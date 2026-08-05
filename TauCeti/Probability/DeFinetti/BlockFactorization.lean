@@ -250,15 +250,9 @@ private theorem blockLaw_injective_eq_lintegral_prod_directingMeasure
     (Tuple.monotone_sort k).strictMono_of_injective (hk.comp e.injective)
   have hreindex : blockLaw μ X k (Set.univ.pi B)
       = blockLaw μ X (k ∘ e) (Set.univ.pi fun i => B (e i)) := by
-    rw [← map_blockLaw_reindex μ k (e : Fin m → Fin m) (fun j => (hX_meas (k j)).aemeasurable),
-      Measure.map_apply (measurable_pi_lambda _ fun i => measurable_pi_apply (e i))
-        (MeasurableSet.univ_pi fun i => hB (e i))]
-    congr 1
-    ext x
-    simp only [Set.mem_preimage, Set.mem_pi, Set.mem_univ, true_implies]
-    constructor
-    · intro h i; exact h (e i)
-    · intro h j; have hj := h (e.symm j); rwa [e.apply_symm_apply] at hj
+    rw [blockLaw_blockCylinder X (fun i => (hX_meas (k i)).aemeasurable) hB,
+      blockLaw_blockCylinder X (fun i => (hX_meas ((k ∘ e) i)).aemeasurable) (fun i => hB (e i)),
+      blockCylinder_comp_perm X k B e]
   rw [hreindex, blockLaw_strictMono_eq_lintegral_prod_directingMeasure hX hX_meas hsm
     (fun i => hB (e i))]
   refine lintegral_congr fun ω => ?_

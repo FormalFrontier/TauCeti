@@ -6,7 +6,6 @@ module
 
 public import TauCeti.Probability.Exchangeability.ConditionallyIID.Basic
 public import TauCeti.Probability.Exchangeability.Cylinder
-import Mathlib.Order.Interval.Finset.Fin
 import Mathlib.Data.Fin.Tuple.Sort
 
 /-!
@@ -105,9 +104,13 @@ theorem conditionallyIID_of_jointRectangles {μ : Measure Ω} [IsFiniteMeasure �
     inferInstance
   exact measure_eq_of_forall_prod_univ_pi (h_rect m k hk)
 
-/-- **Set-integral common de Finetti ending.** If for every injective block the mass of a
-directing-measure event met with a block cylinder is the set-integral of the product of the
+/-- **Set-integral common de Finetti ending.** If for every **strictly monotone** block the mass of
+a directing-measure event met with a block cylinder is the set-integral of the product of the
 witness's evaluations, then the witness directs the process.
+
+`ConditionallyIIDWith` quantifies over arbitrary injective selections, but a caller need only supply
+the monotone case: the reduction by sorting happens here. That matches what the proof routes
+naturally produce, since a block argument reads disjoint windows in increasing order.
 
 This is a reusable seam: nothing here mentions how `ν` was built, so a route supplies only its own
 factorization identity. The martingale route reaches it from tail conditional laws and consumes it
@@ -139,12 +142,8 @@ theorem conditionallyIIDWith_of_measure_inter_blockCylinder_eq_setLIntegral {μ 
     set e : Equiv.Perm (Fin r) := Tuple.sort k with he
     have hsm : StrictMono (k ∘ e) :=
       (Tuple.monotone_sort k).strictMono_of_injective (hk.comp e.injective)
-    have hcyl : blockCylinder X k B = blockCylinder X (k ∘ e) fun i => B (e i) := by
-      ext ω
-      simp only [mem_blockCylinder, Function.comp_apply]
-      exact ⟨fun h i => h (e i), fun h j => by
-        have := h (e.symm j); rwa [e.apply_symm_apply] at this⟩
-    rw [hcyl, hcore r (k ∘ e) hsm S hS (fun i => B (e i)) fun i => hB (e i)]
+    rw [blockCylinder_comp_perm X k B e,
+      hcore r (k ∘ e) hsm S hS (fun i => B (e i)) fun i => hB (e i)]
     exact lintegral_congr fun ω => Equiv.prod_comp e fun i => (ν ω : Measure α) (B i)
   refine conditionallyIID_of_jointRectangles hν fun r k hk S hS B hB => ?_
   have hjoint : AEMeasurable (fun ω => (ν ω, fun i : Fin r => X (k i) ω)) μ :=
