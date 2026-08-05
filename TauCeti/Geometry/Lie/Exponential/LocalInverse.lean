@@ -176,7 +176,10 @@ theorem mulInvariantLogChart_apply [FiniteDimensional ℝ E] [LieGroup I ∞ G]
 theorem mulInvariantLogChart_one [FiniteDimensional ℝ E] [LieGroup I ∞ G]
     [T2Space G] [BoundarylessManifold I G] :
     mulInvariantLogChart (I := I) (G := G)
-      (extChartAt I (1 : G) (1 : G)) = 0 := by
+      (I (chartAt H (1 : G) (1 : G))) = 0 := by
+  have hcoord := congrFun (extChartAt_coe (I := I) (1 : G)) (1 : G)
+  simp only [Function.comp_apply] at hcoord
+  rw [← hcoord]
   rw [← mulInvariantExpChart_zero (I := I) (G := G)]
   exact (mulInvariantExpOpenPartialHomeomorph (I := I) (G := G)).left_inv
     zero_mem_mulInvariantExpOpenPartialHomeomorph_source
@@ -360,7 +363,8 @@ theorem eventually_mulInvariantExp_log [FiniteDimensional ℝ E] [LieGroup I ∞
     (contDiffAt_mulInvariantLogChart_one (I := I) (G := G)).continuousAt.comp
       (continuousAt_extChartAt (I := I) (1 : G))
   have hlogOne : L (extChartAt I (1 : G) (1 : G)) = 0 := by
-    exact mulInvariantLogChart_one (I := I) (G := G)
+    simpa only [L, extChartAt_coe, Function.comp_apply] using
+      mulInvariantLogChart_one (I := I) (G := G)
   have hexpCont : ContinuousAt
       (fun g : G => mulInvariantExp (I := I) (G := G)
         (L (extChartAt I (1 : G) g) : GroupLieAlgebra I G)) 1 :=
