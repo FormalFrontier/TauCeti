@@ -43,10 +43,14 @@ Two facts make the notion usable, and both are proved here.
   everywhere on `Ω` (`TauCeti.HasWeakLineDerivOn.ae_eq` and `TauCeti.HasWeakFDerivOn.ae_eq`). This
   is the fundamental lemma of the calculus of variations, consumed from Mathlib in the form
   `IsOpen.ae_eq_zero_of_integral_contDiff_smul_eq_zero`.
-* **Consistency.** For a Haar measure `μ`, a classical derivative is a weak derivative
-  (`TauCeti.hasWeakLineDerivOn_of_hasLineDerivAt`, `TauCeti.hasWeakFDerivOn_of_differentiableOn`),
-  by integration by parts. Together with uniqueness this pins the notion down: on a `C¹`
-  function the weak derivative is the classical one almost everywhere.
+* **Consistency.** For a Haar measure `μ`, a classical derivative that is locally integrable on
+  `Ω` is a weak derivative (`TauCeti.hasWeakLineDerivOn_of_hasLineDerivAt`,
+  `TauCeti.hasWeakFDerivOn_of_differentiableOn`), by integration by parts. Differentiability alone
+  is not enough: local integrability of `u` and of its derivative is part of what it means to have
+  a weak derivative, so both are hypotheses of these theorems and of the comparison theorems
+  `TauCeti.HasWeakLineDerivOn.ae_eq_lineDeriv` and `TauCeti.HasWeakFDerivOn.ae_eq_fderiv`.
+  Together with uniqueness this pins the notion down: on a `C¹` function whose derivative is
+  locally integrable on `Ω`, the weak derivative is the classical one almost everywhere.
 
 Nothing here assumes that `Ω` is bounded or that its boundary is regular: the weak derivative is a
 purely interior notion, and boundary hypotheses enter only with traces and extensions.
@@ -106,17 +110,21 @@ weaken them for no gain.
 * `TauCeti.HasWeakLineDerivOn.congr_ae` and `.congr_ae_deriv`, together with their
   `TauCeti.HasWeakFDerivOn` counterparts: the notion only sees the function and its weak
   derivative up to almost-everywhere equality on `Ω`.
+* `TauCeti.hasWeakLineDerivOn_zero` and `TauCeti.hasWeakFDerivOn_zero`: the zero function has
+  weak derivative `0`.
 * `TauCeti.HasWeakLineDerivOn.add`, `.neg`, `.sub`, `.const_smul` and their
   `TauCeti.HasWeakFDerivOn` counterparts: linearity in the function.
 * `TauCeti.HasWeakLineDerivOn.add_direction` and `.smul_direction`: linearity in the direction,
   which is what makes the `TauCeti.HasWeakFDerivOn` packaging the right one.
 * `TauCeti.hasWeakLineDerivOn_of_hasLineDerivAt` and
-  `TauCeti.hasWeakFDerivOn_of_differentiableOn`: classical derivatives are weak derivatives.
+  `TauCeti.hasWeakFDerivOn_of_differentiableOn`: classical derivatives that are locally integrable
+  on `Ω` are weak derivatives.
 * `TauCeti.hasWeakLineDerivOn_const`: against a Haar measure, a constant has weak derivative `0`.
 * `TauCeti.HasWeakLineDerivOn.ae_eq` and `TauCeti.HasWeakFDerivOn.ae_eq`: uniqueness almost
   everywhere on `Ω`.
 * `TauCeti.HasWeakLineDerivOn.ae_eq_lineDeriv` and `TauCeti.HasWeakFDerivOn.ae_eq_fderiv`: where
-  the classical derivative exists, the weak one agrees with it almost everywhere.
+  the classical derivative exists and is locally integrable on `Ω`, the weak one agrees with it
+  almost everywhere.
 -/
 
 public section
@@ -220,6 +228,18 @@ theorem HasWeakFDerivOn.mono {U : E → E →L[ℝ] F} {Ω' : Opens E} (h : HasW
 /-- Every direction of a weak Fréchet derivative is a weak directional derivative. -/
 theorem HasWeakFDerivOn.hasWeakLineDerivOn {U : E → E →L[ℝ] F} (h : HasWeakFDerivOn μ Ω u U)
     (v : E) : HasWeakLineDerivOn μ Ω u (fun x => U x v) v := h v
+
+/-- The zero function has weak derivative `0` in every direction, for every `μ`: no translation
+invariance is needed, since both sides of the defining identity vanish. This is the zero of the
+vector space structure that `TauCeti.HasWeakLineDerivOn.add`, `.neg` and `.const_smul` supply. -/
+@[simp]
+theorem hasWeakLineDerivOn_zero : HasWeakLineDerivOn μ Ω (0 : E → F) (0 : E → F) v :=
+  ⟨locallyIntegrableOn_zero, locallyIntegrableOn_zero, fun _ => by simp⟩
+
+/-- The zero function has weak Fréchet derivative `0`, for every `μ`. -/
+@[simp]
+theorem hasWeakFDerivOn_zero : HasWeakFDerivOn μ Ω (0 : E → F) 0 :=
+  fun _ => ⟨locallyIntegrableOn_zero, locallyIntegrableOn_zero, fun _ => by simp⟩
 
 /-- Weak differentiation commutes with negation. -/
 theorem HasWeakLineDerivOn.neg (h : HasWeakLineDerivOn μ Ω u u' v) :
@@ -516,8 +536,10 @@ variable [MeasurableSpace E] [BorelSpace E] [FiniteDimensional ℝ E] [CompleteS
   {μ : Measure E} [μ.IsAddHaarMeasure] {u u' : E → F}
 
 /-- **The weak derivative of a classically differentiable function is the classical one.** If `u`
-has a line derivative in the direction `v` at every point of `Ω`, then any weak derivative of `u`
-in that direction agrees with it almost everywhere on `Ω`.
+has a line derivative in the direction `v` at every point of `Ω`, and that line derivative is
+locally integrable on `Ω`, then any weak derivative of `u` in that direction agrees with it almost
+everywhere on `Ω`. Local integrability of `u` itself is not a hypothesis here: it is already part
+of `h`.
 
 Combined with `TauCeti.hasWeakLineDerivOn_of_hasLineDerivAt`, this says that the weak derivative
 extends the classical one without changing it where the classical one exists. -/
@@ -529,8 +551,9 @@ theorem HasWeakLineDerivOn.ae_eq_lineDeriv (h : HasWeakLineDerivOn μ Ω u u' v)
     fun x hx => (hdiff x hx).hasLineDerivAt)
 
 /-- **The weak Fréchet derivative of a differentiable function is `fderiv`.** If `u` is
-differentiable at every point of `Ω`, then any weak Fréchet derivative of `u` agrees with
-`fderiv ℝ u` almost everywhere on `Ω`. -/
+differentiable at every point of `Ω` and `fderiv ℝ u` is locally integrable on `Ω`, then any weak
+Fréchet derivative of `u` agrees with `fderiv ℝ u` almost everywhere on `Ω`. Local integrability
+of `u` itself is not a hypothesis here: it is already part of `h`. -/
 theorem HasWeakFDerivOn.ae_eq_fderiv {U : E → E →L[ℝ] F} (h : HasWeakFDerivOn μ Ω u U)
     (hd : LocallyIntegrableOn (fderiv ℝ u) Ω μ)
     (hdiff : ∀ x ∈ (Ω : Set E), DifferentiableAt ℝ u x) :
