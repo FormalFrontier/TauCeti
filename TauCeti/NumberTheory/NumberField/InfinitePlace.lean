@@ -14,7 +14,7 @@ embedding would send that element to a real square root of a negative number.
 
 ## Main results
 
-* `TauCeti.NumberField.isTotallyComplex_of_sq_ratCast_neg`.
+* `TauCeti.NumberField.isTotallyComplex_of_sq_ratCast_of_neg`.
 -/
 
 public section
@@ -27,7 +27,7 @@ variable {K : Type*} [Field K] [NumberField K]
 
 /-- **A field with a negative square is totally complex.** If some `x : K` has `x² = r` for a
 negative rational `r`, then every infinite place of `K` is complex. -/
-theorem isTotallyComplex_of_sq_ratCast_neg {x : K} {r : ℚ} (hx2 : x ^ 2 = algebraMap ℚ K r)
+theorem isTotallyComplex_of_sq_ratCast_of_neg {x : K} {r : ℚ} (hx2 : x ^ 2 = algebraMap ℚ K r)
     (hr : r < 0) : IsTotallyComplex K := by
   -- A real embedding would carry `x` to a real square root of `r < 0`, which is impossible.
   rw [isTotallyComplex_iff]
