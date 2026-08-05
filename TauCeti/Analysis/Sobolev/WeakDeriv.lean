@@ -71,6 +71,21 @@ The three components are projected out by `TauCeti.HasWeakLineDerivOn.locallyInt
 `TauCeti.HasWeakLineDerivOn.integral_lineDeriv_smul_eq_neg_integral_smul`, so a proof never has to
 unfold the definition.
 
+## The codomain
+
+Completeness of `F` is, like translation invariance of `μ`, carried by the results that need it
+rather than built into the definition. `MeasureTheory.integral` is *defined* to be `0` when the
+codomain is incomplete, so for an incomplete `F` the identity above reads `0 = -0` and
+`TauCeti.HasWeakLineDerivOn μ Ω u u' v` says no more than that `u` and `u'` are locally integrable
+on `Ω`. That is how every Bochner-integral notion behaves there, and Mathlib takes the same
+convention: `TestFunction.integralAgainstBilinCLM` — the bundled pairing that turns a locally
+integrable function into a distribution — and `MeasureTheory.convolution` are both defined for a
+bare normed space, while the fundamental lemma of the calculus of variations, which is false
+without completeness, assumes `[CompleteSpace F]`. Accordingly the results here that would fail
+for an incomplete `F` assume it — `TauCeti.HasWeakLineDerivOn.ae_eq`,
+`TauCeti.HasWeakFDerivOn.ae_eq` and the two comparison theorems — while locality, linearity and
+the integration-by-parts constructors, which hold for an incomplete `F` as well, do not.
+
 ## The measure
 
 The defining identity is *not* the distributional derivative for an arbitrary `μ`, and is not
@@ -171,7 +186,11 @@ distributional derivative `∂_v u` on `Ω`, and `[μ.IsAddHaarMeasure]` is the 
 result identifying the two (`TauCeti.hasWeakLineDerivOn_of_hasLineDerivAt` and
 `TauCeti.hasWeakLineDerivOn_const` among them). For a `μ` that is not translation invariant the
 identity is instead the adjoint of `∂_v` relative to `μ` — with a weight `w` it describes
-`∂_v (w • u)`, so a constant need not have weak derivative `0`; see the module docstring. -/
+`∂_v (w • u)`, so a constant need not have weak derivative `0`; see the module docstring.
+
+Completeness of `F` is likewise a hypothesis of the results that need it — uniqueness and the
+comparison theorems — and not of this definition, which for an incomplete `F` says only that `u`
+and `u'` are locally integrable, the Bochner integral being `0` there; see the module docstring. -/
 def HasWeakLineDerivOn (μ : Measure E) (Ω : Opens E) (u u' : E → F) (v : E) : Prop :=
   LocallyIntegrableOn u Ω μ ∧ LocallyIntegrableOn u' Ω μ ∧
     ∀ φ : 𝓓(Ω, ℝ), ∫ x, lineDeriv ℝ (φ : E → ℝ) x v • u x ∂μ = -∫ x, (φ : E → ℝ) x • u' x ∂μ
