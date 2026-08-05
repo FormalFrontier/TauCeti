@@ -9,11 +9,11 @@ public import TauCeti.RepresentationTheory.Continuous.MatrixCoefficient
 /-!
 # The conjugate of a continuous representation
 
-Complex conjugation of the matrix entries of a unitary representation gives another unitary
-representation, the **conjugate** (equivalently, for a unitary representation, the contragredient).
-It is what the span of the matrix coefficients needs in order to be closed under the involution of
-`C(G, 𝕜)`: conjugating a matrix coefficient of `π` produces a matrix coefficient of the conjugate of
-`π`, not of `π` itself.
+Complex conjugation of the matrix entries of a representation gives another representation, the
+**conjugate** (equivalently, for a unitary representation, the contragredient). It is what the span
+of the matrix coefficients needs in order to be closed under the involution of `C(G, 𝕜)`:
+conjugating a matrix coefficient of `π` produces a matrix coefficient of the conjugate of `π`, not
+of `π` itself.
 
 There is no canonical conjugation on an abstract inner product space, so the construction takes an
 orthonormal basis `e` as data and conjugates the coordinates in it:
