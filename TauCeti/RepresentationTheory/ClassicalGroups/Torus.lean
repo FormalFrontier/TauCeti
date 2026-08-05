@@ -37,9 +37,12 @@ bound; when the unit group is infinite it is automatic
 one unit, such as `𝔽₂`, the torus is trivial (`TauCeti.diagonalTorus_eq_bot`) while its
 centralizer is the whole of `GL n k` (`TauCeti.centralizer_diagonalTorus_eq_top`).
 
-Finally the coordinate lines `k ∙ eᵢ` are recorded as the weight spaces of the torus in the
-standard representation: each is stable under every torus element
-(`TauCeti.map_stdRep_span_basisFun`), which acts on it by the `i`-th diagonal entry.
+Finally the action of the torus on the coordinate lines `k ∙ eᵢ` of the standard representation
+is recorded: each `eᵢ` is an eigenvector of every torus element, with eigenvalue the `i`-th
+diagonal entry (`TauCeti.stdRep_apply_basisFun_of_mem_diagonalTorus`), so each line is stable
+(`TauCeti.map_stdRep_span_basisFun`).  Over a general `k` these lines are not yet the *weight
+spaces* of the torus: that identification needs the coordinate characters to be pairwise
+distinct, and it fails outright when the torus is trivial, as it is over `𝔽₂`.
 
 ## Main definitions
 
@@ -53,8 +56,8 @@ standard representation: each is stable under every torus element
   distinct entries is itself diagonal.
 * `TauCeti.centralizer_diagonalTorus`: the diagonal torus is its own centralizer.
 * `TauCeti.centralizer_diagonalTorus_eq_top`: the sharpness of the hypothesis there.
-* `TauCeti.map_stdRep_span_basisFun`: the coordinate lines are the torus weight spaces of the
-  standard representation.
+* `TauCeti.map_stdRep_span_basisFun`: the coordinate lines of the standard representation are
+  stable under the diagonal torus.
 
 ## References
 
@@ -234,8 +237,8 @@ end Subsingleton
 section StandardRepresentation
 
 /-- Every standard basis vector is an eigenvector of every element of the diagonal torus, with
-eigenvalue the corresponding diagonal entry.  These are the weights of the torus on the standard
-representation. -/
+eigenvalue the corresponding diagonal entry.  The eigenvalue is the `i`-th coordinate character
+of the torus, read off `diagGL` through `TauCeti.diagonalTorusEquiv`. -/
 theorem stdRep_apply_basisFun_of_mem_diagonalTorus {g : GL (Fin n) k}
     (hg : g ∈ diagonalTorus k n) (i : Fin n) :
     stdRep k n g (Pi.basisFun k (Fin n) i) =
@@ -243,8 +246,8 @@ theorem stdRep_apply_basisFun_of_mem_diagonalTorus {g : GL (Fin n) k}
   obtain ⟨t, rfl⟩ := exists_diagGL_eq hg
   rw [stdRep_diagGL_apply_basisFun, diagGL_coe, Matrix.diagonal_apply_eq]
 
-/-- The coordinate lines are stable under the diagonal torus: they are the weight spaces of the
-torus in the standard representation. -/
+/-- Each coordinate line of the standard representation is stable under the diagonal torus, a
+torus element acting on it by the invertible scalar given by its `i`-th diagonal entry. -/
 theorem map_stdRep_span_basisFun {g : GL (Fin n) k} (hg : g ∈ diagonalTorus k n) (i : Fin n) :
     Submodule.map (stdRep k n g) (Submodule.span k {Pi.basisFun k (Fin n) i}) =
       Submodule.span k {Pi.basisFun k (Fin n) i} := by
