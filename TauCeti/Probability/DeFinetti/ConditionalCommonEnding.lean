@@ -6,6 +6,8 @@ module
 
 public import TauCeti.Probability.Exchangeability.ConditionallyIID.Basic
 public import TauCeti.Probability.Exchangeability.Cylinder
+import Mathlib.Order.Interval.Finset.Fin
+import Mathlib.Data.Fin.Tuple.Sort
 
 /-!
 # The conditional rectangle common ending for de Finetti
@@ -117,13 +119,33 @@ needed to *construct* a directing measure, not to recognise one. -/
 theorem conditionallyIIDWith_of_measure_inter_blockCylinder_eq_setLIntegral {μ : Measure Ω}
     [IsFiniteMeasure μ] {X : ℕ → Ω → α} (hX_meas : ∀ n, AEMeasurable (X n) μ)
     {ν : Ω → ProbabilityMeasure α} (hν : Measurable ν)
-    (hcore : ∀ (r : ℕ) (k : Fin r → ℕ), Function.Injective k →
+    (hcore : ∀ (r : ℕ) (k : Fin r → ℕ), StrictMono k →
       ∀ S : Set (ProbabilityMeasure α), MeasurableSet S →
         ∀ B : Fin r → Set α, (∀ i, MeasurableSet (B i)) →
           μ ((ν ⁻¹' S) ∩ blockCylinder X k B)
             = ∫⁻ ω in ν ⁻¹' S, ∏ i, (ν ω : Measure α) (B i) ∂μ) :
     ConditionallyIIDWith μ X ν := by
   classical
+  -- Sorting reduces an arbitrary injective selection to a strictly monotone one. The block
+  -- cylinder is unchanged as a *set* — only the order of the coordinates moves — and the
+  -- directing-measure event `ν ⁻¹' S` is untouched, so the right-hand product reorders by
+  -- `Equiv.prod_comp`. Routes therefore supply only the monotone case.
+  have hcore' : ∀ (r : ℕ) (k : Fin r → ℕ), Function.Injective k →
+      ∀ S : Set (ProbabilityMeasure α), MeasurableSet S →
+        ∀ B : Fin r → Set α, (∀ i, MeasurableSet (B i)) →
+          μ ((ν ⁻¹' S) ∩ blockCylinder X k B)
+            = ∫⁻ ω in ν ⁻¹' S, ∏ i, (ν ω : Measure α) (B i) ∂μ := by
+    intro r k hk S hS B hB
+    set e : Equiv.Perm (Fin r) := Tuple.sort k with he
+    have hsm : StrictMono (k ∘ e) :=
+      (Tuple.monotone_sort k).strictMono_of_injective (hk.comp e.injective)
+    have hcyl : blockCylinder X k B = blockCylinder X (k ∘ e) fun i => B (e i) := by
+      ext ω
+      simp only [mem_blockCylinder, Function.comp_apply]
+      exact ⟨fun h i => h (e i), fun h j => by
+        have := h (e.symm j); rwa [e.apply_symm_apply] at this⟩
+    rw [hcyl, hcore r (k ∘ e) hsm S hS (fun i => B (e i)) fun i => hB (e i)]
+    exact lintegral_congr fun ω => Equiv.prod_comp e fun i => (ν ω : Measure α) (B i)
   refine conditionallyIID_of_jointRectangles hν fun r k hk S hS B hB => ?_
   have hjoint : AEMeasurable (fun ω => (ν ω, fun i : Fin r => X (k i) ω)) μ :=
     hν.aemeasurable.prodMk (aemeasurable_pi_lambda _ fun i => hX_meas _)
@@ -134,7 +156,7 @@ theorem conditionallyIIDWith_of_measure_inter_blockCylinder_eq_setLIntegral {μ 
   have hpre : (fun ω => (ν ω, fun i : Fin r => X (k i) ω)) ⁻¹' (S ×ˢ Set.univ.pi B)
       = (ν ⁻¹' S) ∩ blockCylinder X k B := by
     rw [Set.mk_preimage_prod, ← blockCylinder_eq_preimage_univ_pi X k B]
-  rw [Measure.map_apply_of_aemeasurable hjoint hrect, hpre, hcore r k hk S hS B hB,
+  rw [Measure.map_apply_of_aemeasurable hjoint hrect, hpre, hcore' r k hk S hS B hB,
     Measure.bind_apply hrect hker.aemeasurable, ← lintegral_indicator (hν hS)]
   refine lintegral_congr fun ω => ?_
   have hprod : (ProbabilityMeasure.pi fun _ : Fin r => ν ω).toMeasure (Set.univ.pi B)
