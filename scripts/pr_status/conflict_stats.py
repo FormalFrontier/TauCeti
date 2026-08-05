@@ -63,13 +63,16 @@ Every run reports provenance per PR, because it decides what a row is worth:
                episodes truncated. Kept distinct from `recorded` on purpose: an
                API slice that fails or caps out returns fewer pushes and looks
                exactly like a quiet week, so the hole has to be carried alongside
-               the data rather than inferred from it.
+               the data rather than inferred from it. A PR whose recorded heads
+               are ALL unfetchable is partial too, falling back to commit dates
+               for its heads: the ledger covered it, so calling that row
+               `inferred` or `skipped` would hide a record that exists.
     inferred   no ledger coverage -- older than the workflow, or its runs aged
                out. Heads come from commit dates grouped by `--push-window`,
                boundaries are guesses, and resolutions are attributed to nobody,
                because there a commit that was never a head can invent an episode
                or split a real one.
-    skipped    nothing replayable at all.
+    skipped    nothing replayable at all, and nothing recorded to have lost.
 
 Two further limits apply to both paths:
 
@@ -500,40 +503,52 @@ def pr_epochs(mirror, pr, index, push_window, available):
                   treating one matching head as full coverage silently dropped the
                   rest, and treating a failed API slice as "no pushes then" made
                   an incomplete history indistinguishable from a complete one.
+                  Losing EVERY recorded head is partial as well, not "inferred":
+                  the commit-date fallback still runs, but the ledger did cover
+                  this PR, and a row that says otherwise conceals the loss.
       "inferred"  no ledger coverage at all (a PR older than the workflow, or
                   whose runs aged out). Heads come from commit dates, grouped by
                   `push_window`; boundaries are guesses and actors are unknown.
+      "skipped"   nothing replayable, and no recorded head lost either.
     """
     number = pr["number"]
     recorded = pr.get("_pushes") or []
-    if recorded:
-        replayable = [row for row in recorded if row[0] in available]
-        if replayable:
-            epochs = [(sha, when) for sha, when, _ in replayable]
-            actors = [actor or "" for _, _, actor in replayable]
-            complete = (len(epochs) == len(recorded)
-                        and pr.get("_ledger_covered", True))
-            return epochs, actors, ("recorded" if complete else "partial")
+    replayable = [row for row in recorded if row[0] in available]
+    if replayable:
+        epochs = [(sha, when) for sha, when, _ in replayable]
+        actors = [actor or "" for _, _, actor in replayable]
+        complete = (len(epochs) == len(recorded)
+                    and pr.get("_ledger_covered", True))
+        return epochs, actors, ("recorded" if complete else "partial")
+    # The ledger recorded heads for this PR and not one of them can be fetched.
+    # The commit-date fallback below is all that is left, but the result is not
+    # `inferred` and not `skipped`: both of those say the ledger never covered
+    # this PR, and saying that here would hide the loss of a record that exists.
+    # Losing every recorded head is the extreme case of losing some, so it is
+    # reported as `partial` -- with the heads below guessed rather than merely
+    # incomplete, which is why they are attributed to nobody either way.
+    lost = bool(recorded)
     heads = mirror.pr_heads(number)
     if not heads:
-        return [], [], "skipped"
+        return [], [], "partial" if lost else "skipped"
     epochs = []
     for sha, when in heads:
         if epochs and when - epochs[-1][1] <= push_window:
             epochs[-1] = (sha, when)
         else:
             epochs.append((sha, when))
-    return epochs, [""] * len(epochs), "inferred"
+    return epochs, [""] * len(epochs), "partial" if lost else "inferred"
 
 
 def analyse_pr(mirror, history, history_times, pr, now, session_gap, exhaustive=False,
                push_window=PUSH_WINDOW_SECONDS, index=None, available=None):
     """Conflict episodes for one PR, its epochs, its actors, and how it was handled.
 
-    `handling` is "pushed" or "inferred" per `pr_epochs`, or "skipped" when the PR
-    has no commits of its own to replay -- an unfetchable head, or a merge strategy
-    that put the branch commits verbatim on main. Each is counted and reported
-    rather than quietly folded into "no conflict", which would flatter the result.
+    `handling` is the provenance `pr_epochs` returned -- "recorded", "partial",
+    "inferred", or "skipped" when the PR has no commits of its own to replay and
+    the ledger holds none either (a merge strategy that put the branch commits
+    verbatim on main). Each is counted and reported rather than quietly folded
+    into "no conflict", which would flatter the result.
     """
     number = pr["number"]
     epochs, actors, handling = pr_epochs(mirror, pr, index or {}, push_window,
@@ -897,7 +912,8 @@ def summarise(episodes, handled, total_prs):
     lines.append(
         f"provenance: {handled.get('recorded', 0)} PR(s) fully recorded in the push ledger, "
         f"{handled.get('partial', 0)} partially (heads unfetchable, or a hole in the "
-        f"ledger over the PR's lifetime), "
+        f"ledger over the PR's lifetime; where every recorded head was lost the "
+        f"heads fall back to commit dates), "
         f"{handled.get('inferred', 0)} inferred from commit dates (boundaries and actors "
         f"are guesses there), {handled.get('skipped', 0)} with no replayable commits")
     # A row whose timeline could not be read still carries any time its PR spent

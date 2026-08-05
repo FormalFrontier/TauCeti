@@ -343,6 +343,37 @@ class Replay(unittest.TestCase):
         mirror = self.FakeMirror([], {})
         self.assertEqual(self.analyse(mirror, self.pr()), ([], "skipped"))
 
+    def test_losing_every_recorded_head_is_partial_not_inferred(self):
+        # The ledger covered this PR and none of its heads can be fetched, so the
+        # heads below are commit-date guesses. Calling that `inferred` -- which
+        # promises the ledger never covered it -- would hide the loss entirely.
+        mirror = self.FakeMirror([("h1", 1000), ("h2", 1650)], {"h1": 5})
+        ledger = [{"sha": sha, "actor": "alice", "when": when,
+                   "owner": "o", "branch": "b"}
+                  for sha, when in [("h1", 1000), ("h2", 1650)]]
+        pr = dict(self.pr(), headRefName="b", headRepositoryOwner={"login": "o"})
+        pr["_pushes"] = [("h1", 1000, "alice"), ("h2", 1650, "alice")]
+        rows, handling, _, actors = conflict_stats.analyse_pr(
+            mirror, self.HISTORY, self.TIMES, pr, 9999, 7200, push_window=0,
+            index=conflict_stats.ledger_index(ledger), available=set())
+        self.assertEqual(handling, "partial")
+        # Guessed heads, so the resolution is credited to nobody.
+        self.assertEqual(actors, ["", ""])
+        self.assertEqual([row["session"] for row in rows],
+                         [conflict_stats.UNATTRIBUTED])
+
+    def test_losing_every_recorded_head_with_nothing_to_fall_back_on_is_partial(self):
+        # Not `skipped`: that says nothing was ever recorded for this PR.
+        mirror = self.FakeMirror([], {})
+        ledger = [{"sha": "h1", "actor": "alice", "when": 1000,
+                   "owner": "o", "branch": "b"}]
+        pr = dict(self.pr(), headRefName="b", headRepositoryOwner={"login": "o"})
+        pr["_pushes"] = [("h1", 1000, "alice")]
+        _, handling, _, _ = conflict_stats.analyse_pr(
+            mirror, self.HISTORY, self.TIMES, pr, 9999, 7200,
+            index=conflict_stats.ledger_index(ledger), available=set())
+        self.assertEqual(handling, "partial")
+
 
 class LedgerIndex(unittest.TestCase):
     """Which repeats of a head are transitions and which are noise."""
