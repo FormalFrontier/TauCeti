@@ -226,12 +226,17 @@ def first_conflicting(mirror, history, lo, hi, head):
 def analyse_pr(mirror, history, history_times, pr, now, session_gap):
     """Conflict episodes for one PR, plus how it was handled.
 
-    The second element is "" for a fully measured PR, "rewritten" when every
-    surviving commit shares one timestamp (a force-push destroyed the earlier
-    heads), or "skipped" when the PR has no commits of its own to replay -- an
-    unfetchable head, or a merge strategy that put the branch commits verbatim on
-    main. Both are counted and reported rather than quietly folded into "no
-    conflict", which would flatter the result.
+    The second element is "" for a fully measured PR, "rewritten" when several
+    commits survive but all share one timestamp (a force-push destroyed the
+    earlier heads), or "skipped" when the PR has no commits of its own to replay
+    -- an unfetchable head, or a merge strategy that put the branch commits
+    verbatim on main. Each is counted and reported rather than quietly folded into
+    "no conflict", which would flatter the result.
+
+    Force-push detection is a heuristic and deliberately conservative: a PR
+    force-pushed down to a SINGLE commit is indistinguishable from one that always
+    had one, so it reads as fully measured. Flagging every one-commit PR would
+    destroy the signal to catch a case we cannot confirm.
     """
     number = pr["number"]
     heads = mirror.pr_heads(number)
