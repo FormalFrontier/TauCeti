@@ -170,12 +170,15 @@ theorem haarProbLpEquivFun_symm_apply (F : G → 𝕜) :
     ⇑((haarProbLpEquivFun G 𝕜).symm F) = F :=
   (haarProbLpEquivFun G 𝕜).apply_symm_apply F
 
-/-- On a finite group the `L²` class of a continuous function is represented by that function at
-every point, not merely almost everywhere. -/
+/-- On a finite group the almost-everywhere class of a continuous function is represented by that
+function at every point, not merely almost everywhere. Together with
+`ContinuousMap.coe_toLp` this evaluates the `L²` class `ContinuousMap.toLp 2 (haarProb G) 𝕜 F`,
+which is why it is stated for `ContinuousMap.toAEEqFun`: that is the simp normal form of the
+underlying function. -/
 @[simp]
-theorem coeFn_toLp_haarProb (F : C(G, 𝕜)) :
-    ⇑(ContinuousMap.toLp 2 (haarProb G) 𝕜 F) = F :=
-  eq_of_ae_eq_haarProb (ContinuousMap.coeFn_toLp (haarProb G) F)
+theorem coeFn_toAEEqFun_haarProb (F : C(G, 𝕜)) :
+    ⇑(F.toAEEqFun (haarProb G)) = F :=
+  eq_of_ae_eq_haarProb (F.coeFn_toAEEqFun (haarProb G))
 
 end Lp
 
@@ -202,7 +205,8 @@ their pointwise products. -/
 theorem inner_toLp_eq_card_inv_mul_sum (F H : C(G, 𝕜)) :
     ⟪ContinuousMap.toLp 2 (haarProb G) 𝕜 F, ContinuousMap.toLp 2 (haarProb G) 𝕜 H⟫_𝕜
       = (Nat.card G : 𝕜)⁻¹ * ∑ g, H g * (starRingEnd 𝕜) (F g) := by
-  rw [inner_eq_card_inv_mul_sum, coeFn_toLp_haarProb, coeFn_toLp_haarProb]
+  rw [inner_eq_card_inv_mul_sum]
+  simp only [ContinuousMap.coe_toLp, coeFn_toAEEqFun_haarProb]
 
 end InnerProduct
 
