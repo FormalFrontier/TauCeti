@@ -233,21 +233,22 @@ angle in `[a, b]`.
 This is `TauCeti.circleMap_mem_ball_iff_sq` read through the unimodality of `cos` on a period
 centred at `arg (c - ζ)`. Neither `0 < r` nor any relation between `ζ` and the disc is assumed: the
 first is forced by the hypotheses, and the second is not needed, so the conclusion covers a cutting
-circle centred anywhere and not only the circular crosscut at a boundary point `ζ` of the disc. A
-circle centred at `c` itself is the degenerate case, its points being all at the same distance from
-`c`; the criterion is then independent of the angle. -/
-theorem circleMap_mem_ball_of_mem_Icc {c ζ : ℂ} {r ρ : ℝ} (hρ : 0 < ρ) {a b θ : ℝ}
+circle centred anywhere and not only the circular crosscut at a boundary point `ζ` of the disc. Two
+degenerate cases are covered as well, in both of which the criterion is independent of the angle: a
+circle centred at `c` itself, whose points are all at the same distance from `c`, and the circle of
+radius `ρ = 0`, which is the single point `ζ`. -/
+theorem circleMap_mem_ball_of_mem_Icc {c ζ : ℂ} {r ρ : ℝ} (hρ : 0 ≤ ρ) {a b θ : ℝ}
     (ha : -π ≤ a - (c - ζ).arg) (hb : b - (c - ζ).arg ≤ π) (hθ : θ ∈ Icc a b)
     (hain : circleMap ζ ρ a ∈ ball c r) (hbin : circleMap ζ ρ b ∈ ball c r) :
     circleMap ζ ρ θ ∈ ball c r := by
   have hr : 0 < r := dist_nonneg.trans_lt (mem_ball.mp hain)
   rw [circleMap_mem_ball_iff_sq hr.le] at hain hbin ⊢
-  rcases (dist_nonneg : (0 : ℝ) ≤ dist ζ c).eq_or_lt with hd | hd
-  · -- a circle centred at `c`: the criterion does not see the angle at all
+  have hnn : (0 : ℝ) ≤ 2 * ρ * dist ζ c := mul_nonneg (by linarith) dist_nonneg
+  rcases hnn.eq_or_lt with hd | hpos
+  · -- a circle centred at `c`, or one of radius zero: the criterion does not see the angle at all
     rw [← hd] at hain ⊢
     linarith
   · -- otherwise divide by `2 * ρ * dist ζ c` and use that `cos` has no interior minimum
-    have hpos : 0 < 2 * ρ * dist ζ c := by positivity
     have hkey : ∀ x : ℝ, (ρ ^ 2 + dist ζ c ^ 2 - r ^ 2
           < 2 * ρ * dist ζ c * Real.cos (x - (c - ζ).arg))
         ↔ (ρ ^ 2 + dist ζ c ^ 2 - r ^ 2) / (2 * ρ * dist ζ c)

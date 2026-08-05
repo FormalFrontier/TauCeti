@@ -72,7 +72,9 @@ In accordance with the generality bar of `ConformalMapping/README.md`, which fix
 every theorem added in layers L0–L6, everything below is stated for maps of `ℂ`. The disc is a
 general `ball c r` rather than the unit disc, since nothing is cheaper in the normalised case, and
 the centre `ζ` of the cutting circle is unrestricted, since the arc description that carries the
-chord bound never uses `dist ζ c = r`.
+chord bound never uses `dist ζ c = r`. The radius `ρ` of that circle is unrestricted as well, the
+three estimates on `ball c r ∩ sphere ζ ρ` asking nothing of it: `sphere ζ ρ` is empty for `ρ < 0`
+and the single point `ζ` for `ρ = 0`, so both degenerate cases hold for want of a second point.
 
 ## Coordination with upstream Mathlib
 
@@ -113,11 +115,18 @@ it with `s = U = ball c r`.
 
 The centre `ζ` of the cutting circle is unrestricted: `ball c r ∩ sphere ζ ρ` is an arc of angles
 wherever `ζ` lies, so the bound is not confined to the circular crosscuts at a boundary point
-`ζ ∈ sphere c r` that the Carathéodory correspondence cuts with. -/
-theorem ofReal_dist_le_circleImageLength_of_mem_ball_inter_sphere (hρ : 0 < ρ)
+`ζ ∈ sphere c r` that the Carathéodory correspondence cuts with. The radius `ρ` is unrestricted
+too, the hypotheses forcing `0 ≤ ρ`: a negative radius leaves `sphere ζ ρ` empty, and `ρ = 0`
+leaves it the single point `ζ`, so in both degenerate cases `z = w` and the chord is `0`. -/
+theorem ofReal_dist_le_circleImageLength_of_mem_ball_inter_sphere
     (hf : DifferentiableOn ℂ f (ball c r)) {z w : ℂ} (hz : z ∈ ball c r ∩ sphere ζ ρ)
     (hw : w ∈ ball c r ∩ sphere ζ ρ) :
     ENNReal.ofReal (dist (f z) (f w)) ≤ circleImageLength f (ball c r) ζ ρ := by
+  rcases (nonneg_of_mem_sphere hz.2).eq_or_lt with hρ | hρ
+  · -- a circle of radius zero: both points are its centre
+    have hzζ : z = ζ := by simpa [← hρ] using hz.2
+    have hwζ : w = ζ := by simpa [← hρ] using hw.2
+    simp [hzζ, hwζ]
   -- it suffices to treat a pair of angles in increasing order
   suffices h : ∀ z' w' : ℂ, z' ∈ ball c r ∩ sphere ζ ρ → w' ∈ ball c r ∩ sphere ζ ρ →
       ∀ t₁ ∈ Icc (-π) π, ∀ t₂ ∈ Icc (-π) π, t₁ ≤ t₂ →
@@ -132,7 +141,7 @@ theorem ofReal_dist_le_circleImageLength_of_mem_ball_inter_sphere (hρ : 0 < ρ)
   rintro z' w' hz' hw' t₁ ht₁ t₂ ht₂ hle rfl rfl
   have harc : ∀ θ ∈ Icc ((c - ζ).arg + t₁) ((c - ζ).arg + t₂), circleMap ζ ρ θ ∈ ball c r :=
     fun θ hθ =>
-      circleMap_mem_ball_of_mem_Icc hρ (by rw [add_sub_cancel_left]; exact ht₁.1)
+      circleMap_mem_ball_of_mem_Icc hρ.le (by rw [add_sub_cancel_left]; exact ht₁.1)
         (by rw [add_sub_cancel_left]; exact ht₂.2) hθ hz'.1 hw'.1
   exact ofReal_dist_le_circleImageLength isOpen_ball hf ζ hρ (by linarith)
     (by linarith [ht₁.1, ht₂.2, Real.pi_pos]) harc harc
@@ -140,15 +149,16 @@ theorem ofReal_dist_le_circleImageLength_of_mem_ball_inter_sphere (hρ : 0 < ρ)
 /-- **The image of a circular crosscut is no wider than its length.** A bound `ε` on
 `TauCeti.circleImageLength f (ball c r) ζ ρ` bounds the diameter of the image of
 `ball c r ∩ sphere ζ ρ`, by the chord bound
-`TauCeti.ofReal_dist_le_circleImageLength_of_mem_ball_inter_sphere`. -/
-theorem diam_image_ball_inter_sphere_le (hρ : 0 < ρ)
+`TauCeti.ofReal_dist_le_circleImageLength_of_mem_ball_inter_sphere`, from which it inherits its
+indifference to the centre and the radius of the cutting circle. -/
+theorem diam_image_ball_inter_sphere_le
     (hf : DifferentiableOn ℂ f (ball c r)) {ε : ℝ} (hε : 0 ≤ ε)
     (hlen : circleImageLength f (ball c r) ζ ρ ≤ ENNReal.ofReal ε) :
     diam (f '' (ball c r ∩ sphere ζ ρ)) ≤ ε := by
   refine diam_le_of_forall_dist_le hε ?_
   rintro _ ⟨z, hz, rfl⟩ _ ⟨w, hw, rfl⟩
   exact (ENNReal.ofReal_le_ofReal_iff hε).mp
-    ((ofReal_dist_le_circleImageLength_of_mem_ball_inter_sphere hρ hf hz hw).trans hlen)
+    ((ofReal_dist_le_circleImageLength_of_mem_ball_inter_sphere hf hz hw).trans hlen)
 
 /-- **An image crosscut of finite length is bounded.** The chord bound
 `TauCeti.ofReal_dist_le_circleImageLength_of_mem_ball_inter_sphere` keeps every pair of points of
@@ -160,14 +170,14 @@ image crosscut rather than the junk value `0` that an unbounded set carries; it 
 counterpart of `TauCeti.isBounded_image_circleMap_image_Ioo_of_lintegral_ne_top`, stated against
 the crosscut rather than against an arc of angles. -/
 theorem isBounded_image_ball_inter_sphere_of_circleImageLength_ne_top
-    (hρ : 0 < ρ) (hf : DifferentiableOn ℂ f (ball c r))
+    (hf : DifferentiableOn ℂ f (ball c r))
     (hfin : circleImageLength f (ball c r) ζ ρ ≠ ⊤) :
     IsBounded (f '' (ball c r ∩ sphere ζ ρ)) := by
   rw [isBounded_iff]
   refine ⟨(circleImageLength f (ball c r) ζ ρ).toReal, ?_⟩
   rintro _ ⟨z, hz, rfl⟩ _ ⟨w, hw, rfl⟩
   exact (ENNReal.ofReal_le_iff_le_toReal hfin).mp
-    (ofReal_dist_le_circleImageLength_of_mem_ball_inter_sphere hρ hf hz hw)
+    (ofReal_dist_le_circleImageLength_of_mem_ball_inter_sphere hf hz hw)
 
 /-! ## Crosscuts with a short image -/
 
@@ -201,7 +211,7 @@ theorem exists_diam_image_ball_inter_sphere_le_of_lintegral_ne_top
   obtain ⟨ρ, hρmem, hlen⟩ :=
     exists_circleImageLength_lt_of_lintegral_ne_top (s := ball c r) f measurableSet_ball ζ hfin
       (ENNReal.ofReal_pos.mpr hε).ne' hR
-  exact ⟨ρ, hρmem, diam_image_ball_inter_sphere_le hρmem.1 hf hε.le hlen.le⟩
+  exact ⟨ρ, hρmem, diam_image_ball_inter_sphere_le hf hε.le hlen.le⟩
 
 /-- **A conformal map of a disc has arbitrarily small images of the circle intersections
 `ball c r ∩ sphere ζ ρ` at every centre `ζ`.** This is the case of
