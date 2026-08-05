@@ -46,9 +46,9 @@ bound applies.
 
 Nothing in that description relates `ζ` to the disc, so the estimates below are stated for an
 arbitrary centre `ζ` of the cutting circle. The Carathéodory correspondence spends them at a
-boundary point, `dist ζ c = r`, which is where `ball c r ∩ sphere ζ ρ` is a circular crosscut in
-the sense of `Conformal/Crosscut/Basic.lean`; that hypothesis is nowhere needed for the estimates
-themselves.
+boundary point, `dist ζ c = r`, which together with `ρ < 2 * r` is where `ball c r ∩ sphere ζ ρ`
+is a circular crosscut in the sense of `Conformal/Crosscut/Basic.lean`; neither hypothesis is
+needed for the estimates themselves, whose statements cover every centre and radius.
 
 ## Main results
 
@@ -101,10 +101,10 @@ open scoped ENNReal Real
 
 variable {f : ℂ → ℂ} {c ζ : ℂ} {r ρ : ℝ}
 
-/-! ## The chord bound on a circular crosscut -/
+/-! ## The chord bound on the intersection `ball c r ∩ sphere ζ ρ` -/
 
-/-- **The chord bound for a circular crosscut.** For `f` holomorphic on `ball c r` and an arbitrary
-centre `ζ`, any two points of `ball c r ∩ sphere ζ ρ` have images at distance at most
+/-- **The chord bound on `ball c r ∩ sphere ζ ρ`.** For `f` holomorphic on `ball c r` and an
+arbitrary centre `ζ`, any two points of `ball c r ∩ sphere ζ ρ` have images at distance at most
 `TauCeti.circleImageLength f (ball c r) ζ ρ`.
 
 The two points are `circleMap ζ ρ (α + t₁)` and `circleMap ζ ρ (α + t₂)` for angles
@@ -146,7 +146,7 @@ theorem ofReal_dist_le_circleImageLength_of_mem_ball_inter_sphere
   exact ofReal_dist_le_circleImageLength isOpen_ball hf ζ hρ (by linarith)
     (by linarith [ht₁.1, ht₂.2, Real.pi_pos]) harc harc
 
-/-- **The image of a circular crosscut is no wider than its length.** A bound `ε` on
+/-- **The image of `ball c r ∩ sphere ζ ρ` is no wider than its length.** A bound `ε` on
 `TauCeti.circleImageLength f (ball c r) ζ ρ` bounds the diameter of the image of
 `ball c r ∩ sphere ζ ρ`, by the chord bound
 `TauCeti.ofReal_dist_le_circleImageLength_of_mem_ball_inter_sphere`, from which it inherits its
@@ -160,15 +160,15 @@ theorem diam_image_ball_inter_sphere_le
   exact (ENNReal.ofReal_le_ofReal_iff hε).mp
     ((ofReal_dist_le_circleImageLength_of_mem_ball_inter_sphere hf hz hw).trans hlen)
 
-/-- **An image crosscut of finite length is bounded.** The chord bound
+/-- **An image of finite length is bounded.** The chord bound
 `TauCeti.ofReal_dist_le_circleImageLength_of_mem_ball_inter_sphere` keeps every pair of points of
 `f '' (ball c r ∩ sphere ζ ρ)` within the finite number
 `(TauCeti.circleImageLength f (ball c r) ζ ρ).toReal` of each other.
 
-This is what makes `Metric.diam (f '' (ball c r ∩ sphere ζ ρ))` a bound on the distances inside the
-image crosscut rather than the junk value `0` that an unbounded set carries; it is the disc
-counterpart of `TauCeti.isBounded_image_circleMap_image_Ioo_of_lintegral_ne_top`, stated against
-the crosscut rather than against an arc of angles. -/
+This is what makes `Metric.diam (f '' (ball c r ∩ sphere ζ ρ))` a bound on the distances inside
+that image rather than the junk value `0` that an unbounded set carries; it is the disc counterpart
+of `TauCeti.isBounded_image_circleMap_image_Ioo_of_lintegral_ne_top`, stated against the
+intersection rather than against an arc of angles. -/
 theorem isBounded_image_ball_inter_sphere_of_circleImageLength_ne_top
     (hf : DifferentiableOn ℂ f (ball c r))
     (hfin : circleImageLength f (ball c r) ζ ρ ≠ ⊤) :
@@ -179,13 +179,14 @@ theorem isBounded_image_ball_inter_sphere_of_circleImageLength_ne_top
   exact (ENNReal.ofReal_le_iff_le_toReal hfin).mp
     (ofReal_dist_le_circleImageLength_of_mem_ball_inter_sphere hf hz hw)
 
-/-! ## Crosscuts with a short image -/
+/-! ## Circle intersections with a short image -/
 
-/-- **A holomorphic map of finite Dirichlet integral has short image crosscuts.** For `f`
-holomorphic on `ball c r` with `∫⁻ z in ball c r, ‖deriv f z‖ₑ ^ 2 ≠ ⊤` and an arbitrary `ζ`, every
-tolerance `ε > 0` and every bound `R > 0` admit a radius `ρ < R` at which the image of
-`ball c r ∩ sphere ζ ρ` has diameter at most `ε`. The case the Carathéodory correspondence uses is
-`ζ` on the circle `sphere c r`, where the intersection is a crosscut.
+/-- **A holomorphic map of finite Dirichlet integral has short images of small circle
+intersections.** For `f` holomorphic on `ball c r` with `∫⁻ z in ball c r, ‖deriv f z‖ₑ ^ 2 ≠ ⊤`
+and an arbitrary `ζ`, every tolerance `ε > 0` and every bound `R > 0` admit a radius `ρ < R` at
+which the image of `ball c r ∩ sphere ζ ρ` has diameter at most `ε`. The case the Carathéodory
+correspondence uses is `ζ` on the circle `sphere c r` and `ρ < 2 * r`, where the intersection is a
+circular crosscut.
 
 This is the limiting form `TauCeti.exists_circleImageLength_lt_of_lintegral_ne_top` of Wolff's
 lemma fed to `TauCeti.diam_image_ball_inter_sphere_le`. The annulus in which the good `ρ` is sought
