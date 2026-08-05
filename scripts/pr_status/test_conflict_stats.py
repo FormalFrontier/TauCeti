@@ -42,21 +42,23 @@ class Replay(unittest.TestCase):
         return base
 
     def analyse(self, mirror, pr, now=9999, gap=7200, actors=None, window=0):
-        """Replay, then attribute. `actors` maps head sha -> github login; by
-        default every head is the PR's own author."""
-        rows, handling, epochs = conflict_stats.analyse_pr(
-            mirror, self.HISTORY, self.TIMES, pr, now, gap, push_window=window)
+        """Replay through the push ledger. `actors` maps head sha -> github login;
+        by default every head was pushed by the PR's own author."""
         author = (pr.get("author") or {}).get("login") or ""
+        heads = mirror.pr_heads(pr["number"])
         if actors is None:
-            actors = {sha: author for sha, _ in epochs}
-        conflict_stats.attribute(rows, epochs, actors, author, gap)
+            actors = {sha: author for sha, _ in heads}
+        ledger = {sha: (actors[sha], when) for sha, when in heads if sha in actors}
+        rows, handling, _, _ = conflict_stats.analyse_pr(
+            mirror, self.HISTORY, self.TIMES, pr, now, gap, push_window=window,
+            ledger=ledger)
         return rows, handling
 
     def test_a_never_conflicting_pr_yields_nothing(self):
         mirror = self.FakeMirror([("h1", 1000)], {})
         episodes, handling = self.analyse(mirror, self.pr())
         self.assertEqual(episodes, [])
-        self.assertEqual(handling, "")
+        self.assertEqual(handling, "pushed")
 
     def test_onset_is_the_first_main_commit_that_breaks_the_merge(self):
         # Head h1 is current from t=1000 until the push at t=1650; main commit 5
@@ -103,11 +105,18 @@ class Replay(unittest.TestCase):
         [episode] = [e for e in episodes if e["outcome"] == "push"]
         self.assertEqual(episode["session"], conflict_stats.RETURN)
 
-    def test_a_rebased_pr_is_flagged_as_unmeasurable(self):
-        # Every commit rewritten to one timestamp: the pre-rebase window is gone.
-        mirror = self.FakeMirror([("h1", 1500), ("h2", 1500)], {})
+    def test_ledger_coverage_is_reported_as_such(self):
+        mirror = self.FakeMirror([("h1", 1500), ("h2", 1600)], {})
         _, handling = self.analyse(mirror, self.pr())
-        self.assertEqual(handling, "rewritten")
+        self.assertEqual(handling, "pushed")
+
+    def test_only_ledger_commits_count_as_heads(self):
+        # A commit that never appears in the ledger was never a head, so an
+        # intermediate one that conflicts cannot invent an episode.
+        mirror = self.FakeMirror([("h1", 1000), ("h2", 1010)], {"h1": 0})
+        episodes, handling = self.analyse(mirror, self.pr(), actors={"h2": "alice"})
+        self.assertEqual(handling, "pushed")
+        self.assertEqual(episodes, [])
 
     def test_conflicts_before_the_pr_existed_are_not_counted(self):
         # A branch's commits routinely predate the PR proposing them; a PR cannot
@@ -171,7 +180,7 @@ class Replay(unittest.TestCase):
         history = self.HISTORY[:10] + [("10", 2000, "feat: do a thing (#1)")] + self.HISTORY[11:]
         times = [when for _, when, _ in history]
         mirror = self.FakeMirror([("h1", 1000)], {"h1": 10})
-        episodes, _, _ = conflict_stats.analyse_pr(
+        episodes, _, _, _ = conflict_stats.analyse_pr(
             mirror, history, times, self.pr(mergedAt="1970-01-01T00:33:20Z"), 9999, 7200,
             push_window=0)
         self.assertEqual(episodes, [])
@@ -187,7 +196,12 @@ class Replay(unittest.TestCase):
 
     def test_an_unnameable_actor_is_left_unattributed(self):
         mirror = self.FakeMirror([("h1", 1000), ("h2", 1650)], {"h1": 5})
-        episodes, _ = self.analyse(mirror, self.pr(), actors={})
+        # No ledger coverage at all: heads inferred from commits, actor unknown.
+        rows, handling, _, _ = conflict_stats.analyse_pr(
+            mirror, self.HISTORY, self.TIMES, self.pr(), 9999, 7200, push_window=0,
+            ledger={})
+        self.assertEqual(handling, "inferred")
+        episodes = rows
         self.assertEqual(episodes[0]["session"], conflict_stats.UNATTRIBUTED)
         self.assertIsNone(episodes[0]["resolver"])
 
@@ -203,16 +217,19 @@ class Replay(unittest.TestCase):
         [row] = [e for e in episodes if e["outcome"] == "push"]
         self.assertEqual(row["session"], conflict_stats.RETURN)
 
-    def test_commits_within_the_push_window_are_one_head(self):
-        # Only the last commit of a push was ever the branch head; an intermediate
-        # one that conflicts must not invent an episode.
-        mirror = self.FakeMirror([("h1", 1000), ("h2", 1010)], {"h1": 0})
-        episodes, _ = self.analyse(mirror, self.pr(), window=120)
-        self.assertEqual(episodes, [])
-        # With grouping off, the intermediate commit is treated as a real head.
-        mirror = self.FakeMirror([("h1", 1000), ("h2", 1010)], {"h1": 0})
-        episodes, _ = self.analyse(mirror, self.pr(), window=0)
-        self.assertEqual(len(episodes), 1)
+    def test_the_push_window_groups_commits_when_inferring(self):
+        # Without ledger coverage we fall back to commit dates. Commits written
+        # seconds apart travelled in one push, so an intermediate one that
+        # conflicts must not invent an episode.
+        def run(window):
+            mirror = self.FakeMirror([("h1", 1000), ("h2", 1010)], {"h1": 0})
+            rows, handling, _, _ = conflict_stats.analyse_pr(
+                mirror, self.HISTORY, self.TIMES, self.pr(), 9999, 7200,
+                push_window=window, ledger={})
+            self.assertEqual(handling, "inferred")
+            return rows
+        self.assertEqual(run(120), [])
+        self.assertEqual(len(run(0)), 1)
 
     def test_a_pr_with_no_fetchable_head_is_skipped_not_guessed(self):
         mirror = self.FakeMirror([], {})
@@ -234,9 +251,11 @@ class ReplaySummary(unittest.TestCase):
 
     def test_reports_the_over_24h_tail_and_the_session_split(self):
         lines = "\n".join(conflict_stats.summarise(
-            self.episodes(), unmeasured={"rewritten": 4, "skipped": 2}, total_prs=99))
+            self.episodes(), handled={"pushed": 40, "inferred": 4, "skipped": 2},
+            total_prs=99))
         self.assertIn("4 conflict episode(s) across 4 of 99 PR(s)", lines)
-        self.assertIn("4 PR(s) had their history rewritten", lines)
+        self.assertIn("push ledger for 40 PR(s)", lines)
+        self.assertIn("4 inferred from commit dates", lines)
         self.assertIn("2 had no replayable commits", lines)
         self.assertIn("1/3 took over 24h", lines)
         self.assertIn("1 by the PR's author, already pushing to it", lines)

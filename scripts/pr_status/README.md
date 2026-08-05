@@ -124,41 +124,46 @@ GitHub reports only the *current* value of a PR's `mergeable`, and its timeline
 records nothing when a PR starts conflicting. So "how long do conflicts last here"
 is not a question you can look up — there is no log to read.
 
-[`conflict_stats.py`](conflict_stats.py) reconstructs it from git instead. A PR
-conflicts because main moved and stops because the author pushed, and both are in
-the history: the PR's own commits give the sequence of heads it has had, and
-main's first-parent history gives every base each was measured against. For each
-head it binary-searches main's commits with `git merge-tree` — starting from the
-base already in effect, so a PR born conflicting is not missed — for the first one
-that cannot merge cleanly. An episode ends only when a head appears that is *clean*
-against the base current when it appeared, so successive conflicting heads stay one
-continuous conflict rather than a string of falsely-resolved short ones. A PR
-closed or merged while still conflicting is reported as censored, not as a fast
-resolution.
+[`conflict_stats.py`](conflict_stats.py) reconstructs it. A PR conflicts because
+main moved and stops because someone pushed, and answering "how long, and who
+fixed it" needs three things git cannot give you: which shas were ever the PR's
+head, when GitHub received them, and who pushed them. A commit is not a head
+(several travel in one push), its committer date is when it was *written*, and its
+committer field is free text rather than an account.
+
+All three come from the **push ledger**: `pr-build` runs on `pull_request_target`
+for every open, reopen, and synchronize, so one run exists per pushed head carrying
+the sha, the pushing account, and the time GitHub received it. `main`'s
+first-parent history supplies the bases, from git. For each head the tool
+binary-searches those bases with `git merge-tree` — starting from the base already
+in effect, so a PR born conflicting is not missed — for the first that will not
+merge cleanly. An episode ends only at a head that is *clean* when it appeared, so
+successive conflicting heads stay one conflict; a PR closed or merged while still
+conflicting is censored rather than counted as a fast resolution.
 
 ```bash
-python3 scripts/pr_status/conflict_stats.py --since 2026-06-01 --json episodes.json
+python3 scripts/pr_status/conflict_stats.py --ledger-cache /tmp/ledger.json --json episodes.json
 python3 scripts/pr_status/conflict_stats.py --exhaustive   # no monotonicity assumption
 ```
 
-It reports the resolution distribution, the over-24h tail, and — because "the
-author's session had ended" is a real competing explanation for a conflict nobody
-fixed — how many resolutions came from an author who was already pushing to that
-PR versus one who came back to it after a gap (`--session-gap`, default 2h).
+The ledger costs ~100 API reads (the runs listing caps at 1000 per query whatever
+`total_count` says, so it is fetched in date slices that halve on hitting the cap);
+`--ledger-cache` memoises it. Over this repository it covers 1944 of 1974 PRs. The
+remainder fall back to inferring heads from commit dates, are counted separately in
+every run, and have their resolutions attributed to nobody — on that path a commit
+that was never a head can invent an episode or split a real one.
 
-Read it as a **reconstruction, not a log**, and its module docstring is blunt about
-why. Commit time is not push time and a commit is not a head; force-pushed heads
-are gone from the server, and PRs whose history was rewritten are counted and
-excluded rather than guessed at; and the default binary search assumes a conflict
-persists as main accumulates commits, which `--exhaustive` drops (over this
-repository's whole history the two agree exactly, so the assumption is currently
-costing nothing — but it is an assumption, so re-check it rather than trust it).
+Resolutions are bucketed as the author continuing, the author returning,
+*someone else entirely*, or unattributed, and each episode records the measured
+gap, so checking that a conclusion is not an artefact of one `--session-gap` costs
+a re-read of the JSON rather than a re-run.
 
-What makes the output usable despite all that is that every one of those errors
-runs the *same* way: they lose episodes and shorten the ones they keep. The
-numbers are a lower bound. It cannot invent a conflict that did not happen, and
-for the session question the bias runs against the conclusion the data supports
-rather than for it.
+An earlier draft of this file claimed every error ran one way and the output was a
+lower bound. That was wrong and is worth stating so nobody revives it: on the
+inferred path an intermediate conflicting commit invents an episode, an error in
+the other direction. Quote the ledger-covered numbers, treat a run with a large
+inferred population as softer, and note that the unresolved tail needs no
+reconstruction at all — it matches GitHub's live `CONFLICTING` list.
 
 ## Stuck-automation alerts (Tau Ceti > "Stuck PRs")
 
