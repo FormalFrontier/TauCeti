@@ -118,6 +118,44 @@ Three event-driven workflows drive it:
   schedule (every 6h) that runs `check` to probe the credentials, so a broken
   key is caught even during quiet periods with no PR activity.
 
+## Measuring merge conflicts
+
+GitHub reports only the *current* value of a PR's `mergeable`, and its timeline
+records nothing when a PR starts conflicting. So "how long do conflicts last here"
+is not a question you can look up — there is no log to read.
+
+[`conflict_stats.py`](conflict_stats.py) reconstructs it from git instead. A PR
+conflicts because main moved and stops because the author pushed, and both are in
+the history: the PR's own commits give the sequence of heads it has had, and
+main's first-parent history gives every base each was measured against. For each
+head it binary-searches main's commits with `git merge-tree` for the first one
+that cannot merge cleanly — that commit's time is the conflict's onset — and the
+episode ends at the next push, or at the merge or close.
+
+```bash
+python3 scripts/pr_status/conflict_stats.py --since 2026-06-01 --json episodes.json
+python3 scripts/pr_status/conflict_stats.py --exhaustive   # no monotonicity assumption
+```
+
+It reports the resolution distribution, the over-24h tail, and — because "the
+author's session had ended" is a real competing explanation for a conflict nobody
+fixed — how many resolutions came from an author who was already pushing to that
+PR versus one who came back to it after a gap (`--session-gap`, default 2h).
+
+Read it as a **reconstruction, not a log**, and its module docstring is blunt about
+why. Commit time is not push time and a commit is not a head; force-pushed heads
+are gone from the server, and PRs whose history was rewritten are counted and
+excluded rather than guessed at; and the default binary search assumes a conflict
+persists as main accumulates commits, which `--exhaustive` drops (over this
+repository's whole history the two agree exactly, so the assumption is currently
+costing nothing — but it is an assumption, so re-check it rather than trust it).
+
+What makes the output usable despite all that is that every one of those errors
+runs the *same* way: they lose episodes and shorten the ones they keep. The
+numbers are a lower bound. It cannot invent a conflict that did not happen, and
+for the session question the bias runs against the conclusion the data supports
+rather than for it.
+
 ## Stuck-automation alerts (Tau Ceti > "Stuck PRs")
 
 [`stuck_alerts.py`](stuck_alerts.py), driven by
