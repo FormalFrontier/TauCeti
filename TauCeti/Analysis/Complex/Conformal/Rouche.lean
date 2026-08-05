@@ -67,9 +67,9 @@ countable-exception logarithmic-derivative FTC.
 That equality of logarithmic-derivative integrals also has a purely geometric reading, obtained by
 running it through `TauCeti.Analysis.Complex.Conformal.ArgumentPrinciple`: the two *image* curves
 `f ∘ γ` and `g ∘ γ` wind equally often about the origin. That is the classical "dog on a leash"
-form, and it is stronger than the counting statement, needing only the hypotheses along the curve —
-no ambient open set, no finite `S`, no null-homology — because the vanishing of the slit-plane
-integral already holds there.
+form, and it is stronger than the counting statement, needing only analyticity at each point of the
+curve — no single ambient open set, no finite `S`, no null-homology — because the vanishing of the
+slit-plane integral already holds there.
 
 That same observation is what makes the count *detect* zeros rather than merely count them:
 `TauCeti.finsum_analyticOrderNatAt_ball_eq_zero_iff`, from `TauCeti.Analysis.Complex.ZeroCount`,
@@ -570,10 +570,12 @@ point in opposite directions there, the image curves `f ∘ γ` and `g ∘ γ` w
 the origin.
 
 Read through `TauCeti.argumentPrinciple_windingNumber_of_analyticOnNhd`, this is the geometric face
-of `TauCeti.rouche_symm_nullHomologous_of_analyticOnNhd`; on its own it is *stronger*, since only
-the behaviour of the two functions **along the curve** enters. Nothing is assumed off the curve —
-no ambient open set, no confinement of the zeros to a finite set, and no null-homology — because
-the equality of the two logarithmic-derivative integrals is already forced by the hypothesis: it
+of `TauCeti.rouche_symm_nullHomologous_of_analyticOnNhd`; on its own it is *stronger*, since apart
+from analyticity at each point of the curve — `AnalyticAt`, hence on some neighbourhood of that
+point — only the behaviour of the two functions **along the curve** enters: no single ambient open
+set carrying both, no confinement of the zeros to a finite set, and no null-homology. That is
+because the equality of the two logarithmic-derivative integrals is already forced by the
+hypothesis: it
 puts `g / f` in `Complex.slitPlane`, where `Complex.log` is a single-valued primitive. It is only
 in *counting* the winding that those extra hypotheses are needed. -/
 theorem rouche_symm_windingNumber_comp (hγ : Contour.IsPiecewiseC1On γ a b) (hclosed : γ a = γ b)

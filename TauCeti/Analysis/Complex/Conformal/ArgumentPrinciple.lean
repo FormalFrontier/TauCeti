@@ -104,8 +104,11 @@ the chain rule. The chain rule is available only off the breakpoints of `γ`, a 
 two integrands agree merely almost everywhere — enough for both the integrals and the
 interval-integrability to transfer.
 
-Nothing is assumed about `f` off the curve, so the lemma applies verbatim to a function with zeros
-and poles inside the region the curve encloses; that is what the argument principle then counts. -/
+The analyticity hypothesis is local: `AnalyticAt ℂ f (γ t)` asks only for *some* neighbourhood of
+each point of the curve on which `f` is analytic, never for one ambient open set carrying the whole
+curve, and imposes no condition beyond those neighbourhoods. So the lemma applies verbatim to a
+function with zeros and poles inside the region the curve encloses; that is what the argument
+principle then counts. -/
 theorem windingNumber_comp_eq_integral_logDeriv (hγ : Contour.IsPiecewiseC1On γ a b)
     (hfa : ∀ t ∈ [[a, b]], AnalyticAt ℂ f (γ t)) (hfne : ∀ t ∈ [[a, b]], f (γ t) ≠ 0) :
     Contour.windingNumber (f ∘ γ) a b 0
