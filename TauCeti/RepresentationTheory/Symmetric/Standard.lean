@@ -137,9 +137,103 @@ theorem coe_standardRepresentation_apply (g : Equiv.Perm α)
 
 end Defn
 
+section WeakScalars
+
+variable {k : Type*} {α : Type*}
+
+section SemiringNoZeroDivisors
+
+variable [CommSemiring k] [NoZeroDivisors k] [Fintype α]
+
+/-- A nonzero vector in the kernel of `sumCoords` has two different coefficients, provided
+`(Fintype.card α : k) ≠ 0`.
+
+Nonemptiness of `α` is not assumed — it follows from `(Fintype.card α : k) ≠ 0`. -/
+private theorem exists_coeff_ne_of_ne_zero_of_sumCoords_eq_zero (hchar : (Fintype.card α : k) ≠ 0)
+    {v : MonoidAlgebra k α} (hv0 : v ≠ 0)
+    (hvker : (MonoidAlgebra.basis α k).sumCoords v = 0) :
+    ∃ x y : α, x ≠ y ∧ v.coeff x ≠ v.coeff y := by
+  classical
+  -- Otherwise all coefficients agree, and their common value is killed by `Fintype.card α`.
+  have hpos : 0 < Fintype.card α :=
+    Nat.pos_of_ne_zero fun h => hchar (by rw [h]; simp)
+  obtain ⟨x₀⟩ := Fintype.card_pos_iff.mp hpos
+  by_contra hcon
+  push Not at hcon
+  have hall : ∀ z : α, v.coeff z = v.coeff x₀ := fun z =>
+    (eq_or_ne z x₀).elim (fun h => by rw [h]) fun h => hcon z x₀ h
+  have hsum : (MonoidAlgebra.basis α k).sumCoords v = ∑ z : α, v.coeff z := by simp
+  have hmul : (Fintype.card α : k) * v.coeff x₀ = 0 := by
+    rw [← hvker, hsum, Finset.sum_congr rfl fun z _ => hall z]
+    simp
+  have hzero : v.coeff x₀ = 0 := (mul_eq_zero.mp hmul).resolve_left hchar
+  exact hv0 (MonoidAlgebra.coeff_eq_zero.mp (Finsupp.ext fun z => by simp [hall z, hzero]))
+
+end SemiringNoZeroDivisors
+
+section Ring
+
+variable [CommRing k]
+
+/-- A subrepresentation containing one difference of standard basis vectors contains every
+difference with the same base point `x`. -/
+private theorem single_sub_single_mem_of_ne_of_single_sub_single_mem
+    {τ : Subrepresentation (Representation.ofMulAction k (Equiv.Perm α) α)} {x y : α}
+    (hxy : x ≠ y) (hmem : (single x 1 - single y 1 : MonoidAlgebra k α) ∈ τ.toSubmodule) (z : α) :
+    (single z 1 - single x 1 : MonoidAlgebra k α) ∈ τ.toSubmodule := by
+  classical
+  -- Transpose `y` with `z`, which fixes `x`.
+  rcases eq_or_ne z x with rfl | hzx
+  · simp
+  · have hswapx : (Equiv.swap y z) • x = x := by
+      rw [Equiv.Perm.smul_def, Equiv.swap_apply_of_ne_of_ne hxy (Ne.symm hzx)]
+    have hswapy : (Equiv.swap y z) • y = z := by
+      rw [Equiv.Perm.smul_def, Equiv.swap_apply_left]
+    have hm := τ.apply_mem_toSubmodule (Equiv.swap y z) hmem
+    rw [map_sub, Representation.ofMulAction_single, Representation.ofMulAction_single,
+      hswapx, hswapy] at hm
+    simpa using τ.toSubmodule.neg_mem hm
+
+end Ring
+
+end WeakScalars
+
 section Standard
 
 variable {k : Type*} [Field k] {α : Type*} [Fintype α]
+
+/-- The standard subrepresentation is an atom when `Fintype.card α = 2`, with no hypothesis on the
+characteristic of `k`. -/
+private theorem isAtom_augmentationSubrepresentation_of_card_eq_two (hcard : Fintype.card α = 2) :
+    IsAtom (augmentationSubrepresentation k (Equiv.Perm α) α) := by
+  -- For two elements the subrepresentation is a line, and a line is an atom of the lattice of
+  -- subspaces; the lattice of subrepresentations embeds in it by `toSubmodule`.
+  have hatom : IsAtom (augmentationSubrepresentation k (Equiv.Perm α) α).toSubmodule :=
+    Submodule.isAtom_iff_finrank_eq_one.mpr
+      (by rw [finrank_augmentationSubrepresentation, hcard])
+  refine ⟨fun h => hatom.1 (by rw [h, Subrepresentation.toSubmodule_bot]), fun τ hτ =>
+    Subrepresentation.toSubmodule_injective
+      ((hatom.2 _ ?_).trans Subrepresentation.toSubmodule_bot.symm)⟩
+  exact lt_of_le_of_ne hτ.le fun hc => hτ.ne (Subrepresentation.toSubmodule_injective hc)
+
+omit [Fintype α] in
+/-- A subrepresentation containing a vector whose `x`- and `y`-coefficients differ contains the
+difference `single x 1 - single y 1`.
+
+The two indices need not be distinct as a hypothesis — differing coefficients already force it. -/
+private theorem single_sub_single_mem_of_mem_of_coeff_ne
+    {τ : Subrepresentation (Representation.ofMulAction k (Equiv.Perm α) α)}
+    {v : MonoidAlgebra k α} (hv : v ∈ τ.toSubmodule) {x y : α}
+    (hcoeff : v.coeff x ≠ v.coeff y) :
+    (single x 1 - single y 1 : MonoidAlgebra k α) ∈ τ.toSubmodule := by
+  classical
+  -- Subtract the transposition `swap x y` from `v`, then rescale.
+  have hsub : v - Representation.ofMulAction k (Equiv.Perm α) α (Equiv.swap x y) v ∈
+      τ.toSubmodule :=
+    Submodule.sub_mem _ hv (τ.apply_mem_toSubmodule _ hv)
+  rw [sub_ofMulAction_swap] at hsub
+  have hsmul := τ.toSubmodule.smul_mem (v.coeff x - v.coeff y)⁻¹ hsub
+  rwa [smul_smul, inv_mul_cancel₀ (sub_ne_zero.mpr hcoeff), one_smul] at hsmul
 
 /-- **The standard subrepresentation is minimal.**  A nonzero subrepresentation of the permutation
 representation contained in the standard one is the whole of it: from a nonzero vector with
@@ -151,22 +245,8 @@ theorem isAtom_augmentationSubrepresentation (h2 : 2 ≤ Fintype.card α)
     IsAtom (augmentationSubrepresentation k (Equiv.Perm α) α) := by
   classical
   rcases hchar with hcard | hchar
-  · -- a two-element `α` leaves a line, and a line is an atom of the lattice of subspaces; the
-    -- lattice of subrepresentations embeds in it, the bottom one carrying the zero subspace
-    have hbot :
-        (⊥ : Subrepresentation (Representation.ofMulAction k (Equiv.Perm α) α)).toSubmodule = ⊥ :=
-      rfl
-    have hatom : IsAtom (augmentationSubrepresentation k (Equiv.Perm α) α).toSubmodule :=
-      Submodule.isAtom_iff_finrank_eq_one.mpr
-        (by rw [finrank_augmentationSubrepresentation, hcard])
-    refine ⟨fun h => hatom.1 (by rw [h, hbot]), fun τ hτ =>
-      Subrepresentation.toSubmodule_injective ((hatom.2 _ ?_).trans hbot.symm)⟩
-    exact lt_of_le_of_ne hτ.le fun hc => hτ.ne (Subrepresentation.toSubmodule_injective hc)
+  · exact isAtom_augmentationSubrepresentation_of_card_eq_two hcard
   obtain ⟨x₀, y₀, hx₀y₀⟩ := Fintype.exists_pair_of_one_lt_card (α := α) (by omega)
-  have hne : ∀ x y : α, x ≠ y → (single x 1 - single y 1 : MonoidAlgebra k α) ≠ 0 := by
-    intro x y hxy hzero
-    have : (single x (1 : k) - single y 1).coeff x = 0 := by rw [hzero]; simp
-    simp [MonoidAlgebra.coeff_single, Ne.symm hxy] at this
   constructor
   · -- the standard subrepresentation is nonzero
     intro hbot
@@ -174,56 +254,28 @@ theorem isAtom_augmentationSubrepresentation (h2 : 2 ≤ Fintype.card α)
         augmentationSubrepresentation k (Equiv.Perm α) α :=
       single_sub_single_mem_augmentationSubrepresentation x₀ y₀
     rw [hbot] at hmem
-    exact hne x₀ y₀ hx₀y₀ (Submodule.mem_bot k |>.mp hmem)
+    have hne : (single x₀ 1 - single y₀ 1 : MonoidAlgebra k α) ≠ 0 :=
+      sub_ne_zero.mpr ((MonoidAlgebra.single_left_injective one_ne_zero).ne hx₀y₀)
+    exact hne (Submodule.mem_bot k |>.mp hmem)
   · -- every strictly smaller subrepresentation is zero
     intro τ hτ
     by_contra hτbot
-    -- a nonzero vector of `τ`
     have hτne : τ.toSubmodule ≠ ⊥ := fun hc =>
       hτbot (Subrepresentation.toSubmodule_injective hc)
     obtain ⟨v, hv, hv0⟩ := Submodule.exists_mem_ne_zero_of_ne_bot hτne
     have hvker : (MonoidAlgebra.basis α k).sumCoords v = 0 :=
       mem_augmentationSubrepresentation_iff.mp (hτ.le hv)
-    -- two of its coefficients differ
-    obtain ⟨x, y, hxy, hcoeff⟩ : ∃ x y : α, x ≠ y ∧ v.coeff x ≠ v.coeff y := by
-      by_contra hcon
-      push Not at hcon
-      have hall : ∀ z : α, v.coeff z = v.coeff x₀ := fun z =>
-        (eq_or_ne z x₀).elim (fun h => by rw [h]) fun h => hcon z x₀ h
-      have hsum : (MonoidAlgebra.basis α k).sumCoords v = ∑ z : α, v.coeff z := by simp
-      have hmul : (Fintype.card α : k) * v.coeff x₀ = 0 := by
-        rw [← hvker, hsum, Finset.sum_congr rfl fun z _ => hall z]
-        simp
-      have hzero : v.coeff x₀ = 0 := (mul_eq_zero.mp hmul).resolve_left hchar
-      exact hv0 (MonoidAlgebra.coeff_eq_zero.mp (Finsupp.ext fun z => by simp [hall z, hzero]))
-    -- hence `τ` contains one difference of standard basis vectors
-    have hdiff : (single x 1 - single y 1 : MonoidAlgebra k α) ∈ τ.toSubmodule := by
-      have hsub : v - Representation.ofMulAction k (Equiv.Perm α) α (Equiv.swap x y) v ∈
-          τ.toSubmodule :=
-        Submodule.sub_mem _ hv (τ.apply_mem_toSubmodule _ hv)
-      rw [sub_ofMulAction_swap] at hsub
-      have := τ.toSubmodule.smul_mem (v.coeff x - v.coeff y)⁻¹ hsub
-      rwa [smul_smul, inv_mul_cancel₀ (sub_ne_zero.mpr hcoeff), one_smul] at this
-    -- transposing `y` with an arbitrary `z` produces all the others
-    have hall : ∀ z : α, (single z 1 - single x 1 : MonoidAlgebra k α) ∈ τ.toSubmodule := by
-      intro z
-      rcases eq_or_ne z x with rfl | hzx
-      · simp
-      · have hswapx : (Equiv.swap y z) • x = x := by
-          rw [Equiv.Perm.smul_def, Equiv.swap_apply_of_ne_of_ne hxy (Ne.symm hzx)]
-        have hswapy : (Equiv.swap y z) • y = z := by
-          rw [Equiv.Perm.smul_def, Equiv.swap_apply_left]
-        have hmem := τ.apply_mem_toSubmodule (Equiv.swap y z) hdiff
-        rw [map_sub, Representation.ofMulAction_single, Representation.ofMulAction_single,
-          hswapx, hswapy] at hmem
-        simpa using τ.toSubmodule.neg_mem hmem
-    -- so `τ` contains the whole standard subrepresentation, contradicting strictness
+    obtain ⟨x, y, hxy, hcoeff⟩ := exists_coeff_ne_of_ne_zero_of_sumCoords_eq_zero hchar hv0 hvker
+    have hdiff := single_sub_single_mem_of_mem_of_coeff_ne hv hcoeff
+    -- `τ` then contains every difference of standard basis vectors, which span
     have hle : augmentationSubrepresentation k (Equiv.Perm α) α ≤ τ := by
       intro w hw
       have hw' : w ∈ LinearMap.ker (MonoidAlgebra.basis α k).sumCoords :=
         mem_augmentationSubrepresentation_iff.mp hw
       rw [ker_sumCoords_basis_eq_span k α x] at hw'
-      exact Submodule.span_le.mpr (by rintro _ ⟨z, rfl⟩; exact hall z) hw'
+      exact Submodule.span_le.mpr (by
+        rintro _ ⟨z, rfl⟩
+        exact single_sub_single_mem_of_ne_of_single_sub_single_mem hxy hdiff z) hw'
     exact absurd (le_antisymm hτ.le hle) hτ.ne
 
 /-- **The standard representation is irreducible.**  Given `2 ≤ |α|`, the hypothesis is sharp: for

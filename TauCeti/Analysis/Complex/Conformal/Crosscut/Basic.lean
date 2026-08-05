@@ -7,10 +7,8 @@ module
 
 public import Mathlib.Analysis.Complex.AbsMax
 public import Mathlib.Analysis.SpecialFunctions.Complex.CircleMap
+public import TauCeti.Analysis.Normed.Module.Ball.Cut
 public import TauCeti.Topology.ClusterSet
-public import TauCeti.Topology.MetricSpace.Cut
-import Mathlib.Analysis.Convex.PathConnected
-import Mathlib.Analysis.Normed.Module.RCLike.Real
 import TauCeti.Topology.Circle.Metric
 
 /-!
@@ -31,7 +29,10 @@ extension the L5 milestone asks for.
 ## The decomposition
 
 That `ball c r ∩ ball ζ ρ` is connected is immediate — it is an intersection of two balls, hence
-convex. The other piece is not convex, and the proof is the **Möbius reduction** the roadmap
+convex — and is proved in a seminormed real vector space, together with the rest of what the
+crosscut neighbourhood is, in `TauCeti/Analysis/Normed/Module/Ball/Cut.lean`. The other piece is
+not convex,
+and the proof is the **Möbius reduction** the roadmap
 prescribes for circles: the inversion `z ↦ (z - ζ)⁻¹` at the boundary point `ζ` carries the disc to
 a half-plane, because a circle through the centre of an inversion goes to a line. Concretely,
 writing `a = c - ζ`, a point `z ≠ ζ` lies in `ball c r` exactly when `1 < 2 * (a * (z - ζ)⁻¹).re`
@@ -43,9 +44,14 @@ carried onto an intersection of a half-plane with a ball — convex, and nonempt
 inverse inversion `w ↦ ζ + w⁻¹`.
 
 The two pieces are open, disjoint and cover `ball c r \ sphere ζ ρ`, so they *are* its connected
-components (`TauCeti.connectedComponentIn_ball_diff_sphere_eq_ball_inter_ball` and its companion):
-a circular crosscut separates the disc into exactly two parts, and a connected subset of the disc
-missing the crosscut lies entirely in one of them.
+components: a circular crosscut separates the disc into exactly two parts, and a connected subset
+of the disc missing the crosscut lies entirely in one of them. That the crosscut neighbourhood is
+one of the two components is
+`TauCeti.connectedComponentIn_ball_diff_sphere_eq_ball_inter_ball` of
+`TauCeti/Analysis/Normed/Module/Ball/Cut.lean`, which needs no complex structure; that the other
+piece is the other component is
+`TauCeti.connectedComponentIn_ball_diff_sphere_eq_ball_diff_closedBall` below, resting on the
+Möbius reduction.
 
 ## The angular description
 
@@ -69,7 +75,9 @@ left in its general form: the crosscut is an arc.
 ## The boundary criterion
 
 The frontier of the crosscut neighbourhood is contained in the union of two pieces of circle
-(`TauCeti.frontier_ball_inter_ball_subset`): the arc `closedBall c r ∩ sphere ζ ρ`, and the cap
+(`TauCeti.frontier_ball_inter_ball_subset` of `TauCeti/Analysis/Normed/Module/Ball/Cut.lean`, which
+asks nothing of the ambient space beyond a pseudo-metric): the arc `closedBall c r ∩ sphere ζ ρ`,
+and the cap
 `sphere c r ∩ closedBall ζ ρ` cut off on the boundary of the disc. Equality can fail — for
 `2 * r ≤ ρ` the crosscut neighbourhood is the whole disc, and its frontier misses the arc — but
 containment is all a frontier bound needs. Since the crosscut neighbourhood
@@ -112,10 +120,15 @@ In accordance with the generality bar of `ConformalMapping/README.md`, which fix
 every theorem added in layers L0–L6, everything below is stated for `ℂ`. The three set lemmas that
 split a set by a sphere use nothing but the containments between balls and spheres, so they live in
 `TauCeti/Topology/MetricSpace/Cut.lean`, stated for an arbitrary pseudo-metric space, and are used
-here at `ℂ`. For the rest the bar is not merely a convenience: the map that performs the
-decomposition is the complex inversion `z ↦ (z - ζ)⁻¹`, the Möbius map the roadmap names for
-reducing circles to lines, and the analytic half is the maximum modulus principle for holomorphic
-functions.
+here at `ℂ`. Likewise the whole of the *near* side — that the crosscut neighbourhood is nonempty,
+connected and a connected component of the cut disc, and the bound on its frontier — needs only
+convexity of a ball, or for the frontier bound not even that, so it lives in
+`TauCeti/Analysis/Normed/Module/Ball/Cut.lean` for a seminormed real vector space and a
+pseudo-metric space respectively, and is used here at `ℂ`. For the rest the bar is not merely a
+convenience: the decomposition of the *far* side is performed by the complex inversion
+`z ↦ (z - ζ)⁻¹`, the
+Möbius map the roadmap names for reducing circles to lines, and the analytic half is the maximum
+modulus principle for holomorphic functions.
 
 ## Main results
 
@@ -126,12 +139,13 @@ functions.
   `TauCeti/Topology/Circle/Metric.lean`, which also supplies the fact that the angles form an arc.
 * `TauCeti.isConnected_ball_diff_closedBall` — the part of a disc outside a circular crosscut is
   connected.
-* `TauCeti.connectedComponentIn_ball_diff_sphere_eq_ball_inter_ball` and its companion — a circular
-  crosscut separates the disc into exactly two connected components, the two sides being those cut
-  out by `TauCeti.sdiff_sphere_eq_inter_ball_union_sdiff_closedBall` and
+* `TauCeti.connectedComponentIn_ball_diff_sphere_eq_ball_diff_closedBall` — together with its
+  companion `TauCeti.connectedComponentIn_ball_diff_sphere_eq_ball_inter_ball` of
+  `TauCeti/Analysis/Normed/Module/Ball/Cut.lean`, a circular crosscut separates the disc into
+  exactly two connected components, the two sides being those cut out by
+  `TauCeti.sdiff_sphere_eq_inter_ball_union_sdiff_closedBall` and
   `TauCeti.subset_inter_ball_or_subset_sdiff_closedBall` of
-  `TauCeti/Topology/MetricSpace/Cut.lean`. The disc signatures those two replace are kept here as
-  deprecated compatibility wrappers.
+  `TauCeti/Topology/MetricSpace/Cut.lean`.
 * `TauCeti.norm_sub_le_of_mem_ball_inter_ball` and
   `TauCeti.norm_sub_le_of_mem_ball_inter_ball_of_differentiableOn` — the maximum modulus principle
   on a crosscut neighbourhood: a bound on the arc and on the cap is a bound inside, and its
@@ -250,34 +264,13 @@ theorem exists_mem_Icc_circleMap_eq (α : ℝ) {z : ℂ} (hz : z ∈ sphere ζ �
   · linarith [hθ.1]
   · linarith [hθ.2]
 
-/-! ## The two sides of a circular crosscut -/
+/-! ## The far side of a circular crosscut
 
-/-- **The crosscut neighbourhood is nonempty.** For `ζ` on the circle `sphere c r` and any positive
-`ρ`, the intersection `ball c r ∩ ball ζ ρ` contains points of the radius from `ζ` to `c` close
-enough to `ζ`. -/
-theorem nonempty_ball_inter_ball (hr : 0 < r) (hζ : dist ζ c = r) (hρ : 0 < ρ) :
-    (ball c r ∩ ball ζ ρ).Nonempty := by
-  have hnc : ‖ζ - c‖ = r := by rw [← dist_eq_norm, hζ]
-  set t : ℝ := min (1 / 2) (ρ / (2 * r))
-  have ht0 : 0 < t := lt_min (by norm_num) (by positivity)
-  have ht1 : t < 1 := lt_of_le_of_lt (min_le_left _ _) (by norm_num)
-  refine ⟨ζ + (t : ℂ) * (c - ζ), ?_, ?_⟩
-  · have : ζ + (t : ℂ) * (c - ζ) - c = ((1 : ℂ) - (t : ℂ)) * (ζ - c) := by ring
-    rw [mem_ball, dist_eq_norm, this, norm_mul, hnc, ← Complex.ofReal_one, ← Complex.ofReal_sub,
-      Complex.norm_real, Real.norm_eq_abs, abs_of_pos (by linarith)]
-    nlinarith
-  · have : ζ + (t : ℂ) * (c - ζ) - ζ = (t : ℂ) * (c - ζ) := by ring
-    rw [mem_ball, dist_eq_norm, this, norm_mul, Complex.norm_real, Real.norm_eq_abs,
-      abs_of_pos ht0, ← norm_neg, neg_sub, hnc]
-    calc t * r ≤ ρ / (2 * r) * r := by nlinarith [min_le_right (1 / 2 : ℝ) (ρ / (2 * r))]
-      _ = ρ / 2 := by field_simp
-      _ < ρ := by linarith
-
-/-- **The crosscut neighbourhood is connected**, being an intersection of two balls, hence convex.
-Its nonemptiness is `TauCeti.nonempty_ball_inter_ball`. -/
-theorem isConnected_ball_inter_ball (hr : 0 < r) (hζ : dist ζ c = r) (hρ : 0 < ρ) :
-    IsConnected (ball c r ∩ ball ζ ρ) :=
-  ((convex_ball c r).inter (convex_ball ζ ρ)).isConnected (nonempty_ball_inter_ball hr hζ hρ)
+The *near* side `ball c r ∩ ball ζ ρ` is convex, and everything about it — that it is nonempty,
+connected, and a connected component of the cut disc, and that its frontier lies on the two
+circles — is proved without any complex structure in
+`TauCeti/Analysis/Normed/Module/Ball/Cut.lean`. What follows is the far side, which is not convex
+and is where the Möbius reduction is needed. -/
 
 /-- The inversion model of a disc punctured by a crosscut: the intersection of the open half-plane
 `{w | 1 < 2 * (a * w).re}` with `ball 0 R`. It is convex for every `a` and every `R`, being an
@@ -375,54 +368,11 @@ theorem isConnected_ball_diff_closedBall (hζ : dist ζ c = r) (hρ : 0 < ρ)
   exact (continuousAt_const.add
     (continuousAt_inv₀ (ne_zero_of_one_lt_two_mul_re_mul hw.1))).continuousWithinAt
 
-/-! ### Deprecated disc-specific forms
-
-The three cut lemmas of `TauCeti/Topology/MetricSpace/Cut.lean` were stated here for
-`s = ball c r` in `ℂ`. Their old signatures are retained as deprecated compatibility wrappers,
-each naming its generalized replacement. -/
-
-/-- Deprecated compatibility wrapper for the disc case of
-`TauCeti.sdiff_sphere_eq_inter_ball_union_sdiff_closedBall`. -/
-@[deprecated sdiff_sphere_eq_inter_ball_union_sdiff_closedBall (since := "2026-08-04")]
-theorem ball_diff_sphere_eq_union :
-    ball c r \ sphere ζ ρ = ball c r ∩ ball ζ ρ ∪ ball c r \ closedBall ζ ρ :=
-  sdiff_sphere_eq_inter_ball_union_sdiff_closedBall
-
-/-- Deprecated compatibility wrapper for the disc case of
-`TauCeti.disjoint_inter_ball_sdiff_closedBall`. -/
-@[deprecated disjoint_inter_ball_sdiff_closedBall (since := "2026-08-04")]
-theorem disjoint_ball_inter_ball_ball_diff_closedBall :
-    Disjoint (ball c r ∩ ball ζ ρ) (ball c r \ closedBall ζ ρ) :=
-  disjoint_inter_ball_sdiff_closedBall
-
-/-- Deprecated compatibility wrapper for the disc case of
-`TauCeti.subset_inter_ball_or_subset_sdiff_closedBall`, whose openness hypothesis the disc
-discharges with `Metric.isOpen_ball`. -/
-@[deprecated subset_inter_ball_or_subset_sdiff_closedBall (since := "2026-08-04")]
-theorem subset_ball_inter_ball_or_subset_ball_diff_closedBall {S : Set ℂ} (hS : IsPreconnected S)
-    (hSsub : S ⊆ ball c r \ sphere ζ ρ) :
-    S ⊆ ball c r ∩ ball ζ ρ ∨ S ⊆ ball c r \ closedBall ζ ρ :=
-  subset_inter_ball_or_subset_sdiff_closedBall isOpen_ball hS hSsub
-
-/-- **The crosscut neighbourhood is a connected component of the cut disc.** Together with
-`TauCeti.connectedComponentIn_ball_diff_sphere_eq_ball_diff_closedBall` this says a circular
-crosscut cuts the disc into *exactly two* pieces. -/
-theorem connectedComponentIn_ball_diff_sphere_eq_ball_inter_ball
-    (hz : z ∈ ball c r ∩ ball ζ ρ) :
-    connectedComponentIn (ball c r \ sphere ζ ρ) z = ball c r ∩ ball ζ ρ := by
-  have hsub : ball c r ∩ ball ζ ρ ⊆ ball c r \ sphere ζ ρ :=
-    sdiff_sphere_eq_inter_ball_union_sdiff_closedBall (x := ζ) (s := ball c r) ▸ subset_union_left
-  refine Subset.antisymm ?_ (((convex_ball c r).inter (convex_ball ζ ρ)).isPreconnected
-    |>.subset_connectedComponentIn hz hsub)
-  rcases subset_inter_ball_or_subset_sdiff_closedBall (x := ζ) (s := ball c r) isOpen_ball
-    isPreconnected_connectedComponentIn (connectedComponentIn_subset _ _) with h | h
-  · exact h
-  · exact absurd (h (mem_connectedComponentIn (hsub hz)))
-      (Set.disjoint_left.mp disjoint_inter_ball_sdiff_closedBall hz)
-
 /-- **The far side of a circular crosscut is a connected component of the cut disc.** The companion
-of `TauCeti.connectedComponentIn_ball_diff_sphere_eq_ball_inter_ball`; here the connectedness of the
-piece is the substantial `TauCeti.isConnected_ball_diff_closedBall`. -/
+of `TauCeti.connectedComponentIn_ball_diff_sphere_eq_ball_inter_ball` of
+`TauCeti/Analysis/Normed/Module/Ball/Cut.lean`; here the connectedness of the piece is the
+substantial `TauCeti.isConnected_ball_diff_closedBall` rather than convexity, which is why this
+half stays in the plane. -/
 theorem connectedComponentIn_ball_diff_sphere_eq_ball_diff_closedBall
     (hζ : dist ζ c = r) (hρ : 0 < ρ) (hρ' : ρ < 2 * r) (hz : z ∈ ball c r \ closedBall ζ ρ) :
     connectedComponentIn (ball c r \ sphere ζ ρ) z = ball c r \ closedBall ζ ρ := by
@@ -437,23 +387,6 @@ theorem connectedComponentIn_ball_diff_sphere_eq_ball_diff_closedBall
   · exact h
 
 /-! ## The maximum modulus principle on a crosscut neighbourhood -/
-
-/-- **The frontier of a crosscut neighbourhood lies on the two circles.** It is covered by the
-*cap* `sphere c r ∩ closedBall ζ ρ` cut off on the boundary of the disc together with the closed
-*arc* `closedBall c r ∩ sphere ζ ρ` of the crosscut; these are the two pieces on which a function
-has to be controlled for the maximum principle to control it inside. Only the inclusion is claimed,
-which is all a frontier bound needs, and it is what holds without further hypotheses — for
-`2 * r ≤ ρ` the crosscut neighbourhood is the whole disc and its frontier misses the arc
-entirely.
-
-This is Mathlib's `frontier_inter_subset` for the two balls, whose two summands are pinned down by
-`frontier_ball_subset_sphere` and `closure_ball_subset_closedBall`. -/
-theorem frontier_ball_inter_ball_subset :
-    frontier (ball c r ∩ ball ζ ρ)
-      ⊆ sphere c r ∩ closedBall ζ ρ ∪ closedBall c r ∩ sphere ζ ρ :=
-  (frontier_inter_subset _ _).trans <| union_subset_union
-    (inter_subset_inter frontier_ball_subset_sphere closure_ball_subset_closedBall)
-    (inter_subset_inter closure_ball_subset_closedBall frontier_ball_subset_sphere)
 
 variable {f : ℂ → ℂ} {a : ℂ} {C r₀ : ℝ}
 

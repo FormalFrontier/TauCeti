@@ -33,6 +33,18 @@ each compact subset, gives locally uniform convergence of the original sequence.
 * `TauCeti.vitali_of_tendsto` — the same theorem with a prescribed pointwise limit on the
   convergence set.
 
+## The scalar target
+
+Unlike the estimates of `Conformal/NormalFamilies.lean` and the Montel results they feed, which
+are stated for a target complex normed space `E`, this file keeps the roadmap's scalar target
+`ℂ`. The reason is the proof: it runs `TauCeti.montel`, which is genuinely false for a target
+that is not proper, so an `E`-valued version of the argument below would prove only the
+finite-dimensional case. Vitali's theorem does hold for an arbitrary Banach target (Arendt and
+Nikolski, *Vector-valued holomorphic functions revisited*, Math. Z. **234** (2000), §2), but by a
+different argument — convergence of the Taylor coefficients at an accumulation point, and a
+clopen propagation — so that generality is a separate theorem rather than a weakening of this
+one.
+
 ## Coordination with upstream Mathlib
 
 Per the *Coordination with upstream Mathlib* section of `ConformalMapping/README.md`, L0–L3
@@ -94,13 +106,8 @@ theorem vitali (hΩ : IsOpen Ω) (hconn : IsPreconnected Ω)
         (𝓝 ⟨K.domRestrict g, (hg.continuousOn.mono hKΩ).domRestrict⟩) := by
     apply tendsto_of_subseq_tendsto
     intro ψ hψ
-    have hbψ : IsLocallyBoundedOn (fun n => F (ψ n)) Ω := by
-      rw [isLocallyBoundedOn_def]
-      intro L hLΩ hL
-      obtain ⟨C, hC⟩ := isLocallyBoundedOn_def.mp hb L hLΩ hL
-      exact ⟨C, fun n => hC (ψ n)⟩
     obtain ⟨θ, q, hθ, hq, hθconv⟩ :=
-      montel hΩ (fun n => hF (ψ n)) hbψ
+      montel hΩ (fun n => hF (ψ n)) (hb.comp ψ)
     have hqgA : A.EqOn q g := eqOn_of_subseq_limits hAΩ hpoint
       (hψ.comp hθ.tendsto_atTop) hφ.tendsto_atTop hθconv hφconv
     have hqg : Ω.EqOn q g :=
