@@ -48,17 +48,20 @@ missing the crosscut lies entirely in one of them.
 
 ## The angular description
 
-The same inversion, read in polar coordinates around `ζ`, says which *angles* the crosscut
-occupies. Writing `α = arg (c - ζ)` for the direction from `ζ` to the centre, the point of
-`sphere ζ ρ` at angle `θ` lies in the disc exactly when `ρ < 2 * r * cos (θ - α)`
-(`TauCeti.circleMap_mem_ball_iff`, with the `simp`-normal form
-`TauCeti.dist_circleMap_lt_iff` beside it): for `0 < ρ < 2 * r` the crosscut consists of the angles
-*strictly* within `arccos (ρ / (2 * r))` of `α`, while for `2 * r ≤ ρ` no angle satisfies the
-condition and `sphere ζ ρ` misses the disc altogether. Rather than name that half-width,
-the file records only
+Which *angles* the crosscut occupies is the law of cosines, `TauCeti.dist_circleMap_sq`: writing
+`α = arg (c - ζ)` for the direction from `ζ` to the centre and `d = dist ζ c`, the point of
+`sphere ζ ρ` at angle `θ` is at distance `ρ ^ 2 + d ^ 2 - 2 * ρ * d * cos (θ - α)`, squared, from
+`c`, so it lies in the disc exactly when `ρ ^ 2 + d ^ 2 - r ^ 2 < 2 * ρ * d * cos (θ - α)`
+(`TauCeti.circleMap_mem_ball_iff_sq`). Nothing there ties `ζ` to the disc; at a *boundary* point,
+`d = r`, the two squared radii cancel and the condition becomes `ρ < 2 * r * cos (θ - α)`
+(`TauCeti.circleMap_mem_ball_iff`, with the `simp`-normal form `TauCeti.dist_circleMap_lt_iff`
+beside it), so for `0 < ρ < 2 * r` the crosscut consists of the angles *strictly* within
+`arccos (ρ / (2 * r))` of `α`, while for `2 * r ≤ ρ` no angle satisfies the condition and
+`sphere ζ ρ` misses the disc altogether. Rather than name that half-width, the file records only
 that `cos` has no interior minimum on a period centred at `α`, so the condition holds throughout an
 interval of angles as soon as it holds at both ends
-(`TauCeti.circleMap_mem_ball_of_mem_Icc`): the crosscut is an arc.
+(`TauCeti.circleMap_mem_ball_of_mem_Icc`, for a cutting circle centred anywhere): the crosscut is
+an arc.
 
 ## The boundary criterion
 
@@ -115,8 +118,11 @@ functions.
 
 * `TauCeti.mem_ball_iff_one_lt_two_mul_re_mul_inv` — the inversion at a boundary point carries a
   disc to a half-plane.
+* `TauCeti.dist_circleMap_sq` — the law of cosines for a point of a circle, from which
+  `TauCeti.circleMap_mem_ball_iff_sq` reads off when that point lies in a disc.
 * `TauCeti.circleMap_mem_ball_iff` and `TauCeti.circleMap_mem_ball_of_mem_Icc` — the angular
-  description of a circular crosscut, and the fact that it is an arc of angles.
+  description of a circular crosscut, and the fact that it is an arc of angles; the latter holds
+  for a cutting circle centred anywhere, not only at a boundary point of the disc.
 * `TauCeti.isConnected_ball_diff_closedBall` — the part of a disc outside a circular crosscut is
   connected.
 * `TauCeti.connectedComponentIn_ball_diff_sphere_eq_ball_inter_ball` and its companion — a circular
@@ -200,14 +206,71 @@ theorem mem_ball_iff_one_lt_two_mul_re_mul_inv (hζ : dist ζ c = r) (hz : z ≠
 
 /-! ## The angular description of a circular crosscut -/
 
+/-- **The law of cosines for a point of a circle.** The point of `sphere ζ ρ` at angle `θ` is at
+distance `ρ ^ 2 + dist ζ c ^ 2 - 2 * ρ * dist ζ c * cos (θ - arg (c - ζ))`, squared, from an
+arbitrary point `c`: in the triangle with vertices `ζ`, `circleMap ζ ρ θ` and `c`, the angle at `ζ`
+between the two sides of lengths `ρ` and `dist ζ c` is `θ - arg (c - ζ)`.
+
+Nothing is assumed. For `ρ < 0` the point `circleMap ζ ρ θ` is the one at angle `θ + π` on the
+circle of radius `-ρ`, and the identity still holds because only `ρ ^ 2` and `ρ * cos` occur; for
+`c = ζ` both terms carrying `dist ζ c` vanish, so the junk value `arg 0 = 0` does no harm and the
+identity reads `dist (circleMap ζ ρ θ) ζ ^ 2 = ρ ^ 2`. -/
+theorem dist_circleMap_sq (ζ c : ℂ) (ρ θ : ℝ) :
+    dist (circleMap ζ ρ θ) c ^ 2
+      = ρ ^ 2 + dist ζ c ^ 2 - 2 * ρ * dist ζ c * Real.cos (θ - (c - ζ).arg) := by
+  have hdist : dist ζ c = ‖c - ζ‖ := by rw [dist_eq_norm, norm_sub_rev]
+  have hsub : circleMap ζ ρ θ - c = (ρ : ℂ) * exp ((θ : ℂ) * I) - (c - ζ) := by
+    simp only [circleMap]; ring
+  -- the conjugate of `c - ζ` in polar form, valid at `c = ζ` as well
+  have hconj : (starRingEnd ℂ) (c - ζ)
+      = ((‖c - ζ‖ : ℝ) : ℂ) * exp (((-(c - ζ).arg : ℝ) : ℂ) * I) := by
+    conv_lhs => rw [← Complex.norm_mul_exp_arg_mul_I (c - ζ)]
+    rw [map_mul, Complex.conj_ofReal, ← Complex.exp_conj]
+    congr 2
+    push_cast
+    rw [map_mul, Complex.conj_ofReal, Complex.conj_I]
+    ring
+  -- the cross term is the cosine of the angle at `ζ`
+  have hre : ((ρ : ℂ) * exp ((θ : ℂ) * I) * (starRingEnd ℂ) (c - ζ)).re
+      = ρ * ‖c - ζ‖ * Real.cos (θ - (c - ζ).arg) := by
+    have hmul : (ρ : ℂ) * exp ((θ : ℂ) * I) * (starRingEnd ℂ) (c - ζ)
+        = ((ρ * ‖c - ζ‖ : ℝ) : ℂ) * exp (((θ - (c - ζ).arg : ℝ) : ℂ) * I) := by
+      rw [hconj, mul_mul_mul_comm, ← Complex.exp_add]
+      push_cast
+      ring_nf
+    rw [hmul, Complex.re_ofReal_mul, Complex.exp_ofReal_mul_I_re]
+  have hunit : normSq ((ρ : ℂ) * exp ((θ : ℂ) * I)) = ρ ^ 2 := by
+    rw [Complex.normSq_mul, Complex.normSq_ofReal, Complex.normSq_eq_norm_sq,
+      Complex.norm_exp_ofReal_mul_I]
+    ring
+  rw [dist_eq_norm, Complex.sq_norm, hsub, Complex.normSq_sub, hunit, hre,
+    Complex.normSq_eq_norm_sq, hdist]
+  ring
+
+/-- **A circle meets a disc in an arc of angles around the direction of the centre.** For `r ≥ 0`
+and an arbitrary centre `ζ`, the point of `sphere ζ ρ` at angle `θ` lies in `ball c r` exactly when
+`ρ ^ 2 + dist ζ c ^ 2 - r ^ 2 < 2 * ρ * dist ζ c * cos (θ - arg (c - ζ))`.
+
+This is `TauCeti.dist_circleMap_sq` compared with `r ^ 2`, both sides of `dist … < r` being
+nonnegative. The right-hand side depends on `θ` only through `cos (θ - arg (c - ζ))`, which is what
+makes the intersection an arc (`TauCeti.circleMap_mem_ball_of_mem_Icc`); the boundary-point case
+`dist ζ c = r`, where the condition collapses to `ρ < 2 * r * cos (θ - arg (c - ζ))`, is
+`TauCeti.circleMap_mem_ball_iff`. -/
+theorem circleMap_mem_ball_iff_sq (hr : 0 ≤ r) (ρ θ : ℝ) :
+    circleMap ζ ρ θ ∈ ball c r ↔
+      ρ ^ 2 + dist ζ c ^ 2 - r ^ 2 < 2 * ρ * dist ζ c * Real.cos (θ - (c - ζ).arg) := by
+  rw [mem_ball, ← sq_lt_sq₀ dist_nonneg hr, dist_circleMap_sq]
+  constructor
+  · intro h; linarith
+  · intro h; linarith
+
 /-- **A circular crosscut is an arc of angles around the direction of the centre.** For `ζ` on the
 circle `sphere c r` and `ρ > 0`, the point of `sphere ζ ρ` at angle `θ` lies in `ball c r` exactly
 when `ρ < 2 * r * cos (θ - arg (c - ζ))`.
 
-This is the inversion identity `TauCeti.mem_ball_iff_one_lt_two_mul_re_mul_inv` written in polar
-form: with `c - ζ = r * exp (arg (c - ζ) * I)`, the inverted point
-`(c - ζ) * (circleMap ζ ρ θ - ζ)⁻¹` is `(r / ρ) * exp ((arg (c - ζ) - θ) * I)`, whose real part is
-`(r / ρ) * cos (θ - arg (c - ζ))`.
+This is the general criterion `TauCeti.circleMap_mem_ball_iff_sq` at `dist ζ c = r`, where the two
+squared radii cancel and the surviving condition `ρ ^ 2 < 2 * ρ * r * cos (θ - arg (c - ζ))` may be
+divided by `ρ > 0`.
 
 Nothing is assumed of `r` beyond what `dist ζ c = r` forces; for `r = 0` both sides are false.
 
@@ -217,35 +280,10 @@ linter rejects the attribute. The `simp`-normal companion is
 `TauCeti.dist_circleMap_lt_iff`. -/
 theorem circleMap_mem_ball_iff (hζ : dist ζ c = r) (hρ : 0 < ρ) (θ : ℝ) :
     circleMap ζ ρ θ ∈ ball c r ↔ ρ < 2 * r * Real.cos (θ - (c - ζ).arg) := by
-  have hnorm : ‖c - ζ‖ = r := by rw [← dist_eq_norm, dist_comm, hζ]
-  have hpolar : c - ζ = (r : ℂ) * exp (((c - ζ).arg : ℂ) * I) := by
-    conv_lhs => rw [← Complex.norm_mul_exp_arg_mul_I (c - ζ)]
-    rw [hnorm]
-  have hsphere : circleMap ζ ρ θ ∈ sphere ζ ρ := circleMap_mem_sphere ζ hρ.le θ
-  have hne : circleMap ζ ρ θ ≠ ζ := by
-    intro h
-    rw [mem_sphere, h, dist_self] at hsphere
-    exact hρ.ne hsphere
-  have hsub : circleMap ζ ρ θ - ζ = (ρ : ℂ) * exp ((θ : ℂ) * I) := by
-    rw [circleMap_sub_center, circleMap_zero]
-  have hexp : exp (((c - ζ).arg : ℂ) * I) * (exp ((θ : ℂ) * I))⁻¹
-      = exp ((((c - ζ).arg - θ : ℝ) : ℂ) * I) := by
-    rw [← Complex.exp_neg, ← Complex.exp_add]
-    push_cast
-    ring_nf
-  have hprod : (c - ζ) * (circleMap ζ ρ θ - ζ)⁻¹
-      = ((r * ρ⁻¹ : ℝ) : ℂ) * exp ((((c - ζ).arg - θ : ℝ) : ℂ) * I) := by
-    rw [hsub, mul_inv, ← hexp]
-    conv_lhs => rw [hpolar]
-    push_cast
-    ring
-  -- the half-plane condition, cleared of the inversion
-  have hre : 2 * ((c - ζ) * (circleMap ζ ρ θ - ζ)⁻¹).re
-      = 2 * r * Real.cos (θ - (c - ζ).arg) / ρ := by
-    rw [hprod, Complex.re_ofReal_mul, Complex.exp_ofReal_mul_I_re, ← Real.cos_neg, neg_sub,
-      eq_div_iff hρ.ne']
-    field_simp
-  rw [mem_ball_iff_one_lt_two_mul_re_mul_inv hζ hne, hre, lt_div_iff₀ hρ, one_mul]
+  rw [circleMap_mem_ball_iff_sq (hζ ▸ dist_nonneg) ρ θ, hζ]
+  constructor
+  · intro h; nlinarith
+  · intro h; nlinarith
 
 /-- **A circular crosscut is an arc of angles around the direction of the centre**, stated in
 `simp` normal form. This is `TauCeti.circleMap_mem_ball_iff` with the membership in `ball c r`
@@ -280,27 +318,36 @@ private theorem lt_cos_of_mem_Icc {k a b θ : ℝ} (ha : -π ≤ a) (hb : b ≤ 
     exact Real.cos_le_cos_of_nonneg_of_le_pi (by linarith) (by linarith) (by linarith [hθ.1])
   · exact hkb.trans_le (Real.cos_le_cos_of_nonneg_of_le_pi hθ0 hb hθ.2)
 
-/-- **A circular crosscut is connected as a set of angles.** If the angles `a` and `b` both lie
-within `π` of the direction `arg (c - ζ)` of the centre and both put the point of `sphere ζ ρ` they
-name inside `ball c r`, then so does every angle in `[a, b]`.
+/-- **A circle meets a disc in a connected set of angles.** If the angles `a` and `b` both lie
+within `π` of the direction `arg (c - ζ)` from the centre `ζ` of the circle to the centre `c` of
+the disc, and both put the point of `sphere ζ ρ` they name inside `ball c r`, then so does every
+angle in `[a, b]`.
 
-This is `TauCeti.circleMap_mem_ball_iff` read through the unimodality of `cos` on a period centred
-at `arg (c - ζ)`; positivity of `r` is not assumed, being forced by the hypotheses. -/
-theorem circleMap_mem_ball_of_mem_Icc (hζ : dist ζ c = r) (hρ : 0 < ρ) {a b θ : ℝ}
+This is `TauCeti.circleMap_mem_ball_iff_sq` read through the unimodality of `cos` on a period
+centred at `arg (c - ζ)`. Neither `0 < r` nor any relation between `ζ` and the disc is assumed: the
+first is forced by the hypotheses, and the second is not needed, so the conclusion covers a cutting
+circle centred anywhere and not only the circular crosscut at a boundary point `ζ` of the disc. A
+circle centred at `c` itself is the degenerate case, its points being all at the same distance from
+`c`; the criterion is then independent of the angle. -/
+theorem circleMap_mem_ball_of_mem_Icc (hρ : 0 < ρ) {a b θ : ℝ}
     (ha : -π ≤ a - (c - ζ).arg) (hb : b - (c - ζ).arg ≤ π) (hθ : θ ∈ Icc a b)
     (hain : circleMap ζ ρ a ∈ ball c r) (hbin : circleMap ζ ρ b ∈ ball c r) :
     circleMap ζ ρ θ ∈ ball c r := by
-  rw [circleMap_mem_ball_iff hζ hρ] at hain hbin ⊢
-  have hr : 0 < r := by
-    rcases (hζ ▸ dist_nonneg : (0 : ℝ) ≤ r).eq_or_lt with h | h
-    · rw [← h, mul_zero, zero_mul] at hain
-      linarith
-    · exact h
-  have hkey : ∀ x : ℝ, (ρ < 2 * r * Real.cos (x - (c - ζ).arg))
-      ↔ ρ / (2 * r) < Real.cos (x - (c - ζ).arg) := fun x => by
-    rw [div_lt_iff₀ (by linarith), mul_comm]
-  rw [hkey] at hain hbin ⊢
-  exact lt_cos_of_mem_Icc ha hb ⟨by linarith [hθ.1], by linarith [hθ.2]⟩ hain hbin
+  have hr : 0 < r := dist_nonneg.trans_lt (mem_ball.mp hain)
+  rw [circleMap_mem_ball_iff_sq hr.le] at hain hbin ⊢
+  rcases (dist_nonneg : (0 : ℝ) ≤ dist ζ c).eq_or_lt with hd | hd
+  · -- a circle centred at `c`: the criterion does not see the angle at all
+    rw [← hd] at hain ⊢
+    linarith
+  · -- otherwise divide by `2 * ρ * dist ζ c` and use that `cos` has no interior minimum
+    have hpos : 0 < 2 * ρ * dist ζ c := by positivity
+    have hkey : ∀ x : ℝ, (ρ ^ 2 + dist ζ c ^ 2 - r ^ 2
+          < 2 * ρ * dist ζ c * Real.cos (x - (c - ζ).arg))
+        ↔ (ρ ^ 2 + dist ζ c ^ 2 - r ^ 2) / (2 * ρ * dist ζ c)
+          < Real.cos (x - (c - ζ).arg) := fun x => by
+      rw [div_lt_iff₀ hpos, mul_comm]
+    rw [hkey] at hain hbin ⊢
+    exact lt_cos_of_mem_Icc ha hb ⟨by linarith [hθ.1], by linarith [hθ.2]⟩ hain hbin
 
 /-! ## The two sides of a circular crosscut -/
 

@@ -145,7 +145,7 @@ theorem exists_path_range_eq_closure_image_ball_inter_sphere (hζ : dist ζ c = 
       (hf.continuousOn _ (hmaps hθ)).comp
         (continuous_circleMap ζ ρ).continuousAt.continuousWithinAt hmaps
   have hgb : IsBounded (g '' Ioo a b) := by
-    have hb := isBounded_image_ball_inter_sphere_of_circleImageLength_ne_top hζ hρ hf hfin
+    have hb := isBounded_image_ball_inter_sphere_of_circleImageLength_ne_top hρ hf hfin
     rw [hcrosscut, image_image] at hb
     simpa only [g, Function.comp_def] using hb
   have hglim : ∀ θ ∈ frontier (Ioo a b), ∃ v,
