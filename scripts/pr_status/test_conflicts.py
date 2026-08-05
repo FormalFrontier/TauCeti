@@ -133,6 +133,20 @@ class ReconcilePR(unittest.TestCase):
         self.assertEqual(len(self.posted), 1)
         self.assertEqual(self.edited, [])
 
+    def test_a_flapping_conflict_does_not_re_comment_immediately(self):
+        # GitHub recomputing mergeability (or a push that did not take) must never
+        # turn into a stream of comments; the label and reaction still show it.
+        resolved = self.NOW - conflicts.RECURRENCE_COOLDOWN_SECONDS + 60
+        self.history(self.closed_episode(11, resolved - 3600, resolved))
+        self.assertEqual(conflicts.reconcile_pr("7", True, now=self.NOW), "cooldown")
+        self.assertEqual((self.posted, self.edited), ([], []))
+
+    def test_a_conflict_that_outlives_the_cooldown_is_announced(self):
+        resolved = self.NOW - conflicts.RECURRENCE_COOLDOWN_SECONDS - 60
+        self.history(self.closed_episode(11, resolved - 3600, resolved))
+        self.assertEqual(conflicts.reconcile_pr("7", True, now=self.NOW), "opened")
+        self.assertEqual(len(self.posted), 1)
+
     def test_a_parked_pr_gets_no_comment(self):
         self.history()
         self.assertEqual(conflicts.reconcile_pr("7", True, now=self.NOW, parked=True), "parked")
@@ -355,9 +369,9 @@ class Replay(unittest.TestCase):
 
     def test_a_never_conflicting_pr_yields_nothing(self):
         mirror = self.FakeMirror([("h1", 1000)], {})
-        episodes, rewritten = self.analyse(mirror, self.pr())
+        episodes, handling = self.analyse(mirror, self.pr())
         self.assertEqual(episodes, [])
-        self.assertFalse(rewritten)
+        self.assertEqual(handling, "")
 
     def test_onset_is_the_first_main_commit_that_breaks_the_merge(self):
         # Head h1 is current from t=1000 until the push at t=1650; main commit 5
@@ -407,12 +421,12 @@ class Replay(unittest.TestCase):
     def test_a_rebased_pr_is_flagged_as_unmeasurable(self):
         # Every commit rewritten to one timestamp: the pre-rebase window is gone.
         mirror = self.FakeMirror([("h1", 1500), ("h2", 1500)], {})
-        _, rewritten = self.analyse(mirror, self.pr())
-        self.assertTrue(rewritten)
+        _, handling = self.analyse(mirror, self.pr())
+        self.assertEqual(handling, "rewritten")
 
     def test_a_pr_with_no_fetchable_head_is_skipped_not_guessed(self):
         mirror = self.FakeMirror([], {})
-        self.assertEqual(self.analyse(mirror, self.pr()), ([], False))
+        self.assertEqual(self.analyse(mirror, self.pr()), ([], "skipped"))
 
 
 class ReplaySummary(unittest.TestCase):
@@ -427,9 +441,11 @@ class ReplaySummary(unittest.TestCase):
         ]
 
     def test_reports_the_over_24h_tail_and_the_session_split(self):
-        lines = "\n".join(conflict_stats.summarise(self.episodes(), rewritten=4, total_prs=99))
+        lines = "\n".join(conflict_stats.summarise(
+            self.episodes(), unmeasured={"rewritten": 4, "skipped": 2}, total_prs=99))
         self.assertIn("3 conflict episode(s) across 3 of 99 PR(s)", lines)
         self.assertIn("4 PR(s) had their history rewritten", lines)
+        self.assertIn("2 had no replayable commits", lines)
         self.assertIn("1/2 took over 24h", lines)
         self.assertIn("1 while the author was already working the PR, 1 on a later return", lines)
         self.assertIn("still conflicting", lines)

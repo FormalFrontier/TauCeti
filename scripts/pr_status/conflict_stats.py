@@ -224,11 +224,19 @@ def first_conflicting(mirror, history, lo, hi, head):
 
 
 def analyse_pr(mirror, history, history_times, pr, now, session_gap):
-    """Conflict episodes for one PR, plus whether its history was rewritten."""
+    """Conflict episodes for one PR, plus how it was handled.
+
+    The second element is "" for a fully measured PR, "rewritten" when every
+    surviving commit shares one timestamp (a force-push destroyed the earlier
+    heads), or "skipped" when the PR has no commits of its own to replay -- an
+    unfetchable head, or a merge strategy that put the branch commits verbatim on
+    main. Both are counted and reported rather than quietly folded into "no
+    conflict", which would flatter the result.
+    """
     number = pr["number"]
     heads = mirror.pr_heads(number)
     if not heads:
-        return [], False
+        return [], "skipped"
     # Collapse commits sharing a timestamp: the head during that instant is the
     # last of them. What survives is one entry per push (or per rebase).
     epochs = []
@@ -237,7 +245,7 @@ def analyse_pr(mirror, history, history_times, pr, now, session_gap):
             epochs[-1] = (sha, when)
         else:
             epochs.append((sha, when))
-    rewritten = len(epochs) == 1 and len(heads) > 1
+    handling = "rewritten" if len(epochs) == 1 and len(heads) > 1 else ""
 
     ended = parse_iso(pr["mergedAt"]) or parse_iso(pr["closedAt"]) or now
     out = []
@@ -272,7 +280,7 @@ def analyse_pr(mirror, history, history_times, pr, now, session_gap):
             "outcome": outcome,
             "continuation": continuation,
         })
-    return out, rewritten
+    return out, handling
 
 
 def replay(mirror, prs, jobs, session_gap, now):
@@ -285,24 +293,28 @@ def replay(mirror, prs, jobs, session_gap, now):
             return analyse_pr(mirror, history, history_times, pr, now, session_gap)
         except Exception as exc:
             log(f"PR #{pr['number']}: replay failed ({exc}); skipping")
-            return [], False
+            return [], "skipped"
 
     with ThreadPoolExecutor(max_workers=jobs) as pool:
         results = list(pool.map(one, prs))
     episodes = [episode for rows, _ in results for episode in rows]
-    rewritten = sum(1 for _, flag in results if flag)
-    return episodes, rewritten
+    unmeasured = {"rewritten": 0, "skipped": 0}
+    for _, handling in results:
+        if handling:
+            unmeasured[handling] += 1
+    return episodes, unmeasured
 
 
 # ----- report -----------------------------------------------------------------
 
-def summarise(episodes, rewritten, total_prs):
+def summarise(episodes, unmeasured, total_prs):
     lines = []
     conflicted_prs = {e["pr"] for e in episodes}
     lines.append(f"{len(episodes)} conflict episode(s) across {len(conflicted_prs)} "
                  f"of {total_prs} PR(s)")
-    lines.append(f"{rewritten} PR(s) had their history rewritten with no surviving "
-                 f"earlier head; their pre-rebase conflicts are not measurable")
+    lines.append(f"{unmeasured.get('rewritten', 0)} PR(s) had their history rewritten with "
+                 f"no surviving earlier head, and {unmeasured.get('skipped', 0)} had no "
+                 f"replayable commits; neither group's conflicts are measurable")
 
     closed = [e for e in episodes if e["outcome"] != "still-open"]
     if closed:
@@ -373,14 +385,14 @@ def main(argv=None):
         mirror.fetch()
         prs = fetch_prs(args.since)
         now = int(datetime.datetime.now(datetime.timezone.utc).timestamp())
-        episodes, rewritten = replay(
+        episodes, unmeasured = replay(
             mirror, prs, args.jobs, int(args.session_gap * 3600), now)
 
     if args.json_out:
         with open(args.json_out, "w") as handle:
             json.dump(episodes, handle, indent=2)
         log(f"wrote {len(episodes)} episode(s) to {args.json_out}")
-    for line in summarise(episodes, rewritten, len(prs)):
+    for line in summarise(episodes, unmeasured, len(prs)):
         print(line)
     return 0
 

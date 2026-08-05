@@ -158,7 +158,9 @@ reaches an author whose session has ended. There is exactly one per conflict
 - when the PR merges cleanly again the comment is **edited** to a ✅ form
   recording `resolved`;
 - a *second* conflict posts a **new** comment, since editing the buried ✅ one
-  would notify nobody.
+  would notify nobody — unless it reappears within half an hour of clearing, which
+  is flapping rather than news, and comment spam is the worst way for an
+  autonomous notifier to fail. The label and the reaction show it either way.
 
 A PR carrying a hold label (`keep`/`hold`/`wip`/`human`/`do-not-close`/`blocked`)
 still gets the label and the reaction — the queue view should be honest — but no

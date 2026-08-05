@@ -21,7 +21,9 @@ three places an author already looks.
      has moved on. One comment per conflict *episode*, carrying a hidden
      `<!--tauceti-conflict:v1 {...}-->` marker; edited (never re-posted) to a ✅
      form when the PR merges cleanly again, and re-posted fresh if the PR
-     conflicts a second time, so a recurrence is genuinely seen.
+     conflicts a second time, so a recurrence is genuinely seen -- but not within
+     `RECURRENCE_COOLDOWN_SECONDS` of the last one, so a flapping mergeability
+     computation cannot turn into a stream of comments.
   2. **The `merge-conflict` label**, via `labels.py` -- which stays the sole
      writer of the status labels, so the "exactly one" invariant is unaffected.
   3. **The ⚠️ Zulip reaction**, via `zulip.py`, on the PR's existing post.
@@ -34,8 +36,13 @@ that number was to replay every PR head against every `main` commit with
 baseline). The target that motivated this, a median under 24h, is not something
 you can chase without being able to re-measure it cheaply.
 
-Mergeability is read for EVERY open PR in one GraphQL query, so a sweep costs one
-request plus a handful for the PRs that actually changed state.
+Mergeability is read for EVERY open PR in one GraphQL query. The per-PR cost after
+that is one paginated comment read each, deliberately: the marker comments ARE the
+state, and short-circuiting on the `merge-conflict` label instead would mean a lost
+label silently swallows the next conflict notice -- the one failure this module must
+not have. At this repository's rate (a couple of sweeps an hour over ~50 open PRs)
+that is ~100 requests an hour against a 5000/hour budget. Only the PRs that actually
+changed state cost anything more.
 
 GitHub computes `mergeable` lazily: the first read after the base moves schedules
 a background merge and answers UNKNOWN. The sweep re-reads the unknowns a few
@@ -101,6 +108,14 @@ UNKNOWN_WAIT_SECONDS = 10.0
 # the comment is a call to action, and nobody asked for action on a parked PR.
 # Mirrors stuck_alerts.HOLD_LABELS.
 HOLD_LABELS = {"keep", "hold", "wip", "human", "do-not-close", "blocked"}
+
+# How soon after clearing a conflict a PR may open a NEW episode. A conflict that
+# reappears within half an hour is either GitHub flapping its own computation or a
+# push that did not take, and in both cases the author was told about it minutes
+# ago -- a second comment would be noise, and comment spam is the worst way for an
+# autonomous notifier to fail. A genuine recurrence just waits for the next sweep:
+# the label and the reaction show it immediately either way.
+RECURRENCE_COOLDOWN_SECONDS = 1800
 
 CONFLICT_BODY = """\
 ⚠️ **This PR no longer merges into `main`.**
@@ -312,8 +327,8 @@ def resolved_body(onset, resolved):
 def reconcile_pr(pr, is_conflicting, now=None, dry_run=False, parked=False):
     """Bring one PR's conflict comment in line with its live mergeability.
 
-    Returns the action taken: "opened", "resolved", "ongoing", "clear", or
-    "parked".
+    Returns the action taken: "opened", "resolved", "ongoing", "clear", "parked",
+    or "cooldown".
 
     Draft PRs are reconciled like any other: a draft that conflicts is still a
     conflict its author has to fix, and the label/Zulip sinks already show draft
@@ -332,6 +347,9 @@ def reconcile_pr(pr, is_conflicting, now=None, dry_run=False, parked=False):
             return "ongoing"
         if parked:
             return "parked"
+        if history and now - history[-1]["marker"]["resolved"] < RECURRENCE_COOLDOWN_SECONDS:
+            log(f"PR #{pr}: conflicting again within the cooldown; not re-commenting yet")
+            return "cooldown"
         log(f"PR #{pr}: NEW conflict")
         if not dry_run:
             post_comment(pr, conflict_body(now))
@@ -377,16 +395,18 @@ def sweep(dry_run=False, use_zulip=True, sleep=time.sleep):
 
 
 def _render(pr, is_conflicting, zulip_sink, dry_run):
-    """Refresh the label and Zulip reaction for one PR. Returns failures (0/1/2).
+    """Refresh the label and Zulip reaction for one PR. Returns failures (0 or 1).
 
     Both sinks are convergent, so a failure here self-heals on the next sweep and
-    is counted but never aborts the run: the comment, which is the notification
-    that matters, has already been posted.
+    never aborts the run. A failed LABEL write still counts, because the label is
+    how the queue view and every `gh pr list` see the conflict. A failed Zulip
+    reaction does NOT: that is cosmetic, exactly as zulip.py itself treats it, and
+    a persistently broken bot is caught loudly by zulip-healthcheck.yml.
     """
-    failures = 0
     if dry_run:
         log(f"PR #{pr}: would refresh label/reaction (conflicting={is_conflicting})")
         return 0
+    failures = 0
     try:
         labels.reconcile(pr, conflict_override=is_conflicting)
     except Exception as exc:
@@ -397,8 +417,7 @@ def _render(pr, is_conflicting, zulip_sink, dry_run):
             zulip.reconcile(zulip_sink, str(pr), create=False, ci_override=None,
                             conflict_override=is_conflicting)
         except Exception as exc:
-            log(f"PR #{pr}: Zulip refresh failed: {exc}")
-            failures += 1
+            log(f"PR #{pr}: Zulip refresh failed (cosmetic): {exc}")
     return failures
 
 
