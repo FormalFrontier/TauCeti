@@ -107,6 +107,10 @@ def irreducibleCharacters : Set (G → k) :=
 
 variable {k G}
 
+/-- Membership in `TauCeti.irreducibleCharacters` unfolded. This is deliberately not `@[simp]`:
+unfolding membership to the existential would put the left-hand side of the `@[simp]` lemma
+`TauCeti.irreducibleCharacter_mem` out of simp normal form, and simp cannot discharge the
+existential it produces. -/
 theorem mem_irreducibleCharacters_iff {f : G → k} :
     f ∈ irreducibleCharacters k G ↔
       ∃ (n : ℕ) (ρ : Representation k G (Fin n → k)), ρ.IsIrreducible ∧ ρ.character = f :=
@@ -173,6 +177,8 @@ variable {G}
 noncomputable def irreducibleCharacter (i : Fin (Nat.card (ConjClasses G))) : G → k :=
   finEquivIrreducibleCharacters k G i
 
+/-- Every enumerated character is an irreducible character. -/
+@[simp]
 theorem irreducibleCharacter_mem (i : Fin (Nat.card (ConjClasses G))) :
     irreducibleCharacter k i ∈ irreducibleCharacters k G :=
   (finEquivIrreducibleCharacters k G i).2
