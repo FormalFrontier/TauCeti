@@ -126,8 +126,7 @@ private theorem exists_wordProd_eq_of_ncard_inversions_eq :
     have hdrop := ncard_inversions_mul_ofIdx_of_mem P w b hi hmem
     obtain ⟨l, hl, hlen⟩ := ih (w * RootPairing.weylGroup.ofIdx P i) (by omega)
     refine ⟨l ++ [⟨i, hi⟩], ?_, by simp [hlen]⟩
-    rw [wordProd_append, wordProd_cons, wordProd_nil, mul_one, hl, mul_assoc,
-      RootPairing.weylGroup.ofIdx_mul_self, mul_one]
+    simp [hl, mul_assoc]
 
 /-- **Some word spells a Weyl-group element with exactly as many letters as it has inversions.** -/
 theorem exists_wordProd_eq_and_length_eq_ncard_inversions (w : P.weylGroup) :
@@ -171,15 +170,9 @@ theorem ncard_inversions_mul_le (v w : P.weylGroup) :
     _ = (inversions P b v).ncard + (inversions P b w).ncard := by
       rw [List.length_append, hlen, hlen']
 
-variable {P b} in
-/-- A Weyl-group element has no inversions exactly when it is the identity. -/
-@[simp]
-theorem ncard_inversions_eq_zero_iff {w : P.weylGroup} :
-    (inversions P b w).ncard = 0 ↔ w = 1 := by
-  rw [Set.ncard_eq_zero (Set.toFinite _), inversions_eq_empty_iff_eq_one]
-
 /-- **Descent criterion.** Right multiplication by a simple reflection shortens an element exactly
 when its simple root is already an inversion. -/
+@[simp]
 theorem ncard_inversions_mul_ofIdx_lt_iff (w : P.weylGroup) {i : ι} (hi : i ∈ b.support) :
     (inversions P b (w * RootPairing.weylGroup.ofIdx P i)).ncard < (inversions P b w).ncard ↔
       i ∈ inversions P b w := by
@@ -191,6 +184,7 @@ theorem ncard_inversions_mul_ofIdx_lt_iff (w : P.weylGroup) {i : ι} (hi : i ∈
 
 /-- **Ascent criterion.** Right multiplication by a simple reflection lengthens an element exactly
 when its simple root is not yet an inversion. -/
+@[simp]
 theorem lt_ncard_inversions_mul_ofIdx_iff (w : P.weylGroup) {i : ι} (hi : i ∈ b.support) :
     (inversions P b w).ncard < (inversions P b (w * RootPairing.weylGroup.ofIdx P i)).ncard ↔
       i ∉ inversions P b w := by
