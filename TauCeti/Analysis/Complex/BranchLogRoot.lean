@@ -62,17 +62,18 @@ refactored onto them.
 
 The root branch needs `g` to be zero-free, so on its own it says nothing about a germ that
 vanishes. Locally that gap closes by factoring the zero out: `A z = (z - z₀) ^ m • g z` with
-`g z₀ ≠ 0`, so an `n`-th root of the germ exists exactly when `n ∣ m`
-(`TauCeti.exists_eventually_pow_eq_iff_dvd`), namely `(z - z₀) ^ (m / n)` times the branch above
-applied to `g`. This weakens the zero-free hypothesis — the case `m = 0` — to the divisibility
-condition, and the converse direction shows the condition is sharp.
+`g z₀ ≠ 0`, so an `n`-th root of the germ exists exactly when `n` divides its order of vanishing
+(`TauCeti.exists_eventuallyEq_pow_iff_dvd`), namely `(z - z₀) ^ (m / n)` times the branch above
+applied to `g`. This weakens the zero-free hypothesis — the case of order `0` — to the
+divisibility condition, and the converse direction shows the condition is sharp. The germ that
+vanishes identically near `z₀`, of order `⊤`, is its own `n`-th root.
 
 ## Main statements
 
 * `TauCeti.exists_differentiableOn_eqOn_exp_comp` — a holomorphic branch of `log ∘ g`.
 * `TauCeti.exists_differentiableOn_pow_eq` — a holomorphic branch of `ⁿ√g`.
-* `TauCeti.exists_eventually_pow_eq_iff_dvd` — a holomorphic germ of finite order `m` has a
-  holomorphic `n`-th root iff `n ∣ m`.
+* `TauCeti.exists_eventuallyEq_pow_iff_dvd` — a holomorphic germ has a holomorphic `n`-th root iff
+  `n` divides its order of vanishing.
 -/
 
 public section
@@ -159,12 +160,12 @@ theorem exists_differentiableOn_pow_eq {U : Set ℂ} (hUc : IsSimplyConnected U)
   simpa only [hpow, Function.comp_apply] using hLeq hz
 
 /-- The germ form of `TauCeti.exists_differentiableOn_pow_eq`: a holomorphic germ that does not
-vanish at `z₀` has a holomorphic `n`-th root near `z₀`. A small enough disc about `z₀` is one on
-which the germ is holomorphic and zero-free, and it is simply connected because it is
-contractible. -/
-private lemma exists_eventually_pow_eq_of_ne_zero {A : ℂ → ℂ} {z₀ : ℂ} {n : ℕ}
+vanish at `z₀` has a holomorphic `n`-th root near `z₀`. -/
+private lemma exists_eventuallyEq_pow_of_ne_zero {A : ℂ → ℂ} {z₀ : ℂ} {n : ℕ}
     (hA : AnalyticAt ℂ A z₀) (h0 : A z₀ ≠ 0) (hn : n ≠ 0) :
     ∃ h : ℂ → ℂ, AnalyticAt ℂ h z₀ ∧ ∀ᶠ z in nhds z₀, h z ^ n = A z := by
+  -- A small enough disc about `z₀` is holomorphic and zero-free, and simply connected because
+  -- it is contractible, so the branch above applies on it.
   have hloc : ∀ᶠ z in nhds z₀, AnalyticAt ℂ A z ∧ A z ≠ 0 :=
     hA.eventually_analyticAt.and (hA.continuousAt.eventually_ne h0)
   obtain ⟨r, hr, hball⟩ := Metric.eventually_nhds_iff.mp hloc
@@ -184,31 +185,39 @@ private lemma exists_eventually_pow_eq_of_ne_zero {A : ℂ → ℂ} {z₀ : ℂ}
 /-- **When a holomorphic germ has a holomorphic `n`-th root**: exactly when `n` divides its order
 of vanishing. This weakens the zero-free hypothesis of `TauCeti.exists_differentiableOn_pow_eq`,
 which is the case of order `0`, to the divisibility condition, and records that the condition is
-sharp: the order of `ψ ^ n` is `n` times the order of `ψ`.
-
-The root of an order-`n * k` germ is `(z - z₀) ^ k` times a root of the nonvanishing factor `g` of
-the factorisation `A z = (z - z₀) ^ (n * k) • g z`, and that root of `g` is the zero-free branch
-above. -/
-theorem exists_eventually_pow_eq_iff_dvd {A : ℂ → ℂ} {z₀ : ℂ} {m n : ℕ} (hA : AnalyticAt ℂ A z₀)
-    (hord : analyticOrderAt A z₀ = m) (hn : n ≠ 0) :
-    (∃ ψ : ℂ → ℂ, AnalyticAt ℂ ψ z₀ ∧ ∀ᶠ z in nhds z₀, A z = ψ z ^ n) ↔ n ∣ m := by
+sharp. A germ of order `⊤`, one vanishing identically near `z₀`, is included: `n ≠ 0` divides
+`⊤`. -/
+theorem exists_eventuallyEq_pow_iff_dvd {A : ℂ → ℂ} {z₀ : ℂ} {n : ℕ} (hA : AnalyticAt ℂ A z₀)
+    (hn : n ≠ 0) :
+    (∃ ψ : ℂ → ℂ, AnalyticAt ℂ ψ z₀ ∧ ∀ᶠ z in nhds z₀, A z = ψ z ^ n) ↔
+      (n : ℕ∞) ∣ analyticOrderAt A z₀ := by
   constructor
   · rintro ⟨ψ, hψ, hψeq⟩
     have hpi : A =ᶠ[nhds z₀] ψ ^ n := by
       filter_upwards [hψeq] with z hz
       simpa using hz
-    have hm : analyticOrderNatAt A z₀ = m := by simp [analyticOrderNatAt, hord]
-    have hcongr : analyticOrderNatAt A z₀ = analyticOrderNatAt (ψ ^ n) z₀ := by
-      simp only [analyticOrderNatAt, analyticOrderAt_congr hpi]
-    have hmul : analyticOrderNatAt A z₀ = n * analyticOrderNatAt ψ z₀ := by
-      rw [hcongr, analyticOrderNatAt_pow hψ n, smul_eq_mul]
-    exact ⟨analyticOrderNatAt ψ z₀, by rw [← hm, hmul]⟩
-  · rintro ⟨k, rfl⟩
-    -- Factor out the zero: `A z = (z - z₀) ^ (n * k) • g z` near `z₀`, with `g z₀ ≠ 0`.
-    obtain ⟨g, hg, hg0, hgeq⟩ := hA.analyticOrderAt_eq_natCast.mp hord
-    obtain ⟨h, hh, hheq⟩ := exists_eventually_pow_eq_of_ne_zero hg hg0 hn
-    refine ⟨fun z => (z - z₀) ^ k * h z, ((analyticAt_id.sub analyticAt_const).pow k).mul hh, ?_⟩
-    filter_upwards [hgeq, hheq] with z hz hz'
-    rw [hz, smul_eq_mul, ← hz', mul_pow, ← pow_mul, mul_comm k n]
+    exact ⟨analyticOrderAt ψ z₀, by
+      rw [analyticOrderAt_congr hpi, analyticOrderAt_pow hψ, nsmul_eq_mul]⟩
+  · intro hdvd
+    rcases eq_or_ne (analyticOrderAt A z₀) ⊤ with htop | htop
+    · -- Order `⊤`: the germ vanishes near `z₀`, and the zero germ is its own `n`-th root.
+      refine ⟨0, analyticAt_const, ?_⟩
+      filter_upwards [analyticOrderAt_eq_top.mp htop] with z hz
+      simp [hz, zero_pow hn]
+    · obtain ⟨m, hm⟩ := ENat.ne_top_iff_exists.mp htop
+      obtain ⟨k, hk⟩ : n ∣ m := by
+        obtain ⟨c, hc⟩ := hdvd
+        rcases eq_or_ne c ⊤ with rfl | hc'
+        · rw [← hm, ENat.mul_top (by exact_mod_cast hn)] at hc
+          exact absurd hc.symm (by simp)
+        · obtain ⟨j, rfl⟩ := ENat.ne_top_iff_exists.mp hc'
+          exact ⟨j, by exact_mod_cast hm.trans hc⟩
+      -- Factor out the zero: `A z = (z - z₀) ^ (n * k) • g z` near `z₀`, with `g z₀ ≠ 0`.
+      obtain ⟨g, hg, hg0, hgeq⟩ :=
+        hA.analyticOrderAt_eq_natCast.mp (by rw [← hm, hk])
+      obtain ⟨h, hh, hheq⟩ := exists_eventuallyEq_pow_of_ne_zero hg hg0 hn
+      refine ⟨fun z => (z - z₀) ^ k * h z, ((analyticAt_id.sub analyticAt_const).pow k).mul hh, ?_⟩
+      filter_upwards [hgeq, hheq] with z hz hz'
+      rw [hz, smul_eq_mul, ← hz', mul_pow, ← pow_mul, mul_comm k n]
 
 end TauCeti
