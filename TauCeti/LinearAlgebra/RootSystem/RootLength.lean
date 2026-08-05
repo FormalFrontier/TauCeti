@@ -445,14 +445,6 @@ section IsCrystallographic
 
 variable [CharZero R] {P : RootPairing ι R M N} [P.IsCrystallographic]
 
-/-- Two simple roots of a base joined by a strictly negative Cartan entry compare in length exactly
-as the transposed pair of Cartan entries compares. This is
-`TauCeti.rootLength_le_iff_pairingIn_le` read on the Cartan matrix. -/
-theorem rootLength_le_iff_cartanMatrix_le (b : P.Base) (B : P.RootPositiveForm ℤ)
-    {i j : b.support} (h : b.cartanMatrix i j < 0) :
-    B.rootLength i ≤ B.rootLength j ↔ b.cartanMatrix j i ≤ b.cartanMatrix i j :=
-  rootLength_le_iff_pairingIn_le B h
-
 /-- **A base matched to a Dynkin type has its adjacent simple roots comparing in length exactly as
 `TauCeti.DynkinType.rootLength` says.** The matching `e` is taken as data rather than through
 `TauCeti.HasCartanType` so that the statement names the node the comparison is made at; any witness
@@ -466,7 +458,11 @@ theorem rootLength_le_iff_dynkinRootLength_le {b : P.Base} {t : DynkinType}
     {e : b.support ≃ Fin t.rank} (he : ∀ i j, b.cartanMatrix i j = t.cartanMatrix (e i) (e j))
     (B : P.RootPositiveForm ℤ) {i j : b.support} (h : b.cartanMatrix i j < 0) :
     B.rootLength i ≤ B.rootLength j ↔ t.rootLength (e i) ≤ t.rootLength (e j) := by
-  rw [rootLength_le_iff_cartanMatrix_le b B h, he i j, he j i]
+  -- The comparison of `TauCeti.rootLength_le_iff_pairingIn_le` is one of pairings, and the Cartan
+  -- entries of a base are those pairings definitionally (`RootPairing.Base.cartanMatrixIn_def`).
+  have key : B.rootLength i ≤ B.rootLength j ↔ b.cartanMatrix j i ≤ b.cartanMatrix i j :=
+    rootLength_le_iff_pairingIn_le B h
+  rw [key, he i j, he j i]
   refine (le_iff_le_of_mul_eq_mul (t.rootLength_pos (e i)) ?_
     (t.cartanMatrix_mul_rootLength (e i) (e j))).symm
   rwa [he i j] at h
