@@ -4,33 +4,35 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Probability.Exchangeability.PathSpace.ContractableLaw
-public import TauCeti.Probability.Exchangeability.PathSpace.InvariantTail
+public import TauCeti.Probability.Exchangeability.PathSpace.InvariantTransport
 public import TauCeti.Probability.Exchangeability.PermutationExtension
-public import Mathlib.MeasureTheory.Integral.Lebesgue.Map
 public import TauCeti.Probability.Exchangeability.L2.LongTailAverages
 public import Mathlib.Dynamics.BirkhoffSum.Average
 
 /-!
-# Moving a block through a reindexing, over an invariant event
+# Moving a finite block through a reindexing, over an invariant event
 
-The Koopman block argument needs to compare the integral of a block observable over a
-shift-invariant event with the integral of a *displaced* block over the same event. Two independent
-facts combine to allow that, and keeping them apart is the point:
+The Koopman block argument needs two things: to compare the integral of a block observable over a
+shift-invariant event with the integral of the *prefix* block over the same event, and to read
+Mathlib's mean ergodic theorem — stated for Birkhoff averages — in terms of prefix averages of the
+process.
 
-* a strictly increasing reindexing preserves a contractable path law
-  (`ContractableLaw.measurePreserving_reindex`) — this needs monotonicity;
-* an eventually-translating reindexing fixes every shift-invariant event
-  (`preimage_reindex_eq_of_measurableSet_invariants_of_eventually_add`) — this needs no
-  monotonicity, only exact shift invariance.
+## Main results
 
-`exists_strictMono_nat_extending_fin_eventually_add` supplies a single reindexing with **both**
-properties extending any strictly increasing finite selection, which is what makes the comparison
-available for an arbitrary block.
+* `ContractableLaw.setLIntegral_block_eq_prefix_of_measurableSet_invariants` — over an invariant
+  event, a strictly increasing finite selection may be replaced by the prefix `0, 1, …, m - 1`.
+* `birkhoffAverage_coord_eq_prefixAverage` — the Birkhoff average of a coordinate observable *is*
+  the prefix average of the process.
 
-⚠ This is specific to *invariant* events. A tail event need not satisfy `shift ⁻¹' A = A`, and
-`invariants_shift_lt_pathTail` shows the inclusion is strict, so the tail-conditioned analogue
-needs a different argument and is not obtained by weakening the hypothesis here.
+The block comparison is the finite-selection form of
+`ContractableLaw.setLIntegral_comp_reindex_eq_of_measurableSet_invariants`, which transports an
+arbitrary path functional through a reindexing that is strictly increasing and eventually a
+translation. `exists_strictMono_nat_extending_fin_eventually_add` supplies such a reindexing
+extending any strictly increasing finite selection, which is what turns the global statement into
+one about an arbitrary block.
+
+⚠ Both rest on *invariance*, not tail-measurability: a tail event need not satisfy
+`shift ⁻¹' A = A`, and `invariants_shift_lt_pathTail` shows the inclusion is strict.
 -/
 
 public section
@@ -38,6 +40,7 @@ public section
 noncomputable section
 
 open Filter MeasureTheory
+
 open scoped ENNReal
 
 namespace TauCeti
@@ -46,26 +49,21 @@ namespace Probability
 
 variable {α : Type*} [MeasurableSpace α]
 
-/-- **A strictly increasing finite selection can be displaced over an invariant event.** For a
-contractable path law and a set `A` measurable in `MeasurableSpace.invariants (shift α)`, the
-set-integral of a block observable over `A` is unchanged when the block is read through any
-strictly increasing extension of the selection that is eventually a translation. -/
-theorem ContractableLaw.setLIntegral_comp_reindex_eq_of_measurableSet_invariants
-    {ρ : Measure (ℕ → α)} (hρ : ContractableLaw ρ) {φ : ℕ → ℕ} {m C : ℕ}
-    (hφ_mono : StrictMono φ) (hφ_add : ∀ n, m ≤ n → φ n = n + C)
+/-- **A strictly increasing finite selection can be displaced to the prefix over an invariant
+event.** For a contractable path law and a set `A` measurable in
+`MeasurableSpace.invariants (shift α)`, the set-integral over `A` of a block observable read along
+a strictly increasing selection `k` equals the set-integral of the same observable read along the
+prefix `0, 1, …, m - 1`. -/
+theorem ContractableLaw.setLIntegral_block_eq_prefix_of_measurableSet_invariants
+    {ρ : Measure (ℕ → α)} (hρ : ContractableLaw ρ) {m : ℕ} {k : Fin m → ℕ} (hk : StrictMono k)
     {A : Set (ℕ → α)} (hA : MeasurableSet[MeasurableSpace.invariants (shift α)] A)
-    {f : (ℕ → α) → ℝ≥0∞} (hf : Measurable f) :
-    ∫⁻ x in A, f (fun k => x (φ k)) ∂ρ = ∫⁻ x in A, f x ∂ρ := by
-  have hmp : MeasurePreserving (fun x : ℕ → α => fun k => x (φ k)) ρ ρ :=
-    hρ.measurePreserving_reindex hφ_mono
-  have hpre : (fun x : ℕ → α => fun k => x (φ k)) ⁻¹' A = A :=
-    preimage_reindex_eq_of_measurableSet_invariants_of_eventually_add hA hφ_add
-  have hAmeas : MeasurableSet A := (MeasurableSpace.measurableSet_invariants.1 hA).1
-  calc ∫⁻ x in A, f (fun k => x (φ k)) ∂ρ
-      = ∫⁻ x in (fun x : ℕ → α => fun k => x (φ k)) ⁻¹' A, f (fun k => x (φ k)) ∂ρ := by
-        rw [hpre]
-    _ = ∫⁻ x in A, f x ∂ρ := by
-        rw [← hmp.setLIntegral_comp_preimage hAmeas hf]
+    {g : (Fin m → α) → ℝ≥0∞} (hg : Measurable g) :
+    ∫⁻ x in A, g (fun i => x (k i)) ∂ρ = ∫⁻ x in A, g (fun i : Fin m => x (i : ℕ)) ∂ρ := by
+  obtain ⟨φ, C, hφ_mono, hφ_eq, hφ_add⟩ := exists_strictMono_nat_extending_fin_eventually_add hk
+  have hf : Measurable fun x : ℕ → α => g fun i : Fin m => x (i : ℕ) :=
+    hg.comp (measurable_pi_lambda _ fun i => measurable_pi_apply _)
+  simpa only [hφ_eq] using
+    hρ.setLIntegral_comp_reindex_eq_of_measurableSet_invariants hφ_mono hφ_add hA hf
 
 omit [MeasurableSpace α] in
 /-- **The Birkhoff average of a coordinate observable is a prefix average of the process.** For the
@@ -76,6 +74,7 @@ This is the bridge from the generic mean-ergodic theorem — which speaks of Bir
 single observable under a measure-preserving map — to the block-average API, which speaks of
 averages of a process over a selection of coordinates. Neither side needs to know about the other:
 they are the same function. -/
+@[simp]
 theorem birkhoffAverage_coord_eq_prefixAverage (f : α → ℝ) (n : ℕ) :
     birkhoffAverage ℝ (shift α) (fun x => f (x 0)) n
       = prefixAverage (fun i (x : ℕ → α) => f (x i)) n := by
@@ -90,3 +89,7 @@ theorem birkhoffAverage_coord_eq_prefixAverage (f : α → ℝ) (n : ℕ) :
 end Probability
 
 end TauCeti
+
+end
+
+end
