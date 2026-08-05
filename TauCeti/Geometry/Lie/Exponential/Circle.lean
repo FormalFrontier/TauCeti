@@ -45,6 +45,7 @@ noncomputable def circleExpHom : ContinuousMonoidHom (Multiplicative ℝ) Circle
   map_mul' s t := Circle.exp_add (Multiplicative.toAdd s) (Multiplicative.toAdd t)
   continuous_toFun := Circle.exp.continuous.comp continuous_toAdd
 
+/-- The bundled circle exponential evaluates to Mathlib's `Circle.exp`. -/
 @[simp]
 theorem circleExpHom_apply (t : ℝ) :
     circleExpHom (Multiplicative.ofAdd t) = Circle.exp t := rfl
@@ -76,7 +77,7 @@ theorem circleExpGenerator_ne_zero : circleExpGenerator ≠ 0 := by
 
 /-- A preliminary linear identification of the circle Lie algebra with the reals, obtained from
 evaluation at the identity and the one-dimensional Euclidean model. -/
-noncomputable def circleLieAlgebraEquivModel :
+private noncomputable def circleLieAlgebraEquivModel :
     LeftInvariantDerivation (𝓡 1) Circle ≃ₗ[ℝ] ℝ :=
   (leftInvariantDerivationEquivGroupLieAlgebra (I := 𝓡 1) (G := Circle)
       BoundarylessManifold.isInteriorPoint).trans
