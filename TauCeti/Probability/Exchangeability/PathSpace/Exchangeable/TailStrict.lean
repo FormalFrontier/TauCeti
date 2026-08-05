@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Probability.Exchangeability.PathSpace.InvariantTail
-public import Mathlib.MeasureTheory.MeasurableSpace.NCard
+import Mathlib.MeasureTheory.MeasurableSpace.NCard
 
 /-!
 # The path tail is strictly smaller than the exchangeable sigma-algebra
