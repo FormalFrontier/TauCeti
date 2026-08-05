@@ -4,8 +4,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+public import TauCeti.Combinatorics.Young.Kostka
 public import TauCeti.RepresentationTheory.ClassicalGroups.GelfandTsetlin.Basic
-public import Mathlib.Combinatorics.Young.SemistandardTableau
+public import Mathlib.Data.Fintype.Fin
 
 /-!
 # Gelfand-Tsetlin patterns are semistandard Young tableaux
@@ -57,8 +58,6 @@ regime is there a tableau to speak of.
   `TauCeti.SemistandardYoungTableau.lt_card_filter_rowLen_iff`: the two counting maps are decided
   by the pattern entries, respectively by the tableau entries.  Everything else is read off these
   two comparisons.
-* `TauCeti.SemistandardYoungTableau.row_le_entry`: an entry of a semistandard tableau is at least
-  its row index, which is why the pattern read off a tableau vanishes off the triangle `i < j`.
 * `TauCeti.finite_ssyt_lt` and `TauCeti.card_gtPattern_topRow_eq_card_ssyt`: there are finitely
   many semistandard tableaux of a fixed shape with bounded entries, and they are as many as the
   patterns with the corresponding top row.
@@ -89,52 +88,23 @@ variable {n : ℕ} {μ : YoungDiagram}
 
 /-! ### Initial segments cut out by a downward closed predicate -/
 
-/-- A predicate that is downward closed below `N` keeps an initial segment of `Finset.range N`.
-This is the plumbing behind both counting maps of this file, each of which filters a range by a
-downward closed condition. -/
-private theorem filter_range_eq_range_card :
-    ∀ {N : ℕ} {p : ℕ → Prop} [DecidablePred p],
-      (∀ ⦃x y : ℕ⦄, y ≤ x → x < N → p x → p y) →
-      {y ∈ range N | p y} = range #{y ∈ range N | p y} := by
-  intro N
-  induction N with
-  | zero => intro p _ _; simp
-  | succ N ih =>
-    intro p _ hp
-    by_cases hN : p N
-    · have h : {y ∈ range (N + 1) | p y} = range (N + 1) :=
-        filter_true_of_mem fun y hy =>
-          hp (Nat.lt_succ_iff.mp (mem_range.mp hy)) (Nat.lt_succ_self N) hN
-      rw [h, card_range]
-    · have h : {y ∈ range (N + 1) | p y} = {y ∈ range N | p y} := by
-        rw [range_add_one, filter_insert, if_neg hN]
-      rw [h]
-      exact ih fun x y hxy hx => hp hxy (hx.trans (Nat.lt_succ_self N))
-
-/-- Membership below the count, for a predicate that is downward closed below `N`. -/
+/-- Membership below the count, for a predicate that is downward closed below `N`: such a
+predicate keeps an initial segment of `Finset.range N`, so a number is counted exactly when it
+lies below `N` and satisfies the predicate.  This is the plumbing behind both counting maps of
+this file, each of which filters a range by a downward closed condition; it is
+`Fin.lt_card_filter_univ_iff_apply_of_imp` transported along `Finset.image_fin_univ`. -/
 private theorem lt_card_filter_range_iff {N : ℕ} {p : ℕ → Prop} [DecidablePred p]
     (hp : ∀ ⦃x y : ℕ⦄, y ≤ x → x < N → p x → p y) {x : ℕ} :
     x < #{y ∈ range N | p y} ↔ x < N ∧ p x := by
-  rw [← mem_range, ← filter_range_eq_range_card hp, mem_filter, mem_range]
-
-/-! ### Entries of a semistandard Young tableau -/
-
-namespace SemistandardYoungTableau
-
-/-- **Entries dominate their row index**: in a semistandard Young tableau the entry in row `i` is
-at least `i`, because the `i` cells above it in its column carry strictly smaller entries. -/
-theorem row_le_entry (T : SemistandardYoungTableau μ) :
-    ∀ {i c : ℕ}, (i, c) ∈ μ → i ≤ T i c := by
-  intro i
-  induction i with
-  | zero => intro c _; exact Nat.zero_le _
-  | succ k ih =>
-    intro c hc
-    exact Nat.succ_le_of_lt
-      ((ih (μ.up_left_mem (Nat.le_succ k) le_rfl hc)).trans_lt
-        (T.col_strict (Nat.lt_succ_self k) hc))
-
-end SemistandardYoungTableau
+  have hcard : #{y ∈ range N | p y} = #{i : Fin N | p i} := by
+    rw [← Finset.image_fin_univ, filter_image, card_image_of_injective _ Fin.val_injective]
+  rcases Nat.lt_or_ge x N with hx | hx
+  · have h : x < #{i : Fin N | p i} ↔ p x :=
+      Fin.lt_card_filter_univ_iff_apply_of_imp (j := (⟨x, hx⟩ : Fin N)) (fun i => p i)
+        fun i _ hji hi => hp hji i.2 hi
+    rw [hcard, h, and_iff_right hx]
+  · have hle : #{y ∈ range N | p y} ≤ N := (card_filter_le _ _).trans_eq (card_range N)
+    exact iff_of_false (by omega) fun h => absurd h.1 (by omega)
 
 /-! ### Nonnegativity and monotonicity of pattern entries -/
 
@@ -344,7 +314,7 @@ needed to build the pattern; a bound is what makes its top row the whole of `μ`
           rw [Finset.eq_empty_iff_forall_notMem]
           intro c hc
           rw [mem_filter, mem_range] at hc
-          have := row_le_entry T (YoungDiagram.mem_iff_lt_rowLen.mpr hc.1)
+          have := le_entry T (YoungDiagram.mem_iff_lt_rowLen.mpr hc.1)
           omega
         rw [hempty, card_empty, Nat.cast_zero]
   interlacing' {i j} _ hj := by
