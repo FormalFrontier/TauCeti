@@ -49,10 +49,10 @@ the crosscut arc, gives `TauCeti.frontier_image_inter_ball_subset` and
 
 ## From the boundary to the piece
 
-A bounded set in a normed space is no wider than anything bounded that contains its frontier
-(`TauCeti.diam_le_diam_of_frontier_subset`, in
-`TauCeti/Analysis/Normed/Module/DiamFrontier.lean`), so the inclusion above is already a diameter
-bound: for any `E` containing the boundary points of `Ω` that lie on `frontier A`,
+A bounded set in a normed space is exactly as wide as its frontier (`TauCeti.diam_frontier`, in
+`TauCeti/Analysis/Normed/Module/DiamFrontier.lean`), so with `Metric.diam_mono` the inclusion above
+is already a diameter bound: for any `E` containing the boundary points of `Ω` that lie on
+`frontier A`,
 
 > `diam A ≤ diam (f '' (U ∩ sphere ζ ρ) ∪ E)`
 
@@ -93,8 +93,8 @@ In accordance with the generality bar of `ConformalMapping/README.md`, which fix
 every theorem added in layers L0–L6, everything below is stated for maps of `ℂ`. The three steps
 that never mention a holomorphic map are stated at their own generality elsewhere, and consumed
 here: `TauCeti.frontier_image_subset_image_union_frontier_image` for maps between arbitrary
-topological spaces, `TauCeti.diam_le_diam_of_frontier_subset` — through `TauCeti.diam_frontier`
-and `TauCeti.IsPreconnected.inter_frontier_nonempty` — for an arbitrary real normed space, and
+topological spaces, `TauCeti.diam_frontier` — through
+`TauCeti.IsPreconnected.inter_frontier_nonempty` — for an arbitrary real normed space, and
 `TauCeti.subsingleton_clusterSetOn_of_forall_exists_diam_le` for a map between metric spaces. What
 remains here is exactly the conformal content: the open mapping theorem, and the reading of a
 circular cut as a crosscut.
@@ -192,18 +192,18 @@ of the image domain is no wider than the two together.** For `s` and `u` inside 
 of the image domain that lie on `frontier (f '' s)`, the image `f '' s` has diameter at most that of
 `f '' u ∪ E`.
 
-This is `TauCeti.diam_le_diam_of_frontier_subset` — a bounded set is no wider than anything bounded
-containing its frontier — applied to a boundary inclusion; no estimate on `f` is used, the width of
-the piece being entirely determined by the width of what bounds it. The two hypotheses combine into
-the single inclusion `frontier (f '' s) ⊆ f '' u ∪ E` that lemma consumes. -/
+This is `TauCeti.diam_frontier` — a bounded set is exactly as wide as its frontier — followed by
+`Metric.diam_mono` along a boundary inclusion; no estimate on `f` is used, the width of the piece
+being entirely determined by the width of what bounds it. The two hypotheses combine into the single
+inclusion `frontier (f '' s) ⊆ f '' u ∪ E` that the monotonicity consumes. -/
 theorem diam_image_le_diam_image_union (hb : IsBounded (f '' U)) {s u : Set ℂ}
     (hsU : s ⊆ U) (huU : u ⊆ U)
     (hfr : frontier (f '' s) ⊆ f '' u ∪ frontier (f '' U)) {E : Set ℂ} (hE : IsBounded E)
     (hEsub : frontier (f '' U) ∩ frontier (f '' s) ⊆ E) :
     diam (f '' s) ≤ diam (f '' u ∪ E) :=
-  diam_le_diam_of_frontier_subset (hb.subset (image_mono hsU))
-    ((hb.subset (image_mono huU)).union hE)
-    fun _ hp => (hfr hp).imp id fun h => hEsub ⟨h, hp⟩
+  (diam_frontier (hb.subset (image_mono hsU))).symm.le.trans
+    (diam_mono (fun _ hp => (hfr hp).imp id fun h => hEsub ⟨h, hp⟩)
+      ((hb.subset (image_mono huU)).union hE))
 
 /-- **The image of a crosscut neighbourhood is no wider than the image crosscut together with the
 boundary piece it cuts off.** If every boundary point of the image domain `f '' U` that lies on the
