@@ -23,7 +23,7 @@ This completes the strict comparison between the path tail and exchangeable sigm
 Layer 2 of the exchangeability roadmap.  Together with `invariants_shift_lt_pathTail`, it gives
 the strict chain
 
-`invariants (shift alpha) < pathTail alpha < exchangeableSigma alpha`
+`invariants (shift Bool) < pathTail Bool < exchangeableSigma Bool`
 
 under the hypotheses of the two results.
 
