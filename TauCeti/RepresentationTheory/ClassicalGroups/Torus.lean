@@ -41,8 +41,8 @@ itself nontrivial — over `𝔽₂` that is the case for `n ≥ 2`, while for `
 trivial and the conclusion survives for want of anything to contradict it.
 
 Finally the action of the torus on the coordinate lines `k ∙ eᵢ` of the standard representation
-is recorded: each `eᵢ` is an eigenvector of every torus element, with eigenvalue the `i`-th
-diagonal entry (`TauCeti.stdRep_apply_basisFun_of_mem_diagonalTorus`), so each line is stable
+is recorded: every torus element scales `eᵢ` by its `i`-th diagonal entry
+(`TauCeti.stdRep_apply_basisFun_of_mem_diagonalTorus`), so each line is stable
 (`TauCeti.map_stdRep_span_basisFun`).  Over a general `k` these lines are not yet the *weight
 spaces* of the torus: that identification needs the coordinate characters to be pairwise
 distinct, and it fails outright when the torus is trivial, as it is over `𝔽₂`.
@@ -201,9 +201,10 @@ end Subsingleton
 
 section StandardRepresentation
 
-/-- Every standard basis vector is an eigenvector of every element of the diagonal torus, with
-eigenvalue the corresponding diagonal entry.  The eigenvalue is the `i`-th coordinate character
-of the torus, read off `diagGL` through `TauCeti.diagonalTorusEquiv`. -/
+/-- An element of the diagonal torus scales the standard basis vector `eᵢ` by its `(i, i)` matrix
+entry, the `i`-th coordinate character of the torus read off `diagGL` through
+`TauCeti.diagonalTorusEquiv`.  This is an eigen-relation rather than an eigenvector statement:
+over the zero ring `eᵢ` itself vanishes. -/
 theorem stdRep_apply_basisFun_of_mem_diagonalTorus {g : GL (Fin n) k}
     (hg : g ∈ diagonalTorus k n) (i : Fin n) :
     stdRep k n g (Pi.basisFun k (Fin n) i) =

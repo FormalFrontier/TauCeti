@@ -7,7 +7,6 @@ module
 public import TauCeti.RepresentationTheory.ClassicalGroups.Standard
 public import Mathlib.Algebra.Group.Pi.Units
 public import Mathlib.LinearAlgebra.Matrix.IsDiag
-public import Mathlib.LinearAlgebra.Matrix.NonsingularInverse
 
 /-!
 # Diagonal elements of the general linear group
@@ -100,12 +99,15 @@ theorem stdRep_diagGL_apply_basisFun (t : Fin n → kˣ) (i : Fin n) :
     simp
   · simp [Pi.basisFun_apply, hji]
 
+section Diagonal
+
+variable {ι : Type*} [Fintype ι] [DecidableEq ι]
+
 /-- The diagonal entries of an invertible diagonal matrix are units, because a diagonal matrix
 is invertible exactly when its diagonal is invertible coordinatewise. -/
-theorem isUnit_apply_of_isDiag {g : GL (Fin n) k}
-    (hg : (g : Matrix (Fin n) (Fin n) k).IsDiag) (i : Fin n) :
-    IsUnit ((g : Matrix (Fin n) (Fin n) k) i i) := by
-  have h : IsUnit (Matrix.diagonal (Matrix.diag (g : Matrix (Fin n) (Fin n) k))) := by
+theorem isUnit_apply_of_isDiag {g : GL ι k} (hg : (g : Matrix ι ι k).IsDiag) (i : ι) :
+    IsUnit ((g : Matrix ι ι k) i i) := by
+  have h : IsUnit (Matrix.diagonal (Matrix.diag (g : Matrix ι ι k))) := by
     rw [hg.diagonal_diag]
     exact Units.isUnit g
   exact (Matrix.isUnit_diagonal.mp h).apply i
@@ -116,8 +118,8 @@ variable [NoZeroDivisors k]
 
 /-- A matrix commuting with a diagonal matrix has vanishing `(i, j)` entry whenever the diagonal
 matrix separates the coordinates `i` and `j`. -/
-theorem apply_eq_zero_of_commute_diagonal {t : Fin n → k} {g : Matrix (Fin n) (Fin n) k}
-    (hg : Commute (Matrix.diagonal t) g) {i j : Fin n} (hij : t i ≠ t j) : g i j = 0 := by
+theorem apply_eq_zero_of_commute_diagonal {t : ι → k} {g : Matrix ι ι k}
+    (hg : Commute (Matrix.diagonal t) g) {i j : ι} (hij : t i ≠ t j) : g i j = 0 := by
   have hentry : (Matrix.diagonal t * g) i j = (g * Matrix.diagonal t) i j := by rw [hg.eq]
   rw [Matrix.diagonal_mul, Matrix.mul_diagonal] at hentry
   have hzero : g i j * (t i - t j) = 0 := by
@@ -126,10 +128,12 @@ theorem apply_eq_zero_of_commute_diagonal {t : Fin n → k} {g : Matrix (Fin n) 
   exact (mul_eq_zero.mp hzero).resolve_right (sub_ne_zero.mpr hij)
 
 /-- **A matrix commuting with a diagonal matrix of pairwise distinct entries is diagonal.** -/
-theorem isDiag_of_commute_diagonal {t : Fin n → k} (ht : Function.Injective t)
-    {g : Matrix (Fin n) (Fin n) k} (hg : Commute (Matrix.diagonal t) g) : g.IsDiag :=
+theorem isDiag_of_commute_diagonal {t : ι → k} (ht : Function.Injective t)
+    {g : Matrix ι ι k} (hg : Commute (Matrix.diagonal t) g) : g.IsDiag :=
   fun _ _ hij => apply_eq_zero_of_commute_diagonal hg (ht.ne hij)
 
 end NoZeroDivisors
+
+end Diagonal
 
 end TauCeti
