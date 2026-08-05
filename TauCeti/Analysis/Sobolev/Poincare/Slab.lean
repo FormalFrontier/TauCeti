@@ -7,6 +7,10 @@ module
 public import Mathlib.Analysis.Calculus.ContDiff.Basic
 public import Mathlib.MeasureTheory.Function.LpSeminorm.CompareExp
 public import Mathlib.MeasureTheory.Measure.Haar.InnerProductSpace
+-- `TauCeti.MeasureTheory.Function.Lp.LIntegralRpow` is imported publicly: every estimate below is
+-- proved as a bound between `∫⁻ ‖·‖ₑ ^ p` integrals and converted by
+-- `TauCeti.eLpNorm_le_eLpNorm_of_lintegral_rpow_le`, which a reader of either form will want.
+public import TauCeti.MeasureTheory.Function.Lp.LIntegralRpow
 import Mathlib.Analysis.Calculus.Deriv.Mul
 import Mathlib.MeasureTheory.Constructions.Pi
 import Mathlib.MeasureTheory.Integral.IntervalIntegral.FundThmCalculus
@@ -15,8 +19,8 @@ import Mathlib.MeasureTheory.Integral.Prod
 /-!
 # The Poincaré inequality on a slab
 
-This file proves the **Poincaré inequality** (also called the Friedrichs inequality) for
-compactly supported `C¹` functions: if `u` vanishes outside the slab
+This file proves the **Poincaré inequality** (also called the Friedrichs inequality) for `C¹`
+functions supported in a slab: if `u` vanishes outside the slab
 `{x | x i ∈ Set.Icc a b}` of width `b - a`, then
 
 `‖u‖_p ≤ (b - a) * ‖Du‖_p`
@@ -52,8 +56,9 @@ the bound `‖Du x (eᵢ)‖ ≤ ‖Du x‖`.
   `EuclideanSpace ℝ (Fin (n + 1))` for a `C¹` function supported in a slab of width `b - a`.
 * `TauCeti.eLpNorm_le_eLpNorm_fderiv_of_support_subset_ball`: the form for a support inside a
   ball, with twice the radius as the constant.
-* `TauCeti.eLpNorm_le_eLpNorm_of_lintegral_rpow_le`: the passage from a bound between
-  `∫⁻ ‖·‖^p` integrals to one between `Lᵖ` seminorms, used for both.
+
+The passage from a bound between the `∫⁻ ‖·‖ₑ ^ p` integrals to one between the `Lᵖ` seminorms is
+generic measure theory and lives in `TauCeti.MeasureTheory.Function.Lp.LIntegralRpow`.
 -/
 
 public section
@@ -62,28 +67,6 @@ namespace TauCeti
 
 open Filter MeasureTheory Set
 open scoped ENNReal Topology
-
-/-- Turn a bound between the `∫⁻ ‖·‖^p` integrals into a bound between the `Lᵖ` seminorms.
-The two functions may have different codomains, which is what lets the `n`-dimensional statement
-below compare a function with its derivative. -/
-theorem eLpNorm_le_eLpNorm_of_lintegral_rpow_le {α : Type*} [MeasurableSpace α] {μ : Measure α}
-    {G H : Type*} [NormedAddCommGroup G] [NormedAddCommGroup H] {v : α → G} {w : α → H} {c : ℝ}
-    (hc : 0 ≤ c) {p : ℝ≥0∞} (hp : 1 ≤ p) (hp' : p ≠ ∞)
-    (h : ∫⁻ x, ‖v x‖ₑ ^ p.toReal ∂μ ≤
-      ENNReal.ofReal (c ^ p.toReal) * ∫⁻ x, ‖w x‖ₑ ^ p.toReal ∂μ) :
-    eLpNorm v p μ ≤ ENNReal.ofReal c * eLpNorm w p μ := by
-  have hp0 : p ≠ 0 := (zero_lt_one.trans_le hp).ne'
-  have hr : 1 ≤ p.toReal := by simpa using ENNReal.toReal_mono hp' hp
-  have hr0 : (0 : ℝ) < p.toReal := one_pos.trans_le hr
-  rw [eLpNorm_eq_lintegral_rpow_enorm_toReal hp0 hp',
-    eLpNorm_eq_lintegral_rpow_enorm_toReal hp0 hp']
-  calc (∫⁻ x, ‖v x‖ₑ ^ p.toReal ∂μ) ^ (1 / p.toReal)
-      ≤ (ENNReal.ofReal (c ^ p.toReal) * ∫⁻ x, ‖w x‖ₑ ^ p.toReal ∂μ) ^ (1 / p.toReal) :=
-        ENNReal.rpow_le_rpow h (by positivity)
-    _ = ENNReal.ofReal c * (∫⁻ x, ‖w x‖ₑ ^ p.toReal ∂μ) ^ (1 / p.toReal) := by
-        rw [ENNReal.mul_rpow_of_nonneg _ _ (by positivity),
-          ← ENNReal.ofReal_rpow_of_nonneg hc hr0.le, ← ENNReal.rpow_mul,
-          mul_one_div_cancel hr0.ne', ENNReal.rpow_one]
 
 section OneDimensional
 
@@ -171,9 +154,10 @@ theorem lintegral_enorm_rpow_le_of_support_subset_Icc (hab : a ≤ b)
   -- Step 3: integrate the pointwise bound over the slab.
   have hpow : ENNReal.ofReal (b - a) ^ (r - 1) * ENNReal.ofReal (b - a)
       = ENNReal.ofReal ((b - a) ^ r) := by
+    have hsum : r - 1 + 1 = r := by ring
     nth_rewrite 2 [← ENNReal.rpow_one (ENNReal.ofReal (b - a))]
-    rw [← ENNReal.rpow_add _ _ (by simpa using hba) ENNReal.ofReal_ne_top,
-      show r - 1 + 1 = r by ring, ENNReal.ofReal_rpow_of_pos hba]
+    rw [← ENNReal.rpow_add _ _ (by simpa using hba) ENNReal.ofReal_ne_top, hsum,
+      ENNReal.ofReal_rpow_of_pos hba]
   have hsupp' : Function.support (fun t => ‖g t‖ₑ ^ r) ⊆ Ioc a b := by
     intro t ht
     have hgt : g t ≠ 0 := by
@@ -205,7 +189,7 @@ theorem eLpNorm_le_eLpNorm_deriv_of_support_subset_Icc (hab : a ≤ b)
     (hg : ∀ t, HasDerivAt g (g' t) t) (hg' : Continuous g')
     (hsupp : Function.support g ⊆ Icc a b) {p : ℝ≥0∞} (hp : 1 ≤ p) (hp' : p ≠ ∞) :
     eLpNorm g p volume ≤ ENNReal.ofReal (b - a) * eLpNorm g' p volume :=
-  eLpNorm_le_eLpNorm_of_lintegral_rpow_le (sub_nonneg.2 hab) hp hp'
+  eLpNorm_le_eLpNorm_of_lintegral_rpow_le (sub_nonneg.2 hab) (zero_lt_one.trans_le hp).ne' hp'
     (lintegral_enorm_rpow_le_of_support_subset_Icc hab hg hg' hsupp
       (by simpa using ENNReal.toReal_mono hp' hp))
 
@@ -268,7 +252,8 @@ theorem eLpNorm_le_eLpNorm_fderiv_of_support_subset_slab (hu : ContDiff ℝ 1 u)
     eLpNorm u p volume ≤ ENNReal.ofReal (b - a) * eLpNorm (fderiv ℝ u) p volume := by
   have hr : 1 ≤ p.toReal := by simpa using ENNReal.toReal_mono hp' hp
   have hfc : Continuous (fderiv ℝ u) := hu.continuous_fderiv one_ne_zero
-  refine eLpNorm_le_eLpNorm_of_lintegral_rpow_le (sub_nonneg.2 hab) hp hp' ?_
+  refine eLpNorm_le_eLpNorm_of_lintegral_rpow_le (sub_nonneg.2 hab)
+    (zero_lt_one.trans_le hp).ne' hp' ?_
   set r := p.toReal
   -- Restricted to a line in the `i`-th coordinate direction, `u` is a `C¹` function of one
   -- variable supported in `Set.Icc a b`.
@@ -334,7 +319,8 @@ theorem eLpNorm_le_eLpNorm_fderiv_of_support_subset_ball {R : ℝ} (hu : ContDif
     have := (PiLp.norm_apply_le x (0 : Fin (n + 1))).trans hx'.le
     rw [Real.norm_eq_abs, abs_le] at this
     exact this
-  simpa [show R - -R = 2 * R by ring] using
+  have hwidth : R - -R = 2 * R := by ring
+  simpa [hwidth] using
     eLpNorm_le_eLpNorm_fderiv_of_support_subset_slab hu (by linarith : (-R : ℝ) ≤ R) hslab hp hp'
 
 end Slab
