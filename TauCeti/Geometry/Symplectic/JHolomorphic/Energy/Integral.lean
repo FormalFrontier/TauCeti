@@ -32,6 +32,11 @@ integrated Wirtinger inequality bounds symplectic area by energy, and equality h
 differential is complex-linear almost everywhere.  These are the total-energy statements needed
 before the compactness theory for `J`-holomorphic strips and disks.
 
+The energy--area statements assume compatibility of `(ω, J)` rather than being stated for an
+arbitrary pair: it is compatibility that makes both densities nonnegative, so that the
+`ENNReal.ofReal` coercions record energy and symplectic area themselves rather than their
+positive parts.
+
 ## Main declarations
 
 * `TauCeti.SymplecticForm.stdComplexLineEnergy`: the integrated energy of a field of
@@ -41,9 +46,10 @@ before the compactness theory for `J`-holomorphic strips and disks.
 * `TauCeti.SymplecticForm.lintegral_symplecticForm_le_stdComplexLineEnergy`: the integrated
   Wirtinger inequality.
 * `TauCeti.SymplecticForm.stdComplexLineEnergy_eq_lintegral_symplecticForm`: equality of energy
-  and symplectic area for a complex-linear differential.
+  and symplectic area for a compatible pair and an almost everywhere complex-linear differential.
 * `TauCeti.IsConstStructureJHolomorphic.stdComplexLineEnergy_eq_lintegral_symplecticForm`: the
-  energy--area identity for a globally constant-structure `J`-holomorphic map.
+  energy--area identity for a compatible pair and a globally constant-structure `J`-holomorphic
+  map.
 
 The convention and the energy--area identity follow McDuff--Salamon,
 *J-holomorphic Curves and Symplectic Topology*, Section 2.1.
@@ -170,10 +176,15 @@ lemma lintegral_symplecticForm_le_stdComplexLineEnergy (hcompat : ω.Compatible 
     ω.two_mul_symplecticForm_le_stdComplexLineEnergyDensity hcompat (du x)
   linarith
 
-/-- A complex-linear differential has energy equal to the integral of its symplectic area
+/-- **Equality in the integrated Wirtinger inequality.**  For a compatible pair, a differential
+that is complex linear almost everywhere has energy equal to the integral of its symplectic area
 density.  In particular, this applies to the differential of a constant-structure
-`J`-holomorphic map. -/
-lemma stdComplexLineEnergy_eq_lintegral_symplecticForm
+`J`-holomorphic map.
+
+Compatibility is what makes both sides geometric: it forces the symplectic area density of a
+complex-linear differential to be nonnegative, so neither `ENNReal.ofReal` truncates and the
+identity is the energy--area identity rather than one between positive parts. -/
+lemma stdComplexLineEnergy_eq_lintegral_symplecticForm (hcompat : ω.Compatible J)
     (hdu : ∀ᵐ x ∂μ, IsComplexLinearMap (AlmostComplexStructure.product ℝ) J (du x)) :
     ω.stdComplexLineEnergy J du μ =
       ∫⁻ x, ENNReal.ofReal
@@ -181,7 +192,7 @@ lemma stdComplexLineEnergy_eq_lintegral_symplecticForm
   rw [stdComplexLineEnergy_apply]
   apply lintegral_congr_ae
   filter_upwards [hdu] with x hx
-  rw [hx.stdComplexLineEnergyDensity_eq_two_mul_symplecticForm]
+  rw [(ω.stdComplexLineEnergyDensity_eq_two_mul_symplecticForm_iff hcompat (du x)).mpr hx]
   congr 1
   ring
 
@@ -194,15 +205,17 @@ variable {J : AlmostComplexStructure W} {ω : SymplecticForm W}
 variable {f : ℝ × ℝ → W}
 
 /-- The energy of a globally constant-structure `J`-holomorphic map is the lower Lebesgue
-integral of its symplectic area density. -/
+integral of its symplectic area density, for a compatible pair.  As in
+`TauCeti.SymplecticForm.stdComplexLineEnergy_eq_lintegral_symplecticForm`, compatibility is what
+makes the area density nonnegative, so neither side is truncated by `ENNReal.ofReal`. -/
 lemma stdComplexLineEnergy_eq_lintegral_symplecticForm
     (hf : IsConstStructureJHolomorphic (AlmostComplexStructure.product ℝ) J f)
-    (μ : Measure (ℝ × ℝ)) :
+    (hcompat : ω.Compatible J) (μ : Measure (ℝ × ℝ)) :
     ω.stdComplexLineEnergy J (fun x ↦ (fderiv ℝ f x).toLinearMap) μ =
       ∫⁻ x, ENNReal.ofReal
         (ω (fderiv ℝ f x stdComplexLineReal)
           (fderiv ℝ f x stdComplexLineImag)) ∂μ := by
-  apply ω.stdComplexLineEnergy_eq_lintegral_symplecticForm
+  apply ω.stdComplexLineEnergy_eq_lintegral_symplecticForm hcompat
   filter_upwards with x
   exact (hf.isConstStructureJHolomorphicAt x).fderiv_isComplexLinear
 
