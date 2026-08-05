@@ -18,9 +18,9 @@ characters are orthonormal for this pairing.
 The pairing is bilinear, rather than Hermitian: complex conjugation enters only after restricting
 to virtual characters.
 
-Nondegeneracy is proved by pairing against the indicator function of a conjugacy class. That
-indicator, `TauCeti.ClassFunction.classIndicator`, and the value of its pairing,
-`TauCeti.ClassFunction.characterPairing_classIndicator_inv`, are of independent use: reading a
+Nondegeneracy is proved by pairing against the indicator function of a conjugacy class,
+`TauCeti.ClassFunction.classIndicator`. The value of that pairing,
+`TauCeti.ClassFunction.characterPairing_classIndicator_inv`, is of independent use: reading a
 class function off its pairings against the class indicators is what turns the expansion of a class
 function in the basis of irreducible characters into the second orthogonality relation.
 
@@ -35,21 +35,6 @@ public section
 namespace TauCeti
 
 universe u v
-
-/-- Conjugacy is inherited by inverses in both directions. -/
-theorem isConj_inv_iff {G : Type v} [Group G] {x y : G} :
-    IsConj x⁻¹ y⁻¹ ↔ IsConj x y := by
-  constructor <;> intro h
-  · obtain ⟨c, hc⟩ := isConj_iff.mp h
-    apply isConj_iff.mpr
-    refine ⟨c, ?_⟩
-    have := congrArg Inv.inv hc
-    simpa [mul_assoc] using this
-  · obtain ⟨c, hc⟩ := isConj_iff.mp h
-    apply isConj_iff.mpr
-    refine ⟨c, ?_⟩
-    have := congrArg Inv.inv hc
-    simpa [mul_assoc] using this
 
 namespace ClassFunction
 
@@ -112,20 +97,6 @@ theorem characterPairing_symm (f₁ f₂ : ClassFunction k G) :
 theorem characterPairing_isSymm :
     characterPairing (k := k) (G := G).IsSymm :=
   ⟨characterPairing_symm⟩
-
-/-- The indicator class function of the conjugacy class of `x`: it takes the value `1` on the
-conjugates of `x` and `0` elsewhere. -/
-noncomputable def classIndicator (x : G) : ClassFunction k G := by
-  classical
-  exact equivConjClasses.symm (Pi.single (ConjClasses.mk x) 1)
-
-open scoped Classical in
-/-- The defining values of `TauCeti.ClassFunction.classIndicator`. -/
-theorem classIndicator_apply (x y : G) : (classIndicator (k := k) x).1 y =
-      if ConjClasses.mk y = ConjClasses.mk x then 1 else 0 :=
-  by
-    classical
-    rw [classIndicator, equivConjClasses_symm_apply, ofConjClasses_apply, Pi.single_apply]
 
 omit [Fintype G] in
 private theorem card_conjClass_dvd_card [Finite G] (x : G) :

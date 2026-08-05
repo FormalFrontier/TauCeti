@@ -5,8 +5,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.RepresentationTheory.CharacterTable.Wedderburn
+public import TauCeti.RepresentationTheory.Irreducible
 public import Mathlib.LinearAlgebra.Matrix.ToLin
-public import Mathlib.RepresentationTheory.Irreducible
 
 /-!
 # The irreducible representations carried by the Wedderburn blocks
@@ -17,10 +17,10 @@ the projection onto the `i`-th factor and with `Matrix.toLinAlgEquiv'` presents 
 `Fin (d i) → k` as a `k[G]`-module, hence as a representation of `G`.
 
 Two facts make the resulting family the family of irreducibles. Each `blockRepresentation e i` is
-irreducible, because its algebra map onto `End k (Fin (d i) → k)` is surjective and a nonzero vector
-of a vector space can be moved anywhere by an endomorphism. And the blocks are pairwise
-inequivalent, because the idempotent `e.symm (Pi.single i 1)` acts as the identity on the `i`-th
-block and as zero on every other one.
+irreducible by `TauCeti.Representation.isIrreducible_of_asAlgebraHom_surjective`, its algebra map
+onto `End k (Fin (d i) → k)` being surjective. And the blocks are pairwise inequivalent, because
+the idempotent `e.symm (Pi.single i 1)` acts as the identity on the `i`-th block and as zero on
+every other one.
 
 Together with `TauCeti.exists_algEquiv_pi_matrix_conjClasses` this produces, over an algebraically
 closed field whose characteristic does not divide `|G|`, a family of pairwise inequivalent
@@ -44,7 +44,7 @@ irreducible representations of `G` indexed by the conjugacy classes of `G`.
 
 ## References
 
-This supplies the block ⇆ irreducible-representation matching that Layer 2.5 of the
+This supplies one half of the block ⇆ irreducible-representation matching that Layer 2.5 of the
 [character theory roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/CharacterTheory/README.md)
 asks for, in the concrete form needed by Layer 3's completeness statement. See J.-P. Serre, *Linear
 Representations of Finite Groups*, Section 6.4, or I. M. Isaacs, *Character Theory of Finite
@@ -58,26 +58,6 @@ open scoped MonoidAlgebra
 namespace TauCeti
 
 universe u v w
-
-section Surjective
-
-variable {k : Type u} {G : Type v} {V : Type w} [Field k] [Monoid G] [AddCommGroup V] [Module k V]
-
-/-- **A representation whose algebra map exhausts the endomorphisms is irreducible.** Every nonzero
-vector then generates, because a vector space is a simple module over its endomorphism ring. -/
-theorem Representation.isIrreducible_of_asAlgebraHom_surjective [Nontrivial V]
-    (ρ : Representation k G V) (h : Function.Surjective ρ.asAlgebraHom) : ρ.IsIrreducible := by
-  rw [_root_.Representation.irreducible_iff_isSimpleModule_asModule,
-    isSimpleModule_iff_toSpanSingleton_surjective]
-  refine ⟨ρ.asModuleEquiv.toEquiv.nontrivial, fun x hx y => ?_⟩
-  obtain ⟨T, hT⟩ := IsSimpleModule.toSpanSingleton_surjective (Module.End k V)
-    (m := ρ.asModuleEquiv x) (by simpa using hx) (ρ.asModuleEquiv y)
-  rw [LinearMap.toSpanSingleton_apply, Module.End.smul_def] at hT
-  obtain ⟨r, rfl⟩ := h T
-  refine ⟨r, ρ.asModuleEquiv.injective ?_⟩
-  rw [LinearMap.toSpanSingleton_apply, _root_.Representation.asModuleEquiv_map_smul, hT]
-
-end Surjective
 
 section Block
 

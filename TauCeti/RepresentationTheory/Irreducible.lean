@@ -8,7 +8,10 @@ public import Mathlib.RepresentationTheory.Irreducible
 public import Mathlib.RingTheory.SimpleModule.Rank
 
 /-!
-# Irreducibility of a line
+# Criteria for irreducibility
+
+Two criteria recognise a representation as irreducible from outside, without inspecting its
+subrepresentations one by one.
 
 A representation on a one-dimensional vector space is irreducible, whatever the group and however
 it acts: a subrepresentation is in particular a subspace, and a line has only the two trivial
@@ -17,6 +20,11 @@ subspaces.  Nontriviality, the other half of irreducibility, is the same dimensi
 This is how the smallest representations of a group are recognised as irreducible without knowing
 anything about the group -- the trivial representation, a character, a sign -- and it is the
 criterion the one-row and one-column Specht modules are proved irreducible by.
+
+At the other extreme, a representation whose algebra map exhausts `End k V` is irreducible, because
+a vector space is a simple module over its own endomorphism ring, so a nonzero vector can be carried
+to any other.  This is the criterion a matrix block of a semisimple group algebra is recognised as
+irreducible by.
 
 ## References
 
@@ -49,6 +57,20 @@ theorem isIrreducible_of_finrank_eq_one (ρ : Representation k G V)
 /-- The trivial representation of a monoid on the base field is irreducible, being a line. -/
 instance isIrreducible_trivial_self : (_root_.Representation.trivial k G k).IsIrreducible :=
   isIrreducible_of_finrank_eq_one _ (Module.finrank_self k)
+
+/-- **A representation whose algebra map exhausts the endomorphisms is irreducible.** Every nonzero
+vector then generates, because a vector space is a simple module over its endomorphism ring. -/
+theorem isIrreducible_of_asAlgebraHom_surjective [Nontrivial V] (ρ : Representation k G V)
+    (h : Function.Surjective ρ.asAlgebraHom) : ρ.IsIrreducible := by
+  rw [_root_.Representation.irreducible_iff_isSimpleModule_asModule,
+    isSimpleModule_iff_toSpanSingleton_surjective]
+  refine ⟨ρ.asModuleEquiv.toEquiv.nontrivial, fun x hx y => ?_⟩
+  obtain ⟨T, hT⟩ := IsSimpleModule.toSpanSingleton_surjective (Module.End k V)
+    (m := ρ.asModuleEquiv x) (by simpa using hx) (ρ.asModuleEquiv y)
+  rw [LinearMap.toSpanSingleton_apply, Module.End.smul_def] at hT
+  obtain ⟨r, rfl⟩ := h T
+  refine ⟨r, ρ.asModuleEquiv.injective ?_⟩
+  rw [LinearMap.toSpanSingleton_apply, _root_.Representation.asModuleEquiv_map_smul, hT]
 
 end Representation
 

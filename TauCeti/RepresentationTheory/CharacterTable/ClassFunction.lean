@@ -16,6 +16,10 @@ their module with the module of functions on `ConjClasses G`, computes its dimen
 groups, shows that characters of representations are class functions, and evaluates a sum over a
 finite group one conjugacy class at a time.
 
+The indicator function of a conjugacy class, `TauCeti.ClassFunction.classIndicator`, is the class
+function pulled back from the indicator of a single point of `ConjClasses G`; pairing a class
+function against it is how a class function is read off an expansion in a basis of class functions.
+
 These are the indexing foundations for character tables.
 
 This implementation follows the
@@ -36,6 +40,24 @@ definitional equalities, which would in turn require exposing the definitions.
 namespace TauCeti
 
 universe u v w
+
+/-- Conjugacy is inherited by inverses in both directions.
+
+Not `@[simp]`: Mathlib's `isConj_iff` is itself `simp`, so the left-hand side simplifies to
+`∃ c, c * x⁻¹ * c⁻¹ = y⁻¹` and the simp normal form linter rejects the pair. -/
+theorem isConj_inv_iff {G : Type v} [Group G] {x y : G} :
+    IsConj x⁻¹ y⁻¹ ↔ IsConj x y := by
+  constructor <;> intro h
+  · obtain ⟨c, hc⟩ := isConj_iff.mp h
+    apply isConj_iff.mpr
+    refine ⟨c, ?_⟩
+    have := congrArg Inv.inv hc
+    simpa [mul_assoc] using this
+  · obtain ⟨c, hc⟩ := isConj_iff.mp h
+    apply isConj_iff.mpr
+    refine ⟨c, ?_⟩
+    have := congrArg Inv.inv hc
+    simpa [mul_assoc] using this
 
 /-- The submodule of functions on `G` that are constant under conjugation. -/
 def ClassFunction (k : Type u) (G : Type v) [Semiring k] [Group G] : Submodule k (G → k) where
@@ -114,6 +136,25 @@ theorem equivConjClasses_apply (f : ClassFunction k G) :
 theorem equivConjClasses_symm_apply (f : ConjClasses G → k) :
     equivConjClasses.symm f = ofConjClasses f :=
   (rfl)
+
+/-- The indicator class function of the conjugacy class of `x`: it takes the value `1` on the
+conjugates of `x` and `0` elsewhere.
+
+`Set.indicator` rather than `Pi.single` so that the definition carries no decidability instance of
+its own, and `TauCeti.ClassFunction.classIndicator_apply` can be stated with whichever instance is
+in scope where it is used. -/
+noncomputable def classIndicator (x : G) : ClassFunction k G :=
+  ofConjClasses (({ConjClasses.mk x} : Set (ConjClasses G)).indicator fun _ => 1)
+
+/-- The defining values of `TauCeti.ClassFunction.classIndicator`. -/
+@[simp]
+theorem classIndicator_apply [DecidableEq (ConjClasses G)] (x y : G) :
+    (classIndicator (k := k) x).1 y =
+      if ConjClasses.mk y = ConjClasses.mk x then 1 else 0 := by
+  rw [classIndicator, ofConjClasses_apply]
+  by_cases h : ConjClasses.mk y = ConjClasses.mk x
+  · rw [if_pos h, Set.indicator_of_mem (Set.mem_singleton_iff.mpr h)]
+  · rw [if_neg h, Set.indicator_of_notMem (fun hm => h (Set.mem_singleton_iff.mp hm))]
 
 /-- **Summing a class function one conjugacy class at a time.** The conjugacy classes partition
 the group and a class function is constant on each of them, so each class contributes its size
