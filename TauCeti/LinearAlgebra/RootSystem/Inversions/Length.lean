@@ -20,9 +20,12 @@ reflection from the right lowers the inversion count by one, so a word of exactl
 as there are inversions is built up one letter at a time.
 
 The identification is packaged as an `IsLeast` statement, `TauCeti.isLeast_ncard_inversions`, so
-that both halves are available at once. Downstream it is the root-level form of the Coxeter length
-of a Weyl group: once the Coxeter presentation of Layer 2 lands, `CoxeterSystem.length` is the
-least length of a word in the simple reflections, so it is the inversion count by this theorem.
+that both halves are available at once. Everything here is stated and proved purely at the root
+level, in terms of `TauCeti.inversions` and `TauCeti.wordProd`: no Coxeter presentation is
+mentioned, assumed, or needed. Downstream it *is* the root-level form of the Coxeter length of a
+Weyl group, because Mathlib defines `CoxeterSystem.length` to be exactly the least length of a
+word in the simple reflections; so once the Coxeter presentation lands, the Coxeter-length
+spelling of this theorem is a rewrite of it rather than a further theorem.
 
 The subadditivity, inversion-invariance and descent consequences recorded here are the standard
 length-function axioms in their inversion-count spelling.
@@ -46,11 +49,18 @@ length-function axioms in their inversion-count spelling.
 
 ## References
 
-This file implements the "length equals inversions" item of Layer 2 in
-`TauCetiRoadmap/RepresentationTheory/RootSystems/README.md`, in the inversion spelling of length
-that the roadmap pins as equal to the Coxeter length. The argument is the one in J. E. Humphreys,
-*Introduction to Lie Algebras and Representation Theory*, GTM 9, Ch. III, §10.3, and in
-Bourbaki, *Lie Groups and Lie Algebras*, Chapters 4--6.
+This file iterates over a whole word the root-level exchange step of "Inversion sets and the
+exchange step" in Layer 1 of `TauCetiRoadmap/RepresentationTheory/RootSystems/README.md` — the
+step that the roadmap describes there as "the combinatorial core that Layer 2's generation and
+presentation consume" — and consumes nothing beyond that Layer 1 material, which is on `main`
+(`TauCeti/LinearAlgebra/RootSystem/Inversions/Deletion.lean` and its imports).
+
+The identification of the inversion count with the least word length that comes out of that
+iteration is the mathematical content of the "length equals inversions" item of Layer 2, whose
+`(weylCoxeterSystem b).length` spelling is a rewrite of `TauCeti.isLeast_ncard_inversions` once
+the Coxeter presentation — the Layer 2 summit — lands; nothing here waits on it. The argument is
+the one in J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, GTM 9,
+Ch. III, §10.3, and in Bourbaki, *Lie Groups and Lie Algebras*, Chapters 4--6.
 -/
 
 namespace TauCeti
