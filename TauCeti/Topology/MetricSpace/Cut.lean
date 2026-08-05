@@ -43,10 +43,8 @@ use, and Mathlib has no form of the decomposition.
   missing the sphere lies on one side of it.
 * `TauCeti.image_eq_union_image_inter_sphere` — the image of a cut set is the union of the images
   of the two sides and of the part on the sphere.
-* `TauCeti.frontier_image_subset_union_closure_image_inter_sphere` and
-  `TauCeti.frontier_image_eq_union_closure_image_inter_sphere` — the frontier of the image is
-  covered by, and so splits into, the frontiers of the two side images and the part of it adherent
-  to the middle image.
+* `TauCeti.frontier_image_subset_union_closure_image_inter_sphere` — the frontier of the image is
+  covered by the frontiers of the two side images together with the closure of the middle image.
 -/
 
 public section
@@ -122,22 +120,5 @@ theorem frontier_image_subset_union_closure_image_inter_sphere (f : X → Y) (s 
   rw [image_eq_union_image_inter_sphere f s x ρ]
   exact (hunion _ _).trans (union_subset_union
     ((hunion _ _).trans (union_subset_union subset_rfl frontier_subset_closure)) subset_rfl)
-
-/-- **A sphere cuts the frontier of the image into two pieces and a middle piece.** The equality
-form of `TauCeti.frontier_image_subset_union_closure_image_inter_sphere`: `frontier (f '' s)` is the
-union of the two *boundary pieces* the sphere determines — its intersections with the frontiers of
-the images of the parts of `s` inside and outside the sphere — and of the part of it adherent to
-`f '' (s ∩ sphere x ρ)`.
-
-The three pieces are not claimed to be disjoint, and none of them is claimed nonempty; what the
-equality says is that no boundary point of the image escapes all three. -/
-theorem frontier_image_eq_union_closure_image_inter_sphere (f : X → Y) (s : Set X) (x : X) (ρ : ℝ) :
-    frontier (f '' s) =
-      frontier (f '' s) ∩ frontier (f '' (s ∩ ball x ρ)) ∪
-        frontier (f '' s) ∩ closure (f '' (s ∩ sphere x ρ)) ∪
-        frontier (f '' s) ∩ frontier (f '' (s \ closedBall x ρ)) := by
-  rw [← inter_union_distrib_left, ← inter_union_distrib_left]
-  exact (inter_eq_left.mpr
-    (frontier_image_subset_union_closure_image_inter_sphere f s x ρ)).symm
 
 end TauCeti

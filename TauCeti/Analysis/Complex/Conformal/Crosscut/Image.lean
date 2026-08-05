@@ -41,9 +41,9 @@ pseudometric space), and the frontier of a union is covered by the frontiers of 
 frontier point of `Ω` is a frontier point of `A`, a frontier point of `B`, or an adherent point of
 `γ`:
 
-> `frontier Ω = frontier Ω ∩ frontier A ∪ frontier Ω ∩ closure γ ∪ frontier Ω ∩ frontier B`
+> `frontier Ω ⊆ frontier A ∪ closure γ ∪ frontier B`
 
-(`TauCeti.frontier_image_eq_union_closure_image_inter_sphere`). This is the sense in which the
+(`TauCeti.frontier_image_subset_union_closure_image_inter_sphere`). This is the sense in which the
 circle *cuts the image boundary in two*: the two boundary pieces `frontier Ω ∩ frontier A` and
 `frontier Ω ∩ frontier B` cover `frontier Ω` apart from a middle piece no wider than `γ` itself
 (`TauCeti.diam_frontier_inter_closure_image_inter_sphere_le`), which by the length–area estimate of
@@ -117,7 +117,7 @@ not about conformality are stated at their own generality elsewhere: `TauCeti.di
 arbitrary real normed space, `TauCeti.IsUniformlyLocallyConnected` for an arbitrary pseudometric
 space, and the decomposition of the image and of its frontier by the cutting sphere
 (`TauCeti.image_eq_union_image_inter_sphere`,
-`TauCeti.frontier_image_eq_union_closure_image_inter_sphere`) for an arbitrary map out of a
+`TauCeti.frontier_image_subset_union_closure_image_inter_sphere`) for an arbitrary map out of a
 pseudometric space, in `TauCeti/Topology/MetricSpace/Cut.lean`.
 
 ## Main results
