@@ -35,14 +35,16 @@ the field structure of the reals, so the usual `X = ℝ` with `s = Set.Icc 0 1` 
 ## Generality
 
 The germs carried are germs of maps `ℂ → E` into a complex normed space `E`. The generality is
-free rather than speculative: the only analytic inputs to everything below are Mathlib's identity
-principle `AnalyticOnNhd.eqOn_of_preconnected_of_eventuallyEq`, the openness of the analyticity
-locus `AnalyticAt.exists_ball_analyticOnNhd`, and `DifferentiableOn.analyticOnNhd` — all of which
-Mathlib already states for maps into an arbitrary normed space, so the scalar case is not one line
-shorter. In the words of the generality bar of `TauCetiRoadmap/ConformalMapping/README.md`, those
-are *inputs consumed from Mathlib at whatever generality Mathlib provides*; the conformal-mapping
-theorems that consume this file — the reflection and boundary layers — are scalar and stay scalar,
-instantiating `E = ℂ`.
+free rather than speculative: every analytic fact this file consumes is one Mathlib already states
+for maps into an arbitrary normed space, so the scalar case is not one line shorter. The
+uniqueness theorem rests on Mathlib's identity principle
+`AnalyticOnNhd.eqOn_of_preconnected_of_eventuallyEq` and on the openness of the analyticity locus
+`AnalyticAt.exists_ball_analyticOnNhd`; `DifferentiableOn.analyticOnNhd` produces continuations
+from holomorphy; and the closure lemmas below consume `AnalyticAt.deriv`, `.add` and `.neg`, and
+`AnalyticAt.mul` and `.pow` for the two that multiply germs. In the words of the generality bar of
+`TauCetiRoadmap/ConformalMapping/README.md`, these are *inputs consumed from Mathlib at whatever
+generality Mathlib provides*; the conformal-mapping theorems that consume this file — the
+reflection and boundary layers — are scalar and stay scalar, instantiating `E = ℂ`.
 
 Completeness of `E` is asked for exactly where those Mathlib inputs ask for it, and nowhere else:
 the definition itself, the gluing and reparametrisation lemmas, and the closure of continuations
