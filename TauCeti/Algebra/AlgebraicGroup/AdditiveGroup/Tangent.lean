@@ -163,10 +163,12 @@ theorem tangentLinearEquiv_apply (d : Derivation R (SymmetricAlgebra R M)
 /-- The inverse vector-group tangent equivalence has the prescribed value on every generator. -/
 @[simp]
 theorem tangentLinearEquiv_symm_apply_ι (f : M →ₗ[R] B) (x : M) :
-    CounitAlgebra.algEquivSelf R (SymmetricAlgebra R M) B
-        ((tangentLinearEquiv (R := R) (M := M) (B := B)).symm f
-          (SymmetricAlgebra.ι R M x)) = f x := by
-  exact tangentOfLinear_ι f x
+    (tangentLinearEquiv (R := R) (M := M) (B := B)).symm f
+        (SymmetricAlgebra.ι R M x) = f x := by
+  change tangentOfLinear f (SymmetricAlgebra.ι R M x) = f x
+  have h := congrArg (CounitAlgebra.algEquivSelf R (SymmetricAlgebra R M) B).symm
+    (tangentOfLinear_ι f x)
+  simpa only [AlgEquiv.symm_apply_apply, CounitAlgebra.algEquivSelf_symm_apply] using h
 
 /-- The tangent module of the one-dimensional additive group `𝔾ₐ` is the value algebra `B`.
 
@@ -192,11 +194,15 @@ theorem gaTangentLinearEquiv_apply
 coordinate `ι(1)` to `b`. -/
 @[simp]
 theorem gaTangentLinearEquiv_symm_apply_ι (b : B) :
-    CounitAlgebra.algEquivSelf R (SymmetricAlgebra R R) B
-        ((gaTangentLinearEquiv (R := R) (B := B)).symm b
-          (SymmetricAlgebra.ι R R 1)) = b := by
-  simpa only [gaTangentLinearEquiv_apply] using
-    (gaTangentLinearEquiv (R := R) (B := B)).apply_symm_apply b
+    (gaTangentLinearEquiv (R := R) (B := B)).symm b
+        (SymmetricAlgebra.ι R R 1) = b := by
+  have h : CounitAlgebra.algEquivSelf R (SymmetricAlgebra R R) B
+      ((gaTangentLinearEquiv (R := R) (B := B)).symm b
+        (SymmetricAlgebra.ι R R 1)) = b := by
+    simpa only [gaTangentLinearEquiv_apply] using
+      (gaTangentLinearEquiv (R := R) (B := B)).apply_symm_apply b
+  have h' := congrArg (CounitAlgebra.algEquivSelf R (SymmetricAlgebra R R) B).symm h
+  simpa only [AlgEquiv.symm_apply_apply, CounitAlgebra.algEquivSelf_symm_apply] using h'
 
 end Tangent
 
