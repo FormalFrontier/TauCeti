@@ -22,9 +22,9 @@ tangent-space exponential.
 * `eventually_mulInvariantExp_log`: exponential followed after logarithm is locally the identity.
 * `eventually_mulInvariantLog_exp`: logarithm followed after exponential is locally the identity.
 * `isLocalDiffeomorphAt_lieExp_zero`: the canonical Lie-group exponential is a local
-  diffeomorphism of every finite differentiability order at zero.
+  `C∞` local diffeomorphism at zero.
 * `isLocalDiffeomorphAt_mulInvariantExpChart_zero`: the fully charted exponential is a local
-  diffeomorphism of every finite differentiability order at zero.
+  `C∞` local diffeomorphism at zero.
 * `exists_injOn_mulInvariantExp_modelSpace`: exponential is injective near zero.
 
 ## References
@@ -422,198 +422,230 @@ theorem exists_injOn_mulInvariantExp_modelSpace [FiniteDimensional ℝ E] [LieGr
   rw [mulInvariantExpOpenPartialHomeomorph_apply, mulInvariantExpOpenPartialHomeomorph_apply]
   exact congrArg (extChartAt I (1 : G)) hxy
 
-/-- The fully charted exponential is a local diffeomorphism of every finite differentiability
-order at zero. Together with `contMDiff_mulInvariantExp` and
-`contDiffAt_mulInvariantLogChart_one`, this packages the smooth inverse-function-theorem
-conclusion available from Mathlib's finite-order local-neighborhood API. -/
-theorem isLocalDiffeomorphAt_mulInvariantExpChart_zero (n : ℕ) [FiniteDimensional ℝ E]
-    [LieGroup I ∞ G]
-    [T2Space G] [BoundarylessManifold I G] :
-    IsLocalDiffeomorphAt 𝓘(ℝ, E) 𝓘(ℝ, E) (n : ℕ∞ω)
-      (mulInvariantExpChart (I := I) (G := G)) 0 := by
+/-- A smooth partial diffeomorphism for the fully charted exponential, whose source stays inside
+the identity chart. -/
+private theorem exists_mulInvariantExpChartPartialDiffeomorph [FiniteDimensional ℝ E]
+    [LieGroup I ∞ G] [T2Space G] [BoundarylessManifold I G] :
+    ∃ d : PartialDiffeomorph 𝓘(ℝ, E) 𝓘(ℝ, E) E E ∞,
+      0 ∈ d.source ∧
+      d.source ⊆ (fun v : E =>
+        mulInvariantExp (I := I) (G := G) (v : GroupLieAlgebra I G)) ⁻¹'
+          (extChartAt I (1 : G)).source ∧
+      mulInvariantExpChart (I := I) (G := G) = d := by
+  let f : E → G := fun v =>
+    mulInvariantExp (I := I) (G := G) (v : GroupLieAlgebra I G)
+  let F : E → E := mulInvariantExpChart (I := I) (G := G)
+  let S := f ⁻¹' (extChartAt I (1 : G)).source
+  have hf : ContMDiff 𝓘(ℝ, E) I ∞ f := by
+    simpa only [f] using contMDiff_mulInvariantExp (I := I) (G := G)
+  have hSopen : IsOpen S := hf.continuous.isOpen_preimage _
+    (isOpen_extChartAt_source (I := I) (1 : G))
+  have hzeroS : (0 : E) ∈ S := by
+    change f 0 ∈ (extChartAt I (1 : G)).source
+    rw [show f 0 = (1 : G) by exact mulInvariantExp_zero]
+    exact mem_extChartAt_source (I := I) (1 : G)
+  -- Global smoothness of the exponential gives smoothness of its identity-chart expression on
+  -- the fixed open set where that chart is valid.
+  have hF : ContDiffOn ℝ ∞ F S := by
+    have hcoord := (contMDiff_iff_target.mp hf).2 (1 : G)
+    rw [contMDiffOn_iff_contDiffOn] at hcoord
+    simpa only [F, S, f, mulInvariantExpChart_eq, Function.comp_def] using hcoord
+  have hDF : ContinuousOn (fderiv ℝ F) S :=
+    hF.continuousOn_fderiv_of_isOpen hSopen (by simp)
+  -- Invertible continuous linear endomorphisms form an open set. Shrinking to its derivative
+  -- preimage makes the derivative invertible at every point of one common source neighborhood.
+  let U := S ∩ (fderiv ℝ F) ⁻¹' {A : E →L[ℝ] E | IsUnit A}
+  have hUopen : IsOpen U := hDF.isOpen_inter_preimage hSopen Units.isOpen
+  have hzeroU : (0 : E) ∈ U := by
+    refine ⟨hzeroS, ?_⟩
+    change IsUnit (fderiv ℝ F 0)
+    rw [show fderiv ℝ F 0 = ContinuousLinearMap.id ℝ E by
+      simpa only [F] using
+        (hasFDerivAt_mulInvariantExpChart_zero (I := I) (G := G)).fderiv]
+    exact (ContinuousLinearEquiv.toUnit (ContinuousLinearEquiv.refl ℝ E)).isUnit
   let φ := mulInvariantExpOpenPartialHomeomorph (I := I) (G := G)
-  -- Choose neighborhoods on which the exponential and logarithm are both `C^n`.
-  obtain ⟨U, hUopen, hzeroU, hFU⟩ :=
-    (contDiffAt_mulInvariantExpChart_zero (I := I) (G := G)).contDiffOn'
-      (m := (n : ℕ∞ω)) (by exact_mod_cast le_top) (by simp)
-  obtain ⟨V, hVopen, hyV, hLV⟩ :=
-    (contDiffAt_mulInvariantLogChart_one (I := I) (G := G)).contDiffOn'
-      (m := (n : ℕ∞ω)) (by exact_mod_cast le_top) (by simp)
-  have hFU' : ContDiffOn ℝ n (mulInvariantExpChart (I := I) (G := G)) U := by
-    simpa using hFU
-  have hLV' : ContDiffOn ℝ n (mulInvariantLogChart (I := I) (G := G)) V := by
-    simpa using hLV
-  -- Restrict the inverse-function-theorem homeomorphism to those two neighborhoods.
-  let ψ : OpenPartialHomeomorph E E :=
-    (φ.restrOpen U hUopen).trans (OpenPartialHomeomorph.ofSet V hVopen)
-  have hψ_apply (x : E) : ψ x = mulInvariantExpChart (I := I) (G := G) x := by
+  let ψ := φ.restrOpen U hUopen
+  have hψ_apply (x : E) : ψ x = F x := by
     exact mulInvariantExpOpenPartialHomeomorph_apply (I := I) (G := G) x
-  have hφzeroV : φ 0 ∈ V := by
-    rw [mulInvariantExpOpenPartialHomeomorph_apply, mulInvariantExpChart_zero]
-    exact hyV
   have hzeroψ : (0 : E) ∈ ψ.source := by
-    rw [OpenPartialHomeomorph.trans_source]
-    refine ⟨?_, ?_⟩
-    · rw [OpenPartialHomeomorph.restrOpen_source]
-      exact ⟨zero_mem_mulInvariantExpOpenPartialHomeomorph_source (I := I) (G := G), hzeroU⟩
-    · exact hφzeroV
-  -- Give the restricted homeomorphism the public coordinate exponential as its forward map.
-  let ψe : PartialEquiv E E := {
-    toFun := mulInvariantExpChart (I := I) (G := G)
-    invFun := ψ.symm
-    source := ψ.source
-    target := ψ.target
-    map_source' := by
-      intro x hx
-      exact ψ.map_source hx
-    map_target' := by
-      intro x hx
-      exact ψ.map_target hx
-    left_inv' := by
-      intro x hx
-      rw [← hψ_apply]
-      exact ψ.left_inv hx
-    right_inv' := by
-      intro x hx
-      rw [← hψ_apply]
-      exact ψ.right_inv hx
-  }
-  -- Attach the two finite-order smoothness proofs to obtain the partial diffeomorphism.
-  let ψd : PartialDiffeomorph 𝓘(ℝ, E) 𝓘(ℝ, E) E E n := {
-    toPartialEquiv := ψe
+    rw [OpenPartialHomeomorph.restrOpen_source]
+    exact ⟨zero_mem_mulInvariantExpOpenPartialHomeomorph_source (I := I) (G := G), hzeroU⟩
+  have hψsmooth : ContDiffOn ℝ ∞ ψ ψ.source := by
+    rw [show (ψ : E → E) = F by funext x; exact hψ_apply x]
+    apply hF.mono
+    intro x hx
+    rw [OpenPartialHomeomorph.restrOpen_source] at hx
+    exact hx.2.1
+  -- At every target point the derivative is invertible, so smoothness of the global forward map
+  -- bootstraps the homeomorphism's inverse to `C∞` on the entire fixed target neighborhood.
+  have hψsymmSmooth : ContDiffOn ℝ ∞ ψ.symm ψ.target := by
+    intro y hy
+    have hxy := ψ.map_target hy
+    have hxyU : ψ.symm y ∈ U := by
+      rw [OpenPartialHomeomorph.restrOpen_source] at hxy
+      exact hxy.2
+    have hxyS : ψ.symm y ∈ S := hxyU.1
+    have hFxy : ContDiffAt ℝ ∞ F (ψ.symm y) :=
+      (hF (ψ.symm y) hxyS).contDiffAt (hSopen.mem_nhds hxyS)
+    obtain ⟨A, hA⟩ := hxyU.2
+    apply (ψ.contDiffAt_symm hy (f₀' := ContinuousLinearEquiv.ofUnit A) ?_ ?_).contDiffWithinAt
+    · rw [show (ψ : E → E) = F by funext x; exact hψ_apply x]
+      rw [show ((ContinuousLinearEquiv.ofUnit A : E ≃L[ℝ] E) : E →L[ℝ] E) =
+          fderiv ℝ F (ψ.symm y) by exact hA]
+      exact (hFxy.differentiableAt (by simp)).hasFDerivAt
+    · rw [show (ψ : E → E) = F by funext x; exact hψ_apply x]
+      exact hFxy
+  let d : PartialDiffeomorph 𝓘(ℝ, E) 𝓘(ℝ, E) E E ∞ := {
+    toPartialEquiv := ψ.toPartialEquiv
     open_source := ψ.open_source
     open_target := ψ.open_target
     contMDiffOn_toFun := by
       rw [contMDiffOn_iff_contDiffOn]
-      apply hFU'.mono
-      intro v hv
-      rw [OpenPartialHomeomorph.trans_source] at hv
-      exact hv.1.2
+      exact hψsmooth
     contMDiffOn_invFun := by
       rw [contMDiffOn_iff_contDiffOn]
-      apply hLV'.mono
-      intro y hy
-      rw [OpenPartialHomeomorph.trans_target] at hy
-      exact hy.1
+      exact hψsymmSmooth
   }
-  exact ψd.isLocalDiffeomorphAt 𝓘(ℝ, E) 𝓘(ℝ, E) n hzeroψ
+  refine ⟨d, hzeroψ, ?_, ?_⟩
+  · intro x hx
+    change x ∈ ψ.source at hx
+    rw [OpenPartialHomeomorph.restrOpen_source] at hx
+    exact hx.2.1
+  · funext x
+    exact (hψ_apply x).symm
 
-/-- The canonical Lie-group exponential is a local diffeomorphism of every finite
-differentiability order at zero. -/
-theorem isLocalDiffeomorphAt_lieExp_zero (n : ℕ) [FiniteDimensional ℝ E]
+/-- The fully charted exponential is a smooth local diffeomorphism at zero. -/
+theorem isLocalDiffeomorphAt_mulInvariantExpChart_zero [FiniteDimensional ℝ E]
     [LieGroup I ∞ G] [T2Space G] [BoundarylessManifold I G] :
-    IsLocalDiffeomorphAt
-      (modelWithCornersSelf ℝ (LeftInvariantDerivation I G)) I (n : ℕ∞ω)
-      (lieExp (I := I) (G := G)) 0 := by
-  let f : LeftInvariantDerivation I G → G := lieExp (I := I) (G := G)
-  let g : G → LeftInvariantDerivation I G := lieLog (I := I) (G := G)
-  -- First choose neighborhoods on which the two germ-level inverse laws hold pointwise.
-  have hgf : ∀ᶠ X in 𝓝 (0 : LeftInvariantDerivation I G), g (f X) = X := by
-    simpa only [f, g] using eventually_lieLog_lieExp (I := I) (G := G)
-  have hfg : ∀ᶠ y in 𝓝 (1 : G), f (g y) = y := by
-    simpa only [f, g] using eventually_lieExp_lieLog (I := I) (G := G)
-  obtain ⟨U₀, hU₀sub, hU₀open, hzeroU₀⟩ := mem_nhds_iff.mp hgf
-  obtain ⟨V₀, hV₀sub, hV₀open, honeV₀⟩ := mem_nhds_iff.mp hfg
-  -- Independently choose a neighborhood on which the local logarithm is `C^n`.
-  obtain ⟨W, hWopen, honeW, hgW⟩ :=
-    (contMDiffAt_lieLog_one (I := I) (G := G)).contMDiffOn'
-      (m := (n : ℕ∞ω)) (by exact_mod_cast le_top) (by simp)
-  have hgW' : ContMDiffOn I
-      (modelWithCornersSelf ℝ (LeftInvariantDerivation I G)) n g W := by
-    simpa [g] using hgW
-  have hf : ContMDiff
-      (modelWithCornersSelf ℝ (LeftInvariantDerivation I G)) I ∞ f := by
-    simpa only [f] using contMDiff_lieExp (I := I) (G := G)
-  -- Shrink the target to the common inverse-law and smoothness neighborhood. Then shrink the
-  -- source and target once more so each map lands in the other's domain; this turns the two
-  -- eventual inverse laws into the exact source/target laws required by `PartialEquiv`.
-  let Vb := V₀ ∩ W
-  have hVbopen : IsOpen Vb := hV₀open.inter hWopen
-  have honeVb : (1 : G) ∈ Vb := ⟨honeV₀, honeW⟩
-  have hgVb : ContMDiffOn I
-      (modelWithCornersSelf ℝ (LeftInvariantDerivation I G)) n g Vb :=
-    hgW'.mono Set.inter_subset_right
-  let U := U₀ ∩ f ⁻¹' Vb
-  have hUopen : IsOpen U :=
-    hU₀open.inter (hf.continuous.isOpen_preimage _ hVbopen)
-  have hzeroU : (0 : LeftInvariantDerivation I G) ∈ U := by
-    refine ⟨hzeroU₀, ?_⟩
-    change f 0 ∈ Vb
-    rw [show f 0 = (1 : G) by exact lieExp_zero]
-    exact honeVb
-  let V := Vb ∩ g ⁻¹' U
-  have hVopen : IsOpen V :=
-    hgVb.continuousOn.isOpen_inter_preimage hVbopen hUopen
-  have honeV : (1 : G) ∈ V := by
-    refine ⟨honeVb, ?_⟩
-    change g 1 ∈ U
-    rw [show g 1 = (0 : LeftInvariantDerivation I G) by exact lieLog_one]
-    exact hzeroU
-  -- Package the restricted inverse pair, followed by its finite-order smoothness data.
-  let e : PartialEquiv (LeftInvariantDerivation I G) G := {
-    toFun := f
-    invFun := g
-    source := U
+    IsLocalDiffeomorphAt 𝓘(ℝ, E) 𝓘(ℝ, E) ∞
+      (mulInvariantExpChart (I := I) (G := G)) 0 := by
+  obtain ⟨d, hzero, _, hd⟩ :=
+    exists_mulInvariantExpChartPartialDiffeomorph (I := I) (G := G)
+  rw [hd]
+  exact d.isLocalDiffeomorphAt 𝓘(ℝ, E) 𝓘(ℝ, E) ∞ hzero
+
+/-- The tangent-space exponential, viewed as a group-valued map on model coordinates, is a smooth
+local diffeomorphism at zero. -/
+theorem isLocalDiffeomorphAt_mulInvariantExp_modelSpace_zero [FiniteDimensional ℝ E]
+    [LieGroup I ∞ G] [T2Space G] [BoundarylessManifold I G] :
+    IsLocalDiffeomorphAt 𝓘(ℝ, E) I ∞
+      (fun v : E => mulInvariantExp (I := I) (G := G)
+        (v : GroupLieAlgebra I G)) 0 := by
+  let f : E → G := fun v =>
+    mulInvariantExp (I := I) (G := G) (v : GroupLieAlgebra I G)
+  obtain ⟨d, hzero, hdsource, hd⟩ :=
+    exists_mulInvariantExpChartPartialDiffeomorph (I := I) (G := G)
+  let chart := extChartAt I (1 : G)
+  let V := interior chart.target
+  have hVopen : IsOpen V := isOpen_interior
+  have honeV : extChartAt I (1 : G) (1 : G) ∈ V := by
+    exact (ModelWithCorners.isInteriorPoint_iff (I := I)).mp
+      BoundarylessManifold.isInteriorPoint
+  have hsourceOpen : IsOpen (chart.source ∩ chart ⁻¹' V) :=
+    (continuousOn_extChartAt (I := I) (1 : G)).isOpen_inter_preimage
+      (isOpen_extChartAt_source (I := I) (1 : G)) hVopen
+  let ce : PartialEquiv G E := {
+    toFun := chart
+    invFun := chart.symm
+    source := chart.source ∩ chart ⁻¹' V
     target := V
-    map_source' := by
-      intro X hX
-      refine ⟨hX.2, ?_⟩
-      change g (f X) ∈ U
-      rw [hU₀sub hX.1]
-      exact hX
+    map_source' := fun _ hx => hx.2
     map_target' := by
       intro y hy
-      exact hy.2
+      refine ⟨chart.map_target (interior_subset hy), ?_⟩
+      change chart (chart.symm y) ∈ V
+      rw [chart.right_inv (interior_subset hy)]
+      exact hy
+    left_inv' := fun _ hx => chart.left_inv hx.1
+    right_inv' := fun _ hy => chart.right_inv (interior_subset hy)
+  }
+  let c : PartialDiffeomorph I 𝓘(ℝ, E) G E ∞ := {
+    toPartialEquiv := ce
+    open_source := hsourceOpen
+    open_target := hVopen
+    contMDiffOn_toFun := by
+      apply (contMDiffOn_extChartAt (I := I) (n := ∞) (x := (1 : G))).mono
+      intro x hx
+      change x ∈ chart.source ∩ chart ⁻¹' V at hx
+      simpa only [chart, extChartAt_source] using hx.1
+    contMDiffOn_invFun :=
+      (contMDiffOn_extChartAt_symm (I := I) (1 : G)).mono interior_subset
+  }
+  let q := d.trans c.symm
+  have hzeroq : (0 : E) ∈ q.source := by
+    change 0 ∈ d.source ∩ d ⁻¹' c.symm.source
+    refine ⟨hzero, ?_⟩
+    change d 0 ∈ c.target
+    rw [← hd, mulInvariantExpChart_zero]
+    exact honeV
+  have hq (x : E) (hx : x ∈ q.source) : f x = q x := by
+    change x ∈ d.source ∩ d ⁻¹' c.symm.source at hx
+    change f x = (extChartAt I (1 : G)).symm (d x)
+    rw [← hd]
+    change f x = (extChartAt I (1 : G)).symm
+      (extChartAt I (1 : G) (f x))
+    exact ((extChartAt I (1 : G)).left_inv (hdsource hx.1)).symm
+  let e : PartialEquiv E G := {
+    toFun := f
+    invFun := q.symm
+    source := q.source
+    target := q.target
+    map_source' := by
+      intro x hx
+      rw [hq x hx]
+      exact q.map_source hx
+    map_target' := by
+      intro y hy
+      exact q.map_target hy
     left_inv' := by
-      intro X hX
-      exact hU₀sub hX.1
+      intro x hx
+      rw [hq x hx]
+      exact q.left_inv hx
     right_inv' := by
       intro y hy
-      exact hV₀sub hy.1.1
+      rw [hq (q.symm y) (q.map_target hy)]
+      exact q.right_inv hy
   }
-  let d : PartialDiffeomorph
-      (modelWithCornersSelf ℝ (LeftInvariantDerivation I G)) I
-      (LeftInvariantDerivation I G) G n := {
+  let p : PartialDiffeomorph 𝓘(ℝ, E) I E G ∞ := {
     toPartialEquiv := e
-    open_source := hUopen
-    open_target := hVopen
-    contMDiffOn_toFun := hf.contMDiffOn.of_le (by exact_mod_cast le_top)
-    contMDiffOn_invFun := hgVb.mono Set.inter_subset_left
+    open_source := q.open_source
+    open_target := q.open_target
+    contMDiffOn_toFun := by
+      simpa only [f] using
+        (contMDiff_mulInvariantExp (I := I) (G := G)).contMDiffOn
+    contMDiffOn_invFun := q.contMDiffOn_invFun
   }
-  exact d.isLocalDiffeomorphAt _ _ n hzeroU
+  change IsLocalDiffeomorphAt 𝓘(ℝ, E) I ∞ f 0
+  exact p.isLocalDiffeomorphAt 𝓘(ℝ, E) I ∞ hzeroq
 
-/-- The tangent-space exponential, viewed as a group-valued map on model coordinates, is a local
-diffeomorphism of every finite differentiability order at zero. -/
-theorem isLocalDiffeomorphAt_mulInvariantExp_modelSpace_zero (n : ℕ)
-    [FiniteDimensional ℝ E] [LieGroup I ∞ G] [T2Space G]
-    [BoundarylessManifold I G] :
-    IsLocalDiffeomorphAt 𝓘(ℝ, E) I (n : ℕ∞ω)
-      (fun v : E => mulInvariantExp (I := I) (G := G) (v : GroupLieAlgebra I G)) 0 := by
+/-- The canonical Lie-group exponential is a smooth local diffeomorphism at zero. -/
+theorem isLocalDiffeomorphAt_lieExp_zero [FiniteDimensional ℝ E]
+    [LieGroup I ∞ G] [T2Space G] [BoundarylessManifold I G] :
+    IsLocalDiffeomorphAt
+      (modelWithCornersSelf ℝ (LeftInvariantDerivation I G)) I ∞
+      (lieExp (I := I) (G := G)) 0 := by
   let L := leftInvariantDerivationLinearIsometryEquivModelVectorSpace
     (I := I) (G := G)
-  let d : E ≃ₘ^n⟮𝓘(ℝ, E),
-      modelWithCornersSelf ℝ (LeftInvariantDerivation I G)⟯
-      LeftInvariantDerivation I G := {
-    toEquiv := L.symm.toEquiv
-    contMDiff_toFun :=
-      L.toContinuousLinearEquiv.symm.contDiff.contMDiff.of_le (by exact_mod_cast le_top)
-    contMDiff_invFun :=
-      L.toContinuousLinearEquiv.contDiff.contMDiff.of_le (by exact_mod_cast le_top)
+  let d : LeftInvariantDerivation I G ≃ₘ^∞⟮
+      modelWithCornersSelf ℝ (LeftInvariantDerivation I G), 𝓘(ℝ, E)⟯ E := {
+    toEquiv := L.toEquiv
+    contMDiff_toFun := L.toContinuousLinearEquiv.contDiff.contMDiff
+    contMDiff_invFun := L.toContinuousLinearEquiv.symm.contDiff.contMDiff
   }
-  have hL : IsLocalDiffeomorphAt 𝓘(ℝ, E)
-      (modelWithCornersSelf ℝ (LeftInvariantDerivation I G)) n L.symm 0 :=
+  have hL : IsLocalDiffeomorphAt
+      (modelWithCornersSelf ℝ (LeftInvariantDerivation I G)) 𝓘(ℝ, E) ∞ L 0 :=
     d.isLocalDiffeomorph 0
-  have hgroup : IsLocalDiffeomorphAt
-      (modelWithCornersSelf ℝ (LeftInvariantDerivation I G)) I n
-      (lieExp (I := I) (G := G)) (L.symm 0) := by
-    rw [show L.symm (0 : E) = (0 : LeftInvariantDerivation I G) by
+  have hmodel : IsLocalDiffeomorphAt 𝓘(ℝ, E) I ∞
+      (fun v : E => mulInvariantExp (I := I) (G := G)
+        (v : GroupLieAlgebra I G)) (L 0) := by
+    rw [show L (0 : LeftInvariantDerivation I G) = (0 : E) by
       exact LinearEquiv.map_zero _]
-    exact isLocalDiffeomorphAt_lieExp_zero (I := I) (G := G) n
-  have hcomp := hL.comp I G hgroup
-  rw [show (fun v : E => mulInvariantExp (I := I) (G := G)
-      (v : GroupLieAlgebra I G)) = lieExp (I := I) (G := G) ∘ L.symm by
-    funext v
+    exact isLocalDiffeomorphAt_mulInvariantExp_modelSpace_zero (I := I) (G := G)
+  have hcomp := hL.comp I G hmodel
+  rw [show lieExp (I := I) (G := G) =
+      (fun v : E => mulInvariantExp (I := I) (G := G)
+        (v : GroupLieAlgebra I G)) ∘ L by
+    funext X
     rw [Function.comp_apply, lieExp_eq_mulInvariantExp,
-      ← leftInvariantDerivationLinearIsometryEquivModelVectorSpace_apply,
-      L.apply_symm_apply]]
+      leftInvariantDerivationLinearIsometryEquivModelVectorSpace_apply]]
   exact hcomp
