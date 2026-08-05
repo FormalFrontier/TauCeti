@@ -312,10 +312,13 @@ theorem lieLog_one [FiniteDimensional ℝ E] [LieGroup I ∞ G]
     [T2Space G] [BoundarylessManifold I G] :
     lieLog (I := I) (G := G) (1 : G) = 0 := by
   rw [lieLog_eq]
+  -- `GroupLieAlgebra I G` is definitionally the model space `E`, so the linear equivalence can
+  -- consume the model-space presentation of `mulInvariantLog`.
   change (leftInvariantDerivationLinearIsometryEquivModelVectorSpace
     (I := I) (G := G)).symm
       (show E from mulInvariantLog (I := I) (G := G) (1 : G)) = 0
   have hlog : (show E from mulInvariantLog (I := I) (G := G) (1 : G)) = 0 := by
+    -- Return across the same definitional identification to reuse the group-valued zero theorem.
     change mulInvariantLog (I := I) (G := G) (1 : G) =
       (0 : GroupLieAlgebra I G)
     exact mulInvariantLog_one (I := I) (G := G)
@@ -337,6 +340,8 @@ theorem eventually_lieLog_lieExp [FiniteDimensional ℝ E] [LieGroup I ∞ G]
   filter_upwards [h] with X hX
   rw [lieLog_eq, lieExp_eq_mulInvariantExp]
   rw [← leftInvariantDerivationLinearIsometryEquivModelVectorSpace_apply]
+  -- `GroupLieAlgebra I G` is definitionally `E`; expose that identification around the two
+  -- mutually inverse linear equivalences.
   change L.symm (show E from mulInvariantLog (I := I) (G := G)
     (mulInvariantExp (I := I) (G := G) (L X : GroupLieAlgebra I G))) = X
   rw [hX, L.symm_apply_apply]
@@ -396,6 +401,7 @@ theorem eventually_lieExp_lieLog [FiniteDimensional ℝ E] [LieGroup I ∞ G]
   intro g hg
   rw [lieLog_eq, lieExp_eq_mulInvariantExp]
   rw [← leftInvariantDerivationLinearIsometryEquivModelVectorSpace_apply]
+  -- `GroupLieAlgebra I G` is definitionally `E`; expose it so `L.apply_symm_apply` applies.
   change mulInvariantExp (I := I) (G := G)
     (L (L.symm (show E from mulInvariantLog (I := I) (G := G) g)) :
       GroupLieAlgebra I G) = g
@@ -501,12 +507,14 @@ theorem isLocalDiffeomorphAt_lieExp_zero (n : ℕ) [FiniteDimensional ℝ E]
       (lieExp (I := I) (G := G)) 0 := by
   let f : LeftInvariantDerivation I G → G := lieExp (I := I) (G := G)
   let g : G → LeftInvariantDerivation I G := lieLog (I := I) (G := G)
+  -- First choose neighborhoods on which the two germ-level inverse laws hold pointwise.
   have hgf : ∀ᶠ X in 𝓝 (0 : LeftInvariantDerivation I G), g (f X) = X := by
     simpa only [f, g] using eventually_lieLog_lieExp (I := I) (G := G)
   have hfg : ∀ᶠ y in 𝓝 (1 : G), f (g y) = y := by
     simpa only [f, g] using eventually_lieExp_lieLog (I := I) (G := G)
   obtain ⟨U₀, hU₀sub, hU₀open, hzeroU₀⟩ := mem_nhds_iff.mp hgf
   obtain ⟨V₀, hV₀sub, hV₀open, honeV₀⟩ := mem_nhds_iff.mp hfg
+  -- Independently choose a neighborhood on which the local logarithm is `C^n`.
   obtain ⟨W, hWopen, honeW, hgW⟩ :=
     (contMDiffAt_lieLog_one (I := I) (G := G)).contMDiffOn'
       (m := (n : ℕ∞ω)) (by exact_mod_cast le_top) (by simp)
@@ -516,6 +524,9 @@ theorem isLocalDiffeomorphAt_lieExp_zero (n : ℕ) [FiniteDimensional ℝ E]
   have hf : ContMDiff
       (modelWithCornersSelf ℝ (LeftInvariantDerivation I G)) I ∞ f := by
     simpa only [f] using contMDiff_lieExp (I := I) (G := G)
+  -- Shrink the target to the common inverse-law and smoothness neighborhood. Then shrink the
+  -- source and target once more so each map lands in the other's domain; this turns the two
+  -- eventual inverse laws into the exact source/target laws required by `PartialEquiv`.
   let Vb := V₀ ∩ W
   have hVbopen : IsOpen Vb := hV₀open.inter hWopen
   have honeVb : (1 : G) ∈ Vb := ⟨honeV₀, honeW⟩
@@ -538,6 +549,7 @@ theorem isLocalDiffeomorphAt_lieExp_zero (n : ℕ) [FiniteDimensional ℝ E]
     change g 1 ∈ U
     rw [show g 1 = (0 : LeftInvariantDerivation I G) by exact lieLog_one]
     exact hzeroU
+  -- Package the restricted inverse pair, followed by its finite-order smoothness data.
   let e : PartialEquiv (LeftInvariantDerivation I G) G := {
     toFun := f
     invFun := g
