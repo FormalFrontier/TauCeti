@@ -59,6 +59,10 @@ ball is the whole space — and that degenerate case is proved separately.
   `TauCeti.lt_maximalFunction_iff` as its interface.
 * `TauCeti.maximalFunction_const`: the maximal function of a constant is that constant, so the
   normalisation is the intended one.
+* `TauCeti.maximalFunction_mono`, `TauCeti.maximalFunction_congr_ae`: `M f` depends on `f` only
+  through `‖f‖ₑ`, and only up to a null set.
+* `TauCeti.maximalFunction_add_le`, `TauCeti.maximalFunction_const_smul`: `M` is sublinear, which
+  is what Marcinkiewicz interpolation will ask of it.
 * `TauCeti.maximalFunction_le_eLpNormEssSup`: the `L^∞` endpoint.
 * `TauCeti.lowerSemicontinuous_maximalFunction`, `TauCeti.measurable_maximalFunction`: the
   superlevel sets `{x | t < M f x}` are open, so `M f` is Borel measurable.
@@ -120,10 +124,17 @@ theorem lt_maximalFunction_iff :
   rw [maximalFunction_def]
   simp only [lt_iSup_iff, exists_prop]
 
-theorem maximalFunction_mono (h : ∀ y, ‖f y‖ₑ ≤ ‖g y‖ₑ) :
+/-- The maximal function depends on `f` only through `‖f‖ₑ`, and only up to a null set. -/
+theorem maximalFunction_mono (h : ∀ᵐ y ∂μ, ‖f y‖ₑ ≤ ‖g y‖ₑ) :
     maximalFunction μ f x ≤ maximalFunction μ g x :=
   maximalFunction_le fun _ hr =>
-    (setLAverage_mono_ae _ (.of_forall h)).trans (setLAverage_le_maximalFunction μ g x hr)
+    (setLAverage_mono_ae _ h).trans (setLAverage_le_maximalFunction μ g x hr)
+
+/-- Functions whose norms agree almost everywhere have the same maximal function. -/
+theorem maximalFunction_congr_ae (h : ∀ᵐ y ∂μ, ‖f y‖ₑ = ‖g y‖ₑ) :
+    maximalFunction μ f x = maximalFunction μ g x :=
+  le_antisymm (maximalFunction_mono (h.mono fun _ hy => hy.le))
+    (maximalFunction_mono (h.mono fun _ hy => hy.ge))
 
 /-- The `L^∞` endpoint of the maximal inequality: the maximal function of `f` is bounded by the
 essential supremum of `‖f‖`, with constant `1`. -/
@@ -143,6 +154,43 @@ theorem maximalFunction_const [ProperSpace X] (μ : Measure X) [μ.IsOpenPosMeas
       ENNReal.mul_div_cancel_right (measure_ball_pos μ x hr).ne' measure_ball_lt_top.ne]
   refine le_antisymm (maximalFunction_le fun r hr => (key r hr).le) ?_
   exact (key 1 one_pos).ge.trans (setLAverage_le_maximalFunction μ _ x one_pos)
+
+section Sublinear
+
+omit [PseudoMetricSpace X] in
+/-- Pulling a finite constant out of a set average. -/
+private theorem setLAverage_const_mul (μ : Measure X) (s : Set X) {c : ℝ≥0∞} (hc : c ≠ ∞)
+    (h : X → ℝ≥0∞) : ⨍⁻ y in s, c * h y ∂μ = c * ⨍⁻ y in s, h y ∂μ := by
+  rw [setLAverage_eq, setLAverage_eq, lintegral_const_mul' _ _ hc, mul_div_assoc]
+
+/-- The maximal function is positively homogeneous, the first half of the sublinearity that
+Marcinkiewicz interpolation asks of an operator. -/
+theorem maximalFunction_const_smul {𝕜 : Type*} [NormedRing 𝕜] [SMul 𝕜 F] [ENormSMulClass 𝕜 F]
+    (μ : Measure X) (c : 𝕜) (f : X → F) (x : X) :
+    maximalFunction μ (c • f) x = ‖c‖ₑ * maximalFunction μ f x := by
+  rw [maximalFunction_def, maximalFunction_def]
+  simp only [Pi.smul_apply, enorm_smul, ENNReal.mul_iSup]
+  exact iSup_congr fun r =>
+    iSup_congr fun _ => setLAverage_const_mul μ _ enorm_ne_top fun y => ‖f y‖ₑ
+
+variable {G : Type*} [TopologicalSpace G] [ESeminormedAddMonoid G] {f g : X → G}
+
+/-- The maximal function is subadditive, the second half of that sublinearity. Only the first
+summand needs to be measurable, as that is all `lintegral_add_left'` asks for. -/
+theorem maximalFunction_add_le (hf : AEMeasurable (fun y => ‖f y‖ₑ) μ) (x : X) :
+    maximalFunction μ (f + g) x ≤ maximalFunction μ f x + maximalFunction μ g x := by
+  refine maximalFunction_le fun r hr => ?_
+  calc ⨍⁻ y in ball x r, ‖(f + g) y‖ₑ ∂μ
+      ≤ ⨍⁻ y in ball x r, (‖f y‖ₑ + ‖g y‖ₑ) ∂μ :=
+        setLAverage_mono_ae _ (.of_forall fun y => enorm_add_le (f y) (g y))
+    _ = ⨍⁻ y in ball x r, ‖f y‖ₑ ∂μ + ⨍⁻ y in ball x r, ‖g y‖ₑ ∂μ := by
+        rw [setLAverage_eq, setLAverage_eq, setLAverage_eq, lintegral_add_left' hf.restrict,
+          ENNReal.add_div]
+    _ ≤ maximalFunction μ f x + maximalFunction μ g x :=
+        add_le_add (setLAverage_le_maximalFunction μ f x hr)
+          (setLAverage_le_maximalFunction μ g x hr)
+
+end Sublinear
 
 end PseudoMetricSpace
 
@@ -245,6 +293,8 @@ theorem lowerSemicontinuous_maximalFunction (μ : Measure E) [μ.IsAddHaarMeasur
   rw [dist_comm]
   linarith [mem_ball.mp hy]
 
+/-- The maximal function is Borel measurable, being lower semicontinuous. No hypothesis on `f` is
+needed: the supremum defining `M f` is over balls, not over values of `f`. -/
 @[fun_prop]
 theorem measurable_maximalFunction (μ : Measure E) [μ.IsAddHaarMeasure] (f : E → F) :
     Measurable (maximalFunction μ f) :=
