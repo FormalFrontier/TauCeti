@@ -96,7 +96,7 @@ the winding number of `γ` about it.
 
 This is the reading that names the theorem — the total change of `arg (f z)` along `γ`, divided by
 `2π` — and it is `TauCeti.Contour.argumentPrinciple_nullHomologous` read through
-`TauCeti.windingNumber_comp_eq_integral_logDeriv`. As there, points of `S` outside `U` are
+`TauCeti.Contour.windingNumber_comp_eq_integral_logDeriv`. As there, points of `S` outside `U` are
 harmless: null-homology makes their winding number, hence their contribution, vanish. -/
 theorem argumentPrinciple_windingNumber {ord : ℂ → ℤ} (hU : IsOpen U)
     (hoff : ∀ z ∈ U, z ∉ S → AnalyticAt ℂ f z ∧ f z ≠ 0)
