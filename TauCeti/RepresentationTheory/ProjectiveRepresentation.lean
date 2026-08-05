@@ -324,6 +324,20 @@ noncomputable def isProjectiveRepEquivAlgHom :
   left_inv ρ := Subtype.ext (projectiveRepOfAlgHom_toAlgHom ρ.2)
   right_inv _ := toAlgHom_projectiveRepOfAlgHom
 
+/-- The bijection sends a projective representation to the `k_α[G]`-module structure it
+determines. -/
+@[simp]
+theorem isProjectiveRepEquivAlgHom_apply (ρ : {ρ : G → V ≃ₗ[k] V // IsProjectiveRep ρ α}) :
+    isProjectiveRepEquivAlgHom k V α ρ = ρ.2.toAlgHom :=
+  (rfl)
+
+/-- The inverse bijection sends a `k_α[G]`-module structure to the action of the basis elements. -/
+@[simp]
+theorem isProjectiveRepEquivAlgHom_symm_apply
+    (ψ : twistedMonoidAlgebra k G α →ₐ[k] Module.End k V) :
+    ((isProjectiveRepEquivAlgHom k V α).symm ψ : G → V ≃ₗ[k] V) = projectiveRepOfAlgHom ψ :=
+  (rfl)
+
 end Group
 
 end AlgHom
