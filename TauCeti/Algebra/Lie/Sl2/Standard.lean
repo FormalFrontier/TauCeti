@@ -71,8 +71,10 @@ The three ladder operators are `@[expose]`d for the same reason. They are define
 `Module.End` literal, and unfolding that literal is exactly what proves their coordinate equations
 `TauCeti.Sl2Std.raise_apply`, `TauCeti.Sl2Std.lower_apply` and `TauCeti.Sl2Std.diag_apply`; without
 exposure those equations could not be stated as public theorems at all, and there would be no way
-to use the operators. They are the only declarations that unfold the literal, and everything
-downstream of them goes through those three equations.
+to use the operators. Exposure is what makes those three equations provable, not an invitation to
+unfold the literal again: the operators are marked `irreducible` immediately after the equations,
+so the equations really are the only elimination API and no consumer, here or downstream, can
+depend on how the operators are built.
 
 The ladder coefficients are pinned as above rather than in the more common normalization
 `e · vᵢ = i(n + 1 - i) · vᵢ₋₁`, `f · vᵢ = vᵢ₊₁`: the two differ by rescaling the basis, and in the
@@ -189,6 +191,10 @@ restated here. -/
 /-- The Cartan operator in coordinates. -/
 @[simp] theorem diag_apply (v : Sl2Std K n) (i : Fin (n + 1)) :
     diag K n v i = ((n : K) - 2 * (i : ℕ)) * v i := rfl
+
+-- The three equations above are the whole elimination API of the ladder operators; nothing
+-- unfolds their `Module.End` literals again.
+attribute [irreducible] raise lower diag
 
 /-- Raising after lowering is diagonal, with eigenvalue `(i + 1)(n - i)` at index `i`. The
 statement is uniform in `i`: at the top of the string, `i = n`, the raising operator reads past the
@@ -543,11 +549,6 @@ theorem eq_top_of_raise_mem_of_lower_mem (N : Submodule K (Sl2Std K n)) (hN : N 
     (hraise : ∀ w ∈ N, raise K n w ∈ N) (hlower : ∀ w ∈ N, lower K n w ∈ N) : N = ⊤ := by
   classical
   obtain ⟨v, hvN, hv⟩ := Submodule.exists_mem_ne_zero_of_ne_bot hN
-  have hpow : ∀ k, ((raise K n) ^ k) v ∈ N := by
-    intro k
-    induction k with
-    | zero => simpa using hvN
-    | succ k ih => rw [pow_succ', Module.End.mul_apply]; exact hraise _ ih
   -- The last nonzero vector of the sequence `v, e·v, e²·v, …` is killed by `e`.
   have hex : ∃ k, ((raise K n) ^ k) v = 0 :=
     ⟨n + 1, by rw [raise_pow_eq_zero, LinearMap.zero_apply]⟩
@@ -570,7 +571,7 @@ theorem eq_top_of_raise_mem_of_lower_mem (N : Submodule K (Sl2Std K n)) (hN : N 
     have hsmul : basis K n 0 = c⁻¹ • ((raise K n) ^ k) v := by
       rw [hcv, smul_smul, inv_mul_cancel₀ hc, one_smul]
     rw [hsmul]
-    exact N.smul_mem _ (hpow k)
+    exact N.smul_mem _ (Module.End.pow_apply_mem_of_forall_mem k hraise v hvN)
   have hall : ∀ i : Fin (n + 1), basis K n i ∈ N := by
     intro i
     induction i using Fin.induction with
@@ -632,14 +633,14 @@ instance isIrreducible_toLieSubalgebra :
   · rw [← lie_slFinTwoBasis_one]; exact hmem N _ hf w hw
 
 /-- **The classification of the finite-dimensional irreducible `sl₂`-modules.** A Noetherian
-torsion-free module over `sl (Fin 2) K` which is irreducible over the subalgebra of the standard
-triple and carries a primitive vector of weight `n` is equivalent to `V(n)`. Together with
+module over `sl (Fin 2) K` which is irreducible over the subalgebra of the standard triple and
+carries a primitive vector of weight `n` is equivalent to `V(n)`. Together with
 `TauCeti.Sl2Std.hasPrimitiveVectorWith` and `TauCeti.Sl2Std.isIrreducible_toLieSubalgebra` this
 exhibits `V(n)` as *the* irreducible of highest weight `n`: existence here, uniqueness in
 `TauCeti.lieModuleEquivOfHasPrimitiveVectorWith`. -/
 noncomputable def lieModuleEquiv {M : Type*} [AddCommGroup M] [Module K M]
     [LieRingModule (SpecialLinear.sl (Fin 2) K) M] [LieModule K (SpecialLinear.sl (Fin 2) K) M]
-    [IsTorsionFree K M] [IsNoetherian K M]
+    [IsNoetherian K M]
     [LieModule.IsIrreducible K
       ((isSl2Triple_single (R := K) (zero_ne_one : (0 : Fin 2) ≠ 1)).toLieSubalgebra K) M]
     {m : M}
@@ -655,7 +656,7 @@ the coordinate basis of `V(n)`, position by position, scaled by the coefficients
 (`TauCeti.Sl2Std.lower_pow_basis_zero`). -/
 theorem lieModuleEquiv_apply_basis {M : Type*} [AddCommGroup M] [Module K M]
     [LieRingModule (SpecialLinear.sl (Fin 2) K) M] [LieModule K (SpecialLinear.sl (Fin 2) K) M]
-    [IsTorsionFree K M] [IsNoetherian K M]
+    [IsNoetherian K M]
     [LieModule.IsIrreducible K
       ((isSl2Triple_single (R := K) (zero_ne_one : (0 : Fin 2) ≠ 1)).toLieSubalgebra K) M]
     {m : M}
