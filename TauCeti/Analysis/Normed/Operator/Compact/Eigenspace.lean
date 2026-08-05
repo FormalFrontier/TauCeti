@@ -86,27 +86,22 @@ private theorem finiteDimensional_genEigenspace_succ
   have heigker : FiniteDimensional 𝕜 (LinearMap.ker (T.toLinearMap - μ • 1)) := by
     rwa [← eigenspace_def]
   have hker : FiniteDimensional 𝕜 (LinearMap.ker A) := by
-    let := heigker
     have hkerA : LinearMap.ker A =
         (LinearMap.ker (T.toLinearMap - μ • 1)).comap
           (genEigenspace T.toLinearMap μ ((n + 1 : ℕ) : ℕ∞)).subtype := by
       dsimp only [A, genEigenspaceSuccMap]
       exact LinearMap.ker_restrict _
-    let i : LinearMap.ker A →ₗ[𝕜] LinearMap.ker (T.toLinearMap - μ • 1) :=
-      ((genEigenspace T.toLinearMap μ ((n + 1 : ℕ) : ℕ∞)).subtype.domRestrict
-        (LinearMap.ker A)).codRestrict _ fun x => by
-          change x.1 ∈ (LinearMap.ker (T.toLinearMap - μ • 1)).comap
-            (genEigenspace T.toLinearMap μ ((n + 1 : ℕ) : ℕ∞)).subtype
-          rw [← hkerA]
-          exact x.2
-    apply FiniteDimensional.of_injective i
-    rw [← LinearMap.ker_eq_bot]
-    dsimp only [i]
-    rw [LinearMap.ker_codRestrict, LinearMap.ker_domRestrict, Submodule.ker_subtype,
-      Submodule.comap_bot, Submodule.ker_subtype]
+    rw [hkerA]
+    let := heigker
+    let _ : FiniteDimensional 𝕜
+        (LinearMap.ker
+          (genEigenspace T.toLinearMap μ ((n + 1 : ℕ) : ℕ∞)).subtype) := by
+      rw [Submodule.ker_subtype]
+      infer_instance
+    infer_instance
   have hrange : FiniteDimensional 𝕜 (LinearMap.range A) := by
     let := hn
-    exact FiniteDimensional.of_injective (LinearMap.range A).subtype Subtype.val_injective
+    infer_instance
   refine ⟨(⊤ : Submodule 𝕜 (genEigenspace T.toLinearMap μ ((n + 1 : ℕ) : ℕ∞)))
     |>.fg_of_fg_map_of_fg_inf_ker A ?_ ?_⟩
   · rw [Submodule.map_top]
