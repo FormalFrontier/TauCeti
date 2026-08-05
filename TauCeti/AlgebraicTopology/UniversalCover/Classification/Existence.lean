@@ -277,6 +277,7 @@ theorem isCoveringMap_subgroupQuotientProj [LocallyPathConnectedSpace X]
         simpa only [center, fiberPath_fiberPoint] using heqₓ
       refine Set.mem_iUnion_of_mem a ?_
       rw [← subgroupQuotientMap_apply]
+      -- Expose the let-bound definition of `S` so `hS_eq_of_orbit` can match its left side.
       rw [show S a = subgroupQuotientMap x₀ H '' sheet U hxU (fiberPath a.out) from rfl,
         hS_eq_of_orbit ha_orbit]
       exact ⟨e, heqₓ', rfl⟩
