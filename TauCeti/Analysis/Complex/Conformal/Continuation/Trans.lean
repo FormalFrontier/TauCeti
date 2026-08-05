@@ -19,33 +19,30 @@ one along each factor.
 
 ## The gluing engine
 
-Both directions rest on two general facts about `TauCeti.IsAnalyticContinuationAlong`, proved
-here for an arbitrary parameter space:
+Both directions run on general facts about `TauCeti.IsAnalyticContinuationAlong`, stated for an
+arbitrary parameter space in `Continuation/Basic.lean` and consumed here:
 
 * only the values of the path on the parameter set matter
-  (`TauCeti.IsAnalyticContinuationAlong.congr_path`), the companion of the germ-level
-  `TauCeti.IsAnalyticContinuationAlong.congr` already available;
+  (`TauCeti.IsAnalyticContinuationAlong.congr_path`);
 * one family of germs that continues over each of two **closed** parameter sets continues over
-  their union (`TauCeti.IsAnalyticContinuationAlong.union`).
+  their union (`TauCeti.IsAnalyticContinuationAlong.union`) — closedness being what makes the
+  gluing true rather than a convenience, since the locality condition over a parameter set is
+  vacuous outside its closure.
 
-Closedness is what makes the union statement true and is not a convenience: the condition
-`∀ᶠ u in 𝓝[s] t, …` defining a continuation is vacuous at a parameter time `t` outside the
-closure of `s`, so a set may be enlarged by points it does not cling to for free, and the union
-of two closed sets adds no new clinging. Without it the germ carried on one piece would be
-unrelated to the germ carried on the other at a shared limit point.
-
-The restriction direction needs no new engine at all: reading `γ` as the first half of
-`γ.trans δ` is a reparametrisation, and `TauCeti.IsAnalyticContinuationAlong.reparam` already
-transports a continuation along any reparametrisation.
+The restriction direction needs no gluing at all: reading `γ` as the first half of `γ.trans δ` is
+a reparametrisation, and `TauCeti.IsAnalyticContinuationAlong.reparam` already transports a
+continuation along any reparametrisation.
 
 ## The concatenated family
 
 The family of germs carried along `γ.trans δ` is written down explicitly, as
 `TauCeti.transFamily`: on the first half of the parameter interval it is the family carried along
-`γ`, read at twice the parameter, and on the second half the one carried along `δ`. The two halves
-are compared at the junction, where `TauCeti.transFamily` takes the value coming from `γ`; the
-hypothesis of `TauCeti.IsAnalyticContinuationAlong.trans` is exactly that the germ `γ` delivers
-there agrees with the germ `δ` starts from.
+`γ`, read at twice the parameter, and on the second half the one carried along `δ`. Assembling two
+families indexed by the unit interval into one is pure reparametrisation, so `TauCeti.transFamily`
+carries values in an arbitrary sort and is specialised to germs only where continuations are
+concatenated. The two halves are compared at the junction, where `TauCeti.transFamily` takes the
+value coming from `γ`; the hypothesis of `TauCeti.IsAnalyticContinuationAlong.trans` is exactly
+that the germ `γ` delivers there agrees with the germ `δ` starts from.
 
 ## Moving the base point
 
@@ -58,14 +55,14 @@ restriction plus uniqueness of continuation along a fixed path identify the germ
 
 ## Main results
 
-* `TauCeti.IsAnalyticContinuationAlong.congr_path` — a continuation depends on the path only
-  through its values on the parameter set.
-* `TauCeti.IsAnalyticContinuationAlong.union` — continuations glue over two closed parameter sets.
 * `TauCeti.transFamily` — the family of germs carried along a concatenation.
 * `TauCeti.IsAnalyticContinuationAlong.trans` — **continuations concatenate**: two continuations
   whose germs match at the junction assemble into a continuation along `γ.trans δ`.
 * `TauCeti.continuesAlong_trans` — the germ-level form: a germ that continues along `γ` to a germ
   that continues along `δ` continues along `γ.trans δ`.
+* `TauCeti.IsAnalyticContinuationAlong.left_of_trans`, `.right_of_trans` — **continuations
+  restrict**: a continuation along `γ.trans δ` reads as a continuation along `γ` and one
+  along `δ`.
 * `TauCeti.continuesInside_of_isAnalyticContinuationAlong` — **continuability inside a domain
   travels with the germ**: continuing inside `U` along a path of `U` again continues inside `U`.
 
@@ -92,92 +89,65 @@ namespace TauCeti
 
 open Filter Set Topology unitInterval
 
-/-! ### Gluing continuations over a union of parameter sets -/
+/-! ### The family carried along a concatenation -/
 
-section Glue
+section TransFamily
 
-variable {X : Type*} [TopologicalSpace X] {f : X → ℂ → ℂ} {γ γ' : X → ℂ} {s t : Set X}
+variable {Y : Sort*}
 
-namespace IsAnalyticContinuationAlong
+/-- The family carried along a concatenation `γ.trans δ` of paths, assembled from the family `F`
+carried along `γ` and the family `G` carried along `δ`: on the first half of the parameter interval
+it is `F`, read at twice the parameter, and on the second half it is `G`, read at twice the
+parameter minus one. The junction time `1 / 2` is assigned the value coming from `F`, matching the
+convention of `Path.trans`.
 
-/-- **A continuation depends on the path only through its values on the parameter set.** This is
-the path-level companion of `TauCeti.IsAnalyticContinuationAlong.congr`, which says the same for
-the family of germs. -/
-theorem congr_path (hf : IsAnalyticContinuationAlong f γ s) (h : EqOn γ' γ s) :
-    IsAnalyticContinuationAlong f γ' s where
-  continuousOn := hf.continuousOn.congr h
-  analyticAt u hu := by rw [h hu]; exact hf.analyticAt u hu
-  locallyEq u hu := by
-    filter_upwards [hf.locallyEq u hu, self_mem_nhdsWithin] with v hv hvs
-    rwa [h hvs]
-
-/-- **Continuations glue over closed parameter sets.** One family of germs that is a continuation
-along `γ` over each of two closed parameter sets is a continuation over their union.
-
-Closedness is essential rather than cosmetic. At a parameter time outside the closure of `s` the
-locality condition over `s` is vacuous, so it says nothing about how the germ carried there
-relates to the germs carried on `s`; taking `s` and `t` closed makes every parameter time of the
-union cling only to the piece it already lies in. -/
-theorem union (hf : IsAnalyticContinuationAlong f γ s) (hg : IsAnalyticContinuationAlong f γ t)
-    (hs : IsClosed s) (ht : IsClosed t) : IsAnalyticContinuationAlong f γ (s ∪ t) where
-  continuousOn := hf.continuousOn.union_of_isClosed hg.continuousOn hs ht
-  analyticAt u hu := hu.elim (hf.analyticAt u) (hg.analyticAt u)
-  locallyEq u _ := by
-    rw [nhdsWithin_union, eventually_sup]
-    constructor
-    · by_cases hus : u ∈ s
-      · exact hf.locallyEq u hus
-      · have hcl : u ∉ closure s := by rwa [hs.closure_eq]
-        rw [notMem_closure_iff_nhdsWithin_eq_bot.mp hcl]
-        exact eventually_bot
-    · by_cases hut : u ∈ t
-      · exact hg.locallyEq u hut
-      · have hcl : u ∉ closure t := by rwa [ht.closure_eq]
-        rw [notMem_closure_iff_nhdsWithin_eq_bot.mp hcl]
-        exact eventually_bot
-
-end IsAnalyticContinuationAlong
-
-end Glue
-
-/-! ### The family of germs carried along a concatenation -/
-
-section Trans
-
-variable {a b c : ℂ} {f₀ : ℂ → ℂ} {F G : I → ℂ → ℂ}
-
-/-- The family of germs carried along a concatenation `γ.trans δ` of paths, assembled from the
-family `F` carried along `γ` and the family `G` carried along `δ`: on the first half of the
-parameter interval it is `F`, read at twice the parameter, and on the second half it is `G`, read
-at twice the parameter minus one. The junction time `1 / 2` is assigned the germ coming from `F`,
-matching the convention of `Path.trans`. -/
-noncomputable def transFamily (F G : I → ℂ → ℂ) (u : I) : ℂ → ℂ :=
+Assembling the two halves is pure reparametrisation of the unit interval, so the values are
+allowed to lie in an arbitrary sort; the case of interest is `Y = ℂ → ℂ`, where `F` and `G` are
+families of germs (`TauCeti.IsAnalyticContinuationAlong.trans`). -/
+noncomputable def transFamily (F G : I → Y) (u : I) : Y :=
   if (u : ℝ) ≤ 1 / 2 then F (projIcc 0 1 zero_le_one (2 * u))
   else G (projIcc 0 1 zero_le_one (2 * u - 1))
 
-/-- On the first half of the parameter interval the concatenated family is the first family. -/
-theorem transFamily_of_le_half (F G : I → ℂ → ℂ) {u : I} (hu : (u : ℝ) ≤ 1 / 2) :
+/-- On the first half of the parameter interval the concatenated family is the first family.
+
+Not a `simp` lemma: its hypothesis is a side condition on a variable parameter that `simp` cannot
+discharge, and marking it `simp` would shadow the endpoint lemmas `TauCeti.transFamily_zero` and
+`TauCeti.transFamily_one` below, which are the useful normal forms. -/
+theorem transFamily_of_le_half (F G : I → Y) {u : I} (hu : (u : ℝ) ≤ 1 / 2) :
     transFamily F G u = F (projIcc 0 1 zero_le_one (2 * u)) :=
   if_pos hu
 
-/-- Strictly past the junction the concatenated family is the second family. -/
-theorem transFamily_of_half_lt (F G : I → ℂ → ℂ) {u : I} (hu : 1 / 2 < (u : ℝ)) :
+/-- Strictly past the junction the concatenated family is the second family. Not a `simp` lemma,
+for the reason given at `TauCeti.transFamily_of_le_half`. -/
+theorem transFamily_of_half_lt (F G : I → Y) {u : I} (hu : 1 / 2 < (u : ℝ)) :
     transFamily F G u = G (projIcc 0 1 zero_le_one (2 * u - 1)) :=
   if_neg (not_le.mpr hu)
 
+/-- At parameter time `0` the concatenated family is the initial value of the first family:
+a concatenation starts where its first factor starts. -/
 @[simp]
-theorem transFamily_zero (F G : I → ℂ → ℂ) : transFamily F G 0 = F 0 := by
+theorem transFamily_zero (F G : I → Y) : transFamily F G 0 = F 0 := by
   rw [transFamily_of_le_half F G (by norm_num)]
   congr 1
   ext
   norm_num [coe_projIcc]
 
+/-- At parameter time `1` the concatenated family is the terminal value of the second family:
+a concatenation ends where its second factor ends. -/
 @[simp]
-theorem transFamily_one (F G : I → ℂ → ℂ) : transFamily F G 1 = G 1 := by
+theorem transFamily_one (F G : I → Y) : transFamily F G 1 = G 1 := by
   rw [transFamily_of_half_lt F G (by norm_num)]
   congr 1
   ext
   norm_num [coe_projIcc]
+
+end TransFamily
+
+/-! ### Concatenating continuations -/
+
+section Trans
+
+variable {a b c : ℂ} {f₀ : ℂ → ℂ} {F G : I → ℂ → ℂ}
 
 /-- **Continuations concatenate.** If `F` continues a germ along `p`, `G` continues a germ along
 `q`, and the germ `F` delivers at the end of `p` is the germ `G` starts from, then
@@ -204,10 +174,14 @@ theorem IsAnalyticContinuationAlong.trans {p : Path a b} {q : Path b c}
       ((⇑p) ∘ fun u : I => projIcc (0 : ℝ) 1 zero_le_one (2 * u))
       {u : I | (u : ℝ) ≤ 1 / 2} := by
     intro u hu
+    have hu' : (u : ℝ) ≤ 1 / 2 := hu
+    have hmem : 2 * (u : ℝ) ∈ Icc (0 : ℝ) 1 := ⟨by linarith [u.2.1], by linarith⟩
     calc (p.trans q) u
         = (p.trans q).extend (u : ℝ) := ((p.trans q).extend_extends' u).symm
       _ = p.extend (2 * u) := Path.extend_trans_of_le_half p q hu
-      _ = p (projIcc (0 : ℝ) 1 zero_le_one (2 * u)) := rfl
+      _ = p.extend ((projIcc (0 : ℝ) 1 zero_le_one (2 * u) : I) : ℝ) := by
+            rw [projIcc_of_mem _ hmem]
+      _ = p (projIcc (0 : ℝ) 1 zero_le_one (2 * u)) := p.extend_extends' _
   have h₁' : IsAnalyticContinuationAlong (transFamily F G) (⇑(p.trans q))
       {u : I | (u : ℝ) ≤ 1 / 2} :=
     (h₁.congr_path hpath₁).congr fun u hu => by
@@ -222,10 +196,14 @@ theorem IsAnalyticContinuationAlong.trans {p : Path a b} {q : Path b c}
       ((⇑q) ∘ fun u : I => projIcc (0 : ℝ) 1 zero_le_one (2 * u - 1))
       {u : I | 1 / 2 ≤ (u : ℝ)} := by
     intro u hu
+    have hu' : 1 / 2 ≤ (u : ℝ) := hu
+    have hmem : 2 * (u : ℝ) - 1 ∈ Icc (0 : ℝ) 1 := ⟨by linarith, by linarith [u.2.2]⟩
     calc (p.trans q) u
         = (p.trans q).extend (u : ℝ) := ((p.trans q).extend_extends' u).symm
       _ = q.extend (2 * u - 1) := Path.extend_trans_of_half_le p q hu
-      _ = q (projIcc (0 : ℝ) 1 zero_le_one (2 * u - 1)) := rfl
+      _ = q.extend ((projIcc (0 : ℝ) 1 zero_le_one (2 * u - 1) : I) : ℝ) := by
+            rw [projIcc_of_mem _ hmem]
+      _ = q (projIcc (0 : ℝ) 1 zero_le_one (2 * u - 1)) := q.extend_extends' _
   have h₂' : IsAnalyticContinuationAlong (transFamily F G) (⇑(p.trans q))
       {u : I | 1 / 2 ≤ (u : ℝ)} := by
     refine (h₂.congr_path hpath₂).congr fun u hu => ?_
@@ -258,9 +236,14 @@ theorem continuesAlong_trans {p : Path a b} {q : Path b c}
 
 /-! ### Restricting a continuation to the factors of a concatenation -/
 
-/-- Reading a continuation along `p.trans q` on the first half of the parameter interval gives a
-continuation along `p`. -/
-private theorem isAnalyticContinuationAlong_comp_half_left {H : I → ℂ → ℂ} {p : Path a b}
+/-- **A continuation along a concatenation restricts to its first factor.** Reading a continuation
+along `p.trans q` on the first half of the parameter interval — that is, precomposing with the
+halving map `t ↦ t / 2` — gives a continuation along `p`.
+
+This is the converse of `TauCeti.IsAnalyticContinuationAlong.trans`, and needs no gluing: the
+first half of `p.trans q` is `p` reparametrised, so
+`TauCeti.IsAnalyticContinuationAlong.reparam` transports the continuation. -/
+theorem IsAnalyticContinuationAlong.left_of_trans {H : I → ℂ → ℂ} {p : Path a b}
     {q : Path b c} (h : IsAnalyticContinuationAlong H (⇑(p.trans q)) univ) :
     IsAnalyticContinuationAlong (fun t : I => H (projIcc (0 : ℝ) 1 zero_le_one ((t : ℝ) / 2)))
       (⇑p) univ := by
@@ -269,15 +252,19 @@ private theorem isAnalyticContinuationAlong_comp_half_left {H : I → ℂ → �
   refine (h.reparam (φ := fun t : I => projIcc (0 : ℝ) 1 zero_le_one ((t : ℝ) / 2))
     (s' := univ) hψ.continuousOn (mapsTo_univ _ _)).congr_path fun t _ => ?_
   have ht : (t : ℝ) / 2 ≤ 1 / 2 := by linarith [t.2.2]
+  have hmem : (t : ℝ) / 2 ∈ Icc (0 : ℝ) 1 := ⟨by linarith [t.2.1], by linarith⟩
   calc (p : I → ℂ) t
       = p.extend (t : ℝ) := (p.extend_extends' t).symm
     _ = p.extend (2 * ((t : ℝ) / 2)) := by ring_nf
     _ = (p.trans q).extend ((t : ℝ) / 2) := (Path.extend_trans_of_le_half p q ht).symm
-    _ = (p.trans q) (projIcc (0 : ℝ) 1 zero_le_one ((t : ℝ) / 2)) := rfl
+    _ = (p.trans q).extend ((projIcc (0 : ℝ) 1 zero_le_one ((t : ℝ) / 2) : I) : ℝ) := by
+          rw [projIcc_of_mem _ hmem]
+    _ = (p.trans q) (projIcc (0 : ℝ) 1 zero_le_one ((t : ℝ) / 2)) := (p.trans q).extend_extends' _
 
-/-- Reading a continuation along `p.trans q` on the second half of the parameter interval gives a
-continuation along `q`. -/
-private theorem isAnalyticContinuationAlong_comp_half_right {H : I → ℂ → ℂ} {p : Path a b}
+/-- **A continuation along a concatenation restricts to its second factor.** Reading a continuation
+along `p.trans q` on the second half of the parameter interval — that is, precomposing with
+`t ↦ (t + 1) / 2` — gives a continuation along `q`. -/
+theorem IsAnalyticContinuationAlong.right_of_trans {H : I → ℂ → ℂ} {p : Path a b}
     {q : Path b c} (h : IsAnalyticContinuationAlong H (⇑(p.trans q)) univ) :
     IsAnalyticContinuationAlong
       (fun t : I => H (projIcc (0 : ℝ) 1 zero_le_one (((t : ℝ) + 1) / 2))) (⇑q) univ := by
@@ -286,11 +273,15 @@ private theorem isAnalyticContinuationAlong_comp_half_right {H : I → ℂ → �
   refine (h.reparam (φ := fun t : I => projIcc (0 : ℝ) 1 zero_le_one (((t : ℝ) + 1) / 2))
     (s' := univ) hψ.continuousOn (mapsTo_univ _ _)).congr_path fun t _ => ?_
   have ht : 1 / 2 ≤ ((t : ℝ) + 1) / 2 := by linarith [t.2.1]
+  have hmem : ((t : ℝ) + 1) / 2 ∈ Icc (0 : ℝ) 1 := ⟨by linarith, by linarith [t.2.2]⟩
   calc (q : I → ℂ) t
       = q.extend (t : ℝ) := (q.extend_extends' t).symm
     _ = q.extend (2 * (((t : ℝ) + 1) / 2) - 1) := by ring_nf
     _ = (p.trans q).extend (((t : ℝ) + 1) / 2) := (Path.extend_trans_of_half_le p q ht).symm
-    _ = (p.trans q) (projIcc (0 : ℝ) 1 zero_le_one (((t : ℝ) + 1) / 2)) := rfl
+    _ = (p.trans q).extend ((projIcc (0 : ℝ) 1 zero_le_one (((t : ℝ) + 1) / 2) : I) : ℝ) := by
+          rw [projIcc_of_mem _ hmem]
+    _ = (p.trans q) (projIcc (0 : ℝ) 1 zero_le_one (((t : ℝ) + 1) / 2)) :=
+          (p.trans q).extend_extends' _
 
 /-! ### Continuability inside a domain travels with the germ -/
 
@@ -320,7 +311,7 @@ theorem continuesInside_of_isAnalyticContinuationAlong {U : Set ℂ} {z₀ z₁ 
     (H.continuesAlong (p.trans q).continuous hpq (p.trans q).source)
   rw [(p.trans q).source] at hK0
   -- The first factor: the germ reached at the junction is the one `F` delivers.
-  have hleft := isAnalyticContinuationAlong_comp_half_left hK
+  have hleft := hK.left_of_trans
   have hzero : projIcc (0 : ℝ) 1 zero_le_one (((0 : I) : ℝ) / 2) = 0 := by
     ext; norm_num [coe_projIcc]
   have hstart : (fun t : I => K (projIcc (0 : ℝ) 1 zero_le_one ((t : ℝ) / 2))) 0
@@ -331,7 +322,7 @@ theorem continuesInside_of_isAnalyticContinuationAlong {U : Set ℂ} {z₀ z₁ 
   have hmid := hleft.eventuallyEq hF isPreconnected_univ (mem_univ 0) (mem_univ 1) hstart
   rw [p.target] at hmid
   -- The second factor: it starts at the junction germ, hence at `F 1`.
-  have hright := isAnalyticContinuationAlong_comp_half_right hK
+  have hright := hK.right_of_trans
   have hjunction : projIcc (0 : ℝ) 1 zero_le_one ((((0 : I) : ℝ) + 1) / 2)
       = projIcc (0 : ℝ) 1 zero_le_one (((1 : I) : ℝ) / 2) := by
     ext; norm_num [coe_projIcc]
