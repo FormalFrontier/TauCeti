@@ -75,6 +75,8 @@ theorem asAlgebraHom_ofModule'_apply (r : k[G]) (x : M) :
 
 /-- **The `k[G]`-module underlying `Representation.ofModule' M` is `M` itself.**  The map is the
 identity; the content is that the two `k[G]`-actions agree. -/
+-- `@[expose]` is needed: without the body, the `rfl` proof of the characteristic lemma
+-- `ofModule'AsModuleEquiv_apply` below cannot be checked outside this module.
 @[expose] noncomputable def ofModule'AsModuleEquiv :
     (_root_.Representation.ofModule' (k := k) (G := G) M).asModule ≃ₗ[k[G]] M where
   toFun := (_root_.Representation.ofModule' (k := k) (G := G) M).asModuleEquiv
