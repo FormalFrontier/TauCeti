@@ -99,25 +99,25 @@ noncomputable def maximalFunction (μ : Measure X) (f : X → F) (x : X) : ℝ�
 
 variable {μ : Measure X} {f : X → F} {g : X → F'} {x : X} {r : ℝ} {a t : ℝ≥0∞}
 
-theorem maximalFunction_eq (μ : Measure X) (f : X → F) (x : X) :
+theorem maximalFunction_def (μ : Measure X) (f : X → F) (x : X) :
     maximalFunction μ f x = ⨆ r > 0, ⨍⁻ y in ball x r, ‖f y‖ₑ ∂μ := (rfl)
 
 /-- Every ball average is at most the maximal function: the introduction rule. -/
 theorem setLAverage_le_maximalFunction (μ : Measure X) (f : X → F) (x : X) (hr : 0 < r) :
     ⨍⁻ y in ball x r, ‖f y‖ₑ ∂μ ≤ maximalFunction μ f x := by
-  rw [maximalFunction_eq]
+  rw [maximalFunction_def]
   exact le_iSup₂ (f := fun r (_ : 0 < r) => ⨍⁻ y in ball x r, ‖f y‖ₑ ∂μ) r hr
 
 /-- A bound holding for every ball average bounds the maximal function: the elimination rule. -/
 theorem maximalFunction_le (h : ∀ r > 0, ⨍⁻ y in ball x r, ‖f y‖ₑ ∂μ ≤ a) :
     maximalFunction μ f x ≤ a := by
-  rw [maximalFunction_eq]
+  rw [maximalFunction_def]
   exact iSup₂_le h
 
 /-- The maximal function exceeds `t` exactly when some ball average does. -/
 theorem lt_maximalFunction_iff :
     t < maximalFunction μ f x ↔ ∃ r > 0, t < ⨍⁻ y in ball x r, ‖f y‖ₑ ∂μ := by
-  rw [maximalFunction_eq]
+  rw [maximalFunction_def]
   simp only [lt_iSup_iff, exists_prop]
 
 theorem maximalFunction_mono (h : ∀ y, ‖f y‖ₑ ≤ ‖g y‖ₑ) :
@@ -245,6 +245,7 @@ theorem lowerSemicontinuous_maximalFunction (μ : Measure E) [μ.IsAddHaarMeasur
   rw [dist_comm]
   linarith [mem_ball.mp hy]
 
+@[fun_prop]
 theorem measurable_maximalFunction (μ : Measure E) [μ.IsAddHaarMeasure] (f : E → F) :
     Measurable (maximalFunction μ f) :=
   (lowerSemicontinuous_maximalFunction μ f).measurable
