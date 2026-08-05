@@ -27,18 +27,21 @@ centralizer
 (`TauCeti.centralizer_diagonalTorus`), so it is a maximal abelian subgroup: no larger subgroup of
 `GL n k` contains it and is commutative.
 
-Self-centralization needs two hypotheses, both genuine.  The ring must have no zero divisors: an
-off-diagonal entry `g i j` of a centralizing matrix satisfies `g i j * (t i - t j) = 0` for
-diagonal entries `t i ≠ t j`, and it vanishes because the second factor is nonzero — not because
-that factor is invertible, which it need not be (`TauCeti.apply_eq_zero_of_commute_diagonal`).
-And the unit group must have two distinct elements, since a diagonal matrix can only separate the
-coordinate lines it distinguishes; two units already suffice, because only one pair of
-coordinates is separated at a time.  What happens without that hypothesis is recorded too: over a
-ring with only one unit, such as `𝔽₂`, the torus is trivial (`TauCeti.diagonalTorus_eq_bot`)
-while its centralizer is the whole of `GL n k` (`TauCeti.centralizer_diagonalTorus_eq_top`).
-These two subgroups differ, so self-centralization genuinely fails, exactly when `GL n k` is
-itself nontrivial — over `𝔽₂` that is the case for `n ≥ 2`, while for `n ≤ 1` the whole group is
-trivial and the conclusion survives for want of anything to contradict it.
+Self-centralization is proved under two hypotheses, neither of them idle.  The absence of zero
+divisors is a sufficient hypothesis rather than a necessary one: an off-diagonal entry `g i j` of
+a centralizing matrix satisfies `g i j * (t i - t j) = 0` for diagonal entries `t i ≠ t j`, and
+`NoZeroDivisors k` is what cancels the second factor — not invertibility of that factor, which it
+need not have (`TauCeti.apply_eq_zero_of_commute_diagonal`).  All the argument asks of the ring is
+that the two units it separates the coordinates with differ by a regular element.  The second
+hypothesis, that the unit group has two distinct elements, is there because a diagonal matrix can
+only separate the coordinate lines it distinguishes; two units already suffice, because only one
+pair of coordinates is separated at a time.  That one cannot simply be dropped, and what happens
+without it is recorded here: over a ring with only one unit, such as `𝔽₂`, the torus is trivial
+(`TauCeti.diagonalTorus_eq_bot`) while its centralizer is the whole of `GL n k`
+(`TauCeti.centralizer_diagonalTorus_eq_top`).  These two subgroups differ, so self-centralization
+genuinely fails, exactly when `GL n k` is itself nontrivial — over `𝔽₂` that is the case for
+`n ≥ 2`, while for `n ≤ 1` the whole group is trivial and the conclusion survives for want of
+anything to contradict it.
 
 Finally the action of the torus on the coordinate lines `k ∙ eᵢ` of the standard representation
 is recorded: every torus element scales `eᵢ` by its `i`-th diagonal entry
