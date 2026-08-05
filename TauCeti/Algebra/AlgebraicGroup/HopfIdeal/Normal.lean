@@ -21,8 +21,7 @@ with the first tensor factor carrying the conjugating variable. Thus `I` is norm
 commutative value algebra, the subgroup cut out by a normal Hopf ideal is a normal subgroup of
 the ambient group of points.
 
-Normal Hopf ideals are closed under arbitrary suprema. In particular, the zero Hopf ideal is
-normal, and the join of two normal Hopf ideals is normal.
+Normal Hopf ideals are closed under arbitrary suprema.
 
 ## Main declarations
 
@@ -80,29 +79,11 @@ theorem IsNormal.conjugation_mem {I : HopfIdeal R H} (hI : I.IsNormal) {x : H} (
       rightTensorIdeal (R := R) (H := H) I.toIdeal :=
   (isNormal_iff_conjugation_mem I).mp hI hx
 
-/-- The zero Hopf ideal is normal. -/
-@[simp]
-theorem isNormal_bot : IsNormal (⊥ : HopfIdeal R H) := by
-  rw [isNormal_def, bot_toIdeal, Ideal.map_bot]
-  exact bot_le
-
-/-- A join of normal Hopf ideals is normal. -/
-theorem IsNormal.sup {I J : HopfIdeal R H} (hI : I.IsNormal) (hJ : J.IsNormal) :
-    (I ⊔ J).IsNormal := by
-  rw [isNormal_def, sup_toIdeal, Ideal.map_sup, rightTensorIdeal_sup]
-  exact sup_le_sup hI hJ
-
 /-- An arbitrary supremum of normal Hopf ideals is normal. -/
 theorem isNormal_iSup {i : Sort*} {I : i → HopfIdeal R H} (hI : ∀ j, (I j).IsNormal) :
     (⨆ j, I j).IsNormal := by
   rw [isNormal_def, iSup_toIdeal, Ideal.map_iSup, rightTensorIdeal_iSup]
   exact iSup_le fun j ↦ le_iSup_of_le j (hI j)
-
-/-- The supremum of a set of normal Hopf ideals is normal. -/
-theorem isNormal_sSup {S : Set (HopfIdeal R H)} (hS : ∀ I ∈ S, I.IsNormal) :
-    (sSup S).IsNormal := by
-  rw [isNormal_def, sSup_toIdeal, Ideal.map_iSup, rightTensorIdeal_iSup]
-  exact iSup_le fun I ↦ le_iSup_of_le I (hS I I.property)
 
 end HopfIdeal
 
@@ -129,8 +110,7 @@ theorem quotientPointsSubgroup_normal (H : _root_.CommHopfAlgCat.{v} R)
   exact RingHom.mem_ker.mp (hker (hI.conjugation_mem hx))
 
 /-- A Hopf ideal is normal if and only if it cuts out a normal subgroup over every
-commutative value algebra. The reverse implication is detected by the universal pair of
-points in `H ⊗[R] (H ⧸ I)`. -/
+commutative value algebra. -/
 theorem isNormal_iff_quotientPointsSubgroup_normal
     (H : _root_.CommHopfAlgCat.{v} R) (I : HopfIdeal R H) :
     I.IsNormal ↔ ∀ A : CommAlgCat.{v} R, (quotientPointsSubgroup H I A).Normal := by
@@ -176,11 +156,7 @@ theorem isNormal_iff_quotientPointsSubgroup_normal
         mul_one, one_mul]
     rw [hproduct] at heval
     have hmem := RingHom.mem_ker.mpr heval
-    rw [Algebra.TensorProduct.lTensor_ker (A := H) (Ideal.Quotient.mkₐ R I.toIdeal)
-      (Ideal.Quotient.mkₐ_surjective R I.toIdeal)] at hmem
-    rw [← RingHom.ker_coe_toRingHom (Ideal.Quotient.mkₐ R I.toIdeal),
-      Ideal.Quotient.mkₐ_ker R I.toIdeal] at hmem
-    rw [AlgHom.coe_ideal_map] at hmem
+    rw [HopfIdeal.ker_tensorProduct_map_id_quotient I.toIdeal] at hmem
     exact hmem
 
 end CommHopfAlgCat
