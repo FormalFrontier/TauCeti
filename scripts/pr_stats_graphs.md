@@ -36,9 +36,10 @@ It requires an authenticated `gh` CLI. In GitHub Actions, set `GH_TOKEN` to
   the engine started stamping that block; `pr-stats.json` records how many marker comments
   were rejected and why.
   This is a count of posted scoreboards, not reconstructed review rounds; scoreboards
-  edited in place remain one comment. As in the status pipeline, attribution accepts
-  only comments whose author association is `OWNER`, `MEMBER`, or `COLLABORATOR`; an
-  external account cannot forge review credit with a pasted marker and metadata block.
+  edited in place remain one comment. Attribution accepts only comments whose posting
+  login also authors a merged PR in the fetched snapshot. This excludes arbitrary external
+  commenters without requiring the read-only Actions token to enumerate collaborators; a
+  contributor who has authored a merged PR is inside this statistics trust boundary.
 - Seven-day metrics use complete UTC calendar days. Merge latency is PR creation to
   merge time among PRs merged in that trailing window. Cumulative contributor histories
   include events through the snapshot time, including the current partial UTC day.

@@ -91,6 +91,10 @@ joining them can be named.
   `TauCeti.exists_tendsto_nhdsWithin_ball_inter_sphere` and
   `TauCeti.exists_clusterSetOn_ball_inter_sphere_eq_singleton` — the three arc statements at the arc
   of a circular crosscut, the last of them the form `Conformal/Crosscut/Image.lean` indexes over.
+* `TauCeti.exists_biUnion_clusterSetOn_ball_inter_sphere_eq_pair` — hence the union of the cluster
+  sets at the two endpoints, the term `Conformal/Crosscut/Image.lean` adjoins to the image crosscut
+  to close it, is a pair of points. (That file also identifies the union with the boundary piece the
+  image crosscut clings to, but only for injective `f`.)
 * `TauCeti.exists_closure_image_ball_inter_sphere_eq_insert` — hence the closure of an image
   crosscut of finite length is the image crosscut together with two points.
 
@@ -494,18 +498,25 @@ theorem exists_clusterSetOn_ball_inter_sphere_eq_singleton (hζ : dist ζ c = r)
     (by linarith [Real.pi_pos]) hθ₀ (fun _ hθ => circleMap_mem_ball_of_mem_Ioo hζ hρ hρr hθ)
     (lintegral_enorm_deriv_circleMap_ne_top hζ hρ hρr hfin)
 
-/-- **The closure of an image crosscut of finite length is the image crosscut together with two
-points.** `Conformal/Crosscut/Image.lean` writes that closure as the image crosscut together with
-the cluster sets at the two endpoints; finiteness of the length collapses each of those to a point.
+/-- **The two ends of a circular crosscut of finite image length are two points.** The union of the
+cluster sets of `f` at the two endpoints of the crosscut is a pair. That union is the term
+`Conformal/Crosscut/Image.lean` adjoins to the image crosscut to write
+`closure (f '' (ball c r ∩ sphere ζ ρ))`, under exactly the hypotheses assumed here; that
+decomposition is a union, not a disjoint one, so nothing here says the pair misses the image
+crosscut. The other description of the union in that file, as the piece of
+`frontier (f '' ball c r)` the image crosscut clings to, is *not* available here: it asks `f` to be
+injective on `ball c r`, which makes `f '' ball c r` open and hence disjoint from its own
+frontier. Adding that hypothesis is
+`TauCeti.exists_frontier_inter_closure_image_ball_inter_sphere_eq_pair` of
+`Conformal/Crosscut/BoundaryEnds.lean`.
 
 Nothing is claimed about the two points: they may coincide, an image crosscut being free to close
 up. What a boundary-correspondence argument needs of them is that they are points at all, so that
 the arc of a locally connected image boundary joining them can be named. -/
-theorem exists_closure_image_ball_inter_sphere_eq_insert (hζ : dist ζ c = r) (hρ : 0 < ρ)
+theorem exists_biUnion_clusterSetOn_ball_inter_sphere_eq_pair (hζ : dist ζ c = r) (hρ : 0 < ρ)
     (hρr : ρ < 2 * r) (hf : DifferentiableOn ℂ f (ball c r))
     (hfin : circleImageLength f (ball c r) ζ ρ ≠ ⊤) :
-    ∃ u v, closure (f '' (ball c r ∩ sphere ζ ρ)) =
-      insert u (insert v (f '' (ball c r ∩ sphere ζ ρ))) := by
+    ∃ u v, ⋃ e ∈ sphere c r ∩ sphere ζ ρ, clusterSetOn f (ball c r ∩ sphere ζ ρ) e = {u, v} := by
   have hpair : sphere c r ∩ sphere ζ ρ =
       {circleMap ζ ρ ((c - ζ).arg - Real.arccos (ρ / (2 * r))),
         circleMap ζ ρ ((c - ζ).arg + Real.arccos (ρ / (2 * r)))} :=
@@ -520,13 +531,27 @@ theorem exists_closure_image_ball_inter_sphere_eq_insert (hζ : dist ζ c = r) (
     exists_clusterSetOn_ball_inter_sphere_eq_singleton hζ hρ hρr hf hfin (hsub _ hp)
   obtain ⟨v, hv⟩ :=
     exists_clusterSetOn_ball_inter_sphere_eq_singleton hζ hρ hρr hf hfin (hsub _ hq)
+  exact ⟨u, v, by rw [hpair, biUnion_pair, hu, hv, singleton_union]⟩
+
+/-- **The closure of an image crosscut of finite length is the image crosscut together with two
+points.** `Conformal/Crosscut/Image.lean` writes that closure as the image crosscut together with
+the cluster sets at the two endpoints, and
+`TauCeti.exists_biUnion_clusterSetOn_ball_inter_sphere_eq_pair` collapses those to a pair.
+
+Which two points they are is not recorded here; the sharper statement that they are exactly the
+points where the closed image crosscut meets `frontier (f '' ball c r)` is
+`TauCeti.exists_frontier_inter_closure_image_ball_inter_sphere_eq_pair` in
+`Conformal/Crosscut/BoundaryEnds.lean`, which asks injectivity of `f` in addition. -/
+theorem exists_closure_image_ball_inter_sphere_eq_insert (hζ : dist ζ c = r) (hρ : 0 < ρ)
+    (hρr : ρ < 2 * r) (hf : DifferentiableOn ℂ f (ball c r))
+    (hfin : circleImageLength f (ball c r) ζ ρ ≠ ⊤) :
+    ∃ u v, closure (f '' (ball c r ∩ sphere ζ ρ)) =
+      insert u (insert v (f '' (ball c r ∩ sphere ζ ρ))) := by
+  obtain ⟨u, v, hends⟩ := exists_biUnion_clusterSetOn_ball_inter_sphere_eq_pair hζ hρ hρr hf hfin
   have hr : 0 < r := by linarith
-  have hends : ⋃ e ∈ frontier (ball c r) ∩ sphere ζ ρ,
-      clusterSetOn f (ball c r ∩ sphere ζ ρ) e = {u, v} := by
-    rw [frontier_ball c hr.ne', hpair, biUnion_pair, hu, hv, singleton_union]
   refine ⟨u, v, ?_⟩
   rw [closure_image_inter_sphere_eq_union_biUnion_clusterSetOn
-    (hf.continuousOn.mono inter_subset_left), hends]
+    (hf.continuousOn.mono inter_subset_left), frontier_ball c hr.ne', hends]
   simp
 
 end TauCeti
