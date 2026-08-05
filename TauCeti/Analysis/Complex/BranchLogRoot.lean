@@ -34,15 +34,25 @@ continuous logarithm of a holomorphic nonvanishing function is automatically hol
 
 ## Attribution and upstream coordination
 
-The mathematics here is an upgrade of prior Mathlib work, not a first proof, and rests on two
-efforts of Yury Kudryashov's.
+The mathematics here is an upgrade of prior Mathlib work, not a first proof. The logarithm and
+zero-free root branches rest on two efforts of Yury Kudryashov's; the germ statement rests in
+addition on Mathlib's order-of-vanishing formalization.
 
 *The branch itself* is Mathlib's: `Complex.exists_continuousOn_eqOn_exp_comp` in
 `Mathlib.Analysis.Complex.BranchLogRoot` (© Yury Kudryashov) supplies the continuous logarithm
-branch on a simply connected domain, which this file consumes rather than rebuilds. Everything
-added below is the continuity-to-holomorphy upgrade. The `n`-th root is *not* obtained from
-Mathlib's continuous root API (`Complex.exists_continuousOn_pow_eq` is never used here): it is
-derived as `exp (L / n)` from the upgraded holomorphic logarithm branch `L`.
+branch on a simply connected domain, which this file consumes rather than rebuilds. What
+`TauCeti.exists_differentiableOn_eqOn_exp_comp` and `TauCeti.exists_differentiableOn_pow_eq` add to
+it is the continuity-to-holomorphy upgrade. The `n`-th root is *not* obtained from Mathlib's
+continuous root API (`Complex.exists_continuousOn_pow_eq` is never used here): it is derived as
+`exp (L / n)` from the upgraded holomorphic logarithm branch `L`.
+
+*The order of vanishing* is Mathlib's too: `Mathlib.Analysis.Analytic.Order` (© Vincent Beffara;
+authors Vincent Beffara and Stefan Kebekus) formalizes `analyticOrderAt` and the factorization
+theory around it, on which `TauCeti.exists_eventuallyEq_pow_iff_dvd` rests throughout.
+`AnalyticAt.analyticOrderAt_eq_natCast` supplies the factorization of a germ of finite order,
+`analyticOrderAt_eq_top` identifies the germ of order `⊤` as the one vanishing near `z₀`, and
+`analyticOrderAt_pow` gives the converse direction outright. What is added here is only the
+assembly of those with the root branch above.
 
 *The consumer* is the Riemann mapping construction in `Mathlib.Analysis.Complex.RiemannMapping`
 (© Yury Kudryashov), whose `Complex.exists_mapsTo_unitBall_injOn_deriv_ne_zero` performs the same
@@ -54,9 +64,11 @@ The Riemann mapping theorem is being formalized upstream at
 holomorphic log / `n`-th-root statements (`exists_branch_log`, `exists_branch_nthRoot`)
 **internally, as private lemmas**, alongside the argument principle, Hurwitz and Montel. The
 `ConformalMapping` roadmap's stated contribution at these layers is therefore *named, reusable API*
-rather than first proof. Accordingly the declarations here are a **temporary shim**: when the
-human-curated Mathlib versions land, these should be deleted and every downstream consumer
-refactored onto them.
+rather than first proof. Accordingly the two branch declarations here are a **temporary shim**: when
+the human-curated Mathlib versions land, those should be deleted and every downstream consumer
+refactored onto them. That does not extend to `TauCeti.exists_eventuallyEq_pow_iff_dvd`: the
+upstream statements are zero-free, like the ones they replace, so they do not subsume a germ that
+vanishes.
 
 ## Roots of a germ that vanishes
 
