@@ -101,15 +101,16 @@ theorem isDiag_of_mem_diagonalTorus {g : GL (Fin n) k} (hg : g ∈ diagonalTorus
     (g : Matrix (Fin n) (Fin n) k).IsDiag :=
   mem_diagonalTorus_iff.mp hg
 
-/-- Off-diagonal entries of an element of the diagonal torus vanish. -/
-theorem apply_eq_zero_of_mem_diagonalTorus {g : GL (Fin n) k} (hg : g ∈ diagonalTorus k n)
-    {i j : Fin n} (hij : i ≠ j) : (g : Matrix (Fin n) (Fin n) k) i j = 0 :=
-  isDiag_of_mem_diagonalTorus hg hij
-
 /-- The diagonal torus is the group of coordinatewise units. -/
 noncomputable def diagonalTorusEquiv (k : Type u) [CommRing k] (n : ℕ) :
     (Fin n → kˣ) ≃* diagonalTorus k n :=
   MonoidHom.ofInjective diagGL_injective
+
+/-- The torus element attached to a family of units is `diagGL t`. -/
+@[simp]
+theorem coe_diagonalTorusEquiv_apply (t : Fin n → kˣ) :
+    ((diagonalTorusEquiv k n t : diagonalTorus k n) : GL (Fin n) k) = diagGL t :=
+  MonoidHom.ofInjective_apply diagGL_injective
 
 /-- The `i`-th coordinate character of a torus element is its `(i, i)` matrix entry. -/
 @[simp]
@@ -150,10 +151,7 @@ section NoZeroDivisors
 
 variable [NoZeroDivisors k] [Nontrivial kˣ]
 
-/-- **The diagonal torus is its own centralizer**, hence a maximal abelian subgroup of `GL n k`.
-Two distinct units `u ≠ v` are all the argument needs: for `i ≠ j` the family taking the value
-`u` at `i` and `v` elsewhere gives a diagonal matrix separating those two coordinates, which
-kills the `(i, j)` entry of anything commuting with it. -/
+/-- **The diagonal torus is its own centralizer**, hence a maximal abelian subgroup of `GL n k`. -/
 theorem centralizer_diagonalTorus :
     Subgroup.centralizer (diagonalTorus k n : Set (GL (Fin n) k)) = diagonalTorus k n := by
   refine le_antisymm (fun g hg => mem_diagonalTorus_iff.mpr fun i j hij => ?_)

@@ -115,8 +115,7 @@ section NoZeroDivisors
 variable [NoZeroDivisors k]
 
 /-- A matrix commuting with a diagonal matrix has vanishing `(i, j)` entry whenever the diagonal
-matrix separates the coordinates `i` and `j`.  Comparing the `(i, j)` entries of the two products
-gives `tᵢ * gᵢⱼ = gᵢⱼ * tⱼ`, so `gᵢⱼ` is annihilated by `tᵢ - tⱼ`, which is nonzero. -/
+matrix separates the coordinates `i` and `j`. -/
 theorem apply_eq_zero_of_commute_diagonal {t : Fin n → k} {g : Matrix (Fin n) (Fin n) k}
     (hg : Commute (Matrix.diagonal t) g) {i j : Fin n} (hij : t i ≠ t j) : g i j = 0 := by
   have hentry : (Matrix.diagonal t * g) i j = (g * Matrix.diagonal t) i j := by rw [hg.eq]
