@@ -53,6 +53,12 @@ from `z₀` — the hypothesis the monodromy theorem for a simply connected doma
 that germ continues inside `U` from `z₁`. Concatenation supplies the paths issuing from `z₁`, and
 restriction plus uniqueness of continuation along a fixed path identify the germ reached halfway.
 
+Transport is in fact an equivalence, `TauCeti.continuesInside_iff_of_isAnalyticContinuationAlong`:
+the reversed path `p.symm` carries the germ back, the family read backwards being a continuation
+along it by `TauCeti.IsAnalyticContinuationAlong.reparam`. So no endpoint of the path is
+distinguished — continuability inside `U` is a property of the domain and of the branch being
+carried, and any point the branch reaches may serve as its base point.
+
 ## Main results
 
 * `TauCeti.transFamily` — the family of germs carried along a concatenation.
@@ -67,6 +73,8 @@ restriction plus uniqueness of continuation along a fixed path identify the germ
   that continues along `γ.trans δ` continues along `γ`.
 * `TauCeti.continuesInside_of_isAnalyticContinuationAlong` — **continuability inside a domain
   travels with the germ**: continuing inside `U` along a path of `U` again continues inside `U`.
+* `TauCeti.continuesInside_iff_of_isAnalyticContinuationAlong` — the equivalence: the two germs at
+  the ends of such a path continue inside `U` together, or neither does.
 
 ## Coordination with upstream Mathlib
 
@@ -361,6 +369,34 @@ theorem continuesInside_of_isAnalyticContinuationAlong {U : Set ℂ} {z₀ z₁ 
     ⟨fun t : I => K (projIcc (0 : ℝ) 1 zero_le_one (((t : ℝ) + 1) / 2)), hright, ?_⟩
   rw [q.source]
   simpa only [hjunction] using hmid
+
+/-- **Continuability inside a domain is a property of the branch alone.** If `F` continues a germ
+along a path `p` of `U` from `z₀` to `z₁`, then the germ `F 1` delivered at `z₁` continues inside
+`U` exactly when the germ `F 0` it started from does.
+
+This strengthens `TauCeti.continuesInside_of_isAnalyticContinuationAlong`, its `←` direction, to
+an equivalence, and drops the representative `f₀` from the statement; the version with a
+representative is recovered from `TauCeti.continuesInside_congr`. The `→` direction transports the
+base point back along the reversed path `p.symm`, along which the family read backwards, `F ∘ σ`,
+is again a continuation: reversing the parameter is a reparametrisation of the parameter interval
+by the central symmetry `σ`, which `TauCeti.IsAnalyticContinuationAlong.reparam` transports. So
+neither endpoint of `p` is distinguished, and any point the branch reaches inside `U` may serve as
+the base point of `TauCeti.ContinuesInside`, the hypothesis of the monodromy theorem for a simply
+connected domain (`Conformal/GlobalBranch.lean`). -/
+theorem continuesInside_iff_of_isAnalyticContinuationAlong {U : Set ℂ} {z₀ z₁ : ℂ}
+    {p : Path z₀ z₁} (hpU : ∀ t, p t ∈ U) (hF : IsAnalyticContinuationAlong F (⇑p) univ) :
+    ContinuesInside (F 1) U z₁ ↔ ContinuesInside (F 0) U z₀ := by
+  -- The family read backwards is a continuation along the reversed path.
+  have hsymm : IsAnalyticContinuationAlong (F ∘ σ) (⇑p.symm) univ :=
+    (hF.reparam continuous_symm.continuousOn (mapsTo_univ _ _)).congr_path fun t _ => by
+      rw [Path.symm_apply]
+  refine ⟨fun h => ?_, fun h => continuesInside_of_isAnalyticContinuationAlong h hpU hF .rfl⟩
+  have hstart : (F ∘ σ) 0 =ᶠ[𝓝 z₁] F 1 := by
+    simp only [Function.comp_apply, symm_zero]
+    exact .rfl
+  have hback := continuesInside_of_isAnalyticContinuationAlong h (p := p.symm)
+    (fun t => by rw [Path.symm_apply]; exact hpU (σ t)) hsymm hstart
+  rwa [Function.comp_apply, symm_one] at hback
 
 end Trans
 
