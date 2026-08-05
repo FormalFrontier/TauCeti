@@ -41,9 +41,8 @@ local-endomorphism-ring theorem. Both are supplied here.
 * `TauCeti.isLocalRing_end_of_isIndecomposable`: the endomorphism ring of an indecomposable module
   of finite length is local, and `TauCeti.nontrivial_of_isLocalRing_end` for the converse direction
   that a local endomorphism ring forces the module to be nonzero.
-* `TauCeti.isIndecomposableModule_iff_nontrivial_and_isLocalRing_end`: for a module of finite
-  length the converse holds too, so indecomposability is *equivalent* to being nontrivial and
-  having a local endomorphism ring.
+* `TauCeti.isIndecomposableModule_iff_isLocalRing_end`: for a module of finite length the converse
+  holds too, so indecomposability is *equivalent* to having a local endomorphism ring.
 
 ## Implementation notes
 
@@ -57,9 +56,8 @@ and `IsSimpleModule` is itself only defined for modules over a ring.
 The finiteness hypothesis is carried as the pair of instances `[IsNoetherian A M] [IsArtinian A M]`
 on the lemmas that consume it, which is what Mathlib's Fitting decomposition asks for. The
 `IsFiniteLength A M` spelling appears on the headline statements
-`isLocalRing_end_of_isIndecomposable` and
-`isIndecomposableModule_iff_nontrivial_and_isLocalRing_end`, which unpack it through
-`isFiniteLength_iff_isNoetherian_isArtinian`.
+`isLocalRing_end_of_isIndecomposable` and `isIndecomposableModule_iff_isLocalRing_end`, which
+unpack it through `isFiniteLength_iff_isNoetherian_isArtinian`.
 
 ## References
 
@@ -267,18 +265,20 @@ theorem nontrivial_of_isLocalRing_end [IsLocalRing (Module.End A M)] : Nontrivia
       zero_ne_one
   · exact h
 
-/-- A nonzero module with local endomorphism ring is indecomposable. This is the converse of
-`TauCeti.isLocalRing_end_of_isIndecomposable`, and needs no finiteness hypothesis. -/
-theorem isIndecomposableModule_of_isLocalRing_end [Nontrivial M]
-    [IsLocalRing (Module.End A M)] : IsIndecomposableModule A M :=
+/-- A module with local endomorphism ring is indecomposable. This is the converse of
+`TauCeti.isLocalRing_end_of_isIndecomposable`, and needs no finiteness hypothesis; nontriviality
+comes for free, by `TauCeti.nontrivial_of_isLocalRing_end`. -/
+theorem isIndecomposableModule_of_isLocalRing_end [IsLocalRing (Module.End A M)] :
+    IsIndecomposableModule A M :=
+  have := nontrivial_of_isLocalRing_end (A := A) (M := M)
   isIndecomposableModule_of_forall_isIdempotentElem fun _ hf ↦
     IsLocalRing.eq_zero_or_eq_one_of_isIdempotentElem hf
 
-/-- For a module of finite length, indecomposability is **equivalent** to being nontrivial and
-having a local endomorphism ring. -/
-theorem isIndecomposableModule_iff_nontrivial_and_isLocalRing_end (hM : IsFiniteLength A M) :
-    IsIndecomposableModule A M ↔ Nontrivial M ∧ IsLocalRing (Module.End A M) := by
-  refine ⟨fun h ↦ ⟨h.nontrivial, isLocalRing_end_of_isIndecomposable hM h⟩, fun ⟨_, h⟩ ↦ ?_⟩
+/-- For a module of finite length, indecomposability is **equivalent** to having a local
+endomorphism ring. -/
+theorem isIndecomposableModule_iff_isLocalRing_end (hM : IsFiniteLength A M) :
+    IsIndecomposableModule A M ↔ IsLocalRing (Module.End A M) := by
+  refine ⟨isLocalRing_end_of_isIndecomposable hM, fun h ↦ ?_⟩
   have := h
   exact isIndecomposableModule_of_isLocalRing_end
 
