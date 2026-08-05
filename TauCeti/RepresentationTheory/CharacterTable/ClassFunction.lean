@@ -36,7 +36,7 @@ definitional equalities, which would in turn require exposing the definitions.
 
 namespace TauCeti
 
-universe u v w
+universe u v w w'
 
 /-- The submodule of functions on `G` that are constant under conjugation. -/
 def ClassFunction (k : Type u) (G : Type v) [Semiring k] [Group G] : Submodule k (G → k) where
@@ -98,6 +98,18 @@ def comap {H : Type w} [Group H] (φ : H →* G) :
 @[simp]
 theorem comap_apply {H : Type w} [Group H] (φ : H →* G) (f : ClassFunction k G) (x : H) :
     (comap φ f).1 x = f.1 (φ x) :=
+  (rfl)
+
+/-- Pulling back along the identity homomorphism changes nothing. -/
+@[simp]
+theorem comap_id : comap (MonoidHom.id G) = LinearMap.id (R := k) (M := ClassFunction k G) :=
+  (rfl)
+
+/-- Pullback is contravariantly functorial: pulling back along a composite is pulling back along
+each factor in turn. -/
+@[simp]
+theorem comap_comp {H : Type w} {J : Type w'} [Group H] [Group J] (φ : H →* G) (ψ : J →* H) :
+    comap (k := k) (φ.comp ψ) = (comap ψ).comp (comap φ) :=
   (rfl)
 
 /-- Class functions on `G` are linearly equivalent to functions on its conjugacy classes. -/

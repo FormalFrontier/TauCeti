@@ -61,45 +61,10 @@ private theorem quotientRightRelEquivQuotientLeftRel_mk (S : Subgroup G) (x : G)
       @Quotient.mk'' G (QuotientGroup.leftRel S) x⁻¹
   apply Quotient.map'_mk''
 
-open scoped Classical in
-/-- The contribution of a group element to the induced-character sum at a representative `x`. -/
-private noncomputable def inducedCharacterTerm {V : Type u} [AddCommGroup V] [Module k V]
-    (ρ : Representation k S V) (g x : G) : k :=
-  if h : x⁻¹ * g * x ∈ S then ρ.character ⟨x⁻¹ * g * x, h⟩ else 0
-
-/-- The induced-character summand is unchanged on replacing a representative by another
-representative of the same left coset. -/
-private theorem inducedCharacterTerm_mul {V : Type u} [AddCommGroup V] [Module k V]
-    (ρ : Representation k S V) (g x : G) (s : S) :
-    inducedCharacterTerm ρ g (x * s) = inducedCharacterTerm ρ g x := by
-  by_cases hx : x⁻¹ * g * x ∈ S
-  · have hxs : (x * (s : G))⁻¹ * g * (x * s) ∈ S := by
-      simpa [mul_assoc] using S.mul_mem (S.mul_mem (S.inv_mem s.2) hx) s.2
-    rw [inducedCharacterTerm, dif_pos hxs, inducedCharacterTerm, dif_pos hx]
-    have helem :
-        (⟨(x * (s : G))⁻¹ * g * (x * s), hxs⟩ : S) =
-          s⁻¹ * ⟨x⁻¹ * g * x, hx⟩ * s := by
-      apply Subtype.ext
-      simp only [Subgroup.coe_mul, Subgroup.coe_inv]
-      group
-    rw [helem]
-    simpa only [inv_inv] using ρ.char_conj ⟨x⁻¹ * g * x, hx⟩ s⁻¹
-  · have hxs : (x * (s : G))⁻¹ * g * (x * s) ∉ S := by
-      intro h
-      apply hx
-      simpa [mul_assoc] using S.mul_mem (S.mul_mem s.2 h) (S.inv_mem s.2)
-    rw [inducedCharacterTerm, dif_neg hxs, inducedCharacterTerm, dif_neg hx]
-
-/-- The induced-character summand depends only on the left coset of its representative. -/
-private theorem inducedCharacterTerm_eq_of_mk_eq {V : Type u} [AddCommGroup V] [Module k V]
-    (ρ : Representation k S V) (g x y : G)
-    (hxy : (QuotientGroup.mk x : G ⧸ S) = QuotientGroup.mk y) :
-    inducedCharacterTerm ρ g x = inducedCharacterTerm ρ g y := by
-  have hs : x⁻¹ * y ∈ S :=
-    QuotientGroup.leftRel_apply.mp (Quotient.exact' hxy)
-  let s : S := ⟨x⁻¹ * y, hs⟩
-  have hy : x * (s : G) = y := by simp [s]
-  rw [← hy, inducedCharacterTerm_mul]
+/-- A character is a class function, so `TauCeti.indTerm` applies to it. -/
+private theorem character_mem_classFunction {V : Type u} [AddCommGroup V] [Module k V]
+    (ρ : Representation k S V) : ρ.character ∈ ClassFunction k S :=
+  ClassFunction.mem_iff.mpr ρ.char_conj
 
 open scoped Classical in
 /-- The trace of the induced action, computed on the right-coset model. -/
@@ -137,7 +102,7 @@ cosets. -/
 private theorem trace_ind_eq_sum_terms [S.FiniteIndex] [Fintype (RightCosets S)]
     (A : Rep.{u} k S) [FiniteDimensional k A] (g : G) :
     LinearMap.trace k (Rep.ind S.subtype A) ((Rep.ind S.subtype A).ρ g) =
-      ∑ q : RightCosets S, inducedCharacterTerm A.ρ g q.out⁻¹ := by
+      ∑ q : RightCosets S, indTerm A.ρ.character g q.out⁻¹ := by
   rw [trace_ind_eq_sum_rightCosets A g]
   apply Finset.sum_congr rfl
   intro q _
@@ -150,7 +115,7 @@ private theorem trace_ind_eq_sum_terms [S.FiniteIndex] [Fintype (RightCosets S)]
         simpa [mul_assoc] using
           (QuotientGroup.rightRel_apply.mp (Quotient.exact' hq'))
       simpa [mul_assoc] using S.inv_mem hinv
-    rw [if_pos hq, inducedCharacterTerm, dif_pos (by simpa [mul_assoc] using hmem)]
+    rw [if_pos hq, indTerm_apply, dif_pos (by simpa [mul_assoc] using hmem)]
     have hfactor :
         rightCosetFactor (S := S) (q.out * g) =
           ⟨q.out * g * q.out⁻¹, hmem⟩ := by
@@ -173,7 +138,7 @@ private theorem trace_ind_eq_sum_terms [S.FiniteIndex] [Fintype (RightCosets S)]
       refine (Quotient.sound' ?_).trans (Quotient.out_eq' q)
       rw [QuotientGroup.rightRel_apply]
       simpa [mul_assoc] using S.inv_mem h
-    rw [if_neg hq, inducedCharacterTerm, dif_neg (by simpa [mul_assoc] using hmem)]
+    rw [if_neg hq, indTerm_apply, dif_neg (by simpa [mul_assoc] using hmem)]
 
 end Rep
 
@@ -225,11 +190,11 @@ theorem character_indFDRep_sum_quotient {k G : Type u} [Field k] [Group G]
   rw [hcharacter, Rep.trace_ind_eq_sum_terms A' g]
   let e := QuotientGroup.quotientRightRelEquivQuotientLeftRel S
   calc
-    (∑ q : Rep.RightCosets S, Rep.inducedCharacterTerm A'.ρ g q.out⁻¹) =
-        ∑ t : G ⧸ S, Rep.inducedCharacterTerm A'.ρ g t.out := by
+    (∑ q : Rep.RightCosets S, indTerm A'.ρ.character g q.out⁻¹) =
+        ∑ t : G ⧸ S, indTerm A'.ρ.character g t.out := by
       apply Fintype.sum_equiv e
       intro q
-      apply Rep.inducedCharacterTerm_eq_of_mk_eq
+      refine indTerm_eq_of_mk_eq (Rep.character_mem_classFunction A'.ρ) _ _ _ ?_
       have heq : e q = QuotientGroup.mk q.out⁻¹ := by
         calc
           e q = e (Quotient.mk'' q.out) :=
@@ -240,7 +205,7 @@ theorem character_indFDRep_sum_quotient {k G : Type u} [Field k] [Group G]
     _ = _ := by
       apply Finset.sum_congr rfl
       intro t _
-      rw [Rep.inducedCharacterTerm]
+      rw [indTerm_apply]
       by_cases hmem : t.out⁻¹ * g * t.out ∈ S
       · rw [dif_pos hmem, dif_pos hmem, hforgetCharacter]
       · rw [dif_neg hmem, dif_neg hmem]

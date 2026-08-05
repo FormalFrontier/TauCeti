@@ -23,6 +23,10 @@ and to deduce `TauCeti.character_ind` from `TauCeti.indClassFun_eq_natCard_inv_m
 
 ## Main definitions
 
+* `TauCeti.indTerm f g x`: the summand attached to a representative `x`, namely `f (x⁻¹ g x)`
+  when `x⁻¹ g x` lies in the subgroup and `0` otherwise.  It is the summand of the
+  induced-character formula too, which the character file uses at `f = ρ.character`, together
+  with the coset-invariance lemmas `TauCeti.indTerm_mul` and `TauCeti.indTerm_eq_of_mk_eq`.
 * `TauCeti.indClassFun S f`: the function `G → k` obtained from `f : S → k` by summing `f` over
   those left coset representatives that conjugate `g` into `S`.  There is no division by `|S|`,
   so it needs no invertibility hypothesis and no more than an additive commutative monoid of
@@ -76,9 +80,18 @@ variable [AddCommMonoid k]
 
 open scoped Classical in
 /-- The summand of the induced class function attached to a representative `x`: the value of `f`
-at `x⁻¹ * g * x` when that element lies in the subgroup, and `0` otherwise. -/
-private noncomputable def indTerm (f : S → k) (g x : G) : k :=
+at `x⁻¹ * g * x` when that element lies in the subgroup, and `0` otherwise.
+
+Specialized to the character of a representation of `S` this is the summand of the
+induced-character formula `TauCeti.character_indFDRep_sum_quotient`. -/
+noncomputable def indTerm (f : S → k) (g x : G) : k :=
   if h : x⁻¹ * g * x ∈ S then f ⟨x⁻¹ * g * x, h⟩ else 0
+
+open scoped Classical in
+/-- The defining case split of `TauCeti.indTerm`. -/
+theorem indTerm_apply (f : S → k) (g x : G) :
+    indTerm f g x = if h : x⁻¹ * g * x ∈ S then f ⟨x⁻¹ * g * x, h⟩ else 0 :=
+  (rfl)
 
 /-- Conjugating the argument of the summand translates the representative. -/
 private theorem indTerm_conj (f : S → k) (g x c : G) :
@@ -166,7 +179,7 @@ variable {f : S → k}
 
 /-- Replacing a representative `x` by `x * s` for `s` in the subgroup does not change the
 summand, because `f` is constant on conjugacy classes of the subgroup. -/
-private theorem indTerm_mul (hf : f ∈ ClassFunction k S) (g x : G) (s : S) :
+theorem indTerm_mul (hf : f ∈ ClassFunction k S) (g x : G) (s : S) :
     indTerm f g (x * s) = indTerm f g x := by
   classical
   by_cases hx : x⁻¹ * g * x ∈ S
@@ -186,7 +199,7 @@ private theorem indTerm_mul (hf : f ∈ ClassFunction k S) (g x : G) (s : S) :
 
 /-- The summand of the induced class function depends only on the left coset of its
 representative. -/
-private theorem indTerm_eq_of_mk_eq (hf : f ∈ ClassFunction k S) (g x y : G)
+theorem indTerm_eq_of_mk_eq (hf : f ∈ ClassFunction k S) (g x y : G)
     (hxy : (QuotientGroup.mk x : G ⧸ S) = QuotientGroup.mk y) :
     indTerm f g x = indTerm f g y := by
   have hs : x⁻¹ * y ∈ S := QuotientGroup.leftRel_apply.mp (Quotient.exact' hxy)
