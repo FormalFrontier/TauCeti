@@ -5,7 +5,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.Algebra.MonoidAlgebra.Module
-public import Mathlib.RepresentationTheory.Basic
 public import Mathlib.RepresentationTheory.Subrepresentation
 
 /-!
@@ -52,8 +51,10 @@ is no ring structure on `k[X]` for a ring homomorphism to be defined on.  On the
 monoid, the two maps agree, both sending `single x a` to `a`.
 
 Invertibility of `|X|` in `k`, rather than an ordered field or an averaging operator, is what the
-splitting needs, and it is the sharp hypothesis: if `|X| = 0` in `k` then `permutationSum` itself
-lies in the augmentation subrepresentation, and the two are not complementary.
+splitting needs, and for a nonempty `X` over a nontrivial `k` it is the sharp hypothesis: if
+`|X| = 0` in `k` then `permutationSum` is a nonzero element of the augmentation subrepresentation,
+so the invariant line meets it and the two are not complementary.  For an empty `X`, or a trivial
+`k`, every module in sight is zero and the two are complementary whatever `|X|` is in `k`.
 
 ## References
 
@@ -223,16 +224,19 @@ theorem toRepresentation_invariantLine :
   have hw : (w : MonoidAlgebra k X) ∈ Submodule.span k {permutationSum k X} := by
     rw [← toSubmodule_invariantLine k G X]; exact w.2
   obtain ⟨c, hc⟩ := Submodule.mem_span_singleton.mp hw
-  change Representation.ofMulAction k G X g (w : MonoidAlgebra k X) = (w : MonoidAlgebra k X)
+  -- both sides act on the underlying element of `k[X]`: `Subrepresentation.toRepresentation` is
+  -- the restriction of the ambient action, and the trivial representation is the identity
+  simp only [Subrepresentation.toRepresentation, MonoidHom.coe_mk, OneHom.coe_mk,
+    LinearMap.coe_restrict_apply, Representation.trivial_apply]
   rw [← hc, map_smul, ofMulAction_permutationSum]
 
 end InvariantLine
 
 /-! ### The splitting -/
 
-section Field
+section Span
 
-variable (k : Type*) [Field k] (G X : Type*) [Group G] [MulAction G X]
+variable (k : Type*) [CommRing k] (X : Type*)
 
 /-- The augmentation subrepresentation is spanned by the differences of the standard basis vectors
 from a fixed one. -/
@@ -256,7 +260,11 @@ theorem ker_sumCoords_basis_eq_span (x₀ : X) :
   · rintro _ ⟨x, rfl⟩
     simp only [SetLike.mem_coe, LinearMap.mem_ker, map_sub, sumCoords_basis_single, sub_self]
 
-variable [Fintype X]
+end Span
+
+section Field
+
+variable (k : Type*) [Field k] (G X : Type*) [Group G] [MulAction G X] [Fintype X]
 
 /-- The invariant line is a line. -/
 @[simp]
@@ -295,9 +303,15 @@ theorem isCompl_invariantLine_augmentationSubrepresentation (h : (Fintype.card X
   · rw [codisjoint_iff]
     exact Subrepresentation.toSubmodule_injective hsub.sup_eq_top
 
-/-- The augmentation subrepresentation has dimension one less than the cardinality of `X`. -/
-theorem finrank_augmentationSubrepresentation [Nonempty X] :
+/-- The augmentation subrepresentation has dimension one less than the cardinality of `X`.  For an
+empty `X` both sides are zero, the subtraction being truncated. -/
+theorem finrank_augmentationSubrepresentation :
     Module.finrank k (augmentationSubrepresentation k G X).toSubmodule = Fintype.card X - 1 := by
+  rcases isEmpty_or_nonempty X with hX | hX
+  · have hbot : (augmentationSubrepresentation k G X).toSubmodule = ⊥ :=
+      Submodule.eq_bot_iff _ |>.mpr fun v _ =>
+        MonoidAlgebra.coeff_eq_zero.mp (Finsupp.ext fun x => isEmptyElim x)
+    rw [hbot, finrank_bot, Fintype.card_eq_zero]
   have hcard : Module.finrank k (MonoidAlgebra k X) = Fintype.card X :=
     (Module.finrank_eq_card_basis (MonoidAlgebra.basis X k)).trans (by simp)
   have : Module.Finite k (MonoidAlgebra k X) := Module.Finite.of_basis (MonoidAlgebra.basis X k)

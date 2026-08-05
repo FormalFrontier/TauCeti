@@ -104,23 +104,41 @@ end Swap
 
 /-! ### The standard representation -/
 
-section Standard
+section Defn
 
-variable (k : Type*) [Field k] (α : Type*) [Fintype α]
+variable (k : Type*) [CommSemiring k] (α : Type*)
 
 /-- The **standard representation** of the symmetric group on `α`: the action of `Equiv.Perm α` on
-the vectors of `k[α]` whose coefficients sum to zero.  No hypothesis on `k` is imposed here; when
-`(Fintype.card α : k) ≠ 0` it is a complement of the invariant line in the permutation
-representation `k[α]`, by `isCompl_invariantLine_augmentationSubrepresentation`, whereas when
-`(Fintype.card α : k) = 0` the invariant line lies inside it instead.  Identifying it with the
-Specht module of the shape `(|α|-1, 1)` is an aim for later: the polytabloid presentation needed to
-state that equivalence is not yet in the repository. -/
+the vectors of `k[α]` whose coefficients sum to zero.  No hypothesis on `k` or on `α` is imposed
+here; when `α` is finite and `(Fintype.card α : k) ≠ 0` it is a complement of the invariant line in
+the permutation representation `k[α]`, by
+`isCompl_invariantLine_augmentationSubrepresentation`, whereas when `(Fintype.card α : k) = 0` the
+invariant line lies inside it instead.  Identifying it with the Specht module of the shape
+`(|α|-1, 1)` is an aim for later: the polytabloid presentation needed to state that equivalence is
+not yet in the repository. -/
 noncomputable def standardRepresentation :
     Representation k (Equiv.Perm α)
       (augmentationSubrepresentation k (Equiv.Perm α) α).toSubmodule :=
   (augmentationSubrepresentation k (Equiv.Perm α) α).toRepresentation
 
 variable {k α}
+
+/-- The standard representation acts by permuting the standard basis: on underlying elements of
+`k[α]` it is the permutation representation. -/
+@[simp]
+theorem coe_standardRepresentation_apply (g : Equiv.Perm α)
+    (v : (augmentationSubrepresentation k (Equiv.Perm α) α).toSubmodule) :
+    (standardRepresentation k α g v : MonoidAlgebra k α) =
+      Representation.ofMulAction k (Equiv.Perm α) α g v :=
+  -- `(rfl)`, not `rfl`: the body of `standardRepresentation` is not `@[expose]`d, so this must not
+  -- be inferred `@[defeq]`.
+  (rfl)
+
+end Defn
+
+section Standard
+
+variable {k : Type*} [Field k] {α : Type*} [Fintype α]
 
 /-- **The standard subrepresentation is minimal.**  A nonzero subrepresentation of the permutation
 representation contained in the standard one is the whole of it: from a nonzero vector with
@@ -176,11 +194,13 @@ theorem isAtom_augmentationSubrepresentation (h2 : 2 ≤ Fintype.card α)
       intro z
       rcases eq_or_ne z x with rfl | hzx
       · simp
-      · have hmem := τ.apply_mem_toSubmodule (Equiv.swap y z) hdiff
+      · have hswapx : (Equiv.swap y z) • x = x := by
+          rw [Equiv.Perm.smul_def, Equiv.swap_apply_of_ne_of_ne hxy (Ne.symm hzx)]
+        have hswapy : (Equiv.swap y z) • y = z := by
+          rw [Equiv.Perm.smul_def, Equiv.swap_apply_left]
+        have hmem := τ.apply_mem_toSubmodule (Equiv.swap y z) hdiff
         rw [map_sub, Representation.ofMulAction_single, Representation.ofMulAction_single,
-          show (Equiv.swap y z) • x = x from
-            Equiv.swap_apply_of_ne_of_ne hxy (Ne.symm hzx),
-          show (Equiv.swap y z) • y = z from Equiv.swap_apply_left y z] at hmem
+          hswapx, hswapy] at hmem
         simpa using τ.toSubmodule.neg_mem hmem
     -- so `τ` contains the whole standard subrepresentation, contradicting strictness
     have hle : augmentationSubrepresentation k (Equiv.Perm α) α ≤ τ := by
