@@ -7,6 +7,7 @@ module
 
 public import Mathlib.Analysis.Normed.Module.Convex
 public import TauCeti.Topology.MetricSpace.Cut
+import Mathlib.Analysis.Normed.Module.Ball.Pointwise
 
 /-!
 # The near side of a ball cut by a sphere
@@ -14,11 +15,16 @@ public import TauCeti.Topology.MetricSpace.Cut
 `TauCeti/Topology/MetricSpace/Cut.lean` cuts an arbitrary set `s` by a sphere `sphere y ρ` into a
 *near side* `s ∩ ball y ρ` and a *far side* `s \ closedBall y ρ`. This file specialises the cut set
 to a ball, `s = ball x r`, and records what the near side then is: a convex set, hence connected as
-soon as it is nonempty, hence one of the two connected components of the cut ball. Its frontier is
-covered by the two spheres involved.
+soon as it is nonempty, hence a connected component of the cut ball. Its frontier is covered by the
+two spheres involved.
 
-Everything here is stated at the generality its proof uses, which is never more than a real normed
-space and for the frontier bound not even that:
+Only *a* component, and not one of exactly two: at this generality the far side can itself be
+disconnected — in `ℝ`, cutting `ball 0 1` by `sphere 0 (1 / 2)` leaves three components — so how
+many components the cut ball has is a question about the ambient geometry, settled in the plane
+rather than here.
+
+Everything here is stated at the generality its proof uses, which is never more than a seminormed
+real vector space and for the frontier bound not even that:
 
 * the frontier bound `TauCeti.frontier_ball_inter_ball_subset` is Mathlib's `frontier_inter_subset`
   fed with `frontier_ball_subset_sphere` and `closure_ball_subset_closedBall`, so it holds in an
@@ -36,13 +42,15 @@ at the cut point, and it lives with its complex-analytic consumer in
 
 ## The overlap condition
 
-Two balls meet exactly when their radii together exceed the distance between the centres. One
-direction is Mathlib's `Metric.dist_lt_add_of_nonempty_ball_inter_ball`; the other is
-`TauCeti.nonempty_ball_inter_ball`, whose witness is the point `c + t • (ζ - c)` of the segment
-joining the two centres at the parameter `t = r / (r + ρ)` that divides it in the ratio of the two
-radii. That one parameter works for every pair of balls: it puts the witness at distance
-`r * dist c ζ / (r + ρ)` from `c` and `ρ * dist c ζ / (r + ρ)` from `ζ`, and both are below the
-corresponding radius precisely when `dist c ζ < r + ρ`.
+Two balls *of positive radius* meet exactly when their radii together exceed the distance between
+the centres. One direction is Mathlib's `Metric.dist_lt_add_of_nonempty_ball_inter_ball`, and needs
+no positivity; the other is `TauCeti.nonempty_ball_inter_ball`, and does — a ball of non-positive
+radius is empty while `dist c ζ < r + ρ` can still hold.
+
+Its witness is supplied by Mathlib's `exists_dist_lt_lt`: the point of the segment joining the two
+centres that divides it in the ratio of the two radii, at distance `r * dist c ζ / (r + ρ)` from
+`c` and `ρ * dist c ζ / (r + ρ)` from `ζ`, both below the corresponding radius precisely when
+`dist c ζ < r + ρ`.
 
 ## The intended consumer
 
@@ -98,33 +106,16 @@ variable {E : Type*} [SeminormedAddCommGroup E] [NormedSpace ℝ E] {c ζ z : E}
 
 /-- **Two balls whose radii together exceed the distance between their centres meet.** This is the
 converse of Mathlib's `Metric.dist_lt_add_of_nonempty_ball_inter_ball`, and it is where the linear
-structure enters: the witness is the point of the segment joining the two centres that divides it
-in the ratio of the two radii,
-`c + (r / (r + ρ)) • (ζ - c)`, at distance `r * dist c ζ / (r + ρ) < r` from `c` and
-`ρ * dist c ζ / (r + ρ) < ρ` from `ζ`.
+structure enters, through Mathlib's `exists_dist_lt_lt`: the witness is the point of the segment
+joining the two centres that divides it in the ratio of the two radii, at distance
+`r * dist c ζ / (r + ρ) < r` from `c` and `ρ * dist c ζ / (r + ρ) < ρ` from `ζ`.
 
 Both radii must be positive, or the corresponding ball is empty while the hypothesis can still
 hold. -/
 theorem nonempty_ball_inter_ball (hr : 0 < r) (hρ : 0 < ρ) (h : dist c ζ < r + ρ) :
     (ball c r ∩ ball ζ ρ).Nonempty := by
-  have hsum : 0 < r + ρ := by linarith
-  set t : ℝ := r / (r + ρ) with ht
-  have ht0 : 0 ≤ t := by positivity
-  have ht1 : 0 ≤ 1 - t := by
-    rw [sub_nonneg, ht, div_le_one hsum]
-    linarith
-  have hone : 1 - t = ρ / (r + ρ) := by
-    rw [ht, eq_div_iff hsum.ne', sub_mul, one_mul, div_mul_cancel₀ _ hsum.ne']
-    ring
-  refine ⟨c + t • (ζ - c), ?_, ?_⟩
-  · rw [mem_ball, dist_eq_norm, add_sub_cancel_left, norm_smul, Real.norm_eq_abs,
-      abs_of_nonneg ht0, ← dist_eq_norm, dist_comm ζ c, ht, div_mul_eq_mul_div,
-      div_lt_iff₀ hsum]
-    exact mul_lt_mul_of_pos_left h hr
-  · have hsub : c + t • (ζ - c) - ζ = (1 - t) • (c - ζ) := by module
-    rw [mem_ball, dist_eq_norm, hsub, norm_smul, Real.norm_eq_abs, abs_of_nonneg ht1,
-      ← dist_eq_norm, hone, div_mul_eq_mul_div, div_lt_iff₀ hsum]
-    exact mul_lt_mul_of_pos_left h hρ
+  obtain ⟨w, hcw, hwζ⟩ := exists_dist_lt_lt hr hρ (by rwa [add_comm] at h)
+  exact ⟨w, mem_ball'.2 hcw, mem_ball.2 hwζ⟩
 
 /-- **The near side of a cut ball is connected**, being an intersection of two balls, hence convex.
 Its nonemptiness is `TauCeti.nonempty_ball_inter_ball`, and that is the only role the overlap

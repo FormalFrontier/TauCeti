@@ -9,9 +9,6 @@ public import Mathlib.Analysis.Complex.AbsMax
 public import Mathlib.Analysis.SpecialFunctions.Complex.CircleMap
 public import TauCeti.Analysis.Normed.Module.Ball.Cut
 public import TauCeti.Topology.ClusterSet
-public import TauCeti.Topology.MetricSpace.Cut
-import Mathlib.Analysis.Convex.PathConnected
-import Mathlib.Analysis.Normed.Module.RCLike.Real
 import TauCeti.Topology.Circle.Metric
 
 /-!
@@ -148,8 +145,7 @@ modulus principle for holomorphic functions.
   exactly two connected components, the two sides being those cut out by
   `TauCeti.sdiff_sphere_eq_inter_ball_union_sdiff_closedBall` and
   `TauCeti.subset_inter_ball_or_subset_sdiff_closedBall` of
-  `TauCeti/Topology/MetricSpace/Cut.lean`. The disc signatures those two replace are kept here as
-  deprecated compatibility wrappers.
+  `TauCeti/Topology/MetricSpace/Cut.lean`.
 * `TauCeti.norm_sub_le_of_mem_ball_inter_ball` and
   `TauCeti.norm_sub_le_of_mem_ball_inter_ball_of_differentiableOn` — the maximum modulus principle
   on a crosscut neighbourhood: a bound on the arc and on the cap is a bound inside, and its
@@ -371,35 +367,6 @@ theorem isConnected_ball_diff_closedBall (hζ : dist ζ c = r) (hρ : 0 < ρ)
     (nonempty_halfPlane_inter_ball hρ (by rw [hac]; exact hρ'))).image _ fun w hw => ?_
   exact (continuousAt_const.add
     (continuousAt_inv₀ (ne_zero_of_one_lt_two_mul_re_mul hw.1))).continuousWithinAt
-
-/-! ### Deprecated disc-specific forms
-
-The three cut lemmas of `TauCeti/Topology/MetricSpace/Cut.lean` were stated here for
-`s = ball c r` in `ℂ`. Their old signatures are retained as deprecated compatibility wrappers,
-each naming its generalized replacement. -/
-
-/-- Deprecated compatibility wrapper for the disc case of
-`TauCeti.sdiff_sphere_eq_inter_ball_union_sdiff_closedBall`. -/
-@[deprecated sdiff_sphere_eq_inter_ball_union_sdiff_closedBall (since := "2026-08-04")]
-theorem ball_diff_sphere_eq_union :
-    ball c r \ sphere ζ ρ = ball c r ∩ ball ζ ρ ∪ ball c r \ closedBall ζ ρ :=
-  sdiff_sphere_eq_inter_ball_union_sdiff_closedBall
-
-/-- Deprecated compatibility wrapper for the disc case of
-`TauCeti.disjoint_inter_ball_sdiff_closedBall`. -/
-@[deprecated disjoint_inter_ball_sdiff_closedBall (since := "2026-08-04")]
-theorem disjoint_ball_inter_ball_ball_diff_closedBall :
-    Disjoint (ball c r ∩ ball ζ ρ) (ball c r \ closedBall ζ ρ) :=
-  disjoint_inter_ball_sdiff_closedBall
-
-/-- Deprecated compatibility wrapper for the disc case of
-`TauCeti.subset_inter_ball_or_subset_sdiff_closedBall`, whose openness hypothesis the disc
-discharges with `Metric.isOpen_ball`. -/
-@[deprecated subset_inter_ball_or_subset_sdiff_closedBall (since := "2026-08-04")]
-theorem subset_ball_inter_ball_or_subset_ball_diff_closedBall {S : Set ℂ} (hS : IsPreconnected S)
-    (hSsub : S ⊆ ball c r \ sphere ζ ρ) :
-    S ⊆ ball c r ∩ ball ζ ρ ∨ S ⊆ ball c r \ closedBall ζ ρ :=
-  subset_inter_ball_or_subset_sdiff_closedBall isOpen_ball hS hSsub
 
 /-- **The far side of a circular crosscut is a connected component of the cut disc.** The companion
 of `TauCeti.connectedComponentIn_ball_diff_sphere_eq_ball_inter_ball` of
