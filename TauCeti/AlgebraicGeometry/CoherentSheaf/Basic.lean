@@ -6,13 +6,14 @@ module
 
 public import TauCeti.Algebra.Category.ModuleCat.Sheaf.Invertible.FinitePresentation
 public import TauCeti.AlgebraicGeometry.LineBundle.Basic
+public import Mathlib.AlgebraicGeometry.Noetherian
 
 /-!
 # Coherent sheaves on schemes
 
-This file introduces finite-presentation coherent sheaves using Mathlib's finite-presentation
-condition for sheaves of modules. On a locally Noetherian scheme this is the standard
-coherent-sheaf notion used for coherent cohomology.
+This file introduces coherent sheaves on a locally Noetherian scheme using Mathlib's
+finite-presentation condition for sheaves of modules. On a locally Noetherian scheme this is the
+standard coherent-sheaf notion used for coherent cohomology.
 
 The main declarations are:
 
@@ -46,39 +47,43 @@ noncomputable section
 
 namespace SheafOfModules
 
-variable (X : Scheme.{u})
+/-- A coherent sheaf on a locally Noetherian scheme is a finitely presented sheaf of modules. -/
+structure IsCoherent (X : Scheme.{u}) [IsLocallyNoetherian X] (M : X.Modules) : Prop where
+  /-- A coherent sheaf on a locally Noetherian scheme is finitely presented. -/
+  isFinitePresentation : M.IsFinitePresentation
 
-/-- The object property of being a finite-presentation coherent sheaf. On a locally Noetherian
-scheme, this is the standard coherent-sheaf condition. -/
+variable (X : Scheme.{u}) [IsLocallyNoetherian X]
+
+/-- The object property of being a coherent sheaf on a locally Noetherian scheme. -/
 abbrev isCoherent : ObjectProperty X.Modules :=
-  _root_.SheafOfModules.isFinitePresentation X.ringCatSheaf
+  IsCoherent X
 
 end SheafOfModules
 
-/-- The full category of finite-presentation coherent sheaves on a scheme. -/
-abbrev CoherentSheaf (X : Scheme.{u}) :=
+/-- The full category of coherent sheaves on a locally Noetherian scheme. -/
+abbrev CoherentSheaf (X : Scheme.{u}) [IsLocallyNoetherian X] :=
   ObjectProperty.FullSubcategory (SheafOfModules.isCoherent X)
 
 namespace CoherentSheaf
 
-variable {X : Scheme.{u}}
+variable {X : Scheme.{u}} [IsLocallyNoetherian X]
 
 /-- The underlying sheaf of a coherent sheaf is finitely presented. -/
 instance (F : CoherentSheaf X) : F.obj.IsFinitePresentation :=
-  F.property
+  F.property.isFinitePresentation
 
 end CoherentSheaf
 
 namespace InvertibleSheaf
 
-variable {X : Scheme.{u}}
+variable {X : Scheme.{u}} [IsLocallyNoetherian X]
 
-/-- The fully faithful inclusion of invertible sheaves into finite-presentation coherent sheaves. -/
-abbrev toCoherent (X : Scheme.{u}) :
+/-- The fully faithful inclusion of invertible sheaves into coherent sheaves. -/
+abbrev toCoherent (X : Scheme.{u}) [IsLocallyNoetherian X] :
     InvertibleSheaf X ⥤ CoherentSheaf X :=
   ObjectProperty.ιOfLE fun M hM ↦ by
     let : TauCeti.SheafOfModules.IsInvertible (R := X.ringCatSheaf) M := hM
-    exact TauCeti.SheafOfModules.IsInvertible.isFinitePresentation (M := M)
+    exact ⟨TauCeti.SheafOfModules.IsInvertible.isFinitePresentation (M := M)⟩
 
 end InvertibleSheaf
 
