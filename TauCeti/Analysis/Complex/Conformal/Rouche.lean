@@ -10,7 +10,8 @@ public import Mathlib.Analysis.Meromorphic.Divisor
 public import TauCeti.Analysis.Complex.ZeroCount
 public import TauCeti.Analysis.Contour.Argument.Cycle
 public import TauCeti.Analysis.Contour.Argument.Divisor
-public import TauCeti.Analysis.Contour.LogDerivFTC
+import TauCeti.Analysis.Contour.Curve.Integrability
+import TauCeti.Analysis.Contour.LogDerivFTC
 import Mathlib.Analysis.Calculus.LogDeriv
 import Mathlib.Analysis.SpecialFunctions.Complex.Analytic
 import Mathlib.Analysis.SpecialFunctions.Complex.LogDeriv
@@ -404,10 +405,15 @@ the whole closed disc; the cycle form asks for analyticity only on `U` and allow
 but must be handed a finite `S` carrying the exceptional points — on a general open set the zeros
 may accumulate at the boundary, and then no such `S` exists.
 
-Unlike on a circle there is no zero-*detection* corollary here, and that is not an omission: with
-winding numbers of both signs the weighted counts can cancel, so a nonzero count of `f` says
-nothing about where — or whether — `g` vanishes. Detection needs a sign hypothesis on the cycle,
-which the disc case supplies by winding once.
+Unlike on a circle there is no zero-*detection* corollary here, and that is not an omission: what
+fails for a general cycle is the *equivalence*, not detection outright. With winding numbers of
+both signs the weighted counts can cancel, so a vanishing count no longer means the function is
+zero-free — `TauCeti.finsum_analyticOrderNatAt_ball_eq_zero_iff`, which the disc forms use, has no
+cycle analogue. The converse direction survives and needs no corollary: if the weighted count of
+`f` is nonzero then by the theorem so is that of `g`, so some `z ∈ S` has nonzero winding number
+and `analyticOrderNatAt g z ≠ 0`; null-homology places such a `z` in `U`, where a nonzero order
+means `g z = 0`. It is the `iff` that requires a sign hypothesis on the cycle, which the disc case
+supplies by winding once.
 -/
 
 section Cycle
@@ -419,17 +425,18 @@ open scoped Interval
 variable {U : Set ℂ} {S : Finset ℂ} {γ : ℝ → ℂ} {a b : ℝ}
 
 /-- The argument-principle integrand `deriv γ • (logDeriv h ∘ γ)` is interval-integrable when `h`
-is analytic and zero-free along a piecewise-`C¹` curve: the logarithmic derivative is continuous
-along the curve, and the velocity of a piecewise-`C¹` curve is interval-integrable. -/
+is analytic and zero-free along a piecewise-`C¹` curve. All this lemma contributes is the
+continuity of `logDeriv h` on the curve image; the integrand is then assembled by
+`TauCeti.Contour.IsPiecewiseC1On.intervalIntegrable_deriv_smul_comp`. -/
 private lemma intervalIntegrable_deriv_smul_logDeriv {h : ℂ → ℂ}
     (hγ : Contour.IsPiecewiseC1On γ a b) (hh : ∀ t ∈ [[a, b]], AnalyticAt ℂ h (γ t))
     (hne : ∀ t ∈ [[a, b]], h (γ t) ≠ 0) :
     IntervalIntegrable (fun t => deriv γ t • logDeriv h (γ t)) volume a b := by
-  refine hγ.intervalIntegrable_deriv.smul_continuousOn fun t ht => ?_
-  have hca : ContinuousAt (logDeriv h) (γ t) := by
-    have h' := ((hh t ht).deriv.continuousAt).div (hh t ht).continuousAt (hne t ht)
-    simpa only [logDeriv] using h'
-  exact hca.comp_continuousWithinAt (hγ.continuousOn t ht)
+  refine hγ.intervalIntegrable_deriv_smul_comp ?_
+  rintro _ ⟨t, ht, rfl⟩
+  refine ContinuousAt.continuousWithinAt ?_
+  have h' := ((hh t ht).deriv.continuousAt).div (hh t ht).continuousAt (hne t ht)
+  simpa only [logDeriv] using h'
 
 /-- **A slit-plane-valued function has a single-valued logarithm along a closed curve.** If `h` is
 analytic along a closed piecewise-`C¹` curve `γ` and takes its values there in
