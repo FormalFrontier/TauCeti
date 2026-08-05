@@ -10,7 +10,7 @@ public import TauCeti.Algebra.Category.ModuleCat.Sheaf.Invertible.Basic
 # Finite presentation of invertible sheaves
 
 An invertible sheaf is locally free on a one-element basis, so it is locally finitely presented.
-This file makes that implication available to the coherent-sheaf layer.
+This file makes that implication available to the scheme-level sheaf API.
 
 Mathlib constructs a finite presentation from locally free data by using the chosen basis as
 generators and no relations. The only missing step for an invertible sheaf is finiteness of the
@@ -19,8 +19,8 @@ are already finite.
 
 The main result is the instance
 `TauCeti.SheafOfModules.IsInvertible.isFinitePresentation`. It applies over an arbitrary site;
-the scheme-level coherent-sheaf packaging is in
-`TauCeti/AlgebraicGeometry/CoherentSheaf/Basic.lean`.
+the scheme-level finitely-presented-sheaf packaging is in
+`TauCeti/AlgebraicGeometry/FinitelyPresentedSheaf/Basic.lean`.
 
 This advances `TauCetiRoadmap/JacobianChallenge/README.md`, from Layer A's invertible sheaves to
 Layer B's coherent sheaves. No formalization is vendored. The proof reuses Mathlib's

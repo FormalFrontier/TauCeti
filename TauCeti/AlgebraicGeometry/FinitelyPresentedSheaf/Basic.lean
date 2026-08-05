@@ -8,19 +8,18 @@ public import TauCeti.Algebra.Category.ModuleCat.Sheaf.Invertible.FinitePresenta
 public import TauCeti.AlgebraicGeometry.LineBundle.Basic
 
 /-!
-# Coherent sheaves on schemes
+# Finitely presented sheaves on schemes
 
-This file introduces coherent sheaves on a scheme using Mathlib's finite-presentation condition
-for sheaves of modules. On a locally Noetherian scheme this is the standard coherent-sheaf notion
-used for coherent cohomology.
+This file packages Mathlib's finite-presentation condition for sheaves of modules as a full
+subcategory on an arbitrary scheme. On a locally Noetherian scheme this supplies the objects used
+in the standard coherent-sheaf notion.
 
 The main declarations are:
 
-* `TauCeti.AlgebraicGeometry.SheafOfModules.isCoherent X`, the object property of finite
-  presentation on `X.Modules`;
-* `TauCeti.AlgebraicGeometry.CoherentSheaf X`, its full subcategory;
-* `TauCeti.AlgebraicGeometry.InvertibleSheaf.toCoherent`, the fully faithful inclusion of
-  invertible sheaves into coherent sheaves.
+* `TauCeti.AlgebraicGeometry.FinitelyPresentedSheaf X`, the full subcategory of finitely
+  presented objects in `X.Modules`;
+* `TauCeti.AlgebraicGeometry.InvertibleSheaf.toFinitelyPresented`, the fully faithful inclusion
+  of invertible sheaves into finitely presented sheaves.
 
 The inclusion uses the site-level theorem that an invertible sheaf is finitely presented: its
 rank-one local trivializations give finite generators and have no relations. Thus the existing
@@ -44,36 +43,28 @@ universe u
 
 noncomputable section
 
-namespace SheafOfModules
+/-- The full category of finitely presented sheaves of modules on a scheme. -/
+abbrev FinitelyPresentedSheaf (X : Scheme.{u}) :=
+  ObjectProperty.FullSubcategory
+    (_root_.SheafOfModules.isFinitePresentation X.ringCatSheaf)
 
-variable (X : Scheme.{u})
-
-/-- The object property of being a coherent sheaf on a scheme. -/
-abbrev isCoherent : ObjectProperty X.Modules :=
-  _root_.SheafOfModules.isFinitePresentation X.ringCatSheaf
-
-end SheafOfModules
-
-/-- The full category of coherent sheaves on a scheme. -/
-abbrev CoherentSheaf (X : Scheme.{u}) :=
-  ObjectProperty.FullSubcategory (SheafOfModules.isCoherent X)
-
-namespace CoherentSheaf
+namespace FinitelyPresentedSheaf
 
 variable {X : Scheme.{u}}
 
-/-- The underlying sheaf of a coherent sheaf is finitely presented. -/
-instance (F : CoherentSheaf X) : F.obj.IsFinitePresentation :=
+/-- The underlying sheaf of a finitely presented sheaf is finitely presented. -/
+instance (F : FinitelyPresentedSheaf X) : F.obj.IsFinitePresentation :=
   F.property
 
-end CoherentSheaf
+end FinitelyPresentedSheaf
 
 namespace InvertibleSheaf
 
 variable {X : Scheme.{u}}
 
-/-- The fully faithful inclusion of invertible sheaves into coherent sheaves. -/
-abbrev toCoherent (X : Scheme.{u}) : InvertibleSheaf X ⥤ CoherentSheaf X :=
+/-- The fully faithful inclusion of invertible sheaves into finitely presented sheaves. -/
+abbrev toFinitelyPresented (X : Scheme.{u}) :
+    InvertibleSheaf X ⥤ FinitelyPresentedSheaf X :=
   ObjectProperty.ιOfLE fun M hM ↦ by
     let : TauCeti.SheafOfModules.IsInvertible (R := X.ringCatSheaf) M := hM
     exact TauCeti.SheafOfModules.IsInvertible.isFinitePresentation (M := M)
