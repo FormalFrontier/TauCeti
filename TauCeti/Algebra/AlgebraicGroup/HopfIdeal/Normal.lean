@@ -1,0 +1,188 @@
+/-
+Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+-/
+module
+
+public import TauCeti.Algebra.AlgebraicGroup.Hopf.Conjugation
+public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Points.Basic
+
+/-!
+# Normal Hopf ideals
+
+A Hopf ideal `I` in a commutative Hopf algebra `H` defines a closed subgroup of the affine
+group represented by `H`. This file defines normality of that closed subgroup in Hopf-algebra
+coordinates: the ideal is stable under the coordinate morphism of conjugation,
+
+`c♯ : H → H ⊗[R] H`,
+
+with the first tensor factor carrying the conjugating variable. Thus `I` is normal when
+`c♯(I) ⊆ H ⊗ I`. It also verifies the pointwise meaning of this condition: over every
+commutative value algebra, the subgroup cut out by a normal Hopf ideal is a normal subgroup of
+the ambient group of points.
+
+Normal Hopf ideals are closed under arbitrary suprema. In particular, the zero Hopf ideal is
+normal, and the join of two normal Hopf ideals is normal.
+
+## Main declarations
+
+* `TauCeti.HopfIdeal.IsNormal`: stability under the coordinate conjugation action.
+* `TauCeti.HopfIdeal.isNormal_iSup`: arbitrary suprema of normal Hopf ideals are normal.
+* `TauCeti.CommHopfAlgCat.quotientPointsSubgroup_normal`: a normal Hopf ideal cuts out a normal
+  subgroup on points over every commutative value algebra.
+
+## References
+
+The coordinate criterion is the usual adjoint-coaction characterization of a normal closed
+subgroup; see J. S. Milne, *Algebraic Groups* (2017), §3.5 and §10.20. This is the normality
+prerequisite in Layer 3, “Normality and quotients”, of the ReductiveGroups roadmap.
+-/
+
+public section
+
+open WithConv
+
+namespace TauCeti
+
+universe u v w
+
+namespace HopfIdeal
+
+variable {R : Type u} {H : Type v}
+variable [CommSemiring R] [CommSemiring H] [HopfAlgebra R H]
+
+/-- A Hopf ideal is normal when the coordinate morphism of conjugation carries it into
+`H ⊗ I`. The first tensor factor of `HopfAlgebra.conjugationAlgHom` is the conjugating
+variable, so the right tensor ideal is the ideal of `G × V(I)`. -/
+def IsNormal (I : HopfIdeal R H) : Prop :=
+  Ideal.map (HopfAlgebra.conjugationAlgHom (R := R) (H := H)).toRingHom I.toIdeal ≤
+    rightTensorIdeal (R := R) (H := H) I.toIdeal
+
+/-- Normality restated as the defining ideal inclusion. -/
+theorem isNormal_def (I : HopfIdeal R H) :
+    I.IsNormal ↔
+      Ideal.map (HopfAlgebra.conjugationAlgHom (R := R) (H := H)).toRingHom I.toIdeal ≤
+        rightTensorIdeal (R := R) (H := H) I.toIdeal :=
+  Iff.rfl
+
+/-- A Hopf ideal is normal exactly when the coordinate conjugation of each of its elements
+belongs to `H ⊗ I`. -/
+theorem isNormal_iff_conjugation_mem (I : HopfIdeal R H) :
+    I.IsNormal ↔ ∀ ⦃x : H⦄, x ∈ I →
+      HopfAlgebra.conjugationAlgHom (R := R) (H := H) x ∈
+        rightTensorIdeal (R := R) (H := H) I.toIdeal := by
+  rw [isNormal_def, Ideal.map_le_iff_le_comap]
+  rfl
+
+/-- The coordinate conjugation of an element of a normal Hopf ideal belongs to `H ⊗ I`. -/
+theorem IsNormal.conjugation_mem {I : HopfIdeal R H} (hI : I.IsNormal) {x : H} (hx : x ∈ I) :
+    HopfAlgebra.conjugationAlgHom (R := R) (H := H) x ∈
+      rightTensorIdeal (R := R) (H := H) I.toIdeal :=
+  (isNormal_iff_conjugation_mem I).mp hI hx
+
+/-- The zero Hopf ideal is normal. -/
+@[simp]
+theorem isNormal_bot : IsNormal (⊥ : HopfIdeal R H) := by
+  rw [isNormal_def, bot_toIdeal, Ideal.map_bot]
+  exact bot_le
+
+/-- A join of normal Hopf ideals is normal. -/
+theorem IsNormal.sup {I J : HopfIdeal R H} (hI : I.IsNormal) (hJ : J.IsNormal) :
+    (I ⊔ J).IsNormal := by
+  rw [isNormal_def, sup_toIdeal, Ideal.map_sup, rightTensorIdeal_sup]
+  exact sup_le_sup hI hJ
+
+/-- An arbitrary supremum of normal Hopf ideals is normal. -/
+theorem isNormal_iSup {i : Sort*} {I : i → HopfIdeal R H} (hI : ∀ j, (I j).IsNormal) :
+    (⨆ j, I j).IsNormal := by
+  rw [isNormal_def, iSup_toIdeal, Ideal.map_iSup, rightTensorIdeal_iSup]
+  exact iSup_le fun j ↦ le_iSup_of_le j (hI j)
+
+/-- The supremum of a set of normal Hopf ideals is normal. -/
+theorem isNormal_sSup {S : Set (HopfIdeal R H)} (hS : ∀ I ∈ S, I.IsNormal) :
+    (sSup S).IsNormal := by
+  rw [isNormal_def, sSup_toIdeal, Ideal.map_iSup, rightTensorIdeal_iSup]
+  exact iSup_le fun I ↦ le_iSup_of_le I (hS I I.property)
+
+end HopfIdeal
+
+namespace CommHopfAlgCat
+
+variable {R : Type u} [CommRing R]
+
+/-- A normal Hopf ideal cuts out a normal subgroup of points over every commutative
+`R`-algebra. -/
+theorem quotientPointsSubgroup_normal (H : _root_.CommHopfAlgCat.{v} R)
+    (I : HopfIdeal R H) (hI : I.IsNormal) (A : CommAlgCat.{w} R) :
+    (quotientPointsSubgroup H I A).Normal := by
+  refine ⟨fun n hn g ↦ ?_⟩
+  rw [mem_quotientPointsSubgroup_iff] at hn ⊢
+  intro x hx
+  rw [← HopfAlgebra.productMap_comp_conjugationAlgHom (R := R) (H := H) g n]
+  have hker :
+      HopfIdeal.rightTensorIdeal (R := R) (H := H) I.toIdeal ≤
+        RingHom.ker (Algebra.TensorProduct.productMap g.ofConv n.ofConv).toRingHom := by
+    rw [HopfIdeal.rightTensorIdeal_le_iff]
+    intro y hy
+    rw [Ideal.mem_comap, RingHom.mem_ker]
+    simpa using hn y ((HopfIdeal.mem_toIdeal (I := I)).mp hy)
+  exact RingHom.mem_ker.mp (hker (hI.conjugation_mem hx))
+
+/-- A Hopf ideal is normal if and only if it cuts out a normal subgroup over every
+commutative value algebra. The reverse implication is detected by the universal pair of
+points in `H ⊗[R] (H ⧸ I)`. -/
+theorem isNormal_iff_quotientPointsSubgroup_normal
+    (H : _root_.CommHopfAlgCat.{v} R) (I : HopfIdeal R H) :
+    I.IsNormal ↔ ∀ A : CommAlgCat.{v} R, (quotientPointsSubgroup H I A).Normal := by
+  constructor
+  · intro hI A
+    exact quotientPointsSubgroup_normal H I hI A
+  · intro hnormal
+    rw [HopfIdeal.isNormal_iff_conjugation_mem]
+    intro x hx
+    let Q := H ⧸ I.toIdeal
+    let A : CommAlgCat R := CommAlgCat.of R (TensorProduct R H Q)
+    let g : HopfAlgebra.points (R := R) (H := H) A :=
+      toConv Algebra.TensorProduct.includeLeft
+    let n : HopfAlgebra.points (R := R) (H := H) A :=
+      toConv (Algebra.TensorProduct.includeRight.comp (Ideal.Quotient.mkₐ R I.toIdeal))
+    have hn : n ∈ quotientPointsSubgroup H I A := by
+      rw [mem_quotientPointsSubgroup_iff]
+      intro y hy
+      simp only [n, AlgHom.comp_apply,
+        Algebra.TensorProduct.includeRight_apply]
+      have hyzero : (Ideal.Quotient.mkₐ R I.toIdeal) y = 0 :=
+        Ideal.Quotient.eq_zero_iff_mem.mpr ((HopfIdeal.mem_toIdeal (I := I)).mpr hy)
+      rw [hyzero, TensorProduct.tmul_zero]
+    have hconj := (hnormal A).conj_mem n hn g
+    rw [mem_quotientPointsSubgroup_iff] at hconj
+    have hzero := hconj x hx
+    have heval :
+        (Algebra.TensorProduct.productMap g.ofConv n.ofConv)
+            (HopfAlgebra.conjugationAlgHom (R := R) (H := H) x) = 0 := by
+      exact
+        (AlgHom.congr_fun
+          (HopfAlgebra.productMap_comp_conjugationAlgHom (R := R) (H := H) g n) x).trans
+            hzero
+    have hproduct :
+        Algebra.TensorProduct.productMap g.ofConv n.ofConv =
+          Algebra.TensorProduct.map (AlgHom.id R H) (Ideal.Quotient.mkₐ R I.toIdeal) := by
+      apply Algebra.TensorProduct.ext'
+      intro y z
+      rw [Algebra.TensorProduct.productMap_apply_tmul, Algebra.TensorProduct.map_tmul]
+      simp only [g, n, Q, AlgHom.comp_apply, AlgHom.id_apply,
+        Algebra.TensorProduct.includeRight_apply]
+      rw [Algebra.TensorProduct.includeLeft_apply, Algebra.TensorProduct.tmul_mul_tmul,
+        mul_one, one_mul]
+    rw [hproduct] at heval
+    have hmem := RingHom.mem_ker.mpr heval
+    rw [Algebra.TensorProduct.lTensor_ker (A := H) (Ideal.Quotient.mkₐ R I.toIdeal)
+      (Ideal.Quotient.mkₐ_surjective R I.toIdeal)] at hmem
+    rw [← RingHom.ker_coe_toRingHom (Ideal.Quotient.mkₐ R I.toIdeal),
+      Ideal.Quotient.mkₐ_ker R I.toIdeal] at hmem
+    rw [AlgHom.coe_ideal_map] at hmem
+    exact hmem
+
+end CommHopfAlgCat
+
+end TauCeti
