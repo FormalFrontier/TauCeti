@@ -144,11 +144,24 @@ variable {k : Type*} [Field k] {α : Type*} [Fintype α]
 /-- **The standard subrepresentation is minimal.**  A nonzero subrepresentation of the permutation
 representation contained in the standard one is the whole of it: from a nonzero vector with
 vanishing coefficient sum one produces, by transpositions, every difference of standard basis
-vectors, and those span. -/
+vectors, and those span.  For a two-element `α` the standard subrepresentation is a line, so it is
+minimal whatever the characteristic. -/
 theorem isAtom_augmentationSubrepresentation (h2 : 2 ≤ Fintype.card α)
-    (hchar : (Fintype.card α : k) ≠ 0) :
+    (hchar : Fintype.card α = 2 ∨ (Fintype.card α : k) ≠ 0) :
     IsAtom (augmentationSubrepresentation k (Equiv.Perm α) α) := by
   classical
+  rcases hchar with hcard | hchar
+  · -- a two-element `α` leaves a line, and a line is an atom of the lattice of subspaces; the
+    -- lattice of subrepresentations embeds in it, the bottom one carrying the zero subspace
+    have hbot :
+        (⊥ : Subrepresentation (Representation.ofMulAction k (Equiv.Perm α) α)).toSubmodule = ⊥ :=
+      rfl
+    have hatom : IsAtom (augmentationSubrepresentation k (Equiv.Perm α) α).toSubmodule :=
+      Submodule.isAtom_iff_finrank_eq_one.mpr
+        (by rw [finrank_augmentationSubrepresentation, hcard])
+    refine ⟨fun h => hatom.1 (by rw [h, hbot]), fun τ hτ =>
+      Subrepresentation.toSubmodule_injective ((hatom.2 _ ?_).trans hbot.symm)⟩
+    exact lt_of_le_of_ne hτ.le fun hc => hτ.ne (Subrepresentation.toSubmodule_injective hc)
   obtain ⟨x₀, y₀, hx₀y₀⟩ := Fintype.exists_pair_of_one_lt_card (α := α) (by omega)
   have hne : ∀ x y : α, x ≠ y → (single x 1 - single y 1 : MonoidAlgebra k α) ≠ 0 := by
     intro x y hxy hzero
@@ -219,13 +232,9 @@ and for `3 ≤ |α|` with `|α| = 0` in `k` the invariant line is a proper nonze
 of it. -/
 theorem isIrreducible_standardRepresentation (h2 : 2 ≤ Fintype.card α)
     (hchar : Fintype.card α = 2 ∨ (Fintype.card α : k) ≠ 0) :
-    (standardRepresentation k α).IsIrreducible := by
-  rcases hchar with hcard | hchar
-  · -- a two-element `α` leaves a line, which is irreducible in every characteristic
-    exact Representation.isIrreducible_of_finrank_eq_one _
-      (by rw [finrank_augmentationSubrepresentation, hcard])
-  · exact Representation.isIrreducible_toRepresentation_of_isAtom
-      (isAtom_augmentationSubrepresentation h2 hchar)
+    (standardRepresentation k α).IsIrreducible :=
+  Representation.isIrreducible_toRepresentation_of_isAtom
+    (isAtom_augmentationSubrepresentation h2 hchar)
 
 end Standard
 

@@ -110,6 +110,7 @@ variable (k : Type*) [CommSemiring k] (G X : Type*) [Group G] [MulAction G X]
 
 /-- The augmentation is invariant: a group element permutes the standard basis, so it does not
 change the sum of the coefficients. -/
+@[simp]
 theorem sumCoords_basis_ofMulAction (g : G) (v : MonoidAlgebra k X) :
     (MonoidAlgebra.basis X k).sumCoords (Representation.ofMulAction k G X g v) =
       (MonoidAlgebra.basis X k).sumCoords v := by
@@ -173,7 +174,10 @@ theorem coeff_permutationSum (x : X) : (permutationSum k X).coeff x = 1 := by
   classical
   simp [permutationSum, MonoidAlgebra.coeff_single, Finsupp.single_apply, Finset.sum_ite_eq']
 
-/-- The augmentation of the sum of the standard basis is the cardinality of the index type. -/
+/-- The augmentation of the sum of the standard basis is the cardinality of the index type.
+
+Deliberately not `@[simp]`: `simp` already proves this from `TauCeti.coeff_permutationSum` and the
+generic basis API, so tagging it would be a `simpNF` violation. -/
 theorem sumCoords_basis_permutationSum :
     (MonoidAlgebra.basis X k).sumCoords (permutationSum k X) = Fintype.card X := by
   simp
@@ -217,6 +221,7 @@ theorem toSubmodule_invariantLine :
 
 /-- The invariant line carries the trivial representation: the sum of the standard basis, and
 hence every multiple of it, is fixed. -/
+@[simp]
 theorem toRepresentation_invariantLine :
     (invariantLine k G X).toRepresentation = Representation.trivial k G _ := by
   refine DFunLike.ext _ _ fun g => LinearMap.ext fun w => Subtype.ext ?_
@@ -325,6 +330,7 @@ theorem isCompl_invariantLine_augmentationSubrepresentation
 
 /-- The augmentation subrepresentation has dimension one less than the cardinality of `X`.  For an
 empty `X` both sides are zero, the subtraction being truncated. -/
+@[simp]
 theorem finrank_augmentationSubrepresentation :
     Module.finrank k (augmentationSubrepresentation k G X).toSubmodule = Fintype.card X - 1 := by
   rcases isEmpty_or_nonempty X with hX | hX
