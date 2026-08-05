@@ -57,6 +57,7 @@ noncomputable def circleExpGenerator : LeftInvariantDerivation (𝓡 1) Circle :
 @[simp]
 theorem oneParameterSubgroup_circleExpGenerator :
     oneParameterSubgroup circleExpGenerator = circleExpHom := by
+  rw [circleExpGenerator, ← oneParameterSubgroupEquiv_apply]
   exact (oneParameterSubgroupEquiv (I := 𝓡 1) (G := Circle)).apply_symm_apply circleExpHom
 
 /-- Exponentiating a scalar multiple of the circle generator gives `Circle.exp` at that scalar. -/
