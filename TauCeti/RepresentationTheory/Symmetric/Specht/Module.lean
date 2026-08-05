@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+public import TauCeti.GroupTheory.QuotientGroup.Basic
 public import TauCeti.RepresentationTheory.Symmetric.PermutationModule.Form
 public import TauCeti.RepresentationTheory.Symmetric.Relabel
 public import TauCeti.RepresentationTheory.Symmetric.TableauSubgroupConjugacy
@@ -102,33 +103,23 @@ theorem tabloid_surjective : Function.Surjective (tabloid (μ := μ)) := by
   refine ⟨relabel (σ * (rowYoungConjugator t)⁻¹) t, ?_⟩
   rw [tabloid_def, rowYoungConjugator_relabel, inv_mul_cancel_right]
 
-/-- The row group of `t` is the conjugate, by `rowYoungConjugator t`, of the Young subgroup of the
-shape of `μ`. -/
-theorem mem_rowSubgroup_iff_conj_mem_youngSubgroup (t : YoungTableau μ)
-    (σ : Equiv.Perm (Fin μ.card)) :
-    σ ∈ rowSubgroup t ↔
-      (rowYoungConjugator t)⁻¹ * σ * rowYoungConjugator t ∈ youngSubgroup (shapePartition μ) := by
-  rw [← youngSubgroup_map_conj_eq_rowSubgroup t, Subgroup.mem_map_equiv]
-  simp [MulAut.conj, mul_assoc]
+/-- **The stabilizer of a tabloid is the row group.** A permutation fixes the tabloid of `t`
+exactly when it preserves the rows of `t`. -/
+@[simp]
+theorem smul_tabloid_eq_self_iff {t : YoungTableau μ} {σ : Equiv.Perm (Fin μ.card)} :
+    σ • tabloid t = tabloid t ↔ σ ∈ rowSubgroup t := by
+  -- the stabilizer of a coset is the conjugate subgroup, and that conjugate is the row group
+  have h : MulAction.stabilizer (Equiv.Perm (Fin μ.card)) (tabloid t) = rowSubgroup t := by
+    rw [tabloid_def, stabilizer_quotientGroup_mk]
+    exact youngSubgroup_map_conj_eq_rowSubgroup t
+  rw [← h, MulAction.mem_stabilizer_iff]
 
 /-- Two permutations send the tabloid of `t` to the same tabloid exactly when they differ by an
 element of the row group of `t`. -/
 @[simp]
 theorem smul_tabloid_eq_iff {t : YoungTableau μ} {σ τ : Equiv.Perm (Fin μ.card)} :
     σ • tabloid t = τ • tabloid t ↔ σ⁻¹ * τ ∈ rowSubgroup t := by
-  rw [tabloid_def, MulAction.Quotient.smul_coe, MulAction.Quotient.smul_coe, smul_eq_mul,
-    smul_eq_mul, QuotientGroup.eq, mem_rowSubgroup_iff_conj_mem_youngSubgroup]
-  simp [mul_assoc]
-
-/-- **The stabilizer of a tabloid is the row group.** A permutation fixes the tabloid of `t`
-exactly when it preserves the rows of `t`. -/
-@[simp]
-theorem smul_tabloid_eq_self_iff {t : YoungTableau μ} {σ : Equiv.Perm (Fin μ.card)} :
-    σ • tabloid t = tabloid t ↔ σ ∈ rowSubgroup t := by
-  have h := smul_tabloid_eq_iff (t := t) (σ := σ) (τ := 1)
-  rw [one_smul, mul_one] at h
-  rw [h]
-  exact Subgroup.inv_mem_iff _
+  rw [← smul_tabloid_eq_self_iff, mul_smul, inv_smul_eq_iff, eq_comm]
 
 /-- Distinct elements of the column group of `t` move the tabloid of `t` to distinct tabloids: the
 column group meets the row group, which is the stabilizer, only in the identity. -/
