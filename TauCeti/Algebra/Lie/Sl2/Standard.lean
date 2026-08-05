@@ -78,6 +78,12 @@ unfold the literal again: the operators are marked `irreducible` immediately aft
 so the equations really are the only elimination API and no consumer, here or downstream, can
 depend on how the operators are built.
 
+`TauCeti.Sl2Std.lie_slFinTwoBasis_zero`, `TauCeti.Sl2Std.lie_slFinTwoBasis_one` and
+`TauCeti.Sl2Std.lie_slFinTwoBasis_two` are deliberately not `@[simp]`: `TauCeti.slFinTwoBasis_zero`,
+`TauCeti.slFinTwoBasis_one` and `TauCeti.slFinTwoBasis_two` are themselves `@[simp]`, so their left
+hand sides are not in simp normal form and `simpNF` rejects them. `simp` reaches the ladder
+operators through the coordinate equations instead, and these three are used in both directions.
+
 The ladder coefficients are pinned as above rather than in the more common normalization
 `e · vᵢ = i(n + 1 - i) · vᵢ₋₁`, `f · vᵢ = vᵢ₊₁`: the two differ by rescaling the basis, and in the
 normalization used here *both* coefficients vanish at the relevant end of the string, so the
@@ -356,6 +362,9 @@ theorem lie_eq_rep_apply (x : SpecialLinear.sl (Fin 2) K) (v : Sl2Std K n) :
 theorem rep_apply_basis (i : Fin 3) :
     rep K n (slFinTwoBasis K i) = ![raise K n, lower K n, diag K n] i :=
   Basis.constr_basis (slFinTwoBasis K) K ![raise K n, lower K n, diag K n] i
+
+-- The next three are not `@[simp]`: `slFinTwoBasis_zero`, `slFinTwoBasis_one` and
+-- `slFinTwoBasis_two` are `@[simp]`, so these left hand sides are not in simp normal form.
 
 /-- The element `e` of the standard `sl₂` triple acts on `V(n)` as the raising operator. -/
 theorem lie_slFinTwoBasis_zero (v : Sl2Std K n) : ⁅slFinTwoBasis K 0, v⁆ = raise K n v := by
