@@ -102,8 +102,7 @@ theorem finrank_mul_sum_centralCharacter_eq_card [Invertible (Nat.card G : k)] :
         ClassFunction.toConjClasses (ClassFunction.ofCharacter ρ.dual) C = Nat.card G := by
   classical
   -- First orthogonality for `ρ` against itself, with the normalising factor `|G|⁻¹` cleared.
-  have hself : Nonempty (_root_.Representation.Equiv ρ ρ) :=
-    ⟨_root_.Representation.Equiv.mk (LinearEquiv.refl k V) fun g => by ext v; simp⟩
+  have hself : Nonempty (_root_.Representation.Equiv ρ ρ) := ⟨.refl ρ⟩
   have horth : ∑ g : G, ρ.character g * ρ.character g⁻¹ = Nat.card G := by
     have h := _root_.Representation.char_orthonormal ρ ρ
     rw [if_pos hself,
