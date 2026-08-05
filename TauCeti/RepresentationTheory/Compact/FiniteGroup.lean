@@ -218,14 +218,19 @@ theorem card_inv_mul_sum_character_mul_character_inv_self [IsAlgClosed 𝕜] (hu
 omit [NormedSpace ℝ W] [SMulCommClass ℝ 𝕜 W] in
 /-- **Second orthogonality relation for the characters of a finite group**, obtained by
 specializing `TauCeti.ContRepresentation.character_orthonormal_distinct`. This is the off-diagonal
-half of Mathlib's `Representation.char_orthonormal`; the hypothesis is the vanishing of the
-intertwiners that Schur's lemma supplies for a pair of inequivalent irreducibles. -/
+half of Mathlib's `Representation.char_orthonormal`: the characters of two inequivalent irreducible
+representations are orthogonal. The vanishing of the intertwiners `ρ → π` that
+`character_orthonormal_distinct` asks for is supplied by Schur's lemma, in the form of
+`TauCeti.ContRepresentation.eq_zero_of_isEmpty_equiv`. -/
 theorem card_inv_mul_sum_character_mul_character_inv (hunitary : IsUnitary π)
+    (hirr : Representation.IsIrreducible π.toRepresentation)
     (ρ : ContRepresentation 𝕜 G W) (hρ : Continuous ρ)
-    (hdistinct : ∀ f : ContIntertwiningMap ρ π, f.toContinuousLinearMap = 0) :
+    (hirr' : Representation.IsIrreducible ρ.toRepresentation)
+    (hne : IsEmpty (_root_.ContRepresentation.Equiv ρ π)) :
     (Nat.card G : 𝕜)⁻¹ * ∑ g, character ρ hρ g * character π hπ g⁻¹ = 0 := by
   rw [← inner_characterLp_eq_inv_card_mul_sum π hπ hunitary ρ hρ]
-  exact character_orthonormal_distinct π hπ ρ hρ hunitary hdistinct
+  exact character_orthonormal_distinct π hπ ρ hρ hunitary
+    fun f ↦ by simp [eq_zero_of_isEmpty_equiv hirr' hirr hne f]
 
 end Character
 
