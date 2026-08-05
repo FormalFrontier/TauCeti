@@ -6,7 +6,6 @@ module
 
 public import TauCeti.Algebra.Lie.Sl2.Standard
 public import TauCeti.Algebra.Lie.Subalgebra.Top
-public import Mathlib.LinearAlgebra.Eigenspace.Triangularizable
 
 /-!
 # The classification of the finite-dimensional irreducible `sl₂`-modules
@@ -18,13 +17,12 @@ every `n`. What neither file supplies is the remaining half of the classificatio
 finite-dimensional irreducible module *has* a primitive vector at all. This file supplies it and
 draws the classification.
 
-The argument is the standard one. Over an algebraically closed field the Cartan element `h` has an
-eigenvector `v`, and the raising operator moves eigenvectors up the `h`-spectrum by `2` at a time
-(`TauCeti.lie_h_pow_toEnd_e`). Distinct eigenvalues force the vectors `eⁱ • v` to be linearly
-independent as long as they are nonzero, so in a finite-dimensional module the raising must
-eventually kill `v` (`TauCeti.exists_pow_toEnd_e_eq_zero`); the last nonzero vector of that chain
-is primitive, and Mathlib's `IsSl2Triple.HasPrimitiveVectorWith.exists_nat` makes its weight a
-natural number.
+The argument is the standard one, and Mathlib runs it: over a triangularizable module the Cartan
+element `h` has an eigenvector which the raising operator pushes up the `h`-spectrum by `2` at a
+time until it dies, leaving a primitive vector (`IsSl2Triple.exists_hasPrimitiveVectorWith`). All
+that is added here is that over an algebraically closed field of characteristic zero a
+finite-dimensional module is triangularizable, so the hypothesis is automatic, and that
+`IsSl2Triple.HasPrimitiveVectorWith.exists_nat` makes the weight a natural number.
 
 Note that no irreducibility is needed for the existence of a primitive vector: a nonzero
 finite-dimensional module suffices. Irreducibility enters only when the weight string of that
@@ -68,75 +66,7 @@ namespace TauCeti
 
 open LieModule Module
 
-/-! ### The raising ladder -/
-
-section CommRing
-
-variable {K : Type*} [CommRing K]
-variable {L : Type*} [LieRing L] [LieAlgebra K L]
-variable {M : Type*} [AddCommGroup M] [Module K M] [LieRingModule L M] [LieModule K L M]
-variable {h e f : L} {μ : K} {v : M}
-
-/-- **The raising operator shifts the `h`-eigenvalue up by `2`.** This is the mirror of Mathlib's
-`IsSl2Triple.HasPrimitiveVectorWith.lie_h_pow_toEnd_f` for the raising operator `e` rather than the
-lowering operator `f`, and, unlike it, needs only that `v` be an eigenvector of `h`: there is no
-primitive vector around yet, since producing one is what the ladder is for. -/
-theorem lie_h_pow_toEnd_e (t : IsSl2Triple h e f) (hv : ⁅h, v⁆ = μ • v) (i : ℕ) :
-    ⁅h, (toEnd K L M e ^ i) v⁆ = (μ + 2 * i) • (toEnd K L M e ^ i) v := by
-  induction i with
-  | zero => simpa using hv
-  | succ i ih =>
-    rw [pow_succ', Module.End.mul_apply, toEnd_apply_apply, Nat.cast_add, Nat.cast_one,
-      leibniz_lie h, t.lie_h_e_smul K, ih, lie_smul, smul_lie, ← add_smul]
-    congr 1
-    ring
-
-end CommRing
-
 /-! ### Existence of a primitive vector -/
-
-section Domain
-
-variable {K : Type*} [CommRing K] [IsDomain K] [CharZero K]
-variable {L : Type*} [LieRing L] [LieAlgebra K L]
-variable {M : Type*} [AddCommGroup M] [Module K M] [LieRingModule L M] [LieModule K L M]
-variable [IsTorsionFree K M] [IsNoetherian K M]
-variable {h e f : L} {μ : K} {v : M}
-
-/-- **The raising ladder terminates.** Repeatedly raising an eigenvector of `h` in a Noetherian
-module gives zero after finitely many steps: the nonzero vectors among `v, e • v, e² • v, …` are
-eigenvectors of `h` for the pairwise distinct eigenvalues `μ, μ + 2, μ + 4, …`, hence linearly
-independent, and an infinite linearly independent family does not fit in a Noetherian module.
-
-This is the mirror of the first half of the proof of
-`IsSl2Triple.HasPrimitiveVectorWith.exists_nat`, which runs the same argument down the lowering
-ladder from a primitive vector. -/
-theorem exists_pow_toEnd_e_eq_zero (t : IsSl2Triple h e f) (hv : ⁅h, v⁆ = μ • v) :
-    ∃ i : ℕ, (toEnd K L M e ^ i) v = 0 := by
-  by_contra! contra
-  have hinf : (Set.range fun i : ℕ ↦ μ + 2 * (i : K)).Infinite := by
-    rw [Set.infinite_range_iff fun i j hij ↦ by simpa using hij]
-    infer_instance
-  exact hinf ((toEnd K L M h).eigenvectors_linearIndependent
-    {μ + 2 * (i : K) | i : ℕ}
-    (fun ⟨_, hs⟩ ↦ (toEnd K L M e ^ Classical.choose hs) v)
-    (fun ⟨_, hr⟩ ↦ by
-      simp [lie_h_pow_toEnd_e t hv, Classical.choose_spec hr, contra,
-        Module.End.hasEigenvector_iff])).finite
-
-/-- **A primitive vector from an eigenvector.** Raise an eigenvector of `h` until the raising
-operator kills it: the last nonzero vector of the chain is annihilated by `e` and is still an
-eigenvector of `h`, so it is primitive, of weight `μ + 2i` after `i` steps. -/
-theorem exists_hasPrimitiveVectorWith_of_lie_h (t : IsSl2Triple h e f) (hv₀ : v ≠ 0)
-    (hv : ⁅h, v⁆ = μ • v) :
-    ∃ (w : M) (i : ℕ), t.HasPrimitiveVectorWith w (μ + 2 * i) := by
-  obtain ⟨i, hi₀, hi₁⟩ := Nat.exists_not_and_succ_of_not_zero_of_exists
-    (p := fun i ↦ (toEnd K L M e ^ i) v = 0) (by simpa using hv₀)
-    (exists_pow_toEnd_e_eq_zero t hv)
-  rw [pow_succ', Module.End.mul_apply, toEnd_apply_apply] at hi₁
-  exact ⟨_, i, ⟨hi₀, lie_h_pow_toEnd_e t hv i, hi₁⟩⟩
-
-end Domain
 
 section AlgClosed
 
@@ -152,14 +82,13 @@ weight is a natural number.
 
 This is the half of the classification of the finite-dimensional irreducible `sl₂`-modules that
 `TauCeti.exists_isIrreducible_hasPrimitiveVectorWith` leaves open. Irreducibility is not needed:
-the eigenvector the field supplies can be raised in any module at all. -/
+the eigenvector the field supplies can be raised in any module at all. It refines Mathlib's
+`IsSl2Triple.exists_hasPrimitiveVectorWith`, which produces a primitive vector of some weight in
+`K`, by pinning that weight down to a natural number. -/
 theorem exists_hasPrimitiveVectorWith [FiniteDimensional K M] [Nontrivial M]
     (t : IsSl2Triple h e f) :
     ∃ (w : M) (n : ℕ), t.HasPrimitiveVectorWith w (n : K) := by
-  obtain ⟨μ, hμ⟩ := Module.End.exists_eigenvalue (toEnd K L M h)
-  obtain ⟨v, hv⟩ := hμ.exists_hasEigenvector
-  obtain ⟨w, i, P⟩ := exists_hasPrimitiveVectorWith_of_lie_h t hv.2
-    (by simpa using Module.End.mem_eigenspace_iff.1 hv.1)
+  obtain ⟨μ, w, -, P⟩ := t.exists_hasPrimitiveVectorWith (R := K) (M := M)
   obtain ⟨n, hn⟩ := P.exists_nat
   exact ⟨w, n, hn ▸ P⟩
 
