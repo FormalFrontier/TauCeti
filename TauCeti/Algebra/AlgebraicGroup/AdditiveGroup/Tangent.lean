@@ -99,7 +99,7 @@ private lemma tangentOfLinear_ι (f : M →ₗ[R] B) (x : M) :
 
 /-- Two tangent derivations of a symmetric algebra are equal if they agree on its generators. -/
 @[ext]
-theorem derivation_ext_ι
+theorem derivation_ext
     {d e : Derivation R (SymmetricAlgebra R M)
       (CounitAlgebra R (SymmetricAlgebra R M) B)}
     (h : ∀ x, d (SymmetricAlgebra.ι R M x) = e (SymmetricAlgebra.ι R M x)) : d = e := by
@@ -136,7 +136,7 @@ noncomputable def tangentLinearEquiv :
       d.toLinearMap ∘ₗ SymmetricAlgebra.ι R M
   invFun := tangentOfLinear
   left_inv d := by
-    apply derivation_ext_ι
+    apply derivation_ext
     intro x
     apply (CounitAlgebra.algEquivSelf R (SymmetricAlgebra R M) B).injective
     exact tangentOfLinear_ι _ _
@@ -224,7 +224,7 @@ values on the generators. -/
 theorem tangent_bracket_eq_zero
     (d e : Derivation R (SymmetricAlgebra R M)
       (CounitAlgebra R (SymmetricAlgebra R M) B)) : ⁅d, e⁆ = 0 := by
-  apply derivation_ext_ι
+  apply derivation_ext
   intro x
   rw [TauCeti.Derivation.bracket_apply, SymmetricAlgebra.comul_ι]
   simp
