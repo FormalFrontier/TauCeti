@@ -9,7 +9,6 @@ import TauCeti.MeasureTheory.Function.L2ToL1Convergence
 import TauCeti.Probability.Exchangeability.Map
 import TauCeti.MeasureTheory.Function.BoundedMemLp
 import Mathlib.MeasureTheory.Function.L2Space
-import Mathlib.MeasureTheory.Function.LpSeminorm.CompareExp
 
 /-!
 # L¹ convergence of Cesàro averages of a contractable process
@@ -300,10 +299,13 @@ theorem weighted_sums_converge_L1_of_memLp {μ : Measure Ω} [IsFiniteMeasure μ
     simpa only [zero_add] using
       (tendsto_dist_blockAverage_window_prefix_toLp hY hY_L2 r).add
         (tendsto_iff_dist_tendsto_zero.mp ha₂)
-  refine TauCeti.MeasureTheory.tendsto_integral_abs_sub_of_tendsto_eLpNorm_two
-    (fun m => ((hW_L2 m).sub ha_L2).aestronglyMeasurable) ?_
-  rw [← Lp.tendsto_Lp_iff_tendsto_eLpNorm'' _ hW_L2 a ha_L2]
-  simpa only [ha_toLp] using hW₂_tendsto
+  have hL2 : Tendsto (fun m : ℕ =>
+      eLpNorm (blockAverage Y (fun j : Fin (m + 1) => r + j) - a) 2 μ) atTop (𝓝 0) := by
+    rw [← Lp.tendsto_Lp_iff_tendsto_eLpNorm'' _ hW_L2 a ha_L2]
+    simpa only [ha_toLp] using hW₂_tendsto
+  simpa only [Pi.sub_apply, Real.norm_eq_abs] using
+    TauCeti.MeasureTheory.tendsto_integral_norm_of_tendsto_eLpNorm_two
+      (fun m => ((hW_L2 m).sub ha_L2).aestronglyMeasurable) hL2
 
 /-- **Bounded-observable form**, the shape the Layer 3 roadmap names and the determining-class stage
 consumes. A uniform bound on `f` gives square-integrability of the composite on a finite measure

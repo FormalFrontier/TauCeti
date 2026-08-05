@@ -33,30 +33,30 @@ namespace MeasureTheory
 
 variable {Ω : Type*} [MeasurableSpace Ω]
 
-/-- **`L²` convergence implies `L¹` convergence on a finite measure space.** If `W m - a` tends to
-`0` in `L²`, then `∫ ‖W m - a‖` tends to `0`.
+/-- **`L²` convergence implies `L¹` convergence on a finite measure space.** If a family `f` tends
+to `0` in `L²` along a filter `l`, then `∫ ‖f i‖` tends to `0` along `l`.
 
 The exponent comparison costs the fixed finite factor `μ univ ^ (1/1 - 1/2)`, which the limit
-absorbs. -/
-theorem tendsto_integral_abs_sub_of_tendsto_eLpNorm_two {μ : Measure Ω}
-    [IsFiniteMeasure μ] {W : ℕ → Ω → ℝ} {a : Ω → ℝ}
-    (hWa_meas : ∀ m, AEStronglyMeasurable (W m - a) μ)
-    (h : Tendsto (fun m => eLpNorm (W m - a) 2 μ) atTop (𝓝 0)) :
-    Tendsto (fun m => ∫ ω, |W m ω - a ω| ∂μ) atTop (𝓝 0) := by
-  have hW_L1 : Tendsto (fun m => eLpNorm (W m - a) 1 μ) atTop (𝓝 0) := by
-    have hbound := fun m => eLpNorm_le_eLpNorm_mul_rpow_measure_univ (p := 1) (q := 2)
-      one_le_two (hWa_meas m)
+absorbs. Nothing in the argument constrains the index, the filter, or the codomain beyond having a
+norm, so all three are arbitrary; the usual difference form is the instance `f i = W i - a`. -/
+theorem tendsto_integral_norm_of_tendsto_eLpNorm_two {ι E : Type*} [NormedAddCommGroup E]
+    {l : Filter ι} {μ : Measure Ω} [IsFiniteMeasure μ] {f : ι → Ω → E}
+    (hf_meas : ∀ i, AEStronglyMeasurable (f i) μ)
+    (h : Tendsto (fun i => eLpNorm (f i) 2 μ) l (𝓝 0)) :
+    Tendsto (fun i => ∫ ω, ‖f i ω‖ ∂μ) l (𝓝 0) := by
+  have hf_L1 : Tendsto (fun i => eLpNorm (f i) 1 μ) l (𝓝 0) := by
+    have hbound := fun i => eLpNorm_le_eLpNorm_mul_rpow_measure_univ (p := 1) (q := 2)
+      one_le_two (hf_meas i)
     refine tendsto_of_tendsto_of_tendsto_of_le_of_le' tendsto_const_nhds ?_
       (Eventually.of_forall fun _ => bot_le) (Eventually.of_forall hbound)
     simpa using ENNReal.Tendsto.mul_const h
       (Or.inr (ENNReal.rpow_ne_top_of_nonneg (by norm_num) (measure_ne_top μ Set.univ)))
-  have hreal : Tendsto (fun m => (eLpNorm (W m - a) 1 μ).toReal) atTop (𝓝 0) := by
+  have hreal : Tendsto (fun i => (eLpNorm (f i) 1 μ).toReal) l (𝓝 0) := by
     simpa only [Function.comp_def, ENNReal.toReal_zero] using
-      (ENNReal.tendsto_toReal ENNReal.zero_ne_top).comp hW_L1
+      (ENNReal.tendsto_toReal ENNReal.zero_ne_top).comp hf_L1
   convert hreal using 1
-  ext m
-  simpa only [Pi.sub_apply, Real.norm_eq_abs, eLpNorm_one_eq_lintegral_enorm] using
-    (integral_norm_eq_lintegral_enorm (hWa_meas m))
+  ext i
+  simpa only [eLpNorm_one_eq_lintegral_enorm] using (integral_norm_eq_lintegral_enorm (hf_meas i))
 
 end MeasureTheory
 
