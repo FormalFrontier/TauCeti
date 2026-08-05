@@ -5,7 +5,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.RepresentationTheory.ClassicalGroups.Diagonal
-public import Mathlib.LinearAlgebra.Matrix.IsDiag
 public import Mathlib.GroupTheory.Subgroup.Centralizer
 
 /-!
@@ -34,9 +33,12 @@ diagonal entries `t i ≠ t j`, and it vanishes because the second factor is non
 that factor is invertible, which it need not be (`TauCeti.apply_eq_zero_of_commute_diagonal`).
 And the unit group must have two distinct elements, since a diagonal matrix can only separate the
 coordinate lines it distinguishes; two units already suffice, because only one pair of
-coordinates is separated at a time.  That hypothesis cannot be dropped: over a ring with only one
-unit, such as `𝔽₂`, the torus is trivial (`TauCeti.diagonalTorus_eq_bot`) while its centralizer
-is the whole of `GL n k` (`TauCeti.centralizer_diagonalTorus_eq_top`).
+coordinates is separated at a time.  What happens without that hypothesis is recorded too: over a
+ring with only one unit, such as `𝔽₂`, the torus is trivial (`TauCeti.diagonalTorus_eq_bot`)
+while its centralizer is the whole of `GL n k` (`TauCeti.centralizer_diagonalTorus_eq_top`).
+These two subgroups differ, so self-centralization genuinely fails, exactly when `GL n k` is
+itself nontrivial — over `𝔽₂` that is the case for `n ≥ 2`, while for `n ≤ 1` the whole group is
+trivial and the conclusion survives for want of anything to contradict it.
 
 Finally the action of the torus on the coordinate lines `k ∙ eᵢ` of the standard representation
 is recorded: each `eᵢ` is an eigenvector of every torus element, with eigenvalue the `i`-th
@@ -54,7 +56,8 @@ distinct, and it fails outright when the torus is trivial, as it is over `𝔽�
 
 * `TauCeti.mem_diagonalTorus_iff`: membership in the torus is diagonality of the matrix.
 * `TauCeti.centralizer_diagonalTorus`: the diagonal torus is its own centralizer.
-* `TauCeti.centralizer_diagonalTorus_eq_top`: the sharpness of the hypothesis there.
+* `TauCeti.centralizer_diagonalTorus_eq_top`: over a ring with a single unit the centralizer is
+  instead the whole group.
 * `TauCeti.map_stdRep_span_basisFun`: the coordinate lines of the standard representation are
   stable under the diagonal torus.
 
@@ -78,16 +81,6 @@ variable {k : Type u} [CommRing k] {n : ℕ}
 /-- The **diagonal torus** of `GL n k`: the image of the coordinatewise units under `diagGL`. -/
 def diagonalTorus (k : Type u) [CommRing k] (n : ℕ) : Subgroup (GL (Fin n) k) :=
   MonoidHom.range (diagGL (k := k) (n := n))
-
-/-- A family of units gives an element of the diagonal torus.  This is not a `simp` lemma:
-`mem_diagonalTorus_iff` already reduces the membership to `Matrix.isDiag_diagonal`. -/
-theorem diagGL_mem_diagonalTorus (t : Fin n → kˣ) : diagGL t ∈ diagonalTorus k n :=
-  ⟨t, rfl⟩
-
-/-- Every element of the diagonal torus comes from a family of units. -/
-theorem exists_diagGL_eq {g : GL (Fin n) k} (hg : g ∈ diagonalTorus k n) :
-    ∃ t : Fin n → kˣ, diagGL t = g :=
-  hg
 
 /-- An invertible matrix lies in the diagonal torus exactly when it is a diagonal matrix. -/
 @[simp]
@@ -118,26 +111,14 @@ noncomputable def diagonalTorusEquiv (k : Type u) [CommRing k] (n : ℕ) :
     (Fin n → kˣ) ≃* diagonalTorus k n :=
   MonoidHom.ofInjective diagGL_injective
 
-/-- Reading the diagonal entries of a torus element and embedding them back is the identity. -/
-@[simp]
-theorem diagGL_diagonalTorusEquiv_symm_apply (g : diagonalTorus k n) :
-    diagGL ((diagonalTorusEquiv k n).symm g) = (g : GL (Fin n) k) :=
-  congrArg Subtype.val ((diagonalTorusEquiv k n).apply_symm_apply g)
-
-/-- The identification of the torus with the coordinatewise units is `diagGL`. -/
-@[simp]
-theorem coe_diagonalTorusEquiv_apply (t : Fin n → kˣ) :
-    (diagonalTorusEquiv k n t : GL (Fin n) k) = diagGL t := by
-  have h := diagGL_diagonalTorusEquiv_symm_apply (diagonalTorusEquiv k n t)
-  rw [MulEquiv.symm_apply_apply] at h
-  exact h.symm
-
 /-- The `i`-th coordinate character of a torus element is its `(i, i)` matrix entry. -/
 @[simp]
 theorem coe_diagonalTorusEquiv_symm_apply (g : diagonalTorus k n) (i : Fin n) :
     (((diagonalTorusEquiv k n).symm g i : kˣ) : k) =
       ((g : GL (Fin n) k) : Matrix (Fin n) (Fin n) k) i i := by
-  conv_rhs => rw [← diagGL_diagonalTorusEquiv_symm_apply g, diagGL_coe]
+  have h : diagGL ((diagonalTorusEquiv k n).symm g) = (g : GL (Fin n) k) :=
+    MonoidHom.apply_ofInjective_symm diagGL_injective g
+  conv_rhs => rw [← h, diagGL_coe]
   rw [Matrix.diagonal_apply_eq]
 
 /-- The diagonal torus is commutative: diagonal matrices multiply coordinatewise. -/
@@ -160,7 +141,7 @@ theorem commute_diagonal_of_mem_centralizer {g : GL (Fin n) k}
     (hg : g ∈ Subgroup.centralizer (diagonalTorus k n : Set (GL (Fin n) k))) (t : Fin n → kˣ) :
     Commute (Matrix.diagonal fun i => (t i : k)) (g : Matrix (Fin n) (Fin n) k) := by
   have hcomm : Commute (diagGL t) g :=
-    Subgroup.mem_centralizer_iff.mp hg _ (diagGL_mem_diagonalTorus t)
+    Subgroup.mem_centralizer_iff.mp hg _ (MonoidHom.mem_range.mpr ⟨t, rfl⟩)
   have h : ((diagGL t * g : GL (Fin n) k) : Matrix (Fin n) (Fin n) k) =
       ((g * diagGL t : GL (Fin n) k) : Matrix (Fin n) (Fin n) k) := congrArg _ hcomm.eq
   rwa [Units.val_mul, Units.val_mul, diagGL_coe] at h
@@ -207,10 +188,11 @@ theorem diagonalTorus_eq_bot : diagonalTorus k n = ⊥ := by
   rintro - ⟨t, rfl⟩
   rw [Subgroup.mem_bot, Subsingleton.elim t 1, map_one]
 
-/-- Over a ring with only one unit the centralizer of the diagonal torus is the whole group, so
-the hypothesis `Nontrivial kˣ` of `TauCeti.centralizer_diagonalTorus` cannot be dropped: there
-the torus is trivial by `TauCeti.diagonalTorus_eq_bot`, while its centralizer is all of
-`GL n k`. -/
+/-- Over a ring with only one unit the centralizer of the diagonal torus is the whole group,
+while the torus itself is trivial by `TauCeti.diagonalTorus_eq_bot`.  So the hypothesis
+`Nontrivial kˣ` of `TauCeti.centralizer_diagonalTorus` cannot simply be dropped: the two
+subgroups differ as soon as `GL n k` is nontrivial, as it is over `𝔽₂` for `n ≥ 2`.  For `n ≤ 1`
+the group is trivial and the present theorem says nothing more than `⊤ = ⊥`. -/
 theorem centralizer_diagonalTorus_eq_top :
     Subgroup.centralizer (diagonalTorus k n : Set (GL (Fin n) k)) = ⊤ := by
   refine eq_top_iff.mpr fun g _ => Subgroup.mem_centralizer_iff.mpr fun h hh => ?_
@@ -228,7 +210,7 @@ theorem stdRep_apply_basisFun_of_mem_diagonalTorus {g : GL (Fin n) k}
     (hg : g ∈ diagonalTorus k n) (i : Fin n) :
     stdRep k n g (Pi.basisFun k (Fin n) i) =
       (g : Matrix (Fin n) (Fin n) k) i i • Pi.basisFun k (Fin n) i := by
-  obtain ⟨t, rfl⟩ := exists_diagGL_eq hg
+  obtain ⟨t, rfl⟩ := MonoidHom.mem_range.mp hg
   rw [stdRep_diagGL_apply_basisFun, diagGL_coe, Matrix.diagonal_apply_eq]
 
 /-- Each coordinate line of the standard representation is stable under the diagonal torus, a
