@@ -50,17 +50,21 @@ length-function axioms in their inversion-count spelling.
 ## References
 
 This file iterates over a whole word the root-level exchange step of "Inversion sets and the
-exchange step" in Layer 1 of `TauCetiRoadmap/RepresentationTheory/RootSystems/README.md` — the
-step that the roadmap describes there as "the combinatorial core that Layer 2's generation and
-presentation consume" — and consumes nothing beyond that Layer 1 material, which is on `main`
+exchange step" in Layer 1 of `TauCetiRoadmap/RepresentationTheory/RootSystems/README.md`, the item
+that asks for exactly that iteration: the step "iterated, is the exchange/deletion condition for
+the geometric action and the combinatorial core that Layer 2's generation and presentation
+consume". Nothing beyond that Layer 1 material is consumed, and all of it is on `main`
 (`TauCeti/LinearAlgebra/RootSystem/Inversions/Deletion.lean` and its imports).
 
-The identification of the inversion count with the least word length that comes out of that
-iteration is the mathematical content of the "length equals inversions" item of Layer 2, whose
-`(weylCoxeterSystem b).length` spelling is a rewrite of `TauCeti.isLeast_ncard_inversions` once
-the Coxeter presentation — the Layer 2 summit — lands; nothing here waits on it. The argument is
-the one in J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, GTM 9,
-Ch. III, §10.3, and in Bourbaki, *Lie Groups and Lie Algebras*, Chapters 4--6.
+What Layer 2's presentation takes from the iteration is that a nonempty word of least length
+spells an element other than the identity, equivalently that its inversion set is nonempty: that
+is how the roadmap proves the lift from the presented group injective in Tits' theorem, "a
+nonempty reduced word has a nonempty inversion set". This file therefore precedes
+`weylCoxeterSystem` rather than waiting on it, and the Coxeter-length identity
+`(weylCoxeterSystem b).length w = (inversions b w).ncard` is not proved here.
+
+The argument is the one in J. E. Humphreys, *Introduction to Lie Algebras and Representation
+Theory*, GTM 9, Ch. III, §10.3, and in Bourbaki, *Lie Groups and Lie Algebras*, Chapters 4--6.
 -/
 
 namespace TauCeti
