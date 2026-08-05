@@ -36,6 +36,9 @@ bump's own seminorm vanish. Note that the two hypotheses `p ≠ 0` and `p ≠ �
 needed: the failure is not confined to the subcritical range `p < n` in which the positive
 result lives.
 
+`TauCeti.Analysis.Sobolev.Poincare.Slab` proves the matching positive statement: bounding the
+support in a single direction already suffices, and the constant is then the width of the slab.
+
 ## Main declarations
 
 * `TauCeti.not_exists_eLpNorm_le_const_mul_eLpNorm_fderiv`: no constant `C` satisfies

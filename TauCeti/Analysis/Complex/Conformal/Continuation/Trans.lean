@@ -150,6 +150,27 @@ section Trans
 
 variable {a b c : ℂ} {f₀ : ℂ → ℂ} {F G : I → ℂ → ℂ}
 
+/-- **A concatenation restricted to a half is a reparametrisation of that half.** Wherever the
+extended concatenation agrees with `r.extend ∘ ψ` and `ψ` lands in `[0, 1]`, the concatenation
+itself agrees with `r` read at `projIcc ∘ ψ`.
+
+Both halves of `TauCeti.IsAnalyticContinuationAlong.trans` are this statement: the first for
+`r = p`, `ψ u = 2u` on `{u ≤ 2⁻¹}`, the second for `r = q`, `ψ u = 2u - 1` on `{2⁻¹ ≤ u}`. The
+`Path.extend_trans_of_le_half` / `Path.extend_trans_of_half_le` step is what each supplies as
+`hext`. -/
+private theorem eqOn_trans_comp_projIcc {X : Type*} [TopologicalSpace X] {x y z x' y' : X}
+    {r : Path x' y'} {p : Path x y} {q : Path y z}
+    {ψ : I → ℝ} {s : Set I} (hmem : ∀ u ∈ s, ψ u ∈ Icc (0 : ℝ) 1)
+    (hext : ∀ u ∈ s, (p.trans q).extend u = r.extend (ψ u)) :
+    EqOn (⇑(p.trans q)) ((⇑r) ∘ fun u : I => projIcc (0 : ℝ) 1 zero_le_one (ψ u)) s := by
+  intro u hu
+  calc (p.trans q) u
+      = (p.trans q).extend (u : ℝ) := ((p.trans q).extend_extends' u).symm
+    _ = r.extend (ψ u) := hext u hu
+    _ = r.extend ((projIcc (0 : ℝ) 1 zero_le_one (ψ u) : I) : ℝ) := by
+          rw [projIcc_of_mem _ (hmem u hu)]
+    _ = r (projIcc (0 : ℝ) 1 zero_le_one (ψ u)) := r.extend_extends' _
+
 /-- **Continuations concatenate.** If `F` continues a germ along `p`, `G` continues a germ along
 `q`, and the germ `F` delivers at the end of `p` is the germ `G` starts from, then
 `TauCeti.transFamily F G` is a continuation along the concatenated path `p.trans q`.
@@ -161,11 +182,6 @@ theorem IsAnalyticContinuationAlong.trans {p : Path a b} {q : Path b c}
     (hF : IsAnalyticContinuationAlong F (⇑p) univ)
     (hG : IsAnalyticContinuationAlong G (⇑q) univ) (hFG : F 1 =ᶠ[𝓝 b] G 0) :
     IsAnalyticContinuationAlong (transFamily F G) (⇑(p.trans q)) univ := by
-  have hcoe : Continuous fun u : I => (u : ℝ) := continuous_subtype_val
-  have hclosed₁ : IsClosed {u : I | (u : ℝ) ≤ 2⁻¹} := isClosed_le hcoe continuous_const
-  have hclosed₂ : IsClosed {u : I | 2⁻¹ ≤ (u : ℝ)} := isClosed_le continuous_const hcoe
-  have hunion : {u : I | (u : ℝ) ≤ 2⁻¹} ∪ {u : I | 2⁻¹ ≤ (u : ℝ)} = univ :=
-    eq_univ_of_forall fun u => (le_total (u : ℝ) 2⁻¹).imp id id
   -- The first half of the concatenation is `p`, reparametrised by doubling.
   have hφ₁ : Continuous fun u : I => projIcc (0 : ℝ) 1 zero_le_one (2 * u) :=
     continuous_projIcc.comp (by fun_prop)
@@ -173,16 +189,12 @@ theorem IsAnalyticContinuationAlong.trans {p : Path a b} {q : Path b c}
     (s' := {u : I | (u : ℝ) ≤ 2⁻¹}) hφ₁.continuousOn (mapsTo_univ _ _)
   have hpath₁ : EqOn (⇑(p.trans q))
       ((⇑p) ∘ fun u : I => projIcc (0 : ℝ) 1 zero_le_one (2 * u))
-      {u : I | (u : ℝ) ≤ 2⁻¹} := by
-    intro u hu
-    have hu' : (u : ℝ) ≤ 1 / 2 := by rw [one_div]; exact hu
-    have hmem : 2 * (u : ℝ) ∈ Icc (0 : ℝ) 1 := ⟨by linarith [u.2.1], by linarith⟩
-    calc (p.trans q) u
-        = (p.trans q).extend (u : ℝ) := ((p.trans q).extend_extends' u).symm
-      _ = p.extend (2 * u) := Path.extend_trans_of_le_half p q hu'
-      _ = p.extend ((projIcc (0 : ℝ) 1 zero_le_one (2 * u) : I) : ℝ) := by
-            rw [projIcc_of_mem _ hmem]
-      _ = p (projIcc (0 : ℝ) 1 zero_le_one (2 * u)) := p.extend_extends' _
+      {u : I | (u : ℝ) ≤ 2⁻¹} :=
+    eqOn_trans_comp_projIcc
+      (fun u hu => have hu' : (u : ℝ) ≤ 2⁻¹ := hu
+        ⟨by linarith [u.2.1], by linarith⟩)
+      (fun u hu => have hu' : (u : ℝ) ≤ 2⁻¹ := hu
+        Path.extend_trans_of_le_half p q (by rw [one_div]; exact hu'))
   have h₁' : IsAnalyticContinuationAlong (transFamily F G) (⇑(p.trans q))
       {u : I | (u : ℝ) ≤ 2⁻¹} :=
     (h₁.congr_path hpath₁).congr fun u hu => by
@@ -195,33 +207,30 @@ theorem IsAnalyticContinuationAlong.trans {p : Path a b} {q : Path b c}
     (s' := {u : I | 2⁻¹ ≤ (u : ℝ)}) hφ₂.continuousOn (mapsTo_univ _ _)
   have hpath₂ : EqOn (⇑(p.trans q))
       ((⇑q) ∘ fun u : I => projIcc (0 : ℝ) 1 zero_le_one (2 * u - 1))
-      {u : I | 2⁻¹ ≤ (u : ℝ)} := by
-    intro u hu
-    have hu' : 1 / 2 ≤ (u : ℝ) := by rw [one_div]; exact hu
-    have hmem : 2 * (u : ℝ) - 1 ∈ Icc (0 : ℝ) 1 := ⟨by linarith, by linarith [u.2.2]⟩
-    calc (p.trans q) u
-        = (p.trans q).extend (u : ℝ) := ((p.trans q).extend_extends' u).symm
-      _ = q.extend (2 * u - 1) := Path.extend_trans_of_half_le p q hu'
-      _ = q.extend ((projIcc (0 : ℝ) 1 zero_le_one (2 * u - 1) : I) : ℝ) := by
-            rw [projIcc_of_mem _ hmem]
-      _ = q (projIcc (0 : ℝ) 1 zero_le_one (2 * u - 1)) := q.extend_extends' _
+      {u : I | 2⁻¹ ≤ (u : ℝ)} :=
+    eqOn_trans_comp_projIcc
+      (fun u hu => have hu' : 2⁻¹ ≤ (u : ℝ) := hu
+        ⟨by linarith, by linarith [u.2.2]⟩)
+      (fun u hu => have hu' : 2⁻¹ ≤ (u : ℝ) := hu
+        Path.extend_trans_of_half_le p q (by rw [one_div]; exact hu'))
   have h₂' : IsAnalyticContinuationAlong (transFamily F G) (⇑(p.trans q))
       {u : I | 2⁻¹ ≤ (u : ℝ)} := by
     refine (h₂.congr_path hpath₂).congr fun u hu => ?_
     have hu' : 2⁻¹ ≤ (u : ℝ) := hu
     rcases eq_or_lt_of_le hu' with heq | hlt
     · -- At the junction the two halves are compared through the matching hypothesis.
-      have e₁ : projIcc (0 : ℝ) 1 zero_le_one (2 * u) = 1 := by
-        ext; rw [coe_projIcc, ← heq]; norm_num
-      have e₀ : projIcc (0 : ℝ) 1 zero_le_one (2 * u - 1) = 0 := by
-        ext; rw [coe_projIcc, ← heq]; norm_num
+      have e₁ : projIcc (0 : ℝ) 1 zero_le_one (2 * u) = 1 := by norm_num [← heq]
+      have e₀ : projIcc (0 : ℝ) 1 zero_le_one (2 * u - 1) = 0 := by norm_num [← heq]
       have hpt : (p.trans q) u = b := by rw [hpath₂ hu]; simp [e₀]
       rw [transFamily_of_le_half F G heq.ge, e₁, hpt]
       simpa [e₀] using hFG
     · rw [transFamily_of_half_lt F G hlt]
       exact .rfl
-  have hglue := h₁'.union h₂' hclosed₁ hclosed₂
-  rwa [hunion] at hglue
+  -- The halves are the `Iic`/`Ici` pair at the midpoint: `I` carries the order induced from `ℝ`,
+  -- so the set-builder literals above are definitionally those intervals.
+  rw [← Iic_union_Ici (a := (⟨2⁻¹, by norm_num⟩ : I))]
+  exact h₁'.union h₂' (isClosed_Iic (a := (⟨2⁻¹, by norm_num⟩ : I)))
+    (isClosed_Ici (a := (⟨2⁻¹, by norm_num⟩ : I)))
 
 /-- **Continuability is transitive along a concatenation.** If `F` continues the germ of `f₀`
 along `p`, and the germ `F 1` it delivers at the end of `p` continues along `q`, then `f₀`
