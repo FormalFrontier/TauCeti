@@ -5,8 +5,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.Analysis.Calculus.Deriv.Basic
+public import Mathlib.Analysis.Calculus.FDeriv.Analytic
+public import Mathlib.Analysis.Calculus.LogDeriv
 public import Mathlib.Analysis.SpecialFunctions.Complex.Log
 public import Mathlib.MeasureTheory.Integral.IntervalIntegral.Basic
+public import TauCeti.Analysis.Contour.Curve.Integrability
 import Mathlib.Analysis.SpecialFunctions.Complex.LogDeriv
 import Mathlib.MeasureTheory.Integral.DivergenceTheorem
 
@@ -26,6 +29,14 @@ basepoint `a` equal to `Complex.log 1 = 0`. The exceptional set `P` accommodates
 breakpoints of a piecewise-`C¹` contour, and the oriented interval `[a, b]` needs no `a ≤ b`
 assumption.
 
+Specializing the other way, to `f = h ∘ γ` for a piecewise-`C¹` curve `γ` and an analytic `h`,
+gives the curve form of the same principle: if `h` takes its values along `γ` in
+`Complex.slitPlane`, then `Complex.log ∘ h ∘ γ` is a single-valued primitive of the
+argument-principle integrand `deriv γ • (logDeriv h ∘ γ)`, so that integral is an endpoint
+difference — in particular it vanishes on a closed curve. This is the corner-tolerant replacement
+for `circleIntegral.integral_eq_zero_of_hasDerivWithinAt`, which needs a genuinely differentiable
+contour.
+
 ## Main results
 
 * `TauCeti.Contour.integral_deriv_div_eq_log_sub_log` — the slit-plane logarithmic-derivative FTC in
@@ -35,6 +46,10 @@ assumption.
   a sum of `Complex.log` argument increments.
 * `TauCeti.Contour.integral_inv_sub_mul_deriv_eq_log` — the `deriv γ` form with the winding-integral
   integrand `(γ t - w)⁻¹ * deriv γ t`, ready for the downstream winding sum.
+* `TauCeti.Contour.intervalIntegrable_deriv_smul_logDeriv` — interval-integrability of the
+  argument-principle integrand `deriv γ • (logDeriv h ∘ γ)` along a piecewise-`C¹` curve.
+* `TauCeti.Contour.integral_deriv_smul_logDeriv_eq_zero_of_mem_slitPlane` — that integral vanishes
+  along a closed piecewise-`C¹` curve on which `h` is analytic and slit-plane-valued.
 
 ## Provenance
 
@@ -102,5 +117,46 @@ theorem integral_inv_sub_mul_deriv_eq_log {γ : ℝ → ℂ} {w : ℂ} {a b : �
   simp only [inv_mul_eq_div]
   exact integral_deriv_div_sub_eq_log (γ' := deriv γ) hP hγ_cont
     (fun t ht ↦ (hγ_diff t ht).hasDerivAt) h_slit (by simpa only [inv_mul_eq_div] using h_int)
+
+/-- The argument-principle integrand `deriv γ • (logDeriv h ∘ γ)` is interval-integrable when `h`
+is analytic and zero-free along a piecewise-`C¹` curve. All this lemma contributes is the
+continuity of `logDeriv h` on the curve image; the integrand is then assembled by
+`TauCeti.Contour.IsPiecewiseC1On.intervalIntegrable_deriv_smul_comp`. -/
+theorem intervalIntegrable_deriv_smul_logDeriv {γ : ℝ → ℂ} {h : ℂ → ℂ} {a b : ℝ}
+    (hγ : IsPiecewiseC1On γ a b) (hh : ∀ t ∈ uIcc a b, AnalyticAt ℂ h (γ t))
+    (hne : ∀ t ∈ uIcc a b, h (γ t) ≠ 0) :
+    IntervalIntegrable (fun t ↦ deriv γ t • logDeriv h (γ t)) volume a b := by
+  refine hγ.intervalIntegrable_deriv_smul_comp ?_
+  rintro _ ⟨t, ht, rfl⟩
+  refine ContinuousAt.continuousWithinAt ?_
+  have h' := ((hh t ht).deriv.continuousAt).div (hh t ht).continuousAt (hne t ht)
+  simpa only [logDeriv] using h'
+
+/-- **A slit-plane-valued function has a single-valued logarithm along a closed curve.** If `h` is
+analytic along a closed piecewise-`C¹` curve `γ` and takes its values there in
+`Complex.slitPlane`, then `Complex.log ∘ h` is a primitive of `logDeriv h` along `γ`, so the
+contour integral of `logDeriv h` vanishes.
+
+This is the corner-tolerant replacement for `circleIntegral.integral_eq_zero_of_hasDerivWithinAt`:
+`γ` need only be differentiable off the countably many breakpoints, which is what
+`integral_deriv_div_eq_log_sub_log` asks for. Nothing is required of `h` off the curve — in the
+Rouché application `h = g / f` has both zeros and poles inside. -/
+theorem integral_deriv_smul_logDeriv_eq_zero_of_mem_slitPlane {γ : ℝ → ℂ} {h : ℂ → ℂ} {a b : ℝ}
+    (hγ : IsPiecewiseC1On γ a b) (hclosed : γ a = γ b)
+    (hh : ∀ t ∈ uIcc a b, AnalyticAt ℂ h (γ t))
+    (hslit : ∀ t ∈ uIcc a b, h (γ t) ∈ slitPlane) :
+    ∫ t in a..b, deriv γ t • logDeriv h (γ t) = 0 := by
+  obtain ⟨P, hPc, hPd⟩ := hγ.exists_countable_differentiableAt
+  have hne : ∀ t ∈ uIcc a b, h (γ t) ≠ 0 := fun t ht ↦ slitPlane_ne_zero (hslit t ht)
+  have hint := intervalIntegrable_deriv_smul_logDeriv hγ hh hne
+  -- The integrand is the logarithmic-derivative integrand of `t ↦ h (γ t)`.
+  simp only [smul_eq_mul, logDeriv_apply, ← mul_div_assoc] at hint ⊢
+  rw [integral_deriv_div_eq_log_sub_log (f := fun t ↦ h (γ t))
+    (f' := fun t ↦ deriv γ t * deriv h (γ t)) hPc
+    (fun t ht ↦ ((hh t ht).continuousAt).comp_continuousWithinAt (hγ.continuousOn t ht))
+    (fun t ht ↦ ?_) hslit hint, hclosed, sub_self]
+  have hmem : t ∈ uIcc a b := Ioo_subset_Icc_self ht.1
+  simpa only [Function.comp_def, smul_eq_mul] using
+    ((hh t hmem).differentiableAt.hasDerivAt).scomp t ((hPd t ht).hasDerivAt)
 
 end TauCeti.Contour

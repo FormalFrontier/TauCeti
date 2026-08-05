@@ -10,10 +10,8 @@ public import Mathlib.Analysis.Meromorphic.Divisor
 public import TauCeti.Analysis.Complex.ZeroCount
 public import TauCeti.Analysis.Contour.Argument.Cycle
 public import TauCeti.Analysis.Contour.Argument.Divisor
-import TauCeti.Analysis.Contour.Curve.Integrability
 import TauCeti.Analysis.Contour.LogDerivFTC
 import Mathlib.Analysis.Calculus.LogDeriv
-import Mathlib.Analysis.SpecialFunctions.Complex.Analytic
 import Mathlib.Analysis.SpecialFunctions.Complex.LogDeriv
 import Mathlib.MeasureTheory.Integral.CircleIntegral
 
@@ -61,8 +59,9 @@ it along an arbitrary closed piecewise-`C¹` curve that is null-homologous in an
 both functions, weighting each zero by the winding number of the curve about it — and there the
 functions may be meromorphic, the preserved quantity becoming zeros minus poles. The homological
 argument principle `TauCeti.Contour.argumentPrinciple_nullHomologous` replaces the circle one, and
-the slit-plane primitive is pushed across the corners of the curve by the countable-exception FTC
-`TauCeti.Contour.integral_deriv_div_eq_log_sub_log`.
+the slit-plane primitive is pushed across the corners of the curve by
+`TauCeti.Contour.integral_deriv_smul_logDeriv_eq_zero_of_mem_slitPlane`, the curve form of the
+countable-exception logarithmic-derivative FTC.
 
 That same observation is what makes the count *detect* zeros rather than merely count them:
 `TauCeti.finsum_analyticOrderNatAt_ball_eq_zero_iff`, from `TauCeti.Analysis.Complex.ZeroCount`,
@@ -393,17 +392,23 @@ The proof is the disc one, run through `TauCeti.Contour.argumentPrinciple_nullHo
 of the circle argument principle. What changes is the vanishing step. On a circle the integral of
 `logDeriv (g / f)` was killed by `circleIntegral.integral_eq_zero_of_hasDerivWithinAt`; along a
 piecewise-`C¹` curve the primitive has to be pushed through the finitely many corners, which is
-exactly what the countable exceptional set of
-`TauCeti.Contour.integral_deriv_div_eq_log_sub_log` allows. The geometry is unchanged: the
-symmetric hypothesis confines `g / f` to `Complex.slitPlane`, where the principal `Complex.log` is
-a single-valued primitive of the logarithmic derivative, so the integral is an endpoint difference
-and the curve is closed.
+exactly what the countable exceptional set of `TauCeti.Contour.integral_deriv_div_eq_log_sub_log`
+allows; that step is contour theory rather than Rouché, and lives with the FTC it specializes, as
+`TauCeti.Contour.integral_deriv_smul_logDeriv_eq_zero_of_mem_slitPlane`. The geometry is unchanged:
+the symmetric hypothesis confines `g / f` to `Complex.slitPlane`, where the principal `Complex.log`
+is a single-valued primitive of the logarithmic derivative, so the integral is an endpoint
+difference and the curve is closed.
 
-Neither form implies the other. The disc form counts *all* the zeros of the open disc, with no
-finiteness hypothesis and no null-homology bookkeeping, but needs analyticity on a neighbourhood of
-the whole closed disc; the cycle form asks for analyticity only on `U` and allows any cycle there,
-but must be handed a finite `S` carrying the exceptional points — on a general open set the zeros
-may accumulate at the boundary, and then no such `S` exists.
+The two are stated and proved separately because their interfaces differ, not because the disc case
+is out of reach from here. It *is* reachable: analyticity on a neighbourhood of `closedBall c R`
+gives, by compactness, analyticity on a slightly larger open ball `U`, in which every closed curve
+is null-homologous; the zeros in `closedBall c R` are finite in number, so they can be collected
+into an `S`; and the winding number of the bounding circle is `1` at each of them. What that route
+costs is exactly that bookkeeping — producing `S`, evaluating the winding numbers, and converting
+the resulting weighted `Finset` sum back into the `∑ᶠ` count of `TauCeti.rouche_symm`, which ranges
+over the whole open disc with no finiteness hypothesis. In the other direction there is no route at
+all: on a general open set the zeros may accumulate at the boundary, so no finite `S` exists and
+the cycle form has nothing to say.
 
 Unlike on a circle there is no zero-*detection* corollary here, and that is not an omission: what
 fails for a general cycle is the *equivalence*, not detection outright. With winding numbers of
@@ -424,47 +429,6 @@ open scoped Interval
 
 variable {U : Set ℂ} {S : Finset ℂ} {γ : ℝ → ℂ} {a b : ℝ}
 
-/-- The argument-principle integrand `deriv γ • (logDeriv h ∘ γ)` is interval-integrable when `h`
-is analytic and zero-free along a piecewise-`C¹` curve. All this lemma contributes is the
-continuity of `logDeriv h` on the curve image; the integrand is then assembled by
-`TauCeti.Contour.IsPiecewiseC1On.intervalIntegrable_deriv_smul_comp`. -/
-private lemma intervalIntegrable_deriv_smul_logDeriv {h : ℂ → ℂ}
-    (hγ : Contour.IsPiecewiseC1On γ a b) (hh : ∀ t ∈ [[a, b]], AnalyticAt ℂ h (γ t))
-    (hne : ∀ t ∈ [[a, b]], h (γ t) ≠ 0) :
-    IntervalIntegrable (fun t => deriv γ t • logDeriv h (γ t)) volume a b := by
-  refine hγ.intervalIntegrable_deriv_smul_comp ?_
-  rintro _ ⟨t, ht, rfl⟩
-  refine ContinuousAt.continuousWithinAt ?_
-  have h' := ((hh t ht).deriv.continuousAt).div (hh t ht).continuousAt (hne t ht)
-  simpa only [logDeriv] using h'
-
-/-- **A slit-plane-valued function has a single-valued logarithm along a closed curve.** If `h` is
-analytic along a closed piecewise-`C¹` curve `γ` and takes its values there in
-`Complex.slitPlane`, then `Complex.log ∘ h` is a primitive of `logDeriv h` along `γ`, so the
-contour integral of `logDeriv h` vanishes.
-
-This is the corner-tolerant replacement for `circleIntegral.integral_eq_zero_of_hasDerivWithinAt`:
-`γ` need only be differentiable off the countably many breakpoints, which is what
-`TauCeti.Contour.integral_deriv_div_eq_log_sub_log` asks for. Nothing is required of `h` off the
-curve — in the Rouché application `h = g / f` has both zeros and poles inside. -/
-private lemma integral_deriv_smul_logDeriv_eq_zero_of_mem_slitPlane {h : ℂ → ℂ}
-    (hγ : Contour.IsPiecewiseC1On γ a b) (hclosed : γ a = γ b)
-    (hh : ∀ t ∈ [[a, b]], AnalyticAt ℂ h (γ t))
-    (hslit : ∀ t ∈ [[a, b]], h (γ t) ∈ slitPlane) :
-    ∫ t in a..b, deriv γ t • logDeriv h (γ t) = 0 := by
-  obtain ⟨P, hPc, hPd⟩ := hγ.exists_countable_differentiableAt
-  have hne : ∀ t ∈ [[a, b]], h (γ t) ≠ 0 := fun t ht => slitPlane_ne_zero (hslit t ht)
-  have hint := intervalIntegrable_deriv_smul_logDeriv hγ hh hne
-  -- The integrand is the logarithmic-derivative integrand of `t ↦ h (γ t)`.
-  simp only [smul_eq_mul, logDeriv_apply, ← mul_div_assoc] at hint ⊢
-  rw [Contour.integral_deriv_div_eq_log_sub_log (f := fun t => h (γ t))
-    (f' := fun t => deriv γ t * deriv h (γ t)) hPc
-    (fun t ht => ((hh t ht).continuousAt).comp_continuousWithinAt (hγ.continuousOn t ht))
-    (fun t ht => ?_) hslit hint, hclosed, sub_self]
-  have hmem : t ∈ [[a, b]] := Set.Ioo_subset_Icc_self ht.1
-  simpa only [Function.comp_def, smul_eq_mul] using
-    ((hh t hmem).differentiableAt.hasDerivAt).scomp t ((hPd t ht).hasDerivAt)
-
 /-- **The two argument-principle integrals of a Rouché pair agree.** This is the analytic heart of
 every homology form of Rouché's theorem: along a closed piecewise-`C¹` curve on which `f` and `g`
 are analytic and never point in opposite directions, the contour integrals of `logDeriv f` and
@@ -479,7 +443,7 @@ private lemma integral_deriv_smul_logDeriv_eq_of_norm_sub_lt
       = ∫ t in a..b, deriv γ t • logDeriv g (γ t) := by
   have hfne : ∀ t ∈ [[a, b]], f (γ t) ≠ 0 := fun t ht => ne_zero_left (hs t ht)
   have hgne : ∀ t ∈ [[a, b]], g (γ t) ≠ 0 := fun t ht => ne_zero_right (hs t ht)
-  have hzero := integral_deriv_smul_logDeriv_eq_zero_of_mem_slitPlane
+  have hzero := Contour.integral_deriv_smul_logDeriv_eq_zero_of_mem_slitPlane
     (h := fun w => g w / f w) hγ hclosed
     (fun t ht => (hga t ht).div (hfa t ht) (hfne t ht))
     (fun t ht => div_mem_slitPlane (hs t ht))
@@ -489,8 +453,8 @@ private lemma integral_deriv_smul_logDeriv_eq_of_norm_sub_lt
     rw [logDeriv_div _ (hgne t ht) (hfne t ht) (hga t ht).differentiableAt
       (hfa t ht).differentiableAt, smul_sub]
   rw [hcong, intervalIntegral.integral_sub
-    (intervalIntegrable_deriv_smul_logDeriv hγ hga hgne)
-    (intervalIntegrable_deriv_smul_logDeriv hγ hfa hfne)] at hzero
+    (Contour.intervalIntegrable_deriv_smul_logDeriv hγ hga hgne)
+    (Contour.intervalIntegrable_deriv_smul_logDeriv hγ hfa hfne)] at hzero
   exact (sub_eq_zero.mp hzero).symm
 
 /-- **Rouché's theorem for a null-homologous cycle, symmetric form** (Estermann). Let `f` and `g`
@@ -509,8 +473,8 @@ harmless rather than excluded — null-homology makes their winding number, henc
 on either side, vanish — so the meromorphy and order hypotheses are conditional on membership in
 `U`, and `S` may list ordinary points, of order `0`.
 
-`TauCeti.rouche_symm` is the circle case, proved separately: see the section introduction for why
-neither statement subsumes the other. -/
+`TauCeti.rouche_symm` is the circle case, proved separately: see the section introduction for how
+the two interfaces differ and what recovering the disc statement from this one would take. -/
 theorem rouche_symm_nullHomologous {ordf ordg : ℂ → ℤ} (hU : IsOpen U)
     (hfoff : ∀ z ∈ U, z ∉ S → AnalyticAt ℂ f z ∧ f z ≠ 0)
     (hgoff : ∀ z ∈ U, z ∉ S → AnalyticAt ℂ g z ∧ g z ≠ 0)
