@@ -37,6 +37,15 @@ class ReviewEmoji(unittest.TestCase):
         self.assertEqual(self.emoji(review="approved", conflicting=None), "check")
         self.assertIsNone(self.emoji(review="none", conflicting=None))
 
+    def test_uncomputed_mergeability_keeps_a_warning_the_bot_already_owns(self):
+        message = {"id": 7, "reactions": [{"emoji_name": "warning", "user_id": 42}]}
+        self.assertTrue(zulip._has_warning(message, 42))
+        # A human's ⚠️ is not ours to read as state, exactly as set_group judges it.
+        other = {"id": 7, "reactions": [{"emoji_name": "warning", "user_id": 99}]}
+        self.assertFalse(zulip._has_warning(other, 42))
+        self.assertFalse(zulip._has_warning({"id": 7, "reactions": []}, 42))
+        self.assertFalse(zulip._has_warning(None, 42))
+
     def test_the_conflict_emoji_is_in_the_review_group(self):
         # Otherwise reconcile could never REMOVE it once the conflict clears.
         self.assertIn("warning", zulip.REVIEW_GROUP)

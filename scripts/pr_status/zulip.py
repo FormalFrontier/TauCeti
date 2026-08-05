@@ -394,6 +394,13 @@ def set_group(z, message, bot_id, group, desired, dry_run=False):
     return changes
 
 
+def _has_warning(message, bot_id):
+    """Does the bot already own a ⚠️ on this message? Only the bot's own reactions
+    count, exactly as set_group judges presence."""
+    return any(r["emoji_name"] == "warning" and r.get("user_id") == bot_id
+               for r in (message or {}).get("reactions", []))
+
+
 def review_emoji(status):
     """Review reaction derived from the same truth as the automatic labels.
 
@@ -458,6 +465,11 @@ def reconcile(
     rev = {"merged": "merge", "closed": "closed-pr"}.get(status["lifecycle"])
     if rev is None:  # open PR: render the review state
         rev = review_emoji(status)
+        # An UNCOMPUTED mergeability must not clear an ESTABLISHED conflict, for the
+        # same reason as the label: GitHub answers null for a while after every push,
+        # and removing ⚠️ then would say "this merges again" when we do not know that.
+        if status.get("conflicting") is None and _has_warning(message, bot_id):
+            rev = "warning"
     changes += set_group(z, message, bot_id, REVIEW_GROUP, rev, dry_run)
 
     # CI status is only meaningful while the PR is open; core.derive already

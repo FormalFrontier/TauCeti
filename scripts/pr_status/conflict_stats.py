@@ -26,16 +26,36 @@ merge cleanly with that head; its commit time is the conflict's ONSET. The epoch
 ends when the author pushes again (a resolution, since the next epoch's head is
 measured afresh) or when the PR merges or closes.
 
-Two honest limitations, both reported rather than hidden:
+What this is and is not
+-----------------------
+This is a RECONSTRUCTION, not a log. GitHub keeps no record of when a PR started
+conflicting, so there is nothing to read; commits are the only durable trace of a
+branch's history, and they are an imperfect proxy for it. Read the numbers with
+these limits in mind, all of which are reported rather than hidden:
 
-  * **Rewritten history.** Force-pushed heads are gone from the server, so a PR
-    whose commits all share one timestamp has no measurable pre-rebase window. We
-    count those PRs and say so; they can only make the reported medians *better*
-    than reality, never worse.
-  * **Monotonicity.** The binary search assumes that once a head conflicts with
-    `main`, later `main` commits still conflict. That is near-universally true
-    (main only accumulates) but not a theorem, so each epoch is first checked at
-    its LAST base: an epoch that is clean at the end is reported as clean.
+  * **Commit time is not push time, and a commit is not a head.** Several commits
+    pushed together each look like a separate head here, and a commit's committer
+    date is when it was written, not when it reached GitHub. Both effects
+    *fragment* the timeline into more, shorter epochs than really existed.
+  * **Rewritten history.** Force-pushed heads are gone from the server. A PR whose
+    surviving commits all share one timestamp is flagged `rewritten` and its
+    pre-rebase window is unmeasurable; a PR force-pushed down to a single commit
+    cannot be distinguished from one that always had one.
+  * **Monotonicity.** By default the binary search assumes a head that conflicts
+    with `main` still conflicts against later `main`. Each epoch is therefore
+    checked at its LAST base and reported clean if it ends clean, which drops a
+    conflict that arose and cleared inside one epoch. `--exhaustive` tests every
+    base instead; over this repository's whole history the two agree exactly (105
+    episodes, identical medians and session split), so the assumption is currently
+    costing nothing -- but it is an assumption, so re-check it rather than trust
+    that it keeps holding.
+
+Every one of those errs the same way: they lose episodes and shorten the ones they
+keep. So the reported medians and counts are a LOWER bound on how much conflict
+there was -- useful for "is the tail real" (it is: an unresolved episode needs no
+reconstruction, and the ones found here match GitHub's live `CONFLICTING` list
+exactly), and directionally safe for the session question below, where the bias
+runs *against* the conclusion the numbers support.
 
 Attribution
 -----------
@@ -48,6 +68,16 @@ author was already there); anything later is a RETURN (the author came back to a
 PR they had left). If essentially every resolution is a continuation and returns
 are vanishingly rare, the problem is session lifetime, not motivation, and the
 remedy is a different one.
+
+This classification inherits the limits above, and it is worth being precise about
+which way they push. Treating each commit as its own push SPLITS what was really
+one push into several closely-spaced epochs, which shortens apparent gaps and
+therefore over-reports CONTINUATIONS. So the count of returns is a floor: the
+error can only hide evidence that authors come back, never manufacture it. A
+result showing plentiful returns survives the criticism; a result showing none
+would not, and should be treated as inconclusive rather than as proof of the
+session-lifetime story. Vary `--session-gap` and check the split is not an
+artefact of one threshold.
 
 Usage
 -----
@@ -138,9 +168,13 @@ class Mirror:
             subprocess.run(["git", "init", "-q", self.path], check=True)
             self.git("remote", "add", "origin", f"https://github.com/{REPO}.git")
         log(f"fetching main and every PR head into {self.path}")
-        self.git("fetch", "-q", "--no-tags", "origin",
-                 "refs/heads/main:refs/remotes/origin/main",
-                 "refs/pull/*/head:refs/remotes/pr/*")
+        # Both refspecs are FORCED (`+`) and the PR namespace is pruned. A PR head
+        # that was force-pushed since the last fetch is not a fast-forward, and
+        # without the `+` the whole fetch exits non-zero -- on exactly the PRs whose
+        # force-pushes this script exists to reason about.
+        self.git("fetch", "-q", "--no-tags", "--prune", "origin",
+                 "+refs/heads/main:refs/remotes/origin/main",
+                 "+refs/pull/*/head:refs/remotes/pr/*")
 
     def main_history(self):
         """`main`'s first-parent commits, OLDEST first, as (sha, epoch)."""
@@ -200,14 +234,26 @@ def fetch_prs(since=None):
 
 # ----- replay -----------------------------------------------------------------
 
-def first_conflicting(mirror, history, lo, hi, head):
+def first_conflicting(mirror, history, lo, hi, head, exhaustive=False):
     """Index of the first base in `history[lo:hi]` that conflicts with `head`.
 
-    None if the epoch never conflicts. The LAST base is checked first, so an epoch
-    that ends clean is reported clean regardless of what happened in the middle;
-    only when it ends conflicted do we binary-search for where that began.
+    None if no base in the window conflicts.
+
+    `exhaustive` tests every base, which is correct but costs one merge per main
+    commit per epoch. The default instead assumes the predicate is monotone in
+    main accumulating commits, checks the LAST base, and binary-searches only if
+    that conflicts. That assumption is NOT a theorem -- main can revert or
+    converge on the same change and un-conflict a head -- and it fails in one
+    known direction: an epoch that conflicted in the middle but ends clean is
+    reported clean, so the default UNDERCOUNTS episodes and never invents one.
+    Use `--exhaustive` when the count matters more than the wall clock.
     """
     if lo >= hi:
+        return None
+    if exhaustive:
+        for index in range(lo, hi):
+            if mirror.conflicts(history[index][0], head):
+                return index
         return None
     if not mirror.conflicts(history[hi - 1][0], head):
         return None
@@ -223,7 +269,7 @@ def first_conflicting(mirror, history, lo, hi, head):
     return lo
 
 
-def analyse_pr(mirror, history, history_times, pr, now, session_gap):
+def analyse_pr(mirror, history, history_times, pr, now, session_gap, exhaustive=False):
     """Conflict episodes for one PR, plus how it was handled.
 
     The second element is "" for a fully measured PR, "rewritten" when several
@@ -252,21 +298,27 @@ def analyse_pr(mirror, history, history_times, pr, now, session_gap):
             epochs.append((sha, when))
     handling = "rewritten" if len(epochs) == 1 and len(heads) > 1 else ""
 
+    # A branch's commits routinely predate the PR that proposes them, and a PR
+    # cannot conflict before it exists. Clamp every epoch to the PR's creation, or
+    # a commit authored a week earlier would date a "conflict" to before the PR
+    # was opened and inflate its duration.
+    created = parse_iso(pr.get("createdAt")) or epochs[0][1]
     ended = parse_iso(pr["mergedAt"]) or parse_iso(pr["closedAt"]) or now
     out = []
     for index, (head, start) in enumerate(epochs):
+        start = max(start, created)
         following = epochs[index + 1][1] if index + 1 < len(epochs) else ended
         if following <= start:
             continue
         lo = bisect.bisect_left(history_times, start)
         hi = bisect.bisect_left(history_times, following)
-        found = first_conflicting(mirror, history, lo, hi, head)
+        found = first_conflicting(mirror, history, lo, hi, head, exhaustive)
         if found is None:
             continue
         onset = history_times[found]
         if index + 1 < len(epochs):
             resolved, outcome = following, "push"
-            previous = epochs[index - 1][1] if index else start
+            previous = max(epochs[index - 1][1], created) if index else start
             continuation = (following - previous) <= session_gap
         elif pr["mergedAt"]:
             # A merge with no intervening push means the conflict cleared some
@@ -288,14 +340,16 @@ def analyse_pr(mirror, history, history_times, pr, now, session_gap):
     return out, handling
 
 
-def replay(mirror, prs, jobs, session_gap, now):
+def replay(mirror, prs, jobs, session_gap, now, exhaustive=False):
     history = mirror.main_history()
     history_times = [when for _, when in history]
-    log(f"main has {len(history)} commits; replaying {len(prs)} PR(s) on {jobs} threads")
+    log(f"main has {len(history)} commits; replaying {len(prs)} PR(s) on {jobs} threads"
+        + (" (exhaustive)" if exhaustive else ""))
 
     def one(pr):
         try:
-            return analyse_pr(mirror, history, history_times, pr, now, session_gap)
+            return analyse_pr(mirror, history, history_times, pr, now, session_gap,
+                              exhaustive)
         except Exception as exc:
             log(f"PR #{pr['number']}: replay failed ({exc}); skipping")
             return [], "skipped"
@@ -381,6 +435,9 @@ def main(argv=None):
     parser.add_argument("--session-gap", type=float, default=DEFAULT_SESSION_GAP_HOURS,
                         help="hours after which a resolving push counts as a return, "
                              "not a continuation of the author's current session")
+    parser.add_argument("--exhaustive", action="store_true",
+                        help="test every base instead of binary-searching; slower, but "
+                             "does not assume a conflict persists as main accumulates")
     parser.add_argument("--json", dest="json_out", default=None,
                         help="also write the per-episode rows here")
     args = parser.parse_args(argv)
@@ -391,7 +448,7 @@ def main(argv=None):
         prs = fetch_prs(args.since)
         now = int(datetime.datetime.now(datetime.timezone.utc).timestamp())
         episodes, unmeasured = replay(
-            mirror, prs, args.jobs, int(args.session_gap * 3600), now)
+            mirror, prs, args.jobs, int(args.session_gap * 3600), now, args.exhaustive)
 
     if args.json_out:
         with open(args.json_out, "w") as handle:

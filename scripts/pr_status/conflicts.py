@@ -21,9 +21,10 @@ three places an author already looks.
      has moved on. One comment per conflict *episode*, carrying a hidden
      `<!--tauceti-conflict:v1 {...}-->` marker; edited (never re-posted) to a ✅
      form when the PR merges cleanly again, and re-posted fresh if the PR
-     conflicts a second time, so a recurrence is genuinely seen -- but not within
-     `RECURRENCE_COOLDOWN_SECONDS` of the last one, so a flapping mergeability
-     computation cannot turn into a stream of comments.
+     conflicts a second time, so a recurrence is genuinely seen. Every write is
+     gated on a fresh confirmation that the head, the base, and the mergeability
+     are all still what the sweep saw, so a push landing mid-sweep cannot produce
+     a comment about a state the PR has already left.
   2. **The `merge-conflict` label**, via `labels.py` -- which stays the sole
      writer of the status labels, so the "exactly one" invariant is unaffected.
   3. **The ⚠️ Zulip reaction**, via `zulip.py`, on the PR's existing post.
@@ -60,8 +61,10 @@ sink (useful locally, and implied when no bot credentials are set).
 
 `report` reads the conflict markers back out of GitHub and prints the
 conflict-to-resolution distribution -- overall and per author -- plus the
-still-open conflicts and how long they have been live. `--days N` limits it to
-episodes that began in the last N days.
+still-open conflicts and how long they have been live. `--days N` (default 30)
+sets the window. It reads CLOSED and merged PRs as well as open ones: a conflict
+that was resolved and then merged is precisely the case that must not be dropped,
+or the median would improve every time the queue got healthier.
 
 Environment:
     GH_REPO                                  default "TauCetiProject/TauCeti"
@@ -108,14 +111,6 @@ UNKNOWN_WAIT_SECONDS = 10.0
 # the comment is a call to action, and nobody asked for action on a parked PR.
 # Mirrors stuck_alerts.HOLD_LABELS.
 HOLD_LABELS = {"keep", "hold", "wip", "human", "do-not-close", "blocked"}
-
-# How soon after clearing a conflict a PR may open a NEW episode. A conflict that
-# reappears within half an hour is either GitHub flapping its own computation or a
-# push that did not take, and in both cases the author was told about it minutes
-# ago -- a second comment would be noise, and comment spam is the worst way for an
-# autonomous notifier to fail. A genuine recurrence just waits for the next sweep:
-# the label and the reaction show it immediately either way.
-RECURRENCE_COOLDOWN_SECONDS = 1800
 
 CONFLICT_BODY = """\
 ⚠️ **This PR no longer merges into `main`.**
@@ -181,9 +176,11 @@ query($owner:String!, $name:String!, $cursor:String) {
                  orderBy:{field:CREATED_AT, direction:ASC}) {
       pageInfo { hasNextPage endCursor }
       nodes {
-        number title isDraft mergeable
+        number title isDraft mergeable headRefOid baseRefOid
         author { login }
-        labels(first:50) { nodes { name } }
+        # 100, not 50: a hold label past the page would read as absent and earn the
+        # PR a comment it should never have got. Nothing here carries 100 labels.
+        labels(first:100) { nodes { name } }
       }
     }
   }
@@ -222,6 +219,8 @@ def open_prs():
                 "draft": bool(node.get("isDraft")),
                 "conflicting": {"CONFLICTING": True, "MERGEABLE": False}.get(
                     node.get("mergeable")),
+                "head": node.get("headRefOid") or "",
+                "base": node.get("baseRefOid") or "",
                 "author": ((node.get("author") or {}).get("login")) or "",
                 "labels": [l["name"] for l in (node.get("labels") or {}).get("nodes", [])],
             })
@@ -243,10 +242,14 @@ def resolve_unknowns(prs, sleep=time.sleep):
             return
         log(f"{len(pending)} PR(s) with mergeability not yet computed; re-reading")
         sleep(UNKNOWN_WAIT_SECONDS)
-        fresh = {p["number"]: p["conflicting"] for p in open_prs()}
+        # Re-key on (number, head, base), not number alone: between rounds the
+        # author may push, and an answer computed for the NEW head must not be
+        # filled in as the answer for the head we recorded.
+        fresh = {(p["number"], p["head"], p["base"]): p["conflicting"] for p in open_prs()}
         for pr in prs:
-            if pr["conflicting"] is None and fresh.get(pr["number"]) is not None:
-                pr["conflicting"] = fresh[pr["number"]]
+            answer = fresh.get((pr["number"], pr["head"], pr["base"]))
+            if pr["conflicting"] is None and answer is not None:
+                pr["conflicting"] = answer
     still = [p["number"] for p in prs if p["conflicting"] is None]
     if still:
         log(f"mergeability still unknown for {still}; leaving them exactly as they are")
@@ -269,16 +272,29 @@ def parse_marker(body):
     return found
 
 
-def conflict_comments(pr):
-    """This PR's conflict-marker comments, oldest first, as {id, marker, resolved}.
+def ours(comment):
+    """Could this comment be one of OURS -- the automation's own marker?
 
-    Read through `core.trusted_comments`, so only a repo-associated author's
-    comment counts -- the same trust the review scoreboard and the in-progress
-    marker use. A fork PR author cannot post a marker that suppresses their own
-    conflict notice.
+    NOT `core.trusted_comments`' rule, and this distinction is load-bearing. A
+    GitHub App's installation bot comments as `author_association: CONTRIBUTOR`
+    (verified on this repository: `tauceti-review-bot[bot]` posts housekeeping
+    comments as CONTRIBUTOR), which that rule excludes. Reading markers through it
+    would mean the sweep never recognised a comment it had just written, so every
+    run would post another one -- the exact spam failure the state machine exists
+    to prevent, on every push to main, forever.
+
+    So the rule here is "a bot, or a repo-associated human": `is_bot` covers the
+    App under any token, and the association arm covers a maintainer running the
+    sweep locally with a PAT. A fork PR author is a `User` with no repo
+    association, so they still cannot forge a marker to suppress their own notice.
     """
+    return bool(comment.get("is_bot")) or comment.get("association") in core.TRUSTED_ASSOC
+
+
+def conflict_comments(pr):
+    """This PR's conflict-marker comments, oldest first, as {id, marker, resolved}."""
     out = []
-    for comment in core.trusted_comments(pr):
+    for comment in (c for c in core.pr_comments(pr) if ours(c)):
         marker = parse_marker(comment.get("body"))
         if marker is None:
             continue
@@ -311,6 +327,43 @@ def edit_comment(comment_id, body):
     log(f"edited comment {comment_id} to the resolved form")
 
 
+def still_true(pr, head, base, is_conflicting):
+    """Re-read the PR and confirm the observation we are about to act on.
+
+    The sweep reads the whole queue in one query and then works through it, so a
+    push can land between the observation and the write. Acting on the stale value
+    would post a conflict notice for a head the author has already fixed, or close
+    out an episode that a NEW head has just re-opened (losing its onset). One
+    targeted read immediately before the write closes that window: the head, the
+    base, and the mergeability must all still agree, or we skip the PR and let the
+    next sweep act on a settled state.
+
+    Returns True only on a positive match. Anything else -- a moved head or base,
+    a mergeability GitHub has gone back to computing, or a failed read -- is False,
+    because "we could not confirm it" must never authorise a write.
+    """
+    try:
+        row = core.gh_api(
+            f"/repos/{REPO}/pulls/{pr}",
+            jq='{head: .head.sha, base: .base.sha, mergeable: .mergeable}').strip()
+    except RuntimeError as exc:
+        log(f"PR #{pr}: could not re-confirm before writing ({exc}); skipping")
+        return False
+    if not row:
+        return False
+    fresh = json.loads(row.splitlines()[0])
+    if fresh.get("head") != head or fresh.get("base") != base:
+        log(f"PR #{pr}: head or base moved since the sweep read it; skipping")
+        return False
+    if not isinstance(fresh.get("mergeable"), bool):
+        log(f"PR #{pr}: mergeability went back to uncomputed; skipping")
+        return False
+    if (not fresh["mergeable"]) != is_conflicting:
+        log(f"PR #{pr}: mergeability changed since the sweep read it; skipping")
+        return False
+    return True
+
+
 def conflict_body(onset):
     return CONFLICT_BODY.format(marker=json.dumps({"onset": onset}, sort_keys=True))
 
@@ -324,11 +377,17 @@ def resolved_body(onset, resolved):
 
 # ----- reconcile --------------------------------------------------------------
 
-def reconcile_pr(pr, is_conflicting, now=None, dry_run=False, parked=False):
+def reconcile_pr(pr, is_conflicting, now=None, dry_run=False, parked=False,
+                 head=None, base=None):
     """Bring one PR's conflict comment in line with its live mergeability.
 
     Returns the action taken: "opened", "resolved", "ongoing", "clear", "parked",
-    or "cooldown".
+    or "stale" (the PR moved under us and the next sweep should decide).
+
+    Every write is gated on `still_true`, so nothing is posted or resolved on an
+    observation the PR has since invalidated. `head`/`base` are the OIDs the sweep
+    saw; passing neither skips the re-confirmation, which only a caller that has
+    just read the PR itself should do.
 
     Draft PRs are reconciled like any other: a draft that conflicts is still a
     conflict its author has to fix, and the label/Zulip sinks already show draft
@@ -340,16 +399,21 @@ def reconcile_pr(pr, is_conflicting, now=None, dry_run=False, parked=False):
     history = conflict_comments(pr)
     live = history[-1] if history and not history[-1]["resolved"] else None
 
+    def confirmed():
+        if dry_run or head is None or base is None:
+            return True
+        return still_true(pr, head, base, is_conflicting)
+
     if is_conflicting:
         if live is not None:
             # Ongoing. Leave the comment byte-identical: an edit notifies nobody
-            # and a repost would be a nag, and this module is not a nag.
+            # and a repost would be a nag, and this module is not a nag. No write,
+            # so nothing to re-confirm.
             return "ongoing"
         if parked:
             return "parked"
-        if history and now - history[-1]["marker"]["resolved"] < RECURRENCE_COOLDOWN_SECONDS:
-            log(f"PR #{pr}: conflicting again within the cooldown; not re-commenting yet")
-            return "cooldown"
+        if not confirmed():
+            return "stale"
         log(f"PR #{pr}: NEW conflict")
         if not dry_run:
             post_comment(pr, conflict_body(now))
@@ -357,6 +421,8 @@ def reconcile_pr(pr, is_conflicting, now=None, dry_run=False, parked=False):
 
     if live is None:
         return "clear"
+    if not confirmed():
+        return "stale"
     onset = live["marker"]["onset"]
     log(f"PR #{pr}: conflict resolved after {human_duration(now - onset)}")
     if not dry_run:
@@ -380,7 +446,7 @@ def sweep(dry_run=False, use_zulip=True, sleep=time.sleep):
         parked = bool(HOLD_LABELS.intersection(n.lower() for n in pr["labels"]))
         try:
             action = reconcile_pr(number, pr["conflicting"], dry_run=dry_run,
-                                  parked=parked)
+                                  parked=parked, head=pr["head"], base=pr["base"])
         except Exception as exc:
             log(f"PR #{number}: conflict comment failed: {exc}")
             failures += 1
@@ -389,6 +455,8 @@ def sweep(dry_run=False, use_zulip=True, sleep=time.sleep):
         # touch a PR whose comment state just changed or whose label disagrees with
         # what we just measured. An unchanged, correctly-labelled PR costs nothing.
         label_wrong = ("merge-conflict" in pr["labels"]) != bool(pr["conflicting"])
+        if action == "stale":
+            continue  # the PR moved; next sweep renders it from a settled read
         if action in ("opened", "resolved") or label_wrong:
             failures += _render(number, pr["conflicting"], zulip_sink, dry_run)
     return failures
@@ -440,36 +508,96 @@ def _zulip_sink():
 
 # ----- report -----------------------------------------------------------------
 
-def episodes(days=None, now=None):
-    """Every conflict episode recorded on an open PR, newest onset first.
+REPORT_PRS_QUERY = """
+query($q:String!, $cursor:String) {
+  search(query:$q, type:ISSUE, first:100, after:$cursor) {
+    pageInfo { hasNextPage endCursor }
+    nodes { ... on PullRequest {
+      number state closedAt author { login }
+    } }
+  }
+}
+"""
 
-    Each is `{pr, author, onset, resolved, seconds, live}`. A live episode has
-    `resolved` None and `seconds` measured to `now`, so "how long has this been
-    conflicting" and "how long did that conflict last" are the same number.
 
-    This reads only OPEN PRs: once a PR merges its episodes are history, and the
-    question the report answers is whether the queue is currently healthy.
+def report_prs(days):
+    """PRs to read markers from: every PR updated in the window, open OR closed.
+
+    Reading only open PRs would be survivor bias of the worst kind -- a conflict
+    resolved by an author who then merged the PR would VANISH from the median,
+    leaving only the ones that never resolved, so the number would get worse the
+    better the queue got. `days` is required for the same reason it is cheap: the
+    search is bounded by an updated-at window rather than the whole history.
+    """
+    since = datetime.datetime.fromtimestamp(
+        now_epoch() - days * 86400, datetime.timezone.utc).strftime("%Y-%m-%d")
+    query = f"repo:{REPO} is:pr updated:>={since}"
+    rows, cursor = [], None
+    while True:
+        page = _graphql(REPORT_PRS_QUERY, q=query, **({"cursor": cursor} if cursor else {}))
+        block = page["data"]["search"]
+        for node in block["nodes"]:
+            if not node:
+                continue
+            rows.append({
+                "number": node["number"],
+                "author": ((node.get("author") or {}).get("login")) or "",
+                "closed_at": node.get("closedAt"),
+            })
+        if not block["pageInfo"]["hasNextPage"]:
+            return rows
+        cursor = block["pageInfo"]["endCursor"]
+
+
+REPORT_DEFAULT_DAYS = 30
+
+
+def episodes(days=REPORT_DEFAULT_DAYS, now=None, prs=None):
+    """Every conflict episode recorded in the window, newest onset first.
+
+    Each is `{pr, author, onset, resolved, seconds, state}` where `state` is:
+
+        "resolved"  the PR merged cleanly again; `seconds` is the real duration
+        "live"      still conflicting on an open PR; `seconds` is its age so far
+        "censored"  the PR was CLOSED while still conflicting, so it has no
+                    resolution and never will. Counted and shown, but kept out of
+                    the resolved median: closing a conflicted PR is an outcome,
+                    not a resolution time, and averaging it in would flatter or
+                    ruin the number depending on which way you squinted.
     """
     now = now_epoch() if now is None else now
-    cutoff = None if days is None else now - days * 86400
+    cutoff = now - days * 86400
     out = []
-    for pr in open_prs():
+    for pr in (report_prs(days) if prs is None else prs):
         for comment in conflict_comments(pr["number"]):
             marker = comment["marker"]
             onset = marker["onset"]
-            if cutoff is not None and onset < cutoff:
+            if onset < cutoff:
                 continue
             resolved = marker.get("resolved") if comment["resolved"] else None
+            if resolved is not None:
+                state, end = "resolved", resolved
+            elif pr.get("closed_at"):
+                # Unresolved marker on a closed PR: the sweep only reconciles open
+                # PRs, so the episode ends, unresolved, when the PR closed.
+                state, end = "censored", iso_to_epoch(pr["closed_at"])
+            else:
+                state, end = "live", now
             out.append({
                 "pr": pr["number"],
                 "author": pr["author"],
                 "onset": onset,
                 "resolved": resolved,
-                "seconds": (resolved or now) - onset,
-                "live": resolved is None,
+                "seconds": max(0, end - onset),
+                "state": state,
             })
     out.sort(key=lambda e: e["onset"], reverse=True)
     return out
+
+
+def iso_to_epoch(text):
+    return int(datetime.datetime.fromisoformat(
+        text.replace("Z", "+00:00")).timestamp())
 
 
 def median(values):
@@ -485,24 +613,30 @@ def median(values):
 def summarise(eps):
     """Lines of a human-readable report over `episodes()` output."""
     lines = []
-    resolved = [e for e in eps if not e["live"]]
-    live = [e for e in eps if e["live"]]
-    lines.append(f"{len(eps)} conflict episode(s): {len(resolved)} resolved, {len(live)} live")
+    resolved = [e for e in eps if e["state"] == "resolved"]
+    live = [e for e in eps if e["state"] == "live"]
+    censored = [e for e in eps if e["state"] == "censored"]
+    lines.append(f"{len(eps)} conflict episode(s): {len(resolved)} resolved, "
+                 f"{len(live)} live, {len(censored)} closed while conflicting")
     if resolved:
         durations = [e["seconds"] for e in resolved]
+        over = sum(1 for d in durations if d > 86400)
         lines.append(f"  resolved: median {human_duration(median(durations))}, "
-                     f"max {human_duration(max(durations))}")
+                     f"max {human_duration(max(durations))}, {over} over 24h")
     if live:
         ages = [e["seconds"] for e in live]
         lines.append(f"  live:     median age {human_duration(median(ages))}, "
                      f"oldest {human_duration(max(ages))}")
+    if censored:
+        lines.append(f"  censored: {len(censored)} PR(s) were closed still conflicting; "
+                     f"they have no resolution time and are not in the median")
     by_author = {}
     for e in eps:
         by_author.setdefault(e["author"], []).append(e)
     for author in sorted(by_author):
         rows = by_author[author]
-        done = [e["seconds"] for e in rows if not e["live"]]
-        open_now = [e for e in rows if e["live"]]
+        done = [e["seconds"] for e in rows if e["state"] == "resolved"]
+        open_now = [e for e in rows if e["state"] == "live"]
         detail = f"{len(rows)} episode(s)"
         if done:
             detail += f", median {human_duration(median(done))}"
@@ -528,7 +662,7 @@ def main(argv):
             return 1
         return 0
     if cmd == "report":
-        days = None
+        days = REPORT_DEFAULT_DAYS
         if "--days" in rest:
             days = int(rest[rest.index("--days") + 1])
         eps = episodes(days=days)

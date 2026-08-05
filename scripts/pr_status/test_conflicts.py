@@ -42,18 +42,38 @@ class Marker(unittest.TestCase):
 
 class ConflictComments(unittest.TestCase):
     def setUp(self):
-        self._saved = core.trusted_comments
+        self._saved = core.pr_comments
 
     def tearDown(self):
-        core.trusted_comments = self._saved
+        core.pr_comments = self._saved
 
     def stub(self, *comments):
-        core.trusted_comments = lambda pr: list(comments)
+        core.pr_comments = lambda pr: list(comments)
 
-    def comment(self, cid, onset, resolved=None):
+    def comment(self, cid, onset, resolved=None, association="CONTRIBUTOR", is_bot=True):
         body = (conflicts.resolved_body(onset, resolved) if resolved
                 else conflicts.conflict_body(onset))
-        return {"id": cid, "body": body, "updated": "2026-01-01T00:00:00Z"}
+        return {"id": cid, "body": body, "updated": "2026-01-01T00:00:00Z",
+                "association": association, "is_bot": is_bot}
+
+    def test_finds_its_own_app_authored_comment(self):
+        # The regression that would have made every sweep post another comment: a
+        # GitHub App installation bot is CONTRIBUTOR, which core.trusted_comments
+        # excludes. Reading markers through that filter saw nothing, forever.
+        self.stub(self.comment(10, 100, association="CONTRIBUTOR", is_bot=True))
+        self.assertEqual(len(conflicts.conflict_comments("1")), 1)
+
+    def test_finds_a_repo_associated_humans_comment(self):
+        self.stub(self.comment(10, 100, association="MEMBER", is_bot=False))
+        self.assertEqual(len(conflicts.conflict_comments("1")), 1)
+
+    def test_ignores_a_marker_forged_by_an_outside_contributor(self):
+        self.stub(self.comment(10, 100, association="CONTRIBUTOR", is_bot=False))
+        self.assertEqual(conflicts.conflict_comments("1"), [])
+
+    def test_ignores_a_marker_from_a_drive_by_account(self):
+        self.stub(self.comment(10, 100, association="NONE", is_bot=False))
+        self.assertEqual(conflicts.conflict_comments("1"), [])
 
     def test_orders_episodes_oldest_first(self):
         self.stub(self.comment(20, 300), self.comment(10, 100, 200))
@@ -62,7 +82,8 @@ class ConflictComments(unittest.TestCase):
         self.assertEqual([c["resolved"] for c in found], [True, False])
 
     def test_ignores_unrelated_comments(self):
-        self.stub({"id": 1, "body": "<!--tauceti-scoreboard--> nope", "updated": "x"})
+        self.stub({"id": 1, "body": "<!--tauceti-scoreboard--> nope", "updated": "x",
+                   "association": "MEMBER", "is_bot": False})
         self.assertEqual(conflicts.conflict_comments("1"), [])
 
 
@@ -72,26 +93,31 @@ class ReconcilePR(unittest.TestCase):
     NOW = 1_700_100_000
 
     def setUp(self):
-        self._comments = core.trusted_comments
+        self._comments = core.pr_comments
         self._post = conflicts.post_comment
         self._edit = conflicts.edit_comment
+        self._still = conflicts.still_true
         self.posted, self.edited = [], []
         conflicts.post_comment = lambda pr, body: self.posted.append((pr, body))
         conflicts.edit_comment = lambda cid, body: self.edited.append((cid, body))
+        conflicts.still_true = lambda pr, head, base, c: True
 
     def tearDown(self):
-        core.trusted_comments = self._comments
+        core.pr_comments = self._comments
         conflicts.post_comment = self._post
         conflicts.edit_comment = self._edit
+        conflicts.still_true = self._still
 
     def history(self, *comments):
-        core.trusted_comments = lambda pr: list(comments)
+        core.pr_comments = lambda pr: list(comments)
 
     def open_episode(self, cid, onset):
-        return {"id": cid, "body": conflicts.conflict_body(onset), "updated": "u"}
+        return {"id": cid, "body": conflicts.conflict_body(onset), "updated": "u",
+                "association": "CONTRIBUTOR", "is_bot": True}
 
     def closed_episode(self, cid, onset, resolved):
-        return {"id": cid, "body": conflicts.resolved_body(onset, resolved), "updated": "u"}
+        return {"id": cid, "body": conflicts.resolved_body(onset, resolved), "updated": "u",
+                "association": "CONTRIBUTOR", "is_bot": True}
 
     def test_first_conflict_posts_exactly_one_comment(self):
         self.history()
@@ -133,19 +159,29 @@ class ReconcilePR(unittest.TestCase):
         self.assertEqual(len(self.posted), 1)
         self.assertEqual(self.edited, [])
 
-    def test_a_flapping_conflict_does_not_re_comment_immediately(self):
-        # GitHub recomputing mergeability (or a push that did not take) must never
-        # turn into a stream of comments; the label and reaction still show it.
-        resolved = self.NOW - conflicts.RECURRENCE_COOLDOWN_SECONDS + 60
-        self.history(self.closed_episode(11, resolved - 3600, resolved))
-        self.assertEqual(conflicts.reconcile_pr("7", True, now=self.NOW), "cooldown")
-        self.assertEqual((self.posted, self.edited), ([], []))
+    def test_a_pr_that_moved_since_the_sweep_read_it_is_not_commented(self):
+        # The author pushed between the queue read and this write; commenting now
+        # would announce a conflict on a head that may already be fixed.
+        self.history()
+        conflicts.still_true = lambda pr, head, base, c: False
+        self.assertEqual(
+            conflicts.reconcile_pr("7", True, now=self.NOW, head="H", base="B"), "stale")
+        self.assertEqual(self.posted, [])
 
-    def test_a_conflict_that_outlives_the_cooldown_is_announced(self):
-        resolved = self.NOW - conflicts.RECURRENCE_COOLDOWN_SECONDS - 60
-        self.history(self.closed_episode(11, resolved - 3600, resolved))
-        self.assertEqual(conflicts.reconcile_pr("7", True, now=self.NOW), "opened")
-        self.assertEqual(len(self.posted), 1)
+    def test_a_pr_that_moved_does_not_get_its_episode_closed_out(self):
+        # Resolving on a stale read would lose this episode's real onset.
+        self.history(self.open_episode(11, self.NOW - 5000))
+        conflicts.still_true = lambda pr, head, base, c: False
+        self.assertEqual(
+            conflicts.reconcile_pr("7", False, now=self.NOW, head="H", base="B"), "stale")
+        self.assertEqual(self.edited, [])
+
+    def test_the_confirmation_is_given_the_observed_head_and_base(self):
+        seen = []
+        self.history()
+        conflicts.still_true = lambda pr, head, base, c: seen.append((pr, head, base, c)) or True
+        conflicts.reconcile_pr("7", True, now=self.NOW, head="H1", base="B1")
+        self.assertEqual(seen, [("7", "H1", "B1", True)])
 
     def test_a_parked_pr_gets_no_comment(self):
         self.history()
@@ -174,28 +210,81 @@ class Unknowns(unittest.TestCase):
     def tearDown(self):
         conflicts.open_prs = self._open
 
+    def row(self, number, conflicting, head="H", base="B"):
+        return {"number": number, "conflicting": conflicting, "head": head, "base": base}
+
     def test_a_later_round_fills_in_what_the_first_could_not(self):
-        rows = [{"number": 1, "conflicting": None}, {"number": 2, "conflicting": False}]
-        conflicts.open_prs = lambda: [{"number": 1, "conflicting": True},
-                                      {"number": 2, "conflicting": False}]
+        rows = [self.row(1, None), self.row(2, False)]
+        conflicts.open_prs = lambda: [self.row(1, True), self.row(2, False)]
         conflicts.resolve_unknowns(rows, sleep=lambda s: None)
         self.assertEqual([r["conflicting"] for r in rows], [True, False])
 
+    def test_an_answer_for_a_different_head_is_not_filled_in(self):
+        # The author pushed between rounds: GitHub's answer is about the NEW head
+        # and says nothing about the one we recorded.
+        rows = [self.row(1, None, head="H1")]
+        conflicts.open_prs = lambda: [self.row(1, True, head="H2")]
+        conflicts.resolve_unknowns(rows, sleep=lambda s: None)
+        self.assertIsNone(rows[0]["conflicting"])
+
     def test_a_permanently_unknown_pr_stays_unknown(self):
-        rows = [{"number": 1, "conflicting": None}]
+        rows = [self.row(1, None)]
         calls = []
         def never_knows():
             calls.append(1)
-            return [{"number": 1, "conflicting": None}]
+            return [self.row(1, None)]
         conflicts.open_prs = never_knows
         conflicts.resolve_unknowns(rows, sleep=lambda s: None)
         self.assertIsNone(rows[0]["conflicting"])
         self.assertEqual(len(calls), conflicts.UNKNOWN_ROUNDS - 1)
 
     def test_no_unknowns_costs_no_extra_request(self):
-        rows = [{"number": 1, "conflicting": False}]
+        rows = [self.row(1, False)]
         conflicts.open_prs = lambda: self.fail("must not re-read when nothing is unknown")
         conflicts.resolve_unknowns(rows, sleep=lambda s: None)
+
+
+class StillTrue(unittest.TestCase):
+    """The gate that stands between a stale observation and an irreversible write."""
+
+    def setUp(self):
+        self._api = core.gh_api
+
+    def tearDown(self):
+        core.gh_api = self._api
+
+    def answer(self, payload):
+        core.gh_api = lambda path, jq=None, paginate=False: payload
+
+    def test_confirms_an_unchanged_conflicting_pr(self):
+        self.answer('{"head":"H","base":"B","mergeable":false}')
+        self.assertTrue(conflicts.still_true("1", "H", "B", True))
+
+    def test_confirms_an_unchanged_mergeable_pr(self):
+        self.answer('{"head":"H","base":"B","mergeable":true}')
+        self.assertTrue(conflicts.still_true("1", "H", "B", False))
+
+    def test_rejects_a_moved_head(self):
+        self.answer('{"head":"H2","base":"B","mergeable":false}')
+        self.assertFalse(conflicts.still_true("1", "H", "B", True))
+
+    def test_rejects_a_moved_base(self):
+        self.answer('{"head":"H","base":"B2","mergeable":false}')
+        self.assertFalse(conflicts.still_true("1", "H", "B", True))
+
+    def test_rejects_a_changed_verdict(self):
+        self.answer('{"head":"H","base":"B","mergeable":true}')
+        self.assertFalse(conflicts.still_true("1", "H", "B", True))
+
+    def test_rejects_a_verdict_that_went_back_to_uncomputed(self):
+        self.answer('{"head":"H","base":"B","mergeable":null}')
+        self.assertFalse(conflicts.still_true("1", "H", "B", True))
+
+    def test_a_failed_read_never_authorises_the_write(self):
+        def boom(path, jq=None, paginate=False):
+            raise RuntimeError("GitHub is down")
+        core.gh_api = boom
+        self.assertFalse(conflicts.still_true("1", "H", "B", True))
 
 
 class Sweep(unittest.TestCase):
@@ -215,14 +304,14 @@ class Sweep(unittest.TestCase):
         conflicts._zulip_sink = self._sink
 
     def pr(self, number, conflicting, labels=None):
-        return {"number": number, "title": "t", "draft": False,
+        return {"number": number, "title": "t", "draft": False, "head": "H", "base": "B",
                 "conflicting": conflicting, "author": "alice", "labels": labels or []}
 
     def stub_prs(self, *prs):
         conflicts.open_prs = lambda: list(prs)
 
     def stub_actions(self, actions):
-        def fake(pr, conflicting, now=None, dry_run=False, parked=False):
+        def fake(pr, conflicting, now=None, dry_run=False, parked=False, head=None, base=None):
             self.reconciled.append((pr, conflicting, parked))
             return actions[pr]
         conflicts.reconcile_pr = fake
@@ -261,7 +350,7 @@ class Sweep(unittest.TestCase):
         self.assertEqual(self.rendered, [1, 2])
 
     def test_a_failing_pr_does_not_stop_the_others(self):
-        def fake(pr, conflicting, now=None, dry_run=False, parked=False):
+        def fake(pr, conflicting, now=None, dry_run=False, parked=False, head=None, base=None):
             if pr == 1:
                 raise RuntimeError("GitHub said no")
             self.reconciled.append(pr)
@@ -276,15 +365,17 @@ class Report(unittest.TestCase):
     NOW = 1_700_100_000
 
     def setUp(self):
-        self._open = conflicts.open_prs
         self._comments = conflicts.conflict_comments
+        self.prs = []
 
     def tearDown(self):
-        conflicts.open_prs = self._open
         conflicts.conflict_comments = self._comments
 
+    def run_episodes(self, **kwargs):
+        return conflicts.episodes(now=self.NOW, prs=self.prs, **kwargs)
+
     def stub(self, prs, comments):
-        conflicts.open_prs = lambda: prs
+        self.prs = prs
         conflicts.conflict_comments = lambda pr: comments.get(pr, [])
 
     def episode(self, onset, resolved=None):
@@ -296,29 +387,29 @@ class Report(unittest.TestCase):
     def test_a_live_episode_is_measured_to_now(self):
         self.stub([{"number": 5, "author": "alice"}],
                   {5: [self.episode(self.NOW - 3600)]})
-        [row] = conflicts.episodes(now=self.NOW)
-        self.assertTrue(row["live"])
+        [row] = self.run_episodes()
+        self.assertEqual(row["state"], "live")
         self.assertEqual(row["seconds"], 3600)
         self.assertIsNone(row["resolved"])
 
     def test_a_resolved_episode_uses_its_recorded_span(self):
         self.stub([{"number": 5, "author": "alice"}],
-                  {5: [self.episode(1000, 4600)]})
-        [row] = conflicts.episodes(now=self.NOW)
-        self.assertFalse(row["live"])
+                  {5: [self.episode(self.NOW - 3600, self.NOW)]})
+        [row] = self.run_episodes()
+        self.assertEqual(row["state"], "resolved")
         self.assertEqual(row["seconds"], 3600)
 
     def test_days_filters_on_onset(self):
         self.stub([{"number": 5, "author": "alice"}],
                   {5: [self.episode(self.NOW - 10 * 86400), self.episode(self.NOW - 3600)]})
-        self.assertEqual(len(conflicts.episodes(days=2, now=self.NOW)), 1)
-        self.assertEqual(len(conflicts.episodes(now=self.NOW)), 2)
+        self.assertEqual(len(self.run_episodes(days=2)), 1)
+        self.assertEqual(len(self.run_episodes(days=90)), 2)
 
     def test_summary_reports_both_populations(self):
         self.stub([{"number": 5, "author": "alice"}, {"number": 6, "author": "bob"}],
-                  {5: [self.episode(1000, 1000 + 7200)],
+                  {5: [self.episode(self.NOW - 90000, self.NOW - 82800)],
                    6: [self.episode(self.NOW - 86400)]})
-        lines = "\n".join(conflicts.summarise(conflicts.episodes(now=self.NOW)))
+        lines = "\n".join(conflicts.summarise(self.run_episodes(days=90)))
         self.assertIn("2 conflict episode(s): 1 resolved, 1 live", lines)
         self.assertIn("LIVE #6", lines)
         self.assertIn("alice", lines)
@@ -423,6 +514,25 @@ class Replay(unittest.TestCase):
         mirror = self.FakeMirror([("h1", 1500), ("h2", 1500)], {})
         _, handling = self.analyse(mirror, self.pr())
         self.assertEqual(handling, "rewritten")
+
+    def test_conflicts_before_the_pr_existed_are_not_counted(self):
+        # A branch's commits routinely predate the PR proposing them; a PR cannot
+        # conflict before it was opened.
+        mirror = self.FakeMirror([("h1", 1000)], {"h1": 0})
+        episodes, _ = self.analyse(mirror, self.pr(createdAt="1970-01-01T00:28:20Z"))
+        # created at t=1700, so onset cannot be earlier than main commit index 7.
+        self.assertTrue(all(e["onset"] >= 1700 for e in episodes), episodes)
+
+    def test_exhaustive_finds_a_conflict_an_epoch_ends_clean_after(self):
+        class Transient(self.FakeMirror):
+            def conflicts(self, base_sha, head_sha):
+                self.merges += 1
+                return 5 <= int(base_sha) <= 9     # clean again from 10 onwards
+        mirror = Transient([("h1", 1000)], {})
+        self.assertIsNone(conflict_stats.first_conflicting(
+            mirror, self.HISTORY, 0, 20, "h1"))
+        self.assertEqual(conflict_stats.first_conflicting(
+            mirror, self.HISTORY, 0, 20, "h1", exhaustive=True), 5)
 
     def test_a_pr_with_no_fetchable_head_is_skipped_not_guessed(self):
         mirror = self.FakeMirror([], {})

@@ -189,6 +189,36 @@ class Conflicting(unittest.TestCase):
         self.assertEqual(len(self.calls), core.MERGEABLE_POLLS)
 
 
+class RateLimitBackoff(unittest.TestCase):
+    """gh does not retry a rate limit; every sink here shares one App budget."""
+
+    def run_with(self, *results):
+        replies = list(results)
+        class Result:
+            def __init__(self, rc, err): self.returncode, self.stderr, self.stdout = rc, err, "ok"
+        with mock.patch.object(core.subprocess, "run",
+                               side_effect=[Result(*r) for r in replies]) as run:
+            return core.gh_api("/x", sleep=lambda s: None), run.call_count
+
+    def test_retries_through_a_rate_limit(self):
+        out, calls = self.run_with((1, "API rate limit exceeded"), (0, ""))
+        self.assertEqual((out, calls), ("ok", 2))
+
+    def test_a_normal_failure_is_not_retried(self):
+        with mock.patch.object(core.subprocess, "run") as run:
+            run.return_value = mock.Mock(returncode=1, stderr="404 Not Found", stdout="")
+            with self.assertRaises(RuntimeError):
+                core.gh_api("/x", sleep=lambda s: None)
+            self.assertEqual(run.call_count, 1)
+
+    def test_a_persistent_rate_limit_eventually_raises(self):
+        with mock.patch.object(core.subprocess, "run") as run:
+            run.return_value = mock.Mock(returncode=1, stderr="secondary rate limit", stdout="")
+            with self.assertRaises(RuntimeError):
+                core.gh_api("/x", sleep=lambda s: None)
+            self.assertEqual(run.call_count, core.RATE_LIMIT_RETRIES)
+
+
 class DerivedLabel(unittest.TestCase):
     def label(self, lifecycle="open", ci=None, review="none", inprogress=False,
               conflicting=False):
@@ -384,6 +414,32 @@ class Reconcile(unittest.TestCase):
         labels.reconcile("1")
         self.assertEqual(self.added, ["ready-to-merge"])
         self.assertEqual(self.removed, ["merge-conflict"])
+
+    def test_uncomputed_mergeability_keeps_an_established_conflict(self):
+        # GitHub answers null for a while after every push, which is exactly when a
+        # PR event fires this. Deriving from None would strip the label off a
+        # still-conflicting PR until the hourly sweep put it back.
+        self.run_with(self.status(conflicting=None), present=["merge-conflict"])
+        labels.reconcile("1")
+        self.assertEqual((self.added, self.removed), ([], []))
+
+    def test_uncomputed_mergeability_does_not_invent_a_conflict(self):
+        self.run_with(self.status(conflicting=None), present=["awaiting-review"])
+        labels.reconcile("1")
+        self.assertEqual(self.added, ["ready-to-merge"])
+        self.assertEqual(self.removed, ["awaiting-review"])
+
+    def test_only_a_positive_answer_clears_the_conflict_label(self):
+        self.run_with(self.status(conflicting=False), present=["merge-conflict"])
+        labels.reconcile("1")
+        self.assertEqual(self.added, ["ready-to-merge"])
+        self.assertEqual(self.removed, ["merge-conflict"])
+
+    def test_a_terminal_pr_still_strips_a_kept_conflict_label(self):
+        self.run_with(self.status(lifecycle="merged", ci=None, review=None, conflicting=None),
+                      present=["merge-conflict"])
+        labels.reconcile("1")
+        self.assertEqual((self.added, self.removed), ([], ["merge-conflict"]))
 
     def test_conflict_override_is_plumbed_through(self):
         self.run_with(self.status(conflicting=True), present=[])

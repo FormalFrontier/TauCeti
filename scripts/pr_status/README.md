@@ -158,9 +158,20 @@ reaches an author whose session has ended. There is exactly one per conflict
 - when the PR merges cleanly again the comment is **edited** to a ✅ form
   recording `resolved`;
 - a *second* conflict posts a **new** comment, since editing the buried ✅ one
-  would notify nobody — unless it reappears within half an hour of clearing, which
-  is flapping rather than news, and comment spam is the worst way for an
-  autonomous notifier to fail. The label and the reaction show it either way.
+  would notify nobody.
+
+Two things guard against the worst failure an autonomous notifier can have, which
+is posting comments it should not. **Every write is re-confirmed**: the sweep reads
+the whole queue in one query and then works through it, so before posting or
+resolving anything it re-reads that one PR and requires the head OID, the base OID,
+and the mergeability to all still match what it saw. A push landing mid-sweep makes
+it skip the PR rather than comment about a state the PR has already left. And the
+marker comments are read with a trust rule of their own — `conflicts.ours`, not
+`core.trusted_comments`: a GitHub App's installation bot comments as
+`author_association: CONTRIBUTOR`, which the latter excludes, so reading markers
+through it would mean the sweep never recognised a comment it had just written and
+posted another on every run, forever. A fork PR author is a `User` with no repo
+association and so still cannot forge a marker to silence their own notice.
 
 A PR carrying a hold label (`keep`/`hold`/`wip`/`human`/`do-not-close`/`blocked`)
 still gets the label and the reaction — the queue view should be honest — but no
@@ -183,6 +194,12 @@ python3 scripts/pr_status/conflicts.py report            # median, tail, per aut
 python3 scripts/pr_status/conflicts.py report --days 14 --json
 ```
 
+`report` reads **closed and merged PRs as well as open ones**, which is not a
+detail: a conflict that was resolved and then merged is exactly the case that must
+not be dropped, or the median would improve every time the queue got healthier. A
+PR closed while still conflicting is reported as *censored* — an outcome, not a
+resolution time — and kept out of the median rather than counted either way.
+
 The first sweep dates every *already*-conflicting PR from the moment it ran, so
 its first day of output understates those ages. For history from before the
 markers existed, [`conflict_stats.py`](conflict_stats.py) reconstructs it from git
@@ -191,16 +208,23 @@ alone: it replays each PR head against every commit of main with
 
 ```bash
 python3 scripts/pr_status/conflict_stats.py --since 2026-06-01 --json episodes.json
+python3 scripts/pr_status/conflict_stats.py --exhaustive   # no monotonicity assumption
 ```
 
 It reports the resolution distribution, the over-24h tail, and — because "the
 author's session had ended" is a real competing explanation for an unfixed
 conflict — how many resolutions came from an author who was already pushing to
 that PR versus one who came back to it after a gap (`--session-gap`, default 2h).
-It is honest about its two limits: force-pushed heads are gone from the server, so
-PRs whose history was rewritten are counted and excluded rather than guessed at;
-and the binary search assumes conflicts persist as main accumulates, so every
-epoch is checked at its last base first and reported clean if it ends clean.
+
+Its module docstring is blunt about being a **reconstruction rather than a log**,
+because GitHub keeps no record of when a PR started conflicting. Commit time is
+not push time and a commit is not a head; force-pushed heads are gone; and the
+default binary search assumes a conflict persists as main accumulates
+(`--exhaustive` drops that assumption). Every one of those errors in the same
+direction — losing episodes and shortening the ones it keeps — so the output is a
+lower bound. That is what makes it usable: it cannot invent a conflict that did
+not happen, and for the session question the bias runs *against* the conclusion
+the numbers support rather than for it.
 
 ## Stuck-automation alerts (Tau Ceti > "Stuck PRs")
 

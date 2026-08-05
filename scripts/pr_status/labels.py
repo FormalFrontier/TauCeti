@@ -167,6 +167,17 @@ def reconcile(pr, ci_override=None, conflict_override=None):
     desired = derived_label(status)          # one of STATUS_LABELS, or None (terminal)
     current = set(current_status_labels(pr))
 
+    # An UNCOMPUTED mergeability must not clear an ESTABLISHED conflict. GitHub
+    # answers null for a while after any push or base move, which is exactly when
+    # a PR event fires this, so deriving from None would strip `merge-conflict`
+    # off a still-conflicting PR on every push and leave it off until the hourly
+    # sweep restored it. Only a positive "it merges" (conflicting is False) may
+    # take the label away; a terminal PR still strips everything.
+    if (status.get("conflicting") is None and status["lifecycle"] == "open"
+            and "merge-conflict" in current):
+        log(f"PR #{pr}: mergeability not computed; keeping merge-conflict")
+        desired = "merge-conflict"
+
     for name in current:
         if name != desired:
             remove_label(pr, name)

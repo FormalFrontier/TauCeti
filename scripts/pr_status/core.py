@@ -42,21 +42,43 @@ _META_RE = re.compile(r"<!--tauceti-meta:v1\s+(\{.*\})\s*-->", re.S)
 # `expires_at` (epoch seconds) so a crashed reviewer self-clears. The format is owned by the review
 # engine; we parse only those two fields (mirrors the worker's de-contention read).
 _INPROGRESS_RE = re.compile(r"<!--tauceti-review-in-progress (.*?)-->", re.S)
-_TRUSTED_ASSOC = ("OWNER", "MEMBER", "COLLABORATOR")
+TRUSTED_ASSOC = ("OWNER", "MEMBER", "COLLABORATOR")
+
+# `gh` exits nonzero on a rate limit without retrying. These substrings identify
+# that case in its stderr, so gh_api can back off instead of failing the caller.
+_RATE_LIMITED = ("rate limit", "secondary rate", "API rate limit exceeded",
+                 "was submitted too quickly", "HTTP 429")
+RATE_LIMIT_RETRIES = 4
+RATE_LIMIT_BACKOFF_SECONDS = 15
 
 
 # ----- GitHub truth (via the gh CLI, authenticated by GH_TOKEN) ---------------
 
-def gh_api(path, jq=None, paginate=False):
+def gh_api(path, jq=None, paginate=False, sleep=time.sleep):
+    """One `gh api` read, with a bounded back-off for a rate limit.
+
+    `gh` does not retry a 403/429 rate limit of its own accord, and every sink in
+    this package shares one App installation budget with the review and merge
+    workflows. Failing the whole run because a burst of merges used the budget for
+    a minute is the wrong answer, so a rate-limited call waits and retries a few
+    times; anything else fails immediately, as before.
+    """
     cmd = ["gh", "api", path]
     if paginate:
         cmd.append("--paginate")
     if jq is not None:
         cmd += ["--jq", jq]
-    out = subprocess.run(cmd, capture_output=True, text=True)
-    if out.returncode != 0:
-        raise RuntimeError(f"gh api {path} failed: {out.stderr.strip()}")
-    return out.stdout
+    for attempt in range(RATE_LIMIT_RETRIES):
+        out = subprocess.run(cmd, capture_output=True, text=True)
+        if out.returncode == 0:
+            return out.stdout
+        stderr = out.stderr.strip()
+        limited = any(marker.lower() in stderr.lower() for marker in _RATE_LIMITED)
+        if not limited or attempt + 1 == RATE_LIMIT_RETRIES:
+            raise RuntimeError(f"gh api {path} failed: {stderr}")
+        delay = RATE_LIMIT_BACKOFF_SECONDS * (2 ** attempt)
+        print(f"gh api rate-limited; retrying in {delay}s", flush=True)
+        sleep(delay)
 
 
 def _roadmap_labels(labels):
@@ -114,16 +136,31 @@ def pr_state(pr):
 
 
 def trusted_comments(pr):
-    """Issue comments authored by a repo-associated account (OWNER/MEMBER/COLLABORATOR), as
-    `[{'id','body','updated'}]`. One paginated fetch, reused for the review signals below and for
-    conflicts.py's markers, so an untrusted fork-PR comment can never forge review or conflict
-    state. `id` is what lets a caller EDIT the comment it found (conflicts.py edits its marker to a
-    resolved form). The jq emits one compact object per line (valid JSONL across any number of
-    pages)."""
+    """Issue comments authored by a repo-associated account (OWNER/MEMBER/COLLABORATOR).
+
+    The review signals below read only these, so an untrusted fork-PR comment can never forge
+    review state. Note what this deliberately EXCLUDES: a GitHub App's installation bot comments
+    as `CONTRIBUTOR`, so a comment the automation itself posted is *not* trusted here. That is
+    correct for a review verdict (the App does not issue verdicts) but wrong for a marker the
+    automation wrote and must find again, which is why conflicts.py reads `pr_comments` and applies
+    its own rule.
+    """
+    return [c for c in pr_comments(pr) if c["association"] in TRUSTED_ASSOC]
+
+
+def pr_comments(pr):
+    """Every issue comment on the PR, as `[{'id','body','updated','association','is_bot'}]`.
+
+    One paginated fetch shared by both trust policies above. `id` is what lets a caller EDIT the
+    comment it found (conflicts.py edits its marker to a resolved form), and `is_bot` distinguishes
+    a GitHub App / bot author from a human, which `author_association` alone cannot: an installation
+    bot reports `CONTRIBUTOR`, indistinguishable from an outside contributor by association. A fork
+    PR author is always a `User`, so `is_bot` is a boundary they cannot cross. The jq emits one
+    compact object per line (valid JSONL across any number of pages)."""
     out = gh_api(
         f"/repos/{REPO}/issues/{pr}/comments?per_page=100",
-        jq='.[] | select(.author_association|IN("OWNER","MEMBER","COLLABORATOR"))'
-           ' | {id: .id, body: .body, updated: .updated_at}',
+        jq='.[] | {id: .id, body: .body, updated: .updated_at,'
+           ' association: .author_association, is_bot: (.user.type == "Bot")}',
         paginate=True,
     )
     rows = []
