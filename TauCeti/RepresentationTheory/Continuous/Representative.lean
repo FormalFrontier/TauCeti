@@ -73,7 +73,7 @@ it is a Layer 5 corollary of the analytic density theorem, not an input to it.
   multiplication and conjugation and contain the constants.
 * `TauCeti.mul_mem_representativeSubmodule`, `TauCeti.star_mem_representativeSubmodule`: the same
   closure properties for their span.
-* `TauCeti.ContRepresentation.character_mem_representativeSubmodule`: characters are representative.
+* `TauCeti.ContRepresentation.character_mem_representativeSubmodule`: characters lie in `𝓡(G)`.
 
 This is the representative-`*`-subalgebra item of Layer 3 of the
 [compact-groups roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/CompactGroups/README.md),
@@ -226,7 +226,7 @@ namespace ContRepresentation
 variable {𝕜 G V : Type*} [RCLike 𝕜] [Monoid G] [TopologicalSpace G]
   [NormedAddCommGroup V] [InnerProductSpace 𝕜 V] [FiniteDimensional 𝕜 V]
 
-/-- **The character of a finite-dimensional continuous representation is representative.** Its
+/-- **The character of a finite-dimensional continuous representation lies in `𝓡(G)`.** Its
 conjugate is the sum of the diagonal matrix coefficients, and `𝓡(G)` is closed under
 conjugation. -/
 theorem character_mem_representativeSubmodule (π : ContRepresentation 𝕜 G V) (hπ : Continuous π) :
