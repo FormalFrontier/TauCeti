@@ -113,6 +113,7 @@ theorem mem_rowSubgroup_iff_conj_mem_youngSubgroup (t : YoungTableau μ)
 
 /-- Two permutations send the tabloid of `t` to the same tabloid exactly when they differ by an
 element of the row group of `t`. -/
+@[simp]
 theorem smul_tabloid_eq_iff {t : YoungTableau μ} {σ τ : Equiv.Perm (Fin μ.card)} :
     σ • tabloid t = τ • tabloid t ↔ σ⁻¹ * τ ∈ rowSubgroup t := by
   rw [tabloid_def, MulAction.Quotient.smul_coe, MulAction.Quotient.smul_coe, smul_eq_mul,
@@ -121,6 +122,7 @@ theorem smul_tabloid_eq_iff {t : YoungTableau μ} {σ τ : Equiv.Perm (Fin μ.ca
 
 /-- **The stabilizer of a tabloid is the row group.** A permutation fixes the tabloid of `t`
 exactly when it preserves the rows of `t`. -/
+@[simp]
 theorem smul_tabloid_eq_self_iff {t : YoungTableau μ} {σ : Equiv.Perm (Fin μ.card)} :
     σ • tabloid t = tabloid t ↔ σ ∈ rowSubgroup t := by
   have h := smul_tabloid_eq_iff (t := t) (σ := σ) (τ := 1)
@@ -202,6 +204,7 @@ theorem polytabloid_coeff_tabloid (t : YoungTableau μ) :
   simpa using h
 
 /-- Polytabloids are nonzero. -/
+@[simp]
 theorem polytabloid_ne_zero (t : YoungTableau μ) : polytabloid t ≠ 0 := by
   intro h
   have := polytabloid_coeff_tabloid t
@@ -282,6 +285,7 @@ theorem spechtSubrepresentation_eq_span_orbit (t : YoungTableau μ) :
     exact ⟨relabel σ t, polytabloid_relabel σ t⟩
 
 /-- The Specht module is nonzero. -/
+@[simp]
 theorem spechtSubrepresentation_ne_bot (μ : YoungDiagram) : spechtSubrepresentation μ ≠ ⊥ := by
   obtain ⟨t⟩ := YoungTableau.nonempty μ
   intro h
