@@ -103,24 +103,13 @@ theorem derivation_ext
     {d e : Derivation R (SymmetricAlgebra R M)
       (CounitAlgebra R (SymmetricAlgebra R M) B)}
     (h : ∀ x, d (SymmetricAlgebra.ι R M x) = e (SymmetricAlgebra.ι R M x)) : d = e := by
-  apply (derivationToDualNumberEquivLift R (SymmetricAlgebra R M)
-    (CounitAlgebra R (SymmetricAlgebra R M) B)).injective
-  apply Subtype.ext
-  apply SymmetricAlgebra.algHom_ext
-  apply LinearMap.ext
-  intro x
-  simp only [LinearMap.comp_apply]
-  apply TrivSqZeroExt.ext
-  · calc
-      _ = algebraMap (SymmetricAlgebra R M)
-          (CounitAlgebra R (SymmetricAlgebra R M) B) (SymmetricAlgebra.ι R M x) :=
-        derivationToDualNumberEquivLift_apply_fst d _
-      _ = _ := (derivationToDualNumberEquivLift_apply_fst e _).symm
-  · calc
-      _ = d (SymmetricAlgebra.ι R M x) :=
-        derivationToDualNumberEquivLift_apply_snd d _
-      _ = e (SymmetricAlgebra.ι R M x) := h x
-      _ = _ := (derivationToDualNumberEquivLift_apply_snd e _).symm
+  apply Derivation.ext
+  intro a
+  induction a using SymmetricAlgebra.induction with
+  | algebraMap r => simp only [Derivation.map_algebraMap]
+  | ι x => exact h x
+  | mul a b ha hb => simp only [Derivation.leibniz, ha, hb]
+  | add a b ha hb => simp only [map_add, ha, hb]
 
 /-- The tangent module of the additive vector group represented by `SymmetricAlgebra R M` is
 the module `M →ₗ[R] B` of possible generator values.
