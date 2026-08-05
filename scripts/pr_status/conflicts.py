@@ -42,8 +42,12 @@ that is one paginated comment read each, deliberately: the marker comments ARE t
 state, and short-circuiting on the `merge-conflict` label instead would mean a lost
 label silently swallows the next conflict notice -- the one failure this module must
 not have. At this repository's rate (a couple of sweeps an hour over ~50 open PRs)
-that is ~100 requests an hour against a 5000/hour budget. Only the PRs that actually
-changed state cost anything more.
+that is ~100 requests an hour against a 5000/hour budget. Beyond that only two kinds
+of PR cost anything: one whose comment state just changed, and one that is currently
+conflicting, whose label and reaction are re-asserted every sweep. The latter is
+deliberate -- during an episode nothing else fires for that PR, so a sink lost to a
+failed write would otherwise stay lost for exactly the window it exists to cover --
+and it is a handful of PRs, not the queue.
 
 GitHub computes `mergeable` lazily: the first read after the base moves schedules
 a background merge and answers UNKNOWN. The sweep re-reads the unknowns a few
@@ -116,7 +120,21 @@ UNKNOWN_WAIT_SECONDS = 10.0
 # reaction -- the queue view should be honest about its state -- but no comment:
 # the comment is a call to action, and nobody asked for action on a parked PR.
 # Mirrors stuck_alerts.HOLD_LABELS.
+#
+# Withholding the comment must not falsify the measurement, and that takes care:
+# the comment is where the onset is recorded, so a parked conflict has no marker to
+# date it by. The LABEL goes on at the moment the sweep first sees the conflict,
+# parked or not, so if the PR is later unparked while still conflicting, the
+# `labeled` event dates the episode truthfully (see `label_onset`) rather than
+# reporting a days-old conflict as minutes old. A conflict that both starts AND
+# clears while the PR is parked leaves no episode at all, deliberately: no notice
+# was ever issued and nobody was ever asked to act, so there is no author latency
+# to attribute -- the label carried its live state throughout.
 HOLD_LABELS = {"keep", "hold", "wip", "human", "do-not-close", "blocked"}
+
+# The status label this module drives, via labels.py. Also the onset store for an
+# episode that has no comment yet; see `label_onset`.
+CONFLICT_LABEL = "merge-conflict"
 
 CONFLICT_BODY = """\
 ⚠️ **This PR no longer merges into `main`.**
@@ -370,6 +388,35 @@ def still_true(pr, head, base, is_conflicting):
     return True
 
 
+def label_onset(pr):
+    """When `merge-conflict` was most recently put on this PR (epoch), or None.
+
+    The onset of an episode nobody has been told about yet. A parked PR is labelled
+    the moment the sweep first sees the conflict but gets no comment, so if it is
+    later unparked while still conflicting, dating the episode from THAT sweep would
+    report a conflict of days as one of minutes and quietly shorten the median. The
+    `labeled` event is the timestamp GitHub already keeps for us.
+
+    Only ever consulted for a PR that CURRENTLY carries the label, which is what
+    makes its most recent `labeled` event the current application rather than a
+    stale one left by an earlier episode. A missing event or a failed read returns
+    None and the caller falls back to now: the notice still goes out, only its
+    timestamp is approximate. Episode *existence* is never decided by the label --
+    a lost label must not swallow a notice -- only its start time.
+    """
+    try:
+        raw = core.gh_api(
+            f"/repos/{REPO}/issues/{pr}/events?per_page=100",
+            jq=f'.[] | select(.event == "labeled" and .label.name == "{CONFLICT_LABEL}")'
+               ' | .created_at',
+            paginate=True)
+    except (RuntimeError, ValueError) as exc:
+        log(f"PR #{pr}: could not read its label history ({exc}); dating the episode now")
+        return None
+    stamps = [iso_to_epoch(line.strip()) for line in (raw or "").splitlines() if line.strip()]
+    return max(stamps) if stamps else None
+
+
 def conflict_body(onset):
     return CONFLICT_BODY.format(marker=json.dumps({"onset": onset}, sort_keys=True))
 
@@ -384,7 +431,7 @@ def resolved_body(onset, resolved):
 # ----- reconcile --------------------------------------------------------------
 
 def reconcile_pr(pr, is_conflicting, now=None, dry_run=False, parked=False,
-                 head=None, base=None):
+                 head=None, base=None, conflict_labelled=False):
     """Bring one PR's conflict comment in line with its live mergeability.
 
     Returns the action taken: "opened", "resolved", "ongoing", "clear", "parked",
@@ -400,6 +447,11 @@ def reconcile_pr(pr, is_conflicting, now=None, dry_run=False, parked=False,
     status separately. A `parked` PR (one carrying a hold label) is left without a
     comment, but an episode already open on it is still closed out, so its
     recorded duration stays truthful.
+
+    `conflict_labelled` says the PR already carries `merge-conflict`, i.e. an
+    earlier sweep saw this conflict but left no comment (it was parked then, or the
+    comment was deleted). The episode is then dated from the label rather than from
+    this moment; see `label_onset`.
     """
     now = now_epoch() if now is None else now
     history = conflict_comments(pr)
@@ -420,9 +472,11 @@ def reconcile_pr(pr, is_conflicting, now=None, dry_run=False, parked=False,
             return "parked"
         if not confirmed():
             return "stale"
-        log(f"PR #{pr}: NEW conflict")
+        onset = min(label_onset(pr) or now, now) if conflict_labelled else now
+        log(f"PR #{pr}: NEW conflict"
+            + ("" if onset == now else f", first seen {iso(onset)}"))
         if not dry_run:
-            post_comment(pr, conflict_body(now))
+            post_comment(pr, conflict_body(onset))
         return "opened"
 
     if live is None:
@@ -450,20 +504,28 @@ def sweep(dry_run=False, use_zulip=True, sleep=time.sleep):
     for pr in known:
         number = pr["number"]
         parked = bool(HOLD_LABELS.intersection(n.lower() for n in pr["labels"]))
+        labelled = CONFLICT_LABEL in pr["labels"]
         try:
             action = reconcile_pr(number, pr["conflicting"], dry_run=dry_run,
-                                  parked=parked, head=pr["head"], base=pr["base"])
+                                  parked=parked, head=pr["head"], base=pr["base"],
+                                  conflict_labelled=labelled)
         except Exception as exc:
             log(f"PR #{number}: conflict comment failed: {exc}")
             failures += 1
             continue
-        # The label and reaction are cheap to keep converged but not free, so only
-        # touch a PR whose comment state just changed or whose label disagrees with
-        # what we just measured. An unchanged, correctly-labelled PR costs nothing.
-        label_wrong = ("merge-conflict" in pr["labels"]) != bool(pr["conflicting"])
         if action == "stale":
             continue  # the PR moved; next sweep renders it from a settled read
-        if action in ("opened", "resolved") or label_wrong:
+        # Both sinks are convergent, so re-rendering one that already agrees costs
+        # reads and no writes. A PR we see CONFLICTING is re-rendered on EVERY
+        # sweep: for the whole of an episode nothing else fires for that PR -- that
+        # is this module's entire premise -- so a label or a ⚠️ lost to a failed
+        # write would otherwise stay lost until the conflict cleared, which is
+        # exactly the window it is meant to be visible in. Off an episode the PR is
+        # mergeable and its own events reconcile it (a push runs `pr-build`, which
+        # refreshes Zulip), so there we pay only for a PR whose comment state just
+        # changed or whose label disagrees with what we measured.
+        label_wrong = labelled != bool(pr["conflicting"])
+        if pr["conflicting"] or action in ("opened", "resolved") or label_wrong:
             failures += _render(number, pr["conflicting"], zulip_sink, dry_run)
     return failures
 
@@ -471,11 +533,14 @@ def sweep(dry_run=False, use_zulip=True, sleep=time.sleep):
 def _render(pr, is_conflicting, zulip_sink, dry_run):
     """Refresh the label and Zulip reaction for one PR. Returns failures (0 or 1).
 
-    Both sinks are convergent, so a failure here self-heals on the next sweep and
-    never aborts the run. A failed LABEL write still counts, because the label is
-    how the queue view and every `gh pr list` see the conflict. A failed Zulip
-    reaction does NOT: that is cosmetic, exactly as zulip.py itself treats it, and
-    a persistently broken bot is caught loudly by zulip-healthcheck.yml.
+    Both sinks are convergent and neither failure aborts the run. A failure is
+    retried on the next sweep for as long as the PR conflicts (`sweep` re-renders
+    every live conflict), and after the episode by the PR's own events, which by
+    then are firing again. A failed LABEL write still counts as a failure, because
+    the label is how the queue view and every `gh pr list` see the conflict. A
+    failed Zulip reaction does NOT: that is cosmetic, exactly as zulip.py itself
+    treats it, and a persistently broken bot is caught loudly by
+    zulip-healthcheck.yml.
     """
     if dry_run:
         log(f"PR #{pr}: would refresh label/reaction (conflicting={is_conflicting})")

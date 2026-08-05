@@ -96,16 +96,19 @@ class ReconcilePR(unittest.TestCase):
         self._post = conflicts.post_comment
         self._edit = conflicts.edit_comment
         self._still = conflicts.still_true
+        self._onset = conflicts.label_onset
         self.posted, self.edited = [], []
         conflicts.post_comment = lambda pr, body: self.posted.append((pr, body))
         conflicts.edit_comment = lambda cid, body: self.edited.append((cid, body))
         conflicts.still_true = lambda pr, head, base, c: True
+        conflicts.label_onset = lambda pr: None
 
     def tearDown(self):
         core.pr_comments = self._comments
         conflicts.post_comment = self._post
         conflicts.edit_comment = self._edit
         conflicts.still_true = self._still
+        conflicts.label_onset = self._onset
 
     def history(self, *comments):
         core.pr_comments = lambda pr: list(comments)
@@ -193,6 +196,39 @@ class ReconcilePR(unittest.TestCase):
         self.history(self.open_episode(11, onset))
         self.assertEqual(conflicts.reconcile_pr("7", False, now=self.NOW, parked=True), "resolved")
         self.assertEqual(len(self.edited), 1)
+
+    def test_an_unparked_conflict_is_dated_from_when_the_label_went_on(self):
+        # The sweep saw this conflict two days ago, while the PR was parked: it
+        # labelled it but wrote no comment. Dating the episode from now would report
+        # a two-day-old conflict as brand new and quietly shorten the median.
+        self.history()
+        conflicts.label_onset = lambda pr: self.NOW - 2 * 86400
+        self.assertEqual(
+            conflicts.reconcile_pr("7", True, now=self.NOW, conflict_labelled=True),
+            "opened")
+        self.assertEqual(conflicts.parse_marker(self.posted[0][1]),
+                         {"onset": self.NOW - 2 * 86400})
+
+    def test_an_unreadable_label_history_still_posts_the_notice(self):
+        # The onset degrades to "now"; the notice itself never depends on the label.
+        self.history()
+        conflicts.label_onset = lambda pr: None
+        self.assertEqual(
+            conflicts.reconcile_pr("7", True, now=self.NOW, conflict_labelled=True),
+            "opened")
+        self.assertEqual(conflicts.parse_marker(self.posted[0][1]), {"onset": self.NOW})
+
+    def test_an_episode_is_never_dated_into_the_future(self):
+        self.history()
+        conflicts.label_onset = lambda pr: self.NOW + 500
+        conflicts.reconcile_pr("7", True, now=self.NOW, conflict_labelled=True)
+        self.assertEqual(conflicts.parse_marker(self.posted[0][1]), {"onset": self.NOW})
+
+    def test_an_unlabelled_pr_costs_no_label_history_read(self):
+        self.history()
+        conflicts.label_onset = lambda pr: self.fail("must not read the label history")
+        conflicts.reconcile_pr("7", True, now=self.NOW)
+        self.assertEqual(conflicts.parse_marker(self.posted[0][1]), {"onset": self.NOW})
 
     def test_dry_run_decides_but_writes_nothing(self):
         self.history()
@@ -286,6 +322,36 @@ class StillTrue(unittest.TestCase):
         self.assertFalse(conflicts.still_true("1", "H", "B", True))
 
 
+class LabelOnset(unittest.TestCase):
+    """The onset store for an episode that was seen but never commented on."""
+
+    def setUp(self):
+        self._api = core.gh_api
+
+    def tearDown(self):
+        core.gh_api = self._api
+
+    def answer(self, payload):
+        core.gh_api = lambda path, jq=None, paginate=False: payload
+
+    def test_takes_the_most_recent_application(self):
+        # An earlier episode's label event is still in the history; only the current
+        # application dates this one.
+        self.answer("2026-01-01T00:00:00Z\n2026-03-01T12:00:00Z\n")
+        self.assertEqual(conflicts.label_onset("7"),
+                         conflicts.iso_to_epoch("2026-03-01T12:00:00Z"))
+
+    def test_no_recorded_application_reads_as_unknown(self):
+        self.answer("")
+        self.assertIsNone(conflicts.label_onset("7"))
+
+    def test_a_failed_read_reads_as_unknown(self):
+        def boom(path, jq=None, paginate=False):
+            raise RuntimeError("GitHub is down")
+        core.gh_api = boom
+        self.assertIsNone(conflicts.label_onset("7"))
+
+
 class Sweep(unittest.TestCase):
     def setUp(self):
         self._open = conflicts.open_prs
@@ -310,8 +376,9 @@ class Sweep(unittest.TestCase):
         conflicts.open_prs = lambda: list(prs)
 
     def stub_actions(self, actions):
-        def fake(pr, conflicting, now=None, dry_run=False, parked=False, head=None, base=None):
-            self.reconciled.append((pr, conflicting, parked))
+        def fake(pr, conflicting, now=None, dry_run=False, parked=False, head=None,
+                 base=None, conflict_labelled=False):
+            self.reconciled.append((pr, conflicting, parked, conflict_labelled))
             return actions[pr]
         conflicts.reconcile_pr = fake
 
@@ -325,7 +392,14 @@ class Sweep(unittest.TestCase):
         self.stub_prs(self.pr(1, True, labels=["keep", "roadmap/PDE"]))
         self.stub_actions({1: "parked"})
         conflicts.sweep(use_zulip=False, sleep=lambda s: None)
-        self.assertEqual(self.reconciled, [(1, True, True)])
+        self.assertEqual(self.reconciled, [(1, True, True, False)])
+
+    def test_an_already_labelled_pr_is_reconciled_as_such(self):
+        # How a conflict first seen while the PR was parked keeps its real onset.
+        self.stub_prs(self.pr(1, True, labels=["merge-conflict"]))
+        self.stub_actions({1: "opened"})
+        conflicts.sweep(use_zulip=False, sleep=lambda s: None)
+        self.assertEqual(self.reconciled, [(1, True, False, True)])
 
     def test_a_changed_pr_is_re_rendered(self):
         self.stub_prs(self.pr(1, True))
@@ -333,10 +407,20 @@ class Sweep(unittest.TestCase):
         conflicts.sweep(use_zulip=False, sleep=lambda s: None)
         self.assertEqual(self.rendered, [1])
 
-    def test_an_unchanged_correctly_labelled_pr_is_left_alone(self):
-        self.stub_prs(self.pr(1, True, labels=["merge-conflict"]),
-                      self.pr(2, False, labels=["ready-to-merge"]))
-        self.stub_actions({1: "ongoing", 2: "clear"})
+    def test_a_live_conflict_is_re_rendered_every_sweep(self):
+        # Nothing else fires for a conflicting PR -- that is this module's premise --
+        # so a label or a ⚠️ lost to a failed write is only ever restored here. An
+        # unchanged, correctly-labelled conflict is still re-asserted; both sinks are
+        # convergent, so agreeing costs reads and no writes.
+        self.stub_prs(self.pr(1, True, labels=["merge-conflict"]))
+        self.stub_actions({1: "ongoing"})
+        conflicts.sweep(use_zulip=False, sleep=lambda s: None)
+        self.assertEqual(self.rendered, [1])
+
+    def test_an_unchanged_mergeable_pr_is_left_alone(self):
+        # Off an episode the PR's own events reconcile it, so the sweep pays nothing.
+        self.stub_prs(self.pr(2, False, labels=["ready-to-merge"]))
+        self.stub_actions({2: "clear"})
         conflicts.sweep(use_zulip=False, sleep=lambda s: None)
         self.assertEqual(self.rendered, [])
 
@@ -349,7 +433,8 @@ class Sweep(unittest.TestCase):
         self.assertEqual(self.rendered, [1, 2])
 
     def test_a_failing_pr_does_not_stop_the_others(self):
-        def fake(pr, conflicting, now=None, dry_run=False, parked=False, head=None, base=None):
+        def fake(pr, conflicting, now=None, dry_run=False, parked=False, head=None,
+                 base=None, conflict_labelled=False):
             if pr == 1:
                 raise RuntimeError("GitHub said no")
             self.reconciled.append(pr)

@@ -175,7 +175,19 @@ association and so still cannot forge a marker to silence their own notice.
 
 A PR carrying a hold label (`keep`/`hold`/`wip`/`human`/`do-not-close`/`blocked`)
 still gets the label and the reaction — the queue view should be honest — but no
-comment, because it is parked on purpose.
+comment, because it is parked on purpose. The label goes on the moment the conflict
+is *seen*, so if such a PR is later unparked while still conflicting, the episode is
+dated from that `labeled` event rather than from the sweep that finally comments —
+otherwise a conflict of days would be reported as one of minutes. A conflict that
+both starts and clears while the PR is parked leaves no episode at all: no notice
+was issued and nobody was asked to act, so there is no author latency to record.
+
+The label and the ⚠️ are re-asserted on **every** sweep for a PR that is currently
+conflicting. During an episode nothing else fires for that PR — that is this
+module's whole premise — so a sink lost to a failed write would otherwise stay lost
+for exactly the window it exists to cover. Both sinks are convergent, so a sweep
+that finds them already right costs reads and no writes; once the conflict clears,
+the PR's own events (a push runs `pr-build`, which refreshes Zulip) take over.
 
 GitHub computes `mergeable` lazily, so the first read after main moves answers
 UNKNOWN and schedules the merge in the background. The sweep re-reads the unknowns
