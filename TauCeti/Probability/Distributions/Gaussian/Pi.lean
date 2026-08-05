@@ -61,10 +61,10 @@ theorem pi_gaussianReal_eq_withDensity :
   have : IsProbabilityMeasure
       (volume.withDensity fun x => ENNReal.ofReal (gaussianPDFReal 0 1 x)) := by
     rw [hγ]; infer_instance
-  rw [show (fun _ : ι => (gaussianReal 0 1 : Measure ℝ))
-      = fun _ : ι => volume.withDensity fun x => ENNReal.ofReal (gaussianPDFReal 0 1 x) from
-    funext fun _ => hγ.symm,
-    pi_withDensity (fun _ : ι => (volume : Measure ℝ)) fun _ =>
+  have hfam : (fun _ : ι => (gaussianReal 0 1 : Measure ℝ))
+      = fun _ : ι => volume.withDensity fun x => ENNReal.ofReal (gaussianPDFReal 0 1 x) :=
+    funext fun _ => hγ.symm
+  rw [hfam, pi_withDensity (fun _ : ι => (volume : Measure ℝ)) fun _ =>
       (measurable_gaussianPDFReal 0 1).ennreal_ofReal]
   exact withDensity_congr_ae (Filter.Eventually.of_forall fun x =>
     (ENNReal.ofReal_prod_of_nonneg fun i _ =>

@@ -34,6 +34,7 @@ namespace TauCeti
 /-- **Transporting an `Lp` element along an equality of measures does not move its
 representative.** The `cast` is along the equality of types `↥(Lp E p μ) = ↥(Lp E p ν)` induced by
 `μ = ν`, so it acts as the identity on functions. -/
+@[simp]
 theorem coeFn_cast_lp {α E : Type*} [MeasurableSpace α] [NormedAddCommGroup E] {p : ℝ≥0∞}
     {μ ν : Measure α} (h : μ = ν) (f : Lp E p μ) (x : α) :
     ((cast (congrArg (fun m : Measure α => (Lp E p m : Type _)) h) f : Lp E p ν) : α → E) x
