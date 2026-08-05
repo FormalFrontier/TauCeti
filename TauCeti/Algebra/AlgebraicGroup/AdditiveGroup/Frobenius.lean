@@ -52,7 +52,7 @@ constructor `BialgHom.ofAlgHom` are Mathlib's.
 
 public section
 
-open Coalgebra HopfAlgebra SymmetricAlgebra WithConv
+open _root_.Coalgebra HopfAlgebra SymmetricAlgebra WithConv
 open scoped TensorProduct
 
 namespace TauCeti

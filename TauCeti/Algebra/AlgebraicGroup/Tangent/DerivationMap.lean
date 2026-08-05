@@ -33,7 +33,7 @@ public section
 
 namespace TauCeti
 
-open Coalgebra
+open _root_.Coalgebra
 
 section DerivationMap
 
@@ -98,7 +98,8 @@ private noncomputable def derivationCompAux (φ : A' →ₐc[R] A)
       -- step explicitly.
       rw [show ρ (algebraMap R A' r) =
           (IsScalarTower.toAlgHom R A (Bialgebra.CounitAlgebra R A B))
-            (algebraMap R A r) from by simp [ρ, AlgHomClass.commutes],
+            (algebraMap R A r) from by
+          simp [ρ, AlgHomClass.commutes, -Bialgebra.CounitAlgebra.algebraMap_base],
         IsScalarTower.coe_toAlgHom', ← IsScalarTower.algebraMap_apply]
   letI : IsScalarTower A' A (Bialgebra.CounitAlgebra R A B) :=
     IsScalarTower.of_algebraMap_eq' rfl

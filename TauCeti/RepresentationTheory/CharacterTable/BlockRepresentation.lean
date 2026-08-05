@@ -40,7 +40,7 @@ irreducible representations of `G` indexed by the conjugacy classes of `G`.
   representations**.
 * `TauCeti.exists_irreducible_family_conjClasses`: **there are as many pairwise inequivalent
   irreducible representations of `G` as `G` has conjugacy classes**, in the form of a family indexed
-  by `ConjClasses G`.
+  by `ConjClasses G`, whose dimensions have squares summing to `|G|`.
 
 ## References
 
@@ -170,17 +170,19 @@ variable (k : Type u) (G : Type v) [Field k] [Group G] [Finite G] [NeZero (Nat.c
 
 /-- **There are as many pairwise inequivalent irreducible representations of `G` as `G` has
 conjugacy classes.** Maschke and Artin--Wedderburn present `k[G]` with its blocks indexed by
-`ConjClasses G`, and the blocks carry pairwise inequivalent irreducible representations.
+`ConjClasses G`, and the blocks carry pairwise inequivalent irreducible representations, of
+dimensions whose squares add up to `|G|`, that being the dimension of `k[G]`.
 
 The bound in the other direction, that no family of pairwise inequivalent irreducibles is larger,
 is `TauCeti.ClassFunction.card_le_card_conjClasses`. -/
 theorem exists_irreducible_family_conjClasses :
     ∃ (d : ConjClasses G → ℕ) (ρ : ∀ C, Representation k G (Fin (d C) → k)),
-      (∀ C, (ρ C).IsIrreducible) ∧ Pairwise fun C D => IsEmpty ((ρ C).Equiv (ρ D)) := by
-  obtain ⟨d, hd, -, ⟨e⟩⟩ := exists_algEquiv_pi_matrix_conjClasses k G
+      (∀ C, (ρ C).IsIrreducible) ∧ (Pairwise fun C D => IsEmpty ((ρ C).Equiv (ρ D))) ∧
+        ∑ᶠ C, d C ^ 2 = Nat.card G := by
+  obtain ⟨d, hd, hsum, ⟨e⟩⟩ := exists_algEquiv_pi_matrix_conjClasses k G
   have := hd
   exact ⟨d, blockRepresentation e, fun C => isIrreducible_blockRepresentation e C,
-    fun _ _ h => isEmpty_equiv_blockRepresentation e h⟩
+    fun _ _ h => isEmpty_equiv_blockRepresentation e h, hsum⟩
 
 end Existence
 

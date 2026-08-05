@@ -258,7 +258,7 @@ theorem exists_basis_ofCharacter :
       (b : Module.Basis (ConjClasses G) k (ClassFunction k G)),
       (∀ C, (ρ C).IsIrreducible) ∧ ∀ C, b C = ofCharacter (ρ C) := by
   have : NeZero (Nat.card G : k) := ⟨Invertible.ne_zero _⟩
-  obtain ⟨d, ρ, hirr, hind⟩ := exists_irreducible_family_conjClasses k G
+  obtain ⟨d, ρ, hirr, hind, -⟩ := exists_irreducible_family_conjClasses k G
   have := hirr
   exact ⟨d, ρ, basisOfIrreducibleCharacters ρ hind rfl, hirr,
     basisOfIrreducibleCharacters_apply ρ hind rfl⟩
