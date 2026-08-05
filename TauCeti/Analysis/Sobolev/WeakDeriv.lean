@@ -411,11 +411,12 @@ theorem HasWeakLineDerivOn.add_direction {u u₁' u₂' : E → F} {v₁ v₂ : 
     HasWeakLineDerivOn μ Ω u (u₁' + u₂') (v₁ + v₂) := by
   refine ⟨h₁.completeSpace, h₁.locallyIntegrableOn,
     h₁.locallyIntegrableOn_deriv.add h₂.locallyIntegrableOn_deriv, fun φ => ?_⟩
-  have hφd : Differentiable ℝ (φ : E → ℝ) := φ.contDiff.differentiable (by simp)
+  -- Additivity in the direction is Mathlib's `TestFunction.lineDerivCLM_add`, read off pointwise.
   have hsplit : ∀ x, lineDeriv ℝ (φ : E → ℝ) x (v₁ + v₂) =
-      lineDeriv ℝ (φ : E → ℝ) x v₁ + lineDeriv ℝ (φ : E → ℝ) x v₂ := by
-    intro x
-    simp only [(hφd x).lineDeriv_eq_fderiv, map_add]
+      lineDeriv ℝ (φ : E → ℝ) x v₁ + lineDeriv ℝ (φ : E → ℝ) x v₂ := fun x => by
+    have h := congrArg (fun T : 𝓓(Ω, ℝ) →L[ℝ] 𝓓(Ω, ℝ) => ((T φ : 𝓓(Ω, ℝ)) : E → ℝ) x)
+      (TestFunction.lineDerivCLM_add (𝕜 := ℝ) (v₁ := v₁) (v₂ := v₂))
+    simpa [TestFunction.lineDerivCLM_apply_of_le le_top] using h
   have hleft : ∫ x, lineDeriv ℝ (φ : E → ℝ) x (v₁ + v₂) • u x ∂μ =
       (∫ x, lineDeriv ℝ (φ : E → ℝ) x v₁ • u x ∂μ) +
         ∫ x, lineDeriv ℝ (φ : E → ℝ) x v₂ • u x ∂μ := by
@@ -444,11 +445,7 @@ theorem HasWeakLineDerivOn.smul_direction (h : HasWeakLineDerivOn μ Ω u u' v) 
     HasWeakLineDerivOn μ Ω u (c • u') (c • v) := by
   refine ⟨h.completeSpace, h.locallyIntegrableOn, h.locallyIntegrableOn_deriv.smul c,
     fun φ => ?_⟩
-  have hφd : Differentiable ℝ (φ : E → ℝ) := φ.contDiff.differentiable (by simp)
-  have hsmul : ∀ x, lineDeriv ℝ (φ : E → ℝ) x (c • v) = c * lineDeriv ℝ (φ : E → ℝ) x v := by
-    intro x
-    simp only [(hφd x).lineDeriv_eq_fderiv, map_smul, smul_eq_mul]
-  simp only [hsmul, mul_smul, integral_smul,
+  simp only [lineDeriv_smul, smul_eq_mul, mul_smul, integral_smul,
     h.integral_lineDeriv_smul_eq_neg_integral_smul φ, Pi.smul_apply, smul_comm _ c, smul_neg]
 
 end SmulDirection
