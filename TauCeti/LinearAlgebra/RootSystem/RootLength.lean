@@ -31,17 +31,16 @@ Bourbaki's with node `i` at `Fin` index `i - 1`. Zero-based `Fin` indices agains
 Bourbaki labels are the standing trap, so the numbering is pinned explicitly: the `Aₙ` chain runs
 `0, 1, …, n - 1` in order; `Bₙ` and `Cₙ` continue that chain with the double edge between `n - 2`
 and `n - 1`, the short simple root being the last node of `Bₙ` and the long one the last node of
-`Cₙ`; `Dₙ` forks at `n - 3`; `Eₙ` follows Bourbaki with index `1` the branch node; and `F₄` has
-`0, 1` long and `2, 3` short.
+`Cₙ`; `Dₙ` forks at `n - 3`; `Eₙ` follows Bourbaki with index `1` the branch node; `F₄` has
+`0, 1` long and `2, 3` short; and `G₂` is short then long, so `TauCeti.DynkinType.IsLongSimpleRoot`
+selects index `1` there.
 
-`G₂` is the one place where Mathlib's convention differs from Bourbaki's. Mathlib takes
-`CartanMatrix.G₂ = !![2, -3; -1, 2]`, the transpose of Bourbaki's matrix, "for consistency with
-F₄"; that is, its long simple root comes first, at index `0`, exactly as the long simple roots of
-`F₄` do. Since `TauCeti.DynkinType.cartanMatrix` is defined from Mathlib's family, the numbering
-inherited here is Mathlib's, so `G₂` is long-then-short and `TauCeti.DynkinType.IsLongSimpleRoot`
-selects index `0`. This is the orientation that
-`TauCeti.DynkinType.cartanMatrix_mul_rootLength` forces; the opposite convention would make that
-identity false.
+`G₂` is the one place where Mathlib's convention differs from Bourbaki's, and
+`TauCeti.DynkinType.cartanMatrix` follows Bourbaki: Mathlib's `CartanMatrix.G₂ = !![2, -3; -1, 2]`
+is documented as the transpose of Bourbaki's plate IX matrix, so the standard matrix pinned here is
+`CartanMatrix.G₂ᵀ = !![2, -1; -3, 2]`, whose short simple root comes first. That orientation is
+what `TauCeti.DynkinType.cartanMatrix_mul_rootLength` forces: reading the lengths off the
+transposed matrix instead would make that identity false.
 
 ## Main definitions
 
@@ -93,7 +92,7 @@ def rootLength : (t : DynkinType) → Fin t.rank → ℤ
   | .B n, i => if (i : ℕ) + 1 = n then 1 else 2
   | .C n, i => if (i : ℕ) + 1 = n then 2 else 1
   | .F4, i => if (i : ℕ) < 2 then 2 else 1
-  | .G2, i => if (i : ℕ) = 0 then 3 else 1
+  | .G2, i => if (i : ℕ) = 0 then 1 else 3
 
 -- The parenthesized `(rfl)` proofs keep these out of the implicit `@[defeq]` set, which would
 -- otherwise demand that `rootLength` be `@[expose]`d. They are stated at the level of the whole
@@ -116,7 +115,7 @@ def rootLength : (t : DynkinType) → Fin t.rank → ℤ
     F4.rootLength = fun i : Fin F4.rank ↦ if (i : ℕ) < 2 then (2 : ℤ) else 1 := (rfl)
 
 @[simp] lemma rootLength_G2 :
-    G2.rootLength = fun i : Fin G2.rank ↦ if (i : ℕ) = 0 then (3 : ℤ) else 1 := (rfl)
+    G2.rootLength = fun i : Fin G2.rank ↦ if (i : ℕ) = 0 then (1 : ℤ) else 3 := (rfl)
 
 /-- Every simple root has positive length. -/
 lemma rootLength_pos (t : DynkinType) (i : Fin t.rank) : 0 < t.rootLength i := by
@@ -188,21 +187,21 @@ theorem cartanMatrix_mul_rootLength (t : DynkinType) (i j : Fin t.rank) :
 roots, in the Bourbaki numbering of `TauCeti.DynkinType.cartanMatrix`
 (`TauCeti.DynkinType.isLongSimpleRoot_iff`). Simply-laced types have all their simple roots of the
 same length, hence all long; `Bₙ` is short at its last node, `Cₙ` long only at its last node, `F₄`
-long at its first two nodes and `G₂` long at its first, following Mathlib's `CartanMatrix.G₂`,
-which is Bourbaki's transposed. -/
+long at its first two nodes and `G₂` long at its second, following Bourbaki's numbering as
+`TauCeti.DynkinType.cartanMatrix` pins it. -/
 def IsLongSimpleRoot : (t : DynkinType) → Fin t.rank → Prop
   | .A _, _ | .D _, _ | .E6, _ | .E7, _ | .E8, _ => True
   | .B n, i => (i : ℕ) + 1 < n
   | .C n, i => (i : ℕ) + 1 = n
   | .F4, i => (i : ℕ) < 2
-  | .G2, i => (i : ℕ) = 0
+  | .G2, i => (i : ℕ) = 1
 
 instance : ∀ t : DynkinType, DecidablePred t.IsLongSimpleRoot
   | .A _ | .D _ | .E6 | .E7 | .E8 => fun _ ↦ inferInstanceAs (Decidable True)
   | .B n => fun i ↦ inferInstanceAs (Decidable ((i : ℕ) + 1 < n))
   | .C n => fun i ↦ inferInstanceAs (Decidable ((i : ℕ) + 1 = n))
   | .F4 => fun i ↦ inferInstanceAs (Decidable ((i : ℕ) < 2))
-  | .G2 => fun i ↦ inferInstanceAs (Decidable ((i : ℕ) = 0))
+  | .G2 => fun i ↦ inferInstanceAs (Decidable ((i : ℕ) = 1))
 
 @[simp] lemma isLongSimpleRoot_A (n : ℕ) : (A n).IsLongSimpleRoot = fun _ ↦ True := (rfl)
 @[simp] lemma isLongSimpleRoot_D (n : ℕ) : (D n).IsLongSimpleRoot = fun _ ↦ True := (rfl)
@@ -220,7 +219,7 @@ instance : ∀ t : DynkinType, DecidablePred t.IsLongSimpleRoot
     F4.IsLongSimpleRoot = fun i : Fin F4.rank ↦ (i : ℕ) < 2 := (rfl)
 
 @[simp] lemma isLongSimpleRoot_G2 :
-    G2.IsLongSimpleRoot = fun i : Fin G2.rank ↦ (i : ℕ) = 0 := (rfl)
+    G2.IsLongSimpleRoot = fun i : Fin G2.rank ↦ (i : ℕ) = 1 := (rfl)
 
 /-- **A node of a valid Dynkin type is long exactly when its simple root has maximal length.**
 
@@ -299,7 +298,7 @@ theorem forall_isLongSimpleRoot_iff_isSimplyLaced {t : DynkinType} (ht : t.Valid
       simp only [isLongSimpleRoot_F4] at h₀
       exact absurd h₀ (by omega)
   | G2 =>
-      obtain ⟨j₀, hj₀⟩ : ∃ j₀ : Fin 2, (j₀ : ℕ) = 1 := ⟨⟨1, by omega⟩, rfl⟩
+      obtain ⟨j₀, hj₀⟩ : ∃ j₀ : Fin 2, (j₀ : ℕ) = 0 := ⟨⟨0, by omega⟩, rfl⟩
       have h₀ := h j₀
       simp only [isLongSimpleRoot_G2] at h₀
       exact absurd h₀ (by omega)
@@ -331,7 +330,7 @@ theorem exists_isLongSimpleRoot {t : DynkinType} (ht : t.Valid) :
       obtain ⟨j₀, hj₀⟩ : ∃ j₀ : Fin 4, (j₀ : ℕ) = 0 := ⟨⟨0, by omega⟩, rfl⟩
       exact ⟨j₀, by simp only [isLongSimpleRoot_F4]; omega⟩
   | G2 =>
-      obtain ⟨j₀, hj₀⟩ : ∃ j₀ : Fin 2, (j₀ : ℕ) = 0 := ⟨⟨0, by omega⟩, rfl⟩
+      obtain ⟨j₀, hj₀⟩ : ∃ j₀ : Fin 2, (j₀ : ℕ) = 1 := ⟨⟨1, by omega⟩, rfl⟩
       exact ⟨j₀, by simp only [isLongSimpleRoot_G2]; omega⟩
 
 /-- **Types `Bₙ` and `Cₙ` have the same diagram with long and short exchanged.** Their standard
