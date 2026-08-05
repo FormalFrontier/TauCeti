@@ -60,6 +60,7 @@ parts: the closure lemmas of `TauCeti.IsAnalyticContinuationAlong` transport to 
 no choice of continuation to reconcile. A function analytic at every point of a continuous path
 continues along it via the constant family (`TauCeti.ContinuesAlong.of_analyticAt`), so
 continuability is a condition one may check on the pieces of a germ built from simpler ones.
+They are also closed under concatenating paths, which `Continuation/Trans.lean` proves.
 
 ## Relation to the monodromy theorem
 
@@ -77,7 +78,10 @@ holomorphic germs and deducing monodromy from it is left to a follow-up.
   parameter set `s`.
 * `TauCeti.IsAnalyticContinuationAlong.const`, `.of_differentiableOn` — a holomorphic function
   continues itself along any path in its domain.
-* `TauCeti.IsAnalyticContinuationAlong.congr` — only the carried germs matter.
+* `TauCeti.IsAnalyticContinuationAlong.congr`, `.congr_path` — only the carried germs matter, and
+  only the values of the path on the parameter set.
+* `TauCeti.IsAnalyticContinuationAlong.union` — continuations glue over two **closed** parameter
+  sets.
 * `TauCeti.IsAnalyticContinuationAlong.deriv`, `.add`, `.mul`, `.neg`, `.sub`, `.pow` —
   continuations are closed under the germ-wise operations.
 * `TauCeti.IsAnalyticContinuationAlong.reparam` — a continuation transports along any
@@ -204,6 +208,32 @@ theorem mono (hf : IsAnalyticContinuationAlong f γ s) {s' : Set X} (hs' : s' �
     IsAnalyticContinuationAlong f γ s' :=
   hf.reparam (φ := id) continuousOn_id hs'
 
+/-- **Continuations glue over closed parameter sets.** One family of germs that is a continuation
+along `γ` over each of two closed parameter sets is a continuation over their union.
+
+Closedness is essential rather than cosmetic. At a parameter time outside the closure of `s` the
+locality condition over `s` is vacuous, so it says nothing about how the germ carried there
+relates to the germs carried on `s`; taking both sets closed makes every parameter time of the
+union cling only to the piece it already lies in. -/
+theorem union {s' : Set X} (hf : IsAnalyticContinuationAlong f γ s)
+    (hf' : IsAnalyticContinuationAlong f γ s') (hs : IsClosed s) (hs' : IsClosed s') :
+    IsAnalyticContinuationAlong f γ (s ∪ s') where
+  continuousOn := hf.continuousOn.union_of_isClosed hf'.continuousOn hs hs'
+  analyticAt u hu := hu.elim (hf.analyticAt u) (hf'.analyticAt u)
+  locallyEq u _ := by
+    rw [nhdsWithin_union, eventually_sup]
+    constructor
+    · by_cases hus : u ∈ s
+      · exact hf.locallyEq u hus
+      · have hcl : u ∉ closure s := by rwa [hs.closure_eq]
+        rw [notMem_closure_iff_nhdsWithin_eq_bot.mp hcl]
+        exact eventually_bot
+    · by_cases hus' : u ∈ s'
+      · exact hf'.locallyEq u hus'
+      · have hcl : u ∉ closure s' := by rwa [hs'.closure_eq]
+        rw [notMem_closure_iff_nhdsWithin_eq_bot.mp hcl]
+        exact eventually_bot
+
 /-- The constant family is a continuation: a function analytic at every point of the path
 continues itself along it. -/
 theorem const {F : ℂ → ℂ} (hγ : ContinuousOn γ s) (hF : ∀ t ∈ s, AnalyticAt ℂ F (γ t)) :
@@ -231,6 +261,17 @@ protected theorem congr (hf : IsAnalyticContinuationAlong f γ s) {f' : X → �
     filter_upwards [(hf.continuousOn t ht).eventually hball, hf.locallyEq t ht,
       self_mem_nhdsWithin] with u hiff hfu hu
     exact ((h u hu).trans hfu).trans (hiff.mpr (h t ht)).symm
+
+/-- **A continuation depends on the path only through its values on the parameter set.** This is
+the path-level companion of `TauCeti.IsAnalyticContinuationAlong.congr`, which says the same for
+the family of germs. -/
+theorem congr_path (hf : IsAnalyticContinuationAlong f γ s) {γ' : X → ℂ} (h : Set.EqOn γ' γ s) :
+    IsAnalyticContinuationAlong f γ' s where
+  continuousOn := hf.continuousOn.congr h
+  analyticAt u hu := by rw [h hu]; exact hf.analyticAt u hu
+  locallyEq u hu := by
+    filter_upwards [hf.locallyEq u hu, self_mem_nhdsWithin] with v hv hvs
+    rwa [h hvs]
 
 /-- Differentiating a continuation term by term gives a continuation of the derivative germ. -/
 protected theorem deriv (hf : IsAnalyticContinuationAlong f γ s) :
