@@ -129,9 +129,11 @@ maps of an open set `Ω ⊆ ℂ` into a proper complex normed space `E` restrict
 compact family in the space `C(↥Ω, E)` of continuous maps with the compact-open topology.
 
 This is the precompactness the roadmap's L1 milestone asks for; `TauCeti.montel` is the sequential
-selection statement extracted from it. The local boundedness hypothesis cannot be dropped: on a
-nonempty open `Ω` the holomorphic family `F n z = n • v`, for a unit vector `v`, restricts to a
-closed discrete — hence non-relatively-compact — family. Properness of `E` cannot be dropped
+selection statement extracted from it. The local boundedness hypothesis cannot be dropped once `E`
+is nontrivial: on a nonempty open `Ω` the holomorphic family `F n z = n • v`, for a unit vector
+`v : E`, restricts to a closed discrete — hence non-relatively-compact — family. On `Ω = ∅`, or on
+the trivial `E = 0` where no unit vector exists, the conclusion holds regardless, so there is no
+counterexample in those two degenerate cases. Properness of `E` cannot be dropped
 either: it is what turns the pointwise norm bound into pointwise relative compactness, and for a
 normed space over `ℂ` it says exactly that `E` is finite-dimensional. -/
 theorem isCompact_closure_range_of_isLocallyBoundedOn [ProperSpace E] (hΩ : IsOpen Ω)

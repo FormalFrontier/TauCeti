@@ -69,10 +69,12 @@ variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℂ E] {Ω : Set ℂ} {
 `Ω ⊆ ℂ` into a proper complex normed space `E` is normal: every sequence from it has a subsequence
 converging locally uniformly on `Ω`, and the limit is holomorphic.
 
-The local boundedness hypothesis cannot be dropped: on any *nonempty* open `Ω`, and for any unit
-vector `v : E`, the holomorphic family `F n z = n • v` has no locally uniformly convergent
-subsequence. (On `Ω = ∅` the conclusion is vacuous, so nonemptiness is needed for the
-counterexample.) Properness of `E` cannot be dropped either — see
+The local boundedness hypothesis cannot be dropped once `E` is nontrivial: on any *nonempty* open
+`Ω`, and for a unit vector `v : E`, the holomorphic family `F n z = n • v` has no locally uniformly
+convergent subsequence. Both qualifications are needed for that counterexample: on `Ω = ∅` the
+conclusion is vacuous, and on the trivial `E = 0` there is no unit vector and every family
+converges, so local boundedness is genuinely dispensable in those two degenerate cases.
+Properness of `E` cannot be dropped either — see
 `TauCeti.isCompact_closure_range_of_isLocallyBoundedOn`, where it enters; for a normed space over
 `ℂ` it is exactly finite-dimensionality, and the scalar case `E = ℂ` is the one the Riemann
 mapping theorem uses. -/
