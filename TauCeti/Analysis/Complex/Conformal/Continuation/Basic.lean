@@ -80,7 +80,7 @@ across eventual equality of the initial function (`TauCeti.continuesAlong_congr`
 `TauCeti.continuesInside_congr`). `TauCeti.ContinuesInside` is the hypothesis of the monodromy
 theorem for a simply connected domain (`Conformal/GlobalBranch.lean`).
 
-Both predicates are closed under the linear and the ring operations and under differentiation,
+Both predicates are closed under the additive and the ring operations and under differentiation,
 because a continuation of a combination of germs is the corresponding combination of continuations
 of the parts: the closure lemmas of `TauCeti.IsAnalyticContinuationAlong` transport to them
 verbatim, with no choice of continuation to reconcile. A function analytic at every point of a
