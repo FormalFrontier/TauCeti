@@ -204,30 +204,10 @@ PR closed while still conflicting is reported as *censored* — an outcome, not 
 resolution time — and kept out of the median rather than counted either way.
 
 The first sweep dates every *already*-conflicting PR from the moment it ran, so
-its first day of output understates those ages. For history from before the
-markers existed, [`conflict_stats.py`](conflict_stats.py) reconstructs it from git
-alone: it replays each PR head against every commit of main with
-`git merge-tree`, binary-searching for the main commit that first broke the merge.
-
-```bash
-python3 scripts/pr_status/conflict_stats.py --since 2026-06-01 --json episodes.json
-python3 scripts/pr_status/conflict_stats.py --exhaustive   # no monotonicity assumption
-```
-
-It reports the resolution distribution, the over-24h tail, and — because "the
-author's session had ended" is a real competing explanation for an unfixed
-conflict — how many resolutions came from an author who was already pushing to
-that PR versus one who came back to it after a gap (`--session-gap`, default 2h).
-
-Its module docstring is blunt about being a **reconstruction rather than a log**,
-because GitHub keeps no record of when a PR started conflicting. Commit time is
-not push time and a commit is not a head; force-pushed heads are gone; and the
-default binary search assumes a conflict persists as main accumulates
-(`--exhaustive` drops that assumption). Every one of those errors in the same
-direction — losing episodes and shortening the ones it keeps — so the output is a
-lower bound. That is what makes it usable: it cannot invent a conflict that did
-not happen, and for the session question the bias runs *against* the conclusion
-the numbers support rather than for it.
+its first day of output understates those ages. History from before the markers
+existed has to be reconstructed from git instead; see
+[`conflict_stats.py`](conflict_stats.py) and the "Measuring merge conflicts"
+section below.
 
 ## Stuck-automation alerts (Tau Ceti > "Stuck PRs")
 
