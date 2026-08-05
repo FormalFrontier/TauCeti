@@ -150,9 +150,13 @@ theorem measure_eq_of_prefixPair_map_eq {T : Type*} [MeasurableSpace T]
         (r.1, r.2 i.castSucc)) :=
       measurable_pi_lambda _ fun i =>
         measurable_fst.prodMk ((measurable_pi_apply i.castSucc).comp measurable_snd)
+    have hfun : prefixProj (T × α) n ∘ R
+        = (fun r : T × (Fin (n + 1) → α) => fun i : Fin n => (r.1, r.2 i.castSucc))
+            ∘ prefixPair T α (n + 1) := by
+      funext q i
+      simp only [Function.comp_apply, hR, prefixProj_apply, prefixPair_apply, Fin.val_castSucc]
     rw [Measure.map_map (measurable_prefixProj (α := T × α) n) hRm,
-      Measure.map_map hcut (measurable_prefixPair T α (n + 1))]
-    congr 1
+      Measure.map_map hcut (measurable_prefixPair T α (n + 1)), hfun]
   rw [hstep μ, hstep ν, h (n + 1)]
 
 end Probability

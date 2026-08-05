@@ -6,7 +6,6 @@ module
 
 public import TauCeti.Probability.Exchangeability.ConditionallyIID.Construct
 public import TauCeti.Probability.Exchangeability.FiniteMarginals
-import TauCeti.MeasureTheory.Measure.ProductKernel
 import TauCeti.MeasureTheory.Measure.GiryMonad
 
 /-!
@@ -28,20 +27,18 @@ two-stage law of `ConditionallyIID.Construct` — draw a probability measure fro
 says the abstract conditional predicate is *exactly* realised by that generative construction, which
 is a stronger statement than naming a bespoke disintegration measure would be.
 
-Both measures live on `ProbabilityMeasure α × (ℕ → α)`, and they agree on every finite prefix: the
-joint law by the defining identity at the selection `Fin n → ℕ`, the mixture law by pushing the
-`μ.map ν`-bind back along `ν` and projecting each fibre `δ_Q ⊗ Q^{⊗ℕ}` through
-`map_prefixProj_infinitePi_const`. Extensionality then comes from
-`ext_of_generate_finite` against the π-system `prefixSets` of preimages under the prefix maps
-`prefixPair`:
+Both measures live on `ProbabilityMeasure α × (ℕ → α)`, and the proof identifies them prefix by
+prefix. For the joint law that prefix marginal is the defining identity of `ConditionallyIIDWith`
+at the selection `Fin n → ℕ`. For the mixture law no fibre calculation is needed either: the
+canonical construction is *itself* conditionally i.i.d. (`conditionallyIIDWith_iidMixtureLaw`), so
+its own block-level disintegration supplies the prefix marginal, and `iidMixtureLaw_map_directing`
+rewrites the first factor back along `ν`. The two agree, and `measure_eq_of_prefixPair_map_eq`
+promotes that agreement to equality of the full measures.
 
-* it is a π-system because two such sets can be re-presented at the longer of their two prefixes
-  (`prefixPair_comp`);
-* it generates the product σ-algebra, the first factor read off the empty prefix and the path factor
-  through `MeasurableSpace.comap_iSup` on the coordinate evaluations.
-
-Mathlib's `IsProjectiveLimit` is stated for pure dependent products `∀ i, α i`, so it does not apply
-to this product directly; the π-system argument avoids reindexing the pair through `Option ℕ`.
+That last step is where the paired prefix maps `prefixPair` earn their keep. Mathlib's
+`IsProjectiveLimit` is stated for pure dependent products `∀ i, α i`, so it does not apply to a
+product with a fixed first factor; `measure_eq_of_prefixPair_map_eq` instead replicates the first
+factor at every coordinate to reduce to the honest path case.
 
 ## References
 
@@ -68,18 +65,35 @@ namespace Probability
 variable {Ω α : Type*} [MeasurableSpace Ω] [MeasurableSpace α]
   {μ : Measure Ω} {X : ℕ → Ω → α} {ν : Ω → ProbabilityMeasure α}
 
-/-- The joint path law: the law of the directing measure together with the whole path.
-
-`@[expose]` is load-bearing: `jointPathLaw_def` below is the definitional unfolding, and under the
-module system an exported theorem may only unfold exposed definitions. Unlike `blockLaw`, writing
-the proof as `(rfl)` does not discharge it here. -/
+/-- The joint path law: the law of the directing measure together with the whole path. -/
+-- `@[expose]` is load-bearing: `jointPathLaw_def` below is the definitional unfolding, and under
+-- the module system an exported theorem may only unfold exposed definitions. Unlike `blockLaw`,
+-- writing the proof of `jointPathLaw_def` as `(rfl)` does not discharge it here.
 @[expose]
 def jointPathLaw (μ : Measure Ω) (X : ℕ → Ω → α) (ν : Ω → ProbabilityMeasure α) :
     Measure (ProbabilityMeasure α × (ℕ → α)) :=
   μ.map fun ω => (ν ω, fun i => X i ω)
 
+@[simp]
 theorem jointPathLaw_def (μ : Measure Ω) (X : ℕ → Ω → α) (ν : Ω → ProbabilityMeasure α) :
     jointPathLaw μ X ν = μ.map fun ω => (ν ω, fun i => X i ω) := rfl
+
+/-- The first marginal of the joint path law is the law of the directing measure. -/
+-- Not `@[simp]`: `jointPathLaw_def` is the registered normal form, so simp rewrites this
+-- left-hand side away before the lemma could fire, and `simpNF` rejects the annotation.
+theorem map_fst_jointPathLaw (hX : ∀ i, Measurable (X i)) (hν : Measurable ν) :
+    (jointPathLaw μ X ν).map Prod.fst = μ.map ν := by
+  rw [jointPathLaw_def,
+    Measure.map_map measurable_fst (hν.prodMk (measurable_pi_lambda _ hX))]
+  rfl
+
+/-- The second marginal of the joint path law is the law of the path. -/
+-- Not `@[simp]`, for the same reason as `map_fst_jointPathLaw`.
+theorem map_snd_jointPathLaw (hX : ∀ i, Measurable (X i)) (hν : Measurable ν) :
+    (jointPathLaw μ X ν).map Prod.snd = pathLaw μ X := by
+  rw [jointPathLaw_def,
+    Measure.map_map measurable_snd (hν.prodMk (measurable_pi_lambda _ hX)), pathLaw_def]
+  rfl
 
 /-- The prefix pushforward of the joint path law is the joint block law of the first `n`
 coordinates. -/
