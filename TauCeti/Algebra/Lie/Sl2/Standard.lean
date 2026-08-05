@@ -782,8 +782,8 @@ noncomputable def basisOfIsSl2Triple (t : IsSl2Triple h e f) (htop : t.toLieSuba
     Basis (Fin 3) K L :=
   Basis.mk (linearIndependent_isSl2Triple t) <| by
     rintro x -
-    obtain ⟨c₁, c₂, c₃, hx⟩ :=
-      IsSl2Triple.mem_toLieSubalgebra_iff.1 (show x ∈ t.toLieSubalgebra K by rw [htop]; trivial)
+    have hx_mem : x ∈ t.toLieSubalgebra K := by rw [htop]; trivial
+    obtain ⟨c₁, c₂, c₃, hx⟩ := IsSl2Triple.mem_toLieSubalgebra_iff.1 hx_mem
     rw [t.lie_e_f] at hx
     subst hx
     exact Submodule.add_mem _ (Submodule.add_mem _
