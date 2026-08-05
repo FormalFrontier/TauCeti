@@ -141,6 +141,13 @@ merge cleanly. An episode ends only at a head that is *clean* when it appeared, 
 successive conflicting heads stay one conflict; a PR closed or merged while still
 conflicting is censored rather than counted as a fast resolution.
 
+It ends at a clean *head*, never at a base — so if main moved such that a
+conflicting head merged again with nobody pushing, the conflict would be over and
+this would not say so. Testing every base in every epoch's window instead of
+stopping at the first that conflicts (41,790 merges over 9,647 epochs, 184 of them
+conflicting) finds no epoch where a clean base follows a conflicting one, so that
+has never happened here.
+
 Closing a PR and reopening it does not end an episode — nothing there resolves the
 conflict — but the time it spent closed is discounted from the duration, since
 nobody could have merged it then, and `closed_seconds` on each row records how

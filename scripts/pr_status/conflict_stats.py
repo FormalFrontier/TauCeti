@@ -92,10 +92,20 @@ Two further limits apply to both paths:
     with `main` still conflicts against later `main`. Each epoch is therefore
     checked at its LAST base and reported clean if it ends clean, which drops a
     conflict that arose and cleared inside one epoch. `--exhaustive` tests every
-    base instead; over this repository's whole history the two have agreed
-    exactly (136 episodes, identical medians and session split), so the assumption
-    is costing nothing today -- but it is an assumption, so re-check it rather than
-    trust that it keeps holding.
+    base instead; run back to back over the whole history the two agree.
+
+    The assumption reaches past the search, because an episode ends at a clean
+    HEAD and never at a base: if `main` moved so that a conflicting head merged
+    again with nobody pushing, the conflict would be over and this file would not
+    say so -- `--exhaustive` would carry the episode on to the next clean head, and
+    the default would drop it. Whether that ever happens is measurable, and
+    measured: scanning every base in every epoch's window, rather than stopping at
+    the first that conflicts, is 41,790 merges over 9,647 epochs, 184 of which
+    conflict with some base -- and NO epoch has a clean base after a conflicting
+    one. So nothing here has ever been un-conflicted by `main` moving. That is a
+    fact about this history rather than a theorem, and the scan is the way to
+    re-check it; the two modes agreeing is the weaker instrument, since a live
+    queue moves between two runs.
 
 An earlier version of this file claimed every error ran one way, making the output
 a LOWER bound. That was wrong and is worth killing explicitly so nobody revives
@@ -325,6 +335,11 @@ def first_conflicting(mirror, history, lo, hi, head, exhaustive=False):
     known direction: an epoch that conflicted in the middle but ends clean is
     reported clean, so the default UNDERCOUNTS episodes and never invents one.
     Use `--exhaustive` when the count matters more than the wall clock.
+
+    Either way this returns the ONSET and stops: nothing here looks for a base
+    that clears a conflict again, because an episode ends at a clean head. Over
+    this repository no epoch has one -- see the module docstring on monotonicity,
+    which measures it.
     """
     if lo >= hi:
         return None
