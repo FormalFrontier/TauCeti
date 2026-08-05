@@ -46,7 +46,10 @@ the symmetric group in `TauCeti.RepresentationTheory.Symmetric.Standard` is the 
 
 The augmentation used here is Mathlib's `Module.Basis.sumCoords` of the standard basis
 `MonoidAlgebra.basis X k`, a `k`-linear map on the free module `k[X]` of an arbitrary index type
-`X`, because that is what a permutation representation acts on.  It is therefore *not* an instance
+`X`, because that is what a permutation representation acts on.  Nothing is restated about it: the
+one lemma this file adds, `TauCeti.MonoidAlgebra.basis_repr`, is the bridge from that basis to
+`MonoidAlgebra.coeff` that Mathlib does not record, and the generic `Module.Basis` API computes
+with the augmentation once it is available.  The augmentation is therefore *not* an instance
 of `TauCeti.MonoidAlgebra.augmentation` of `TauCeti.Algebra.MonoidAlgebra.Exactness`, which is the
 ring homomorphism `k[M] →+* k` of a monoid algebra: a `G`-set carries no multiplication, so there
 is no ring structure on `k[X]` for a ring homomorphism to be defined on.  On the overlap, `X` a
@@ -76,32 +79,26 @@ namespace TauCeti
 
 section Augmentation
 
-variable {k : Type*} [CommSemiring k] {X : Type*}
+variable {k : Type*} [Semiring k] {X : Type*}
 
-/-- The **augmentation** of `k[X]` is `Module.Basis.sumCoords` of the standard basis: the linear
-map sending an element to the sum of its coefficients.  It sums them over the support. -/
-theorem sumCoords_basis_apply (v : MonoidAlgebra k X) :
-    (MonoidAlgebra.basis X k).sumCoords v = v.coeff.sum fun _ a => a :=
+/-- The coordinates of `k[X]` in the standard basis are the coefficients.
+
+Mathlib defines `MonoidAlgebra.basis` by `repr := MonoidAlgebra.coeffLinearEquiv _` but records no
+lemma for the resulting `repr`.  This is that missing bridge, and it is all that is needed for the
+generic basis API -- `Module.Basis.coe_sumCoords`, `Module.Basis.coe_sumCoords_of_fintype`,
+`Module.Basis.sumCoords_self_apply` -- to compute the augmentation in terms of
+`MonoidAlgebra.coeff`. -/
+@[simp]
+theorem MonoidAlgebra.basis_repr (v : MonoidAlgebra k X) :
+    (MonoidAlgebra.basis X k).repr v = v.coeff :=
   rfl
 
-/-- The augmentation sends a standard basis vector to its coefficient.
-
-This is not a `simp` lemma: `Module.Basis.coe_sumCoords` already rewrites the left-hand side, so
-the statement is not in `simp` normal form.  The same applies to the other lemmas below whose
-left-hand side is an augmentation. -/
-theorem sumCoords_basis_single (x : X) (a : k) :
-    (MonoidAlgebra.basis X k).sumCoords (MonoidAlgebra.single x a) = a := by
-  rw [sumCoords_basis_apply, MonoidAlgebra.coeff_single, Finsupp.sum_single_index rfl]
-
-/-- Over a finite index type the augmentation is the sum of all the coefficients. -/
-theorem sumCoords_basis_eq_sum [Fintype X] (v : MonoidAlgebra k X) :
-    (MonoidAlgebra.basis X k).sumCoords v = ∑ x : X, v.coeff x := by
-  rw [sumCoords_basis_apply, Finsupp.sum_fintype _ _ fun _ => rfl]
-
-/-- The augmentation is surjective as soon as there is a standard basis vector to hit `1`. -/
+/-- The **augmentation** of `k[X]` is `Module.Basis.sumCoords` of the standard basis: the linear
+map sending an element to the sum of its coefficients.  It is surjective as soon as there is a
+standard basis vector to hit `1`. -/
 theorem sumCoords_basis_surjective [Nonempty X] :
     Function.Surjective (MonoidAlgebra.basis X k).sumCoords := fun a =>
-  ⟨MonoidAlgebra.single (Classical.arbitrary X) a, sumCoords_basis_single _ _⟩
+  ⟨MonoidAlgebra.single (Classical.arbitrary X) a, by simp⟩
 
 end Augmentation
 
@@ -119,8 +116,8 @@ theorem sumCoords_basis_ofMulAction (g : G) (v : MonoidAlgebra k X) :
   have hcoeff : (Representation.ofMulAction k G X g v).coeff =
       Finsupp.mapDomain (g • ·) v.coeff := by
     simp [Representation.ofMulAction_def]
-  rw [sumCoords_basis_apply, sumCoords_basis_apply, hcoeff,
-    Finsupp.sum_mapDomain_index_inj (MulAction.injective g)]
+  simp only [Module.Basis.coe_sumCoords, MonoidAlgebra.basis_repr, hcoeff]
+  exact Finsupp.sum_mapDomain_index_inj (MulAction.injective g)
 
 /-- The **augmentation subrepresentation** of `k[X]`: the elements whose coefficients sum to
 zero. -/
@@ -155,8 +152,8 @@ variable {k : Type*} [CommRing k] {G X : Type*} [Group G] [MulAction G X]
 theorem single_sub_single_mem_augmentationSubrepresentation (x y : X) :
     (MonoidAlgebra.single x 1 - MonoidAlgebra.single y 1 : MonoidAlgebra k X) ∈
       augmentationSubrepresentation k G X := by
-  rw [mem_augmentationSubrepresentation_iff, map_sub, sumCoords_basis_single,
-    sumCoords_basis_single, sub_self]
+  rw [mem_augmentationSubrepresentation_iff, map_sub]
+  simp
 
 end SubrepRing
 
@@ -179,7 +176,6 @@ theorem coeff_permutationSum (x : X) : (permutationSum k X).coeff x = 1 := by
 /-- The augmentation of the sum of the standard basis is the cardinality of the index type. -/
 theorem sumCoords_basis_permutationSum :
     (MonoidAlgebra.basis X k).sumCoords (permutationSum k X) = Fintype.card X := by
-  rw [sumCoords_basis_eq_sum]
   simp
 
 /-- The sum of the standard basis is nonzero, since each of its coefficients is `1`. -/
@@ -258,7 +254,8 @@ theorem ker_sumCoords_basis_eq_span (x₀ : X) :
         (MonoidAlgebra.single x 1 - MonoidAlgebra.single x₀ 1 : MonoidAlgebra k X)) := by
   classical
   refine le_antisymm (fun v hv => ?_) (Submodule.span_le.mpr ?_)
-  · rw [LinearMap.mem_ker, sumCoords_basis_apply, Finsupp.sum] at hv
+  · simp only [LinearMap.mem_ker, Module.Basis.coe_sumCoords, MonoidAlgebra.basis_repr,
+      Finsupp.sum, id_eq] at hv
     have hbasis : ∑ x ∈ v.coeff.support, MonoidAlgebra.single x (v.coeff x) = v :=
       MonoidAlgebra.sum_coeff_single v
     have key : ∑ x ∈ v.coeff.support, v.coeff x •
@@ -270,7 +267,8 @@ theorem ker_sumCoords_basis_eq_span (x₀ : X) :
     exact Submodule.sum_mem _ fun x _ =>
       Submodule.smul_mem _ _ (Submodule.subset_span ⟨x, rfl⟩)
   · rintro _ ⟨x, rfl⟩
-    simp only [SetLike.mem_coe, LinearMap.mem_ker, map_sub, sumCoords_basis_single, sub_self]
+    rw [SetLike.mem_coe, LinearMap.mem_ker, map_sub]
+    simp
 
 end Span
 

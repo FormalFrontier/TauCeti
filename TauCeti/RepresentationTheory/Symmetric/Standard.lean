@@ -69,7 +69,8 @@ public section
 
 namespace TauCeti
 
-open MonoidAlgebra
+-- `_root_.`, since `TauCeti.MonoidAlgebra` is a namespace of its own
+open _root_.MonoidAlgebra
 
 /-! ### Transpositions and differences of basis vectors -/
 
@@ -176,8 +177,9 @@ theorem isAtom_augmentationSubrepresentation (h2 : 2 ≤ Fintype.card α)
       push Not at hcon
       have hall : ∀ z : α, v.coeff z = v.coeff x₀ := fun z =>
         (eq_or_ne z x₀).elim (fun h => by rw [h]) fun h => hcon z x₀ h
+      have hsum : (MonoidAlgebra.basis α k).sumCoords v = ∑ z : α, v.coeff z := by simp
       have hmul : (Fintype.card α : k) * v.coeff x₀ = 0 := by
-        rw [← hvker, sumCoords_basis_eq_sum, Finset.sum_congr rfl fun z _ => hall z]
+        rw [← hvker, hsum, Finset.sum_congr rfl fun z _ => hall z]
         simp
       have hzero : v.coeff x₀ = 0 := (mul_eq_zero.mp hmul).resolve_left hchar
       exact hv0 (MonoidAlgebra.coeff_eq_zero.mp (Finsupp.ext fun z => by simp [hall z, hzero]))
