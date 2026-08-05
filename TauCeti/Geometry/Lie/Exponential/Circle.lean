@@ -41,8 +41,8 @@ written multiplicatively. -/
 @[expose]
 noncomputable def circleExpHom : ContinuousMonoidHom (Multiplicative ℝ) Circle where
   toFun t := Circle.exp (Multiplicative.toAdd t)
-  map_one' := Circle.exp_zero
-  map_mul' s t := Circle.exp_add (Multiplicative.toAdd s) (Multiplicative.toAdd t)
+  map_one' := Circle.expHom.map_zero
+  map_mul' s t := Circle.expHom.map_add (Multiplicative.toAdd s) (Multiplicative.toAdd t)
   continuous_toFun := Circle.exp.continuous.comp continuous_toAdd
 
 /-- The bundled circle exponential evaluates to Mathlib's `Circle.exp`. -/
