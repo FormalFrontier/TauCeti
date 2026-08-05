@@ -22,15 +22,15 @@ gives the main result of this file: the indicator is the signed count
 
 `ν₂(ρ) = dim (Sym²V)ᴳ - dim (Λ²V)ᴳ`
 
-of the invariants in the two halves of the tensor square. Reading the companion identity
-`Representation.char_tensorSquare` the same way splits the invariants of `V ⊗ V` into those same
-two summands.
+of the invariants in the symmetric and exterior squares. Reading the companion identity
+`Representation.char_tensorSquare` the same way shows that those same two invariant dimensions sum
+to the dimension of the invariants of `V ⊗ V`.
 
 Both identities are proved wherever `|G|` is invertible in `k`, with **no hypothesis on
 characteristic two**, because the two character identities they average hold over every field: the
 tensor square need not split for the two invariant counts to add up. The price is that a count of
-invariants only ever appears here through its image in `k`, so in characteristic `p` the splitting
-of the tensor-square invariants is an identity of residues. Over a field of characteristic zero it
+invariants only ever appears here through its image in `k`, so in characteristic `p` the additivity
+of the invariant dimensions is an identity of residues. Over a field of characteristic zero it
 upgrades to an equality of natural numbers, and there the indicator is an integer.
 
 This is the module-level half of the roadmap's Layer 7 pair; the `FDRep`-level indicator and its
@@ -39,18 +39,20 @@ agreement with this one are at the end of the file.
 ## Main definitions
 
 * `TauCeti.Representation.frobeniusSchurIndicator`: `ν₂(ρ) = |G|⁻¹ ∑_g χ(g²)`.
-* `TauCeti.FDRep.frobeniusSchurIndicator`: the same average, for a `V : FDRep k G`.
+* `TauCeti.FDRep.frobeniusSchurIndicator`: the same indicator, for a `V : FDRep k G`.
 
 ## Main results
 
 * `TauCeti.Representation.frobeniusSchurIndicator_eq_sub_finrank_invariants`: **the indicator is
   the signed count of invariants in the two squares**, `ν₂(ρ) = dim (Sym²V)ᴳ - dim (Λ²V)ᴳ`.
-* `TauCeti.Representation.finrank_invariants_tprod_self`: **the invariants of the tensor square
-  split**, `dim (V ⊗ V)ᴳ = dim (Sym²V)ᴳ + dim (Λ²V)ᴳ`, as an identity in `k` in general
-  (`TauCeti.Representation.finrank_invariants_tprod_self_cast`) and as natural numbers in
-  characteristic zero.
+* `TauCeti.Representation.finrank_invariants_tprod_self`: **the two invariant dimensions add to
+  that of the tensor square**, `dim (V ⊗ V)ᴳ = dim (Sym²V)ᴳ + dim (Λ²V)ᴳ`, as an identity in `k`
+  in general (`TauCeti.Representation.finrank_invariants_tprod_self_cast`) and as natural numbers
+  in characteristic zero.
 * `TauCeti.Representation.frobeniusSchurIndicator_eq_intCast`: in characteristic zero the indicator
   is the integer `dim (Sym²V)ᴳ - dim (Λ²V)ᴳ`.
+* `TauCeti.FDRep.frobeniusSchurIndicator_eq_representation`: the `FDRep`-level indicator is the
+  indicator of the underlying representation.
 
 ## Implementation notes
 
@@ -59,6 +61,13 @@ of `Representation.char_symmetricSquare_sub_char_exteriorSquare`, and the defini
 only for a `Fintype G`: invertibility of `|G|` is a hypothesis of the theorems, not of the object.
 The two statements that do not mention the indicator ask only for `Finite G`, and build the
 `Fintype` they average over inside their proofs.
+
+The `FDRep`-level indicator is the module-level one applied to `V.ρ` rather than a second copy of
+the average, so `TauCeti.FDRep.frobeniusSchurIndicator_eq_representation` unfolds that one
+definition and nothing else, and every theorem about the average transfers through it. Neither
+definition is `@[expose]`d: the lemmas here are the intended interface, and nothing downstream
+needs to unfold either one. That is also why the agreement theorem is proved by a parenthesised
+`(rfl)`, which keeps the definitional equality inside this module instead of exporting it.
 
 ## References
 
@@ -91,7 +100,7 @@ variable [Field k] [Group G] [Fintype G] [AddCommGroup V] [Module k V]
 /-- **The Frobenius-Schur indicator** of a representation of a finite group,
 `ν₂(ρ) = |G|⁻¹ ∑_g χ(g²)`. It is the theorems below, not the average itself, that ask for `V` to be
 finite-dimensional and for `|G|` to be invertible in `k`. -/
-@[expose] noncomputable def frobeniusSchurIndicator (ρ : Representation k G V) : k :=
+noncomputable def frobeniusSchurIndicator (ρ : Representation k G V) : k :=
   (Nat.card G : k)⁻¹ * ∑ g : G, ρ.character (g * g)
 
 /-- The indicator, written with a square rather than a product. -/
@@ -146,11 +155,13 @@ section Finite
 variable [Field k] [Group G] [Finite G] [AddCommGroup V] [Module k V] [FiniteDimensional k V]
   [Invertible (Nat.card G : k)]
 
-/-- **The invariants of the tensor square split**, as an identity in `k`: averaging
-`Representation.char_tensorSquare` gives `dim (V ⊗ V)ᴳ = dim (Sym²V)ᴳ + dim (Λ²V)ᴳ` in `k`.
+/-- **The two invariant dimensions add to that of the tensor square**, as an identity in `k`:
+averaging `Representation.char_tensorSquare` gives `dim (V ⊗ V)ᴳ = dim (Sym²V)ᴳ + dim (Λ²V)ᴳ`
+in `k`.
 
 As with `TauCeti.Representation.frobeniusSchurIndicator_eq_sub_finrank_invariants`, no hypothesis
-on characteristic two is needed. In characteristic `p` this is an identity of residues only; see
+on characteristic two is needed: this is an equality of invariant dimensions, not a decomposition
+of the tensor square. In characteristic `p` it is an identity of residues only; see
 `TauCeti.Representation.finrank_invariants_tprod_self` for the characteristic-zero form. -/
 theorem finrank_invariants_tprod_self_cast (ρ : Representation k G V) :
     (finrank k (Representation.tprod ρ ρ).invariants : k) =
@@ -163,8 +174,8 @@ theorem finrank_invariants_tprod_self_cast (ρ : Representation k G V) :
   refine congrArg _ (Finset.sum_congr rfl fun g _ => ?_)
   rw [← Representation.char_tensorSquare ρ g, Representation.char_tensor, Pi.mul_apply, sq]
 
-/-- **The invariants of the tensor square split**, as natural numbers: over a field of
-characteristic zero, `dim (V ⊗ V)ᴳ = dim (Sym²V)ᴳ + dim (Λ²V)ᴳ`. -/
+/-- **The two invariant dimensions add to that of the tensor square**, as natural numbers: over a
+field of characteristic zero, `dim (V ⊗ V)ᴳ = dim (Sym²V)ᴳ + dim (Λ²V)ᴳ`. -/
 theorem finrank_invariants_tprod_self [CharZero k] (ρ : Representation k G V) :
     finrank k (Representation.tprod ρ ρ).invariants =
       finrank k (ρ.symmetricPower 2).invariants + finrank k (ρ.exteriorPower 2).invariants := by
@@ -191,7 +202,7 @@ theorem frobeniusSchurIndicator_eq_intCast (ρ : Representation k G V) :
   rfl
 
 /-- In characteristic zero the Frobenius-Schur indicator lies in the image of `ℤ`. -/
-theorem exists_intCast_eq_frobeniusSchurIndicator (ρ : Representation k G V) :
+theorem exists_frobeniusSchurIndicator_eq_intCast (ρ : Representation k G V) :
     ∃ n : ℤ, frobeniusSchurIndicator ρ = (n : k) :=
   ⟨_, frobeniusSchurIndicator_eq_intCast ρ⟩
 
@@ -204,24 +215,15 @@ namespace FDRep
 variable [Field k] [Group G] [Fintype G]
 
 /-- **The Frobenius-Schur indicator** of a finite-dimensional representation presented as an
-object of `FDRep k G`. -/
-@[expose] noncomputable def frobeniusSchurIndicator (V : FDRep k G) : k :=
-  (Nat.card G : k)⁻¹ * ∑ g : G, V.character (g * g)
+object of `FDRep k G`: the indicator `|G|⁻¹ ∑_g χ(g²)` of the underlying representation `V.ρ`. -/
+noncomputable def frobeniusSchurIndicator (V : FDRep k G) : k :=
+  Representation.frobeniusSchurIndicator V.ρ
 
 /-- The two forms of the indicator agree: the `FDRep`-level indicator of `V` is the indicator of
 the underlying representation `V.ρ`. -/
-theorem frobeniusSchurIndicator_eq (V : FDRep k G) :
+theorem frobeniusSchurIndicator_eq_representation (V : FDRep k G) :
     frobeniusSchurIndicator V = Representation.frobeniusSchurIndicator V.ρ :=
-  rfl
-
-/-- The `FDRep` form of
-`TauCeti.Representation.frobeniusSchurIndicator_eq_sub_finrank_invariants`. -/
-theorem frobeniusSchurIndicator_eq_sub_finrank_invariants [Invertible (Nat.card G : k)]
-    (V : FDRep k G) :
-    frobeniusSchurIndicator V =
-      (finrank k (Representation.symmetricPower V.ρ 2).invariants : k) -
-        (finrank k (Representation.exteriorPower V.ρ 2).invariants : k) :=
-  Representation.frobeniusSchurIndicator_eq_sub_finrank_invariants V.ρ
+  (rfl)
 
 end FDRep
 
