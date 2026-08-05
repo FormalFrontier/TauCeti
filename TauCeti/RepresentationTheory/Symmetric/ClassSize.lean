@@ -161,7 +161,7 @@ theorem card_partition_mul_zPart (μ : (Fintype.card α).Partition) :
   have hcongr : Nat.card {σ : Equiv.Perm α // σ.partition = μ} =
       Nat.card {τ : Equiv.Perm α | IsConj g τ} :=
     Nat.card_congr <| Equiv.subtypeEquivRight fun τ => by
-      rw [Set.mem_setOf_eq, Equiv.Perm.partition_eq_of_isConj, hg, eq_comm]
+      rw [Set.mem_ofPred_eq, Equiv.Perm.partition_eq_of_isConj, hg, eq_comm]
   rw [hcongr, ← hg]
   exact card_isConj_mul_zPart g
 
