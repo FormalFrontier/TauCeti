@@ -24,9 +24,11 @@ Both directions are instances of the generic subgroup-change API of
 the diamond operators are slashes by elements of `Γ₀(N)`. Conversely, a `Γ₁(N)`-form with
 trivial nebentypus is `Γ₀(N)`-slash invariant by the nebentypus bridge
 `mem_modFormCharSpace_iff_nebentypus`, and it is bounded (resp. zero) at every cusp of `Γ₀(N)`
-because `Γ₀(N)` and `Γ₁(N)` are arithmetic, hence share the cusps of `SL(2, ℤ)`; this is
-`ModularForm.ofSlashInvariant`. The two constructions preserve the underlying function `ℍ → ℂ`,
-so the resulting bijections are `ℂ`-linear and their inverses are visible in the definition.
+because `Γ₀(N)` and `Γ₁(N)` are arithmetic, hence share the cusps of `SL(2, ℤ)`
+(`Subgroup.IsArithmetic.isCusp_of_isCusp`); this is `ModularForm.ofSlashInvariant`. Both
+constructions preserve the underlying function `ℍ → ℂ`, so the resulting bijections are
+`ℂ`-linear and conversion in either direction costs nothing: see the `coe_…_apply` lemmas
+below.
 
 Note what the isomorphism is *not*: `M_k(Γ₁(N), 1)` is a `Submodule` of `M_k(Γ₁(N))`, so the
 statement is that a submodule of the level-`Γ₁(N)` space is linearly equivalent to another
@@ -103,12 +105,14 @@ theorem mem_cuspFormCharSpace_one_iff_diamondOpCusp (f : CuspForm ((Gamma1 N).ma
 theorem ofLe_mem_modFormCharSpace_one (f : ModularForm ((Gamma0 N).map (mapGL ℝ)) k) :
     ModularForm.ofLe (Gamma1_map_le_Gamma0_map N) f ∈
       modFormCharSpace k (1 : (ZMod N)ˣ →* ℂˣ) :=
-  (mem_modFormCharSpace_one_iff _).mpr fun γ hγ ↦ f.slash_action_eq' γ hγ
+  (mem_modFormCharSpace_one_iff _).mpr fun γ hγ ↦ by
+    simpa using f.slash_action_eq' γ hγ
 
 /-- Restricted to `Γ₁(N)`, a cusp form for `Γ₀(N)` has trivial nebentypus. -/
 theorem ofLe_mem_cuspFormCharSpace_one (f : CuspForm ((Gamma0 N).map (mapGL ℝ)) k) :
     CuspForm.ofLe (Gamma1_map_le_Gamma0_map N) f ∈ cuspFormCharSpace k (1 : (ZMod N)ˣ →* ℂˣ) :=
-  (mem_cuspFormCharSpace_one_iff _).mpr fun γ hγ ↦ f.slash_action_eq' γ hγ
+  (mem_cuspFormCharSpace_one_iff _).mpr fun γ hγ ↦ by
+    simpa using f.slash_action_eq' γ hγ
 
 /-- The diamond operators fix the restriction of a `Γ₀(N)`-form: they are slashes by elements
 of `Γ₀(N)`, under which such a form is already invariant. -/
@@ -128,70 +132,87 @@ theorem modFormCharSpace_one_eq_range :
     modFormCharSpace (N := N) k (1 : (ZMod N)ˣ →* ℂˣ) =
       LinearMap.range (ModularForm.ofLeₗ (k := k) (Gamma1_map_le_Gamma0_map N)) :=
   Submodule.ext fun f ↦
-    (mem_modFormCharSpace_one_iff f).trans (ModularForm.mem_range_ofLeₗ_iff _ f).symm
+    (mem_modFormCharSpace_one_iff f).trans
+      (ModularForm.mem_range_ofLeₗ_iff _ Subgroup.IsArithmetic.isCusp_of_isCusp f).symm
 
 /-- The trivial-nebentypus space is exactly the image of `S_k(Γ₀(N))` under restriction. -/
 theorem cuspFormCharSpace_one_eq_range :
     cuspFormCharSpace (N := N) k (1 : (ZMod N)ˣ →* ℂˣ) =
       LinearMap.range (CuspForm.ofLeₗ (k := k) (Gamma1_map_le_Gamma0_map N)) :=
   Submodule.ext fun f ↦
-    (mem_cuspFormCharSpace_one_iff f).trans (CuspForm.mem_range_ofLeₗ_iff _ f).symm
+    (mem_cuspFormCharSpace_one_iff f).trans
+      (CuspForm.mem_range_ofLeₗ_iff _ Subgroup.IsArithmetic.isCusp_of_isCusp f).symm
 
-/-! ### The isomorphisms -/
+/-! ### The isomorphisms
+
+The two equivalences are deliberately not `@[expose]`, so the `coe_…` lemmas recording that
+they preserve the underlying function are written `(rfl)` rather than `rfl`: the parentheses opt
+out of exporting the definitional equality, which those lemmas themselves replace downstream.
+-/
 
 /-- **The two spellings of `M_k(Γ₀(N))` agree**: the trivial-nebentypus character space
 `M_k(Γ₁(N), 1)` is `ℂ`-linearly isomorphic to the space `M_k(Γ₀(N))` of modular forms for the
 bare congruence subgroup `Γ₀(N)`, by an isomorphism preserving the underlying function on `ℍ`
-(`coe_modFormCharSpaceOneEquiv`). -/
-@[expose]
+(`coe_modFormCharSpaceOneEquiv_apply`). -/
 noncomputable def modFormCharSpaceOneEquiv (N : ℕ) [NeZero N] (k : ℤ) :
     modFormCharSpace (N := N) k (1 : (ZMod N)ˣ →* ℂˣ) ≃ₗ[ℂ]
       ModularForm ((Gamma0 N).map (mapGL ℝ)) k where
-  toFun f := ModularForm.ofSlashInvariant (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)
-    ((mem_modFormCharSpace_one_iff _).mp f.2)
-  map_add' _ _ := ModularForm.ext fun _ ↦ rfl
-  map_smul' _ _ := ModularForm.ext fun _ ↦ rfl
+  toFun f := ModularForm.ofSlashInvariant Subgroup.IsArithmetic.isCusp_of_isCusp
+    (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) ((mem_modFormCharSpace_one_iff _).mp f.2)
+  map_add' _ _ := ModularForm.ext fun _ ↦ by simp
+  map_smul' _ _ := ModularForm.ext fun _ ↦ by simp
   invFun f := ⟨ModularForm.ofLe (Gamma1_map_le_Gamma0_map N) f,
     ofLe_mem_modFormCharSpace_one f⟩
-  left_inv _ := Subtype.ext (ModularForm.ext fun _ ↦ rfl)
-  right_inv _ := ModularForm.ext fun _ ↦ rfl
+  left_inv _ := Subtype.ext (ModularForm.ext fun _ ↦ by simp)
+  right_inv _ := ModularForm.ext fun _ ↦ by simp
 
+/-- `modFormCharSpaceOneEquiv` does not change the underlying function on `ℍ`: a
+trivial-nebentypus form is converted to a `Γ₀(N)`-form by re-reading it, not by transporting
+it. -/
 @[simp]
-theorem coe_modFormCharSpaceOneEquiv (f : modFormCharSpace (N := N) k (1 : (ZMod N)ˣ →* ℂˣ)) :
+theorem coe_modFormCharSpaceOneEquiv_apply
+    (f : modFormCharSpace (N := N) k (1 : (ZMod N)ˣ →* ℂˣ)) :
     ⇑(modFormCharSpaceOneEquiv N k f) = ⇑(f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) :=
-  rfl
+  ModularForm.coe_ofSlashInvariant _ _ _
 
+/-- The inverse of `modFormCharSpaceOneEquiv` is the restriction `ModularForm.ofLe` of a
+`Γ₀(N)`-form to `Γ₁(N)`; in particular it too preserves the underlying function on `ℍ`. -/
 @[simp]
-theorem coe_modFormCharSpaceOneEquiv_symm (f : ModularForm ((Gamma0 N).map (mapGL ℝ)) k) :
+theorem coe_modFormCharSpaceOneEquiv_symm_apply (f : ModularForm ((Gamma0 N).map (mapGL ℝ)) k) :
     (((modFormCharSpaceOneEquiv N k).symm f : modFormCharSpace k (1 : (ZMod N)ˣ →* ℂˣ)) :
       ModularForm ((Gamma1 N).map (mapGL ℝ)) k) =
       ModularForm.ofLe (Gamma1_map_le_Gamma0_map N) f :=
-  rfl
+  (rfl)
 
 /-- **The two spellings of `S_k(Γ₀(N))` agree**: the cusp-form analogue of
 `modFormCharSpaceOneEquiv`. -/
-@[expose]
 noncomputable def cuspFormCharSpaceOneEquiv (N : ℕ) [NeZero N] (k : ℤ) :
     cuspFormCharSpace (N := N) k (1 : (ZMod N)ˣ →* ℂˣ) ≃ₗ[ℂ]
       CuspForm ((Gamma0 N).map (mapGL ℝ)) k where
-  toFun f := CuspForm.ofSlashInvariant (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    ((mem_cuspFormCharSpace_one_iff _).mp f.2)
-  map_add' _ _ := CuspForm.ext fun _ ↦ rfl
-  map_smul' _ _ := CuspForm.ext fun _ ↦ rfl
+  toFun f := CuspForm.ofSlashInvariant Subgroup.IsArithmetic.isCusp_of_isCusp
+    (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) ((mem_cuspFormCharSpace_one_iff _).mp f.2)
+  map_add' _ _ := CuspForm.ext fun _ ↦ by simp
+  map_smul' _ _ := CuspForm.ext fun _ ↦ by simp
   invFun f := ⟨CuspForm.ofLe (Gamma1_map_le_Gamma0_map N) f, ofLe_mem_cuspFormCharSpace_one f⟩
-  left_inv _ := Subtype.ext (CuspForm.ext fun _ ↦ rfl)
-  right_inv _ := CuspForm.ext fun _ ↦ rfl
+  left_inv _ := Subtype.ext (CuspForm.ext fun _ ↦ by simp)
+  right_inv _ := CuspForm.ext fun _ ↦ by simp
 
+/-- `cuspFormCharSpaceOneEquiv` does not change the underlying function on `ℍ`: a
+trivial-nebentypus cusp form is converted to a `Γ₀(N)`-cusp form by re-reading it, not by
+transporting it. -/
 @[simp]
-theorem coe_cuspFormCharSpaceOneEquiv (f : cuspFormCharSpace (N := N) k (1 : (ZMod N)ˣ →* ℂˣ)) :
+theorem coe_cuspFormCharSpaceOneEquiv_apply
+    (f : cuspFormCharSpace (N := N) k (1 : (ZMod N)ˣ →* ℂˣ)) :
     ⇑(cuspFormCharSpaceOneEquiv N k f) = ⇑(f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :=
-  rfl
+  CuspForm.coe_ofSlashInvariant _ _ _
 
+/-- The inverse of `cuspFormCharSpaceOneEquiv` is the restriction `CuspForm.ofLe` of a
+`Γ₀(N)`-cusp form to `Γ₁(N)`; in particular it too preserves the underlying function on `ℍ`. -/
 @[simp]
-theorem coe_cuspFormCharSpaceOneEquiv_symm (f : CuspForm ((Gamma0 N).map (mapGL ℝ)) k) :
+theorem coe_cuspFormCharSpaceOneEquiv_symm_apply (f : CuspForm ((Gamma0 N).map (mapGL ℝ)) k) :
     (((cuspFormCharSpaceOneEquiv N k).symm f : cuspFormCharSpace k (1 : (ZMod N)ˣ →* ℂˣ)) :
       CuspForm ((Gamma1 N).map (mapGL ℝ)) k) =
       CuspForm.ofLe (Gamma1_map_le_Gamma0_map N) f :=
-  rfl
+  (rfl)
 
 end TauCeti
