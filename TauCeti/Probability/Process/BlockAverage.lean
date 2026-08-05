@@ -39,6 +39,8 @@ the empirical mean `n⁻¹ • ∑ i, X (k i)` of the block `(X (k i))ᵢ`. -/
 def blockAverage (X : ℕ → Ω → ℝ) {n : ℕ} (k : Fin n → ℕ) : Ω → ℝ :=
   𝔼 i, X (k i)
 
+/-- **The pointwise formula for a block average**: at each `ω` it is the normalised finite sum
+`n⁻¹ * ∑ i, X (k i) ω`. -/
 @[simp]
 theorem blockAverage_apply {n : ℕ} (k : Fin n → ℕ) (ω : Ω) :
     blockAverage X k ω = (n : ℝ)⁻¹ * ∑ i, X (k i) ω := by
