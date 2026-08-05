@@ -49,6 +49,8 @@ bound applies.
   `TauCeti.circleImageLength f (ball c r) ζ ρ`.
 * `TauCeti.diam_image_ball_inter_sphere_le` — hence the image of `ball c r ∩ sphere ζ ρ` is no
   wider than that quantity.
+* `TauCeti.isBounded_image_ball_inter_sphere_of_circleImageLength_ne_top` — and when that quantity
+  is finite the image is bounded, so its diameter is a genuine bound on the distances inside it.
 * `TauCeti.exists_diam_image_ball_inter_sphere_le_of_lintegral_ne_top` — the conclusion, from
   Wolff's lemma: a holomorphic map of a disc with finite Dirichlet integral has, at every boundary
   point and below every positive radius, a radius `ρ` at which `f '' (ball c r ∩ sphere ζ ρ)` has
@@ -134,6 +136,25 @@ theorem diam_image_ball_inter_sphere_le (hζ : dist ζ c = r) (hρ : 0 < ρ)
   rintro _ ⟨z, hz, rfl⟩ _ ⟨w, hw, rfl⟩
   exact (ENNReal.ofReal_le_ofReal_iff hε).mp
     ((ofReal_dist_le_circleImageLength_of_mem_ball_inter_sphere hζ hρ hf hz hw).trans hlen)
+
+/-- **An image crosscut of finite length is bounded.** The chord bound
+`TauCeti.ofReal_dist_le_circleImageLength_of_mem_ball_inter_sphere` keeps every pair of points of
+`f '' (ball c r ∩ sphere ζ ρ)` within the finite number
+`(TauCeti.circleImageLength f (ball c r) ζ ρ).toReal` of each other.
+
+This is what makes `Metric.diam (f '' (ball c r ∩ sphere ζ ρ))` a bound on the distances inside the
+image crosscut rather than the junk value `0` that an unbounded set carries; it is the disc
+counterpart of `TauCeti.isBounded_image_circleMap_image_Ioo_of_lintegral_ne_top`, stated against
+the crosscut rather than against an arc of angles. -/
+theorem isBounded_image_ball_inter_sphere_of_circleImageLength_ne_top (hζ : dist ζ c = r)
+    (hρ : 0 < ρ) (hf : DifferentiableOn ℂ f (ball c r))
+    (hfin : circleImageLength f (ball c r) ζ ρ ≠ ⊤) :
+    IsBounded (f '' (ball c r ∩ sphere ζ ρ)) := by
+  rw [isBounded_iff]
+  refine ⟨(circleImageLength f (ball c r) ζ ρ).toReal, ?_⟩
+  rintro _ ⟨z, hz, rfl⟩ _ ⟨w, hw, rfl⟩
+  exact (ENNReal.ofReal_le_iff_le_toReal hfin).mp
+    (ofReal_dist_le_circleImageLength_of_mem_ball_inter_sphere hζ hρ hf hz hw)
 
 /-! ## Crosscuts with a short image -/
 

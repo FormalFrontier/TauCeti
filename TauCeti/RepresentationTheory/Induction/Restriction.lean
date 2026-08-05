@@ -5,7 +5,7 @@ Authors: Claude
 -/
 module
 
-public import Mathlib.RepresentationTheory.Character
+public import TauCeti.RepresentationTheory.CharacterTable.ClassFunction
 public import Mathlib.RepresentationTheory.Irreducible
 public import Mathlib.RepresentationTheory.Rep.Res
 
@@ -15,7 +15,8 @@ public import Mathlib.RepresentationTheory.Rep.Res
 This file collects restriction infrastructure shared by the induction files: how the restriction
 functors `Rep.resFunctor` and `Action.res` behave under composing and inverting the homomorphism
 restricted along, and, for a subgroup `S` of a group `G`, the restriction of a finite-dimensional
-representation of `G` to `S` together with its character.  Restricting along a surjective
+representation of `G` to `S` together with its character and the class function that character
+carries (`TauCeti.ClassFunction.comap_subtype_ofFDRep`).  Restricting along a surjective
 homomorphism changes nothing essential: it identifies the lattices of invariant subspaces, and
 hence preserves irreducibility.
 
@@ -208,6 +209,15 @@ variable [Field k]
 theorem character_resFDRep (S : Subgroup G) (B : FDRep k G) (s : S) :
     (resFDRep S B).character s = B.character (s : G) :=
   rfl
+
+/-- Pulling the class function of a representation back along the inclusion of a subgroup gives
+the class function of the restricted representation: `ClassFunction.comap S.subtype` is
+restriction of class functions. -/
+@[simp]
+theorem ClassFunction.comap_subtype_ofFDRep (S : Subgroup G) (B : FDRep k G) :
+    ClassFunction.comap S.subtype (ClassFunction.ofFDRep B) =
+      ClassFunction.ofFDRep (resFDRep S B) :=
+  Subtype.ext (funext fun _ => by simp)
 
 end Character
 

@@ -32,14 +32,6 @@ namespace TauCeti.NumberField
 
 variable {K : Type*} [Field K] [NumberField K] {θ : 𝓞 K} {d : ℤ}
 
-/-- The quadratic field `K` has degree `2` over `ℚ`: its power basis has dimension
-`natDegree (X² - d) = 2`. -/
-private theorem finrank_rat_eq_two (hmin : minpoly ℤ θ = X ^ 2 - C d)
-    (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) : Module.finrank ℚ K = 2 := by
-  have hint : IsIntegral ℚ (θ : K) := θ.isIntegral_coe.tower_top
-  rw [(PowerBasis.ofAdjoinEqTop' hint hgen).finrank,
-    PowerBasis.ofAdjoinEqTop'_dim hint hgen, minpoly_rat_quadratic hmin, natDegree_X_pow_sub_C]
-
 /-- The generator `θ` of the quadratic field is nonzero (its minimal polynomial has degree `2`,
 not `1`). -/
 private theorem coe_gen_ne_zero (hmin : minpoly ℤ θ = X ^ 2 - C d) : (θ : K) ≠ 0 := by
