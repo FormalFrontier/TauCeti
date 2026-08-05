@@ -15,13 +15,7 @@ Styled to sit on the dark navy Tau Ceti site (see web/static_files/style.css).
 
 import subprocess, sys, argparse, datetime as dt, html, math
 
-# Palette mirrors style.css so the chart matches the site.
-BG      = "#101936"   # panel over the navy gradient
-PANEL   = "#1b2547"
-GRID    = "rgba(255,255,255,0.08)"
-AXIS    = "rgba(255,255,255,0.18)"
-TEXT    = "#eef2fb"
-MUTED   = "#9aa6c9"
+from chart_style import base_css, card_rect
 
 
 def git(repo, *args):
@@ -94,7 +88,7 @@ def render(data, title, accent, out):
         v = ymax * i // 5
         y = Y(v)
         yticks.append(f'<line class="grid" x1="{L}" y1="{y:.1f}" x2="{L+pw}" y2="{y:.1f}"/>')
-        yticks.append(f'<text class="ytick" x="{L-12}" y="{y+4:.1f}">{v:,}</text>')
+        yticks.append(f'<text class="tick ytick" x="{L-12}" y="{y+4:.1f}">{v:,}</text>')
 
     # x ticks: walk left to right, label only when >= 78px past the last label
     # (so runs of consecutive days don't collide); always keep first and last.
@@ -107,15 +101,14 @@ def render(data, title, accent, out):
                 xticks.pop()        # drop a label that would crowd the final one
             dd = dt.date.fromisoformat(d)
             lab = f"{dd:%b} {dd.day}"   # avoid the GNU-only %-d
-            xticks.append(f'<text class="xtick" x="{x:.1f}" y="{T+ph+24}">{lab}</text>')
+            xticks.append(f'<text class="tick xtick" x="{x:.1f}" y="{T+ph+24}">{lab}</text>')
             last_x = x
 
     dots = "".join(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="3"/>' for x, y in pts)
     latest = data[-1][1]
     grad = "g" + accent.lstrip("#")
 
-    svg = f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}"
-     font-family="ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif" role="img"
+    svg = f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" role="img"
      aria-label="{html.escape(title)}: {latest:,} lines as of {data[-1][0]}">
   <defs>
     <linearGradient id="{grad}" x1="0" y1="0" x2="0" y2="1">
@@ -124,18 +117,15 @@ def render(data, title, accent, out):
     </linearGradient>
   </defs>
   <style>
-    .grid{{stroke:{GRID};stroke-width:1}}
-    .axis{{stroke:{AXIS};stroke-width:1}}
-    .ytick{{fill:{MUTED};font-size:13px;text-anchor:end}}
-    .xtick{{fill:{MUTED};font-size:13px;text-anchor:middle}}
-    .title{{fill:{TEXT};font-size:19px;font-weight:600}}
-    .sub{{fill:{MUTED};font-size:13px}}
+    {base_css(W)}
+    .ytick{{text-anchor:end}}
+    .xtick{{text-anchor:middle}}
     .line{{fill:none;stroke:{accent};stroke-width:2.5;stroke-linejoin:round;stroke-linecap:round}}
     circle{{fill:{accent}}}
   </style>
-  <rect x="0.5" y="0.5" width="{W-1}" height="{H-1}" rx="12" fill="{BG}" stroke="{PANEL}"/>
+  {card_rect(W, H)}
   <text class="title" x="{L}" y="30">{html.escape(title)}</text>
-  <text class="sub" x="{L}" y="48">{latest:,} lines as of {data[-1][0]}</text>
+  <text class="subtitle" x="{L}" y="48">{latest:,} lines as of {data[-1][0]}</text>
   {''.join(yticks)}
   <line class="axis" x1="{L}" y1="{T}" x2="{L}" y2="{T+ph}"/>
   <line class="axis" x1="{L}" y1="{T+ph}" x2="{L+pw}" y2="{T+ph}"/>
