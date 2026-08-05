@@ -40,7 +40,7 @@ and to deduce `TauCeti.character_ind` from `TauCeti.indClassFun_eq_natCard_inv_m
   function.
 * `TauCeti.natCard_mul_indClassFun`: the group-sum form, `|S| · (Ind f)(g) = ∑_{x ∈ G} f(x⁻¹gx)`,
   and its averaged corollary `TauCeti.indClassFun_eq_natCard_inv_mul_sum`.
-* `TauCeti.frobenius_reciprocity_classFun` and `TauCeti.characterPairing_ind`: **Frobenius
+* `TauCeti.frobenius_reciprocity_classFunction` and `TauCeti.characterPairing_ind`: **Frobenius
   reciprocity for class functions**, `⟨Ind f, h⟩_G = ⟨f, Res h⟩_S`, for arbitrary class functions
   `f` on `S` and `h` on `G`.
 
@@ -53,7 +53,7 @@ and that is what `TauCeti.indClassFun_mem_classFunction` extracts, in the form o
 invariance of the total sum.  It is the only regime the results below use.
 
 `TauCeti.frobenius_reciprocity` is the special case of
-`TauCeti.frobenius_reciprocity_classFun` for two characters.  It is not re-derived here: it is
+`TauCeti.frobenius_reciprocity_classFunction` for two characters.  It is not re-derived here: it is
 what the earlier layers of the roadmap are stated against, and what is new is that the same
 identity holds for class functions that are not characters, which is what the virtual-character
 lattice of Layer 6 needs.
@@ -299,7 +299,7 @@ any particular pairing; `TauCeti.characterPairing_ind` is the same identity phra
 `TauCeti.ClassFunction.characterPairing`.  Specialized to two characters this is
 `TauCeti.frobenius_reciprocity`, but no representation is involved here: the identity is a
 double count over `G × G` and holds for arbitrary class functions. -/
-theorem frobenius_reciprocity_classFun [Fintype G] (hG : IsUnit (Nat.card G : k))
+theorem frobenius_reciprocity_classFunction [Fintype G] (hG : IsUnit (Nat.card G : k))
     (f : ClassFunction k S) (h : ClassFunction k G) :
     (Nat.card G : k)⁻¹ * ∑ g : G, indClassFun S f.1 g * h.1 g⁻¹ =
       (Nat.card S : k)⁻¹ * ∑ s : S, f.1 s * h.1 ((s : G)⁻¹) := by
@@ -366,7 +366,7 @@ theorem characterPairing_ind [Fintype G] (hG : IsUnit (Nat.card G : k))
     ClassFunction.characterPairing (ClassFunction.ind S f) h =
       ClassFunction.characterPairing f (ClassFunction.comap S.subtype h) := by
   rw [ClassFunction.characterPairing_apply, ClassFunction.characterPairing_apply]
-  simpa using frobenius_reciprocity_classFun hG f h
+  simpa using frobenius_reciprocity_classFunction hG f h
 
 end Field
 
