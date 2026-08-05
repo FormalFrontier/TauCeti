@@ -23,19 +23,20 @@ isomorphic as a group to the coordinatewise units `Fin n → kˣ`
 (`TauCeti.diagonalTorusEquiv`).  It is cut out inside `GL n k` by a condition on matrix entries:
 an invertible matrix lies in it exactly when it is diagonal (`TauCeti.mem_diagonalTorus_iff`),
 the point being that invertibility upgrades the diagonal entries of a diagonal matrix to units
-(`TauCeti.isUnit_apply_of_isDiag`).  And it is its own centralizer
+(`TauCeti.isUnit_apply_of_isDiag`, from `ClassicalGroups/Diagonal.lean`).  And it is its own
+centralizer
 (`TauCeti.centralizer_diagonalTorus`), so it is a maximal abelian subgroup: no larger subgroup of
 `GL n k` contains it and is commutative.
 
-Self-centralization needs two hypotheses, both genuine.  The ring must have no zero divisors,
-because the argument divides by a difference `t i - t j` of diagonal entries; and the unit group
-must be large enough to hold `n` distinct values, since a diagonal matrix can only separate the
-coordinate lines it distinguishes.  The second hypothesis is carried as
-`Nonempty (Fin n ↪ kˣ)`, which is exactly what the proof consumes, rather than a cardinality
-bound; when the unit group is infinite it is automatic
-(`TauCeti.centralizer_diagonalTorus_of_infinite`).  It cannot be dropped: over a ring with only
-one unit, such as `𝔽₂`, the torus is trivial (`TauCeti.diagonalTorus_eq_bot`) while its
-centralizer is the whole of `GL n k` (`TauCeti.centralizer_diagonalTorus_eq_top`).
+Self-centralization needs two hypotheses, both genuine.  The ring must have no zero divisors: an
+off-diagonal entry `g i j` of a centralizing matrix satisfies `g i j * (t i - t j) = 0` for
+diagonal entries `t i ≠ t j`, and it vanishes because the second factor is nonzero — not because
+that factor is invertible, which it need not be (`TauCeti.apply_eq_zero_of_commute_diagonal`).
+And the unit group must have two distinct elements, since a diagonal matrix can only separate the
+coordinate lines it distinguishes; two units already suffice, because only one pair of
+coordinates is separated at a time.  That hypothesis cannot be dropped: over a ring with only one
+unit, such as `𝔽₂`, the torus is trivial (`TauCeti.diagonalTorus_eq_bot`) while its centralizer
+is the whole of `GL n k` (`TauCeti.centralizer_diagonalTorus_eq_top`).
 
 Finally the action of the torus on the coordinate lines `k ∙ eᵢ` of the standard representation
 is recorded: each `eᵢ` is an eigenvector of every torus element, with eigenvalue the `i`-th
@@ -52,8 +53,6 @@ distinct, and it fails outright when the torus is trivial, as it is over `𝔽�
 ## Main statements
 
 * `TauCeti.mem_diagonalTorus_iff`: membership in the torus is diagonality of the matrix.
-* `TauCeti.isDiag_of_commute_diagGL`: a matrix commuting with a diagonal matrix of pairwise
-  distinct entries is itself diagonal.
 * `TauCeti.centralizer_diagonalTorus`: the diagonal torus is its own centralizer.
 * `TauCeti.centralizer_diagonalTorus_eq_top`: the sharpness of the hypothesis there.
 * `TauCeti.map_stdRep_span_basisFun`: the coordinate lines of the standard representation are
@@ -77,12 +76,11 @@ namespace TauCeti
 variable {k : Type u} [CommRing k] {n : ℕ}
 
 /-- The **diagonal torus** of `GL n k`: the image of the coordinatewise units under `diagGL`. -/
-@[expose]
 def diagonalTorus (k : Type u) [CommRing k] (n : ℕ) : Subgroup (GL (Fin n) k) :=
   MonoidHom.range (diagGL (k := k) (n := n))
 
-/-- A family of units gives an element of the diagonal torus. -/
-@[simp]
+/-- A family of units gives an element of the diagonal torus.  This is not a `simp` lemma:
+`mem_diagonalTorus_iff` already reduces the membership to `Matrix.isDiag_diagonal`. -/
 theorem diagGL_mem_diagonalTorus (t : Fin n → kˣ) : diagGL t ∈ diagonalTorus k n :=
   ⟨t, rfl⟩
 
@@ -91,24 +89,8 @@ theorem exists_diagGL_eq {g : GL (Fin n) k} (hg : g ∈ diagonalTorus k n) :
     ∃ t : Fin n → kˣ, diagGL t = g :=
   hg
 
-/-- The diagonal entries of an invertible diagonal matrix are units: the corresponding entry of
-the inverse matrix is an inverse for them, because in a product of two diagonal matrices only the
-diagonal term of the sum survives. -/
-theorem isUnit_apply_of_isDiag {g : GL (Fin n) k}
-    (hg : (g : Matrix (Fin n) (Fin n) k).IsDiag) (i : Fin n) :
-    IsUnit ((g : Matrix (Fin n) (Fin n) k) i i) := by
-  refine isUnit_iff_exists_inv.mpr ⟨(↑g⁻¹ : Matrix (Fin n) (Fin n) k) i i, ?_⟩
-  have hone : ((g : Matrix (Fin n) (Fin n) k) * (↑g⁻¹ : Matrix (Fin n) (Fin n) k)) i i = 1 := by
-    rw [← Units.val_mul, mul_inv_cancel]
-    simp
-  rw [Matrix.mul_apply, Finset.sum_eq_single i] at hone
-  · exact hone
-  · intro j _ hj
-    rw [hg (Ne.symm hj), zero_mul]
-  · intro h
-    exact absurd (Finset.mem_univ i) h
-
 /-- An invertible matrix lies in the diagonal torus exactly when it is a diagonal matrix. -/
+@[simp]
 theorem mem_diagonalTorus_iff {g : GL (Fin n) k} :
     g ∈ diagonalTorus k n ↔ (g : Matrix (Fin n) (Fin n) k).IsDiag := by
   constructor
@@ -132,22 +114,31 @@ theorem apply_eq_zero_of_mem_diagonalTorus {g : GL (Fin n) k} (hg : g ∈ diagon
   isDiag_of_mem_diagonalTorus hg hij
 
 /-- The diagonal torus is the group of coordinatewise units. -/
-@[expose]
 noncomputable def diagonalTorusEquiv (k : Type u) [CommRing k] (n : ℕ) :
     (Fin n → kˣ) ≃* diagonalTorus k n :=
   MonoidHom.ofInjective diagGL_injective
-
-/-- The identification of the torus with the coordinatewise units is `diagGL`. -/
-@[simp]
-theorem coe_diagonalTorusEquiv_apply (t : Fin n → kˣ) :
-    (diagonalTorusEquiv k n t : GL (Fin n) k) = diagGL t :=
-  rfl
 
 /-- Reading the diagonal entries of a torus element and embedding them back is the identity. -/
 @[simp]
 theorem diagGL_diagonalTorusEquiv_symm_apply (g : diagonalTorus k n) :
     diagGL ((diagonalTorusEquiv k n).symm g) = (g : GL (Fin n) k) :=
   congrArg Subtype.val ((diagonalTorusEquiv k n).apply_symm_apply g)
+
+/-- The identification of the torus with the coordinatewise units is `diagGL`. -/
+@[simp]
+theorem coe_diagonalTorusEquiv_apply (t : Fin n → kˣ) :
+    (diagonalTorusEquiv k n t : GL (Fin n) k) = diagGL t := by
+  have h := diagGL_diagonalTorusEquiv_symm_apply (diagonalTorusEquiv k n t)
+  rw [MulEquiv.symm_apply_apply] at h
+  exact h.symm
+
+/-- The `i`-th coordinate character of a torus element is its `(i, i)` matrix entry. -/
+@[simp]
+theorem coe_diagonalTorusEquiv_symm_apply (g : diagonalTorus k n) (i : Fin n) :
+    (((diagonalTorusEquiv k n).symm g i : kˣ) : k) =
+      ((g : GL (Fin n) k) : Matrix (Fin n) (Fin n) k) i i := by
+  conv_rhs => rw [← diagGL_diagonalTorusEquiv_symm_apply g, diagGL_coe]
+  rw [Matrix.diagonal_apply_eq]
 
 /-- The diagonal torus is commutative: diagonal matrices multiply coordinatewise. -/
 instance instIsMulCommutativeDiagonalTorus : IsMulCommutative (diagonalTorus k n) :=
@@ -163,50 +154,43 @@ theorem det_of_mem_diagonalTorus {g : GL (Fin n) k} (hg : g ∈ diagonalTorus k 
     ← (isDiag_of_mem_diagonalTorus hg).diagonal_diag, Matrix.det_diagonal]
   simp [Matrix.diag]
 
+/-- An element centralizing the diagonal torus commutes, as a matrix, with every diagonal matrix
+of units. -/
+theorem commute_diagonal_of_mem_centralizer {g : GL (Fin n) k}
+    (hg : g ∈ Subgroup.centralizer (diagonalTorus k n : Set (GL (Fin n) k))) (t : Fin n → kˣ) :
+    Commute (Matrix.diagonal fun i => (t i : k)) (g : Matrix (Fin n) (Fin n) k) := by
+  have hcomm : Commute (diagGL t) g :=
+    Subgroup.mem_centralizer_iff.mp hg _ (diagGL_mem_diagonalTorus t)
+  have h : ((diagGL t * g : GL (Fin n) k) : Matrix (Fin n) (Fin n) k) =
+      ((g * diagGL t : GL (Fin n) k) : Matrix (Fin n) (Fin n) k) := congrArg _ hcomm.eq
+  rwa [Units.val_mul, Units.val_mul, diagGL_coe] at h
+
 section NoZeroDivisors
 
-variable [NoZeroDivisors k]
-
-/-- **A matrix commuting with a diagonal matrix of pairwise distinct entries is diagonal.**
-Comparing the `(i, j)` entries of the two products gives `tᵢ · gᵢⱼ = gᵢⱼ · tⱼ`, so `gᵢⱼ` is
-annihilated by `tᵢ - tⱼ`, which is nonzero off the diagonal. -/
-theorem isDiag_of_commute_diagGL {t : Fin n → kˣ} (ht : Function.Injective t)
-    {g : GL (Fin n) k} (hg : Commute (diagGL t) g) :
-    (g : Matrix (Fin n) (Fin n) k).IsDiag := by
-  intro i j hij
-  have hentry := congrArg (fun x : GL (Fin n) k => (x : Matrix (Fin n) (Fin n) k) i j) hg
-  simp only [Units.val_mul, diagGL_coe, Matrix.diagonal_mul, Matrix.mul_diagonal] at hentry
-  have hne : ((t i : k) - (t j : k)) ≠ 0 :=
-    sub_ne_zero.mpr fun h => ht.ne hij (Units.ext h)
-  have hzero : (g : Matrix (Fin n) (Fin n) k) i j * ((t i : k) - (t j : k)) = 0 := by
-    rw [mul_sub, ← hentry, mul_comm]
-    ring
-  exact (mul_eq_zero.mp hzero).resolve_right hne
+variable [NoZeroDivisors k] [Nontrivial kˣ]
 
 /-- **The diagonal torus is its own centralizer**, hence a maximal abelian subgroup of `GL n k`.
-The hypothesis `Nonempty (Fin n ↪ kˣ)` supplies a diagonal matrix whose entries are pairwise
-distinct, which is what separates the coordinate lines. -/
-theorem centralizer_diagonalTorus (h : Nonempty (Fin n ↪ kˣ)) :
+Two distinct units `u ≠ v` are all the argument needs: for `i ≠ j` the family taking the value
+`u` at `i` and `v` elsewhere gives a diagonal matrix separating those two coordinates, which
+kills the `(i, j)` entry of anything commuting with it. -/
+theorem centralizer_diagonalTorus :
     Subgroup.centralizer (diagonalTorus k n : Set (GL (Fin n) k)) = diagonalTorus k n := by
-  obtain ⟨e⟩ := h
-  refine le_antisymm (fun g hg => ?_) (Subgroup.le_centralizer _)
-  refine mem_diagonalTorus_iff.mpr (isDiag_of_commute_diagGL e.injective ?_)
-  exact Subgroup.mem_centralizer_iff.mp hg _ (diagGL_mem_diagonalTorus _)
-
-/-- Over a ring whose unit group is infinite there are always `n` distinct units, so the
-diagonal torus is its own centralizer with no further hypotheses. -/
-theorem centralizer_diagonalTorus_of_infinite [Infinite kˣ] :
-    Subgroup.centralizer (diagonalTorus k n : Set (GL (Fin n) k)) = diagonalTorus k n :=
-  centralizer_diagonalTorus ⟨Fin.valEmbedding.trans (Infinite.natEmbedding kˣ)⟩
+  refine le_antisymm (fun g hg => mem_diagonalTorus_iff.mpr fun i j hij => ?_)
+    (Subgroup.le_centralizer _)
+  obtain ⟨u, v, huv⟩ := exists_pair_ne kˣ
+  refine apply_eq_zero_of_commute_diagonal
+    (commute_diagonal_of_mem_centralizer hg fun m => if m = i then u else v) ?_
+  rw [if_pos rfl, if_neg (Ne.symm hij)]
+  exact fun h => huv (Units.ext h)
 
 /-- A commutative subgroup of `GL n k` containing the diagonal torus equals it: this is the
 maximality of the torus among abelian subgroups. -/
-theorem eq_diagonalTorus_of_le_of_isMulCommutative (h : Nonempty (Fin n ↪ kˣ))
-    (H : Subgroup (GL (Fin n) k)) [IsMulCommutative H] (hle : diagonalTorus k n ≤ H) :
+theorem eq_diagonalTorus_of_le_of_isMulCommutative (H : Subgroup (GL (Fin n) k))
+    [IsMulCommutative H] (hle : diagonalTorus k n ≤ H) :
     H = diagonalTorus k n :=
   le_antisymm
     (by
-      rw [← centralizer_diagonalTorus (k := k) (n := n) h]
+      rw [← centralizer_diagonalTorus (k := k) (n := n)]
       exact (Subgroup.le_centralizer (H := H)).trans
         (Subgroup.centralizer_le (SetLike.coe_subset_coe.mpr hle)))
     hle
@@ -224,8 +208,9 @@ theorem diagonalTorus_eq_bot : diagonalTorus k n = ⊥ := by
   rw [Subgroup.mem_bot, Subsingleton.elim t 1, map_one]
 
 /-- Over a ring with only one unit the centralizer of the diagonal torus is the whole group, so
-the size hypothesis of `TauCeti.centralizer_diagonalTorus` cannot be dropped: there the torus is
-trivial by `TauCeti.diagonalTorus_eq_bot`, while its centralizer is all of `GL n k`. -/
+the hypothesis `Nontrivial kˣ` of `TauCeti.centralizer_diagonalTorus` cannot be dropped: there
+the torus is trivial by `TauCeti.diagonalTorus_eq_bot`, while its centralizer is all of
+`GL n k`. -/
 theorem centralizer_diagonalTorus_eq_top :
     Subgroup.centralizer (diagonalTorus k n : Set (GL (Fin n) k)) = ⊤ := by
   refine eq_top_iff.mpr fun g _ => Subgroup.mem_centralizer_iff.mpr fun h hh => ?_
