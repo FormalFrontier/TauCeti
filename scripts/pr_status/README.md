@@ -181,7 +181,10 @@ GitHub computes `mergeable` lazily, so the first read after main moves answers
 UNKNOWN and schedules the merge in the background. The sweep re-reads the unknowns
 a few times; anything still unknown is **left exactly as it is**, neither
 announced nor cleared, and picked up an hour later. "We could not compute it" is
-not evidence either way.
+not evidence either way. A PR stuck at UNKNOWN *permanently* is a different fault
+— GitHub has stopped recomputing it, usually a head diverged from its branch tip —
+and `stuck_alerts.py`'s `diverged-head` detector escalates that, so a PR this
+sweep can never see is surfaced rather than dropped.
 
 ### Measuring it
 

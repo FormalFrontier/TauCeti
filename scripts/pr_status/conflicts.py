@@ -51,6 +51,12 @@ times, and any PR still UNKNOWN at the end is LEFT EXACTLY AS IT IS -- not
 announced, not cleared. "We could not compute it" is not evidence either way, and
 an hour later the next sweep will know.
 
+A PR that is *permanently* UNKNOWN is a different problem and not this module's to
+solve: it means GitHub has stopped recomputing mergeability at all, usually because
+the PR's recorded head has diverged from its branch tip. `stuck_alerts.py`'s
+`diverged-head` detector is what escalates that, so a PR this sweep can never see
+is not silently dropped -- it surfaces there instead.
+
 Usage:
     conflicts.py sweep [--dry-run] [--no-zulip]
     conflicts.py report [--json] [--days N]
