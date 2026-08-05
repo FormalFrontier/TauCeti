@@ -60,6 +60,9 @@ classification for an arbitrary `sl₂`.
   standard `sl₂` triple of `sl (Fin 2) K`.
 * `TauCeti.Sl2Std.finrank_eq`: `V(n)` has rank `n + 1`, matching the value forced by
   `TauCeti.finrank_eq_of_hasPrimitiveVectorWith`.
+* `TauCeti.Sl2Std.eigenspace_diag`, `TauCeti.Sl2Std.finrank_eigenspace_diag` and
+  `TauCeti.Sl2Std.eigenspace_diag_eq_bot`: the weights of `V(n)` are exactly `n, n - 2, …, -n`,
+  each with multiplicity one, the eigenspace of `n - 2i` being the coordinate line of `vᵢ`.
 * `TauCeti.Sl2Std.lower_pow_basis_zero`: the weight string of `v₀` in coordinates, `fⁱ · v₀` being
   `vᵢ` scaled by `n(n - 1)⋯(n - i + 1)`. `TauCeti.Sl2Std.lieModuleEquiv_apply_basis` reads the
   classification through it.
@@ -587,11 +590,63 @@ end CommRing
 
 namespace Sl2Std
 
-/-! ### Irreducibility -/
-
 section Field
 
 variable {K : Type*} [Field K] [CharZero K] {n : ℕ}
+
+/-! ### The Cartan eigenspaces -/
+
+/-- **The Cartan eigenspaces of `V(n)` are the coordinate lines.** The eigenspace of `h` for the
+weight `n - 2i` is exactly the line spanned by `vᵢ`: a vector of that eigenvalue has its `j`th
+coordinate killed by `2(i - j)`, which in characteristic zero vanishes only at `j = i`. -/
+theorem eigenspace_diag (i : Fin (n + 1)) :
+    Module.End.eigenspace (diag K n) ((n : K) - 2 * (i : ℕ)) = K ∙ basis K n i := by
+  refine le_antisymm (fun v hv => ?_) ?_
+  · rw [Module.End.mem_eigenspace_iff] at hv
+    refine Submodule.mem_span_singleton.2 ⟨v i, ?_⟩
+    funext j
+    rw [smul_apply, basis_apply]
+    by_cases hji : j = i
+    · rw [hji, if_pos rfl, mul_one]
+    · rw [if_neg hji, mul_zero]
+      -- The `j`th coordinate satisfies both the eigenvalue at `j` and the eigenvalue at `i`.
+      have hcoord : ((n : K) - 2 * (j : ℕ)) * v j = ((n : K) - 2 * (i : ℕ)) * v j := by
+        rw [← diag_apply, hv, smul_apply]
+      have hne : ((n : K) - 2 * (j : ℕ)) - ((n : K) - 2 * (i : ℕ)) ≠ 0 := by
+        intro hc
+        have h2 : (2 : K) * (((i : ℕ) : K) - ((j : ℕ) : K)) = 0 := by linear_combination hc
+        have hij : ((i : ℕ) : K) = ((j : ℕ) : K) :=
+          sub_eq_zero.1 ((mul_eq_zero.1 h2).resolve_left (by norm_num))
+        exact hji (Fin.ext (Nat.cast_injective hij)).symm
+      have hzero : (((n : K) - 2 * (j : ℕ)) - ((n : K) - 2 * (i : ℕ))) * v j = 0 := by
+        rw [sub_mul, hcoord, sub_self]
+      exact ((mul_eq_zero.1 hzero).resolve_left hne).symm
+  · rw [Submodule.span_le, Set.singleton_subset_iff]
+    exact Module.End.mem_eigenspace_iff.2 (diag_basis i)
+
+/-- **The weights of `V(n)` have multiplicity one**: each Cartan eigenspace is a line. -/
+theorem finrank_eigenspace_diag (i : Fin (n + 1)) :
+    Module.finrank K (Module.End.eigenspace (diag K n) ((n : K) - 2 * (i : ℕ))) = 1 := by
+  rw [eigenspace_diag]
+  exact finrank_span_singleton ((basis K n).ne_zero i)
+
+omit [CharZero K] in
+/-- **The weights of `V(n)` are exactly `n, n - 2, …, -n`**: no other scalar is an eigenvalue of
+the Cartan operator, every coordinate of a would-be eigenvector being killed. Characteristic zero
+is not needed here: it is what makes those `n + 1` weights distinct, not what makes them the only
+ones. -/
+theorem eigenspace_diag_eq_bot {μ : K} (hμ : ∀ i : Fin (n + 1), μ ≠ (n : K) - 2 * (i : ℕ)) :
+    Module.End.eigenspace (diag K n) μ = ⊥ := by
+  refine (Submodule.eq_bot_iff _).2 fun v hv => ?_
+  rw [Module.End.mem_eigenspace_iff] at hv
+  funext j
+  rw [zero_apply]
+  have hcoord : ((n : K) - 2 * (j : ℕ)) * v j = μ * v j := by rw [← diag_apply, hv, smul_apply]
+  have hne : ((n : K) - 2 * (j : ℕ)) - μ ≠ 0 := fun hc => hμ j (by linear_combination -hc)
+  have hzero : (((n : K) - 2 * (j : ℕ)) - μ) * v j = 0 := by rw [sub_mul, hcoord, sub_self]
+  exact (mul_eq_zero.1 hzero).resolve_left hne
+
+/-! ### Irreducibility -/
 
 /-- **The kernel of the raising operator is the highest weight line.** In characteristic zero the
 coefficients `i + 1` are invertible, so a vector killed by `e` has all coordinates but the zeroth
