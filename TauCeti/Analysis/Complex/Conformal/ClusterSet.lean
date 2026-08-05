@@ -241,13 +241,15 @@ which plays no role once the map is given: `U` is open and convex — the disc o
 case of interest, and convexity is what makes the cluster sets connected — the image is bounded, and
 its frontier is a Jordan curve. -/
 
-/-- **A boundary cluster set of a conformal map on a convex domain is a compact continuum lying on
-the frontier of the image.** This packages the three inputs the classification of
+/-- A boundary cluster set of a conformal map on a convex domain is a compact continuum lying on
+the frontier of the image. This packages, for the two theorems below, the three inputs the
+classification of
 `TauCeti/Topology/JordanCurve/Subcontinuum.lean` consumes: compactness from boundedness of the
 image, connectedness from convexity of the domain
 (`TauCeti.isConnected_clusterSetOn_of_convex_of_isBounded`), and the location from
 `TauCeti.clusterSetOn_subset_frontier_image`. -/
-theorem isCompact_isConnected_clusterSetOn_subset_frontier_image (hUo : IsOpen U) (hUc : Convex ℝ U)
+private theorem isCompact_isConnected_clusterSetOn_subset_frontier_image (hUo : IsOpen U)
+    (hUc : Convex ℝ U)
     (hfd : DifferentiableOn ℂ f U) (hfi : InjOn f U) (hfb : Bornology.IsBounded (f '' U))
     (hw : w ∈ frontier U) :
     IsCompact (clusterSetOn f U w) ∧ IsConnected (clusterSetOn f U w) ∧
@@ -262,8 +264,10 @@ For a conformal map of a convex domain whose image has Jordan frontier, a bounda
 than that whole frontier is either a subsingleton or the range of an injective path.
 
 This is `TauCeti.IsJordanCurve.subsingleton_or_exists_injective_path` applied to the cluster set,
-which `TauCeti.isCompact_isConnected_clusterSetOn_subset_frontier_image` exhibits as a compact
-connected subset of the curve. Carathéodory's theorem — layer **L5** of the conformal-mapping
+which `TauCeti.isCompact_clusterSetOn_of_isBounded`,
+`TauCeti.isConnected_clusterSetOn_of_convex_of_isBounded` and
+`TauCeti.clusterSetOn_subset_frontier_image` together exhibit as a compact connected subset of the
+curve. Carathéodory's theorem — layer **L5** of the conformal-mapping
 roadmap — is the assertion that for a Riemann map of a Jordan domain the first case always
 holds. -/
 theorem subsingleton_or_exists_injective_path_clusterSetOn (hUo : IsOpen U) (hUc : Convex ℝ U)

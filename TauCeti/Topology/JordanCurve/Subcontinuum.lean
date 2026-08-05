@@ -62,9 +62,10 @@ carried out on the conformal side in `TauCeti/Analysis/Complex/Conformal/Cluster
 
 The statements are for a subset of an arbitrary topological space, as in
 `TauCeti/Topology/JordanCurve/Separation.lean`; the subcontinuum is asked to be *compact* rather
-than closed, which is what transports along the parametrization without a separation axiom. Only
-`TauCeti.IsJordanCurve.subsingleton_of_subset_closure_sdiff` needs the ambient space to be
-Hausdorff, because it speaks of a closure taken in that space.
+than closed, which is what transports along the parametrization without a separation axiom. Only the
+two nowhere-density statements `TauCeti.IsJordanCurve.exists_notMem_closure_sdiff` and
+`TauCeti.IsJordanCurve.subsingleton_of_subset_closure_sdiff` need the ambient space to be Hausdorff,
+because they speak of a closure taken in that space.
 
 ## Main results
 
