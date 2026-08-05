@@ -440,6 +440,12 @@ def ensure_objects(mirror, shas, batch=60):
 def pr_epochs(mirror, pr, index, push_window, available):
     """The heads this PR has had, as [(sha, epoch)], plus actors and provenance.
 
+    `actors[i]` is who pushed `epochs[i]`, POSITIONALLY: one sha can head a branch
+    more than once (an A -> B -> A force-push), and the two occurrences need not
+    have the same actor. Keyed by sha instead, the later occurrence overwrote the
+    earlier one's actor, which both miscredited the earlier push and let
+    `attribute` find a "previous push by the same actor" that was somebody else's.
+
     Provenance is reported per PR because it decides how much the row is worth:
 
       "recorded"  every push the ledger holds for this PR is replayable. Head
@@ -454,21 +460,22 @@ def pr_epochs(mirror, pr, index, push_window, available):
     number = pr["number"]
     recorded = pr.get("_pushes") or []
     if recorded:
-        epochs = [(sha, when) for sha, when, _ in recorded if sha in available]
-        if epochs:
-            actors = {sha: actor for sha, _, actor in recorded if sha in available}
+        replayable = [row for row in recorded if row[0] in available]
+        if replayable:
+            epochs = [(sha, when) for sha, when, _ in replayable]
+            actors = [actor or "" for _, _, actor in replayable]
             return epochs, actors, ("recorded" if len(epochs) == len(recorded)
                                     else "partial")
     heads = mirror.pr_heads(number)
     if not heads:
-        return [], {}, "skipped"
+        return [], [], "skipped"
     epochs = []
     for sha, when in heads:
         if epochs and when - epochs[-1][1] <= push_window:
             epochs[-1] = (sha, when)
         else:
             epochs.append((sha, when))
-    return epochs, {}, "inferred"
+    return epochs, [""] * len(epochs), "inferred"
 
 
 def analyse_pr(mirror, history, history_times, pr, now, session_gap, exhaustive=False,
@@ -484,7 +491,7 @@ def analyse_pr(mirror, history, history_times, pr, now, session_gap, exhaustive=
     epochs, actors, handling = pr_epochs(mirror, pr, index or {}, push_window,
                                          available or set())
     if not epochs:
-        return [], handling, [], {}
+        return [], handling, [], []
 
     # A branch's commits routinely predate the PR that proposes them, and a PR
     # cannot conflict before it exists. Clamp every epoch to the PR's creation, or
@@ -702,13 +709,17 @@ def attribute(episodes, epochs, actors, pr_author, session_gap):
     The gap is measured against that same actor's previous push to the PR, not
     against whoever pushed last, so one person's return is not disguised as a
     continuation by somebody else's activity in between.
+
+    `actors` is indexed by EPOCH, not by sha: a head returned to after a
+    force-push occupies two epochs which may have two different actors, and a
+    per-sha lookup collapsed them into one.
     """
     for row in episodes:
         index = row.get("resolver_epoch")
         if index is None:
             continue
-        sha, when = epochs[index][0], epochs[index][1]
-        actor = actors.get(sha) or ""
+        when = epochs[index][1]
+        actor = actors[index]
         row["resolver"] = actor or None
         if not actor:
             row["session"] = UNATTRIBUTED
@@ -716,7 +727,7 @@ def attribute(episodes, epochs, actors, pr_author, session_gap):
             row["session"] = OTHER_ACTOR
         else:
             previous = next((epochs[j][1] for j in range(index - 1, -1, -1)
-                             if actors.get(epochs[j][0]) == actor), None)
+                             if actors[j] == actor), None)
             # Record the measured gap, not just the verdict it produced. Checking
             # that a conclusion is not an artefact of one --session-gap then costs
             # a re-read of the JSON rather than a re-run of the whole replay.
@@ -756,7 +767,7 @@ def replay(mirror, prs, jobs, session_gap, now, exhaustive=False,
                               exhaustive, push_window, index, available)
         except Exception as exc:
             log(f"PR #{pr['number']}: replay failed ({exc}); skipping")
-            return [], "skipped", [], {}
+            return [], "skipped", [], []
 
     with ThreadPoolExecutor(max_workers=jobs) as pool:
         results = list(pool.map(one, prs))

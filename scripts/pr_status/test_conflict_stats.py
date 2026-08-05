@@ -59,6 +59,19 @@ class Replay(unittest.TestCase):
             index=index, available={r["sha"] for r in ledger})
         return rows, handling
 
+    def analyse_pushes(self, mirror, pr, pushes, gap=7200, now=9999):
+        """Replay a ledger given as (sha, when, actor) OCCURRENCES, so a head that
+        was returned to can carry a different actor each time it was pushed."""
+        ledger = [{"sha": sha, "actor": actor, "when": when,
+                   "owner": "o", "branch": "b"} for sha, when, actor in pushes]
+        pr = dict(pr, headRefName="b", headRepositoryOwner={"login": "o"})
+        index = conflict_stats.ledger_index(ledger)
+        pr["_pushes"] = index[("o", "b")]
+        rows, _, _, _ = conflict_stats.analyse_pr(
+            mirror, self.HISTORY, self.TIMES, pr, now, gap, push_window=0,
+            index=index, available={sha for sha, _, _ in pushes})
+        return rows
+
     def test_a_never_conflicting_pr_yields_nothing(self):
         mirror = self.FakeMirror([("h1", 1000)], {})
         episodes, handling = self.analyse(mirror, self.pr())
@@ -235,6 +248,33 @@ class Replay(unittest.TestCase):
             actors={"h0": "alice", "h1": "bob", "h2": "alice"})
         [row] = [e for e in episodes if e["outcome"] == "push"]
         self.assertEqual(row["session"], conflict_stats.RETURN)
+
+    def test_a_returned_to_head_does_not_invent_a_push_by_its_new_actor(self):
+        # A -> B -> A, where carol pushed the first A and alice the second. Keying
+        # actors by sha gave BOTH occurrences alice, so searching back for her
+        # previous push found carol's, and alice's return read as a continuation
+        # of a session she had never started.
+        mirror = self.FakeMirror([], {"B": 5})
+        episodes = self.analyse_pushes(
+            mirror, self.pr(), gap=3600,
+            pushes=[("A", 1000, "carol"), ("B", 1650, "bob"), ("A", 2500, "alice")])
+        [row] = [e for e in episodes if e["outcome"] == "push"]
+        self.assertEqual(row["resolver"], "alice")
+        self.assertIsNone(row["gap"])
+        self.assertEqual(row["session"], conflict_stats.RETURN)
+
+    def test_an_earlier_occurrence_of_a_head_keeps_its_own_actor(self):
+        # The same conflation the other way round: alice pushed A and resolved the
+        # conflict, and carol's later force-push back to A overwrote the actor on
+        # alice's push, crediting the fix to someone who had not made it yet.
+        mirror = self.FakeMirror([], {"X": 5})
+        episodes = self.analyse_pushes(
+            mirror, self.pr(),
+            pushes=[("X", 900, "alice"), ("A", 1650, "alice"),
+                    ("Y", 2000, "carol"), ("A", 2500, "carol")])
+        [row] = [e for e in episodes if e["outcome"] == "push"]
+        self.assertEqual(row["resolver"], "alice")
+        self.assertEqual(row["session"], conflict_stats.CONTINUATION)
 
     def test_the_push_window_groups_commits_when_inferring(self):
         # Without ledger coverage we fall back to commit dates. Commits written
