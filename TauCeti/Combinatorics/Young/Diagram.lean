@@ -22,10 +22,6 @@ the rows exhaust the cells, the row lengths also determine the diagram
 The partial sums are the shape of every dominance statement about partitions, since dominance
 compares partial sums of decreasingly sorted parts, and the sorted parts of a partition are the
 row lengths of its Young diagram.
-
-The number of rows itself is `μ.colLen 0`, and a bound on it bounds the row index of every cell
-(`TauCeti.YoungDiagram.row_lt_of_colLen_le_of_mem`) and kills every row past it
-(`TauCeti.YoungDiagram.rowLen_eq_zero_of_colLen_le`).
 -/
 
 public section
@@ -55,12 +51,6 @@ theorem rowLen_eq_zero_of_colLen_le {μ : YoungDiagram} {i : ℕ} (hi : μ.colLe
   by_contra h
   exact absurd (_root_.YoungDiagram.mem_iff_lt_colLen.mp
     (_root_.YoungDiagram.mem_iff_lt_rowLen.mpr (Nat.pos_of_ne_zero h))) (Nat.not_lt.mpr hi)
-
-/-- A cell of a Young diagram with at most `n` rows has row index below `n`. -/
-theorem row_lt_of_colLen_le_of_mem {μ : YoungDiagram} {n : ℕ} (hμ : μ.colLen 0 ≤ n) {i c : ℕ}
-    (h : (i, c) ∈ μ) : i < n :=
-  (_root_.YoungDiagram.mem_iff_lt_colLen.mp
-    (μ.up_left_mem le_rfl (Nat.zero_le c) h)).trans_le hμ
 
 /-- A Young diagram is determined by its row lengths. -/
 theorem rowLen_injective : Function.Injective _root_.YoungDiagram.rowLen := by

@@ -202,6 +202,15 @@ noncomputable def weylRepEquiv (t t' : YoungTableau μ) :
 
 /-! ### The vanishing criterion -/
 
+/-- **Every label of a `μ`-tableau has row index below `n`** once `μ` has at most `n` rows: the
+row of a label is bounded by the length of the first column. -/
+private theorem rowIndex_lt_of_colLen_le (t : YoungTableau μ) (hn : μ.colLen 0 ≤ n)
+    (ℓ : Fin μ.card) : rowIndex t ℓ < n := by
+  have hmem : ((t.symm ℓ : ℕ × ℕ).1, (t.symm ℓ : ℕ × ℕ).2) ∈ μ := (t.symm ℓ).2
+  have h1 := YoungDiagram.mem_iff_lt_colLen.mp hmem
+  rw [rowIndex_def]
+  exact lt_of_lt_of_le (lt_of_lt_of_le h1 (μ.colLen_anti 0 _ (Nat.zero_le _))) hn
+
 /-- **The symmetrizer does not annihilate the monomial basis vector of a tableau.** Write `r ℓ` for
 the row of the label `ℓ`. Reading the `r`-coordinate of `c_t • e_r` in the monomial basis leaves
 exactly the terms indexed by the row group of `t`, each with coefficient `1`; the value is the order
@@ -210,14 +219,12 @@ private theorem repr_symmetrizer_tensorPowerBasis_ne_zero [Nontrivial k] (t : Yo
     (hn : μ.colLen 0 ≤ n) :
     (tensorPowerBasis k n μ.card).repr
         (permTensorActionAlgHom k n μ.card (youngSymmetrizerOver k t)
-          (tensorPowerBasis k n μ.card fun ℓ => (⟨rowIndex t ℓ, (rowIndex_def t ℓ).trans_lt
-            (YoungDiagram.row_lt_of_colLen_le_of_mem hn (t.symm ℓ).2)⟩ : Fin n)))
-        (fun ℓ => (⟨rowIndex t ℓ, (rowIndex_def t ℓ).trans_lt
-          (YoungDiagram.row_lt_of_colLen_le_of_mem hn (t.symm ℓ).2)⟩ : Fin n)) ≠ 0 := by
+          (tensorPowerBasis k n μ.card fun ℓ =>
+            (⟨rowIndex t ℓ, rowIndex_lt_of_colLen_le t hn ℓ⟩ : Fin n)))
+        (fun ℓ => (⟨rowIndex t ℓ, rowIndex_lt_of_colLen_le t hn ℓ⟩ : Fin n)) ≠ 0 := by
   classical
   have : CharZero k := charZero_of_injective_algebraMap (algebraMap ℚ k).injective
-  set r : Fin μ.card → Fin n := fun ℓ => ⟨rowIndex t ℓ, (rowIndex_def t ℓ).trans_lt
-    (YoungDiagram.row_lt_of_colLen_le_of_mem hn (t.symm ℓ).2)⟩ with hrdef
+  set r : Fin μ.card → Fin n := fun ℓ => ⟨rowIndex t ℓ, rowIndex_lt_of_colLen_le t hn ℓ⟩ with hrdef
   -- the row group is exactly the set of permutations surviving the evaluation
   set S : Finset (Equiv.Perm (Fin μ.card)) := {σ | σ ∈ rowSubgroup t} with hSdef
   have hmemS : ∀ σ : Equiv.Perm (Fin μ.card), σ ∈ S ↔ σ ∈ rowSubgroup t := by
@@ -271,8 +278,8 @@ theorem weylModule_ne_bot [Nontrivial k] (t : YoungTableau μ) (hn : μ.colLen 0
   -- the submodule underlying the zero subrepresentation is `⊥`
   have hbot' : (weylModule k n t).toSubmodule = ⊥ := by rw [hbot]; rfl
   have hmem : permTensorActionAlgHom k n μ.card (youngSymmetrizerOver k t)
-      (tensorPowerBasis k n μ.card fun ℓ => (⟨rowIndex t ℓ, (rowIndex_def t ℓ).trans_lt
-        (YoungDiagram.row_lt_of_colLen_le_of_mem hn (t.symm ℓ).2)⟩ : Fin n))
+      (tensorPowerBasis k n μ.card fun ℓ =>
+        (⟨rowIndex t ℓ, rowIndex_lt_of_colLen_le t hn ℓ⟩ : Fin n))
       ∈ (weylModule k n t).toSubmodule := by
     rw [weylModule_toSubmodule]
     exact LinearMap.mem_range_self _ _
