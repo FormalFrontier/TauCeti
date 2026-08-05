@@ -5,24 +5,22 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 -- Public: exactly the modules supplying types and classes that occur in the statements exported
--- from here. `Mathlib.RingTheory.TensorProduct.Basic` carries `AlgHom`, `AlgEquiv` and `Subalgebra`
--- (and the algebra structure on `B ⊗[K] Aᵐᵒᵖ` that the private construction below uses); the other
--- three carry `Algebra.IsCentral`, `IsSimpleRing` and `FiniteDimensional`.
+-- from here. `Mathlib.RingTheory.TensorProduct.Basic` carries `AlgHom`, `AlgEquiv` and
+-- `Subalgebra`; the other three carry `Algebra.IsCentral`, `IsSimpleRing` and `FiniteDimensional`.
 public import Mathlib.Algebra.Central.Defs
 public import Mathlib.LinearAlgebra.FiniteDimensional.Defs
 public import Mathlib.RingTheory.SimpleRing.Defs
 public import Mathlib.RingTheory.TensorProduct.Basic
--- Non-public: none of these appears in the type of an exported declaration. Simplicity of a tensor
--- product, the classification of modules over a simple Artinian algebra, `AlgHom.mulLeftRight`,
--- `Algebra.TensorProduct.map` and finiteness of a tensor product are used only inside proofs, and
--- the matrix, complex and quaternion modules only by the worked examples at the end of the file.
-import Mathlib.Algebra.Azumaya.Defs
+-- Non-public: none of these appears in the type of an exported declaration. The
+-- `B ⊗[K] Aᵐᵒᵖ`-module structure on `A`, simplicity of a tensor product, the classification of
+-- modules over a simple Artinian algebra and finiteness of a tensor product are used only inside
+-- proofs, and the matrix, complex and quaternion modules only by the worked examples at the end.
 import Mathlib.Algebra.Central.Matrix
 import Mathlib.Data.Complex.Basic
 import Mathlib.RingTheory.SimpleRing.Matrix
 import Mathlib.RingTheory.TensorProduct.Finite
-import Mathlib.RingTheory.TensorProduct.Maps
 import TauCeti.Algebra.Central.Quaternion
+import TauCeti.Algebra.CentralSimple.Bimodule
 import TauCeti.Algebra.CentralSimple.TensorProduct
 import TauCeti.RingTheory.Semisimple.SimpleArtinian
 
@@ -37,7 +35,7 @@ automorphism of a finite-dimensional central simple algebra is inner.
 
 The proof is the classical module-theoretic one. A homomorphism `f : B →ₐ[K] A` makes `A` into a
 module over `R = B ⊗[K] Aᵐᵒᵖ`, with `B` acting on the left through `f` and `A` on the right by
-multiplication; this is the private `Bimodule f` below. Because `B` is central simple and `Aᵐᵒᵖ` is
+multiplication; this is `TauCeti.Bimodule f`. Because `B` is central simple and `Aᵐᵒᵖ` is
 simple, `R` is a simple ring (`TauCeti.IsSimpleRing.tensorProduct`), and it is finite-dimensional
 over `K`, hence Artinian. The two modules `Bimodule f` and `Bimodule g` are carried by one and the
 same `K`-vector space `A`, so they have equal dimension, so they are isomorphic `R`-modules
@@ -73,21 +71,12 @@ simple `B` provided the ambient `A` is central simple, but that form needs the c
 and is a separate, later target; the central simple form pinned here is what the centralizer theorem
 itself consumes.
 
-`Bimodule f` is a type synonym for `A` rather than a `Module` instance on `A` itself, because the
-whole point is to compare the two different `B ⊗[K] Aᵐᵒᵖ`-module structures coming from `f` and from
-`g`; indexing the synonym by the homomorphism keeps both available at once. Mathlib takes the same
-route for `A ⊗[R] Aᵐᵒᵖ` acting on `A` in `Mathlib/Algebra/Azumaya/Defs.lean`, where
-`instModuleTensorProductMop` is deliberately not an instance. The action map is built from Mathlib's
-`AlgHom.mulLeftRight` by restricting along `f` on the left factor, so the two agree for `f` the
-identity of `A`.
-
-The whole construction is `private`: it is the mechanism of the proof below and has no consumer
-outside this file, so none of it — the synonym, its representation as `A`, the action map, or the
-instances — reaches the interface, and no importer can depend on `Bimodule f` being `A`
-definitionally. A type synonym cannot be carried by a `Module` instance without unfolding its body,
-so making it public would mean exposing that body; the exported statements are the three theorems
-below, all phrased in `A` and `B` alone. Should a later file need the bimodule, it can be made
-public then, together with an interface that pins down what that file actually uses.
+`TauCeti.Bimodule f` is a type synonym for `A` rather than a `Module` instance on `A` itself,
+because the whole point is to compare the two different `B ⊗[K] Aᵐᵒᵖ`-module structures coming from
+`f` and from `g`; indexing the synonym by the homomorphism keeps both available at once. It lives in
+`TauCeti/Algebra/CentralSimple/Bimodule.lean`, which documents the construction; the centralizer
+theorem is its second consumer. The statements exported from this file are the three theorems below,
+all phrased in `A` and `B` alone.
 
 ## References
 
@@ -102,76 +91,6 @@ public section
 namespace TauCeti
 
 open scoped TensorProduct
-
-section Construction
-
-variable {K A B : Type*} [CommSemiring K] [Ring A] [Algebra K A] [Semiring B] [Algebra K B]
-
-/-- `A` regarded as a left module over `B ⊗[K] Aᵐᵒᵖ` through an algebra homomorphism
-`f : B →ₐ[K] A`: the element `b ⊗ₜ op a` acts by `x ↦ f b * x * a`.
-
-Equivalently this is the `B`-`A`-bimodule `A` obtained by restricting the left action along `f`,
-packaged as a left module over `B ⊗[K] Aᵐᵒᵖ` in the usual way. It is a type synonym for `A`
-precisely so that the structures coming from two different homomorphisms can be compared, and it is
-`private` because it is the mechanism of the proof below rather than part of the interface. -/
-private def Bimodule (_f : B →ₐ[K] A) : Type _ := A
-
-namespace Bimodule
-
-variable (f : B →ₐ[K] A)
-
-private instance : AddCommGroup (Bimodule f) := inferInstanceAs (AddCommGroup A)
-
-private instance : Module K (Bimodule f) := inferInstanceAs (Module K A)
-
-/-- `Bimodule f` is `A` again as a `K`-module: only the `B ⊗[K] Aᵐᵒᵖ`-action is new. -/
-private def of : A ≃ₗ[K] Bimodule f := LinearEquiv.refl K A
-
-/-- The action of `B ⊗[K] Aᵐᵒᵖ` on `A` defining `Bimodule f`, as an algebra homomorphism into
-`Module.End K A`. It is Mathlib's `AlgHom.mulLeftRight` restricted along `f` on the left factor, so
-for `f = AlgHom.id K A` it is `AlgHom.mulLeftRight K A` itself. -/
-private noncomputable def toEnd : B ⊗[K] Aᵐᵒᵖ →ₐ[K] Module.End K A :=
-  (AlgHom.mulLeftRight K A).comp (Algebra.TensorProduct.map f (AlgHom.id K Aᵐᵒᵖ))
-
-/-- A pure tensor `b ⊗ₜ op a` acts on `x : A` through `toEnd f` by `x ↦ f b * x * a`. -/
-@[simp]
-private theorem toEnd_tmul_apply (b : B) (a : Aᵐᵒᵖ) (x : A) :
-    toEnd f (b ⊗ₜ a) x = f b * x * a.unop := by
-  simp [toEnd]
-
-private noncomputable instance : Module (B ⊗[K] Aᵐᵒᵖ) (Bimodule f) :=
-  Module.compHom (M := A) (toEnd f).toRingHom
-
-/-- A scalar `r : B ⊗[K] Aᵐᵒᵖ` acts on `Bimodule f` through `toEnd f`. This is the defining equation
-of the module structure, and the single place it is unfolded: the scalar tower instance below
-rewrites with it instead of reasoning up to definitional equality. -/
-private theorem smul_def (r : B ⊗[K] Aᵐᵒᵖ) (x : A) : r • of f x = of f (toEnd f r x) := rfl
-
-private instance : IsScalarTower K (B ⊗[K] Aᵐᵒᵖ) (Bimodule f) where
-  smul_assoc c r x := by
-    rw [← (of f).apply_symm_apply x, smul_def, smul_def, map_smul (toEnd f),
-      LinearMap.smul_apply, map_smul (of f)]
-
-private instance [Module.Finite K A] : Module.Finite K (Bimodule f) :=
-  inferInstanceAs (Module.Finite K A)
-
-/-- A pure tensor `b ⊗ₜ op a` acts on `Bimodule f` by `x ↦ f b * x * a`: the left factor acts on the
-left through `f`, the right factor on the right by multiplication. -/
-@[simp]
-private theorem smul_of (b : B) (a : Aᵐᵒᵖ) (x : A) :
-    (b ⊗ₜ a : B ⊗[K] Aᵐᵒᵖ) • of f x = of f (f b * x * a.unop) :=
-  toEnd_tmul_apply f b a x
-
-/-- `smul_of` read back through `of`: the action of a pure tensor `b ⊗ₜ op a`, transported to `A`,
-is `x ↦ f b * x * a`. -/
-@[simp]
-private theorem symm_smul (b : B) (a : Aᵐᵒᵖ) (y : Bimodule f) :
-    (of f).symm ((b ⊗ₜ a : B ⊗[K] Aᵐᵒᵖ) • y) = f b * (of f).symm y * a.unop :=
-  toEnd_tmul_apply f b a ((of f).symm y)
-
-end Bimodule
-
-end Construction
 
 section SkolemNoether
 

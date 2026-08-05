@@ -5,8 +5,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.Analysis.Calculus.Deriv.Basic
+public import Mathlib.Analysis.Calculus.FDeriv.Analytic
+public import Mathlib.Analysis.Calculus.LogDeriv
 public import Mathlib.Analysis.SpecialFunctions.Complex.Log
 public import Mathlib.MeasureTheory.Integral.IntervalIntegral.Basic
+public import TauCeti.Analysis.Contour.Curve.Integrability
+public import TauCeti.Analysis.Contour.Winding.Number.Basic
 import Mathlib.Analysis.SpecialFunctions.Complex.LogDeriv
 import Mathlib.MeasureTheory.Integral.DivergenceTheorem
 
@@ -26,8 +30,27 @@ basepoint `a` equal to `Complex.log 1 = 0`. The exceptional set `P` accommodates
 breakpoints of a piecewise-`C¹` contour, and the oriented interval `[a, b]` needs no `a ≤ b`
 assumption.
 
+Specializing the other way, to `f = h ∘ γ` for a piecewise-`C¹` curve `γ` and an analytic `h`,
+gives the curve form of the same principle: if `h` takes its values along `γ` in
+`Complex.slitPlane`, then `Complex.log ∘ h ∘ γ` is a single-valued primitive of the
+argument-principle integrand `deriv γ • (logDeriv h ∘ γ)`, so that integral is an endpoint
+difference — in particular it vanishes on a closed curve. This is the corner-tolerant replacement
+for `circleIntegral.integral_eq_zero_of_hasDerivWithinAt`, which needs a genuinely differentiable
+contour.
+
+That same integrand is what the winding number of the *image* curve computes: if `h` is moreover
+zero-free along `γ`, then `h ∘ γ` misses the origin and its index integral
+`(2πi)⁻¹ ∮_{h ∘ γ} dw / w` is, after the substitution `w = h z`, exactly
+`(2πi)⁻¹ ∫_a^b γ' • (logDeriv h ∘ γ)`. Formally the substitution is the chain rule
+`(h ∘ γ)' = γ' · h'(γ)`, available off the breakpoints of `γ` and so almost everywhere, which is all
+an integral sees. This bridge is what turns every logarithmic-derivative integral identity — the
+argument principle above all — into a statement about how often an image curve winds.
+
 ## Main results
 
+* `TauCeti.Contour.analyticAt_logDeriv_of_analyticAt` — `logDeriv f` is analytic wherever `f` is
+  analytic and nonzero; the regularity input shared by the results below and by the argument
+  principle.
 * `TauCeti.Contour.integral_deriv_div_eq_log_sub_log` — the slit-plane logarithmic-derivative FTC in
   general `f' / f` form.
 * `TauCeti.Contour.integral_deriv_div_sub_eq_log` — its contour specialization to
@@ -35,6 +58,12 @@ assumption.
   a sum of `Complex.log` argument increments.
 * `TauCeti.Contour.integral_inv_sub_mul_deriv_eq_log` — the `deriv γ` form with the winding-integral
   integrand `(γ t - w)⁻¹ * deriv γ t`, ready for the downstream winding sum.
+* `TauCeti.Contour.intervalIntegrable_deriv_smul_logDeriv` — interval-integrability of the
+  argument-principle integrand `deriv γ • (logDeriv h ∘ γ)` along a piecewise-`C¹` curve.
+* `TauCeti.Contour.integral_deriv_smul_logDeriv_eq_zero_of_mem_slitPlane` — that integral vanishes
+  along a closed piecewise-`C¹` curve on which `h` is analytic and slit-plane-valued.
+* `TauCeti.Contour.windingNumber_comp_eq_integral_logDeriv` — the bridge to the image curve: the
+  winding number of `h ∘ γ` about the origin is `(2πi)⁻¹ ∫_a^b γ' • (logDeriv h ∘ γ)`.
 
 ## Provenance
 
@@ -102,5 +131,103 @@ theorem integral_inv_sub_mul_deriv_eq_log {γ : ℝ → ℂ} {w : ℂ} {a b : �
   simp only [inv_mul_eq_div]
   exact integral_deriv_div_sub_eq_log (γ' := deriv γ) hP hγ_cont
     (fun t ht ↦ (hγ_diff t ht).hasDerivAt) h_slit (by simpa only [inv_mul_eq_div] using h_int)
+
+/-- At a point where a function is analytic and non-vanishing, its logarithmic derivative
+`logDeriv f = deriv f / f` is analytic. This is the regularity input for every integrability and
+residue statement about a logarithmic-derivative integrand, from the interval-integrability lemma
+below to the residue form of the argument principle
+(`TauCeti.Contour.residue_logDeriv_eq_meromorphicOrderAt`). -/
+lemma analyticAt_logDeriv_of_analyticAt {f : ℂ → ℂ} {z : ℂ} (hf : AnalyticAt ℂ f z)
+    (hz : f z ≠ 0) : AnalyticAt ℂ (logDeriv f) z := by
+  rw [logDeriv]
+  exact hf.deriv.div hf hz
+
+/-- The argument-principle integrand `deriv γ • (logDeriv h ∘ γ)` is interval-integrable along a
+piecewise-`C¹` curve `γ` on which `h` is analytic and zero-free. This supplies the integrability
+hypothesis of the logarithmic-derivative contour results — `IntervalIntegrable` is what
+`integral_deriv_div_eq_log_sub_log` and its specializations ask of the integrand. -/
+theorem intervalIntegrable_deriv_smul_logDeriv {γ : ℝ → ℂ} {h : ℂ → ℂ} {a b : ℝ}
+    (hγ : IsPiecewiseC1On γ a b) (hh : ∀ t ∈ uIcc a b, AnalyticAt ℂ h (γ t))
+    (hne : ∀ t ∈ uIcc a b, h (γ t) ≠ 0) :
+    IntervalIntegrable (fun t ↦ deriv γ t • logDeriv h (γ t)) volume a b := by
+  refine hγ.intervalIntegrable_deriv_smul_comp ?_
+  rintro _ ⟨t, ht, rfl⟩
+  exact (analyticAt_logDeriv_of_analyticAt (hh t ht) (hne t ht)).continuousAt.continuousWithinAt
+
+/-- **A slit-plane-valued function has a single-valued logarithm along a closed curve.** If `h` is
+analytic along a closed piecewise-`C¹` curve `γ` and takes its values there in
+`Complex.slitPlane`, then `Complex.log ∘ h` is a primitive of `logDeriv h` along `γ`, so the
+contour integral of `logDeriv h` vanishes.
+
+This is the corner-tolerant replacement for `circleIntegral.integral_eq_zero_of_hasDerivWithinAt`:
+`γ` need only be differentiable off the countably many breakpoints, which is what
+`integral_deriv_div_eq_log_sub_log` asks for. Nothing is required of `h` off the curve — in the
+Rouché application `h = g / f` has both zeros and poles inside. -/
+theorem integral_deriv_smul_logDeriv_eq_zero_of_mem_slitPlane {γ : ℝ → ℂ} {h : ℂ → ℂ} {a b : ℝ}
+    (hγ : IsPiecewiseC1On γ a b) (hclosed : γ a = γ b)
+    (hh : ∀ t ∈ uIcc a b, AnalyticAt ℂ h (γ t))
+    (hslit : ∀ t ∈ uIcc a b, h (γ t) ∈ slitPlane) :
+    ∫ t in a..b, deriv γ t • logDeriv h (γ t) = 0 := by
+  obtain ⟨P, hPc, hPd⟩ := hγ.exists_countable_differentiableAt
+  have hne : ∀ t ∈ uIcc a b, h (γ t) ≠ 0 := fun t ht ↦ slitPlane_ne_zero (hslit t ht)
+  have hint := intervalIntegrable_deriv_smul_logDeriv hγ hh hne
+  -- The integrand is the logarithmic-derivative integrand of `t ↦ h (γ t)`.
+  simp only [smul_eq_mul, logDeriv_apply, ← mul_div_assoc] at hint ⊢
+  rw [integral_deriv_div_eq_log_sub_log (f := fun t ↦ h (γ t))
+    (f' := fun t ↦ deriv γ t * deriv h (γ t)) hPc
+    (fun t ht ↦ ((hh t ht).continuousAt).comp_continuousWithinAt (hγ.continuousOn t ht))
+    (fun t ht ↦ ?_) hslit hint, hclosed, sub_self]
+  have hmem : t ∈ uIcc a b := Ioo_subset_Icc_self ht.1
+  simpa only [Function.comp_def, smul_eq_mul] using
+    ((hh t hmem).differentiableAt.hasDerivAt).scomp t ((hPd t ht).hasDerivAt)
+
+/-- **The winding number of the image curve is the logarithmic-derivative integral.** If `h` is
+analytic and zero-free along a piecewise-`C¹` curve `γ`, the composite `h ∘ γ` avoids the origin
+and
+
+`n_0(h ∘ γ) = (2πi)⁻¹ ∫_a^b γ' t · (logDeriv h) (γ t)`.
+
+This is the substitution `w = h z` in the index integral `(2πi)⁻¹ ∮_{h ∘ γ} dw / w`, carried out by
+the chain rule. The chain rule is available only off the breakpoints of `γ`, a finite set, so the
+two integrands agree merely almost everywhere — enough for both the integrals and the
+interval-integrability to transfer. No regularity of `h ∘ γ` beyond continuity and this
+almost-everywhere derivative is needed, so nothing has to be said about `h ∘ γ` being
+piecewise `C¹` (it is, but `windingNumber` does not ask).
+
+The analyticity hypothesis is local: `AnalyticAt ℂ h (γ t)` asks only for *some* neighbourhood of
+each point of the curve on which `h` is analytic, never for one ambient open set carrying the whole
+curve, and imposes no condition beyond those neighbourhoods. So the lemma applies verbatim to a
+function with zeros and poles inside the region the curve encloses; that is what the argument
+principle then counts. -/
+theorem windingNumber_comp_eq_integral_logDeriv {γ : ℝ → ℂ} {h : ℂ → ℂ} {a b : ℝ}
+    (hγ : IsPiecewiseC1On γ a b) (hh : ∀ t ∈ uIcc a b, AnalyticAt ℂ h (γ t))
+    (hne : ∀ t ∈ uIcc a b, h (γ t) ≠ 0) :
+    windingNumber (h ∘ γ) a b 0
+      = (2 * (Real.pi : ℂ) * Complex.I)⁻¹ * ∫ t in a..b, deriv γ t • logDeriv h (γ t) := by
+  obtain ⟨p, hp⟩ := hγ.exists_finset_differentiableAt
+  have hcont : ContinuousOn (h ∘ γ) (uIcc a b) := fun t ht =>
+    (hh t ht).continuousAt.comp_continuousWithinAt (hγ.continuousOn t ht)
+  -- Off the finitely many breakpoints of `γ` — and off the right endpoint, which `Ι a b` contains
+  -- but `Set.Ioo (min a b) (max a b)` does not — the chain rule identifies the two integrands.
+  have hae : ∀ᵐ t ∂(volume : Measure ℝ), t ∈ Ι a b →
+      deriv γ t • logDeriv h (γ t) = ((h ∘ γ) t - 0)⁻¹ * deriv (h ∘ γ) t := by
+    have hnull : ∀ᵐ t ∂(volume : Measure ℝ), t ∉ insert (max a b) (↑p : Set ℝ) :=
+      measure_eq_zero_iff_ae_notMem.mp ((p.finite_toSet.insert (max a b)).measure_zero volume)
+    filter_upwards [hnull] with t hts ht
+    have ht' : t ∈ Ioc (min a b) (max a b) := ht
+    have htIoo : t ∈ Ioo (min a b) (max a b) \ (↑p : Set ℝ) :=
+      ⟨⟨ht'.1, lt_of_le_of_ne ht'.2 fun hmax => hts (by simp [hmax])⟩,
+        fun hmem => hts (Set.mem_insert_of_mem _ hmem)⟩
+    have htu : t ∈ uIcc a b := by
+      rw [← Set.Icc_min_max]
+      exact Ioo_subset_Icc_self htIoo.1
+    have hcomp : logDeriv (h ∘ γ) t = logDeriv h (γ t) * deriv γ t :=
+      logDeriv_comp (hh t htu).differentiableAt (hp t htIoo)
+    rw [sub_zero, ← div_eq_inv_mul, ← logDeriv_apply, hcomp, smul_eq_mul, mul_comm]
+  have hint : IntervalIntegrable (fun t => deriv γ t • logDeriv h (γ t)) volume a b :=
+    intervalIntegrable_deriv_smul_logDeriv hγ hh hne
+  rw [windingNumber_eq_integral_of_avoidance hcont
+      (fun t ht => hne t ht) (hint.congr_ae ((ae_restrict_iff' measurableSet_uIoc).mpr hae))]
+  exact congrArg _ (intervalIntegral.integral_congr_ae hae).symm
 
 end TauCeti.Contour

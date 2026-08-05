@@ -5,7 +5,7 @@ Authors: Claude
 -/
 module
 
-public import TauCeti.Analysis.Complex.Conformal.Continuation
+public import TauCeti.Analysis.Complex.Conformal.Continuation.Basic
 public import Mathlib.Topology.Homotopy.Path
 import Mathlib.Analysis.Analytic.Uniqueness
 import Mathlib.Topology.UniformSpace.Compact
@@ -13,11 +13,11 @@ import Mathlib.Topology.UniformSpace.Compact
 /-!
 # The monodromy theorem
 
-Analytic continuation along a path is unique (`Continuation.lean`), but the germ it delivers at
-the far end may depend on the path. The **monodromy theorem** says that it only depends on the
-path up to homotopy: if a germ continues along every path of a homotopy rel endpoints, all those
-continuations end at the same germ. This is the L4 milestone of the conformal-mapping roadmap
-that `Continuation.lean` left as a follow-up.
+Analytic continuation along a path is unique (`Continuation/Basic.lean`), but the germ it
+delivers at the far end may depend on the path. The **monodromy theorem** says that it only
+depends on the path up to homotopy: if a germ continues along every path of a homotopy rel
+endpoints, all those continuations end at the same germ. This is the L4 milestone of the
+conformal-mapping roadmap that `Continuation/Basic.lean` left as a follow-up.
 
 The theorem is proved here in the form that does **not** hold the endpoints fixed. A homotopy of
 paths whose endpoints move carries the initial germs along the path `t ↦ h (t, 0)` swept out by
