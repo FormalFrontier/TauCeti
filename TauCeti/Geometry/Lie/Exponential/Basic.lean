@@ -19,6 +19,8 @@ roadmap-facing Lie-group exponential.
 ## Main results
 
 * `mulInvariantExp`: the time-one value of the invariant curve attached to a tangent vector.
+* `hasDerivAt_extChartAt_mulInvariantIntegralCurve_zero`: in identity-chart coordinates, the
+  canonical curve has initial velocity equal to its generator.
 * `mulInvariantExp_smul`: scaling a tangent vector is evaluation at the corresponding time.
 * `mulInvariantOneParameterSubgroup_eq_mulInvariantExp_smul`: the bundled subgroup is the
   exponential along a line.
@@ -48,6 +50,30 @@ noncomputable section
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
   {H : Type*} [TopologicalSpace H] {I : ModelWithCorners ℝ E H}
   {G : Type*} [TopologicalSpace G] [ChartedSpace H G] [Group G]
+
+/-- In the extended chart at the identity, the canonical invariant curve through the identity has
+initial velocity equal to its generator. -/
+theorem hasDerivAt_extChartAt_mulInvariantIntegralCurve_zero [CompleteSpace E]
+    [LieGroup I (minSmoothness ℝ 3) G] [IsManifold I 1 G] [T2Space G]
+    [BoundarylessManifold I G] (v : E) :
+    HasDerivAt
+      ((extChartAt I (1 : G)) ∘
+        mulInvariantIntegralCurve (I := I) (G := G) (v : GroupLieAlgebra I G) 1) v 0 := by
+  have hcurve :=
+    (isMIntegralCurve_mulInvariantIntegralCurve (I := I) (G := G)
+      (v : GroupLieAlgebra I G) (1 : G)).isMIntegralCurveAt 0
+  have hcurveDeriv := hcurve.eventually_hasDerivAt.self_of_nhds
+  have hcurveZero : mulInvariantIntegralCurve (I := I) (G := G)
+      (v : GroupLieAlgebra I G) 1 0 = 1 := mulInvariantIntegralCurve_zero _ _
+  rw [hcurveZero] at hcurveDeriv
+  have hfieldOne : mulInvariantVectorField (I := I) (G := G)
+      (v : GroupLieAlgebra I G) (1 : G) = (v : GroupLieAlgebra I G) :=
+    mulInvariantVectorField_one (I := I) (G := G) (v : GroupLieAlgebra I G)
+  rw [hfieldOne] at hcurveDeriv
+  have hone : (1 : G) ∈ (extChartAt I (1 : G)).source :=
+    mem_of_mem_nhds (extChartAt_source_mem_nhds (I := I) (1 : G))
+  rw [tangentCoordChange_self hone] at hcurveDeriv
+  exact hcurveDeriv
 
 /-- The tangent-space exponential obtained by evaluating the canonical invariant curve at time
 one. This is the tangent-vector precursor of the roadmap's derivation-based `lieExp`. -/

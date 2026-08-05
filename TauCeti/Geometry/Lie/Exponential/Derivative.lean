@@ -17,7 +17,7 @@ the identity at zero; equivalently, `F(v) = F(0) + v + o(‖v‖)`.
 
 ## Main results
 
-* `hasFDerivAt_mulInvariantExp_modelSpace_zero`: in model-space identity coordinates, the
+* `hasFDerivAt_extChartAt_mulInvariantExp_zero`: in model-space identity coordinates, the
   tangent-space exponential has derivative the identity at zero.
 
 ## References
@@ -40,64 +40,61 @@ variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
 local instance [LieGroup I ∞ G] : LieGroup I (minSmoothness ℝ 3) G := by
   simpa using (inferInstance : LieGroup I (3 : ℕ∞ω) G)
 
+/-- Scalar multiplication commutes with the model-space identification of the Lie algebra. -/
+private theorem coe_smul_groupLieAlgebra (t : ℝ) (v : E) :
+    ((t • v : E) : GroupLieAlgebra I G) = t • (v : GroupLieAlgebra I G) := rfl
+
 /-- In model-space identity coordinates, the tangent-space exponential has derivative the identity
 at zero. -/
-theorem hasFDerivAt_mulInvariantExp_modelSpace_zero
+theorem hasFDerivAt_extChartAt_mulInvariantExp_zero
     [FiniteDimensional ℝ E] [LieGroup I ∞ G] [T2Space G] [BoundarylessManifold I G] :
     HasFDerivAt
       (fun v : E => extChartAt I (1 : G)
         (mulInvariantExp (I := I) (G := G) (v : GroupLieAlgebra I G)))
       (ContinuousLinearMap.id ℝ E) 0 := by
   let _ : CompleteSpace E := FiniteDimensional.complete ℝ E
-  let F : E → E := (extChartAt I (1 : G)) ∘ fun v =>
-    mulInvariantExp (I := I) (G := G) (v : GroupLieAlgebra I G)
-  change HasFDerivAt F (ContinuousLinearMap.id ℝ E) 0
-  have hexpZero : mulInvariantExp (I := I) (G := G)
-      (0 : GroupLieAlgebra I G) = 1 := mulInvariantExp_zero
-  have hsource : mulInvariantExp (I := I) (G := G)
-      (0 : GroupLieAlgebra I G) ∈ (chartAt H (1 : G)).source := by
-    rw [hexpZero]
-    exact mem_chart_source H (1 : G)
-  have hsmooth := contMDiffAt_mulInvariantExp_modelSpace_zero (I := I) (G := G)
-  have hsmoothCoord := (contMDiffAt_iff_target_of_mem_source
-    (f := fun v : E => mulInvariantExp (I := I) (G := G)
-      (v : GroupLieAlgebra I G)) (y := (1 : G)) hsource).mp hsmooth
-  have hFdiff : DifferentiableAt ℝ F 0 := by
-    exact (hsmoothCoord.2.mdifferentiableAt (by simp)).differentiableAt
-  apply hFdiff.hasFDerivAt.congr_fderiv
-  apply ContinuousLinearMap.ext
-  intro v
-  have hscale : HasDerivAt (fun t : ℝ => t • v) v 0 := by
-    simpa using ((hasDerivAt_id (𝕜 := ℝ) (0 : ℝ)).smul_const v)
-  have hline : HasDerivAt (F ∘ fun t : ℝ => t • v) (fderiv ℝ F 0 v) 0 :=
-    hFdiff.hasFDerivAt.comp_hasDerivAt_of_eq 0 hscale (by simp)
-  have hcurve :=
-    (isMIntegralCurve_mulInvariantIntegralCurve (I := I) (G := G)
-      (v : GroupLieAlgebra I G) (1 : G)).isMIntegralCurveAt 0
-  have hcurveDeriv := hcurve.eventually_hasDerivAt.self_of_nhds
-  have hcurveZero : mulInvariantIntegralCurve (I := I) (G := G)
-      (v : GroupLieAlgebra I G) 1 0 = 1 := mulInvariantIntegralCurve_zero _ _
-  rw [hcurveZero] at hcurveDeriv
-  have hfieldOne : mulInvariantVectorField (I := I) (G := G)
-      (v : GroupLieAlgebra I G) (1 : G) = (v : GroupLieAlgebra I G) :=
-    mulInvariantVectorField_one (I := I) (G := G) (v : GroupLieAlgebra I G)
-  rw [hfieldOne] at hcurveDeriv
-  have hone : (1 : G) ∈ (extChartAt I (1 : G)).source :=
-    mem_of_mem_nhds (extChartAt_source_mem_nhds (I := I) (1 : G))
-  rw [tangentCoordChange_self hone] at hcurveDeriv
-  have hlineEq : (F ∘ fun t : ℝ => t • v) =
-        (extChartAt I (1 : G)) ∘
-          mulInvariantIntegralCurve (I := I) (G := G)
-            (v : GroupLieAlgebra I G) 1 := by
-    funext t
-    simp only [F, Function.comp_apply]
-    apply congrArg (extChartAt I (1 : G))
-    have hparameter : ((t • v : E) : GroupLieAlgebra I G) =
-        t • (v : GroupLieAlgebra I G) := rfl
-    rw [hparameter]
-    exact mulInvariantExp_smul (I := I) (G := G)
-      (v : GroupLieAlgebra I G) t
-  have hlineCurve : HasDerivAt (F ∘ fun t : ℝ => t • v) v 0 := by
-    rw [hlineEq]
-    exact hcurveDeriv
-  exact hline.unique hlineCurve
+  let F : E → E := fun v => extChartAt I (1 : G)
+    (mulInvariantExp (I := I) (G := G) (v : GroupLieAlgebra I G))
+  have hresult : HasFDerivAt F (ContinuousLinearMap.id ℝ E) 0 := by
+    have hexpZero : mulInvariantExp (I := I) (G := G)
+        (0 : GroupLieAlgebra I G) = 1 := mulInvariantExp_zero
+    have hsource : mulInvariantExp (I := I) (G := G)
+        (0 : GroupLieAlgebra I G) ∈ (chartAt H (1 : G)).source := by
+      rw [hexpZero]
+      exact mem_chart_source H (1 : G)
+    have hsmooth := contMDiffAt_mulInvariantExp_modelSpace_zero (I := I) (G := G)
+    have hsmoothCoord := (contMDiffAt_iff_target_of_mem_source
+      (f := fun v : E => mulInvariantExp (I := I) (G := G)
+        (v : GroupLieAlgebra I G)) (y := (1 : G)) hsource).mp hsmooth
+    have hFdiff : DifferentiableAt ℝ F 0 := by
+      have hcoordDiff := (hsmoothCoord.2.mdifferentiableAt (by simp)).differentiableAt
+      have hF_eq : F = (extChartAt I (1 : G)) ∘ fun v : E =>
+          mulInvariantExp (I := I) (G := G) (v : GroupLieAlgebra I G) := by
+        funext v
+        rfl
+      rw [hF_eq]
+      exact hcoordDiff
+    apply hFdiff.hasFDerivAt.congr_fderiv
+    apply ContinuousLinearMap.ext
+    intro v
+    have hscale : HasDerivAt (fun t : ℝ => t • v) v 0 := by
+      simpa using ((hasDerivAt_id (𝕜 := ℝ) (0 : ℝ)).smul_const v)
+    have hline : HasDerivAt (F ∘ fun t : ℝ => t • v) (fderiv ℝ F 0 v) 0 :=
+      hFdiff.hasFDerivAt.comp_hasDerivAt_of_eq 0 hscale (by simp)
+    have hcurveDeriv := hasDerivAt_extChartAt_mulInvariantIntegralCurve_zero
+      (I := I) (G := G) v
+    have hlineEq : (F ∘ fun t : ℝ => t • v) =
+          (extChartAt I (1 : G)) ∘
+            mulInvariantIntegralCurve (I := I) (G := G)
+              (v : GroupLieAlgebra I G) 1 := by
+      funext t
+      simp only [F, Function.comp_apply]
+      apply congrArg (extChartAt I (1 : G))
+      rw [coe_smul_groupLieAlgebra]
+      exact mulInvariantExp_smul (I := I) (G := G)
+        (v : GroupLieAlgebra I G) t
+    have hlineCurve : HasDerivAt (F ∘ fun t : ℝ => t • v) v 0 := by
+      rw [hlineEq]
+      exact hcurveDeriv
+    exact hline.unique hlineCurve
+  exact hresult
