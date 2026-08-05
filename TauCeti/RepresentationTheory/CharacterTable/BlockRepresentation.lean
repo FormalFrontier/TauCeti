@@ -61,7 +61,7 @@ universe u v w
 
 section Block
 
-variable {k : Type u} {G : Type v} [Field k] [Monoid G] {ι : Type w} {d : ι → ℕ}
+variable {k : Type u} {G : Type v} [CommSemiring k] [Monoid G] {ι : Type w} {d : ι → ℕ}
   (e : k[G] ≃ₐ[k] Π i, Matrix (Fin (d i)) (Fin (d i)) k)
 
 /-- The algebra map from the group algebra onto the endomorphisms of the `i`-th column space of a
@@ -105,6 +105,13 @@ theorem asAlgebraHom_blockRepresentation (i : ι) :
   | add x y hx hy => rw [map_add, map_add, hx, hy]
   | smul r x hx => rw [map_smul, map_smul, hx]
 
+end Block
+
+section Irreducible
+
+variable {k : Type u} {G : Type v} [Field k] [Monoid G] {ι : Type w} {d : ι → ℕ}
+  (e : k[G] ≃ₐ[k] Π i, Matrix (Fin (d i)) (Fin (d i)) k)
+
 /-- **Every Wedderburn block carries an irreducible representation.** -/
 theorem isIrreducible_blockRepresentation (i : ι) [NeZero (d i)] :
     (blockRepresentation e i).IsIrreducible := by
@@ -146,7 +153,7 @@ theorem isEmpty_equiv_blockRepresentation {i j : ι} [NeZero (d i)] (hij : i ≠
   rw [hi, hj] at hv0
   simpa using hv0
 
-end Block
+end Irreducible
 
 section Existence
 
