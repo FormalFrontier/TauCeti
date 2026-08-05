@@ -87,7 +87,7 @@ theorem tendsto_continuousOneParameterLog [FiniteDimensional ℝ E] [LieGroup I 
   have hφ := tendsto_continuousMonoidHom_dyadicStep (I := I) (G := G) φ
   have hchart := (continuousAt_extChartAt (I := I) (1 : G)).tendsto.comp hφ
   have hlog :=
-    (contDiffAt_mulInvariantLogChart_identity (I := I) (G := G)).continuousAt.tendsto
+    (contDiffAt_mulInvariantLogChart_one (I := I) (G := G)).continuousAt.tendsto
       |>.comp hchart
   change Tendsto (continuousOneParameterLog (I := I) (G := G) φ) atTop
     (𝓝 (mulInvariantLogChart (I := I) (G := G)
@@ -96,7 +96,7 @@ theorem tendsto_continuousOneParameterLog [FiniteDimensional ℝ E] [LieGroup I 
       (extChartAt I (1 : G) (1 : G)) = 0 by
     change mulInvariantLogChart (I := I) (G := G)
       (I (chartAt H (1 : G) (1 : G))) = 0
-    exact mulInvariantLogChart_identity (I := I) (G := G)] at hlog
+    exact mulInvariantLogChart_one (I := I) (G := G)] at hlog
   exact hlog
 
 /-- At sufficiently small dyadic times, the local logarithm scales exactly under time halving. -/
