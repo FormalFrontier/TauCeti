@@ -49,16 +49,15 @@ the crosscut arc, gives `TauCeti.frontier_image_inter_ball_subset` and
 
 ## From the boundary to the piece
 
-A bounded set in a normed space is exactly as wide as its frontier (`TauCeti.diam_frontier`, in
-`TauCeti/Analysis/Normed/Module/DiamFrontier.lean`), so with `Metric.diam_mono` the inclusion above
-is already a diameter bound: for any `E` containing the boundary points of `Ω` that lie on
-`frontier A`,
+A bounded set in a normed space is no wider than anything bounded that contains its frontier
+(`TauCeti.diam_le_diam_of_frontier_subset`, in
+`TauCeti/Analysis/Normed/Module/DiamFrontier.lean`), so the inclusion above is already a diameter
+bound: for any `E` containing the boundary points of `Ω` that lie on `frontier A`,
 
 > `diam A ≤ diam (f '' (U ∩ sphere ζ ρ) ∪ E)`
 
 (`TauCeti.diam_image_inter_ball_le`), and likewise for the far side
-(`TauCeti.diam_image_sdiff_closedBall_le`), both through the same
-`TauCeti.diam_image_le_diam_image_union`. Feeding those bounds, one for each tolerance, to the
+(`TauCeti.diam_image_sdiff_closedBall_le`). Feeding those bounds, one for each tolerance, to the
 Cauchy criterion `TauCeti.subsingleton_clusterSetOn_of_forall_exists` of
 `Topology/ClusterSet.lean` — a diameter bound on the image of an approach region bounding the
 distance between two of its values by `Metric.dist_le_diam_of_mem` — gives the boundary limit
@@ -94,16 +93,14 @@ In accordance with the generality bar of `ConformalMapping/README.md`, which fix
 every theorem added in layers L0–L6, everything below is stated for maps of `ℂ`. The three steps
 that never mention a holomorphic map are stated at their own generality elsewhere, and consumed
 here: `TauCeti.frontier_image_subset_image_union_frontier_image` for maps between arbitrary
-topological spaces, `TauCeti.diam_frontier` — through
-`TauCeti.IsPreconnected.inter_frontier_nonempty` — for an arbitrary real normed space, and
+topological spaces, `TauCeti.diam_le_diam_of_frontier_subset` — through `TauCeti.diam_frontier`
+and `TauCeti.IsPreconnected.inter_frontier_nonempty` — for an arbitrary real normed space, and
 `TauCeti.subsingleton_clusterSetOn_of_forall_exists` for a map between metric spaces. What
 remains here is exactly the conformal content: the open mapping theorem, and the reading of a
 circular cut as a crosscut.
 
 ## Main results
 
-* `TauCeti.diam_image_le_diam_image_union` — the diameter bound for one side of an arbitrary
-  splitting of the domain into two pieces with disjoint open images and a remainder.
 * `TauCeti.frontier_image_inter_ball_subset` and `TauCeti.frontier_image_sdiff_closedBall_subset` —
   the boundary of the image of either side of a crosscut is covered by the image crosscut and the
   boundary of the image domain.
@@ -187,38 +184,23 @@ theorem frontier_image_sdiff_closedBall_subset (hUo : IsOpen U) (hd : Differenti
 
 /-! ## The diameter of the cut-off piece -/
 
-/-- **A piece of the domain whose image has its boundary on the image of a set and on the boundary
-of the image domain is no wider than the two together.** For `s` and `u` inside `U` with
-`frontier (f '' s) ⊆ f '' u ∪ frontier (f '' U)`, and a bounded `E` containing the boundary points
-of the image domain that lie on `frontier (f '' s)`, the image `f '' s` has diameter at most that of
-`f '' u ∪ E`.
-
-This is `TauCeti.diam_frontier` — a bounded set is exactly as wide as its frontier — followed by
-`Metric.diam_mono` along a boundary inclusion; no estimate on `f` is used, the width of the piece
-being entirely determined by the width of what bounds it. The two hypotheses combine into the single
-inclusion `frontier (f '' s) ⊆ f '' u ∪ E` that the monotonicity consumes. -/
-theorem diam_image_le_diam_image_union (hb : IsBounded (f '' U)) {s u : Set ℂ}
-    (hsU : s ⊆ U) (huU : u ⊆ U)
-    (hfr : frontier (f '' s) ⊆ f '' u ∪ frontier (f '' U)) {E : Set ℂ} (hE : IsBounded E)
-    (hEsub : frontier (f '' U) ∩ frontier (f '' s) ⊆ E) :
-    diam (f '' s) ≤ diam (f '' u ∪ E) :=
-  (diam_frontier (hb.subset (image_mono hsU))).symm.le.trans
-    (diam_mono (fun _ hp => (hfr hp).imp id fun h => hEsub ⟨h, hp⟩)
-      ((hb.subset (image_mono huU)).union hE))
-
 /-- **The image of a crosscut neighbourhood is no wider than the image crosscut together with the
 boundary piece it cuts off.** If every boundary point of the image domain `f '' U` that lies on the
 frontier of `f '' (U ∩ ball ζ ρ)` belongs to a bounded set `E`, then the diameter of that image is
 at most the diameter of `f '' (U ∩ sphere ζ ρ) ∪ E`.
 
 This is `TauCeti.frontier_image_inter_ball_subset` read through
-`TauCeti.diam_image_le_diam_image_union`. -/
+`TauCeti.diam_le_diam_of_frontier_subset` — a bounded set is no wider than anything bounded
+containing its frontier — the two boundary hypotheses combining into the single inclusion
+`frontier (f '' (U ∩ ball ζ ρ)) ⊆ f '' (U ∩ sphere ζ ρ) ∪ E` that lemma consumes. No estimate on
+`f` is used, the width of the piece being entirely determined by the width of what bounds it. -/
 theorem diam_image_inter_ball_le (hUo : IsOpen U) (hd : DifferentiableOn ℂ f U)
     (hinj : InjOn f U) (hb : IsBounded (f '' U)) {E : Set ℂ} (hE : IsBounded E)
     (hEsub : frontier (f '' U) ∩ frontier (f '' (U ∩ ball ζ ρ)) ⊆ E) :
     diam (f '' (U ∩ ball ζ ρ)) ≤ diam (f '' (U ∩ sphere ζ ρ) ∪ E) :=
-  diam_image_le_diam_image_union hb inter_subset_left inter_subset_left
-    (frontier_image_inter_ball_subset hUo hd hinj) hE hEsub
+  diam_le_diam_of_frontier_subset (hb.subset (image_mono inter_subset_left))
+    ((hb.subset (image_mono inter_subset_left)).union hE)
+    fun _ hp => (frontier_image_inter_ball_subset hUo hd hinj hp).imp id fun h => hEsub ⟨h, hp⟩
 
 /-- **The image of the far side of a crosscut is no wider than the image crosscut together with the
 boundary piece it cuts off.** The mirror of `TauCeti.diam_image_inter_ball_le`: whichever of the two
@@ -227,8 +209,10 @@ theorem diam_image_sdiff_closedBall_le (hUo : IsOpen U) (hd : DifferentiableOn �
     (hinj : InjOn f U) (hb : IsBounded (f '' U)) {E : Set ℂ} (hE : IsBounded E)
     (hEsub : frontier (f '' U) ∩ frontier (f '' (U \ closedBall ζ ρ)) ⊆ E) :
     diam (f '' (U \ closedBall ζ ρ)) ≤ diam (f '' (U ∩ sphere ζ ρ) ∪ E) :=
-  diam_image_le_diam_image_union hb sdiff_subset inter_subset_left
-    (frontier_image_sdiff_closedBall_subset hUo hd hinj) hE hEsub
+  diam_le_diam_of_frontier_subset (hb.subset (image_mono sdiff_subset))
+    ((hb.subset (image_mono inter_subset_left)).union hE)
+    fun _ hp =>
+      (frontier_image_sdiff_closedBall_subset hUo hd hinj hp).imp id fun h => hEsub ⟨h, hp⟩
 
 /-! ## The boundary limit -/
 
