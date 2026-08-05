@@ -71,7 +71,7 @@ connected subset of a Jordan curve that is *nowhere dense* in it — every point
 rest of the curve — is a single point. Feeding that criterion to the extension theorem
 `TauCeti.exists_continuousOn_closure_eqOn_of_isBounded` gives
 `TauCeti.exists_continuousOn_closure_eqOn_of_forall_subset_closure_sdiff`: **a conformal map of a
-bounded convex domain onto a region with Jordan boundary, none of whose boundary cluster sets has
+convex domain onto a bounded region with Jordan boundary, none of whose boundary cluster sets has
 interior in that boundary curve, extends continuously to the closure.** This is a sufficient
 condition for the L5 milestone stated entirely in terms of the boundary curve; what it does not do
 is *verify* the nowhere-density hypothesis for a Riemann map, which is the step still separating L5
@@ -296,9 +296,9 @@ theorem subsingleton_clusterSetOn_of_subset_closure_sdiff (hUo : IsOpen U) (hUc 
   hJ.subsingleton_of_subset_closure_sdiff h.2.2 h.1 h.2.1.isPreconnected hnwd
 
 /-- **A nowhere-density criterion for the Carathéodory extension.** A holomorphic injection of a
-bounded convex open set onto a region whose frontier is a Jordan curve extends continuously to the
+convex open set onto a bounded region whose frontier is a Jordan curve extends continuously to the
 closure of the domain, provided no boundary cluster set occupies a relatively open piece of that
-frontier.
+frontier. Boundedness is asked of the image `f '' U`, not of the domain.
 
 This is the sufficient condition for the layer-**L5** milestone that the classification of
 subcontinua supplies: the extension criterion

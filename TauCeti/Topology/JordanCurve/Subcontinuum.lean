@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import TauCeti.Topology.Circle.Arc
 public import TauCeti.Topology.JordanCurve.Basic
 
 /-!
@@ -22,27 +23,19 @@ in which the classification is spent.
 Everything is transported from the model curve `Circle`, so the work is on the circle, and the
 transport is the parametrization `TauCeti.jordanParam` of `TauCeti/Topology/JordanCurve/Basic.lean`.
 
-On the circle the argument is the one for `ℝ`. Let `T ⊆ Circle` be closed, preconnected and not the
-whole circle, and pick `z ∉ T`. Cutting the circle at `z` — that is, reading it as `Circle.exp` on
-the period `[t, t + 2π]` for `Circle.exp t = z` — turns `T` into
-`K = Circle.exp ⁻¹' T ∩ Icc t (t + 2 * π)`, a compact subset of `ℝ` avoiding *both* endpoints of
-that period, so `K ⊆ Ioo t (t + 2 * π)` and `Circle.exp` is injective on `K`. A continuous injection
-of a compact space into a Hausdorff one is a closed map, so
-`IsPreconnected.preimage_of_isClosedMap` carries preconnectedness of `T = Circle.exp '' K` back to
-`K`, and a compact connected subset of `ℝ` is a closed interval
-(`eq_Icc_of_connected_compact`). Hence `T = Circle.exp '' Icc a b` with `b - a < 2 * π`, the two
-degenerate cases `a = b` and `T = ∅` being the point and the empty set.
-
-The complement is then read off the same period, moved to `Ioc b (b + 2 * π)` so that the closed
-arc becomes `Icc (a + 2 * π) (b + 2 * π)` and injectivity of `Circle.exp` applies to the difference:
-`(Circle.exp '' Icc a b)ᶜ = Circle.exp '' Ioo b (a + 2 * π)`, an *open* arc, path connected as the
-continuous image of an interval.
+The circle half is `TauCeti/Topology/Circle/Arc.lean`: a nonempty closed preconnected proper subset
+of the circle is a closed arc `Circle.exp '' Icc a b` with `b - a < 2 * π`
+(`TauCeti.exists_eq_circleExp_image_Icc`), the two degenerate cases `a = b` and the empty set being
+the point and the empty set, and its complement is the open arc `Circle.exp '' Ioo b (a + 2 * π)`
+(`TauCeti.compl_circleExp_image_Icc`), path connected as the continuous image of an interval. So a
+proper subcontinuum `S` of the curve is the image of such a closed arc of angles under the
+parametrization, and `C \ S` the image of the complementary open arc.
 
 Nowhere density is the same computation once more. If `a < b` then the midpoint `(a + b) / 2` names
-a point of the curve that lies outside the compact set `Circle.exp '' Icc b (a + 2 * π)`, which
-contains the whole complement of `T`; so that point of `T` is not adherent to the complement, and
-`T` is not nowhere dense. Contrapositively, a nowhere dense compact connected subset has `a = b`
-and is a point.
+a point of `S` whose angle lies outside `Icc b (a + 2 * π)`, so it lies outside the image of that
+compact interval of angles, which is closed and contains the whole of `C \ S`; hence that point of
+`S` is not adherent to `C \ S`, and `S` is not nowhere dense. Contrapositively, a nowhere dense
+compact connected subset has `a = b` and is a point.
 
 ## Why this is a layer-L5 prerequisite
 
@@ -69,10 +62,6 @@ because they speak of a closure taken in that space.
 
 ## Main results
 
-* `TauCeti.exists_eq_circleExp_image_Icc` — a nonempty closed preconnected proper subset of the
-  circle is `Circle.exp '' Set.Icc a b` for a pair of angles less than a full turn apart.
-* `TauCeti.compl_circleExp_image_Icc` — the complement of such a closed arc is the open arc
-  `Circle.exp '' Set.Ioo b (a + 2 * π)`.
 * `TauCeti.IsJordanCurve.subsingleton_or_exists_injective_path` — **a proper subcontinuum of a
   Jordan curve is a point or an arc**: it is either a subsingleton or the range of an injective
   path.
@@ -99,109 +88,6 @@ namespace TauCeti
 open Real Set Topology
 
 variable {X : Type*} [TopologicalSpace X] {C S : Set X}
-
-/-! ## The model curve
-
-Both circle statements below are about a *closed arc* `Circle.exp '' Set.Icc a b` of angular width
-`b - a` less than a full turn. Nothing ties the angles to a period, so a consumer may translate them
-by any multiple of `2 * π`. -/
-
-/-- A full period of angles covers the circle. -/
-private lemma circleExp_image_Icc_add_two_pi (a : ℝ) : Circle.exp '' Icc a (a + 2 * π) = univ := by
-  rw [Circle.periodic_exp.image_Icc two_pi_pos]
-  exact Circle.exp_surjective.range_eq
-
-/-- A full period of angles, taken half open, covers the circle. -/
-private lemma circleExp_image_Ioc_add_two_pi (a : ℝ) : Circle.exp '' Ioc a (a + 2 * π) = univ := by
-  rw [Circle.periodic_exp.image_Ioc two_pi_pos]
-  exact Circle.exp_surjective.range_eq
-
-/-- `Circle.exp` is injective on a full period of angles taken half open. -/
-private lemma circleExp_injOn_Ioc (a : ℝ) : InjOn Circle.exp (Ioc a (a + 2 * π)) :=
-  Circle.exp_injOn_Ioc (by ring_nf; exact le_rfl)
-
-/-- Translating the angles by a full turn does not change a closed arc. -/
-private lemma circleExp_image_Icc_add_period (a b : ℝ) :
-    Circle.exp '' Icc (a + 2 * π) (b + 2 * π) = Circle.exp '' Icc a b := by
-  rw [← image_add_const_Icc, ← image_comp]
-  exact image_congr fun x _ => Circle.exp_add_two_pi x
-
-/-- **A nonempty closed preconnected proper subset of the circle is a closed arc.** The two angles
-are less than a full turn apart, so `Circle.exp` is injective on the interval carrying them, and the
-degenerate case `a = b` is a single point.
-
-Closedness is what forces the arc to be closed: the set is compact, `Circle` being compact, and a
-compact connected subset of the line is a closed interval. -/
-theorem exists_eq_circleExp_image_Icc {T : Set Circle} (hT : IsClosed T) (hpre : IsPreconnected T)
-    (hne : T.Nonempty) (hTuniv : T ≠ univ) :
-    ∃ a b : ℝ, a ≤ b ∧ b - a < 2 * π ∧ T = Circle.exp '' Icc a b := by
-  obtain ⟨z, hz⟩ : ∃ z, z ∉ T := by
-    by_contra hcon
-    exact hTuniv (eq_univ_of_forall (by simpa using hcon))
-  set t : ℝ := z.val.arg
-  have hexpt : Circle.exp t = z := Circle.exp_arg z
-  set K : Set ℝ := Circle.exp ⁻¹' T ∩ Icc t (t + 2 * π) with hK
-  have hKcompact : IsCompact K := isCompact_Icc.inter_left (hT.preimage Circle.exp.continuous)
-  have himg : Circle.exp '' K = T := by
-    rw [hK, image_preimage_inter, circleExp_image_Icc_add_two_pi, inter_univ]
-  have hKsub : K ⊆ Ioo t (t + 2 * π) := by
-    rintro x ⟨hxT, hxI⟩
-    refine ⟨lt_of_le_of_ne hxI.1 fun hxt => hz ?_, lt_of_le_of_ne hxI.2 fun hxt => hz ?_⟩
-    · rw [← hexpt, hxt]; exact hxT
-    · rw [← hexpt, ← Circle.exp_add_two_pi, ← hxt]; exact hxT
-  have hinj : InjOn Circle.exp K := (circleExp_injOn_Ioc t).mono (hKsub.trans Ioo_subset_Ioc_self)
-  have hKne : K.Nonempty := by
-    rw [← image_nonempty (f := Circle.exp), himg]
-    exact hne
-  have hKpre : IsPreconnected K := by
-    have : CompactSpace K := isCompact_iff_compactSpace.mp hKcompact
-    have hginj : Function.Injective fun x : K => Circle.exp (x : ℝ) :=
-      fun x y hxy => Subtype.ext (hinj x.2 y.2 hxy)
-    have hgc : Continuous fun x : K => Circle.exp (x : ℝ) :=
-      Circle.exp.continuous.comp continuous_subtype_val
-    have hrange : range (fun x : K => Circle.exp (x : ℝ)) = T := by
-      rw [← himg]
-      refine subset_antisymm ?_ ?_
-      · rintro _ ⟨x, rfl⟩
-        exact ⟨x, x.2, rfl⟩
-      · rintro _ ⟨x, hx, rfl⟩
-        exact ⟨⟨x, hx⟩, rfl⟩
-    have hpre' := hpre.preimage_of_isClosedMap hginj hgc.isClosedMap hrange.ge
-    rw [show (fun x : K => Circle.exp (x : ℝ)) ⁻¹' T = univ from
-      eq_univ_of_forall fun x => x.2.1] at hpre'
-    exact isPreconnected_iff_preconnectedSpace.mpr ⟨hpre'⟩
-  have hKeq : K = Icc (sInf K) (sSup K) := eq_Icc_of_connected_compact ⟨hKne, hKpre⟩ hKcompact
-  have hIsub : Icc (sInf K) (sSup K) ⊆ Ioo t (t + 2 * π) := hKeq ▸ hKsub
-  have hle : sInf K ≤ sSup K := by
-    obtain ⟨x, hx⟩ := hKne
-    rw [hKeq] at hx
-    exact hx.1.trans hx.2
-  refine ⟨sInf K, sSup K, hle, ?_, ?_⟩
-  · have h₁ := (hIsub (left_mem_Icc.mpr hle)).1
-    have h₂ := (hIsub (right_mem_Icc.mpr hle)).2
-    linarith
-  · rw [← himg]
-    exact congrArg _ hKeq
-
-/-- **The complement of a closed arc of the circle is the complementary open arc.** The two arcs
-share their endpoints' angles: `Circle.exp '' Set.Icc a b` is complemented by
-`Circle.exp '' Set.Ioo b (a + 2 * π)`, which is nonempty exactly because the closed arc is not the
-whole circle. -/
-theorem compl_circleExp_image_Icc {a b : ℝ} (hab : a ≤ b) (hlt : b - a < 2 * π) :
-    (Circle.exp '' Icc a b)ᶜ = Circle.exp '' Ioo b (a + 2 * π) := by
-  have hbsub : Icc (a + 2 * π) (b + 2 * π) ⊆ Ioc b (b + 2 * π) := fun x hx =>
-    ⟨by linarith [hx.1], hx.2⟩
-  have hdiff : Ioc b (b + 2 * π) \ Icc (a + 2 * π) (b + 2 * π) = Ioo b (a + 2 * π) := by
-    ext x
-    simp only [mem_sdiff, mem_Ioc, mem_Icc, mem_Ioo, not_and, not_le]
-    refine ⟨fun h => ⟨h.1.1, ?_⟩, fun h => ⟨⟨h.1, by linarith⟩, fun hx => by linarith⟩⟩
-    by_contra hcon
-    exact absurd h.1.2 (not_le.mpr (h.2 (not_lt.mp hcon)))
-  have himage : Circle.exp '' (Ioc b (b + 2 * π) \ Icc (a + 2 * π) (b + 2 * π)) =
-      Circle.exp '' Ioc b (b + 2 * π) \ Circle.exp '' Icc (a + 2 * π) (b + 2 * π) :=
-    (circleExp_injOn_Ioc b).image_sdiff_subset hbsub
-  rw [← circleExp_image_Icc_add_period a b, compl_eq_univ_sdiff,
-    ← circleExp_image_Ioc_add_two_pi b, ← himage, hdiff]
 
 /-! ## Subcontinua of a Jordan curve
 
@@ -330,7 +216,8 @@ theorem IsJordanCurve.exists_notMem_closure_sdiff [T2Space X] (h : IsJordanCurve
   refine ⟨_, hpS, fun hcon => ?_⟩
   obtain ⟨u, ⟨s, hs, hsu⟩, hu⟩ := closure_minimal hsub hLclosed hcon
   have hsm : s = (a + b) / 2 := by
-    refine circleExp_injOn_Ioc a ⟨by linarith [hs.1], hs.2⟩ ⟨by linarith, by linarith⟩ ?_
+    refine Circle.exp_injOn_Ioc (a := a) (b := a + 2 * π) (by linarith)
+      ⟨by linarith [hs.1], hs.2⟩ ⟨by linarith, by linarith⟩ ?_
     rw [hsu]
     exact jordanParam_injective e hu
   linarith [hs.1, hsm ▸ hs.1]
