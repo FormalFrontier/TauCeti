@@ -10,11 +10,12 @@ public import TauCeti.RepresentationTheory.Irreducible
 /-!
 # The standard representation of the symmetric group
 
-The symmetric group on a finite type `α` acts on `k[α]` by permuting the standard basis, and that
-permutation representation splits: the invariant line spanned by the sum of the basis, carrying the
-trivial representation, and the **standard representation**, the complementary subrepresentation of
-dimension `|α| - 1` on which the coefficients sum to zero.  This file proves that the standard
-representation is irreducible whenever `|α| ≥ 2` and `|α|` is invertible in `k`.
+The symmetric group on a finite type `α` acts on `k[α]` by permuting the standard basis.  Inside
+that permutation representation sit the invariant line spanned by the sum of the basis, carrying the
+trivial representation, and the **standard representation**, the subrepresentation of dimension
+`|α| - 1` on which the coefficients sum to zero; when `|α|` is invertible in `k` the two are
+complementary and the permutation representation splits as their direct sum.  This file proves that
+the standard representation is irreducible whenever `|α| ≥ 2` and `|α|` is invertible in `k`.
 
 The hypothesis `2 ≤ |α|` is needed: for `|α| ≤ 1` the standard representation is zero, and the zero
 representation is not irreducible.  The hypothesis `|α| ≠ 0` in `k` is a sufficient hypothesis
@@ -48,7 +49,7 @@ produces all the others, and those differences span.
 
 The two remaining halves of the picture hold for an arbitrary permutation representation and are
 proved there, in `TauCeti.RepresentationTheory.Augmentation`: that `k[α]` is the direct sum of the
-invariant line and the standard subrepresentation is
+invariant line and the standard subrepresentation, again under `|α| ≠ 0` in `k`, is
 `TauCeti.isCompl_invariantLine_augmentationSubrepresentation`, and that the standard
 subrepresentation has dimension `|α| - 1` is `TauCeti.finrank_augmentationSubrepresentation`.
 
@@ -108,8 +109,12 @@ section Standard
 variable (k : Type*) [Field k] (α : Type*) [Fintype α]
 
 /-- The **standard representation** of the symmetric group on `α`: the action of `Equiv.Perm α` on
-the vectors of `k[α]` whose coefficients sum to zero.  It is the complement of the invariant line
-in the permutation representation `k[α]`, and it is the Specht module of the shape `(|α|-1, 1)`. -/
+the vectors of `k[α]` whose coefficients sum to zero.  No hypothesis on `k` is imposed here; when
+`(Fintype.card α : k) ≠ 0` it is a complement of the invariant line in the permutation
+representation `k[α]`, by `isCompl_invariantLine_augmentationSubrepresentation`, whereas when
+`(Fintype.card α : k) = 0` the invariant line lies inside it instead.  Identifying it with the
+Specht module of the shape `(|α|-1, 1)` is an aim for later: the polytabloid presentation needed to
+state that equivalence is not yet in the repository. -/
 noncomputable def standardRepresentation :
     Representation k (Equiv.Perm α)
       (augmentationSubrepresentation k (Equiv.Perm α) α).toSubmodule :=
