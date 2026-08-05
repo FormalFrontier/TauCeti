@@ -48,17 +48,22 @@ class Replay(unittest.TestCase):
         heads = mirror.pr_heads(pr["number"])
         if actors is None:
             actors = {sha: author for sha, _ in heads}
-        ledger = {sha: (actors[sha], when) for sha, when in heads if sha in actors}
+        ledger = {sha: {"actor": actors[sha], "when": when, "owner": "o", "branch": "b"}
+                  for sha, when in heads if sha in actors}
+        pr = dict(pr, headRefName="b", headRepositoryOwner={"login": "o"})
+        pr["_pushes"] = [(sha, when) for sha, when in heads if sha in ledger]
+        pr["_ledger"] = ledger
         rows, handling, _, _ = conflict_stats.analyse_pr(
             mirror, self.HISTORY, self.TIMES, pr, now, gap, push_window=window,
-            ledger=ledger)
+            index=conflict_stats.ledger_index(ledger),
+            available=set(ledger))
         return rows, handling
 
     def test_a_never_conflicting_pr_yields_nothing(self):
         mirror = self.FakeMirror([("h1", 1000)], {})
         episodes, handling = self.analyse(mirror, self.pr())
         self.assertEqual(episodes, [])
-        self.assertEqual(handling, "pushed")
+        self.assertEqual(handling, "recorded")
 
     def test_onset_is_the_first_main_commit_that_breaks_the_merge(self):
         # Head h1 is current from t=1000 until the push at t=1650; main commit 5
@@ -108,14 +113,14 @@ class Replay(unittest.TestCase):
     def test_ledger_coverage_is_reported_as_such(self):
         mirror = self.FakeMirror([("h1", 1500), ("h2", 1600)], {})
         _, handling = self.analyse(mirror, self.pr())
-        self.assertEqual(handling, "pushed")
+        self.assertEqual(handling, "recorded")
 
     def test_only_ledger_commits_count_as_heads(self):
         # A commit that never appears in the ledger was never a head, so an
         # intermediate one that conflicts cannot invent an episode.
         mirror = self.FakeMirror([("h1", 1000), ("h2", 1010)], {"h1": 0})
         episodes, handling = self.analyse(mirror, self.pr(), actors={"h2": "alice"})
-        self.assertEqual(handling, "pushed")
+        self.assertEqual(handling, "recorded")
         self.assertEqual(episodes, [])
 
     def test_conflicts_before_the_pr_existed_are_not_counted(self):
@@ -198,8 +203,7 @@ class Replay(unittest.TestCase):
         mirror = self.FakeMirror([("h1", 1000), ("h2", 1650)], {"h1": 5})
         # No ledger coverage at all: heads inferred from commits, actor unknown.
         rows, handling, _, _ = conflict_stats.analyse_pr(
-            mirror, self.HISTORY, self.TIMES, self.pr(), 9999, 7200, push_window=0,
-            ledger={})
+            mirror, self.HISTORY, self.TIMES, self.pr(), 9999, 7200, push_window=0)
         self.assertEqual(handling, "inferred")
         episodes = rows
         self.assertEqual(episodes[0]["session"], conflict_stats.UNATTRIBUTED)
@@ -225,11 +229,37 @@ class Replay(unittest.TestCase):
             mirror = self.FakeMirror([("h1", 1000), ("h2", 1010)], {"h1": 0})
             rows, handling, _, _ = conflict_stats.analyse_pr(
                 mirror, self.HISTORY, self.TIMES, self.pr(), 9999, 7200,
-                push_window=window, ledger={})
+                push_window=window)
             self.assertEqual(handling, "inferred")
             return rows
         self.assertEqual(run(120), [])
         self.assertEqual(len(run(0)), 1)
+
+    def test_partial_ledger_coverage_is_not_reported_as_full(self):
+        # One matching head used to mark the whole PR recorded, silently dropping
+        # every head that could not be fetched and truncating its episodes.
+        mirror = self.FakeMirror([("h1", 1000), ("h2", 1650)], {"h1": 5})
+        ledger = {sha: {"actor": "alice", "when": when, "owner": "o", "branch": "b"}
+                  for sha, when in [("h1", 1000), ("h2", 1650)]}
+        pr = dict(self.pr(), headRefName="b", headRepositoryOwner={"login": "o"})
+        pr["_pushes"] = [("h1", 1000), ("h2", 1650)]
+        pr["_ledger"] = ledger
+        _, handling, _, _ = conflict_stats.analyse_pr(
+            mirror, self.HISTORY, self.TIMES, pr, 9999, 7200,
+            index=conflict_stats.ledger_index(ledger), available={"h1"})
+        self.assertEqual(handling, "partial")
+
+    def test_branch_reuse_does_not_borrow_another_prs_pushes(self):
+        # `fix/typo` belongs to a dozen PRs over time; only the pushes inside this
+        # PR's own lifetime are its own.
+        ledger = {
+            "old": {"actor": "a", "when": 500, "owner": "o", "branch": "b"},
+            "mine": {"actor": "a", "when": 1500, "owner": "o", "branch": "b"},
+            "later": {"actor": "a", "when": 9000, "owner": "o", "branch": "b"},
+        }
+        pr = {"headRefName": "b", "headRepositoryOwner": {"login": "o"}}
+        pushes = conflict_stats.pr_pushes(pr, conflict_stats.ledger_index(ledger), 1000, 2000)
+        self.assertEqual(pushes, [("mine", 1500)])
 
     def test_a_pr_with_no_fetchable_head_is_skipped_not_guessed(self):
         mirror = self.FakeMirror([], {})
@@ -251,12 +281,12 @@ class ReplaySummary(unittest.TestCase):
 
     def test_reports_the_over_24h_tail_and_the_session_split(self):
         lines = "\n".join(conflict_stats.summarise(
-            self.episodes(), handled={"pushed": 40, "inferred": 4, "skipped": 2},
+            self.episodes(), handled={"recorded": 40, "inferred": 4, "skipped": 2},
             total_prs=99))
         self.assertIn("4 conflict episode(s) across 4 of 99 PR(s)", lines)
-        self.assertIn("push ledger for 40 PR(s)", lines)
+        self.assertIn("40 PR(s) fully recorded", lines)
         self.assertIn("4 inferred from commit dates", lines)
-        self.assertIn("2 had no replayable commits", lines)
+        self.assertIn("2 with no replayable commits", lines)
         self.assertIn("1/3 took over 24h", lines)
         self.assertIn("1 by the PR's author, already pushing to it", lines)
         self.assertIn("1 by the PR's author, returning after a gap", lines)

@@ -61,7 +61,7 @@ Two further limits apply to both paths:
     checked at its LAST base and reported clean if it ends clean, which drops a
     conflict that arose and cleared inside one epoch. `--exhaustive` tests every
     base instead; over this repository's whole history the two have agreed
-    exactly (101 episodes, identical medians and session split), so the assumption
+    exactly (136 episodes, identical medians and session split), so the assumption
     is costing nothing today -- but it is an assumption, so re-check it rather than
     trust that it keeps holding.
 
@@ -90,8 +90,8 @@ rare, the problem is session lifetime, not motivation, and the remedy is a
 different one. Each episode also records the measured `gap`, so checking that a
 conclusion is not an artefact of one `--session-gap` is a re-read of the `--json`
 output rather than a re-run of the whole replay. On this repository returns run
-from 30 of 76 at a half-hour gap to 11 at eight hours: never dominant, never zero,
-so authors demonstrably do come back to conflicted PRs.
+from 60 of 110 at a half-hour gap to 23 at eight hours: never vanishing, so
+authors demonstrably do come back to conflicted PRs.
 
 Usage
 -----
@@ -185,9 +185,9 @@ class Mirror:
     def __init__(self, path):
         self.path = path
 
-    def git(self, *args, check=True):
+    def git(self, *args, check=True, stdin=None):
         result = subprocess.run(["git", "-C", self.path, *args],
-                                capture_output=True, text=True)
+                                input=stdin, capture_output=True, text=True)
         if check and result.returncode != 0:
             raise RuntimeError(f"git {' '.join(args)}: {result.stderr.strip()}")
         return result
@@ -253,7 +253,8 @@ class Mirror:
 
 def fetch_prs(since=None):
     """Every PR, as GitHub reports it, optionally limited to `--since`."""
-    fields = "number,author,createdAt,closedAt,mergedAt,state,isDraft,title"
+    fields = ("number,author,createdAt,closedAt,mergedAt,state,isDraft,title,"
+              "headRefName,headRepositoryOwner")
     out = subprocess.run(
         ["gh", "pr", "list", "--repo", REPO, "--state", "all", "--limit", "5000",
          "--json", fields], capture_output=True, text=True)
@@ -303,27 +304,94 @@ def first_conflicting(mirror, history, lo, hi, head, exhaustive=False):
     return lo
 
 
-def pr_epochs(mirror, number, ledger, push_window):
-    """The heads this PR has had, as [(sha, epoch)], plus actors and a provenance tag.
+def ledger_index(ledger):
+    """(head owner, head branch) -> its pushes, oldest first.
 
-    Two sources, and which one was used matters enough to report:
-
-      "pushed"   The push ledger knows this PR's commits. Those commits ARE its
-                 heads, stamped when GitHub received them and attributed to the
-                 account that pushed them. Nothing is inferred.
-      "inferred" No ledger coverage (a PR older than the workflow, or whose runs
-                 have aged out). Fall back to commit dates, grouping commits
-                 written within `push_window` into one push, since only the last
-                 of them can have been a head. Boundaries and times are guesses
-                 and the actor is unknown, so these are attributed to nobody.
+    A workflow run names the branch it built, not the PR, and `pull_requests[]` is
+    empty for most runs here (2 of 20 sampled), so the branch is the only usable
+    join. Branch names get reused, so callers must also bound by the PR's own
+    lifetime -- see `pr_pushes`.
     """
+    index = {}
+    for sha, row in ledger.items():
+        index.setdefault((row["owner"], row["branch"]), []).append((sha, row["when"]))
+    for pushes in index.values():
+        pushes.sort(key=lambda item: item[1])
+    return index
+
+
+def pr_pushes(pr, index, created, ended):
+    """Every recorded push to this PR's branch during its lifetime, oldest first.
+
+    Bounded by the PR's own window because a branch name is reused: `fix/typo` may
+    belong to a dozen PRs over time, and only the pushes between this PR's opening
+    and its close are its own.
+    """
+    owner = (pr.get("headRepositoryOwner") or {}).get("login") or ""
+    branch = pr.get("headRefName") or ""
+    return [(sha, when) for sha, when in index.get((owner, branch), [])
+            if created <= when <= ended]
+
+
+def ensure_objects(mirror, shas, batch=60):
+    """Fetch any of `shas` the mirror does not have. Returns the set it now has.
+
+    A force-pushed head is unreachable from `refs/pull/N/head`, so it is missing
+    from a normal clone -- 13.5% of recorded heads here. GitHub still serves those
+    objects by sha, which is what makes replaying a force-pushed head possible at
+    all; without this the ledger's record of them would be discarded.
+    """
+    have = set()
+    check = mirror.git("cat-file", "--batch-check", check=False,
+                       stdin="\n".join(shas))
+    for line in check.stdout.splitlines():
+        parts = line.split()
+        if len(parts) >= 2 and parts[1] == "commit":
+            have.add(parts[0])
+    missing = [sha for sha in shas if sha not in have]
+    if not missing:
+        return have
+    log(f"fetching {len(missing)} head(s) no longer reachable from any PR ref")
+    for start in range(0, len(missing), batch):
+        chunk = missing[start:start + batch]
+        result = mirror.git("fetch", "-q", "--no-tags", "origin", *chunk, check=False)
+        if result.returncode == 0:
+            have.update(chunk)
+        else:
+            # Fetch is all-or-nothing per invocation; retry the chunk one at a time
+            # so a single unavailable object does not discard fifty good ones.
+            for sha in chunk:
+                if mirror.git("fetch", "-q", "--no-tags", "origin", sha,
+                              check=False).returncode == 0:
+                    have.add(sha)
+    return have
+
+
+def pr_epochs(mirror, pr, index, push_window, available):
+    """The heads this PR has had, as [(sha, epoch)], plus actors and provenance.
+
+    Provenance is reported per PR because it decides how much the row is worth:
+
+      "recorded"  every push the ledger holds for this PR is replayable. Head
+                  sequence, times, and actors are records, not inferences.
+      "partial"   some recorded heads could not be fetched, so episodes may be
+                  truncated. Distinguished from "recorded" deliberately: treating
+                  one matching head as full coverage silently dropped the rest.
+      "inferred"  no ledger coverage at all (a PR older than the workflow, or
+                  whose runs aged out). Heads come from commit dates, grouped by
+                  `push_window`; boundaries are guesses and actors are unknown.
+    """
+    number = pr["number"]
+    recorded = pr.get("_pushes") or []
+    if recorded:
+        epochs = [(sha, when) for sha, when in recorded if sha in available]
+        if epochs:
+            actors = {sha: (pr["_ledger"][sha]["actor"] or "") for sha, _ in epochs}
+            return epochs, actors, ("recorded" if len(epochs) == len(recorded)
+                                    else "partial")
     heads = mirror.pr_heads(number)
     if not heads:
         return [], {}, "skipped"
-    pushed = sorted(((sha, ledger[sha][1]) for sha, _ in heads if sha in ledger),
-                    key=lambda row: row[1])
-    if pushed:
-        return pushed, {sha: ledger[sha][0] for sha, _ in pushed}, "pushed"
     epochs = []
     for sha, when in heads:
         if epochs and when - epochs[-1][1] <= push_window:
@@ -334,7 +402,7 @@ def pr_epochs(mirror, number, ledger, push_window):
 
 
 def analyse_pr(mirror, history, history_times, pr, now, session_gap, exhaustive=False,
-               push_window=PUSH_WINDOW_SECONDS, ledger=None):
+               push_window=PUSH_WINDOW_SECONDS, index=None, available=None):
     """Conflict episodes for one PR, its epochs, its actors, and how it was handled.
 
     `handling` is "pushed" or "inferred" per `pr_epochs`, or "skipped" when the PR
@@ -343,7 +411,8 @@ def analyse_pr(mirror, history, history_times, pr, now, session_gap, exhaustive=
     rather than quietly folded into "no conflict", which would flatter the result.
     """
     number = pr["number"]
-    epochs, actors, handling = pr_epochs(mirror, number, ledger or {}, push_window)
+    epochs, actors, handling = pr_epochs(mirror, pr, index or {}, push_window,
+                                         available or set())
     if not epochs:
         return [], handling, [], {}
 
@@ -463,14 +532,14 @@ def cached_ledger(path, start, end):
             with open(path) as handle:
                 rows = json.load(handle)
             log(f"push ledger: {len(rows)} pushed heads from {path}")
-            return {sha: (actor, when) for sha, (actor, when) in rows.items()}
+            return rows
         except (OSError, ValueError, TypeError) as exc:
             log(f"push ledger cache {path} unusable ({exc}); re-reading")
     ledger = push_ledger(start, end)
     if path:
         try:
             with open(path, "w") as handle:
-                json.dump({sha: list(value) for sha, value in ledger.items()}, handle)
+                json.dump(ledger, handle)
         except OSError as exc:
             log(f"could not write the ledger cache {path}: {exc}")
     return ledger
@@ -506,7 +575,8 @@ def push_ledger(start, end):
              f"/repos/{REPO}/actions/workflows/{PUSH_LEDGER_WORKFLOW}/runs"
              f"?per_page=100&event=pull_request_target&created={span}",
              "--jq", '.workflow_runs[] | "\\(.head_sha) \\(.actor.login // '
-                     '.triggering_actor.login // "") \\(.created_at)"'],
+                     '.triggering_actor.login // "-") \\(.created_at) '
+                     '\\(.head_repository.owner.login // "-") \\(.head_branch // "-")"'],
             capture_output=True, text=True)
         if out.returncode != 0:
             log(f"push ledger: {span} unavailable ({out.stderr.strip()}); "
@@ -523,12 +593,14 @@ def push_ledger(start, end):
         if len(rows) >= LISTING_CAP:
             log(f"push ledger: {span} caps out at its smallest slice; it is incomplete")
         for parts in rows:
-            if len(parts) != 3:
+            if len(parts) != 5:
                 continue
             sha, actor, when = parts[0], parts[1], parse_iso(parts[2])
+            owner, branch = parts[3], parts[4]
             # A re-run reuses the sha; the EARLIEST run is the one the push caused.
-            if when is not None and (sha not in ledger or when < ledger[sha][1]):
-                ledger[sha] = (actor, when)
+            if when is not None and (sha not in ledger or when < ledger[sha]["when"]):
+                ledger[sha] = {"actor": actor, "when": when,
+                               "owner": owner, "branch": branch}
     log(f"push ledger: {len(ledger)} pushed heads")
     return ledger
 
@@ -573,13 +645,28 @@ def replay(mirror, prs, jobs, session_gap, now, exhaustive=False,
            push_window=PUSH_WINDOW_SECONDS, ledger=None):
     history = mirror.main_history()
     history_times = [when for _, when, _ in history]
+    ledger = ledger or {}
+    index = ledger_index(ledger)
+
+    # Resolve each PR's recorded pushes first, then fetch in ONE pass every head
+    # object the mirror is missing. Doing it per PR would mean thousands of tiny
+    # fetches; doing it not at all would discard every force-pushed head.
+    wanted = []
+    for pr in prs:
+        created = parse_iso(pr.get("createdAt")) or 0
+        ended = parse_iso(pr["mergedAt"]) or parse_iso(pr["closedAt"]) or now
+        pushes = pr_pushes(pr, index, created, ended)
+        pr["_pushes"], pr["_ledger"] = pushes, ledger
+        wanted.extend(sha for sha, _ in pushes)
+    available = ensure_objects(mirror, sorted(set(wanted))) if wanted else set()
+
     log(f"main has {len(history)} commits; replaying {len(prs)} PR(s) on {jobs} threads"
         + (" (exhaustive)" if exhaustive else ""))
 
     def one(pr):
         try:
             return analyse_pr(mirror, history, history_times, pr, now, session_gap,
-                              exhaustive, push_window, ledger)
+                              exhaustive, push_window, index, available)
         except Exception as exc:
             log(f"PR #{pr['number']}: replay failed ({exc}); skipping")
             return [], "skipped", [], {}
@@ -588,7 +675,7 @@ def replay(mirror, prs, jobs, session_gap, now, exhaustive=False,
         results = list(pool.map(one, prs))
 
     episodes = [row for rows, _, _, _ in results for row in rows]
-    handled = {"pushed": 0, "inferred": 0, "skipped": 0}
+    handled = {}
     for _, handling, _, _ in results:
         if handling:
             handled[handling] = handled.get(handling, 0) + 1
@@ -602,10 +689,11 @@ def summarise(episodes, handled, total_prs):
     conflicted_prs = {e["pr"] for e in episodes}
     lines.append(f"{len(episodes)} conflict episode(s) across {len(conflicted_prs)} "
                  f"of {total_prs} PR(s)")
-    lines.append(f"heads from the push ledger for {handled.get('pushed', 0)} PR(s); "
-                 f"{handled.get('inferred', 0)} inferred from commit dates (boundaries and "
-                 f"actors are guesses there); {handled.get('skipped', 0)} had no replayable "
-                 f"commits")
+    lines.append(
+        f"provenance: {handled.get('recorded', 0)} PR(s) fully recorded in the push ledger, "
+        f"{handled.get('partial', 0)} partially (some recorded heads unfetchable), "
+        f"{handled.get('inferred', 0)} inferred from commit dates (boundaries and actors "
+        f"are guesses there), {handled.get('skipped', 0)} with no replayable commits")
 
     # ONLY a push that made the branch merge again is a resolution. Closing a PR
     # that is still conflicting ends the episode without resolving anything, and

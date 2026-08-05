@@ -148,10 +148,14 @@ python3 scripts/pr_status/conflict_stats.py --exhaustive   # no monotonicity ass
 
 The ledger costs ~100 API reads (the runs listing caps at 1000 per query whatever
 `total_count` says, so it is fetched in date slices that halve on hitting the cap);
-`--ledger-cache` memoises it. Over this repository it covers 1944 of 1974 PRs. The
-remainder fall back to inferring heads from commit dates, are counted separately in
-every run, and have their resolutions attributed to nobody — on that path a commit
-that was never a head can invent an episode or split a real one.
+`--ledger-cache` memoises it. A force-pushed head is recorded there but unreachable
+from `refs/pull/N/head`, so the replay fetches those objects by sha — 1282 of 9477
+here, and ignoring them cost 36 episodes and over half the author-returns.
+
+Provenance is reported per PR and has four values: `recorded` (every recorded push
+replayable), `partial` (some heads unfetchable, so episodes may be truncated),
+`inferred` (no ledger coverage — heads from commit dates, actors unknown), and
+`skipped`. Over this repository: 1946 recorded, 0 partial, 19 inferred, 14 skipped.
 
 Resolutions are bucketed as the author continuing, the author returning,
 *someone else entirely*, or unattributed, and each episode records the measured
