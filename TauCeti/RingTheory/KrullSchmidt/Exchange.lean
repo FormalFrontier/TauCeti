@@ -41,9 +41,9 @@ that the statement does not otherwise need; that is also the form the projection
 explicit complement `S`, rather than deducing one, because that is how it is used: `N` is one
 summand of a second decomposition of `M`, whose other summands supply `S`.
 
-Of `N` the proof needs only that it is nonzero and that `Module.End A N` is local, so those are the
-hypotheses; indecomposability of `N` follows from them
-(`TauCeti.isIndecomposableModule_of_isLocalRing_end`) and is never used.
+Of `N` the proof needs only that `Module.End A N` is local, so that is the hypothesis; it already
+makes `N` nonzero (`TauCeti.nontrivial_of_isLocalRing_end`) and indecomposable
+(`TauCeti.isIndecomposableModule_of_isLocalRing_end`), and indecomposability is never used.
 
 ## References
 
@@ -63,18 +63,19 @@ universe u v w
 variable {A : Type u} {M : Type v} [Ring A] [AddCommGroup M] [Module A M]
 
 /-- **Azumaya's exchange lemma.** Let `M` be the internal direct sum of a finite family `Q` of
-indecomposable submodules, and let `N` be a nonzero direct summand of `M` whose endomorphism ring is
-local. Then `N` is isomorphic to one of the `Q i₀`, and can be exchanged for it: `N` and the
-remaining summands `⨆ j ≠ i₀, Q j` are complementary in `M`.
+indecomposable submodules, and let `N` be a direct summand of `M` whose endomorphism ring is local
+(so in particular `N` is nonzero). Then `N` is isomorphic to one of the `Q i₀`, and can be exchanged
+for it: `N` and the remaining summands `⨆ j ≠ i₀, Q j` are complementary in `M`.
 
 The locality of `Module.End A N` is what Fitting's lemma
 `TauCeti.isLocalRing_end_of_isIndecomposable` supplies when `M` has finite length. -/
 theorem exists_linearEquiv_and_isCompl_biSup_ne
     {ι : Type w} [Finite ι] {Q : ι → Submodule A M} (hQi : iSupIndep Q) (hQt : ⨆ i, Q i = ⊤)
-    (hQind : ∀ i, IsIndecomposableModule A (Q i)) {N S : Submodule A M} [Nontrivial N]
+    (hQind : ∀ i, IsIndecomposableModule A (Q i)) {N S : Submodule A M}
     [IsLocalRing (Module.End A N)] (hNS : IsCompl N S) :
     ∃ i₀ : ι, Nonempty (N ≃ₗ[A] Q i₀) ∧ IsCompl N (⨆ j, ⨆ (_ : j ≠ i₀), Q j) := by
   have _ : Fintype ι := Fintype.ofFinite ι
+  have _ : Nontrivial N := nontrivial_of_isLocalRing_end (A := A)
   set p : M →ₗ[A] N := N.projectionOnto S hNS with hp
   set f : ι → Module.End A N :=
     fun i ↦ (p ∘ₗ (Q i).subtype) ∘ₗ (internalProjection hQi hQt i ∘ₗ N.subtype) with hf

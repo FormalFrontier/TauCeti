@@ -115,7 +115,11 @@ theorem sum_coe_internalProjection [Fintype ι] (hQi : iSupIndep Q) (hQt : ⨆ i
     · simp [internalProjection_apply_of_mem hQi hQt hy]
     · intro j _ hjk
       simp [internalProjection_apply_eq_zero_of_mem_of_ne hQi hQt (Ne.symm hjk) hy]
-  have hx := (show (⊤ : Submodule A M) ≤ _ from hQt ▸ iSup_le hker) (Submodule.mem_top (x := x))
+  have htop : (⊤ : Submodule A M) ≤ LinearMap.ker
+      ((∑ i, (Q i).subtype ∘ₗ internalProjection hQi hQt i) - LinearMap.id) := by
+    rw [← hQt]
+    exact iSup_le hker
+  have hx := htop (Submodule.mem_top (x := x))
   rw [LinearMap.mem_ker, LinearMap.sub_apply, LinearMap.id_apply, LinearMap.sum_apply,
     sub_eq_zero] at hx
   simpa using hx

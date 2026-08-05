@@ -124,9 +124,8 @@ private theorem exists_equiv_linearEquiv_aux :
     rw [hS, ← hPt]
     exact (iSup_split_single P i₀).symm
   -- Exchange it for a summand of the second decomposition; its endomorphism ring is local, which is
-  -- what the exchange lemma asks for, and that already makes it nonzero.
+  -- all the exchange lemma asks for.
   have : IsLocalRing (Module.End A (P i₀)) := hPloc i₀
-  have : Nontrivial (P i₀) := nontrivial_of_isLocalRing_end (A := A)
   obtain ⟨j₀, ⟨e₀⟩, hexch⟩ :=
     exists_linearEquiv_and_isCompl_biSup_ne hQ hQt hQind hcomplP
   set t : Set κ := {j | j ≠ j₀}
