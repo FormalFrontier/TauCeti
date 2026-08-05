@@ -128,11 +128,11 @@ theorem entry_top_eq (P : GTPattern n) (hμ : μ.colLen 0 ≤ n)
 /-! ### From a pattern to a tableau -/
 
 /-- The `(i, c)` entry of the tableau attached to a Gelfand-Tsetlin pattern: the number of rows
-`j < n` of the pattern whose `i`-th entry is at most `c`.  For a nonnegative pattern the counted
-rows form an initial segment, so *when some row `v < n` has `c < λᵢ,ᵥ₊₁`* the count is the least
-such `v`: the cell `(i, c)` first appears in the shape `νᵛ⁺¹` of the chain recorded by the
-pattern, one step further along the chain than the value `v` carried by the cell.  When no row
-does, every row is counted and the entry is `n`. -/
+`j < n` of the pattern whose `i`-th entry is at most `c`.  The counted rows form an initial
+segment, so *when some row `v < n` has `c < λᵢ,ᵥ₊₁`* the count is the least such `v`: the cell
+`(i, c)` first appears in the shape `νᵛ⁺¹` of the chain recorded by the pattern, one step further
+along the chain than the value `v` carried by the cell.  When no row does, every row is counted
+and the entry is `n`. -/
 def tableauEntry (P : GTPattern n) (i c : ℕ) : ℕ :=
   #{j ∈ range n | P i (j + 1) ≤ (c : ℤ)}
 
@@ -145,23 +145,26 @@ theorem tableauEntry_def (P : GTPattern n) (i c : ℕ) :
   (rfl)
 
 /-- **The tableau entry, read off the pattern**: `j < T i c` exactly when `j < n` and the `i`-th
-entry of row `j + 1` is at most `c`.  The `i`-th entries of a pattern with a nonnegative `i`-th
-column increase weakly with the row index, so the condition is downward closed in `j` and the
-count is an initial segment. -/
-theorem lt_tableauEntry_iff (P : GTPattern n) {i : ℕ} (hnn : ∀ j, 0 ≤ P i j) {c j : ℕ} :
+entry of row `j + 1` is at most `c`.  The `i`-th entries of a pattern increase weakly with the row
+index on the informative cells and vanish on the rest, where the bound holds anyway since `c` is a
+natural number, so the condition is downward closed in `j` and the count is an initial segment. -/
+theorem lt_tableauEntry_iff (P : GTPattern n) {i c j : ℕ} :
     j < P.tableauEntry i c ↔ j < n ∧ P i (j + 1) ≤ (c : ℤ) :=
-  lt_card_filter_range_iff fun x _ hxy hx hpx =>
-    (P.entry_le_entry_of_nonneg_of_le (hnn (x + 1)) (by omega) (by omega)).trans hpx
+  lt_card_filter_range_iff fun x y hxy hx hpx => by
+    rcases Nat.lt_or_ge i (y + 1) with hi | hi
+    · exact (P.entry_le_entry_of_le hi (by omega) (by omega)).trans hpx
+    · rw [P.entry_eq_zero_of_le hi]
+      exact Int.natCast_nonneg c
 
 /-- Tableau entries are bounded by the number of rows of the pattern: a cell strictly inside the
 top row is reached before the last shape of the chain. -/
-theorem tableauEntry_lt (P : GTPattern n) {i : ℕ} (hnn : ∀ j, 0 ≤ P i j) {c : ℕ}
-    (hc : (c : ℤ) < P i n) : P.tableauEntry i c < n := by
+theorem tableauEntry_lt (P : GTPattern n) {i c : ℕ} (hc : (c : ℤ) < P i n) :
+    P.tableauEntry i c < n := by
   rcases Nat.eq_zero_or_pos n with rfl | hn
   · rw [P.entry_eq_zero_of_le (Nat.zero_le i)] at hc
     omega
   · by_contra h
-    obtain ⟨-, hle⟩ := (P.lt_tableauEntry_iff hnn (c := c) (j := n - 1)).mp (by omega)
+    obtain ⟨-, hle⟩ := (P.lt_tableauEntry_iff (i := i) (c := c) (j := n - 1)).mp (by omega)
     rw [Nat.sub_add_cancel hn] at hle
     omega
 
@@ -175,28 +178,28 @@ theorem tableauEntry_mono (P : GTPattern n) (i : ℕ) {c c' : ℕ} (h : c ≤ c'
 /-- Tableau entries increase strictly down a column, one step: the count `m` for row `i` is beaten
 by the count for row `i + 1`, because the second interlacing inequality carries each of the `m`
 rows witnessing the bound for row `i` one step up, while row `1` supplies a further witness. -/
-theorem tableauEntry_lt_tableauEntry_succ (P : GTPattern n) (hnn : ∀ i j, 0 ≤ P i j) {i c : ℕ}
+theorem tableauEntry_lt_tableauEntry_succ (P : GTPattern n) {i c : ℕ}
     (hlt : P.tableauEntry i c < n) :
     P.tableauEntry i c < P.tableauEntry (i + 1) c := by
-  refine (P.lt_tableauEntry_iff (hnn (i + 1))).mpr ⟨hlt, ?_⟩
+  refine P.lt_tableauEntry_iff.mpr ⟨hlt, ?_⟩
   rcases Nat.eq_zero_or_pos (P.tableauEntry i c) with h0 | hpos
   · rw [h0, P.entry_eq_zero_of_le (show 0 + 1 ≤ i + 1 by omega)]
     exact Int.natCast_nonneg c
   · obtain ⟨k, hk⟩ : ∃ k, P.tableauEntry i c = k + 1 := ⟨_, (Nat.succ_pred_eq_of_pos hpos).symm⟩
-    obtain ⟨-, hle⟩ := (P.lt_tableauEntry_iff (hnn i) (c := c) (j := k)).mp (by omega)
+    obtain ⟨-, hle⟩ := (P.lt_tableauEntry_iff (i := i) (c := c) (j := k)).mp (by omega)
     rw [hk]
     exact (P.entry_succ_succ_le_entry (show k + 1 < n by omega)).trans hle
 
 /-- Tableau entries increase strictly down a column. -/
-theorem tableauEntry_lt_tableauEntry (P : GTPattern n) (hnn : ∀ i j, 0 ≤ P i j) {c : ℕ} :
+theorem tableauEntry_lt_tableauEntry (P : GTPattern n) {c : ℕ} :
     ∀ {i₁ i₂ : ℕ}, i₁ < i₂ → (∀ i ≤ i₂, P.tableauEntry i c < n) →
       P.tableauEntry i₁ c < P.tableauEntry i₂ c := by
   intro i₁ i₂ h
   induction i₂, h using Nat.le_induction with
-  | base => exact fun hlt => P.tableauEntry_lt_tableauEntry_succ hnn (hlt i₁ (by omega))
+  | base => exact fun hlt => P.tableauEntry_lt_tableauEntry_succ (hlt i₁ (by omega))
   | succ k _ ih =>
     exact fun hlt => (ih fun i hi => hlt i (by omega)).trans
-      (P.tableauEntry_lt_tableauEntry_succ hnn (hlt k (by omega)))
+      (P.tableauEntry_lt_tableauEntry_succ (hlt k (by omega)))
 
 /-- **The semistandard Young tableau of a Gelfand-Tsetlin pattern** whose top row is the shape
 `μ`: the cell `(i, c)` carries the entry `j` for which `νʲ⁺¹` is the first shape in the chain that
@@ -209,9 +212,9 @@ def toTableau (P : GTPattern n) (hμ : μ.colLen 0 ≤ n)
     exact P.tableauEntry_mono i hc.le
   col_strict' {i₁ i₂ c} hi hcell := by
     rw [if_pos (μ.up_left_mem hi.le le_rfl hcell), if_pos hcell]
-    refine P.tableauEntry_lt_tableauEntry (P.entry_nonneg_of_topRow hP) hi fun i hi' => ?_
+    refine P.tableauEntry_lt_tableauEntry hi fun i hi' => ?_
     have hcell' : (i, c) ∈ μ := μ.up_left_mem hi' le_rfl hcell
-    refine P.tableauEntry_lt (P.entry_nonneg_of_topRow hP i) ?_
+    refine P.tableauEntry_lt ?_
     rw [P.entry_top_eq hμ hP]
     exact_mod_cast YoungDiagram.mem_iff_lt_rowLen.mp hcell'
   zeros' h := if_neg h
@@ -235,7 +238,7 @@ theorem toTableau_lt (P : GTPattern n) (hμ : μ.colLen 0 ≤ n)
     (hP : ∀ i : Fin n, P.topRow i = (μ.rowLen i : ℤ)) {i c : ℕ} (h : (i, c) ∈ μ) :
     P.toTableau hμ hP i c < n := by
   rw [P.toTableau_apply_of_mem hμ hP h]
-  refine P.tableauEntry_lt (P.entry_nonneg_of_topRow hP i) ?_
+  refine P.tableauEntry_lt ?_
   rw [P.entry_top_eq hμ hP]
   exact_mod_cast YoungDiagram.mem_iff_lt_rowLen.mp h
 
@@ -248,7 +251,7 @@ theorem toTableau_lt_iff (P : GTPattern n) (hμ : μ.colLen 0 ≤ n)
   cases j with
   | zero => simp [P.entry_eq_zero_of_le (Nat.zero_le i)]
   | succ k =>
-    rw [Nat.lt_succ_iff, ← Nat.not_lt, P.lt_tableauEntry_iff (P.entry_nonneg_of_topRow hP i)]
+    rw [Nat.lt_succ_iff, ← Nat.not_lt, P.lt_tableauEntry_iff]
     simp only [show k < n by omega, true_and, not_le]
 
 end GTPattern
