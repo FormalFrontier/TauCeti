@@ -44,7 +44,8 @@ The range statement follows from compactness: the image of `Icc a b`, the closur
 is the closure of the image of `Ioo a b`. This construction does not need injectivity. When `f`
 is injective on the disc, a companion theorem also places the endpoints on the image frontier and
 shows that only the two endpoints can be identified. Interior injectivity uses only the
-injectivity of `f`, Mathlib's `Complex.eq_of_circleMap_eq`, and the fact that `b - a < 2π`.
+injectivity of `f`, Mathlib's `Complex.injOn_circleMap_of_abs_sub_le`, and the fact that
+`b - a < 2π`.
 
 ## Main result
 
@@ -337,10 +338,10 @@ theorem exists_path_range_eq_closure_image_ball_inter_sphere_of_injOn
       exact ⟨_, hyIoo, rfl⟩
     rw [hγformula' x hx, hγformula' y hy] at hxy
     have hcircle := hinj hxcross.1 hycross.1 hxy
-    have hangle : AffineMap.lineMap a b (x : ℝ) = AffineMap.lineMap a b (y : ℝ) := by
-      apply eq_of_circleMap_eq hρ.ne' _ hcircle
-      rw [abs_lt]
-      constructor <;> linarith [hab2π, hxIoo.1, hxIoo.2, hyIoo.1, hyIoo.2]
+    have hangle := injOn_circleMap_of_abs_sub_le (c := ζ) hρ.ne'
+      (by rw [abs_sub_comm, abs_of_pos (sub_pos.mpr hab)]; exact hab2π.le)
+      (by rw [uIoc_of_le hab.le]; exact ⟨hxIoo.1, hxIoo.2.le⟩)
+      (by rw [uIoc_of_le hab.le]; exact ⟨hyIoo.1, hyIoo.2.le⟩) hcircle
     exact Subtype.ext ((AffineMap.lineMap_injective ℝ hab.ne) hangle)
   have hγzero : γ 0 ∈ frontier (f '' ball c r) := by
     simpa only [Path.source] using hufrontier
