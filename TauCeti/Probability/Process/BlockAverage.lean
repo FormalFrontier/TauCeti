@@ -5,9 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.Algebra.BigOperators.Expect
-public import Mathlib.Algebra.Order.Field.Basic
 public import Mathlib.Data.Real.Basic
-public import Mathlib.Algebra.Order.BigOperators.Ring.Finset
 
 /-!
 # Block averages of a real-valued process
