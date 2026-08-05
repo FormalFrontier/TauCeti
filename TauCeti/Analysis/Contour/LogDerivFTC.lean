@@ -39,6 +39,9 @@ contour.
 
 ## Main results
 
+* `TauCeti.Contour.analyticAt_logDeriv_of_analyticAt` — `logDeriv f` is analytic wherever `f` is
+  analytic and nonzero; the regularity input shared by the results below and by the argument
+  principle.
 * `TauCeti.Contour.integral_deriv_div_eq_log_sub_log` — the slit-plane logarithmic-derivative FTC in
   general `f' / f` form.
 * `TauCeti.Contour.integral_deriv_div_sub_eq_log` — its contour specialization to
@@ -118,19 +121,27 @@ theorem integral_inv_sub_mul_deriv_eq_log {γ : ℝ → ℂ} {w : ℂ} {a b : �
   exact integral_deriv_div_sub_eq_log (γ' := deriv γ) hP hγ_cont
     (fun t ht ↦ (hγ_diff t ht).hasDerivAt) h_slit (by simpa only [inv_mul_eq_div] using h_int)
 
-/-- The argument-principle integrand `deriv γ • (logDeriv h ∘ γ)` is interval-integrable when `h`
-is analytic and zero-free along a piecewise-`C¹` curve. All this lemma contributes is the
-continuity of `logDeriv h` on the curve image; the integrand is then assembled by
-`TauCeti.Contour.IsPiecewiseC1On.intervalIntegrable_deriv_smul_comp`. -/
+/-- At a point where a function is analytic and non-vanishing, its logarithmic derivative
+`logDeriv f = deriv f / f` is analytic. This is the regularity input for every integrability and
+residue statement about a logarithmic-derivative integrand, from the interval-integrability lemma
+below to the residue form of the argument principle
+(`TauCeti.Contour.residue_logDeriv_eq_meromorphicOrderAt`). -/
+lemma analyticAt_logDeriv_of_analyticAt {f : ℂ → ℂ} {z : ℂ} (hf : AnalyticAt ℂ f z)
+    (hz : f z ≠ 0) : AnalyticAt ℂ (logDeriv f) z := by
+  rw [logDeriv]
+  exact hf.deriv.div hf hz
+
+/-- The argument-principle integrand `deriv γ • (logDeriv h ∘ γ)` is interval-integrable along a
+piecewise-`C¹` curve `γ` on which `h` is analytic and zero-free. This supplies the integrability
+hypothesis of the logarithmic-derivative contour results — `IntervalIntegrable` is what
+`integral_deriv_div_eq_log_sub_log` and its specializations ask of the integrand. -/
 theorem intervalIntegrable_deriv_smul_logDeriv {γ : ℝ → ℂ} {h : ℂ → ℂ} {a b : ℝ}
     (hγ : IsPiecewiseC1On γ a b) (hh : ∀ t ∈ uIcc a b, AnalyticAt ℂ h (γ t))
     (hne : ∀ t ∈ uIcc a b, h (γ t) ≠ 0) :
     IntervalIntegrable (fun t ↦ deriv γ t • logDeriv h (γ t)) volume a b := by
   refine hγ.intervalIntegrable_deriv_smul_comp ?_
   rintro _ ⟨t, ht, rfl⟩
-  refine ContinuousAt.continuousWithinAt ?_
-  have h' := ((hh t ht).deriv.continuousAt).div (hh t ht).continuousAt (hne t ht)
-  simpa only [logDeriv] using h'
+  exact (analyticAt_logDeriv_of_analyticAt (hh t ht) (hne t ht)).continuousAt.continuousWithinAt
 
 /-- **A slit-plane-valued function has a single-valued logarithm along a closed curve.** If `h` is
 analytic along a closed piecewise-`C¹` curve `γ` and takes its values there in
