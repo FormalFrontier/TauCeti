@@ -4,11 +4,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
--- Both imports are public: `TestFunction` supplies `𝓓(Ω, ℝ)`, `Opens`, `lineDeriv` and
--- `LocallyIntegrableOn`, and the Bochner integral supplies the `∫ … ∂μ` appearing in every
--- statement below.
+-- This import is public: `TestFunction` supplies `𝓓(Ω, ℝ)`, `Opens`, `lineDeriv`,
+-- `LocallyIntegrableOn` and the Bochner integral `∫ … ∂μ` appearing in every statement below.
 public import Mathlib.Analysis.Distribution.TestFunction
-public import Mathlib.MeasureTheory.Integral.Bochner.Basic
 -- The next two imports are private: integration by parts is used only to prove that a classical
 -- derivative is a weak one, and the fundamental lemma of the calculus of variations only to prove
 -- uniqueness, so downstream importers pay for neither.
@@ -65,7 +63,7 @@ corner in `TestFunction.integralAgainstBilinCLM`, which pairs against a function
 locally integrable on `Ω` and is the zero map otherwise.
 
 The three components are projected out by `TauCeti.HasWeakLineDerivOn.locallyIntegrableOn`,
-`TauCeti.HasWeakLineDerivOn.locallyIntegrableOn'` and
+`TauCeti.HasWeakLineDerivOn.locallyIntegrableOn_deriv` and
 `TauCeti.HasWeakLineDerivOn.integral_lineDeriv_smul_eq_neg_integral_smul`, so a proof never has to
 unfold the definition.
 
@@ -74,8 +72,8 @@ unfold the definition.
 The defining identity is *not* the distributional derivative for an arbitrary `μ`, and is not
 advertised as one. Integrating against `μ` produces the adjoint of `∂_v` relative to `μ`: for a
 weighted `μ = volume.withDensity w`, the identity reads `∂_v (w • u) = w • u'` in the sense of
-distributions, so differentiating the weight contributes the extra term `u • ∂_v w`, and a
-constant `u` then has weak derivative `u • ∂_v w / w` rather than `0`. Exactly when `μ` is
+distributions, a condition on `u` and `u'` in which the weight cannot be cancelled: it constrains
+`w • u'`, not `u'`, so a constant `u` need not have weak derivative `0`. Exactly when `μ` is
 translation invariant — an additive Haar measure, hence a positive multiple of Lebesgue measure
 on a finite-dimensional `E` — does the identity say that `u'` represents `∂_v u` as a
 distribution on `Ω`, and that is the `μ` out of which `W^{k,p}(Ω)` will be built.
@@ -96,7 +94,7 @@ weaken them for no gain.
   relative to `μ`.
 * `TauCeti.HasWeakFDerivOn`: `U` is a weak (Fréchet) derivative of `u` on `Ω`.
 * `TauCeti.HasWeakLineDerivOn.locallyIntegrableOn`,
-  `TauCeti.HasWeakLineDerivOn.locallyIntegrableOn'` and
+  `TauCeti.HasWeakLineDerivOn.locallyIntegrableOn_deriv` and
   `TauCeti.HasWeakLineDerivOn.integral_lineDeriv_smul_eq_neg_integral_smul`: the three components
   of the definition.
 * `TauCeti.hasWeakLineDerivOn_iff`: the unbundled restatement of the defining identity.
@@ -105,9 +103,11 @@ weaken them for no gain.
   make the defining integrals honest.
 * `TauCeti.HasWeakLineDerivOn.mono` and `TauCeti.HasWeakFDerivOn.mono`: a weak derivative on `Ω`
   is one on every smaller open set.
-* `TauCeti.HasWeakLineDerivOn.congr_ae` and `TauCeti.HasWeakLineDerivOn.congr_ae'`: the notion
-  only sees `u` and `u'` up to almost-everywhere equality on `Ω`.
-* `TauCeti.HasWeakLineDerivOn.add`, `.neg`, `.sub`, `.const_smul`: linearity in the function.
+* `TauCeti.HasWeakLineDerivOn.congr_ae` and `.congr_ae_deriv`, together with their
+  `TauCeti.HasWeakFDerivOn` counterparts: the notion only sees the function and its weak
+  derivative up to almost-everywhere equality on `Ω`.
+* `TauCeti.HasWeakLineDerivOn.add`, `.neg`, `.sub`, `.const_smul` and their
+  `TauCeti.HasWeakFDerivOn` counterparts: linearity in the function.
 * `TauCeti.HasWeakLineDerivOn.add_direction` and `.smul_direction`: linearity in the direction,
   which is what makes the `TauCeti.HasWeakFDerivOn` packaging the right one.
 * `TauCeti.hasWeakLineDerivOn_of_hasLineDerivAt` and
@@ -173,7 +173,7 @@ theorem HasWeakLineDerivOn.locallyIntegrableOn (h : HasWeakLineDerivOn μ Ω u u
     LocallyIntegrableOn u Ω μ := h.1
 
 /-- A weak derivative on `Ω` is locally integrable on `Ω`. -/
-theorem HasWeakLineDerivOn.locallyIntegrableOn' (h : HasWeakLineDerivOn μ Ω u u' v) :
+theorem HasWeakLineDerivOn.locallyIntegrableOn_deriv (h : HasWeakLineDerivOn μ Ω u u' v) :
     LocallyIntegrableOn u' Ω μ := h.2.1
 
 /-- The integration-by-parts identity defining a weak derivative. -/
@@ -209,7 +209,7 @@ theorem hasWeakLineDerivOn_iff (hu : LocallyIntegrableOn u Ω μ)
 differentiability is a local notion. -/
 theorem HasWeakLineDerivOn.mono {Ω' : Opens E} (h : HasWeakLineDerivOn μ Ω u u' v) (hΩ : Ω' ≤ Ω) :
     HasWeakLineDerivOn μ Ω' u u' v :=
-  ⟨h.locallyIntegrableOn.mono_set hΩ, h.locallyIntegrableOn'.mono_set hΩ, fun φ =>
+  ⟨h.locallyIntegrableOn.mono_set hΩ, h.locallyIntegrableOn_deriv.mono_set hΩ, fun φ =>
     h.integral_lineDeriv_smul_eq_neg_integral_smul
       ⟨φ, φ.contDiff, φ.hasCompactSupport, φ.tsupport_subset.trans hΩ⟩⟩
 
@@ -224,16 +224,24 @@ theorem HasWeakFDerivOn.hasWeakLineDerivOn {U : E → E →L[ℝ] F} (h : HasWea
 /-- Weak differentiation commutes with negation. -/
 theorem HasWeakLineDerivOn.neg (h : HasWeakLineDerivOn μ Ω u u' v) :
     HasWeakLineDerivOn μ Ω (-u) (-u') v := by
-  refine ⟨h.locallyIntegrableOn.neg, h.locallyIntegrableOn'.neg, fun φ => ?_⟩
+  refine ⟨h.locallyIntegrableOn.neg, h.locallyIntegrableOn_deriv.neg, fun φ => ?_⟩
   simp only [Pi.neg_apply, smul_neg, integral_neg,
     h.integral_lineDeriv_smul_eq_neg_integral_smul φ, neg_neg]
+
+/-- Weak Fréchet differentiation commutes with negation. -/
+theorem HasWeakFDerivOn.neg {U : E → E →L[ℝ] F} (h : HasWeakFDerivOn μ Ω u U) :
+    HasWeakFDerivOn μ Ω (-u) (-U) := fun v => (h v).neg
 
 /-- Weak differentiation commutes with multiplication by a real scalar. -/
 theorem HasWeakLineDerivOn.const_smul (h : HasWeakLineDerivOn μ Ω u u' v) (c : ℝ) :
     HasWeakLineDerivOn μ Ω (c • u) (c • u') v := by
-  refine ⟨h.locallyIntegrableOn.smul c, h.locallyIntegrableOn'.smul c, fun φ => ?_⟩
+  refine ⟨h.locallyIntegrableOn.smul c, h.locallyIntegrableOn_deriv.smul c, fun φ => ?_⟩
   simp only [Pi.smul_apply, smul_comm _ c, integral_smul,
     h.integral_lineDeriv_smul_eq_neg_integral_smul φ, smul_neg]
+
+/-- Weak Fréchet differentiation commutes with multiplication by a real scalar. -/
+theorem HasWeakFDerivOn.const_smul {U : E → E →L[ℝ] F} (h : HasWeakFDerivOn μ Ω u U) (c : ℝ) :
+    HasWeakFDerivOn μ Ω (c • u) (c • U) := fun v => (h v).const_smul c
 
 end Defs
 
@@ -264,7 +272,7 @@ theorem integrable_lineDeriv_smul_of_locallyIntegrableOn {w : E → F}
 derivative: only the restriction of `u` to `Ω` is seen. -/
 theorem HasWeakLineDerivOn.congr_ae {w : E → F} (h : HasWeakLineDerivOn μ Ω u u' v)
     (hw : u =ᵐ[μ.restrict Ω] w) : HasWeakLineDerivOn μ Ω w u' v := by
-  refine ⟨h.locallyIntegrableOn.congr hw, h.locallyIntegrableOn', fun φ => ?_⟩
+  refine ⟨h.locallyIntegrableOn.congr hw, h.locallyIntegrableOn_deriv, fun φ => ?_⟩
   rw [← h.integral_lineDeriv_smul_eq_neg_integral_smul φ]
   refine integral_congr_ae ?_
   filter_upwards [(ae_restrict_iff' Ω.isOpen.measurableSet).1 hw] with x hx
@@ -275,9 +283,9 @@ theorem HasWeakLineDerivOn.congr_ae {w : E → F} (h : HasWeakLineDerivOn μ Ω 
 
 /-- Replacing `u'` by a function agreeing with it almost everywhere on `Ω` preserves the weak
 derivative. -/
-theorem HasWeakLineDerivOn.congr_ae' {w : E → F} (h : HasWeakLineDerivOn μ Ω u u' v)
+theorem HasWeakLineDerivOn.congr_ae_deriv {w : E → F} (h : HasWeakLineDerivOn μ Ω u u' v)
     (hw : u' =ᵐ[μ.restrict Ω] w) : HasWeakLineDerivOn μ Ω u w v := by
-  refine ⟨h.locallyIntegrableOn, h.locallyIntegrableOn'.congr hw, fun φ => ?_⟩
+  refine ⟨h.locallyIntegrableOn, h.locallyIntegrableOn_deriv.congr hw, fun φ => ?_⟩
   rw [h.integral_lineDeriv_smul_eq_neg_integral_smul φ]
   congr 1
   refine integral_congr_ae ?_
@@ -286,6 +294,17 @@ theorem HasWeakLineDerivOn.congr_ae' {w : E → F} (h : HasWeakLineDerivOn μ Ω
   · rw [hx hxΩ]
   · rw [image_eq_zero_of_notMem_tsupport (fun h' => hxΩ (φ.tsupport_subset h'))]
     simp
+
+/-- Replacing `u` by a function agreeing with it almost everywhere on `Ω` preserves the weak
+Fréchet derivative. -/
+theorem HasWeakFDerivOn.congr_ae {U : E → E →L[ℝ] F} {w : E → F} (h : HasWeakFDerivOn μ Ω u U)
+    (hw : u =ᵐ[μ.restrict Ω] w) : HasWeakFDerivOn μ Ω w U := fun v => (h v).congr_ae hw
+
+/-- Replacing `U` by a map agreeing with it almost everywhere on `Ω` preserves the weak Fréchet
+derivative. -/
+theorem HasWeakFDerivOn.congr_ae_deriv {U W : E → E →L[ℝ] F} (h : HasWeakFDerivOn μ Ω u U)
+    (hW : U =ᵐ[μ.restrict Ω] W) : HasWeakFDerivOn μ Ω u W := fun v =>
+  (h v).congr_ae_deriv (hW.mono fun _ hx => congrArg (· v) hx)
 
 end Integrability
 
@@ -300,7 +319,7 @@ theorem HasWeakLineDerivOn.add {u₁ u₁' u₂ u₂' : E → F} (h₁ : HasWeak
     (h₂ : HasWeakLineDerivOn μ Ω u₂ u₂' v) :
     HasWeakLineDerivOn μ Ω (u₁ + u₂) (u₁' + u₂') v := by
   refine ⟨h₁.locallyIntegrableOn.add h₂.locallyIntegrableOn,
-    h₁.locallyIntegrableOn'.add h₂.locallyIntegrableOn', fun φ => ?_⟩
+    h₁.locallyIntegrableOn_deriv.add h₂.locallyIntegrableOn_deriv, fun φ => ?_⟩
   have hleft : ∫ x, lineDeriv ℝ (φ : E → ℝ) x v • (u₁ + u₂) x ∂μ =
       (∫ x, lineDeriv ℝ (φ : E → ℝ) x v • u₁ x ∂μ) +
         ∫ x, lineDeriv ℝ (φ : E → ℝ) x v • u₂ x ∂μ := by
@@ -311,8 +330,8 @@ theorem HasWeakLineDerivOn.add {u₁ u₁' u₂ u₂' : E → F} (h₁ : HasWeak
   have hright : ∫ x, (φ : E → ℝ) x • (u₁' + u₂') x ∂μ =
       (∫ x, (φ : E → ℝ) x • u₁' x ∂μ) + ∫ x, (φ : E → ℝ) x • u₂' x ∂μ := by
     simp only [Pi.add_apply, smul_add]
-    exact integral_add (integrable_smul_of_locallyIntegrableOn h₁.locallyIntegrableOn' φ)
-      (integrable_smul_of_locallyIntegrableOn h₂.locallyIntegrableOn' φ)
+    exact integral_add (integrable_smul_of_locallyIntegrableOn h₁.locallyIntegrableOn_deriv φ)
+      (integrable_smul_of_locallyIntegrableOn h₂.locallyIntegrableOn_deriv φ)
   rw [hleft, hright, h₁.integral_lineDeriv_smul_eq_neg_integral_smul φ,
     h₂.integral_lineDeriv_smul_eq_neg_integral_smul φ, neg_add]
 
@@ -322,6 +341,16 @@ theorem HasWeakLineDerivOn.sub {u₁ u₁' u₂ u₂' : E → F} (h₁ : HasWeak
     HasWeakLineDerivOn μ Ω (u₁ - u₂) (u₁' - u₂') v := by
   simpa [sub_eq_add_neg] using h₁.add h₂.neg
 
+/-- Weak Fréchet differentiation is additive. -/
+theorem HasWeakFDerivOn.add {u₁ u₂ : E → F} {U₁ U₂ : E → E →L[ℝ] F}
+    (h₁ : HasWeakFDerivOn μ Ω u₁ U₁) (h₂ : HasWeakFDerivOn μ Ω u₂ U₂) :
+    HasWeakFDerivOn μ Ω (u₁ + u₂) (U₁ + U₂) := fun v => (h₁ v).add (h₂ v)
+
+/-- Weak Fréchet differentiation is compatible with subtraction. -/
+theorem HasWeakFDerivOn.sub {u₁ u₂ : E → F} {U₁ U₂ : E → E →L[ℝ] F}
+    (h₁ : HasWeakFDerivOn μ Ω u₁ U₁) (h₂ : HasWeakFDerivOn μ Ω u₂ U₂) :
+    HasWeakFDerivOn μ Ω (u₁ - u₂) (U₁ - U₂) := fun v => (h₁ v).sub (h₂ v)
+
 /-- The weak derivative is additive in the direction of differentiation. Together with
 `TauCeti.HasWeakLineDerivOn.smul_direction` this is what makes packaging the directional weak
 derivatives into a single continuous linear map, as `TauCeti.HasWeakFDerivOn` does, the right
@@ -330,7 +359,7 @@ theorem HasWeakLineDerivOn.add_direction {u u₁' u₂' : E → F} {v₁ v₂ : 
     (h₁ : HasWeakLineDerivOn μ Ω u u₁' v₁) (h₂ : HasWeakLineDerivOn μ Ω u u₂' v₂) :
     HasWeakLineDerivOn μ Ω u (u₁' + u₂') (v₁ + v₂) := by
   refine ⟨h₁.locallyIntegrableOn,
-    h₁.locallyIntegrableOn'.add h₂.locallyIntegrableOn', fun φ => ?_⟩
+    h₁.locallyIntegrableOn_deriv.add h₂.locallyIntegrableOn_deriv, fun φ => ?_⟩
   have hφd : Differentiable ℝ (φ : E → ℝ) := φ.contDiff.differentiable (by simp)
   have hsplit : ∀ x, lineDeriv ℝ (φ : E → ℝ) x (v₁ + v₂) =
       lineDeriv ℝ (φ : E → ℝ) x v₁ + lineDeriv ℝ (φ : E → ℝ) x v₂ := by
@@ -346,8 +375,8 @@ theorem HasWeakLineDerivOn.add_direction {u u₁' u₂' : E → F} {v₁ v₂ : 
   have hright : ∫ x, (φ : E → ℝ) x • (u₁' + u₂') x ∂μ =
       (∫ x, (φ : E → ℝ) x • u₁' x ∂μ) + ∫ x, (φ : E → ℝ) x • u₂' x ∂μ := by
     simp only [Pi.add_apply, smul_add]
-    exact integral_add (integrable_smul_of_locallyIntegrableOn h₁.locallyIntegrableOn' φ)
-      (integrable_smul_of_locallyIntegrableOn h₂.locallyIntegrableOn' φ)
+    exact integral_add (integrable_smul_of_locallyIntegrableOn h₁.locallyIntegrableOn_deriv φ)
+      (integrable_smul_of_locallyIntegrableOn h₂.locallyIntegrableOn_deriv φ)
   rw [hleft, hright, h₁.integral_lineDeriv_smul_eq_neg_integral_smul φ,
     h₂.integral_lineDeriv_smul_eq_neg_integral_smul φ, neg_add]
 
@@ -362,7 +391,7 @@ variable [MeasurableSpace E] {μ : Measure E} {u u' : E → F}
 /-- The weak derivative is homogeneous in the direction of differentiation. -/
 theorem HasWeakLineDerivOn.smul_direction (h : HasWeakLineDerivOn μ Ω u u' v) (c : ℝ) :
     HasWeakLineDerivOn μ Ω u (c • u') (c • v) := by
-  refine ⟨h.locallyIntegrableOn, h.locallyIntegrableOn'.smul c, fun φ => ?_⟩
+  refine ⟨h.locallyIntegrableOn, h.locallyIntegrableOn_deriv.smul c, fun φ => ?_⟩
   have hφd : Differentiable ℝ (φ : E → ℝ) := φ.contDiff.differentiable (by simp)
   have hsmul : ∀ x, lineDeriv ℝ (φ : E → ℝ) x (c • v) = c * lineDeriv ℝ (φ : E → ℝ) x v := by
     intro x
@@ -402,8 +431,7 @@ theorem hasWeakLineDerivOn_of_hasLineDerivAt (hu : LocallyIntegrableOn u Ω μ)
     (by simpa using integrable_lineDeriv_smul_of_locallyIntegrableOn hu φ v)
     (by simpa using integrable_smul_of_locallyIntegrableOn hu φ)
     (fun x hx => h x (φ.tsupport_subset hx))
-    (fun x _ => ((hφd x).hasFDerivAt.hasLineDerivAt v).lineDeriv ▸
-      (hφd x).hasFDerivAt.hasLineDerivAt v)
+    (fun x _ => (hφd x).lineDifferentiableAt.hasLineDerivAt)
   simpa using key
 
 /-- A constant function has weak derivative `0` in every direction, for `μ` an additive Haar
@@ -445,8 +473,8 @@ against every test function supported in `Ω`, and both are locally integrable o
 is part of `TauCeti.HasWeakLineDerivOn`. -/
 theorem HasWeakLineDerivOn.ae_eq {u₁' u₂' : E → F} (h₁ : HasWeakLineDerivOn μ Ω u u₁' v)
     (h₂ : HasWeakLineDerivOn μ Ω u u₂' v) : u₁' =ᵐ[μ.restrict Ω] u₂' := by
-  have hu₁ := h₁.locallyIntegrableOn'
-  have hu₂ := h₂.locallyIntegrableOn'
+  have hu₁ := h₁.locallyIntegrableOn_deriv
+  have hu₂ := h₂.locallyIntegrableOn_deriv
   have key : ∀ φ : E → ℝ, ContDiff ℝ ∞ φ → HasCompactSupport φ → tsupport φ ⊆ (Ω : Set E) →
       ∫ x, φ x • (u₁' - u₂') x ∂μ = 0 := by
     intro φ hφ hφc hφs
