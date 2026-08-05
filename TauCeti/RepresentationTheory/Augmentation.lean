@@ -24,20 +24,18 @@ the symmetric group in `TauCeti.RepresentationTheory.Symmetric.Standard` is the 
 
 ## Main definitions
 
-* `TauCeti.coeffSum`: the augmentation of `k[X]`, the linear map summing all coefficients.
 * `TauCeti.permutationSum`: the sum of the standard basis of `k[X]`, for a finite `X`.
 * `TauCeti.invariantLine`: the line spanned by `TauCeti.permutationSum`, as a subrepresentation.
-* `TauCeti.augmentationSubrepresentation`: the kernel of `TauCeti.coeffSum`, as a
-  subrepresentation.
+* `TauCeti.augmentationSubrepresentation`: the kernel of the augmentation, as a subrepresentation.
 
 ## Main results
 
-* `TauCeti.coeffSum_ofMulAction`: the augmentation is invariant, which is what makes both
+* `TauCeti.sumCoords_basis_ofMulAction`: the augmentation is invariant, which is what makes both
   subrepresentations subrepresentations.
 * `TauCeti.toRepresentation_invariantLine`: the invariant line carries the trivial representation,
   and `TauCeti.finrank_invariantLine` says it is a line.
-* `TauCeti.ker_coeffSum_eq_span`: the augmentation subrepresentation is spanned by the differences
-  of the standard basis vectors from a fixed one.
+* `TauCeti.ker_sumCoords_basis_eq_span`: the augmentation subrepresentation is spanned by the
+  differences of the standard basis vectors from a fixed one.
 * `TauCeti.isCompl_invariantLine_augmentationSubrepresentation`: when `|X|` is invertible in `k`
   the two subrepresentations are complementary.
 * `TauCeti.finrank_augmentationSubrepresentation`: the augmentation subrepresentation has
@@ -45,9 +43,10 @@ the symmetric group in `TauCeti.RepresentationTheory.Symmetric.Standard` is the 
 
 ## Implementation notes
 
-The augmentation here is a `k`-linear map on the free module `k[X]` of an arbitrary index type `X`,
-because that is what a permutation representation acts on.  It is therefore *not* an instance of
-`TauCeti.MonoidAlgebra.augmentation` of `TauCeti.Algebra.MonoidAlgebra.Exactness`, which is the
+The augmentation used here is Mathlib's `Module.Basis.sumCoords` of the standard basis
+`MonoidAlgebra.basis X k`, a `k`-linear map on the free module `k[X]` of an arbitrary index type
+`X`, because that is what a permutation representation acts on.  It is therefore *not* an instance
+of `TauCeti.MonoidAlgebra.augmentation` of `TauCeti.Algebra.MonoidAlgebra.Exactness`, which is the
 ring homomorphism `k[M] →+* k` of a monoid algebra: a `G`-set carries no multiplication, so there
 is no ring structure on `k[X]` for a ring homomorphism to be defined on.  On the overlap, `X` a
 monoid, the two maps agree, both sending `single x a` to `a`.
@@ -73,33 +72,32 @@ namespace TauCeti
 
 section Augmentation
 
-variable (k : Type*) [CommSemiring k] (X : Type*)
+variable {k : Type*} [CommSemiring k] {X : Type*}
 
-/-- The **augmentation** of `k[X]`: the linear map sending an element to the sum of its
-coefficients.  Equivalently, it is the unique linear map sending every standard basis vector
-to `1`. -/
-noncomputable def coeffSum : MonoidAlgebra k X →ₗ[k] k :=
-  (Finsupp.lsum k fun _ : X => LinearMap.id) ∘ₗ (MonoidAlgebra.coeffLinearEquiv k).toLinearMap
+/-- The **augmentation** of `k[X]` is `Module.Basis.sumCoords` of the standard basis: the linear
+map sending an element to the sum of its coefficients.  It sums them over the support. -/
+theorem sumCoords_basis_apply (v : MonoidAlgebra k X) :
+    (MonoidAlgebra.basis X k).sumCoords v = v.coeff.sum fun _ a => a :=
+  rfl
 
-variable {k X}
+/-- The augmentation sends a standard basis vector to its coefficient.
 
-/-- The augmentation sums the coefficients over the support. -/
-theorem coeffSum_apply (v : MonoidAlgebra k X) : coeffSum k X v = v.coeff.sum fun _ a => a := by
-  simp [coeffSum, Finsupp.sum]
-
-/-- The augmentation sends a standard basis vector to its coefficient. -/
-@[simp]
-theorem coeffSum_single (x : X) (a : k) : coeffSum k X (MonoidAlgebra.single x a) = a := by
-  rw [coeffSum_apply, MonoidAlgebra.coeff_single, Finsupp.sum_single_index rfl]
+This is not a `simp` lemma: `Module.Basis.coe_sumCoords` already rewrites the left-hand side, so
+the statement is not in `simp` normal form.  The same applies to the other lemmas below whose
+left-hand side is an augmentation. -/
+theorem sumCoords_basis_single (x : X) (a : k) :
+    (MonoidAlgebra.basis X k).sumCoords (MonoidAlgebra.single x a) = a := by
+  rw [sumCoords_basis_apply, MonoidAlgebra.coeff_single, Finsupp.sum_single_index rfl]
 
 /-- Over a finite index type the augmentation is the sum of all the coefficients. -/
-theorem coeffSum_eq_sum [Fintype X] (v : MonoidAlgebra k X) :
-    coeffSum k X v = ∑ x : X, v.coeff x := by
-  rw [coeffSum_apply, Finsupp.sum_fintype _ _ fun _ => rfl]
+theorem sumCoords_basis_eq_sum [Fintype X] (v : MonoidAlgebra k X) :
+    (MonoidAlgebra.basis X k).sumCoords v = ∑ x : X, v.coeff x := by
+  rw [sumCoords_basis_apply, Finsupp.sum_fintype _ _ fun _ => rfl]
 
 /-- The augmentation is surjective as soon as there is a standard basis vector to hit `1`. -/
-theorem coeffSum_surjective [Nonempty X] : Function.Surjective (coeffSum k X) := fun a =>
-  ⟨MonoidAlgebra.single (Classical.arbitrary X) a, coeffSum_single _ _⟩
+theorem sumCoords_basis_surjective [Nonempty X] :
+    Function.Surjective (MonoidAlgebra.basis X k).sumCoords := fun a =>
+  ⟨MonoidAlgebra.single (Classical.arbitrary X) a, sumCoords_basis_single _ _⟩
 
 end Augmentation
 
@@ -111,26 +109,27 @@ variable (k : Type*) [CommSemiring k] (G X : Type*) [Group G] [MulAction G X]
 
 /-- The augmentation is invariant: a group element permutes the standard basis, so it does not
 change the sum of the coefficients. -/
-@[simp]
-theorem coeffSum_ofMulAction (g : G) (v : MonoidAlgebra k X) :
-    coeffSum k X (Representation.ofMulAction k G X g v) = coeffSum k X v := by
+theorem sumCoords_basis_ofMulAction (g : G) (v : MonoidAlgebra k X) :
+    (MonoidAlgebra.basis X k).sumCoords (Representation.ofMulAction k G X g v) =
+      (MonoidAlgebra.basis X k).sumCoords v := by
   have hcoeff : (Representation.ofMulAction k G X g v).coeff =
       Finsupp.mapDomain (g • ·) v.coeff := by
     simp [Representation.ofMulAction_def]
-  rw [coeffSum_apply, coeffSum_apply, hcoeff,
+  rw [sumCoords_basis_apply, sumCoords_basis_apply, hcoeff,
     Finsupp.sum_mapDomain_index_inj (MulAction.injective g)]
 
 /-- The **augmentation subrepresentation** of `k[X]`: the elements whose coefficients sum to
 zero. -/
 noncomputable def augmentationSubrepresentation :
     Subrepresentation (Representation.ofMulAction k G X) where
-  toSubmodule := LinearMap.ker (coeffSum k X)
+  toSubmodule := LinearMap.ker (MonoidAlgebra.basis X k).sumCoords
   apply_mem_toSubmodule g v hv := by
-    simpa only [LinearMap.mem_ker, coeffSum_ofMulAction] using hv
+    simpa only [LinearMap.mem_ker, sumCoords_basis_ofMulAction] using hv
 
 @[simp]
 theorem toSubmodule_augmentationSubrepresentation :
-    (augmentationSubrepresentation k G X).toSubmodule = LinearMap.ker (coeffSum k X) :=
+    (augmentationSubrepresentation k G X).toSubmodule =
+      LinearMap.ker (MonoidAlgebra.basis X k).sumCoords :=
   -- `(rfl)`, not `rfl`: the body of `augmentationSubrepresentation` is not `@[expose]`d, so this
   -- must not be inferred `@[defeq]`.
   (rfl)
@@ -139,7 +138,7 @@ variable {k G X}
 
 @[simp]
 theorem mem_augmentationSubrepresentation_iff {v : MonoidAlgebra k X} :
-    v ∈ augmentationSubrepresentation k G X ↔ coeffSum k X v = 0 :=
+    v ∈ augmentationSubrepresentation k G X ↔ (MonoidAlgebra.basis X k).sumCoords v = 0 :=
   Iff.rfl
 
 end Subrep
@@ -152,7 +151,8 @@ variable {k : Type*} [CommRing k] {G X : Type*} [Group G] [MulAction G X]
 theorem single_sub_single_mem_augmentationSubrepresentation (x y : X) :
     (MonoidAlgebra.single x 1 - MonoidAlgebra.single y 1 : MonoidAlgebra k X) ∈
       augmentationSubrepresentation k G X := by
-  simp
+  rw [mem_augmentationSubrepresentation_iff, map_sub, sumCoords_basis_single,
+    sumCoords_basis_single, sub_self]
 
 end SubrepRing
 
@@ -173,9 +173,9 @@ theorem coeff_permutationSum (x : X) : (permutationSum k X).coeff x = 1 := by
   simp [permutationSum, MonoidAlgebra.coeff_single, Finsupp.single_apply, Finset.sum_ite_eq']
 
 /-- The augmentation of the sum of the standard basis is the cardinality of the index type. -/
-@[simp]
-theorem coeffSum_permutationSum : coeffSum k X (permutationSum k X) = Fintype.card X := by
-  rw [coeffSum_eq_sum]
+theorem sumCoords_basis_permutationSum :
+    (MonoidAlgebra.basis X k).sumCoords (permutationSum k X) = Fintype.card X := by
+  rw [sumCoords_basis_eq_sum]
   simp
 
 /-- The sum of the standard basis is nonzero, since each of its coefficients is `1`. -/
@@ -236,13 +236,13 @@ variable (k : Type*) [Field k] (G X : Type*) [Group G] [MulAction G X]
 
 /-- The augmentation subrepresentation is spanned by the differences of the standard basis vectors
 from a fixed one. -/
-theorem ker_coeffSum_eq_span (x₀ : X) :
-    LinearMap.ker (coeffSum k X) =
+theorem ker_sumCoords_basis_eq_span (x₀ : X) :
+    LinearMap.ker (MonoidAlgebra.basis X k).sumCoords =
       Submodule.span k (Set.range fun x : X =>
         (MonoidAlgebra.single x 1 - MonoidAlgebra.single x₀ 1 : MonoidAlgebra k X)) := by
   classical
   refine le_antisymm (fun v hv => ?_) (Submodule.span_le.mpr ?_)
-  · rw [LinearMap.mem_ker, coeffSum_apply, Finsupp.sum] at hv
+  · rw [LinearMap.mem_ker, sumCoords_basis_apply, Finsupp.sum] at hv
     have hbasis : ∑ x ∈ v.coeff.support, MonoidAlgebra.single x (v.coeff x) = v :=
       MonoidAlgebra.sum_coeff_single v
     have key : ∑ x ∈ v.coeff.support, v.coeff x •
@@ -254,7 +254,7 @@ theorem ker_coeffSum_eq_span (x₀ : X) :
     exact Submodule.sum_mem _ fun x _ =>
       Submodule.smul_mem _ _ (Submodule.subset_span ⟨x, rfl⟩)
   · rintro _ ⟨x, rfl⟩
-    simp
+    simp only [SetLike.mem_coe, LinearMap.mem_ker, map_sub, sumCoords_basis_single, sub_self]
 
 variable [Fintype X]
 
@@ -272,19 +272,22 @@ the invariant line and the augmentation subrepresentation are complementary, so 
 direct sum of a trivial representation and a representation of dimension `|X| - 1`. -/
 theorem isCompl_invariantLine_augmentationSubrepresentation (h : (Fintype.card X : k) ≠ 0) :
     IsCompl (invariantLine k G X) (augmentationSubrepresentation k G X) := by
-  have hsub : IsCompl (Submodule.span k {permutationSum k X}) (LinearMap.ker (coeffSum k X)) := by
+  have hsub : IsCompl (Submodule.span k {permutationSum k X})
+      (LinearMap.ker (MonoidAlgebra.basis X k).sumCoords) := by
     constructor
     · rw [Submodule.disjoint_def]
       rintro v hv hv'
       obtain ⟨c, rfl⟩ := Submodule.mem_span_singleton.mp hv
-      rw [LinearMap.mem_ker, map_smul, coeffSum_permutationSum, smul_eq_mul] at hv'
+      rw [LinearMap.mem_ker, map_smul, sumCoords_basis_permutationSum, smul_eq_mul] at hv'
       rw [(mul_eq_zero.mp hv').resolve_right h, zero_smul]
     · rw [codisjoint_iff, eq_top_iff]
       intro v _
-      refine Submodule.mem_sup.mpr ⟨(coeffSum k X v / Fintype.card X) • permutationSum k X,
+      refine Submodule.mem_sup.mpr
+        ⟨((MonoidAlgebra.basis X k).sumCoords v / Fintype.card X) • permutationSum k X,
         Submodule.smul_mem _ _ (Submodule.mem_span_singleton_self _),
-        v - (coeffSum k X v / Fintype.card X) • permutationSum k X, ?_, by abel⟩
-      rw [LinearMap.mem_ker, map_sub, map_smul, coeffSum_permutationSum, smul_eq_mul,
+        v - ((MonoidAlgebra.basis X k).sumCoords v / Fintype.card X) • permutationSum k X,
+        ?_, by abel⟩
+      rw [LinearMap.mem_ker, map_sub, map_smul, sumCoords_basis_permutationSum, smul_eq_mul,
         div_mul_cancel₀ _ h, sub_self]
   constructor
   · rw [disjoint_iff]
@@ -298,10 +301,10 @@ theorem finrank_augmentationSubrepresentation [Nonempty X] :
   have hcard : Module.finrank k (MonoidAlgebra k X) = Fintype.card X :=
     (Module.finrank_eq_card_basis (MonoidAlgebra.basis X k)).trans (by simp)
   have : Module.Finite k (MonoidAlgebra k X) := Module.Finite.of_basis (MonoidAlgebra.basis X k)
-  have hrange : Module.finrank k (LinearMap.range (coeffSum k X)) = 1 := by
-    rw [LinearMap.range_eq_top.mpr coeffSum_surjective]
+  have hrange : Module.finrank k (LinearMap.range (MonoidAlgebra.basis X k).sumCoords) = 1 := by
+    rw [LinearMap.range_eq_top.mpr sumCoords_basis_surjective]
     simp
-  have hsum := LinearMap.finrank_range_add_finrank_ker (coeffSum k X)
+  have hsum := LinearMap.finrank_range_add_finrank_ker (MonoidAlgebra.basis X k).sumCoords
   rw [hrange, hcard] at hsum
   rw [toSubmodule_augmentationSubrepresentation]
   omega

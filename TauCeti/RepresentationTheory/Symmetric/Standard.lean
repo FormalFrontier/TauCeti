@@ -16,11 +16,16 @@ trivial representation, and the **standard representation**, the complementary s
 dimension `|α| - 1` on which the coefficients sum to zero.  This file proves that the standard
 representation is irreducible whenever `|α| ≥ 2` and `|α|` is invertible in `k`.
 
-Both hypotheses are needed.  For `|α| ≤ 1` the standard representation is zero, and the zero
-representation is not irreducible.  If `|α| = 0` in `k` the sum of the standard basis itself has
-vanishing coefficient sum, so the invariant line lies *inside* the standard subrepresentation and
-the latter is reducible -- this is the first place the modular theory departs from the ordinary
-one, and it is excluded here rather than developed.
+The hypothesis `2 ≤ |α|` is needed: for `|α| ≤ 1` the standard representation is zero, and the zero
+representation is not irreducible.  The hypothesis `|α| ≠ 0` in `k` is a sufficient hypothesis
+uniform in `|α|` rather than a necessary one.  It cannot simply be dropped: as soon as `3 ≤ |α|`
+and `|α| = 0` in `k`, the sum of the standard basis itself has vanishing coefficient sum, so the
+invariant line lies *inside* the standard subrepresentation, and it is a proper subrepresentation
+because the standard one has dimension `|α| - 1 ≥ 2`, so the latter is reducible -- this is the
+first place the modular theory departs from the ordinary one, and it is excluded here rather than
+developed.  The remaining case is an exception: for `|α| = 2` in characteristic `2` the standard
+subrepresentation *is* the invariant line, a line and hence irreducible, so there the conclusion
+holds without `|α| ≠ 0` in `k`.
 
 The argument is elementary and uses only transpositions.  If `v` has vanishing coefficient sum and
 is nonzero, two of its coefficients differ, say at `x` and `y`; subtracting the transposition
@@ -140,7 +145,8 @@ theorem isAtom_augmentationSubrepresentation (h2 : 2 ≤ Fintype.card α)
     have hτne : τ.toSubmodule ≠ ⊥ := fun hc =>
       hτbot (Subrepresentation.toSubmodule_injective hc)
     obtain ⟨v, hv, hv0⟩ := Submodule.exists_mem_ne_zero_of_ne_bot hτne
-    have hvker : coeffSum k α v = 0 := mem_augmentationSubrepresentation_iff.mp (hτ.le hv)
+    have hvker : (MonoidAlgebra.basis α k).sumCoords v = 0 :=
+      mem_augmentationSubrepresentation_iff.mp (hτ.le hv)
     -- two of its coefficients differ
     obtain ⟨x, y, hxy, hcoeff⟩ : ∃ x y : α, x ≠ y ∧ v.coeff x ≠ v.coeff y := by
       by_contra hcon
@@ -148,7 +154,7 @@ theorem isAtom_augmentationSubrepresentation (h2 : 2 ≤ Fintype.card α)
       have hall : ∀ z : α, v.coeff z = v.coeff x₀ := fun z =>
         (eq_or_ne z x₀).elim (fun h => by rw [h]) fun h => hcon z x₀ h
       have hmul : (Fintype.card α : k) * v.coeff x₀ = 0 := by
-        rw [← hvker, coeffSum_eq_sum, Finset.sum_congr rfl fun z _ => hall z]
+        rw [← hvker, sumCoords_basis_eq_sum, Finset.sum_congr rfl fun z _ => hall z]
         simp
       have hzero : v.coeff x₀ = 0 := (mul_eq_zero.mp hmul).resolve_left hchar
       exact hv0 (MonoidAlgebra.coeff_eq_zero.mp (Finsupp.ext fun z => by simp [hall z, hzero]))
@@ -174,8 +180,9 @@ theorem isAtom_augmentationSubrepresentation (h2 : 2 ≤ Fintype.card α)
     -- so `τ` contains the whole standard subrepresentation, contradicting strictness
     have hle : augmentationSubrepresentation k (Equiv.Perm α) α ≤ τ := by
       intro w hw
-      have hw' : w ∈ LinearMap.ker (coeffSum k α) := mem_augmentationSubrepresentation_iff.mp hw
-      rw [ker_coeffSum_eq_span k α x] at hw'
+      have hw' : w ∈ LinearMap.ker (MonoidAlgebra.basis α k).sumCoords :=
+        mem_augmentationSubrepresentation_iff.mp hw
+      rw [ker_sumCoords_basis_eq_span k α x] at hw'
       exact Submodule.span_le.mpr (by rintro _ ⟨z, rfl⟩; exact hall z) hw'
     exact absurd (le_antisymm hτ.le hle) hτ.ne
 
