@@ -421,9 +421,14 @@ One inclusion is formal. For the other, `C = C_A(B)` is itself central simple
 applies to `C` as well and gives `finrank K C * finrank K C_A(C) = finrank K A`, while for `B` it
 gives `finrank K B * finrank K C = finrank K A`. Cancelling `finrank K C`, which is positive, leaves
 `finrank K C_A(C) = finrank K B`, and a subalgebra containing `B` with the dimension of `B` is `B`.
--/
+
+The inner centralizer is written as the `Set.centralizer` of `↑B`, which is what
+`Subalgebra.coe_centralizer` (a `simp` lemma) turns the coerced subalgebra into, so that the
+left-hand side is in simp normal form; `Subalgebra.centralizer_centralizer_centralizer` is stated
+the same way. -/
+@[simp]
 theorem centralizer_centralizer :
-    Subalgebra.centralizer K (Subalgebra.centralizer K (B : Set A) : Set A) = B := by
+    Subalgebra.centralizer K (Set.centralizer (B : Set A)) = B := by
   have := centralizer_isSimpleRing B
   have := centralizer_isCentral B
   have hC : 0 < finrank K ↥(Subalgebra.centralizer K (B : Set A)) := Module.finrank_pos
@@ -438,8 +443,9 @@ theorem centralizer_centralizer :
 /-- **The degree is multiplicative along a central simple subalgebra**:
 `deg K B * deg K C_A(B) = deg K A`.
 
-This is the dimension formula divided by two, and it is the shape in which the centralizer theorem
-is usually quoted. It is a statement about the degree of `C_A(B)`, so it needs `C_A(B)` to be
+This is the dimension formula with square roots taken, the degree being the square root of the
+dimension (`TauCeti.Algebra.deg_sq`), and it is the shape in which the centralizer theorem is
+usually quoted. It is a statement about the degree of `C_A(B)`, so it needs `C_A(B)` to be
 central simple, which is `TauCeti.centralizer_isCentral` together with
 `TauCeti.centralizer_isSimpleRing`; given that, it is the tensor decomposition read through
 `TauCeti.Algebra.deg_tensorProduct`. -/
