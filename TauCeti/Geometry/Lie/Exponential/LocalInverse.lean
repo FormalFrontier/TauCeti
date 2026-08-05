@@ -134,8 +134,7 @@ theorem mulInvariantExpOpenPartialHomeomorph_apply [FiniteDimensional ℝ E] [Li
     [T2Space G] [BoundarylessManifold I G] (v : E) :
     mulInvariantExpOpenPartialHomeomorph (I := I) (G := G) v =
       mulInvariantExpChart (I := I) (G := G) v := by
-  unfold mulInvariantExpOpenPartialHomeomorph
-  rfl
+  simp [mulInvariantExpOpenPartialHomeomorph]
 
 /-- Zero belongs to the source of the local coordinate exponential. -/
 theorem zero_mem_mulInvariantExpOpenPartialHomeomorph_source [FiniteDimensional ℝ E]
