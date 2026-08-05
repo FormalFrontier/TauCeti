@@ -18,13 +18,20 @@ that information off the standard Cartan matrices of `TauCeti.DynkinType`, pinni
 which of its nodes carry long simple roots and which carry short ones, and then proves that the
 reading is correct against Mathlib's `RootPairing.RootPositiveForm.rootLength`.
 
-Two pieces of data are attached to a type. `TauCeti.DynkinType.rootLength` gives the relative
-squared length of each simple root, normalised so that a shortest one has length `1`; it is the
-integral symmetriser of the standard Cartan matrix, the reciprocal of the rational symmetriser `d`
-asked for by `TauCeti.IsFiniteType`. `TauCeti.DynkinType.IsLongSimpleRoot` then singles out the
-long nodes family by family. For a *valid* type those are exactly the nodes of maximal length
-(`TauCeti.DynkinType.isLongSimpleRoot_iff`); the degenerate `B 1` is the sole type where the
-family-wise reading and the maximality reading part company.
+Two pieces of data are attached to a type, both read off family by family.
+`TauCeti.DynkinType.rootLength` gives the relative squared length of each simple root, normalised
+for a *valid* type so that a shortest one has length `1`; it is the integral symmetriser of the
+standard Cartan matrix, the reciprocal of the rational symmetriser `d` asked for by
+`TauCeti.IsFiniteType`. `TauCeti.DynkinType.IsLongSimpleRoot` then singles out the long nodes. For
+a *valid* type those are exactly the nodes of maximal length
+(`TauCeti.DynkinType.isLongSimpleRoot_iff`).
+
+Validity is load-bearing in both places, and in each a single degenerate type is the reason. The
+sole node of `C 1` is the last node of the `Cₙ` family, hence long, of length `2`: nothing shorter
+sits beside it to normalise against, so `rootLength` is off by the factor `2` there. The sole node
+of `B 1` is the last node of the `Bₙ` family, hence short, while being of maximal length for want
+of competition: that is the one type where the family-wise reading and the maximality reading of
+`IsLongSimpleRoot` part company.
 
 ## The Bourbaki numbering
 
@@ -47,13 +54,17 @@ transposed matrix instead would make that identity false.
 ## Main definitions
 
 * `TauCeti.DynkinType.rootLength`: the relative squared length of each simple root of a type.
-* `TauCeti.DynkinType.IsLongSimpleRoot`: the nodes carrying a simple root of maximal length.
+* `TauCeti.DynkinType.IsLongSimpleRoot`: the nodes its family calls long, which for a valid type
+  are exactly those carrying a simple root of maximal length.
 
 ## Main results
 
 * `TauCeti.DynkinType.cartanMatrix_mul_rootLength`: the standard Cartan matrix of a type is
   symmetrised by `rootLength`, that is `A i j * ℓ j = A j i * ℓ i`. This is the identity that
   pins the relative lengths, and it holds for every type, valid or not.
+* `TauCeti.DynkinType.exists_rootLength_eq_one`: a valid type has a simple root of length `1`,
+  which with `TauCeti.DynkinType.rootLength_pos` is the normalisation of the lengths. Validity is
+  needed here too, for `C 1`.
 * `TauCeti.DynkinType.isLongSimpleRoot_iff`: for a valid type, a node is long exactly when its
   simple root has maximal length. Validity is needed: the degenerate `B 1` has a single node,
   which is of maximal length while `IsLongSimpleRoot` calls it short, because it is the short node
@@ -82,13 +93,20 @@ namespace TauCeti
 namespace DynkinType
 
 /-- The relative squared length of the simple roots of a Dynkin type, in the Bourbaki numbering of
-`TauCeti.DynkinType.cartanMatrix`, normalised so that a shortest simple root has length `1`.
+`TauCeti.DynkinType.cartanMatrix`, given family by family and normalised, for a valid type, so that
+a shortest simple root has length `1`.
 
 "Length" is squared length, as in Mathlib's `RootPairing.RootPositiveForm.rootLength`: it is the
 value of an invariant form on a root with itself. The vector is exactly the symmetriser of the
 standard Cartan matrix (`TauCeti.DynkinType.cartanMatrix_mul_rootLength`), so it is determined up
 to a positive factor by the matrix alone once the diagram is connected; the normalisation fixes
-that factor. -/
+that factor.
+
+Validity is what the normalisation needs, and `C 1` is the one type that lacks it: its sole node is
+the last node of the `Cₙ` family, hence of length `2`, with no shorter node beside it, so every
+length there is twice what the normalisation would ask. Fixing that by hand would cost a
+special case in `rootLength` and in every proof reading it, to normalise a type that
+`TauCeti.DynkinType.Valid` excludes anyway; the family-wise reading is kept instead. -/
 def rootLength : (t : DynkinType) → Fin t.rank → ℤ
   | .A _, _ | .D _, _ | .E6, _ | .E7, _ | .E8, _ => 1
   | .B n, i => if (i : ℕ) + 1 = n then 1 else 2
@@ -123,6 +141,42 @@ def rootLength : (t : DynkinType) → Fin t.rank → ℤ
 lemma rootLength_pos (t : DynkinType) (i : Fin t.rank) : 0 < t.rootLength i := by
   cases t <;> simp only [rootLength_A, rootLength_B, rootLength_C, rootLength_D, rootLength_E6,
     rootLength_E7, rootLength_E8, rootLength_F4, rootLength_G2] <;> (try split_ifs) <;> norm_num
+
+/-- **A valid Dynkin type has a simple root of length `1`.** With
+`TauCeti.DynkinType.rootLength_pos` this is the normalisation that `TauCeti.DynkinType.rootLength`
+is stated up to: on a valid type the shortest simple roots are exactly those of length `1`.
+
+Validity is needed, and only for `C 1`, whose sole node the `Cₙ` family calls long and gives
+length `2`. -/
+theorem exists_rootLength_eq_one {t : DynkinType} (ht : t.Valid) : ∃ i, t.rootLength i = 1 := by
+  cases t with
+  | A n =>
+      have hn : 1 ≤ n := valid_A.mp ht
+      obtain ⟨j₀, -⟩ : ∃ j₀ : Fin n, (j₀ : ℕ) = 0 := ⟨⟨0, by omega⟩, rfl⟩
+      exact ⟨j₀, by simp⟩
+  | D n =>
+      have hn : 4 ≤ n := valid_D.mp ht
+      obtain ⟨j₀, -⟩ : ∃ j₀ : Fin n, (j₀ : ℕ) = 0 := ⟨⟨0, by omega⟩, rfl⟩
+      exact ⟨j₀, by simp⟩
+  | E6 => exact ⟨⟨0, by simp⟩, by simp⟩
+  | E7 => exact ⟨⟨0, by simp⟩, by simp⟩
+  | E8 => exact ⟨⟨0, by simp⟩, by simp⟩
+  | B n =>
+      -- The last node of `Bₙ` is its short one.
+      have hn : 2 ≤ n := valid_B.mp ht
+      obtain ⟨j₀, hj₀⟩ : ∃ j₀ : Fin n, (j₀ : ℕ) = n - 1 := ⟨⟨n - 1, by omega⟩, rfl⟩
+      exact ⟨j₀, by simp only [rootLength_B]; split_ifs <;> omega⟩
+  | C n =>
+      -- Every node of `Cₙ` but the last is short, and validity gives more than one node.
+      have hn : 3 ≤ n := valid_C.mp ht
+      obtain ⟨j₀, hj₀⟩ : ∃ j₀ : Fin n, (j₀ : ℕ) = 0 := ⟨⟨0, by omega⟩, rfl⟩
+      exact ⟨j₀, by simp only [rootLength_C]; split_ifs <;> omega⟩
+  | F4 =>
+      obtain ⟨j₀, hj₀⟩ : ∃ j₀ : Fin 4, (j₀ : ℕ) = 2 := ⟨⟨2, by omega⟩, rfl⟩
+      exact ⟨j₀, by simp only [rootLength_F4]; split_ifs <;> omega⟩
+  | G2 =>
+      obtain ⟨j₀, hj₀⟩ : ∃ j₀ : Fin 2, (j₀ : ℕ) = 0 := ⟨⟨0, by omega⟩, rfl⟩
+      exact ⟨j₀, by simp only [rootLength_G2]; split_ifs <;> omega⟩
 
 /-- A simply-laced type has all its simple roots of length `1`. -/
 lemma rootLength_eq_one_of_isSimplyLaced {t : DynkinType} (ht : t.IsSimplyLaced)
