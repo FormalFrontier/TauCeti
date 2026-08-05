@@ -247,6 +247,45 @@ class Replay(unittest.TestCase):
         self.assertEqual(episodes[0]["session"], conflict_stats.UNATTRIBUTED)
         self.assertIsNone(episodes[0]["resolver"])
 
+    def test_an_actor_github_could_not_name_is_not_a_named_non_author(self):
+        # A run with neither actor field set is written out as MISSING_FIELD, which
+        # is an absence, not an account. Carried through as a string it merely
+        # compared unequal to the author, so an unnameable pusher was reported as
+        # somebody else having fixed the PR.
+        mirror = self.FakeMirror([("h1", 1000), ("h2", 1650)], {"h1": 5})
+        episodes, _ = self.analyse(
+            mirror, self.pr(),
+            actors={"h1": "alice", "h2": conflict_stats.MISSING_FIELD})
+        [row] = [e for e in episodes if e["outcome"] == "push"]
+        self.assertEqual(row["session"], conflict_stats.UNATTRIBUTED)
+        self.assertIsNone(row["resolver"])
+
+    def test_a_fix_soon_after_the_pr_opened_is_not_a_return(self):
+        # A `pull_request_target` run fires on `opened`, so the first ledger entry
+        # is the PR opening rather than a push. It is still the author present on
+        # the PR at that moment; refusing to measure to it would leave no earlier
+        # event and file an author who never left under `return`.
+        mirror = self.FakeMirror([("h1", 1000), ("h2", 1650)], {"h1": 0})
+        episodes, _ = self.analyse(
+            mirror, self.pr(createdAt="1970-01-01T00:16:40Z"), gap=7200)
+        [row] = [e for e in episodes if e["outcome"] == "push"]
+        self.assertEqual(row["session"], conflict_stats.CONTINUATION)
+        self.assertEqual(row["gap"], 650)
+        self.assertEqual(row["gap_from"], conflict_stats.GAP_FROM_OPENING)
+
+    def test_a_gap_back_to_an_earlier_push_says_so(self):
+        mirror = self.FakeMirror([("h0", 1000), ("h1", 1100), ("h2", 1650)], {"h1": 5})
+        episodes, _ = self.analyse(
+            mirror, self.pr(createdAt="1970-01-01T00:16:40Z"), gap=7200)
+        [row] = [e for e in episodes if e["outcome"] == "push"]
+        self.assertEqual(row["gap_from"], conflict_stats.GAP_FROM_PUSH)
+
+    def test_the_first_entry_after_a_ledger_hole_is_not_the_opening(self):
+        # If a hole swallowed the opening run, the earliest surviving entry is a
+        # real push, and marking it as the opening would compound the hole.
+        self.assertEqual(conflict_stats.opening_epoch([("h1", 1000)], 900), 0)
+        self.assertIsNone(conflict_stats.opening_epoch([("h1", 9000)], 900))
+
     def test_the_gap_is_measured_against_the_same_actors_previous_push(self):
         # bob pushing in between must not disguise alice's return as a continuation.
         # alice pushed at 1100, bob at 2400, alice again at 2500. Against bob's
@@ -402,6 +441,26 @@ class LedgerIndex(unittest.TestCase):
         index = conflict_stats.ledger_index(rows)
         self.assertEqual(len(index[("o", "b")]), 1)
         self.assertEqual(len(index[("o", "other")]), 1)
+
+
+class LedgerActor(unittest.TestCase):
+    """The stand-in for a null actor is an absence, never an account."""
+
+    def test_a_run_with_no_actor_at_all_is_read_as_no_actor(self):
+        line = (f"sha1 {conflict_stats.MISSING_FIELD} 2026-01-01T00:00:00Z "
+                f"owner branch\n")
+        with mock.patch.object(conflict_stats.subprocess, "run",
+                               return_value=FakeRun(stdout=line)):
+            rows, _ = conflict_stats.push_ledger(0, 100)
+        self.assertEqual(rows[0]["actor"], "")
+
+    def test_a_cache_written_before_this_is_normalised_on_the_way_in(self):
+        # The sentinel survives in any ledger cache written by an earlier version,
+        # so normalising only at the API read would walk straight past it.
+        index = conflict_stats.ledger_index(
+            [{"sha": "A", "actor": conflict_stats.MISSING_FIELD, "when": 100,
+              "owner": "o", "branch": "b"}])
+        self.assertEqual(index[("o", "b")][0][2], "")
 
 
 class LedgerHoles(unittest.TestCase):

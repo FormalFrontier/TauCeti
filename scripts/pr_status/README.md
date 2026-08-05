@@ -132,9 +132,13 @@ head, when GitHub received them, and who pushed them. A commit is not a head
 committer field is free text rather than an account.
 
 All three come from the **push ledger**: `pr-build` runs on `pull_request_target`
-for every open, reopen, and synchronize, so one run exists per pushed head carrying
-the sha, the pushing account, and the time GitHub received it. `main`'s
-first-parent history supplies the bases, from git. For each head the tool
+for every open, reopen, and synchronize, so one run exists per head *transition* —
+the head the PR was opened with, and every head pushed over it — carrying the sha,
+the account behind it, and the time GitHub received it. Not every run is a push:
+the opening run's sha reached the branch earlier and unrecorded, since a push to a
+fork's branch triggers nothing here. It still dates the head, which is what the
+replay needs from it. `main`'s first-parent history supplies the bases, from
+git. For each head the tool
 binary-searches those bases with `git merge-tree` — starting from the base already
 in effect, so a PR born conflicting is not missed — for the first that will not
 merge cleanly. An episode ends only at a head that is *clean* when it appeared, so
@@ -187,7 +191,12 @@ discount, and the report counts those rows as upper bounds.
 Resolutions are bucketed as the author continuing, the author returning,
 *someone else entirely*, or unattributed, and each episode records the measured
 gap, so checking that a conclusion is not an artefact of one `--session-gap` costs
-a re-read of the JSON rather than a re-run.
+a re-read of the JSON rather than a re-run. The gap runs back to that same actor's
+previous appearance on the PR, which for one fixed shortly after it opened is them
+*opening* it rather than an earlier push. That is still the author present at that
+moment, so it counts — dropping it would leave no earlier event and file an author
+who never left under `return` — and `gap_from` records which it was, per row and
+as a count in the report.
 
 An earlier draft of this file claimed every error ran one way and the output was a
 lower bound. That was wrong and is worth stating so nobody revives it: on the

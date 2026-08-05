@@ -8,12 +8,14 @@ none of them. An earlier version of this line said "from git alone", which was t
 of the replay and false of the tool; it is worth saying so rather than leaving the
 claim to be revived.
 
-`conflicts.py report` answers "how long are conflicts lasting" from the markers
-this repository now writes. This script answers the same question for the era
-BEFORE those markers existed, which is the only way to establish the baseline the
-target (median conflict-to-resolution under 24h) is measured against. GitHub keeps
-no history of `mergeable`: it reports only the current value, and nothing in the
-timeline records the moment a PR started conflicting. So we replay it.
+The question is "how long are conflicts lasting", and nothing here has ever
+recorded it. GitHub keeps no history of `mergeable`: it reports only the current
+value, and nothing in the timeline marks the moment a PR started conflicting.
+There is no log to read, so the baseline the target (median conflict-to-resolution
+under 24h) is measured against has to be replayed. An earlier version of this
+paragraph pointed at a `conflicts.py report` reading markers "this repository now
+writes"; neither that script nor those markers exists, here or anywhere, so the
+claim is recorded as false rather than left to be revived.
 
 Method
 ------
@@ -24,9 +26,13 @@ is not a head (several travel in one push), its committer date is when it was
 written rather than pushed, and its committer field is free text, not an account.
 
 All three come from the **push ledger**: `pr-build` runs on `pull_request_target`
-for every open, reopen, and synchronize, so one run exists per pushed head,
-carrying that head's sha, the account that pushed it, and the time GitHub received
-it. `main`'s first-parent history supplies the bases, from git.
+for every open, reopen, and synchronize, so one run exists per head TRANSITION --
+the head the PR was opened with, and every head pushed over it -- carrying that
+head's sha, the account behind it, and the time GitHub received it. Not every run
+is a push: the opening run's sha reached the branch earlier and unrecorded, since
+a push to a fork's branch triggers nothing here. It still dates the head, which is
+what an epoch boundary is, and Attribution below says what that means for a gap
+measured back to it. `main`'s first-parent history supplies the bases, from git.
 
 An **epoch** is one head and the window it was current for. Within an epoch we
 binary-search `main`'s commits -- starting from the base already in effect when
@@ -118,14 +124,23 @@ Attribution
 The issue this was written for asks a specific question: are conflicts resolved
 only while the author's session happens to still be alive, and never once it has
 ended? A session is not visible from outside, so the proxy is the gap between a
-resolving push and that same actor's previous push to that PR -- the same actor,
-so one person's return is not disguised as a continuation by another's activity in
-between. Every resolving push lands in one of four buckets:
+resolving push and that same actor's previous appearance on that PR -- the same
+actor, so one person's return is not disguised as a continuation by another's
+activity in between. Every resolving push lands in one of four buckets:
 
-    continuation   the PR's author, who had pushed to it within --session-gap
+    continuation   the PR's author, last seen on it within --session-gap
     return         the PR's author, coming back after longer than that
     other-actor    somebody else entirely -- not evidence about the author at all
     unattributed   no ledger entry for that head; counted, never guessed
+
+"Last seen" is usually their previous push, and for a PR born conflicting and
+fixed shortly after it is them OPENING the PR. That is still the actor acting on
+the PR at that timestamp, which is the whole content of the question, and a firmer
+sign of presence than a push -- whose sha may have sat on the branch for a week.
+Dropping it for not being a push would leave no earlier event at all and land the
+row in `return`, asserting an absence for an author who never went away; the count
+of gaps measured back to an opening is reported instead, and `gap_from` carries it
+per row.
 
 If essentially every resolution is a continuation and returns are vanishingly
 rare, the problem is session lifetime, not motivation, and the remedy is a
@@ -181,6 +196,16 @@ LISTING_CAP = 1000
 MIN_LEDGER_SLICE = 900
 # Commits written within this many seconds of each other are treated as one push.
 PUSH_WINDOW_SECONDS = 120
+# What a ledger read writes for a field GitHub left null. The runs are read as
+# space-separated lines, which cannot carry an empty field, so the absence needs a
+# stand-in -- and the stand-in has to be turned back into an absence on the way
+# in, because it is not an account: compared against the PR's author it is merely
+# unequal, so an unnameable pusher's fix reads as `other-actor`, a claim that
+# somebody else fixed it, rather than `unattributed`.
+MISSING_FIELD = "-"
+# A workflow run is created a moment after the event that triggered it, so a PR's
+# `opened` run lands within this of its `createdAt` -- see `opening_epoch`.
+OPENING_TOLERANCE_SECONDS = 300
 
 
 def log(msg):
@@ -362,6 +387,16 @@ def first_conflicting(mirror, history, lo, hi, head, exhaustive=False):
     return lo
 
 
+def ledger_actor(actor):
+    """The account behind a ledger row, or `""` when GitHub named nobody.
+
+    Applied both on the way out of `push_ledger` and on the way in here, because a
+    cache file written before this existed still holds the raw `MISSING_FIELD` and
+    would sail past a normalisation done only at the point of reading the API.
+    """
+    return "" if not actor or actor == MISSING_FIELD else actor
+
+
 def ledger_index(ledger):
     """(head owner, head branch) -> its pushes, oldest first.
 
@@ -373,7 +408,7 @@ def ledger_index(ledger):
     index = {}
     for row in ledger:
         index.setdefault((row["owner"], row["branch"]), []).append(
-            (row["sha"], row["when"], row["actor"] or ""))
+            (row["sha"], row["when"], ledger_actor(row["actor"])))
     for key, pushes in index.items():
         pushes.sort(key=lambda item: item[1])
         # Collapse ADJACENT repeats of one sha, which are re-runs and reopens
@@ -642,7 +677,7 @@ def analyse_pr(mirror, history, history_times, pr, now, session_gap, exhaustive=
             outcome = "still-open"
         out.append(episode(number, author, open_onset,
                            ended if outcome != "still-open" else now, outcome, None))
-    attribute(out, epochs, actors, author, session_gap)
+    attribute(out, epochs, actors, author, session_gap, created)
     return out, handling, epochs, actors
 
 
@@ -685,6 +720,11 @@ def episode(number, author, onset, resolved, outcome, resolver_epoch):
         "resolver": None,
         "session": None,
         "gap": None,
+        # Whether `gap` was measured to a previous PUSH by that actor or to their
+        # OPENING of the PR, which is presence without being a push. Recorded
+        # rather than flattened, so a reader who wants only push-to-push gaps can
+        # take the other rows out without re-running anything.
+        "gap_from": None,
     }
 
 
@@ -693,6 +733,10 @@ CONTINUATION = "continuation"   # the same actor had pushed to this PR moments b
 RETURN = "return"               # the same actor came back after a gap
 OTHER_ACTOR = "other-actor"     # someone other than the PR's author pushed the fix
 UNATTRIBUTED = "unattributed"   # GitHub could not name the actor
+
+# What the earlier event a `gap` was measured back to actually was.
+GAP_FROM_PUSH = "push"          # that actor's previous push to this PR
+GAP_FROM_OPENING = "opening"    # that actor opening the PR: presence, not a push
 
 
 def cached_ledger(path, start, end):
@@ -838,8 +882,11 @@ def push_ledger(start, end):
             # a branch, and `ledger_index` collapses those; a repeat with another
             # head in between is a genuine transition and survives.
             if when is not None:
-                ledger.append({"sha": sha, "actor": actor, "when": when,
-                               "owner": owner, "branch": branch})
+                # `MISSING_FIELD` is the absence of an actor, not an actor named
+                # "-"; normalise it here so nothing downstream can mistake a run
+                # GitHub named nobody for a run by somebody who is not the author.
+                ledger.append({"sha": sha, "actor": ledger_actor(actor),
+                               "when": when, "owner": owner, "branch": branch})
     log(f"push ledger: {len(ledger)} recorded pushes"
         + (f", {len(holes)} coverage hole(s)" if holes else ""))
     return ledger, holes
@@ -856,7 +903,28 @@ def covered_by_ledger(holes, created, ended):
     return not any(low <= ended and created <= high for low, high in holes)
 
 
-def attribute(episodes, epochs, actors, pr_author, session_gap):
+def opening_epoch(epochs, created):
+    """Index of the epoch that is the PR being OPENED rather than pushed to, or None.
+
+    `pull_request_target` fires on `opened` as well as on `synchronize`, so a
+    ledger-covered PR's first entry is the run for its opening. That entry does
+    date the head -- it is the moment GitHub made that sha the PR's head, which is
+    exactly what an epoch boundary means -- but the sha reached the branch at some
+    earlier, unrecorded moment, since pushing a branch on a fork triggers nothing
+    here. So it is not a push, and `attribute` says so rather than reporting it as
+    one.
+
+    Identified by landing at the PR's creation rather than by position: if a hole
+    in the ledger swallowed the opening run, the first SURVIVING entry is a real
+    push, and marking it as the opening would be a second error on top of the
+    first.
+    """
+    if created is None or not epochs:
+        return None
+    return 0 if epochs[0][1] <= created + OPENING_TOLERANCE_SECONDS else None
+
+
+def attribute(episodes, epochs, actors, pr_author, session_gap, created=None):
     """Name the actor behind each resolving push and classify the session.
 
     The question this tool exists to answer is about an AUTHOR's behaviour, so a
@@ -872,7 +940,19 @@ def attribute(episodes, epochs, actors, pr_author, session_gap):
     `actors` is indexed by EPOCH, not by sha: a head returned to after a
     force-push occupies two epochs which may have two different actors, and a
     per-sha lookup collapsed them into one.
+
+    The earlier event the gap is measured to is not always a push: for a PR that
+    was born conflicting and fixed shortly after, it is the author OPENING the PR
+    (see `opening_epoch`). That still answers the question the buckets ask -- was
+    this actor's session alive, or had it ended and they came back -- because
+    opening a PR is that actor acting on it at that timestamp, and if anything a
+    firmer sign of presence than a push, whose sha may have been sitting on the
+    branch for a week. Excluding it would leave no earlier event at all and file
+    an author who never went away under `return`, inventing an absence to avoid
+    misnaming a presence. So it counts, and `gap_from` records which it was, so
+    the split can be read either way from the JSON.
     """
+    opening = opening_epoch(epochs, created)
     for row in episodes:
         index = row.get("resolver_epoch")
         if index is None:
@@ -885,14 +965,17 @@ def attribute(episodes, epochs, actors, pr_author, session_gap):
         elif actor != pr_author:
             row["session"] = OTHER_ACTOR
         else:
-            previous = next((epochs[j][1] for j in range(index - 1, -1, -1)
+            previous = next((j for j in range(index - 1, -1, -1)
                              if actors[j] == actor), None)
             # Record the measured gap, not just the verdict it produced. Checking
             # that a conclusion is not an artefact of one --session-gap then costs
             # a re-read of the JSON rather than a re-run of the whole replay.
-            row["gap"] = None if previous is None else when - previous
+            row["gap"] = None if previous is None else when - epochs[previous][1]
+            row["gap_from"] = (None if previous is None else GAP_FROM_OPENING
+                               if previous == opening else GAP_FROM_PUSH)
             row["session"] = (CONTINUATION if previous is not None
-                              and (when - previous) <= session_gap else RETURN)
+                              and (when - epochs[previous][1]) <= session_gap
+                              else RETURN)
     return episodes
 
 
@@ -1060,6 +1143,15 @@ def summarise(episodes, handled, total_prs):
                 continue
             lines.append(f"  {len(rows):3} by {description}, median "
                          f"{human_duration(median([e['seconds'] for e in rows]))}")
+        # A `pull_request_target` run fires on `opened` too, so some of those gaps
+        # run back to the author opening the PR rather than to an earlier push of
+        # theirs. That is still the actor present on the PR at that moment, which
+        # is what the split asks, but it is not a push and the count says so.
+        from_opening = sum(1 for row in pushes
+                           if row.get("gap_from") == GAP_FROM_OPENING)
+        if from_opening:
+            lines.append(f"  ({from_opening} of those gaps were measured back to the "
+                         f"author OPENING the PR, not to an earlier push of theirs)")
 
     by_author = {}
     for e in episodes:
