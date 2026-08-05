@@ -174,7 +174,10 @@ private noncomputable def mulInvariantLogLocalInverse [FiniteDimensional ℝ E] 
   exact (contDiffAt_mulInvariantExpChart_zero (I := I) (G := G)).localInverse
     (hasFDerivAt_mulInvariantExpChart_zero_equiv (I := I) (G := G)) smoothOrder_ne_zero
 
-/- The logarithm chosen through the local homeomorphism is exactly Mathlib's named local inverse. -/
+/- The logarithm chosen through the local homeomorphism is exactly Mathlib's named local inverse.
+The `rfl` proof relies on the definitional identity between `ContDiffAt.localInverse` and the
+inverse of `ContDiffAt.toOpenPartialHomeomorph`; Mathlib currently has no public lemma for this
+bridge. -/
 private theorem mulInvariantLogChart_eq_localInverse [FiniteDimensional ℝ E] [LieGroup I ∞ G]
     [T2Space G] [BoundarylessManifold I G] :
     mulInvariantLogChart (I := I) (G := G) =
