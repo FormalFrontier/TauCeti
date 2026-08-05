@@ -20,7 +20,7 @@ The argument is the classical one. Writing `p` for the projection of `M` onto `N
 endomorphisms of `N` obtained by projecting `N` into `Q i` and back sum to the identity. Fitting's
 lemma makes `Module.End A N` local (`TauCeti.isLocalRing_end_of_isIndecomposable`), and in a local
 ring a finite sum can only be a unit if one of its terms is
-(`TauCeti.IsLocalRing.exists_isUnit_of_isUnit_sum`); so one of those endomorphisms is an
+(`IsLocalRing.exists_of_isUnit_sum`); so one of those endomorphisms is an
 isomorphism. It factors through `Q i₀`, and a split injection into an *indecomposable* module is
 already an isomorphism, so `N ≃ₗ Q i₀`. The exchange is then read off from the injectivity and
 surjectivity of that isomorphism.
@@ -167,7 +167,7 @@ theorem exists_linearEquiv_and_isCompl_biSup_ne [IsNoetherian A M] [IsArtinian A
     exact hx
   -- Locality of `Module.End A N` picks out an index whose component is invertible.
   obtain ⟨i₀, -, hunit⟩ : ∃ i₀ ∈ Finset.univ, IsUnit (f i₀) :=
-    IsLocalRing.exists_isUnit_of_isUnit_sum (by rw [hsum]; exact isUnit_one)
+    IsLocalRing.exists_of_isUnit_sum (by rw [hsum]; exact isUnit_one)
   set α : N →ₗ[A] Q i₀ := internalProjection hQ i₀ ∘ₗ N.subtype with hα
   have hbij : Function.Bijective α :=
     (hQind i₀).bijective_of_bijective_comp (g := p ∘ₗ (Q i₀).subtype)
