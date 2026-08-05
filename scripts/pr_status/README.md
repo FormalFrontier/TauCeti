@@ -161,9 +161,15 @@ from `refs/pull/N/head`, so the replay fetches those objects by sha — 1282 of 
 here, and ignoring them cost 36 episodes and over half the author-returns.
 
 Provenance is reported per PR and has four values: `recorded` (every recorded push
-replayable), `partial` (some heads unfetchable, so episodes may be truncated),
-`inferred` (no ledger coverage — heads from commit dates, actors unknown), and
-`skipped`. Over this repository: 1946 recorded, 0 partial, 19 inferred, 14 skipped.
+replayable), `partial` (some heads unfetchable, or a hole in the ledger over that
+PR's lifetime, so episodes may be truncated), `inferred` (no ledger coverage —
+heads from commit dates, actors unknown), and `skipped`. A slice of the runs
+listing that fails or still caps at its smallest span returns fewer pushes and
+looks exactly like a quiet week, so those spans are carried alongside the ledger
+and every PR alive during one is downgraded to `partial`; a cache file that does
+not record them is rejected rather than read as hole-free. The same rule covers
+the timeline read: a failure gives `closed_seconds: null` rather than a zero
+discount, and the report counts those rows as upper bounds.
 
 Resolutions are bucketed as the author continuing, the author returning,
 *someone else entirely*, or unattributed, and each episode records the measured

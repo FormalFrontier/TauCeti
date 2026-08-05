@@ -39,11 +39,13 @@ conflicted PR would score as fixing it quickly.
 
 A PR that is closed and REOPENED is a different matter: nothing there resolved the
 conflict, so the episode continues across the closure, with the time spent closed
-discounted from its duration (`closed_seconds` records how much) because nobody
-could have merged it then. It is not split into a censored segment plus a resolved
-one; that would file the pre-close segment under "abandoned while conflicting",
-and the closures here are mostly the review bot pulsing a PR shut and open again
-for a second at a time -- #1908 fifteen times in one afternoon.
+discounted from its duration (`closed_seconds` records how much, and `null` when
+the timeline read failed, so an unknown discount is never passed off as a checked
+zero) because nobody could have merged it then. It is not split into a censored
+segment plus a resolved one; that would file the pre-close segment under
+"abandoned while conflicting", and the closures here are mostly the review bot
+pulsing a PR shut and open again for a second at a time -- #1908 fifteen times in
+one afternoon.
 
 A PR's own squash-merge commit is excluded from the bases it is measured against.
 It conflicts with that PR's head by construction (same edits, different sha), and
@@ -56,8 +58,12 @@ Every run reports provenance per PR, because it decides what a row is worth:
     recorded   every push the ledger holds for this PR is replayable. The head
                sequence, the push times, and the actors are records; only the
                conflict itself is computed, by re-running the merge.
-    partial    some recorded heads could not be fetched, so episodes may be
-               truncated. Kept distinct from `recorded` on purpose.
+    partial    some recorded heads could not be fetched, OR the ledger read left
+               a hole spanning this PR's lifetime, so heads may be missing and
+               episodes truncated. Kept distinct from `recorded` on purpose: an
+               API slice that fails or caps out returns fewer pushes and looks
+               exactly like a quiet week, so the hole has to be carried alongside
+               the data rather than inferred from it.
     inferred   no ledger coverage -- older than the workflow, or its runs aged
                out. Heads come from commit dates grouped by `--push-window`,
                boundaries are guesses, and resolutions are attributed to nobody,
@@ -369,7 +375,14 @@ def pr_pushes(pr, index, created, ended):
 
 
 def closed_intervals(number):
-    """[(closed_at, reopened_at)] for a PR, from its timeline; [] on any failure.
+    """[(closed_at, reopened_at)] for a PR, from its timeline; None if it failed.
+
+    A failed read is NOT an empty one. `[]` says "this PR was never closed and
+    reopened, so there is nothing to discount"; a failed read says "we do not know
+    whether there is", and the two produce the same duration while deserving very
+    different confidence. Returning `[]` for both let a timeline outage quietly
+    leave closed time in every duration with the rows still presented as ordinary.
+    Callers mark the affected episodes instead -- see `replay`.
 
     A PR that was closed and reopened was not in the queue in between, and a
     conflict cannot be "unresolved" during a period when nobody could merge it
@@ -386,7 +399,9 @@ def closed_intervals(number):
          r'| "\(.event) \(.created_at)"'],
         capture_output=True, text=True)
     if out.returncode != 0:
-        return []
+        log(f"PR #{number}: timeline unavailable ({out.stderr.strip()}); any time it "
+            f"spent closed stays in its durations, which become upper bounds")
+        return None
     intervals, closed_at = [], None
     for line in out.stdout.splitlines():
         parts = line.split()
@@ -479,9 +494,12 @@ def pr_epochs(mirror, pr, index, push_window, available):
 
       "recorded"  every push the ledger holds for this PR is replayable. Head
                   sequence, times, and actors are records, not inferences.
-      "partial"   some recorded heads could not be fetched, so episodes may be
-                  truncated. Distinguished from "recorded" deliberately: treating
-                  one matching head as full coverage silently dropped the rest.
+      "partial"   some recorded heads could not be fetched, or the ledger read
+                  left a hole over this PR's lifetime, so heads may be missing and
+                  episodes truncated. Distinguished from "recorded" deliberately:
+                  treating one matching head as full coverage silently dropped the
+                  rest, and treating a failed API slice as "no pushes then" made
+                  an incomplete history indistinguishable from a complete one.
       "inferred"  no ledger coverage at all (a PR older than the workflow, or
                   whose runs aged out). Heads come from commit dates, grouped by
                   `push_window`; boundaries are guesses and actors are unknown.
@@ -493,8 +511,9 @@ def pr_epochs(mirror, pr, index, push_window, available):
         if replayable:
             epochs = [(sha, when) for sha, when, _ in replayable]
             actors = [actor or "" for _, _, actor in replayable]
-            return epochs, actors, ("recorded" if len(epochs) == len(recorded)
-                                    else "partial")
+            complete = (len(epochs) == len(recorded)
+                        and pr.get("_ledger_covered", True))
+            return epochs, actors, ("recorded" if complete else "partial")
     heads = mirror.pr_heads(number)
     if not heads:
         return [], [], "skipped"
@@ -618,7 +637,9 @@ def episode(number, author, onset, resolved, outcome, resolver_epoch):
         # Time inside [onset, resolved] the PR spent closed, which `clip_episodes`
         # takes back out of `seconds`. Recorded rather than silently subtracted, so
         # a reader of the JSON can see why the two timestamps and the duration do
-        # not agree, and can put it back if they want wall-clock instead.
+        # not agree, and can put it back if they want wall-clock instead. `None`
+        # means the timeline read failed and the discount is UNKNOWN, which is not
+        # the same claim as this zero.
         "closed_seconds": 0,
         "outcome": "push" if resolver_epoch is not None else outcome,
         "resolver_epoch": resolver_epoch,
@@ -643,27 +664,35 @@ def cached_ledger(path, start, end):
     check a conclusion is not an artefact of one threshold. The ledger is
     append-only history, so a cache of it does not go stale in any way that
     matters; delete the file to refresh.
+
+    The cache carries the coverage holes as well as the pushes, and a file that
+    does not is rejected rather than read as hole-free: assuming coverage because
+    a file failed to mention its absence is exactly the failure the holes exist
+    to prevent.
     """
     if path and os.path.exists(path):
         try:
             with open(path) as handle:
-                rows = json.load(handle)
-            log(f"push ledger: {len(rows)} recorded pushes from {path}")
-            return rows
-        except (OSError, ValueError, TypeError) as exc:
+                cached = json.load(handle)
+            rows = cached["pushes"]
+            holes = [tuple(span) for span in cached["holes"]]
+            log(f"push ledger: {len(rows)} recorded pushes and {len(holes)} "
+                f"coverage hole(s) from {path}")
+            return rows, holes
+        except (OSError, ValueError, TypeError, KeyError) as exc:
             log(f"push ledger cache {path} unusable ({exc}); re-reading")
-    ledger = push_ledger(start, end)
+    ledger, holes = push_ledger(start, end)
     if path:
         try:
             with open(path, "w") as handle:
-                json.dump(ledger, handle)
+                json.dump({"pushes": ledger, "holes": holes}, handle)
         except OSError as exc:
             log(f"could not write the ledger cache {path}: {exc}")
-    return ledger
+    return ledger, holes
 
 
 def push_ledger(start, end):
-    """{head sha: (actor login, push epoch)} for every push to every PR.
+    """`(pushes, holes)`: every push to every PR, and the spans nobody could read.
 
     THE authoritative record of head transitions, and the thing that makes the
     session question answerable at all. `pr-build` runs on `pull_request_target`
@@ -675,10 +704,17 @@ def push_ledger(start, end):
 
     Read in date slices, halving any slice that reaches the API's 1000-result
     listing cap until it fits, because a capped listing is silently truncated and
-    a hole in the ledger degrades attribution without saying so. A single day that
-    still caps is reported as a genuine hole.
+    a hole in the ledger degrades attribution without saying so.
+
+    A slice that fails outright, or that still caps at the smallest span worth
+    halving, leaves a HOLE: pushes made in it are missing from the result with
+    nothing in the result to show they are missing. Those spans are returned
+    alongside the pushes so that `covered_by_ledger` can downgrade every PR alive
+    during one from `recorded` to `partial`. Dropping them on the floor -- which
+    an earlier version did -- reported a PR whose heads had silently gone missing
+    as fully recorded, which is the one claim this tool must never make falsely.
     """
-    ledger = []
+    ledger, holes = [], []
     pending = [(start, end)]
     while pending:
         low, high = pending.pop()
@@ -697,7 +733,8 @@ def push_ledger(start, end):
             capture_output=True, text=True)
         if out.returncode != 0:
             log(f"push ledger: {span} unavailable ({out.stderr.strip()}); "
-                f"those pushes stay unattributed")
+                f"PRs alive then are reported partial, never recorded")
+            holes.append((low, high))
             continue
         rows = [line.split(" ") for line in out.stdout.splitlines() if line.strip()]
         # The listing caps at 1000 no matter what `total_count` says, so a slice
@@ -709,6 +746,7 @@ def push_ledger(start, end):
             continue
         if len(rows) >= LISTING_CAP:
             log(f"push ledger: {span} caps out at its smallest slice; it is incomplete")
+            holes.append((low, high))
         for parts in rows:
             if len(parts) != 5:
                 continue
@@ -724,8 +762,20 @@ def push_ledger(start, end):
             if when is not None:
                 ledger.append({"sha": sha, "actor": actor, "when": when,
                                "owner": owner, "branch": branch})
-    log(f"push ledger: {len(ledger)} recorded pushes")
-    return ledger
+    log(f"push ledger: {len(ledger)} recorded pushes"
+        + (f", {len(holes)} coverage hole(s)" if holes else ""))
+    return ledger, holes
+
+
+def covered_by_ledger(holes, created, ended):
+    """Does the ledger cover a PR alive over `[created, ended]` end to end?
+
+    A hole overlapping that window means heads may be missing from the PR's push
+    list, and nothing in the list itself says so -- the pushes that survived look
+    exactly like a complete record. So the answer decides `recorded` vs `partial`
+    in `pr_epochs`; it cannot be recovered later.
+    """
+    return not any(low <= ended and created <= high for low, high in holes)
 
 
 def attribute(episodes, epochs, actors, pr_author, session_gap):
@@ -769,10 +819,11 @@ def attribute(episodes, epochs, actors, pr_author, session_gap):
 
 
 def replay(mirror, prs, jobs, session_gap, now, exhaustive=False,
-           push_window=PUSH_WINDOW_SECONDS, ledger=None):
+           push_window=PUSH_WINDOW_SECONDS, ledger=None, holes=None):
     history = mirror.main_history()
     history_times = [when for _, when, _ in history]
-    ledger = ledger or {}
+    ledger = ledger or []
+    holes = holes or []
     index = ledger_index(ledger)
 
     # Resolve each PR's recorded pushes first, then fetch in ONE pass every head
@@ -784,6 +835,7 @@ def replay(mirror, prs, jobs, session_gap, now, exhaustive=False,
         ended = parse_iso(pr["mergedAt"]) or parse_iso(pr["closedAt"]) or now
         pushes = pr_pushes(pr, index, created, ended)
         pr["_pushes"] = pushes
+        pr["_ledger_covered"] = covered_by_ledger(holes, created, ended)
         wanted.extend(row[0] for row in pushes)
     available = ensure_objects(mirror, sorted(set(wanted))) if wanted else set()
 
@@ -817,7 +869,13 @@ def replay(mirror, prs, jobs, session_gap, now, exhaustive=False,
         with ThreadPoolExecutor(max_workers=min(jobs, 8)) as pool:
             for number, intervals in zip(conflicted,
                                          pool.map(closed_intervals, conflicted)):
-                if intervals:
+                if intervals is None:
+                    # The read failed, so whether this PR spent time closed is
+                    # unknown. `closed_seconds = None` says so in the row rather
+                    # than letting a discount of zero pass for a checked zero.
+                    for row in by_pr[number]:
+                        row["closed_seconds"] = None
+                elif intervals:
                     by_pr[number] = clip_episodes(by_pr[number], intervals)
 
     episodes = [row for rows, _, _, _ in results for row in rows
@@ -838,9 +896,17 @@ def summarise(episodes, handled, total_prs):
                  f"of {total_prs} PR(s)")
     lines.append(
         f"provenance: {handled.get('recorded', 0)} PR(s) fully recorded in the push ledger, "
-        f"{handled.get('partial', 0)} partially (some recorded heads unfetchable), "
+        f"{handled.get('partial', 0)} partially (heads unfetchable, or a hole in the "
+        f"ledger over the PR's lifetime), "
         f"{handled.get('inferred', 0)} inferred from commit dates (boundaries and actors "
         f"are guesses there), {handled.get('skipped', 0)} with no replayable commits")
+    # A row whose timeline could not be read still carries any time its PR spent
+    # closed, so its duration is an upper bound. Say how many rather than letting
+    # them sit unmarked among rows that were actually checked.
+    unchecked = [e for e in episodes if e.get("closed_seconds") is None]
+    if unchecked:
+        lines.append(f"{len(unchecked)} episode(s) whose timeline could not be read: time the "
+                     f"PR spent closed is still in their duration, so those are upper bounds")
 
     # ONLY a push that made the branch merge again is a resolution. Closing a PR
     # that is still conflicting ends the episode without resolving anything, and
@@ -937,12 +1003,12 @@ def main(argv=None):
         mirror.fetch()
         prs = fetch_prs(args.since)
         now = int(datetime.datetime.now(datetime.timezone.utc).timestamp())
-        ledger = {} if args.no_ledger else cached_ledger(
+        ledger, holes = ([], []) if args.no_ledger else cached_ledger(
             args.ledger_cache,
             min((parse_iso(p["createdAt"]) for p in prs), default=now), now + 86400)
         episodes, handled = replay(
             mirror, prs, args.jobs, int(args.session_gap * 3600), now,
-            args.exhaustive, args.push_window, ledger)
+            args.exhaustive, args.push_window, ledger, holes)
 
     if args.json_out:
         with open(args.json_out, "w") as handle:

@@ -8,9 +8,17 @@ Pure logic only: the git mirror is a fake, so these run with no network, no
 import os
 import sys
 import unittest
+from unittest import mock
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import conflict_stats  # noqa: E402
+
+
+class FakeRun:
+    """What `subprocess.run` returns, for the two reads that can fail."""
+
+    def __init__(self, returncode=0, stdout="", stderr=""):
+        self.returncode, self.stdout, self.stderr = returncode, stdout, stderr
 
 
 class Replay(unittest.TestCase):
@@ -304,6 +312,21 @@ class Replay(unittest.TestCase):
             index=conflict_stats.ledger_index(ledger), available={"h1"})
         self.assertEqual(handling, "partial")
 
+    def test_a_ledger_hole_over_the_prs_life_is_not_reported_as_full_coverage(self):
+        # A failed or capped API slice returns fewer pushes and looks exactly like
+        # a quiet week, so a PR alive during one cannot be called `recorded`.
+        mirror = self.FakeMirror([("h1", 1000), ("h2", 1650)], {"h1": 5})
+        ledger = [{"sha": sha, "actor": "alice", "when": when,
+                   "owner": "o", "branch": "b"}
+                  for sha, when in [("h1", 1000), ("h2", 1650)]]
+        pr = dict(self.pr(), headRefName="b", headRepositoryOwner={"login": "o"})
+        pr["_pushes"] = [("h1", 1000, "alice"), ("h2", 1650, "alice")]
+        pr["_ledger_covered"] = False
+        _, handling, _, _ = conflict_stats.analyse_pr(
+            mirror, self.HISTORY, self.TIMES, pr, 9999, 7200,
+            index=conflict_stats.ledger_index(ledger), available={"h1", "h2"})
+        self.assertEqual(handling, "partial")
+
     def test_branch_reuse_does_not_borrow_another_prs_pushes(self):
         # `fix/typo` belongs to a dozen PRs over time; only the pushes inside this
         # PR's own lifetime are its own.
@@ -346,6 +369,43 @@ class LedgerIndex(unittest.TestCase):
         index = conflict_stats.ledger_index(rows)
         self.assertEqual(len(index[("o", "b")]), 1)
         self.assertEqual(len(index[("o", "other")]), 1)
+
+
+class LedgerHoles(unittest.TestCase):
+    """A slice the API would not serve is a hole, not a quiet week."""
+
+    def ledger(self, result):
+        with mock.patch.object(conflict_stats.subprocess, "run",
+                               return_value=result):
+            return conflict_stats.push_ledger(0, 100)
+
+    def test_a_failed_slice_is_returned_as_a_hole(self):
+        rows, holes = self.ledger(FakeRun(returncode=1, stderr="HTTP 502"))
+        self.assertEqual(rows, [])
+        self.assertEqual(holes, [(0, 100)])
+
+    def test_a_slice_that_caps_out_at_its_smallest_span_is_a_hole(self):
+        # Halving stops at MIN_LEDGER_SLICE, so a span this small that still caps
+        # is truncated for good; accepting it would drop pushes silently.
+        line = "sha1 alice 2026-01-01T00:00:00Z owner branch\n"
+        rows, holes = self.ledger(
+            FakeRun(stdout=line * conflict_stats.LISTING_CAP))
+        self.assertEqual(len(rows), conflict_stats.LISTING_CAP)
+        self.assertEqual(holes, [(0, 100)])
+
+    def test_a_slice_that_reads_cleanly_leaves_no_hole(self):
+        rows, holes = self.ledger(
+            FakeRun(stdout="sha1 alice 2026-01-01T00:00:00Z owner branch\n"))
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(holes, [])
+
+    def test_a_pr_alive_during_a_hole_is_not_covered(self):
+        self.assertFalse(conflict_stats.covered_by_ledger([(50, 150)], 100, 200))
+        self.assertFalse(conflict_stats.covered_by_ledger([(50, 150)], 0, 999))
+
+    def test_a_hole_outside_a_prs_lifetime_does_not_touch_it(self):
+        self.assertTrue(conflict_stats.covered_by_ledger([(50, 150)], 200, 300))
+        self.assertTrue(conflict_stats.covered_by_ledger([], 0, 999))
 
 
 class ClosedIntervals(unittest.TestCase):
@@ -391,17 +451,35 @@ class ClosedIntervals(unittest.TestCase):
         self.assertEqual(rows[0]["closed_seconds"], 15)
         self.assertEqual(rows[0]["seconds"], 985)
 
+    def test_a_failed_timeline_read_is_not_a_pr_that_never_closed(self):
+        # `[]` claims "nothing to discount"; the read failing claims nothing at
+        # all. Returning `[]` for both hid an outage inside every duration.
+        with mock.patch.object(
+                conflict_stats.subprocess, "run",
+                return_value=FakeRun(returncode=1, stderr="HTTP 502")):
+            self.assertIsNone(conflict_stats.closed_intervals(7))
+        with mock.patch.object(
+                conflict_stats.subprocess, "run",
+                return_value=FakeRun(stdout="")):
+            self.assertEqual(conflict_stats.closed_intervals(7), [])
+
 
 class ReplaySummary(unittest.TestCase):
     def episodes(self):
+        # `closed_seconds: 0` as a real row carries it: a checked zero, which the
+        # report must not confuse with the `None` that means nobody could check.
         return [
             {"pr": 1, "author": "alice", "onset": 0, "resolved": 3600, "seconds": 3600,
+             "closed_seconds": 0,
              "outcome": "push", "session": conflict_stats.CONTINUATION, "resolver": "alice"},
             {"pr": 2, "author": "alice", "onset": 0, "resolved": 200000, "seconds": 200000,
+             "closed_seconds": 0,
              "outcome": "push", "session": conflict_stats.RETURN, "resolver": "alice"},
             {"pr": 3, "author": "bob", "onset": 0, "resolved": 500000, "seconds": 500000,
+             "closed_seconds": 0,
              "outcome": "still-open", "session": None, "resolver": None},
             {"pr": 4, "author": "bob", "onset": 0, "resolved": 900, "seconds": 900,
+             "closed_seconds": 0,
              "outcome": "push", "session": conflict_stats.OTHER_ACTOR, "resolver": "carol"},
         ]
 
@@ -418,6 +496,19 @@ class ReplaySummary(unittest.TestCase):
         self.assertIn("1 by the PR's author, returning after a gap", lines)
         self.assertIn("1 by someone other than the PR's author", lines)
         self.assertIn("still conflicting", lines)
+
+    def test_partial_coverage_is_reported_as_its_own_provenance(self):
+        lines = "\n".join(conflict_stats.summarise(
+            self.episodes(), handled={"recorded": 40, "partial": 3}, total_prs=99))
+        self.assertIn("3 partially (heads unfetchable, or a hole in the ledger", lines)
+
+    def test_an_unchecked_closed_time_is_flagged_rather_than_passed_off_as_zero(self):
+        episodes = self.episodes()
+        episodes[0]["closed_seconds"] = None
+        lines = "\n".join(conflict_stats.summarise(
+            episodes, handled={"recorded": 40}, total_prs=99))
+        self.assertIn("1 episode(s) whose timeline could not be read", lines)
+        self.assertIn("upper bounds", lines)
 
 
 if __name__ == "__main__":
