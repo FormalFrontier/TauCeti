@@ -22,10 +22,10 @@ displayed relation for every `α`, so without them nothing below is true.
 Working with a normalized lift rather than with a homomorphism `G → PGL(V)` keeps the theory
 basis-free and puts the factor set in the statement, where the rest of the theory needs it.
 
-That `α` is a factor set is rarely something to check by hand: on a nonzero module it is
-*determined* by `ρ`, and `TauCeti.IsProjectiveRep.of_mul_apply` derives its normalization and its
-multiplicative `2`-cocycle identity from associativity of composition, so there only the two
-conditions on `ρ` remain. The main results then identify projective
+That `α` is a factor set is rarely something to check by hand: as soon as `k` acts faithfully on
+`V` it is *determined* by `ρ`, and `TauCeti.IsProjectiveRep.of_map_one_mul_apply` derives its
+normalization and its multiplicative `2`-cocycle identity from associativity of composition, so
+there only the two conditions on `ρ` remain. The main results then identify projective
 representations with factor set `α` with modules over the twisted monoid algebra `k_α[G]` of
 `TauCeti.twistedMonoidAlgebra`: a module structure on `V` is an algebra map
 `k_α[G] →ₐ[k] Module.End k V`, and `TauCeti.isProjectiveRepEquivAlgHom` is the bijection between
@@ -44,10 +44,13 @@ itself becomes the **twisted regular representation**, which realizes every fact
 
 ## Main results
 
-* `TauCeti.IsProjectiveRep.of_mul_apply`: on a nonzero module the factor-set axioms are automatic,
-  and `TauCeti.IsProjectiveRep.factorSet_eq`: there the factor set is determined by the lift.
+* `TauCeti.IsProjectiveRep.of_map_one_mul_apply`: when `k` acts faithfully on `V` the factor-set
+  axioms are automatic, and `TauCeti.IsProjectiveRep.factorSet_eq`: there the factor set is
+  determined by the lift.
 * `TauCeti.IsProjectiveRep.rescale`: rescaling the lift by `c : G → kˣ` multiplies the factor set by
-  the coboundary of `c`, so the cohomology class of the factor set is the invariant of the lift.
+  the coboundary of `c`. A fixed lift determines its factor set outright; it is the cohomology
+  class that is unchanged by normalized rescaling, hence an invariant of the underlying projective
+  action rather than of the lift.
 * `TauCeti.IsProjectiveRep.toMonoidHom` and `TauCeti.IsProjectiveRep.of_monoidHom`: the projective
   representations with trivial factor set are exactly the linear representations.
 * `TauCeti.exists_isProjectiveRep`: every normalized factor set is the factor set of a projective
@@ -81,8 +84,8 @@ variable [CommSemiring k] [Monoid G] [AddCommMonoid V] [Module k V]
 that is multiplicative up to the scalars `α`. Invertibility of the `ρ g` is carried by the type
 `V ≃ₗ[k] V` and normalization by `map_one`; without them the zero family would satisfy `mul_apply`
 for every `α`, and on the zero module it still does, which is why the factor-set axioms are
-recorded here rather than left to be derived. On a nonzero torsion-free module they *are*
-derivable, and `TauCeti.IsProjectiveRep.of_mul_apply` derives them. -/
+recorded here rather than left to be derived. When `k` acts faithfully on `V` they *are*
+derivable, and `TauCeti.IsProjectiveRep.of_map_one_mul_apply` derives them. -/
 structure IsProjectiveRep (ρ : G → V ≃ₗ[k] V) (α : G → G → kˣ) : Prop where
   /-- The scalars are a normalized multiplicative `2`-cocycle. -/
   isFactorSet : IsFactorSet α
@@ -139,11 +142,10 @@ theorem rescale (h : IsProjectiveRep ρ α) (c : G → kˣ) (hc : c 1 = 1) :
     simp
   mul_apply g₁ g₂ x := by
     have hunit : (c g₁ * c g₂ * (c (g₁ * g₂))⁻¹ * α g₁ g₂) * c (g₁ * g₂)
-        = c g₁ * c g₂ * α g₁ g₂ := by
+        = c g₂ * (c g₁ * α g₁ g₂) := by
       rw [mul_right_comm, inv_mul_cancel_right]
-    rw [trans_smulOfUnit_apply, trans_smulOfUnit_apply, trans_smulOfUnit_apply, map_smul,
-      h.mul_apply, smul_smul, smul_smul, smul_smul, ← Units.val_mul, ← Units.val_mul,
-      ← Units.val_mul, hunit]
+      simp only [mul_comm, mul_left_comm]
+    simp only [trans_smulOfUnit_apply, map_smul, h.mul_apply, smul_smul, ← Units.val_mul, hunit]
 
 /-- A linear representation, presented as a homomorphism into the group of linear automorphisms, is
 a projective representation with trivial factor set. -/
@@ -154,7 +156,7 @@ theorem of_monoidHom (π : G →* (V ≃ₗ[k] V)) : IsProjectiveRep (⇑π) (1 
 
 /-- A projective representation with trivial factor set is a linear representation: the lift is
 itself a homomorphism into the group of linear automorphisms. -/
-@[expose] def toMonoidHom (h : IsProjectiveRep ρ (1 : G → G → kˣ)) : G →* (V ≃ₗ[k] V) where
+def toMonoidHom (h : IsProjectiveRep ρ (1 : G → G → kˣ)) : G →* (V ≃ₗ[k] V) where
   toFun := ρ
   map_one' := h.map_one
   map_mul' g₁ g₂ := LinearEquiv.ext fun x ↦ by simpa using (h.mul_apply g₁ g₂ x).symm
@@ -163,50 +165,39 @@ itself a homomorphism into the group of linear automorphisms. -/
 itself. -/
 @[simp]
 theorem coe_toMonoidHom (h : IsProjectiveRep ρ (1 : G → G → kˣ)) : ⇑h.toMonoidHom = ρ :=
-  rfl
+  (rfl)
 
 end IsProjectiveRep
 
 end Defs
 
 /-!
-## On a nonzero module the factor-set axioms are automatic
+## For a faithful scalar action the factor-set axioms are automatic
 
-On a nonzero module the scalars in the defining relation are determined by the lift, and
-associativity of composition forces the cocycle identity on them. So there a normalized lift that
-is multiplicative up to `α` is already a projective representation, and its factor set is unique.
-Torsion-freeness of `V` over `k` is what lets a scalar be read off from its action; over a field it
-is automatic.
+When `k` acts faithfully on `V` the scalars in the defining relation are determined by the lift,
+and associativity of composition forces the cocycle identity on them. So there a normalized lift
+that is multiplicative up to `α` is already a projective representation, and its factor set is
+unique. Faithfulness is exactly what lets a scalar be read off from its action; a nonzero
+torsion-free module, a nonzero vector space in particular, has it.
 -/
 
-section IsFactorSet
+section Faithful
 
-variable [CommRing k] [Monoid G] [AddCommGroup V] [Module k V] [NoZeroSMulDivisors k V]
-  [Nontrivial V] {ρ : G → V ≃ₗ[k] V} {α : G → G → kˣ}
-
-/-- On a nonzero torsion-free module a unit is determined by the scalar multiplication it induces.
--/
-private theorem units_eq_of_forall_smul_eq {a b : kˣ} (h : ∀ x : V, (a : k) • x = (b : k) • x) :
-    a = b := by
-  obtain ⟨x, hx⟩ := exists_ne (0 : V)
-  refine Units.ext ?_
-  have hsub : ((a : k) - b) • x = 0 := by rw [sub_smul, h x, sub_self]
-  rcases eq_zero_or_eq_zero_of_smul_eq_zero hsub with h' | h'
-  · exact sub_eq_zero.1 h'
-  · exact absurd h' hx
+variable [CommSemiring k] [Monoid G] [AddCommMonoid V] [Module k V] [FaithfulSMul k V]
+  {ρ : G → V ≃ₗ[k] V} {α : G → G → kˣ}
 
 namespace IsProjectiveRep
 
-/-- **On a nonzero module the factor-set axioms come for free.** A normalized lift that is
+/-- **For a faithful scalar action the factor-set axioms come for free.** A normalized lift that is
 multiplicative up to `α` is a projective representation: the normalization of `α` follows from that
-of the lift, and its multiplicative `2`-cocycle identity from associativity of composition. So over
-a field, say, the cocycle identity never has to be checked. -/
-theorem of_mul_apply (h₁ : ρ 1 = 1)
+of the lift, and its multiplicative `2`-cocycle identity from associativity of composition. So on a
+nonzero vector space, say, the cocycle identity never has to be checked. -/
+theorem of_map_one_mul_apply (h₁ : ρ 1 = 1)
     (h₂ : ∀ (g₁ g₂ : G) (x : V), ρ g₁ (ρ g₂ x) = (α g₁ g₂ : k) • ρ (g₁ * g₂) x) :
     IsProjectiveRep ρ α where
   isFactorSet :=
     { cocycle g₁ g₂ g₃ := by
-        refine units_eq_of_forall_smul_eq (V := V) fun x ↦ ?_
+        refine Units.ext (FaithfulSMul.eq_of_smul_eq_smul fun x : V ↦ ?_)
         obtain ⟨y, rfl⟩ := (ρ (g₁ * g₂ * g₃)).surjective x
         have outer : ρ g₁ (ρ g₂ (ρ g₃ y))
             = ((α g₁ g₂ : k) * α (g₁ * g₂) g₃) • ρ (g₁ * g₂ * g₃) y := by
@@ -216,13 +207,13 @@ theorem of_mul_apply (h₁ : ρ 1 = 1)
           rw [h₂ g₂ g₃, map_smul, h₂ g₁ (g₂ * g₃), smul_smul, mul_assoc]
         rw [Units.val_mul, Units.val_mul, ← inner, outer, mul_comm]
       one_left g := by
-        refine units_eq_of_forall_smul_eq (V := V) fun x ↦ ?_
+        refine Units.ext (FaithfulSMul.eq_of_smul_eq_smul fun x : V ↦ ?_)
         obtain ⟨y, rfl⟩ := (ρ g).surjective x
         have hy := h₂ 1 g y
         rw [h₁, one_mul] at hy
         simpa using hy.symm
       one_right g := by
-        refine units_eq_of_forall_smul_eq (V := V) fun x ↦ ?_
+        refine Units.ext (FaithfulSMul.eq_of_smul_eq_smul fun x : V ↦ ?_)
         obtain ⟨y, rfl⟩ := (ρ g).surjective x
         have hy := h₂ g 1 y
         rw [h₁, mul_one] at hy
@@ -230,18 +221,18 @@ theorem of_mul_apply (h₁ : ρ 1 = 1)
   map_one := h₁
   mul_apply := h₂
 
-/-- **The factor set is determined by the lift**: on a nonzero module a projective representation
-has at most one factor set, so `α` is not extra data but an invariant of `ρ`. -/
+/-- **The factor set is determined by the lift**: for a faithful scalar action a projective
+representation has at most one factor set, so `α` is not extra data but an invariant of `ρ`. -/
 theorem factorSet_eq {β : G → G → kˣ} (h : IsProjectiveRep ρ α) (h' : IsProjectiveRep ρ β) :
     α = β := by
   funext g₁ g₂
-  refine units_eq_of_forall_smul_eq (V := V) fun x ↦ ?_
+  refine Units.ext (FaithfulSMul.eq_of_smul_eq_smul fun x : V ↦ ?_)
   obtain ⟨y, rfl⟩ := (ρ (g₁ * g₂)).surjective x
   exact (h.mul_apply g₁ g₂ y).symm.trans (h'.mul_apply g₁ g₂ y)
 
 end IsProjectiveRep
 
-end IsFactorSet
+end Faithful
 
 /-!
 ## Projective representations are twisted-group-algebra modules
@@ -279,7 +270,7 @@ variable [Group G] {α : G → G → kˣ} [IsFactorSet α]
 
 /-- **A `k_α[G]`-module is a projective representation with factor set `α`.** The basis element at
 `g` is a unit of `k_α[G]`, so it acts on `V` as a linear automorphism. -/
-@[expose] noncomputable def projectiveRepOfAlgHom (g : G) : V ≃ₗ[k] V :=
+noncomputable def projectiveRepOfAlgHom (g : G) : V ≃ₗ[k] V :=
   LinearEquiv.ofBijective (φ (TwistedMonoidAlgebra.of g))
     ((Module.End.isUnit_iff _).1 ((TwistedMonoidAlgebra.isUnit_of g).map φ))
 
@@ -288,7 +279,7 @@ at `g`. -/
 @[simp]
 theorem projectiveRepOfAlgHom_apply (g : G) (x : V) :
     projectiveRepOfAlgHom φ g x = φ (TwistedMonoidAlgebra.of g) x :=
-  rfl
+  (rfl)
 
 /-- The action of the basis elements of `k_α[G]` on a module is a projective representation with
 factor set `α`. -/
@@ -312,7 +303,7 @@ theorem toAlgHom_projectiveRepOfAlgHom :
     (isProjectiveRep_projectiveRepOfAlgHom φ).toAlgHom = φ :=
   TwistedMonoidAlgebra.algHom_ext fun g ↦ by
     rw [IsProjectiveRep.toAlgHom_of]
-    rfl
+    exact LinearMap.ext (projectiveRepOfAlgHom_apply φ g)
 
 /-- Reading a projective representation as a `k_α[G]`-module and back returns the lift. -/
 @[simp]
@@ -348,14 +339,15 @@ variable (k G : Type*) [CommSemiring k] [Group G] (α : G → G → kˣ) [IsFact
 /-- **The twisted regular representation** of `G` on `G →₀ k`: the twisted monoid algebra `k_α[G]`
 acting on itself, read through its realization as operators on `G →₀ k`. Its factor set is `α`, so
 every normalized factor set is realized by a projective representation. -/
-@[expose] noncomputable def twistedRegularRep (g : G) : (G →₀ k) ≃ₗ[k] (G →₀ k) :=
+noncomputable def twistedRegularRep (g : G) : (G →₀ k) ≃ₗ[k] (G →₀ k) :=
   projectiveRepOfAlgHom (twistedMonoidAlgebra k G α).val g
 
 /-- The twisted regular representation acts by the twisted translations. -/
 @[simp]
 theorem twistedRegularRep_apply (g : G) (x : G →₀ k) :
-    twistedRegularRep k G α g x = twistedTranslation k α g x :=
-  rfl
+    twistedRegularRep k G α g x = twistedTranslation k α g x := by
+  rw [twistedRegularRep, projectiveRepOfAlgHom_apply, Subalgebra.coe_val,
+    TwistedMonoidAlgebra.coe_of]
 
 /-- The twisted regular representation has factor set `α`. -/
 theorem isProjectiveRep_twistedRegularRep : IsProjectiveRep (twistedRegularRep k G α) α :=
