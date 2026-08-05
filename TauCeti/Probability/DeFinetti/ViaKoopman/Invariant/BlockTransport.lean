@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Probability.Exchangeability.PathSpace.InvariantTransport
+public import TauCeti.Probability.Exchangeability.PathSpace.Invariant.Transport
 public import TauCeti.Probability.Exchangeability.PermutationExtension
 public import TauCeti.Probability.Exchangeability.L2.LongTailAverages
 public import Mathlib.Dynamics.BirkhoffSum.Average
@@ -31,8 +31,10 @@ translation. `exists_strictMono_nat_extending_fin_eventually_add` supplies such 
 extending any strictly increasing finite selection, which is what turns the global statement into
 one about an arbitrary block.
 
-⚠ Both rest on *invariance*, not tail-measurability: a tail event need not satisfy
-`shift ⁻¹' A = A`, and `invariants_shift_lt_pathTail` shows the inclusion is strict.
+⚠ The block-transport results rest on *invariance*, not tail-measurability: a tail event need not
+satisfy `shift ⁻¹' A = A`, and `invariants_shift_lt_pathTail` shows the inclusion is strict. The
+Birkhoff/prefix-average identity carries no such caveat — it mentions no event at all and is an
+unconditional identity of functions.
 -/
 
 public section
