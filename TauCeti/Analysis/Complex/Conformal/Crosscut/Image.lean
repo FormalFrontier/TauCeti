@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Analysis.Complex.Conformal.CutDiameter
+public import TauCeti.Topology.MetricSpace.Cut
 public import TauCeti.Topology.UniformlyLocallyConnected
 import TauCeti.Analysis.Complex.Conformal.ClusterSet
 import TauCeti.Analysis.Complex.Conformal.Crosscut.Endpoints
@@ -35,9 +36,11 @@ and in the deprecated disc forms of the final section.
 Write `Ω = f '' U`, `A = f '' (U ∩ ball ζ ρ)`, `B = f '' (U \ closedBall ζ ρ)` for the images of
 the parts of `U` inside and outside the circle, and `γ = f '' (U ∩ sphere ζ ρ)` for the image of the
 part on it, `f` being holomorphic and injective on the open set `U`. Then `Ω = A ∪ γ ∪ B`
-(`TauCeti.image_eq_union_image_inter_sphere`), and the frontier of a union is covered by the
-frontiers of its parts, so a frontier point of `Ω` is a frontier point of `A`, a frontier point of
-`B`, or an adherent point of `γ`:
+(`TauCeti.image_eq_union_image_inter_sphere`, in `TauCeti/Topology/MetricSpace/Cut.lean`, where the
+decomposition and the boundary covering it yields are proved for an arbitrary map out of a
+pseudometric space), and the frontier of a union is covered by the frontiers of its parts, so a
+frontier point of `Ω` is a frontier point of `A`, a frontier point of `B`, or an adherent point of
+`γ`:
 
 > `frontier Ω = frontier Ω ∩ frontier A ∪ frontier Ω ∩ closure γ ∪ frontier Ω ∩ frontier B`
 
@@ -110,18 +113,16 @@ statement that does use the disc is the continuum theorem
 crosscut in a subarc.
 
 In accordance with the generality bar of `ConformalMapping/README.md`, which fixes scalar `ℂ` for
-every theorem added in layers L0–L6, everything here is stated for maps of `ℂ`. The two inputs that
-are not about conformality are stated at their own generality elsewhere: `TauCeti.diam_frontier`
-for an arbitrary real normed space and `TauCeti.IsUniformlyLocallyConnected` for an arbitrary
-pseudometric space.
+every theorem added in layers L0–L6, everything here is stated for maps of `ℂ`. The inputs that are
+not about conformality are stated at their own generality elsewhere: `TauCeti.diam_frontier` for an
+arbitrary real normed space, `TauCeti.IsUniformlyLocallyConnected` for an arbitrary pseudometric
+space, and the decomposition of the image and of its frontier by the cutting sphere
+(`TauCeti.image_eq_union_image_inter_sphere`,
+`TauCeti.frontier_image_eq_union_closure_image_inter_sphere`) for an arbitrary map out of a
+pseudometric space, in `TauCeti/Topology/MetricSpace/Cut.lean`.
 
 ## Main results
 
-* `TauCeti.image_eq_union_image_inter_sphere` — the image of the domain is the union of the images
-  of the parts of it inside, on, and outside the circle.
-* `TauCeti.frontier_image_subset_union_closure_image_inter_sphere` and
-  `TauCeti.frontier_image_eq_union_closure_image_inter_sphere` — the circle cuts the boundary of
-  the image into two pieces and a middle piece adherent to the image of the cut.
 * `TauCeti.closure_image_inter_sphere_eq_union_biUnion_clusterSetOn` — the closure of the image of
   the cut is that image together with the cluster sets of `f` along it.
 * `TauCeti.isConnected_clusterSetOn_ball_inter_sphere` — at an endpoint of a crosscut of a disc a
@@ -166,54 +167,6 @@ namespace TauCeti
 open Bornology Complex Filter Metric Set Topology
 
 variable {f : ℂ → ℂ} {U : Set ℂ} {c ζ e : ℂ} {r ρ : ℝ}
-
-/-! ## The three pieces of the image -/
-
-/-- **A circle splits the image of a domain into three pieces**: the images of the parts of the
-domain inside, on, and outside it. This is
-`TauCeti.sdiff_sphere_eq_inter_ball_union_sdiff_closedBall` — the corresponding identity in the
-domain — pushed forward, and needs nothing of `f` and nothing of `U`. -/
-theorem image_eq_union_image_inter_sphere (f : ℂ → ℂ) (U : Set ℂ) (ζ : ℂ) (ρ : ℝ) :
-    f '' U =
-      f '' (U ∩ ball ζ ρ) ∪ f '' (U ∩ sphere ζ ρ) ∪ f '' (U \ closedBall ζ ρ) := by
-  rw [← image_union, ← image_union]
-  congr 1
-  rw [union_right_comm, ← sdiff_sphere_eq_inter_ball_union_sdiff_closedBall, sdiff_union_inter]
-
-/-! ## The circle cuts the boundary of the image in two -/
-
-/-- **The boundary of the image of a domain is covered by the boundaries of the images of the parts
-inside and outside the circle together with the closure of the image of the part on it.**
-
-Like the decomposition itself this needs nothing of `f`: the image of the domain is the union of
-the three pieces by `TauCeti.image_eq_union_image_inter_sphere`, the frontier of a union is covered
-by the frontiers of the two parts by `frontier_union_subset`, and the frontier of the middle image
-lies in its closure. -/
-theorem frontier_image_subset_union_closure_image_inter_sphere (f : ℂ → ℂ) (U : Set ℂ) (ζ : ℂ)
-    (ρ : ℝ) :
-    frontier (f '' U) ⊆
-      frontier (f '' (U ∩ ball ζ ρ)) ∪ closure (f '' (U ∩ sphere ζ ρ)) ∪
-        frontier (f '' (U \ closedBall ζ ρ)) := by
-  have hunion : ∀ s t : Set ℂ, frontier (s ∪ t) ⊆ frontier s ∪ frontier t := fun s t =>
-    (frontier_union_subset s t).trans (union_subset_union inter_subset_left inter_subset_right)
-  rw [image_eq_union_image_inter_sphere f U ζ ρ]
-  exact (hunion _ _).trans (union_subset_union
-    ((hunion _ _).trans (union_subset_union subset_rfl frontier_subset_closure)) subset_rfl)
-
-/-- **A circle cuts the boundary of the image into two pieces and a middle piece.** The equality
-form of `TauCeti.frontier_image_subset_union_closure_image_inter_sphere`: `frontier (f '' U)` is the
-union of the two *boundary pieces* the circle determines — its intersections with the frontiers of
-the images of the parts of `U` inside and outside the circle — and of the part of it adherent to
-`f '' (U ∩ sphere ζ ρ)`, which `TauCeti.diam_frontier_inter_closure_image_inter_sphere_le` shows to
-be no wider than that image itself. -/
-theorem frontier_image_eq_union_closure_image_inter_sphere (f : ℂ → ℂ) (U : Set ℂ) (ζ : ℂ) (ρ : ℝ) :
-    frontier (f '' U) =
-      frontier (f '' U) ∩ frontier (f '' (U ∩ ball ζ ρ)) ∪
-        frontier (f '' U) ∩ closure (f '' (U ∩ sphere ζ ρ)) ∪
-        frontier (f '' U) ∩ frontier (f '' (U \ closedBall ζ ρ)) := by
-  rw [← inter_union_distrib_left, ← inter_union_distrib_left]
-  exact (inter_eq_left.mpr
-    (frontier_image_subset_union_closure_image_inter_sphere f U ζ ρ)).symm
 
 /-! ## Where the cut leaves the domain -/
 

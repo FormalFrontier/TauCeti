@@ -70,6 +70,10 @@ criterion adds is the production of the pointwise limits that theorem asks for.
   some point of `closure U` — at a point of `frontier U`, if the value is not attained and `f` is
   continuous — so `closure (f '' U)` is the union of the cluster sets, and — for continuous `f` —
   is the image together with the *boundary* cluster values.
+* `TauCeti.subsingleton_clusterSetOn_of_forall_exists` and
+  `TauCeti.subsingleton_clusterSetOn_of_forall_exists_diam_le` — **the Cauchy criterion**: a
+  uniformly small oscillation on the approach regions `U ∩ ball w δ`, or equivalently a small
+  diameter of their images, makes the cluster set a subsingleton.
 * `TauCeti.exists_continuousOn_closure_eqOn` — **the extension criterion**: a continuous map into a
   compact set, with subsingleton boundary cluster sets, extends continuously to `closure U`;
   `TauCeti.exists_continuousOn_closure_eqOn_of_isBounded` is the proper-metric form, where the
@@ -354,6 +358,24 @@ theorem subsingleton_clusterSetOn_of_forall_exists
   calc dist v₁ v₂ ≤ dist v₁ (f x) + dist (f x) (f y) + dist (f y) v₂ := dist_triangle4 _ _ _ _
     _ ≤ ε / 3 + ε / 3 + ε / 3 := add_le_add (add_le_add h₁'.le hxy) hy.le
     _ = ε := by ring
+
+/-- **Small images of the approach regions make the cluster set a subsingleton.** If the image
+`f '' (U ∩ ball w δ)` of the approach region can be made of diameter at most `ε` for every `ε > 0`,
+then `f` has at most one cluster value at `w` along `U`.
+
+This is `TauCeti.subsingleton_clusterSetOn_of_forall_exists` read through `Metric.diam`, which is
+the shape a *geometric* estimate arrives in: what such an estimate bounds is the width of the
+image of the approach region, not the distance between two named values in it. Boundedness of the
+whole image is needed only because `Metric.diam` vanishes on an unbounded set, so a diameter bound
+would otherwise be no bound at all. -/
+theorem subsingleton_clusterSetOn_of_forall_exists_diam_le (hb : Bornology.IsBounded (f '' U))
+    (h : ∀ ε > 0, ∃ δ > 0, Metric.diam (f '' (U ∩ Metric.ball w δ)) ≤ ε) :
+    (clusterSetOn f U w).Subsingleton := by
+  refine subsingleton_clusterSetOn_of_forall_exists fun ε hε => ?_
+  obtain ⟨δ, hδ, hdiam⟩ := h ε hε
+  refine ⟨δ, hδ, fun x hx y hy => le_trans ?_ hdiam⟩
+  exact Metric.dist_le_diam_of_mem (hb.subset (Set.image_mono Set.inter_subset_left))
+    (Set.mem_image_of_mem f hx) (Set.mem_image_of_mem f hy)
 
 end MetricSpace
 
