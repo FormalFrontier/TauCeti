@@ -44,7 +44,8 @@ is all the bridge needs.
   orthonormal for `dx` on `(-1, 1]`.
 * `TauCeti.chebyshevTEnvelopeHilbertBasis` — the basis itself.
 * `TauCeti.coeFn_chebyshevTEnvelopeHilbertBasis`, `TauCeti.coe_chebyshevTEnvelopeHilbertBasis` —
-  the anti-vacuity pins: the `n`-th basis vector really is `τₙ`, pointwise and as an `Lp` vector.
+  the anti-vacuity pins: the `n`-th basis vector really is `τₙ`, almost everywhere and as an `Lp`
+  vector.
 -/
 
 public section
