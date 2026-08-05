@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+public import TauCeti.Combinatorics.Enumerative.Partition.Conjugate
 public import TauCeti.GroupTheory.QuotientGroup.Basic
 public import TauCeti.RepresentationTheory.Symmetric.PermutationModule.Form
 public import TauCeti.RepresentationTheory.Symmetric.Relabel
@@ -45,8 +46,8 @@ proved here; so are James's submodule theorem and irreducibility.
 * `TauCeti.YoungTableau.tabloid`: the `μ`-tabloid of a tableau.
 * `TauCeti.YoungTableau.polytabloid`: the polytabloid `e_t = b_t · {t}`.
 * `TauCeti.spechtSubrepresentation`: the span of the polytabloids, as a subrepresentation of `M^μ`.
-* `TauCeti.spechtModule`: the Specht module `S^μ`, that subrepresentation bundled as a
-  finite-dimensional representation.
+* `TauCeti.spechtModule`: the Specht module `S^μ` of a partition `μ` of `n`, that subrepresentation
+  of the diagram of `μ` bundled as a finite-dimensional representation of `Sₙ`.
 
 ## Main results
 
@@ -290,19 +291,27 @@ instance (μ : YoungDiagram) :
     FiniteDimensional ℚ (spechtSubrepresentation μ).toSubmodule :=
   FiniteDimensional.finiteDimensional_submodule _
 
-/-- The **Specht module** `S^μ` bundled as a finite-dimensional representation of the symmetric
-group; `spechtSubrepresentation_toSubmodule` identifies the underlying module with the span of the
+/-- The **Specht module** `S^μ` of a partition `μ` of `n`, bundled as a finite-dimensional
+representation of `Sₙ`: the span of the polytabloids of the tableaux of the Young diagram
+`diagramOf μ`, with the symmetric group on the `(diagramOf μ).card` entries of such a tableau
+identified with `Sₙ` along `card_diagramOf`.
+
+The tabloid combinatorics is indexed by a diagram, since a tableau is a filling of one, while the
+classification the Specht modules feed is indexed by partitions; this is the partition-indexed
+name.  Its representation unfolds to `spechtSubrepresentation (diagramOf μ)` by `FDRep.of_ρ'`, and
+`spechtSubrepresentation_toSubmodule` identifies the underlying module with the span of the
 polytabloids. -/
-noncomputable abbrev spechtModule (μ : YoungDiagram) :
-    FDRep ℚ (Equiv.Perm (Fin μ.card)) :=
-  FDRep.of (spechtSubrepresentation μ).toRepresentation
+noncomputable abbrev spechtModule {n : ℕ} (μ : n.Partition) :
+    FDRep ℚ (Equiv.Perm (Fin n)) :=
+  FDRep.of ((spechtSubrepresentation (diagramOf μ)).toRepresentation.comp
+    (finCongr (card_diagramOf μ).symm).permCongrHom.toMonoidHom)
 
 /-- The Specht module is nontrivial, so it has positive dimension. -/
-theorem finrank_spechtModule_pos (μ : YoungDiagram) :
+theorem finrank_spechtModule_pos {n : ℕ} (μ : n.Partition) :
     0 < Module.finrank ℚ (spechtModule μ) :=
-  have : Nontrivial (spechtSubrepresentation μ).toSubmodule :=
+  have : Nontrivial (spechtSubrepresentation (diagramOf μ)).toSubmodule :=
     Submodule.nontrivial_iff_ne_bot.mpr fun h =>
-      spechtSubrepresentation_ne_bot μ (Subrepresentation.toSubmodule_injective h)
+      spechtSubrepresentation_ne_bot _ (Subrepresentation.toSubmodule_injective h)
   Module.finrank_pos
 
 end TauCeti
