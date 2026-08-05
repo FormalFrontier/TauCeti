@@ -18,8 +18,8 @@ Consequently `H \ G / K` is finite as soon as `K` has finite index, with no fini
 on `G` itself.
 
 This is the instance that lets a sum be taken over `H \ G / K`; the Mackey decomposition
-(`TauCeti.RepresentationTheory.Induction.Mackey`) is its first consumer, where the index of the
-subgroup being induced from is the only finiteness available.
+(`TauCeti.RepresentationTheory.Induction.Mackey.Basic`) is its first consumer, where the index of
+the subgroup being induced from is the only finiteness available.
 
 ## Main statements
 
