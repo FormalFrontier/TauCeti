@@ -19,6 +19,7 @@ tangent-space exponential.
 
 * `mulInvariantLog`: the canonical local logarithm from the group to its tangent Lie algebra.
 * `eventually_mulInvariantExp_log`: exponential followed after logarithm is locally the identity.
+* `eventually_mulInvariantLog_exp`: logarithm followed after exponential is locally the identity.
 * `isLocalDiffeomorphAt_mulInvariantExpChart_zero`: the fully charted exponential is a local
   diffeomorphism of every finite differentiability order at zero.
 * `exists_injOn_mulInvariantExp_modelSpace`: exponential is injective near zero.
@@ -39,6 +40,10 @@ variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
 local instance lieGroupMinSmoothnessLocalInverse [LieGroup I ∞ G] :
     LieGroup I (minSmoothness ℝ 3) G := by
   simpa using (inferInstance : LieGroup I (3 : ℕ∞ω) G)
+
+private theorem smoothOrder_ne_zero : (∞ : ℕ∞ω) ≠ 0 := by
+  simp
+
 /-- The tangent-space exponential with both domain and codomain expressed in identity-chart
 coordinates. -/
 noncomputable def mulInvariantExpChart [FiniteDimensional ℝ E] [LieGroup I ∞ G]
@@ -58,7 +63,7 @@ theorem mulInvariantExpChart_apply [FiniteDimensional ℝ E] [LieGroup I ∞ G]
 
 /-- The fully charted exponential as a composition, for rewriting under higher-order
 predicates. -/
-theorem mulInvariantExpChart_eq [FiniteDimensional ℝ E] [LieGroup I ∞ G]
+private theorem mulInvariantExpChart_eq [FiniteDimensional ℝ E] [LieGroup I ∞ G]
     [T2Space G] [BoundarylessManifold I G] :
     mulInvariantExpChart (I := I) (G := G) = fun v : E =>
       extChartAt I (1 : G)
@@ -107,7 +112,8 @@ theorem hasFDerivAt_mulInvariantExpChart_zero [FiniteDimensional ℝ E] [LieGrou
 
 /-- The derivative of the fully charted exponential at zero, packaged as a continuous linear
 equivalence for the inverse function theorem. -/
-theorem hasFDerivAt_mulInvariantExpChart_zero_equiv [FiniteDimensional ℝ E] [LieGroup I ∞ G]
+private theorem hasFDerivAt_mulInvariantExpChart_zero_equiv [FiniteDimensional ℝ E]
+    [LieGroup I ∞ G]
     [T2Space G] [BoundarylessManifold I G] :
     HasFDerivAt (mulInvariantExpChart (I := I) (G := G))
       ((ContinuousLinearEquiv.refl ℝ E : E ≃L[ℝ] E) : E →L[ℝ] E) 0 := by
@@ -115,50 +121,64 @@ theorem hasFDerivAt_mulInvariantExpChart_zero_equiv [FiniteDimensional ℝ E] [L
 
 /-- The fully charted exponential on the canonical neighborhoods selected by the inverse function
 theorem. -/
-noncomputable def mulInvariantExpLocalHomeomorph [FiniteDimensional ℝ E] [LieGroup I ∞ G]
+noncomputable def mulInvariantExpOpenPartialHomeomorph [FiniteDimensional ℝ E] [LieGroup I ∞ G]
     [T2Space G] [BoundarylessManifold I G] : OpenPartialHomeomorph E E := by
   let _ : CompleteSpace E := FiniteDimensional.complete ℝ E
   exact (contDiffAt_mulInvariantExpChart_zero (I := I) (G := G))
     |>.toOpenPartialHomeomorph _
-      (hasFDerivAt_mulInvariantExpChart_zero_equiv (I := I) (G := G)) (by simp)
+      (hasFDerivAt_mulInvariantExpChart_zero_equiv (I := I) (G := G)) smoothOrder_ne_zero
 
 /-- The local homeomorphism agrees with the coordinate exponential. -/
 @[simp]
-theorem mulInvariantExpLocalHomeomorph_apply [FiniteDimensional ℝ E] [LieGroup I ∞ G]
+theorem mulInvariantExpOpenPartialHomeomorph_apply [FiniteDimensional ℝ E] [LieGroup I ∞ G]
     [T2Space G] [BoundarylessManifold I G] (v : E) :
-    mulInvariantExpLocalHomeomorph (I := I) (G := G) v =
+    mulInvariantExpOpenPartialHomeomorph (I := I) (G := G) v =
       mulInvariantExpChart (I := I) (G := G) v := by
-  unfold mulInvariantExpLocalHomeomorph
+  unfold mulInvariantExpOpenPartialHomeomorph
   rfl
 
 /-- Zero belongs to the source of the local coordinate exponential. -/
-theorem zero_mem_mulInvariantExpLocalHomeomorph_source [FiniteDimensional ℝ E]
+theorem zero_mem_mulInvariantExpOpenPartialHomeomorph_source [FiniteDimensional ℝ E]
     [LieGroup I ∞ G] [T2Space G] [BoundarylessManifold I G] :
-    0 ∈ (mulInvariantExpLocalHomeomorph (I := I) (G := G)).source := by
+    0 ∈ (mulInvariantExpOpenPartialHomeomorph (I := I) (G := G)).source := by
   let _ : CompleteSpace E := FiniteDimensional.complete ℝ E
   exact (contDiffAt_mulInvariantExpChart_zero (I := I) (G := G))
     |>.mem_toOpenPartialHomeomorph_source
-      (hasFDerivAt_mulInvariantExpChart_zero_equiv (I := I) (G := G)) (by simp)
+      (hasFDerivAt_mulInvariantExpChart_zero_equiv (I := I) (G := G)) smoothOrder_ne_zero
 
 /-- The identity coordinate belongs to the target of the local coordinate exponential. -/
-theorem identity_mem_mulInvariantExpLocalHomeomorph_target [FiniteDimensional ℝ E]
+theorem identity_mem_mulInvariantExpOpenPartialHomeomorph_target [FiniteDimensional ℝ E]
     [LieGroup I ∞ G] [T2Space G] [BoundarylessManifold I G] :
     extChartAt I (1 : G) (1 : G) ∈
-      (mulInvariantExpLocalHomeomorph (I := I) (G := G)).target := by
+      (mulInvariantExpOpenPartialHomeomorph (I := I) (G := G)).target := by
   rw [← mulInvariantExpChart_zero (I := I) (G := G)]
-  exact (mulInvariantExpLocalHomeomorph (I := I) (G := G)).map_source
-    zero_mem_mulInvariantExpLocalHomeomorph_source
+  exact (mulInvariantExpOpenPartialHomeomorph (I := I) (G := G)).map_source
+    zero_mem_mulInvariantExpOpenPartialHomeomorph_source
 
 /-- The canonical local logarithm with both domain and codomain in identity-chart coordinates. -/
 noncomputable def mulInvariantLogChart [FiniteDimensional ℝ E] [LieGroup I ∞ G]
     [T2Space G] [BoundarylessManifold I G] : E → E :=
-  (mulInvariantExpLocalHomeomorph (I := I) (G := G)).symm
+  (mulInvariantExpOpenPartialHomeomorph (I := I) (G := G)).symm
 
 /-- The fully charted logarithm is the inverse of the canonical local homeomorphism. -/
 theorem mulInvariantLogChart_apply [FiniteDimensional ℝ E] [LieGroup I ∞ G]
     [T2Space G] [BoundarylessManifold I G] (y : E) :
     mulInvariantLogChart (I := I) (G := G) y =
-      (mulInvariantExpLocalHomeomorph (I := I) (G := G)).symm y := by
+      (mulInvariantExpOpenPartialHomeomorph (I := I) (G := G)).symm y := by
+  rfl
+
+/- This private wrapper gives a stable name to Mathlib's inverse-function-theorem local inverse. -/
+private noncomputable def mulInvariantLogLocalInverse [FiniteDimensional ℝ E] [LieGroup I ∞ G]
+    [T2Space G] [BoundarylessManifold I G] : E → E := by
+  let _ : CompleteSpace E := FiniteDimensional.complete ℝ E
+  exact (contDiffAt_mulInvariantExpChart_zero (I := I) (G := G)).localInverse
+    (hasFDerivAt_mulInvariantExpChart_zero_equiv (I := I) (G := G)) smoothOrder_ne_zero
+
+/- The logarithm chosen through the local homeomorphism is exactly Mathlib's named local inverse. -/
+private theorem mulInvariantLogChart_eq_localInverse [FiniteDimensional ℝ E] [LieGroup I ∞ G]
+    [T2Space G] [BoundarylessManifold I G] :
+    mulInvariantLogChart (I := I) (G := G) =
+      mulInvariantLogLocalInverse (I := I) (G := G) := by
   rfl
 
 /-- The coordinate logarithm sends the identity coordinate to zero. -/
@@ -171,8 +191,8 @@ theorem mulInvariantLogChart_identity [FiniteDimensional ℝ E] [LieGroup I ∞ 
   simp only [Function.comp_apply] at hcoord
   rw [← hcoord]
   rw [← mulInvariantExpChart_zero (I := I) (G := G)]
-  exact (mulInvariantExpLocalHomeomorph (I := I) (G := G)).left_inv
-    zero_mem_mulInvariantExpLocalHomeomorph_source
+  exact (mulInvariantExpOpenPartialHomeomorph (I := I) (G := G)).left_inv
+    zero_mem_mulInvariantExpOpenPartialHomeomorph_source
 
 /-- Locally around zero, logarithm is a left inverse to the coordinate exponential. -/
 theorem eventually_mulInvariantLogChart_exp [FiniteDimensional ℝ E] [LieGroup I ∞ G]
@@ -180,8 +200,8 @@ theorem eventually_mulInvariantLogChart_exp [FiniteDimensional ℝ E] [LieGroup 
     ∀ᶠ v in 𝓝 (0 : E),
       mulInvariantLogChart (I := I) (G := G)
         (mulInvariantExpChart (I := I) (G := G) v) = v :=
-  (mulInvariantExpLocalHomeomorph (I := I) (G := G)).eventually_left_inverse
-    zero_mem_mulInvariantExpLocalHomeomorph_source
+  (mulInvariantExpOpenPartialHomeomorph (I := I) (G := G)).eventually_left_inverse
+    zero_mem_mulInvariantExpOpenPartialHomeomorph_source
 
 /-- Locally around the identity coordinate, exponential is a left inverse to logarithm. -/
 theorem eventually_mulInvariantExpChart_log [FiniteDimensional ℝ E] [LieGroup I ∞ G]
@@ -190,8 +210,8 @@ theorem eventually_mulInvariantExpChart_log [FiniteDimensional ℝ E] [LieGroup 
       mulInvariantExpChart (I := I) (G := G)
         (mulInvariantLogChart (I := I) (G := G) y) = y := by
   rw [← mulInvariantExpChart_zero (I := I) (G := G)]
-  exact (mulInvariantExpLocalHomeomorph (I := I) (G := G)).eventually_right_inverse'
-    zero_mem_mulInvariantExpLocalHomeomorph_source
+  exact (mulInvariantExpOpenPartialHomeomorph (I := I) (G := G)).eventually_right_inverse'
+    zero_mem_mulInvariantExpOpenPartialHomeomorph_source
 
 /-- The coordinate logarithm is smooth at the identity coordinate. -/
 theorem contDiffAt_mulInvariantLogChart_identity [FiniteDimensional ℝ E]
@@ -200,11 +220,10 @@ theorem contDiffAt_mulInvariantLogChart_identity [FiniteDimensional ℝ E]
       (extChartAt I (1 : G) (1 : G)) := by
   let _ : CompleteSpace E := FiniteDimensional.complete ℝ E
   let hf := contDiffAt_mulInvariantExpChart_zero (I := I) (G := G)
-  unfold mulInvariantLogChart mulInvariantExpLocalHomeomorph
-  convert hf.to_localInverse
-    (hasFDerivAt_mulInvariantExpChart_zero_equiv (I := I) (G := G)) (by simp) using 1 <;>
-    simp only [ContDiffAt.localInverse, ContDiffAt.toOpenPartialHomeomorph,
-      HasStrictFDerivAt.localInverse, mulInvariantExpChart_zero]
+  rw [mulInvariantLogChart_eq_localInverse]
+  unfold mulInvariantLogLocalInverse
+  simpa only [mulInvariantExpChart_zero] using hf.to_localInverse
+    (hasFDerivAt_mulInvariantExpChart_zero_equiv (I := I) (G := G)) smoothOrder_ne_zero
 
 /-- The local logarithm of a group element, valued in the tangent Lie algebra at the identity. It
 is the coordinate logarithm transported back from the manifold model space. -/
@@ -221,6 +240,18 @@ theorem mulInvariantLog_eq_chart [FiniteDimensional ℝ E] [LieGroup I ∞ G]
     (show E from mulInvariantLog (I := I) (G := G) g) =
       mulInvariantLogChart (I := I) (G := G) (extChartAt I (1 : G) g) := by
   rfl
+
+/-- Locally around zero, taking the local logarithm after exponentiating recovers the original
+tangent vector. -/
+theorem eventually_mulInvariantLog_exp [FiniteDimensional ℝ E] [LieGroup I ∞ G]
+    [T2Space G] [BoundarylessManifold I G] :
+    ∀ᶠ v in 𝓝 (0 : E),
+      (show E from mulInvariantLog (I := I) (G := G)
+        (mulInvariantExp (I := I) (G := G) (v : GroupLieAlgebra I G))) = v := by
+  refine (eventually_mulInvariantLogChart_exp (I := I) (G := G)).mono ?_
+  intro v hv
+  rw [mulInvariantLog_eq_chart]
+  exact hv
 
 /-- The local logarithm sends the group identity to the zero tangent vector. -/
 @[simp]
@@ -283,12 +314,12 @@ theorem exists_injOn_mulInvariantExp_modelSpace [FiniteDimensional ℝ E] [LieGr
     [T2Space G] [BoundarylessManifold I G] :
     ∃ U ∈ 𝓝 (0 : E), Set.InjOn
       (fun v : E => mulInvariantExp (I := I) (G := G) (v : GroupLieAlgebra I G)) U := by
-  let φ := mulInvariantExpLocalHomeomorph (I := I) (G := G)
+  let φ := mulInvariantExpOpenPartialHomeomorph (I := I) (G := G)
   refine ⟨φ.source, φ.open_source.mem_nhds
-    zero_mem_mulInvariantExpLocalHomeomorph_source, ?_⟩
+    zero_mem_mulInvariantExpOpenPartialHomeomorph_source, ?_⟩
   intro x hx y hy hxy
   apply φ.injOn hx hy
-  rw [mulInvariantExpLocalHomeomorph_apply, mulInvariantExpLocalHomeomorph_apply]
+  rw [mulInvariantExpOpenPartialHomeomorph_apply, mulInvariantExpOpenPartialHomeomorph_apply]
   exact congrArg (extChartAt I (1 : G)) hxy
 
 /-- The fully charted exponential is a local diffeomorphism of every finite differentiability
@@ -300,7 +331,7 @@ theorem isLocalDiffeomorphAt_mulInvariantExpChart_zero (n : ℕ) [FiniteDimensio
     [T2Space G] [BoundarylessManifold I G] :
     IsLocalDiffeomorphAt 𝓘(ℝ, E) 𝓘(ℝ, E) (n : ℕ∞ω)
       (mulInvariantExpChart (I := I) (G := G)) 0 := by
-  let φ := mulInvariantExpLocalHomeomorph (I := I) (G := G)
+  let φ := mulInvariantExpOpenPartialHomeomorph (I := I) (G := G)
   -- Choose neighborhoods on which the exponential and logarithm are both `C^n`.
   obtain ⟨U, hUopen, hzeroU, hFU⟩ :=
     (contDiffAt_mulInvariantExpChart_zero (I := I) (G := G)).contDiffOn'
@@ -316,15 +347,15 @@ theorem isLocalDiffeomorphAt_mulInvariantExpChart_zero (n : ℕ) [FiniteDimensio
   let ψ : OpenPartialHomeomorph E E :=
     (φ.restrOpen U hUopen).trans (OpenPartialHomeomorph.ofSet V hVopen)
   have hψ_apply (x : E) : ψ x = mulInvariantExpChart (I := I) (G := G) x := by
-    exact mulInvariantExpLocalHomeomorph_apply (I := I) (G := G) x
+    exact mulInvariantExpOpenPartialHomeomorph_apply (I := I) (G := G) x
   have hφzeroV : φ 0 ∈ V := by
-    rw [mulInvariantExpLocalHomeomorph_apply, mulInvariantExpChart_zero]
+    rw [mulInvariantExpOpenPartialHomeomorph_apply, mulInvariantExpChart_zero]
     exact hyV
   have hzeroψ : (0 : E) ∈ ψ.source := by
     rw [OpenPartialHomeomorph.trans_source]
     refine ⟨?_, ?_⟩
     · rw [OpenPartialHomeomorph.restrOpen_source]
-      exact ⟨zero_mem_mulInvariantExpLocalHomeomorph_source (I := I) (G := G), hzeroU⟩
+      exact ⟨zero_mem_mulInvariantExpOpenPartialHomeomorph_source (I := I) (G := G), hzeroU⟩
     · exact hφzeroV
   -- Give the restricted homeomorphism the public coordinate exponential as its forward map.
   let ψe : PartialEquiv E E := {
