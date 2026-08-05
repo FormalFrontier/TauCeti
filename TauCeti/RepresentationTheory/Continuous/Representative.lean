@@ -10,9 +10,9 @@ public import TauCeti.RepresentationTheory.Continuous.TensorProduct
 public import TauCeti.RepresentationTheory.Continuous.Transport
 
 /-!
-# The representative ring of a topological group
+# The representative ring of a monoid with a topology
 
-A **representative function** on a topological group `G` is a matrix coefficient of a
+A **representative function** on a monoid `G` equipped with a topology is a matrix coefficient of a
 finite-dimensional continuous representation of `G`. Their span
 `TauCeti.representativeSubmodule` is the **representative ring** `𝓡(G) ⊆ C(G, 𝕜)`, and the point of
 this file is that the span is far more than a subspace: it is a `*`-subalgebra,

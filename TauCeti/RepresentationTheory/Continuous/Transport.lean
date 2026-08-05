@@ -10,10 +10,11 @@ public import TauCeti.RepresentationTheory.Continuous.MatrixCoefficient
 # Transporting a continuous representation along a linear isometry equivalence
 
 A linear isometry equivalence `e : V ≃ₗᵢ[𝕜] W` carries a continuous representation on `V` to one
-on `W` by conjugating every action operator, `π g ↦ e ∘ π g ∘ e⁻¹`. This file builds that transport
-and records what it preserves: continuity of the operator-valued action, unitarity, and — the point
-of the construction — the matrix coefficients, which are unchanged once the defining vectors are
-moved along `e`.
+on `W` by conjugating every action operator, `π g ↦ e ∘ π g ∘ e⁻¹`, that is, by applying Mathlib's
+continuous algebra equivalence `ContinuousLinearEquiv.conjContinuousAlgEquiv`. This file builds
+that transport and records what it preserves: continuity of the operator-valued action, unitarity,
+and — the point of the construction — the matrix coefficients, which are unchanged once the
+defining vectors are moved along `e`.
 
 The transport is what lets a statement about representations on the standard models
 `EuclideanSpace 𝕜 (Fin n)` be applied to a representation on an arbitrary finite-dimensional
@@ -51,10 +52,9 @@ representation on `V` by conjugating each action operator with `e : V ≃ₗᵢ[
 noncomputable def congr (e : V ≃ₗᵢ[𝕜] W) (π : ContRepresentation 𝕜 G V) :
     ContRepresentation 𝕜 G W :=
   .ofMonoidHom
-    { toFun g := (e.toContinuousLinearEquiv : V →L[𝕜] W) ∘L π g ∘L
-        (e.symm.toContinuousLinearEquiv : W →L[𝕜] V)
-      map_one' := by ext x; simp
-      map_mul' g h := by ext x; simp [map_mul] }
+    { toFun g := e.toContinuousLinearEquiv.conjContinuousAlgEquiv (π g)
+      map_one' := by simp
+      map_mul' g h := by rw [map_mul, map_mul] }
 
 omit [TopologicalSpace G] in
 /-- The action operators of a transported representation. -/
@@ -63,11 +63,11 @@ theorem congr_apply (e : V ≃ₗᵢ[𝕜] W) (π : ContRepresentation 𝕜 G V)
     congr e π g x = e (π g (e.symm x)) :=
   (rfl)
 
-/-- Transport preserves continuity of the operator-valued action: conjugation by a fixed pair of
-continuous linear maps is continuous. -/
+/-- Transport preserves continuity of the operator-valued action: conjugation by `e` is the
+continuous algebra equivalence `ContinuousLinearEquiv.conjContinuousAlgEquiv`. -/
 theorem continuous_congr (e : V ≃ₗᵢ[𝕜] W) {π : ContRepresentation 𝕜 G V} (hπ : Continuous π) :
     Continuous (congr e π) :=
-  (continuous_const.clm_comp hπ).clm_comp continuous_const
+  (map_continuous e.toContinuousLinearEquiv.conjContinuousAlgEquiv).comp hπ
 
 omit [TopologicalSpace G] in
 /-- Transport preserves unitarity: `e` and `e⁻¹` preserve the inner product, so the conjugated

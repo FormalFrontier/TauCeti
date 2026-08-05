@@ -5,12 +5,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.Analysis.InnerProductSpace.TensorProduct
+public import TauCeti.Analysis.InnerProductSpace.TensorProduct
 public import TauCeti.RepresentationTheory.Continuous.MatrixCoefficient
 
 /-!
 # The tensor product of continuous representations
 
-The tensor product of two continuous representations of the same group acts by
+The tensor product of two continuous representations of the same monoid acts by
 `g ↦ (π g) ⊗ (ρ g)`, that is, by Mathlib's `TensorProduct.mapL`. This file builds it and proves the
 three facts its use requires: the operator-valued action stays continuous, unitarity is preserved,
 and the matrix coefficients **multiply**,
@@ -48,32 +49,6 @@ public section
 open scoped InnerProductSpace TensorProduct
 
 namespace TauCeti
-
-section Lipschitz
-
-variable {𝕜 E F H : Type*} [RCLike 𝕜]
-  [NormedAddCommGroup E] [InnerProductSpace 𝕜 E]
-  [NormedAddCommGroup F] [InnerProductSpace 𝕜 F]
-  [NormedAddCommGroup H] [InnerProductSpace 𝕜 H]
-
-/-- Tensoring a continuous linear map with the identity on the right is a contraction, hence
-continuous in the map. This is the elementary continuity statement that Mathlib's
-`ContinuousLinearMap.norm_rTensor_le` and additivity give together. -/
-theorem lipschitzWith_one_rTensor :
-    LipschitzWith 1 fun f : E →L[𝕜] F ↦ f.rTensor H :=
-  LipschitzWith.of_dist_le_mul fun f f' ↦ by
-    simpa [dist_eq_norm, ← ContinuousLinearMap.rTensor_sub] using
-      ContinuousLinearMap.norm_rTensor_le (G := H) (f - f')
-
-/-- Tensoring a continuous linear map with the identity on the left is a contraction, hence
-continuous in the map. -/
-theorem lipschitzWith_one_lTensor :
-    LipschitzWith 1 fun f : E →L[𝕜] F ↦ f.lTensor H :=
-  LipschitzWith.of_dist_le_mul fun f f' ↦ by
-    simpa [dist_eq_norm, ← ContinuousLinearMap.lTensor_sub] using
-      ContinuousLinearMap.norm_lTensor_le (G := H) (f - f')
-
-end Lipschitz
 
 namespace ContRepresentation
 
