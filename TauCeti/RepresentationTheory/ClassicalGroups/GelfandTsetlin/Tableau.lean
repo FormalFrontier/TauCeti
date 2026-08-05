@@ -32,11 +32,12 @@ has
 T i c = #{j < n | λᵢ,ⱼ₊₁ ≤ c},
 ```
 
-the index of the first row of `P` whose `i`-th entry runs past `c`, and the pattern attached to a
-tableau `T` has `λᵢ,ⱼ` the number of cells `(i, c)` of `μ` with `T i c < j`, that is, the length
-of row `i` of the shape filled by the entries below `j`.  The interlacing inequalities and the
-semistandardness conditions are exchanged by these two formulas, and the two maps are mutually
-inverse.
+the number of rows of `P` that do *not* yet reach past `c`: for a cell `(i, c)` of `μ` this is one
+less than the number of the first shape of the chain that contains it, so that the cells carrying
+the entry `j` are exactly those of `νʲ⁺¹` and not of `νʲ`.  The pattern attached to a tableau `T`
+has `λᵢ,ⱼ` the number of cells `(i, c)` of `μ` with `T i c < j`, that is, the length of row `i` of
+the shape filled by the entries below `j`.  The interlacing inequalities and the semistandardness
+conditions are exchanged by these two formulas, and the two maps are mutually inverse.
 
 Nonnegativity of the entries is not assumed on `TauCeti.GTPattern`, which admits the
 determinant-twisted patterns; it is a *consequence* of the top row being a shape, since every
@@ -133,8 +134,9 @@ theorem entry_top_eq (P : GTPattern n) (hμ : μ.colLen 0 ≤ n)
 /-- The `(i, c)` entry of the tableau attached to a Gelfand-Tsetlin pattern: the number of rows
 `j < n` of the pattern whose `i`-th entry is at most `c`.  For a nonnegative pattern the counted
 rows form an initial segment, so *when some row `v < n` has `c < λᵢ,ᵥ₊₁`* the count is the least
-such `v`, the index of the first shape in the chain recorded by the pattern that contains the cell
-`(i, c)`; when no row does, every row is counted and the entry is `n`. -/
+such `v`: the cell `(i, c)` first appears in the shape `νᵛ⁺¹` of the chain recorded by the
+pattern, one step further along the chain than the value `v` carried by the cell.  When no row
+does, every row is counted and the entry is `n`. -/
 def tableauEntry (P : GTPattern n) (i c : ℕ) : ℕ :=
   #{j ∈ range n | P i (j + 1) ≤ (c : ℤ)}
 
@@ -151,8 +153,8 @@ entry of row `j + 1` is at most `c`.  The rows of a nonnegative pattern increase
 row index, so the condition is downward closed in `j` and the count is an initial segment. -/
 theorem lt_tableauEntry_iff (P : GTPattern n) (hnn : ∀ i j, 0 ≤ P i j) {i c j : ℕ} :
     j < P.tableauEntry i c ↔ j < n ∧ P i (j + 1) ≤ (c : ℤ) :=
-  lt_card_filter_range_iff fun _ _ hxy hx hpx =>
-    (P.entry_le_entry_of_le' hnn (by omega) (by omega)).trans hpx
+  lt_card_filter_range_iff fun x _ hxy hx hpx =>
+    (P.entry_le_entry_of_nonneg_of_le (hnn i (x + 1)) (by omega) (by omega)).trans hpx
 
 /-- Tableau entries are bounded by the number of rows of the pattern: a cell strictly inside the
 top row is reached before the last shape of the chain. -/
@@ -183,7 +185,7 @@ theorem tableauEntry_lt_tableauEntry_succ (P : GTPattern n) (hnn : ∀ i j, 0 �
   · obtain ⟨k, hk⟩ : ∃ k, P.tableauEntry i c = k + 1 := ⟨_, (Nat.succ_pred_eq_of_pos hpos).symm⟩
     obtain ⟨-, hle⟩ := (P.lt_tableauEntry_iff hnn (i := i) (c := c) (j := k)).mp (by omega)
     rw [hk]
-    exact (P.entry_succ_succ_le_entry' (show k + 1 < n by omega)).trans hle
+    exact (P.entry_succ_succ_le_entry (show k + 1 < n by omega)).trans hle
 
 /-- Tableau entries increase strictly down a column. -/
 theorem tableauEntry_lt_tableauEntry (P : GTPattern n) (hnn : ∀ i j, 0 ≤ P i j) {c : ℕ} :
@@ -197,7 +199,8 @@ theorem tableauEntry_lt_tableauEntry (P : GTPattern n) (hnn : ∀ i j, 0 ≤ P i
       (P.tableauEntry_lt_tableauEntry_succ hnn (hlt k (by omega)))
 
 /-- **The semistandard Young tableau of a Gelfand-Tsetlin pattern** whose top row is the shape
-`μ`: the cell `(i, c)` carries the index of the first shape in the chain that contains it. -/
+`μ`: the cell `(i, c)` carries the entry `j` for which `νʲ⁺¹` is the first shape in the chain that
+contains it, one less than the number of that shape. -/
 def toTableau (P : GTPattern n) (hμ : μ.colLen 0 ≤ n)
     (hP : ∀ i : Fin n, P.topRow i = (μ.rowLen i : ℤ)) : SemistandardYoungTableau μ where
   entry i c := if (i, c) ∈ μ then P.tableauEntry i c else 0
@@ -216,6 +219,7 @@ def toTableau (P : GTPattern n) (hμ : μ.colLen 0 ≤ n)
 
 /-- The tableau of a pattern, unfolded: off `μ` the entry vanishes, and on `μ` it is the count
 `TauCeti.GTPattern.tableauEntry`. -/
+@[simp]
 theorem toTableau_apply (P : GTPattern n) (hμ : μ.colLen 0 ≤ n)
     (hP : ∀ i : Fin n, P.topRow i = (μ.rowLen i : ℤ)) (i c : ℕ) :
     P.toTableau hμ hP i c = if (i, c) ∈ μ then P.tableauEntry i c else 0 :=
@@ -315,6 +319,7 @@ def toGTPattern (T : SemistandardYoungTableau μ) (n : ℕ) : GTPattern n where
       exact ⟨YoungDiagram.mem_iff_lt_rowLen.mp hup, by omega⟩
 
 /-- The pattern of a tableau, unfolded. -/
+@[simp]
 theorem toGTPattern_apply (T : SemistandardYoungTableau μ) (n i j : ℕ) :
     toGTPattern T n i j = patternEntry T n i j :=
   (rfl)
@@ -351,7 +356,8 @@ end SemistandardYoungTableau
 `n` rows, the patterns with `n` rows and top row `μ` correspond to the semistandard Young tableaux
 of shape `μ` whose entries lie in `{0, …, n - 1}`: row `j` of the pattern is the row-length
 sequence of the shape filled by the entries below `j`, and the cell `(i, c)` of the tableau
-carries the index of the first row of the pattern that runs past `c`.
+carries the number of rows of the pattern whose `i`-th entry does not yet run past `c`, one less
+than the index of the first row that does.
 
 Together with the count of the patterns with a given top row, this is the tableau reading of the
 Gelfand-Tsetlin basis of an irreducible polynomial representation of `GL n`. -/
@@ -373,7 +379,7 @@ def gtPatternEquivSSYT (n : ℕ) (μ : YoungDiagram) (hμ : μ.colLen 0 ≤ n) :
       have hj : j ≤ n := by omega
       have hle : P i j ≤ (μ.rowLen i : ℤ) := by
         rw [← P.entry_top_eq hμ hP]
-        exact P.entry_le_entry_of_le' hnn hj le_rfl
+        exact P.entry_le_entry_of_nonneg_of_le (hnn i n) hj le_rfl
       have hset : {c ∈ range (μ.rowLen i) | P.toTableau hμ hP i c < j}
           = range (P i j).toNat := by
         ext c
