@@ -5,7 +5,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.RepresentationTheory.CharacterTable.Wedderburn
-public import Mathlib.LinearAlgebra.Basis.VectorSpace
 public import Mathlib.LinearAlgebra.Matrix.ToLin
 public import Mathlib.RepresentationTheory.Irreducible
 
@@ -64,30 +63,16 @@ section Surjective
 
 variable {k : Type u} {G : Type v} {V : Type w} [Field k] [Monoid G] [AddCommGroup V] [Module k V]
 
-/-- A nonzero vector of a vector space can be carried to any other vector by an endomorphism: the
-functional dual to it on the line it spans extends to the whole space. -/
-theorem exists_end_apply_eq {x : V} (hx : x ≠ 0) (y : V) : ∃ T : Module.End k V, T x = y := by
-  obtain ⟨T, hT⟩ := LinearMap.exists_extend
-    ((LinearMap.toSpanSingleton k V y).comp
-      (LinearEquiv.toSpanNonzeroSingleton k V x hx).symm.toLinearMap)
-  refine ⟨T, ?_⟩
-  have h := congrFun (congrArg DFunLike.coe hT)
-    (LinearEquiv.toSpanNonzeroSingleton k V x hx 1)
-  simp only [LinearMap.coe_comp, Function.comp_apply, Submodule.subtype_apply,
-    LinearEquiv.coe_coe, LinearEquiv.symm_apply_apply, LinearMap.toSpanSingleton_apply,
-    one_smul] at h
-  rwa [LinearEquiv.toSpanNonzeroSingleton_one] at h
-
 /-- **A representation whose algebra map exhausts the endomorphisms is irreducible.** Every nonzero
-vector then generates, because a nonzero vector of a vector space can be carried anywhere by an
-endomorphism. -/
+vector then generates, because a vector space is a simple module over its endomorphism ring. -/
 theorem Representation.isIrreducible_of_asAlgebraHom_surjective [Nontrivial V]
     (ρ : Representation k G V) (h : Function.Surjective ρ.asAlgebraHom) : ρ.IsIrreducible := by
   rw [_root_.Representation.irreducible_iff_isSimpleModule_asModule,
     isSimpleModule_iff_toSpanSingleton_surjective]
   refine ⟨ρ.asModuleEquiv.toEquiv.nontrivial, fun x hx y => ?_⟩
-  obtain ⟨T, hT⟩ := exists_end_apply_eq (k := k)
-    (x := ρ.asModuleEquiv x) (by simpa using hx) (ρ.asModuleEquiv y)
+  obtain ⟨T, hT⟩ := IsSimpleModule.toSpanSingleton_surjective (Module.End k V)
+    (m := ρ.asModuleEquiv x) (by simpa using hx) (ρ.asModuleEquiv y)
+  rw [LinearMap.toSpanSingleton_apply, Module.End.smul_def] at hT
   obtain ⟨r, rfl⟩ := h T
   refine ⟨r, ρ.asModuleEquiv.injective ?_⟩
   rw [LinearMap.toSpanSingleton_apply, _root_.Representation.asModuleEquiv_map_smul, hT]
