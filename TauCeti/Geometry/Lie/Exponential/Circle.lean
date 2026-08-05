@@ -103,10 +103,7 @@ noncomputable def circleLieAlgebraEquiv :
 @[simp]
 theorem circleLieAlgebraEquiv_generator :
     circleLieAlgebraEquiv circleExpGenerator = 1 := by
-  rw [circleLieAlgebraEquiv, LinearEquiv.trans_apply]
-  change ((Units.mk0 (circleLieAlgebraEquivModel circleExpGenerator)
-    circleLieAlgebraEquivModel_generator_ne_zero)⁻¹ : ℝ) *
-      circleLieAlgebraEquivModel circleExpGenerator = 1
+  rw [circleLieAlgebraEquiv, LinearEquiv.trans_apply, Units.mulLeftLinearEquiv_apply]
   exact inv_mul_cancel₀ circleLieAlgebraEquivModel_generator_ne_zero
 
 /-- Under the normalized identification `Lie(Circle) ≃ₗ[ℝ] ℝ`, the abstract Lie-group
