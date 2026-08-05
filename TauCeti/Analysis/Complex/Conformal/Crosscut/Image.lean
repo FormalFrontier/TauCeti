@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Analysis.Complex.Conformal.CutDiameter
-public import TauCeti.Topology.MetricSpace.Cut
 public import TauCeti.Topology.UniformlyLocallyConnected
 import TauCeti.Analysis.Complex.Conformal.ClusterSet
 import TauCeti.Analysis.Complex.Conformal.Crosscut.Endpoints
