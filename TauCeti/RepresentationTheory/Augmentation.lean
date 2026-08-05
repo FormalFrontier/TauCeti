@@ -162,7 +162,7 @@ end SubrepRing
 
 section PermutationSum
 
-variable (k : Type*) [CommSemiring k] (X : Type*) [Fintype X]
+variable (k : Type*) [Semiring k] (X : Type*) [Fintype X]
 
 /-- The sum of the standard basis of `k[X]`, for a finite index type. -/
 noncomputable def permutationSum : MonoidAlgebra k X := ∑ x : X, MonoidAlgebra.single x (1 : k)
@@ -249,7 +249,7 @@ end InvariantLine
 
 section Span
 
-variable (k : Type*) [CommRing k] (X : Type*)
+variable (k : Type*) [Ring k] (X : Type*)
 
 /-- The augmentation subrepresentation is spanned by the differences of the standard basis vectors
 from a fixed one. -/
