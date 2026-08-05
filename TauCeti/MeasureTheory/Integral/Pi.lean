@@ -24,9 +24,8 @@ Mathlib's: reduce a `Fin (n + 1)`-indexed product to a binary product measure al
 
 ## Main statements
 
-* `TauCeti.lintegral_fintype_prod_eq_prod₀`: the product formula, for almost everywhere
-  measurable factors.
-* `TauCeti.lintegral_fintype_prod_eq_prod`: the same for measurable factors.
+* `TauCeti.lintegral_fintype_prod_eq_prod`: the product formula, for measurable factors.
+* `TauCeti.lintegral_fintype_prod_eq_prod₀`: the same for almost everywhere measurable factors.
 -/
 
 public section
@@ -69,10 +68,14 @@ private theorem lintegral_fin_nat_prod_eq_prod {n : ℕ} {α : Fin n → Type*}
         _ = ∏ i, ∫⁻ y, f i y ∂μ i :=
             (Fin.prod_univ_succAbove (fun i => ∫⁻ y, f i y ∂μ i) 0).symm
 
-/-- The product formula for measurable factors, from which the almost everywhere measurable
-statement `TauCeti.lintegral_fintype_prod_eq_prod₀` is obtained by passing to measurable
-representatives. -/
-private theorem lintegral_fintype_prod_eq_prod_of_measurable {ι : Type*} [Fintype ι]
+/-- **The product formula for lower integrals over a finite product measure.** The lower integral
+of `∏ i, f i (x i)` against `MeasureTheory.Measure.pi μ` is `∏ i, ∫⁻ y, f i y ∂μ i`.
+
+This is the `ℝ≥0∞` analogue of `MeasureTheory.integral_fintype_prod_eq_prod`; unlike the Bochner
+statement it needs no integrability of the factors. See
+`TauCeti.lintegral_fintype_prod_eq_prod₀` for the almost everywhere measurable version, which is
+obtained from this one by passing to measurable representatives. -/
+theorem lintegral_fintype_prod_eq_prod {ι : Type*} [Fintype ι]
     {α : ι → Type*} {mα : ∀ i, MeasurableSpace (α i)} (μ : ∀ i, Measure (α i))
     [∀ i, SigmaFinite (μ i)] {f : ∀ i, α i → ℝ≥0∞} (hf : ∀ i, Measurable (f i)) :
     ∫⁻ x : ∀ i, α i, ∏ i, f i (x i) ∂Measure.pi μ = ∏ i, ∫⁻ y, f i y ∂μ i := by
@@ -91,11 +94,9 @@ private theorem lintegral_fintype_prod_eq_prod_of_measurable {ι : Type*} [Finty
     _ = ∏ j, ∫⁻ z, f (e j) z ∂μ (e j) := lintegral_fin_nat_prod_eq_prod fun j => hf _
     _ = ∏ i, ∫⁻ y, f i y ∂μ i := e.prod_comp fun i => ∫⁻ y, f i y ∂μ i
 
-/-- **The product formula for lower integrals over a finite product measure.** The lower integral
-of `∏ i, f i (x i)` against `MeasureTheory.Measure.pi μ` is `∏ i, ∫⁻ y, f i y ∂μ i`.
-
-This is the `ℝ≥0∞` analogue of `MeasureTheory.integral_fintype_prod_eq_prod`; unlike the Bochner
-statement it needs only almost everywhere measurability of the factors, no integrability. -/
+/-- **The product formula for lower integrals over a finite product measure**, for almost
+everywhere measurable factors; see `TauCeti.lintegral_fintype_prod_eq_prod` for the measurable
+version. -/
 theorem lintegral_fintype_prod_eq_prod₀ {ι : Type*} [Fintype ι] {α : ι → Type*}
     {mα : ∀ i, MeasurableSpace (α i)} (μ : ∀ i, Measure (α i)) [∀ i, SigmaFinite (μ i)]
     {f : ∀ i, α i → ℝ≥0∞} (hf : ∀ i, AEMeasurable (f i) (μ i)) :
@@ -105,16 +106,7 @@ theorem lintegral_fintype_prod_eq_prod₀ {ι : Type*} [Fintype ι] {α : ι →
   have hae : ∀ᵐ x : ∀ i, α i ∂Measure.pi μ, ∀ i, f i (x i) = (hf i).mk (f i) (x i) :=
     Filter.eventually_all.2 fun i => tendsto_eval_ae_ae.eventually (hf i).ae_eq_mk
   rw [lintegral_congr_ae (hae.mono fun x hx => Finset.prod_congr rfl fun i _ => hx i),
-    lintegral_fintype_prod_eq_prod_of_measurable μ fun i => (hf i).measurable_mk]
+    lintegral_fintype_prod_eq_prod μ fun i => (hf i).measurable_mk]
   exact Finset.prod_congr rfl fun i _ => (lintegral_congr_ae (hf i).ae_eq_mk).symm
-
-/-- **The product formula for lower integrals over a finite product measure**, for measurable
-factors; see `TauCeti.lintegral_fintype_prod_eq_prod₀` for the almost everywhere measurable
-version. -/
-theorem lintegral_fintype_prod_eq_prod {ι : Type*} [Fintype ι] {α : ι → Type*}
-    {mα : ∀ i, MeasurableSpace (α i)} (μ : ∀ i, Measure (α i)) [∀ i, SigmaFinite (μ i)]
-    {f : ∀ i, α i → ℝ≥0∞} (hf : ∀ i, Measurable (f i)) :
-    ∫⁻ x : ∀ i, α i, ∏ i, f i (x i) ∂Measure.pi μ = ∏ i, ∫⁻ y, f i y ∂μ i :=
-  lintegral_fintype_prod_eq_prod₀ μ fun i => (hf i).aemeasurable
 
 end TauCeti
