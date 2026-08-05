@@ -370,9 +370,10 @@ theorem continuesInside_of_isAnalyticContinuationAlong {U : Set ℂ} {z₀ z₁ 
   rw [q.source]
   simpa only [hjunction] using hmid
 
-/-- **Continuability inside a domain is a property of the branch alone.** If `F` continues a germ
-along a path `p` of `U` from `z₀` to `z₁`, then the germ `F 1` delivered at `z₁` continues inside
-`U` exactly when the germ `F 0` it started from does.
+/-- **Continuability inside a fixed domain is invariant under base-point transport along an
+analytic continuation inside that domain.** If `F` continues a germ along a path `p` of `U` from
+`z₀` to `z₁`, then the germ `F 1` delivered at `z₁` continues inside `U` exactly when the germ
+`F 0` it started from does.
 
 This strengthens `TauCeti.continuesInside_of_isAnalyticContinuationAlong`, its `←` direction, to
 an equivalence, and drops the representative `f₀` from the statement; the version with a
