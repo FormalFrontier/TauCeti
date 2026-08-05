@@ -8,6 +8,7 @@ module
 import Mathlib.Analysis.Analytic.Uniqueness
 public import Mathlib.Analysis.Calculus.FDeriv.Defs
 import Mathlib.Analysis.Complex.CauchyIntegral
+import Mathlib.Analysis.Complex.Convex
 import Mathlib.NumberTheory.LSeries.Deriv
 public import Mathlib.NumberTheory.LSeries.Convergence
 
@@ -20,11 +21,14 @@ convergence is finite and some entire function agrees with `LSeries a` on the (n
 convergence half-plane. Such an extension is unique (`LSeries.HasEntireExtension.unique`)
 by analytic continuation.
 
-The predicate comes with an introduction lemma (`LSeries.HasEntireExtension.of_extension`)
-and elimination lemmas (`.abscissa_lt_top`, `.exists_extension`), so consumers never
-unfold the definition. It is exercised: every finitely supported coefficient sequence has
-an entire extension (`LSeries.hasEntireExtension_of_support_finite`, with the delta
-sequence `LSeries.hasEntireExtension_delta` as the basic instance), and
+The predicate comes with introduction lemmas — `LSeries.HasEntireExtension.of_extension`
+(agreement on the full convergence half-plane) and the principal
+`LSeries.HasEntireExtension.of_extension_of_eq_on_lt_re` (agreement on `Re s > c` for
+some real `c`) — and elimination lemmas
+(`.abscissa_lt_top`, `.exists_extension`), so consumers never unfold the definition.
+It is exercised: every finitely supported coefficient sequence has an entire extension
+(`LSeries.hasEntireExtension_of_support_finite`, with the delta sequence
+`LSeries.hasEntireExtension_delta` as the basic instance), and
 `LSeries.HasEntireExtension.existsUnique` pins down the unique extension.
 
 Ported from the AINTLIB `LeanModularForms` project
@@ -66,6 +70,36 @@ theorem of_extension {F : ℂ → ℂ} (h_finite : abscissaOfAbsConv a < ⊤)
     (hFa : ∀ {s : ℂ}, abscissaOfAbsConv a < s.re → F s = LSeries a s) :
     HasEntireExtension a :=
   ⟨h_finite, F, hF, hFa⟩
+
+/-- Introduction from agreement on any real-cutoff half-plane: if an entire function
+agrees with `LSeries a` on `Re s > c` for some real `c`, and the abscissa of absolute
+convergence is finite, then `a` has an entire extension. -/
+theorem of_extension_of_eq_on_lt_re {F : ℂ → ℂ} {c : ℝ} (h_finite : abscissaOfAbsConv a < ⊤)
+    (hF : Differentiable ℂ F) (hFa : ∀ {s : ℂ}, c < s.re → F s = LSeries a s) :
+    HasEntireExtension a := by
+  refine ⟨h_finite, F, hF, fun {s} hs ↦ ?_⟩
+  obtain ⟨σ, hσ_abs, hσ_s⟩ := EReal.exists_between_coe_real hs
+  have hσ_s' : (σ : ℝ) < s.re := by exact_mod_cast hσ_s
+  set W : Set ℂ := {z : ℂ | (σ : ℝ) < z.re} with hW_def
+  have hW_sub : ∀ z ∈ W, abscissaOfAbsConv a < (z.re : EReal) := fun z hz ↦
+    lt_of_lt_of_le hσ_abs (by exact_mod_cast (hz : (σ : ℝ) < z.re).le)
+  have hL : AnalyticOnNhd ℂ (LSeries a) W := (LSeries_analyticOnNhd a).mono hW_sub
+  have hFW : AnalyticOnNhd ℂ F W :=
+    (Complex.analyticOnNhd_univ_iff_differentiable.mpr hF).mono (Set.subset_univ W)
+  set z₀ : ℂ := ((max σ c + 1 : ℝ) : ℂ) with hz₀_def
+  have hz₀W : z₀ ∈ W := by
+    simp only [hW_def, Set.mem_ofPred_eq, hz₀_def, Complex.ofReal_re]
+    have := le_max_left σ c
+    linarith
+  have hfg : F =ᶠ[nhds z₀] LSeries a := by
+    refine Filter.eventuallyEq_iff_exists_mem.mpr
+      ⟨{z : ℂ | (max σ c : ℝ) < z.re},
+        (isOpen_lt continuous_const Complex.continuous_re).mem_nhds ?_, fun z hz ↦ ?_⟩
+    · simp only [Set.mem_ofPred_eq, hz₀_def, Complex.ofReal_re]
+      linarith
+    · exact hFa (lt_of_le_of_lt (le_max_right σ c) hz)
+  have hconn : IsPreconnected W := (convex_halfSpace_re_gt σ).isPreconnected
+  exact hFW.eqOn_of_preconnected_of_eventuallyEq hL hconn hz₀W hfg hσ_s'
 
 /-- The abscissa of absolute convergence of a sequence with an entire extension is
 finite. -/

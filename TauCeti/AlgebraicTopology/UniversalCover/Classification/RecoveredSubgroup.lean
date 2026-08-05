@@ -93,6 +93,21 @@ theorem SubgroupQuotient.fundamentalGroupEquiv_unop_smul
   exact
     (isQuotientCoveringMap_subgroupQuotientMap x₀ H).unop_fundamentalGroupToMulOpposite_smul
 
+/-- **The fibre of `subgroupQuotientMap` over the distinguished quotient point lies inside the
+fibre of `proj` over `x₀`.** -/
+private theorem proj_eq_of_mem_fiber_subgroupQuotientMap
+    (H : Subgroup (FundamentalGroup X x₀))
+    (e : (subgroupQuotientMap x₀ H) ⁻¹' {SubgroupQuotient.basepoint x₀ H}) :
+    proj (e : UniversalCover x₀) = x₀ := by
+  have hbase : subgroupQuotientMap x₀ H e = SubgroupQuotient.basepoint x₀ H := by
+    simpa only [Set.mem_preimage, Set.mem_singleton_iff] using e.2
+  calc
+    proj (e : UniversalCover x₀) =
+        subgroupQuotientProj x₀ H (subgroupQuotientMap x₀ H e) :=
+      congrFun (subgroupQuotientProj_comp_subgroupQuotientMap x₀ H) e |>.symm
+    _ = subgroupQuotientProj x₀ H (SubgroupQuotient.basepoint x₀ H) := by rw [hbase]
+    _ = x₀ := subgroupQuotientProj_basepoint x₀ H
+
 variable [LocallyPathConnectedSpace X] [PathConnectedSpace X]
   [SemilocallySimplyConnectedSpace X]
 
@@ -116,18 +131,8 @@ private theorem monodromy_mapOfEq_subgroupQuotientProj
     dsimp only [e]
     rw [SubgroupQuotient.basepointLift_coe]
   let e' := hq.isCoveringMap.monodromy g e
-  have he'_basepoint : subgroupQuotientMap x₀ H e' =
-      SubgroupQuotient.basepoint x₀ H := by
-    simpa only [Set.mem_preimage, Set.mem_singleton_iff] using e'.2
-  have he' : proj (e' : UniversalCover x₀) = x₀ := by
-    calc
-      proj (e' : UniversalCover x₀) =
-          subgroupQuotientProj x₀ H (subgroupQuotientMap x₀ H e') := by
-            exact congrFun (subgroupQuotientProj_comp_subgroupQuotientMap x₀ H) e' |>.symm
-      _ = subgroupQuotientProj x₀ H (SubgroupQuotient.basepoint x₀ H) := by
-            rw [he'_basepoint]
-      _ = x₀ := subgroupQuotientProj_basepoint x₀ H
-  let e'' : (proj : UniversalCover x₀ → X) ⁻¹' {x₀} := ⟨e', he'⟩
+  let e'' : (proj : UniversalCover x₀ → X) ⁻¹' {x₀} :=
+    ⟨e', proj_eq_of_mem_fiber_subgroupQuotientMap x₀ H e'⟩
   -- Lift `g` through the quotient map, then map that same lifted path through the descended
   -- endpoint map; the commuting triangle identifies it as the universal-cover lift.
   have hmon : (isCoveringMap x₀).monodromy
