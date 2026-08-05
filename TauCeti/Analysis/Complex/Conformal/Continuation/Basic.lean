@@ -6,11 +6,9 @@ Authors: Claude
 module
 
 public import Mathlib.Analysis.Analytic.Basic
-public import Mathlib.Analysis.Analytic.Linear
 public import Mathlib.Analysis.Calculus.Deriv.Basic
 public import Mathlib.Analysis.Complex.Basic
 public import Mathlib.Topology.UnitInterval
-import Mathlib.Analysis.Analytic.Composition
 import Mathlib.Analysis.Complex.CauchyIntegral
 import Mathlib.Topology.LocallyConstant.Basic
 
@@ -48,7 +46,7 @@ instantiating `E = ℂ`.
 
 Completeness of `E` is asked for exactly where those Mathlib inputs ask for it, and nowhere else:
 the definition itself, the gluing and reparametrisation lemmas, and the closure of continuations
-under sums, images and products need none, while everything resting on the identity principle —
+under sums and products need none, while everything resting on the identity principle —
 `TauCeti.IsAnalyticContinuationAlong.eventuallyEq` and all of its consequences — needs `E` to be a
 Banach space.
 
@@ -109,10 +107,8 @@ holomorphic germs and deducing monodromy from it is left to a follow-up.
   only the values of the path on the parameter set.
 * `TauCeti.IsAnalyticContinuationAlong.union` — continuations glue over two **closed** parameter
   sets.
-* `TauCeti.IsAnalyticContinuationAlong.deriv`, `.add`, `.mul`, `.map`, `.neg`, `.sub`, `.pow` —
-  continuations are closed under the germ-wise operations. Postcomposition with a continuous
-  linear map (`.map`) is the one the vector-valued reading adds, and `.neg` is its instance at
-  `-ContinuousLinearMap.id`.
+* `TauCeti.IsAnalyticContinuationAlong.deriv`, `.add`, `.mul`, `.neg`, `.sub`, `.pow` —
+  continuations are closed under the germ-wise operations.
 * `TauCeti.IsAnalyticContinuationAlong.reparam` — a continuation transports along any
   reparametrisation of the path by a continuous map into its parameter set, of which restriction
   to a smaller parameter set (`TauCeti.IsAnalyticContinuationAlong.mono`) is the identity case.
@@ -124,9 +120,9 @@ holomorphic germs and deducing monodromy from it is left to a follow-up.
   and along every path inside a domain. Neither body is exposed; downstream files use them through
   `TauCeti.continuesAlong_iff_exists`, `TauCeti.ContinuesInside.continuesAlong` and
   `TauCeti.ContinuesInside.of_forall`.
-* `TauCeti.ContinuesAlong.add`, `.mul`, `.map`, `.neg`, `.sub`, `.pow`, `.deriv` and their
+* `TauCeti.ContinuesAlong.add`, `.mul`, `.neg`, `.sub`, `.pow`, `.deriv` and their
   `TauCeti.ContinuesInside` counterparts — continuability of a germ is inherited by sums, products,
-  images under a continuous linear map, differences, powers and derivatives.
+  differences, powers and derivatives.
 
 ## References
 
@@ -319,25 +315,12 @@ protected theorem add (hf : IsAnalyticContinuationAlong f γ s)
   locallyEq t ht := by
     filter_upwards [hf.locallyEq t ht, hg.locallyEq t ht] with u hu hu' using hu.add hu'
 
-/-- **Continuations push forward along a continuous linear map.** Applying a fixed `L : E →L[ℂ] F`
-to every germ of a continuation gives a continuation of the image germ.
-
-This is the closure operation the vector-valued reading of a continuation adds: a continuation of
-an `E`-valued germ carries with it a continuation of each of its coordinates, and of every
-continuous-linear function of it. `TauCeti.IsAnalyticContinuationAlong.neg` is the instance at
-`L = -ContinuousLinearMap.id ℂ E`. -/
-protected theorem map {F : Type*} [NormedAddCommGroup F] [NormedSpace ℂ F] (L : E →L[ℂ] F)
-    (hf : IsAnalyticContinuationAlong f γ s) :
-    IsAnalyticContinuationAlong (fun t => L ∘ f t) γ s where
-  continuousOn := hf.continuousOn
-  analyticAt t ht := (L.analyticAt _).comp (hf.analyticAt t ht)
-  locallyEq t ht := (hf.locallyEq t ht).mono fun _ hu => hu.fun_comp L
-
-/-- Continuations negate: the pointwise negation family `-f` continues along `γ` as well. This is
-`TauCeti.IsAnalyticContinuationAlong.map` at `L = -ContinuousLinearMap.id ℂ E`. -/
+/-- Continuations negate: the pointwise negation family `-f` continues along `γ` as well. -/
 protected theorem neg (hf : IsAnalyticContinuationAlong f γ s) :
-    IsAnalyticContinuationAlong (-f) γ s :=
-  hf.map (-ContinuousLinearMap.id ℂ E)
+    IsAnalyticContinuationAlong (-f) γ s where
+  continuousOn := hf.continuousOn
+  analyticAt t ht := (hf.analyticAt t ht).neg
+  locallyEq t ht := (hf.locallyEq t ht).mono fun _ hu => hu.neg
 
 /-- Continuations subtract: the pointwise difference family `f - g` continues along `γ` as
 well. -/
@@ -481,13 +464,6 @@ protected theorem add (h : ContinuesAlong f₀ c) (h' : ContinuesAlong g₀ c) :
   let ⟨g, hg, hg0⟩ := h'
   ⟨f + g, hf.add hg, hf0.add hg0⟩
 
-/-- The image of a germ that continues along a path under a continuous linear map continues along
-it. -/
-protected theorem map {F : Type*} [NormedAddCommGroup F] [NormedSpace ℂ F] (L : E →L[ℂ] F)
-    (h : ContinuesAlong f₀ c) : ContinuesAlong (L ∘ f₀) c :=
-  let ⟨f, hf, hf0⟩ := h
-  ⟨fun t => L ∘ f t, hf.map L, hf0.fun_comp L⟩
-
 /-- The negation of a germ that continues along a path continues along it. -/
 protected theorem neg (h : ContinuesAlong f₀ c) : ContinuesAlong (-f₀) c :=
   let ⟨f, hf, hf0⟩ := h
@@ -581,12 +557,6 @@ assembled from germs extending to `U` extends to `U` itself. -/
 protected theorem add (H : ContinuesInside f₀ U z₀) (H' : ContinuesInside g₀ U z₀) :
     ContinuesInside (f₀ + g₀) U z₀ :=
   of_forall fun _ hc hcU hc0 => (H.continuesAlong hc hcU hc0).add (H'.continuesAlong hc hcU hc0)
-
-/-- The image of a germ that continues inside a domain under a continuous linear map continues
-inside it. -/
-protected theorem map {F : Type*} [NormedAddCommGroup F] [NormedSpace ℂ F] (L : E →L[ℂ] F)
-    (H : ContinuesInside f₀ U z₀) : ContinuesInside (L ∘ f₀) U z₀ :=
-  of_forall fun _ hc hcU hc0 => (H.continuesAlong hc hcU hc0).map L
 
 /-- The negation of a germ that continues inside a domain continues inside it. -/
 protected theorem neg (H : ContinuesInside f₀ U z₀) : ContinuesInside (-f₀) U z₀ :=
