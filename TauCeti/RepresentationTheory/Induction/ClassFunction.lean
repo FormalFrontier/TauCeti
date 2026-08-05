@@ -70,9 +70,9 @@ public section
 
 namespace TauCeti
 
-universe u
+universe u v
 
-variable {k G : Type u} [Group G] {S : Subgroup G}
+variable {k : Type u} {G : Type v} [Group G] {S : Subgroup G}
 
 section AddCommMonoid
 
@@ -113,7 +113,12 @@ left coset representatives `t` of `S` in `G` with `t⁻¹ g t ∈ S`.
 The sum has no division by `|S|`, so the definition needs nothing of the coefficients beyond
 addition; the averaged group-sum form is `TauCeti.indClassFun_eq_natCard_inv_mul_sum`.  On a
 character it is the character of the induced representation, by
-`TauCeti.indClassFun_ofFDRep_character`. -/
+`TauCeti.indClassFun_ofFDRep_character`.
+
+The representatives are the fixed `Quotient.out` ones, so this is a function of `f` alone; but it
+is only for a class function `f` that the individual summands, and hence the sum, are independent
+of the representatives chosen.  `TauCeti.ClassFunction.ind` is the bundled form on
+`TauCeti.ClassFunction k S`, and is the canonical API. -/
 noncomputable def indClassFun (S : Subgroup G) [S.FiniteIndex] (f : S → k) : G → k := fun g =>
   letI := Fintype.ofFinite (G ⧸ S)
   ∑ t : G ⧸ S, indTerm f g (Quotient.out t)

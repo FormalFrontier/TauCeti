@@ -6,7 +6,6 @@ Authors: Claude
 module
 
 public import TauCeti.RepresentationTheory.CharacterTable.ClassFunction
-public import Mathlib.RepresentationTheory.Character
 public import Mathlib.RepresentationTheory.Irreducible
 public import Mathlib.RepresentationTheory.Rep.Res
 
