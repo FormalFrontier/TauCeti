@@ -55,6 +55,8 @@ a dominant top row `λ₁ ≤ λ₀` is `λ₀ - λ₁ + 1`, the dimension of th
 
 * `TauCeti.GTPattern.entry_anti` and `TauCeti.GTPattern.topRow_antitone`: rows are weakly
   decreasing, so the top row is a dominant weight.
+* `TauCeti.GTPattern.entry_nonneg`: a pattern with a nonnegative top row has nonnegative entries,
+  so the polynomial patterns are cut out by the top row alone.
 * `TauCeti.Interlaces.antitone`: an interlacing sequence is weakly decreasing, so a sequence
   interlacing a dominant weight is dominant.
 * `TauCeti.GTPattern.truncateEquiv`: patterns with `n + 1` rows and top row `l` correspond to
@@ -131,6 +133,14 @@ theorem entry_le_entry_succ_row (P : GTPattern n) {i j : ℕ} (hij : i < j) (hj 
 theorem entry_succ_succ_le_entry (P : GTPattern n) {i j : ℕ} (hij : i < j) (hj : j < n) :
     P (i + 1) (j + 1) ≤ P i j := (P.interlacing' hij hj).2
 
+/-- The second interlacing inequality `λᵢ₊₁,ⱼ₊₁ ≤ λᵢ,ⱼ`, extended to the uninformative cells,
+where both sides vanish. -/
+theorem entry_succ_succ_le_entry' (P : GTPattern n) {i j : ℕ} (hj : j < n) :
+    P (i + 1) (j + 1) ≤ P i j := by
+  rcases Nat.lt_or_ge i j with hij | hij
+  · exact P.entry_succ_succ_le_entry hij hj
+  · rw [P.entry_eq_zero_of_le hij, P.entry_eq_zero_of_le (Nat.succ_le_succ hij)]
+
 /-- Rows decrease weakly, in adjacent form. -/
 theorem entry_succ_le_entry (P : GTPattern n) {i j : ℕ} (hij : i + 1 < j) (hj : j ≤ n) :
     P (i + 1) j ≤ P i j := by
@@ -159,6 +169,15 @@ theorem entry_le_entry_of_le (P : GTPattern n) {i j : ℕ} (hij : i < j) :
     · exact (ih (by omega) (by omega)).trans (P.entry_le_entry_succ_row (by omega) (by omega))
     · obtain rfl : j = k + 1 := by omega
       exact le_rfl
+
+/-- Entries of a nonnegative pattern increase weakly with the row index, across the uninformative
+cells `j ≤ i` as well as the informative ones. -/
+theorem entry_le_entry_of_le' (P : GTPattern n) (hnn : ∀ i j, 0 ≤ P i j) {i j j' : ℕ}
+    (hj : j ≤ j') (hj' : j' ≤ n) : P i j ≤ P i j' := by
+  rcases Nat.lt_or_ge i j with hij | hij
+  · exact P.entry_le_entry_of_le hij hj hj'
+  · rw [P.entry_eq_zero_of_le hij]
+    exact hnn i j'
 
 /-- Increasing both indices of a cell by the same amount decreases it. -/
 theorem entry_add_le (P : GTPattern n) {i j : ℕ} (hij : i < j) :
@@ -205,6 +224,17 @@ theorem topRow_le_entry (P : GTPattern n) {i j : ℕ} (hij : i < j) (hj : j ≤ 
   have h := P.entry_add_le hij (d := n - j) (by omega)
   rw [hjn] at h
   simpa using h
+
+/-- **A pattern with a nonnegative top row has nonnegative entries**: every informative entry
+dominates a top-row entry, and the remaining ones vanish.  This is what confines a pattern whose
+top row is a shape to the polynomial regime, where it names a semistandard Young tableau. -/
+theorem entry_nonneg (P : GTPattern n) (h : ∀ i : Fin n, 0 ≤ P.topRow i) (i j : ℕ) :
+    0 ≤ P i j := by
+  rcases Nat.lt_or_ge n j with hj | hj
+  · exact (P.entry_eq_zero_of_lt hj).ge
+  · rcases Nat.lt_or_ge i j with hij | hij
+    · exact (h _).trans (P.topRow_le_entry hij hj)
+    · exact (P.entry_eq_zero_of_le hij).ge
 
 /-- Every entry of a pattern lies between the last and the first entry of its top row. -/
 theorem entry_mem_Icc (P : GTPattern n) {i j : ℕ} (hij : i < j) (hj : j ≤ n) :
