@@ -81,7 +81,7 @@ lemma ofReal_integral_eq_lintegral_prod_directingMeasure [StandardBorelSpace α]
   simpa only [measureReal_def] using
     TauCeti.MeasureTheory.ofReal_integral_prod_toReal_eq_lintegral_prod
       (f := fun i ω => directingMeasure μ X ω (B i))
-      (fun _ _ => ae_of_all _ fun _ => measure_ne_top _ _)
+      (ae_of_all _ fun _ => ENNReal.prod_ne_top fun _ _ => measure_ne_top _ _)
       (by simpa only [measureReal_def] using hg_int)
 
 end Probability

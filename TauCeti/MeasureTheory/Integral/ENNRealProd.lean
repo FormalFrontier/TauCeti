@@ -17,7 +17,7 @@ to its `ℝ≥0∞` form.
 * `integrable_prod_toReal` — a finite product of measurable `[0,1]`-valued functions is integrable
   against a finite measure, since the product is itself `[0,1]`-valued.
 * `ofReal_integral_prod_toReal_eq_lintegral_prod` — the real integral of the product of the real
-  forms is the lower integral of the product, provided no factor is infinite.
+  forms is the lower integral of the product, provided the product is a.e. finite.
 
 Both are stated for an arbitrary family `f : ι → Ω → ℝ≥0∞` indexed over a `Finset`, with
 almost-everywhere hypotheses, since that is all integration sees. The motivating instance is a
@@ -55,18 +55,18 @@ theorem integrable_prod_toReal {ι : Type*} {ν : Measure Ω} [IsFiniteMeasure �
   exact Finset.prod_le_one (fun i _ => ENNReal.toReal_nonneg) fun i hi =>
     ENNReal.toReal_le_of_le_ofReal zero_le_one (by rw [ENNReal.ofReal_one]; exact hω i hi)
 
-/-- **The real integral of a finite product is its `ℝ≥0∞` integral**, factor by factor: each factor
-is a.e. finite, so `ENNReal.ofReal_toReal` recovers it from its real form. -/
+/-- **The real integral of a finite product is its `ℝ≥0∞` integral.** Only the *product* need be
+a.e. finite — an infinite factor annihilated by a zero one is fine — since `ENNReal.toReal` is
+multiplicative and `ENNReal.ofReal_toReal` is then applied to the product as a whole. -/
 theorem ofReal_integral_prod_toReal_eq_lintegral_prod {ι : Type*} {ν : Measure Ω} {s : Finset ι}
-    {f : ι → Ω → ℝ≥0∞} (hf_ne_top : ∀ i ∈ s, ∀ᵐ ω ∂ν, f i ω ≠ ∞)
+    {f : ι → Ω → ℝ≥0∞} (hf_ne_top : ∀ᵐ ω ∂ν, (∏ i ∈ s, f i ω) ≠ ∞)
     (h_int : Integrable (fun ω => ∏ i ∈ s, (f i ω).toReal) ν) :
     ENNReal.ofReal (∫ ω, ∏ i ∈ s, (f i ω).toReal ∂ν) = ∫⁻ ω, ∏ i ∈ s, f i ω ∂ν := by
   rw [ofReal_integral_eq_lintegral_ofReal h_int
     (ae_of_all _ fun ω => Finset.prod_nonneg fun i _ => ENNReal.toReal_nonneg)]
   refine lintegral_congr_ae ?_
-  filter_upwards [(Filter.eventually_all_finset s).2 hf_ne_top] with ω hω
-  rw [ENNReal.ofReal_prod_of_nonneg fun i _ => ENNReal.toReal_nonneg]
-  exact Finset.prod_congr rfl fun i hi => ENNReal.ofReal_toReal (hω i hi)
+  filter_upwards [hf_ne_top] with ω hω
+  rw [← ENNReal.toReal_prod, ENNReal.ofReal_toReal hω]
 
 end MeasureTheory
 
