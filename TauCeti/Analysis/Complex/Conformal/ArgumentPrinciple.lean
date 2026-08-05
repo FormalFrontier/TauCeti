@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Analysis.Contour.Argument.Cycle
-import TauCeti.Analysis.Contour.LogDerivFTC
 
 /-!
 # The argument principle in winding-number form
