@@ -10,7 +10,7 @@ public import Mathlib.Algebra.Order.BigOperators.Ring.Finset
 /-!
 # Comparing two products of elements of the unit ball
 
-For families taking values in the closed unit ball of a normed commutative ring, the difference
+For families taking values in the closed unit ball of a seminormed commutative ring, the difference
 of the products is controlled by the sum of the pointwise differences:
 
 ```text
@@ -18,7 +18,8 @@ of the products is controlled by the sum of the pointwise differences:
 ```
 
 Only `‖a i‖ ≤ 1` and `‖b i‖ ≤ 1` are needed; the argument uses subadditivity and submultiplicativity
-of the norm and nothing else, so it holds over `ℂ` as well as `ℝ`. The unit-ball bound is what makes
+of the norm and nothing else, so it holds over `ℂ` as well as `ℝ`, and norm definiteness is never
+used — hence `SeminormedCommRing` rather than `NormedCommRing`. The unit-ball bound is what makes
 the constant `1`; the same telescoping argument with a uniform bound `C` gives `C ^ (s.card - 1)`
 and is not needed here.
 
@@ -38,10 +39,24 @@ namespace TauCeti
 
 open Finset
 
+/-- **A finite product of unit-ball elements lies in the unit ball.** Mathlib's
+`Finset.norm_prod_le` gives this over a `NormedCommRing`, but only submultiplicativity of the norm
+and `‖1‖ = 1` are used, so it holds over a seminormed ring. -/
+theorem norm_prod_le_one {ι R : Type*} [SeminormedCommRing R] [NormOneClass R] {s : Finset ι}
+    {b : ι → R} (hb : ∀ i ∈ s, ‖b i‖ ≤ 1) : ‖∏ i ∈ s, b i‖ ≤ 1 := by
+  classical
+  induction s using Finset.induction with
+  | empty => simp
+  | insert j s hj ih =>
+      rw [Finset.prod_insert hj]
+      exact (norm_mul_le _ _).trans (mul_le_one₀ (hb j (Finset.mem_insert_self j s))
+        (norm_nonneg _) (ih fun i hi => hb i (Finset.mem_insert_of_mem hi)))
+
 /-- **Telescoping bound for a product of unit-ball elements.** If `‖a i‖ ≤ 1` and `‖b i‖ ≤ 1` for
 every `i ∈ s`, then the difference of the products is at most the sum of the pointwise
 differences. -/
-theorem norm_prod_sub_prod_le_sum_norm_sub {ι R : Type*} [NormedCommRing R] [NormOneClass R]
+theorem norm_prod_sub_prod_le_sum_norm_sub {ι R : Type*} [SeminormedCommRing R]
+    [NormOneClass R]
     (s : Finset ι) {a b : ι → R}
     (ha : ∀ i ∈ s, ‖a i‖ ≤ 1) (hb : ∀ i ∈ s, ‖b i‖ ≤ 1) :
     ‖∏ i ∈ s, a i - ∏ i ∈ s, b i‖ ≤ ∑ i ∈ s, ‖a i - b i‖ := by
@@ -52,9 +67,7 @@ theorem norm_prod_sub_prod_le_sum_norm_sub {ι R : Type*} [NormedCommRing R] [No
       have hmem : ∀ i ∈ s, i ∈ insert j s := fun i hi => Finset.mem_insert_of_mem hi
       have hjs : j ∈ insert j s := Finset.mem_insert_self j s
       have ihs := ih (fun i hi => ha i (hmem i hi)) (fun i hi => hb i (hmem i hi))
-      have hprodb : ‖∏ i ∈ s, b i‖ ≤ 1 :=
-        (Finset.norm_prod_le s b).trans
-          (Finset.prod_le_one (fun i _ => norm_nonneg _) fun i hi => hb i (hmem i hi))
+      have hprodb : ‖∏ i ∈ s, b i‖ ≤ 1 := norm_prod_le_one fun i hi => hb i (hmem i hi)
       rw [Finset.prod_insert hj, Finset.prod_insert hj, Finset.sum_insert hj]
       have hsplit : a j * ∏ i ∈ s, a i - b j * ∏ i ∈ s, b i
           = a j * (∏ i ∈ s, a i - ∏ i ∈ s, b i) + (a j - b j) * ∏ i ∈ s, b i := by ring
