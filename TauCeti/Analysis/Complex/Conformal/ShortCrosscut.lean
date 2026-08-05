@@ -16,10 +16,10 @@ public import TauCeti.Analysis.Complex.Conformal.LengthArea
 `TauCeti.ofReal_dist_le_circleImageLength`, which controls the distance between the images of the
 two endpoints of an *arc of angles*. It leaves open, in its own words, the step of "turning that
 into a crosscut of small diameter at a boundary point". This file takes that step: it reads the
-intersection `ball c r ∩ sphere ζ ρ` of the circle `sphere ζ ρ` with the disc — the **circular
-crosscut** of `Conformal/Crosscut/Basic.lean` when `ρ < 2 * r`, and empty otherwise — as an arc of
-angles, and concludes that its image under a conformal map has small diameter at suitable radii
-`ρ`.
+intersection `ball c r ∩ sphere ζ ρ` of the circle `sphere ζ ρ` with the disc — at a boundary
+point, `dist ζ c = r`, the **circular crosscut** of `Conformal/Crosscut/Basic.lean` when
+`ρ < 2 * r`, and empty otherwise — as an arc of angles, and concludes that its image under a
+conformal map has small diameter at suitable radii `ρ`.
 
 That is the first of the two geometric inputs
 `TauCeti.exists_continuousOn_closure_eqOn_of_forall_exists_diam_union_le` of
@@ -32,7 +32,8 @@ crosscut cuts off — is a matter of local connectedness of that boundary and is
 
 Everything rests on the angular description of the intersection proved in
 `Conformal/Crosscut/Basic.lean`. Writing `α = arg (c - ζ)` for the direction from `ζ` to the centre
-of the disc and `d = dist ζ c`, the law of cosines `TauCeti.dist_circleMap_sq` says that
+of the disc and `d = dist ζ c`, the criterion `TauCeti.circleMap_mem_ball_iff_sq` read off the law
+of cosines says that
 
 > `circleMap ζ ρ θ ∈ ball c r ↔ ρ ^ 2 + d ^ 2 - r ^ 2 < 2 * ρ * d * cos (θ - α)`,
 
@@ -169,11 +170,11 @@ theorem isBounded_image_ball_inter_sphere_of_circleImageLength_ne_top
 
 /-! ## Crosscuts with a short image -/
 
-/-- **A holomorphic map of finite Dirichlet integral has short image crosscuts at every boundary
-point.** For `f` holomorphic on `ball c r` with `∫⁻ z in ball c r, ‖deriv f z‖ₑ ^ 2 ≠ ⊤` and an
-arbitrary `ζ`, every tolerance `ε > 0` and every bound `R > 0` admit a radius `ρ < R` at
-which the image of `ball c r ∩ sphere ζ ρ` has diameter at most `ε`. The case the Carathéodory
-correspondence uses is `ζ` on the circle `sphere c r`, where the intersection is a crosscut.
+/-- **A holomorphic map of finite Dirichlet integral has short image crosscuts.** For `f`
+holomorphic on `ball c r` with `∫⁻ z in ball c r, ‖deriv f z‖ₑ ^ 2 ≠ ⊤` and an arbitrary `ζ`, every
+tolerance `ε > 0` and every bound `R > 0` admit a radius `ρ < R` at which the image of
+`ball c r ∩ sphere ζ ρ` has diameter at most `ε`. The case the Carathéodory correspondence uses is
+`ζ` on the circle `sphere c r`, where the intersection is a crosscut.
 
 This is the limiting form `TauCeti.exists_circleImageLength_lt_of_lintegral_ne_top` of Wolff's
 lemma fed to `TauCeti.diam_image_ball_inter_sphere_le`. The annulus in which the good `ρ` is sought
@@ -182,8 +183,11 @@ average of `circleImageLength f (ball c r) ζ ρ ^ 2` over it falls below the th
 shrunk against `R` so that the radius produced lies in `Ioo 0 R`.
 
 The bound is on the intersection `ball c r ∩ sphere ζ ρ`, which is a genuine circular crosscut only
-when `ρ < 2 * r`, being empty otherwise; since `R` is arbitrary, a caller wanting a crosscut applies
-the theorem with `R ≤ 2 * r`.
+at a boundary point, `dist ζ c = r`, and there only when `ρ < 2 * r`, the intersection being empty
+otherwise; since `R` is arbitrary, a caller wanting a crosscut applies the theorem at such a `ζ`
+with `R ≤ 2 * r`. Neither restriction is imposed here, and away from the boundary circle neither
+holds: a cutting circle centred at `c` itself meets the disc in the whole of `sphere c ρ` for
+`ρ < r`, and one centred far outside meets it at radii `ρ` far above `2 * r`.
 
 This is the first of the two geometric inputs of
 `TauCeti.exists_continuousOn_closure_eqOn_of_forall_exists_diam_union_le`; nothing here bounds
@@ -204,9 +208,10 @@ theorem exists_diam_image_ball_inter_sphere_le_of_lintegral_ne_top
 for `f` injective on `ball c r` with bounded image the Dirichlet integral is the area of that image,
 hence finite by `TauCeti.lintegral_enorm_deriv_sq_ne_top_of_isBounded`.
 
-As there, the intersection bounded is a genuine circular crosscut only when `ρ < 2 * r`, being
-empty otherwise — in particular when `r = 0`, which the hypotheses allow; a caller wanting a
-crosscut applies the theorem with `R ≤ 2 * r`. -/
+As there, the intersection bounded is a genuine circular crosscut only at a boundary point,
+`dist ζ c = r`, and there only when `ρ < 2 * r`, the intersection being empty otherwise — in
+particular empty when `r = 0`, which the hypotheses allow; a caller wanting a crosscut applies the
+theorem at such a `ζ` with `R ≤ 2 * r`. -/
 theorem exists_diam_image_ball_inter_sphere_le
     (hf : DifferentiableOn ℂ f (ball c r)) (hinj : InjOn f (ball c r))
     (hb : IsBounded (f '' ball c r)) {ε : ℝ} (hε : 0 < ε) {R : ℝ} (hR : 0 < R) :

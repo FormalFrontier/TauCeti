@@ -16,7 +16,9 @@ Mathlib's `Circle` carries both a metric, from the inclusion into `ℂ`, and an 
 `Circle.exp` parametrizes it by angles and `Circle.angleDiff x y` is the length of the arc running
 counterclockwise from `x` to `y`. This file relates the two, comparing the *chord* `dist x y` with
 the *arc* separating `x` from `y` in both directions, and transports the chord formula along the
-translation and real scaling that carry `Circle.exp` to Mathlib's `circleMap ζ ρ`.
+translation and real scaling that carry `Circle.exp` to Mathlib's `circleMap ζ ρ`. It also records
+the chord with one endpoint allowed *off* the circle — the distance from a point of `circleMap ζ ρ`
+to an arbitrary point of the plane, which is the law of cosines.
 
 ## Main results
 
@@ -27,6 +29,9 @@ translation and real scaling that carry `Circle.exp` to Mathlib's `circleMap ζ 
   `2 * |ρ| * |sin ((θ - θ') / 2)|`, and
   `TauCeti.dist_circleMap_eq_two_mul_sin_abs`, the same formula with the sign of the angular
   difference cleared, valid for angles at most a full turn apart.
+* `TauCeti.dist_circleMap_sq` — the law of cosines: the point of `circleMap ζ ρ` at angle `θ` is at
+  distance `ρ ^ 2 + dist ζ c ^ 2 - 2 * ρ * dist ζ c * cos (θ - arg (c - ζ))`, squared, from an
+  arbitrary point `c` of the plane.
 * `TauCeti.lipschitzWith_one_circleExp` and `TauCeti.diam_circleExp_image_Icc_le` — the chord is at
   most the arc, so an arc of angles of length `b - a` has image of diameter at most `b - a`.
 * `TauCeti.min_angleDiff_le_pi_div_two_mul_dist` — the shorter of the two arcs joining two points of
@@ -111,6 +116,50 @@ theorem dist_circleMap_eq_two_mul_sin_abs (ζ : ℂ) (ρ : ℝ) {θ θ' : ℝ} (
   have habs : |(θ - θ') / 2| = |θ - θ'| / 2 := by rw [abs_div, abs_two]
   rw [dist_circleMap_eq_two_mul_abs_sin,
     Real.abs_sin_eq_sin_abs_of_abs_le_pi (by rw [habs]; linarith), habs]
+
+/-- **The law of cosines for a point of a circle.** The point of `circleMap ζ ρ` at angle `θ` is at
+distance `ρ ^ 2 + dist ζ c ^ 2 - 2 * ρ * dist ζ c * cos (θ - arg (c - ζ))`, squared, from an
+arbitrary point `c`: in the triangle with vertices `ζ`, `circleMap ζ ρ θ` and `c`, the angle at `ζ`
+between the two sides of lengths `ρ` and `dist ζ c` is `θ - arg (c - ζ)`. It is the chord formula
+`TauCeti.dist_circleMap_eq_two_mul_abs_sin` with one endpoint allowed off the circle.
+
+Nothing is assumed. For `ρ < 0` the point `circleMap ζ ρ θ` is the one at angle `θ + π` on the
+circle of radius `-ρ`, and the identity still holds because only `ρ ^ 2` and `ρ * cos` occur; for
+`c = ζ` both terms carrying `dist ζ c` vanish, so the junk value `arg 0 = 0` does no harm and the
+identity reads `dist (circleMap ζ ρ θ) ζ ^ 2 = ρ ^ 2`. -/
+theorem dist_circleMap_sq (ζ c : ℂ) (ρ θ : ℝ) :
+    dist (circleMap ζ ρ θ) c ^ 2
+      = ρ ^ 2 + dist ζ c ^ 2 - 2 * ρ * dist ζ c * Real.cos (θ - (c - ζ).arg) := by
+  have hdist : dist ζ c = ‖c - ζ‖ := by rw [dist_eq_norm, norm_sub_rev]
+  have hsub : circleMap ζ ρ θ - c
+      = (ρ : ℂ) * Complex.exp ((θ : ℂ) * Complex.I) - (c - ζ) := by
+    simp only [circleMap]; ring
+  -- the conjugate of `c - ζ` in polar form, valid at `c = ζ` as well
+  have hconj : (starRingEnd ℂ) (c - ζ)
+      = ((‖c - ζ‖ : ℝ) : ℂ) * Complex.exp (((-(c - ζ).arg : ℝ) : ℂ) * Complex.I) := by
+    conv_lhs => rw [← Complex.norm_mul_exp_arg_mul_I (c - ζ)]
+    rw [map_mul, Complex.conj_ofReal, ← Complex.exp_conj]
+    congr 2
+    push_cast
+    rw [map_mul, Complex.conj_ofReal, Complex.conj_I]
+    ring
+  -- the cross term is the cosine of the angle at `ζ`
+  have hre : ((ρ : ℂ) * Complex.exp ((θ : ℂ) * Complex.I) * (starRingEnd ℂ) (c - ζ)).re
+      = ρ * ‖c - ζ‖ * Real.cos (θ - (c - ζ).arg) := by
+    have hmul : (ρ : ℂ) * Complex.exp ((θ : ℂ) * Complex.I) * (starRingEnd ℂ) (c - ζ)
+        = ((ρ * ‖c - ζ‖ : ℝ) : ℂ)
+            * Complex.exp (((θ - (c - ζ).arg : ℝ) : ℂ) * Complex.I) := by
+      rw [hconj, mul_mul_mul_comm, ← Complex.exp_add]
+      push_cast
+      ring_nf
+    rw [hmul, Complex.re_ofReal_mul, Complex.exp_ofReal_mul_I_re]
+  have hunit : Complex.normSq ((ρ : ℂ) * Complex.exp ((θ : ℂ) * Complex.I)) = ρ ^ 2 := by
+    rw [Complex.normSq_mul, Complex.normSq_ofReal, Complex.normSq_eq_norm_sq,
+      Complex.norm_exp_ofReal_mul_I]
+    ring
+  rw [dist_eq_norm, Complex.sq_norm, hsub, Complex.normSq_sub, hunit, hre,
+    Complex.normSq_eq_norm_sq, hdist]
+  ring
 
 /-- **The chord is at most the arc**: `Circle.exp` is `1`-Lipschitz. -/
 theorem lipschitzWith_one_circleExp : LipschitzWith 1 Circle.exp :=

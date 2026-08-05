@@ -112,28 +112,18 @@ private lemma ordConnected_Ioo_inter_setOf_dist_circleMap_lt (ζ : ℂ) (ρ : �
 
 /-- A point of `sphere ζ ρ`, in angular coordinates, lies in `closedBall c r` exactly when its
 angle satisfies the weak cosine inequality complementary to
-`TauCeti.circleMap_mem_ball_iff`. -/
+`TauCeti.circleMap_mem_ball_iff`.
+
+This is the general criterion `TauCeti.circleMap_mem_closedBall_iff_sq` at `dist ζ c = r`, where
+the two squared radii cancel and the surviving condition
+`ρ ^ 2 ≤ 2 * ρ * r * cos (θ - arg (c - ζ))` may be divided by `ρ > 0`. -/
 theorem circleMap_mem_closedBall_iff (hζ : dist ζ c = r) (hρ : 0 < ρ) (θ : ℝ) :
     circleMap ζ ρ θ ∈ closedBall c r ↔
       ρ ≤ 2 * r * Real.cos (θ - (c - ζ).arg) := by
-  rw [mem_closedBall]
-  have hr : 0 ≤ r := hζ ▸ dist_nonneg
-  have hd : dist (circleMap ζ ρ θ) c ^ 2
-      = ρ ^ 2 + r ^ 2 - 2 * ρ * r * Real.cos (θ - (c - ζ).arg) := by
-    rw [dist_circleMap_sq, hζ]
+  rw [circleMap_mem_closedBall_iff_sq (hζ ▸ dist_nonneg) ρ θ, hζ]
   constructor
-  · intro h
-    have hsq : dist (circleMap ζ ρ θ) c ^ 2 ≤ r ^ 2 := by
-      nlinarith [dist_nonneg (x := circleMap ζ ρ θ) (y := c)]
-    have hprod : ρ * (ρ - 2 * r * Real.cos (θ - (c - ζ).arg)) ≤ 0 := by
-      nlinarith
-    apply le_of_sub_nonpos
-    by_contra hnot
-    exact (not_lt_of_ge hprod) (mul_pos hρ (lt_of_not_ge hnot))
-  · intro h
-    have hprod : ρ * (ρ - 2 * r * Real.cos (θ - (c - ζ).arg)) ≤ 0 :=
-      mul_nonpos_of_nonneg_of_nonpos hρ.le (sub_nonpos.mpr h)
-    nlinarith [dist_nonneg (x := circleMap ζ ρ θ) (y := c)]
+  · intro h; nlinarith
+  · intro h; nlinarith
 
 /-- The `simp`-normal form of `TauCeti.circleMap_mem_closedBall_iff`. -/
 @[simp]
