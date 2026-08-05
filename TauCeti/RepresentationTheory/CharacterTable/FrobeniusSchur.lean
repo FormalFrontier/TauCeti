@@ -51,26 +51,24 @@ agreement with this one are at the end of the file.
   in characteristic zero.
 * `TauCeti.Representation.frobeniusSchurIndicator_eq_intCast`: in characteristic zero the indicator
   is the integer `dim (Sym²V)ᴳ - dim (Λ²V)ᴳ`.
-* `TauCeti.FDRep.frobeniusSchurIndicator_eq_representation`: the `FDRep`-level indicator is the
-  indicator of the underlying representation.
+* `TauCeti.FDRep.frobeniusSchurIndicator_def`: the `FDRep`-level indicator is the indicator of the
+  underlying representation.
 
 ## Implementation notes
 
-The indicator is defined by `|G|⁻¹ * ∑ g, χ (g * g)` rather than by `χ (g ^ 2)`, matching the shape
-of `Representation.char_symmetricSquare_sub_char_exteriorSquare`, and the definition itself asks
-only for a `Fintype G`: invertibility of `|G|` is a hypothesis of the theorems, not of the object.
-The two statements that do not mention the indicator ask only for `Finite G`, and build the
-`Fintype` they average over inside their proofs.
+The definition asks only for a `Fintype G`: invertibility of `|G|` is a hypothesis of the theorems,
+not of the object. The two statements that do not mention the indicator ask only for `Finite G`,
+and build the `Fintype` they average over inside their proofs.
 
 The `FDRep`-level indicator is the module-level one applied to `V.ρ` rather than a second copy of
-the average, so `TauCeti.FDRep.frobeniusSchurIndicator_eq_representation` unfolds that one
-definition and nothing else, and every theorem about the average transfers through it. Neither
-definition is `@[expose]`d: the lemmas here are the intended interface, and nothing downstream
-needs to unfold either one. That is also why the agreement theorem is proved by a parenthesised
-`(rfl)`: a proof written syntactically as `:= rfl` is implicitly tagged `@[defeq]`, and validating
-that tag on an exported theorem asks that every definition it unfolds be exposed, which these two
-deliberately are not. The parentheses suppress the tag, which is what `@[defeq]`'s own
-documentation prescribes them for; a bare `rfl` does not compile here.
+the average, so `TauCeti.FDRep.frobeniusSchurIndicator_def` unfolds that one definition and nothing
+else, and every theorem about the average transfers through it. Neither definition is `@[expose]`d,
+so the two `_def` lemmas are the only route to the two averages from another module; that is what
+they are for. It is also why both are proved by a parenthesised `(rfl)`: a proof written
+syntactically as `:= rfl` is implicitly tagged `@[defeq]`, and validating that tag on an exported
+theorem asks that every definition it unfolds be exposed, which these two deliberately are not. The
+parentheses suppress the tag, which is what `@[defeq]`'s own documentation prescribes them for; a
+bare `rfl` does not compile here.
 
 ## References
 
@@ -104,12 +102,13 @@ variable [Field k] [Group G] [Fintype G] [AddCommGroup V] [Module k V]
 `ν₂(ρ) = |G|⁻¹ ∑_g χ(g²)`. It is the theorems below, not the average itself, that ask for `V` to be
 finite-dimensional and for `|G|` to be invertible in `k`. -/
 noncomputable def frobeniusSchurIndicator (ρ : Representation k G V) : k :=
-  (Nat.card G : k)⁻¹ * ∑ g : G, ρ.character (g * g)
+  (Nat.card G : k)⁻¹ * ∑ g : G, ρ.character (g ^ 2)
 
-/-- The indicator, written with a square rather than a product. -/
-theorem frobeniusSchurIndicator_eq_card_inv_mul_sum_char_sq (ρ : Representation k G V) :
-    frobeniusSchurIndicator ρ = (Nat.card G : k)⁻¹ * ∑ g : G, ρ.character (g ^ 2) := by
-  simp only [frobeniusSchurIndicator, sq]
+/-- The defining equation of the indicator, `ν₂(ρ) = |G|⁻¹ ∑_g χ(g²)`. The definition is not
+`@[expose]`d, so this is how it unfolds outside this file. -/
+theorem frobeniusSchurIndicator_def (ρ : Representation k G V) :
+    frobeniusSchurIndicator ρ = (Nat.card G : k)⁻¹ * ∑ g : G, ρ.character (g ^ 2) :=
+  (rfl)
 
 /-- Equivalent representations have the same Frobenius-Schur indicator, since they have the same
 character. -/
@@ -125,9 +124,9 @@ variable [FiniteDimensional k V]
 @[simp]
 theorem frobeniusSchurIndicator_trivial [Invertible (Nat.card G : k)] :
     frobeniusSchurIndicator (Representation.trivial k G V) = (finrank k V : k) := by
-  have hchar : ∀ g : G, (Representation.trivial k G V).character (g * g) = (finrank k V : k) := by
+  have hchar : ∀ g : G, (Representation.trivial k G V).character (g ^ 2) = (finrank k V : k) := by
     intro g
-    have h1 : (Representation.trivial k G V) (g * g) = LinearMap.id (R := k) (M := V) := by
+    have h1 : (Representation.trivial k G V) (g ^ 2) = LinearMap.id (R := k) (M := V) := by
       ext v; simp
     rw [Representation.character, h1, LinearMap.trace_id]
   simp only [frobeniusSchurIndicator, hchar, Finset.sum_const, Finset.card_univ,
@@ -149,7 +148,7 @@ theorem frobeniusSchurIndicator_eq_sub_finrank_invariants [Invertible (Nat.card 
   rw [← Representation.card_inv_mul_sum_char_eq_finrank,
     ← Representation.card_inv_mul_sum_char_eq_finrank, ← mul_sub, ← Finset.sum_sub_distrib,
     frobeniusSchurIndicator]
-  simp_rw [Representation.char_symmetricSquare_sub_char_exteriorSquare]
+  simp_rw [Representation.char_symmetricSquare_sub_char_exteriorSquare, sq]
 
 end Fintype
 
@@ -204,11 +203,6 @@ theorem frobeniusSchurIndicator_eq_intCast (ρ : Representation k G V) :
   push_cast
   rfl
 
-/-- In characteristic zero the Frobenius-Schur indicator lies in the image of `ℤ`. -/
-theorem exists_frobeniusSchurIndicator_eq_intCast (ρ : Representation k G V) :
-    ∃ n : ℤ, frobeniusSchurIndicator ρ = (n : k) :=
-  ⟨_, frobeniusSchurIndicator_eq_intCast ρ⟩
-
 end CharZero
 
 end Representation
@@ -226,7 +220,7 @@ noncomputable def frobeniusSchurIndicator (V : FDRep k G) : k :=
 the underlying representation `V.ρ`. It is a `simp` lemma, so results proved on the module spine
 apply to the `FDRep`-level indicator automatically. -/
 @[simp]
-theorem frobeniusSchurIndicator_eq_representation (V : FDRep k G) :
+theorem frobeniusSchurIndicator_def (V : FDRep k G) :
     frobeniusSchurIndicator V = Representation.frobeniusSchurIndicator V.ρ :=
   (rfl)
 
