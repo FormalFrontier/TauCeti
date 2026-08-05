@@ -327,11 +327,20 @@ def ledger_index(ledger):
     lifetime -- see `pr_pushes`.
     """
     index = {}
-    for row in ledger.values():
+    for row in ledger:
         index.setdefault((row["owner"], row["branch"]), []).append(
             (row["sha"], row["when"], row["actor"] or ""))
-    for pushes in index.values():
+    for key, pushes in index.items():
         pushes.sort(key=lambda item: item[1])
+        # Collapse ADJACENT repeats of one sha, which are re-runs and reopens
+        # rather than head transitions, keeping the earliest. A repeat separated
+        # by a different head is a real return to an earlier head and is kept.
+        collapsed = []
+        for row in pushes:
+            if collapsed and collapsed[-1][0] == row[0]:
+                continue
+            collapsed.append(row)
+        index[key] = collapsed
     return index
 
 
@@ -527,8 +536,15 @@ def analyse_pr(mirror, history, history_times, pr, now, session_gap, exhaustive=
             open_onset = onset
 
     if open_onset is not None:
+        # `closedAt` is NOT a reliable "is closed": a reopened PR keeps the old
+        # timestamp while being open again. Trusting it labelled such a PR
+        # `closed`, which censors it -- so a live conflict on a reopened PR would
+        # vanish from the very tail this tool exists to report. Current state
+        # decides; `closedAt` only dates a PR that is actually closed now.
         if pr["mergedAt"]:
             outcome = "merged"
+        elif pr.get("state") == "OPEN" or pr.get("_reopened"):
+            outcome = "still-open"
         elif pr["closedAt"]:
             outcome = "closed"
         else:
@@ -594,7 +610,7 @@ def cached_ledger(path, start, end):
         try:
             with open(path) as handle:
                 rows = json.load(handle)
-            log(f"push ledger: {len(rows)} pushed heads from {path}")
+            log(f"push ledger: {len(rows)} recorded pushes from {path}")
             return rows
         except (OSError, ValueError, TypeError) as exc:
             log(f"push ledger cache {path} unusable ({exc}); re-reading")
@@ -624,7 +640,7 @@ def push_ledger(start, end):
     a hole in the ledger degrades attribution without saying so. A single day that
     still caps is reported as a genuine hole.
     """
-    ledger = {}
+    ledger = []
     pending = [(start, end)]
     while pending:
         low, high = pending.pop()
@@ -661,16 +677,16 @@ def push_ledger(start, end):
             sha, actor, when = parts[0], parts[1], parse_iso(parts[2])
             owner, branch = parts[3], parts[4]
             # A re-run reuses the sha; the EARLIEST run is the one the push caused.
-            # Keyed by (sha, owner, branch), not by sha alone: the same commit can
-            # legitimately be the head of two different branches, and keying on the
-            # sha would hand the second one's push to the first. Within one key a
-            # repeat is a re-run or a reopen -- neither is a head transition -- so
-            # the EARLIEST run, the one the push caused, wins.
-            key = f"{owner}\t{branch}\t{sha}"
-            if when is not None and (key not in ledger or when < ledger[key]["when"]):
-                ledger[key] = {"sha": sha, "actor": actor, "when": when,
-                               "owner": owner, "branch": branch}
-    log(f"push ledger: {len(ledger)} pushed heads")
+            # Every occurrence is kept. Deduplicating by (owner, branch, sha)
+            # discarded a head returned to later -- an A -> B -> A force-push,
+            # where the second A can be the push that resolved the conflict.
+            # Repeats that really are re-runs or reopens are ADJACENT in time for
+            # a branch, and `ledger_index` collapses those; a repeat with another
+            # head in between is a genuine transition and survives.
+            if when is not None:
+                ledger.append({"sha": sha, "actor": actor, "when": when,
+                               "owner": owner, "branch": branch})
+    log(f"push ledger: {len(ledger)} recorded pushes")
     return ledger
 
 

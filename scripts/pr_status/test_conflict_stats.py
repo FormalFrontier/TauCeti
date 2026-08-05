@@ -48,15 +48,15 @@ class Replay(unittest.TestCase):
         heads = mirror.pr_heads(pr["number"])
         if actors is None:
             actors = {sha: author for sha, _ in heads}
-        ledger = {f"o\tb\t{sha}": {"sha": sha, "actor": actors[sha], "when": when,
-                                    "owner": "o", "branch": "b"}
-                  for sha, when in heads if sha in actors}
+        ledger = [{"sha": sha, "actor": actors[sha], "when": when,
+                   "owner": "o", "branch": "b"}
+                  for sha, when in heads if sha in actors]
         pr = dict(pr, headRefName="b", headRepositoryOwner={"login": "o"})
         index = conflict_stats.ledger_index(ledger)
         pr["_pushes"] = [row for row in index.get(("o", "b"), [])]
         rows, handling, _, _ = conflict_stats.analyse_pr(
             mirror, self.HISTORY, self.TIMES, pr, now, gap, push_window=window,
-            index=index, available={r["sha"] for r in ledger.values()})
+            index=index, available={r["sha"] for r in ledger})
         return rows, handling
 
     def test_a_never_conflicting_pr_yields_nothing(self):
@@ -141,6 +141,21 @@ class Replay(unittest.TestCase):
             mirror, self.HISTORY, 0, 20, "h1"))
         self.assertEqual(conflict_stats.first_conflicting(
             mirror, self.HISTORY, 0, 20, "h1", exhaustive=True), 5)
+
+    def test_a_reopened_pr_is_still_open_not_closed(self):
+        # `closedAt` survives a reopen, and trusting it censored the PR out of the
+        # live tail this tool exists to report.
+        mirror = self.FakeMirror([("h1", 1000)], {"h1": 5})
+        pr = self.pr(closedAt="1970-01-01T00:30:00Z", state="OPEN")
+        pr["_reopened"] = True
+        episodes, _ = self.analyse(mirror, pr)
+        self.assertEqual(episodes[0]["outcome"], "still-open")
+
+    def test_a_genuinely_closed_pr_is_closed(self):
+        mirror = self.FakeMirror([("h1", 1000)], {"h1": 5})
+        episodes, _ = self.analyse(
+            mirror, self.pr(closedAt="1970-01-01T00:30:00Z", state="CLOSED"))
+        self.assertEqual(episodes[0]["outcome"], "closed")
 
     def test_a_pr_born_conflicting_is_detected_and_dated_to_its_opening(self):
         # The base in effect when the PR opened already conflicts. Replaying only
@@ -239,9 +254,9 @@ class Replay(unittest.TestCase):
         # One matching head used to mark the whole PR recorded, silently dropping
         # every head that could not be fetched and truncating its episodes.
         mirror = self.FakeMirror([("h1", 1000), ("h2", 1650)], {"h1": 5})
-        ledger = {f"o\tb\t{sha}": {"sha": sha, "actor": "alice", "when": when,
-                                    "owner": "o", "branch": "b"}
-                  for sha, when in [("h1", 1000), ("h2", 1650)]}
+        ledger = [{"sha": sha, "actor": "alice", "when": when,
+                   "owner": "o", "branch": "b"}
+                  for sha, when in [("h1", 1000), ("h2", 1650)]]
         pr = dict(self.pr(), headRefName="b", headRepositoryOwner={"login": "o"})
         pr["_pushes"] = [("h1", 1000, "alice"), ("h2", 1650, "alice")]
         _, handling, _, _ = conflict_stats.analyse_pr(
@@ -252,11 +267,11 @@ class Replay(unittest.TestCase):
     def test_branch_reuse_does_not_borrow_another_prs_pushes(self):
         # `fix/typo` belongs to a dozen PRs over time; only the pushes inside this
         # PR's own lifetime are its own.
-        ledger = {
-            "o\tb\told": {"sha": "old", "actor": "a", "when": 500, "owner": "o", "branch": "b"},
-            "o\tb\tmine": {"sha": "mine", "actor": "a", "when": 1500, "owner": "o", "branch": "b"},
-            "o\tb\tlater": {"sha": "later", "actor": "a", "when": 9000, "owner": "o", "branch": "b"},
-        }
+        ledger = [
+            {"sha": "old", "actor": "a", "when": 500, "owner": "o", "branch": "b"},
+            {"sha": "mine", "actor": "a", "when": 1500, "owner": "o", "branch": "b"},
+            {"sha": "later", "actor": "a", "when": 9000, "owner": "o", "branch": "b"},
+        ]
         pr = {"headRefName": "b", "headRepositoryOwner": {"login": "o"}}
         pushes = conflict_stats.pr_pushes(pr, conflict_stats.ledger_index(ledger), 1000, 2000)
         self.assertEqual(pushes, [("mine", 1500, "a")])
@@ -264,6 +279,33 @@ class Replay(unittest.TestCase):
     def test_a_pr_with_no_fetchable_head_is_skipped_not_guessed(self):
         mirror = self.FakeMirror([], {})
         self.assertEqual(self.analyse(mirror, self.pr()), ([], "skipped"))
+
+
+class LedgerIndex(unittest.TestCase):
+    """Which repeats of a head are transitions and which are noise."""
+
+    def rows(self, *items):
+        return [{"sha": sha, "actor": "a", "when": when, "owner": "o", "branch": "b"}
+                for sha, when in items]
+
+    def test_adjacent_repeats_collapse_to_the_earliest(self):
+        # A re-run or a reopen re-reports the current head; neither moved it.
+        index = conflict_stats.ledger_index(self.rows(("A", 100), ("A", 200), ("B", 300)))
+        self.assertEqual([row[0] for row in index[("o", "b")]], ["A", "B"])
+        self.assertEqual(index[("o", "b")][0][1], 100)
+
+    def test_a_head_returned_to_later_is_kept(self):
+        # A -> B -> A is a real force-push back; the second A can be the push that
+        # resolved the conflict, and deduplicating by sha discarded it.
+        index = conflict_stats.ledger_index(self.rows(("A", 100), ("B", 200), ("A", 300)))
+        self.assertEqual([row[0] for row in index[("o", "b")]], ["A", "B", "A"])
+
+    def test_the_same_sha_on_two_branches_stays_separate(self):
+        rows = self.rows(("A", 100))
+        rows.append({"sha": "A", "actor": "a", "when": 150, "owner": "o", "branch": "other"})
+        index = conflict_stats.ledger_index(rows)
+        self.assertEqual(len(index[("o", "b")]), 1)
+        self.assertEqual(len(index[("o", "other")]), 1)
 
 
 class ClosedIntervals(unittest.TestCase):
