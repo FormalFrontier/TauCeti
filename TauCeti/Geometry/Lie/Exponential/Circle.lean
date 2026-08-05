@@ -38,7 +38,6 @@ noncomputable section
 
 /-- Mathlib's circle exponential, bundled as a continuous homomorphism from the additive real line
 written multiplicatively. -/
-@[expose]
 noncomputable def circleExpHom : ContinuousMonoidHom (Multiplicative ℝ) Circle where
   toFun t := Circle.exp (Multiplicative.toAdd t)
   map_one' := Circle.expHom.map_zero
@@ -48,7 +47,7 @@ noncomputable def circleExpHom : ContinuousMonoidHom (Multiplicative ℝ) Circle
 /-- The bundled circle exponential evaluates to Mathlib's `Circle.exp`. -/
 @[simp]
 theorem circleExpHom_apply (t : ℝ) :
-    circleExpHom (Multiplicative.ofAdd t) = Circle.exp t := rfl
+    circleExpHom (Multiplicative.ofAdd t) = Circle.exp t := (rfl)
 
 /-- The unique abstract Lie-algebra generator of Mathlib's circle exponential. -/
 noncomputable def circleExpGenerator : LeftInvariantDerivation (𝓡 1) Circle :=
