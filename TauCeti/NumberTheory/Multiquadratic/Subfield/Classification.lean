@@ -7,7 +7,7 @@ module
 public import Mathlib.FieldTheory.IntermediateField.Basic
 public import Mathlib.FieldTheory.IntermediateField.Adjoin.Defs
 public import TauCeti.Data.Finset.Basic
-public import TauCeti.NumberTheory.Multiquadratic.QuadraticSubfield
+public import TauCeti.NumberTheory.Multiquadratic.Quadratic.Subfield
 public import TauCeti.NumberTheory.Multiquadratic.Subfield.Count
 
 /-!
@@ -16,7 +16,7 @@ public import TauCeti.NumberTheory.Multiquadratic.Subfield.Count
 For square roots `root i` of radicands `d i ∈ K` over a field `K` with `2 ≠ 0`, the nonempty
 subset products `∏_{i ∈ S} root i` generate quadratic subfields of the multiquadratic field
 `M = K(rootᵢ : i)`, and under square-class independence distinct nonempty subsets give distinct
-subfields (`TauCeti.NumberTheory.Multiquadratic.QuadraticSubfield`). Separately, `M` has exactly
+subfields (`TauCeti.NumberTheory.Multiquadratic.Quadratic.Subfield`). Separately, `M` has exactly
 `2ⁿ - 1` quadratic subfields (`TauCeti.NumberTheory.Multiquadratic.Subfield.Count`). Since the
 nonempty subsets of an `n`-element index type also number `2ⁿ - 1`, the injective subset-product
 assignment is forced by counting to be a **bijection**: every quadratic subfield of `M` is
