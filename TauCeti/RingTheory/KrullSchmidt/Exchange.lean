@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.LinearAlgebra.Projection
-public import TauCeti.RingTheory.KrullSchmidt.Existence
+public import TauCeti.RingTheory.KrullSchmidt.Indecomposable
 
 /-!
 # Azumaya's exchange lemma
@@ -17,13 +17,13 @@ summands `Q i₀`, and it may be *exchanged* for it: `M` is also the direct sum 
 remaining summands `⨆ j ≠ i₀, Q j`.
 
 The argument is the classical one. Writing `p` for the projection of `M` onto `N`, the
-endomorphisms of `N` obtained by projecting `N` into `Q i` and back sum to the identity. Fitting's
-lemma makes `Module.End A N` local (`TauCeti.isLocalRing_end_of_isIndecomposable`), and in a local
-ring a finite sum can only be a unit if one of its terms is
-(`IsLocalRing.exists_of_isUnit_sum`); so one of those endomorphisms is an
+endomorphisms of `N` obtained by projecting `N` into `Q i` and back sum to the identity. The
+hypothesis is that `Module.End A N` is local, and in a local ring a finite sum can only be a unit
+if one of its terms is (`IsLocalRing.exists_of_isUnit_sum`); so one of those endomorphisms is an
 isomorphism. It factors through `Q i₀`, and a split injection into an *indecomposable* module is
 already an isomorphism, so `N ≃ₗ Q i₀`. The exchange is then read off from the injectivity and
-surjectivity of that isomorphism.
+surjectivity of that isomorphism. Locality of `Module.End A N` is what Fitting's lemma
+`TauCeti.isLocalRing_end_of_isIndecomposable` supplies when `M` has finite length.
 
 ## Main definitions
 
@@ -40,8 +40,9 @@ surjectivity of that isomorphism.
 
 The projections `TauCeti.internalProjection` are built from Mathlib's linear equivalence
 `LinearEquiv.ofBijective (DirectSum.coeLinearMap Q) h`, so that Mathlib's evaluation lemmas
-`DirectSum.IsInternal.ofBijective_coeLinearMap_of_mem` and `_of_mem_ne` apply on the nose; the one
-fact added here is that they sum to the identity over a finite index type.
+`DirectSum.IsInternal.ofBijective_coeLinearMap_of_mem` and `_of_mem_ne` apply on the nose; the facts
+added here are that they sum to the identity over a finite index type, that each is surjective, and
+that the kernel of the `i`-th one is the supremum of the other summands.
 
 The exchange lemma states the decomposition of `M` as `iSupIndep` together with `⨆ i, Q i = ⊤`
 rather than as `DirectSum.IsInternal`, which carries a `DecidableEq` hypothesis on the index type
@@ -119,17 +120,59 @@ theorem internalProjection_eq_zero_of_mem_of_ne (h : DirectSum.IsInternal Q) {i 
     (hij : i ≠ j) {x : M} (hx : x ∈ Q i) : internalProjection h j x = 0 :=
   h.ofBijective_coeLinearMap_of_mem_ne hij hx
 
+/-- The projection onto `Q i` restricts to the identity on `Q i`. -/
+@[simp]
+theorem internalProjection_coe (h : DirectSum.IsInternal Q) {i : ι} (x : Q i) :
+    internalProjection h i (x : M) = x :=
+  Subtype.ext (congrArg Subtype.val (internalProjection_of_mem h x.2))
+
+/-- The projection onto `Q j` restricts to `0` on any other summand `Q i`. -/
+@[simp]
+theorem internalProjection_coe_of_ne (h : DirectSum.IsInternal Q) {i j : ι} (hij : i ≠ j)
+    (x : Q i) : internalProjection h j (x : M) = 0 :=
+  internalProjection_eq_zero_of_mem_of_ne h hij x.2
+
+/-- The projection onto `Q i` is surjective, since it restricts to the identity on `Q i`. -/
+theorem internalProjection_surjective (h : DirectSum.IsInternal Q) (i : ι) :
+    Function.Surjective (internalProjection h i) :=
+  fun x ↦ ⟨(x : M), internalProjection_coe h x⟩
+
+/-- The projection onto `Q i` is surjective, stated for its range. -/
+@[simp]
+theorem range_internalProjection (h : DirectSum.IsInternal Q) (i : ι) :
+    LinearMap.range (internalProjection h i) = ⊤ :=
+  LinearMap.range_eq_top.mpr (internalProjection_surjective h i)
+
 /-- Over a finite index type the projections onto the summands sum to the identity. -/
 theorem sum_coe_internalProjection [Fintype ι] (h : DirectSum.IsInternal Q) (x : M) :
     ∑ i, ((internalProjection h i x : M)) = x := by
-  set e := LinearEquiv.ofBijective (DirectSum.coeLinearMap Q) h with he
+  have hcoe : (DirectSum.coeLinearMap Q)
+      ((LinearEquiv.ofBijective (DirectSum.coeLinearMap Q) h).symm x) = x :=
+    LinearEquiv.apply_ofBijective_symm_apply (DirectSum.coeLinearMap Q) (h := h) x
   have hsum := congrArg (DirectSum.coeLinearMap Q)
-    (DirectSum.sum_univ_of (β := fun j ↦ (Q j : Type v)) (e.symm x))
-  rw [map_sum] at hsum
+    (DirectSum.sum_univ_of (β := fun j ↦ (Q j : Type v))
+      ((LinearEquiv.ofBijective (DirectSum.coeLinearMap Q) h).symm x))
+  rw [map_sum, hcoe] at hsum
   simp only [DirectSum.coeLinearMap_of] at hsum
-  rw [show (DirectSum.coeLinearMap Q) (e.symm x) = e (e.symm x) from rfl,
-    e.apply_symm_apply] at hsum
   exact hsum
+
+/-- The kernel of the projection onto `Q i` is the supremum of the other summands. -/
+theorem ker_internalProjection [Finite ι] (h : DirectSum.IsInternal Q) (i : ι) :
+    LinearMap.ker (internalProjection h i) = ⨆ j, ⨆ (_ : j ≠ i), Q j := by
+  have _ : Fintype ι := Fintype.ofFinite ι
+  refine le_antisymm (fun x hx ↦ ?_) (iSup₂_le fun j hj _ hy ↦
+    internalProjection_eq_zero_of_mem_of_ne h hj hy)
+  have hx0 : ((internalProjection h i x : M)) = 0 := by simp [LinearMap.mem_ker.mp hx]
+  have hxsum : ((internalProjection h i x : M)) + ∑ j ∈ Finset.univ.erase i,
+      ((internalProjection h j x : M)) = x :=
+    (Finset.add_sum_erase _ _ (Finset.mem_univ i)).trans (sum_coe_internalProjection h x)
+  rw [hx0, zero_add] at hxsum
+  have hmem : (∑ j ∈ Finset.univ.erase i, ((internalProjection h j x : M))) ∈
+      ⨆ j, ⨆ (_ : j ≠ i), Q j :=
+    Submodule.sum_mem _ fun j hj ↦
+      (le_iSup₂ (f := fun k (_ : k ≠ i) ↦ Q k) j (Finset.ne_of_mem_erase hj))
+        (internalProjection h j x).2
+  rwa [hxsum] at hmem
 
 end Projection
 
@@ -140,10 +183,12 @@ indecomposable submodules, and let `N` be an indecomposable direct summand of `M
 isomorphic to one of the `Q i₀`, and can be exchanged for it: `N` and the remaining summands
 `⨆ j ≠ i₀, Q j` are complementary in `M`.
 
-The finiteness hypotheses on `M` are what makes `Module.End A N` local, by Fitting's lemma. -/
-theorem exists_linearEquiv_and_isCompl_biSup_ne [IsNoetherian A M] [IsArtinian A M]
+The locality of `Module.End A N` is what Fitting's lemma
+`TauCeti.isLocalRing_end_of_isIndecomposable` supplies when `M` has finite length. -/
+theorem exists_linearEquiv_and_isCompl_biSup_ne
     {ι : Type w} [Finite ι] {Q : ι → Submodule A M} (hQi : iSupIndep Q) (hQt : ⨆ i, Q i = ⊤)
-    (hQind : ∀ i, IsIndecomposableModule A (Q i)) {N S : Submodule A M} (hNS : IsCompl N S)
+    (hQind : ∀ i, IsIndecomposableModule A (Q i)) {N S : Submodule A M}
+    [IsLocalRing (Module.End A N)] (hNS : IsCompl N S)
     (hN : IsIndecomposableModule A N) :
     ∃ i₀ : ι, Nonempty (N ≃ₗ[A] Q i₀) ∧ IsCompl N (⨆ j, ⨆ (_ : j ≠ i₀), Q j) := by
   classical
@@ -151,9 +196,6 @@ theorem exists_linearEquiv_and_isCompl_biSup_ne [IsNoetherian A M] [IsArtinian A
   have hQ : DirectSum.IsInternal Q :=
     DirectSum.isInternal_submodule_of_iSupIndep_of_iSup_eq_top hQi hQt
   have hNtriv := hN.nontrivial
-  have hloc : IsLocalRing (Module.End A N) :=
-    isLocalRing_end_of_isIndecomposable
-      (isFiniteLength_iff_isNoetherian_isArtinian.mpr ⟨inferInstance, inferInstance⟩) hN
   set p : M →ₗ[A] N := N.projectionOnto S hNS with hp
   set f : ι → Module.End A N :=
     fun i ↦ (p ∘ₗ (Q i).subtype) ∘ₗ (internalProjection hQ i ∘ₗ N.subtype) with hf
@@ -174,30 +216,25 @@ theorem exists_linearEquiv_and_isCompl_biSup_ne [IsNoetherian A M] [IsArtinian A
       ((Module.End.isUnit_iff _).mp hunit)
   refine ⟨i₀, ⟨LinearEquiv.ofBijective α hbij⟩, ?_⟩
   set T : Submodule A M := ⨆ j, ⨆ (_ : j ≠ i₀), Q j with hT
-  -- Everything outside the `i₀`-summand is killed by the `i₀`-projection.
-  have hTker : T ≤ LinearMap.ker (internalProjection hQ i₀) :=
-    iSup₂_le fun j hj _ hx ↦ internalProjection_eq_zero_of_mem_of_ne hQ hj hx
+  -- `T` is exactly what the `i₀`-projection kills.
+  have hTker : T = LinearMap.ker (internalProjection hQ i₀) := by
+    rw [hT, ker_internalProjection]
   -- Each element of `M` differs from its `i₀`-component by an element of `T`.
-  have hrest : ∀ x : M, x - ((internalProjection hQ i₀ x : M)) ∈ T := by
-    intro x
-    have hsplit : ((internalProjection hQ i₀ x : M)) + ∑ i ∈ Finset.univ.erase i₀,
-        ((internalProjection hQ i x : M)) = x :=
-      (Finset.add_sum_erase _ _ (Finset.mem_univ i₀)).trans (sum_coe_internalProjection hQ x)
-    rw [sub_eq_of_eq_add' hsplit.symm]
-    refine Submodule.sum_mem _ fun i hi ↦ ?_
-    exact (le_iSup₂ (f := fun j (_ : j ≠ i₀) ↦ Q j) i (Finset.ne_of_mem_erase hi))
-      (internalProjection hQ i x).2
+  have hrest : ∀ x : M, x - ((internalProjection hQ i₀ x : M)) ∈ T := fun x ↦ by
+    rw [hTker, LinearMap.mem_ker, map_sub, internalProjection_coe, sub_self]
   constructor
   · rw [Submodule.disjoint_def]
     intro x hxN hxT
-    have hzero : α ⟨x, hxN⟩ = 0 := LinearMap.mem_ker.mp (hTker hxT)
+    have hzero : α ⟨x, hxN⟩ = 0 := by
+      rw [hα, LinearMap.comp_apply, Submodule.subtype_apply, ← LinearMap.mem_ker, ← hTker]
+      exact hxT
     have hx0 := hbij.1 (hzero.trans (map_zero α).symm)
     simpa using congrArg Subtype.val hx0
   · rw [codisjoint_iff, eq_top_iff]
     intro m _
     obtain ⟨n, hn⟩ := hbij.2 (internalProjection hQ i₀ m)
     have hcomp : ((internalProjection hQ i₀ (n : M) : M)) = ((internalProjection hQ i₀ m : M)) := by
-      rw [← hn]; rfl
+      rw [← hn, hα, LinearMap.comp_apply, Submodule.subtype_apply]
     have hmem : ((internalProjection hQ i₀ m : M)) ∈ N ⊔ T := by
       rw [← hcomp, ← sub_sub_cancel (n : M) ((internalProjection hQ i₀ (n : M) : M))]
       exact Submodule.sub_mem _ (Submodule.mem_sup_left n.2)

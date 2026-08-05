@@ -47,7 +47,7 @@ recursive call is made on `↥(⨆ j ≠ j₀, Q j)`. That is why it is packaged
 statement quantifying over the module as well, rather than run inside the theorem below.
 Restricting a decomposition to the submodule it spans is Mathlib's
 `DirectSum.isInternal_biSup_submodule_of_iSupIndep`; transporting one along a linear equivalence is
-`TauCeti.iSupIndep_map_of_linearEquiv` and `TauCeti.iSup_map_of_linearEquiv_eq_top` below.
+Mathlib's `LinearMap.iSupIndep_map` together with the private helper below.
 
 ## References
 
@@ -73,15 +73,9 @@ section Transport
 variable {M : Type v} {M' : Type*} [AddCommGroup M] [Module A M] [AddCommGroup M'] [Module A M']
 variable {ι : Type w} {P : ι → Submodule A M}
 
-/-- Independence of a family of submodules is preserved by the image along a linear
-equivalence. -/
-theorem iSupIndep_map_of_linearEquiv (e : M ≃ₗ[A] M') (h : iSupIndep P) :
-    iSupIndep fun i ↦ (P i).map (e : M →ₗ[A] M') :=
-  (iSupIndep_map_orderIso_iff (Submodule.orderIsoMapComap e)).mpr h
-
 /-- A family of submodules spanning the whole module still spans it after taking images along a
 linear equivalence. -/
-theorem iSup_map_of_linearEquiv_eq_top (e : M ≃ₗ[A] M') (h : ⨆ i, P i = ⊤) :
+private theorem iSup_map_of_linearEquiv_eq_top (e : M ≃ₗ[A] M') (h : ⨆ i, P i = ⊤) :
     ⨆ i, (P i).map (e : M →ₗ[A] M') = ⊤ := by
   rw [← Submodule.map_iSup, h, Submodule.map_top]
   exact LinearMap.range_eq_top.mpr e.surjective
@@ -119,7 +113,11 @@ private theorem exists_equiv_linearEquiv_aux :
     refine ⟨hP i₀, codisjoint_iff.mpr ?_⟩
     rw [hS, ← hPt]
     exact (iSup_split_single P i₀).symm
-  -- Exchange it for a summand of the second decomposition.
+  -- Exchange it for a summand of the second decomposition; Fitting's lemma makes its endomorphism
+  -- ring local, which is what the exchange lemma asks for.
+  have : IsLocalRing (Module.End A (P i₀)) :=
+    isLocalRing_end_of_isIndecomposable
+      (isFiniteLength_iff_isNoetherian_isArtinian.mpr ⟨inferInstance, inferInstance⟩) (hPind i₀)
   obtain ⟨j₀, ⟨e₀⟩, hexch⟩ :=
     exists_linearEquiv_and_isCompl_biSup_ne hQ hQt hQind hcomplP (hPind i₀)
   set t : Set κ := {j | j ≠ j₀}
@@ -146,7 +144,8 @@ private theorem exists_equiv_linearEquiv_aux :
   obtain ⟨e', he'⟩ := ih (Nat.card s)
     (hcard ▸ Finite.card_subtype_lt (p := fun i ↦ i ∈ s) (x := i₀) (by simp [hs]))
     (M := T) (ι := s) (κ := t) (P := P') (Q := Q') rfl
-    (iSupIndep_map_of_linearEquiv φ hPi) (iSup_map_of_linearEquiv_eq_top φ hPs)
+    (LinearMap.iSupIndep_map (φ : S →ₗ[A] T) φ.injective hPi)
+    (iSup_map_of_linearEquiv_eq_top φ hPs)
     (fun i ↦ (hPind i).of_linearEquiv (hPP' i).some) hQi hQs
     (fun j ↦ (hQind j).of_linearEquiv (hQQ' j).some.symm)
   -- Extend the matching by `i₀ ↦ j₀`.
