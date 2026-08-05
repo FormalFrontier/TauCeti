@@ -61,7 +61,7 @@ universe u v w
 
 section Block
 
-variable {k : Type u} {G : Type v} [Field k] [Group G] {ι : Type w} {d : ι → ℕ}
+variable {k : Type u} {G : Type v} [Field k] [Monoid G] {ι : Type w} {d : ι → ℕ}
   (e : k[G] ≃ₐ[k] Π i, Matrix (Fin (d i)) (Fin (d i)) k)
 
 /-- The algebra map from the group algebra onto the endomorphisms of the `i`-th column space of a
@@ -106,7 +106,7 @@ theorem asAlgebraHom_blockRepresentation (i : ι) :
   | smul r x hx => rw [map_smul, map_smul, hx]
 
 /-- **Every Wedderburn block carries an irreducible representation.** -/
-theorem isIrreducible_blockRepresentation [∀ i, NeZero (d i)] (i : ι) :
+theorem isIrreducible_blockRepresentation (i : ι) [NeZero (d i)] :
     (blockRepresentation e i).IsIrreducible := by
   have : Nonempty (Fin (d i)) := ⟨⟨0, Nat.pos_of_ne_zero (NeZero.ne (d i))⟩⟩
   have : Nontrivial (Fin (d i) → k) := inferInstance
@@ -115,7 +115,7 @@ theorem isIrreducible_blockRepresentation [∀ i, NeZero (d i)] (i : ι) :
 
 /-- **Distinct Wedderburn blocks carry inequivalent representations.** The idempotent that `e`
 matches with `Pi.single i 1` acts as the identity on the `i`-th block and as zero on the `j`-th. -/
-theorem isEmpty_equiv_blockRepresentation [∀ i, NeZero (d i)] {i j : ι} (hij : i ≠ j) :
+theorem isEmpty_equiv_blockRepresentation {i j : ι} [NeZero (d i)] (hij : i ≠ j) :
     IsEmpty ((blockRepresentation e i).Equiv (blockRepresentation e j)) := by
   classical
   have : Nonempty (Fin (d i)) := ⟨⟨0, Nat.pos_of_ne_zero (NeZero.ne (d i))⟩⟩
@@ -164,7 +164,7 @@ theorem exists_irreducible_family_conjClasses :
       (∀ C, (ρ C).IsIrreducible) ∧ Pairwise fun C D => IsEmpty ((ρ C).Equiv (ρ D)) := by
   obtain ⟨d, hd, -, ⟨e⟩⟩ := exists_algEquiv_pi_matrix_conjClasses k G
   have := hd
-  exact ⟨d, blockRepresentation e, isIrreducible_blockRepresentation e,
+  exact ⟨d, blockRepresentation e, fun C => isIrreducible_blockRepresentation e C,
     fun _ _ h => isEmpty_equiv_blockRepresentation e h⟩
 
 end Existence

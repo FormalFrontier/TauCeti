@@ -6,7 +6,6 @@ module
 
 public import TauCeti.RepresentationTheory.CharacterTable.BlockRepresentation
 public import TauCeti.RepresentationTheory.CharacterTable.Independence
-public import Mathlib.LinearAlgebra.Basis.VectorSpace
 public import Mathlib.LinearAlgebra.FiniteDimensional.Lemmas
 
 /-!
@@ -22,8 +21,8 @@ The lower bound comes from the Wedderburn presentation of `k[G]`: its blocks are
 conjugacy classes and each carries an irreducible representation, pairwise inequivalent
 (`TauCeti.exists_irreducible_family_conjClasses`). A family of that size therefore has linearly
 independent characters in a space of exactly that dimension, so **the characters are a basis of the
-class functions**: this is completeness, and `TauCeti.ClassFunction.irreducibleCharacters_span` is
-the spanning statement it amounts to.
+class functions**: this is completeness, and `TauCeti.ClassFunction.le_span_irreducibleCharacters`
+is the spanning statement it amounts to.
 
 Expanding a class function in that basis is easy because the basis is orthonormal for
 `TauCeti.ClassFunction.characterPairing`: the coefficient of `χᵢ` in `f` is `⟨χᵢ, f⟩`. Applying this
@@ -38,8 +37,8 @@ conjugate or not.
   inequivalent irreducible representations indexed by as many indices as `G` has conjugacy classes
   form a basis of the class functions**, with `TauCeti.ClassFunction.exists_basis_ofCharacter` the
   statement that such a family exists.
-* `TauCeti.ClassFunction.irreducibleCharacters_span`: **completeness**, in the form that every class
-  function lies in the span of the irreducible characters.
+* `TauCeti.ClassFunction.le_span_irreducibleCharacters`: **completeness**, in the form that every
+  class function lies in the span of the irreducible characters.
 * `TauCeti.ClassFunction.sum_characterPairing_smul_ofCharacter`: the expansion of a class function
   in that basis, with coefficients the pairings against the irreducible characters.
 * `TauCeti.ClassFunction.exists_nonempty_equiv`: **such a family is a complete list of the
@@ -61,7 +60,11 @@ the ones the rest of the theory uses.
 
 This implements the completeness and second-orthogonality items of Layer 3 of the
 [character theory roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/CharacterTheory/README.md),
-whose `Suggested.lean` pins them as `irreducibleCharacters_span` and `char_column_orthogonality`.
+at the `Representation` level. Its `Suggested.lean` pins them as `irreducibleCharacters_span`, over
+the simple objects of `FDRep k G`, and `char_column_orthogonality`, over the `ℂ`-valued character
+table; the statements below are the prerequisites those two are read off from once Layer 2.5
+supplies the dictionary between `CategoryTheory.Simple` in `FDRep k G` and
+`Representation.IsIrreducible`, and neither roadmap name is claimed here.
 See I. M. Isaacs, *Character Theory of Finite Groups* (1976), Theorem 2.18 and Corollary 2.14, or
 J.-P. Serre, *Linear Representations of Finite Groups*, Sections 2.5 and 6.4.
 -/
@@ -264,8 +267,15 @@ theorem exists_basis_ofCharacter :
 
 Only this inclusion is stated: every character is itself a class function, so the span is contained
 in `TauCeti.ClassFunction k G` for free, and the irreducible characters do not span all of `G → k`
-unless `G` is abelian. -/
-theorem irreducibleCharacters_span :
+unless `G` is abelian.
+
+This is the `Representation`-level form, spanning by the characters of the irreducible
+representations on the coordinate spaces `Fin n → k` that the Wedderburn blocks produce. It is a
+prerequisite for, and not the same statement as, the roadmap's `irreducibleCharacters_span`, which
+spans by the characters of the simple objects of `FDRep k G`: passing between the two needs the
+dictionary between `CategoryTheory.Simple` in `FDRep k G` and `Representation.IsIrreducible`, which
+is Layer 2.5 work and exists neither in Mathlib nor here. -/
+theorem le_span_irreducibleCharacters :
     ClassFunction k G ≤ Submodule.span k
       {f : G → k | ∃ (n : ℕ) (ρ : Representation k G (Fin n → k)), ρ.IsIrreducible ∧
         ρ.character = f} := by
