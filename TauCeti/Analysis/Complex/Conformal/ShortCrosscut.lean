@@ -7,6 +7,7 @@ module
 
 public import TauCeti.Analysis.Complex.Conformal.Crosscut.Basic
 public import TauCeti.Analysis.Complex.Conformal.LengthArea
+import TauCeti.Topology.Circle.Metric
 
 /-!
 # A circular crosscut with a short image
@@ -31,9 +32,9 @@ crosscut cuts off — is a matter of local connectedness of that boundary and is
 ## The intersection is an arc
 
 Everything rests on the angular description of the intersection proved in
-`Conformal/Crosscut/Basic.lean`. Writing `α = arg (c - ζ)` for the direction from `ζ` to the centre
-of the disc and `d = dist ζ c`, the criterion `TauCeti.circleMap_mem_ball_iff_sq` read off the law
-of cosines says that
+`TauCeti/Topology/Circle/Metric.lean`. Writing `α = arg (c - ζ)` for the direction from `ζ` to the
+centre of the disc and `d = dist ζ c`, the criterion `TauCeti.circleMap_mem_ball_iff_sq` read off
+the law of cosines says that
 
 > `circleMap ζ ρ θ ∈ ball c r ↔ ρ ^ 2 + d ^ 2 - r ^ 2 < 2 * ρ * d * cos (θ - α)`,
 
