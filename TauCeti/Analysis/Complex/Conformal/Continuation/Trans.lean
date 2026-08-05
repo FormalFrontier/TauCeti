@@ -318,7 +318,7 @@ There is no companion for the second factor at this level: `q` issues from the e
 so the germ it continues is the one reached at the junction, which
 `TauCeti.ContinuesAlong` does not name. Use
 `TauCeti.IsAnalyticContinuationAlong.right_of_trans` on a witness instead. -/
-theorem ContinuesAlong.left_of_trans [CompleteSpace E] {p : Path a b} {q : Path b c}
+theorem ContinuesAlong.left_of_trans {p : Path a b} {q : Path b c}
     (h : ContinuesAlong f₀ (⇑(p.trans q))) : ContinuesAlong f₀ (⇑p) := by
   obtain ⟨H, hH, hH0⟩ := continuesAlong_iff_exists.mp h
   rw [(p.trans q).source] at hH0
