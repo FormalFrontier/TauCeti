@@ -67,7 +67,10 @@ the average, so `TauCeti.FDRep.frobeniusSchurIndicator_eq_representation` unfold
 definition and nothing else, and every theorem about the average transfers through it. Neither
 definition is `@[expose]`d: the lemmas here are the intended interface, and nothing downstream
 needs to unfold either one. That is also why the agreement theorem is proved by a parenthesised
-`(rfl)`, which keeps the definitional equality inside this module instead of exporting it.
+`(rfl)`: a proof written syntactically as `:= rfl` is implicitly tagged `@[defeq]`, and validating
+that tag on an exported theorem asks that every definition it unfolds be exposed, which these two
+deliberately are not. The parentheses suppress the tag, which is what `@[defeq]`'s own
+documentation prescribes them for; a bare `rfl` does not compile here.
 
 ## References
 
