@@ -43,19 +43,27 @@ leaving it in made a PR's own landing look like the event that broke it.
 
 What this is and is not
 -----------------------
-For a PR the ledger covers, the head sequence, the push times, and the actors are
-RECORDED, not inferred; only the conflict itself is computed, by re-running the
-merge. For a PR it does not cover -- older than the workflow, or whose runs have
-aged out of the API -- the tool falls back to commit dates, grouping commits
-written within `--push-window` into one push. Those PRs are counted separately in
-every run and their resolutions are attributed to nobody, because on that path a
-commit that was never a head can invent an episode or split a real one.
+Every run reports provenance per PR, because it decides what a row is worth:
+
+    recorded   every push the ledger holds for this PR is replayable. The head
+               sequence, the push times, and the actors are records; only the
+               conflict itself is computed, by re-running the merge.
+    partial    some recorded heads could not be fetched, so episodes may be
+               truncated. Kept distinct from `recorded` on purpose.
+    inferred   no ledger coverage -- older than the workflow, or its runs aged
+               out. Heads come from commit dates grouped by `--push-window`,
+               boundaries are guesses, and resolutions are attributed to nobody,
+               because there a commit that was never a head can invent an episode
+               or split a real one.
+    skipped    nothing replayable at all.
 
 Two further limits apply to both paths:
 
-  * **Force-pushed heads that never ran a build** leave no trace anywhere. The
-    ledger has what ran; a head that was pushed and superseded before its build
-    started is simply absent.
+  * **Force-pushed heads** are recorded by the ledger but unreachable from
+    `refs/pull/N/head`, so their objects are fetched by sha before replaying --
+    1282 of 9477 here, and ignoring them cost 36 episodes and more than half the
+    author-returns. A head pushed and superseded before its build even started
+    leaves no trace anywhere and is genuinely lost.
   * **Monotonicity.** By default the binary search assumes a head that conflicts
     with `main` still conflicts against later `main`. Each epoch is therefore
     checked at its LAST base and reported clean if it ends clean, which drops a
@@ -108,6 +116,8 @@ actors guesses throughout. `--json` also writes the per-episode rows.
 
 Set PUSH_LEDGER_WORKFLOW if the workflow that runs on every push is not
 `pr-build.yml`; a repository without such a workflow gets the inferred path.
+`--ledger-cache PATH` memoises the ledger (it costs ~100 API reads), which makes
+re-running against a different `--session-gap` or `--exhaustive` cheap.
 
 Needs python3's standard library, `git` >= 2.38 (for `merge-tree --write-tree`),
 and an authenticated `gh` CLI.
