@@ -105,27 +105,26 @@ Assembling the two halves is pure reparametrisation of the unit interval, so the
 allowed to lie in an arbitrary sort; the case of interest is `Y = ℂ → ℂ`, where `F` and `G` are
 families of germs (`TauCeti.IsAnalyticContinuationAlong.trans`). -/
 noncomputable def transFamily (F G : I → Y) (u : I) : Y :=
-  if (u : ℝ) ≤ 1 / 2 then F (projIcc 0 1 zero_le_one (2 * u))
+  if (u : ℝ) ≤ 2⁻¹ then F (projIcc 0 1 zero_le_one (2 * u))
   else G (projIcc 0 1 zero_le_one (2 * u - 1))
 
-/-- On the first half of the parameter interval the concatenated family is the first family.
-
-Not a `simp` lemma: its hypothesis is a side condition on a variable parameter that `simp` cannot
-discharge, and marking it `simp` would shadow the endpoint lemmas `TauCeti.transFamily_zero` and
-`TauCeti.transFamily_one` below, which are the useful normal forms. -/
-theorem transFamily_of_le_half (F G : I → Y) {u : I} (hu : (u : ℝ) ≤ 1 / 2) :
+/-- On the first half of the parameter interval the concatenated family is the first family. -/
+@[simp]
+theorem transFamily_of_le_half (F G : I → Y) {u : I} (hu : (u : ℝ) ≤ 2⁻¹) :
     transFamily F G u = F (projIcc 0 1 zero_le_one (2 * u)) :=
   if_pos hu
 
-/-- Strictly past the junction the concatenated family is the second family. Not a `simp` lemma,
-for the reason given at `TauCeti.transFamily_of_le_half`. -/
-theorem transFamily_of_half_lt (F G : I → Y) {u : I} (hu : 1 / 2 < (u : ℝ)) :
+/-- Strictly past the junction the concatenated family is the second family. -/
+@[simp]
+theorem transFamily_of_half_lt (F G : I → Y) {u : I} (hu : 2⁻¹ < (u : ℝ)) :
     transFamily F G u = G (projIcc 0 1 zero_le_one (2 * u - 1)) :=
   if_neg (not_le.mpr hu)
 
 /-- At parameter time `0` the concatenated family is the initial value of the first family:
-a concatenation starts where its first factor starts. -/
-@[simp]
+a concatenation starts where its first factor starts.
+
+Not itself a `simp` lemma: `simp` already reaches this normal form through
+`TauCeti.transFamily_of_le_half`, whose bound it discharges at `0`. -/
 theorem transFamily_zero (F G : I → Y) : transFamily F G 0 = F 0 := by
   rw [transFamily_of_le_half F G (by norm_num)]
   congr 1
@@ -161,29 +160,29 @@ theorem IsAnalyticContinuationAlong.trans {p : Path a b} {q : Path b c}
     (hG : IsAnalyticContinuationAlong G (⇑q) univ) (hFG : F 1 =ᶠ[𝓝 b] G 0) :
     IsAnalyticContinuationAlong (transFamily F G) (⇑(p.trans q)) univ := by
   have hcoe : Continuous fun u : I => (u : ℝ) := continuous_subtype_val
-  have hclosed₁ : IsClosed {u : I | (u : ℝ) ≤ 1 / 2} := isClosed_le hcoe continuous_const
-  have hclosed₂ : IsClosed {u : I | 1 / 2 ≤ (u : ℝ)} := isClosed_le continuous_const hcoe
-  have hunion : {u : I | (u : ℝ) ≤ 1 / 2} ∪ {u : I | 1 / 2 ≤ (u : ℝ)} = univ :=
-    eq_univ_of_forall fun u => (le_total (u : ℝ) (1 / 2)).imp id id
+  have hclosed₁ : IsClosed {u : I | (u : ℝ) ≤ 2⁻¹} := isClosed_le hcoe continuous_const
+  have hclosed₂ : IsClosed {u : I | 2⁻¹ ≤ (u : ℝ)} := isClosed_le continuous_const hcoe
+  have hunion : {u : I | (u : ℝ) ≤ 2⁻¹} ∪ {u : I | 2⁻¹ ≤ (u : ℝ)} = univ :=
+    eq_univ_of_forall fun u => (le_total (u : ℝ) 2⁻¹).imp id id
   -- The first half of the concatenation is `p`, reparametrised by doubling.
   have hφ₁ : Continuous fun u : I => projIcc (0 : ℝ) 1 zero_le_one (2 * u) :=
     continuous_projIcc.comp (by fun_prop)
   have h₁ := hF.reparam (φ := fun u : I => projIcc (0 : ℝ) 1 zero_le_one (2 * u))
-    (s' := {u : I | (u : ℝ) ≤ 1 / 2}) hφ₁.continuousOn (mapsTo_univ _ _)
+    (s' := {u : I | (u : ℝ) ≤ 2⁻¹}) hφ₁.continuousOn (mapsTo_univ _ _)
   have hpath₁ : EqOn (⇑(p.trans q))
       ((⇑p) ∘ fun u : I => projIcc (0 : ℝ) 1 zero_le_one (2 * u))
-      {u : I | (u : ℝ) ≤ 1 / 2} := by
+      {u : I | (u : ℝ) ≤ 2⁻¹} := by
     intro u hu
-    have hu' : (u : ℝ) ≤ 1 / 2 := hu
+    have hu' : (u : ℝ) ≤ 1 / 2 := by rw [one_div]; exact hu
     have hmem : 2 * (u : ℝ) ∈ Icc (0 : ℝ) 1 := ⟨by linarith [u.2.1], by linarith⟩
     calc (p.trans q) u
         = (p.trans q).extend (u : ℝ) := ((p.trans q).extend_extends' u).symm
-      _ = p.extend (2 * u) := Path.extend_trans_of_le_half p q hu
+      _ = p.extend (2 * u) := Path.extend_trans_of_le_half p q hu'
       _ = p.extend ((projIcc (0 : ℝ) 1 zero_le_one (2 * u) : I) : ℝ) := by
             rw [projIcc_of_mem _ hmem]
       _ = p (projIcc (0 : ℝ) 1 zero_le_one (2 * u)) := p.extend_extends' _
   have h₁' : IsAnalyticContinuationAlong (transFamily F G) (⇑(p.trans q))
-      {u : I | (u : ℝ) ≤ 1 / 2} :=
+      {u : I | (u : ℝ) ≤ 2⁻¹} :=
     (h₁.congr_path hpath₁).congr fun u hu => by
       rw [transFamily_of_le_half F G hu]
       exact .rfl
@@ -191,23 +190,23 @@ theorem IsAnalyticContinuationAlong.trans {p : Path a b} {q : Path b c}
   have hφ₂ : Continuous fun u : I => projIcc (0 : ℝ) 1 zero_le_one (2 * u - 1) :=
     continuous_projIcc.comp (by fun_prop)
   have h₂ := hG.reparam (φ := fun u : I => projIcc (0 : ℝ) 1 zero_le_one (2 * u - 1))
-    (s' := {u : I | 1 / 2 ≤ (u : ℝ)}) hφ₂.continuousOn (mapsTo_univ _ _)
+    (s' := {u : I | 2⁻¹ ≤ (u : ℝ)}) hφ₂.continuousOn (mapsTo_univ _ _)
   have hpath₂ : EqOn (⇑(p.trans q))
       ((⇑q) ∘ fun u : I => projIcc (0 : ℝ) 1 zero_le_one (2 * u - 1))
-      {u : I | 1 / 2 ≤ (u : ℝ)} := by
+      {u : I | 2⁻¹ ≤ (u : ℝ)} := by
     intro u hu
-    have hu' : 1 / 2 ≤ (u : ℝ) := hu
+    have hu' : 1 / 2 ≤ (u : ℝ) := by rw [one_div]; exact hu
     have hmem : 2 * (u : ℝ) - 1 ∈ Icc (0 : ℝ) 1 := ⟨by linarith, by linarith [u.2.2]⟩
     calc (p.trans q) u
         = (p.trans q).extend (u : ℝ) := ((p.trans q).extend_extends' u).symm
-      _ = q.extend (2 * u - 1) := Path.extend_trans_of_half_le p q hu
+      _ = q.extend (2 * u - 1) := Path.extend_trans_of_half_le p q hu'
       _ = q.extend ((projIcc (0 : ℝ) 1 zero_le_one (2 * u - 1) : I) : ℝ) := by
             rw [projIcc_of_mem _ hmem]
       _ = q (projIcc (0 : ℝ) 1 zero_le_one (2 * u - 1)) := q.extend_extends' _
   have h₂' : IsAnalyticContinuationAlong (transFamily F G) (⇑(p.trans q))
-      {u : I | 1 / 2 ≤ (u : ℝ)} := by
+      {u : I | 2⁻¹ ≤ (u : ℝ)} := by
     refine (h₂.congr_path hpath₂).congr fun u hu => ?_
-    have hu' : 1 / 2 ≤ (u : ℝ) := hu
+    have hu' : 2⁻¹ ≤ (u : ℝ) := hu
     rcases eq_or_lt_of_le hu' with heq | hlt
     · -- At the junction the two halves are compared through the matching hypothesis.
       have e₁ : projIcc (0 : ℝ) 1 zero_le_one (2 * u) = 1 := by
