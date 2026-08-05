@@ -231,14 +231,18 @@ class MetricsTest(unittest.TestCase):
             })
 
         raw = "\n".join([
-            comment(7, "reviewer-a"),
+            # GitHub Actions may project a real collaborator as CONTRIBUTOR here.
+            comment(7, "reviewer-a", association="CONTRIBUTOR"),
             comment(8, "issue-commenter"),       # an ordinary issue, not a PR
             comment(9, "marker-quoter", False),  # the public marker without engine meta
             comment(7, "forger", association="NONE"),
             comment(7, "reviewer-b"),
         ])
         with patch.object(stats, "run_gh", return_value=raw):
-            scoreboards, rejected = stats.fetch_scoreboards("example/project", {7, 9})
+            scoreboards, rejected = stats.fetch_scoreboards(
+                "example/project", {7, 9},
+                {"reviewer-a", "reviewer-b", "marker-quoter"},
+            )
         self.assertEqual(
             [(item["pr"], item["user"]) for item in scoreboards],
             [(7, "reviewer-a"), (7, "reviewer-b")],
@@ -272,7 +276,7 @@ class MetricsTest(unittest.TestCase):
             }
 
         comments = [
-            fixture(7, "trusted", "MEMBER",
+            fixture(7, "trusted", "CONTRIBUTOR",
                     {"kind": "scoreboard", "pr": 7, "states": {"api": "green"}}),
             fixture(7, "wrong-pr", "MEMBER", {"kind": "scoreboard", "pr": 8}),
             fixture(7, "string-pr", "MEMBER", {"kind": "scoreboard", "pr": "7"}),
@@ -285,7 +289,7 @@ class MetricsTest(unittest.TestCase):
             },
         ]
         with patch.object(stats, "run_gh", return_value="") as run:
-            stats.fetch_scoreboards("example/project", {7})
+            stats.fetch_scoreboards("example/project", {7}, {"trusted"})
         query = run.call_args.args[0][-1]
         result = subprocess.run(
             ["jq", "-c", query], input=json.dumps(comments), text=True,
@@ -295,7 +299,25 @@ class MetricsTest(unittest.TestCase):
         self.assertEqual(
             [row["canonical"] for row in rows], [True, False, False, False, False],
         )
-        self.assertTrue(all(row["author_association"] == "MEMBER" for row in rows))
+        self.assertEqual(rows[0]["user"], "trusted")
+
+    def test_trusted_collaborators_use_repository_metadata_endpoint(self):
+        with patch.object(stats, "run_gh", return_value="reviewer-a\nreviewer-b\n") as run:
+            self.assertEqual(
+                stats.fetch_trusted_collaborators("example/project"),
+                {"reviewer-a", "reviewer-b"},
+            )
+        self.assertEqual(
+            run.call_args.args[0],
+            ["api", "--paginate",
+             "repos/example/project/collaborators?affiliation=all&per_page=100",
+             "--jq", ".[].login"],
+        )
+
+    def test_empty_collaborator_response_refuses_empty_review_chart(self):
+        with patch.object(stats, "run_gh", return_value=""):
+            with self.assertRaisesRegex(ValueError, "no repository collaborators"):
+                stats.fetch_trusted_collaborators("example/project")
 
     def test_thousands_of_contributors_are_bounded(self):
         start = datetime(2026, 1, 1, tzinfo=UTC)

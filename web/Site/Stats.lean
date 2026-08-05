@@ -78,7 +78,7 @@ private def prGraphs : Html := {{
       <img class="loc-graph" src="static/cumulative-reviews-by-contributor.svg"
            alt="Cumulative trusted v1 review scoreboards by contributor"
            loading="lazy"/>
-      <figcaption>"Cumulative canonical v1 review scoreboards posted by repository-associated accounts; external accounts and edits to existing scoreboards do not add counts."</figcaption>
+      <figcaption>"Cumulative canonical v1 review scoreboards posted by current repository collaborators; external accounts and edits to existing scoreboards do not add counts."</figcaption>
     </figure>
   </div>
 }}
@@ -124,8 +124,8 @@ include the current partial UTC day through the snapshot time. The contributor S
 show every contributor while that remains legible, then cap themselves at 24 named
 lines and combine the remaining long tail. Exact totals for every login remain available in
 the generated [`pr-stats.json`](static/pr-stats.json). Review attribution follows the
-status pipeline's trust boundary: only canonical v1 scoreboards from repository owners,
-members, or collaborators are included.
+status pipeline's trust boundary: only canonical v1 scoreboards from current repository
+collaborators are included.
 
 :::blob prGraphs
 :::

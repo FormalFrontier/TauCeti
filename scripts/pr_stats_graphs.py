@@ -53,7 +53,6 @@ SCOREBOARD_MARKER = "<!--tauceti-scoreboard-->"
 # marker or paste another PR's scoreboard.  scripts/pr_status/core.py parses the same block
 # when it derives a single PR's review state.
 SCOREBOARD_META_KIND = "scoreboard"
-TRUSTED_ASSOCIATIONS = {"OWNER", "MEMBER", "COLLABORATOR"}
 STATE_REVIEW = {"awaiting-review", "review-in-progress"}
 STATE_LABELS = {"awaiting-author", *STATE_REVIEW}
 # States in which the PR has left the review queue: the author owns it, or CI is judging a
@@ -288,15 +287,42 @@ def names_scoreboard_for(metas: Iterable[str], pr_number: int) -> bool:
     return False
 
 
-def fetch_scoreboards(repo: str, pr_numbers: set[int]) -> tuple[list[dict], Counter]:
+def fetch_trusted_collaborators(repo: str) -> set[str]:
+    """Current repository collaborators, using the token-independent trust endpoint.
+
+    ``author_association`` on issue comments is requester-dependent: a GitHub Actions
+    installation token can see an organization member as ``CONTRIBUTOR`` even when a member's
+    user token sees ``MEMBER``.  The collaborators endpoint instead answers the question the
+    chart needs directly and is available to installation tokens with metadata read access.
+    """
+    raw = run_gh([
+        "api", "--paginate",
+        f"repos/{repo}/collaborators?affiliation=all&per_page=100",
+        "--jq", ".[].login",
+    ])
+    collaborators = {line.strip() for line in raw.splitlines() if line.strip()}
+    if not collaborators:
+        raise ValueError(
+            "GitHub returned no repository collaborators; refusing an empty review chart"
+        )
+    return collaborators
+
+
+def fetch_scoreboards(
+    repo: str,
+    pr_numbers: set[int],
+    trusted_logins: set[str] | None = None,
+) -> tuple[list[dict], Counter]:
     """Canonical review scoreboards posted on this repository's pull requests.
 
     The repository issue-comments endpoint also serves ordinary issues and accepts comments
     from anyone. A comment counts only when its issue number is one of the fetched pull
-    requests, its author is repository-associated, and its parsed engine metadata declares
-    a scoreboard for that same PR. Parsing runs at gh/jq, so only compact fields reach Python
-    rather than memory growing with review prose. Rejections are published by reason.
+    requests, its author is a current repository collaborator, and its parsed engine metadata
+    declares a scoreboard for that same PR. Parsing runs at gh/jq, so only compact fields reach
+    Python rather than memory growing with review prose. Rejections are published by reason.
     """
+    if trusted_logins is None:
+        trusted_logins = fetch_trusted_collaborators(repo)
     marker = json.dumps(SCOREBOARD_MARKER)
     raw = run_gh([
         "api", "--paginate",
@@ -306,8 +332,9 @@ def fetch_scoreboards(repo: str, pr_numbers: set[int]) -> tuple[list[dict], Coun
                 ' | ([try ($comment.body | capture("<!--tauceti-meta:v1\\\\s+'
                 '(?<json>\\\\{[\\\\s\\\\S]*\\\\})\\\\s*-->").json'
                 ' | fromjson) catch null][0] // null) as $meta'
-                ' | {number: $number, created_at, updated_at, user: .user.login,'
-                '    author_association, canonical: (($meta | type == "object")'
+                ' | {number: $number, created_at: $comment.created_at,'
+                '    updated_at: $comment.updated_at, user: $comment.user.login,'
+                '    canonical: (($meta | type == "object")'
                 '      and $meta.kind == "scoreboard"'
                 '      and (($meta.pr | type) == "number")'
                 '      and (($meta.pr | floor) == $meta.pr)'
@@ -325,7 +352,7 @@ def fetch_scoreboards(repo: str, pr_numbers: set[int]) -> tuple[list[dict], Coun
         if pr_number not in pr_numbers:
             rejected["not_a_pull_request"] += 1
             continue
-        if comment.get("author_association") not in TRUSTED_ASSOCIATIONS:
+        if comment.get("user") not in trusted_logins:
             rejected["untrusted_author"] += 1
             continue
         if not comment.get("canonical"):
@@ -833,7 +860,7 @@ def generate(
         "last_full_day": last_full_day.isoformat(),
         "definitions": {
             "review_cycle": cycles["definition"],
-            "review": "one canonical <!--tauceti-scoreboard--> comment on a pull request of this repository, identified by the tauceti-meta:v1 block naming that PR, attributed to the posting account",
+            "review": "one canonical <!--tauceti-scoreboard--> comment on a pull request of this repository, identified by the tauceti-meta:v1 block naming that PR, attributed to a current repository collaborator",
             "active_author": "distinct PR author opening a PR in the trailing seven-day window",
             "merge_latency": "PR creation timestamp to merge timestamp",
         },

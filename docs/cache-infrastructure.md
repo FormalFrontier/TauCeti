@@ -1,0 +1,143 @@
+# Lake artifact cache infrastructure
+
+Where the build cache lives, who owns it, and which knob feeds which workflow.
+
+## Cloudflare account
+
+| | |
+|---|---|
+| Account | `kim@lean-fro.org` |
+| Account ID | `d789bf36d237e0cb313be59b927c82bd` |
+| Dashboard | https://dash.cloudflare.com/d789bf36d237e0cb313be59b927c82bd |
+| R2 bucket | `tauceti-cache` |
+| Registrar | `taucetiproject.org`, bought through Cloudflare Registrar in this same account |
+
+The account ID is not a secret: it is the subdomain of the S3 endpoint below. If the dashboard
+link 404s, the login you used is not a member of that account.
+
+The account holds other buckets unrelated to this project. Only `tauceti-cache` is ours.
+
+## Endpoints
+
+Reads are anonymous. Lake's download path issues plain unauthenticated `curl` GETs and has no way
+to sign them, so the read host must be public; only uploads use a key.
+
+| Purpose | Value | Used by |
+|---|---|---|
+| `LAKE_CACHE_ARTIFACT_ENDPOINT_PUBLIC` | `https://cache.taucetiproject.org/artifacts` | `pr-build.yml` read |
+| `LAKE_CACHE_REVISION_ENDPOINT_PUBLIC` | `https://cache.taucetiproject.org/revisions` | `pr-build.yml` read |
+| `LAKE_CACHE_ARTIFACT_ENDPOINT` | `https://d789bf36….r2.cloudflarestorage.com/tauceti-cache/artifacts` | `ci.yml` upload |
+| `LAKE_CACHE_REVISION_ENDPOINT` | `https://d789bf36….r2.cloudflarestorage.com/tauceti-cache/revisions` | `ci.yml` upload |
+| `LAKE_CACHE_KEY` (secret) | `<ACCESS_KEY_ID>:<SECRET>`, read-write | `ci.yml` upload only |
+
+Lake service names: `tauceti-public` for reads, `tauceti-r2` for uploads. Object keys are
+`artifacts/TauCetiProject/TauCeti/<hash>.art`, so the endpoint variables hold only the prefix and
+Lake appends the scope.
+
+## Why a custom domain
+
+Cloudflare rate-limits `r2.dev` public bucket URLs and documents them as development-only
+(https://developers.cloudflare.com/r2/buckets/public-buckets/); exceeding the limit returns HTTP 429
+with Cloudflare error 1015
+(https://developers.cloudflare.com/support/troubleshooting/http-status-codes/cloudflare-1xxx-errors/).
+An R2 custom domain carries no such limit, so reads go through `cache.taucetiproject.org`. The
+bucket's `r2.dev` URL is disabled, so there is nothing to silently fall back to.
+
+A custom domain requires the zone in the same Cloudflare account as the bucket
+(https://developers.cloudflare.com/r2/buckets/public-buckets/#add-your-domain-to-cloudflare).
+Attaching only a subdomain while keeping DNS elsewhere needs Business (partial CNAME setup,
+https://developers.cloudflare.com/dns/zone-setups/partial-setup/) or Enterprise (subdomain zone,
+https://developers.cloudflare.com/dns/zone-setups/subdomain-setup/), hence a domain registered
+in-account.
+
+## Edge cache
+
+`.art` is not one of the extensions Cloudflare caches by default
+(https://developers.cloudflare.com/cache/concepts/default-cache-behavior/), so artifact reads are
+cached by an explicit Cache Rule. Dashboard: Caching, then Cache Rules, on the
+`taucetiproject.org` zone.
+
+Rule expression:
+
+```
+(http.host eq "cache.taucetiproject.org" and starts_with(http.request.uri.path, "/artifacts/"))
+```
+
+Settings: cache eligibility "Eligible for cache"; Edge TTL "Ignore cache-control header and use
+this TTL", one month. Browser TTL left at the default.
+
+The rule is scoped to `/artifacts/` on purpose. Those keys are immutable content hashes, so a long
+TTL is always safe. `/revisions/` is deliberately left uncached: a lookup for a revision that has
+not been published yet returns 404, and a long-cached 404 would hide it from a later build once
+main publishes it. Revision lookups are a handful of requests per build against a thousand or more
+artifact fetches, so nothing is lost by leaving them alone.
+
+Tiered Cache is a separate per-zone toggle and is not part of the rule above: Cloudflare documents
+it as something you enable, under Caching, then Tiered Cache
+(https://developers.cloudflare.com/cache/how-to/tiered-cache/). Smart topology is available on
+every plan and needs no further configuration once Tiered Cache is on. Check the toggle on the
+`taucetiproject.org` zone rather than assuming it; the Cache Rule above is what does the work
+either way.
+
+To check the rule is live, request the same artifact twice. `curl -I` works as well as a GET:
+Cloudflare converts a cacheable `HEAD` into a `GET`, fetching and caching the full response and
+returning only the headers (https://developers.cloudflare.com/cache/concepts/cache-behavior/), so a
+`HEAD` reports the same `cf-cache-status` a `GET` would.
+
+```bash
+U=https://cache.taucetiproject.org/artifacts/TauCetiProject/TauCeti/<hash>.art
+curl -s -o /dev/null -D - "$U" | grep -i cf-cache-status   # MISS on the first request
+curl -s -o /dev/null -D - "$U" | grep -i cf-cache-status   # HIT on the second
+```
+
+`DYNAMIC` means the expression is not matching; `BYPASS` means something overrides it.
+The hit ratio that actually determines the saving is under Caching, then Analytics.
+
+## Cost
+
+Egress from R2 is free. Reads are Class B operations: 10M per month free, then $0.36 per million
+(https://developers.cloudflare.com/r2/pricing/, standard storage, prices read 2026-08-04).
+
+Measured 2026-08-04:
+
+| | |
+|---|---|
+| Artifacts fetched per build | 1,224 |
+| Mean artifact size | 14 KiB, so about 17 MiB per build across those 1,224 fetches |
+| `pr-build` runs per day | 734 |
+| Class B reads | about 27M per month |
+| Billable after the 10M free tier | about 17M, so roughly **$6 per month** |
+| Egress | about 375 GB per month, free |
+| Storage and Class A writes | a few GB and well inside the 1M free writes, so negligible |
+
+Treat that as a range of roughly $4 to $9. The run count came from one busy day, and the artifact
+count per build varies with how much of the dependency cone a PR invalidates.
+
+To re-estimate, take an artifact count from any `sandboxed-build` job and a day's run count:
+
+```bash
+JOB=$(gh run view --repo TauCetiProject/TauCeti <run-id> \
+        --json jobs -q '.jobs[]|select(.name=="sandboxed-build")|.databaseId' | head -1)
+gh run view --repo TauCetiProject/TauCeti --job "$JOB" --log | grep -c 'downloaded artifact'
+gh api -X GET repos/TauCetiProject/TauCeti/actions/workflows/pr-build.yml/runs \
+  -f created=YYYY-MM-DD -q .total_count
+```
+
+Then reads per month is roughly `artifacts x runs_per_day x 30`, and the bill is
+`max(0, reads - 10e6) / 1e6 x $0.36`.
+
+That arithmetic charges every artifact fetch as a Class B read, so it is the bill without the edge
+cache, and an upper bound on the real one. A custom domain puts Cloudflare Cache in front of the
+bucket (https://developers.cloudflare.com/r2/buckets/public-buckets/#caching), and the Cache Rule
+under [Edge cache](#edge-cache) is what claims that saving: a request answered at the edge never
+reaches R2 and so is never billed as a Class B operation. The hit ratio under Caching, then
+Analytics says how much of the 27M is still reaching the bucket.
+
+## Related
+
+- `pr-build.yml` retries a partial fetch and discards the cache rather than handing it to the
+  offline sandbox. See the comment at that step for when part of it can be simplified.
+- https://github.com/leanprover/lean4/issues/14670, open: Lake fails a build over a cache miss it
+  has already recovered from.
+- https://github.com/leanprover/lean4/pull/14651, merged: `lake cache get` exit status was
+  unreliable. Ships in v4.34.0, not backported to v4.33.0.
