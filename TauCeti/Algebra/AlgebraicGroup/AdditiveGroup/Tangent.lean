@@ -97,7 +97,9 @@ private lemma tangentOfLinear_ι (f : M →ₗ[R] B) (x : M) :
     SymmetricAlgebra.lift_ι_apply, infinitesimalGenerator_apply, snd_inr,
     AlgEquiv.apply_symm_apply]
 
-private theorem derivation_ext_ι
+/-- Two tangent derivations of a symmetric algebra are equal if they agree on its generators. -/
+@[ext]
+theorem derivation_ext_ι
     {d e : Derivation R (SymmetricAlgebra R M)
       (CounitAlgebra R (SymmetricAlgebra R M) B)}
     (h : ∀ x, d (SymmetricAlgebra.ι R M x) = e (SymmetricAlgebra.ι R M x)) : d = e := by
@@ -165,7 +167,7 @@ theorem tangentLinearEquiv_apply (d : Derivation R (SymmetricAlgebra R M)
 theorem tangentLinearEquiv_symm_apply_ι (f : M →ₗ[R] B) (x : M) :
     (tangentLinearEquiv (R := R) (M := M) (B := B)).symm f
         (SymmetricAlgebra.ι R M x) = f x := by
-  change tangentOfLinear f (SymmetricAlgebra.ι R M x) = f x
+  simp only [tangentLinearEquiv, LinearEquiv.coe_symm_mk]
   have h := congrArg (CounitAlgebra.algEquivSelf R (SymmetricAlgebra R M) B).symm
     (tangentOfLinear_ι f x)
   simpa only [AlgEquiv.symm_apply_apply, CounitAlgebra.algEquivSelf_symm_apply] using h
@@ -188,7 +190,8 @@ theorem gaTangentLinearEquiv_apply
     gaTangentLinearEquiv d =
       CounitAlgebra.algEquivSelf R (SymmetricAlgebra R R) B
         (d (SymmetricAlgebra.ι R R 1)) := by
-  rfl
+  simp only [gaTangentLinearEquiv, LinearEquiv.trans_apply,
+    LinearMap.ringLmapEquivSelf_apply, tangentLinearEquiv_apply]
 
 /-- The derivation corresponding to `b : B` under the `𝔾ₐ` tangent equivalence takes the
 coordinate `ι(1)` to `b`. -/
@@ -208,7 +211,7 @@ end Tangent
 
 section Lie
 
-variable {R : Type u} [CommRing R]
+variable {R : Type u} [CommSemiring R]
 variable {M : Type v} [AddCommMonoid M] [Module R M]
 variable {B : Type w} [CommRing B] [Algebra R B]
 
@@ -217,6 +220,7 @@ variable {B : Type w} [CommRing B] [Algebra R B]
 Indeed, every symmetric-algebra generator is primitive. Both convolution products of two
 counit-valued derivations vanish on primitive elements, and derivations are determined by their
 values on the generators. -/
+@[simp]
 theorem tangent_bracket_eq_zero
     (d e : Derivation R (SymmetricAlgebra R M)
       (CounitAlgebra R (SymmetricAlgebra R M) B)) : ⁅d, e⁆ = 0 := by
