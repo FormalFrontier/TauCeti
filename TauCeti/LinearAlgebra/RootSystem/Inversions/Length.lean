@@ -133,14 +133,9 @@ theorem isLeast_ncard_inversions (w : P.weylGroup) :
   rintro n ⟨l, rfl, rfl⟩
   exact ncard_inversions_wordProd_le_length P b l
 
-/-- The inversion count is the infimum of the lengths of the words spelling the element. -/
-theorem ncard_inversions_eq_sInf (w : P.weylGroup) :
-    (inversions P b w).ncard =
-      sInf {n | ∃ l : List b.support, wordProd P b l = w ∧ l.length = n} :=
-  ((isLeast_ncard_inversions P b w).csInf_eq).symm
-
 /-- **The inversion count is invariant under inversion**: reversing a word spelling `w` spells
 `w⁻¹`, since a simple reflection is its own inverse. -/
+@[simp]
 theorem ncard_inversions_inv (w : P.weylGroup) :
     (inversions P b w⁻¹).ncard = (inversions P b w).ncard := by
   have key : ∀ v : P.weylGroup, (inversions P b v⁻¹).ncard ≤ (inversions P b v).ncard := by
@@ -167,7 +162,7 @@ theorem ncard_inversions_mul_le (v w : P.weylGroup) :
       rw [List.length_append, hlen, hlen']
 
 variable {P b} in
-/-- Only the identity is spelled by no simple reflection at all. -/
+/-- A Weyl-group element has no inversions exactly when it is the identity. -/
 @[simp]
 theorem ncard_inversions_eq_zero_iff {w : P.weylGroup} :
     (inversions P b w).ncard = 0 ↔ w = 1 := by

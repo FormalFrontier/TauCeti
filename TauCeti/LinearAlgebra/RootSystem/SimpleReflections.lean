@@ -76,11 +76,8 @@ own inverse. -/
 @[simp]
 lemma wordProd_reverse (b : P.Base) (l : List b.support) :
     wordProd P b l.reverse = (wordProd P b l)⁻¹ := by
-  induction l with
-  | nil => simp
-  | cons i l ih =>
-    rw [List.reverse_cons, wordProd_append, ih]
-    simp
+  rw [wordProd, wordProd, List.map_reverse, List.prod_reverse_noncomm, List.map_map]
+  simp [Function.comp_def]
 
 variable (P) [Finite ι] [CharZero R] [IsDomain R] [P.IsCrystallographic] [P.IsReduced]
 

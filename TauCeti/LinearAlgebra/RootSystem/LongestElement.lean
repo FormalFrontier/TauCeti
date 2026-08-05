@@ -44,7 +44,7 @@ available here, so length is spelled throughout as `(inversions P b w).ncard`.
 * `TauCeti.ncard_inversions_le_ncard_inversions_longestElement` and
   `TauCeti.eq_longestElement_iff_ncard_inversions`: `w₀` is the unique element of maximal length,
   and that length is the number of positive roots.
-* `TauCeti.isLeast_length_wordProd_longestElement`: `|Φ⁺|` simple reflections spell `w₀`, and no
+* `TauCeti.isLeast_ncard_posRoots_longestElement`: `|Φ⁺|` simple reflections spell `w₀`, and no
   fewer do.
 * `TauCeti.longestElement_inv` and `TauCeti.longestElement_sq`: `w₀` is an involution.
 * `TauCeti.longestElement_smul_dominantChamber` and
@@ -268,17 +268,11 @@ theorem ncard_inversions_longestElement :
 
 /-- **A shortest word spelling the longest element has one letter for each positive root.** This
 is the acceptance clause `ℓ(w₀) = |Φ⁺|` in its word-length spelling. -/
-theorem isLeast_length_wordProd_longestElement :
+theorem isLeast_ncard_posRoots_longestElement :
     IsLeast {n | ∃ l : List b.support, wordProd P b l = longestElement P b ∧ l.length = n}
       ((posRoots P b).ncard) := by
   rw [← ncard_inversions_longestElement P b]
   exact isLeast_ncard_inversions P b _
-
-/-- **The longest element is spelled by a word with one letter for each positive root.** -/
-theorem exists_wordProd_eq_longestElement :
-    ∃ l : List b.support,
-      wordProd P b l = longestElement P b ∧ l.length = (posRoots P b).ncard :=
-  (isLeast_length_wordProd_longestElement P b).1
 
 /-- **No Weyl-group element is longer than the longest element.** -/
 theorem ncard_inversions_le_ncard_inversions_longestElement (w : P.weylGroup) :
