@@ -30,10 +30,11 @@ The two directions are
 
 `⟦h ⊗ₜ (a ⊗ₜ b)⟧ ↦ ⟦h ⊗ₜ a⟧ ⊗ₜ ρ_B(h⁻¹) b`,  `⟦h ⊗ₜ a⟧ ⊗ₜ b ↦ ⟦h ⊗ₜ (a ⊗ₜ ρ_B(h) b)⟧`.
 
-The inverse `h⁻¹` is forced, not a convention. In Mathlib's model, `g : G` identifies
-`h ⊗ₜ (a ⊗ₜ b)` with `φ(g)h ⊗ₜ (ρ_A(g) a ⊗ₜ ρ_B(φ g) b)`, so a twist `ρ_B(f h)` descends to the
-coinvariants exactly when `f (φ(g) h) · φ(g) = f h` for all `g` and `h`, and `f h = h⁻¹` is the
-solution. The same inverse makes the map `H`-equivariant, because `H` acts on `Ind_φ A` by
+The inverse `h⁻¹` is not decorative. In Mathlib's model, `g : G` identifies `h ⊗ₜ (a ⊗ₜ b)` with
+`φ(g)h ⊗ₜ (ρ_A(g) a ⊗ₜ ρ_B(φ g) b)`, so a twist `ρ_B(f h)` by a function `f : H → H` descends to
+the coinvariants as soon as `f (φ(g) h) · φ(g) = f h` for all `g` and `h` — a condition on `f`
+alone, which does not mention `B`. The canonical solution is `f h = h⁻¹`, and it is also the one
+that makes the map `H`-equivariant, because `H` acts on `Ind_φ A` by
 `h₁ • ⟦h ⊗ₜ a⟧ = ⟦h h₁⁻¹ ⊗ₜ a⟧`.
 
 ## Main definitions
@@ -53,11 +54,11 @@ solution. The same inverse makes the map `H`-equivariant, because `H` acts on `I
 
 ## Main statements
 
-* `TauCeti.indVMk_self_apply`: the generators of `Representation.IndV` satisfy
-  `⟦φ(g) h ⊗ₜ ρ(g) a⟧ = ⟦h ⊗ₜ a⟧`. This single relation is what makes both directions of the
-  projection formula descend to the coinvariants.
+* `TauCeti.indProjectionHom_apply_mk`, `TauCeti.indProjectionInv_apply_mk`: the two `k`-linear maps
+  on generators. Every proof below about the projection formula goes through these two rules rather
+  than through the definitions.
 * `TauCeti.indProjection_hom_hom_apply`, `TauCeti.indProjection_inv_hom_apply`: the two directions
-  on generators.
+  of the `Rep k H` isomorphism on generators.
 * `TauCeti.indProjection_hom_naturality_left`, `TauCeti.indProjection_hom_naturality_right`:
   naturality in each variable.
 * `TauCeti.coinvariantsTensorIndHom_map_indProjection_mk`: the comparison with Mathlib's
@@ -73,9 +74,16 @@ solution. The same inverse makes the map `H`-equivariant, because `H` acts on `I
 The generator lemmas below are therefore stated with `IndV.mk`, the readable form, but are not
 `simp` lemmas: their left-hand sides are not in `simp`-normal form and they never fire. This
 matches Mathlib's own `Rep.coinvariantsTensorIndHom_mk_tmul_indVMk` and the sibling
-`TauCeti.indTrivialEquiv_apply_mk`. Where a proof needs them after `simp` has normalized a goal,
-it finishes with an explicit `Eq.trans`; the two naturality proofs instead unfold the definitions,
-exactly as Mathlib does in `Rep.coinvariantsTensorIndIso`.
+`TauCeti.indTrivialEquiv_apply_mk`. They are applied by explicit `rw`/`Eq.trans` instead, so that
+only the two definitions `TauCeti.indProjectionHom` and `TauCeti.indProjectionInv` are ever
+unfolded, and only in their own generator lemmas.
+
+The `Representation`-level constructions are universe-polymorphic in `k`, `G`, `H` and the two
+carrier modules. The `Rep k H` layer is not, and cannot be: `Rep.{w} k G` is monoidal only for
+`w` the universe of `k` (`ModuleCat.monoidalCategory` is stated for `ModuleCat.{u} R` with
+`R : Type u`), while `Rep.ind φ` lands in `Rep.{max u v' w} k H` for `H : Type v'`. Tensoring
+`Rep.ind φ X` with `Y` therefore forces `H` into the universe of `k`, exactly as in Mathlib's own
+`Rep.coinvariantsTensorIndHom` section; only the source group `G` stays free.
 
 ## References
 
@@ -92,33 +100,30 @@ open scoped MonoidAlgebra
 
 namespace TauCeti
 
-universe u
+universe u v v' w w'
 
-variable {k G H : Type u} [CommRing k] [Group G] [Group H] (φ : G →* H)
-  {A B : Type u} [AddCommGroup A] [Module k A] [AddCommGroup B] [Module k B]
+section Linear
+
+variable {k : Type u} {G : Type v} {H : Type v'} [CommRing k] [Group G] [Group H] (φ : G →* H)
+  {A : Type w} {B : Type w'} [AddCommGroup A] [Module k A] [AddCommGroup B] [Module k B]
   (ρ : Representation k G A) (τ : Representation k H B)
 
-/-- The defining relation of `Representation.IndV`: translating the group coordinate by `φ g` and
-acting by `g` leaves a generator unchanged. This is `Representation.Coinvariants.mk_self_apply`
-read on generators, and it is the only fact about the induced module that the projection formula
-needs. -/
-theorem indVMk_self_apply (g : G) (h : H) (a : A) :
-    IndV.mk φ ρ (φ g * h) (ρ g a) = IndV.mk φ ρ h a := by
-  simpa using Coinvariants.mk_self_apply (tprod ((leftRegular k H).comp φ) ρ) g
-    (MonoidAlgebra.single h 1 ⊗ₜ[k] a)
-
 /-- The forward map of the projection formula, `⟦h ⊗ₜ (a ⊗ₜ b)⟧ ↦ ⟦h ⊗ₜ a⟧ ⊗ₜ τ(h⁻¹) b`. The
-twist by `τ h⁻¹` is what makes the expression independent of the representative: see
-`TauCeti.indVMk_self_apply`. -/
+twist by `τ h⁻¹` is what makes the expression independent of the representative: it undoes the
+translation of the group coordinate recorded by `Representation.Coinvariants.mk_self_apply`. -/
 noncomputable def indProjectionHom :
     IndV φ (ρ.tprod (τ.comp φ)) →ₗ[k] IndV φ ρ ⊗[k] B :=
   Coinvariants.lift _ (TensorProduct.lift <|
     (Finsupp.lift _ k H fun h => TensorProduct.map (IndV.mk φ ρ h) (τ h⁻¹)) ∘ₗ
       (MonoidAlgebra.coeffLinearEquiv k).toLinearMap) fun g => by
     ext h a b
-    simpa using congrArg (· ⊗ₜ[k] τ h⁻¹ b) (indVMk_self_apply φ ρ g h a)
+    simpa using congrArg (· ⊗ₜ[k] τ h⁻¹ b)
+      (Coinvariants.mk_self_apply (tprod ((leftRegular k H).comp φ) ρ) g
+        (MonoidAlgebra.single h 1 ⊗ₜ[k] a))
 
-theorem indProjectionHom_mk (h : H) (a : A) (b : B) :
+/-- `TauCeti.indProjectionHom` on generators. This is the only place the definition is unfolded;
+every later proof rewrites with this rule instead. -/
+theorem indProjectionHom_apply_mk (h : H) (a : A) (b : B) :
     indProjectionHom φ ρ τ (IndV.mk φ (ρ.tprod (τ.comp φ)) h (a ⊗ₜ[k] b))
       = IndV.mk φ ρ h a ⊗ₜ[k] τ h⁻¹ b := by
   simp [indProjectionHom]
@@ -131,9 +136,12 @@ noncomputable def indProjectionInv :
       ((TensorProduct.mk k A B).compr₂ (IndV.mk φ (ρ.tprod (τ.comp φ)) h)).compl₂ (τ h)) ∘ₗ
       (MonoidAlgebra.coeffLinearEquiv k).toLinearMap) fun g => by
     ext h a b
-    simpa using indVMk_self_apply φ (ρ.tprod (τ.comp φ)) g h (a ⊗ₜ[k] τ h b)
+    simpa using Coinvariants.mk_self_apply (tprod ((leftRegular k H).comp φ) (ρ.tprod (τ.comp φ)))
+      g (MonoidAlgebra.single h 1 ⊗ₜ[k] (a ⊗ₜ[k] τ h b))
 
-theorem indProjectionInv_mk (h : H) (a : A) (b : B) :
+/-- `TauCeti.indProjectionInv` on generators. This is the only place the definition is unfolded;
+every later proof rewrites with this rule instead. -/
+theorem indProjectionInv_apply_mk (h : H) (a : A) (b : B) :
     indProjectionInv φ ρ τ (IndV.mk φ ρ h a ⊗ₜ[k] b)
       = IndV.mk φ (ρ.tprod (τ.comp φ)) h (a ⊗ₜ[k] τ h b) := by
   simp [indProjectionInv]
@@ -143,8 +151,20 @@ above are mutually inverse because `τ h` and `τ h⁻¹` cancel. -/
 noncomputable def indProjectionLEquiv :
     IndV φ (ρ.tprod (τ.comp φ)) ≃ₗ[k] IndV φ ρ ⊗[k] B :=
   LinearEquiv.ofLinear (indProjectionHom φ ρ τ) (indProjectionInv φ ρ τ)
-    (by ext h a b; simp [indProjectionHom, indProjectionInv])
-    (by ext h a b; simp [indProjectionHom, indProjectionInv])
+    (by
+      ext h a b
+      exact (congrArg (indProjectionHom φ ρ τ) (indProjectionInv_apply_mk φ ρ τ h a b)).trans <|
+        (indProjectionHom_apply_mk φ ρ τ h a (τ h b)).trans <| by simp)
+    (by
+      ext h a b
+      exact (congrArg (indProjectionInv φ ρ τ) (indProjectionHom_apply_mk φ ρ τ h a b)).trans <|
+        (indProjectionInv_apply_mk φ ρ τ h a (τ h⁻¹ b)).trans <| by simp)
+
+/-- `TauCeti.indProjectionLEquiv` is `TauCeti.indProjectionHom` in the forward direction. -/
+@[simp]
+theorem indProjectionLEquiv_apply (x : IndV φ (ρ.tprod (τ.comp φ))) :
+    indProjectionLEquiv φ ρ τ x = indProjectionHom φ ρ τ x := by
+  simp [indProjectionLEquiv]
 
 /-- The projection formula as an equivalence of representations. Equivariance is the computation
 `(h h₁⁻¹)⁻¹ = h₁ h⁻¹`: translating the group coordinate on the induced side by `h₁⁻¹` on the right
@@ -153,11 +173,20 @@ noncomputable def indProjectionEquiv :
     (Representation.ind φ (ρ.tprod (τ.comp φ))).Equiv ((Representation.ind φ ρ).tprod τ) :=
   Representation.Equiv.mk (indProjectionLEquiv φ ρ τ) fun h₁ => by
     ext h a b
-    simp [indProjectionLEquiv, indProjectionHom, mul_inv_rev]
+    change indProjectionHom φ ρ τ (Representation.ind φ (ρ.tprod (τ.comp φ)) h₁
+        (IndV.mk φ (ρ.tprod (τ.comp φ)) h (a ⊗ₜ[k] b)))
+      = TensorProduct.map (Representation.ind φ ρ h₁) (τ h₁)
+        (indProjectionHom φ ρ τ (IndV.mk φ (ρ.tprod (τ.comp φ)) h (a ⊗ₜ[k] b)))
+    rw [Representation.ind_mk, indProjectionHom_apply_mk, indProjectionHom_apply_mk,
+      TensorProduct.map_tmul, Representation.ind_mk, mul_inv_rev, inv_inv, map_mul]
+    rfl
+
+end Linear
 
 section Rep
 
-variable (X : Rep k G) (Y : Rep k H)
+variable {k : Type u} {G : Type v} {H : Type u} [CommRing k] [Group G] [Group H] (φ : G →* H)
+  (X : Rep.{u} k G) (Y : Rep.{u} k H)
 
 /-- **The projection formula** in `Rep k H`: inducing a representation tensored with a restricted
 one is the induced representation tensored with the original,
@@ -171,52 +200,76 @@ form. -/
 theorem indProjection_hom_hom_apply (h : H) (x : X) (y : Y) :
     (indProjection φ X Y).hom.hom (IndV.mk φ (X ⊗ Rep.res φ Y).ρ h (x ⊗ₜ[k] y))
       = IndV.mk φ X.ρ h x ⊗ₜ[k] Y.ρ h⁻¹ y :=
-  indProjectionHom_mk φ X.ρ Y.ρ h x y
+  indProjectionHom_apply_mk φ X.ρ Y.ρ h x y
 
 /-- The backward direction of `TauCeti.indProjection` on generators. -/
 theorem indProjection_inv_hom_apply (h : H) (x : X) (y : Y) :
     (indProjection φ X Y).inv.hom (IndV.mk φ X.ρ h x ⊗ₜ[k] y)
       = IndV.mk φ (X ⊗ Rep.res φ Y).ρ h (x ⊗ₜ[k] Y.ρ h y) :=
-  indProjectionInv_mk φ X.ρ Y.ρ h x y
+  indProjectionInv_apply_mk φ X.ρ Y.ρ h x y
 
 /-- The projection formula is natural in the left tensor factor, the `Rep k G` argument. -/
-theorem indProjection_hom_naturality_left {X X' : Rep k G} (f : X ⟶ X') (Y : Rep k H) :
+theorem indProjection_hom_naturality_left {X X' : Rep.{u} k G} (f : X ⟶ X') (Y : Rep.{u} k H) :
     Rep.indMap φ (f ⊗ₘ 𝟙 (Rep.res φ Y)) ≫ (indProjection φ X' Y).hom
       = (indProjection φ X Y).hom ≫ (Rep.indMap φ f ⊗ₘ 𝟙 Y) := by
   ext h x
   induction x using TensorProduct.induction_on with
   | zero => simp
-  | tmul x y => simp [Rep.indMap, indProjection, indProjectionEquiv, indProjectionLEquiv,
-      indProjectionHom]
+  | tmul x y =>
+    have hmap : (Rep.indMap φ (f ⊗ₘ 𝟙 (Rep.res φ Y))).hom
+        (IndV.mk φ (X ⊗ Rep.res φ Y).ρ h (x ⊗ₜ[k] y))
+          = IndV.mk φ (X' ⊗ Rep.res φ Y).ρ h (f.hom x ⊗ₜ[k] y) := by
+      simp [Rep.indMap]
+    change (indProjection φ X' Y).hom.hom ((Rep.indMap φ (f ⊗ₘ 𝟙 (Rep.res φ Y))).hom
+        (IndV.mk φ (X ⊗ Rep.res φ Y).ρ h (x ⊗ₜ[k] y)))
+      = (Rep.indMap φ f ⊗ₘ 𝟙 Y).hom
+        ((indProjection φ X Y).hom.hom (IndV.mk φ (X ⊗ Rep.res φ Y).ρ h (x ⊗ₜ[k] y)))
+    rw [hmap, indProjection_hom_hom_apply, indProjection_hom_hom_apply]
+    simp [Rep.indMap]
   | add u v hu hv => simp only [map_add, hu, hv]
 
 /-- The projection formula is natural in the right tensor factor, the `Rep k H` argument. -/
-theorem indProjection_hom_naturality_right (X : Rep k G) {Y Y' : Rep k H} (g : Y ⟶ Y') :
+theorem indProjection_hom_naturality_right (X : Rep.{u} k G) {Y Y' : Rep.{u} k H} (g : Y ⟶ Y') :
     Rep.indMap φ (𝟙 X ⊗ₘ (Rep.resFunctor φ).map g) ≫ (indProjection φ X Y').hom
       = (indProjection φ X Y).hom ≫ (𝟙 (Rep.ind φ X) ⊗ₘ g) := by
   ext h x
   induction x using TensorProduct.induction_on with
   | zero => simp
-  | tmul x y => simp [Rep.indMap, indProjection, indProjectionEquiv, indProjectionLEquiv,
-      indProjectionHom, ← Rep.hom_comm_apply]
+  | tmul x y =>
+    have hmap : (Rep.indMap φ (𝟙 X ⊗ₘ (Rep.resFunctor φ).map g)).hom
+        (IndV.mk φ (X ⊗ Rep.res φ Y).ρ h (x ⊗ₜ[k] y))
+          = IndV.mk φ (X ⊗ Rep.res φ Y').ρ h (x ⊗ₜ[k] g.hom y) := by
+      simp [Rep.indMap]
+    change (indProjection φ X Y').hom.hom ((Rep.indMap φ (𝟙 X ⊗ₘ (Rep.resFunctor φ).map g)).hom
+        (IndV.mk φ (X ⊗ Rep.res φ Y).ρ h (x ⊗ₜ[k] y)))
+      = (𝟙 (Rep.ind φ X) ⊗ₘ g).hom
+        ((indProjection φ X Y).hom.hom (IndV.mk φ (X ⊗ Rep.res φ Y).ρ h (x ⊗ₜ[k] y)))
+    rw [hmap, indProjection_hom_hom_apply, indProjection_hom_hom_apply]
+    simp [← Rep.hom_comm_apply]
   | add u v hu hv => simp only [map_add, hu, hv]
 
 /-- The projection formula as a natural isomorphism in the left tensor factor: the functors
 `X ↦ Ind_φ (X ⊗ Res_φ Y)` and `X ↦ (Ind_φ X) ⊗ Y` from `Rep k G` to `Rep k H` agree. -/
-noncomputable def indProjectionNatIsoLeft (Y : Rep k H) :
-    (curriedTensor (Rep k G)).flip.obj (Rep.res φ Y) ⋙ Rep.indFunctor k φ
-      ≅ Rep.indFunctor k φ ⋙ (curriedTensor (Rep k H)).flip.obj Y :=
+noncomputable def indProjectionNatIsoLeft (Y : Rep.{u} k H) :
+    (curriedTensor (Rep.{u} k G)).flip.obj (Rep.res φ Y) ⋙ Rep.indFunctor k φ
+      ≅ Rep.indFunctor k φ ⋙ (curriedTensor (Rep.{u} k H)).flip.obj Y :=
   NatIso.ofComponents (fun X => indProjection φ X Y) fun {_ _} f => by
     simpa using indProjection_hom_naturality_left φ f Y
 
 /-- The projection formula as a natural isomorphism in the right tensor factor: the endofunctors
 `Y ↦ Ind_φ (X ⊗ Res_φ Y)` and `Y ↦ (Ind_φ X) ⊗ Y` of `Rep k H` agree. This is the shape of
 Mathlib's coinvariants version `Rep.coinvariantsTensorIndNatIso`. -/
-noncomputable def indProjectionNatIsoRight (X : Rep k G) :
-    Rep.resFunctor φ ⋙ (curriedTensor (Rep k G)).obj X ⋙ Rep.indFunctor k φ
-      ≅ (curriedTensor (Rep k H)).obj (Rep.ind φ X) :=
+noncomputable def indProjectionNatIsoRight (X : Rep.{u} k G) :
+    Rep.resFunctor φ ⋙ (curriedTensor (Rep.{u} k G)).obj X ⋙ Rep.indFunctor k φ
+      ≅ (curriedTensor (Rep.{u} k H)).obj (Rep.ind φ X) :=
   NatIso.ofComponents (indProjection φ X) fun {_ _} g => by
     simpa using indProjection_hom_naturality_right φ X g
+
+end Rep
+
+section Comparison
+
+variable {k : Type u} {G H : Type u} [CommRing k] [Group G] [Group H] (φ : G →* H)
 
 /-- **The comparison with Mathlib's coinvariants shadow.** Applying `H`-coinvariants to
 `TauCeti.indProjection` and composing with `Rep.coinvariantsTensorIndHom` sends the class of a
@@ -234,13 +287,15 @@ theorem coinvariantsTensorIndHom_map_indProjection_mk (X : Rep k G) (Y : Rep k H
         = Coinvariants.mk (X.ρ.tprod ((Rep.res φ Y).ρ)) (x ⊗ₜ[k] y) := by
     simpa using Rep.coinvariantsTensorIndHom_mk_tmul_indVMk φ (1 : H) x y
   refine Eq.trans ?_ key
-  simp [indProjection, indProjectionEquiv, indProjectionLEquiv, indProjectionHom]
+  refine congrArg (Rep.coinvariantsTensorIndHom φ X Y).hom ?_
+  refine Eq.trans (congrArg (Coinvariants.mk _) (indProjection_hom_hom_apply φ X Y h x y)) ?_
+  simp [Rep.coinvariantsTensorMk]
 
-end Rep
+end Comparison
 
 section Subgroup
 
-variable {S : Subgroup G} (Y : Rep k G)
+variable {k : Type u} {G : Type u} [CommRing k] [Group G] {S : Subgroup G} (Y : Rep k G)
 
 /-- **Induction of a restriction.** For a subgroup `S ≤ G`, restricting a `G`-representation to `S`
 and inducing back up tensors it with the permutation representation on the cosets,
@@ -258,8 +313,9 @@ theorem indResProjection_hom_hom_apply (x : G) (y : Y) :
     (indResProjection Y).hom.hom (IndV.mk S.subtype (Rep.res S.subtype Y).ρ x y)
       = MonoidAlgebra.single (QuotientGroup.mk x⁻¹ : G ⧸ S) (1 : k) ⊗ₜ[k] Y.ρ x⁻¹ y := by
   refine Eq.trans ?_ (congrArg (· ⊗ₜ[k] Y.ρ x⁻¹ y) (indTrivialIso_hom_hom_apply k S x 1))
-  simp [indResProjection, indProjection, indProjectionEquiv, indProjectionLEquiv,
-    indProjectionHom, Rep.indMap]
+  refine Eq.trans ?_ (congrArg (Rep.Hom.hom (indTrivialIso k S ⊗ᵢ Iso.refl Y).hom)
+    (indProjection_hom_hom_apply S.subtype (𝟙_ (Rep k S)) Y x 1 y))
+  simp [indResProjection, Rep.indMap]
 
 end Subgroup
 
