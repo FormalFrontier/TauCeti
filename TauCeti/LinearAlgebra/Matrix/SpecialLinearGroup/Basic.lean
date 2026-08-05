@@ -53,25 +53,29 @@ lemma mapGL_neg_one {n R S : Type*} [Fintype n] [DecidableEq n] [CommRing R] [Co
 variable {R : Type*} [CommRing R]
 
 /-- The `(1,0)` coordinate of the inverse of an `SL₂` element, from `SL2_inv_expl`. -/
-private lemma inv_apply_one_zero (M : SpecialLinearGroup (Fin 2) R) :
+@[simp]
+lemma inv_apply_one_zero (M : SpecialLinearGroup (Fin 2) R) :
     (M⁻¹ : SpecialLinearGroup (Fin 2) R) 1 0 = -(M 1 0) := by
   rw [SL2_inv_expl]
   rfl
 
 /-- The `(1,1)` coordinate of the inverse of an `SL₂` element, from `SL2_inv_expl`. -/
-private lemma inv_apply_one_one (M : SpecialLinearGroup (Fin 2) R) :
+@[simp]
+lemma inv_apply_one_one (M : SpecialLinearGroup (Fin 2) R) :
     (M⁻¹ : SpecialLinearGroup (Fin 2) R) 1 1 = M 0 0 := by
   rw [SL2_inv_expl]
   rfl
 
 /-- The `(0,0)` coordinate of the inverse of an `SL₂` element, from `SL2_inv_expl`. -/
-private lemma inv_apply_zero_zero (M : SpecialLinearGroup (Fin 2) R) :
+@[simp]
+lemma inv_apply_zero_zero (M : SpecialLinearGroup (Fin 2) R) :
     (M⁻¹ : SpecialLinearGroup (Fin 2) R) 0 0 = M 1 1 := by
   rw [SL2_inv_expl]
   rfl
 
 /-- The `(0,1)` coordinate of the inverse of an `SL₂` element, from `SL2_inv_expl`. -/
-private lemma inv_apply_zero_one (M : SpecialLinearGroup (Fin 2) R) :
+@[simp]
+lemma inv_apply_zero_one (M : SpecialLinearGroup (Fin 2) R) :
     (M⁻¹ : SpecialLinearGroup (Fin 2) R) 0 1 = -(M 0 1) := by
   rw [SL2_inv_expl]
   rfl
