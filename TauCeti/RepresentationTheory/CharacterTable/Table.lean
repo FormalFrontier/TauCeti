@@ -214,6 +214,13 @@ theorem pairwise_isEmpty_equiv_irreducibleRepresentation :
     rw [← character_irreducibleRepresentation k i, ← character_irreducibleRepresentation k j]
     exact _root_.Representation.char_iso e))⟩
 
+/-- **An irreducible character takes its degree as its value at the identity.** -/
+@[simp]
+theorem irreducibleCharacter_one (i : Fin (Nat.card (ConjClasses G))) :
+    irreducibleCharacter k i 1 = (characterDegree k i : k) := by
+  rw [← character_irreducibleRepresentation k i, _root_.Representation.char_one]
+  simp
+
 theorem characterDegree_pos (i : Fin (Nat.card (ConjClasses G))) :
     0 < characterDegree k i := by
   have hsimple : Nontrivial (irreducibleRepresentation k i).asModule :=
@@ -252,13 +259,13 @@ theorem characterTable_apply (i : Fin (Nat.card (ConjClasses G))) (g : G) :
   rw [characterTable, ClassFunction.toConjClasses_mk, ClassFunction.ofCharacter_apply,
     character_irreducibleRepresentation]
 
-/-- The first column of the character table lists the degrees of the irreducible characters. -/
-@[simp]
+/-- The first column of the character table lists the degrees of the irreducible characters.
+
+This is not a `simp` lemma: `TauCeti.characterTable_apply` already rewrites the left-hand side to
+`TauCeti.irreducibleCharacter k i 1`, which `TauCeti.irreducibleCharacter_one` then evaluates. -/
 theorem characterTable_one (i : Fin (Nat.card (ConjClasses G))) :
     characterTable k G i (ConjClasses.mk 1) = (characterDegree k i : k) := by
-  rw [characterTable_apply, ← character_irreducibleRepresentation k i,
-    _root_.Representation.char_one]
-  simp
+  rw [characterTable_apply, irreducibleCharacter_one]
 
 variable (k G)
 
