@@ -12,7 +12,6 @@ public import Mathlib.FieldTheory.Separable
 public import Mathlib.LinearAlgebra.Eigenspace.Charpoly
 public import Mathlib.LinearAlgebra.Eigenspace.Minpoly
 public import Mathlib.LinearAlgebra.Eigenspace.Semisimple
-public import Mathlib.LinearAlgebra.Semisimple
 
 /-!
 # Endomorphisms of finite order
@@ -81,16 +80,12 @@ section Eigenspace
 variable {f : End k V} {n : ℕ}
 
 omit [FiniteDimensional k V] in
-/-- A power of `f` acts on the `μ`-eigenspace of `f` as the scalar `μ ^ m`. -/
-theorem pow_apply_of_mem_eigenspace {μ : k} {x : V} (hx : x ∈ f.eigenspace μ) (m : ℕ) :
-    (f ^ m) x = μ ^ m • x := by
-  simpa using End.aeval_apply_of_mem_apply_eq_smul (p := X ^ m) (End.mem_eigenspace_iff.1 hx)
-
-omit [FiniteDimensional k V] in
-/-- Every power of `f` maps each eigenspace of `f` to itself. -/
+/-- Every power of `f` maps each eigenspace of `f` to itself, acting there as the scalar `μ ^ m`. -/
 theorem mapsTo_pow_eigenspace (f : End k V) (μ : k) (m : ℕ) :
-    Set.MapsTo (f ^ m) (f.eigenspace μ) (f.eigenspace μ) := fun _ hx => by
-  rw [SetLike.mem_coe, pow_apply_of_mem_eigenspace hx m]
+    Set.MapsTo (f ^ m) (f.eigenspace μ) (f.eigenspace μ) := fun x hx => by
+  have hx' : (f ^ m) x = μ ^ m • x := by
+    simpa using End.aeval_apply_of_mem_apply_eq_smul (p := X ^ m) (End.mem_eigenspace_iff.1 hx)
+  rw [SetLike.mem_coe, hx']
   exact Submodule.smul_mem _ _ hx
 
 /-- The trace of `f ^ m` on the `μ`-eigenspace of `f` is `dim(V_μ) * μ ^ m`, because `f ^ m` acts
@@ -100,7 +95,8 @@ theorem trace_restrict_eigenspace (f : End k V) (μ : k) (m : ℕ) :
       (finrank k (f.eigenspace μ) : k) * μ ^ m := by
   have hrestrict : (f ^ m).restrict (mapsTo_pow_eigenspace f μ m) = μ ^ m • LinearMap.id := by
     ext x
-    exact (LinearMap.coe_restrict_apply _ x).trans (pow_apply_of_mem_eigenspace x.2 m)
+    refine (LinearMap.coe_restrict_apply _ x).trans ?_
+    simpa using End.aeval_apply_of_mem_apply_eq_smul (p := X ^ m) (End.mem_eigenspace_iff.1 x.2)
   rw [hrestrict, map_smul, LinearMap.trace_id, smul_eq_mul, mul_comm]
 
 /-- Every eigenvalue of an endomorphism of finite order `n` is an `n`-th root of unity. -/

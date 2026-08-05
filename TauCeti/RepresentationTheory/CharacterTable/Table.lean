@@ -52,8 +52,8 @@ take their familiar Hermitian form, because inversion conjugates character value
 * `TauCeti.card_conjClass_mul_sum_characterTable_mul_characterTable_inv` and
   `TauCeti.sum_characterTable_mul_conj`: **second (column) orthogonality**, over `k` and in its
   Hermitian form over `ℂ`.
-* `TauCeti.characterTable_one`: the first column of the table lists the degrees, which are positive
-  (`TauCeti.characterDegree_pos`) and have squares summing to `|G|`
+* `TauCeti.characterTable_one`: the identity-class column of the table lists the degrees, which are
+  positive (`TauCeti.characterDegree_pos`) and have squares summing to `|G|`
   (`TauCeti.sum_characterDegree_sq_eq_card`); in characteristic zero they moreover divide `|G|`
   (`TauCeti.characterDegree_dvd_card`).
 
@@ -78,8 +78,8 @@ defined over such a `k`, and `TauCeti.characterTable ℂ G` is the pinned object
 This is Layer 3 of the
 [character theory roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/CharacterTheory/README.md):
 the character table as an object, with its second orthogonality relation
-(`char_column_orthogonality` in that roadmap's `Suggested.lean`) and the degrees in its first
-column.
+(`char_column_orthogonality` in that roadmap's `Suggested.lean`) and the degrees in its
+identity-class column.
 See I. M. Isaacs, *Character Theory of Finite Groups* (1976), Chapter 2, or J.-P. Serre, *Linear
 Representations of Finite Groups* (1977), Section 2.5.
 -/
@@ -126,7 +126,7 @@ theorem character_mem_irreducibleCharacters {V : Type w} [AddCommGroup V] [Modul
     [FiniteDimensional k V] (σ : Representation k G V) [σ.IsIrreducible] :
     σ.character ∈ irreducibleCharacters k G := by
   have : NeZero (Nat.card G : k) := ⟨Invertible.ne_zero _⟩
-  obtain ⟨d, ρ, hirr, hind⟩ := exists_irreducible_family_conjClasses k G
+  obtain ⟨d, ρ, hirr, hind, -⟩ := exists_irreducible_family_conjClasses k G
   have := hirr
   obtain ⟨C, ⟨e⟩⟩ := ClassFunction.exists_nonempty_equiv ρ hind rfl σ
   exact ⟨d C, ρ C, hirr C, (_root_.Representation.char_iso e).symm⟩
@@ -139,7 +139,7 @@ distinct because they are linearly independent, and every irreducible character 
 theorem nonempty_equiv_conjClasses_irreducibleCharacters :
     Nonempty (ConjClasses G ≃ irreducibleCharacters k G) := by
   have : NeZero (Nat.card G : k) := ⟨Invertible.ne_zero _⟩
-  obtain ⟨d, ρ, hirr, hind⟩ := exists_irreducible_family_conjClasses k G
+  obtain ⟨d, ρ, hirr, hind, -⟩ := exists_irreducible_family_conjClasses k G
   have := hirr
   have hmem : ∀ C, (ρ C).character ∈ irreducibleCharacters k G := fun C => ⟨d C, ρ C, hirr C, rfl⟩
   refine ⟨Equiv.ofBijective (fun C => ⟨(ρ C).character, hmem C⟩) ⟨fun C D hCD => ?_, ?_⟩⟩
@@ -241,6 +241,36 @@ theorem characterDegree_pos (i : Fin (Nat.card (ConjClasses G))) :
     (irreducibleRepresentation k i).asModuleEquiv.symm.toEquiv.nontrivial
   simpa using Module.finrank_pos (R := k) (M := Fin (characterDegree k i) → k)
 
+/-- **The sum of the squares of the degrees is the order of the group**, as an identity of natural
+numbers. The representations affording the enumerated characters are pairwise inequivalent
+irreducibles, and there are as many of them as `G` has conjugacy classes, so they are the blocks of
+a Wedderburn presentation of `k[G]` up to a relabelling of the blocks; the squares of the block
+dimensions add up to the dimension `|G|` of `k[G]`. -/
+theorem sum_characterDegree_sq_eq_card :
+    ∑ i : Fin (Nat.card (ConjClasses G)), characterDegree k i ^ 2 = Nat.card G := by
+  classical
+  have : NeZero (Nat.card G : k) := ⟨Invertible.ne_zero _⟩
+  let _ : Fintype (ConjClasses G) := Fintype.ofFinite (ConjClasses G)
+  obtain ⟨d, ρ, hirr, hind, hsum⟩ := exists_irreducible_family_conjClasses k G
+  have := hirr
+  choose C hC using fun i : Fin (Nat.card (ConjClasses G)) =>
+    ClassFunction.exists_nonempty_equiv ρ hind rfl (irreducibleRepresentation k i)
+  have hdeg : ∀ i, characterDegree k i ^ 2 = d (C i) ^ 2 := fun i => by
+    have := (hC i).some.toLinearEquiv.finrank_eq
+    simp only [Module.finrank_fin_fun] at this
+    rw [this]
+  have hinj : Function.Injective C := by
+    intro i j hij
+    by_contra hne
+    have e : (irreducibleRepresentation k i).Equiv (ρ (C j)) := hij ▸ (hC i).some
+    exact (pairwise_isEmpty_equiv_irreducibleRepresentation k hne).elim
+      (e.trans (hC j).some.symm)
+  have hbij : Function.Bijective C :=
+    (Fintype.bijective_iff_injective_and_card C).2
+      ⟨hinj, by rw [Fintype.card_fin, Fintype.card_eq_nat_card]⟩
+  rw [← hsum, finsum_eq_sum_of_fintype]
+  exact Fintype.sum_bijective C hbij _ _ hdeg
+
 /-- **The degree of an irreducible character divides the order of the group.** -/
 theorem characterDegree_dvd_card [CharZero k] (i : Fin (Nat.card (ConjClasses G))) :
     characterDegree k i ∣ Nat.card G := by
@@ -273,7 +303,8 @@ theorem characterTable_apply (i : Fin (Nat.card (ConjClasses G))) (g : G) :
   rw [characterTable, ClassFunction.toConjClasses_mk, ClassFunction.ofCharacter_apply,
     character_irreducibleRepresentation]
 
-/-- The first column of the character table lists the degrees of the irreducible characters.
+/-- The identity-class column of the character table lists the degrees of the irreducible
+characters.
 
 This is not a `simp` lemma: `TauCeti.characterTable_apply` already rewrites the left-hand side to
 `TauCeti.irreducibleCharacter k i 1`, which `TauCeti.irreducibleCharacter_one` then evaluates. -/
@@ -356,21 +387,6 @@ theorem sum_characterTable_mul_characterTable_inv (g h : G) :
   simpa using ClassFunction.sum_char_mul_char_inv
     (fun i : Fin (Nat.card (ConjClasses G)) => irreducibleRepresentation k i)
     (pairwise_isEmpty_equiv_irreducibleRepresentation k) (by simp) g h
-
-/-- **The sum of the squares of the degrees is the order of the group**, the second orthogonality
-relation read on the column of the identity. -/
-theorem sum_characterDegree_sq_eq_card :
-    ∑ i : Fin (Nat.card (ConjClasses G)), (characterDegree k i : k) ^ 2 =
-      Nat.card G := by
-  classical
-  have hcarrier : (ConjClasses.mk (1 : G)).carrier = {1} := by
-    ext x
-    rw [ConjClasses.mem_carrier_iff_mk_eq, ConjClasses.mk_eq_mk_iff_isConj, isConj_one_left]
-    rfl
-  have h := card_conjClass_mul_sum_characterTable_mul_characterTable_inv (k := k) (1 : G) 1
-  rw [if_pos (IsConj.refl 1), hcarrier] at h
-  simp only [inv_one, characterTable_one] at h
-  simpa [pow_two] using h
 
 end ColumnOrthogonality
 
