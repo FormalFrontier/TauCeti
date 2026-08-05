@@ -5,8 +5,10 @@ Pure logic only: the git mirror is a fake, so these run with no network, no
 `git`, and no repository. Run with:  python3 test_conflict_stats.py
 """
 
+import json
 import os
 import sys
+import tempfile
 import unittest
 from unittest import mock
 
@@ -437,6 +439,69 @@ class LedgerHoles(unittest.TestCase):
     def test_a_hole_outside_a_prs_lifetime_does_not_touch_it(self):
         self.assertTrue(conflict_stats.covered_by_ledger([(50, 150)], 200, 300))
         self.assertTrue(conflict_stats.covered_by_ledger([], 0, 999))
+
+
+class LedgerCache(unittest.TestCase):
+    """A cache is a snapshot of the ledger, so it is extended, never trusted whole."""
+
+    def push(self, sha, when):
+        return {"sha": sha, "actor": "alice", "when": when,
+                "owner": "o", "branch": "b"}
+
+    def write(self, body):
+        path = os.path.join(self.tmp, "ledger.json")
+        with open(path, "w") as handle:
+            json.dump(body, handle)
+        return path
+
+    def setUp(self):
+        self.holder = tempfile.TemporaryDirectory()
+        self.tmp = self.holder.name
+        self.addCleanup(self.holder.cleanup)
+
+    def test_only_the_span_the_cache_does_not_cover_is_read(self):
+        # The cache holds the runs that existed when it was written. Returning it
+        # whole would miss every push since -- including the one that resolved a
+        # conflict an hour ago, which would then still be reported as live.
+        path = self.write({"from": 0, "through": 100, "holes": [],
+                           "pushes": [self.push("old", 50)]})
+        with mock.patch.object(conflict_stats, "push_ledger",
+                               return_value=([self.push("new", 150)], [])) as read:
+            rows, holes = conflict_stats.cached_ledger(path, 0, 200)
+        read.assert_called_once_with(100, 200)
+        self.assertEqual([row["sha"] for row in rows], ["old", "new"])
+        self.assertEqual(holes, [])
+        with open(path) as handle:
+            self.assertEqual(json.load(handle)["through"], 200)
+
+    def test_a_cache_covering_the_window_costs_no_api_read(self):
+        path = self.write({"from": 0, "through": 300, "holes": [[10, 20]],
+                           "pushes": [self.push("old", 50)]})
+        with mock.patch.object(conflict_stats, "push_ledger") as read:
+            rows, holes = conflict_stats.cached_ledger(path, 0, 200)
+        read.assert_not_called()
+        self.assertEqual([row["sha"] for row in rows], ["old"])
+        self.assertEqual(holes, [(10, 20)])
+
+    def test_a_cache_that_does_not_say_what_it_covers_is_rejected(self):
+        # Silence about coverage is not a claim of it: a file in the older format
+        # said nothing about its range, and reading it as complete is the bug.
+        path = self.write({"holes": [], "pushes": [self.push("old", 50)]})
+        with mock.patch.object(conflict_stats, "push_ledger",
+                               return_value=([self.push("new", 150)], [])) as read:
+            rows, _ = conflict_stats.cached_ledger(path, 0, 200)
+        read.assert_called_once_with(0, 200)
+        self.assertEqual([row["sha"] for row in rows], ["new"])
+
+    def test_a_run_read_by_two_spans_is_not_counted_twice(self):
+        # `created=A..B` is inclusive at both ends, so spans that meet at an
+        # endpoint can both return the run sitting on it.
+        path = self.write({"from": 0, "through": 100, "holes": [],
+                           "pushes": [self.push("edge", 100)]})
+        with mock.patch.object(conflict_stats, "push_ledger",
+                               return_value=([self.push("edge", 100)], [])):
+            rows, _ = conflict_stats.cached_ledger(path, 0, 200)
+        self.assertEqual([row["sha"] for row in rows], ["edge"])
 
 
 class ClosedIntervals(unittest.TestCase):

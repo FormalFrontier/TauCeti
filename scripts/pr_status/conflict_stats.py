@@ -1,5 +1,12 @@
 #!/usr/bin/env python3
-"""Reconstruct the history of merge conflicts in the PR queue, from git alone.
+"""Reconstruct the history of merge conflicts in the PR queue, by replaying merges.
+
+Only the merge replay is from git. Which shas were ever a PR's head, when GitHub
+received them, who pushed them, and when the PR was closed all come from GitHub --
+the `pr-build` workflow's run history and the issue timeline -- because git records
+none of them. An earlier version of this line said "from git alone", which was true
+of the replay and false of the tool; it is worth saying so rather than leaving the
+claim to be revived.
 
 `conflicts.py report` answers "how long are conflicts lasting" from the markers
 this repository now writes. This script answers the same question for the era
@@ -134,7 +141,9 @@ actors guesses throughout. `--json` also writes the per-episode rows.
 Set PUSH_LEDGER_WORKFLOW if the workflow that runs on every push is not
 `pr-build.yml`; a repository without such a workflow gets the inferred path.
 `--ledger-cache PATH` memoises the ledger (it costs ~100 API reads), which makes
-re-running against a different `--session-gap` or `--exhaustive` cheap.
+re-running against a different `--session-gap` or `--exhaustive` cheap. The file
+records the span it covers, and a later run reads the time since rather than
+answering from a snapshot that predates it.
 
 Needs python3's standard library, `git` >= 2.38 (for `merge-tree --write-tree`),
 and an authenticated `gh` CLI.
@@ -672,38 +681,77 @@ UNATTRIBUTED = "unattributed"   # GitHub could not name the actor
 
 
 def cached_ledger(path, start, end):
-    """`push_ledger`, memoised on disk when `path` is given.
+    """`push_ledger` over `[start, end]`, memoised on disk and EXTENDED, not trusted.
 
     Reading the ledger costs a hundred-odd API requests and a few minutes, which
     is fine once and intolerable when sweeping `--session-gap` over five values to
-    check a conclusion is not an artefact of one threshold. The ledger is
-    append-only history, so a cache of it does not go stale in any way that
-    matters; delete the file to refresh.
+    check a conclusion is not an artefact of one threshold.
 
-    The cache carries the coverage holes as well as the pushes, and a file that
-    does not is rejected rather than read as hole-free: assuming coverage because
-    a file failed to mention its absence is exactly the failure the holes exist
-    to prevent.
+    A cache file is a snapshot, not the ledger: it holds the runs that existed when
+    it was written, so every push since is missing from it. Read back whole, it
+    would report a conflict fixed an hour ago as still open -- the live tail is the
+    one figure here that needs no reconstruction, and staleness is the one way to
+    corrupt it. So the file records the span it actually covers, and only the part
+    of `[start, end]` outside that span is read from the API and merged in. The
+    watermark is when the read STARTED, never the future `end` the caller pads its
+    request with: a run created after that moment cannot be in what was read, and
+    recording `end` would let the next run skip real pushes.
+
+    A file that does not say what it covers, or does not carry the coverage holes,
+    is rejected rather than read as complete -- assuming coverage because a file
+    failed to mention its absence is exactly the failure the holes exist to
+    prevent. Delete the file to re-read the lot.
     """
+    rows, holes, covered = [], [], None
     if path and os.path.exists(path):
         try:
             with open(path) as handle:
                 cached = json.load(handle)
-            rows = cached["pushes"]
+            rows = list(cached["pushes"])
             holes = [tuple(span) for span in cached["holes"]]
+            covered = (cached["from"], cached["through"])
             log(f"push ledger: {len(rows)} recorded pushes and {len(holes)} "
-                f"coverage hole(s) from {path}")
-            return rows, holes
+                f"coverage hole(s) from {path}, covering "
+                f"{covered[0]}..{covered[1]}")
         except (OSError, ValueError, TypeError, KeyError) as exc:
             log(f"push ledger cache {path} unusable ({exc}); re-reading")
-    ledger, holes = push_ledger(start, end)
-    if path:
-        try:
-            with open(path, "w") as handle:
-                json.dump({"pushes": ledger, "holes": holes}, handle)
-        except OSError as exc:
-            log(f"could not write the ledger cache {path}: {exc}")
-    return ledger, holes
+            rows, holes, covered = [], [], None
+
+    read_at = int(datetime.datetime.now(datetime.timezone.utc).timestamp())
+    if covered is None:
+        gaps = [(start, end)]
+    else:
+        gaps = [(low, high) for low, high in ((start, covered[0]), (covered[1], end))
+                if high > low]
+        if gaps:
+            log(f"push ledger: reading {len(gaps)} span(s) the cache does not cover")
+    for low, high in gaps:
+        fresh, fresh_holes = push_ledger(low, high)
+        rows.extend(fresh)
+        holes.extend(fresh_holes)
+
+    if gaps:
+        # Spans read separately meet at their endpoints, and a `created=` range is
+        # inclusive at both, so one run can arrive twice. Two occurrences of a sha
+        # at the SAME second on the same branch are that artefact, not a transition.
+        seen, distinct = set(), []
+        for row in rows:
+            key = (row["sha"], row["owner"], row["branch"], row["when"], row["actor"])
+            if key in seen:
+                continue
+            seen.add(key)
+            distinct.append(row)
+        rows = distinct
+        window = (min(start, covered[0]) if covered else start,
+                  max(covered[1], min(end, read_at)) if covered else min(end, read_at))
+        if path:
+            try:
+                with open(path, "w") as handle:
+                    json.dump({"from": window[0], "through": window[1],
+                               "pushes": rows, "holes": holes}, handle)
+            except OSError as exc:
+                log(f"could not write the ledger cache {path}: {exc}")
+    return rows, holes
 
 
 def push_ledger(start, end):
@@ -835,6 +883,26 @@ def attribute(episodes, epochs, actors, pr_author, session_gap):
 
 def replay(mirror, prs, jobs, session_gap, now, exhaustive=False,
            push_window=PUSH_WINDOW_SECONDS, ledger=None, holes=None):
+    """`(episodes, handled)` for the whole queue: every conflict episode, and how
+    many PRs each provenance class accounts for.
+
+    `handled` counts "recorded", "partial", "inferred", and "skipped" (see
+    `pr_epochs`) and is reported alongside the episodes, because a run whose rows
+    are mostly reconstructed is worth less than one whose rows are records, and
+    nothing in the rows themselves says which it is.
+
+    Three passes, in this order because each is affordable only once the one before
+    it has finished. Resolve every PR's recorded pushes and fetch, in ONE batch,
+    every head object the mirror lacks -- per PR that would be thousands of tiny
+    fetches, and skipping it would discard every force-pushed head. Then replay the
+    merges on `jobs` threads, a PR whose replay raises being counted "skipped"
+    rather than silently read as conflict-free. Then ask the PRs that produced an
+    episode, and only those, for the time they spent closed.
+
+    Each `pr` dict is annotated in place with `_pushes` and `_ledger_covered`,
+    which `analyse_pr` reads; `ledger` and `holes` come from `cached_ledger`, and
+    an empty `ledger` puts every PR on the inferred path.
+    """
     history = mirror.main_history()
     history_times = [when for _, when, _ in history]
     ledger = ledger or []
@@ -905,6 +973,15 @@ def replay(mirror, prs, jobs, session_gap, now, exhaustive=False,
 # ----- report -----------------------------------------------------------------
 
 def summarise(episodes, handled, total_prs):
+    """The report as a list of lines: what was measured, how well, and what it says.
+
+    Provenance leads, because it decides what the rest is worth, and rows whose
+    timeline could not be read are called out as upper bounds. The resolution
+    figures then cover ONLY episodes a push ended: a PR closed or merged while
+    still conflicting is censored and counted on its own line, since folding it in
+    would score abandoning a conflicted PR as fixing it quickly. The session split
+    follows, which is the question this tool was written to answer.
+    """
     lines = []
     conflicted_prs = {e["pr"] for e in episodes}
     lines.append(f"{len(episodes)} conflict episode(s) across {len(conflicted_prs)} "
@@ -988,6 +1065,16 @@ def summarise(episodes, handled, total_prs):
 
 
 def main(argv=None):
+    """Run the whole thing from the command line; returns a process exit code.
+
+    Fetches the mirror (into `--repo-dir`, or a temporary directory thrown away on
+    exit), reads the PR list and the push ledger, replays, and prints the report to
+    stdout with the progress log on stderr. `--json` additionally writes the
+    per-episode rows, which is what a sensitivity sweep re-reads instead of
+    replaying again. The ledger is read from the oldest PR's creation to a day past
+    `now`, the pad covering any skew between this clock and GitHub's; what a cached
+    ledger actually covers is `cached_ledger`'s business, not the pad's.
+    """
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     parser.add_argument("--repo-dir", default=None,
                         help="scratch clone to fetch into (default: a temp dir)")
@@ -1003,7 +1090,8 @@ def main(argv=None):
                              "push (0 to treat every commit as its own head)")
     parser.add_argument("--ledger-cache", default=None,
                         help="read/write the push ledger here, so repeated runs (a "
-                             "sensitivity sweep) do not re-read it from the API")
+                             "sensitivity sweep) re-read only the time since it "
+                             "was written, not the whole history")
     parser.add_argument("--no-ledger", action="store_true",
                         help="skip the push ledger and infer heads from commit dates "
                              "(faster, but boundaries and actors become guesses)")

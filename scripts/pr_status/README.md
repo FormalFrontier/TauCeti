@@ -156,7 +156,10 @@ python3 scripts/pr_status/conflict_stats.py --exhaustive   # no monotonicity ass
 
 The ledger costs ~100 API reads (the runs listing caps at 1000 per query whatever
 `total_count` says, so it is fetched in date slices that halve on hitting the cap);
-`--ledger-cache` memoises it. A force-pushed head is recorded there but unreachable
+`--ledger-cache` memoises it. That file is a snapshot rather than the ledger, so it
+records the span it covers and a later run reads the time since and merges it in —
+read back whole, a cache from this morning would report a conflict fixed at lunch
+as still open. A force-pushed head is recorded there but unreachable
 from `refs/pull/N/head`, so the replay fetches those objects by sha — 1282 of 9477
 here, and ignoring them cost 36 episodes and over half the author-returns.
 
