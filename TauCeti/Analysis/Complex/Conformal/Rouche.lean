@@ -7,6 +7,7 @@ module
 
 public import Mathlib.Analysis.Analytic.Order
 public import Mathlib.Analysis.Meromorphic.Divisor
+public import TauCeti.Analysis.Complex.Conformal.ArgumentPrinciple
 public import TauCeti.Analysis.Complex.ZeroCount
 public import TauCeti.Analysis.Contour.Argument.Cycle
 public import TauCeti.Analysis.Contour.Argument.Divisor
@@ -63,6 +64,13 @@ the slit-plane primitive is pushed across the corners of the curve by
 `TauCeti.Contour.integral_deriv_smul_logDeriv_eq_zero_of_mem_slitPlane`, the curve form of the
 countable-exception logarithmic-derivative FTC.
 
+That equality of logarithmic-derivative integrals also has a purely geometric reading, obtained by
+running it through `TauCeti.Analysis.Complex.Conformal.ArgumentPrinciple`: the two *image* curves
+`f ∘ γ` and `g ∘ γ` wind equally often about the origin. That is the classical "dog on a leash"
+form, and it is stronger than the counting statement, needing only the hypotheses along the curve —
+no ambient open set, no finite `S`, no null-homology — because the vanishing of the slit-plane
+integral already holds there.
+
 That same observation is what makes the count *detect* zeros rather than merely count them:
 `TauCeti.finsum_analyticOrderNatAt_ball_eq_zero_iff`, from `TauCeti.Analysis.Complex.ZeroCount`,
 says the count vanishes exactly when the function has no zero in the open disc, so Rouché transfers
@@ -90,6 +98,9 @@ equality, is how Rouché is normally used.
 * `TauCeti.rouche_symm_nullHomologous_of_analyticOnNhd`, `TauCeti.rouche_nullHomologous`,
   `TauCeti.rouche_add_nullHomologous` — its holomorphic specialization in the same three
   phrasings as the disc statements.
+* `TauCeti.rouche_symm_windingNumber_comp`, `TauCeti.rouche_add_windingNumber_comp` — the "dog on
+  a leash" form: under the symmetric, respectively the additive, hypothesis along the curve, the
+  image curves wind equally often about the origin.
 
 ## Coordination with upstream Mathlib
 
@@ -552,6 +563,45 @@ theorem rouche_add_nullHomologous (hU : IsOpen U)
           (analyticOrderNatAt (fun w => f w + g w) z : ℂ) :=
   rouche_nullHomologous hU hf (hf.add hg) hfS hsumS hγ hγU hclosed hnull fun t ht => by
     simpa using hs t ht
+
+/-- **Rouché's theorem as an equality of image winding numbers, symmetric form** — the "dog on a
+leash" statement. If `f` and `g` are analytic along a closed piecewise-`C¹` curve `γ` and never
+point in opposite directions there, the image curves `f ∘ γ` and `g ∘ γ` wind equally often about
+the origin.
+
+Read through `TauCeti.argumentPrinciple_windingNumber_of_analyticOnNhd`, this is the geometric face
+of `TauCeti.rouche_symm_nullHomologous_of_analyticOnNhd`; on its own it is *stronger*, since only
+the behaviour of the two functions **along the curve** enters. Nothing is assumed off the curve —
+no ambient open set, no confinement of the zeros to a finite set, and no null-homology — because
+the equality of the two logarithmic-derivative integrals is already forced by the hypothesis: it
+puts `g / f` in `Complex.slitPlane`, where `Complex.log` is a single-valued primitive. It is only
+in *counting* the winding that those extra hypotheses are needed. -/
+theorem rouche_symm_windingNumber_comp (hγ : Contour.IsPiecewiseC1On γ a b) (hclosed : γ a = γ b)
+    (hfa : ∀ t ∈ [[a, b]], AnalyticAt ℂ f (γ t)) (hga : ∀ t ∈ [[a, b]], AnalyticAt ℂ g (γ t))
+    (hs : ∀ t ∈ [[a, b]], ‖f (γ t) - g (γ t)‖ < ‖f (γ t)‖ + ‖g (γ t)‖) :
+    Contour.windingNumber (f ∘ γ) a b 0 = Contour.windingNumber (g ∘ γ) a b 0 := by
+  rw [windingNumber_comp_eq_integral_logDeriv hγ hfa fun t ht => ne_zero_left (hs t ht),
+    windingNumber_comp_eq_integral_logDeriv hγ hga fun t ht => ne_zero_right (hs t ht),
+    integral_deriv_smul_logDeriv_eq_of_norm_sub_lt hγ hclosed hfa hga hs]
+
+/-- **Rouché's theorem as an equality of image winding numbers, additive form.** A holomorphic
+perturbation `g` dominated by `f` along a closed piecewise-`C¹` curve does not change how often the
+image winds about the origin. This is the phrasing that names the "dog on a leash" picture: the
+walker `f ∘ γ` and the dog `(f + g) ∘ γ`, on a leash shorter than the walker's distance from the
+lamppost at the origin, circle it the same number of times.
+
+It is the special case of `TauCeti.rouche_symm_windingNumber_comp` for the pair `f`, `f + g`,
+obtained by discarding the nonnegative summand `‖f (γ t) + g (γ t)‖`; the intermediate asymmetric
+hypothesis `‖f (γ t) - g (γ t)‖ < ‖f (γ t)‖` is the same specialisation and is not stated
+separately. -/
+theorem rouche_add_windingNumber_comp (hγ : Contour.IsPiecewiseC1On γ a b) (hclosed : γ a = γ b)
+    (hfa : ∀ t ∈ [[a, b]], AnalyticAt ℂ f (γ t)) (hga : ∀ t ∈ [[a, b]], AnalyticAt ℂ g (γ t))
+    (hs : ∀ t ∈ [[a, b]], ‖g (γ t)‖ < ‖f (γ t)‖) :
+    Contour.windingNumber (f ∘ γ) a b 0
+      = Contour.windingNumber ((fun w => f w + g w) ∘ γ) a b 0 :=
+  rouche_symm_windingNumber_comp hγ hclosed hfa (fun t ht => (hfa t ht).add (hga t ht))
+    fun t ht => by
+      simpa using (hs t ht).trans_le (le_add_of_nonneg_right (norm_nonneg _))
 
 end Cycle
 
