@@ -253,6 +253,8 @@ class Mirror:
 
 def fetch_prs(since=None):
     """Every PR, as GitHub reports it, optionally limited to `--since`."""
+    # `state == OPEN` with a non-null closedAt is GitHub's own tell that a PR was
+    # closed and reopened; it costs nothing extra on the list read.
     fields = ("number,author,createdAt,closedAt,mergedAt,state,isDraft,title,"
               "headRefName,headRepositoryOwner")
     out = subprocess.run(
@@ -261,6 +263,8 @@ def fetch_prs(since=None):
     if out.returncode != 0:
         raise RuntimeError(f"gh pr list failed: {out.stderr.strip()}")
     prs = json.loads(out.stdout)
+    for pr in prs:
+        pr["_reopened"] = bool(pr.get("closedAt")) and pr.get("state") == "OPEN"
     cutoff = parse_iso(since)
     if cutoff is not None:
         prs = [p for p in prs if parse_iso(p["createdAt"]) >= cutoff]
@@ -313,8 +317,9 @@ def ledger_index(ledger):
     lifetime -- see `pr_pushes`.
     """
     index = {}
-    for sha, row in ledger.items():
-        index.setdefault((row["owner"], row["branch"]), []).append((sha, row["when"]))
+    for row in ledger.values():
+        index.setdefault((row["owner"], row["branch"]), []).append(
+            (row["sha"], row["when"], row["actor"] or ""))
     for pushes in index.values():
         pushes.sort(key=lambda item: item[1])
     return index
@@ -329,8 +334,54 @@ def pr_pushes(pr, index, created, ended):
     """
     owner = (pr.get("headRepositoryOwner") or {}).get("login") or ""
     branch = pr.get("headRefName") or ""
-    return [(sha, when) for sha, when in index.get((owner, branch), [])
-            if created <= when <= ended]
+    return [row for row in index.get((owner, branch), [])
+            if created <= row[1] <= ended]
+
+
+def closed_intervals(number):
+    """[(closed_at, reopened_at)] for a PR, from its timeline; [] on any failure.
+
+    A PR that was closed and reopened was not in the queue in between, and a
+    conflict cannot be "unresolved" during a period when nobody could merge it
+    anyway. Only reopened PRs need this -- for everything else GitHub's `closedAt`
+    already bounds the window -- so it is fetched only where a reopen exists.
+    """
+    out = subprocess.run(
+        ["gh", "api", f"/repos/{REPO}/issues/{number}/timeline?per_page=100",
+         "--paginate", "--jq",
+         '.[] | select(.event == "closed" or .event == "reopened") '
+         r'| "\(.event) \(.created_at)"'],
+        capture_output=True, text=True)
+    if out.returncode != 0:
+        return []
+    intervals, closed_at = [], None
+    for line in out.stdout.splitlines():
+        parts = line.split()
+        if len(parts) != 2:
+            continue
+        when = parse_iso(parts[1])
+        if parts[0] == "closed" and closed_at is None:
+            closed_at = when
+        elif parts[0] == "reopened" and closed_at is not None:
+            intervals.append((closed_at, when))
+            closed_at = None
+    return intervals
+
+
+def clip_episodes(episodes, intervals):
+    """Remove time the PR spent closed from each episode, dropping any that lie
+    entirely inside a closed interval."""
+    if not intervals:
+        return episodes
+    kept = []
+    for row in episodes:
+        overlap = sum(max(0, min(row["resolved"], high) - max(row["onset"], low))
+                      for low, high in intervals)
+        if overlap >= row["seconds"]:
+            continue
+        row["seconds"] = max(0, row["seconds"] - overlap)
+        kept.append(row)
+    return kept
 
 
 def ensure_objects(mirror, shas, batch=60):
@@ -384,9 +435,9 @@ def pr_epochs(mirror, pr, index, push_window, available):
     number = pr["number"]
     recorded = pr.get("_pushes") or []
     if recorded:
-        epochs = [(sha, when) for sha, when in recorded if sha in available]
+        epochs = [(sha, when) for sha, when, _ in recorded if sha in available]
         if epochs:
-            actors = {sha: (pr["_ledger"][sha]["actor"] or "") for sha, _ in epochs}
+            actors = {sha: actor for sha, _, actor in recorded if sha in available}
             return epochs, actors, ("recorded" if len(epochs) == len(recorded)
                                     else "partial")
     heads = mirror.pr_heads(number)
@@ -421,7 +472,9 @@ def analyse_pr(mirror, history, history_times, pr, now, session_gap, exhaustive=
     # a commit authored a week earlier would date a "conflict" to before the PR
     # was opened and inflate its duration.
     created = parse_iso(pr.get("createdAt")) or epochs[0][1]
-    ended = parse_iso(pr["mergedAt"]) or parse_iso(pr["closedAt"]) or now
+    ended = (parse_iso(pr["mergedAt"])
+             or (None if pr.get("_reopened") else parse_iso(pr["closedAt"]))
+             or now)
     author = (pr.get("author") or {}).get("login") or ""
     # A PR's OWN squash commit is not a base it was ever measured against, and it
     # conflicts with the PR's head by construction (same edits, different sha). Left
@@ -598,8 +651,14 @@ def push_ledger(start, end):
             sha, actor, when = parts[0], parts[1], parse_iso(parts[2])
             owner, branch = parts[3], parts[4]
             # A re-run reuses the sha; the EARLIEST run is the one the push caused.
-            if when is not None and (sha not in ledger or when < ledger[sha]["when"]):
-                ledger[sha] = {"actor": actor, "when": when,
+            # Keyed by (sha, owner, branch), not by sha alone: the same commit can
+            # legitimately be the head of two different branches, and keying on the
+            # sha would hand the second one's push to the first. Within one key a
+            # repeat is a re-run or a reopen -- neither is a head transition -- so
+            # the EARLIEST run, the one the push caused, wins.
+            key = f"{owner}\t{branch}\t{sha}"
+            if when is not None and (key not in ledger or when < ledger[key]["when"]):
+                ledger[key] = {"sha": sha, "actor": actor, "when": when,
                                "owner": owner, "branch": branch}
     log(f"push ledger: {len(ledger)} pushed heads")
     return ledger
@@ -654,10 +713,12 @@ def replay(mirror, prs, jobs, session_gap, now, exhaustive=False,
     wanted = []
     for pr in prs:
         created = parse_iso(pr.get("createdAt")) or 0
-        ended = parse_iso(pr["mergedAt"]) or parse_iso(pr["closedAt"]) or now
+        ended = (parse_iso(pr["mergedAt"])
+                 or (None if pr.get("_reopened") else parse_iso(pr["closedAt"]))
+                 or now)
         pushes = pr_pushes(pr, index, created, ended)
-        pr["_pushes"], pr["_ledger"] = pushes, ledger
-        wanted.extend(sha for sha, _ in pushes)
+        pr["_pushes"] = pushes
+        wanted.extend(row[0] for row in pushes)
     available = ensure_objects(mirror, sorted(set(wanted))) if wanted else set()
 
     log(f"main has {len(history)} commits; replaying {len(prs)} PR(s) on {jobs} threads"
@@ -674,7 +735,22 @@ def replay(mirror, prs, jobs, session_gap, now, exhaustive=False,
     with ThreadPoolExecutor(max_workers=jobs) as pool:
         results = list(pool.map(one, prs))
 
-    episodes = [row for rows, _, _, _ in results for row in rows]
+    # Only PRs that produced an episode AND were reopened need their closed
+    # intervals removed; that is a handful, so the timeline reads are cheap.
+    by_pr = {}
+    for rows, _, _, _ in results:
+        for row in rows:
+            by_pr.setdefault(row["pr"], []).append(row)
+    reopened = [pr["number"] for pr in prs
+                if pr["number"] in by_pr and pr.get("_reopened")]
+    if reopened:
+        log(f"removing closed intervals from {len(reopened)} reopened PR(s)")
+        with ThreadPoolExecutor(max_workers=min(jobs, 8)) as pool:
+            for number, intervals in zip(reopened, pool.map(closed_intervals, reopened)):
+                by_pr[number] = clip_episodes(by_pr[number], intervals)
+
+    episodes = [row for rows, _, _, _ in results for row in rows
+                if row in by_pr.get(row["pr"], [])]
     handled = {}
     for _, handling, _, _ in results:
         if handling:
