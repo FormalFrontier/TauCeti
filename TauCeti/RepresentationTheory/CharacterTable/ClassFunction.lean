@@ -13,8 +13,13 @@ public import Mathlib.RepresentationTheory.Character
 
 This file defines functions on a group that are constant on conjugacy classes. It identifies
 their module with the module of functions on `ConjClasses G`, computes its dimension for finite
-groups, shows that characters of representations are class functions, and evaluates a sum over a
-finite group one conjugacy class at a time.
+groups, pulls class functions back along a group homomorphism, shows that characters of
+representations are class functions, and evaluates a sum over a finite group one conjugacy class
+at a time.
+
+The indicator function of a conjugacy class, `TauCeti.ClassFunction.classIndicator`, is the class
+function pulled back from the indicator of a single point of `ConjClasses G`; pairing a class
+function against it is how a class function is read off an expansion in a basis of class functions.
 
 These are the indexing foundations for character tables.
 
@@ -35,7 +40,25 @@ definitional equalities, which would in turn require exposing the definitions.
 
 namespace TauCeti
 
-universe u v w
+universe u v w w'
+
+/-- Conjugacy is inherited by inverses in both directions.
+
+Not `@[simp]`: Mathlib's `isConj_iff` is itself `simp`, so the left-hand side simplifies to
+`∃ c, c * x⁻¹ * c⁻¹ = y⁻¹` and the simp normal form linter rejects the pair. -/
+theorem isConj_inv_iff {G : Type v} [Group G] {x y : G} :
+    IsConj x⁻¹ y⁻¹ ↔ IsConj x y := by
+  constructor <;> intro h
+  · obtain ⟨c, hc⟩ := isConj_iff.mp h
+    apply isConj_iff.mpr
+    refine ⟨c, ?_⟩
+    have := congrArg Inv.inv hc
+    simpa [mul_assoc] using this
+  · obtain ⟨c, hc⟩ := isConj_iff.mp h
+    apply isConj_iff.mpr
+    refine ⟨c, ?_⟩
+    have := congrArg Inv.inv hc
+    simpa [mul_assoc] using this
 
 /-- The submodule of functions on `G` that are constant under conjugation. -/
 def ClassFunction (k : Type u) (G : Type v) [Semiring k] [Group G] : Submodule k (G → k) where
@@ -83,6 +106,34 @@ theorem ofConjClasses_apply (f : ConjClasses G → k) (g : G) :
     (ofConjClasses f).1 g = f (ConjClasses.mk g) :=
   (rfl)
 
+/-- Pull a class function back along a group homomorphism.  Restriction of a class function to a
+subgroup is the case `φ = S.subtype`. -/
+def comap {H : Type w} [Group H] (φ : H →* G) :
+    ClassFunction k G →ₗ[k] ClassFunction k H where
+  toFun f := ⟨fun x => f.1 (φ x), fun g h => by
+    simp only [map_mul, map_inv]
+    exact f.2 (φ g) (φ h)⟩
+  map_add' _ _ := rfl
+  map_smul' _ _ := rfl
+
+/-- A pulled-back class function is the composite with the homomorphism. -/
+@[simp]
+theorem comap_apply {H : Type w} [Group H] (φ : H →* G) (f : ClassFunction k G) (x : H) :
+    (comap φ f).1 x = f.1 (φ x) :=
+  (rfl)
+
+/-- Pulling back along the identity homomorphism changes nothing. -/
+@[simp]
+theorem comap_id : comap (MonoidHom.id G) = LinearMap.id (R := k) (M := ClassFunction k G) :=
+  (rfl)
+
+/-- Pullback is contravariantly functorial: pulling back along a composite is pulling back along
+each factor in turn. -/
+@[simp]
+theorem comap_comp {H : Type w} {J : Type w'} [Group H] [Group J] (φ : H →* G) (ψ : J →* H) :
+    comap (k := k) (φ.comp ψ) = (comap ψ).comp (comap φ) :=
+  (rfl)
+
 /-- Class functions on `G` are linearly equivalent to functions on its conjugacy classes. -/
 noncomputable def equivConjClasses : ClassFunction k G ≃ₗ[k] (ConjClasses G → k) where
   toFun := toConjClasses
@@ -114,6 +165,25 @@ theorem equivConjClasses_apply (f : ClassFunction k G) :
 theorem equivConjClasses_symm_apply (f : ConjClasses G → k) :
     equivConjClasses.symm f = ofConjClasses f :=
   (rfl)
+
+/-- The indicator class function of the conjugacy class of `x`: it takes the value `1` on the
+conjugates of `x` and `0` elsewhere.
+
+`Set.indicator` rather than `Pi.single` so that the definition carries no decidability instance of
+its own, and `TauCeti.ClassFunction.classIndicator_apply` can be stated with whichever instance is
+in scope where it is used. -/
+noncomputable def classIndicator (x : G) : ClassFunction k G :=
+  ofConjClasses (({ConjClasses.mk x} : Set (ConjClasses G)).indicator fun _ => 1)
+
+/-- The defining values of `TauCeti.ClassFunction.classIndicator`. -/
+@[simp]
+theorem classIndicator_apply [DecidableEq (ConjClasses G)] (x y : G) :
+    (classIndicator (k := k) x).1 y =
+      if ConjClasses.mk y = ConjClasses.mk x then 1 else 0 := by
+  rw [classIndicator, ofConjClasses_apply]
+  by_cases h : ConjClasses.mk y = ConjClasses.mk x
+  · rw [if_pos h, Set.indicator_of_mem (Set.mem_singleton_iff.mpr h)]
+  · rw [if_neg h, Set.indicator_of_notMem (fun hm => h (Set.mem_singleton_iff.mp hm))]
 
 /-- **Summing a class function one conjugacy class at a time.** The conjugacy classes partition
 the group and a class function is constant on each of them, so each class contributes its size

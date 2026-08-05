@@ -96,7 +96,7 @@ private noncomputable def diamondOpAux (k : ℤ) (g : ↥(Gamma0 N)) :
   map_smul' c f := by
     refine ModularForm.ext fun z ↦ ((mcast_translate_apply k g (c • f) z).trans ?_).trans
       (congrArg (fun w : ℂ ↦ c • w) (mcast_translate_apply k g f z)).symm
-    rw [ModularForm.IsGLPos.coe_smul, ModularForm.smul_slash]
+    rw [FunLike.coe_smul, ModularForm.smul_slash]
     simp
 
 /-- Slash-transport for `Γ₁(N)`-invariant functions: if `f` is invariant under
@@ -184,7 +184,7 @@ private noncomputable def diamondOpCuspAux (k : ℤ) (g : ↥(Gamma0 N)) :
   map_smul' c f := by
     refine CuspForm.ext fun z ↦ ((cusp_mcast_translate_apply k g (c • f) z).trans ?_).trans
       (congrArg (fun w : ℂ ↦ c • w) (cusp_mcast_translate_apply k g f z)).symm
-    rw [CuspForm.IsGLPos.coe_smul, ModularForm.smul_slash]
+    rw [FunLike.coe_smul, ModularForm.smul_slash]
     simp
 
 -- Well-definedness for the cusp-form diamond operator.

@@ -433,6 +433,32 @@ lemma contDiffOn_fdBoundary (H : ℝ) {c d : ℝ}
       · have hc4 : 4 ≤ c := le_of_not_gt fun hlt ↦ hbp 4 (by simp) ⟨hlt, hd4⟩
         exact (fdBoundary_piece5 H).mono fun x hx ↦ ⟨hc4.trans hx.1, (hcd hx).2⟩
 
+/-- The right vertical has constant real part `1/2`. -/
+theorem re_fdBoundary_segment1 (H : ℝ) {t : ℝ} (ht : t ∈ Icc (0 : ℝ) 1) :
+    (fdBoundary H t).re = 1 / 2 := by
+  rw [eqOn_fdBoundary_segment1 H ht, fdBoundary_segment1_apply, AffineMap.lineMap_apply]
+  simp [ρ, Complex.real_smul]
+  norm_num
+
+/-- The arc stays at height at most `1`. -/
+theorem im_fdBoundary_arc_le (H : ℝ) {t : ℝ} (ht : t ∈ Icc (1 : ℝ) 3) :
+    (fdBoundary H t).im ≤ 1 := by
+  rw [eqOn_fdBoundary_arc H ht, circleMap_zero_im]
+  simpa using Real.sin_le_one ((t + 1) * (Real.pi / 6))
+
+/-- The left vertical has constant real part `-1/2`. -/
+theorem re_fdBoundary_segment4 (H : ℝ) {t : ℝ} (ht : t ∈ Icc (3 : ℝ) 4) :
+    (fdBoundary H t).re = -(1 / 2) := by
+  rw [eqOn_fdBoundary_segment4 H ht, fdBoundary_segment4_apply, AffineMap.lineMap_apply]
+  simp [ρ, Complex.real_smul]
+  norm_num
+
+/-- The truncation ceiling has constant height `H`. -/
+theorem im_fdBoundary_segment5 (H : ℝ) {t : ℝ} (ht : t ∈ Icc (4 : ℝ) 5) :
+    (fdBoundary H t).im = H := by
+  rw [eqOn_fdBoundary_segment5 H ht, fdBoundary_segment5_apply, AffineMap.lineMap_apply]
+  simp [Complex.real_smul]
+
 /-- The fundamental-domain boundary contour is piecewise `C¹` on `[0, 5]`;
 `contDiffOn_fdBoundary` certifies the three genuine corners as a breakpoint witness. -/
 theorem isPiecewiseC1On_fdBoundary (H : ℝ) : Contour.IsPiecewiseC1On (fdBoundary H) 0 5 := by

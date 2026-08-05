@@ -58,17 +58,6 @@ lemma subsingleton_decompQuotient_of_mem {Γ : Subgroup G} {g : G} (hg : g ∈ �
   subsingleton_decompQuotient
     (Subgroup.conjAct_pointwise_smul_eq_self (Subgroup.le_normalizer hg)).ge
 
-/-- The left cosets `σᵢ g Γ₂` of the decomposition of `Γ₁gΓ₂` are pairwise distinct: the map
-`i ↦ σᵢ g Γ₂` into `G ⧸ Γ₂` is injective. -/
-lemma mk_out_mul_injective (Γ₁ Γ₂ : Subgroup G) (g : G) :
-    Function.Injective fun i : DecompQuotient Γ₁ Γ₂ g ↦ (((i.out : G) * g : G) : G ⧸ Γ₂) := by
-  intro i j hij
-  simp only [QuotientGroup.eq] at hij
-  rw [← QuotientGroup.out_eq' i, ← QuotientGroup.out_eq' j, QuotientGroup.eq,
-    Subgroup.mem_subgroupOf, Subgroup.mem_pointwise_smul_iff_inv_smul_mem, ← ConjAct.toConjAct_inv,
-      ConjAct.smul_def, ConjAct.ofConjAct_toConjAct, inv_inv]
-  simpa [mul_assoc] using hij
-
 /-- Shimura's multiplicity (Proposition 3.2 of [Shimura][shimura1971]): the number of pairs
 `(i, j)` of coset representatives such that `σᵢ g τⱼ h Γ₃ = d Γ₃`. The diagonal case
 `Γ₁ = Γ₂ = Γ₃` gives the structure constants of the Hecke ring.
