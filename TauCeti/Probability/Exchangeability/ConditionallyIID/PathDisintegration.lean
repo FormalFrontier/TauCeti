@@ -109,33 +109,33 @@ theorem map_prefixPair_iidMixtureLaw (hν : Measurable ν) (n : ℕ) :
     (iidMixtureLaw (μ.map ν) id).map (prefixPair (ProbabilityMeasure α) α n)
       = μ.bind fun ω =>
           (Measure.dirac (ν ω)).prod (ProbabilityMeasure.pi fun _ : Fin n => ν ω).toMeasure := by
-  have hker : Measurable (fun ω =>
-      (Measure.dirac (ν ω)).prod (Measure.infinitePi fun _ : ℕ => (ν ω : Measure α))) :=
-    (TauCeti.MeasureTheory.measurable_dirac_prod_infinitePi_const (ι' := ℕ)
-      (id : ProbabilityMeasure α → ProbabilityMeasure α) measurable_id).comp hν
-  have hker0 : Measurable (fun Q : ProbabilityMeasure α =>
-      (Measure.dirac Q).prod (Measure.infinitePi fun _ : ℕ => (Q : Measure α))) :=
-    TauCeti.MeasureTheory.measurable_dirac_prod_infinitePi_const (ι' := ℕ)
-      (id : ProbabilityMeasure α → ProbabilityMeasure α) measurable_id
-  -- Each fibre is the tagged-block identity already proved in `Measure/ProductKernel.lean`,
-  -- specialised to the prefix selection `Fin.val`.
-  have hfibre : ∀ Q : ProbabilityMeasure α,
-      ((Measure.dirac Q).prod (Measure.infinitePi fun _ : ℕ => (Q : Measure α))).map
-          (prefixPair (ProbabilityMeasure α) α n)
-        = (Measure.dirac Q).prod (ProbabilityMeasure.pi fun _ : Fin n => Q).toMeasure := by
-    intro Q
-    rw [Measure.dirac_prod, Measure.map_map (measurable_prefixPair (ProbabilityMeasure α) α n)
-      measurable_prodMk_left]
-    simpa only [Function.comp_def, prefixPair_apply] using
-      TauCeti.MeasureTheory.map_infinitePi_pair_block Q (Fin.val_injective (n := n))
-  rw [iidMixtureLaw_def,
-    TauCeti.MeasureTheory.bind_map hν.aemeasurable (by simpa using hker0.aemeasurable)]
-  simp only [Function.comp_def, id_eq]
-  rw [TauCeti.MeasureTheory.map_bind hker.aemeasurable
-      (measurable_prefixPair (ProbabilityMeasure α) α n)]
-  congr 1
-  funext ω
-  exact hfibre (ν ω)
+  -- The canonical construction is itself conditionally i.i.d., so its own block-level
+  -- disintegration is the prefix pushforward; no fibre calculation is needed here.
+  set F : ProbabilityMeasure α → Measure (ProbabilityMeasure α × (Fin n → α)) := fun Q =>
+    (Measure.dirac Q).prod (ProbabilityMeasure.pi fun _ : Fin n => Q).toMeasure with hF
+  have hker : Measurable F :=
+    TauCeti.MeasureTheory.measurable_dirac_prod_probabilityMeasure_pi_const_toMeasure _
+      measurable_id
+  have hcIID := conditionallyIIDWith_iidMixtureLaw (π := μ.map ν)
+    (P := (id : ProbabilityMeasure α → ProbabilityMeasure α)) measurable_id
+  have hblock := hcIID.jointLaw_eq_disintegration (fun i : Fin n => (i : ℕ)) Fin.val_injective
+  have hpair : prefixPair (ProbabilityMeasure α) α n
+      = fun q : ProbabilityMeasure α × (ℕ → α) => (id q.1, fun i : Fin n => q.2 (i : ℕ)) := by
+    funext q; simp [prefixPair_apply]
+  have hdir : (iidMixtureLaw (μ.map ν) id).map (fun q => id q.1) = μ.map ν := by
+    simpa using iidMixtureLaw_map_directing (π := μ.map ν)
+      (P := (id : ProbabilityMeasure α → ProbabilityMeasure α)) measurable_id
+  rw [hpair, hblock]
+  calc (iidMixtureLaw (μ.map ν) id).bind (fun q => F (id q.1))
+      = ((iidMixtureLaw (μ.map ν) id).map fun q => id q.1).bind F := by
+        have hfst : AEMeasurable (fun q : ProbabilityMeasure α × (ℕ → α) => id q.1)
+            (iidMixtureLaw (μ.map ν) id) := measurable_fst.aemeasurable
+        rw [TauCeti.MeasureTheory.bind_map hfst hker.aemeasurable]
+        rfl
+    _ = (μ.map ν).bind F := by rw [hdir]
+    _ = μ.bind fun ω => F (ν ω) := by
+        rw [TauCeti.MeasureTheory.bind_map hν.aemeasurable hker.aemeasurable]
+        rfl
 
 /-! ### The full-path disintegration -/
 
@@ -151,7 +151,7 @@ theorem ConditionallyIIDWith.jointPathLaw_eq_iidMixtureLaw [IsFiniteMeasure μ]
   have hpath : Measurable (fun ω => (ν ω, fun i => X i ω) :
       Ω → ProbabilityMeasure α × (ℕ → α)) :=
     h.measurable_directing.prodMk (measurable_pi_lambda _ hX)
-  haveI : IsFiniteMeasure (jointPathLaw μ X ν) := by
+  have : IsFiniteMeasure (jointPathLaw μ X ν) := by
     rw [jointPathLaw_def]; exact Measure.isFiniteMeasure_map _ _
   refine measure_eq_of_prefixPair_map_eq fun n => ?_
   rw [map_prefixPair_jointPathLaw_eq h hX n,

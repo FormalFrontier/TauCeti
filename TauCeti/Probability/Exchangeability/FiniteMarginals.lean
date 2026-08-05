@@ -134,7 +134,7 @@ theorem measure_eq_of_prefixPair_map_eq {T : Type*} [MeasurableSpace T]
   have hLm : Measurable (fun y : ℕ → T × α => ((y 0).1, fun n => (y n).2)) :=
     (measurable_fst.comp (measurable_pi_apply 0)).prodMk
       (measurable_pi_lambda _ fun n => measurable_snd.comp (measurable_pi_apply n))
-  haveI : IsFiniteMeasure (μ.map R) := Measure.isFiniteMeasure_map _ _
+  have : IsFiniteMeasure (μ.map R) := Measure.isFiniteMeasure_map _ _
   -- Enough to identify the replicated measures: the left inverse recovers the originals.
   suffices hmap : (μ.map R) = (ν.map R) by
     have := congrArg (fun ρ => ρ.map (fun y : ℕ → T × α => ((y 0).1, fun n => (y n).2))) hmap
