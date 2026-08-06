@@ -223,7 +223,7 @@ theorem mem_classFinset_iff_isConj {i : Fin d.numClasses} {g : G} :
     g ∈ d.classFinset i ↔ IsConj (d.rep i) g := by
   rw [mem_classFinset, index_eq_iff]
 
-@[simp]
+/-- The `i`-th representative lies in the `i`-th class. -/
 theorem rep_mem_classFinset (i : Fin d.numClasses) : d.rep i ∈ d.classFinset i :=
   d.mem_classFinset_iff_isConj.mpr (IsConj.refl _)
 
