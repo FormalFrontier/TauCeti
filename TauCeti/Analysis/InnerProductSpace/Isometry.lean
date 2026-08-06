@@ -29,9 +29,15 @@ than only after an extension.
 * `TauCeti.real_inner_map_map_of_dist_map_eq` — such a map preserves the real inner product.
 
 The consumer is `TauCeti/Analysis/Complex/Isometry.lean`, which classifies the distance-preserving
-self-maps of a disc of `ℂ` about the origin; there `s` is an open ball, on which no map is
-surjective onto `ℂ` and none is a priori linear, so the Mazur--Ulam route is unavailable and this
-is what replaces it.
+self-maps of a disc of `ℂ` about the origin. There the map is given only on an open ball, and is
+assumed neither linear nor bijective; Mazur--Ulam asks for an isometric equivalence of the whole
+space, so none of its hypotheses are on hand, and this polarisation is what replaces it.
+
+The argument is adapted from the proofs of
+`TauCeti.norm_map_of_pseudoHyperbolicExpr_map_eq` and
+`TauCeti.real_inner_map_map_of_pseudoHyperbolicExpr_map_eq` in
+`TauCeti/Analysis/Complex/Conformal/Poincare/Isometry/Classification.lean`, as merged in
+TauCeti#1502, with the unit disc of `ℂ` relaxed to an arbitrary set `s` containing the origin.
 -/
 
 public section

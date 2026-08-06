@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Analysis.InnerProductSpace.Isometry
-public import Mathlib.Analysis.Complex.Basic
+import Mathlib.Analysis.InnerProductSpace.TwoDim
 
 /-!
 # Distance-preserving maps of a disc about the origin
@@ -14,21 +14,35 @@ public import Mathlib.Analysis.Complex.Basic
 Mathlib's `Mathlib/Analysis/Complex/Isometry.lean` classifies the **linear** isometries of the
 plane: `linear_isometry_complex` says that every `f : ℂ ≃ₗᵢ[ℝ] ℂ` is `rotation a` or
 `conjLIE.trans (rotation a)`. That statement asks for a map defined on all of `ℂ`, and asks it to
-be both `ℝ`-linear and surjective. This file removes all three hypotheses at once: a map defined
-only on a disc `ball 0 r` about the origin, fixing the origin and merely preserving distances
-between points of that disc, is already `z ↦ u * z` or `z ↦ u * conj z` there, for a single unit
-`u`. Neither alternative is chosen point by point, and neither linearity nor surjectivity is
-assumed — both are conclusions.
+be both `ℝ`-linear and surjective. This file drops all three hypotheses at once: for a map `g`
+defined on a disc `ball 0 r` about the origin, fixing the origin and merely preserving distances
+between points of that disc, the *restriction of `g` to that disc* is the restriction of
+`z ↦ u * z`, or of `z ↦ u * conj z`, for a single unit `u`. The alternative is not chosen point by
+point — that single choice is the content of the theorem.
+
+Linearity and surjectivity are dropped as hypotheses; they are not put back as conclusions.
+Nothing is claimed about `g` off the disc, so `g` itself need be neither linear nor surjective, and
+the theorem says only that on `ball 0 r` it agrees with a map that is.
 
 The proof is the classical orthonormal-frame argument. `TauCeti/Analysis/InnerProductSpace/
 Isometry.lean` turns the distance hypothesis into preservation of the real inner product that `ℂ`
 carries (`Complex.inner : ⟪w, z⟫_ℝ = (z * conj w).re`). The two probe points `r / 2` and `I * r / 2`
 of the disc then have images whose doublings-by-`2 / r` are an orthonormal pair `e`, `f`, and
-`⟪e, g z⟫_ℝ`, `⟪f, g z⟫_ℝ` read off the real and imaginary parts of `z`. Orthogonality of two unit
-complex numbers means a quarter turn, `f = e * I` or `f = -(e * I)`
+`⟪e, g z⟫_ℝ`, `⟪f, g z⟫_ℝ` read off the real and imaginary parts of `z` — the second through
+Mathlib's two-dimensional orientation API, whose area form `Complex.areaForm` is `(conj x * y).im`
+and whose quarter turn `Complex.rightAngleRotation` is multiplication by `I`. Orthogonality of two
+unit complex numbers means a quarter turn, `f = e * I` or `f = -(e * I)`
 (`TauCeti.eq_mul_I_or_eq_neg_mul_I_of_real_inner_eq_zero`), and the two cases give
 `conj e * g z = z` and `conj e * g z = conj z` respectively — the alternative being fixed once, by
 `f`, and not per point.
+
+That argument is adapted from the proof of
+`TauCeti.exists_norm_eq_one_eqOn_ball_const_mul_or_const_mul_conj` and its `private` scaffolding
+(`real_inner_eq`, `im_conj_mul`, `exists_orthonormal_pair_real_inner_map_eq`,
+`eq_mul_I_or_eq_neg_mul_I`) in
+`TauCeti/Analysis/Complex/Conformal/Poincare/Isometry/Classification.lean`, as merged in
+TauCeti#1502; here the unit radius is relaxed to an arbitrary `r > 0` and the hyperbolic
+hypothesis is replaced by the Euclidean one the argument actually used.
 
 ## Main results
 
@@ -58,34 +72,26 @@ open scoped ComplexConjugate RealInnerProductSpace
 
 open _root_.Complex (I)
 
-/-! ### The real inner product of `ℂ` in Hermitian form
+-- Mathlib's two-dimensional orientation API is stated for a space of `finrank ℝ` equal to `2`,
+-- and, as in `Mathlib/Analysis/InnerProductSpace/TwoDim.lean` itself, the witness for `ℂ` is a
+-- local instance rather than a global one.
+attribute [local instance] _root_.Complex.finrank_real_complex_fact
 
-`ℂ` carries the real inner product `⟪w, z⟫_ℝ = (z * conj w).re` (`Complex.inner`). The three
-private lemmas below are that identity in the three readings these proofs use: with the
-conjugation on the left, in real coordinates, and for the imaginary part. Together they say that
-`conj x * y` carries the coordinates of `y` in the orthonormal frame `x`, `x * I` attached to a
-unit `x`. The imaginary one is Mathlib's `Complex.areaForm` — the area form of
-`Complex.orientation` is `(conj x * y).im` and pairs with `Complex.rightAngleRotation`, which is
-multiplication by `I` — but proving it in place costs one `ring` and saves the two-dimensional
-orientation theory from being pulled in. -/
+/-! ### The real inner product of `ℂ` in real coordinates
 
-/-- The real inner product of `ℂ`, with the conjugation moved to the left factor. -/
-private lemma real_inner_eq_re_conj_mul (x y : ℂ) : ⟪x, y⟫ = (conj x * y).re := by
-  rw [_root_.Complex.inner, mul_comm]
+`ℂ` carries the real inner product `⟪w, z⟫_ℝ = (z * conj w).re` (`Complex.inner`); its two readings
+in terms of `conj x * y` are Mathlib's as well, the real part being `Complex.inner` up to
+`mul_comm` and the imaginary part being the area form `Complex.areaForm` of `Complex.orientation`
+paired with the quarter turn `Complex.rightAngleRotation` through
+`Orientation.inner_rightAngleRotation_left`. The one reading Mathlib does not carry is in the real
+coordinates `Complex.re`, `Complex.im`, and the private lemma below expands `Complex.inner` into
+them. -/
 
 /-- The real inner product of `ℂ` in the real coordinates `Complex.re`, `Complex.im`. -/
 private lemma real_inner_eq_re_mul_re_add_im_mul_im (x y : ℂ) :
     ⟪x, y⟫ = x.re * y.re + x.im * y.im := by
   simp only [_root_.Complex.inner, _root_.Complex.mul_re, _root_.Complex.conj_re,
     _root_.Complex.conj_im]
-  ring
-
-/-- The imaginary part of `conj x * y` is the real inner product of `y` against the quarter turn
-`x * I`. -/
-private lemma real_inner_mul_I_eq_im_conj_mul (x y : ℂ) : ⟪x * I, y⟫ = (conj x * y).im := by
-  simp only [_root_.Complex.inner, map_mul, _root_.Complex.conj_I, _root_.Complex.mul_re,
-    _root_.Complex.mul_im, _root_.Complex.conj_re, _root_.Complex.conj_im, _root_.Complex.neg_re,
-    _root_.Complex.neg_im, _root_.Complex.I_re, _root_.Complex.I_im]
   ring
 
 /-! ### Orthogonality in the Euclidean plane -/
@@ -118,11 +124,10 @@ theorem real_inner_eq_zero_iff_exists_eq_real_mul_mul_I {z w : ℂ} (hz : z ≠ 
       _ = (s : ℂ) * I * z := by rw [hwc]
       _ = (s : ℂ) * (z * I) := by ring
   · rintro ⟨t, rfl⟩
-    have h : (t : ℂ) * (z * I) * conj z = ((t * _root_.Complex.normSq z : ℝ) : ℂ) * I := by
-      push_cast
-      rw [show (t : ℂ) * (z * I) * conj z = (t : ℂ) * I * (z * conj z) by ring,
-        _root_.Complex.mul_conj]
-      ring
+    have h : (t : ℂ) * (z * I) * conj z = ((t * _root_.Complex.normSq z : ℝ) : ℂ) * I :=
+      calc (t : ℂ) * (z * I) * conj z = (t : ℂ) * I * (z * conj z) := by ring
+        _ = (t : ℂ) * I * ((_root_.Complex.normSq z : ℝ) : ℂ) := by rw [_root_.Complex.mul_conj]
+        _ = ((t * _root_.Complex.normSq z : ℝ) : ℂ) * I := by push_cast; ring
     rw [h]
     simp
 
@@ -219,14 +224,18 @@ theorem exists_norm_eq_one_eqOn_ball_const_mul_or_const_mul_conj_of_dist_map_eq 
     rw [_root_.Complex.mul_conj', hne]
     norm_num
   have hcoordre : ∀ z ∈ ball (0 : ℂ) r, (conj e * g z).re = z.re := fun z hz => by
-    rw [← real_inner_eq_re_conj_mul]
+    -- The real part of `conj e * g z` is `⟪e, g z⟫_ℝ` (`Complex.inner`, up to `mul_comm`).
+    rw [mul_comm, ← _root_.Complex.inner]
     exact hre z hz
   refine ⟨e, hne, ?_⟩
   rcases eq_mul_I_or_eq_neg_mul_I_of_real_inner_eq_zero hne hnf horth with hcase | hcase
   · -- The frame is positively oriented: `g` is the rotation by `e`.
     refine Or.inl fun z hz => ?_
     have hcoordim : (conj e * g z).im = z.im := by
-      rw [← real_inner_mul_I_eq_im_conj_mul, ← hcase]
+      -- The imaginary part of `conj e * g z` is the area form, which pairs the quarter turn
+      -- `e * I = f` against `g z`.
+      rw [← _root_.Complex.areaForm, ← Orientation.inner_rightAngleRotation_left,
+        _root_.Complex.rightAngleRotation, mul_comm, ← hcase]
       exact him z hz
     have hxi : conj e * g z = z := _root_.Complex.ext (hcoordre z hz) hcoordim
     calc g z = e * (conj e * g z) := by rw [← mul_assoc, hmul, one_mul]
@@ -234,7 +243,9 @@ theorem exists_norm_eq_one_eqOn_ball_const_mul_or_const_mul_conj_of_dist_map_eq 
   · -- The frame is negatively oriented: `g` is that rotation composed with the conjugation.
     refine Or.inr fun z hz => ?_
     have hcoordim : (conj e * g z).im = -z.im := by
-      rw [← real_inner_mul_I_eq_im_conj_mul, ← neg_neg (e * I), ← hcase, inner_neg_left]
+      -- Same reading of the imaginary part, with `f = -(e * I)` now contributing the sign.
+      rw [← _root_.Complex.areaForm, ← Orientation.inner_rightAngleRotation_left,
+        _root_.Complex.rightAngleRotation, mul_comm, ← neg_neg (e * I), ← hcase, inner_neg_left]
       exact congrArg Neg.neg (him z hz)
     have hxi : conj e * g z = conj z := by
       refine _root_.Complex.ext ?_ ?_
