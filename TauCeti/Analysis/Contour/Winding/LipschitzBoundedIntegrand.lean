@@ -32,6 +32,8 @@ differentiability of `γ` is assumed (not continuity of its derivative): Lipschi
   and `..._left` -- the real winding integrand is bounded on a small enough one-sided window,
   starting (resp. ending) at a crossing where `derivWithin γ` is Lipschitz and non-zero there, on
   the one-sided piece the window lies in.
+* `..._corner` -- the two one-sided windows above combined into one full neighborhood of the
+  crossing, allowing the two sides to disagree.
 
 ## References
 
@@ -301,64 +303,10 @@ theorem exists_isBounded_image_realWindingIntegrand_of_lipschitzOnWith_derivWith
       _ = ‖derivWithin γ (Icc c t₀) t₀‖ / 2 := by field_simp; ring
       _ ≤ ‖derivWithin γ (Icc c t₀) t₀‖ := half_le_self (norm_nonneg _)
 
-/-- **Boundedness of the real winding integrand at a two-sided `C^{1,1}` crossing.** The smooth
-(non-corner) specialization of `_right`/`_left` above, matching the shape of the pre-corner-case
-API: if `γ` has an ambient derivative throughout `[t₀ - ε, t₀ + ε]` and `deriv γ` is `K`-Lipschitz
-there and non-zero at `t₀`, where `γ t₀ = w`, the real winding integrand is bounded on a small
-enough symmetric window `[t₀ - ρ, t₀ + ρ]`. -/
-theorem exists_isBounded_image_realWindingIntegrand_of_lipschitzOnWith_deriv
-    {γ : ℝ → ℂ} {w : ℂ} {t₀ ε : ℝ} {K : ℝ≥0} (hε_pos : 0 < ε)
-    (hderiv : ∀ t ∈ Icc (t₀ - ε) (t₀ + ε), HasDerivAt γ (deriv γ t) t)
-    (hlip : LipschitzOnWith K (deriv γ) (Icc (t₀ - ε) (t₀ + ε)))
-    (h_eq : γ t₀ = w) (hvel : deriv γ t₀ ≠ 0) :
-    ∃ ρ > 0, ρ ≤ ε ∧ Bornology.IsBounded
-      ((fun t => realWindingIntegrand (γ t - w) (deriv γ t)) '' Icc (t₀ - ρ) (t₀ + ρ)) := by
-  have heqonR : Set.EqOn (derivWithin γ (Icc t₀ (t₀ + ε))) (deriv γ) (Icc t₀ (t₀ + ε)) :=
-    fun t ht => ((hderiv t (Icc_subset_Icc (by linarith) le_rfl ht)).hasDerivWithinAt).derivWithin
-      ((uniqueDiffOn_Icc (by linarith)).uniqueDiffWithinAt ht)
-  have heqonL : Set.EqOn (derivWithin γ (Icc (t₀ - ε) t₀)) (deriv γ) (Icc (t₀ - ε) t₀) :=
-    fun t ht => ((hderiv t (Icc_subset_Icc le_rfl (by linarith) ht)).hasDerivWithinAt).derivWithin
-      ((uniqueDiffOn_Icc (by linarith)).uniqueDiffWithinAt ht)
-  have hdiffR : DifferentiableOn ℝ γ (Icc t₀ (t₀ + ε)) := fun t ht =>
-    (hderiv t (Icc_subset_Icc (by linarith) le_rfl ht)).differentiableAt.differentiableWithinAt
-  have hdiffL : DifferentiableOn ℝ γ (Icc (t₀ - ε) t₀) := fun t ht =>
-    (hderiv t (Icc_subset_Icc le_rfl (by linarith) ht)).differentiableAt.differentiableWithinAt
-  have hlipR : LipschitzOnWith K (derivWithin γ (Icc t₀ (t₀ + ε))) (Icc t₀ (t₀ + ε)) := by
-    intro x hx y hy
-    rw [heqonR hx, heqonR hy]
-    exact hlip.mono (Icc_subset_Icc (by linarith) le_rfl) hx hy
-  have hlipL : LipschitzOnWith K (derivWithin γ (Icc (t₀ - ε) t₀)) (Icc (t₀ - ε) t₀) := by
-    intro x hx y hy
-    rw [heqonL hx, heqonL hy]
-    exact hlip.mono (Icc_subset_Icc le_rfl (by linarith)) hx hy
-  have hvelR : derivWithin γ (Icc t₀ (t₀ + ε)) t₀ ≠ 0 := by
-    rwa [heqonR (left_mem_Icc.mpr (by linarith))]
-  have hvelL : derivWithin γ (Icc (t₀ - ε) t₀) t₀ ≠ 0 := by
-    rwa [heqonL (right_mem_Icc.mpr (by linarith))]
-  obtain ⟨ρR, hρR_pos, hρR_lt, hbddR⟩ :=
-    exists_isBounded_image_realWindingIntegrand_of_lipschitzOnWith_derivWithin_right
-      (by linarith) hdiffR hlipR h_eq hvelR
-  obtain ⟨ρL, hρL_pos, hρL_lt, hbddL⟩ :=
-    exists_isBounded_image_realWindingIntegrand_of_lipschitzOnWith_derivWithin_left
-      (by linarith) hdiffL hlipL h_eq hvelL
-  refine ⟨min ρR ρL, lt_min hρR_pos hρL_pos, by linarith [min_le_left ρR ρL], ?_⟩
-  -- Split the symmetric window at `t₀` so the left/right one-sided boundedness facts
-  -- `hbddL`/`hbddR` combine via `Set.image_union` into one on the whole window.
-  have hsplit : Icc (t₀ - min ρR ρL) (t₀ + min ρR ρL)
-      = Icc (t₀ - min ρR ρL) t₀ ∪ Icc t₀ (t₀ + min ρR ρL) :=
-    (Set.Icc_union_Icc_eq_Icc (by linarith [lt_min hρR_pos hρL_pos])
-      (by linarith [lt_min hρR_pos hρL_pos])).symm
-  rw [hsplit, Set.image_union]
-  exact (hbddL.subset (Set.image_mono
-      (Icc_subset_Icc (by linarith [min_le_right ρR ρL]) le_rfl))).union
-    (hbddR.subset (Set.image_mono (Icc_subset_Icc le_rfl (by linarith [min_le_left ρR ρL]))))
-
 /-- **Boundedness of the real winding integrand on the full neighborhood of a `C^{1,1}` corner
 crossing.** Combines `_right` and `_left` above into the full two-sided window `[t₀ - ρ, t₀ + ρ]`,
-allowing the two sides to have genuinely different pieces and Lipschitz constants (as at a
-corner, where the one-sided tangents themselves may differ) rather than requiring one shared
-ambient derivative as `exists_isBounded_image_realWindingIntegrand_of_lipschitzOnWith_deriv`
-does. -/
+allowing the two sides to have genuinely different pieces and Lipschitz constants, as at a
+corner where the one-sided tangents themselves may differ. -/
 theorem exists_isBounded_image_realWindingIntegrand_of_lipschitzOnWith_derivWithin_corner
     {γ : ℝ → ℂ} {w : ℂ} {c t₀ d : ℝ} {KR KL : ℝ≥0} (hct : c < t₀) (htd : t₀ < d)
     (hdiffR : DifferentiableOn ℝ γ (Icc t₀ d))
