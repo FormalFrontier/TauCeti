@@ -102,6 +102,14 @@ lemma stdComplexLineEnergyDensity_def (ω : SymplecticForm V) (J : AlmostComplex
 -- another module fails to kernel-check.
 attribute [irreducible] stdComplexLineEnergyDensity
 
+/-- The zero real-linear map has zero standard complex-line energy density.  No hypothesis
+relating `ω` and `J` is needed, unlike in
+`TauCeti.SymplecticForm.stdComplexLineEnergyDensity_eq_zero_iff`. -/
+@[simp]
+lemma stdComplexLineEnergyDensity_zero (ω : SymplecticForm V) (J : AlmostComplexStructure V) :
+    ω.stdComplexLineEnergyDensity J 0 = 0 := by
+  simp [stdComplexLineEnergyDensity_def]
+
 /-- The standard pointwise energy density of any real-linear map is nonnegative under tameness. -/
 lemma stdComplexLineEnergyDensity_nonneg (hω : ω.Tames J)
     (F : (ℝ × ℝ) →ₗ[ℝ] V) :
@@ -178,7 +186,7 @@ lemma stdComplexLineEnergyDensity_eq_zero_iff (hω : ω.Tames J)
     rw [LinearMap.apply_stdComplexLine F z, hreal, himag]
     simp
   · intro hzero
-    simp [hzero, stdComplexLineEnergyDensity_def]
+    simp [hzero]
 
 /-- Under tameness, the standard pointwise energy density is positive exactly for nonzero
 real-linear maps from the standard complex line. -/

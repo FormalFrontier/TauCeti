@@ -6,6 +6,7 @@ module
 
 public import TauCeti.Geometry.Symplectic.JHolomorphic.Energy.Basic
 public import Mathlib.MeasureTheory.Integral.Lebesgue.Basic
+import Mathlib.MeasureTheory.Constructions.BorelSpace.Real
 
 /-!
 # Integrated energy for maps from the standard complex line
@@ -32,7 +33,9 @@ Under a taming hypothesis, zero energy is equivalent to the differential vanishi
 everywhere (assuming the energy integrand is a.e. measurable).  Under compatibility, the
 integrated Wirtinger inequality bounds the integral of the symplectic area density by energy;
 equality needs only that the differential is complex linear almost everywhere.  These are the
-total-energy statements needed before the compactness theory for `J`-holomorphic strips and disks.
+first total-energy statements needed before the compactness theory for `J`-holomorphic curves.
+Everything is stated for an abstract field of differentials over an abstract measure, so a domain
+such as a strip or a disk is handled by restricting the measure to it.
 
 Both integrands are wrapped in `ENNReal.ofReal`, so what is integrated is in each case a positive
 part.  A taming pair makes the energy density nonnegative, so nothing is truncated on the energy
@@ -50,8 +53,8 @@ differential is complex linear and the pair tames, since then it is half the ene
   Wirtinger inequality.
 * `TauCeti.SymplecticForm.stdComplexLineEnergy_eq_lintegral_symplecticForm`: equality of energy
   and symplectic area for an almost everywhere complex-linear differential.
-* `TauCeti.IsConstStructureJHolomorphic.stdComplexLineEnergy_eq_lintegral_symplecticForm`: the
-  energy--area identity for a globally constant-structure `J`-holomorphic map.
+* `TauCeti.SymplecticForm.fderiv_stdComplexLineEnergy_eq_lintegral_symplecticForm`: the
+  energy--area identity for an almost everywhere constant-structure `J`-holomorphic map.
 
 The convention and the energy--area identity follow McDuff--Salamon,
 *J-holomorphic Curves and Symplectic Topology*, Section 2.1.
@@ -101,7 +104,7 @@ lemma stdComplexLineEnergy_def
 attribute [irreducible] stdComplexLineEnergy
 
 /-- Energy depends only on the differential field almost everywhere. -/
-lemma stdComplexLineEnergy_congr
+lemma stdComplexLineEnergy_congr_ae
     (h : du =ᵐ[μ] dv) :
     ω.stdComplexLineEnergy J du μ = ω.stdComplexLineEnergy J dv μ := by
   rw [stdComplexLineEnergy_def, stdComplexLineEnergy_def]
@@ -118,7 +121,7 @@ lemma stdComplexLineEnergy_mono_measure (hμν : μ ≤ ν) :
 @[simp]
 lemma stdComplexLineEnergy_zero :
     ω.stdComplexLineEnergy J (fun _ : X => 0) μ = 0 := by
-  simp [stdComplexLineEnergy_def, stdComplexLineEnergyDensity_def]
+  simp [stdComplexLineEnergy_def]
 
 /-- Every differential has zero energy with respect to the zero measure. -/
 @[simp]
@@ -142,18 +145,20 @@ private lemma energyIntegrand_eq_zero_iff (hω : ω.Tames J)
   · intro h
     exact (ω.stdComplexLineEnergyDensity_eq_zero_iff hω).mp (by linarith)
   · rintro rfl
-    simp [stdComplexLineEnergyDensity_def]
+    simp
 
 /-- Under tameness, energy vanishes exactly when the differential vanishes almost everywhere.
 
 The a.e.-measurability assumption is necessary for the implication from zero energy to a.e.
 vanishing: the lower Lebesgue integral of a nonmeasurable function can be zero without that
-function vanishing almost everywhere. -/
+function vanishing almost everywhere.  It is stated for the real-valued pointwise density, so no
+consumer has to reassemble the normalization that `TauCeti.SymplecticForm.stdComplexLineEnergy`
+applies to it. -/
 lemma stdComplexLineEnergy_eq_zero_iff (hω : ω.Tames J)
-    (hmeas : AEMeasurable
-      (fun x ↦ ENNReal.ofReal (ω.stdComplexLineEnergyDensity J (du x) / 2)) μ) :
+    (hmeas : AEMeasurable (fun x ↦ ω.stdComplexLineEnergyDensity J (du x)) μ) :
     ω.stdComplexLineEnergy J du μ = 0 ↔ du =ᵐ[μ] 0 := by
-  rw [stdComplexLineEnergy_def, lintegral_eq_zero_iff' hmeas]
+  rw [stdComplexLineEnergy_def,
+    lintegral_eq_zero_iff' (AEMeasurable.ennreal_ofReal (hmeas.div_const 2))]
   constructor
   · intro h
     filter_upwards [h] with x hx
@@ -169,7 +174,7 @@ not require measurability. -/
 lemma stdComplexLineEnergy_eq_zero_of_ae_eq_zero
     (hdu : du =ᵐ[μ] 0) :
     ω.stdComplexLineEnergy J du μ = 0 :=
-  (stdComplexLineEnergy_congr hdu).trans stdComplexLineEnergy_zero
+  (stdComplexLineEnergy_congr_ae hdu).trans stdComplexLineEnergy_zero
 
 /-- **Integrated Wirtinger inequality.**  For a compatible pair, the integral of the positive
 symplectic area density is at most the energy. -/
@@ -205,30 +210,30 @@ lemma stdComplexLineEnergy_eq_lintegral_symplecticForm
   congr 1
   ring
 
-end SymplecticForm
-
-namespace IsConstStructureJHolomorphic
+section Map
 
 variable {W : Type*} [NormedAddCommGroup W] [NormedSpace ℝ W]
 variable {J : AlmostComplexStructure W} {ω : SymplecticForm W}
-variable {f : ℝ × ℝ → W}
+variable {f : ℝ × ℝ → W} {μ : Measure (ℝ × ℝ)}
 
-/-- The energy of a globally constant-structure `J`-holomorphic map is the lower Lebesgue
-integral of its symplectic area density.  As in
-`TauCeti.SymplecticForm.stdComplexLineEnergy_eq_lintegral_symplecticForm`, no hypothesis relating
-`ω` and `J` is needed for the identity; a taming pair is what additionally makes the common
-integrand nonnegative, so that neither side is truncated by `ENNReal.ofReal`. -/
-lemma stdComplexLineEnergy_eq_lintegral_symplecticForm
-    (hf : IsConstStructureJHolomorphic (AlmostComplexStructure.product ℝ) J f)
-    (μ : Measure (ℝ × ℝ)) :
+/-- The energy of a map that is constant-structure `J`-holomorphic almost everywhere is the lower
+Lebesgue integral of its symplectic area density.  Holomorphy is needed only almost everywhere, so
+a map holomorphic on a strip or a disk is covered by restricting `μ` to that domain.
+
+As in `TauCeti.SymplecticForm.stdComplexLineEnergy_eq_lintegral_symplecticForm`, no hypothesis
+relating `ω` and `J` is needed for the identity; a taming pair is what additionally makes the
+common integrand nonnegative, so that neither side is truncated by `ENNReal.ofReal`. -/
+lemma fderiv_stdComplexLineEnergy_eq_lintegral_symplecticForm
+    (hf : ∀ᵐ x ∂μ, IsConstStructureJHolomorphicAt (AlmostComplexStructure.product ℝ) J f x) :
     ω.stdComplexLineEnergy J (fun x ↦ (fderiv ℝ f x).toLinearMap) μ =
       ∫⁻ x, ENNReal.ofReal
         (ω (fderiv ℝ f x stdComplexLineReal)
-          (fderiv ℝ f x stdComplexLineImag)) ∂μ := by
-  apply ω.stdComplexLineEnergy_eq_lintegral_symplecticForm
-  filter_upwards with x
-  exact (hf.isConstStructureJHolomorphicAt x).fderiv_isComplexLinear
+          (fderiv ℝ f x stdComplexLineImag)) ∂μ :=
+  ω.stdComplexLineEnergy_eq_lintegral_symplecticForm <|
+    hf.mono fun _ hx => hx.fderiv_isComplexLinear
 
-end IsConstStructureJHolomorphic
+end Map
+
+end SymplecticForm
 
 end TauCeti
