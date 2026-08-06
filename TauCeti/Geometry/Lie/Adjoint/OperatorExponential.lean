@@ -71,17 +71,15 @@ omit [CompleteSpace R] in
 private theorem mulLeft_pow_apply (x y : R) (n : ℕ) :
     ((ContinuousLinearMap.mul ℝ R x) ^ n) y = x ^ n * y := by
   -- Transport Mathlib's linear-map power identity through the explicit bundling boundary.
-  change (((ContinuousLinearMap.mul ℝ R x) ^ n).toLinearMap) y = x ^ n * y
-  rw [ContinuousLinearMap.toLinearMap_pow, mulLeft_toLinearMap, LinearMap.pow_mulLeft,
-    LinearMap.mulLeft_apply]
+  rw [← ContinuousLinearMap.coe_coe, ContinuousLinearMap.toLinearMap_pow,
+    mulLeft_toLinearMap, LinearMap.pow_mulLeft, LinearMap.mulLeft_apply]
 
 omit [CompleteSpace R] in
 private theorem mulRight_pow_apply (x y : R) (n : ℕ) :
     (((ContinuousLinearMap.mul ℝ R).flip x) ^ n) y = y * x ^ n := by
   -- Transport Mathlib's linear-map power identity through the explicit bundling boundary.
-  change ((((ContinuousLinearMap.mul ℝ R).flip x) ^ n).toLinearMap) y = y * x ^ n
-  rw [ContinuousLinearMap.toLinearMap_pow, mulRight_toLinearMap, LinearMap.pow_mulRight,
-    LinearMap.mulRight_apply]
+  rw [← ContinuousLinearMap.coe_coe, ContinuousLinearMap.toLinearMap_pow,
+    mulRight_toLinearMap, LinearMap.pow_mulRight, LinearMap.mulRight_apply]
 
 /-- Exponentiating the bounded left-multiplication operator gives left multiplication by the
 algebra exponential. -/
@@ -91,7 +89,7 @@ theorem exp_mulLeft_apply (x y : R) :
   have hop := (ContinuousLinearMap.apply ℝ R y).hasSum
     (exp_series_hasSum_exp' (𝕂 := ℝ) (ContinuousLinearMap.mul ℝ R x))
   have halg := (exp_series_hasSum_exp' (𝕂 := ℝ) x).mul_right y
-  apply HasSum.unique (hop.congr fun n => ?_) halg
+  apply HasSum.unique (hop.congr_fun fun n => ?_) halg
   simp only [map_smul, ContinuousLinearMap.apply_apply, mulLeft_pow_apply]
   simp only [smul_mul_assoc]
 
@@ -103,7 +101,7 @@ theorem exp_mulRight_apply (x y : R) :
   have hop := (ContinuousLinearMap.apply ℝ R y).hasSum
     (exp_series_hasSum_exp' (𝕂 := ℝ) ((ContinuousLinearMap.mul ℝ R).flip x))
   have halg := (exp_series_hasSum_exp' (𝕂 := ℝ) x).mul_left y
-  apply HasSum.unique (hop.congr fun n => ?_) halg
+  apply HasSum.unique (hop.congr_fun fun n => ?_) halg
   simp only [map_smul, ContinuousLinearMap.apply_apply, mulRight_pow_apply]
   simp only [mul_smul_comm]
 
