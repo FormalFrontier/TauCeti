@@ -101,40 +101,27 @@ namespace Representation
 variable {V : Type*} [AddCommGroup V] [Module k V]
 variable [IsAlgClosed k] [FiniteDimensional k V] (ρ : Representation k G V) [ρ.IsIrreducible]
 
-/-- **The central character on the inverse of a class.** In division-free form: the value of the
-central character on the class sum of `C⁻¹`, times the degree `χ(1)`, is the size of `C` times the
-character value at the inverse of a representative.
-
-This is `TauCeti.Representation.centralCharacter_classSumCenter_mul_character_one` at `C⁻¹`, using
-that `C⁻¹` has the same size as `C`. -/
-theorem centralCharacter_classSumCenter_inv_mul_character_one {C : ConjClasses G} {g : G}
-    (hg : ConjClasses.mk g = C) :
-    centralCharacter ρ (classSumCenter C⁻¹) * ρ.character 1 =
-      Nat.card C.carrier * ρ.character g⁻¹ := by
-  have hg' : ConjClasses.mk g⁻¹ = C⁻¹ := by rw [← ConjClasses.inv_mk, hg]
-  rw [centralCharacter_classSumCenter_mul_character_one ρ hg', ConjClasses.card_carrier_inv]
-
-variable [Invertible (Nat.card G : k)]
-
 /-- **The character value recovered from the central character.** On the class of `g`, the character
 is the degree times the value of the central character on the class sum, divided by the size of the
-class.
+class; the class size is assumed nonzero, which is all the division needs.
 
 This is the conversion from a row of the central character table `Ω` to the corresponding row of the
 ordinary character table `X`; the degree it needs is supplied by
-`TauCeti.Representation.finrank_sq_mul_classRowNorm_eq_card`. -/
+`TauCeti.Representation.finrank_sq_mul_classRowNorm_eq_card`. When the order of the group is
+invertible in `k`, the hypothesis on the class size comes from
+`TauCeti.ConjClasses.card_carrier_cast_ne_zero`. -/
 theorem character_eq_finrank_mul_centralCharacter_div {C : ConjClasses G} {g : G}
-    (hg : ConjClasses.mk g = C) :
+    (hg : ConjClasses.mk g = C) (hcard : (Nat.card C.carrier : k) ≠ 0) :
     ρ.character g =
       (finrank k V : k) * centralCharacter ρ (classSumCenter C) / (Nat.card C.carrier : k) := by
-  have hcard : (Nat.card C.carrier : k) ≠ 0 :=
-    ConjClasses.card_carrier_cast_ne_zero C (Invertible.ne_zero _)
   have h := centralCharacter_classSumCenter_mul_character_one ρ hg
   rw [ρ.char_one] at h
   exact eq_div_of_mul_eq hcard (by linear_combination -h)
 
-/-- **Degree recovery.** The square of the degree of an irreducible representation is the group
-order divided by the class-row norm of its central character:
+variable [Invertible (Nat.card G : k)]
+
+/-- **Degree recovery.** The square of the degree of an irreducible representation, multiplied by
+the class-row norm of its central character, is the group order:
 
 `χ(1)² · ∑_C ωᵪ(K_C) ωᵪ(K_{C⁻¹}) / |C| = |G|`.
 
@@ -158,13 +145,9 @@ theorem finrank_sq_mul_classRowNorm_eq_card :
     have hdual : ClassFunction.toConjClasses (ClassFunction.ofCharacter ρ.dual)
         (ConjClasses.mk g) = ρ.character g⁻¹ := by
       rw [ClassFunction.toConjClasses_mk, ClassFunction.ofCharacter_apply, ρ.char_dual]
-    have hinv := centralCharacter_classSumCenter_inv_mul_character_one ρ
-      (rfl : ConjClasses.mk g = _)
-    rw [ρ.char_one] at hinv
-    have hchar : ρ.character g⁻¹ =
-        centralCharacter ρ (classSumCenter (ConjClasses.mk g)⁻¹) * (finrank k V : k) /
-          (Nat.card (ConjClasses.mk g).carrier : k) :=
-      eq_div_of_mul_eq hcard (by linear_combination -hinv)
+    have hchar := character_eq_finrank_mul_centralCharacter_div ρ (ConjClasses.inv_mk g).symm
+      (by rwa [ConjClasses.card_carrier_inv])
+    rw [ConjClasses.card_carrier_inv] at hchar
     rw [hdual, hchar, classSumRow_apply, classSumRow_apply]
     field_simp
   calc (finrank k V : k) ^ 2 * classRowNorm (classSumRow (centralCharacter ρ))
@@ -207,6 +190,7 @@ is the group order.
 
 Degree recovery then reads `1² · |G| = |G|`: on the trivial representation the formula is exactly
 the statement that the conjugacy classes partition the group. -/
+@[simp]
 theorem classRowNorm_classSumRow_centralCharacter_trivial :
     classRowNorm (classSumRow (centralCharacter (_root_.Representation.trivial k G k))) =
       Nat.card G := by
@@ -257,8 +241,10 @@ theorem character_eq_of_classSumRow_eq : ρ.character = σ.character := by
   have : Invertible (Nat.card G : k) :=
     invertibleOfNonzero (Nat.cast_ne_zero.mpr Nat.card_pos.ne')
   funext g
-  rw [character_eq_finrank_mul_centralCharacter_div ρ (rfl : ConjClasses.mk g = _),
-    character_eq_finrank_mul_centralCharacter_div σ (rfl : ConjClasses.mk g = _),
+  have hcard : (Nat.card (ConjClasses.mk g).carrier : k) ≠ 0 :=
+    ConjClasses.card_carrier_cast_ne_zero _ (Invertible.ne_zero _)
+  rw [character_eq_finrank_mul_centralCharacter_div ρ (rfl : ConjClasses.mk g = _) hcard,
+    character_eq_finrank_mul_centralCharacter_div σ (rfl : ConjClasses.mk g = _) hcard,
     finrank_eq_of_classSumRow_eq ρ σ hρσ, ← classSumRow_apply, hρσ, classSumRow_apply]
 
 end Representation

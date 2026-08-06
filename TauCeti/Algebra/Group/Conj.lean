@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.Algebra.Group.ConjFinite
+public import Mathlib.Data.Set.Card
 public import Mathlib.GroupTheory.GroupAction.Quotient
 
 /-!
@@ -22,7 +23,8 @@ a consequence of the orbit-stabilizer theorem for the conjugation action.
 
 * `TauCeti.isConj_inv_iff`: conjugacy is inherited by inverses in both directions.
 * `TauCeti.ConjClasses.inv_mk`: the inverse of the class of `g` is the class of `g⁻¹`.
-* `TauCeti.ConjClasses.card_carrier_inv`: a conjugacy class and its inverse have the same size.
+* `TauCeti.ConjClasses.ncard_carrier_inv` and `TauCeti.ConjClasses.card_carrier_inv`: a conjugacy
+  class and its inverse have the same size, in `Set.ncard` and in `Nat.card` form.
 * `TauCeti.ConjClasses.card_carrier_dvd_card`: the size of a conjugacy class divides the order of
   the group, with `TauCeti.ConjClasses.card_carrier_cast_ne_zero` the consequence that the size of
   a class is nonzero in any semiring where the group order is.
@@ -87,10 +89,20 @@ theorem mem_carrier_inv_iff {C : ConjClasses G} {x : G} :
 /-- **A conjugacy class and its inverse have the same size**, inversion of the group restricting to
 a bijection between them.
 
-Not `@[simp]`: Mathlib's `Nat.card_coe_set_eq` is itself `simp`, so the left-hand side simplifies
-to `(C⁻¹).carrier.ncard` and the simp normal form linter rejects the pair. -/
-theorem card_carrier_inv (C : ConjClasses G) : Nat.card (C⁻¹).carrier = Nat.card C.carrier :=
+This is the `Set.ncard` form, which is the simp normal form: Mathlib's `Nat.card_coe_set_eq` is
+itself `simp`. See `TauCeti.ConjClasses.card_carrier_inv` for the `Nat.card` form. -/
+@[simp]
+theorem ncard_carrier_inv (C : ConjClasses G) :
+    Set.ncard (C⁻¹).carrier = Set.ncard C.carrier :=
   Nat.card_congr ((Equiv.inv G).subtypeEquiv fun _ => mem_carrier_inv_iff)
+
+/-- **A conjugacy class and its inverse have the same size**, in `Nat.card` form.
+
+Not `@[simp]`: Mathlib's `Nat.card_coe_set_eq` is itself `simp`, so the left-hand side simplifies
+to `(C⁻¹).carrier.ncard` and the simp normal form linter rejects the pair; that normalized form is
+`TauCeti.ConjClasses.ncard_carrier_inv`. -/
+theorem card_carrier_inv (C : ConjClasses G) : Nat.card (C⁻¹).carrier = Nat.card C.carrier :=
+  ncard_carrier_inv C
 
 /-- **The size of a conjugacy class divides the order of the group.** The class is the orbit of any
 of its members under the conjugation action, so its size is the index of a centralizer. -/
