@@ -21,11 +21,11 @@ a consequence of the orbit-stabilizer theorem for the conjugation action.
 ## Main statements
 
 * `TauCeti.isConj_inv_iff`: conjugacy is inherited by inverses in both directions.
-* `TauCeti.conjClasses_inv_mk`: the inverse of the class of `g` is the class of `g⁻¹`.
-* `TauCeti.card_carrier_inv`: a conjugacy class and its inverse have the same size.
-* `TauCeti.card_carrier_dvd_card`: the size of a conjugacy class divides the order of the group,
-  with `TauCeti.card_carrier_cast_ne_zero` the consequence that the size of a class is nonzero in
-  any semiring where the group order is.
+* `TauCeti.ConjClasses.inv_mk`: the inverse of the class of `g` is the class of `g⁻¹`.
+* `TauCeti.ConjClasses.card_carrier_inv`: a conjugacy class and its inverse have the same size.
+* `TauCeti.ConjClasses.card_carrier_dvd_card`: the size of a conjugacy class divides the order of
+  the group, with `TauCeti.ConjClasses.card_carrier_cast_ne_zero` the consequence that the size of
+  a class is nonzero in any semiring where the group order is.
 
 ## Implementation notes
 
@@ -64,25 +64,31 @@ instance instInvolutiveInvConjClasses : InvolutiveInv (ConjClasses G) where
     obtain ⟨g, rfl⟩ := ConjClasses.exists_rep C
     exact congrArg ConjClasses.mk (inv_inv g)
 
+namespace ConjClasses
+
 /-- The inverse of the conjugacy class of `g` is the conjugacy class of `g⁻¹`. -/
 @[simp]
-theorem conjClasses_inv_mk (g : G) : (ConjClasses.mk g)⁻¹ = ConjClasses.mk g⁻¹ :=
+theorem inv_mk (g : G) : (ConjClasses.mk g)⁻¹ = ConjClasses.mk g⁻¹ :=
   (rfl)
 
 /-- The class of the identity is its own inverse. -/
 @[simp]
-theorem conjClasses_inv_one : (1 : ConjClasses G)⁻¹ = 1 := by
-  rw [ConjClasses.one_eq_mk_one, conjClasses_inv_mk, inv_one]
+theorem inv_one : (1 : ConjClasses G)⁻¹ = 1 := by
+  rw [ConjClasses.one_eq_mk_one, inv_mk, _root_.inv_one]
 
 /-- An element lies in the inverse of a conjugacy class exactly when its inverse lies in the
 class. -/
+@[simp]
 theorem mem_carrier_inv_iff {C : ConjClasses G} {x : G} :
     x ∈ (C⁻¹).carrier ↔ x⁻¹ ∈ C.carrier := by
   rw [ConjClasses.mem_carrier_iff_mk_eq, ConjClasses.mem_carrier_iff_mk_eq,
-    ← conjClasses_inv_mk, inv_eq_iff_eq_inv]
+    ← inv_mk, inv_eq_iff_eq_inv]
 
 /-- **A conjugacy class and its inverse have the same size**, inversion of the group restricting to
-a bijection between them. -/
+a bijection between them.
+
+Not `@[simp]`: Mathlib's `Nat.card_coe_set_eq` is itself `simp`, so the left-hand side simplifies
+to `(C⁻¹).carrier.ncard` and the simp normal form linter rejects the pair. -/
 theorem card_carrier_inv (C : ConjClasses G) : Nat.card (C⁻¹).carrier = Nat.card C.carrier :=
   Nat.card_congr ((Equiv.inv G).subtypeEquiv fun _ => mem_carrier_inv_iff)
 
@@ -106,5 +112,7 @@ nonzero: it divides that order. -/
 theorem card_carrier_cast_ne_zero {R : Type*} [Semiring R] [Finite G] (C : ConjClasses G)
     (h : (Nat.card G : R) ≠ 0) : (Nat.card C.carrier : R) ≠ 0 :=
   ne_zero_of_dvd_ne_zero h (Nat.cast_dvd_cast (card_carrier_dvd_card C))
+
+end ConjClasses
 
 end TauCeti

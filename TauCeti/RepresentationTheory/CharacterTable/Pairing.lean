@@ -149,7 +149,8 @@ theorem characterPairing_nondegenerate [Invertible (Nat.card G : k)] :
   have hpair := hf (classIndicator (k := k) x⁻¹)
   rw [characterPairing_classIndicator_inv] at hpair
   exact (mul_ne_zero (inv_ne_zero (Invertible.ne_zero _))
-    (mul_ne_zero (card_carrier_cast_ne_zero (R := k) _ (Invertible.ne_zero _)) hfx)) hpair
+    (mul_ne_zero (ConjClasses.card_carrier_cast_ne_zero (R := k) _ (Invertible.ne_zero _))
+      hfx)) hpair
 
 /-- The pairing of two representation characters is Mathlib's normalized character sum. -/
 theorem characterPairing_ofCharacter {V W : Type*} [AddCommGroup V] [Module k V]

@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+public import Mathlib.GroupTheory.ClassEquation
 public import TauCeti.RepresentationTheory.CharacterTable.Degree
 public import TauCeti.RepresentationTheory.CharacterTable.ClassSum.Eigenrow
 
@@ -72,7 +73,9 @@ namespace TauCeti
 open Module (finrank)
 open scoped MonoidAlgebra
 
-variable {k G : Type*} [Field k] [Group G] [Fintype G] [DecidableEq G]
+section ClassRowNorm
+
+variable {k G : Type*} [DivisionSemiring k] [Group G] [Fintype (ConjClasses G)]
 
 /-- The **class-row norm** of a row of scalars indexed by the conjugacy classes of `G`:
 `∑_C v(C) v(C⁻¹) / |C|`, each term weighted by the reciprocal of the size of the class.
@@ -85,9 +88,13 @@ noncomputable def classRowNorm (v : ConjClasses G → k) : k :=
   ∑ C : ConjClasses G, v C * v C⁻¹ / (Nat.card C.carrier : k)
 
 /-- The defining formula for `TauCeti.classRowNorm`. -/
-theorem classRowNorm_eq_sum (v : ConjClasses G → k) :
+theorem classRowNorm_def (v : ConjClasses G → k) :
     classRowNorm v = ∑ C : ConjClasses G, v C * v C⁻¹ / (Nat.card C.carrier : k) :=
   (rfl)
+
+end ClassRowNorm
+
+variable {k G : Type*} [Field k] [Group G] [Fintype G] [DecidableEq G]
 
 namespace Representation
 
@@ -104,8 +111,8 @@ theorem centralCharacter_classSumCenter_inv_mul_character_one {C : ConjClasses G
     (hg : ConjClasses.mk g = C) :
     centralCharacter ρ (classSumCenter C⁻¹) * ρ.character 1 =
       Nat.card C.carrier * ρ.character g⁻¹ := by
-  have hg' : ConjClasses.mk g⁻¹ = C⁻¹ := by rw [← conjClasses_inv_mk, hg]
-  rw [centralCharacter_classSumCenter_mul_character_one ρ hg', card_carrier_inv]
+  have hg' : ConjClasses.mk g⁻¹ = C⁻¹ := by rw [← ConjClasses.inv_mk, hg]
+  rw [centralCharacter_classSumCenter_mul_character_one ρ hg', ConjClasses.card_carrier_inv]
 
 variable [Invertible (Nat.card G : k)]
 
@@ -121,7 +128,7 @@ theorem character_eq_finrank_mul_centralCharacter_div {C : ConjClasses G} {g : G
     ρ.character g =
       (finrank k V : k) * centralCharacter ρ (classSumCenter C) / (Nat.card C.carrier : k) := by
   have hcard : (Nat.card C.carrier : k) ≠ 0 :=
-    card_carrier_cast_ne_zero C (Invertible.ne_zero _)
+    ConjClasses.card_carrier_cast_ne_zero C (Invertible.ne_zero _)
   have h := centralCharacter_classSumCenter_mul_character_one ρ hg
   rw [ρ.char_one] at h
   exact eq_div_of_mul_eq hcard (by linear_combination -h)
@@ -147,7 +154,7 @@ theorem finrank_sq_mul_classRowNorm_eq_card :
     intro C
     obtain ⟨g, rfl⟩ := ConjClasses.exists_rep C
     have hcard : (Nat.card (ConjClasses.mk g).carrier : k) ≠ 0 :=
-      card_carrier_cast_ne_zero _ (Invertible.ne_zero _)
+      ConjClasses.card_carrier_cast_ne_zero _ (Invertible.ne_zero _)
     have hdual : ClassFunction.toConjClasses (ClassFunction.ofCharacter ρ.dual)
         (ConjClasses.mk g) = ρ.character g⁻¹ := by
       rw [ClassFunction.toConjClasses_mk, ClassFunction.ofCharacter_apply, ρ.char_dual]
@@ -164,7 +171,7 @@ theorem finrank_sq_mul_classRowNorm_eq_card :
       = (finrank k V : k) * ∑ C : ConjClasses G, (finrank k V : k) *
           (classSumRow (centralCharacter ρ) C * classSumRow (centralCharacter ρ) C⁻¹ /
             (Nat.card C.carrier : k)) := by
-        rw [classRowNorm_eq_sum, Finset.mul_sum, Finset.mul_sum]
+        rw [classRowNorm_def, Finset.mul_sum, Finset.mul_sum]
         exact Finset.sum_congr rfl fun C _ => by ring
     _ = (finrank k V : k) * ∑ C : ConjClasses G, centralCharacter ρ (classSumCenter C) *
           ClassFunction.toConjClasses (ClassFunction.ofCharacter ρ.dual) C := by
@@ -203,11 +210,18 @@ the statement that the conjugacy classes partition the group. -/
 theorem classRowNorm_classSumRow_centralCharacter_trivial :
     classRowNorm (classSumRow (centralCharacter (_root_.Representation.trivial k G k))) =
       Nat.card G := by
-  rw [classRowNorm_eq_sum, ← ClassFunction.sum_card_carrier_eq_card (k := k) (G := G)]
-  refine Finset.sum_congr rfl fun C _ => ?_
-  rw [classSumRow_apply, classSumRow_apply, centralCharacter_trivial_classSumCenter,
-    centralCharacter_trivial_classSumCenter, card_carrier_inv]
-  exact mul_div_cancel_right₀ _ (card_carrier_cast_ne_zero C (Invertible.ne_zero _))
+  have hpart : ∑ C : ConjClasses G, Nat.card C.carrier = Nat.card G := by
+    rw [← Group.sum_card_conj_classes_eq_card G, finsum_eq_sum_of_fintype]
+    exact Finset.sum_congr rfl fun C _ => Nat.card_coe_set_eq C.carrier
+  have hterm : ∀ C : ConjClasses G,
+      classSumRow (centralCharacter (_root_.Representation.trivial k G k)) C *
+          classSumRow (centralCharacter (_root_.Representation.trivial k G k)) C⁻¹ /
+            (Nat.card C.carrier : k) = (Nat.card C.carrier : k) := fun C => by
+    rw [classSumRow_apply, classSumRow_apply, centralCharacter_trivial_classSumCenter,
+      centralCharacter_trivial_classSumCenter, ConjClasses.card_carrier_inv]
+    exact mul_div_cancel_right₀ _
+      (ConjClasses.card_carrier_cast_ne_zero C (Invertible.ne_zero _))
+  rw [classRowNorm_def, Finset.sum_congr rfl fun C _ => hterm C, ← Nat.cast_sum, hpart]
 
 end Trivial
 
