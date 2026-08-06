@@ -10,7 +10,6 @@ public import TauCeti.Analysis.SpecialFunctions.Trigonometric.Chebyshev.Envelope
 public import TauCeti.Analysis.SpecialFunctions.Trigonometric.Chebyshev.HilbertBasis
 public import TauCeti.MeasureTheory.Function.Lp.CastMeasure
 public import TauCeti.MeasureTheory.Function.WeightL2Isometry
-import Mathlib.MeasureTheory.Measure.HasOuterApproxClosed
 
 /-!
 # The two Chebyshev normalizations are images of one another
@@ -30,15 +29,12 @@ vectors.
 
 The one thing standing in the way was that `Polynomial.Chebyshev.measureT` is not reducible outside
 the module defining it, so the identity `measureT = w · (volume|_{(-1,1]})` was not available and
-`TauCeti.weightL2Isometry` could not be pointed at it. That identity,
-`TauCeti.chebyshevMeasureT_eq_withDensity`, is proved here from the *public* integral formula
-`Polynomial.Chebyshev.integral_measureT`: both measures are finite, and two finite Borel measures
-that integrate every bounded continuous function alike are equal.
+`TauCeti.weightL2Isometry` could not be pointed at it. That identity is
+`TauCeti.chebyshevMeasureT_eq_withDensity`, recorded with the rest of the Chebyshev measure API in
+`TauCeti.Analysis.SpecialFunctions.Trigonometric.Chebyshev.Measure`.
 
 ## Main statements
 
-* `TauCeti.chebyshevMeasureT_eq_withDensity` — `measureT` is Lebesgue measure on `(-1, 1]` weighted
-  by `(1-x²)^{-1/2}`.
 * `TauCeti.chebyshevWeightL2Isometry` — the resulting isometry
   `L²(measureT) ≃ₗᵢ[𝕜] L²((-1, 1]; dx)`, multiplication by `√w`.
 * `TauCeti.chebyshevWeightL2Isometry_normalizedChebyshevTLp` — it carries the normalized mode
@@ -56,54 +52,6 @@ public section
 namespace TauCeti
 
 open MeasureTheory Polynomial.Chebyshev
-
-/-! ## The Chebyshev measure is a weighted Lebesgue measure -/
-
-/-- The weighted Lebesgue measure `w · (volume|_{(-1,1]})` is finite: its total mass is the integral
-of the weight over a bounded interval, which Mathlib's
-`Polynomial.Chebyshev.intervalIntegrable_sqrt_one_sub_sq_inv` supplies. -/
-instance chebyshevWeightedVolume.instIsFiniteMeasure :
-    IsFiniteMeasure ((volume.restrict (Set.Ioc (-1 : ℝ) 1)).withDensity
-      fun x => ENNReal.ofReal (√(1 - x ^ 2)⁻¹)) where
-  measure_univ_lt_top := by
-    rw [withDensity_apply _ MeasurableSet.univ, Measure.restrict_univ,
-      ← ofReal_integral_eq_lintegral_ofReal intervalIntegrable_sqrt_one_sub_sq_inv.1
-        (Filter.Eventually.of_forall fun x => Real.sqrt_nonneg _)]
-    exact ENNReal.ofReal_lt_top
-
-/-- **The Chebyshev measure is Lebesgue measure on `(-1, 1]` weighted by `(1-x²)^{-1/2}`.**
-
-Mathlib defines `Polynomial.Chebyshev.measureT` this way but does not expose the definition, so the
-identity has to be recovered from the public integral formula
-`Polynomial.Chebyshev.integral_measureT`. Both measures are finite, and a finite Borel measure on
-`ℝ` is determined by the integrals of bounded continuous functions
-(`MeasureTheory.ext_of_forall_integral_eq_of_IsFiniteMeasure`).
-
-This is what lets `TauCeti.weightL2Isometry` — whose domain is spelled `L²(μ.withDensity …)` — be
-applied to `L²(measureT)`. -/
-theorem chebyshevMeasureT_eq_withDensity :
-    (measureT : Measure ℝ)
-      = (volume.restrict (Set.Ioc (-1 : ℝ) 1)).withDensity
-          fun x => ENNReal.ofReal (√(1 - x ^ 2)⁻¹) := by
-  refine ext_of_forall_integral_eq_of_IsFiniteMeasure fun f => ?_
-  rw [integral_measureT fun x => f x,
-    integral_withDensity_eq_integral_toReal_smul measurable_chebyshevWeight.ennreal_ofReal
-      (Filter.Eventually.of_forall fun _ => ENNReal.ofReal_lt_top),
-    intervalIntegral.integral_of_le (by norm_num : (-1 : ℝ) ≤ 1)]
-  refine integral_congr_ae (Filter.Eventually.of_forall fun x => ?_)
-  simp only [smul_eq_mul, ENNReal.toReal_ofReal (Real.sqrt_nonneg ((1 - x ^ 2)⁻¹))]
-  exact mul_comm _ _
-
-/-- Lebesgue measure on `(-1, 1]` is absolutely continuous with respect to the Chebyshev measure:
-the weight is almost everywhere positive there, so weighting by it destroys no null sets. This is
-what moves an almost-everywhere identity between representatives from `measureT` to `dx`. -/
-theorem volume_restrict_absolutelyContinuous_measureT :
-    (volume.restrict (Set.Ioc (-1 : ℝ) 1)) ≪ (measureT : Measure ℝ) := by
-  rw [chebyshevMeasureT_eq_withDensity]
-  refine withDensity_absolutelyContinuous' measurable_chebyshevWeight.ennreal_ofReal.aemeasurable ?_
-  filter_upwards [ae_zero_lt_chebyshevWeight] with x hx
-  simp only [ne_eq, ENNReal.ofReal_eq_zero, not_le]
-  exact hx
 
 /-! ## The weight-change isometry for the Chebyshev interval -/
 
@@ -156,6 +104,7 @@ theorem chebyshevWeightL2Isometry_symm_apply (g : Lp 𝕜 2 (volume.restrict (Se
 /-- **The isometry carries the normalized Chebyshev mode to the envelope function.**
 `√w · (Tₙ/√cₙ) = τₙ`: the weight moves from the measure into the function, and nothing else
 changes — no dilation of the argument and no change of normalizing constant. -/
+@[simp]
 theorem chebyshevWeightL2Isometry_normalizedChebyshevTLp (n : ℕ) :
     chebyshevWeightL2Isometry 𝕜 (normalizedChebyshevTLp 𝕜 n) = chebyshevTEnvelopeLp 𝕜 n := by
   refine Lp.ext ?_
@@ -173,6 +122,7 @@ This is the Chebyshev instance of the roadmap's claim that a family's weighted-m
 `√w`-envelope bases are `HilbertBasis.mapₗᵢ`-images of one another; unlike the Gaussian instance it
 needs no dilation, so it is an equality of bases rather than of individual vectors up to a change of
 variables. -/
+@[simp]
 theorem chebyshevTHilbertBasis_mapₗᵢ :
     (chebyshevTHilbertBasis 𝕜).mapₗᵢ (chebyshevWeightL2Isometry 𝕜)
       = chebyshevTEnvelopeHilbertBasis 𝕜 := by
@@ -182,6 +132,7 @@ theorem chebyshevTHilbertBasis_mapₗᵢ :
 
 /-- The reverse transport: dividing the envelope basis by `√w` returns the bare-polynomial basis of
 `L²(measureT)`. -/
+@[simp]
 theorem chebyshevTEnvelopeHilbertBasis_mapₗᵢ_symm :
     (chebyshevTEnvelopeHilbertBasis 𝕜).mapₗᵢ (chebyshevWeightL2Isometry 𝕜).symm
       = chebyshevTHilbertBasis 𝕜 := by

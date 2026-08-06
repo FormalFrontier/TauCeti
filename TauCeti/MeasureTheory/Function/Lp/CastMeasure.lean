@@ -56,8 +56,20 @@ noncomputable def castLpₗᵢ {α E 𝕜 : Type*} [MeasurableSpace α] [NormedF
     (h : μ = ν) : Lp E p μ ≃ₗᵢ[𝕜] Lp E p ν :=
   h.rec (motive := fun m _ => Lp E p μ ≃ₗᵢ[𝕜] Lp E p m) (LinearIsometryEquiv.refl 𝕜 _)
 
-/-- **The isometric cast does not move representatives.** -/
+/-- **The isometric cast is the transport `cast`.** This is what lets a consumer rewrite the
+transported vector itself, rather than only its representative, so no extensionality step is needed
+to get at it. -/
 @[simp]
+theorem castLpₗᵢ_apply {α E 𝕜 : Type*} [MeasurableSpace α] [NormedField 𝕜]
+    [NormedAddCommGroup E] [NormedSpace 𝕜 E] {p : ℝ≥0∞} [Fact (1 ≤ p)] {μ ν : Measure α}
+    (h : μ = ν) (f : Lp E p μ) :
+    castLpₗᵢ (𝕜 := 𝕜) h f = cast (congrArg (fun m : Measure α => (Lp E p m : Type _)) h) f := by
+  subst h
+  rfl
+
+/-- **The isometric cast does not move representatives.** This is not itself a `simp` lemma:
+`TauCeti.castLpₗᵢ_apply` followed by `TauCeti.coeFn_cast_lp` already reduces its left-hand side,
+so `simp` reaches the same normal form and marking it too would only duplicate them. -/
 theorem coeFn_castLpₗᵢ {α E 𝕜 : Type*} [MeasurableSpace α] [NormedField 𝕜]
     [NormedAddCommGroup E] [NormedSpace 𝕜 E] {p : ℝ≥0∞} [Fact (1 ≤ p)] {μ ν : Measure α}
     (h : μ = ν) (f : Lp E p μ) (x : α) :
