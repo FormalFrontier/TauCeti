@@ -5,7 +5,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.RepresentationTheory.Irreducible
-public import Mathlib.RingTheory.SimpleModule.Basic
 
 /-!
 # The representation carried by a `k[G]`-module
@@ -60,8 +59,9 @@ theorem ofModule'_apply (g : G) (x : M) :
   rfl
 
 /-- The algebra map of `Representation.ofModule' M` is the action of `k[G]` on `M` that it was
-built from.  Both are the `k[G]`-linear extension of the same map on group elements, and
-`MonoidAlgebra.lift` says that extension is unique. -/
+built from. -/
+-- Both are the `k[G]`-linear extension of the same map on group elements, and `MonoidAlgebra.lift`
+-- says that extension is unique.
 theorem asAlgebraHom_ofModule' :
     (_root_.Representation.ofModule' (k := k) (G := G) M).asAlgebraHom = Algebra.lsmul k k M := by
   rw [_root_.Representation.asAlgebraHom_def, _root_.Representation.ofModule']
@@ -75,9 +75,7 @@ theorem asAlgebraHom_ofModule'_apply (r : k[G]) (x : M) :
 
 /-- **The `k[G]`-module underlying `Representation.ofModule' M` is `M` itself.**  The map is the
 identity; the content is that the two `k[G]`-actions agree. -/
--- `@[expose]` is needed: without the body, the `rfl` proof of the characteristic lemma
--- `ofModule'AsModuleEquiv_apply` below cannot be checked outside this module.
-@[expose] noncomputable def ofModule'AsModuleEquiv :
+noncomputable def ofModule'AsModuleEquiv :
     (_root_.Representation.ofModule' (k := k) (G := G) M).asModule ≃ₗ[k[G]] M where
   toFun := (_root_.Representation.ofModule' (k := k) (G := G) M).asModuleEquiv
   invFun := (_root_.Representation.ofModule' (k := k) (G := G) M).asModuleEquiv.symm
@@ -90,11 +88,14 @@ identity; the content is that the two `k[G]`-actions agree. -/
 
 /-- `TauCeti.Representation.ofModule'AsModuleEquiv` is the identity map: its two sides are the
 same type, and all it records is that their `k[G]`-actions agree. -/
+-- The proof is written `(rfl)` rather than `rfl`: the parenthesised form suppresses the automatic
+-- `@[defeq]` tag, which an exported theorem may carry only if the definitions it unfolds are
+-- exposed, and there is no reason to expose the body of the equivalence.
 @[simp]
 theorem ofModule'AsModuleEquiv_apply
     (x : (_root_.Representation.ofModule' (k := k) (G := G) M).asModule) :
     ofModule'AsModuleEquiv M x = x :=
-  rfl
+  (rfl)
 
 end Semiring
 
