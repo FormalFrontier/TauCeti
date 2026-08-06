@@ -45,7 +45,7 @@ orthonormality forbids repetitions, so the matching is a permutation.
 * `TauCeti.characterTable_unique_rows`: **labeled uniqueness**, a matrix satisfying the
   specification is the character table up to a permutation of rows. With
   `TauCeti.IsCharacterTableSpec.submatrix`, that a row permutation preserves the specification, this
-  becomes the characterization `TauCeti.isCharacterTableSpec_iff_exists_equiv` of the matrices
+  becomes the characterization `TauCeti.isCharacterTableSpec_iff_exists_perm` of the matrices
   satisfying it, and `TauCeti.IsCharacterTableSpec.exists_perm_eq`: any two of them differ by a
   permutation of rows.
 * `TauCeti.IsCharacterTableSpec.exists_eq_characterTable`: the row-by-row form of uniqueness, that
@@ -59,8 +59,9 @@ the Hermitian one, which is the form the algorithm checks. The normalized row
 `TauCeti.centralCharacterRow_characterTable` (the normalized rows of the character table are the
 rows of the central character table) is available wherever the two tables are.
 
-The group is left implicit in `TauCeti.IsCharacterTableSpec`, being determined by the type of the
-matrix.
+The group is an explicit argument of `TauCeti.IsCharacterTableSpec`, as the roadmap pins it: the
+specification is read as a statement about `G`, and `IsCharacterTableSpec G M` says what it says
+without having to recover `G` from the type of `M`.
 
 Three of the four conditions do the work in `TauCeti.characterTable_unique_rows`: the positivity
 and integrality of the degrees, row orthonormality, and the eigenrow condition. The divisibility
@@ -164,7 +165,7 @@ labeled by the conjugacy classes of `G` satisfies it when
 These are conditions on the structure constants of the class algebra and on the entries of `M`
 alone, mentioning no representation, and they determine `M` up to a permutation of its rows
 (`TauCeti.characterTable_unique_rows`). -/
-structure IsCharacterTableSpec
+structure IsCharacterTableSpec (G : Type v) [Group G] [Fintype G] [DecidableEq G]
     (M : Matrix (Fin (Nat.card (ConjClasses G))) (ConjClasses G) ℂ) : Prop where
   /-- The identity column consists of positive integers dividing the order of `G`. -/
   exists_degree : ∀ i, ∃ d : ℕ, 0 < d ∧ M i (ConjClasses.mk 1) = (d : ℂ) ∧ d ∣ Nat.card G
@@ -181,7 +182,7 @@ which are positive and divide `|G|` and whose squares sum to `|G|`; the rows are
 first orthogonality relation; and the normalized rows are the rows of the central character table,
 which are eigenrows because a central character is an algebra homomorphism out of the centre. -/
 theorem isCharacterTableSpec_characterTable (G : Type v) [Group G] [Fintype G] [DecidableEq G] :
-    IsCharacterTableSpec (characterTable ℂ G) where
+    IsCharacterTableSpec G (characterTable ℂ G) where
   exists_degree i :=
     ⟨characterDegree ℂ i, characterDegree_pos ℂ i, characterTable_one i,
       characterDegree_dvd_card ℂ i⟩
@@ -199,7 +200,7 @@ theorem isCharacterTableSpec_characterTable (G : Type v) [Group G] [Fintype G] [
 
 namespace IsCharacterTableSpec
 
-variable (hM : IsCharacterTableSpec M) (i : Fin (Nat.card (ConjClasses G)))
+variable (hM : IsCharacterTableSpec G M) (i : Fin (Nat.card (ConjClasses G)))
 include hM
 
 /-- The identity column of a matrix satisfying the specification has no zero entry. -/
@@ -268,7 +269,7 @@ theorem exists_eq_characterTable : ∃ j, ∀ C, M i C = characterTable ℂ G j 
 
 /-- Permuting the rows of a matrix satisfying the specification gives a matrix satisfying it. -/
 theorem submatrix (σ : Equiv.Perm (Fin (Nat.card (ConjClasses G)))) :
-    IsCharacterTableSpec (M.submatrix σ id) where
+    IsCharacterTableSpec G (M.submatrix σ id) where
   exists_degree i := hM.exists_degree (σ i)
   sum_degree_sq := by
     rw [← hM.sum_degree_sq]
@@ -290,7 +291,7 @@ its rows, and of its rows only.
 Each row is a row of the character table (`TauCeti.IsCharacterTableSpec.exists_eq_characterTable`),
 and the assignment is injective because two equal rows would pair to `1` rather than to `0`; an
 injective self-map of a finite type is a permutation. -/
-theorem characterTable_unique_rows (hM : IsCharacterTableSpec M) :
+theorem characterTable_unique_rows (hM : IsCharacterTableSpec G M) :
     ∃ σ : Equiv.Perm (Fin (Nat.card (ConjClasses G))),
       M = (characterTable ℂ G).submatrix σ id := by
   choose τ hτ using hM.exists_eq_characterTable
@@ -308,8 +309,8 @@ theorem characterTable_unique_rows (hM : IsCharacterTableSpec M) :
 
 /-- **The matrices satisfying the specification are exactly the row permutations of the character
 table**: the specification recognizes the character table, and nothing else. -/
-theorem isCharacterTableSpec_iff_exists_equiv :
-    IsCharacterTableSpec M ↔ ∃ σ : Equiv.Perm (Fin (Nat.card (ConjClasses G))),
+theorem isCharacterTableSpec_iff_exists_perm :
+    IsCharacterTableSpec G M ↔ ∃ σ : Equiv.Perm (Fin (Nat.card (ConjClasses G))),
       M = (characterTable ℂ G).submatrix σ id :=
   ⟨characterTable_unique_rows, by
     rintro ⟨σ, rfl⟩
@@ -320,10 +321,10 @@ character table up to such a permutation, so a solver that returns a matrix pass
 returned the same table as any other. -/
 theorem IsCharacterTableSpec.exists_perm_eq
     {N : Matrix (Fin (Nat.card (ConjClasses G))) (ConjClasses G) ℂ}
-    (hM : IsCharacterTableSpec M) (hN : IsCharacterTableSpec N) :
+    (hM : IsCharacterTableSpec G M) (hN : IsCharacterTableSpec G N) :
     ∃ σ : Equiv.Perm (Fin (Nat.card (ConjClasses G))), M = N.submatrix σ id := by
-  obtain ⟨σ, rfl⟩ := isCharacterTableSpec_iff_exists_equiv.mp hM
-  obtain ⟨τ, rfl⟩ := isCharacterTableSpec_iff_exists_equiv.mp hN
+  obtain ⟨σ, rfl⟩ := isCharacterTableSpec_iff_exists_perm.mp hM
+  obtain ⟨τ, rfl⟩ := isCharacterTableSpec_iff_exists_perm.mp hN
   exact ⟨τ⁻¹ * σ, by ext i C; simp⟩
 
 end Spec
