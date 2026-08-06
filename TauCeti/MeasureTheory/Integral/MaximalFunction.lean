@@ -59,8 +59,8 @@ ball is the whole space — and that degenerate case is proved separately.
   `TauCeti.lt_maximalFunction_iff` as its interface.
 * `TauCeti.maximalFunction_const`: the maximal function of a constant is that constant, so the
   normalisation is the intended one.
-* `TauCeti.maximalFunction_mono`, `TauCeti.maximalFunction_congr_ae`: `M f` depends on `f` only
-  through `‖f‖ₑ`, and only up to a null set.
+* `TauCeti.maximalFunction_mono_ae`, `TauCeti.maximalFunction_congr_ae`: `M` is monotone in `‖f‖ₑ`
+  almost everywhere, so `M f` depends on `f` only through `‖f‖ₑ` and only up to a null set.
 * `TauCeti.maximalFunction_add_le`, `TauCeti.maximalFunction_const_smul`: `M` is sublinear, which
   is what Marcinkiewicz interpolation will ask of it.
 * `TauCeti.maximalFunction_le_eLpNormEssSup`: the `L^∞` endpoint.
@@ -124,8 +124,8 @@ theorem lt_maximalFunction_iff :
   rw [maximalFunction_def]
   simp only [lt_iSup_iff, exists_prop]
 
-/-- The maximal function depends on `f` only through `‖f‖ₑ`, and only up to a null set. -/
-theorem maximalFunction_mono (h : ∀ᵐ y ∂μ, ‖f y‖ₑ ≤ ‖g y‖ₑ) :
+/-- If `‖f‖ₑ ≤ ‖g‖ₑ` almost everywhere, then `M f ≤ M g`. -/
+theorem maximalFunction_mono_ae (h : ∀ᵐ y ∂μ, ‖f y‖ₑ ≤ ‖g y‖ₑ) :
     maximalFunction μ f x ≤ maximalFunction μ g x :=
   maximalFunction_le fun _ hr =>
     (setLAverage_mono_ae _ h).trans (setLAverage_le_maximalFunction μ g x hr)
@@ -133,8 +133,8 @@ theorem maximalFunction_mono (h : ∀ᵐ y ∂μ, ‖f y‖ₑ ≤ ‖g y‖ₑ)
 /-- Functions whose norms agree almost everywhere have the same maximal function. -/
 theorem maximalFunction_congr_ae (h : ∀ᵐ y ∂μ, ‖f y‖ₑ = ‖g y‖ₑ) :
     maximalFunction μ f x = maximalFunction μ g x :=
-  le_antisymm (maximalFunction_mono (h.mono fun _ hy => hy.le))
-    (maximalFunction_mono (h.mono fun _ hy => hy.ge))
+  le_antisymm (maximalFunction_mono_ae (h.mono fun _ hy => hy.le))
+    (maximalFunction_mono_ae (h.mono fun _ hy => hy.ge))
 
 /-- The `L^∞` endpoint of the maximal inequality: the maximal function of `f` is bounded by the
 essential supremum of `‖f‖`, with constant `1`. -/
@@ -149,9 +149,8 @@ so no factor of the measure of a ball is left behind. -/
 theorem maximalFunction_const [ProperSpace X] (μ : Measure X) [μ.IsOpenPosMeasure]
     [IsFiniteMeasureOnCompacts μ] (c : F) (x : X) :
     maximalFunction μ (fun _ => c) x = ‖c‖ₑ := by
-  have key : ∀ r : ℝ, 0 < r → ⨍⁻ _y in ball x r, ‖c‖ₑ ∂μ = ‖c‖ₑ := fun r hr => by
-    rw [setLAverage_eq, setLIntegral_const,
-      ENNReal.mul_div_cancel_right (measure_ball_pos μ x hr).ne' measure_ball_lt_top.ne]
+  have key : ∀ r : ℝ, 0 < r → ⨍⁻ _y in ball x r, ‖c‖ₑ ∂μ = ‖c‖ₑ := fun r hr =>
+    setLAverage_const (measure_ball_pos μ x hr).ne' measure_ball_lt_top.ne ‖c‖ₑ
   refine le_antisymm (maximalFunction_le fun r hr => (key r hr).le) ?_
   exact (key 1 one_pos).ge.trans (setLAverage_le_maximalFunction μ _ x one_pos)
 
@@ -176,8 +175,8 @@ theorem maximalFunction_const_smul {𝕜 : Type*} [NormedRing 𝕜] [SMul 𝕜 F
 
 variable {G : Type*} [TopologicalSpace G] [ESeminormedAddMonoid G] {f g : X → G}
 
-/-- The maximal function is subadditive, the second half of that sublinearity. Only the first
-summand needs to be measurable, as that is all `lintegral_add_left'` asks for. -/
+/-- The maximal function is subadditive, the second half of that sublinearity. Only the norm of the
+first summand need be measurable. -/
 theorem maximalFunction_add_le (hf : AEMeasurable (fun y => ‖f y‖ₑ) μ) (x : X) :
     maximalFunction μ (f + g) x ≤ maximalFunction μ f x + maximalFunction μ g x := by
   refine maximalFunction_le fun r hr => ?_
