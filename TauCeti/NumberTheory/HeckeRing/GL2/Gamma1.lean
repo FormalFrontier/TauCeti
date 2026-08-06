@@ -8,6 +8,9 @@ module
 public import TauCeti.NumberTheory.HeckeRing.GLn.Basic
 public import Mathlib.NumberTheory.ModularForms.CongruenceSubgroups
 
+-- only the Γ₀ unit-entry lemma is needed, and only inside a proof
+import TauCeti.NumberTheory.ModularForms.CongruenceSubgroups
+
 /-!
 # The Hecke triple of `Γ₁(N)`
 
@@ -111,8 +114,7 @@ lemma Gamma1Image_le_Delta0 : (Gamma1Image N).toSubmonoid ≤ Delta0 N := by
   obtain ⟨σ, hσ, rfl⟩ := (mem_Gamma1Image_iff N).mp hg
   obtain ⟨ha, -, hc⟩ := (Gamma1_mem _ _).mp hσ
   refine (mem_Delta0_iff N).mpr ⟨(σ : Matrix (Fin 2) (Fin 2) ℤ), ?_, ?_, ?_, ha ▸ isUnit_one⟩
-  · rw [mapGL_coe_matrix]
-    rfl
+  · simp [mapGL_coe_matrix, algebraMap_int_eq]
   · rw [mapGL_coe_matrix, (SpecialLinearGroup.map (algebraMap ℤ ℚ) σ).prop]
     exact one_pos
   · exact (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp hc
@@ -124,27 +126,12 @@ lemma Gamma0_map_le_Delta0 :
     ((Gamma0 N).map (mapGL ℚ)).toSubmonoid ≤ Delta0 N := by
   intro g hg
   obtain ⟨σ, hσ, rfl⟩ := Subgroup.mem_map.mp hg
-  have hc : ((σ : Matrix (Fin 2) (Fin 2) ℤ) 1 0 : ZMod N) = 0 := Gamma0_mem.mp hσ
-  have hdet : (σ : Matrix (Fin 2) (Fin 2) ℤ) 0 0 * (σ : Matrix (Fin 2) (Fin 2) ℤ) 1 1 -
-      (σ : Matrix (Fin 2) (Fin 2) ℤ) 0 1 * (σ : Matrix (Fin 2) (Fin 2) ℤ) 1 0 = 1 := by
-    have := σ.prop
-    rwa [Matrix.det_fin_two] at this
-  refine (mem_Delta0_iff N).mpr ⟨(σ : Matrix (Fin 2) (Fin 2) ℤ), ?_, ?_, ?_, ?_⟩
-  · rw [mapGL_coe_matrix]
-    rfl
+  refine (mem_Delta0_iff N).mpr ⟨(σ : Matrix (Fin 2) (Fin 2) ℤ), ?_, ?_, ?_,
+    isUnit_intCast_apply_zero_zero_of_mem_Gamma0 hσ⟩
+  · simp [mapGL_coe_matrix, algebraMap_int_eq]
   · rw [mapGL_coe_matrix, (SpecialLinearGroup.map (algebraMap ℤ ℚ) σ).prop]
     exact one_pos
-  · exact (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp hc
-  · refine IsUnit.of_mul_eq_one (((σ : Matrix (Fin 2) (Fin 2) ℤ) 1 1 : ZMod N)) ?_
-    have hcast : (((σ : Matrix (Fin 2) (Fin 2) ℤ) 0 0 *
-        (σ : Matrix (Fin 2) (Fin 2) ℤ) 1 1 -
-        (σ : Matrix (Fin 2) (Fin 2) ℤ) 0 1 *
-        (σ : Matrix (Fin 2) (Fin 2) ℤ) 1 0 : ℤ) : ZMod N) = 1 := by
-      rw [hdet]
-      exact Int.cast_one
-    push_cast at hcast
-    rw [hc, mul_zero, sub_zero] at hcast
-    exact hcast
+  · exact (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp (Gamma0_mem.mp hσ)
 
 /-- `Δ₀(N)` consists of integral matrices with positive determinant. -/
 lemma Delta0_le_posDetInt : Delta0 N ≤ posDetInt 2 := by

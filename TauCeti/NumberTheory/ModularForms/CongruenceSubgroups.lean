@@ -35,6 +35,8 @@ infrastructure independent of the diamond operators.
 
 * `CongruenceSubgroup.Gamma1_le_Gamma1_of_dvd`, `CongruenceSubgroup.Gamma0_le_Gamma0_of_dvd`:
   both families are antitone in the level, `Γ(N) ≤ Γ(M)` whenever `M ∣ N`.
+* `CongruenceSubgroup.isUnit_intCast_apply_zero_zero_of_mem_Gamma0`: a `Γ₀(N)` matrix has
+  unit upper-left entry modulo `N`.
 * `CongruenceSubgroup.Gamma0_normalizes_Gamma1`: conjugation by `Γ₀(N)` preserves `Γ₁(N)`.
 * `CongruenceSubgroup.Gamma1_map_le_Gamma0_map`: the inclusion `Γ₁(N) ≤ Γ₀(N)` after mapping to
   `GL₂(ℝ)`.
@@ -76,6 +78,18 @@ theorem Gamma0_le_Gamma0_of_dvd {M N : ℕ} (h : M ∣ N) : Gamma0 N ≤ Gamma0 
   intro A hA
   rw [Gamma0_mem] at hA ⊢
   simpa [map_intCast, map_one, map_zero] using congr_arg (ZMod.castHom h (ZMod M)) hA
+
+/-- The upper-left entry of a `Γ₀(N)` matrix is a unit modulo `N`: the determinant is one
+and the lower-left entry vanishes modulo `N`, so `ad ≡ 1`. -/
+theorem isUnit_intCast_apply_zero_zero_of_mem_Gamma0 {N : ℕ} {σ : SL(2, ℤ)} (hσ : σ ∈ Gamma0 N) :
+    IsUnit ((σ.1 0 0 : ℤ) : ZMod N) := by
+  have h10 : ((σ.1 1 0 : ℤ) : ZMod N) = 0 := Gamma0_mem.mp hσ
+  have hdet : σ.1 0 0 * σ.1 1 1 - σ.1 0 1 * σ.1 1 0 = 1 :=
+    Matrix.det_fin_two σ.1 ▸ σ.2
+  have hcast := congrArg (fun z : ℤ ↦ (z : ZMod N)) hdet
+  push_cast at hcast
+  rw [h10, mul_zero, sub_zero] at hcast
+  exact IsUnit.of_mul_eq_one _ hcast
 
 /-- Conjugation by a `Gamma0 N` element preserves `Gamma1 N`.
 This is the foundation for the diamond operator `⟨d⟩` on modular forms. -/
@@ -327,16 +341,10 @@ private lemma Gamma0_relindex_step_surj (k : ℕ) (hk : 0 < k) :
   obtain ⟨q, hq⟩ : (↑(p ^ k) : ℤ) ∣ σ.1 1 0 := by
     rwa [← ZMod.intCast_zmod_eq_zero_iff_dvd, ← Gamma0_mem]
   push_cast at hq
-  have h00_unit : IsUnit ((σ.1 0 0 : ℤ) : ZMod p) := by
-    have h10 : ((σ.1 1 0 : ℤ) : ZMod p) = 0 := by
+  have h00_unit : IsUnit ((σ.1 0 0 : ℤ) : ZMod p) :=
+    isUnit_intCast_apply_zero_zero_of_mem_Gamma0 (Gamma0_mem.mpr (by
       rw [ZMod.intCast_zmod_eq_zero_iff_dvd]
-      exact hq ▸ dvd_mul_of_dvd_left (dvd_pow_self _ hk.ne') q
-    have hdet : σ.1 0 0 * σ.1 1 1 - σ.1 0 1 * σ.1 1 0 = 1 :=
-      Matrix.det_fin_two σ.1 ▸ σ.2
-    have hcast := congrArg (fun z : ℤ ↦ (z : ZMod p)) hdet
-    push_cast at hcast
-    rw [h10, mul_zero, sub_zero] at hcast
-    exact IsUnit.of_mul_eq_one _ hcast
+      exact hq ▸ dvd_mul_of_dvd_left (dvd_pow_self _ hk.ne') q))
   obtain ⟨c₀, hc₀⟩ := exists_dvd_sub_val_mul p q (σ.1 0 0) h00_unit
   refine ⟨⟨c₀.val, ZMod.val_lt c₀⟩, ?_⟩
   rw [QuotientGroup.eq, Subgroup.mem_subgroupOf]

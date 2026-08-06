@@ -12,7 +12,8 @@ public import Mathlib.RingTheory.SimpleModule.Rank
 # Criteria for irreducibility
 
 This file collects three ways of recognising an irreducible representation from outside, without
-inspecting its subrepresentations one by one.
+inspecting its subrepresentations one by one, and the finite-dimensional existence statement that
+makes the second of them usable.
 
 A representation on a one-dimensional vector space is irreducible, whatever the group and however
 it acts: a subrepresentation is in particular a subspace, and a line has only the two trivial
@@ -42,6 +43,10 @@ irreducible by.
   subrepresentations carries an irreducible representation.
 * `TauCeti.Representation.isIrreducible_of_asAlgebraHom_surjective`: a representation whose
   algebra map exhausts the endomorphisms is irreducible.
+* `TauCeti.Representation.exists_isAtom_le`: every nonzero finite-dimensional subrepresentation
+  contains an atom, so the atom criterion always has something to apply to.
+* `TauCeti.Representation.exists_isIrreducible_subrepresentation`: consequently every nonzero
+  finite-dimensional representation contains an irreducible subrepresentation.
 
 ## References
 
@@ -129,6 +134,49 @@ theorem isIrreducible_of_asAlgebraHom_surjective [Nontrivial V] (ρ : Representa
   obtain ⟨r, rfl⟩ := h T
   refine ⟨r, ρ.asModuleEquiv.injective ?_⟩
   rw [LinearMap.toSpanSingleton_apply, _root_.Representation.asModuleEquiv_map_smul, hT]
+
+/-! ### Atoms exist in finite dimensions -/
+
+/-- **Atoms exist.** Every nonzero finite-dimensional subrepresentation contains an atom of the
+lattice of subrepresentations.
+
+Finite-dimensionality is what makes a minimal nonzero subrepresentation exist, and only the
+subrepresentation being minimised inside has to be finite-dimensional: the ambient representation
+may be infinite-dimensional, and the acting monoid stays arbitrary.  Combined with
+`TauCeti.Representation.isIrreducible_toRepresentation_of_isAtom` it exhibits an irreducible
+subrepresentation inside any nonzero one. -/
+theorem exists_isAtom_le {ρ : Representation k G V} {σ : Subrepresentation ρ}
+    [FiniteDimensional k σ.toSubmodule] (hσ : σ ≠ ⊥) :
+    ∃ τ : Subrepresentation ρ, τ ≤ σ ∧ IsAtom τ := by
+  -- Among the nonzero subrepresentations contained in `σ`, pick one whose subspace has least
+  -- dimension; the dimensions are natural numbers, so such a one exists.
+  obtain ⟨τ, hmin⟩ :=
+    exists_minimalFor_of_wellFoundedLT (fun τ : Subrepresentation ρ => τ ≠ ⊥ ∧ τ ≤ σ)
+      (fun τ => Module.finrank k τ.toSubmodule) ⟨σ, hσ, le_rfl⟩
+  obtain ⟨hτ, hτσ⟩ := hmin.1
+  have : FiniteDimensional k τ.toSubmodule :=
+    Submodule.finiteDimensional_of_le (Subrepresentation.toSubmodule_le_toSubmodule.mpr hτσ)
+  -- Anything strictly inside `τ` is again inside `σ` and of strictly smaller dimension, so
+  -- minimality forces it to be zero.
+  refine ⟨τ, hτσ, hτ, fun υ hυ => ?_⟩
+  by_contra hυ0
+  exact hmin.not_prop_of_lt
+    (Submodule.finrank_lt_finrank_of_lt (Subrepresentation.toSubmodule_lt_toSubmodule.mpr hυ))
+    ⟨hυ0, hυ.le.trans hτσ⟩
+
+/-- **Every nonzero finite-dimensional representation contains an irreducible subrepresentation.**
+Finite-dimensionality alone suffices; no semisimplicity is assumed.  This produces a single
+irreducible subrepresentation, not a decomposition: a representation that is not semisimple need
+not be the sum of its irreducible subrepresentations. -/
+theorem exists_isIrreducible_subrepresentation [FiniteDimensional k V] [Nontrivial V]
+    (ρ : Representation k G V) :
+    ∃ σ : Subrepresentation ρ, σ ≠ ⊥ ∧ σ.toRepresentation.IsIrreducible := by
+  have htop : (⊤ : Subrepresentation ρ) ≠ ⊥ := fun hc =>
+    top_ne_bot (α := Submodule k V) (by
+      rw [← Subrepresentation.toSubmodule_top (ρ := ρ), ← Subrepresentation.toSubmodule_bot
+        (ρ := ρ), hc])
+  obtain ⟨σ, -, hσ⟩ := exists_isAtom_le htop
+  exact ⟨σ, hσ.1, isIrreducible_toRepresentation_of_isAtom hσ⟩
 
 end Representation
 
