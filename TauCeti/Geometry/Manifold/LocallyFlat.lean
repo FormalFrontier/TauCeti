@@ -67,8 +67,8 @@ discs (topological sliceness) and for stating the annulus conjecture.
   under open embeddings and homeomorphisms of the ambient space and of the domain.
 * `TauCeti.IsSliceEmbedding.transHomeomorph`: invariance under a homeomorphic change of model
   space.
-* `TauCeti.IsLocallyFlat.comp`: a composite of embeddings is locally flat, under an explicit
-  hypothesis supplying flattening charts for the two that are chosen compatibly.
+* `TauCeti.IsLocallyFlat.comp`: a composite embedding is locally flat, under an explicit
+  hypothesis supplying flattening charts for the two factors that are chosen compatibly.
 * `TauCeti.IsLocallyFlat.prodMap`: a product of locally flat embeddings is locally flat.
 * `TauCeti.isLocallyFlat_iff_isOpenEmbedding`: in codimension zero, locally flat means open.
 * `TauCeti.IsLocallyFlat.isLocallyClosed_range`: a locally flat image is locally closed, as soon as
@@ -110,7 +110,8 @@ chosen independently, and nothing makes them agree. `TauCeti.IsLocallyFlat.comp`
 that agreement as an explicit hypothesis — the outer chart reads the intermediate coordinates off
 the inner one along `g` — rather than assuming the conclusion; the outer chart then flattens the
 composite, and the complementary models multiply. That hypothesis already produces the flattening
-charts around each point of the domain, so the two maps are assumed to be embeddings only. It is
+charts around each point of the domain, so nothing beyond the embedding content of the conclusion
+itself is assumed: that the composite is an embedding, and that the outer map is injective. It is
 stated only for the standard slice, since the compatibility condition refers to the splitting
 `F × F'` of the intermediate model, which the relative layer does not have. The ambient
 codimension-zero case needs no such hypothesis and is kept separate, as
@@ -497,9 +498,10 @@ a flattening chart `ψ` of `P` at `g (f x)` such that `ψ` reads the intermediat
 `φ` along `g`, in the sense `ψ (g y) = (φ y, 0)` on the source of `φ`, and such that `ψ` sees no
 more of `range g` than `φ` charts. That same `ψ` then flattens `g ∘ f`, whose complementary model
 is the product of the two complementary models. Since `hcompat` already supplies every flattening
-chart the conclusion needs, `f` and `g` themselves are only assumed to be embeddings. -/
+chart the conclusion needs, the only embedding content assumed is what the conclusion itself
+carries, that `g ∘ f` is an embedding, together with injectivity of `g`. -/
 theorem comp {G' : Type*} [TopologicalSpace G'] [Zero G'] {g : M → P}
-    (hg : IsEmbedding g) (hf : IsEmbedding f)
+    (hgf : IsEmbedding (g ∘ f)) (hg : Function.Injective g)
     (hcompat : ∀ x : N, ∃ ψ : OpenPartialHomeomorph P ((F × F') × G'),
       ∃ φ : OpenPartialHomeomorph M (F × F'), g (f x) ∈ ψ.source ∧ f x ∈ φ.source ∧
         IsSliceChart ψ ((univ : Set (F × F')) ×ˢ ({0} : Set G')) (range g) ∧
@@ -509,7 +511,7 @@ theorem comp {G' : Type*} [TopologicalSpace G'] [Zero G'] {g : M → P}
   -- In the model `(F × F') × G'` of `P` the composite is flattened onto the iterated slice; the
   -- standard slice of `F × (F' × G')` is that one after reassociating the coordinates.
   have key : IsSliceEmbedding (((univ : Set F) ×ˢ ({0} : Set F')) ×ˢ ({0} : Set G')) (g ∘ f) := by
-    refine ⟨hg.comp hf, fun x => ?_⟩
+    refine ⟨hgf, fun x => ?_⟩
     obtain ⟨ψ, φ, hψx, hφx, hψ, hφ, hsub, hagree⟩ := hcompat x
     refine ⟨ψ, hψx, isSliceChart_iff.2 fun p hp => ?_⟩
     constructor
@@ -518,7 +520,7 @@ theorem comp {G' : Type*} [TopologicalSpace G'] [Zero G'] {g : M → P}
       obtain ⟨x', hx'⟩ := hpf
       rw [Function.comp_apply] at hx'
       rw [hagree y hy]
-      exact ⟨(hφ.mem_iff hy).1 ⟨x', hg.injective hx'⟩, rfl⟩
+      exact ⟨(hφ.mem_iff hy).1 ⟨x', hg hx'⟩, rfl⟩
     · intro hps
       obtain ⟨y, hy, rfl⟩ := hsub ⟨hp, (hψ.mem_iff hp).2 ⟨mem_univ _, hps.2⟩⟩
       rw [hagree y hy] at hps
