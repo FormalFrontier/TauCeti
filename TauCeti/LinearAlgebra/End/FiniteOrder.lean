@@ -23,10 +23,14 @@ is then squarefree.
 
 Over an algebraically closed field semisimplicity is diagonalizability, so the eigenspaces of such
 an `f` decompose the space. Every power of `f` acts on the `μ`-eigenspace as the scalar `μ ^ m`,
-which turns the trace of `f ^ m` into the sum `∑ μ, dim(V_μ) * μ ^ m` over the eigenvalues. Over `ℂ`
-the eigenvalues are roots of unity, so complex conjugation sends `μ` to `μ⁻¹ = μ ^ (n - 1)` and the
-trace of `f` is conjugated by passing to `f ^ (n - 1)`, that is, to the inverse of `f`. That last
-statement is the source of `conj (χ g) = χ g⁻¹` for characters of complex representations.
+which turns the trace of `f ^ m` into the sum `∑ μ, dim(V_μ) * μ ^ m` over the eigenvalues.
+
+That sum is what makes the trace transform predictably under a ring endomorphism `σ` of the
+coefficient field: the dimensions are natural numbers and so are fixed by `σ`, so if `σ` raises
+every `n`-th root of unity to the `j`-th power then `σ (tr f) = tr (f ^ j)`. Over `ℂ` complex
+conjugation is such a `σ`, with `j = n - 1`, since it sends a root of unity `μ` to
+`μ⁻¹ = μ ^ (n - 1)`; that instance is the source of `conj (χ g) = χ g⁻¹` for characters of complex
+representations.
 
 All the results are stated of `Module.End`, so they sit in the `End` namespace under `open Module`.
 
@@ -39,6 +43,9 @@ All the results are stated of `Module.End`, so they sit in the `End` namespace u
 * `TauCeti.End.trace_pow_eq_sum_eigenvalue_pow`: over an algebraically closed field, the trace of
   `f ^ m` is the sum of the `m`-th powers of the eigenvalues of `f`, weighted by the dimensions of
   the eigenspaces.
+* `TauCeti.End.map_trace_eq_trace_pow`: a ring endomorphism raising every `n`-th root of unity to
+  the `j`-th power sends the trace of an endomorphism of finite order `n` to the trace of its
+  `j`-th power.
 * `TauCeti.End.conj_trace_eq_trace_pow_sub_one`: over `ℂ`, the conjugate of the trace of an
   endomorphism of finite order `n` is the trace of its inverse `f ^ (n - 1)`.
 -/
@@ -127,6 +134,20 @@ theorem trace_pow_eq_sum_eigenvalue_pow (hn : (n : k) ≠ 0) (hf : f ^ n = 1) (m
     (End.finite_hasEigenvalue f) (mapsTo_pow_eigenspace f · m)]
   exact Finset.sum_congr rfl fun μ _ => trace_restrict_eigenspace f μ m
 
+/-- **A ring endomorphism raising the roots of unity to the `j`-th power raises an endomorphism of
+finite order to the `j`-th power, as far as the trace can see**: if `f ^ n = 1` and `σ μ = μ ^ j`
+for every `n`-th root of unity `μ`, then `σ (tr f) = tr (f ^ j)`. Both sides are the sum
+`∑ μ, dim(V_μ) · μ ^ j` over the eigenvalues, since a ring homomorphism fixes the dimensions,
+which enter as natural numbers. -/
+theorem map_trace_eq_trace_pow {j : ℕ} (hn : (n : k) ≠ 0) (hf : f ^ n = 1) (σ : k →+* k)
+    (hσ : ∀ μ : k, μ ^ n = 1 → σ μ = μ ^ j) :
+    σ (LinearMap.trace k V f) = LinearMap.trace k V (f ^ j) := by
+  conv_lhs => rw [← pow_one f]
+  rw [trace_pow_eq_sum_eigenvalue_pow hn hf 1, trace_pow_eq_sum_eigenvalue_pow hn hf j, map_sum]
+  refine Finset.sum_congr rfl fun μ hμ => ?_
+  rw [map_mul, map_natCast, pow_one,
+    hσ μ (pow_eq_one_of_hasEigenvalue hf ((End.finite_hasEigenvalue f).mem_toFinset.1 hμ))]
+
 end Eigenspace
 
 section Complex
@@ -137,19 +158,11 @@ variable {V : Type w} [AddCommGroup V] [Module ℂ V] [FiniteDimensional ℂ V]
 the conjugate of the trace of `f` is the trace of its inverse `f ^ (n - 1)`: the eigenvalues of `f`
 are `n`-th roots of unity, and conjugation inverts those. -/
 theorem conj_trace_eq_trace_pow_sub_one {f : End ℂ V} {n : ℕ} (hn : n ≠ 0) (hf : f ^ n = 1) :
-    (starRingEnd ℂ) (LinearMap.trace ℂ V f) = LinearMap.trace ℂ V (f ^ (n - 1)) := by
-  have hn' : ((n : ℕ) : ℂ) ≠ 0 := Nat.cast_ne_zero.2 hn
-  conv_lhs => rw [← pow_one f]
-  rw [trace_pow_eq_sum_eigenvalue_pow hn' hf 1, trace_pow_eq_sum_eigenvalue_pow hn' hf (n - 1),
-    map_sum]
-  refine Finset.sum_congr rfl fun μ hμ => ?_
-  have hroot : μ ^ n = 1 :=
-    pow_eq_one_of_hasEigenvalue hf ((End.finite_hasEigenvalue f).mem_toFinset.1 hμ)
-  have hinv : (starRingEnd ℂ) μ = μ ^ (n - 1) := by
-    rw [← Complex.inv_eq_conj (Complex.norm_eq_one_of_pow_eq_one hroot hn)]
-    refine inv_eq_of_mul_eq_one_right ?_
-    rw [← pow_succ', Nat.sub_add_cancel (Nat.one_le_iff_ne_zero.2 hn), hroot]
-  rw [map_mul, pow_one, hinv, Complex.conj_natCast]
+    (starRingEnd ℂ) (LinearMap.trace ℂ V f) = LinearMap.trace ℂ V (f ^ (n - 1)) :=
+  map_trace_eq_trace_pow (Nat.cast_ne_zero.2 hn) hf (starRingEnd ℂ) fun μ hμ => by
+    rw [← Complex.inv_eq_conj (Complex.norm_eq_one_of_pow_eq_one hμ hn)]
+    exact inv_eq_of_mul_eq_one_right
+      (by rw [← pow_succ', Nat.sub_add_cancel (Nat.one_le_iff_ne_zero.2 hn), hμ])
 
 end Complex
 

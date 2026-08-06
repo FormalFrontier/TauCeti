@@ -358,6 +358,17 @@ theorem isNullHomologous_fdBoundary (hH : 1 ≤ H) :
       linarith
   · exact windingNumber_fdBoundary_eq_zero_of_norm_lt_one hH hnorm
 
+/-- The boundary contour lies in the closed truncated fundamental domain. -/
+lemma fdBoundary_mem_coe_truncatedFundamentalDomain (hH : 1 ≤ H) {t : ℝ}
+    (ht : t ∈ Icc (0 : ℝ) 5) :
+    fdBoundary H t ∈ UpperHalfPlane.coe '' ModularGroup.truncatedFundamentalDomain H := by
+  have h32 : Real.sqrt 3 / 2 ≤ 1 := sqrt_three_div_two_le_one
+  rw [ModularGroup.coe_truncatedFundamentalDomain, Set.mem_ofPred_eq]
+  refine ⟨?_, im_fdBoundary_le hH ht, abs_re_fdBoundary_le_half ht.2,
+    one_le_norm_fdBoundary hH ht⟩
+  have := sqrt_three_div_two_le_im_fdBoundary (h32.trans hH) ht
+  nlinarith [Real.sqrt_nonneg 3]
+
 end ModularForm
 
 end TauCeti
