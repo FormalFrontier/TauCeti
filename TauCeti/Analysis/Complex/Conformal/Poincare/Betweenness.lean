@@ -36,7 +36,7 @@ end, is proved the same way and identifies `(z * conj w).re = -(‖z‖ * ‖w�
 
 Both of those last identifications are Euclidean, not hyperbolic, and hold in any real inner
 product space: `(z * conj w).re` is the real inner product of `ℂ` (`Complex.inner`), and the
-criteria are `TauCeti.mem_segment_zero_left_iff_real_inner_eq_norm_mul` and
+criteria are `TauCeti.mem_segment_zero_left_iff_real_inner_eq_norm_mul_and_norm_le` and
 `TauCeti.zero_mem_segment_iff_real_inner_eq_neg_norm_mul` of
 `TauCeti/Analysis/Convex/Segment.lean`, consumed here through that one translation.
 
@@ -127,10 +127,11 @@ the origin than `w` is.
 
 Both conditions are needed: `2 * w` points in the direction of `w` without lying on the segment.
 
-This is `TauCeti.mem_segment_zero_left_iff_real_inner_eq_norm_mul` read through `Complex.inner`. -/
+This is `TauCeti.mem_segment_zero_left_iff_real_inner_eq_norm_mul_and_norm_le` read through
+`Complex.inner`. -/
 private lemma mem_segment_zero_left_iff_re_mul_conj :
     m ∈ segment ℝ 0 w ↔ (m * (starRingEnd ℂ) w).re = ‖m‖ * ‖w‖ ∧ ‖m‖ ≤ ‖w‖ := by
-  rw [re_mul_conj_eq_real_inner, mem_segment_zero_left_iff_real_inner_eq_norm_mul]
+  rw [re_mul_conj_eq_real_inner, mem_segment_zero_left_iff_real_inner_eq_norm_mul_and_norm_le]
 
 /-- **The origin lies between two points exactly when their Hermitian product is negative real.**
 This is the mirror of `TauCeti.mem_segment_zero_left_iff_re_mul_conj`, for the origin at the

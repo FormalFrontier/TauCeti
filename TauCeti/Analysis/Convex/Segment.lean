@@ -34,10 +34,10 @@ No strict convexity is involved: the alternative route through `sameRay_iff_norm
 
 ## Main results
 
-* `TauCeti.mem_segment_zero_left_iff_sameRay` —
+* `TauCeti.mem_segment_zero_left_iff_sameRay_and_norm_le` —
   `m ∈ [0 -[ℝ] w] ↔ SameRay ℝ m w ∧ ‖m‖ ≤ ‖w‖`. Both conjuncts are needed.
 * `TauCeti.eq_of_mem_segment_zero_left_of_norm_eq` — the norm separates the points of `[0, w]`.
-* `TauCeti.mem_segment_zero_left_iff_real_inner_eq_norm_mul` and
+* `TauCeti.mem_segment_zero_left_iff_real_inner_eq_norm_mul_and_norm_le` and
   `TauCeti.zero_mem_segment_iff_real_inner_eq_neg_norm_mul` — the two criteria in a real inner
   product space.
 
@@ -71,7 +71,7 @@ point `m` lies on `[0, w]` exactly when it points along `w` and is no further fr
 
 Both conjuncts are needed: for `w ≠ 0` the point `(2 : ℝ) • w` satisfies the first without
 satisfying the second. -/
-theorem mem_segment_zero_left_iff_sameRay :
+theorem mem_segment_zero_left_iff_sameRay_and_norm_le :
     m ∈ [(0 : E) -[ℝ] w] ↔ SameRay ℝ m w ∧ ‖m‖ ≤ ‖w‖ := by
   rw [segment_eq_image' ℝ (0 : E) w]
   simp only [mem_image, mem_Icc, zero_add, sub_zero]
@@ -98,8 +98,8 @@ theorem eq_of_mem_segment_zero_left_of_norm_eq {m₁ m₂ : E} (h₁ : m₁ ∈ 
   rcases eq_or_ne w 0 with rfl | hw
   · rw [segment_same, mem_singleton_iff] at h₁ h₂
     rw [h₁, h₂]
-  · exact norm_injOn_ray_right hw (mem_segment_zero_left_iff_sameRay.mp h₁).1
-      (mem_segment_zero_left_iff_sameRay.mp h₂).1 h
+  · exact norm_injOn_ray_right hw (mem_segment_zero_left_iff_sameRay_and_norm_le.mp h₁).1
+      (mem_segment_zero_left_iff_sameRay_and_norm_le.mp h₂).1 h
 
 end Normed
 
@@ -110,18 +110,18 @@ section InnerProduct
 variable {F : Type*} [NormedAddCommGroup F] [InnerProductSpace ℝ F] {x y : F}
 
 /-- **Membership in the segment from the origin, read off the inner product.** The inner-product
-form of `TauCeti.mem_segment_zero_left_iff_sameRay`: by `sameRay_iff_norm_smul_eq` and
+form of `TauCeti.mem_segment_zero_left_iff_sameRay_and_norm_le`: by `sameRay_iff_norm_smul_eq` and
 `inner_eq_norm_mul_iff_real`, two vectors lie on a common ray exactly when Cauchy–Schwarz is an
 equality for them. -/
-theorem mem_segment_zero_left_iff_real_inner_eq_norm_mul :
+theorem mem_segment_zero_left_iff_real_inner_eq_norm_mul_and_norm_le :
     x ∈ [(0 : F) -[ℝ] y] ↔ ⟪x, y⟫ = ‖x‖ * ‖y‖ ∧ ‖x‖ ≤ ‖y‖ := by
-  rw [mem_segment_zero_left_iff_sameRay, sameRay_iff_norm_smul_eq, inner_eq_norm_mul_iff_real,
-    eq_comm]
+  rw [mem_segment_zero_left_iff_sameRay_and_norm_le, sameRay_iff_norm_smul_eq,
+    inner_eq_norm_mul_iff_real, eq_comm]
 
 /-- **The origin lies between two vectors exactly when their inner product is minimal.** The mirror
-of `TauCeti.mem_segment_zero_left_iff_real_inner_eq_norm_mul`, with the origin in the middle of the
-segment rather than at an end: `mem_segment_iff_sameRay` at the point `0` says that `x` and `-y`
-lie on a common ray, so Cauchy–Schwarz is an equality at the other end of its range,
+of `TauCeti.mem_segment_zero_left_iff_real_inner_eq_norm_mul_and_norm_le`, with the origin in the
+middle of the segment rather than at an end: `mem_segment_iff_sameRay` at the point `0` says that
+`x` and `-y` lie on a common ray, so Cauchy–Schwarz is an equality at the other end of its range,
 `⟪x, y⟫_ℝ = -(‖x‖ * ‖y‖)`.
 
 No nondegeneracy is needed: if `x = 0` then `0` is an endpoint of the segment and both sides hold,
