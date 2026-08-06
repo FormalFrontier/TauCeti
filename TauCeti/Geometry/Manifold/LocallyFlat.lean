@@ -78,6 +78,18 @@ structure and is not formalised here.
 
 Codimension is not baked into the definition; see the module docstring above.
 
+The pair `(F, S)` is the *local model*, and it is an argument of the predicate rather than
+something `IsLocallyFlat` picks: `IsLocallyFlat S f` asserts flatness against the model the caller
+names, so a statement about locally flat embeddings fixes that model, as
+`TauCeti.isLocallyFlat_prodMkLeft` fixes the standard slice `Set.univ ×ˢ {c}`. Degenerate models
+are cheap, as they are for `ChartedSpace`: Mathlib's `chartedSpaceSelf` charts every space on itself
+through the identity, and in the same way `F = M`, `S = Set.range f` and
+`OpenPartialHomeomorph.refl M` flatten any embedding at all. As with `ChartedSpace`, the content
+is in the model being the standard one, and the predicate has teeth once it is fixed:
+`TauCeti.isLocallyFlat_univ_iff` says that for `S = Set.univ` exactly the open embeddings are
+flat, and `TauCeti.IsLocallyFlat.isLocallyClosed_range` rules out an image that is not locally
+closed whenever `S` is closed.
+
 Composing two locally flat embeddings `N ↪ M ↪ P` is deliberately absent: it is not a formal
 consequence of the definition, because the two flattening charts have to be made compatible before
 they can be combined. Only the codimension-zero ambient case is proved here, as
