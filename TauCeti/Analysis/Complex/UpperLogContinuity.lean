@@ -18,8 +18,8 @@ touch the slit-plane boundary.
 
 ## Main declarations
 
-* `TauCeti.Complex.continuousOn_arg_im_nonneg`.
-* `TauCeti.Complex.continuousOn_log_im_nonneg`.
+* `TauCeti.continuousOn_arg_im_nonneg`.
+* `TauCeti.continuousOn_log_im_nonneg`.
 
 ## References
 
@@ -32,7 +32,7 @@ public section
 
 open Complex
 
-namespace TauCeti.Complex
+namespace TauCeti
 
 /-- The principal argument is continuous on the punctured closed upper half-plane: the
 approach is confined to nonnegative imaginary parts, where `arg` is the `arccos` of the
@@ -60,6 +60,6 @@ theorem continuousOn_log_im_nonneg :
   · exact (continuous_ofReal.continuousAt.comp_continuousWithinAt
       (continuousOn_arg_im_nonneg z ⟨hz_im, hz_ne⟩)).mul continuousWithinAt_const
 
-end TauCeti.Complex
+end TauCeti
 
 end
