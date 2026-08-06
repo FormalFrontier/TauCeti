@@ -38,7 +38,7 @@ follows from the inversion `Real.tanh_artanh` together with the addition formula
   be applied again to their own right-hand sides.
 * `Real.artanh_neg_eq_neg_artanh` and `Real.artanh_abs` — `artanh (-x) = -artanh x` and
   `artanh |x| = |artanh x|`, both for *every* real `x`, the values outside `(-1, 1)` being
-  handled by `Real.artanh_eq_zero_of_one_le_abs`.
+  handled by Mathlib's `Real.artanh_eq_zero_iff`.
 
 ### The calculus
 
@@ -79,22 +79,13 @@ open scoped Topology
 
 /-! ### The additive law -/
 
-/-- `Real.artanh` vanishes outside the interval `(-1, 1)` on which it inverts `Real.tanh`: this
-is the junk value forced by the defining formula `artanh x = log √((1 + x) / (1 - x))`, whose
-argument is there nonpositive — or, at `x = 1`, the value `2 / 0 = 0` of Lean's division
-convention — so that both `√` and `log` return `0`.
-
-This is `Real.artanh_eq_zero_iff` in the form the two unconditional identities below spend it. -/
-theorem _root_.Real.artanh_eq_zero_of_one_le_abs {x : ℝ} (hx : 1 ≤ |x|) : Real.artanh x = 0 := by
-  rcases le_abs.mp hx with h | h
-  · exact Real.artanh_eq_zero_iff.mpr (Or.inr (Or.inr h))
-  · exact Real.artanh_eq_zero_iff.mpr (Or.inl (by linarith))
-
 /-- **`Real.artanh` is odd**, at every real number: `artanh (-x) = -artanh x`.
 
 No hypothesis is needed. On `(-1, 1)` this is the logarithmic formula
 `Real.artanh_eq_half_log` read through `Real.log_inv`, and outside it both sides vanish by
-`Real.artanh_eq_zero_of_one_le_abs`.
+`Real.artanh_eq_zero_iff` — the junk value forced by the defining formula
+`artanh x = log √((1 + x) / (1 - x))`, whose argument is there nonpositive, or, at `x = 1`, the
+value `2 / 0 = 0` of Lean's division convention.
 
 The name `Real.artanh_neg`, which the Mathlib convention for oddness would suggest (compare
 `Real.arsinh_neg`, `Real.arctan_neg`), is taken in Mathlib by the sign lemma
@@ -110,8 +101,11 @@ theorem _root_.Real.artanh_neg_eq_neg_artanh (x : ℝ) : Real.artanh (-x) = -Rea
       Real.artanh_eq_half_log (Ioo_subset_Icc_self hx'), ← sub_eq_add_neg, sub_neg_eq_add,
       ← inv_div (1 + x) (1 - x), Real.log_inv]
     ring
-  · rw [Real.artanh_eq_zero_of_one_le_abs hx,
-      Real.artanh_eq_zero_of_one_le_abs (by rwa [abs_neg]), neg_zero]
+  · have hzero : ∀ y : ℝ, 1 ≤ |y| → Real.artanh y = 0 := fun y hy => by
+      rcases le_abs.mp hy with h | h
+      · exact Real.artanh_eq_zero_iff.mpr (Or.inr (Or.inr h))
+      · exact Real.artanh_eq_zero_iff.mpr (Or.inl (by linarith))
+    rw [hzero x hx, hzero (-x) (by rwa [abs_neg]), neg_zero]
 
 /-- **The absolute value passes through `Real.artanh`**, at every real number:
 `artanh |x| = |artanh x|`. Both sides are `artanh` of the larger of `x` and `-x`, by oddness and
