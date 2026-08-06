@@ -18,9 +18,10 @@ top endpoints of its through strands, the bottom endpoints of its caps and the t
 its cups -- defines `propagatingNumber` as the cardinality of the first of these sets, and
 establishes the basic constraints on it. Following an arc matches the bottom endpoints of the
 through strands with their top endpoints (`BrauerDiagram.throughEquiv`), so a diagram has as
-many caps as cups (`BrauerDiagram.card_bottomCap_eq_card_topCup`); the caps in turn match the
-remaining bottom points among themselves (`BrauerDiagram.capMatching`), so there is an even
-number of them and the propagating number has the same parity as the number of strands
+many capped bottom points as cupped top points
+(`BrauerDiagram.card_bottomCap_eq_card_topCup`); the caps in turn match the remaining bottom
+points among themselves (`BrauerDiagram.capMatching`), so those points are even in number and
+the propagating number has the same parity as the number of strands
 (`BrauerDiagram.propagatingNumber_mod_two`). The two extreme values are the two ways a diagram
 can carry no horizontal arc at all and, at the opposite end, nothing else
 (`BrauerDiagram.propagatingNumber_eq_card_iff` and
@@ -37,7 +38,8 @@ can carry no horizontal arc at all and, at the opposite end, nothing else
 
 ## Main results
 
-* `TauCeti.BrauerDiagram.card_bottomCap_eq_card_topCup`: a diagram has as many caps as cups.
+* `TauCeti.BrauerDiagram.card_bottomCap_eq_card_topCup`: a diagram has as many capped bottom
+  points as cupped top points, hence as many caps as cups.
 * `TauCeti.BrauerDiagram.propagatingNumber_mod_two`: the propagating number of a diagram on `k`
   strands has the same parity as `k`.
 
@@ -105,14 +107,8 @@ theorem topCup_eq_compl : D.topCup = D.topThroughᶜ := by
 their top endpoints. -/
 def throughEquiv :
     {i : Fin k // D.IsThrough (Sum.inl i)} ≃ {j : Fin k // D.IsThrough (Sum.inr j)} where
-  toFun i := ⟨(D.val (Sum.inl i.1)).getRight (isRight_val_inl i.2), by
-    rw [show Sum.inr ((D.val (Sum.inl i.1)).getRight (isRight_val_inl i.2))
-        = D.val (Sum.inl i.1) from Sum.inr_getRight _ _]
-    exact (D.isThrough_val _).mpr i.2⟩
-  invFun j := ⟨(D.val (Sum.inr j.1)).getLeft (isLeft_val_inr j.2), by
-    rw [show Sum.inl ((D.val (Sum.inr j.1)).getLeft (isLeft_val_inr j.2))
-        = D.val (Sum.inr j.1) from Sum.inl_getLeft _ _]
-    exact (D.isThrough_val _).mpr j.2⟩
+  toFun i := ⟨(D.val (Sum.inl i.1)).getRight (isRight_val_inl i.2), by simpa using i.2⟩
+  invFun j := ⟨(D.val (Sum.inr j.1)).getLeft (isLeft_val_inr j.2), by simpa using j.2⟩
   left_inv i := Subtype.ext <| (Sum.getLeft_eq_iff _).mpr <| by
     rw [Sum.inr_getRight]
     exact D.apply_apply _
@@ -120,37 +116,52 @@ def throughEquiv :
     rw [Sum.inl_getLeft]
     exact D.apply_apply _
 
+/-- The top endpoint that `BrauerDiagram.throughEquiv` assigns to a bottom point is the point
+that the diagram matches with it. -/
+@[simp]
+theorem inr_throughEquiv (i : {i : Fin k // D.IsThrough (Sum.inl i)}) :
+    Sum.inr (D.throughEquiv i).1 = D.val (Sum.inl i.1) := Sum.inr_getRight _ _
+
+/-- The bottom endpoint that `BrauerDiagram.throughEquiv` assigns to a top point is the point
+that the diagram matches with it. -/
+@[simp]
+theorem inl_throughEquiv_symm (j : {j : Fin k // D.IsThrough (Sum.inr j)}) :
+    Sum.inl (D.throughEquiv.symm j).1 = D.val (Sum.inr j.1) := Sum.inl_getLeft _ _
+
 /-- A diagram has as many bottom endpoints of through strands as top endpoints. -/
 theorem card_bottomThrough_eq_card_topThrough : D.bottomThrough.card = D.topThrough.card := by
   rw [bottomThrough, topThrough, ← Fintype.card_subtype, ← Fintype.card_subtype]
   exact Fintype.card_congr D.throughEquiv
 
-/-- **A diagram has as many caps as cups.** -/
+/-- **A diagram has as many capped bottom points as cupped top points**, hence as many caps as
+cups. -/
 theorem card_bottomCap_eq_card_topCup : D.bottomCap.card = D.topCup.card := by
   rw [bottomCap_eq_compl, topCup_eq_compl, Finset.card_compl, Finset.card_compl,
     card_bottomThrough_eq_card_topThrough]
 
 /-- The **propagating number** of a Brauer diagram: the number of its through strands. -/
-@[expose]
 def propagatingNumber : ℕ := D.bottomThrough.card
 
+/-- The propagating number counts the bottom endpoints of the through strands. -/
+theorem propagatingNumber_eq_card_bottomThrough :
+    D.propagatingNumber = D.bottomThrough.card := (rfl)
+
+/-- The propagating number counts the top endpoints of the through strands just as well. -/
 theorem propagatingNumber_eq_card_topThrough : D.propagatingNumber = D.topThrough.card :=
   D.card_bottomThrough_eq_card_topThrough
 
 /-- The through strands are at most as many as the strands. -/
 theorem propagatingNumber_le : D.propagatingNumber ≤ k := by
-  simpa [propagatingNumber] using Finset.card_le_univ D.bottomThrough
+  simpa [propagatingNumber_eq_card_bottomThrough] using Finset.card_le_univ D.bottomThrough
 
 /-- Every bottom point is either the endpoint of a through strand or the endpoint of a cap. -/
 theorem propagatingNumber_add_card_bottomCap : D.propagatingNumber + D.bottomCap.card = k := by
-  rw [propagatingNumber, bottomCap_eq_compl, Finset.card_add_card_compl, Fintype.card_fin]
+  rw [propagatingNumber_eq_card_bottomThrough, bottomCap_eq_compl, Finset.card_add_card_compl,
+    Fintype.card_fin]
 
 /-- The map sending a capped bottom point to the other end of its cap. -/
 private def capFun (i : {i : Fin k // D.IsCap (Sum.inl i)}) : {i : Fin k // D.IsCap (Sum.inl i)} :=
-  ⟨(D.val (Sum.inl i.1)).getLeft ((D.isCap_def _).mp i.2).2, by
-    rw [show Sum.inl ((D.val (Sum.inl i.1)).getLeft ((D.isCap_def _).mp i.2).2)
-        = D.val (Sum.inl i.1) from Sum.inl_getLeft _ _]
-    exact (D.isCap_val _).mpr i.2⟩
+  ⟨(D.val (Sum.inl i.1)).getLeft ((D.isCap_def _).mp i.2).2, by simpa using i.2⟩
 
 private theorem inl_capFun (i : {i : Fin k // D.IsCap (Sum.inl i)}) :
     Sum.inl (D.capFun i).1 = D.val (Sum.inl i.1) := Sum.inl_getLeft _ _
@@ -168,8 +179,14 @@ def capMatching : PerfectMatching {i : Fin k // D.IsCap (Sum.inl i)} :=
   .mk (capFun_involutive D).toPerm (fun i => by simpa using capFun_involutive D i)
     fun i => by simpa using capFun_ne D i
 
-/-- A diagram has an even number of caps: they pair off the bottom points that no through strand
-reaches. -/
+/-- `BrauerDiagram.capMatching` matches a capped bottom point with the other end of its cap. -/
+@[simp]
+theorem inl_capMatching (i : {i : Fin k // D.IsCap (Sum.inl i)}) :
+    Sum.inl (D.capMatching.val i).1 = D.val (Sum.inl i.1) := by
+  simpa [capMatching] using inl_capFun D i
+
+/-- A diagram has an even number of capped bottom points: the caps pair those points off among
+themselves. -/
 theorem even_card_bottomCap : Even D.bottomCap.card := by
   rw [bottomCap, ← Fintype.card_subtype]
   exact even_card_of_nonempty_perfectMatching _ ⟨D.capMatching⟩
@@ -185,7 +202,8 @@ theorem propagatingNumber_eq_card_iff : D.propagatingNumber = k ↔ ∀ x, D.IsT
   constructor
   · intro h x
     have hb : D.bottomThrough = Finset.univ :=
-      Finset.eq_univ_of_card _ (by rw [← propagatingNumber, h, Fintype.card_fin])
+      Finset.eq_univ_of_card _ (by
+        rw [← propagatingNumber_eq_card_bottomThrough, h, Fintype.card_fin])
     have ht : D.topThrough = Finset.univ :=
       Finset.eq_univ_of_card _ (by
         rw [← propagatingNumber_eq_card_topThrough, h, Fintype.card_fin])
@@ -193,8 +211,8 @@ theorem propagatingNumber_eq_card_iff : D.propagatingNumber = k ↔ ∀ x, D.IsT
     · exact (D.mem_bottomThrough).mp (hb ▸ Finset.mem_univ i)
     · exact (D.mem_topThrough).mp (ht ▸ Finset.mem_univ j)
   · intro h
-    rw [propagatingNumber, Finset.eq_univ_of_forall fun i => (D.mem_bottomThrough).mpr (h _),
-      Finset.card_fin]
+    rw [propagatingNumber_eq_card_bottomThrough,
+      Finset.eq_univ_of_forall fun i => (D.mem_bottomThrough).mpr (h _), Finset.card_fin]
 
 @[simp]
 theorem propagatingNumber_permToBrauer (σ : Equiv.Perm (Fin k)) :
@@ -205,21 +223,21 @@ theorem propagatingNumber_permToBrauer (σ : Equiv.Perm (Fin k)) :
 theorem propagatingNumber_eq_zero_iff : D.propagatingNumber = 0 ↔ ∀ x, ¬D.IsThrough x := by
   constructor
   · intro h x
-    have hb : D.bottomThrough = ∅ := Finset.card_eq_zero.mp (by rw [← propagatingNumber, h])
+    have hb : D.bottomThrough = ∅ :=
+      Finset.card_eq_zero.mp (by rw [← propagatingNumber_eq_card_bottomThrough, h])
     have ht : D.topThrough = ∅ :=
       Finset.card_eq_zero.mp (by rw [← propagatingNumber_eq_card_topThrough, h])
     rcases x with i | j
     · exact fun hi => (Finset.eq_empty_iff_forall_notMem.mp hb i) ((D.mem_bottomThrough).mpr hi)
     · exact fun hj => (Finset.eq_empty_iff_forall_notMem.mp ht j) ((D.mem_topThrough).mpr hj)
   · intro h
-    rw [propagatingNumber, Finset.card_eq_zero, Finset.eq_empty_iff_forall_notMem]
+    rw [propagatingNumber_eq_card_bottomThrough, Finset.card_eq_zero,
+      Finset.eq_empty_iff_forall_notMem]
     exact fun i hi => h _ ((D.mem_bottomThrough).mp hi)
 
 /-- Only an even number of strands admits a diagram with no through strand. -/
-theorem even_of_propagatingNumber_eq_zero (h : D.propagatingNumber = 0) : Even k := by
-  obtain ⟨r, hr⟩ := D.even_card_bottomCap
-  have hk := D.propagatingNumber_add_card_bottomCap
-  exact ⟨r, by omega⟩
+theorem even_of_propagatingNumber_eq_zero (h : D.propagatingNumber = 0) : Even k :=
+  Nat.even_iff.mpr (by rw [← D.propagatingNumber_mod_two, h])
 
 end BrauerDiagram
 
