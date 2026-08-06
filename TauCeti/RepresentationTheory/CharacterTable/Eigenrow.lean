@@ -23,7 +23,7 @@ This file supplies the representation theory that computation is missing: **thos
 homomorphisms are exactly the central characters `ωᵪ` of the irreducible representations of `G`**.
 Collecting their values on the class sums gives the **central character table**
 `TauCeti.centralCharacterTable k G`, the matrix `Ω` of the Burnside--Dixon--Schneider algorithm, and
-`TauCeti.isClassEigenrow_iff_exists_eq_centralCharacterTable` says that its rows are precisely the
+`TauCeti.isClassEigenrow_iff_exists_centralCharacterTable_eq` says that its rows are precisely the
 normalized common left eigenrows. So an eigenrow computed from the structure constants alone is a
 central character, and there are exactly as many of them as `G` has conjugacy classes.
 
@@ -46,12 +46,14 @@ to a block, hence has the same central character as one.
 * `TauCeti.exists_centralCharacter_eq`: **every algebra homomorphism out of the centre is a central
   character**, and `TauCeti.centralCharacter_irreducibleRepresentation_injective`: **distinct
   irreducibles have distinct central characters**.
-* `TauCeti.isClassEigenrow_iff_exists_eq_centralCharacterTable`: **the normalized common left
+* `TauCeti.isClassEigenrow_iff_exists_centralCharacterTable_eq`: **the normalized common left
   eigenrows of the class-multiplication matrices are exactly the rows of `Ω`**, and
   `TauCeti.card_isClassEigenrow`: there are as many of them as conjugacy classes.
 * `TauCeti.eq_of_centralCharacter_eq`: **the central characters separate the points of the centre**.
 * `TauCeti.centralCharacterTable_mul_characterDegree`: the conversion `ωᵪ(K_C) · χ(1) = |C| · χ(g)`
-  between `Ω` and the ordinary character table `TauCeti.characterTable`.
+  between `Ω` and the ordinary character table `TauCeti.characterTable`, with the two quotient
+  forms `TauCeti.centralCharacterTable_eq_div` and `TauCeti.characterTable_eq_div` reading each
+  table off the other.
 
 ## Implementation notes
 
@@ -60,8 +62,11 @@ irreducible characters as the rows of `TauCeti.characterTable`, so the two table
 row and `TauCeti.centralCharacterTable_mul_characterDegree` converts between them entry by entry.
 
 That conversion is stated without division, so it holds over every algebraically closed field in
-which `|G|` is invertible; `TauCeti.centralCharacterTable_eq_div` is the quotient form, which needs
-the degree to be invertible and so is stated in characteristic zero.
+which `|G|` is invertible. Dividing it out in either direction needs the corresponding factor to be
+invertible: `TauCeti.characterTable_eq_div` divides by the class size `|C|`, which the standing
+hypotheses already make invertible, while
+`TauCeti.centralCharacterTable_eq_div` divides by the degree `χ(1)` and so takes its nonvanishing
+as an explicit hypothesis rather than assuming characteristic zero.
 
 `TauCeti.centralCharacter_blockRepresentation` carries the irreducibility of the block as an
 instance argument rather than deriving it: the central character is only defined for an irreducible
@@ -266,7 +271,7 @@ This is the step that turns the linear algebra of the class algebra into represe
 eigenrow condition alone characterises the algebra homomorphisms out of the centre
 (`TauCeti.isClassEigenrow_iff_exists_algHom`), and those are the central characters of the
 irreducible representations (`TauCeti.exists_centralCharacter_eq`). -/
-theorem isClassEigenrow_iff_exists_eq_centralCharacterTable {v : ConjClasses G → k}
+theorem isClassEigenrow_iff_exists_centralCharacterTable_eq {v : ConjClasses G → k}
     (hv₁ : v (ConjClasses.mk (1 : G)) = 1) :
     IsClassEigenrow v ↔ ∃ i, centralCharacterTable k G i = v := by
   refine ⟨fun hv => ?_, ?_⟩
@@ -289,9 +294,8 @@ noncomputable def finEquivEigenrow :
 @[simp]
 theorem coe_finEquivEigenrow (i : Fin (Nat.card (ConjClasses G))) :
     (finEquivEigenrow k G i : ConjClasses G → k) = centralCharacterTable k G i := by
-  change (algHomEquivEigenrow (finEquivCentralCharacter k G i) : ConjClasses G → k) = _
-  rw [algHomEquivEigenrow_apply_coe, finEquivCentralCharacter_apply]
-  rfl
+  rw [finEquivEigenrow, Equiv.trans_apply, algHomEquivEigenrow_apply_coe,
+    finEquivCentralCharacter_apply, centralCharacterTable]
 
 /-- **A finite group has as many normalized common left eigenrows as conjugacy classes.** -/
 theorem card_isClassEigenrow :
@@ -304,8 +308,10 @@ variable {k G}
 
 /-- **The conversion between the central table and the character table**:
 `ωᵪ(K_C) · χ(1) = |C| · χ(g_C)`, in the division-free form that needs no invertibility of the
-degree. Both factors on the left are invertible in characteristic zero, so there the identity reads
-each table off the other. -/
+degree. Dividing by the class size `|C|`, which is always invertible here, reads the character table
+off the central one (`TauCeti.characterTable_eq_div`); dividing by the degree `χ(1)`, which is
+invertible in characteristic zero, reads the central table off the character table
+(`TauCeti.centralCharacterTable_eq_div`). -/
 theorem centralCharacterTable_mul_characterDegree (i : Fin (Nat.card (ConjClasses G)))
     (C : ConjClasses G) :
     centralCharacterTable k G i C * (characterDegree k i : k) =
@@ -316,14 +322,31 @@ theorem centralCharacterTable_mul_characterDegree (i : Fin (Nat.card (ConjClasse
   rw [character_irreducibleRepresentation, irreducibleCharacter_one] at h
   simpa using h
 
-/-- The central character table read off the character table, in characteristic zero, where the
-degrees are invertible. -/
-theorem centralCharacterTable_eq_div [CharZero k] (i : Fin (Nat.card (ConjClasses G)))
-    (C : ConjClasses G) :
+/-- The central character table read off the character table, wherever the degree `χ(1)` is nonzero
+in `k`; that holds in particular in characteristic zero, where the degree is a positive natural
+number, by `TauCeti.characterDegree_pos`. -/
+theorem centralCharacterTable_eq_div (i : Fin (Nat.card (ConjClasses G)))
+    (hdeg : (characterDegree k i : k) ≠ 0) (C : ConjClasses G) :
     centralCharacterTable k G i C =
       Nat.card C.carrier * characterTable k G i C / (characterDegree k i : k) := by
-  rw [eq_div_iff (Nat.cast_ne_zero.mpr (characterDegree_pos k i).ne'),
-    centralCharacterTable_mul_characterDegree]
+  rw [eq_div_iff hdeg, centralCharacterTable_mul_characterDegree]
+
+/-- The character table read off the central character table. No hypothesis beyond the standing
+ones is needed, because the class size `|C|` is already invertible in `k`: the second
+column-orthogonality relation `TauCeti.card_conjClass_mul_sum_characterTable_mul_characterTable_inv`
+exhibits the invertible `|G|` as a multiple of it. -/
+theorem characterTable_eq_div (i : Fin (Nat.card (ConjClasses G))) (C : ConjClasses G) :
+    characterTable k G i C =
+      (characterDegree k i : k) * centralCharacterTable k G i C / Nat.card C.carrier := by
+  obtain ⟨g, rfl⟩ := C.exists_rep
+  have hC : (Nat.card (ConjClasses.mk g).carrier : k) ≠ 0 := fun h0 =>
+    Invertible.ne_zero (Nat.card G : k) <| by
+      have h := card_conjClass_mul_sum_characterTable_mul_characterTable_inv (k := k) g g
+      rw [if_pos (IsConj.refl g), h0, zero_mul] at h
+      exact h.symm
+  rw [eq_div_iff hC, mul_comm (characterTable k G i (ConjClasses.mk g)),
+    ← centralCharacterTable_mul_characterDegree i (ConjClasses.mk g)]
+  exact mul_comm _ _
 
 end CentralTable
 
