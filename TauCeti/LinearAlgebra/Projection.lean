@@ -14,8 +14,8 @@ A family `Q` of submodules that is `iSupIndep` and spans the whole module presen
 complementary to the supremum of the other summands, so each summand inherits such a projection.
 
 This file records that complement, `TauCeti.isCompl_biSup_ne`, and the projections it produces,
-`TauCeti.internalProjection`. Their pointwise behaviour, range and kernel are Mathlib's lemmas
-about `Submodule.projectionOnto`, restated for the specialization. The one fact that goes beyond a
+`TauCeti.internalProjection`. Their pointwise behaviour and kernel are Mathlib's lemmas about
+`Submodule.projectionOnto`, restated for the specialization. The one fact that goes beyond a
 single projection is that over a finite index type the projections sum to the identity,
 `TauCeti.sum_coe_internalProjection`.
 
@@ -77,23 +77,6 @@ theorem internalProjection_apply_eq_zero_of_mem_of_ne (hQi : iSupIndep Q) (hQt :
     {i j : ι} (hij : i ≠ j) {x : M} (hx : x ∈ Q i) : internalProjection hQi hQt j x = 0 :=
   Submodule.projectionOnto_apply_of_mem_right _
     (le_iSup₂ (f := fun k (_ : k ≠ j) ↦ Q k) i hij hx)
-
-/-- The projection onto `Q j` restricts to `0` on any other summand `Q i`. -/
-@[simp]
-theorem internalProjection_apply_of_ne (hQi : iSupIndep Q) (hQt : ⨆ i, Q i = ⊤) {i j : ι}
-    (hij : i ≠ j) (x : Q i) : internalProjection hQi hQt j (x : M) = 0 :=
-  internalProjection_apply_eq_zero_of_mem_of_ne hQi hQt hij x.2
-
-/-- The projection onto `Q i` is surjective, since it restricts to the identity on `Q i`. -/
-theorem internalProjection_surjective (hQi : iSupIndep Q) (hQt : ⨆ i, Q i = ⊤) (i : ι) :
-    Function.Surjective (internalProjection hQi hQt i) :=
-  Submodule.projectionOnto_surjective _
-
-/-- The projection onto `Q i` is surjective, stated for its range. -/
-@[simp]
-theorem range_internalProjection (hQi : iSupIndep Q) (hQt : ⨆ i, Q i = ⊤) (i : ι) :
-    LinearMap.range (internalProjection hQi hQt i) = ⊤ :=
-  Submodule.range_projectionOnto _
 
 /-- The kernel of the projection onto `Q i` is the supremum of the other summands. -/
 @[simp]
