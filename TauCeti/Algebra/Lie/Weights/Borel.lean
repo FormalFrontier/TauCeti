@@ -7,7 +7,7 @@ module
 public import Mathlib.Algebra.Lie.Weights.RootSystem
 public import TauCeti.LinearAlgebra.RootSystem.Positive
 
-@[expose] public section
+public section
 
 /-!
 # The nilradicals and the Borel subalgebra of a positive system
@@ -17,25 +17,26 @@ characteristic zero, and let `H` be a splitting Cartan subalgebra, so that
 `LieAlgebra.IsKilling.rootSystem H` is the root system of `L` relative to `H`. A base `b` of that
 root system singles out the positive roots, and this file builds the three subalgebras the base
 determines: the positive nilradical `n⁺ = ⨁_{α > 0} Lα`, the negative nilradical
-`n⁻ = ⨁_{α < 0} Lα`, and the Borel subalgebra `𝔟 = H ⊕ n⁺`.
+`n⁻ = ⨁_{α < 0} Lα`, and the Borel subalgebra `𝔟 = H + n⁺`.
 
-Everything rests on one observation, isolated as `TauCeti.rootSpaceSubalgebra`: a closed set `S`
-of roots spans a Lie subalgebra, because `⁅Lα, Lβ⁆ ≤ L(α + β)`. Being closed under sums is what
-puts the bracket back in the span when `α + β` is a root, and containing no opposite pair is what
-rules out `α + β = 0`, whose weight space is the Cartan subalgebra rather than a root space. The
-positive roots and the negative roots are two such sets, by the additivity of the height
+Everything rests on one observation, isolated as `TauCeti.rootSpaceSubalgebra`: a special closed
+set `S` of roots spans a Lie subalgebra, because `⁅Lα, Lβ⁆ ≤ L(α + β)`. Being closed under sums is
+what puts the bracket back in the span when `α + β` is a root, and containing no opposite pair is
+what rules out `α + β = 0`, whose weight space is the Cartan subalgebra rather than a root space.
+The positive roots and the negative roots are two such sets, by the additivity of the height
 function.
 
 ## Main definitions
 
 * `TauCeti.rootSpaceSpan H S`: the `H`-submodule of `L` spanned by the root spaces indexed by a set
   `S` of roots.
-* `TauCeti.IsClosedRootSet H S`: `S` is stable under those sums of its members that are again
-  roots, and contains no root together with its negative.
-* `TauCeti.rootSpaceSubalgebra H S hS`: the span of a closed set of roots, as a Lie subalgebra.
+* `TauCeti.IsSpecialClosedRootSet H S`: `S` is stable under those sums of its members that are
+  again roots, and contains no root together with its negative.
+* `TauCeti.rootSpaceSubalgebra H S hS`: the span of a special closed set of roots, as a Lie
+  subalgebra.
 * `TauCeti.positiveNilradical H b`, `TauCeti.negativeNilradical H b`: the nilradicals `n⁺` and `n⁻`
   of the positive system determined by a base `b`.
-* `TauCeti.borelSubalgebra H b`: the Borel subalgebra `𝔟 = H ⊕ n⁺`.
+* `TauCeti.borelSubalgebra H b`: the Borel subalgebra `𝔟 = H + n⁺`.
 
 ## Main results
 
@@ -43,11 +44,11 @@ function.
   `TauCeti.mem_negativeNilradical_of_mem_rootSpace` say the nilradicals contain the root spaces
   they are built from.
 * `TauCeti.borelSubalgebra_eq_sup`: the Borel subalgebra is the join `H ⊔ n⁺`.
-* `TauCeti.le_borelSubalgebra` and `TauCeti.positiveNilradical_le_borelSubalgebra` exhibit the two
-  summands of the Borel subalgebra.
+* `TauCeti.le_borelSubalgebra` and `TauCeti.positiveNilradical_le_borelSubalgebra` are the two
+  inclusions `H ≤ 𝔟` and `n⁺ ≤ 𝔟`.
 * `TauCeti.lie_mem_positiveNilradical_of_mem_borelSubalgebra`: `⁅𝔟, n⁺⁆ ≤ n⁺`, so `n⁺` is a Lie
   ideal of `𝔟`.
-* `TauCeti.negativeNilradical_sup_borelSubalgebra`: the triangular decomposition
+* `TauCeti.negativeNilradical_sup_borelSubalgebra_eq_top`: the triangular decomposition
   `L = n⁻ + (H + n⁺)`, as an equality of submodules.
 
 ## Implementation notes
@@ -119,16 +120,16 @@ theorem lie_mem_rootSpaceSpan {S : Set H.root}
     (fun β y hy => ?_) (by simp) (fun y z hy hz => by rw [lie_add]; exact add_mem hy hz)
   exact hS α α.2 β β.2 (lie_mem_genWeightSpace_of_mem_genWeightSpace hx hy)
 
-/-! ### Closed sets of roots -/
+/-! ### Special closed sets of roots -/
 
 variable (H) in
-/-- A set `S` of roots is **closed** when it is stable under those sums of its members that are
-again roots, and contains no root together with its negative.
+/-- A set `S` of roots is **special closed** when it is *closed*, that is stable under those sums
+of its members that are again roots, and moreover contains no root together with its negative.
 
 The second condition is what the first one alone does not give: without it the sum `α + (-α) = 0`
 would contribute the zero weight space, which is the Cartan subalgebra and not a root space, and
 the span of `S` would not be closed under the bracket. -/
-structure IsClosedRootSet (S : Set H.root) : Prop where
+structure IsSpecialClosedRootSet (S : Set H.root) : Prop where
   /-- A root that is the sum of two members of `S` is again a member of `S`. -/
   add_mem : ∀ α ∈ S, ∀ β ∈ S, ∀ k : H.root,
     (IsKilling.rootSystem H).root k =
@@ -136,9 +137,9 @@ structure IsClosedRootSet (S : Set H.root) : Prop where
   /-- No member of `S` has its negative in `S`. -/
   reflectionPerm_self_notMem : ∀ α ∈ S, (IsKilling.rootSystem H).reflectionPerm α α ∉ S
 
-/-- The root space of the sum of two members of a closed set of roots lies in the span of that
-set. -/
-theorem rootSpace_add_le_rootSpaceSpan {S : Set H.root} (hS : IsClosedRootSet H S)
+/-- The root space of the sum of two members of a special closed set of roots lies in the span of
+that set. -/
+theorem rootSpace_add_le_rootSpaceSpan {S : Set H.root} (hS : IsSpecialClosedRootSet H S)
     {α β : H.root} (hα : α ∈ S) (hβ : β ∈ S) :
     rootSpace H ((α : H → K) + (β : H → K)) ≤ rootSpaceSpan H S := by
   rcases eq_or_ne (rootSpace H ((α : H → K) + (β : H → K))) ⊥ with h | h
@@ -165,29 +166,29 @@ theorem rootSpace_add_le_rootSpaceSpan {S : Set H.root} (hS : IsClosedRootSet H 
 
 variable (b : (IsKilling.rootSystem H).Base)
 
-/-- The positive roots are a closed set of roots: heights add, and a positive root never has a
-positive negative. -/
-theorem isClosedRootSet_posRoots :
-    IsClosedRootSet H (posRoots (IsKilling.rootSystem H) b) where
+/-- The positive roots are a special closed set of roots: heights add, and a positive root never
+has a positive negative. -/
+theorem isSpecialClosedRootSet_posRoots :
+    IsSpecialClosedRootSet H (posRoots (IsKilling.rootSystem H) b) where
   add_mem _ hα _ hβ _ hk := add_mem_posRoots _ b hα hβ hk
   reflectionPerm_self_notMem _ hα := reflectionPerm_self_notMem_posRoots _ b hα
 
-/-- The negative roots are a closed set of roots. -/
-theorem isClosedRootSet_negRoots :
-    IsClosedRootSet H (negRoots (IsKilling.rootSystem H) b) where
+/-- The negative roots are a special closed set of roots. -/
+theorem isSpecialClosedRootSet_negRoots :
+    IsSpecialClosedRootSet H (negRoots (IsKilling.rootSystem H) b) where
   add_mem _ hα _ hβ _ hk := add_mem_negRoots _ b hα hβ hk
   reflectionPerm_self_notMem _ hα := reflectionPerm_self_notMem_negRoots _ b hα
 
 variable (H) in
-/-- The span of the root spaces indexed by a closed set `S` of roots, as a Lie subalgebra
+/-- The span of the root spaces indexed by a special closed set `S` of roots, as a Lie subalgebra
 of `L`. -/
-def rootSpaceSubalgebra (S : Set H.root) (hS : IsClosedRootSet H S) : LieSubalgebra K L where
+def rootSpaceSubalgebra (S : Set H.root) (hS : IsSpecialClosedRootSet H S) : LieSubalgebra K L where
   __ := (rootSpaceSpan H S : Submodule K L)
   lie_mem' hx hy :=
     lie_mem_rootSpaceSpan (fun _ hα _ hβ => rootSpace_add_le_rootSpaceSpan hS hα hβ) hx hy
 
 @[simp]
-theorem mem_rootSpaceSubalgebra {S : Set H.root} (hS : IsClosedRootSet H S) (x : L) :
+theorem mem_rootSpaceSubalgebra {S : Set H.root} (hS : IsSpecialClosedRootSet H S) (x : L) :
     x ∈ rootSpaceSubalgebra H S hS ↔ x ∈ rootSpaceSpan H S :=
   Iff.rfl
 
@@ -197,11 +198,11 @@ variable (H)
 
 /-- The **positive nilradical** `n⁺ = ⨁_{α > 0} Lα` of the positive system determined by `b`. -/
 def positiveNilradical : LieSubalgebra K L :=
-  rootSpaceSubalgebra H _ (isClosedRootSet_posRoots b)
+  rootSpaceSubalgebra H _ (isSpecialClosedRootSet_posRoots b)
 
 /-- The **negative nilradical** `n⁻ = ⨁_{α < 0} Lα` of the positive system determined by `b`. -/
 def negativeNilradical : LieSubalgebra K L :=
-  rootSpaceSubalgebra H _ (isClosedRootSet_negRoots b)
+  rootSpaceSubalgebra H _ (isSpecialClosedRootSet_negRoots b)
 
 @[simp]
 theorem mem_positiveNilradical (x : L) :
@@ -227,7 +228,7 @@ theorem mem_negativeNilradical_of_mem_rootSpace {α : H.root}
 
 /-- The sum of the Cartan subalgebra and the positive nilradical is closed under the bracket: the
 Cartan preserves each root space, and the positive root spaces bracket into one another. -/
-theorem lie_mem_sup_rootSpaceSpan_posRoots {x y : L}
+private theorem lie_mem_sup_rootSpaceSpan_posRoots {x y : L}
     (hx : x ∈ (H : Submodule K L) ⊔
       (rootSpaceSpan H (posRoots (IsKilling.rootSystem H) b) : Submodule K L))
     (hy : y ∈ (H : Submodule K L) ⊔
@@ -244,9 +245,9 @@ theorem lie_mem_sup_rootSpaceSpan_posRoots {x y : L}
   · rw [← lie_skew]
     exact neg_mem (LieSubmodule.lie_mem _ (x := (⟨v, hv⟩ : H)) hm)
   · exact lie_mem_rootSpaceSpan (fun _ hα _ hβ =>
-      rootSpace_add_le_rootSpaceSpan (isClosedRootSet_posRoots b) hα hβ) hm hn
+      rootSpace_add_le_rootSpaceSpan (isSpecialClosedRootSet_posRoots b) hα hβ) hm hn
 
-/-- The **Borel subalgebra** `𝔟 = H ⊕ n⁺` of the positive system determined by `b`.
+/-- The **Borel subalgebra** `𝔟 = H + n⁺` of the positive system determined by `b`.
 
 It is a subalgebra because `H` is one, because `⁅H, n⁺⁆ ≤ n⁺` — the root spaces being
 `H`-submodules — and because `n⁺` is one. -/
@@ -262,18 +263,18 @@ theorem mem_borelSubalgebra (x : L) :
         (rootSpaceSpan H (posRoots (IsKilling.rootSystem H) b) : Submodule K L) :=
   Iff.rfl
 
-/-- The Cartan subalgebra is a summand of the Borel subalgebra. -/
+/-- The Cartan subalgebra is contained in the Borel subalgebra. -/
 theorem le_borelSubalgebra : H ≤ borelSubalgebra H b :=
   fun _ hx => Submodule.mem_sup_left hx
 
-/-- The positive nilradical is a summand of the Borel subalgebra. -/
+/-- The positive nilradical is contained in the Borel subalgebra. -/
 theorem positiveNilradical_le_borelSubalgebra :
     positiveNilradical H b ≤ borelSubalgebra H b :=
   fun _ hx => Submodule.mem_sup_right hx
 
-/-- The Borel subalgebra is the join of the Cartan subalgebra and the positive nilradical in the
-lattice of Lie subalgebras: this is the decomposition `𝔟 = H ⊕ n⁺`, with the sum taken where it
-belongs once both summands are known to be subalgebras. -/
+/-- The Borel subalgebra is the join `H ⊔ n⁺` of the Cartan subalgebra and the positive nilradical
+in the lattice of Lie subalgebras: no closure is needed, the submodule sum `H + n⁺` being already
+a Lie subalgebra. -/
 theorem borelSubalgebra_eq_sup : borelSubalgebra H b = H ⊔ positiveNilradical H b := by
   refine le_antisymm (fun x hx => ?_)
     (sup_le (le_borelSubalgebra H b) (positiveNilradical_le_borelSubalgebra H b))
@@ -290,7 +291,7 @@ theorem lie_mem_positiveNilradical_of_mem_borelSubalgebra {x y : L}
   rw [add_lie]
   exact add_mem (LieSubmodule.lie_mem _ (x := (⟨u, hu⟩ : H)) hy)
     (lie_mem_rootSpaceSpan (fun _ hα _ hβ =>
-      rootSpace_add_le_rootSpaceSpan (isClosedRootSet_posRoots b) hα hβ) hm hy)
+      rootSpace_add_le_rootSpaceSpan (isSpecialClosedRootSet_posRoots b) hα hβ) hm hy)
 
 /-! ### The triangular decomposition -/
 
@@ -309,7 +310,8 @@ private theorem rootSpace_le_negativeNilradical_sup_borelSubalgebra (α : H.root
 /-- **The triangular decomposition** `L = n⁻ + (H + n⁺)`: the negative nilradical and the Borel
 subalgebra together span `L`. This is the spanning half of `L = n⁻ ⊕ H ⊕ n⁺`, and it is exactly
 what the root space decomposition of `L` supplies. -/
-theorem negativeNilradical_sup_borelSubalgebra :
+@[simp]
+theorem negativeNilradical_sup_borelSubalgebra_eq_top :
     (negativeNilradical H b : Submodule K L) ⊔ (borelSubalgebra H b : Submodule K L) = ⊤ := by
   refine top_le_iff.mp ?_
   have htop : ((⊤ : LieSubmodule K H L) : Submodule K L) ≤
@@ -321,7 +323,7 @@ theorem negativeNilradical_sup_borelSubalgebra :
         ⟨χ, by simpa [LieSubalgebra.root] using hχ⟩
     · rw [not_not] at hχ
       refine le_trans (le_of_eq ?_) (le_sup_of_le_right (le_borelSubalgebra H b))
-      rw [show ((χ : H → K)) = 0 from hχ]
+      rw [hχ.eq]
       exact (congrArg LieSubmodule.toSubmodule (LieAlgebra.rootSpace_zero_eq K L H)).trans
         H.coe_toLieSubmodule
   simpa using htop

@@ -160,8 +160,8 @@ lemma add_mem_posRoots {i j k : ι} (hi : i ∈ posRoots P b) (hj : j ∈ posRoo
     (hk : P.root k = P.root i + P.root j) : k ∈ posRoots P b :=
   RootPairing.Base.IsPos.add hi hj hk
 
-/-- The negative roots are closed under addition, by negating the three roots and applying
-`TauCeti.add_mem_posRoots`. -/
+/-- The negative roots are closed under addition: a root that is the sum of two negative roots is
+negative. -/
 lemma add_mem_negRoots {i j k : ι} (hi : i ∈ negRoots P b) (hj : j ∈ negRoots P b)
     (hk : P.root k = P.root i + P.root j) : k ∈ negRoots P b := by
   rw [← isPos_reflectionPerm_self_iff_mem_negRoots] at hi hj ⊢
