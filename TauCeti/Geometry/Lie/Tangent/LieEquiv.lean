@@ -43,9 +43,6 @@ variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
   {G : Type*} [TopologicalSpace G] [ChartedSpace H G] [Group G]
   [LieGroup I ∞ G]
 
-local instance finiteDimensionalCompleteSpaceLieEquiv [FiniteDimensional ℝ E] : CompleteSpace E :=
-  FiniteDimensional.complete ℝ E
-
 -- The manifold bracket API needs three derivatives; this instance is the corresponding downgrade of
 -- the ambient smooth Lie-group structure.
 local instance lieGroupMinSmoothnessThree : LieGroup I (minSmoothness ℝ 3) G :=
@@ -63,17 +60,13 @@ theorem tangentToLeftInvariantDerivation_lie [CompleteSpace E]
   apply LeftInvariantDerivation.evalAt_one_injective
   ext f
   let F : C^∞⟮I, G; ℝ⟯ := f
-  -- Point-derivation extensionality presents `f` as a pointed smooth map, while a global
-  -- derivation acts on its canonical global extension `F`.
-  have hleft :
-      (LeftInvariantDerivation.evalAt (I := I) (1 : G)
-        (tangentToLeftInvariantDerivation ⁅v, w⁆)) f =
-        (tangentToLeftInvariantDerivation ⁅v, w⁆ F) 1 := rfl
-  have hright :
-      (LeftInvariantDerivation.evalAt (I := I) (1 : G)
-        ⁅tangentToLeftInvariantDerivation v, tangentToLeftInvariantDerivation w⁆) f =
-        (⁅tangentToLeftInvariantDerivation v, tangentToLeftInvariantDerivation w⁆ F) 1 := rfl
-  rw [hleft, hright]
+  -- `PointedContMDiffMap` is Mathlib's type synonym for the same smooth map with a different scalar
+  -- action; expose its canonical global-map view before using the evaluation API.
+  change (LeftInvariantDerivation.evalAt (I := I) (1 : G)
+      (tangentToLeftInvariantDerivation ⁅v, w⁆)) F =
+    (LeftInvariantDerivation.evalAt (I := I) (1 : G)
+      ⁅tangentToLeftInvariantDerivation v, tangentToLeftInvariantDerivation w⁆) F
+  rw [LeftInvariantDerivation.evalAt_apply, LeftInvariantDerivation.evalAt_apply]
   rw [LeftInvariantDerivation.commutator_apply]
   simp only [tangentToLeftInvariantDerivation_apply, ContMDiffMap.coe_sub, Pi.sub_apply]
   rw [mulInvariantVectorField_one, GroupLieAlgebra.bracket_def]

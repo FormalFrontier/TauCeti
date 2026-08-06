@@ -171,7 +171,12 @@ private theorem mdifferentiableAt_mvfderiv_apply
       (tangentMap I 𝓘(𝕜, F) f (U x : TangentBundle I M)) :=
     (contMDiff_snd_tangentBundle_modelSpace F 𝓘(𝕜, F)
       (n := 1)).mdifferentiable (by norm_num) |>.mdifferentiableAt
-  exact (hsnd.comp x htangent).congr_of_eventuallyEq (by rfl)
+  apply (hsnd.comp x htangent).congr_of_eventuallyEq
+  filter_upwards with y
+  rw [Function.comp_apply, tangentMap_snd, mvfderiv, ContinuousLinearMap.comp_apply]
+  -- `fromTangentSpace` is Mathlib's explicit interface for the definitional identification of the
+  -- tangent space of a normed space with that normed space.
+  rfl
 
 /-- Let `f` have enough derivatives for symmetry of its second derivative at `x`, and let `V` and
 `W` be differentiable vector fields there. Then the differential of `f` on the manifold bracket is
