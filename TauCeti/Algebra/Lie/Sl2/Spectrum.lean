@@ -150,7 +150,10 @@ theorem exists_int_of_hasEigenvalue (t : IsSl2Triple h e f)
   simpa using Module.End.mem_eigenspace_iff.1 hv
 
 /-- **No eigenvalues off the integers.** The eigenspace of the Cartan element at a scalar that is
-not an integer is trivial. -/
+not an integer is trivial.
+
+This is deliberately not a `simp` lemma: the triple `t` mentions `e` and `f`, which do not occur
+in the left-hand side, so `simp` cannot infer them (the `simpNF` linter rejects the tag). -/
 theorem eigenspace_toEnd_eq_bot_of_forall_ne_intCast (t : IsSl2Triple h e f)
     (hμ : ∀ z : ℤ, μ ≠ (z : K)) : (toEnd K L M h).eigenspace μ = ⊥ := by
   by_contra hbot
@@ -261,19 +264,24 @@ def eigenspaceSup : LieSubmodule K (t.toLieSubalgebra K) M where
       fun ν _ hw ↦ Submodule.mem_iSup_of_mem (ν - 2) (lie_mem_eigenspace_sub_two t hw)
     have hh : ∀ ν : K, (toEnd K L M h).eigenspace ν ≤ S.comap (toEnd K L M h) :=
       fun ν _ hw ↦ Submodule.mem_iSup_of_mem ν (lie_mem_eigenspace hw)
-    rintro ⟨x, hx⟩ y hy
-    obtain ⟨c₁, c₂, c₃, rfl⟩ := IsSl2Triple.mem_toLieSubalgebra_iff.1 hx
-    change ⁅c₁ • e + c₂ • f + c₃ • ⁅e, f⁆, y⁆ ∈ S
-    rw [add_lie, add_lie, smul_lie, smul_lie, smul_lie, t.lie_e_f]
+    rintro x y hy
+    obtain ⟨c₁, c₂, c₃, hx⟩ := IsSl2Triple.mem_toLieSubalgebra_iff.1 x.2
+    rw [LieSubalgebra.coe_bracket_of_module, hx, add_lie, add_lie, smul_lie, smul_lie, smul_lie,
+      t.lie_e_f]
     exact Submodule.add_mem _ (Submodule.add_mem _
       (Submodule.smul_mem _ _ (key e he y hy)) (Submodule.smul_mem _ _ (key f hf y hy)))
       (Submodule.smul_mem _ _ (key h hh y hy))
 
+/-- The submodule underlying `TauCeti.eigenspaceSup` is the sum of the eigenspaces of the Cartan
+element. This is the abstraction boundary: it is how a downstream proof should pass between the
+bundled Lie submodule and the eigenspaces, rather than unfolding the definition. -/
 @[simp]
 theorem eigenspaceSup_toSubmodule :
     (eigenspaceSup t (M := M)).toSubmodule = ⨆ ν : K, (toEnd K L M h).eigenspace ν := by
   simp only [eigenspaceSup]
 
+/-- An eigenvector of the Cartan element lies in the sum of its eigenspaces,
+`TauCeti.eigenspaceSup`. -/
 theorem mem_eigenspaceSup_of_lie_h_eq_smul (hv : ⁅h, v⁆ = μ • v) :
     v ∈ eigenspaceSup (K := K) t := by
   rw [← LieSubmodule.mem_toSubmodule, eigenspaceSup_toSubmodule t]
