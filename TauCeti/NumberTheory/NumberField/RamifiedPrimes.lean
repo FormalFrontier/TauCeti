@@ -41,8 +41,8 @@ namespace TauCeti.NumberField
 variable (K : Type*) [Field K]
 
 /-- **The ramified rational primes of a number field.** The set of natural primes `p` such that
-`p` — as the ideal `span {p}` of `ℤ` — ramifies in the ring of integers of `K`. Its cardinality is
-the `t` of genus theory. -/
+`p` — as the ideal `span {p}` of `ℤ` — ramifies in the ring of integers of `K`. For a quadratic
+field `K`, its cardinality is the `t` of genus theory. -/
 def ramifiedPrimes : Set ℕ :=
   {p | p.Prime ∧ ¬ Algebra.IsUnramifiedIn (𝓞 K) (Ideal.span {(p : ℤ)})}
 

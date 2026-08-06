@@ -370,8 +370,13 @@ discriminant `p*`, and `2` for each of `-4`, `8`, `-8`. That prime is the one ra
 quadratic field the discriminant belongs to, so the map below is what turns a prime-discriminant
 factorization of a fundamental discriminant into the list of ramified primes. -/
 
-/-- The rational prime lying under a prime discriminant: `p` for the odd prime discriminant `p*`,
-and `2` for the even prime discriminants `-4`, `8`, `-8`. -/
+/-- The rational prime lying under a prime discriminant `D`, when `IsPrimeDiscriminant D`: `p` for
+the odd prime discriminant `p*`, and `2` for the even prime discriminants `-4`, `8`, `-8`. That the
+value really is prime under that hypothesis is `prime_primeDiscriminantPrime`.
+
+The definition is total: on an integer that is not a prime discriminant it returns the junk value
+`D.natAbs` (unless `D` is one of `-4`, `8`, `-8`), which need not be prime — for instance
+`primeDiscriminantPrime 9 = 9`. -/
 def primeDiscriminantPrime (D : ℤ) : ℕ :=
   if D = -4 ∨ D = 8 ∨ D = -8 then 2 else D.natAbs
 
