@@ -4,8 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+public import TauCeti.LinearAlgebra.End.FiniteOrder
 public import TauCeti.RepresentationTheory.CharacterTable.ClassFunction
-public import TauCeti.RepresentationTheory.CharacterTable.Values
 public import TauCeti.RingTheory.RootsOfUnity.PrimitiveRoots
 public import Mathlib.FieldTheory.Minpoly.IsConjRoot
 
@@ -22,9 +22,10 @@ action on character values is by power maps of the group element**.
 This file proves that identity, first for an arbitrary ring endomorphism of an algebraically closed
 field and then, over `ℂ`, in the form the character-theory roadmap asks for, with the exponent `j`
 supplied by Mathlib's cyclotomic character `IsPrimitiveRoot.autToPow`, which reads it off a chosen
-primitive root of unity and an algebra automorphism. Every ring homomorphism `ℂ →+* ℂ` is
-automatically `ℚ`-linear, so `ℂ ≃ₐ[ℚ] ℂ` is the group of field automorphisms of `ℂ` and no
-generality is lost.
+primitive root of unity and an algebra automorphism. A field automorphism of `ℂ` is automatically
+`ℚ`-linear, so `ℂ ≃ₐ[ℚ] ℂ` is the group of field automorphisms of `ℂ`; the endomorphism statement
+above is the more general one, since a `ℚ`-linear ring homomorphism `ℂ →+* ℂ` is an embedding but
+need not be surjective.
 
 Complex conjugation is the instance `j = n - 1` of all this, and gives back
 `TauCeti.Representation.conj_char_eq_char_inv`, `conj (χ g) = χ g⁻¹`.
@@ -48,9 +49,9 @@ consumes once such a `σ` is in hand.
 * `TauCeti.Representation.map_ofCharacter_eq_powMap`: on a group of exponent dividing `n` the
   Galois twist `σ ∘ χ` is the power-map twist `TauCeti.ClassFunction.powMap j` of the class
   function of `χ`, so the twist is an operation on `ClassFunction k G`.
-* `TauCeti.FDRep.algEquiv_character_eq_character_pow`: over `ℂ`, a field automorphism `f` of `ℂ`
-  sends `χ(g)` to `χ(g ^ j)`, with `j` the cyclotomic exponent `IsPrimitiveRoot.autToPow` attaches
-  to `f`.
+* `TauCeti.FDRep.map_character_eq_character_pow_of_isPrimitiveRoot`: over `ℂ`, a field
+  automorphism `f` of `ℂ` sends `χ(g)` to `χ(g ^ j)`, with `j` the cyclotomic exponent
+  `IsPrimitiveRoot.autToPow` attaches to `f`.
 * `TauCeti.FDRep.isConjRoot_character_pow`: `χ(g)` and `χ(g ^ j)` are conjugate over `ℚ`.
 * `TauCeti.FDRep.character_pow_eq_character_of_mem_range`: a rational character value is unchanged
   by the power maps that automorphisms of `ℂ` realize.
@@ -90,9 +91,10 @@ theorem map_character_eq_character_pow (ρ : Representation k G V) {g : G} {n j 
 witnessed on a single primitive `n`-th root of unity: if `σ ζ = ζ ^ j` for a primitive `n`-th root
 of unity `ζ` and `g ^ n = 1`, then `σ (χ(g)) = χ(g ^ j)`. -/
 theorem map_character_eq_character_pow_of_isPrimitiveRoot (ρ : Representation k G V) {g : G}
-    {n j : ℕ} [NeZero n] {ζ : k} (hζ : IsPrimitiveRoot ζ n) (hn : (n : k) ≠ 0) (hg : g ^ n = 1)
+    {n j : ℕ} {ζ : k} (hζ : IsPrimitiveRoot ζ n) (hn : (n : k) ≠ 0) (hg : g ^ n = 1)
     (σ : k →+* k) (hσ : σ ζ = ζ ^ j) :
     σ (ρ.character g) = ρ.character (g ^ j) :=
+  have : NeZero n := ⟨fun h => hn (by rw [h, Nat.cast_zero])⟩
   Representation.map_character_eq_character_pow ρ hn hg σ
     fun _ hμ => IsPrimitiveRoot.map_eq_pow hζ σ hσ hμ
 
@@ -133,7 +135,7 @@ theorem map_character_eq_character_pow (X : FDRep ℂ G) {g : G} {n j : ℕ} (hn
 the cyclotomic character `IsPrimitiveRoot.autToPow`: a field automorphism `f` of `ℂ`, which is the
 same thing as a `ℚ`-algebra automorphism, acts on the roots of unity of order dividing `n` as
 `ζ ↦ ζ ^ j` for a unique `j : (ZMod n)ˣ`, and then `f (χ(g)) = χ(g ^ j)` whenever `g ^ n = 1`. -/
-theorem algEquiv_character_eq_character_pow (X : FDRep ℂ G) {n : ℕ} [NeZero n] {ζ : ℂ}
+theorem map_character_eq_character_pow_of_isPrimitiveRoot (X : FDRep ℂ G) {n : ℕ} [NeZero n] {ζ : ℂ}
     (hζ : IsPrimitiveRoot ζ n) {g : G} (hg : g ^ n = 1) (f : ℂ ≃ₐ[ℚ] ℂ) :
     f (X.character g) = X.character (g ^ ((hζ.autToPow ℚ f : ZMod n).val)) :=
   FDRep.map_character_eq_character_pow X (NeZero.ne n) hg f.toAlgHom.toRingHom
@@ -145,7 +147,7 @@ automorphism of `ℂ`. -/
 theorem isConjRoot_character_pow (X : FDRep ℂ G) {n : ℕ} [NeZero n] {ζ : ℂ}
     (hζ : IsPrimitiveRoot ζ n) {g : G} (hg : g ^ n = 1) (f : ℂ ≃ₐ[ℚ] ℂ) :
     IsConjRoot ℚ (X.character g) (X.character (g ^ ((hζ.autToPow ℚ f : ZMod n).val))) := by
-  rw [← FDRep.algEquiv_character_eq_character_pow X hζ hg f]
+  rw [← FDRep.map_character_eq_character_pow_of_isPrimitiveRoot X hζ hg f]
   exact isConjRoot_of_algEquiv _ f
 
 /-- **A rational character value is fixed by the power maps that automorphisms of `ℂ` realize**: if
@@ -155,7 +157,7 @@ theorem character_pow_eq_character_of_mem_range (X : FDRep ℂ G) {n : ℕ} [NeZ
     (hχ : X.character g ∈ (algebraMap ℚ ℂ).range) :
     X.character (g ^ ((hζ.autToPow ℚ f : ZMod n).val)) = X.character g := by
   obtain ⟨q, hq⟩ := hχ
-  rw [← FDRep.algEquiv_character_eq_character_pow X hζ hg f, ← hq, AlgEquiv.commutes]
+  rw [← FDRep.map_character_eq_character_pow_of_isPrimitiveRoot X hζ hg f, ← hq, AlgEquiv.commutes]
 
 end FDRep
 

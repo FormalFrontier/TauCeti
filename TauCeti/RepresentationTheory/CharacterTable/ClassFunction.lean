@@ -148,6 +148,20 @@ theorem powMap_apply (j : ℕ) (f : ClassFunction k G) (g : G) :
     (powMap j f).1 g = f.1 (g ^ j) :=
   (rfl)
 
+/-- Twisting by the first power changes nothing. -/
+@[simp]
+theorem powMap_one : powMap 1 = LinearMap.id (R := k) (M := ClassFunction k G) := by
+  ext f g
+  simp
+
+/-- The power maps compose: twisting by `j` and then by `i` is twisting by `i * j`.  This is what
+makes the twists an action of the multiplicative monoid of exponents. -/
+@[simp]
+theorem powMap_mul (i j : ℕ) :
+    powMap (k := k) (G := G) (i * j) = (powMap i).comp (powMap j) := by
+  ext f g
+  simp [pow_mul]
+
 /-- Class functions on `G` are linearly equivalent to functions on its conjugacy classes. -/
 noncomputable def equivConjClasses : ClassFunction k G ≃ₗ[k] (ConjClasses G → k) where
   toFun := toConjClasses
