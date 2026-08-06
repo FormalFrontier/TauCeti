@@ -59,13 +59,13 @@ private theorem fderivWithin_chart_apply_mpullbackWithin
     ((mfderiv[Set.range I] (extChartAt I x).symm z).inverse
       (U ((extChartAt I x).symm z))) =
     (mfderiv% p ((extChartAt I x).symm z)) (U ((extChartAt I x).symm z))
+  have hunique : UniqueMDiffAt[Set.range I] z := by
+    rw [uniqueMDiffWithinAt_iff_uniqueDiffWithinAt]
+    exact I.uniqueDiffOn.uniqueDiffWithinAt (extChartAt_target_subset_range x hz)
   rw [mfderiv_comp_mfderivWithin
     (I := 𝓘(𝕜, E)) (I' := I) (I'' := 𝓘(𝕜, F))
     (f := (extChartAt I x).symm) (g := p) (s := Set.range I) z hpz
-    (mdifferentiableWithinAt_extChartAt_symm hz)
-    (show UniqueMDiffAt[Set.range I] z by
-      rw [uniqueMDiffWithinAt_iff_uniqueDiffWithinAt]
-      exact I.uniqueDiffOn.uniqueDiffWithinAt (extChartAt_target_subset_range x hz))]
+    (mdifferentiableWithinAt_extChartAt_symm hz) hunique]
   rw [ContinuousLinearMap.comp_apply]
   exact congrArg (mfderiv% p ((extChartAt I x).symm z))
     ((isInvertible_mfderivWithin_extChartAt_symm hz).self_apply_inverse _)
@@ -228,11 +228,12 @@ theorem mvfderiv_mlieBracket {f : M → F} {V W : ∀ x : M, TangentSpace I x} {
   have hfcoord : ContDiffWithinAt 𝕜 (minSmoothness 𝕜 2)
       (f ∘ (extChartAt I x).symm)
       (Set.range I) (extChartAt I x x) := by
+    have hfWithin : ContMDiffWithinAt I 𝓘(𝕜, F) (minSmoothness 𝕜 2) f Set.univ x :=
+      hf.of_le hn
     have hsymm := contMDiffWithinAt_extChartAt_symm_range_self
       (I := I) (n := minSmoothness 𝕜 2) x
     have hcomp := ContMDiffWithinAt.comp_of_eq
-      (show ContMDiffWithinAt I 𝓘(𝕜, F) (minSmoothness 𝕜 2) f Set.univ x from
-        hf.of_le hn)
+      hfWithin
       hsymm (Set.mapsTo_univ _ _) (extChartAt_to_inv x)
     exact contMDiffWithinAt_iff_contDiffWithinAt.mp hcomp
   have hVcoord : DifferentiableWithinAt 𝕜
@@ -271,11 +272,12 @@ theorem mvfderiv_mlieBracket {f : M → F} {V W : ∀ x : M, TangentSpace I x} {
     (I := I) (p := fun y ↦ mvfderiv I f y (V y)) (U := W)
     (mem_extChartAt_target x) (by simpa only [extChartAt_to_inv] using hVf)
   rw [extChartAt_to_inv] at houterW houterV
-  rw [show Z = lieBracketWithin 𝕜
+  have hZ : Z = lieBracketWithin 𝕜
     (mpullbackWithin 𝓘(𝕜, E) I (extChartAt I x).symm V (Set.range I))
     (mpullbackWithin 𝓘(𝕜, E) I (extChartAt I x).symm W (Set.range I))
-    (Set.range I) (extChartAt I x x) by
-      simp only [Z, Set.preimage_univ, Set.univ_inter]]
+    (Set.range I) (extChartAt I x x) := by
+    simp only [Z, Set.preimage_univ, Set.univ_inter]
+  rw [hZ]
   rw [fderivWithin_apply_lieBracket hfcoord le_rfl I.uniqueDiffOn
     (I.range_subset_closure_interior (Set.mem_range_self (f := I) _))
     (Set.mem_range_self (f := I) _) hWcoord hVcoord]

@@ -109,13 +109,13 @@ noncomputable def leftInvariantDerivationLieEquivGroupLieAlgebra
       let e₀ := leftInvariantDerivationEquivGroupLieAlgebra (I := I) (G := G) h₁
       -- Expose the underlying canonical linear equivalence supplied to this structure literal.
       change e₀ ⁅D, D'⁆ = ⁅e₀ D, e₀ D'⁆
+      have hinv (X : LeftInvariantDerivation I G) :
+          tangentToLeftInvariantDerivation (e₀ X) = X := by
+        rw [← leftInvariantDerivationEquivGroupLieAlgebra_symm_apply h₁,
+          e₀.symm_apply_apply]
       apply e₀.symm.injective
-      rw [e₀.symm_apply_apply]
-      rw [leftInvariantDerivationEquivGroupLieAlgebra_symm_apply h₁]
-      rw [tangentToLeftInvariantDerivation_lie]
-      rw [← leftInvariantDerivationEquivGroupLieAlgebra_symm_apply h₁,
-        ← leftInvariantDerivationEquivGroupLieAlgebra_symm_apply h₁]
-      rw [e₀.symm_apply_apply, e₀.symm_apply_apply] }
+      rw [e₀.symm_apply_apply, leftInvariantDerivationEquivGroupLieAlgebra_symm_apply h₁]
+      simp only [tangentToLeftInvariantDerivation_lie, hinv] }
 
 /-- The Lie equivalence acts as the underlying linear equivalence given by evaluation at the
 identity. -/
