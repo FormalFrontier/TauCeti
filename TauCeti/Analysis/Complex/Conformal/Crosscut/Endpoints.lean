@@ -76,48 +76,6 @@ variable {c ζ : ℂ} {r ρ : ℝ}
 
 /-! ## Metric and angular descriptions -/
 
-/-- The squared distance from a point on `sphere ζ ρ` to `c`, in angular coordinates based at the
-direction from `ζ` to `c`. This is the cosine rule in the form underlying circular crosscuts. -/
-private theorem dist_circleMap_sq (hζ : dist ζ c = r) (θ : ℝ) :
-    dist (circleMap ζ ρ θ) c ^ 2 =
-      ρ ^ 2 + r ^ 2 - 2 * ρ * r * Real.cos (θ - (c - ζ).arg) := by
-  have hnorm : ‖c - ζ‖ = r := by rw [← dist_eq_norm, dist_comm, hζ]
-  have hpolar : c - ζ = (r : ℂ) * exp (((c - ζ).arg : ℂ) * I) := by
-    conv_lhs => rw [← Complex.norm_mul_exp_arg_mul_I (c - ζ)]
-    rw [hnorm]
-  have hsub : circleMap ζ ρ θ - c =
-      (ρ : ℂ) * exp ((θ : ℂ) * I) - (c - ζ) := by
-    simp only [circleMap]
-    ring
-  have hu : normSq ((ρ : ℂ) * exp ((θ : ℂ) * I)) = ρ ^ 2 := by
-    rw [Complex.normSq_eq_norm_sq, Complex.norm_mul, Complex.norm_exp_ofReal_mul_I, mul_one,
-      norm_real, Real.norm_eq_abs, sq_abs]
-  have ha : normSq (c - ζ) = r ^ 2 := by
-    rw [Complex.normSq_eq_norm_sq, hnorm]
-  have hare : (c - ζ).re = r * Real.cos (c - ζ).arg := by
-    calc
-      (c - ζ).re = ((r : ℂ) * exp (((c - ζ).arg : ℂ) * I)).re :=
-        congrArg Complex.re hpolar
-      _ = r * Real.cos (c - ζ).arg := by simp [Complex.mul_re]
-  have haim : (c - ζ).im = r * Real.sin (c - ζ).arg := by
-    calc
-      (c - ζ).im = ((r : ℂ) * exp (((c - ζ).arg : ℂ) * I)).im :=
-        congrArg Complex.im hpolar
-      _ = r * Real.sin (c - ζ).arg := by simp [Complex.mul_im]
-  have hcross :
-      (((ρ : ℂ) * exp ((θ : ℂ) * I)) * (starRingEnd ℂ) (c - ζ)).re =
-        ρ * r * Real.cos (θ - (c - ζ).arg) := by
-    calc
-      (((ρ : ℂ) * exp ((θ : ℂ) * I)) * (starRingEnd ℂ) (c - ζ)).re =
-          (ρ * Real.cos θ) * (c - ζ).re + (ρ * Real.sin θ) * (c - ζ).im := by
-            simp [Complex.mul_re, Complex.mul_im]
-            ring
-      _ = ρ * r * Real.cos (θ - (c - ζ).arg) := by
-        rw [hare, haim, Real.cos_sub]
-        ring
-  rw [dist_eq_norm, ← Complex.normSq_eq_norm_sq, hsub, Complex.normSq_sub, hu, ha, hcross]
-  ring
-
 /-- **A ball centred at a point of an arc of angular width at most `π` meets it in an arc.** The
 chord distance to a fixed angle `θ₀` of the arc falls and then rises as the angle sweeps across the
 arc, so the angles it keeps below a threshold form an interval. -/
@@ -154,26 +112,18 @@ private lemma ordConnected_Ioo_inter_setOf_dist_circleMap_lt (ζ : ℂ) (ρ : �
 
 /-- A point of `sphere ζ ρ`, in angular coordinates, lies in `closedBall c r` exactly when its
 angle satisfies the weak cosine inequality complementary to
-`TauCeti.circleMap_mem_ball_iff`. -/
+`TauCeti.circleMap_mem_ball_iff`.
+
+This is the general criterion `TauCeti.circleMap_mem_closedBall_iff_sq` at `dist ζ c = r`, where
+the two squared radii cancel and the surviving condition
+`ρ ^ 2 ≤ 2 * ρ * r * cos (θ - arg (c - ζ))` may be divided by `ρ > 0`. -/
 theorem circleMap_mem_closedBall_iff (hζ : dist ζ c = r) (hρ : 0 < ρ) (θ : ℝ) :
     circleMap ζ ρ θ ∈ closedBall c r ↔
       ρ ≤ 2 * r * Real.cos (θ - (c - ζ).arg) := by
-  rw [mem_closedBall]
-  have hr : 0 ≤ r := hζ ▸ dist_nonneg
-  have hd := dist_circleMap_sq (ρ := ρ) hζ θ
+  rw [circleMap_mem_closedBall_iff_sq (hζ ▸ dist_nonneg) ρ θ, hζ]
   constructor
-  · intro h
-    have hsq : dist (circleMap ζ ρ θ) c ^ 2 ≤ r ^ 2 := by
-      nlinarith [dist_nonneg (x := circleMap ζ ρ θ) (y := c)]
-    have hprod : ρ * (ρ - 2 * r * Real.cos (θ - (c - ζ).arg)) ≤ 0 := by
-      nlinarith
-    apply le_of_sub_nonpos
-    by_contra hnot
-    exact (not_lt_of_ge hprod) (mul_pos hρ (lt_of_not_ge hnot))
-  · intro h
-    have hprod : ρ * (ρ - 2 * r * Real.cos (θ - (c - ζ).arg)) ≤ 0 :=
-      mul_nonpos_of_nonneg_of_nonpos hρ.le (sub_nonpos.mpr h)
-    nlinarith [dist_nonneg (x := circleMap ζ ρ θ) (y := c)]
+  · intro h; nlinarith
+  · intro h; nlinarith
 
 /-- The `simp`-normal form of `TauCeti.circleMap_mem_closedBall_iff`. -/
 @[simp]

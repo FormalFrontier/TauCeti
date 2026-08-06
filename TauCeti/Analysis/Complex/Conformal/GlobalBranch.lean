@@ -19,8 +19,8 @@ function on the whole domain**. Equivalently, on such a domain continuation crea
 branches, so "multi-valued analytic function" is a phenomenon of the topology of the domain and
 not of the germ.
 
-The hypothesis is `TauCeti.ContinuesInside f₀ U z₀` from `Conformal/Continuation.lean`: the germ
-of `f₀` at `z₀` continues along *every* path in `U` issuing from `z₀`. It is exactly what a
+The hypothesis is `TauCeti.ContinuesInside f₀ U z₀` from `Conformal/Continuation/Basic.lean`:
+the germ of `f₀` at `z₀` continues along *every* path in `U` issuing from `z₀`. It is exactly what a
 holomorphic function on `U` supplies (`TauCeti.ContinuesInside.of_differentiableOn`), and by the
 two-way form below it is supplied by nothing else once `U` is simply connected.
 
@@ -62,6 +62,14 @@ representative of the terminal germ at `z`, which is what analyticity at `z` nee
 identification at `z₀`, applied to the constant path, is what gives `F` the prescribed germ
 there.
 
+## Generality
+
+The germ carried is the germ of a map `ℂ → E` into a complex Banach space, as in
+`Continuation/Basic.lean`, where the choice is discussed; the conformal-mapping consumers
+instantiate `E = ℂ`. The domain `U` is a subset of `ℂ` throughout: it is the topology of `U` that
+the theorem is about, and the shear that moves the endpoint of a path is a statement about paths
+in `ℂ`.
+
 ## Relation to the roadmap and to Mathlib
 
 This completes the L4 target "the monodromy theorem (continuations along homotopic paths agree)"
@@ -93,7 +101,8 @@ namespace TauCeti
 
 open Filter Metric Set Topology unitInterval
 
-variable {U : Set ℂ} {z₀ : ℂ} {f₀ : ℂ → ℂ} {γ δ : I → ℂ} {f g : I → ℂ → ℂ}
+variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℂ E] [CompleteSpace E]
+  {U : Set ℂ} {z₀ : ℂ} {f₀ : ℂ → E} {γ δ : I → ℂ} {f g : I → ℂ → E}
 
 /-! ### Path independence and the global branch -/
 
@@ -177,7 +186,7 @@ So on a simply connected domain analytic continuation produces no new branches, 
 "multi-valued analytic function" there is single-valued after all. -/
 theorem exists_analyticOnNhd (hUo : IsOpen U) (hUc : IsSimplyConnected U) (hz₀ : z₀ ∈ U)
     (H : ContinuesInside f₀ U z₀) :
-    ∃ F : ℂ → ℂ, AnalyticOnNhd ℂ F U ∧ F =ᶠ[𝓝 z₀] f₀ := by
+    ∃ F : ℂ → E, AnalyticOnNhd ℂ F U ∧ F =ᶠ[𝓝 z₀] f₀ := by
   -- A path from `z₀` to each point of `U`, and a continuation of the germ along it.
   have hpath : ∀ w ∈ U, ∃ γ : I → ℂ,
       Continuous γ ∧ (∀ x, γ x ∈ U) ∧ γ 0 = z₀ ∧ γ 1 = w := fun w hw =>
@@ -189,10 +198,10 @@ theorem exists_analyticOnNhd (hUo : IsOpen U) (hUc : IsSimplyConnected U) (hz₀
   have hf₀' : ∀ w ∈ U, f w 0 =ᶠ[𝓝 z₀] f₀ := fun w hw => by
     have := hf₀ w hw; rwa [hγ0 w hw] at this
   -- The candidate branch: the value at `w` of the terminal germ of the chosen continuation.
-  set F : ℂ → ℂ := fun w => f w 1 w with hFdef
+  set F : ℂ → E := fun w => f w 1 w with hFdef
   -- **The key step.** Near the endpoint of *any* continuation of the germ, `F` is the value of
   -- that continuation's terminal germ.
-  have key : ∀ z : ℂ, ∀ δ : I → ℂ, ∀ g : I → ℂ → ℂ, Continuous δ → (∀ x, δ x ∈ U) → δ 0 = z₀ →
+  have key : ∀ z : ℂ, ∀ δ : I → ℂ, ∀ g : I → ℂ → E, Continuous δ → (∀ x, δ x ∈ U) → δ 0 = z₀ →
       δ 1 = z → IsAnalyticContinuationAlong g δ univ → g 0 =ᶠ[𝓝 z₀] f₀ → F =ᶠ[𝓝 z] g 1 := by
     intro z δ g hδ hδU hδ0 hδ1 hg hg0
     -- One family of germs continues along every path uniformly `ρ`-close to `δ`, ...
@@ -239,7 +248,7 @@ The forward direction is `TauCeti.ContinuesInside.exists_analyticOnNhd`; the rev
 observation that a holomorphic function is its own continuation. -/
 theorem continuesInside_iff_exists_analyticOnNhd (hUo : IsOpen U) (hUc : IsSimplyConnected U)
     (hz₀ : z₀ ∈ U) :
-    ContinuesInside f₀ U z₀ ↔ ∃ F : ℂ → ℂ, AnalyticOnNhd ℂ F U ∧ F =ᶠ[𝓝 z₀] f₀ := by
+    ContinuesInside f₀ U z₀ ↔ ∃ F : ℂ → E, AnalyticOnNhd ℂ F U ∧ F =ᶠ[𝓝 z₀] f₀ := by
   refine ⟨fun H => H.exists_analyticOnNhd hUo hUc hz₀, ?_⟩
   rintro ⟨F, hF, hFeq⟩
   exact .of_forall fun c hc hcU hc0 =>

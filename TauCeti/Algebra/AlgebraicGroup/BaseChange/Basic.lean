@@ -39,7 +39,7 @@ used here are from Mathlib, respectively `Mathlib.RingTheory.Bialgebra.TensorPro
 
 public section
 
-open Coalgebra HopfAlgebra TensorProduct WithConv
+open _root_.Coalgebra HopfAlgebra TensorProduct WithConv
 
 namespace TauCeti
 

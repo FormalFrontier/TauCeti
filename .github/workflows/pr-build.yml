@@ -424,6 +424,22 @@ jobs:
           # backported. From v4.34.0-rc1 on, drop FAIL_RE and trust `rc` alone.
           # The purge below outlives that bump: it is for
           # https://github.com/leanprover/lean4/issues/14670, still open.
+          # Discarding the cache must never fail the step. A plain `rm -rf` on a directory that
+          # Lake's stragglers are still writing into exits 1 with "Directory not empty", and under
+          # `set -e` that killed the whole build — worse than the partial cache it was clearing.
+          # Rename first (atomic, and unaffected by concurrent writes under the old path), then
+          # delete the renamed copy best-effort. What matters for correctness is only that the
+          # cache PATH is empty for the next attempt, not that the bytes are reclaimed promptly.
+          discard_cache() {
+            local d=base/.lake/cache
+            [ -e "$d" ] || return 0
+            if mv "$d" "$d.discard.$$" 2>/dev/null; then
+              rm -rf "$d.discard.$$" 2>/dev/null || true
+            else
+              rm -rf "$d" 2>/dev/null || true
+            fi
+            return 0
+          }
           FAIL_RE='failed to download|output lookup failed|curl exited with code'
           # A revision with no cached build at all is deterministic: retrying cannot change it,
           # and there is nothing partial to discard.
@@ -444,11 +460,15 @@ jobs:
             # an endpoint that is throttling us.
             if [ "$attempt" != 3 ]; then
               echo "::notice::lake cache get attempt $attempt did not complete cleanly; discarding the partial cache and retrying"
+              # Sleep BEFORE discarding. A failed `lake cache get` returns as soon as one transfer
+              # errors, while its sibling curl/leantar processes are still writing into the cache
+              # dir; discarding at that instant races them. The backoff also serves its original
+              # purpose of not adding request rate to an endpoint that is throttling us.
+              sleep $(( attempt * 30 ))
               # Must precede the retry: see the step comment above. Without this, attempt N+1
               # skips every artifact this attempt already wrote, including the broken ones, and
               # a clean exit from it says nothing about the entries that made this attempt fail.
-              rm -rf base/.lake/cache
-              sleep $(( attempt * 30 ))
+              discard_cache
             fi
           done
           if [ "$clean" != 1 ]; then
@@ -458,7 +478,7 @@ jobs:
             # resolve is worse than none, because each unresolvable entry becomes a build
             # failure rather than a rebuild. Discarding it restores the no-cache path exactly.
             echo "::warning::lake cache get did not complete cleanly; discarding the cache and building TauCeti/ from scratch"
-            rm -rf base/.lake/cache
+            discard_cache
             # Empty is NOT off: Lake parses an empty LAKE_ARTIFACT_CACHE as "unspecified" and
             # then defaults artifact-cache reads to true, and an empty LAKE_CACHE_DIR falls back
             # to the workspace's own .lake/cache. Say false explicitly rather than relying on

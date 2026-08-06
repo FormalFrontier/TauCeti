@@ -4,7 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.RepresentationTheory.Irreducible
 public import TauCeti.RepresentationTheory.Symmetric.Specht.Ideal.Basic
 
 /-!
@@ -13,7 +12,10 @@ public import TauCeti.RepresentationTheory.Symmetric.Specht.Ideal.Basic
 The two extreme shapes of a partition of `n` are the single row `(n)` and the single column
 `(1ⁿ)`, and their Specht modules are the two representations of `Sₙ` that are visible without any
 representation theory: the trivial one and the sign one.  This file proves that for the left-ideal
-presentation `ℚ[Sₙ] c_t` of the Specht module, and deduces that both are irreducible.
+presentation `ℚ[Sₙ] c_t` of the Specht module.  Both are lines, so both are irreducible, but that
+is a special case of `TauCeti.YoungTableau.isIrreducible_spechtIdealRep` in
+`TauCeti.RepresentationTheory.Symmetric.Specht.Ideal.Irreducible`, which holds for every shape, and
+is not restated here.
 
 The shape hypotheses are stated on the row and column groups rather than on the diagram, because
 that is the form the symmetrizer identities consume: `rowSubgroup t = ⊤` says that all the labels
@@ -48,8 +50,8 @@ statements one level down, that the permutation module `M^{(n)}` is the trivial 
   representation.
 * `YoungTableau.spechtIdealRep_ρ_apply_of_colSubgroup_eq_top`: the one-column Specht ideal is the
   sign representation.
-* `YoungTableau.isIrreducible_spechtIdealRep_of_rowSubgroup_eq_top` and
-  `YoungTableau.isIrreducible_spechtIdealRep_of_colSubgroup_eq_top`: both are irreducible.
+* `YoungTableau.finrank_spechtIdeal_of_rowSubgroup_eq_top` and
+  `YoungTableau.finrank_spechtIdeal_of_colSubgroup_eq_top`: both are lines.
 
 ## References
 
@@ -146,12 +148,6 @@ theorem spechtIdealRep_ρ_eq_trivial (t : YoungTableau μ) (h : rowSubgroup t = 
   refine DFunLike.ext _ _ fun g => LinearMap.ext fun x => ?_
   rw [spechtIdealRep_ρ_apply_of_rowSubgroup_eq_top t h, Representation.trivial_apply]
 
-/-- The Specht ideal of a shape with at most one row is irreducible, being a line. -/
-theorem isIrreducible_spechtIdealRep_of_rowSubgroup_eq_top (t : YoungTableau μ)
-    (h : rowSubgroup t = ⊤) : (spechtIdealRep t).ρ.IsIrreducible :=
-  Representation.isIrreducible_of_finrank_eq_one _
-    (finrank_spechtIdeal_of_rowSubgroup_eq_top t h)
-
 /-! ### The one-column shape gives the sign representation -/
 
 /-- The Specht ideal of a shape with at most one column is a line. -/
@@ -169,12 +165,6 @@ theorem spechtIdealRep_ρ_apply_of_colSubgroup_eq_top (t : YoungTableau μ)
     (spechtIdealRep t).ρ g x = ((Equiv.Perm.sign g : ℤ) : ℚ) • x :=
   spechtIdealRep_ρ_apply (χ := fun g => ((Equiv.Perm.sign g : ℤ) : ℚ)) t
     (single_mul_youngSymmetrizer_of_colSubgroup_eq_top t h) g x
-
-/-- The Specht ideal of a shape with at most one column is irreducible, being a line. -/
-theorem isIrreducible_spechtIdealRep_of_colSubgroup_eq_top (t : YoungTableau μ)
-    (h : colSubgroup t = ⊤) : (spechtIdealRep t).ρ.IsIrreducible :=
-  Representation.isIrreducible_of_finrank_eq_one _
-    (finrank_spechtIdeal_of_colSubgroup_eq_top t h)
 
 end YoungTableau
 

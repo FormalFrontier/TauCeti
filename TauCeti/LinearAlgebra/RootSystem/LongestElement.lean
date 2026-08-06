@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.LinearAlgebra.RootSystem.Chamber
-public import TauCeti.LinearAlgebra.RootSystem.Inversions.Deletion
+public import TauCeti.LinearAlgebra.RootSystem.Inversions.Length
 
 public section
 
@@ -44,6 +44,8 @@ available here, so length is spelled throughout as `(inversions P b w).ncard`.
 * `TauCeti.ncard_inversions_le_ncard_inversions_longestElement` and
   `TauCeti.eq_longestElement_iff_ncard_inversions`: `w₀` is the unique element of maximal length,
   and that length is the number of positive roots.
+* `TauCeti.isLeast_ncard_posRoots_longestElement`: `|Φ⁺|` simple reflections spell `w₀`, and no
+  fewer do.
 * `TauCeti.longestElement_inv` and `TauCeti.longestElement_sq`: `w₀` is an involution.
 * `TauCeti.longestElement_smul_dominantChamber` and
   `TauCeti.longestElement_smul_openDominantChamber`: `w₀` carries the dominant chamber, and its
@@ -263,6 +265,14 @@ theorem image_weylGroupToPerm_longestElement_negRoots :
 theorem ncard_inversions_longestElement :
     (inversions P b (longestElement P b)).ncard = (posRoots P b).ncard := by
   rw [inversions_longestElement]
+
+/-- **A shortest word spelling the longest element has one letter for each positive root.** This
+is the acceptance clause `ℓ(w₀) = |Φ⁺|` in its word-length spelling. -/
+theorem isLeast_ncard_posRoots_longestElement :
+    IsLeast {n | ∃ l : List b.support, wordProd P b l = longestElement P b ∧ l.length = n}
+      ((posRoots P b).ncard) := by
+  rw [← ncard_inversions_longestElement P b]
+  exact isLeast_ncard_inversions P b _
 
 /-- **No Weyl-group element is longer than the longest element.** -/
 theorem ncard_inversions_le_ncard_inversions_longestElement (w : P.weylGroup) :
