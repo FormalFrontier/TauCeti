@@ -111,14 +111,10 @@ theorem centralCharacter_blockRepresentation [∀ i, NeZero (d i)] (i : ι)
   have hv : (Pi.single j 1 : Fin (d i) → k) ≠ 0 := by
     intro h
     simpa using congrFun h j
-  have h := Representation.asAlgebraHom_center_apply (blockRepresentation e i) z (Pi.single j 1)
+  refine Representation.centralCharacter_eq_of_ne_zero_of_asAlgebraHom_apply_eq _ hv ?_
   rw [asAlgebraHom_blockRepresentation, blockAlgHom_apply,
     ← algebraMap_centerMonoidAlgebraAlgEquivPi_apply e z i, Matrix.toLinAlgEquiv'.commutes,
-    Module.algebraMap_end_apply] at h
-  have hsub : (Representation.centralCharacter (blockRepresentation e i) z -
-      centerMonoidAlgebraAlgEquivPi e z i) • (Pi.single j 1 : Fin (d i) → k) = 0 := by
-    rw [sub_smul, ← h, sub_self]
-  exact sub_eq_zero.mp ((smul_eq_zero.mp hsub).resolve_right hv)
+    Module.algebraMap_end_apply]
 
 end Block
 

@@ -37,7 +37,9 @@ centre, and is `TauCeti.isClassEigenrow_classSumRow` applied to a central charac
 ## Main statements
 
 * `TauCeti.Representation.asAlgebraHom_center_apply`: a central element of the group algebra
-  acts on the representation as the scalar its central character records.
+  acts on the representation as the scalar its central character records, and
+  `TauCeti.Representation.centralCharacter_eq_of_ne_zero_of_asAlgebraHom_apply_eq`: that scalar is
+  the only one doing so at a single nonzero vector.
 * `TauCeti.Representation.centralCharacter_classSumCenter_mul_character_one`: the class-sum
   identity `ωᵪ(K_C) · χ(1) = |C| · χ(g)`, in its division-free form, with
   `TauCeti.Representation.centralCharacter_classSumCenter` the quotient form for an invertible
@@ -112,6 +114,19 @@ theorem asAlgebraHom_center (z : Subalgebra.center k k[G]) :
     ρ.asAlgebraHom (z : k[G]) = centralCharacter ρ z • LinearMap.id :=
   LinearMap.ext fun v => asAlgebraHom_center_apply ρ z v
 
+/-- The central character is determined by the action of a central element on a single nonzero
+vector: no other scalar can reproduce it there.
+
+This is `TauCeti.centralCharacter_eq_of_ne_zero_of_smul_eq` read through
+`Representation.asModuleEquiv`. -/
+theorem centralCharacter_eq_of_ne_zero_of_asAlgebraHom_apply_eq {z : Subalgebra.center k k[G]}
+    {c : k} {v : V} (hv : v ≠ 0) (h : ρ.asAlgebraHom (z : k[G]) v = c • v) :
+    centralCharacter ρ z = c := by
+  have hv' : ρ.asModuleEquiv.symm v ≠ 0 := fun h0 =>
+    hv (by simpa using congrArg ρ.asModuleEquiv h0)
+  refine TauCeti.centralCharacter_eq_of_ne_zero_of_smul_eq hv' (ρ.asModuleEquiv.injective ?_)
+  rw [_root_.Representation.asModuleEquiv_map_smul, map_smul, LinearEquiv.apply_symm_apply, h]
+
 /-- The trace of the action of a central element is its central character times the degree. -/
 theorem trace_asAlgebraHom_center (z : Subalgebra.center k k[G]) :
     LinearMap.trace k V (ρ.asAlgebraHom (z : k[G])) = centralCharacter ρ z * finrank k V := by
@@ -133,10 +148,8 @@ theorem centralCharacter_eq_of_equiv {W : Type*} [AddCommGroup W] [Module k W]
       σ.asAlgebraHom (z : k[G]) (φ.toIntertwiningMap v) :=
     (_root_.Representation.IntertwiningMap.equivLinearMapAsModule ρ σ
       φ.toIntertwiningMap).map_smul' (z : k[G]) v
-  rw [asAlgebraHom_center_apply, map_smul, asAlgebraHom_center_apply] at h
-  have hsub : (centralCharacter σ z - centralCharacter ρ z) • φ.toIntertwiningMap v = 0 := by
-    rw [sub_smul, ← h, sub_self]
-  exact sub_eq_zero.mp ((smul_eq_zero.mp hsub).resolve_right hφv)
+  refine centralCharacter_eq_of_ne_zero_of_asAlgebraHom_apply_eq σ hφv ?_
+  rw [← h, asAlgebraHom_center_apply, map_smul]
 
 section Finite
 
