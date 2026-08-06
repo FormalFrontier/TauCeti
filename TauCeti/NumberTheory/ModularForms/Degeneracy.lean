@@ -79,7 +79,6 @@ lemma coe_scaleGL [NeZero d] :
 lemma coe_inv_scaleGL [NeZero d] :
     (((scaleGL d)⁻¹ : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ) = !![(d : ℝ)⁻¹, 0; 0, 1] := rfl
 
-@[simp]
 lemma val_det_scaleGL [NeZero d] : ((scaleGL d).det : ℝ) = d := by
   simp [Matrix.GeneralLinearGroup.det, Matrix.det_fin_two]
 
