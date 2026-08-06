@@ -24,7 +24,9 @@ exponential map.
 ## References
 
 * [Lie groups and the Lie algebra correspondence roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/LieGroups/README.md),
-  Deliverable A, Layer 1, "Differential of the exponential".
+  Deliverable A, Layer 1, "The conjugation formulas".
+* Mathlib's `spectrum.exp_mem_exp`, whose proof supplies the shifted-exponential series argument
+  adapted here.
 -/
 
 public section
@@ -80,20 +82,11 @@ theorem mul_regularizedExpNeg (a : A) :
   rw [exp_neg_eq_one_add_mul_regularizedExpNeg]
   noncomm_ring
 
+omit [CompleteSpace A] in
 /-- The regularized exponential quotient commutes with its argument. -/
 theorem regularizedExpNeg_commute (a : A) : Commute a (regularizedExpNeg a) := by
-  have hmulLeft :
-      (∑' n : ℕ, ((n + 1).factorial⁻¹ : ℝ) • (-a) ^ (n + 1)) =
-        (-a) * regularizedExpNeg a := by
-    simpa only [regularizedExpNeg, mul_smul_comm, pow_succ'] using
-      (summable_regularizedExpNeg a).tsum_mul_left (-a)
-  have hmulRight :
-      (∑' n : ℕ, ((n + 1).factorial⁻¹ : ℝ) • (-a) ^ (n + 1)) =
-        regularizedExpNeg a * (-a) := by
-    simpa only [regularizedExpNeg, pow_succ, Algebra.smul_mul_assoc] using
-      (summable_regularizedExpNeg a).tsum_mul_right (-a)
-  change a * regularizedExpNeg a = regularizedExpNeg a * a
-  simpa only [neg_mul, mul_neg, neg_inj] using hmulLeft.symm.trans hmulRight
+  rw [regularizedExpNeg_eq_tsum]
+  exact Commute.tsum_right _ fun n ↦ ((Commute.refl a).neg_right.pow_right n).smul_right _
 
 /-- Multiplying the regularized quotient on the right by its argument recovers its numerator. -/
 theorem regularizedExpNeg_mul (a : A) :
