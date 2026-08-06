@@ -16,6 +16,7 @@ exponential map.
 ## Main results
 
 * `regularizedExpNeg`: the convergent series `∑ n, (n + 1)!⁻¹ • (-a)ⁿ`.
+* `regularizedExpNeg_eq_tsum`: the defining series exposed across module boundaries.
 * `regularizedExpNeg_commute`: the series commutes with its argument.
 * `mul_regularizedExpNeg`: multiplying the series by `a` gives `1 - exp (-a)`.
 * `regularizedExpNeg_mul`: the corresponding right-multiplication identity.
@@ -38,6 +39,12 @@ variable {A : Type*} [NormedRing A] [NormedAlgebra ℝ A] [CompleteSpace A]
 series. At a noninvertible `a`, the series rather than the quotient is the definition. -/
 noncomputable def regularizedExpNeg (a : A) : A :=
   ∑' n : ℕ, ((n + 1).factorial⁻¹ : ℝ) • (-a) ^ n
+
+omit [CompleteSpace A] in
+/-- The defining series for the regularized exponential quotient. -/
+theorem regularizedExpNeg_eq_tsum (a : A) :
+    regularizedExpNeg a = ∑' n : ℕ, (((n + 1).factorial)⁻¹ : ℝ) • (-a) ^ n := by
+  rw [regularizedExpNeg]
 
 private theorem summable_regularizedExpNeg (a : A) :
     Summable fun n : ℕ ↦ ((n + 1).factorial⁻¹ : ℝ) • (-a) ^ n := by
