@@ -116,21 +116,24 @@ theorem single_one_mem_doubledAlexanderPiece_iff {R : Type*} [Semiring R] [Nontr
 
 section Decomposition
 
-variable (G) (R : Type*) [CommSemiring R]
+variable (G) (R : Type*) [Semiring R]
 
-/-- Split a grid chain into its homogeneous auxiliary `(M_O, 2A)` pieces. -/
-noncomputable def doubledAlexanderDecomposition :
+set_option backward.privateInPublic true in
+/-- Split a grid chain into its homogeneous auxiliary `(M_O, 2A)` pieces.
+
+Implementation-only linear map underlying `doubledAlexanderPieceDecomposition`. External users
+should access the decomposition through `DirectSum.decompose`. -/
+private noncomputable def doubledAlexanderDecomposition :
     GridChain R n →ₗ[R] DirectSum (ℤ × ℤ) fun d ↦ G.doubledAlexanderPiece R d :=
-  Finsupp.lsum R fun x : GridState n ↦
+  Finsupp.lsum ℕ fun x : GridState n ↦
     (DirectSum.lof R (ℤ × ℤ) (G.doubledAlexanderPiece R ·)
       (G.doubledAlexanderBidegree x)).comp
       (LinearMap.codRestrict _ (Finsupp.lsingle x) fun a ↦
         G.single_mem_doubledAlexanderPiece x a)
 
-/-- Splitting a generator puts it in the summand indexed by its doubled-Alexander bidegree. -/
-@[simp]
-theorem doubledAlexanderDecomposition_single (x : GridState n) (a : R) :
-    G.doubledAlexanderDecomposition R (Finsupp.single x a) =
+set_option backward.privateInPublic true in
+private theorem doubledAlexanderDecomposition_single (x : GridState n) (a : R) :
+    doubledAlexanderDecomposition G R (Finsupp.single x a) =
       DirectSum.lof R (ℤ × ℤ) (G.doubledAlexanderPiece R ·)
         (G.doubledAlexanderBidegree x)
         ⟨Finsupp.single x a, G.single_mem_doubledAlexanderPiece x a⟩ := by
@@ -138,70 +141,73 @@ theorem doubledAlexanderDecomposition_single (x : GridState n) (a : R) :
   simp [doubledAlexanderDecomposition]
   congr
 
+set_option backward.privateInPublic true in
+/-- The implementation map takes a homogeneous chain to its own summand. This is the reusable
+characterization used to prove the direct-sum right-inverse law. -/
+private theorem doubledAlexanderDecomposition_of_mem {d : ℤ × ℤ} (c : GridChain R n)
+    (hc : c ∈ G.doubledAlexanderPiece R d) :
+    doubledAlexanderDecomposition G R c =
+      DirectSum.lof R (ℤ × ℤ) (G.doubledAlexanderPiece R ·) d ⟨c, hc⟩ := by
+  classical
+  induction c using Finsupp.induction with
+  | zero =>
+      have hzero : (⟨0, hc⟩ : G.doubledAlexanderPiece R d) = 0 := rfl
+      rw [hzero]
+      exact (map_zero (DirectSum.lof R (ℤ × ℤ) (G.doubledAlexanderPiece R ·) d)).symm
+  | single_add x a c hx ha ih =>
+      have hdegree : G.doubledAlexanderBidegree x = d := by
+        by_contra hne
+        have hzero := (G.mem_doubledAlexanderPiece_iff (Finsupp.single x a + c)).mp hc x hne
+        have hcx : c x = 0 := Finsupp.notMem_support_iff.mp hx
+        simp [hcx, ha] at hzero
+      have hc' : c ∈ G.doubledAlexanderPiece R d := by
+        rw [G.mem_doubledAlexanderPiece_iff]
+        intro y hy
+        have hzero := (G.mem_doubledAlexanderPiece_iff (Finsupp.single x a + c)).mp hc y hy
+        by_cases hyx : y = x
+        · subst y
+          exact Finsupp.notMem_support_iff.mp hx
+        · simpa [hyx] using hzero
+      subst d
+      rw [map_add, doubledAlexanderDecomposition_single G R x a, ih hc', ← map_add]
+      congr
+
+set_option backward.privateInPublic true in
+set_option backward.privateInPublic.warn false in
 /-- Grid chains are the internal direct sum of the submodules at each auxiliary `(M_O, 2A)`
 bidegree. -/
 noncomputable instance doubledAlexanderPieceDecomposition :
     DirectSum.Decomposition (G.doubledAlexanderPiece R) where
-  decompose' := G.doubledAlexanderDecomposition R
+  decompose' := doubledAlexanderDecomposition G R
   left_inv := by
     have h : DirectSum.coeLinearMap (G.doubledAlexanderPiece R) ∘ₗ
-        G.doubledAlexanderDecomposition R = LinearMap.id := by
+        doubledAlexanderDecomposition G R = LinearMap.id := by
       apply Finsupp.lhom_ext
       intro x a
-      simp
+      simp [doubledAlexanderDecomposition]
+      rfl
     exact DFunLike.congr_fun h
   right_inv := by
-    have decompose_of_mem : ∀ {d : ℤ × ℤ} (c : GridChain R n)
-        (hc : c ∈ G.doubledAlexanderPiece R d),
-        G.doubledAlexanderDecomposition R c =
-          DirectSum.lof R (ℤ × ℤ) (G.doubledAlexanderPiece R ·) d ⟨c, hc⟩ := by
-      intro d c
-      classical
-      induction c using Finsupp.induction with
-      | zero =>
-          intro hc
-          have hzero : (⟨0, hc⟩ : G.doubledAlexanderPiece R d) = 0 := rfl
-          rw [hzero]
-          exact
-            (map_zero (DirectSum.lof R (ℤ × ℤ) (G.doubledAlexanderPiece R ·) d)).symm
-      | single_add x a c hx ha ih =>
-          intro hc
-          have hdegree : G.doubledAlexanderBidegree x = d := by
-            by_contra hne
-            have hzero :=
-              (G.mem_doubledAlexanderPiece_iff (Finsupp.single x a + c)).mp hc x hne
-            have hcx : c x = 0 := Finsupp.notMem_support_iff.mp hx
-            simp [hcx, ha] at hzero
-          have hc' : c ∈ G.doubledAlexanderPiece R d := by
-            rw [G.mem_doubledAlexanderPiece_iff]
-            intro y hy
-            have hzero :=
-              (G.mem_doubledAlexanderPiece_iff (Finsupp.single x a + c)).mp hc y hy
-            by_cases hyx : y = x
-            · subst y
-              exact Finsupp.notMem_support_iff.mp hx
-            · simpa [hyx] using hzero
-          subst d
-          rw [map_add, G.doubledAlexanderDecomposition_single, ih hc', ← map_add]
-          congr
-    have h : G.doubledAlexanderDecomposition R ∘ₗ
+    have h : doubledAlexanderDecomposition G R ∘ₗ
         DirectSum.coeLinearMap (G.doubledAlexanderPiece R) = LinearMap.id := by
       apply DirectSum.linearMap_ext
       intro d
       apply LinearMap.ext
       intro c
       simp only [LinearMap.comp_apply, DirectSum.coeLinearMap_lof, LinearMap.id_apply]
-      exact decompose_of_mem c c.property
+      exact doubledAlexanderDecomposition_of_mem G R c c.property
     exact DFunLike.congr_fun h
 
+set_option backward.privateInPublic true in
+set_option backward.privateInPublic.warn false in
 /-- The doubled-Alexander direct-sum decomposition sends a grid-state generator to its summand. -/
 @[simp]
 theorem decompose_doubledAlexanderPiece_single (x : GridState n) (a : R) :
     DirectSum.decompose (G.doubledAlexanderPiece R) (Finsupp.single x a) =
       DirectSum.lof R (ℤ × ℤ) (G.doubledAlexanderPiece R ·)
         (G.doubledAlexanderBidegree x)
-        ⟨Finsupp.single x a, G.single_mem_doubledAlexanderPiece x a⟩ := by
-  exact G.doubledAlexanderDecomposition_single R x a
+        ⟨Finsupp.single x a, G.single_mem_doubledAlexanderPiece x a⟩ :=
+  doubledAlexanderDecomposition_single G R x a
 
 end Decomposition
 
