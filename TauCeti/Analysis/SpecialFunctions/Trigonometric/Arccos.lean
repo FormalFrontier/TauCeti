@@ -24,10 +24,13 @@ sets of `Real.cos` on one period. Since `arccos` is antitone, the comparisons sw
 ## Main results
 
 * `Real.arccos_le_iff_cos_le`, `Real.le_arccos_iff_le_cos`, `Real.arccos_lt_iff_cos_lt` and
-  `Real.lt_arccos_iff_lt_cos` — the four comparisons, for an angle `y` in `[0, π]`. Nothing at all
-  is assumed of `x`: as with Mathlib's primed `arcsin` lemmas, the degenerate values `x < -1` and
-  `1 < x`, where `arccos` is constant, are covered by excluding the one endpoint of `[0, π]` at
-  which the comparison would fail.
+  `Real.lt_arccos_iff_lt_cos` — the four comparisons on the closed domain, for `x` in `[-1, 1]` and
+  an angle `y` in `[0, π]`.
+* `Real.arccos_le_iff_cos_le'`, `Real.le_arccos_iff_le_cos'`, `Real.arccos_lt_iff_cos_lt'` and
+  `Real.lt_arccos_iff_lt_cos'` — the same four with nothing at all assumed of `x`. Exactly as for
+  Mathlib's primed `arcsin` lemmas, the degenerate values `x < -1` and `1 < x`, where `arccos` is
+  constant, are covered at the price of excluding the one endpoint of `[0, π]` at which the
+  comparison would then fail.
 * `Real.abs_lt_arccos_iff_lt_cos` and `Real.abs_le_arccos_iff_le_cos` — since `cos` is even, an
   angle `t` of the full period `[-π, π]` may be compared through `|t|`; here the excluded endpoint
   is paid for by a one-sided bound on `x` instead.
@@ -40,10 +43,12 @@ sets of `Real.cos` on one period. Since `arccos` is antitone, the comparisons sw
 
 ## The argument
 
-Everything is `Real.arccos_eq_pi_div_two_sub_arcsin` fed into Mathlib's `arcsin` family, followed by
-`Real.sin_pi_div_two_sub`; the four comparisons come in two proofs and two negations, exactly as the
-`arcsin` family does. The `|t|` forms then split off the single degenerate angle that the
-half-period statement does not reach, and the interval forms are `abs_lt` and `abs_le`.
+The closed-domain family is `Real.arccos_eq_pi_div_two_sub_arcsin` fed into Mathlib's `arcsin`
+family, followed by `Real.sin_pi_div_two_sub`; each primed form is then its unprimed form together
+with the two degenerate ranges of `x`, and the strict comparisons are negations of the weak ones —
+exactly the shape, and the same order of derivation, that the `arcsin` family has. The `|t|` forms
+split off the single degenerate angle that the half-period statement does not reach, and the
+interval forms are `abs_lt` and `abs_le`.
 
 This is general real analysis, extracted from two places that had proved fragments of it privately:
 `TauCeti/Analysis/Complex/Conformal/Crosscut/Endpoints.lean`, which described a circular crosscut of
@@ -62,41 +67,90 @@ open Set
 
 open scoped Real
 
-/-- **An arccosine is at most an angle exactly when the angle's cosine is at most the value.** The
-`Real.arccos` counterpart of Mathlib's `Real.le_arcsin_iff_sin_le'`, with the sides swapped because
-`Real.arccos` is antitone.
-
-The angle `y` is excluded from `π`, and in exchange nothing is assumed of `x`. At `y = π` the left
-side is automatic and the right side, `-1 ≤ x`, is not; at the other endpoint `y = 0` the statement
-is `Real.arccos_eq_zero`. -/
-theorem _root_.Real.arccos_le_iff_cos_le {x y : ℝ} (hy : y ∈ Ico 0 π) :
+/-- **An arccosine is at most an angle exactly when the angle's cosine is at most the value.** For
+`x ∈ [-1, 1]` and an angle `y ∈ [0, π]`, the two intervals on which `Real.arccos` and `Real.cos` are
+mutually inverse, `arccos x ≤ y ↔ cos y ≤ x`. The `Real.arccos` counterpart of Mathlib's
+`Real.le_arcsin_iff_sin_le`, with the sides swapped because `Real.arccos` is antitone. -/
+theorem _root_.Real.arccos_le_iff_cos_le {x y : ℝ} (hx : x ∈ Icc (-1 : ℝ) 1) (hy : y ∈ Icc 0 π) :
     Real.arccos x ≤ y ↔ Real.cos y ≤ x := by
   rw [Real.arccos_eq_pi_div_two_sub_arcsin, sub_le_comm,
-    Real.le_arcsin_iff_sin_le' ⟨by linarith [hy.2], by linarith [hy.1]⟩, Real.sin_pi_div_two_sub]
+    Real.le_arcsin_iff_sin_le ⟨by linarith [hy.2], by linarith [hy.1]⟩ hx, Real.sin_pi_div_two_sub]
 
-/-- **An angle is at most an arccosine exactly when the value is at most the angle's cosine.** The
-`Real.arccos` counterpart of Mathlib's `Real.arcsin_le_iff_le_sin'`.
+/-- **An arccosine is at most an angle exactly when the angle's cosine is at most the value**, with
+nothing assumed of `x`. The `Real.arccos` counterpart of Mathlib's `Real.le_arcsin_iff_sin_le'`.
 
-The angle `y` is excluded from `0`, and in exchange nothing is assumed of `x`. At `y = 0` the left
-side is automatic and the right side, `x ≤ 1`, is not; at the other endpoint `y = π` the statement
-is `Real.arccos_eq_pi`. -/
-theorem _root_.Real.le_arccos_iff_le_cos {x y : ℝ} (hy : y ∈ Ioc 0 π) :
+The angle `y` is excluded from `π`, and in exchange the bounds on `x` are dropped: for `x < -1` and
+for `1 < x`, where `Real.arccos` is constant, both sides then agree. At `y = π` the left side is
+automatic while the right side, `-1 ≤ x`, is not; at the other endpoint `y = 0` the statement is
+`Real.arccos_eq_zero`. -/
+theorem _root_.Real.arccos_le_iff_cos_le' {x y : ℝ} (hy : y ∈ Ico 0 π) :
+    Real.arccos x ≤ y ↔ Real.cos y ≤ x := by
+  rcases le_total x (-1) with hx₁ | hx₁
+  · have hcos : Real.cos π < Real.cos y :=
+      Real.cos_lt_cos_of_nonneg_of_le_pi hy.1 le_rfl hy.2
+    rw [Real.cos_pi] at hcos
+    exact iff_of_false (by rw [Real.arccos_of_le_neg_one hx₁]; exact not_le.mpr hy.2)
+      (not_le.mpr (by linarith))
+  rcases le_total 1 x with hx₂ | hx₂
+  · exact iff_of_true (by rw [Real.arccos_of_one_le hx₂]; exact hy.1)
+      ((Real.cos_le_one y).trans hx₂)
+  exact Real.arccos_le_iff_cos_le ⟨hx₁, hx₂⟩ (mem_Icc_of_Ico hy)
+
+/-- **An angle is at most an arccosine exactly when the value is at most the angle's cosine.** For
+`x ∈ [-1, 1]` and an angle `y ∈ [0, π]`, `y ≤ arccos x ↔ x ≤ cos y`. The `Real.arccos` counterpart
+of Mathlib's `Real.arcsin_le_iff_le_sin`. -/
+theorem _root_.Real.le_arccos_iff_le_cos {x y : ℝ} (hx : x ∈ Icc (-1 : ℝ) 1) (hy : y ∈ Icc 0 π) :
     y ≤ Real.arccos x ↔ x ≤ Real.cos y := by
   rw [Real.arccos_eq_pi_div_two_sub_arcsin, le_sub_comm,
-    Real.arcsin_le_iff_le_sin' ⟨by linarith [hy.2], by linarith [hy.1]⟩, Real.sin_pi_div_two_sub]
+    Real.arcsin_le_iff_le_sin hx ⟨by linarith [hy.2], by linarith [hy.1]⟩, Real.sin_pi_div_two_sub]
 
-/-- The strict companion of `Real.le_arccos_iff_le_cos`, by negation. -/
-theorem _root_.Real.arccos_lt_iff_cos_lt {x y : ℝ} (hy : y ∈ Ioc 0 π) :
+/-- **An angle is at most an arccosine exactly when the value is at most the angle's cosine**, with
+nothing assumed of `x`. The `Real.arccos` counterpart of Mathlib's `Real.arcsin_le_iff_le_sin'`.
+
+The angle `y` is excluded from `0`, and in exchange the bounds on `x` are dropped. At `y = 0` the
+left side is automatic while the right side, `x ≤ 1`, is not; at the other endpoint `y = π` the
+statement is `Real.arccos_eq_pi`. -/
+theorem _root_.Real.le_arccos_iff_le_cos' {x y : ℝ} (hy : y ∈ Ioc 0 π) :
+    y ≤ Real.arccos x ↔ x ≤ Real.cos y := by
+  rcases le_total x (-1) with hx₁ | hx₁
+  · exact iff_of_true (by rw [Real.arccos_of_le_neg_one hx₁]; exact hy.2)
+      (hx₁.trans (Real.neg_one_le_cos y))
+  rcases le_total 1 x with hx₂ | hx₂
+  · have hcos : Real.cos y < Real.cos 0 :=
+      Real.cos_lt_cos_of_nonneg_of_le_pi le_rfl hy.2 hy.1
+    rw [Real.cos_zero] at hcos
+    exact iff_of_false (by rw [Real.arccos_of_one_le hx₂]; exact not_le.mpr hy.1)
+      (not_le.mpr (by linarith))
+  exact Real.le_arccos_iff_le_cos ⟨hx₁, hx₂⟩ (mem_Icc_of_Ioc hy)
+
+/-- **An arccosine is below an angle exactly when the angle's cosine is below the value.** The
+strict form of `Real.arccos_le_iff_cos_le`, for `x ∈ [-1, 1]` and an angle `y ∈ [0, π]`. -/
+theorem _root_.Real.arccos_lt_iff_cos_lt {x y : ℝ} (hx : x ∈ Icc (-1 : ℝ) 1) (hy : y ∈ Icc 0 π) :
     Real.arccos x < y ↔ Real.cos y < x :=
-  not_le.symm.trans <| (not_congr (Real.le_arccos_iff_le_cos hy)).trans not_le
+  not_le.symm.trans <| (not_congr (Real.le_arccos_iff_le_cos hx hy)).trans not_le
 
-/-- The strict companion of `Real.arccos_le_iff_cos_le`, by negation. -/
-theorem _root_.Real.lt_arccos_iff_lt_cos {x y : ℝ} (hy : y ∈ Ico 0 π) :
+/-- **An arccosine is below an angle exactly when the angle's cosine is below the value**, with
+nothing assumed of `x`. The strict form of `Real.arccos_le_iff_cos_le'`; as in
+`Real.le_arccos_iff_le_cos'`, whose negation it is, the angle `y` runs over `Ioc 0 π`. -/
+theorem _root_.Real.arccos_lt_iff_cos_lt' {x y : ℝ} (hy : y ∈ Ioc 0 π) :
+    Real.arccos x < y ↔ Real.cos y < x :=
+  not_le.symm.trans <| (not_congr (Real.le_arccos_iff_le_cos' hy)).trans not_le
+
+/-- **An angle is below an arccosine exactly when the value is below the angle's cosine.** The
+strict form of `Real.le_arccos_iff_le_cos`, for `x ∈ [-1, 1]` and an angle `y ∈ [0, π]`. -/
+theorem _root_.Real.lt_arccos_iff_lt_cos {x y : ℝ} (hx : x ∈ Icc (-1 : ℝ) 1) (hy : y ∈ Icc 0 π) :
     y < Real.arccos x ↔ x < Real.cos y :=
-  not_le.symm.trans <| (not_congr (Real.arccos_le_iff_cos_le hy)).trans not_le
+  not_le.symm.trans <| (not_congr (Real.arccos_le_iff_cos_le hx hy)).trans not_le
+
+/-- **An angle is below an arccosine exactly when the value is below the angle's cosine**, with
+nothing assumed of `x`. The strict form of `Real.le_arccos_iff_le_cos'`; as in
+`Real.arccos_le_iff_cos_le'`, whose negation it is, the angle `y` runs over `Ico 0 π`. -/
+theorem _root_.Real.lt_arccos_iff_lt_cos' {x y : ℝ} (hy : y ∈ Ico 0 π) :
+    y < Real.arccos x ↔ x < Real.cos y :=
+  not_le.symm.trans <| (not_congr (Real.arccos_le_iff_cos_le' hy)).trans not_le
 
 /-- **On a full period, a strict lower bound on the cosine is a strict upper bound on the angle.**
-Because `Real.cos` is even, `Real.lt_arccos_iff_lt_cos` extends from `[0, π]` to `[-π, π]` read
+Because `Real.cos` is even, `Real.lt_arccos_iff_lt_cos'` extends from `[0, π]` to `[-π, π]` read
 through `|t|`. The angle is now allowed to reach `π`, at the cost of the hypothesis `-1 ≤ x`, which
 is what makes the two sides agree there: both are false. -/
 theorem _root_.Real.abs_lt_arccos_iff_lt_cos {x t : ℝ} (hx : -1 ≤ x) (ht : |t| ≤ π) :
@@ -109,7 +163,7 @@ theorem _root_.Real.abs_lt_arccos_iff_lt_cos {x t : ℝ} (hx : -1 ≤ x) (ht : |
     · rw [hcos]
       exact not_lt.mpr hx
   · rw [← Real.cos_abs t]
-    exact Real.lt_arccos_iff_lt_cos ⟨abs_nonneg t, hπ⟩
+    exact Real.lt_arccos_iff_lt_cos' ⟨abs_nonneg t, hπ⟩
 
 /-- **On a full period, a lower bound on the cosine is an upper bound on the angle.** The weak
 companion of `Real.abs_lt_arccos_iff_lt_cos`; here it is the angle `0` that the half-period
@@ -122,7 +176,7 @@ theorem _root_.Real.abs_le_arccos_iff_le_cos {x t : ℝ} (hx : x ≤ 1) (ht : |t
     rw [abs_zero, Real.cos_zero]
     exact iff_of_true (Real.arccos_nonneg x) hx
   · rw [← Real.cos_abs t]
-    exact Real.le_arccos_iff_le_cos ⟨h0, ht⟩
+    exact Real.le_arccos_iff_le_cos' ⟨h0, ht⟩
 
 /-- **The cosine exceeds a threshold on a symmetric interval.** On the period `[-π, π]` the angles
 at which `Real.cos` exceeds `x` are exactly those of `(-arccos x, arccos x)`. -/

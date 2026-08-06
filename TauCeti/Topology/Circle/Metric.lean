@@ -151,9 +151,10 @@ theorem dist_circleMap_le_dist_circleMap_of_abs_sub_le (ζ : ℂ) (ρ : ℝ) {θ
       (by linarith [abs_nonneg (u - θ₀), Real.pi_pos]) (by linarith) (by linarith)
   exact mul_le_mul_of_nonneg_left hsin (by positivity)
 
-/-- **A ball centred on an arc of angular width at most `π` meets it in a subarc.** For a set `s` of
-angles contained in the half-turn `[θ₀ - π, θ₀ + π]`, the angles of `s` whose points lie within `δ`
-of the point at angle `θ₀` form an order-connected subset of `s`.
+/-- **An order-connected set of angles within half a turn of `θ₀` keeps that form when cut down by
+the distance to the point at `θ₀`.** For a set `s` of angles contained in the half-turn
+`[θ₀ - π, θ₀ + π]`, the angles of `s` whose points lie within `δ` of the point at angle `θ₀` form an
+order-connected subset of `s`.
 
 The chord distance to `θ₀` falls and then rises as the angle sweeps across `s`
 (`TauCeti.dist_circleMap_le_dist_circleMap_of_abs_sub_le`), so an angle between two admitted ones is
