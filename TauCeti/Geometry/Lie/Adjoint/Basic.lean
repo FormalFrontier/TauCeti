@@ -54,12 +54,12 @@ local instance lieGroupMinSmoothnessThree : LieGroup I (minSmoothness ℝ 3) G :
 /-- The continuous linear map underlying the differential of conjugation at the identity. -/
 def adjointContinuousLinearMap (g : G) :
     GroupLieAlgebra I G →L[ℝ] GroupLieAlgebra I G :=
-  mfderiv I I (conjugationDiffeomorph (I := I) (n := ∞) g) 1
+  mfderiv I I (conjDiffeomorph (I := I) (n := ∞) g) 1
 
 @[simp]
 theorem adjointContinuousLinearMap_apply (g : G) (X : GroupLieAlgebra I G) :
     adjointContinuousLinearMap (I := I) g X =
-      mfderiv I I (conjugationDiffeomorph (I := I) (n := ∞) g) 1 X :=
+      mfderiv I I (conjDiffeomorph (I := I) (n := ∞) g) 1 X :=
   (rfl)
 
 @[simp]
@@ -79,125 +79,125 @@ theorem adjointContinuousLinearMap_mul (g h : G) :
   unfold adjointContinuousLinearMap
   change @Eq (E →L[ℝ] E) _ _
   have hfun :
-      conjugationDiffeomorph (I := I) (n := ∞) (g * h) =
-        (conjugationDiffeomorph (I := I) (n := ∞) g) ∘
-          (conjugationDiffeomorph (I := I) (n := ∞) h) := by
+      conjDiffeomorph (I := I) (n := ∞) (g * h) =
+        (conjDiffeomorph (I := I) (n := ∞) g) ∘
+          (conjDiffeomorph (I := I) (n := ∞) h) := by
     funext x
-    simp only [conjugationDiffeomorph_apply, Function.comp_apply]
+    simp only [conjDiffeomorph_apply, Function.comp_apply]
     group
   rw [mfderiv_congr (I := I) (I' := I) hfun]
   rw [mfderiv_comp (I := I) (I' := I) (I'' := I) _
-    (((conjugationDiffeomorph (I := I) (n := ∞) g).mdifferentiable (by simp)) _)
-    (((conjugationDiffeomorph (I := I) (n := ∞) h).mdifferentiable (by simp)) _)]
+    (((conjDiffeomorph (I := I) (n := ∞) g).mdifferentiable (by simp)) _)
+    (((conjDiffeomorph (I := I) (n := ∞) h).mdifferentiable (by simp)) _)]
   rw [mfderiv_congr_point (I := I) (I' := I)
-    (f := conjugationDiffeomorph (I := I) (n := ∞) g)
-    (x := conjugationDiffeomorph (I := I) (n := ∞) h 1) (x' := 1)
+    (f := conjDiffeomorph (I := I) (n := ∞) g)
+    (x := conjDiffeomorph (I := I) (n := ∞) h 1) (x' := 1)
     (by simp)]
   with_unfolding_all rfl
 
 theorem inverse_mfderiv_conjugation (g x : G) :
-    (mfderiv I I (conjugationDiffeomorph (I := I) (n := ∞) g) x).inverse =
-      mfderiv I I (conjugationDiffeomorph (I := I) (n := ∞) g⁻¹)
-        (conjugationDiffeomorph (I := I) (n := ∞) g x) := by
-  have hdiff (a : G) : MDifferentiableAt I I (conjugationDiffeomorph (I := I) (n := ∞) a) x :=
-    ((conjugationDiffeomorph (I := I) (n := ∞) a).mdifferentiable (by simp)) x
+    (mfderiv I I (conjDiffeomorph (I := I) (n := ∞) g) x).inverse =
+      mfderiv I I (conjDiffeomorph (I := I) (n := ∞) g⁻¹)
+        (conjDiffeomorph (I := I) (n := ∞) g x) := by
+  have hdiff (a : G) : MDifferentiableAt I I (conjDiffeomorph (I := I) (n := ∞) a) x :=
+    ((conjDiffeomorph (I := I) (n := ∞) a).mdifferentiable (by simp)) x
   have A : mfderiv I I
-      ((conjugationDiffeomorph (I := I) (n := ∞) g⁻¹) ∘
-        (conjugationDiffeomorph (I := I) (n := ∞) g)) x =
+      ((conjDiffeomorph (I := I) (n := ∞) g⁻¹) ∘
+        (conjDiffeomorph (I := I) (n := ∞) g)) x =
         ContinuousLinearMap.id ℝ (TangentSpace I x) := by
     have h :
-        (conjugationDiffeomorph (I := I) (n := ∞) g⁻¹) ∘
-          (conjugationDiffeomorph (I := I) (n := ∞) g) = id := by
+        (conjDiffeomorph (I := I) (n := ∞) g⁻¹) ∘
+          (conjDiffeomorph (I := I) (n := ∞) g) = id := by
       funext y
       simp [Function.comp_apply, mul_assoc]
     rw [h, mfderiv_id]
   rw [mfderiv_comp (I := I) (I' := I) (I'' := I) _
-    (((conjugationDiffeomorph (I := I) (n := ∞) g⁻¹).mdifferentiable (by simp)) _)
+    (((conjDiffeomorph (I := I) (n := ∞) g⁻¹).mdifferentiable (by simp)) _)
     (hdiff g)] at A
   have A' : mfderiv I I
-      ((conjugationDiffeomorph (I := I) (n := ∞) g) ∘
-        (conjugationDiffeomorph (I := I) (n := ∞) g⁻¹))
-        (conjugationDiffeomorph (I := I) (n := ∞) g x) =
+      ((conjDiffeomorph (I := I) (n := ∞) g) ∘
+        (conjDiffeomorph (I := I) (n := ∞) g⁻¹))
+        (conjDiffeomorph (I := I) (n := ∞) g x) =
         ContinuousLinearMap.id ℝ
-          (TangentSpace I (conjugationDiffeomorph (I := I) (n := ∞) g x)) := by
+          (TangentSpace I (conjDiffeomorph (I := I) (n := ∞) g x)) := by
     have h :
-        (conjugationDiffeomorph (I := I) (n := ∞) g) ∘
-          (conjugationDiffeomorph (I := I) (n := ∞) g⁻¹) = id := by
+        (conjDiffeomorph (I := I) (n := ∞) g) ∘
+          (conjDiffeomorph (I := I) (n := ∞) g⁻¹) = id := by
       funext y
       simp [Function.comp_apply, mul_assoc]
     rw [h, mfderiv_id]
   rw [mfderiv_comp (I := I) (I' := I) (I'' := I) _
-    (((conjugationDiffeomorph (I := I) (n := ∞) g).mdifferentiable (by simp)) _)
-    (((conjugationDiffeomorph (I := I) (n := ∞) g⁻¹).mdifferentiable (by simp)) _)] at A'
+    (((conjDiffeomorph (I := I) (n := ∞) g).mdifferentiable (by simp)) _)
+    (((conjDiffeomorph (I := I) (n := ∞) g⁻¹).mdifferentiable (by simp)) _)] at A'
   rw [mfderiv_congr_point (I := I) (I' := I)
-    (f := conjugationDiffeomorph (I := I) (n := ∞) g)
-    (x := conjugationDiffeomorph (I := I) (n := ∞) g⁻¹
-      (conjugationDiffeomorph (I := I) (n := ∞) g x))
-    (x' := x) (by simp only [conjugationDiffeomorph_apply]; group)] at A'
+    (f := conjDiffeomorph (I := I) (n := ∞) g)
+    (x := conjDiffeomorph (I := I) (n := ∞) g⁻¹
+      (conjDiffeomorph (I := I) (n := ∞) g x))
+    (x' := x) (by simp only [conjDiffeomorph_apply]; group)] at A'
   exact ContinuousLinearMap.inverse_eq A' A
 
 theorem mfderiv_conjugation_mulInvariantVectorField (g x : G)
     (X : GroupLieAlgebra I G) :
-    mfderiv I I (conjugationDiffeomorph (I := I) (n := ∞) g) x
+    mfderiv I I (conjDiffeomorph (I := I) (n := ∞) g) x
         (mulInvariantVectorField X x) =
       mulInvariantVectorField (adjointContinuousLinearMap (I := I) g X)
-        (conjugationDiffeomorph (I := I) (n := ∞) g x) := by
+        (conjDiffeomorph (I := I) (n := ∞) g x) := by
   simp only [mulInvariantVectorField]
   have hfun :
-      (conjugationDiffeomorph (I := I) (n := ∞) g) ∘ (fun y : G ↦ x * y) =
-        (fun y : G ↦ conjugationDiffeomorph (I := I) (n := ∞) g x * y) ∘
-          (conjugationDiffeomorph (I := I) (n := ∞) g) := by
+      (conjDiffeomorph (I := I) (n := ∞) g) ∘ (fun y : G ↦ x * y) =
+        (fun y : G ↦ conjDiffeomorph (I := I) (n := ∞) g x * y) ∘
+          (conjDiffeomorph (I := I) (n := ∞) g) := by
     funext y
     simp [Function.comp_apply, mul_assoc]
   have h := congrArg (fun f : G → G ↦ mfderiv I I f 1 X) hfun
   rw [mfderiv_comp_apply (I := I) (I' := I) (I'' := I),
     mfderiv_comp_apply (I := I) (I' := I) (I'' := I)] at h
-  · rw [mfderiv_congr_point (I := I) (I' := I) (f := conjugationDiffeomorph (I := I) (n := ∞) g)
+  · rw [mfderiv_congr_point (I := I) (I' := I) (f := conjDiffeomorph (I := I) (n := ∞) g)
       (x := x * 1) (x' := x) (by simp)] at h
     rw [mfderiv_congr_point (I := I) (I' := I)
-      (f := fun y : G ↦ conjugationDiffeomorph (I := I) (n := ∞) g x * y)
-      (x := conjugationDiffeomorph (I := I) (n := ∞) g 1) (x' := 1)
+      (f := fun y : G ↦ conjDiffeomorph (I := I) (n := ∞) g x * y)
+      (x := conjDiffeomorph (I := I) (n := ∞) g 1) (x' := 1)
       (by simp)] at h
     change @Eq E _ _
     exact h
   · exact contMDiffAt_mul_left.mdifferentiableAt one_ne_zero
-  · exact ((conjugationDiffeomorph (I := I) (n := ∞) g).mdifferentiable (by simp)) _
-  · exact ((conjugationDiffeomorph (I := I) (n := ∞) g).mdifferentiable (by simp)) _
+  · exact ((conjDiffeomorph (I := I) (n := ∞) g).mdifferentiable (by simp)) _
+  · exact ((conjDiffeomorph (I := I) (n := ∞) g).mdifferentiable (by simp)) _
   · exact contMDiffAt_mul_left.mdifferentiableAt one_ne_zero
 
 theorem mpullback_conjugation_mulInvariantVectorField (g : G)
     (X : GroupLieAlgebra I G) :
-    VectorField.mpullback I I (conjugationDiffeomorph (I := I) (n := ∞) g⁻¹)
+    VectorField.mpullback I I (conjDiffeomorph (I := I) (n := ∞) g⁻¹)
         (mulInvariantVectorField X) =
       mulInvariantVectorField (adjointContinuousLinearMap (I := I) g X) := by
   funext x
   simp only [VectorField.mpullback]
   rw [inverse_mfderiv_conjugation]
   rw [mfderiv_congr (I := I) (I' := I)
-    (f := conjugationDiffeomorph (I := I) (n := ∞) g⁻¹⁻¹)
-    (f' := conjugationDiffeomorph (I := I) (n := ∞) g) (by simp)]
+    (f := conjDiffeomorph (I := I) (n := ∞) g⁻¹⁻¹)
+    (f' := conjDiffeomorph (I := I) (n := ∞) g) (by simp)]
   have hpush := mfderiv_conjugation_mulInvariantVectorField (I := I) g
-    (conjugationDiffeomorph (I := I) (n := ∞) g⁻¹ x) X
+    (conjDiffeomorph (I := I) (n := ∞) g⁻¹ x) X
   change @Eq E _ _
   change @Eq E _ _ at hpush
-  have hpoint : conjugationDiffeomorph (I := I) (n := ∞) g
-      (conjugationDiffeomorph (I := I) (n := ∞) g⁻¹ x) = x := by
-    simp only [conjugationDiffeomorph_apply]
+  have hpoint : conjDiffeomorph (I := I) (n := ∞) g
+      (conjDiffeomorph (I := I) (n := ∞) g⁻¹ x) = x := by
+    simp only [conjDiffeomorph_apply]
     group
   rw [hpoint] at hpush
   exact hpush
 
 theorem mpullback_conjugation_one (g : G) (V : ∀ x : G, TangentSpace I x) :
-    VectorField.mpullback I I (conjugationDiffeomorph (I := I) (n := ∞) g⁻¹) V 1 =
+    VectorField.mpullback I I (conjDiffeomorph (I := I) (n := ∞) g⁻¹) V 1 =
       adjointContinuousLinearMap (I := I) g (V 1) := by
   simp only [VectorField.mpullback]
   rw [inverse_mfderiv_conjugation]
   rw [mfderiv_congr (I := I) (I' := I)
-    (f := conjugationDiffeomorph (I := I) (n := ∞) g⁻¹⁻¹)
-    (f' := conjugationDiffeomorph (I := I) (n := ∞) g) (by simp)]
+    (f := conjDiffeomorph (I := I) (n := ∞) g⁻¹⁻¹)
+    (f' := conjDiffeomorph (I := I) (n := ∞) g) (by simp)]
   rw [mfderiv_congr_point (I := I) (I' := I)
-    (f := conjugationDiffeomorph (I := I) (n := ∞) g)
-    (x := conjugationDiffeomorph (I := I) (n := ∞) g⁻¹ 1) (x' := 1)
+    (f := conjDiffeomorph (I := I) (n := ∞) g)
+    (x := conjDiffeomorph (I := I) (n := ∞) g⁻¹ 1) (x' := 1)
     (by simp)]
   change @Eq E _ _
   rw [adjointContinuousLinearMap]
@@ -211,11 +211,11 @@ theorem adjointContinuousLinearMap_lie [CompleteSpace E] (g : G)
         adjointContinuousLinearMap (I := I) g Y⁆ := by
   have h := VectorField.mpullback_mlieBracket
     (I := I) (I' := I) (n := ∞)
-    (f := conjugationDiffeomorph (I := I) (n := ∞) g⁻¹)
+    (f := conjDiffeomorph (I := I) (n := ∞) g⁻¹)
     (V := mulInvariantVectorField X) (W := mulInvariantVectorField Y) (x₀ := (1 : G))
     (mdifferentiableAt_mulInvariantVectorField X)
     (mdifferentiableAt_mulInvariantVectorField Y)
-    (conjugationDiffeomorph (I := I) (n := ∞) g⁻¹).contMDiffAt
+    (conjDiffeomorph (I := I) (n := ∞) g⁻¹).contMDiffAt
       (by simpa using (inferInstance : ENat.LEInfty (2 : ℕ∞ω)).out)
   rw [mpullback_conjugation_mulInvariantVectorField,
     mpullback_conjugation_mulInvariantVectorField] at h
