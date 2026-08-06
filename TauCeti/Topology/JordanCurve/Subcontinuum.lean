@@ -16,7 +16,7 @@ This file describes the pieces from the other side: it classifies the compact co
 a Jordan curve. Every one of them other than the curve itself is a point or an **arc** — the range
 of an injective path — and its complement in the curve is again path connected. In particular a
 compact connected subset that is *nowhere dense in the curve* is a subsingleton, hence a single
-point as soon as it is nonempty, which is the form in which the classification is spent.
+point as soon as it is nonempty.
 
 ## The argument
 
@@ -46,10 +46,10 @@ to be *continua contained in the image boundary*
 (`TauCeti.isConnected_clusterSetOn_of_convex_of_isBounded` together with
 `TauCeti.clusterSetOn_subset_frontier_image`), so for a Jordan domain each of them is a compact
 connected subset of a Jordan curve, and the results here say what such a set can be: a point, an
-arc, or the whole curve. The milestone is thereby reduced to excluding the last two, and
-`TauCeti.IsJordanCurve.subsingleton_of_subset_closure_sdiff` performs that exclusion from a
-hypothesis about the curve alone — that the cluster set is nowhere dense in it. That reduction is
-carried out on the conformal side in `TauCeti/Analysis/Complex/Conformal/ClusterSet.lean`.
+arc, or the whole curve. That reading of a boundary cluster set is
+`TauCeti.subsingleton_or_exists_injective_path_clusterSetOn`, in
+`TauCeti/Analysis/Complex/Conformal/ClusterSet.lean`. Excluding the two nondegenerate cases for a
+Riemann map is the step the milestone still waits on, and is not attempted here or there.
 
 ## Generality
 
@@ -70,9 +70,9 @@ because they speak of a closure taken in that space.
   `TauCeti.IsJordanCurve.isPathConnected_sdiff_singleton`.
 * `TauCeti.IsJordanCurve.exists_notMem_closure_sdiff` — a subcontinuum with more than one point is
   not nowhere dense: one of its points is not adherent to the rest of the curve.
-* `TauCeti.IsJordanCurve.subsingleton_of_subset_closure_sdiff` — the contrapositive, and the form
-  the boundary correspondence consumes: a compact connected subset of a Jordan curve every point of
-  which is adherent to the complement is a subsingleton, so a single point once it is nonempty.
+* `TauCeti.IsJordanCurve.subsingleton_of_subset_closure_sdiff` — the contrapositive: a compact
+  connected subset of a Jordan curve every point of which is adherent to the complement is a
+  subsingleton, so a single point once it is nonempty.
 
 ## References
 

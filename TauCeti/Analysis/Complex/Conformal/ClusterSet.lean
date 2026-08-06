@@ -54,29 +54,19 @@ Carathéodory's theorem asserts that for a Riemann map of a Jordan domain every 
 is a singleton; feeding that into `TauCeti.exists_continuousOn_closure_eqOn` gives a continuous
 extension to `closure U`, and upgrading it to a homeomorphism of closures needs one further input,
 namely injectivity of the extension on `frontier U`, which `TauCeti.injOn_closure_of_injOn_frontier`
-then propagates to `closure U` for `TauCeti.closureHomeomorph`. Boundary injectivity is not proved
-here, and neither is the singleton property — but the last section reduces it.
+then propagates to `closure U` for `TauCeti.closureHomeomorph`. Neither the singleton property nor
+boundary injectivity is proved here.
 
-## The singleton property on a Jordan image boundary
+## The shape of a boundary cluster set on a Jordan image boundary
 
 For a **convex** domain the three facts above compose into a structural description of the boundary
 cluster set. It is compact, it is a continuum, and it lies on `frontier (f '' U)`; so if that
 frontier is a Jordan curve — the Carathéodory hypothesis — the cluster set is a *compact connected
 subset of a Jordan curve*, and `TauCeti/Topology/JordanCurve/Subcontinuum.lean` classifies those:
 each is a point, an arc, or the whole curve. That is
-`TauCeti.subsingleton_or_exists_injective_path_clusterSetOn`.
-
-The classification comes with a criterion excluding the two nondegenerate cases at once: a compact
-connected subset of a Jordan curve that is *nowhere dense* in it — every point of it adherent to the
-rest of the curve — is a subsingleton, so a single point for a cluster set, which is nonempty.
-Feeding that criterion to the extension theorem
-`TauCeti.exists_continuousOn_closure_eqOn_of_isBounded` gives
-`TauCeti.exists_continuousOn_closure_eqOn_of_forall_subset_closure_sdiff`: **a conformal map of a
-convex domain onto a bounded region with Jordan boundary, none of whose boundary cluster sets has
-interior in that boundary curve, extends continuously to the closure.** This is a sufficient
-condition for the L5 milestone stated entirely in terms of the boundary curve; what it does not do
-is *verify* the nowhere-density hypothesis for a Riemann map, which is the step still separating L5
-from its milestone and which the crosscut and length–area files are aimed at.
+`TauCeti.subsingleton_or_exists_injective_path_clusterSetOn`, which says what a boundary cluster set
+can look like; excluding the two nondegenerate cases for a Riemann map is the missing L5 step, and
+is not attempted here.
 
 In accordance with the generality bar of `ConformalMapping/README.md`, which fixes scalar `ℂ` for
 every theorem added in layers L0–L6, the results below are stated for maps of `ℂ`, as in
@@ -95,11 +85,6 @@ every theorem added in layers L0–L6, the results below are stated for maps of 
   the unit circle.
 * `TauCeti.subsingleton_or_exists_injective_path_clusterSetOn` — on a convex domain whose image has
   Jordan frontier, a boundary cluster set other than the whole frontier is a point or an arc.
-* `TauCeti.subsingleton_clusterSetOn_of_subset_closure_sdiff` — such a cluster set that is nowhere
-  dense in the frontier is a single point.
-* `TauCeti.exists_continuousOn_closure_eqOn_of_forall_subset_closure_sdiff` — **a nowhere-density
-  criterion for the Carathéodory extension**: if no boundary cluster set has interior in the Jordan
-  frontier of the image, the map extends continuously to `closure U`.
 
 ## Coordination with upstream Mathlib
 
@@ -235,30 +220,12 @@ theorem biUnion_clusterSetOn_eq_frontier_image (hUo : IsOpen U) (hUb : Bornology
       obtain ⟨w, hw, hvw⟩ := exists_mem_frontier_mem_clusterSetOn hUo hUb hfd hfi hv
       exact mem_biUnion hw hvw
 
-/-! ## The singleton property on a Jordan image boundary
+/-! ## The shape of a boundary cluster set on a Jordan image boundary
 
 The hypotheses of this section are those of Carathéodory's theorem apart from simple connectivity,
 which plays no role once the map is given: `U` is open and convex — the disc of a Riemann map is the
 case of interest, and convexity is what makes the cluster sets connected — the image is bounded, and
 its frontier is a Jordan curve. -/
-
-/-- A boundary cluster set of a conformal map on a convex domain is a compact continuum lying on
-the frontier of the image. This packages, for the two theorems below, the three inputs the
-classification of
-`TauCeti/Topology/JordanCurve/Subcontinuum.lean` consumes: compactness from boundedness of the
-image, connectedness from convexity of the domain
-(`TauCeti.isConnected_clusterSetOn_of_convex_of_isBounded`), and the location from
-`TauCeti.clusterSetOn_subset_frontier_image`. -/
-private theorem isCompact_isConnected_clusterSetOn_subset_frontier_image (hUo : IsOpen U)
-    (hUc : Convex ℝ U)
-    (hfd : DifferentiableOn ℂ f U) (hfi : InjOn f U) (hfb : Bornology.IsBounded (f '' U))
-    (hw : w ∈ frontier U) :
-    IsCompact (clusterSetOn f U w) ∧ IsConnected (clusterSetOn f U w) ∧
-      clusterSetOn f U w ⊆ frontier (f '' U) :=
-  ⟨isCompact_clusterSetOn_of_isBounded hfb,
-    isConnected_clusterSetOn_of_convex_of_isBounded hUc hfd.continuousOn hfb
-      (frontier_subset_closure hw),
-    clusterSetOn_subset_frontier_image hUo hfd hfi hw⟩
 
 /-- **A boundary cluster set on a Jordan image boundary is a point, an arc, or the whole curve.**
 For a conformal map of a convex domain whose image has Jordan frontier, a boundary cluster set other
@@ -277,48 +244,9 @@ theorem subsingleton_or_exists_injective_path_clusterSetOn (hUo : IsOpen U) (hUc
     (hne : clusterSetOn f U w ≠ frontier (f '' U)) :
     (clusterSetOn f U w).Subsingleton ∨
       ∃ (p q : ℂ) (γ : Path p q), Function.Injective γ ∧ range γ = clusterSetOn f U w :=
-  have h := isCompact_isConnected_clusterSetOn_subset_frontier_image hUo hUc hfd hfi hfb hw
-  hJ.subsingleton_or_exists_injective_path h.2.2 h.1 h.2.1.isPreconnected hne
-
-/-- **A boundary cluster set that is nowhere dense in a Jordan image boundary is a single point.**
-If every value the conformal map clusters at over the boundary point `w` is adherent to the rest of
-`frontier (f '' U)`, then there is only one such value: the conclusion is that the cluster set is a
-subsingleton, and under these hypotheses it is nonempty, being a continuum by
-`TauCeti.isConnected_clusterSetOn_of_convex_of_isBounded`.
-
-This is the nondegeneracy criterion
-`TauCeti.IsJordanCurve.subsingleton_of_subset_closure_sdiff` for subcontinua of a Jordan curve, and
-it is the whole content of the reduction: the cluster set is a continuum on the curve, and a
-continuum on a Jordan curve that occupies no relatively open piece of it can only be a point. -/
-theorem subsingleton_clusterSetOn_of_subset_closure_sdiff (hUo : IsOpen U) (hUc : Convex ℝ U)
-    (hfd : DifferentiableOn ℂ f U) (hfi : InjOn f U) (hfb : Bornology.IsBounded (f '' U))
-    (hJ : IsJordanCurve (frontier (f '' U))) (hw : w ∈ frontier U)
-    (hnwd : clusterSetOn f U w ⊆ closure (frontier (f '' U) \ clusterSetOn f U w)) :
-    (clusterSetOn f U w).Subsingleton :=
-  have h := isCompact_isConnected_clusterSetOn_subset_frontier_image hUo hUc hfd hfi hfb hw
-  hJ.subsingleton_of_subset_closure_sdiff h.2.2 h.1 h.2.1.isPreconnected hnwd
-
-/-- **A nowhere-density criterion for the Carathéodory extension.** A holomorphic injection of a
-convex open set onto a bounded region whose frontier is a Jordan curve extends continuously to the
-closure of the domain, provided no boundary cluster set occupies a relatively open piece of that
-frontier. Boundedness is asked of the image `f '' U`, not of the domain.
-
-This is the sufficient condition for the layer-**L5** milestone that the classification of
-subcontinua supplies: the extension criterion
-`TauCeti.exists_continuousOn_closure_eqOn_of_isBounded` asks exactly that every boundary cluster set
-be a subsingleton, and `TauCeti.subsingleton_clusterSetOn_of_subset_closure_sdiff` converts that
-into a statement about the image boundary alone. Verifying the hypothesis for a Riemann map is what
-the
-crosscut and length–area material is aimed at, and is not done here; nor is injectivity of the
-extension on `frontier U`, which `TauCeti.injOn_closure_of_injOn_frontier` still asks for
-separately. -/
-theorem exists_continuousOn_closure_eqOn_of_forall_subset_closure_sdiff (hUo : IsOpen U)
-    (hUc : Convex ℝ U) (hfd : DifferentiableOn ℂ f U) (hfi : InjOn f U)
-    (hfb : Bornology.IsBounded (f '' U)) (hJ : IsJordanCurve (frontier (f '' U)))
-    (hnwd : ∀ w ∈ frontier U,
-      clusterSetOn f U w ⊆ closure (frontier (f '' U) \ clusterSetOn f U w)) :
-    ∃ F : ℂ → ℂ, ContinuousOn F (closure U) ∧ EqOn F f U :=
-  exists_continuousOn_closure_eqOn_of_isBounded hUo hfd.continuousOn hfb fun w hw =>
-    subsingleton_clusterSetOn_of_subset_closure_sdiff hUo hUc hfd hfi hfb hJ hw (hnwd w hw)
+  hJ.subsingleton_or_exists_injective_path (clusterSetOn_subset_frontier_image hUo hfd hfi hw)
+    (isCompact_clusterSetOn_of_isBounded hfb)
+    (isConnected_clusterSetOn_of_convex_of_isBounded hUc hfd.continuousOn hfb
+      (frontier_subset_closure hw)).isPreconnected hne
 
 end TauCeti
