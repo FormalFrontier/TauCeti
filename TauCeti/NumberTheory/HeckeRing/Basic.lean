@@ -21,12 +21,16 @@ define the Hecke product in later files and is finite for a Hecke triple. It als
 the basis-element API of the coset module: `HeckeCosetModule.single` with its evaluation,
 summation, and additivity laws, the `induction_linear` principle, and the transported
 `Module` instance — placed at this layer so every later file (convolution, one, and the
-coset actions) can build on one shared vocabulary.
+coset actions) can build on one shared vocabulary. Finally it defines the degree of a
+double coset, the number of left cosets in its decomposition, together with its
+relative-index form, since that count is read straight off `DecompQuotient`.
 
-Vendored from the in-review mathlib4 PR
+The coset vocabulary is vendored from the in-review mathlib4 PR
 [#41253](https://github.com/leanprover-community/mathlib4/pull/41253) (Chris Birkbeck), per the
-ModularForms roadmap's dependency policy; migrate to Mathlib and delete this file when that
-stack merges.
+ModularForms roadmap's dependency policy; migrate to Mathlib and delete it when that stack
+merges. The degree section is instead ported from the AINTLIB `LeanModularForms` project
+(`LeanModularForms/HeckeRIngs/AbstractHeckeRing/Degree.lean`, Chris Birkbeck,
+<https://github.com/CBirkbeck/AINTLIB/tree/main/projects/LeanModularForms>).
 
 ## Main definitions
 
@@ -37,6 +41,10 @@ stack merges.
 * `HeckeCosetModule.single`: the basis element `b • [D]` of the Hecke coset module, with
   `single_apply`, `sum_single_index`, `smul_single_one`, `single_add`, `induction_linear`,
   and the `Module R` instance `HeckeCosetModule.instModule`.
+* `HeckeCoset.degree`: the number of left cosets in the decomposition of a double coset,
+  with `degree_eq_relIndex` and `degree_mk` presenting it as a relative index,
+  `degree_eq_natCard_decompQuotient` as the (hypothesis-free) count of that quotient, and
+  `degree_one` the identity coset.
 
 ## Main results
 
@@ -161,6 +169,70 @@ noncomputable instance {Δ : Submonoid G} {H₁ H₂ : Subgroup G} [IsHeckeTripl
   Subgroup.fintypeOfIndexNeZero (IsHeckeTriple.commensurable_conjAct_right g).1
 
 end IsHeckeTriple
+
+namespace HeckeCoset
+
+variable {G : Type*} [Group G] {Δ : Submonoid G} {H₁ H₂ : Subgroup G}
+
+open scoped Pointwise in
+/-- The degree of a double coset: the number of left cosets `σᵢgH₂` in the decomposition
+`H₁gH₂ = ⊔ᵢ σᵢgH₂`, i.e. the relative index `[H₁ : H₁ ∩ gH₂g⁻¹]`. Stating it needs no
+finiteness — `Subgroup.relIndex` is a `Nat.card`, which is `0` when the index is infinite;
+the Hecke-triple hypothesis enters only where the count is genuinely finite. -/
+noncomputable def degree (D : HeckeCoset Δ H₁ H₂) : ℕ :=
+  (ConjAct.toConjAct (D.rep : G) • H₂).relIndex H₁
+
+open scoped Pointwise in
+/-- The degree as a relative index: `deg(H₁gH₂) = [H₁ : H₁ ∩ gH₂g⁻¹]`. This is the form in
+which concrete degree computations identify the count with a congruence-subgroup index. -/
+lemma degree_eq_relIndex (D : HeckeCoset Δ H₁ H₂) :
+    D.degree = (ConjAct.toConjAct (D.rep : G) • H₂).relIndex H₁ :=
+  (rfl)
+
+open scoped Pointwise in
+/-- The degree at an explicit representative: the count computed from any `g`, not only
+from the chosen `rep`. This is the form concrete coset calculations use, since they present
+a double coset as `mk H H g`. -/
+@[simp] lemma degree_mk (g : Δ) :
+    (HeckeCoset.mk H₁ H₂ g).degree = (ConjAct.toConjAct (g : G) • H₂).relIndex H₁ := by
+  obtain ⟨h₁, hh₁, h₂, hh₂, heq⟩ :=
+    DoubleCoset.mem_doubleCoset.mp (toSet_mk g ▸ rep_mem (HeckeCoset.mk H₁ H₂ g))
+  have hfix₂ : ConjAct.toConjAct h₂ • H₂ = H₂ :=
+    Subgroup.conjAct_pointwise_smul_eq_self (Subgroup.le_normalizer hh₂)
+  have hfix₁ : ConjAct.toConjAct h₁ • H₁ = H₁ :=
+    Subgroup.conjAct_pointwise_smul_eq_self (Subgroup.le_normalizer hh₁)
+  have htransport := Subgroup.relIndex_pointwise_smul
+    (ConjAct.toConjAct h₁) (ConjAct.toConjAct (g : G) • H₂) H₁
+  rw [hfix₁] at htransport
+  rw [degree_eq_relIndex, heq, map_mul, map_mul, ← smul_smul, ← smul_smul, hfix₂,
+    htransport]
+
+/-- The identity double coset has degree one: `H·1·H = H` is a single left coset. -/
+@[simp] lemma degree_one {H : Subgroup G} : (1 : HeckeCoset Δ H H).degree = 1 := by
+  rw [one_def H, degree_mk]
+  simp
+
+/-- The degree counts the decomposition quotient. No finiteness is involved: a relative
+index is by definition the `Nat.card` of exactly this quotient, so the two sides are the
+same term. -/
+lemma degree_eq_natCard_decompQuotient (D : HeckeCoset Δ H₁ H₂) :
+    D.degree = Nat.card (DecompQuotient H₁ H₂ (D.rep : G)) :=
+  (rfl)
+
+variable [IsHeckeTriple Δ H₁ H₂]
+
+/-- Under the Hecke-triple hypothesis the decomposition quotient is finite, so the degree is
+its `Fintype.card`. The hypothesis is needed only for the `Fintype` instance, not for the
+count itself — see `degree_eq_natCard_decompQuotient`. -/
+lemma degree_eq_card_decompQuotient (D : HeckeCoset Δ H₁ H₂) :
+    D.degree = Fintype.card (DecompQuotient H₁ H₂ (D.rep : G)) := by
+  rw [degree_eq_natCard_decompQuotient, Nat.card_eq_fintype_card]
+
+/-- Every double coset has positive degree. -/
+lemma degree_pos (D : HeckeCoset Δ H₁ H₂) : 0 < D.degree := by
+  rw [degree_eq_card_decompQuotient]; exact Fintype.card_pos
+
+end HeckeCoset
 
 namespace HeckeCosetModule
 

@@ -29,6 +29,10 @@ positive root is a nonnegative integer combination of the simple coroots.
 ## Main results
 
 * `TauCeti.image_reflectionPerm_self_posRoots` says root negation exchanges the two sets.
+* `TauCeti.add_mem_posRoots` and `TauCeti.add_mem_negRoots` say each of the two sets is closed
+  under those sums of its members that are again roots, and
+  `TauCeti.reflectionPerm_self_notMem_posRoots`, `TauCeti.reflectionPerm_self_notMem_negRoots` say
+  neither contains a root together with its negative.
 * `TauCeti.bijOn_reflectionPerm_posRoots_diff_singleton` says a simple reflection permutes the
   positive roots other than its own simple root.
 * `TauCeti.RootPairing.Base.isPos_flip_iff` says a root is positive for a base exactly when its
@@ -139,6 +143,32 @@ lemma isPos_reflectionPerm_self_iff_mem_negRoots (i : ι) :
 lemma reflectionPerm_self_mem_posRoots_iff_mem_negRoots (i : ι) :
     P.reflectionPerm i i ∈ posRoots P b ↔ i ∈ negRoots P b := by
   exact (mem_posRoots P b _).trans (isPos_reflectionPerm_self_iff_mem_negRoots P b i)
+
+/-- Neither set contains a root together with its negative. -/
+lemma reflectionPerm_self_notMem_posRoots {i : ι} (hi : i ∈ posRoots P b) :
+    P.reflectionPerm i i ∉ posRoots P b := fun hcon =>
+  (reflectionPerm_self_mem_posRoots_iff_mem_negRoots P b i).mp hcon hi
+
+/-- Neither set contains a root together with its negative. -/
+lemma reflectionPerm_self_notMem_negRoots {i : ι} (hi : i ∈ negRoots P b) :
+    P.reflectionPerm i i ∉ negRoots P b := fun hcon =>
+  hi ((reflectionPerm_self_mem_negRoots_iff_mem_posRoots P b i).mp hcon)
+
+/-- The positive roots are closed under addition: a root that is the sum of two positive roots is
+positive, because heights add. -/
+lemma add_mem_posRoots {i j k : ι} (hi : i ∈ posRoots P b) (hj : j ∈ posRoots P b)
+    (hk : P.root k = P.root i + P.root j) : k ∈ posRoots P b :=
+  RootPairing.Base.IsPos.add hi hj hk
+
+/-- The negative roots are closed under addition: a root that is the sum of two negative roots is
+negative. -/
+lemma add_mem_negRoots {i j k : ι} (hi : i ∈ negRoots P b) (hj : j ∈ negRoots P b)
+    (hk : P.root k = P.root i + P.root j) : k ∈ negRoots P b := by
+  rw [← isPos_reflectionPerm_self_iff_mem_negRoots] at hi hj ⊢
+  refine RootPairing.Base.IsPos.add hi hj ?_
+  simp only [RootPairing.root_reflectionPerm, RootPairing.reflection_apply_self]
+  rw [hk]
+  abel
 
 /-- A positive root is a nonnegative natural-number combination of simple roots. -/
 lemma exists_root_eq_sum_nat_of_mem_posRoots {i : ι} (hi : i ∈ posRoots P b) :
