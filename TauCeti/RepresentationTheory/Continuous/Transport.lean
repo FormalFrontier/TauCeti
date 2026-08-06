@@ -7,14 +7,15 @@ module
 public import TauCeti.RepresentationTheory.Continuous.MatrixCoefficient
 
 /-!
-# Transporting a continuous representation along a linear isometry equivalence
+# Transporting a continuous representation along a continuous linear equivalence
 
-A linear isometry equivalence `e : V ≃ₗᵢ[𝕜] W` carries a continuous representation on `V` to one
+A continuous linear equivalence `e : V ≃L[𝕜] W` carries a continuous representation on `V` to one
 on `W` by conjugating every action operator, `π g ↦ e ∘ π g ∘ e⁻¹`, that is, by applying Mathlib's
 continuous algebra equivalence `ContinuousLinearEquiv.conjContinuousAlgEquiv`. This file builds
-that transport and records what it preserves: continuity of the operator-valued action, unitarity,
-and — the point of the construction — the matrix coefficients, which are unchanged once the
-defining vectors are moved along `e`.
+that transport and records what it preserves: continuity of the operator-valued action, and — for
+an equivalence that is moreover isometric, so that inner products are available — unitarity and,
+the point of the construction, the matrix coefficients, which are unchanged once the defining
+vectors are moved along `e`.
 
 The transport is what lets a statement about representations on the standard models
 `EuclideanSpace 𝕜 (Fin n)` be applied to a representation on an arbitrary finite-dimensional
@@ -43,49 +44,58 @@ namespace ContRepresentation
 
 section Congr
 
-variable {𝕜 G V W : Type*} [RCLike 𝕜] [Monoid G] [TopologicalSpace G]
-  [NormedAddCommGroup V] [InnerProductSpace 𝕜 V]
-  [NormedAddCommGroup W] [InnerProductSpace 𝕜 W]
+variable {𝕜 G V W : Type*} [NormedField 𝕜] [Monoid G] [TopologicalSpace G]
+  [NormedAddCommGroup V] [NormedSpace 𝕜 V] [NormedAddCommGroup W] [NormedSpace 𝕜 W]
 
-/-- **Transport along a linear isometry equivalence.** The representation on `W` obtained from a
-representation on `V` by conjugating each action operator with `e : V ≃ₗᵢ[𝕜] W`. -/
-noncomputable def congr (e : V ≃ₗᵢ[𝕜] W) (π : ContRepresentation 𝕜 G V) :
+/-- **Transport along a continuous linear equivalence.** The representation on `W` obtained from a
+representation on `V` by conjugating each action operator with `e : V ≃L[𝕜] W`. -/
+noncomputable def congr (e : V ≃L[𝕜] W) (π : ContRepresentation 𝕜 G V) :
     ContRepresentation 𝕜 G W :=
   .ofMonoidHom
-    { toFun g := e.toContinuousLinearEquiv.conjContinuousAlgEquiv (π g)
+    { toFun g := e.conjContinuousAlgEquiv (π g)
       map_one' := by simp
       map_mul' g h := by rw [map_mul, map_mul] }
 
 omit [TopologicalSpace G] in
 /-- The action operators of a transported representation. -/
 @[simp]
-theorem congr_apply (e : V ≃ₗᵢ[𝕜] W) (π : ContRepresentation 𝕜 G V) (g : G) (x : W) :
+theorem congr_apply (e : V ≃L[𝕜] W) (π : ContRepresentation 𝕜 G V) (g : G) (x : W) :
     congr e π g x = e (π g (e.symm x)) :=
   (rfl)
 
 /-- Transport preserves continuity of the operator-valued action: conjugation by `e` is the
 continuous algebra equivalence `ContinuousLinearEquiv.conjContinuousAlgEquiv`. -/
-theorem continuous_congr (e : V ≃ₗᵢ[𝕜] W) {π : ContRepresentation 𝕜 G V} (hπ : Continuous π) :
+theorem continuous_congr (e : V ≃L[𝕜] W) {π : ContRepresentation 𝕜 G V} (hπ : Continuous π) :
     Continuous (congr e π) :=
-  (map_continuous e.toContinuousLinearEquiv.conjContinuousAlgEquiv).comp hπ
+  (map_continuous e.conjContinuousAlgEquiv).comp hπ
+
+end Congr
+
+section CongrIsometry
+
+variable {𝕜 G V W : Type*} [RCLike 𝕜] [Monoid G] [TopologicalSpace G]
+  [NormedAddCommGroup V] [InnerProductSpace 𝕜 V]
+  [NormedAddCommGroup W] [InnerProductSpace 𝕜 W]
 
 omit [TopologicalSpace G] in
-/-- Transport preserves unitarity: `e` and `e⁻¹` preserve the inner product, so the conjugated
-operators do exactly when the original ones do. -/
+/-- Transport along a linear isometry equivalence preserves unitarity: `e` and `e⁻¹` preserve the
+inner product, so the conjugated operators do exactly when the original ones do. -/
 theorem IsUnitary.congr {π : ContRepresentation 𝕜 G V} (hπ : IsUnitary π) (e : V ≃ₗᵢ[𝕜] W) :
-    IsUnitary (ContRepresentation.congr e π) :=
+    IsUnitary (ContRepresentation.congr e.toContinuousLinearEquiv π) :=
   (isUnitary_iff_norm_map _).mpr fun g x ↦ by simp [hπ.norm_map]
 
-/-- **Transport does not change matrix coefficients.** The matrix coefficient of the transported
-representation at the transported vectors is the matrix coefficient of the original. -/
+/-- **Transport along a linear isometry equivalence does not change matrix coefficients.** The
+matrix coefficient of the transported representation at the transported vectors is the matrix
+coefficient of the original. -/
 @[simp]
 theorem matrixCoeff_congr (e : V ≃ₗᵢ[𝕜] W) {π : ContRepresentation 𝕜 G V} (hπ : Continuous π)
     (v w : V) :
-    matrixCoeff (congr e π) (continuous_congr e hπ) (e v) (e w) = matrixCoeff π hπ v w := by
+    matrixCoeff (congr e.toContinuousLinearEquiv π) (continuous_congr _ hπ) (e v) (e w) =
+      matrixCoeff π hπ v w := by
   ext g
   simp
 
-end Congr
+end CongrIsometry
 
 end ContRepresentation
 

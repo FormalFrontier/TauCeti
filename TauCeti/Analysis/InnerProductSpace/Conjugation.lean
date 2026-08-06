@@ -27,6 +27,8 @@ conjugating the matrix of `A` entrywise.
   involution, and reverses the inner product.
 * `TauCeti.conjCLM_one`, `TauCeti.conjCLM_mul` and `TauCeti.conjCLM_conjCLM`: conjugation of
   operators is a multiplicative involution fixing the identity.
+* `TauCeti.conjCLM_add` and `TauCeti.conjCLM_smul`: it is additive and conjugate-linear, so with
+  the two preceding it is a conjugate-linear ring involution of the operators.
 * `TauCeti.norm_conjCLM`: conjugation of operators preserves the operator norm.
 -/
 
@@ -68,6 +70,11 @@ theorem inner_conjugation (x : V) (j : ι) :
   simp only [h]
   simp
 
+/-- Conjugation fixes the zero vector. -/
+@[simp]
+theorem conjugation_zero : conjugation e (0 : V) = 0 := by
+  simp [conjugation_apply]
+
 /-- Conjugation is additive. -/
 @[simp]
 theorem conjugation_add (x y : V) :
@@ -79,6 +86,11 @@ theorem conjugation_add (x y : V) :
 theorem conjugation_smul (c : 𝕜) (x : V) :
     conjugation e (c • x) = (starRingEnd 𝕜) c • conjugation e x := by
   simp [conjugation_apply, inner_smul_right, Finset.smul_sum, smul_smul]
+
+/-- Conjugation commutes with negation. -/
+@[simp]
+theorem conjugation_neg (x : V) : conjugation e (-x) = -conjugation e x := by
+  simp [conjugation_apply, inner_neg_right, neg_smul, Finset.sum_neg_distrib]
 
 /-- Conjugation commutes with subtraction. -/
 @[simp]
@@ -156,10 +168,36 @@ theorem conjCLM_conjCLM (A : V →L[𝕜] V) : conjCLM e (conjCLM e A) = A := by
   ext x
   simp
 
+/-- Conjugation kills the zero operator. -/
+@[simp]
+theorem conjCLM_zero : conjCLM e (0 : V →L[𝕜] V) = 0 := by
+  ext x
+  simp
+
+/-- Conjugation of operators is additive. -/
+@[simp]
+theorem conjCLM_add (A B : V →L[𝕜] V) : conjCLM e (A + B) = conjCLM e A + conjCLM e B := by
+  ext x
+  simp
+
+/-- Conjugation of operators commutes with negation. -/
+@[simp]
+theorem conjCLM_neg (A : V →L[𝕜] V) : conjCLM e (-A) = -conjCLM e A := by
+  ext x
+  simp
+
 /-- Conjugation commutes with subtraction of operators. -/
+@[simp]
 theorem conjCLM_sub (A B : V →L[𝕜] V) : conjCLM e (A - B) = conjCLM e A - conjCLM e B := by
   ext x
   simp
+
+/-- Conjugation of operators is conjugate-linear: a scalar of the operator passes through the
+outer `J` only, so it comes out conjugated. -/
+@[simp]
+theorem conjCLM_smul (c : 𝕜) (A : V →L[𝕜] V) : conjCLM e (c • A) = star c • conjCLM e A := by
+  ext x
+  simp [RCLike.star_def]
 
 /-- Conjugation does not increase the operator norm. -/
 theorem norm_conjCLM_le (A : V →L[𝕜] V) : ‖conjCLM e A‖ ≤ ‖A‖ :=
@@ -174,7 +212,8 @@ theorem norm_conjCLM (A : V →L[𝕜] V) : ‖conjCLM e A‖ = ‖A‖ :=
 /-- Conjugation of operators is a contraction, hence continuous. -/
 theorem lipschitzWith_one_conjCLM : LipschitzWith 1 (conjCLM e) :=
   LipschitzWith.of_dist_le_mul fun A B ↦ by
-    simp [dist_eq_norm, ← conjCLM_sub]
+    rw [dist_eq_norm, dist_eq_norm, ← conjCLM_sub, norm_conjCLM]
+    simp
 
 end ConjugateOperator
 

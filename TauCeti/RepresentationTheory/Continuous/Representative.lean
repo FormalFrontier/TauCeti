@@ -126,7 +126,8 @@ without changing its matrix coefficients. -/
 theorem isRepresentative_matrixCoeff (π : ContRepresentation 𝕜 G V)
     (hπ : Continuous π) (v w : V) :
     IsRepresentative (matrixCoeff π hπ v w) :=
-  ⟨Module.finrank 𝕜 V, ContRepresentation.congr (stdOrthonormalBasis 𝕜 V).repr π,
+  ⟨Module.finrank 𝕜 V,
+    ContRepresentation.congr (stdOrthonormalBasis 𝕜 V).repr.toContinuousLinearEquiv π,
     continuous_congr _ hπ, _, _,
     (matrixCoeff_congr (stdOrthonormalBasis 𝕜 V).repr hπ v w).symm⟩
 
@@ -179,16 +180,14 @@ theorem IsRepresentative.star {a : C(G, 𝕜)} (ha : IsRepresentative a) :
 /-- **`𝓡(G)` is closed under multiplication.** -/
 theorem mul_mem_representativeSubmodule {a b : C(G, 𝕜)} (ha : a ∈ representativeSubmodule 𝕜 G)
     (hb : b ∈ representativeSubmodule 𝕜 G) : a * b ∈ representativeSubmodule 𝕜 G := by
-  induction ha using Submodule.span_induction with
-  | mem x hx =>
-    induction hb using Submodule.span_induction with
-    | mem y hy => exact mem_representativeSubmodule_of_isRepresentative (hx.mul hy)
-    | zero => simp
-    | add y z _ _ ihy ihz => rw [mul_add]; exact add_mem ihy ihz
-    | smul c y _ ih => rw [mul_smul_comm]; exact Submodule.smul_mem _ c ih
-  | zero => simp
-  | add x y _ _ ihx ihy => rw [add_mul]; exact add_mem ihx ihy
-  | smul c x _ ih => rw [smul_mul_assoc]; exact Submodule.smul_mem _ c ih
+  induction ha, hb using Submodule.span_induction₂ with
+  | mem_mem x y hx hy => exact mem_representativeSubmodule_of_isRepresentative (hx.mul hy)
+  | zero_left y _ => simp
+  | zero_right x _ => simp
+  | add_left x y z _ _ _ ihx ihy => rw [add_mul]; exact add_mem ihx ihy
+  | add_right x y z _ _ _ ihy ihz => rw [mul_add]; exact add_mem ihy ihz
+  | smul_left c x y _ _ ih => rw [smul_mul_assoc]; exact Submodule.smul_mem _ c ih
+  | smul_right c x y _ _ ih => rw [mul_smul_comm]; exact Submodule.smul_mem _ c ih
 
 /-- **`𝓡(G)` is closed under the involution of `C(G, 𝕜)`.** -/
 theorem star_mem_representativeSubmodule {a : C(G, 𝕜)} (ha : a ∈ representativeSubmodule 𝕜 G) :
