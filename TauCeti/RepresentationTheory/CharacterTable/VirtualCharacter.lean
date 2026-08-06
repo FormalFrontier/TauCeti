@@ -36,8 +36,8 @@ work — a virtual character of norm `1` is, up to sign, an irreducible characte
 
 * `TauCeti.mul_mem_virtualCharacters` and `TauCeti.one_mem_virtualCharacters`: the lattice is
   closed under the pointwise product and contains the constant `1`.
-* `TauCeti.mem_classFunction_of_mem_virtualCharacters`: a virtual character is a class function,
-  and `TauCeti.conj_apply_of_mem_virtualCharacters`: over `ℂ` inverting the argument conjugates the
+* `TauCeti.virtualCharacters_le_classFunction`: a virtual character is a class function, and
+  `TauCeti.conj_apply_of_mem_virtualCharacters`: over `ℂ` inverting the argument conjugates the
   value, `conj (f g) = f g⁻¹`.
 * `TauCeti.character_eq_sum_nsmul_irreducibleCharacter`: **a character is the sum of the
   irreducible characters weighted by their multiplicities**, and
@@ -151,21 +151,16 @@ section ClassFunctions
 
 variable {k : Type u} {G : Type v} [Field k] [Group G]
 
-/-- **The virtual-character lattice is contained in the class functions.** -/
+/-- **The virtual-character lattice is contained in the class functions**: a virtual character is
+constant on conjugacy classes, being an integer combination of characters, each of which is.
+
+Applied to a hypothesis `hf : f ∈ virtualCharacters k G` this gives `f ∈ ClassFunction k G`. -/
 theorem virtualCharacters_le_classFunction :
     virtualCharacters k G ≤ (ClassFunction k G).toAddSubgroup :=
   virtualCharacters_le fun V => by
     have h : (ClassFunction.ofCharacter V.ρ : G → k) = V.character :=
       funext fun g => ClassFunction.ofCharacter_apply V.ρ g
     exact h ▸ (ClassFunction.ofCharacter V.ρ).2
-
-/-- **A virtual character is a class function**, in membership form: it is constant on conjugacy
-classes, being an integer combination of characters, each of which is.
-
-This is `TauCeti.virtualCharacters_le_classFunction` applied to an element. -/
-theorem mem_classFunction_of_mem_virtualCharacters {f : G → k}
-    (hf : f ∈ virtualCharacters k G) : f ∈ ClassFunction k G :=
-  virtualCharacters_le_classFunction hf
 
 end ClassFunctions
 
