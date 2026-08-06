@@ -242,7 +242,6 @@ theorem centralCharacterTable_apply (i : Fin (Nat.card (ConjClasses G))) (C : Co
 
 /-- Every row of the central character table is normalized: the class sum of the class of `1` is
 the unit of the centre. -/
-@[simp]
 theorem centralCharacterTable_mk_one (i : Fin (Nat.card (ConjClasses G))) :
     centralCharacterTable k G i (ConjClasses.mk (1 : G)) = 1 :=
   classSumRow_mk_one _
