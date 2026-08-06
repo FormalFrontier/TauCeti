@@ -4,9 +4,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.LinearAlgebra.StdBasis
 public import TauCeti.RepresentationTheory.CharacterTable.ClassSum.Eigenrow
 public import TauCeti.RepresentationTheory.CharacterTable.Table
+import Mathlib.LinearAlgebra.StdBasis
 
 /-!
 # The eigenrows of the class-multiplication matrices are the central characters
