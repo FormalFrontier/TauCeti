@@ -151,6 +151,7 @@ theorem IsInvariantForm.flip (hB : IsInvariantForm ρ B) : IsInvariantForm ρ B.
   fun g x y => hB.apply g y x
 
 /-- Every bilinear form is invariant for the trivial representation, which acts by the identity. -/
+@[simp]
 theorem isInvariantForm_trivial (B : BilinForm k V) :
     IsInvariantForm (Representation.trivial k G V) B :=
   fun _ _ _ => rfl
