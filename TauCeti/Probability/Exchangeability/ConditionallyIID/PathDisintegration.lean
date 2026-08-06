@@ -78,7 +78,7 @@ theorem map_prefixProjPair_jointPathLaw_eq (h : ConditionallyIIDWith μ X ν)
 /-- The prefix pushforward of the full-path disintegration is the block-level disintegration:
 projecting `δ_{ν ω} ⊗ (ν ω)^{⊗ℕ}` onto the first `n` path coordinates leaves
 `δ_{ν ω} ⊗ (ν ω)^{⊗ Fin n}`. -/
-theorem map_prefixProjPair_iidMixtureLaw (hν : Measurable ν) (n : ℕ) :
+theorem map_prefixProjPair_iidMixtureLaw (hν : AEMeasurable ν μ) (n : ℕ) :
     (iidMixtureLaw (μ.map ν) id).map (prefixProjPair (ProbabilityMeasure α) α n)
       = μ.bind fun ω =>
           (Measure.dirac (ν ω)).prod (ProbabilityMeasure.pi fun _ : Fin n => ν ω).toMeasure := by
@@ -107,7 +107,7 @@ theorem map_prefixProjPair_iidMixtureLaw (hν : Measurable ν) (n : ℕ) :
         rfl
     _ = (μ.map ν).bind F := by rw [hdir]
     _ = μ.bind fun ω => F (ν ω) := by
-        rw [TauCeti.MeasureTheory.bind_map hν.aemeasurable hker.aemeasurable]
+        rw [TauCeti.MeasureTheory.bind_map hν hker.aemeasurable]
         rfl
 
 /-! ### The full-path disintegration -/
@@ -125,7 +125,7 @@ theorem ConditionallyIIDWith.jointPathLaw_eq_iidMixtureLaw [IsFiniteMeasure μ]
     rw [jointPathLaw_def]; exact Measure.isFiniteMeasure_map _ _
   refine measure_eq_of_prefixProjPair_map_eq fun n => ?_
   rw [map_prefixProjPair_jointPathLaw_eq h hX n,
-    map_prefixProjPair_iidMixtureLaw h.measurable_directing n]
+    map_prefixProjPair_iidMixtureLaw h.measurable_directing.aemeasurable n]
 
 end Probability
 
