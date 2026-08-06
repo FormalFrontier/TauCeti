@@ -6,7 +6,7 @@ module
 
 public import Mathlib.Data.Set.Card
 public import TauCeti.LinearAlgebra.RootSystem.Positive
-public import TauCeti.LinearAlgebra.RootSystem.WeylGroup
+public import TauCeti.LinearAlgebra.RootSystem.Weyl.Group
 
 public section
 

@@ -273,6 +273,11 @@ noncomputable def ofFDRep (V : FDRep k G) : ClassFunction k G :=
 theorem ofFDRep_apply (V : FDRep k G) (g : G) : (ofFDRep V).1 g = V.character g :=
   (rfl)
 
+/-- The class function of a bundled finite-dimensional representation is the class function of the
+underlying representation: `FDRep.character` is `Representation.character` of `V.ρ`. -/
+theorem ofFDRep_eq_ofCharacter (V : FDRep k G) : ofFDRep V = ofCharacter V.ρ :=
+  (rfl)
+
 end ClassFunction
 
 end TauCeti

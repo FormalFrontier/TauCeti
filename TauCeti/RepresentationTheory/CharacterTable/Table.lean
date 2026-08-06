@@ -48,7 +48,9 @@ take their familiar Hermitian form, because inversion conjugates character value
   `TauCeti.card_inv_mul_sum_characterTable_mul_conj`: **first (row) orthogonality**, over `k` and in
   its Hermitian form over `ℂ`; `TauCeti.card_inv_mul_sum_card_conjClass_mul_characterTable_mul_conj`
   is the latter summed one column at a time, the form in which the roadmap's specification of a
-  character table asks for it.
+  character table asks for it;
+  `TauCeti.characterPairing_ofCharacter_irreducibleRepresentation_orthonormal` is the same relation
+  phrased as orthonormality for the character pairing.
 * `TauCeti.card_conjClass_mul_sum_characterTable_mul_characterTable_inv` and
   `TauCeti.sum_characterTable_mul_conj`: **second (column) orthogonality**, over `k` and in its
   Hermitian form over `ℂ`.
@@ -337,17 +339,17 @@ section RowOrthogonality
 variable {k : Type u} {G : Type v} [Field k] [Group G] [Fintype G] [IsAlgClosed k]
   [Invertible (Nat.card G : k)]
 
-/-- **First (row) orthogonality on the character table**: distinct rows pair to `0` and each row
-pairs to `1` with itself. -/
-theorem card_inv_mul_sum_characterTable_mul_characterTable_inv
+/-- **The rows of the character table are orthonormal**, read as class functions: the character
+pairing of the representations affording the `i`-th and `j`-th irreducible characters is `1` when
+`i = j` and `0` otherwise. This is the orthonormality of the irreducible characters
+(`TauCeti.ClassFunction.characterPairing_ofCharacter_self` and
+`TauCeti.ClassFunction.characterPairing_ofCharacter_eq_zero`) transported along the enumeration. -/
+@[simp]
+theorem characterPairing_ofCharacter_irreducibleRepresentation_orthonormal
     (i j : Fin (Nat.card (ConjClasses G))) :
-    (Nat.card G : k)⁻¹ * ∑ g : G, characterTable k G i (ConjClasses.mk g) *
-        characterTable k G j (ConjClasses.mk g⁻¹) = if i = j then 1 else 0 := by
-  classical
-  have hchar : ∀ (l : Fin (Nat.card (ConjClasses G))) (g : G),
-      characterTable k G l (ConjClasses.mk g) =
-        (irreducibleRepresentation k l).character g := by simp
-  simp only [hchar, ← ClassFunction.characterPairing_ofCharacter]
+    ClassFunction.characterPairing (ClassFunction.ofCharacter (irreducibleRepresentation k i))
+        (ClassFunction.ofCharacter (irreducibleRepresentation k j)) =
+      if i = j then 1 else 0 := by
   by_cases hij : i = j
   · subst hij
     rw [if_pos rfl]
@@ -355,6 +357,18 @@ theorem card_inv_mul_sum_characterTable_mul_characterTable_inv
   · rw [if_neg hij]
     exact ClassFunction.characterPairing_ofCharacter_eq_zero _ _
       (pairwise_isEmpty_equiv_irreducibleRepresentation k (Ne.symm hij))
+
+/-- **First (row) orthogonality on the character table**: distinct rows pair to `0` and each row
+pairs to `1` with itself. -/
+theorem card_inv_mul_sum_characterTable_mul_characterTable_inv
+    (i j : Fin (Nat.card (ConjClasses G))) :
+    (Nat.card G : k)⁻¹ * ∑ g : G, characterTable k G i (ConjClasses.mk g) *
+        characterTable k G j (ConjClasses.mk g⁻¹) = if i = j then 1 else 0 := by
+  have hchar : ∀ (l : Fin (Nat.card (ConjClasses G))) (g : G),
+      characterTable k G l (ConjClasses.mk g) =
+        (irreducibleRepresentation k l).character g := by simp
+  simp only [hchar, ← ClassFunction.characterPairing_ofCharacter]
+  exact characterPairing_ofCharacter_irreducibleRepresentation_orthonormal i j
 
 end RowOrthogonality
 

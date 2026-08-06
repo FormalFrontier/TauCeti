@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.LinearAlgebra.RootSystem.Base
-public import TauCeti.LinearAlgebra.RootSystem.WeylGroup
+public import TauCeti.LinearAlgebra.RootSystem.Weyl.Group
 import Mathlib.Algebra.Group.Submonoid.Membership
 import Mathlib.GroupTheory.OrderOfElement
 
