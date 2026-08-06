@@ -44,6 +44,11 @@ theorem conjugationDiffeomorph_apply (g x : G) :
   rfl
 
 @[simp]
+theorem conjugationDiffeomorph_one (g : G) :
+    conjugationDiffeomorph (I := I) g (1 : G) = 1 := by
+  simp
+
+@[simp]
 theorem conjugationDiffeomorph_symm_apply (g x : G) :
     (conjugationDiffeomorph (I := I) g).symm x = g⁻¹ * x * g :=
   rfl
