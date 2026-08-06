@@ -26,12 +26,15 @@ reciprocal `d i = (ℓ i)⁻¹`. `TauCeti.DynkinType.IsLongSimpleRoot` then sing
 For a *valid* type those are exactly the nodes of maximal length
 (`TauCeti.DynkinType.isLongSimpleRoot_iff`).
 
-Validity is load-bearing in both places, and in each a single degenerate type is the reason. The
-sole node of `C 1` is the last node of the `Cₙ` family, hence long, of length `2`: nothing shorter
-sits beside it to normalise against, so `rootLength` is off by the factor `2` there. The sole node
-of `B 1` is the last node of the `Bₙ` family, hence short, while being of maximal length for want
-of competition: that is the one type where the family-wise reading and the maximality reading of
-`IsLongSimpleRoot` part company.
+Validity is load-bearing in both places, and among the types of positive rank a single degenerate
+type is the reason in each. The sole node of `C 1` is the last node of the `Cₙ` family, hence long,
+of length `2`: nothing shorter sits beside it to normalise against, so `rootLength` is off by the
+factor `2` there. The sole node of `B 1` is the last node of the `Bₙ` family, hence short, while
+being of maximal length for want of competition: that is the one type where the family-wise reading
+and the maximality reading of `IsLongSimpleRoot` part company. Validity also excludes the rank-zero
+types `A 0`, `B 0`, `C 0` and `D 0`, which have no node at all. A statement quantified over the
+nodes cannot see that, but an existential one can, which is a second reason
+`TauCeti.DynkinType.exists_rootLength_eq_one` needs validity.
 
 ## The Bourbaki numbering
 
@@ -64,7 +67,8 @@ transposed matrix instead would make that identity false.
   identity that pins the relative lengths, and it holds for every type, valid or not.
 * `TauCeti.DynkinType.exists_rootLength_eq_one`: a valid type has a simple root of length `1`,
   which with `TauCeti.DynkinType.rootLength_pos` is the normalisation of the lengths. Validity is
-  needed here too, for `C 1`.
+  needed here too, and twice over: for `C 1`, whose sole node has length `2`, and for the rank-zero
+  types, which have no simple root to exhibit.
 * `TauCeti.DynkinType.isLongSimpleRoot_iff`: for a valid type, a node is long exactly when its
   simple root has maximal length. Validity is needed: the degenerate `B 1` has a single node,
   which is of maximal length while `IsLongSimpleRoot` calls it short, because it is the short node
@@ -105,7 +109,8 @@ on the left, as in `TauCeti.IsFiniteType`, being the reciprocal `d i = (ℓ i)�
 matrix alone determines the vector up to a positive factor once the diagram is connected; the
 normalisation fixes that factor.
 
-Validity is what the normalisation needs, and `C 1` is the one type that lacks it: its sole node is
+Validity is what the normalisation needs, and among the types of positive rank `C 1` is the one
+that lacks it (the rank-zero types have no node to normalise against): its sole node is
 the last node of the `Cₙ` family, hence of length `2`, with no shorter node beside it, so every
 length there is twice what the normalisation would ask. Fixing that by hand would cost a
 special case in `rootLength` and in every proof reading it, to normalise a type that
@@ -149,8 +154,9 @@ lemma rootLength_pos (t : DynkinType) (i : Fin t.rank) : 0 < t.rootLength i := b
 `TauCeti.DynkinType.rootLength_pos` this is the normalisation that `TauCeti.DynkinType.rootLength`
 is stated up to: on a valid type the shortest simple roots are exactly those of length `1`.
 
-Validity is needed, and only for `C 1`, whose sole node the `Cₙ` family calls long and gives
-length `2`. -/
+Validity is needed for two reasons. The rank-zero types `A 0`, `B 0`, `C 0` and `D 0` have no simple
+root at all to exhibit; and among the types of positive rank the only obstruction is `C 1`, whose
+sole node the `Cₙ` family calls long and gives length `2`. -/
 theorem exists_rootLength_eq_one {t : DynkinType} (ht : t.Valid) : ∃ i, t.rootLength i = 1 := by
   cases t with
   | A n =>
@@ -327,7 +333,8 @@ lemma isLongSimpleRoot_of_isSimplyLaced {t : DynkinType} (ht : t.IsSimplyLaced) 
 
 /-- **A valid Dynkin type has all its simple roots long exactly when it is simply laced.** The
 multiply-laced types `Bₙ`, `Cₙ`, `F₄` and `G₂` each have a short simple root, and validity is what
-rules out the degenerate `B 1`, whose single node is short by name while nothing is longer. -/
+rules out the degenerate types where that fails: `C 1`, whose sole node the `Cₙ` family calls long,
+and the rank-zero `B 0` and `C 0`, which have no node at all to be short. -/
 theorem forall_isLongSimpleRoot_iff_isSimplyLaced {t : DynkinType} (ht : t.Valid) :
     (∀ i, t.IsLongSimpleRoot i) ↔ t.IsSimplyLaced := by
   refine ⟨fun h ↦ ?_, fun h i ↦ isLongSimpleRoot_of_isSimplyLaced h i⟩
