@@ -1,0 +1,132 @@
+/-
+Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+-/
+module
+
+public import TauCeti.Geometry.Lie.Exponential.Regularized
+public import Mathlib.Analysis.SpecialFunctions.Integrals.Basic
+public import Mathlib.MeasureTheory.Integral.DominatedConvergence
+
+/-!
+# An integral formula for the regularized exponential quotient
+
+This file identifies the regularized quotient `(1 - exp (-a)) / a` with the integral of the
+exponential along the line segment from `0` to `-a`. The formula remains valid when `a` is not
+invertible.
+
+## Main result
+
+* `regularizedExpNeg_eq_integral_exp`: `regularizedExpNeg a = ∫ t in 0..1, exp (t • -a)`.
+
+## References
+
+* [Lie groups and the Lie algebra correspondence roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/LieGroups/README.md),
+  Deliverable A, Layer 1, "Differential of the exponential".
+-/
+
+public section
+
+open NormedSpace
+open TopologicalSpace
+
+noncomputable section
+
+variable {A : Type*} [NormedRing A] [NormedAlgebra ℝ A] [CompleteSpace A]
+
+private noncomputable def regularizedExpIntegrand (a : A) (n : ℕ) : C(ℝ, A) :=
+  ⟨fun t ↦ (n.factorial⁻¹ : ℝ) • ((t : ℝ) • (-a)) ^ n, by fun_prop⟩
+
+omit [NormedAlgebra ℝ A] [CompleteSpace A] in
+private theorem norm_pow_le_max_one (x : A) (n : ℕ) :
+    ‖x ^ n‖ ≤ max ‖(1 : A)‖ ‖x‖ ^ (n + 1) := by
+  by_cases hA : Nontrivial A
+  · let _ : Nontrivial A := hA
+    cases n with
+    | zero =>
+        simpa only [pow_zero, zero_add, pow_one] using
+          (le_max_left (α := ℝ) ‖(1 : A)‖ ‖x‖)
+    | succ n =>
+        calc
+          ‖x ^ (n + 1)‖ ≤ ‖x‖ ^ (n + 1) := norm_pow_le' x (Nat.succ_pos n)
+          _ ≤ max ‖(1 : A)‖ ‖x‖ ^ (n + 1) := by
+            gcongr
+            exact le_max_right ‖(1 : A)‖ ‖x‖
+          _ ≤ max ‖(1 : A)‖ ‖x‖ ^ (n + 1 + 1) := by
+            rw [pow_succ]
+            exact le_mul_of_one_le_right
+              (pow_nonneg ((norm_nonneg (1 : A)).trans (le_max_left _ _)) (n + 1))
+              ((one_le_norm_one A).trans (le_max_left _ _))
+  · let _ : Subsingleton A := not_nontrivial_iff_subsingleton.mp hA
+    have hOne : (1 : A) = 0 := Subsingleton.elim _ _
+    rw [Subsingleton.elim x 0]
+    cases n <;> simp [hOne]
+
+omit [CompleteSpace A] in
+private theorem summable_regularizedExpIntegrand_norm (a : A) :
+    Summable fun n : ℕ ↦
+      ‖(regularizedExpIntegrand a n).restrict
+        (⟨Set.uIcc 0 1, isCompact_uIcc⟩ : Compacts ℝ)‖ := by
+  let c : ℝ := max ‖(1 : A)‖ ‖-a‖
+  have hc : Summable fun n : ℕ ↦ c ^ (n + 1) / n.factorial := by
+    simpa only [pow_succ', mul_div_assoc] using
+      (Real.summable_pow_div_factorial c).mul_left c
+  refine hc.of_nonneg_of_le
+    (fun n ↦ norm_nonneg _) ?_
+  intro n
+  refine (ContinuousMap.norm_le _ (by positivity)).2 ?_
+  intro t
+  rcases t with ⟨t, ht⟩
+  change ‖(n.factorial⁻¹ : ℝ) • (t • (-a)) ^ n‖ ≤ _
+  rw [norm_smul]
+  change t ∈ Set.uIcc 0 1 at ht
+  simp only [Set.mem_uIcc] at ht
+  have ht_norm : ‖t‖ ≤ 1 := by
+    rcases ht with ht | ht
+    · rw [Real.norm_eq_abs]
+      exact abs_le.mpr ⟨by linarith [ht.1], ht.2⟩
+    · linarith [ht.1, ht.2]
+  have hta : ‖t • (-a)‖ ≤ ‖-a‖ := by
+    rw [norm_smul]
+    exact mul_le_of_le_one_left (norm_nonneg (-a)) ht_norm
+  calc
+    ‖(n.factorial⁻¹ : ℝ)‖ * ‖(t • (-a)) ^ n‖ ≤
+        (n.factorial⁻¹ : ℝ) * c ^ (n + 1) := by
+      gcongr
+      · simp
+      · exact (norm_pow_le_max_one (t • (-a)) n).trans <| by
+          dsimp only [c]
+          gcongr
+    _ = c ^ (n + 1) / n.factorial := by
+      simp [div_eq_mul_inv, mul_comm]
+
+private theorem integral_regularizedExpIntegrand (a : A) (n : ℕ) :
+    ∫ t in (0 : ℝ)..1, regularizedExpIntegrand a n t =
+      (((n + 1).factorial)⁻¹ : ℝ) • (-a) ^ n := by
+  change (∫ t in (0 : ℝ)..1, (n.factorial⁻¹ : ℝ) • (t • (-a)) ^ n) = _
+  simp_rw [smul_pow, smul_smul]
+  rw [intervalIntegral.integral_smul_const,
+    intervalIntegral.integral_const_mul, integral_pow]
+  rw [one_pow, zero_pow (Nat.succ_ne_zero n), sub_zero]
+  rw [Nat.factorial_succ, Nat.cast_mul, Nat.cast_add, Nat.cast_one]
+  field_simp
+
+/-- The regularized exponential quotient is the integral of the exponential along the line
+segment from `0` to `-a`. -/
+theorem regularizedExpNeg_eq_integral_exp (a : A) :
+    regularizedExpNeg a = ∫ t in (0 : ℝ)..1, exp (t • (-a)) := by
+  rw [regularizedExpNeg_eq_tsum]
+  calc
+    ∑' n : ℕ, (((n + 1).factorial)⁻¹ : ℝ) • (-a) ^ n =
+        ∑' n : ℕ, ∫ t in (0 : ℝ)..1, regularizedExpIntegrand a n t := by
+      congr 1
+      funext n
+      exact (integral_regularizedExpIntegrand a n).symm
+    _ = ∫ t in (0 : ℝ)..1, ∑' n : ℕ, regularizedExpIntegrand a n t :=
+      intervalIntegral.tsum_intervalIntegral_eq_of_summable_norm
+        (summable_regularizedExpIntegrand_norm a)
+    _ = ∫ t in (0 : ℝ)..1, exp (t • (-a)) := by
+      apply intervalIntegral.integral_congr
+      intro t _ht
+      rw [exp_eq_tsum ℝ]
+      rfl
