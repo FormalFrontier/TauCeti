@@ -208,6 +208,7 @@ end IsSliceChart
 
 /-- A chart is a slice chart for the full model space exactly when everything it sees lies in the
 set: this is the codimension-zero case. -/
+@[simp]
 theorem isSliceChart_univ_iff : IsSliceChart φ (univ : Set F) A ↔ φ.source ⊆ A := by
   simp [isSliceChart_iff, subset_def]
 
@@ -521,9 +522,9 @@ flat is exactly open embedding. In particular local flatness is strictly stronge
 not every embedding is locally flat. -/
 theorem isLocallyFlat_iff_isOpenEmbedding [Subsingleton F'] [ChartedSpace (F × F') M] :
     IsLocallyFlat F F' f ↔ IsOpenEmbedding f := by
+  have hzero : ({0} : Set F') = univ := eq_univ_of_forall fun x => Subsingleton.elim x 0
   have h0 : ((univ : Set F) ×ˢ ({0} : Set F')) = (univ : Set (F × F')) := by
-    rw [show ({0} : Set F') = univ from eq_univ_of_forall fun x => Subsingleton.elim x 0,
-      univ_prod_univ]
+    rw [hzero, univ_prod_univ]
   rw [IsLocallyFlat, h0]
   exact isSliceEmbedding_univ_iff
 
