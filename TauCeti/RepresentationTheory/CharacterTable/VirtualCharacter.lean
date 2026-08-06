@@ -9,10 +9,12 @@ public import TauCeti.RepresentationTheory.CharacterTable.Table
 /-!
 # The virtual-character lattice
 
-The characters of the finite-dimensional representations of a monoid `G` over a field `k` are not
-closed under subtraction, so they do not form a group. The additive subgroup of `G → k` they
-generate, `TauCeti.virtualCharacters k G`, is the **virtual-character lattice**: its elements are
-the *virtual characters* of `G`, the formal differences of genuine characters.
+The characters of the finite-dimensional representations of a monoid `G` over a field `k` are
+closed under addition, the character of a direct sum being the sum of the characters, but in
+general not under negation: over `ℂ` a character takes the positive value `dim V` at `1`. The
+additive subgroup of `G → k` they generate, `TauCeti.virtualCharacters k G`, is the
+**virtual-character lattice**: its elements are the *virtual characters* of `G`, the differences of
+genuine characters.
 
 It is an additive subgroup rather than a subring, but it is closed under the pointwise product
 (`TauCeti.mul_mem_virtualCharacters`), because the pointwise product of two characters is the
@@ -93,7 +95,8 @@ variable (k G)
 /-- **The virtual-character lattice** of `G` over `k`: the additive subgroup of `G → k` generated
 by the characters of the finite-dimensional representations of `G`.
 
-Its elements, the *virtual characters*, are the formal differences of genuine characters. -/
+Its elements, the *virtual characters*, are the differences of genuine characters: characters are
+closed under addition, so an integer combination of them is a difference of two of them. -/
 def virtualCharacters : AddSubgroup (G → k) :=
   AddSubgroup.closure (Set.range (FDRep.character : FDRep k G → G → k))
 
