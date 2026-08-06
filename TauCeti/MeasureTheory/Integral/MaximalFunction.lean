@@ -166,7 +166,7 @@ private theorem setLAverage_const_mul (μ : Measure X) (s : Set X) {c : ℝ≥0�
 /-- The maximal function is positively homogeneous, the first half of the sublinearity that
 Marcinkiewicz interpolation asks of an operator. -/
 @[simp]
-theorem maximalFunction_const_smul {𝕜 : Type*} [SeminormedRing 𝕜] [SMul 𝕜 F] [ENormSMulClass 𝕜 F]
+theorem maximalFunction_const_smul {𝕜 : Type*} [NNNorm 𝕜] [SMul 𝕜 F] [ENormSMulClass 𝕜 F]
     (μ : Measure X) (c : 𝕜) (f : X → F) (x : X) :
     maximalFunction μ (c • f) x = ‖c‖ₑ * maximalFunction μ f x := by
   rw [maximalFunction_def, maximalFunction_def]
