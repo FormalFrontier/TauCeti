@@ -111,7 +111,11 @@ that agreement as an explicit hypothesis — the outer chart reads the intermedi
 the inner one along `g` — rather than assuming the conclusion; the outer chart then flattens the
 composite, and the complementary models multiply. That hypothesis already produces the flattening
 charts around each point of the domain, so nothing beyond the embedding content of the conclusion
-itself is assumed: that the composite is an embedding, and that the outer map is injective. It is
+itself is assumed: that the composite is an embedding, and that the outer map is injective. The
+compatibility hypothesis is kept down to the part that is not already implied by the rest of it:
+the outer chart is only asked to detect `range g` in one direction, the other direction and the
+fact that the inner chart is a chart around `f x` both following from the agreement of the two
+charts together with injectivity of the outer map. It is
 stated only for the standard slice, since the compatibility condition refers to the splitting
 `F × F'` of the intermediate model, which the relative layer does not have. The ambient
 codimension-zero case needs no such hypothesis and is kept separate, as
@@ -493,18 +497,21 @@ theorem homeomorph_comp (h : IsLocallyFlat F F' f) (e : M ≃ₜ P) : IsLocallyF
 their flattening charts. Local flatness of `f : N → M` and of `g : M → P` does not by itself make
 `g ∘ f` locally flat, because the chart of `M` flattening `f` and the chart of `P` flattening `g`
 need not have anything to do with each other; `hcompat` is the hypothesis that they can be chosen
-coherently around each point of the domain. It asks for a flattening chart `φ` of `M` at `f x` and
-a flattening chart `ψ` of `P` at `g (f x)` such that `ψ` reads the intermediate coordinates off
-`φ` along `g`, in the sense `ψ (g y) = (φ y, 0)` on the source of `φ`, and such that `ψ` sees no
-more of `range g` than `φ` charts. That same `ψ` then flattens `g ∘ f`, whose complementary model
-is the product of the two complementary models. Since `hcompat` already supplies every flattening
-chart the conclusion needs, the only embedding content assumed is what the conclusion itself
-carries, that `g ∘ f` is an embedding, together with injectivity of `g`. -/
+coherently around each point of the domain. It asks for a chart `ψ` of `P` at `g (f x)` and a
+flattening chart `φ` of `M` for `f` such that `ψ` reads the intermediate coordinates off `φ` along
+`g`, in the sense `ψ (g y) = (φ y, 0)` on the source of `φ`, such that `ψ` sees no more of
+`range g` than `φ` charts, and such that on its source `ψ` detects `range g` from the vanishing of
+the outer coordinate. That same `ψ` then flattens `g ∘ f`, whose complementary model is the product
+of the two complementary models. Since `hcompat` already supplies every flattening chart the
+conclusion needs, the only embedding content assumed is what the conclusion itself carries, that
+`g ∘ f` is an embedding, together with injectivity of `g`. Only the stated half of the flattening
+of `range g` by `ψ` is assumed, the other half being forced by `hagree` and `hsub`; likewise
+`f x ∈ φ.source` is not assumed, since `hsub` and injectivity of `g` already give it. -/
 theorem comp {G' : Type*} [TopologicalSpace G'] [Zero G'] {g : M → P}
     (hgf : IsEmbedding (g ∘ f)) (hg : Function.Injective g)
     (hcompat : ∀ x : N, ∃ ψ : OpenPartialHomeomorph P ((F × F') × G'),
-      ∃ φ : OpenPartialHomeomorph M (F × F'), g (f x) ∈ ψ.source ∧ f x ∈ φ.source ∧
-        IsSliceChart ψ ((univ : Set (F × F')) ×ˢ ({0} : Set G')) (range g) ∧
+      ∃ φ : OpenPartialHomeomorph M (F × F'), g (f x) ∈ ψ.source ∧
+        (∀ p ∈ ψ.source, (ψ p).2 = 0 → p ∈ range g) ∧
         IsSliceChart φ ((univ : Set F) ×ˢ ({0} : Set F')) (range f) ∧
         ψ.source ∩ range g ⊆ g '' φ.source ∧ ∀ y ∈ φ.source, ψ (g y) = (φ y, 0)) :
     IsLocallyFlat F (F' × G') (g ∘ f) := by
@@ -512,7 +519,7 @@ theorem comp {G' : Type*} [TopologicalSpace G'] [Zero G'] {g : M → P}
   -- standard slice of `F × (F' × G')` is that one after reassociating the coordinates.
   have key : IsSliceEmbedding (((univ : Set F) ×ˢ ({0} : Set F')) ×ˢ ({0} : Set G')) (g ∘ f) := by
     refine ⟨hgf, fun x => ?_⟩
-    obtain ⟨ψ, φ, hψx, hφx, hψ, hφ, hsub, hagree⟩ := hcompat x
+    obtain ⟨ψ, φ, hψx, hψ, hφ, hsub, hagree⟩ := hcompat x
     refine ⟨ψ, hψx, isSliceChart_iff.2 fun p hp => ?_⟩
     constructor
     · intro hpf
@@ -522,7 +529,7 @@ theorem comp {G' : Type*} [TopologicalSpace G'] [Zero G'] {g : M → P}
       rw [hagree y hy]
       exact ⟨(hφ.mem_iff hy).1 ⟨x', hg hx'⟩, rfl⟩
     · intro hps
-      obtain ⟨y, hy, rfl⟩ := hsub ⟨hp, (hψ.mem_iff hp).2 ⟨mem_univ _, hps.2⟩⟩
+      obtain ⟨y, hy, rfl⟩ := hsub ⟨hp, hψ p hp hps.2⟩
       rw [hagree y hy] at hps
       obtain ⟨x', hx'⟩ := (hφ.mem_iff hy).2 hps.1
       exact ⟨x', by rw [Function.comp_apply, hx']⟩
