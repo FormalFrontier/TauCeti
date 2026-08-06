@@ -345,9 +345,9 @@ theorem norm_leftInvariantDerivation_eq_norm_modelVectorSpace
   (leftInvariantDerivationLinearIsometryEquivModelVectorSpace
     (I := I) (G := G)).norm_map X |>.symm
 
-/-- The private proof boundary identifying the identity tangent space with the model vector
+/-- The canonical linear identification of the identity tangent space with the model vector
 space. -/
-private noncomputable def groupLieAlgebraEquivModelVectorSpace :
+noncomputable abbrev groupLieAlgebraEquivModelVectorSpace :
     GroupLieAlgebra I G ≃ₗ[ℝ] E :=
   LinearEquiv.refl ℝ E
 

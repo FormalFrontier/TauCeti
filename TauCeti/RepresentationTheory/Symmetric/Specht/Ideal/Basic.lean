@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.RepresentationTheory.FDRep
+public import TauCeti.RepresentationTheory.OfModule
 public import TauCeti.RepresentationTheory.Symmetric.Symmetrizer
 
 /-!
@@ -44,17 +45,6 @@ public section
 namespace TauCeti
 
 namespace YoungTableau
-
-/-- `Representation.ofModule'` has no public application lemma, so this private bridge
-isolates its definitional reduction to the group-algebra action. -/
-private theorem ofModule'_apply
-    {k G M : Type*} [CommSemiring k] [Monoid G] [AddCommMonoid M]
-    [Module k M] [Module (MonoidAlgebra k G) M]
-    [IsScalarTower k (MonoidAlgebra k G) M]
-    (g : G) (x : M) :
-    Representation.ofModule' (k := k) (G := G) M g x =
-      MonoidAlgebra.single g (1 : k) • x := by
-  rfl
 
 variable {μ : YoungDiagram}
 
@@ -120,7 +110,7 @@ theorem spechtIdealRep_ρ_apply_coe (t : YoungTableau μ)
       MonoidAlgebra ℚ (Equiv.Perm (Fin μ.card))) =
       MonoidAlgebra.single g 1 *
         (x : MonoidAlgebra ℚ (Equiv.Perm (Fin μ.card))) := by
-  rw [Rep.of_ρ, ofModule'_apply, Submodule.coe_smul, smul_eq_mul]
+  rw [Rep.of_ρ, Representation.ofModule'_apply, Submodule.coe_smul, smul_eq_mul]
 
 /-- A Young-symmetrizer left ideal is finite-dimensional over `ℚ`. -/
 noncomputable instance instModuleFiniteSpechtIdeal (t : YoungTableau μ) :

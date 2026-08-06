@@ -25,13 +25,14 @@ would also have to be the cross pairing `0`. And a family of pairwise inequivale
 has at most as many members as `G` has conjugacy classes, because the class functions have
 exactly that dimension.
 
-That last bound is in fact an equality, and the equality would upgrade the linear independence
-proved here to a basis of the class functions. Its other half is the roadmap's Layer 2 count,
-which runs through Wedderburn and the dimension of the centre of `k[G]`, and it is not available:
-`TauCeti.card_eq_card_conjClasses_of_algEquiv_pi_matrix` supplies that count only for the
-Wedderburn blocks of `k[G]`, which are not yet matched up with the irreducible representations
-themselves. Nothing below uses it, and the two statements that would need it, that the irreducible
-characters span the class functions and that they form a basis of them, are not stated here.
+That last bound is in fact an equality, and the equality upgrades the linear independence proved
+here to a basis of the class functions. Its other half runs through Wedderburn: the blocks of a
+presentation of `k[G]` are as many as the conjugacy classes, and each carries an irreducible
+representation, distinct blocks carrying inequivalent ones
+(`TauCeti/RepresentationTheory/CharacterTable/BlockRepresentation.lean`). Completeness, the
+resulting basis and the second orthogonality relation are proved in
+`TauCeti/RepresentationTheory/CharacterTable/Completeness.lean`, downstream of this file; nothing
+below uses them.
 
 ## Main results
 
@@ -64,8 +65,9 @@ the pairing enters only through the split orthonormality lemmas of
   `character : Irreps k G → ClassFunction k G` that Layer 2.5 asks for, and the cardinality bound
   is the `≤` half of Layer 2's count `Nat.card (Irreps k G) = Nat.card (ConjClasses G)`, obtained
   without Wedderburn. Layer 3's completeness item, the spanning statement and the orthonormal
-  basis indexed by `Irreps k G`, is not advanced here: it needs both that indexing and that count,
-  and neither is in the repository yet.
+  basis, is proved downstream in
+  `TauCeti/RepresentationTheory/CharacterTable/Completeness.lean` from the linear independence
+  proved here and the `≥` half of the count.
 * I. M. Isaacs, *Character Theory of Finite Groups* (1976), Theorem 2.8 and Corollary 2.9.
 -/
 

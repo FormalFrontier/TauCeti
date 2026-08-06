@@ -33,6 +33,10 @@ anchors of the valence-formula contour.
 * `TauCeti.ModularForm.continuous_fdBoundary`: the contour is (globally) continuous.
 * `TauCeti.ModularForm.isPiecewiseC1On_fdBoundary`: the contour is piecewise `C¹`
   (`contDiffOn_fdBoundary` certifies `fdBoundaryCorners` as a breakpoint witness).
+* `TauCeti.ModularForm.fdBoundary_four_sub_vertical`, `…_four_sub_arc`: the reflection
+  `t ↦ 4 - t` identifies the verticals through `z ↦ z - 1` and the arc with its own
+  reversal through `z ↦ -1/z` — the boundary identifications driving the cancellations
+  in the valence-formula contour integral.
 
 ## References
 
@@ -413,6 +417,25 @@ lemma continuous_fdBoundary (H : ℝ) : Continuous (fdBoundary H) := by
 lemma continuousOn_fdBoundary (H : ℝ) : ContinuousOn (fdBoundary H) (Icc 0 5) :=
   (continuous_fdBoundary H).continuousOn
 
+/-- A corner-free closed subinterval of `[0, 5]` lies inside one smooth piece — the
+classification certificate shared by the smoothness and immersion witnesses. -/
+theorem subset_piece_of_disjoint_corners {c d : ℝ} (hcd : Icc c d ⊆ Icc (0 : ℝ) 5)
+    (hdis : Disjoint (fdBoundaryCorners : Set ℝ) (Ioo c d)) :
+    Icc c d ⊆ Icc (0 : ℝ) 1 ∨ Icc c d ⊆ Icc (1 : ℝ) 3 ∨ Icc c d ⊆ Icc (3 : ℝ) 4 ∨
+      Icc c d ⊆ Icc (4 : ℝ) 5 := by
+  have hbp : ∀ m : ℝ, m ∈ fdBoundaryCorners → m ∉ Ioo c d := fun m hm ↦
+    Set.disjoint_left.mp hdis (Finset.mem_coe.mpr hm)
+  rcases le_or_gt d 1 with hd1 | hd1
+  · exact Or.inl fun x hx ↦ ⟨(hcd hx).1, hx.2.trans hd1⟩
+  · have hc1 : 1 ≤ c := le_of_not_gt fun hlt ↦ hbp 1 (by simp) ⟨hlt, hd1⟩
+    rcases le_or_gt d 3 with hd3 | hd3
+    · exact Or.inr (Or.inl fun x hx ↦ ⟨hc1.trans hx.1, hx.2.trans hd3⟩)
+    · have hc3 : 3 ≤ c := le_of_not_gt fun hlt ↦ hbp 3 (by simp) ⟨hlt, hd3⟩
+      rcases le_or_gt d 4 with hd4 | hd4
+      · exact Or.inr (Or.inr (Or.inl fun x hx ↦ ⟨hc3.trans hx.1, hx.2.trans hd4⟩))
+      · have hc4 : 4 ≤ c := le_of_not_gt fun hlt ↦ hbp 4 (by simp) ⟨hlt, hd4⟩
+        exact Or.inr (Or.inr (Or.inr fun x hx ↦ ⟨hc4.trans hx.1, (hcd hx).2⟩))
+
 /-- On every closed subinterval of `[0, 5]` whose interior avoids the three genuine
 corners, the contour is smooth at every order — the certificate that `fdBoundaryCorners`
 is a valid breakpoint witness for `isPiecewiseC1On_fdBoundary`. The two arcs continue one
@@ -420,18 +443,45 @@ smooth circle map through `t = 2`, so no hypothesis excludes it. -/
 lemma contDiffOn_fdBoundary (H : ℝ) {c d : ℝ}
     (hcd : Icc c d ⊆ Icc 0 5) (hdis : Disjoint (fdBoundaryCorners : Set ℝ) (Ioo c d)) :
     ContDiffOn ℝ n (fdBoundary H) (Icc c d) := by
-  have hbp : ∀ m : ℝ, m ∈ fdBoundaryCorners → m ∉ Ioo c d := fun m hm ↦
-    Set.disjoint_left.mp hdis (Finset.mem_coe.mpr hm)
-  rcases le_or_gt d 1 with hd1 | hd1
-  · exact (fdBoundary_piece1 H).mono fun x hx ↦ ⟨(hcd hx).1, hx.2.trans hd1⟩
-  · have hc1 : 1 ≤ c := le_of_not_gt fun hlt ↦ hbp 1 (by simp) ⟨hlt, hd1⟩
-    rcases le_or_gt d 3 with hd3 | hd3
-    · exact (fdBoundary_piece13 H).mono fun x hx ↦ ⟨hc1.trans hx.1, hx.2.trans hd3⟩
-    · have hc3 : 3 ≤ c := le_of_not_gt fun hlt ↦ hbp 3 (by simp) ⟨hlt, hd3⟩
-      rcases le_or_gt d 4 with hd4 | hd4
-      · exact (fdBoundary_piece4 H).mono fun x hx ↦ ⟨hc3.trans hx.1, hx.2.trans hd4⟩
-      · have hc4 : 4 ≤ c := le_of_not_gt fun hlt ↦ hbp 4 (by simp) ⟨hlt, hd4⟩
-        exact (fdBoundary_piece5 H).mono fun x hx ↦ ⟨hc4.trans hx.1, (hcd hx).2⟩
+  rcases subset_piece_of_disjoint_corners hcd hdis with h | h | h | h
+  · exact (fdBoundary_piece1 H).mono h
+  · exact (fdBoundary_piece13 H).mono h
+  · exact (fdBoundary_piece4 H).mono h
+  · exact (fdBoundary_piece5 H).mono h
+
+/-- The right vertical has constant real part `1/2`. -/
+theorem re_fdBoundary_segment1 (H : ℝ) {t : ℝ} (ht : t ∈ Icc (0 : ℝ) 1) :
+    (fdBoundary H t).re = 1 / 2 := by
+  rw [eqOn_fdBoundary_segment1 H ht, fdBoundary_segment1_apply, AffineMap.lineMap_apply]
+  simp [ρ, Complex.real_smul]
+  norm_num
+
+/-- The arc stays at height at most `1`. -/
+theorem im_fdBoundary_arc_le (H : ℝ) {t : ℝ} (ht : t ∈ Icc (1 : ℝ) 3) :
+    (fdBoundary H t).im ≤ 1 := by
+  rw [eqOn_fdBoundary_arc H ht, circleMap_zero_im]
+  simpa using Real.sin_le_one ((t + 1) * (Real.pi / 6))
+
+/-- The arc stays in the open upper half-plane. -/
+theorem im_fdBoundary_arc_pos (H : ℝ) {t : ℝ} (ht : t ∈ Icc (1 : ℝ) 3) :
+    0 < (fdBoundary H t).im := by
+  rw [eqOn_fdBoundary_arc H ht, circleMap_zero_im, one_mul]
+  have h5 : (0 : ℝ) < 5 - t := by linarith [ht.2]
+  exact Real.sin_pos_of_pos_of_lt_pi (mul_pos (by linarith [ht.1]) (by positivity))
+    (by nlinarith [mul_pos Real.pi_pos h5])
+
+/-- The left vertical has constant real part `-1/2`. -/
+theorem re_fdBoundary_segment4 (H : ℝ) {t : ℝ} (ht : t ∈ Icc (3 : ℝ) 4) :
+    (fdBoundary H t).re = -(1 / 2) := by
+  rw [eqOn_fdBoundary_segment4 H ht, fdBoundary_segment4_apply, AffineMap.lineMap_apply]
+  simp [ρ, Complex.real_smul]
+  norm_num
+
+/-- The truncation ceiling has constant height `H`. -/
+theorem im_fdBoundary_segment5 (H : ℝ) {t : ℝ} (ht : t ∈ Icc (4 : ℝ) 5) :
+    (fdBoundary H t).im = H := by
+  rw [eqOn_fdBoundary_segment5 H ht, fdBoundary_segment5_apply, AffineMap.lineMap_apply]
+  simp [Complex.real_smul]
 
 /-- The fundamental-domain boundary contour is piecewise `C¹` on `[0, 5]`;
 `contDiffOn_fdBoundary` certifies the three genuine corners as a breakpoint witness. -/
@@ -446,6 +496,31 @@ theorem isPiecewiseC1On_fdBoundary (H : ℝ) : Contour.IsPiecewiseC1On (fdBounda
   · intro c d hcd hdis
     rw [uIcc_of_le (by norm_num : (0 : ℝ) ≤ 5)] at hcd
     exact contDiffOn_fdBoundary H hcd hdis
+
+/-- The reflection `t ↦ 4 - t` of the parameter interval carries the right vertical onto
+the left vertical through the translation `z ↦ z - 1`: the two verticals of the
+fundamental-domain boundary are identified by `T⁻¹`. -/
+@[simp]
+theorem fdBoundary_four_sub_vertical (H : ℝ) {t : ℝ} (ht : t ∈ Icc (0 : ℝ) 1) :
+    fdBoundary H (4 - t) = fdBoundary H t - 1 := by
+  rw [eqOn_fdBoundary_segment4 H ⟨by linarith [ht.2], by linarith [ht.1]⟩,
+    eqOn_fdBoundary_segment1 H ht, fdBoundary_segment4_apply, fdBoundary_segment1_apply,
+    AffineMap.lineMap_apply, AffineMap.lineMap_apply]
+  simp only [vsub_eq_sub, vadd_eq_add, Complex.real_smul]
+  push_cast
+  ring
+
+/-- The reflection `t ↦ 4 - t` of the parameter interval carries the unit-circle arc onto
+itself, reversed, through the inversion `z ↦ -1/z`: the two halves of the arc of the
+fundamental-domain boundary are identified by `S`. -/
+@[simp]
+theorem fdBoundary_four_sub_arc (H : ℝ) {t : ℝ} (ht : t ∈ Icc (1 : ℝ) 3) :
+    fdBoundary H (4 - t) = -1 / fdBoundary H t := by
+  have hangle : (4 - t + 1) * (Real.pi / 6) + (t + 1) * (Real.pi / 6) = Real.pi := by ring
+  rw [eqOn_fdBoundary_arc H ⟨by linarith [ht.2], by linarith [ht.1]⟩,
+    eqOn_fdBoundary_arc H ht, eq_div_iff (circleMap_ne_center one_ne_zero),
+    circleMap_zero_mul, hangle]
+  simp [circleMap_zero, Complex.exp_pi_mul_I]
 
 end Regularity
 

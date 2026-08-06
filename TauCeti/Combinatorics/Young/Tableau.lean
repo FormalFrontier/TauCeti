@@ -340,6 +340,13 @@ theorem relabel_relabelPerm (t t' : YoungTableau μ) : relabel (relabelPerm t t'
 theorem exists_relabel_eq (t t' : YoungTableau μ) : ∃ σ, relabel σ t = t' :=
   ⟨relabelPerm t t', relabel_relabelPerm t t'⟩
 
+/-- Every Young diagram carries a tableau: enumerating its cells is one.
+
+This is a theorem rather than a `Nonempty` instance because `YoungTableau μ` is an abbreviation
+for a type of equivalences, so an instance would fire on equivalences at large. -/
+theorem nonempty (μ : YoungDiagram) : Nonempty (YoungTableau μ) :=
+  ⟨μ.cells.equivFin⟩
+
 end YoungTableau
 
 end TauCeti

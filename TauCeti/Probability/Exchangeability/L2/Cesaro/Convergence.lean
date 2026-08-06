@@ -5,10 +5,10 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Probability.Exchangeability.L2.BlockAverages
+import TauCeti.MeasureTheory.Function.L2ToL1Convergence
 import TauCeti.Probability.Exchangeability.Map
 import TauCeti.MeasureTheory.Function.BoundedMemLp
 import Mathlib.MeasureTheory.Function.L2Space
-import Mathlib.MeasureTheory.Function.LpSeminorm.CompareExp
 
 /-!
 # L¹ convergence of Cesàro averages of a contractable process
@@ -250,28 +250,6 @@ private theorem tendsto_dist_blockAverage_window_prefix_toLp {μ : Measure Ω}
   simp only [Nat.cast_succ] at hdist
   linarith
 
-/-- On a finite measure space, `L²` convergence to a limit gives `L¹` convergence of the
-integrated absolute difference. -/
-private theorem tendsto_integral_abs_sub_of_tendsto_eLpNorm_two {μ : Measure Ω}
-    [IsFiniteMeasure μ] {W : ℕ → Ω → ℝ} {a : Ω → ℝ}
-    (hWa_meas : ∀ m, AEStronglyMeasurable (W m - a) μ)
-    (h : Tendsto (fun m => eLpNorm (W m - a) 2 μ) atTop (𝓝 0)) :
-    Tendsto (fun m => ∫ ω, |W m ω - a ω| ∂μ) atTop (𝓝 0) := by
-  have hW_L1 : Tendsto (fun m => eLpNorm (W m - a) 1 μ) atTop (𝓝 0) := by
-    -- The exponent comparison costs a fixed finite factor, which the limit absorbs.
-    have hbound := fun m => eLpNorm_le_eLpNorm_mul_rpow_measure_univ (p := 1) (q := 2)
-      one_le_two (hWa_meas m)
-    refine tendsto_of_tendsto_of_tendsto_of_le_of_le' tendsto_const_nhds ?_
-      (Eventually.of_forall fun _ => bot_le) (Eventually.of_forall hbound)
-    simpa using ENNReal.Tendsto.mul_const h
-      (Or.inr (ENNReal.rpow_ne_top_of_nonneg (by norm_num) (measure_ne_top μ Set.univ)))
-  have hreal : Tendsto (fun m => (eLpNorm (W m - a) 1 μ).toReal) atTop (𝓝 0) := by
-    simpa only [Function.comp_def, ENNReal.toReal_zero] using
-      (ENNReal.tendsto_toReal ENNReal.zero_ne_top).comp hW_L1
-  convert hreal using 1
-  ext m
-  simpa only [Pi.sub_apply, Real.norm_eq_abs, eLpNorm_one_eq_lintegral_enorm] using
-    (integral_norm_eq_lintegral_enorm (hWa_meas m))
 
 /-- A measurable observable of a contractable process whose composite with a *single* coordinate is
 square-integrable has fixed-start Cesàro averages converging in `L¹` to one common measurable limit.
@@ -321,10 +299,13 @@ theorem weighted_sums_converge_L1_of_memLp {μ : Measure Ω} [IsFiniteMeasure μ
     simpa only [zero_add] using
       (tendsto_dist_blockAverage_window_prefix_toLp hY hY_L2 r).add
         (tendsto_iff_dist_tendsto_zero.mp ha₂)
-  refine tendsto_integral_abs_sub_of_tendsto_eLpNorm_two
-    (fun m => ((hW_L2 m).sub ha_L2).aestronglyMeasurable) ?_
-  rw [← Lp.tendsto_Lp_iff_tendsto_eLpNorm'' _ hW_L2 a ha_L2]
-  simpa only [ha_toLp] using hW₂_tendsto
+  have hL2 : Tendsto (fun m : ℕ =>
+      eLpNorm (blockAverage Y (fun j : Fin (m + 1) => r + j) - a) 2 μ) atTop (𝓝 0) := by
+    rw [← Lp.tendsto_Lp_iff_tendsto_eLpNorm'' _ hW_L2 a ha_L2]
+    simpa only [ha_toLp] using hW₂_tendsto
+  simpa only [Pi.sub_apply, Real.norm_eq_abs] using
+    TauCeti.MeasureTheory.tendsto_integral_norm_of_tendsto_eLpNorm_two
+      (fun m => ((hW_L2 m).sub ha_L2).aestronglyMeasurable) hL2
 
 /-- **Bounded-observable form**, the shape the Layer 3 roadmap names and the determining-class stage
 consumes. A uniform bound on `f` gives square-integrability of the composite on a finite measure
