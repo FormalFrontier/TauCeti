@@ -60,7 +60,8 @@ involution, a separate target of the Schur-Weyl roadmap, and none of the results
 ## Main results
 
 * `TauCeti.coeff_diagramSchurPoly`: the coefficients of a Schur polynomial are the images of the
-  Kostka numbers, and `TauCeti.coeff_schurPoly_partWeight` is its partition-indexed form.
+  Kostka numbers, `TauCeti.coeff_schurPoly` is its form in an arbitrary finite alphabet, and
+  `TauCeti.coeff_schurPoly_partWeight` reads it at the exponent of a partition.
 * `TauCeti.diagramSchurPoly_eq_zero_iff` and `TauCeti.schurPoly_eq_zero_iff`: a Schur polynomial
   vanishes exactly for a shape taller than its alphabet.
 * `TauCeti.isHomogeneous_diagramSchurPoly` and `TauCeti.isHomogeneous_schurPoly`: a Schur
@@ -141,7 +142,8 @@ private theorem weight_eq_of_content_eq (T : BoundedSSYT N μ) {d : Fin N →₀
 /-- **The bounded tableaux of a given weight are the tableaux of the corresponding content.**
 Boundedness is not an extra condition on the right-hand side: a letter outside the alphabet would
 have to occur in the content, where the extension by zero puts a zero. -/
-noncomputable def weightFiberEquivContentFiber (N : ℕ) (μ : YoungDiagram) (d : Fin N →₀ ℕ) :
+private noncomputable def weightFiberEquivContentFiber (N : ℕ) (μ : YoungDiagram)
+    (d : Fin N →₀ ℕ) :
     {T : BoundedSSYT N μ // weight T = d} ≃
       {T : _root_.SemistandardYoungTableau μ //
         ⇑(SemistandardYoungTableau.content T) = ⇑(Finsupp.mapDomain Fin.val d)} where
@@ -352,6 +354,21 @@ theorem coeff_schurPoly_mapDomain (d : Fin (Fintype.card σ) →₀ ℕ) :
   rw [schurPoly, coeff_rename_mapDomain _ (Fintype.equivFin σ).symm.injective,
     coeff_diagramSchurPoly]
 
+/-- **The coefficients of a Schur polynomial in a finite alphabet are the Kostka numbers**: the
+coefficient of `s_μ` at an arbitrary exponent `d` is the image in `R` of the Kostka number of `μ`
+and the content obtained from `d` by numbering the alphabet with `Fintype.equivFin`. -/
+theorem coeff_schurPoly (d : σ →₀ ℕ) :
+    coeff d (schurPoly σ R μ)
+      = (diagramKostkaNumber (diagramOf μ)
+          (Finsupp.mapDomain (fun x => (Fintype.equivFin σ x : ℕ)) d) : R) := by
+  have hd : Finsupp.mapDomain (Fintype.equivFin σ).symm
+      (Finsupp.mapDomain (Fintype.equivFin σ) d) = d := by
+    rw [← Finsupp.mapDomain_comp]
+    simp
+  conv_lhs => rw [← hd]
+  rw [coeff_schurPoly_mapDomain, ← Finsupp.mapDomain_comp]
+  rfl
+
 /-- **The coefficient of a Schur polynomial at a partition is a Kostka number**: the coefficient
 of `s_μ` at the exponent recording the parts of `ν` is the image in `R` of `K_{μν}`. The row bound
 is what makes the exponent record all of `ν`: an alphabet with fewer letters than `ν` has parts
@@ -374,6 +391,15 @@ namely of a Kostka number, and casts of natural numbers are preserved by semirin
 theorem map_schurPoly {S : Type*} [CommSemiring S] (f : R →+* S) :
     MvPolynomial.map f (schurPoly σ R μ) = schurPoly σ S μ := by
   rw [schurPoly, schurPoly, map_rename, map_diagramSchurPoly]
+
+/-- **The Schur polynomial of the partition of `0` is `1`**, its Young diagram being empty and the
+empty tableau contributing the empty monomial. -/
+@[simp]
+theorem schurPoly_partition_zero (p : Nat.Partition 0) : schurPoly σ R p = 1 := by
+  have hbot : diagramOf p = ⊥ :=
+    YoungDiagram.ext ((Finset.card_eq_zero.mp (card_diagramOf p)).trans
+      YoungDiagram.cells_bot.symm)
+  rw [schurPoly, hbot, diagramSchurPoly_bot, map_one]
 
 /-- **A Schur polynomial vanishes exactly for a partition with more parts than the alphabet has
 letters.** -/
