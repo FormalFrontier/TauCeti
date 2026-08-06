@@ -5,7 +5,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.RepresentationTheory.CharacterTable.Table
-public import TauCeti.RepresentationTheory.CharacterTable.Values
 public import Mathlib.LinearAlgebra.Finsupp.LinearCombination
 
 /-!
@@ -88,12 +87,6 @@ section Defs
 
 variable {k : Type u} {G : Type v} [Field k] [Monoid G]
 
-/-- The character of a bundled finite-dimensional representation is the character of the underlying
-unbundled representation. -/
-theorem FDRep.character_eq_ρ_character (V : FDRep k G) :
-    V.character = Representation.character V.ρ :=
-  rfl
-
 variable (k G)
 
 /-- **The virtual-character lattice** of `G` over `k`: the additive subgroup of `G → k` generated
@@ -145,6 +138,7 @@ theorem mul_mem_virtualCharacters {f g : G → k} (hf : f ∈ virtualCharacters 
 
 /-- **The constant function `1` is a virtual character**, being the character of the trivial
 one-dimensional representation. -/
+@[simp]
 theorem one_mem_virtualCharacters : (1 : G → k) ∈ virtualCharacters k G := by
   have h : (FDRep.of (Representation.trivial k G k)).character = 1 := by
     funext g
@@ -157,7 +151,7 @@ section ClassFunctions
 
 variable {k : Type u} {G : Type v} [Field k] [Group G]
 
-/-- **A virtual character is a class function.** -/
+/-- **The virtual-character lattice is contained in the class functions.** -/
 theorem virtualCharacters_le_classFunction :
     virtualCharacters k G ≤ (ClassFunction k G).toAddSubgroup :=
   virtualCharacters_le fun V => by
@@ -165,6 +159,10 @@ theorem virtualCharacters_le_classFunction :
       funext fun g => ClassFunction.ofCharacter_apply V.ρ g
     exact h ▸ (ClassFunction.ofCharacter V.ρ).2
 
+/-- **A virtual character is a class function**, in membership form: it is constant on conjugacy
+classes, being an integer combination of characters, each of which is.
+
+This is `TauCeti.virtualCharacters_le_classFunction` applied to an element. -/
 theorem mem_classFunction_of_mem_virtualCharacters {f : G → k}
     (hf : f ∈ virtualCharacters k G) : f ∈ ClassFunction k G :=
   virtualCharacters_le_classFunction hf
@@ -226,7 +224,9 @@ theorem character_eq_sum_nsmul_irreducibleCharacter (V : FDRep k G) :
     (irreducibleRepresentation k) (pairwise_isEmpty_equiv_irreducibleRepresentation k)
     (by simp) (ClassFunction.ofCharacter V.ρ) y
   rw [ClassFunction.ofCharacter_apply] at hy
-  rw [FDRep.character_eq_ρ_character, hy, Finset.sum_apply]
+  -- `V.character` is by definition the character of the underlying representation `V.ρ`.
+  change Representation.character V.ρ y = _
+  rw [hy, Finset.sum_apply]
   refine Finset.sum_congr rfl fun i _ => ?_
   rw [ClassFunction.characterPairing_ofCharacter_eq_finrank (irreducibleRepresentation k i) V.ρ,
     Pi.smul_apply, nsmul_eq_mul, character_irreducibleRepresentation]
@@ -302,21 +302,6 @@ section Pairing
 variable {k : Type u} {G : Type v} [Field k] [Group G] [Fintype G] [IsAlgClosed k]
   [Invertible (Nat.card G : k)]
 
-/-- The irreducible characters, as class functions, are orthonormal for the character pairing. -/
-theorem characterPairing_ofCharacter_irreducibleRepresentation
-    (i j : Fin (Nat.card (ConjClasses G))) :
-    ClassFunction.characterPairing (ClassFunction.ofCharacter (irreducibleRepresentation k i))
-        (ClassFunction.ofCharacter (irreducibleRepresentation k j)) =
-      if i = j then 1 else 0 := by
-  classical
-  by_cases hij : i = j
-  · subst hij
-    rw [if_pos rfl]
-    exact ClassFunction.characterPairing_ofCharacter_self _
-  · rw [if_neg hij]
-    exact ClassFunction.characterPairing_ofCharacter_eq_zero _ _
-      (pairwise_isEmpty_equiv_irreducibleRepresentation k (Ne.symm hij))
-
 /-- **The character pairing of two virtual characters is the dot product of their coordinates.**
 The irreducible characters are orthonormal, so pairing two integer combinations of them multiplies
 the coordinates termwise. -/
@@ -352,7 +337,10 @@ variable {k : Type u} {G : Type v} [Field k] [Group G] [Fintype G] [IsAlgClosed 
 character as `∑ᵢ cᵢ χᵢ` with integer coordinates, its norm is `∑ᵢ cᵢ²`; a sum of squares of integers
 is `1` only when a single coordinate is `±1` and the rest vanish.
 
-This is the standard test for irreducibility of a class function, and the tool behind the
+This is the norm-`1` classification of virtual characters: the conclusion is genuinely a sign
+ambiguity, since `-χᵢ` also has norm `1` and is not itself an irreducible character. It specializes
+to the usual irreducibility test only for a genuine character, where the coordinates are
+non-negative and so the negative case cannot occur. It is the tool behind the
 exceptional-character arguments of Frobenius's theorem. -/
 theorem exists_eq_irreducibleCharacter_or_neg {f : ClassFunction k G}
     (hf : (f : G → k) ∈ virtualCharacters k G)
