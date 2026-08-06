@@ -16,7 +16,7 @@ This file describes the pieces from the other side: it classifies the compact co
 a Jordan curve. Every one of them other than the curve itself is a point or an **arc** — the range
 of an injective path — and its complement in the curve is again path connected. In particular a
 compact connected subset that is *nowhere dense in the curve* is a subsingleton, hence a single
-point as soon as it is nonempty.
+point as soon as it is nonempty, which is the form in which the classification is spent.
 
 ## The argument
 
@@ -60,9 +60,19 @@ here say it: a point, an arc, or the whole curve —
 for a Riemann map the first case always holds, so what this file leaves of it on the Jordan-curve
 side is exactly the exclusion of the other two.
 
-That exclusion is attempted neither here nor in `Conformal/ClusterSet.lean`, and nothing here
-shortens or replaces the route `ConformalMapping/STATUS.md` sequences next for it: the length–area
-estimate, fed into `TauCeti.exists_continuousOn_closure_eqOn_of_isBounded`, proves singletonness
+`TauCeti.IsJordanCurve.subsingleton_of_subset_closure_sdiff` excludes both at once from a single
+condition on the curve, and that is the step of the L5 argument this file exists for: fed to
+`TauCeti.exists_continuousOn_closure_eqOn_of_isBounded` — which
+`ConformalMapping/STATUS.md` names as "the topological form the estimate should be fed into" — it
+gives `TauCeti.exists_continuousOn_closure_eqOn_of_forall_subset_closure_sdiff`, a conformal map of
+a convex domain onto a bounded Jordan-bounded region none of whose boundary cluster sets has
+interior in the boundary curve extends continuously to `closure U`. That conclusion is the L5
+milestone's conclusion; the one hypothesis separating them is a statement about the image boundary
+alone.
+
+Verifying that hypothesis for a Riemann map is not attempted here, and nothing here shortens or
+replaces the route `ConformalMapping/STATUS.md` sequences next for it: the length–area estimate,
+fed into the same `TauCeti.exists_continuousOn_closure_eqOn_of_isBounded`, proves singletonness
 directly.
 
 ## Generality
@@ -84,9 +94,9 @@ because they speak of a closure taken in that space.
   `TauCeti.IsJordanCurve.isPathConnected_sdiff_singleton`.
 * `TauCeti.IsJordanCurve.exists_notMem_closure_sdiff` — a subcontinuum with more than one point is
   not nowhere dense: one of its points is not adherent to the rest of the curve.
-* `TauCeti.IsJordanCurve.subsingleton_of_subset_closure_sdiff` — the contrapositive: a compact
-  connected subset of a Jordan curve every point of which is adherent to the complement is a
-  subsingleton, so a single point once it is nonempty.
+* `TauCeti.IsJordanCurve.subsingleton_of_subset_closure_sdiff` — the contrapositive, and the form
+  the boundary correspondence consumes: a compact connected subset of a Jordan curve every point of
+  which is adherent to the complement is a subsingleton, so a single point once it is nonempty.
 
 ## References
 
