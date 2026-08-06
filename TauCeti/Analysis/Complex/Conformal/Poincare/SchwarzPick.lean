@@ -48,18 +48,20 @@ its holomorphic part.
 The second is the dichotomy `TauCeti.PoincareDisc.forall_dist_lt_or_isometry`: a holomorphic
 self-map either strictly decreases the Poincaré distance between *every* pair of distinct points,
 or preserves it between every pair. There is no intermediate behaviour — a single pair at which
-the Schwarz–Pick inequality is an equality forces equality everywhere, which is the rigidity
-`TauCeti.forall_hyperbolicDist_map_eq_of_hyperbolicDist_map_eq` read in the metric.
+the Schwarz–Pick inequality is an equality already forces the map to be a disc automorphism, which
+is the rigidity
+`TauCeti.exists_forall_unitDisc_eq_unitDiscStandardAutomorphismEquiv_of_hyperbolicDist_map_eq`
+read in the metric.
 
 ## Main results
 
 * `TauCeti.PoincareDisc.dist_map_le` and `TauCeti.PoincareDisc.lipschitzWith_one` —
   **Schwarz–Pick, metric form**: a holomorphic self-map of the disc is nonexpanding for the
   Poincaré metric.
-* `TauCeti.PoincareDisc.isometry_of_dist_eq` — **rigidity, metric form**: preserving the Poincaré
-  distance between one pair of distinct points makes the map an isometry.
-* `TauCeti.PoincareDisc.exists_eq_unitDiscStandardAutomorphismIsometryEquiv_of_dist_eq` — and then
-  a standard disc automorphism.
+* `TauCeti.PoincareDisc.exists_eq_unitDiscStandardAutomorphismIsometryEquiv_of_dist_eq` —
+  **rigidity, metric form**: preserving the Poincaré distance between one pair of distinct points
+  makes the map a standard disc automorphism.
+* `TauCeti.PoincareDisc.isometry_of_dist_eq` — and hence an isometry.
 * `TauCeti.PoincareDisc.isometry_iff_exists_eq_unitDiscStandardAutomorphismIsometryEquiv` — **the
   holomorphic isometries of the Poincaré disc are exactly `Aut(𝔻)`**.
 * `TauCeti.PoincareDisc.forall_dist_lt_or_isometry` — strict contraction everywhere, or isometry.
@@ -146,24 +148,6 @@ theorem lipschitzWith_one (hf : DifferentiableOn ℂ f (ball (0 : ℂ) 1))
   LipschitzWith.of_dist_le_mul fun z w => by
     simpa using dist_map_le hf hrep z w
 
-/-- **Schwarz–Pick rigidity for the Poincaré metric.** If a holomorphic self-map of the unit disc
-preserves the Poincaré distance between a *single* pair of distinct points, it preserves it between
-every pair: the nonexpanding map of `TauCeti.PoincareDisc.lipschitzWith_one` is an isometry.
-
-This is `TauCeti.forall_hyperbolicDist_map_eq_of_hyperbolicDist_map_eq` in the metric. -/
-theorem isometry_of_dist_eq (hf : DifferentiableOn ℂ f (ball (0 : ℂ) 1))
-    (hrep : ∀ z : PoincareDisc, (toUnitDisc (F z) : ℂ) = f (toUnitDisc z : ℂ))
-    {z w : PoincareDisc} (hne : z ≠ w) (heq : dist (F z) (F w) = dist z w) : Isometry F := by
-  have hne' : (toUnitDisc z : ℂ) ≠ (toUnitDisc w : ℂ) := fun h =>
-    hne (toUnitDisc.injective (Complex.UnitDisc.coe_injective h))
-  have heq' : hyperbolicDist (f (toUnitDisc z : ℂ)) (f (toUnitDisc w : ℂ))
-      = hyperbolicDist (toUnitDisc z : ℂ) (toUnitDisc w : ℂ) := by
-    simpa only [dist_eq, hrep] using heq
-  refine Isometry.of_dist_eq fun p q => ?_
-  simp only [dist_eq, hrep]
-  exact forall_hyperbolicDist_map_eq_of_hyperbolicDist_map_eq hf (mapsTo_of_rep hrep)
-    (coe_mem_ball z) (coe_mem_ball w) hne' heq' _ (coe_mem_ball p) _ (coe_mem_ball q)
-
 /-- **The equality case of Schwarz–Pick, bundled.** A holomorphic self-map of the unit disc that
 preserves the Poincaré distance between one pair of distinct points *is* a standard disc
 automorphism, as a map of `TauCeti.PoincareDisc`.
@@ -190,6 +174,20 @@ theorem exists_eq_unitDiscStandardAutomorphismIsometryEquiv_of_dist_eq
   refine ⟨u, a, fun ζ => toUnitDisc.injective (Complex.UnitDisc.coe_injective ?_)⟩
   rw [unitDiscStandardAutomorphismIsometryEquiv_apply, toUnitDisc_toPoincare, hrep ζ]
   exact hua (toUnitDisc ζ)
+
+/-- **Schwarz–Pick rigidity for the Poincaré metric.** If a holomorphic self-map of the unit disc
+preserves the Poincaré distance between a *single* pair of distinct points, it preserves it between
+every pair: the nonexpanding map of `TauCeti.PoincareDisc.lipschitzWith_one` is an isometry.
+
+This is the unbundled reading of
+`TauCeti.PoincareDisc.exists_eq_unitDiscStandardAutomorphismIsometryEquiv_of_dist_eq`, the disc
+automorphism it produces being an isometric equivalence. -/
+theorem isometry_of_dist_eq (hf : DifferentiableOn ℂ f (ball (0 : ℂ) 1))
+    (hrep : ∀ z : PoincareDisc, (toUnitDisc (F z) : ℂ) = f (toUnitDisc z : ℂ))
+    {z w : PoincareDisc} (hne : z ≠ w) (heq : dist (F z) (F w) = dist z w) : Isometry F := by
+  obtain ⟨u, a, hcase⟩ :=
+    exists_eq_unitDiscStandardAutomorphismIsometryEquiv_of_dist_eq hf hrep hne heq
+  exact funext hcase ▸ (unitDiscStandardAutomorphismIsometryEquiv u a).isometry
 
 /-- **The holomorphic isometries of the Poincaré disc are exactly the disc automorphisms.** A
 holomorphic self-map of the unit disc is a Poincaré isometry if and only if it is one of the
