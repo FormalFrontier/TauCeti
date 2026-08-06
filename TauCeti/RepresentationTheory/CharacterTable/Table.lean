@@ -48,8 +48,9 @@ take their familiar Hermitian form, because inversion conjugates character value
   `TauCeti.card_inv_mul_sum_characterTable_mul_conj`: **first (row) orthogonality**, over `k` and in
   its Hermitian form over `ℂ`; `TauCeti.card_inv_mul_sum_card_conjClass_mul_characterTable_mul_conj`
   is the latter summed one column at a time, the form in which the roadmap's specification of a
-  character table asks for it; `TauCeti.characterPairing_ofCharacter_irreducibleRepresentation` is
-  the same relation phrased as orthonormality for the character pairing.
+  character table asks for it;
+  `TauCeti.characterPairing_ofCharacter_irreducibleRepresentation_orthonormal` is the same relation
+  phrased as orthonormality for the character pairing.
 * `TauCeti.card_conjClass_mul_sum_characterTable_mul_characterTable_inv` and
   `TauCeti.sum_characterTable_mul_conj`: **second (column) orthogonality**, over `k` and in its
   Hermitian form over `ℂ`.
@@ -343,7 +344,8 @@ pairing of the representations affording the `i`-th and `j`-th irreducible chara
 `i = j` and `0` otherwise. This is the orthonormality of the irreducible characters
 (`TauCeti.ClassFunction.characterPairing_ofCharacter_self` and
 `TauCeti.ClassFunction.characterPairing_ofCharacter_eq_zero`) transported along the enumeration. -/
-theorem characterPairing_ofCharacter_irreducibleRepresentation
+@[simp]
+theorem characterPairing_ofCharacter_irreducibleRepresentation_orthonormal
     (i j : Fin (Nat.card (ConjClasses G))) :
     ClassFunction.characterPairing (ClassFunction.ofCharacter (irreducibleRepresentation k i))
         (ClassFunction.ofCharacter (irreducibleRepresentation k j)) =
@@ -366,7 +368,7 @@ theorem card_inv_mul_sum_characterTable_mul_characterTable_inv
       characterTable k G l (ConjClasses.mk g) =
         (irreducibleRepresentation k l).character g := by simp
   simp only [hchar, ← ClassFunction.characterPairing_ofCharacter]
-  exact characterPairing_ofCharacter_irreducibleRepresentation i j
+  exact characterPairing_ofCharacter_irreducibleRepresentation_orthonormal i j
 
 end RowOrthogonality
 
