@@ -46,10 +46,15 @@ local instance lieGroupMinSmoothnessThree : LieGroup I (minSmoothness ℝ 3) G :
     (by simpa using (inferInstance : ENat.LEInfty (3 : ℕ∞ω)).out)
 
 /-- The continuous linear map underlying the differential of conjugation at the identity. -/
-@[expose]
 def adjointContinuousLinearMap (g : G) :
     GroupLieAlgebra I G →L[ℝ] GroupLieAlgebra I G :=
   mfderiv I I (conjugationDiffeomorph (I := I) (n := ∞) g) 1
+
+@[simp]
+theorem adjointContinuousLinearMap_apply (g : G) (X : GroupLieAlgebra I G) :
+    adjointContinuousLinearMap (I := I) g X =
+      mfderiv I I (conjugationDiffeomorph (I := I) (n := ∞) g) 1 X :=
+  (rfl)
 
 @[simp]
 theorem adjointContinuousLinearMap_one :
@@ -212,7 +217,6 @@ theorem adjointContinuousLinearMap_lie [CompleteSpace E] (g : G)
   exact h
 
 /-- The group adjoint automorphism: the differential at the identity of conjugation by `g`. -/
-@[expose]
 def tangentAd [CompleteSpace E] (g : G) :
     GroupLieAlgebra I G ≃ₗ⁅ℝ⁆ GroupLieAlgebra I G where
   toFun := adjointContinuousLinearMap (I := I) g
@@ -234,7 +238,7 @@ def tangentAd [CompleteSpace E] (g : G) :
 @[simp]
 theorem tangentAd_apply [CompleteSpace E] (g : G) (X : GroupLieAlgebra I G) :
     tangentAd (I := I) g X = adjointContinuousLinearMap (I := I) g X :=
-  rfl
+  (rfl)
 
 @[simp]
 theorem tangentAd_one [CompleteSpace E] :
@@ -246,7 +250,8 @@ theorem tangentAd_mul [CompleteSpace E] (g h : G) :
     tangentAd (I := I) (g * h) =
       (tangentAd (I := I) h).trans (tangentAd (I := I) g) := by
   ext X
-  simpa [tangentAd_apply] using congrArg
+  rw [tangentAd_apply, LieEquiv.trans_apply, tangentAd_apply, tangentAd_apply]
+  exact congrArg
     (fun f : GroupLieAlgebra I G →L[ℝ] GroupLieAlgebra I G ↦ f X)
     (adjointContinuousLinearMap_mul (I := I) g h)
 
