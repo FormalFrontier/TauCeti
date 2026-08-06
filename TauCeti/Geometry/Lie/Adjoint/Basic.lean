@@ -5,7 +5,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.Geometry.Manifold.GroupLieAlgebra
-public import Mathlib.Geometry.Manifold.LocalDiffeomorph
 public import TauCeti.Geometry.Lie.Adjoint.Conjugation
 
 /-!
@@ -21,7 +20,6 @@ This advances Deliverable A, Layer 1 of
 
 ## Main definitions
 
-* `TauCeti.Lie.adjointContinuousLinearMap`: the differential of conjugation at the identity.
 * `TauCeti.Lie.tangentAd`: the resulting tangent Lie algebra automorphism.
 
 ## Main results
@@ -46,16 +44,6 @@ variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
 local instance lieGroupMinSmoothnessThree : LieGroup I (minSmoothness ℝ 3) G :=
   LieGroup.of_le (I := I) (G := G) (m := minSmoothness ℝ 3) (n := ∞)
     (by simpa using (inferInstance : ENat.LEInfty (3 : ℕ∞ω)).out)
-
-/-- The differential at the identity of conjugation by `g`, as a continuous linear
-equivalence of the tangent Lie algebra.  The fixed-point identity
-`conjugationDiffeomorph_one` identifies the target fiber of the differential with the tangent
-space at the identity. -/
-@[expose]
-def adjointContinuousLinearEquiv (g : G) :
-    GroupLieAlgebra I G ≃L[ℝ] GroupLieAlgebra I G :=
-  conjugationDiffeomorph_one (I := I) g ▸
-    (conjugationDiffeomorph (I := I) g).mfderivToContinuousLinearEquiv (by simp) (1 : G)
 
 /-- The continuous linear map underlying the differential of conjugation at the identity. -/
 @[expose]
