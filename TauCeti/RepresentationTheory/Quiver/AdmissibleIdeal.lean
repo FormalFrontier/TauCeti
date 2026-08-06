@@ -43,7 +43,10 @@ becomes **nilpotent** in it.
   `TauCeti.IsAdmissibleIdeal.vertexIdempotent_notMem` and
   `TauCeti.IsAdmissibleIdeal.ofArrow_notMem`: an admissible ideal contains no vertex idempotent and
   no arrow, so the quiver survives the passage to the quotient. In particular the quotient is
-  nonzero, `TauCeti.IsAdmissibleIdeal.nontrivial_quotient`.
+  nonzero, `TauCeti.IsAdmissibleIdeal.nontrivial_quotient`. More is true and is
+  `TauCeti.IsAdmissibleIdeal.linearIndependent_mk_ofPath_of_length_lt_two`: the vertices and the
+  arrows stay *linearly independent* in the quotient, so the quotient map is injective on their
+  span.
 * `TauCeti.isAdmissibleIdeal_iff`: admissibility checked entirely on the path basis.
 * `TauCeti.isAdmissibleIdeal_arrowIdeal_pow`: the powers `R ^ n` with `2 ≤ n` are admissible, and
   `TauCeti.isAdmissibleIdeal_bot_of_isAcyclic`: over a finite acyclic quiver the zero ideal is
@@ -208,6 +211,44 @@ theorem isNilpotent_mk_of_mem_arrowIdeal (h : IsAdmissibleIdeal I) {f : pathAlge
   rw [← map_pow]
   refine Ideal.Quotient.eq_zero_iff_mem.2 (hN (mem_arrowIdeal_pow.2 ?_))
   exact pow_mem_pathSpan (mem_arrowIdeal_pow.1 (by rwa [Submodule.pow_one])) N
+
+/-- **The vertices and the arrows stay independent in a bound quiver algebra**: the images of the
+paths of length less than two are linearly independent over `k`, so the quotient map is injective
+on their span. This is the upper bound `I ≤ R ^ 2` read on the quotient, and it says more than the
+individual nonmemberships `TauCeti.IsAdmissibleIdeal.vertexIdempotent_notMem` and
+`TauCeti.IsAdmissibleIdeal.ofArrow_notMem`: distinct vertices stay distinct, distinct arrows stay
+distinct, and no nonzero combination of them is erased. -/
+theorem linearIndependent_mk_ofPath_of_length_lt_two (h : IsAdmissibleIdeal I) :
+    LinearIndependent k fun x : {x : Quiver.TotalPath Q // x.2.2.length < 2} =>
+      Ideal.Quotient.mk I (ofPath x.1) := by
+  -- The short paths span a complement of `R ^ 2`, which already contains `I`.
+  have hdisj : Disjoint
+      (Submodule.span k (Set.range fun x : {x : Quiver.TotalPath Q // x.2.2.length < 2} =>
+        pathAlgebraBasis k Q x.1))
+      (LinearMap.ker (Ideal.Quotient.mkₐ k I).toLinearMap) := by
+    have hrange : (Set.range fun x : {x : Quiver.TotalPath Q // x.2.2.length < 2} =>
+        pathAlgebraBasis k Q x.1)
+        = pathAlgebraBasis k Q '' {x : Quiver.TotalPath Q | x.2.2.length < 2} := by
+      ext y
+      simp [Set.mem_image, Subtype.exists]
+    rw [Submodule.disjoint_def, hrange]
+    intro f hshort hmem
+    -- Every path in the support of `f` is short, being in the span of the short ones, and long,
+    -- `f` lying in `I ≤ R ^ 2`. So there is none, and `f = 0`.
+    have hlt := (pathAlgebraBasis k Q).mem_span_image.1 hshort
+    have hle : ∀ x : Quiver.TotalPath Q, (pathAlgebraBasis k Q).repr f x ≠ 0 →
+        2 ≤ x.2.2.length := by
+      refine mem_pathSpan_iff.1 (mem_arrowIdeal_pow.1 (h.le_arrowIdeal_sq ?_))
+      rwa [LinearMap.mem_ker, AlgHom.toLinearMap_apply, Ideal.Quotient.mkₐ_eq_mk,
+        Ideal.Quotient.eq_zero_iff_mem] at hmem
+    refine (pathAlgebraBasis k Q).repr.map_eq_zero_iff.1 (Finsupp.ext fun x => ?_)
+    simp only [Finsupp.coe_zero, Pi.zero_apply]
+    by_contra hx
+    have hxshort : x.2.2.length < 2 := hlt (Finsupp.mem_support_iff.2 hx)
+    have hxlong : 2 ≤ x.2.2.length := hle x hx
+    omega
+  simpa [Function.comp_def, Ideal.Quotient.mkₐ_eq_mk] using
+    ((pathAlgebraBasis k Q).linearIndependent.comp _ Subtype.val_injective).map hdisj
 
 /-- A bound quiver algebra over a nonempty quiver is nonzero: an admissible ideal is proper, the
 vertex idempotents escaping it. -/
