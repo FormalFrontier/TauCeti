@@ -29,6 +29,12 @@ see `TauCeti/Combinatorics/Brauer/Diagram.lean`.
 * `TauCeti.PerfectMatching.restrict`: the perfect matching induced on the complement of an arc.
 * `TauCeti.PerfectMatching.extend`: the perfect matching obtained by adjoining an arc.
 * `TauCeti.PerfectMatching.fiberEquiv`: the two constructions above are mutually inverse.
+* `TauCeti.PerfectMatching.sumCongr`: the perfect matching of `α ⊕ β` gluing one of `α` to one
+  of `β`.
+* `TauCeti.PerfectMatching.IsSplit`: a perfect matching of `α ⊕ β` matches each summand within
+  itself.
+* `TauCeti.PerfectMatching.sumEquiv`: the split matchings of `α ⊕ β` are the pairs consisting of
+  a matching of `α` and a matching of `β`.
 
 ## Main results
 
@@ -48,7 +54,7 @@ open scoped Nat
 
 namespace TauCeti
 
-universe u
+universe u v
 
 variable {α : Type u}
 
@@ -223,6 +229,115 @@ theorem fiberEquiv_symm_apply (hab : a ≠ b) (E : PerfectMatching {x : α // x 
     ((fiberEquiv hab).symm E : PerfectMatching α) = extend hab E := (rfl)
 
 end Extend
+
+section Sum
+
+variable {β : Type v}
+
+/-- The perfect matching of `α ⊕ β` that matches the two summands separately, using `a` inside
+`α` and `b` inside `β`. -/
+def sumCongr (a : PerfectMatching α) (b : PerfectMatching β) : PerfectMatching (α ⊕ β) :=
+  ⟨a.val.sumCongr b.val, fun x => by rcases x with x | x <;> simp,
+    fun x => by rcases x with x | x <;> simp⟩
+
+@[simp]
+theorem sumCongr_val_inl (a : PerfectMatching α) (b : PerfectMatching β) (x : α) :
+    (sumCongr a b).val (Sum.inl x) = Sum.inl (a.val x) := by simp [sumCongr]
+
+@[simp]
+theorem sumCongr_val_inr (a : PerfectMatching α) (b : PerfectMatching β) (y : β) :
+    (sumCongr a b).val (Sum.inr y) = Sum.inr (b.val y) := by simp [sumCongr]
+
+/-- A perfect matching of `α ⊕ β` is **split** when no arc crosses between the summands, so that
+it restricts to a perfect matching of each of them. -/
+def IsSplit (D : PerfectMatching (α ⊕ β)) : Prop := ∀ x, (D.val x).isLeft = x.isLeft
+
+theorem isSplit_iff {D : PerfectMatching (α ⊕ β)} :
+    D.IsSplit ↔ ∀ x, (D.val x).isLeft = x.isLeft := Iff.rfl
+
+theorem isSplit_sumCongr (a : PerfectMatching α) (b : PerfectMatching β) :
+    (sumCongr a b).IsSplit := fun x => by rcases x with x | x <;> simp
+
+variable {D : PerfectMatching (α ⊕ β)}
+
+theorem IsSplit.isLeft_val_inl (h : D.IsSplit) (x : α) : (D.val (Sum.inl x)).isLeft := by
+  simpa using h (Sum.inl x)
+
+theorem IsSplit.isRight_val_inr (h : D.IsSplit) (y : β) : (D.val (Sum.inr y)).isRight := by
+  have hy := h (Sum.inr y)
+  rcases hx : D.val (Sum.inr y) with a | a
+  · rw [hx] at hy; simp at hy
+  · simp
+
+/-- The function underlying the matching that a split matching induces on the left summand. -/
+private def leftFun (h : D.IsSplit) (x : α) : α := (D.val (Sum.inl x)).getLeft (h.isLeft_val_inl x)
+
+/-- The function underlying the matching that a split matching induces on the right summand. -/
+private def rightFun (h : D.IsSplit) (y : β) : β :=
+  (D.val (Sum.inr y)).getRight (h.isRight_val_inr y)
+
+private theorem inl_leftFun (h : D.IsSplit) (x : α) :
+    Sum.inl (leftFun h x) = D.val (Sum.inl x) := Sum.inl_getLeft _ _
+
+private theorem inr_rightFun (h : D.IsSplit) (y : β) :
+    Sum.inr (rightFun h y) = D.val (Sum.inr y) := Sum.inr_getRight _ _
+
+private theorem leftFun_involutive (h : D.IsSplit) : Function.Involutive (leftFun h) := fun x =>
+  Sum.inl_injective <| by
+    rw [inl_leftFun h (leftFun h x), inl_leftFun h x, D.apply_apply]
+
+private theorem rightFun_involutive (h : D.IsSplit) : Function.Involutive (rightFun h) := fun y =>
+  Sum.inr_injective <| by
+    rw [inr_rightFun h (rightFun h y), inr_rightFun h y, D.apply_apply]
+
+private theorem leftFun_ne (h : D.IsSplit) (x : α) : leftFun h x ≠ x := fun hx =>
+  D.apply_ne (Sum.inl x) (by rw [← inl_leftFun h x, hx])
+
+private theorem rightFun_ne (h : D.IsSplit) (y : β) : rightFun h y ≠ y := fun hy =>
+  D.apply_ne (Sum.inr y) (by rw [← inr_rightFun h y, hy])
+
+/-- The perfect matching that a split matching of `α ⊕ β` induces on the left summand. -/
+def IsSplit.left (h : D.IsSplit) : PerfectMatching α :=
+  ⟨(leftFun_involutive h).toPerm, fun x => by simpa using leftFun_involutive h x,
+    fun x => by simpa using leftFun_ne h x⟩
+
+/-- The perfect matching that a split matching of `α ⊕ β` induces on the right summand. -/
+def IsSplit.right (h : D.IsSplit) : PerfectMatching β :=
+  ⟨(rightFun_involutive h).toPerm, fun y => by simpa using rightFun_involutive h y,
+    fun y => by simpa using rightFun_ne h y⟩
+
+@[simp]
+theorem IsSplit.inl_left_val (h : D.IsSplit) (x : α) :
+    Sum.inl (h.left.val x) = D.val (Sum.inl x) := inl_leftFun h x
+
+@[simp]
+theorem IsSplit.inr_right_val (h : D.IsSplit) (y : β) :
+    Sum.inr (h.right.val y) = D.val (Sum.inr y) := inr_rightFun h y
+
+theorem sumCongr_left_right (h : D.IsSplit) : sumCongr h.left h.right = D :=
+  Subtype.ext <| Equiv.ext fun x => by rcases x with x | x <;> simp
+
+@[simp]
+theorem left_isSplit_sumCongr (a : PerfectMatching α) (b : PerfectMatching β) :
+    (isSplit_sumCongr a b).left = a :=
+  Subtype.ext <| Equiv.ext fun x => Sum.inl_injective <| by
+    rw [IsSplit.inl_left_val, sumCongr_val_inl]
+
+@[simp]
+theorem right_isSplit_sumCongr (a : PerfectMatching α) (b : PerfectMatching β) :
+    (isSplit_sumCongr a b).right = b :=
+  Subtype.ext <| Equiv.ext fun y => Sum.inr_injective <| by
+    rw [IsSplit.inr_right_val, sumCongr_val_inr]
+
+/-- **The split matchings of a sum type are the pairs of matchings of its summands.** -/
+def sumEquiv :
+    {D : PerfectMatching (α ⊕ β) // D.IsSplit} ≃ PerfectMatching α × PerfectMatching β where
+  toFun D := (D.2.left, D.2.right)
+  invFun p := ⟨sumCongr p.1 p.2, isSplit_sumCongr p.1 p.2⟩
+  left_inv D := Subtype.ext (sumCongr_left_right D.2)
+  right_inv p := Prod.ext (left_isSplit_sumCongr p.1 p.2) (right_isSplit_sumCongr p.1 p.2)
+
+end Sum
 
 end PerfectMatching
 
