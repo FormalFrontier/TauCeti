@@ -11,7 +11,23 @@ public import TauCeti.Geometry.Lie.Adjoint.Conjugation
 /-!
 # The adjoint action of a Lie group
 
-The group adjoint action is the differential at the identity of conjugation.
+The group adjoint action is the differential at the identity of conjugation.  We first prove that
+this differential transports left-invariant vector fields.  Naturality of the manifold Lie
+bracket then shows that it is a Lie algebra automorphism, and the composition law for conjugation
+gives the representation law.
+
+This advances Deliverable A, Layer 1 of
+`TauCetiRoadmap/RepresentationTheory/LieGroups/README.md`.
+
+## Main definitions
+
+* `TauCeti.Lie.adjointContinuousLinearMap`: the differential of conjugation at the identity.
+* `TauCeti.Lie.Ad`: the resulting Lie algebra automorphism.
+
+## Main results
+
+* `TauCeti.Lie.adjointContinuousLinearMap_lie`: the differential preserves the Lie bracket.
+* `TauCeti.Lie.Ad_mul`: the adjoint automorphism respects group multiplication.
 -/
 
 public section
