@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.RepresentationTheory.Character
-public import TauCeti.RepresentationTheory.Symmetric.SpechtIdeal.Basic
+public import TauCeti.RepresentationTheory.Symmetric.Specht.Ideal.Basic
 
 /-!
 # Relabeling a Young tableau conjugates its Young symmetrizer

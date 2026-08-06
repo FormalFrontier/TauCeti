@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Probability.DeFinetti.DirectingMeasure.Basic
-public import Mathlib.MeasureTheory.Integral.Bochner.Set
+public import TauCeti.MeasureTheory.Integral.ENNRealProd
 
 /-!
 # Integrating finite products of directing-measure evaluations
@@ -20,6 +20,15 @@ rectangle arguments need: it is integrable in its real form, and its real integr
   and measurable, hence integrable against a finite measure.
 * `ofReal_integral_eq_lintegral_prod_directingMeasure` — the real integral of that product is the
   `ℝ≥0∞` integral of the product of the evaluations themselves.
+
+Neither argument uses anything about directing measures beyond measurability of each evaluation
+`ω ↦ directingMeasure μ X ω (B i)` and the bounds `≤ 1` and `≠ ∞`. The two statements are therefore
+instances of `TauCeti.MeasureTheory.integrable_prod_toReal` and
+`TauCeti.MeasureTheory.ofReal_integral_prod_toReal_eq_lintegral_prod`, which are about finite
+products of `ℝ≥0∞`-valued functions over a `Finset`, with almost-everywhere hypotheses, and mention
+no measure on `α`. What is left here is the
+specialisation: it discharges measurability from `measurable_directingMeasure_coe`, which all three
+consumers would otherwise repeat.
 
 In both, the measure in the integration slot is independent of the measure `μ` that defines the
 directing measure: `μ` is only the directing-measure parameter, and the integral is taken against a
@@ -51,16 +60,13 @@ lemma integrable_prod_directingMeasure_real [StandardBorelSpace α] [Nonempty α
     {μ : Measure Ω} [IsFiniteMeasure μ] {ν : Measure Ω} [IsFiniteMeasure ν] {X : ℕ → Ω → α}
     (hTail : tailProcess X ≤ mΩ) {r : ℕ} {B : Fin r → Set α}
     (hB : ∀ i, MeasurableSet (B i)) :
-    Integrable (fun ω => ∏ i, (directingMeasure μ X ω).real (B i)) ν := by
-  have hg_meas : Measurable fun ω => ∏ i, (directingMeasure μ X ω).real (B i) :=
-    Finset.measurable_prod _ fun i _ =>
-      (measurable_directingMeasure_coe hTail (hB i)).ennreal_toReal
-  refine (integrable_const (1 : ℝ)).mono' hg_meas.aestronglyMeasurable (ae_of_all _ fun ω => ?_)
-  simp only [measureReal_def]
-  rw [Real.norm_of_nonneg (Finset.prod_nonneg fun i _ => ENNReal.toReal_nonneg)]
-  refine Finset.prod_le_one (fun i _ => ENNReal.toReal_nonneg) fun i _ => ?_
-  exact ENNReal.toReal_le_of_le_ofReal zero_le_one
-    (by rw [ENNReal.ofReal_one]; exact (measure_mono (Set.subset_univ _)).trans_eq measure_univ)
+    Integrable (fun ω => ∏ i, (directingMeasure μ X ω).real (B i)) ν :=
+  by
+  simpa only [measureReal_def] using
+    TauCeti.MeasureTheory.integrable_prod_toReal
+      (f := fun i ω => directingMeasure μ X ω (B i))
+      (fun i _ => (measurable_directingMeasure_coe hTail (hB i)).aemeasurable)
+      fun _ _ => ae_of_all _ fun _ => prob_le_one
 
 /-- The real integral of the directing-measure product is its `ℝ≥0∞` integral, factor by factor:
 each factor is a finite measure of a set, so `ENNReal.ofReal_toReal` applies. As above, `ν` is an
@@ -70,13 +76,13 @@ lemma ofReal_integral_eq_lintegral_prod_directingMeasure [StandardBorelSpace α]
     {B : Fin r → Set α}
     (hg_int : Integrable (fun ω => ∏ i, (directingMeasure μ X ω).real (B i)) ν) :
     ENNReal.ofReal (∫ ω, ∏ i, (directingMeasure μ X ω).real (B i) ∂ν)
-      = ∫⁻ ω, ∏ i, directingMeasure μ X ω (B i) ∂ν := by
-  rw [ofReal_integral_eq_lintegral_ofReal hg_int
-    (ae_of_all _ fun ω => Finset.prod_nonneg fun i _ => ENNReal.toReal_nonneg)]
-  refine lintegral_congr fun ω => ?_
-  simp only [measureReal_def]
-  rw [ENNReal.ofReal_prod_of_nonneg fun i _ => ENNReal.toReal_nonneg]
-  exact Finset.prod_congr rfl fun i _ => ENNReal.ofReal_toReal (measure_ne_top _ _)
+      = ∫⁻ ω, ∏ i, directingMeasure μ X ω (B i) ∂ν :=
+  by
+  simpa only [measureReal_def] using
+    TauCeti.MeasureTheory.ofReal_integral_prod_toReal_eq_lintegral_prod
+      (f := fun i ω => directingMeasure μ X ω (B i))
+      (ae_of_all _ fun _ => ENNReal.prod_ne_top fun _ _ => measure_ne_top _ _)
+      (by simpa only [measureReal_def] using hg_int)
 
 end Probability
 

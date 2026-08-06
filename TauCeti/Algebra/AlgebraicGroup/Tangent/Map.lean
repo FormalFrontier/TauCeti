@@ -33,7 +33,7 @@ public section
 
 namespace TauCeti
 
-open Coalgebra WithConv TrivSqZeroExt
+open _root_.Coalgebra WithConv TrivSqZeroExt
 
 section Differential
 

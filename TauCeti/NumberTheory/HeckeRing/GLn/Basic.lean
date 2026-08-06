@@ -64,10 +64,17 @@ noncomputable scoped instance coeMapGLRat :
     Coe (SpecialLinearGroup (Fin n) ℤ) (GL (Fin n) ℚ) :=
   ⟨mapGL ℚ⟩
 
-/-- The canonical membership: integral special-linear matrices land in `SL_n(ℤ)`. -/
-@[simp]
+/-- The canonical membership: integral special-linear matrices land in `SL_n(ℤ)`. Not a
+`simp` lemma: `mem_SLnZ_iff` subsumes it as a normal form. -/
 lemma coe_mem_SLnZ (σ : SpecialLinearGroup (Fin n) ℤ) :
     (σ : GL (Fin n) ℚ) ∈ SLnZ n := ⟨σ, rfl⟩
+
+/-- Membership in `SL_n(ℤ)` characterised by an integral special-linear witness: the
+elimination principle paired with `coe_mem_SLnZ`. `SLnZ` is a sealed definition, so modules
+downstream cannot unfold it to `MonoidHom.range`; this lemma is how they extract the witness. -/
+@[simp] lemma mem_SLnZ_iff {g : GL (Fin n) ℚ} :
+    g ∈ SLnZ n ↔ ∃ σ : SpecialLinearGroup (Fin n) ℤ, (σ : GL (Fin n) ℚ) = g := by
+  rw [SLnZ, MonoidHom.mem_range]
 
 end Embedding
 

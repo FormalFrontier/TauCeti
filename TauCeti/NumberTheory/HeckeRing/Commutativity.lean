@@ -187,15 +187,6 @@ private lemma exists_bar_eq [IsHeckeTriple Δ H H]
   rw [doubleCoset_eq_of_mem (ι.bar_mem_doubleCoset_self h_fix g)] at hbar
   exact mem_doubleCoset.mp hbar
 
-/-- The conjugation criterion for the stabilizer subgroup indexing `DecompQuotient`: an
-element `n` of the stabilizer conjugates into `H` under `g`. -/
-private lemma conj_mem_of_stabilizer (g : G)
-    (n : (ConjAct.toConjAct g • H).subgroupOf H) : g⁻¹ * (n : G) * g ∈ H := by
-  have hn := n.2
-  rw [Subgroup.mem_subgroupOf, Subgroup.mem_pointwise_smul_iff_inv_smul_mem,
-    ConjAct.smul_def] at hn
-  simpa [ConjAct.ofConjAct_toConjAct] using hn
-
 /-- Equality of classes in `DecompQuotient H H g` yields the conjugation relation of their
 representatives. -/
 private lemma conj_mem_of_mk_eq (g : G) {u₁ u₂ : H}

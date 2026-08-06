@@ -42,10 +42,6 @@ variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
 local instance [LieGroup I ∞ G] : LieGroup I (minSmoothness ℝ 3) G := by
   simpa using (inferInstance : LieGroup I (3 : ℕ∞ω) G)
 
-/-- Scalar multiplication commutes with the model-space identification of the Lie algebra. -/
-private theorem coe_smul_groupLieAlgebra (t : ℝ) (v : E) :
-    ((t • v : E) : GroupLieAlgebra I G) = t • (v : GroupLieAlgebra I G) := rfl
-
 /-- In model-space identity coordinates, the tangent-space exponential has derivative the identity
 at zero. -/
 theorem hasFDerivAt_extChartAt_mulInvariantExp_zero
@@ -92,7 +88,10 @@ theorem hasFDerivAt_extChartAt_mulInvariantExp_zero
       funext t
       simp only [F, Function.comp_apply]
       apply congrArg (extChartAt I (1 : G))
-      rw [coe_smul_groupLieAlgebra]
+      have hsmul : ((t • v : E) : GroupLieAlgebra I G) =
+          t • (v : GroupLieAlgebra I G) :=
+        (groupLieAlgebraEquivModelVectorSpace (I := I) (G := G)).symm.map_smul t v
+      rw [hsmul]
       exact mulInvariantExp_smul (I := I) (G := G)
         (v : GroupLieAlgebra I G) t
     have hlineCurve : HasDerivAt (F ∘ fun t : ℝ => t • v) v 0 := by

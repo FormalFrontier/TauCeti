@@ -55,6 +55,8 @@ a dominant top row `λ₁ ≤ λ₀` is `λ₀ - λ₁ + 1`, the dimension of th
 
 * `TauCeti.GTPattern.entry_anti` and `TauCeti.GTPattern.topRow_antitone`: rows are weakly
   decreasing, so the top row is a dominant weight.
+* `TauCeti.GTPattern.entry_nonneg`: a pattern with a nonnegative top row has nonnegative entries,
+  so the polynomial patterns are cut out by the top row alone.
 * `TauCeti.Interlaces.antitone`: an interlacing sequence is weakly decreasing, so a sequence
   interlacing a dominant weight is dominant.
 * `TauCeti.GTPattern.truncateEquiv`: patterns with `n + 1` rows and top row `l` correspond to
@@ -127,15 +129,20 @@ theorem entry_eq_zero_of_le (P : GTPattern n) {i j : ℕ} (h : j ≤ i) : P i j 
 theorem entry_le_entry_succ_row (P : GTPattern n) {i j : ℕ} (hij : i < j) (hj : j < n) :
     P i j ≤ P i (j + 1) := (P.interlacing' hij hj).1
 
-/-- The second interlacing inequality `λᵢ₊₁,ⱼ₊₁ ≤ λᵢ,ⱼ`. -/
-theorem entry_succ_succ_le_entry (P : GTPattern n) {i j : ℕ} (hij : i < j) (hj : j < n) :
-    P (i + 1) (j + 1) ≤ P i j := (P.interlacing' hij hj).2
+/-- The second interlacing inequality `λᵢ₊₁,ⱼ₊₁ ≤ λᵢ,ⱼ`.  The interlacing constraint is imposed
+only on the informative cells `i < j`, but the inequality needs no such restriction: off them both
+sides vanish. -/
+theorem entry_succ_succ_le_entry (P : GTPattern n) {i j : ℕ} (hj : j < n) :
+    P (i + 1) (j + 1) ≤ P i j := by
+  rcases Nat.lt_or_ge i j with hij | hij
+  · exact (P.interlacing' hij hj).2
+  · rw [P.entry_eq_zero_of_le hij, P.entry_eq_zero_of_le (Nat.succ_le_succ hij)]
 
 /-- Rows decrease weakly, in adjacent form. -/
 theorem entry_succ_le_entry (P : GTPattern n) {i j : ℕ} (hij : i + 1 < j) (hj : j ≤ n) :
     P (i + 1) j ≤ P i j := by
   obtain ⟨k, rfl⟩ : ∃ k, j = k + 1 := ⟨j - 1, by omega⟩
-  exact (P.entry_succ_succ_le_entry (by omega) (by omega)).trans
+  exact (P.entry_succ_succ_le_entry (by omega)).trans
     (P.entry_le_entry_succ_row (by omega) (by omega))
 
 /-- Rows decrease weakly: `λᵢ,ⱼ ≥ λᵢ',ⱼ` for `i ≤ i' < j ≤ n`.  This is a consequence of the
@@ -160,8 +167,17 @@ theorem entry_le_entry_of_le (P : GTPattern n) {i j : ℕ} (hij : i < j) :
     · obtain rfl : j = k + 1 := by omega
       exact le_rfl
 
+/-- Entries increase weakly with the row index across the uninformative cells `j ≤ i` as well,
+provided the larger entry is nonnegative: `λᵢ,ⱼ ≤ λᵢ,ⱼ'` for `j ≤ j' ≤ n` and `0 ≤ λᵢ,ⱼ'`. -/
+theorem entry_le_entry_of_nonneg_of_le (P : GTPattern n) {i j j' : ℕ} (hnn : 0 ≤ P i j')
+    (hj : j ≤ j') (hj' : j' ≤ n) : P i j ≤ P i j' := by
+  rcases Nat.lt_or_ge i j with hij | hij
+  · exact P.entry_le_entry_of_le hij hj hj'
+  · rw [P.entry_eq_zero_of_le hij]
+    exact hnn
+
 /-- Increasing both indices of a cell by the same amount decreases it. -/
-theorem entry_add_le (P : GTPattern n) {i j : ℕ} (hij : i < j) :
+theorem entry_add_le (P : GTPattern n) {i j : ℕ} :
     ∀ {d : ℕ}, j + d ≤ n → P (i + d) (j + d) ≤ P i j := by
   intro d
   induction d with
@@ -169,7 +185,7 @@ theorem entry_add_le (P : GTPattern n) {i j : ℕ} (hij : i < j) :
   | succ e ih =>
     intro hj
     have h : P (i + e + 1) (j + e + 1) ≤ P (i + e) (j + e) :=
-      P.entry_succ_succ_le_entry (by omega) (by omega)
+      P.entry_succ_succ_le_entry (by omega)
     exact h.trans (ih (by omega))
 
 /-! ### The top row -/
@@ -202,9 +218,20 @@ theorem entry_le_topRow (P : GTPattern n) {i j : ℕ} (hij : i < j) (hj : j ≤ 
 theorem topRow_le_entry (P : GTPattern n) {i j : ℕ} (hij : i < j) (hj : j ≤ n) :
     P.topRow ⟨i + (n - j), by omega⟩ ≤ P i j := by
   have hjn : j + (n - j) = n := by omega
-  have h := P.entry_add_le hij (d := n - j) (by omega)
+  have h := P.entry_add_le (i := i) (j := j) (d := n - j) (by omega)
   rw [hjn] at h
   simpa using h
+
+/-- **A pattern with a nonnegative top row has nonnegative entries**: every informative entry
+dominates a top-row entry, and the remaining ones vanish.  This is what confines a pattern whose
+top row is a shape to the polynomial regime, where it names a semistandard Young tableau. -/
+theorem entry_nonneg (P : GTPattern n) (h : ∀ i : Fin n, 0 ≤ P.topRow i) (i j : ℕ) :
+    0 ≤ P i j := by
+  rcases Nat.lt_or_ge n j with hj | hj
+  · exact (P.entry_eq_zero_of_lt hj).ge
+  · rcases Nat.lt_or_ge i j with hij | hij
+    · exact (h _).trans (P.topRow_le_entry hij hj)
+    · exact (P.entry_eq_zero_of_le hij).ge
 
 /-- Every entry of a pattern lies between the last and the first entry of its top row. -/
 theorem entry_mem_Icc (P : GTPattern n) {i j : ℕ} (hij : i < j) (hj : j ≤ n) :
@@ -299,7 +326,7 @@ theorem interlaces_topRow_truncate (P : GTPattern (n + 1)) :
     Interlaces P.topRow (truncate P).topRow :=
   interlaces_iff.mpr fun i =>
     ⟨by simpa using P.entry_le_entry_succ_row i.2 (by omega),
-      by simpa using P.entry_succ_succ_le_entry i.2 (by omega)⟩
+      by simpa using P.entry_succ_succ_le_entry (i := (i : ℕ)) (j := n) (by omega)⟩
 
 /-- Prepend the row `l` on top of a pattern with `n` rows whose own top row it interlaces. -/
 def extend (Q : GTPattern n) (l : Fin (n + 1) → ℤ) (h : Interlaces l Q.topRow) :

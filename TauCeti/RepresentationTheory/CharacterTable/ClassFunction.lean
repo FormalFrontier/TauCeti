@@ -13,9 +13,13 @@ public import Mathlib.RepresentationTheory.Character
 
 This file defines functions on a group that are constant on conjugacy classes. It identifies
 their module with the module of functions on `ConjClasses G`, computes its dimension for finite
-groups, pulls class functions back along a group homomorphism, shows that characters of
-representations are class functions, and evaluates a sum over a finite group one conjugacy class
-at a time.
+groups, pulls class functions back along a group homomorphism, twists them by a power map of the
+group element, shows that characters of representations are class functions, and evaluates a sum
+over a finite group one conjugacy class at a time.
+
+The indicator function of a conjugacy class, `TauCeti.ClassFunction.classIndicator`, is the class
+function pulled back from the indicator of a single point of `ConjClasses G`; pairing a class
+function against it is how a class function is read off an expansion in a basis of class functions.
 
 These are the indexing foundations for character tables.
 
@@ -37,6 +41,24 @@ definitional equalities, which would in turn require exposing the definitions.
 namespace TauCeti
 
 universe u v w w'
+
+/-- Conjugacy is inherited by inverses in both directions.
+
+Not `@[simp]`: Mathlib's `isConj_iff` is itself `simp`, so the left-hand side simplifies to
+`∃ c, c * x⁻¹ * c⁻¹ = y⁻¹` and the simp normal form linter rejects the pair. -/
+theorem isConj_inv_iff {G : Type v} [Group G] {x y : G} :
+    IsConj x⁻¹ y⁻¹ ↔ IsConj x y := by
+  constructor <;> intro h
+  · obtain ⟨c, hc⟩ := isConj_iff.mp h
+    apply isConj_iff.mpr
+    refine ⟨c, ?_⟩
+    have := congrArg Inv.inv hc
+    simpa [mul_assoc] using this
+  · obtain ⟨c, hc⟩ := isConj_iff.mp h
+    apply isConj_iff.mpr
+    refine ⟨c, ?_⟩
+    have := congrArg Inv.inv hc
+    simpa [mul_assoc] using this
 
 /-- The submodule of functions on `G` that are constant under conjugation. -/
 def ClassFunction (k : Type u) (G : Type v) [Semiring k] [Group G] : Submodule k (G → k) where
@@ -112,6 +134,34 @@ theorem comap_comp {H : Type w} {J : Type w'} [Group H] [Group J] (φ : H →* G
     comap (k := k) (φ.comp ψ) = (comap ψ).comp (comap φ) :=
   (rfl)
 
+/-- Twist a class function by a power map of the group element, `f ↦ (g ↦ f (g ^ j))`.  This is
+again a class function because a power of a conjugate is the conjugate of that power, and it
+depends linearly on `f`.  The Galois action on character values is by these twists. -/
+def powMap (j : ℕ) : ClassFunction k G →ₗ[k] ClassFunction k G where
+  toFun f := ⟨fun g => f.1 (g ^ j), fun g h => by simpa only [conj_pow] using f.2 (g ^ j) h⟩
+  map_add' _ _ := rfl
+  map_smul' _ _ := rfl
+
+/-- The power-map twist evaluates the class function at the power of the group element. -/
+@[simp]
+theorem powMap_apply (j : ℕ) (f : ClassFunction k G) (g : G) :
+    (powMap j f).1 g = f.1 (g ^ j) :=
+  (rfl)
+
+/-- Twisting by the first power changes nothing. -/
+@[simp]
+theorem powMap_one : powMap 1 = LinearMap.id (R := k) (M := ClassFunction k G) := by
+  ext f g
+  simp
+
+/-- The power maps compose: twisting by `j` and then by `i` is twisting by `i * j`.  This is what
+makes the twists an action of the multiplicative monoid of exponents. -/
+@[simp]
+theorem powMap_mul (i j : ℕ) :
+    powMap (k := k) (G := G) (i * j) = (powMap i).comp (powMap j) := by
+  ext f g
+  simp [pow_mul]
+
 /-- Class functions on `G` are linearly equivalent to functions on its conjugacy classes. -/
 noncomputable def equivConjClasses : ClassFunction k G ≃ₗ[k] (ConjClasses G → k) where
   toFun := toConjClasses
@@ -143,6 +193,25 @@ theorem equivConjClasses_apply (f : ClassFunction k G) :
 theorem equivConjClasses_symm_apply (f : ConjClasses G → k) :
     equivConjClasses.symm f = ofConjClasses f :=
   (rfl)
+
+/-- The indicator class function of the conjugacy class of `x`: it takes the value `1` on the
+conjugates of `x` and `0` elsewhere.
+
+`Set.indicator` rather than `Pi.single` so that the definition carries no decidability instance of
+its own, and `TauCeti.ClassFunction.classIndicator_apply` can be stated with whichever instance is
+in scope where it is used. -/
+noncomputable def classIndicator (x : G) : ClassFunction k G :=
+  ofConjClasses (({ConjClasses.mk x} : Set (ConjClasses G)).indicator fun _ => 1)
+
+/-- The defining values of `TauCeti.ClassFunction.classIndicator`. -/
+@[simp]
+theorem classIndicator_apply [DecidableEq (ConjClasses G)] (x y : G) :
+    (classIndicator (k := k) x).1 y =
+      if ConjClasses.mk y = ConjClasses.mk x then 1 else 0 := by
+  rw [classIndicator, ofConjClasses_apply]
+  by_cases h : ConjClasses.mk y = ConjClasses.mk x
+  · rw [if_pos h, Set.indicator_of_mem (Set.mem_singleton_iff.mpr h)]
+  · rw [if_neg h, Set.indicator_of_notMem (fun hm => h (Set.mem_singleton_iff.mp hm))]
 
 /-- **Summing a class function one conjugacy class at a time.** The conjugacy classes partition
 the group and a class function is constant on each of them, so each class contributes its size

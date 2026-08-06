@@ -480,7 +480,7 @@ theorem exists_tendsto_nhdsWithin_ball_inter_sphere (hζ : dist ζ c = r) (hρ :
 /-- **The end of a circular crosscut of finite image length is a single point.** This is
 `TauCeti.exists_clusterSetOn_circleMap_image_Ioo_eq_singleton` at the arc description of
 `Conformal/Crosscut/Endpoints.lean`, and it is the form
-`TauCeti.frontier_inter_closure_image_ball_inter_sphere_eq_biUnion_clusterSetOn` of
+`TauCeti.frontier_inter_closure_image_inter_sphere_eq_biUnion_clusterSetOn` of
 `Conformal/Crosscut/Image.lean` indexes the boundary piece over. -/
 theorem exists_clusterSetOn_ball_inter_sphere_eq_singleton (hζ : dist ζ c = r) (hρ : 0 < ρ)
     (hρr : ρ < 2 * r) (hf : DifferentiableOn ℂ f (ball c r))

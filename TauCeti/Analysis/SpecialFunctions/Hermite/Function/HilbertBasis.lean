@@ -139,27 +139,11 @@ exhibit *some* Hilbert basis; here the `√w`-envelope of `Hₙ(x√2)/√cₙ` 
 @[simp]
 theorem coe_hermiteHilbertBasis : ⇑(hermiteHilbertBasis 𝕜) = hermiteFunctionLp 𝕜 := by
   funext n
-  have hwpos : ∀ᵐ x ∂(volume : Measure ℝ), 0 < Real.exp (-x ^ 2) :=
-    Filter.Eventually.of_forall fun x => Real.exp_pos _
-  have hwm : AEMeasurable (fun x : ℝ => Real.exp (-x ^ 2)) volume := by fun_prop
-  -- `w > 0` makes `μ` absolutely continuous with respect to `w·μ`, so the `w·μ`-a.e.
-  -- representative of the normalized family is also a `volume`-a.e. one.
-  have hac : (volume : Measure ℝ)
-      ≪ volume.withDensity fun x => ENNReal.ofReal (Real.exp (-x ^ 2)) :=
-    withDensity_absolutelyContinuous' hwm.ennreal_ofReal
-      (Filter.Eventually.of_forall fun x => by
-        simp only [ne_eq, ENNReal.ofReal_eq_zero, not_le]
-        exact Real.exp_pos _)
-  rw [hermiteHilbertBasis, coe_hilbertBasisOfOrthogonalSystem]
-  refine Lp.ext ?_
-  filter_upwards [weightL2Isometry_apply (𝕜 := 𝕜) volume (fun x => Real.exp (-x ^ 2)) hwpos hwm
-      (bareNormalizedLp (𝕜 := 𝕜) (fun n x => (hermiteDilated n).eval x)
-        (fun x => Real.exp (-x ^ 2)) (fun n => (n.factorial : ℝ) * Real.sqrt Real.pi)
-        (memLp_hermiteDilated_normalized 𝕜) n),
-    (coeFn_bareNormalizedLp (𝕜 := 𝕜) (fun n x => (hermiteDilated n).eval x)
-      (fun x => Real.exp (-x ^ 2)) (fun n => (n.factorial : ℝ) * Real.sqrt Real.pi)
-      (memLp_hermiteDilated_normalized 𝕜) n).filter_mono hac.ae_le,
-    coeFn_hermiteFunctionLp (𝕜 := 𝕜) n] with x h1 h2 h3
+  rw [hermiteHilbertBasis]
+  -- The bridge already presents the `n`-th vector as `Hₙ(x√2)·√w/√cₙ`, so nothing about the
+  -- weighted measure is left to do here.
+  refine Lp.ext ((coeFn_hilbertBasisOfOrthogonalSystem _ _ _ _ _ _ _ _ _ n).trans ?_)
+  filter_upwards [coeFn_hermiteFunctionLp (𝕜 := 𝕜) n] with x hx
   -- `√w` is the Hermite envelope: `√(e^{-x²}) = e^{-x²/2}`. `Real.sqrt_mul_self` wants the
   -- radicand presented as a literal product, so the exponent is split first and `Real.exp_add`
   -- turns the sum into that product; the split is stated as its own equality rather than being
@@ -168,9 +152,7 @@ theorem coe_hermiteHilbertBasis : ⇑(hermiteHilbertBasis 𝕜) = hermiteFunctio
   have hs : Real.sqrt (Real.exp (-x ^ 2)) = Real.exp (-(x ^ 2 / 2)) := by
     rw [hsplit, Real.exp_add]
     exact Real.sqrt_mul_self (Real.exp_pos _).le
-  rw [h1, h2, h3, hermiteFunction_def, eval_hermiteDilated, Algebra.smul_def, ← map_mul, hs]
-  congr 1
-  ring
+  rw [hx, hermiteFunction_def, eval_hermiteDilated, hs]
 
 end Basis
 
