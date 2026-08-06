@@ -472,11 +472,7 @@ not a unit, and the left ideal it generates is contained in a maximal one that w
 theorem vertexIdempotent_notMem_jacobson (v : Q) :
     (vertexIdempotent k v : pathAlgebra k Q) ∉ Ring.jacobson (pathAlgebra k Q) := by
   intro hv
-  have hne : (vertexIdempotent k v : pathAlgebra k Q) ≠ 0 := by
-    have hb := (pathAlgebraBasis k Q).ne_zero (⟨v, v, Quiver.Path.nil⟩ : Quiver.TotalPath Q)
-    simp only [coe_pathAlgebraBasis] at hb
-    rw [vertexIdempotent_eq_single, ← ofPath_eq_single]
-    exact hb
+  have hne : (vertexIdempotent k v : pathAlgebra k Q) ≠ 0 := vertexIdempotent_ne_zero v
   have hproper : Ideal.span {1 - vertexIdempotent k v} ≠ (⊤ : Ideal (pathAlgebra k Q)) := by
     intro htop
     have hone : (1 : pathAlgebra k Q) ∈ Ideal.span {1 - vertexIdempotent k v} := by

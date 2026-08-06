@@ -44,7 +44,9 @@ idempotents `e`, so left multiplication by `α` carries the `i`-component of a l
 
 * `TauCeti.PathAlgebra.single_mul_single`: the defining product of two basis paths.
 * `TauCeti.PathAlgebra.one_def`: the vertex idempotents sum to `1`; they are
-  orthogonal by `TauCeti.PathAlgebra.vertexIdempotent_mul_vertexIdempotent_of_ne`.
+  orthogonal by `TauCeti.PathAlgebra.vertexIdempotent_mul_vertexIdempotent_of_ne`, idempotent by
+  `TauCeti.PathAlgebra.isIdempotentElem_vertexIdempotent` and nonzero by
+  `TauCeti.PathAlgebra.vertexIdempotent_ne_zero`.
 * `TauCeti.module_finite_pathAlgebra` and `TauCeti.finrank_pathAlgebra`: `kQ` is a free module of
   rank the number of paths of `Q`. The specialization to a finite acyclic quiver, whose paths are
   finite, is `TauCeti.finiteDimensional_pathAlgebra_of_isAcyclic` in
@@ -559,6 +561,18 @@ theorem vertexIdempotent_mul_vertexIdempotent_of_ne {u v : Q} (h : u ≠ v) :
 theorem vertexIdempotent_mul_self (v : Q) :
     (vertexIdempotent k v * vertexIdempotent k v : pathAlgebra k Q) = vertexIdempotent k v := by
   rw [vertexIdempotent_eq_single, single_mul_single_of_comp, one_mul, _root_.Quiver.Path.comp_nil]
+
+/-- A vertex idempotent is nonzero: it is the basis path of the trivial path at its vertex, whose
+coefficient is `1`. -/
+theorem vertexIdempotent_ne_zero [Nontrivial k] (v : Q) :
+    (vertexIdempotent k v : pathAlgebra k Q) ≠ 0 := by
+  rw [vertexIdempotent_eq_single, single_def]
+  exact Finsupp.single_ne_zero.2 one_ne_zero
+
+/-- The vertex idempotents are idempotent elements. -/
+theorem isIdempotentElem_vertexIdempotent (v : Q) :
+    IsIdempotentElem (vertexIdempotent k v : pathAlgebra k Q) :=
+  vertexIdempotent_mul_self v
 
 /-! ### The unit -/
 
