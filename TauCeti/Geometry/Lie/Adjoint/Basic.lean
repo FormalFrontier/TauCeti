@@ -8,12 +8,13 @@ public import Mathlib.Geometry.Manifold.GroupLieAlgebra
 public import TauCeti.Geometry.Lie.Adjoint.Conjugation
 
 /-!
-# The adjoint action of a Lie group
+# The tangent-space adjoint action of a Lie group
 
-The group adjoint action is the differential at the identity of conjugation.  We first prove that
-this differential transports left-invariant vector fields.  Naturality of the manifold Lie
+The tangent-space adjoint action is the differential at the identity of conjugation. We first prove
+that this differential transports left-invariant vector fields. Naturality of the manifold Lie
 bracket then shows that it is a Lie algebra automorphism, and the composition law for conjugation
-gives the representation law.
+gives the representation law. A subsequent file transports this construction to the roadmap-facing
+Lie algebra of left-invariant derivations.
 
 This advances Deliverable A, Layer 1 of
 `TauCetiRoadmap/RepresentationTheory/LieGroups/README.md`.
@@ -26,6 +27,11 @@ This advances Deliverable A, Layer 1 of
 
 * `TauCeti.Lie.adjointContinuousLinearMap_lie`: the differential preserves the Lie bracket.
 * `TauCeti.Lie.tangentAd_mul`: the tangent adjoint automorphism respects group multiplication.
+
+## References
+
+* [Lie groups and the Lie algebra correspondence roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/LieGroups/README.md),
+  Deliverable A, Layer 1, "The group adjoint".
 -/
 
 public section
