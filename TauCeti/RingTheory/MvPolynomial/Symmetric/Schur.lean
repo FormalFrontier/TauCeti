@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+public import Mathlib.Data.Fintype.EquivFin
 public import Mathlib.RingTheory.MvPolynomial.Homogeneous
 public import TauCeti.Combinatorics.Young.Kostka
 
@@ -15,52 +16,55 @@ public section
 The **Schur polynomial** `s_μ` of a Young diagram `μ` in `N` variables is the generating function
 of the semistandard Young tableaux of shape `μ` whose entries are drawn from the `N`-letter
 alphabet: each such tableau contributes the monomial `∏ᵢ xᵢ ^ (number of cells filled with i)`.
-This file defines it, `TauCeti.schurPoly`, and reads off the basic structure that the definition
-alone gives.
+This file defines it, `TauCeti.diagramSchurPoly`, reads off the basic structure that the
+definition alone gives, and transports it to the partition-indexed Schur polynomial
+`TauCeti.schurPoly` in an arbitrary finite alphabet.
 
-Mathlib's `SemistandardYoungTableau μ` fills cells with arbitrary natural numbers, so the alphabet
-is cut out here as a subtype, `TauCeti.BoundedSSYT`, of the tableaux whose entries are smaller
-than `N`; the alphabet is `0, 1, …, N - 1` rather than the classical `1, …, N`, matching
-`TauCeti.SemistandardYoungTableau.content`. That subtype is finite
-(`TauCeti.finite_ssyt_lt`), which is what makes the generating function a polynomial.
+The tableaux summed over are the bounded ones, `TauCeti.BoundedSSYT`: Mathlib's
+`SemistandardYoungTableau μ` fills cells with arbitrary natural numbers, and it is the bound that
+makes the sum finite. The alphabet is `0, 1, …, N - 1` rather than the classical `1, …, N`,
+matching `TauCeti.SemistandardYoungTableau.content`.
 
-The load-bearing statement is `TauCeti.coeff_schurPoly`: the coefficient of a monomial `x^d` in
-`s_μ` is the Kostka number `K_{μ d}`, the number of tableaux of shape `μ` and content `d`. Every
-other result here is read off it together with the Kostka theory of
-`TauCeti.Combinatorics.Young.Kostka`:
+The load-bearing statement is `TauCeti.coeff_diagramSchurPoly`: the coefficient of a monomial
+`x^d` in `s_μ` is the image in the coefficient semiring of the Kostka number `K_{μ d}`, the number
+of semistandard tableaux of shape `μ` and content `d`. Every other result here is read off it
+together with the Kostka theory of `TauCeti.Combinatorics.Young.Kostka`:
 
-* `TauCeti.schurPoly_eq_zero_iff`: `s_μ` vanishes exactly when `μ` is taller than the alphabet,
-  since columns are strict and the entry in row `i` is at least `i`.
-* `TauCeti.coeff_schurPoly_rowLenWeight`: the coefficient at the exponent recording the row
+* `TauCeti.diagramSchurPoly_eq_zero_iff`: `s_μ` vanishes exactly when `μ` is taller than the
+  alphabet, since columns are strict and the entry in row `i` is at least `i`.
+* `TauCeti.coeff_diagramSchurPoly_rowLenWeight`: the coefficient at the exponent recording the row
   lengths of `μ` is `1`, the highest-weight tableau being the unique one of that content.
-* `TauCeti.coeff_schurPoly_diagramOf_eq_zero_of_not_dominates`: for partitions, the exponent
-  recording the parts of `ν` occurs in `s_μ` only if `μ` dominates `ν`. Together with the previous
-  item this is the triangularity of the Schur polynomials against the dominance order, and
-  `TauCeti.coeff_schurPoly_eq_zero_of_sum_lt` is the partial-sum form it comes from.
-* `TauCeti.isHomogeneous_schurPoly`: `s_μ` is homogeneous of degree the number of cells of `μ`,
-  every tableau of shape `μ` having that many entries.
+* `TauCeti.coeff_diagramSchurPoly_diagramOf_eq_zero_of_not_dominates`: for partitions, the
+  exponent recording the parts of `ν` occurs in `s_μ` only if `μ` dominates `ν`. Together with the
+  previous item this is the triangularity of the Schur polynomials against the dominance order,
+  and `TauCeti.coeff_diagramSchurPoly_eq_zero_of_sum_lt` is the partial-sum form it comes from.
+* `TauCeti.isHomogeneous_diagramSchurPoly`: `s_μ` is homogeneous of degree the number of cells of
+  `μ`, every tableau of shape `μ` having that many entries.
 
-Symmetry of `s_μ` is *not* proved here: it is the Bender-Knuth involution, a separate target of
-the Schur-Weyl roadmap, and none of the results below need it.
+An arbitrary finite alphabet `σ` is ordered by `Fintype.equivFin σ`, and `TauCeti.schurPoly σ R μ`
+is `TauCeti.diagramSchurPoly` renamed along that ordering. The result does not depend on the
+ordering, but that is the symmetry of `s_μ`, which is *not* proved here: it is the Bender-Knuth
+involution, a separate target of the Schur-Weyl roadmap, and none of the results below need it.
 
 ## Main definitions
 
-* `TauCeti.BoundedSSYT`: the semistandard Young tableaux of a given shape whose entries lie below
-  a given bound.
-* `TauCeti.BoundedSSYT.weight`: the content of such a tableau, packaged as an exponent vector on
-  the alphabet.
-* `TauCeti.schurPoly`: the Schur polynomial of a Young diagram in a finite alphabet.
-* `TauCeti.rowLenWeight`: the exponent vector recording the row lengths of a shape, the leading
-  exponent of its Schur polynomial.
+* `TauCeti.BoundedSSYT.weight`: the content of a bounded tableau, packaged as an exponent vector
+  on the alphabet.
+* `TauCeti.diagramSchurPoly`: the Schur polynomial of a Young diagram in the alphabet `Fin N`.
+* `TauCeti.rowLenWeight`: the exponent vector recording the row lengths of a shape, the exponent
+  of the monomial contributed by the highest-weight tableau.
+* `TauCeti.schurPoly`: the Schur polynomial of a partition in a finite alphabet.
+* `TauCeti.partWeight`: the exponent vector on a finite alphabet recording the parts of a
+  partition.
 
 ## Main results
 
-* `TauCeti.coeff_schurPoly`: the coefficients of a Schur polynomial are the Kostka numbers, and
-  `TauCeti.coeff_schurPoly_diagramOf` is its partition-indexed form.
-* `TauCeti.schurPoly_eq_zero_iff`: a Schur polynomial vanishes exactly for a shape taller than
-  its alphabet.
-* `TauCeti.isHomogeneous_schurPoly`: a Schur polynomial is homogeneous of degree the number of
-  cells of its shape.
+* `TauCeti.coeff_diagramSchurPoly`: the coefficients of a Schur polynomial are the images of the
+  Kostka numbers, and `TauCeti.coeff_schurPoly_partWeight` is its partition-indexed form.
+* `TauCeti.diagramSchurPoly_eq_zero_iff` and `TauCeti.schurPoly_eq_zero_iff`: a Schur polynomial
+  vanishes exactly for a shape taller than its alphabet.
+* `TauCeti.isHomogeneous_diagramSchurPoly` and `TauCeti.isHomogeneous_schurPoly`: a Schur
+  polynomial is homogeneous of degree the number of cells of its shape.
 
 ## References
 
@@ -75,29 +79,13 @@ namespace TauCeti
 
 open Finset MvPolynomial
 
-/-- The semistandard Young tableaux of shape `μ` written in the alphabet `{0, …, N - 1}`, that is,
-those all of whose entries are smaller than `N`. Mathlib's `SemistandardYoungTableau μ` allows
-arbitrary natural-number entries and is infinite for a nonempty `μ`; bounding the alphabet is what
-makes the generating function `TauCeti.schurPoly` a polynomial. -/
-abbrev BoundedSSYT (N : ℕ) (μ : YoungDiagram) : Type :=
-  {T : _root_.SemistandardYoungTableau μ // ∀ i c : ℕ, (i, c) ∈ μ → T i c < N}
-
-instance (N : ℕ) (μ : YoungDiagram) : Finite (BoundedSSYT N μ) := finite_ssyt_lt N μ
-
-noncomputable instance (N : ℕ) (μ : YoungDiagram) : Fintype (BoundedSSYT N μ) := .ofFinite _
-
 namespace BoundedSSYT
 
 variable {N : ℕ} {μ : YoungDiagram}
 
-/-- The entries of a tableau written in the alphabet `{0, …, N - 1}` all use letters of that
-alphabet. -/
-theorem entry_lt (T : BoundedSSYT N μ) {i c : ℕ} (h : (i, c) ∈ μ) : T.1 i c < N :=
-  T.2 i c h
-
 /-- The letters a bounded tableau uses all come from the alphabet, so its content is supported on
 the image of `Fin N`. -/
-theorem support_content_subset_range (T : BoundedSSYT N μ) :
+private theorem support_content_subset_range (T : BoundedSSYT N μ) :
     ↑(SemistandardYoungTableau.content T.1).support ⊆ Set.range (Fin.val : Fin N → ℕ) := by
   intro x hx
   simp only [Finset.mem_coe, SemistandardYoungTableau.support_content, Finset.mem_image] at hx
@@ -106,7 +94,7 @@ theorem support_content_subset_range (T : BoundedSSYT N μ) :
 
 /-- The **weight** of a bounded tableau: its content, read as an exponent vector indexed by the
 alphabet `Fin N`. This is the exponent of the monomial the tableau contributes to
-`TauCeti.schurPoly`. -/
+`TauCeti.diagramSchurPoly`. -/
 noncomputable def weight (T : BoundedSSYT N μ) : Fin N →₀ ℕ :=
   Finsupp.comapDomain Fin.val (SemistandardYoungTableau.content T.1) Fin.val_injective.injOn
 
@@ -131,7 +119,7 @@ theorem sum_weight (T : BoundedSSYT N μ) : ∑ i, weight T i = μ.card := by
 
 /-- **Boundedness is not an extra condition on a content extended by zero**: a letter outside the
 alphabet would have to occur in the content, where the extension puts a zero. -/
-theorem lt_of_content_eq {T : _root_.SemistandardYoungTableau μ} {d : Fin N →₀ ℕ}
+private theorem lt_of_content_eq {T : _root_.SemistandardYoungTableau μ} {d : Fin N →₀ ℕ}
     (h : ⇑(SemistandardYoungTableau.content T) = ⇑(Finsupp.mapDomain Fin.val d))
     {i c : ℕ} (hic : (i, c) ∈ μ) : T i c < N := by
   by_contra hlt
@@ -144,16 +132,16 @@ theorem lt_of_content_eq {T : _root_.SemistandardYoungTableau μ} {d : Fin N →
 
 /-- The weight of a bounded tableau whose content is an exponent vector extended by zero is that
 exponent vector. -/
-theorem weight_eq_of_content_eq (T : BoundedSSYT N μ) {d : Fin N →₀ ℕ}
+private theorem weight_eq_of_content_eq (T : BoundedSSYT N μ) {d : Fin N →₀ ℕ}
     (h : ⇑(SemistandardYoungTableau.content T.1) = ⇑(Finsupp.mapDomain Fin.val d)) :
     weight T = d := by
   ext i
   rw [weight_apply, congrFun h i, Finsupp.mapDomain_apply Fin.val_injective]
 
 /-- **The bounded tableaux of a given weight are the tableaux of the corresponding content.**
-Boundedness is not an extra condition on the right-hand side, by
-`TauCeti.BoundedSSYT.lt_of_content_eq`. -/
-noncomputable def weightEquiv (N : ℕ) (μ : YoungDiagram) (d : Fin N →₀ ℕ) :
+Boundedness is not an extra condition on the right-hand side: a letter outside the alphabet would
+have to occur in the content, where the extension by zero puts a zero. -/
+noncomputable def weightFiberEquivContentFiber (N : ℕ) (μ : YoungDiagram) (d : Fin N →₀ ℕ) :
     {T : BoundedSSYT N μ // weight T = d} ≃
       {T : _root_.SemistandardYoungTableau μ //
         ⇑(SemistandardYoungTableau.content T) = ⇑(Finsupp.mapDomain Fin.val d)} where
@@ -166,19 +154,7 @@ noncomputable def weightEquiv (N : ℕ) (μ : YoungDiagram) (d : Fin N →₀ �
 theorem card_weight_eq (d : Fin N →₀ ℕ) :
     Nat.card {T : BoundedSSYT N μ // weight T = d}
       = diagramKostkaNumber μ (Finsupp.mapDomain Fin.val d) :=
-  (Nat.card_congr (weightEquiv N μ d)).trans (diagramKostkaNumber_def _ _).symm
-
-/-- **A shape taller than its alphabet admits no tableau**: entries increase strictly down a
-column, so a column of more than `N` cells cannot be filled from an `N`-letter alphabet. -/
-theorem isEmpty_of_lt_colLen (h : N < μ.colLen 0) : IsEmpty (BoundedSSYT N μ) := by
-  refine ⟨fun T => absurd (entry_lt T (YoungDiagram.mem_iff_lt_colLen.mpr h)) (not_lt.mpr ?_)⟩
-  exact SemistandardYoungTableau.le_entry T.1 (YoungDiagram.mem_iff_lt_colLen.mpr h)
-
-/-- The empty shape has a unique tableau, the empty one. -/
-instance (N : ℕ) : Unique (BoundedSSYT N (⊥ : YoungDiagram)) where
-  default := ⟨_root_.SemistandardYoungTableau.highestWeight ⊥, fun _ _ hic => absurd hic (by simp)⟩
-  uniq T := Subtype.ext <| _root_.SemistandardYoungTableau.ext fun _ _ => by
-    rw [T.1.zeros (by simp), _root_.SemistandardYoungTableau.highestWeight_apply, if_neg (by simp)]
+  (Nat.card_congr (weightFiberEquivContentFiber N μ d)).trans (diagramKostkaNumber_def _ _).symm
 
 end BoundedSSYT
 
@@ -187,50 +163,54 @@ variable (N : ℕ) (R : Type*) [CommSemiring R] (μ : YoungDiagram)
 /-- **The Schur polynomial** `s_μ` of a Young diagram `μ` in the `N` variables `x₀, …, x_{N-1}`:
 the generating function of the semistandard Young tableaux of shape `μ` in the alphabet
 `{0, …, N - 1}`, each contributing the monomial `∏ᵢ xᵢ ^ (number of cells filled with i)`. -/
-noncomputable def schurPoly : MvPolynomial (Fin N) R :=
+noncomputable def diagramSchurPoly : MvPolynomial (Fin N) R :=
   ∑ T : BoundedSSYT N μ, monomial (BoundedSSYT.weight T) 1
 
 variable {N R μ}
 
 /-- **The coefficients of a Schur polynomial are the Kostka numbers**: the coefficient of `x^d` in
-`s_μ` counts the semistandard tableaux of shape `μ` whose content is `d`. -/
-theorem coeff_schurPoly (d : Fin N →₀ ℕ) :
-    coeff d (schurPoly N R μ) = (diagramKostkaNumber μ (Finsupp.mapDomain Fin.val d) : R) := by
+`s_μ` is the image in `R` of the number of semistandard tableaux of shape `μ` whose content
+is `d`. -/
+theorem coeff_diagramSchurPoly (d : Fin N →₀ ℕ) :
+    coeff d (diagramSchurPoly N R μ)
+      = (diagramKostkaNumber μ (Finsupp.mapDomain Fin.val d) : R) := by
   classical
-  rw [schurPoly, coeff_sum]
+  rw [diagramSchurPoly, coeff_sum]
   simp only [coeff_monomial]
   rw [Finset.sum_boole, ← BoundedSSYT.card_weight_eq d, Nat.card_eq_fintype_card,
     Fintype.card_subtype]
 
 /-- Scalars pass through a Schur polynomial: its coefficients are natural numbers, so it is the
 image of the integral one under any ring homomorphism. -/
-theorem map_schurPoly {S : Type*} [CommSemiring S] (f : R →+* S) :
-    MvPolynomial.map f (schurPoly N R μ) = schurPoly N S μ := by
+theorem map_diagramSchurPoly {S : Type*} [CommSemiring S] (f : R →+* S) :
+    MvPolynomial.map f (diagramSchurPoly N R μ) = diagramSchurPoly N S μ := by
   ext d
-  rw [coeff_map, coeff_schurPoly, coeff_schurPoly, map_natCast]
+  rw [coeff_map, coeff_diagramSchurPoly, coeff_diagramSchurPoly, map_natCast]
 
 /-- **A Schur polynomial of a shape taller than its alphabet vanishes**, there being no tableau to
 sum over. -/
-theorem schurPoly_eq_zero_of_lt_colLen (h : N < μ.colLen 0) : schurPoly N R μ = 0 := by
+theorem diagramSchurPoly_eq_zero_of_lt_colLen (h : N < μ.colLen 0) :
+    diagramSchurPoly N R μ = 0 := by
   have := BoundedSSYT.isEmpty_of_lt_colLen h
-  simp [schurPoly]
+  simp [diagramSchurPoly]
 
 /-- **The Schur polynomial of the empty shape is `1`**, the empty tableau contributing the empty
 monomial. -/
 @[simp]
-theorem schurPoly_bot : schurPoly N R (⊥ : YoungDiagram) = 1 := by
+theorem diagramSchurPoly_bot : diagramSchurPoly N R (⊥ : YoungDiagram) = 1 := by
   have hw : BoundedSSYT.weight (default : BoundedSSYT N (⊥ : YoungDiagram)) = 0 := by
     ext i
     rw [BoundedSSYT.weight_apply, Finsupp.coe_zero, Pi.zero_apply,
       SemistandardYoungTableau.content_apply]
     simp
-  rw [schurPoly, Finset.univ_unique, Finset.sum_singleton, hw, monomial_zero']
+  rw [diagramSchurPoly, Finset.univ_unique, Finset.sum_singleton, hw, monomial_zero']
   exact map_one C
 
 variable (N μ)
 
 /-- The exponent vector on the alphabet `Fin N` recording the row lengths of `μ`: the content of
-the highest-weight tableau of shape `μ`, and the leading exponent of `TauCeti.schurPoly`. -/
+the highest-weight tableau of shape `μ`, and the exponent of the monomial it contributes to
+`TauCeti.diagramSchurPoly`. -/
 noncomputable def rowLenWeight : Fin N →₀ ℕ :=
   Finsupp.equivFunOnFinite.symm fun i : Fin N => μ.rowLen i
 
@@ -255,66 +235,142 @@ theorem mapDomain_rowLenWeight (h : μ.colLen 0 ≤ N) :
     rintro ⟨y, hy⟩
     exact hj (hy ▸ y.isLt)
 
-/-- **The leading coefficient of a Schur polynomial is `1`**: the highest-weight tableau, whose
-`i`-th row consists of `i`s, is the unique tableau of shape `μ` whose content is the row lengths
-of `μ`. -/
-theorem coeff_schurPoly_rowLenWeight (h : μ.colLen 0 ≤ N) :
-    coeff (rowLenWeight N μ) (schurPoly N R μ) = 1 := by
-  rw [coeff_schurPoly, mapDomain_rowLenWeight h, diagramKostkaNumber_rowLen, Nat.cast_one]
+/-- **The coefficient of a Schur polynomial at the row lengths of its shape is `1`**: the
+highest-weight tableau, whose `i`-th row consists of `i`s, is the unique tableau of shape `μ`
+whose content is the row lengths of `μ`. -/
+theorem coeff_diagramSchurPoly_rowLenWeight (h : μ.colLen 0 ≤ N) :
+    coeff (rowLenWeight N μ) (diagramSchurPoly N R μ) = 1 := by
+  rw [coeff_diagramSchurPoly, mapDomain_rowLenWeight h, diagramKostkaNumber_rowLen, Nat.cast_one]
 
 /-- **A Schur polynomial of a shape no taller than its alphabet is nonzero.** -/
-theorem schurPoly_ne_zero [Nontrivial R] (h : μ.colLen 0 ≤ N) : schurPoly N R μ ≠ 0 := by
+theorem diagramSchurPoly_ne_zero [Nontrivial R] (h : μ.colLen 0 ≤ N) :
+    diagramSchurPoly N R μ ≠ 0 := by
   intro hz
-  have h1 := coeff_schurPoly_rowLenWeight (R := R) h
+  have h1 := coeff_diagramSchurPoly_rowLenWeight (R := R) h
   rw [hz, coeff_zero] at h1
   exact zero_ne_one h1
 
 /-- **A Schur polynomial vanishes exactly for a shape taller than its alphabet.** -/
-theorem schurPoly_eq_zero_iff [Nontrivial R] : schurPoly N R μ = 0 ↔ N < μ.colLen 0 :=
-  ⟨fun h => not_le.mp fun hle => schurPoly_ne_zero hle h, schurPoly_eq_zero_of_lt_colLen⟩
+theorem diagramSchurPoly_eq_zero_iff [Nontrivial R] :
+    diagramSchurPoly N R μ = 0 ↔ N < μ.colLen 0 :=
+  ⟨fun h => not_le.mp fun hle => diagramSchurPoly_ne_zero hle h,
+    diagramSchurPoly_eq_zero_of_lt_colLen⟩
 
 /-- **Triangularity of the Schur polynomials**: an exponent whose partial sums overshoot those of
 the row lengths of `μ` does not occur in `s_μ`. For partitions this is the vanishing of `s_μ`
 outside the dominance order, `TauCeti.kostkaNumber_eq_zero_of_not_dominates`. -/
-theorem coeff_schurPoly_eq_zero_of_sum_lt {d : Fin N →₀ ℕ} {k : ℕ}
+theorem coeff_diagramSchurPoly_eq_zero_of_sum_lt {d : Fin N →₀ ℕ} {k : ℕ}
     (h : (μ.rowLens.take k).sum < ∑ i ∈ Finset.range k, Finsupp.mapDomain Fin.val d i) :
-    coeff d (schurPoly N R μ) = 0 := by
+    coeff d (diagramSchurPoly N R μ) = 0 := by
   have hzero : diagramKostkaNumber μ (Finsupp.mapDomain Fin.val d) = 0 := by
     by_contra hne
     exact absurd (sum_le_sum_take_rowLens_of_diagramKostkaNumber_ne_zero hne k) (not_le.mpr h)
-  rw [coeff_schurPoly, hzero, Nat.cast_zero]
+  rw [coeff_diagramSchurPoly, hzero, Nat.cast_zero]
 
 /-- **A Schur polynomial is homogeneous** of degree the number of cells of its shape: a tableau of
 shape `μ` has one entry per cell. -/
-theorem isHomogeneous_schurPoly : (schurPoly N R μ).IsHomogeneous μ.card :=
+theorem isHomogeneous_diagramSchurPoly : (diagramSchurPoly N R μ).IsHomogeneous μ.card :=
   IsHomogeneous.sum _ _ _ fun T _ =>
     isHomogeneous_monomial _ ((Finsupp.degree_eq_sum _).trans (BoundedSSYT.sum_weight T))
 
 /-- The total degree of a nonzero Schur polynomial is the number of cells of its shape. -/
-theorem totalDegree_schurPoly [Nontrivial R] (h : μ.colLen 0 ≤ N) :
-    (schurPoly N R μ).totalDegree = μ.card :=
-  isHomogeneous_schurPoly.totalDegree (schurPoly_ne_zero h)
+theorem totalDegree_diagramSchurPoly [Nontrivial R] (h : μ.colLen 0 ≤ N) :
+    (diagramSchurPoly N R μ).totalDegree = μ.card :=
+  isHomogeneous_diagramSchurPoly.totalDegree (diagramSchurPoly_ne_zero h)
 
 section Partition
 
 variable {n : ℕ} (μ ν : n.Partition)
 
 /-- **The coefficients of a Schur polynomial are the Kostka numbers of partitions**: the
-coefficient of `s_μ` at the exponent recording the parts of `ν` is `K_{μν}`. The row bound is
-what makes the exponent record all of `ν`: an alphabet shorter than the number of parts of `ν`
-would truncate it. -/
-theorem coeff_schurPoly_diagramOf (h : (diagramOf ν).colLen 0 ≤ N) :
-    coeff (rowLenWeight N (diagramOf ν)) (schurPoly N R (diagramOf μ))
+coefficient of `s_μ` at the exponent recording the parts of `ν` is the image in `R` of `K_{μν}`.
+The row bound is what makes the exponent record all of `ν`: an alphabet shorter than the number of
+parts of `ν` would truncate it. -/
+theorem coeff_diagramSchurPoly_diagramOf (h : (diagramOf ν).colLen 0 ≤ N) :
+    coeff (rowLenWeight N (diagramOf ν)) (diagramSchurPoly N R (diagramOf μ))
       = (kostkaNumber μ ν : R) := by
-  rw [coeff_schurPoly, mapDomain_rowLenWeight h, kostkaNumber_def]
+  rw [coeff_diagramSchurPoly, mapDomain_rowLenWeight h, kostkaNumber_def]
 
 /-- **The Schur polynomials are triangular for the dominance order**: the exponent recording the
 parts of `ν` occurs in `s_μ` only if `μ` dominates `ν`. -/
-theorem coeff_schurPoly_diagramOf_eq_zero_of_not_dominates (h : (diagramOf ν).colLen 0 ≤ N)
+theorem coeff_diagramSchurPoly_diagramOf_eq_zero_of_not_dominates (h : (diagramOf ν).colLen 0 ≤ N)
     (hd : ¬ Dominates μ ν) :
-    coeff (rowLenWeight N (diagramOf ν)) (schurPoly N R (diagramOf μ)) = 0 := by
-  rw [coeff_schurPoly_diagramOf μ ν h, kostkaNumber_eq_zero_of_not_dominates hd, Nat.cast_zero]
+    coeff (rowLenWeight N (diagramOf ν)) (diagramSchurPoly N R (diagramOf μ)) = 0 := by
+  rw [coeff_diagramSchurPoly_diagramOf μ ν h, kostkaNumber_eq_zero_of_not_dominates hd,
+    Nat.cast_zero]
 
 end Partition
+
+section Alphabet
+
+variable {σ : Type*} [Fintype σ] {n : ℕ}
+
+/-- **The Schur polynomial** `s_μ` of a partition `μ` in the finite alphabet `σ`: the Schur
+polynomial `TauCeti.diagramSchurPoly` of the Young diagram of `μ` in the alphabet
+`Fin (Fintype.card σ)`, renamed along the ordering `Fintype.equivFin σ` of `σ`. The ordering does
+not matter, `s_μ` being symmetric, but symmetry is not proved here. -/
+noncomputable def schurPoly (σ : Type*) [Fintype σ] (R : Type*) [CommSemiring R] {n : ℕ}
+    (μ : n.Partition) : MvPolynomial σ R :=
+  rename (Fintype.equivFin σ).symm (diagramSchurPoly (Fintype.card σ) R (diagramOf μ))
+
+/-- The exponent vector on the alphabet `σ` recording the parts of `ν`, read through the ordering
+`Fintype.equivFin σ`: the image of `TauCeti.rowLenWeight` of the Young diagram of `ν`. -/
+noncomputable def partWeight (σ : Type*) [Fintype σ] {n : ℕ} (ν : n.Partition) : σ →₀ ℕ :=
+  Finsupp.mapDomain (Fintype.equivFin σ).symm (rowLenWeight (Fintype.card σ) (diagramOf ν))
+
+@[simp]
+theorem partWeight_apply (ν : n.Partition) (x : σ) :
+    partWeight σ ν x = (diagramOf ν).rowLen (Fintype.equivFin σ x) := by
+  conv_lhs => rw [partWeight, ← (Fintype.equivFin σ).symm_apply_apply x]
+  rw [Finsupp.mapDomain_apply (Fintype.equivFin σ).symm.injective, rowLenWeight_apply]
+
+variable (μ ν : n.Partition)
+
+/-- **The coefficients of a Schur polynomial in a finite alphabet are the Kostka numbers**: at the
+exponent obtained from `d` by the ordering of the alphabet, the coefficient of `s_μ` is the image
+in `R` of the Kostka number of `μ` and the content that `d` extends to by zero. -/
+theorem coeff_schurPoly_mapDomain (d : Fin (Fintype.card σ) →₀ ℕ) :
+    coeff (Finsupp.mapDomain (Fintype.equivFin σ).symm d) (schurPoly σ R μ)
+      = (diagramKostkaNumber (diagramOf μ) (Finsupp.mapDomain Fin.val d) : R) := by
+  rw [schurPoly, coeff_rename_mapDomain _ (Fintype.equivFin σ).symm.injective,
+    coeff_diagramSchurPoly]
+
+/-- **The coefficient of a Schur polynomial at a partition is a Kostka number**: the coefficient
+of `s_μ` at the exponent recording the parts of `ν` is the image in `R` of `K_{μν}`. The row bound
+is what makes the exponent record all of `ν`: an alphabet with fewer letters than `ν` has parts
+would truncate the record. -/
+theorem coeff_schurPoly_partWeight (h : (diagramOf ν).colLen 0 ≤ Fintype.card σ) :
+    coeff (partWeight σ ν) (schurPoly σ R μ) = (kostkaNumber μ ν : R) := by
+  rw [partWeight, coeff_schurPoly_mapDomain, mapDomain_rowLenWeight h, kostkaNumber_def]
+
+/-- **The Schur polynomials are triangular for the dominance order**: the exponent recording the
+parts of `ν` occurs in `s_μ` only if `μ` dominates `ν`. -/
+theorem coeff_schurPoly_partWeight_eq_zero_of_not_dominates
+    (h : (diagramOf ν).colLen 0 ≤ Fintype.card σ) (hd : ¬ Dominates μ ν) :
+    coeff (partWeight σ ν) (schurPoly σ R μ) = 0 := by
+  rw [coeff_schurPoly_partWeight μ ν h, kostkaNumber_eq_zero_of_not_dominates hd, Nat.cast_zero]
+
+/-- Scalars pass through a Schur polynomial: its coefficients are natural numbers, so it is the
+image of the integral one under any ring homomorphism. -/
+theorem map_schurPoly {S : Type*} [CommSemiring S] (f : R →+* S) :
+    MvPolynomial.map f (schurPoly σ R μ) = schurPoly σ S μ := by
+  rw [schurPoly, schurPoly, map_rename, map_diagramSchurPoly]
+
+/-- **A Schur polynomial vanishes exactly for a partition with more parts than the alphabet has
+letters.** -/
+theorem schurPoly_eq_zero_iff [Nontrivial R] :
+    schurPoly σ R μ = 0 ↔ Fintype.card σ < (diagramOf μ).colLen 0 := by
+  rw [schurPoly, map_eq_zero_iff _ (rename_injective _ (Fintype.equivFin σ).symm.injective),
+    diagramSchurPoly_eq_zero_iff]
+
+/-- **A Schur polynomial is homogeneous** of degree the natural number its partition partitions: a
+tableau of that shape has one entry per cell. -/
+theorem isHomogeneous_schurPoly : (schurPoly σ R μ).IsHomogeneous n := by
+  have h := isHomogeneous_diagramSchurPoly (N := Fintype.card σ) (R := R) (μ := diagramOf μ)
+  rw [card_diagramOf μ] at h
+  rw [schurPoly]
+  exact h.rename_isHomogeneous
+
+end Alphabet
 
 end TauCeti

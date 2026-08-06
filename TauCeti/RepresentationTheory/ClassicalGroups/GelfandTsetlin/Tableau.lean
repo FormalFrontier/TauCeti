@@ -51,7 +51,8 @@ regime is there a tableau to speak of.
 * `TauCeti.SemistandardYoungTableau.patternEntry` and
   `TauCeti.SemistandardYoungTableau.toGTPattern`: the pattern read off a tableau.
 * `TauCeti.gtPatternEquivSSYT`: **the bijection**, between the patterns with `n` rows and top row
-  the shape `μ` and the semistandard Young tableaux of shape `μ` with entries below `n`.
+  the shape `μ` and the semistandard Young tableaux of shape `μ` with entries below `n`, that is,
+  `TauCeti.BoundedSSYT n μ`.
 
 ## Main results
 
@@ -365,8 +366,7 @@ than the index of the first row that does.
 Together with the count of the patterns with a given top row, this is the tableau reading of the
 Gelfand-Tsetlin basis of an irreducible polynomial representation of `GL n`. -/
 def gtPatternEquivSSYT (n : ℕ) (μ : YoungDiagram) (hμ : μ.colLen 0 ≤ n) :
-    {P : GTPattern n // ∀ i : Fin n, P.topRow i = (μ.rowLen i : ℤ)} ≃
-      {T : SemistandardYoungTableau μ // ∀ i c : ℕ, (i, c) ∈ μ → T i c < n} where
+    {P : GTPattern n // ∀ i : Fin n, P.topRow i = (μ.rowLen i : ℤ)} ≃ BoundedSSYT n μ where
   toFun P := ⟨P.1.toTableau hμ P.2, fun _ _ h => P.1.toTableau_lt hμ P.2 h⟩
   invFun T := ⟨SemistandardYoungTableau.toGTPattern T.1 n,
     SemistandardYoungTableau.topRow_toGTPattern T.1 n T.2⟩
@@ -426,7 +426,7 @@ theorem gtPatternEquivSSYT_apply_coe (n : ℕ) (μ : YoungDiagram) (hμ : μ.col
 `TauCeti.SemistandardYoungTableau.toGTPattern` it names. -/
 @[simp]
 theorem gtPatternEquivSSYT_symm_apply_coe (n : ℕ) (μ : YoungDiagram) (hμ : μ.colLen 0 ≤ n)
-    (T : {T : SemistandardYoungTableau μ // ∀ i c : ℕ, (i, c) ∈ μ → T i c < n}) :
+    (T : BoundedSSYT n μ) :
     ((gtPatternEquivSSYT n μ hμ).symm T).1 = SemistandardYoungTableau.toGTPattern T.1 n :=
   (rfl)
 
@@ -435,7 +435,7 @@ many as the semistandard Young tableaux of shape `μ` with entries below `n`.  T
 which the bijection feeds the Gelfand-Tsetlin dimension count. -/
 theorem card_gtPattern_topRow_eq_card_ssyt (n : ℕ) (μ : YoungDiagram) (hμ : μ.colLen 0 ≤ n) :
     Nat.card {P : GTPattern n // ∀ i : Fin n, P.topRow i = (μ.rowLen i : ℤ)}
-      = Nat.card {T : SemistandardYoungTableau μ // ∀ i c : ℕ, (i, c) ∈ μ → T i c < n} :=
+      = Nat.card (BoundedSSYT n μ) :=
   Nat.card_congr (gtPatternEquivSSYT n μ hμ)
 
 end TauCeti
