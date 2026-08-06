@@ -44,11 +44,11 @@ followed by a fixed-point-free involution, so a strand cannot return to its own 
   `TauCeti.composeDiagram_val_inl_eq_inl_of_cap_upper`,
   `TauCeti.composeDiagram_val_inr_eq_inr_of_cup_lower`: the arcs of the composite along the
   strands that leave the middle boundary after at most two crossings.
-* `TauCeti.BrauerDiagram.inr_throughEquiv_composeDiagram`: a through strand of `D₂` continued by
-  a through strand of `D₁` is a through strand of the composite.
-* `TauCeti.BrauerDiagram.inl_capMatching_composeDiagram`,
-  `TauCeti.BrauerDiagram.inr_cupMatching_composeDiagram`: the caps of `D₂` are caps of the
-  composite, and the cups of `D₁` are cups of the composite.
+* `TauCeti.BrauerDiagram.composeDiagram_val_inl_eq_inr_throughEquiv`: a through strand of `D₂`
+  continued by a through strand of `D₁` is a through strand of the composite.
+* `TauCeti.BrauerDiagram.composeDiagram_val_inl_eq_inl_capMatching`,
+  `TauCeti.BrauerDiagram.composeDiagram_val_inr_eq_inr_cupMatching`: the caps of `D₂` are caps of
+  the composite, and the cups of `D₁` are cups of the composite.
 * `TauCeti.composeDiagram_permToBrauer_one_left`,
   `TauCeti.composeDiagram_permToBrauer_one_right`: the identity diagram is a two-sided identity
   for stacking.
@@ -305,30 +305,6 @@ def stackStart (D₁ D₂ : BrauerDiagram k) : Fin k ⊕ Fin k → (Fin k ⊕ Fi
   | Sum.inr j =>
     (D₁.val (Sum.inr j)).elim (fun a => Sum.inr (Sum.inr a)) fun j' => Sum.inl (Sum.inr j')
 
-/-- A strand at the middle point `a`, about to run up through `D₁`, follows the arc of `D₁`
-at `Sum.inl a`. -/
-theorem stackStep_inl (D₁ D₂ : BrauerDiagram k) (a : Fin k) : stackStep D₁ D₂ (Sum.inl a) =
-    (D₁.val (Sum.inl a)).elim (fun a' => Sum.inr (Sum.inr a')) fun j => Sum.inl (Sum.inr j) :=
-  rfl
-
-/-- A strand at the middle point `a`, about to run down through `D₂`, follows the arc of `D₂`
-at `Sum.inr a`. -/
-theorem stackStep_inr (D₁ D₂ : BrauerDiagram k) (a : Fin k) : stackStep D₁ D₂ (Sum.inr a) =
-    (D₂.val (Sum.inr a)).elim (fun i => Sum.inl (Sum.inl i)) fun a' => Sum.inr (Sum.inl a') :=
-  rfl
-
-/-- A strand starting at the bottom point `i` of the stack follows the arc of `D₂` at
-`Sum.inl i`. -/
-theorem stackStart_inl (D₁ D₂ : BrauerDiagram k) (i : Fin k) : stackStart D₁ D₂ (Sum.inl i) =
-    (D₂.val (Sum.inl i)).elim (fun i' => Sum.inl (Sum.inl i')) fun a => Sum.inr (Sum.inl a) :=
-  rfl
-
-/-- A strand starting at the top point `j` of the stack follows the arc of `D₁` at
-`Sum.inr j`. -/
-theorem stackStart_inr (D₁ D₂ : BrauerDiagram k) (j : Fin k) : stackStart D₁ D₂ (Sum.inr j) =
-    (D₁.val (Sum.inr j)).elim (fun a => Sum.inr (Sum.inr a)) fun j' => Sum.inl (Sum.inr j') :=
-  rfl
-
 namespace BrauerDiagram
 
 variable (D₁ D₂ : BrauerDiagram k)
@@ -343,18 +319,18 @@ private theorem walk_inl_eq (x : Fin k ⊕ Fin k) :
     walk D₁ D₂ (Sum.inl x) = (stackStart D₁ D₂ x).elim Sum.inl fun s => Sum.inr s.swap := by
   rcases x with i | j
   · rcases h : D₂.val (Sum.inl i) with i' | a <;>
-      simp [walk_inl_inl, stackStart_inl, h, glue, lowerPt]
+      simp [walk_inl_inl, stackStart, h, glue, lowerPt]
   · rcases h : D₁.val (Sum.inr j) with a | j' <;>
-      simp [walk_inl_inr, stackStart_inr, h, glue, upperPt]
+      simp [walk_inl_inr, stackStart, h, glue, upperPt]
 
 /-- A later step of the walk, read off the next arc of the strand. -/
 private theorem walk_inr_swap (s : Fin k ⊕ Fin k) :
     walk D₁ D₂ (Sum.inr s.swap) = (stackStep D₁ D₂ s).elim Sum.inl fun t => Sum.inr t.swap := by
   rcases s with a | a
   · rcases h : D₁.val (Sum.inl a) with a' | j <;>
-      simp [walk_inr_inr, stackStep_inl, h, glue, upperPt]
+      simp [walk_inr_inr, stackStep, h, glue, upperPt]
   · rcases h : D₂.val (Sum.inr a) with i | a' <;>
-      simp [walk_inr_inl, stackStep_inr, h, glue, lowerPt]
+      simp [walk_inr_inl, stackStep, h, glue, lowerPt]
 
 /-- A strand whose first arc crosses the middle boundary at the middle state `s` is walked from
 `s` on. -/
@@ -553,7 +529,8 @@ namespace BrauerDiagram
 /-- **A through strand of `D₂` continued by a through strand of `D₁` is a through strand of the
 composite**: the composite joins the bottom endpoint of a through strand of `D₂` to the top
 endpoint of the through strand of `D₁` that continues it. -/
-theorem inr_throughEquiv_composeDiagram (i : {i : Fin k // D₂.IsThrough (Sum.inl i)})
+theorem composeDiagram_val_inl_eq_inr_throughEquiv
+    (i : {i : Fin k // D₂.IsThrough (Sum.inl i)})
     (h : D₁.IsThrough (Sum.inl (D₂.throughEquiv i).1)) :
     (composeDiagram D₁ D₂).val (Sum.inl i.1) = Sum.inr (D₁.throughEquiv ⟨_, h⟩).1 :=
   composeDiagram_val_inl_eq_inr_of_through D₁ D₂ (D₂.inr_throughEquiv i).symm
@@ -561,13 +538,13 @@ theorem inr_throughEquiv_composeDiagram (i : {i : Fin k // D₂.IsThrough (Sum.i
 
 /-- **The caps of `D₂` are caps of the composite**: the composite matches a capped bottom point
 of `D₂` with the other end of that cap. -/
-theorem inl_capMatching_composeDiagram (i : {i : Fin k // D₂.IsCap (Sum.inl i)}) :
+theorem composeDiagram_val_inl_eq_inl_capMatching (i : {i : Fin k // D₂.IsCap (Sum.inl i)}) :
     (composeDiagram D₁ D₂).val (Sum.inl i.1) = Sum.inl (D₂.capMatching.val i).1 :=
   composeDiagram_val_inl_eq_inl_of_cap_lower D₁ D₂ (D₂.inl_capMatching i).symm
 
 /-- **The cups of `D₁` are cups of the composite**: the composite matches a cupped top point of
 `D₁` with the other end of that cup. -/
-theorem inr_cupMatching_composeDiagram (j : {j : Fin k // D₁.IsCup (Sum.inr j)}) :
+theorem composeDiagram_val_inr_eq_inr_cupMatching (j : {j : Fin k // D₁.IsCup (Sum.inr j)}) :
     (composeDiagram D₁ D₂).val (Sum.inr j.1) = Sum.inr (D₁.cupMatching.val j).1 :=
   composeDiagram_val_inr_eq_inr_of_cup_upper D₁ D₂ (D₁.inr_cupMatching j).symm
 
