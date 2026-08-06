@@ -7,7 +7,7 @@ module
 public import TauCeti.NumberTheory.Multiquadratic.FundamentalDiscriminant.OfSquarefree
 public import Mathlib.FieldTheory.IntermediateField.Adjoin.Basic
 import TauCeti.NumberTheory.Multiquadratic.FundamentalDiscriminant.Factorization
-import TauCeti.NumberTheory.Multiquadratic.QuadraticSubfield
+import TauCeti.NumberTheory.Multiquadratic.Quadratic.Subfield
 
 /-!
 # A square root of the radicand in the prime-discriminant compositum

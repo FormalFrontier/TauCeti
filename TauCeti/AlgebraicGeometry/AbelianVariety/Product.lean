@@ -114,18 +114,18 @@ def fst (A B : AbelianVariety K) : prod A B ⟶ A := by
   refine Hom.mk'
     (eqToHom (prod_toOver A B) ≫ CartesianMonoidalCategory.fst A.toOver B.toOver) ?_ ?_
   · rw [← Category.assoc, prod_one]
-    simp
+    simp only [IsMonHom.one_hom]
   · rw [← Category.assoc, prod_mul]
-    simp
+    simp only [Category.assoc, IsMonHom.mul_hom, tensorHom_comp_tensorHom_assoc]
 
 /-- The second projection from a product of abelian varieties. -/
 def snd (A B : AbelianVariety K) : prod A B ⟶ B := by
   refine Hom.mk'
     (eqToHom (prod_toOver A B) ≫ CartesianMonoidalCategory.snd A.toOver B.toOver) ?_ ?_
   · rw [← Category.assoc, prod_one]
-    simp
+    simp only [IsMonHom.one_hom]
   · rw [← Category.assoc, prod_mul]
-    simp
+    simp only [Category.assoc, IsMonHom.mul_hom, tensorHom_comp_tensorHom_assoc]
 
 /-- Pair two homomorphisms with a common source to obtain a homomorphism into a product. -/
 def lift {A B C : AbelianVariety K} (f : C ⟶ A) (g : C ⟶ B) :
@@ -133,8 +133,11 @@ def lift {A B C : AbelianVariety K} (f : C ⟶ A) (g : C ⟶ B) :
   refine Hom.mk'
     (CartesianMonoidalCategory.lift (Hom.toOverHom f) (Hom.toOverHom g) ≫
       eqToHom (prod_toOver A B).symm) ?_ ?_
-  · simp [← cancel_mono (eqToHom (prod_toOver A B))]
-  · simp [← cancel_mono (eqToHom (prod_toOver A B))]
+  · simp only [IsMonHom.one_hom_assoc, ← cancel_mono (eqToHom (prod_toOver A B)),
+      Category.assoc, eqToHom_trans, eqToHom_refl, Category.comp_id, prod_one]
+  · simp only [IsMonHom.mul_hom_assoc, ← cancel_mono (eqToHom (prod_toOver A B)),
+      Category.assoc, eqToHom_trans, eqToHom_refl, Category.comp_id, prod_mul,
+      tensorHom_comp_tensorHom_assoc]
 
 /-- The morphism over `Spec K` underlying the first projection is the pullback projection. -/
 @[simp]

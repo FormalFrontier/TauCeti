@@ -633,13 +633,13 @@ private lemma evalE₄E₆_monomial_qExpansion_coeff_zero {n : ℕ} {d₀ : Fin 
     Algebra.algebraMap_eq_smul_one, smul_mul_assoc, one_mul, evalE₄E₆_monomial,
     DirectSum.smul_apply,
     -- Scalar action commutes with the coercion to functions
-    -- (`ModularForm.IsGLPos.coe_smul`); the ascribed `show` pins the statement at the
+    -- (`FunLike.coe_smul`); the ascribed `show` pins the statement at the
     -- right type.
     show (↑(c • ((DirectSum.of (ModularForm 𝒮ℒ) 4 E₄ ^ d₀ 0 *
         DirectSum.of (ModularForm 𝒮ℒ) 6 E₆ ^ d₀ 1) (↑n : ℤ))) : ℍ → ℂ) =
       c • (↑((DirectSum.of (ModularForm 𝒮ℒ) 4 E₄ ^ d₀ 0 *
         DirectSum.of (ModularForm 𝒮ℒ) 6 E₆ ^ d₀ 1) (↑n : ℤ)) : ℍ → ℂ) from
-      ModularForm.IsGLPos.coe_smul _ c,
+      FunLike.coe_smul c _,
     UpperHalfPlane.qExpansion_smul (ModularFormClass.analyticAt_cuspFunction_zero _
       one_pos one_mem_strictPeriods_SL) c, PowerSeries.coeff_smul,
     monomial_qExpansion_coeff_zero_eq_one hd₀_weight]
@@ -683,7 +683,7 @@ private lemma eval_discriminantPoly_mul_eq_zero_imp_eval_eq_zero {n : ℕ} (hn12
   rw [evalE₄E₆_discriminantPoly_mul_apply s hs hcast] at hds
   ext z
   have hpw := DFunLike.congr_fun hds z
-  simp only [ModularForm.zero_apply, cast_apply hcast] at hpw ⊢
+  simp only [_root_.zero_apply, cast_apply hcast] at hpw ⊢
   exact (mul_eq_zero.mp hpw).resolve_left (discriminant_ne_zero z)
 
 private lemma per_weight_injective_inductive_step (n : ℕ)

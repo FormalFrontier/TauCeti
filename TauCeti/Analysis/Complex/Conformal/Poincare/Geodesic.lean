@@ -22,9 +22,9 @@ tangents of the signed radii:
 `hyperbolicDist (u * a) (u * b) = |artanh a - artanh b|`
 (`TauCeti.hyperbolicDist_mul_ofReal_of_norm_eq_one`). Indeed the Moebius denominator
 `1 - conj (u * b) * (u * a)` collapses to the real number `1 - a * b`, so the pseudo-hyperbolic
-expression is `|a - b| / |1 - a * b|`, and the subtraction formula for `Real.artanh` — the
-mirror image of the addition formula `TauCeti.artanh_add` proved for the triangle inequality —
-turns that into `|artanh a - artanh b|`. Reparametrising the diameter by `a = Real.tanh t` makes
+expression is `|a - b| / |1 - a * b|`, and the subtraction formula `Real.artanh_sub` of
+`TauCeti/Analysis/SpecialFunctions/Artanh.lean`, together with `Real.artanh_abs`, turns that
+into `|artanh a - artanh b|`. Reparametrising the diameter by `a = Real.tanh t` makes
 it a unit-speed line: `TauCeti.PoincareDisc.radialGeodesic u` is an isometric embedding of `ℝ`.
 
 Every point of the disc lies on such a line through the origin, and the disc automorphisms act
@@ -85,41 +85,6 @@ namespace TauCeti
 
 open _root_.Complex Metric Set
 
-/-! ### Inverse hyperbolic tangent helpers -/
-
-/-- `Real.artanh` is odd on `(-1, 1)`.
-
-Mathlib's `Analysis/SpecialFunctions/Artanh.lean` records the monotonicity, sign and inversion
-properties of `Real.artanh` but not this one (the name `Real.artanh_neg` is taken there by the
-sign lemma). This is a local proof helper for the geodesic computation, kept private so that a
-general real-analysis fact is not exported from a file about the Poincaré disc. -/
-private lemma artanh_neg_eq {x : ℝ} (hx : x ∈ Ioo (-1 : ℝ) 1) :
-    Real.artanh (-x) = -Real.artanh x := by
-  have h1 : (0 : ℝ) < 1 + x := by linarith [hx.1]
-  have h2 : (0 : ℝ) < 1 - x := by linarith [hx.2]
-  rw [Real.artanh_eq_half_log ⟨by linarith [hx.2], by linarith [hx.1]⟩,
-    Real.artanh_eq_half_log (Ioo_subset_Icc_self hx), ← sub_eq_add_neg, sub_neg_eq_add,
-    ← inv_div (1 + x) (1 - x), Real.log_inv]
-  ring
-
-/-- The absolute value passes through `Real.artanh` on `(-1, 1)`. -/
-private lemma artanh_abs {x : ℝ} (hx : x ∈ Ioo (-1 : ℝ) 1) :
-    Real.artanh |x| = |Real.artanh x| := by
-  rcases le_or_gt 0 x with hx0 | hx0
-  · rw [abs_of_nonneg hx0, abs_of_nonneg (Real.artanh_nonneg hx0)]
-  · rw [abs_of_neg hx0, artanh_neg_eq hx, abs_of_nonpos (Real.artanh_nonpos hx0.le)]
-
-/-- **Subtraction formula for the inverse hyperbolic tangent.** For `a, b ∈ (-1, 1)`,
-`artanh a - artanh b = artanh ((a - b) / (1 - a * b))`. This is the addition formula
-`TauCeti.artanh_add`, which underlies the hyperbolic triangle inequality, with `b` negated. -/
-private lemma artanh_sub {a b : ℝ} (ha : a ∈ Ioo (-1 : ℝ) 1) (hb : b ∈ Ioo (-1 : ℝ) 1) :
-    Real.artanh a - Real.artanh b = Real.artanh ((a - b) / (1 - a * b)) := by
-  have hb' : -b ∈ Ioo (-1 : ℝ) 1 := ⟨by linarith [hb.2], by linarith [hb.1]⟩
-  have h := artanh_add ha hb'
-  rw [artanh_neg_eq hb] at h
-  rw [sub_eq_add_neg a b, sub_eq_add_neg 1 (a * b), ← mul_neg, ← h]
-  ring
-
 /-! ### The hyperbolic distance along a Euclidean diameter -/
 
 /-- The pseudo-hyperbolic expression of two points `u * a`, `u * b` of the same real line
@@ -148,17 +113,8 @@ theorem hyperbolicDist_mul_ofReal_of_norm_eq_one {u : ℂ} (hu : ‖u‖ = 1) {a
     hyperbolicDist (u * a) (u * b) = |Real.artanh a - Real.artanh b| := by
   have ha' := abs_lt.1 ha
   have hb' := abs_lt.1 hb
-  have hab : (0 : ℝ) < 1 - a * b := by nlinarith [ha'.1, ha'.2, hb'.1, hb'.2]
-  have hquot : (a - b) / (1 - a * b) ∈ Ioo (-1 : ℝ) 1 := by
-    refine mem_Ioo.2 (abs_lt.1 ?_)
-    rw [abs_div, abs_of_pos hab, div_lt_one hab, abs_lt]
-    have h₁ : (0 : ℝ) < (1 + a) * (1 - b) :=
-      mul_pos (by linarith [ha'.1]) (by linarith [hb'.2])
-    have h₂ : (0 : ℝ) < (1 - a) * (1 + b) :=
-      mul_pos (by linarith [ha'.2]) (by linarith [hb'.1])
-    constructor <;> nlinarith [h₁, h₂]
   rw [hyperbolicDist_def, pseudoHyperbolicExpr_mul_ofReal_of_norm_eq_one hu a b,
-    ← abs_div, artanh_abs hquot, ← artanh_sub ⟨ha'.1, ha'.2⟩ ⟨hb'.1, hb'.2⟩]
+    ← abs_div, Real.artanh_abs, ← Real.artanh_sub ⟨ha'.1, ha'.2⟩ ⟨hb'.1, hb'.2⟩]
 
 /-- Reparametrising a Euclidean diameter by `Real.tanh` makes it unit speed: the hyperbolic
 distance between `u * Real.tanh s` and `u * Real.tanh t` is `|s - t|`. -/

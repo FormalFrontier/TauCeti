@@ -32,7 +32,8 @@ stack merges.
 * `DoubleCoset.multiplicity_doubleCoset_congr`: `m(g, h; d)` depends on `d` only through the
   double coset `Γ₁dΓ₃`.
 * `HeckeCosetModule.mul_assoc`: associativity of the convolution product at mixed levels.
-* the `Semiring (𝕋 Δ H R)` instance.
+* the `Semiring (𝕋 Δ H R)` instance, and the `Ring (𝕋 Δ H R)` instance over a ring of
+  coefficients.
 -/
 
 public section
@@ -501,5 +502,12 @@ noncomputable instance instSemiringHeckeRing {H : Subgroup G} [IsHeckeTriple Δ 
     Semiring (𝕋 Δ H R) :=
   { (inferInstance : NonAssocSemiring (𝕋 Δ H R)) with
     mul_assoc := fun f g h ↦ HeckeCosetModule.mul_assoc R f g h }
+
+/-- The Hecke ring over a ring of coefficients is a ring: the coefficientwise additive
+inverse of the underlying finitely supported functions. -/
+noncomputable instance instRingHeckeRing {H : Subgroup G} [IsHeckeTriple Δ H H]
+    {R' : Type*} [Ring R'] : Ring (𝕋 Δ H R') :=
+  { (inferInstance : Semiring (𝕋 Δ H R')),
+    (inferInstance : AddCommGroup (𝕋 Δ H R')) with }
 
 end HeckeCosetModule
