@@ -78,6 +78,15 @@ theorem internalProjection_apply_eq_zero_of_mem_of_ne (hQi : iSupIndep Q) (hQt :
   Submodule.projectionOnto_apply_of_mem_right _
     (le_iSup₂ (f := fun k (_ : k ≠ j) ↦ Q k) i hij hx)
 
+/-- The projection onto `Q j` restricts to `0` on any other summand `Q i`.
+
+This is the form `simp` can use: the summand index `i` is read off the type of `x`, whereas in
+`TauCeti.internalProjection_apply_eq_zero_of_mem_of_ne` it appears only in the hypotheses. -/
+@[simp]
+theorem internalProjection_apply_of_ne (hQi : iSupIndep Q) (hQt : ⨆ i, Q i = ⊤) {i j : ι}
+    (hij : i ≠ j) (x : Q i) : internalProjection hQi hQt j (x : M) = 0 :=
+  internalProjection_apply_eq_zero_of_mem_of_ne hQi hQt hij x.2
+
 /-- The kernel of the projection onto `Q i` is the supremum of the other summands. -/
 @[simp]
 theorem ker_internalProjection (hQi : iSupIndep Q) (hQt : ⨆ i, Q i = ⊤) (i : ι) :

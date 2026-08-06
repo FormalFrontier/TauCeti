@@ -48,7 +48,8 @@ local-endomorphism-ring theorem. Both are supplied here.
 
 `IsIndecomposableModule`, its two projections, and its transport along a linear equivalence are
 stated for a semimodule over a semiring, since the submodule lattice and the order isomorphism it
-inherits from a linear equivalence need no subtraction. Everything from the idempotent
+inherits from a linear equivalence need no subtraction; so is `nontrivial_of_isLocalRing_end`,
+which only reads `0 ≠ 1` off the endomorphism semiring. Everything from the idempotent
 reformulation onwards is stated over a ring, which is where Mathlib puts the tools it uses:
 `LinearMap.IsIdempotentElem.isCompl` and `Submodule.projection` build a projection by subtracting,
 and `IsSimpleModule` is itself only defined for modules over a ring.
@@ -112,6 +113,14 @@ theorem IsIndecomposableModule.of_linearEquiv {N : Type w} [AddCommMonoid N] [Mo
   have := h.nontrivial
   refine ⟨e.symm.toEquiv.nontrivial, fun P Q hPQ ↦ ?_⟩
   simpa using h.eq_bot_or_eq_bot ((Submodule.orderIsoMapComap e.symm).isCompl hPQ)
+
+/-- A module with local endomorphism ring is nonzero: over the zero module the endomorphism ring is
+the zero ring, which is not local. -/
+theorem nontrivial_of_isLocalRing_end [IsLocalRing (Module.End A M)] : Nontrivial M := by
+  rcases subsingleton_or_nontrivial M with _ | h
+  · exact absurd (LinearMap.ext fun _ ↦ Subsingleton.elim _ _ : (0 : Module.End A M) = 1)
+      zero_ne_one
+  · exact h
 
 end Semiring
 
@@ -256,14 +265,6 @@ theorem isLocalRing_end_of_isIndecomposable (hM : IsFiniteLength A M)
   have := h.nontrivial
   refine IsLocalRing.of_isUnit_or_isUnit_one_sub_self fun f ↦ ?_
   exact (h.isNilpotent_or_isUnit f).symm.imp id IsNilpotent.isUnit_one_sub
-
-/-- A module with local endomorphism ring is nonzero: over the zero module the endomorphism ring is
-the zero ring, which is not local. -/
-theorem nontrivial_of_isLocalRing_end [IsLocalRing (Module.End A M)] : Nontrivial M := by
-  rcases subsingleton_or_nontrivial M with _ | h
-  · exact absurd (LinearMap.ext fun _ ↦ Subsingleton.elim _ _ : (0 : Module.End A M) = 1)
-      zero_ne_one
-  · exact h
 
 /-- A module with local endomorphism ring is indecomposable. This is the converse of
 `TauCeti.isLocalRing_end_of_isIndecomposable`, and needs no finiteness hypothesis; nontriviality
