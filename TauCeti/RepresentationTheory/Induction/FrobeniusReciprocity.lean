@@ -82,8 +82,9 @@ namespace TauCeti
 universe u v
 
 /-- If the order of a finite group is invertible in `k`, then so is the order of any subgroup,
-because the two differ by the index. -/
-private theorem isUnit_natCard_subgroup {k : Type u} {G : Type v} [Field k] [Group G] [Finite G]
+because the two differ by the index.  This is what lets the reciprocity identities below carry
+only the hypothesis on `G`. -/
+theorem isUnit_natCard_subgroup {k : Type u} {G : Type v} [Field k] [Group G] [Finite G]
     (S : Subgroup G) (hG : IsUnit (Nat.card G : k)) : IsUnit (Nat.card S : k) := by
   refine isUnit_of_mul_isUnit_left (y := (S.index : k)) ?_
   rwa [← Nat.cast_mul, S.card_mul_index]
