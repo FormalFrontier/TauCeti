@@ -22,10 +22,12 @@ categorically (`TauCeti.Quiver.Representation.indecomposable_indecProjRep`); the
 the module-level one, about the left ideal of `kQ` itself, and it is the input to the
 primitive-idempotent decomposition of `1 = ∑ᵥ eᵥ`.
 
-Acyclicity is genuinely needed: for the one-loop quiver `kQ ≅ k[X]` the single vertex idempotent is
-`1`, whose corner ring is all of `k[X]`; that ring has no nontrivial idempotents either, so `1`
-stays primitive there, but the corner computation this file runs is unavailable, and over a quiver
-with an oriented cycle a vertex idempotent can fail to be primitive.
+Acyclicity is what the proof needs, not what the statement needs. With an oriented cycle through
+`v` the corner ring is the monoid algebra of the monoid of paths `v → v`, which is free on the
+loops at `v` that do not return to `v` in between; a free associative algebra is a domain, so `0`
+and `eᵥ` remain its only idempotents and `eᵥ` remains primitive — for the one-loop quiver, where
+`kQ ≅ k[X]` and the single vertex idempotent is `1`, this is just that `k[X]` is a domain. What
+acyclicity buys is the scalar corner computation run here, which is unavailable in that generality.
 
 ## Main results
 
