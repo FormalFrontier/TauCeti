@@ -46,9 +46,8 @@ hypothesis is replaced by the Euclidean one the argument actually used.
 
 ## Main results
 
-* `TauCeti.real_inner_eq_zero_iff_exists_eq_real_mul_mul_I` — the orthogonal complement of a
-  nonzero `z` in the Euclidean plane `ℂ` is the real line through the quarter turn `z * I`, and
-  `TauCeti.eq_mul_I_or_eq_neg_mul_I_of_real_inner_eq_zero` — its unit-vector reading.
+* `TauCeti.eq_mul_I_or_eq_neg_mul_I_of_real_inner_eq_zero` — two orthogonal unit vectors of the
+  Euclidean plane `ℂ` differ by the quarter turn `z ↦ z * I`.
 * `TauCeti.exists_norm_eq_one_eqOn_ball_const_mul_or_const_mul_conj_of_dist_map_eq` — **the
   classification**: a distance-preserving self-map of `ball 0 r` fixing `0` is a rotation or a
   rotated conjugation there, and
@@ -96,56 +95,32 @@ private lemma real_inner_eq_re_mul_re_add_im_mul_im (x y : ℂ) :
 
 /-! ### Orthogonality in the Euclidean plane -/
 
-/-- **The orthogonal complement of a line in the plane is the perpendicular line.** For `z ≠ 0`,
-the complex numbers `w` with `⟪z, w⟫_ℝ = 0` are exactly the real multiples of the quarter turn
-`z * I`.
+/-- **Two orthogonal unit vectors of the plane differ by a quarter turn.** For unit complex
+numbers `z` and `w` with `⟪z, w⟫_ℝ = 0`, either `w = z * I` or `w = -(z * I)`.
 
-The hypothesis `z ≠ 0` is needed only for `→`: at `z = 0` every `w` is orthogonal to `z` while the
-right-hand side forces `w = 0`. -/
-theorem real_inner_eq_zero_iff_exists_eq_real_mul_mul_I {z w : ℂ} (hz : z ≠ 0) :
-    ⟪z, w⟫ = 0 ↔ ∃ t : ℝ, w = (t : ℂ) * (z * I) := by
-  have hns : _root_.Complex.normSq z ≠ 0 := fun h => hz (_root_.Complex.normSq_eq_zero.mp h)
-  have hnsC : ((_root_.Complex.normSq z : ℝ) : ℂ) ≠ 0 := by
-    exact_mod_cast hns
-  have hzc : conj z * z = ((_root_.Complex.normSq z : ℝ) : ℂ) := by
-    rw [mul_comm, _root_.Complex.mul_conj]
-  rw [_root_.Complex.inner]
-  constructor
-  · intro h
-    -- `w * conj z` is purely imaginary, so dividing by `z * conj z = normSq z` leaves a real
-    -- multiple of `I * z`.
-    set s : ℝ := (w * conj z).im with hs_def
-    refine ⟨s / _root_.Complex.normSq z, ?_⟩
-    have hwc : w * conj z = (s : ℂ) * I := by
-      apply _root_.Complex.ext <;> simp [h, hs_def]
-    push_cast
-    rw [div_mul_eq_mul_div, eq_div_iff hnsC]
-    calc w * ((_root_.Complex.normSq z : ℝ) : ℂ) = w * conj z * z := by rw [← hzc]; ring
-      _ = (s : ℂ) * I * z := by rw [hwc]
-      _ = (s : ℂ) * (z * I) := by ring
-  · rintro ⟨t, rfl⟩
-    have h : (t : ℂ) * (z * I) * conj z = ((t * _root_.Complex.normSq z : ℝ) : ℂ) * I :=
-      calc (t : ℂ) * (z * I) * conj z = (t : ℂ) * I * (z * conj z) := by ring
-        _ = (t : ℂ) * I * ((_root_.Complex.normSq z : ℝ) : ℂ) := by rw [_root_.Complex.mul_conj]
-        _ = ((t * _root_.Complex.normSq z : ℝ) : ℂ) * I := by push_cast; ring
-    rw [h]
-    simp
-
-/-- **Two orthogonal unit vectors of the plane differ by a quarter turn.** The unit-vector reading
-of `TauCeti.real_inner_eq_zero_iff_exists_eq_real_mul_mul_I`: the real multiple it produces has
-absolute value `1`, so it is `1` or `-1`. -/
+The plane being two-dimensional, the orthogonal complement of a nonzero `z` is the real line
+through the quarter turn `z * I`; that is Mathlib's
+`Submodule.mem_span_singleton_of_inner_eq_zero_of_inner_eq_zero`, the quarter turn being
+`Complex.orientation.rightAngleRotation` (`Complex.rightAngleRotation`). Being a unit vector, the
+real multiple it produces is `1` or `-1`. -/
 theorem eq_mul_I_or_eq_neg_mul_I_of_real_inner_eq_zero {z w : ℂ} (hz : ‖z‖ = 1) (hw : ‖w‖ = 1)
     (h : ⟪z, w⟫ = 0) : w = z * I ∨ w = -(z * I) := by
   have hz0 : z ≠ 0 := by
     rw [← norm_ne_zero_iff, hz]
     norm_num
-  obtain ⟨t, rfl⟩ := (real_inner_eq_zero_iff_exists_eq_real_mul_mul_I hz0).mp h
+  have hzI0 : z * I ≠ 0 := mul_ne_zero hz0 _root_.Complex.I_ne_zero
+  -- The quarter turn of `z` is orthogonal to `z`, so it spans the orthogonal complement.
+  have hperp : ⟪z, z * I⟫ = 0 := by
+    rw [mul_comm, ← _root_.Complex.rightAngleRotation, real_inner_comm,
+      Orientation.inner_rightAngleRotation_self]
+  obtain ⟨t, ht⟩ := Submodule.mem_span_singleton.mp
+    (Submodule.mem_span_singleton_of_inner_eq_zero_of_inner_eq_zero hz0 hzI0 h hperp)
+  have hnzI : ‖z * I‖ = 1 := by rw [norm_mul, _root_.Complex.norm_I, hz, mul_one]
   have habs : |t| = 1 := by
-    rwa [norm_mul, norm_mul, _root_.Complex.norm_real, Real.norm_eq_abs, hz,
-      _root_.Complex.norm_I, mul_one, mul_one] at hw
-  rcases (abs_eq zero_le_one).mp habs with ht | ht <;> rw [ht]
-  · exact Or.inl (by push_cast; ring)
-  · exact Or.inr (by push_cast; ring)
+    rwa [← ht, norm_smul, Real.norm_eq_abs, hnzI, mul_one] at hw
+  rcases (abs_eq zero_le_one).mp habs with hteq | hteq <;> rw [← ht, hteq]
+  · exact Or.inl (one_smul _ _)
+  · exact Or.inr (by rw [neg_smul, one_smul])
 
 /-! ### The classification -/
 

@@ -7,7 +7,7 @@ module
 
 public import TauCeti.Analysis.Complex.Conformal.Poincare.Isometry.Equiv
 public import TauCeti.Analysis.Complex.Conformal.SchwarzPick.Isometry
-public import TauCeti.Analysis.Complex.Isometry
+import TauCeti.Analysis.Complex.Isometry
 public import TauCeti.Analysis.Complex.UnitDisc.Basic
 
 /-!
