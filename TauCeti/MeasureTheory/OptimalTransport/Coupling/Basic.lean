@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.MeasureTheory.Measure.FiniteMeasureProd
+public import TauCeti.MeasureTheory.Measure.Prod
 
 /-!
 # Couplings of measures
@@ -32,40 +33,20 @@ namespace Measure
 
 variable {X : Type u} {Y : Type v} [MeasurableSpace X] [MeasurableSpace Y]
 
-/-- The first marginal of a coordinatewise pushforward is the pushforward of the first
-marginal. -/
-@[simp]
-theorem fst_map_prodMap {X' : Type u'} {Y' : Type v'} [MeasurableSpace X'] [MeasurableSpace Y']
-    (π : Measure (X × Y)) {f : X → X'} {g : Y → Y'} (hf : Measurable f)
-    (hg : Measurable g) :
-    (π.map (Prod.map f g)).fst = π.fst.map f := by
-  rw [Prod.map_def]
-  exact (Measure.fst_map_prodMk (μ := π) (X := f ∘ Prod.fst) (Y := g ∘ Prod.snd)
-    (hg.comp measurable_snd)).trans (Measure.map_map hf measurable_fst).symm
-
-/-- The second marginal of a coordinatewise pushforward is the pushforward of the second
-marginal. -/
-@[simp]
-theorem snd_map_prodMap {X' : Type u'} {Y' : Type v'} [MeasurableSpace X'] [MeasurableSpace Y']
-    (π : Measure (X × Y)) {f : X → X'} {g : Y → Y'} (hf : Measurable f)
-    (hg : Measurable g) :
-    (π.map (Prod.map f g)).snd = π.snd.map g := by
-  rw [Prod.map_def]
-  exact (Measure.snd_map_prodMk (μ := π) (X := f ∘ Prod.fst) (Y := g ∘ Prod.snd)
-    (hf.comp measurable_fst)).trans (Measure.map_map hg measurable_snd).symm
-
 /-- A measure `π` on `X × Y` is a coupling of `μ` and `ν` when its first and second
 marginals are respectively `μ` and `ν`. -/
 structure IsCoupling (π : Measure (X × Y)) (μ : Measure X) (ν : Measure Y) : Prop where
   fst_eq : π.fst = μ
   snd_eq : π.snd = ν
 
+attribute [simp] IsCoupling.fst_eq IsCoupling.snd_eq
+
 namespace IsCoupling
 
 variable {π : Measure (X × Y)} {μ : Measure X} {ν : Measure Y}
 
 /-- A coupling evaluated on `s × univ` equals its first marginal evaluated on `s`. -/
-@[grind =>]
+@[simp, grind =>]
 theorem measure_prod_univ (hπ : IsCoupling π μ ν) {s : Set X} (hs : MeasurableSet s) :
     π (s ×ˢ univ) = μ s := by
   rw [← hπ.fst_eq, MeasureTheory.Measure.fst_apply hs]
@@ -74,7 +55,7 @@ theorem measure_prod_univ (hπ : IsCoupling π μ ν) {s : Set X} (hs : Measurab
   simp
 
 /-- A coupling evaluated on `univ × t` equals its second marginal evaluated on `t`. -/
-@[grind =>]
+@[simp, grind =>]
 theorem measure_univ_prod (hπ : IsCoupling π μ ν) {t : Set Y} (ht : MeasurableSet t) :
     π (univ ×ˢ t) = ν t := by
   rw [← hπ.snd_eq, MeasureTheory.Measure.snd_apply ht]
@@ -206,7 +187,7 @@ theorem coe_map {X' : Type u'} {Y' : Type v'} [MeasurableSpace X'] [MeasurableSp
 /-- Mapping both coordinates by the identity leaves the underlying probability measure
 unchanged. -/
 @[simp]
-theorem map_id (π : Coupling μ ν) :
+theorem coe_map_id (π : Coupling μ ν) :
     π.1.map measurable_id.aemeasurable = π.1 := by
   apply ProbabilityMeasure.toMeasure_injective
   simpa only [ProbabilityMeasure.toMeasure_map] using
@@ -215,7 +196,7 @@ theorem map_id (π : Coupling μ ν) :
 /-- Two successive coordinatewise maps agree on underlying probability measures with mapping by
 the composites. -/
 @[simp]
-theorem map_map {X' : Type u'} {Y' : Type v'} {X'' : Type u''} {Y'' : Type v''}
+theorem coe_map_map {X' : Type u'} {Y' : Type v'} {X'' : Type u''} {Y'' : Type v''}
     [MeasurableSpace X'] [MeasurableSpace Y'] [MeasurableSpace X''] [MeasurableSpace Y'']
     (π : Coupling μ ν) (f : X → X') (g : Y → Y') (f' : X' → X'') (g' : Y' → Y'')
     (hf : Measurable f) (hg : Measurable g) (hf' : Measurable f') (hg' : Measurable g') :
@@ -223,7 +204,7 @@ theorem map_map {X' : Type u'} {Y' : Type v'} {X'' : Type u''} {Y'' : Type v''}
       (π.map (f' ∘ f) (g' ∘ g) (hf'.comp hf) (hg'.comp hg)).1 := by
   apply ProbabilityMeasure.toMeasure_injective
   simp only [ProbabilityMeasure.toMeasure_map]
-  rw [Measure.map_map (hf'.prodMap hg') (hf.prodMap hg)]
+  rw [Measure.map_map (hf'.prodMap hg') (hf.prodMap hg), Prod.map_comp_map]
   rfl
 
 /-- Swapping after a coordinatewise map is the same as mapping the swapped coupling in the
@@ -236,8 +217,7 @@ theorem swap_map {X' : Type u'} {Y' : Type v'} [MeasurableSpace X'] [MeasurableS
   apply ext
   simp only [coe_swap, coe_map, ProbabilityMeasure.toMeasure_map]
   rw [Measure.map_map measurable_swap (hf.prodMap hg),
-    Measure.map_map (hg.prodMap hf) measurable_swap]
-  rfl
+    Measure.map_map (hg.prodMap hf) measurable_swap, ← Prod.map_comp_swap]
 
 /-- Pairs of measurable equivalences induce an equivalence between the corresponding coupling
 spaces. -/
