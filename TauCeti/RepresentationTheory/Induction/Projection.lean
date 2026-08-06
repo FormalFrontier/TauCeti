@@ -5,7 +5,7 @@ Authors: Claude
 -/
 module
 
-public import TauCeti.RepresentationTheory.Induction.Permutation
+public import Mathlib.RepresentationTheory.Induced
 
 /-!
 # The projection formula for induced representations
@@ -47,10 +47,11 @@ that makes the map `H`-equivariant, because `H` acts on `Ind_φ A` by
 * `TauCeti.indProjectionNatIsoLeft`, `TauCeti.indProjectionNatIsoRight`: the projection formula as
   a natural isomorphism of functors, in the left tensor factor (the `Rep k G` argument) and in the
   right one (the `Rep k H` argument) respectively.
-* `TauCeti.indResProjection`: for a subgroup `S ≤ G`, the classical corollary
-  `Ind_S^G (Res_S^G Y) ≅ k[G ⧸ S] ⊗ Y`, obtained by feeding the trivial representation into the
-  projection formula and identifying `Ind_S^G (trivial)` with the permutation representation
-  through `TauCeti.indTrivialIso`.
+
+The classical corollary for a subgroup `S ≤ G`, `Ind_S^G (Res_S^G Y) ≅ k[G ⧸ S] ⊗ Y`, needs the
+identification of `Ind_S^G (trivial)` with the permutation representation and therefore lives
+downstream, as `TauCeti.indResProjection` in
+`TauCeti/RepresentationTheory/Induction/Permutation.lean`.
 
 ## Main statements
 
@@ -63,9 +64,7 @@ that makes the map `H`-equivariant, because `H` acts on `Ind_φ A` by
   naturality in each variable.
 * `TauCeti.coinvariantsTensorIndHom_map_indProjection_mk`: the comparison with Mathlib's
   coinvariants shadow. Taking `H`-coinvariants of `indProjection` and following with Mathlib's
-  `Rep.coinvariantsTensorIndHom` gives the map `⟦⟦h ⊗ₜ z⟧⟧ ↦ ⟦z⟧`, which no longer mentions `h`;
-  so the two isomorphisms agree, and the coinvariants of an induced representation are the
-  coinvariants downstairs.
+  `Rep.coinvariantsTensorIndHom` sends `⟦⟦h ⊗ₜ z⟧⟧` to `⟦z⟧`, with no trace of `h` left.
 
 ## Implementation notes
 
@@ -272,9 +271,13 @@ variable {k : Type u} {G H : Type u} [CommRing k] [Group G] [Group H] (φ : G �
 
 /-- **The comparison with Mathlib's coinvariants shadow.** Applying `H`-coinvariants to
 `TauCeti.indProjection` and composing with `Rep.coinvariantsTensorIndHom` sends the class of a
-generator `⟦h ⊗ₜ z⟧` to `⟦z⟧`, with no trace of `h` left: the two twists `Y.ρ h⁻¹` and `Y.ρ h`
-cancel. So `Rep.coinvariantsTensorIndNatIso` is indeed the image of the projection formula under
-coinvariants, and coinvariants of an induced representation are computed downstairs. -/
+generator `⟦h ⊗ₜ z⟧` to `⟦z⟧`, with no trace of `h` left: the twist `Y.ρ h⁻¹` introduced by the
+projection formula is absorbed by the coinvariants relation.
+
+This computes that one composite on generators; it is not an equality of the two isomorphisms,
+which do not have the same source and target: `Rep.coinvariantsTensorIndHom` runs from the
+coinvariants of `(Ind_φ X) ⊗ Y` to the coinvariants of `X ⊗ Res_φ Y` downstairs, while
+`TauCeti.indProjection` is an isomorphism in `Rep k H` upstairs. -/
 theorem coinvariantsTensorIndHom_map_indProjection_mk (X : Rep k G) (Y : Rep k H)
     (h : H) (x : X) (y : Y) :
     (Rep.coinvariantsTensorIndHom φ X Y).hom
@@ -291,31 +294,5 @@ theorem coinvariantsTensorIndHom_map_indProjection_mk (X : Rep k G) (Y : Rep k H
   simp [Rep.coinvariantsTensorMk]
 
 end Comparison
-
-section Subgroup
-
-variable {k : Type u} {G : Type u} [CommRing k] [Group G] {S : Subgroup G} (Y : Rep k G)
-
-/-- **Induction of a restriction.** For a subgroup `S ≤ G`, restricting a `G`-representation to `S`
-and inducing back up tensors it with the permutation representation on the cosets,
-`Ind_S^G (Res_S^G Y) ≅ k[G ⧸ S] ⊗ Y`. This is the projection formula applied to the trivial
-`S`-representation, followed by `TauCeti.indTrivialIso`. -/
-noncomputable def indResProjection :
-    Rep.ind S.subtype (Rep.res S.subtype Y) ≅ Rep.ofMulAction k G (G ⧸ S) ⊗ Y :=
-  (Rep.indFunctor k S.subtype).mapIso (λ_ (Rep.res S.subtype Y)).symm ≪≫
-    indProjection S.subtype (𝟙_ (Rep k S)) Y ≪≫
-    (indTrivialIso k S ⊗ᵢ Iso.refl Y)
-
-/-- `TauCeti.indResProjection` on generators: the coset orientation is the one inherited from
-`TauCeti.indTrivialIso`, which sends `⟦x ⊗ₜ a⟧` to `single ⟦x⁻¹⟧ a`. -/
-theorem indResProjection_hom_hom_apply (x : G) (y : Y) :
-    (indResProjection Y).hom.hom (IndV.mk S.subtype (Rep.res S.subtype Y).ρ x y)
-      = MonoidAlgebra.single (QuotientGroup.mk x⁻¹ : G ⧸ S) (1 : k) ⊗ₜ[k] Y.ρ x⁻¹ y := by
-  refine Eq.trans ?_ (congrArg (· ⊗ₜ[k] Y.ρ x⁻¹ y) (indTrivialIso_hom_hom_apply k S x 1))
-  refine Eq.trans ?_ (congrArg (Rep.Hom.hom (indTrivialIso k S ⊗ᵢ Iso.refl Y).hom)
-    (indProjection_hom_hom_apply S.subtype (𝟙_ (Rep k S)) Y x 1 y))
-  simp [indResProjection, Rep.indMap]
-
-end Subgroup
 
 end TauCeti
