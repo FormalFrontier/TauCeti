@@ -8,25 +8,26 @@ module
 -- `Subalgebra` come from `Mathlib.Algebra.Algebra.Subalgebra.Basic`, the module structure carrying
 -- `Module.End (↥B ⊗[K] Aᵐᵒᵖ) (Bimodule B.val)` from `TauCeti.Algebra.CentralSimple.Bimodule`,
 -- `TauCeti.Algebra.deg` from `TauCeti.Algebra.CentralSimple.Degree`, and the remaining three from
--- the hypotheses `Algebra.IsCentral`, `IsSimpleRing`, `FiniteDimensional`.
+-- the hypotheses `Algebra.IsCentral`, `IsSimpleRing`, `FiniteDimensional`. The `Degree` import also
+-- re-exports `TauCeti.Algebra.CentralSimple.TensorProduct`, and with it
+-- `Mathlib.Algebra.Central.Basic` and `Mathlib.RingTheory.SimpleRing.Basic`, which is why none of
+-- those three is imported again here.
 public import Mathlib.Algebra.Algebra.Subalgebra.Basic
 public import Mathlib.Algebra.Central.Defs
 public import Mathlib.LinearAlgebra.FiniteDimensional.Defs
 public import Mathlib.RingTheory.SimpleRing.Defs
 public import TauCeti.Algebra.CentralSimple.Bimodule
 public import TauCeti.Algebra.CentralSimple.Degree
--- Non-public: used only inside proofs. Simplicity of the tensor product, the endomorphism algebra
--- of a module over a simple Artinian ring, and finiteness of a tensor product supply the three
--- inputs of the first two theorems, and no exported statement mentions any of them; the Artinian
--- hypothesis of the first is supplied by finite-dimensionality (`IsArtinianRing.of_finite`); the
--- dimension of a tensor product and the finite-dimensionality of an opposite space are the
--- bookkeeping, and the complex numbers appear only in the worked examples. Injectivity of a ring
--- homomorphism out of a simple ring, the equality of injectivity and surjectivity in equal finite
--- dimension, the transport of centrality along an algebra isomorphism and the descent of centrality
--- from a tensor product to its factors are the four further tools of the tensor decomposition and
--- the double centralizer.
+-- Non-public: used only inside proofs. The endomorphism algebra of a module over a simple Artinian
+-- ring and finiteness of a tensor product supply two of the three inputs of the first two theorems
+-- (the third, simplicity of a tensor product, comes with the `Degree` import above), and no
+-- exported statement mentions any of them; the Artinian hypothesis of the first is supplied by
+-- finite-dimensionality (`IsArtinianRing.of_finite`); the dimension of a tensor product and the
+-- finite-dimensionality of an opposite space are the bookkeeping, and the complex numbers appear
+-- only in the worked examples. The equality of injectivity and surjectivity in equal finite
+-- dimension and the descent of centrality from a tensor product to its factors are the two further
+-- tools of the tensor decomposition and the double centralizer.
 import Mathlib.Algebra.Algebra.Subalgebra.Lattice
-import Mathlib.Algebra.Central.Basic
 import Mathlib.Algebra.Central.TensorProduct
 import Mathlib.LinearAlgebra.Basis.MulOpposite
 import Mathlib.LinearAlgebra.Complex.FiniteDimensional
@@ -34,10 +35,8 @@ import Mathlib.LinearAlgebra.Dimension.Constructions
 import Mathlib.LinearAlgebra.FiniteDimensional.Basic
 import Mathlib.LinearAlgebra.FiniteDimensional.Lemmas
 import Mathlib.RingTheory.Artinian.Module
-import Mathlib.RingTheory.SimpleRing.Basic
 import Mathlib.RingTheory.SimpleRing.Congr
 import Mathlib.RingTheory.TensorProduct.Finite
-import TauCeti.Algebra.CentralSimple.TensorProduct
 import TauCeti.RingTheory.Semisimple.EndAlgebra
 
 /-!
@@ -470,11 +469,6 @@ example :
   rw [centralizer_top_complex, htop, Complex.finrank_real_complex]
   norm_num
 
-/-- The centralizer of the trivial subalgebra `⊥` of `ℂ` is `ℂ`: scalars are central. -/
-private theorem centralizer_bot_complex :
-    Subalgebra.centralizer ℝ ((⊥ : Subalgebra ℝ ℂ) : Set ℂ) = ⊤ :=
-  eq_top_iff.2 fun z _ ↦ (Subalgebra.mem_centralizer_iff ℝ).2 fun w _ ↦ mul_comm w z
-
 /-- The negative control for `TauCeti.centralizer_centralizer`: centrality of the **ambient**
 algebra cannot be dropped. Take `K = ℝ` and `A = ℂ` again, and `B = ⊥`, which is central simple,
 being `ℝ` itself. Its centralizer is all of `ℂ`, and so is the centralizer of that, not `⊥`. -/
@@ -482,7 +476,10 @@ example :
     Subalgebra.centralizer ℝ
         (Subalgebra.centralizer ℝ ((⊥ : Subalgebra ℝ ℂ) : Set ℂ) : Set ℂ)
       ≠ (⊥ : Subalgebra ℝ ℂ) := by
-  rw [centralizer_bot_complex, centralizer_top_complex]
+  -- `⊥` consists of scalars, so it lies in the center of `ℂ`, and its centralizer is everything.
+  have hbot : Subalgebra.centralizer ℝ ((⊥ : Subalgebra ℝ ℂ) : Set ℂ) = ⊤ :=
+    (Subalgebra.centralizer_eq_top_iff_subset ℝ).2 (by simp)
+  rw [hbot, centralizer_top_complex]
   intro h
   obtain ⟨r, hr⟩ := Algebra.mem_bot.1 (h ▸ (Algebra.mem_top : Complex.I ∈ (⊤ : Subalgebra ℝ ℂ)))
   simpa using congrArg Complex.im hr
