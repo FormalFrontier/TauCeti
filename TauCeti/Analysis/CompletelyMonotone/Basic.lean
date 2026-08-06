@@ -51,6 +51,9 @@ point `0`); on the open half-line it agrees with the ordinary iterated derivativ
   scalar multiples.
 * `TauCeti.IsCompletelyMonotoneOnIoi`: the open-half-line analogue, using ordinary iterated
   derivatives on `(0, ∞)`.
+* `TauCeti.IsClosedCompletelyMonotone`: the closed-half-line predicate used by the
+  finite-measure Hausdorff--Bernstein--Widder theorem: continuity on `[0, ∞)` plus complete
+  monotonicity on `(0, ∞)`.
 * `TauCeti.isCompletelyMonotone_const`: a nonnegative constant is completely monotone.
 * `TauCeti.isCompletelyMonotone_exp_neg_mul`: the building block `t ↦ e^{-x t}` for `x ≥ 0`.
 
@@ -358,5 +361,150 @@ lemma _root_.TauCeti.IsCompletelyMonotone.isCompletelyMonotoneOnIoi
     fun n _ ht => hf.neg_one_pow_mul_iteratedDeriv_nonneg n ht⟩
 
 end IsCompletelyMonotoneOnIoi
+
+/-! ## Closed-half-line complete monotonicity -/
+
+/-- Roadmap-level complete monotonicity on the closed half-line.
+
+This is the classical finite-measure hypothesis: the function is continuous on `[0, ∞)` and
+completely monotone on the open half-line `(0, ∞)`. It is weaker at the endpoint than the existing
+`IsCompletelyMonotone`, which requires all derivatives within `[0, ∞)` to exist at `0`. -/
+def IsClosedCompletelyMonotone (f : ℝ → ℝ) : Prop :=
+  ContinuousOn f (Ici 0) ∧ IsCompletelyMonotoneOnIoi f
+
+/-- `IsClosedCompletelyMonotone f` unfolds to continuity on `[0, ∞)` and complete monotonicity on
+the open half-line. -/
+lemma isClosedCompletelyMonotone_iff {f : ℝ → ℝ} :
+    IsClosedCompletelyMonotone f ↔
+      ContinuousOn f (Ici 0) ∧ IsCompletelyMonotoneOnIoi f :=
+  Iff.rfl
+
+namespace IsClosedCompletelyMonotone
+
+variable {f g : ℝ → ℝ}
+
+/-- A closed-half-line completely monotone function is continuous on `[0, ∞)`. -/
+@[grind →]
+lemma continuousOn (hf : IsClosedCompletelyMonotone f) : ContinuousOn f (Ici 0) := hf.1
+
+/-- A closed-half-line completely monotone function is completely monotone on `(0, ∞)`. -/
+@[grind =>]
+lemma isCompletelyMonotoneOnIoi (hf : IsClosedCompletelyMonotone f) :
+    IsCompletelyMonotoneOnIoi f := hf.2
+
+/-- The existing strong Tau Ceti predicate implies the roadmap-level closed-half-line predicate. -/
+lemma of_isCompletelyMonotone (hf : IsCompletelyMonotone f) :
+    IsClosedCompletelyMonotone f :=
+  ⟨hf.contDiffOn.continuousOn, hf.isCompletelyMonotoneOnIoi⟩
+
+/-- Closed-half-line complete monotonicity is closed under addition. -/
+lemma add (hf : IsClosedCompletelyMonotone f) (hg : IsClosedCompletelyMonotone g) :
+    IsClosedCompletelyMonotone (f + g) :=
+  ⟨hf.continuousOn.add hg.continuousOn,
+    hf.isCompletelyMonotoneOnIoi.add hg.isCompletelyMonotoneOnIoi⟩
+
+/-- Closed-half-line complete monotonicity is closed under multiplication by a nonnegative
+constant. -/
+lemma smul (hf : IsClosedCompletelyMonotone f) {c : ℝ} (hc : 0 ≤ c) :
+    IsClosedCompletelyMonotone (c • f) :=
+  ⟨hf.continuousOn.const_smul c, hf.isCompletelyMonotoneOnIoi.smul hc⟩
+
+/-- A closed-half-line completely monotone function is nonincreasing on `(0, ∞)`. -/
+lemma antitoneOn_Ioi (hf : IsClosedCompletelyMonotone f) : AntitoneOn f (Ioi 0) := by
+  refine antitoneOn_of_deriv_nonpos (convex_Ioi 0)
+    hf.isCompletelyMonotoneOnIoi.contDiffOn.continuousOn
+    (by
+      simpa [interior_Ioi] using
+        hf.isCompletelyMonotoneOnIoi.contDiffOn.differentiableOn (by simp))
+    fun x hx => ?_
+  rw [interior_Ioi] at hx
+  exact hf.isCompletelyMonotoneOnIoi.deriv_nonpos hx
+
+/-- A closed-half-line completely monotone function is nonnegative at `0`. -/
+lemma nonneg_zero (hf : IsClosedCompletelyMonotone f) : 0 ≤ f 0 := by
+  have hy_tendsto_nhds : Tendsto (fun n : ℕ => 1 / ((n : ℝ) + 1)) atTop (nhds 0) := by
+    have hden : Tendsto (fun n : ℕ => (n : ℝ) + 1) atTop atTop := by
+      exact Filter.tendsto_atTop_add_const_right atTop 1
+        (tendsto_natCast_atTop_atTop (R := ℝ))
+    simpa using Filter.Tendsto.const_div_atTop hden (1 : ℝ)
+  have hy_mem : ∀ᶠ n : ℕ in atTop, 1 / ((n : ℝ) + 1) ∈ Ici (0 : ℝ) := by
+    filter_upwards with n
+    exact mem_Ici.mpr (by positivity)
+  have hy_tendsto : Tendsto (fun n : ℕ => 1 / ((n : ℝ) + 1)) atTop
+      (𝓝[Ici (0 : ℝ)] 0) := by
+    rw [nhdsWithin]
+    exact tendsto_inf.2 ⟨hy_tendsto_nhds, tendsto_principal.mpr hy_mem⟩
+  have hf_tendsto : Tendsto (fun n : ℕ => f (1 / ((n : ℝ) + 1))) atTop
+      (nhds (f 0)) :=
+    (hf.continuousOn.continuousWithinAt (mem_Ici.mpr le_rfl)).tendsto.comp hy_tendsto
+  refine ge_of_tendsto hf_tendsto ?_
+  filter_upwards with n
+  exact hf.isCompletelyMonotoneOnIoi.nonneg (by positivity)
+
+/-- A closed-half-line completely monotone function is nonnegative on `[0, ∞)`. -/
+@[grind =>]
+lemma nonneg (hf : IsClosedCompletelyMonotone f) {t : ℝ} (ht : 0 ≤ t) : 0 ≤ f t := by
+  rcases ht.eq_or_lt with rfl | ht_pos
+  · exact hf.nonneg_zero
+  · exact hf.isCompletelyMonotoneOnIoi.nonneg ht_pos
+
+/-- A closed-half-line completely monotone function lies below its value at `0` on `[0, ∞)`. -/
+lemma le_apply_zero (hf : IsClosedCompletelyMonotone f) {t : ℝ} (ht : 0 ≤ t) : f t ≤ f 0 := by
+  rcases ht.eq_or_lt with rfl | ht_pos
+  · exact le_rfl
+  have hy_tendsto_nhds : Tendsto (fun n : ℕ => t / ((n : ℝ) + 2)) atTop (nhds 0) := by
+    have hden : Tendsto (fun n : ℕ => (n : ℝ) + 2) atTop atTop := by
+      exact Filter.tendsto_atTop_add_const_right atTop 2
+        (tendsto_natCast_atTop_atTop (R := ℝ))
+    simpa using Filter.Tendsto.const_div_atTop hden t
+  have hy_mem : ∀ᶠ n : ℕ in atTop, t / ((n : ℝ) + 2) ∈ Ici (0 : ℝ) := by
+    filter_upwards with n
+    have hden_pos : 0 < (n : ℝ) + 2 := by positivity
+    exact mem_Ici.mpr (div_nonneg ht hden_pos.le)
+  have hy_tendsto : Tendsto (fun n : ℕ => t / ((n : ℝ) + 2)) atTop
+      (𝓝[Ici (0 : ℝ)] 0) := by
+    rw [nhdsWithin]
+    exact tendsto_inf.2 ⟨hy_tendsto_nhds, tendsto_principal.mpr hy_mem⟩
+  have hf_tendsto : Tendsto (fun n : ℕ => f (t / ((n : ℝ) + 2))) atTop
+      (nhds (f 0)) :=
+    (hf.continuousOn.continuousWithinAt (mem_Ici.mpr le_rfl)).tendsto.comp hy_tendsto
+  refine ge_of_tendsto hf_tendsto ?_
+  filter_upwards with n
+  have hden_pos : 0 < (n : ℝ) + 2 := by positivity
+  have hy_pos : 0 < t / ((n : ℝ) + 2) := div_pos ht_pos hden_pos
+  have hy_le : t / ((n : ℝ) + 2) ≤ t := by
+    have hden_ge_one : (1 : ℝ) ≤ (n : ℝ) + 2 := by
+      have hn : (0 : ℝ) ≤ n := by exact_mod_cast Nat.zero_le n
+      linarith
+    exact div_le_self ht hden_ge_one
+  exact hf.antitoneOn_Ioi (mem_Ioi.mpr hy_pos) (mem_Ioi.mpr ht_pos) hy_le
+
+/-- Positive right-translates of a closed-half-line completely monotone function satisfy the
+strong closed-half-line predicate. -/
+lemma shift_pos (hf : IsClosedCompletelyMonotone f) {a : ℝ} (ha : 0 < a) :
+    IsCompletelyMonotone (fun t : ℝ => f (t + a)) := by
+  refine ⟨?_, fun n t ht => ?_⟩
+  · have hmaps : MapsTo (fun t : ℝ => t + a) (Ici 0) (Ioi 0) := by
+      intro t ht
+      exact (by linarith [mem_Ici.mp ht] : 0 < t + a)
+    exact hf.isCompletelyMonotoneOnIoi.contDiffOn.comp (by fun_prop) hmaps
+  · have htpa : 0 < t + a := by linarith
+    have hcont : ContDiffAt ℝ (n : WithTop ℕ∞) (fun t : ℝ => f (t + a)) t := by
+      have hc : ContDiffAt ℝ (n : WithTop ℕ∞) f (t + a) :=
+        (hf.isCompletelyMonotoneOnIoi.contDiffOn.contDiffAt
+          (isOpen_Ioi.mem_nhds htpa)).of_le (by exact_mod_cast le_top)
+      simpa [Function.comp_def] using hc.comp t
+        (by fun_prop : ContDiffAt ℝ (n : WithTop ℕ∞) (fun t : ℝ => t + a) t)
+    rw [iteratedDerivWithin_eq_iteratedDeriv (uniqueDiffOn_Ici 0) hcont (mem_Ici.mpr ht),
+      iteratedDeriv_comp_add_const]
+    exact hf.isCompletelyMonotoneOnIoi.neg_one_pow_mul_iteratedDeriv_nonneg n htpa
+
+/-- Closed-half-line complete monotonicity is determined by values on `[0, ∞)`. -/
+lemma congr (hf : IsClosedCompletelyMonotone f) (h : EqOn g f (Ici 0)) :
+    IsClosedCompletelyMonotone g := by
+  refine ⟨hf.continuousOn.congr fun x hx => h hx, ?_⟩
+  exact hf.isCompletelyMonotoneOnIoi.congr fun x hx => h (Ioi_subset_Ici_self hx)
+
+end IsClosedCompletelyMonotone
 
 end TauCeti
