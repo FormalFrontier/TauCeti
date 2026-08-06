@@ -166,8 +166,10 @@ irreducible subrepresentations, and its dimension is the sum of theirs.
 
 The four conclusions say, in order: each block is irreducible; distinct blocks are orthogonal;
 the blocks decompose the space as an internal direct sum; and the dimensions add up. Unitarity is
-essential — over a general representation the blocks exist only after choosing complements, and
-they need not be orthogonal for the given inner product. -/
+essential: a general finite-dimensional representation need not decompose into irreducible
+subrepresentations at all, since an invariant subspace need not have an invariant complement.
+Unitarity supplies one, and supplies it orthogonally, which is what makes the descent go through
+and the resulting family orthogonal. -/
 theorem exists_orthogonal_irreducible_decomposition (hπ : IsUnitary π) :
     ∃ (n : ℕ) (U : Fin n → Subrepresentation π.toRepresentation),
       (∀ i, (U i).toRepresentation.IsIrreducible) ∧

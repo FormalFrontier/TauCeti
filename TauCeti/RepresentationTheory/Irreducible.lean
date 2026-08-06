@@ -4,7 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.LinearAlgebra.FiniteDimensional.Lemmas
 public import Mathlib.RepresentationTheory.Irreducible
 public import TauCeti.RepresentationTheory.Subrepresentation
 public import Mathlib.RingTheory.SimpleModule.Rank
@@ -169,14 +168,16 @@ contains an atom of the lattice of subrepresentations.
 
 Finite-dimensionality is what makes the descent to a minimal nonzero subrepresentation terminate;
 it is a hypothesis on the ambient representation, not on the acting monoid, which stays arbitrary.
-Combined with `TauCeti.Representation.isIrreducible_toRepresentation_of_isAtom` this is the
-statement that a finite-dimensional representation is built from irreducible pieces. -/
+Combined with `TauCeti.Representation.isIrreducible_toRepresentation_of_isAtom` it exhibits an
+irreducible subrepresentation inside any nonzero one. -/
 theorem exists_isAtom_le [FiniteDimensional k V] {ρ : Representation k G V}
     {σ : Subrepresentation ρ} (hσ : σ ≠ ⊥) : ∃ τ : Subrepresentation ρ, τ ≤ σ ∧ IsAtom τ :=
   exists_isAtom_le_aux (Module.finrank k σ.toSubmodule) σ le_rfl hσ
 
-/-- **Every nonzero finite-dimensional representation contains an irreducible.** This is the
-existence half of complete reducibility, available with no semisimplicity hypothesis at all. -/
+/-- **Every nonzero finite-dimensional representation contains an irreducible subrepresentation.**
+Finite-dimensionality alone suffices; no semisimplicity is assumed.  This produces a single
+irreducible subrepresentation, not a decomposition: a representation that is not semisimple need
+not be the sum of its irreducible subrepresentations. -/
 theorem exists_isIrreducible_subrepresentation [FiniteDimensional k V] [Nontrivial V]
     (ρ : Representation k G V) :
     ∃ σ : Subrepresentation ρ, σ ≠ ⊥ ∧ σ.toRepresentation.IsIrreducible := by
