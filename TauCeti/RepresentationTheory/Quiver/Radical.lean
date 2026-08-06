@@ -7,7 +7,8 @@ module
 public import Mathlib.RingTheory.Ideal.Maximal
 public import Mathlib.RingTheory.Jacobson.Radical
 public import Mathlib.RingTheory.Nilpotent.Basic
-public import TauCeti.RepresentationTheory.Quiver.Acyclic.PathAlgebra
+public import TauCeti.RepresentationTheory.Quiver.Acyclic.FinitePaths
+public import TauCeti.RepresentationTheory.Quiver.PathAlgebra
 
 /-!
 # The arrow ideal of a path algebra, and its radical
@@ -458,7 +459,7 @@ theorem jacobson_pathAlgebra_eq_arrowIdeal (k : Type w) (Q : Type u) [Field k] [
   refine vertexIdempotent_notMem_jacobson (k := k) a ?_
   have hmem : (pathAlgebraBasis k Q).repr f ⟨a, a, Quiver.Path.nil⟩ • vertexIdempotent k a
       ∈ Ring.jacobson (pathAlgebra k Q) := by
-    rw [← vertexIdempotent_mul_mul_vertexIdempotent h a f]
+    rw [← vertexIdempotent_mul_mul_vertexIdempotent a h.eq_nil f]
     exact Ideal.mul_mem_right _ _ (Ideal.mul_mem_left _ _ hf)
   have hscale := Ideal.mul_mem_left (Ring.jacobson (pathAlgebra k Q))
     (algebraMap k (pathAlgebra k Q) ((pathAlgebraBasis k Q).repr f ⟨a, a, Quiver.Path.nil⟩)⁻¹) hmem

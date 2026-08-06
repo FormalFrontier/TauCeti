@@ -52,6 +52,9 @@ idempotents `e`, so left multiplication by `α` carries the `i`-component of a l
   coordinates of a basis path. The specialization to a finite acyclic quiver, whose paths are
   finite, is `TauCeti.finiteDimensional_pathAlgebra_of_isAcyclic` in
   `TauCeti.RepresentationTheory.Quiver.Acyclic.PathAlgebra`.
+* `TauCeti.vertexIdempotent_mul_mul_vertexIdempotent`: when the trivial path is the only path from
+  `v` to itself, `eᵥ f eᵥ` is the coefficient of `f` on that path, times `eᵥ`, so the corner
+  `eᵥ kQ eᵥ` is a copy of `k`. This is what makes the trivial paths visible to a two-sided ideal.
 * `TauCeti.PathAlgebra.adjoin_vertexIdempotents_union_arrows`: the vertex idempotents and arrows
   generate the path algebra.
 * `TauCeti.PathAlgebra.oneLoopAlgEquiv`: the one-loop path algebra is the additive monoid algebra
@@ -565,6 +568,7 @@ theorem vertexIdempotent_mul_self (v : Q) :
 
 /-- A vertex idempotent is nonzero: it is the basis path of the trivial path at its vertex, whose
 coefficient is `1`. -/
+@[simp]
 theorem vertexIdempotent_ne_zero [Nontrivial k] (v : Q) :
     (vertexIdempotent k v : pathAlgebra k Q) ≠ 0 := by
   rw [vertexIdempotent_eq_single, single_def]
@@ -697,11 +701,53 @@ theorem module_finite_pathAlgebra [Finite (Quiver.TotalPath Q)] :
 variable {k Q}
 
 /-- The coordinates of a basis path for the path basis. -/
+@[simp]
 theorem pathAlgebraBasis_repr_single (x : Quiver.TotalPath Q) (c : k) :
     (pathAlgebraBasis k Q).repr (PathAlgebra.single x c) = Finsupp.single x c := by
   have hx : (PathAlgebra.single x c : pathAlgebra k Q) = c • pathAlgebraBasis k Q x := by
     simp [coe_pathAlgebraBasis, PathAlgebra.ofPath_eq_single]
   rw [hx, map_smul, Module.Basis.repr_self, Finsupp.smul_single, smul_eq_mul, mul_one]
+
+open PathAlgebra in
+/-- **Conjugating by a vertex idempotent reads off a coordinate.** When the trivial path is the
+only path from `v` to itself, `eᵥ f eᵥ` is the coordinate of `f` on that path, times `eᵥ`, so that
+the corner `eᵥ kQ eᵥ` is a copy of `k`. An acyclic quiver supplies the hypothesis through
+`TauCeti.Quiver.IsAcyclic.eq_nil`. -/
+theorem vertexIdempotent_mul_mul_vertexIdempotent (v : Q)
+    (h : ∀ p : _root_.Quiver.Path v v, p = _root_.Quiver.Path.nil) (f : pathAlgebra k Q) :
+    vertexIdempotent k v * f * vertexIdempotent k v
+      = (pathAlgebraBasis k Q).repr f ⟨v, v, _root_.Quiver.Path.nil⟩ • vertexIdempotent k v := by
+  induction f using PathAlgebra.induction_linear with
+  | zero => simp
+  | add f g hf hg =>
+    rw [mul_add, add_mul, hf, hg, map_add, Finsupp.add_apply, add_smul]
+  | single x c =>
+    obtain ⟨a, b, p⟩ := x
+    rw [pathAlgebraBasis_repr_single, vertexIdempotent_eq_single, smul_single, mul_one]
+    by_cases hb : v = b
+    · subst hb
+      rw [single_mul_single_of_comp (p := _root_.Quiver.Path.nil) (q := p) 1 c, one_mul,
+        _root_.Quiver.Path.comp_nil]
+      by_cases ha : v = a
+      · subst ha
+        obtain rfl := h p
+        rw [single_mul_single_of_comp (p := _root_.Quiver.Path.nil)
+            (q := _root_.Quiver.Path.nil) c 1, mul_one,
+          _root_.Quiver.Path.comp_nil, Finsupp.single_eq_same]
+      · have hne : (⟨a, v, p⟩ : Quiver.TotalPath Q) ≠ ⟨v, v, _root_.Quiver.Path.nil⟩ := by
+          intro heq
+          have hav : a = v := congrArg (fun z : Quiver.TotalPath Q => z.1) heq
+          exact ha hav.symm
+        rw [single_mul_single_of_not_composable
+          (x := ⟨a, v, p⟩) (y := ⟨v, v, _root_.Quiver.Path.nil⟩) ha c 1,
+          Finsupp.single_eq_of_ne' hne, single_zero]
+    · have hne : (⟨a, b, p⟩ : Quiver.TotalPath Q) ≠ ⟨v, v, _root_.Quiver.Path.nil⟩ := by
+        intro heq
+        have hbv : b = v := congrArg (fun z : Quiver.TotalPath Q => z.2.1) heq
+        exact hb hbv.symm
+      rw [single_mul_single_of_not_composable
+        (x := ⟨v, v, _root_.Quiver.Path.nil⟩) (y := ⟨a, b, p⟩) (fun hbv => hb hbv.symm) 1 c,
+        zero_mul, Finsupp.single_eq_of_ne' hne, single_zero]
 
 end Basis
 
