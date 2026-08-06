@@ -33,6 +33,8 @@ infrastructure independent of the diamond operators.
 ## Main results
 
 * `CongruenceSubgroup.Gamma0_normalizes_Gamma1`: conjugation by `Γ₀(N)` preserves `Γ₁(N)`.
+* `CongruenceSubgroup.Gamma1_map_le_Gamma0_map`: the inclusion `Γ₁(N) ≤ Γ₀(N)` after mapping to
+  `GL₂(ℝ)`.
 * `CongruenceSubgroup.Gamma1_map_inv_conjAct_eq`: `(Gamma1 N).map (mapGL ℝ)` is invariant
   under conjugation by `Γ₀(N)` elements in `GL₂(ℝ)`.
 * `CongruenceSubgroup.Gamma0Map_toHomUnits_surjective`: every unit of `ZMod N` is the
@@ -64,6 +66,11 @@ theorem Gamma0_normalizes_Gamma1 (g : ↥(Gamma0 N)) (h : SL(2, ℤ)) (hh : h �
   (Gamma1_mem _ _).mpr <| (Gamma1_to_Gamma0_mem _).mp <|
     (Gamma0Map N).normal_ker.conj_mem ⟨h, Gamma1_in_Gamma0 N hh⟩
       ((Gamma1_to_Gamma0_mem _).mpr ((Gamma1_mem _ _).mp hh)) g
+
+/-- The inclusion `Γ₁(N) ≤ Γ₀(N)`, transported to `GL₂(ℝ)`. -/
+theorem Gamma1_map_le_Gamma0_map (N : ℕ) :
+    (Gamma1 N).map (mapGL ℝ) ≤ (Gamma0 N).map (mapGL ℝ) :=
+  Subgroup.map_mono (Gamma1_in_Gamma0 N)
 
 /-- `(Gamma1 N).map (mapGL ℝ)` is invariant under conjugation by `Gamma0 N` elements
 in `GL₂(ℝ)`. -/
