@@ -43,12 +43,12 @@ of `A`, a frontier point of `B`, or an adherent point of `γ`:
 
 This is the sense in which the circle *cuts the image boundary in two*: the two boundary pieces
 `frontier Ω ∩ frontier A` and `frontier Ω ∩ frontier B` cover `frontier Ω` apart from the *middle
-piece* `frontier Ω ∩ closure γ`, which is no wider than `γ` itself
-(`TauCeti.diam_frontier_inter_closure_image_inter_sphere_le`) and by the length–area estimate of
-`Conformal/ShortCrosscut.lean` can be made as small as desired. That covering is elementary set
-theory and is not recorded as a lemma: nothing below consumes it, every result here being about
-the middle piece itself. The covering that *is* consumed runs the other way, bounding the frontier
-of one side by the cut and the frontier of the whole
+piece* `frontier Ω ∩ closure γ`, which for a bounded `γ` — `Ω` itself need not be bounded — is no
+wider than `γ` itself (`TauCeti.diam_frontier_inter_closure_image_inter_sphere_le`) and by the
+length–area estimate of `Conformal/ShortCrosscut.lean` can be made as small as desired. That
+covering is elementary set theory and is not recorded as a lemma: nothing below consumes it, every
+result here being about the middle piece itself. The covering that *is* consumed runs the other
+way, bounding the frontier of one side by the cut and the frontier of the whole
 (`TauCeti.frontier_image_inter_ball_subset` of `Conformal/CutDiameter.lean`, whose topological core
 `TauCeti.frontier_image_subset_image_union_frontier_image` is in `TauCeti/Topology/Frontier.lean`).
 
@@ -134,8 +134,8 @@ pseudometric space, in `TauCeti/Topology/MetricSpace/Cut.lean`.
   piece is *exactly* the union of those cluster sets, its one-sided inclusion being
   `TauCeti.clusterSetOn_inter_sphere_subset_frontier_inter_closure_image`.
 * `TauCeti.diam_frontier_inter_closure_image_inter_sphere_le` and
-  `TauCeti.nonempty_frontier_inter_closure_image_inter_sphere` — the middle piece is nonempty
-  and no wider than the image of the cut. For a disc,
+  `TauCeti.nonempty_frontier_inter_closure_image_inter_sphere` — for a bounded image of the cut,
+  the middle piece is nonempty and no wider than that image. For a disc,
   `TauCeti.nonempty_frontier_ball_inter_closure_ball_inter_sphere` in
   `Conformal/Crosscut/Endpoints.lean` discharges the nonemptiness hypothesis of the second.
 * `TauCeti.exists_isConnected_subset_frontier_image_of_diam_lt` — a uniformly locally connected
