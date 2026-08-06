@@ -15,10 +15,16 @@ algebra. Nothing here involves a measure: `blockAverage X k` is a function of `�
 lemmas below are the pointwise formula, the scaled-sum normal form, and the value on a constant
 block.
 
-Measure-theoretic facts about block averages — square-integrability, conditional expectations,
-variances and covariances under contractability — live with the `L²` averaging library in
-`Exchangeability/L2/BlockAverages.lean`, which imports this module. Keeping the definition here
-means a route that only needs the algebra does not import the `L²` machinery to get it.
+It also carries the two standard selections — `prefixAverage X n` over the first `n` coordinates
+and `followingAverage X n` over the `n` coordinates after them — with their pointwise formulas.
+These are likewise measure-free.
+
+Measure-theoretic facts about all three — square-integrability, conditional expectations, variances
+and covariances under contractability — live with the `L²` averaging library in
+`Exchangeability/L2/BlockAverages.lean` and `Exchangeability/L2/LongTailAverages.lean`, which import
+this module. Keeping the definitions here means a route that only needs the algebra does not import
+the `L²` machinery to get them: the Koopman route needs `prefixAverage` to state its Birkhoff
+bridge, and has no `L²` content of its own.
 -/
 
 public section
@@ -60,6 +66,30 @@ theorem blockAverage_apply_of_forall_eq {n : ℕ} (hn : 0 < n) {k : Fin n → �
   have : Nonempty (Fin n) := Fin.pos_iff_nonempty.mp hn
   rw [blockAverage, Finset.expect_apply, Finset.expect_congr rfl fun i _ => h i,
     Fintype.expect_const]
+
+/-- The average of the first `n` coordinates of a real-valued process. -/
+-- `@[expose]`: consumers in other modules unfold this with `rw [prefixAverage]` and rely on the
+-- defeq to `blockAverage`, which the module system permits only for exposed definitions.
+@[expose]
+def prefixAverage (X : ℕ → Ω → ℝ) (n : ℕ) : Ω → ℝ :=
+  blockAverage X fun i : Fin n => i
+
+/-- The average of the `n` coordinates immediately following the first `n` coordinates. -/
+@[expose]
+def followingAverage (X : ℕ → Ω → ℝ) (n : ℕ) : Ω → ℝ :=
+  blockAverage X fun i : Fin n => n + i
+
+/-- **The pointwise formula for a prefix average.** -/
+@[simp]
+theorem prefixAverage_apply (n : ℕ) (ω : Ω) :
+    prefixAverage X n ω = (n : ℝ)⁻¹ * ∑ i : Fin n, X i ω := by
+  simp [prefixAverage, blockAverage_apply]
+
+/-- **The pointwise formula for a following-block average.** -/
+@[simp]
+theorem followingAverage_apply (n : ℕ) (ω : Ω) :
+    followingAverage X n ω = (n : ℝ)⁻¹ * ∑ i : Fin n, X (n + i) ω := by
+  simp [followingAverage, blockAverage_apply]
 
 end Probability
 
