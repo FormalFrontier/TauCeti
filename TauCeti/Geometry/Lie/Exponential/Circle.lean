@@ -39,9 +39,7 @@ noncomputable section
 /-- Mathlib's circle exponential, bundled as a continuous homomorphism from the additive real line
 written multiplicatively. -/
 noncomputable def circleExpHom : ContinuousMonoidHom (Multiplicative ℝ) Circle where
-  toFun t := Circle.exp (Multiplicative.toAdd t)
-  map_one' := Circle.expHom.map_zero
-  map_mul' s t := Circle.expHom.map_add (Multiplicative.toAdd s) (Multiplicative.toAdd t)
+  toMonoidHom := Circle.expHom.toMultiplicativeLeft
   continuous_toFun := Circle.exp.continuous.comp continuous_toAdd
 
 /-- The bundled circle exponential evaluates to Mathlib's `Circle.exp`. -/
@@ -101,7 +99,7 @@ noncomputable def circleLieAlgebraEquiv :
 
 /-- The normalized circle Lie-algebra identification sends the exponential generator to one. -/
 @[simp]
-theorem circleLieAlgebraEquiv_generator :
+theorem circleLieAlgebraEquiv_apply_generator :
     circleLieAlgebraEquiv circleExpGenerator = 1 := by
   rw [circleLieAlgebraEquiv, LinearEquiv.trans_apply, Units.mulLeftLinearEquiv_apply]
   exact inv_mul_cancel₀ circleLieAlgebraEquivModel_generator_ne_zero
@@ -111,7 +109,7 @@ exponential is exactly Mathlib's `Circle.exp`. -/
 @[simp]
 theorem lieExp_circle (t : ℝ) : lieExp (circleLieAlgebraEquiv.symm t) = Circle.exp t := by
   have hgen : circleLieAlgebraEquiv.symm 1 = circleExpGenerator := by
-    exact circleLieAlgebraEquiv.symm_apply_eq.mpr circleLieAlgebraEquiv_generator.symm
+    exact circleLieAlgebraEquiv.symm_apply_eq.mpr circleLieAlgebraEquiv_apply_generator.symm
   calc
     lieExp (circleLieAlgebraEquiv.symm t) =
         lieExp (circleLieAlgebraEquiv.symm (t • (1 : ℝ))) := by rw [smul_eq_mul, mul_one]
