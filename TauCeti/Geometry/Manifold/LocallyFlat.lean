@@ -41,7 +41,7 @@ closure properties: restriction to an open subset of the domain, locality, invar
 homeomorphisms and open embeddings on either side, invariance under a change of model space, and
 products. Those are proved here, together with two results that pin the notion down: in codimension
 zero local flatness is exactly openness of the embedding, and a locally flat embedding has locally
-closed image as soon as the complementary model is `T1`.
+closed image as soon as the origin of the complementary model is closed.
 
 This is layer 2 of the geometric-topology roadmap, the substrate for topologically locally flat
 discs (topological sliceness) and for stating the annulus conjecture.
@@ -56,17 +56,18 @@ discs (topological sliceness) and for stating the annulus conjecture.
 
 * `TauCeti.isSliceChart_iff`: a chart is a slice chart iff, on its source, membership in the set is
   read off as membership of the coordinates in the slice.
-* `TauCeti.IsLocallyFlat.restrict` and `TauCeti.isLocallyFlat_iff_forall_exists_isOpen`: local
+* `TauCeti.IsLocallyFlat.restrict` and `TauCeti.IsLocallyFlat.of_forall_exists_isOpen`: local
   flatness is a local property of the domain.
-* `TauCeti.IsLocallyFlat.comp_isOpenEmbedding`, `TauCeti.IsLocallyFlat.of_comp_isOpenEmbedding`,
+* `TauCeti.IsLocallyFlat.isOpenEmbedding_comp`, `TauCeti.IsLocallyFlat.of_isOpenEmbedding_comp`,
   `TauCeti.IsLocallyFlat.codRestrict`, `TauCeti.IsLocallyFlat.homeomorph_comp`,
-  `TauCeti.IsLocallyFlat.comp_homeomorph`: invariance under open embeddings and homeomorphisms of
-  the ambient space and of the domain.
+  `TauCeti.IsLocallyFlat.comp_isOpenEmbedding`, `TauCeti.IsLocallyFlat.comp_homeomorph`: invariance
+  under open embeddings and homeomorphisms of the ambient space and of the domain.
 * `TauCeti.IsSliceEmbedding.transHomeomorph`: invariance under a homeomorphic change of model
   space.
 * `TauCeti.IsLocallyFlat.prodMap`: a product of locally flat embeddings is locally flat.
 * `TauCeti.isLocallyFlat_iff_isOpenEmbedding`: in codimension zero, locally flat means open.
-* `TauCeti.IsLocallyFlat.isLocallyClosed_range`: a locally flat image is locally closed.
+* `TauCeti.IsLocallyFlat.isLocallyClosed_range`: a locally flat image is locally closed, as soon as
+  the origin of the complementary model is closed.
 * `TauCeti.isLocallyFlat_prodMkLeft`: the standard model `x ↦ (x, 0)` is locally flat.
 
 ## Implementation notes
@@ -101,7 +102,7 @@ structure and is not formalised here.
 Composing two locally flat embeddings `N ↪ M ↪ P` is deliberately absent: it is not a formal
 consequence of the definition, because the two flattening charts have to be made compatible before
 they can be combined. Only the codimension-zero ambient case is proved here, as
-`TauCeti.IsLocallyFlat.comp_isOpenEmbedding` and its converse.
+`TauCeti.IsLocallyFlat.isOpenEmbedding_comp` and its converse.
 
 ## References
 
@@ -274,10 +275,18 @@ theorem comp_homeomorph (h : IsSliceEmbedding S f) (e : N' ≃ₜ N) : IsSliceEm
   obtain ⟨φ, hφx, hφ⟩ := h.exists_isSliceChart (e x)
   exact ⟨φ, hφx, by rwa [range_comp, e.surjective.range_eq, image_univ]⟩
 
+/-- Being a slice embedding is invariant under precomposition with an open embedding of the domain:
+such a precomposition is a restriction to an open subset, read through the homeomorphism onto its
+range. -/
+theorem comp_isOpenEmbedding {e : N' → N} (h : IsSliceEmbedding S f) (he : IsOpenEmbedding e) :
+    IsSliceEmbedding S (f ∘ e) := by
+  have h' := (h.restrict he.isOpen_range).comp_homeomorph he.isEmbedding.toHomeomorph
+  simpa [Function.comp_def] using h'
+
 /-- Pushing a slice embedding forward along an open embedding of the ambient space keeps it a slice
 embedding. Taking `g` the inclusion of an open subset, this is the statement that a slice embedding
 into an open subset is one into the whole space. -/
-theorem comp_isOpenEmbedding {g : M → P} (h : IsSliceEmbedding S f) (hg : IsOpenEmbedding g) :
+theorem isOpenEmbedding_comp {g : M → P} (h : IsSliceEmbedding S f) (hg : IsOpenEmbedding g) :
     IsSliceEmbedding S (g ∘ f) := by
   refine ⟨hg.isEmbedding.comp h.isEmbedding, fun x => ?_⟩
   have : Nonempty M := ⟨f x⟩
@@ -302,7 +311,7 @@ theorem comp_isOpenEmbedding {g : M → P} (h : IsSliceEmbedding S f) (hg : IsOp
 /-- Conversely, an embedding that becomes a slice embedding after an open embedding of the ambient
 space was already one. Taking `g` the inclusion of an open subset, this corestricts a slice
 embedding to an open neighbourhood of its image. -/
-theorem of_comp_isOpenEmbedding {g : M → P} (hg : IsOpenEmbedding g)
+theorem of_isOpenEmbedding_comp {g : M → P} (hg : IsOpenEmbedding g)
     (h : IsSliceEmbedding S (g ∘ f)) : IsSliceEmbedding S f := by
   refine ⟨hg.isEmbedding.of_comp_iff.1 h.isEmbedding, fun x => ?_⟩
   have : Nonempty M := ⟨f x⟩
@@ -324,11 +333,11 @@ theorem of_comp_isOpenEmbedding {g : M → P} (hg : IsOpenEmbedding g)
 a slice embedding as a map into `V`. -/
 theorem codRestrict (h : IsSliceEmbedding S f) {V : Set M} (hV : IsOpen V) (hf : ∀ x, f x ∈ V) :
     IsSliceEmbedding S (fun x => (⟨f x, hf x⟩ : V)) :=
-  of_comp_isOpenEmbedding hV.isOpenEmbedding_subtypeVal h
+  of_isOpenEmbedding_comp hV.isOpenEmbedding_subtypeVal h
 
 /-- Being a slice embedding is invariant under a homeomorphism of the ambient space. -/
 theorem homeomorph_comp (h : IsSliceEmbedding S f) (e : M ≃ₜ P) : IsSliceEmbedding S (e ∘ f) :=
-  h.comp_isOpenEmbedding e.isOpenEmbedding
+  h.isOpenEmbedding_comp e.isOpenEmbedding
 
 /-- Being a slice embedding only depends on the model space up to homeomorphism, the slice being
 transported along. -/
@@ -368,21 +377,13 @@ theorem isLocallyClosed_range (h : IsSliceEmbedding S f) (hS : IsClosed S) :
   rintro _ ⟨x, rfl⟩
   obtain ⟨φ, hφx, hφ⟩ := h.exists_isSliceChart x
   refine ⟨φ.source, φ.open_source.mem_nhds hφx, ?_⟩
-  have hpre : ((Subtype.val : φ.source → M) ⁻¹' range f) = (fun y : φ.source => φ ↑y) ⁻¹' S := by
-    ext y
-    exact hφ.mem_iff y.2
-  change IsClosed ((Subtype.val : φ.source → M) ⁻¹' range f)
+  -- `U ↓∩ s` is notation for `Subtype.val ⁻¹' s`, so the goal is literally about that preimage.
+  have hpre : ((Subtype.val : φ.source → M) ⁻¹' range f) = (fun y : φ.source => φ ↑y) ⁻¹' S :=
+    Set.ext fun y => hφ.mem_iff y.2
   rw [hpre]
   exact hS.preimage φ.continuousOn.domRestrict
 
 end IsSliceEmbedding
-
-/-- Being a slice embedding is exactly a local property of the domain. -/
-theorem isSliceEmbedding_iff_forall_exists_isOpen :
-    IsSliceEmbedding S f ↔ IsEmbedding f ∧
-      ∀ x : N, ∃ U : Set N, IsOpen U ∧ x ∈ U ∧ IsSliceEmbedding S (f ∘ ((↑) : U → N)) :=
-  ⟨fun h => ⟨h.isEmbedding, fun x => ⟨univ, isOpen_univ, mem_univ x, h.restrict isOpen_univ⟩⟩,
-    fun h => .of_forall_exists_isOpen h.1 h.2⟩
 
 /-- An open embedding into a space charted on `F` is a slice embedding for the full model space. -/
 theorem isSliceEmbedding_univ_of_isOpenEmbedding [ChartedSpace F M] (h : IsOpenEmbedding f) :
@@ -401,12 +402,6 @@ theorem isSliceEmbedding_univ_iff [ChartedSpace F M] :
 section StandardSlice
 
 variable [Zero F']
-
-/-- Local flatness unfolded: it is the slice-embedding condition for the standard slice. All the
-transport lemmas are inherited through this. -/
-theorem isLocallyFlat_iff_isSliceEmbedding :
-    IsLocallyFlat F F' f ↔ IsSliceEmbedding ((univ : Set F) ×ˢ ({0} : Set F')) f :=
-  Iff.rfl
 
 namespace IsLocallyFlat
 
@@ -435,18 +430,23 @@ theorem of_forall_exists_isOpen (hf : IsEmbedding f)
 theorem comp_homeomorph (h : IsLocallyFlat F F' f) (e : N' ≃ₜ N) : IsLocallyFlat F F' (f ∘ e) :=
   IsSliceEmbedding.comp_homeomorph h e
 
+/-- Local flatness is invariant under precomposition with an open embedding of the domain. -/
+theorem comp_isOpenEmbedding {e : N' → N} (h : IsLocallyFlat F F' f) (he : IsOpenEmbedding e) :
+    IsLocallyFlat F F' (f ∘ e) :=
+  IsSliceEmbedding.comp_isOpenEmbedding h he
+
 /-- Pushing a locally flat embedding forward along an open embedding of the ambient space keeps it
 locally flat. Taking `g` the inclusion of an open subset, this is the statement that a locally flat
 embedding into an open subset is locally flat into the whole space. -/
-theorem comp_isOpenEmbedding {g : M → P} (h : IsLocallyFlat F F' f) (hg : IsOpenEmbedding g) :
+theorem isOpenEmbedding_comp {g : M → P} (h : IsLocallyFlat F F' f) (hg : IsOpenEmbedding g) :
     IsLocallyFlat F F' (g ∘ f) :=
-  IsSliceEmbedding.comp_isOpenEmbedding h hg
+  IsSliceEmbedding.isOpenEmbedding_comp h hg
 
 /-- Conversely, an embedding that becomes locally flat after an open embedding of the ambient space
 was already locally flat. -/
-theorem of_comp_isOpenEmbedding {g : M → P} (hg : IsOpenEmbedding g)
+theorem of_isOpenEmbedding_comp {g : M → P} (hg : IsOpenEmbedding g)
     (h : IsLocallyFlat F F' (g ∘ f)) : IsLocallyFlat F F' f :=
-  IsSliceEmbedding.of_comp_isOpenEmbedding hg h
+  IsSliceEmbedding.of_isOpenEmbedding_comp hg h
 
 /-- Corestriction: a locally flat embedding whose image lies in an open subset `V` of the ambient
 space is locally flat as a map into `V`. -/
@@ -475,19 +475,14 @@ theorem prodMap {G G' : Type*} [TopologicalSpace G] [TopologicalSpace G'] [Zero 
   rw [himage] at hprod
   exact hprod
 
-/-- The image of a locally flat embedding is locally closed, the standard slice being closed. This
-is where the definition has teeth: the image of a wild embedding need not be locally closed. -/
-theorem isLocallyClosed_range [T1Space F'] (h : IsLocallyFlat F F' f) :
+/-- The image of a locally flat embedding is locally closed as soon as the origin of the
+complementary model is closed, the standard slice then being closed. This is where the definition
+has teeth: the image of a wild embedding need not be locally closed. -/
+theorem isLocallyClosed_range (h : IsLocallyFlat F F' f) (h0 : IsClosed ({0} : Set F')) :
     IsLocallyClosed (range f) :=
-  IsSliceEmbedding.isLocallyClosed_range h (isClosed_univ.prod isClosed_singleton)
+  IsSliceEmbedding.isLocallyClosed_range h (isClosed_univ.prod h0)
 
 end IsLocallyFlat
-
-/-- Local flatness is exactly a local property of the domain. -/
-theorem isLocallyFlat_iff_forall_exists_isOpen :
-    IsLocallyFlat F F' f ↔ IsEmbedding f ∧
-      ∀ x : N, ∃ U : Set N, IsOpen U ∧ x ∈ U ∧ IsLocallyFlat F F' (f ∘ ((↑) : U → N)) :=
-  isSliceEmbedding_iff_forall_exists_isOpen
 
 /-- Codimension zero: with a trivial complementary model, over a space charted on `F × F'`, locally
 flat is exactly open embedding. In particular local flatness is strictly stronger than embedding:
@@ -497,7 +492,7 @@ theorem isLocallyFlat_iff_isOpenEmbedding [Subsingleton F'] [ChartedSpace (F × 
   have h0 : ((univ : Set F) ×ˢ ({0} : Set F')) = (univ : Set (F × F')) := by
     rw [show ({0} : Set F') = univ from eq_univ_of_forall fun x => Subsingleton.elim x 0,
       univ_prod_univ]
-  rw [isLocallyFlat_iff_isSliceEmbedding, h0]
+  rw [IsLocallyFlat, h0]
   exact isSliceEmbedding_univ_iff
 
 /-- The standard local model: the inclusion of `F` as the slice `F × {0}` of `F × F'` is locally
