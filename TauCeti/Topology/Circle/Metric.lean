@@ -8,6 +8,7 @@ module
 public import Mathlib.Analysis.SpecialFunctions.Complex.Circle
 public import Mathlib.Analysis.SpecialFunctions.Complex.CircleMap
 import Mathlib.Analysis.SpecialFunctions.Trigonometric.Bounds
+import TauCeti.Analysis.SpecialFunctions.Trigonometric.Arccos
 
 /-!
 # The chord and the arc on a circle
@@ -31,6 +32,10 @@ circle.
   `2 * |ρ| * |sin ((θ - θ') / 2)|`, and
   `TauCeti.dist_circleMap_eq_two_mul_sin_abs`, the same formula with the sign of the angular
   difference cleared, valid for angles at most a full turn apart.
+* `TauCeti.dist_circleMap_le_dist_circleMap_of_abs_sub_le` — within half a turn that chord grows
+  with the angular gap, so the distance to a fixed point of the circle is unimodal along it, and
+  `TauCeti.ordConnected_inter_setOf_dist_circleMap_lt` — consequently a ball meets an arc of
+  angular width at most `π` in a set of angles that is order connected.
 * `TauCeti.dist_circleMap_sq` — the law of cosines: the point of `circleMap ζ ρ` at angle `θ` is at
   distance `ρ ^ 2 + dist ζ c ^ 2 - 2 * ρ * dist ζ c * cos (θ - arg (c - ζ))`, squared, from an
   arbitrary point `c` of the plane.
@@ -125,6 +130,51 @@ theorem dist_circleMap_eq_two_mul_sin_abs (ζ : ℂ) (ρ : ℝ) {θ θ' : ℝ} (
   rw [dist_circleMap_eq_two_mul_abs_sin,
     Real.abs_sin_eq_sin_abs_of_abs_le_pi (by rw [habs]; linarith), habs]
 
+/-- **Within half a turn, the chord grows with the angular gap.** If the angle `u` is no further
+from `θ₀` than `v` is, and `v` is within half a turn of `θ₀`, then the point of `circleMap ζ ρ` at
+angle `u` is no further from the one at `θ₀` than the point at `v` is.
+
+Both chords are `TauCeti.dist_circleMap_eq_two_mul_sin_abs`, and the half-angles they feed to the
+sine stay in `[0, π / 2]`, where the sine is monotone. The restriction to half a turn is sharp:
+antipodal points are the furthest apart, and beyond them the chord shrinks again. -/
+theorem dist_circleMap_le_dist_circleMap_of_abs_sub_le (ζ : ℂ) (ρ : ℝ) {θ₀ u v : ℝ}
+    (huv : |u - θ₀| ≤ |v - θ₀|) (hv : |v - θ₀| ≤ π) :
+    dist (circleMap ζ ρ u) (circleMap ζ ρ θ₀) ≤ dist (circleMap ζ ρ v) (circleMap ζ ρ θ₀) := by
+  have hu : |u - θ₀| ≤ π := huv.trans hv
+  have hdu : dist (circleMap ζ ρ u) (circleMap ζ ρ θ₀) = 2 * |ρ| * Real.sin (|u - θ₀| / 2) :=
+    dist_circleMap_eq_two_mul_sin_abs ζ ρ (by linarith [Real.pi_pos])
+  have hdv : dist (circleMap ζ ρ v) (circleMap ζ ρ θ₀) = 2 * |ρ| * Real.sin (|v - θ₀| / 2) :=
+    dist_circleMap_eq_two_mul_sin_abs ζ ρ (by linarith [Real.pi_pos])
+  rw [hdu, hdv]
+  have hsin : Real.sin (|u - θ₀| / 2) ≤ Real.sin (|v - θ₀| / 2) :=
+    Real.sin_le_sin_of_le_of_le_pi_div_two
+      (by linarith [abs_nonneg (u - θ₀), Real.pi_pos]) (by linarith) (by linarith)
+  exact mul_le_mul_of_nonneg_left hsin (by positivity)
+
+/-- **A ball centred on an arc of angular width at most `π` meets it in a subarc.** For a set `s` of
+angles contained in the half-turn `[θ₀ - π, θ₀ + π]`, the angles of `s` whose points lie within `δ`
+of the point at angle `θ₀` form an order-connected subset of `s`.
+
+The chord distance to `θ₀` falls and then rises as the angle sweeps across `s`
+(`TauCeti.dist_circleMap_le_dist_circleMap_of_abs_sub_le`), so an angle between two admitted ones is
+itself no further from `θ₀` than the admitted one on its side of `θ₀`. The angle `θ₀` need not lie
+in `s`, and the radius `δ` is arbitrary: for large `δ` the trace is all of `s`. -/
+theorem ordConnected_inter_setOf_dist_circleMap_lt (ζ : ℂ) (ρ : ℝ) {s : Set ℝ} {θ₀ δ : ℝ}
+    (hs : s.OrdConnected) (hsub : s ⊆ Icc (θ₀ - π) (θ₀ + π)) :
+    (s ∩ {θ | dist (circleMap ζ ρ θ) (circleMap ζ ρ θ₀) < δ}).OrdConnected := by
+  refine ⟨fun x hx y hy z hz => ⟨hs.out hx.1 hy.1 hz, ?_⟩⟩
+  rcases le_total z θ₀ with hzθ | hzθ
+  · refine lt_of_le_of_lt (dist_circleMap_le_dist_circleMap_of_abs_sub_le ζ ρ ?_ ?_) hx.2
+    · rw [abs_of_nonpos (by linarith), abs_of_nonpos (by linarith [hz.1])]
+      linarith [hz.1]
+    · rw [abs_le]
+      exact ⟨by linarith [(hsub hx.1).1], by linarith [(hsub hx.1).2]⟩
+  · refine lt_of_le_of_lt (dist_circleMap_le_dist_circleMap_of_abs_sub_le ζ ρ ?_ ?_) hy.2
+    · rw [abs_of_nonneg (by linarith), abs_of_nonneg (by linarith [hz.2])]
+      linarith [hz.2]
+    · rw [abs_le]
+      exact ⟨by linarith [(hsub hy.1).1], by linarith [(hsub hy.1).2]⟩
+
 /-- **The law of cosines for a point of a circle.** The point of `circleMap ζ ρ` at angle `θ` is at
 distance `ρ ^ 2 + dist ζ c ^ 2 - 2 * ρ * dist ζ c * cos (θ - arg (c - ζ))`, squared, from an
 arbitrary point `c`. For `ρ ≥ 0` this is the law of cosines as usually read: in the triangle with
@@ -214,26 +264,16 @@ theorem circleMap_mem_closedBall_iff_sq {c ζ : ℂ} {r : ℝ} (hr : 0 ≤ r) (�
   · intro h; linarith
   · intro h; linarith
 
-/-- **The cosine has no interior minimum on `[-π, π]`.** If `k < cos a` and `k < cos b`, with
-`-π ≤ a` and `b ≤ π`, then `k < cos θ` for every `θ ∈ [a, b]`: `cos` increases on `[-π, 0]` and
-decreases on `[0, π]`, so on `[a, b]` its minimum is attained at an endpoint. -/
-private theorem lt_cos_of_mem_Icc {k a b θ : ℝ} (ha : -π ≤ a) (hb : b ≤ π) (hθ : θ ∈ Icc a b)
-    (hka : k < Real.cos a) (hkb : k < Real.cos b) : k < Real.cos θ := by
-  rcases le_total θ 0 with hθ0 | hθ0
-  · refine hka.trans_le ?_
-    rw [← Real.cos_neg θ, ← Real.cos_neg a]
-    exact Real.cos_le_cos_of_nonneg_of_le_pi (by linarith) (by linarith) (by linarith [hθ.1])
-  · exact hkb.trans_le (Real.cos_le_cos_of_nonneg_of_le_pi hθ0 hb hθ.2)
-
 /-- **A circle meets a disc in a connected set of angles.** If the angles `a` and `b` both lie
 within `π` of the direction `arg (c - ζ)` from the centre `ζ` of the circle to the centre `c` of
 the disc, and both put the point of `sphere ζ ρ` they name inside `ball c r`, then so does every
 angle in `[a, b]`.
 
 This is `TauCeti.circleMap_mem_ball_iff_sq` read through the unimodality of `cos` on a period
-centred at `arg (c - ζ)`. Neither `0 < r` nor any relation between `ζ` and the disc is assumed: the
-first is forced by the hypotheses, and the second is not needed, so the conclusion covers a cutting
-circle centred anywhere and not only the circular crosscut at a boundary point `ζ` of the disc. Two
+centred at `arg (c - ζ)`, which is `Real.lt_cos_of_mem_Icc`. Neither `0 < r` nor any relation
+between `ζ` and the disc is assumed: the first is forced by the hypotheses, and the second is not
+needed, so the conclusion covers a cutting circle centred anywhere and not only the circular
+crosscut at a boundary point `ζ` of the disc. Two
 degenerate cases are covered as well, in both of which the criterion is independent of the angle: a
 circle centred at `c` itself, whose points are all at the same distance from `c`, and the circle of
 radius `ρ = 0`, which is the single point `ζ`. -/
@@ -255,7 +295,7 @@ theorem circleMap_mem_ball_of_mem_Icc {c ζ : ℂ} {r ρ : ℝ} (hρ : 0 ≤ ρ)
           < Real.cos (x - (c - ζ).arg) := fun x => by
       rw [div_lt_iff₀ hpos, mul_comm]
     rw [hkey] at hain hbin ⊢
-    exact lt_cos_of_mem_Icc ha hb ⟨by linarith [hθ.1], by linarith [hθ.2]⟩ hain hbin
+    exact Real.lt_cos_of_mem_Icc ha hb ⟨by linarith [hθ.1], by linarith [hθ.2]⟩ hain hbin
 
 /-- **The chord is at most the arc**: `Circle.exp` is `1`-Lipschitz. -/
 theorem lipschitzWith_one_circleExp : LipschitzWith 1 Circle.exp :=
