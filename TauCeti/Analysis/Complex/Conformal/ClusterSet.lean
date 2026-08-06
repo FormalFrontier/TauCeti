@@ -68,7 +68,8 @@ each is a point, an arc, or the whole curve. That is
 
 The classification comes with a criterion excluding the two nondegenerate cases at once: a compact
 connected subset of a Jordan curve that is *nowhere dense* in it — every point of it adherent to the
-rest of the curve — is a single point. Feeding that criterion to the extension theorem
+rest of the curve — is a subsingleton, so a single point for a cluster set, which is nonempty.
+Feeding that criterion to the extension theorem
 `TauCeti.exists_continuousOn_closure_eqOn_of_isBounded` gives
 `TauCeti.exists_continuousOn_closure_eqOn_of_forall_subset_closure_sdiff`: **a conformal map of a
 convex domain onto a bounded region with Jordan boundary, none of whose boundary cluster sets has
@@ -281,7 +282,9 @@ theorem subsingleton_or_exists_injective_path_clusterSetOn (hUo : IsOpen U) (hUc
 
 /-- **A boundary cluster set that is nowhere dense in a Jordan image boundary is a single point.**
 If every value the conformal map clusters at over the boundary point `w` is adherent to the rest of
-`frontier (f '' U)`, then there is only one such value.
+`frontier (f '' U)`, then there is only one such value: the conclusion is that the cluster set is a
+subsingleton, and under these hypotheses it is nonempty, being a continuum by
+`TauCeti.isConnected_clusterSetOn_of_convex_of_isBounded`.
 
 This is the nondegeneracy criterion
 `TauCeti.IsJordanCurve.subsingleton_of_subset_closure_sdiff` for subcontinua of a Jordan curve, and

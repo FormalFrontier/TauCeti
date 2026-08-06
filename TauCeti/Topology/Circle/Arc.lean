@@ -114,8 +114,9 @@ theorem exists_eq_circleExp_image_Icc {T : Set Circle} (hT : IsClosed T) (hpre :
       · rintro _ ⟨x, hx, rfl⟩
         exact ⟨⟨x, hx⟩, rfl⟩
     have hpre' := hpre.preimage_of_isClosedMap hginj hgc.isClosedMap hrange.ge
-    rw [show (fun x : K => Circle.exp (x : ℝ)) ⁻¹' T = univ from
-      eq_univ_of_forall fun x => x.2.1] at hpre'
+    have hpreimage : (fun x : K => Circle.exp (x : ℝ)) ⁻¹' T = univ :=
+      eq_univ_of_forall fun x => x.2.1
+    rw [hpreimage] at hpre'
     exact isPreconnected_iff_preconnectedSpace.mpr ⟨hpre'⟩
   have hKeq : K = Icc (sInf K) (sSup K) := eq_Icc_of_connected_compact ⟨hKne, hKpre⟩ hKcompact
   have hIsub : Icc (sInf K) (sSup K) ⊆ Ioo t (t + 2 * π) := hKeq ▸ hKsub
@@ -133,7 +134,9 @@ theorem exists_eq_circleExp_image_Icc {T : Set Circle} (hT : IsClosed T) (hpre :
 /-- **The complement of a closed arc of the circle is the complementary open arc.** The two arcs
 share their endpoints' angles: `Circle.exp '' Set.Icc a b` is complemented by
 `Circle.exp '' Set.Ioo b (a + 2 * π)`, which is nonempty exactly because the closed arc is not the
-whole circle. -/
+whole circle. Read left to right this removes a complement, so it is the normal form a consumer
+should reach for: `simp [hab, hlt]` rewrites with it. -/
+@[simp]
 theorem compl_circleExp_image_Icc {a b : ℝ} (hab : a ≤ b) (hlt : b - a < 2 * π) :
     (Circle.exp '' Icc a b)ᶜ = Circle.exp '' Ioo b (a + 2 * π) := by
   have hbsub : Icc (a + 2 * π) (b + 2 * π) ⊆ Ioc b (b + 2 * π) := fun x hx =>

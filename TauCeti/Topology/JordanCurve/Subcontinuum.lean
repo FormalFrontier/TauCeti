@@ -15,8 +15,8 @@ public import TauCeti.Topology.JordanCurve.Basic
 This file describes the pieces from the other side: it classifies the compact connected subsets of
 a Jordan curve. Every one of them other than the curve itself is a point or an **arc** — the range
 of an injective path — and its complement in the curve is again path connected. In particular a
-compact connected subset that is *nowhere dense in the curve* is a single point, which is the form
-in which the classification is spent.
+compact connected subset that is *nowhere dense in the curve* is a subsingleton, hence a single
+point as soon as it is nonempty, which is the form in which the classification is spent.
 
 ## The argument
 
@@ -35,7 +35,7 @@ Nowhere density is the same computation once more. If `a < b` then the midpoint 
 a point of `S` whose angle lies outside `Icc b (a + 2 * π)`, so it lies outside the image of that
 compact interval of angles, which is closed and contains the whole of `C \ S`; hence that point of
 `S` is not adherent to `C \ S`, and `S` is not nowhere dense. Contrapositively, a nowhere dense
-compact connected subset has `a = b` and is a point.
+compact connected subset is a subsingleton: it is empty, or it has `a = b` and is a point.
 
 ## Why this is a layer-L5 prerequisite
 
@@ -68,11 +68,11 @@ because they speak of a closure taken in that space.
 * `TauCeti.IsJordanCurve.isPathConnected_sdiff` — the complement of a proper subcontinuum in the
   curve is path connected; for a singleton this is
   `TauCeti.IsJordanCurve.isPathConnected_sdiff_singleton`.
-* `TauCeti.IsJordanCurve.exists_notMem_closure_sdiff` — a proper subcontinuum with more than one
-  point is not nowhere dense: one of its points is not adherent to the rest of the curve.
+* `TauCeti.IsJordanCurve.exists_notMem_closure_sdiff` — a subcontinuum with more than one point is
+  not nowhere dense: one of its points is not adherent to the rest of the curve.
 * `TauCeti.IsJordanCurve.subsingleton_of_subset_closure_sdiff` — the contrapositive, and the form
   the boundary correspondence consumes: a compact connected subset of a Jordan curve every point of
-  which is adherent to the complement is a single point.
+  which is adherent to the complement is a subsingleton, so a single point once it is nonempty.
 
 ## References
 
@@ -179,25 +179,29 @@ theorem IsJordanCurve.isPathConnected_sdiff (h : IsJordanCurve C) (hSC : S ⊆ C
 
 /-! ## Nowhere density
 
-A proper subcontinuum with more than one point occupies a relatively open piece of the curve, so it
-is not nowhere dense there. Stated in the contrapositive this is what identifies a nowhere dense
-subcontinuum as a single point, and it is the form the Carathéodory boundary correspondence spends:
+A subcontinuum with more than one point occupies a relatively open piece of the curve, so it is not
+nowhere dense there. Stated in the contrapositive this is what identifies a nowhere dense
+subcontinuum as a subsingleton — a single point once it is nonempty, which is how the classification
+is used — and it is the form the Carathéodory boundary correspondence spends:
 a boundary cluster set of a conformal map is a continuum on the image boundary, and this is what
 degenerates it. Both statements are about a closure taken in the ambient space, so that space is
 asked to be Hausdorff here. -/
 
-/-- **A proper subcontinuum of a Jordan curve with more than one point is not nowhere dense in it**:
-one of its points is not adherent to the rest of the curve.
+/-- **A subcontinuum of a Jordan curve with more than one point is not nowhere dense in it**: one of
+its points is not adherent to the rest of the curve.
 
 The witness is the midpoint of the arc of angles carrying the subcontinuum. The complement of the
 subcontinuum in the curve is the open arc of `TauCeti.compl_circleExp_image_Icc`, whose closure is
 contained in the compact — hence closed — image of the corresponding closed arc, and the midpoint
-misses that image because `Circle.exp` is injective on a period. -/
+misses that image because `Circle.exp` is injective on a period. The subcontinuum is not asked to be
+proper: for the whole curve the complement is empty and any of its points will do. -/
 theorem IsJordanCurve.exists_notMem_closure_sdiff [T2Space X] (h : IsJordanCurve C) (hSC : S ⊆ C)
-    (hS : IsCompact S) (hpre : IsPreconnected S) (hSne : S ≠ C) (hnsub : ¬ S.Subsingleton) :
+    (hS : IsCompact S) (hpre : IsPreconnected S) (hnsub : ¬ S.Subsingleton) :
     ∃ p ∈ S, p ∉ closure (C \ S) := by
-  obtain ⟨e⟩ := isJordanCurve_iff.mp h
   obtain ⟨x, hx, y, hy, hxy⟩ := not_subsingleton_iff.mp hnsub
+  rcases eq_or_ne S C with rfl | hSne
+  · exact ⟨x, hx, by simp⟩
+  obtain ⟨e⟩ := isJordanCurve_iff.mp h
   obtain ⟨a, b, hab, hlt, hSeq⟩ := exists_eq_jordanParam_image e hSC hS hpre ⟨x, hx⟩ hSne
   have hab' : a < b := by
     rcases eq_or_lt_of_le hab with rfl | hab'
@@ -222,23 +226,16 @@ theorem IsJordanCurve.exists_notMem_closure_sdiff [T2Space X] (h : IsJordanCurve
     exact jordanParam_injective e hu
   linarith [hs.1, hsm ▸ hs.1]
 
-/-- **A nowhere dense subcontinuum of a Jordan curve is a single point.** If every point of a
-compact preconnected subset of a Jordan curve is adherent to the complement of that subset in the
-curve, then the subset is a subsingleton.
+/-- **A nowhere dense subcontinuum of a Jordan curve is a subsingleton**, so a single point when it
+is nonempty. If every point of a compact preconnected subset of a Jordan curve is adherent to the
+complement of that subset in the curve, then the subset has at most one point.
 
-This is the contrapositive of `TauCeti.IsJordanCurve.exists_notMem_closure_sdiff`; no properness
-hypothesis is needed, because a nonempty subset satisfying the density hypothesis already has a
-nonempty complement in the curve. -/
+This is the contrapositive of `TauCeti.IsJordanCurve.exists_notMem_closure_sdiff`. -/
 theorem IsJordanCurve.subsingleton_of_subset_closure_sdiff [T2Space X] (h : IsJordanCurve C)
     (hSC : S ⊆ C) (hS : IsCompact S) (hpre : IsPreconnected S) (hdense : S ⊆ closure (C \ S)) :
     S.Subsingleton := by
   by_contra hnsub
-  obtain ⟨x, hx, _, _, _⟩ := not_subsingleton_iff.mp hnsub
-  have hSne : S ≠ C := by
-    rintro rfl
-    rw [sdiff_self, closure_empty] at hdense
-    exact hdense hx
-  obtain ⟨p, hp, hpn⟩ := h.exists_notMem_closure_sdiff hSC hS hpre hSne hnsub
+  obtain ⟨p, hp, hpn⟩ := h.exists_notMem_closure_sdiff hSC hS hpre hnsub
   exact hpn (hdense hp)
 
 end TauCeti
