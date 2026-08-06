@@ -28,6 +28,8 @@ This advances Deliverable A, Layer 1 of
 
 * `TauCeti.Lie.exp_mulLeft_apply`: exponentiating left multiplication acts by `exp x` on the left.
 * `TauCeti.Lie.exp_mulRight_apply`: the analogous right-multiplication identity.
+* `TauCeti.Lie.exp_mulLeft` and `TauCeti.Lie.exp_mulRight`: the corresponding bounded-operator
+  identities.
 * `TauCeti.Lie.exp_continuousCommutator_apply`: its operator exponential acts by conjugation.
 * `TauCeti.Lie.exp_continuousCommutator`: the corresponding equality of bounded operators.
 * `TauCeti.Lie.continuousCommutator_toLinearMap`: its underlying linear map is Mathlib's
@@ -50,27 +52,40 @@ open NormedSpace
 variable {R : Type*} [NormedRing R] [NormedAlgebra ℝ R] [CompleteSpace R]
 
 /-- The rational scalar restriction used by Mathlib's exponential API in this module. -/
-noncomputable local instance normedAlgebraRat : NormedAlgebra ℚ R :=
+private noncomputable local instance normedAlgebraRat : NormedAlgebra ℚ R :=
   .restrictScalars ℚ ℝ R
+
+omit [CompleteSpace R] in
+private theorem mulLeft_toLinearMap (x : R) :
+    (ContinuousLinearMap.mul ℝ R x).toLinearMap = LinearMap.mulLeft ℝ x := by
+  ext y
+  simp
+
+omit [CompleteSpace R] in
+private theorem mulRight_toLinearMap (x : R) :
+    ((ContinuousLinearMap.mul ℝ R).flip x).toLinearMap = LinearMap.mulRight ℝ x := by
+  ext y
+  simp
 
 omit [CompleteSpace R] in
 private theorem mulLeft_pow_apply (x y : R) (n : ℕ) :
     ((ContinuousLinearMap.mul ℝ R x) ^ n) y = x ^ n * y := by
-  -- Transport Mathlib's linear-map power identity through the underlying linear map.
+  -- Transport Mathlib's linear-map power identity through the explicit bundling boundary.
   change (((ContinuousLinearMap.mul ℝ R x) ^ n).toLinearMap) y = x ^ n * y
-  rw [ContinuousLinearMap.toLinearMap_pow]
-  exact LinearMap.congr_fun (LinearMap.pow_mulLeft ℝ R x n) y
+  rw [ContinuousLinearMap.toLinearMap_pow, mulLeft_toLinearMap, LinearMap.pow_mulLeft,
+    LinearMap.mulLeft_apply]
 
 omit [CompleteSpace R] in
 private theorem mulRight_pow_apply (x y : R) (n : ℕ) :
     (((ContinuousLinearMap.mul ℝ R).flip x) ^ n) y = y * x ^ n := by
-  -- Transport Mathlib's linear-map power identity through the underlying linear map.
+  -- Transport Mathlib's linear-map power identity through the explicit bundling boundary.
   change ((((ContinuousLinearMap.mul ℝ R).flip x) ^ n).toLinearMap) y = y * x ^ n
-  rw [ContinuousLinearMap.toLinearMap_pow]
-  exact LinearMap.congr_fun (LinearMap.pow_mulRight ℝ R x n) y
+  rw [ContinuousLinearMap.toLinearMap_pow, mulRight_toLinearMap, LinearMap.pow_mulRight,
+    LinearMap.mulRight_apply]
 
 /-- Exponentiating the bounded left-multiplication operator gives left multiplication by the
 algebra exponential. -/
+@[simp]
 theorem exp_mulLeft_apply (x y : R) :
     exp (ContinuousLinearMap.mul ℝ R x) y = exp x * y := by
   have hop := (ContinuousLinearMap.apply ℝ R y).hasSum
@@ -82,6 +97,7 @@ theorem exp_mulLeft_apply (x y : R) :
 
 /-- Exponentiating the bounded right-multiplication operator gives right multiplication by the
 algebra exponential. -/
+@[simp]
 theorem exp_mulRight_apply (x y : R) :
     exp ((ContinuousLinearMap.mul ℝ R).flip x) y = y * exp x := by
   have hop := (ContinuousLinearMap.apply ℝ R y).hasSum
@@ -90,6 +106,21 @@ theorem exp_mulRight_apply (x y : R) :
   apply HasSum.unique (hop.congr fun n => ?_) halg
   simp only [map_smul, ContinuousLinearMap.apply_apply, mulRight_pow_apply]
   simp only [mul_smul_comm]
+
+/-- Exponentiating the bounded left-multiplication operator gives the operator of left
+multiplication by the algebra exponential. -/
+theorem exp_mulLeft (x : R) :
+    exp (ContinuousLinearMap.mul ℝ R x) = ContinuousLinearMap.mul ℝ R (exp x) := by
+  ext y
+  simp
+
+/-- Exponentiating the bounded right-multiplication operator gives the operator of right
+multiplication by the algebra exponential. -/
+theorem exp_mulRight (x : R) :
+    exp ((ContinuousLinearMap.mul ℝ R).flip x) =
+      (ContinuousLinearMap.mul ℝ R).flip (exp x) := by
+  ext y
+  simp
 
 /-- The continuous-linear family of endomorphisms `y ↦ x * y - y * x`. -/
 def continuousCommutator : R →L[ℝ] R →L[ℝ] R :=
@@ -109,10 +140,11 @@ theorem exp_continuousCommutator_apply (x y : R) :
   let L := ContinuousLinearMap.mul ℝ R x
   let R' := (ContinuousLinearMap.mul ℝ R).flip x
   have hcomm : Commute L R' := by
-    apply ContinuousLinearMap.ext
-    intro z
-    exact LinearMap.congr_fun (LinearMap.commute_mulLeft_right x x).eq z
-  have hcommutator : continuousCommutator x = L - R' := rfl
+    ext z
+    simp only [L, R', mul_apply_eq_comp, ContinuousLinearMap.mul_apply',
+      ContinuousLinearMap.flip_apply, mul_assoc]
+  have hcommutator : continuousCommutator x = L - R' := by
+    rw [continuousCommutator, sub_apply]
   rw [hcommutator, sub_eq_add_neg, exp_add_of_commute hcomm.neg_right,
     mul_apply_eq_comp]
   have hneg : -R' = (ContinuousLinearMap.mul ℝ R).flip (-x) := by
