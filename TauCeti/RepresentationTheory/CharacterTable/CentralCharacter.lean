@@ -5,7 +5,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.RingTheory.Semisimple.CentralCharacter
-public import TauCeti.RepresentationTheory.Intertwining
 public import TauCeti.RepresentationTheory.Irreducible
 public import TauCeti.RepresentationTheory.CharacterTable.ClassSum.Integral
 public import TauCeti.RepresentationTheory.CharacterTable.ClassSum.Representation
@@ -130,7 +129,10 @@ theorem centralCharacter_eq_of_equiv {W : Type*} [AddCommGroup W] [Module k W]
   have hφv : φ.toIntertwiningMap v ≠ 0 := fun h0 =>
     hv (φ.toLinearEquiv.injective (by simpa using h0))
   refine AlgHom.ext fun z => ?_
-  have h := IntertwiningMap.map_asAlgebraHom φ.toIntertwiningMap (z : k[G]) v
+  have h : φ.toIntertwiningMap (ρ.asAlgebraHom (z : k[G]) v) =
+      σ.asAlgebraHom (z : k[G]) (φ.toIntertwiningMap v) :=
+    (_root_.Representation.IntertwiningMap.equivLinearMapAsModule ρ σ
+      φ.toIntertwiningMap).map_smul' (z : k[G]) v
   rw [asAlgebraHom_center_apply, map_smul, asAlgebraHom_center_apply] at h
   have hsub : (centralCharacter σ z - centralCharacter ρ z) • φ.toIntertwiningMap v = 0 := by
     rw [sub_smul, ← h, sub_self]
