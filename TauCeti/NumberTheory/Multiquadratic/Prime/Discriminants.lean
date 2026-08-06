@@ -372,13 +372,15 @@ factorization of a fundamental discriminant into the list of ramified primes. -/
 
 /-- The rational prime lying under a prime discriminant: `p` for the odd prime discriminant `p*`,
 and `2` for the even prime discriminants `-4`, `8`, `-8`. -/
-@[expose] def primeDiscriminantPrime (D : ℤ) : ℕ :=
+def primeDiscriminantPrime (D : ℤ) : ℕ :=
   if D = -4 ∨ D = 8 ∨ D = -8 then 2 else D.natAbs
 
-/-- The defining `if` expression for `primeDiscriminantPrime`. -/
+/-- The defining `if` expression for `primeDiscriminantPrime`. The body of
+`primeDiscriminantPrime` is not `@[expose]`d, so downstream files rewrite with this lemma — or with
+the evaluation lemmas below — rather than unfolding the definition. -/
 theorem primeDiscriminantPrime_def (D : ℤ) :
-    primeDiscriminantPrime D = if D = -4 ∨ D = 8 ∨ D = -8 then 2 else D.natAbs :=
-  rfl
+    primeDiscriminantPrime D = if D = -4 ∨ D = 8 ∨ D = -8 then 2 else D.natAbs := by
+  rw [primeDiscriminantPrime]
 
 /-- The prime under an even prime discriminant is `2`. -/
 @[simp]
@@ -411,10 +413,6 @@ theorem primeDiscriminantPrime_dvd {D : ℤ} (hD : IsPrimeDiscriminant D) :
     simpa using two_dvd_evenPrimeDiscriminant hev
   · simp [primeDiscriminantPrime_oddPrimeDiscriminant hodd]
 
-/-- A natural prime dividing a power of `2` is `2`. -/
-private theorem eq_two_of_prime_dvd_two_pow {p k : ℕ} (hp : p.Prime) (h : p ∣ 2 ^ k) : p = 2 :=
-  (Nat.prime_dvd_prime_iff_eq hp Nat.prime_two).mp (hp.dvd_of_dvd_pow h)
-
 /-- **A prime discriminant has exactly one prime divisor.** A natural prime divides a prime
 discriminant precisely when it is the prime under it. This is what makes the prime-discriminant
 factorization of a fundamental discriminant a list of ramified primes without repetition. -/
@@ -430,7 +428,7 @@ theorem natCast_dvd_primeDiscriminant_iff {D : ℤ} (hD : IsPrimeDiscriminant D)
       · exact ⟨-1, by norm_num⟩
     have hdvd8 : (p : ℤ) ∣ ((2 ^ 3 : ℕ) : ℤ) := by
       simpa using hdvd.trans hd8
-    exact eq_two_of_prime_dvd_two_pow hp (Int.natCast_dvd_natCast.mp hdvd8)
+    exact Nat.prime_eq_prime_of_dvd_pow hp Nat.prime_two (Int.natCast_dvd_natCast.mp hdvd8)
   · rw [primeDiscriminantPrime_oddPrimeDiscriminant hodd]
     rw [dvd_oddPrimeDiscriminant_iff] at hdvd
     exact (Nat.prime_dvd_prime_iff_eq hp hr).mp (Int.natCast_dvd_natCast.mp hdvd)

@@ -49,6 +49,7 @@ def ramifiedPrimes : Set ℕ :=
 variable {K}
 
 /-- The defining condition for membership in `ramifiedPrimes`. -/
+@[simp]
 theorem mem_ramifiedPrimes_iff {p : ℕ} :
     p ∈ ramifiedPrimes K ↔
       p.Prime ∧ ¬ Algebra.IsUnramifiedIn (𝓞 K) (Ideal.span {(p : ℤ)}) :=
@@ -80,7 +81,8 @@ theorem finite_ramifiedPrimes : (ramifiedPrimes K).Finite := by
 
 /-- **Some prime ramifies in a number field other than `ℚ`.** This is Minkowski's bound in the form
 `NumberField.exists_not_isUnramifiedIn`. -/
-theorem ramifiedPrimes_nonempty (h : Module.finrank ℚ K ≠ 1) : (ramifiedPrimes K).Nonempty :=
-  NumberField.exists_not_isUnramifiedIn (𝒪 := 𝓞 K) h
+theorem ramifiedPrimes_nonempty (h : Module.finrank ℚ K ≠ 1) : (ramifiedPrimes K).Nonempty := by
+  simpa only [Set.nonempty_def, mem_ramifiedPrimes_iff] using
+    NumberField.exists_not_isUnramifiedIn (𝒪 := 𝓞 K) h
 
 end TauCeti.NumberField

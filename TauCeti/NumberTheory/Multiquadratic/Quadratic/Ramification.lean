@@ -7,7 +7,6 @@ module
 public import TauCeti.NumberTheory.Multiquadratic.Quadratic.Discriminant
 public import TauCeti.NumberTheory.Multiquadratic.FundamentalDiscriminant.Factorization
 public import TauCeti.NumberTheory.NumberField.RamifiedPrimes
-public import Mathlib.NumberTheory.NumberField.Discriminant.Different
 import Mathlib.Algebra.BigOperators.Associated
 
 /-!

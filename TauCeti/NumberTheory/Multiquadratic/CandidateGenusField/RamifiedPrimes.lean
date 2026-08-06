@@ -28,8 +28,10 @@ x² + ny²*, and F. Lemmermeyer, *Reciprocity Laws*.
 
 ## Main results
 
-* `TauCeti.Multiquadratic.finrank_candidateGenusField_eq_two_pow_ncard_ramifiedPrimes`.
-* `TauCeti.Multiquadratic.finrank_candidateGenusField_over_base_eq_two_pow_ncard_ramifiedPrimes`.
+In the namespace `TauCeti.Multiquadratic`:
+
+* `finrank_candidateGenusField_eq_two_pow_ncard_ramifiedPrimes`.
+* `finrank_candidateGenusField_over_candidateGenusFieldBase_eq_two_pow_ncard_ramifiedPrimes`.
 -/
 
 public section
@@ -64,7 +66,7 @@ theorem finrank_candidateGenusField_eq_two_pow_ncard_ramifiedPrimes
 number of rational primes ramifying in `ℚ(√d)`. This is the field-theoretic side of the genus-theory
 `2`-rank formula: once `Gal(K_gen/K) ≅ Cl(K)/Cl(K)²` is available, it says that the elementary-`2`
 quotient of the class group has rank `t - 1`. -/
-theorem finrank_candidateGenusField_over_base_eq_two_pow_ncard_ramifiedPrimes
+theorem finrank_candidateGenusField_over_candidateGenusFieldBase_eq_two_pow_ncard_ramifiedPrimes
     (hmin : minpoly ℤ θ = X ^ 2 - C d) (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤)
     (hd : Squarefree d) :
     Module.finrank (candidateGenusFieldBase hd) (candidateGenusField hd) =
