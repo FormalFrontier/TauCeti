@@ -18,9 +18,10 @@ Weyl character, dimension and Kostant formulas as the correction `λ ↦ λ + ρ
 Which roots are positive is defined only over a coefficient ring of characteristic zero, and
 halving asks for `2` to be invertible on top of that. So the sum of the positive roots is
 introduced first, as `TauCeti.twoWeylVector`, over a characteristic-zero coefficient ring, and the
-Weyl vector itself only once `2` is invertible as well. Every substantive statement is proved for
-the sum and then divided by two, so nothing below assumes more of the coefficient ring than its
-own statement needs.
+Weyl vector itself only once `2` is invertible as well. The simple-coroot pairing and the simple
+reflection identity are proved for the sum first and then divided by two; the statements that
+speak of `ρ` alone — the dot action and the dominance results — are proved only in the halved
+form. So nothing below assumes more of the coefficient ring than its own statement needs.
 
 The one theorem the notion exists for is that `ρ` pairs to `1` with every simple coroot,
 equivalently that the simple reflection `sᵢ` sends `ρ` to `ρ - αᵢ`. Its proof is the classical
