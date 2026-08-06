@@ -11,13 +11,13 @@ public import Mathlib.RingTheory.Ideal.Quotient.Operations
 /-!
 # Admissible ideals and bound quiver algebras
 
-An ideal `I` of a path algebra `kQ` is *admissible* when it is squeezed between a power of the
-arrow ideal `R` and its square, `R ^ N ≤ I ≤ R ^ 2`. The two bounds say complementary things about
-the relations `I` imposes. The upper bound `I ≤ R ^ 2` says that every relation is a combination of
-paths of length at least two: a relation involving a vertex idempotent or a single arrow would
-delete a vertex or an arrow from the quiver rather than impose a relation on it. The lower bound
-`R ^ N ≤ I` says that all long enough paths are killed, which is what cuts the quotient down to
-finite dimension.
+A two-sided ideal `I` of a path algebra `kQ` is *admissible* when it is squeezed between a power
+of the arrow ideal `R` and its square, `R ^ N ≤ I ≤ R ^ 2`. The two bounds say complementary
+things about the relations `I` imposes. The upper bound `I ≤ R ^ 2` says that every relation is a
+combination of paths of length at least two: a relation involving a vertex idempotent or a single
+arrow would delete a vertex or an arrow from the quiver rather than impose a relation on it. The
+lower bound `R ^ N ≤ I` says that all long enough paths are killed, which is what cuts the
+quotient down to finite dimension.
 
 The quotient `kQ ⧸ I` by an admissible ideal is a *bound quiver algebra*, and the two main results
 here are its two basic properties: it is **finite-dimensional** whenever the quiver has finitely
@@ -26,8 +26,8 @@ becomes **nilpotent** in it.
 
 ## Main definitions
 
-* `TauCeti.IsAdmissibleIdeal`: the predicate `R ^ N ≤ I ≤ R ^ 2` on an ideal of a path algebra,
-  for the arrow ideal `R = TauCeti.arrowIdeal k Q` and some `N`.
+* `TauCeti.IsAdmissibleIdeal`: the predicate `R ^ N ≤ I ≤ R ^ 2` on a two-sided ideal of a path
+  algebra, for the arrow ideal `R = TauCeti.arrowIdeal k Q` and some `N`.
 
 ## Main results
 
@@ -56,10 +56,15 @@ carried as data: no result below depends on a particular choice, and quantifying
 statements they should be. The usual textbook phrasing adds `2 ≤ N`, which is redundant: `R ^ N`
 decreases in `N`, so `R ^ N ≤ I` for some `N` gives it for every larger one.
 
-`TauCeti.arrowIdeal` is a left ideal carrying an `Ideal.IsTwoSided` instance. The results that
-mention the quotient *ring* `kQ ⧸ I` therefore take `[I.IsTwoSided]` as a hypothesis, as
-`Ideal.Quotient` does; admissibility itself is a statement about two inclusions of left ideals and
-asks for nothing.
+`Ideal R` means *left* ideal in Mathlib, two-sidedness being the separate typeclass
+`Ideal.IsTwoSided` — which `TauCeti.arrowIdeal` carries. Admissibility is a notion about
+*two-sided* ideals: it is the quotient *algebra* `kQ ⧸ I` that it exists to describe, and the two
+inclusions `R ^ N ≤ I ≤ R ^ 2` alone do not force `I` to be two-sided. `TauCeti.IsAdmissibleIdeal`
+therefore takes `[I.IsTwoSided]` as an argument of the predicate itself, so that the ideals it
+speaks of are exactly the admissible ones, and every consequence — in particular those about the
+quotient, where `Ideal.Quotient` asks for the same instance — is available from the predicate
+alone. For the ideals of `TauCeti.isAdmissibleIdeal_arrowIdeal_pow` and
+`TauCeti.isAdmissibleIdeal_bot_of_isAcyclic` the instance is found by synthesis.
 
 Finite dimensionality is proved by spanning: the images of the paths of length less than `N` span
 the quotient, because every longer path already lies in `I`, and there are finitely many of them
@@ -87,10 +92,10 @@ section Defs
 
 variable {k : Type w} {Q : Type u} [CommSemiring k] [Quiver.{v} Q] [Finite Q]
 
-/-- An ideal of a path algebra is **admissible** when some power of the arrow ideal is contained in
-it and it is contained in the square of the arrow ideal. The quotient of the path algebra by an
-admissible ideal is a *bound quiver algebra*. -/
-structure IsAdmissibleIdeal (I : Ideal (pathAlgebra k Q)) : Prop where
+/-- A two-sided ideal of a path algebra is **admissible** when some power of the arrow ideal is
+contained in it and it is contained in the square of the arrow ideal. The quotient of the path
+algebra by an admissible ideal is a *bound quiver algebra*. -/
+structure IsAdmissibleIdeal (I : Ideal (pathAlgebra k Q)) [I.IsTwoSided] : Prop where
   /-- Some power of the arrow ideal is contained in `I`: all long enough paths are killed. -/
   exists_arrowIdeal_pow_le : ∃ N, arrowIdeal k Q ^ N ≤ I
   /-- `I` is contained in the square of the arrow ideal: every relation is supported on the paths
@@ -99,7 +104,7 @@ structure IsAdmissibleIdeal (I : Ideal (pathAlgebra k Q)) : Prop where
 
 namespace IsAdmissibleIdeal
 
-variable {I : Ideal (pathAlgebra k Q)}
+variable {I : Ideal (pathAlgebra k Q)} [I.IsTwoSided]
 
 /-- An admissible ideal is contained in the arrow ideal. -/
 theorem le_arrowIdeal (h : IsAdmissibleIdeal I) : I ≤ arrowIdeal k Q :=
@@ -145,7 +150,7 @@ end IsAdmissibleIdeal
 basis paths, since a `k`-submodule containing every path of length at least `N` contains their whole
 span, which is `R ^ N`. This is how admissibility of a concretely given ideal of relations is
 verified. -/
-theorem isAdmissibleIdeal_iff {I : Ideal (pathAlgebra k Q)} :
+theorem isAdmissibleIdeal_iff {I : Ideal (pathAlgebra k Q)} [I.IsTwoSided] :
     IsAdmissibleIdeal I ↔
       (∃ N, ∀ x : Quiver.TotalPath Q, N ≤ x.2.2.length → (ofPath x : pathAlgebra k Q) ∈ I) ∧
         I ≤ arrowIdeal k Q ^ 2 := by
@@ -203,9 +208,8 @@ theorem isNilpotent_quotientMk_of_mem_arrowIdeal (h : IsAdmissibleIdeal I) {f : 
   refine Ideal.Quotient.eq_zero_iff_mem.2 (hN (mem_arrowIdeal_pow.2 ?_))
   exact pow_mem_pathSpan (mem_arrowIdeal_pow.1 (by rwa [Submodule.pow_one])) N
 
-omit [I.IsTwoSided] in
-/-- A bound quiver algebra over a nonempty quiver is nonzero. Two-sidedness plays no part: the
-underlying additive quotient is already nontrivial. -/
+/-- A bound quiver algebra over a nonempty quiver is nonzero: an admissible ideal is proper, the
+vertex idempotents escaping it. -/
 theorem nontrivial_quotient [Nontrivial k] [Nonempty Q] (h : IsAdmissibleIdeal I) :
     Nontrivial (pathAlgebra k Q ⧸ I) :=
   Ideal.Quotient.nontrivial_iff.2 h.ne_top
