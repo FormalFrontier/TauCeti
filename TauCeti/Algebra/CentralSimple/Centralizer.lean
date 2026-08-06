@@ -377,8 +377,8 @@ end Centralizer
 
 The three statements below need `A` itself to be **central** simple, and not merely simple. This is
 the first point in the file where that is so: the dimension formula and the tensor decomposition
-hold over the center of `A` for free, but `C_A(C_A(B)) = B` genuinely fails when `A` has a larger
-center, as the second worked example at the end of the file records.
+hold over `K` without assuming that `A` is central, but `C_A(C_A(B)) = B` genuinely fails when `A`
+has a larger center, as the second worked example at the end of the file records.
 -/
 
 section DoubleCentralizer
