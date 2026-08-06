@@ -36,32 +36,33 @@ noncomputable section
 open ContinuousLinearMap
 
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
+  {F' : Type*} [NormedAddCommGroup F'] [NormedSpace ℝ F']
 
 /-- The spatial Jacobian of a parametric map at `x`, as a function of the parameter. -/
-def spatialFDeriv (F : ℝ × E → E) (x : E) (t : ℝ) : E →L[ℝ] E :=
+def spatialFDeriv (F : ℝ × E → F') (x : E) (t : ℝ) : E →L[ℝ] F' :=
   (fderiv ℝ F (t, x)).comp (ContinuousLinearMap.inr ℝ ℝ E)
 
 @[simp]
-theorem spatialFDeriv_apply (F : ℝ × E → E) (x : E) (t : ℝ) (w : E) :
+theorem spatialFDeriv_apply (F : ℝ × E → F') (x : E) (t : ℝ) (w : E) :
     spatialFDeriv F x t w = fderiv ℝ F (t, x) (0, w) :=
   (rfl)
 
 /-- The parameter velocity at zero of a parametric map. -/
-def timeFDeriv (F : ℝ × E → E) (x : E) : E :=
+def timeFDeriv (F : ℝ × E → F') (x : E) : F' :=
   fderiv ℝ F (0, x) (1, 0)
 
 @[simp]
-theorem timeFDeriv_apply (F : ℝ × E → E) (x : E) :
+theorem timeFDeriv_apply (F : ℝ × E → F') (x : E) :
     timeFDeriv F x = fderiv ℝ F (0, x) (1, 0) :=
   (rfl)
 
 /-- For a `C²` parametric map, the parameter derivative of its spatial Jacobian, applied to `w`,
 is the spatial derivative of its parameter-velocity field applied to `w`. -/
-theorem deriv_spatialFDeriv_apply {F : ℝ × E → E} {x w : E}
+theorem deriv_spatialFDeriv_apply {F : ℝ × E → F'} {x w : E}
     (hF : ContDiffAt ℝ 2 F (0, x)) :
     _root_.deriv (fun t => spatialFDeriv F x t w) 0 =
       fderiv ℝ (timeFDeriv F) x w := by
-  let DF : ℝ × E → (ℝ × E →L[ℝ] E) := fderiv ℝ F
+  let DF : ℝ × E → (ℝ × E →L[ℝ] F') := fderiv ℝ F
   have hDFdiff : DifferentiableAt ℝ DF (0, x) :=
     (hF.fderiv_right (m := 1) (by norm_num)).differentiableAt (by norm_num)
   have hDF := hDFdiff.hasFDerivAt
