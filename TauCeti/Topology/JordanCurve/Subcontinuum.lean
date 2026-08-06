@@ -49,16 +49,21 @@ of a curve is one such fact, and it is established here with no conformal input,
 statements below, `TauCeti.IsJordanCurve.isPathConnected_sdiff` is a strict generalisation of the
 `Separation.lean` statement for a removed point.
 
-The immediate application is a reading of a boundary cluster set. Those cluster sets are already
-known to be *continua contained in the image boundary*
-(`TauCeti.isConnected_clusterSetOn_of_convex_of_isBounded` together with
-`TauCeti.clusterSetOn_subset_frontier_image`), so for a Jordan domain each of them is a compact
-connected subset of a Jordan curve, and the results here say what such a set can be: a point, an
-arc, or the whole curve — `TauCeti.subsingleton_or_exists_injective_path_clusterSetOn`, in
-`TauCeti/Analysis/Complex/Conformal/ClusterSet.lean`. The open direction of L5 is the assertion that
-for a Riemann map the first case always holds; the length–area estimate that STATUS.md sequences
-next proves that directly, and nothing here shortens or replaces it, nor is the exclusion of the two
-nondegenerate cases attempted here or there.
+The path from here to that target is one step, and it is a reduction. A boundary cluster set of a
+conformal map is already known in this repository to be a *continuum contained in the image
+boundary* (`TauCeti.isConnected_clusterSetOn_of_convex_of_isBounded` together with
+`TauCeti.clusterSetOn_subset_frontier_image`), so for a Jordan domain it is a compact connected
+subset of a Jordan curve — and until this file nothing said what such a set can be. The results
+here say it: a point, an arc, or the whole curve —
+`TauCeti.subsingleton_or_exists_injective_path_clusterSetOn`, in
+`TauCeti/Analysis/Complex/Conformal/ClusterSet.lean`. L5's forward direction is the assertion that
+for a Riemann map the first case always holds, so what this file leaves of it on the Jordan-curve
+side is exactly the exclusion of the other two.
+
+That exclusion is attempted neither here nor in `Conformal/ClusterSet.lean`, and nothing here
+shortens or replaces the route `ConformalMapping/STATUS.md` sequences next for it: the length–area
+estimate, fed into `TauCeti.exists_continuousOn_closure_eqOn_of_isBounded`, proves singletonness
+directly.
 
 ## Generality
 
