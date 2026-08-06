@@ -76,23 +76,6 @@ open _root_.Complex (I)
 -- local instance rather than a global one.
 attribute [local instance] _root_.Complex.finrank_real_complex_fact
 
-/-! ### The real inner product of `ℂ` in real coordinates
-
-`ℂ` carries the real inner product `⟪w, z⟫_ℝ = (z * conj w).re` (`Complex.inner`); its two readings
-in terms of `conj x * y` are Mathlib's as well, the real part being `Complex.inner` up to
-`mul_comm` and the imaginary part being the area form `Complex.areaForm` of `Complex.orientation`
-paired with the quarter turn `Complex.rightAngleRotation` through
-`Orientation.inner_rightAngleRotation_left`. The one reading Mathlib does not carry is in the real
-coordinates `Complex.re`, `Complex.im`, and the private lemma below expands `Complex.inner` into
-them. -/
-
-/-- The real inner product of `ℂ` in the real coordinates `Complex.re`, `Complex.im`. -/
-private lemma real_inner_eq_re_mul_re_add_im_mul_im (x y : ℂ) :
-    ⟪x, y⟫ = x.re * y.re + x.im * y.im := by
-  simp only [_root_.Complex.inner, _root_.Complex.mul_re, _root_.Complex.conj_re,
-    _root_.Complex.conj_im]
-  ring
-
 /-! ### Orthogonality in the Euclidean plane -/
 
 /-- **Two orthogonal unit vectors of the plane differ by a quarter turn.** For unit complex
@@ -145,6 +128,18 @@ theorem exists_norm_eq_one_eqOn_ball_const_mul_or_const_mul_conj_of_dist_map_eq 
   -- The two probe points, at half the radius along the two axes.
   set p : ℂ := ((r / 2 : ℝ) : ℂ) with hp_def
   set q : ℂ := I * p with hq_def
+  -- They are the real multiples `r / 2` of the two axes `1` and `I`, and pairing a point of the
+  -- plane against those two axes reads off its two real coordinates (`Complex.inner`).
+  have hp_smul : p = (r / 2 : ℝ) • (1 : ℂ) := by rw [hp_def, _root_.Complex.real_smul, mul_one]
+  have hq_smul : q = (r / 2 : ℝ) • I := by
+    rw [hq_def, hp_def, _root_.Complex.real_smul]
+    exact mul_comm _ _
+  have hone : ∀ z : ℂ, ⟪(1 : ℂ), z⟫ = z.re := fun z => by
+    rw [_root_.Complex.inner, map_one, mul_one]
+  have hI : ∀ z : ℂ, ⟪I, z⟫ = z.im := fun z => by
+    rw [_root_.Complex.inner, _root_.Complex.conj_I, _root_.Complex.mul_re, _root_.Complex.neg_re,
+      _root_.Complex.neg_im, _root_.Complex.I_re, _root_.Complex.I_im]
+    ring
   have hnp : ‖p‖ = r / 2 := by
     rw [hp_def, _root_.Complex.norm_real, Real.norm_eq_abs, abs_of_pos (by linarith)]
   have hnq : ‖q‖ = r / 2 := by rw [hq_def, norm_mul, _root_.Complex.norm_I, one_mul, hnp]
@@ -170,30 +165,21 @@ theorem exists_norm_eq_one_eqOn_ball_const_mul_or_const_mul_conj_of_dist_map_eq 
       norm_map_of_dist_map_eq hzero h0 hg hqm, hnq, hc_def]
     field_simp
   -- The frame is orthogonal, and reads off the coordinates of every point of the disc.
-  have hpre : p.re = r / 2 := by rw [hp_def, _root_.Complex.ofReal_re]
-  have hpim : p.im = 0 := by rw [hp_def, _root_.Complex.ofReal_im]
-  have hqre : q.re = 0 := by
-    rw [hq_def, _root_.Complex.mul_re, _root_.Complex.I_re, _root_.Complex.I_im, hpre, hpim]
-    ring
-  have hqim : q.im = r / 2 := by
-    rw [hq_def, _root_.Complex.mul_im, _root_.Complex.I_re, _root_.Complex.I_im, hpre, hpim]
-    ring
   have hpq : ⟪p, q⟫ = 0 := by
-    rw [real_inner_eq_re_mul_re_add_im_mul_im, hpre, hpim, hqre, hqim]
+    rw [hp_smul, hq_smul, real_inner_smul_left, real_inner_smul_right, hone I,
+      _root_.Complex.I_re]
     ring
   have horth : ⟪e, f⟫ = 0 := by
     rw [he_def, hf_def, real_inner_smul_left, real_inner_smul_right, hip p hpm q hqm, hpq]
     ring
   have hre : ∀ z ∈ ball (0 : ℂ) r, ⟪e, g z⟫ = z.re := fun z hz => by
-    rw [he_def, real_inner_smul_left, hip p hpm z hz, real_inner_eq_re_mul_re_add_im_mul_im, hpre,
-      hpim, hc_def]
+    rw [he_def, real_inner_smul_left, hip p hpm z hz, hp_smul, real_inner_smul_left, hone z,
+      hc_def]
     field_simp
-    ring
   have him : ∀ z ∈ ball (0 : ℂ) r, ⟪f, g z⟫ = z.im := fun z hz => by
-    rw [hf_def, real_inner_smul_left, hip q hqm z hz, real_inner_eq_re_mul_re_add_im_mul_im, hqre,
-      hqim, hc_def]
+    rw [hf_def, real_inner_smul_left, hip q hqm z hz, hq_smul, real_inner_smul_left, hI z,
+      hc_def]
     field_simp
-    ring
   -- `e * conj e = 1` lets the frame reading be undone.
   have hmul : e * conj e = 1 := by
     rw [_root_.Complex.mul_conj', hne]
