@@ -124,12 +124,10 @@ include e
 is finite-dimensional: it is a direct factor, hence a linear quotient, of the algebra. -/
 private theorem finiteDimensional_matrix_of_algEquiv_pi_matrix (i : ι) :
     FiniteDimensional k (Matrix (Fin (d i)) (Fin (d i)) (D i)) := by
-  classical
   have : Module.Finite k (Π i, Matrix (Fin (d i)) (Fin (d i)) (D i)) :=
     Module.Finite.equiv e.toLinearEquiv
-  exact Module.Finite.of_surjective
-    (LinearMap.proj (R := k) (φ := fun j => Matrix (Fin (d j)) (Fin (d j)) (D j)) i)
-    fun x => ⟨Pi.single i x, by simp⟩
+  exact Module.Finite.of_surjective _ (LinearMap.proj_surjective (R := k)
+    (φ := fun j => Matrix (Fin (d j)) (Fin (d j)) (D j)) i)
 
 /-- The coefficient algebra of a block of nonzero size in a presentation of a finite-dimensional
 algebra as a product of matrix algebras is itself finite-dimensional, so no such presentation can
@@ -181,7 +179,6 @@ Only the block `i` takes part: the bound reads off the surjection of `A` onto th
 neither the other coefficient algebras nor the finiteness of the index are assumed. -/
 theorem sq_le_finrank_of_algEquiv_pi_matrix (i : ι) [Nontrivial (D i)] :
     d i ^ 2 ≤ Module.finrank k A := by
-  classical
   rcases eq_or_ne (d i) 0 with h | h
   · simp [h]
   · have : NeZero (d i) := ⟨h⟩
@@ -194,7 +191,9 @@ theorem sq_le_finrank_of_algEquiv_pi_matrix (i : ι) [Nontrivial (D i)] :
           LinearMap.finrank_le_finrank_of_surjective
             (f := (LinearMap.proj (R := k) (φ := fun j => Matrix (Fin (d j)) (Fin (d j)) (D j)) i)
               ∘ₗ (e.toLinearEquiv : A →ₗ[k] Π i, Matrix (Fin (d i)) (Fin (d i)) (D i)))
-            fun x => ⟨e.symm (Pi.single i x), by simp⟩
+            ((LinearMap.proj_surjective (R := k)
+              (φ := fun j => Matrix (Fin (d j)) (Fin (d j)) (D j)) i).comp
+              e.toLinearEquiv.surjective)
 
 /-- **The number of blocks is bounded by the dimension**: a finite-dimensional algebra presented by
 nonzero matrix blocks over nontrivial coefficients has at most `finrank k A` of them.
