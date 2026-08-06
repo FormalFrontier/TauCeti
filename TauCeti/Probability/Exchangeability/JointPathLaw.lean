@@ -46,6 +46,8 @@ def jointPathLaw (μ : Measure Ω) (X : ℕ → Ω → α) (ν : Ω → Probabil
     Measure (ProbabilityMeasure α × (ℕ → α)) :=
   μ.map fun ω => (ν ω, fun i => X i ω)
 
+/-- The definitional expansion of `jointPathLaw`: the pushforward of `μ` along
+`ω ↦ (ν ω, fun i => X i ω)`. -/
 theorem jointPathLaw_def (μ : Measure Ω) (X : ℕ → Ω → α) (ν : Ω → ProbabilityMeasure α) :
     jointPathLaw μ X ν = μ.map fun ω => (ν ω, fun i => X i ω) := (rfl)
 

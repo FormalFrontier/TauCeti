@@ -99,6 +99,8 @@ theorem prefixProjPair_apply {T α : Type*} (n : ℕ) (q : T × (ℕ → α)) :
     prefixProjPair T α n q = (q.1, fun i : Fin n => q.2 i) :=
   (rfl)
 
+/-- The paired prefix projection is measurable: it keeps the first factor and reads finitely many
+path coordinates. -/
 theorem measurable_prefixProjPair (T α : Type*) [MeasurableSpace T] [MeasurableSpace α]
     (n : ℕ) : Measurable (prefixProjPair T α n) :=
   measurable_fst.prodMk (measurable_pi_lambda _ fun i =>
