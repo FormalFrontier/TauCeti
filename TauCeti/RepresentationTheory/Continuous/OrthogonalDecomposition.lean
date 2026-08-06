@@ -32,7 +32,7 @@ unitarian trick in `TauCeti.RepresentationTheory.Compact.Unitarizable` is there 
 
 ## Main results
 
-* `TauCeti.ContRepresentation.IsUnitary.sup_inf_orthogonalSubrepresentation`: a subrepresentation
+* `TauCeti.ContRepresentation.IsUnitary.sup_orthogonalSubrepresentation_inf`: a subrepresentation
   together with its orthogonal complement inside a larger one recovers the larger one.
 * `TauCeti.ContRepresentation.IsUnitary.exists_orthogonal_irreducible_decomposition`: complete
   reducibility in orthogonal internal form, with the dimension count that goes with it.
@@ -83,7 +83,7 @@ subrepresentation, recovers that larger subrepresentation. This is
 `Submodule.sup_orthogonal_inf_of_hasOrthogonalProjection` read in the lattice of
 subrepresentations, which is legitimate because unitarity makes the orthogonal complement
 invariant. -/
-theorem sup_inf_orthogonalSubrepresentation (hπ : IsUnitary π)
+theorem sup_orthogonalSubrepresentation_inf (hπ : IsUnitary π)
     {σ τ : Subrepresentation π.toRepresentation} (h : σ ≤ τ)
     [σ.toSubmodule.HasOrthogonalProjection] :
     σ ⊔ hπ.orthogonalSubrepresentation σ ⊓ τ = τ := by
@@ -126,7 +126,7 @@ private theorem exists_atom_family_aux (hπ : IsUnitary π) :
     set ω : Subrepresentation π.toRepresentation := hπ.orthogonalSubrepresentation τ ⊓ σ with hω
     have hωsub : ω.toSubmodule = τ.toSubmoduleᗮ ⊓ σ.toSubmodule := by
       rw [hω, Subrepresentation.toSubmodule_inf, toSubmodule_orthogonalSubrepresentation]
-    have hsup : τ ⊔ ω = σ := hπ.sup_inf_orthogonalSubrepresentation hτσ
+    have hsup : τ ⊔ ω = σ := hπ.sup_orthogonalSubrepresentation_inf hτσ
     have hωlt : ω.toSubmodule < σ.toSubmodule := by
       refine lt_of_le_of_ne (hωsub ▸ inf_le_right) fun heq ↦ hτbot (le_bot_iff.mp ?_)
       refine Submodule.orthogonal_disjoint τ.toSubmodule le_rfl ?_
