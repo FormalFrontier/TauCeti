@@ -22,10 +22,12 @@ public import TauCeti.Algebra.CentralSimple.Degree
 -- dimension of a tensor product and the finite-dimensionality of an opposite space are the
 -- bookkeeping, and the complex numbers appear only in the worked examples. Injectivity of a ring
 -- homomorphism out of a simple ring, the equality of injectivity and surjectivity in equal finite
--- dimension, and the description of the center of a central algebra are the three further tools of
--- the tensor decomposition and the double centralizer.
+-- dimension, the transport of centrality along an algebra isomorphism and the descent of centrality
+-- from a tensor product to its factors are the four further tools of the tensor decomposition and
+-- the double centralizer.
 import Mathlib.Algebra.Algebra.Subalgebra.Lattice
 import Mathlib.Algebra.Central.Basic
+import Mathlib.Algebra.Central.TensorProduct
 import Mathlib.LinearAlgebra.Basis.MulOpposite
 import Mathlib.LinearAlgebra.Complex.FiniteDimensional
 import Mathlib.LinearAlgebra.Dimension.Constructions
@@ -53,9 +55,9 @@ is again a simple `K`-algebra, and that its dimension is the complementary one:
 The dimension formula is sharpened here to a decomposition: multiplication `B ⊗[K] C → A` is an
 algebra isomorphism, because its source is simple, so that the map is injective, and the two sides
 have the same dimension. When `A` is moreover **central** simple, the decomposition forces `C` to be
-central as well, since an element of the center of `C` commutes with every `b * c`, hence with all
-of `A`; so `C` is central simple in turn, the centralizer theorem applies to it, and comparing the
-two dimension formulas gives the **double centralizer** `C_A(C) = B`.
+central as well, since a tensor product of algebras over a field is central only if both factors
+are; so `C` is central simple in turn, the centralizer theorem applies to it, and comparing the two
+dimension formulas gives the **double centralizer** `C_A(C) = B`.
 
 The proof is the module-theoretic one, and it reuses the bimodule of the Skolem-Noether theorem. The
 inclusion `B.val : B →ₐ[K] A` makes `A` a module over `R = B ⊗[K] Aᵐᵒᵖ`
@@ -336,8 +338,10 @@ theorem finrank_mul_finrank_centralizer :
 
 The source is a simple ring, being the tensor product of the central simple algebra `B` with the
 simple algebra `C_A(B)`, so the homomorphism is injective; the centralizer theorem says the two
-sides have the same dimension over `K`, so it is surjective as well. -/
-theorem tensorCentralizerAlgHom_bijective :
+sides have the same dimension over `K`, so it is surjective as well.
+
+Only the isomorphism `TauCeti.tensorCentralizerAlgEquiv` assembled from this is exported. -/
+private theorem tensorCentralizerAlgHom_bijective :
     Function.Bijective (tensorCentralizerAlgHom B) := by
   have := centralizer_isSimpleRing B
   have hinj : Function.Injective (tensorCentralizerAlgHom B) :=
@@ -354,8 +358,9 @@ theorem tensorCentralizerAlgHom_bijective :
 
   `B ⊗[K] C_A(B) ≃ₐ[K] A`,
 
-by multiplication. It is `TauCeti.tensorCentralizerAlgHom`, which
-`TauCeti.tensorCentralizerAlgHom_bijective` shows to be bijective. -/
+by multiplication. It is `TauCeti.tensorCentralizerAlgHom`, which a private lemma of this file
+shows to be bijective: the source is simple, so the map is injective, and the centralizer theorem
+makes the two sides equidimensional, so it is surjective too. -/
 noncomputable def tensorCentralizerAlgEquiv :
     ↥B ⊗[K] ↥(Subalgebra.centralizer K (B : Set A)) ≃ₐ[K] A :=
   AlgEquiv.ofBijective (tensorCentralizerAlgHom B) (tensorCentralizerAlgHom_bijective B)
@@ -385,31 +390,15 @@ variable {K A : Type*} [Field K] [Ring A] [Algebra K A] [Algebra.IsCentral K A] 
 Together with `TauCeti.centralizer_isSimpleRing` this says that `C_A(B)` is again central simple, so
 that the centralizer theorem may be applied to it in turn.
 
-The proof is the tensor decomposition `A ≃ₐ[K] B ⊗[K] C_A(B)` read as a statement about elements:
-every element of `A` is a sum of products `b * c` with `b ∈ B` and `c ∈ C_A(B)`. An element `z` of
-the center of `C_A(B)` commutes with each such `c` because it is central there, and with each such
-`b` because it lies in `C_A(B)`; so it commutes with all of `A`, and centrality of `A` puts it in
-`K`. -/
+The proof is the tensor decomposition `B ⊗[K] C_A(B) ≃ₐ[K] A` transported: the tensor product is
+central because `A` is, and a tensor product of algebras over a field is central only if each factor
+is, provided the other one is nontrivial (`Algebra.IsCentral.right_of_tensor_of_field`); here `B` is
+nontrivial because it is simple. -/
 theorem centralizer_isCentral :
-    Algebra.IsCentral K ↥(Subalgebra.centralizer K (B : Set A)) := by
-  refine ⟨fun z hz ↦ ?_⟩
-  -- `z` commutes with every element of `A`, checked on the image of a pure tensor.
-  have hzA : (z : A) ∈ Subalgebra.center K A := by
-    refine Subalgebra.mem_center_iff.2 fun a ↦ ?_
-    obtain ⟨t, rfl⟩ := (tensorCentralizerAlgHom_bijective B).surjective a
-    induction t using TensorProduct.induction_on with
-    | zero => simp
-    | tmul b c =>
-      -- `z` commutes with `b` because `z ∈ C_A(B)`, and with `c` because `z` is central there.
-      have hb : (b : A) * (z : A) = (z : A) * (b : A) :=
-        (Subalgebra.mem_centralizer_iff K).1 z.2 (b : A) b.2
-      have hc : (c : A) * (z : A) = (z : A) * (c : A) :=
-        congrArg Subtype.val (Subalgebra.mem_center_iff.1 hz c)
-      rw [tensorCentralizerAlgHom_tmul, mul_assoc, hc, ← mul_assoc, hb, mul_assoc]
-    | add x y hx hy => rw [map_add, add_mul, mul_add, hx, hy]
-  obtain ⟨k, hk⟩ := (Algebra.IsCentral.mem_center_iff K).1 hzA
-  refine Algebra.mem_bot.2 ⟨k, Subtype.ext ?_⟩
-  simpa using hk.symm
+    Algebra.IsCentral K ↥(Subalgebra.centralizer K (B : Set A)) :=
+  have : Algebra.IsCentral K (↥B ⊗[K] ↥(Subalgebra.centralizer K (B : Set A))) :=
+    Algebra.IsCentral.of_algEquiv K A _ (tensorCentralizerAlgEquiv B).symm
+  Algebra.IsCentral.right_of_tensor_of_field K ↥B _
 
 /-- **The double centralizer theorem for a central simple subalgebra.** For a central simple
 `K`-subalgebra `B` of a finite-dimensional central simple `K`-algebra `A`,
