@@ -137,49 +137,32 @@ theorem isIrreducible_of_asAlgebraHom_surjective [Nontrivial V] (ρ : Representa
 
 /-! ### Atoms exist in finite dimensions -/
 
-/-- The engine behind `TauCeti.Representation.exists_isAtom_le`: descend from a nonzero
-subrepresentation to a smaller nonzero one until the descent stops, which it must, because the
-subspace carried by a subrepresentation drops dimension at every step. -/
-private theorem exists_isAtom_le_aux {ρ : Representation k G V} :
-    ∀ n : ℕ, ∀ σ : Subrepresentation ρ, FiniteDimensional k σ.toSubmodule →
-      Module.finrank k σ.toSubmodule ≤ n → σ ≠ ⊥ →
-      ∃ τ : Subrepresentation ρ, τ ≤ σ ∧ IsAtom τ := by
-  intro n
-  induction n with
-  | zero =>
-    intro σ hfin hle hne
-    have := hfin
-    exact absurd (Subrepresentation.toSubmodule_injective
-      ((Submodule.finrank_eq_zero.mp (Nat.le_zero.mp hle)).trans
-        Subrepresentation.toSubmodule_bot.symm)) hne
-  | succ n ih =>
-    intro σ hfin hle hne
-    have := hfin
-    by_cases hatom : IsAtom σ
-    · exact ⟨σ, le_rfl, hatom⟩
-    · obtain ⟨υ, hυσ, hυ⟩ : ∃ υ : Subrepresentation ρ, υ < σ ∧ υ ≠ ⊥ := by
-        by_contra hcon
-        push Not at hcon
-        exact hatom ⟨hne, fun υ hυ => hcon υ hυ⟩
-      have hltsub : υ.toSubmodule < σ.toSubmodule :=
-        Subrepresentation.toSubmodule_lt_toSubmodule.mpr hυσ
-      have hlt : Module.finrank k υ.toSubmodule < Module.finrank k σ.toSubmodule :=
-        Submodule.finrank_lt_finrank_of_lt hltsub
-      obtain ⟨τ, hτυ, hτ⟩ := ih υ (Submodule.finiteDimensional_of_le hltsub.le) (by omega) hυ
-      exact ⟨τ, hτυ.trans hυσ.le, hτ⟩
-
 /-- **Atoms exist.** Every nonzero finite-dimensional subrepresentation contains an atom of the
 lattice of subrepresentations.
 
-Finite-dimensionality is what makes the descent to a minimal nonzero subrepresentation terminate,
-and only the subrepresentation being descended through has to be finite-dimensional: the ambient
-representation may be infinite-dimensional, and the acting monoid stays arbitrary.  Combined with
+Finite-dimensionality is what makes a minimal nonzero subrepresentation exist, and only the
+subrepresentation being minimised inside has to be finite-dimensional: the ambient representation
+may be infinite-dimensional, and the acting monoid stays arbitrary.  Combined with
 `TauCeti.Representation.isIrreducible_toRepresentation_of_isAtom` it exhibits an irreducible
 subrepresentation inside any nonzero one. -/
 theorem exists_isAtom_le {ρ : Representation k G V} {σ : Subrepresentation ρ}
     [FiniteDimensional k σ.toSubmodule] (hσ : σ ≠ ⊥) :
-    ∃ τ : Subrepresentation ρ, τ ≤ σ ∧ IsAtom τ :=
-  exists_isAtom_le_aux (Module.finrank k σ.toSubmodule) σ inferInstance le_rfl hσ
+    ∃ τ : Subrepresentation ρ, τ ≤ σ ∧ IsAtom τ := by
+  -- Among the nonzero subrepresentations contained in `σ`, pick one whose subspace has least
+  -- dimension; the dimensions are natural numbers, so such a one exists.
+  obtain ⟨τ, hmin⟩ :=
+    exists_minimalFor_of_wellFoundedLT (fun τ : Subrepresentation ρ => τ ≠ ⊥ ∧ τ ≤ σ)
+      (fun τ => Module.finrank k τ.toSubmodule) ⟨σ, hσ, le_rfl⟩
+  obtain ⟨hτ, hτσ⟩ := hmin.1
+  have : FiniteDimensional k τ.toSubmodule :=
+    Submodule.finiteDimensional_of_le (Subrepresentation.toSubmodule_le_toSubmodule.mpr hτσ)
+  -- Anything strictly inside `τ` is again inside `σ` and of strictly smaller dimension, so
+  -- minimality forces it to be zero.
+  refine ⟨τ, hτσ, hτ, fun υ hυ => ?_⟩
+  by_contra hυ0
+  exact hmin.not_prop_of_lt
+    (Submodule.finrank_lt_finrank_of_lt (Subrepresentation.toSubmodule_lt_toSubmodule.mpr hυ))
+    ⟨hυ0, hυ.le.trans hτσ⟩
 
 /-- **Every nonzero finite-dimensional representation contains an irreducible subrepresentation.**
 Finite-dimensionality alone suffices; no semisimplicity is assumed.  This produces a single
