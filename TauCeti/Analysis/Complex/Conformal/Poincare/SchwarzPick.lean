@@ -23,11 +23,13 @@ without unfolding the distance.
 
 The shape is the one `Conformal/Poincare/Isometry/Classification.lean` already uses for the
 isometries: a self-map `F : PoincareDisc → PoincareDisc` is related to a scalar map `f : ℂ → ℂ` by
-the hypothesis `(toUnitDisc (F z) : ℂ) = f (toUnitDisc z : ℂ)`, so that the analytic hypotheses
-(`DifferentiableOn`, `MapsTo`) are stated where holomorphy lives, on `ℂ`, and the conclusions are
-stated where the metric lives, on `PoincareDisc`. No new definition is introduced: `F` is whatever
-map the consumer already has, and the representation hypothesis is what a consumer holding a
-holomorphic self-map of the disc can always supply.
+the hypothesis `(toUnitDisc (F z) : ℂ) = f (toUnitDisc z : ℂ)`, so that the analytic hypothesis
+`DifferentiableOn` is stated where holomorphy lives, on `ℂ`, and the conclusions are stated where
+the metric lives, on `PoincareDisc`. No new definition is introduced: `F` is whatever map the
+consumer already has, and the representation hypothesis is what a consumer holding a holomorphic
+self-map of the disc can always supply. That hypothesis already forces `f` to carry the unit disc
+into itself — the value `f (toUnitDisc z : ℂ)` is a coordinate of `PoincareDisc` — so none of the
+theorems below asks for a separate `MapsTo` hypothesis.
 
 ## What the metric form adds
 
@@ -108,6 +110,17 @@ example (hmaps : MapsTo f (ball (0 : ℂ) 1) (ball (0 : ℂ) 1)) :
   ⟨fun z => Complex.UnitDisc.toPoincare (Complex.UnitDisc.mk (f (toUnitDisc z : ℂ))
     (mem_ball_zero_iff.mp (hmaps (coe_mem_ball z)))), fun _ => rfl⟩
 
+/-- A map of `ℂ` representing a self-map of `PoincareDisc` carries the unit disc into itself: each
+value `f x` is the coordinate of a point of `PoincareDisc`. This is what lets the theorems below ask
+only for the representation hypothesis, and it supplies the `MapsTo` hypothesis of their scalar
+inputs. -/
+private lemma mapsTo_of_rep
+    (hrep : ∀ z : PoincareDisc, (toUnitDisc (F z) : ℂ) = f (toUnitDisc z : ℂ)) :
+    MapsTo f (ball (0 : ℂ) 1) (ball (0 : ℂ) 1) := fun x hx => by
+  have hx' := hrep (Complex.UnitDisc.toPoincare (Complex.UnitDisc.mk x (mem_ball_zero_iff.mp hx)))
+  rw [toUnitDisc_toPoincare, Complex.UnitDisc.coe_mk] at hx'
+  exact hx' ▸ coe_mem_ball _
+
 /-- **Schwarz–Pick for the Poincaré metric.** A self-map `F` of the Poincaré disc represented by a
 holomorphic self-map `f` of the unit disc does not increase the Poincaré distance.
 
@@ -115,11 +128,10 @@ This is `TauCeti.hyperbolicDist_map_le` read through the metric-space instance o
 `TauCeti.PoincareDisc`; the bundled `LipschitzWith` form is `TauCeti.PoincareDisc.lipschitzWith_one`
 below. -/
 theorem dist_map_le (hf : DifferentiableOn ℂ f (ball (0 : ℂ) 1))
-    (hmaps : MapsTo f (ball (0 : ℂ) 1) (ball (0 : ℂ) 1))
     (hrep : ∀ z : PoincareDisc, (toUnitDisc (F z) : ℂ) = f (toUnitDisc z : ℂ))
     (z w : PoincareDisc) : dist (F z) (F w) ≤ dist z w := by
   simp only [dist_eq, hrep]
-  exact hyperbolicDist_map_le hf hmaps (coe_mem_ball z) (coe_mem_ball w)
+  exact hyperbolicDist_map_le hf (mapsTo_of_rep hrep) (coe_mem_ball z) (coe_mem_ball w)
 
 /-- **Schwarz–Pick, Lipschitz form.** A holomorphic self-map of the unit disc is a nonexpanding
 map of the metric space `TauCeti.PoincareDisc`.
@@ -129,11 +141,10 @@ Together with
 that a holomorphic self-map of the Poincaré disc is nonexpanding, and is an isometry precisely
 when it is a disc automorphism. -/
 theorem lipschitzWith_one (hf : DifferentiableOn ℂ f (ball (0 : ℂ) 1))
-    (hmaps : MapsTo f (ball (0 : ℂ) 1) (ball (0 : ℂ) 1))
     (hrep : ∀ z : PoincareDisc, (toUnitDisc (F z) : ℂ) = f (toUnitDisc z : ℂ)) :
     LipschitzWith 1 F :=
   LipschitzWith.of_dist_le_mul fun z w => by
-    simpa using dist_map_le hf hmaps hrep z w
+    simpa using dist_map_le hf hrep z w
 
 /-- **Schwarz–Pick rigidity for the Poincaré metric.** If a holomorphic self-map of the unit disc
 preserves the Poincaré distance between a *single* pair of distinct points, it preserves it between
@@ -141,7 +152,6 @@ every pair: the nonexpanding map of `TauCeti.PoincareDisc.lipschitzWith_one` is 
 
 This is `TauCeti.forall_hyperbolicDist_map_eq_of_hyperbolicDist_map_eq` in the metric. -/
 theorem isometry_of_dist_eq (hf : DifferentiableOn ℂ f (ball (0 : ℂ) 1))
-    (hmaps : MapsTo f (ball (0 : ℂ) 1) (ball (0 : ℂ) 1))
     (hrep : ∀ z : PoincareDisc, (toUnitDisc (F z) : ℂ) = f (toUnitDisc z : ℂ))
     {z w : PoincareDisc} (hne : z ≠ w) (heq : dist (F z) (F w) = dist z w) : Isometry F := by
   have hne' : (toUnitDisc z : ℂ) ≠ (toUnitDisc w : ℂ) := fun h =>
@@ -151,8 +161,8 @@ theorem isometry_of_dist_eq (hf : DifferentiableOn ℂ f (ball (0 : ℂ) 1))
     simpa only [dist_eq, hrep] using heq
   refine Isometry.of_dist_eq fun p q => ?_
   simp only [dist_eq, hrep]
-  exact forall_hyperbolicDist_map_eq_of_hyperbolicDist_map_eq hf hmaps (coe_mem_ball z)
-    (coe_mem_ball w) hne' heq' _ (coe_mem_ball p) _ (coe_mem_ball q)
+  exact forall_hyperbolicDist_map_eq_of_hyperbolicDist_map_eq hf (mapsTo_of_rep hrep)
+    (coe_mem_ball z) (coe_mem_ball w) hne' heq' _ (coe_mem_ball p) _ (coe_mem_ball q)
 
 /-- **The equality case of Schwarz–Pick, bundled.** A holomorphic self-map of the unit disc that
 preserves the Poincaré distance between one pair of distinct points *is* a standard disc
@@ -165,7 +175,6 @@ of self-maps of the metric space, against the isometric equivalences
 `TauCeti.PoincareDisc.unitDiscStandardAutomorphismIsometryEquiv`. -/
 theorem exists_eq_unitDiscStandardAutomorphismIsometryEquiv_of_dist_eq
     (hf : DifferentiableOn ℂ f (ball (0 : ℂ) 1))
-    (hmaps : MapsTo f (ball (0 : ℂ) 1) (ball (0 : ℂ) 1))
     (hrep : ∀ z : PoincareDisc, (toUnitDisc (F z) : ℂ) = f (toUnitDisc z : ℂ))
     {z w : PoincareDisc} (hne : z ≠ w) (heq : dist (F z) (F w) = dist z w) :
     ∃ (u : Circle) (a : Complex.UnitDisc),
@@ -176,8 +185,8 @@ theorem exists_eq_unitDiscStandardAutomorphismIsometryEquiv_of_dist_eq
       = hyperbolicDist (toUnitDisc z : ℂ) (toUnitDisc w : ℂ) := by
     simpa only [dist_eq, hrep] using heq
   obtain ⟨u, a, hua⟩ :=
-    exists_forall_unitDisc_eq_unitDiscStandardAutomorphismEquiv_of_hyperbolicDist_map_eq hf hmaps
-      (coe_mem_ball z) (coe_mem_ball w) hne' heq'
+    exists_forall_unitDisc_eq_unitDiscStandardAutomorphismEquiv_of_hyperbolicDist_map_eq hf
+      (mapsTo_of_rep hrep) (coe_mem_ball z) (coe_mem_ball w) hne' heq'
   refine ⟨u, a, fun ζ => toUnitDisc.injective (Complex.UnitDisc.coe_injective ?_)⟩
   rw [unitDiscStandardAutomorphismIsometryEquiv_apply, toUnitDisc_toPoincare, hrep ζ]
   exact hua (toUnitDisc ζ)
@@ -192,20 +201,15 @@ This sharpens the theorem
 which classifies *all* Poincaré isometries and has to admit the orientation-reversing coset of
 `Aut(𝔻)`: the conjugation `TauCeti.PoincareDisc.starIsometryEquiv` is an isometry, so that
 alternative cannot be dropped there. It disappears here because holomorphy excludes it. Hence the
-disc automorphisms are precisely the holomorphic part of the isometry group.
-
-The forward direction spends the equality case
-`TauCeti.PoincareDisc.exists_eq_unitDiscStandardAutomorphismIsometryEquiv_of_dist_eq` at the pair
-of distinct points `0` and `1 / 2`; the converse holds because each
-`unitDiscStandardAutomorphismIsometryEquiv u a` is an isometric equivalence by construction. -/
+disc automorphisms are precisely the holomorphic part of the isometry group. -/
 theorem isometry_iff_exists_eq_unitDiscStandardAutomorphismIsometryEquiv
     (hf : DifferentiableOn ℂ f (ball (0 : ℂ) 1))
-    (hmaps : MapsTo f (ball (0 : ℂ) 1) (ball (0 : ℂ) 1))
     (hrep : ∀ z : PoincareDisc, (toUnitDisc (F z) : ℂ) = f (toUnitDisc z : ℂ)) :
     Isometry F ↔ ∃ (u : Circle) (a : Complex.UnitDisc),
       ∀ ζ : PoincareDisc, F ζ = unitDiscStandardAutomorphismIsometryEquiv u a ζ := by
   refine ⟨fun hF => ?_, ?_⟩
-  · -- Two distinct points of the disc, at which the isometry certainly preserves the distance.
+  · -- Spend the equality case at the pair of distinct points `0` and `1 / 2`, at which the
+    -- isometry certainly preserves the distance.
     have hhalf : ‖((1 / 2 : ℝ) : ℂ)‖ < 1 := by
       rw [Complex.norm_real, Real.norm_eq_abs]
       norm_num
@@ -218,7 +222,7 @@ theorem isometry_iff_exists_eq_unitDiscStandardAutomorphismIsometryEquiv
         rw [h₀, Complex.UnitDisc.coe_mk]
       rw [Complex.UnitDisc.coe_zero] at h₁
       norm_num at h₁
-    exact exists_eq_unitDiscStandardAutomorphismIsometryEquiv_of_dist_eq hf hmaps hrep hne
+    exact exists_eq_unitDiscStandardAutomorphismIsometryEquiv_of_dist_eq hf hrep hne
       (hF.dist_eq _ _)
   · rintro ⟨u, a, hcase⟩
     exact funext hcase ▸ (unitDiscStandardAutomorphismIsometryEquiv u a).isometry
@@ -234,14 +238,13 @@ The two alternatives cannot both hold, since `PoincareDisc` has distinct points 
 preserves the distance between them; the statement is left a plain disjunction because that is the
 form a consumer case-splits on. -/
 theorem forall_dist_lt_or_isometry (hf : DifferentiableOn ℂ f (ball (0 : ℂ) 1))
-    (hmaps : MapsTo f (ball (0 : ℂ) 1) (ball (0 : ℂ) 1))
     (hrep : ∀ z : PoincareDisc, (toUnitDisc (F z) : ℂ) = f (toUnitDisc z : ℂ)) :
     (∀ z w : PoincareDisc, z ≠ w → dist (F z) (F w) < dist z w) ∨ Isometry F := by
   by_cases h : ∃ z w : PoincareDisc, z ≠ w ∧ dist (F z) (F w) = dist z w
   · obtain ⟨z, w, hne, heq⟩ := h
-    exact Or.inr (isometry_of_dist_eq hf hmaps hrep hne heq)
+    exact Or.inr (isometry_of_dist_eq hf hrep hne heq)
   · exact Or.inl fun z w hne =>
-      lt_of_le_of_ne (dist_map_le hf hmaps hrep z w) fun heq => h ⟨z, w, hne, heq⟩
+      lt_of_le_of_ne (dist_map_le hf hrep z w) fun heq => h ⟨z, w, hne, heq⟩
 
 end PoincareDisc
 
