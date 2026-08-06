@@ -41,7 +41,10 @@ open scoped ContDiff Manifold
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
   {H : Type*} [TopologicalSpace H] {I : ModelWithCorners ℝ E H}
   {G : Type*} [TopologicalSpace G] [ChartedSpace H G] [Group G]
-  [CompleteSpace E] [LieGroup I ∞ G]
+  [LieGroup I ∞ G]
+
+local instance finiteDimensionalCompleteSpaceLieEquiv [FiniteDimensional ℝ E] : CompleteSpace E :=
+  FiniteDimensional.complete ℝ E
 
 -- The manifold bracket API needs three derivatives; this instance is the corresponding downgrade of
 -- the ambient smooth Lie-group structure.
@@ -52,16 +55,25 @@ local instance lieGroupMinSmoothnessThree : LieGroup I (minSmoothness ℝ 3) G :
 /-- The map sending a tangent vector at the identity to its left-invariant derivation preserves the
 Lie bracket. -/
 @[simp]
-theorem tangentToLeftInvariantDerivation_lie (v w : GroupLieAlgebra I G) :
+theorem tangentToLeftInvariantDerivation_lie [CompleteSpace E]
+    (v w : GroupLieAlgebra I G) :
     tangentToLeftInvariantDerivation (I := I) (G := G) ⁅v, w⁆ =
       ⁅tangentToLeftInvariantDerivation (I := I) (G := G) v,
         tangentToLeftInvariantDerivation (I := I) (G := G) w⁆ := by
   apply LeftInvariantDerivation.evalAt_one_injective
   ext f
   let F : C^∞⟮I, G; ℝ⟯ := f
-  change (tangentToLeftInvariantDerivation (I := I) (G := G) ⁅v, w⁆ F) 1 =
-    (⁅tangentToLeftInvariantDerivation (I := I) (G := G) v,
-      tangentToLeftInvariantDerivation (I := I) (G := G) w⁆ F) 1
+  -- Point-derivation extensionality presents `f` as a pointed smooth map, while a global
+  -- derivation acts on its canonical global extension `F`.
+  have hleft :
+      (LeftInvariantDerivation.evalAt (I := I) (1 : G)
+        (tangentToLeftInvariantDerivation ⁅v, w⁆)) f =
+        (tangentToLeftInvariantDerivation ⁅v, w⁆ F) 1 := rfl
+  have hright :
+      (LeftInvariantDerivation.evalAt (I := I) (1 : G)
+        ⁅tangentToLeftInvariantDerivation v, tangentToLeftInvariantDerivation w⁆) f =
+        (⁅tangentToLeftInvariantDerivation v, tangentToLeftInvariantDerivation w⁆ F) 1 := rfl
+  rw [hleft, hright]
   rw [LeftInvariantDerivation.commutator_apply]
   simp only [tangentToLeftInvariantDerivation_apply, ContMDiffMap.coe_sub, Pi.sub_apply]
   rw [mulInvariantVectorField_one, GroupLieAlgebra.bracket_def]
@@ -85,61 +97,32 @@ theorem tangentToLeftInvariantDerivation_lie (v w : GroupLieAlgebra I G) :
       (V := mulInvariantVectorField v)
       (W := mulInvariantVectorField w)
       (x := (1 : G))
-      (by norm_num)
-      (F.contMDiff.contMDiffAt.of_le (show
-        ((2 : ℕ∞) : ℕ∞ω) ≤ ((⊤ : ℕ∞) : ℕ∞ω) from
-          WithTop.coe_le_coe.mpr le_top))
+      F.contMDiff.contMDiffAt
+      (by simpa using (inferInstance : ENat.LEInfty (2 : ℕ∞ω)).out)
       ((contMDiff_mulInvariantVectorField_infty v).mdifferentiable
         (by simp)).mdifferentiableAt
       ((contMDiff_mulInvariantVectorField_infty w).mdifferentiable
         (by simp)).mdifferentiableAt
-      ((contMDiff_mvfderiv_mulInvariantVectorField v F).mdifferentiable
-        (by simp)).mdifferentiableAt
-      ((contMDiff_mvfderiv_mulInvariantVectorField w F).mdifferentiable
-        (by simp)).mdifferentiableAt
   exact hbridge.trans (congrArg₂ (· - ·) hwapply.symm hvapply.symm)
-
-private noncomputable def tangentToLeftInvariantDerivationLieHom
-    : GroupLieAlgebra I G →ₗ⁅ℝ⁆ LeftInvariantDerivation I G :=
-  { toLinearMap := tangentToLeftInvariantDerivation (I := I) (G := G)
-    map_lie' := by
-      intro v w
-      exact tangentToLeftInvariantDerivation_lie (I := I) (G := G) v w }
-
-/-- The tangent Lie algebra at the identity is canonically Lie-equivalent to the algebra of
-left-invariant derivations. -/
-private noncomputable def groupLieAlgebraLieEquivLeftInvariantDerivation
-    [FiniteDimensional ℝ E] [T2Space G] (h₁ : I.IsInteriorPoint (1 : G)) :
-    GroupLieAlgebra I G ≃ₗ⁅ℝ⁆ LeftInvariantDerivation I G :=
-  LieEquiv.ofBijective (tangentToLeftInvariantDerivationLieHom (I := I) (G := G))
-    (by
-      let e := leftInvariantDerivationEquivGroupLieAlgebra (I := I) (G := G) h₁
-      have hfun :
-          (tangentToLeftInvariantDerivationLieHom (I := I) (G := G) :
-            GroupLieAlgebra I G → LeftInvariantDerivation I G) = e.symm := by
-        funext v
-        exact leftInvariantDerivationEquivGroupLieAlgebra_symm_apply h₁ v |>.symm
-      rw [hfun]
-      exact e.symm.bijective)
 
 /-- Evaluation at the identity identifies left-invariant derivations with the tangent Lie algebra as
 Lie algebras. -/
 noncomputable def leftInvariantDerivationLieEquivGroupLieAlgebra
     [FiniteDimensional ℝ E] [T2Space G] (h₁ : I.IsInteriorPoint (1 : G)) :
     LeftInvariantDerivation I G ≃ₗ⁅ℝ⁆ GroupLieAlgebra I G :=
-  (groupLieAlgebraLieEquivLeftInvariantDerivation (I := I) (G := G) h₁).symm
-
-/-- The inverse Lie equivalence sends a tangent vector to its left-invariant derivation. -/
-@[simp]
-theorem leftInvariantDerivationLieEquivGroupLieAlgebra_symm_apply
-    [FiniteDimensional ℝ E] [T2Space G] (h₁ : I.IsInteriorPoint (1 : G))
-    (v : GroupLieAlgebra I G) :
-    (leftInvariantDerivationLieEquivGroupLieAlgebra h₁).symm v =
-      tangentToLeftInvariantDerivation v := by
-  simp [leftInvariantDerivationLieEquivGroupLieAlgebra,
-    groupLieAlgebraLieEquivLeftInvariantDerivation,
-    tangentToLeftInvariantDerivationLieHom]
-  rfl
+  { leftInvariantDerivationEquivGroupLieAlgebra (I := I) (G := G) h₁ with
+    map_lie' := by
+      intro D D'
+      let e₀ := leftInvariantDerivationEquivGroupLieAlgebra (I := I) (G := G) h₁
+      -- Expose the underlying canonical linear equivalence supplied to this structure literal.
+      change e₀ ⁅D, D'⁆ = ⁅e₀ D, e₀ D'⁆
+      apply e₀.symm.injective
+      rw [e₀.symm_apply_apply]
+      rw [leftInvariantDerivationEquivGroupLieAlgebra_symm_apply h₁]
+      rw [tangentToLeftInvariantDerivation_lie]
+      rw [← leftInvariantDerivationEquivGroupLieAlgebra_symm_apply h₁,
+        ← leftInvariantDerivationEquivGroupLieAlgebra_symm_apply h₁]
+      rw [e₀.symm_apply_apply, e₀.symm_apply_apply] }
 
 /-- The Lie equivalence acts as the underlying linear equivalence given by evaluation at the
 identity. -/
@@ -149,13 +132,38 @@ theorem leftInvariantDerivationLieEquivGroupLieAlgebra_apply
     (D : LeftInvariantDerivation I G) :
     leftInvariantDerivationLieEquivGroupLieAlgebra h₁ D =
       leftInvariantDerivationEquivGroupLieAlgebra h₁ D := by
+  rfl
+
+/-- The inverse Lie equivalence sends a tangent vector to its left-invariant derivation. -/
+@[simp]
+theorem leftInvariantDerivationLieEquivGroupLieAlgebra_symm_apply
+    [FiniteDimensional ℝ E] [T2Space G] (h₁ : I.IsInteriorPoint (1 : G))
+    (v : GroupLieAlgebra I G) :
+    (leftInvariantDerivationLieEquivGroupLieAlgebra h₁).symm v =
+      tangentToLeftInvariantDerivation v := by
   let e := leftInvariantDerivationLieEquivGroupLieAlgebra h₁
   let e₀ := leftInvariantDerivationEquivGroupLieAlgebra h₁
-  have hright : e.symm (e₀ D) = D := by
-    calc
-      e.symm (e₀ D) = tangentToLeftInvariantDerivation (e₀ D) :=
-        leftInvariantDerivationLieEquivGroupLieAlgebra_symm_apply h₁ (e₀ D)
-      _ = e₀.symm (e₀ D) :=
-        (leftInvariantDerivationEquivGroupLieAlgebra_symm_apply h₁ (e₀ D)).symm
-      _ = D := e₀.symm_apply_apply D
-  exact e.symm.injective ((e.symm_apply_apply D).trans hright.symm)
+  apply e.symm_apply_eq.mpr
+  rw [leftInvariantDerivationLieEquivGroupLieAlgebra_apply]
+  symm
+  calc
+    e₀ (tangentToLeftInvariantDerivation v) = e₀ (e₀.symm v) := by
+      rw [leftInvariantDerivationEquivGroupLieAlgebra_symm_apply]
+    _ = v := e₀.apply_symm_apply v
+
+/-- Evaluation at the identity preserves the Lie bracket. -/
+@[simp]
+theorem leftInvariantDerivationEquivGroupLieAlgebra_lie
+    [FiniteDimensional ℝ E] [T2Space G] (h₁ : I.IsInteriorPoint (1 : G))
+    (D D' : LeftInvariantDerivation I G) :
+    pointDerivationEquivTangentSpace (I := I) 1 h₁
+        (LeftInvariantDerivation.evalAt 1 ⁅D, D'⁆) =
+      ⁅pointDerivationEquivTangentSpace (I := I) 1 h₁
+          (LeftInvariantDerivation.evalAt 1 D),
+        pointDerivationEquivTangentSpace (I := I) 1 h₁
+          (LeftInvariantDerivation.evalAt 1 D')⁆ := by
+  rw [← leftInvariantDerivationEquivGroupLieAlgebra_apply,
+    ← leftInvariantDerivationEquivGroupLieAlgebra_apply,
+    ← leftInvariantDerivationEquivGroupLieAlgebra_apply]
+  simpa only [leftInvariantDerivationLieEquivGroupLieAlgebra_apply] using
+    (leftInvariantDerivationLieEquivGroupLieAlgebra h₁).map_lie D D'
