@@ -10,14 +10,20 @@ public import TauCeti.Geometry.Diffeomorphism.Group
 /-!
 # Smooth conjugation in a Lie group
 
-This file packages conjugation by an element of a Lie group as a smooth self-diffeomorphism.  The
+This file packages conjugation by an element of a Lie group as a smooth self-diffeomorphism. The
 resulting map from the group to its group of smooth self-diffeomorphisms is a group homomorphism.
-Its differential at the identity is the group adjoint action developed in subsequent files.
+Differentiating each conjugation diffeomorphism at the identity yields the group adjoint action
+developed in subsequent files.
 
 ## Main definitions
 
 * `TauCeti.Lie.conjugationDiffeomorph`: conjugation by `g` as a smooth diffeomorphism.
 * `TauCeti.Lie.conjugation`: the conjugation homomorphism into smooth self-diffeomorphisms.
+
+## References
+
+* [Lie groups and the Lie algebra correspondence roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/LieGroups/README.md),
+  Deliverable A, Layer 1, "The group adjoint".
 -/
 
 public section
@@ -26,36 +32,31 @@ namespace TauCeti.Lie
 
 open scoped Manifold ContDiff
 
-variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
-  {H : Type*} [TopologicalSpace H] {I : ModelWithCorners ℝ E H}
+variable {𝕜 : Type*} [NontriviallyNormedField 𝕜]
+  {E : Type*} [NormedAddCommGroup E] [NormedSpace 𝕜 E]
+  {H : Type*} [TopologicalSpace H] {I : ModelWithCorners 𝕜 E H}
   {G : Type*} [TopologicalSpace G] [ChartedSpace H G] [Group G]
-  [LieGroup I ∞ G]
+  {n : ℕ∞ω} [LieGroup I n G]
 
 /-- Conjugation by `g`, sending `x` to `g * x * g⁻¹`, as a smooth self-diffeomorphism. -/
-@[expose]
-def conjugationDiffeomorph (g : G) : G ≃ₘ⟮I, I⟯ G where
+def conjugationDiffeomorph (g : G) : G ≃ₘ^n⟮I, I⟯ G where
   toEquiv := (MulAut.conj g).toEquiv
   contMDiff_toFun := (contMDiff_const.mul contMDiff_id).mul contMDiff_const.inv
   contMDiff_invFun := (contMDiff_const.mul contMDiff_id).mul contMDiff_const
 
 @[simp]
 theorem conjugationDiffeomorph_apply (g x : G) :
-    conjugationDiffeomorph (I := I) g x = g * x * g⁻¹ :=
-  rfl
-
-theorem conjugationDiffeomorph_one (g : G) :
-    conjugationDiffeomorph (I := I) g (1 : G) = 1 := by
-  simp
+    conjugationDiffeomorph (I := I) (n := n) g x = g * x * g⁻¹ :=
+  (rfl)
 
 @[simp]
 theorem conjugationDiffeomorph_symm_apply (g x : G) :
-    (conjugationDiffeomorph (I := I) g).symm x = g⁻¹ * x * g :=
-  rfl
+    (conjugationDiffeomorph (I := I) (n := n) g).symm x = g⁻¹ * x * g :=
+  (rfl)
 
 /-- Smooth conjugation is a group homomorphism from `G` to its group of smooth
 self-diffeomorphisms. -/
-@[expose]
-def conjugation : G →* TauCeti.Diff I G ∞ where
+def conjugation : G →* TauCeti.Diff I G n where
   toFun := conjugationDiffeomorph
   map_one' := by
     ext x
@@ -67,7 +68,7 @@ def conjugation : G →* TauCeti.Diff I G ∞ where
 
 @[simp]
 theorem conjugation_apply (g : G) :
-    conjugation (I := I) g = conjugationDiffeomorph (I := I) g :=
-  rfl
+    conjugation (I := I) (n := n) g = conjugationDiffeomorph (I := I) (n := n) g :=
+  (rfl)
 
 end TauCeti.Lie
