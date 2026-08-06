@@ -19,15 +19,17 @@ of bilinear forms.
 
 On an **irreducible** representation the invariant forms are tightly constrained, and the three
 constraints proved here are the ones the Frobenius-Schur trichotomy is read off from.  First, the
-left radical of an invariant form is a subrepresentation, so a nonzero invariant form on an
-irreducible representation is nondegenerate.  Second, over an algebraically closed field and in
-finite dimensions, Schur's lemma makes a nonzero invariant form unique up to a scalar: the
-invariant forms are the line it spans.  Third -- and this is the point -- the flip of an invariant
-form is invariant, so a nonzero invariant form is a scalar multiple of its own flip; flipping twice
-squares the scalar to `1`, and the form is therefore either symmetric or the negative of its flip.
+left radical of an invariant form is the kernel of an intertwiner, hence a subrepresentation, so a
+nonzero invariant form on an irreducible representation is nondegenerate.  Second, over an
+algebraically closed field and in finite dimensions, Schur's lemma makes a nonzero invariant form
+unique up to a scalar: the invariant forms are the line it spans.  Third -- and this is the
+point -- the flip of an invariant form is invariant, so a nonzero invariant form is a scalar
+multiple of its own flip; flipping twice squares the scalar to `1`, and the form is therefore
+either symmetric or the negative of its flip.
 Away from characteristic two the second alternative is exactly alternation, which gives the
 orthogonal/symplectic dichotomy: an irreducible representation carries at most a line of invariant
-forms, and any nonzero one on it is either symmetric or alternating.
+forms, and -- in characteristic other than two -- any nonzero one on it is either symmetric or
+alternating.
 
 Nothing here needs a finite group, and the first two sections need neither a field nor finite
 dimensions: invariance is defined for a representation of a monoid on a module over a commutative
@@ -52,9 +54,10 @@ with it everything downstream of it, is what makes `G` a group from that point o
 * `TauCeti.Representation.IsInvariantForm.invariantForms_eq_span`: over an algebraically closed
   field and in finite dimensions, a nonzero invariant form on an irreducible representation spans
   all of them.
-* `TauCeti.Representation.IsInvariantForm.flip_eq_or_flip_eq_neg` and
-  `TauCeti.Representation.IsInvariantForm.isSymm_or_isAlt`: such a form is symmetric or
-  alternating.
+* `TauCeti.Representation.IsInvariantForm.flip_eq_or_flip_eq_neg`: in every characteristic, the
+  flip of such a form is the form itself or its negative.
+* `TauCeti.Representation.IsInvariantForm.isSymm_or_isAlt`: away from characteristic two -- the
+  hypothesis `(2 : k) ≠ 0` -- such a form is symmetric or alternating.
 
 ## Implementation notes
 
@@ -68,6 +71,14 @@ rejects.  What the file adds around that pair is the two rewritings that are *no
 immediate -- moving a single `ρ g` across the form at the cost of an inverse
 (`TauCeti.Representation.IsInvariantForm.apply_left`), and the identification with intertwiners
 into the dual.
+
+That identification is also what makes the left radical a subrepresentation: it is the kernel of
+the intertwiner, so `TauCeti.Representation.IsInvariantForm.ker_eq_bot` reads it off Mathlib's
+`Representation.IntertwiningMap.ker` rather than building a subrepresentation by hand.  Schur's
+lemma enters through Mathlib's
+`Representation.IsIrreducible.algebraMap_intertwiningMap_bijective_of_isAlgClosed`, the same
+theorem that `TauCeti.ContRepresentation.exists_eq_smul_one_of_irreducible` rests on for a
+continuous representation.
 
 ## References
 
@@ -107,6 +118,7 @@ theorem isInvariantForm_iff :
 
 /-- An invariant form is preserved by every `ρ g`: this is the elimination rule for
 `TauCeti.Representation.IsInvariantForm`. -/
+@[grind =]
 theorem IsInvariantForm.apply (hB : IsInvariantForm ρ B) (g : G) (x y : V) :
     B (ρ g x) (ρ g y) = B x y := hB g x y
 
@@ -183,50 +195,39 @@ section Irreducible
 variable {k G V : Type*} [Field k] [Group G] [AddCommGroup V] [Module k V]
 variable {ρ : Representation k G V} {B C : BilinForm k V}
 
-/-- The left radical of an invariant form is a subrepresentation: if `B v` vanishes then so does
-`B (ρ g v)`, because `B (ρ g v) w = B v (ρ g⁻¹ w)`. -/
-def IsInvariantForm.radical (hB : IsInvariantForm ρ B) : Subrepresentation ρ where
-  toSubmodule := LinearMap.ker B
-  apply_mem_toSubmodule g v hv := by
-    rw [LinearMap.mem_ker] at hv ⊢
-    ext w
-    rw [hB.apply_left g v w, hv]
-    simp
-
-/-- The radical of an invariant form carries the kernel of the form. -/
-@[simp]
-theorem IsInvariantForm.toSubmodule_radical (hB : IsInvariantForm ρ B) :
-    hB.radical.toSubmodule = LinearMap.ker B :=
-  (rfl)
-
-/-- On an irreducible representation the radical of an invariant form is trivial unless the form
-is: the radical is a subrepresentation, hence zero or everything, and it is everything exactly for
-the zero form. -/
+/-- **A nonzero invariant form on an irreducible representation has trivial left radical.** -/
 theorem IsInvariantForm.ker_eq_bot [ρ.IsIrreducible] (hB : IsInvariantForm ρ B) (hB0 : B ≠ 0) :
     LinearMap.ker B = ⊥ := by
-  rcases IsSimpleOrder.eq_bot_or_eq_top hB.radical with h | h
-  · rw [← hB.toSubmodule_radical, h, Subrepresentation.toSubmodule_bot]
+  -- Read as a map `V → V*`, `B` intertwines `ρ` with `ρ.dual`, so its left radical is the
+  -- underlying submodule of the subrepresentation `Representation.IntertwiningMap.ker`; on an
+  -- irreducible representation that is `⊥` or `⊤`, and `⊤` only for the zero form.
+  set f : Representation.IntertwiningMap ρ ρ.dual :=
+    B.intertwiningMap_of_isIntertwiningMap ρ ρ.dual
+      ((isInvariantForm_iff_isIntertwiningMap ρ B).mp hB).isIntertwining with hfdef
+  have hker : f.ker.toSubmodule = LinearMap.ker B := by rw [hfdef]; rfl
+  rcases IsSimpleOrder.eq_bot_or_eq_top f.ker with h | h
+  · rw [← hker, h, Subrepresentation.toSubmodule_bot]
   · exact absurd (LinearMap.ker_eq_top.mp
-      (by rw [← hB.toSubmodule_radical, h, Subrepresentation.toSubmodule_top])) hB0
+      (by rw [← hker, h, Subrepresentation.toSubmodule_top])) hB0
 
-/-- **A nonzero invariant form on an irreducible representation is nondegenerate.** Both radicals
-are handled at once, the right one by applying the left statement to the flipped form. -/
+/-- **A nonzero invariant form on an irreducible representation is nondegenerate.** -/
 theorem IsInvariantForm.nondegenerate [ρ.IsIrreducible] (hB : IsInvariantForm ρ B) (hB0 : B ≠ 0) :
     B.Nondegenerate := by
+  -- Both radicals are handled by `ker_eq_bot`, the right one via the flipped form.
   refine ⟨LinearMap.separatingLeft_iff_ker_eq_bot.mpr (hB.ker_eq_bot hB0),
     LinearMap.flip_separatingLeft.mp (LinearMap.separatingLeft_iff_ker_eq_bot.mpr ?_)⟩
   exact hB.flip.ker_eq_bot fun h => hB0 (LinearMap.BilinForm.flipHom.map_eq_zero_iff.mp h)
 
 variable [FiniteDimensional k V] [IsAlgClosed k] [ρ.IsIrreducible]
 
-/-- **An invariant form on an irreducible representation is unique up to a scalar.** Comparing `C`
-with a nonzero `B` through the isomorphism `V ≃ V*` that the nondegenerate `B` provides produces an
-endomorphism commuting with the action, hence a scalar by Schur's lemma in the form of Mathlib's
-`Representation.IsIrreducible.algebraMap_intertwiningMap_bijective_of_isAlgClosed` -- the same
-theorem that `TauCeti.ContRepresentation.exists_eq_smul_one_of_irreducible` rests on for a
-continuous representation. -/
+/-- **An invariant form on an irreducible representation is unique up to a scalar**: over an
+algebraically closed field and in finite dimensions, every invariant form `C` is a scalar multiple
+of a nonzero invariant form `B`. -/
 theorem IsInvariantForm.exists_eq_smul (hB : IsInvariantForm ρ B) (hB0 : B ≠ 0)
     (hC : IsInvariantForm ρ C) : ∃ c : k, C = c • B := by
+  -- Comparing `C` with `B` produces an endomorphism `φ` commuting with the action, hence a scalar
+  -- by Schur's lemma in the form of Mathlib's
+  -- `Representation.IsIrreducible.algebraMap_intertwiningMap_bijective_of_isAlgClosed`.
   have hBnd : B.Nondegenerate := hB.nondegenerate hB0
   -- `φ` reads `C` through the isomorphism `V ≃ V*` that the nondegenerate `B` provides.
   set φ : V →ₗ[k] V := (B.toDual hBnd).symm.toLinearMap ∘ₗ C with hφdef
@@ -256,11 +257,12 @@ theorem IsInvariantForm.invariantForms_eq_span (hB : IsInvariantForm ρ B) (hB0 
   obtain ⟨c, rfl⟩ := hB.exists_eq_smul hB0 hC
   exact Submodule.smul_mem _ c (Submodule.mem_span_singleton_self B)
 
-/-- **A nonzero invariant form on an irreducible representation is its own flip up to sign.** The
-flip is invariant too, so it is a scalar multiple `c • B` of the form; reading that off twice
-multiplies each value of `B` by `c * c`, which is therefore `1`. -/
+/-- **A nonzero invariant form on an irreducible representation is its own flip up to sign**: its
+flip is either the form itself or its negative.  This holds in every characteristic. -/
 theorem IsInvariantForm.flip_eq_or_flip_eq_neg (hB : IsInvariantForm ρ B) (hB0 : B ≠ 0) :
     B.flip = B ∨ B.flip = -B := by
+  -- The flip is invariant too, so it is a scalar multiple `c • B` of the form; reading that off
+  -- twice multiplies each value of `B` by `c * c`, which is therefore `1`.
   obtain ⟨c, hc⟩ := hB.exists_eq_smul hB0 hB.flip
   have hpt : ∀ x y : V, B y x = c * B x y := by
     intro x y
