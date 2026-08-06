@@ -59,6 +59,7 @@ theorem oneParameterSubgroup_circleExpGenerator :
   exact (oneParameterSubgroupEquiv (I := 𝓡 1) (G := Circle)).apply_symm_apply circleExpHom
 
 /-- Exponentiating a scalar multiple of the circle generator gives `Circle.exp` at that scalar. -/
+@[simp]
 theorem lieExp_circleExpGenerator (t : ℝ) :
     lieExp (t • circleExpGenerator) = Circle.exp t := by
   have h := DFunLike.congr_fun oneParameterSubgroup_circleExpGenerator
