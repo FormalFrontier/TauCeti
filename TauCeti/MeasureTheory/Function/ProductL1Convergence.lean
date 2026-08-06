@@ -75,17 +75,13 @@ theorem tendsto_integral_norm_prod_sub_prod {ι ι' R : Type*} [SeminormedCommRi
     filter_upwards [(Filter.eventually_all_finset s).2 fun i hi => hF_le i hi j,
       (Filter.eventually_all_finset s).2 hg_le] with ω hF hg
     exact norm_prod_sub_prod_le_sum_norm_sub s (fun i hi => hF i hi) fun i hi => hg i hi
+  -- The telescoping bound already dominates the integrand by an integrable function.
   have hprod_int : ∀ j, Integrable
-      (fun ω => ‖(∏ i ∈ s, F i j ω) - ∏ i ∈ s, g i ω‖) μ := by
-    intro j
-    refine (integrable_const (2 : ℝ)).mono' ((hFprod j).sub hgprod).norm ?_
-    filter_upwards [(Filter.eventually_all_finset s).2 fun i hi => hF_le i hi j,
-      (Filter.eventually_all_finset s).2 hg_le] with ω hF hg
-    rw [Real.norm_of_nonneg (norm_nonneg _)]
-    refine (norm_sub_le _ _).trans ?_
-    have h1 := norm_prod_le_one (b := fun i => F i j ω) fun i hi => hF i hi
-    have h2 := norm_prod_le_one (b := fun i => g i ω) fun i hi => hg i hi
-    linarith
+      (fun ω => ‖(∏ i ∈ s, F i j ω) - ∏ i ∈ s, g i ω‖) μ := fun j =>
+    (integrable_finsetSum _ fun i hi => hsub_int i hi j).mono'
+      ((hFprod j).sub hgprod).norm (by
+        filter_upwards [hpoint j] with ω hω
+        rwa [Real.norm_of_nonneg (norm_nonneg _)])
   have hmaj : Tendsto (fun j => ∑ i ∈ s, ∫ ω, ‖F i j ω - g i ω‖ ∂μ) l (𝓝 0) := by
     simpa using tendsto_finsetSum s fun i hi => hconv i hi
   refine squeeze_zero' (Eventually.of_forall fun j => integral_nonneg fun _ => norm_nonneg _)
