@@ -76,7 +76,11 @@ The generator lemmas below are therefore stated with `IndV.mk`, the readable for
 matches Mathlib's own `Rep.coinvariantsTensorIndHom_mk_tmul_indVMk` and the sibling
 `TauCeti.indTrivialEquiv_apply_mk`. They are applied by explicit `rw`/`Eq.trans` instead, so that
 only the two definitions `TauCeti.indProjectionHom` and `TauCeti.indProjectionInv` are ever
-unfolded, and only in their own generator lemmas.
+unfolded, and only in their own generator lemmas. For the same reason the proofs below reach the
+generators by an explicit `Representation.IndV.hom_ext`/`TensorProduct.ext'` chain and peel the
+resulting compositions one at a time with `LinearMap.comp_apply` under `conv_lhs`/`conv_rhs`: an
+unrestricted `ext`/`simp` step also unfolds `IndV.mk`, after which the generator lemmas no longer
+match.
 
 The `Representation`-level constructions are universe-polymorphic in `k`, `G`, `H` and the two
 carrier modules. The `Rep k H` layer is not, and cannot be: `Rep.{w} k G` is monoidal only for
@@ -171,15 +175,14 @@ theorem indProjectionLEquiv_apply (x : IndV φ (ρ.tprod (τ.comp φ))) :
 is matched by acting with `h₁` on the second tensor factor. -/
 noncomputable def indProjectionEquiv :
     (Representation.ind φ (ρ.tprod (τ.comp φ))).Equiv ((Representation.ind φ ρ).tprod τ) :=
-  Representation.Equiv.mk (indProjectionLEquiv φ ρ τ) fun h₁ => by
-    ext h a b
-    change indProjectionHom φ ρ τ (Representation.ind φ (ρ.tprod (τ.comp φ)) h₁
-        (IndV.mk φ (ρ.tprod (τ.comp φ)) h (a ⊗ₜ[k] b)))
-      = TensorProduct.map (Representation.ind φ ρ h₁) (τ h₁)
-        (indProjectionHom φ ρ τ (IndV.mk φ (ρ.tprod (τ.comp φ)) h (a ⊗ₜ[k] b)))
-    rw [Representation.ind_mk, indProjectionHom_apply_mk, indProjectionHom_apply_mk,
-      TensorProduct.map_tmul, Representation.ind_mk, mul_inv_rev, inv_inv, map_mul]
-    rfl
+  Representation.Equiv.mk (indProjectionLEquiv φ ρ τ) fun h₁ =>
+    IndV.hom_ext φ _ fun h => TensorProduct.ext' fun a b => by
+      conv_lhs => rw [LinearMap.comp_apply, LinearMap.comp_apply]
+      conv_rhs => rw [LinearMap.comp_apply, LinearMap.comp_apply]
+      rw [LinearEquiv.coe_coe, indProjectionLEquiv_apply, indProjectionLEquiv_apply,
+        Representation.tprod_apply, Representation.ind_mk, indProjectionHom_apply_mk,
+        indProjectionHom_apply_mk, TensorProduct.map_tmul, Representation.ind_mk, mul_inv_rev,
+        inv_inv, map_mul, Module.End.mul_apply]
 
 end Linear
 
@@ -212,41 +215,37 @@ theorem indProjection_inv_hom_apply (h : H) (x : X) (y : Y) :
 theorem indProjection_hom_naturality_left {X X' : Rep.{u} k G} (f : X ⟶ X') (Y : Rep.{u} k H) :
     Rep.indMap φ (f ⊗ₘ 𝟙 (Rep.res φ Y)) ≫ (indProjection φ X' Y).hom
       = (indProjection φ X Y).hom ≫ (Rep.indMap φ f ⊗ₘ 𝟙 Y) := by
-  ext h x
-  induction x using TensorProduct.induction_on with
-  | zero => simp
-  | tmul x y =>
-    have hmap : (Rep.indMap φ (f ⊗ₘ 𝟙 (Rep.res φ Y))).hom
-        (IndV.mk φ (X ⊗ Rep.res φ Y).ρ h (x ⊗ₜ[k] y))
-          = IndV.mk φ (X' ⊗ Rep.res φ Y).ρ h (f.hom x ⊗ₜ[k] y) := by
-      simp [Rep.indMap]
-    change (indProjection φ X' Y).hom.hom ((Rep.indMap φ (f ⊗ₘ 𝟙 (Rep.res φ Y))).hom
-        (IndV.mk φ (X ⊗ Rep.res φ Y).ρ h (x ⊗ₜ[k] y)))
-      = (Rep.indMap φ f ⊗ₘ 𝟙 Y).hom
-        ((indProjection φ X Y).hom.hom (IndV.mk φ (X ⊗ Rep.res φ Y).ρ h (x ⊗ₜ[k] y)))
-    rw [hmap, indProjection_hom_hom_apply, indProjection_hom_hom_apply]
+  refine Rep.hom_ext (Representation.IntertwiningMap.ext (IndV.hom_ext φ _ fun h =>
+    TensorProduct.ext' fun x y => ?_))
+  have hmap : (Rep.indMap φ (f ⊗ₘ 𝟙 (Rep.res φ Y))).hom
+      (IndV.mk φ (X ⊗ Rep.res φ Y).ρ h (x ⊗ₜ[k] y))
+        = IndV.mk φ (X' ⊗ Rep.res φ Y).ρ h (f.hom x ⊗ₜ[k] y) := by
     simp [Rep.indMap]
-  | add u v hu hv => simp only [map_add, hu, hv]
+  conv_lhs => rw [LinearMap.comp_apply]
+  conv_rhs => rw [LinearMap.comp_apply]
+  rw [Representation.IntertwiningMap.toLinearMap_apply,
+    Representation.IntertwiningMap.toLinearMap_apply, Rep.hom_comp, Rep.hom_comp,
+    Representation.IntertwiningMap.comp_apply, Representation.IntertwiningMap.comp_apply,
+    hmap, indProjection_hom_hom_apply, indProjection_hom_hom_apply]
+  simp [Rep.indMap]
 
 /-- The projection formula is natural in the right tensor factor, the `Rep k H` argument. -/
 theorem indProjection_hom_naturality_right (X : Rep.{u} k G) {Y Y' : Rep.{u} k H} (g : Y ⟶ Y') :
     Rep.indMap φ (𝟙 X ⊗ₘ (Rep.resFunctor φ).map g) ≫ (indProjection φ X Y').hom
       = (indProjection φ X Y).hom ≫ (𝟙 (Rep.ind φ X) ⊗ₘ g) := by
-  ext h x
-  induction x using TensorProduct.induction_on with
-  | zero => simp
-  | tmul x y =>
-    have hmap : (Rep.indMap φ (𝟙 X ⊗ₘ (Rep.resFunctor φ).map g)).hom
-        (IndV.mk φ (X ⊗ Rep.res φ Y).ρ h (x ⊗ₜ[k] y))
-          = IndV.mk φ (X ⊗ Rep.res φ Y').ρ h (x ⊗ₜ[k] g.hom y) := by
-      simp [Rep.indMap]
-    change (indProjection φ X Y').hom.hom ((Rep.indMap φ (𝟙 X ⊗ₘ (Rep.resFunctor φ).map g)).hom
-        (IndV.mk φ (X ⊗ Rep.res φ Y).ρ h (x ⊗ₜ[k] y)))
-      = (𝟙 (Rep.ind φ X) ⊗ₘ g).hom
-        ((indProjection φ X Y).hom.hom (IndV.mk φ (X ⊗ Rep.res φ Y).ρ h (x ⊗ₜ[k] y)))
-    rw [hmap, indProjection_hom_hom_apply, indProjection_hom_hom_apply]
-    simp [← Rep.hom_comm_apply]
-  | add u v hu hv => simp only [map_add, hu, hv]
+  refine Rep.hom_ext (Representation.IntertwiningMap.ext (IndV.hom_ext φ _ fun h =>
+    TensorProduct.ext' fun x y => ?_))
+  have hmap : (Rep.indMap φ (𝟙 X ⊗ₘ (Rep.resFunctor φ).map g)).hom
+      (IndV.mk φ (X ⊗ Rep.res φ Y).ρ h (x ⊗ₜ[k] y))
+        = IndV.mk φ (X ⊗ Rep.res φ Y').ρ h (x ⊗ₜ[k] g.hom y) := by
+    simp [Rep.indMap]
+  conv_lhs => rw [LinearMap.comp_apply]
+  conv_rhs => rw [LinearMap.comp_apply]
+  rw [Representation.IntertwiningMap.toLinearMap_apply,
+    Representation.IntertwiningMap.toLinearMap_apply, Rep.hom_comp, Rep.hom_comp,
+    Representation.IntertwiningMap.comp_apply, Representation.IntertwiningMap.comp_apply,
+    hmap, indProjection_hom_hom_apply, indProjection_hom_hom_apply]
+  simp [← Rep.hom_comm_apply]
 
 /-- The projection formula as a natural isomorphism in the left tensor factor: the functors
 `X ↦ Ind_φ (X ⊗ Res_φ Y)` and `X ↦ (Ind_φ X) ⊗ Y` from `Rep k G` to `Rep k H` agree. -/
