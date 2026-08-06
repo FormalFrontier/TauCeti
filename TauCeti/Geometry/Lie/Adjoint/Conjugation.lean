@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.Geometry.Manifold.Algebra.LieGroup
+public import Mathlib.Geometry.Manifold.Algebra.SMul
 public import TauCeti.Geometry.Diffeomorphism.Group
 
 /-!
@@ -35,24 +36,34 @@ open scoped Manifold ContDiff
 variable {𝕜 : Type*} [NontriviallyNormedField 𝕜]
   {E : Type*} [NormedAddCommGroup E] [NormedSpace 𝕜 E]
   {H : Type*} [TopologicalSpace H] {I : ModelWithCorners 𝕜 E H}
-  {G : Type*} [TopologicalSpace G] [ChartedSpace H G] [Group G]
+  {G : Type*} [topG : TopologicalSpace G] [chartsG : ChartedSpace H G] [Group G]
   {n : ℕ∞ω} [LieGroup I n G]
 
+/-- The conjugation-action copy of a Lie group carries the original topology. -/
+instance instTopologicalSpaceConjAct : TopologicalSpace (ConjAct G) := topG
+
+/-- The conjugation-action copy of a Lie group carries the original manifold charts. -/
+instance instChartedSpaceConjAct : ChartedSpace H (ConjAct G) := chartsG
+
+/-- Conjugation is a smooth action of the conjugation-action copy of a Lie group on the group. -/
+instance instContMDiffSMulConjAct : ContMDiffSMul I I n (ConjAct G) G where
+  contMDiff_smul := by
+    change CMDiff n (fun p : G × G ↦ p.1 * p.2 * p.1⁻¹)
+    exact (contMDiff_fst.mul contMDiff_snd).mul contMDiff_fst.inv
+
 /-- Conjugation by `g`, sending `x` to `g * x * g⁻¹`, as a smooth self-diffeomorphism. -/
-def conjDiffeomorph (g : G) : G ≃ₘ^n⟮I, I⟯ G where
-  toEquiv := (MulAut.conj g).toEquiv
-  contMDiff_toFun := (contMDiff_const.mul contMDiff_id).mul contMDiff_const.inv
-  contMDiff_invFun := (contMDiff_const.mul contMDiff_id).mul contMDiff_const
+def conjDiffeomorph (g : G) : G ≃ₘ^n⟮I, I⟯ G :=
+  Diffeomorph.smul I I n (ConjAct.toConjAct g)
 
 @[simp]
 theorem conjDiffeomorph_apply (g x : G) :
     conjDiffeomorph (I := I) (n := n) g x = g * x * g⁻¹ :=
-  (rfl)
+  ConjAct.toConjAct_smul g x
 
 @[simp]
 theorem conjDiffeomorph_symm_apply (g x : G) :
     (conjDiffeomorph (I := I) (n := n) g).symm x = g⁻¹ * x * g :=
-  (rfl)
+  ConjAct.toConjAct_inv_smul g x
 
 /-- Smooth conjugation is a group homomorphism from `G` to its group of smooth
 self-diffeomorphisms. -/
