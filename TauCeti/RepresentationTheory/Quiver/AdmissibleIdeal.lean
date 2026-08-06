@@ -15,9 +15,9 @@ A two-sided ideal `I` of a path algebra `kQ` is *admissible* when it is squeezed
 of the arrow ideal `R` and its square, `R ^ N ≤ I ≤ R ^ 2`. The two bounds say complementary
 things about the relations `I` imposes. The upper bound `I ≤ R ^ 2` says that every relation is a
 combination of paths of length at least two: a relation involving a vertex idempotent or a single
-arrow would delete a vertex or an arrow from the quiver rather than impose a relation on it. The
-lower bound `R ^ N ≤ I` says that all long enough paths are killed, which is what cuts the
-quotient down to finite dimension.
+arrow would change the quiver data itself — identifying or collapsing vertices or arrows — rather
+than impose a relation on the paths of `Q`. The lower bound `R ^ N ≤ I` says that all long enough
+paths are killed, which is what cuts the quotient down to finite dimension.
 
 The quotient `kQ ⧸ I` by an admissible ideal is a *bound quiver algebra*, and the two main results
 here are its two basic properties: it is **finite-dimensional** whenever the quiver has finitely
@@ -122,7 +122,9 @@ theorem exists_ofPath_mem (h : IsAdmissibleIdeal I) :
   exact ⟨N, fun x hx => hN (mem_arrowIdeal_pow.2 (ofPath_mem_pathSpan hx))⟩
 
 /-- **An admissible ideal contains no short path**: this is the upper bound, read on the path
-basis. A relation with a linear part would erase an arrow of the quiver instead of binding it. -/
+basis. It excludes one at a time the basis paths of length less than two, the vertex idempotents
+and the arrows; that no nonzero combination of them is erased either is
+`TauCeti.IsAdmissibleIdeal.linearIndependent_mk_ofPath_of_length_lt_two`. -/
 theorem ofPath_notMem_of_length_lt_two [Nontrivial k] (h : IsAdmissibleIdeal I)
     {x : Quiver.TotalPath Q} (hx : x.2.2.length < 2) :
     (ofPath x : pathAlgebra k Q) ∉ I := by
