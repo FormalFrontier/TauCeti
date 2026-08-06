@@ -7,6 +7,7 @@ module
 public import Mathlib.NumberTheory.ModularForms.QExpansion
 public import TauCeti.NumberTheory.ModularForms.Basic
 public import TauCeti.NumberTheory.ModularForms.CongruenceSubgroups
+public import TauCeti.RepresentationTheory.ClassicalGroups.Diagonal
 
 /-!
 # The level-raising degeneracy maps `V_d`
@@ -17,7 +18,8 @@ the upper half-plane to `τ ↦ f (d τ)`. It is the slash action by `diag(d, 1)
 
 ## Main definitions
 
-* `TauCeti.scaleGL d`: the matrix `!![d, 0; 0, 1]` in `GL(2, ℝ)`.
+* `TauCeti.scaleGL d`: the diagonal element `!![d, 0; 0, 1]` of `GL(2, ℝ)`, a value of
+  `TauCeti.diagGL`.
 * `TauCeti.conjScale`: its conjugation action on an integral matrix whose lower-left entry is
   divisible by `d`, `(a, b; d c, e) ↦ (a, d b; c, e)`.
 * `TauCeti.ModularForm.levelRaise`, `TauCeti.CuspForm.levelRaise`: the operator `V_d`, taking a
@@ -61,29 +63,32 @@ variable {k : ℤ} {d : ℕ}
 
 /-! ### The scaling matrix `diag(d, 1)` -/
 
-/-- The matrix `!![d, 0; 0, 1]` in `GL(2, ℝ)`, for `d` a nonzero natural number. Slashing by it
-is, up to the normalizing scalar `d ^ (1 - k)`, the level-raising operator `V_d`. -/
+/-- The diagonal element `!![d, 0; 0, 1]` of `GL(2, ℝ)`, for `d` a nonzero natural number.
+Slashing by it is, up to the normalizing scalar `d ^ (1 - k)`, the level-raising operator
+`V_d`. -/
 @[expose]
 def scaleGL (d : ℕ) [NeZero d] : GL (Fin 2) ℝ :=
-  ⟨!![(d : ℝ), 0; 0, 1], !![(d : ℝ)⁻¹, 0; 0, 1],
-    by simp [Matrix.one_fin_two,
-      mul_inv_cancel₀ (Nat.cast_ne_zero.mpr (NeZero.ne d) : (d : ℝ) ≠ 0)],
-    by simp [Matrix.one_fin_two,
-      inv_mul_cancel₀ (Nat.cast_ne_zero.mpr (NeZero.ne d) : (d : ℝ) ≠ 0)]⟩
+  diagGL ![Units.mk0 (d : ℝ) (Nat.cast_ne_zero.mpr (NeZero.ne d)), 1]
 
 @[simp]
 lemma coe_scaleGL [NeZero d] :
-    ((scaleGL d : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ) = !![(d : ℝ), 0; 0, 1] := rfl
+    ((scaleGL d : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ) = !![(d : ℝ), 0; 0, 1] := by
+  rw [scaleGL, diagGL_coe, Matrix.diagonal_fin_two]
+  simp
 
 @[simp]
 lemma coe_inv_scaleGL [NeZero d] :
-    (((scaleGL d)⁻¹ : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ) = !![(d : ℝ)⁻¹, 0; 0, 1] := rfl
+    (((scaleGL d)⁻¹ : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ) = !![(d : ℝ)⁻¹, 0; 0, 1] := by
+  rw [scaleGL, ← map_inv, diagGL_coe, Matrix.diagonal_fin_two]
+  simp
 
 lemma val_det_scaleGL [NeZero d] : ((scaleGL d).det : ℝ) = d := by
-  simp [Matrix.GeneralLinearGroup.det, Matrix.det_fin_two]
+  rw [scaleGL, det_diagGL]
+  simp [Fin.prod_univ_two]
 
 lemma val_det_scaleGL_pos [NeZero d] : 0 < ((scaleGL d).det : ℝ) := by
-  simpa using Nat.pos_of_ne_zero (NeZero.ne d)
+  rw [val_det_scaleGL]
+  exact mod_cast Nat.pos_of_ne_zero (NeZero.ne d)
 
 @[simp]
 lemma denom_scaleGL [NeZero d] (τ : ℍ) : denom (scaleGL d) τ = 1 := by
@@ -96,13 +101,17 @@ lemma coe_scaleGL_smul [NeZero d] (τ : ℍ) : ((scaleGL d • τ : ℍ) : ℂ) 
 
 @[simp]
 lemma scaleGL_one : scaleGL 1 = 1 := by
-  ext i j
-  fin_cases i <;> fin_cases j <;> simp
+  rw [scaleGL, ← map_one diagGL]
+  congr 1
+  ext i
+  fin_cases i <;> simp
 
 lemma scaleGL_mul (d e : ℕ) [NeZero d] [NeZero e] :
     scaleGL (d * e) = scaleGL d * scaleGL e := by
-  ext i j
-  fin_cases i <;> fin_cases j <;> simp
+  rw [scaleGL, scaleGL, scaleGL, ← map_mul diagGL]
+  congr 1
+  ext i
+  fin_cases i <;> simp
 
 /-- Slashing by `diag(d, 1)` rescales the argument and introduces the factor `d ^ (k - 1)`. -/
 lemma slash_scaleGL_apply [NeZero d] (k : ℤ) (f : ℍ → ℂ) (τ : ℍ) :
