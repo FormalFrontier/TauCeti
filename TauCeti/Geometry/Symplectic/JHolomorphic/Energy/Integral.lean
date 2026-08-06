@@ -80,13 +80,21 @@ noncomputable irreducible_def stdComplexLineEnergy
   ∫⁻ x, ENNReal.ofReal (ω.stdComplexLineEnergyDensity J (du x) / (1 + 1)) ∂μ
 
 /-- The energy of a differential field is the lower integral of its normalized pointwise energy
-density. -/
+density.
+
+This is the characteristic lemma to rewrite with: it states the definition with the normalizing
+factor as `2`, which is how the rest of this file and the module docstring phrase it.  The
+`stdComplexLineEnergy_def` that `irreducible_def` generates instead exposes the `1 + 1` of the
+body, and that `1 + 1` cannot simply be replaced by `2`: elaborating the numeral inside the
+`private` helper declaration `irreducible_def` introduces leaves the generated
+`stdComplexLineEnergy_def` mentioning a proof constant the module system does not export, so its
+statement stops type-checking against the exported environment. -/
 lemma stdComplexLineEnergy_apply
     (ω : SymplecticForm V) (J : AlmostComplexStructure V)
     (du : X → ((ℝ × ℝ) →ₗ[ℝ] V)) (μ : Measure X) :
     ω.stdComplexLineEnergy J du μ =
-      ∫⁻ x, ENNReal.ofReal (ω.stdComplexLineEnergyDensity J (du x) / 2) ∂μ :=
-  by simpa only [one_add_one_eq_two] using stdComplexLineEnergy_def ω J du μ
+      ∫⁻ x, ENNReal.ofReal (ω.stdComplexLineEnergyDensity J (du x) / 2) ∂μ := by
+  simpa only [one_add_one_eq_two] using stdComplexLineEnergy_def ω J du μ
 
 /-- Energy depends only on the differential field almost everywhere. -/
 lemma stdComplexLineEnergy_congr

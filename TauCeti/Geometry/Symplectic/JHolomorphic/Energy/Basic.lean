@@ -86,7 +86,14 @@ irreducible_def stdComplexLineEnergyDensity (ω : SymplecticForm V) (J : AlmostC
     ω.associatedBilinForm J (F stdComplexLineImag) (F stdComplexLineImag)
 
 /-- The standard complex-line energy density is the sum of the associated bilinear form evaluated
-on the images of the standard real and imaginary basis vectors. -/
+on the images of the standard real and imaginary basis vectors.
+
+This is the characteristic lemma to rewrite with, in this module and downstream. It is not
+interchangeable with the `stdComplexLineEnergyDensity_def` that `irreducible_def` generates: the
+right-hand side of that one is elaborated inside the `private` helper declaration
+`irreducible_def` introduces, so it mentions a proof constant that the module system does not
+export. Rewriting with it from another module fails to kernel-check, which is also why
+`scripts/lint-baseline.txt` grandfathers a `checkType` violation for it. -/
 lemma stdComplexLineEnergyDensity_apply (ω : SymplecticForm V) (J : AlmostComplexStructure V)
     (F : (ℝ × ℝ) →ₗ[ℝ] V) :
     ω.stdComplexLineEnergyDensity J F =
@@ -98,7 +105,7 @@ lemma stdComplexLineEnergyDensity_apply (ω : SymplecticForm V) (J : AlmostCompl
 lemma stdComplexLineEnergyDensity_nonneg (hω : ω.Tames J)
     (F : (ℝ × ℝ) →ₗ[ℝ] V) :
     0 ≤ ω.stdComplexLineEnergyDensity J F := by
-  rw [stdComplexLineEnergyDensity_def]
+  rw [stdComplexLineEnergyDensity_apply]
   refine add_nonneg ?_ ?_
   · rw [associatedBilinForm_apply]
     by_cases h : F stdComplexLineReal = 0
@@ -114,7 +121,7 @@ standard complex line is positive. -/
 lemma stdComplexLineEnergyDensity_pos (hω : ω.Tames J) {F : (ℝ × ℝ) →ₗ[ℝ] V}
     (hFne : F ≠ 0) :
     0 < ω.stdComplexLineEnergyDensity J F := by
-  rw [stdComplexLineEnergyDensity_def]
+  rw [stdComplexLineEnergyDensity_apply]
   by_cases hreal : F stdComplexLineReal = 0
   · have himag : F stdComplexLineImag ≠ 0 := by
       intro himag
@@ -142,7 +149,7 @@ lemma stdComplexLineEnergyDensity_eq_zero_iff (hω : ω.Tames J)
     ω.stdComplexLineEnergyDensity J F = 0 ↔ F = 0 := by
   constructor
   · intro henergy
-    rw [stdComplexLineEnergyDensity_def] at henergy
+    rw [stdComplexLineEnergyDensity_apply] at henergy
     have hreal_nonneg :
         0 ≤ ω.associatedBilinForm J (F stdComplexLineReal) (F stdComplexLineReal) := by
       rw [associatedBilinForm_apply]
@@ -170,7 +177,7 @@ lemma stdComplexLineEnergyDensity_eq_zero_iff (hω : ω.Tames J)
     rw [LinearMap.apply_stdComplexLine F z, hreal, himag]
     simp
   · intro hzero
-    simp [hzero, stdComplexLineEnergyDensity_def]
+    simp [hzero, stdComplexLineEnergyDensity_apply]
 
 /-- Under tameness, the standard pointwise energy density is positive exactly for nonzero
 real-linear maps from the standard complex line. -/
@@ -220,7 +227,7 @@ lemma prod_stdComplexLineEnergyDensity (F : (ℝ × ℝ) →ₗ[ℝ] V × W) :
     (ω₁.prod ω₂).stdComplexLineEnergyDensity (J₁.prod J₂) F =
       ω₁.stdComplexLineEnergyDensity J₁ ((LinearMap.fst ℝ V W).comp F) +
         ω₂.stdComplexLineEnergyDensity J₂ ((LinearMap.snd ℝ V W).comp F) := by
-  simp only [stdComplexLineEnergyDensity_def, prod_associatedBilinForm_apply,
+  simp only [stdComplexLineEnergyDensity_apply, prod_associatedBilinForm_apply,
     LinearMap.comp_apply, LinearMap.fst_apply, LinearMap.snd_apply]
   ring_nf
 
@@ -259,7 +266,7 @@ lemma stdComplexLineEnergyDensity_eq_two_mul_symplecticForm
     (hF : IsComplexLinearMap (AlmostComplexStructure.product ℝ) J F) :
     ω.stdComplexLineEnergyDensity J F =
       2 * ω (F stdComplexLineReal) (F stdComplexLineImag) := by
-  rw [SymplecticForm.stdComplexLineEnergyDensity_def,
+  rw [SymplecticForm.stdComplexLineEnergyDensity_apply,
     hF.associatedBilinForm_apply_stdComplexLineImag_self_eq,
     hF.associatedBilinForm_apply_stdComplexLineReal_self_eq_symplecticForm]
   ring
@@ -414,7 +421,7 @@ lemma stdComplexLineEnergyDensity_sub_two_mul_symplecticForm (hinv : ω.Invarian
         2 * ω (F stdComplexLineReal) (F stdComplexLineImag) =
       ω.associatedBilinForm J (F stdComplexLineReal + J (F stdComplexLineImag))
         (F stdComplexLineReal + J (F stdComplexLineImag)) := by
-  rw [stdComplexLineEnergyDensity_def]
+  rw [stdComplexLineEnergyDensity_apply]
   linarith [hinv.associatedBilinForm_add_apply_self (F stdComplexLineReal) (F stdComplexLineImag)]
 
 /-- **Wirtinger inequality.** For a compatible pair `(ω, J)` and any real-linear map out of the
