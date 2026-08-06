@@ -28,8 +28,8 @@ variable {𝕜 : Type*} [NontriviallyNormedField 𝕜] [IsRCLikeNormedField 𝕜
   {G : Type*} [TopologicalSpace G] [ChartedSpace H G] [Group G]
 
 /-- A `C³` Lie group over an RCL-like field has the regularity required by Mathlib's tangent Lie
-algebra. This theorem is deliberately not a global instance; consumers activate it with
-`attribute [local instance] LieGroup.minSmoothnessThree` to avoid typeclass loops. -/
+algebra. This theorem is deliberately not a global instance, so the downgrade applies only in files
+that opt in with `attribute [local instance] LieGroup.minSmoothnessThree`. -/
 theorem LieGroup.minSmoothnessThree [LieGroup I 3 G] :
     LieGroup I (minSmoothness 𝕜 3) G := by
   simpa using (inferInstance : LieGroup I 3 G)
