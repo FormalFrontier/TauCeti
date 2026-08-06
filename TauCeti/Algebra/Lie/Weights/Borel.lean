@@ -205,15 +205,21 @@ theorem mem_rootSpaceSubalgebra {S : Set H.root} (hS : IsSpecialClosedRootSet H 
     x ∈ rootSpaceSubalgebra H S hS ↔ x ∈ rootSpaceSpan H S :=
   Iff.rfl
 
+/-- The carrier of the Lie subalgebra spanned by a special closed set `S` of roots is the span of
+the root spaces indexed by `S`; the bracket-closure the definition supplies costs the carrier
+nothing. -/
+theorem rootSpaceSubalgebra_toSubmodule {S : Set H.root} (hS : IsSpecialClosedRootSet H S) :
+    (rootSpaceSubalgebra H S hS : Submodule K L) = (rootSpaceSpan H S : Submodule K L) :=
+  SetLike.ext fun _ => Iff.rfl
+
 /-- The Lie subalgebra spanned by a special closed set `S` of roots is contained in a Lie
 subalgebra `K'` exactly when each of the root spaces indexed by `S` is. -/
 theorem rootSpaceSubalgebra_le_iff {S : Set H.root} (hS : IsSpecialClosedRootSet H S)
     {K' : LieSubalgebra K L} :
     rootSpaceSubalgebra H S hS ≤ K' ↔ ∀ α ∈ S, ∀ x ∈ rootSpace H (α : H → K), x ∈ K' := by
   refine ⟨fun h α hα _ hx => h (rootSpace_le_rootSpaceSpan hα hx), fun h => ?_⟩
-  rw [← LieSubalgebra.toSubmodule_le_toSubmodule]
-  change (rootSpaceSpan H S : Submodule K L) ≤ (K' : Submodule K L)
-  rw [rootSpaceSpan, LieSubmodule.iSup_toSubmodule]
+  rw [← LieSubalgebra.toSubmodule_le_toSubmodule, rootSpaceSubalgebra_toSubmodule,
+    rootSpaceSpan, LieSubmodule.iSup_toSubmodule]
   exact iSup_le fun α => h α α.2
 
 /-! ### The nilradicals and the Borel subalgebra -/
@@ -279,8 +285,7 @@ private theorem lie_mem_sup_positiveNilradical {x y : L}
   · exact LieSubmodule.lie_mem _ (x := (⟨u, hu⟩ : H)) hn
   · rw [← lie_skew]
     exact neg_mem (LieSubmodule.lie_mem _ (x := (⟨v, hv⟩ : H)) hm)
-  · exact lie_mem_rootSpaceSpan (fun _ hα _ hβ =>
-      rootSpace_add_le_rootSpaceSpan (isSpecialClosedRootSet_posRoots b) hα hβ) hm hn
+  · exact (positiveNilradical H b).lie_mem hm hn
 
 /-- The **Borel subalgebra** `𝔟 = H + n⁺` of the positive system determined by `b`.
 
@@ -330,8 +335,7 @@ theorem lie_mem_positiveNilradical_of_mem_borelSubalgebra {x y : L}
   obtain ⟨u, hu, m, hm, rfl⟩ := hx
   rw [add_lie]
   exact add_mem (LieSubmodule.lie_mem _ (x := (⟨u, hu⟩ : H)) hy)
-    (lie_mem_rootSpaceSpan (fun _ hα _ hβ =>
-      rootSpace_add_le_rootSpaceSpan (isSpecialClosedRootSet_posRoots b) hα hβ) hm hy)
+    ((positiveNilradical H b).lie_mem hm hy)
 
 /-! ### The triangular decomposition -/
 
