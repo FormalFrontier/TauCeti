@@ -48,7 +48,8 @@ idempotents `e`, so left multiplication by `α` carries the `i`-component of a l
   `TauCeti.PathAlgebra.isIdempotentElem_vertexIdempotent` and nonzero by
   `TauCeti.PathAlgebra.vertexIdempotent_ne_zero`.
 * `TauCeti.module_finite_pathAlgebra` and `TauCeti.finrank_pathAlgebra`: `kQ` is a free module of
-  rank the number of paths of `Q`. The specialization to a finite acyclic quiver, whose paths are
+  rank the number of paths of `Q`, with `TauCeti.pathAlgebraBasis_repr_single` reading off the
+  coordinates of a basis path. The specialization to a finite acyclic quiver, whose paths are
   finite, is `TauCeti.finiteDimensional_pathAlgebra_of_isAcyclic` in
   `TauCeti.RepresentationTheory.Quiver.Acyclic.PathAlgebra`.
 * `TauCeti.PathAlgebra.adjoin_vertexIdempotents_union_arrows`: the vertex idempotents and arrows
@@ -697,6 +698,15 @@ theorem coe_pathAlgebraBasis :
 theorem module_finite_pathAlgebra [Finite (Quiver.TotalPath Q)] :
     Module.Finite k (pathAlgebra k Q) :=
   Module.Finite.of_basis (pathAlgebraBasis k Q)
+
+variable {k Q}
+
+/-- The coordinates of a basis path for the path basis. -/
+theorem pathAlgebraBasis_repr_single (x : Quiver.TotalPath Q) (c : k) :
+    (pathAlgebraBasis k Q).repr (PathAlgebra.single x c) = Finsupp.single x c := by
+  have hx : (PathAlgebra.single x c : pathAlgebra k Q) = c • pathAlgebraBasis k Q x := by
+    simp [coe_pathAlgebraBasis, PathAlgebra.ofPath_eq_single]
+  rw [hx, map_smul, Module.Basis.repr_self, Finsupp.smul_single, smul_eq_mul, mul_one]
 
 end Basis
 

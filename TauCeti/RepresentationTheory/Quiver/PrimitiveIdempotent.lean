@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.RepresentationTheory.Quiver.Radical
+public import TauCeti.RepresentationTheory.Quiver.Acyclic.PathAlgebra
 public import TauCeti.RingTheory.PrimitiveIdempotent
 
 /-!
@@ -12,8 +12,8 @@ public import TauCeti.RingTheory.PrimitiveIdempotent
 
 Over a finite acyclic quiver the corner ring `eᵥ kQ eᵥ` of a vertex idempotent is as small as it
 can be: the only path from `v` to `v` is the trivial one, so `eᵥ f eᵥ` is a scalar multiple of `eᵥ`
-(`TauCeti.vertexIdempotent_mul_mul_vertexIdempotent`) and the corner ring is a copy of `k`. Its
-only idempotents are therefore `0` and `eᵥ`, which is exactly primitivity of `eᵥ`.
+(`TauCeti.vertexIdempotent_mul_mul_vertexIdempotent`) and the corner ring is a copy of `k`. Over a
+domain its only idempotents are therefore `0` and `eᵥ`, which is exactly primitivity of `eᵥ`.
 
 Read through `TauCeti.isPrimitiveIdempotent_iff_isIndecomposableModule`, this says that the left
 ideal `kQ eᵥ` — the indecomposable projective `Pᵥ` — is an indecomposable module. That the
@@ -51,11 +51,11 @@ open PathAlgebra
 
 universe u v w
 
-variable {k : Type w} {Q : Type u} [Field k] [Quiver.{v} Q] [Finite Q]
+variable {k : Type w} {Q : Type u} [CommRing k] [IsDomain k] [Quiver.{v} Q] [Finite Q]
 
 /-- **The vertex idempotents of a finite acyclic path algebra are primitive.** An idempotent `f` of
 the corner ring `eᵥ kQ eᵥ` is `c • eᵥ` for a scalar `c`, and idempotence of `f` forces `c² = c`,
-hence `c = 0` or `c = 1`. -/
+hence `c = 0` or `c = 1`, the coefficients having no zero divisors. -/
 theorem isPrimitiveIdempotent_vertexIdempotent (h : Quiver.IsAcyclic Q) (v : Q) :
     IsPrimitiveIdempotent (vertexIdempotent k v : pathAlgebra k Q) := by
   refine isPrimitiveIdempotent_of_forall (isIdempotentElem_vertexIdempotent v)
@@ -68,11 +68,9 @@ theorem isPrimitiveIdempotent_vertexIdempotent (h : Quiver.IsAcyclic Q) (v : Q) 
     have hff := hf.eq
     rwa [hfeq, smul_mul_smul_comm, vertexIdempotent_mul_self] at hff
   have hcc : c * c = c := by
-    have hzero : (c * c - c) • (vertexIdempotent k v : pathAlgebra k Q) = 0 := by
-      rw [sub_smul, hsq, sub_self]
-    rcases smul_eq_zero.mp hzero with hsub | hev
-    · exact sub_eq_zero.mp hsub
-    · exact absurd hev (vertexIdempotent_ne_zero v)
+    have hrepr := congrArg
+      (fun g : pathAlgebra k Q => (pathAlgebraBasis k Q).repr g ⟨v, v, Quiver.Path.nil⟩) hsq
+    simpa [vertexIdempotent_eq_single, smul_single, pathAlgebraBasis_repr_single] using hrepr
   have hfactor : c * (c - 1) = 0 := by rw [mul_sub, mul_one, hcc, sub_self]
   rcases mul_eq_zero.mp hfactor with hzero | hone
   · exact Or.inl (by rw [hfeq, hzero, zero_smul])
