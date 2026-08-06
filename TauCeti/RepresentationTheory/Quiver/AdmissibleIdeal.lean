@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.RepresentationTheory.Quiver.BoundedPaths
+public import TauCeti.Combinatorics.Quiver.BoundedPaths
 public import TauCeti.RepresentationTheory.Quiver.Radical
 public import Mathlib.RingTheory.Ideal.Quotient.Operations
 
@@ -33,10 +33,11 @@ becomes **nilpotent** in it.
 
 * `TauCeti.IsAdmissibleIdeal.finiteDimensional_quotient`: **a bound quiver algebra is
   finite-dimensional**, over a quiver with finitely many vertices and finitely many arrows. No
-  acyclicity is needed, and the one-loop quiver
-  (`TauCeti.finiteDimensional_quotient_arrowIdeal_pow_oneLoop`) shows that this is a genuine gain:
-  its path algebra `k[X]` is infinite-dimensional while `k[X] ⧸ (Xⁿ)` is not.
-* `TauCeti.IsAdmissibleIdeal.isNilpotent_quotientMk_of_mem_arrowIdeal`: the image of an element of
+  acyclicity is needed, and the one-loop quiver shows that this is a genuine gain: its path
+  algebra `k[X]` is infinite-dimensional (`TauCeti.not_finiteDimensional_pathAlgebra_oneLoop`)
+  while the quotients `k[X] ⧸ (Xⁿ)` by the admissible ideals of
+  `TauCeti.isAdmissibleIdeal_arrowIdeal_pow` are not.
+* `TauCeti.IsAdmissibleIdeal.isNilpotent_mk_of_mem_arrowIdeal`: the image of an element of
   the arrow ideal in a bound quiver algebra is nilpotent.
 * `TauCeti.IsAdmissibleIdeal.ofPath_notMem_of_length_lt_two`, together with
   `TauCeti.IsAdmissibleIdeal.vertexIdempotent_notMem` and
@@ -200,7 +201,7 @@ namespace IsAdmissibleIdeal
 is supported on the paths of length at least `N`, which the ideal has already killed. Over an
 acyclic quiver this holds already in `kQ` (`TauCeti.isNilpotent_of_mem_arrowIdeal`); admissibility
 is what replaces acyclicity in general. -/
-theorem isNilpotent_quotientMk_of_mem_arrowIdeal (h : IsAdmissibleIdeal I) {f : pathAlgebra k Q}
+theorem isNilpotent_mk_of_mem_arrowIdeal (h : IsAdmissibleIdeal I) {f : pathAlgebra k Q}
     (hf : f ∈ arrowIdeal k Q) : IsNilpotent (Ideal.Quotient.mk I f) := by
   obtain ⟨N, hN⟩ := h.exists_arrowIdeal_pow_le
   refine ⟨N, ?_⟩
@@ -232,8 +233,9 @@ acyclicity, whereas the bound `R ^ N ≤ I` supplies the missing truncation. -/
 theorem IsAdmissibleIdeal.finiteDimensional_quotient (h : IsAdmissibleIdeal I) :
     FiniteDimensional k (pathAlgebra k Q ⧸ I) := by
   obtain ⟨N, hN⟩ := h.exists_ofPath_mem
-  set π : pathAlgebra k Q →ₗ[k] pathAlgebra k Q ⧸ I := (Ideal.Quotient.mkₐ k I).toLinearMap
-  have hπ_apply (f : pathAlgebra k Q) : π f = Ideal.Quotient.mk I f := rfl
+  set π : pathAlgebra k Q →ₗ[k] pathAlgebra k Q ⧸ I := (Ideal.Quotient.mkₐ k I).toLinearMap with hπ
+  have hπ_apply (f : pathAlgebra k Q) : π f = Ideal.Quotient.mk I f := by
+    rw [hπ, AlgHom.toLinearMap_apply, Ideal.Quotient.mkₐ_eq_mk]
   -- The images of *all* the basis paths span the quotient, the quotient map being onto.
   have htop : Submodule.span k (Set.range fun x : Quiver.TotalPath Q => π (ofPath x)) = ⊤ := by
     have hmap : Submodule.map π ⊤ = ⊤ := by
@@ -249,7 +251,6 @@ theorem IsAdmissibleIdeal.finiteDimensional_quotient (h : IsAdmissibleIdeal I) :
     refine le_antisymm le_top ?_
     rw [← htop]
     refine Submodule.span_le.2 (Set.range_subset_iff.2 fun x => SetLike.mem_coe.2 ?_)
-    show π (ofPath x) ∈ Submodule.span k _
     by_cases hx : x.2.2.length < N
     · exact Submodule.subset_span ⟨x, hx, rfl⟩
     · have hzero : π (ofPath x) = 0 :=
@@ -257,16 +258,6 @@ theorem IsAdmissibleIdeal.finiteDimensional_quotient (h : IsAdmissibleIdeal I) :
       rw [hzero]
       exact Submodule.zero_mem _
   exact ⟨hshort ▸ Submodule.fg_span ((Quiver.finite_setOf_length_lt N).image _)⟩
-
-/-- **The bound quiver algebras of the one-loop quiver are finite-dimensional**, although its path
-algebra `k[X]` is not (`TauCeti.not_finiteDimensional_pathAlgebra_oneLoop`). The one-loop quiver is
-the smallest quiver where the truncation an admissible ideal performs is not already performed by
-acyclicity: the loop generates the arrow ideal, and the quotient is a truncated polynomial
-algebra. -/
-theorem finiteDimensional_quotient_arrowIdeal_pow_oneLoop (k : Type w) [Field k] {n : ℕ}
-    (hn : 2 ≤ n) :
-    FiniteDimensional k (pathAlgebra k Quiver.OneLoop ⧸ arrowIdeal k Quiver.OneLoop ^ n) :=
-  (isAdmissibleIdeal_arrowIdeal_pow k Quiver.OneLoop hn).finiteDimensional_quotient
 
 end FiniteDimensional
 

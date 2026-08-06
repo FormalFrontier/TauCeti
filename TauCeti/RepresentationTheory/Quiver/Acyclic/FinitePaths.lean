@@ -4,8 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+public import TauCeti.Combinatorics.Quiver.BoundedPaths
 public import TauCeti.RepresentationTheory.Quiver.Acyclic.Basic
-public import TauCeti.RepresentationTheory.Quiver.BoundedPaths
 
 /-!
 # Finite paths in acyclic quivers
@@ -14,7 +14,7 @@ This file proves that a finite quiver with finitely many arrows between any two 
 finitely many paths when it is acyclic. The result supplies the finiteness hypothesis needed for
 the finite-dimensionality of its path algebra. The bound that makes the count finite is the
 acyclic one: every path has length below the number of vertices, so the count reduces to the
-bounded-length count of `TauCeti.RepresentationTheory.Quiver.BoundedPaths`.
+bounded-length count of `TauCeti.Combinatorics.Quiver.BoundedPaths`.
 
 ## References
 
