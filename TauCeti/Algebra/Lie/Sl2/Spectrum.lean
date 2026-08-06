@@ -322,8 +322,10 @@ theorem iSup_eigenspace_toEnd_eq_top (t : IsSl2Triple h e f) :
     obtain ⟨v, hv, hv0⟩ := hμ.exists_hasEigenvector
     have hvM : ⁅h, (v : M)⁆ = μ • (v : M) := by
       have hv' : ⁅(⟨h, h_mem_toLieSubalgebra t⟩ : t.toLieSubalgebra K), v⁆ = μ • v := by
-        simpa using Module.End.mem_eigenspace_iff.1 hv
-      simpa using congrArg (fun w : ↥N ↦ (w : M)) hv'
+        simpa only [LieModule.toEnd_apply_apply] using Module.End.mem_eigenspace_iff.1 hv
+      -- Push the equality in `↥N` down to `M`, through the submodule and then the subalgebra.
+      simpa only [LieSubmodule.coe_bracket, LieSubalgebra.coe_bracket_of_module,
+        LieSubmodule.coe_smul] using congrArg (fun w : ↥N ↦ (w : M)) hv'
     have hmem : (v : M) ∈ eigenspaceSup t ⊓ N :=
       ⟨mem_eigenspaceSup_of_lie_h_eq_smul t hvM, v.2⟩
     rw [hN.inf_eq_bot] at hmem
