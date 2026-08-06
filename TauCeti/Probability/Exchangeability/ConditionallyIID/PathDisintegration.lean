@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Probability.Exchangeability.ConditionallyIID.Construct
-public import TauCeti.Probability.Exchangeability.FiniteMarginals
+public import TauCeti.Probability.Exchangeability.JointPathLaw
 import TauCeti.MeasureTheory.Measure.GiryMonad
 
 /-!
@@ -32,13 +32,13 @@ prefix. For the joint law that prefix marginal is the defining identity of `Cond
 at the selection `Fin n → ℕ`. For the mixture law no fibre calculation is needed either: the
 canonical construction is *itself* conditionally i.i.d. (`conditionallyIIDWith_iidMixtureLaw`), so
 its own block-level disintegration supplies the prefix marginal, and `iidMixtureLaw_map_directing`
-rewrites the first factor back along `ν`. The two agree, and `measure_eq_of_prefixPair_map_eq`
+rewrites the first factor back along `ν`. The two agree, and `measure_eq_of_prefixProjPair_map_eq`
 promotes that agreement to equality of the full measures.
 
-That last step is where the paired prefix maps `prefixPair` earn their keep. Mathlib's
+That last step is where the paired prefix maps `prefixProjPair` earn their keep. Mathlib's
 `IsProjectiveLimit` is stated for pure dependent products `∀ i, α i`, so it does not apply to a
-product with a fixed first factor; `measure_eq_of_prefixPair_map_eq` instead replicates the first
-factor at every coordinate to reduce to the honest path case.
+product with a fixed first factor; `measure_eq_of_prefixProjPair_map_eq` instead replicates the
+first factor at every coordinate to reduce to the honest path case.
 
 ## References
 
@@ -65,62 +65,21 @@ namespace Probability
 variable {Ω α : Type*} [MeasurableSpace Ω] [MeasurableSpace α]
   {μ : Measure Ω} {X : ℕ → Ω → α} {ν : Ω → ProbabilityMeasure α}
 
-/-- The joint path law: the law of the directing measure together with the whole path. -/
--- `@[expose]` is load-bearing: `jointPathLaw_def` below is the definitional unfolding, and under
--- the module system an exported theorem may only unfold exposed definitions. Unlike `blockLaw`,
--- writing the proof of `jointPathLaw_def` as `(rfl)` does not discharge it here.
-@[expose]
-def jointPathLaw (μ : Measure Ω) (X : ℕ → Ω → α) (ν : Ω → ProbabilityMeasure α) :
-    Measure (ProbabilityMeasure α × (ℕ → α)) :=
-  μ.map fun ω => (ν ω, fun i => X i ω)
-
-@[simp]
-theorem jointPathLaw_def (μ : Measure Ω) (X : ℕ → Ω → α) (ν : Ω → ProbabilityMeasure α) :
-    jointPathLaw μ X ν = μ.map fun ω => (ν ω, fun i => X i ω) := rfl
-
-/-- The first marginal of the joint path law is the law of the directing measure. -/
--- Not `@[simp]`: `jointPathLaw_def` is the registered normal form, so simp rewrites this
--- left-hand side away before the lemma could fire, and `simpNF` rejects the annotation.
-theorem map_fst_jointPathLaw (hX : ∀ i, Measurable (X i)) (hν : Measurable ν) :
-    (jointPathLaw μ X ν).map Prod.fst = μ.map ν := by
-  rw [jointPathLaw_def,
-    Measure.map_map measurable_fst (hν.prodMk (measurable_pi_lambda _ hX))]
-  rfl
-
-/-- The second marginal of the joint path law is the law of the path. -/
--- Not `@[simp]`, for the same reason as `map_fst_jointPathLaw`.
-theorem map_snd_jointPathLaw (hX : ∀ i, Measurable (X i)) (hν : Measurable ν) :
-    (jointPathLaw μ X ν).map Prod.snd = pathLaw μ X := by
-  rw [jointPathLaw_def,
-    Measure.map_map measurable_snd (hν.prodMk (measurable_pi_lambda _ hX)), pathLaw_def]
-  rfl
-
-/-- The prefix pushforward of the joint path law is the joint block law of the first `n`
-coordinates. -/
-theorem map_prefixPair_jointPathLaw (hX : ∀ i, Measurable (X i)) (hν : Measurable ν) (n : ℕ) :
-    (jointPathLaw μ X ν).map (prefixPair (ProbabilityMeasure α) α n)
-      = μ.map fun ω => (ν ω, fun i : Fin n => X i ω) := by
-  have hpath : Measurable (fun ω => (ν ω, fun i => X i ω) :
-      Ω → ProbabilityMeasure α × (ℕ → α)) :=
-    hν.prodMk (measurable_pi_lambda _ hX)
-  rw [jointPathLaw_def, Measure.map_map (measurable_prefixPair (ProbabilityMeasure α) α n) hpath]
-  simp only [Function.comp_def, prefixPair_apply]
-
 /-- The prefix pushforward of the joint path law is the block-level disintegration, by the defining
 identity at the first `n` coordinates. -/
-theorem map_prefixPair_jointPathLaw_eq (h : ConditionallyIIDWith μ X ν) (hX : ∀ i, Measurable (X i))
-    (n : ℕ) :
-    (jointPathLaw μ X ν).map (prefixPair (ProbabilityMeasure α) α n)
+theorem map_prefixProjPair_jointPathLaw_eq (h : ConditionallyIIDWith μ X ν)
+    (hX : ∀ i, AEMeasurable (X i) μ) (n : ℕ) :
+    (jointPathLaw μ X ν).map (prefixProjPair (ProbabilityMeasure α) α n)
       = μ.bind fun ω =>
           (Measure.dirac (ν ω)).prod (ProbabilityMeasure.pi fun _ : Fin n => ν ω).toMeasure := by
-  rw [map_prefixPair_jointPathLaw hX h.measurable_directing n]
+  rw [map_prefixProjPair_jointPathLaw hX h.measurable_directing.aemeasurable n]
   exact h.jointLaw_eq_disintegration (fun i : Fin n => (i : ℕ)) Fin.val_injective
 
 /-- The prefix pushforward of the full-path disintegration is the block-level disintegration:
 projecting `δ_{ν ω} ⊗ (ν ω)^{⊗ℕ}` onto the first `n` path coordinates leaves
 `δ_{ν ω} ⊗ (ν ω)^{⊗ Fin n}`. -/
-theorem map_prefixPair_iidMixtureLaw (hν : Measurable ν) (n : ℕ) :
-    (iidMixtureLaw (μ.map ν) id).map (prefixPair (ProbabilityMeasure α) α n)
+theorem map_prefixProjPair_iidMixtureLaw (hν : Measurable ν) (n : ℕ) :
+    (iidMixtureLaw (μ.map ν) id).map (prefixProjPair (ProbabilityMeasure α) α n)
       = μ.bind fun ω =>
           (Measure.dirac (ν ω)).prod (ProbabilityMeasure.pi fun _ : Fin n => ν ω).toMeasure := by
   -- The canonical construction is itself conditionally i.i.d., so its own block-level
@@ -133,9 +92,9 @@ theorem map_prefixPair_iidMixtureLaw (hν : Measurable ν) (n : ℕ) :
   have hcIID := conditionallyIIDWith_iidMixtureLaw (π := μ.map ν)
     (P := (id : ProbabilityMeasure α → ProbabilityMeasure α)) measurable_id
   have hblock := hcIID.jointLaw_eq_disintegration (fun i : Fin n => (i : ℕ)) Fin.val_injective
-  have hpair : prefixPair (ProbabilityMeasure α) α n
+  have hpair : prefixProjPair (ProbabilityMeasure α) α n
       = fun q : ProbabilityMeasure α × (ℕ → α) => (id q.1, fun i : Fin n => q.2 (i : ℕ)) := by
-    funext q; simp [prefixPair_apply]
+    funext q; simp [prefixProjPair_apply]
   have hdir : (iidMixtureLaw (μ.map ν) id).map (fun q => id q.1) = μ.map ν := by
     simpa using iidMixtureLaw_map_directing (π := μ.map ν)
       (P := (id : ProbabilityMeasure α → ProbabilityMeasure α)) measurable_id
@@ -160,16 +119,13 @@ directing measure together with the *whole* path is the disintegration
 The definition of `ConditionallyIIDWith` gives this along each finite selection of coordinates; this
 upgrades it to the entire path at once. -/
 theorem ConditionallyIIDWith.jointPathLaw_eq_iidMixtureLaw [IsFiniteMeasure μ]
-    (h : ConditionallyIIDWith μ X ν) (hX : ∀ i, Measurable (X i)) :
+    (h : ConditionallyIIDWith μ X ν) (hX : ∀ i, AEMeasurable (X i) μ) :
     jointPathLaw μ X ν = iidMixtureLaw (μ.map ν) id := by
-  have hpath : Measurable (fun ω => (ν ω, fun i => X i ω) :
-      Ω → ProbabilityMeasure α × (ℕ → α)) :=
-    h.measurable_directing.prodMk (measurable_pi_lambda _ hX)
   have : IsFiniteMeasure (jointPathLaw μ X ν) := by
     rw [jointPathLaw_def]; exact Measure.isFiniteMeasure_map _ _
-  refine measure_eq_of_prefixPair_map_eq fun n => ?_
-  rw [map_prefixPair_jointPathLaw_eq h hX n,
-    map_prefixPair_iidMixtureLaw h.measurable_directing n]
+  refine measure_eq_of_prefixProjPair_map_eq fun n => ?_
+  rw [map_prefixProjPair_jointPathLaw_eq h hX n,
+    map_prefixProjPair_iidMixtureLaw h.measurable_directing n]
 
 end Probability
 

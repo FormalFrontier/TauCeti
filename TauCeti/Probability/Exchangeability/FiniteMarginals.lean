@@ -19,9 +19,9 @@ machinery (`IsProjectiveLimit.unique`), not new measure theory.
 The public API:
 * `measure_eq_of_prefixProj_map_eq` — the map-equality form;
 * `measure_eq_of_fin_marginals_eq` — the roadmap-named setwise form;
-* `prefixPair`, `measurable_prefixPair`, `prefixPair_comp` — the same prefix projection carrying an
-  extra factor along;
-* `measure_eq_of_prefixPair_map_eq` — paired finite-marginal uniqueness on `T × (ℕ → α)`.
+* `prefixProjPair`, `measurable_prefixProjPair`, `prefixProjPair_comp` — the same prefix
+  projection, carrying an extra factor along;
+* `measure_eq_of_prefixProjPair_map_eq` — paired finite-marginal uniqueness on `T × (ℕ → α)`.
 
 The paired form reduces to the unpaired one rather than reproving it. Mathlib's
 `IsProjectiveLimit` is stated for dependent products `∀ i, α i`, and `T × (ℕ → α)` is not of that
@@ -90,17 +90,17 @@ theorem measure_eq_of_fin_marginals_eq {μ ν : Measure (ℕ → α)} [IsFiniteM
   measure_eq_of_prefixProj_map_eq fun n => Measure.ext fun S hS => h n S hS
 
 /-- The prefix map onto the first `n` path coordinates, keeping the first factor. -/
-def prefixPair (T α : Type*) (n : ℕ) : T × (ℕ → α) → T × (Fin n → α) :=
+def prefixProjPair (T α : Type*) (n : ℕ) : T × (ℕ → α) → T × (Fin n → α) :=
   fun q => (q.1, fun i : Fin n => q.2 i)
 
 /-- Applying the paired prefix map. -/
 @[simp]
-theorem prefixPair_apply {T α : Type*} (n : ℕ) (q : T × (ℕ → α)) :
-    prefixPair T α n q = (q.1, fun i : Fin n => q.2 i) :=
+theorem prefixProjPair_apply {T α : Type*} (n : ℕ) (q : T × (ℕ → α)) :
+    prefixProjPair T α n q = (q.1, fun i : Fin n => q.2 i) :=
   (rfl)
 
-theorem measurable_prefixPair (T α : Type*) [MeasurableSpace T] [MeasurableSpace α]
-    (n : ℕ) : Measurable (prefixPair T α n) :=
+theorem measurable_prefixProjPair (T α : Type*) [MeasurableSpace T] [MeasurableSpace α]
+    (n : ℕ) : Measurable (prefixProjPair T α n) :=
   measurable_fst.prodMk (measurable_pi_lambda _ fun i =>
     (measurable_pi_apply (i : ℕ)).comp measurable_snd)
 
@@ -109,21 +109,21 @@ theorem measurable_prefixPair (T α : Type*) [MeasurableSpace T] [MeasurableSpac
 
 
 /-- Longer prefixes refine shorter ones. -/
-theorem prefixPair_comp {T α : Type*} {m n : ℕ} (hmn : m ≤ n) : prefixPair T α m
+theorem prefixProjPair_comp {T α : Type*} {m n : ℕ} (hmn : m ≤ n) : prefixProjPair T α m
       = (fun r : T × (Fin n → α) =>
-          (r.1, fun i : Fin m => r.2 (Fin.castLE hmn i))) ∘ prefixPair T α n := by
+          (r.1, fun i : Fin m => r.2 (Fin.castLE hmn i))) ∘ prefixProjPair T α n := by
   funext q
-  simp only [prefixPair, Function.comp_apply, Fin.val_castLE]
+  simp only [prefixProjPair, Function.comp_apply, Fin.val_castLE]
 
 /-- **Paired finite-marginal uniqueness.** Two measures on `T × (ℕ → α)` that agree under every
 prefix projection — keeping the `T` coordinate — are equal.
 
 As with `measure_eq_of_prefixProj_map_eq`, only one of the two measures need be assumed finite: the
-`n = 0` projection already forces the total masses to agree, since `prefixPair` retains the first
-factor even at the empty prefix. -/
-theorem measure_eq_of_prefixPair_map_eq {T : Type*} [MeasurableSpace T]
+`n = 0` projection already forces the total masses to agree, since `prefixProjPair` retains the
+first factor even at the empty prefix. -/
+theorem measure_eq_of_prefixProjPair_map_eq {T : Type*} [MeasurableSpace T]
     {μ ν : Measure (T × (ℕ → α))} [IsFiniteMeasure μ]
-    (h : ∀ n, μ.map (prefixPair T α n) = ν.map (prefixPair T α n)) : μ = ν := by
+    (h : ∀ n, μ.map (prefixProjPair T α n) = ν.map (prefixProjPair T α n)) : μ = ν := by
   -- Replicate the first factor at every coordinate, turning the pair into an honest path.
   set R : T × (ℕ → α) → (ℕ → T × α) := fun q n => (q.1, q.2 n) with hR
   have hRm : Measurable R := measurable_pi_lambda _ fun n =>
@@ -143,7 +143,7 @@ theorem measure_eq_of_prefixPair_map_eq {T : Type*} [MeasurableSpace T]
   refine measure_eq_of_prefixProj_map_eq fun n => ?_
   have hstep : ∀ ρ : Measure (T × (ℕ → α)),
       (ρ.map R).map (prefixProj (T × α) n)
-        = (ρ.map (prefixPair T α (n + 1))).map
+        = (ρ.map (prefixProjPair T α (n + 1))).map
             (fun r : T × (Fin (n + 1) → α) => fun i : Fin n => (r.1, r.2 i.castSucc)) := by
     intro ρ
     have hcut : Measurable (fun r : T × (Fin (n + 1) → α) => fun i : Fin n =>
@@ -152,11 +152,11 @@ theorem measure_eq_of_prefixPair_map_eq {T : Type*} [MeasurableSpace T]
         measurable_fst.prodMk ((measurable_pi_apply i.castSucc).comp measurable_snd)
     have hfun : prefixProj (T × α) n ∘ R
         = (fun r : T × (Fin (n + 1) → α) => fun i : Fin n => (r.1, r.2 i.castSucc))
-            ∘ prefixPair T α (n + 1) := by
+            ∘ prefixProjPair T α (n + 1) := by
       funext q i
-      simp only [Function.comp_apply, hR, prefixProj_apply, prefixPair_apply, Fin.val_castSucc]
+      simp only [Function.comp_apply, hR, prefixProj_apply, prefixProjPair_apply, Fin.val_castSucc]
     rw [Measure.map_map (measurable_prefixProj (α := T × α) n) hRm,
-      Measure.map_map hcut (measurable_prefixPair T α (n + 1)), hfun]
+      Measure.map_map hcut (measurable_prefixProjPair T α (n + 1)), hfun]
   rw [hstep μ, hstep ν, h (n + 1)]
 
 end Probability
