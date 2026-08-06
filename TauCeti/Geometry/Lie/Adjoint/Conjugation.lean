@@ -48,6 +48,8 @@ instance instChartedSpaceConjAct : ChartedSpace H (ConjAct G) := chartsG
 /-- Conjugation is a smooth action of the conjugation-action copy of a Lie group on the group. -/
 instance instContMDiffSMulConjAct : ContMDiffSMul I I n (ConjAct G) G where
   contMDiff_smul := by
+    -- The topology and charts above are definitionally those of `G`, while `ConjAct`'s scalar
+    -- action is definitionally conjugation. Unfolding both exposes the standard smooth operations.
     change CMDiff n (fun p : G × G ↦ p.1 * p.2 * p.1⁻¹)
     exact (contMDiff_fst.mul contMDiff_snd).mul contMDiff_fst.inv
 
