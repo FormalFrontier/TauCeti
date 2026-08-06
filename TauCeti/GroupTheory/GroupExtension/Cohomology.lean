@@ -25,14 +25,16 @@ function `f (1, 1)` normalizes it without moving its class
 (`TauCeti.FactorSet.ofIsMulCocycle₂`).
 
 Read through the group extensions of `TauCeti/GroupTheory/GroupExtension/OfFactorSet.lean` and
-`TauCeti/GroupTheory/GroupExtension/FactorSetOfSection.lean`, this is the classification of
-extensions of `G` by an abelian kernel `M` inducing the given action: the class of a factor set is
-an invariant of the extension it builds (`TauCeti.GroupExtension.cohomologyClass_factorSet_eq`),
-equal classes give equivalent extensions
-(`TauCeti.FactorSet.nonempty_groupExtensionEquiv_of_cohomologyClass_eq`), and the class vanishes
-exactly on the split extensions. Specializing the action to the trivial action of `G` on `M = kˣ`
-gives `H²(G, kˣ)`, the group that classifies the factor sets of projective representations of `G`
-and the central extensions of `G` by `kˣ`.
+`TauCeti/GroupTheory/GroupExtension/FactorSetOfSection.lean`, this says several things about
+extensions of `G` by an abelian kernel `M` inducing the given action: the class read off an
+extension does not depend on the normalized section it is read from
+(`TauCeti.GroupExtension.cohomologyClass_factorSet_eq`), factor sets with equal classes build
+equivalent extensions (`TauCeti.FactorSet.nonempty_groupExtensionEquiv_of_cohomologyClass_eq`), and
+the class vanishes exactly on the split extensions. The converse invariance — that equivalent
+extensions have equal classes, which together with these would make the class a complete invariant
+of an extension — is not proved here. Specializing the action to the trivial action of `G` on
+`M = kˣ` gives `H²(G, kˣ)`, the group that classifies the factor sets of projective representations
+of `G`.
 
 ## Universes
 
@@ -44,8 +46,9 @@ and the central extensions of `G` by `kˣ`.
 
 * `TauCeti.FactorSet.toCocycles₂`: a factor set read as a `2`-cocycle valued in `Additive M`.
 * `TauCeti.FactorSet.cohomologyClass`: its class in `H²(G, M)`.
-* `TauCeti.FactorSet.Cohomologous`: two factor sets whose quotient is a multiplicative
-  `2`-coboundary, with `TauCeti.FactorSet.cohomologousSetoid` the equivalence relation it defines.
+* `TauCeti.FactorSet.IsCohomologous`: two factor sets whose quotient is a multiplicative
+  `2`-coboundary, with `TauCeti.FactorSet.isCohomologousSetoid` the equivalence relation it cuts
+  out, presented as the kernel of the cohomology class.
 * `TauCeti.FactorSet.ofIsMulCocycle₂`: the normalization of an arbitrary multiplicative
   `2`-cocycle.
 
@@ -60,7 +63,7 @@ and the central extensions of `G` by `kˣ`.
   `TauCeti.FactorSet.nonempty_splitting_iff_cohomologyClass_eq_zero`: the class vanishes exactly
   for the coboundaries, equivalently for the factor sets whose extension splits.
 * `TauCeti.GroupExtension.cohomologyClass_factorSet_eq`: the class of the factor set of a
-  normalized section does not depend on the section, so it is an invariant of the extension.
+  normalized section does not depend on the section.
 
 ## References
 
@@ -95,7 +98,6 @@ theorem mem_cocycles₂ :
   (cocyclesOfIsMulCocycle₂ α.isMulCocycle₂).2
 
 /-- A factor set, read as a `2`-cocycle valued in `Additive M`. -/
-@[expose]
 def toCocycles₂ : cocycles₂ (Rep.ofMulDistribMulAction G M) :=
   ⟨_, α.mem_cocycles₂⟩
 
@@ -115,7 +117,9 @@ theorem cohomologyClass_def :
 
 /-- The pointwise quotient of two factor sets is the difference of the cocycles they name. -/
 theorem coe_toCocycles₂_sub :
-    ⇑α.toCocycles₂ - ⇑β.toCocycles₂ = fun p : G × G => Additive.ofMul (α p / β p) :=
+    ⇑α.toCocycles₂ - ⇑β.toCocycles₂ = fun p : G × G => Additive.ofMul (α p / β p) := by
+  ext p
+  simp only [coe_toCocycles₂, ofMul_div]
   rfl
 
 /-- **Two factor sets have the same cohomology class exactly when their quotient is a
@@ -150,7 +154,6 @@ include hf
 function `p ↦ p.1 • f (1, 1)` — the coboundary of the function constant at `f (1, 1)` — leaves a
 factor set: the cocycle identity survives because the divisor is itself a cocycle, and the value at
 `(1, 1)` becomes `1`. -/
-@[expose]
 def ofIsMulCocycle₂ : FactorSet G M where
   toFun p := f p / p.1 • f (1, 1)
   isMulCocycle₂' g h j := by
@@ -190,41 +193,28 @@ theorem exists_cohomologyClass_eq (x : H2 (Rep.ofMulDistribMulAction G M)) :
 equivalently (`TauCeti.FactorSet.cohomologyClass_eq_iff`) they have the same class in `H²(G, M)`.
 This is the relation under which the factor sets of a projective representation, or of a group
 extension with abelian kernel, are well defined. -/
-@[expose]
-def Cohomologous (α β : FactorSet G M) : Prop :=
+def IsCohomologous (α β : FactorSet G M) : Prop :=
   IsMulCoboundary₂ fun p : G × G => α p / β p
 
-theorem cohomologous_iff_cohomologyClass_eq {α β : FactorSet G M} :
-    Cohomologous α β ↔ α.cohomologyClass = β.cohomologyClass :=
+@[simp]
+theorem isCohomologous_iff_cohomologyClass_eq {α β : FactorSet G M} :
+    IsCohomologous α β ↔ α.cohomologyClass = β.cohomologyClass :=
   (cohomologyClass_eq_iff α β).symm
 
 variable (G M) in
-/-- Being cohomologous is an equivalence relation on factor sets: it is equality of cohomology
-classes. -/
-def cohomologousSetoid : Setoid (FactorSet G M) where
-  r := Cohomologous
-  iseqv :=
-    { refl _ := cohomologous_iff_cohomologyClass_eq.2 rfl
-      symm h := cohomologous_iff_cohomologyClass_eq.2
-        (cohomologous_iff_cohomologyClass_eq.1 h).symm
-      trans h h' := cohomologous_iff_cohomologyClass_eq.2
-        ((cohomologous_iff_cohomologyClass_eq.1 h).trans
-          (cohomologous_iff_cohomologyClass_eq.1 h')) }
+/-- Being cohomologous is an equivalence relation on factor sets: by
+`TauCeti.FactorSet.isCohomologous_iff_cohomologyClass_eq` it is the kernel of the cohomology
+class. -/
+noncomputable def isCohomologousSetoid : Setoid (FactorSet G M) :=
+  Setoid.ker (cohomologyClass : FactorSet G M → H2 (Rep.ofMulDistribMulAction G M))
 
 variable (G M) in
 /-- **`H²(G, M)` classifies factor sets up to cohomology.** The cohomology class descends to a
 bijection from the factor sets of `G` with values in `M`, taken modulo the cohomologous relation,
 onto the second cohomology group. -/
 noncomputable def cohomologyClassEquiv :
-    Quotient (cohomologousSetoid G M) ≃ H2 (Rep.ofMulDistribMulAction G M) :=
-  Equiv.ofBijective
-    (Quotient.lift cohomologyClass fun _ _ h => cohomologous_iff_cohomologyClass_eq.1 h)
-    ⟨by
-      refine fun x y => Quotient.inductionOn₂ x y fun α β h => ?_
-      exact Quotient.sound (cohomologous_iff_cohomologyClass_eq.2 h),
-      fun x => by
-        obtain ⟨α, hα⟩ := exists_cohomologyClass_eq x
-        exact ⟨Quotient.mk _ α, hα⟩⟩
+    Quotient (isCohomologousSetoid G M) ≃ H2 (Rep.ofMulDistribMulAction G M) :=
+  Setoid.quotientKerEquivOfSurjective _ exists_cohomologyClass_eq
 
 @[simp]
 theorem cohomologyClassEquiv_apply_mk (α : FactorSet G M) :
@@ -287,9 +277,9 @@ namespace GroupExtension
 variable {E : Type*} [Group E] {S : GroupExtension M E G}
 
 /-- **The cohomology class of the factor set of an extension does not depend on the section.**
-With `TauCeti.GroupExtension.factorSetToGroupExtensionEquiv`, which recovers the extension from any
-one of these factor sets, this says the class in `H²(G, M)` is a complete invariant of the
-extension. -/
+So the class in `H²(G, M)` is an invariant of the extension, and by
+`TauCeti.GroupExtension.factorSetToGroupExtensionEquiv` the extension is recovered from any one of
+these factor sets. -/
 theorem cohomologyClass_factorSet_eq (σ σ' : S.Section) (hσ : σ 1 = 1) (hσ' : σ' 1 = 1)
     (hact : InducesAction S) :
     (factorSet σ hσ hact).cohomologyClass = (factorSet σ' hσ' hact).cohomologyClass :=
