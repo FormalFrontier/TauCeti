@@ -6,7 +6,7 @@ module
 
 public import TauCeti.Probability.Exchangeability.Basic
 import Mathlib.Logic.Equiv.Basic
-public import Mathlib.Data.Fin.Tuple.Sort
+import Mathlib.Data.Fin.Tuple.Sort
 public import Mathlib.MeasureTheory.Integral.Bochner.Basic
 import Mathlib.MeasureTheory.Integral.Bochner.Set
 
@@ -102,18 +102,17 @@ omit [MeasurableSpace Ω] [MeasurableSpace α] in
 /-- **Sorting an injective block selection.** Any injective `k` can be permuted into strictly
 increasing order without changing the block event or any product over the selected sets.
 
-This packages the whole reduction that lets a proof handle only the *monotone* case: `Tuple.sort`
-supplies the permutation, `blockCylinder_comp_perm` says the event is unchanged, and
-`Equiv.prod_comp` says a product over the sets is unchanged. Callers that establish an identity for
-strictly monotone selections get the injective case by `obtain`ing this and rewriting. -/
+`Tuple.sort` supplies the permutation and `blockCylinder_comp_perm` says the event is unchanged.
+Callers that establish an identity for strictly monotone selections get the injective case by
+`obtain`ing this and rewriting; a product over the selected sets is reindexed separately by
+`Equiv.prod_comp`, which is generic and needs nothing from here. -/
 theorem exists_perm_strictMono_comp_blockCylinder_eq (X : ℕ → Ω → α) {m : ℕ} {k : Fin m → ℕ}
     (hk : Function.Injective k) (B : Fin m → Set α) :
     ∃ e : Equiv.Perm (Fin m), StrictMono (k ∘ e) ∧
-      blockCylinder X k B = blockCylinder X (k ∘ e) (fun i => B (e i)) ∧
-      ∀ g : Set α → ℝ≥0∞, ∏ i, g (B (e i)) = ∏ i, g (B i) :=
+      blockCylinder X k B = blockCylinder X (k ∘ e) (fun i => B (e i)) :=
   ⟨Tuple.sort k,
     (Tuple.monotone_sort k).strictMono_of_injective (hk.comp (Equiv.injective _)),
-    blockCylinder_comp_perm X k B _, fun g => Equiv.prod_comp _ fun i => g (B i)⟩
+    blockCylinder_comp_perm X k B _⟩
 
 /-- The product of the selected coordinate indicators, `∏ i, 𝟙_{C i}(X (k i) ω)`. -/
 def blockIndicatorProd (X : ℕ → Ω → α) {m : ℕ} (k : Fin m → ℕ) (C : Fin m → Set α) : Ω → ℝ :=

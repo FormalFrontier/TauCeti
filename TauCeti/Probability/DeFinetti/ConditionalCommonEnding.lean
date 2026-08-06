@@ -138,9 +138,9 @@ theorem conditionallyIIDWith_of_measure_inter_blockCylinder_eq_setLIntegral {μ 
           μ ((ν ⁻¹' S) ∩ blockCylinder X k B)
             = ∫⁻ ω in ν ⁻¹' S, ∏ i, (ν ω : Measure α) (B i) ∂μ := by
     intro r k hk S hS B hB
-    obtain ⟨e, hsm, hcyl, hprod⟩ := exists_perm_strictMono_comp_blockCylinder_eq X hk B
+    obtain ⟨e, hsm, hcyl⟩ := exists_perm_strictMono_comp_blockCylinder_eq X hk B
     rw [hcyl, hcore r (k ∘ e) hsm S hS (fun i => B (e i)) fun i => hB (e i)]
-    exact lintegral_congr fun ω => hprod fun T => (ν ω : Measure α) T
+    exact lintegral_congr fun ω => Equiv.prod_comp e fun i => (ν ω : Measure α) (B i)
   refine conditionallyIID_of_jointRectangles hν fun r k hk S hS B hB => ?_
   have hjoint : AEMeasurable (fun ω => (ν ω, fun i : Fin r => X (k i) ω)) μ :=
     hν.aemeasurable.prodMk (aemeasurable_pi_lambda _ fun i => hX_meas _)
