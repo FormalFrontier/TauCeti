@@ -78,7 +78,7 @@ in the coefficient ring, whereas the sum is always available and carries all the
 noncomputable def twoWeylVector : M := ∑ i ∈ posRootsFinset P b, P.root i
 
 /-- `2ρ` is the sum of the positive roots, by definition. -/
-lemma twoWeylVector_eq_sum : twoWeylVector P b = ∑ i ∈ posRootsFinset P b, P.root i := by
+lemma twoWeylVector_def : twoWeylVector P b = ∑ i ∈ posRootsFinset P b, P.root i := by
   rw [twoWeylVector]
 
 section Reduced
@@ -113,7 +113,7 @@ theorem coroot'_twoWeylVector {i : ι} (hi : i ∈ b.support) :
   classical
   have hmem : i ∈ posRootsFinset P b :=
     (mem_posRootsFinset P b i).mpr (support_subset_posRoots P b (Finset.mem_coe.mpr hi))
-  rw [twoWeylVector_eq_sum, map_sum]
+  rw [twoWeylVector_def, map_sum]
   simp only [RootPairing.root_coroot'_eq_pairing]
   rw [← Finset.add_sum_erase _ _ hmem, sum_pairing_posRootsFinset_erase_eq_zero P b hi, add_zero,
     RootPairing.pairing_same]
@@ -133,7 +133,7 @@ theorem sum_root_negRootsFinset :
     intro j
     let := P.indexNeg
     simp only [← RootPairing.indexNeg_neg, neg_neg]
-  rw [twoWeylVector_eq_sum, ← Finset.sum_neg_distrib]
+  rw [twoWeylVector_def, ← Finset.sum_neg_distrib]
   refine Finset.sum_equiv hinv.toPerm (fun j ↦ ?_) fun j _ ↦ ?_
   · rw [mem_negRootsFinset, mem_posRootsFinset, Function.Involutive.coe_toPerm]
     exact (reflectionPerm_self_mem_posRoots_iff_mem_negRoots P b j).symm
@@ -146,6 +146,10 @@ variable [Invertible (2 : R)]
 /-- **The Weyl vector `ρ`**: the half-sum of the positive roots of a base. -/
 noncomputable def weylVector : M := ⅟(2 : R) • twoWeylVector P b
 
+/-- `ρ` is half the sum of the positive roots, by definition. -/
+lemma weylVector_def : weylVector P b = ⅟(2 : R) • twoWeylVector P b := by
+  rw [weylVector]
+
 /-- Doubling the Weyl vector recovers the sum of the positive roots. -/
 @[simp]
 lemma two_smul_weylVector : (2 : R) • weylVector P b = twoWeylVector P b := by
@@ -154,7 +158,9 @@ lemma two_smul_weylVector : (2 : R) • weylVector P b = twoWeylVector P b := by
 variable [IsDomain R] [P.IsCrystallographic] [P.IsReduced]
 
 /-- **The Weyl vector pairs to `1` with every simple coroot**, `⟨ρ, αᵢ^∨⟩ = 1`. This is the
-defining property of `ρ`: it is the weight taking the value `1` on every simple coroot. -/
+characteristic pairing identity that `ρ` is introduced for; it records the values of `ρ` on the
+simple coroots, and over an abstract root pairing those values need not pin `ρ` down, since
+nothing here says the simple coroots separate the points of `M`. -/
 theorem coroot'_weylVector {i : ι} (hi : i ∈ b.support) : P.coroot' i (weylVector P b) = 1 := by
   rw [weylVector, map_smul, coroot'_twoWeylVector P b hi, smul_eq_mul, invOf_mul_self]
 
@@ -171,8 +177,10 @@ theorem coroot'_add_weylVector {i : ι} (hi : i ∈ b.support) (x : M) :
   rw [map_add, coroot'_weylVector P b hi]
 
 /-- **The dot action of a simple reflection.** Conjugating the reflection `sᵢ` by the translation
-by `ρ` gives `sᵢ ⬝ λ = λ - (⟨λ, αᵢ^∨⟩ + 1) αᵢ`, the shifted Weyl group action under which the
-Verma and irreducible highest-weight modules of a given central character are permuted. -/
+by `ρ` gives `sᵢ ⬝ λ = λ - (⟨λ, αᵢ^∨⟩ + 1) αᵢ`. Only this formula on weights is proved here; it is
+the shifted Weyl group action that the highest-weight theory uses in place of the linear one, but
+the statement that it permutes the highest weights of a given central character belongs to that
+setting and needs its hypotheses. -/
 theorem reflection_add_weylVector_sub {i : ι} (hi : i ∈ b.support) (x : M) :
     P.reflection i (x + weylVector P b) - weylVector P b
       = x - (P.coroot' i x + 1) • P.root i := by
