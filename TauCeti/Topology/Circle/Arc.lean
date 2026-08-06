@@ -53,20 +53,6 @@ open Real Set
 `b - a` less than a full turn. Nothing ties the angles to a period, so a consumer may translate them
 by any multiple of `2 * π`. -/
 
-/-- A full period of angles covers the circle. -/
-private lemma circleExp_image_Icc_add_two_pi (a : ℝ) : Circle.exp '' Icc a (a + 2 * π) = univ := by
-  rw [Circle.periodic_exp.image_Icc two_pi_pos]
-  exact Circle.exp_surjective.range_eq
-
-/-- A full period of angles, taken half open, covers the circle. -/
-private lemma circleExp_image_Ioc_add_two_pi (a : ℝ) : Circle.exp '' Ioc a (a + 2 * π) = univ := by
-  rw [Circle.periodic_exp.image_Ioc two_pi_pos]
-  exact Circle.exp_surjective.range_eq
-
-/-- `Circle.exp` is injective on a full period of angles taken half open. -/
-private lemma circleExp_injOn_Ioc (a : ℝ) : InjOn Circle.exp (Ioc a (a + 2 * π)) :=
-  Circle.exp_injOn_Ioc (by ring_nf; exact le_rfl)
-
 /-- Translating the angles by a full turn does not change a closed arc. -/
 private lemma circleExp_image_Icc_add_period (a b : ℝ) :
     Circle.exp '' Icc (a + 2 * π) (b + 2 * π) = Circle.exp '' Icc a b := by
@@ -90,13 +76,16 @@ theorem exists_eq_circleExp_image_Icc {T : Set Circle} (hT : IsClosed T) (hpre :
   set K : Set ℝ := Circle.exp ⁻¹' T ∩ Icc t (t + 2 * π) with hK
   have hKcompact : IsCompact K := isCompact_Icc.inter_left (hT.preimage Circle.exp.continuous)
   have himg : Circle.exp '' K = T := by
-    rw [hK, image_preimage_inter, circleExp_image_Icc_add_two_pi, inter_univ]
+    rw [hK, image_preimage_inter, Circle.periodic_exp.image_Icc two_pi_pos,
+      Circle.exp_surjective.range_eq, inter_univ]
   have hKsub : K ⊆ Ioo t (t + 2 * π) := by
     rintro x ⟨hxT, hxI⟩
     refine ⟨lt_of_le_of_ne hxI.1 fun hxt => hz ?_, lt_of_le_of_ne hxI.2 fun hxt => hz ?_⟩
     · rw [← hexpt, hxt]; exact hxT
     · rw [← hexpt, ← Circle.exp_add_two_pi, ← hxt]; exact hxT
-  have hinj : InjOn Circle.exp K := (circleExp_injOn_Ioc t).mono (hKsub.trans Ioo_subset_Ioc_self)
+  have hinj : InjOn Circle.exp K :=
+    (Circle.exp_injOn_Ioc (a := t) (b := t + 2 * π) (by simp)).mono
+      (hKsub.trans Ioo_subset_Ioc_self)
   have hKne : K.Nonempty := by
     rw [← image_nonempty (f := Circle.exp), himg]
     exact hne
@@ -149,8 +138,9 @@ theorem compl_circleExp_image_Icc {a b : ℝ} (hab : a ≤ b) (hlt : b - a < 2 *
     exact absurd h.1.2 (not_le.mpr (h.2 (not_lt.mp hcon)))
   have himage : Circle.exp '' (Ioc b (b + 2 * π) \ Icc (a + 2 * π) (b + 2 * π)) =
       Circle.exp '' Ioc b (b + 2 * π) \ Circle.exp '' Icc (a + 2 * π) (b + 2 * π) :=
-    (circleExp_injOn_Ioc b).image_sdiff_subset hbsub
+    (Circle.exp_injOn_Ioc (a := b) (b := b + 2 * π) (by simp)).image_sdiff_subset hbsub
   rw [← circleExp_image_Icc_add_period a b, compl_eq_univ_sdiff,
-    ← circleExp_image_Ioc_add_two_pi b, ← himage, hdiff]
+    ← Circle.exp_surjective.range_eq, ← Circle.periodic_exp.image_Ioc two_pi_pos b,
+    ← himage, hdiff]
 
 end TauCeti
