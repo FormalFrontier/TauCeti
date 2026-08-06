@@ -46,8 +46,9 @@ with it everything downstream of it, is what makes `G` a group from that point o
   it intertwines `ρ` with `ρ.dual`.
 * `TauCeti.Representation.IsInvariantForm.nondegenerate`: a nonzero invariant form on an
   irreducible representation is nondegenerate.
-* `TauCeti.Representation.exists_eq_smul_id_of_comm`: **Schur's lemma, scalar form**, for an
-  abstract representation.
+* `TauCeti.Representation.IsInvariantForm.exists_eq_smul`: over an algebraically closed field and
+  in finite dimensions, an invariant form on an irreducible representation is a scalar multiple of
+  any nonzero one.
 * `TauCeti.Representation.IsInvariantForm.invariantForms_eq_span`: over an algebraically closed
   field and in finite dimensions, a nonzero invariant form on an irreducible representation spans
   all of them.
@@ -57,12 +58,16 @@ with it everything downstream of it, is what makes `G` a group from that point o
 
 ## Implementation notes
 
-`TauCeti.Representation.IsInvariantForm` is `@[expose]`d, because it is a plain `∀`-statement with
-no useful content of its own: the intended way to prove it is `intro g x y`, and the intended way
-to use it is to apply it, both of which need the unfolding.  What the file adds around it is the
-two rewritings that are *not* immediate -- moving a single `ρ g` across the form at the cost of an
-inverse (`TauCeti.Representation.IsInvariantForm.apply_left`), and the identification with
-intertwiners into the dual.
+`TauCeti.Representation.IsInvariantForm` is a plain `∀`-statement, but its body is not exposed:
+`TauCeti.Representation.isInvariantForm_iff` introduces it and
+`TauCeti.Representation.IsInvariantForm.apply` eliminates it, so nothing outside this file has to
+unfold the definition.  The `iff` is deliberately not a `simp` lemma: unfolding invariance into its
+quantified equation would take `TauCeti.Representation.isInvariantForm_zero` and
+`TauCeti.Representation.mem_invariantForms` out of simp-normal form, which the `simpNF` linter
+rejects.  What the file adds around that pair is the two rewritings that are *not*
+immediate -- moving a single `ρ g` across the form at the cost of an inverse
+(`TauCeti.Representation.IsInvariantForm.apply_left`), and the identification with intertwiners
+into the dual.
 
 ## References
 
@@ -90,11 +95,20 @@ variable {k G V : Type*} [CommSemiring k] [Monoid G] [AddCommMonoid V] [Module k
 
 /-- A bilinear form `B` is **invariant** for a representation `ρ` when every `ρ g` preserves it:
 `B (ρ g x) (ρ g y) = B x y`. -/
-@[expose]
 def IsInvariantForm (ρ : Representation k G V) (B : BilinForm k V) : Prop :=
   ∀ (g : G) (x y : V), B (ρ g x) (ρ g y) = B x y
 
 variable {ρ : Representation k G V} {B C : BilinForm k V}
+
+/-- Invariance is the defining equation: this is the introduction rule for
+`TauCeti.Representation.IsInvariantForm`, which is what one proves by `intro g x y`. -/
+theorem isInvariantForm_iff :
+    IsInvariantForm ρ B ↔ ∀ (g : G) (x y : V), B (ρ g x) (ρ g y) = B x y := Iff.rfl
+
+/-- An invariant form is preserved by every `ρ g`: this is the elimination rule for
+`TauCeti.Representation.IsInvariantForm`. -/
+theorem IsInvariantForm.apply (hB : IsInvariantForm ρ B) (g : G) (x y : V) :
+    B (ρ g x) (ρ g y) = B x y := hB g x y
 
 /-- The invariant bilinear forms of `ρ`, as a submodule of all bilinear forms on `V`. -/
 def invariantForms (ρ : Representation k G V) : Submodule k (BilinForm k V) where
@@ -122,7 +136,7 @@ theorem IsInvariantForm.smul (c : k) (hB : IsInvariantForm ρ B) : IsInvariantFo
 
 /-- Exchanging the two arguments of an invariant form leaves it invariant. -/
 theorem IsInvariantForm.flip (hB : IsInvariantForm ρ B) : IsInvariantForm ρ B.flip :=
-  fun g x y => hB g y x
+  fun g x y => hB.apply g y x
 
 /-- Every bilinear form is invariant for the trivial representation, which acts by the identity. -/
 theorem isInvariantForm_trivial (B : BilinForm k V) :
@@ -144,7 +158,7 @@ as in the radical of the form or in a comparison with the dual representation. -
 theorem IsInvariantForm.apply_left (hB : IsInvariantForm ρ B) (g : G) (x y : V) :
     B (ρ g x) y = B x (ρ g⁻¹ y) := by
   conv_lhs => rw [← Representation.self_inv_apply ρ g y]
-  exact hB g x (ρ g⁻¹ y)
+  exact hB.apply g x (ρ g⁻¹ y)
 
 /-- **A bilinear form is invariant exactly when it intertwines `ρ` with its dual.** Read as a
 linear map `V → V*`, an invariant form is a map of representations from `ρ` to `ρ.dual`, and
@@ -203,29 +217,14 @@ theorem IsInvariantForm.nondegenerate [ρ.IsIrreducible] (hB : IsInvariantForm �
     LinearMap.flip_separatingLeft.mp (LinearMap.separatingLeft_iff_ker_eq_bot.mpr ?_)⟩
   exact hB.flip.ker_eq_bot fun h => hB0 (LinearMap.BilinForm.flipHom.map_eq_zero_iff.mp h)
 
-/-- **Schur's lemma, scalar form.** An endomorphism of a finite-dimensional irreducible
-representation over an algebraically closed field that commutes with the action is a scalar
-multiple of the identity.
-
-This is the statement for an abstract representation; the counterpart for a continuous
-representation of a topological group is
-`TauCeti.ContRepresentation.exists_eq_smul_one_of_irreducible`, and both rest on Mathlib's
-`Representation.IsIrreducible.algebraMap_intertwiningMap_bijective_of_isAlgClosed`. -/
-theorem exists_eq_smul_id_of_comm [FiniteDimensional k V] [IsAlgClosed k]
-    {ρ : Representation k G V} [ρ.IsIrreducible] {φ : V →ₗ[k] V}
-    (hφ : ∀ (g : G) (v : V), φ (ρ g v) = ρ g (φ v)) :
-    ∃ c : k, φ = c • LinearMap.id := by
-  obtain ⟨c, hc⟩ :=
-    (Representation.IsIrreducible.algebraMap_intertwiningMap_bijective_of_isAlgClosed
-      (ρ := ρ)).2 (φ.intertwiningMap_of_isIntertwiningMap ρ ρ hφ)
-  refine ⟨c, LinearMap.ext fun v => ?_⟩
-  simpa using (congrArg (fun f : Representation.IntertwiningMap ρ ρ => f v) hc).symm
-
 variable [FiniteDimensional k V] [IsAlgClosed k] [ρ.IsIrreducible]
 
 /-- **An invariant form on an irreducible representation is unique up to a scalar.** Comparing `C`
 with a nonzero `B` through the isomorphism `V ≃ V*` that the nondegenerate `B` provides produces an
-endomorphism commuting with the action, hence a scalar. -/
+endomorphism commuting with the action, hence a scalar by Schur's lemma in the form of Mathlib's
+`Representation.IsIrreducible.algebraMap_intertwiningMap_bijective_of_isAlgClosed` -- the same
+theorem that `TauCeti.ContRepresentation.exists_eq_smul_one_of_irreducible` rests on for a
+continuous representation. -/
 theorem IsInvariantForm.exists_eq_smul (hB : IsInvariantForm ρ B) (hB0 : B ≠ 0)
     (hC : IsInvariantForm ρ C) : ∃ c : k, C = c • B := by
   have hBnd : B.Nondegenerate := hB.nondegenerate hB0
@@ -239,10 +238,14 @@ theorem IsInvariantForm.exists_eq_smul (hB : IsInvariantForm ρ B) (hB0 : B ≠ 
     intro g v
     refine sub_eq_zero.mp (hBnd.1 _ fun w => ?_)
     rw [map_sub, LinearMap.sub_apply, hφB, hB.apply_left, hφB, hC.apply_left, sub_self]
-  obtain ⟨c, hc⟩ := exists_eq_smul_id_of_comm (ρ := ρ) hφ
+  obtain ⟨c, hc⟩ :=
+    (Representation.IsIrreducible.algebraMap_intertwiningMap_bijective_of_isAlgClosed
+      (ρ := ρ)).2 (φ.intertwiningMap_of_isIntertwiningMap ρ ρ hφ)
+  have hcφ : φ = c • LinearMap.id := LinearMap.ext fun v => by
+    simpa using (congrArg (fun f : Representation.IntertwiningMap ρ ρ => f v) hc).symm
   refine ⟨c, LinearMap.ext fun v => LinearMap.ext fun w => ?_⟩
   have h := hφB v w
-  rw [hc] at h
+  rw [hcφ] at h
   simpa using h.symm
 
 /-- **A nonzero invariant form on an irreducible representation spans all of them**: the invariant
