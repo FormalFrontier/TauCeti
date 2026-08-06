@@ -207,9 +207,9 @@ theorem coe_map {X' : Type u'} {Y' : Type v'} [MeasurableSpace X'] [MeasurableSp
 unchanged. -/
 @[simp]
 theorem map_id (π : Coupling μ ν) :
-    (π.map id id measurable_id measurable_id : ProbabilityMeasure (X × Y)) = π.1 := by
+    π.1.map measurable_id.aemeasurable = π.1 := by
   apply ProbabilityMeasure.toMeasure_injective
-  simpa only [coe_map, ProbabilityMeasure.toMeasure_map, Prod.map_id] using
+  simpa only [ProbabilityMeasure.toMeasure_map] using
     (Measure.map_id (μ := π.1.toMeasure))
 
 /-- Two successive coordinatewise maps agree on underlying probability measures with mapping by
@@ -219,10 +219,10 @@ theorem map_map {X' : Type u'} {Y' : Type v'} {X'' : Type u''} {Y'' : Type v''}
     [MeasurableSpace X'] [MeasurableSpace Y'] [MeasurableSpace X''] [MeasurableSpace Y'']
     (π : Coupling μ ν) (f : X → X') (g : Y → Y') (f' : X' → X'') (g' : Y' → Y'')
     (hf : Measurable f) (hg : Measurable g) (hf' : Measurable f') (hg' : Measurable g') :
-    ((π.map f g hf hg).map f' g' hf' hg' : ProbabilityMeasure (X'' × Y'')) =
+    (π.1.map (hf.prodMap hg).aemeasurable).map (hf'.prodMap hg').aemeasurable =
       (π.map (f' ∘ f) (g' ∘ g) (hf'.comp hf) (hg'.comp hg)).1 := by
   apply ProbabilityMeasure.toMeasure_injective
-  simp only [coe_map, ProbabilityMeasure.toMeasure_map]
+  simp only [ProbabilityMeasure.toMeasure_map]
   rw [Measure.map_map (hf'.prodMap hg') (hf.prodMap hg)]
   rfl
 
