@@ -298,15 +298,11 @@ theorem isLongSimpleRoot_iff {t : DynkinType} (ht : t.Valid) (i : Fin t.rank) :
       have hi : (i : ℕ) < n := i.isLt
       simp only [isLongSimpleRoot_B, rootLength_B]
       refine ⟨fun h j ↦ ?_, fun h ↦ ?_⟩
-      · rw [if_neg (show ¬ (i : ℕ) + 1 = n by omega)]
-        split_ifs <;> norm_num
+      · split_ifs <;> omega
       · -- The first node is long, so a node of maximal length cannot be the short last one.
-        by_contra hcon
         obtain ⟨j₀, hj₀⟩ : ∃ j₀ : Fin n, (j₀ : ℕ) = 0 := ⟨⟨0, by omega⟩, rfl⟩
         have h₀ := h j₀
-        rw [if_neg (show ¬ (j₀ : ℕ) + 1 = n by omega),
-          if_pos (show (i : ℕ) + 1 = n by omega)] at h₀
-        norm_num at h₀
+        split_ifs at h₀ <;> omega
   | C n =>
       have hn : 3 ≤ n := valid_C.mp ht
       -- As in the `B` branch, make the reduced dependent index explicit before bounding it.
@@ -314,14 +310,11 @@ theorem isLongSimpleRoot_iff {t : DynkinType} (ht : t.Valid) (i : Fin t.rank) :
       have hi : (i : ℕ) < n := i.isLt
       simp only [isLongSimpleRoot_C, rootLength_C]
       refine ⟨fun h j ↦ ?_, fun h ↦ ?_⟩
-      · rw [if_pos h]
-        split_ifs <;> norm_num
+      · split_ifs <;> omega
       · -- The last node is the only long one, so a node of maximal length is that node.
-        by_contra hcon
         obtain ⟨j₀, hj₀⟩ : ∃ j₀ : Fin n, (j₀ : ℕ) = n - 1 := ⟨⟨n - 1, by omega⟩, rfl⟩
         have h₀ := h j₀
-        rw [if_pos (show (j₀ : ℕ) + 1 = n by omega), if_neg hcon] at h₀
-        norm_num at h₀
+        split_ifs at h₀ <;> omega
 
 /-- Every simple root of a simply-laced type is long: all its simple roots have the same length. -/
 lemma isLongSimpleRoot_of_isSimplyLaced {t : DynkinType} (ht : t.IsSimplyLaced) (i : Fin t.rank) :
