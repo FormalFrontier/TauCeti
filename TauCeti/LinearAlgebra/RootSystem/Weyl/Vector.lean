@@ -27,8 +27,6 @@ remaining roots with `αᵢ^∨` cancel in pairs and only `⟨αᵢ, αᵢ^∨�
 
 ## Main definitions
 
-* `TauCeti.posRootsFinset` and `TauCeti.negRootsFinset`: the positive and the negative roots of a
-  base as finsets, so that they can be summed over.
 * `TauCeti.twoWeylVector`: the sum of the positive roots, that is `2ρ`.
 * `TauCeti.weylVector`: the Weyl vector `ρ`, the half-sum of the positive roots, defined when `2`
   is invertible in the coefficient ring.
@@ -48,12 +46,16 @@ remaining roots with `αᵢ^∨` cancel in pairs and only `⟨αᵢ, αᵢ^∨�
 
 ## References
 
-This file supplies the `weylVector` prerequisite of Layer 3 of
-`TauCetiRoadmap/RepresentationTheory/LieHighestWeight/README.md`, which fixes the notation `ρ` for
-the half-sum of the positive roots and states its dominance and integrality; the Weyl character
-and dimension formulas of that roadmap's Layer 6 are stated in terms of it. It is built here at
-the level of an abstract root pairing, where the positive-root combinatorics it needs already
-lives.
+This file supplies the root-pairing-level prerequisite of the `ρ` item of
+`TauCetiRoadmap/RepresentationTheory/LieHighestWeight/README.md`: Layer 1 there "only fixes the
+notation `ρ` for the half-sum of positive roots and states dominance and integrality of weights",
+and the Lie-algebra signature `weylVector (base : (LieAlgebra.IsKilling.rootSystem H).Base) :
+Module.Dual K H` is stated in the Layer 5 section of that roadmap's `Suggested.lean`, where the
+Casimir eigenvalue is the first consumer; the Weyl character and dimension formulas of Layer 6 are
+stated in terms of the same `ρ`. Nothing here is a Lie-algebra-level declaration, and nothing here
+uses the highest-weight machinery of Layers 2-4: `ρ` is built for an abstract root pairing, where
+the positive-root combinatorics it needs already lives, so that the Lie-algebra target is a
+specialization rather than a rebuild.
 
 The argument is the one in J. E. Humphreys, *Introduction to Lie Algebras and Representation
 Theory*, GTM 9, Ch. III, §10.2 and §13.3.
@@ -69,29 +71,15 @@ variable {ι : Type u} {R : Type v} {M : Type w} {N : Type x}
 
 variable [CharZero R] (b : P.Base) [Finite ι]
 
-/-- The positive roots of a base, as a finset. -/
-noncomputable def posRootsFinset : Finset ι := (posRoots_finite P b).toFinset
-
-/-- The negative roots of a base, as a finset. -/
-noncomputable def negRootsFinset : Finset ι := (negRoots_finite P b).toFinset
-
-@[simp]
-lemma mem_posRootsFinset (i : ι) : i ∈ posRootsFinset P b ↔ i ∈ posRoots P b :=
-  (posRoots_finite P b).mem_toFinset
-
-@[simp]
-lemma mem_negRootsFinset (i : ι) : i ∈ negRootsFinset P b ↔ i ∈ negRoots P b :=
-  (negRoots_finite P b).mem_toFinset
-
 /-- **Twice the Weyl vector**: the sum of the positive roots of a base.
 
 The Weyl vector itself is `TauCeti.weylVector`, this element halved; it needs `2` to be invertible
 in the coefficient ring, whereas the sum is always available and carries all the content. -/
-@[expose]
 noncomputable def twoWeylVector : M := ∑ i ∈ posRootsFinset P b, P.root i
 
 /-- `2ρ` is the sum of the positive roots, by definition. -/
-lemma twoWeylVector_eq_sum : twoWeylVector P b = ∑ i ∈ posRootsFinset P b, P.root i := rfl
+lemma twoWeylVector_eq_sum : twoWeylVector P b = ∑ i ∈ posRootsFinset P b, P.root i := by
+  rw [twoWeylVector]
 
 section Reduced
 
@@ -100,17 +88,12 @@ variable [IsDomain R] [P.IsCrystallographic] [P.IsReduced]
 /-- **The pairings of the positive roots other than `αᵢ` with `αᵢ^∨` cancel.** The simple
 reflection `sᵢ` permutes those roots and negates each of their pairings with `αᵢ^∨`, so the sum is
 its own negative. -/
-theorem sum_pairing_posRootsFinset_erase_eq_zero [DecidableEq ι] {i : ι} (hi : i ∈ b.support) :
+private theorem sum_pairing_posRootsFinset_erase_eq_zero [DecidableEq ι] {i : ι}
+    (hi : i ∈ b.support) :
     ∑ j ∈ (posRootsFinset P b).erase i, P.pairing j i = 0 := by
-  set E := (posRootsFinset P b).erase i with hEdef
-  have hstable : ∀ j : ι, j ∈ E ↔ P.reflectionPerm i j ∈ E := by
-    intro j
-    have h := reflectionPerm_mem_posRoots_diff_singleton_iff P b hi j
-    simp only [Set.mem_sdiff, Set.mem_singleton_iff] at h
-    simp only [hEdef, Finset.mem_erase, mem_posRootsFinset]
-    tauto
+  set E := (posRootsFinset P b).erase i
   have key : ∑ j ∈ E, P.pairing (P.reflectionPerm i j) i = ∑ j ∈ E, P.pairing j i :=
-    Finset.sum_equiv (P.reflectionPerm i) hstable fun _ _ ↦ rfl
+    sum_posRootsFinset_erase_comp_reflectionPerm P b hi fun j ↦ P.pairing j i
   have hneg : ∑ j ∈ E, P.pairing (P.reflectionPerm i j) i = -∑ j ∈ E, P.pairing j i := by
     rw [← Finset.sum_neg_distrib]
     exact Finset.sum_congr rfl fun j _ ↦ by
