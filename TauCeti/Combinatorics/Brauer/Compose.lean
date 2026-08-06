@@ -29,9 +29,14 @@ followed by a fixed-point-free involution, so a strand cannot return to its own 
 ## Main definitions
 
 * `TauCeti.composeDiagram`: the composite of two Brauer diagrams, `D₁` stacked above `D₂`.
+* `TauCeti.stackStart`, `TauCeti.stackStep`: the first arc of a strand of the stack, and the arc
+  continuing it from a point of the middle boundary.
 
 ## Main results
 
+* `TauCeti.composeDiagram_val_eq_iff`: the composite matches two outer points exactly when a
+  strand joins them, that is, when following the arcs of the two diagrams from the one leads
+  through finitely many points of the middle boundary to the other.
 * `TauCeti.composeDiagram_val_inl_eq_inl_of_cap_lower`,
   `TauCeti.composeDiagram_val_inr_eq_inr_of_cup_upper`,
   `TauCeti.composeDiagram_val_inl_eq_inr_of_through`,
@@ -273,6 +278,57 @@ def composeDiagram (D₁ D₂ : BrauerDiagram k) : BrauerDiagram k :=
     (fun x => by simpa using BrauerDiagram.stackVal_involutive D₁ D₂ x)
     fun x => by simpa using BrauerDiagram.stackVal_ne D₁ D₂ x
 
+/-- Following a strand of the stack of `D₁` above `D₂` one arc further, from a **middle state**:
+a point of the middle boundary together with the diagram the strand runs through next. The
+middle state `Sum.inl a` is the middle point `a` reached as a bottom point of the upper diagram
+`D₁`, so the strand next follows the arc of `D₁` at `Sum.inl a`; the middle state `Sum.inr a` is
+the middle point `a` reached as a top point of the lower diagram `D₂`, so the strand next follows
+the arc of `D₂` at `Sum.inr a`. The value is `Sum.inl y` when that arc leaves the stack at the
+outer point `y`, and `Sum.inr t` when it crosses the middle boundary again, at the middle state
+`t`. -/
+@[expose]
+def stackStep (D₁ D₂ : BrauerDiagram k) : Fin k ⊕ Fin k → (Fin k ⊕ Fin k) ⊕ (Fin k ⊕ Fin k)
+  | Sum.inl a =>
+    (D₁.val (Sum.inl a)).elim (fun a' => Sum.inr (Sum.inr a')) fun j => Sum.inl (Sum.inr j)
+  | Sum.inr a =>
+    (D₂.val (Sum.inr a)).elim (fun i => Sum.inl (Sum.inl i)) fun a' => Sum.inr (Sum.inl a')
+
+/-- Following the strand of the stack of `D₁` above `D₂` that starts at the outer point `x` along
+its first arc, an arc of `D₂` at a bottom point `x = Sum.inl i` and an arc of `D₁` at a top point
+`x = Sum.inr j`. The value is `Sum.inl y` when that arc already leaves the stack, at the outer
+point `y`, and `Sum.inr s` when it crosses the middle boundary, at the middle state `s` of
+`TauCeti.stackStep`. -/
+@[expose]
+def stackStart (D₁ D₂ : BrauerDiagram k) : Fin k ⊕ Fin k → (Fin k ⊕ Fin k) ⊕ (Fin k ⊕ Fin k)
+  | Sum.inl i =>
+    (D₂.val (Sum.inl i)).elim (fun i' => Sum.inl (Sum.inl i')) fun a => Sum.inr (Sum.inl a)
+  | Sum.inr j =>
+    (D₁.val (Sum.inr j)).elim (fun a => Sum.inr (Sum.inr a)) fun j' => Sum.inl (Sum.inr j')
+
+/-- A strand at the middle point `a`, about to run up through `D₁`, follows the arc of `D₁`
+at `Sum.inl a`. -/
+theorem stackStep_inl (D₁ D₂ : BrauerDiagram k) (a : Fin k) : stackStep D₁ D₂ (Sum.inl a) =
+    (D₁.val (Sum.inl a)).elim (fun a' => Sum.inr (Sum.inr a')) fun j => Sum.inl (Sum.inr j) :=
+  rfl
+
+/-- A strand at the middle point `a`, about to run down through `D₂`, follows the arc of `D₂`
+at `Sum.inr a`. -/
+theorem stackStep_inr (D₁ D₂ : BrauerDiagram k) (a : Fin k) : stackStep D₁ D₂ (Sum.inr a) =
+    (D₂.val (Sum.inr a)).elim (fun i => Sum.inl (Sum.inl i)) fun a' => Sum.inr (Sum.inl a') :=
+  rfl
+
+/-- A strand starting at the bottom point `i` of the stack follows the arc of `D₂` at
+`Sum.inl i`. -/
+theorem stackStart_inl (D₁ D₂ : BrauerDiagram k) (i : Fin k) : stackStart D₁ D₂ (Sum.inl i) =
+    (D₂.val (Sum.inl i)).elim (fun i' => Sum.inl (Sum.inl i')) fun a => Sum.inr (Sum.inl a) :=
+  rfl
+
+/-- A strand starting at the top point `j` of the stack follows the arc of `D₁` at
+`Sum.inr j`. -/
+theorem stackStart_inr (D₁ D₂ : BrauerDiagram k) (j : Fin k) : stackStart D₁ D₂ (Sum.inr j) =
+    (D₁.val (Sum.inr j)).elim (fun a => Sum.inr (Sum.inr a)) fun j' => Sum.inl (Sum.inr j') :=
+  rfl
+
 namespace BrauerDiagram
 
 variable (D₁ D₂ : BrauerDiagram k)
@@ -281,9 +337,126 @@ private theorem composeDiagram_val (x : Fin k ⊕ Fin k) :
     (composeDiagram D₁ D₂).val x = stackVal D₁ D₂ x := by
   simp [composeDiagram]
 
+/-- The first step of the walk, read off the first arc of the strand. The middle state `s` sits
+at the stacked point `Sum.inr s.swap`. -/
+private theorem walk_inl_eq (x : Fin k ⊕ Fin k) :
+    walk D₁ D₂ (Sum.inl x) = (stackStart D₁ D₂ x).elim Sum.inl fun s => Sum.inr s.swap := by
+  rcases x with i | j
+  · rcases h : D₂.val (Sum.inl i) with i' | a <;>
+      simp [walk_inl_inl, stackStart_inl, h, glue, lowerPt]
+  · rcases h : D₁.val (Sum.inr j) with a | j' <;>
+      simp [walk_inl_inr, stackStart_inr, h, glue, upperPt]
+
+/-- A later step of the walk, read off the next arc of the strand. -/
+private theorem walk_inr_swap (s : Fin k ⊕ Fin k) :
+    walk D₁ D₂ (Sum.inr s.swap) = (stackStep D₁ D₂ s).elim Sum.inl fun t => Sum.inr t.swap := by
+  rcases s with a | a
+  · rcases h : D₁.val (Sum.inl a) with a' | j <;>
+      simp [walk_inr_inr, stackStep_inl, h, glue, upperPt]
+  · rcases h : D₂.val (Sum.inr a) with i | a' <;>
+      simp [walk_inr_inl, stackStep_inr, h, glue, lowerPt]
+
+/-- A strand whose first arc crosses the middle boundary at the middle state `s` is walked from
+`s` on. -/
+private theorem walk_pow_succ_inl {x s : Fin k ⊕ Fin k} (h : stackStart D₁ D₂ x = Sum.inr s)
+    (m : ℕ) : (walk D₁ D₂ ^ (m + 1)) (Sum.inl x) = (walk D₁ D₂ ^ m) (Sum.inr s.swap) := by
+  rw [pow_succ, Equiv.Perm.mul_apply, walk_inl_eq, h]
+  rfl
+
+/-- A chain of middle states is walked without meeting the outer boundary. -/
+private theorem exists_walk_pow_of_reflTransGen {s t : Fin k ⊕ Fin k}
+    (h : Relation.ReflTransGen (fun u v => stackStep D₁ D₂ u = Sum.inr v) s t) :
+    ∃ n, (walk D₁ D₂ ^ n) (Sum.inr s.swap) = Sum.inr t.swap ∧
+      ∀ m ≤ n, ¬((walk D₁ D₂ ^ m) (Sum.inr s.swap)).isLeft := by
+  induction h with
+  | refl => exact ⟨0, by simp, fun m hm => by rw [Nat.le_zero.mp hm]; simp⟩
+  | @tail u v _ hstep ih =>
+    obtain ⟨n, hn, hmin⟩ := ih
+    have hnext : (walk D₁ D₂ ^ (n + 1)) (Sum.inr s.swap) = Sum.inr v.swap := by
+      rw [pow_succ', Equiv.Perm.mul_apply, hn, walk_inr_swap, hstep]
+      rfl
+    refine ⟨n + 1, hnext, fun m hm => ?_⟩
+    rcases Nat.lt_or_ge m (n + 1) with hlt | hge
+    · exact hmin m (by omega)
+    · rw [Nat.le_antisymm hm hge, hnext]
+      simp
+
+/-- A walk that stays off the outer boundary follows a chain of middle states. -/
+private theorem exists_reflTransGen_of_walk_pow (s : Fin k ⊕ Fin k) (n : ℕ)
+    (h : ∀ m ≤ n, ¬((walk D₁ D₂ ^ m) (Sum.inr s.swap)).isLeft) :
+    ∃ t, (walk D₁ D₂ ^ n) (Sum.inr s.swap) = Sum.inr t.swap ∧
+      Relation.ReflTransGen (fun u v => stackStep D₁ D₂ u = Sum.inr v) s t := by
+  induction n with
+  | zero => exact ⟨s, by simp, .refl⟩
+  | succ n ih =>
+    obtain ⟨t, ht, hpath⟩ := ih fun m hm => h m (by omega)
+    have hnext : (walk D₁ D₂ ^ (n + 1)) (Sum.inr s.swap)
+        = (stackStep D₁ D₂ t).elim Sum.inl fun u => Sum.inr u.swap := by
+      rw [pow_succ', Equiv.Perm.mul_apply, ht, walk_inr_swap]
+    rcases hstep : stackStep D₁ D₂ t with y | u
+    · exact absurd (by rw [hnext, hstep]; rfl) (h (n + 1) le_rfl)
+    · exact ⟨u, by rw [hnext, hstep]; rfl, hpath.tail hstep⟩
+
 end BrauerDiagram
 
 variable (D₁ D₂ : BrauerDiagram k)
+
+/-- **The strands of a stack of two Brauer diagrams.** The composite of `D₁` above `D₂` matches
+the outer points `x` and `y` exactly when the strand starting at `x` emerges at `y`: either its
+first arc already leaves the stack at `y`, or it crosses the middle boundary at a middle state
+`s`, runs from there through finitely many further middle states to a middle state `t`, and
+leaves the stack at `y` from `t`. -/
+theorem composeDiagram_val_eq_iff {x y : Fin k ⊕ Fin k} :
+    (composeDiagram D₁ D₂).val x = y ↔
+      stackStart D₁ D₂ x = Sum.inl y ∨
+        ∃ s t, stackStart D₁ D₂ x = Sum.inr s ∧
+          Relation.ReflTransGen (fun u v => stackStep D₁ D₂ u = Sum.inr v) s t ∧
+            stackStep D₁ D₂ t = Sum.inl y := by
+  rw [BrauerDiagram.composeDiagram_val]
+  constructor
+  · intro hxy
+    have hexit : (BrauerDiagram.walk D₁ D₂ ^ (BrauerDiagram.exitTime D₁ D₂ x + 1)) (Sum.inl x)
+        = Sum.inl y := by rw [← BrauerDiagram.inl_stackVal, hxy]
+    rcases hstart : stackStart D₁ D₂ x with y' | s
+    · left
+      have h₁ : BrauerDiagram.walk D₁ D₂ (Sum.inl x) = Sum.inl y' := by
+        rw [BrauerDiagram.walk_inl_eq, hstart]; rfl
+      rcases Nat.eq_zero_or_pos (BrauerDiagram.exitTime D₁ D₂ x) with h₀ | h₀
+      · rwa [h₀, zero_add, pow_one, h₁] at hexit
+      · exact absurd (by rw [zero_add, pow_one, h₁]; rfl)
+          (BrauerDiagram.not_isLeft_walk_pow_of_lt D₁ D₂ x h₀)
+    · right
+      have hshift := BrauerDiagram.walk_pow_succ_inl D₁ D₂ hstart
+      obtain ⟨n, hn⟩ : ∃ n, BrauerDiagram.exitTime D₁ D₂ x = n + 1 := by
+        rcases Nat.eq_zero_or_pos (BrauerDiagram.exitTime D₁ D₂ x) with h₀ | h₀
+        · rw [h₀, hshift 0] at hexit
+          exact absurd hexit (by simp)
+        · exact ⟨BrauerDiagram.exitTime D₁ D₂ x - 1, by omega⟩
+      rw [hn] at hexit
+      obtain ⟨t, ht, hpath⟩ := BrauerDiagram.exists_reflTransGen_of_walk_pow D₁ D₂ s n
+        fun m hm => by
+          rw [← hshift]
+          exact BrauerDiagram.not_isLeft_walk_pow_of_lt D₁ D₂ x (by omega)
+      refine ⟨s, t, rfl, hpath, ?_⟩
+      rw [hshift (n + 1), pow_succ', Equiv.Perm.mul_apply, ht,
+        BrauerDiagram.walk_inr_swap] at hexit
+      rcases hstep : stackStep D₁ D₂ t with y' | u
+      · rw [hstep] at hexit
+        simpa using hexit
+      · rw [hstep] at hexit
+        exact absurd hexit (by simp)
+  · rintro (h | ⟨s, t, hstart, hpath, hstep⟩)
+    · refine BrauerDiagram.stackVal_eq_of_exit D₁ D₂ (n := 0) ?_ (by simp)
+      rw [zero_add, pow_one, BrauerDiagram.walk_inl_eq, h]
+      rfl
+    · obtain ⟨n, hn, hmin⟩ := BrauerDiagram.exists_walk_pow_of_reflTransGen D₁ D₂ hpath
+      have hshift := BrauerDiagram.walk_pow_succ_inl D₁ D₂ hstart
+      refine BrauerDiagram.stackVal_eq_of_exit D₁ D₂ (n := n + 1) ?_ fun m hm => ?_
+      · rw [hshift (n + 1), pow_succ', Equiv.Perm.mul_apply, hn,
+          BrauerDiagram.walk_inr_swap, hstep]
+        rfl
+      · rw [hshift m]
+        exact hmin m (by omega)
 
 /-- **A cap of the lower diagram is a cap of the composite.** -/
 theorem composeDiagram_val_inl_eq_inl_of_cap_lower {i i' : Fin k}
