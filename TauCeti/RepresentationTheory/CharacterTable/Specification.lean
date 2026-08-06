@@ -57,7 +57,10 @@ The specification is stated over `ℂ`, where the roadmap pins it: its orthonorm
 the Hermitian one, which is the form the algorithm checks. The normalized row
 `TauCeti.centralCharacterRow` needs no such restriction and is defined over any field, so that
 `TauCeti.centralCharacterRow_characterTable` (the normalized rows of the character table are the
-rows of the central character table) is available wherever the two tables are.
+rows of the central character table) is available wherever the two tables are. Normalizing reads
+only the row it is given, so it is also defined for a matrix with any row index type, and only
+`TauCeti.centralCharacterRow_characterTable` and the specification itself ask for the character
+table's.
 
 The group is an explicit argument of `TauCeti.IsCharacterTableSpec`, as the roadmap pins it: the
 specification is read as a statement about `G`, and `IsCharacterTableSpec G M` says what it says
@@ -89,9 +92,8 @@ universe u v
 
 section Row
 
-variable {k : Type u} {G : Type v} [Field k] [Group G]
-  {M : Matrix (Fin (Nat.card (ConjClasses G))) (ConjClasses G) k}
-  {i : Fin (Nat.card (ConjClasses G))}
+variable {ι : Type*} {k : Type u} {G : Type v} [Field k] [Group G]
+  {M : Matrix ι (ConjClasses G) k} {i : ι}
 
 /-- **The normalized row** `ω_i(K_C) = |C| · M i C / M i 1` of a candidate character table `M`.
 
@@ -99,18 +101,15 @@ For the character table itself this is the corresponding row of the central char
 (`TauCeti.centralCharacterRow_characterTable`), which is why the specification of a character table
 asks for its normalized rows, rather than its rows, to be eigenrows of the class-multiplication
 matrices. -/
-noncomputable def centralCharacterRow
-    (M : Matrix (Fin (Nat.card (ConjClasses G))) (ConjClasses G) k)
-    (i : Fin (Nat.card (ConjClasses G))) (C : ConjClasses G) : k :=
+noncomputable def centralCharacterRow (M : Matrix ι (ConjClasses G) k) (i : ι) (C : ConjClasses G) :
+    k :=
   (Nat.card C.carrier : k) * M i C / M i (ConjClasses.mk 1)
 
 /-- The normalized row, unfolded. The definition is not `@[expose]`d, so this is how it unfolds
 outside this file; it is deliberately not `@[simp]`, because the specification and its consequences
 are stated about `TauCeti.centralCharacterRow` as a whole, and unfolding it would take them out of
 the shape in which the eigenrow API applies. -/
-theorem centralCharacterRow_apply
-    (M : Matrix (Fin (Nat.card (ConjClasses G))) (ConjClasses G) k)
-    (i : Fin (Nat.card (ConjClasses G))) (C : ConjClasses G) :
+theorem centralCharacterRow_apply (M : Matrix ι (ConjClasses G) k) (i : ι) (C : ConjClasses G) :
     centralCharacterRow M i C = (Nat.card C.carrier : k) * M i C / M i (ConjClasses.mk 1) :=
   (rfl)
 
@@ -127,12 +126,12 @@ theorem centralCharacterRow_mul (hM : M i (ConjClasses.mk 1) ≠ 0) (C : ConjCla
     centralCharacterRow M i C * M i (ConjClasses.mk 1) = (Nat.card C.carrier : k) * M i C := by
   rw [centralCharacterRow_apply, div_mul_cancel₀ _ hM]
 
-/-- Permuting the rows of a matrix permutes its normalized rows. -/
+/-- Reindexing the rows of a matrix reindexes its normalized rows; in particular a permutation of
+the rows permutes them. -/
 @[simp]
-theorem centralCharacterRow_submatrix
-    (M : Matrix (Fin (Nat.card (ConjClasses G))) (ConjClasses G) k)
-    (σ : Equiv.Perm (Fin (Nat.card (ConjClasses G)))) (i : Fin (Nat.card (ConjClasses G))) :
-    centralCharacterRow (M.submatrix σ id) i = centralCharacterRow M (σ i) := by
+theorem centralCharacterRow_submatrix {ι' : Type*} (M : Matrix ι (ConjClasses G) k) (e : ι' → ι)
+    (i : ι') :
+    centralCharacterRow (M.submatrix e id) i = centralCharacterRow M (e i) := by
   funext C
   rw [centralCharacterRow_apply, centralCharacterRow_apply, Matrix.submatrix_apply,
     Matrix.submatrix_apply, id_eq, id_eq]
@@ -142,7 +141,8 @@ variable [Fintype G] [DecidableEq G] [IsAlgClosed k] [Invertible (Nat.card G : k
 /-- **The normalized rows of the character table are the rows of the central character table.**
 Both say `ω_i(K_C) = |C| · χᵢ(g_C) / χᵢ(1)`; the hypothesis is that the degree `χᵢ(1)` does not
 vanish in `k`, which holds automatically in characteristic zero. -/
-theorem centralCharacterRow_characterTable (hdeg : (characterDegree k i : k) ≠ 0) :
+theorem centralCharacterRow_characterTable {i : Fin (Nat.card (ConjClasses G))}
+    (hdeg : (characterDegree k i : k) ≠ 0) :
     centralCharacterRow (characterTable k G) i = centralCharacterTable k G i := by
   funext C
   rw [centralCharacterRow_apply, characterTable_one, centralCharacterTable_eq_div i hdeg C]
