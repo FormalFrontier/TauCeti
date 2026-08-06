@@ -6,7 +6,6 @@ module
 
 public import Mathlib.RingTheory.Ideal.Span
 public import TauCeti.RingTheory.KrullSchmidt.Indecomposable
-public import TauCeti.RingTheory.LocalRing.Basic
 
 /-!
 # Primitive idempotents
@@ -150,17 +149,16 @@ theorem mem_span_singleton_iff_mul_eq_self (he : IsIdempotentElem e) {x : A} :
   obtain ⟨a, rfl⟩ := Ideal.mem_span_singleton'.1 hx
   rw [mul_assoc, he.eq]
 
-/-- The generator of the left ideal it generates, as an element of that ideal. The body is
-`@[expose]`d only because the characteristic lemma `TauCeti.coe_spanSingletonGenerator` below is
-proved by `rfl` and is exported; consumers go through that lemma and
+/-- The generator of the left ideal it generates, as an element of that ideal. The body is not
+exposed; consumers go through `TauCeti.coe_spanSingletonGenerator` and
 `TauCeti.smul_spanSingletonGenerator`, never through the subtype. -/
-@[expose] def spanSingletonGenerator (e : A) : (Ideal.span {e} : Ideal A) :=
+def spanSingletonGenerator (e : A) : (Ideal.span {e} : Ideal A) :=
   ⟨e, Ideal.mem_span_singleton_self e⟩
 
 /-- The generator of `Ae`, read in `A`, is `e`. -/
 @[simp]
 theorem coe_spanSingletonGenerator (e : A) :
-    (spanSingletonGenerator e : A) = e := rfl
+    (spanSingletonGenerator e : A) = e := (rfl)
 
 /-- Every element of `Ae` is the generator scaled by itself. -/
 @[simp]

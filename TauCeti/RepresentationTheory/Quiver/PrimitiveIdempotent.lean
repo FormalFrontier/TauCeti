@@ -58,7 +58,7 @@ the corner ring `eᵥ kQ eᵥ` is `c • eᵥ` for a scalar `c`, and idempotence
 hence `c = 0` or `c = 1`, the coefficients having no zero divisors. -/
 theorem isPrimitiveIdempotent_vertexIdempotent (h : Quiver.IsAcyclic Q) (v : Q) :
     IsPrimitiveIdempotent (vertexIdempotent k v : pathAlgebra k Q) := by
-  refine isPrimitiveIdempotent_of_forall (isIdempotentElem_vertexIdempotent v)
+  refine isPrimitiveIdempotent_of_forall (vertexIdempotent_mul_self v)
     (vertexIdempotent_ne_zero v) fun f hf hef hfe ↦ ?_
   set c := (pathAlgebraBasis k Q).repr f ⟨v, v, Quiver.Path.nil⟩ with hc
   have hfeq : f = c • (vertexIdempotent k v : pathAlgebra k Q) := by

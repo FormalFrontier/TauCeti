@@ -45,7 +45,7 @@ idempotents `e`, so left multiplication by `α` carries the `i`-component of a l
 * `TauCeti.PathAlgebra.single_mul_single`: the defining product of two basis paths.
 * `TauCeti.PathAlgebra.one_def`: the vertex idempotents sum to `1`; they are
   orthogonal by `TauCeti.PathAlgebra.vertexIdempotent_mul_vertexIdempotent_of_ne`, idempotent by
-  `TauCeti.PathAlgebra.isIdempotentElem_vertexIdempotent` and nonzero by
+  `TauCeti.PathAlgebra.vertexIdempotent_mul_self` and nonzero by
   `TauCeti.PathAlgebra.vertexIdempotent_ne_zero`.
 * `TauCeti.module_finite_pathAlgebra` and `TauCeti.finrank_pathAlgebra`: `kQ` is a free module of
   rank the number of paths of `Q`, with `TauCeti.pathAlgebraBasis_repr_single` reading off the
@@ -569,11 +569,6 @@ theorem vertexIdempotent_ne_zero [Nontrivial k] (v : Q) :
     (vertexIdempotent k v : pathAlgebra k Q) ≠ 0 := by
   rw [vertexIdempotent_eq_single, single_def]
   exact Finsupp.single_ne_zero.2 one_ne_zero
-
-/-- The vertex idempotents are idempotent elements. -/
-theorem isIdempotentElem_vertexIdempotent (v : Q) :
-    IsIdempotentElem (vertexIdempotent k v : pathAlgebra k Q) :=
-  vertexIdempotent_mul_self v
 
 /-! ### The unit -/
 

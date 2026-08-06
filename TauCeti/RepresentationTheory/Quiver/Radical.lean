@@ -8,7 +8,6 @@ public import Mathlib.RingTheory.Ideal.Maximal
 public import Mathlib.RingTheory.Jacobson.Radical
 public import Mathlib.RingTheory.Nilpotent.Basic
 public import TauCeti.RepresentationTheory.Quiver.Acyclic.PathAlgebra
-public import TauCeti.RepresentationTheory.Quiver.PathAlgebra
 
 /-!
 # The arrow ideal of a path algebra, and its radical
