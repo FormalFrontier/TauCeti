@@ -32,8 +32,6 @@ unitarian trick in `TauCeti.RepresentationTheory.Compact.Unitarizable` is there 
 
 ## Main results
 
-* `TauCeti.ContRepresentation.IsUnitary.sup_orthogonalSubrepresentation_inf`: a subrepresentation
-  together with its orthogonal complement inside a larger one recovers the larger one.
 * `TauCeti.ContRepresentation.IsUnitary.exists_orthogonal_irreducible_decomposition`: complete
   reducibility in orthogonal internal form, with the dimension count that goes with it.
 
@@ -77,21 +75,6 @@ namespace IsUnitary
 
 variable {𝕜 G V : Type*} [RCLike 𝕜] [Group G] [NormedAddCommGroup V] [InnerProductSpace 𝕜 V]
   {π : ContRepresentation 𝕜 G V}
-
-/-- A subrepresentation, together with its orthogonal complement taken inside a larger
-subrepresentation, recovers that larger subrepresentation. This is
-`Submodule.sup_orthogonal_inf_of_hasOrthogonalProjection` read in the lattice of
-subrepresentations, which is legitimate because unitarity makes the orthogonal complement
-invariant. -/
-theorem sup_orthogonalSubrepresentation_inf (hπ : IsUnitary π)
-    {σ τ : Subrepresentation π.toRepresentation} (h : σ ≤ τ)
-    [σ.toSubmodule.HasOrthogonalProjection] :
-    σ ⊔ hπ.orthogonalSubrepresentation σ ⊓ τ = τ := by
-  refine Subrepresentation.toSubmodule_injective ?_
-  rw [Subrepresentation.toSubmodule_sup, Subrepresentation.toSubmodule_inf,
-    toSubmodule_orthogonalSubrepresentation]
-  exact Submodule.sup_orthogonal_inf_of_hasOrthogonalProjection
-    (Subrepresentation.toSubmodule_le_toSubmodule.mpr h)
 
 section FiniteDimensional
 
