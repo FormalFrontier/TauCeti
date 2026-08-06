@@ -20,30 +20,23 @@ segment `[0, w]` in terms of the two data it can measure — the direction of `m
 the two norms. This file supplies that reading, together with its mirror in which the origin sits
 in the *middle* of the segment rather than at an end, and the inner-product form of both.
 
-Each criterion is stated at the generality its proof uses. The origin-in-the-middle one needs no
-norm at all, and is stated for a module over a linearly ordered field; the origin-at-an-end one
-compares two norms, and is stated for a real normed space; the inner-product forms replace
-`SameRay` by the equality case of the Cauchy--Schwarz inequality, and are stated for a real inner
-product space.
+Each criterion is stated at the generality its proof uses. The origin-at-an-end one compares two
+norms, and is stated for a real normed space; the inner-product forms replace `SameRay` by the
+equality case of the Cauchy--Schwarz inequality, and are stated for a real inner product space.
 
-The bridge between the ray forms and the inner-product forms is
-`TauCeti.sameRay_iff_real_inner_eq_norm_mul`: two vectors of a real inner product space lie on a
-common ray exactly when Cauchy--Schwarz is an equality for them. Mathlib has both halves of it —
-`inner_eq_norm_mul_iff_real : ⟪x, y⟫_ℝ = ‖x‖ * ‖y‖ ↔ ‖y‖ • x = ‖x‖ • y` and
-`sameRay_iff_norm_smul_eq : SameRay ℝ x y ↔ ‖x‖ • y = ‖y‖ • x` — but not the composite, which is
-what makes the geometric content visible. No strict convexity is involved: the alternative route
-through `sameRay_iff_norm_add` would need a `StrictConvexSpace ℝ E` instance, whereas
-`sameRay_iff_norm_smul_eq` and `inner_eq_norm_mul_iff_real` hold in any normed, respectively inner
-product, space.
+The bridge between the ray form and the inner-product forms is Mathlib's pair
+`sameRay_iff_norm_smul_eq : SameRay ℝ x y ↔ ‖x‖ • y = ‖y‖ • x` and
+`inner_eq_norm_mul_iff_real : ⟪x, y⟫_ℝ = ‖x‖ * ‖y‖ ↔ ‖y‖ • x = ‖x‖ • y`, used directly: together
+they say that two vectors lie on a common ray exactly when Cauchy--Schwarz is an equality for them.
+No strict convexity is involved: the alternative route through `sameRay_iff_norm_add` would need a
+`StrictConvexSpace ℝ E` instance, whereas `sameRay_iff_norm_smul_eq` and
+`inner_eq_norm_mul_iff_real` hold in any normed, respectively inner product, space.
 
 ## Main results
 
-* `TauCeti.zero_mem_segment_iff_sameRay_neg` — `0 ∈ [x -[𝕜] y] ↔ SameRay 𝕜 x (-y)`.
 * `TauCeti.mem_segment_zero_left_iff_sameRay` —
   `m ∈ [0 -[ℝ] w] ↔ SameRay ℝ m w ∧ ‖m‖ ≤ ‖w‖`. Both conjuncts are needed.
 * `TauCeti.eq_of_mem_segment_zero_left_of_norm_eq` — the norm separates the points of `[0, w]`.
-* `TauCeti.sameRay_iff_real_inner_eq_norm_mul` — the ray predicate as the equality case of
-  Cauchy--Schwarz.
 * `TauCeti.mem_segment_zero_left_iff_real_inner_eq_norm_mul` and
   `TauCeti.zero_mem_segment_iff_real_inner_eq_neg_norm_mul` — the two criteria in a real inner
   product space.
@@ -67,22 +60,6 @@ open RealInnerProductSpace Set
 open scoped Convex
 
 /-! ### Segments and rays -/
-
-section Module
-
-variable {𝕜 E : Type*} [Field 𝕜] [LinearOrder 𝕜] [IsStrictOrderedRing 𝕜] [AddCommGroup E]
-  [Module 𝕜 E] {x y : E}
-
-/-- **The origin lies between two points exactly when they point in opposite directions.** This is
-`mem_segment_iff_sameRay` evaluated at the point `0`, with the resulting `SameRay 𝕜 (-x) y`
-rewritten by `sameRay_neg_swap`.
-
-No nondegeneracy is needed: if `x = 0` then `0` is an endpoint of the segment and `SameRay 𝕜 0 (-y)`
-holds, and symmetrically for `y`. -/
-theorem zero_mem_segment_iff_sameRay_neg : (0 : E) ∈ [x -[𝕜] y] ↔ SameRay 𝕜 x (-y) := by
-  rw [mem_segment_iff_sameRay, zero_sub, sub_zero, sameRay_neg_swap]
-
-end Module
 
 section Normed
 
@@ -132,25 +109,27 @@ section InnerProduct
 
 variable {F : Type*} [NormedAddCommGroup F] [InnerProductSpace ℝ F] {x y : F}
 
-/-- **Two vectors lie on a common ray exactly when Cauchy–Schwarz is an equality for them.** Both
-sides are Mathlib's, in the shapes `sameRay_iff_norm_smul_eq` and `inner_eq_norm_mul_iff_real`
-give them; only the composite is new. -/
-theorem sameRay_iff_real_inner_eq_norm_mul : SameRay ℝ x y ↔ ⟪x, y⟫ = ‖x‖ * ‖y‖ := by
-  rw [sameRay_iff_norm_smul_eq, inner_eq_norm_mul_iff_real, eq_comm]
-
 /-- **Membership in the segment from the origin, read off the inner product.** The inner-product
-form of `TauCeti.mem_segment_zero_left_iff_sameRay`. -/
+form of `TauCeti.mem_segment_zero_left_iff_sameRay`: by `sameRay_iff_norm_smul_eq` and
+`inner_eq_norm_mul_iff_real`, two vectors lie on a common ray exactly when Cauchy–Schwarz is an
+equality for them. -/
 theorem mem_segment_zero_left_iff_real_inner_eq_norm_mul :
     x ∈ [(0 : F) -[ℝ] y] ↔ ⟪x, y⟫ = ‖x‖ * ‖y‖ ∧ ‖x‖ ≤ ‖y‖ := by
-  rw [mem_segment_zero_left_iff_sameRay, sameRay_iff_real_inner_eq_norm_mul]
+  rw [mem_segment_zero_left_iff_sameRay, sameRay_iff_norm_smul_eq, inner_eq_norm_mul_iff_real,
+    eq_comm]
 
-/-- **The origin lies between two vectors exactly when their inner product is minimal.** The
-inner-product form of `TauCeti.zero_mem_segment_iff_sameRay_neg`: Cauchy–Schwarz is an equality at
-the other end of its range, `⟪x, y⟫_ℝ = -(‖x‖ * ‖y‖)`. -/
+/-- **The origin lies between two vectors exactly when their inner product is minimal.** The mirror
+of `TauCeti.mem_segment_zero_left_iff_real_inner_eq_norm_mul`, with the origin in the middle of the
+segment rather than at an end: `mem_segment_iff_sameRay` at the point `0` says that `x` and `-y`
+lie on a common ray, so Cauchy–Schwarz is an equality at the other end of its range,
+`⟪x, y⟫_ℝ = -(‖x‖ * ‖y‖)`.
+
+No nondegeneracy is needed: if `x = 0` then `0` is an endpoint of the segment and both sides hold,
+and symmetrically for `y`. -/
 theorem zero_mem_segment_iff_real_inner_eq_neg_norm_mul :
     (0 : F) ∈ [x -[ℝ] y] ↔ ⟪x, y⟫ = -(‖x‖ * ‖y‖) := by
-  rw [zero_mem_segment_iff_sameRay_neg, sameRay_iff_real_inner_eq_norm_mul, inner_neg_right,
-    norm_neg, neg_eq_iff_eq_neg]
+  rw [mem_segment_iff_sameRay, zero_sub, sub_zero, sameRay_neg_swap, sameRay_iff_norm_smul_eq,
+    eq_comm, ← inner_eq_norm_mul_iff_real, inner_neg_right, norm_neg, neg_eq_iff_eq_neg]
 
 end InnerProduct
 
