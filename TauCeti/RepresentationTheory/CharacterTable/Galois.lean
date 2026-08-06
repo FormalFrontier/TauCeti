@@ -6,8 +6,8 @@ module
 
 public import TauCeti.RepresentationTheory.CharacterTable.ClassFunction
 public import TauCeti.RepresentationTheory.CharacterTable.Values
+public import TauCeti.RingTheory.RootsOfUnity.PrimitiveRoots
 public import Mathlib.FieldTheory.Minpoly.IsConjRoot
-public import Mathlib.NumberTheory.Cyclotomic.CyclotomicCharacter
 
 /-!
 # The Galois action on character values
@@ -21,11 +21,10 @@ action on character values is by power maps of the group element**.
 
 This file proves that identity, first for an arbitrary ring endomorphism of an algebraically closed
 field and then, over `ℂ`, in the form the character-theory roadmap asks for, with the exponent `j`
-supplied by Mathlib's cyclotomic character. Two packagings of that exponent are given, because
-Mathlib supplies two: `IsPrimitiveRoot.autToPow` reads it off a chosen primitive root of unity and
-an algebra automorphism, while `modularCyclotomicCharacter` reads it off a ring automorphism with
-no base ring in sight. Over `ℂ` the two settings agree: every ring homomorphism `ℂ →+* ℂ` is
-automatically `ℚ`-linear, so `ℂ ≃ₐ[ℚ] ℂ` is the group of field automorphisms of `ℂ`.
+supplied by Mathlib's cyclotomic character `IsPrimitiveRoot.autToPow`, which reads it off a chosen
+primitive root of unity and an algebra automorphism. Every ring homomorphism `ℂ →+* ℂ` is
+automatically `ℚ`-linear, so `ℂ ≃ₐ[ℚ] ℂ` is the group of field automorphisms of `ℂ` and no
+generality is lost.
 
 Complex conjugation is the instance `j = n - 1` of all this, and gives back
 `TauCeti.Representation.conj_char_eq_char_inv`, `conj (χ g) = χ g⁻¹`.
@@ -45,15 +44,13 @@ consumes once such a `σ` is in hand.
 * `TauCeti.Representation.map_character_eq_character_pow`: if `σ` raises every `n`-th root of unity
   to the `j`-th power and `g ^ n = 1`, then `σ (χ(g)) = χ(g ^ j)`. The variant
   `TauCeti.Representation.map_character_eq_character_pow_of_isPrimitiveRoot` witnesses the power on
-  a single primitive root of unity, and `TauCeti.Representation.map_comp_character` states the
-  identity as an equality of functions on the group.
-* `TauCeti.Representation.character_comp_pow_mem_classFunction`: the twisted function
-  `g ↦ χ(g ^ j)` is again a class function, so the Galois twist stays in `ClassFunction k G`.
+  a single primitive root of unity.
+* `TauCeti.Representation.map_ofCharacter_eq_powMap`: on a group of exponent dividing `n` the
+  Galois twist `σ ∘ χ` is the power-map twist `TauCeti.ClassFunction.powMap j` of the class
+  function of `χ`, so the twist is an operation on `ClassFunction k G`.
 * `TauCeti.FDRep.algEquiv_character_eq_character_pow`: over `ℂ`, a field automorphism `f` of `ℂ`
   sends `χ(g)` to `χ(g ^ j)`, with `j` the cyclotomic exponent `IsPrimitiveRoot.autToPow` attaches
   to `f`.
-* `TauCeti.FDRep.ringEquiv_character_eq_character_pow`: the same statement with the exponent read
-  off `modularCyclotomicCharacter` instead.
 * `TauCeti.FDRep.isConjRoot_character_pow`: `χ(g)` and `χ(g ^ j)` are conjugate over `ℚ`.
 * `TauCeti.FDRep.character_pow_eq_character_of_mem_range`: a rational character value is unchanged
   by the power maps that automorphisms of `ℂ` realize.
@@ -73,20 +70,6 @@ namespace TauCeti
 open Module Polynomial
 
 universe u v w
-
-section RootsOfUnity
-
-variable {R : Type u} [CommRing R] [IsDomain R]
-
-/-- A ring homomorphism that raises one primitive `n`-th root of unity to the `j`-th power raises
-every `n`-th root of unity to the `j`-th power, since the `n`-th roots of unity are exactly the
-powers of a primitive one. -/
-theorem IsPrimitiveRoot.map_eq_pow {n j : ℕ} [NeZero n] {ζ : R} (hζ : IsPrimitiveRoot ζ n)
-    (σ : R →+* R) (hσ : σ ζ = ζ ^ j) {μ : R} (hμ : μ ^ n = 1) : σ μ = μ ^ j := by
-  obtain ⟨i, -, rfl⟩ := hζ.eq_pow_of_pow_eq_one hμ
-  rw [map_pow, hσ, ← pow_mul, ← pow_mul, Nat.mul_comm]
-
-end RootsOfUnity
 
 namespace Representation
 
@@ -113,28 +96,24 @@ theorem map_character_eq_character_pow_of_isPrimitiveRoot (ρ : Representation k
   Representation.map_character_eq_character_pow ρ hn hg σ
     fun _ hμ => IsPrimitiveRoot.map_eq_pow hζ σ hσ hμ
 
-/-- **The Galois twist of a character is its twist by a power map**, as functions on a group of
-exponent dividing `n`: `σ ∘ χ = χ ∘ (· ^ j)`. -/
-theorem map_comp_character (ρ : Representation k G V) {n j : ℕ} (hn : (n : k) ≠ 0)
-    (hG : ∀ g : G, g ^ n = 1) (σ : k →+* k) (hσ : ∀ μ : k, μ ^ n = 1 → σ μ = μ ^ j) :
-    σ ∘ ρ.character = fun g => ρ.character (g ^ j) :=
-  funext fun g => Representation.map_character_eq_character_pow ρ hn (hG g) σ hσ
-
 end Representation
 
 section ClassFunction
 
-variable {k : Type u} {G : Type v} {V : Type w} [Field k] [Group G] [AddCommGroup V] [Module k V]
+variable {k : Type u} {G : Type v} {V : Type w} [Field k] [IsAlgClosed k] [Group G]
+  [AddCommGroup V] [Module k V] [FiniteDimensional k V]
 
-/-- **The power-map twist of a character is again a class function**, because a power of a
-conjugate is the conjugate of that power. Together with
-`TauCeti.Representation.map_comp_character` this places the Galois twist `σ ∘ χ` of a character in
-`ClassFunction k G`, where the character itself lives. -/
-theorem Representation.character_comp_pow_mem_classFunction (ρ : Representation k G V) (j : ℕ) :
-    (fun g => ρ.character (g ^ j)) ∈ ClassFunction k G :=
-  ClassFunction.mem_iff.mpr fun g h => by
-    show ρ.character ((h * g * h⁻¹) ^ j) = ρ.character (g ^ j)
-    rw [conj_pow, _root_.Representation.char_conj]
+/-- **The Galois twist of a character is the power-map twist of its class function.** On a group
+of exponent dividing `n`, the composite `σ ∘ χ` is `TauCeti.ClassFunction.powMap j` applied to the
+class function of `χ`. This is the form in which a Galois group acts on `ClassFunction k G`. -/
+theorem Representation.map_ofCharacter_eq_powMap (ρ : Representation k G V) {n j : ℕ}
+    (hn : (n : k) ≠ 0) (hG : ∀ g : G, g ^ n = 1) (σ : k →+* k)
+    (hσ : ∀ μ : k, μ ^ n = 1 → σ μ = μ ^ j) :
+    σ ∘ (ClassFunction.ofCharacter ρ).1 =
+      (ClassFunction.powMap j (ClassFunction.ofCharacter ρ)).1 := by
+  funext g
+  simpa only [Function.comp_apply, ClassFunction.powMap_apply, ClassFunction.ofCharacter_apply]
+    using Representation.map_character_eq_character_pow ρ hn (hG g) σ hσ
 
 end ClassFunction
 
@@ -159,18 +138,6 @@ theorem algEquiv_character_eq_character_pow (X : FDRep ℂ G) {n : ℕ} [NeZero 
     f (X.character g) = X.character (g ^ ((hζ.autToPow ℚ f : ZMod n).val)) :=
   FDRep.map_character_eq_character_pow X (NeZero.ne n) hg f.toAlgHom.toRingHom
     fun _ hμ => IsPrimitiveRoot.map_eq_pow hζ _ (hζ.autToPow_spec ℚ f).symm hμ
-
-/-- **The Galois action on complex character values is by power maps**, with the power supplied by
-`modularCyclotomicCharacter`, which reads the action of a ring automorphism of `ℂ` on the `n`-th
-roots of unity directly, with no base ring. -/
-theorem ringEquiv_character_eq_character_pow (X : FDRep ℂ G) {n : ℕ} [NeZero n] {ζ : ℂ}
-    (hζ : IsPrimitiveRoot ζ n) {g : G} (hg : g ^ n = 1) (σ : ℂ ≃+* ℂ) :
-    σ (X.character g) =
-      X.character (g ^ ((modularCyclotomicCharacter ℂ hζ.card_rootsOfUnity σ : ZMod n).val)) := by
-  have hζ' := modularCyclotomicCharacter.spec ℂ hζ.card_rootsOfUnity σ hζ.toRootsOfUnity.2
-  rw [hζ.val_toRootsOfUnity_coe] at hζ'
-  exact FDRep.map_character_eq_character_pow X (NeZero.ne n) hg σ.toRingHom
-    fun _ hμ => IsPrimitiveRoot.map_eq_pow hζ _ hζ' hμ
 
 /-- **A character value and its power-map twist are conjugate algebraic numbers**: `χ(g)` and
 `χ(g ^ j)` have the same minimal polynomial over `ℚ`, being images of one another under a field

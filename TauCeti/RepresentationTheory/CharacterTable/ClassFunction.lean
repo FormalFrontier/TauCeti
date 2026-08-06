@@ -13,9 +13,9 @@ public import Mathlib.RepresentationTheory.Character
 
 This file defines functions on a group that are constant on conjugacy classes. It identifies
 their module with the module of functions on `ConjClasses G`, computes its dimension for finite
-groups, pulls class functions back along a group homomorphism, shows that characters of
-representations are class functions, and evaluates a sum over a finite group one conjugacy class
-at a time.
+groups, pulls class functions back along a group homomorphism, twists them by a power map of the
+group element, shows that characters of representations are class functions, and evaluates a sum
+over a finite group one conjugacy class at a time.
 
 The indicator function of a conjugacy class, `TauCeti.ClassFunction.classIndicator`, is the class
 function pulled back from the indicator of a single point of `ConjClasses G`; pairing a class
@@ -132,6 +132,20 @@ each factor in turn. -/
 @[simp]
 theorem comap_comp {H : Type w} {J : Type w'} [Group H] [Group J] (φ : H →* G) (ψ : J →* H) :
     comap (k := k) (φ.comp ψ) = (comap ψ).comp (comap φ) :=
+  (rfl)
+
+/-- Twist a class function by a power map of the group element, `f ↦ (g ↦ f (g ^ j))`.  This is
+again a class function because a power of a conjugate is the conjugate of that power, and it
+depends linearly on `f`.  The Galois action on character values is by these twists. -/
+def powMap (j : ℕ) : ClassFunction k G →ₗ[k] ClassFunction k G where
+  toFun f := ⟨fun g => f.1 (g ^ j), fun g h => by simpa only [conj_pow] using f.2 (g ^ j) h⟩
+  map_add' _ _ := rfl
+  map_smul' _ _ := rfl
+
+/-- The power-map twist evaluates the class function at the power of the group element. -/
+@[simp]
+theorem powMap_apply (j : ℕ) (f : ClassFunction k G) (g : G) :
+    (powMap j f).1 g = f.1 (g ^ j) :=
   (rfl)
 
 /-- Class functions on `G` are linearly equivalent to functions on its conjugacy classes. -/
