@@ -5,32 +5,26 @@ Authors: Claude
 -/
 module
 
-public import Mathlib.Data.Fintype.Prod
 public import TauCeti.Combinatorics.Brauer.Diagram
 
 /-!
 # The propagating number of a Brauer diagram
 
 The **propagating number** of a Brauer diagram is the number of its through strands, the arcs
-joining a bottom point to a top point. It is the statistic that stratifies the Brauer algebra:
-composing diagrams can destroy through strands but never create them, so the diagrams of
-propagating number at most `r` span an ideal, and these ideals are the chain underlying the cell
-structure of the algebra.
+joining a bottom point to a top point.
 
-This file introduces the four boundary sets of a diagram -- the bottom and top endpoints of its
-through strands, the bottom endpoints of its caps and the top endpoints of its cups -- defines
-`propagatingNumber` as the cardinality of the first of them, and establishes the basic
-constraints on it. Following an arc matches the bottom endpoints of the through strands with
-their top endpoints, so a diagram has as many caps as cups
-(`BrauerDiagram.card_bottomCap_eq_card_topCup`); the caps in turn match the remaining bottom
-points among themselves, so there is an even number of them and the propagating number has the
-same parity as the number of strands (`BrauerDiagram.propagatingNumber_mod_two`).
-
-The two extreme values are identified with the two families of diagrams that carry no
-horizontal arc at all and, at the opposite end, nothing else: the diagrams of propagating number
-`k` are the `k !` permutation diagrams, and the diagrams of propagating number `0` are the pairs
-consisting of a perfect matching of the bottom points and a perfect matching of the top points,
-so on `2 * m` strands there are `((2 * m - 1)‼) ^ 2` of them.
+This file sorts the boundary points of a diagram by the type of arc they carry -- the bottom and
+top endpoints of its through strands, the bottom endpoints of its caps and the top endpoints of
+its cups -- defines `propagatingNumber` as the cardinality of the first of these sets, and
+establishes the basic constraints on it. Following an arc matches the bottom endpoints of the
+through strands with their top endpoints (`BrauerDiagram.throughEquiv`), so a diagram has as
+many caps as cups (`BrauerDiagram.card_bottomCap_eq_card_topCup`); the caps in turn match the
+remaining bottom points among themselves (`BrauerDiagram.capMatching`), so there is an even
+number of them and the propagating number has the same parity as the number of strands
+(`BrauerDiagram.propagatingNumber_mod_two`). The two extreme values are the two ways a diagram
+can carry no horizontal arc at all and, at the opposite end, nothing else
+(`BrauerDiagram.propagatingNumber_eq_card_iff` and
+`BrauerDiagram.propagatingNumber_eq_zero_iff`).
 
 ## Main definitions
 
@@ -40,17 +34,12 @@ so on `2 * m` strands there are `((2 * m - 1)‼) ^ 2` of them.
   endpoint.
 * `TauCeti.BrauerDiagram.propagatingNumber`: the number of through strands.
 * `TauCeti.BrauerDiagram.capMatching`: the perfect matching of the capped bottom points.
-* `TauCeti.propagatingNumberZeroEquiv`: the diagrams with no through strand are the pairs of a
-  matching of the bottom points and a matching of the top points.
 
 ## Main results
 
 * `TauCeti.BrauerDiagram.card_bottomCap_eq_card_topCup`: a diagram has as many caps as cups.
 * `TauCeti.BrauerDiagram.propagatingNumber_mod_two`: the propagating number of a diagram on `k`
   strands has the same parity as `k`.
-* `TauCeti.card_propagatingNumber_eq_card`: there are `k !` diagrams of propagating number `k`.
-* `TauCeti.card_propagatingNumber_eq_zero`: there are `((2 * m - 1)‼) ^ 2` diagrams on `2 * m`
-  strands with no through strand.
 
 ## References
 
@@ -61,8 +50,6 @@ so on `2 * m` strands there are `((2 * m - 1)‼) ^ 2` of them.
 -/
 
 public section
-
-open scoped Nat
 
 namespace TauCeti
 
@@ -147,21 +134,16 @@ theorem card_bottomCap_eq_card_topCup : D.bottomCap.card = D.topCup.card := by
 @[expose]
 def propagatingNumber : ℕ := D.bottomThrough.card
 
-theorem propagatingNumber_eq_card_bottomThrough :
-    D.propagatingNumber = D.bottomThrough.card := rfl
-
 theorem propagatingNumber_eq_card_topThrough : D.propagatingNumber = D.topThrough.card :=
   D.card_bottomThrough_eq_card_topThrough
 
 /-- The through strands are at most as many as the strands. -/
 theorem propagatingNumber_le : D.propagatingNumber ≤ k := by
-  rw [propagatingNumber_eq_card_bottomThrough]
-  simpa using Finset.card_le_univ D.bottomThrough
+  simpa [propagatingNumber] using Finset.card_le_univ D.bottomThrough
 
 /-- Every bottom point is either the endpoint of a through strand or the endpoint of a cap. -/
 theorem propagatingNumber_add_card_bottomCap : D.propagatingNumber + D.bottomCap.card = k := by
-  rw [propagatingNumber_eq_card_bottomThrough, bottomCap_eq_compl, Finset.card_add_card_compl,
-    Fintype.card_fin]
+  rw [propagatingNumber, bottomCap_eq_compl, Finset.card_add_card_compl, Fintype.card_fin]
 
 /-- The map sending a capped bottom point to the other end of its cap. -/
 private def capFun (i : {i : Fin k // D.IsCap (Sum.inl i)}) : {i : Fin k // D.IsCap (Sum.inl i)} :=
@@ -203,8 +185,7 @@ theorem propagatingNumber_eq_card_iff : D.propagatingNumber = k ↔ ∀ x, D.IsT
   constructor
   · intro h x
     have hb : D.bottomThrough = Finset.univ :=
-      Finset.eq_univ_of_card _ (by
-        rw [← propagatingNumber_eq_card_bottomThrough, h, Fintype.card_fin])
+      Finset.eq_univ_of_card _ (by rw [← propagatingNumber, h, Fintype.card_fin])
     have ht : D.topThrough = Finset.univ :=
       Finset.eq_univ_of_card _ (by
         rw [← propagatingNumber_eq_card_topThrough, h, Fintype.card_fin])
@@ -212,8 +193,8 @@ theorem propagatingNumber_eq_card_iff : D.propagatingNumber = k ↔ ∀ x, D.IsT
     · exact (D.mem_bottomThrough).mp (hb ▸ Finset.mem_univ i)
     · exact (D.mem_topThrough).mp (ht ▸ Finset.mem_univ j)
   · intro h
-    rw [propagatingNumber_eq_card_bottomThrough,
-      Finset.eq_univ_of_forall fun i => (D.mem_bottomThrough).mpr (h _), Finset.card_fin]
+    rw [propagatingNumber, Finset.eq_univ_of_forall fun i => (D.mem_bottomThrough).mpr (h _),
+      Finset.card_fin]
 
 @[simp]
 theorem propagatingNumber_permToBrauer (σ : Equiv.Perm (Fin k)) :
@@ -224,26 +205,15 @@ theorem propagatingNumber_permToBrauer (σ : Equiv.Perm (Fin k)) :
 theorem propagatingNumber_eq_zero_iff : D.propagatingNumber = 0 ↔ ∀ x, ¬D.IsThrough x := by
   constructor
   · intro h x
-    have hb : D.bottomThrough = ∅ :=
-      Finset.card_eq_zero.mp (by rw [← propagatingNumber_eq_card_bottomThrough, h])
+    have hb : D.bottomThrough = ∅ := Finset.card_eq_zero.mp (by rw [← propagatingNumber, h])
     have ht : D.topThrough = ∅ :=
       Finset.card_eq_zero.mp (by rw [← propagatingNumber_eq_card_topThrough, h])
     rcases x with i | j
     · exact fun hi => (Finset.eq_empty_iff_forall_notMem.mp hb i) ((D.mem_bottomThrough).mpr hi)
     · exact fun hj => (Finset.eq_empty_iff_forall_notMem.mp ht j) ((D.mem_topThrough).mpr hj)
   · intro h
-    rw [propagatingNumber_eq_card_bottomThrough, Finset.card_eq_zero,
-      Finset.eq_empty_iff_forall_notMem]
+    rw [propagatingNumber, Finset.card_eq_zero, Finset.eq_empty_iff_forall_notMem]
     exact fun i hi => h _ ((D.mem_bottomThrough).mp hi)
-
-/-- A diagram propagates no strand exactly when it is split: no arc crosses between the bottom
-and the top boundary. -/
-theorem propagatingNumber_eq_zero_iff_isSplit :
-    D.propagatingNumber = 0 ↔ PerfectMatching.IsSplit D := by
-  rw [propagatingNumber_eq_zero_iff, PerfectMatching.isSplit_iff]
-  refine forall_congr' fun x => ?_
-  rw [D.isThrough_def x]
-  exact not_not
 
 /-- Only an even number of strands admits a diagram with no through strand. -/
 theorem even_of_propagatingNumber_eq_zero (h : D.propagatingNumber = 0) : Even k := by
@@ -252,36 +222,5 @@ theorem even_of_propagatingNumber_eq_zero (h : D.propagatingNumber = 0) : Even k
   exact ⟨r, by omega⟩
 
 end BrauerDiagram
-
-/-- **The diagrams that propagate every strand are the permutation diagrams**, so there are `k !`
-of them. -/
-theorem card_propagatingNumber_eq_card (k : ℕ) :
-    Fintype.card {D : BrauerDiagram k // D.propagatingNumber = k} = k ! := by
-  rw [← card_brauerDiagram_forall_isThrough k]
-  exact Fintype.card_congr
-    (Equiv.subtypeEquivRight fun D => BrauerDiagram.propagatingNumber_eq_card_iff D)
-
-/-- **The diagrams with no through strand are the pairs consisting of a perfect matching of the
-bottom points and a perfect matching of the top points.** -/
-def propagatingNumberZeroEquiv (k : ℕ) :
-    {D : BrauerDiagram k // D.propagatingNumber = 0} ≃
-      PerfectMatching (Fin k) × PerfectMatching (Fin k) :=
-  (Equiv.subtypeEquivRight fun D => BrauerDiagram.propagatingNumber_eq_zero_iff_isSplit D).trans
-    PerfectMatching.sumEquiv
-
-/-- **The number of Brauer diagrams with no through strand.** On `2 * m` strands there are
-`((2 * m - 1)‼) ^ 2` of them: one perfect matching of the bottom points and one of the top
-points, chosen independently. -/
-theorem card_propagatingNumber_eq_zero (m : ℕ) :
-    Fintype.card {D : BrauerDiagram (2 * m) // D.propagatingNumber = 0} = ((2 * m - 1)‼) ^ 2 := by
-  rw [Fintype.card_congr (propagatingNumberZeroEquiv (2 * m)), Fintype.card_prod,
-    card_perfectMatching (Fin (2 * m)) (Fintype.card_fin _), sq]
-
--- On two strands the cap-cup diagram is the only one with no through strand, and the two
--- permutation diagrams are the other two of the three diagrams in all.
-example : Fintype.card {D : BrauerDiagram 2 // D.propagatingNumber = 0} = 1 := by
-  have h := card_propagatingNumber_eq_zero 1
-  norm_num at h
-  exact h
 
 end TauCeti
