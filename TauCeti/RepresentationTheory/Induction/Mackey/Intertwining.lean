@@ -87,11 +87,7 @@ open scoped Classical in
 /-- **The intertwining-number formula for class functions.**  The pairing over `G` of a class
 function induced from `H` with one induced from `K` is the sum, over the double cosets
 `H \ G / K`, of the pairings over the Mackey subgroup `H ⊓ sKs⁻¹` of the conjugate `{}^s h` with
-the restriction of `f`.
-
-Both applications of Frobenius reciprocity are `TauCeti.characterPairing_ind`: the first moves the
-pairing from `G` down to `H`, the second moves each Mackey summand from `H` down to its Mackey
-subgroup. -/
+the restriction of `f`. -/
 theorem characterPairing_ind_ind_mackey [Fintype G] (hG : IsUnit (Nat.card G : k))
     (f : ClassFunction k H) (h : ClassFunction k K) :
     ClassFunction.characterPairing (ClassFunction.ind H f) (ClassFunction.ind K h) =
@@ -101,6 +97,9 @@ theorem characterPairing_ind_ind_mackey [Fintype G] (hG : IsUnit (Nat.card G : k
           (ClassFunction.comap ((mackeySubgroup D.out K H).subgroupOf H).subtype f) := by
   let := Fintype.ofFinite (DoubleCoset.Quotient (H : Set G) (K : Set G))
   have hH : IsUnit (Nat.card H : k) := isUnit_natCard_subgroup H hG
+  -- Both applications of Frobenius reciprocity are `characterPairing_ind`: the first moves the
+  -- pairing from `G` down to `H`, the second moves each Mackey summand from `H` down to its
+  -- Mackey subgroup.
   calc ClassFunction.characterPairing (ClassFunction.ind H f) (ClassFunction.ind K h)
       = ClassFunction.characterPairing f
           (ClassFunction.comap H.subtype (ClassFunction.ind K h)) :=
