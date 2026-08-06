@@ -417,6 +417,7 @@ theorem IsMDissipative.resolventRightInv {A : X →ₗ.[ℝ] X} (hA : IsMDissipa
   hA.isDissipative.resolventOfBijectiveRightInv hlambda (hA.smul_sub_bijective hlambda) y
 
 /-- **The resolvent is a left inverse of `lambda • I - A`.** -/
+@[simp]
 theorem IsMDissipative.resolventLeftInv {A : X →ₗ.[ℝ] X} (hA : IsMDissipative A) {lambda : ℝ}
     (hlambda : 0 < lambda) (x : A.domain) :
     hA.resolvent lambda hlambda (lambda • (x : X) - A x) = (x : X) :=
