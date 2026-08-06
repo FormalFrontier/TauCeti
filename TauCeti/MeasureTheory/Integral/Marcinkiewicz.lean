@@ -92,11 +92,11 @@ private theorem lintegral_rpow_le_of_mul_meas_ofReal_lt_le_of_measurable [SFinit
   have hGval : ∀ (t : ℝ) (x : α), G (t, x) =
       ENNReal.ofReal (t ^ (p - 2)) * {x | ENNReal.ofReal (c * t) < f x}.indicator f x := by
     intro t x
-    by_cases hx : ENNReal.ofReal (c * t) < f x
-    · rw [hG, Set.indicator_of_mem (show (t, x) ∈ S from hx),
-        Set.indicator_of_mem (show x ∈ {x | ENNReal.ofReal (c * t) < f x} from hx)]
-    · rw [hG, Set.indicator_of_notMem (show (t, x) ∉ S from hx),
-        Set.indicator_of_notMem (show x ∉ {x | ENNReal.ofReal (c * t) < f x} from hx), mul_zero]
+    have hmem : (t, x) ∈ S ↔ x ∈ {x | ENNReal.ofReal (c * t) < f x} := by
+      simp only [hS, Set.mem_ofPred]
+    by_cases hx : x ∈ {x | ENNReal.ofReal (c * t) < f x}
+    · rw [hG, Set.indicator_of_mem (hmem.2 hx), Set.indicator_of_mem hx]
+    · rw [hG, Set.indicator_of_notMem (hmem.not.2 hx), Set.indicator_of_notMem hx, mul_zero]
   -- Its slices are the truncated integrals appearing in the hypothesis.
   have hslice : ∀ t : ℝ, ∫⁻ x, G (t, x) ∂μ =
       ENNReal.ofReal (t ^ (p - 2)) * ∫⁻ x in {x | ENNReal.ofReal (c * t) < f x}, f x ∂μ := by
@@ -110,8 +110,9 @@ private theorem lintegral_rpow_le_of_mul_meas_ofReal_lt_le_of_measurable [SFinit
       A * ∫⁻ x, G (t, x) ∂μ := by
     intro t ht
     have ht' : (0 : ℝ) < t := ht
+    have hexp : p - 1 = 1 + (p - 2) := by ring
     have hpow : t ^ (p - 1) = t * t ^ (p - 2) := by
-      rw [show p - 1 = 1 + (p - 2) by ring, Real.rpow_add ht', Real.rpow_one]
+      rw [hexp, Real.rpow_add ht', Real.rpow_one]
     calc ν {y | ENNReal.ofReal t < u y} * ENNReal.ofReal (t ^ (p - 1))
         = ENNReal.ofReal t * ν {y | ENNReal.ofReal t < u y} * ENNReal.ofReal (t ^ (p - 2)) := by
           rw [hpow, ENNReal.ofReal_mul ht'.le]; ring
@@ -128,8 +129,8 @@ private theorem lintegral_rpow_le_of_mul_meas_ofReal_lt_le_of_measurable [SFinit
       exact le_top
     rcases eq_or_ne (f x) 0 with hx0 | hx0
     · have hzero : ∀ t : ℝ, G (t, x) = 0 := fun t => by
-        rw [hGval t x, Set.indicator_of_notMem
-          (show x ∉ {x | ENNReal.ofReal (c * t) < f x} by simp [hx0]), mul_zero]
+        have hnot : x ∉ {x | ENNReal.ofReal (c * t) < f x} := by simp [hx0]
+        rw [hGval t x, Set.indicator_of_notMem hnot, mul_zero]
       simp [hzero]
     set b : ℝ := (f x).toReal with hbdef
     have hb0 : 0 < b := ENNReal.toReal_pos hx0 hx
@@ -143,28 +144,29 @@ private theorem lintegral_rpow_le_of_mul_meas_ofReal_lt_le_of_measurable [SFinit
       have hiff : ENNReal.ofReal (c * t) < f x ↔ t < b / c := by
         rw [hfx, ENNReal.ofReal_lt_ofReal_iff hb0, lt_div_iff₀ hc, mul_comm]
       rcases lt_or_ge t (b / c) with hmem | hmem
-      · rw [hGval t x, Set.indicator_of_mem
-          (show x ∈ {x | ENNReal.ofReal (c * t) < f x} from hiff.2 hmem),
-          Set.indicator_of_mem (show t ∈ Ioo (0 : ℝ) (b / c) from ⟨ht', hmem⟩)]
-      · rw [hGval t x, Set.indicator_of_notMem
-          (show x ∉ {x | ENNReal.ofReal (c * t) < f x} from fun hcon =>
-            absurd (hiff.1 hcon) (not_lt.2 hmem)),
-          Set.indicator_of_notMem
-            (show t ∉ Ioo (0 : ℝ) (b / c) from fun hcon => absurd hcon.2 (not_lt.2 hmem)),
-          mul_zero]
+      · have hxmem : x ∈ {x | ENNReal.ofReal (c * t) < f x} := Set.mem_ofPred.2 (hiff.2 hmem)
+        have htmem : t ∈ Ioo (0 : ℝ) (b / c) := Set.mem_Ioo.2 ⟨ht', hmem⟩
+        rw [hGval t x, Set.indicator_of_mem hxmem, Set.indicator_of_mem htmem]
+      · have hxmem : x ∉ {x | ENNReal.ofReal (c * t) < f x} := fun hcon =>
+          absurd (hiff.1 (Set.mem_ofPred.1 hcon)) (not_lt.2 hmem)
+        have htmem : t ∉ Ioo (0 : ℝ) (b / c) := fun hcon =>
+          absurd (Set.mem_Ioo.1 hcon).2 (not_lt.2 hmem)
+        rw [hGval t x, Set.indicator_of_notMem hxmem, Set.indicator_of_notMem htmem, mul_zero]
     have hInt : ∫⁻ t in Ioo (0 : ℝ) (b / c), ENNReal.ofReal (t ^ (p - 2)) =
         ENNReal.ofReal ((b / c) ^ (p - 1) / (p - 1)) := by
+      have hexp : p - 2 + 1 = p - 1 := by ring
       have h := lintegral_ofReal_rpow_Ioo (s := p - 2) (by linarith)
         (a := b / c) (by positivity)
-      rwa [show p - 2 + 1 = p - 1 by ring] at h
+      rwa [hexp] at h
     -- The elementary real identity behind the constant `c ^ (1 - p) / (p - 1)`.
     have hreal : (b / c) ^ (p - 1) / (p - 1) * b = c ^ (1 - p) / (p - 1) * b ^ p := by
       have hcp : c ^ (p - 1) ≠ 0 := (Real.rpow_pos_of_pos hc _).ne'
+      have hsucc : p = p - 1 + 1 := by ring
+      have hneg : (1 : ℝ) - p = -(p - 1) := by ring
       have hbp : b ^ p = b ^ (p - 1) * b := by
-        conv_lhs => rw [show p = p - 1 + 1 by ring]
+        conv_lhs => rw [hsucc]
         rw [Real.rpow_add hb0, Real.rpow_one]
-      rw [Real.div_rpow hb0.le hc.le, show (1 : ℝ) - p = -(p - 1) by ring,
-        Real.rpow_neg hc.le, hbp]
+      rw [Real.div_rpow hb0.le hc.le, hneg, Real.rpow_neg hc.le, hbp]
       field_simp
     refine le_of_eq ?_
     calc (∫⁻ t in Ioi (0 : ℝ), G (t, x))
@@ -192,8 +194,8 @@ private theorem lintegral_rpow_le_of_mul_meas_ofReal_lt_le_of_measurable [SFinit
         rw [← lintegral_const_mul _ (hf.pow_const p)]
         exact lintegral_mono hinner
     _ = ENNReal.ofReal (p * c ^ (1 - p) / (p - 1)) * A * ∫⁻ x, f x ^ p ∂μ := by
-        rw [show p * c ^ (1 - p) / (p - 1) = p * (c ^ (1 - p) / (p - 1)) by ring,
-          ENNReal.ofReal_mul hp0.le]
+        have hconst : p * c ^ (1 - p) / (p - 1) = p * (c ^ (1 - p) / (p - 1)) := by ring
+        rw [hconst, ENNReal.ofReal_mul hp0.le]
         ring
 
 /-- **Marcinkiewicz interpolation**, the diagonal case `p₀ = 1`, `p₁ = ∞`, in distributional form.
@@ -224,8 +226,9 @@ theorem lintegral_rpow_le_of_mul_meas_ofReal_lt_le [SFinite μ]
       exact congrArg (fun z : ℝ≥0∞ => a < z) hx
     rw [Measure.restrict_congr_set hsets]
     exact lintegral_congr_ae (ae_restrict_of_ae hae)
-  rw [lintegral_congr_ae (show (fun x => f x ^ p) =ᵐ[μ] fun x => hf.mk f x ^ p from
-    hae.mono fun x hx => congrArg (fun z : ℝ≥0∞ => z ^ p) hx)]
+  have hrpow : (fun x => f x ^ p) =ᵐ[μ] fun x => hf.mk f x ^ p :=
+    hae.mono fun x hx => congrArg (fun z : ℝ≥0∞ => z ^ p) hx
+  rw [lintegral_congr_ae hrpow]
   refine lintegral_rpow_le_of_mul_meas_ofReal_lt_le_of_measurable hf.measurable_mk hu hp hc
     fun t ht => ?_
   rw [← hset]

@@ -128,9 +128,10 @@ theorem lintegral_rpow_eq_lintegral_meas_ofReal_lt_mul (ν : Measure β) {u : β
     exact propext (ENNReal.ofReal_lt_iff_lt_toReal (le_of_lt ht) hy).symm
   · -- `u = ∞` on a set of positive measure: both sides are `∞`.
     have hL : ∫⁻ y, u y ^ p ∂ν = ∞ := by
+      have hlevel : {y | u y ^ p = ∞} = {y | u y = ∞} :=
+        Set.ext fun y => ENNReal.rpow_eq_top_iff_of_pos hp
       refine lintegral_eq_top_of_measure_eq_top_ne_zero (hu.pow_const p) ?_
-      rwa [show {y | u y ^ p = ∞} = {y | u y = ∞} from
-        Set.ext fun y => ENNReal.rpow_eq_top_iff_of_pos hp]
+      rwa [hlevel]
     have hR : ∫⁻ t in Ioi (0 : ℝ), ν {y | ENNReal.ofReal t < u y} *
         ENNReal.ofReal (t ^ (p - 1)) = ∞ := by
       have hsub : ∀ {t : ℝ}, {y | u y = ∞} ⊆ {y | ENNReal.ofReal t < u y} := by

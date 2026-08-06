@@ -480,7 +480,8 @@ theorem mul_measure_lt_maximalFunction_le_setLIntegral (μ : Measure E) [μ.IsAd
       exact maximalFunction_add_le hae₁ x
     have h2 : ENNReal.ofReal (2⁻¹ * t) + ENNReal.ofReal (2⁻¹ * t) <
         maximalFunction μ f₁ x + ENNReal.ofReal (2⁻¹ * t) := by
-      rw [← ENNReal.ofReal_add hhalf hhalf, show 2⁻¹ * t + 2⁻¹ * t = t by ring]
+      have hsum : 2⁻¹ * t + 2⁻¹ * t = t := by ring
+      rw [← ENNReal.ofReal_add hhalf hhalf, hsum]
       exact lt_of_lt_of_le hx (h1.trans (add_le_add le_rfl (hM₂ x)))
     exact (ENNReal.add_lt_add_iff_right ENNReal.ofReal_ne_top).1 h2
   -- The `L¹` norm of the high part is the truncated integral.
@@ -516,10 +517,10 @@ theorem lintegral_maximalFunction_rpow_le (μ : Measure E) [μ.IsAddHaarMeasure]
   have hp0 : (0 : ℝ) < p := by linarith
   have hconst : ENNReal.ofReal (p * (2 : ℝ)⁻¹ ^ (1 - p) / (p - 1)) * (2 * 4 ^ finrank ℝ E) =
       ENNReal.ofReal (2 * p * 2 ^ (p - 1) / (p - 1)) * 4 ^ finrank ℝ E := by
-    rw [show ((2 : ℝ))⁻¹ ^ (1 - p) = 2 ^ (p - 1) by
-      rw [Real.inv_rpow (by norm_num), ← Real.rpow_neg (by norm_num), neg_sub],
-      show 2 * p * 2 ^ (p - 1) / (p - 1) = 2 * (p * 2 ^ (p - 1) / (p - 1)) by ring,
-      ENNReal.ofReal_mul (by norm_num : (0 : ℝ) ≤ 2), ENNReal.ofReal_ofNat]
+    have hinv : ((2 : ℝ))⁻¹ ^ (1 - p) = 2 ^ (p - 1) := by
+      rw [Real.inv_rpow (by norm_num), ← Real.rpow_neg (by norm_num), neg_sub]
+    have hsplit : 2 * p * 2 ^ (p - 1) / (p - 1) = 2 * (p * 2 ^ (p - 1) / (p - 1)) := by ring
+    rw [hinv, hsplit, ENNReal.ofReal_mul (by norm_num : (0 : ℝ) ≤ 2), ENNReal.ofReal_ofNat]
     ring
   rw [← hconst]
   refine lintegral_rpow_le_of_mul_meas_ofReal_lt_le hf
