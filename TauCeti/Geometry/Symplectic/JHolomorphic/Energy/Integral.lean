@@ -20,9 +20,11 @@ its energy is
 
 `∫⁻ x, ENNReal.ofReal (energyDensity (du x) / 2) ∂μ`.
 
-The factor `1 / 2` is the standard convention for the energy of a map.  Thus a complex-linear
-differential has energy density exactly equal to its symplectic area density.  The differential is
-kept explicit: for a differentiable map `u`, consumers use
+The factor `1 / 2` is the standard convention for the energy of a map.  The named pointwise
+density `stdComplexLineEnergyDensity` is *twice* the symplectic area density on a complex-linear
+differential, so it is the normalized half-density integrated here that equals the area density
+`ω (du ∂s) (du ∂t)` exactly.  The differential is kept explicit: for a differentiable map `u`,
+consumers use
 `fun x ↦ (fderiv ℝ u x).toLinearMap`.  This avoids assigning a misleading energy to a
 nondifferentiable map, since Mathlib defines `fderiv` to be zero where differentiability fails.
 
@@ -85,7 +87,7 @@ noncomputable def stdComplexLineEnergy
 
 /-- The energy of a differential field is the lower integral of its normalized pointwise energy
 density. -/
-lemma stdComplexLineEnergy_apply
+lemma stdComplexLineEnergy_def
     (ω : SymplecticForm V) (J : AlmostComplexStructure V)
     (du : X → ((ℝ × ℝ) →ₗ[ℝ] V)) (μ : Measure X) :
     ω.stdComplexLineEnergy J du μ =
@@ -102,34 +104,34 @@ attribute [irreducible] stdComplexLineEnergy
 lemma stdComplexLineEnergy_congr
     (h : du =ᵐ[μ] dv) :
     ω.stdComplexLineEnergy J du μ = ω.stdComplexLineEnergy J dv μ := by
-  rw [stdComplexLineEnergy_apply, stdComplexLineEnergy_apply]
+  rw [stdComplexLineEnergy_def, stdComplexLineEnergy_def]
   exact lintegral_congr_ae <| h.mono fun x hx => by
     simp [hx]
 
 /-- Enlarging the source measure cannot decrease energy. -/
 lemma stdComplexLineEnergy_mono_measure (hμν : μ ≤ ν) :
     ω.stdComplexLineEnergy J du μ ≤ ω.stdComplexLineEnergy J du ν := by
-  rw [stdComplexLineEnergy_apply, stdComplexLineEnergy_apply]
+  rw [stdComplexLineEnergy_def, stdComplexLineEnergy_def]
   exact lintegral_mono' hμν le_rfl
 
 /-- The zero differential has zero energy. -/
 @[simp]
 lemma stdComplexLineEnergy_zero :
     ω.stdComplexLineEnergy J (fun _ : X => 0) μ = 0 := by
-  simp [stdComplexLineEnergy_apply, stdComplexLineEnergyDensity_apply]
+  simp [stdComplexLineEnergy_def, stdComplexLineEnergyDensity_def]
 
 /-- Every differential has zero energy with respect to the zero measure. -/
 @[simp]
 lemma stdComplexLineEnergy_zero_measure :
     ω.stdComplexLineEnergy J du 0 = 0 := by
-  simp [stdComplexLineEnergy_apply]
+  simp [stdComplexLineEnergy_def]
 
 /-- The energy of a constant differential is its normalized pointwise density times the total
 mass of the source. -/
 lemma stdComplexLineEnergy_const (F : (ℝ × ℝ) →ₗ[ℝ] V) :
     ω.stdComplexLineEnergy J (fun _ : X => F) μ =
       ENNReal.ofReal (ω.stdComplexLineEnergyDensity J F / 2) * μ Set.univ := by
-  rw [stdComplexLineEnergy_apply, lintegral_const]
+  rw [stdComplexLineEnergy_def, lintegral_const]
 
 private lemma energyIntegrand_eq_zero_iff (hω : ω.Tames J)
     (F : (ℝ × ℝ) →ₗ[ℝ] V) :
@@ -140,7 +142,7 @@ private lemma energyIntegrand_eq_zero_iff (hω : ω.Tames J)
   · intro h
     exact (ω.stdComplexLineEnergyDensity_eq_zero_iff hω).mp (by linarith)
   · rintro rfl
-    simp [stdComplexLineEnergyDensity_apply]
+    simp [stdComplexLineEnergyDensity_def]
 
 /-- Under tameness, energy vanishes exactly when the differential vanishes almost everywhere.
 
@@ -151,7 +153,7 @@ lemma stdComplexLineEnergy_eq_zero_iff (hω : ω.Tames J)
     (hmeas : AEMeasurable
       (fun x ↦ ENNReal.ofReal (ω.stdComplexLineEnergyDensity J (du x) / 2)) μ) :
     ω.stdComplexLineEnergy J du μ = 0 ↔ du =ᵐ[μ] 0 := by
-  rw [stdComplexLineEnergy_apply, lintegral_eq_zero_iff' hmeas]
+  rw [stdComplexLineEnergy_def, lintegral_eq_zero_iff' hmeas]
   constructor
   · intro h
     filter_upwards [h] with x hx
@@ -166,11 +168,8 @@ lemma stdComplexLineEnergy_eq_zero_iff (hω : ω.Tames J)
 not require measurability. -/
 lemma stdComplexLineEnergy_eq_zero_of_ae_eq_zero
     (hdu : du =ᵐ[μ] 0) :
-    ω.stdComplexLineEnergy J du μ = 0 := by
-  rw [stdComplexLineEnergy_apply]
-  apply lintegral_eq_zero_of_ae_eq_zero
-  filter_upwards [hdu] with x hx
-  simp [hx, stdComplexLineEnergyDensity_apply]
+    ω.stdComplexLineEnergy J du μ = 0 :=
+  (stdComplexLineEnergy_congr hdu).trans stdComplexLineEnergy_zero
 
 /-- **Integrated Wirtinger inequality.**  For a compatible pair, the integral of the positive
 symplectic area density is at most the energy. -/
@@ -178,7 +177,7 @@ lemma lintegral_symplecticForm_le_stdComplexLineEnergy (hcompat : ω.Compatible 
     (∫⁻ x, ENNReal.ofReal
       (ω (du x stdComplexLineReal) (du x stdComplexLineImag)) ∂μ) ≤
         ω.stdComplexLineEnergy J du μ := by
-  rw [stdComplexLineEnergy_apply]
+  rw [stdComplexLineEnergy_def]
   apply lintegral_mono
   intro x
   apply ENNReal.ofReal_le_ofReal
@@ -199,7 +198,7 @@ lemma stdComplexLineEnergy_eq_lintegral_symplecticForm
     ω.stdComplexLineEnergy J du μ =
       ∫⁻ x, ENNReal.ofReal
         (ω (du x stdComplexLineReal) (du x stdComplexLineImag)) ∂μ := by
-  rw [stdComplexLineEnergy_apply]
+  rw [stdComplexLineEnergy_def]
   apply lintegral_congr_ae
   filter_upwards [hdu] with x hx
   rw [hx.stdComplexLineEnergyDensity_eq_two_mul_symplecticForm (ω := ω)]
