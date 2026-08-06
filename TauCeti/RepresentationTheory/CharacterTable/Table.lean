@@ -420,17 +420,21 @@ theorem card_inv_mul_sum_characterTable_mul_conj [Fintype G]
   simp only [conj_characterTable_apply]
   exact card_inv_mul_sum_characterTable_mul_characterTable_inv i j
 
-open scoped Classical in
 /-- **First (row) orthogonality over `ℂ`, summed one column at a time**: the Hermitian pairing of
 two rows of the complex character table, collected over the conjugacy classes with the class sizes
 as weights. This is the shape in which the roadmap's specification of a character table asks for row
 orthonormality; `TauCeti.card_inv_mul_sum_characterTable_mul_conj` is the same statement summed over
-the group. -/
-theorem card_inv_mul_sum_card_conjClass_mul_characterTable_mul_conj [Fintype G]
+the group.
+
+The enumeration of the conjugacy classes is an explicit `Fintype` argument rather than a classical
+one, so that the statement is about whichever enumeration the caller has in hand; a caller with
+`[DecidableEq G]` has one, and a classical instance would not be defeq to it. -/
+theorem card_inv_mul_sum_card_conjClass_mul_characterTable_mul_conj [Fintype (ConjClasses G)]
     (i j : Fin (Nat.card (ConjClasses G))) :
     (Nat.card G : ℂ)⁻¹ * ∑ C : ConjClasses G, (Nat.card C.carrier : ℂ) *
         characterTable ℂ G i C * (starRingEnd ℂ) (characterTable ℂ G j C) =
       if i = j then 1 else 0 := by
+  let _ : Fintype G := Fintype.ofFinite G
   rw [← card_inv_mul_sum_characterTable_mul_conj i j]
   congr 1
   have hsum := ClassFunction.sum_eq_sum_conjClasses (ClassFunction.ofConjClasses
