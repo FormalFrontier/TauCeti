@@ -234,7 +234,7 @@ hyperbolically between the origin and `w` — exactly when it lies on the Euclid
 to `w`.
 
 The implication `←` is `TauCeti.hyperbolicDist_zero_add_hyperbolicDist_ofReal_mul`. For `→`, the
-addition formula `TauCeti.artanh_add` and the injectivity of `Real.artanh` on `Ioo (-1) 1` turn the
+addition formula `Real.artanh_add` and the injectivity of `Real.artanh` on `Ioo (-1) 1` turn the
 hypothesis into `(‖m‖ + ρ) / (1 + ‖m‖ ρ) = ‖w‖`, hence into `ρ (1 - ‖m‖ ‖w‖) = ‖w‖ - ‖m‖`, where
 `ρ = pseudoHyperbolicExpr m w`; that is the equality case
 `TauCeti.pseudoHyperbolicExpr_eq_abs_sub_div_one_sub_mul_iff_of_norm_lt_one` of the reverse
@@ -251,17 +251,9 @@ theorem hyperbolicDist_zero_add_eq_iff_of_norm_lt_one (hm : ‖m‖ < 1) (hw : �
     have hwIoo : ‖w‖ ∈ Ioo (-1 : ℝ) 1 := ⟨by linarith [norm_nonneg w], hw⟩
     have hρIoo : pseudoHyperbolicExpr m w ∈ Ioo (-1 : ℝ) 1 := ⟨by linarith, hρ1⟩
     have hquotIoo : (‖m‖ + pseudoHyperbolicExpr m w) / (1 + ‖m‖ * pseudoHyperbolicExpr m w)
-        ∈ Ioo (-1 : ℝ) 1 := by
-      have hposden : (0 : ℝ) < 1 + ‖m‖ * pseudoHyperbolicExpr m w := by
-        nlinarith [norm_nonneg m]
-      have hquot0 : (0 : ℝ) ≤ (‖m‖ + pseudoHyperbolicExpr m w)
-          / (1 + ‖m‖ * pseudoHyperbolicExpr m w) :=
-        div_nonneg (by linarith [norm_nonneg m]) hposden.le
-      refine ⟨by linarith, ?_⟩
-      rw [div_lt_one hposden]
-      nlinarith [mul_pos (sub_pos.mpr hm) (sub_pos.mpr hρ1)]
+        ∈ Ioo (-1 : ℝ) 1 := Real.add_div_one_add_mul_mem_Ioo hmIoo hρIoo
     rw [hyperbolicDist_comm 0 m, hyperbolicDist_zero_right, hyperbolicDist_def,
-      hyperbolicDist_comm 0 w, hyperbolicDist_zero_right, artanh_add hmIoo hρIoo] at h
+      hyperbolicDist_comm 0 w, hyperbolicDist_zero_right, Real.artanh_add hmIoo hρIoo] at h
     have heq := Real.artanh_injOn hquotIoo hwIoo h
     rw [div_eq_iff (by nlinarith [norm_nonneg m] : (1 : ℝ) + ‖m‖ * pseudoHyperbolicExpr m w ≠ 0)]
       at heq
@@ -284,19 +276,15 @@ equality case `TauCeti.pseudoHyperbolicExpr_eq_add_div_one_add_mul_iff_of_norm_l
 @[simp]
 theorem hyperbolicDist_add_zero_eq_iff_of_norm_lt_one (hz : ‖z‖ < 1) (hw : ‖w‖ < 1) :
     hyperbolicDist z 0 + hyperbolicDist 0 w = hyperbolicDist z w ↔ (0 : ℂ) ∈ segment ℝ z w := by
-  have hAB : (0 : ℝ) < 1 + ‖z‖ * ‖w‖ := by positivity
   have hρ0 : 0 ≤ pseudoHyperbolicExpr z w := pseudoHyperbolicExpr_nonneg z w
   have hρ1 : pseudoHyperbolicExpr z w < 1 := pseudoHyperbolicExpr_lt_one_of_norm_lt_one hz hw
   have hzIoo : ‖z‖ ∈ Ioo (-1 : ℝ) 1 := ⟨by linarith [norm_nonneg z], hz⟩
   have hwIoo : ‖w‖ ∈ Ioo (-1 : ℝ) 1 := ⟨by linarith [norm_nonneg w], hw⟩
   have hρIoo : pseudoHyperbolicExpr z w ∈ Ioo (-1 : ℝ) 1 := ⟨by linarith, hρ1⟩
-  have hquotIoo : (‖z‖ + ‖w‖) / (1 + ‖z‖ * ‖w‖) ∈ Ioo (-1 : ℝ) 1 := by
-    have hquot0 : (0 : ℝ) ≤ (‖z‖ + ‖w‖) / (1 + ‖z‖ * ‖w‖) := by positivity
-    refine ⟨by linarith, ?_⟩
-    rw [div_lt_one hAB]
-    nlinarith [mul_pos (sub_pos.mpr hz) (sub_pos.mpr hw)]
+  have hquotIoo : (‖z‖ + ‖w‖) / (1 + ‖z‖ * ‖w‖) ∈ Ioo (-1 : ℝ) 1 :=
+    Real.add_div_one_add_mul_mem_Ioo hzIoo hwIoo
   rw [hyperbolicDist_zero_right, hyperbolicDist_comm 0 w, hyperbolicDist_zero_right,
-    hyperbolicDist_def, artanh_add hzIoo hwIoo, Real.artanh_injOn.eq_iff hquotIoo hρIoo,
+    hyperbolicDist_def, Real.artanh_add hzIoo hwIoo, Real.artanh_injOn.eq_iff hquotIoo hρIoo,
     zero_mem_segment_iff_re_mul_conj,
     ← pseudoHyperbolicExpr_eq_add_div_one_add_mul_iff_of_norm_lt_one hz hw]
   exact eq_comm
