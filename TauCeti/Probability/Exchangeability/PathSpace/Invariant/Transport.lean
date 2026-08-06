@@ -5,8 +5,10 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Probability.Exchangeability.PathSpace.ContractableLaw
-public import TauCeti.Probability.Exchangeability.PathSpace.Invariant.Tail
-public import Mathlib.MeasureTheory.Integral.Lebesgue.Map
+public import TauCeti.Probability.Exchangeability.PathSpace.Shift
+public import Mathlib.MeasureTheory.MeasurableSpace.Invariants
+public import Mathlib.MeasureTheory.Integral.Lebesgue.Basic
+import Mathlib.MeasureTheory.Integral.Lebesgue.Map
 
 /-!
 # Transporting an integral through a reindexing, over an invariant event
@@ -20,6 +22,15 @@ combine to give this, and keeping them apart is the point:
 * an eventually-translating reindexing fixes every shift-invariant event
   (`preimage_reindex_eq_of_measurableSet_invariants_of_eventually_add`) — this needs no
   monotonicity, only exact shift invariance.
+
+## Source
+
+This generic transport statement is Tau Ceti-native: it is assembled from two declarations already
+in this repository — `ContractableLaw.measurePreserving_reindex` and
+`preimage_reindex_eq_of_measurableSet_invariants_of_eventually_add` — composed through Mathlib's
+`MeasurePreserving.setLIntegral_comp_preimage`. It mentions no block, no selection and no Koopman
+operator. The Koopman-facing consumer credits the strategy it serves, in
+`DeFinetti/ViaKoopman/Invariant/BlockTransport.lean`.
 
 ⚠ This is specific to *invariant* events. A tail event need not satisfy `shift ⁻¹' A = A`, and
 `invariants_shift_lt_pathTail` shows the inclusion is strict, so the tail-conditioned analogue
@@ -39,6 +50,18 @@ namespace TauCeti
 namespace Probability
 
 variable {α : Type*} [MeasurableSpace α]
+
+/-- **Invariant events are fixed by an eventually-translating reindexing**, in the
+`MeasurableSpace.invariants`-measurable form.
+
+Deliberately **not** `@[simp]`: `m` and `C` occur only in the hypothesis `hφ`, never in the
+left-hand side, so `simp` cannot infer them and the rule would never fire. -/
+theorem preimage_reindex_eq_of_measurableSet_invariants_of_eventually_add {m C : ℕ} {φ : ℕ → ℕ}
+    {A : Set (ℕ → α)} (hA : MeasurableSet[MeasurableSpace.invariants (shift α)] A)
+    (hφ : ∀ n, m ≤ n → φ n = n + C) :
+    (fun x : ℕ → α => fun k => x (φ k)) ⁻¹' A = A :=
+  preimage_reindex_eq_of_preimage_shift_eq_of_eventually_add
+    (MeasurableSpace.measurableSet_invariants.1 hA).2 hφ
 
 /-- **An eventually-translating strict reindexing acts trivially over an invariant event.** For a
 contractable path law `ρ`, a set `A` measurable in `MeasurableSpace.invariants (shift α)`, and a

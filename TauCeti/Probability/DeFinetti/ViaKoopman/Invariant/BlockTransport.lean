@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Probability.Exchangeability.PathSpace.Invariant.Transport
-public import TauCeti.Probability.Exchangeability.PermutationExtension
+import TauCeti.Probability.Exchangeability.PermutationExtension
 public import TauCeti.Probability.Exchangeability.L2.LongTailAverages
 public import Mathlib.Dynamics.BirkhoffSum.Average
 
@@ -30,6 +30,16 @@ arbitrary path functional through a reindexing that is strictly increasing and e
 translation. `exists_strictMono_nat_extending_fin_eventually_add` supplies such a reindexing
 extending any strictly increasing finite selection, which is what turns the global statement into
 one about an arbitrary block.
+
+## Source
+
+The Koopman block-factorization strategy follows the earlier `cameronfreer/exchangeability`
+development, which carries related block-reindexing and factorization material. The transport
+lemmas here are not line-by-line ports: they are assembled from Tau Ceti's eventual-translation
+extension (`exists_strictMono_nat_extending_fin_eventually_add`), invariant-event preimage
+(`preimage_reindex_eq_of_measurableSet_invariants_of_eventually_add`), contractable reindexing
+(`ContractableLaw.measurePreserving_reindex`), and Birkhoff-average APIs. The generic transport
+theorem they rest on, in `PathSpace/Invariant/Transport.lean`, is Tau Ceti-native.
 
 ⚠ The block-transport results rest on *invariance*, not tail-measurability: a tail event need not
 satisfy `shift ⁻¹' A = A`, and `invariants_shift_lt_pathTail` shows the inclusion is strict. The
