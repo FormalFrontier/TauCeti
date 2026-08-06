@@ -28,8 +28,10 @@ the quantitative core of the Mackey irreducibility criterion.
 
 Taking `K = H` and `h = f`, the double coset of `1` is the class of every element of `H`, its
 Mackey subgroup is all of `H`, and its term is the self-pairing `⟨f, f⟩_H`.  Splitting that term
-off is `TauCeti.characterPairing_ind_ind_mackey_erase`, the shape in which the Mackey
-irreducibility criterion reads the formula.
+off is `TauCeti.characterPairing_ind_ind_mackey_erase`, and
+`TauCeti.finrank_hom_indFDRep_mackey_erase` is the same split for dimensions, where the term
+becomes `dim End_H A`: this is the shape in which the Mackey irreducibility criterion reads the
+formula.
 
 ## Main definitions
 
@@ -49,6 +51,8 @@ irreducibility criterion reads the formula.
   is the self-pairing over `H`.
 * `TauCeti.characterPairing_ind_ind_mackey_erase`: the formula for `K = H`, with the term of the
   identity double coset split off.
+* `TauCeti.finrank_hom_indFDRep_mackey_erase`: the same split for intertwining-space dimensions,
+  whose identity-coset term is `dim End_H A`.
 
 ## Implementation notes
 
@@ -187,7 +191,7 @@ and the term of `TauCeti.characterPairing_ind_ind_mackey` is the self-pairing `�
 
 For `K = H` this is the term of the identity double coset, the one that
 `TauCeti.characterPairing_ind_ind_mackey_erase` splits off. -/
-theorem characterPairing_mackeyClassFunction_of_mem [Fintype G] {s : G} (hs : s ∈ H)
+theorem characterPairing_mackeyClassFunction_of_mem [Fintype H] {s : G} (hs : s ∈ H)
     (f : ClassFunction k H) :
     ClassFunction.characterPairing (mackeyClassFunction s H H f)
         (ClassFunction.comap ((mackeySubgroup s H H).subgroupOf H).subtype f) =
@@ -231,8 +235,10 @@ terms of the remaining double cosets.
 
 For the character of an irreducible representation over an algebraically closed field the first
 summand is `1` (`TauCeti.ClassFunction.characterPairing_ofFDRep_self`), so the self-pairing of
-`Ind_H^G f` is `1` exactly when every remaining term vanishes: this is the shape of the Mackey
-irreducibility criterion. -/
+`Ind_H^G f` is `1` exactly when the remaining terms *sum* to zero.  That the terms then vanish
+one by one is a separate matter: it needs them to be nonnegative, which is what
+`TauCeti.finrank_hom_indFDRep_mackey_erase` supplies in characteristic zero by reading them as
+natural-number dimensions.  In that shape the identity is the Mackey irreducibility criterion. -/
 theorem characterPairing_ind_ind_mackey_erase [Fintype G] (hG : IsUnit (Nat.card G : k))
     (f : ClassFunction k H) :
     ClassFunction.characterPairing (ClassFunction.ind H f) (ClassFunction.ind H f) =
@@ -304,6 +310,57 @@ theorem finrank_hom_indFDRep_mackey [Finite G] [CharZero k] (A : FDRep k H) (B :
   have hG : IsUnit (Nat.card G : k) :=
     isUnit_iff_ne_zero.mpr (Nat.cast_ne_zero.mpr Nat.card_pos.ne')
   exact_mod_cast natCast_finrank_hom_indFDRep_mackey hG A B
+
+open scoped Classical in
+/-- **The intertwining-number formula for a single induced representation**, as an identity in `k`
+of the casts of the dimensions, with the identity double coset split off: the dimension of
+`End_G(Ind_H^G A)` is `dim End_H A` plus the Mackey terms of the remaining double cosets.
+
+`TauCeti.finrank_hom_indFDRep_mackey_erase` cancels the casts over a field of characteristic
+zero. -/
+theorem natCast_finrank_hom_indFDRep_mackey_erase [Finite G] (hG : IsUnit (Nat.card G : k))
+    (A : FDRep k H) :
+    (Module.finrank k (indFDRep A ⟶ indFDRep A) : k) =
+      (Module.finrank k (A ⟶ A) : k) +
+        letI := Fintype.ofFinite (DoubleCoset.Quotient (H : Set G) (H : Set G))
+        ∑ D ∈ Finset.univ.erase (DoubleCoset.mk H H 1),
+          (Module.finrank k (resFDRep ((mackeySubgroup D.out H H).subgroupOf H) A ⟶
+            (Action.res (FGModuleCat k) (mackeyToH D.out H H)).obj A) : k) := by
+  let := Fintype.ofFinite G
+  let := Fintype.ofFinite (DoubleCoset.Quotient (H : Set G) (H : Set G))
+  let : Invertible (Nat.card G : k) := hG.invertible
+  have hH : IsUnit (Nat.card H : k) := isUnit_natCard_subgroup H hG
+  let : Invertible (Nat.card H : k) := hH.invertible
+  rw [← ClassFunction.characterPairing_ofFDRep_eq_finrank, ← ClassFunction.ind_ofFDRep,
+    characterPairing_ind_ind_mackey_erase hG]
+  congr 1
+  · exact ClassFunction.characterPairing_ofFDRep_eq_finrank A A
+  · refine Finset.sum_congr rfl fun D _ => ?_
+    let : Invertible (Nat.card ((mackeySubgroup D.out H H).subgroupOf H) : k) :=
+      (isUnit_natCard_subgroup _ hH).invertible
+    rw [← ofFDRep_res_mackeyToH, ClassFunction.comap_subtype_ofFDRep,
+      ClassFunction.characterPairing_ofFDRep_eq_finrank]
+
+open scoped Classical in
+/-- **The intertwining-number formula for a single induced representation**, over a field of
+characteristic zero and with the identity double coset split off:
+
+`dim End_G(Ind_H^G A) = dim End_H A + ∑_{HsH ≠ H} dim Hom_{H ⊓ sHs⁻¹}(Res A, {}^s A)`.
+
+All the summands are natural numbers, so `Ind_H^G A` has a one-dimensional endomorphism algebra
+exactly when `A` does and every non-identity double coset contributes nothing: this is the shape in
+which the Mackey irreducibility criterion reads the formula. -/
+theorem finrank_hom_indFDRep_mackey_erase [Finite G] [CharZero k] (A : FDRep k H) :
+    Module.finrank k (indFDRep A ⟶ indFDRep A) =
+      Module.finrank k (A ⟶ A) +
+        letI := Fintype.ofFinite (DoubleCoset.Quotient (H : Set G) (H : Set G))
+        ∑ D ∈ Finset.univ.erase (DoubleCoset.mk H H 1),
+          Module.finrank k (resFDRep ((mackeySubgroup D.out H H).subgroupOf H) A ⟶
+            (Action.res (FGModuleCat k) (mackeyToH D.out H H)).obj A) := by
+  let := Fintype.ofFinite (DoubleCoset.Quotient (H : Set G) (H : Set G))
+  have hG : IsUnit (Nat.card G : k) :=
+    isUnit_iff_ne_zero.mpr (Nat.cast_ne_zero.mpr Nat.card_pos.ne')
+  exact_mod_cast natCast_finrank_hom_indFDRep_mackey_erase hG A
 
 end Representations
 
