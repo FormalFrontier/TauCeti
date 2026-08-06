@@ -102,12 +102,7 @@ private theorem sum_pairing_posRootsFinset_erase_eq_zero [DecidableEq ι] {i : �
     exact Finset.sum_congr rfl fun j _ ↦ by
       rw [← P.pairing_reflectionPerm i j i, P.pairing_reflectionPerm_self_right]
   have hself : ∑ j ∈ E, P.pairing j i = -∑ j ∈ E, P.pairing j i := key.symm.trans hneg
-  have htwo : (2 : R) * ∑ j ∈ E, P.pairing j i = 0 := by
-    rw [two_mul]
-    nth_rewrite 1 [hself]
-    exact neg_add_cancel _
-  have h2 : (2 : R) ≠ 0 := by exact_mod_cast (by norm_num : (2 : ℕ) ≠ 0)
-  exact (mul_eq_zero.mp htwo).resolve_left h2
+  exact CharZero.eq_neg_self_iff.mp hself
 
 /-- **The sum of the positive roots pairs to `2` with every simple coroot.** All the positive roots
 other than `αᵢ` cancel, leaving `⟨αᵢ, αᵢ^∨⟩ = 2`.
