@@ -7,6 +7,7 @@ module
 
 public import TauCeti.Analysis.InnerProductSpace.PolynomialCompleteness
 public import TauCeti.Analysis.SpecialFunctions.Trigonometric.Chebyshev.Measure
+import TauCeti.MeasureTheory.Function.BoundedSupportExponential
 
 /-!
 # The Chebyshev envelope functions as a Hilbert basis of `L²((-1, 1])`
@@ -71,9 +72,10 @@ theorem ae_zero_lt_chebyshevWeight :
   nlinarith [hx.1, hx.2]
 
 /-- **Finite exponential moments of the Chebyshev weight.** For every rate `a` the function
-`e^{a|x|}` is integrable against the weighted measure `w·(volume|_{(-1,1]})`. On a bounded interval
-`e^{a|x|} ≤ e^{|a|}`, so the statement reduces to integrability of the weight itself, which is
-Mathlib's `Polynomial.Chebyshev.intervalIntegrable_sqrt_one_sub_sq_inv`.
+`e^{a|x|}` is integrable against the weighted measure `w·(volume|_{(-1,1]})`. The measure lives on a
+bounded interval, so this is the bounded-support principle
+`TauCeti.Integrable.exp_abs_smul_of_ae_abs_le` applied to integrability of the weight itself, which
+is Mathlib's `Polynomial.Chebyshev.intervalIntegrable_sqrt_one_sub_sq_inv`.
 
 This is the single analytic hypothesis behind both the `L²` membership of the polynomials and the
 completeness of the family. -/
@@ -83,16 +85,12 @@ theorem integrable_exp_mul_abs_chebyshevWeight (a : ℝ) :
         fun x => ENNReal.ofReal (√(1 - x ^ 2)⁻¹)) := by
   rw [integrable_withDensity_iff_integrable_smul' measurable_chebyshevWeight.ennreal_ofReal
     (Filter.Eventually.of_forall fun _ => ENNReal.ofReal_lt_top)]
-  simp only [ENNReal.toReal_ofReal (Real.sqrt_nonneg _), smul_eq_mul]
   have hw : Integrable (fun x : ℝ => √(1 - x ^ 2)⁻¹) (volume.restrict (Set.Ioc (-1 : ℝ) 1)) :=
     intervalIntegrable_sqrt_one_sub_sq_inv.1
-  refine Integrable.mono' (hw.const_mul (Real.exp |a|)) (by fun_prop) ?_
-  filter_upwards [ae_restrict_mem measurableSet_Ioc] with x hx
-  have hx1 : |x| ≤ 1 := abs_le.mpr ⟨hx.1.le, hx.2⟩
-  have hexp : Real.exp (a * |x|) ≤ Real.exp |a| :=
-    Real.exp_le_exp.mpr <| by nlinarith [le_abs_self a, abs_nonneg a, abs_nonneg x]
-  rw [Real.norm_eq_abs, abs_of_nonneg (by positivity), mul_comm (Real.exp |a|)]
-  exact mul_le_mul_of_nonneg_left hexp (Real.sqrt_nonneg _)
+  have := Integrable.exp_abs_smul_of_ae_abs_le (𝕜 := ℝ) hw a 1 (by
+    filter_upwards [ae_restrict_mem measurableSet_Ioc] with x hx
+    exact abs_le.mpr ⟨hx.1.le, hx.2⟩)
+  simpa [ENNReal.toReal_ofReal (Real.sqrt_nonneg _), smul_eq_mul, mul_comm] using this
 
 /-- **The Chebyshev orthogonality relation on Lebesgue measure.** Mathlib's relation is stated
 against `measureT`; `Polynomial.Chebyshev.integral_measureT` rewrites it as an interval integral,
