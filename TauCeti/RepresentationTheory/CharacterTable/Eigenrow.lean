@@ -332,33 +332,28 @@ theorem card_normalized_isClassEigenrow :
   rw [← Nat.card_congr (finEquivEigenrow k G)]
   simp
 
-/-- **The rows of the central character table are linearly independent.** A linear relation between
-them is a linear functional on the centre vanishing on the class-sum basis, hence a linear relation
-between the central characters themselves; those are independent because the central characters
-separate the points of the centre (`TauCeti.eq_of_centralCharacter_eq`), which by a dimension count
-makes the values of all of them on a central element an arbitrary tuple of scalars. -/
+/-- **The rows of the central character table are linearly independent.** Distinct algebra
+homomorphisms into a field are linearly independent, by Dedekind's theorem
+(`linearIndependent_algHom_toLinearMap`), and distinct irreducibles have distinct central characters
+(`TauCeti.centralCharacter_irreducibleRepresentation_injective`); a row is the tuple of values of
+such a homomorphism on the class-sum basis, so the rows inherit that independence. -/
 theorem linearIndependent_centralCharacterTable :
     LinearIndependent k (centralCharacterTable k G) := by
-  have hsurj : ∀ b : Fin (Nat.card (ConjClasses G)) → k, ∃ z : Subalgebra.center k k[G],
-      ∀ i, Representation.centralCharacter (irreducibleRepresentation k i) z = b i := by
-    have hΦ : Function.Surjective (LinearMap.pi fun i =>
-        (Representation.centralCharacter (irreducibleRepresentation k i)).toLinearMap :
-          Subalgebra.center k k[G] →ₗ[k] (Fin (Nat.card (ConjClasses G)) → k)) := by
-      refine (LinearMap.injective_iff_surjective_of_finrank_eq_finrank ?_).mp fun z w h =>
-        eq_of_centralCharacter_eq k G fun i => congrFun h i
-      rw [finrank_center_monoidAlgebra, Module.finrank_fintype_fun_eq_card, Fintype.card_fin]
-    exact fun b => (hΦ b).imp fun z hz i => congrFun hz i
-  refine Fintype.linearIndependent_iff.mpr fun a ha j => ?_
-  have hzero : (∑ i, a i •
-      (Representation.centralCharacter (irreducibleRepresentation k i)).toLinearMap) =
-      (0 : Subalgebra.center k k[G] →ₗ[k] k) :=
+  have hli : LinearIndependent k fun i : Fin (Nat.card (ConjClasses G)) =>
+      (Representation.centralCharacter (irreducibleRepresentation k i)).toLinearMap :=
+    (linearIndependent_algHom_toLinearMap k (Subalgebra.center k k[G]) k).comp _
+      (centralCharacter_irreducibleRepresentation_injective k G)
+  have hrow : ∀ i, Module.Basis.constr (classSumBasis (k := k) (G := G)) k
+        (centralCharacterTable k G i) =
+      (Representation.centralCharacter (irreducibleRepresentation k i)).toLinearMap := fun i =>
     Module.Basis.ext classSumBasis fun C => by
-      simpa [classSumBasis_apply] using congrFun ha C
-  obtain ⟨z, hz⟩ := hsurj (Pi.single j 1)
-  have h := DFunLike.congr_fun hzero z
-  simp only [LinearMap.sum_apply, LinearMap.smul_apply, AlgHom.toLinearMap_apply, smul_eq_mul,
-    LinearMap.zero_apply] at h
-  simpa [hz, Pi.single_apply] using h
+      rw [Module.Basis.constr_basis, AlgHom.toLinearMap_apply, classSumBasis_apply,
+        centralCharacterTable_apply]
+  have hli' : LinearIndependent k fun i : Fin (Nat.card (ConjClasses G)) =>
+      Module.Basis.constr (classSumBasis (k := k) (G := G)) k (centralCharacterTable k G i) := by
+    simpa only [hrow] using hli
+  exact LinearIndependent.of_comp
+    (Module.Basis.constr (classSumBasis (k := k) (G := G)) k).toLinearMap hli'
 
 /-- **The rows of the central character table are a basis** of the functions on the conjugacy
 classes: they are linearly independent, and there are as many of them as conjugacy classes, which is
