@@ -13,7 +13,7 @@ The preimage `H.comap f` of a finite-index subgroup along a group homomorphism a
 index: its index is the relative index of `H` in the range of `f`, which is finite.
 
 Because the order of a subgroup divides the order of the group -- with the index as cofactor --
-invertibility of the order of a finite group in a commutative semiring passes to every subgroup.
+invertibility of the order of a finite group in a semiring passes to every subgroup.
 -/
 
 public section
@@ -32,9 +32,10 @@ namespace TauCeti
 
 /-- If the order of a finite group is invertible in `k`, then so is the order of any subgroup,
 because the two differ by the index. -/
-theorem isUnit_natCard_subgroup {k : Type*} {G : Type*} [CommSemiring k] [Group G] [Finite G]
+theorem isUnit_natCard_subgroup {k : Type*} {G : Type*} [Semiring k] [Group G] [Finite G]
     (S : Subgroup G) (hG : IsUnit (Nat.card G : k)) : IsUnit (Nat.card S : k) := by
-  refine isUnit_of_mul_isUnit_left (y := (S.index : k)) ?_
-  rwa [← Nat.cast_mul, S.card_mul_index]
+  have h : IsUnit ((Nat.card S : k) * (S.index : k)) := by
+    rwa [← Nat.cast_mul, S.card_mul_index]
+  exact ((Nat.cast_commute _ _).isUnit_mul_iff.mp h).1
 
 end TauCeti

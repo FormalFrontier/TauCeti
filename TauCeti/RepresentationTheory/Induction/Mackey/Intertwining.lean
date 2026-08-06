@@ -33,17 +33,8 @@ off is `TauCeti.characterPairing_ind_ind_mackey_erase`, and
 becomes `dim End_H A`: this is the shape in which the Mackey irreducibility criterion reads the
 formula.
 
-## Main definitions
-
-* `TauCeti.mackeyClassFunction`: the conjugated class function `TauCeti.mackeyClassFun`, bundled as
-  an element of `TauCeti.ClassFunction`.
-* `TauCeti.mackeySubgroupSelfEquiv`: the identification of the Mackey subgroup of a representative
-  lying in `H` with `H` itself.
-
 ## Main statements
 
-* `TauCeti.comap_subtype_ind_mackey`: the Mackey decomposition of a restricted induced class
-  function, as an identity of bundled class functions.
 * `TauCeti.characterPairing_ind_ind_mackey`: the intertwining-number formula for class functions.
 * `TauCeti.finrank_hom_indFDRep_mackey`: the intertwining-number formula as an identity of
   intertwining-space dimensions.
@@ -92,36 +83,6 @@ section ClassFunctions
 
 variable {k : Type u} {G : Type v} [Field k] [Group G] {H K : Subgroup G}
 
-/-- The conjugated class function `TauCeti.mackeyClassFun` on the Mackey subgroup, bundled as an
-element of `TauCeti.ClassFunction`. -/
-def mackeyClassFunction (s : G) (H K : Subgroup G) (f : ClassFunction k H) :
-    ClassFunction k ((mackeySubgroup s H K).subgroupOf K) :=
-  ⟨mackeyClassFun s H K f.1, mackeyClassFun_mem_classFunction s H K f.2⟩
-
-@[simp]
-theorem mackeyClassFunction_coe (s : G) (H K : Subgroup G) (f : ClassFunction k H) :
-    (mackeyClassFunction s H K f).1 = mackeyClassFun s H K f.1 :=
-  (rfl)
-
-/-- **The Mackey decomposition of a restricted induced class function.**  Restricting to `H` a
-class function induced from `K` gives the sum, over the double cosets `H \ G / K`, of the class
-functions induced to `H` from the Mackey subgroups.
-
-This is `TauCeti.indClassFun_mackey` rewritten as an identity of bundled class functions, which is
-the form the character pairing consumes. -/
-theorem comap_subtype_ind_mackey (H : Subgroup G) [K.FiniteIndex] (h : ClassFunction k K) :
-    ClassFunction.comap H.subtype (ClassFunction.ind K h) =
-      letI := Fintype.ofFinite (DoubleCoset.Quotient (H : Set G) (K : Set G))
-      ∑ D : DoubleCoset.Quotient (H : Set G) (K : Set G),
-        ClassFunction.ind ((mackeySubgroup D.out K H).subgroupOf H)
-          (mackeyClassFunction D.out K H h) := by
-  let := Fintype.ofFinite (DoubleCoset.Quotient (H : Set G) (K : Set G))
-  refine Subtype.ext (funext fun x => ?_)
-  rw [ClassFunction.comap_apply, ClassFunction.ind_apply, Subgroup.coe_subtype]
-  simp only [Submodule.coe_sum, Finset.sum_apply, ClassFunction.ind_apply,
-    mackeyClassFunction_coe]
-  exact indClassFun_mackey h.2 x
-
 open scoped Classical in
 /-- **The intertwining-number formula for class functions.**  The pairing over `G` of a class
 function induced from `H` with one induced from `K` is the sum, over the double cosets
@@ -167,23 +128,6 @@ section IdentityCoset
 
 variable {k : Type u} {G : Type v} [Field k] [Group G] {H : Subgroup G}
 
-/-- A representative lying in `H` has all of `H` for its Mackey subgroup, so the Mackey subgroup
-sits inside `H` as the top subgroup. -/
-theorem mackeySubgroup_subgroupOf_self_of_mem {s : G} (hs : s ∈ H) :
-    (mackeySubgroup s H H).subgroupOf H = ⊤ := by
-  rw [mackeySubgroup_of_mem hs, inf_idem, Subgroup.subgroupOf_self]
-
-/-- The Mackey subgroup of a representative lying in `H`, identified with `H` itself. -/
-noncomputable def mackeySubgroupSelfEquiv {s : G} (hs : s ∈ H) :
-    ((mackeySubgroup s H H).subgroupOf H) ≃* H :=
-  (MulEquiv.subgroupCongr (mackeySubgroup_subgroupOf_self_of_mem hs)).trans Subgroup.topEquiv
-
-@[simp]
-theorem coe_mackeySubgroupSelfEquiv_apply {s : G} (hs : s ∈ H)
-    (y : (mackeySubgroup s H H).subgroupOf H) :
-    (mackeySubgroupSelfEquiv hs y : H) = (y : H) :=
-  (rfl)
-
 open scoped Classical in
 /-- **The term of a double coset that meets `H`.**  When the chosen representative lies in `H`, the
 Mackey subgroup is all of `H`, conjugating by the representative does not change a class function,
@@ -211,7 +155,7 @@ theorem characterPairing_mackeyClassFunction_of_mem [Fintype H] {s : G} (hs : s 
   refine Fintype.sum_equiv (mackeySubgroupSelfEquiv hs).toEquiv _ _ fun y => ?_
   -- The identification is the identity on underlying elements, so it commutes with the inverse.
   have hinv : ((mackeySubgroup s H H).subgroupOf H).subtype y⁻¹
-      = (mackeySubgroupSelfEquiv hs y)⁻¹ := rfl
+      = (mackeySubgroupSelfEquiv hs y)⁻¹ := by simp
   rw [mackeyClassFunction_coe, mackeyClassFun_apply, hterm y, ClassFunction.comap_apply, hinv]
   rfl
 
