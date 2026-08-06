@@ -23,8 +23,7 @@ transforms and the predicate that a finite measure represents a function by its 
 ## References
 
 The finite-measure representation is the Hausdorff--Bernstein--Widder theorem, after
-S. Bernstein (1928) and D. V. Widder, *The Laplace Transform*, Chapter IV. The extraction
-argument follows the Bernstein-kernel proof described by D. Chafaï (2013). This file provides
+S. Bernstein (1928) and D. V. Widder, *The Laplace Transform*, Chapter IV. This file provides
 the Laplace-transform API used by the finite-measure representation theorem.
 
 * Roadmap: `TauCetiRoadmap/OneParameterSemigroups/README.md`, Part B (Bernstein theorem
@@ -48,8 +47,8 @@ integrable. -/
 noncomputable def laplaceTransform (μ : Measure ℝ≥0) (t : ℝ) : ℝ :=
   ∫ x, Real.exp (-(t * (x : ℝ))) ∂μ
 
-/-- The defining formula for `laplaceTransform`. -/
-@[simp]
+/-- The defining formula for `laplaceTransform`. Not `@[simp]`: simp should not unfold the
+abstraction into a raw integral; the evaluation lemmas below are the simp normal forms. -/
 lemma laplaceTransform_apply (μ : Measure ℝ≥0) (t : ℝ) :
     laplaceTransform μ t = ∫ x, Real.exp (-(t * (x : ℝ))) ∂μ := by
   rw [laplaceTransform]
@@ -95,8 +94,8 @@ lemma integrable_exp_neg_mul (μ : Measure ℝ≥0) [IsFiniteMeasure μ] {x : �
   have h := (laplaceKernelBoundedContinuous hx).integrable μ
   rwa [funext (laplaceKernelBoundedContinuous_apply hx)] at h
 
-/-- The value of the Laplace transform at zero is the total finite mass. (Not `@[simp]`: the
-current simp set already reduces `laplaceTransform μ 0`, so a simp lemma would be redundant.) -/
+/-- The value of the Laplace transform at zero is the total finite mass. -/
+@[simp]
 lemma laplaceTransform_zero (μ : Measure ℝ≥0) [IsFiniteMeasure μ] :
     laplaceTransform μ 0 = μ.real univ := by
   simp [laplaceTransform]
@@ -124,8 +123,8 @@ lemma laplaceTransform_smul (c : ℝ≥0) (μ : Measure ℝ≥0) (t : ℝ) :
   simp only [laplaceTransform_apply, integral_smul_measure, ENNReal.coe_toReal, smul_eq_mul]
 
 /-- The Laplace transform of the Dirac mass at `x₀` is the exponential kernel `exp (-(t · x₀))`;
-the point masses are the building blocks of the representing mixtures. (Not `@[simp]`: the simp set
-already reduces `laplaceTransform (Measure.dirac x₀) t` via `laplaceTransform_apply`.) -/
+the point masses are the building blocks of the representing mixtures. -/
+@[simp]
 lemma laplaceTransform_dirac (x₀ : ℝ≥0) (t : ℝ) :
     laplaceTransform (Measure.dirac x₀) t = Real.exp (-(t * (x₀ : ℝ))) := by
   simp only [laplaceTransform_apply, integral_dirac]
@@ -552,10 +551,10 @@ theorem isCompletelyMonotoneOnIoi_laplaceTransform
 
 /-- The Laplace transform of a finite measure is completely monotone in the closed-half-line
 roadmap sense. -/
-theorem isClosedCompletelyMonotone_laplaceTransform
+theorem isCompletelyMonotoneOnIci_laplaceTransform
     (μ : Measure ℝ≥0) [hμ : IsFiniteMeasure μ] :
-    IsClosedCompletelyMonotone (laplaceTransform μ) :=
-  isClosedCompletelyMonotone_iff.mpr
+    IsCompletelyMonotoneOnIci (laplaceTransform μ) :=
+  isCompletelyMonotoneOnIci_iff.mpr
     ⟨continuousOn_Ici_laplaceTransform μ, isCompletelyMonotoneOnIoi_laplaceTransform μ⟩
 
 /-- Strong easy direction: with all moments finite, the Laplace transform satisfies the existing
@@ -596,6 +595,12 @@ lemma isFiniteMeasure (h : RepresentsLaplace f μ) : IsFiniteMeasure μ := h.1
 lemma eq_laplaceTransform (h : RepresentsLaplace f μ) {t : ℝ} (ht : 0 ≤ t) :
     f t = laplaceTransform μ t :=
   h.2 t ht
+
+/-- A representation transports along agreement on the nonnegative half-line: the predicate
+constrains `f` only there. -/
+protected lemma congr {g : ℝ → ℝ} (hf : RepresentsLaplace f μ) (h : EqOn g f (Ici 0)) :
+    RepresentsLaplace g μ :=
+  ⟨hf.isFiniteMeasure, fun _ ht => (h (mem_Ici.mpr ht)).trans (hf.eq_laplaceTransform ht)⟩
 
 /-- The sum of two representing measures represents the sum of the functions. -/
 protected lemma add {f g : ℝ → ℝ} {μ ν : Measure ℝ≥0}

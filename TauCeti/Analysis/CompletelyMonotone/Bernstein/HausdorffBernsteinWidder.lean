@@ -29,7 +29,7 @@ uniqueness both live in `LaplaceRepresentation.lean`.
 
 ## Main declarations
 
-* `TauCeti.exists_representsLaplace_of_isClosedCompletelyMonotone`
+* `TauCeti.exists_representsLaplace_of_isCompletelyMonotoneOnIci`
 * `TauCeti.hausdorff_bernstein_widder`, `TauCeti.hausdorff_bernstein_widder_unique`
 
 ## References
@@ -145,7 +145,9 @@ private lemma measure_closedBall_compl_le_lintegral_div
     rw [hc_def]; linarith
   exact ENNReal.ofReal_le_ofReal hreal
 
-/-- A Laplace-representing measure for a positive shift has exponentially controlled tails.
+/-- Tail bound for a Laplace-representing measure of a positive shift: the mass outside the
+ball of radius `R` is controlled by the Laplace gap `f δ - f (x + δ)`. This is the tightness
+input, not a decay rate in `R`: the denominator tends to `1` as `R → ∞`.
 
 The estimate is Markov's inequality on the bounded coordinate `p ↦ 1 - exp (-x * p)`, factored into
 `measure_closedBall_compl_le_lintegral_div` (the Markov bound) and
@@ -191,7 +193,7 @@ private lemma exists_representsLaplace_of_isCompletelyMonotone
 `shiftedRepresentingMeasures_tight` so that theorem is the uniform-tail-plus-finite-prefix
 compactness assembly. -/
 private lemma exists_shift_uniform_gap_bound
-    {f : ℝ → ℝ} (hf : IsClosedCompletelyMonotone f)
+    {f : ℝ → ℝ} (hf : IsCompletelyMonotoneOnIci f)
     {a : ℕ → ℝ} (ha_pos : ∀ n, 0 < a n)
     (ha_tendsto_nhds : Tendsto a atTop (nhds 0))
     (ha_tendsto_Ici : Tendsto a atTop (𝓝[Ici (0 : ℝ)] 0))
@@ -248,7 +250,7 @@ The proof combines the finite initial-segment tightness with a uniform tail esti
 remaining shifts (`exists_shift_uniform_gap_bound`) and the Laplace-kernel tail bound
 `shiftedMeasure_closedBall_compl_le`. -/
 private lemma shiftedRepresentingMeasures_tight
-    {f : ℝ → ℝ} (hf : IsClosedCompletelyMonotone f)
+    {f : ℝ → ℝ} (hf : IsCompletelyMonotoneOnIci f)
     {a : ℕ → ℝ} (ha_pos : ∀ n, 0 < a n)
     (ha_tendsto_nhds : Tendsto a atTop (nhds 0))
     (ha_tendsto_Ici : Tendsto a atTop (𝓝[Ici (0 : ℝ)] 0))
@@ -311,8 +313,8 @@ the stronger Tau Ceti predicate. As `a ↓ 0`, the representing measures are uni
 elementary Laplace-kernel tail estimate and hence have a weak cluster point. Continuity at `0`
 then identifies that cluster point as a representing measure for the original closed-half-line
 function. -/
-theorem exists_representsLaplace_of_isClosedCompletelyMonotone
-    {f : ℝ → ℝ} (hf : IsClosedCompletelyMonotone f) :
+theorem exists_representsLaplace_of_isCompletelyMonotoneOnIci
+    {f : ℝ → ℝ} (hf : IsCompletelyMonotoneOnIci f) :
     ∃ μ : Measure ℝ≥0, RepresentsLaplace f μ := by
   classical
   let a : ℕ → ℝ := fun n => 1 / ((n : ℝ) + 1)
@@ -389,68 +391,24 @@ theorem exists_representsLaplace_of_isClosedCompletelyMonotone
 
 /-! ## Headline theorem -/
 
-/-- Internal proposition form of the **Hausdorff--Bernstein--Widder theorem**, finite-measure
-version on `ℝ≥0`.
-
-A function is continuous on `[0, ∞)` and completely monotone on `(0, ∞)` if and only if it is the
-Laplace transform of a finite positive measure on `ℝ≥0`, on the nonnegative half-line. -/
-private def HausdorffBernsteinWidderTheorem : Prop :=
-  ∀ f : ℝ → ℝ,
-    IsClosedCompletelyMonotone f ↔ ∃ μ : Measure ℝ≥0, RepresentsLaplace f μ
-
-/-- Internal proposition form of the unique-existence statement of the
-Hausdorff--Bernstein--Widder theorem. -/
-private def HausdorffBernsteinWidderUniqueTheorem : Prop :=
-  ∀ f : ℝ → ℝ,
-    IsClosedCompletelyMonotone f ↔ ∃! μ : Measure ℝ≥0, RepresentsLaplace f μ
-
-/-- Assemble the non-unique Hausdorff--Bernstein--Widder theorem from separately supplied
-existence and easy directions. -/
-private theorem hausdorff_bernstein_widder_of_exists_of_laplaceTransform
-    (hexists :
-      ∀ f : ℝ → ℝ, IsClosedCompletelyMonotone f →
-        ∃ μ : Measure ℝ≥0, RepresentsLaplace f μ)
-    (hlaplace :
-      ∀ μ : Measure ℝ≥0, IsFiniteMeasure μ →
-        IsClosedCompletelyMonotone (laplaceTransform μ)) :
-    HausdorffBernsteinWidderTheorem := by
-  intro f
-  constructor
-  · exact hexists f
-  · rintro ⟨μ, hμ⟩
-    exact (hlaplace μ hμ.isFiniteMeasure).congr fun t ht =>
-      hμ.eq_laplaceTransform ht
-
-/-- Assemble the unique-existence Hausdorff--Bernstein--Widder theorem from the non-unique
-theorem. -/
-private theorem hausdorff_bernstein_widder_unique_of_hausdorff_bernstein_widder
-    (hhbw : HausdorffBernsteinWidderTheorem) :
-    HausdorffBernsteinWidderUniqueTheorem := by
-  intro f
-  constructor
-  · intro hf
-    obtain ⟨μ, hμ⟩ := (hhbw f).mp hf
-    exact ⟨μ, hμ, fun ν hν =>
-      (laplaceTransform_unique (f := f) (μ := μ) (ν := ν) hμ hν).symm⟩
-  · rintro ⟨μ, hμ, _huniq⟩
-    exact (hhbw f).mpr ⟨μ, hμ⟩
-
-/-- Hausdorff--Bernstein--Widder theorem, finite-measure version on `ℝ≥0`.
+/-- **Hausdorff--Bernstein--Widder theorem**, finite-measure version on `ℝ≥0`.
 
 A function is continuous on `[0, ∞)` and completely monotone on `(0, ∞)` if and only if it is
 the Laplace transform of a finite positive measure on `ℝ≥0`. -/
 theorem hausdorff_bernstein_widder (f : ℝ → ℝ) :
-    IsClosedCompletelyMonotone f ↔ ∃ μ : Measure ℝ≥0, RepresentsLaplace f μ :=
-  hausdorff_bernstein_widder_of_exists_of_laplaceTransform
-    (fun _f hf => exists_representsLaplace_of_isClosedCompletelyMonotone hf)
-    (fun μ hμ => by
-      have := hμ
-      exact isClosedCompletelyMonotone_laplaceTransform μ) f
+    IsCompletelyMonotoneOnIci f ↔ ∃ μ : Measure ℝ≥0, RepresentsLaplace f μ := by
+  constructor
+  · exact exists_representsLaplace_of_isCompletelyMonotoneOnIci
+  · rintro ⟨μ, hμ⟩
+    have := hμ.isFiniteMeasure
+    exact (isCompletelyMonotoneOnIci_laplaceTransform μ).congr fun t ht =>
+      hμ.eq_laplaceTransform ht
 
 /-- Unique-existence form of the Hausdorff--Bernstein--Widder theorem. -/
 theorem hausdorff_bernstein_widder_unique (f : ℝ → ℝ) :
-    IsClosedCompletelyMonotone f ↔ ∃! μ : Measure ℝ≥0, RepresentsLaplace f μ :=
-  hausdorff_bernstein_widder_unique_of_hausdorff_bernstein_widder
-    (fun f => hausdorff_bernstein_widder f) f
+    IsCompletelyMonotoneOnIci f ↔ ∃! μ : Measure ℝ≥0, RepresentsLaplace f μ := by
+  rw [hausdorff_bernstein_widder]
+  exact ⟨fun ⟨μ, hμ⟩ => ⟨μ, hμ, fun ν hν => laplaceTransform_unique hν hμ⟩,
+    fun ⟨μ, hμ, _⟩ => ⟨μ, hμ⟩⟩
 
 end TauCeti
