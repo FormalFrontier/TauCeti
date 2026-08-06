@@ -63,7 +63,6 @@ def adjointContinuousLinearMap (g : G) :
     GroupLieAlgebra I G →L[ℝ] GroupLieAlgebra I G :=
   mfderiv I I (conjugationDiffeomorph (I := I) g) 1
 
-set_option backward.isDefEq.respectTransparency false in
 @[simp]
 theorem adjointContinuousLinearMap_one :
     adjointContinuousLinearMap (I := I) (1 : G) =
@@ -74,7 +73,6 @@ theorem adjointContinuousLinearMap_one :
   funext x
   simp
 
-set_option backward.isDefEq.respectTransparency false in
 theorem adjointContinuousLinearMap_mul (g h : G) :
     adjointContinuousLinearMap (I := I) (g * h) =
       (adjointContinuousLinearMap (I := I) g).comp
@@ -96,8 +94,8 @@ theorem adjointContinuousLinearMap_mul (g h : G) :
     (f := conjugationDiffeomorph (I := I) g)
     (x := conjugationDiffeomorph (I := I) h 1) (x' := 1)
     (conjugationDiffeomorph_one (I := I) h)]
+  with_unfolding_all rfl
 
-set_option backward.isDefEq.respectTransparency false in
 theorem inverse_mfderiv_conjugation (g x : G) :
     (mfderiv I I (conjugationDiffeomorph (I := I) g) x).inverse =
       mfderiv I I (conjugationDiffeomorph (I := I) g⁻¹)
@@ -137,7 +135,6 @@ theorem inverse_mfderiv_conjugation (g x : G) :
     (x' := x) (by simp only [conjugationDiffeomorph_apply]; group)] at A'
   exact ContinuousLinearMap.inverse_eq A' A
 
-set_option backward.isDefEq.respectTransparency false in
 theorem mfderiv_conjugation_mulInvariantVectorField (g x : G)
     (X : GroupLieAlgebra I G) :
     mfderiv I I (conjugationDiffeomorph (I := I) g) x
@@ -167,7 +164,6 @@ theorem mfderiv_conjugation_mulInvariantVectorField (g x : G)
   · exact ((conjugationDiffeomorph (I := I) g).mdifferentiable (by simp)) _
   · exact contMDiffAt_mul_left.mdifferentiableAt one_ne_zero
 
-set_option backward.isDefEq.respectTransparency false in
 theorem mpullback_conjugation_mulInvariantVectorField (g : G)
     (X : GroupLieAlgebra I G) :
     VectorField.mpullback I I (conjugationDiffeomorph (I := I) g⁻¹)
@@ -183,17 +179,13 @@ theorem mpullback_conjugation_mulInvariantVectorField (g : G)
     (conjugationDiffeomorph (I := I) g⁻¹ x) X
   change @Eq E _ _
   change @Eq E _ _ at hpush
-  calc
-    _ = (mulInvariantVectorField (adjointContinuousLinearMap (I := I) g X)
-          (conjugationDiffeomorph (I := I) g
-            (conjugationDiffeomorph (I := I) g⁻¹ x)) : E) := hpush
-    _ = (mulInvariantVectorField (adjointContinuousLinearMap (I := I) g X) x : E) :=
-      congrArg (fun y : G ↦
-      (mulInvariantVectorField (adjointContinuousLinearMap (I := I) g X) y : E)) (by
-        simp only [conjugationDiffeomorph_apply]
-        group)
+  have hpoint : conjugationDiffeomorph (I := I) g
+      (conjugationDiffeomorph (I := I) g⁻¹ x) = x := by
+    simp only [conjugationDiffeomorph_apply]
+    group
+  rw [hpoint] at hpush
+  exact hpush
 
-set_option backward.isDefEq.respectTransparency false in
 theorem mpullback_conjugation_one (g : G) (V : ∀ x : G, TangentSpace I x) :
     VectorField.mpullback I I (conjugationDiffeomorph (I := I) g⁻¹) V 1 =
       adjointContinuousLinearMap (I := I) g (V 1) := by
@@ -211,7 +203,6 @@ theorem mpullback_conjugation_one (g : G) (V : ∀ x : G, TangentSpace I x) :
   congr 1
   exact congrArg (fun y : G ↦ (V y : E)) (conjugationDiffeomorph_one (I := I) g⁻¹)
 
-set_option backward.isDefEq.respectTransparency false in
 theorem adjointContinuousLinearMap_lie [CompleteSpace E] (g : G)
     (X Y : GroupLieAlgebra I G) :
     adjointContinuousLinearMap (I := I) g ⁅X, Y⁆ =
