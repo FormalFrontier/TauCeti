@@ -41,7 +41,8 @@ closure properties: restriction to an open subset of the domain, locality, invar
 homeomorphisms and open embeddings on either side, invariance under a change of model space, and
 products. Those are proved here, together with two results that pin the notion down: in codimension
 zero local flatness is exactly openness of the embedding, and a locally flat embedding has locally
-closed image as soon as the origin of the complementary model is closed.
+closed image as soon as the origin of the complementary model is closed (on the relative layer, as
+soon as the model slice is locally closed).
 
 This is layer 2 of the geometric-topology roadmap, the substrate for topologically locally flat
 discs (topological sliceness) and for stating the annulus conjecture.
@@ -56,6 +57,8 @@ discs (topological sliceness) and for stating the annulus conjecture.
 
 * `TauCeti.isSliceChart_iff`: a chart is a slice chart iff, on its source, membership in the set is
   read off as membership of the coordinates in the slice.
+* `TauCeti.isLocallyFlat_iff` and `TauCeti.IsLocallyFlat.exists_isSliceChart`: the defining
+  flattening charts, in pointwise form and as an eliminator.
 * `TauCeti.IsLocallyFlat.restrict` and `TauCeti.IsLocallyFlat.of_forall_exists_isOpen`: local
   flatness is a local property of the domain.
 * `TauCeti.IsLocallyFlat.isOpenEmbedding_comp`, `TauCeti.IsLocallyFlat.of_isOpenEmbedding_comp`,
@@ -368,20 +371,26 @@ theorem isOpenEmbedding (h : IsSliceEmbedding (univ : Set F) f) : IsOpenEmbeddin
   obtain ⟨φ, hφx, hφ⟩ := h.exists_isSliceChart x
   exact Filter.mem_of_superset (φ.open_source.mem_nhds hφx) (isSliceChart_univ_iff.1 hφ)
 
-/-- The image of a slice embedding is locally closed as soon as the model slice is closed. This is
-where the definition has teeth: the image of a wild embedding need not be locally closed in any
-chart in this way. -/
-theorem isLocallyClosed_range (h : IsSliceEmbedding S f) (hS : IsClosed S) :
+/-- The image of a slice embedding is locally closed as soon as the model slice is. This is where
+the definition has teeth: the image of a wild embedding need not be locally closed in any chart in
+this way. -/
+theorem isLocallyClosed_range (h : IsSliceEmbedding S f) (hS : IsLocallyClosed S) :
     IsLocallyClosed (range f) := by
+  obtain ⟨U, Z, hU, hZ, rfl⟩ := hS
   refine ((isLocallyClosed_tfae (range f)).out 2 0).1 ?_
   rintro _ ⟨x, rfl⟩
   obtain ⟨φ, hφx, hφ⟩ := h.exists_isSliceChart x
-  refine ⟨φ.source, φ.open_source.mem_nhds hφx, ?_⟩
+  -- Shrink the chart to the part of its source where the open half of the slice already holds;
+  -- there the image is cut out by the closed half alone.
+  set W := φ.source ∩ φ ⁻¹' U
+  have hW : IsOpen W := φ.isOpen_inter_preimage hU
+  have hxW : f x ∈ W := ⟨hφx, ((hφ.mem_iff hφx).1 (mem_range_self x)).1⟩
+  refine ⟨W, hW.mem_nhds hxW, ?_⟩
   -- `U ↓∩ s` is notation for `Subtype.val ⁻¹' s`, so the goal is literally about that preimage.
-  have hpre : ((Subtype.val : φ.source → M) ⁻¹' range f) = (fun y : φ.source => φ ↑y) ⁻¹' S :=
-    Set.ext fun y => hφ.mem_iff y.2
+  have hpre : ((Subtype.val : W → M) ⁻¹' range f) = (fun y : W => φ ↑y) ⁻¹' Z :=
+    Set.ext fun y => (hφ.mem_iff y.2.1).trans (and_iff_right y.2.2)
   rw [hpre]
-  exact hS.preimage φ.continuousOn.domRestrict
+  exact hZ.preimage (φ.continuousOn.mono inter_subset_left).domRestrict
 
 end IsSliceEmbedding
 
@@ -407,6 +416,14 @@ namespace IsLocallyFlat
 
 theorem isEmbedding (h : IsLocallyFlat F F' f) : IsEmbedding f :=
   IsSliceEmbedding.isEmbedding h
+
+/-- The defining charts of a locally flat embedding: around every point of the image there is a
+chart of the ambient space, with values in `F × F'`, carrying the image onto the standard
+coordinate slice. This is the eliminator consumers use to get hold of a flattening chart. -/
+theorem exists_isSliceChart (h : IsLocallyFlat F F' f) (x : N) :
+    ∃ φ : OpenPartialHomeomorph M (F × F'), f x ∈ φ.source ∧
+      IsSliceChart φ ((univ : Set F) ×ˢ ({0} : Set F')) (range f) :=
+  IsSliceEmbedding.exists_isSliceChart h x
 
 theorem continuous (h : IsLocallyFlat F F' f) : Continuous f :=
   h.isEmbedding.continuous
@@ -480,9 +497,24 @@ complementary model is closed, the standard slice then being closed. This is whe
 has teeth: the image of a wild embedding need not be locally closed. -/
 theorem isLocallyClosed_range (h : IsLocallyFlat F F' f) (h0 : IsClosed ({0} : Set F')) :
     IsLocallyClosed (range f) :=
-  IsSliceEmbedding.isLocallyClosed_range h (isClosed_univ.prod h0)
+  IsSliceEmbedding.isLocallyClosed_range h (isClosed_univ.prod h0).isLocallyClosed
 
 end IsLocallyFlat
+
+/-- Local flatness spelled out pointwise: `f` is a topological embedding, and around every point of
+its image there is an ambient chart in which the image is exactly the vanishing locus of the
+complementary coordinates. -/
+theorem isLocallyFlat_iff :
+    IsLocallyFlat F F' f ↔ IsEmbedding f ∧ ∀ x : N, ∃ φ : OpenPartialHomeomorph M (F × F'),
+      f x ∈ φ.source ∧ ∀ y ∈ φ.source, y ∈ range f ↔ (φ y).2 = 0 := by
+  have key : ∀ φ : OpenPartialHomeomorph M (F × F'),
+      IsSliceChart φ ((univ : Set F) ×ˢ ({0} : Set F')) (range f) ↔
+        ∀ y ∈ φ.source, y ∈ range f ↔ (φ y).2 = 0 := fun φ => by
+    rw [isSliceChart_iff]
+    simp
+  exact ⟨fun h => ⟨h.isEmbedding,
+      fun x => (h.exists_isSliceChart x).imp fun φ hφ => ⟨hφ.1, (key φ).1 hφ.2⟩⟩,
+    fun h => ⟨h.1, fun x => (h.2 x).imp fun φ hφ => ⟨hφ.1, (key φ).2 hφ.2⟩⟩⟩
 
 /-- Codimension zero: with a trivial complementary model, over a space charted on `F × F'`, locally
 flat is exactly open embedding. In particular local flatness is strictly stronger than embedding:
