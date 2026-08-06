@@ -6,7 +6,6 @@ module
 
 public import Mathlib.LinearAlgebra.BilinearForm.Properties
 public import Mathlib.RepresentationTheory.Irreducible
-public import TauCeti.RepresentationTheory.Subrepresentation
 
 /-!
 # Invariant bilinear forms on a representation
@@ -19,8 +18,8 @@ of bilinear forms.
 
 On an **irreducible** representation the invariant forms are tightly constrained, and the three
 constraints proved here are the ones the Frobenius-Schur trichotomy is read off from.  First, the
-left radical of an invariant form is the kernel of an intertwiner, hence a subrepresentation, so a
-nonzero invariant form on an irreducible representation is nondegenerate.  Second, over an
+left radical of an invariant form is the kernel of an intertwiner out of an irreducible
+representation, so a nonzero invariant form on one is nondegenerate.  Second, over an
 algebraically closed field and in finite dimensions, Schur's lemma makes a nonzero invariant form
 unique up to a scalar: the invariant forms are the line it spans.  Third -- and this is the
 point -- the flip of an invariant form is invariant, so a nonzero invariant form is a scalar
@@ -72,10 +71,10 @@ immediate -- moving a single `ρ g` across the form at the cost of an inverse
 (`TauCeti.Representation.IsInvariantForm.apply_left`), and the identification with intertwiners
 into the dual.
 
-That identification is also what makes the left radical a subrepresentation: it is the kernel of
-the intertwiner, so `TauCeti.Representation.IsInvariantForm.ker_eq_bot` reads it off Mathlib's
-`Representation.IntertwiningMap.ker` rather than building a subrepresentation by hand.  Schur's
-lemma enters through Mathlib's
+That identification is also what controls the left radical: the form is an intertwiner out of an
+irreducible representation, so `TauCeti.Representation.IsInvariantForm.ker_eq_bot` is Mathlib's
+`Representation.IsIrreducible.injective_or_eq_zero` rather than a hand-built subrepresentation
+argument.  Schur's lemma enters through Mathlib's
 `Representation.IsIrreducible.algebraMap_intertwiningMap_bijective_of_isAlgClosed`, the same
 theorem that `TauCeti.ContRepresentation.exists_eq_smul_one_of_irreducible` rests on for a
 continuous representation.
@@ -111,13 +110,12 @@ def IsInvariantForm (ρ : Representation k G V) (B : BilinForm k V) : Prop :=
 
 variable {ρ : Representation k G V} {B C : BilinForm k V}
 
-/-- Invariance is the defining equation: this is the introduction rule for
-`TauCeti.Representation.IsInvariantForm`, which is what one proves by `intro g x y`. -/
+/-- A form is invariant for `ρ` exactly when it satisfies the pointwise equation
+`B (ρ g x) (ρ g y) = B x y`. -/
 theorem isInvariantForm_iff :
     IsInvariantForm ρ B ↔ ∀ (g : G) (x y : V), B (ρ g x) (ρ g y) = B x y := Iff.rfl
 
-/-- An invariant form is preserved by every `ρ g`: this is the elimination rule for
-`TauCeti.Representation.IsInvariantForm`. -/
+/-- An invariant form takes the same value on `ρ g x` and `ρ g y` as it does on `x` and `y`. -/
 @[grind =]
 theorem IsInvariantForm.apply (hB : IsInvariantForm ρ B) (g : G) (x y : V) :
     B (ρ g x) (ρ g y) = B x y := hB g x y
@@ -199,17 +197,14 @@ variable {ρ : Representation k G V} {B C : BilinForm k V}
 /-- **A nonzero invariant form on an irreducible representation has trivial left radical.** -/
 theorem IsInvariantForm.ker_eq_bot [ρ.IsIrreducible] (hB : IsInvariantForm ρ B) (hB0 : B ≠ 0) :
     LinearMap.ker B = ⊥ := by
-  -- Read as a map `V → V*`, `B` intertwines `ρ` with `ρ.dual`, so its left radical is the
-  -- underlying submodule of the subrepresentation `Representation.IntertwiningMap.ker`; on an
-  -- irreducible representation that is `⊥` or `⊤`, and `⊤` only for the zero form.
+  -- Read as a map `V → V*`, `B` intertwines `ρ` with `ρ.dual`; an intertwiner out of an
+  -- irreducible representation is injective or zero, and `B` is not zero.
   set f : Representation.IntertwiningMap ρ ρ.dual :=
     B.intertwiningMap_of_isIntertwiningMap ρ ρ.dual
-      ((isInvariantForm_iff_isIntertwiningMap ρ B).mp hB).isIntertwining with hfdef
-  have hker : f.ker.toSubmodule = LinearMap.ker B := by rw [hfdef]; rfl
-  rcases IsSimpleOrder.eq_bot_or_eq_top f.ker with h | h
-  · rw [← hker, h, Subrepresentation.toSubmodule_bot]
-  · exact absurd (LinearMap.ker_eq_top.mp
-      (by rw [← hker, h, Subrepresentation.toSubmodule_top])) hB0
+      ((isInvariantForm_iff_isIntertwiningMap ρ B).mp hB).isIntertwining
+  have hf0 : f ≠ 0 := fun h => hB0 (congrArg Representation.IntertwiningMap.toLinearMap h)
+  exact LinearMap.ker_eq_bot.mpr
+    ((Representation.IsIrreducible.injective_or_eq_zero f).resolve_right hf0)
 
 /-- **A nonzero invariant form on an irreducible representation is nondegenerate.** -/
 theorem IsInvariantForm.nondegenerate [ρ.IsIrreducible] (hB : IsInvariantForm ρ B) (hB0 : B ≠ 0) :
@@ -231,11 +226,9 @@ theorem IsInvariantForm.exists_eq_smul (hB : IsInvariantForm ρ B) (hB0 : B ≠ 
   -- `Representation.IsIrreducible.algebraMap_intertwiningMap_bijective_of_isAlgClosed`.
   have hBnd : B.Nondegenerate := hB.nondegenerate hB0
   -- `φ` reads `C` through the isomorphism `V ≃ V*` that the nondegenerate `B` provides.
-  set φ : V →ₗ[k] V := (B.toDual hBnd).symm.toLinearMap ∘ₗ C with hφdef
-  have hφB : ∀ v w : V, B (φ v) w = C v w := by
-    intro v w
-    rw [hφdef]
-    simp
+  set φ : V →ₗ[k] V := C.symmCompOfNondegenerate B hBnd
+  have hφB : ∀ v w : V, B (φ v) w = C v w := fun v w =>
+    C.symmCompOfNondegenerate_left_apply hBnd w v
   have hφ : ∀ (g : G) (v : V), φ (ρ g v) = ρ g (φ v) := by
     intro g v
     refine sub_eq_zero.mp (hBnd.1 _ fun w => ?_)
