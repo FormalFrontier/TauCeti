@@ -6,7 +6,6 @@ module
 
 public import TauCeti.RepresentationTheory.CharacterTable.ClassSum.Eigenrow
 public import TauCeti.RepresentationTheory.CharacterTable.Table
-import Mathlib.LinearAlgebra.StdBasis
 
 /-!
 # The eigenrows of the class-multiplication matrices are the central characters
@@ -40,6 +39,8 @@ to a block, hence has the same central character as one.
 * `TauCeti.finEquivCentralCharacter`: the enumeration of the algebra homomorphisms out of
   `Z(k[G])` by the irreducible representations, and `TauCeti.finEquivEigenrow`, the same for the
   normalized common left eigenrows.
+* `TauCeti.basisCentralCharacterTable`: the rows of `Ω`, as a basis of the functions on the
+  conjugacy classes.
 
 ## Main statements
 
@@ -48,7 +49,12 @@ to a block, hence has the same central character as one.
   irreducibles have distinct central characters**.
 * `TauCeti.isClassEigenrow_iff_exists_centralCharacterTable_eq`: **the normalized common left
   eigenrows of the class-multiplication matrices are exactly the rows of `Ω`**, and
-  `TauCeti.card_isClassEigenrow`: there are as many of them as conjugacy classes.
+  `TauCeti.card_normalized_isClassEigenrow`: there are as many of them as conjugacy classes.
+  Dropping the normalization only adds scalar multiples:
+  `TauCeti.exists_eq_smul_centralCharacterTable` says **every nonzero common left eigenvector of the
+  class-multiplication matrices is a multiple of a row of `Ω`**, and
+  `TauCeti.linearIndependent_centralCharacterTable` says those rows are linearly independent, hence
+  a basis.
 * `TauCeti.eq_of_centralCharacter_eq`: **the central characters separate the points of the centre**.
 * `TauCeti.centralCharacterTable_mul_characterDegree`: the conversion `ωᵪ(K_C) · χ(1) = |C| · χ(g)`
   between `Ω` and the ordinary character table `TauCeti.characterTable`, with the two quotient
@@ -88,7 +94,7 @@ public section
 
 namespace TauCeti
 
-open scoped MonoidAlgebra
+open scoped Matrix MonoidAlgebra
 
 universe u v w
 
@@ -277,6 +283,30 @@ theorem isClassEigenrow_iff_exists_centralCharacterTable_eq {v : ConjClasses G �
   · rintro ⟨i, rfl⟩
     exact isClassEigenrow_centralCharacterTable i
 
+/-- **Every nonzero common left eigenvector of the class-multiplication matrices is a multiple of a
+row of the central character table**, so the rows of `Ω` are those eigenvectors up to scale.
+Normalization need not be assumed: the value of such a vector at the class of `1` is automatically
+nonzero, and is exactly the scale factor. -/
+theorem exists_eq_smul_centralCharacterTable {w : ConjClasses G → k} (hw₀ : w ≠ 0)
+    (hw : ∀ Cᵢ : ConjClasses G, ∃ c : k,
+      w ᵥ* (classMultMatrix Cᵢ).map (Int.cast : ℤ → k) = c • w) :
+    ∃ i, w = w (ConjClasses.mk (1 : G)) • centralCharacterTable k G i := by
+  have hw₁ : w (ConjClasses.mk (1 : G)) ≠ 0 := by
+    intro h₀
+    refine hw₀ (funext fun Cᵢ => ?_)
+    obtain ⟨c, hc⟩ := hw Cᵢ
+    have h := congrFun hc (ConjClasses.mk (1 : G))
+    rw [vecMul_classMultMatrix_apply] at h
+    simpa [structureConstant_mk_one_right, h₀] using h
+  have hv₁ : ((w (ConjClasses.mk (1 : G)))⁻¹ • w) (ConjClasses.mk (1 : G)) = 1 :=
+    inv_mul_cancel₀ hw₁
+  have hv : IsClassEigenrow ((w (ConjClasses.mk (1 : G)))⁻¹ • w) :=
+    isClassEigenrow_of_forall_exists_smul hv₁ fun Cᵢ => by
+      obtain ⟨c, hc⟩ := hw Cᵢ
+      exact ⟨c, by rw [Matrix.smul_vecMul, hc, smul_comm]⟩
+  obtain ⟨i, hi⟩ := (isClassEigenrow_iff_exists_centralCharacterTable_eq hv₁).mp hv
+  exact ⟨i, by rw [hi, smul_inv_smul₀ hw₁]⟩
+
 variable (k G)
 
 /-- **The irreducible representations of `G` are in bijection with the normalized common left
@@ -293,12 +323,57 @@ theorem coe_finEquivEigenrow (i : Fin (Nat.card (ConjClasses G))) :
   rw [finEquivEigenrow, Equiv.trans_apply, algHomEquivEigenrow_apply_coe,
     finEquivCentralCharacter_apply, centralCharacterTable]
 
-/-- **A finite group has as many normalized common left eigenrows as conjugacy classes.** -/
-theorem card_isClassEigenrow :
+/-- **A finite group has as many normalized common left eigenrows as conjugacy classes.** The
+normalization `v (ConjClasses.mk 1) = 1` cannot be dropped: the zero row is a common left eigenrow
+too (`TauCeti.isClassEigenrow_zero`). -/
+theorem card_normalized_isClassEigenrow :
     Nat.card {v : ConjClasses G → k // v (ConjClasses.mk (1 : G)) = 1 ∧ IsClassEigenrow v} =
       Nat.card (ConjClasses G) := by
   rw [← Nat.card_congr (finEquivEigenrow k G)]
   simp
+
+/-- **The rows of the central character table are linearly independent.** A linear relation between
+them is a linear functional on the centre vanishing on the class-sum basis, hence a linear relation
+between the central characters themselves; those are independent because the central characters
+separate the points of the centre (`TauCeti.eq_of_centralCharacter_eq`), which by a dimension count
+makes the values of all of them on a central element an arbitrary tuple of scalars. -/
+theorem linearIndependent_centralCharacterTable :
+    LinearIndependent k (centralCharacterTable k G) := by
+  have hsurj : ∀ b : Fin (Nat.card (ConjClasses G)) → k, ∃ z : Subalgebra.center k k[G],
+      ∀ i, Representation.centralCharacter (irreducibleRepresentation k i) z = b i := by
+    have hΦ : Function.Surjective (LinearMap.pi fun i =>
+        (Representation.centralCharacter (irreducibleRepresentation k i)).toLinearMap :
+          Subalgebra.center k k[G] →ₗ[k] (Fin (Nat.card (ConjClasses G)) → k)) := by
+      refine (LinearMap.injective_iff_surjective_of_finrank_eq_finrank ?_).mp fun z w h =>
+        eq_of_centralCharacter_eq k G fun i => congrFun h i
+      rw [finrank_center_monoidAlgebra, Module.finrank_fintype_fun_eq_card, Fintype.card_fin]
+    exact fun b => (hΦ b).imp fun z hz i => congrFun hz i
+  refine Fintype.linearIndependent_iff.mpr fun a ha j => ?_
+  have hzero : (∑ i, a i •
+      (Representation.centralCharacter (irreducibleRepresentation k i)).toLinearMap) =
+      (0 : Subalgebra.center k k[G] →ₗ[k] k) :=
+    Module.Basis.ext classSumBasis fun C => by
+      simpa [classSumBasis_apply] using congrFun ha C
+  obtain ⟨z, hz⟩ := hsurj (Pi.single j 1)
+  have h := DFunLike.congr_fun hzero z
+  simp only [LinearMap.sum_apply, LinearMap.smul_apply, AlgHom.toLinearMap_apply, smul_eq_mul,
+    LinearMap.zero_apply] at h
+  simpa [hz, Pi.single_apply] using h
+
+/-- **The rows of the central character table are a basis** of the functions on the conjugacy
+classes: they are linearly independent, and there are as many of them as conjugacy classes, which is
+the dimension of that space. Together with
+`TauCeti.exists_eq_smul_centralCharacterTable` this is the full description of the common left
+eigenvectors of the class-multiplication matrices. -/
+noncomputable def basisCentralCharacterTable :
+    Module.Basis (Fin (Nat.card (ConjClasses G))) k (ConjClasses G → k) :=
+  basisOfLinearIndependentOfCardEqFinrank' _ (linearIndependent_centralCharacterTable k G)
+    (by rw [Module.finrank_fintype_fun_eq_card, Fintype.card_fin, Nat.card_eq_fintype_card])
+
+@[simp]
+theorem coe_basisCentralCharacterTable :
+    ⇑(basisCentralCharacterTable k G) = centralCharacterTable k G :=
+  coe_basisOfLinearIndependentOfCardEqFinrank' _ _ _
 
 variable {k G}
 
