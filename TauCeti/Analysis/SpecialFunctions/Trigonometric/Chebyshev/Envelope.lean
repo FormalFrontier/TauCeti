@@ -33,7 +33,9 @@ The reference measure is `volume.restrict (Set.Ioc (-1) 1)` rather than Mathlib'
 itself. The two are related by `measureT = w · (volume.restrict (Set.Ioc (-1) 1))`, but `measureT`
 does not expose its body outside the module that defines it, so that identity is not available
 here; the orthogonality relation is transported instead through the public integral formula, which
-is all the bridge needs.
+is all the bridge needs. (The identity itself is recovered from that same integral formula
+downstream, as `TauCeti.chebyshevMeasureT_eq_withDensity`, and is what identifies this basis with
+`TauCeti.chebyshevTHilbertBasis` through the weight-change isometry.)
 
 ## Main statements
 
