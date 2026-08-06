@@ -6,7 +6,7 @@ module
 
 public import Mathlib.Algebra.Group.ConjFinite
 public import Mathlib.Data.Set.Card
-public import Mathlib.GroupTheory.GroupAction.Quotient
+public import Mathlib.GroupTheory.Index
 
 /-!
 # Inversion of conjugacy classes, and the size of a class
@@ -106,22 +106,18 @@ theorem card_carrier_inv (C : ConjClasses G) : Nat.card (C⁻¹).carrier = Nat.c
 
 /-- **The size of a conjugacy class divides the order of the group.** The class is the orbit of any
 of its members under the conjugation action, so its size is the index of a centralizer. -/
-theorem card_carrier_dvd_card [Finite G] (C : ConjClasses G) :
-    Nat.card C.carrier ∣ Nat.card G := by
-  classical
+theorem card_carrier_dvd_card (C : ConjClasses G) : Nat.card C.carrier ∣ Nat.card G := by
   obtain ⟨x, rfl⟩ := ConjClasses.exists_rep C
-  let : Fintype G := Fintype.ofFinite G
-  let : Fintype (ConjClasses.mk x).carrier := Fintype.ofFinite _
-  let : Fintype (MulAction.stabilizer (ConjAct G) x) := Fintype.ofFinite _
-  let : Fintype (MulAction.orbit (ConjAct G) x) := Fintype.ofFinite _
-  rw [Nat.card_eq_fintype_card, Nat.card_eq_fintype_card, ConjClasses.card_carrier]
-  refine Nat.div_dvd_of_dvd ⟨Fintype.card (MulAction.orbit (ConjAct G) x), ?_⟩
-  simpa [Nat.card_eq_fintype_card, Nat.mul_comm] using
-    (MulAction.card_orbit_mul_card_stabilizer_eq_card_group (ConjAct G) x).symm
+  calc Nat.card (ConjClasses.mk x).carrier
+      = (MulAction.stabilizer (ConjAct G) x).index := by
+        rw [Nat.card_coe_set_eq, ← ConjAct.orbit_eq_carrier_conjClasses,
+          MulAction.index_stabilizer]
+    _ ∣ Nat.card (ConjAct G) := Subgroup.index_dvd_card _
+    _ = Nat.card G := Nat.card_congr ConjAct.ofConjAct.toEquiv
 
 /-- The size of a conjugacy class is nonzero in any semiring in which the order of the group is
 nonzero: it divides that order. -/
-theorem card_carrier_cast_ne_zero {R : Type*} [Semiring R] [Finite G] (C : ConjClasses G)
+theorem card_carrier_cast_ne_zero {R : Type*} [Semiring R] (C : ConjClasses G)
     (h : (Nat.card G : R) ≠ 0) : (Nat.card C.carrier : R) ≠ 0 :=
   ne_zero_of_dvd_ne_zero h (Nat.cast_dvd_cast (card_carrier_dvd_card C))
 
