@@ -7,6 +7,7 @@ module
 public import Mathlib.Analysis.SpecialFunctions.Artanh
 public import Mathlib.Analysis.SpecialFunctions.Log.Deriv
 public import Mathlib.MeasureTheory.Integral.IntervalIntegral.FundThmCalculus
+public import TauCeti.Analysis.SpecialFunctions.Hyperbolic
 
 /-!
 # The algebra and the calculus of the inverse hyperbolic tangent
@@ -22,19 +23,19 @@ This file supplies both. The analytic half follows from the logarithmic formula
 the open interval `(-1, 1)`; since that interval is open, the formula may be differentiated at
 each of its points and the result transported back to `Real.artanh` itself. The algebraic half
 follows from the inversion `Real.tanh_artanh` together with the addition formula for
-`Real.tanh`, which the pinned Mathlib does not state either and which is proved here.
+`Real.tanh`, which the pinned Mathlib does not state either and which is proved in
+`TauCeti/Analysis/SpecialFunctions/Hyperbolic.lean`.
 
 ## Main declarations
 
 ### The additive law
 
-* `Real.tanh_add` — `tanh (a + b) = (tanh a + tanh b) / (1 + tanh a * tanh b)`, the addition
-  formula for `Real.tanh`, from which the `Real.artanh` one is read off by inversion.
 * `Real.artanh_add` and `Real.artanh_sub` — `artanh a ± artanh b = artanh ((a ± b) / (1 ± a * b))`
   for `a` and `b` in `(-1, 1)`: `Real.artanh` is an isomorphism from the Möbius addition of
   `(-1, 1)` onto `(ℝ, +)`.
-* `Real.add_div_one_add_mul_mem_Ioo` — that Möbius addition is closed on `(-1, 1)`, which is
-  what lets the addition formula be applied again to its own right-hand side.
+* `Real.add_div_one_add_mul_mem_Ioo` and `Real.sub_div_one_sub_mul_mem_Ioo` — that Möbius
+  addition and Möbius subtraction are closed on `(-1, 1)`, which is what lets the two formulae
+  be applied again to their own right-hand sides.
 * `Real.artanh_neg_eq_neg_artanh` and `Real.artanh_abs` — `artanh (-x) = -artanh x` and
   `artanh |x| = |artanh x|`, both for *every* real `x`, the values outside `(-1, 1)` being
   handled by `Real.artanh_eq_zero_of_one_le_abs`.
@@ -66,10 +67,6 @@ while its infinitesimal form — proved in
 `Real.artanh` at the origin transported along that expression. Nothing here is
 complex-analytic, so it is all stated for `Real.artanh` alone, at the natural generality of a
 real special function, rather than being buried in the disc files.
-
-`Real.tanh_add` is stated here, rather than in a file of its own, because `Real.artanh` is
-where it is consumed: the pinned Mathlib has no hyperbolic addition formulae beyond
-`Real.sinh_add` and `Real.cosh_add`, and Tau Ceti has no other hyperbolic-function file.
 -/
 
 public section
@@ -81,33 +78,6 @@ open Set
 open scoped Topology
 
 /-! ### The additive law -/
-
-/-- **Addition formula for the hyperbolic tangent.** `Real.tanh (a + b)` is the Möbius sum
-`(tanh a + tanh b) / (1 + tanh a * tanh b)`.
-
-The pinned Mathlib has `Real.sinh_add` and `Real.cosh_add` but no addition formula for
-`Real.tanh`. This one is their quotient, both sides of which carry the same factor: by those two
-formulae `tanh a + tanh b = sinh (a + b) / (cosh a * cosh b)` and
-`1 + tanh a * tanh b = cosh (a + b) / (cosh a * cosh b)`, and the right-hand denominator is
-positive, so dividing cancels `cosh a * cosh b` and leaves `tanh (a + b)`. -/
-theorem _root_.Real.tanh_add (a b : ℝ) :
-    Real.tanh (a + b) = (Real.tanh a + Real.tanh b) / (1 + Real.tanh a * Real.tanh b) := by
-  have ha : Real.cosh a ≠ 0 := (Real.cosh_pos a).ne'
-  have hb : Real.cosh b ≠ 0 := (Real.cosh_pos b).ne'
-  have hc : Real.cosh (a + b) ≠ 0 := (Real.cosh_pos _).ne'
-  have hnum : Real.tanh a + Real.tanh b
-      = Real.sinh (a + b) / (Real.cosh a * Real.cosh b) := by
-    rw [Real.sinh_add, Real.tanh_eq_sinh_div_cosh, Real.tanh_eq_sinh_div_cosh]
-    field_simp
-  have hden : 1 + Real.tanh a * Real.tanh b
-      = Real.cosh (a + b) / (Real.cosh a * Real.cosh b) := by
-    rw [Real.cosh_add, Real.tanh_eq_sinh_div_cosh, Real.tanh_eq_sinh_div_cosh]
-    field_simp
-  have hne : 1 + Real.tanh a * Real.tanh b ≠ 0 := by
-    rw [hden]
-    exact div_ne_zero hc (mul_ne_zero ha hb)
-  rw [eq_div_iff hne, hnum, hden, Real.tanh_eq_sinh_div_cosh (a + b)]
-  field_simp
 
 /-- `Real.artanh` vanishes outside the interval `(-1, 1)` on which it inverts `Real.tanh`: this
 is the junk value forced by the defining formula `artanh x = log √((1 + x) / (1 - x))`, whose
@@ -195,6 +165,19 @@ theorem _root_.Real.artanh_sub {a b : ℝ} (ha : a ∈ Ioo (-1 : ℝ) 1) (hb : b
   rw [Real.artanh_neg_eq_neg_artanh] at h
   rw [sub_eq_add_neg a b, sub_eq_add_neg 1 (a * b), ← mul_neg, ← h]
   ring
+
+/-- **Möbius subtraction preserves the interval `(-1, 1)`**: for `a, b ∈ (-1, 1)` the Möbius
+difference `(a - b) / (1 - a * b)` again lies in `(-1, 1)`.
+
+This is the closure statement that `Real.artanh_sub` needs, exactly as
+`Real.add_div_one_add_mul_mem_Ioo` is the one that `Real.artanh_add` needs: without it a
+consumer of the subtraction formula could not feed its right-hand side back into the
+interval-only `Real.artanh` API. It is the addition statement at `-b`. -/
+theorem _root_.Real.sub_div_one_sub_mul_mem_Ioo {a b : ℝ} (ha : a ∈ Ioo (-1 : ℝ) 1)
+    (hb : b ∈ Ioo (-1 : ℝ) 1) : (a - b) / (1 - a * b) ∈ Ioo (-1 : ℝ) 1 := by
+  have hb' : -b ∈ Ioo (-1 : ℝ) 1 := ⟨by linarith [hb.2], by linarith [hb.1]⟩
+  have h := Real.add_div_one_add_mul_mem_Ioo ha hb'
+  rwa [mul_neg, ← sub_eq_add_neg, ← sub_eq_add_neg] at h
 
 /-! ### Differentiability -/
 
