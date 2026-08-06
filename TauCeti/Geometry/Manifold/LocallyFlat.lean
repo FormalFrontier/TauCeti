@@ -67,8 +67,10 @@ discs (topological sliceness) and for stating the annulus conjecture.
   under open embeddings and homeomorphisms of the ambient space and of the domain.
 * `TauCeti.IsSliceEmbedding.transHomeomorph`: invariance under a homeomorphic change of model
   space.
-* `TauCeti.IsLocallyFlat.comp`: a composite embedding is locally flat, under an explicit
-  hypothesis supplying flattening charts for the two factors that are chosen compatibly.
+* `TauCeti.IsLocallyFlat.comp`: a composite of locally flat embeddings is locally flat, under an
+  explicit hypothesis that their flattening charts can be chosen compatibly, and
+  `TauCeti.IsLocallyFlat.of_compatible_isSliceChart`, the form of it that assumes only the
+  compatible pair of charts.
 * `TauCeti.IsLocallyFlat.prodMap`: a product of locally flat embeddings is locally flat.
 * `TauCeti.isLocallyFlat_iff_isOpenEmbedding`: in codimension zero, locally flat means open.
 * `TauCeti.IsLocallyFlat.isLocallyClosed_range`: a locally flat image is locally closed, as soon as
@@ -107,17 +109,21 @@ structure and is not formalised here.
 Composing two locally flat embeddings `N ↪ M ↪ P` is not a formal consequence of the definition:
 the chart of `M` flattening the inner embedding and the chart of `P` flattening the outer one are
 chosen independently, and nothing makes them agree. `TauCeti.IsLocallyFlat.comp` therefore carries
-that agreement as an explicit hypothesis — the outer chart reads the intermediate coordinates off
-the inner one along `g` — rather than assuming the conclusion; the outer chart then flattens the
-composite, and the complementary models multiply. That hypothesis already produces the flattening
-charts around each point of the domain, so nothing beyond the embedding content of the conclusion
-itself is assumed: that the composite is an embedding, and that the outer map is injective. The
-compatibility hypothesis is kept down to the part that is not already implied by the rest of it:
-the outer chart is only asked to detect `range g` in one direction, the other direction and the
-fact that the inner chart is a chart around `f x` both following from the agreement of the two
-charts together with injectivity of the outer map. It is
-stated only for the standard slice, since the compatibility condition refers to the splitting
-`F × F'` of the intermediate model, which the relative layer does not have. The ambient
+that agreement as an explicit hypothesis on charts witnessing the local flatness of the two
+factors — the outer chart reads the intermediate coordinates off the inner one along `g` — rather
+than assuming the conclusion; the outer chart then flattens the composite, and the complementary
+models multiply. Composition comes in two levels, because a witnessing chart can only be referred
+to by exhibiting it, so the compatibility hypothesis necessarily re-exhibits the two charts and
+thereby already carries the flattening content of the two factors. `TauCeti.IsLocallyFlat.comp` is
+the statement in the shape it is used and read, with both factors locally flat;
+`TauCeti.IsLocallyFlat.of_compatible_isSliceChart` is what its proof actually consumes, a
+compatible pair of charts around each point together with the embedding content of the conclusion
+itself, and `comp` is a two-line consequence of it. There the compatibility hypothesis is kept down
+to the part not already implied by the rest of it: the outer chart is only asked to detect
+`range g` in one direction, the other direction and the fact that the inner chart is a chart around
+`f x` both following from the agreement of the two charts together with injectivity of the outer
+map. Both are stated only for the standard slice, since the compatibility condition refers to the
+splitting `F × F'` of the intermediate model, which the relative layer does not have. The ambient
 codimension-zero case needs no such hypothesis and is kept separate, as
 `TauCeti.IsLocallyFlat.isOpenEmbedding_comp` and its converse.
 
@@ -493,21 +499,19 @@ theorem codRestrict (h : IsLocallyFlat F F' f) {V : Set M} (hV : IsOpen V) (hf :
 theorem homeomorph_comp (h : IsLocallyFlat F F' f) (e : M ≃ₜ P) : IsLocallyFlat F F' (e ∘ f) :=
   IsSliceEmbedding.homeomorph_comp h e
 
-/-- **Composition of locally flat embeddings**, under an explicit compatibility hypothesis on
-their flattening charts. Local flatness of `f : N → M` and of `g : M → P` does not by itself make
-`g ∘ f` locally flat, because the chart of `M` flattening `f` and the chart of `P` flattening `g`
-need not have anything to do with each other; `hcompat` is the hypothesis that they can be chosen
-coherently around each point of the domain. It asks for a chart `ψ` of `P` at `g (f x)` and a
-flattening chart `φ` of `M` for `f` such that `ψ` reads the intermediate coordinates off `φ` along
-`g`, in the sense `ψ (g y) = (φ y, 0)` on the source of `φ`, such that `ψ` sees no more of
-`range g` than `φ` charts, and such that on its source `ψ` detects `range g` from the vanishing of
-the outer coordinate. That same `ψ` then flattens `g ∘ f`, whose complementary model is the product
-of the two complementary models. Since `hcompat` already supplies every flattening chart the
-conclusion needs, the only embedding content assumed is what the conclusion itself carries, that
-`g ∘ f` is an embedding, together with injectivity of `g`. Only the stated half of the flattening
-of `range g` by `ψ` is assumed, the other half being forced by `hagree` and `hsub`; likewise
-`f x ∈ φ.source` is not assumed, since `hsub` and injectivity of `g` already give it. -/
-theorem comp {G' : Type*} [TopologicalSpace G'] [Zero G'] {g : M → P}
+/-- The general form of `TauCeti.IsLocallyFlat.comp`: what makes a composite locally flat is a
+compatible pair of charts around each point of the domain, and nothing else. It asks for a chart
+`ψ` of `P` at `g (f x)` and a flattening chart `φ` of `M` for `f` such that `ψ` reads the
+intermediate coordinates off `φ` along `g`, in the sense `ψ (g y) = (φ y, 0)` on the source of `φ`,
+such that `ψ` sees no more of `range g` than `φ` charts, and such that on its source `ψ` detects
+`range g` from the vanishing of the outer coordinate. That same `ψ` then flattens `g ∘ f`, whose
+complementary model is the product of the two complementary models. Since `hcompat` already
+supplies every flattening chart the conclusion needs, the only embedding content assumed is what
+the conclusion itself carries, that `g ∘ f` is an embedding, together with injectivity of `g`. Only
+the stated half of the flattening of `range g` by `ψ` is assumed, the other half being forced by
+`hagree` and `hsub`; likewise `f x ∈ φ.source` is not assumed, since `hsub` and injectivity of `g`
+already give it. -/
+theorem of_compatible_isSliceChart {G' : Type*} [TopologicalSpace G'] [Zero G'] {g : M → P}
     (hgf : IsEmbedding (g ∘ f)) (hg : Function.Injective g)
     (hcompat : ∀ x : N, ∃ ψ : OpenPartialHomeomorph P ((F × F') × G'),
       ∃ φ : OpenPartialHomeomorph M (F × F'), g (f x) ∈ ψ.source ∧
@@ -542,6 +546,32 @@ theorem comp {G' : Type*} [TopologicalSpace G'] [Zero G'] {g : M → P}
   have hcomp := key.transHomeomorph (Homeomorph.prodAssoc F F' G')
   rw [himage] at hcomp
   exact hcomp
+
+/-- **Composition of locally flat embeddings**, under an explicit compatibility hypothesis on
+their flattening charts. Local flatness of `f : N → M` and of `g : M → P` does not by itself make
+`g ∘ f` locally flat, because the chart of `M` flattening `f` and the chart of `P` flattening `g`
+are chosen independently and nothing makes them agree; `hcompat` is the hypothesis that charts
+witnessing `hf` and `hg` can be chosen coherently around each point of the domain, namely so that
+the outer chart reads the intermediate coordinates off the inner one along `g`, in the sense
+`ψ (g y) = (φ y, 0)` on the source of `φ`, and sees no more of `range g` than the inner one charts.
+The outer chart then flattens the composite, whose complementary model is the product of the two
+complementary models.
+
+Only the compatible pair of charts is used, not the two local flatness hypotheses in full; that
+sharper form is `TauCeti.IsLocallyFlat.of_compatible_isSliceChart`, from which this is derived. -/
+theorem comp {G' : Type*} [TopologicalSpace G'] [Zero G'] {g : M → P}
+    (hg : IsLocallyFlat (F × F') G' g) (hf : IsLocallyFlat F F' f)
+    (hcompat : ∀ x : N, ∃ ψ : OpenPartialHomeomorph P ((F × F') × G'),
+      ∃ φ : OpenPartialHomeomorph M (F × F'), g (f x) ∈ ψ.source ∧ f x ∈ φ.source ∧
+        IsSliceChart ψ ((univ : Set (F × F')) ×ˢ ({0} : Set G')) (range g) ∧
+        IsSliceChart φ ((univ : Set F) ×ˢ ({0} : Set F')) (range f) ∧
+        ψ.source ∩ range g ⊆ g '' φ.source ∧ ∀ y ∈ φ.source, ψ (g y) = (φ y, 0)) :
+    IsLocallyFlat F (F' × G') (g ∘ f) :=
+  of_compatible_isSliceChart (hg.isEmbedding.comp hf.isEmbedding) hg.injective fun x => by
+    obtain ⟨ψ, φ, hψx, -, hψ, hφ, hsub, hagree⟩ := hcompat x
+    -- The flattening of `range g` by `ψ` gives in particular the one direction of it that
+    -- `of_compatible_isSliceChart` asks for.
+    exact ⟨ψ, φ, hψx, fun p hp hp2 => (hψ.mem_iff hp).2 ⟨mem_univ _, hp2⟩, hφ, hsub, hagree⟩
 
 /-- A product of locally flat embeddings is locally flat, the models multiplying: the product of
 two standard slices is the standard slice of the product, after the permutation of coordinates
