@@ -29,11 +29,13 @@ is a stronger statement than naming a bespoke disintegration measure would be.
 
 Both measures live on `ProbabilityMeasure α × (ℕ → α)`, and the proof identifies them prefix by
 prefix. For the joint law that prefix marginal is the defining identity of `ConditionallyIIDWith`
-at the selection `Fin n → ℕ`. For the mixture law no fibre calculation is needed either: the
-canonical construction is *itself* conditionally i.i.d. (`conditionallyIIDWith_iidMixtureLaw`), so
-its own block-level disintegration supplies the prefix marginal, and `iidMixtureLaw_map_directing`
-rewrites the first factor back along `ν`. The two agree, and `measure_eq_of_prefixProjPair_map_eq`
-promotes that agreement to equality of the full measures.
+at the selection `Fin n → ℕ`, which is
+`map_prefixProjPair_jointPathLaw_eq_disintegration`. For the mixture law it is
+`map_prefixProjPair_iidMixtureLaw`, proved fibrewise: over each point `t` of the mixing law the
+fibre `δ_t ⊗ (P t)^{⊗ℕ}` projects to `δ_t ⊗ (P t)^{⊗ Fin n}`, by `Measure.dirac_prod` and
+`map_prefixProj_infinitePi_const`. Instantiating that at the identity kernel and pushing the bind
+back along `ν` makes the two prefix marginals agree, and
+`measure_eq_of_prefixProjPair_map_eq` promotes the agreement to equality of the full measures.
 
 That last step is where the paired prefix maps `prefixProjPair` earn their keep. Mathlib's
 `IsProjectiveLimit` is stated for pure dependent products `∀ i, α i`, so it does not apply to a
