@@ -22,7 +22,13 @@ turns the integrand into a finite sum of the individual discrepancies; integrati
 gives the result with no Hölder or dominated-convergence machinery.
 
 The unit-ball hypotheses are what make the constant `1`: for indicator observables both a block
-average and its conditional expectation lie in `[0, 1]`, which is the motivating case.
+average and its conditional expectation lie in `[0, 1]`, which is the motivating case. That
+motivation is `TauCetiRoadmap/Exchangeability/README.md`, **Layer 3** (the L² averaging library and
+the standard-Borel de Finetti route): this is the step from "each window average converges in `L¹`"
+to "the product of finitely many window averages converges in `L¹`", which the disjoint-window block
+factorization consumes. Layer 5's Koopman route needs the same step against a different
+conditioning σ-algebra, which is why this is neutral infrastructure rather than living inside
+either route.
 
 Everything is stated for an arbitrary `Finset ι` of factors, an arbitrary filter on the
 approximating index, and an arbitrary seminormed commutative ring of values, with a.e. bounds and
