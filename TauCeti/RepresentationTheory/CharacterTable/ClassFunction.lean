@@ -14,8 +14,12 @@ public import Mathlib.RepresentationTheory.Character
 This file defines functions on a group that are constant on conjugacy classes. It identifies
 their module with the module of functions on `ConjClasses G`, computes its dimension for finite
 groups, pulls class functions back along a group homomorphism, twists them by a power map of the
-group element, shows that characters of representations are class functions, and evaluates a sum
-over a finite group one conjugacy class at a time.
+group element, inverts the group element, shows that characters of representations are class
+functions, and evaluates a sum over a finite group one conjugacy class at a time.
+
+Inverting the group element, `TauCeti.ClassFunction.invMap`, is the involution that turns the
+character of a representation into the character of its dual
+(`TauCeti.ClassFunction.invMap_ofCharacter`), and over `ℂ` conjugates the values of a character.
 
 The indicator function of a conjugacy class, `TauCeti.ClassFunction.classIndicator`, is the class
 function pulled back from the indicator of a single point of `ConjClasses G`; pairing a class
@@ -88,6 +92,14 @@ theorem ofConjClasses_apply (f : ConjClasses G → k) (g : G) :
     (ofConjClasses f).1 g = f (ConjClasses.mk g) :=
   (rfl)
 
+/-- Pulling a function on conjugacy classes back and evaluating it again returns it. -/
+@[simp]
+theorem toConjClasses_ofConjClasses (f : ConjClasses G → k) :
+    toConjClasses (ofConjClasses f) = f :=
+  funext fun C => by
+    obtain ⟨g, rfl⟩ := ConjClasses.exists_rep C
+    rw [toConjClasses_mk, ofConjClasses_apply]
+
 /-- Pull a class function back along a group homomorphism.  Restriction of a class function to a
 subgroup is the case `φ = S.subtype`. -/
 def comap {H : Type w} [Group H] (φ : H →* G) :
@@ -143,6 +155,31 @@ theorem powMap_mul (i j : ℕ) :
     powMap (k := k) (G := G) (i * j) = (powMap i).comp (powMap j) := by
   ext f g
   simp [pow_mul]
+
+/-- Invert the group element in a class function, `f ↦ (g ↦ f g⁻¹)`.  This is again a class
+function because the inverse of a conjugate is the conjugate of the inverse, and it depends
+linearly on `f`.
+
+This is the twist that `TauCeti.ClassFunction.powMap` cannot express, the exponent `-1` lying
+outside `ℕ`; on characters it is passage to the dual representation. -/
+def invMap : ClassFunction k G →ₗ[k] ClassFunction k G where
+  toFun f := ⟨fun g => f.1 g⁻¹, fun g h => by
+    change f.1 (h * g * h⁻¹)⁻¹ = f.1 g⁻¹
+    have hinv : (h * g * h⁻¹)⁻¹ = h * g⁻¹ * h⁻¹ := by group
+    rw [hinv]
+    exact f.2 g⁻¹ h⟩
+  map_add' _ _ := rfl
+  map_smul' _ _ := rfl
+
+/-- The inversion twist evaluates the class function at the inverse of the group element. -/
+@[simp]
+theorem invMap_apply (f : ClassFunction k G) (g : G) : (invMap f).1 g = f.1 g⁻¹ :=
+  (rfl)
+
+/-- Inverting the group element twice changes nothing: `invMap` is an involution. -/
+@[simp]
+theorem invMap_invMap (f : ClassFunction k G) : invMap (invMap f) = f :=
+  Subtype.ext (funext fun g => by rw [invMap_apply, invMap_apply, inv_inv])
 
 /-- Class functions on `G` are linearly equivalent to functions on its conjugacy classes. -/
 noncomputable def equivConjClasses : ClassFunction k G ≃ₗ[k] (ConjClasses G → k) where
@@ -245,6 +282,14 @@ noncomputable def ofCharacter {V : Type w} [AddCommGroup V] [Module k V]
 theorem ofCharacter_apply {V : Type w} [AddCommGroup V] [Module k V]
     (ρ : Representation k G V) (g : G) : (ofCharacter ρ).1 g = ρ.character g :=
   (rfl)
+
+/-- **Inverting the group element in a character gives the character of the dual
+representation**: `χ_{ρ*}(g) = χ_ρ(g⁻¹)`. -/
+@[simp]
+theorem invMap_ofCharacter {V : Type w} [AddCommGroup V] [Module k V] [FiniteDimensional k V]
+    (ρ : Representation k G V) : invMap (ofCharacter ρ) = ofCharacter ρ.dual :=
+  Subtype.ext (funext fun g => by
+    rw [invMap_apply, ofCharacter_apply, ofCharacter_apply, Representation.char_dual])
 
 /-- The character of a finite-dimensional bundled representation is a class function. -/
 noncomputable def ofFDRep (V : FDRep k G) : ClassFunction k G :=
