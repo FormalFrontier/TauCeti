@@ -23,18 +23,19 @@ for a *valid* type so that a shortest one has length `1`; it symmetrises the sta
 *on the right*, `A i j * ℓ j = A j i * ℓ i`, so it is integral where the symmetriser `d` asked for
 by `TauCeti.IsFiniteType`, which scales the matrix on the left, is rational: that one is the
 reciprocal `d i = (ℓ i)⁻¹`. `TauCeti.DynkinType.IsLongSimpleRoot` then singles out the long nodes.
-For a *valid* type those are exactly the nodes of maximal length
-(`TauCeti.DynkinType.isLongSimpleRoot_iff`).
+Away from the degenerate `B 1` those are exactly the nodes of maximal length
+(`TauCeti.DynkinType.isLongSimpleRoot_iff`), in particular for a valid type.
 
-Validity is load-bearing in both places, and among the types of positive rank a single degenerate
-type is the reason in each. The sole node of `C 1` is the last node of the `Cₙ` family, hence long,
-of length `2`: nothing shorter sits beside it to normalise against, so `rootLength` is off by the
-factor `2` there. The sole node of `B 1` is the last node of the `Bₙ` family, hence short, while
-being of maximal length for want of competition: that is the one type where the family-wise reading
-and the maximality reading of `IsLongSimpleRoot` part company. Validity also excludes the rank-zero
-types `A 0`, `B 0`, `C 0` and `D 0`, which have no node at all. A statement quantified over the
-nodes cannot see that, but an existential one can, which is a second reason
-`TauCeti.DynkinType.exists_rootLength_eq_one` needs validity.
+A handful of degenerate types stand between the family-wise reading and its intended meaning, and
+each of the four statements below that meets one is proved first in its exact form, naming the
+types it excludes, and then specialised to a valid type for the downstream consumers, which reach a
+type through `TauCeti.HasCartanType` and so have validity and nothing else. The sole node of `C 1`
+is the last node of the `Cₙ` family, hence long, of length `2`: nothing shorter sits beside it to
+normalise against, so `rootLength` is off by the factor `2` there. The sole node of `B 1` is the
+last node of the `Bₙ` family, hence short, while being of maximal length for want of competition:
+that is the one type where the family-wise reading and the maximality reading of
+`IsLongSimpleRoot` part company. Finally the rank-zero types `A 0`, `B 0`, `C 0` and `D 0` have no
+node at all. A statement quantified over the nodes cannot see that, but an existential one can.
 
 ## The Bourbaki numbering
 
@@ -65,16 +66,20 @@ transposed matrix instead would make that identity false.
 * `TauCeti.DynkinType.cartanMatrix_mul_rootLength`: the standard Cartan matrix of a type is
   symmetrised on the right by `rootLength`, that is `A i j * ℓ j = A j i * ℓ i`. This is the
   identity that pins the relative lengths, and it holds for every type, valid or not.
-* `TauCeti.DynkinType.exists_rootLength_eq_one`: a valid type has a simple root of length `1`,
-  which with `TauCeti.DynkinType.rootLength_pos` is the normalisation of the lengths. Validity is
-  needed here too, and twice over: for `C 1`, whose sole node has length `2`, and for the rank-zero
-  types, which have no simple root to exhibit.
-* `TauCeti.DynkinType.isLongSimpleRoot_iff`: for a valid type, a node is long exactly when its
-  simple root has maximal length. Validity is needed: the degenerate `B 1` has a single node,
-  which is of maximal length while `IsLongSimpleRoot` calls it short, because it is the short node
-  of the `Bₙ` family.
-* `TauCeti.DynkinType.forall_isLongSimpleRoot_iff_isSimplyLaced`: a valid type has all its simple
-  roots long exactly when it is simply laced.
+* `TauCeti.DynkinType.exists_rootLength_eq_one_iff`: a type has a simple root of length `1` exactly
+  when it has a node at all and is not `C 1`, whose sole node has length `2`; with
+  `TauCeti.DynkinType.rootLength_pos` this is the normalisation of the lengths.
+  `TauCeti.DynkinType.exists_rootLength_eq_one` is the corollary for a valid type.
+* `TauCeti.DynkinType.isLongSimpleRoot_iff`: outside the degenerate `B 1`, a node is long exactly
+  when its simple root has maximal length; `B 1` has a single node, which is of maximal length
+  while `IsLongSimpleRoot` calls it short, because it is the short node of the `Bₙ` family.
+  `TauCeti.DynkinType.isLongSimpleRoot_iff_of_valid` is the corollary for a valid type.
+* `TauCeti.DynkinType.forall_isLongSimpleRoot_iff`: a type has all its simple roots long exactly
+  when it is simply laced, has no node at all, or is `C 1`; for a valid type this is
+  `TauCeti.DynkinType.forall_isLongSimpleRoot_iff_isSimplyLaced`.
+* `TauCeti.DynkinType.exists_isLongSimpleRoot_iff`: a type has a long simple root exactly when it
+  has a node at all and is not `B 1`; `TauCeti.DynkinType.exists_isLongSimpleRoot` is the corollary
+  for a valid type.
 * `TauCeti.DynkinType.isLongSimpleRoot_C_iff_not_isLongSimpleRoot_B`: `Bₙ` and `Cₙ` carry the same
   diagram with the lengths exchanged.
 * `TauCeti.RootPairing.RootPositiveForm.rootLength_le_iff_pairingIn_le`: in any root pairing
@@ -150,42 +155,51 @@ lemma rootLength_pos (t : DynkinType) (i : Fin t.rank) : 0 < t.rootLength i := b
   cases t <;> simp only [rootLength_A, rootLength_B, rootLength_C, rootLength_D, rootLength_E6,
     rootLength_E7, rootLength_E8, rootLength_F4, rootLength_G2] <;> (try split_ifs) <;> norm_num
 
-/-- **A valid Dynkin type has a simple root of length `1`.** With
-`TauCeti.DynkinType.rootLength_pos` this is the normalisation that `TauCeti.DynkinType.rootLength`
-is stated up to: on a valid type the shortest simple roots are exactly those of length `1`.
+/-- **A Dynkin type has a simple root of length `1` exactly when it has a node at all and is not
+`C 1`.** With `TauCeti.DynkinType.rootLength_pos` this is the normalisation that
+`TauCeti.DynkinType.rootLength` is stated up to: away from the two exceptions the shortest simple
+roots are exactly those of length `1`.
 
-Validity is needed for two reasons. The rank-zero types `A 0`, `B 0`, `C 0` and `D 0` have no simple
-root at all to exhibit; and among the types of positive rank the only obstruction is `C 1`, whose
-sole node the `Cₙ` family calls long and gives length `2`. -/
-theorem exists_rootLength_eq_one {t : DynkinType} (ht : t.Valid) : ∃ i, t.rootLength i = 1 := by
-  cases t with
-  | A n =>
-      have hn : 1 ≤ n := valid_A.mp ht
-      obtain ⟨j₀, -⟩ : ∃ j₀ : Fin n, (j₀ : ℕ) = 0 := ⟨⟨0, by omega⟩, rfl⟩
-      exact ⟨j₀, by simp⟩
-  | D n =>
-      have hn : 4 ≤ n := valid_D.mp ht
-      obtain ⟨j₀, -⟩ : ∃ j₀ : Fin n, (j₀ : ℕ) = 0 := ⟨⟨0, by omega⟩, rfl⟩
-      exact ⟨j₀, by simp⟩
-  | E6 => exact ⟨⟨0, by simp⟩, by simp⟩
-  | E7 => exact ⟨⟨0, by simp⟩, by simp⟩
-  | E8 => exact ⟨⟨0, by simp⟩, by simp⟩
-  | B n =>
-      -- The last node of `Bₙ` is its short one.
-      have hn : 2 ≤ n := valid_B.mp ht
-      obtain ⟨j₀, hj₀⟩ : ∃ j₀ : Fin n, (j₀ : ℕ) = n - 1 := ⟨⟨n - 1, by omega⟩, rfl⟩
-      exact ⟨j₀, by simp only [rootLength_B]; split_ifs <;> omega⟩
-  | C n =>
-      -- Every node of `Cₙ` but the last is short, and validity gives more than one node.
-      have hn : 3 ≤ n := valid_C.mp ht
-      obtain ⟨j₀, hj₀⟩ : ∃ j₀ : Fin n, (j₀ : ℕ) = 0 := ⟨⟨0, by omega⟩, rfl⟩
-      exact ⟨j₀, by simp only [rootLength_C]; split_ifs <;> omega⟩
-  | F4 =>
-      obtain ⟨j₀, hj₀⟩ : ∃ j₀ : Fin 4, (j₀ : ℕ) = 2 := ⟨⟨2, by omega⟩, rfl⟩
-      exact ⟨j₀, by simp only [rootLength_F4]; split_ifs <;> omega⟩
-  | G2 =>
-      obtain ⟨j₀, hj₀⟩ : ∃ j₀ : Fin 2, (j₀ : ℕ) = 0 := ⟨⟨0, by omega⟩, rfl⟩
-      exact ⟨j₀, by simp only [rootLength_G2]; split_ifs <;> omega⟩
+Both exceptions are degenerate. The rank-zero types `A 0`, `B 0`, `C 0` and `D 0` have no simple
+root at all to exhibit; and the sole node of `C 1` is the last node of the `Cₙ` family, which that
+family calls long and gives length `2`. -/
+theorem exists_rootLength_eq_one_iff (t : DynkinType) :
+    (∃ i, t.rootLength i = 1) ↔ 0 < t.rank ∧ t ≠ C 1 := by
+  refine ⟨fun ⟨i, hi⟩ ↦ ⟨(Nat.zero_le _).trans_lt i.isLt, ?_⟩, fun ⟨hr, hne⟩ ↦ ?_⟩
+  · -- The sole node of `C 1` is the long last node of the `Cₙ` family.
+    rintro rfl
+    have h1 : (i : ℕ) < 1 := i.isLt
+    simp only [rootLength_C] at hi
+    split_ifs at hi <;> omega
+  · cases t with
+    | A n => exact ⟨⟨0, hr⟩, by simp⟩
+    | D n => exact ⟨⟨0, hr⟩, by simp⟩
+    | E6 => exact ⟨⟨0, by simp⟩, by simp⟩
+    | E7 => exact ⟨⟨0, by simp⟩, by simp⟩
+    | E8 => exact ⟨⟨0, by simp⟩, by simp⟩
+    | B n =>
+        -- The last node of `Bₙ` is its short one.
+        have hn : 0 < n := hr
+        obtain ⟨j₀, hj₀⟩ : ∃ j₀ : Fin n, (j₀ : ℕ) = n - 1 := ⟨⟨n - 1, by omega⟩, rfl⟩
+        exact ⟨j₀, by simp only [rootLength_B]; split_ifs <;> omega⟩
+    | C n =>
+        -- Every node of `Cₙ` but the last is short, and `n ≠ 1` gives a node before the last.
+        have hn : 0 < n := hr
+        have hn1 : n ≠ 1 := by rintro rfl; exact hne rfl
+        obtain ⟨j₀, hj₀⟩ : ∃ j₀ : Fin n, (j₀ : ℕ) = 0 := ⟨⟨0, by omega⟩, rfl⟩
+        exact ⟨j₀, by simp only [rootLength_C]; split_ifs <;> omega⟩
+    | F4 =>
+        obtain ⟨j₀, hj₀⟩ : ∃ j₀ : Fin 4, (j₀ : ℕ) = 2 := ⟨⟨2, by omega⟩, rfl⟩
+        exact ⟨j₀, by simp only [rootLength_F4]; split_ifs <;> omega⟩
+    | G2 =>
+        obtain ⟨j₀, hj₀⟩ : ∃ j₀ : Fin 2, (j₀ : ℕ) = 0 := ⟨⟨0, by omega⟩, rfl⟩
+        exact ⟨j₀, by simp only [rootLength_G2]; split_ifs <;> omega⟩
+
+/-- **A valid Dynkin type has a simple root of length `1`.** This is
+`TauCeti.DynkinType.exists_rootLength_eq_one_iff` for a valid type, which excludes both of its
+exceptions: the rank-zero types and `C 1`. -/
+theorem exists_rootLength_eq_one {t : DynkinType} (ht : t.Valid) : ∃ i, t.rootLength i = 1 :=
+  (exists_rootLength_eq_one_iff t).mpr ⟨rank_pos ht, by rintro rfl; simp at ht⟩
 
 /-- A simply-laced type has all its simple roots of length `1`. -/
 lemma rootLength_eq_one_of_isSimplyLaced {t : DynkinType} (ht : t.IsSimplyLaced)
@@ -248,8 +262,9 @@ roots of the same length, hence all long; `Bₙ` is short at its last node, `C�
 last node, `F₄` long at its first two nodes and `G₂` long at its second, following Bourbaki's
 numbering as `TauCeti.DynkinType.cartanMatrix` pins it.
 
-For a valid type this is exactly maximality of length among the simple roots
-(`TauCeti.DynkinType.isLongSimpleRoot_iff`). Validity is needed: the degenerate `B 1` has a single
+Away from the degenerate `B 1` this is exactly maximality of length among the simple roots
+(`TauCeti.DynkinType.isLongSimpleRoot_iff`), in particular for a valid type
+(`TauCeti.DynkinType.isLongSimpleRoot_iff_of_valid`). `B 1` really is an exception: it has a single
 node, of maximal length, that this predicate calls short as the short node of the `Bₙ` family. -/
 def IsLongSimpleRoot : (t : DynkinType) → Fin t.rank → Prop
   | .A _, _ | .D _, _ | .E6, _ | .E7, _ | .E8, _ => True
@@ -283,24 +298,28 @@ instance : ∀ t : DynkinType, DecidablePred t.IsLongSimpleRoot
 @[simp] lemma isLongSimpleRoot_G2 :
     G2.IsLongSimpleRoot = fun i : Fin G2.rank ↦ (i : ℕ) = 1 := (rfl)
 
-/-- **A node of a valid Dynkin type is long exactly when its simple root has maximal length.**
+/-- **A node of a Dynkin type other than `B 1` is long exactly when its simple root has maximal
+length.**
 
-Validity is not decoration. The degenerate type `B 1` has a single node, necessarily of maximal
+The exception is not decoration. The degenerate type `B 1` has a single node, necessarily of maximal
 length, but `TauCeti.DynkinType.IsLongSimpleRoot` calls it short because it is the short node of
 the `Bₙ` family; that node is the only counterexample among all the types. -/
-theorem isLongSimpleRoot_iff {t : DynkinType} (ht : t.Valid) (i : Fin t.rank) :
+theorem isLongSimpleRoot_iff {t : DynkinType} (ht : t ≠ B 1) (i : Fin t.rank) :
     t.IsLongSimpleRoot i ↔ ∀ j, t.rootLength j ≤ t.rootLength i := by
   cases t with
   | A n | D n | E6 | E7 | E8 => simp
   | F4 => simp only [isLongSimpleRoot_F4, rootLength_F4]; revert i; decide
   | G2 => simp only [isLongSimpleRoot_G2, rootLength_G2]; revert i; decide
   | B n =>
-      have hn : 2 ≤ n := valid_B.mp ht
       -- As in `cartanMatrix_mul_rootLength`, the case split leaves `i` elaborated at the
       -- unreduced type `Fin (B n).rank`; expose its definitional reduction to `Fin n` so that
       -- `i.isLt` bounds `i` by `n` and `omega` can compare it with the last node.
       change Fin n at i
       have hi : (i : ℕ) < n := i.isLt
+      -- The node `i` bounds `n` below by `1`, and `B 1` is the excluded type.
+      have hn : 2 ≤ n := by
+        have hn1 : n ≠ 1 := by rintro rfl; exact ht rfl
+        omega
       simp only [isLongSimpleRoot_B, rootLength_B]
       refine ⟨fun h j ↦ ?_, fun h ↦ ?_⟩
       · split_ifs <;> omega
@@ -309,7 +328,6 @@ theorem isLongSimpleRoot_iff {t : DynkinType} (ht : t.Valid) (i : Fin t.rank) :
         have h₀ := h j₀
         split_ifs at h₀ <;> omega
   | C n =>
-      have hn : 3 ≤ n := valid_C.mp ht
       -- As in the `B` branch, make the reduced dependent index explicit before bounding it.
       change Fin n at i
       have hi : (i : ℕ) < n := i.isLt
@@ -321,6 +339,13 @@ theorem isLongSimpleRoot_iff {t : DynkinType} (ht : t.Valid) (i : Fin t.rank) :
         have h₀ := h j₀
         split_ifs at h₀ <;> omega
 
+/-- **A node of a valid Dynkin type is long exactly when its simple root has maximal length.** This
+is `TauCeti.DynkinType.isLongSimpleRoot_iff` for a valid type, which excludes its one exception
+`B 1`. -/
+theorem isLongSimpleRoot_iff_of_valid {t : DynkinType} (ht : t.Valid) (i : Fin t.rank) :
+    t.IsLongSimpleRoot i ↔ ∀ j, t.rootLength j ≤ t.rootLength i :=
+  isLongSimpleRoot_iff (by rintro rfl; simp at ht) i
+
 /-- Every simple root of a simply-laced type is long: all its simple roots have the same length. -/
 lemma isLongSimpleRoot_of_isSimplyLaced {t : DynkinType} (ht : t.IsSimplyLaced) (i : Fin t.rank) :
     t.IsLongSimpleRoot i := by
@@ -331,46 +356,83 @@ lemma isLongSimpleRoot_of_isSimplyLaced {t : DynkinType} (ht : t.IsSimplyLaced) 
   case G2 => exact absurd ht not_isSimplyLaced_G2
   all_goals simp
 
-/-- **A valid Dynkin type has all its simple roots long exactly when it is simply laced.** The
-multiply-laced types `Bₙ`, `Cₙ`, `F₄` and `G₂` each have a short simple root, and validity is what
-rules out the degenerate types where that fails: `C 1`, whose sole node the `Cₙ` family calls long,
-and the rank-zero `B 0` and `C 0`, which have no node at all to be short. -/
+/-- **A Dynkin type has all its simple roots long exactly when it is simply laced, has no node at
+all, or is `C 1`.** The multiply-laced types `Bₙ`, `Cₙ`, `F₄` and `G₂` each have a short simple
+root, save in the two degenerate cases the right-hand side names: the rank-zero `B 0` and `C 0`,
+which have no node at all to be short, and `C 1`, whose sole node the `Cₙ` family calls long. The
+remaining degenerate type `B 1` is no exception, its sole node being short. -/
+theorem forall_isLongSimpleRoot_iff (t : DynkinType) :
+    (∀ i, t.IsLongSimpleRoot i) ↔ t.IsSimplyLaced ∨ t.rank = 0 ∨ t = C 1 := by
+  refine ⟨fun h ↦ ?_, ?_⟩
+  · cases t with
+    | A n | D n | E6 | E7 | E8 => exact Or.inl (by simp)
+    | B n =>
+        obtain rfl | hn : n = 0 ∨ 0 < n := by omega
+        · exact Or.inr (Or.inl (by simp))
+        · obtain ⟨j₀, hj₀⟩ : ∃ j₀ : Fin n, (j₀ : ℕ) = n - 1 := ⟨⟨n - 1, by omega⟩, rfl⟩
+          have h₀ := h j₀
+          simp only [isLongSimpleRoot_B] at h₀
+          exact absurd h₀ (by omega)
+    | C n =>
+        obtain rfl | rfl | hn : n = 0 ∨ n = 1 ∨ 2 ≤ n := by omega
+        · exact Or.inr (Or.inl (by simp))
+        · exact Or.inr (Or.inr rfl)
+        · obtain ⟨j₀, hj₀⟩ : ∃ j₀ : Fin n, (j₀ : ℕ) = 0 := ⟨⟨0, by omega⟩, rfl⟩
+          have h₀ := h j₀
+          simp only [isLongSimpleRoot_C] at h₀
+          exact absurd h₀ (by omega)
+    | F4 =>
+        obtain ⟨j₀, hj₀⟩ : ∃ j₀ : Fin 4, (j₀ : ℕ) = 2 := ⟨⟨2, by omega⟩, rfl⟩
+        have h₀ := h j₀
+        simp only [isLongSimpleRoot_F4] at h₀
+        exact absurd h₀ (by omega)
+    | G2 =>
+        obtain ⟨j₀, hj₀⟩ : ∃ j₀ : Fin 2, (j₀ : ℕ) = 0 := ⟨⟨0, by omega⟩, rfl⟩
+        have h₀ := h j₀
+        simp only [isLongSimpleRoot_G2] at h₀
+        exact absurd h₀ (by omega)
+  · rintro (h | h | rfl) i
+    · exact isLongSimpleRoot_of_isSimplyLaced h i
+    · -- A type of rank zero has no node for the statement to constrain.
+      exact absurd i.isLt (by omega)
+    · -- The sole node of `C 1` is its last one, which the `Cₙ` family calls long.
+      have h1 : (i : ℕ) < 1 := i.isLt
+      simp only [isLongSimpleRoot_C]
+      omega
+
+/-- **A valid Dynkin type has all its simple roots long exactly when it is simply laced.** This is
+`TauCeti.DynkinType.forall_isLongSimpleRoot_iff` for a valid type, which excludes both of its
+degenerate cases: the rank-zero `B 0` and `C 0`, and `C 1`. -/
 theorem forall_isLongSimpleRoot_iff_isSimplyLaced {t : DynkinType} (ht : t.Valid) :
     (∀ i, t.IsLongSimpleRoot i) ↔ t.IsSimplyLaced := by
-  refine ⟨fun h ↦ ?_, fun h i ↦ isLongSimpleRoot_of_isSimplyLaced h i⟩
-  cases t with
-  | A n | D n | E6 | E7 | E8 => simp
-  | B n =>
-      have hn : 2 ≤ n := valid_B.mp ht
-      obtain ⟨j₀, hj₀⟩ : ∃ j₀ : Fin n, (j₀ : ℕ) = n - 1 := ⟨⟨n - 1, by omega⟩, rfl⟩
-      have h₀ := h j₀
-      simp only [isLongSimpleRoot_B] at h₀
-      exact absurd h₀ (by omega)
-  | C n =>
-      have hn : 3 ≤ n := valid_C.mp ht
-      obtain ⟨j₀, hj₀⟩ : ∃ j₀ : Fin n, (j₀ : ℕ) = 0 := ⟨⟨0, by omega⟩, rfl⟩
-      have h₀ := h j₀
-      simp only [isLongSimpleRoot_C] at h₀
-      exact absurd h₀ (by omega)
-  | F4 =>
-      obtain ⟨j₀, hj₀⟩ : ∃ j₀ : Fin 4, (j₀ : ℕ) = 2 := ⟨⟨2, by omega⟩, rfl⟩
-      have h₀ := h j₀
-      simp only [isLongSimpleRoot_F4] at h₀
-      exact absurd h₀ (by omega)
-  | G2 =>
-      obtain ⟨j₀, hj₀⟩ : ∃ j₀ : Fin 2, (j₀ : ℕ) = 0 := ⟨⟨0, by omega⟩, rfl⟩
-      have h₀ := h j₀
-      simp only [isLongSimpleRoot_G2] at h₀
-      exact absurd h₀ (by omega)
+  refine (forall_isLongSimpleRoot_iff t).trans (or_iff_left ?_)
+  rintro (h | rfl)
+  · have := rank_pos ht
+    omega
+  · simp at ht
 
-/-- Every valid Dynkin type has a long simple root. -/
-theorem exists_isLongSimpleRoot {t : DynkinType} (ht : t.Valid) :
-    ∃ i, t.IsLongSimpleRoot i := by
-  -- A valid type has a node at all, hence one of maximal length, which is long by
-  -- `TauCeti.DynkinType.isLongSimpleRoot_iff`.
-  obtain ⟨i₀, -⟩ := exists_rootLength_eq_one ht
-  obtain ⟨i, -, hi⟩ := Finset.exists_max_image Finset.univ t.rootLength ⟨i₀, Finset.mem_univ i₀⟩
-  exact ⟨i, (isLongSimpleRoot_iff ht i).mpr fun j ↦ hi j (Finset.mem_univ j)⟩
+/-- **A Dynkin type has a long simple root exactly when it has a node at all and is not `B 1`.**
+Both exceptions are degenerate: the rank-zero types have no node to be long, and the sole node of
+`B 1` is the short last node of the `Bₙ` family. -/
+theorem exists_isLongSimpleRoot_iff (t : DynkinType) :
+    (∃ i, t.IsLongSimpleRoot i) ↔ 0 < t.rank ∧ t ≠ B 1 := by
+  refine ⟨fun ⟨i, hi⟩ ↦ ⟨(Nat.zero_le _).trans_lt i.isLt, ?_⟩, fun ⟨hr, hne⟩ ↦ ?_⟩
+  · -- The sole node of `B 1` is the short last node of the `Bₙ` family.
+    rintro rfl
+    have h1 : (i : ℕ) < 1 := i.isLt
+    simp only [isLongSimpleRoot_B] at hi
+    omega
+  · -- A type with a node has one of maximal length, which is long by
+    -- `TauCeti.DynkinType.isLongSimpleRoot_iff`.
+    obtain ⟨i, -, hi⟩ :=
+      Finset.exists_max_image Finset.univ t.rootLength ⟨⟨0, hr⟩, Finset.mem_univ _⟩
+    exact ⟨i, (isLongSimpleRoot_iff hne i).mpr fun j ↦ hi j (Finset.mem_univ j)⟩
+
+/-- Every valid Dynkin type has a long simple root. This is
+`TauCeti.DynkinType.exists_isLongSimpleRoot_iff` for a valid type, which excludes both of its
+exceptions: the rank-zero types and `B 1`. -/
+theorem exists_isLongSimpleRoot {t : DynkinType} (ht : t.Valid) : ∃ i, t.IsLongSimpleRoot i :=
+  (exists_isLongSimpleRoot_iff t).mpr ⟨rank_pos ht, by rintro rfl; simp at ht⟩
 
 /-- **Types `Bₙ` and `Cₙ` have the same diagram with long and short exchanged.** Their standard
 Cartan matrices are transposes of one another (`CartanMatrix.B_transpose`), and this is that duality
