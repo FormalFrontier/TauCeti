@@ -50,15 +50,13 @@ theorem, hence do not run on `TauCeti.montel` at all.
   sequence of holomorphic functions converging pointwise on the whole of `Ω` converges to that
   limit **locally uniformly**: on such a sequence, pointwise convergence and locally uniform
   convergence are the same thing.
-* `TauCeti.differentiableOn_of_isLocallyBoundedOn_of_forall_tendsto` — the pointwise limit is
-  then **holomorphic**.
-* `TauCeti.tendstoLocallyUniformlyOn_deriv_of_isLocallyBoundedOn_of_forall_tendsto` — and the
-  derivatives converge locally uniformly to the derivative of the pointwise limit, by
-  Weierstrass' theorem (`TendstoLocallyUniformlyOn.deriv`); differentiating a pointwise limit
-  termwise is legitimate for a locally bounded holomorphic sequence.
-* `TauCeti.exists_differentiableOn_tendstoLocallyUniformlyOn_of_isLocallyBoundedOn` — the
-  existential companion of the three, for a consumer who knows the sequence converges at each
-  point of `Ω` without a name for the limit.
+* `TauCeti.exists_differentiableOn_tendstoLocallyUniformlyOn_of_isLocallyBoundedOn` — its
+  existential companion, for a consumer who knows the sequence converges at each point of `Ω`
+  without a name for the limit.
+
+Holomorphy of such a pointwise limit, and termwise differentiation along it, are then Mathlib's
+`TendstoLocallyUniformlyOn.differentiableOn` and `TendstoLocallyUniformlyOn.deriv` applied to the
+first of these.
 
 ## The scalar target
 
@@ -80,8 +78,8 @@ Per the *Coordination with upstream Mathlib* section of `ConformalMapping/README
 material overlaps [mathlib4#33505](https://github.com/leanprover-community/mathlib4/pull/33505).
 This file is therefore a **temporary shim**: if a human-curated Vitali theorem lands in Mathlib,
 this statement should be backed by it, or deleted and its consumers refactored to the upstream API.
-Mathlib's Weierstrass convergence theorem `TendstoLocallyUniformlyOn.deriv`, its identity theorem
-and its Arzelà–Ascoli framework are consumed rather than restated.
+Mathlib's `TendstoLocallyUniformlyOn.differentiableOn`, its identity theorem and its Arzelà–Ascoli
+framework are consumed rather than restated.
 
 ## References
 
@@ -212,48 +210,21 @@ theorem tendstoLocallyUniformlyOn_of_isLocallyBoundedOn_of_forall_tendsto (hΩ :
     ((heq.tendsto_uniformFun_iff_pi atTop (K.domRestrict g)).2
       (tendsto_pi_nhds.2 fun z => hpoint z (hKΩ z.2)))
 
-/-- **The pointwise limit of a locally bounded sequence of holomorphic functions is holomorphic.**
-No connectivity of `Ω` is assumed, and no accumulation point has to be exhibited: the convergence
-is locally uniform by
-`TauCeti.tendstoLocallyUniformlyOn_of_isLocallyBoundedOn_of_forall_tendsto`, and a locally uniform
-limit of holomorphic functions is holomorphic. -/
-theorem differentiableOn_of_isLocallyBoundedOn_of_forall_tendsto (hΩ : IsOpen Ω)
-    (hF : ∀ n, DifferentiableOn ℂ (F n) Ω) (hb : IsLocallyBoundedOn F Ω)
-    (hpoint : ∀ z ∈ Ω, Tendsto (fun n => F n z) atTop (𝓝 (g z))) :
-    DifferentiableOn ℂ g Ω :=
-  (tendstoLocallyUniformlyOn_of_isLocallyBoundedOn_of_forall_tendsto hΩ hF hb
-    hpoint).differentiableOn (.of_forall hF) hΩ
-
-/-- **A locally bounded holomorphic sequence may be differentiated termwise along a pointwise
-limit.** If a locally bounded sequence of holomorphic functions converges pointwise on an open `Ω`,
-the derivatives converge locally uniformly to the derivative of the pointwise limit.
-
-Pointwise convergence alone says nothing about derivatives; what makes the conclusion available is
-that `TauCeti.tendstoLocallyUniformlyOn_of_isLocallyBoundedOn_of_forall_tendsto` promotes the
-hypothesis to locally uniform convergence, on which Mathlib's Weierstrass theorem
-`TendstoLocallyUniformlyOn.deriv` acts. -/
-theorem tendstoLocallyUniformlyOn_deriv_of_isLocallyBoundedOn_of_forall_tendsto
-    (hΩ : IsOpen Ω) (hF : ∀ n, DifferentiableOn ℂ (F n) Ω) (hb : IsLocallyBoundedOn F Ω)
-    (hpoint : ∀ z ∈ Ω, Tendsto (fun n => F n z) atTop (𝓝 (g z))) :
-    TendstoLocallyUniformlyOn (fun n => deriv (F n)) (deriv g) atTop Ω :=
-  (tendstoLocallyUniformlyOn_of_isLocallyBoundedOn_of_forall_tendsto hΩ hF hb hpoint).deriv
-    (.of_forall hF) hΩ
-
 /-- **The pointwise limit need not be named.** A locally bounded sequence of holomorphic functions
 on an open `Ω` which converges at each point of `Ω` converges locally uniformly on `Ω` to a
-holomorphic function — the existential companion of the three statements above, in the shape
+holomorphic function — the existential companion of the statement above, in the shape
 `TauCeti.vitali` takes on a subset `A`.
 
 The limit is `fun z => limUnder atTop fun n => F n z`, which the hypothesis identifies as the
 pointwise limit on `Ω`; no connectivity of `Ω` and no accumulation point is involved, exactly as
-above. -/
+above, and holomorphy of the limit is `TendstoLocallyUniformlyOn.differentiableOn`. -/
 theorem exists_differentiableOn_tendstoLocallyUniformlyOn_of_isLocallyBoundedOn
     (hΩ : IsOpen Ω) (hF : ∀ n, DifferentiableOn ℂ (F n) Ω) (hb : IsLocallyBoundedOn F Ω)
     (hpoint : ∀ z ∈ Ω, ∃ w, Tendsto (fun n => F n z) atTop (𝓝 w)) :
     ∃ g : ℂ → ℂ, DifferentiableOn ℂ g Ω ∧ TendstoLocallyUniformlyOn F g atTop Ω :=
   have h : ∀ z ∈ Ω, Tendsto (fun n => F n z) atTop (𝓝 (limUnder atTop fun n => F n z)) :=
     fun z hz => tendsto_nhds_limUnder (hpoint z hz)
-  ⟨_, differentiableOn_of_isLocallyBoundedOn_of_forall_tendsto hΩ hF hb h,
-    tendstoLocallyUniformlyOn_of_isLocallyBoundedOn_of_forall_tendsto hΩ hF hb h⟩
+  have hconv := tendstoLocallyUniformlyOn_of_isLocallyBoundedOn_of_forall_tendsto hΩ hF hb h
+  ⟨_, hconv.differentiableOn (.of_forall hF) hΩ, hconv⟩
 
 end TauCeti
