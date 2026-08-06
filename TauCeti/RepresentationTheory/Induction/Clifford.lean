@@ -8,6 +8,7 @@ public import Mathlib.GroupTheory.GroupAction.ConjAct
 public import Mathlib.LinearAlgebra.Projection
 public import Mathlib.RepresentationTheory.Intertwining
 public import Mathlib.RepresentationTheory.Semisimple
+public import TauCeti.RepresentationTheory.Induction.Conjugate
 public import TauCeti.RepresentationTheory.Irreducible
 
 /-!
@@ -15,7 +16,9 @@ public import TauCeti.RepresentationTheory.Irreducible
 
 Let `N` be a normal subgroup of `G` and let `ρ` be an irreducible representation of `G`.  Clifford's
 theorem describes what `ρ` looks like once the group is cut down to `N`: the restriction is
-semisimple, and its irreducible constituents are all carried into one another by `G`.
+semisimple — once there is a minimal nonzero `N`-stable subspace to start from, which for a
+finite-dimensional `ρ` there always is — and its irreducible constituents are all carried into one
+another by `G`.
 
 The mechanism is a single observation.  If `U ⊆ V` is stable under `N`, then so is `ρ g '' U` for
 every `g : G`, because `ρ n (ρ g u) = ρ g (ρ (g⁻¹ n g) u)` and `g⁻¹ n g` lies in `N` by normality.
@@ -23,9 +26,10 @@ Translation by `ρ g` therefore acts on the lattice of `N`-subrepresentations
 (`TauCeti.Representation.conjSubrep`), by order isomorphisms
 (`TauCeti.Representation.conjSubrepOrderIso`), so it preserves atoms; and it identifies `U` with its
 translate not as representations of `N` on the nose but after twisting the action of `N` by
-conjugation (`TauCeti.Representation.conjSubrepEquiv`).  That twist is exactly the conjugation
-action on representations of `N` built in `TauCeti/RepresentationTheory/Induction/Conjugate.lean`,
-whose stabilisers are the inertia groups of `TauCeti/RepresentationTheory/Induction/Inertia.lean`.
+conjugation (`TauCeti.Representation.conjSubrepEquiv`).  That twist is exactly
+`TauCeti.conjNormalRep`, the conjugation action on representations of `N` built in
+`TauCeti/RepresentationTheory/Induction/Conjugate.lean`, whose stabilisers are the inertia groups of
+`TauCeti/RepresentationTheory/Induction/Inertia.lean`.
 
 Two theorems come out of it.  First, the translates of a single nonzero `N`-subrepresentation span:
 their sum is stable under all of `G`, so irreducibility of `ρ` forces it to be everything
@@ -55,19 +59,21 @@ conjugates enters.  Finite-dimensionality is used only to *produce* an atom, in
 
 ## Main statements
 
-* `TauCeti.Representation.isCompl_toSubmodule`: complementary subrepresentations carry
-  complementary subspaces.
 * `TauCeti.Representation.iSup_conjSubrep_eq_top`: the translates of a nonzero
   `N`-subrepresentation of an irreducible representation span.
-* `TauCeti.Representation.isSemisimpleRepresentation_comp_subtype`: **Clifford's theorem, first
-  half** -- the restriction of an irreducible representation to a normal subgroup is semisimple.
+* `TauCeti.Representation.isSemisimpleRepresentation_comp_subtype_of_isAtom`: **Clifford's theorem,
+  first half** -- if some `N`-subrepresentation of an irreducible representation `IsAtom`, then the
+  restriction to `N` is semisimple.
+* `TauCeti.Representation.isSemisimpleRepresentation_comp_subtype`: the same conclusion for a
+  **finite-dimensional** irreducible representation, where such an atom is automatic.
 * `TauCeti.Representation.exists_conjSubrep_equiv`: **Clifford's theorem, second half** -- any two
   minimal `N`-subrepresentations of an irreducible representation are translates of one another, up
   to isomorphism.
-* `TauCeti.Representation.exists_equiv_comp_conjNormal`: the same statement read as conjugacy, so
-  that the irreducible constituents of the restriction form a single `G`-orbit.
+* `TauCeti.Representation.exists_equiv_comp_conjNormal`: the same statement read through
+  `TauCeti.conjNormalRep`, so that the irreducible constituents of the restriction form a single
+  orbit under the conjugation action of `G` on representations of `N`.
 * `TauCeti.Representation.finrank_eq_finrank_of_isAtom`: consequently all the constituents have the
-  same dimension.
+  same `Module.finrank` over `k`.
 
 ## References
 
@@ -80,7 +86,7 @@ The mathematics is the classical argument of C. W. Curtis and I. Reiner, *Repres
 Finite Groups and Associative Algebras*, §49.
 -/
 
-@[expose] public section
+public section
 
 open scoped MonoidAlgebra
 
@@ -88,43 +94,44 @@ namespace TauCeti
 
 namespace Representation
 
-/-- Complementary subrepresentations carry complementary subspaces. -/
-theorem isCompl_toSubmodule {k G V : Type*} [Field k] [Monoid G] [AddCommGroup V] [Module k V]
-    {π : Representation k G V} {σ τ : Subrepresentation π} (h : IsCompl σ τ) :
-    IsCompl σ.toSubmodule τ.toSubmodule where
-  disjoint := by
-    rw [disjoint_iff, ← Subrepresentation.toSubmodule_inf, disjoint_iff.mp h.disjoint,
-      Subrepresentation.toSubmodule_bot]
-  codisjoint := by
-    rw [codisjoint_iff, ← Subrepresentation.toSubmodule_sup, codisjoint_iff.mp h.codisjoint,
-      Subrepresentation.toSubmodule_top]
-
 section Translate
 
-variable {k G V : Type*} [CommSemiring k] [Group G] [AddCommMonoid V] [Module k V]
+variable {k G V : Type*} [Semiring k] [Group G] [AddCommMonoid V] [Module k V]
   {N : Subgroup G} [N.Normal] (ρ : Representation k G V)
 
 /-- Acting by `g` and then by `n ∈ N` is the same as acting by the conjugate `g⁻¹ n g` and then by
 `g`.  This is the whole content of Clifford theory: it is why translating an `N`-stable subspace by
 `ρ g` produces another `N`-stable subspace, and why the two carry the same representation of `N` up
-to a conjugation twist. -/
-theorem apply_conjNormal_symm (g : G) (n : N) (v : V) :
-    ρ g (ρ ((MulAut.conjNormal g).symm n : G) v) = ρ (n : G) (ρ g v) := by
-  rw [← Module.End.mul_apply, ← Module.End.mul_apply, ← map_mul, ← map_mul,
-    MulAut.conjNormal_symm_apply, show g * (g⁻¹ * (n : G) * g) = (n : G) * g by group]
+to a conjugation twist.
+
+The conjugate is written as Mathlib's `MulAut.conjNormal g⁻¹`, the automorphism of `N` that
+`TauCeti.conjNormalRep` twists by. -/
+theorem apply_conjNormal_inv (g : G) (n : N) (v : V) :
+    ρ g (ρ (MulAut.conjNormal g⁻¹ n : G) v) = ρ (n : G) (ρ g v) := by
+  -- `MulAut.conjNormal g⁻¹` sends `n` to `g⁻¹ * n * g⁻¹⁻¹`, and it is only after that double
+  -- inverse is cleared that the two group elements below are visibly equal.
+  have hg : g * (MulAut.conjNormal g⁻¹ n : G) = (n : G) * g := by
+    rw [MulAut.conjNormal_apply]
+    group
+  rw [← Module.End.mul_apply, ← Module.End.mul_apply, ← map_mul, ← map_mul, hg]
 
 /-- The **translate** of an `N`-subrepresentation `σ` by `g : G`: the image of `σ` under `ρ g`,
 again stable under `N` because `N` is normal.
 
 For `g ∈ N` this is `σ` itself; in general it is a possibly different subspace, carrying the
-representation of `N` obtained from `σ` by conjugating with `g` (`conjSubrepEquiv`). -/
+representation of `N` obtained from `σ` by conjugating with `g` (`conjSubrepEquiv`).
+
+`@[expose]`, and only here: the carrier is `σ.toSubmodule.map (ρ g)` on the nose, which is what
+lets `toSubmodule_conjSubrep` be an exported `rfl` and so lets everything below reason through the
+submodule lattice rather than through this definition. -/
+@[expose]
 def conjSubrep (g : G) (σ : Subrepresentation (ρ.comp N.subtype)) :
     Subrepresentation (ρ.comp N.subtype) where
   toSubmodule := σ.toSubmodule.map (ρ g)
   apply_mem_toSubmodule := by
     rintro n _ ⟨v, hv, rfl⟩
-    exact ⟨_, σ.apply_mem_toSubmodule ((MulAut.conjNormal g).symm n) hv,
-      apply_conjNormal_symm ρ g n v⟩
+    exact ⟨_, σ.apply_mem_toSubmodule (MulAut.conjNormal g⁻¹ n) hv,
+      apply_conjNormal_inv ρ g n v⟩
 
 variable {ρ}
 
@@ -133,6 +140,7 @@ theorem toSubmodule_conjSubrep (g : G) (σ : Subrepresentation (ρ.comp N.subtyp
     (conjSubrep ρ g σ).toSubmodule = σ.toSubmodule.map (ρ g) :=
   rfl
 
+@[simp]
 theorem mem_conjSubrep_iff {g : G} {σ : Subrepresentation (ρ.comp N.subtype)} {v : V} :
     v ∈ conjSubrep ρ g σ ↔ ρ g⁻¹ v ∈ σ := by
   refine ⟨?_, fun h => ⟨_, h, _root_.Representation.self_inv_apply ρ g v⟩⟩
@@ -144,6 +152,7 @@ theorem conjSubrep_one (σ : Subrepresentation (ρ.comp N.subtype)) : conjSubrep
   Subrepresentation.toSubmodule_injective <| by
     rw [toSubmodule_conjSubrep, map_one, Module.End.one_eq_id, Submodule.map_id]
 
+@[simp]
 theorem conjSubrep_conjSubrep (g h : G) (σ : Subrepresentation (ρ.comp N.subtype)) :
     conjSubrep ρ g (conjSubrep ρ h σ) = conjSubrep ρ (g * h) σ :=
   Subrepresentation.toSubmodule_injective <| by
@@ -164,8 +173,11 @@ theorem conjSubrep_top (g : G) : conjSubrep ρ g (⊤ : Subrepresentation (ρ.co
 
 variable (ρ) in
 /-- Translation by `ρ g` is an order isomorphism of the lattice of `N`-subrepresentations, with
-inverse translation by `ρ g⁻¹`.  In particular it takes atoms to atoms. -/
-@[simps]
+inverse translation by `ρ g⁻¹`.  In particular it takes atoms to atoms.
+
+`@[expose]` for the same reason as `conjSubrep`: the point of this order isomorphism is that it
+*is* `conjSubrep ρ g`, which is what `@[simps]` records and what `isAtom_conjSubrep_iff` reads. -/
+@[expose, simps]
 def conjSubrepOrderIso (g : G) :
     Subrepresentation (ρ.comp N.subtype) ≃o Subrepresentation (ρ.comp N.subtype) where
   toFun := conjSubrep ρ g
@@ -188,17 +200,23 @@ variable (ρ) in
 with the translate `conjSubrep ρ g σ`.
 
 The twist is unavoidable: the two subspaces are exchanged by `ρ g`, which does not commute with `N`
-but conjugates it.  Read on isomorphism classes, this says that `conjSubrep ρ g σ` represents the
-image of the class of `σ` under the conjugation action of `g` on representations of `N`. -/
+but conjugates it.  The twisted source is the conjugate representation `TauCeti.conjNormalRep g` of
+`TauCeti/RepresentationTheory/Induction/Conjugate.lean`, unbundled: it is
+`(conjNormalRep g (Rep.of σ.toRepresentation)).ρ` by `TauCeti.conjNormalRep_ρ`.  It is written here
+as the plain composition rather than through `Rep.of`, which would need `V` to be an `AddCommGroup`
+where this section asks only for an `AddCommMonoid`; `exists_equiv_comp_conjNormal`, where that
+hypothesis is present anyway, is stated in the bundled form.  Read on isomorphism classes, this says
+that `conjSubrep ρ g σ` represents the image of the class of `σ` under the conjugation action of `g`
+on representations of `N`. -/
 noncomputable def conjSubrepEquiv (g : G) (σ : Subrepresentation (ρ.comp N.subtype)) :
     _root_.Representation.Equiv
-      (σ.toRepresentation.comp ((MulAut.conjNormal g).symm : N ≃* N).toMonoidHom)
+      (σ.toRepresentation.comp (MulAut.conjNormal g⁻¹ : MulAut N).toMonoidHom)
       (conjSubrep ρ g σ).toRepresentation :=
   _root_.Representation.Equiv.mk
     (σ.toSubmodule.equivMapOfInjective (ρ g) (_root_.Representation.apply_bijective ρ g).injective)
     (fun n => by
       ext u
-      exact apply_conjNormal_symm ρ g n u)
+      exact apply_conjNormal_inv ρ g n u)
 
 end Translate
 
@@ -297,21 +315,12 @@ theorem exists_conjSubrep_equiv [ρ.IsIrreducible]
       σ'.toRepresentation) := by
   have := isSemisimpleRepresentation_comp_subtype_of_isAtom ρ hσ
   obtain ⟨τ, hτ⟩ := ComplementedLattice.exists_isCompl σ'
-  have hc : IsCompl σ'.toSubmodule τ.toSubmodule := isCompl_toSubmodule hτ
+  have hc : IsCompl σ'.toSubmodule τ.toSubmodule := Subrepresentation.isCompl_toSubmodule hτ
   set P : V →ₗ[k] σ'.toSubmodule := Submodule.projectionOnto σ'.toSubmodule τ.toSubmodule hc
     with hP
   -- the projection along an invariant complement is `N`-equivariant
-  have hequiv : ∀ (n : N) (v : V), P (ρ (n : G) v) = σ'.toRepresentation n (P v) := by
-    intro n v
-    obtain ⟨a, b, hab, -⟩ := Submodule.existsUnique_add_of_isCompl hc v
-    subst hab
-    have h1 : P (ρ (n : G) (a : V)) = σ'.toRepresentation n a :=
-      Submodule.projectionOnto_apply_of_mem_left hc (σ'.apply_mem_toSubmodule n a.2)
-    have h2 : P (ρ (n : G) (b : V)) = 0 :=
-      Submodule.projectionOnto_apply_of_mem_right hc (τ.apply_mem_toSubmodule n b.2)
-    have h3 : P (a : V) = a := Submodule.projectionOnto_apply_left hc a
-    have h4 : P (b : V) = 0 := Submodule.projectionOnto_apply_right hc b
-    rw [map_add, map_add, map_add, h1, h2, h3, h4, add_zero, add_zero]
+  have hequiv : ∀ (n : N) (v : V), P (ρ (n : G) v) = σ'.toRepresentation n (P v) :=
+    (Subrepresentation.isIntertwiningMap_projectionOnto hτ).isIntertwining
   -- the projection cannot vanish on every translate, because the translates span
   have hne : ∃ g : G, ∃ v ∈ (conjSubrep ρ g σ).toSubmodule, P v ≠ 0 := by
     by_contra hcon
@@ -342,18 +351,18 @@ theorem exists_conjSubrep_equiv [ρ.IsIrreducible]
     ((_root_.Representation.IsIrreducible.bijective_or_eq_zero f).resolve_right hfne)⟩⟩
 
 /-- **Clifford's theorem, orbit form.** Every minimal `N`-subrepresentation of an irreducible
-representation is isomorphic to a conjugate of any other: the irreducible constituents of the
-restriction form a single orbit under the conjugation action of `G` on representations of `N`. -/
+representation is isomorphic to a conjugate of any other, the conjugate being the one
+`TauCeti.conjNormalRep` takes: the irreducible constituents of the restriction form a single orbit
+under the conjugation action of `G` on representations of `N`. -/
 theorem exists_equiv_comp_conjNormal [ρ.IsIrreducible]
     {σ σ' : Subrepresentation (ρ.comp N.subtype)} (hσ : IsAtom σ) (hσ' : IsAtom σ') :
     ∃ g : G, Nonempty (_root_.Representation.Equiv
-      (σ.toRepresentation.comp ((MulAut.conjNormal g).symm : N ≃* N).toMonoidHom)
-      σ'.toRepresentation) := by
+      (conjNormalRep g (Rep.of σ.toRepresentation)).ρ σ'.toRepresentation) := by
   obtain ⟨g, ⟨e⟩⟩ := exists_conjSubrep_equiv hσ hσ'
   exact ⟨g, ⟨(conjSubrepEquiv ρ g σ).trans e⟩⟩
 
 /-- All the irreducible constituents of the restriction of an irreducible representation to a
-normal subgroup have the same dimension. -/
+normal subgroup have the same `Module.finrank` over `k`. -/
 theorem finrank_eq_finrank_of_isAtom [ρ.IsIrreducible]
     {σ σ' : Subrepresentation (ρ.comp N.subtype)} (hσ : IsAtom σ) (hσ' : IsAtom σ') :
     Module.finrank k σ.toSubmodule = Module.finrank k σ'.toSubmodule := by
