@@ -22,12 +22,12 @@ This advances Deliverable A, Layer 1 of
 ## Main definitions
 
 * `TauCeti.Lie.adjointContinuousLinearMap`: the differential of conjugation at the identity.
-* `TauCeti.Lie.Ad`: the resulting Lie algebra automorphism.
+* `TauCeti.Lie.tangentAd`: the resulting tangent Lie algebra automorphism.
 
 ## Main results
 
 * `TauCeti.Lie.adjointContinuousLinearMap_lie`: the differential preserves the Lie bracket.
-* `TauCeti.Lie.Ad_mul`: the adjoint automorphism respects group multiplication.
+* `TauCeti.Lie.tangentAd_mul`: the tangent adjoint automorphism respects group multiplication.
 -/
 
 public section
@@ -223,7 +223,7 @@ theorem adjointContinuousLinearMap_lie [CompleteSpace E] (g : G)
 
 /-- The group adjoint automorphism: the differential at the identity of conjugation by `g`. -/
 @[expose]
-def Ad [CompleteSpace E] (g : G) :
+def tangentAd [CompleteSpace E] (g : G) :
     GroupLieAlgebra I G ≃ₗ⁅ℝ⁆ GroupLieAlgebra I G where
   toFun := adjointContinuousLinearMap (I := I) g
   invFun := adjointContinuousLinearMap (I := I) g⁻¹
@@ -242,26 +242,27 @@ def Ad [CompleteSpace E] (g : G) :
     exact adjointContinuousLinearMap_lie (I := I) g X Y
 
 @[simp]
-theorem Ad_apply [CompleteSpace E] (g : G) (X : GroupLieAlgebra I G) :
-    Ad (I := I) g X = adjointContinuousLinearMap (I := I) g X :=
+theorem tangentAd_apply [CompleteSpace E] (g : G) (X : GroupLieAlgebra I G) :
+    tangentAd (I := I) g X = adjointContinuousLinearMap (I := I) g X :=
   rfl
 
 @[simp]
-theorem Ad_one [CompleteSpace E] :
-    Ad (I := I) (1 : G) = LieEquiv.refl := by
+theorem tangentAd_one [CompleteSpace E] :
+    tangentAd (I := I) (1 : G) = LieEquiv.refl := by
   ext X
-  simp [Ad_apply]
+  simp [tangentAd_apply]
 
-theorem Ad_mul [CompleteSpace E] (g h : G) :
-    Ad (I := I) (g * h) = (Ad (I := I) h).trans (Ad (I := I) g) := by
+theorem tangentAd_mul [CompleteSpace E] (g h : G) :
+    tangentAd (I := I) (g * h) =
+      (tangentAd (I := I) h).trans (tangentAd (I := I) g) := by
   ext X
-  simpa [Ad_apply] using congrArg
+  simpa [tangentAd_apply] using congrArg
     (fun f : GroupLieAlgebra I G →L[ℝ] GroupLieAlgebra I G ↦ f X)
     (adjointContinuousLinearMap_mul (I := I) g h)
 
 @[simp]
-theorem Ad_inv [CompleteSpace E] (g : G) :
-    Ad (I := I) g⁻¹ = (Ad (I := I) g).symm := by
+theorem tangentAd_inv [CompleteSpace E] (g : G) :
+    tangentAd (I := I) g⁻¹ = (tangentAd (I := I) g).symm := by
   ext X
   rfl
 
