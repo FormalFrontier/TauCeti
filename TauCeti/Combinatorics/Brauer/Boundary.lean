@@ -20,13 +20,14 @@ endpoints (`BrauerDiagram.throughEquiv`); since the capped bottom points and the
 points are the points those two sets leave over, a diagram has as many capped bottom points as
 cupped top points (`BrauerDiagram.card_bottomCap_eq_card_topCup`), that is, as many caps as
 cups. Following a cap instead matches the capped bottom points among themselves
-(`BrauerDiagram.capMatching`), so they are even in number.
+(`BrauerDiagram.capMatching`), so they are even in number; following a cup likewise matches the
+cupped top points among themselves (`BrauerDiagram.cupMatching`).
 
 These are the data that vertical stacking consumes: composing `D₁` with `D₂` identifies the
-bottom boundary of `D₁` with the top boundary of `D₂`, reads the arcs of the composite by
-concatenating through strands (`throughEquiv`) along that middle boundary, and counts the
-closed loops formed there by alternately following the caps of `D₁` (`capMatching`) and the
-cups of `D₂`.
+bottom boundary of `D₁` with the top boundary of `D₂` and reads the arcs of the composite by
+concatenating through strands (`throughEquiv`) along that middle boundary. Counting the closed
+loops that form there, by alternately following the caps of `D₁` (`capMatching`) and the cups of
+`D₂` (`cupMatching`), is left to a later file.
 
 ## Main definitions
 
@@ -34,7 +35,8 @@ cups of `D₂`.
   carrying an arc of each kind.
 * `TauCeti.BrauerDiagram.throughEquiv`: a through strand matches its bottom endpoint with its top
   endpoint.
-* `TauCeti.BrauerDiagram.capMatching`: the perfect matching of the capped bottom points.
+* `TauCeti.BrauerDiagram.capMatching`, `TauCeti.BrauerDiagram.cupMatching`: the perfect matchings
+  of the capped bottom points and of the cupped top points.
 
 ## Main results
 
@@ -170,6 +172,32 @@ among themselves. -/
 theorem even_card_bottomCap : Even D.bottomCap.card := by
   rw [bottomCap, ← Fintype.card_subtype]
   exact even_card_of_nonempty_perfectMatching _ ⟨D.capMatching⟩
+
+/-- The map sending a cupped top point to the other end of its cup. -/
+private def cupFun (j : {j : Fin k // D.IsCup (Sum.inr j)}) : {j : Fin k // D.IsCup (Sum.inr j)} :=
+  ⟨(D.val (Sum.inr j.1)).getRight ((D.isCup_def _).mp j.2).2, by simpa using j.2⟩
+
+private theorem inr_cupFun (j : {j : Fin k // D.IsCup (Sum.inr j)}) :
+    Sum.inr (D.cupFun j).1 = D.val (Sum.inr j.1) := Sum.inr_getRight _ _
+
+private theorem cupFun_involutive : Function.Involutive D.cupFun := fun j =>
+  Subtype.ext <| Sum.inr_injective <| by
+    rw [inr_cupFun D (D.cupFun j), inr_cupFun D j, D.apply_apply]
+
+private theorem cupFun_ne (j : {j : Fin k // D.IsCup (Sum.inr j)}) : D.cupFun j ≠ j := fun h =>
+  D.apply_ne (Sum.inr j.1) (by rw [← inr_cupFun D j, h])
+
+/-- The perfect matching that a diagram induces on its cupped top points: the cups pair those
+points off among themselves. -/
+def cupMatching : PerfectMatching {j : Fin k // D.IsCup (Sum.inr j)} :=
+  .mk (cupFun_involutive D).toPerm (fun j => by simpa using cupFun_involutive D j)
+    fun j => by simpa using cupFun_ne D j
+
+/-- `BrauerDiagram.cupMatching` matches a cupped top point with the other end of its cup. -/
+@[simp]
+theorem inr_cupMatching (j : {j : Fin k // D.IsCup (Sum.inr j)}) :
+    Sum.inr (D.cupMatching.val j).1 = D.val (Sum.inr j.1) := by
+  simpa [cupMatching] using inr_cupFun D j
 
 end BrauerDiagram
 

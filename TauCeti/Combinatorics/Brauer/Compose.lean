@@ -39,10 +39,11 @@ followed by a fixed-point-free involution, so a strand cannot return to its own 
   `TauCeti.composeDiagram_val_inl_eq_inl_of_cap_upper`,
   `TauCeti.composeDiagram_val_inr_eq_inr_of_cup_lower`: the arcs of the composite along the
   strands that leave the middle boundary after at most two crossings.
-* `TauCeti.BrauerDiagram.inr_throughEquiv_composeDiagram`: a through strand of the composite is a
-  through strand of `D₂` concatenated with a through strand of `D₁`.
-* `TauCeti.BrauerDiagram.inl_capMatching_composeDiagram`: the caps of `D₂` are caps of the
-  composite.
+* `TauCeti.BrauerDiagram.inr_throughEquiv_composeDiagram`: a through strand of `D₂` continued by
+  a through strand of `D₁` is a through strand of the composite.
+* `TauCeti.BrauerDiagram.inl_capMatching_composeDiagram`,
+  `TauCeti.BrauerDiagram.inr_cupMatching_composeDiagram`: the caps of `D₂` are caps of the
+  composite, and the cups of `D₁` are cups of the composite.
 * `TauCeti.composeDiagram_permToBrauer_one_left`,
   `TauCeti.composeDiagram_permToBrauer_one_right`: the identity diagram is a two-sided identity
   for stacking.
@@ -178,8 +179,9 @@ private theorem glue_walk_pow (n : ℕ) (p : StackPt k) :
 private theorem walk_pow_of_walk_pow {x y : Fin k ⊕ Fin k} {n j : ℕ} (hj : j ≤ n)
     (h : (walk D₁ D₂ ^ n) (Sum.inl x) = Sum.inl y) :
     (walk D₁ D₂ ^ j) (Sum.inl y) = glue ((walk D₁ D₂ ^ (n - j)) (Sum.inl x)) := by
+  have hjn : j + (n - j) = n := by omega
   have hsplit : (walk D₁ D₂ ^ j) ((walk D₁ D₂ ^ (n - j)) (Sum.inl x)) = Sum.inl y := by
-    rw [← Equiv.Perm.mul_apply, ← pow_add, show j + (n - j) = n by omega, h]
+    rw [← Equiv.Perm.mul_apply, ← pow_add, hjn, h]
   have h₁ : glue ((walk D₁ D₂ ^ j) (Sum.inl y)) = ((walk D₁ D₂ ^ j)⁻¹) (Sum.inl y) := by
     rw [glue_walk_pow, glue_inl]
   have h₂ : ((walk D₁ D₂ ^ j)⁻¹) (Sum.inl y) = (walk D₁ D₂ ^ (n - j)) (Sum.inl x) := by
@@ -234,8 +236,8 @@ private theorem stackVal_involutive : Function.Involutive (stackVal D₁ D₂) :
   · have hend := key (exitTime D₁ D₂ x + 1) le_rfl
     rwa [Nat.sub_self, pow_zero, Equiv.Perm.one_apply, glue_inl] at hend
   · have hstep := key (m + 1) (by omega)
-    rw [hstep, isLeft_glue,
-      show exitTime D₁ D₂ x + 1 - (m + 1) = exitTime D₁ D₂ x - m - 1 + 1 by omega]
+    have hsub : exitTime D₁ D₂ x + 1 - (m + 1) = exitTime D₁ D₂ x - m - 1 + 1 := by omega
+    rw [hstep, isLeft_glue, hsub]
     exact not_isLeft_walk_pow_of_lt D₁ D₂ x (by omega)
 
 private theorem stackVal_ne (x : Fin k ⊕ Fin k) : stackVal D₁ D₂ x ≠ x := by
@@ -247,13 +249,15 @@ private theorem stackVal_ne (x : Fin k ⊕ Fin k) : stackVal D₁ D₂ x ≠ x :
     fun j hj => walk_pow_of_walk_pow D₁ D₂ hj h
   rcases Nat.even_or_odd (exitTime D₁ D₂ x + 1) with ⟨r, hr⟩ | ⟨r, hr⟩
   · have hmid := key r (by omega)
-    rw [show exitTime D₁ D₂ x + 1 - r = r by omega] at hmid
+    have hsub : exitTime D₁ D₂ x + 1 - r = r := by omega
+    have hpred : r - 1 + 1 = r := by omega
+    rw [hsub] at hmid
     refine not_isLeft_walk_pow_of_lt D₁ D₂ x (m := r - 1) (by omega) ?_
-    rw [show r - 1 + 1 = r by omega]
+    rw [hpred]
     exact isLeft_of_glue_eq hmid.symm
   · have hmid := key (r + 1) (by omega)
-    rw [show exitTime D₁ D₂ x + 1 - (r + 1) = r by omega, pow_succ', Equiv.Perm.mul_apply,
-      walk_apply] at hmid
+    have hsub : exitTime D₁ D₂ x + 1 - (r + 1) = r := by omega
+    rw [hsub, pow_succ', Equiv.Perm.mul_apply, walk_apply] at hmid
     exact stackFun_ne D₁ D₂ _ (glue_involutive.injective hmid)
 
 end BrauerDiagram
@@ -311,7 +315,8 @@ theorem composeDiagram_val_inl_eq_inr_of_through {i a j : Fin k}
   refine BrauerDiagram.stackVal_eq_of_exit D₁ D₂ (n := 1) ?_ fun m hm => ?_
   · rw [pow_succ', Equiv.Perm.mul_apply, pow_one, hstep, BrauerDiagram.walk_inr_inr, h₁]
     rfl
-  · rw [show m = 0 by omega, zero_add, pow_one, hstep]
+  · have hm0 : m = 0 := by omega
+    rw [hm0, zero_add, pow_one, hstep]
     simp
 
 /-- **A through strand of the composite, read from its top endpoint.** -/
@@ -339,7 +344,8 @@ theorem composeDiagram_val_inl_eq_inl_of_cap_upper {i a a' i' : Fin k}
   · rw [pow_succ', Equiv.Perm.mul_apply, pow_succ', Equiv.Perm.mul_apply, pow_one, hstep, hstep',
       BrauerDiagram.walk_inr_inl, h₂']
     rfl
-  · rcases show m = 0 ∨ m = 1 by omega with rfl | rfl
+  · have hm' : m = 0 ∨ m = 1 := by omega
+    rcases hm' with rfl | rfl
     · rw [zero_add, pow_one, hstep]
       simp
     · rw [pow_succ', Equiv.Perm.mul_apply, pow_one, hstep, hstep']
@@ -362,7 +368,8 @@ theorem composeDiagram_val_inr_eq_inr_of_cup_lower {j a a' j' : Fin k}
   · rw [pow_succ', Equiv.Perm.mul_apply, pow_succ', Equiv.Perm.mul_apply, pow_one, hstep, hstep',
       BrauerDiagram.walk_inr_inr, h₁']
     rfl
-  · rcases show m = 0 ∨ m = 1 by omega with rfl | rfl
+  · have hm' : m = 0 ∨ m = 1 := by omega
+    rcases hm' with rfl | rfl
     · rw [zero_add, pow_one, hstep]
       simp
     · rw [pow_succ', Equiv.Perm.mul_apply, pow_one, hstep, hstep']
@@ -370,9 +377,9 @@ theorem composeDiagram_val_inr_eq_inr_of_cup_lower {j a a' j' : Fin k}
 
 namespace BrauerDiagram
 
-/-- **A through strand of the composite is a through strand of `D₂` concatenated with a through
-strand of `D₁`**: it joins the bottom endpoint of a through strand of `D₂` to the top endpoint of
-the through strand of `D₁` that continues it. -/
+/-- **A through strand of `D₂` continued by a through strand of `D₁` is a through strand of the
+composite**: the composite joins the bottom endpoint of a through strand of `D₂` to the top
+endpoint of the through strand of `D₁` that continues it. -/
 theorem inr_throughEquiv_composeDiagram (i : {i : Fin k // D₂.IsThrough (Sum.inl i)})
     (h : D₁.IsThrough (Sum.inl (D₂.throughEquiv i).1)) :
     (composeDiagram D₁ D₂).val (Sum.inl i.1) = Sum.inr (D₁.throughEquiv ⟨_, h⟩).1 :=
@@ -384,6 +391,12 @@ of `D₂` with the other end of that cap. -/
 theorem inl_capMatching_composeDiagram (i : {i : Fin k // D₂.IsCap (Sum.inl i)}) :
     (composeDiagram D₁ D₂).val (Sum.inl i.1) = Sum.inl (D₂.capMatching.val i).1 :=
   composeDiagram_val_inl_eq_inl_of_cap_lower D₁ D₂ (D₂.inl_capMatching i).symm
+
+/-- **The cups of `D₁` are cups of the composite**: the composite matches a cupped top point of
+`D₁` with the other end of that cup. -/
+theorem inr_cupMatching_composeDiagram (j : {j : Fin k // D₁.IsCup (Sum.inr j)}) :
+    (composeDiagram D₁ D₂).val (Sum.inr j.1) = Sum.inr (D₁.cupMatching.val j).1 :=
+  composeDiagram_val_inr_eq_inr_of_cup_upper D₁ D₂ (D₁.inr_cupMatching j).symm
 
 /-- Every capped bottom point of `D₂` is a capped bottom point of the composite. -/
 theorem bottomCap_subset_bottomCap_composeDiagram :
@@ -429,17 +442,8 @@ theorem topThrough_composeDiagram_subset :
 
 end BrauerDiagram
 
-private theorem permToBrauer_one_val_inl (i : Fin k) :
-    (permToBrauer (1 : Equiv.Perm (Fin k))).val (Sum.inl i) = Sum.inr i := by
-  rw [BrauerDiagram.permToBrauer_val_inl]
-  rfl
-
-private theorem permToBrauer_one_val_inr (j : Fin k) :
-    (permToBrauer (1 : Equiv.Perm (Fin k))).val (Sum.inr j) = Sum.inl j := by
-  rw [BrauerDiagram.permToBrauer_val_inr]
-  rfl
-
 /-- **The identity diagram is a left identity for stacking.** -/
+@[simp]
 theorem composeDiagram_permToBrauer_one_left (D : BrauerDiagram k) :
     composeDiagram (permToBrauer 1) D = D := by
   refine Subtype.ext (Equiv.ext fun x => ?_)
@@ -447,26 +451,29 @@ theorem composeDiagram_permToBrauer_one_left (D : BrauerDiagram k) :
   · rcases h : D.val (Sum.inl i) with i' | a
     · exact composeDiagram_val_inl_eq_inl_of_cap_lower _ D h
     · exact composeDiagram_val_inl_eq_inr_of_through (D₁ := permToBrauer 1) (D₂ := D) (j := a) h
-        (permToBrauer_one_val_inl a)
+        (by rw [BrauerDiagram.permToBrauer_val_inl]; rfl)
   · rcases h : D.val (Sum.inr j) with i | j'
     · exact composeDiagram_val_inr_eq_inl_of_through (D₁ := permToBrauer 1) (D₂ := D) (a := j)
-        (permToBrauer_one_val_inr j) h
+        (by rw [BrauerDiagram.permToBrauer_val_inr]; rfl) h
     · exact composeDiagram_val_inr_eq_inr_of_cup_lower (D₁ := permToBrauer 1) (D₂ := D) (a := j)
-        (j' := j') (permToBrauer_one_val_inr j) h (permToBrauer_one_val_inl j')
+        (j' := j') (by rw [BrauerDiagram.permToBrauer_val_inr]; rfl) h
+        (by rw [BrauerDiagram.permToBrauer_val_inl]; rfl)
 
 /-- **The identity diagram is a right identity for stacking.** -/
+@[simp]
 theorem composeDiagram_permToBrauer_one_right (D : BrauerDiagram k) :
     composeDiagram D (permToBrauer 1) = D := by
   refine Subtype.ext (Equiv.ext fun x => ?_)
   rcases x with i | j
   · rcases h : D.val (Sum.inl i) with i' | a
     · exact composeDiagram_val_inl_eq_inl_of_cap_upper (D₁ := D) (D₂ := permToBrauer 1) (a := i)
-        (i' := i') (permToBrauer_one_val_inl i) h (permToBrauer_one_val_inr i')
+        (i' := i') (by rw [BrauerDiagram.permToBrauer_val_inl]; rfl) h
+        (by rw [BrauerDiagram.permToBrauer_val_inr]; rfl)
     · exact composeDiagram_val_inl_eq_inr_of_through (D₁ := D) (D₂ := permToBrauer 1) (a := i)
-        (permToBrauer_one_val_inl i) h
+        (by rw [BrauerDiagram.permToBrauer_val_inl]; rfl) h
   · rcases h : D.val (Sum.inr j) with i | j'
     · exact composeDiagram_val_inr_eq_inl_of_through (D₁ := D) (D₂ := permToBrauer 1) (a := i)
-        h (permToBrauer_one_val_inr i)
+        h (by rw [BrauerDiagram.permToBrauer_val_inr]; rfl)
     · exact composeDiagram_val_inr_eq_inr_of_cup_upper (D₁ := D) (D₂ := permToBrauer 1) h
 
 end TauCeti
