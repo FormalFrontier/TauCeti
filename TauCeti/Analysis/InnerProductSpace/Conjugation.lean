@@ -108,6 +108,7 @@ theorem conjugation_conjugation (x : V) : conjugation e (conjugation e x) = x :=
   exact e.sum_repr' x
 
 /-- Conjugation reverses the inner product: it is conjugate-linear and isometric. -/
+@[simp]
 theorem inner_conjugation_conjugation (x y : V) :
     ⟪conjugation e x, conjugation e y⟫_𝕜 = (starRingEnd 𝕜) ⟪x, y⟫_𝕜 := by
   have hxy : ⟪x, y⟫_𝕜 = ∑ i, (starRingEnd 𝕜) ⟪e i, x⟫_𝕜 * ⟪e i, y⟫_𝕜 := by
