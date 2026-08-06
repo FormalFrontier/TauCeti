@@ -49,7 +49,7 @@ highest-weight tableau `SemistandardYoungTableau.highestWeight μ` is `μ.rowLen
   and content `μ.rowLen` is the highest-weight tableau.
 * `TauCeti.SemistandardYoungTableau.finite_content_eq`: the tableaux of a fixed shape and content
   are finite, so the Kostka number counts them faithfully.
-* `TauCeti.finite_ssyt_lt`: likewise the tableaux of a fixed shape written in a finite alphabet,
+* `TauCeti.finite_boundedSSYT`: likewise the tableaux of a fixed shape written in a finite alphabet,
   `TauCeti.BoundedSSYT`, are finite.
 * `TauCeti.BoundedSSYT.isEmpty_of_lt_colLen`: a shape taller than its alphabet admits no tableau.
 * `TauCeti.kostkaNumber_self`: `K_{μ μ} = 1`.
@@ -232,7 +232,7 @@ determined by its restriction to the finitely many cells of `μ`, where it takes
 Mathlib's `SemistandardYoungTableau μ` allows unbounded entries and is infinite for a nonempty
 `μ`, so the bound is what makes the count finite.  No relation between `n` and the number of rows
 of `μ` is needed: for a shape taller than `n` the type is empty, columns being strict. -/
-instance finite_ssyt_lt (n : ℕ) (μ : YoungDiagram) : Finite (BoundedSSYT n μ) := by
+instance finite_boundedSSYT (n : ℕ) (μ : YoungDiagram) : Finite (BoundedSSYT n μ) := by
   refine Finite.of_injective (β := μ.cells → Fin n)
     (fun T x => ⟨T.1 x.1.1 x.1.2, T.2 _ _ ((YoungDiagram.mem_cells _).mp x.2)⟩) ?_
   rintro ⟨T, hT⟩ ⟨T', hT'⟩ h

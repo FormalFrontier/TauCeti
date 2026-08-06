@@ -62,7 +62,7 @@ regime is there a tableau to speak of.
   two comparisons.
 * `TauCeti.card_gtPattern_topRow_eq_card_ssyt`: the patterns with a given top row are as many as
   the semistandard tableaux of the corresponding shape with bounded entries, both counts being
-  finite by `TauCeti.GTPattern.finite_topRow_eq` and `TauCeti.finite_ssyt_lt`.
+  finite by `TauCeti.GTPattern.finite_topRow_eq` and `TauCeti.finite_boundedSSYT`.
 
 ## Implementation notes
 

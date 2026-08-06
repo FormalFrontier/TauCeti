@@ -180,8 +180,8 @@ theorem coeff_diagramSchurPoly (d : Fin N →₀ ℕ) :
   rw [Finset.sum_boole, ← BoundedSSYT.card_weight_eq d, Nat.card_eq_fintype_card,
     Fintype.card_subtype]
 
-/-- Scalars pass through a Schur polynomial: its coefficients are natural numbers, so it is the
-image of the integral one under any ring homomorphism. -/
+/-- Scalars pass through a Schur polynomial: every coefficient is the cast of a natural number,
+namely of a Kostka number, and casts of natural numbers are preserved by semiring homomorphisms. -/
 theorem map_diagramSchurPoly {S : Type*} [CommSemiring S] (f : R →+* S) :
     MvPolynomial.map f (diagramSchurPoly N R μ) = diagramSchurPoly N S μ := by
   ext d
@@ -234,6 +234,18 @@ theorem mapDomain_rowLenWeight (h : μ.colLen 0 ≤ N) :
     refine Finsupp.mapDomain_of_notMem_range _ _ ?_
     rintro ⟨y, hy⟩
     exact hj (hy ▸ y.isLt)
+
+/-- For a shape taller than the alphabet the row-length exponent records only the rows the
+alphabet reaches, so its degree falls short of the number of cells. -/
+private theorem degree_rowLenWeight_lt (h : N < μ.colLen 0) :
+    (rowLenWeight N μ).degree < μ.card := by
+  rw [Finsupp.degree_eq_sum]
+  simp only [rowLenWeight_apply]
+  rw [Fin.sum_univ_eq_sum_range fun i => μ.rowLen i,
+    YoungDiagram.sum_range_rowLen_eq_card_filter_fst]
+  refine Finset.card_lt_card ((Finset.ssubset_iff_of_subset (Finset.filter_subset _ _)).mpr
+    ⟨(N, 0), (YoungDiagram.mem_cells _).mpr (YoungDiagram.mem_iff_lt_colLen.mpr h), ?_⟩)
+  simp
 
 /-- **The coefficient of a Schur polynomial at the row lengths of its shape is `1`**: the
 highest-weight tableau, whose `i`-th row consists of `i`s, is the unique tableau of shape `μ`
@@ -292,12 +304,17 @@ theorem coeff_diagramSchurPoly_diagramOf (h : (diagramOf ν).colLen 0 ≤ N) :
   rw [coeff_diagramSchurPoly, mapDomain_rowLenWeight h, kostkaNumber_def]
 
 /-- **The Schur polynomials are triangular for the dominance order**: the exponent recording the
-parts of `ν` occurs in `s_μ` only if `μ` dominates `ν`. -/
-theorem coeff_diagramSchurPoly_diagramOf_eq_zero_of_not_dominates (h : (diagramOf ν).colLen 0 ≤ N)
-    (hd : ¬ Dominates μ ν) :
+parts of `ν` occurs in `s_μ` only if `μ` dominates `ν`. No row bound is needed: an alphabet too
+short to record all of `ν` truncates the exponent to one of degree less than `n`, where `s_μ`
+vanishes by homogeneity. -/
+theorem coeff_diagramSchurPoly_diagramOf_eq_zero_of_not_dominates (hd : ¬ Dominates μ ν) :
     coeff (rowLenWeight N (diagramOf ν)) (diagramSchurPoly N R (diagramOf μ)) = 0 := by
-  rw [coeff_diagramSchurPoly_diagramOf μ ν h, kostkaNumber_eq_zero_of_not_dominates hd,
-    Nat.cast_zero]
+  rcases le_or_gt ((diagramOf ν).colLen 0) N with h | h
+  · rw [coeff_diagramSchurPoly_diagramOf μ ν h, kostkaNumber_eq_zero_of_not_dominates hd,
+      Nat.cast_zero]
+  · refine isHomogeneous_diagramSchurPoly.coeff_eq_zero ?_
+    rw [card_diagramOf]
+    exact ((degree_rowLenWeight_lt h).trans_eq (card_diagramOf ν)).ne
 
 end Partition
 
@@ -344,14 +361,16 @@ theorem coeff_schurPoly_partWeight (h : (diagramOf ν).colLen 0 ≤ Fintype.card
   rw [partWeight, coeff_schurPoly_mapDomain, mapDomain_rowLenWeight h, kostkaNumber_def]
 
 /-- **The Schur polynomials are triangular for the dominance order**: the exponent recording the
-parts of `ν` occurs in `s_μ` only if `μ` dominates `ν`. -/
-theorem coeff_schurPoly_partWeight_eq_zero_of_not_dominates
-    (h : (diagramOf ν).colLen 0 ≤ Fintype.card σ) (hd : ¬ Dominates μ ν) :
+parts of `ν` occurs in `s_μ` only if `μ` dominates `ν`. No row bound is needed: an alphabet too
+short to record all of `ν` truncates the exponent to one of degree less than `n`, where `s_μ`
+vanishes by homogeneity. -/
+theorem coeff_schurPoly_partWeight_eq_zero_of_not_dominates (hd : ¬ Dominates μ ν) :
     coeff (partWeight σ ν) (schurPoly σ R μ) = 0 := by
-  rw [coeff_schurPoly_partWeight μ ν h, kostkaNumber_eq_zero_of_not_dominates hd, Nat.cast_zero]
+  rw [partWeight, schurPoly, coeff_rename_mapDomain _ (Fintype.equivFin σ).symm.injective]
+  exact coeff_diagramSchurPoly_diagramOf_eq_zero_of_not_dominates μ ν hd
 
-/-- Scalars pass through a Schur polynomial: its coefficients are natural numbers, so it is the
-image of the integral one under any ring homomorphism. -/
+/-- Scalars pass through a Schur polynomial: every coefficient is the cast of a natural number,
+namely of a Kostka number, and casts of natural numbers are preserved by semiring homomorphisms. -/
 theorem map_schurPoly {S : Type*} [CommSemiring S] (f : R →+* S) :
     MvPolynomial.map f (schurPoly σ R μ) = schurPoly σ S μ := by
   rw [schurPoly, schurPoly, map_rename, map_diagramSchurPoly]
