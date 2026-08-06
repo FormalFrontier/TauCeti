@@ -6,7 +6,7 @@ module
 
 public import Mathlib.Analysis.SpecialFunctions.Pow.Integral
 -- `Mathlib.Analysis.SpecialFunctions.ImproperIntegrals` is imported privately: it supplies
--- `integrableOn_Ioi_rpow_iff`, used only inside the proof of
+-- `not_integrableOn_Ioi_rpow`, used only inside the proof of
 -- `TauCeti.lintegral_ofReal_rpow_Ioi`.
 import Mathlib.Analysis.SpecialFunctions.ImproperIntegrals
 -- `Mathlib.Analysis.SpecialFunctions.Integrals.Basic` is imported privately: it supplies the
@@ -21,10 +21,12 @@ This file collects the two lower integrals of `t ↦ t ^ s` on a half-line that 
 interpolation method needs, and uses them to transport Mathlib's layer cake formula from
 real-valued to `ℝ≥0∞`-valued functions.
 
-For `-1 < s` the function `t ↦ t ^ s` is integrable near `0` and not integrable near `∞`, so the
-two computations below are the two halves of that dichotomy: `TauCeti.lintegral_ofReal_rpow_Ioo`
-evaluates `∫⁻ t in (0, a), t ^ s` to the expected antiderivative, and
-`TauCeti.lintegral_ofReal_rpow_Ioi` records that `∫⁻ t in (0, ∞), t ^ s` diverges.
+For `-1 < s` the function `t ↦ t ^ s` is integrable near `0` and not integrable near `∞`, and the
+two computations below are the two halves of that dichotomy:
+`TauCeti.lintegral_ofReal_rpow_Ioo` evaluates `∫⁻ t in (0, a), t ^ s` to the expected
+antiderivative for such an `s`, while `TauCeti.lintegral_ofReal_rpow_Ioi` records that
+`∫⁻ t in (0, ∞), t ^ s` diverges — the latter for *every* exponent `s`, since a power that is
+integrable at the origin is not integrable at infinity and conversely.
 
 The layer cake formula `∫⁻ u ^ p = p * ∫⁻ t in (0, ∞), ν {u > t} * t ^ (p - 1)` is in Mathlib as
 `MeasureTheory.lintegral_rpow_eq_lintegral_meas_lt_mul`, but only for a nonnegative *real-valued*
@@ -45,7 +47,7 @@ used, and it is why the statement needs no finiteness hypothesis on `u`.
 
 * `TauCeti.lintegral_ofReal_rpow_Ioo`: `∫⁻ t in (0, a), t ^ s = a ^ (s + 1) / (s + 1)` for
   `-1 < s`.
-* `TauCeti.lintegral_ofReal_rpow_Ioi`: `∫⁻ t in (0, ∞), t ^ s = ∞` for `-1 < s`.
+* `TauCeti.lintegral_ofReal_rpow_Ioi`: `∫⁻ t in (0, ∞), t ^ s = ∞`, for every `s`.
 * `TauCeti.lintegral_rpow_eq_lintegral_meas_ofReal_lt_mul`: the layer cake formula for an
   `ℝ≥0∞`-valued function.
 
@@ -79,22 +81,17 @@ theorem lintegral_ofReal_rpow_Ioo (hs : -1 < s) {a : ℝ} (ha : 0 ≤ a) :
     ← intervalIntegral.integral_of_le ha, integral_rpow (Or.inl hs), Real.zero_rpow hs1.ne',
     sub_zero]
 
-/-- The lower integral of `t ^ s` over `(0, ∞)` diverges for `-1 < s`: the power is not integrable
-at infinity. -/
-theorem lintegral_ofReal_rpow_Ioi (hs : -1 < s) :
+/-- The lower integral of `t ^ s` over `(0, ∞)` diverges, for every exponent `s`: the power fails
+to be integrable at the origin or at infinity, according as `s ≤ -1` or `-1 < s`. -/
+theorem lintegral_ofReal_rpow_Ioi (s : ℝ) :
     ∫⁻ t in Ioi (0 : ℝ), ENNReal.ofReal (t ^ s) = ∞ := by
   by_contra hne
-  have hle : ∫⁻ t in Ioi (1 : ℝ), ENNReal.ofReal (t ^ s) ≤
-      ∫⁻ t in Ioi (0 : ℝ), ENNReal.ofReal (t ^ s) :=
-    lintegral_mono_set (Ioi_subset_Ioi zero_le_one)
   have hmeas : Measurable fun t : ℝ => t ^ s := measurable_id.pow measurable_const
-  have hint : IntegrableOn (fun t : ℝ => t ^ s) (Ioi 1) := by
-    refine ⟨hmeas.aestronglyMeasurable, ?_⟩
-    rw [hasFiniteIntegral_iff_enorm]
-    refine lt_of_le_of_lt (le_of_eq ?_) (lt_top_iff_ne_top.2 fun h => hne (top_le_iff.1 (h ▸ hle)))
-    refine setLIntegral_congr_fun measurableSet_Ioi fun t ht => ?_
-    exact Real.enorm_eq_ofReal (Real.rpow_nonneg (zero_le_one.trans (le_of_lt ht)) s)
-  exact absurd ((integrableOn_Ioi_rpow_iff one_pos).1 hint) (by linarith)
+  refine not_integrableOn_Ioi_rpow s ⟨hmeas.aestronglyMeasurable, ?_⟩
+  rw [hasFiniteIntegral_iff_enorm]
+  refine lt_of_le_of_lt (le_of_eq ?_) (lt_top_iff_ne_top.2 hne)
+  refine setLIntegral_congr_fun measurableSet_Ioi fun t ht => ?_
+  exact Real.enorm_eq_ofReal (Real.rpow_nonneg (le_of_lt ht) s)
 
 variable {β : Type*} [MeasurableSpace β]
 
@@ -111,7 +108,6 @@ theorem lintegral_rpow_eq_lintegral_meas_ofReal_lt_mul (ν : Measure β) {u : β
     (hu : AEMeasurable u ν) {p : ℝ} (hp : 0 < p) :
     ∫⁻ y, u y ^ p ∂ν = ENNReal.ofReal p *
       ∫⁻ t in Ioi (0 : ℝ), ν {y | ENNReal.ofReal t < u y} * ENNReal.ofReal (t ^ (p - 1)) := by
-  have hs : -1 < p - 1 := by linarith
   rcases eq_or_ne (ν {y | u y = ∞}) 0 with hnull | hnull
   · -- `u` is finite almost everywhere, so `ENNReal.toReal` transports Mathlib's formula.
     have hfin : ∀ᵐ y ∂ν, u y ≠ ∞ := by rw [ae_iff]; simpa using hnull
@@ -141,7 +137,7 @@ theorem lintegral_rpow_eq_lintegral_meas_ofReal_lt_mul (ν : Measure β) {u : β
       refine top_le_iff.1 ?_
       calc (∞ : ℝ≥0∞)
           = ν {y | u y = ∞} * ∫⁻ t in Ioi (0 : ℝ), ENNReal.ofReal (t ^ (p - 1)) := by
-            rw [lintegral_ofReal_rpow_Ioi hs, ENNReal.mul_top hnull]
+            rw [lintegral_ofReal_rpow_Ioi (p - 1), ENNReal.mul_top hnull]
         _ = ∫⁻ t in Ioi (0 : ℝ), ν {y | u y = ∞} * ENNReal.ofReal (t ^ (p - 1)) :=
             (lintegral_const_mul _ ((measurable_id.pow measurable_const).ennreal_ofReal)).symm
         _ ≤ _ := lintegral_mono fun t => mul_le_mul_left (measure_mono hsub) _

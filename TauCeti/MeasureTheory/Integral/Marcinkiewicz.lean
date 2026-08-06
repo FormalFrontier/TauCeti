@@ -12,10 +12,10 @@ import Mathlib.MeasureTheory.Measure.Prod
 /-!
 # Marcinkiewicz interpolation between weak type `(1,1)` and `L^∞`
 
-An operator `T` that is simultaneously of **weak type `(1,1)`** and bounded on `L^∞` is bounded on
-`L^p` for every `1 < p < ∞`. This is the diagonal case `p₀ = 1`, `p₁ = ∞` of the Marcinkiewicz
-interpolation theorem, and it is the mechanism that turns the Hardy–Littlewood maximal inequality
-into the strong `(p,p)` bounds, item 9 of Lane B of the PDE roadmap.
+A **sublinear** operator `T` that is simultaneously of **weak type `(1,1)`** and bounded on `L^∞`
+is bounded on `L^p` for every `1 < p < ∞`. This is the diagonal case `p₀ = 1`, `p₁ = ∞` of the
+Marcinkiewicz interpolation theorem, and it is the mechanism that turns the Hardy–Littlewood
+maximal inequality into the strong `(p,p)` bounds, item 9 of Lane B of the PDE roadmap.
 
 ## The statement proved here
 
@@ -47,6 +47,10 @@ elementary `∫⁻ t in (0, ‖f x‖ / c), t ^ (p - 2) = (‖f x‖ / c) ^ (p -
 reassembles into `c ^ (1 - p) / (p - 1) * ‖f x‖ ^ p`. Convergence of that inner integral at the
 origin is where `1 < p` is used, and it is why the constant carries the factor `1 / (p - 1)`.
 
+Tonelli's theorem needs `μ` to be s-finite, but the statement does not: both sides ignore the
+part of `μ` outside `{f > 0}`, and once `∫⁻ f ^ p ∂μ` is finite that part is σ-finite, being
+exhausted by the level sets `{f ≥ 1 / (n + 1)}`, each of finite measure by Chebyshev.
+
 ## Main declarations
 
 * `TauCeti.lintegral_rpow_le_of_mul_meas_ofReal_lt_le`: the interpolation estimate.
@@ -67,9 +71,9 @@ open scoped ENNReal
 variable {α β : Type*} [MeasurableSpace α] [MeasurableSpace β] {μ : Measure α} {ν : Measure β}
   {f : α → ℝ≥0∞} {u : β → ℝ≥0∞} {p c : ℝ} {A : ℝ≥0∞}
 
-/-- The interpolation estimate for a measurable `f`; the general case is reduced to this one by
-replacing `f` with a measurable representative. -/
-private theorem lintegral_rpow_le_of_mul_meas_ofReal_lt_le_of_measurable [SFinite μ]
+/-- The interpolation estimate for a measurable `f` and an s-finite `μ`, which is the generality
+in which Tonelli's theorem is available; both hypotheses are removed below. -/
+private theorem lintegral_rpow_le_of_mul_meas_ofReal_lt_le_of_measurable_of_sFinite [SFinite μ]
     (hf : Measurable f) (hu : AEMeasurable u ν) (hp : 1 < p) (hc : 0 < c)
     (h : ∀ t : ℝ, 0 < t → ENNReal.ofReal t * ν {y | ENNReal.ofReal t < u y} ≤
       A * ∫⁻ x in {x | ENNReal.ofReal (c * t) < f x}, f x ∂μ) :
@@ -198,6 +202,77 @@ private theorem lintegral_rpow_le_of_mul_meas_ofReal_lt_le_of_measurable [SFinit
         rw [hconst, ENNReal.ofReal_mul hp0.le]
         ring
 
+/-- The interpolation estimate for a measurable `f` and an arbitrary measure `μ`.
+
+Only the part of `μ` carried by `{f > 0}` enters either side, and once `f` has finite `L^p` norm
+that part is σ-finite, because the level sets `{f ≥ 1 / (n + 1)}` have finite measure and exhaust
+`{f > 0}`. So the s-finite case applies to `μ` restricted to `{f > 0}`, after the two degenerate
+cases — a vanishing weak-type constant and an infinite right-hand side — are disposed of. -/
+private theorem lintegral_rpow_le_of_mul_meas_ofReal_lt_le_of_measurable
+    (hf : Measurable f) (hu : AEMeasurable u ν) (hp : 1 < p) (hc : 0 < c)
+    (h : ∀ t : ℝ, 0 < t → ENNReal.ofReal t * ν {y | ENNReal.ofReal t < u y} ≤
+      A * ∫⁻ x in {x | ENNReal.ofReal (c * t) < f x}, f x ∂μ) :
+    ∫⁻ y, u y ^ p ∂ν ≤
+      ENNReal.ofReal (p * c ^ (1 - p) / (p - 1)) * A * ∫⁻ x, f x ^ p ∂μ := by
+  have hp0 : (0 : ℝ) < p := by linarith
+  have hp1 : (0 : ℝ) < p - 1 := by linarith
+  have hK : (0 : ℝ) < p * c ^ (1 - p) / (p - 1) := by positivity
+  rcases eq_or_ne A 0 with hA | hA
+  · -- With `A = 0` the hypothesis holds over the zero measure as well, and there it already
+    -- yields the bound `∫⁻ u ^ p ∂ν ≤ 0`.
+    have hzero := lintegral_rpow_le_of_mul_meas_ofReal_lt_le_of_measurable_of_sFinite
+      (μ := (0 : Measure α)) (A := A) hf hu hp hc fun t ht => by simpa [hA] using h t ht
+    simpa [hA] using hzero
+  rcases eq_or_ne (∫⁻ x, f x ^ p ∂μ) ∞ with htop | htop
+  · -- The right-hand side is infinite.
+    rw [htop, ENNReal.mul_top (mul_ne_zero (ENNReal.ofReal_pos.2 hK).ne' hA)]
+    exact le_top
+  have hsmeas : MeasurableSet {x | 0 < f x} := measurableSet_lt measurable_const hf
+  -- Chebyshev's inequality for `f ^ p` bounds the measure of each level set of `f`.
+  have hlevel : ∀ n : ℕ, μ {x | ((n : ℝ≥0∞) + 1)⁻¹ ≤ f x} ≠ ∞ := by
+    intro n
+    have hne : ((n : ℝ≥0∞) + 1)⁻¹ ≠ ∞ := ENNReal.inv_ne_top.2 (by simp)
+    have hpos : (0 : ℝ≥0∞) < ((n : ℝ≥0∞) + 1)⁻¹ :=
+      ENNReal.inv_pos.2 (by simp [ENNReal.natCast_ne_top])
+    have hεpos : (0 : ℝ≥0∞) < ((n : ℝ≥0∞) + 1)⁻¹ ^ p := ENNReal.rpow_pos hpos hne
+    have hset : {x | ((n : ℝ≥0∞) + 1)⁻¹ ≤ f x} = {x | ((n : ℝ≥0∞) + 1)⁻¹ ^ p ≤ f x ^ p} :=
+      Set.ext fun x => (ENNReal.rpow_le_rpow_iff hp0).symm
+    rw [hset]
+    refine ne_top_of_le_ne_top (ENNReal.div_lt_top htop hεpos.ne').ne
+      (meas_ge_le_lintegral_div (hf.pow_const p).aemeasurable hεpos.ne'
+        (ENNReal.rpow_ne_top_of_nonneg hp0.le hne))
+  -- Hence `μ` restricted to `{f > 0}` is σ-finite, so in particular s-finite.
+  have hσ : SigmaFinite (μ.restrict {x | 0 < f x}) := by
+    refine ⟨⟨⟨fun n => {x | ((n : ℝ≥0∞) + 1)⁻¹ ≤ f x} ∪ {x | 0 < f x}ᶜ, fun _ => trivial, ?_, ?_⟩⟩⟩
+    · intro n
+      have hcompl : μ.restrict {x | 0 < f x} {x | 0 < f x}ᶜ = 0 := by
+        rw [Measure.restrict_apply hsmeas.compl, Set.compl_inter_self, measure_empty]
+      refine lt_of_le_of_lt (measure_union_le _ _) ?_
+      rw [hcompl, add_zero]
+      exact lt_of_le_of_lt (Measure.restrict_apply_le _ _) (lt_top_iff_ne_top.2 (hlevel n))
+    · refine Set.eq_univ_of_forall fun x => ?_
+      rcases eq_or_ne (f x) 0 with hx | hx
+      · exact Set.mem_iUnion.2 ⟨0, Set.mem_union_right _ (by simp [hx])⟩
+      · obtain ⟨n, hn⟩ := ENNReal.exists_inv_nat_lt hx
+        exact Set.mem_iUnion.2
+          ⟨n, Set.mem_union_left _ ((ENNReal.inv_le_inv' le_self_add).trans hn.le)⟩
+  -- The truncated integrals of the hypothesis do not see the complement of `{f > 0}`.
+  have hsub : ∀ t : ℝ, 0 < t → {x | ENNReal.ofReal (c * t) < f x} ⊆ {x | 0 < f x} := by
+    intro t _ x hx
+    exact Set.mem_ofPred.2 (lt_of_le_of_lt zero_le (Set.mem_ofPred.1 hx))
+  -- Neither does `∫⁻ f ^ p`, since `f` vanishes there.
+  have hpow : ∫⁻ x, f x ^ p ∂μ.restrict {x | 0 < f x} = ∫⁻ x, f x ^ p ∂μ := by
+    have hcompl : ∫⁻ x in {x | 0 < f x}ᶜ, f x ^ p ∂μ = 0 := by
+      rw [setLIntegral_congr_fun hsmeas.compl fun x hx => ?_, lintegral_zero]
+      have hx0 : f x = 0 := by simpa using hx
+      rw [hx0, ENNReal.zero_rpow_of_pos hp0]
+    rw [← lintegral_add_compl (μ := μ) (fun x => f x ^ p) hsmeas, hcompl, add_zero]
+  have hmain := lintegral_rpow_le_of_mul_meas_ofReal_lt_le_of_measurable_of_sFinite
+    (μ := μ.restrict {x | 0 < f x}) hf hu hp hc fun t ht => by
+      rw [Measure.restrict_restrict_of_subset (hsub t ht)]
+      exact h t ht
+  rwa [hpow] at hmain
+
 /-- **Marcinkiewicz interpolation**, the diagonal case `p₀ = 1`, `p₁ = ∞`, in distributional form.
 
 If for every height `t > 0` the superlevel set `{u > t}` obeys the weak-type bound
@@ -211,7 +286,7 @@ against the part of `f` above `c * t`, then for every `1 < p < ∞`
 Applied with `u = T f` for a sublinear `T`, the hypothesis is what the weak `(1,1)` and `L^∞`
 endpoint bounds for `T` give after splitting `f` at the height `c * t`, and the conclusion is the
 strong type `(p,p)` bound. The constant degenerates as `p → 1`, as it must. -/
-theorem lintegral_rpow_le_of_mul_meas_ofReal_lt_le [SFinite μ]
+theorem lintegral_rpow_le_of_mul_meas_ofReal_lt_le
     (hf : AEMeasurable f μ) (hu : AEMeasurable u ν) (hp : 1 < p) (hc : 0 < c)
     (h : ∀ t : ℝ, 0 < t → ENNReal.ofReal t * ν {y | ENNReal.ofReal t < u y} ≤
       A * ∫⁻ x in {x | ENNReal.ofReal (c * t) < f x}, f x ∂μ) :
