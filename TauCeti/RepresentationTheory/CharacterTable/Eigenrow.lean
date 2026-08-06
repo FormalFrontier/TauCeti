@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Algebra.Algebra.Pi
+public import Mathlib.LinearAlgebra.StdBasis
 public import TauCeti.RepresentationTheory.CharacterTable.ClassSum.Eigenrow
 public import TauCeti.RepresentationTheory.CharacterTable.Table
 
@@ -29,7 +29,7 @@ central character, and there are exactly as many of them as `G` has conjugacy cl
 
 The proof runs through a Wedderburn presentation `k[G] ≃ₐ[k] ∏ᵢ Matₙᵢ(k)`. Such a presentation
 splits the centre as the product algebra `∏ᵢ k` (`TauCeti.centerMonoidAlgebraAlgEquivPi`), whose
-only algebra homomorphisms to `k` are the coordinate evaluations (`TauCeti.exists_eq_evalAlgHom`);
+only algebra homomorphisms to `k` are the coordinate evaluations (`AlgHom.eq_piEvalAlgHom`);
 the evaluation at a block is the central character of the representation that block carries
 (`TauCeti.centralCharacter_blockRepresentation`), and every irreducible representation is equivalent
 to a block, hence has the same central character as one.
@@ -141,7 +141,8 @@ theorem exists_centralCharacter_eq (φ : Subalgebra.center k k[G] →ₐ[k] k) :
   have : NeZero (Nat.card G : k) := ⟨Invertible.ne_zero _⟩
   obtain ⟨n, d, hd, ⟨e⟩⟩ := exists_algEquiv_pi_matrix k G
   have := hd
-  obtain ⟨a, ha⟩ := exists_eq_evalAlgHom (φ.comp (centerMonoidAlgebraAlgEquivPi e).symm.toAlgHom)
+  obtain ⟨a, ha⟩ :=
+    (φ.comp (centerMonoidAlgebraAlgEquivPi e).symm.toAlgHom).eq_piEvalAlgHom
   have := isIrreducible_blockRepresentation e a
   obtain ⟨i, hi⟩ :=
     exists_centralCharacter_irreducibleRepresentation_eq k G (blockRepresentation e a)

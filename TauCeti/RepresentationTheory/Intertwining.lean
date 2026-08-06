@@ -38,14 +38,15 @@ variable {k G V W : Type*} [CommSemiring k] [Monoid G] [AddCommMonoid V] [AddCom
 namespace IntertwiningMap
 
 /-- **An intertwining map commutes with the action of the group algebra**, not just with the
-action of the group elements: both sides are linear in the group-algebra element and agree on the
-group elements, where the statement is the intertwining property itself. -/
+action of the group elements.
+
+This is the `k[G]`-linearity supplied by `Representation.IntertwiningMap.equivLinearMapAsModule`,
+read through the identity equivalence `Representation.asModuleEquiv` that identifies `ρ.asModule`
+with `V` and, by `Representation.asModuleEquiv_map_smul`, the scalar action of `k[G]` with
+`ρ.asAlgebraHom`. -/
 theorem map_asAlgebraHom (f : ρ.IntertwiningMap σ) (x : k[G]) (v : V) :
-    f (ρ.asAlgebraHom x v) = σ.asAlgebraHom x (f v) := by
-  induction x using MonoidAlgebra.induction_on with
-  | of g => simpa using _root_.Representation.IntertwiningMap.isIntertwining ρ σ f g v
-  | add x y hx hy => simp only [map_add, LinearMap.add_apply, map_add, hx, hy]
-  | smul r x hx => simp only [map_smul, LinearMap.smul_apply, map_smul, hx]
+    f (ρ.asAlgebraHom x v) = σ.asAlgebraHom x (f v) :=
+  (_root_.Representation.IntertwiningMap.equivLinearMapAsModule ρ σ f).map_smul' x v
 
 end IntertwiningMap
 
