@@ -257,6 +257,7 @@ standard coordinate slice `F × {0}`.
 For `M` a topological manifold modelled on `F × F'` and `N` one modelled on `F` this is the usual
 condition that `f` looks like `ℝⁿ × {0} ⊆ ℝⁿ⁺ᵏ` in ambient charts; the codimension is the choice of
 the complementary model `F'`, and is not otherwise constrained. -/
+@[expose]
 def IsLocallyFlat [Zero F'] (f : N → M) : Prop :=
   IsSliceEmbedding ((univ : Set F) ×ˢ ({0} : Set F')) f
 
