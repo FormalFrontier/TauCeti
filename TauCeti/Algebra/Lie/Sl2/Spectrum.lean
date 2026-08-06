@@ -161,7 +161,7 @@ end Raising
 
 section Ladder
 
-variable {K : Type*} [Field K]
+variable {K : Type*} [CommRing K]
 variable {L : Type*} [LieRing L] [LieAlgebra K L]
 variable {M : Type*} [AddCommGroup M] [Module K M] [LieRingModule L M] [LieModule K L M]
 variable {h e f : L} {v : M} {μ : K}
@@ -299,9 +299,9 @@ theorem iSup_eigenspace_toEnd_intCast_eq_top (htop : t.toLieSubalgebra K = ⊤) 
 `TauCeti.iSup_eigenspace_toEnd_intCast_eq_top`. -/
 theorem isInternal_eigenspace_toEnd_intCast (htop : t.toLieSubalgebra K = ⊤) :
     DirectSum.IsInternal fun z : ℤ ↦ (toEnd K L M h).eigenspace (z : K) :=
-  (DirectSum.isInternal_submodule_iff_iSupIndep_and_iSup_eq_top _).2
-    ⟨(toEnd K L M h).eigenspaces_iSupIndep.comp (f := fun z : ℤ ↦ (z : K)) Int.cast_injective,
-      iSup_eigenspace_toEnd_intCast_eq_top htop⟩
+  DirectSum.isInternal_submodule_of_iSupIndep_of_iSup_eq_top
+    ((toEnd K L M h).eigenspaces_iSupIndep.comp (f := fun z : ℤ ↦ (z : K)) Int.cast_injective)
+    (iSup_eigenspace_toEnd_intCast_eq_top htop)
 
 end Diagonalizable
 
