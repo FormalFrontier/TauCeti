@@ -8,6 +8,7 @@ public import TauCeti.Probability.Exchangeability
 public import TauCeti.Probability.DeFinetti.Representation
 public import TauCeti.Probability.DeFinetti.CountableIndex
 public import TauCeti.Probability.Exchangeability.ConditionallyIID.Unique
+public import TauCeti.Probability.Exchangeability.ConditionallyIID.PathDisintegration
 public import TauCeti.Probability.Exchangeability.PathSpace.Law.Extreme
 
 /-!
@@ -28,7 +29,8 @@ This module declares nothing of its own; it is a curated re-export, and it build
 * `mixedIID_mixingLaw_unique` — uniqueness of the mixing *law*;
 * `conditionallyIID_ae_unique` — a.e. uniqueness of the directing *measure*;
 * `conditionallyIID_of_exchangeableFamily` — the countable-index extension;
-* `exchangeable_extreme_iff_iid` — the extreme exchangeable laws are exactly the i.i.d. laws.
+* `exchangeable_extreme_iff_iid` — the extreme exchangeable laws are exactly the i.i.d. laws;
+* `ConditionallyIIDWith.jointPathLaw_eq_iidMixtureLaw` — the full-path joint disintegration.
 
 The two uniqueness statements are genuinely different, and the difference is the point of the
 conditional predicate: only the law `μ.map ν` is pinned down by the mixture identity, whereas a
