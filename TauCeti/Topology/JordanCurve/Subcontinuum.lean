@@ -39,17 +39,26 @@ compact connected subset is a subsingleton: it is empty, or it has `a = b` and i
 
 ## Why this is a layer-L5 prerequisite
 
-Layer **L5** of the conformal-mapping roadmap (`TauCetiRoadmap/ConformalMapping/README.md`) is
-Carathéodory's boundary correspondence for a Jordan domain, and its open direction is the assertion
-that the boundary cluster sets of a Riemann map are singletons. Those cluster sets are already known
-to be *continua contained in the image boundary*
+`ConformalMapping/STATUS.md` asks, under **Jordan curve input**, that "the strong facts about Jordan
+curves that the forward direction classically leans on" be settled before layer **L5** of the
+conformal-mapping roadmap (`TauCetiRoadmap/ConformalMapping/README.md`), Carathéodory's boundary
+correspondence for a Jordan domain, is attacked. The classification of the compact connected subsets
+of a curve is one such fact, and it is established here with no conformal input, as
+`TauCeti/Topology/JordanCurve/Separation.lean` settles the cutting of a curve at given points and
+`TauCeti/Topology/JordanCurve/SmallArc.lean` the size of the pieces that cutting leaves. Of the
+statements below, `TauCeti.IsJordanCurve.isPathConnected_sdiff` is a strict generalisation of the
+`Separation.lean` statement for a removed point.
+
+The immediate application is a reading of a boundary cluster set. Those cluster sets are already
+known to be *continua contained in the image boundary*
 (`TauCeti.isConnected_clusterSetOn_of_convex_of_isBounded` together with
 `TauCeti.clusterSetOn_subset_frontier_image`), so for a Jordan domain each of them is a compact
 connected subset of a Jordan curve, and the results here say what such a set can be: a point, an
-arc, or the whole curve. That reading of a boundary cluster set is
-`TauCeti.subsingleton_or_exists_injective_path_clusterSetOn`, in
-`TauCeti/Analysis/Complex/Conformal/ClusterSet.lean`. Excluding the two nondegenerate cases for a
-Riemann map is the step the milestone still waits on, and is not attempted here or there.
+arc, or the whole curve — `TauCeti.subsingleton_or_exists_injective_path_clusterSetOn`, in
+`TauCeti/Analysis/Complex/Conformal/ClusterSet.lean`. The open direction of L5 is the assertion that
+for a Riemann map the first case always holds; the length–area estimate that STATUS.md sequences
+next proves that directly, and nothing here shortens or replaces it, nor is the exclusion of the two
+nondegenerate cases attempted here or there.
 
 ## Generality
 
