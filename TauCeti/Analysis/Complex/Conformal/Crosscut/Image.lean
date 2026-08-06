@@ -33,20 +33,24 @@ hypothesis puts them there — for a disc, in `TauCeti.isConnected_clusterSetOn_
 
 Write `Ω = f '' U`, `A = f '' (U ∩ ball ζ ρ)`, `B = f '' (U \ closedBall ζ ρ)` for the images of
 the parts of `U` inside and outside the circle, and `γ = f '' (U ∩ sphere ζ ρ)` for the image of the
-part on it, `f` being holomorphic and injective on the open set `U`. Then `Ω = A ∪ γ ∪ B`
-(`TauCeti.image_eq_union_image_inter_sphere`, in `TauCeti/Topology/MetricSpace/Cut.lean`, where the
-decomposition and the boundary covering it yields are proved for an arbitrary map out of a
-pseudometric space), and the frontier of a union is covered by the frontiers of its parts, so a
-frontier point of `Ω` is a frontier point of `A`, a frontier point of `B`, or an adherent point of
-`γ`:
+part on it, `f` being holomorphic and injective on the open set `U`. The three parts cover `U` —
+the two sides cover `U \ sphere ζ ρ` by
+`TauCeti.sdiff_sphere_eq_inter_ball_union_sdiff_closedBall` — so `Ω = A ∪ γ ∪ B`, and the frontier
+of a union is covered by the frontiers of its parts, so a frontier point of `Ω` is a frontier point
+of `A`, a frontier point of `B`, or an adherent point of `γ`:
 
 > `frontier Ω ⊆ frontier A ∪ closure γ ∪ frontier B`
 
-(`TauCeti.frontier_image_subset_union_closure_image_inter_sphere`). This is the sense in which the
-circle *cuts the image boundary in two*: the two boundary pieces `frontier Ω ∩ frontier A` and
-`frontier Ω ∩ frontier B` cover `frontier Ω` apart from a middle piece no wider than `γ` itself
-(`TauCeti.diam_frontier_inter_closure_image_inter_sphere_le`), which by the length–area estimate of
-`Conformal/ShortCrosscut.lean` can be made as small as desired.
+This is the sense in which the circle *cuts the image boundary in two*: the two boundary pieces
+`frontier Ω ∩ frontier A` and `frontier Ω ∩ frontier B` cover `frontier Ω` apart from the *middle
+piece* `frontier Ω ∩ closure γ`, which is no wider than `γ` itself
+(`TauCeti.diam_frontier_inter_closure_image_inter_sphere_le`) and by the length–area estimate of
+`Conformal/ShortCrosscut.lean` can be made as small as desired. That covering is elementary set
+theory and is not recorded as a lemma: nothing below consumes it, every result here being about
+the middle piece itself. The covering that *is* consumed runs the other way, bounding the frontier
+of one side by the cut and the frontier of the whole
+(`TauCeti.frontier_image_inter_ball_subset` of `Conformal/CutDiameter.lean`, whose topological core
+`TauCeti.frontier_image_subset_image_union_frontier_image` is in `TauCeti/Topology/Frontier.lean`).
 
 ## The middle piece, and the connected boundary set enclosing it
 
@@ -114,9 +118,8 @@ In accordance with the generality bar of `ConformalMapping/README.md`, which fix
 every theorem added in layers L0–L6, everything here is stated for maps of `ℂ`. The inputs that are
 not about conformality are stated at their own generality elsewhere: `TauCeti.diam_frontier` for an
 arbitrary real normed space, `TauCeti.IsUniformlyLocallyConnected` for an arbitrary pseudometric
-space, and the decomposition of the image and of its frontier by the cutting sphere
-(`TauCeti.image_eq_union_image_inter_sphere`,
-`TauCeti.frontier_image_subset_union_closure_image_inter_sphere`) for an arbitrary map out of a
+space, and the splitting of the domain by the cutting sphere
+(`TauCeti.sdiff_sphere_eq_inter_ball_union_sdiff_closedBall`) for an arbitrary set in an arbitrary
 pseudometric space, in `TauCeti/Topology/MetricSpace/Cut.lean`.
 
 ## Main results

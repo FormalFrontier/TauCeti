@@ -21,16 +21,9 @@ Nothing beyond the containments `ball x ρ ⊆ closedBall x ρ` and `sphere x ρ
 the openness of a ball against the closedness of a closed ball, is used, so `s` is an arbitrary set
 in an arbitrary pseudo-metric space.
 
-The decomposition is then pushed forward through a map `f : X → Y`: the image of `s` is the union
-of the images of the two sides and of the part of `s` on the sphere, and — for a topological `Y` —
-the frontier of `f '' s` is covered by the frontiers of the two side images together with the
-closure of the middle one. Nothing whatever is asked of `f`; it is not assumed continuous, let
-alone injective or open.
-
 The intended consumer is layer **L5** of `TauCetiRoadmap/ConformalMapping/README.md`, Carathéodory's
-boundary correspondence, through `TauCeti/Analysis/Complex/Conformal/Crosscut/Basic.lean`,
-`TauCeti/Analysis/Complex/Conformal/Crosscut/Image.lean` and
-`TauCeti/Analysis/Complex/Conformal/CutDiameter.lean`: there `X = Y = ℂ` and the sphere is the
+boundary correspondence, through `TauCeti/Analysis/Complex/Conformal/Crosscut/Basic.lean` and
+`TauCeti/Analysis/Complex/Conformal/CutDiameter.lean`: there `X = ℂ` and the sphere is the
 *circular crosscut* of a plane domain at a boundary point, whose near side is the approach region
 along which the boundary behaviour of a conformal map is read off. Nothing here is specific to that
 use, and Mathlib has no form of the decomposition.
@@ -41,10 +34,6 @@ use, and Mathlib has no form of the decomposition.
 * `TauCeti.disjoint_inter_ball_sdiff_closedBall` — the two sides are disjoint.
 * `TauCeti.subset_inter_ball_or_subset_sdiff_closedBall` — a preconnected subset of an open cut set
   missing the sphere lies on one side of it.
-* `TauCeti.image_eq_union_image_inter_sphere` — the image of a cut set is the union of the images
-  of the two sides and of the part on the sphere.
-* `TauCeti.frontier_image_subset_union_closure_image_inter_sphere` — the frontier of the image is
-  covered by the frontiers of the two side images together with the closure of the middle image.
 -/
 
 public section
@@ -86,39 +75,5 @@ theorem subset_inter_ball_or_subset_sdiff_closedBall {s S : Set X} (hs : IsOpen 
   hS.subset_or_subset (hs.inter isOpen_ball) (hs.sdiff isClosed_closedBall)
     disjoint_inter_ball_sdiff_closedBall
     (sdiff_sphere_eq_inter_ball_union_sdiff_closedBall (x := x) (s := s) ▸ hSsub)
-
-/-! ## The cut pushed forward through a map -/
-
-variable {Y : Type*}
-
-/-- **A sphere splits the image of a set into three pieces**: the images of the parts of the set
-inside, on, and outside it. This is
-`TauCeti.sdiff_sphere_eq_inter_ball_union_sdiff_closedBall` pushed forward, and needs nothing of
-`f` and nothing of `s`. -/
-theorem image_eq_union_image_inter_sphere (f : X → Y) (s : Set X) (x : X) (ρ : ℝ) :
-    f '' s = f '' (s ∩ ball x ρ) ∪ f '' (s ∩ sphere x ρ) ∪ f '' (s \ closedBall x ρ) := by
-  rw [← image_union, ← image_union]
-  congr 1
-  rw [union_right_comm, ← sdiff_sphere_eq_inter_ball_union_sdiff_closedBall, sdiff_union_inter]
-
-variable [TopologicalSpace Y]
-
-/-- **The frontier of the image of a cut set is covered by the frontiers of the images of the two
-sides together with the closure of the image of the part on the sphere.**
-
-Like the decomposition itself this needs nothing of `f`: the image is the union of the three pieces
-by `TauCeti.image_eq_union_image_inter_sphere`, the frontier of a union is covered by the frontiers
-of the two parts by `frontier_union_subset`, and the frontier of the middle image lies in its
-closure. -/
-theorem frontier_image_subset_union_closure_image_inter_sphere (f : X → Y) (s : Set X) (x : X)
-    (ρ : ℝ) :
-    frontier (f '' s) ⊆
-      frontier (f '' (s ∩ ball x ρ)) ∪ closure (f '' (s ∩ sphere x ρ)) ∪
-        frontier (f '' (s \ closedBall x ρ)) := by
-  have hunion : ∀ a b : Set Y, frontier (a ∪ b) ⊆ frontier a ∪ frontier b := fun a b =>
-    (frontier_union_subset a b).trans (union_subset_union inter_subset_left inter_subset_right)
-  rw [image_eq_union_image_inter_sphere f s x ρ]
-  exact (hunion _ _).trans (union_subset_union
-    ((hunion _ _).trans (union_subset_union subset_rfl frontier_subset_closure)) subset_rfl)
 
 end TauCeti
