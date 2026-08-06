@@ -1,0 +1,110 @@
+/-
+Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+-/
+module
+
+public import Mathlib.Algebra.Group.ConjFinite
+public import Mathlib.GroupTheory.GroupAction.Quotient
+
+/-!
+# Inversion of conjugacy classes, and the size of a class
+
+Inversion of a group is compatible with conjugacy: `x` and `y` are conjugate exactly when `x⁻¹` and
+`y⁻¹` are (`TauCeti.isConj_inv_iff`). So inversion descends to the conjugacy classes, where it is an
+involution, recorded here as an `InvolutiveInv (ConjClasses G)` instance; `C⁻¹` is the class of the
+inverses of the members of `C`, and it has the same size as `C`.
+
+The other fact collected here is that the size of a conjugacy class divides the order of the group,
+a consequence of the orbit-stabilizer theorem for the conjugation action.
+
+## Main statements
+
+* `TauCeti.isConj_inv_iff`: conjugacy is inherited by inverses in both directions.
+* `TauCeti.conjClasses_inv_mk`: the inverse of the class of `g` is the class of `g⁻¹`.
+* `TauCeti.card_carrier_inv`: a conjugacy class and its inverse have the same size.
+* `TauCeti.card_carrier_dvd_card`: the size of a conjugacy class divides the order of the group,
+  with `TauCeti.card_carrier_cast_ne_zero` the consequence that the size of a class is nonzero in
+  any semiring where the group order is.
+
+## Implementation notes
+
+The inversion is an instance rather than a plain function so that the notation `C⁻¹`, the
+involutivity lemma `inv_inv` and the reindexing equivalence `Equiv.inv` are all available for
+conjugacy classes. There is no multiplication on `ConjClasses G` for it to interact with.
+-/
+
+public section
+
+namespace TauCeti
+
+variable {G : Type*} [Group G]
+
+/-- Conjugacy is inherited by inverses in both directions.
+
+Not `@[simp]`: Mathlib's `isConj_iff` is itself `simp`, so the left-hand side simplifies to
+`∃ c, c * x⁻¹ * c⁻¹ = y⁻¹` and the simp normal form linter rejects the pair. -/
+theorem isConj_inv_iff {x y : G} : IsConj x⁻¹ y⁻¹ ↔ IsConj x y := by
+  constructor <;> intro h
+  · obtain ⟨c, hc⟩ := isConj_iff.mp h
+    refine isConj_iff.mpr ⟨c, ?_⟩
+    have := congrArg Inv.inv hc
+    simpa [mul_assoc] using this
+  · obtain ⟨c, hc⟩ := isConj_iff.mp h
+    refine isConj_iff.mpr ⟨c, ?_⟩
+    have := congrArg Inv.inv hc
+    simpa [mul_assoc] using this
+
+/-- **Inversion of conjugacy classes.** Inversion of the group respects conjugacy, so it descends
+to the conjugacy classes; there it is an involution, because it is one on the group. -/
+instance instInvolutiveInvConjClasses : InvolutiveInv (ConjClasses G) where
+  inv := Quotient.lift (fun g => ConjClasses.mk g⁻¹) fun _ _ h =>
+    ConjClasses.mk_eq_mk_iff_isConj.2 (isConj_inv_iff.mpr h)
+  inv_inv C := by
+    obtain ⟨g, rfl⟩ := ConjClasses.exists_rep C
+    exact congrArg ConjClasses.mk (inv_inv g)
+
+/-- The inverse of the conjugacy class of `g` is the conjugacy class of `g⁻¹`. -/
+@[simp]
+theorem conjClasses_inv_mk (g : G) : (ConjClasses.mk g)⁻¹ = ConjClasses.mk g⁻¹ :=
+  (rfl)
+
+/-- The class of the identity is its own inverse. -/
+@[simp]
+theorem conjClasses_inv_one : (1 : ConjClasses G)⁻¹ = 1 := by
+  rw [ConjClasses.one_eq_mk_one, conjClasses_inv_mk, inv_one]
+
+/-- An element lies in the inverse of a conjugacy class exactly when its inverse lies in the
+class. -/
+theorem mem_carrier_inv_iff {C : ConjClasses G} {x : G} :
+    x ∈ (C⁻¹).carrier ↔ x⁻¹ ∈ C.carrier := by
+  rw [ConjClasses.mem_carrier_iff_mk_eq, ConjClasses.mem_carrier_iff_mk_eq,
+    ← conjClasses_inv_mk, inv_eq_iff_eq_inv]
+
+/-- **A conjugacy class and its inverse have the same size**, inversion of the group restricting to
+a bijection between them. -/
+theorem card_carrier_inv (C : ConjClasses G) : Nat.card (C⁻¹).carrier = Nat.card C.carrier :=
+  Nat.card_congr ((Equiv.inv G).subtypeEquiv fun _ => mem_carrier_inv_iff)
+
+/-- **The size of a conjugacy class divides the order of the group.** The class is the orbit of any
+of its members under the conjugation action, so its size is the index of a centralizer. -/
+theorem card_carrier_dvd_card [Finite G] (C : ConjClasses G) :
+    Nat.card C.carrier ∣ Nat.card G := by
+  classical
+  obtain ⟨x, rfl⟩ := ConjClasses.exists_rep C
+  let : Fintype G := Fintype.ofFinite G
+  let : Fintype (ConjClasses.mk x).carrier := Fintype.ofFinite _
+  let : Fintype (MulAction.stabilizer (ConjAct G) x) := Fintype.ofFinite _
+  let : Fintype (MulAction.orbit (ConjAct G) x) := Fintype.ofFinite _
+  rw [Nat.card_eq_fintype_card, Nat.card_eq_fintype_card, ConjClasses.card_carrier]
+  refine Nat.div_dvd_of_dvd ⟨Fintype.card (MulAction.orbit (ConjAct G) x), ?_⟩
+  simpa [Nat.card_eq_fintype_card, Nat.mul_comm] using
+    (MulAction.card_orbit_mul_card_stabilizer_eq_card_group (ConjAct G) x).symm
+
+/-- The size of a conjugacy class is nonzero in any semiring in which the order of the group is
+nonzero: it divides that order. -/
+theorem card_carrier_cast_ne_zero {R : Type*} [Semiring R] [Finite G] (C : ConjClasses G)
+    (h : (Nat.card G : R) ≠ 0) : (Nat.card C.carrier : R) ≠ 0 :=
+  ne_zero_of_dvd_ne_zero h (Nat.cast_dvd_cast (card_carrier_dvd_card C))
+
+end TauCeti

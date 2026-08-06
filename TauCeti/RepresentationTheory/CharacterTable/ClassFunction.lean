@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.Algebra.Group.ConjFinite
+public import TauCeti.Algebra.Group.Conj
 public import Mathlib.LinearAlgebra.Dimension.Constructions
 public import Mathlib.RepresentationTheory.Character
 
@@ -15,7 +15,7 @@ This file defines functions on a group that are constant on conjugacy classes. I
 their module with the module of functions on `ConjClasses G`, computes its dimension for finite
 groups, pulls class functions back along a group homomorphism, shows that characters of
 representations are class functions, and evaluates a sum over a finite group one conjugacy class
-at a time.
+at a time -- whence, for the constant function `1`, that the class sizes sum to the group order.
 
 The indicator function of a conjugacy class, `TauCeti.ClassFunction.classIndicator`, is the class
 function pulled back from the indicator of a single point of `ConjClasses G`; pairing a class
@@ -41,24 +41,6 @@ definitional equalities, which would in turn require exposing the definitions.
 namespace TauCeti
 
 universe u v w w'
-
-/-- Conjugacy is inherited by inverses in both directions.
-
-Not `@[simp]`: Mathlib's `isConj_iff` is itself `simp`, so the left-hand side simplifies to
-`∃ c, c * x⁻¹ * c⁻¹ = y⁻¹` and the simp normal form linter rejects the pair. -/
-theorem isConj_inv_iff {G : Type v} [Group G] {x y : G} :
-    IsConj x⁻¹ y⁻¹ ↔ IsConj x y := by
-  constructor <;> intro h
-  · obtain ⟨c, hc⟩ := isConj_iff.mp h
-    apply isConj_iff.mpr
-    refine ⟨c, ?_⟩
-    have := congrArg Inv.inv hc
-    simpa [mul_assoc] using this
-  · obtain ⟨c, hc⟩ := isConj_iff.mp h
-    apply isConj_iff.mpr
-    refine ⟨c, ?_⟩
-    have := congrArg Inv.inv hc
-    simpa [mul_assoc] using this
 
 /-- The submodule of functions on `G` that are constant under conjugation. -/
 def ClassFunction (k : Type u) (G : Type v) [Semiring k] [Group G] : Submodule k (G → k) where
@@ -205,6 +187,23 @@ theorem sum_eq_sum_conjClasses [Fintype G] [Fintype (ConjClasses G)] (f : ClassF
       (Nat.card_eq_fintype_card)
   rw [Finset.sum_congr rfl fun x _ => hconst x, Finset.sum_const, Finset.card_univ, hcard,
     nsmul_eq_mul]
+
+/-- **The conjugacy classes partition the group**, read in the coefficient semiring: the sizes of
+the classes sum to the order of the group.
+
+This is `TauCeti.ClassFunction.sum_eq_sum_conjClasses` for the constant class function `1`. -/
+theorem sum_card_carrier_eq_card [Finite G] [Fintype (ConjClasses G)] :
+    ∑ C : ConjClasses G, (Nat.card C.carrier : k) = Nat.card G := by
+  let _ : Fintype G := Fintype.ofFinite G
+  have hone : (fun _ : G => (1 : k)) ∈ ClassFunction k G := fun _ _ => rfl
+  calc ∑ C : ConjClasses G, (Nat.card C.carrier : k)
+      = ∑ C : ConjClasses G, (Nat.card C.carrier : k) *
+          toConjClasses (⟨_, hone⟩ : ClassFunction k G) C := by
+        refine Finset.sum_congr rfl fun C _ => ?_
+        obtain ⟨g, rfl⟩ := ConjClasses.exists_rep C
+        rw [toConjClasses_mk, mul_one]
+    _ = ∑ _g : G, (1 : k) := (sum_eq_sum_conjClasses (⟨_, hone⟩ : ClassFunction k G)).symm
+    _ = Nat.card G := by simp [Nat.card_eq_fintype_card]
 
 end ClassFunction
 
