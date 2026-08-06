@@ -9,6 +9,7 @@ public import TauCeti.Analysis.Complex.Conformal.Montel.Basic
 import Mathlib.Analysis.Analytic.IsolatedZeros
 import Mathlib.Analysis.Complex.CauchyIntegral
 import Mathlib.Analysis.Complex.LocallyUniformLimit
+import Mathlib.Topology.UniformSpace.Ascoli
 import Mathlib.Topology.UniformSpace.CompactConvergence
 
 /-!
@@ -18,24 +19,27 @@ Vitali's theorem upgrades pointwise convergence on a set with an accumulation po
 uniform convergence for a locally bounded sequence of holomorphic functions. This completes the
 Vitali component of layer **L1 (normal families / Montel)** of the conformal-mapping roadmap.
 
-Everything below runs on one principle, isolated here as
+`TauCeti.vitali` runs on a subsequence principle, isolated here as the private
 `tendstoLocallyUniformlyOn_of_forall_subseq_eqOn`: for a locally bounded family of holomorphic
 functions, a candidate limit `g` continuous on `Ω` which every *locally uniform subsequential*
 limit agrees with on `Ω` is already the locally uniform limit of the whole sequence. Indeed
 `TauCeti.montel` supplies a locally uniform limit inside every subsequence, so the hypothesis says
 that every subsequence has a further subsequence converging to `g`; the sequential convergence
 criterion `tendsto_of_subseq_tendsto`, applied to the restrictions to a compact subset as
-continuous maps, then gives convergence of the original sequence there. Only the identification of
-the subsequential limits changes from one statement below to the next:
+continuous maps, then gives convergence of the original sequence there. For `TauCeti.vitali` the
+candidate is one subsequential limit chosen by Montel, and two subsequential limits agree on the
+pointwise convergence set `A`, hence on the whole *preconnected* `Ω` by Mathlib's analytic identity
+theorem `AnalyticOnNhd.eqOn_of_preconnected_of_frequently_eq` — which is where the accumulation
+point of `A` is spent.
 
-* for `TauCeti.vitali`, `g` is one subsequential limit chosen by Montel, and two subsequential
-  limits agree on the pointwise convergence set `A`, hence on the whole *preconnected* `Ω` by
-  Mathlib's analytic identity theorem `AnalyticOnNhd.eqOn_of_preconnected_of_frequently_eq` —
-  which is where the accumulation point of `A` is spent;
-* for the pointwise-limit forms, `g` is the prescribed pointwise limit and the identification is
-  the uniqueness of limits in a Hausdorff space, point by point. No identity theorem, no
-  accumulation point, and — this is the reason these are not corollaries of `TauCeti.vitali`
-  — no connectivity hypothesis on `Ω` is needed.
+When the sequence already converges pointwise on the *whole* of `Ω`, none of that machinery is
+needed. Local boundedness makes the sequence equicontinuous on `Ω`
+(`TauCeti.IsLocallyBoundedOn.equicontinuousOn`, the Cauchy-estimate half of Montel's theorem), and
+on an equicontinuous family pointwise convergence *is* uniform convergence on each compact subset,
+by Mathlib's Arzelà–Ascoli lemma `Equicontinuous.tendsto_uniformFun_iff_pi`. This is why the
+whole-domain statements below are not corollaries of `TauCeti.vitali`: they spend no identity
+theorem, hence need neither an accumulation point nor connectivity of `Ω`, and no selection
+theorem, hence not even properness of the target.
 
 ## Main results
 
@@ -44,23 +48,28 @@ the subsequential limits changes from one statement below to the next:
   function.
 * `TauCeti.vitali_of_tendsto` — the same theorem with a prescribed pointwise limit on the
   convergence set.
-* `TauCeti.differentiableOn_of_isLocallyBoundedOn_of_forall_tendsto` — a locally bounded
-  sequence of holomorphic functions converging pointwise on the whole of `Ω` has a
-  **holomorphic** pointwise limit.
-* `TauCeti.tendstoLocallyUniformlyOn_of_isLocallyBoundedOn_of_forall_tendsto` — and it converges
-  to that limit **locally uniformly**: on a locally bounded holomorphic sequence, pointwise
-  convergence and locally uniform convergence are the same thing.
-* `TauCeti.tendstoLocallyUniformlyOn_deriv_of_isLocallyBoundedOn_of_forall_tendsto` — hence the
+* `TauCeti.tendstoLocallyUniformlyOn_of_isLocallyBoundedOn_of_forall_tendsto` — a locally bounded
+  sequence of holomorphic functions converging pointwise on the whole of `Ω` converges to that
+  limit **locally uniformly**: on such a sequence, pointwise convergence and locally uniform
+  convergence are the same thing.
+* `TauCeti.differentiableOn_of_isLocallyBoundedOn_of_forall_tendsto` — the pointwise limit is
+  then **holomorphic**.
+* `TauCeti.tendstoLocallyUniformlyOn_deriv_of_isLocallyBoundedOn_of_forall_tendsto` — and the
   derivatives converge locally uniformly to the derivative of the pointwise limit, by
   Weierstrass' theorem (`TendstoLocallyUniformlyOn.deriv`); differentiating a pointwise limit
   termwise is legitimate for a locally bounded holomorphic sequence.
+* `TauCeti.exists_differentiableOn_tendstoLocallyUniformlyOn_of_isLocallyBoundedOn` — the
+  existential companion of the three, for a consumer who knows the sequence converges at each
+  point of `Ω` without a name for the limit.
 
 ## The target
 
-The target is a proper complex normed space `E`, the generality at which
-`Conformal/Montel/Basic.lean` states the selection theorem this file runs on; the conformal-mapping
-consumers instantiate `E = ℂ`. Properness cannot be dropped from the argument, `TauCeti.montel`
-being false without it. Vitali's theorem does hold for an arbitrary Banach target (Arendt and
+The target is a complex normed space `E`; the conformal-mapping consumers instantiate `E = ℂ`.
+`TauCeti.vitali` asks it to be **proper**, the generality at which `Conformal/Montel/Basic.lean`
+states the selection theorem that proof runs on, and properness cannot be dropped from that
+argument, `TauCeti.montel` being false without it. The whole-domain statements bypass the selection
+theorem, so they ask for nothing beyond completeness — and the locally uniform convergence itself
+for nothing at all. Vitali's theorem does hold for an arbitrary Banach target (Arendt and
 Nikolski, *Vector-valued holomorphic functions revisited*, Math. Z. **234** (2000), §2), but by a
 different argument — convergence of the Taylor coefficients at an accumulation point, and a clopen
 propagation — so that generality is a separate theorem rather than a weakening of these.
@@ -71,8 +80,8 @@ Per the *Coordination with upstream Mathlib* section of `ConformalMapping/README
 material overlaps [mathlib4#33505](https://github.com/leanprover-community/mathlib4/pull/33505).
 This file is therefore a **temporary shim**: if a human-curated Vitali theorem lands in Mathlib,
 this statement should be backed by it, or deleted and its consumers refactored to the upstream API.
-Mathlib's Weierstrass convergence theorem `TendstoLocallyUniformlyOn.deriv` and its identity
-theorem are consumed rather than restated.
+Mathlib's Weierstrass convergence theorem `TendstoLocallyUniformlyOn.deriv`, its identity theorem
+and its Arzelà–Ascoli framework are consumed rather than restated.
 
 ## References
 
@@ -102,8 +111,8 @@ about a *sequence in a topological space*, so it is applied on each compact `K �
 restrictions `K.domRestrict (F n)` as elements of `C(K, E)`, where compact-open convergence is
 uniform convergence on `K`.
 
-Kept private: it is the shared engine of the theorems below, whose hypotheses are the checkable
-ones, and its own hypothesis is not in a form a consumer can supply without redoing their work. -/
+Kept private: it is the engine of `TauCeti.vitali`, whose hypotheses are the checkable ones, and
+its own hypothesis is not in a form a consumer can supply without redoing their work. -/
 private theorem tendstoLocallyUniformlyOn_of_forall_subseq_eqOn (hΩ : IsOpen Ω)
     (hF : ∀ n, DifferentiableOn ℂ (F n) Ω) (hb : IsLocallyBoundedOn F Ω)
     (hg : ContinuousOn g Ω)
@@ -176,18 +185,7 @@ theorem vitali_of_tendsto (hΩ : IsOpen Ω) (hconn : IsPreconnected Ω)
 
 /-! ### Pointwise convergence on the whole domain -/
 
-/-- **The pointwise limit of a locally bounded sequence of holomorphic functions is holomorphic.**
-No connectivity of `Ω` is assumed, and no accumulation point has to be exhibited: `TauCeti.montel`
-extracts a holomorphic locally uniform limit along a subsequence, and that limit is the pointwise
-limit `g`, limits in a Hausdorff space being unique. -/
-theorem differentiableOn_of_isLocallyBoundedOn_of_forall_tendsto (hΩ : IsOpen Ω)
-    (hF : ∀ n, DifferentiableOn ℂ (F n) Ω) (hb : IsLocallyBoundedOn F Ω)
-    (hpoint : ∀ z ∈ Ω, Tendsto (fun n => F n z) atTop (𝓝 (g z))) :
-    DifferentiableOn ℂ g Ω := by
-  obtain ⟨φ, q, hφ, hq, hφconv⟩ := montel hΩ hF hb
-  exact hq.congr fun z hz =>
-    tendsto_nhds_unique ((hpoint z hz).comp hφ.tendsto_atTop) (hφconv.tendsto_at hz)
-
+omit [ProperSpace E] in
 /-- **On a locally bounded sequence of holomorphic functions, pointwise convergence is locally
 uniform convergence.** If a locally bounded sequence of holomorphic functions on an open `Ω`
 converges pointwise at every point of `Ω`, it converges locally uniformly to that pointwise limit.
@@ -196,16 +194,41 @@ This is not a case of `TauCeti.vitali`, which asks `Ω` preconnected in order to
 identification made on a small set `A` to the whole domain: here the identification is available at
 every point already, so the identity theorem — and with it the connectivity — is not needed. The
 converse implication is immediate, locally uniform convergence being pointwise convergence at each
-point of `Ω`. -/
+point of `Ω`.
+
+Neither is it a case of `TauCeti.montel`, and no properness of the target is needed: only the
+equicontinuity half of Montel's theorem is spent. On a compact `K ⊆ Ω` local boundedness makes the
+restricted sequence equicontinuous (`TauCeti.IsLocallyBoundedOn.equicontinuousOn`), and on an
+equicontinuous family the topology of uniform convergence and the topology of pointwise convergence
+have the same convergent sequences, which is Mathlib's Arzelà–Ascoli lemma
+`Equicontinuous.tendsto_uniformFun_iff_pi`. -/
 theorem tendstoLocallyUniformlyOn_of_isLocallyBoundedOn_of_forall_tendsto (hΩ : IsOpen Ω)
     (hF : ∀ n, DifferentiableOn ℂ (F n) Ω) (hb : IsLocallyBoundedOn F Ω)
     (hpoint : ∀ z ∈ Ω, Tendsto (fun n => F n z) atTop (𝓝 (g z))) :
     TendstoLocallyUniformlyOn F g atTop Ω := by
-  refine tendstoLocallyUniformlyOn_of_forall_subseq_eqOn hΩ hF hb
-    (differentiableOn_of_isLocallyBoundedOn_of_forall_tendsto hΩ hF hb hpoint).continuousOn
-    fun ψ hψ q hq z hz => ?_
-  exact tendsto_nhds_unique (hq.tendsto_at hz) ((hpoint z hz).comp hψ)
+  refine (tendstoLocallyUniformlyOn_iff_forall_isCompact hΩ).2 fun K hKΩ hK => ?_
+  let : CompactSpace K := isCompact_iff_compactSpace.mp hK
+  have heq : Equicontinuous (K.domRestrict ∘ F) :=
+    (equicontinuous_restrict_iff F).2 ((hb.equicontinuousOn hΩ hF).mono hKΩ)
+  rw [tendstoUniformlyOn_iff_restrict]
+  exact UniformFun.tendsto_iff_tendstoUniformly.1
+    ((heq.tendsto_uniformFun_iff_pi atTop (K.domRestrict g)).2
+      (tendsto_pi_nhds.2 fun z => hpoint z (hKΩ z.2)))
 
+omit [ProperSpace E] in
+/-- **The pointwise limit of a locally bounded sequence of holomorphic functions is holomorphic.**
+No connectivity of `Ω` is assumed, and no accumulation point has to be exhibited: the convergence
+is locally uniform by
+`TauCeti.tendstoLocallyUniformlyOn_of_isLocallyBoundedOn_of_forall_tendsto`, and a locally uniform
+limit of holomorphic functions is holomorphic. -/
+theorem differentiableOn_of_isLocallyBoundedOn_of_forall_tendsto [CompleteSpace E] (hΩ : IsOpen Ω)
+    (hF : ∀ n, DifferentiableOn ℂ (F n) Ω) (hb : IsLocallyBoundedOn F Ω)
+    (hpoint : ∀ z ∈ Ω, Tendsto (fun n => F n z) atTop (𝓝 (g z))) :
+    DifferentiableOn ℂ g Ω :=
+  (tendstoLocallyUniformlyOn_of_isLocallyBoundedOn_of_forall_tendsto hΩ hF hb
+    hpoint).differentiableOn (.of_forall hF) hΩ
+
+omit [ProperSpace E] in
 /-- **A locally bounded holomorphic sequence may be differentiated termwise along a pointwise
 limit.** If a locally bounded sequence of holomorphic functions converges pointwise on an open `Ω`,
 the derivatives converge locally uniformly to the derivative of the pointwise limit.
@@ -214,11 +237,29 @@ Pointwise convergence alone says nothing about derivatives; what makes the concl
 that `TauCeti.tendstoLocallyUniformlyOn_of_isLocallyBoundedOn_of_forall_tendsto` promotes the
 hypothesis to locally uniform convergence, on which Mathlib's Weierstrass theorem
 `TendstoLocallyUniformlyOn.deriv` acts. -/
-theorem tendstoLocallyUniformlyOn_deriv_of_isLocallyBoundedOn_of_forall_tendsto (hΩ : IsOpen Ω)
-    (hF : ∀ n, DifferentiableOn ℂ (F n) Ω) (hb : IsLocallyBoundedOn F Ω)
+theorem tendstoLocallyUniformlyOn_deriv_of_isLocallyBoundedOn_of_forall_tendsto [CompleteSpace E]
+    (hΩ : IsOpen Ω) (hF : ∀ n, DifferentiableOn ℂ (F n) Ω) (hb : IsLocallyBoundedOn F Ω)
     (hpoint : ∀ z ∈ Ω, Tendsto (fun n => F n z) atTop (𝓝 (g z))) :
     TendstoLocallyUniformlyOn (fun n => deriv (F n)) (deriv g) atTop Ω :=
   (tendstoLocallyUniformlyOn_of_isLocallyBoundedOn_of_forall_tendsto hΩ hF hb hpoint).deriv
     (.of_forall hF) hΩ
+
+omit [ProperSpace E] in
+/-- **The pointwise limit need not be named.** A locally bounded sequence of holomorphic functions
+on an open `Ω` which converges at each point of `Ω` converges locally uniformly on `Ω` to a
+holomorphic function — the existential companion of the three statements above, in the shape
+`TauCeti.vitali` takes on a subset `A`.
+
+The limit is `fun z => limUnder atTop fun n => F n z`, which the hypothesis identifies as the
+pointwise limit on `Ω`; no connectivity of `Ω`, accumulation point or properness of the target is
+involved, exactly as above. -/
+theorem exists_differentiableOn_tendstoLocallyUniformlyOn_of_isLocallyBoundedOn [CompleteSpace E]
+    (hΩ : IsOpen Ω) (hF : ∀ n, DifferentiableOn ℂ (F n) Ω) (hb : IsLocallyBoundedOn F Ω)
+    (hpoint : ∀ z ∈ Ω, ∃ w, Tendsto (fun n => F n z) atTop (𝓝 w)) :
+    ∃ g : ℂ → E, DifferentiableOn ℂ g Ω ∧ TendstoLocallyUniformlyOn F g atTop Ω :=
+  have h : ∀ z ∈ Ω, Tendsto (fun n => F n z) atTop (𝓝 (limUnder atTop fun n => F n z)) :=
+    fun z hz => tendsto_nhds_limUnder (hpoint z hz)
+  ⟨_, differentiableOn_of_isLocallyBoundedOn_of_forall_tendsto hΩ hF hb h,
+    tendstoLocallyUniformlyOn_of_isLocallyBoundedOn_of_forall_tendsto hΩ hF hb h⟩
 
 end TauCeti
