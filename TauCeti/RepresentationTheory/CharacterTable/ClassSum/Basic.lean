@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.Algebra.Group.ConjFinite
+public import TauCeti.Algebra.Group.ConjFinite
 public import Mathlib.Algebra.Algebra.Subalgebra.Basic
 public import Mathlib.Algebra.MonoidAlgebra.Basic
 
@@ -14,11 +14,6 @@ public import Mathlib.Algebra.MonoidAlgebra.Basic
 This file defines the element of a group algebra obtained by summing the members of a conjugacy
 class.  It proves that every class sum is central, the first input to the class-algebra side of
 finite-group character theory.
-
-It also records the two elementary facts about the sizes of conjugacy classes that the class-sum
-bookkeeping needs: the class of the identity is the singleton `{1}`
-(`TauCeti.ConjClasses.carrier_mk_one`), and every class of a finite group has positive size
-(`TauCeti.ConjClasses.card_carrier_pos`).
 -/
 
 public section
@@ -97,36 +92,6 @@ theorem classSum_commutes {k : Type*} [Semiring k] (C : ConjClasses G) (g : G) :
   simp [mul_assoc]
 
 end
-
-namespace ConjClasses
-
-omit [Fintype G] [DecidableEq G] in
-/-- **The conjugacy class of the identity is the singleton `{1}`**: an element conjugate to `1` is
-`1`. -/
-theorem carrier_mk_one : (_root_.ConjClasses.mk (1 : G)).carrier = {1} := by
-  ext g
-  rw [_root_.ConjClasses.mem_carrier_iff_mk_eq, _root_.ConjClasses.mk_eq_mk_iff_isConj,
-    isConj_one_left, Set.mem_singleton_iff]
-
-omit [Fintype G] [DecidableEq G] in
-/-- **The identity conjugacy class has exactly one element.** This is the weight that normalizes the
-identity column of a character table.
-
-This is not a `@[simp]` lemma: `Nat.card` of a coerced set is not in simp normal form, `Set.ncard`
-being what `Nat.card_coe_set_eq` rewrites it to. -/
-theorem card_carrier_mk_one : Nat.card (_root_.ConjClasses.mk (1 : G)).carrier = 1 := by
-  rw [carrier_mk_one]
-  simp
-
-omit [Fintype G] [DecidableEq G] in
-/-- **A conjugacy class of a finite group has positive size**: it contains any of its
-representatives. -/
-theorem card_carrier_pos [Finite G] (C : _root_.ConjClasses G) : 0 < Nat.card C.carrier := by
-  obtain ⟨g, rfl⟩ := C.exists_rep
-  have : Nonempty (_root_.ConjClasses.mk g).carrier := ⟨⟨g, _root_.ConjClasses.mem_carrier_mk⟩⟩
-  exact Nat.card_pos
-
-end ConjClasses
 
 /-- The class sum of the conjugacy class of `1` is the unit of the group algebra: that class is the
 singleton `{1}` (`TauCeti.ConjClasses.carrier_mk_one`). -/

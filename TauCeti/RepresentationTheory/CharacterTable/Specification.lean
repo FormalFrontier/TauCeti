@@ -115,6 +115,7 @@ theorem centralCharacterRow_apply
 
 /-- The normalized row is normalized: it takes the value `1` on the class of the identity, whose
 size is `1`. -/
+@[simp]
 theorem centralCharacterRow_mk_one (hM : M i (ConjClasses.mk 1) ≠ 0) :
     centralCharacterRow M i (ConjClasses.mk (1 : G)) = 1 := by
   rw [centralCharacterRow_apply, ConjClasses.card_carrier_mk_one, Nat.cast_one, one_mul,
@@ -126,6 +127,7 @@ theorem centralCharacterRow_mul (hM : M i (ConjClasses.mk 1) ≠ 0) (C : ConjCla
   rw [centralCharacterRow_apply, div_mul_cancel₀ _ hM]
 
 /-- Permuting the rows of a matrix permutes its normalized rows. -/
+@[simp]
 theorem centralCharacterRow_submatrix
     (M : Matrix (Fin (Nat.card (ConjClasses G))) (ConjClasses G) k)
     (σ : Equiv.Perm (Fin (Nat.card (ConjClasses G)))) (i : Fin (Nat.card (ConjClasses G))) :
