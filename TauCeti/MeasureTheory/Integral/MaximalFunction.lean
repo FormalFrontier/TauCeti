@@ -61,8 +61,9 @@ ball is the whole space — and that degenerate case is proved separately.
   normalisation is the intended one.
 * `TauCeti.maximalFunction_mono_ae`, `TauCeti.maximalFunction_congr_ae`: `M` is monotone in `‖f‖ₑ`
   almost everywhere, so `M f` depends on `f` only through `‖f‖ₑ` and only up to a null set.
-* `TauCeti.maximalFunction_add_le`, `TauCeti.maximalFunction_const_smul`: `M` is sublinear, which
-  is what Marcinkiewicz interpolation will ask of it.
+* `TauCeti.maximalFunction_zero`, `TauCeti.maximalFunction_add_le`,
+  `TauCeti.maximalFunction_const_smul`: `M` is sublinear, which is what Marcinkiewicz
+  interpolation will ask of it.
 * `TauCeti.maximalFunction_le_eLpNormEssSup`: the `L^∞` endpoint.
 * `TauCeti.lowerSemicontinuous_maximalFunction`, `TauCeti.measurable_maximalFunction`: the
   superlevel sets `{x | t < M f x}` are open, so `M f` is Borel measurable.
@@ -165,7 +166,7 @@ private theorem setLAverage_const_mul (μ : Measure X) (s : Set X) {c : ℝ≥0�
 /-- The maximal function is positively homogeneous, the first half of the sublinearity that
 Marcinkiewicz interpolation asks of an operator. -/
 @[simp]
-theorem maximalFunction_const_smul {𝕜 : Type*} [NormedRing 𝕜] [SMul 𝕜 F] [ENormSMulClass 𝕜 F]
+theorem maximalFunction_const_smul {𝕜 : Type*} [SeminormedRing 𝕜] [SMul 𝕜 F] [ENormSMulClass 𝕜 F]
     (μ : Measure X) (c : 𝕜) (f : X → F) (x : X) :
     maximalFunction μ (c • f) x = ‖c‖ₑ * maximalFunction μ f x := by
   rw [maximalFunction_def, maximalFunction_def]
@@ -174,6 +175,11 @@ theorem maximalFunction_const_smul {𝕜 : Type*} [NormedRing 𝕜] [SMul 𝕜 F
     iSup_congr fun _ => setLAverage_const_mul μ _ enorm_ne_top fun y => ‖f y‖ₑ
 
 variable {G : Type*} [TopologicalSpace G] [ESeminormedAddMonoid G] {f g : X → G}
+
+/-- The maximal function of the zero function is zero. -/
+@[simp]
+theorem maximalFunction_zero (μ : Measure X) (x : X) : maximalFunction μ (0 : X → G) x = 0 := by
+  simp [maximalFunction_def]
 
 /-- The maximal function is subadditive, the second half of that sublinearity. Only the norm of the
 first summand need be measurable. -/
