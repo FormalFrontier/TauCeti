@@ -17,8 +17,8 @@ developed in subsequent files.
 
 ## Main definitions
 
-* `TauCeti.Lie.conjugationDiffeomorph`: conjugation by `g` as a smooth diffeomorphism.
-* `TauCeti.Lie.conjugation`: the conjugation homomorphism into smooth self-diffeomorphisms.
+* `TauCeti.Lie.conjDiffeomorph`: conjugation by `g` as a smooth diffeomorphism.
+* `TauCeti.Lie.conj`: the conjugation homomorphism into smooth self-diffeomorphisms.
 
 ## References
 
@@ -39,36 +39,36 @@ variable {𝕜 : Type*} [NontriviallyNormedField 𝕜]
   {n : ℕ∞ω} [LieGroup I n G]
 
 /-- Conjugation by `g`, sending `x` to `g * x * g⁻¹`, as a smooth self-diffeomorphism. -/
-def conjugationDiffeomorph (g : G) : G ≃ₘ^n⟮I, I⟯ G where
+def conjDiffeomorph (g : G) : G ≃ₘ^n⟮I, I⟯ G where
   toEquiv := (MulAut.conj g).toEquiv
   contMDiff_toFun := (contMDiff_const.mul contMDiff_id).mul contMDiff_const.inv
   contMDiff_invFun := (contMDiff_const.mul contMDiff_id).mul contMDiff_const
 
 @[simp]
-theorem conjugationDiffeomorph_apply (g x : G) :
-    conjugationDiffeomorph (I := I) (n := n) g x = g * x * g⁻¹ :=
+theorem conjDiffeomorph_apply (g x : G) :
+    conjDiffeomorph (I := I) (n := n) g x = g * x * g⁻¹ :=
   (rfl)
 
 @[simp]
-theorem conjugationDiffeomorph_symm_apply (g x : G) :
-    (conjugationDiffeomorph (I := I) (n := n) g).symm x = g⁻¹ * x * g :=
+theorem conjDiffeomorph_symm_apply (g x : G) :
+    (conjDiffeomorph (I := I) (n := n) g).symm x = g⁻¹ * x * g :=
   (rfl)
 
 /-- Smooth conjugation is a group homomorphism from `G` to its group of smooth
 self-diffeomorphisms. -/
-def conjugation : G →* TauCeti.Diff I G n where
-  toFun := conjugationDiffeomorph
+def conj : G →* TauCeti.Diff I G n where
+  toFun := conjDiffeomorph
   map_one' := by
     ext x
     simp
   map_mul' g h := by
     ext x
-    simp only [TauCeti.Diffeomorph.mul_apply, conjugationDiffeomorph_apply]
+    simp only [TauCeti.Diffeomorph.mul_apply, conjDiffeomorph_apply]
     group
 
 @[simp]
-theorem conjugation_apply (g : G) :
-    conjugation (I := I) (n := n) g = conjugationDiffeomorph (I := I) (n := n) g :=
+theorem conj_apply (g : G) :
+    conj (I := I) (n := n) g = conjDiffeomorph (I := I) (n := n) g :=
   (rfl)
 
 end TauCeti.Lie
