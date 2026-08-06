@@ -35,6 +35,7 @@ noncomputable section
 
 variable {A : Type*} [NormedRing A] [NormedAlgebra ℝ A] [CompleteSpace A]
 
+/-- The rational normed algebra structure obtained by restricting the real scalars. -/
 noncomputable local instance normedAlgebraRatOfReal : NormedAlgebra ℚ A :=
   .restrictScalars ℚ ℝ A
 
