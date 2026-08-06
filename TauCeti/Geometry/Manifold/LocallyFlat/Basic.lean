@@ -57,8 +57,9 @@ discs (topological sliceness) and for stating the annulus conjecture.
 
 * `TauCeti.isSliceChart_iff`: a chart is a slice chart iff, on its source, membership in the set is
   read off as membership of the coordinates in the slice.
-* `TauCeti.isLocallyFlat_iff` and `TauCeti.IsLocallyFlat.exists_isSliceChart`: the defining
-  flattening charts, in pointwise form and as an eliminator.
+* `TauCeti.isLocallyFlat_iff_isSliceEmbedding`, `TauCeti.isLocallyFlat_iff` and
+  `TauCeti.IsLocallyFlat.exists_isSliceChart`: the defining flattening charts, as the slice
+  embedding for the standard slice, in pointwise form, and as an eliminator.
 * `TauCeti.IsLocallyFlat.restrict` and `TauCeti.IsLocallyFlat.of_forall_exists_isOpen`: local
   flatness is a local property of the domain.
 * `TauCeti.IsLocallyFlat.isOpenEmbedding_comp`, `TauCeti.IsLocallyFlat.of_isOpenEmbedding_comp`,
@@ -257,7 +258,6 @@ standard coordinate slice `F × {0}`.
 For `M` a topological manifold modelled on `F × F'` and `N` one modelled on `F` this is the usual
 condition that `f` looks like `ℝⁿ × {0} ⊆ ℝⁿ⁺ᵏ` in ambient charts; the codimension is the choice of
 the complementary model `F'`, and is not otherwise constrained. -/
-@[expose]
 def IsLocallyFlat [Zero F'] (f : N → M) : Prop :=
   IsSliceEmbedding ((univ : Set F) ×ˢ ({0} : Set F')) f
 
@@ -599,6 +599,13 @@ theorem isLocallyClosed_range (h : IsLocallyFlat F F' f) (h0 : IsClosed ({0} : S
   IsSliceEmbedding.isLocallyClosed_range h (isClosed_univ.prod h0).isLocallyClosed
 
 end IsLocallyFlat
+
+/-- Local flatness is exactly being a slice embedding for the standard coordinate slice
+`F × {0}` of `F × F'`. This is the characterisation to use downstream, where the definition of
+`TauCeti.IsLocallyFlat` is not unfolded. -/
+theorem isLocallyFlat_iff_isSliceEmbedding :
+    IsLocallyFlat F F' f ↔ IsSliceEmbedding ((univ : Set F) ×ˢ ({0} : Set F')) f :=
+  Iff.rfl
 
 /-- Local flatness spelled out pointwise: `f` is a topological embedding, and around every point of
 its image there is an ambient chart in which the image is exactly the vanishing locus of the

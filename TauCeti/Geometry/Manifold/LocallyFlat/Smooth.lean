@@ -29,8 +29,11 @@ the image on the slice — fails for that chart, and is what the shrinking suppl
   point of the slice to be the image of a point of `φ.source`;
 * the chart is cut down again to an open set meeting `Set.range f` only in `f '' φ.source`, which
   is where being a *topological embedding* enters, and without which a point of the slice could be
-  the image of a far-away point of the domain — exactly the failure that stops an injective
-  immersion such as a figure-eight curve from being flat at its crossing.
+  the image of a far-away point of the domain. That is exactly what happens for the figure-eight
+  immersion `t ↦ (sin 2t, sin t)` of the open interval `(-π, π)` into the plane: it is injective,
+  the crossing point of the figure eight being attained only at `t = 0`, but the two ends `t → ±π`
+  accumulate at that same crossing point, so no neighbourhood of it in the plane meets the image in
+  a single arc, and no chart flattens the image there.
 
 Only the ambient manifold has to be boundaryless, its charts being required to be homeomorphisms
 onto open sets of the model space `E'`. The domain need not be: with boundary or corners in the
@@ -42,20 +45,21 @@ read off it.
 
 ## Main results
 
-* `TauCeti.exists_isSliceChart_of_isImmersionAtOfComplement`: the slice chart at a point, the
-  shrinking argument itself and the engine of the file.
-* `TauCeti.IsSliceEmbedding.of_isImmersionOfComplement`: a `C^n` immersion that is a topological
-  embedding flattens its image onto `Set.range I ×ˢ {0}`, for a boundaryless ambient manifold and
-  an arbitrary domain model with corners.
-* `TauCeti.IsLocallyFlat.of_isImmersionOfComplement` and
+* `TauCeti.exists_isSliceChart_of_isEmbedding_of_isImmersionAtOfComplement`: the slice chart at a
+  point, the shrinking argument itself and the engine of the file.
+* `TauCeti.IsSliceEmbedding.of_isImmersionOfComplement_of_isEmbedding`: a `C^n` immersion that is a
+  topological embedding flattens its image onto `Set.range I ×ˢ {0}`, for a boundaryless ambient
+  manifold and an arbitrary domain model with corners.
+* `TauCeti.IsLocallyFlat.of_isImmersionOfComplement_of_isEmbedding` and
   `TauCeti.IsLocallyFlat.of_isSmoothEmbedding`: between boundaryless manifolds, a `C^n` embedding
   is locally flat, the complementary model being the complement of the immersion.
-* `TauCeti.isLocallyClosed_range_of_isSmoothEmbedding`: the image of a `C^n` embedding of
-  boundaryless manifolds is locally closed.
+* `TauCeti.isLocallyClosed_range_of_isSmoothEmbedding`: the image of a `C^n` embedding into a
+  boundaryless manifold is locally closed.
 * `TauCeti.SmoothEmbedding.isLocallyFlat`: the same for the bundled smooth embeddings that the
   roadmap's geometric knot presentations are built from.
-* `TauCeti.isOpenEmbedding_of_isImmersionOfComplement` and `TauCeti.isLocallyFlat_subtypeVal`: the
-  codimension-zero end, where local flatness is openness of the embedding.
+* `TauCeti.isOpenEmbedding_of_isImmersionOfComplement_of_isEmbedding` and
+  `TauCeti.isLocallyFlat_subtypeVal`: the codimension-zero end, where local flatness is openness of
+  the embedding.
 
 ## Implementation notes
 
@@ -116,15 +120,19 @@ performed here cut that chart down until nothing else does: first to the part ly
 of the domain chart, so that a point of the slice is the image of a point of `h.domChart.source`,
 and then to an open set meeting `Set.range f` only in `f '' h.domChart.source`, which exists
 because `f` is an embedding. -/
-theorem exists_isSliceChart_of_isImmersionAtOfComplement [J.Boundaryless] (hf : IsEmbedding f)
-    {x : M} (h : IsImmersionAtOfComplement F I J n f x) :
+theorem exists_isSliceChart_of_isEmbedding_of_isImmersionAtOfComplement [J.Boundaryless]
+    (hf : IsEmbedding f) {x : M} (h : IsImmersionAtOfComplement F I J n f x) :
     ∃ Φ : OpenPartialHomeomorph N (E × F), f x ∈ Φ.source ∧
       IsSliceChart Φ (range I ×ˢ ({0} : Set F)) (range f) := by
   -- The ambient chart of the immersion, read in the splitting `E × F` of the ambient model space.
   set Ψ : OpenPartialHomeomorph N (E × F) :=
-    h.codChart.transHomeomorph (J.toHomeomorph.trans h.equiv.toHomeomorph.symm)
-  have hΨ_apply : ∀ p : N, Ψ p = h.equiv.symm ((h.codChart.extend J) p) := fun _ => rfl
-  have hextend : ∀ y : M, (h.domChart.extend I) y = I (h.domChart y) := fun _ => rfl
+    h.codChart.transHomeomorph (J.toHomeomorph.trans h.equiv.toHomeomorph.symm) with hΨ
+  have hΨ_apply : ∀ p : N, Ψ p = h.equiv.symm ((h.codChart.extend J) p) := fun p => by
+    rw [hΨ, OpenPartialHomeomorph.transHomeomorph_apply, Function.comp_apply,
+      Homeomorph.trans_apply, ContinuousLinearEquiv.coe_symm_toHomeomorph,
+      ModelWithCorners.toHomeomorph_apply, OpenPartialHomeomorph.extend_coe, Function.comp_apply]
+  have hextend : ∀ y : M, (h.domChart.extend I) y = I (h.domChart y) := fun y => by
+    rw [OpenPartialHomeomorph.extend_coe, Function.comp_apply]
   -- In this chart the immersion normal form says that `f` is the standard inclusion.
   have key : ∀ y ∈ h.domChart.source, Ψ (f y) = ((h.domChart.extend I) y, 0) := by
     intro y hy
@@ -175,24 +183,26 @@ the slice `Set.range I ×ˢ {0}` of the split ambient model space `E × F`.
 Only the ambient manifold is assumed boundaryless. The domain may have boundary or corners, and
 then its model cuts the slice down to `Set.range I ×ˢ {0}`, which is the honest local picture of,
 say, a closed half-plane embedded in `ℝ³`. -/
-theorem IsSliceEmbedding.of_isImmersionOfComplement [J.Boundaryless]
+theorem IsSliceEmbedding.of_isImmersionOfComplement_of_isEmbedding [J.Boundaryless]
     (h : IsImmersionOfComplement F I J n f) (hf : IsEmbedding f) :
     IsSliceEmbedding (range I ×ˢ ({0} : Set F)) f :=
-  ⟨hf, fun x => exists_isSliceChart_of_isImmersionAtOfComplement hf (h x)⟩
+  ⟨hf, fun x => exists_isSliceChart_of_isEmbedding_of_isImmersionAtOfComplement hf (h x)⟩
 
 /-- **A smooth embedding of boundaryless manifolds is locally flat**, the complementary model space
 of the local flatness being the complement `F` of the immersion. In particular a smooth embedding
 is never wild: there is no smooth analogue of the Alexander horned sphere. -/
-theorem IsLocallyFlat.of_isImmersionOfComplement [I.Boundaryless] [J.Boundaryless]
+theorem IsLocallyFlat.of_isImmersionOfComplement_of_isEmbedding [I.Boundaryless] [J.Boundaryless]
     (h : IsImmersionOfComplement F I J n f) (hf : IsEmbedding f) : IsLocallyFlat E F f := by
-  have hslice := IsSliceEmbedding.of_isImmersionOfComplement h hf
+  rw [isLocallyFlat_iff_isSliceEmbedding]
+  have hslice := IsSliceEmbedding.of_isImmersionOfComplement_of_isEmbedding h hf
   rwa [I.range_eq_univ] at hslice
 
 /-- A `C^n` embedding into a boundaryless manifold flattens its image onto `Set.range I ×ˢ {0}`,
 the complementary model space being the complement carried by the immersion. -/
 theorem IsSliceEmbedding.of_isSmoothEmbedding [J.Boundaryless] (h : IsSmoothEmbedding I J n f) :
     IsSliceEmbedding (range I ×ˢ ({0} : Set h.isImmersion.complement)) f :=
-  .of_isImmersionOfComplement h.isImmersion.isImmersionOfComplement_complement h.isEmbedding
+  .of_isImmersionOfComplement_of_isEmbedding h.isImmersion.isImmersionOfComplement_complement
+    h.isEmbedding
 
 /-- **A `C^n` embedding of boundaryless manifolds is locally flat.** This is the form the
 geometric-topology roadmap asks for: the low-codimension subtleties of topological embeddings are
@@ -201,14 +211,17 @@ space is the complement `Manifold.IsImmersion.complement` chosen by the immersio
 of the normal directions. -/
 theorem IsLocallyFlat.of_isSmoothEmbedding [I.Boundaryless] [J.Boundaryless]
     (h : IsSmoothEmbedding I J n f) : IsLocallyFlat E h.isImmersion.complement f :=
-  .of_isImmersionOfComplement h.isImmersion.isImmersionOfComplement_complement h.isEmbedding
+  .of_isImmersionOfComplement_of_isEmbedding h.isImmersion.isImmersionOfComplement_complement
+    h.isEmbedding
 
-/-- The image of a `C^n` embedding of boundaryless manifolds is locally closed: it is closed in
-some open neighbourhood of itself. This is inherited from local flatness, the standard slice being
-closed, and is one of the properties a wild embedding can fail. -/
-theorem isLocallyClosed_range_of_isSmoothEmbedding [I.Boundaryless] [J.Boundaryless]
+/-- The image of a `C^n` embedding into a boundaryless manifold is locally closed: it is closed in
+some open neighbourhood of itself. This is inherited from the slice picture, the slice
+`Set.range I ×ˢ {0}` being closed whatever the domain model, and is one of the properties a wild
+embedding can fail. -/
+theorem isLocallyClosed_range_of_isSmoothEmbedding [J.Boundaryless]
     (h : IsSmoothEmbedding I J n f) : IsLocallyClosed (range f) :=
-  (IsLocallyFlat.of_isSmoothEmbedding h).isLocallyClosed_range isClosed_singleton
+  (IsSliceEmbedding.of_isSmoothEmbedding h).isLocallyClosed_range
+    (I.isClosed_range.prod isClosed_singleton).isLocallyClosed
 
 /-- A bundled smooth embedding of boundaryless manifolds is locally flat. This is the shape layer 4
 of the geometric-topology roadmap consumes: a geometric knot presentation is a smooth embedding of
@@ -221,13 +234,13 @@ theorem SmoothEmbedding.isLocallyFlat [I.Boundaryless] [J.Boundaryless]
 /-- **Codimension zero.** A `C^n` immersion with trivial complement which is a topological
 embedding is an open embedding: with no normal directions left the slice is the whole model space,
 so the flattening charts see nothing but the image. -/
-theorem isOpenEmbedding_of_isImmersionOfComplement [I.Boundaryless] [J.Boundaryless]
+theorem isOpenEmbedding_of_isImmersionOfComplement_of_isEmbedding [I.Boundaryless] [J.Boundaryless]
     [Subsingleton F] (h : IsImmersionOfComplement F I J n f) (hf : IsEmbedding f) :
     IsOpenEmbedding f := by
+  have hzero : ({0} : Set F) = univ := eq_univ_of_forall fun y => Subsingleton.elim y 0
   have hslice : range I ×ˢ ({0} : Set F) = (univ : Set (E × F)) := by
-    rw [I.range_eq_univ, show ({0} : Set F) = univ from
-      eq_univ_of_forall fun y => Subsingleton.elim y 0, univ_prod_univ]
-  have hemb := IsSliceEmbedding.of_isImmersionOfComplement h hf
+    rw [I.range_eq_univ, hzero, univ_prod_univ]
+  have hemb := IsSliceEmbedding.of_isImmersionOfComplement_of_isEmbedding h hf
   rw [hslice] at hemb
   exact hemb.isOpenEmbedding
 
@@ -238,7 +251,7 @@ conventions that make an open embedding flat rather than merely embedded. -/
 theorem isLocallyFlat_subtypeVal (I : ModelWithCorners 𝕜 E H) (n : ℕ∞ω) [I.Boundaryless]
     [IsManifold I n M] (s : TopologicalSpace.Opens M) :
     IsLocallyFlat E PUnit (Subtype.val : s → M) :=
-  IsLocallyFlat.of_isImmersionOfComplement (I := I) (J := I) (n := n)
+  IsLocallyFlat.of_isImmersionOfComplement_of_isEmbedding (I := I) (J := I) (n := n)
     (IsImmersionOfComplement.of_opens s) IsEmbedding.subtypeVal
 
 end TauCeti
