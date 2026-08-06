@@ -253,21 +253,13 @@ def mapEquiv {X' : Type u'} {Y' : Type v'} [MeasurableSpace X'] [MeasurableSpace
   left_inv π := by
     apply ext
     simp only [Coupling.map, ProbabilityMeasure.toMeasure_map]
-    rw [Measure.map_map (e.symm.measurable.prodMap d.symm.measurable)
-      (e.measurable.prodMap d.measurable)]
-    have hcomp : Prod.map e.symm d.symm ∘ Prod.map e d = id := by
-      funext z
-      exact Prod.ext (e.symm_apply_apply z.1) (d.symm_apply_apply z.2)
-    rw [hcomp, Measure.map_id]
+    convert MeasurableEquiv.map_symm_map (μ := π.1.toMeasure) (e.prodCongr d) using 1
+    all_goals rfl
   right_inv π := by
     apply ext
     simp only [Coupling.map, ProbabilityMeasure.toMeasure_map]
-    rw [Measure.map_map (e.measurable.prodMap d.measurable)
-      (e.symm.measurable.prodMap d.symm.measurable)]
-    have hcomp : Prod.map e d ∘ Prod.map e.symm d.symm = id := by
-      funext z
-      exact Prod.ext (e.apply_symm_apply z.1) (d.apply_symm_apply z.2)
-    rw [hcomp, Measure.map_id]
+    convert MeasurableEquiv.map_map_symm (ν := π.1.toMeasure) (e.prodCongr d) using 1
+    all_goals rfl
 
 /-- Applying the coupling equivalence maps both coordinates. -/
 @[simp]
@@ -295,10 +287,11 @@ theorem swap_prod (μ : ProbabilityMeasure X) (ν : ProbabilityMeasure Y) :
 /-- Swapping a coupling twice gives the original coupling. -/
 @[simp]
 theorem swap_swap (π : Coupling μ ν) : π.swap.swap = π := by
-  ext
+  apply Coupling.ext
   simp only [swap, ProbabilityMeasure.toMeasure_map]
-  rw [Measure.map_map measurable_swap measurable_swap]
-  simp only [Function.comp_def, Prod.swap_swap, Measure.map_id']
+  convert MeasurableEquiv.map_symm_map (μ := π.1.toMeasure)
+    (MeasurableEquiv.prodComm : X × Y ≃ᵐ Y × X) using 1
+  all_goals rfl
 
 end Coupling
 
