@@ -15,9 +15,11 @@ The tangent adjoint action is transported across the canonical Lie equivalence b
 space at the identity and left-invariant derivations. The result is the roadmap-facing group adjoint
 `Ad` on Mathlib's Lie algebra `LeftInvariantDerivation I G`.
 
-The Hausdorff hypothesis is inherited from the canonical derivation–tangent equivalence: its proof
-uses global smooth functions to identify point derivations with tangent vectors. No boundaryless
-manifold assumption is needed, because a Lie group's identity is automatically an interior point.
+The canonical derivation–tangent equivalence uses Hausdorffness to identify point derivations with
+tangent vectors through global smooth functions. This imposes no extra public hypothesis on `Ad`
+or its group laws: a charted space over the normed model is `T1`, and a `T1` topological group is
+Hausdorff. No boundaryless manifold assumption is needed, because a Lie group's identity is
+automatically an interior point.
 
 This advances Deliverable A, Layer 1 of
 `TauCetiRoadmap/RepresentationTheory/LieGroups/README.md`.
@@ -49,13 +51,22 @@ open scoped Manifold ContDiff
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
   {H : Type*} [TopologicalSpace H] {I : ModelWithCorners ℝ E H}
   {G : Type*} [TopologicalSpace G] [ChartedSpace H G] [Group G]
-  [FiniteDimensional ℝ E] [LieGroup I ∞ G] [T2Space G]
+  [FiniteDimensional ℝ E] [LieGroup I ∞ G]
 
 attribute [local instance] LieGroup.minSmoothnessThree
+
+omit [FiniteDimensional ℝ E] in
+private theorem t2Space_of_lieGroup
+    (I : ModelWithCorners ℝ E H) (G : Type*) [TopologicalSpace G] [ChartedSpace H G]
+    [Group G] [LieGroup I ∞ G] : T2Space G := by
+  let _ : T1Space G := I.t1Space G
+  let _ : IsTopologicalGroup G := topologicalGroup_of_lieGroup I ∞
+  exact IsTopologicalGroup.t2Space_iff_one_closed.mpr isClosed_singleton
 
 /-- The group adjoint on left-invariant derivations, obtained by transporting the differential of
 conjugation across evaluation at the identity. -/
 def Ad (g : G) : LeftInvariantDerivation I G ≃ₗ⁅ℝ⁆ LeftInvariantDerivation I G :=
+  let _ : T2Space G := t2Space_of_lieGroup I G
   let e := leftInvariantDerivationLieEquivGroupLieAlgebra
     (I := I) (G := G) (ContMDiffMul.isInteriorPoint (I := I) (n := ∞) (by simp) (1 : G))
   (e.trans (tangentAd (I := I) g)).trans e.symm
@@ -63,7 +74,7 @@ def Ad (g : G) : LeftInvariantDerivation I G ≃ₗ⁅ℝ⁆ LeftInvariantDeriva
 /-- Applying the derivation adjoint is applying the tangent adjoint through the canonical Lie
 equivalence. -/
 @[simp]
-theorem Ad_apply (g : G) (D : LeftInvariantDerivation I G) :
+theorem Ad_apply [T2Space G] (g : G) (D : LeftInvariantDerivation I G) :
     Ad (I := I) g D =
       (leftInvariantDerivationLieEquivGroupLieAlgebra
           (I := I) (G := G)
@@ -77,6 +88,7 @@ theorem Ad_apply (g : G) (D : LeftInvariantDerivation I G) :
 /-- The identity element acts trivially on left-invariant derivations. -/
 @[simp]
 theorem Ad_one : Ad (I := I) (1 : G) = LieEquiv.refl := by
+  let _ : T2Space G := t2Space_of_lieGroup I G
   apply LieEquiv.ext
   intro D
   rw [Ad_apply, tangentAd_one, LieEquiv.refl_apply]
@@ -87,6 +99,7 @@ theorem Ad_one : Ad (I := I) (1 : G) = LieEquiv.refl := by
 /-- A product acts by the composite of the two derivation adjoint automorphisms. -/
 theorem Ad_mul (g h : G) :
     Ad (I := I) (g * h) = (Ad (I := I) h).trans (Ad (I := I) g) := by
+  let _ : T2Space G := t2Space_of_lieGroup I G
   apply LieEquiv.ext
   intro D
   rw [Ad_apply, tangentAd_mul, LieEquiv.trans_apply, LieEquiv.trans_apply,
