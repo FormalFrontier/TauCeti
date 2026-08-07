@@ -8,17 +8,18 @@ module
 public import Mathlib.LinearAlgebra.Matrix.Charpoly.Eigs
 -- `Matrix.charpoly_natDegree_eq_dim` and `Matrix.charpoly_monic`, for the cardinality bound.
 public import Mathlib.LinearAlgebra.Matrix.Charpoly.Coeff
--- `Matrix.exists_mulVec_eq_zero_iff`, the singularity criterion the search rests on.
+-- `Matrix.exists_mulVec_eq_zero_iff`, the singularity criterion the search rests on; this also
+-- supplies `Matrix.isUnit_iff_isUnit_det` and `Matrix.coe_units_inv`.
 public import Mathlib.LinearAlgebra.Matrix.ToLinearEquiv
--- `Matrix.det_conj`, for invariance of the search under conjugation.
-public import Mathlib.LinearAlgebra.Matrix.NonsingularInverse
--- `Matrix.spectrum_toLin'`, `Matrix.spectrum_diagonal` and
--- `Module.End.hasEigenvalue_iff_mem_spectrum`.
+-- `Matrix.spectrum_toLin'`, `Matrix.spectrum_diagonal`,
+-- `Module.End.hasEigenvalue_iff_mem_spectrum`, and the `spectrum` API itself, including
+-- `spectrum.units_conjugate`.
 public import Mathlib.LinearAlgebra.Eigenspace.Matrix
--- `ZMod 3` as a field, for the worked example at the end.
-public import Mathlib.Algebra.Field.ZMod
--- The `!![a, b; c, d]` notation, for the same example.
-public import Mathlib.LinearAlgebra.Matrix.Notation
+-- `ZMod 3` as a field, for the worked example at the end. Not `public`: nothing in the API
+-- mentions it.
+import Mathlib.Algebra.Field.ZMod
+-- The `!![a, b; c, d]` notation, for the same example, and not `public` for the same reason.
+import Mathlib.LinearAlgebra.Matrix.Notation
 
 /-!
 # Searching a finite field for the eigenvalues of a matrix
@@ -189,17 +190,12 @@ theorem eigenvalueSearch_scalar [Nonempty n] (a : F) :
 /-- Similar matrices have the same eigenvalues. -/
 theorem eigenvalueSearch_conj {M : Matrix n n F} (hM : IsUnit M) (A : Matrix n n F) :
     eigenvalueSearch (M * A * M⁻¹) = eigenvalueSearch A := by
-  have hdet : IsUnit M.det := (Matrix.isUnit_iff_isUnit_det M).mp hM
-  ext a
-  have hcomm : M * Matrix.scalar n a * M⁻¹ = Matrix.scalar n a := by
-    rw [← (Matrix.scalar_commute a (fun _ => Commute.all _ _) M).eq, mul_assoc,
-      Matrix.mul_nonsing_inv M hdet, mul_one]
-  have key : Matrix.scalar n a - M * A * M⁻¹ = M * (Matrix.scalar n a - A) * M⁻¹ := by
-    rw [mul_sub, sub_mul, hcomm]
-  rw [mem_eigenvalueSearch, mem_eigenvalueSearch, key, Matrix.det_conj hM]
+  apply Finset.coe_injective
+  rw [coe_eigenvalueSearch, coe_eigenvalueSearch, ← hM.unit_spec, ← Matrix.coe_units_inv,
+    spectrum.units_conjugate]
 
 /-- A matrix with no rows has no eigenvalues: its `0 × 0` determinant is `1`. -/
-@[simp] theorem eigenvalueSearch_of_isEmpty [IsEmpty n] (A : Matrix n n F) :
+@[simp] theorem eigenvalueSearch_eq_empty_of_isEmpty [IsEmpty n] (A : Matrix n n F) :
     eigenvalueSearch A = ∅ := by
   ext a
   simp
