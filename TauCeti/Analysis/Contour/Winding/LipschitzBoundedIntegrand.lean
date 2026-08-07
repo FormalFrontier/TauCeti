@@ -342,6 +342,8 @@ theorem exists_isBounded_image_realWindingIntegrand_of_lipschitzOnWith_derivWith
   have hlip' : LipschitzOnWith K (derivWithin γ' (Icc t₀ (2 * t₀ - c))) (Icc t₀ (2 * t₀ - c)) :=
     lipschitzOnWith_derivWithin_reflect_of_lipschitzOnWith hct hdiff hlip
   have h_eq' : γ' t₀ = w := by
+    -- `rw [hγ'_def]` alone would leave the unapplied `(fun s => γ (2 * t₀ - s)) t₀`, since `rw`
+    -- does not beta-reduce; `change` unfolds `γ'` and applies it in one step (both defeq to it).
     change γ (2 * t₀ - t₀) = w
     rw [show (2 : ℝ) * t₀ - t₀ = t₀ by ring]; exact h_eq
   have hvel' : derivWithin γ' (Icc t₀ (2 * t₀ - c)) t₀ ≠ 0 := by
@@ -361,6 +363,10 @@ theorem exists_isBounded_image_realWindingIntegrand_of_lipschitzOnWith_derivWith
     rcases eq_or_ne t t₀ with heq | htne
     · have hz2 : γ (2 * t₀ - t) - w = 0 := by
         rw [heq, show (2 : ℝ) * t₀ - t₀ = t₀ by ring, h_eq, sub_self]
+      -- `Set.image_congr`'s goal states the right side's position as `γ' t - w`, defeq (via
+      -- `γ'`'s definition) but not syntactically equal to the `γ (2 * t₀ - t) - w` on the left;
+      -- `change` records that both sides already talk about the same position, before `hz2`
+      -- zeroes it out on both.
       change realWindingIntegrand (γ (2 * t₀ - t) - w) (deriv γ (2 * t₀ - t))
         = -realWindingIntegrand (γ (2 * t₀ - t) - w) (deriv γ' t)
       rw [hz2, realWindingIntegrand_def, realWindingIntegrand_def]
@@ -376,6 +382,8 @@ theorem exists_isBounded_image_realWindingIntegrand_of_lipschitzOnWith_derivWith
       have hDeriv_eq : deriv γ' t = -deriv γ (2 * t₀ - t) := by
         rw [hDeq', show γ' = fun s => γ (2 * t₀ - s) from hγ'_def,
           derivWithin_reflect_eq_neg hct hdiff htbig, hDeq]
+      -- Same defeq-not-syntactic gap as the `heq` case above: restate the position on both
+      -- sides as `γ (2 * t₀ - t) - w` so the remaining rewrites only need to track the velocity.
       change realWindingIntegrand (γ (2 * t₀ - t) - w) (deriv γ (2 * t₀ - t))
         = -realWindingIntegrand (γ (2 * t₀ - t) - w) (deriv γ' t)
       rw [hDeriv_eq, realWindingIntegrand_neg_right, neg_neg]
