@@ -34,11 +34,10 @@ necessarily continuous, let alone differentiable, `deriv` reading its junk value
 not differentiable (`TauCeti.densityLength_eq_integral` is the reformulation for a path with a
 known derivative). The hypotheses appear only where the mathematics needs them: nonnegativity of
 the density for `TauCeti.densityLength_nonneg`, differentiability of the path for the two
-substitution rules, which differentiate the composite, and for the comparison
-`TauCeti.densityLength_le_densityLength`, whose pointwise hypothesis is about explicit
-derivatives, together with the integrability without which two comparable integrands need not have
-comparable integrals. Each is asked at the *interior* parameters only, the two endpoints forming a
-null set.
+substitution rules, which differentiate the composite, and integrability of the two integrands for
+the comparison `TauCeti.densityLength_le_densityLength`, without which two comparable integrands
+need not have comparable integrals. The pointwise hypotheses are asked at the *interior*
+parameters only, the two endpoints forming a null set.
 
 The integral is taken over the **unordered** interval `uIcc a b`, as in Mathlib's
 `Manifold.pathELength`. This is what makes the length independent of the orientation of the
@@ -78,7 +77,7 @@ through the chain rule; the affine rule is `intervalIntegral.integral_comp_mul_a
 * `TauCeti.densityLength_nonneg` — a nonnegative density gives a nonnegative length.
 * `TauCeti.densityLength_congr_of_eqOn` and `TauCeti.densityLength_le_densityLength` — two paths
   whose density-weighted speeds agree inside the parameter interval have equal lengths, and two
-  whose speeds compare there have comparable lengths.
+  whose integrable speeds compare there have comparable lengths.
 * `TauCeti.densityLength_congr` — the length depends on the path only through its restriction to
   the interior of the parameter interval.
 * `TauCeti.densityLength_add` — additivity along the parameter interval.
@@ -192,21 +191,20 @@ form in which a contraction property of a map post-composed with a path — a Sc
 say — arrives: the chain rule turns the density-weighted speed of the composite into a factor
 bounded by the density at the point times the speed of the path. The comparison is the inequality
 counterpart of `TauCeti.densityLength_congr_of_eqOn`, which needs no integrability because equal
-integrands have equal integrals whether or not they are integrable. Derivatives are asked for at
-the interior parameters only, the two endpoints forming a null set, while integrability is asked of
-the *explicit* derivatives, which is what a `C¹` path supplies by continuity. -/
-theorem densityLength_le_densityLength {δ' : ℝ → F}
-    (hδ : ∀ t ∈ uIoo a b, HasDerivAt δ (δ' t) t) (hγ : ∀ t ∈ uIoo a b, HasDerivAt γ (γ' t) t)
-    (hδint : IntervalIntegrable (fun t => ρ' (δ t) * ‖δ' t‖) volume a b)
-    (hγint : IntervalIntegrable (fun t => ρ (γ t) * ‖γ' t‖) volume a b)
-    (h : ∀ t ∈ uIoo a b, ρ' (δ t) * ‖δ' t‖ ≤ ρ (γ t) * ‖γ' t‖) :
+integrands have equal integrals whether or not they are integrable. As there, the comparison is
+between the integrands that define the two lengths, and is asked at the interior parameters only,
+the two endpoints forming a null set; a path with an explicit derivative is read through
+`HasDerivAt.deriv`. Integrability, unlike that comparison, is a genuinely additional hypothesis:
+the density being arbitrary here, regularity of the path alone does not supply it, and it is the
+`C¹` path *together with* a density continuous along it that does — as in the hyperbolic
+application, where the path stays in the open disc on which the Poincaré density is continuous. -/
+theorem densityLength_le_densityLength
+    (hδint : IntervalIntegrable (fun t => ρ' (δ t) * ‖deriv δ t‖) volume a b)
+    (hγint : IntervalIntegrable (fun t => ρ (γ t) * ‖deriv γ t‖) volume a b)
+    (h : ∀ t ∈ uIoo a b, ρ' (δ t) * ‖deriv δ t‖ ≤ ρ (γ t) * ‖deriv γ t‖) :
     densityLength ρ' δ a b ≤ densityLength ρ γ a b := by
   have hsub : uIoo a b ⊆ uIoc a b := fun t ht => ⟨ht.1, ht.2.le⟩
-  have hδeq : ∫ t in uIoo a b, ρ' (δ t) * ‖deriv δ t‖ = ∫ t in uIoo a b, ρ' (δ t) * ‖δ' t‖ :=
-    setIntegral_congr_fun measurableSet_Ioo fun t ht => by simp only [(hδ t ht).deriv]
-  have hγeq : ∫ t in uIoo a b, ρ (γ t) * ‖deriv γ t‖ = ∫ t in uIoo a b, ρ (γ t) * ‖γ' t‖ :=
-    setIntegral_congr_fun measurableSet_Ioo fun t ht => by simp only [(hγ t ht).deriv]
-  rw [densityLength_eq_setIntegral_uIoo, densityLength_eq_setIntegral_uIoo, hδeq, hγeq]
+  rw [densityLength_eq_setIntegral_uIoo, densityLength_eq_setIntegral_uIoo]
   exact setIntegral_mono_on ((intervalIntegrable_iff.mp hδint).mono_set hsub)
     ((intervalIntegrable_iff.mp hγint).mono_set hsub) measurableSet_Ioo h
 
