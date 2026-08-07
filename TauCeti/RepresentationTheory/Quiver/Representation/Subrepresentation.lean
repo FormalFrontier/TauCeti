@@ -14,10 +14,11 @@ public import Mathlib.CategoryTheory.Simple
 
 A subrepresentation of a representation `M` of a quiver is a submodule of `Mₐ` at every vertex `a`,
 stable under the action of every path. This file packages that data as `TauCeti.QuiverSubrep M`,
-builds the representation it carries together with its monomorphism into `M`, and identifies when
-that monomorphism is zero or invertible. The payoff is
-`TauCeti.QuiverSubrep.toSubmodule_eq_bot_or_eq_top`: over a *simple* representation there are no
-subrepresentations other than the two trivial ones, vertex by vertex.
+orders subrepresentations vertexwise — a bounded order, with `⊥` and `⊤` the zero subrepresentation
+and the whole of `M` — builds the representation a subrepresentation carries together with its
+monomorphism into `M`, and identifies when that monomorphism is zero or invertible. The payoff is
+`TauCeti.QuiverSubrep.eq_bot_or_eq_top`: over a *simple* representation there are no
+subrepresentations other than the two trivial ones.
 
 The file also builds the subrepresentation `TauCeti.QuiverSubrep.pathSpan x n` spanned by the images
 of a single vector `x : Mᵢ` under all paths out of `i` of length at least `n`. Taking `n = 0` gives
@@ -28,7 +29,8 @@ That comparison is what forces a simple representation to be concentrated at one
 
 ## Main definitions
 
-* `TauCeti.QuiverSubrep M`: a subrepresentation of `M`.
+* `TauCeti.QuiverSubrep M`: a subrepresentation of `M`, ordered vertexwise by
+  `TauCeti.QuiverSubrep.le_def` and bounded by `⊥` and `⊤`.
 * `TauCeti.QuiverSubrep.toQuiverRep` and `TauCeti.QuiverSubrep.ι`: the representation a
   subrepresentation carries, and its inclusion into `M`.
 * `TauCeti.QuiverSubrep.pathSpan x n`: the subrepresentation spanned by the images of `x` under the
@@ -37,9 +39,9 @@ That comparison is what forces a simple representation to be concentrated at one
 ## Main results
 
 * `TauCeti.QuiverSubrep.ι_eq_zero_iff` and `TauCeti.QuiverSubrep.isIso_ι_iff`: the inclusion is zero
-  exactly when the subrepresentation vanishes, and invertible exactly when it is everything.
-* `TauCeti.QuiverSubrep.toSubmodule_eq_bot_or_eq_top`: a subrepresentation of a simple
-  representation is `⊥` at every vertex or `⊤` at every vertex.
+  exactly when the subrepresentation is `⊥`, and invertible exactly when it is `⊤`.
+* `TauCeti.QuiverSubrep.eq_bot_or_eq_top`: a subrepresentation of a simple representation is `⊥`
+  or `⊤`.
 * `TauCeti.QuiverSubrep.pathSpan_zero_self_of_forall_path_eq_nil` and
   `TauCeti.QuiverSubrep.pathSpan_one_self_of_forall_path_eq_nil`: if every closed path at the base
   vertex is trivial, the two spans there are the line through `x` and `⊥`.
@@ -90,6 +92,46 @@ theorem ext {N N' : QuiverSubrep M} (h : ∀ a : Q, N.toSubmodule a = N'.toSubmo
   cases N'
   simpa only [mk.injEq] using funext h
 
+/-! ### The vertexwise order -/
+
+/-- Subrepresentations are ordered vertexwise, by inclusion of the submodules they put at each
+vertex. -/
+instance : PartialOrder (QuiverSubrep M) :=
+  PartialOrder.lift toSubmodule fun _ _ h ↦ ext (congrFun h)
+
+/-- One subrepresentation is contained in another exactly when that holds at every vertex. -/
+theorem le_def {N N' : QuiverSubrep M} : N ≤ N' ↔ ∀ a : Q, N.toSubmodule a ≤ N'.toSubmodule a :=
+  Iff.rfl
+
+/-- The zero subrepresentation: `⊥` at every vertex. -/
+instance : Bot (QuiverSubrep M) where
+  bot :=
+    { toSubmodule := fun _ ↦ ⊥
+      map_mem := by
+        intro _ _ p x hx
+        rw [Submodule.mem_bot] at hx ⊢
+        rw [hx, map_zero] }
+
+/-- The whole representation, viewed as a subrepresentation of itself: `⊤` at every vertex. -/
+instance : Top (QuiverSubrep M) where
+  top :=
+    { toSubmodule := fun _ ↦ ⊤
+      map_mem := by
+        intro _ _ _ _ _
+        trivial }
+
+@[simp]
+theorem toSubmodule_bot (a : Q) : (⊥ : QuiverSubrep M).toSubmodule a = ⊥ :=
+  rfl
+
+@[simp]
+theorem toSubmodule_top (a : Q) : (⊤ : QuiverSubrep M).toSubmodule a = ⊤ :=
+  rfl
+
+instance : BoundedOrder (QuiverSubrep M) where
+  bot_le N := le_def.2 fun a ↦ by rw [toSubmodule_bot]; exact bot_le
+  le_top N := le_def.2 fun a ↦ by rw [toSubmodule_top]; exact le_top
+
 /-- The representation carried by a subrepresentation: the submodule at each vertex, with a path
 acting by the restriction of its action on `M`. -/
 -- The object part is the interface here: the point of a subrepresentation is that it *is* the
@@ -130,62 +172,66 @@ theorem ι_app_apply (N : QuiverSubrep M) (a : Q) (x : N.toSubmodule a) :
     N.ι.app a x = (x : M.obj a) :=
   (rfl)
 
-/-- **A path acts on a subrepresentation by its action on `M`**: the inclusion of a
-subrepresentation intertwines the two actions. -/
-theorem ι_app_toQuiverRep_map (N : QuiverSubrep M) {a b : Q} (p : Quiver.Path a b)
-    (x : N.toQuiverRep.obj a) :
-    N.ι.app b (N.toQuiverRep.map p x) = M.map p (N.ι.app a x) := by
-  simpa using ConcreteCategory.congr_hom (N.ι.naturality p) x
+/-- **A path acts on a subrepresentation by its action on `M`**: the value of the path action,
+read in the ambient representation, is the ambient action on the value. -/
+@[simp]
+theorem coe_toQuiverRep_map_apply (N : QuiverSubrep M) {a b : Q} (p : Quiver.Path a b)
+    (x : N.toSubmodule a) :
+    (N.toQuiverRep.map p x).1 = M.map p (x : M.obj a) :=
+  (rfl)
 
 instance mono_ι (N : QuiverSubrep M) : Mono N.ι := by
   have : ∀ a : Paths Q, Mono (N.ι.app a) := fun a ↦
     (ModuleCat.mono_iff_injective _).2 (Subtype.val_injective (p := fun x ↦ x ∈ N.toSubmodule a))
   exact NatTrans.mono_of_mono_app N.ι
 
-/-- A subrepresentation that vanishes at every vertex carries the zero representation. -/
-theorem isZero_toQuiverRep (N : QuiverSubrep M) (h : ∀ a : Q, N.toSubmodule a = ⊥) :
-    IsZero N.toQuiverRep :=
-  Functor.isZero _ fun a ↦ ModuleCat.isZero_iff_subsingleton.2 <| by
-    have hs : Subsingleton (N.toSubmodule a) := by
-      rw [h a]
-      infer_instance
-    exact hs
+/-- The zero subrepresentation carries the zero representation. -/
+theorem isZero_toQuiverRep {N : QuiverSubrep M} (h : N = ⊥) : IsZero N.toQuiverRep := by
+  have hb : ∀ a : Q, N.toSubmodule a = ⊥ := fun a ↦ by rw [h, toSubmodule_bot]
+  refine Functor.isZero _ fun a ↦ ModuleCat.isZero_iff_subsingleton.2 ?_
+  have hs : Subsingleton (N.toSubmodule a) := by
+    rw [hb a]
+    infer_instance
+  exact hs
 
 /-- The inclusion of a subrepresentation is the zero morphism exactly when the subrepresentation
-vanishes at every vertex. -/
-theorem ι_eq_zero_iff (N : QuiverSubrep M) : N.ι = 0 ↔ ∀ a : Q, N.toSubmodule a = ⊥ := by
+is `⊥`. -/
+theorem ι_eq_zero_iff (N : QuiverSubrep M) : N.ι = 0 ↔ N = ⊥ := by
   constructor
-  · intro h a
+  · refine fun h ↦ ext fun a ↦ ?_
+    rw [toSubmodule_bot]
     refine (Submodule.eq_bot_iff _).2 fun x hx ↦ ?_
     have happ : N.ι.app a = 0 := by
       rw [NatTrans.congr_app h a]
       exact Limits.zero_app _ _ _ _
     calc (x : M.obj a) = N.ι.app a (⟨x, hx⟩ : N.toSubmodule a) := rfl
       _ = 0 := by rw [happ]; rfl
-  · exact fun h ↦ (N.isZero_toQuiverRep h).eq_of_src _ _
+  · exact fun h ↦ (isZero_toQuiverRep h).eq_of_src _ _
 
-/-- The inclusion of a subrepresentation is an isomorphism exactly when the subrepresentation is
-everything at every vertex. -/
-theorem isIso_ι_iff (N : QuiverSubrep M) : IsIso N.ι ↔ ∀ a : Q, N.toSubmodule a = ⊤ := by
+/-- The inclusion of a subrepresentation is an isomorphism exactly when the subrepresentation
+is `⊤`. -/
+theorem isIso_ι_iff (N : QuiverSubrep M) : IsIso N.ι ↔ N = ⊤ := by
   rw [NatTrans.isIso_iff_isIso_app]
   constructor
-  · intro h a
+  · refine fun h ↦ ext fun a ↦ ?_
+    rw [toSubmodule_top]
     have hb : Function.Bijective (N.ι.app a) := by
       have := h a
       rwa [ConcreteCategory.isIso_iff_bijective] at this
     refine Submodule.eq_top_iff'.2 fun y ↦ ?_
     obtain ⟨x, hx⟩ := hb.2 y
     exact hx ▸ x.2
-  · intro h a
+  · intro h
+    have ht : ∀ a : Q, N.toSubmodule a = ⊤ := fun a ↦ by rw [h, toSubmodule_top]
+    intro a
     rw [ConcreteCategory.isIso_iff_bijective]
     refine ⟨Subtype.val_injective (p := fun x ↦ x ∈ N.toSubmodule a), fun y ↦ ⟨⟨y, ?_⟩, rfl⟩⟩
-    rw [h a]
+    rw [ht a]
     trivial
 
 /-- **A simple representation has no proper nonzero subrepresentation**: a subrepresentation of a
-simple representation is `⊥` at every vertex, or `⊤` at every vertex. -/
-theorem toSubmodule_eq_bot_or_eq_top [Simple M] (N : QuiverSubrep M) :
-    (∀ a : Q, N.toSubmodule a = ⊥) ∨ ∀ a : Q, N.toSubmodule a = ⊤ := by
+simple representation is `⊥` or `⊤`. -/
+theorem eq_bot_or_eq_top [Simple M] (N : QuiverSubrep M) : N = ⊥ ∨ N = ⊤ := by
   rcases eq_or_ne N.ι 0 with h | h
   · exact Or.inl (N.ι_eq_zero_iff.1 h)
   · exact Or.inr (N.isIso_ι_iff.1 ((Simple.mono_isIso_iff_nonzero N.ι).2 h))

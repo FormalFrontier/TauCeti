@@ -320,22 +320,24 @@ theorem exists_iso_simpleRep_of_simple (hQ : Quiver.IsAcyclic Q) (M : QuiverRep 
   have hnil : ∀ p : Quiver.Path i i, p = Quiver.Path.nil := fun p ↦ hQ.eq_nil p
   -- the paths of positive length out of `i` span nothing at all
   have h1 : ∀ a : Q, (QuiverSubrep.pathSpan (i := i) x 1).toSubmodule a = ⊥ := by
-    rcases (QuiverSubrep.pathSpan (i := i) x 1).toSubmodule_eq_bot_or_eq_top with h | h
-    · exact h
+    rcases (QuiverSubrep.pathSpan (i := i) x 1).eq_bot_or_eq_top with h | h
+    · intro a
+      rw [h, QuiverSubrep.toSubmodule_bot]
     · refine absurd ?_ hx
       have hmem : x ∈ (QuiverSubrep.pathSpan (i := i) x 1).toSubmodule i := by
-        rw [h i]
+        rw [h, QuiverSubrep.toSubmodule_top]
         trivial
       rw [QuiverSubrep.pathSpan_one_self_of_forall_path_eq_nil (i := i) hnil x] at hmem
       exact (Submodule.mem_bot k).1 hmem
   -- so the vector `x` generates all of `M`
   have h0 : ∀ a : Q, (QuiverSubrep.pathSpan (i := i) x 0).toSubmodule a = ⊤ := by
-    rcases (QuiverSubrep.pathSpan (i := i) x 0).toSubmodule_eq_bot_or_eq_top with h | h
+    rcases (QuiverSubrep.pathSpan (i := i) x 0).eq_bot_or_eq_top with h | h
     · refine absurd ?_ hx
       have hmem := QuiverSubrep.mem_pathSpan_zero (i := i) x
-      rw [h i] at hmem
+      rw [h, QuiverSubrep.toSubmodule_bot] at hmem
       exact (Submodule.mem_bot k).1 hmem
-    · exact h
+    · intro a
+      rw [h, QuiverSubrep.toSubmodule_top]
   -- away from `i` the two spans agree, so `M` vanishes there
   have hM : ∀ a : Q, a ≠ i → IsZero (M.obj a) := by
     intro a ha
