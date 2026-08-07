@@ -97,7 +97,7 @@ namespace TauCeti
 open MeasureTheory Set
 
 variable {F : Type*} [NormedAddCommGroup F] [NormedSpace ℝ F]
-  {ρ ρ' : F → ℝ} {γ δ : ℝ → F} {γ' : ℝ → F} {a b : ℝ}
+  {ρ : F → ℝ} {γ δ : ℝ → F} {γ' : ℝ → F} {a b : ℝ}
 
 /-- The **length of the path `γ` measured against the density `ρ`**, over the parameter interval
 with endpoints `a` and `b`: the Euclidean speed `‖deriv γ t‖` integrated over the unordered
@@ -147,8 +147,13 @@ private theorem densityLength_eq_setIntegral_uIoo (ρ : F → ℝ) (γ : ℝ →
 
 /-- **Two paths with the same density-weighted speed inside the parameter interval have the same
 length.** This is the shape in which a symmetry of the pair `(ρ, γ)` — an isometry of the ambient
-space preserving the density, say — is fed to the length. -/
-theorem densityLength_congr_of_eqOn
+space preserving the density, say — is fed to the length.
+
+As for its inequality counterpart `TauCeti.densityLength_le_densityLength`, nothing relates the
+two paths, or the two densities, beyond that pointwise agreement — not even the space they run
+in, the hypothesis comparing only their real-valued weighted speeds. -/
+theorem densityLength_congr_of_eqOn {G : Type*} [NormedAddCommGroup G] [NormedSpace ℝ G]
+    {ρ' : G → ℝ} {δ : ℝ → G}
     (h : EqOn (fun t => ρ' (δ t) * ‖deriv δ t‖) (fun t => ρ (γ t) * ‖deriv γ t‖) (uIoo a b)) :
     densityLength ρ' δ a b = densityLength ρ γ a b := by
   rw [densityLength_eq_setIntegral_uIoo, densityLength_eq_setIntegral_uIoo]
@@ -205,7 +210,9 @@ theorem densityLength_le_densityLength {G : Type*} [NormedAddCommGroup G] [Norme
     (hγint : IntervalIntegrable (fun t => ρ (γ t) * ‖deriv γ t‖) volume a b)
     (h : ∀ t ∈ uIoo a b, ρ' (δ t) * ‖deriv δ t‖ ≤ ρ (γ t) * ‖deriv γ t‖) :
     densityLength ρ' δ a b ≤ densityLength ρ γ a b := by
-  have hsub : uIoo a b ⊆ uIoc a b := fun t ht => ⟨ht.1, ht.2.le⟩
+  have hsub : uIoo a b ⊆ uIoc a b := by
+    rw [uIoo_eq_union, uIoc_eq_union]
+    exact union_subset_union Ioo_subset_Ioc_self Ioo_subset_Ioc_self
   rw [densityLength_eq_setIntegral_uIoo, densityLength_eq_setIntegral_uIoo]
   exact setIntegral_mono_on ((intervalIntegrable_iff.mp hδint).mono_set hsub)
     ((intervalIntegrable_iff.mp hγint).mono_set hsub) measurableSet_Ioo h

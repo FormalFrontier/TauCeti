@@ -138,6 +138,11 @@ that API at that point.
   `TauCeti.hyperbolicLength_symm`, `TauCeti.hyperbolicLength_nonneg`,
   `TauCeti.hyperbolicLength_const`, `TauCeti.hyperbolicLength_add` the basic evaluations and
   operations.
+* `TauCeti.intervalIntegrable_norm_div_one_sub_norm_sq` and
+  `TauCeti.intervalIntegrable_norm_deriv_div_one_sub_norm_sq` — for a `C¹` path in the disc the
+  density-weighted speed is interval integrable, against an explicit derivative and against
+  `deriv` respectively. The latter is the integrability hypothesis of
+  `TauCeti.hyperbolicLength_add`, and what the Schwarz--Pick estimate below spends.
 * `TauCeti.hyperbolicLength_comp_of_deriv_nonneg` and
   `TauCeti.hyperbolicLength_comp_of_deriv_nonpos` — **hyperbolic length is a reparametrisation
   invariant**: precomposing a path with a differentiable monotone, respectively antitone, map of
@@ -259,7 +264,7 @@ theorem hyperbolicLength_nonneg (hmem : ∀ t ∈ uIoo a b, ‖γ t‖ < 1) :
 
 /-- For a `C¹` path in the disc the density-weighted speed is interval integrable: it is
 continuous, its denominator staying away from zero because the path stays in the open disc. -/
-private theorem intervalIntegrable_norm_div_one_sub_norm_sq
+theorem intervalIntegrable_norm_div_one_sub_norm_sq
     (hγ : ContinuousOn γ (uIcc a b)) (hγ' : ContinuousOn γ' (uIcc a b))
     (hmem : ∀ t ∈ uIcc a b, ‖γ t‖ < 1) :
     IntervalIntegrable (fun t => ‖γ' t‖ / (1 - ‖γ t‖ ^ 2)) MeasureTheory.volume a b := by
@@ -267,6 +272,17 @@ private theorem intervalIntegrable_norm_div_one_sub_norm_sq
   refine hγ'.norm.div (continuousOn_const.sub (hγ.norm.pow 2)) fun t ht => ?_
   have hpos : (0 : ℝ) < 1 - ‖γ t‖ ^ 2 := by nlinarith [norm_nonneg (γ t), hmem t ht]
   exact hpos.ne'
+
+/-- The same integrability read against `deriv` rather than against the explicit derivative, the
+two agreeing at the interior parameters and the two endpoints forming a null set. This is the
+shape in which the integrability is asked for by `TauCeti.hyperbolicLength_add` and by the
+comparison `TauCeti.densityLength_le_densityLength`. -/
+theorem intervalIntegrable_norm_deriv_div_one_sub_norm_sq
+    (hγ : ContinuousOn γ (uIcc a b)) (hγ' : ContinuousOn γ' (uIcc a b))
+    (hderiv : ∀ t ∈ uIoo a b, HasDerivAt γ (γ' t) t) (hmem : ∀ t ∈ uIcc a b, ‖γ t‖ < 1) :
+    IntervalIntegrable (fun t => ‖deriv γ t‖ / (1 - ‖γ t‖ ^ 2)) MeasureTheory.volume a b :=
+  (intervalIntegrable_norm_div_one_sub_norm_sq hγ hγ' hmem).congr_uIoo fun t ht => by
+    rw [(hderiv t ht).deriv]
 
 /-- **The hyperbolic length of a path depends only on its parameter interval.** Two paths that
 agree inside the interval with endpoints `a` and `b` have the same hyperbolic length over it: at an
@@ -373,17 +389,17 @@ the path. It is the tool that moves the starting point of a path to the origin.
 
 Only the density-weighted speeds of the two paths are compared, and they agree at every interior
 parameter, so this is `TauCeti.densityLength_congr_of_eqOn` and needs no integrability: the path
-is asked for nothing beyond a derivative inside its parameter interval, unlike the Schwarz--Pick
-estimate `TauCeti.hyperbolicLength_comp_le` below, whose two integrands are only comparable. -/
+is asked for nothing beyond a derivative inside its parameter interval, and to stay in the disc
+there, the two endpoints forming a null set — unlike the Schwarz--Pick estimate
+`TauCeti.hyperbolicLength_comp_le` below, whose two integrands are only comparable. -/
 theorem hyperbolicLength_unitDiscMoebiusFormula_comp (hc : ‖c‖ < 1)
-    (hderiv : ∀ t ∈ uIoo a b, HasDerivAt γ (γ' t) t) (hmem : ∀ t ∈ uIcc a b, ‖γ t‖ < 1) :
+    (hderiv : ∀ t ∈ uIoo a b, HasDerivAt γ (γ' t) t) (hmem : ∀ t ∈ uIoo a b, ‖γ t‖ < 1) :
     hyperbolicLength (fun t => (γ t - c) / (1 - (starRingEnd ℂ) c * γ t)) a b
       = hyperbolicLength γ a b := by
   simp only [hyperbolicLength]
   refine densityLength_congr_of_eqOn fun t ht => ?_
-  have htc : t ∈ uIcc a b := uIoo_subset_uIcc_self ht
   have hden : (1 : ℂ) - (starRingEnd ℂ) c * γ t ≠ 0 :=
-    one_sub_conj_mul_ne_zero_of_norm_lt_one (hmem t htc) hc
+    one_sub_conj_mul_ne_zero_of_norm_lt_one (hmem t ht) hc
   have hcomp : HasDerivAt (fun s => (γ s - c) / (1 - (starRingEnd ℂ) c * γ s))
       (γ' t * ((1 - (starRingEnd ℂ) c * c) / (1 - (starRingEnd ℂ) c * γ t) ^ 2)) t := by
     simpa [Function.comp_def, smul_eq_mul] using
@@ -392,7 +408,7 @@ theorem hyperbolicLength_unitDiscMoebiusFormula_comp (hc : ‖c‖ < 1)
   have hkey : ‖(1 - (starRingEnd ℂ) c * c) / (1 - (starRingEnd ℂ) c * γ t) ^ 2‖
       / (1 - ‖(γ t - c) / (1 - (starRingEnd ℂ) c * γ t)‖ ^ 2) = 1 / (1 - ‖γ t‖ ^ 2) := by
     rw [← (hasDerivAt_unitDiscMoebiusFormula c (γ t) hden).deriv]
-    exact norm_deriv_div_one_sub_norm_sq_unitDiscMoebiusFormula_of_norm_lt_one hc (hmem t htc)
+    exact norm_deriv_div_one_sub_norm_sq_unitDiscMoebiusFormula_of_norm_lt_one hc (hmem t ht)
   simp only [hcomp.deriv, (hderiv t ht).deriv]
   calc (1 - ‖(γ t - c) / (1 - (starRingEnd ℂ) c * γ t)‖ ^ 2)⁻¹
         * ‖γ' t * ((1 - (starRingEnd ℂ) c * c) / (1 - (starRingEnd ℂ) c * γ t) ^ 2)‖
@@ -439,17 +455,12 @@ theorem hyperbolicLength_comp_le {f : ℂ → ℂ} (hf : DifferentiableOn ℂ f 
   -- the two integrands are continuous, and agree with `deriv` inside the parameter interval
   have hint1 : IntervalIntegrable (fun t => (1 - ‖(f ∘ γ) t‖ ^ 2)⁻¹ * ‖deriv (f ∘ γ) t‖)
       MeasureTheory.volume a b := by
-    have h : IntervalIntegrable (fun t => (1 - ‖(f ∘ γ) t‖ ^ 2)⁻¹ * ‖γ' t * deriv f (γ t)‖)
-        MeasureTheory.volume a b := by
-      simpa only [div_eq_inv_mul, Pi.mul_apply] using intervalIntegrable_norm_div_one_sub_norm_sq
-        (hf.continuousOn.comp hγ hball) (hγ'.mul hdf) hfmem
-    exact h.congr_uIoo fun t ht => by rw [(hcomp t ht).deriv]
+    simpa only [div_eq_inv_mul] using intervalIntegrable_norm_deriv_div_one_sub_norm_sq
+      (hf.continuousOn.comp hγ hball) (hγ'.mul hdf) hcomp hfmem
   have hint2 : IntervalIntegrable (fun t => (1 - ‖γ t‖ ^ 2)⁻¹ * ‖deriv γ t‖)
       MeasureTheory.volume a b := by
-    have h : IntervalIntegrable (fun t => (1 - ‖γ t‖ ^ 2)⁻¹ * ‖γ' t‖)
-        MeasureTheory.volume a b := by
-      simpa only [div_eq_inv_mul] using intervalIntegrable_norm_div_one_sub_norm_sq hγ hγ' hmem
-    exact h.congr_uIoo fun t ht => by rw [(hderiv t ht).deriv]
+    simpa only [div_eq_inv_mul] using
+      intervalIntegrable_norm_deriv_div_one_sub_norm_sq hγ hγ' hderiv hmem
   simp only [hyperbolicLength]
   refine densityLength_le_densityLength hint1 hint2 fun t ht => ?_
   rw [(hcomp t ht).deriv, (hderiv t ht).deriv, ← div_eq_inv_mul, ← div_eq_inv_mul]
@@ -502,10 +513,11 @@ private theorem artanh_norm_le_integral (hab : a ≤ b) (hγ : ContinuousOn γ (
     Real.artanh ‖γ b‖ ≤ ∫ t in a..b, ‖γ' t‖ / (1 - ‖γ t‖ ^ 2) := by
   have hpos : ∀ t ∈ Icc a b, (0 : ℝ) < 1 - ‖γ t‖ ^ 2 := fun t ht => by
     nlinarith [norm_nonneg (γ t), hmem t ht]
-  have huIcc : uIcc a b = Icc a b := uIcc_of_le hab
+  have hγu : ContinuousOn γ (uIcc a b) := by rwa [uIcc_of_le hab]
+  have hγ'u : ContinuousOn γ' (uIcc a b) := by rwa [uIcc_of_le hab]
+  have hmemu : ∀ t ∈ uIcc a b, ‖γ t‖ < 1 := by rwa [uIcc_of_le hab]
   have hint2 : IntervalIntegrable (fun t => ‖γ' t‖ / (1 - ‖γ t‖ ^ 2)) MeasureTheory.volume a b :=
-    intervalIntegrable_norm_div_one_sub_norm_sq (huIcc ▸ hγ) (huIcc ▸ hγ')
-      (huIcc ▸ hmem : ∀ t ∈ uIcc a b, ‖γ t‖ < 1)
+    intervalIntegrable_norm_div_one_sub_norm_sq hγu hγ'u hmemu
   obtain ⟨v, hvnorm, hvb⟩ := Complex.exists_norm_eq_mul_self (γ b)
   set ψ : ℝ → ℝ := fun t => (v * γ t).re with hψdef
   have hψa : ψ a = 0 := by simp [hψdef, h0]
@@ -574,10 +586,13 @@ private theorem hyperbolicDist_le_hyperbolicLength_of_le (hab : a ≤ b)
     exact pseudoHyperbolicExpr_lt_one_of_norm_lt_one (hmem t ht) hc
   have hσa : (γ a - γ a) / (1 - (starRingEnd ℂ) (γ a) * γ a) = 0 := by
     rw [sub_self, zero_div]
+  have hderivu : ∀ t ∈ uIoo a b, HasDerivAt γ (γ' t) t := by rwa [uIoo_of_le hab]
+  have hmemu : ∀ t ∈ uIoo a b, ‖γ t‖ < 1 := by
+    rw [uIoo_of_le hab]
+    exact fun t ht => hmem t (Ioo_subset_Icc_self ht)
   have key := artanh_norm_le_integral hab hσcont hσderiv hσ'cont hσmem hσa
   rw [← hyperbolicLength_eq_integral hab hσderiv,
-    hyperbolicLength_unitDiscMoebiusFormula_comp hc (uIoo_of_le hab ▸ hderiv)
-      (uIcc_of_le hab ▸ hmem : ∀ t ∈ uIcc a b, ‖γ t‖ < 1)] at key
+    hyperbolicLength_unitDiscMoebiusFormula_comp hc hderivu hmemu] at key
   refine le_trans (le_of_eq ?_) key
   rw [hyperbolicDist_comm, hyperbolicDist_def, pseudoHyperbolicExpr_def]
 
@@ -637,7 +652,9 @@ theorem exists_hyperbolicLength_eq_hyperbolicDist (hz : ‖z‖ < 1) (hw : ‖w�
           (1 - (starRingEnd ℂ) (-z) * (u * (t : ℂ))) ^ 2)) t := fun t ht => by
     simpa [Function.comp_def, smul_eq_mul, mul_comm] using
       (hasDerivAt_unitDiscMoebiusFormula (-z) (u * (t : ℂ)) (hden t ht)).scomp t (hρderiv t)
-  have huIcc : uIcc (0 : ℝ) p = Icc 0 p := uIcc_of_le hp0
+  have hρmem' : ∀ t ∈ uIoo (0 : ℝ) p, ‖u * (t : ℂ)‖ < 1 := by
+    rw [uIoo_of_le hp0]
+    exact fun t ht => hρmem t (Ioo_subset_Icc_self ht)
   refine ⟨p, fun t => (u * (t : ℂ) - -z) / (1 - (starRingEnd ℂ) (-z) * (u * (t : ℂ))),
     fun t => u * ((1 - (starRingEnd ℂ) (-z) * -z) /
       (1 - (starRingEnd ℂ) (-z) * (u * (t : ℂ))) ^ 2),
@@ -657,7 +674,7 @@ theorem exists_hyperbolicLength_eq_hyperbolicDist (hz : ‖z‖ < 1) (hw : ‖w�
     rw [hup, hmdef]
     simpa using hinv
   · rw [hyperbolicLength_unitDiscMoebiusFormula_comp hnz (γ' := fun _ => u)
-      (fun t _ => hρderiv t) (fun t ht => hρmem t (huIcc ▸ ht)),
+      (fun t _ => hρderiv t) hρmem',
       hyperbolicLength_ray hunorm hp0 hp1, hpdef, ← hyperbolicDist_def, hyperbolicDist_comm]
 
 /-- **The Poincaré metric is the length metric of the Poincaré density.** For two points of the
