@@ -7,7 +7,6 @@ module
 
 public import Mathlib.NumberTheory.PrimesCongruentOne
 public import Mathlib.RepresentationTheory.Maschke
-public import Mathlib.RingTheory.Polynomial.Cyclotomic.Basic
 public import Mathlib.RingTheory.ZMod.Torsion
 public import TauCeti.Data.ZMod.ValMinAbs
 public import TauCeti.RepresentationTheory.CharacterTable.Values
@@ -167,9 +166,14 @@ theorem splits_X_pow_exponent_sub_one (hp : IsGoodDixonPrime G p) :
   simpa using X_pow_sub_one_splits hζ
 
 /-- The `e`-th roots of unity in `ZMod p` are `e` in number: `X ^ e - 1` splits with *distinct*
-roots, which is what makes the elements of `G` act semisimply. The `Fact` instance is what puts the
-field structure on `ZMod p` that `Polynomial.nthRootsFinset` needs to be stated at all; it is
-implied by `hp`. -/
+roots, which is what makes the elements of `G` act semisimply.
+
+The `Fact` instance is redundant with `hp.prime`, but it cannot be dropped:
+`Polynomial.nthRootsFinset` is defined only over an `IsDomain`, and `IsDomain (ZMod p)` is found
+from `Fact p.Prime`, so without the instance argument the *statement* fails to elaborate. Deriving
+it inside the proof is therefore not an option, unlike in
+`TauCeti.IsGoodDixonPrime.splits_X_pow_exponent_sub_one`, whose `Polynomial.Splits` is defined over
+any commutative ring. -/
 theorem card_nthRootsFinset [Fact p.Prime] (hp : IsGoodDixonPrime G p) :
     (nthRootsFinset (Monoid.exponent G) (1 : ZMod p)).card = Monoid.exponent G := by
   obtain ⟨ζ, hζ⟩ := hp.exists_isPrimitiveRoot
