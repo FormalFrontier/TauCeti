@@ -6,12 +6,11 @@ Authors: Claude
 module
 
 public import Mathlib.FieldTheory.Finite.Basic
-public import Mathlib.GroupTheory.SpecificGroups.Dihedral
 public import Mathlib.NumberTheory.PrimesCongruentOne
 public import Mathlib.RepresentationTheory.Maschke
-public import Mathlib.RingTheory.IntegralDomain
 public import Mathlib.RingTheory.Polynomial.Cyclotomic.Basic
 public import TauCeti.LinearAlgebra.End.FiniteOrder
+public import TauCeti.RingTheory.RootsOfUnity.PrimitiveRoots
 
 /-!
 # Good Dixon primes
@@ -33,8 +32,8 @@ determined by its residue modulo `p`.
 Such primes always exist: there are arbitrarily large primes congruent to `1` modulo `e`
 (`Nat.exists_prime_gt_modEq_one`, itself a cyclotomic-polynomial argument), and any of them beyond
 `|G|` is good. The existence proof is not part of any computation; a concrete group supplies a
-concrete prime, as `TauCeti.dihedralFourDixonPrimeData` and `TauCeti.dihedralThreeDixonPrimeData`
-do below.
+concrete prime, as the dihedral instances in
+`TauCeti/RepresentationTheory/CharacterTable/Dixon/Dihedral.lean` do.
 
 ## Main definitions
 
@@ -50,7 +49,7 @@ do below.
   distinct roots.
 * `TauCeti.IsGoodDixonPrime.isSemisimple_representation_apply`: every group element acts semisimply
   in a representation over `ZMod p`.
-* `TauCeti.IsGoodDixonPrime.valMinAbs_intCast` and `TauCeti.IsGoodDixonPrime.intCast_inj`: an
+* `TauCeti.IsGoodDixonPrime.valMinAbs_intCast` and `TauCeti.IsGoodDixonPrime.eq_of_intCast_eq`: an
   integer bounded by `√|G|` is recovered from, and so determined by, its residue modulo `p`. This
   is what the size bound is for.
 * `TauCeti.exists_isGoodDixonPrime`: **good Dixon primes exist** for every finite group.
@@ -78,21 +77,6 @@ namespace TauCeti
 
 open Polynomial
 
-/-! ### Primitive roots of unity in a finite field -/
-
-/-- A finite field contains a primitive `d`-th root of unity for every `d` dividing the order of
-its unit group, because that unit group is cyclic. -/
-theorem exists_isPrimitiveRoot_of_dvd_card_units (F : Type*) [Field F] [Finite F] {d : ℕ}
-    (hd : d ∣ Nat.card Fˣ) : ∃ ζ : F, IsPrimitiveRoot ζ d := by
-  obtain ⟨u, hu⟩ := IsCyclic.exists_ofOrder_eq_natCard (α := Fˣ)
-  have hcard : Nat.card Fˣ ≠ 0 := Nat.card_pos.ne'
-  refine ⟨((u ^ (Nat.card Fˣ / d) : Fˣ) : F), IsPrimitiveRoot.coe_units_iff.2 ?_⟩
-  have hord : orderOf (u ^ (orderOf u / d)) = d :=
-    orderOf_pow_orderOf_div (by rw [hu]; exact hcard) (by rw [hu]; exact hd)
-  rw [hu] at hord
-  have hprim := IsPrimitiveRoot.orderOf (u ^ (Nat.card Fˣ / d))
-  rwa [hord] at hprim
-
 /-! ### The good-prime predicate -/
 
 /-- **`p` is a good Dixon prime for `G`**: it is prime, it does not divide `|G|`, the exponent of
@@ -103,20 +87,19 @@ runs: the first makes `ZMod p [G]` semisimple, the second puts the `e`-th roots 
 `ZMod p`, and the third makes the lift back to characteristic zero unique. That the reduced central
 characters stay pairwise distinct is *not* part of the definition; it is a consequence, the content
 of the good-prime structure theorem. -/
-def IsGoodDixonPrime (G : Type*) [Group G] (p : ℕ) : Prop :=
-  p.Prime ∧ ¬p ∣ Nat.card G ∧ Monoid.exponent G ∣ p - 1 ∧ 2 * Nat.sqrt (Nat.card G) < p
+structure IsGoodDixonPrime (G : Type*) [Group G] (p : ℕ) : Prop where
+  /-- `p` is prime, so that `ZMod p` is a field. -/
+  prime : p.Prime
+  /-- `p` does not divide `|G|`, so that Maschke applies over `ZMod p`. -/
+  not_dvd_natCard : ¬p ∣ Nat.card G
+  /-- The exponent of `G` divides `p - 1`, so that the `e`-th roots of unity lie in `ZMod p`. -/
+  exponent_dvd : Monoid.exponent G ∣ p - 1
+  /-- Dixon's size bound, which makes the lift back to characteristic zero unique. -/
+  two_mul_sqrt_lt : 2 * Nat.sqrt (Nat.card G) < p
 
 namespace IsGoodDixonPrime
 
 variable {G : Type*} [Group G] {p : ℕ}
-
-theorem prime (hp : IsGoodDixonPrime G p) : p.Prime := hp.1
-
-theorem not_dvd_natCard (hp : IsGoodDixonPrime G p) : ¬p ∣ Nat.card G := hp.2.1
-
-theorem exponent_dvd (hp : IsGoodDixonPrime G p) : Monoid.exponent G ∣ p - 1 := hp.2.2.1
-
-theorem two_mul_sqrt_lt (hp : IsGoodDixonPrime G p) : 2 * Nat.sqrt (Nat.card G) < p := hp.2.2.2
 
 /-- The primality of a good Dixon prime, as the `Fact` that the field structure on `ZMod p` is
 found from. -/
@@ -204,7 +187,7 @@ theorem valMinAbs_intCast (hp : IsGoodDixonPrime G p) {z : ℤ}
 /-- **Dixon's size bound opens a wide enough residue window.** Two integers of absolute value at
 most `⌊√|G|⌋` that agree modulo `p` are equal, so an integer of that size is determined by its
 residue. This is why the lift is unambiguous. -/
-theorem intCast_inj (hp : IsGoodDixonPrime G p) {z w : ℤ}
+theorem eq_of_intCast_eq (hp : IsGoodDixonPrime G p) {z w : ℤ}
     (hz : z.natAbs ≤ Nat.sqrt (Nat.card G)) (hw : w.natAbs ≤ Nat.sqrt (Nat.card G))
     (h : (z : ZMod p) = w) : z = w := by
   rw [← hp.valMinAbs_intCast hz, ← hp.valMinAbs_intCast hw, h]
@@ -229,10 +212,9 @@ theorem natCast_orderOf_ne_zero (hp : IsGoodDixonPrime G p) (g : G) :
   rw [Ne, ZMod.natCast_eq_zero_iff]
   exact fun hdvd' => absurd (Nat.le_of_dvd hpos hdvd') (by omega)
 
-/-- **At a good Dixon prime every group element acts semisimply.** In any finite-dimensional
-representation over `ZMod p`, `ρ g` is annihilated by the squarefree polynomial
-`X ^ orderOf g - 1`. Over `ℂ` this is where diagonalizability of the class-multiplication matrices
-comes from, and the good-prime conditions are exactly what transports it to `ZMod p`. -/
+/-- **At a good Dixon prime every group element acts semisimply.** In a representation over
+`ZMod p`, `ρ g` is annihilated by `X ^ orderOf g - 1`, and that polynomial is squarefree because
+`orderOf g` divides `p - 1` and so is invertible modulo `p`. -/
 theorem isSemisimple_representation_apply (hp : IsGoodDixonPrime G p)
     (ρ : Representation (ZMod p) G V) (g : G) : Module.End.IsSemisimple (ρ g) :=
   End.isSemisimple_of_pow_eq_one (hp.natCast_orderOf_ne_zero g)
@@ -262,11 +244,12 @@ theorem exists_isGoodDixonPrime (G : Type*) [Group G] [Finite G] :
 together with a chosen primitive `e`-th root of unity modulo `p`, `e` the exponent of `G`. The root
 is data rather than a choice made by `exists_isPrimitiveRoot`, so that the definitions consuming it
 stay computable. -/
+@[ext]
 structure DixonPrimeData (G : Type*) [Group G] where
   /-- The prime the algorithm reduces modulo. -/
   p : ℕ
-  /-- A primitive `e`-th root of unity modulo `p`, `e` the exponent of `G`. It pins the
-  identification of the `e`-th roots of unity in `ZMod p` with those in `ℂ` that the lift uses. -/
+  /-- The primitive `e`-th root of unity modulo `p`, `e` the exponent of `G`, that the finite-field
+  computation runs with. -/
   root : ZMod p
   /-- The certificate that `p` is a good Dixon prime. -/
   isGoodDixonPrime : IsGoodDixonPrime G p
@@ -276,14 +259,6 @@ structure DixonPrimeData (G : Type*) [Group G] where
 namespace DixonPrimeData
 
 variable {G : Type*} [Group G] (d : DixonPrimeData G)
-
-theorem prime : d.p.Prime := d.isGoodDixonPrime.prime
-
-theorem not_dvd_natCard : ¬d.p ∣ Nat.card G := d.isGoodDixonPrime.not_dvd_natCard
-
-theorem exponent_dvd : Monoid.exponent G ∣ d.p - 1 := d.isGoodDixonPrime.exponent_dvd
-
-theorem two_mul_sqrt_lt : 2 * Nat.sqrt (Nat.card G) < d.p := d.isGoodDixonPrime.two_mul_sqrt_lt
 
 /-- The chosen root has order exactly the exponent of `G`. -/
 theorem orderOf_root : orderOf d.root = Monoid.exponent G :=
@@ -297,72 +272,5 @@ instance (G : Type*) [Group G] [Finite G] : Nonempty (DixonPrimeData G) := by
   obtain ⟨p, hp⟩ := exists_isGoodDixonPrime G
   obtain ⟨ζ, hζ⟩ := hp.exists_isPrimitiveRoot
   exact ⟨⟨p, ζ, hp, hζ⟩⟩
-
-/-! ### Worked instances -/
-
-section Dihedral
-
-/-- The dihedral group of order `8` has exponent `4`. -/
-theorem exponent_dihedral_four : Monoid.exponent (DihedralGroup 4) = 4 := by
-  rw [DihedralGroup.exponent]
-  decide
-
-/-- **`5` is a good Dixon prime for the dihedral group of order `8`**, the worked example of the
-character-table algorithm: `5 ∤ 8`, the exponent `4` divides `4 = 5 - 1`, and
-`2⌊√8⌋ = 4 < 5`. -/
-theorem isGoodDixonPrime_dihedral_four : IsGoodDixonPrime (DihedralGroup 4) 5 := by
-  refine ⟨by decide, ?_, ?_, ?_⟩
-  · rw [DihedralGroup.nat_card]; decide
-  · rw [exponent_dihedral_four]
-  · rw [DihedralGroup.nat_card]
-    have h : Nat.sqrt (2 * 4) < 3 := Nat.sqrt_lt.2 (by norm_num)
-    omega
-
-/-- Dixon prime data for the dihedral group of order `8`: the prime `5`, with `2` as the primitive
-fourth root of unity modulo `5`. -/
-def dihedralFourDixonPrimeData : DixonPrimeData (DihedralGroup 4) where
-  p := 5
-  root := 2
-  isGoodDixonPrime := isGoodDixonPrime_dihedral_four
-  isPrimitiveRoot_root := by
-    rw [exponent_dihedral_four]
-    have h : orderOf (2 : ZMod 5) = 4 :=
-      orderOf_eq_of_pow_and_pow_div_prime (by norm_num) (by decide) fun q hq hq4 => by
-        have h2 := hq.two_le
-        have h4 := Nat.le_of_dvd (by norm_num) hq4
-        interval_cases q <;> revert hq4 <;> decide
-    exact h ▸ IsPrimitiveRoot.orderOf (2 : ZMod 5)
-
-/-- The dihedral group of order `6`, the symmetric group on three letters, has exponent `6`. -/
-theorem exponent_dihedral_three : Monoid.exponent (DihedralGroup 3) = 6 := by
-  rw [DihedralGroup.exponent]
-  decide
-
-/-- **`7` is a good Dixon prime for the dihedral group of order `6`**: `7 ∤ 6`, the exponent `6`
-divides `6 = 7 - 1`, and `2⌊√6⌋ = 4 < 7`. -/
-theorem isGoodDixonPrime_dihedral_three : IsGoodDixonPrime (DihedralGroup 3) 7 := by
-  refine ⟨by decide, ?_, ?_, ?_⟩
-  · rw [DihedralGroup.nat_card]; decide
-  · rw [exponent_dihedral_three]
-  · rw [DihedralGroup.nat_card]
-    have h : Nat.sqrt (2 * 3) < 3 := Nat.sqrt_lt.2 (by norm_num)
-    omega
-
-/-- Dixon prime data for the dihedral group of order `6`: the prime `7`, with `3` as the primitive
-sixth root of unity modulo `7`. -/
-def dihedralThreeDixonPrimeData : DixonPrimeData (DihedralGroup 3) where
-  p := 7
-  root := 3
-  isGoodDixonPrime := isGoodDixonPrime_dihedral_three
-  isPrimitiveRoot_root := by
-    rw [exponent_dihedral_three]
-    have h : orderOf (3 : ZMod 7) = 6 :=
-      orderOf_eq_of_pow_and_pow_div_prime (by norm_num) (by decide) fun q hq hq6 => by
-        have h2 := hq.two_le
-        have h6 := Nat.le_of_dvd (by norm_num) hq6
-        interval_cases q <;> revert hq6 <;> decide
-    exact h ▸ IsPrimitiveRoot.orderOf (3 : ZMod 7)
-
-end Dihedral
 
 end TauCeti
