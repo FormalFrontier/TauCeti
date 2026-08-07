@@ -71,6 +71,7 @@ def coordinateMatrix (rho : Comodule R H (Fin n → R)) : Matrix (Fin n) (Fin n)
     (Pi.basisFun R (Fin n) j)
 
 /-- An entry of the coordinate matrix is the corresponding standard-basis matrix coefficient. -/
+@[simp]
 theorem coordinateMatrix_apply (rho : Comodule R H (Fin n → R)) (i j : Fin n) :
     coordinateMatrix rho i j =
       let _ : Comodule R H (Fin n → R) := rho
@@ -184,7 +185,7 @@ private theorem coordinateAlgHom_counit
       Bialgebra.counitAlgHom R (GeneralLinear.coordinateHopfAlgebra R n) := by
   apply coordinateAlgHom_ext
   intro i j
-  simp
+  simp [Pi.single_apply]
 
 private theorem coordinateAlgHom_comul
     (rho : Comodule R H (Fin n → R)) :
