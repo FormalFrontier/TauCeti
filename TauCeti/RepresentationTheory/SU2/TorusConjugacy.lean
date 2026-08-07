@@ -216,20 +216,16 @@ with the `W`-invariant functions on `T`. -/
 theorem exists_conjInvariant_torusHom_eq {α : Type*} {φ : Circle → α}
     (hφ : ∀ z : Circle, φ z⁻¹ = φ z) :
     ∃ f : SU2 → α, (∀ u g : SU2, f (u * g * u⁻¹) = f g) ∧ ∀ z : Circle, f (torusHom z) = φ z := by
+  -- The chosen torus element is only well defined up to the Weyl action, which `φ` cannot see.
+  have key : ∀ {g : SU2} {z : Circle}, IsConj g (torusHom z) →
+      φ (exists_isConj_torusHom g).choose = φ z := fun {g z} hz => by
+    rcases isConj_torusHom_iff.mp
+      ((exists_isConj_torusHom g).choose_spec.symm.trans hz) with h' | h'
+    · rw [h']
+    · rw [h', hφ]
   refine ⟨fun g => φ (exists_isConj_torusHom g).choose, fun u g => ?_, fun z => ?_⟩
-  · change φ (exists_isConj_torusHom (u * g * u⁻¹)).choose
-      = φ (exists_isConj_torusHom g).choose
-    have h : IsConj (torusHom (exists_isConj_torusHom (u * g * u⁻¹)).choose)
-        (torusHom (exists_isConj_torusHom g).choose) :=
-      ((exists_isConj_torusHom (u * g * u⁻¹)).choose_spec.symm.trans
-        (isConj_iff.mpr ⟨u, rfl⟩).symm).trans (exists_isConj_torusHom g).choose_spec
-    rcases isConj_torusHom_iff.mp h with h' | h'
-    · rw [h']
-    · rw [h', hφ]
-  · change φ (exists_isConj_torusHom (torusHom z)).choose = φ z
-    rcases isConj_torusHom_iff.mp (exists_isConj_torusHom (torusHom z)).choose_spec with h' | h'
-    · rw [h']
-    · rw [h', hφ]
+  · exact key ((isConj_iff.mpr ⟨u, rfl⟩).symm.trans (exists_isConj_torusHom g).choose_spec)
+  · exact key (IsConj.refl (torusHom z))
 
 end SU2
 

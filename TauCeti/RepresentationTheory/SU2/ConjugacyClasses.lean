@@ -112,22 +112,13 @@ theorem isConj_iff_trace_eq {g h : SU2} :
 
 /-! ### Conjugacy on the maximal torus -/
 
-/-- **The trace classifies conjugacy on the maximal torus:** two torus elements are conjugate in
-`SU(2)` exactly when they have the same trace. This is `TauCeti.SU2.isConj_iff_trace_eq` in the
-angle parametrisation of the maximal torus. -/
-theorem isConj_torusExp_iff_trace_eq {θ φ : ℝ} :
-    IsConj (torusExp θ) (torusExp φ)
-      ↔ Matrix.trace ((torusExp θ : SU2) : Matrix (Fin 2) (Fin 2) ℂ)
-        = Matrix.trace ((torusExp φ : SU2) : Matrix (Fin 2) (Fin 2) ℂ) :=
-  isConj_iff_trace_eq
-
 /-- Two torus elements are conjugate in `SU(2)` exactly when their angles have the same cosine:
 the Weyl group acts on the angle by negation, and the cosine is precisely the invariant of that
-action. This is `TauCeti.SU2.isConj_torusExp_iff_trace_eq` with the trace evaluated by
-`TauCeti.SU2.trace_torusExp`. -/
+action. This is `TauCeti.SU2.isConj_iff_trace_eq` in the angle parametrisation of the maximal
+torus, with the trace evaluated by `TauCeti.SU2.trace_torusExp`. -/
 theorem isConj_torusExp_iff_cos_eq {θ φ : ℝ} :
     IsConj (torusExp θ) (torusExp φ) ↔ Real.cos φ = Real.cos θ := by
-  rw [isConj_torusExp_iff_trace_eq, trace_torusExp, trace_torusExp]
+  rw [isConj_iff_trace_eq, trace_torusExp, trace_torusExp]
   refine ⟨fun h => ?_, fun h => by rw [h]⟩
   exact_mod_cast (mul_left_cancel₀ (a := (2 : ℂ)) (by norm_num) h).symm
 
