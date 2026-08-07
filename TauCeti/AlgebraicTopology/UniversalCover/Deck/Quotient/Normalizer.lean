@@ -88,17 +88,18 @@ theorem normalizerMap_apply (γ : _root_.Subgroup.normalizer (H : Set Γ)) (e : 
     rw [← mul_smul, ← mul_smul]
     congr 1
     group
-  change q ((γ : Γ) • Function.surjInv hq.surjective (q e)) = q ((γ : Γ) • e)
-  rw [hsurj, hstep]
+  rw [normalizerMap, hsurj, hstep]
   exact hq.map_smul (⟨_, hconj⟩ : H)
 
 /-- The identity of the normalizer descends to the identity. -/
+@[simp]
 theorem normalizerMap_one (y : F) : normalizerMap hq 1 y = y := by
   obtain ⟨e, rfl⟩ := hq.surjective y
   rw [normalizerMap_apply]
   simp
 
 /-- Descending translations is multiplicative, the right factor acting first. -/
+@[simp]
 theorem normalizerMap_mul (γ γ' : _root_.Subgroup.normalizer (H : Set Γ)) (y : F) :
     normalizerMap hq (γ * γ') y = normalizerMap hq γ (normalizerMap hq γ' y) := by
   obtain ⟨e, rfl⟩ := hq.surjective y
@@ -133,20 +134,20 @@ end Descend
 
 section DeckHom
 
-variable [ContinuousConstSMul Γ E]
 variable (hp : IsQuotientCoveringMap p Γ) (hq : IsQuotientCoveringMap q H) (hr : r ∘ q = p)
 include hp hq hr
 
 /-- Translation by an element normalizing `H`, as a homomorphism from the normalizer to the
 deck transformation group of the intermediate covering `r`. -/
-def normalizerDeckHom : _root_.Subgroup.normalizer (H : Set Γ) →* Deck r where
-  toFun γ := ⟨normalizerHomeomorph hq γ, by
-    intro y
-    obtain ⟨e, rfl⟩ := hq.surjective y
-    have hrq : ∀ e' : E, r (q e') = p e' := fun e' => congrFun hr e'
-    rw [normalizerHomeomorph_apply, hrq, hrq, hp.map_smul]⟩
-  map_one' := Subtype.ext (Homeomorph.ext (normalizerMap_one hq))
-  map_mul' γ γ' := Subtype.ext (Homeomorph.ext (normalizerMap_mul hq γ γ'))
+def normalizerDeckHom : _root_.Subgroup.normalizer (H : Set Γ) →* Deck r :=
+  letI := hp.toContinuousConstSMul
+  { toFun := fun γ => ⟨normalizerHomeomorph hq γ, by
+      intro y
+      obtain ⟨e, rfl⟩ := hq.surjective y
+      have hrq : ∀ e' : E, r (q e') = p e' := fun e' => congrFun hr e'
+      rw [normalizerHomeomorph_apply, hrq, hrq, hp.map_smul]⟩
+    map_one' := Subtype.ext (Homeomorph.ext (normalizerMap_one hq))
+    map_mul' := fun γ γ' => Subtype.ext (Homeomorph.ext (normalizerMap_mul hq γ γ')) }
 
 /-- On points, the deck transformation attached to a normalizer element is the descent of
 translation by that element. -/
@@ -178,7 +179,7 @@ theorem ker_normalizerDeckHom [Nonempty E] :
     rw [normalizerDeckHom_apply]
     exact hq.map_smul (⟨(γ : Γ), hγ⟩ : H)
 
-omit hr [ContinuousConstSMul Γ E] in
+omit hr in
 /-- If translating a fixed point by `γ` is insensitive to an `H`-translation first, then `γ`
 conjugates `H` into itself. -/
 private theorem conj_mem_of_smul_eq {γ : Γ} {e₀ : E}
@@ -195,10 +196,16 @@ private theorem conj_mem_of_smul_eq {γ : Γ} {e₀ : E}
 
 /-- Every deck transformation of the intermediate covering is the descent of a translation by
 a normalizer element. -/
-theorem normalizerDeckHom_surjective [PreconnectedSpace E] [Nonempty E] (hrc : IsCoveringMap r) :
+theorem normalizerDeckHom_surjective [PreconnectedSpace E] (hrc : IsCoveringMap r) :
     Function.Surjective (normalizerDeckHom hp hq hr) := by
+  have := hp.toContinuousConstSMul
   intro φ
-  obtain ⟨e₀⟩ := ‹Nonempty E›
+  rcases isEmpty_or_nonempty E with hE | hne
+  · -- `q` is surjective, so `F` is empty too and every deck transformation is the identity.
+    exact ⟨1, Subtype.ext (Homeomorph.ext fun y => by
+      obtain ⟨e, rfl⟩ := hq.surjective y
+      exact (hE.false e).elim)⟩
+  obtain ⟨e₀⟩ := hne
   obtain ⟨e₁, he₁⟩ := hq.surjective (φ.1 (q e₀))
   have hrq : ∀ e : E, r (q e) = p e := fun e => congrFun hr e
   have hpe : p e₁ = p e₀ := by rw [← hrq e₁, ← hrq e₀, he₁, Deck.map_proj φ (q e₀)]
@@ -208,8 +215,8 @@ theorem normalizerDeckHom_surjective [PreconnectedSpace E] [Nonempty E] (hrc : I
     refine congrFun (hrc.eq_of_comp_eq (g₁ := fun e => φ.1 (q e)) (g₂ := fun e => q (γ • e))
       (φ.1.continuous.comp hq.isCoveringMap.continuous)
       (hq.isCoveringMap.continuous.comp (continuous_const_smul _)) (funext fun e => ?_) e₀ ?_)
-    · change r (φ.1 (q e)) = r (q (γ • e))
-      rw [Deck.map_proj φ (q e), hrq e, hrq (γ • e), hp.map_smul]
+    · rw [Function.comp_apply, Function.comp_apply, Deck.map_proj φ (q e), hrq e, hrq (γ • e),
+        hp.map_smul]
     · have hγ' : (γ • e₀ : E) = e₁ := hγ
       rw [hγ', he₁]
   have hkey' : ∀ e, φ.1.symm (q e) = q (γ⁻¹ • e) := fun e => by
@@ -249,30 +256,20 @@ theorem normalizerQuotientDeckMulEquiv_mk [PreconnectedSpace E] [Nonempty E]
     (hrc : IsCoveringMap r) (γ : _root_.Subgroup.normalizer (H : Set Γ)) :
     normalizerQuotientDeckMulEquiv hp hq hr hrc (QuotientGroup.mk γ) =
       normalizerDeckHom hp hq hr γ := by
-  rw [normalizerQuotientDeckMulEquiv, MulEquiv.trans_apply,
-    QuotientGroup.quotientMulEquivOfEq_mk, QuotientGroup.quotientKerEquivOfSurjective,
-    QuotientGroup.quotientKerEquivOfRightInverse_apply, QuotientGroup.kerLift_mk]
+  simp [normalizerQuotientDeckMulEquiv, QuotientGroup.quotientKerEquivOfSurjective]
 
 end DeckHom
 
 section Normal
 
-variable [ContinuousConstSMul Γ E]
 variable (hp : IsQuotientCoveringMap p Γ) (hq : IsQuotientCoveringMap q H) (hr : r ∘ q = p)
 variable [H.Normal]
 include hp hq hr
 
 omit hp hq hr in
-/-- Every element normalizes a normal subgroup. -/
-private theorem mem_normalizer_of_normal (γ : Γ) :
-    γ ∈ _root_.Subgroup.normalizer (H : Set Γ) := by
-  rw [_root_.Subgroup.normalizer_eq_top]
-  exact Subgroup.mem_top γ
-
-omit hp hq hr in
 /-- For a normal subgroup, the identity is a homomorphism onto the normalizer. -/
 private def toNormalizerOfNormal : Γ →* _root_.Subgroup.normalizer (H : Set Γ) where
-  toFun γ := ⟨γ, mem_normalizer_of_normal γ⟩
+  toFun γ := ⟨γ, _root_.Subgroup.subset_normalizer_of_normal (Set.mem_univ γ)⟩
   map_one' := rfl
   map_mul' _ _ := rfl
 
@@ -293,7 +290,7 @@ theorem ker_deckHomOfNormal [Nonempty E] : (deckHomOfNormal hp hq hr).ker = H :=
     ker_normalizerDeckHom hp hq hr, Subgroup.mem_subgroupOf]
   exact Iff.rfl
 
-theorem deckHomOfNormal_surjective [PreconnectedSpace E] [Nonempty E] (hrc : IsCoveringMap r) :
+theorem deckHomOfNormal_surjective [PreconnectedSpace E] (hrc : IsCoveringMap r) :
     Function.Surjective (deckHomOfNormal hp hq hr) := fun φ => by
   obtain ⟨γ, hγ⟩ := normalizerDeckHom_surjective hp hq hr hrc φ
   exact ⟨(γ : Γ), hγ⟩
@@ -312,9 +309,7 @@ theorem quotientDeckMulEquivOfNormal_mk [PreconnectedSpace E] [Nonempty E]
     (hrc : IsCoveringMap r) (γ : Γ) :
     quotientDeckMulEquivOfNormal hp hq hr hrc (QuotientGroup.mk γ) =
       deckHomOfNormal hp hq hr γ := by
-  rw [quotientDeckMulEquivOfNormal, MulEquiv.trans_apply,
-    QuotientGroup.quotientMulEquivOfEq_mk, QuotientGroup.quotientKerEquivOfSurjective,
-    QuotientGroup.quotientKerEquivOfRightInverse_apply, QuotientGroup.kerLift_mk]
+  simp [quotientDeckMulEquivOfNormal, QuotientGroup.quotientKerEquivOfSurjective]
 
 end Normal
 
