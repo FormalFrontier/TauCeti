@@ -53,25 +53,6 @@ namespace TauCeti
 
 namespace YoungDiagram
 
-/-- The cells of a Young diagram lying in a fixed column and in one of the first `k` rows are the
-top `min k (colLen j)` cells of that column. -/
-theorem card_filter_fst_lt_filter_snd_eq (lam : YoungDiagram) (k j : ℕ) :
-    (((lam.cells.filter fun c => c.1 < k)).filter fun c => c.2 = j).card
-      = min k (lam.colLen j) := by
-  have himg : (((lam.cells.filter fun c => c.1 < k)).filter fun c => c.2 = j)
-      = (Finset.range (min k (lam.colLen j))).image fun i => (i, j) := by
-    ext c
-    simp only [Finset.mem_filter, Finset.mem_image, Finset.mem_range, lt_min_iff,
-      _root_.YoungDiagram.mem_cells]
-    constructor
-    · rintro ⟨⟨hc, hk⟩, hj⟩
-      refine ⟨c.1, ⟨hk, ?_⟩, ?_⟩
-      · exact _root_.YoungDiagram.mem_iff_lt_colLen.mp (hj ▸ hc)
-      · rw [← hj]
-    · rintro ⟨i, ⟨hik, hicol⟩, rfl⟩
-      exact ⟨⟨_root_.YoungDiagram.mem_iff_lt_colLen.mpr hicol, hik⟩, rfl⟩
-  rw [himg, Finset.card_image_of_injective _ fun _ _ h => congrArg Prod.fst h, Finset.card_range]
-
 /-- **The counting core of the dominance lemma.** Let the elements of a finite type `α` be
 labelled by a *row* `r a : ℕ` and placed in the cells of a Young diagram `lam` by an injection
 `f`, in such a way that the row of an element together with the column of its cell determines
@@ -118,21 +99,6 @@ end YoungDiagram
 namespace YoungTableau
 
 variable {lam m : YoungDiagram}
-
-/-- The labels of a tableau lying in one of its first `k` rows are as many as the cells of the
-shape in its first `k` rows. -/
-theorem card_filter_rowIndex_lt (s : YoungTableau m) (k : ℕ) :
-    (Finset.univ.filter fun x => rowIndex s x < k).card = (m.rowLens.take k).sum := by
-  classical
-  rw [YoungDiagram.sum_take_rowLens_eq_card_filter_fst]
-  refine Finset.card_bij (fun x _ => ((s.symm x : ↥m.cells) : ℕ × ℕ)) (fun x hx => ?_)
-    (fun x _ y _ h => s.symm.injective (Subtype.ext h)) fun c hc => ?_
-  · simp only [Finset.mem_filter, Finset.mem_univ, true_and, rowIndex_def] at hx
-    exact Finset.mem_filter.mpr ⟨(s.symm x).2, hx⟩
-  · rw [Finset.mem_filter] at hc
-    refine ⟨s ⟨c, hc.1⟩, ?_, ?_⟩
-    · simpa only [Finset.mem_filter, Finset.mem_univ, true_and, rowIndex_apply] using hc.2
-    · rw [Equiv.symm_apply_apply]
 
 /-- **The dominance lemma.** Let `s` be an `m`-tableau and `t` a `lam`-tableau whose labels are
 identified by `σ`.  If the labels of each row of `s` occupy pairwise distinct columns of `t`,
