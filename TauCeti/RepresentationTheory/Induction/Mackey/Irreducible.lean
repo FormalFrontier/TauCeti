@@ -207,9 +207,9 @@ theorem simple_indFDRep_iff (A : FDRep k H) :
   · obtain ⟨a, ha, b, hb, hab⟩ :=
       (DoubleCoset.eq H H (DoubleCoset.mk H H s).out s).mp (DoubleCoset.out_eq' H H _)
     exact hab ▸ (mackeyDisjoint_mul_left_mul_right_iff A ha hb _).mpr
-      (h _ fun hc => hs ((doubleCoset_mk_eq_mk_one_iff H s).mp hc))
+      (h _ fun hc => hs ((doubleCosetMk_eq_mk_one_iff H s).mp hc))
   · exact h D.out fun hmem =>
-      hD ((DoubleCoset.out_eq' H H D).symm.trans ((doubleCoset_mk_eq_mk_one_iff H D.out).mpr hmem))
+      hD ((DoubleCoset.out_eq' H H D).symm.trans ((doubleCosetMk_eq_mk_one_iff H D.out).mpr hmem))
 
 end Criterion
 
