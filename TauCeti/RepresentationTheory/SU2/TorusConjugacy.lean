@@ -46,8 +46,9 @@ change the conjugation it induces.
   converse, that conjugate elements of `T` are equal or inverse, is
   `TauCeti.SU2.eq_or_eq_inv_of_conj_torusHom` of `TauCeti/RepresentationTheory/SU2/Basic.lean`, so
   each conjugacy class of `SU(2)` meets `T` in exactly one orbit `{z, z⁻¹}` of the Weyl group
-  computed in `TauCeti/RepresentationTheory/SU2/Weyl.lean`; that identification is not assembled
-  into a theorem here.
+  computed in `TauCeti/RepresentationTheory/SU2/Weyl.lean`; that identification is
+  `TauCeti.SU2.isConj_torusHom_iff` of
+  `TauCeti/RepresentationTheory/SU2/ConjugacyClasses.lean`.
 * `TauCeti.SU2.eq_of_conjInvariant_of_eqOn_torus`: two conjugation-invariant functions on `SU(2)`
   that agree on the maximal torus are equal; a class function on `SU(2)` is determined by its
   restriction to `T`.

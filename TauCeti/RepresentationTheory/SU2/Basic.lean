@@ -43,9 +43,13 @@ of `SU(2)` is computed from in `TauCeti/RepresentationTheory/SU2/Weyl.lean`.
 
 It also records the structural identity `TauCeti.SU2.coe_add_star`: an element of `SU(2)` and its
 conjugate transpose add up to `(tr g) • 1`, so the Hermitian part of an element of `SU(2)` is a
-scalar matrix. On the torus the trace is `TauCeti.SU2.trace_torusMatrix`: `tr (diag (z, z⁻¹))
-= z + z⁻¹`, and `TauCeti.SU2.eq_or_eq_inv_of_trace_torusMatrix_eq` says that this value determines
-`z` up to inversion.
+scalar matrix; tracing it shows the trace is real (`TauCeti.SU2.isSelfAdjoint_trace`). Conjugate
+elements have the same trace (`TauCeti.SU2.trace_eq_of_isConj`). On the torus the trace is
+`TauCeti.SU2.trace_torusMatrix`: `tr (diag (z, z⁻¹)) = z + z⁻¹`, in the angle parametrisation
+`TauCeti.SU2.trace_coe_torusExp`: `tr (diag (e^{iθ}, e^{-iθ})) = 2 cos θ`, and
+`TauCeti.SU2.eq_or_eq_inv_of_trace_torusMatrix_eq` says that this value determines `z` up to
+inversion. That the trace is a *complete* conjugacy invariant is proved in
+`TauCeti/RepresentationTheory/SU2/ConjugacyClasses.lean`.
 
 ## Main definitions
 
@@ -77,6 +81,26 @@ theorem coe_add_star (g : SU2) :
   rw [Matrix.specialUnitaryGroup.star_eq_adjugate, Matrix.adjugate_fin_two, Matrix.trace_fin_two]
   ext i j
   fin_cases i <;> fin_cases j <;> simp [add_comm]
+
+/-- **The trace of an element of `SU(2)` is real.** Taking traces in
+`TauCeti.SU2.coe_add_star`, `g + g* = (tr g) • 1`, gives `tr g + conj (tr g)` on the left and
+`2 tr g` on the right. -/
+theorem isSelfAdjoint_trace (g : SU2) :
+    IsSelfAdjoint (Matrix.trace (g : Matrix (Fin 2) (Fin 2) ℂ)) := by
+  have h := congrArg Matrix.trace (coe_add_star g)
+  simp only [Matrix.trace_add, Matrix.star_eq_conjTranspose, Matrix.trace_conjTranspose,
+    Matrix.trace_smul, Matrix.trace_one, Fintype.card_fin, smul_eq_mul, Nat.cast_ofNat] at h
+  rw [isSelfAdjoint_iff]
+  linear_combination h
+
+/-- Conjugate elements of `SU(2)` have the same trace. -/
+theorem trace_eq_of_isConj {g h : SU2} (hgh : IsConj g h) :
+    Matrix.trace (g : Matrix (Fin 2) (Fin 2) ℂ)
+      = Matrix.trace (h : Matrix (Fin 2) (Fin 2) ℂ) := by
+  obtain ⟨u, rfl⟩ := isConj_iff.mp hgh
+  simp only [Submonoid.coe_mul]
+  rw [Matrix.trace_mul_cycle, ← Submonoid.coe_mul, inv_mul_cancel, OneMemClass.coe_one,
+    Matrix.one_mul]
 
 /-! ### The diagonal matrices `diag (z, z⁻¹)` -/
 
@@ -352,17 +376,12 @@ theorem eq_or_eq_inv_of_trace_torusMatrix_eq {z w : Circle}
   · exact Or.inr (Circle.ext (by rw [Circle.coe_inv]; exact sub_eq_zero.mp hc))
 
 /-- **Conjugating a torus element back into the maximal torus returns it or its inverse.**
-Conjugation preserves the trace, and the trace separates torus elements up to inversion
-(`TauCeti.SU2.eq_or_eq_inv_of_trace_torusMatrix_eq`). -/
+Conjugation preserves the trace (`TauCeti.SU2.trace_eq_of_isConj`), and the trace separates torus
+elements up to inversion (`TauCeti.SU2.eq_or_eq_inv_of_trace_torusMatrix_eq`). -/
 theorem eq_or_eq_inv_of_conj_torusHom {z w : Circle} {g : SU2}
-    (h : g * torusHom z * g⁻¹ = torusHom w) : w = z ∨ w = z⁻¹ := by
-  refine eq_or_eq_inv_of_trace_torusMatrix_eq ?_
-  have hmat : (g : Matrix (Fin 2) (Fin 2) ℂ) * torusMatrix z
-      * ((g⁻¹ : SU2) : Matrix (Fin 2) (Fin 2) ℂ) = torusMatrix w := by
-    have hval := congrArg Subtype.val h
-    simpa only [Submonoid.coe_mul, coe_torusHom] using hval
-  rw [← hmat, Matrix.trace_mul_cycle, ← Submonoid.coe_mul, inv_mul_cancel, OneMemClass.coe_one,
-    Matrix.one_mul]
+    (h : g * torusHom z * g⁻¹ = torusHom w) : w = z ∨ w = z⁻¹ :=
+  eq_or_eq_inv_of_trace_torusMatrix_eq
+    (by simpa only [coe_torusHom] using (trace_eq_of_isConj (isConj_iff.mpr ⟨g, h⟩)).symm)
 
 /-! ### The angle parametrisation -/
 
@@ -381,6 +400,14 @@ theorem coe_torusExp (θ : ℝ) :
   congr 1
   ext i
   fin_cases i <;> simp [← Complex.exp_neg]
+
+/-- The trace of the torus element `diag (e^{iθ}, e^{-iθ})` is `2 cos θ`. This is not a `simp`
+lemma: `TauCeti.SU2.coe_torusExp` already rewrites the underlying matrix to a diagonal one, so its
+left-hand side is not in simp-normal form. -/
+theorem trace_coe_torusExp (θ : ℝ) :
+    Matrix.trace ((torusExp θ : SU2) : Matrix (Fin 2) (Fin 2) ℂ) = 2 * (Real.cos θ : ℂ) := by
+  rw [torusExp_def, coe_torusHom, trace_torusMatrix, Circle.coe_exp, ← Complex.exp_neg,
+    Complex.ofReal_cos, Complex.two_cos, neg_mul]
 
 theorem torusExp_mem_torus (θ : ℝ) : torusExp θ ∈ torus := torusHom_mem_torus _
 
