@@ -27,8 +27,10 @@ for every finite acyclic quiver.
 
 * `TauCeti.Quiver.IsAcyclic.exists_isSinkAdmissible`: a finite acyclic quiver has a
   repetition-free sink-admissible ordering of all of its vertices.
-* `TauCeti.Quiver.isSinkAdmissible_of_pairwise`: a repetition-free list of all the vertices along
-  which no arrow runs forwards is sink-admissible.
+* `TauCeti.Quiver.isSinkAdmissible_of_pairwise`: a repetition-free list along which no arrow runs
+  forwards, whose entries carry no loop and emit no arrow off the list, is sink-admissible, with
+  `TauCeti.Quiver.isSinkAdmissible_of_pairwise_of_forall_mem` the case of a list of all the
+  vertices, where the last two hypotheses are automatic.
 
 ## References
 
@@ -103,7 +105,7 @@ no arrow leaves the list, is what survives the passage from a list to its tail: 
 head turns the arrows out of the head into arrows into it. -/
 private theorem isSinkAdmissible_of_pairwise_aux :
     ∀ (l : List V) (q : _root_.Quiver.{v} V), l.Nodup →
-      (∀ v : V, IsEmpty (@_root_.Quiver.Hom V q v v)) →
+      (∀ x ∈ l, IsEmpty (@_root_.Quiver.Hom V q x x)) →
       (l.Pairwise fun x y ↦ IsEmpty (@_root_.Quiver.Hom V q x y)) →
       (∀ x ∈ l, ∀ b : V, b ∉ l → IsEmpty (@_root_.Quiver.Hom V q x b)) →
       IsSinkAdmissible q l := by
@@ -120,17 +122,14 @@ private theorem isSinkAdmissible_of_pairwise_aux :
     have hsink : @IsSink V q i := (@IsSink_def V q i).mpr fun b ↦ by
       by_cases hbi : b = i
       · rw [hbi]
-        exact hloop i
+        exact hloop i hii
       · by_cases hbt : b ∈ t
         · exact hhead b hbt
         · exact hout i hii b (by simp [hbi, hbt])
-    have hloop' : ∀ v : V, IsEmpty (@_root_.Quiver.Hom V (reflectAt q i) v v) := fun v ↦ by
-      rw [hom_reflectAt]
-      by_cases hvi : v = i
-      · rw [hvi, @reflectHom_left V q i i]
-        exact hloop i
-      · rw [@reflectHom_of_ne_of_ne V q i v v hvi hvi]
-        exact hloop v
+    have hloop' : ∀ x ∈ t, IsEmpty (@_root_.Quiver.Hom V (reflectAt q i) x x) := fun x hx ↦ by
+      rw [hom_reflectAt, @reflectHom_of_ne_of_ne V q i x x (fun hc ↦ hit (hc ▸ hx))
+        (fun hc ↦ hit (hc ▸ hx))]
+      exact hloop x (List.mem_cons_of_mem _ hx)
     have hp' : t.Pairwise fun x y ↦ IsEmpty (@_root_.Quiver.Hom V (reflectAt q i) x y) := by
       refine (List.Pairwise.and_mem.mp hp).imp fun {x y} h ↦ ?_
       obtain ⟨hx, hy, hxy⟩ := h
@@ -148,15 +147,30 @@ private theorem isSinkAdmissible_of_pairwise_aux :
         exact hout x (List.mem_cons_of_mem _ hx) b (by simp [hbi, hb])
     exact isSinkAdmissible_cons.mpr ⟨hsink, ih (reflectAt q i) hnd hloop' hp' hout'⟩
 
-/-- **A topological ordering is sink-admissible.** If `l` lists every vertex exactly once, no
-vertex carries a loop, and no arrow runs from an earlier entry of `l` to a later one —
-equivalently, the target of every arrow precedes its source — then each entry is a sink once its
-predecessors have been reflected. -/
+/-- **A topological ordering is sink-admissible.** If `l` repeats no vertex, no entry of `l`
+carries a loop, no arrow runs from an earlier entry of `l` to a later one — equivalently, the
+target of such an arrow precedes its source — and no arrow leaves `l` for a vertex outside it,
+then each entry is a sink once its predecessors have been reflected. The list need not exhaust the
+vertices; `TauCeti.Quiver.isSinkAdmissible_of_pairwise_of_forall_mem` is the case where it does,
+in which the last hypothesis is vacuous. -/
 theorem isSinkAdmissible_of_pairwise (q : _root_.Quiver.{v} V) {l : List V} (hnd : l.Nodup)
-    (hall : ∀ v : V, v ∈ l) (hloop : ∀ v : V, IsEmpty (@_root_.Quiver.Hom V q v v))
+    (hloop : ∀ x ∈ l, IsEmpty (@_root_.Quiver.Hom V q x x))
+    (hp : l.Pairwise fun x y ↦ IsEmpty (@_root_.Quiver.Hom V q x y))
+    (hout : ∀ x ∈ l, ∀ b : V, b ∉ l → IsEmpty (@_root_.Quiver.Hom V q x b)) :
+    IsSinkAdmissible q l :=
+  isSinkAdmissible_of_pairwise_aux l q hnd hloop hp hout
+
+/-- A repetition-free list of all the vertices along which no arrow runs forwards, no vertex
+carrying a loop, is sink-admissible: this is the case of
+`TauCeti.Quiver.isSinkAdmissible_of_pairwise` in which nothing lies outside the list, so no arrow
+can leave it. Such a list is a sink-admissible *ordering*, the input the Coxeter functor is
+assembled from. -/
+theorem isSinkAdmissible_of_pairwise_of_forall_mem (q : _root_.Quiver.{v} V) {l : List V}
+    (hnd : l.Nodup) (hall : ∀ v : V, v ∈ l)
+    (hloop : ∀ v : V, IsEmpty (@_root_.Quiver.Hom V q v v))
     (hp : l.Pairwise fun x y ↦ IsEmpty (@_root_.Quiver.Hom V q x y)) :
     IsSinkAdmissible q l :=
-  isSinkAdmissible_of_pairwise_aux l q hnd hloop hp fun _ _ b hb ↦ absurd (hall b) hb
+  isSinkAdmissible_of_pairwise q hnd (fun x _ ↦ hloop x) hp fun _ _ b hb ↦ absurd (hall b) hb
 
 /-! ### Existence for a finite acyclic quiver -/
 
@@ -215,7 +229,7 @@ theorem IsAcyclic.exists_isSinkAdmissible [Finite V] (h : IsAcyclic V) :
   obtain ⟨l, hnd, hmem, hp⟩ := exists_pairwise_isEmpty_hom h Finset.univ
   have hall : ∀ v : V, v ∈ l := fun v ↦ (hmem v).mpr (Finset.mem_univ v)
   exact ⟨l, hnd, hall,
-    isSinkAdmissible_of_pairwise q hnd hall (fun v ↦ h.isEmpty_hom_self v) hp⟩
+    isSinkAdmissible_of_pairwise_of_forall_mem q hnd hall (fun v ↦ h.isEmpty_hom_self v) hp⟩
 
 end Quiver
 
