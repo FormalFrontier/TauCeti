@@ -46,25 +46,38 @@ denominators. The symmetrization itself is not redone here: Mathlib packages it 
 * `TauCeti.IsFiniteType.apply_mul_apply_mem_of_ne`: the rank-two bound. For `i ≠ j` the Cartan
   product `A i j * A j i` lies in `{0, 1, 2, 3}`, so every edge of the diagram is single, double or
   triple.
-* `TauCeti.IsFiniteType.card_le_three_of_pairwise_apply_eq_zero`: the degree bound for a
-  non-adjacent star. No index has four pairwise non-adjacent neighbours; the affine type `D̃₄` is
-  ruled out in `TauCeti.not_isFiniteType_affineD₄`.
 * `TauCeti.IsFiniteType.apply_mul_apply_le_one_of_two_le` and
   `TauCeti.IsFiniteType.apply_eq_zero_of_apply_mul_apply_eq_three`: of two edges at an index whose
   far ends are non-adjacent at most one is multiple, and an index carrying a triple edge is joined
   to no further index non-adjacent to the far end of that edge.
-* `TauCeti.IsFiniteType.apply_mul_apply_eq_one_of_three_le_card`: three pairwise non-adjacent
-  neighbours of an index are each joined to it by a single edge.
 
 Each of these consequences selects its neighbours through a pairwise non-adjacency hypothesis,
-which is what the star bound asks for. Turning them into the unconditional graph statements the
-classification runs on - degree at most three, at most one multiple edge at a vertex, an isolated
-triple edge, a simply laced branch vertex - needs in addition that distinct neighbours of an index
-are never adjacent, that is, that a finite-type diagram carries no triangle. That exclusion is not
-proved here.
+which is what the star bound asks for. The second positive-definiteness estimate of the file
+removes that hypothesis for good.
+
+* `TauCeti.IsFiniteType.apply_eq_zero_of_apply_ne_zero`: **a finite-type diagram carries no
+  triangle**. Two distinct neighbours of an index are never adjacent to one another. The test
+  vector is supported on the three indices of the putative triangle, its coordinate at each of them
+  being the weight of the opposite edge; the rank-two bound then makes the symmetrized form
+  nonpositive there. `TauCeti.IsFiniteType.pairwise_apply_eq_zero` is the same statement for a whole
+  neighbourhood, in the shape the star bound consumes.
+
+With it the conditional consequences above become the graph statements the classification runs on.
+
+* `TauCeti.IsFiniteType.card_le_three` and `TauCeti.IsFiniteType.card_filter_le_three`: **the
+  degree bound**. No index has four neighbours; the affine type `D̃₄` is ruled out in
+  `TauCeti.not_isFiniteType_affineD₄`.
+* `TauCeti.IsFiniteType.apply_mul_apply_le_one_of_two_le_of_ne`: **at most one edge at an index is
+  multiple**.
+* `TauCeti.IsFiniteType.apply_eq_zero_of_apply_mul_apply_eq_three_of_ne`: **a triple edge is
+  isolated**, so it is a connected component of the diagram; this is why `G₂` has rank `2`.
+* `TauCeti.IsFiniteType.apply_mul_apply_eq_one_of_three_le_card`: **a branch vertex is simply
+  laced**. Three neighbours of an index are each joined to it by a single edge.
 * `TauCeti.IsFiniteType.det_ne_zero`: a finite-type matrix is nonsingular. Since the extended
-  Dynkin diagrams have singular Cartan matrices, this is the second elimination tool; the affine
-  type `Ã₂` is ruled out in `TauCeti.not_isFiniteType_affineA₂`.
+  Dynkin diagrams have singular Cartan matrices, this is the third elimination tool; the affine
+  type `Ã₂` is ruled out in `TauCeti.not_isFiniteType_affineA₂`. It does not subsume the
+  no-triangle theorem: `TauCeti.not_isFiniteType_doubleEdgeTriangle` exhibits a nonsingular
+  triangle.
 * `TauCeti.isFiniteType_cartanMatrix`: **the Cartan matrix of a base of a finite crystallographic
   root system is of finite type**, and `TauCeti.HasCartanType.isFiniteType`: so is the standard
   Cartan matrix of any Dynkin type realized by such a base.
@@ -267,6 +280,143 @@ theorem apply_mul_apply_mem_of_ne (h : IsFiniteType A) {i j : B} (hij : i ≠ j)
   simp only [Set.mem_insert_iff, Set.mem_singleton_iff]
   omega
 
+/-- **Three Cartan products in the rank-two range satisfy `(α + β + γ) ^ 2 ≤ 9αβγ`.** This is the
+arithmetic behind the exclusion of triangles. The three edges of a triangle carry Cartan products
+between `1` and `3`, and the inequality then says that the test vector built from those three
+products does not see a positive value of the symmetrized form. Equality holds exactly at
+`α = β = γ = 1`, the simply laced triangle, which is the affine diagram `Ã₂`. -/
+private theorem sq_add_le_nine_mul {α β γ : ℤ} (hα : 1 ≤ α) (hα' : α ≤ 3) (hβ : 1 ≤ β)
+    (hβ' : β ≤ 3) (hγ : 1 ≤ γ) (hγ' : γ ≤ 3) :
+    (α + β + γ) ^ 2 ≤ 9 * (α * β * γ) := by
+  interval_cases α <;> interval_cases β <;> interval_cases γ <;> norm_num
+
+/-- **The endgame of the triangle exclusion.** If `m` is positive with `m² = P²αβγ` and the three
+Cartan products satisfy the bound of `TauCeti.IsFiniteType.sq_add_le_nine_mul`, then `3m` is not
+below `P(α + β + γ)`: squaring the strict inequality would make `9P²αβγ` smaller than itself.
+
+At the call site `P` is the product of the three symmetrizer values, `α`, `β`, `γ` are the Cartan
+products along the three edges of the triangle, and `m` is the product of the three edge weights of
+the symmetrization, up to sign; the value of the symmetrized form at the test vector is
+`2P(α + β + γ) - 6m`, so positive definiteness is exactly the inequality refuted here. -/
+private theorem not_three_mul_lt {P m α β γ : ℚ} (hP : 0 < P) (hm : 0 < m)
+    (hm2 : m ^ 2 = P ^ 2 * (α * β * γ)) (hb : (α + β + γ) ^ 2 ≤ 9 * (α * β * γ)) :
+    ¬ 3 * m < P * (α + β + γ) := fun hlt ↦ by
+  nlinarith [mul_le_mul_of_nonneg_left hb (mul_pos hP hP).le, sq_nonneg (P * (α + β + γ) - 3 * m)]
+
+/-- **The three-index core of the no-triangle theorem.** A finite-type matrix on three indices has
+a missing edge: if the first index is joined to the other two, those two are not joined to each
+other.
+
+The proof is the second, and last, positive-definiteness estimate of this file, and it is a
+different one from the star bound: the test vector is supported on *all three* indices, and at each
+of them its coordinate is the weight, in the symmetrization, of the *opposite* edge. Writing
+`a`, `b`, `c` for the three edge weights - each negative, since the off-diagonal entries are - the
+symmetrized form evaluates at that vector to `2(d₀c² + d₁b² + d₂a²) + 6abc`, and the identity
+`a² = d₀d₁·(A₀₁A₁₀)` turns this into `2P(α + β + γ) - 6m` in the notation of
+`TauCeti.IsFiniteType.not_three_mul_lt`. -/
+private theorem apply_eq_zero_of_fin_three {T : Matrix (Fin 3) (Fin 3) ℤ} (h : IsFiniteType T)
+    (h01 : T 0 1 ≠ 0) (h02 : T 0 2 ≠ 0) :
+    T 1 2 = 0 := by
+  by_contra h12
+  obtain ⟨d, hd, hpd⟩ := h.exists_symmetrizer
+  -- The symmetrizer intertwines the two entries of a transposed pair.
+  have hsymm : ∀ p q : Fin 3, d q * ((T q p : ℤ) : ℚ) = d p * ((T p q : ℤ) : ℚ) := fun p q ↦ by
+    simpa using hpd.isHermitian.apply p q
+  -- Each of the three edges is present, so each edge weight of the symmetrization is negative.
+  have hT01 : T 0 1 < 0 := lt_of_le_of_ne (h.apply_le_zero_of_ne (by decide)) h01
+  have hT02 : T 0 2 < 0 := lt_of_le_of_ne (h.apply_le_zero_of_ne (by decide)) h02
+  have hT12 : T 1 2 < 0 := lt_of_le_of_ne (h.apply_le_zero_of_ne (by decide)) h12
+  have ha : d 0 * ((T 0 1 : ℤ) : ℚ) < 0 := mul_neg_of_pos_of_neg (hd 0) (by exact_mod_cast hT01)
+  have hb : d 0 * ((T 0 2 : ℤ) : ℚ) < 0 := mul_neg_of_pos_of_neg (hd 0) (by exact_mod_cast hT02)
+  have hc : d 1 * ((T 1 2 : ℤ) : ℚ) < 0 := mul_neg_of_pos_of_neg (hd 1) (by exact_mod_cast hT12)
+  -- The test vector: at each index, the weight of the opposite edge.
+  have hq := hpd.dotProduct_mulVec_pos
+    (x := ![-(d 1 * ((T 1 2 : ℤ) : ℚ)), -(d 0 * ((T 0 2 : ℤ) : ℚ)), -(d 0 * ((T 0 1 : ℤ) : ℚ))])
+    (fun hcon ↦ by
+      have h0 := congrFun hcon 0
+      simp only [Matrix.cons_val_zero, Pi.zero_apply, neg_eq_zero] at h0
+      linarith)
+  rw [star_trivial, Matrix.dot_mulVec_eq_sum_sum] at hq
+  simp only [Fin.sum_univ_three, Matrix.of_apply, Matrix.cons_val_zero, Matrix.cons_val_one,
+    Matrix.head_cons, Matrix.cons_val_two, Matrix.tail_cons] at hq
+  rw [h.apply_self 0, h.apply_self 1, h.apply_self 2, hsymm 0 1, hsymm 0 2, hsymm 1 2] at hq
+  push_cast at hq
+  -- The square of an edge weight is the Cartan product of that edge, scaled by two symmetrizers.
+  have ea : (d 0 * ((T 0 1 : ℤ) : ℚ)) ^ 2
+      = d 0 * d 1 * (((T 0 1 : ℤ) : ℚ) * ((T 1 0 : ℤ) : ℚ)) := by
+    linear_combination (-(d 0 * ((T 0 1 : ℤ) : ℚ))) * hsymm 0 1
+  have eb : (d 0 * ((T 0 2 : ℤ) : ℚ)) ^ 2
+      = d 0 * d 2 * (((T 0 2 : ℤ) : ℚ) * ((T 2 0 : ℤ) : ℚ)) := by
+    linear_combination (-(d 0 * ((T 0 2 : ℤ) : ℚ))) * hsymm 0 2
+  have ec : (d 1 * ((T 1 2 : ℤ) : ℚ)) ^ 2
+      = d 1 * d 2 * (((T 1 2 : ℤ) : ℚ) * ((T 2 1 : ℤ) : ℚ)) := by
+    linear_combination (-(d 1 * ((T 1 2 : ℤ) : ℚ))) * hsymm 1 2
+  -- Package the three edges as the data the arithmetic endgame consumes.
+  refine not_three_mul_lt (P := d 0 * d 1 * d 2)
+    (m := -(d 0 * ((T 0 1 : ℤ) : ℚ) * (d 0 * ((T 0 2 : ℤ) : ℚ)) * (d 1 * ((T 1 2 : ℤ) : ℚ))))
+    (α := ((T 0 1 : ℤ) : ℚ) * ((T 1 0 : ℤ) : ℚ)) (β := ((T 0 2 : ℤ) : ℚ) * ((T 2 0 : ℤ) : ℚ))
+    (γ := ((T 1 2 : ℤ) : ℚ) * ((T 2 1 : ℤ) : ℚ))
+    (mul_pos (mul_pos (hd 0) (hd 1)) (hd 2))
+    (neg_pos.mpr (mul_neg_of_pos_of_neg (mul_pos_of_neg_of_neg ha hb) hc)) ?_ ?_ ?_
+  · -- `m² = P²αβγ`, by multiplying the three edge identities.
+    have : (-(d 0 * ((T 0 1 : ℤ) : ℚ) * (d 0 * ((T 0 2 : ℤ) : ℚ)) * (d 1 * ((T 1 2 : ℤ) : ℚ)))) ^ 2
+        = (d 0 * ((T 0 1 : ℤ) : ℚ)) ^ 2 * (d 0 * ((T 0 2 : ℤ) : ℚ)) ^ 2 *
+          (d 1 * ((T 1 2 : ℤ) : ℚ)) ^ 2 := by ring
+    rw [this, ea, eb, ec]
+    ring
+  · -- The rank-two bound on each of the three edges feeds the arithmetic inequality.
+    have hα := h.one_le_apply_mul_apply h01
+    have hβ := h.one_le_apply_mul_apply h02
+    have hγ := h.one_le_apply_mul_apply h12
+    have hα' := h.apply_mul_apply_mem_of_ne (i := 0) (j := 1) (by decide)
+    have hβ' := h.apply_mul_apply_mem_of_ne (i := 0) (j := 2) (by decide)
+    have hγ' := h.apply_mul_apply_mem_of_ne (i := 1) (j := 2) (by decide)
+    simp only [Set.mem_insert_iff, Set.mem_singleton_iff] at hα' hβ' hγ'
+    have := sq_add_le_nine_mul hα (by omega) hβ (by omega) hγ (by omega)
+    exact_mod_cast this
+  · -- Positive definiteness at the test vector, rewritten through the three edge identities: each
+    -- diagonal contribution is twice `P` times the Cartan product of the opposite edge.
+    have ea' : 2 * d 2 * (d 0 * ((T 0 1 : ℤ) : ℚ)) ^ 2
+        = 2 * (d 0 * d 1 * d 2) * (((T 0 1 : ℤ) : ℚ) * ((T 1 0 : ℤ) : ℚ)) := by rw [ea]; ring
+    have eb' : 2 * d 1 * (d 0 * ((T 0 2 : ℤ) : ℚ)) ^ 2
+        = 2 * (d 0 * d 1 * d 2) * (((T 0 2 : ℤ) : ℚ) * ((T 2 0 : ℤ) : ℚ)) := by rw [eb]; ring
+    have ec' : 2 * d 0 * (d 1 * ((T 1 2 : ℤ) : ℚ)) ^ 2
+        = 2 * (d 0 * d 1 * d 2) * (((T 1 2 : ℤ) : ℚ) * ((T 2 1 : ℤ) : ℚ)) := by rw [ec]; ring
+    linarith [hq, ea', eb', ec']
+
+/-- **A finite-type diagram carries no triangle.** Two distinct neighbours of an index are never
+adjacent to one another, so the neighbourhood of an index is pairwise non-adjacent and the star
+bound applies to it with no side condition.
+
+This is what turns the conditional consequences of the star bound into graph statements: the degree
+bound `TauCeti.IsFiniteType.card_le_three`, the fact that at most one edge at an index is multiple,
+and the isolation of a triple edge. -/
+theorem apply_eq_zero_of_apply_ne_zero (h : IsFiniteType A) {i j k : B} (hij : i ≠ j) (hik : i ≠ k)
+    (hjk : j ≠ k) (hj : A i j ≠ 0) (hk : A i k ≠ 0) :
+    A j k = 0 := by
+  -- Restrict to the principal submatrix on the three indices and apply the three-index core.
+  have he : Function.Injective ![i, j, k] := by
+    intro p q hpq
+    fin_cases p <;> fin_cases q <;> simp_all
+  have h' := h.submatrix he
+  have e01 : (A.submatrix ![i, j, k] ![i, j, k]) 0 1 = A i j := by simp
+  have e02 : (A.submatrix ![i, j, k] ![i, j, k]) 0 2 = A i k := by simp
+  have e12 : (A.submatrix ![i, j, k] ![i, j, k]) 1 2 = A j k := by simp
+  have := apply_eq_zero_of_fin_three h' (e01 ▸ hj) (e02 ▸ hk)
+  rwa [e12] at this
+
+/-- **The neighbourhood of an index is pairwise non-adjacent.** This is the no-triangle theorem in
+the form the star bound consumes: a set of neighbours of `i`, none of them `i` itself, satisfies the
+pairwise hypothesis of `TauCeti.IsFiniteType.sum_apply_mul_apply_lt_four` for free. -/
+theorem pairwise_apply_eq_zero (h : IsFiniteType A) {i : B} {s : Finset B} (his : i ∉ s)
+    (hadj : ∀ j ∈ s, A i j ≠ 0) :
+    (s : Set B).Pairwise fun j k ↦ A j k = 0 := by
+  intro j hj k hk hjk
+  simp only [Finset.mem_coe] at hj hk
+  refine h.apply_eq_zero_of_apply_ne_zero ?_ ?_ hjk (hadj j hj) (hadj k hk)
+  · rintro rfl; exact his hj
+  · rintro rfl; exact his hk
+
 /-- **The two-index case of the star bound.** Two non-adjacent indices `j` and `k`, both distinct
 from `i`, carry Cartan products with `i` summing to less than `4`; neither is required to be a
 neighbour of `i`, an absent edge contributing `0`. Here `j ≠ k` need not be assumed: it follows
@@ -301,6 +451,20 @@ theorem apply_mul_apply_le_one_of_two_le (h : IsFiniteType A) {i j k : B} (h0 : 
   have := h.apply_mul_apply_add_apply_mul_apply_lt_four hij hik h0
   omega
 
+/-- **At most one edge at an index is multiple.** An index carrying a multiple edge is joined to
+every other index by at most a single edge. This is the unconditional form of
+`TauCeti.IsFiniteType.apply_mul_apply_le_one_of_two_le`: the non-adjacency of the two far ends,
+which that statement assumes, is supplied by the no-triangle theorem. -/
+theorem apply_mul_apply_le_one_of_two_le_of_ne (h : IsFiniteType A) {i j k : B} (hij : i ≠ j)
+    (hik : i ≠ k) (hjk : j ≠ k) (hj : 2 ≤ A i j * A j i) :
+    A i k * A k i ≤ 1 := by
+  -- Either `k` is not a neighbour of `i` at all, or the triangle `i, j, k` is forbidden.
+  rcases eq_or_ne (A i k) 0 with h0 | h0
+  · simp [h0]
+  have hne : A i j ≠ 0 := fun hc ↦ by simp [hc] at hj
+  exact h.apply_mul_apply_le_one_of_two_le
+    (h.apply_eq_zero_of_apply_ne_zero hij hik hjk hne h0) hj
+
 /-- **A triple edge is isolated among the neighbours non-adjacent to its far end.** An index joined
 to `j` by a triple edge is joined to no further index non-adjacent to `j`. This is the local step
 behind `G₂` being the only finite-type diagram carrying a triple edge. -/
@@ -321,30 +485,48 @@ theorem apply_eq_zero_of_apply_mul_apply_eq_three (h : IsFiniteType A) {i j k : 
   have := h.apply_mul_apply_add_apply_mul_apply_lt_four hij hik h0
   omega
 
-/-- **An index of a finite-type matrix has at most three pairwise non-adjacent neighbours**, so a
-finite-type diagram branches into at most three pairwise unjoined arms. The unconditional degree
-bound asks in addition that distinct neighbours of an index are non-adjacent, which is not proved
-here. -/
-theorem card_le_three_of_pairwise_apply_eq_zero (h : IsFiniteType A) {i : B} {s : Finset B}
-    (his : i ∉ s) (hadj : ∀ j ∈ s, A i j ≠ 0)
-    (hs : (s : Set B).Pairwise fun j k ↦ A j k = 0) :
+/-- **A triple edge is isolated.** An index carrying a triple edge is joined to no other index at
+all. This is the unconditional form of
+`TauCeti.IsFiniteType.apply_eq_zero_of_apply_mul_apply_eq_three`, and applied at both ends of the
+edge it says that a triple edge is a connected component: it is why `G₂` has rank `2`. -/
+theorem apply_eq_zero_of_apply_mul_apply_eq_three_of_ne (h : IsFiniteType A) {i j k : B}
+    (hij : i ≠ j) (hik : i ≠ k) (hjk : j ≠ k) (hj : A i j * A j i = 3) :
+    A i k = 0 := by
+  -- Were `k` a neighbour of `i` too, the triangle `i, j, k` would be forbidden.
+  by_contra h0
+  have hne : A i j ≠ 0 := fun hc ↦ by simp [hc] at hj
+  exact h0 (h.apply_eq_zero_of_apply_mul_apply_eq_three
+    (h.apply_eq_zero_of_apply_ne_zero hij hik hjk hne h0) hj)
+
+/-- **The degree bound: an index of a finite-type matrix has at most three neighbours**, so a
+finite-type diagram branches into at most three arms. By the no-triangle theorem the neighbours are
+automatically pairwise non-adjacent, so the star bound applies to them directly. -/
+theorem card_le_three (h : IsFiniteType A) {i : B} {s : Finset B} (his : i ∉ s)
+    (hadj : ∀ j ∈ s, A i j ≠ 0) :
     s.card ≤ 3 := by
   have hone : ∀ j ∈ s, (1 : ℤ) ≤ A i j * A j i := fun j hj ↦
     h.one_le_apply_mul_apply (hadj j hj)
   have hcard : (s.card : ℤ) ≤ ∑ j ∈ s, A i j * A j i := by
     calc (s.card : ℤ) = ∑ _j ∈ s, (1 : ℤ) := by simp
       _ ≤ _ := Finset.sum_le_sum hone
-  have := h.sum_apply_mul_apply_lt_four his hs
+  have := h.sum_apply_mul_apply_lt_four his (h.pairwise_apply_eq_zero his hadj)
   omega
 
-/-- **A three-armed non-adjacent star of a finite-type matrix is simply laced.** An index with
-three pairwise non-adjacent neighbours meets each of them along a single edge, since three Cartan
-products of value at least `1` already exhaust the star bound. -/
+/-- **The degree bound, for the neighbourhood itself.** The indices joined to `i`, other than `i`,
+number at most three. -/
+theorem card_filter_le_three [DecidableEq B] (h : IsFiniteType A) (i : B) :
+    (Finset.univ.filter fun j ↦ j ≠ i ∧ A i j ≠ 0).card ≤ 3 :=
+  h.card_le_three (by simp) fun j hj ↦ (Finset.mem_filter.mp hj).2.2
+
+/-- **A three-armed star of a finite-type matrix is simply laced.** An index with three neighbours
+meets each of them along a single edge, since three Cartan products of value at least `1` already
+exhaust the star bound. Together with `TauCeti.IsFiniteType.card_le_three` this says that a branch
+vertex of a finite-type diagram carries exactly three simple edges. -/
 theorem apply_mul_apply_eq_one_of_three_le_card (h : IsFiniteType A) {i : B} {s : Finset B}
-    (his : i ∉ s) (hadj : ∀ j ∈ s, A i j ≠ 0)
-    (hs : (s : Set B).Pairwise fun j k ↦ A j k = 0) (hcard : 3 ≤ s.card) {j : B} (hj : j ∈ s) :
+    (his : i ∉ s) (hadj : ∀ j ∈ s, A i j ≠ 0) (hcard : 3 ≤ s.card) {j : B} (hj : j ∈ s) :
     A i j * A j i = 1 := by
   classical
+  have hs : (s : Set B).Pairwise fun j k ↦ A j k = 0 := h.pairwise_apply_eq_zero his hadj
   have hone : ∀ k ∈ s, (1 : ℤ) ≤ A i k * A k i := fun k hk ↦
     h.one_le_apply_mul_apply (hadj k hk)
   have hsplit : ∑ k ∈ s, A i k * A k i
@@ -390,8 +572,7 @@ theorem not_isFiniteType_affineA₂ :
 
 /-- **The Cartan matrix of the affine diagram `D̃₄` is not of finite type.** The four-armed star is
 the smallest diagram excluded by the degree bound; unlike `Ã₂` it needs no determinant, since
-`TauCeti.IsFiniteType.card_le_three_of_pairwise_apply_eq_zero` applies to the central index
-directly. -/
+`TauCeti.IsFiniteType.card_le_three` applies to the central index directly. -/
 theorem not_isFiniteType_affineD₄ :
     ¬ IsFiniteType (!![2, -1, -1, -1, -1;
                       -1, 2, 0, 0, 0;
@@ -399,14 +580,22 @@ theorem not_isFiniteType_affineD₄ :
                       -1, 0, 0, 2, 0;
                       -1, 0, 0, 0, 2] : Matrix (Fin 5) (Fin 5) ℤ) := by
   intro h
-  have hcard := h.card_le_three_of_pairwise_apply_eq_zero (i := 0) (s := {1, 2, 3, 4})
-    (by decide) (by decide) (by
-      intro p hp q hq hpq
-      simp only [Finset.coe_insert, Finset.coe_singleton, Set.mem_insert_iff,
-        Set.mem_singleton_iff] at hp hq
-      rcases hp with rfl | rfl | rfl | rfl <;> rcases hq with rfl | rfl | rfl | rfl <;>
-        revert hpq <;> decide)
+  have hcard := h.card_le_three (i := 0) (s := {1, 2, 3, 4}) (by decide) (by decide)
   revert hcard
+  decide
+
+/-- **A triangle carrying double edges is not of finite type.** This matrix is a generalized Cartan
+matrix; it is symmetrizable, by `d = (1, 2, 1)`; its Cartan products `2`, `1`, `2` all lie in the
+rank-two range; and it is nonsingular, with determinant `-6`. So neither the combinatorial axioms,
+nor `TauCeti.IsFiniteType.apply_mul_apply_mem_of_ne`, nor `TauCeti.IsFiniteType.det_ne_zero`
+excludes it, and the star bound never applies, its non-adjacency hypothesis being what a triangle
+fails. It is `TauCeti.IsFiniteType.apply_eq_zero_of_apply_ne_zero` that rules it out. -/
+theorem not_isFiniteType_doubleEdgeTriangle :
+    ¬ IsFiniteType (!![2, -2, -1; -1, 2, -1; -1, -2, 2] : Matrix (Fin 3) (Fin 3) ℤ) := by
+  intro h
+  have h12 := h.apply_eq_zero_of_apply_ne_zero (i := 0) (j := 1) (k := 2)
+    (by decide) (by decide) (by decide) (by decide) (by decide)
+  revert h12
   decide
 
 section RootPairing
