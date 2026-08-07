@@ -10,7 +10,7 @@ public import TauCeti.Probability.Process.Tail.Basic
 public import Mathlib.MeasureTheory.MeasurableSpace.Invariants
 
 /-!
-# The shift-invariant σ-algebra: its place below the path tail, and its stability under reindexing
+# The shift-invariant σ-algebra: its place below the path tail
 
 For the one-sided shift on path space `ℕ → α`, an ambient-measurable event fixed by the shift is
 fixed by every iterate of the shift, and therefore depends only on the coordinates from an
@@ -22,13 +22,9 @@ and shows that the inclusion is **strict**: for `Bool`-valued paths, the tail ev
 `true` occurs at infinitely many even times" is not shift-invariant, because the shift exchanges
 even and odd times.
 
-The invariant-measurable form of the reindexing lemma
-(`preimage_reindex_eq_of_measurableSet_invariants_of_eventually_add`) lives with its consumer in
-`PathSpace/Invariant/Transport.lean`; the underlying fact about exactly shift-invariant sets is
-`preimage_reindex_eq_of_preimage_shift_eq_of_eventually_add` in `PathSpace/Shift.lean`.
-That is one of the two independent inputs a Koopman-style block argument needs — the other,
-measure preservation, comes from contractability and needs strict monotonicity, which this one does
-not.
+The reindexing stability of invariant events is elsewhere:
+`preimage_reindex_eq_of_preimage_shift_eq_of_eventually_add` in `PathSpace/Shift.lean`, and its
+invariant-measurable form in `PathSpace/Invariant/Transport.lean`.
 
 The Layer 2 exchangeability roadmap warns against silently identifying the tail σ-algebra with the
 shift-invariant σ-algebra for one-sided sequences; these two results are the exact form of that

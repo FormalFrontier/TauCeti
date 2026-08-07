@@ -23,13 +23,19 @@ combine to give this, and keeping them apart is the point:
   (`preimage_reindex_eq_of_measurableSet_invariants_of_eventually_add`) — this needs no
   monotonicity, only exact shift invariance.
 
+## Main results
+
+* `preimage_reindex_eq_of_measurableSet_invariants_of_eventually_add` — the invariant-measurable
+  form of reindexing stability;
+* `ContractableLaw.setLIntegral_comp_reindex_eq_of_measurableSet_invariants` — the transport itself.
+
 ## Source
 
-This generic transport statement is Tau Ceti-native: it is assembled from two declarations already
-in this repository — `ContractableLaw.measurePreserving_reindex` and
-`preimage_reindex_eq_of_measurableSet_invariants_of_eventually_add` — composed through Mathlib's
-`MeasurePreserving.setLIntegral_comp_preimage`. It mentions no block, no selection and no Koopman
-operator. The Koopman-facing consumer credits the strategy it serves, in
+Both statements are Tau Ceti-native. The genuinely external inputs are
+`ContractableLaw.measurePreserving_reindex` and
+`preimage_reindex_eq_of_preimage_shift_eq_of_eventually_add`, together with Mathlib's
+`MeasurePreserving.setLIntegral_comp_preimage`. Nothing here mentions a block, a selection or a
+Koopman operator; the Koopman-facing consumer credits the strategy it serves, in
 `DeFinetti/ViaKoopman/Invariant/BlockTransport.lean`.
 
 ⚠ This is specific to *invariant* events. A tail event need not satisfy `shift ⁻¹' A = A`, and

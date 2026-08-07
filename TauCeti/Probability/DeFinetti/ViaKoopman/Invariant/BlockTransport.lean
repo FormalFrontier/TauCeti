@@ -21,7 +21,7 @@ process.
 
 * `ContractableLaw.setLIntegral_block_eq_prefix_of_measurableSet_invariants` — over an invariant
   event, a strictly increasing finite selection may be replaced by the prefix `0, 1, …, m - 1`.
-* `birkhoffAverage_coord_eq_prefixAverage` — the Birkhoff average of a coordinate observable *is*
+* `birkhoffAverage_shift_eq_prefixAverage` — the Birkhoff average of a coordinate observable *is*
   the prefix average of the process.
 
 The block comparison is the finite-selection form of
@@ -70,11 +70,14 @@ theorem ContractableLaw.setLIntegral_block_eq_prefix_of_measurableSet_invariants
     {ρ : Measure (ℕ → α)} (hρ : ContractableLaw ρ) {m : ℕ} {k : Fin m → ℕ} (hk : StrictMono k)
     {A : Set (ℕ → α)} (hA : MeasurableSet[MeasurableSpace.invariants (shift α)] A)
     {g : (Fin m → α) → ℝ≥0∞} (hg : Measurable g) :
-    ∫⁻ x in A, g (fun i => x (k i)) ∂ρ = ∫⁻ x in A, g (fun i : Fin m => x (i : ℕ)) ∂ρ := by
+    ∫⁻ x in A, g (fun i => x (k i)) ∂ρ = ∫⁻ x in A, g (prefixProj α m x) ∂ρ := by
   obtain ⟨φ, C, hφ_mono, hφ_eq, hφ_add⟩ := exists_strictMono_nat_extending_fin_eventually_add hk
-  have hf : Measurable fun x : ℕ → α => g fun i : Fin m => x (i : ℕ) :=
-    hg.comp (measurable_pi_lambda _ fun i => measurable_pi_apply _)
-  simpa only [hφ_eq] using
+  have hf : Measurable fun x : ℕ → α => g (prefixProj α m x) :=
+    hg.comp (measurable_prefixProj m)
+  have hcomp : ∀ x : ℕ → α,
+      prefixProj α m (fun j => x (φ j)) = fun i : Fin m => x (k i) := by
+    intro x; funext i; simp only [prefixProj_apply, hφ_eq]
+  simpa only [hcomp] using
     hρ.setLIntegral_comp_reindex_eq_of_measurableSet_invariants hφ_mono hφ_add hA hf
 
 omit [MeasurableSpace α] in
@@ -87,7 +90,7 @@ single observable under a measure-preserving map — to the block-average API, w
 averages of a process over a selection of coordinates. Neither side needs to know about the other:
 they are the same function. -/
 @[simp]
-theorem birkhoffAverage_coord_eq_prefixAverage (f : α → ℝ) (n : ℕ) :
+theorem birkhoffAverage_shift_eq_prefixAverage (f : α → ℝ) (n : ℕ) :
     birkhoffAverage ℝ (shift α) (fun x => f (x 0)) n
       = prefixAverage (fun i (x : ℕ → α) => f (x i)) n := by
   funext x
