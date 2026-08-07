@@ -6,11 +6,13 @@ module
 
 -- `Matrix.charpoly`, `Matrix.eval_charpoly` and `Matrix.mem_spectrum_iff_isRoot_charpoly`.
 public import Mathlib.LinearAlgebra.Matrix.Charpoly.Eigs
--- `Matrix.charpoly_natDegree_eq_dim` and `Matrix.charpoly_monic`, for the cardinality bound.
-public import Mathlib.LinearAlgebra.Matrix.Charpoly.Coeff
+-- `Matrix.charpoly_natDegree_eq_dim` and `Matrix.charpoly_monic`, for the cardinality bound. Not
+-- `public`: these are used only in proofs.
+import Mathlib.LinearAlgebra.Matrix.Charpoly.Coeff
 -- `Matrix.exists_mulVec_eq_zero_iff`, the singularity criterion the search rests on; this also
--- supplies `Matrix.isUnit_iff_isUnit_det` and `Matrix.coe_units_inv`.
-public import Mathlib.LinearAlgebra.Matrix.ToLinearEquiv
+-- supplies `Matrix.isUnit_iff_isUnit_det` and `Matrix.coe_units_inv`. Not `public` for the same
+-- reason.
+import Mathlib.LinearAlgebra.Matrix.ToLinearEquiv
 -- `Matrix.spectrum_toLin'`, `Matrix.spectrum_diagonal`,
 -- `Module.End.hasEigenvalue_iff_mem_spectrum`, and the `spectrum` API itself, including
 -- `spectrum.units_conjugate`.
@@ -96,7 +98,7 @@ theorem notMem_eigenvalueSearch_iff_isUnit :
   rw [mem_eigenvalueSearch, Matrix.isUnit_iff_isUnit_det, isUnit_iff_ne_zero, ne_eq]
 
 /-- The membership test in the form the algorithm uses it: `a` is an eigenvalue exactly when
-`A - a • 1` is singular, and the eigenspace at `a` is then the kernel of that matrix. -/
+`A - a • 1` is singular. -/
 theorem mem_eigenvalueSearch_iff_det_sub_smul_eq_zero :
     a ∈ eigenvalueSearch A ↔ (A - a • (1 : Matrix n n F)).det = 0 := by
   have h : Matrix.scalar n a - A = -(A - a • (1 : Matrix n n F)) := by
@@ -188,7 +190,7 @@ theorem eigenvalueSearch_scalar [Nonempty n] (a : F) :
   simpa using eigenvalueSearch_scalar (n := n) (1 : F)
 
 /-- Similar matrices have the same eigenvalues. -/
-theorem eigenvalueSearch_conj {M : Matrix n n F} (hM : IsUnit M) (A : Matrix n n F) :
+theorem eigenvalueSearch_conjugate {M : Matrix n n F} (hM : IsUnit M) (A : Matrix n n F) :
     eigenvalueSearch (M * A * M⁻¹) = eigenvalueSearch A := by
   apply Finset.coe_injective
   rw [coe_eigenvalueSearch, coe_eigenvalueSearch, ← hM.unit_spec, ← Matrix.coe_units_inv,
