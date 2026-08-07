@@ -5,7 +5,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 import Mathlib.Tactic.Group
-public import Mathlib.GroupTheory.QuotientGroup.Basic
 public import TauCeti.Algebra.Group.NormalizerQuotient.Basic
 public import TauCeti.AlgebraicTopology.UniversalCover.Deck.Quotient.ActingGroup
 public import TauCeti.GroupTheory.QuotientGroup.KerEquiv
