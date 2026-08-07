@@ -13,6 +13,7 @@ public import Mathlib.MeasureTheory.Constructions.Cylinders
 import Mathlib.MeasureTheory.Measure.MeasuredSets
 import Mathlib.MeasureTheory.Constructions.ProjectiveFamilyContent
 import Mathlib.Probability.Independence.ZeroOne
+import Mathlib.Probability.Independence.InfinitePi
 
 /-!
 # The Hewitt–Savage zero-one law
@@ -387,6 +388,28 @@ theorem hewittSavage_trivial_of_iIndep {μ : Measure Ω} {X : ℕ → Ω → α}
   exact measure_eq_zero_or_one_of_exchangeableSigma hexch
     (fun {_F _G} hFG {_S} hS {_T} hT =>
       measure_pathLaw_inter_cylinder_of_disjoint hX h_indep hFG hS hT) hs
+
+/-- **The zero-one law for an i.i.d. product law.** Every exchangeable event has probability `0` or
+`1` under `P^{⊗ℕ}`.
+
+This is `hewittSavage_trivial_of_iIndep` read for the product law itself rather than for a process
+carried by some other measure: under `P^{⊗ℕ}` the coordinates are independent and identically
+distributed, and the path law of the coordinate process is the product law back again. -/
+theorem exchangeableSigma_trivial_of_infinitePi (P : ProbabilityMeasure α) {s : Set (ℕ → α)}
+    (hs : MeasurableSet[exchangeableSigma α] s) :
+    (Measure.infinitePi fun _ : ℕ => (P : Measure α)) s = 0 ∨
+      (Measure.infinitePi fun _ : ℕ => (P : Measure α)) s = 1 := by
+  let ρ := Measure.infinitePi fun _ : ℕ => (P : Measure α)
+  have hindep : ProbabilityTheory.iIndepFun (fun n (x : ℕ → α) => x n) ρ :=
+    ProbabilityTheory.iIndepFun_infinitePi (P := fun _ : ℕ => (P : Measure α))
+      (X := fun _ x => x) fun _ => measurable_id
+  have hident : ∀ n, ProbabilityTheory.IdentDistrib
+      (fun x : ℕ → α => x n) (fun x => x 0) ρ ρ := fun n =>
+    ⟨(measurable_pi_apply n).aemeasurable, (measurable_pi_apply 0).aemeasurable, by
+      simp [ρ, Measure.infinitePi_map_eval]⟩
+  have hpath : pathLaw ρ (fun n (x : ℕ → α) => x n) = ρ := by simp [pathLaw_def]
+  have hzeroOne := hewittSavage_trivial_of_iIndep hindep hident hs
+  rwa [hpath] at hzeroOne
 
 end HewittSavage
 
