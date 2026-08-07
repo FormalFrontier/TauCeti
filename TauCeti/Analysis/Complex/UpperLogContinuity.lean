@@ -18,8 +18,8 @@ touch the slit-plane boundary.
 
 ## Main declarations
 
-* `TauCeti.continuousOn_arg_im_nonneg`.
-* `TauCeti.continuousOn_log_im_nonneg`.
+* `TauCeti.continuousOn_arg_im_nonneg_ne_zero`.
+* `TauCeti.continuousOn_log_im_nonneg_ne_zero`.
 
 ## References
 
@@ -37,7 +37,8 @@ namespace TauCeti
 /-- The principal argument is continuous on the punctured closed upper half-plane: the
 approach is confined to nonnegative imaginary parts, where `arg` is the `arccos` of the
 normalized real part. -/
-theorem continuousOn_arg_im_nonneg :
+@[fun_prop]
+theorem continuousOn_arg_im_nonneg_ne_zero :
     ContinuousOn Complex.arg {z : ℂ | 0 ≤ z.im ∧ z ≠ 0} := by
   rintro z ⟨hz_im, hz_ne⟩
   exact ContinuousWithinAt.congr
@@ -47,7 +48,8 @@ theorem continuousOn_arg_im_nonneg :
     (Complex.arg_of_im_nonneg_of_ne_zero hz_im hz_ne)
 
 /-- The principal logarithm is continuous on the punctured closed upper half-plane. -/
-theorem continuousOn_log_im_nonneg :
+@[fun_prop]
+theorem continuousOn_log_im_nonneg_ne_zero :
     ContinuousOn Complex.log {z : ℂ | 0 ≤ z.im ∧ z ≠ 0} := by
   have hlog : Complex.log = fun w ↦ ↑(Real.log ‖w‖) + ↑(Complex.arg w) * Complex.I :=
     funext fun w ↦ Complex.ext (by simp [Complex.log_re]) (by simp [Complex.log_im])
@@ -58,7 +60,7 @@ theorem continuousOn_log_im_nonneg :
       ((Real.continuousAt_log (norm_ne_zero_iff.mpr hz_ne)).comp
         continuous_norm.continuousAt)).continuousWithinAt
   · exact (continuous_ofReal.continuousAt.comp_continuousWithinAt
-      (continuousOn_arg_im_nonneg z ⟨hz_im, hz_ne⟩)).mul continuousWithinAt_const
+      (continuousOn_arg_im_nonneg_ne_zero z ⟨hz_im, hz_ne⟩)).mul continuousWithinAt_const
 
 end TauCeti
 
