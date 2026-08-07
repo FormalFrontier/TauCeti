@@ -82,6 +82,9 @@ theorem contMDiff_adjointContinuousLinearMap :
   have hf : CMDiffAt ∞ (Function.uncurry f) (g, c g) := by
     have h := contMDiff_smul (I := I) (I' := I) (n := ∞)
       (G := ConjAct G) (M := G) (ConjAct.toConjAct g, c g)
+    -- `ConjAct G` is a type synonym carrying definitionally the topology and charts of `G`, and
+    -- its scalar action is definitionally conjugation. Since `contMDiff_smul` exposes the domain
+    -- as `ConjAct G × G`, crossing that wrapper requires this definitional reduction.
     change CMDiffAt ∞ (fun p : G × G ↦ p.1 * p.2 * p.1⁻¹) (g, c g) at h
     change CMDiffAt ∞ (fun p : G × G ↦ p.1 * p.2 * p.1⁻¹) (g, c g)
     exact h
@@ -107,7 +110,8 @@ theorem contMDiff_adjointContinuousLinearMap :
     exact adjointContinuousLinearMap_apply (I := I) x v
   rw [hadj]
   have hfun : (conjDiffeomorph (I := I) (n := 1) x : G → G) = f x := by
-    simpa only [f] using conjDiffeomorph_coe (I := I) (n := 1) x
+    funext y
+    exact conjDiffeomorph_apply x y
   rw [mfderiv_congr hfun]
   symm
   dsimp only [Amodel, Bmodel, A, B, e]
