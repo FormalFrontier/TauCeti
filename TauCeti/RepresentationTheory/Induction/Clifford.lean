@@ -4,7 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.GroupTheory.GroupAction.ConjAct
 public import Mathlib.RepresentationTheory.Semisimple
 public import TauCeti.RepresentationTheory.Induction.Conjugate
 public import TauCeti.RepresentationTheory.Irreducible
@@ -37,9 +36,10 @@ to `N` is semisimple (`TauCeti.Representation.isSemisimpleRepresentation_comp_su
 and this needs no invertibility of `Nat.card N`, so it is not Maschke's theorem in disguise.
 Semisimplicity then supplies an `N`-equivariant projection onto any other minimal
 `N`-subrepresentation, which cannot annihilate every translate, and Schur's lemma turns the
-surviving map into an isomorphism (`TauCeti.Representation.exists_conjSubrep_equiv`).  Composed with
-the twist, this says that any two irreducible constituents of the restriction are conjugate
-(`TauCeti.Representation.exists_equiv_comp_conjNormal`): the constituents form a single `G`-orbit.
+surviving map into an isomorphism (`TauCeti.Representation.exists_nonempty_equiv_conjSubrep`).
+Composed with the twist, this says that any two irreducible constituents of the restriction are
+conjugate (`TauCeti.Representation.exists_nonempty_equiv_conjNormalRep`): the constituents form a
+single `G`-orbit.
 
 Throughout, an irreducible constituent is presented as an **atom** of the lattice of
 `N`-subrepresentations rather than as an abstract irreducible representation of `N` mapping in.
@@ -64,10 +64,10 @@ conjugates enters.  Finite-dimensionality is used only to *produce* an atom, in
   restriction to `N` is semisimple.
 * `TauCeti.Representation.isSemisimpleRepresentation_comp_subtype`: the same conclusion for a
   **finite-dimensional** irreducible representation, where such an atom is automatic.
-* `TauCeti.Representation.exists_conjSubrep_equiv`: **Clifford's theorem, second half** -- any two
-  minimal `N`-subrepresentations of an irreducible representation are translates of one another, up
-  to isomorphism.
-* `TauCeti.Representation.exists_equiv_comp_conjNormal`: the same statement read through
+* `TauCeti.Representation.exists_nonempty_equiv_conjSubrep`: **Clifford's theorem, second half** --
+  any two minimal `N`-subrepresentations of an irreducible representation are translates of one
+  another, up to isomorphism.
+* `TauCeti.Representation.exists_nonempty_equiv_conjNormalRep`: the same statement read through
   `TauCeti.conjNormalRep`, so that the irreducible constituents of the restriction form a single
   orbit under the conjugation action of `G` on representations of `N`.
 * `TauCeti.Representation.finrank_eq_finrank_of_isAtom`: consequently all the constituents have the
@@ -77,17 +77,24 @@ conjugates enters.  Finite-dimensionality is used only to *produce* an atom, in
 
 The three constructions above are opaque: their bodies are not exported, and everything downstream
 goes through their characteristic lemmas `toSubmodule_conjSubrep`, `conjSubrepOrderIso_apply`,
-`conjSubrepOrderIso_symm_apply` and `coe_conjSubrepEquiv_apply` instead.  Those four lemmas are
-proved by `(rfl)` rather than by `rfl`: a bare `rfl` body asks in addition that the equation stay
-true by `rfl` *outside* this file, which for an unexposed definition it is not.  The parenthesized
-form checks the proof here, where the bodies are visible, and exports only the statement.
+`conjSubrepOrderIso_symm_apply`, `coe_conjSubrepEquiv_apply` and `coe_conjSubrepEquiv_symm_apply`
+instead.  The first four are proved by `(rfl)` rather than by `rfl`: a bare `rfl` body asks in
+addition that the equation stay true by `rfl` *outside* this file, which for an unexposed definition
+it is not.  The parenthesized form checks the proof here, where the bodies are visible, and exports
+only the statement.
 
 ## References
 
 This file builds the **Clifford's theorem** milestone of Layer 5 (Clifford theory over a normal
 subgroup) of `TauCetiRoadmap/RepresentationTheory/InductionRestriction/README.md`, which asks that
 for an irreducible `W`, "`Res_N W` is semisimple ... and **isotypic under the `G`-action**: its
-irreducible `N`-constituents form a single `G`-orbit".
+irreducible `N`-constituents form a single `G`-orbit".  The milestone's remaining clause, that the
+constituents all occur with one common multiplicity `e` so that `Res_N W ≅ e · ⨁ᵢ {}^{gᵢ}V`, is the
+one that consumes the layer's isotypic-decomposition prerequisite; it is not claimed here, and
+nothing below refers to a decomposition or a multiplicity.  Item (iii) of that prerequisite, that
+restriction along a subgroup preserves semisimplicity, is what
+`TauCeti.Representation.isSemisimpleRepresentation_comp_subtype` supplies in the normal-subgroup
+case Clifford theory uses.
 
 The mathematics is the classical argument of C. W. Curtis and I. Reiner, *Representation Theory of
 Finite Groups and Associative Algebras*, §49.
@@ -152,10 +159,24 @@ theorem mem_conjSubrep_iff {g : G} {σ : Subrepresentation (ρ.comp N.subtype)} 
   rintro ⟨u, hu, rfl⟩
   rwa [_root_.Representation.inv_self_apply]
 
+/-- Translating by an element of `N` itself does nothing: an `N`-subrepresentation is already
+stable under `N`, and under `N`-inverses. -/
 @[simp]
+theorem conjSubrep_eq_self_of_mem {g : G} (hg : g ∈ N)
+    (σ : Subrepresentation (ρ.comp N.subtype)) : conjSubrep ρ g σ = σ := by
+  refine Subrepresentation.toSubmodule_injective (le_antisymm ?_ ?_)
+  · rw [toSubmodule_conjSubrep]
+    rintro _ ⟨v, hv, rfl⟩
+    simpa using σ.apply_mem_toSubmodule ⟨g, hg⟩ hv
+  · intro v hv
+    rw [toSubmodule_conjSubrep]
+    exact ⟨ρ g⁻¹ v, by simpa using σ.apply_mem_toSubmodule ⟨g⁻¹, inv_mem hg⟩ hv,
+      _root_.Representation.self_inv_apply ρ g v⟩
+
+/-- Translation is an action: translating by `1` does nothing.  Not a `simp` lemma, since
+`conjSubrep_eq_self_of_mem` already rewrites this way once it discharges `(1 : G) ∈ N`. -/
 theorem conjSubrep_one (σ : Subrepresentation (ρ.comp N.subtype)) : conjSubrep ρ 1 σ = σ :=
-  Subrepresentation.toSubmodule_injective <| by
-    rw [toSubmodule_conjSubrep, map_one, Module.End.one_eq_id, Submodule.map_id]
+  conjSubrep_eq_self_of_mem (one_mem N) σ
 
 @[simp]
 theorem conjSubrep_conjSubrep (g h : G) (σ : Subrepresentation (ρ.comp N.subtype)) :
@@ -217,12 +238,13 @@ but conjugates it.  The twisted source is the conjugate representation `TauCeti.
 `TauCeti/RepresentationTheory/Induction/Conjugate.lean`, unbundled: it is
 `(conjNormalRep g (Rep.of σ.toRepresentation)).ρ` by `TauCeti.conjNormalRep_ρ`.  It is written here
 as the plain composition rather than through `Rep.of`, which would need `V` to be an `AddCommGroup`
-where this section asks only for an `AddCommMonoid`; `exists_equiv_comp_conjNormal`, where that
-hypothesis is present anyway, is stated in the bundled form.  Read on isomorphism classes, this says
-that `conjSubrep ρ g σ` represents the image of the class of `σ` under the conjugation action of `g`
-on representations of `N`.
+where this section asks only for an `AddCommMonoid`; `exists_nonempty_equiv_conjNormalRep`, where
+that hypothesis is present anyway, is stated in the bundled form.  Read on isomorphism classes, this
+says that `conjSubrep ρ g σ` represents the image of the class of `σ` under the conjugation action
+of `g` on representations of `N`.
 
-The underlying map is `ρ g` (`coe_conjSubrepEquiv_apply`). -/
+The underlying map is `ρ g` (`coe_conjSubrepEquiv_apply`), and its inverse is `ρ g⁻¹`
+(`coe_conjSubrepEquiv_symm_apply`). -/
 noncomputable def conjSubrepEquiv (g : G) (σ : Subrepresentation (ρ.comp N.subtype)) :
     _root_.Representation.Equiv
       (σ.toRepresentation.comp ((MulAut.conjNormal g⁻¹ : MulAut N) : N →* N))
@@ -237,6 +259,15 @@ noncomputable def conjSubrepEquiv (g : G) (σ : Subrepresentation (ρ.comp N.sub
 theorem coe_conjSubrepEquiv_apply (g : G) (σ : Subrepresentation (ρ.comp N.subtype))
     (u : σ.toSubmodule) : (conjSubrepEquiv ρ g σ u : V) = ρ g (u : V) :=
   (rfl)
+
+/-- The inverse of `conjSubrepEquiv` is translation back by `ρ g⁻¹`. -/
+@[simp]
+theorem coe_conjSubrepEquiv_symm_apply (g : G) (σ : Subrepresentation (ρ.comp N.subtype))
+    (v : (conjSubrep ρ g σ).toSubmodule) :
+    ((conjSubrepEquiv ρ g σ).symm v : V) = ρ g⁻¹ (v : V) := by
+  refine (_root_.Representation.apply_bijective ρ g).injective ?_
+  rw [_root_.Representation.self_inv_apply, ← coe_conjSubrepEquiv_apply g σ]
+  exact congrArg Subtype.val ((conjSubrepEquiv ρ g σ).apply_symm_apply v)
 
 end Translate
 
@@ -292,21 +323,26 @@ theorem isSemisimpleRepresentation_comp_subtype_of_isAtom [ρ.IsIrreducible]
     exact (Subrepresentation.subrepresentationSubmoduleOrderIso.isAtom_iff _).mpr
       (isAtom_conjSubrep_iff.mpr hσ)
   -- pull the supremum back to a subrepresentation, where the spanning statement lives
-  set T : Subrepresentation (ρ.comp N.subtype) := Subrepresentation.ofSubmodule'
-    (sSup { m : Submodule k[N] (_root_.Representation.asModule (ρ.comp N.subtype)) |
-      IsSimpleModule k[N] m })
-  have hle : ∀ g : G, conjSubrep ρ g σ ≤ T := fun g =>
-    (Subrepresentation.subrepresentationSubmoduleOrderIso.le_iff_le
-      (x := conjSubrep ρ g σ) (y := T)).mp (le_sSup (hmem g))
+  set T : Subrepresentation (ρ.comp N.subtype) :=
+    Subrepresentation.subrepresentationSubmoduleOrderIso.symm
+      (sSup { m : Submodule k[N] (_root_.Representation.asModule (ρ.comp N.subtype)) |
+        IsSimpleModule k[N] m }) with hT
+  have hTsSup : Subrepresentation.asSubmodule T =
+      sSup { m : Submodule k[N] (_root_.Representation.asModule (ρ.comp N.subtype)) |
+        IsSimpleModule k[N] m } := by
+    rw [hT, ← Subrepresentation.subrepresentationSubmoduleOrderIso_apply,
+      OrderIso.apply_symm_apply]
+  have hle : ∀ g : G, conjSubrep ρ g σ ≤ T := fun g => by
+    rw [← Subrepresentation.subrepresentationSubmoduleOrderIso.le_iff_le,
+      Subrepresentation.subrepresentationSubmoduleOrderIso_apply,
+      Subrepresentation.subrepresentationSubmoduleOrderIso_apply, hTsSup]
+    exact le_sSup (hmem g)
   have htop : T = ⊤ := by
     refine Subrepresentation.toSubmodule_injective (le_antisymm le_top ?_)
     rw [Subrepresentation.toSubmodule_top, ← iSup_conjSubrep_eq_top ρ hσ.1]
     exact iSup_le fun g => hle g
-  have hTsSup : Subrepresentation.asSubmodule T =
-      sSup { m : Submodule k[N] (_root_.Representation.asModule (ρ.comp N.subtype)) |
-        IsSimpleModule k[N] m } := rfl
-  rw [← hTsSup, htop]
-  exact le_of_eq Subrepresentation.subrepresentationSubmoduleOrderIso.map_top.symm
+  rw [← hTsSup, htop, ← Subrepresentation.subrepresentationSubmoduleOrderIso_apply,
+    OrderIso.map_top]
 
 /-- **Clifford's theorem, first half.** The restriction to a normal subgroup of a finite-dimensional
 irreducible representation is semisimple. -/
@@ -329,7 +365,7 @@ representation are isomorphic after translating one of them by an element of `G`
 Semisimplicity of the restriction gives an `N`-equivariant projection onto `σ'`.  It cannot kill
 every translate of `σ`, since the translates span; the surviving map goes between two irreducible
 representations of `N`, so Schur's lemma makes it an isomorphism. -/
-theorem exists_conjSubrep_equiv [ρ.IsIrreducible]
+theorem exists_nonempty_equiv_conjSubrep [ρ.IsIrreducible]
     {σ σ' : Subrepresentation (ρ.comp N.subtype)} (hσ : IsAtom σ) (hσ' : IsAtom σ') :
     ∃ g : G, Nonempty (_root_.Representation.Equiv (conjSubrep ρ g σ).toRepresentation
       σ'.toRepresentation) := by
@@ -374,19 +410,28 @@ theorem exists_conjSubrep_equiv [ρ.IsIrreducible]
 representation is isomorphic to a conjugate of any other, the conjugate being the one
 `TauCeti.conjNormalRep` takes: the irreducible constituents of the restriction form a single orbit
 under the conjugation action of `G` on representations of `N`. -/
-theorem exists_equiv_comp_conjNormal [ρ.IsIrreducible]
+theorem exists_nonempty_equiv_conjNormalRep [ρ.IsIrreducible]
     {σ σ' : Subrepresentation (ρ.comp N.subtype)} (hσ : IsAtom σ) (hσ' : IsAtom σ') :
     ∃ g : G, Nonempty (_root_.Representation.Equiv
       (conjNormalRep g (Rep.of σ.toRepresentation)).ρ σ'.toRepresentation) := by
-  obtain ⟨g, ⟨e⟩⟩ := exists_conjSubrep_equiv hσ hσ'
-  exact ⟨g, ⟨(conjSubrepEquiv ρ g σ).trans e⟩⟩
+  obtain ⟨g, ⟨e⟩⟩ := exists_nonempty_equiv_conjSubrep hσ hσ'
+  refine ⟨g, ⟨?_⟩⟩
+  -- the source of `conjSubrepEquiv` is the conjugated action written as a composition; name the
+  -- equality with the `conjNormalRep` form, from `conjNormalRep_ρ`, and transport along it rather
+  -- than leaving the two descriptions to be identified by definitional unfolding
+  have hρ : (conjNormalRep g (Rep.of σ.toRepresentation)).ρ =
+      σ.toRepresentation.comp ((MulAut.conjNormal g⁻¹ : MulAut N) : N →* N) := by
+    ext x v
+    exact congrArg (fun f => f v) (conjNormalRep_ρ g (Rep.of σ.toRepresentation) x)
+  rw [hρ]
+  exact (conjSubrepEquiv ρ g σ).trans e
 
 /-- All the irreducible constituents of the restriction of an irreducible representation to a
 normal subgroup have the same `Module.finrank` over `k`. -/
 theorem finrank_eq_finrank_of_isAtom [ρ.IsIrreducible]
     {σ σ' : Subrepresentation (ρ.comp N.subtype)} (hσ : IsAtom σ) (hσ' : IsAtom σ') :
     Module.finrank k σ.toSubmodule = Module.finrank k σ'.toSubmodule := by
-  obtain ⟨g, ⟨e⟩⟩ := exists_conjSubrep_equiv hσ hσ'
+  obtain ⟨g, ⟨e⟩⟩ := exists_nonempty_equiv_conjSubrep hσ hσ'
   refine Eq.trans (LinearEquiv.finrank_eq (σ.toSubmodule.equivMapOfInjective (ρ g)
     (_root_.Representation.apply_bijective ρ g).injective)) ?_
   exact LinearEquiv.finrank_eq e.toLinearEquiv
