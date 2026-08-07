@@ -7,9 +7,9 @@ module
 
 public import Mathlib.NumberTheory.PrimesCongruentOne
 public import Mathlib.RepresentationTheory.Maschke
-public import Mathlib.RingTheory.ZMod.Torsion
 public import TauCeti.Data.ZMod.ValMinAbs
 public import TauCeti.RepresentationTheory.CharacterTable.Values
+public import TauCeti.RingTheory.ZMod.Torsion
 
 /-!
 # Good Dixon primes
@@ -48,9 +48,10 @@ supplies a concrete prime, as the dihedral instances in
 * `TauCeti.IsGoodDixonPrime.card_nthRootsFinset`: that splitting has `e` distinct roots.
 * `TauCeti.IsGoodDixonPrime.isSemisimple_apply`: every group element acts semisimply in a
   representation over `ZMod p`.
-* `TauCeti.IsGoodDixonPrime.valMinAbs_intCast` and `TauCeti.IsGoodDixonPrime.eq_of_intCast_eq`: an
-  integer bounded by `√|G|` is recovered from, and so determined by, its residue modulo `p`. This
-  is what the size bound is for.
+* `TauCeti.IsGoodDixonPrime.valMinAbs_intCast_of_natAbs_le_sqrt` and
+  `TauCeti.IsGoodDixonPrime.eq_of_intCast_eq_of_natAbs_le_sqrt`: an integer bounded by `√|G|` is
+  recovered from, and so determined by, its residue modulo `p`. This is what the size bound is
+  for.
 * `TauCeti.exists_isGoodDixonPrime`: **good Dixon primes exist** for every finite group.
 
 ## Implementation notes
@@ -82,10 +83,10 @@ open Polynomial
 `G` divides `p - 1`, and it exceeds Dixon's size bound `2⌊√|G|⌋`.
 
 These are exactly the arithmetic hypotheses under which the Burnside--Dixon--Schneider algorithm
-runs: the first makes `ZMod p [G]` semisimple, the second puts the `e`-th roots of unity into
-`ZMod p`, and the third makes the lift back to characteristic zero unique. That the reduced central
-characters stay pairwise distinct is *not* part of the definition; it is a consequence, the content
-of the good-prime structure theorem. -/
+runs: `not_dvd_natCard` makes `ZMod p [G]` semisimple, `exponent_dvd` puts the `e`-th roots of
+unity into `ZMod p`, and `two_mul_sqrt_lt` makes the lift back to characteristic zero unique. That
+the reduced central characters stay pairwise distinct is *not* part of the definition; it is a
+consequence, the content of the good-prime structure theorem. -/
 structure IsGoodDixonPrime (G : Type*) [Group G] (p : ℕ) : Prop where
   /-- `p` is prime, so that `ZMod p` is a field. -/
   prime : p.Prime
@@ -111,30 +112,12 @@ theorem finite (hp : IsGoodDixonPrime G p) : Finite G :=
 
 /-! #### The exponent condition -/
 
-theorem orderOf_dvd_sub_one (hp : IsGoodDixonPrime G p) (g : G) : orderOf g ∣ p - 1 :=
-  (Monoid.order_dvd_exponent g).trans hp.exponent_dvd
-
-/-- **`ZMod p` has enough roots of unity of every order dividing `p - 1`.** This is the exponent
-condition in the form Mathlib's roots-of-unity API takes it, and everything below about roots of
-unity in `ZMod p` is derived from it. -/
-theorem hasEnoughRootsOfUnity (hp : IsGoodDixonPrime G p) {d : ℕ} (hd : d ∣ p - 1) :
-    HasEnoughRootsOfUnity (ZMod p) d := by
-  have := hp.fact_prime
-  have : NeZero (p - 1) := ⟨by have := hp.prime.two_le; omega⟩
-  exact HasEnoughRootsOfUnity.of_dvd (ZMod p) hd
-
-/-- `ZMod p` contains a primitive `d`-th root of unity for every `d` dividing `p - 1`. This is the
-input to the fact that `X ^ d - 1` splits over `ZMod p`; the orders of elements of `G` all divide
-`p - 1`, by `TauCeti.IsGoodDixonPrime.orderOf_dvd_sub_one`. -/
-theorem exists_isPrimitiveRoot_of_dvd_sub_one (hp : IsGoodDixonPrime G p) {d : ℕ}
-    (hd : d ∣ p - 1) : ∃ ζ : ZMod p, IsPrimitiveRoot ζ d := by
-  have := hp.hasEnoughRootsOfUnity hd
-  exact HasEnoughRootsOfUnity.exists_primitiveRoot (ZMod p) d
-
-/-- **`ZMod p` contains a primitive root of unity of order the exponent of `G`.** -/
+/-- **`ZMod p` contains a primitive root of unity of order the exponent of `G`.** This is the
+exponent condition at work: the exponent divides `p - 1`, and `ZMod p` has the roots of unity of
+every order dividing `p - 1`, by `TauCeti.ZMod.exists_isPrimitiveRoot_of_dvd_sub_one`. -/
 theorem exists_isPrimitiveRoot (hp : IsGoodDixonPrime G p) :
     ∃ ζ : ZMod p, IsPrimitiveRoot ζ (Monoid.exponent G) :=
-  hp.exists_isPrimitiveRoot_of_dvd_sub_one hp.exponent_dvd
+  ZMod.exists_isPrimitiveRoot_of_dvd_sub_one hp.prime hp.exponent_dvd
 
 /-! #### The order condition: Maschke -/
 
@@ -187,14 +170,14 @@ theorem neZero (hp : IsGoodDixonPrime G p) : NeZero p := ⟨hp.prime.ne_zero⟩
 residue window wide enough that an integer of absolute value at most `⌊√|G|⌋` is returned by
 `ZMod.valMinAbs` from its residue. This is the first stage of the cyclotomic lift: a rational
 character value, reduced modulo `p`, is recovered exactly. -/
-theorem valMinAbs_intCast (hp : IsGoodDixonPrime G p) {z : ℤ}
+theorem valMinAbs_intCast_of_natAbs_le_sqrt (hp : IsGoodDixonPrime G p) {z : ℤ}
     (hz : z.natAbs ≤ Nat.sqrt (Nat.card G)) : ((z : ZMod p)).valMinAbs = z :=
   ZMod.valMinAbs_intCast_of_two_mul_natAbs_lt (by have := hp.two_mul_sqrt_lt; omega)
 
 /-- **Dixon's size bound opens a wide enough residue window.** Two integers of absolute value at
 most `⌊√|G|⌋` that agree modulo `p` are equal, so an integer of that size is determined by its
 residue. This is why the lift is unambiguous. -/
-theorem eq_of_intCast_eq (hp : IsGoodDixonPrime G p) {z w : ℤ}
+theorem eq_of_intCast_eq_of_natAbs_le_sqrt (hp : IsGoodDixonPrime G p) {z w : ℤ}
     (hz : z.natAbs ≤ Nat.sqrt (Nat.card G)) (hw : w.natAbs ≤ Nat.sqrt (Nat.card G))
     (h : (z : ZMod p) = w) : z = w :=
   ZMod.eq_of_intCast_eq_of_two_mul_natAbs_lt (by have := hp.two_mul_sqrt_lt; omega)
@@ -202,24 +185,17 @@ theorem eq_of_intCast_eq (hp : IsGoodDixonPrime G p) {z w : ℤ}
 
 /-! #### Representations over `ZMod p` -/
 
-/-- The order of a group element is invertible modulo a good Dixon prime: it divides `|G|`, which
-is invertible by `TauCeti.IsGoodDixonPrime.natCast_natCard_ne_zero`. -/
-theorem natCast_orderOf_ne_zero (hp : IsGoodDixonPrime G p) (g : G) :
-    ((orderOf g : ℕ) : ZMod p) ≠ 0 :=
-  ne_zero_of_dvd_ne_zero hp.natCast_natCard_ne_zero (Nat.cast_dvd_cast (orderOf_dvd_natCard g))
-
 section Representation
 
 variable {V : Type*} [AddCommGroup V] [Module (ZMod p) V]
 
-/-- **At a good Dixon prime every group element acts semisimply.** In a representation over
-`ZMod p`, `ρ g` is annihilated by `X ^ orderOf g - 1`, and that polynomial is squarefree because
-`orderOf g` divides `|G|` and so is invertible modulo `p`. -/
+/-- **At a good Dixon prime every group element acts semisimply.** This is
+`TauCeti.Representation.isSemisimple_apply` at the invertibility of `|G|` that the good-prime
+certificate supplies. -/
 theorem isSemisimple_apply (hp : IsGoodDixonPrime G p)
     (ρ : Representation (ZMod p) G V) (g : G) : Module.End.IsSemisimple (ρ g) :=
   have := hp.fact_prime
-  Representation.isSemisimple_of_pow_eq_one ρ (hp.natCast_orderOf_ne_zero g)
-    (pow_orderOf_eq_one g)
+  Representation.isSemisimple_apply ρ hp.natCast_natCard_ne_zero g
 
 end Representation
 
@@ -290,7 +266,8 @@ end DixonPrimeData
 
 /-- Every finite group admits Dixon prime data. The witness is noncomputable, which is why concrete
 instances are supplied by hand. -/
-instance (G : Type*) [Group G] [Finite G] : Nonempty (DixonPrimeData G) := by
+instance instNonemptyDixonPrimeData (G : Type*) [Group G] [Finite G] :
+    Nonempty (DixonPrimeData G) := by
   obtain ⟨p, hp⟩ := exists_isGoodDixonPrime G
   obtain ⟨ζ, hζ⟩ := hp.exists_isPrimitiveRoot
   exact ⟨⟨p, ζ, hp, hζ⟩⟩
