@@ -246,6 +246,7 @@ def pathImages (x : M.obj i) (n : ℕ) (a : Q) : Set (M.obj a) :=
 
 /-- Membership in `TauCeti.QuiverSubrep.pathImages`: the elements are exactly the images of `x`
 under the paths `i → a` of length at least `n`. -/
+@[simp]
 theorem mem_pathImages {x : M.obj i} {n : ℕ} {a : Q} {y : M.obj a} :
     y ∈ pathImages x n a ↔ ∃ p : Quiver.Path i a, n ≤ p.length ∧ M.map p x = y :=
   (Iff.rfl)
@@ -270,6 +271,7 @@ def pathSpan (x : M.obj i) (n : ℕ) : QuiverSubrep M where
       rfl
 
 /-- The submodule that `TauCeti.QuiverSubrep.pathSpan` puts at a vertex. -/
+@[simp]
 theorem toSubmodule_pathSpan (x : M.obj i) (n : ℕ) (a : Q) :
     (pathSpan x n).toSubmodule a = Submodule.span k (pathImages x n a) :=
   (rfl)
