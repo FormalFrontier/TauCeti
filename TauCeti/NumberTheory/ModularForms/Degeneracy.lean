@@ -203,6 +203,7 @@ lemma levelRaise_one_apply [𝒢'.HasDetOne] (h : 𝒢' ≤ ConjAct.toConjAct (s
   simp
 
 /-- The level-raising operators compose: `V_d ∘ V_e = V_{de}`. -/
+@[simp]
 lemma levelRaise_levelRaise {d e : ℕ} [𝒢'.HasDetOne] [𝒢''.HasDetOne] [NeZero d] [NeZero e]
     (h₁ : 𝒢'' ≤ ConjAct.toConjAct (scaleGL d)⁻¹ • 𝒢')
     (h₂ : 𝒢' ≤ ConjAct.toConjAct (scaleGL e)⁻¹ • 𝒢) (f : ModularForm 𝒢 k) :
@@ -266,6 +267,7 @@ lemma levelRaise_one_apply [𝒢'.HasDetOne] (h : 𝒢' ≤ ConjAct.toConjAct (s
   simp
 
 /-- The level-raising operators compose: `V_d ∘ V_e = V_{de}`. -/
+@[simp]
 lemma levelRaise_levelRaise {d e : ℕ} [𝒢'.HasDetOne] [𝒢''.HasDetOne] [NeZero d] [NeZero e]
     (h₁ : 𝒢'' ≤ ConjAct.toConjAct (scaleGL d)⁻¹ • 𝒢')
     (h₂ : 𝒢' ≤ ConjAct.toConjAct (scaleGL e)⁻¹ • 𝒢) (f : CuspForm 𝒢 k) :
