@@ -115,6 +115,14 @@ theorem cohomologyClass_def :
     α.cohomologyClass = H2π (Rep.ofMulDistribMulAction G M) α.toCocycles₂ :=
   (rfl)
 
+@[simp]
+theorem cohomologyClass_trivial : (trivial G M).cohomologyClass = 0 := by
+  have h : (trivial G M).toCocycles₂ = 0 :=
+    cocycles₂_ext fun _ _ => by
+      simp only [coe_toCocycles₂, trivial_apply, ofMul_one]
+      rfl
+  rw [cohomologyClass_def, h, map_zero]
+
 /-- The pointwise quotient of two factor sets is the difference of the cocycles they name. -/
 theorem coe_toCocycles₂_sub :
     ⇑α.toCocycles₂ - ⇑β.toCocycles₂ = fun p : G × G => Additive.ofMul (α p / β p) := by
@@ -132,15 +140,10 @@ theorem cohomologyClass_eq_iff :
 
 /-- **The class of a factor set vanishes exactly when it is a multiplicative `2`-coboundary.** -/
 theorem cohomologyClass_eq_zero_iff : α.cohomologyClass = 0 ↔ IsMulCoboundary₂ ⇑α := by
-  rw [cohomologyClass_def, H2π_eq_zero_iff, coe_toCocycles₂]
-  exact ⟨fun h => isMulCoboundary₂_of_mem_coboundaries₂ _ h, fun h =>
-    (coboundariesOfIsMulCoboundary₂ h).2⟩
+  rw [← cohomologyClass_trivial (G := G) (M := M), cohomologyClass_eq_iff]
+  simp
 
 end Class
-
-@[simp]
-theorem cohomologyClass_trivial : (trivial G M).cohomologyClass = 0 :=
-  (cohomologyClass_eq_zero_iff _).2 ⟨1, by simp⟩
 
 /-! ### Normalizing a cocycle -/
 
