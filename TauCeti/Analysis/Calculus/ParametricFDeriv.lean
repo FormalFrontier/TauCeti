@@ -10,7 +10,7 @@ public import Mathlib.Analysis.Calculus.FDeriv.Symmetric
 /-!
 # Mixed derivatives of a parametric map
 
-For a map `F : ℝ × E → E` that is twice continuously differentiable at the relevant point,
+For a map `F : ℝ × E → F'` that is twice continuously differentiable at the relevant point,
 differentiating its spatial Jacobian in the parameter direction is the spatial derivative of its
 parameter velocity. This is the mixed-partial identity needed to identify the derivative of a flow
 pullback with a Lie bracket.
