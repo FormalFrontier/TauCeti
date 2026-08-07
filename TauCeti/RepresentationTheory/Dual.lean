@@ -64,6 +64,7 @@ theorem mem_invariants_dual_iff {ρ : Representation k G V} {ψ : Module.Dual k 
     simpa [Representation.dual_apply, Module.Dual.transpose_apply] using h g⁻¹ u
 
 /-- A functional invariant for the dual of a representation is unchanged by the action. -/
+@[grind =]
 theorem apply_of_mem_invariants_dual {ρ : Representation k G V} {ψ : Module.Dual k V}
     (hψ : ψ ∈ ρ.dual.invariants) (g : G) (u : V) : ψ (ρ g u) = ψ u :=
   mem_invariants_dual_iff.mp hψ g u
