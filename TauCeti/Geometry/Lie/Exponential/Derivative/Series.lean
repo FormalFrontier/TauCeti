@@ -26,10 +26,10 @@ every position among `n` copies of the base point.
 * `TauCeti.summable_expFDerivTerm`: summability of the operator-valued series.
 * `TauCeti.summable_expFDerivTerm_apply`: pointwise summability of the insertion series.
 * `TauCeti.expFDeriv_apply`: the pointwise formula for the summed operator.
-* `TauCeti.hasStrictFDerivAt_exp_noncomm`: the Banach-algebra exponential has strict derivative
-  `expFDeriv 𝕂 x` at `x` without a commutativity assumption.
-* `TauCeti.hasFDerivAt_exp_noncomm`: the corresponding ordinary Fréchet derivative statement.
-* `TauCeti.fderiv_exp_noncomm`: the derivative expressed using `fderiv`.
+* `TauCeti.hasStrictFDerivAt_exp`: the Banach-algebra exponential has strict derivative
+  `expFDeriv 𝕂 x` at `x`.
+* `TauCeti.hasFDerivAt_exp`: the corresponding ordinary Fréchet derivative statement.
+* `TauCeti.fderiv_exp`: the derivative expressed using `fderiv`.
 * `TauCeti.expFDeriv_zero`: at zero, the derivative is the identity.
 
 ## References
@@ -48,39 +48,48 @@ open NormedSpace
 
 namespace TauCeti
 
-variable {𝕂 R : Type*} [RCLike 𝕂] [NormedRing R] [NormedAlgebra 𝕂 R] [CompleteSpace R]
+variable {𝕂 R : Type*}
+
+section Definitions
+
+variable [NontriviallyNormedField 𝕂] [NormedRing R] [NormedAlgebra 𝕂 R]
 
 /-- The degree-`n` contribution to the Fréchet derivative of the Banach-algebra exponential.
 Applied to `y`, this is
 `(n + 1)!⁻¹ • ∑ i < n + 1, x ^ (n - i) * y * x ^ i`. -/
-noncomputable def expFDerivTerm (𝕂 : Type*) [RCLike 𝕂] {R : Type*} [NormedRing R]
+noncomputable def expFDerivTerm (𝕂 : Type*) [NontriviallyNormedField 𝕂] {R : Type*} [NormedRing R]
     [NormedAlgebra 𝕂 R] (x : R) (n : ℕ) : R →L[𝕂] R :=
   ((n + 1).factorial⁻¹ : 𝕂) •
     ∑ i ∈ Finset.range (n + 1),
       x ^ (n - i) •> ContinuousLinearMap.id 𝕂 R <• x ^ i
 
-/-- The sum of the convergent Fréchet-derivative series of the Banach-algebra exponential. -/
-noncomputable def expFDeriv (𝕂 : Type*) [RCLike 𝕂] {R : Type*} [NormedRing R]
+/-- The sum of the Fréchet-derivative series of the Banach-algebra exponential. It converges when
+the algebra is complete; as usual for `tsum`, it has the junk value zero when the series is not
+summable. -/
+noncomputable def expFDeriv (𝕂 : Type*) [NontriviallyNormedField 𝕂] {R : Type*} [NormedRing R]
     [NormedAlgebra 𝕂 R] (x : R) : R →L[𝕂] R :=
   ∑' n : ℕ, expFDerivTerm 𝕂 x n
 
-omit [CompleteSpace R] in
 private theorem insertion_apply (x y : R) (a b : ℕ) :
     (x ^ a •> ContinuousLinearMap.id 𝕂 R <• x ^ b) y = x ^ a * y * x ^ b := by
   simp
 
-omit [CompleteSpace R] in
 /-- Evaluating a homogeneous derivative term inserts the tangent vector in every possible
 position. -/
 @[simp]
 theorem expFDerivTerm_apply (x y : R) (n : ℕ) :
     expFDerivTerm 𝕂 x n y = ((n + 1).factorial⁻¹ : 𝕂) •
       ∑ i ∈ Finset.range (n + 1), x ^ (n - i) * y * x ^ i := by
-  rw [expFDerivTerm, smul_apply, sum_apply]
-  apply congrArg (fun z : R ↦ ((n + 1).factorial⁻¹ : 𝕂) • z)
-  apply Finset.sum_congr rfl
-  intro i _hi
-  exact insertion_apply x y (n - i) i
+  simp [expFDerivTerm]
+
+/-- The operator-valued defining series for `expFDeriv`. -/
+theorem expFDeriv_eq_tsum (x : R) :
+    expFDeriv 𝕂 x = ∑' n : ℕ, expFDerivTerm 𝕂 x n := by
+  rfl
+
+end Definitions
+
+variable [RCLike 𝕂] [NormedRing R] [NormedAlgebra 𝕂 R] [CompleteSpace R]
 
 omit [NormedAlgebra 𝕂 R] [CompleteSpace R] in
 private theorem norm_pow_le_growth_bound (x : R) (n : ℕ) :
@@ -108,18 +117,17 @@ private theorem norm_insertion_le (x : R) {n i : ℕ} (hi : i < n + 1) :
   intro y
   rw [insertion_apply]
   calc
-    ‖x ^ (n - i) * y * x ^ i‖ ≤ ‖x ^ (n - i)‖ * ‖y‖ * ‖x ^ i‖ := by
-      exact (norm_mul_le _ _).trans <| by gcongr; exact norm_mul_le _ _
+    ‖x ^ (n - i) * y * x ^ i‖ ≤ ‖x ^ (n - i)‖ * ‖y‖ * ‖x ^ i‖ := norm_mul₃_le
     _ ≤ max 1 (max ‖(1 : R)‖ ‖x‖) ^ (n - i + 1) * ‖y‖ *
         max 1 (max ‖(1 : R)‖ ‖x‖) ^ (i + 1) := by
       gcongr <;> exact norm_pow_le_growth_bound x _
     _ = max 1 (max ‖(1 : R)‖ ‖x‖) ^ (n + 2) * ‖y‖ := by
-      rw [mul_assoc, mul_comm ‖y‖, ← mul_assoc, ← pow_add,
-        show n - i + 1 + (i + 1) = n + 2 by omega]
+      rw [mul_assoc, mul_comm ‖y‖, ← mul_assoc, ← pow_add]
+      congr 2
+      omega
 
 omit [CompleteSpace R] in
-/-- The norm of the degree-`n` derivative term is bounded by a factorially summable sequence. -/
-theorem norm_expFDerivTerm_le (x : R) (n : ℕ) :
+private theorem norm_expFDerivTerm_le (x : R) (n : ℕ) :
     ‖expFDerivTerm 𝕂 x n‖ ≤
       max 1 (max ‖(1 : R)‖ ‖x‖) ^ (n + 2) / n.factorial := by
   rw [expFDerivTerm, norm_smul]
@@ -153,16 +161,8 @@ theorem summable_expFDerivTerm (x : R) : Summable (expFDerivTerm 𝕂 x) :=
 
 /-- Applying the derivative terms to a fixed tangent vector gives a summable series. -/
 theorem summable_expFDerivTerm_apply (x y : R) :
-    Summable (fun n : ℕ ↦ expFDerivTerm 𝕂 x n y) := by
-  let c : ℝ := max 1 (max ‖(1 : R)‖ ‖x‖)
-  refine Summable.of_norm_bounded
-    ((summable_pow_succ_succ_div_factorial c).mul_right ‖y‖) fun n ↦ ?_
-  calc
-    ‖expFDerivTerm 𝕂 x n y‖ ≤ ‖expFDerivTerm 𝕂 x n‖ * ‖y‖ :=
-      ContinuousLinearMap.le_opNorm _ _
-    _ ≤ (c ^ (n + 2) / n.factorial) * ‖y‖ := by
-      gcongr
-      exact norm_expFDerivTerm_le (𝕂 := 𝕂) x n
+    Summable (fun n : ℕ ↦ expFDerivTerm 𝕂 x n y) :=
+  (summable_expFDerivTerm (𝕂 := 𝕂) x).mapL (ContinuousLinearMap.apply 𝕂 R y)
 
 /-- The summed derivative operator takes a tangent vector to the corresponding insertion series. -/
 @[simp]
@@ -180,12 +180,15 @@ private theorem hasFDerivAt_inv_factorial_smul_pow_succ (n : ℕ) (x : R) :
 
 private theorem exp_eq_one_add_tsum_succ (x : R) :
     exp x = 1 + ∑' n : ℕ, ((n + 1).factorial⁻¹ : 𝕂) • x ^ (n + 1) := by
-  rw [exp_eq_tsum 𝕂]
-  convert (expSeries_summable' (𝕂 := 𝕂) x).tsum_eq_zero_add using 1
-  · simp
+  simp only [exp_eq_tsum 𝕂]
+  rw [(expSeries_summable' (𝕂 := 𝕂) x).tsum_eq_zero_add]
+  simp
 
-private theorem hasFDerivAt_exp_noncomm_aux (x : R) :
+/-- The exponential in a possibly noncommutative Banach algebra has the convergent insertion sum
+`expFDeriv 𝕂 x` as its Fréchet derivative at `x`. -/
+theorem hasFDerivAt_exp (x : R) :
     HasFDerivAt exp (expFDeriv 𝕂 x) x := by
+  -- The real restriction supplies the normed-space structure used by convexity of metric balls.
   let _ : NormedSpace ℝ R := NormedSpace.restrictScalars ℝ 𝕂 R
   let r : ℝ := ‖x‖ + 1
   let c : ℝ := max 1 (max ‖(1 : R)‖ r)
@@ -193,6 +196,22 @@ private theorem hasFDerivAt_exp_noncomm_aux (x : R) :
   have hu : Summable u := by
     simpa only [u] using summable_pow_succ_succ_div_factorial c
   have hr : 0 < r := add_pos_of_nonneg_of_pos (norm_nonneg x) zero_lt_one
+  have hderiv : ∀ n y, y ∈ Metric.ball (0 : R) r →
+      HasFDerivAt
+        (((n + 1).factorial⁻¹ : 𝕂) • (fun z : R ↦ z ^ (n + 1)))
+        (expFDerivTerm 𝕂 y n) y := fun n y _hy ↦
+    hasFDerivAt_inv_factorial_smul_pow_succ n y
+  have hbound : ∀ n y, y ∈ Metric.ball (0 : R) r → ‖expFDerivTerm 𝕂 y n‖ ≤ u n := by
+    intro n y hy
+    refine (norm_expFDerivTerm_le y n).trans ?_
+    dsimp only [u, c]
+    gcongr
+    have hyr : ‖y‖ < r := by simpa [Metric.mem_ball, dist_zero_right] using hy
+    exact hyr.le
+  have hx₀ : (0 : R) ∈ Metric.ball 0 r := by simp [Metric.mem_ball, hr]
+  have hsummableAtZero : Summable fun n : ℕ ↦
+      (((n + 1).factorial⁻¹ : 𝕂) • (fun z : R ↦ z ^ (n + 1))) 0 := by simp
+  have hx : x ∈ Metric.ball (0 : R) r := by simp [Metric.mem_ball, r]
   have hseries :
       HasFDerivAt
         (fun y : R ↦ ∑' n : ℕ, (((n + 1).factorial⁻¹ : 𝕂) •
@@ -202,18 +221,8 @@ private theorem hasFDerivAt_exp_noncomm_aux (x : R) :
       (u := u)
       (f := fun n ↦ ((n + 1).factorial⁻¹ : 𝕂) • (fun z : R ↦ z ^ (n + 1)))
       (f' := fun n y ↦ expFDerivTerm 𝕂 y n) (s := Metric.ball 0 r) (x₀ := 0) (x := x)
-      hu Metric.isOpen_ball (convex_ball (0 : R) r).isPreconnected ?_ ?_ ?_ ?_ ?_
-    · intro n y _hy
-      exact hasFDerivAt_inv_factorial_smul_pow_succ n y
-    · intro n y hy
-      refine (norm_expFDerivTerm_le y n).trans ?_
-      dsimp only [u, c]
-      gcongr
-      have hyr : ‖y‖ < r := by simpa [Metric.mem_ball, dist_zero_right] using hy
-      exact hyr.le
-    · simp [Metric.mem_ball, hr]
-    · simp
-    · simp [Metric.mem_ball, r]
+      hu Metric.isOpen_ball (convex_ball (0 : R) r).isPreconnected hderiv hbound hx₀
+        hsummableAtZero hx
   have hadd := (hasFDerivAt_const (x := x) (c := (1 : R))).add hseries
   have hadd' :
       HasFDerivAt
@@ -226,26 +235,29 @@ private theorem hasFDerivAt_exp_noncomm_aux (x : R) :
     rw [Pi.add_apply, exp_eq_one_add_tsum_succ (𝕂 := 𝕂)]
     simp only [Pi.smul_apply])
 
-/-- The exponential in a possibly noncommutative Banach algebra has the convergent insertion sum
-`expFDeriv 𝕂 x` as its strict Fréchet derivative at `x`. -/
-theorem hasStrictFDerivAt_exp_noncomm (x : R) :
+/-- The strict Fréchet-derivative form of `hasFDerivAt_exp`. -/
+theorem hasStrictFDerivAt_exp (x : R) :
     HasStrictFDerivAt exp (expFDeriv 𝕂 x) x :=
   (NormedSpace.exp_analytic (𝕂 := 𝕂) x).hasStrictFDerivAt.congr_fderiv
-    (hasFDerivAt_exp_noncomm_aux (𝕂 := 𝕂) x).fderiv
-
-/-- The ordinary Fréchet-derivative form of `hasStrictFDerivAt_exp_noncomm`. -/
-theorem hasFDerivAt_exp_noncomm (x : R) : HasFDerivAt exp (expFDeriv 𝕂 x) x :=
-  (hasStrictFDerivAt_exp_noncomm (𝕂 := 𝕂) x).hasFDerivAt
+    (hasFDerivAt_exp (𝕂 := 𝕂) x).fderiv
 
 /-- The Fréchet derivative of the exponential in a possibly noncommutative Banach algebra is the
 convergent insertion sum. -/
-theorem fderiv_exp_noncomm (x : R) : fderiv 𝕂 exp x = expFDeriv 𝕂 x :=
-  (hasStrictFDerivAt_exp_noncomm (𝕂 := 𝕂) x).hasFDerivAt.fderiv
+@[simp]
+theorem fderiv_exp (x : R) : fderiv 𝕂 exp x = expFDeriv 𝕂 x :=
+  (hasFDerivAt_exp (𝕂 := 𝕂) x).fderiv
+
+/-- In a commutative Banach algebra, the insertion sum agrees with scalar multiplication by the
+exponential. -/
+theorem expFDeriv_eq_smul_one {R : Type*} [NormedCommRing R] [NormedAlgebra 𝕂 R]
+    [CompleteSpace R] (x : R) :
+    expFDeriv 𝕂 x = exp x • (1 : R →L[𝕂] R) :=
+  (hasFDerivAt_exp (𝕂 := 𝕂) x).unique _root_.hasFDerivAt_exp
 
 /-- At zero, the derivative is the identity continuous linear map. -/
 @[simp]
 theorem expFDeriv_zero : expFDeriv 𝕂 (0 : R) = 1 :=
-  (hasFDerivAt_exp_noncomm (𝕂 := 𝕂) (0 : R)).unique
+  (hasFDerivAt_exp (𝕂 := 𝕂) (0 : R)).unique
     (hasFDerivAt_exp_zero (𝕂 := 𝕂))
 
 end TauCeti
