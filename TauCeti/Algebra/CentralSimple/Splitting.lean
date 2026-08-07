@@ -11,9 +11,9 @@ module
 -- `Mathlib.RingTheory.TensorProduct.Basic` (the `⊗[K]` notation and the algebra structure on
 -- `L ⊗[K] A`) and `Mathlib.Algebra.Central.Basic`, which is why neither is imported again here.
 public import TauCeti.Algebra.CentralSimple.Degree
--- `matrixEquivTensor` is the whole content of `TauCeti.Algebra.matrixBaseChangeAlgEquiv` below,
--- whose statement also needs `Matrix`, and this is the Mathlib file both come from.
-public import Mathlib.RingTheory.MatrixAlgebra
+-- `TauCeti.Algebra.matrixBaseChangeAlgEquiv` is what splits a matrix algebra, and this module also
+-- supplies the `Matrix` type occurring in every statement below.
+public import TauCeti.Algebra.Matrix.BaseChange
 -- Non-public: the dimension counts `Module.finrank_baseChange` and `Module.finrank_matrix`, the
 -- matrix presentation of a central simple algebra over a finite field, and the real quaternions and
 -- the fundamental theorem of algebra (`Complex.isAlgClosed`, the one heavy import here) of the
@@ -49,13 +49,12 @@ an arbitrary `K`-algebra, where the degree is not yet meaningful.
 
 ## Main results
 
-* `TauCeti.Algebra.matrixBaseChangeAlgEquiv`: extending scalars turns matrices over `K` into
-  matrices over `L`, `L ⊗[K] Matrix n n K ≃ₐ[L] Matrix n n L`. This is Mathlib's
-  `matrixEquivTensor` with its scalars upgraded from `K` to `L`.
-* `TauCeti.Algebra.IsSplittingField`: the predicate itself, with the transport
+* `TauCeti.Algebra.IsSplittingField`: the predicate itself, unfolded by
+  `TauCeti.Algebra.isSplittingField_iff`, with the transport
   `TauCeti.Algebra.isSplittingField_congr` along a `K`-algebra isomorphism of `A` and the
   observation `TauCeti.Algebra.isSplittingField_matrix` that a full matrix algebra over `K` is
-  split by every extension.
+  split by every extension (by the base change `TauCeti.Algebra.matrixBaseChangeAlgEquiv` of
+  `TauCeti/Algebra/Matrix/BaseChange.lean`).
 * `TauCeti.Algebra.isSplittingField_self_iff`: `A` is split by its own base field exactly when it
   *is* a matrix algebra over it. This is the statement that "split" means what it should.
 * `TauCeti.Algebra.finrank_eq_sq_of_algEquiv_matrix` and
@@ -102,35 +101,6 @@ open scoped TensorProduct
 
 namespace Algebra
 
-/-! ### Base change of a matrix algebra -/
-
-section MatrixBaseChange
-
-variable (K : Type*) [Field K] (L : Type*) [Field L] [Algebra K L]
-  (n : Type*) [Fintype n] [DecidableEq n]
-
-/-- **Extending scalars turns matrices over `K` into matrices over `L`**:
-`L ⊗[K] Matrix n n K ≃ₐ[L] Matrix n n L`, entrywise.
-
-Mathlib's `matrixEquivTensor` is this isomorphism read as a `K`-algebra isomorphism; the content
-here is that it is `L`-linear, which is what the splitting-field statements are phrased in. -/
-def matrixBaseChangeAlgEquiv : L ⊗[K] Matrix n n K ≃ₐ[L] Matrix n n L :=
-  AlgEquiv.ofRingEquiv (f := (matrixEquivTensor n K L).symm.toRingEquiv) fun l ↦ by
-    simp [Algebra.algebraMap_eq_smul_one, Algebra.TensorProduct.one_def, TensorProduct.smul_tmul',
-      Matrix.map_one]
-
-@[simp]
-theorem matrixBaseChangeAlgEquiv_tmul (l : L) (M : Matrix n n K) :
-    matrixBaseChangeAlgEquiv K L n (l ⊗ₜ M) = l • M.map (algebraMap K L) := by
-  simp [matrixBaseChangeAlgEquiv]
-
-@[simp]
-theorem matrixBaseChangeAlgEquiv_symm_single (i j : n) (x : L) :
-    (matrixBaseChangeAlgEquiv K L n).symm (Matrix.single i j x) = x ⊗ₜ Matrix.single i j 1 := by
-  simp [matrixBaseChangeAlgEquiv]
-
-end MatrixBaseChange
-
 /-! ### Splitting fields -/
 
 /-- An extension `L / K` **splits** the `K`-algebra `A` when the scalar extension `L ⊗[K] A` is a
@@ -146,11 +116,21 @@ def IsSplittingField (K A L : Type*) [Field K] [Ring A] [Algebra K A] [Field L] 
 variable (K : Type*) [Field K] (A : Type*) [Ring A] [Algebra K A]
   (L : Type*) [Field L] [Algebra K L]
 
+/-- **The definition, unfolded**: `L` splits `A` exactly when `L ⊗[K] A` is an `n × n` matrix
+algebra over `L` for some `n`.
+
+This is the characterization at the generality the predicate is stated at, and everything below
+goes through it rather than through the body; for a finite-dimensional central simple `A` the size
+is pinned by `TauCeti.Algebra.isSplittingField_iff_deg`. -/
+theorem isSplittingField_iff :
+    IsSplittingField K A L ↔ ∃ n : ℕ, Nonempty (L ⊗[K] A ≃ₐ[L] Matrix (Fin n) (Fin n) L) :=
+  Iff.rfl
+
 /-- Splitting is a property of the isomorphism class of `A`: a `K`-algebra isomorphic to a split
 one is split, by the same extension and with the same matrix size. -/
 theorem IsSplittingField.of_algEquiv {B : Type*} [Ring B] [Algebra K B] (e : A ≃ₐ[K] B)
     (h : IsSplittingField K A L) : IsSplittingField K B L :=
-  h.imp fun _ ⟨f⟩ ↦
+  (isSplittingField_iff K B L).2 <| ((isSplittingField_iff K A L).1 h).imp fun _ ⟨f⟩ ↦
     ⟨(Algebra.TensorProduct.congr (AlgEquiv.refl (R := L) (A₁ := L)) e).symm.trans f⟩
 
 /-- Splitting transports along a `K`-algebra isomorphism of the algebra being split. -/
@@ -161,14 +141,14 @@ theorem isSplittingField_congr {B : Type*} [Ring B] [Algebra K B] (e : A ≃ₐ[
 /-- **A full matrix algebra over `K` is split by every extension of `K`**, by
 `TauCeti.Algebra.matrixBaseChangeAlgEquiv`. In particular it is split by `K` itself. -/
 theorem isSplittingField_matrix (n : ℕ) : IsSplittingField K (Matrix (Fin n) (Fin n) K) L :=
-  ⟨n, ⟨matrixBaseChangeAlgEquiv K L (Fin n)⟩⟩
+  (isSplittingField_iff K _ L).2 ⟨n, ⟨matrixBaseChangeAlgEquiv K L (Fin n)⟩⟩
 
 /-- **`A` is split by its own base field exactly when it is a matrix algebra over it.** This is the
 sanity check on the definition: over `L = K` the scalar extension does nothing, so "split" is
 literally "is a matrix algebra". -/
 theorem isSplittingField_self_iff :
     IsSplittingField K A K ↔ ∃ n : ℕ, Nonempty (A ≃ₐ[K] Matrix (Fin n) (Fin n) K) :=
-  exists_congr fun _ ↦
+  (isSplittingField_iff K A K).trans <| exists_congr fun _ ↦
     ⟨fun ⟨e⟩ ↦ ⟨(Algebra.TensorProduct.lid K A).symm.trans e⟩,
       fun ⟨e⟩ ↦ ⟨(Algebra.TensorProduct.lid K A).trans e⟩⟩
 
@@ -196,7 +176,7 @@ The existential in `TauCeti.Algebra.IsSplittingField` is therefore not a choice:
 and `TauCeti.Algebra.deg_sq`), and squaring is injective on the naturals. -/
 theorem IsSplittingField.nonempty_algEquiv_matrix_deg (h : IsSplittingField K A L) :
     Nonempty (L ⊗[K] A ≃ₐ[L] Matrix (Fin (deg K A)) (Fin (deg K A)) L) := by
-  obtain ⟨n, ⟨e⟩⟩ := h
+  obtain ⟨n, ⟨e⟩⟩ := (isSplittingField_iff K A L).1 h
   have hsq : n ^ 2 = deg K A ^ 2 := by rw [← finrank_eq_sq_of_algEquiv_matrix K A L e, deg_sq]
   have : n = deg K A := Nat.pow_left_injective (by norm_num) hsq
   exact this ▸ ⟨e⟩
@@ -206,7 +186,8 @@ matrix algebra of size its degree. -/
 theorem isSplittingField_iff_deg :
     IsSplittingField K A L ↔
       Nonempty (L ⊗[K] A ≃ₐ[L] Matrix (Fin (deg K A)) (Fin (deg K A)) L) :=
-  ⟨IsSplittingField.nonempty_algEquiv_matrix_deg K A L, fun h ↦ ⟨deg K A, h⟩⟩
+  ⟨IsSplittingField.nonempty_algEquiv_matrix_deg K A L,
+    fun h ↦ (isSplittingField_iff K A L).2 ⟨deg K A, h⟩⟩
 
 /-- **An algebraically closed extension splits every finite-dimensional central simple algebra.**
 
@@ -215,7 +196,8 @@ algebraically closed field the Wedderburn division algebra collapses, which is e
 `TauCeti.IsSimpleRing.nonempty_algEquiv_matrix_baseChange_of_isAlgClosed`. Every finite-dimensional
 central simple `K`-algebra therefore has a splitting field, namely an algebraic closure of `K`. -/
 theorem isSplittingField_of_isAlgClosed [IsAlgClosed L] : IsSplittingField K A L :=
-  ⟨deg K A, IsSimpleRing.nonempty_algEquiv_matrix_baseChange_of_isAlgClosed K L A⟩
+  (isSplittingField_iff_deg K A L).2
+    (IsSimpleRing.nonempty_algEquiv_matrix_baseChange_of_isAlgClosed K L A)
 
 /-- **Over a finite field every central simple algebra is split by the base field.** A finite
 central division algebra is its own base field (little Wedderburn), so the Wedderburn presentation
@@ -257,9 +239,11 @@ example : ¬ IsSplittingField ℝ ℍ[ℝ] ℝ := by
   rw [isSplittingField_self_iff]
   rintro ⟨n, ⟨e⟩⟩
   have hn : n = 2 := by
-    have := finrank_eq_sq_of_algEquiv_matrix ℝ ℍ[ℝ] ℝ ((Algebra.TensorProduct.lid ℝ ℍ[ℝ]).trans e)
-    rw [Quaternion.finrank_eq_four] at this
-    exact Nat.pow_left_injective (by norm_num) (show n ^ 2 = 2 ^ 2 by omega)
+    have h4 := finrank_eq_sq_of_algEquiv_matrix ℝ ℍ[ℝ] ℝ
+      ((Algebra.TensorProduct.lid ℝ ℍ[ℝ]).trans e)
+    rw [Quaternion.finrank_eq_four] at h4
+    have hsq : n ^ 2 = 2 ^ 2 := by omega
+    exact Nat.pow_left_injective (by norm_num) hsq
   subst hn
   exact (Quaternion.isEmpty_algEquiv_matrix ℝ (Fin 2)).elim e
 
