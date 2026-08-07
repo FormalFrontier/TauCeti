@@ -44,22 +44,22 @@ open MeasureTheory
 
 omit [CompleteSpace X] in
 /-- The growth-bound estimate for a polynomially weighted Laplace-transform integrand:
-`‖t^n e^{-λt} S(t) x‖ ≤ M ‖x‖ t^n e^{-(λ-ω)t}` for `t > 0`. -/
+`‖t^n e^{-λt} S(t) x‖ ≤ M ‖x‖ t^n e^{-(λ-ω)t}` for `t ≥ 0`. -/
 lemma StronglyContinuousSemigroup.norm_pow_mul_resolvent_integrand_le
     (S : StronglyContinuousSemigroup X) {ω M : ℝ} (hb : S.HasGrowthBound ω M)
-    (n : ℕ) (lambda : ℝ) (x : X) {t : ℝ} (ht : 0 < t) :
+    (n : ℕ) (lambda : ℝ) (x : X) {t : ℝ} (ht : 0 ≤ t) :
     ‖(t ^ n * Real.exp (-(lambda * t))) • S.realOperator t x‖ ≤
       M * ‖x‖ * (t ^ n * Real.exp (-((lambda - ω) * t))) := by
   rw [norm_smul, Real.norm_eq_abs,
-    abs_of_nonneg (mul_nonneg (pow_nonneg ht.le n) (Real.exp_pos _).le)]
+    abs_of_nonneg (mul_nonneg (pow_nonneg ht n) (Real.exp_pos _).le)]
   calc
     t ^ n * Real.exp (-(lambda * t)) * ‖S.realOperator t x‖
         ≤ t ^ n * Real.exp (-(lambda * t)) *
             (M * Real.exp (ω * t) * ‖x‖) := by
           apply mul_le_mul_of_nonneg_left _
-            (mul_nonneg (pow_nonneg ht.le _) (Real.exp_pos _).le)
+            (mul_nonneg (pow_nonneg ht _) (Real.exp_pos _).le)
           exact (ContinuousLinearMap.le_opNorm _ _).trans
-            (mul_le_mul_of_nonneg_right (hb.bound t ht.le) (norm_nonneg x))
+            (mul_le_mul_of_nonneg_right (hb.bound t ht) (norm_nonneg x))
     _ = M * ‖x‖ * (t ^ n * Real.exp (-((lambda - ω) * t))) := by
         have h_exp_exponent : -((lambda - ω) * t) = -(lambda * t) + ω * t := by ring
         rw [h_exp_exponent, Real.exp_add]
@@ -73,7 +73,7 @@ lemma StronglyContinuousSemigroup.norm_resolvent_integrand_le
     ‖Real.exp (-(lambda * t)) • S.realOperator t x‖ ≤
       M * ‖x‖ * Real.exp (-(lambda - ω) * t) := by
   simpa only [pow_zero, one_mul, neg_mul] using
-    S.norm_pow_mul_resolvent_integrand_le hb 0 lambda x ht
+    S.norm_pow_mul_resolvent_integrand_le hb 0 lambda x ht.le
 
 /-- Strong measurability of a polynomially weighted semigroup orbit. -/
 lemma StronglyContinuousSemigroup.aestronglyMeasurable_pow_mul_resolvent_integrand
@@ -99,7 +99,7 @@ lemma StronglyContinuousSemigroup.integrableOn_pow_mul_resolvent_integrand
   · exact S.aestronglyMeasurable_pow_mul_resolvent_integrand n lambda x
   · apply (ae_restrict_mem measurableSet_Ioi).mono
     intro t (ht : 0 < t)
-    exact S.norm_pow_mul_resolvent_integrand_le hb n lambda x ht
+    exact S.norm_pow_mul_resolvent_integrand_le hb n lambda x ht.le
 
 /-- The integrand in the defining resolvent integral is integrable on `(0, ∞)` for `ω < λ`. -/
 lemma StronglyContinuousSemigroup.integrableOn_resolvent_integrand

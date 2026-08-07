@@ -69,7 +69,7 @@ private theorem norm_neg_pow_mul_resolvent_integrand_le (hb : S.HasGrowthBound o
         = ‖(t ^ n * Real.exp (-(l * t))) • S.realOperator t x‖ := by
           rw [neg_smul, norm_neg]
     _ ≤ M * ‖x‖ * (t ^ n * Real.exp (-((l - omega) * t))) :=
-          S.norm_pow_mul_resolvent_integrand_le hb n l x ht
+          S.norm_pow_mul_resolvent_integrand_le hb n l x ht.le
     _ ≤ M * ‖x‖ * (t ^ n * Real.exp (-(delta * t))) := by
           apply mul_le_mul_of_nonneg_left _
             (mul_nonneg (by linarith [hb.one_le]) (norm_nonneg x))
@@ -244,7 +244,7 @@ theorem norm_resolvent_pow_succ_apply_le (hb : S.HasGrowthBound omega M) (n : �
           apply MeasureTheory.norm_integral_le_of_norm_le hscalar.integrable
           apply (ae_restrict_mem measurableSet_Ioi).mono
           intro t ht
-          exact S.norm_pow_mul_resolvent_integrand_le hb n lambda x ht
+          exact S.norm_pow_mul_resolvent_integrand_le hb n lambda x ht.le
     _ = M / (lambda - omega) ^ (n + 1) * ‖x‖ := by
       rw [MeasureTheory.integral_const_mul,
         integral_pow_mul_exp_neg_mul_Ioi n ha]
@@ -282,6 +282,17 @@ theorem norm_iteratedDeriv_resolventFun_le (hb : S.HasGrowthBound omega M) (n : 
 end StronglyContinuousSemigroup
 
 namespace ContractionSemigroup
+
+/-- The pointwise power formula for a contraction-semigroup resolvent:
+`R(lambda)^(n+1)x = 1/n! integral t^n exp(-lambda t) S(t)x dt`. -/
+theorem resolvent_pow_succ_apply (S : ContractionSemigroup X) (n : ℕ) {lambda : ℝ}
+    (hlambda : 0 < lambda) (x : X) :
+    (S.resolvent lambda hlambda ^ (n + 1)) x =
+      (1 / (n.factorial : ℝ)) •
+        ∫ t in Set.Ioi 0, (t ^ n * Real.exp (-(lambda * t))) • S.realOperator t x := by
+  rw [S.resolvent_eq_stronglyContinuousSemigroup_resolvent]
+  exact S.toStronglyContinuousSemigroup.resolvent_pow_succ_apply
+    S.hasGrowthBound n hlambda x
 
 /-- The iterated Hille--Yosida bound for a contraction semigroup:
 `‖R(lambda)^n‖ ≤ lambda⁻ⁿ`. -/
