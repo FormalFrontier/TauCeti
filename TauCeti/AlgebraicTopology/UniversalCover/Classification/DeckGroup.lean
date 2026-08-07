@@ -79,6 +79,18 @@ theorem deckSubgroupQuotientProjEquiv_mk_apply
     ← subgroupQuotientMap_apply x₀ H e,
     Deck.IsQuotientCoveringMap.normalizerDeckHom_apply, subgroupQuotientMap_apply]
 
+/-- The inverse of the deck transformation attached to the normalizer class of `g` sends the
+class of `e` to the class of `g⁻¹ • e`. -/
+@[simp]
+theorem deckSubgroupQuotientProjEquiv_mk_symm_apply
+    (g : Subgroup.normalizer (H : Set (FundamentalGroup X x₀))) (e : UniversalCover x₀) :
+    (deckSubgroupQuotientProjEquiv x₀ H (QuotientGroup.mk g)).1.symm (Quotient.mk'' e) =
+      Quotient.mk'' ((g : FundamentalGroup X x₀)⁻¹ • e) := by
+  rw [deckSubgroupQuotientProjEquiv,
+    Deck.IsQuotientCoveringMap.normalizerQuotientDeckMulEquiv_mk,
+    ← subgroupQuotientMap_apply x₀ H e,
+    Deck.IsQuotientCoveringMap.normalizerDeckHom_symm_apply, subgroupQuotientMap_apply]
+
 /-- **For a normal subgroup `H ◁ π₁(X, x₀)`, the deck group of the cover attached to `H` is
 `π₁(X, x₀) ⧸ H`**, so that cover is regular. -/
 def deckSubgroupQuotientProjEquivOfNormal [H.Normal] :
@@ -99,5 +111,17 @@ theorem deckSubgroupQuotientProjEquivOfNormal_mk_apply [H.Normal]
     Deck.IsQuotientCoveringMap.quotientDeckMulEquivOfNormal_mk,
     ← subgroupQuotientMap_apply x₀ H e,
     Deck.IsQuotientCoveringMap.deckHomOfNormal_apply, subgroupQuotientMap_apply]
+
+/-- For normal `H`, the inverse of the deck transformation attached to the class of `g` sends
+the class of `e` to the class of `g⁻¹ • e`. -/
+@[simp]
+theorem deckSubgroupQuotientProjEquivOfNormal_mk_symm_apply [H.Normal]
+    (g : FundamentalGroup X x₀) (e : UniversalCover x₀) :
+    (deckSubgroupQuotientProjEquivOfNormal x₀ H (QuotientGroup.mk g)).1.symm
+        (Quotient.mk'' e) = Quotient.mk'' (g⁻¹ • e) := by
+  rw [deckSubgroupQuotientProjEquivOfNormal,
+    Deck.IsQuotientCoveringMap.quotientDeckMulEquivOfNormal_mk,
+    ← subgroupQuotientMap_apply x₀ H e,
+    Deck.IsQuotientCoveringMap.deckHomOfNormal_symm_apply, subgroupQuotientMap_apply]
 
 end TauCeti.UniversalCover
