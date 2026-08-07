@@ -558,8 +558,10 @@ theorem not_isFiniteType_affineD₄ :
 matrix; it is symmetrizable, by `d = (1, 2, 1)`; its Cartan products `2`, `1`, `2` all lie in the
 rank-two range; and it is nonsingular, with determinant `-6`. So neither the combinatorial axioms,
 nor `TauCeti.IsFiniteType.apply_mul_apply_mem_of_ne`, nor `TauCeti.IsFiniteType.det_ne_zero`
-excludes it, and the star bound never applies, its non-adjacency hypothesis being what a triangle
-fails. It is `TauCeti.IsFiniteType.apply_eq_zero_of_apply_ne_zero` that rules it out. -/
+excludes it. Neither does the star bound: no two of the three indices are non-adjacent, so the only
+neighbour sets meeting its pairwise non-adjacency hypothesis are the empty and the singleton ones,
+whose Cartan products sum to at most `2` and so stay clear of the bound. It is
+`TauCeti.IsFiniteType.apply_eq_zero_of_apply_ne_zero` that rules it out. -/
 theorem not_isFiniteType_doubleEdgeTriangle :
     ¬ IsFiniteType (!![2, -2, -1; -1, 2, -1; -1, -2, 2] : Matrix (Fin 3) (Fin 3) ℤ) := by
   intro h
