@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.Algebra.Group.ConjFinite
+public import TauCeti.Algebra.Group.Conj
 public import Mathlib.LinearAlgebra.Dimension.Constructions
 public import Mathlib.RepresentationTheory.Character
 
@@ -41,24 +41,6 @@ definitional equalities, which would in turn require exposing the definitions.
 namespace TauCeti
 
 universe u v w w'
-
-/-- Conjugacy is inherited by inverses in both directions.
-
-Not `@[simp]`: Mathlib's `isConj_iff` is itself `simp`, so the left-hand side simplifies to
-`∃ c, c * x⁻¹ * c⁻¹ = y⁻¹` and the simp normal form linter rejects the pair. -/
-theorem isConj_inv_iff {G : Type v} [Group G] {x y : G} :
-    IsConj x⁻¹ y⁻¹ ↔ IsConj x y := by
-  constructor <;> intro h
-  · obtain ⟨c, hc⟩ := isConj_iff.mp h
-    apply isConj_iff.mpr
-    refine ⟨c, ?_⟩
-    have := congrArg Inv.inv hc
-    simpa [mul_assoc] using this
-  · obtain ⟨c, hc⟩ := isConj_iff.mp h
-    apply isConj_iff.mpr
-    refine ⟨c, ?_⟩
-    have := congrArg Inv.inv hc
-    simpa [mul_assoc] using this
 
 /-- The submodule of functions on `G` that are constant under conjugation. -/
 def ClassFunction (k : Type u) (G : Type v) [Semiring k] [Group G] : Submodule k (G → k) where
@@ -271,6 +253,11 @@ noncomputable def ofFDRep (V : FDRep k G) : ClassFunction k G :=
 /-- The class function of a bundled finite-dimensional representation evaluates to its character. -/
 @[simp]
 theorem ofFDRep_apply (V : FDRep k G) (g : G) : (ofFDRep V).1 g = V.character g :=
+  (rfl)
+
+/-- The class function of a bundled finite-dimensional representation is the class function of the
+underlying representation: `FDRep.character` is `Representation.character` of `V.ρ`. -/
+theorem ofFDRep_eq_ofCharacter (V : FDRep k G) : ofFDRep V = ofCharacter V.ρ :=
   (rfl)
 
 end ClassFunction

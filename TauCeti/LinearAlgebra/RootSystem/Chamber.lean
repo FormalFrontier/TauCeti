@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.LinearAlgebra.RootSystem.Positive
-public import TauCeti.LinearAlgebra.RootSystem.WeylGroup
+public import TauCeti.LinearAlgebra.RootSystem.Weyl.Group
 
 public section
 
@@ -165,7 +165,7 @@ variable [Finite ι]
 factor two this is the pairing of `x` with the Weyl vector on the coroot side; all that is used
 below is how it transforms under a simple reflection. -/
 private noncomputable def posCorootSum (x : M) : R :=
-  ∑ i ∈ (posRoots_finite P b).toFinset, P.coroot' i x
+  ∑ i ∈ posRootsFinset P b, P.coroot' i x
 
 variable [P.IsCrystallographic] [P.IsReduced]
 
@@ -176,27 +176,22 @@ private lemma posCorootSum_reflection {i : ι} (hi : i ∈ b.support) (x : M) :
   classical
   -- Work with the underlying sums rather than leaning on `posCorootSum` unfolding silently.
   unfold posCorootSum
-  set s := (posRoots_finite P b).toFinset with hs
-  have hmem : ∀ j : ι, j ∈ s ↔ j ∈ posRoots P b := by
-    intro j; rw [hs, Set.Finite.mem_toFinset]
-  have his : i ∈ s := (hmem i).mpr (support_subset_posRoots P b hi)
+  have his : i ∈ posRootsFinset P b :=
+    (mem_posRootsFinset P b i).mpr (support_subset_posRoots P b hi)
   -- Reflecting the argument reindexes the summand along `P.reflectionPerm i`.
-  have hreindex : ∑ j ∈ s, P.coroot' j (P.reflection i x) =
-      ∑ j ∈ s, P.coroot' (P.reflectionPerm i j) x :=
+  have hreindex : ∑ j ∈ posRootsFinset P b, P.coroot' j (P.reflection i x) =
+      ∑ j ∈ posRootsFinset P b, P.coroot' (P.reflectionPerm i j) x :=
     Finset.sum_congr rfl fun _ _ ↦ P.coroot'_reflection x
   -- The reflected simple coroot is the negative of the original.
   have hself : P.coroot' (P.reflectionPerm i i) x = -P.coroot' i x := by
     rw [RootPairing.coroot'_reflectionPerm_self]
     simp
   -- Away from `i` the reflection is a bijection of the punctured positive roots.
-  have hpunctured : ∑ j ∈ s.erase i, P.coroot' (P.reflectionPerm i j) x =
-      ∑ j ∈ s.erase i, P.coroot' j x := by
-    refine Finset.sum_equiv (P.reflectionPerm i) (fun j ↦ ?_) (fun _ _ ↦ rfl)
-    have h := reflectionPerm_mem_posRoots_diff_singleton_iff P b hi j
-    simp only [Set.mem_sdiff, Set.mem_singleton_iff] at h
-    simp only [Finset.mem_erase, hmem]
-    tauto
-  have hexpand : ∑ j ∈ s, P.coroot' j x = P.coroot' i x + ∑ j ∈ s.erase i, P.coroot' j x :=
+  have hpunctured : ∑ j ∈ (posRootsFinset P b).erase i, P.coroot' (P.reflectionPerm i j) x =
+      ∑ j ∈ (posRootsFinset P b).erase i, P.coroot' j x :=
+    sum_posRootsFinset_erase_comp_reflectionPerm P b hi fun j ↦ P.coroot' j x
+  have hexpand : ∑ j ∈ posRootsFinset P b, P.coroot' j x =
+      P.coroot' i x + ∑ j ∈ (posRootsFinset P b).erase i, P.coroot' j x :=
     (Finset.add_sum_erase _ _ his).symm
   rw [hreindex, ← Finset.add_sum_erase _ _ his, hpunctured, hself, hexpand]
   ring
