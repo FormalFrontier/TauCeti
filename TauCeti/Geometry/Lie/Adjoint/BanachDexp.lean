@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Geometry.Lie.Adjoint.OperatorExponential
-public import TauCeti.Analysis.Normed.Algebra.OneSubExpNegDivSelf
+public import TauCeti.Analysis.Normed.Algebra.OneSubExpNegDivSelf.Basic
 
 /-!
 # The Banach-algebra dexp factor
