@@ -63,10 +63,11 @@ Passing between the two forms of the criterion needs the Mackey term to be const
 coset, which is `TauCeti.finrank_hom_res_mackeyToH_conj`, proved with the formula it belongs to;
 `TauCeti.mackeyDisjoint_conj_iff` is its reading through the predicate.
 
-The characteristic-zero hypothesis is inherited from
+The characteristic-zero hypothesis of the two criteria is inherited from
 `TauCeti.finrank_hom_indFDRep_mackey_erase`: the intertwining-number formula is proved as an
 identity in `k` of the casts of the dimensions, and reading it back as an identity of natural
-numbers -- which is what lets the summands be compared one by one -- needs `ℕ → k` injective.
+numbers -- which is what lets the summands be compared one by one -- needs `ℕ → k` injective.  Only
+those two statements carry it: `TauCeti.MackeyDisjoint` and its API hold over any field.
 
 The normal-subgroup corollary -- for `H ◁ G`, irreducibility of `Ind_H^G A` is equivalent to
 irreducibility of `A` together with `{}^s A ≇ A` for every `s ∉ H` -- is the remaining Layer 4
@@ -142,7 +143,7 @@ theorem mackeyDisjoint_iff_finrank_eq_zero (A : FDRep k H) (s : G) :
 `h₁, h₂ ∈ H` exactly when it holds at `s`.  This is the predicate form of
 `TauCeti.finrank_hom_res_mackeyToH_conj`, and is what moves the criterion between its double-coset
 and its elementwise reading. -/
-theorem mackeyDisjoint_conj_iff [Finite G] [CharZero k] (A : FDRep k H) {h₁ h₂ : G} (hh₁ : h₁ ∈ H)
+theorem mackeyDisjoint_conj_iff (A : FDRep k H) {h₁ h₂ : G} (hh₁ : h₁ ∈ H)
     (hh₂ : h₂ ∈ H) (s : G) : MackeyDisjoint A (h₁ * s * h₂) ↔ MackeyDisjoint A s := by
   rw [mackeyDisjoint_iff_finrank_eq_zero, mackeyDisjoint_iff_finrank_eq_zero,
     finrank_hom_res_mackeyToH_conj A hh₁ hh₂ s]

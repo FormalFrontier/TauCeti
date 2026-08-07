@@ -34,9 +34,8 @@ becomes `dim End_H A`: this is the shape in which the Mackey irreducibility crit
 formula.
 
 A term of the sum is read at a representative `s` of its double coset, but does not depend on that
-choice: replacing `s` by `h₁ s h₂` with `h₁, h₂ ∈ H` leaves the pairing
-(`TauCeti.characterPairing_mackeyClassFunction_conj`) and hence the dimension
-(`TauCeti.finrank_hom_res_mackeyToH_conj`) unchanged.
+choice: replacing `s` by `h₁ s h₂` with `h₁, h₂ ∈ H` leaves the dimension unchanged
+(`TauCeti.finrank_hom_res_mackeyToH_conj`).
 
 ## Main statements
 
@@ -49,9 +48,8 @@ choice: replacing `s` by `h₁ s h₂` with `h₁, h₂ ∈ H` leaves the pairin
   identity double coset split off.
 * `TauCeti.finrank_hom_indFDRep_mackey_erase`: the same split for intertwining-space dimensions,
   whose identity-coset term is `dim End_H A`.
-* `TauCeti.characterPairing_mackeyClassFunction_conj`: a term of the formula does not depend on the
-  representative chosen for its double coset, on class functions.
-* `TauCeti.finrank_hom_res_mackeyToH_conj`: the same invariance for intertwining-space dimensions.
+* `TauCeti.finrank_hom_res_mackeyToH_conj`: a term of the formula does not depend on the
+  representative chosen for its double coset.
 
 ## Implementation notes
 
@@ -62,7 +60,9 @@ function form, so it also covers class functions that are not characters.
 The dimension form is stated as an identity in `k` of the *casts* of the two dimensions, because
 that is what the character pairing computes.  Cancelling the cast needs `k` of characteristic
 zero, and `TauCeti.finrank_hom_indFDRep_mackey` carries that hypothesis; over a splitting field of
-positive characteristic only the cast identity is available.
+positive characteristic only the cast identity is available.  The invariance of a single term under
+a change of representative, on the other hand, is proved by transporting the intertwining space
+itself rather than its dimension in `k`, and so holds over any field.
 
 The right-hand argument of each intertwining space is the representation `TauCeti.mackeySummand`
 is induced from, written the way `TauCeti.mackeySummand` writes it: the restriction of `B` along
@@ -205,50 +205,6 @@ theorem characterPairing_ind_ind_mackey_erase [Fintype G] (hG : IsUnit (Nat.card
 
 end IdentityCoset
 
-section Representative
-
-variable {k : Type u} {G : Type v} [Field k] [Group G] {H : Subgroup G}
-
-open scoped Classical in
-/-- **The Mackey term of the formula, on class functions, depends only on the double coset**:
-replacing the representative `s` by `h₁ s h₂` with `h₁, h₂ ∈ H` does not change the pairing of the
-conjugated class function with the restricted one.
-
-This is the class-function shadow of `TauCeti.finrank_hom_res_mackeyToH_conj`; no representation,
-no algebraic closure and no characteristic assumption enter. -/
-theorem characterPairing_mackeyClassFunction_conj [Fintype H] {h₁ h₂ : G} (hh₁ : h₁ ∈ H)
-    (hh₂ : h₂ ∈ H) (s : G) (f : ClassFunction k H) :
-    ClassFunction.characterPairing (mackeyClassFunction (h₁ * s * h₂) H H f)
-        (ClassFunction.comap ((mackeySubgroup (h₁ * s * h₂) H H).subgroupOf H).subtype f) =
-      ClassFunction.characterPairing (mackeyClassFunction s H H f)
-        (ClassFunction.comap ((mackeySubgroup s H H).subgroupOf H).subtype f) := by
-  -- Both pairings are averages over the Mackey subgroup, and `mackeySubgroupOfCongr` reindexes
-  -- one sum into the other by conjugation with `h₁`.
-  have hcard : Nat.card ((mackeySubgroup (h₁ * s * h₂) H H).subgroupOf H) =
-      Nat.card ((mackeySubgroup s H H).subgroupOf H) :=
-    Nat.card_congr (mackeySubgroupOfCongr hh₁ hh₂ s).symm.toEquiv
-  rw [ClassFunction.characterPairing_apply, ClassFunction.characterPairing_apply, hcard]
-  congr 1
-  refine (Fintype.sum_equiv (mackeySubgroupOfCongr hh₁ hh₂ s).toEquiv _ _ fun y => ?_).symm
-  -- Conjugating `y` by `h₁` conjugates `s⁻¹ y s` by `h₂` instead.
-  have hconj : mackeyToH (h₁ * s * h₂) H H (mackeySubgroupOfCongr hh₁ hh₂ s y) =
-      (⟨h₂, hh₂⟩ : H)⁻¹ * mackeyToH s H H y * (⟨h₂, hh₂⟩ : H)⁻¹⁻¹ :=
-    Subtype.ext (by
-      push_cast [coe_mackeyToH_apply, coe_mackeySubgroupOfCongr_apply]
-      group)
-  have hinv : ((mackeySubgroupOfCongr hh₁ hh₂ s y : H))⁻¹ =
-      (⟨h₁, hh₁⟩ : H) * ((y : H))⁻¹ * (⟨h₁, hh₁⟩ : H)⁻¹ :=
-    Subtype.ext (by
-      push_cast [coe_mackeySubgroupOfCongr_apply]
-      group)
-  simp only [MulEquiv.toEquiv_eq_coe, MulEquiv.coe_toEquiv, mackeyClassFunction_coe,
-    mackeyClassFun_apply, ClassFunction.comap_apply, Subgroup.coe_subtype, Subgroup.coe_inv,
-    hconj, hinv]
-  -- Neither conjugation is visible to a class function.
-  rw [ClassFunction.mem_iff.mp f.2, ClassFunction.mem_iff.mp f.2]
-
-end Representative
-
 section Representations
 
 variable {k G : Type u} [Field k] [Group G] {H K : Subgroup G}
@@ -357,32 +313,60 @@ theorem finrank_hom_indFDRep_mackey_erase [Finite G] [CharZero k] (A : FDRep k H
     isUnit_iff_ne_zero.mpr (Nat.cast_ne_zero.mpr Nat.card_pos.ne')
   exact_mod_cast natCast_finrank_hom_indFDRep_mackey_erase hG A
 
+open CategoryTheory in
+/-- Restriction along an isomorphism of groups is an equivalence of representation categories, so
+it leaves the dimension of an intertwining space unchanged. -/
+private theorem finrank_hom_res_mulEquiv {M M' : Type u} [Group M] [Group M'] (e : M ≃* M')
+    (X Y : FDRep k M') :
+    Module.finrank k ((Action.res (FGModuleCat k) (e : M →* M')).obj X ⟶
+        (Action.res (FGModuleCat k) (e : M →* M')).obj Y) = Module.finrank k (X ⟶ Y) :=
+  have hff : (Action.res (FGModuleCat.{u, u} k) (e : M →* M')).FullyFaithful :=
+    (Action.resEquiv (FGModuleCat.{u, u} k) e).fullyFaithfulFunctor
+  (LinearEquiv.ofBijective
+    ((Action.res (FGModuleCat.{u, u} k) (e : M →* M')).mapLinearMap k (X := X) (Y := Y))
+    hff.homEquiv.bijective).finrank_eq.symm
+
+open CategoryTheory in
 /-- **The Mackey term depends only on the double coset**, as a dimension: the intertwining space
-`Hom_{H ⊓ sHs⁻¹}(Res A, {}^s A)` has the same dimension at `s` and at `h₁ s h₂` for `h₁, h₂ ∈ H`. -/
-theorem finrank_hom_res_mackeyToH_conj [Finite G] [CharZero k] (A : FDRep k H) {h₁ h₂ : G}
-    (hh₁ : h₁ ∈ H) (hh₂ : h₂ ∈ H) (s : G) :
+`Hom_{H ⊓ sHs⁻¹}(Res A, {}^s A)` has the same dimension at `s` and at `h₁ s h₂` for `h₁, h₂ ∈ H`.
+
+Nothing is assumed of `k` beyond being a field: the two intertwining spaces are carried into one
+another by the action of `h₁` and of `h₂` on `A`. -/
+theorem finrank_hom_res_mackeyToH_conj (A : FDRep k H) {h₁ h₂ : G} (hh₁ : h₁ ∈ H) (hh₂ : h₂ ∈ H)
+    (s : G) :
     Module.finrank k (resFDRep ((mackeySubgroup (h₁ * s * h₂) H H).subgroupOf H) A ⟶
         (Action.res (FGModuleCat k) (mackeyToH (h₁ * s * h₂) H H)).obj A) =
       Module.finrank k (resFDRep ((mackeySubgroup s H H).subgroupOf H) A ⟶
         (Action.res (FGModuleCat k) (mackeyToH s H H)).obj A) := by
-  classical
-  let := Fintype.ofFinite H
-  -- Each dimension is a character pairing, and the pairings agree by
-  -- `characterPairing_mackeyClassFunction_conj`.
-  have key : ∀ t : G,
-      ClassFunction.characterPairing (mackeyClassFunction t H H (ClassFunction.ofFDRep A))
-          (ClassFunction.comap ((mackeySubgroup t H H).subgroupOf H).subtype
-            (ClassFunction.ofFDRep A)) =
-        (Module.finrank k (resFDRep ((mackeySubgroup t H H).subgroupOf H) A ⟶
-          (Action.res (FGModuleCat k) (mackeyToH t H H)).obj A) : k) := by
-    intro t
-    let : Invertible (Nat.card ((mackeySubgroup t H H).subgroupOf H) : k) :=
-      (isUnit_iff_ne_zero.mpr (Nat.cast_ne_zero.mpr Nat.card_pos.ne')).invertible
-    rw [← ofFDRep_res_mackeyToH, ClassFunction.comap_subtype_ofFDRep,
-      ClassFunction.characterPairing_ofFDRep_eq_finrank]
-  have hpair := characterPairing_mackeyClassFunction_conj hh₁ hh₂ s (ClassFunction.ofFDRep A)
-  rw [key, key] at hpair
-  exact_mod_cast hpair
+  -- Read both intertwining spaces over the Mackey subgroup of `s`, along the change of
+  -- representative `mackeySubgroupOfCongr`, which conjugates by `h₁`.
+  -- On the source, that conjugation is undone by the action of `h₁`:
+  let α : (Action.res (FGModuleCat k) ((mackeySubgroupOfCongr hh₁ hh₂ s) : _ →* _)).obj
+        (resFDRep ((mackeySubgroup (h₁ * s * h₂) H H).subgroupOf H) A) ≅
+      resFDRep ((mackeySubgroup s H H).subgroupOf H) A :=
+    Action.mkIso (A.ρAut ⟨h₁, hh₁⟩).symm fun y => by
+      change Action.ρ A _ ≫ Action.ρ A _ = Action.ρ A _ ≫ Action.ρ A _
+      rw [← End.mul_def, ← End.mul_def, ← map_mul, ← map_mul]
+      congr 1
+      exact Subtype.ext (by
+        simp only [MonoidHom.coe_coe, Subgroup.coe_subtype, coe_mackeySubgroupOfCongr_apply,
+          Subgroup.coe_mul, Subgroup.coe_inv]
+        group)
+  -- and on the twisted target, where `h₁` cancels against the representative, by the action
+  -- of `h₂`:
+  let β : (Action.res (FGModuleCat k) ((mackeySubgroupOfCongr hh₁ hh₂ s) : _ →* _)).obj
+        ((Action.res (FGModuleCat k) (mackeyToH (h₁ * s * h₂) H H)).obj A) ≅
+      (Action.res (FGModuleCat k) (mackeyToH s H H)).obj A :=
+    Action.mkIso (A.ρAut ⟨h₂, hh₂⟩) fun y => by
+      change Action.ρ A _ ≫ Action.ρ A _ = Action.ρ A _ ≫ Action.ρ A _
+      rw [← End.mul_def, ← End.mul_def, ← map_mul, ← map_mul]
+      congr 1
+      exact Subtype.ext (by
+        simp only [MonoidHom.coe_coe, coe_mackeyToH_apply, coe_mackeySubgroupOfCongr_apply,
+          Subgroup.coe_mul]
+        group)
+  rw [← finrank_hom_res_mulEquiv (mackeySubgroupOfCongr hh₁ hh₂ s)]
+  exact (Linear.homCongr k α β).finrank_eq
 
 end Representations
 
