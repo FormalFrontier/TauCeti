@@ -69,6 +69,14 @@ identity in `k` of the casts of the dimensions, and reading it back as an identi
 numbers -- which is what lets the summands be compared one by one -- needs `ℕ → k` injective.  Only
 those two statements carry it: `TauCeti.MackeyDisjoint` and its API hold over any field.
 
+That is also where Mathlib puts a simplicity criterion obtained from a character identity:
+`FDRep.simple_iff_char_is_norm_one` assumes `[CharZero k]`, and uses it for exactly this step
+(`Nat.cast_inj`), even though the rank-one criterion `FDRep.simple_iff_end_is_rank_one` it is
+derived from asks only for `[NeZero (Nat.card G : k)]`.  Reaching the criteria below over such a
+field means proving the intertwining-number formula in `ℕ` from the Mackey decomposition as an
+isomorphism of representations, which is a separate roadmap target (Layer 3a) and is not
+formalized here.
+
 The normal-subgroup corollary -- for `H ◁ G`, irreducibility of `Ind_H^G A` is equivalent to
 irreducibility of `A` together with `{}^s A ≇ A` for every `s ∉ H` -- is the remaining Layer 4
 target, and is not proved here.  It needs the Mackey terms to be identified with `Hom_H(A, {}^s A)`
