@@ -98,9 +98,9 @@ variable {k G V : Type*} [Semiring k] [Group G] [AddCommMonoid V] [Module k V]
   {N : Subgroup G} [N.Normal] (ρ : Representation k G V)
 
 /-- Acting by `g` and then by `n ∈ N` is the same as acting by the conjugate `g⁻¹ n g` and then by
-`g`.  This is the whole content of Clifford theory: it is why translating an `N`-stable subspace by
-`ρ g` produces another `N`-stable subspace, and why the two carry the same representation of `N` up
-to a conjugation twist.
+`g`.  This conjugation identity is what everything below rests on: it is why translating an
+`N`-stable subspace by `ρ g` produces another `N`-stable subspace, and why the two carry the same
+representation of `N` up to a conjugation twist.
 
 The conjugate is written as Mathlib's `MulAut.conjNormal g⁻¹`, the automorphism of `N` that
 `TauCeti.conjNormalRep` twists by. -/
@@ -286,10 +286,10 @@ theorem iSup_conjSubrep_eq_top [ρ.IsIrreducible]
     exact le_bot_iff.mp (hbot ▸ hτσ)
   · exact congrArg Subrepresentation.toSubmodule h
 
-/-- **Clifford's theorem, first half, from a minimal constituent.** If an irreducible representation
-has a minimal nonzero `N`-stable subspace, then its restriction to `N` is semisimple: the translates
-of that subspace are again minimal and they span, so the restriction is a sum of simple
-`N`-submodules.
+/-- **Restriction to a normal subgroup is semisimple, from a minimal constituent.** If an
+irreducible representation has a minimal nonzero `N`-stable subspace, then its restriction to `N`
+is semisimple: the translates of that subspace are again minimal and they span, so the restriction
+is a sum of simple `N`-submodules.
 
 No hypothesis relating `Nat.card N` to the characteristic is needed; irreducibility of the ambient
 representation does the work Maschke's theorem would otherwise do. -/
@@ -327,8 +327,8 @@ theorem isSemisimpleRepresentation_comp_subtype_of_isAtom [ρ.IsIrreducible]
   rw [← hTsSup, htop, ← Subrepresentation.subrepresentationSubmoduleOrderIso_apply,
     OrderIso.map_top]
 
-/-- **Clifford's theorem, first half.** The restriction to a normal subgroup of a finite-dimensional
-irreducible representation is semisimple. -/
+/-- **Restriction to a normal subgroup preserves semisimplicity.** The restriction to a normal
+subgroup of a finite-dimensional irreducible representation is semisimple. -/
 theorem isSemisimpleRepresentation_comp_subtype [ρ.IsIrreducible] [FiniteDimensional k V] :
     _root_.Representation.IsSemisimpleRepresentation (ρ.comp N.subtype) := by
   have hbot : (⊤ : Subrepresentation (ρ.comp N.subtype)) ≠ ⊥ := by
