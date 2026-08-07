@@ -190,9 +190,7 @@ theorem hasDerivAt_extChartAt_mulInvariantIntegralCurve_zero [CompleteSpace E]
   rw [tangentCoordChange_self hone] at hcurveDeriv
   exact hcurveDeriv
 
-local instance lieGroupMinSmoothnessOfInfinite [LieGroup I ∞ G] :
-    LieGroup I (minSmoothness ℝ 3) G := by
-  simpa using (inferInstance : LieGroup I (3 : ℕ∞ω) G)
+attribute [local instance] LieGroup.minSmoothnessThree
 
 section SmoothInvariantIntegralCurve
 

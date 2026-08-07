@@ -131,7 +131,7 @@ private theorem IsPrimeDiscriminant.not_isUnit {D : ℤ} (hD : IsPrimeDiscrimina
     ¬ IsUnit D := by
   rcases isPrimeDiscriminant_iff.mp hD with hev | ⟨p, hp, -, rfl⟩
   · rcases hev with rfl | rfl | rfl <;> simp [Int.isUnit_iff]
-  · exact (prime_oddPrimeDiscriminant hp).not_unit
+  · exact (prime_oddPrimeDiscriminant hp).not_isUnit
 
 /-- A prime discriminant that is not even is `oddPrimeDiscriminant` of its (odd, prime) absolute
 value. -/

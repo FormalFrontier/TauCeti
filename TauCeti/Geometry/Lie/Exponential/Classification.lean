@@ -69,9 +69,7 @@ variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
   {G : Type*} [TopologicalSpace G] [ChartedSpace H G] [Group G]
   [IsManifold I 1 G]
 
-local instance lieGroupMinSmoothnessClassification [LieGroup I ∞ G] :
-    LieGroup I (minSmoothness ℝ 3) G := by
-  simpa using (inferInstance : LieGroup I (3 : ℕ∞ω) G)
+attribute [local instance] LieGroup.minSmoothnessThree
 
 /-- The local logarithm of a continuous one-parameter subgroup at time `2⁻ⁿ`. -/
 private noncomputable def continuousOneParameterLog [FiniteDimensional ℝ E] [LieGroup I ∞ G]

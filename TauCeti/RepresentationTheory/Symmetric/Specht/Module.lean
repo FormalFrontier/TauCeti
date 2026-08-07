@@ -39,7 +39,9 @@ distinct and the coefficient of `{t}` itself is `1`.
 
 The identification of `S^μ` with the left ideal `ℚ[Sₙ] c_t` of
 `TauCeti/RepresentationTheory/Symmetric/Specht/Ideal/Basic.lean` is a separate milestone and is not
-proved here; so are James's submodule theorem and irreducibility.
+proved here.  Neither is James's submodule theorem, which rests on the nonvanishing recorded below
+and lives in `TauCeti/RepresentationTheory/Symmetric/Specht/SubmoduleTheorem.lean` together with
+the irreducibility it yields.
 
 ## Main definitions
 
@@ -148,6 +150,13 @@ noncomputable def polytabloid (t : YoungTableau μ) :
     (permutationModule (shapePartition μ)).V :=
   (permutationModule (shapePartition μ)).ρ.asAlgebraHom (columnAntisymmetrizer t)
     (MonoidAlgebra.single (tabloid t) 1)
+
+/-- The polytabloid is the column antisymmetrizer applied to the tabloid. -/
+theorem polytabloid_def (t : YoungTableau μ) :
+    polytabloid t =
+      (permutationModule (shapePartition μ)).ρ.asAlgebraHom (columnAntisymmetrizer t)
+        (MonoidAlgebra.single (tabloid t) 1) :=
+  (rfl)
 
 /-- The polytabloid is the signed sum of the tabloids obtained from `{t}` by the column group. -/
 theorem polytabloid_eq_sum (t : YoungTableau μ) :
