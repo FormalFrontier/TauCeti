@@ -99,15 +99,6 @@ theorem asAlgebraHom_columnAntisymmetrizer_apply {V : Type*} [AddCommGroup V] [M
   rw [map_smul, MonoidAlgebra.of_apply, Representation.asAlgebraHom_single_one,
     LinearMap.smul_apply]
 
-/-- A subrepresentation is stable under the column antisymmetrizer, being stable under each
-permutation of the column group. -/
-theorem asAlgebraHom_columnAntisymmetrizer_mem {V : Type*} [AddCommGroup V] [Module ℚ V]
-    {ρ : Representation ℚ (Equiv.Perm (Fin μ.card)) V} (t : YoungTableau μ)
-    {U : Subrepresentation ρ} {v : V} (hv : v ∈ U.toSubmodule) :
-    ρ.asAlgebraHom (columnAntisymmetrizer t) v ∈ U.toSubmodule := by
-  rw [asAlgebraHom_columnAntisymmetrizer_apply]
-  exact Submodule.sum_mem _ fun q _ => Submodule.smul_mem _ _ (U.apply_mem_toSubmodule _ hv)
-
 /-! ### James's lemma: the column antisymmetrizer of a tabloid -/
 
 /-- **James's Lemma 4.6.**  The column antisymmetrizer of `t` sends a `μ`-tabloid to a rational
@@ -119,7 +110,7 @@ shared labels fixes the tabloid while `b_t` sees its sign, and otherwise `σ⁻�
 row and column groups of `t`, of which the row part fixes `{t}`. -/
 theorem exists_eq_smul_polytabloid_single (t : YoungTableau μ)
     (T : Equiv.Perm (Fin μ.card) ⧸ youngSubgroup (shapePartition μ)) :
-    ∃ κ : ℚ,
+    ∃ κ : ℚ, (κ = 0 ∨ κ = 1 ∨ κ = -1) ∧
       (permutationModule (shapePartition μ)).ρ.asAlgebraHom (columnAntisymmetrizer t)
           (MonoidAlgebra.single T 1) = κ • polytabloid t := by
   obtain ⟨s, rfl⟩ := tabloid_surjective T
@@ -127,7 +118,7 @@ theorem exists_eq_smul_polytabloid_single (t : YoungTableau μ)
   by_cases h : RowMeetsColumnTwice (relabel σ t) t
   · -- the transposition of the two shared labels fixes the tabloid and negates `b_t`
     obtain ⟨x, y, hxy, hrow, hcol⟩ := (rowMeetsColumnTwice_def _ _).mp h
-    refine ⟨0, ?_⟩
+    refine ⟨0, Or.inl rfl, ?_⟩
     rw [zero_smul]
     have hfix : (permutationModule (shapePartition μ)).ρ (Equiv.swap x y)
         (MonoidAlgebra.single (tabloid (relabel σ t)) (1 : ℚ)) =
@@ -157,7 +148,9 @@ theorem exists_eq_smul_polytabloid_single (t : YoungTableau μ)
     rw [rowMeetsColumnTwice_relabel_left_iff] at h
     obtain ⟨p, hp, q, hq, hpq⟩ := Set.mem_mul.mp (mem_mul_of_not_rowMeetsColumnTwice h)
     have hσ : σ = q⁻¹ * p⁻¹ := by rw [← mul_inv_rev, hpq, inv_inv]
-    refine ⟨((Equiv.Perm.sign q : ℤ) : ℚ), ?_⟩
+    have hsign : ((Equiv.Perm.sign q : ℤ) : ℚ) = 1 ∨ ((Equiv.Perm.sign q : ℤ) : ℚ) = -1 := by
+      rcases Int.units_eq_one_or (Equiv.Perm.sign q) with hq | hq <;> simp [hq]
+    refine ⟨((Equiv.Perm.sign q : ℤ) : ℚ), Or.inr hsign, ?_⟩
     have htab : MonoidAlgebra.single (tabloid (relabel σ t)) (1 : ℚ) =
         (permutationModule (shapePartition μ)).ρ q⁻¹
           (MonoidAlgebra.single (tabloid t) 1) := by
@@ -184,7 +177,7 @@ theorem exists_eq_smul_polytabloid (t : YoungTableau μ)
     induction hv using Submodule.span_induction with
     | mem w hw =>
       obtain ⟨T, rfl⟩ := hw
-      obtain ⟨κ, hκ⟩ := exists_eq_smul_polytabloid_single t T
+      obtain ⟨κ, -, hκ⟩ := exists_eq_smul_polytabloid_single t T
       rw [MonoidAlgebra.basis_apply, hκ]
       exact Submodule.smul_mem _ _ (Submodule.mem_span_singleton_self _)
     | zero => rw [map_zero]; exact Submodule.zero_mem _
@@ -241,7 +234,8 @@ theorem spechtSubrepresentation_le_or_le_orthogonal (μ : YoungDiagram)
     -- the polytabloid itself lies in `U`, after rescaling
     have hmem : polytabloid t ∈ U.toSubmodule := by
       have hsmul : κ • polytabloid t ∈ U.toSubmodule :=
-        hκ ▸ asAlgebraHom_columnAntisymmetrizer_mem t hvU
+        hκ ▸ Representation.asAlgebraHom_mem_of_forall_mem _ U.toSubmodule
+          (fun g _ hv => U.apply_mem_toSubmodule g hv) v hvU (columnAntisymmetrizer t)
       have := U.toSubmodule.smul_mem κ⁻¹ hsmul
       rwa [smul_smul, inv_mul_cancel₀ hκ0, one_smul] at this
     -- and `U` then contains the whole orbit of the polytabloid, which spans `S^μ`
