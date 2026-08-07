@@ -36,21 +36,41 @@ open NormedSpace
 
 noncomputable section
 
-variable {𝕂 A : Type*} [NontriviallyNormedField 𝕂] [CharZero 𝕂] [ContinuousSMul ℚ 𝕂]
-  [NormedRing A] [NormedAlgebra 𝕂 A] [CompleteSpace A]
+section Topological
+
+variable {𝕂 A : Type*} [Field 𝕂] [Ring A] [Algebra 𝕂 A] [TopologicalSpace A]
+  [IsTopologicalRing A]
 
 /-- The value of `(1 - exp (-a)) / a` with its removable singularity filled in, defined by a power
 series. The series is summable everywhere when `A` is complete. -/
-noncomputable def oneSubExpNegDivSelf (𝕂 : Type*) [NontriviallyNormedField 𝕂]
-    {A : Type*} [NormedRing A] [NormedAlgebra 𝕂 A] (a : A) : A :=
+noncomputable def oneSubExpNegDivSelf (𝕂 : Type*) [Field 𝕂] {A : Type*} [Ring A]
+    [Algebra 𝕂 A] [TopologicalSpace A] [IsTopologicalRing A] (a : A) : A :=
   FormalMultilinearSeries.ofScalarsSum
     (E := A) (fun n ↦ ((n + 1).factorial⁻¹ : 𝕂)) (-a)
 
-omit [CharZero 𝕂] [ContinuousSMul ℚ 𝕂] [CompleteSpace A] in
 /-- The defining series for `oneSubExpNegDivSelf`. -/
 theorem oneSubExpNegDivSelf_eq_tsum (a : A) :
     oneSubExpNegDivSelf 𝕂 a = ∑' n : ℕ, (((n + 1).factorial)⁻¹ : 𝕂) • (-a) ^ n := by
   exact FormalMultilinearSeries.ofScalars_sum_eq _ _
+
+/-- The quotient with its removable singularity filled in takes the value `1` at zero. -/
+@[simp]
+theorem oneSubExpNegDivSelf_zero : oneSubExpNegDivSelf 𝕂 (0 : A) = 1 := by
+  simp [oneSubExpNegDivSelf]
+
+variable [T2Space A]
+
+/-- The filled-in quotient commutes with its argument. -/
+theorem commute_oneSubExpNegDivSelf (a : A) : Commute a (oneSubExpNegDivSelf 𝕂 a) := by
+  rw [oneSubExpNegDivSelf_eq_tsum]
+  exact Commute.tsum_right _ fun n ↦ ((Commute.refl a).neg_right.pow_right n).smul_right _
+
+end Topological
+
+section Normed
+
+variable {𝕂 A : Type*} [NontriviallyNormedField 𝕂] [CharZero 𝕂] [ContinuousSMul ℚ 𝕂]
+  [NormedRing A] [NormedAlgebra 𝕂 A] [CompleteSpace A]
 
 /-- The series defining `oneSubExpNegDivSelf` is summable in a complete normed algebra. -/
 theorem summable_oneSubExpNegDivSelf (a : A) :
@@ -78,12 +98,6 @@ theorem summable_oneSubExpNegDivSelf (a : A) :
   exact (FormalMultilinearSeries.ofScalars A c).summable
     (hc.symm ▸ edist_lt_top (-a) 0)
 
-omit [CharZero 𝕂] [ContinuousSMul ℚ 𝕂] [CompleteSpace A] in
-/-- The quotient with its removable singularity filled in takes the value `1` at zero. -/
-@[simp]
-theorem oneSubExpNegDivSelf_zero : oneSubExpNegDivSelf 𝕂 (0 : A) = 1 := by
-  simp [oneSubExpNegDivSelf]
-
 /-- Multiplying the filled-in quotient on the left by its argument recovers its numerator. -/
 @[simp]
 theorem mul_oneSubExpNegDivSelf (a : A) :
@@ -98,12 +112,6 @@ theorem mul_oneSubExpNegDivSelf (a : A) :
   simp only [Nat.factorial_zero, Nat.cast_one, inv_one, one_smul, pow_zero]
   rw [hmul]
   noncomm_ring
-
-omit [CharZero 𝕂] [ContinuousSMul ℚ 𝕂] [CompleteSpace A] in
-/-- The filled-in quotient commutes with its argument. -/
-theorem commute_oneSubExpNegDivSelf (a : A) : Commute a (oneSubExpNegDivSelf 𝕂 a) := by
-  rw [oneSubExpNegDivSelf_eq_tsum]
-  exact Commute.tsum_right _ fun n ↦ ((Commute.refl a).neg_right.pow_right n).smul_right _
 
 /-- Multiplying the filled-in quotient on the right by its argument recovers its numerator. -/
 @[simp]
@@ -120,3 +128,5 @@ theorem oneSubExpNegDivSelf_eq_invOf_mul (a : A) [Invertible a] :
 theorem oneSubExpNegDivSelf_eq_mul_invOf (a : A) [Invertible a] :
     oneSubExpNegDivSelf 𝕂 a = (1 - exp (-a)) * ⅟ a := by
   rw [← oneSubExpNegDivSelf_mul (𝕂 := 𝕂), mul_assoc, mul_invOf_self, mul_one]
+
+end Normed
