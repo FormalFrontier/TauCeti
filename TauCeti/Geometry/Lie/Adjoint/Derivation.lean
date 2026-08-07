@@ -44,9 +44,7 @@ variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
   {G : Type*} [TopologicalSpace G] [ChartedSpace H G] [Group G]
   [FiniteDimensional ℝ E] [LieGroup I ∞ G] [T2Space G] [BoundarylessManifold I G]
 
-local instance lieGroupMinSmoothnessThreeDerivation : LieGroup I (minSmoothness ℝ 3) G :=
-  LieGroup.of_le (I := I) (G := G) (m := minSmoothness ℝ 3) (n := ∞)
-    (by simpa using (inferInstance : ENat.LEInfty (3 : ℕ∞ω)).out)
+attribute [local instance] LieGroup.minSmoothnessThree
 
 /-- The group adjoint on left-invariant derivations, obtained by transporting the differential of
 conjugation across evaluation at the identity. -/
