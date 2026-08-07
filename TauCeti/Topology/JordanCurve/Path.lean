@@ -20,9 +20,11 @@ for its two endpoint parameters, its range is a Jordan curve
 The proof uses the quotient model of the circle already in Mathlib. The extension of a path
 `γ : Path x x` to `ℝ` has equal values at `0` and `1`, so
 `AddCircle.liftIco 1 0 γ.extend` factors it through the additive circle `ℝ / ℤ`. The hypothesis on
-repetitions says precisely that this factor is injective. Its range is the range of `γ`; compactness
-of the additive circle then upgrades the resulting continuous bijection onto the range to a
-homeomorphism, and `AddCircle.homeomorphCircle` identifies its source with `Circle`.
+repetitions says precisely that this factor is injective, and its range is the range of `γ`. The
+additive circle is itself a Jordan curve, `AddCircle.homeomorphCircle` identifying it with
+`Circle`, so `TauCeti.IsJordanCurve.image` carries that along the factor: the compactness argument
+upgrading a continuous injection to a homeomorphism onto its image is already packaged there and is
+not repeated here.
 
 The condition is stated directly rather than bundled as a new notion of simple closed path. This
 is the only operation needed here, and keeping it as a theorem hypothesis avoids introducing a
@@ -56,7 +58,8 @@ If equality `γ s = γ t` forces either `s = t` or the unordered pair of paramet
 then `range γ` is homeomorphic to the circle.
 
 The disjunction records both orientations of the exceptional endpoint pair explicitly. No local
-injectivity, embedding, or ambient separation hypothesis is needed. -/
+injectivity or embedding hypothesis is needed, and no separation assumption on the ambient space
+beyond the Hausdorffness that `TauCeti.IsJordanCurve.image` asks for. -/
 theorem isJordanCurve_range_of_eq_or_eq_endpoints (γ : Path x x)
     (hγ : ∀ ⦃s t : unitInterval⦄, γ s = γ t →
       s = t ∨ (s = 0 ∧ t = 1) ∨ (s = 1 ∧ t = 0)) :
@@ -66,11 +69,11 @@ theorem isJordanCurve_range_of_eq_or_eq_endpoints (γ : Path x x)
   have hg0 : γ.extend 0 = γ.extend 1 := by rw [γ.extend_zero, γ.extend_one]
   have hgc : Continuous g :=
     AddCircle.liftIco_zero_continuous hg0 γ.continuous_extend.continuousOn
+  -- At the class of a representative in `[0, 1)` the lift is the extended path, which on `[0, 1]`
+  -- is the path itself.
   have hgcoe {t : ℝ} (ht : t ∈ Ico (0 : ℝ) 1) :
-      g (t : AddCircle (1 : ℝ)) = γ ⟨t, ht.1, ht.2.le⟩ := by
-    rw [show g (t : AddCircle (1 : ℝ)) = γ.extend t from
-      AddCircle.liftIco_zero_coe_apply ht]
-    exact γ.extend_extends' ⟨t, ht.1, ht.2.le⟩
+      g (t : AddCircle (1 : ℝ)) = γ ⟨t, ht.1, ht.2.le⟩ :=
+    (AddCircle.liftIco_zero_coe_apply ht).trans (γ.extend_extends' ⟨t, ht.1, ht.2.le⟩)
   -- Representatives in `[0, 1)` cannot form the exceptional endpoint pair, so the factor is
   -- injective on the quotient.
   have hgi : Function.Injective g := by
@@ -96,23 +99,11 @@ theorem isJordanCurve_range_of_eq_or_eq_endpoints (γ : Path x x)
         refine ⟨(0 : AddCircle (1 : ℝ)), ?_⟩
         subst t
         exact (hgcoe (t := 0) (by simp)).trans (γ.source.trans γ.target.symm)
-  -- Restrict the codomain to the range and use compact-to-Hausdorff to upgrade the continuous
-  -- bijection to a homeomorphism.
-  let g' : AddCircle (1 : ℝ) → range γ := fun q =>
-    ⟨g q, hgrange.le (mem_range_self q)⟩
-  have hgi' : Function.Injective g' := fun _ _ h => hgi (congrArg Subtype.val h)
-  have hgs' : Function.Surjective g' := by
-    rintro ⟨y, t, rfl⟩
-    obtain ⟨q, hq⟩ : ∃ q, g q = γ t := hgrange.ge (mem_range_self t)
-    exact ⟨q, Subtype.ext hq⟩
-  let e : AddCircle (1 : ℝ) ≃ range γ := Equiv.ofBijective g' ⟨hgi', hgs'⟩
-  have he : (e : AddCircle (1 : ℝ) → range γ) = g' := by
-    unfold e
-    exact Equiv.coe_ofBijective g' ⟨hgi', hgs'⟩
-  have hec : Continuous e := by
-    rw [he]
-    exact hgc.subtype_mk fun q => hgrange.le (mem_range_self q)
-  let h : AddCircle (1 : ℝ) ≃ₜ range γ := Continuous.homeoOfEquivCompactToT2 hec
-  exact isJordanCurve_iff.mpr ⟨h.symm.trans (AddCircle.homeomorphCircle one_ne_zero)⟩
+  -- The additive circle is a Jordan curve, and `g` carries it onto the range of `γ`.
+  have huniv : IsJordanCurve (univ : Set (AddCircle (1 : ℝ))) :=
+    isJordanCurve_iff.mpr
+      ⟨(Homeomorph.Set.univ (AddCircle (1 : ℝ))).trans (AddCircle.homeomorphCircle one_ne_zero)⟩
+  have himage := huniv.image hgc.continuousOn hgi.injOn
+  rwa [image_univ, hgrange] at himage
 
 end TauCeti
