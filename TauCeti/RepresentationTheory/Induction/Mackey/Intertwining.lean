@@ -35,7 +35,7 @@ formula.
 
 A term of the sum is read at a representative `s` of its double coset, but does not depend on that
 choice: replacing `s` by `h₁ s h₂` with `h₁, h₂ ∈ H` leaves the dimension unchanged
-(`TauCeti.finrank_hom_res_mackeyToH_conj`).
+(`TauCeti.finrank_hom_res_mackeyToH_mul_left_mul_right`).
 
 ## Main statements
 
@@ -48,8 +48,8 @@ choice: replacing `s` by `h₁ s h₂` with `h₁, h₂ ∈ H` leaves the dimens
   identity double coset split off.
 * `TauCeti.finrank_hom_indFDRep_mackey_erase`: the same split for intertwining-space dimensions,
   whose identity-coset term is `dim End_H A`.
-* `TauCeti.finrank_hom_res_mackeyToH_conj`: a term of the formula does not depend on the
-  representative chosen for its double coset.
+* `TauCeti.finrank_hom_res_mackeyToH_mul_left_mul_right`: a term of the formula does not depend
+  on the representative chosen for its double coset.
 
 ## Implementation notes
 
@@ -327,28 +327,49 @@ private theorem finrank_hom_res_mulEquiv {M M' : Type u} [Group M] [Group M'] (e
     hff.homEquiv.bijective).finrank_eq.symm
 
 open CategoryTheory in
+/-- **Conjugation intertwines two restrictions of one representation.**  If the two homomorphisms
+`σ ∘ φ` and `σ'` from `M` to `H` differ by conjugation by `g : H`, in the sense that
+`g * σ (φ y) = σ' y * g` for every `y`, then the automorphism `Action.ρAut A g` of the underlying
+object meets the compatibility condition of `Action.mkIso` between the two restrictions of `A` they
+name.  The source is written as a restriction along `φ` of a restriction along `σ` because that is
+the shape a change of representative produces below.
+
+Both restricted actions are, by the definition of `Action.res`, the action of `A` composed with the
+homomorphism, and the proof reads them that way.  `Action.res_obj_ρ` is not usable as a rewrite
+here: it rewrites the restricted action into one valued in `End A.V`, where the goal is composing
+endomorphisms of `((Action.res _ σ').obj A).V`, and those two objects agree only by unfolding
+`Action.res`, so the rewritten goal is rejected as not type-correct.  Stating the step once, here,
+is what keeps that reading out of the two isomorphisms built below. -/
+private theorem res_ρ_comm_ρAut_hom {M N : Type u} [Monoid M] [Monoid N] (A : FDRep k H) (g : H)
+    (φ : M →* N) (σ : N →* H) (σ' : M →* H) (hg : ∀ y : M, g * σ (φ y) = σ' y * g) (y : M) :
+    ((Action.res (FGModuleCat k) φ).obj ((Action.res (FGModuleCat k) σ).obj A)).ρ y ≫
+        (Action.ρAut A g).hom =
+      (Action.ρAut A g).hom ≫ ((Action.res (FGModuleCat k) σ').obj A).ρ y := by
+  change Action.ρ A (σ (φ y)) ≫ Action.ρ A g = Action.ρ A g ≫ Action.ρ A (σ' y)
+  rw [← End.mul_def, ← End.mul_def, ← map_mul, ← map_mul, hg]
+
+open CategoryTheory in
 /-- **The Mackey term depends only on the double coset**, as a dimension: the intertwining space
 `Hom_{H ⊓ sHs⁻¹}(Res A, {}^s A)` has the same dimension at `s` and at `h₁ s h₂` for `h₁, h₂ ∈ H`.
 
 Nothing is assumed of `k` beyond being a field: the two intertwining spaces are carried into one
 another by the action of `h₁` and of `h₂` on `A`. -/
-theorem finrank_hom_res_mackeyToH_conj (A : FDRep k H) {h₁ h₂ : G} (hh₁ : h₁ ∈ H) (hh₂ : h₂ ∈ H)
-    (s : G) :
+theorem finrank_hom_res_mackeyToH_mul_left_mul_right (A : FDRep k H) {h₁ h₂ : G} (hh₁ : h₁ ∈ H)
+    (hh₂ : h₂ ∈ H) (s : G) :
     Module.finrank k (resFDRep ((mackeySubgroup (h₁ * s * h₂) H H).subgroupOf H) A ⟶
         (Action.res (FGModuleCat k) (mackeyToH (h₁ * s * h₂) H H)).obj A) =
       Module.finrank k (resFDRep ((mackeySubgroup s H H).subgroupOf H) A ⟶
         (Action.res (FGModuleCat k) (mackeyToH s H H)).obj A) := by
   -- Read both intertwining spaces over the Mackey subgroup of `s`, along the change of
   -- representative `mackeySubgroupOfCongr`, which conjugates by `h₁`.
-  -- On the source, that conjugation is undone by the action of `h₁`:
+  -- On the source, that conjugation is undone by the action of `h₁⁻¹`.  In both isomorphisms the
+  -- three homomorphisms of `res_ρ_comm_ρAut_hom` are left to unification, which reads them off the
+  -- ascribed type; naming them would only repeat that type.
   let α : (Action.res (FGModuleCat k) ((mackeySubgroupOfCongr hh₁ hh₂ s) : _ →* _)).obj
         (resFDRep ((mackeySubgroup (h₁ * s * h₂) H H).subgroupOf H) A) ≅
       resFDRep ((mackeySubgroup s H H).subgroupOf H) A :=
-    Action.mkIso (A.ρAut ⟨h₁, hh₁⟩).symm fun y => by
-      change Action.ρ A _ ≫ Action.ρ A _ = Action.ρ A _ ≫ Action.ρ A _
-      rw [← End.mul_def, ← End.mul_def, ← map_mul, ← map_mul]
-      congr 1
-      exact Subtype.ext (by
+    Action.mkIso (Action.ρAut A (⟨h₁, hh₁⟩ : H)⁻¹) <|
+      res_ρ_comm_ρAut_hom A (⟨h₁, hh₁⟩ : H)⁻¹ _ _ _ fun y => Subtype.ext (by
         simp only [MonoidHom.coe_coe, Subgroup.coe_subtype, coe_mackeySubgroupOfCongr_apply,
           Subgroup.coe_mul, Subgroup.coe_inv]
         group)
@@ -357,11 +378,8 @@ theorem finrank_hom_res_mackeyToH_conj (A : FDRep k H) {h₁ h₂ : G} (hh₁ : 
   let β : (Action.res (FGModuleCat k) ((mackeySubgroupOfCongr hh₁ hh₂ s) : _ →* _)).obj
         ((Action.res (FGModuleCat k) (mackeyToH (h₁ * s * h₂) H H)).obj A) ≅
       (Action.res (FGModuleCat k) (mackeyToH s H H)).obj A :=
-    Action.mkIso (A.ρAut ⟨h₂, hh₂⟩) fun y => by
-      change Action.ρ A _ ≫ Action.ρ A _ = Action.ρ A _ ≫ Action.ρ A _
-      rw [← End.mul_def, ← End.mul_def, ← map_mul, ← map_mul]
-      congr 1
-      exact Subtype.ext (by
+    Action.mkIso (Action.ρAut A ⟨h₂, hh₂⟩) <|
+      res_ρ_comm_ρAut_hom A ⟨h₂, hh₂⟩ _ _ _ fun y => Subtype.ext (by
         simp only [MonoidHom.coe_coe, coe_mackeyToH_apply, coe_mackeySubgroupOfCongr_apply,
           Subgroup.coe_mul]
         group)

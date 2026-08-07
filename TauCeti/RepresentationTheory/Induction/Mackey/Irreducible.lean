@@ -42,7 +42,8 @@ quantifies over the group elements `s ∉ H` instead.
 * `TauCeti.simple_indFDRep_iff_doubleCoset`: the Mackey irreducibility criterion over the double
   cosets.
 * `TauCeti.simple_indFDRep_iff`: the same criterion quantified over the elements outside `H`.
-* `TauCeti.mackeyDisjoint_conj_iff`: Mackey disjointness depends only on the double coset.
+* `TauCeti.mackeyDisjoint_mul_left_mul_right_iff`: Mackey disjointness depends only on the double
+  coset.
 
 ## Implementation notes
 
@@ -51,8 +52,8 @@ intertwining-number formula produces the dimension of that space instead, and
 `TauCeti.mackeyDisjoint_iff_finrank_eq_zero` is the bridge between the two readings, along which
 the double-coset criterion is proved.  That bridge is deliberately not a `simp` lemma: the named
 predicate is the form the criteria are stated in and the form its own API
-(`TauCeti.mackeyDisjoint_conj_iff`) applies to, so unfolding it to a dimension on sight would be
-the wrong normal form.
+(`TauCeti.mackeyDisjoint_mul_left_mul_right_iff`) applies to, so unfolding it to a dimension on
+sight would be the wrong normal form.
 
 The step in those proofs that the arithmetic does not hand over for free is that `dim End_H A`
 cannot be `0`: a representation with no nonzero endomorphism is a zero object, and then every term
@@ -60,8 +61,8 @@ of the sum vanishes too, so the total could not be `1`.  That is what the two pr
 the `ZeroObject` section below record.
 
 Passing between the two forms of the criterion needs the Mackey term to be constant on a double
-coset, which is `TauCeti.finrank_hom_res_mackeyToH_conj`, proved with the formula it belongs to;
-`TauCeti.mackeyDisjoint_conj_iff` is its reading through the predicate.
+coset, which is `TauCeti.finrank_hom_res_mackeyToH_mul_left_mul_right`, proved with the formula it
+belongs to; `TauCeti.mackeyDisjoint_mul_left_mul_right_iff` is its reading through the predicate.
 
 The characteristic-zero hypothesis of the two criteria is inherited from
 `TauCeti.finrank_hom_indFDRep_mackey_erase`: the intertwining-number formula is proved as an
@@ -149,12 +150,12 @@ theorem mackeyDisjoint_iff_finrank_eq_zero (A : FDRep k H) (s : G) :
 
 /-- **Mackey disjointness depends only on the double coset**: it holds at `h₁ s h₂` with
 `h₁, h₂ ∈ H` exactly when it holds at `s`.  This is the predicate form of
-`TauCeti.finrank_hom_res_mackeyToH_conj`, and is what moves the criterion between its double-coset
-and its elementwise reading. -/
-theorem mackeyDisjoint_conj_iff (A : FDRep k H) {h₁ h₂ : G} (hh₁ : h₁ ∈ H)
+`TauCeti.finrank_hom_res_mackeyToH_mul_left_mul_right`, and is what moves the criterion between
+its double-coset and its elementwise reading. -/
+theorem mackeyDisjoint_mul_left_mul_right_iff (A : FDRep k H) {h₁ h₂ : G} (hh₁ : h₁ ∈ H)
     (hh₂ : h₂ ∈ H) (s : G) : MackeyDisjoint A (h₁ * s * h₂) ↔ MackeyDisjoint A s := by
   rw [mackeyDisjoint_iff_finrank_eq_zero, mackeyDisjoint_iff_finrank_eq_zero,
-    finrank_hom_res_mackeyToH_conj A hh₁ hh₂ s]
+    finrank_hom_res_mackeyToH_mul_left_mul_right A hh₁ hh₂ s]
 
 end Disjoint
 
@@ -205,7 +206,7 @@ theorem simple_indFDRep_iff (A : FDRep k H) :
   refine and_congr_right fun _ => ⟨fun h s hs => ?_, fun h D hD => ?_⟩
   · obtain ⟨a, ha, b, hb, hab⟩ :=
       (DoubleCoset.eq H H (DoubleCoset.mk H H s).out s).mp (DoubleCoset.out_eq' H H _)
-    exact hab ▸ (mackeyDisjoint_conj_iff A ha hb _).mpr
+    exact hab ▸ (mackeyDisjoint_mul_left_mul_right_iff A ha hb _).mpr
       (h _ fun hc => hs ((doubleCoset_mk_eq_mk_one_iff H s).mp hc))
   · exact h D.out fun hmem =>
       hD ((DoubleCoset.out_eq' H H D).symm.trans ((doubleCoset_mk_eq_mk_one_iff H D.out).mpr hmem))
