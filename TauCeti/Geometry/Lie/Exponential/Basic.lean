@@ -130,8 +130,7 @@ section LieAlgebra
 variable [FiniteDimensional ℝ E] [LieGroup I ∞ G] [IsManifold I 1 G] [T2Space G]
   [BoundarylessManifold I G]
 
-local instance lieGroupMinSmoothness : LieGroup I (minSmoothness ℝ 3) G := by
-  simpa using (inferInstance : LieGroup I (3 : ℕ∞ω) G)
+attribute [local instance] LieGroup.minSmoothnessThree
 
 /-- The exponential map of a finite-dimensional smooth real Lie group, obtained by evaluating at
 time one the invariant integral curve whose tangent vector corresponds to a left-invariant

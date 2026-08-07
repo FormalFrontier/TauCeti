@@ -37,6 +37,10 @@ Mathlib's invariant measure `volume : Measure ℍ` (`dx dy / y²`,
 * `UpperHalfPlane.peterssonInner_conj_symm`: Hermitian symmetry.
 * `UpperHalfPlane.integrableOn_petersson_fd_left`: integrability of the Petersson integrand of a
   cusp form against a modular form over the standard fundamental domain.
+* `UpperHalfPlane.integrableOn_petersson_slash`: the same for forms slashed by `SL₂(ℤ)`.
+* `UpperHalfPlane.peterssonInner_self_eq_ofReal`, `peterssonInner_self_re_nonneg`: the
+  self-pairing of any function is the real integral of `‖h τ‖² (Im τ)^k`, hence nonnegative
+  over any domain.
 * `UpperHalfPlane.eq_zero_on_fd_of_peterssonInner_self_eq_zero`: definiteness on the
   fundamental domain, for any continuous function with integrable self-integrand.
 
@@ -64,8 +68,9 @@ public section
 noncomputable section
 
 open MeasureTheory Measure UpperHalfPlane ModularGroup Complex Set ENNReal
+open Matrix.SpecialLinearGroup
 
-open scoped ComplexConjugate MatrixGroups NNReal Pointwise
+open scoped ComplexConjugate MatrixGroups ModularForm NNReal Pointwise
 
 namespace UpperHalfPlane
 
@@ -149,6 +154,53 @@ theorem integrableOn_petersson_fd_right {F F' : Type*} [FunLike F ℍ ℂ] [FunL
       (ModularFormClass.continuous f')).aestronglyMeasurable.restrict) C
     (ae_of_all _ fun τ ↦ hC τ)
 
+/-- The Petersson self-integrand of any function is a nonnegative real:
+`petersson k h h τ = ‖h τ‖² (Im τ)^k`. -/
+@[simp]
+theorem petersson_self_eq_ofReal (k : ℤ) (h : ℍ → ℂ) (τ : ℍ) :
+    petersson k h h τ = ((normSq (h τ) * τ.im ^ k : ℝ) : ℂ) := by
+  simp only [petersson, ← Complex.normSq_eq_conj_mul_self]
+  push_cast
+  ring
+
+/-- The Petersson self-pairing of any function over any domain is the real integral of
+`‖h τ‖² (Im τ)^k`. -/
+theorem peterssonInner_self_eq_ofReal (k : ℤ) (D : Set ℍ) (h : ℍ → ℂ) :
+    peterssonInner k D h h = ((∫ τ in D, normSq (h τ) * τ.im ^ k : ℝ) : ℂ) := by
+  rw [peterssonInner_def]
+  simp_rw [petersson_self_eq_ofReal]
+  exact integral_ofReal
+
+/-- The Petersson self-pairing over any domain is nonnegative, for any function:
+the integrand `‖h τ‖² (Im τ)^k` is. -/
+theorem peterssonInner_self_re_nonneg (k : ℤ) (D : Set ℍ)
+    (h : ℍ → ℂ) : 0 ≤ (peterssonInner k D h h).re := by
+  rw [peterssonInner_self_eq_ofReal, Complex.ofReal_re]
+  exact setIntegral_nonneg_of_ae_restrict <| ae_of_all _ fun τ ↦
+    mul_nonneg (normSq_nonneg _) (zpow_nonneg (UpperHalfPlane.im_pos τ).le _)
+
+/-- The Petersson integrand of slashed forms is integrable over `𝒟`: slashing by an element
+of `SL₂(ℤ)` moves the integrand along the action, where the cusp-form bound still applies. -/
+theorem integrableOn_petersson_slash {F F' : Type*} [FunLike F ℍ ℂ] [FunLike F' ℍ ℂ]
+    (k : ℤ) (Γ : Subgroup (GL (Fin 2) ℝ)) [Γ.IsArithmetic]
+    [CuspFormClass F Γ k] [ModularFormClass F' Γ k]
+    (f : F) (f' : F') (δ : SL(2, ℤ)) :
+    IntegrableOn (fun τ ↦ petersson k (⇑f ∣[k] δ) (⇑f' ∣[k] δ) τ) fd (volume : Measure ℍ) := by
+  obtain ⟨C, hC⟩ := CuspFormClass.petersson_bounded_left k Γ f f'
+  have hslash : (fun τ ↦ petersson k (⇑f ∣[k] δ) (⇑f' ∣[k] δ) τ) =
+      fun τ ↦ petersson k (⇑f) (⇑f') (δ • τ) :=
+    funext fun τ ↦ petersson_slash_SL k _ _ δ τ
+  rw [hslash]
+  -- the `SL(2, ℤ)` action on `ℍ` is the `GL(2, ℝ)` action along `mapGL`, where the
+  -- continuity instance lives
+  have hsmul : Continuous fun τ : ℍ ↦ δ • τ := by
+    simp only [MulAction.compHom_smul_def]
+    exact continuous_const_smul (mapGL ℝ δ)
+  exact IntegrableOn.of_bound ModularGroup.volume_fd_lt_top
+    ((petersson_continuous k (ModularFormClass.continuous f)
+      (ModularFormClass.continuous f')).comp hsmul |>.aestronglyMeasurable.restrict)
+    C (ae_of_all _ fun τ ↦ hC (δ • τ))
+
 /-- Additivity in the second argument. -/
 theorem peterssonInner_add_right (k : ℤ) (D : Set ℍ) (f g₁ g₂ : ℍ → ℂ)
     (hg₁ : IntegrableOn (fun τ ↦ petersson k f g₁ τ) D (volume : Measure ℍ))
@@ -191,11 +243,6 @@ theorem peterssonInner_smul_left (k : ℤ) (D : Set ℍ) (c : ℂ) (f g : ℍ �
     simp only [petersson, Pi.smul_apply, smul_eq_mul, map_mul]
     ring)
 
-private lemma petersson_self_re_eq (z : ℂ) (y : ℝ) (k : ℤ) :
-    (starRingEnd ℂ z * z * (↑y : ℂ) ^ k).re = Complex.normSq z * y ^ k := by
-  rw [← Complex.normSq_eq_conj_mul_self, ← Complex.ofReal_zpow, ← Complex.ofReal_mul,
-    Complex.ofReal_re]
-
 /-- **Definiteness of the Petersson pairing on the fundamental domain**: a continuous
 function whose Petersson self-integrand is integrable on `𝒟` and whose self-pairing over
 `𝒟` vanishes is zero everywhere on `𝒟`.
@@ -211,9 +258,8 @@ theorem eq_zero_on_fd_of_peterssonInner_self_eq_zero {k : ℤ} {f : ℍ → ℂ}
     · exact integral_re hint
     · simp only [peterssonInner] at hpet; rw [hpet]; simp
   have hg_nonneg : ∀ z, 0 ≤ g z := fun z ↦ by
-    simp only [g, petersson]
-    exact (petersson_self_re_eq (f z) z.im k).symm ▸
-      mul_nonneg (Complex.normSq_nonneg _) (zpow_nonneg z.im_pos.le _)
+    simp only [g, petersson_self_eq_ofReal, Complex.ofReal_re]
+    exact mul_nonneg (Complex.normSq_nonneg _) (zpow_nonneg z.im_pos.le _)
   have hg_ae : g =ᶠ[ae ((volume : Measure ℍ).restrict fd)] 0 := by
     rwa [← integral_eq_zero_iff_of_nonneg_ae (ae_of_all _ hg_nonneg) hint.re]
   have hg_cont : Continuous g :=
@@ -221,8 +267,7 @@ theorem eq_zero_on_fd_of_peterssonInner_self_eq_zero {k : ℤ} {f : ℍ → ℂ}
   have hgτ : g τ = 0 :=
     Measure.eqOn_of_ae_eq hg_ae hg_cont.continuousOn continuousOn_const
       (by rw [← fdo_eq_interior_fd, ← fd_eq_closure_fdo]) hτ
-  simp only [g, petersson] at hgτ
-  rw [petersson_self_re_eq] at hgτ
+  simp only [g, petersson_self_eq_ofReal, Complex.ofReal_re] at hgτ
   exact Complex.normSq_eq_zero.mp ((mul_eq_zero.mp hgτ).elim id
     (fun h ↦ absurd h (ne_of_gt (zpow_pos τ.im_pos k))))
 
@@ -267,16 +312,8 @@ theorem peterssonInnerFd_self_im (f : CuspForm Γ k) : (peterssonInnerFd f f).im
 `|f τ|² (Im τ)ᵏ ≥ 0` over the fundamental domain. -/
 theorem peterssonInnerFd_self_re_nonneg (f : CuspForm Γ k) :
     0 ≤ (peterssonInnerFd f f).re := by
-  rw [peterssonInnerFd_def, UpperHalfPlane.peterssonInner_def]
-  have hpt : ∀ τ : ℍ, UpperHalfPlane.petersson k (⇑f) (⇑f) τ =
-      ((‖f τ‖ ^ 2 * τ.im ^ k : ℝ) : ℂ) := fun τ ↦ by
-    simp [UpperHalfPlane.petersson, Complex.conj_mul', Complex.ofReal_mul,
-      Complex.ofReal_zpow]
-  simp only [hpt, integral_complex_ofReal, Complex.ofReal_re]
-  refine MeasureTheory.setIntegral_nonneg ModularGroup.isClosed_fd.measurableSet
-    fun τ _ ↦ ?_
-  have him : (0 : ℝ) < τ.im := τ.im_pos
-  positivity
+  rw [peterssonInnerFd_def]
+  exact UpperHalfPlane.peterssonInner_self_re_nonneg k _ _
 
 /-- The pairing vanishes when its right argument is zero. -/
 @[simp]
