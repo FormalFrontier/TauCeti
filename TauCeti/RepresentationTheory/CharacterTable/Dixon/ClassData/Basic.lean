@@ -366,7 +366,9 @@ theorem length_structureConstantTable : d.structureConstantTable.length = d.numC
   simp [structureConstantTable]
 
 /-- **The `i`-th row of the table** is the table of the structure constants with first index `i`.
-Together with `List.getElem_map` and `List.getElem_finRange` this reduces a lookup at any depth. -/
+Together with `List.getElem_map` and `List.getElem_finRange` this reduces a lookup at any depth:
+in particular `simp` sends the depth-three entry `d.structureConstantTable[i][j][k]` to `aᵢⱼₖ`,
+so no separate entry lemma is needed. -/
 @[simp]
 theorem getElem_structureConstantTable (i : ℕ) (hi : i < d.structureConstantTable.length) :
     d.structureConstantTable[i] =
@@ -374,16 +376,6 @@ theorem getElem_structureConstantTable (i : ℕ) (hi : i < d.structureConstantTa
         (List.finRange d.numClasses).map fun k =>
           d.structureConstant ⟨i, d.length_structureConstantTable ▸ hi⟩ j k := by
   simp [structureConstantTable]
-
-/-- **The entries of the table are the structure constants**: `aᵢⱼₖ` sits at depth three, under
-`i`, then `j`, then `k`. This is not itself a `simp` lemma: `simp` already derives it from
-`TauCeti.ClassData.getElem_structureConstantTable` and `List.getElem_map`. -/
-theorem getElem_getElem_getElem_structureConstantTable (i j k : Fin d.numClasses)
-    (hi : (i : ℕ) < d.structureConstantTable.length)
-    (hj : (j : ℕ) < d.structureConstantTable[(i : ℕ)].length)
-    (hk : (k : ℕ) < d.structureConstantTable[(i : ℕ)][(j : ℕ)].length) :
-    d.structureConstantTable[(i : ℕ)][(j : ℕ)][(k : ℕ)] = d.structureConstant i j k := by
-  simp
 
 /-- The numbered class-multiplication matrices commute pairwise, the centre of the group algebra
 being commutative. -/
