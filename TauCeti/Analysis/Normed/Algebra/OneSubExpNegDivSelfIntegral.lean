@@ -6,7 +6,7 @@ module
 
 public import TauCeti.Analysis.Normed.Algebra.OneSubExpNegDivSelf
 public import Mathlib.Analysis.SpecialFunctions.Integrals.Basic
-public import Mathlib.MeasureTheory.Integral.DominatedConvergence
+import Mathlib.MeasureTheory.Integral.DominatedConvergence
 
 /-!
 # An integral formula for the filled exponential quotient
