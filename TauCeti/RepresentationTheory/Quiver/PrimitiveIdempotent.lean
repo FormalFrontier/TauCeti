@@ -43,6 +43,10 @@ that generality.
 * `TauCeti.isIndecomposableModule_span_singleton_vertexIdempotent`: consequently the left ideal
   `kQ eᵥ` is an indecomposable `kQ`-module.
 
+Primitivity of `eᵥ` is a semiring-level statement, and is proved here directly from the definition,
+transporting a decomposition of `eᵥ` to one of `1` in the coefficient ring. Additive inverses enter
+only with the corollary, the module characterization asking for a ring.
+
 ## References
 
 This supplies the vertex-idempotent instance of the primitive idempotents of Layer 3A in
@@ -58,36 +62,54 @@ open PathAlgebra
 
 universe u v w
 
-variable {k : Type w} {Q : Type u} [CommRing k] [Quiver.{v} Q] [Finite Q]
+variable {k : Type w} {Q : Type u} [Quiver.{v} Q] [Finite Q]
 
-/-- **A vertex idempotent with no nontrivial path at its vertex is primitive.** An idempotent `f`
-of the corner ring `eᵥ kQ eᵥ` is `c • eᵥ` for a scalar `c`, and idempotence of `f` forces `c² = c`,
-hence `c = 0` or `c = 1`, the coefficient ring having no idempotents besides `0` and `1`. -/
+section Semiring
+
+variable [Semiring k]
+
+/-- **A vertex idempotent with no nontrivial path at its vertex is primitive.** Both summands of a
+decomposition of `eᵥ` lie in the corner ring `eᵥ kQ eᵥ`, hence are the trivial path at `v` carrying
+a scalar coefficient; reading off those coefficients turns the decomposition into a decomposition
+of `1` in the coefficient ring, where `1` is primitive. -/
 theorem isPrimitiveIdempotent_vertexIdempotent (hk : IsPrimitiveIdempotent (1 : k)) (v : Q)
     (h : ∀ p : Quiver.Path v v, p = Quiver.Path.nil) :
     IsPrimitiveIdempotent (vertexIdempotent k v : pathAlgebra k Q) := by
   have := hk.nontrivial
-  refine isPrimitiveIdempotent_of_eq_zero_or_eq (vertexIdempotent_mul_self v)
-    (vertexIdempotent_ne_zero v) fun f hf hef hfe ↦ ?_
-  set c := (pathAlgebraBasis k Q).repr f ⟨v, v, Quiver.Path.nil⟩ with hc
-  have hfeq : f = c • (vertexIdempotent k v : pathAlgebra k Q) := by
-    rw [hc, ← vertexIdempotent_mul_mul_vertexIdempotent v h f, hef, hfe]
-  have hsq : (c * c) • (vertexIdempotent k v : pathAlgebra k Q)
-      = c • vertexIdempotent k v := by
-    have hff := hf.eq
-    rwa [hfeq, smul_mul_smul_comm, vertexIdempotent_mul_self] at hff
-  have hcc : c * c = c := by
-    have hrepr := congrArg
-      (fun g : pathAlgebra k Q => (pathAlgebraBasis k Q).repr g ⟨v, v, Quiver.Path.nil⟩) hsq
-    simpa [vertexIdempotent_eq_single, smul_single] using hrepr
-  rcases hk.eq_zero_or_eq hcc (one_mul c) (mul_one c) with hzero | hone
-  · exact Or.inl (by rw [hfeq, hzero, zero_smul])
-  · exact Or.inr (by rw [hfeq, hone, one_smul])
+  have hmul : ∀ a b : k, (single ⟨v, v, Quiver.Path.nil⟩ a *
+      single ⟨v, v, Quiver.Path.nil⟩ b : pathAlgebra k Q)
+        = single ⟨v, v, Quiver.Path.nil⟩ (a * b) := fun a b ↦ by
+    rw [single_mul_single_of_comp, Quiver.Path.comp_nil]
+  have hinj : ∀ a b : k, (single ⟨v, v, Quiver.Path.nil⟩ a : pathAlgebra k Q)
+      = single ⟨v, v, Quiver.Path.nil⟩ b → a = b := fun a b hab ↦ by
+    simpa using congrArg
+      (fun g : pathAlgebra k Q ↦ (pathAlgebraBasis k Q).repr g ⟨v, v, Quiver.Path.nil⟩) hab
+  have hcorner : ∀ f : pathAlgebra k Q, vertexIdempotent k v * f = f →
+      f * vertexIdempotent k v = f → ∃ c : k, f = single ⟨v, v, Quiver.Path.nil⟩ c :=
+    fun f hef hfe ↦ ⟨_, by
+      have hf := vertexIdempotent_mul_mul_vertexIdempotent v h f
+      rwa [hef, hfe, vertexIdempotent_eq_single, smul_single, mul_one] at hf⟩
+  refine ⟨vertexIdempotent_mul_self v, vertexIdempotent_ne_zero v, ?_⟩
+  intro f₁ f₂ h₁ h₂ h₁₂ h₂₁ hsum
+  obtain ⟨c₁, rfl⟩ := hcorner f₁ (by rw [← hsum, add_mul, h₁.eq, h₂₁, add_zero])
+    (by rw [← hsum, mul_add, h₁.eq, h₁₂, add_zero])
+  obtain ⟨c₂, rfl⟩ := hcorner f₂ (by rw [← hsum, add_mul, h₁₂, h₂.eq, zero_add])
+    (by rw [← hsum, mul_add, h₂₁, h₂.eq, zero_add])
+  have hc₁ : c₁ * c₁ = c₁ := hinj _ _ (by rw [← hmul]; exact h₁.eq)
+  have hc₂ : c₂ * c₂ = c₂ := hinj _ _ (by rw [← hmul]; exact h₂.eq)
+  have hc₁₂ : c₁ * c₂ = 0 := hinj _ _ (by rw [← hmul, h₁₂, single_zero])
+  have hc₂₁ : c₂ * c₁ = 0 := hinj _ _ (by rw [← hmul, h₂₁, single_zero])
+  have hcsum : c₁ + c₂ = 1 := hinj _ _ (by rw [single_add, hsum, vertexIdempotent_eq_single])
+  exact (hk.eq_zero_or_eq_zero_of_add hc₁ hc₂ hc₁₂ hc₂₁ hcsum).imp
+    (fun hz ↦ by rw [hz, single_zero]) fun hz ↦ by rw [hz, single_zero]
+
+end Semiring
 
 /-- **The indecomposable projective `Pᵥ = kQ eᵥ` is an indecomposable module**, when the trivial
 path is the only path from `v` to itself: its generator is then a primitive idempotent. -/
-theorem isIndecomposableModule_span_singleton_vertexIdempotent (hk : IsPrimitiveIdempotent (1 : k))
-    (v : Q) (h : ∀ p : Quiver.Path v v, p = Quiver.Path.nil) :
+theorem isIndecomposableModule_span_singleton_vertexIdempotent [Ring k]
+    (hk : IsPrimitiveIdempotent (1 : k)) (v : Q)
+    (h : ∀ p : Quiver.Path v v, p = Quiver.Path.nil) :
     IsIndecomposableModule (pathAlgebra k Q)
       (Ideal.span {(vertexIdempotent k v : pathAlgebra k Q)}) :=
   (isPrimitiveIdempotent_vertexIdempotent hk v h).isIndecomposableModule
