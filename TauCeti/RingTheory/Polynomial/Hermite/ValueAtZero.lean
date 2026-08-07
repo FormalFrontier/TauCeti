@@ -50,8 +50,8 @@ open scoped Nat
 
 /-- **Vanishing at zero of the odd Hermite polynomials.** `H_{2n+1}(0) = 0`: the constant
 coefficient of `hermite (2n+1)` is `0` because `(2n+1) + 0` is odd
-(`Polynomial.coeff_hermite_of_odd_add`). -/
-@[simp]
+(`Polynomial.coeff_hermite_of_odd_add`). Not a `simp` lemma: `Polynomial.hermite_succ` is `@[simp]`
+in Mathlib and unfolds `hermite (2n+1)` on the left, so this LHS is not simp-normal. -/
 theorem _root_.Polynomial.hermite_eval_zero_of_odd (n : ℕ) :
     eval (0 : ℤ) (hermite (2 * n + 1)) = 0 := by
   rw [← coeff_zero_eq_eval_zero]
@@ -94,8 +94,9 @@ theorem _root_.Polynomial.hermite_eval_zero_add_two (n : ℕ) :
   push_cast
   ring
 
-/-- The odd Hermite polynomials vanish at zero, polymorphic form. -/
-@[simp]
+/-- The odd Hermite polynomials vanish at zero, polymorphic form. Not a `simp` lemma for the same
+reason as `Polynomial.hermite_eval_zero_of_odd`: `Polynomial.hermite_succ` unfolds `hermite (2n+1)`
+on the left, so this LHS is not simp-normal. -/
 theorem _root_.Polynomial.hermite_aeval_zero_of_odd {R : Type*} [CommRing R] (n : ℕ) :
     aeval (0 : R) (hermite (2 * n + 1)) = 0 := by
   rw [← coeff_zero_eq_aeval_zero', coeff_zero_eq_eval_zero, hermite_eval_zero_of_odd, map_zero]
