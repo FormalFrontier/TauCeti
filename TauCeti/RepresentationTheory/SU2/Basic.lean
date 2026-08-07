@@ -407,8 +407,8 @@ lemma: `TauCeti.SU2.coe_torusExp` already rewrites the underlying matrix to a di
 left-hand side is not in simp-normal form. -/
 theorem trace_torusExp (θ : ℝ) :
     Matrix.trace ((torusExp θ : SU2) : Matrix (Fin 2) (Fin 2) ℂ) = 2 * (Real.cos θ : ℂ) := by
-  rw [torusExp_def, coe_torusHom, trace_torusMatrix, Circle.coe_exp, ← Complex.exp_neg,
-    Complex.ofReal_cos, Complex.two_cos, neg_mul]
+  -- `TauCeti.SU2.coe_torusExp` reduces the trace to `e^{iθ} + e^{-iθ}`, which is `Complex.two_cos`.
+  simp [Complex.two_cos]
 
 theorem torusExp_mem_torus (θ : ℝ) : torusExp θ ∈ torus := torusHom_mem_torus _
 
