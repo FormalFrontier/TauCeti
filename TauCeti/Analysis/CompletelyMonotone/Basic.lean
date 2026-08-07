@@ -409,51 +409,17 @@ lemma smul (hf : IsCompletelyMonotoneOnIci f) {c : ℝ} (hc : 0 ≤ c) :
     IsCompletelyMonotoneOnIci (c • f) :=
   ⟨hf.continuousOn.const_smul c, hf.isCompletelyMonotoneOnIoi.smul hc⟩
 
-/-- A closed-half-line completely monotone function is nonincreasing on `[0, ∞)`.
-
-On the open half-line the derivative is nonpositive; the left endpoint is reached by
-continuity within `[0, ∞)` at `0` along the positive sequence `t / (n + 2)`. -/
+/-- A closed-half-line completely monotone function is nonincreasing on `[0, ∞)`: the
+derivative is nonpositive on the interior and continuity extends the monotonicity to the
+endpoint. -/
 lemma antitoneOn (hf : IsCompletelyMonotoneOnIci f) : AntitoneOn f (Ici 0) := by
-  have hIoi : AntitoneOn f (Ioi 0) := by
-    refine antitoneOn_of_deriv_nonpos (convex_Ioi 0)
-      hf.isCompletelyMonotoneOnIoi.contDiffOn.continuousOn
-      (by
-        simpa [interior_Ioi] using
-          hf.isCompletelyMonotoneOnIoi.contDiffOn.differentiableOn (by simp))
-      fun x hx => ?_
-    rw [interior_Ioi] at hx
-    exact hf.isCompletelyMonotoneOnIoi.deriv_nonpos hx
-  intro s hs t ht hst
-  rcases (mem_Ici.mp hs).eq_or_lt with rfl | hs_pos
-  · rcases hst.eq_or_lt with rfl | ht_pos
-    · exact le_rfl
-    have hy_tendsto_nhds : Tendsto (fun n : ℕ => t / ((n : ℝ) + 2)) atTop (nhds 0) := by
-      have hden : Tendsto (fun n : ℕ => (n : ℝ) + 2) atTop atTop := by
-        exact Filter.tendsto_atTop_add_const_right atTop 2
-          (tendsto_natCast_atTop_atTop (R := ℝ))
-      simpa using Filter.Tendsto.const_div_atTop hden t
-    have hy_mem : ∀ᶠ n : ℕ in atTop, t / ((n : ℝ) + 2) ∈ Ici (0 : ℝ) := by
-      filter_upwards with n
-      have hden_pos : 0 < (n : ℝ) + 2 := by positivity
-      exact mem_Ici.mpr (div_nonneg hst hden_pos.le)
-    have hy_tendsto : Tendsto (fun n : ℕ => t / ((n : ℝ) + 2)) atTop
-        (𝓝[Ici (0 : ℝ)] 0) := by
-      rw [nhdsWithin]
-      exact tendsto_inf.2 ⟨hy_tendsto_nhds, tendsto_principal.mpr hy_mem⟩
-    have hf_tendsto : Tendsto (fun n : ℕ => f (t / ((n : ℝ) + 2))) atTop
-        (nhds (f 0)) :=
-      (hf.continuousOn.continuousWithinAt (mem_Ici.mpr le_rfl)).tendsto.comp hy_tendsto
-    refine ge_of_tendsto hf_tendsto ?_
-    filter_upwards with n
-    have hden_pos : 0 < (n : ℝ) + 2 := by positivity
-    have hy_pos : 0 < t / ((n : ℝ) + 2) := div_pos ht_pos hden_pos
-    have hy_le : t / ((n : ℝ) + 2) ≤ t := by
-      have hden_ge_one : (1 : ℝ) ≤ (n : ℝ) + 2 := by
-        have hn : (0 : ℝ) ≤ n := by exact_mod_cast Nat.zero_le n
-        linarith
-      exact div_le_self hst hden_ge_one
-    exact hIoi (mem_Ioi.mpr hy_pos) (mem_Ioi.mpr ht_pos) hy_le
-  · exact hIoi (mem_Ioi.mpr hs_pos) (mem_Ioi.mpr (hs_pos.trans_le hst)) hst
+  refine antitoneOn_of_deriv_nonpos (convex_Ici 0) hf.continuousOn
+    (by
+      simpa [interior_Ici] using
+        hf.isCompletelyMonotoneOnIoi.contDiffOn.differentiableOn (by simp))
+    fun x hx => ?_
+  rw [interior_Ici] at hx
+  exact hf.isCompletelyMonotoneOnIoi.deriv_nonpos hx
 
 /-- A closed-half-line completely monotone function is nonnegative on `[0, ∞)`:
 nonnegativity on the open half-line passes to `0` by continuity. -/

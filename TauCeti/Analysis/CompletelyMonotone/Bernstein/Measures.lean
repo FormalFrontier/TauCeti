@@ -11,7 +11,9 @@ import Mathlib.MeasureTheory.Integral.IntegralEqImproper
 import Mathlib.MeasureTheory.Integral.BoundedContinuousFunction
 import TauCeti.Analysis.CompletelyMonotone.Closure
 public import TauCeti.Analysis.CompletelyMonotone.Integral
-public import TauCeti.Analysis.CompletelyMonotone.LaplaceRepresentation
+-- Non-public: the bundled Laplace kernel and its integrability; consumers should import
+-- `CompletelyMonotone.LaplaceRepresentation` directly.
+import TauCeti.Analysis.CompletelyMonotone.LaplaceRepresentation
 
 /-!
 # Approximating measures for Bernstein's theorem

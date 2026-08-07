@@ -11,6 +11,7 @@ public import Mathlib.MeasureTheory.Integral.Bochner.Basic
 -- Non-public: the Chafaï approximating measures, their tightness, and the Prokhorov extraction are
 -- used only inside the proof; the statement mentions none of them.
 import TauCeti.Analysis.CompletelyMonotone.Bernstein.Tightness
+import TauCeti.Analysis.CompletelyMonotone.LaplaceRepresentation
 import TauCeti.MeasureTheory.Measure.Prokhorov
 
 /-!
