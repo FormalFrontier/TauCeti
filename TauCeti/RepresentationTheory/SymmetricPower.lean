@@ -131,7 +131,7 @@ variable {ρ : Representation R G M} {σ : Representation R G N}
 representations. -/
 private noncomputable def symmetricPowerLinearEquiv (e : ρ.Equiv σ) (d : ℕ) :
     (Sym[R]^d M) ≃ₗ[R] (Sym[R]^d N) :=
-  LinearEquiv.ofLinear
+  LinearEquiv.ofLinearMap
     (SymmetricPower.map (ι := Fin d) e.toLinearMap)
     (SymmetricPower.map (ι := Fin d) e.symm.toLinearMap)
     (by
@@ -144,12 +144,12 @@ private noncomputable def symmetricPowerLinearEquiv (e : ρ.Equiv σ) (d : ℕ) 
 private theorem symmetricPowerLinearEquiv_toLinearMap (e : ρ.Equiv σ) (d : ℕ) :
     (symmetricPowerLinearEquiv e d).toLinearMap =
       SymmetricPower.map (ι := Fin d) e.toLinearMap :=
-  LinearEquiv.ofLinear_toLinearMap ..
+  rfl
 
 private theorem symmetricPowerLinearEquiv_symm_toLinearMap (e : ρ.Equiv σ) (d : ℕ) :
     (symmetricPowerLinearEquiv e d).symm.toLinearMap =
       SymmetricPower.map (ι := Fin d) e.symm.toLinearMap :=
-  LinearEquiv.ofLinear_symm_toLinearMap ..
+  rfl
 
 /-- An equivalence of representations induces an equivalence of every symmetric power. -/
 noncomputable def symmetricPower (e : ρ.Equiv σ) (d : ℕ) :

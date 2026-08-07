@@ -44,8 +44,9 @@ representation of a group, from the eigenvalues alone, with no invariant inner p
 * `TauCeti.FDRep.conj_char`: over `ℂ`, **inversion conjugates character values**,
   `conj (χ g) = χ g⁻¹`. This is what makes the character pairing agree with the Hermitian inner
   product on complex class functions.
-* `TauCeti.FDRep.isSemisimple_ρ`: if the characteristic of `k` does not divide `|G|`, then
-  `V.ρ g` is a semisimple endomorphism; over `ℂ` the hypothesis is found by instance search.
+* `TauCeti.Representation.isSemisimple_apply` and `TauCeti.FDRep.isSemisimple_ρ`: if the
+  characteristic of `k` does not divide `|G|`, then `ρ g` is a semisimple endomorphism; over `ℂ`
+  the hypothesis is found by instance search.
 
 The eigenvalues are taken with algebraic multiplicity, as the root multiset of the characteristic
 polynomial. The *set* of roots of the minimal polynomial is the same, namely the distinct
@@ -131,6 +132,21 @@ theorem isIntegral_char [IsAlgClosed k] (ρ : Representation k G V) {g : G} {n :
   isIntegral_char_of_splits ρ (IsAlgClosed.splits _) hn hg
 
 end Field
+
+section Group
+
+variable {k : Type u} {G : Type v} {V : Type w} [Field k] [Group G] [AddCommGroup V] [Module k V]
+
+/-- **If the order of `G` is invertible in `k`, then every group element acts semisimply.** The
+order of `g` divides `|G|`, so it too is invertible, and `ρ g` is annihilated by the squarefree
+polynomial `X ^ orderOf g - 1`. Over a field splitting that polynomial, an algebraically closed one
+for instance, this is diagonalizability of `ρ g`. -/
+theorem isSemisimple_apply (ρ : Representation k G V) (hG : (Nat.card G : k) ≠ 0) (g : G) :
+    End.IsSemisimple (ρ g) :=
+  isSemisimple_of_pow_eq_one ρ
+    (ne_zero_of_dvd_ne_zero hG (Nat.cast_dvd_cast (orderOf_dvd_natCard g))) (pow_orderOf_eq_one g)
+
+end Group
 
 section Complex
 
@@ -224,11 +240,8 @@ and which every finite group satisfies in characteristic zero, then `V.ρ g` is 
 endomorphism. Over an algebraically closed field, `ℂ` for instance, this is its
 diagonalizability. -/
 theorem isSemisimple_ρ {k : Type u} [Field k] [NeZero (Nat.card G : k)] (V : FDRep k G)
-    (g : G) : End.IsSemisimple (V.ρ g) := by
-  refine Representation.isSemisimple_of_pow_eq_one V.ρ ?_ (pow_orderOf_eq_one g)
-  obtain ⟨m, hm⟩ := orderOf_dvd_natCard g
-  intro h
-  exact NeZero.ne (Nat.card G : k) (by rw [hm, Nat.cast_mul, h, zero_mul])
+    (g : G) : End.IsSemisimple (V.ρ g) :=
+  Representation.isSemisimple_apply V.ρ (NeZero.ne _) g
 
 end FDRep
 
