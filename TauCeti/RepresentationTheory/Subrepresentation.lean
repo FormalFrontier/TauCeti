@@ -6,7 +6,6 @@ module
 
 public import Mathlib.LinearAlgebra.Projection
 public import Mathlib.RepresentationTheory.Intertwining
-public import Mathlib.RepresentationTheory.Subrepresentation
 
 /-!
 # `toSubmodule` against the order on subrepresentations

@@ -85,16 +85,19 @@ only the statement.
 
 ## References
 
-This file builds the **Clifford's theorem** milestone of Layer 5 (Clifford theory over a normal
-subgroup) of `TauCetiRoadmap/RepresentationTheory/InductionRestriction/README.md`, which asks that
-for an irreducible `W`, "`Res_N W` is semisimple ... and **isotypic under the `G`-action**: its
-irreducible `N`-constituents form a single `G`-orbit".  The milestone's remaining clause, that the
-constituents all occur with one common multiplicity `e` so that `Res_N W ≅ e · ⨁ᵢ {}^{gᵢ}V`, is the
-one that consumes the layer's isotypic-decomposition prerequisite; it is not claimed here, and
-nothing below refers to a decomposition or a multiplicity.  Item (iii) of that prerequisite, that
-restriction along a subgroup preserves semisimplicity, is what
-`TauCeti.Representation.isSemisimpleRepresentation_comp_subtype` supplies in the normal-subgroup
-case Clifford theory uses.
+This file supplies item (iii) of the **prerequisite** of Layer 5 (Clifford theory over a normal
+subgroup) of `TauCetiRoadmap/RepresentationTheory/InductionRestriction/README.md` — "restriction
+along a subgroup preserves semisimplicity" — in the normal-subgroup case Clifford theory uses,
+as `TauCeti.Representation.isSemisimpleRepresentation_comp_subtype`.  With it come the two clauses
+of that layer's **Clifford's theorem** milestone which the prerequisite is not an input to: for an
+irreducible `W`, "`Res_N W` is semisimple ... and **isotypic under the `G`-action**: its irreducible
+`N`-constituents form a single `G`-orbit".  Neither of those consumes a decomposition —
+semisimplicity is read off from irreducibility of the ambient representation rather than from
+Maschke, and the orbit statement from an equivariant projection.  The milestone's remaining
+clause, that the constituents all occur with one common multiplicity `e` so that
+`Res_N W ≅ e · ⨁ᵢ {}^{gᵢ}V`, is the one that does consume the layer's isotypic-decomposition
+prerequisite; it is not claimed here, and nothing below refers to a decomposition or a
+multiplicity.
 
 The mathematics is the classical argument of C. W. Curtis and I. Reiner, *Representation Theory of
 Finite Groups and Associative Algebras*, §49.
