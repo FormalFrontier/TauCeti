@@ -193,10 +193,7 @@ noncomputable def equivConjClasses : ClassFunction k G ≃ₗ[k] (ConjClasses G 
   left_inv f := by
     ext g
     rfl
-  right_inv f := by
-    ext C
-    obtain ⟨g, rfl⟩ := ConjClasses.exists_rep C
-    rfl
+  right_inv := toConjClasses_ofConjClasses
 
 /-- The linear equivalence is given by `toConjClasses`. -/
 @[simp]
