@@ -28,14 +28,13 @@ Read through the group extensions of `TauCeti/GroupTheory/GroupExtension/OfFacto
 `TauCeti/GroupTheory/GroupExtension/FactorSetOfSection.lean`, this says several things about
 extensions of `G` by an abelian kernel `M` inducing the given action: the class read off an
 extension does not depend on the normalized section it is read from
-(`TauCeti.GroupExtension.cohomologyClass_factorSet_eq`), factor sets with equal classes build
-equivalent extensions (`TauCeti.FactorSet.cohomologyClass_eq_iff` fed to the existing
-`TauCeti.FactorSet.nonempty_groupExtensionEquiv`), and the class vanishes exactly on the split
-extensions. The converse invariance — that equivalent extensions have equal classes, which
-together with these would make the class a complete invariant of an extension — is not proved
-here. Specializing the action to the trivial action of `G` on
+(`TauCeti.GroupExtension.cohomologyClass_factorSet_eq`) and is unchanged by an equivalence of
+extensions, and two such extensions are equivalent exactly when their classes agree
+(`TauCeti.GroupExtension.nonempty_equiv_iff_cohomologyClass_factorSet_eq`), so the class is a
+complete invariant of the extension. The class vanishes exactly on the split extensions.
+Specializing the action to the trivial action of `G` on
 `M = kˣ` gives `H²(G, kˣ)`, the group that classifies the factor sets of projective representations
-of `G`.
+of `G`, equivalently the central extensions of `G` by `kˣ` up to equivalence.
 
 ## Universes
 
@@ -65,6 +64,8 @@ of `G`.
   for the coboundaries, equivalently for the factor sets whose extension splits.
 * `TauCeti.GroupExtension.cohomologyClass_factorSet_eq`: the class of the factor set of a
   normalized section does not depend on the section.
+* `TauCeti.GroupExtension.nonempty_equiv_iff_cohomologyClass_factorSet_eq`: **`H²(G, M)` classifies
+  group extensions of `G` by `M` inducing the given action, up to equivalence.**
 
 ## References
 
@@ -278,7 +279,8 @@ end FactorSet
 
 namespace GroupExtension
 
-variable {E : Type*} [Group E] {S : GroupExtension M E G}
+variable {E E' : Type*} [Group E] [Group E'] {S : GroupExtension M E G}
+  {S' : GroupExtension M E' G}
 
 /-- **The cohomology class of the factor set of an extension does not depend on the section.**
 So the class in `H²(G, M)` is an invariant of the extension, and by
@@ -288,6 +290,41 @@ theorem cohomologyClass_factorSet_eq (σ σ' : S.Section) (hσ : σ 1 = 1) (hσ'
     (hact : InducesAction S) :
     (factorSet σ hσ hact).cohomologyClass = (factorSet σ' hσ' hact).cohomologyClass :=
   (FactorSet.cohomologyClass_eq_iff _ _).2 (isMulCoboundary₂_div σ σ' hσ hσ' hact)
+
+/-- **`H²(G, M)` classifies group extensions up to equivalence.** Two extensions of `G` by the
+abelian kernel `M`, both inducing the ambient action, are equivalent exactly when the factor sets
+of normalized sections of them have the same class.
+
+The forward direction is the invariance of the class under an equivalence `e`: the transported
+section `e ∘ σ` is a normalized section of `S'` with literally the same factor set as `σ`, and by
+`TauCeti.GroupExtension.cohomologyClass_factorSet_eq` the class of `S'` does not see which of its
+sections it is read from. The backward direction is
+`TauCeti.FactorSet.nonempty_groupExtensionEquiv`, carried across the two identifications
+`TauCeti.GroupExtension.factorSetToGroupExtensionEquiv`. -/
+theorem nonempty_equiv_iff_cohomologyClass_factorSet_eq (σ : S.Section) (σ' : S'.Section)
+    (hσ : σ 1 = 1) (hσ' : σ' 1 = 1) (hact : InducesAction S) (hact' : InducesAction S') :
+    Nonempty (S.Equiv S') ↔
+      (factorSet σ hσ hact).cohomologyClass = (factorSet σ' hσ' hact').cohomologyClass := by
+  constructor
+  · rintro ⟨e⟩
+    -- `τ = e ∘ σ` is a section of `S'` because `e` commutes with the projections
+    let τ : S'.Section :=
+      ⟨fun g => e (σ g), fun g => (GroupExtension.Equiv.rightHom_map e (σ g)).trans (by simp)⟩
+    have hτ₁ : τ 1 = 1 := by simp [τ, hσ]
+    -- and `e` carries the defining equation of the factor set of `σ` to that of `τ`
+    have hfac : factorSet τ hτ₁ hact' = factorSet σ hσ hact := by
+      ext p
+      obtain ⟨g, h⟩ := p
+      refine S'.inl_injective ?_
+      rw [inl_factorSet, ← GroupExtension.Equiv.map_inl e, inl_factorSet]
+      simp [τ]
+    rw [← hfac]
+    exact cohomologyClass_factorSet_eq τ σ' hτ₁ hσ' hact'
+  · intro h
+    obtain ⟨e⟩ := FactorSet.nonempty_groupExtensionEquiv _ _
+      ((FactorSet.cohomologyClass_eq_iff _ _).1 h)
+    exact ⟨((factorSetToGroupExtensionEquiv σ hσ hact).symm.trans e).trans
+      (factorSetToGroupExtensionEquiv σ' hσ' hact')⟩
 
 end GroupExtension
 
