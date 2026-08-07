@@ -78,7 +78,9 @@ Only the invertibility of `|G|` in `k` is assumed for the first form; no algebra
 needed, because the duality argument runs on
 `TauCeti.ClassFunction.characterPairing_nondegenerate` alone.  Algebraic closure enters only in the
 refinement to induced characters, where completeness of the irreducible characters of the subgroup
-is used.
+is used.  That refinement needs no assumption on `|G|` at all, only invertibility of the orders of
+the members of `𝒮`, so it takes that as an explicit hypothesis rather than an ambient instance; the
+covering corollaries supply it from `TauCeti.isUnit_natCard_subgroup`.
 
 The covering hypothesis is written out as `∀ x : G, ∃ S ∈ 𝒮, ∃ y : G, y * x * y⁻¹ ∈ S` rather than
 bundled into a predicate: it is used once, and the cyclic instance discharges it with `y = 1`.
@@ -143,6 +145,14 @@ theorem ind_mem_cyclicInduced (C : Subgroup G) (hC : IsCyclic C) (ψ : ClassFunc
     ind C ψ ∈ cyclicInduced k G :=
   ind_mem_inducedFrom hC ψ
 
+/-- The universal property of `TauCeti.ClassFunction.inducedFrom`: it is contained in a submodule
+exactly when every class function induced from a member of `𝒮` is. -/
+theorem inducedFrom_le_iff {𝒮 : Set (Subgroup G)} {p : Submodule k (ClassFunction k G)} :
+    inducedFrom k G 𝒮 ≤ p ↔ ∀ S ∈ 𝒮, ∀ ψ : ClassFunction k S, ind S ψ ∈ p := by
+  refine ⟨fun h S hS ψ => h (ind_mem_inducedFrom hS ψ), fun h => Submodule.span_le.mpr ?_⟩
+  rintro - ⟨S, hS, ψ, rfl⟩
+  exact h S hS ψ
+
 /-- **A class function orthogonal to every induction from `𝒮` vanishes**, when `𝒮` covers `G` up to
 conjugacy.  Frobenius reciprocity turns orthogonality to all of `Ind_S^G (ClassFunction k S)` into
 orthogonality of the restriction of `h` to `S` against all class functions of `S`, so that
@@ -166,15 +176,6 @@ theorem eq_zero_of_characterPairing_inducedFrom_eq_zero [Fintype G]
   rw [← mem_iff.mp h.2 x y]
   simpa using hzero
 
-/-- The orthogonal complement of `TauCeti.ClassFunction.inducedFrom` for the character pairing is
-trivial, when `𝒮` covers `G` up to conjugacy. -/
-theorem orthogonal_inducedFrom_eq_bot [Fintype G] [Invertible (Nat.card G : k)]
-    {𝒮 : Set (Subgroup G)} (h𝒮 : ∀ x : G, ∃ S ∈ 𝒮, ∃ y : G, y * x * y⁻¹ ∈ S) :
-    (characterPairing (k := k) (G := G)).orthogonal (inducedFrom k G 𝒮) = ⊥ :=
-  (Submodule.eq_bot_iff _).mpr fun _ hh =>
-    eq_zero_of_characterPairing_inducedFrom_eq_zero h𝒮 fun f hf =>
-      LinearMap.BilinForm.mem_orthogonal_iff.mp hh f hf
-
 /-- **Induction from a covering family of subgroups is surjective on class functions.**  If every
 element of the finite group `G` is conjugate into a member of `𝒮`, and `|G|` is invertible in `k`,
 then the class functions induced from the members of `𝒮` span all class functions of `G`.
@@ -186,11 +187,15 @@ theorem inducedFrom_eq_top [Invertible (Nat.card G : k)] {𝒮 : Set (Subgroup G
     inducedFrom k G 𝒮 = ⊤ := by
   let := Fintype.ofFinite G
   have hrefl := (characterPairing_isSymm (k := k) (G := G)).isRefl
+  have hbot : (characterPairing (k := k) (G := G)).orthogonal (inducedFrom k G 𝒮) = ⊥ :=
+    (Submodule.eq_bot_iff _).mpr fun _ hh =>
+      eq_zero_of_characterPairing_inducedFrom_eq_zero h𝒮 fun f hf =>
+        LinearMap.BilinForm.mem_orthogonal_iff.mp hh f hf
   calc inducedFrom k G 𝒮
       = (characterPairing (k := k) (G := G)).orthogonal
           ((characterPairing (k := k) (G := G)).orthogonal (inducedFrom k G 𝒮)) :=
         (LinearMap.BilinForm.orthogonal_orthogonal characterPairing_nondegenerate hrefl _).symm
-    _ = ⊤ := by rw [orthogonal_inducedFrom_eq_bot h𝒮, LinearMap.BilinForm.orthogonal_bot]
+    _ = ⊤ := by rw [hbot, LinearMap.BilinForm.orthogonal_bot]
 
 /-- **The class functions induced from the cyclic subgroups span.**  Over a field in which the order
 of the finite group `G` is invertible, the class functions induced from the cyclic subgroups of `G`
@@ -253,24 +258,36 @@ theorem ind_ofCharacter_mem_inducedCharactersFrom {𝒮 : Set (Subgroup G)} {S :
     ind S (ofCharacter ρ) ∈ inducedCharactersFrom k G 𝒮 :=
   Submodule.subset_span ⟨S, hS, n, ρ, hρ, rfl⟩
 
+/-- The universal property of `TauCeti.ClassFunction.inducedCharactersFrom`: it is contained in a
+submodule exactly when every character induced from an irreducible character of a member of `𝒮`
+is. -/
+theorem inducedCharactersFrom_le_iff {𝒮 : Set (Subgroup G)}
+    {p : Submodule k (ClassFunction k G)} :
+    inducedCharactersFrom k G 𝒮 ≤ p ↔ ∀ S ∈ 𝒮, ∀ (n : ℕ) (ρ : Representation k S (Fin n → k)),
+      ρ.IsIrreducible → ind S (ofCharacter ρ) ∈ p := by
+  refine ⟨fun h S hS n ρ hρ => h (ind_ofCharacter_mem_inducedCharactersFrom hS ρ hρ),
+    fun h => Submodule.span_le.mpr ?_⟩
+  rintro - ⟨S, hS, n, ρ, hρ, rfl⟩
+  exact h S hS n ρ hρ
+
 /-- A character is a class function, so inducing only the irreducible characters of the members of
 `𝒮` spans no more than inducing all their class functions. -/
 theorem inducedCharactersFrom_le_inducedFrom (𝒮 : Set (Subgroup G)) :
     inducedCharactersFrom k G 𝒮 ≤ inducedFrom k G 𝒮 :=
-  Submodule.span_le.mpr <| by
-    rintro - ⟨S, hS, -, ρ, -, rfl⟩
-    exact ind_mem_inducedFrom hS (ofCharacter ρ)
+  inducedCharactersFrom_le_iff.mpr fun _ hS _ ρ _ => ind_mem_inducedFrom hS (ofCharacter ρ)
 
 /-- Inducing an arbitrary class function of a subgroup gains nothing over inducing its irreducible
 characters: over an algebraically closed field the latter already span the class functions of the
-subgroup, and induction is linear. -/
-theorem inducedFrom_le_inducedCharactersFrom [IsAlgClosed k] [Invertible (Nat.card G : k)]
-    (𝒮 : Set (Subgroup G)) :
+subgroup, and induction is linear.
+
+Only the orders of the *selected* subgroups need be invertible in `k`; `|G|` itself is irrelevant
+here, and the covering corollaries below supply the hypothesis from
+`TauCeti.isUnit_natCard_subgroup`. -/
+theorem inducedFrom_le_inducedCharactersFrom [IsAlgClosed k] {𝒮 : Set (Subgroup G)}
+    (h𝒮 : ∀ S ∈ 𝒮, IsUnit (Nat.card S : k)) :
     inducedFrom k G 𝒮 ≤ inducedCharactersFrom k G 𝒮 := by
-  have hG : IsUnit (Nat.card G : k) := isUnit_of_invertible _
-  refine Submodule.span_le.mpr ?_
-  rintro - ⟨S, hS, ψ, rfl⟩
-  let : Invertible (Nat.card S : k) := (isUnit_natCard_subgroup _ hG).invertible
+  refine inducedFrom_le_iff.mpr fun S hS ψ => ?_
+  let : Invertible (Nat.card S : k) := (h𝒮 S hS).invertible
   let := Fintype.ofFinite (ConjClasses S)
   obtain ⟨d, ρ, b, hirr, hb⟩ := exists_basis_ofCharacter k S
   have hsum : ψ = ∑ D, b.repr ψ D • ofCharacter (ρ D) := by
@@ -283,18 +300,22 @@ theorem inducedFrom_le_inducedCharactersFrom [IsAlgClosed k] [Invertible (Nat.ca
     (ind_ofCharacter_mem_inducedCharactersFrom hS (ρ D) (hirr D))
 
 /-- Over an algebraically closed field, inducing the irreducible characters of the members of `𝒮`
-spans exactly as much as inducing all their class functions. -/
-theorem inducedCharactersFrom_eq_inducedFrom [IsAlgClosed k] [Invertible (Nat.card G : k)]
-    (𝒮 : Set (Subgroup G)) :
+spans exactly as much as inducing all their class functions.  As in
+`TauCeti.ClassFunction.inducedFrom_le_inducedCharactersFrom`, only the orders of the members of `𝒮`
+need be invertible. -/
+theorem inducedCharactersFrom_eq_inducedFrom [IsAlgClosed k] {𝒮 : Set (Subgroup G)}
+    (h𝒮 : ∀ S ∈ 𝒮, IsUnit (Nat.card S : k)) :
     inducedCharactersFrom k G 𝒮 = inducedFrom k G 𝒮 :=
-  le_antisymm (inducedCharactersFrom_le_inducedFrom 𝒮) (inducedFrom_le_inducedCharactersFrom 𝒮)
+  le_antisymm (inducedCharactersFrom_le_inducedFrom 𝒮) (inducedFrom_le_inducedCharactersFrom h𝒮)
 
 /-- **Induction of irreducible characters from a covering family of subgroups already spans the
 class functions**, over an algebraically closed field in which `|G|` is invertible. -/
 theorem inducedCharactersFrom_eq_top [IsAlgClosed k] [Invertible (Nat.card G : k)]
     {𝒮 : Set (Subgroup G)} (h𝒮 : ∀ x : G, ∃ S ∈ 𝒮, ∃ y : G, y * x * y⁻¹ ∈ S) :
     inducedCharactersFrom k G 𝒮 = ⊤ :=
-  top_le_iff.mp ((inducedFrom_eq_top h𝒮).ge.trans (inducedFrom_le_inducedCharactersFrom 𝒮))
+  top_le_iff.mp ((inducedFrom_eq_top h𝒮).ge.trans
+    (inducedFrom_le_inducedCharactersFrom fun S _ =>
+      isUnit_natCard_subgroup S (isUnit_of_invertible _)))
 
 /-- **The characters induced from the irreducible characters of the cyclic subgroups span.**  Over
 an algebraically closed field in which the order of the finite group `G` is invertible, they span
