@@ -98,9 +98,10 @@ theorem trace_eq_of_isConj {g h : SU2} (hgh : IsConj g h) :
     Matrix.trace (g : Matrix (Fin 2) (Fin 2) ℂ)
       = Matrix.trace (h : Matrix (Fin 2) (Fin 2) ℂ) := by
   obtain ⟨u, rfl⟩ := isConj_iff.mp hgh
-  simp only [Submonoid.coe_mul]
-  rw [Matrix.trace_mul_cycle, ← Submonoid.coe_mul, inv_mul_cancel, OneMemClass.coe_one,
-    Matrix.one_mul]
+  -- `u` maps to a unit of the matrix ring, so this is `Matrix.trace_units_conj`.
+  simpa using
+    (Matrix.trace_units_conj (Units.map (Submonoid.subtype _) (toUnits u))
+      (g : Matrix (Fin 2) (Fin 2) ℂ)).symm
 
 /-! ### The diagonal matrices `diag (z, z⁻¹)` -/
 
