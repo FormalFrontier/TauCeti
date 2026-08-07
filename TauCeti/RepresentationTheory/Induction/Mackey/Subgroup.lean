@@ -55,6 +55,8 @@ roadmap-specific subgroup the induction and restriction of that layer run along.
   `K` and into `sHs⁻¹`.
 * `TauCeti.mackeySubgroupCongr`: the isomorphism between the Mackey subgroups of two
   representatives of one double coset.
+* `TauCeti.mackeySubgroupSelfEquiv`: the identification of the Mackey subgroup of a representative
+  lying in `H` with `H` itself.
 
 ## Main statements
 
@@ -153,6 +155,23 @@ theorem mackeySubgroup_one (H K : Subgroup G) : mackeySubgroup 1 H K = K ⊓ H :
 @[simp]
 theorem mackeySubgroup_of_mem (hs : s ∈ H) : mackeySubgroup s H K = K ⊓ H := by
   rw [mackeySubgroup_def, Subgroup.conj_smul_eq_self_of_mem hs]
+
+/-- A representative lying in `H` has all of `H` for its Mackey subgroup, so the Mackey subgroup
+sits inside `H` as the top subgroup. -/
+theorem mackeySubgroup_subgroupOf_self_of_mem (hs : s ∈ H) :
+    (mackeySubgroup s H H).subgroupOf H = ⊤ := by
+  rw [mackeySubgroup_of_mem hs, inf_idem, Subgroup.subgroupOf_self]
+
+/-- The Mackey subgroup of a representative lying in `H`, identified with `H` itself. -/
+noncomputable def mackeySubgroupSelfEquiv (hs : s ∈ H) :
+    ((mackeySubgroup s H H).subgroupOf H) ≃* H :=
+  (MulEquiv.subgroupCongr (mackeySubgroup_subgroupOf_self_of_mem hs)).trans Subgroup.topEquiv
+
+@[simp]
+theorem coe_mackeySubgroupSelfEquiv_apply (hs : s ∈ H)
+    (y : (mackeySubgroup s H H).subgroupOf H) :
+    (mackeySubgroupSelfEquiv hs y : H) = (y : H) :=
+  (rfl)
 
 /-- For a normal `H` the Mackey subgroup does not depend on the representative at all: it is
 `K ⊓ H` for every `s`.  This is why Clifford theory over a normal subgroup only ever sees the one

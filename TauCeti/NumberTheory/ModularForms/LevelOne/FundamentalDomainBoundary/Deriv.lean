@@ -296,6 +296,24 @@ theorem integral_logDeriv_fdBoundary_arc (H : ℝ) {a b : ℝ} (ha : a ∈ Set.I
   push_cast
   ring
 
+
+/-- The contour's logarithmic derivative is interval-integrable on arc subintervals: it
+is the constant `π/6 · i` on the open arc. -/
+theorem intervalIntegrable_logDeriv_fdBoundary_arc (H : ℝ) {a b : ℝ}
+    (ha : a ∈ Set.Icc (1 : ℝ) 3) (hb : b ∈ Set.Icc (1 : ℝ) 3) :
+    IntervalIntegrable (logDeriv (fdBoundary H)) MeasureTheory.volume a b := by
+  exact (intervalIntegrable_const
+    (c := ((Real.pi / 6 : ℝ) : ℂ) * Complex.I)).congr_uIoo fun t ht ↦
+    (logDeriv_fdBoundary_arc (Set.uIoo_subset_Ioo ha hb ht)).symm
+
+/-- Substituting the reflection `t ↦ 4 - t` in a boundary contour integral. -/
+theorem intervalIntegral_comp_fdBoundary_four_sub {E : Type*} [NormedAddCommGroup E]
+    [NormedSpace ℂ E] (H : ℝ) (φ : ℂ → E) {a b : ℝ} :
+    ∫ t in (4 - b : ℝ)..(4 - a), deriv (fdBoundary H) t • φ (fdBoundary H t) =
+      ∫ u in a..b, deriv (fdBoundary H) (4 - u) • φ (fdBoundary H (4 - u)) :=
+  (intervalIntegral.integral_comp_sub_left
+    (fun t ↦ deriv (fdBoundary H) t • φ (fdBoundary H t)) 4).symm
+
 end Reflection
 
 
