@@ -5,16 +5,15 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.LinearAlgebra.Matrix.Echelon.Pivot
-public import Mathlib.LinearAlgebra.Span.Basic
 
 /-!
 # Computable Gauss-Jordan elimination
 
 Mathlib says what it means for a matrix to be in (reduced) row echelon form
 (`Matrix.IsRowEchelon`, `Matrix.IsReducedRowEchelon`, `Matrix.IsPivotedBy`) but has no algorithm
-producing one. This file supplies the algorithm, as a genuine `def` on `[Field F] [DecidableEq F]`
-data, together with its two correctness statements: the output is in reduced row echelon form, and
-it spans the same subspace as the input.
+producing one. This file supplies the algorithm, as a genuine `def` on
+`[DivisionRing F] [DecidableEq F]` data, together with its two correctness statements: the output
+is in reduced row echelon form, and it spans the same subspace as the input.
 
 The rows are carried as a `List (Fin n → F)` rather than as a matrix, because elimination changes
 the number of rows it keeps: `TauCeti.rowReduce L` returns a list of pairs
@@ -28,12 +27,10 @@ the columns.
 
 ## Main definitions
 
-* `TauCeti.rowReduceStep`: one column of the sweep.
 * `TauCeti.rowReduce`: the reduced row echelon form of a list of rows, as a list of
   `(pivot column, row)` pairs.
 * `TauCeti.rowReduceMatrix` and `TauCeti.rowReducePivot`: that output read as a matrix together
   with its pivot map.
-* `TauCeti.IsRowReduceState`: the invariant the sweep maintains.
 
 ## Main results
 
@@ -48,18 +45,28 @@ the columns.
 
 ## Implementation notes
 
-The state of the sweep is a pair: the pivot rows found so far, each tagged with its pivot column,
-and the rows not yet used as a pivot. A row that is used as a pivot is not removed from the second
-component; subtracting the scaled pivot from it turns it into the zero row, which is harmless and
-saves the algorithm (and every proof about it) from having to delete a list element. When the sweep
-reaches the last column every row of the second component vanishes identically, which is what
+The sweep, the state it threads, and the invariant it maintains are all private, and no definition
+here exposes its body: the supported interface is `TauCeti.rowReduce` together with the results
+above, `TauCeti.rowReduceMatrix_apply` and `TauCeti.rowReducePivot_apply` standing in for the two
+wrappers' bodies. So nothing downstream is committed to how the sweep represents its intermediate
+data.
+
+That state is a pair: the pivot rows found so far, each tagged with its pivot column, and the rows
+not yet used as a pivot. A row that is used as a pivot is not removed from the second component;
+subtracting the scaled pivot from it turns it into the zero row, which is harmless and saves the
+algorithm (and every proof about it) from having to delete a list element. When the sweep reaches
+the last column every row of the second component vanishes identically, which is what
 `TauCeti.span_rowReduce` uses to discard it.
 
 Only the columns are indexed by `Fin n`; the rows are an arbitrary list. Restricting the columns is
 deliberate: the sweep must visit them in increasing order, and `List.finRange n` is the enumeration
-that comes with the proof `List.pairwise_lt_finRange` that it does. The auxiliary
-`TauCeti.rowReduceAux` takes the column list as an argument and the results about it assume only
-that the list is strictly increasing, so the choice is confined to `TauCeti.rowReduce` itself.
+that comes with the proof `List.pairwise_lt_finRange` that it does. The auxiliary sweep takes the
+column list as an argument and the results about it assume only that the list is strictly
+increasing, so the choice is confined to `TauCeti.rowReduce` itself.
+
+Only `TauCeti.rank_rowReduceMatrix` and `TauCeti.length_rowReduce_ofFn` need `F` commutative:
+`Matrix.rank` is defined over a commutative ring. Everything else, the algorithm included, works
+over a division ring.
 
 ## References
 
@@ -77,42 +84,65 @@ namespace TauCeti
 
 universe u
 
-variable {F : Type u} [Field F] [DecidableEq F] {n : ℕ}
+section DivisionRing
+
+variable {F : Type u} [DivisionRing F] [DecidableEq F] {n : ℕ}
 
 /-! ## The algorithm -/
 
 /-- The state of a Gauss-Jordan sweep: the pivot rows found so far, each tagged with its pivot
 column, together with the rows not yet used as a pivot. -/
-abbrev RowReduceState (F : Type u) (n : ℕ) : Type u :=
+private abbrev RowReduceState (F : Type u) (n : ℕ) : Type u :=
   List (Fin n × (Fin n → F)) × List (Fin n → F)
 
 /-- One column of a Gauss-Jordan sweep. If some unused row is nonzero in column `j`, scale the
 first such row to have a `1` there, record it as the pivot row of column `j`, and subtract the
 appropriate multiple of it from every other row, retained or not. Otherwise do nothing. -/
-@[expose] def rowReduceStep (j : Fin n) (s : RowReduceState F n) : RowReduceState F n :=
+private def rowReduceStep (j : Fin n) (s : RowReduceState F n) : RowReduceState F n :=
   match s.2.find? fun w => decide (w j ≠ 0) with
   | none => s
   | some v =>
     let p := (v j)⁻¹ • v
     (s.1.map (fun q => (q.1, q.2 - q.2 j • p)) ++ [(j, p)], s.2.map fun w => w - w j • p)
 
+/-- The idle branch of `TauCeti.rowReduceStep`: if no unused row is nonzero in column `j`, that
+column of the sweep leaves the state alone. -/
+private theorem rowReduceStep_of_find?_eq_none {j : Fin n} {s : RowReduceState F n}
+    (h : s.2.find? (fun w => decide (w j ≠ 0)) = none) : rowReduceStep j s = s := by
+  unfold rowReduceStep
+  rw [h]
+
+/-- The pivoting branch of `TauCeti.rowReduceStep`: if `v` is the first unused row nonzero in
+column `j`, that column of the sweep records `(v j)⁻¹ • v` as the pivot row of `j` and clears
+column `j` from every other row. -/
+private theorem rowReduceStep_of_find?_eq_some {j : Fin n} {s : RowReduceState F n}
+    {v : Fin n → F} (h : s.2.find? (fun w => decide (w j ≠ 0)) = some v) :
+    rowReduceStep j s =
+      (s.1.map (fun q => (q.1, q.2 - q.2 j • (v j)⁻¹ • v)) ++ [(j, (v j)⁻¹ • v)],
+        s.2.map fun w => w - w j • (v j)⁻¹ • v) := by
+  unfold rowReduceStep
+  rw [h]
+
 /-- A Gauss-Jordan sweep over the columns `cs`, taken in the order they are listed. -/
-@[expose] def rowReduceAux : List (Fin n) → RowReduceState F n → RowReduceState F n
+private def rowReduceAux : List (Fin n) → RowReduceState F n → RowReduceState F n
   | [], s => s
   | j :: cs, s => rowReduceAux cs (rowReduceStep j s)
 
 /-- **The reduced row echelon form** of a list of rows: the list of pairs
 `(pivot column, reduced row)`, one for each pivot, in increasing order of pivot column. -/
-@[expose] def rowReduce (L : List (Fin n → F)) : List (Fin n × (Fin n → F)) :=
+def rowReduce (L : List (Fin n → F)) : List (Fin n × (Fin n → F)) :=
   (rowReduceAux (List.finRange n) (([], L) : RowReduceState F n)).1
 
 /-! ## The invariant -/
 
+-- The state is spelled out below rather than written `RowReduceState F n`: a private structure
+-- whose signature names a private abbreviation is not resolvable by the environment linters.
 /-- The invariant a Gauss-Jordan sweep maintains, `cs` being the columns still to be visited: the
 recorded pivot columns are strictly increasing and already visited, each recorded row has a `1` in
 its own pivot column and a `0` in every other pivot column and everywhere to the left of its own,
 and every unused row vanishes in every visited column. -/
-structure IsRowReduceState (cs : List (Fin n)) (s : RowReduceState F n) : Prop where
+private structure IsRowReduceState (cs : List (Fin n))
+    (s : List (Fin n × (Fin n → F)) × List (Fin n → F)) : Prop where
   /-- Every recorded pivot column precedes every column still to be visited. -/
   pivot_lt : ∀ q ∈ s.1, ∀ j ∈ cs, q.1 < j
   /-- The recorded pivot columns are strictly increasing. -/
@@ -126,13 +156,9 @@ structure IsRowReduceState (cs : List (Fin n)) (s : RowReduceState F n) : Prop w
   /-- Every unused row vanishes in every column already visited. -/
   todo_eq_zero : ∀ w ∈ s.2, ∀ d, d ∉ cs → w d = 0
 
-namespace IsRowReduceState
-
-variable {cs : List (Fin n)} {j : Fin n} {s : RowReduceState F n}
-
 omit [DecidableEq F] in
 /-- A sweep starts in a valid state: nothing has been recorded and no column has been visited. -/
-theorem nil_left (L : List (Fin n → F)) :
+private theorem isRowReduceState_nil (L : List (Fin n → F)) :
     IsRowReduceState (List.finRange n) (([], L) : RowReduceState F n) where
   pivot_lt := by simp
   pivot_pairwise := by simp
@@ -142,9 +168,10 @@ theorem nil_left (L : List (Fin n → F)) :
   todo_eq_zero w _ d hd := absurd (List.mem_finRange d) hd
 
 /-- One column of the sweep preserves the invariant. -/
-theorem rowReduceStep (hs : IsRowReduceState (j :: cs) s)
+private theorem isRowReduceState_rowReduceStep {cs : List (Fin n)} {j : Fin n}
+    {s : RowReduceState F n} (hs : IsRowReduceState (j :: cs) s)
     (hcs : (j :: cs).Pairwise (· < ·)) :
-    IsRowReduceState cs (TauCeti.rowReduceStep j s) := by
+    IsRowReduceState cs (rowReduceStep j s) := by
   have hgt : ∀ c ∈ cs, j < c := (List.pairwise_cons.mp hcs).1
   have hnotmem : ∀ d : Fin n, d < j → d ∉ j :: cs := by
     intro d hd hmem
@@ -155,10 +182,7 @@ theorem rowReduceStep (hs : IsRowReduceState (j :: cs) s)
   · have hzero : ∀ w ∈ s.2, w j = 0 := by
       intro w hw
       simpa using List.find?_eq_none.mp hfind w hw
-    have hstep : TauCeti.rowReduceStep j s = s := by
-      unfold TauCeti.rowReduceStep
-      rw [hfind]
-    rw [hstep]
+    rw [rowReduceStep_of_find?_eq_none hfind]
     exact
       { pivot_lt := fun q hq c hc => hs.pivot_lt q hq c (List.mem_cons_of_mem _ hc)
         pivot_pairwise := hs.pivot_pairwise
@@ -178,10 +202,9 @@ theorem rowReduceStep (hs : IsRowReduceState (j :: cs) s)
     have hplow : ∀ d : Fin n, d < j → p d = 0 := fun d hd => hp0 d (hnotmem d hd)
     have hppivot : ∀ q ∈ s.1, p q.1 = 0 := fun q hq =>
       hplow q.1 (hs.pivot_lt q hq j List.mem_cons_self)
-    have hstep : TauCeti.rowReduceStep j s =
+    have hstep : rowReduceStep j s =
         (s.1.map (fun q => (q.1, q.2 - q.2 j • p)) ++ [(j, p)], s.2.map fun w => w - w j • p) := by
-      unfold TauCeti.rowReduceStep
-      rw [hfind, hpdef]
+      rw [rowReduceStep_of_find?_eq_some hfind, hpdef]
     rw [hstep]
     constructor
     · rintro q hq c hc
@@ -212,7 +235,7 @@ theorem rowReduceStep (hs : IsRowReduceState (j :: cs) s)
       rcases hq with ⟨a, ha, rfl⟩ | rfl <;> rcases hq' with ⟨b, hb, rfl⟩ | rfl
       · simp only [Pi.sub_apply, Pi.smul_apply, smul_eq_mul]
         rw [hs.eq_zero_of_ne a ha b hb (by simpa using hne), hppivot b hb]
-        ring
+        simp
       · simp [hpj]
       · exact hppivot b hb
       · exact absurd rfl hne
@@ -225,20 +248,19 @@ theorem rowReduceStep (hs : IsRowReduceState (j :: cs) s)
         simp [hs.todo_eq_zero w' hw' d hdmem, hp0 d hdmem]
 
 /-- A whole sweep preserves the invariant, and leaves no column unvisited. -/
-theorem rowReduceAux (hcs : cs.Pairwise (· < ·)) (hs : IsRowReduceState cs s) :
-    IsRowReduceState [] (TauCeti.rowReduceAux cs s) := by
+private theorem isRowReduceState_rowReduceAux {cs : List (Fin n)} {s : RowReduceState F n}
+    (hcs : cs.Pairwise (· < ·)) (hs : IsRowReduceState cs s) :
+    IsRowReduceState [] (rowReduceAux cs s) := by
   induction cs generalizing s with
   | nil => exact hs
   | cons j cs ih =>
-    rw [TauCeti.rowReduceAux]
-    exact ih (List.pairwise_cons.mp hcs).2 (hs.rowReduceStep hcs)
-
-end IsRowReduceState
+    rw [rowReduceAux]
+    exact ih (List.pairwise_cons.mp hcs).2 (isRowReduceState_rowReduceStep hs hcs)
 
 /-- The state a full sweep ends in is valid, with no column left to visit. -/
-theorem isRowReduceState_rowReduceAux_finRange (L : List (Fin n → F)) :
+private theorem isRowReduceState_rowReduceAux_finRange (L : List (Fin n → F)) :
     IsRowReduceState [] (rowReduceAux (List.finRange n) (([], L) : RowReduceState F n)) :=
-  (IsRowReduceState.nil_left L).rowReduceAux (List.pairwise_lt_finRange n)
+  isRowReduceState_rowReduceAux (List.pairwise_lt_finRange n) (isRowReduceState_nil L)
 
 /-! ## The reduced rows -/
 
@@ -266,7 +288,7 @@ theorem rowReduce_eq_zero_of_ne {q q' : Fin n × (Fin n → F)} (hq : q ∈ rowR
 
 /-- Every row not used as a pivot has been eliminated: at the end of the sweep the unused rows all
 vanish identically. -/
-theorem rowReduceAux_snd_eq_zero {w : Fin n → F}
+private theorem rowReduceAux_snd_eq_zero {w : Fin n → F}
     (hw : w ∈ (rowReduceAux (List.finRange n) (([], L) : RowReduceState F n)).2) : w = 0 := by
   funext d
   exact (isRowReduceState_rowReduceAux_finRange L).todo_eq_zero w hw d (by simp)
@@ -276,12 +298,12 @@ end Rows
 /-! ## The output as a matrix in reduced row echelon form -/
 
 /-- The reduced rows of `L`, read as a matrix. -/
-@[expose] def rowReduceMatrix (L : List (Fin n → F)) :
+def rowReduceMatrix (L : List (Fin n → F)) :
     Matrix (Fin (rowReduce L).length) (Fin n) F :=
   Matrix.of fun i => ((rowReduce L).get i).2
 
 /-- The pivot map of `TauCeti.rowReduceMatrix`; no row is zero, so it never takes the value `⊤`. -/
-@[expose] def rowReducePivot (L : List (Fin n → F)) : Fin (rowReduce L).length → WithTop (Fin n) :=
+def rowReducePivot (L : List (Fin n → F)) : Fin (rowReduce L).length → WithTop (Fin n) :=
   fun i => (((rowReduce L).get i).1 : WithTop (Fin n))
 
 section Echelon
@@ -289,13 +311,15 @@ section Echelon
 variable (L : List (Fin n → F))
 
 /-- The `i`-th row of the reduced matrix is the `i`-th reduced row. -/
-theorem rowReduceMatrix_apply (i : Fin (rowReduce L).length) :
-    rowReduceMatrix L i = ((rowReduce L).get i).2 :=
+@[simp] theorem rowReduceMatrix_apply (i : Fin (rowReduce L).length) :
+    rowReduceMatrix L i = ((rowReduce L).get i).2 := by
+  unfold rowReduceMatrix
   rfl
 
 /-- The pivot of the `i`-th row of the reduced matrix is its recorded column. -/
-theorem rowReducePivot_apply (i : Fin (rowReduce L).length) :
-    rowReducePivot L i = (((rowReduce L).get i).1 : WithTop (Fin n)) :=
+@[simp] theorem rowReducePivot_apply (i : Fin (rowReduce L).length) :
+    rowReducePivot L i = (((rowReduce L).get i).1 : WithTop (Fin n)) := by
+  unfold rowReducePivot
   rfl
 
 /-- The pivot columns are strictly increasing along the rows. -/
@@ -333,11 +357,6 @@ theorem isReducedRowEchelon_rowReduceMatrix :
     exact rowReduce_eq_zero_of_ne L (List.get_mem _ _) (List.get_mem _ _)
       ((strictMono_fst_get_rowReduce L).injective.ne hii'.ne')
 
-/-- The reduced matrix has full row rank: every one of its rows is a pivot row. -/
-theorem rank_rowReduceMatrix : (rowReduceMatrix L).rank = (rowReduce L).length := by
-  rw [(isPivotedBy_rowReduceMatrix L).rank_eq]
-  simp [rowReducePivot]
-
 /-- The rows of `TauCeti.rowReduceMatrix` are exactly the reduced rows. -/
 theorem range_row_rowReduceMatrix :
     Set.range (rowReduceMatrix L).row = {v | v ∈ (rowReduce L).map Prod.snd} := by
@@ -356,20 +375,20 @@ end Echelon
 
 /-- The row space of an elimination state: the span of the rows it still carries, recorded and
 unused alike. -/
-@[expose] def rowSpan (s : RowReduceState F n) : Submodule F (Fin n → F) :=
+private def rowSpan (s : RowReduceState F n) : Submodule F (Fin n → F) :=
   Submodule.span F {v | v ∈ s.1.map Prod.snd ++ s.2}
 
 omit [DecidableEq F] in
 /-- A recorded row lies in the row space of its state. -/
-theorem mem_rowSpan_of_mem_fst {s : RowReduceState F n} {q : Fin n × (Fin n → F)} (hq : q ∈ s.1) :
-    q.2 ∈ rowSpan s := by
+private theorem mem_rowSpan_of_mem_fst {s : RowReduceState F n} {q : Fin n × (Fin n → F)}
+    (hq : q ∈ s.1) : q.2 ∈ rowSpan s := by
   refine Submodule.subset_span ?_
   simp only [Set.mem_ofPred_eq, List.mem_append, List.mem_map]
   exact Or.inl ⟨q, hq, rfl⟩
 
 omit [DecidableEq F] in
 /-- An unused row lies in the row space of its state. -/
-theorem mem_rowSpan_of_mem_snd {s : RowReduceState F n} {w : Fin n → F} (hw : w ∈ s.2) :
+private theorem mem_rowSpan_of_mem_snd {s : RowReduceState F n} {w : Fin n → F} (hw : w ∈ s.2) :
     w ∈ rowSpan s := by
   refine Submodule.subset_span ?_
   simp only [Set.mem_ofPred_eq, List.mem_append]
@@ -377,7 +396,7 @@ theorem mem_rowSpan_of_mem_snd {s : RowReduceState F n} {w : Fin n → F} (hw : 
 
 omit [DecidableEq F] in
 /-- The row space is the smallest submodule containing every row the state carries. -/
-theorem rowSpan_le {s : RowReduceState F n} {p : Submodule F (Fin n → F)}
+private theorem rowSpan_le {s : RowReduceState F n} {p : Submodule F (Fin n → F)}
     (h₁ : ∀ q ∈ s.1, q.2 ∈ p) (h₂ : ∀ w ∈ s.2, w ∈ p) : rowSpan s ≤ p := by
   refine Submodule.span_le.mpr ?_
   rintro v hv
@@ -387,16 +406,15 @@ theorem rowSpan_le {s : RowReduceState F n} {p : Submodule F (Fin n → F)}
   · exact h₂ v hv
 
 /-- One column of the sweep preserves the row space. -/
-theorem rowSpan_rowReduceStep (j : Fin n) (s : RowReduceState F n) :
+private theorem rowSpan_rowReduceStep (j : Fin n) (s : RowReduceState F n) :
     rowSpan (rowReduceStep j s) = rowSpan s := by
   rcases hfind : s.2.find? (fun w => decide (w j ≠ 0)) with _ | v
-  · rw [show rowReduceStep j s = s by unfold rowReduceStep; rw [hfind]]
+  · rw [rowReduceStep_of_find?_eq_none hfind]
   · have hv : v ∈ s.2 := List.mem_of_find?_eq_some hfind
     set p : Fin n → F := (v j)⁻¹ • v with hpdef
     have hstep : rowReduceStep j s =
         (s.1.map (fun q => (q.1, q.2 - q.2 j • p)) ++ [(j, p)], s.2.map fun w => w - w j • p) := by
-      unfold rowReduceStep
-      rw [hfind, hpdef]
+      rw [rowReduceStep_of_find?_eq_some hfind, hpdef]
     have hp : p ∈ rowSpan s := Submodule.smul_mem _ _ (mem_rowSpan_of_mem_snd hv)
     rw [hstep]
     have hp' : p ∈ rowSpan (s.1.map (fun q => (q.1, q.2 - q.2 j • p)) ++ [(j, p)],
@@ -431,7 +449,7 @@ theorem rowSpan_rowReduceStep (j : Fin n) (s : RowReduceState F n) :
       simpa using Submodule.add_mem _ hw' (Submodule.smul_mem _ (w j) hp')
 
 /-- A whole sweep preserves the row space. -/
-theorem rowSpan_rowReduceAux (cs : List (Fin n)) (s : RowReduceState F n) :
+private theorem rowSpan_rowReduceAux (cs : List (Fin n)) (s : RowReduceState F n) :
     rowSpan (rowReduceAux cs s) = rowSpan s := by
   induction cs generalizing s with
   | nil => rfl
@@ -455,6 +473,22 @@ theorem span_rowReduce (L : List (Fin n → F)) :
   · rw [rowReduceAux_snd_eq_zero L hw]
     exact Submodule.zero_mem _
 
+end DivisionRing
+
+/-! ## The sweep computes the rank
+
+`Matrix.rank` is defined over a commutative ring, so these two results, alone in this file, ask
+`F` to be a field. -/
+
+section Field
+
+variable {F : Type u} [Field F] [DecidableEq F] {n : ℕ} (L : List (Fin n → F))
+
+/-- The reduced matrix has full row rank: every one of its rows is a pivot row. -/
+theorem rank_rowReduceMatrix : (rowReduceMatrix L).rank = (rowReduce L).length := by
+  rw [(isPivotedBy_rowReduceMatrix L).rank_eq]
+  simp
+
 /-- **Gauss-Jordan elimination computes the rank**: the number of pivots the sweep records in the
 rows of a matrix is the rank of that matrix. -/
 theorem length_rowReduce_ofFn {m : ℕ} (A : Matrix (Fin m) (Fin n) F) :
@@ -464,5 +498,7 @@ theorem length_rowReduce_ofFn {m : ℕ} (A : Matrix (Fin m) (Fin n) F) :
     exact (List.mem_ofFn' A v).symm
   rw [← rank_rowReduceMatrix, Matrix.rank_eq_finrank_span_row, Matrix.rank_eq_finrank_span_row,
     range_row_rowReduceMatrix, hrows, span_rowReduce]
+
+end Field
 
 end TauCeti
