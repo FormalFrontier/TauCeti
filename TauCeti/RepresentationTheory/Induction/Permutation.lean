@@ -151,7 +151,7 @@ along `H.subtype` gives the permutation representation of `G` on the left cosets
 noncomputable def indTrivialEquiv : ((Representation.trivial k H k).ind H.subtype).Equiv
       (Representation.ofMulAction k G (G ⧸ H)) := by
   refine Representation.Equiv.mk
-    (LinearEquiv.ofLinear (indTrivialToQuotient k H) (quotientToIndTrivial k H) ?_ ?_) ?_
+    (LinearEquiv.ofLinearMap (indTrivialToQuotient k H) (quotientToIndTrivial k H) ?_ ?_) ?_
   · refine MonoidAlgebra.lhom_ext' fun q ↦ LinearMap.ext_ring ?_
     induction q using QuotientGroup.induction_on with
     | H x =>

@@ -7,6 +7,7 @@ module
 public import Mathlib.Analysis.Normed.Algebra.Exponential
 public import Mathlib.Analysis.Normed.Operator.Mul
 public import Mathlib.Algebra.Lie.OfAssociative
+import TauCeti.Analysis.Normed.Algebra.Basic
 
 /-!
 # Exponentiating the commutator operator
@@ -51,9 +52,7 @@ open NormedSpace
 
 variable {R : Type*} [NormedRing R] [NormedAlgebra ℝ R] [CompleteSpace R]
 
-/-- The rational scalar restriction used by Mathlib's exponential API in this module. -/
-private noncomputable local instance normedAlgebraRat : NormedAlgebra ℚ R :=
-  .restrictScalars ℚ ℝ R
+attribute [local instance] TauCeti.normedAlgebraRatOfReal
 
 omit [CompleteSpace R] in
 private theorem mulLeft_toLinearMap (x : R) :
