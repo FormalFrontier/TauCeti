@@ -28,6 +28,7 @@ This supplies a prerequisite for Deliverable A, Layer 1 of
 
 * `hasDerivAt_parameterCurve`: the parameter velocity differentiates the corresponding parameter
   curve.
+* `fderiv_timeSlice`: the derivative of a fixed-parameter slice is its spatial Jacobian.
 * `hasDerivAt_spatialFDeriv`: the spatial Jacobian differentiates to the spatial derivative of the
   parameter velocity.
 * `deriv_spatialFDeriv_apply`: the parameter derivative of the spatial Jacobian equals the

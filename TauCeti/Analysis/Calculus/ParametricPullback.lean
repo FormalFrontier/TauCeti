@@ -24,6 +24,7 @@ This supplies a prerequisite for Deliverable A, Layer 1 of
 
 * `VectorField.hasDerivAt_parametric_pullback`: differentiating the parametric pullback gives the
   Lie bracket.
+* `VectorField.hasDerivAt_parametric_pullback_of_completeSpace`: the Banach-space specialization.
 
 ## References
 
@@ -45,6 +46,12 @@ variable {𝕜 E : Type*} [NontriviallyNormedField 𝕜]
 
 namespace VectorField
 
+private theorem isInvertible_spatialFDeriv_of_eq_id {F : 𝕜 × E → E} {t₀ : 𝕜} {x : E}
+    (hA0 : spatialFDeriv F x t₀ = ContinuousLinearMap.id 𝕜 E) :
+    (spatialFDeriv F x t₀).IsInvertible := by
+  rw [hA0]
+  exact ⟨ContinuousLinearEquiv.refl 𝕜 E, rfl⟩
+
 /-- Let `F` have the minimum smoothness needed for symmetric second derivatives at `(t₀, x)` and
 agree with the identity to first order at `x` when `t = t₀`. If the inverse spatial-Jacobian
 family is differentiable at `t₀` and `W` is differentiable at `x`, then the derivative of the
@@ -65,10 +72,8 @@ theorem hasDerivAt_parametric_pullback {F : 𝕜 × E → E} {W : E → E} {t₀
     exact hasDerivAt_parameterCurve hFdiff
   have hW0 : HasFDerivAt W (fderiv 𝕜 W x) (F (t₀, x)) := by
     simpa only [hF0] using hW.hasFDerivAt
-  have hpull := hA.clm_inverse_apply (by
-    rw [hA0]
-    exact ⟨ContinuousLinearEquiv.refl 𝕜 E, rfl⟩)
-    hInvDiff (hW0.comp_hasDerivAt t₀ hz)
+  have hpull := hA.clm_inverse_apply (isInvertible_spatialFDeriv_of_eq_id hA0) hInvDiff
+    (hW0.comp_hasDerivAt t₀ hz)
   have hslice : (fun t => pullback 𝕜 (fun y => F (t, y)) W x) =ᶠ[𝓝 t₀]
       fun t => (spatialFDeriv F x t).inverse (W (F (t, x))) := by
     have hpath : ContinuousAt (fun t : 𝕜 => (t, x)) t₀ := by fun_prop
@@ -93,11 +98,9 @@ theorem hasDerivAt_parametric_pullback_of_completeSpace [CompleteSpace E]
     HasDerivAt (fun t => pullback 𝕜 (fun y => F (t, y)) W x)
       (lieBracket 𝕜 (timeFDeriv F t₀) W x) t₀ := by
   apply hasDerivAt_parametric_pullback hF hF0 hA0
-  · have hA0Inv : (spatialFDeriv F x t₀).IsInvertible := by
-      rw [hA0]
-      exact ⟨ContinuousLinearEquiv.refl 𝕜 E, rfl⟩
-    exact (hA0Inv.contDiffAt_map_inverse (n := 1)).differentiableAt one_ne_zero |>.comp t₀
+  · exact DifferentiableAt.clm_inverse_of_completeSpace
       (hasDerivAt_spatialFDeriv hF).differentiableAt
+      (isInvertible_spatialFDeriv_of_eq_id hA0)
   · exact hW
 
 end VectorField
