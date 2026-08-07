@@ -7,7 +7,7 @@ module
 public import Mathlib.Analysis.Normed.Algebra.Exponential
 public import Mathlib.Analysis.Normed.Operator.Mul
 public import Mathlib.Algebra.Lie.OfAssociative
-public import TauCeti.Geometry.Lie.Exponential.Units.Basic
+public import TauCeti.Analysis.Normed.Algebra.Basic
 
 /-!
 # Exponentiating the commutator operator
