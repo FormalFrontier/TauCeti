@@ -49,7 +49,8 @@ variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
   [CompleteSpace E] [LieGroup I ∞ G]
 
 omit [CompleteSpace E] in
-private theorem cancel_inCoordinates_at (x : G)
+private theorem cancel_inCoordinates_at {M : Type*} [TopologicalSpace M] [ChartedSpace H M]
+    [IsManifold I 1 M] (x : M)
     (ϕ : TangentSpace I x →L[ℝ] TangentSpace I x) :
     let e := trivializationAt E (TangentSpace I) x
     (e.symmL ℝ x).comp
@@ -70,6 +71,8 @@ omit [CompleteSpace E] in
 group element. -/
 theorem contMDiff_adjointContinuousLinearMap :
     ContMDiff I 𝓘(ℝ, E →L[ℝ] E) ∞
+      -- `GroupLieAlgebra I G` definitionally reduces to the tangent model `E`; the ascription
+      -- exposes that model to the normed-space smoothness API.
       (fun g : G ↦ show E →L[ℝ] E from adjointContinuousLinearMap (I := I) g) := by
   intro g
   let e := trivializationAt E (TangentSpace I) (1 : G)
@@ -77,7 +80,7 @@ theorem contMDiff_adjointContinuousLinearMap :
   let B : E →L[ℝ] TangentSpace I (1 : G) := e.symmL ℝ 1
   let Amodel : E →L[ℝ] E := A
   let Bmodel : E →L[ℝ] E := B
-  let f : G → G → G := fun g x ↦ g * x * g⁻¹
+  let f : G → G → G := fun g ↦ conjDiffeomorph (I := I) (n := 1) g
   let c : G → G := fun _ ↦ 1
   have hf : CMDiffAt ∞ (Function.uncurry f) (g, c g) := by
     have h := contMDiff_smul (I := I) (I' := I) (n := ∞)
@@ -86,7 +89,9 @@ theorem contMDiff_adjointContinuousLinearMap :
     -- its scalar action is definitionally conjugation. Since `contMDiff_smul` exposes the domain
     -- as `ConjAct G × G`, crossing that wrapper requires this definitional reduction.
     change CMDiffAt ∞ (fun p : G × G ↦ p.1 * p.2 * p.1⁻¹) (g, c g) at h
-    change CMDiffAt ∞ (fun p : G × G ↦ p.1 * p.2 * p.1⁻¹) (g, c g)
+    rw [show Function.uncurry f = fun p : G × G ↦ p.1 * p.2 * p.1⁻¹ by
+      funext p
+      exact conjDiffeomorph_apply p.1 p.2]
     exact h
   have h := hf.mfderiv (m := ∞) f c contMDiffAt_const (by simp)
   have hfc : (fun x ↦ f x (c x)) = c := by
@@ -105,17 +110,16 @@ theorem contMDiff_adjointContinuousLinearMap :
         (1 : G) (1 : G) (1 : G) (1 : G) (mfderiv I I (f x) 1)).comp Amodel)
   have hadj : (adjointContinuousLinearMap (I := I) x : E →L[ℝ] E) =
       mfderiv I I (conjDiffeomorph (I := I) (n := 1) x) 1 := by
+    -- The public definitions from `Basic` are opaque here, so use its exported pointwise
+    -- comparison theorem and extensionality to compare the operators.
     apply ContinuousLinearMap.ext
     intro v
     exact adjointContinuousLinearMap_apply (I := I) x v
   rw [hadj]
-  have hfun : (conjDiffeomorph (I := I) (n := 1) x : G → G) = f x := by
-    funext y
-    exact conjDiffeomorph_apply x y
-  rw [mfderiv_congr hfun]
+  dsimp only [f]
   symm
   dsimp only [Amodel, Bmodel, A, B, e]
-  exact cancel_inCoordinates_at (I := I) (G := G) (x := 1)
+  exact cancel_inCoordinates_at (I := I) (M := G) (x := 1)
     (ϕ := mfderiv I I (f x) 1)
 
 /-- The tangent adjoint action is jointly smooth in the group element and tangent vector. -/
@@ -123,6 +127,8 @@ theorem contMDiff_tangentAd_apply :
     ContMDiff (I.prod 𝓘(ℝ, E)) 𝓘(ℝ, E) ∞
       (fun p : G × E ↦
         show E from tangentAd (I := I) p.1 (p.2 : GroupLieAlgebra I G)) := by
+  -- `GroupLieAlgebra I G` is definitionally the model `E`; these ascriptions expose the model on
+  -- both sides so the continuous-linear-map application theorem can be used.
   rw [show (fun p : G × E ↦
       show E from tangentAd (I := I) p.1 (p.2 : GroupLieAlgebra I G)) =
       fun p ↦ (show E →L[ℝ] E from adjointContinuousLinearMap (I := I) p.1) p.2 by
