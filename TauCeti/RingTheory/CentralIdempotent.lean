@@ -6,7 +6,7 @@ module
 
 public import Mathlib.Data.Set.Card
 public import Mathlib.RingTheory.Idempotents
-public import Mathlib.RingTheory.SimpleRing.Basic
+public import Mathlib.RingTheory.SimpleRing.Field
 public import Mathlib.SetTheory.Cardinal.Finite
 
 /-!
@@ -20,16 +20,17 @@ This file collects the three facts that make `TauCeti.centralIdempotents` a *cou
 It is preserved by ring isomorphisms (`TauCeti.centralIdempotentsCongr`); it is computed
 coordinatewise on a product (`TauCeti.centralIdempotentsPiEquiv`); and a simple ring has exactly
 two of them, `0` and `1` (`TauCeti.centralIdempotents_eq_pair`).  Together these say that a finite
-product of simple rings has exactly `2 ^ (number of factors)` central idempotents, so the number of
-factors can be read off the isomorphism class of the ring alone;
-`TauCeti/RingTheory/Semisimple/BlockCount.lean` draws that conclusion.
+product of simple rings has exactly `2 ^ (number of factors)` central idempotents
+(`TauCeti.card_centralIdempotents_pi_of_isSimpleRing`), so the number of factors can be read off
+the isomorphism class of the ring alone; `TauCeti/RingTheory/Semisimple/BlockCount.lean` draws that
+conclusion.
 
 Mathlib has `IsIdempotentElem` and the orthogonal decompositions of `1` it generates
 (`Mathlib/RingTheory/Idempotents.lean`), and `Subring.center`, but nothing about the idempotents
 that are also central.  The one nontrivial ingredient below,
-`TauCeti.centralIdempotents_eq_pair`, is the observation that for a central idempotent `e` the
-principal left ideal `eR = {x | e * x = x}` is automatically **two-sided**, so simplicity of `R`
-pins it down to `⊥` or `⊤`, which forces `e = 0` or `e = 1`.
+`TauCeti.centralIdempotents_eq_pair`, is the observation that a central idempotent of `R` is an
+idempotent of `Subring.center R`, which for simple `R` is a field by
+`IsSimpleRing.isField_center`; a field has only the idempotents `0` and `1`.
 
 ## Main definitions
 
@@ -43,15 +44,17 @@ pins it down to `⊥` or `⊤`, which forces `e = 0` or `e = 1`.
 
 * `TauCeti.centralIdempotents_eq_pair`: **a simple ring has exactly the two central idempotents
   `0` and `1`**, and `TauCeti.card_centralIdempotents_of_isSimpleRing` counts them.
-* `TauCeti.card_centralIdempotents_pi`: the count is multiplicative over a finite product.
+* `TauCeti.card_centralIdempotents_pi`: the count is multiplicative over a finite product, whence
+  `TauCeti.card_centralIdempotents_pi_of_isSimpleRing`: a finite product of simple rings has
+  `2 ^ (number of factors)` central idempotents.
 
 ## Implementation notes
 
 `centralIdempotents R` is a `Set R` rather than a subtype or a bundled structure: the only thing
 done with it here is to transport it along isomorphisms and to count it, and `Nat.card` of the
 coercion is the count.  Centrality is spelled as membership in `Subring.center R`, which is
-Mathlib's canonical form; `TauCeti.mul_comm_of_mem_centralIdempotents` unpacks it to the
-commutation equation every proof below actually uses.
+Mathlib's canonical form; `TauCeti.mul_comm_of_mem_centralIdempotents` unpacks it to the bare
+commutation equation.
 -/
 
 public section
@@ -104,6 +107,10 @@ def centralIdempotentsCongr (f : R ≃+* S) : centralIdempotents R ≃ centralId
 theorem coe_centralIdempotentsCongr_apply (f : R ≃+* S) (e : centralIdempotents R) :
     (centralIdempotentsCongr f e : S) = f e := (rfl)
 
+@[simp]
+theorem coe_centralIdempotentsCongr_symm_apply (f : R ≃+* S) (e : centralIdempotents S) :
+    ((centralIdempotentsCongr f).symm e : R) = f.symm e := (rfl)
+
 /-- Isomorphic rings have the same number of central idempotents. -/
 theorem card_centralIdempotents_congr (f : R ≃+* S) :
     Nat.card (centralIdempotents R) = Nat.card (centralIdempotents S) :=
@@ -138,6 +145,10 @@ def centralIdempotentsPiEquiv :
 theorem coe_centralIdempotentsPiEquiv_apply (e : centralIdempotents (∀ i, A i)) (i : ι) :
     (centralIdempotentsPiEquiv A e i : A i) = (e : ∀ i, A i) i := (rfl)
 
+@[simp]
+theorem coe_centralIdempotentsPiEquiv_symm_apply (e : ∀ i, centralIdempotents (A i)) (i : ι) :
+    ((centralIdempotentsPiEquiv A).symm e : ∀ i, A i) i = (e i : A i) := (rfl)
+
 /-- The number of central idempotents is multiplicative over a finite product of rings. -/
 theorem card_centralIdempotents_pi [Fintype ι] :
     Nat.card (centralIdempotents (∀ i, A i)) = ∏ i, Nat.card (centralIdempotents (A i)) :=
@@ -150,29 +161,17 @@ section IsSimpleRing
 variable (R) in
 /-- **A simple ring has exactly two central idempotents, `0` and `1`.**
 
-For a central idempotent `e` the principal left ideal `eR = {x | e * x = x}` is two-sided, because
-`e` commutes past the multiplier on either side.  Simplicity leaves it two values: it is `⊥`, and
-then `e` — which lies in it — is `0`; or it is `⊤`, and then `1` lies in it, which says `e = 1`. -/
+A central idempotent of `R` is exactly an idempotent of the subring `Subring.center R`, which is a
+field because `R` is simple (`IsSimpleRing.isField_center`); and a field has no idempotents besides
+`0` and `1` (`IsIdempotentElem.iff_eq_zero_or_one`). -/
 theorem centralIdempotents_eq_pair [IsSimpleRing R] : centralIdempotents R = {0, 1} := by
+  let _ := (IsSimpleRing.isField_center R).toField
   refine Set.eq_of_subset_of_subset (fun e he => ?_) ?_
-  · have hcomm := mul_comm_of_mem_centralIdempotents he
-    have hset : ∀ x : R, x ∈ {y : R | e * y = y} ↔ e * x = x := fun x => by
-      rw [Set.mem_ofPred_eq]
-    -- The principal left ideal `eR = {x | e * x = x}`, two-sided because `e` is central.
-    obtain ⟨I, hI⟩ : ∃ I : TwoSidedIdeal R, ∀ x : R, x ∈ I ↔ e * x = x :=
-      ⟨TwoSidedIdeal.mk' {y : R | e * y = y}
-        ((hset 0).mpr (mul_zero e))
-        (fun {x y} hx hy =>
-          (hset _).mpr (by rw [mul_add, (hset x).mp hx, (hset y).mp hy]))
-        (fun {x} hx => (hset _).mpr (by rw [mul_neg, (hset x).mp hx]))
-        (fun {x y} hy =>
-          (hset _).mpr (by rw [← mul_assoc, hcomm x, mul_assoc, (hset y).mp hy]))
-        (fun {x y} hx => (hset _).mpr (by rw [← mul_assoc, (hset x).mp hx])),
-        fun x => by rw [TwoSidedIdeal.mem_mk']; exact hset x⟩
+  · have hidem : IsIdempotentElem (⟨e, he.2⟩ : Subring.center R) := Subtype.ext he.1
     rw [Set.mem_insert_iff, Set.mem_singleton_iff]
-    rcases IsSimpleOrder.eq_bot_or_eq_top I with h | h
-    · exact Or.inl (by simpa [h] using (hI e).mpr he.1)
-    · exact Or.inr (by simpa using (hI 1).mp (by simp [h]))
+    rcases IsIdempotentElem.iff_eq_zero_or_one.mp hidem with h | h
+    · exact Or.inl (by simpa [Subtype.ext_iff] using h)
+    · exact Or.inr (by simpa [Subtype.ext_iff] using h)
   · rintro e (rfl | rfl)
     · exact zero_mem_centralIdempotents
     · exact one_mem_centralIdempotents
@@ -182,6 +181,16 @@ variable (R) in
 theorem card_centralIdempotents_of_isSimpleRing [IsSimpleRing R] :
     Nat.card (centralIdempotents R) = 2 := by
   rw [centralIdempotents_eq_pair R, Nat.card_coe_set_eq, Set.ncard_pair zero_ne_one]
+
+/-- A finite product of simple rings has `2 ^ (number of factors)` central idempotents: one
+independent binary choice per factor. -/
+theorem card_centralIdempotents_pi_of_isSimpleRing {ι : Type*} [Finite ι] (A : ι → Type*)
+    [∀ i, Ring (A i)] [∀ i, IsSimpleRing (A i)] :
+    Nat.card (centralIdempotents (∀ i, A i)) = 2 ^ Nat.card ι := by
+  have := Fintype.ofFinite ι
+  rw [card_centralIdempotents_pi A, Nat.card_eq_fintype_card, ← Finset.card_univ,
+    ← Finset.prod_const]
+  exact Finset.prod_congr rfl fun i _ => card_centralIdempotents_of_isSimpleRing (A i)
 
 end IsSimpleRing
 

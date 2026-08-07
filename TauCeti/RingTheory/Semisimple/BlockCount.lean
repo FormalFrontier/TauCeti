@@ -22,11 +22,11 @@ two presentations** (`TauCeti.card_blocks_eq`).
 The invariant that sees the block count is the set of central idempotents.  A ring isomorphism
 carries central idempotents to central idempotents, they are computed coordinatewise on a product,
 and a simple ring has exactly two of them; so a product of `m` simple rings has exactly `2 ^ m`
-central idempotents, and `m` is recovered from `R`.  All three ingredients are in
-`TauCeti/RingTheory/CentralIdempotent.lean`, and the argument is stated there in its natural
-generality, for a product of arbitrary simple rings
-(`TauCeti.card_eq_of_ringEquiv_pi_of_isSimpleRing`); the matrix blocks of a Wedderburn
-presentation are simple rings by `IsSimpleRing.matrix`.
+central idempotents, and `m` is recovered from `R`.  Those three ingredients are supplied by
+`TauCeti/RingTheory/CentralIdempotent.lean`; this file combines them, first in the natural
+generality of a product of arbitrary simple rings
+(`TauCeti.card_eq_of_ringEquiv_pi_of_isSimpleRing`) and then for a Wedderburn presentation, whose
+matrix blocks are simple rings by `IsSimpleRing.matrix`.
 
 Positivity of the block sizes is essential and not decoration: `Matₒ(D)` is the trivial ring, which
 is not simple, and a presentation could be padded with any number of such blocks without changing
@@ -63,15 +63,6 @@ section Simple
 variable {R : Type*} [Ring R] {ι : Type*} {A : ι → Type*} [∀ i, Ring (A i)]
   [∀ i, IsSimpleRing (A i)]
 
-/-- A finite product of simple rings has `2 ^ (number of factors)` central idempotents: one
-independent binary choice per factor. -/
-theorem card_centralIdempotents_pi_of_isSimpleRing [Finite ι] :
-    Nat.card (centralIdempotents (∀ i, A i)) = 2 ^ Nat.card ι := by
-  have := Fintype.ofFinite ι
-  rw [card_centralIdempotents_pi A, Nat.card_eq_fintype_card, ← Finset.card_univ,
-    ← Finset.prod_const]
-  exact Finset.prod_congr rfl fun i _ => card_centralIdempotents_of_isSimpleRing (A i)
-
 /-- **Two presentations of a ring as a finite product of simple rings have the same number of
 factors.**  Both counts are read off the number of central idempotents of `R`, which is
 `2 ^ (number of factors)`. -/
@@ -79,8 +70,8 @@ theorem card_eq_of_ringEquiv_pi_of_isSimpleRing [Finite ι] {κ : Type*} [Finite
     {B : κ → Type*} [∀ j, Ring (B j)] [∀ j, IsSimpleRing (B j)]
     (f : R ≃+* ∀ i, A i) (g : R ≃+* ∀ j, B j) : Nat.card ι = Nat.card κ := by
   have h : (2 : ℕ) ^ Nat.card ι = 2 ^ Nat.card κ := by
-    rw [← card_centralIdempotents_pi_of_isSimpleRing (A := A),
-      ← card_centralIdempotents_pi_of_isSimpleRing (A := B),
+    rw [← card_centralIdempotents_pi_of_isSimpleRing A,
+      ← card_centralIdempotents_pi_of_isSimpleRing B,
       ← card_centralIdempotents_congr f, ← card_centralIdempotents_congr g]
   exact Nat.pow_right_injective le_rfl h
 
