@@ -11,7 +11,7 @@ public import TauCeti.Analysis.Normed.Algebra.OneSubExpNegDivSelf
 # The Banach-algebra dexp factor
 
 This file evaluates the regularized exponential quotient at the bounded commutator operator. The
-result is the Banach-algebra realization of `(1 - exp (-ad x)) / ad x`, the right-trivialized
+result is the Banach-algebra realization of `(1 - exp (-ad x)) / ad x`, the left-trivialized
 factor in the differential of a Lie-group exponential.
 
 ## Main definitions
