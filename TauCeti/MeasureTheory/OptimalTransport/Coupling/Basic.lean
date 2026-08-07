@@ -39,14 +39,12 @@ structure IsCoupling (π : Measure (X × Y)) (μ : Measure X) (ν : Measure Y) :
   fst_eq : π.fst = μ
   snd_eq : π.snd = ν
 
-attribute [simp] IsCoupling.fst_eq IsCoupling.snd_eq
-
 namespace IsCoupling
 
 variable {π : Measure (X × Y)} {μ : Measure X} {ν : Measure Y}
 
 /-- A coupling evaluated on `s × univ` equals its first marginal evaluated on `s`. -/
-@[simp, grind =>]
+@[grind =>]
 theorem measure_prod_univ (hπ : IsCoupling π μ ν) {s : Set X} (hs : MeasurableSet s) :
     π (s ×ˢ univ) = μ s := by
   rw [← hπ.fst_eq, MeasureTheory.Measure.fst_apply hs]
@@ -55,7 +53,7 @@ theorem measure_prod_univ (hπ : IsCoupling π μ ν) {s : Set X} (hs : Measurab
   simp
 
 /-- A coupling evaluated on `univ × t` equals its second marginal evaluated on `t`. -/
-@[simp, grind =>]
+@[grind =>]
 theorem measure_univ_prod (hπ : IsCoupling π μ ν) {t : Set Y} (ht : MeasurableSet t) :
     π (univ ×ˢ t) = ν t := by
   rw [← hπ.snd_eq, MeasureTheory.Measure.snd_apply ht]
