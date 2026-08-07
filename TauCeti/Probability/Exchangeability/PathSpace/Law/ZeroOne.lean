@@ -57,10 +57,11 @@ variable {α : Type*} [MeasurableSpace α]
 
 /-- **A trivial exchangeable σ-algebra forces an i.i.d. law.** If every exchangeable event has
 probability `0` or `1` under an exchangeable law `ρ`, then `ρ` is an infinite product `P^{⊗ℕ}`. -/
-theorem infinitePi_of_exchangeableSigma_trivial [StandardBorelSpace α] [Nonempty α]
+theorem infinitePi_of_exchangeableSigma_trivial [StandardBorelSpace α]
     {ρ : Measure (ℕ → α)} [IsProbabilityMeasure ρ] (hρ : ExchangeableLaw ρ)
     (htriv : ∀ s, MeasurableSet[exchangeableSigma α] s → ρ s = 0 ∨ ρ s = 1) :
     ∃ P : ProbabilityMeasure α, ρ = Measure.infinitePi fun _ : ℕ => (P : Measure α) := by
+  have : Nonempty α := (nonempty_of_isProbabilityMeasure ρ).map fun x => x 0
   have hcoord : ∀ n, Measurable (fun x : ℕ → α => x n) := fun n => measurable_pi_apply n
   have hpath : pathLaw ρ (fun n (x : ℕ → α) => x n) = ρ := by simp [pathLaw_def]
   have hexch : Exchangeable ρ (fun n (x : ℕ → α) => x n) :=
@@ -94,7 +95,7 @@ theorem infinitePi_of_exchangeableSigma_trivial [StandardBorelSpace α] [Nonempt
 /-- **The zero-one characterization of product laws.** For a standard Borel state space, an
 exchangeable probability law on `ℕ → α` has trivial exchangeable σ-algebra exactly when it is an
 infinite product law. -/
-theorem exchangeableSigma_trivial_iff_iid [StandardBorelSpace α] [Nonempty α]
+theorem exchangeableSigma_trivial_iff_iid [StandardBorelSpace α]
     {ρ : Measure (ℕ → α)} [IsProbabilityMeasure ρ] (hρ : ExchangeableLaw ρ) :
     (∀ s, MeasurableSet[exchangeableSigma α] s → ρ s = 0 ∨ ρ s = 1) ↔
       ∃ P : ProbabilityMeasure α, ρ = Measure.infinitePi fun _ : ℕ => (P : Measure α) := by

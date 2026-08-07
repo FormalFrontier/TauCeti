@@ -9,6 +9,7 @@ public import TauCeti.Probability.DeFinetti.Representation
 public import TauCeti.Probability.DeFinetti.CountableIndex
 public import TauCeti.Probability.Exchangeability.ConditionallyIID.Unique
 public import TauCeti.Probability.Exchangeability.PathSpace.Law.Extreme
+public import TauCeti.Probability.Exchangeability.PathSpace.Law.ZeroOne
 
 /-!
 # De Finetti's theorem
