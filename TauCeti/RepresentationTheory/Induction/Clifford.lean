@@ -4,18 +4,17 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+public import Mathlib.GroupTheory.GroupAction.ConjAct
 public import Mathlib.RepresentationTheory.Semisimple
-public import TauCeti.RepresentationTheory.Induction.Conjugate
 public import TauCeti.RepresentationTheory.Irreducible
 
 /-!
-# Clifford's theorem
+# Restriction to a normal subgroup preserves semisimplicity
 
-Let `N` be a normal subgroup of `G` and let `ρ` be an irreducible representation of `G`.  Clifford's
-theorem describes what `ρ` looks like once the group is cut down to `N`: the restriction is
-semisimple — once there is a minimal nonzero `N`-stable subspace to start from, which for a
-finite-dimensional `ρ` there always is — and its irreducible constituents are all carried into one
-another by `G`.
+Let `N` be a normal subgroup of `G` and let `ρ` be an irreducible representation of `G`.  Cutting
+the group down to `N` does not preserve irreducibility, but it does preserve semisimplicity: the
+restriction of `ρ` to `N` is a sum of irreducibles, as soon as there is a minimal nonzero
+`N`-stable subspace to start from — which for a finite-dimensional `ρ` there always is.
 
 The mechanism is a single observation.  If `U ⊆ V` is stable under `N`, then so is `ρ g '' U` for
 every `g : G`, because `ρ n (ρ g u) = ρ g (ρ (g⁻¹ n g) u)` and `g⁻¹ n g` lies in `N` by normality.
@@ -23,8 +22,8 @@ Translation by `ρ g` therefore acts on the lattice of `N`-subrepresentations
 (`TauCeti.Representation.conjSubrep`), by order isomorphisms
 (`TauCeti.Representation.conjSubrepOrderIso`), so it preserves atoms; and it identifies `U` with its
 translate not as representations of `N` on the nose but after twisting the action of `N` by
-conjugation (`TauCeti.Representation.conjSubrepEquiv`).  That twist is exactly
-`TauCeti.conjNormalRep`, the conjugation action on representations of `N` built in
+conjugation (`TauCeti.Representation.conjSubrepEquiv`).  That twist is exactly the conjugation
+action `TauCeti.conjNormalRep` on representations of `N` built in
 `TauCeti/RepresentationTheory/Induction/Conjugate.lean`, whose stabilisers are the inertia groups of
 `TauCeti/RepresentationTheory/Induction/Inertia.lean`.
 
@@ -34,12 +33,6 @@ their sum is stable under all of `G`, so irreducibility of `ρ` forces it to be 
 translated is *minimal*, the span exhibits `V` as a sum of simple `N`-submodules, so the restriction
 to `N` is semisimple (`TauCeti.Representation.isSemisimpleRepresentation_comp_subtype_of_isAtom`) --
 and this needs no invertibility of `Nat.card N`, so it is not Maschke's theorem in disguise.
-Semisimplicity then supplies an `N`-equivariant projection onto any other minimal
-`N`-subrepresentation, which cannot annihilate every translate, and Schur's lemma turns the
-surviving map into an isomorphism (`TauCeti.Representation.exists_nonempty_equiv_conjSubrep`).
-Composed with the twist, this says that any two irreducible constituents of the restriction are
-conjugate (`TauCeti.Representation.exists_nonempty_equiv_conjNormalRep`): the constituents form a
-single `G`-orbit.
 
 Throughout, an irreducible constituent is presented as an **atom** of the lattice of
 `N`-subrepresentations rather than as an abstract irreducible representation of `N` mapping in.
@@ -59,19 +52,11 @@ conjugates enters.  Finite-dimensionality is used only to *produce* an atom, in
 
 * `TauCeti.Representation.iSup_conjSubrep_eq_top`: the translates of a nonzero
   `N`-subrepresentation of an irreducible representation span.
-* `TauCeti.Representation.isSemisimpleRepresentation_comp_subtype_of_isAtom`: **Clifford's theorem,
-  first half** -- if some `N`-subrepresentation of an irreducible representation `IsAtom`, then the
-  restriction to `N` is semisimple.
+* `TauCeti.Representation.isSemisimpleRepresentation_comp_subtype_of_isAtom`: if some
+  `N`-subrepresentation of an irreducible representation `IsAtom`, then the restriction to `N` is
+  semisimple.
 * `TauCeti.Representation.isSemisimpleRepresentation_comp_subtype`: the same conclusion for a
   **finite-dimensional** irreducible representation, where such an atom is automatic.
-* `TauCeti.Representation.exists_nonempty_equiv_conjSubrep`: **Clifford's theorem, second half** --
-  any two minimal `N`-subrepresentations of an irreducible representation are translates of one
-  another, up to isomorphism.
-* `TauCeti.Representation.exists_nonempty_equiv_conjNormalRep`: the same statement read through
-  `TauCeti.conjNormalRep`, so that the irreducible constituents of the restriction form a single
-  orbit under the conjugation action of `G` on representations of `N`.
-* `TauCeti.Representation.finrank_eq_finrank_of_isAtom`: consequently all the constituents have the
-  same `Module.finrank` over `k`.
 
 ## Implementation notes
 
@@ -88,16 +73,12 @@ only the statement.
 This file supplies item (iii) of the **prerequisite** of Layer 5 (Clifford theory over a normal
 subgroup) of `TauCetiRoadmap/RepresentationTheory/InductionRestriction/README.md` — "restriction
 along a subgroup preserves semisimplicity" — in the normal-subgroup case Clifford theory uses,
-as `TauCeti.Representation.isSemisimpleRepresentation_comp_subtype`.  With it come the two clauses
-of that layer's **Clifford's theorem** milestone which the prerequisite is not an input to: for an
-irreducible `W`, "`Res_N W` is semisimple ... and **isotypic under the `G`-action**: its irreducible
-`N`-constituents form a single `G`-orbit".  Neither of those consumes a decomposition —
-semisimplicity is read off from irreducibility of the ambient representation rather than from
-Maschke, and the orbit statement from an equivariant projection.  The milestone's remaining
-clause, that the constituents all occur with one common multiplicity `e` so that
-`Res_N W ≅ e · ⨁ᵢ {}^{gᵢ}V`, is the one that does consume the layer's isotypic-decomposition
-prerequisite; it is not claimed here, and nothing below refers to a decomposition or a
-multiplicity.
+as `TauCeti.Representation.isSemisimpleRepresentation_comp_subtype`.  It stops there: the layer's
+**Clifford's theorem** milestone itself, which the roadmap orders after the whole of that
+prerequisite, is not claimed here, and nothing below mentions a decomposition, an isotypic
+component, a multiplicity or a `G`-orbit of constituents.  What the file does leave in place is the
+translation machinery that milestone runs on, since it is the same machinery the semisimplicity
+statement is proved from.
 
 The mathematics is the classical argument of C. W. Curtis and I. Reiner, *Representation Theory of
 Finite Groups and Associative Algebras*, §49.
@@ -241,10 +222,9 @@ but conjugates it.  The twisted source is the conjugate representation `TauCeti.
 `TauCeti/RepresentationTheory/Induction/Conjugate.lean`, unbundled: it is
 `(conjNormalRep g (Rep.of σ.toRepresentation)).ρ` by `TauCeti.conjNormalRep_ρ`.  It is written here
 as the plain composition rather than through `Rep.of`, which would need `V` to be an `AddCommGroup`
-where this section asks only for an `AddCommMonoid`; `exists_nonempty_equiv_conjNormalRep`, where
-that hypothesis is present anyway, is stated in the bundled form.  Read on isomorphism classes, this
-says that `conjSubrep ρ g σ` represents the image of the class of `σ` under the conjugation action
-of `g` on representations of `N`.
+where this section asks only for an `AddCommMonoid`.  Read on isomorphism classes, this says that
+`conjSubrep ρ g σ` represents the image of the class of `σ` under the conjugation action of `g` on
+representations of `N`.
 
 The underlying map is `ρ g` (`coe_conjSubrepEquiv_apply`), and its inverse is `ρ g⁻¹`
 (`coe_conjSubrepEquiv_symm_apply`). -/
@@ -359,85 +339,6 @@ theorem isSemisimpleRepresentation_comp_subtype [ρ.IsIrreducible] [FiniteDimens
       (Subrepresentation.toSubmodule_injective (by simpa using h'.symm))
   obtain ⟨σ, -, hσ⟩ := exists_isAtom_le (ρ := ρ.comp N.subtype) hbot
   exact isSemisimpleRepresentation_comp_subtype_of_isAtom ρ hσ
-
-variable {ρ}
-
-/-- **Clifford's theorem, second half.** Any two minimal `N`-subrepresentations of an irreducible
-representation are isomorphic after translating one of them by an element of `G`.
-
-Semisimplicity of the restriction gives an `N`-equivariant projection onto `σ'`.  It cannot kill
-every translate of `σ`, since the translates span; the surviving map goes between two irreducible
-representations of `N`, so Schur's lemma makes it an isomorphism. -/
-theorem exists_nonempty_equiv_conjSubrep [ρ.IsIrreducible]
-    {σ σ' : Subrepresentation (ρ.comp N.subtype)} (hσ : IsAtom σ) (hσ' : IsAtom σ') :
-    ∃ g : G, Nonempty (_root_.Representation.Equiv (conjSubrep ρ g σ).toRepresentation
-      σ'.toRepresentation) := by
-  have := isSemisimpleRepresentation_comp_subtype_of_isAtom ρ hσ
-  obtain ⟨τ, hτ⟩ := ComplementedLattice.exists_isCompl σ'
-  have hc : IsCompl σ'.toSubmodule τ.toSubmodule := Subrepresentation.isCompl_toSubmodule hτ
-  set P : V →ₗ[k] σ'.toSubmodule := Submodule.projectionOnto σ'.toSubmodule τ.toSubmodule hc
-    with hP
-  -- the projection along an invariant complement is `N`-equivariant
-  have hequiv : ∀ (n : N) (v : V), P (ρ (n : G) v) = σ'.toRepresentation n (P v) :=
-    (Subrepresentation.isIntertwiningMap_projectionOnto hτ).isIntertwining
-  -- the projection cannot vanish on every translate, because the translates span
-  have hne : ∃ g : G, ∃ v ∈ (conjSubrep ρ g σ).toSubmodule, P v ≠ 0 := by
-    by_contra hcon
-    push Not at hcon
-    have hker : (⊤ : Submodule k V) ≤ LinearMap.ker P := by
-      rw [← iSup_conjSubrep_eq_top ρ hσ.1]
-      exact iSup_le fun g v hv => LinearMap.mem_ker.mpr (hcon g v hv)
-    have hσ'bot : σ'.toSubmodule ≠ ⊥ := fun h => hσ'.1
-      (Subrepresentation.toSubmodule_injective (h.trans Subrepresentation.toSubmodule_bot.symm))
-    obtain ⟨w, hw, hw0⟩ := (Submodule.ne_bot_iff _).mp hσ'bot
-    have hzero : P w = 0 := LinearMap.mem_ker.mp (hker Submodule.mem_top)
-    rw [hP, Submodule.projectionOnto_apply_of_mem_left hc hw] at hzero
-    exact hw0 (congrArg Subtype.val hzero)
-  obtain ⟨g, v, hv, hPv⟩ := hne
-  -- restricted to that translate, the projection is a nonzero map between irreducibles
-  have hirr : (conjSubrep ρ g σ).toRepresentation.IsIrreducible :=
-    isIrreducible_toRepresentation_of_isAtom (isAtom_conjSubrep_iff.mpr hσ)
-  have hirr' : σ'.toRepresentation.IsIrreducible := isIrreducible_toRepresentation_of_isAtom hσ'
-  set f : _root_.Representation.IntertwiningMap (conjSubrep ρ g σ).toRepresentation
-      σ'.toRepresentation :=
-    (P ∘ₗ (conjSubrep ρ g σ).toSubmodule.subtype).intertwiningMap_of_isIntertwiningMap _ _
-      (fun n u => hequiv n (u : V))
-  have hfne : f ≠ 0 := by
-    intro h
-    have h0 : f ⟨v, hv⟩ = 0 := by rw [h]; rfl
-    exact hPv h0
-  exact ⟨g, ⟨f.ofBijective
-    ((_root_.Representation.IsIrreducible.bijective_or_eq_zero f).resolve_right hfne)⟩⟩
-
-/-- **Clifford's theorem, orbit form.** Every minimal `N`-subrepresentation of an irreducible
-representation is isomorphic to a conjugate of any other, the conjugate being the one
-`TauCeti.conjNormalRep` takes: the irreducible constituents of the restriction form a single orbit
-under the conjugation action of `G` on representations of `N`. -/
-theorem exists_nonempty_equiv_conjNormalRep [ρ.IsIrreducible]
-    {σ σ' : Subrepresentation (ρ.comp N.subtype)} (hσ : IsAtom σ) (hσ' : IsAtom σ') :
-    ∃ g : G, Nonempty (_root_.Representation.Equiv
-      (conjNormalRep g (Rep.of σ.toRepresentation)).ρ σ'.toRepresentation) := by
-  obtain ⟨g, ⟨e⟩⟩ := exists_nonempty_equiv_conjSubrep hσ hσ'
-  refine ⟨g, ⟨?_⟩⟩
-  -- the source of `conjSubrepEquiv` is the conjugated action written as a composition; name the
-  -- equality with the `conjNormalRep` form, from `conjNormalRep_ρ`, and transport along it rather
-  -- than leaving the two descriptions to be identified by definitional unfolding
-  have hρ : (conjNormalRep g (Rep.of σ.toRepresentation)).ρ =
-      σ.toRepresentation.comp ((MulAut.conjNormal g⁻¹ : MulAut N) : N →* N) := by
-    ext x v
-    exact congrArg (fun f => f v) (conjNormalRep_ρ g (Rep.of σ.toRepresentation) x)
-  rw [hρ]
-  exact (conjSubrepEquiv ρ g σ).trans e
-
-/-- All the irreducible constituents of the restriction of an irreducible representation to a
-normal subgroup have the same `Module.finrank` over `k`. -/
-theorem finrank_eq_finrank_of_isAtom [ρ.IsIrreducible]
-    {σ σ' : Subrepresentation (ρ.comp N.subtype)} (hσ : IsAtom σ) (hσ' : IsAtom σ') :
-    Module.finrank k σ.toSubmodule = Module.finrank k σ'.toSubmodule := by
-  obtain ⟨g, ⟨e⟩⟩ := exists_nonempty_equiv_conjSubrep hσ hσ'
-  refine Eq.trans (LinearEquiv.finrank_eq (σ.toSubmodule.equivMapOfInjective (ρ g)
-    (_root_.Representation.apply_bijective ρ g).injective)) ?_
-  exact LinearEquiv.finrank_eq e.toLinearEquiv
 
 end Clifford
 
