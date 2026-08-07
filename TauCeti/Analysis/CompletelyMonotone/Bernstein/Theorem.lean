@@ -8,10 +8,10 @@ public import TauCeti.Analysis.CompletelyMonotone.Basic
 public import Mathlib.MeasureTheory.Measure.MeasureSpaceDef
 public import Mathlib.MeasureTheory.Measure.Typeclasses.Finite
 public import Mathlib.MeasureTheory.Integral.Bochner.Basic
+public import TauCeti.Analysis.CompletelyMonotone.LaplaceRepresentation
 -- Non-public: the Chafaï approximating measures, their tightness, and the Prokhorov extraction are
 -- used only inside the proof; the statement mentions none of them.
 import TauCeti.Analysis.CompletelyMonotone.Bernstein.Tightness
-import TauCeti.Analysis.CompletelyMonotone.LaplaceRepresentation
 import TauCeti.MeasureTheory.Measure.Prokhorov
 
 /-!
@@ -22,7 +22,7 @@ on `ℝ≥0`.
 
 ## Main results
 
-* `TauCeti.exists_isFiniteMeasure_integral_exp_neg_mul_eq_of_isCompletelyMonotone`
+* `TauCeti.exists_representsLaplace_of_isCompletelyMonotone`
 
 ## Scope
 
@@ -130,11 +130,11 @@ private theorem sub_eq_integral_exp_neg_mul_of_weak_limit {L : ℝ} {C : ℝ≥0
 /-- **Bernstein's theorem, existence half.** A completely monotone function on `[0, ∞)` is the
 Laplace transform of a finite positive measure on `ℝ≥0`.
 
-Uniqueness of that measure is not asserted here; see the module docstring. -/
-theorem exists_isFiniteMeasure_integral_exp_neg_mul_eq_of_isCompletelyMonotone
+Uniqueness of that measure is not asserted here; it is `TauCeti.laplaceTransform_unique`, and
+the two combine in the Hausdorff--Bernstein--Widder theorem. -/
+theorem exists_representsLaplace_of_isCompletelyMonotone
     (hcm : IsCompletelyMonotone f) :
-    ∃ μ : Measure ℝ≥0, IsFiniteMeasure μ ∧
-      ∀ t : ℝ, 0 ≤ t → f t = ∫ x, Real.exp (-t * (x : ℝ)) ∂μ := by
+    ∃ μ : Measure ℝ≥0, RepresentsLaplace f μ := by
   obtain ⟨L, C, hL, hL_nn, -, hmass⟩ := chafaiRescaled_prokhorov_mass_bound f hcm
   have hmass' : ∀ n, (chafaiRescaled f n) univ ≤ (C : ℝ≥0∞) := fun n => (hmass n).2
   obtain ⟨μ₀, U, hU, hμ₀fin, -, hweak⟩ :=
@@ -145,9 +145,10 @@ theorem exists_isFiniteMeasure_integral_exp_neg_mul_eq_of_isCompletelyMonotone
     fun t ht => sub_eq_integral_exp_neg_mul_of_weak_limit hcm hL (.of_forall hmass') hU hweak ht
   -- Add the atom `L · δ₀` to recover `f` itself.
   have := hμ₀fin
-  refine ⟨μ₀ + L.toNNReal • Measure.dirac 0, inferInstance, fun t ht => ?_⟩
-  simp only [neg_mul]
-  rw [integral_exp_neg_mul_add_smul_dirac_zero μ₀ _ ht, Real.coe_toNNReal L hL_nn]
+  refine ⟨μ₀ + L.toNNReal • Measure.dirac 0,
+    representsLaplace_iff.mpr ⟨inferInstance, fun t ht => ?_⟩⟩
+  rw [laplaceTransform_apply,
+    integral_exp_neg_mul_add_smul_dirac_zero μ₀ _ ht, Real.coe_toNNReal L hL_nn]
   linarith [key t ht]
 
 end TauCeti

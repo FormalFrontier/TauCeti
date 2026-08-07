@@ -21,7 +21,7 @@ and completely monotone on `(0, ∞)` if and only if it is the Laplace transform
 finite positive measure on `ℝ≥0`.
 
 The hard direction applies Bernstein's existence theorem
-(`TauCeti.exists_isFiniteMeasure_integral_exp_neg_mul_eq_of_isCompletelyMonotone`) to the
+(`TauCeti.exists_representsLaplace_of_isCompletelyMonotone`) to the
 positive shifts `t ↦ f (t + a)`, which satisfy the strong `IsCompletelyMonotone` predicate,
 and passes to a weak cluster point of the representing measures as `a ↓ 0`; the tightness of
 that family is an elementary Laplace-kernel tail estimate. The easy direction and the
@@ -174,18 +174,6 @@ private lemma shiftedMeasure_closedBall_compl_le
           rw [lintegral_ofReal_one_sub_exp_representsLaplace hμ hx]
     _ = ENNReal.ofReal ((f δ - f (x + δ)) / (1 - Real.exp (-(x * R)))) := by
           rw [ENNReal.ofReal_div_of_pos hc_pos]
-
-/-- Existence of a finite representing measure for a function satisfying the strong
-`IsCompletelyMonotone` predicate, phrased through `RepresentsLaplace`. This is Bernstein's
-existence theorem `exists_isFiniteMeasure_integral_exp_neg_mul_eq_of_isCompletelyMonotone`,
-consumed here as the input to the shifted extraction below. -/
-private lemma exists_representsLaplace_of_isCompletelyMonotone
-    {f : ℝ → ℝ} (hcm : IsCompletelyMonotone f) :
-    ∃ μ : Measure ℝ≥0, RepresentsLaplace f μ := by
-  obtain ⟨μ, hfin, hμ⟩ :=
-    exists_isFiniteMeasure_integral_exp_neg_mul_eq_of_isCompletelyMonotone hcm
-  exact ⟨μ, representsLaplace_iff.mpr ⟨hfin, fun t ht => by
-    simpa [laplaceTransform_apply, neg_mul] using hμ t ht⟩⟩
 
 /-- The continuity-at-`0` step behind the tightness of the shifted representing measures: for any
 `η > 0` there is a positive shift `x` and an index `N` beyond which the Laplace gap-quotient
