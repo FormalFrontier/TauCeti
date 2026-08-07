@@ -1,0 +1,332 @@
+/-
+Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+-/
+module
+
+public import Mathlib.Order.Preorder.Finite
+public import TauCeti.RepresentationTheory.Quiver.Reflection.Acyclic
+
+/-!
+# Sink-admissible orderings of the vertices of a quiver
+
+Reflecting a quiver at a sink reverses the arrows meeting that vertex. Composing several such
+reflections calls for a list of vertices that is *sink-admissible*: each entry must be a sink of
+the quiver obtained by reflecting at all the entries preceding it. This file constructs such an
+ordering for every finite acyclic quiver and shows that reflecting along a full one leaves the
+quiver where it started.
+
+Iterating a reflection changes the quiver, not the vertex type, so the carrier here is the quiver
+*structure* rather than the type synonym `TauCeti.Quiver.Reflect`: the reflection at the second
+vertex has to be taken with respect to the structure produced by the first. Accordingly
+`TauCeti.Quiver.reflectAt` repackages `TauCeti.Quiver.reflectHom` as an operation on `Quiver`
+structures — it has the arrows of `Reflect V i`, by
+`TauCeti.Quiver.hom_reflectAt_eq_hom_reflect` — and `TauCeti.Quiver.reflectList` folds it along a
+list.
+
+## Main definitions
+
+* `TauCeti.Quiver.reflectAt`: reflection at a vertex, as an operation on quiver structures.
+* `TauCeti.Quiver.reflectList`: reflection at each vertex of a list, in order.
+* `TauCeti.Quiver.IsSinkAdmissible`: a list of vertices each of which is a sink of the quiver
+  reflected at its predecessors.
+
+## Main results
+
+* `TauCeti.Quiver.IsAcyclic.exists_isSinkAdmissible`: a finite acyclic quiver has a
+  repetition-free sink-admissible ordering of all of its vertices.
+* `TauCeti.Quiver.isSinkAdmissible_of_pairwise`: a repetition-free list of all the vertices along
+  which no arrow runs forwards is sink-admissible.
+* `TauCeti.Quiver.hom_reflectList` and `TauCeti.Quiver.hom_reflectList_of_not_iff`: reflecting
+  along a repetition-free list reverses exactly the arrows joining a vertex of the list to a
+  vertex outside it.
+* `TauCeti.Quiver.hom_reflectList_of_forall_mem`: reflecting once at every vertex restores the
+  original quiver, so the composite of the reflections along a full sink-admissible ordering
+  returns to the quiver it started from.
+
+## References
+
+This is the admissible-ordering milestone opening Layer 5 of
+`TauCetiRoadmap/RepresentationTheory/QuiverRepresentations/README.md`, the input the Coxeter
+functor of Layer 4 is assembled from. See Bernstein--Gelfand--Ponomarev, *Coxeter functors and
+Gabriel's theorem*, and Assem--Simson--Skowroński, *Elements of the Representation Theory of
+Associative Algebras* I, VII.5.
+-/
+
+public section
+
+namespace TauCeti
+
+open _root_.Quiver
+
+universe u v
+
+variable {V : Type u}
+
+namespace Quiver
+
+/-! ### Reflecting along a list of vertices -/
+
+/-- Reflection at the vertex `i`, as an operation on the quiver structures carried by a fixed
+vertex type: `reflectAt q i` has the arrows of `q` with every arrow incident to `i` reversed.
+Unlike the type synonym `TauCeti.Quiver.Reflect`, this form iterates, which is what a sequence of
+reflections needs. -/
+@[expose, instance_reducible]
+noncomputable def reflectAt (q : _root_.Quiver.{v} V) (i : V) : _root_.Quiver.{v} V :=
+  ⟨@reflectHom V q i⟩
+
+/-- The arrows of `reflectAt q i` are the ones computed by `TauCeti.Quiver.reflectHom`. -/
+@[simp]
+theorem hom_reflectAt (q : _root_.Quiver.{v} V) (i a b : V) :
+    @_root_.Quiver.Hom V (reflectAt q i) a b = @reflectHom V q i a b :=
+  rfl
+
+/-- `reflectAt` reproduces the quiver carried by the type synonym `TauCeti.Quiver.Reflect`. -/
+theorem hom_reflectAt_eq_hom_reflect [q : _root_.Quiver.{v} V] (i a b : V) :
+    @_root_.Quiver.Hom V (reflectAt q i) a b = @_root_.Quiver.Hom (Reflect V i) _ a b :=
+  (hom_reflectAt q i a b).trans (hom_reflect i a b).symm
+
+/-- Reflection at each vertex of a list in turn, starting from the head. -/
+@[expose, instance_reducible]
+noncomputable def reflectList (q : _root_.Quiver.{v} V) (l : List V) : _root_.Quiver.{v} V :=
+  l.foldl reflectAt q
+
+@[simp]
+theorem reflectList_nil (q : _root_.Quiver.{v} V) : reflectList q [] = q :=
+  rfl
+
+@[simp]
+theorem reflectList_cons (q : _root_.Quiver.{v} V) (i : V) (l : List V) :
+    reflectList q (i :: l) = reflectList (reflectAt q i) l :=
+  rfl
+
+/-! ### Sink-admissible lists -/
+
+/-- A list of vertices is **sink-admissible** for the quiver structure `q` when each of its
+entries is a sink of the quiver obtained by reflecting `q` at all the entries preceding it. This
+is the hypothesis under which the reflection functors at the successive entries can be composed
+into a Coxeter functor. -/
+@[expose]
+def IsSinkAdmissible (q : _root_.Quiver.{v} V) (l : List V) : Prop :=
+  ∀ t u : List V, ∀ i : V, l = t ++ i :: u → @IsSink V (reflectList q t) i
+
+@[simp]
+theorem isSinkAdmissible_nil (q : _root_.Quiver.{v} V) : IsSinkAdmissible q [] := by
+  intro t u i h
+  simp at h
+
+/-- A list is sink-admissible exactly when its head is a sink and its tail is sink-admissible for
+the quiver reflected at that head. -/
+theorem isSinkAdmissible_cons {q : _root_.Quiver.{v} V} {i : V} {l : List V} :
+    IsSinkAdmissible q (i :: l) ↔ @IsSink V q i ∧ IsSinkAdmissible (reflectAt q i) l := by
+  constructor
+  · intro h
+    refine ⟨h [] l i rfl, fun t u j ht ↦ ?_⟩
+    have := h (i :: t) u j (by rw [List.cons_append, ht])
+    rwa [reflectList_cons] at this
+  · rintro ⟨hi, h⟩ t u j hj
+    rcases t with _ | ⟨a, t⟩
+    · rw [List.nil_append, List.cons.injEq] at hj
+      rw [reflectList_nil, ← hj.1]
+      exact hi
+    · rw [List.cons_append, List.cons.injEq] at hj
+      rw [← hj.1, reflectList_cons]
+      exact h t u j hj.2
+
+/-! ### Reflecting along a repetition-free list -/
+
+/-- The induction behind `TauCeti.Quiver.hom_reflectList`. Both directions are proved at once
+because peeling off the head of the list exchanges them: the head lies on the list and every
+vertex it is joined to changes side. -/
+private theorem hom_reflectList_aux :
+    ∀ l : List V, l.Nodup → ∀ (q : _root_.Quiver.{v} V) (a b : V),
+      ((a ∈ l ↔ b ∈ l) →
+          @_root_.Quiver.Hom V (reflectList q l) a b = @_root_.Quiver.Hom V q a b) ∧
+        (¬(a ∈ l ↔ b ∈ l) →
+          @_root_.Quiver.Hom V (reflectList q l) a b = @_root_.Quiver.Hom V q b a) := by
+  intro l
+  induction l with
+  | nil => exact fun _ q a b ↦ ⟨fun _ ↦ rfl, fun h ↦ absurd (by simp) h⟩
+  | cons i t ih =>
+    intro hnd q a b
+    rw [List.nodup_cons] at hnd
+    obtain ⟨hit, hnd⟩ := hnd
+    have hii : i ∈ i :: t := by simp
+    have hmem : ∀ v : V, v ≠ i → (v ∈ i :: t ↔ v ∈ t) := fun v hv ↦ by simp [hv]
+    rw [reflectList_cons]
+    by_cases hai : a = i
+    · by_cases hbi : b = i
+      · rw [hai, hbi]
+        refine ⟨fun _ ↦ ?_, fun _ ↦ ?_⟩ <;>
+          rw [(ih hnd (reflectAt q i) i i).1 Iff.rfl, hom_reflectAt, @reflectHom_left V q i i]
+      · rw [hai]
+        by_cases hbt : b ∈ t
+        · refine ⟨fun _ ↦ ?_, fun h ↦ absurd (iff_of_true hii (by simp [hbt])) h⟩
+          rw [(ih hnd (reflectAt q i) i b).2 (by simp [hit, hbt]), hom_reflectAt,
+            @reflectHom_right V q i b]
+        · refine ⟨fun h ↦ absurd (h.mp hii) (by simp [hbi, hbt]), fun _ ↦ ?_⟩
+          rw [(ih hnd (reflectAt q i) i b).1 (iff_of_false hit hbt), hom_reflectAt,
+            @reflectHom_left V q i b]
+    · by_cases hbi : b = i
+      · rw [hbi]
+        by_cases hat : a ∈ t
+        · refine ⟨fun _ ↦ ?_, fun h ↦ absurd (iff_of_true (by simp [hat]) hii) h⟩
+          rw [(ih hnd (reflectAt q i) a i).2 (by simp [hit, hat]), hom_reflectAt,
+            @reflectHom_left V q i a]
+        · refine ⟨fun h ↦ absurd (h.mpr hii) (by simp [hai, hat]), fun _ ↦ ?_⟩
+          rw [(ih hnd (reflectAt q i) a i).1 (iff_of_false hat hit), hom_reflectAt,
+            @reflectHom_right V q i a]
+      · rw [hmem a hai, hmem b hbi]
+        refine ⟨fun h ↦ ?_, fun h ↦ ?_⟩
+        · rw [(ih hnd (reflectAt q i) a b).1 h, hom_reflectAt,
+            @reflectHom_of_ne_of_ne V q i a b hai hbi]
+        · rw [(ih hnd (reflectAt q i) a b).2 h, hom_reflectAt,
+            @reflectHom_of_ne_of_ne V q i b a hbi hai]
+
+/-- **Reflecting along a repetition-free list.** An arrow joining two vertices that are both on
+the list, or both off it, survives: each of its ends is reversed the same number of times. -/
+theorem hom_reflectList (q : _root_.Quiver.{v} V) {l : List V} (hl : l.Nodup) {a b : V}
+    (h : a ∈ l ↔ b ∈ l) :
+    @_root_.Quiver.Hom V (reflectList q l) a b = @_root_.Quiver.Hom V q a b :=
+  (hom_reflectList_aux l hl q a b).1 h
+
+/-- Reflecting along a repetition-free list reverses the arrows joining a vertex of the list to a
+vertex outside it: exactly one of the two ends is met by a reflection. -/
+theorem hom_reflectList_of_not_iff (q : _root_.Quiver.{v} V) {l : List V} (hl : l.Nodup)
+    {a b : V} (h : ¬(a ∈ l ↔ b ∈ l)) :
+    @_root_.Quiver.Hom V (reflectList q l) a b = @_root_.Quiver.Hom V q b a :=
+  (hom_reflectList_aux l hl q a b).2 h
+
+/-- **Reflecting once at every vertex restores the quiver.** Both ends of every arrow are met by a
+reflection, so every arrow is reversed twice. In particular the composite of the reflections along
+a full sink-admissible ordering — the combinatorial shadow of the Coxeter functor — carries the
+quiver back to itself. -/
+theorem hom_reflectList_of_forall_mem (q : _root_.Quiver.{v} V) {l : List V} (hl : l.Nodup)
+    (hall : ∀ v : V, v ∈ l) (a b : V) :
+    @_root_.Quiver.Hom V (reflectList q l) a b = @_root_.Quiver.Hom V q a b :=
+  hom_reflectList q hl (iff_of_true (hall a) (hall b))
+
+/-! ### Recognising a sink-admissible ordering -/
+
+/-- The induction behind `TauCeti.Quiver.isSinkAdmissible_of_pairwise`. The last hypothesis, that
+no arrow leaves the list, is what survives the passage from a list to its tail: reflecting at the
+head turns the arrows out of the head into arrows into it. -/
+private theorem isSinkAdmissible_of_pairwise_aux :
+    ∀ (l : List V) (q : _root_.Quiver.{v} V), l.Nodup →
+      (∀ v : V, IsEmpty (@_root_.Quiver.Hom V q v v)) →
+      (l.Pairwise fun x y ↦ IsEmpty (@_root_.Quiver.Hom V q x y)) →
+      (∀ x ∈ l, ∀ b : V, b ∉ l → IsEmpty (@_root_.Quiver.Hom V q x b)) →
+      IsSinkAdmissible q l := by
+  intro l
+  induction l with
+  | nil => exact fun q _ _ _ _ ↦ isSinkAdmissible_nil q
+  | cons i t ih =>
+    intro q hnd hloop hp hout
+    rw [List.nodup_cons] at hnd
+    obtain ⟨hit, hnd⟩ := hnd
+    rw [List.pairwise_cons] at hp
+    obtain ⟨hhead, hp⟩ := hp
+    have hii : i ∈ i :: t := by simp
+    have hsink : @IsSink V q i := (@IsSink_def V q i).mpr fun b ↦ by
+      by_cases hbi : b = i
+      · rw [hbi]
+        exact hloop i
+      · by_cases hbt : b ∈ t
+        · exact hhead b hbt
+        · exact hout i hii b (by simp [hbi, hbt])
+    have hloop' : ∀ v : V, IsEmpty (@_root_.Quiver.Hom V (reflectAt q i) v v) := fun v ↦ by
+      rw [hom_reflectAt]
+      by_cases hvi : v = i
+      · rw [hvi, @reflectHom_left V q i i]
+        exact hloop i
+      · rw [@reflectHom_of_ne_of_ne V q i v v hvi hvi]
+        exact hloop v
+    have hp' : t.Pairwise fun x y ↦ IsEmpty (@_root_.Quiver.Hom V (reflectAt q i) x y) := by
+      refine (List.Pairwise.and_mem.mp hp).imp fun {x y} h ↦ ?_
+      obtain ⟨hx, hy, hxy⟩ := h
+      rw [hom_reflectAt, @reflectHom_of_ne_of_ne V q i x y (fun hc ↦ hit (hc ▸ hx))
+        (fun hc ↦ hit (hc ▸ hy))]
+      exact hxy
+    have hout' : ∀ x ∈ t, ∀ b : V, b ∉ t →
+        IsEmpty (@_root_.Quiver.Hom V (reflectAt q i) x b) := by
+      intro x hx b hb
+      rw [hom_reflectAt]
+      by_cases hbi : b = i
+      · rw [hbi, @reflectHom_right V q i x]
+        exact hhead x hx
+      · rw [@reflectHom_of_ne_of_ne V q i x b (fun hc ↦ hit (hc ▸ hx)) hbi]
+        exact hout x (List.mem_cons_of_mem _ hx) b (by simp [hbi, hb])
+    exact isSinkAdmissible_cons.mpr ⟨hsink, ih (reflectAt q i) hnd hloop' hp' hout'⟩
+
+/-- **A topological ordering is sink-admissible.** If `l` lists every vertex exactly once, no
+vertex carries a loop, and no arrow runs from an earlier entry of `l` to a later one —
+equivalently, the target of every arrow precedes its source — then each entry is a sink once its
+predecessors have been reflected. -/
+theorem isSinkAdmissible_of_pairwise (q : _root_.Quiver.{v} V) {l : List V} (hnd : l.Nodup)
+    (hall : ∀ v : V, v ∈ l) (hloop : ∀ v : V, IsEmpty (@_root_.Quiver.Hom V q v v))
+    (hp : l.Pairwise fun x y ↦ IsEmpty (@_root_.Quiver.Hom V q x y)) :
+    IsSinkAdmissible q l :=
+  isSinkAdmissible_of_pairwise_aux l q hnd hloop hp fun _ _ b hb ↦ absurd (hall b) hb
+
+/-! ### Existence for a finite acyclic quiver -/
+
+variable [q : _root_.Quiver.{v} V]
+
+/-- A nonempty finite set of vertices of an acyclic quiver contains a vertex emitting no arrow
+into the set: a maximal vertex for the reachability preorder cannot, since an arrow out of it
+would have to be matched by a path back. -/
+private theorem exists_isEmpty_hom_mem (h : IsAcyclic V) {s : Finset V} (hs : s.Nonempty) :
+    ∃ i ∈ s, ∀ b ∈ s, IsEmpty (i ⟶ b) := by
+  let : LE V := ⟨fun a b ↦ Nonempty (Path a b)⟩
+  have : IsTrans V (· ≤ · : V → V → Prop) := ⟨fun a b c hab hbc ↦ by
+    obtain ⟨p⟩ : Nonempty (Path a b) := hab
+    obtain ⟨r⟩ : Nonempty (Path b c) := hbc
+    exact ⟨p.comp r⟩⟩
+  obtain ⟨i, hi, hmax⟩ := Finset.exists_maximal hs
+  refine ⟨i, hi, fun b hb ↦ ⟨fun e ↦ ?_⟩⟩
+  obtain ⟨p⟩ : Nonempty (Path b i) := hmax hb (⟨e.toPath⟩ : Nonempty (Path i b))
+  obtain rfl : i = b := h.eq_of_paths e.toPath p
+  exact (h.isEmpty_hom_self i).elim e
+
+/-- Every finite set of vertices of an acyclic quiver can be listed so that no arrow runs from an
+earlier entry to a later one: peel off a vertex emitting no arrow inside the set, and recurse. -/
+private theorem exists_pairwise_isEmpty_hom (h : IsAcyclic V) (s : Finset V) :
+    ∃ l : List V, l.Nodup ∧ (∀ v : V, v ∈ l ↔ v ∈ s) ∧
+      l.Pairwise fun x y ↦ IsEmpty (x ⟶ y) := by
+  classical
+  induction s using Finset.strongInduction with
+  | _ s ih =>
+    rcases s.eq_empty_or_nonempty with rfl | hs
+    · exact ⟨[], List.nodup_nil, by simp, List.Pairwise.nil⟩
+    · obtain ⟨i, his, hsink⟩ := exists_isEmpty_hom_mem h hs
+      obtain ⟨t, htnd, htmem, htp⟩ := ih (s.erase i) (Finset.erase_ssubset his)
+      have hit : i ∉ t := fun hc ↦ by simpa using (htmem i).mp hc
+      refine ⟨i :: t, List.nodup_cons.mpr ⟨hit, htnd⟩, fun v ↦ ?_,
+        List.pairwise_cons.mpr ⟨fun y hy ↦ hsink y (Finset.mem_of_mem_erase ((htmem y).mp hy)),
+          htp⟩⟩
+      rw [List.mem_cons, htmem v, Finset.mem_erase]
+      constructor
+      · rintro (rfl | ⟨-, hv⟩)
+        · exact his
+        · exact hv
+      · intro hv
+        by_cases hvi : v = i
+        · exact Or.inl hvi
+        · exact Or.inr ⟨hvi, hv⟩
+
+/-- **Every finite acyclic quiver has a sink-admissible ordering of its vertices**: a list without
+repetitions containing every vertex, each entry of which is a sink once its predecessors have been
+reflected. This is what lets the reflection functors at the successive vertices be composed into
+the Coxeter functor, and by `TauCeti.Quiver.hom_reflectList_of_forall_mem` the composite returns
+to the original quiver. -/
+theorem IsAcyclic.exists_isSinkAdmissible [Finite V] (h : IsAcyclic V) :
+    ∃ l : List V, l.Nodup ∧ (∀ v : V, v ∈ l) ∧ IsSinkAdmissible q l := by
+  let : Fintype V := Fintype.ofFinite V
+  obtain ⟨l, hnd, hmem, hp⟩ := exists_pairwise_isEmpty_hom h Finset.univ
+  have hall : ∀ v : V, v ∈ l := fun v ↦ (hmem v).mpr (Finset.mem_univ v)
+  exact ⟨l, hnd, hall,
+    isSinkAdmissible_of_pairwise q hnd hall (fun v ↦ h.isEmpty_hom_self v) hp⟩
+
+end Quiver
+
+end TauCeti
