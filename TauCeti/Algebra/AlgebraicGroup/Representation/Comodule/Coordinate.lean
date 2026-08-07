@@ -6,6 +6,7 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Coordinate.HopfAlgebra
 public import TauCeti.Algebra.Coalgebra.Comodule.MatrixCoefficient.Comul
+import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.FunctorOfPoints
 
 /-!
 # The coordinate morphism of a finite free comodule
@@ -41,7 +42,7 @@ faithful-representation criterion identifies with a closed immersion into `GLₙ
 
 ## References
 
-This is the standard coordinate morphism of a finite-dimensional representation; see J. S.
+This is the standard coordinate morphism of a finite free representation; see J. S.
 Milne, *Algebraic Groups* (2017), Chapter 4, especially Remark 4.1 and Theorem 4.9.  It advances
 `ReductiveGroups/README.md`, Layer 1, "Faithfulness done right".
 -/
@@ -89,6 +90,7 @@ theorem coact_basis_eq_sum_coordinateMatrix
 
 /-- Comultiplication of a coordinate entry is matrix multiplication across the two tensor
 factors. -/
+@[simp]
 theorem comul_coordinateMatrix (rho : Comodule R H (Fin n → R)) (i j : Fin n) :
     Coalgebra.comul (R := R) (A := H) (coordinateMatrix rho i j) =
       ∑ k : Fin n, coordinateMatrix rho i k ⊗ₜ[R] coordinateMatrix rho k j := by
@@ -97,6 +99,7 @@ theorem comul_coordinateMatrix (rho : Comodule R H (Fin n → R)) (i j : Fin n) 
     ((Pi.basisFun R (Fin n)).coord i) (Pi.basisFun R (Fin n) j)
 
 /-- The counit of a coordinate entry is the corresponding identity-matrix entry. -/
+@[simp]
 theorem counit_coordinateMatrix (rho : Comodule R H (Fin n → R)) (i j : Fin n) :
     Coalgebra.counit (R := R) (A := H) (coordinateMatrix rho i j) =
       if i = j then 1 else 0 := by
@@ -106,6 +109,7 @@ theorem counit_coordinateMatrix (rho : Comodule R H (Fin n → R)) (i j : Fin n)
     (Pi.basisFun R (Fin n)).repr_self_apply j i
 
 /-- The entrywise antipode of the coordinate matrix is a right inverse. -/
+@[simp]
 theorem coordinateMatrix_mul_antipodeMatrix
     (rho : Comodule R H (Fin n → R)) :
     coordinateMatrix rho * (coordinateMatrix rho).map (HopfAlgebra.antipode R) = 1 := by
@@ -121,6 +125,7 @@ theorem coordinateMatrix_mul_antipodeMatrix
     using hconv
 
 /-- The entrywise antipode of the coordinate matrix is a left inverse. -/
+@[simp]
 theorem antipodeMatrix_mul_coordinateMatrix
     (rho : Comodule R H (Fin n → R)) :
     (coordinateMatrix rho).map (HopfAlgebra.antipode R) * coordinateMatrix rho = 1 := by
@@ -141,53 +146,19 @@ theorem isUnit_det_coordinateMatrix (rho : Comodule R H (Fin n → R)) :
   classical
   exact Matrix.isUnit_det_of_right_inverse (coordinateMatrix_mul_antipodeMatrix rho)
 
-private def polynomialCoordinateMap (rho : Comodule R H (Fin n → R)) :
-    MatrixMonoid.CoordinateRing R n →ₐ[R] H :=
-  MvPolynomial.aeval fun ij : Fin n × Fin n ↦ coordinateMatrix rho ij.1 ij.2
-
-private theorem polynomialCoordinateMap_determinant_isUnit
-    (rho : Comodule R H (Fin n → R)) :
-    IsUnit (polynomialCoordinateMap rho
-      (Matrix.det (Matrix.mvPolynomialX (Fin n) (Fin n) R))) := by
-  rw [polynomialCoordinateMap, AlgHom.map_det, Matrix.mvPolynomialX_mapMatrix_aeval]
-  exact isUnit_det_coordinateMatrix rho
-
-private def rawCoordinateAlgHom (rho : Comodule R H (Fin n → R)) :
-    GeneralLinear.CoordinateRing R n →ₐ[R] H :=
-  IsLocalization.Away.liftAlgHom
-    (Matrix.det (Matrix.mvPolynomialX (Fin n) (Fin n) R))
-    (polynomialCoordinateMap_determinant_isUnit rho)
-
-private theorem rawCoordinateAlgHom_coordinateRingMap
-    (rho : Comodule R H (Fin n → R)) (x : MatrixMonoid.CoordinateRing R n) :
-    rawCoordinateAlgHom rho (GeneralLinear.coordinateRingMap R n x) =
-      polynomialCoordinateMap rho x := by
-  rw [GeneralLinear.coordinateRingMap_apply]
-  exact IsLocalization.Away.lift_eq
-    (S := GeneralLinear.CoordinateRing R n) (P := H)
-    (x := Matrix.det (Matrix.mvPolynomialX (Fin n) (Fin n) R))
-    (g := (polynomialCoordinateMap rho).toRingHom)
-    (polynomialCoordinateMap_determinant_isUnit rho) x
-
-/-- The algebra morphism from the bundled coordinate Hopf algebra of `GLₙ` to `H` associated
-to a comodule on the standard free module. -/
-def coordinateAlgHom (rho : Comodule R H (Fin n → R)) :
+private noncomputable def coordinateAlgHom (rho : Comodule R H (Fin n → R)) :
     GeneralLinear.coordinateHopfAlgebra R n →ₐ[R] H :=
-  (rawCoordinateAlgHom rho).comp
-    (GeneralLinear.coordinateHopfAlgebraAlgEquiv R n).symm.toAlgHom
+  (GeneralLinear.generalLinearToPoint (R := R) n
+    (Matrix.GeneralLinearGroup.mk'' (coordinateMatrix rho)
+      (isUnit_det_coordinateMatrix rho))).ofConv
 
-/-- The coordinate algebra morphism sends a generic matrix entry to the corresponding matrix
-coefficient of the comodule. -/
 @[simp]
-theorem coordinateAlgHom_X (rho : Comodule R H (Fin n → R)) (i j : Fin n) :
+private theorem coordinateAlgHom_X (rho : Comodule R H (Fin n → R)) (i j : Fin n) :
     coordinateAlgHom rho
         (GeneralLinear.coordinateHopfAlgebraAlgEquiv R n
           (GeneralLinear.coordinateRingMap R n (MvPolynomial.X (i, j)))) =
       coordinateMatrix rho i j := by
-  simp only [coordinateAlgHom, AlgHom.comp_apply, AlgEquiv.coe_toAlgHom,
-    AlgEquiv.symm_apply_apply]
-  rw [rawCoordinateAlgHom_coordinateRingMap, polynomialCoordinateMap]
-  exact MvPolynomial.aeval_X _ _
+  exact GeneralLinear.generalLinearToPoint_apply (R := R) n _ i j
 
 private theorem coordinateAlgHom_ext
     {A : Type*} [Semiring A] [Algebra R A]
