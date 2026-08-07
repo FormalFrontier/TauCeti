@@ -171,8 +171,7 @@ theorem ofSymmetricSquareDual_mem_symmetricInvariantForms (ρ : Representation k
     BilinForm.ofSymmetricSquareDual ψ ∈ symmetricInvariantForms ρ := by
   refine mem_symmetricInvariantForms.mpr
     ⟨isInvariantForm_iff.mpr fun g x y => ?_, BilinForm.isSymm_ofSymmetricSquareDual ψ⟩
-  have hvec : (fun i => ρ g (![x, y] i)) = ![ρ g x, ρ g y] := by
-    funext i; fin_cases i <;> simp
+  have hvec : (fun i => ρ g (![x, y] i)) = ![ρ g x, ρ g y] := (FinVec.map_eq _ _).symm
   simp only [BilinForm.ofSymmetricSquareDual_apply]
   rw [← hvec, ← ρ.symmetricPower_apply_tprod 2 g ![x, y],
     apply_of_mem_invariants_dual hψ g]
@@ -189,8 +188,7 @@ theorem ofExteriorSquareDual_mem_alternatingInvariantForms (ρ : Representation 
     BilinForm.ofExteriorSquareDual ψ ∈ alternatingInvariantForms ρ := by
   refine mem_alternatingInvariantForms.mpr
     ⟨isInvariantForm_iff.mpr fun g x y => ?_, BilinForm.isAlt_ofExteriorSquareDual ψ⟩
-  have hvec : (ρ g ∘ ![x, y]) = ![ρ g x, ρ g y] := by
-    funext i; fin_cases i <;> simp
+  have hvec : (ρ g ∘ ![x, y]) = ![ρ g x, ρ g y] := (FinVec.map_eq _ _).symm
   simp only [BilinForm.ofExteriorSquareDual_apply]
   rw [← hvec, ← ρ.exteriorPower_apply_ιMulti 2 g ![x, y],
     apply_of_mem_invariants_dual hψ g]
@@ -285,7 +283,8 @@ private theorem finrank_symmetricInvariantForms_add_le (ρ : Representation k G 
       ≤ finrank k (invariantForms ρ) :=
   finrank_add_finrank_le_of_inf_eq_bot (K := k) (W := BilinForm k V) (symmetricInvariantForms_le ρ)
     (alternatingInvariantForms_le ρ)
-    (symmetricInvariantForms_inf_alternatingInvariantForms (by norm_num) ρ)
+    (symmetricInvariantForms_inf_alternatingInvariantForms
+      (IsRegular.of_ne_zero (two_ne_zero (α := k))).left ρ)
 
 /- The two counts are squeezed together: each of the two injections gives one inequality, and the
 two subspaces meeting only in `0` inside a space of the total dimension gives the third, which

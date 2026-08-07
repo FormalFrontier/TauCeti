@@ -221,11 +221,12 @@ end SymmetricAlternating
 
 section SymmetricAlternatingRing
 
-variable {k G V : Type*} [CommRing k] [NoZeroDivisors k] [Monoid G] [AddCommGroup V] [Module k V]
+variable {k G V : Type*} [CommRing k] [Monoid G] [AddCommGroup V] [Module k V]
 
 /-- Away from characteristic two, a form cannot be both symmetric and alternating, so the two
-invariant subspaces meet only in `0`. -/
-theorem symmetricInvariantForms_inf_alternatingInvariantForms (h2 : (2 : k) ≠ 0)
+invariant subspaces meet only in `0`.  All that is asked of `k` is that `2` be regular, which over
+a field is `IsRegular.of_ne_zero`. -/
+theorem symmetricInvariantForms_inf_alternatingInvariantForms (h2 : IsLeftRegular (2 : k))
     (ρ : Representation k G V) :
     symmetricInvariantForms ρ ⊓ alternatingInvariantForms ρ = ⊥ :=
   le_antisymm (fun _ hB => Submodule.mem_bot k |>.mpr
