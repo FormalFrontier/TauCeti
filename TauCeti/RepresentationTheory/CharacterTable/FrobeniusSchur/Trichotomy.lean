@@ -447,32 +447,34 @@ theorem frobeniusSchurIndicator_eq_one_or_eq_zero_or_eq_neg_one :
   · exact Or.inr (Or.inl (frobeniusSchurIndicator_eq_zero_of_invariantForms_eq_bot ρ hbot))
 
 /-- **The indicator is `1` exactly in the orthogonal case**, that is, exactly when the
-representation carries a nonzero invariant symmetric form, which is then nondegenerate. -/
+representation carries a nondegenerate invariant symmetric form.  Nondegeneracy is nonvanishing
+here, by `TauCeti.Representation.IsInvariantForm.nondegenerate_iff_ne_zero`. -/
 theorem frobeniusSchurIndicator_eq_one_iff :
     frobeniusSchurIndicator ρ = 1 ↔
-      ∃ B : BilinForm k V, IsInvariantForm ρ B ∧ B ≠ 0 ∧ B.IsSymm ∧ B.Nondegenerate := by
-  refine ⟨fun h => ?_, fun ⟨_, hB, hB0, hsymm, _⟩ =>
-    frobeniusSchurIndicator_eq_one_of_isSymm ρ hB hB0 hsymm⟩
+      ∃ B : BilinForm k V, IsInvariantForm ρ B ∧ B.IsSymm ∧ B.Nondegenerate := by
+  refine ⟨fun h => ?_, fun ⟨_, hB, hsymm, hnd⟩ =>
+    frobeniusSchurIndicator_eq_one_of_isSymm ρ hB (hB.nondegenerate_iff_ne_zero.mp hnd) hsymm⟩
   rcases exists_isSymm_or_exists_isAlt_or_invariantForms_eq_bot ρ (by norm_num) with
     ⟨C, hC, hC0, hsymm⟩ | ⟨_, hB, hB0, halt⟩ | hbot
-  · exact ⟨C, hC, hC0, hsymm, hC.nondegenerate hC0⟩
+  · exact ⟨C, hC, hsymm, hC.nondegenerate hC0⟩
   · rw [frobeniusSchurIndicator_eq_neg_one_of_isAlt ρ hB hB0 halt] at h
     exact absurd h (by norm_num)
   · rw [frobeniusSchurIndicator_eq_zero_of_invariantForms_eq_bot ρ hbot] at h
     exact absurd h.symm one_ne_zero
 
 /-- **The indicator is `-1` exactly in the symplectic case**, that is, exactly when the
-representation carries a nonzero invariant alternating form, which is then nondegenerate. -/
+representation carries a nondegenerate invariant alternating form.  Nondegeneracy is nonvanishing
+here, by `TauCeti.Representation.IsInvariantForm.nondegenerate_iff_ne_zero`. -/
 theorem frobeniusSchurIndicator_eq_neg_one_iff :
     frobeniusSchurIndicator ρ = -1 ↔
-      ∃ B : BilinForm k V, IsInvariantForm ρ B ∧ B ≠ 0 ∧ B.IsAlt ∧ B.Nondegenerate := by
-  refine ⟨fun h => ?_, fun ⟨_, hB, hB0, halt, _⟩ =>
-    frobeniusSchurIndicator_eq_neg_one_of_isAlt ρ hB hB0 halt⟩
+      ∃ B : BilinForm k V, IsInvariantForm ρ B ∧ B.IsAlt ∧ B.Nondegenerate := by
+  refine ⟨fun h => ?_, fun ⟨_, hB, halt, hnd⟩ =>
+    frobeniusSchurIndicator_eq_neg_one_of_isAlt ρ hB (hB.nondegenerate_iff_ne_zero.mp hnd) halt⟩
   rcases exists_isSymm_or_exists_isAlt_or_invariantForms_eq_bot ρ (by norm_num) with
     ⟨_, hB, hB0, hsymm⟩ | ⟨C, hC, hC0, halt⟩ | hbot
   · rw [frobeniusSchurIndicator_eq_one_of_isSymm ρ hB hB0 hsymm] at h
     exact absurd h (by norm_num)
-  · exact ⟨C, hC, hC0, halt, hC.nondegenerate hC0⟩
+  · exact ⟨C, hC, halt, hC.nondegenerate hC0⟩
   · rw [frobeniusSchurIndicator_eq_zero_of_invariantForms_eq_bot ρ hbot] at h
     exact absurd h (by norm_num)
 

@@ -54,8 +54,9 @@ representation, is what makes `G` a group.
   it intertwines `ρ` with `ρ.dual`.
 * `TauCeti.Representation.symmetricInvariantForms_inf_alternatingInvariantForms`: away from
   characteristic two the symmetric and the alternating invariant forms meet only in `0`.
-* `TauCeti.Representation.IsInvariantForm.nondegenerate`: a nonzero invariant form on an
-  irreducible representation is nondegenerate.
+* `TauCeti.Representation.IsInvariantForm.nondegenerate` and
+  `TauCeti.Representation.IsInvariantForm.nondegenerate_iff_ne_zero`: an invariant form on an
+  irreducible representation is nondegenerate exactly when it is nonzero.
 * `TauCeti.Representation.IsInvariantForm.exists_eq_smul`: over an algebraically closed field and
   in finite dimensions, an invariant form on an irreducible representation is a scalar multiple of
   any nonzero one.
@@ -319,6 +320,17 @@ theorem IsInvariantForm.nondegenerate [ρ.IsIrreducible] (hB : IsInvariantForm �
   refine ⟨LinearMap.separatingLeft_iff_ker_eq_bot.mpr (hB.ker_eq_bot hB0),
     LinearMap.flip_separatingLeft.mp (LinearMap.separatingLeft_iff_ker_eq_bot.mpr ?_)⟩
   exact hB.flip.ker_eq_bot fun h => hB0 (LinearMap.BilinForm.flipHom.map_eq_zero_iff.mp h)
+
+/-- **On an irreducible representation, an invariant form is nondegenerate exactly when it is
+nonzero.** The interesting direction is `TauCeti.Representation.IsInvariantForm.nondegenerate`; the
+other is Mathlib's `LinearMap.BilinForm.Nondegenerate.ne_zero`, once the space an irreducible
+representation acts on is known to be nonzero. -/
+theorem IsInvariantForm.nondegenerate_iff_ne_zero [ρ.IsIrreducible] (hB : IsInvariantForm ρ B) :
+    B.Nondegenerate ↔ B ≠ 0 := by
+  -- Irreducibility makes `ρ.asModule` a simple, hence nonzero, module over the group algebra.
+  have : Nontrivial ρ.asModule := IsSimpleModule.nontrivial (MonoidAlgebra k G) _
+  have : Nontrivial V := ρ.asModuleEquiv.symm.toEquiv.nontrivial
+  exact ⟨fun h => h.ne_zero, hB.nondegenerate⟩
 
 variable [FiniteDimensional k V] [IsAlgClosed k] [ρ.IsIrreducible]
 
