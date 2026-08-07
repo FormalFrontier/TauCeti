@@ -68,16 +68,20 @@ theorem blockAverage_apply_of_forall_eq {n : ℕ} (hn : 0 < n) {k : Fin n → �
     Fintype.expect_const]
 
 /-- The average of the first `n` coordinates of a real-valued process. -/
--- `@[expose]`: consumers in other modules unfold this with `rw [prefixAverage]` and rely on the
--- defeq to `blockAverage`, which the module system permits only for exposed definitions.
-@[expose]
 def prefixAverage (X : ℕ → Ω → ℝ) (n : ℕ) : Ω → ℝ :=
   blockAverage X fun i : Fin n => i
 
 /-- The average of the `n` coordinates immediately following the first `n` coordinates. -/
-@[expose]
 def followingAverage (X : ℕ → Ω → ℝ) (n : ℕ) : Ω → ℝ :=
   blockAverage X fun i : Fin n => n + i
+
+/-- A prefix average is the block average over the selection `i ↦ i`. -/
+theorem prefixAverage_eq_blockAverage (X : ℕ → Ω → ℝ) (n : ℕ) :
+    prefixAverage X n = blockAverage X fun i : Fin n => (i : ℕ) := (rfl)
+
+/-- A following-block average is the block average over the selection `i ↦ n + i`. -/
+theorem followingAverage_eq_blockAverage (X : ℕ → Ω → ℝ) (n : ℕ) :
+    followingAverage X n = blockAverage X fun i : Fin n => n + (i : ℕ) := (rfl)
 
 /-- **The pointwise formula for a prefix average.** -/
 @[simp]
