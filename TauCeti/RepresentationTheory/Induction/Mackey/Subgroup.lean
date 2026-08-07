@@ -244,6 +244,15 @@ theorem coe_mackeySubgroupOfCongr_apply {k h : G} (hk : k ∈ K) (hh : h ∈ H) 
     ((mackeySubgroupOfCongr hk hh s y : K) : G) = k * ((y : K) : G) * k⁻¹ := by
   simp [mackeySubgroupOfCongr]
 
+@[simp]
+theorem coe_mackeySubgroupOfCongr_symm_apply {k h : G} (hk : k ∈ K) (hh : h ∈ H) (s : G)
+    (y : (mackeySubgroup (k * s * h) H K).subgroupOf K) :
+    (((mackeySubgroupOfCongr hk hh s).symm y : K) : G) = k⁻¹ * ((y : K) : G) * k := by
+  have hy : k * ((((mackeySubgroupOfCongr hk hh s).symm y : K)) : G) * k⁻¹ = ((y : K) : G) := by
+    rw [← coe_mackeySubgroupOfCongr_apply hk hh s, MulEquiv.apply_symm_apply]
+  rw [← hy]
+  simp [mul_assoc]
+
 end Representative
 
 section Orbit
