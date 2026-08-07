@@ -51,20 +51,24 @@ open scoped Manifold ContDiff
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
   {H : Type*} [TopologicalSpace H] {I : ModelWithCorners ℝ E H}
   {G : Type*} [TopologicalSpace G] [ChartedSpace H G] [Group G]
-  [LieGroup I 3 G]
 
-attribute [local instance] LieGroup.minSmoothnessThree
+section Differential
+
+variable [LieGroup I 1 G]
+
+local instance lieGroupMinSmoothnessOne : LieGroup I (minSmoothness ℝ 1) G := by
+  simpa using (inferInstance : LieGroup I 1 G)
 
 /-- The continuous linear equivalence given by the differential of conjugation at the identity. -/
 def adjointContinuousLinearEquiv (g : G) :
     GroupLieAlgebra I G ≃L[ℝ] GroupLieAlgebra I G :=
-  (conjDiffeomorph (I := I) (n := 3) g).mfderivToContinuousLinearEquiv (by simp) 1
+  (conjDiffeomorph (I := I) (n := 1) g).mfderivToContinuousLinearEquiv (by simp) 1
 
 @[simp]
 theorem adjointContinuousLinearEquiv_coe (g : G) :
     (adjointContinuousLinearEquiv (I := I) g :
       GroupLieAlgebra I G →L[ℝ] GroupLieAlgebra I G) =
-        mfderiv I I (conjDiffeomorph (I := I) (n := 3) g) 1 := by
+        mfderiv I I (conjDiffeomorph (I := I) (n := 1) g) 1 := by
   exact Diffeomorph.mfderivToContinuousLinearEquiv_coe _ _
 
 /-- The continuous linear map underlying the differential of conjugation at the identity. -/
@@ -75,7 +79,7 @@ def adjointContinuousLinearMap (g : G) :
 @[simp]
 theorem adjointContinuousLinearMap_apply (g : G) (X : GroupLieAlgebra I G) :
     adjointContinuousLinearMap (I := I) g X =
-      mfderiv I I (conjDiffeomorph (I := I) (n := 3) g) 1 X := by
+      mfderiv I I (conjDiffeomorph (I := I) (n := 1) g) 1 X := by
   congr 1
   exact adjointContinuousLinearEquiv_coe (I := I) g
 
@@ -90,8 +94,8 @@ theorem adjointContinuousLinearMap_one :
   rw [← mfderiv_id]
   apply mfderiv_congr
   have h := congrArg
-    (fun f : TauCeti.Diff I G 3 ↦ (f : G → G))
-    (map_one (conj (I := I) (n := 3)))
+    (fun f : TauCeti.Diff I G 1 ↦ (f : G → G))
+    (map_one (conj (I := I) (n := 1)))
   simpa only [conj_apply, TauCeti.Diffeomorph.coe_one] using h
 
 @[simp]
@@ -103,37 +107,38 @@ theorem adjointContinuousLinearMap_mul (g h : G) :
   -- The tangent fibers in this model-with-corners presentation share the model space `E`.
   change @Eq (E →L[ℝ] E) _ _
   have hfun :
-      conjDiffeomorph (I := I) (n := 3) (g * h) =
-        (conjDiffeomorph (I := I) (n := 3) g) ∘
-          (conjDiffeomorph (I := I) (n := 3) h) := by
+      conjDiffeomorph (I := I) (n := 1) (g * h) =
+        (conjDiffeomorph (I := I) (n := 1) g) ∘
+          (conjDiffeomorph (I := I) (n := 1) h) := by
     have hmap := congrArg
-      (fun f : TauCeti.Diff I G 3 ↦ (f : G → G))
-      (map_mul (conj (I := I) (n := 3)) g h)
+      (fun f : TauCeti.Diff I G 1 ↦ (f : G → G))
+      (map_mul (conj (I := I) (n := 1)) g h)
     simpa only [conj_apply, TauCeti.Diffeomorph.coe_mul] using hmap
   rw [mfderiv_congr (I := I) (I' := I) hfun]
   rw [mfderiv_comp (I := I) (I' := I) (I'' := I) _
-    (((conjDiffeomorph (I := I) (n := 3) g).mdifferentiable (by simp)) _)
-    (((conjDiffeomorph (I := I) (n := 3) h).mdifferentiable (by simp)) _)]
+    (((conjDiffeomorph (I := I) (n := 1) g).mdifferentiable (by simp)) _)
+    (((conjDiffeomorph (I := I) (n := 1) h).mdifferentiable (by simp)) _)]
   rw [mfderiv_congr_point (I := I) (I' := I)
-    (f := conjDiffeomorph (I := I) (n := 3) g)
-    (x := conjDiffeomorph (I := I) (n := 3) h 1) (x' := 1)
+    (f := conjDiffeomorph (I := I) (n := 1) g)
+    (x := conjDiffeomorph (I := I) (n := 1) h 1) (x' := 1)
     (by simp)]
   rfl
 
 @[simp]
 private theorem conjDiffeomorph_inv (g : G) :
-    conjDiffeomorph (I := I) (n := 3) g⁻¹ =
-      (conjDiffeomorph (I := I) (n := 3) g).symm := by
-  have h := map_inv (conj (I := I) (n := 3)) g
+    conjDiffeomorph (I := I) (n := 1) g⁻¹ =
+      (conjDiffeomorph (I := I) (n := 1) g).symm := by
+  have h := map_inv (conj (I := I) (n := 1)) g
   simpa only [conj_apply, TauCeti.Diffeomorph.inv_def] using h
 
 theorem inverse_mfderiv_conjugation (g x : G) :
-    (mfderiv I I (conjDiffeomorph (I := I) (n := 3) g) x).inverse =
-      mfderiv I I (conjDiffeomorph (I := I) (n := 3) g⁻¹)
-        (conjDiffeomorph (I := I) (n := 3) g x) := by
+    (mfderiv I I (conjDiffeomorph (I := I) (n := 1) g) x).inverse =
+      mfderiv I I (conjDiffeomorph (I := I) (n := 1) g⁻¹)
+        (conjDiffeomorph (I := I) (n := 1) g x) := by
   rw [conjDiffeomorph_inv]
-  let Φ := conjDiffeomorph (I := I) (n := 3) g
+  let Φ := conjDiffeomorph (I := I) (n := 1) g
   let hΦ := Φ.isLocalDiffeomorph x
+  -- Unfold the local names so Mathlib's differential-equivalence API sees the same diffeomorphism.
   change (mfderiv I I Φ x).inverse = mfderiv I I Φ.symm (Φ x)
   rw [← hΦ.mfderivToContinuousLinearEquiv_coe (by simp)]
   rw [ContinuousLinearMap.inverse_equiv]
@@ -147,79 +152,90 @@ theorem inverse_mfderiv_conjugation (g x : G) :
 
 theorem mfderiv_conjugation_mulInvariantVectorField (g x : G)
     (X : GroupLieAlgebra I G) :
-    mfderiv I I (conjDiffeomorph (I := I) (n := 3) g) x
+    mfderiv I I (conjDiffeomorph (I := I) (n := 1) g) x
         (mulInvariantVectorField X x) =
       mulInvariantVectorField (adjointContinuousLinearMap (I := I) g X)
-        (conjDiffeomorph (I := I) (n := 3) g x) := by
+        (conjDiffeomorph (I := I) (n := 1) g x) := by
   simp only [mulInvariantVectorField]
-  have hreg : minSmoothness ℝ 3 ≠ 0 :=
+  have hreg : minSmoothness ℝ 1 ≠ 0 :=
     (lt_of_lt_of_le (by simp) le_minSmoothness).ne'
   have hfun :
-      (conjDiffeomorph (I := I) (n := 3) g) ∘ (fun y : G ↦ x * y) =
-        (fun y : G ↦ conjDiffeomorph (I := I) (n := 3) g x * y) ∘
-          (conjDiffeomorph (I := I) (n := 3) g) := by
+      (conjDiffeomorph (I := I) (n := 1) g) ∘ (fun y : G ↦ x * y) =
+        (fun y : G ↦ conjDiffeomorph (I := I) (n := 1) g x * y) ∘
+          (conjDiffeomorph (I := I) (n := 1) g) := by
     funext y
     simp [Function.comp_apply, mul_assoc]
   have h := congrArg (fun f : G → G ↦ mfderiv I I f 1 X) hfun
   rw [mfderiv_comp_apply (I := I) (I' := I) (I'' := I),
     mfderiv_comp_apply (I := I) (I' := I) (I'' := I)] at h
-  · rw [mfderiv_congr_point (I := I) (I' := I) (f := conjDiffeomorph (I := I) (n := 3) g)
+  · rw [mfderiv_congr_point (I := I) (I' := I) (f := conjDiffeomorph (I := I) (n := 1) g)
       (x := x * 1) (x' := x) (by simp)] at h
     rw [mfderiv_congr_point (I := I) (I' := I)
-      (f := fun y : G ↦ conjDiffeomorph (I := I) (n := 3) g x * y)
-      (x := conjDiffeomorph (I := I) (n := 3) g 1) (x' := 1)
+      (f := fun y : G ↦ conjDiffeomorph (I := I) (n := 1) g x * y)
+      (x := conjDiffeomorph (I := I) (n := 1) g 1) (x' := 1)
       (by simp)] at h
     -- For this model-with-corners presentation, each tangent fiber is implemented by `E`.
     change @Eq E _ _
     rw [adjointContinuousLinearMap_apply]
     exact h
   · exact contMDiffAt_mul_left.mdifferentiableAt hreg
-  · exact ((conjDiffeomorph (I := I) (n := 3) g).mdifferentiable (by simp)) _
-  · exact ((conjDiffeomorph (I := I) (n := 3) g).mdifferentiable (by simp)) _
+  · exact ((conjDiffeomorph (I := I) (n := 1) g).mdifferentiable (by simp)) _
+  · exact ((conjDiffeomorph (I := I) (n := 1) g).mdifferentiable (by simp)) _
   · exact contMDiffAt_mul_left.mdifferentiableAt hreg
 
 /-- Pullback through inverse conjugation is the derivative of forward conjugation. -/
 theorem mpullback_conjugation (g x : G) (V : ∀ y : G, TangentSpace I y) :
-    VectorField.mpullback I I (conjDiffeomorph (I := I) (n := 3) g⁻¹) V x =
-      mfderiv I I (conjDiffeomorph (I := I) (n := 3) g)
-        (conjDiffeomorph (I := I) (n := 3) g⁻¹ x)
-        (V (conjDiffeomorph (I := I) (n := 3) g⁻¹ x)) := by
+    VectorField.mpullback I I (conjDiffeomorph (I := I) (n := 1) g⁻¹) V x =
+      mfderiv I I (conjDiffeomorph (I := I) (n := 1) g)
+        (conjDiffeomorph (I := I) (n := 1) g⁻¹ x)
+        (V (conjDiffeomorph (I := I) (n := 1) g⁻¹ x)) := by
   simp only [VectorField.mpullback]
   rw [inverse_mfderiv_conjugation]
   rw [mfderiv_congr (I := I) (I' := I)
-    (f := conjDiffeomorph (I := I) (n := 3) g⁻¹⁻¹)
-    (f' := conjDiffeomorph (I := I) (n := 3) g) (by simp)]
+    (f := conjDiffeomorph (I := I) (n := 1) g⁻¹⁻¹)
+    (f' := conjDiffeomorph (I := I) (n := 1) g) (by simp)]
   rfl
 
 theorem mpullback_conjugation_mulInvariantVectorField (g : G)
     (X : GroupLieAlgebra I G) :
-    VectorField.mpullback I I (conjDiffeomorph (I := I) (n := 3) g⁻¹)
+    VectorField.mpullback I I (conjDiffeomorph (I := I) (n := 1) g⁻¹)
         (mulInvariantVectorField X) =
       mulInvariantVectorField (adjointContinuousLinearMap (I := I) g X) := by
   funext x
   rw [mpullback_conjugation]
   have hpush := mfderiv_conjugation_mulInvariantVectorField (I := I) g
-    (conjDiffeomorph (I := I) (n := 3) g⁻¹ x) X
-  have hpoint : conjDiffeomorph (I := I) (n := 3) g
-      (conjDiffeomorph (I := I) (n := 3) g⁻¹ x) = x := by
+    (conjDiffeomorph (I := I) (n := 1) g⁻¹ x) X
+  have hpoint : conjDiffeomorph (I := I) (n := 1) g
+      (conjDiffeomorph (I := I) (n := 1) g⁻¹ x) = x := by
     rw [conjDiffeomorph_inv]
-    exact (conjDiffeomorph (I := I) (n := 3) g).apply_symm_apply x
+    exact (conjDiffeomorph (I := I) (n := 1) g).apply_symm_apply x
   rw [hpoint] at hpush
   exact hpush
 
 theorem mpullback_conjugation_one (g : G) (V : ∀ x : G, TangentSpace I x) :
-    VectorField.mpullback I I (conjDiffeomorph (I := I) (n := 3) g⁻¹) V 1 =
+    VectorField.mpullback I I (conjDiffeomorph (I := I) (n := 1) g⁻¹) V 1 =
       adjointContinuousLinearMap (I := I) g (V 1) := by
   rw [mpullback_conjugation]
   rw [mfderiv_congr_point (I := I) (I' := I)
-    (f := conjDiffeomorph (I := I) (n := 3) g)
-    (x := conjDiffeomorph (I := I) (n := 3) g⁻¹ 1) (x' := 1)
+    (f := conjDiffeomorph (I := I) (n := 1) g)
+    (x := conjDiffeomorph (I := I) (n := 1) g⁻¹ 1) (x' := 1)
     (by simp)]
   rw [adjointContinuousLinearMap_apply]
-  have hpoint : conjDiffeomorph (I := I) (n := 3) g⁻¹ 1 = 1 := by
+  have hpoint : conjDiffeomorph (I := I) (n := 1) g⁻¹ 1 = 1 := by
     simp only [conjDiffeomorph_apply, mul_one, inv_inv, inv_mul_cancel]
   exact congrArg (fun y : G ↦ mfderiv I I
-    (conjDiffeomorph (I := I) (n := 3) g) 1 (V y)) hpoint
+    (conjDiffeomorph (I := I) (n := 1) g) 1 (V y)) hpoint
+
+end Differential
+
+section Bracket
+
+variable [LieGroup I 3 G]
+
+attribute [local instance] LieGroup.minSmoothnessThree
+
+local instance lieGroupOne : LieGroup I 1 G :=
+  LieGroup.of_le (I := I) (G := G) (m := 1) (n := 3) (by norm_num)
 
 /-- The differential of conjugation preserves the manifold Lie bracket. -/
 theorem adjointContinuousLinearMap_lie [CompleteSpace E] (g : G)
@@ -235,6 +251,12 @@ theorem adjointContinuousLinearMap_lie [CompleteSpace E] (g : G)
     (mdifferentiableAt_mulInvariantVectorField Y)
     (conjDiffeomorph (I := I) (n := 3) g⁻¹).contMDiffAt
       (by norm_num)
+  have hconj :
+      (conjDiffeomorph (I := I) (n := 3) g⁻¹ : G → G) =
+        (conjDiffeomorph (I := I) (n := 1) g⁻¹ : G → G) := by
+    funext x
+    simp only [conjDiffeomorph_apply]
+  rw [hconj] at h
   rw [mpullback_conjugation_mulInvariantVectorField,
     mpullback_conjugation_mulInvariantVectorField] at h
   rw [mpullback_conjugation_one] at h
@@ -280,6 +302,7 @@ theorem tangentAd_inv [CompleteSpace E] (g : G) :
     tangentAd (I := I) g⁻¹ = (tangentAd (I := I) g).symm := by
   ext X
   apply (tangentAd (I := I) g).injective
+  -- Expose the coercions and symmetry of `LieEquiv` so injectivity can use the product law.
   change tangentAd (I := I) g (tangentAd (I := I) g⁻¹ X) =
     tangentAd (I := I) g ((tangentAd (I := I) g).symm X)
   rw [LieEquiv.apply_symm_apply]
@@ -287,5 +310,7 @@ theorem tangentAd_inv [CompleteSpace E] (g : G) :
     (fun e : GroupLieAlgebra I G ≃ₗ⁅ℝ⁆ GroupLieAlgebra I G ↦ e X)
     (tangentAd_mul (I := I) g g⁻¹)
   simpa using h.symm
+
+end Bracket
 
 end TauCeti.Lie
