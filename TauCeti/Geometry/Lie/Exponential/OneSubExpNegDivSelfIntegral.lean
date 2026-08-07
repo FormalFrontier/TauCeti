@@ -4,20 +4,21 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Geometry.Lie.Exponential.Regularized
+public import TauCeti.Geometry.Lie.Exponential.OneSubExpNegDivSelf
 public import Mathlib.Analysis.SpecialFunctions.Integrals.Basic
 public import Mathlib.MeasureTheory.Integral.DominatedConvergence
 
 /-!
-# An integral formula for the regularized exponential quotient
+# An integral formula for the filled exponential quotient
 
-This file identifies the regularized quotient `(1 - exp (-a)) / a` with the integral of the
+This file identifies the filled quotient `(1 - exp (-a)) / a` with the integral of the
 exponential along the line segment from `0` to `-a`. The formula remains valid when `a` is not
 invertible.
 
 ## Main result
 
-* `regularizedExpNeg_eq_integral_exp`: `regularizedExpNeg a = ∫ t in 0..1, exp (t • -a)`.
+* `oneSubExpNegDivSelf_eq_integral_exp`:
+  `oneSubExpNegDivSelf a = ∫ t in 0..1, exp (t • -a)`.
 
 ## References
 
@@ -34,7 +35,7 @@ noncomputable section
 
 variable {A : Type*} [NormedRing A] [NormedAlgebra ℝ A] [CompleteSpace A]
 
-private noncomputable def regularizedExpIntegrand (a : A) (n : ℕ) : C(ℝ, A) :=
+private noncomputable def oneSubExpNegDivSelfIntegrand (a : A) (n : ℕ) : C(ℝ, A) :=
   ⟨fun t ↦ (n.factorial⁻¹ : ℝ) • ((t : ℝ) • (-a)) ^ n, by fun_prop⟩
 
 omit [NormedAlgebra ℝ A] [CompleteSpace A] in
@@ -63,9 +64,9 @@ private theorem norm_pow_le_max_one (x : A) (n : ℕ) :
     cases n <;> simp [hOne]
 
 omit [CompleteSpace A] in
-private theorem summable_regularizedExpIntegrand_norm (a : A) :
+private theorem summable_oneSubExpNegDivSelfIntegrand_norm (a : A) :
     Summable fun n : ℕ ↦
-      ‖(regularizedExpIntegrand a n).restrict
+      ‖(oneSubExpNegDivSelfIntegrand a n).restrict
         (⟨Set.uIcc 0 1, isCompact_uIcc⟩ : Compacts ℝ)‖ := by
   let c : ℝ := max ‖(1 : A)‖ ‖-a‖
   have hc : Summable fun n : ℕ ↦ c ^ (n + 1) / n.factorial := by
@@ -100,8 +101,8 @@ private theorem summable_regularizedExpIntegrand_norm (a : A) :
     _ = c ^ (n + 1) / n.factorial := by
       simp [div_eq_mul_inv, mul_comm]
 
-private theorem integral_regularizedExpIntegrand (a : A) (n : ℕ) :
-    ∫ t in (0 : ℝ)..1, regularizedExpIntegrand a n t =
+private theorem integral_oneSubExpNegDivSelfIntegrand (a : A) (n : ℕ) :
+    ∫ t in (0 : ℝ)..1, oneSubExpNegDivSelfIntegrand a n t =
       (((n + 1).factorial)⁻¹ : ℝ) • (-a) ^ n := by
   change (∫ t in (0 : ℝ)..1, (n.factorial⁻¹ : ℝ) • (t • (-a)) ^ n) = _
   simp_rw [smul_pow, smul_smul]
@@ -113,18 +114,18 @@ private theorem integral_regularizedExpIntegrand (a : A) (n : ℕ) :
 
 /-- The regularized exponential quotient is the integral of the exponential along the line
 segment from `0` to `-a`. -/
-theorem regularizedExpNeg_eq_integral_exp (a : A) :
-    regularizedExpNeg a = ∫ t in (0 : ℝ)..1, exp (t • (-a)) := by
-  rw [regularizedExpNeg_eq_tsum]
+theorem oneSubExpNegDivSelf_eq_integral_exp (a : A) :
+    oneSubExpNegDivSelf a = ∫ t in (0 : ℝ)..1, exp (t • (-a)) := by
+  rw [oneSubExpNegDivSelf_eq_tsum]
   calc
     ∑' n : ℕ, (((n + 1).factorial)⁻¹ : ℝ) • (-a) ^ n =
-        ∑' n : ℕ, ∫ t in (0 : ℝ)..1, regularizedExpIntegrand a n t := by
+        ∑' n : ℕ, ∫ t in (0 : ℝ)..1, oneSubExpNegDivSelfIntegrand a n t := by
       congr 1
       funext n
-      exact (integral_regularizedExpIntegrand a n).symm
-    _ = ∫ t in (0 : ℝ)..1, ∑' n : ℕ, regularizedExpIntegrand a n t :=
+      exact (integral_oneSubExpNegDivSelfIntegrand a n).symm
+    _ = ∫ t in (0 : ℝ)..1, ∑' n : ℕ, oneSubExpNegDivSelfIntegrand a n t :=
       intervalIntegral.tsum_intervalIntegral_eq_of_summable_norm
-        (summable_regularizedExpIntegrand_norm a)
+        (summable_oneSubExpNegDivSelfIntegrand_norm a)
     _ = ∫ t in (0 : ℝ)..1, exp (t • (-a)) := by
       apply intervalIntegral.integral_congr
       intro t _ht
