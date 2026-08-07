@@ -39,6 +39,9 @@ quantifies over the group elements `s ∉ H` instead.
 
 ## Main statements
 
+* `TauCeti.mackeyDisjoint_iff_subsingleton`, `TauCeti.MackeyDisjoint.eq_zero` and
+  `TauCeti.mackeyDisjoint_of_forall_eq_zero`: the predicate read back as the vanishing of every
+  intertwiner.
 * `TauCeti.simple_indFDRep_iff_doubleCoset`: the Mackey irreducibility criterion over the double
   cosets.
 * `TauCeti.simple_indFDRep_iff`: the same criterion quantified over the elements outside `H`.
@@ -140,6 +143,26 @@ def MackeyDisjoint (A : FDRep k H) (s : G) : Prop :=
   Subsingleton (resFDRep ((mackeySubgroup s H H).subgroupOf H) A ⟶
     (Action.res (FGModuleCat k) (mackeyToH s H H)).obj A)
 
+/-- **Mackey disjointness unfolded.**  The body of `TauCeti.MackeyDisjoint` is not exposed, so
+this is how a consumer reads the definition. -/
+theorem mackeyDisjoint_iff_subsingleton (A : FDRep k H) (s : G) :
+    MackeyDisjoint A s ↔
+      Subsingleton (resFDRep ((mackeySubgroup s H H).subgroupOf H) A ⟶
+        (Action.res (FGModuleCat k) (mackeyToH s H H)).obj A) :=
+  Iff.rfl
+
+/-- An intertwiner between the two restrictions of a Mackey disjoint pair is zero. -/
+theorem MackeyDisjoint.eq_zero {A : FDRep k H} {s : G} (h : MackeyDisjoint A s)
+    (φ : resFDRep ((mackeySubgroup s H H).subgroupOf H) A ⟶
+      (Action.res (FGModuleCat k) (mackeyToH s H H)).obj A) : φ = 0 :=
+  @Subsingleton.elim _ h φ 0
+
+/-- Mackey disjointness holds as soon as every intertwiner between the two restrictions is zero. -/
+theorem mackeyDisjoint_of_forall_eq_zero {A : FDRep k H} {s : G}
+    (h : ∀ φ : resFDRep ((mackeySubgroup s H H).subgroupOf H) A ⟶
+      (Action.res (FGModuleCat k) (mackeyToH s H H)).obj A, φ = 0) : MackeyDisjoint A s :=
+  ⟨fun φ ψ => (h φ).trans (h ψ).symm⟩
+
 /-- Mackey disjointness read as the vanishing of a dimension, which is the shape in which the
 intertwining-number formula produces it. -/
 theorem mackeyDisjoint_iff_finrank_eq_zero (A : FDRep k H) (s : G) :
@@ -155,7 +178,7 @@ its double-coset and its elementwise reading. -/
 theorem mackeyDisjoint_mul_left_mul_right_iff (A : FDRep k H) {h₁ h₂ : G} (hh₁ : h₁ ∈ H)
     (hh₂ : h₂ ∈ H) (s : G) : MackeyDisjoint A (h₁ * s * h₂) ↔ MackeyDisjoint A s := by
   rw [mackeyDisjoint_iff_finrank_eq_zero, mackeyDisjoint_iff_finrank_eq_zero,
-    finrank_hom_res_mackeyToH_mul_left_mul_right A hh₁ hh₂ s]
+    finrank_hom_res_mackeyToH_mul_left_mul_right A A hh₁ hh₂ s]
 
 end Disjoint
 
@@ -207,9 +230,10 @@ theorem simple_indFDRep_iff (A : FDRep k H) :
   · obtain ⟨a, ha, b, hb, hab⟩ :=
       (DoubleCoset.eq H H (DoubleCoset.mk H H s).out s).mp (DoubleCoset.out_eq' H H _)
     exact hab ▸ (mackeyDisjoint_mul_left_mul_right_iff A ha hb _).mpr
-      (h _ fun hc => hs ((doubleCosetMk_eq_mk_one_iff H s).mp hc))
+      (h _ fun hc => hs ((doubleCosetMk_eq_mk_one_iff_mem H s).mp hc))
   · exact h D.out fun hmem =>
-      hD ((DoubleCoset.out_eq' H H D).symm.trans ((doubleCosetMk_eq_mk_one_iff H D.out).mpr hmem))
+      hD ((DoubleCoset.out_eq' H H D).symm.trans
+        ((doubleCosetMk_eq_mk_one_iff_mem H D.out).mpr hmem))
 
 end Criterion
 
