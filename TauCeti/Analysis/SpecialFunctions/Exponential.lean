@@ -8,6 +8,7 @@ public import Mathlib.Analysis.SpecialFunctions.Exponential
 import Mathlib.Analysis.Calculus.Deriv.Mul
 import Mathlib.Analysis.Calculus.Deriv.Shift
 public import Mathlib.MeasureTheory.Integral.IntervalIntegral.FundThmCalculus
+import TauCeti.Analysis.Normed.Algebra.Basic
 
 /-!
 # Duhamel's formula for the Banach-algebra exponential
@@ -35,9 +36,7 @@ noncomputable section
 
 variable {A : Type*} [NormedRing A] [NormedAlgebra ℝ A] [CompleteSpace A]
 
-/-- The rational normed algebra structure obtained by restricting the real scalars. -/
-noncomputable local instance normedAlgebraRatOfReal : NormedAlgebra ℚ A :=
-  .restrictScalars ℚ ℝ A
+attribute [local instance] TauCeti.normedAlgebraRatOfReal
 
 private theorem hasDerivAt_duhamelPath (x h : A) (t : ℝ) :
     HasDerivAt
