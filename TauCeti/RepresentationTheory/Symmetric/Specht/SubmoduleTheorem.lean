@@ -88,19 +88,6 @@ noncomputable local instance (t : YoungTableau μ) : DecidablePred (· ∈ colSu
 
 /-! ### James's lemma: the column antisymmetrizer of a tabloid -/
 
-/-- The column antisymmetrizer of `t` annihilates the tabloid of `s` when some row of `s` meets
-some column of `t` twice. -/
-private theorem asAlgebraHom_columnAntisymmetrizer_single_eq_zero (s t : YoungTableau μ)
-    (h : RowMeetsColumnTwice s t) :
-    (permutationModule (shapePartition μ)).ρ.asAlgebraHom (columnAntisymmetrizer t)
-      (MonoidAlgebra.single (tabloid s) 1) = 0 := by
-  -- The transposition of the two shared labels is an odd element of the column group of `t`
-  -- fixing the tabloid of `s`, which is exactly the hypothesis of the general vanishing lemma.
-  obtain ⟨x, y, hxy, hrow, hcol⟩ := (rowMeetsColumnTwice_def _ _).mp h
-  exact TauCeti.asAlgebraHom_columnAntisymmetrizer_single_eq_zero t (shapePartition μ) (tabloid s)
-    (swap_mem_colSubgroup hcol) (Equiv.Perm.sign_swap hxy)
-    (smul_tabloid_eq_self_iff.mpr (swap_mem_rowSubgroup hrow))
-
 /-- When no row of `s` meets a column of `t` twice, the column antisymmetrizer of `t` sends the
 tabloid of `s` to a signed multiple of the polytabloid `e_t`, the sign being that of some
 permutation. -/
@@ -142,8 +129,14 @@ theorem exists_eq_smul_polytabloid_single (t : YoungTableau μ)
           (MonoidAlgebra.single T 1) = κ • polytabloid t := by
   obtain ⟨s, rfl⟩ := tabloid_surjective T
   by_cases h : RowMeetsColumnTwice s t
-  · exact ⟨0, Or.inl rfl, by
-      rw [zero_smul]; exact asAlgebraHom_columnAntisymmetrizer_single_eq_zero s t h⟩
+  · -- The transposition of the two shared labels is an odd element of the column group of `t`
+    -- fixing the tabloid of `s`, which is exactly the hypothesis of the general vanishing lemma.
+    obtain ⟨x, y, hxy, hrow, hcol⟩ := (rowMeetsColumnTwice_def _ _).mp h
+    exact ⟨0, Or.inl rfl, by
+      rw [zero_smul]
+      exact asAlgebraHom_columnAntisymmetrizer_single_eq_zero t (shapePartition μ) (tabloid s)
+        (swap_mem_colSubgroup hcol) (Equiv.Perm.sign_swap hxy)
+        (smul_tabloid_eq_self_iff.mpr (swap_mem_rowSubgroup hrow))⟩
   · obtain ⟨q, hq⟩ := exists_asAlgebraHom_columnAntisymmetrizer_single_eq_sign_smul s t h
     exact ⟨_, Or.inr (by rcases Int.units_eq_one_or (Equiv.Perm.sign q) with h | h <;> simp [h]),
       hq⟩
