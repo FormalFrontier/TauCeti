@@ -6,7 +6,7 @@ module
 
 public import TauCeti.NumberTheory.Multiquadratic.Quadratic.Discriminant
 public import TauCeti.NumberTheory.Multiquadratic.FundamentalDiscriminant.Factorization
-public import TauCeti.NumberTheory.NumberField.RamifiedPrimes
+public import TauCeti.NumberTheory.NumberField.Quadratic.TotalRamification
 import Mathlib.Algebra.BigOperators.Associated
 
 /-!
@@ -44,6 +44,10 @@ the name "prime discriminant" refers to.
   under the prime discriminants dividing its discriminant.
 * `TauCeti.Multiquadratic.ncard_ramifiedPrimes_eq_card`: hence there are as many ramified primes as
   prime-discriminant factors.
+* `TauCeti.Multiquadratic.map_span_eq_sq_of_dvd_fundamentalDiscriminant`: a prime dividing the
+  discriminant is totally ramified, `p 𝓞 K = 𝔭 ^ 2`.
+* `TauCeti.Multiquadratic.map_span_primeDiscriminantPrime_eq_sq`: the same for the single prime
+  ramifying in the quadratic field of a prime discriminant.
 -/
 
 public section
@@ -163,5 +167,45 @@ theorem exists_finset_primeDiscriminant_ncard_ramifiedPrimes (hmin : minpoly ℤ
   obtain ⟨s, hs, heven, hprod⟩ :=
     (isFundamentalDiscriminant_fundamentalDiscriminant hsf).exists_finset_primeDiscriminant
   exact ⟨s, hs, hprod, ncard_ramifiedPrimes_eq_card hmin hgen hsf hs heven hprod⟩
+
+/-! ### Total ramification
+
+A ramified prime of a quadratic field is *totally* ramified: it has a single prime above it, with
+ramification index `2`. This is `TauCeti.NumberField.map_span_eq_sq_of_mem_ramifiedPrimes`, read
+here through the discriminant criterion above. -/
+
+variable {p : ℕ} {𝔭 : Ideal (𝓞 K)} [𝔭.IsPrime] [𝔭.LiesOver (Ideal.span {(p : ℤ)})]
+
+/-- **A prime dividing the discriminant of `ℚ(√d)` is totally ramified.** If the rational prime `p`
+divides `fundamentalDiscriminant d` and `𝔭` is a prime of `𝓞 K` above `p`, then
+`e(𝔭 ∣ p) = 2`. -/
+theorem ramificationIdx_eq_two_of_dvd_fundamentalDiscriminant (hmin : minpoly ℤ θ = X ^ 2 - C d)
+    (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) (hsf : Squarefree d) (hp : p.Prime)
+    (hdvd : (p : ℤ) ∣ fundamentalDiscriminant d) : 𝔭.ramificationIdx ℤ = 2 :=
+  TauCeti.NumberField.ramificationIdx_eq_two_of_mem_ramifiedPrimes
+    (TauCeti.NumberField.finrank_rat_eq_two hmin hgen)
+    ((mem_ramifiedPrimes_iff_dvd_fundamentalDiscriminant hmin hgen hsf hp).mpr hdvd) 𝔭
+
+/-- **`p 𝓞 K = 𝔭 ^ 2` at a prime dividing the discriminant of `ℚ(√d)`.** -/
+theorem map_span_eq_sq_of_dvd_fundamentalDiscriminant (hmin : minpoly ℤ θ = X ^ 2 - C d)
+    (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) (hsf : Squarefree d) (hp : p.Prime)
+    (hdvd : (p : ℤ) ∣ fundamentalDiscriminant d) :
+    (Ideal.span {(p : ℤ)} : Ideal ℤ).map (algebraMap ℤ (𝓞 K)) = 𝔭 ^ 2 :=
+  TauCeti.NumberField.map_span_eq_sq_of_mem_ramifiedPrimes
+    (TauCeti.NumberField.finrank_rat_eq_two hmin hgen)
+    ((mem_ramifiedPrimes_iff_dvd_fundamentalDiscriminant hmin hgen hsf hp).mpr hdvd) 𝔭
+
+/-- **The quadratic field of a prime discriminant is totally ramified at its one ramified prime.**
+For a prime discriminant `D` and `K = ℚ(√(primeDiscriminantRadicand D))`, the prime
+`primeDiscriminantPrime D` generates the square of the unique prime of `𝓞 K` above it. This is the
+local picture at the generators of the candidate genus field. -/
+theorem map_span_primeDiscriminantPrime_eq_sq {D : ℤ} (hD : IsPrimeDiscriminant D)
+    (hmin : minpoly ℤ θ = X ^ 2 - C (primeDiscriminantRadicand D))
+    (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤)
+    {𝔮 : Ideal (𝓞 K)} [𝔮.IsPrime] [𝔮.LiesOver (Ideal.span {(primeDiscriminantPrime D : ℤ)})] :
+    (Ideal.span {(primeDiscriminantPrime D : ℤ)} : Ideal ℤ).map (algebraMap ℤ (𝓞 K)) = 𝔮 ^ 2 :=
+  TauCeti.NumberField.map_span_eq_sq_of_mem_ramifiedPrimes
+    (TauCeti.NumberField.finrank_rat_eq_two hmin hgen)
+    (by rw [ramifiedPrimes_eq_singleton hD hmin hgen]; exact rfl) 𝔮
 
 end TauCeti.Multiquadratic
