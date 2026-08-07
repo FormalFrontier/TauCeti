@@ -623,16 +623,14 @@ theorem finrank_eigenspace_diag (i : Fin (n + 1)) :
 
 /-! ### Irreducibility -/
 
-/-- **The engine of irreducibility.** A nonzero subspace of `V(n)` stable under the raising and
-lowering operators is the whole of `V(n)`: the raising operator is nilpotent, so the subspace
-contains a nonzero vector it kills, hence the highest weight vector `v₀`, and the lowering
-operator then walks `v₀` along the whole coordinate basis because the coefficients `n - i` are
-nonzero for `i < n`. -/
-theorem eq_top_of_raise_mem_of_lower_mem (N : Submodule K (Sl2Std K n)) (hN : N ≠ ⊥)
-    (hraise : ∀ w ∈ N, raise K n w ∈ N) (hlower : ∀ w ∈ N, lower K n w ∈ N) : N = ⊤ := by
+/-- **A nonzero subspace stable under raising contains the highest weight vector.** The raising
+operator is nilpotent, so the sequence `v, e·v, e²·v, …` starting from any nonzero `v` of the
+subspace has a last nonzero term; that term is killed by `e`, hence is a nonzero multiple of
+`basis K n 0`. -/
+private theorem basis_zero_mem_of_ne_bot_of_raise_mem (N : Submodule K (Sl2Std K n)) (hN : N ≠ ⊥)
+    (hraise : ∀ w ∈ N, raise K n w ∈ N) : basis K n 0 ∈ N := by
   classical
   obtain ⟨v, hvN, hv⟩ := Submodule.exists_mem_ne_zero_of_ne_bot hN
-  -- The last nonzero vector of the sequence `v, e·v, e²·v, …` is killed by `e`.
   have hex : ∃ k, ((raise K n) ^ k) v = 0 :=
     ⟨n + 1, by rw [raise_pow_eq_zero, LinearMap.zero_apply]⟩
   have hfind := Nat.find_spec hex
@@ -648,35 +646,41 @@ theorem eq_top_of_raise_mem_of_lower_mem (N : Submodule K (Sl2Std K n)) (hN : N 
   have hcoeff : ((raise K n) ^ k) v 0 ≠ 0 := by
     intro h0
     exact hu (by rw [eq_smul_basis_zero_of_raise_eq_zero hu0, h0, zero_smul])
-  have hbasis0 : basis K n 0 ∈ N := by
-    obtain ⟨c, hc, hcv⟩ : ∃ c : K, c ≠ 0 ∧ ((raise K n) ^ k) v = c • basis K n 0 :=
-      ⟨((raise K n) ^ k) v 0, hcoeff, eq_smul_basis_zero_of_raise_eq_zero hu0⟩
-    have hsmul : basis K n 0 = c⁻¹ • ((raise K n) ^ k) v := by
-      rw [hcv, smul_smul, inv_mul_cancel₀ hc, one_smul]
-    rw [hsmul]
-    exact N.smul_mem _ (Module.End.pow_apply_mem_of_forall_mem k hraise v hvN)
-  have hall : ∀ i : Fin (n + 1), basis K n i ∈ N := by
-    intro i
-    induction i using Fin.induction with
-    | zero => exact hbasis0
-    | succ i ih =>
-      have hlt : ((i.castSucc : Fin (n + 1)) : ℕ) < n := i.isLt
-      have hcne : ((n : K) - ((i.castSucc : Fin (n + 1)) : ℕ)) ≠ 0 := by
-        intro hc
-        have h1 : (n : K) = (((i.castSucc : Fin (n + 1)) : ℕ) : K) := sub_eq_zero.1 hc
-        have h2 : n = ((i.castSucc : Fin (n + 1)) : ℕ) := Nat.cast_injective h1
-        omega
-      have hstep := hlower _ ih
-      rw [lower_basis _ hlt] at hstep
-      have hidx : (⟨((i.castSucc : Fin (n + 1)) : ℕ) + 1, by omega⟩ : Fin (n + 1)) = i.succ := by
-        ext; simp
-      rw [hidx] at hstep
-      have := N.smul_mem ((n : K) - ((i.castSucc : Fin (n + 1)) : ℕ))⁻¹ hstep
-      rwa [smul_smul, inv_mul_cancel₀ hcne, one_smul] at this
+  obtain ⟨c, hc, hcv⟩ : ∃ c : K, c ≠ 0 ∧ ((raise K n) ^ k) v = c • basis K n 0 :=
+    ⟨((raise K n) ^ k) v 0, hcoeff, eq_smul_basis_zero_of_raise_eq_zero hu0⟩
+  have hsmul : basis K n 0 = c⁻¹ • ((raise K n) ^ k) v := by
+    rw [hcv, smul_smul, inv_mul_cancel₀ hc, one_smul]
+  rw [hsmul]
+  exact N.smul_mem _ (Module.End.pow_apply_mem_of_forall_mem k hraise v hvN)
+
+/-- **A subspace stable under lowering and containing the highest weight vector contains the whole
+coordinate basis.** `Sl2Std.lower_pow_basis_zero` identifies `fⁱ · v₀` as `basis K n i` scaled by
+`n(n - 1)⋯(n - i + 1)`, and that product is nonzero because every factor has `j < i ≤ n`. -/
+private theorem basis_mem_of_lower_mem_of_basis_zero_mem (N : Submodule K (Sl2Std K n))
+    (hlower : ∀ w ∈ N, lower K n w ∈ N) (hbasis0 : basis K n 0 ∈ N) (i : Fin (n + 1)) :
+    basis K n i ∈ N := by
+  have hmem : ((lower K n) ^ (i : ℕ)) (basis K n 0) ∈ N :=
+    Module.End.pow_apply_mem_of_forall_mem _ hlower _ hbasis0
+  rw [lower_pow_basis_zero] at hmem
+  have hne : (∏ j ∈ Finset.range (i : ℕ), ((n : K) - j)) ≠ 0 := by
+    refine Finset.prod_ne_zero_iff.2 fun j hj hc ↦ ?_
+    have h2 : n = j := Nat.cast_injective (sub_eq_zero.1 hc)
+    have := Finset.mem_range.1 hj
+    have := i.isLt
+    omega
+  have := N.smul_mem (∏ j ∈ Finset.range (i : ℕ), ((n : K) - j))⁻¹ hmem
+  rwa [smul_smul, inv_mul_cancel₀ hne, one_smul] at this
+
+/-- **The engine of irreducibility.** A nonzero subspace of `V(n)` stable under the raising and
+lowering operators is the whole of `V(n)`: raising produces the highest weight vector, lowering
+walks it along the coordinate basis, and that basis spans. -/
+theorem eq_top_of_raise_mem_of_lower_mem (N : Submodule K (Sl2Std K n)) (hN : N ≠ ⊥)
+    (hraise : ∀ w ∈ N, raise K n w ∈ N) (hlower : ∀ w ∈ N, lower K n w ∈ N) : N = ⊤ := by
   refine eq_top_iff.2 ?_
   rw [← (basis K n).span_eq, Submodule.span_le]
   rintro _ ⟨i, rfl⟩
-  exact hall i
+  exact basis_mem_of_lower_mem_of_basis_zero_mem N hlower
+    (basis_zero_mem_of_ne_bot_of_raise_mem N hN hraise) i
 
 /-- **`V(n)` is an irreducible `sl (Fin 2) K`-module.** -/
 instance isIrreducible :
