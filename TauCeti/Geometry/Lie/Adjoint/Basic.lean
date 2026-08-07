@@ -287,6 +287,7 @@ theorem tangentAd_apply [CompleteSpace E] (g : G) (X : GroupLieAlgebra I G) :
     tangentAd (I := I) g X = adjointContinuousLinearMap (I := I) g X :=
   (rfl)
 
+/-- The tangent adjoint automorphism at the identity is the identity Lie equivalence. -/
 @[simp]
 theorem tangentAd_one [CompleteSpace E] :
     tangentAd (I := I) (1 : G) = LieEquiv.refl := by
