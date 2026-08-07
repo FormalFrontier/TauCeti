@@ -21,8 +21,8 @@ element of `G` is conjugate to an entry. From those two facts alone the whole in
 a representative `d.rep i` for each `i : Fin d.numClasses`, an inverse `d.index g` computed by a
 list search, and the equivalence `d.equivConjClasses : Fin d.numClasses ≃ ConjClasses G` that
 transports statements about `ConjClasses G` to the numbering. All of these are genuine `def`s: the
-numbering data itself asks only for `[Fintype G]`, the searches computed from it for
-`[DecidableEq G]`, and `TauCeti.ClassData.ofList` builds class data from any list that exhausts
+numbering data itself asks only for `[Group G]`, the searches computed from it for `[Fintype G]`
+and `[DecidableEq G]`, and `TauCeti.ClassData.ofList` builds class data from any list that exhausts
 `G`.
 
 On top of the numbering the file gives the two computational objects the algorithm consumes: the
@@ -76,16 +76,17 @@ open scoped BigOperators
 
 attribute [local instance] IsConj.setoid
 
-variable {G : Type*} [Group G] [Fintype G]
+variable {G : Type*} [Group G]
 
-/-- **Executable conjugacy-class data** for a finite group: a list `reps` containing exactly one
-element of each conjugacy class. The two fields are the two halves of "exactly one": distinct
-entries name distinct classes, and no class is missed.
+/-- **Executable conjugacy-class data** for a group: a list `reps` containing exactly one element of
+each conjugacy class. The two fields are the two halves of "exactly one": distinct entries name
+distinct classes, and no class is missed. Carrying the data asks nothing of `G` beyond its group
+structure; finiteness and decidable equality are what the searches computed from it need.
 
 The order of `reps` is the arbitrary but fixed numbering of the conjugacy classes that a
 computation indexes by; `TauCeti.ClassData.equivConjClasses` identifies it with
 `ConjClasses G`. -/
-structure ClassData (G : Type*) [Group G] [Fintype G] where
+structure ClassData (G : Type*) [Group G] where
   /-- The chosen representatives, in the order that numbers the classes. -/
   reps : List G
   /-- Distinct representatives are not conjugate, so they name distinct classes. -/
@@ -110,7 +111,8 @@ representatives occur in `l`.
 
 The hypothesis, rather than `Finset.univ.toList`, is what keeps this computable: `Finset.toList`
 is noncomputable, whereas a concrete finite group comes with a concrete enumeration. -/
-@[expose] def ofList [DecidableEq G] (l : List G) (hl : ∀ g : G, g ∈ l) : ClassData G where
+@[expose] def ofList [Fintype G] [DecidableEq G] (l : List G) (hl : ∀ g : G, g ∈ l) :
+    ClassData G where
   reps := l.pwFilter fun x y => ¬ IsConj x y
   pairwise_not_isConj := List.pairwise_pwFilter _
   exists_isConj g := by
@@ -130,12 +132,12 @@ is noncomputable, whereas a concrete finite group comes with a concrete enumerat
 later retained entry: the characteristic property of `TauCeti.ClassData.ofList`, so that a client
 never has to unfold the filtering itself. -/
 @[simp]
-theorem reps_ofList [DecidableEq G] (l : List G) (hl : ∀ g : G, g ∈ l) :
+theorem reps_ofList [Fintype G] [DecidableEq G] (l : List G) (hl : ∀ g : G, g ∈ l) :
     (ofList l hl).reps = l.pwFilter fun x y => ¬ IsConj x y := (rfl)
 
 /-- Every finite group has class data; the witness is noncomputable only because
 `Finset.toList` is. -/
-noncomputable instance : Inhabited (ClassData G) :=
+noncomputable instance [Fintype G] : Inhabited (ClassData G) :=
   letI := Classical.decEq G
   ⟨ofList (Finset.univ : Finset G).toList fun g => Finset.mem_toList.mpr (Finset.mem_univ g)⟩
 
@@ -169,9 +171,10 @@ theorem nodup_reps : d.reps.Nodup := by
   rintro rfl
   exact h (IsConj.refl a)
 
--- Decidable equality on `G` is what makes the search below, and everything computed from it,
--- executable; the numbering data itself does not need it.
-variable [DecidableEq G]
+-- Finiteness and decidable equality on `G` are what make the search below, and everything computed
+-- from it, executable: together they decide conjugacy and form the classes as `Finset`s. The
+-- numbering data itself needs neither.
+variable [Fintype G] [DecidableEq G]
 
 /-- The number of the conjugacy class of `g`, found by searching `d.reps` for a representative
 conjugate to `g`. The search succeeds because some representative is conjugate to `g`. -/
@@ -233,12 +236,26 @@ theorem equivConjClasses_apply (i : Fin d.numClasses) : d.equivConjClasses i = d
 theorem equivConjClasses_symm_apply (C : ConjClasses G) :
     d.equivConjClasses.symm C = d.indexClass C := (rfl)
 
-omit [DecidableEq G] in
+omit [Fintype G] [DecidableEq G] in
 /-- **The numbering has the expected length**: `d.reps` lists as many elements as `G` has
-conjugacy classes. -/
+conjugacy classes. The bijection is the one underlying `TauCeti.ClassData.equivConjClasses`, but it
+is exhibited here from the two fields directly, since the count itself needs neither a finite `G`
+nor a decidable conjugacy. -/
 theorem numClasses_eq_card_conjClasses : d.numClasses = Nat.card (ConjClasses G) := by
-  classical
-  simpa using Nat.card_congr d.equivConjClasses
+  have hbij : Function.Bijective d.classOf := by
+    constructor
+    · intro i j hij
+      rw [classOf_eq_mk, classOf_eq_mk, ConjClasses.mk_eq_mk_iff_isConj] at hij
+      by_contra hne
+      exact d.not_isConj_rep hne hij
+    · refine Quotient.ind fun g => ?_
+      obtain ⟨x, hx, hxg⟩ := d.exists_isConj g
+      obtain ⟨i, hi, rfl⟩ := List.getElem_of_mem hx
+      refine ⟨⟨i, hi⟩, ?_⟩
+      rw [ConjClasses.quotient_mk_eq_mk, classOf_eq_mk, ConjClasses.mk_eq_mk_iff_isConj]
+      -- the representative `d.rep ⟨i, hi⟩` is the list entry `d.reps[i]` by definition
+      exact hxg
+  simpa using Nat.card_congr (Equiv.ofBijective _ hbij)
 
 section Classes
 
