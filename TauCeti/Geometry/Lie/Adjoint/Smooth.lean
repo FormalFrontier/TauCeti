@@ -60,7 +60,7 @@ omit [FiniteDimensional ℝ E] in
 private theorem contMDiff_mfderiv_conj_apply :
     ContMDiff (I.prod 𝓘(ℝ, E)) 𝓘(ℝ, E) ∞
       (fun p : G × E ↦ @id E
-        (mfderiv I I (conjDiffeomorph (I := I) (n := ∞) p.1) 1
+        (mfderiv I I (conjDiffeomorph (I := I) (n := 3) p.1) 1
           (show TangentSpace I (1 : G) from p.2))) := by
   intro p
   let e := trivializationAt E (TangentSpace I) (1 : G)
@@ -85,7 +85,7 @@ private theorem contMDiff_mfderiv_conj_apply :
   convert h' using 1
   funext x
   let v : TangentSpace I (1 : G) := x.2
-  change @id E ((mfderiv I I (conjDiffeomorph (I := I) (n := ∞) x.1) 1) v) =
+  change @id E ((mfderiv I I (conjDiffeomorph (I := I) (n := 3) x.1) 1) v) =
     @id E (B ((ContinuousLinearMap.inCoordinates E (TangentSpace I) E (TangentSpace I)
       (1 : G) (1 : G) (1 : G) (1 : G) (mfderiv I I (f x.1) 1)) (A v)))
   have hcancel :
@@ -96,9 +96,9 @@ private theorem contMDiff_mfderiv_conj_apply :
     exact cancel_inCoordinates_at (I := I) (G := G) (x := 1)
       (ϕ := mfderiv I I (f x.1) 1) (v := v)
   rw [hcancel]
-  have hfun : (conjDiffeomorph (I := I) (n := ∞) x.1 : G → G) = f x.1 := by
+  have hfun : (conjDiffeomorph (I := I) (n := 3) x.1 : G → G) = f x.1 := by
     funext y
-    exact conjDiffeomorph_apply (I := I) (n := ∞) x.1 y
+    exact conjDiffeomorph_apply (I := I) (n := 3) x.1 y
   rw [mfderiv_congr hfun]
   rfl
 
@@ -114,7 +114,7 @@ theorem contMDiff_tangentAd_apply :
   intro p
   let v : GroupLieAlgebra I G := p.2
   change @id E (tangentAd (I := I) p.1 v) =
-    @id E ((mfderiv I I (conjDiffeomorph (I := I) (n := ∞) p.1) 1) v)
+    @id E ((mfderiv I I (conjDiffeomorph (I := I) (n := 3) p.1) 1) v)
   rw [tangentAd_apply, adjointContinuousLinearMap_apply]
 
 end TauCeti.Lie
