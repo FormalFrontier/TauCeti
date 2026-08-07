@@ -149,10 +149,4 @@ theorem isRealClass_mk_iff {g : G} : IsRealClass (ConjClasses.mk g) ↔ IsConj g
   rw [isRealClass_iff_inv_eq, ConjClasses.inv_mk, ConjClasses.mk_eq_mk_iff_isConj]
   exact ⟨IsConj.symm, IsConj.symm⟩
 
--- Not a `simp` lemma: `simp` already proves it from `isRealClass_iff_inv_eq` and
--- `ConjClasses.inv_one`.
-/-- The class of the identity is real. -/
-theorem isRealClass_one : IsRealClass (1 : ConjClasses G) :=
-  isRealClass_iff_inv_eq.mpr ConjClasses.inv_one
-
 end TauCeti
