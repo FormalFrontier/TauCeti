@@ -43,7 +43,9 @@ of `SU(2)` is computed from in `TauCeti/RepresentationTheory/SU2/Weyl.lean`.
 
 It also records the structural identity `TauCeti.SU2.coe_add_star`: an element of `SU(2)` and its
 conjugate transpose add up to `(tr g) • 1`, so the Hermitian part of an element of `SU(2)` is a
-scalar matrix.
+scalar matrix. On the torus the trace is `TauCeti.SU2.trace_torusMatrix`: `tr (diag (z, z⁻¹))
+= z + z⁻¹`, and `TauCeti.SU2.eq_or_eq_inv_of_trace_torusMatrix_eq` says that this value determines
+`z` up to inversion.
 
 ## Main definitions
 
@@ -120,6 +122,11 @@ theorem star_torusMatrix (z : Circle) : star (torusMatrix z) = torusMatrix z⁻�
   congr 1
   ext i
   fin_cases i <;> simp [hz]
+
+@[simp]
+theorem trace_torusMatrix (z : Circle) :
+    (torusMatrix z).trace = (z : ℂ) + ((z : ℂ))⁻¹ := by
+  rw [Matrix.trace_fin_two, torusMatrix_apply_zero_zero, torusMatrix_apply_one_one]
 
 @[simp]
 theorem det_torusMatrix (z : Circle) : (torusMatrix z).det = 1 := by
@@ -329,11 +336,26 @@ theorem eq_torus_of_isMulCommutative {H : Subgroup SU2} [IsMulCommutative H] (hH
 
 /-! ### Conjugating a torus element back into the torus -/
 
+/-- **The trace separates the torus elements up to inversion:** `z` and `z⁻¹` are the only two
+points of the circle at which `diag (z, z⁻¹)` has a given trace, being the two roots of
+`X² - (z + z⁻¹) X + 1`. -/
+theorem eq_or_eq_inv_of_trace_torusMatrix_eq {z w : Circle}
+    (h : (torusMatrix w).trace = (torusMatrix z).trace) : w = z ∨ w = z⁻¹ := by
+  rw [trace_torusMatrix, trace_torusMatrix] at h
+  have hfac : ((w : ℂ) - (z : ℂ)) * ((w : ℂ) - ((z : ℂ))⁻¹) = 0 := by
+    have hw : (w : ℂ) * ((w : ℂ))⁻¹ = 1 := mul_inv_cancel₀ w.coe_ne_zero
+    have hzz : (z : ℂ) * ((z : ℂ))⁻¹ = 1 := mul_inv_cancel₀ z.coe_ne_zero
+    linear_combination (w : ℂ) * h - hw + hzz
+  rcases mul_eq_zero.mp hfac with hc | hc
+  · exact Or.inl (Circle.ext (sub_eq_zero.mp hc))
+  · exact Or.inr (Circle.ext (by rw [Circle.coe_inv]; exact sub_eq_zero.mp hc))
+
 /-- **Conjugating a torus element back into the maximal torus returns it or its inverse.**
-Conjugation preserves the trace, and `z` and `z⁻¹` are the only two solutions of
-`X + X⁻¹ = z + z⁻¹`, being the two roots of `X² - (z + z⁻¹) X + 1`. -/
+Conjugation preserves the trace, and the trace separates torus elements up to inversion
+(`TauCeti.SU2.eq_or_eq_inv_of_trace_torusMatrix_eq`). -/
 theorem eq_or_eq_inv_of_conj_torusHom {z w : Circle} {g : SU2}
     (h : g * torusHom z * g⁻¹ = torusHom w) : w = z ∨ w = z⁻¹ := by
+  refine eq_or_eq_inv_of_trace_torusMatrix_eq ?_
   have hBA : ((g⁻¹ : SU2) : Matrix (Fin 2) (Fin 2) ℂ) * (g : Matrix (Fin 2) (Fin 2) ℂ) = 1 := by
     have hval := congrArg Subtype.val (inv_mul_cancel g)
     simpa only [Submonoid.coe_mul, OneMemClass.coe_one] using hval
@@ -341,22 +363,14 @@ theorem eq_or_eq_inv_of_conj_torusHom {z w : Circle} {g : SU2}
       * ((g⁻¹ : SU2) : Matrix (Fin 2) (Fin 2) ℂ) = torusMatrix w := by
     have hval := congrArg Subtype.val h
     simpa only [Submonoid.coe_mul, coe_torusHom] using hval
-  have htrace : (torusMatrix w).trace = (torusMatrix z).trace := by
-    rw [← hmat, Matrix.trace_mul_comm, ← Matrix.mul_assoc, hBA, Matrix.one_mul]
-  rw [Matrix.trace_fin_two, Matrix.trace_fin_two] at htrace
-  simp only [torusMatrix_apply_zero_zero, torusMatrix_apply_one_one] at htrace
-  have hfac : ((w : ℂ) - (z : ℂ)) * ((w : ℂ) - ((z : ℂ))⁻¹) = 0 := by
-    have hw : (w : ℂ) * ((w : ℂ))⁻¹ = 1 := mul_inv_cancel₀ w.coe_ne_zero
-    have hzz : (z : ℂ) * ((z : ℂ))⁻¹ = 1 := mul_inv_cancel₀ z.coe_ne_zero
-    linear_combination (w : ℂ) * htrace - hw + hzz
-  rcases mul_eq_zero.mp hfac with hc | hc
-  · exact Or.inl (Circle.ext (sub_eq_zero.mp hc))
-  · exact Or.inr (Circle.ext (by rw [Circle.coe_inv]; exact sub_eq_zero.mp hc))
+  rw [← hmat, Matrix.trace_mul_comm, ← Matrix.mul_assoc, hBA, Matrix.one_mul]
 
 /-! ### The angle parametrisation -/
 
 /-- The torus element `diag (e^{iθ}, e^{-iθ})` of `SU(2)`. -/
 noncomputable def torusExp (θ : ℝ) : SU2 := torusHom (Circle.exp θ)
+
+theorem torusExp_eq_torusHom (θ : ℝ) : torusExp θ = torusHom (Circle.exp θ) := (rfl)
 
 @[simp]
 theorem coe_torusExp (θ : ℝ) :
