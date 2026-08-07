@@ -152,21 +152,18 @@ theorem not_isConj_rep {i j : Fin d.numClasses} (hij : i ≠ j) : ¬ IsConj (d.r
   · exact key h
   · exact fun hc => key h hc.symm
 
-/-- The search for the class of `g` succeeds, since some representative is conjugate to `g`. -/
-theorem findIdx_lt (g : G) : (d.reps.findIdx fun x => IsConj x g) < d.numClasses := by
-  refine List.findIdx_lt_length_of_exists ?_
-  obtain ⟨x, hx, hxg⟩ := d.exists_isConj g
-  exact ⟨x, hx, decide_eq_true hxg⟩
-
 /-- The number of the conjugacy class of `g`, found by searching `d.reps` for a representative
-conjugate to `g`. -/
+conjugate to `g`. The search succeeds because some representative is conjugate to `g`. -/
 @[expose] def index (g : G) : Fin d.numClasses :=
-  ⟨d.reps.findIdx fun x => IsConj x g, d.findIdx_lt g⟩
+  ⟨d.reps.findIdx fun x => IsConj x g, by
+    refine List.findIdx_lt_length_of_exists ?_
+    obtain ⟨x, hx, hxg⟩ := d.exists_isConj g
+    exact ⟨x, hx, decide_eq_true hxg⟩⟩
 
 /-- The representative found by `TauCeti.ClassData.index` is conjugate to `g`. -/
 theorem isConj_rep_index (g : G) : IsConj (d.rep (d.index g)) g :=
   of_decide_eq_true
-    (List.findIdx_getElem (p := fun x => decide (IsConj x g)) (w := d.findIdx_lt g))
+    (List.findIdx_getElem (p := fun x => decide (IsConj x g)) (w := (d.index g).isLt))
 
 /-- **The numbering is characterized by conjugacy**: `g` has number `i` exactly when it is
 conjugate to the `i`-th representative. -/
