@@ -18,10 +18,12 @@ Two facts drive everything. A weight interior to the dominant chamber is moved b
 nontrivial Weyl-group element, indeed out of the closed dominant chamber
 (`TauCeti.eq_one_of_smul_mem_dominantChamber`); and every weight is Weyl-conjugate into the closed
 dominant chamber (`TauCeti.exists_mem_dominantChamber`). The first says an open chamber meets the
-closed chamber of no other Weyl-group element, so labelling chambers by Weyl-group elements is
-unambiguous; the second says the labelling reaches every weight. Together they make
-`w ↦ w • openDominantChamber` a bijection from the Weyl group onto the set of open chambers, which
-is what simple transitivity means here.
+closed chamber of no other Weyl-group element, so the labelling `w ↦ w • openDominantChamber` is
+injective as soon as the open dominant chamber has a point to distinguish two labels by; the set of
+open chambers is by definition the range of that labelling, so surjectivity is free, and the two
+together make it a bijection from the Weyl group onto the set of open chambers, which is what simple
+transitivity means here. The second fact is what covers the weights: it is how every *regular*
+weight is shown to lie in an open chamber.
 
 The weights lying in an open chamber are exactly the **regular** ones, those killed by no coroot
 functional. That is the sense in which the open chambers are the complement of the walls:
@@ -153,10 +155,12 @@ lemma weylChamber_one : weylChamber P b 1 = dominantChamber P b := one_smul _ _
 lemma openWeylChamber_one : openWeylChamber P b 1 = openDominantChamber P b := one_smul _ _
 
 /-- The Weyl group permutes the closed chambers, translating the index. -/
+@[simp]
 lemma smul_weylChamber (v w : P.weylGroup) :
     v • weylChamber P b w = weylChamber P b (v * w) := (mul_smul v w _).symm
 
 /-- The Weyl group permutes the open chambers, translating the index. -/
+@[simp]
 lemma smul_openWeylChamber (v w : P.weylGroup) :
     v • openWeylChamber P b w = openWeylChamber P b (v * w) := (mul_smul v w _).symm
 
@@ -170,20 +174,21 @@ functionals of the roots `w(αᵢ)`, for `αᵢ` simple. -/
 lemma mem_weylChamber_iff (w : P.weylGroup) (x : M) :
     x ∈ weylChamber P b w ↔ ∀ i ∈ b.support, 0 ≤ P.coroot' (P.weylGroupToPerm w i) x := by
   rw [mem_weylChamber, mem_dominantChamber]
-  exact forall₂_congr fun i _ ↦ by rw [RootPairing.coroot'_inv_smul]
+  exact forall₂_congr fun i _ ↦ by
+    rw [← RootPairing.coroot'_weylGroupToPerm_smul P w i (w⁻¹ • x), smul_inv_smul]
 
 /-- **An open Weyl chamber is a sign-pattern cone**: the open chamber of `w` is cut out by the
 coroot functionals of the roots `w(αᵢ)`, for `αᵢ` simple. -/
 lemma mem_openWeylChamber_iff (w : P.weylGroup) (x : M) :
     x ∈ openWeylChamber P b w ↔ ∀ i ∈ b.support, 0 < P.coroot' (P.weylGroupToPerm w i) x := by
   rw [mem_openWeylChamber, mem_openDominantChamber]
-  exact forall₂_congr fun i _ ↦ by rw [RootPairing.coroot'_inv_smul]
+  exact forall₂_congr fun i _ ↦ by
+    rw [← RootPairing.coroot'_weylGroupToPerm_smul P w i (w⁻¹ • x), smul_inv_smul]
 
 /-! ### The set of open chambers -/
 
 /-- The set of **open Weyl chambers** of a base: the Weyl translates of the open dominant
 chamber. -/
-@[expose]
 def openWeylChambers : Set (Set M) := Set.range (openWeylChamber P b)
 
 lemma mem_openWeylChambers {C : Set M} :
@@ -266,7 +271,7 @@ theorem openWeylChamber_injective (hne : (openDominantChamber P b).Nonempty) :
   exact eq_of_mem_openWeylChamber P b hv (h ▸ hv)
 
 /-- Two open chambers agree exactly when their labels do. -/
-theorem openWeylChamber_eq_iff (hne : (openDominantChamber P b).Nonempty) {v w : P.weylGroup} :
+theorem openWeylChamber_inj (hne : (openDominantChamber P b).Nonempty) {v w : P.weylGroup} :
     openWeylChamber P b v = openWeylChamber P b w ↔ v = w :=
   (openWeylChamber_injective P b hne).eq_iff
 
@@ -289,7 +294,6 @@ the Weyl-group element carrying the dominant one to it is a bijection.
 
 Transitivity of the action is `TauCeti.exists_smul_eq_of_mem_openWeylChambers` and freeness is
 `TauCeti.stabilizer_openWeylChamber_eq_bot`; this packages the two as an equivalence. -/
-@[expose]
 noncomputable def weylGroupEquivOpenWeylChambers (hne : (openDominantChamber P b).Nonempty) :
     P.weylGroup ≃ openWeylChambers P b :=
   Equiv.ofInjective (openWeylChamber P b) (openWeylChamber_injective P b hne)
@@ -297,7 +301,7 @@ noncomputable def weylGroupEquivOpenWeylChambers (hne : (openDominantChamber P b
 @[simp]
 lemma weylGroupEquivOpenWeylChambers_apply (hne : (openDominantChamber P b).Nonempty)
     (w : P.weylGroup) :
-    (weylGroupEquivOpenWeylChambers P b hne w : Set M) = openWeylChamber P b w := rfl
+    (weylGroupEquivOpenWeylChambers P b hne w : Set M) = openWeylChamber P b w := (rfl)
 
 end Regular
 

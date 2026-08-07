@@ -27,8 +27,7 @@ along its action on weights, matching the coroot functional of a root with that 
   coroot functional.
 * `TauCeti.RootPairing.coroot'_smul` and `TauCeti.RootPairing.coroot'_weylGroupToPerm_smul` say an
   automorphism, and in particular a Weyl-group element, carries the coroot functional of a root to
-  the coroot functional of its image; `TauCeti.RootPairing.coroot'_inv_smul` is the form of the
-  latter that reads a coroot functional off an inverse translate.
+  the coroot functional of its image.
 * `TauCeti.RootPairing.weylGroupToPerm_ofIdx_apply` evaluates the action of a simple reflection.
 * `TauCeti.RootPairing.weylGroupToPerm_neg` says the action commutes with root negation.
 * `TauCeti.RootPairing.weylGroup.ofIdx_mul_self` says a simple reflection is an involution.
@@ -119,15 +118,6 @@ lemma coroot'_weylGroupToPerm_smul (w : P.weylGroup) (i : ι) (x : M) :
   have h := coroot'_smul P (w : P.Aut) ((w : P.Aut).indexEquiv i) x
   rw [_root_.Equiv.symm_apply_apply] at h
   exact h
-
-/-- **A Weyl-group element transports coroot functionals along its inverse translation**: the
-coroot functional of a root, evaluated at `w⁻¹ • x`, is the coroot functional of the image root,
-evaluated at `x`. -/
-lemma coroot'_inv_smul (w : P.weylGroup) (i : ι) (x : M) :
-    P.coroot' i (w⁻¹ • x) = P.coroot' (P.weylGroupToPerm w i) x := by
-  have h := coroot'_weylGroupToPerm_smul P w i (w⁻¹ • x)
-  rw [smul_inv_smul] at h
-  exact h.symm
 
 /-- If the roots span, the action of the Weyl group on root indices is faithful. -/
 theorem weylGroupToPerm_injective_of_span_eq_top
