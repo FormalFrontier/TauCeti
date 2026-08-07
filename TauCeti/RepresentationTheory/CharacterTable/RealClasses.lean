@@ -79,19 +79,16 @@ theorem isRealClass_iff_inv_eq {C : ConjClasses G} : IsRealClass C ↔ C⁻¹ = 
     rw [ConjClasses.inv_mk, ConjClasses.mk_eq_mk_iff_isConj] at h
     exact ⟨g, rfl, h.symm⟩
 
-/-- The class of `g` is real exactly when `g` is conjugate to `g⁻¹`.
-
-This is not a `simp` lemma: `TauCeti.isRealClass_iff_inv_eq` and `TauCeti.ConjClasses.inv_mk`
-already rewrite the left-hand side to `ConjClasses.mk g⁻¹ = ConjClasses.mk g`, so tagging it makes
-the `simpNF` linter fail. -/
+-- Not a `simp` lemma: `isRealClass_iff_inv_eq` and `ConjClasses.inv_mk` already rewrite the
+-- left-hand side to `ConjClasses.mk g⁻¹ = ConjClasses.mk g`, so tagging it makes `simpNF` fail.
+/-- The class of `g` is real exactly when `g` is conjugate to `g⁻¹`. -/
 theorem isRealClass_mk_iff {g : G} : IsRealClass (ConjClasses.mk g) ↔ IsConj g g⁻¹ := by
   rw [isRealClass_iff_inv_eq, ConjClasses.inv_mk, ConjClasses.mk_eq_mk_iff_isConj]
   exact ⟨IsConj.symm, IsConj.symm⟩
 
-/-- The class of the identity is real.
-
-This is not a `simp` lemma: `simp` already proves it from `TauCeti.isRealClass_iff_inv_eq` and
-`TauCeti.ConjClasses.inv_one`. -/
+-- Not a `simp` lemma: `simp` already proves it from `isRealClass_iff_inv_eq` and
+-- `ConjClasses.inv_one`.
+/-- The class of the identity is real. -/
 theorem isRealClass_one : IsRealClass (1 : ConjClasses G) :=
   isRealClass_iff_inv_eq.mpr ConjClasses.inv_one
 
@@ -106,14 +103,7 @@ variable {k : Type u} {G : Type v} [Field k] [Group G] [Fintype G] [IsAlgClosed 
 
 open scoped Classical in
 /-- **An irreducible character pairs with its own inversion to `1` or to `0`**, according as
-inverting the group element leaves it unchanged or not.
-
-This is the statement that carries the content. Inversion is an isometry of the character pairing,
-so the inverted character still pairs to `1` with itself, and it is a virtual character, being the
-character of the dual representation; a virtual character of norm `1` is `±` a row of the character
-table by `TauCeti.exists_eq_irreducibleCharacter_or_neg`, and the sign is fixed by the value at `1`,
-a positive degree. The inverted character is therefore again one of the rows — a fact proved here,
-not assumed — and it is the `i`-th row exactly when the `i`-th row is inversion-invariant. -/
+inverting the group element leaves it unchanged or not. -/
 theorem characterPairing_ofCharacter_invMap_self [CharZero k]
     (i : Fin (Nat.card (ConjClasses G))) :
     characterPairing (ofCharacter (irreducibleRepresentation k i))
@@ -223,11 +213,7 @@ variable (k : Type u) (G : Type v) [Field k] [CharZero k] [Group G] [Finite G] [
   [Invertible (Nat.card G : k)]
 
 /-- **A finite group has as many inversion-invariant rows in its character table as real conjugacy
-classes.**
-
-Both counts are the total `|G|⁻¹ ∑_i ∑_g χᵢ(g)²` of the square of the table, read once along the
-rows (`TauCeti.card_inv_mul_sum_irreducibleCharacter_sq`) and once down the columns
-(`TauCeti.sum_characterTable_sq`). -/
+classes.** -/
 theorem card_inversionInvariant_eq_card_realClasses :
     Nat.card {i : Fin (Nat.card (ConjClasses G)) //
         ∀ C : ConjClasses G, characterTable k G i C⁻¹ = characterTable k G i C} =
