@@ -18,11 +18,13 @@ This assembles two halves that are already available. Every element of `SU(2)` i
 the maximal torus `T` (`TauCeti.SU2.exists_conj_mem_torus`), and each conjugacy class meets `T` in
 exactly one Weyl orbit `{z, z⁻¹}` (`TauCeti.SU2.isConj_torusHom_iff` of
 `TauCeti/RepresentationTheory/SU2/TorusConjugacy.lean`); here `z + z⁻¹ = tr (diag (z, z⁻¹))` is
-the invariant that separates those orbits. Cutting each orbit down to a single representative is
-what makes `[0, π]` a strict fundamental domain for the Weyl action on angles
+the invariant that separates those orbits. Cutting each orbit down to a single representative
+makes `[0, π]` a set of representatives for the conjugacy classes: every element of `SU(2)` is
+conjugate to `diag (e^{iθ}, e^{-iθ})` for exactly one `θ` in it
 (`TauCeti.SU2.exists_isConj_torusExp_mem_Icc` and
-`TauCeti.SU2.eq_of_mem_Icc_of_isConj_torusExp`): it is the Weyl chamber that the Weyl
-integration formula for `SU(2)` integrates over.
+`TauCeti.SU2.eq_of_mem_Icc_of_isConj_torusExp`). Note that the angle has to be read modulo `2π`
+for this to be the Weyl action alone: `θ ↦ -θ` by itself does not move `θ = 5` into `[0, π]`.
+This is the Weyl chamber that the Weyl integration formula for `SU(2)` integrates over.
 
 The immediate use is for class functions. A conjugation-invariant function on `SU(2)` factors
 through the trace (`TauCeti.SU2.eq_of_conjInvariant_of_trace_eq`), and two of them that agree on
@@ -41,8 +43,9 @@ is drawn in `TauCeti/RepresentationTheory/SU2/Character.lean`.
   `TauCeti.SU2.isSelfAdjoint_trace`, the traces of elements of `SU(2)` are exactly the real
   numbers of absolute value at most `2`.
 * `TauCeti.SU2.exists_isConj_torusExp_mem_Icc` and
-  `TauCeti.SU2.eq_of_mem_Icc_of_isConj_torusExp`: `[0, π]` is a strict fundamental domain,
-  every element of `SU(2)` being conjugate to `diag (e^{iθ}, e^{-iθ})` for exactly one `θ` in it.
+  `TauCeti.SU2.eq_of_mem_Icc_of_isConj_torusExp`: every element of `SU(2)` is conjugate to
+  `diag (e^{iθ}, e^{-iθ})` for exactly one `θ ∈ [0, π]`, so the Weyl chamber `[0, π]` is a set of
+  representatives for the conjugacy classes.
 * `TauCeti.SU2.eq_of_conjInvariant_of_trace_eq` and
   `TauCeti.SU2.eq_of_conjInvariant_of_eqOn_torusExp_Icc`: a class function on `SU(2)` is a
   function of the trace, and is determined by its values on the Weyl chamber.
@@ -122,11 +125,12 @@ theorem isConj_torusExp_iff_cos_eq {θ φ : ℝ} :
   refine ⟨fun h => ?_, fun h => by rw [h]⟩
   exact_mod_cast (mul_left_cancel₀ (a := (2 : ℂ)) (by norm_num) h).symm
 
-/-! ### The Weyl chamber `[0, π]` as a strict fundamental domain -/
+/-! ### The Weyl chamber `[0, π]` as a set of representatives -/
 
 /-- Every element of `SU(2)` is conjugate to `diag (e^{iθ}, e^{-iθ})` for some angle `θ` in the
 Weyl chamber `[0, π]`: the angle produced by torus conjugacy is folded into the chamber by
-`arccos ∘ cos`, which changes it only by the Weyl reflection `θ ↦ -θ` and a full turn. -/
+`arccos ∘ cos`, which changes it only by the Weyl reflection `θ ↦ -θ` and a whole number of full
+turns. -/
 theorem exists_isConj_torusExp_mem_Icc (g : SU2) :
     ∃ θ ∈ Set.Icc (0 : ℝ) Real.pi, IsConj g (torusExp θ) := by
   obtain ⟨φ, hφ⟩ := exists_isConj_torusExp g
@@ -136,8 +140,9 @@ theorem exists_isConj_torusExp_mem_Icc (g : SU2) :
 
 /-- The Weyl chamber `[0, π]` contains **at most** one angle from each conjugacy class: distinct
 angles there give non-conjugate torus elements, because the cosine is injective on `[0, π]`.
-With `TauCeti.SU2.exists_isConj_torusExp_mem_Icc` this says `[0, π]` is a *strict* fundamental
-domain for the Weyl action on the angles of the maximal torus. -/
+With `TauCeti.SU2.exists_isConj_torusExp_mem_Icc` this says that each conjugacy class of `SU(2)`
+contains `diag (e^{iθ}, e^{-iθ})` for exactly one `θ ∈ [0, π]`; equivalently, `[0, π]` is a strict
+fundamental domain for the Weyl reflection `θ ↦ -θ` acting on the angles read modulo `2π`. -/
 theorem eq_of_mem_Icc_of_isConj_torusExp {θ φ : ℝ} (hθ : θ ∈ Set.Icc (0 : ℝ) Real.pi)
     (hφ : φ ∈ Set.Icc (0 : ℝ) Real.pi) (h : IsConj (torusExp θ) (torusExp φ)) : θ = φ :=
   Real.injOn_cos hθ hφ (isConj_torusExp_iff_cos_eq.mp h).symm
@@ -156,8 +161,8 @@ theorem eq_of_conjInvariant_of_trace_eq {α : Type*} {f : SU2 → α}
 /-- **A class function on `SU(2)` is determined by its values on the Weyl chamber:** two
 conjugation-invariant functions that agree at `diag (e^{iθ}, e^{-iθ})` for every `θ ∈ [0, π]` are
 equal. This sharpens `TauCeti.SU2.eq_of_conjInvariant_of_eqOn_torus`, which asks for agreement on
-the whole maximal torus, to the fundamental domain of the Weyl action cut out by
-`TauCeti.SU2.exists_isConj_torusExp_mem_Icc`. -/
+the whole maximal torus, to the Weyl chamber, which by
+`TauCeti.SU2.exists_isConj_torusExp_mem_Icc` already meets every conjugacy class. -/
 theorem eq_of_conjInvariant_of_eqOn_torusExp_Icc {α : Type*} {f₁ f₂ : SU2 → α}
     (h₁ : ∀ u g : SU2, f₁ (u * g * u⁻¹) = f₁ g) (h₂ : ∀ u g : SU2, f₂ (u * g * u⁻¹) = f₂ g)
     (h : ∀ θ ∈ Set.Icc (0 : ℝ) Real.pi, f₁ (torusExp θ) = f₂ (torusExp θ)) : f₁ = f₂ := by
