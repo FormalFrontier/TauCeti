@@ -112,7 +112,7 @@ def spechtIdealToSubrepresentation (t : YoungTableau μ) :
 
 /-- The canonical comparison map is evaluation of an ideal element on the tabloid `{t}`. -/
 @[simp]
-theorem coe_spechtIdealToSubrepresentation (t : YoungTableau μ) (x : spechtIdeal t) :
+theorem coe_spechtIdealToSubrepresentation_apply (t : YoungTableau μ) (x : spechtIdeal t) :
     ((spechtIdealToSubrepresentation t x : (spechtSubrepresentation μ).toSubmodule) :
         (permutationModule (shapePartition μ)).V) =
       (permutationModule (shapePartition μ)).ρ.asAlgebraHom
@@ -122,7 +122,7 @@ theorem coe_spechtIdealToSubrepresentation (t : YoungTableau μ) (x : spechtIdea
 
 /-- The coefficient of `{t}` in `c_t · {t}` is the order of the row group.  In particular the
 canonical comparison map does not annihilate the generator of the Young-symmetrizer ideal. -/
-theorem coeff_asAlgebraHom_youngSymmetrizer_tabloid (t : YoungTableau μ) :
+theorem youngSymmetrizer_smul_tabloid_coeff_tabloid (t : YoungTableau μ) :
     ((permutationModule (shapePartition μ)).ρ.asAlgebraHom (youngSymmetrizer t)
         (MonoidAlgebra.single (tabloid t) 1)).coeff (tabloid t) =
       (Nat.card (rowSubgroup t) : ℚ) := by
@@ -152,7 +152,7 @@ theorem spechtIdealToSubrepresentation_ne_zero (t : YoungTableau μ) :
   have hval :
       (permutationRep μ).asAlgebraHom (youngSymmetrizer t)
           (MonoidAlgebra.single (tabloid t) 1) = 0 := by
-    have hmap := coe_spechtIdealToSubrepresentation t
+    have hmap := coe_spechtIdealToSubrepresentation_apply t
       (⟨youngSymmetrizer t, youngSymmetrizer_mem_spechtIdeal t⟩ : spechtIdeal t)
     have happ' :
         spechtIdealToSubrepresentation t
@@ -166,7 +166,7 @@ theorem spechtIdealToSubrepresentation_ne_zero (t : YoungTableau μ) :
     exact hmap.symm.trans hz
   have hcoeff := congrArg
     (fun x : (permutationModule (shapePartition μ)).V => x.coeff (tabloid t)) hval
-  rw [coeff_asAlgebraHom_youngSymmetrizer_tabloid, MonoidAlgebra.coeff_zero] at hcoeff
+  rw [youngSymmetrizer_smul_tabloid_coeff_tabloid, MonoidAlgebra.coeff_zero] at hcoeff
   exact (Nat.cast_ne_zero.mpr
     (Nat.card_ne_zero.mpr ⟨inferInstance, inferInstance⟩ : Nat.card (rowSubgroup t) ≠ 0)) hcoeff
 
@@ -183,14 +183,15 @@ def spechtIdealEquivSpechtSubrepresentation (t : YoungTableau μ) :
 
 /-- The representation equivalence sends an ideal element to its action on the tabloid `{t}`. -/
 @[simp]
-theorem coe_spechtIdealEquivSpechtSubrepresentation (t : YoungTableau μ) (x : spechtIdeal t) :
+theorem coe_spechtIdealEquivSpechtSubrepresentation_apply (t : YoungTableau μ)
+    (x : spechtIdeal t) :
     (((spechtIdealEquivSpechtSubrepresentation t x :
         (spechtSubrepresentation μ).toSubmodule) :
         (permutationModule (shapePartition μ)).V)) =
       (permutationModule (shapePartition μ)).ρ.asAlgebraHom
         (x : MonoidAlgebra ℚ (Equiv.Perm (Fin μ.card)))
         (MonoidAlgebra.single (tabloid t) 1) := by
-  exact coe_spechtIdealToSubrepresentation t x
+  exact coe_spechtIdealToSubrepresentation_apply t x
 
 /-- The Young-symmetrizer ideal and the polytabloid Specht module are isomorphic as objects of
 `Rep ℚ (Equiv.Perm (Fin μ.card))`. -/
@@ -198,13 +199,30 @@ def spechtIdealIsoSpechtSubrepresentation (t : YoungTableau μ) :
     spechtIdealRep t ≅ Rep.of (spechtSubrepresentation μ).toRepresentation :=
   Rep.mkIso (spechtIdealEquivSpechtSubrepresentation t)
 
+/-- The categorical comparison isomorphism sends an ideal element to its action on the tabloid
+`{t}`. -/
+@[simp]
+theorem spechtIdealIsoSpechtSubrepresentation_hom_hom_apply_coe (t : YoungTableau μ)
+    (x : spechtIdeal t) :
+    (((spechtIdealIsoSpechtSubrepresentation t).hom.hom x :
+        (spechtSubrepresentation μ).toSubmodule) :
+        (permutationModule (shapePartition μ)).V) =
+      (permutationModule (shapePartition μ)).ρ.asAlgebraHom
+        (x : MonoidAlgebra ℚ (Equiv.Perm (Fin μ.card)))
+        (MonoidAlgebra.single (tabloid t) 1) := by
+  rw [spechtIdealIsoSpechtSubrepresentation, Rep.mkIso_hom_hom_apply,
+    Representation.Equiv.coe_toLinearMap,
+    coe_spechtIdealEquivSpechtSubrepresentation_apply]
+
 /-- The two presentations of the Specht module have the same dimension. -/
+@[simp]
 theorem finrank_spechtIdeal_eq_spechtSubrepresentation (t : YoungTableau μ) :
     Module.finrank ℚ (spechtIdeal t) =
       Module.finrank ℚ (spechtSubrepresentation μ).toSubmodule :=
   (spechtIdealEquivSpechtSubrepresentation t).toLinearEquiv.finrank_eq
 
 /-- The two presentations of the Specht module have the same character. -/
+@[simp]
 theorem character_spechtIdeal_eq_spechtSubrepresentation (t : YoungTableau μ) :
     (spechtIdealRep t).ρ.character =
       (spechtSubrepresentation μ).toRepresentation.character :=
