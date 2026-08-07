@@ -39,8 +39,7 @@ variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
   {H : Type*} [TopologicalSpace H] {I : ModelWithCorners ℝ E H}
   {G : Type*} [TopologicalSpace G] [ChartedSpace H G] [Group G]
 
-local instance [LieGroup I ∞ G] : LieGroup I (minSmoothness ℝ 3) G := by
-  simpa using (inferInstance : LieGroup I (3 : ℕ∞ω) G)
+attribute [local instance] LieGroup.minSmoothnessThree
 
 /-- In model-space identity coordinates, the tangent-space exponential has derivative the identity
 at zero. -/
