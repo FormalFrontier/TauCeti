@@ -6,7 +6,9 @@ module
 
 import Mathlib.Tactic.Group
 public import Mathlib.GroupTheory.QuotientGroup.Basic
+public import TauCeti.Algebra.Group.NormalizerQuotient.Basic
 public import TauCeti.AlgebraicTopology.UniversalCover.Deck.Quotient.ActingGroup
+public import TauCeti.GroupTheory.QuotientGroup.KerEquiv
 
 /-!
 # The deck group of an intermediate quotient is a normalizer quotient
@@ -256,7 +258,7 @@ theorem normalizerQuotientDeckMulEquiv_mk [PreconnectedSpace E] [Nonempty E]
     (hrc : IsCoveringMap r) (γ : _root_.Subgroup.normalizer (H : Set Γ)) :
     normalizerQuotientDeckMulEquiv hp hq hr hrc (QuotientGroup.mk γ) =
       normalizerDeckHom hp hq hr γ := by
-  simp [normalizerQuotientDeckMulEquiv, QuotientGroup.quotientKerEquivOfSurjective]
+  simp [normalizerQuotientDeckMulEquiv, QuotientGroup.quotientKerEquivOfSurjective_mk]
 
 end DeckHom
 
@@ -283,24 +285,13 @@ theorem deckHomOfNormal_apply (γ : Γ) (e : E) :
     (deckHomOfNormal hp hq hr γ).1 (q e) = q (γ • e) :=
   normalizerDeckHom_apply hp hq hr _ e
 
-/-- The kernel of the descent homomorphism on the whole acting group is `H`. -/
-theorem ker_deckHomOfNormal [Nonempty E] : (deckHomOfNormal hp hq hr).ker = H := by
-  ext γ
-  rw [MonoidHom.mem_ker, deckHomOfNormal, MonoidHom.comp_apply, ← MonoidHom.mem_ker,
-    ker_normalizerDeckHom hp hq hr, Subgroup.mem_subgroupOf]
-  exact Iff.rfl
-
-theorem deckHomOfNormal_surjective [PreconnectedSpace E] (hrc : IsCoveringMap r) :
-    Function.Surjective (deckHomOfNormal hp hq hr) := fun φ => by
-  obtain ⟨γ, hγ⟩ := normalizerDeckHom_surjective hp hq hr hrc φ
-  exact ⟨(γ : Γ), hγ⟩
-
-/-- **For a normal subgroup, the deck group of the intermediate covering is `Γ ⧸ H`.** -/
+/-- **For a normal subgroup, the deck group of the intermediate covering is `Γ ⧸ H`.** This is
+the general normalizer-quotient identification, read through the algebraic comparison
+`TauCeti.Subgroup.normalizerQuotientEquivQuotientOfNormal` between `N(H) ⧸ H` and `Γ ⧸ H`. -/
 def quotientDeckMulEquivOfNormal [PreconnectedSpace E] [Nonempty E] (hrc : IsCoveringMap r) :
     Γ ⧸ H ≃* Deck r :=
-  (QuotientGroup.quotientMulEquivOfEq (ker_deckHomOfNormal hp hq hr).symm).trans
-    (QuotientGroup.quotientKerEquivOfSurjective (deckHomOfNormal hp hq hr)
-      (deckHomOfNormal_surjective hp hq hr hrc))
+  (Subgroup.normalizerQuotientEquivQuotientOfNormal H).symm.trans
+    (normalizerQuotientDeckMulEquiv hp hq hr hrc)
 
 /-- The isomorphism `Γ ⧸ H ≃* Deck r` sends the class of `γ` to the descent of translation
 by `γ`. -/
@@ -309,7 +300,10 @@ theorem quotientDeckMulEquivOfNormal_mk [PreconnectedSpace E] [Nonempty E]
     (hrc : IsCoveringMap r) (γ : Γ) :
     quotientDeckMulEquivOfNormal hp hq hr hrc (QuotientGroup.mk γ) =
       deckHomOfNormal hp hq hr γ := by
-  simp [quotientDeckMulEquivOfNormal, QuotientGroup.quotientKerEquivOfSurjective]
+  rw [quotientDeckMulEquivOfNormal, MulEquiv.trans_apply, ← QuotientGroup.mk'_apply,
+    Subgroup.normalizerQuotientEquivQuotientOfNormal_symm_mk,
+    Subgroup.normalizerQuotientMk_apply, normalizerQuotientDeckMulEquiv_mk]
+  rfl
 
 end Normal
 
