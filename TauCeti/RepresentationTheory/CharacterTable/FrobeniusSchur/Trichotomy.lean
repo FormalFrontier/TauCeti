@@ -167,24 +167,12 @@ end Submodules
 section Helpers
 
 /-
-The three lemmas below are stated for an abstract module `W` and applied with `W` given
-explicitly.  Leaving `W` to unification at those applications makes the elaborator look for an
-`AddCommGroup` structure on a space of linear maps whose `AddCommMonoid` structure is already
-fixed, which it does not find quickly.
+The lemma below is stated for an abstract module `W` and applied with `W` given explicitly.
+Leaving `W` to unification at those applications makes the elaborator look for an `AddCommGroup`
+structure on a space of linear maps whose `AddCommMonoid` structure is already fixed, which it
+does not find quickly.  The same holds of the Mathlib lemmas `finrank_span_singleton` and
+`Submodule.one_le_finrank_iff` where they are used below.
 -/
-
-/-- A line spanned by a nonzero vector is one-dimensional. -/
-private theorem finrank_span_singleton_eq_one {K W : Type*} [Field K] [AddCommGroup W]
-    [Module K W] {w : W} (hw : w ≠ 0) : finrank K (Submodule.span K {w}) = 1 :=
-  finrank_span_singleton hw
-
-/-- A submodule containing a nonzero vector is at least one-dimensional. -/
-private theorem one_le_finrank_of_mem {K W : Type*} [Field K] [AddCommGroup W] [Module K W]
-    [FiniteDimensional K W] {S : Submodule K W} {w : W} (hw : w ≠ 0) (hmem : w ∈ S) :
-    1 ≤ finrank K S :=
-  calc 1 = finrank K (Submodule.span K {w}) := (finrank_span_singleton_eq_one hw).symm
-    _ ≤ finrank K S :=
-        Submodule.finrank_mono (Submodule.span_le.mpr (Set.singleton_subset_iff.mpr hmem))
 
 /-- Two submodules meeting only in `0` have dimensions adding to at most that of any submodule
 containing them both. -/
@@ -466,9 +454,10 @@ theorem frobeniusSchurIndicator_eq_one_of_isSymm (hB : IsInvariantForm ρ B) (hB
     (hsymm : B.IsSymm) : frobeniusSchurIndicator ρ = 1 := by
   have hone : finrank k (invariantForms ρ) = 1 := by
     rw [hB.invariantForms_eq_span hB0]
-    exact finrank_span_singleton_eq_one (K := k) (W := BilinForm k V) hB0
+    exact finrank_span_singleton (K := k) (V := BilinForm k V) hB0
   have hle : 1 ≤ finrank k (symmetricInvariantForms ρ) :=
-    one_le_finrank_of_mem (K := k) (W := BilinForm k V) hB0 ⟨hB, hsymm⟩
+    Submodule.one_le_finrank_iff (R := k) (M := BilinForm k V) |>.mpr
+      ((Submodule.ne_bot_iff _).mpr ⟨B, ⟨hB, hsymm⟩, hB0⟩)
   have hadd := finrank_symmetricInvariantForms_add_finrank_alternatingInvariantForms ρ
   have hs : finrank k (symmetricInvariantForms ρ) = 1 := by omega
   have ha : finrank k (alternatingInvariantForms ρ) = 0 := by omega
@@ -482,9 +471,10 @@ theorem frobeniusSchurIndicator_eq_neg_one_of_isAlt (hB : IsInvariantForm ρ B) 
     (halt : B.IsAlt) : frobeniusSchurIndicator ρ = -1 := by
   have hone : finrank k (invariantForms ρ) = 1 := by
     rw [hB.invariantForms_eq_span hB0]
-    exact finrank_span_singleton_eq_one (K := k) (W := BilinForm k V) hB0
+    exact finrank_span_singleton (K := k) (V := BilinForm k V) hB0
   have hle : 1 ≤ finrank k (alternatingInvariantForms ρ) :=
-    one_le_finrank_of_mem (K := k) (W := BilinForm k V) hB0 ⟨hB, halt⟩
+    Submodule.one_le_finrank_iff (R := k) (M := BilinForm k V) |>.mpr
+      ((Submodule.ne_bot_iff _).mpr ⟨B, ⟨hB, halt⟩, hB0⟩)
   have hadd := finrank_symmetricInvariantForms_add_finrank_alternatingInvariantForms ρ
   have hs : finrank k (symmetricInvariantForms ρ) = 0 := by omega
   have ha : finrank k (alternatingInvariantForms ρ) = 1 := by omega
