@@ -49,15 +49,12 @@ private theorem hasDerivAt_duhamelPath (x h : A) (t : ℝ) :
     exact (hasDerivAt_exp_smul_const (x + h) (1 - t)).comp_const_sub 1 t
   have hright : HasDerivAt
       (fun s : ℝ ↦ exp (s • x))
-      (exp (t • x) * x) t :=
-    hasDerivAt_exp_smul_const x t
+      (x * exp (t • x)) t :=
+    hasDerivAt_exp_smul_const' x t
   convert hleft.mul hright using 1
   · ext s
     rfl
-  · have hcommRight : exp (t • x) * x = x * exp (t • x) :=
-      ((Commute.refl x).smul_left t).exp_left.eq
-    rw [hcommRight]
-    noncomm_ring
+  · noncomm_ring
 
 /-- Duhamel's exact finite-increment formula for the exponential in a possibly noncommutative real
 Banach algebra. -/
