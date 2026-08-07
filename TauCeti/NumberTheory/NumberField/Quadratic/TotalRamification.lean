@@ -20,16 +20,16 @@ The argument is the fundamental identity `∑_{𝔭 ∣ p} e(𝔭) f(𝔭) = [K 
 (`Ideal.sum_ramification_inertia_eq_finrank`) with the right-hand side equal to `2`: every
 summand is at least `1`, so a single summand with `e ≥ 2` exhausts the sum, forcing `e = 2`,
 `f = 1` and no further primes above `p`. Turning the resulting `e = 2` into the ideal identity
-`p 𝓞 K = 𝔭 ^ 2` is the Dedekind factorization
-`IsDedekindDomain.ramificationIdx_eq_normalizedFactors_count`: all the normalized factors of
-`p 𝓞 K` lie over `p`, hence equal `𝔭`, and `𝔭` occurs with multiplicity `e = 2`.
+`p 𝓞 K = 𝔭 ^ 2` is the Dedekind factorization `Ideal.map_algebraMap_eq_finsetProd_pow`, whose
+product runs over the single prime `𝔭`.
 
-Together with the splitting law of `TauCeti.NumberTheory.NumberField.Quadratic.Splitting` — which
-describes the *unramified* primes of a quadratic field, and is stated only away from the primes
-dividing the radicand — this completes the list of splitting types of a rational prime in a
-quadratic field. It is the ramified case that genus theory needs: the `2`-rank formula for
-`ℚ(√d)` rests on comparing the ramification of `p` in `ℚ(√d)` with its ramification in the genus
-field, and `e(𝔭 ∣ p) = 2` is what makes the genus field unramified over `ℚ(√d)` at `p`.
+This file covers every ramified prime of a quadratic field. The splitting law of
+`TauCeti.NumberTheory.NumberField.Quadratic.Splitting` covers the odd primes `p ∤ d` not dividing
+the radicand; the unramified prime `2` (that is, `d ≡ 1 mod 4`, where `2` is split or inert) is
+described by neither file and remains open. It is the ramified case that genus theory needs: the
+`2`-rank formula for `ℚ(√d)` rests on comparing the ramification of `p` in `ℚ(√d)` with its
+ramification in the genus field, and `e(𝔭 ∣ p) = 2` is what makes the genus field unramified over
+`ℚ(√d)` at `p`.
 
 ## Main results
 
@@ -46,24 +46,12 @@ In the namespace `TauCeti.NumberField`, all for `Module.finrank ℚ K = 2`:
 
 public section
 
-open Ideal Module UniqueFactorizationMonoid
+open Ideal Module
 open scoped NumberField
 
 namespace TauCeti.NumberField
 
 variable {K : Type*} [Field K] [NumberField K] {p : ℕ}
-
-/-- The rational prime `p`, as the ideal `span {(p : ℤ)}` of `ℤ`, is maximal. -/
-private theorem isMaximal_span_natCast (hp : p.Prime) : (span {(p : ℤ)} : Ideal ℤ).IsMaximal := by
-  have hpne : (p : ℤ) ≠ 0 := by exact_mod_cast hp.ne_zero
-  have hprime : (span {(p : ℤ)} : Ideal ℤ).IsPrime :=
-    (Ideal.span_singleton_prime hpne).mpr (Nat.prime_iff_prime_int.mp hp)
-  exact hprime.isMaximal (by simpa [Ideal.span_singleton_eq_bot] using hpne)
-
-/-- The rational prime `p`, as an ideal of `ℤ`, is nonzero. -/
-private theorem span_natCast_ne_bot (hp : p.Prime) : (span {(p : ℤ)} : Ideal ℤ) ≠ ⊥ := by
-  have hpne : (p : ℤ) ≠ 0 := by exact_mod_cast hp.ne_zero
-  simpa [Ideal.span_singleton_eq_bot] using hpne
 
 /-- **The fundamental identity for a quadratic field.** Over a rational prime `p`, the ramification
 indices and inertia degrees of the primes of `𝓞 K` satisfy `∑ e(𝔭) f(𝔭) = 2`. -/
@@ -82,7 +70,7 @@ private theorem totallyRamified_aux (hK : finrank ℚ K = 2) (hp : p.Prime)
     𝔭.ramificationIdx ℤ = 2 ∧ 𝔭.inertiaDeg ℤ = 1 ∧
       (span {(p : ℤ)} : Ideal ℤ).primesOver (𝓞 K) = {𝔭} := by
   classical
-  have := isMaximal_span_natCast hp
+  have := Fact.mk hp
   set x : (span {(p : ℤ)} : Ideal ℤ).primesOver (𝓞 K) := ⟨𝔭, ‹_›, ‹_›⟩ with hx
   have hx1 : (x : Ideal (𝓞 K)) = 𝔭 := by rw [hx]
   -- `e(𝔭) ≥ 2`, since it is positive and not `1`.
@@ -186,37 +174,12 @@ rational prime `p` in the ring of integers of a quadratic field is the square of
 above it. -/
 theorem map_span_eq_sq_of_mem_ramifiedPrimes :
     (span {(p : ℤ)} : Ideal ℤ).map (algebraMap ℤ (𝓞 K)) = 𝔭 ^ 2 := by
-  classical
-  set I : Ideal (𝓞 K) := (span {(p : ℤ)} : Ideal ℤ).map (algebraMap ℤ (𝓞 K))
-  have hP0 : (span {(p : ℤ)} : Ideal ℤ) ≠ ⊥ := span_natCast_ne_bot hp
-  have hI0 : I ≠ ⊥ :=
-    fun h => hP0 ((Ideal.map_eq_bot_iff_of_injective
-      (FaithfulSMul.algebraMap_injective ℤ (𝓞 K))).mp h)
-  -- Every normalized factor of `p 𝓞 K` is a prime lying over `p`, hence equals `𝔭`.
-  have hfac : ∀ q ∈ normalizedFactors I, q = 𝔭 := by
-    intro q hq
-    have hqprime : q.IsPrime := isPrime_of_prime (prime_of_normalized_factor q hq)
-    have hle : I ≤ q := le_of_dvd (dvd_of_mem_normalizedFactors hq)
-    have hcomap : q.under ℤ = span {(p : ℤ)} :=
-      ((isMaximal_span_natCast hp).eq_of_le (Ideal.IsPrime.under ℤ q).ne_top
-        (Ideal.map_le_iff_le_comap.mp hle)).symm
-    have : q.LiesOver (span {(p : ℤ)}) := ⟨hcomap.symm⟩
-    have hqmem : q ∈ (span {(p : ℤ)} : Ideal ℤ).primesOver (𝓞 K) := ⟨hqprime, ‹_›⟩
-    rw [primesOver_eq_singleton_of_mem_ramifiedPrimes hK hp hmem 𝔭, Set.mem_singleton_iff] at hqmem
-    exact hqmem
-  -- `𝔭` occurs in that factorization with multiplicity `e(𝔭 ∣ p) = 2`.
-  have hcount : (normalizedFactors I).count 𝔭 = 2 := by
-    rw [← IsDedekindDomain.ramificationIdx_eq_normalizedFactors_count
-      (span {(p : ℤ)} : Ideal ℤ) 𝔭 hI0]
-    exact ramificationIdx_eq_two_of_mem_ramifiedPrimes hK hp hmem 𝔭
-  have hcard : Multiset.card (normalizedFactors I) = 2 := by
-    rw [← hcount]
-    exact (Multiset.count_eq_card.mpr fun q hq => (hfac q hq).symm).symm
-  have hrep : normalizedFactors I = Multiset.replicate 2 𝔭 := by
-    rw [← hcard]
-    exact Multiset.eq_replicate_card.mpr hfac
-  calc I = (normalizedFactors I).prod := (associated_iff_eq.mp (prod_normalizedFactors hI0)).symm
-    _ = 𝔭 ^ 2 := by rw [hrep, Multiset.prod_replicate]
+  have := Fact.mk hp
+  -- `p 𝓞 K` is the product of the primes above `p` to their ramification indices; here that
+  -- product runs over the single prime `𝔭`, with exponent `e(𝔭 ∣ p) = 2`.
+  rw [Ideal.map_algebraMap_eq_finsetProd_pow (by simp [hp.ne_zero]),
+    Set.toFinset_congr (primesOver_eq_singleton_of_mem_ramifiedPrimes hK hp hmem 𝔭)]
+  simp [ramificationIdx_eq_two_of_mem_ramifiedPrimes hK hp hmem 𝔭]
 
 omit hmem
 
