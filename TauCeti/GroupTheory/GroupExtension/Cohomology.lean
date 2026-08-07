@@ -29,10 +29,11 @@ Read through the group extensions of `TauCeti/GroupTheory/GroupExtension/OfFacto
 extensions of `G` by an abelian kernel `M` inducing the given action: the class read off an
 extension does not depend on the normalized section it is read from
 (`TauCeti.GroupExtension.cohomologyClass_factorSet_eq`), factor sets with equal classes build
-equivalent extensions (`TauCeti.FactorSet.nonempty_groupExtensionEquiv_of_cohomologyClass_eq`), and
-the class vanishes exactly on the split extensions. The converse invariance — that equivalent
-extensions have equal classes, which together with these would make the class a complete invariant
-of an extension — is not proved here. Specializing the action to the trivial action of `G` on
+equivalent extensions (`TauCeti.FactorSet.cohomologyClass_eq_iff` fed to the existing
+`TauCeti.FactorSet.nonempty_groupExtensionEquiv`), and the class vanishes exactly on the split
+extensions. The converse invariance — that equivalent extensions have equal classes, which
+together with these would make the class a complete invariant of an extension — is not proved
+here. Specializing the action to the trivial action of `G` on
 `M = kˣ` gives `H²(G, kˣ)`, the group that classifies the factor sets of projective representations
 of `G`.
 
@@ -107,13 +108,12 @@ theorem coe_toCocycles₂ : ⇑α.toCocycles₂ = fun p : G × G => Additive.ofM
 /-- **The cohomology class of a factor set** in `H²(G, M)`. Rescaling the factor set by a
 coboundary does not move it (`TauCeti.FactorSet.cohomologyClass_eq_iff`), and every class arises
 this way (`TauCeti.FactorSet.exists_cohomologyClass_eq`). -/
-@[expose]
 noncomputable def cohomologyClass : H2 (Rep.ofMulDistribMulAction G M) :=
   H2π (Rep.ofMulDistribMulAction G M) α.toCocycles₂
 
 theorem cohomologyClass_def :
     α.cohomologyClass = H2π (Rep.ofMulDistribMulAction G M) α.toCocycles₂ :=
-  rfl
+  (rfl)
 
 /-- The pointwise quotient of two factor sets is the difference of the cocycles they name. -/
 theorem coe_toCocycles₂_sub :
@@ -225,13 +225,7 @@ theorem cohomologyClassEquiv_apply_mk (α : FactorSet G M) :
 
 section Extension
 
-variable {α β : FactorSet G M}
-
-/-- **Factor sets with the same cohomology class build equivalent extensions.** -/
-theorem nonempty_groupExtensionEquiv_of_cohomologyClass_eq
-    (h : α.cohomologyClass = β.cohomologyClass) :
-    Nonempty (α.groupExtension.Equiv β.groupExtension) :=
-  nonempty_groupExtensionEquiv α β ((cohomologyClass_eq_iff α β).1 h)
+variable {α : FactorSet G M}
 
 /-- **The class of a factor set vanishes exactly when its extension splits.** A splitting is a
 section that is a homomorphism, so its `M`-components form (the inverse of) a function whose
