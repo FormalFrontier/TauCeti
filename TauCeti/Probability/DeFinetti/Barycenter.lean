@@ -10,9 +10,8 @@ public import TauCeti.MeasureTheory.Measure.ProductKernel
 public import TauCeti.Probability.Exchangeability.PathSpace.Law.Basic
 -- Public: `ExchangeableLaw.existsUnique_mixingLaw` is the path-law form of `deFinetti_mixture`.
 public import TauCeti.Probability.DeFinetti.Representation
--- Non-public: used only inside proofs — injectivity of the mixture, the canonical conditionally
--- i.i.d. construction that realizes a barycenter as a path law, and the process/path-law bridge.
-import TauCeti.MeasureTheory.Measure.MixtureInjective
+-- Non-public: used only inside proofs — the canonical conditionally i.i.d. construction that
+-- realizes a barycenter as a path law, and the process/path-law bridge.
 import TauCeti.Probability.Exchangeability.ConditionallyIID.Construct
 import TauCeti.Probability.Exchangeability.PathSpace.Law.Bridge
 
@@ -180,12 +179,6 @@ theorem ExchangeableLaw.existsUnique_mixingLaw [StandardBorelSpace α] {ρ : Mea
     (exchangeable_iff_exchangeableLaw_pathLaw fun n => (hcoord n).aemeasurable).2
       (by simpa [pathLaw_def] using hρ)
   simpa [hpath, deFinettiBarycenter_def] using deFinetti_mixture hexch hcoord
-
-/-- **A barycenter determines its mixing law.** Two finite mixing laws with the same de Finetti
-barycenter are equal. This is `Measure.ext_of_bind_infinitePi_eq` read through the barycenter. -/
-theorem eq_of_deFinettiBarycenter_eq {π₁ π₂ : Measure (ProbabilityMeasure α)} [IsFiniteMeasure π₁]
-    (h : deFinettiBarycenter π₁ = deFinettiBarycenter π₂) : π₁ = π₂ :=
-  TauCeti.MeasureTheory.Measure.ext_of_bind_infinitePi_eq h
 
 end Probability
 

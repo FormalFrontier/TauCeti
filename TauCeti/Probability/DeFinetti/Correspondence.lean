@@ -7,6 +7,9 @@ module
 public import TauCeti.Probability.DeFinetti.Barycenter
 -- Public: the correspondence's point masses are characterized by extremality.
 public import TauCeti.Probability.Exchangeability.PathSpace.Law.Extreme
+-- Non-public: used only inside proofs — injectivity of the mixture is what makes the
+-- correspondence injective.
+import TauCeti.MeasureTheory.Measure.MixtureInjective
 
 /-!
 # The de Finetti correspondence
@@ -89,7 +92,9 @@ def deFinettiEquiv [StandardBorelSpace α] :
       have h' : deFinettiBarycenter π₁.toMeasure = deFinettiBarycenter π₂.toMeasure :=
         congrArg (fun r : {ρ : ProbabilityMeasure (ℕ → α) // ExchangeableLaw ρ.toMeasure} =>
           ProbabilityMeasure.toMeasure r.1) h
-      exact ProbabilityMeasure.toMeasure_injective (eq_of_deFinettiBarycenter_eq h'),
+      simp only [deFinettiBarycenter_def] at h'
+      exact ProbabilityMeasure.toMeasure_injective
+        (TauCeti.MeasureTheory.Measure.ext_of_bind_infinitePi_eq h'),
       fun ρ => by
         obtain ⟨π, hπ, -⟩ := ρ.2.existsUnique_mixingLaw
         exact ⟨π, Subtype.ext (ProbabilityMeasure.toMeasure_injective hπ.symm)⟩⟩
@@ -143,8 +148,9 @@ theorem deFinettiBarycenter_mem_extremePoints_iff [StandardBorelSpace α]
         {ν : Measure (ℕ → α) | ExchangeableLaw ν ∧ IsProbabilityMeasure ν} ↔
       ∃ P : ProbabilityMeasure α, π = Measure.dirac P := by
   rw [exchangeable_extreme_iff_iid]
-  refine ⟨fun ⟨P, hP⟩ => ⟨P, eq_of_deFinettiBarycenter_eq ?_⟩, fun ⟨P, hP⟩ => ⟨P, ?_⟩⟩
-  · rw [hP, deFinettiBarycenter_dirac]
+  refine ⟨fun ⟨P, hP⟩ => ⟨P, TauCeti.MeasureTheory.Measure.ext_of_bind_infinitePi_eq ?_⟩,
+    fun ⟨P, hP⟩ => ⟨P, ?_⟩⟩
+  · simp only [← deFinettiBarycenter_def, hP, deFinettiBarycenter_dirac]
   · rw [hP, deFinettiBarycenter_dirac]
 
 end Probability

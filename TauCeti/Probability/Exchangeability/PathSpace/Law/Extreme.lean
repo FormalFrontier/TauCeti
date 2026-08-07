@@ -17,6 +17,8 @@ import TauCeti.Probability.Exchangeability.PathSpace.InvariantTail
 import TauCeti.Probability.Exchangeability.PathSpace.Exchangeable.ToContractable
 -- Non-public: a zero-one law on `ProbabilityMeasure α` is Dirac.
 import TauCeti.MeasureTheory.Measure.ProbabilityMeasureExt
+-- Non-public: mixture injectivity identifies the conditioned mixing law with `π`.
+import TauCeti.MeasureTheory.Measure.MixtureInjective
 import Mathlib.Probability.Independence.InfinitePi
 
 /-!
@@ -140,7 +142,9 @@ private theorem cond_eq_of_extreme_iidMixture [StandardBorelSpace α]
     ⟨p s, p sᶜ, pos_iff_ne_zero.2 hs0, pos_iff_ne_zero.2 hsc0,
       prob_add_prob_compl hs, hmix_split.symm.trans hrepr.symm⟩
   have hμs : deFinettiBarycenter (p[|s]) = ρ := hρ.2 hs_mem hsc_mem hopen
-  exact eq_of_deFinettiBarycenter_eq (hμs.trans hrepr)
+  have hbary : deFinettiBarycenter (p[|s]) = deFinettiBarycenter p := hμs.trans hrepr
+  simp only [deFinettiBarycenter_def] at hbary
+  exact TauCeti.MeasureTheory.Measure.ext_of_bind_infinitePi_eq hbary
 
 /-- **An extreme exchangeable law is i.i.d.** De Finetti writes the law as a mixture over
 `ProbabilityMeasure α`; extremality forces the mixing measure to be a zero-one law, hence a Dirac
