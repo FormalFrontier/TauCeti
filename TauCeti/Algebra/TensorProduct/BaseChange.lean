@@ -64,8 +64,9 @@ extending each factor and tensoring over `L`.
 
 This is Mathlib's linear equivalence `TensorProduct.AlgebraTensorModule.distribBaseChange` upgraded
 to an algebra equivalence; the multiplicativity is checked on pure tensors, where both sides are
-`(l₁ * l₂) ⊗ₜ (a₁ * a₂)` tensored with `1 ⊗ₜ (b₁ * b₂)`. No hypothesis beyond associativity of the
-scalars is needed, so neither factor has to be central or simple. -/
+`(l₁ * l₂) ⊗ₜ (a₁ * a₂)` tensored with `1 ⊗ₜ (b₁ * b₂)`. Nothing beyond the displayed
+commutative-semiring and algebra hypotheses on `K`, `L`, `A` and `B` is assumed: in particular
+neither factor has to be central or simple. -/
 def baseChangeTensorAlgEquiv :
     L ⊗[K] (A ⊗[K] B) ≃ₐ[L] (L ⊗[K] A) ⊗[L] (L ⊗[K] B) :=
   Algebra.TensorProduct.algEquivOfLinearEquivTensorProduct
