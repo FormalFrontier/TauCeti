@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.RepresentationTheory.CharacterTable.Table
+public import TauCeti.RepresentationTheory.CharacterTable.VirtualCharacter
 
 /-!
 # Real conjugacy classes and inversion-invariant rows of the character table
@@ -20,12 +20,14 @@ This file proves that a finite group has as many inversion-invariant rows as rea
 
 Both counts are read off the same quantity, `|G|⁻¹ ∑_g χᵢ(g)²`, summed over the whole table. Down
 the columns it is the second orthogonality relation applied to a class and its inverse, and it
-detects real classes. Along the rows it is the coefficient of `χᵢ` in the expansion of the twisted
-character `g ↦ χᵢ(g⁻¹)`, and it detects inversion-invariant rows: the twist
-`TauCeti.ClassFunction.invMap` is an isometry of the character pairing, so the twisted character
-still pairs to `1` with itself, while all of its expansion coefficients are dimensions of
-intertwiner spaces, hence natural numbers. A sum of squares of natural numbers equal to `1` has a
-single nonzero term, so the twisted character is again one of the rows, and it is the `i`-th row
+detects real classes. Along the rows it is the pairing of `χᵢ` with the twisted character
+`g ↦ χᵢ(g⁻¹)`, and it detects inversion-invariant rows: the twist
+`TauCeti.ClassFunction.invMap` is an isometry of the character pairing
+(`TauCeti.ClassFunction.characterPairing_invMap_invMap`), so the twisted character still pairs to
+`1` with itself, and it is a virtual character, being the character of the dual representation. A
+virtual character of norm `1` is `±` a row of the character table
+(`TauCeti.exists_eq_irreducibleCharacter_or_neg`), and the sign is fixed by the value at `1`, a
+positive degree. So the twisted character is again one of the rows, and it is the `i`-th row
 exactly when the `i`-th row is inversion-invariant.
 
 That the twisted character is again an irreducible character is *proved* here rather than assumed:
@@ -35,8 +37,6 @@ no irreducibility of the dual representation is needed as an input.
 
 * `TauCeti.IsRealClass`: a conjugacy class containing an element conjugate to its own inverse,
   with `TauCeti.isRealClass_iff_inv_eq` identifying it with being fixed by inversion.
-* `TauCeti.characterPairing_self_eq_sum_sq`: Parseval for the character pairing against the rows
-  of the character table, the expansion this file runs the argument through.
 * `TauCeti.card_inv_mul_sum_irreducibleCharacter_sq`: the row quantity `|G|⁻¹ ∑_g χᵢ(g)²` is `1`
   when the `i`-th row is inversion-invariant and `0` otherwise.
 * `TauCeti.sum_characterTable_sq`: the column quantity `∑_i χᵢ(C)²` is `|G| / |C|` when `C` is
@@ -68,6 +68,7 @@ def IsRealClass (C : ConjClasses G) : Prop :=
   ∃ g : G, ConjClasses.mk g = C ∧ IsConj g g⁻¹
 
 /-- **A class is real exactly when inversion fixes it.** -/
+@[simp]
 theorem isRealClass_iff_inv_eq {C : ConjClasses G} : IsRealClass C ↔ C⁻¹ = C := by
   constructor
   · rintro ⟨g, rfl, hg⟩
@@ -78,12 +79,19 @@ theorem isRealClass_iff_inv_eq {C : ConjClasses G} : IsRealClass C ↔ C⁻¹ = 
     rw [ConjClasses.inv_mk, ConjClasses.mk_eq_mk_iff_isConj] at h
     exact ⟨g, rfl, h.symm⟩
 
-/-- The class of `g` is real exactly when `g` is conjugate to `g⁻¹`. -/
+/-- The class of `g` is real exactly when `g` is conjugate to `g⁻¹`.
+
+This is not a `simp` lemma: `TauCeti.isRealClass_iff_inv_eq` and `TauCeti.ConjClasses.inv_mk`
+already rewrite the left-hand side to `ConjClasses.mk g⁻¹ = ConjClasses.mk g`, so tagging it makes
+the `simpNF` linter fail. -/
 theorem isRealClass_mk_iff {g : G} : IsRealClass (ConjClasses.mk g) ↔ IsConj g g⁻¹ := by
   rw [isRealClass_iff_inv_eq, ConjClasses.inv_mk, ConjClasses.mk_eq_mk_iff_isConj]
   exact ⟨IsConj.symm, IsConj.symm⟩
 
-/-- The class of the identity is real. -/
+/-- The class of the identity is real.
+
+This is not a `simp` lemma: `simp` already proves it from `TauCeti.isRealClass_iff_inv_eq` and
+`TauCeti.ConjClasses.inv_one`. -/
 theorem isRealClass_one : IsRealClass (1 : ConjClasses G) :=
   isRealClass_iff_inv_eq.mpr ConjClasses.inv_one
 
@@ -96,101 +104,52 @@ open ClassFunction
 variable {k : Type u} {G : Type v} [Field k] [Group G] [Fintype G] [IsAlgClosed k]
   [Invertible (Nat.card G : k)]
 
-/-- **Parseval for the character pairing.** The rows of the character table are an orthonormal
-basis of the class functions, so the self-pairing of a class function is the sum of the squares of
-its expansion coefficients.
-
-The pairing is bilinear rather than Hermitian, so the coefficients are squared, not multiplied by
-their conjugates; over `ℂ` this is Parseval for the pairing `⟨f₁, f₂⟩ = |G|⁻¹ ∑_g f₁(g) f₂(g⁻¹)`. -/
-theorem characterPairing_self_eq_sum_sq (f : ClassFunction k G) :
-    characterPairing f f =
-      ∑ i : Fin (Nat.card (ConjClasses G)),
-        characterPairing (ofCharacter (irreducibleRepresentation k i)) f ^ 2 := by
-  have hexp := sum_characterPairing_smul_ofCharacter (irreducibleRepresentation k)
-    (pairwise_isEmpty_equiv_irreducibleRepresentation k) (by simp) f
-  calc characterPairing f f
-      = characterPairing
-          (∑ i, characterPairing (ofCharacter (irreducibleRepresentation k i)) f •
-            ofCharacter (irreducibleRepresentation k i)) f := by rw [hexp]
-    _ = ∑ i, characterPairing (ofCharacter (irreducibleRepresentation k i)) f ^ 2 := by
-        rw [map_sum, LinearMap.sum_apply]
-        exact Finset.sum_congr rfl fun i _ => by
-          rw [map_smul, LinearMap.smul_apply, smul_eq_mul, sq]
-
-/-- **The expansion coefficients of an inverted irreducible character are dimensions.** Inverting
-the group element turns a character into the character of the dual representation, so the
-coefficient of `χⱼ` is the dimension of a space of intertwiners, in particular a natural number. -/
-theorem characterPairing_invMap_eq_finrank (i j : Fin (Nat.card (ConjClasses G))) :
-    characterPairing (ofCharacter (irreducibleRepresentation k j))
-        (invMap (ofCharacter (irreducibleRepresentation k i))) =
-      Module.finrank k (Representation.IntertwiningMap (irreducibleRepresentation k i).dual
-        (irreducibleRepresentation k j)) := by
-  rw [invMap_ofCharacter, characterPairing_ofCharacter_eq_finrank]
-
-/-- The squares of the expansion coefficients of an inverted irreducible character add up to `1`:
-inversion is an isometry of the character pairing, so the inverted character still pairs to `1`
-with itself. -/
-private theorem sum_characterPairing_invMap_sq (i : Fin (Nat.card (ConjClasses G))) :
-    ∑ j : Fin (Nat.card (ConjClasses G)),
-        characterPairing (ofCharacter (irreducibleRepresentation k j))
-          (invMap (ofCharacter (irreducibleRepresentation k i))) ^ 2 = 1 := by
-  rw [← characterPairing_self_eq_sum_sq, characterPairing_invMap_invMap,
-    characterPairing_ofCharacter_self]
-
 open scoped Classical in
 /-- **An irreducible character pairs with its own inversion to `1` or to `0`**, according as
 inverting the group element leaves it unchanged or not.
 
-This is the statement that carries the content: the coefficients of the inverted character are
-natural numbers whose squares add up to `1`, so exactly one of them is `1` and the rest vanish.
-The inverted character is therefore again one of the rows of the character table — a fact proved
-here, not assumed — and it is the `i`-th row exactly when the `i`-th row is inversion-invariant. -/
+This is the statement that carries the content. Inversion is an isometry of the character pairing,
+so the inverted character still pairs to `1` with itself, and it is a virtual character, being the
+character of the dual representation; a virtual character of norm `1` is `±` a row of the character
+table by `TauCeti.exists_eq_irreducibleCharacter_or_neg`, and the sign is fixed by the value at `1`,
+a positive degree. The inverted character is therefore again one of the rows — a fact proved here,
+not assumed — and it is the `i`-th row exactly when the `i`-th row is inversion-invariant. -/
 theorem characterPairing_ofCharacter_invMap_self [CharZero k]
     (i : Fin (Nat.card (ConjClasses G))) :
     characterPairing (ofCharacter (irreducibleRepresentation k i))
         (invMap (ofCharacter (irreducibleRepresentation k i))) =
       if invMap (ofCharacter (irreducibleRepresentation k i)) =
         ofCharacter (irreducibleRepresentation k i) then 1 else 0 := by
-  by_cases hfix : invMap (ofCharacter (irreducibleRepresentation k i)) =
-      ofCharacter (irreducibleRepresentation k i)
-  · rw [if_pos hfix, hfix, characterPairing_ofCharacter_self]
-  rw [if_neg hfix]
-  by_contra hne
-  have hex : ∀ j : Fin (Nat.card (ConjClasses G)), ∃ n : ℕ,
-      characterPairing (ofCharacter (irreducibleRepresentation k j))
-        (invMap (ofCharacter (irreducibleRepresentation k i))) = n :=
-    fun j => ⟨_, characterPairing_invMap_eq_finrank i j⟩
-  choose m hm using hex
-  have hsumk : ∑ j : Fin (Nat.card (ConjClasses G)), (m j : k) ^ 2 = 1 := by
-    rw [← sum_characterPairing_invMap_sq i]
-    exact Finset.sum_congr rfl fun j _ => by rw [hm j]
-  have hsumn : ∑ j : Fin (Nat.card (ConjClasses G)), m j ^ 2 = 1 := by
-    have hcast : ((∑ j : Fin (Nat.card (ConjClasses G)), m j ^ 2 : ℕ) : k) = ((1 : ℕ) : k) := by
+  set f := invMap (ofCharacter (irreducibleRepresentation k i)) with hf
+  -- the inverted character is the character of the dual representation, so a virtual character
+  have hmem : (f : G → k) ∈ virtualCharacters k G := by
+    have hdual : (f : G → k) = (FDRep.of (irreducibleRepresentation k i).dual).character := by
+      rw [hf, invMap_ofCharacter]
+      exact funext fun g => ofCharacter_apply _ g
+    rw [hdual]
+    exact character_mem_virtualCharacters _
+  have hnorm : characterPairing f f = 1 := by
+    rw [hf, characterPairing_invMap_invMap, characterPairing_ofCharacter_self]
+  obtain ⟨j, hj⟩ := exists_eq_irreducibleCharacter_or_neg hmem hnorm
+  have hone : (f : G → k) 1 = (characterDegree k i : k) := by rw [hf]; simp
+  have hval : (f : G → k) = irreducibleCharacter k j := by
+    refine hj.resolve_right fun h => absurd (characterDegree_pos k i) (Nat.not_lt.mpr ?_)
+    rw [h] at hone
+    have hcast : ((characterDegree k i + characterDegree k j : ℕ) : k) = ((0 : ℕ) : k) := by
       push_cast
-      rw [hsumk]
-    exact Nat.cast_injective hcast
-  have hmi : m i ≠ 0 := fun h0 => hne (by rw [hm i, h0, Nat.cast_zero])
-  have hle : m i ^ 2 ≤ 1 := hsumn ▸ Finset.single_le_sum
-    (f := fun j : Fin (Nat.card (ConjClasses G)) => m j ^ 2)
-    (fun j _ => Nat.zero_le _) (Finset.mem_univ i)
-  have hmi1 : m i = 1 :=
-    le_antisymm ((Nat.le_self_pow two_ne_zero (m i)).trans hle) (Nat.one_le_iff_ne_zero.mpr hmi)
-  have hzero : ∀ j : Fin (Nat.card (ConjClasses G)), j ≠ i → m j = 0 := by
-    intro j hj
-    have hsplit := Finset.add_sum_erase Finset.univ
-      (fun j : Fin (Nat.card (ConjClasses G)) => m j ^ 2) (Finset.mem_univ i)
-    rw [hsumn, hmi1, one_pow] at hsplit
-    have herase : ∑ l ∈ Finset.univ.erase i, m l ^ 2 = 0 := by omega
-    have := (Finset.sum_eq_zero_iff.mp herase) j (Finset.mem_erase.mpr ⟨hj, Finset.mem_univ j⟩)
-    simpa using this
-  refine hfix ?_
-  have hexp := sum_characterPairing_smul_ofCharacter (irreducibleRepresentation k)
-    (pairwise_isEmpty_equiv_irreducibleRepresentation k) (by simp)
-    (invMap (ofCharacter (irreducibleRepresentation k i)))
-  rw [← hexp, Finset.sum_eq_single i]
-  · rw [hm i, hmi1, Nat.cast_one, one_smul]
-  · exact fun j _ hj => by rw [hm j, hzero j hj, Nat.cast_zero, zero_smul]
-  · exact fun h => absurd (Finset.mem_univ i) h
+      rw [← hone]
+      simp
+    have := Nat.cast_injective (R := k) hcast
+    omega
+  have hfj : f = ofCharacter (irreducibleRepresentation k j) :=
+    Subtype.ext (hval.trans (funext fun g => by
+      rw [ofCharacter_apply, character_irreducibleRepresentation]))
+  rw [hfj, characterPairing_ofCharacter_irreducibleRepresentation_orthonormal]
+  refine if_congr ⟨fun h => by rw [h], fun h => (irreducibleCharacter_injective k ?_).symm⟩ rfl rfl
+  funext g
+  have hg := congrFun (congrArg Subtype.val h) g
+  rwa [ofCharacter_apply, ofCharacter_apply, character_irreducibleRepresentation,
+    character_irreducibleRepresentation] at hg
 
 open scoped Classical in
 /-- **The row quantity of the character table.** For each irreducible character,
@@ -242,6 +201,7 @@ theorem sum_characterTable_sq (C : ConjClasses G) :
 
 /-- **Complex conjugation of a character-table entry inverts the class**, in the class-indexed
 form: `TauCeti.conj_characterTable_apply` is the same statement about a representative. -/
+@[simp]
 theorem conj_characterTable {G : Type v} [Group G] [Finite G]
     (i : Fin (Nat.card (ConjClasses G))) (C : ConjClasses G) :
     (starRingEnd ℂ) (characterTable ℂ G i C) = characterTable ℂ G i C⁻¹ := by
@@ -268,7 +228,7 @@ classes.**
 Both counts are the total `|G|⁻¹ ∑_i ∑_g χᵢ(g)²` of the square of the table, read once along the
 rows (`TauCeti.card_inv_mul_sum_irreducibleCharacter_sq`) and once down the columns
 (`TauCeti.sum_characterTable_sq`). -/
-theorem card_invariantRow_eq_card_realClasses :
+theorem card_inversionInvariant_eq_card_realClasses :
     Nat.card {i : Fin (Nat.card (ConjClasses G)) //
         ∀ C : ConjClasses G, characterTable k G i C⁻¹ = characterTable k G i C} =
       Nat.card {C : ConjClasses G // IsRealClass C} := by
@@ -339,7 +299,7 @@ theorem card_realValued_eq_card_realClasses (G : Type v) [Group G] [Finite G] :
     Nat.card {i : Fin (Nat.card (ConjClasses G)) //
         ∀ C : ConjClasses G, (starRingEnd ℂ) (characterTable ℂ G i C) = characterTable ℂ G i C} =
       Nat.card {C : ConjClasses G // IsRealClass C} := by
-  rw [← card_invariantRow_eq_card_realClasses ℂ G]
+  rw [← card_inversionInvariant_eq_card_realClasses ℂ G]
   exact Nat.card_congr (Equiv.subtypeEquivRight fun i =>
     forall_congr' fun C => by rw [conj_characterTable])
 

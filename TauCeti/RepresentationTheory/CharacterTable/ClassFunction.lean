@@ -164,10 +164,7 @@ This is the twist that `TauCeti.ClassFunction.powMap` cannot express, the expone
 outside `ℕ`; on characters it is passage to the dual representation. -/
 def invMap : ClassFunction k G →ₗ[k] ClassFunction k G where
   toFun f := ⟨fun g => f.1 g⁻¹, fun g h => by
-    change f.1 (h * g * h⁻¹)⁻¹ = f.1 g⁻¹
-    have hinv : (h * g * h⁻¹)⁻¹ = h * g⁻¹ * h⁻¹ := by group
-    rw [hinv]
-    exact f.2 g⁻¹ h⟩
+    simpa only [mul_inv_rev, inv_inv, mul_assoc] using f.2 g⁻¹ h⟩
   map_add' _ _ := rfl
   map_smul' _ _ := rfl
 
