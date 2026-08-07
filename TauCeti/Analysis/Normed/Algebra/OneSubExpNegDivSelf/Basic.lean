@@ -9,8 +9,8 @@ public import Mathlib.Analysis.Normed.Algebra.Exponential
 /-!
 # The quotient `(1 - exp (-a)) / a`
 
-This file packages the power series representing `(1 - exp (-a)) / a` without requiring `a` to be
-invertible. In a complete normed algebra over a normed characteristic-zero field the series is
+This basic file packages the power series representing `(1 - exp (-a)) / a` without requiring `a`
+to be invertible. In a complete normed algebra over a normed characteristic-zero field the series is
 summable at every point. It is the analytic factor in the differential of a Lie-group exponential
 map.
 
