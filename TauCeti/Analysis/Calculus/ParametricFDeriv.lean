@@ -6,7 +6,6 @@ module
 
 public import Mathlib.Analysis.Calculus.Deriv.Prod
 public import Mathlib.Analysis.Calculus.FDeriv.Symmetric
-public import TauCeti.Analysis.Calculus.ContinuousLinearMapInverse
 
 /-!
 # Mixed derivatives of a parametric map
@@ -82,9 +81,13 @@ theorem deriv_spatialFDeriv_apply {F : ℝ × E → F'} {x w : E}
       (0 : E →L[ℝ] ℝ × E) x :=
     hasFDerivAt_const (x := x) ((1 : ℝ), (0 : E))
   have hVraw := (hDF.comp x hq).clm_apply hone
-  change HasFDerivAt (fun z => DF (0, z) (1, 0)) _ x at hVraw
+  have hV : HasFDerivAt (timeFDeriv F) (fderiv ℝ DF (0, x) ∘L
+      ContinuousLinearMap.inr ℝ ℝ E |>.flip (1, 0)) x := by
+    rw [show timeFDeriv F = fun z => fderiv ℝ F (0, z) (1, 0) from
+      funext (timeFDeriv_apply F)]
+    simpa only [DF, Function.comp_apply, map_zero, add_zero,
+      ContinuousLinearMap.comp_zero, zero_add] using hVraw
   have hsymm := hF.isSymmSndFDerivAt (by norm_num)
-  change _root_.deriv (fun t => DF (t, x) (0, w)) 0 =
-    fderiv ℝ (fun z => DF (0, z) (1, 0)) x w
-  rw [hA.deriv, hVraw.fderiv]
+  rw [show _root_.deriv (fun t => spatialFDeriv F x t w) 0 = _ from
+    by simpa only [DF, spatialFDeriv_apply] using hA.deriv, hV.fderiv]
   simpa [DF, Function.comp_def] using hsymm (1, 0) (0, w)
