@@ -5,7 +5,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.RepresentationTheory.CharacterTable.ClassSum.MultiplicationMatrix
-public import Mathlib.GroupTheory.SpecificGroups.Dihedral
 
 /-!
 # Executable conjugacy-class data
@@ -31,7 +30,10 @@ than by the double scan of the definition, and the class-multiplication matrices
 `d.classMultMatrix i` over `Fin d.numClasses`. Both are proved equal to their `ConjClasses`-indexed
 counterparts `TauCeti.structureConstant` and `TauCeti.classMultMatrix`, so the theory built on the
 latter — in particular the eigenrow characterization of the central characters — applies verbatim
-to the computed data. The dihedral group of order `8` is worked as a closed instance at the end.
+to the computed data.
+
+`TauCeti.RepresentationTheory.CharacterTable.Dixon.ClassData.Dihedral` works the dihedral group of
+order `8` as a closed instance of everything here.
 
 ## Main definitions
 
@@ -43,8 +45,6 @@ to the computed data. The dihedral group of order `8` is worked as a closed inst
 * `TauCeti.ClassData.structureConstant`, `TauCeti.ClassData.structureConstantTable`,
   `TauCeti.ClassData.classMultMatrix`: the single-scan structure constants, tabulated, and the
   matrices they assemble.
-* `TauCeti.dihedralElements`, `TauCeti.dihedralClassData`: the worked instance, an enumeration of
-  `DihedralGroup n` and the class data it produces.
 
 ## Main results
 
@@ -53,11 +53,20 @@ to the computed data. The dihedral group of order `8` is worked as a closed inst
 * `TauCeti.ClassData.structureConstant_eq` and
   `TauCeti.ClassData.classMultMatrix_eq_submatrix`: the computed constants and matrices are the
   ones the theory uses, renumbered.
-* `TauCeti.structureConstantTable_dihedralClassData_four`: the structure constants of the dihedral
-  group of order `8`, evaluated by the kernel.
+
+## References
+
+This implements the object `ClassData` and the executable `structureConstant` of Layer 6 of the
+[character theory roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/CharacterTheory/README.md),
+the layer that makes the Burnside--Dixon--Schneider algorithm executable. The roadmap suggests
+carrying the classes as a `List (Finset G)`; the `Fin`-indexed family `classFinset` supplied here
+carries the same content and is what the class-multiplication matrices are indexed by. See J. D.
+Dixon, *High speed computation of group characters*, Numer. Math. 10 (1967) 446-450.
 -/
 
-public section
+-- Everything here exists to be run: a downstream module that evaluates class data for a concrete
+-- group needs these bodies to reduce in the kernel, so the whole file is `@[expose]`d.
+@[expose] public section
 
 namespace TauCeti
 
@@ -83,6 +92,14 @@ structure ClassData (G : Type*) [Group G] [Fintype G] [DecidableEq G] where
   exists_isConj : ∀ g : G, ∃ x ∈ reps, IsConj x g
 
 namespace ClassData
+
+/-- **Class data is determined by its representatives**: the two remaining fields are proofs. -/
+@[ext]
+theorem ext {d₁ d₂ : ClassData G} (h : d₁.reps = d₂.reps) : d₁ = d₂ := by
+  cases d₁
+  cases d₂
+  subst h
+  rfl
 
 /-- Class data extracted from a list `l` that contains every element of `G`: run through `l` and
 keep an element exactly when it is not conjugate to one already kept.
@@ -274,8 +291,7 @@ its first factor matches the single scan with the double scan of the definition.
 theorem structureConstant_eq (i j k : Fin d.numClasses) :
     d.structureConstant i j k =
       TauCeti.structureConstant (d.classOf i) (d.classOf j) (d.classOf k) := by
-  rw [show d.classOf k = ConjClasses.mk (d.rep k) from d.classOf_eq_mk k,
-    TauCeti.structureConstant_mk]
+  rw [d.classOf_eq_mk k, TauCeti.structureConstant_mk]
   refine Finset.card_bij'
     (fun x hx => (⟨⟨x, ?_⟩, ⟨x⁻¹ * d.rep k, ?_⟩⟩ :
       (d.classOf i).carrier × (d.classOf j).carrier))
@@ -300,9 +316,7 @@ theorem structureConstant_eq (i j k : Fin d.numClasses) :
     rfl
   · intro p hp
     have hp' : (p.1 : G) * (p.2 : G) = d.rep k := (Finset.mem_filter.mp hp).2
-    refine Prod.ext (Subtype.ext rfl) (Subtype.ext ?_)
-    change (p.1 : G)⁻¹ * d.rep k = (p.2 : G)
-    exact (eq_inv_mul_iff_mul_eq.mpr hp').symm
+    exact Prod.ext (Subtype.ext rfl) (Subtype.ext (eq_inv_mul_iff_mul_eq.mpr hp').symm)
 
 /-- The class-multiplication matrix `Mᵢ` of the `i`-th class, numbered by `d`. As in
 `TauCeti.classMultMatrix`, the entry `(Mᵢ)ⱼₖ` is `aᵢₖⱼ`; that transposed index order is what makes
@@ -345,60 +359,5 @@ theorem classMultMatrix_commute (i j : Fin d.numClasses) :
 end StructureConstants
 
 end ClassData
-
-section Dihedral
-
-/-- The `2 * n` elements of `DihedralGroup n`, listed: each rotation followed by the corresponding
-reflection. A concrete enumeration is what `TauCeti.ClassData.ofList` needs, and `Finset.toList`
-cannot supply. -/
-def dihedralElements (n : ℕ) [NeZero n] : List (DihedralGroup n) :=
-  (List.range n).flatMap fun i : ℕ => [DihedralGroup.r (i : ZMod n), DihedralGroup.sr (i : ZMod n)]
-
-/-- The enumeration `TauCeti.dihedralElements` exhausts the dihedral group. -/
-theorem mem_dihedralElements {n : ℕ} [NeZero n] (g : DihedralGroup n) : g ∈ dihedralElements n := by
-  have hmem : ∀ i : ZMod n, i.val ∈ List.range n := fun i => List.mem_range.mpr (ZMod.val_lt i)
-  cases g with
-  | r i =>
-    refine List.mem_flatMap.mpr ⟨i.val, hmem i, ?_⟩
-    rw [ZMod.natCast_rightInverse i]
-    simp
-  | sr i =>
-    refine List.mem_flatMap.mpr ⟨i.val, hmem i, ?_⟩
-    rw [ZMod.natCast_rightInverse i]
-    simp
-
-/-- Class data for the dihedral group of order `2 * n`, computed from the enumeration
-`TauCeti.dihedralElements`. -/
-def dihedralClassData (n : ℕ) [NeZero n] : ClassData (DihedralGroup n) :=
-  ClassData.ofList (dihedralElements n) mem_dihedralElements
-
-/-- **The dihedral group of order `8` has five conjugacy classes**, computed by the kernel from
-`TauCeti.dihedralClassData`. -/
-theorem numClasses_dihedralClassData_four : (dihedralClassData 4).numClasses = 5 := by decide
-
-/-- **The five conjugacy classes of the dihedral group of order `8` have sizes `1, 1, 2, 2, 2`.**
-The order is the one `TauCeti.ClassData.ofList` produces from `TauCeti.dihedralElements`, with
-representatives `1`, `r²`, `sr²`, `r³`, `sr³`: the identity, the central rotation, one pair of
-reflections, the pair of rotations of order `4`, and the other pair of reflections. -/
-theorem card_classFinset_dihedralClassData_four :
-    (List.finRange (dihedralClassData 4).numClasses).map
-      (fun i => ((dihedralClassData 4).classFinset i).card) = [1, 1, 2, 2, 2] := by
-  decide
-
-/-- **The structure constants of the dihedral group of order `8`**, computed by the kernel; this
-nested list is the entire input the Dixon--Schneider algorithm reads for that group. In the
-numbering of `TauCeti.card_classFinset_dihedralClassData_four`, each of the three classes of size
-`2` squares to `2K₀ + 2K₁`, and multiplying the class `K₃` of rotations of order `4` by either
-class of reflections exchanges the two. -/
-theorem structureConstantTable_dihedralClassData_four :
-    (dihedralClassData 4).structureConstantTable =
-      [[[1, 0, 0, 0, 0], [0, 1, 0, 0, 0], [0, 0, 1, 0, 0], [0, 0, 0, 1, 0], [0, 0, 0, 0, 1]],
-       [[0, 1, 0, 0, 0], [1, 0, 0, 0, 0], [0, 0, 1, 0, 0], [0, 0, 0, 1, 0], [0, 0, 0, 0, 1]],
-       [[0, 0, 1, 0, 0], [0, 0, 1, 0, 0], [2, 2, 0, 0, 0], [0, 0, 0, 0, 2], [0, 0, 0, 2, 0]],
-       [[0, 0, 0, 1, 0], [0, 0, 0, 1, 0], [0, 0, 0, 0, 2], [2, 2, 0, 0, 0], [0, 0, 2, 0, 0]],
-       [[0, 0, 0, 0, 1], [0, 0, 0, 0, 1], [0, 0, 0, 2, 0], [0, 0, 2, 0, 0], [2, 2, 0, 0, 0]]] := by
-  decide
-
-end Dihedral
 
 end TauCeti
