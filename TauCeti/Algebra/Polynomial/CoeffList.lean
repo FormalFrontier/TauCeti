@@ -211,17 +211,17 @@ theorem ofCoeffList_coeffList (p : R[X]) : ofCoeffList p.coeffList = p := by
 
 /-- The divisor `X ^ t.length + ofCoeffList t` of `TauCeti.Polynomial.divModByMonicList` is
 monic. -/
-theorem monic_xPow_add_ofCoeffList (t : List R) : (X ^ t.length + ofCoeffList t).Monic :=
+theorem monic_X_pow_add_ofCoeffList (t : List R) : (X ^ t.length + ofCoeffList t).Monic :=
   monic_X_pow_add (degree_ofCoeffList_lt t)
 
 /-- The divisor `X ^ t.length + ofCoeffList t` has degree exactly `t.length`. -/
-theorem degree_xPow_add_ofCoeffList [Nontrivial R] (t : List R) :
+theorem degree_X_pow_add_ofCoeffList [Nontrivial R] (t : List R) :
     (X ^ t.length + ofCoeffList t).degree = ((t.length : ℕ) : WithBot ℕ) := by
   rw [degree_add_eq_left_of_degree_lt (by simpa using degree_ofCoeffList_lt t), degree_X_pow]
 
 /-- A monic polynomial is `X ^ n` plus the polynomial of its remaining coefficients.  This is how
 a computed coefficient list is recognized as a divisor for `TauCeti.Polynomial.divByMonicList`. -/
-theorem xPow_add_ofCoeffList_tail {l : List R} (hhead : l.headD 0 ≠ 0)
+theorem X_pow_add_ofCoeffList_tail {l : List R} (hhead : l.headD 0 ≠ 0)
     (hmonic : (ofCoeffList l).Monic) :
     X ^ l.tail.length + ofCoeffList l.tail = ofCoeffList l := by
   have hl : l ≠ [] := by rintro rfl; exact hhead rfl
@@ -346,9 +346,9 @@ theorem ofCoeffList_divByMonicList (t l : List R) :
     ofCoeffList (divByMonicList t l) = ofCoeffList l /ₘ (X ^ t.length + ofCoeffList t) := by
   nontriviality R
   refine ((div_modByMonic_unique (ofCoeffList (divByMonicList t l))
-    (ofCoeffList (modByMonicList t l)) (monic_xPow_add_ofCoeffList t) ⟨?_, ?_⟩).1).symm
+    (ofCoeffList (modByMonicList t l)) (monic_X_pow_add_ofCoeffList t) ⟨?_, ?_⟩).1).symm
   · rw [add_comm]; exact (ofCoeffList_divModByMonicList t l).symm
-  · rw [degree_xPow_add_ofCoeffList]
+  · rw [degree_X_pow_add_ofCoeffList]
     exact lt_of_lt_of_le (degree_ofCoeffList_lt _) (by rw [length_modByMonicList])
 
 /-- **Synthetic division computes the remainder**: the second output of
@@ -358,9 +358,9 @@ theorem ofCoeffList_modByMonicList (t l : List R) :
     ofCoeffList (modByMonicList t l) = ofCoeffList l %ₘ (X ^ t.length + ofCoeffList t) := by
   nontriviality R
   refine ((div_modByMonic_unique (ofCoeffList (divByMonicList t l))
-    (ofCoeffList (modByMonicList t l)) (monic_xPow_add_ofCoeffList t) ⟨?_, ?_⟩).2).symm
+    (ofCoeffList (modByMonicList t l)) (monic_X_pow_add_ofCoeffList t) ⟨?_, ?_⟩).2).symm
   · rw [add_comm]; exact (ofCoeffList_divModByMonicList t l).symm
-  · rw [degree_xPow_add_ofCoeffList]
+  · rw [degree_X_pow_add_ofCoeffList]
     exact lt_of_lt_of_le (degree_ofCoeffList_lt _) (by rw [length_modByMonicList])
 
 end Ring

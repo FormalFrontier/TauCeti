@@ -72,7 +72,7 @@ genuine `def`: `cyclotomicCoeffs 12 = [1, 0, -1, 0, 1]`, the coefficients of `X 
 @[expose] def cyclotomicCoeffs (n : ℕ) : List ℤ := cyclotomicCoeffsAux n n
 
 /-- Dropping leading zeros from a coefficient list does not change the polynomial. -/
-theorem ofCoeffList_dropWhile_beq_zero (l : List ℤ) :
+private theorem ofCoeffList_dropWhile_beq_zero (l : List ℤ) :
     ofCoeffList (l.dropWhile (· == 0)) = ofCoeffList l := by
   induction l with
   | nil => simp
@@ -150,7 +150,7 @@ private theorem ofCoeffList_cyclotomicCoeffsAux (fuel : ℕ) :
         intro h0
         rw [h0, ofCoeffList_nil] at hIH
         exact cyclotomic_ne_zero d ℤ hIH.symm
-      rw [xPow_add_ofCoeffList_tail (headD_cyclotomicCoeffsAux_ne_zero fuel d hne)
+      rw [X_pow_add_ofCoeffList_tail (headD_cyclotomicCoeffsAux_ne_zero fuel d hne)
         (hIH ▸ cyclotomic.monic d ℤ), hIH]
     · rw [ofCoeffList_xPowSubOneCoeffs hn0, ← List.prod_toFinset _ hnodup, htoFinset,
         ← Polynomial.prod_cyclotomic_eq_X_pow_sub_one (Nat.pos_of_ne_zero hn0) ℤ,
@@ -210,10 +210,10 @@ of multiplication in the exact cyclotomic integers. -/
 /-- The computed list, presented as `TauCeti.Polynomial.divByMonicList` and
 `TauCeti.Polynomial.modByMonicList` consume a monic divisor: `Φ_e` is `X ^ φ e` plus the polynomial
 of the remaining coefficients. -/
-theorem xPow_add_ofCoeffList_tail_cyclotomicCoeffs (e : ℕ) :
+theorem X_pow_add_ofCoeffList_tail_cyclotomicCoeffs (e : ℕ) :
     X ^ (cyclotomicCoeffs e).tail.length + ofCoeffList (cyclotomicCoeffs e).tail
       = cyclotomic e ℤ := by
-  rw [xPow_add_ofCoeffList_tail (headD_cyclotomicCoeffs_ne_zero e)
+  rw [X_pow_add_ofCoeffList_tail (headD_cyclotomicCoeffs_ne_zero e)
     (ofCoeffList_cyclotomicCoeffs e ▸ cyclotomic.monic e ℤ), ofCoeffList_cyclotomicCoeffs]
 
 /-- **Reduction modulo `Φ_e` is computed correctly**: it is Mathlib's `%ₘ` by
@@ -221,7 +221,7 @@ theorem xPow_add_ofCoeffList_tail_cyclotomicCoeffs (e : ℕ) :
 @[simp]
 theorem ofCoeffList_modByCyclotomic (e : ℕ) (l : List ℤ) :
     ofCoeffList (modByCyclotomic e l) = ofCoeffList l %ₘ cyclotomic e ℤ := by
-  rw [modByCyclotomic, ofCoeffList_modByMonicList, xPow_add_ofCoeffList_tail_cyclotomicCoeffs]
+  rw [modByCyclotomic, ofCoeffList_modByMonicList, X_pow_add_ofCoeffList_tail_cyclotomicCoeffs]
 
 /-- A residue modulo `Φ_e` is a vector of `φ e` coordinates, one for each element of the power
 basis of `ℤ[ζ_e]`. -/
