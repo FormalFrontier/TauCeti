@@ -4,24 +4,24 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.Geometry.Manifold.Algebra.LieGroup
+public import Mathlib.Geometry.Manifold.Algebra.Monoid
 import Mathlib.Geometry.Manifold.Algebra.SMul
 public import Mathlib.Geometry.Manifold.IsManifold.InteriorBoundary
 
 /-!
-# Interior points of Lie groups
+# Interior points of group manifolds
 
-Every point of a positive-smoothness group manifold with smooth multiplication is an interior
-point. It suffices to find one interior point in a chart and transport it to the desired point by
-smooth left multiplication.
+Every point of a group manifold whose multiplication is `C^n`, for `n ≠ 0`, is an interior point;
+smooth inversion is not required. It suffices to find one interior point in a chart and transport
+it to the desired point by `C^n` left multiplication.
 
 This supplies a prerequisite for Deliverable A, Layer 1 of
 `TauCetiRoadmap/RepresentationTheory/LieGroups/README.md`.
 
 ## Main results
 
-* `ContMDiffMul.isInteriorPoint`: every point of a group manifold with smooth multiplication is an
-  interior point.
+* `ContMDiffMul.isInteriorPoint`: every point of a group manifold with `C^n` multiplication, for
+  `n ≠ 0`, is an interior point.
 
 ## References
 
@@ -38,8 +38,7 @@ variable {𝕜 : Type*} [NontriviallyNormedField 𝕜]
   {H : Type*} [TopologicalSpace H] {I : ModelWithCorners 𝕜 E H}
   {G : Type*} [TopologicalSpace G] [ChartedSpace H G] [Group G]
 
-/-- Every point of a positive-smoothness group manifold with smooth multiplication is an interior
-point. -/
+/-- Every point of a group manifold with `C^n` multiplication, for `n ≠ 0`, is an interior point. -/
 theorem ContMDiffMul.isInteriorPoint {n : WithTop ℕ∞} [ContMDiffMul I n G] (hn : n ≠ 0)
     (g : G) : I.IsInteriorPoint g := by
   obtain ⟨y, hy⟩ := interior_extChartAt_target_nonempty I (1 : G)
