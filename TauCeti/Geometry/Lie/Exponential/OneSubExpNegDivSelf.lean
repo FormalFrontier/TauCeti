@@ -69,6 +69,7 @@ theorem oneSubExpNegDivSelf_zero : oneSubExpNegDivSelf 𝕂 (0 : A) = 1 := by
     simp [hn]
 
 /-- Multiplying the filled-in quotient on the left by its argument recovers its numerator. -/
+@[simp]
 theorem mul_oneSubExpNegDivSelf (a : A) :
     a * oneSubExpNegDivSelf 𝕂 a = 1 - exp (-a) := by
   have hmul :
@@ -89,6 +90,7 @@ theorem oneSubExpNegDivSelf_commute (a : A) : Commute a (oneSubExpNegDivSelf �
   exact Commute.tsum_right _ fun n ↦ ((Commute.refl a).neg_right.pow_right n).smul_right _
 
 /-- Multiplying the filled-in quotient on the right by its argument recovers its numerator. -/
+@[simp]
 theorem oneSubExpNegDivSelf_mul (a : A) :
     oneSubExpNegDivSelf 𝕂 a * a = 1 - exp (-a) := by
   rw [← (oneSubExpNegDivSelf_commute a).eq, mul_oneSubExpNegDivSelf]
