@@ -97,7 +97,6 @@ theorem comul_coordinateMatrix (rho : Comodule R H (Fin n → R)) (i j : Fin n) 
     ((Pi.basisFun R (Fin n)).coord i) (Pi.basisFun R (Fin n) j)
 
 /-- The counit of a coordinate entry is the corresponding identity-matrix entry. -/
-@[simp]
 theorem counit_coordinateMatrix (rho : Comodule R H (Fin n → R)) (i j : Fin n) :
     Coalgebra.counit (R := R) (A := H) (coordinateMatrix rho i j) =
       if i = j then 1 else 0 := by
