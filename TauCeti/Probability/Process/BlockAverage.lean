@@ -76,11 +76,11 @@ def followingAverage (X : ℕ → Ω → ℝ) (n : ℕ) : Ω → ℝ :=
   blockAverage X fun i : Fin n => n + i
 
 /-- A prefix average is the block average over the selection `i ↦ i`. -/
-theorem prefixAverage_eq_blockAverage (X : ℕ → Ω → ℝ) (n : ℕ) :
+theorem prefixAverage_def (X : ℕ → Ω → ℝ) (n : ℕ) :
     prefixAverage X n = blockAverage X fun i : Fin n => (i : ℕ) := (rfl)
 
 /-- A following-block average is the block average over the selection `i ↦ n + i`. -/
-theorem followingAverage_eq_blockAverage (X : ℕ → Ω → ℝ) (n : ℕ) :
+theorem followingAverage_def (X : ℕ → Ω → ℝ) (n : ℕ) :
     followingAverage X n = blockAverage X fun i : Fin n => n + (i : ℕ) := (rfl)
 
 /-- **The pointwise formula for a prefix average.** -/

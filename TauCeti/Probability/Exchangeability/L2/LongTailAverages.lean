@@ -65,13 +65,13 @@ private theorem prefix_ne_following (n : ℕ) (i j : Fin n) :
 /-- A prefix average of `L²` coordinates is itself `L²`. -/
 theorem memLp_prefixAverage (n : ℕ) (hX_L2 : ∀ i : Fin n, MemLp (X i) 2 μ) :
     MemLp (prefixAverage X n) 2 μ := by
-  rw [prefixAverage_eq_blockAverage]
+  rw [prefixAverage_def]
   exact memLp_blockAverage (fun i : Fin n => (i : ℕ)) hX_L2
 
 /-- A following tail average of `L²` coordinates is itself `L²`. -/
 theorem memLp_followingAverage (n : ℕ) (hX_L2 : ∀ i : Fin n, MemLp (X (n + i)) 2 μ) :
     MemLp (followingAverage X n) 2 μ := by
-  rw [followingAverage_eq_blockAverage]
+  rw [followingAverage_def]
   exact memLp_blockAverage (fun i : Fin n => n + (i : ℕ)) hX_L2
 
 /-- **The exact long-average versus tail-average `L²` bound.** For a contractable process,
@@ -81,7 +81,7 @@ theorem Contractable.integral_sq_prefixAverage_sub_followingAverage [IsFiniteMea
     (hX : Contractable μ X) (hX_L2 : ∀ i, MemLp (X i) 2 μ) {n : ℕ} (hn : 0 < n) :
     ∫ ω, (prefixAverage X n ω - followingAverage X n ω) ^ 2 ∂μ =
       2 * (Var[X 0; μ] - cov[X 0, X 1; μ]) / n := by
-  rw [prefixAverage_eq_blockAverage, followingAverage_eq_blockAverage,
+  rw [prefixAverage_def, followingAverage_def,
     hX.integral_sq_blockAverage_sub_of_disjoint hX_L2 hn hn
       (prefixSelection_injective n) (followingSelection_injective n) (prefix_ne_following n)]
   ring
