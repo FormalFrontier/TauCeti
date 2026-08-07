@@ -23,12 +23,16 @@ covering `r`:
 where `N(H)` is the normalizer of `H` in `Γ`. Taking `H = ⊥` recovers
 `TauCeti.Deck.IsQuotientCoveringMap.deckMulEquiv`, which identifies `Deck p` with `Γ` itself.
 
-Only a normalizer element descends to the quotient: translation by `γ` respects the `H`-orbit
-relation exactly when `γ` conjugates `H` into itself. Conversely every deck transformation of
-`r` arises this way, by uniqueness of lifts. A deck transformation `φ` of `r`, precomposed with
-`q`, and translation by a suitable `γ` followed by `q`, are two lifts of `p` through `r` which
-agree at one point of the preconnected space `E`, hence agree everywhere; comparing the
-translates of a single point then forces `γ` to normalize `H`.
+Only a normalizer element descends to the quotient as a deck transformation: translation by
+`γ` respects the `H`-orbit relation, so descends as a map, exactly when `γ H γ⁻¹ ⊆ H`, while
+the descended map is invertible, hence a homeomorphism, exactly when `γ H γ⁻¹ = H`, that is,
+when `γ` normalizes `H`.
+
+Conversely every deck transformation of `r` arises this way, by uniqueness of lifts. A deck
+transformation `φ` of `r`, precomposed with `q`, and translation by a suitable `γ` followed by
+`q`, are two lifts of `p` through `r` which agree at one point of the preconnected space `E`,
+hence agree everywhere; comparing the translates of a single point then forces `γ` to
+normalize `H`.
 
 ## Main declarations
 
@@ -271,7 +275,7 @@ theorem normalizerQuotientDeckMulEquiv_mk [PreconnectedSpace E] [Nonempty E]
     (hrc : IsCoveringMap r) (γ : _root_.Subgroup.normalizer (H : Set Γ)) :
     normalizerQuotientDeckMulEquiv hp hq hr hrc (QuotientGroup.mk γ) =
       normalizerDeckHom hp hq hr γ := by
-  simp [normalizerQuotientDeckMulEquiv, QuotientGroup.quotientKerEquivOfSurjective_mk]
+  simp [normalizerQuotientDeckMulEquiv, QuotientGroup.quotientKerEquivOfSurjective_apply_mk]
 
 end DeckHom
 
@@ -320,10 +324,10 @@ theorem quotientDeckMulEquivOfNormal_mk [PreconnectedSpace E] [Nonempty E]
     (hrc : IsCoveringMap r) (γ : Γ) :
     quotientDeckMulEquivOfNormal hp hq hr hrc (QuotientGroup.mk γ) =
       deckHomOfNormal hp hq hr γ := by
-  rw [quotientDeckMulEquivOfNormal, MulEquiv.trans_apply, ← QuotientGroup.mk'_apply,
-    Subgroup.normalizerQuotientEquivQuotientOfNormal_symm_mk,
-    Subgroup.normalizerQuotientMk_apply, normalizerQuotientDeckMulEquiv_mk]
-  rfl
+  -- Unwinding both equivalences leaves translation by the same normalizer element `⟨γ, _⟩` on
+  -- either side, reached through two different membership proofs.
+  simp [quotientDeckMulEquivOfNormal, deckHomOfNormal, toNormalizerOfNormal]
+  congr 1
 
 end Normal
 

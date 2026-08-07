@@ -21,8 +21,8 @@ belongs beside `QuotientGroup.quotientKerEquivOfSurjective` in Mathlib.
 
 ## Main statements
 
-* `TauCeti.QuotientGroup.quotientKerEquivOfSurjective_mk`: the isomorphism `G ⧸ φ.ker ≃* M`
-  sends the class of `g` to `φ g`.
+* `TauCeti.QuotientGroup.quotientKerEquivOfSurjective_apply_mk`: the isomorphism
+  `G ⧸ φ.ker ≃* M` sends the class of `g` to `φ g`.
 -/
 
 public section
@@ -36,7 +36,7 @@ variable {G M : Type*} [Group G] [Group M] (φ : G →* M) (hφ : Function.Surje
 /-- The first isomorphism theorem for a surjective homomorphism sends the class of `g` to
 `φ g`. -/
 @[simp]
-theorem quotientKerEquivOfSurjective_mk (g : G) :
+theorem quotientKerEquivOfSurjective_apply_mk (g : G) :
     _root_.QuotientGroup.quotientKerEquivOfSurjective φ hφ (_root_.QuotientGroup.mk g) = φ g :=
   rfl
 
