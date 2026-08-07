@@ -4,8 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.LinearAlgebra.BilinearForm.Properties
 public import Mathlib.RepresentationTheory.Irreducible
+public import TauCeti.LinearAlgebra.BilinearForm.Basic
 
 /-!
 # Invariant bilinear forms on a representation
@@ -82,10 +82,12 @@ into the dual.  That identification is recorded twice: once unbundled as
 `TauCeti.Representation.isInvariantForm_iff_isIntertwiningMap`, which is the shape the proofs
 below use, and once as the linear equivalence
 `TauCeti.Representation.invariantFormsEquivIntertwiningMapDual`, which is the shape a dimension
-count of the invariant forms needs.  That equivalence is not exposed either: its two `simp` lemmas
+count of the invariant forms needs.  That equivalence is not exposed either, so a downstream module
+uses it opaquely -- a dimension count goes through `LinearEquiv.finrank_eq` and never looks at a
+value.  When a value is needed, the two `simp` lemmas
 `TauCeti.Representation.invariantFormsEquivIntertwiningMapDual_apply_toLinearMap` and
-`TauCeti.Representation.invariantFormsEquivIntertwiningMapDual_symm_apply_coe` say that it moves a
-form and an intertwiner to each other unchanged, and are the only route to it from another module.
+`TauCeti.Representation.invariantFormsEquivIntertwiningMapDual_symm_apply_coe` are what identify
+it: they say the equivalence moves a form and an intertwiner to each other unchanged.
 
 That identification is also what controls the left radical: the form is an intertwiner out of an
 irreducible representation, so `TauCeti.Representation.IsInvariantForm.ker_eq_bot` is Mathlib's
@@ -217,23 +219,19 @@ theorem alternatingInvariantForms_le (ρ : Representation k G V) :
 
 end SymmetricAlternating
 
-section SymmetricAlternatingField
+section SymmetricAlternatingRing
 
-variable {k G V : Type*} [Field k] [Monoid G] [AddCommGroup V] [Module k V]
+variable {k G V : Type*} [CommRing k] [NoZeroDivisors k] [Monoid G] [AddCommGroup V] [Module k V]
 
 /-- Away from characteristic two, a form cannot be both symmetric and alternating, so the two
 invariant subspaces meet only in `0`. -/
 theorem symmetricInvariantForms_inf_alternatingInvariantForms (h2 : (2 : k) ≠ 0)
     (ρ : Representation k G V) :
-    symmetricInvariantForms ρ ⊓ alternatingInvariantForms ρ = ⊥ := by
-  refine le_antisymm (fun B hB => ?_) bot_le
-  refine Submodule.mem_bot k |>.mpr (LinearMap.ext fun x => LinearMap.ext fun y => ?_)
-  have hsymm : B x y = B y x := hB.1.2.eq x y
-  have halt : -B x y = B y x := hB.2.2.neg_eq x y
-  have hzero : (2 : k) * B x y = 0 := by linear_combination hsymm - halt
-  simpa using (mul_eq_zero.mp hzero).resolve_left h2
+    symmetricInvariantForms ρ ⊓ alternatingInvariantForms ρ = ⊥ :=
+  le_antisymm (fun _ hB => Submodule.mem_bot k |>.mpr
+    (BilinForm.eq_zero_of_isSymm_of_isAlt h2 hB.1.2 hB.2.2)) bot_le
 
-end SymmetricAlternatingField
+end SymmetricAlternatingRing
 
 /-! ### Invariance as intertwining with the dual representation -/
 

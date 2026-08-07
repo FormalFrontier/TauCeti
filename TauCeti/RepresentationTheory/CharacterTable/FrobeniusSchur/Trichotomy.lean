@@ -19,8 +19,9 @@ and reads the trichotomy off the identification.
 
 The dictionary is elementary.  A functional on `Sym²V` becomes a bilinear form on `V` by composing
 with the universal multilinear map, and the form it produces is symmetric because the symmetric
-square does not see the order of its two arguments; a functional on `Λ²V` becomes an alternating
-form for the same reason.  Both assignments are injective, because the pure tensors span.  So the
+square does not see the order of its two arguments; a functional on `Λ²V` becomes a form in the
+same way, and the form it produces is alternating because a repeated argument wedges to zero.
+Both assignments are injective.  So the
 invariant functionals on the two squares inject into the invariant symmetric and the invariant
 alternating forms, which meet only in `0`.  Counting on the other side, the invariant forms are the
 intertwiners from `ρ` to its dual, and the character sum that counts those is the character sum that
@@ -38,9 +39,10 @@ case), and `0` when it carries no nonzero invariant form at all (the complex cas
 invariant form of the first two cases is automatically nondegenerate, by
 `TauCeti.Representation.IsInvariantForm.nondegenerate`.
 
-Characteristic zero is used in two places, and only there: to move the counting identities from
-equations in `k` to equations of natural numbers, and to keep a form from being symmetric and
-alternating at once.  Averaging characters produces identities in `k` and nothing more, so the two
+Characteristic zero does three jobs, and nothing else: it moves the counting identities from
+equations in `k` to equations of natural numbers, it keeps a form from being symmetric and
+alternating at once, and it supplies `Invertible (Nat.card G : k)` in the statements that do not
+assume it.  Averaging characters produces identities in `k` and nothing more, so the two
 counting identities are stated first in that form, needing only an invertible `|G|`
 (`TauCeti.Representation.finrank_invariants_dual_cast` and
 `TauCeti.Representation.finrank_invariantForms_cast`); in characteristic `p` they are identities
@@ -64,6 +66,10 @@ invariants to invariant forms, and the counting that follows.
 * `TauCeti.Representation.finrank_symmetricInvariantForms` and
   `TauCeti.Representation.finrank_alternatingInvariantForms`: the two invariant form counts are the
   invariant counts of the two squares.
+* `TauCeti.Representation.map_ofSymmetricSquareDual_eq_symmetricInvariantForms` and
+  `TauCeti.Representation.map_ofExteriorSquareDual_eq_alternatingInvariantForms`: **every invariant
+  symmetric, respectively alternating, form comes from an invariant functional on the corresponding
+  square**.
 * `TauCeti.Representation.frobeniusSchurIndicator_eq_sub_finrank_invariantForms`: **the indicator is
   the signed count of invariant forms**, `ν₂(ρ) = dim {symmetric} - dim {alternating}`.
 * `TauCeti.Representation.frobeniusSchurIndicator_eq_one_iff`,
@@ -77,9 +83,11 @@ invariants to invariant forms, and the counting that follows.
 ## Implementation notes
 
 The two maps out of the dual squares are only ever used through their images: injectivity plus the
-dimension count is what forces them onto the symmetric and the alternating forms, and proving
-surjectivity directly would need the universal property of the symmetric square, which is not in
-Mathlib.
+dimension count is what forces them onto the symmetric and the alternating forms, in
+`TauCeti.Representation.map_ofSymmetricSquareDual_eq_symmetricInvariantForms` and
+`TauCeti.Representation.map_ofExteriorSquareDual_eq_alternatingInvariantForms`.  Neither
+surjectivity is proved directly: on the symmetric side that would need a universal property of the
+symmetric square, which Mathlib does not have.
 
 What connects the submodule of invariant forms to the character machinery is
 `TauCeti.Representation.invariantFormsEquivIntertwiningMapDual`: an equivalence with a space of
@@ -89,7 +97,9 @@ intertwiners is the shape Mathlib's
 The dimension lemmas used below are stated for an abstract module and applied with that module
 supplied explicitly.  The reason is mechanical: the `AddCommMonoid` structure on a space of
 bilinear forms is the one on linear maps, and asking the elaborator to solve for an `AddCommGroup`
-structure inducing it does not terminate quickly.
+structure inducing it does not terminate quickly.  The same is why the two range identities are
+stated with the image on the left: they come out of such a lemma in that orientation, and turning
+one round asks for exactly that comparison of structures.
 
 ## References
 
@@ -120,11 +130,14 @@ open LinearMap (BilinForm)
 section Helpers
 
 /-
-The lemma below is stated for an abstract module `W` and applied with `W` given explicitly.
+The two lemmas below are stated for an abstract module `W` and applied with `W` given explicitly.
 Leaving `W` to unification at those applications makes the elaborator look for an `AddCommGroup`
 structure on a space of linear maps whose `AddCommMonoid` structure is already fixed, which it
 does not find quickly.  The same holds of the Mathlib lemmas `finrank_span_singleton` and
-`Submodule.one_le_finrank_iff` where they are used below.
+`Submodule.one_le_finrank_iff` where they are used below.  The second lemma is Mathlib's
+`Submodule.eq_of_le_of_finrank_le` with its `FiniteDimensional` hypothesis moved from the larger
+submodule to the ambient module, which is what makes that hypothesis cheap to discharge on a space
+of bilinear forms.
 -/
 
 /-- Two submodules meeting only in `0` have dimensions adding to at most that of any submodule
@@ -137,6 +150,12 @@ private theorem finrank_add_finrank_le_of_inf_eq_bot {K W : Type*} [Field K] [Ad
   rw [h, finrank_bot, add_zero] at hsup
   rw [← hsup]
   exact Submodule.finrank_mono (sup_le hS hT)
+
+/-- A submodule of another with no less dimension is that other submodule. -/
+private theorem eq_of_le_of_finrank_le {K W : Type*} [Field K] [AddCommGroup W] [Module K W]
+    [FiniteDimensional K W] {S T : Submodule K W} (hST : S ≤ T)
+    (h : finrank K T ≤ finrank K S) : S = T :=
+  Submodule.eq_of_le_of_finrank_le hST h
 
 end Helpers
 
@@ -189,8 +208,26 @@ section Invertible
 
 variable [Invertible (Nat.card G : k)]
 
+/-- **The invariant forms are as many as the invariants of the tensor square**, as an identity in
+`k`: the invariant forms are the intertwiners `ρ → ρ.dual`, and the character sum counting those is
+the character sum counting the invariants of `ρ ⊗ ρ`, read along `g⁻¹` instead of `g`.
+
+As with `TauCeti.Representation.finrank_invariants_dual_cast`, in characteristic `p` this is an
+identity of residues only. -/
+theorem finrank_invariantForms_eq_finrank_invariants_tprod_self_cast (ρ : Representation k G V) :
+    (finrank k (invariantForms ρ) : k) =
+      (finrank k (Representation.tprod ρ ρ).invariants : k) := by
+  have : Fintype G := Fintype.ofFinite G
+  rw [(invariantFormsEquivIntertwiningMapDual ρ).finrank_eq,
+    ← Representation.card_inv_mul_sum_char_mul_char_eq_finrank,
+    ← Representation.card_inv_mul_sum_char_eq_finrank]
+  refine congrArg _ ?_
+  simp only [Representation.char_dual, Representation.char_tensor, Pi.mul_apply]
+  exact Fintype.sum_equiv (Equiv.inv G) _ _ fun _ => rfl
+
 /-- **The invariant forms are as many as the invariants of the two squares together**, as an
-identity in `k`: both counts average `χ(g)²`, one of them along `g⁻¹`.
+identity in `k`: they are as many as the invariants of the tensor square, and
+`TauCeti.Representation.finrank_invariants_tprod_self_cast` splits that count in two.
 
 As with `TauCeti.Representation.finrank_invariants_dual_cast`, in characteristic `p` this is an
 identity of residues only; see `TauCeti.Representation.finrank_invariantForms` for the
@@ -199,17 +236,8 @@ theorem finrank_invariantForms_cast (ρ : Representation k G V) :
     (finrank k (invariantForms ρ) : k) =
       (finrank k (ρ.symmetricPower 2).invariants : k) +
         (finrank k (ρ.exteriorPower 2).invariants : k) := by
-  have : Fintype G := Fintype.ofFinite G
-  have hsum : ∀ g : G, ρ.character g * ρ.character g =
-      (ρ.symmetricPower 2).character g + (ρ.exteriorPower 2).character g := fun g => by
-    rw [← Representation.char_tensorSquare ρ g, sq]
-  rw [(invariantFormsEquivIntertwiningMapDual ρ).finrank_eq,
-    ← Representation.card_inv_mul_sum_char_mul_char_eq_finrank,
-    ← Representation.card_inv_mul_sum_char_eq_finrank,
-    ← Representation.card_inv_mul_sum_char_eq_finrank, ← mul_add, ← Finset.sum_add_distrib]
-  refine congrArg _ ?_
-  simp only [Representation.char_dual, ← hsum]
-  exact Fintype.sum_equiv (Equiv.inv G) _ _ fun _ => rfl
+  rw [finrank_invariantForms_eq_finrank_invariants_tprod_self_cast,
+    finrank_invariants_tprod_self_cast]
 
 end Invertible
 
@@ -259,23 +287,66 @@ private theorem finrank_symmetricInvariantForms_add_le (ρ : Representation k G 
     (alternatingInvariantForms_le ρ)
     (symmetricInvariantForms_inf_alternatingInvariantForms (by norm_num) ρ)
 
-/-- **The invariant symmetric forms are as many as the invariants of the symmetric square.** -/
-theorem finrank_symmetricInvariantForms (ρ : Representation k G V) :
-    finrank k (symmetricInvariantForms ρ) = finrank k (ρ.symmetricPower 2).invariants := by
+/- The two counts are squeezed together: each of the two injections gives one inequality, and the
+two subspaces meeting only in `0` inside a space of the total dimension gives the third, which
+together leave no room. -/
+private theorem finrank_symmetricInvariantForms_and_alternatingInvariantForms
+    (ρ : Representation k G V) :
+    finrank k (symmetricInvariantForms ρ) = finrank k (ρ.symmetricPower 2).invariants ∧
+      finrank k (alternatingInvariantForms ρ) = finrank k (ρ.exteriorPower 2).invariants := by
   have h₁ := finrank_invariants_symmetricPower_le ρ
   have h₂ := finrank_invariants_exteriorPower_le ρ
   have h₃ := finrank_symmetricInvariantForms_add_le ρ
   have h₄ := finrank_invariantForms ρ
   omega
 
+/-- **The invariant symmetric forms are as many as the invariants of the symmetric square.** -/
+theorem finrank_symmetricInvariantForms (ρ : Representation k G V) :
+    finrank k (symmetricInvariantForms ρ) = finrank k (ρ.symmetricPower 2).invariants :=
+  (finrank_symmetricInvariantForms_and_alternatingInvariantForms ρ).1
+
 /-- **The invariant alternating forms are as many as the invariants of the exterior square.** -/
 theorem finrank_alternatingInvariantForms (ρ : Representation k G V) :
-    finrank k (alternatingInvariantForms ρ) = finrank k (ρ.exteriorPower 2).invariants := by
-  have h₁ := finrank_invariants_symmetricPower_le ρ
-  have h₂ := finrank_invariants_exteriorPower_le ρ
-  have h₃ := finrank_symmetricInvariantForms_add_le ρ
-  have h₄ := finrank_invariantForms ρ
-  omega
+    finrank k (alternatingInvariantForms ρ) = finrank k (ρ.exteriorPower 2).invariants :=
+  (finrank_symmetricInvariantForms_and_alternatingInvariantForms ρ).2
+
+/-- **Every invariant symmetric form comes from an invariant functional on the symmetric square.**
+The injection is onto: it lands in the invariant symmetric forms, and the two have the same
+dimension. -/
+theorem map_ofSymmetricSquareDual_eq_symmetricInvariantForms (ρ : Representation k G V) :
+    Submodule.map (BilinForm.ofSymmetricSquareDual (k := k) (V := V))
+        ((ρ.symmetricPower 2).dual).invariants = symmetricInvariantForms ρ := by
+  have hle : Submodule.map (BilinForm.ofSymmetricSquareDual (k := k) (V := V))
+      ((ρ.symmetricPower 2).dual).invariants ≤ symmetricInvariantForms ρ := by
+    rintro _ ⟨ψ, hψ, rfl⟩
+    exact ofSymmetricSquareDual_mem_symmetricInvariantForms ρ hψ
+  have hrank : finrank k (symmetricInvariantForms ρ) =
+      finrank k (Submodule.map (BilinForm.ofSymmetricSquareDual (k := k) (V := V))
+        ((ρ.symmetricPower 2).dual).invariants) := by
+    rw [finrank_symmetricInvariantForms ρ,
+      ← (Submodule.equivMapOfInjective (BilinForm.ofSymmetricSquareDual (k := k) (V := V))
+        BilinForm.ofSymmetricSquareDual_injective
+        ((ρ.symmetricPower 2).dual).invariants).finrank_eq, finrank_invariants_dual]
+  exact eq_of_le_of_finrank_le (K := k) (W := BilinForm k V) hle hrank.le
+
+/-- **Every invariant alternating form comes from an invariant functional on the exterior square.**
+The injection is onto: it lands in the invariant alternating forms, and the two have the same
+dimension. -/
+theorem map_ofExteriorSquareDual_eq_alternatingInvariantForms (ρ : Representation k G V) :
+    Submodule.map (BilinForm.ofExteriorSquareDual (k := k) (V := V))
+        ((ρ.exteriorPower 2).dual).invariants = alternatingInvariantForms ρ := by
+  have hle : Submodule.map (BilinForm.ofExteriorSquareDual (k := k) (V := V))
+      ((ρ.exteriorPower 2).dual).invariants ≤ alternatingInvariantForms ρ := by
+    rintro _ ⟨ψ, hψ, rfl⟩
+    exact ofExteriorSquareDual_mem_alternatingInvariantForms ρ hψ
+  have hrank : finrank k (alternatingInvariantForms ρ) =
+      finrank k (Submodule.map (BilinForm.ofExteriorSquareDual (k := k) (V := V))
+        ((ρ.exteriorPower 2).dual).invariants) := by
+    rw [finrank_alternatingInvariantForms ρ,
+      ← (Submodule.equivMapOfInjective (BilinForm.ofExteriorSquareDual (k := k) (V := V))
+        BilinForm.ofExteriorSquareDual_injective
+        ((ρ.exteriorPower 2).dual).invariants).finrank_eq, finrank_invariants_dual]
+  exact eq_of_le_of_finrank_le (K := k) (W := BilinForm k V) hle hrank.le
 
 /-- **The two invariant form counts add to the number of invariant forms.** -/
 theorem finrank_symmetricInvariantForms_add_finrank_alternatingInvariantForms
@@ -358,18 +429,32 @@ theorem frobeniusSchurIndicator_eq_neg_one_of_isAlt (hB : IsInvariantForm ρ B) 
   rw [frobeniusSchurIndicator_eq_sub_finrank_invariantForms, hs, ha]
   simp
 
+omit [Fintype G] in
+/-- **An irreducible representation is orthogonal, symplectic or complex.** Over an algebraically
+closed field of characteristic zero it carries a nonzero invariant symmetric form, or a nonzero
+invariant alternating form, or no nonzero invariant form at all.  This is the case split the three
+values of the indicator are read off from. -/
+theorem exists_isSymm_or_exists_isAlt_or_invariantForms_eq_bot :
+    (∃ B : BilinForm k V, IsInvariantForm ρ B ∧ B ≠ 0 ∧ B.IsSymm) ∨
+      (∃ B : BilinForm k V, IsInvariantForm ρ B ∧ B ≠ 0 ∧ B.IsAlt) ∨ invariantForms ρ = ⊥ := by
+  by_cases hbot : invariantForms ρ = ⊥
+  · exact Or.inr (Or.inr hbot)
+  · obtain ⟨C, hCmem, hC0⟩ := (Submodule.ne_bot_iff _).mp hbot
+    have hC : IsInvariantForm ρ C := mem_invariantForms.mp hCmem
+    rcases hC.isSymm_or_isAlt (by norm_num) hC0 with hsymm | halt
+    · exact Or.inl ⟨C, hC, hC0, hsymm⟩
+    · exact Or.inr (Or.inl ⟨C, hC, hC0, halt⟩)
+
 /-- **The Frobenius-Schur trichotomy.** The indicator of an irreducible representation over an
 algebraically closed field of characteristic zero takes only the values `1`, `0` and `-1`. -/
 theorem frobeniusSchurIndicator_eq_one_or_eq_zero_or_eq_neg_one :
     frobeniusSchurIndicator ρ = 1 ∨ frobeniusSchurIndicator ρ = 0 ∨
       frobeniusSchurIndicator ρ = -1 := by
-  by_cases hbot : invariantForms ρ = ⊥
+  rcases exists_isSymm_or_exists_isAlt_or_invariantForms_eq_bot ρ with
+    ⟨_, hB, hB0, hsymm⟩ | ⟨_, hB, hB0, halt⟩ | hbot
+  · exact Or.inl (frobeniusSchurIndicator_eq_one_of_isSymm ρ hB hB0 hsymm)
+  · exact Or.inr (Or.inr (frobeniusSchurIndicator_eq_neg_one_of_isAlt ρ hB hB0 halt))
   · exact Or.inr (Or.inl (frobeniusSchurIndicator_eq_zero_of_invariantForms_eq_bot ρ hbot))
-  · obtain ⟨C, hCmem, hC0⟩ := (Submodule.ne_bot_iff _).mp hbot
-    have hC : IsInvariantForm ρ C := mem_invariantForms.mp hCmem
-    rcases hC.isSymm_or_isAlt (by norm_num) hC0 with hsymm | halt
-    · exact Or.inl (frobeniusSchurIndicator_eq_one_of_isSymm ρ hC hC0 hsymm)
-    · exact Or.inr (Or.inr (frobeniusSchurIndicator_eq_neg_one_of_isAlt ρ hC hC0 halt))
 
 /-- **The indicator is `1` exactly in the orthogonal case.** -/
 theorem frobeniusSchurIndicator_eq_one_iff :
@@ -377,15 +462,13 @@ theorem frobeniusSchurIndicator_eq_one_iff :
       ∃ B : BilinForm k V, IsInvariantForm ρ B ∧ B ≠ 0 ∧ B.IsSymm := by
   refine ⟨fun h => ?_, fun ⟨_, hB, hB0, hsymm⟩ =>
     frobeniusSchurIndicator_eq_one_of_isSymm ρ hB hB0 hsymm⟩
-  by_cases hbot : invariantForms ρ = ⊥
+  rcases exists_isSymm_or_exists_isAlt_or_invariantForms_eq_bot ρ with
+    hsymm | ⟨_, hB, hB0, halt⟩ | hbot
+  · exact hsymm
+  · rw [frobeniusSchurIndicator_eq_neg_one_of_isAlt ρ hB hB0 halt] at h
+    exact absurd h (by norm_num)
   · rw [frobeniusSchurIndicator_eq_zero_of_invariantForms_eq_bot ρ hbot] at h
     exact absurd h.symm one_ne_zero
-  · obtain ⟨C, hCmem, hC0⟩ := (Submodule.ne_bot_iff _).mp hbot
-    have hC : IsInvariantForm ρ C := mem_invariantForms.mp hCmem
-    rcases hC.isSymm_or_isAlt (by norm_num) hC0 with hsymm | halt
-    · exact ⟨C, hC, hC0, hsymm⟩
-    · rw [frobeniusSchurIndicator_eq_neg_one_of_isAlt ρ hC hC0 halt] at h
-      exact absurd h (by norm_num)
 
 /-- **The indicator is `-1` exactly in the symplectic case.** -/
 theorem frobeniusSchurIndicator_eq_neg_one_iff :
@@ -393,29 +476,26 @@ theorem frobeniusSchurIndicator_eq_neg_one_iff :
       ∃ B : BilinForm k V, IsInvariantForm ρ B ∧ B ≠ 0 ∧ B.IsAlt := by
   refine ⟨fun h => ?_, fun ⟨_, hB, hB0, halt⟩ =>
     frobeniusSchurIndicator_eq_neg_one_of_isAlt ρ hB hB0 halt⟩
-  by_cases hbot : invariantForms ρ = ⊥
+  rcases exists_isSymm_or_exists_isAlt_or_invariantForms_eq_bot ρ with
+    ⟨_, hB, hB0, hsymm⟩ | halt | hbot
+  · rw [frobeniusSchurIndicator_eq_one_of_isSymm ρ hB hB0 hsymm] at h
+    exact absurd h (by norm_num)
+  · exact halt
   · rw [frobeniusSchurIndicator_eq_zero_of_invariantForms_eq_bot ρ hbot] at h
     exact absurd h (by norm_num)
-  · obtain ⟨C, hCmem, hC0⟩ := (Submodule.ne_bot_iff _).mp hbot
-    have hC : IsInvariantForm ρ C := mem_invariantForms.mp hCmem
-    rcases hC.isSymm_or_isAlt (by norm_num) hC0 with hsymm | halt
-    · rw [frobeniusSchurIndicator_eq_one_of_isSymm ρ hC hC0 hsymm] at h
-      exact absurd h (by norm_num)
-    · exact ⟨C, hC, hC0, halt⟩
 
 /-- **The indicator is `0` exactly in the complex case**, that is, exactly when the representation
 carries no nonzero invariant bilinear form at all. -/
 theorem frobeniusSchurIndicator_eq_zero_iff :
     frobeniusSchurIndicator ρ = 0 ↔ invariantForms ρ = ⊥ := by
   refine ⟨fun h => ?_, frobeniusSchurIndicator_eq_zero_of_invariantForms_eq_bot ρ⟩
-  by_contra hbot
-  obtain ⟨C, hCmem, hC0⟩ := (Submodule.ne_bot_iff _).mp hbot
-  have hC : IsInvariantForm ρ C := mem_invariantForms.mp hCmem
-  rcases hC.isSymm_or_isAlt (by norm_num) hC0 with hsymm | halt
-  · rw [frobeniusSchurIndicator_eq_one_of_isSymm ρ hC hC0 hsymm] at h
+  rcases exists_isSymm_or_exists_isAlt_or_invariantForms_eq_bot ρ with
+    ⟨_, hB, hB0, hsymm⟩ | ⟨_, hB, hB0, halt⟩ | hbot
+  · rw [frobeniusSchurIndicator_eq_one_of_isSymm ρ hB hB0 hsymm] at h
     exact absurd h one_ne_zero
-  · rw [frobeniusSchurIndicator_eq_neg_one_of_isAlt ρ hC hC0 halt] at h
+  · rw [frobeniusSchurIndicator_eq_neg_one_of_isAlt ρ hB hB0 halt] at h
     exact absurd h (by norm_num)
+  · exact hbot
 
 end Trichotomy
 

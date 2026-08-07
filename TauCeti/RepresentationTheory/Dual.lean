@@ -10,9 +10,9 @@ public import Mathlib.RepresentationTheory.Character
 # Invariants of the dual representation
 
 The dual `ρ.dual` of a representation acts on functionals by `ψ ↦ ψ ∘ ρ g⁻¹`, so a functional
-invariant for it is one that the action of `G` on the space leaves unchanged:
-`ψ (ρ g u) = ψ u`.  That is the elimination rule for membership in `ρ.dual.invariants`, and it is
-all a construction out of an invariant functional ever needs.
+invariant for it is exactly one that the action of `G` on the space leaves unchanged:
+`ψ (ρ g u) = ψ u`.  That characterization of membership in `ρ.dual.invariants` is all a
+construction out of an invariant functional, or of one, ever needs.
 
 Counting those invariants needs the character machinery.  The character of the dual is the
 character of `ρ` read along `g⁻¹`, and summing over the group is unchanged by inversion, so the two
@@ -23,8 +23,9 @@ invertible `|G|`; in characteristic `p` it is an identity of residues, and it is
 
 ## Main results
 
-* `TauCeti.Representation.apply_of_mem_invariants_dual`: an invariant functional for `ρ.dual` is
-  unchanged by the action of `G`.
+* `TauCeti.Representation.mem_invariants_dual_iff`: a functional is invariant for `ρ.dual` exactly
+  when the action of `G` leaves it unchanged, with
+  `TauCeti.Representation.apply_of_mem_invariants_dual` the elimination direction.
 * `TauCeti.Representation.finrank_invariants_dual`: **the dual of a representation has as many
   invariants as the representation**, as an identity in `k` whenever `|G|` is invertible
   (`TauCeti.Representation.finrank_invariants_dual_cast`) and as natural numbers in characteristic
@@ -51,11 +52,21 @@ section Group
 
 variable {k G V : Type*} [CommRing k] [Group G] [AddCommMonoid V] [Module k V]
 
+/-- **A functional is invariant for the dual of a representation exactly when the action of `G`
+leaves it unchanged.** -/
+theorem mem_invariants_dual_iff {ρ : Representation k G V} {ψ : Module.Dual k V} :
+    ψ ∈ ρ.dual.invariants ↔ ∀ (g : G) (u : V), ψ (ρ g u) = ψ u := by
+  constructor
+  · intro hψ g u
+    have h := DFunLike.congr_fun (hψ g⁻¹) u
+    simpa [Representation.dual_apply, Module.Dual.transpose_apply] using h
+  · refine fun h g => LinearMap.ext fun u => ?_
+    simpa [Representation.dual_apply, Module.Dual.transpose_apply] using h g⁻¹ u
+
 /-- A functional invariant for the dual of a representation is unchanged by the action. -/
 theorem apply_of_mem_invariants_dual {ρ : Representation k G V} {ψ : Module.Dual k V}
-    (hψ : ψ ∈ ρ.dual.invariants) (g : G) (u : V) : ψ (ρ g u) = ψ u := by
-  have h := DFunLike.congr_fun (hψ g⁻¹) u
-  simpa [Representation.dual_apply, Module.Dual.transpose_apply] using h
+    (hψ : ψ ∈ ρ.dual.invariants) (g : G) (u : V) : ψ (ρ g u) = ψ u :=
+  mem_invariants_dual_iff.mp hψ g u
 
 end Group
 

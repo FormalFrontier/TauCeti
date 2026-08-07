@@ -34,12 +34,11 @@ on `V` by composing with the universal multilinear map.  That is what
 
 ## Implementation notes
 
-Bilinearity is read off `MultilinearMap.map_update_add` and `MultilinearMap.map_update_smul` at the
-two indices of `Fin 2`, which is why the two private lemmas identifying `Function.update` on a
-two-element vector come first: they are what turn an update at `0` or at `1` back into the
-`![·, ·]` notation the statements are phrased in.  Feeding those four facts to `LinearMap.mk₂`
-keeps the four linearity goals stated in that notation, so none of them has to be massaged into
-the nested form a bare `LinearMap` constructor would present.
+Bilinearity is Mathlib's `MultilinearMap.cons_add` and `cons_smul` at the first argument and
+`MultilinearMap.snoc_add` and `snoc_smul` at the second, since `![x, y]` is both `Fin.cons x ![y]`
+and `Fin.snoc ![x] y`.  Feeding those four facts to `LinearMap.mk₂` keeps the four linearity goals
+stated in the `![·, ·]` notation, so none of them has to be massaged into the nested form a bare
+`LinearMap` constructor would present.
 -/
 
 public section
@@ -50,25 +49,15 @@ open LinearMap (BilinForm)
 
 namespace MultilinearMap
 
-private theorem update_two_zero {V : Type*} (x y z : V) :
-    Function.update ![z, y] 0 x = ![x, y] := by
-  funext i
-  fin_cases i <;> simp
-
-private theorem update_two_one {V : Type*} (x y z : V) :
-    Function.update ![x, z] 1 y = ![x, y] := by
-  funext i
-  fin_cases i <;> simp
-
 variable {R V : Type*} [CommSemiring R] [AddCommMonoid V] [Module R V]
 
 /-- The bilinear form `(x, y) ↦ m ![x, y]` of a multilinear map `m` in two variables. -/
 def toBilinForm (m : MultilinearMap R (fun _ : Fin 2 => V) R) : BilinForm R V :=
   LinearMap.mk₂ R (fun x y => m ![x, y])
-    (fun x x' y => by simpa only [update_two_zero] using m.map_update_add ![x, y] 0 x x')
-    (fun c x y => by simpa only [update_two_zero] using m.map_update_smul ![x, y] 0 c x)
-    (fun x y y' => by simpa only [update_two_one] using m.map_update_add ![x, y] 1 y y')
-    (fun c x y => by simpa only [update_two_one] using m.map_update_smul ![x, y] 1 c y)
+    (fun x x' y => m.cons_add ![y] x x')
+    (fun c x y => m.cons_smul ![y] c x)
+    (fun x y y' => by simpa using m.snoc_add ![x] y y')
+    (fun c x y => by simpa using m.snoc_smul ![x] c y)
 
 @[simp]
 theorem toBilinForm_apply (m : MultilinearMap R (fun _ : Fin 2 => V) R) (x y : V) :
@@ -83,7 +72,7 @@ theorem isSymm_toBilinForm {m : MultilinearMap R (fun _ : Fin 2 => V) R}
 /-- The form of a multilinear map that vanishes on a repeated argument is alternating. -/
 theorem isAlt_toBilinForm {m : MultilinearMap R (fun _ : Fin 2 => V) R}
     (h : ∀ x : V, m ![x, x] = 0) : (toBilinForm m).IsAlt :=
-  h
+  fun x => (toBilinForm_apply m x x).trans (h x)
 
 end MultilinearMap
 
