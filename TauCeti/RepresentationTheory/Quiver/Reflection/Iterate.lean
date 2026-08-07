@@ -33,11 +33,13 @@ the arrows of `Reflect V i`, by `TauCeti.Quiver.hom_reflectAt_eq_hom_reflect` �
 
 ## References
 
-The lists along which this iteration is sink-admissible, and hence along which the reflection
+The lists along which this iteration is sink-admissible are studied in
+`TauCeti.RepresentationTheory.Quiver.Reflection.Admissible`. A sink-admissible list may be empty,
+may repeat a vertex and need not exhaust the vertices; it is along a sink-admissible ordering — a
+sink-admissible list that is repetition-free and contains every vertex — that the reflection
 functors of Layer 4 of `TauCetiRoadmap/RepresentationTheory/QuiverRepresentations/README.md`
-compose into the Coxeter functor, are studied in
-`TauCeti.RepresentationTheory.Quiver.Reflection.Admissible`. See Bernstein--Gelfand--Ponomarev,
-*Coxeter functors and Gabriel's theorem*.
+compose into the Coxeter functor. See Bernstein--Gelfand--Ponomarev, *Coxeter functors and
+Gabriel's theorem*.
 -/
 
 public section
