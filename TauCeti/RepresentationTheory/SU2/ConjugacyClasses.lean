@@ -15,11 +15,9 @@ absolute value at most `2`. So the conjugacy classes of `SU(2)` are parametrised
 `θ ∈ [0, π]`, through `θ ↦ diag (e^{iθ}, e^{-iθ})`, whose trace is `2 cos θ`.
 
 This assembles two halves that are already available. Every element of `SU(2)` is conjugate into
-the maximal torus `T` (`TauCeti.SU2.exists_conj_mem_torus`) and the Weyl group of `SU(2)`, of order
-two, acts on `T` by inversion (`TauCeti.SU2.isConj_inv_of_mem_torus`); conversely, conjugating a
-torus element back into `T` can only return it or its inverse
-(`TauCeti.SU2.eq_or_eq_inv_of_conj_torusHom`). Hence each conjugacy class meets `T` in exactly one
-Weyl orbit `{z, z⁻¹}` (`TauCeti.SU2.isConj_torusHom_iff`), and `z + z⁻¹ = tr (diag (z, z⁻¹))` is
+the maximal torus `T` (`TauCeti.SU2.exists_conj_mem_torus`), and each conjugacy class meets `T` in
+exactly one Weyl orbit `{z, z⁻¹}` (`TauCeti.SU2.isConj_torusHom_iff` of
+`TauCeti/RepresentationTheory/SU2/TorusConjugacy.lean`); here `z + z⁻¹ = tr (diag (z, z⁻¹))` is
 the invariant that separates those orbits. Cutting each orbit down to a single representative is
 what makes `[0, π]` a strict fundamental domain for the Weyl action on angles
 (`TauCeti.SU2.exists_isConj_torusExp_mem_Icc` and
@@ -37,8 +35,8 @@ is drawn in `TauCeti/RepresentationTheory/SU2/Character.lean`.
 
 * `TauCeti.SU2.isConj_iff_trace_eq`: two elements of `SU(2)` are conjugate if and only if they
   have the same trace.
-* `TauCeti.SU2.isConj_torusHom_iff`: two torus elements are conjugate in `SU(2)` exactly when they
-  are equal or inverse, so each conjugacy class meets the torus in a single Weyl orbit.
+* `TauCeti.SU2.isConj_torusExp_iff_cos_eq`: on the maximal torus that criterion reads as the
+  equality of the cosines of the angles, the cosine being the invariant of the Weyl action.
 * `TauCeti.SU2.norm_trace_le_two` and `TauCeti.SU2.exists_trace_torusExp_eq_ofReal`: together with
   `TauCeti.SU2.isSelfAdjoint_trace`, the traces of elements of `SU(2)` are exactly the real
   numbers of absolute value at most `2`.
@@ -73,7 +71,7 @@ namespace SU2
 the angle of any torus element it is conjugate to. -/
 theorem norm_trace_le_two (g : SU2) : ‖Matrix.trace (g : Matrix (Fin 2) (Fin 2) ℂ)‖ ≤ 2 := by
   obtain ⟨θ, hθ⟩ := exists_isConj_torusExp g
-  rw [trace_eq_of_isConj hθ, trace_coe_torusExp]
+  rw [trace_eq_of_isConj hθ, trace_torusExp]
   simp only [Complex.norm_mul, Complex.norm_ofNat, Complex.norm_real, Real.norm_eq_abs]
   linarith [Real.abs_cos_le_one θ]
 
@@ -87,64 +85,51 @@ theorem exists_trace_torusExp_eq_ofReal {t : ℝ} (ht : |t| ≤ 2) :
       Matrix.trace ((torusExp θ : SU2) : Matrix (Fin 2) (Fin 2) ℂ) = (t : ℂ) := by
   obtain ⟨hlb, hub⟩ := abs_le.mp ht
   refine ⟨Real.arccos (t / 2), ⟨Real.arccos_nonneg _, Real.arccos_le_pi _⟩, ?_⟩
-  rw [trace_coe_torusExp, Real.cos_arccos (by linarith) (by linarith)]
+  rw [trace_torusExp, Real.cos_arccos (by linarith) (by linarith)]
   push_cast
   ring
-
-/-! ### Conjugacy on the maximal torus -/
-
-/-- **Each conjugacy class of `SU(2)` meets the maximal torus in exactly one Weyl orbit:** two
-torus elements are conjugate in `SU(2)` precisely when they are equal or inverse. The forward
-direction is `TauCeti.SU2.eq_or_eq_inv_of_conj_torusHom` and the backward direction is the Weyl
-reflection `TauCeti.SU2.isConj_inv_of_mem_torus`. -/
-theorem isConj_torusHom_iff {z w : Circle} :
-    IsConj (torusHom z) (torusHom w) ↔ w = z ∨ w = z⁻¹ := by
-  refine ⟨fun h => ?_, ?_⟩
-  · obtain ⟨u, hu⟩ := isConj_iff.mp h
-    exact eq_or_eq_inv_of_conj_torusHom hu
-  · rintro (rfl | rfl)
-    · exact IsConj.refl _
-    · rw [map_inv]
-      exact isConj_inv_of_mem_torus (torusHom_mem_torus z)
-
-/-- **The trace classifies conjugacy on the maximal torus:** two torus elements are conjugate in
-`SU(2)` exactly when they have the same trace. This is `TauCeti.SU2.isConj_torusHom_iff` read
-through the invariant `z + z⁻¹ = tr (diag (z, z⁻¹))` that separates the Weyl orbits
-(`TauCeti.SU2.eq_or_eq_inv_of_trace_torusMatrix_eq`). -/
-theorem isConj_torusExp_iff_trace_eq {θ φ : ℝ} :
-    IsConj (torusExp θ) (torusExp φ)
-      ↔ Matrix.trace ((torusExp θ : SU2) : Matrix (Fin 2) (Fin 2) ℂ)
-        = Matrix.trace ((torusExp φ : SU2) : Matrix (Fin 2) (Fin 2) ℂ) := by
-  refine ⟨trace_eq_of_isConj, fun h => ?_⟩
-  rw [torusExp_def, torusExp_def] at h ⊢
-  rw [coe_torusHom, coe_torusHom] at h
-  exact isConj_torusHom_iff.mpr (eq_or_eq_inv_of_trace_torusMatrix_eq h.symm)
-
-/-- Two torus elements are conjugate in `SU(2)` exactly when their angles have the same cosine:
-the Weyl group acts on the angle by negation, and the cosine is precisely the invariant of that
-action. This is `TauCeti.SU2.isConj_torusExp_iff_trace_eq` with the trace evaluated by
-`TauCeti.SU2.trace_coe_torusExp`. -/
-theorem isConj_torusExp_iff {θ φ : ℝ} :
-    IsConj (torusExp θ) (torusExp φ) ↔ Real.cos φ = Real.cos θ := by
-  rw [isConj_torusExp_iff_trace_eq, trace_coe_torusExp, trace_coe_torusExp]
-  refine ⟨fun h => ?_, fun h => by rw [h]⟩
-  exact_mod_cast (mul_left_cancel₀ (a := (2 : ℂ)) (by norm_num) h).symm
 
 /-! ### The trace as a complete conjugacy invariant -/
 
 /-- **The conjugacy classes of `SU(2)` are classified by the trace:** two elements of `SU(2)` are
-conjugate if and only if they have the same trace. Conjugation always preserves the trace; the
-content is the converse, which conjugates both elements into the maximal torus and applies the
-Weyl-orbit description `TauCeti.SU2.isConj_torusExp_iff_trace_eq`. -/
+conjugate if and only if they have the same trace. Conjugation always preserves the trace
+(`TauCeti.SU2.trace_eq_of_isConj`); the content is the converse, which conjugates both elements
+into the maximal torus (`TauCeti.SU2.exists_isConj_torusHom`) and separates the Weyl orbits there
+by the invariant `z + z⁻¹ = tr (diag (z, z⁻¹))`
+(`TauCeti.SU2.eq_or_eq_inv_of_trace_torusMatrix_eq` and
+`TauCeti.SU2.isConj_torusHom_iff`). -/
 theorem isConj_iff_trace_eq {g h : SU2} :
     IsConj g h ↔ Matrix.trace (g : Matrix (Fin 2) (Fin 2) ℂ)
       = Matrix.trace (h : Matrix (Fin 2) (Fin 2) ℂ) := by
   refine ⟨trace_eq_of_isConj, fun htr => ?_⟩
-  obtain ⟨θ, hθ⟩ := exists_isConj_torusExp g
-  obtain ⟨φ, hφ⟩ := exists_isConj_torusExp h
-  refine hθ.trans (IsConj.trans (isConj_torusExp_iff_trace_eq.mpr ?_) hφ.symm)
-  rw [← trace_eq_of_isConj hθ, ← trace_eq_of_isConj hφ]
-  exact htr
+  obtain ⟨z, hz⟩ := exists_isConj_torusHom g
+  obtain ⟨w, hw⟩ := exists_isConj_torusHom h
+  have hg := trace_eq_of_isConj hz
+  have hh := trace_eq_of_isConj hw
+  rw [coe_torusHom] at hg hh
+  refine hz.trans (IsConj.trans (isConj_torusHom_iff.mpr ?_) hw.symm)
+  exact eq_or_eq_inv_of_trace_torusMatrix_eq (by rw [← hg, ← hh]; exact htr.symm)
+
+/-! ### Conjugacy on the maximal torus -/
+
+/-- **The trace classifies conjugacy on the maximal torus:** two torus elements are conjugate in
+`SU(2)` exactly when they have the same trace. This is `TauCeti.SU2.isConj_iff_trace_eq` in the
+angle parametrisation of the maximal torus. -/
+theorem isConj_torusExp_iff_trace_eq {θ φ : ℝ} :
+    IsConj (torusExp θ) (torusExp φ)
+      ↔ Matrix.trace ((torusExp θ : SU2) : Matrix (Fin 2) (Fin 2) ℂ)
+        = Matrix.trace ((torusExp φ : SU2) : Matrix (Fin 2) (Fin 2) ℂ) :=
+  isConj_iff_trace_eq
+
+/-- Two torus elements are conjugate in `SU(2)` exactly when their angles have the same cosine:
+the Weyl group acts on the angle by negation, and the cosine is precisely the invariant of that
+action. This is `TauCeti.SU2.isConj_torusExp_iff_trace_eq` with the trace evaluated by
+`TauCeti.SU2.trace_torusExp`. -/
+theorem isConj_torusExp_iff_cos_eq {θ φ : ℝ} :
+    IsConj (torusExp θ) (torusExp φ) ↔ Real.cos φ = Real.cos θ := by
+  rw [isConj_torusExp_iff_trace_eq, trace_torusExp, trace_torusExp]
+  refine ⟨fun h => ?_, fun h => by rw [h]⟩
+  exact_mod_cast (mul_left_cancel₀ (a := (2 : ℂ)) (by norm_num) h).symm
 
 /-! ### The Weyl chamber `[0, π]` as a strict fundamental domain -/
 
@@ -155,7 +140,7 @@ theorem exists_isConj_torusExp_mem_Icc (g : SU2) :
     ∃ θ ∈ Set.Icc (0 : ℝ) Real.pi, IsConj g (torusExp θ) := by
   obtain ⟨φ, hφ⟩ := exists_isConj_torusExp g
   refine ⟨Real.arccos (Real.cos φ), ⟨Real.arccos_nonneg _, Real.arccos_le_pi _⟩, ?_⟩
-  exact hφ.trans (isConj_torusExp_iff.mpr
+  exact hφ.trans (isConj_torusExp_iff_cos_eq.mpr
     (Real.cos_arccos (Real.neg_one_le_cos φ) (Real.cos_le_one φ)))
 
 /-- The Weyl chamber `[0, π]` contains **at most** one angle from each conjugacy class: distinct
@@ -164,7 +149,7 @@ With `TauCeti.SU2.exists_isConj_torusExp_mem_Icc` this says `[0, π]` is a *stri
 domain for the Weyl action on the angles of the maximal torus. -/
 theorem eq_of_mem_Icc_of_isConj_torusExp {θ φ : ℝ} (hθ : θ ∈ Set.Icc (0 : ℝ) Real.pi)
     (hφ : φ ∈ Set.Icc (0 : ℝ) Real.pi) (h : IsConj (torusExp θ) (torusExp φ)) : θ = φ :=
-  Real.injOn_cos hθ hφ (isConj_torusExp_iff.mp h).symm
+  Real.injOn_cos hθ hφ (isConj_torusExp_iff_cos_eq.mp h).symm
 
 /-! ### Class functions are functions of the trace -/
 

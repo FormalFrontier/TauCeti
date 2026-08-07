@@ -46,7 +46,7 @@ conjugate transpose add up to `(tr g) • 1`, so the Hermitian part of an elemen
 scalar matrix; tracing it shows the trace is real (`TauCeti.SU2.isSelfAdjoint_trace`). Conjugate
 elements have the same trace (`TauCeti.SU2.trace_eq_of_isConj`). On the torus the trace is
 `TauCeti.SU2.trace_torusMatrix`: `tr (diag (z, z⁻¹)) = z + z⁻¹`, in the angle parametrisation
-`TauCeti.SU2.trace_coe_torusExp`: `tr (diag (e^{iθ}, e^{-iθ})) = 2 cos θ`, and
+`TauCeti.SU2.trace_torusExp`: `tr (diag (e^{iθ}, e^{-iθ})) = 2 cos θ`, and
 `TauCeti.SU2.eq_or_eq_inv_of_trace_torusMatrix_eq` says that this value determines `z` up to
 inversion. That the trace is a *complete* conjugacy invariant is proved in
 `TauCeti/RepresentationTheory/SU2/ConjugacyClasses.lean`.
@@ -405,7 +405,7 @@ theorem coe_torusExp (θ : ℝ) :
 /-- The trace of the torus element `diag (e^{iθ}, e^{-iθ})` is `2 cos θ`. This is not a `simp`
 lemma: `TauCeti.SU2.coe_torusExp` already rewrites the underlying matrix to a diagonal one, so its
 left-hand side is not in simp-normal form. -/
-theorem trace_coe_torusExp (θ : ℝ) :
+theorem trace_torusExp (θ : ℝ) :
     Matrix.trace ((torusExp θ : SU2) : Matrix (Fin 2) (Fin 2) ℂ) = 2 * (Real.cos θ : ℂ) := by
   rw [torusExp_def, coe_torusHom, trace_torusMatrix, Circle.coe_exp, ← Complex.exp_neg,
     Complex.ofReal_cos, Complex.two_cos, neg_mul]
