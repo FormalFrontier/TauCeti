@@ -106,10 +106,7 @@ def baseChangeOpAlgEquiv : L ⊗[K] Aᵐᵒᵖ ≃ₐ[L] (L ⊗[K] A)ᵐᵒᵖ :
 @[simp]
 theorem baseChangeOpAlgEquiv_tmul (l : L) (a : Aᵐᵒᵖ) :
     baseChangeOpAlgEquiv K L A (l ⊗ₜ[K] a) = MulOpposite.op (l ⊗ₜ[K] a.unop) := by
-  rw [baseChangeOpAlgEquiv, AlgEquiv.trans_apply, Algebra.TensorProduct.congr_apply,
-    Algebra.TensorProduct.map_tmul, AlgEquiv.coe_toAlgHom, AlgEquiv.coe_toAlgHom,
-    AlgEquiv.toOpposite_apply, AlgEquiv.coe_refl, id_eq,
-    Algebra.TensorProduct.opAlgEquiv_tmul, MulOpposite.unop_op]
+  simp [baseChangeOpAlgEquiv]
 
 @[simp]
 theorem baseChangeOpAlgEquiv_symm_tmul (l : L) (a : A) :

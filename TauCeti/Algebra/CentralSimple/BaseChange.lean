@@ -91,6 +91,7 @@ over `L` that `A` has over `K`, and the degree is the integer square root of the
 No hypothesis on `A` is needed. For a finite-dimensional central simple `A` the common dimension is
 a square and both sides are the honest degree (`TauCeti.Algebra.deg_sq`); in general the two sides
 are equal because they are `Nat.sqrt` of the same number. -/
+@[simp]
 theorem deg_baseChange : deg L (L ⊗[K] A) = deg K A :=
   deg_eq_of_finrank_eq (Module.finrank_baseChange (R := L) (S := K) (M' := A))
 

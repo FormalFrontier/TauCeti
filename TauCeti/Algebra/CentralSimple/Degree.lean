@@ -39,7 +39,9 @@ simple `K`-algebra and `A` is central simple
 same dimension as `A` over `K` (`Module.finrank_baseChange`); so Mathlib's
 `IsSimpleRing.exists_algEquiv_matrix_of_isAlgClosed` writes it as `Matrix (Fin n) (Fin n) L`, whose
 dimension is `n ^ 2`. Only simplicity of the scalar extension is used: the sharper statement that
-`L ⊗[K] A` is central simple *over `L`* is not needed here, and is not proved.
+`L ⊗[K] A` is central simple *over `L`* is not needed here. It is proved separately, as
+`TauCeti.Algebra.IsCentral.baseChange` in `TauCeti/Algebra/Central/BaseChange.lean`, which this file
+does not import.
 
 Centrality of `A` over `K` is essential rather than decorative: `ℂ` is a simple, finite-dimensional
 `ℝ`-algebra whose dimension `2` is not a perfect square. That negative control is checked at the end

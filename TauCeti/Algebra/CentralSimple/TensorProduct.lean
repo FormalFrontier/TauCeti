@@ -48,8 +48,9 @@ simplicity half of "`L ⊗[K] A` is central simple over `L`". The centrality the
 about `L ⊗[K] A` as an `L`-algebra, over `L` and not over `K`, and is not proved here:
 `TauCeti.Algebra.IsCentral.tensorProduct` gives centrality over `K` and asks both factors to be
 central over `K`, which for a nontrivial extension `L / K` the factor `L` is not. The other half is
-`TauCeti.Algebra.IsCentral.baseChange` in `TauCeti/Algebra/Central/BaseChange.lean`, which
-consumes the simplicity instance below.
+`TauCeti.Algebra.IsCentral.baseChange` in `TauCeti/Algebra/Central/BaseChange.lean`, which asks only
+that `A` be central and `L` be free as a `K`-module, and so combines with the simplicity instance
+below rather than resting on it.
 
 ## Main results
 

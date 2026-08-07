@@ -102,7 +102,7 @@ end Forward
 
 section Converse
 
-variable {K L A : Type*} [Field K] [CommRing L] [Nontrivial L] [Algebra K L]
+variable {K L A : Type*} [Field K] [CommSemiring L] [Nontrivial L] [Algebra K L]
   [Semiring A] [Algebra K A]
 
 /-- **Base change detects centrality.** Over a field `K`, if the scalar extension `L ⊗[K] A` is
@@ -126,6 +126,9 @@ theorem of_baseChange [Algebra.IsCentral L (L ⊗[K] A)] : Algebra.IsCentral K A
     -- A `K`-linear retraction of the structure map `K → L`.
     have hinj : Function.Injective (Algebra.linearMap K L) := fun x y h =>
       (algebraMap K L).injective (by simpa using h)
+    -- Splitting an injection asks `L` to be a `K`-vector space, and a module over the field `K` is
+    -- a group whether or not it was handed to us as one, so a commutative semiring `L` suffices.
+    let : AddCommGroup L := Module.addCommMonoidToAddCommGroup K (M := L)
     obtain ⟨g, hg⟩ := (Algebra.linearMap K L).exists_leftInverse_of_injective
       (LinearMap.ker_eq_bot (f := Algebra.linearMap K L) |>.mpr hinj)
     have hg1 : g 1 = 1 := by
@@ -145,15 +148,20 @@ namespace Algebra
 
 section Iff
 
-variable (K L A : Type*) [Field K] [CommRing L] [Nontrivial L] [Algebra K L]
+variable (K L A : Type*) [Field K] [CommSemiring L] [Nontrivial L] [Algebra K L]
   [Semiring A] [Algebra K A]
 
 /-- **Centrality passes both ways along a scalar extension.** Over a field `K`, an algebra `A` is
 central exactly when its scalar extension along a nontrivial commutative `K`-algebra `L` is central
 over `L`. Freeness of `L` is automatic here, `K` being a field. -/
+@[simp]
 theorem isCentral_baseChange_iff :
-    Algebra.IsCentral L (L ⊗[K] A) ↔ Algebra.IsCentral K A :=
-  ⟨fun _ => Algebra.IsCentral.of_baseChange (K := K) (L := L) (A := A),
+    Algebra.IsCentral L (L ⊗[K] A) ↔ Algebra.IsCentral K A := by
+  -- The forward direction wants `Module.Free K L`, which instance search does not supply for a bare
+  -- commutative semiring. Seeing `L` as the additive group it already is makes it a `K`-vector
+  -- space, hence free.
+  let : AddCommGroup L := Module.addCommMonoidToAddCommGroup K (M := L)
+  exact ⟨fun _ => Algebra.IsCentral.of_baseChange (K := K) (L := L) (A := A),
     fun _ => Algebra.IsCentral.baseChange K L A⟩
 
 end Iff
