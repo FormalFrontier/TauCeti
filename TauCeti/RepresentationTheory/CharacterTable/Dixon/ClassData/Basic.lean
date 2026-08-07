@@ -103,8 +103,10 @@ theorem ext {d₁ d₂ : ClassData G} (h : d₁.reps = d₂.reps) : d₁ = d₂ 
   subst h
   rfl
 
-/-- Class data extracted from a list `l` that contains every element of `G`: run through `l` and
-keep an element exactly when it is not conjugate to one already kept.
+/-- Class data extracted from a list `l` that contains every element of `G`: keep an entry exactly
+when it is not conjugate to any entry kept from the part of `l` after it. Since `List.pwFilter`
+recurses from the right, this keeps the *last* representative of each class, in the order those
+representatives occur in `l`.
 
 The hypothesis, rather than `Finset.univ.toList`, is what keeps this computable: `Finset.toList`
 is noncomputable, whereas a concrete finite group comes with a concrete enumeration. -/
@@ -124,9 +126,9 @@ is noncomputable, whereas a concrete finite group comes with a concrete enumerat
     exact (List.forall_mem_pwFilter (R := fun x y : G => ¬ IsConj x y) hneg g l).mp hall g (hl g)
       (IsConj.refl g)
 
-/-- **The representatives extracted from `l`** are the entries of `l` that are not conjugate to an
-earlier one: the characteristic property of `TauCeti.ClassData.ofList`, so that a client never has
-to unfold the filtering itself. -/
+/-- **The representatives extracted from `l`** are the entries of `l` that are not conjugate to any
+later retained entry: the characteristic property of `TauCeti.ClassData.ofList`, so that a client
+never has to unfold the filtering itself. -/
 @[simp]
 theorem reps_ofList [DecidableEq G] (l : List G) (hl : ∀ g : G, g ∈ l) :
     (ofList l hl).reps = l.pwFilter fun x y => ¬ IsConj x y := (rfl)
