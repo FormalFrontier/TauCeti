@@ -101,17 +101,6 @@ theorem isZero_of_finrank_end_eq_zero {S : Type u} [Monoid S] (A : FDRep k S)
   have : Subsingleton (A ⟶ A) := Module.finrank_zero_iff.mp h
   (IsZero.iff_id_eq_zero A).mpr (Subsingleton.elim _ _)
 
-/-- Restriction along a monoid homomorphism carries a zero object to a zero object: it leaves the
-underlying object, and hence the identity morphism, untouched.
-
-Mathlib's `Rep.isZero_res_iff` is the same statement one category over; it does not transfer to
-`FDRep`, which is an `Action` on `FGModuleCat` rather than a structure, so the two-line proof is
-repeated here. -/
-theorem isZero_res_obj {S T : Type u} [Monoid S] [Monoid T] (φ : S →* T) {A : FDRep k T}
-    (h : IsZero A) : IsZero ((Action.res (FGModuleCat k) φ).obj A) := by
-  rw [IsZero.iff_id_eq_zero] at h ⊢
-  exact Action.hom_ext _ _ (show (𝟙 A : A ⟶ A).hom = (0 : A ⟶ A).hom by rw [h])
-
 /-- The intertwining space into a zero object is trivial. -/
 theorem finrank_hom_eq_zero_of_isZero {S : Type u} [Monoid S] {X Y : FDRep k S} (h : IsZero Y) :
     Module.finrank k (X ⟶ Y) = 0 :=
@@ -254,7 +243,8 @@ theorem simple_indFDRep_iff (A : FDRep k H) :
     have hA : Module.finrank k (A ⟶ A) ≠ 0 := by
       intro h0
       rw [h0, Finset.sum_eq_zero fun D _ =>
-        finrank_hom_eq_zero_of_isZero (isZero_res_obj _ (isZero_of_finrank_end_eq_zero A h0))] at h
+        finrank_hom_eq_zero_of_isZero ((Action.res (FGModuleCat k) _).map_isZero
+          (isZero_of_finrank_end_eq_zero A h0))] at h
       exact absurd h (by norm_num)
     obtain ⟨h1, h2⟩ := (Nat.add_eq_one_iff.mp h).resolve_left fun hc => hA hc.1
     exact ⟨h1, fun D hD => Finset.sum_eq_zero_iff.mp h2 D (Finset.mem_erase.mpr ⟨hD, by simp⟩)⟩
