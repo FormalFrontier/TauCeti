@@ -6,7 +6,6 @@ module
 
 import Mathlib.Tactic.NoncommRing
 public import Mathlib.Algebra.Lie.OfAssociative
-public import Mathlib.Algebra.Lie.Subalgebra
 public import Mathlib.LinearAlgebra.CliffordAlgebra.Even
 public import TauCeti.LinearAlgebra.CliffordAlgebra.Bivector
 
@@ -50,14 +49,15 @@ scope.
 
 * `TauCeti.CliffordAlgebra.lie_cliffordBivector_cliffordBivector`: the bracket of two Clifford
   bivectors, as a sum of two Clifford bivectors.
-* `TauCeti.CliffordAlgebra.quadraticLieSubalgebra_toSubmodule_le`: the universal property of the
-  underlying submodule, from which the containments below are read off.
+* `TauCeti.CliffordAlgebra.quadraticLieSubalgebra_toSubmodule_le_of_cliffordBivector_mem`: the
+  universal property of the underlying submodule, from which the containments below are read off.
 * `TauCeti.CliffordAlgebra.quadraticLieSubalgebra_le_evenOdd_zero`,
   `TauCeti.CliffordAlgebra.quadraticLieSubalgebra_le_even` and
   `TauCeti.CliffordAlgebra.quadraticLieSubalgebra_le_filtration_two`: the quadratic elements are
   even and have filtration degree at most two.
-* `TauCeti.CliffordAlgebra.quadraticLieSubalgebra_toSubmodule_eq_range`: they are exactly the image
-  of `⋀[R]^2 M` under `TauCeti.CliffordAlgebra.cliffordBivectorExterior`.
+* `TauCeti.CliffordAlgebra.quadraticLieSubalgebra_toSubmodule_eq_range` and
+  `TauCeti.CliffordAlgebra.mem_quadraticLieSubalgebra_iff`: they are exactly the image of
+  `⋀[R]^2 M` under `TauCeti.CliffordAlgebra.cliffordBivectorExterior`.
 * `TauCeti.CliffordAlgebra.lie_ι_mem_range_ι_of_mem_quadraticLieSubalgebra`: bracketing with a
   quadratic element preserves the generators.
 
@@ -114,28 +114,21 @@ private theorem cliffordBivector_mem_span (a b : M) :
     cliffordBivector Q a b ∈ Submodule.span R (bivectorSet Q) :=
   Submodule.subset_span ⟨(a, b), rfl⟩
 
-private theorem lie_cliffordBivector_mem_span (a b : M) {y : CliffordAlgebra Q}
-    (hy : y ∈ Submodule.span R (bivectorSet Q)) :
-    ⁅cliffordBivector Q a b, y⁆ ∈ Submodule.span R (bivectorSet Q) := by
-  induction hy using Submodule.span_induction with
-  | mem z hz =>
-    obtain ⟨p, rfl⟩ := hz
-    rw [lie_cliffordBivector_cliffordBivector]
-    exact add_mem (cliffordBivector_mem_span Q _ _) (cliffordBivector_mem_span Q _ _)
-  | zero => rw [lie_zero]; exact Submodule.zero_mem _
-  | add _ _ _ _ hy hz => rw [lie_add]; exact Submodule.add_mem _ hy hz
-  | smul r _ _ hy => rw [lie_smul]; exact Submodule.smul_mem _ r hy
-
 private theorem lie_mem_span {x y : CliffordAlgebra Q}
     (hx : x ∈ Submodule.span R (bivectorSet Q)) (hy : y ∈ Submodule.span R (bivectorSet Q)) :
     ⁅x, y⁆ ∈ Submodule.span R (bivectorSet Q) := by
-  induction hx using Submodule.span_induction with
-  | mem z hz =>
+  induction hx, hy using Submodule.span_induction₂ with
+  | mem_mem _ _ hz hw =>
     obtain ⟨p, rfl⟩ := hz
-    exact lie_cliffordBivector_mem_span Q _ _ hy
-  | zero => rw [zero_lie]; exact Submodule.zero_mem _
-  | add _ _ _ _ hz hw => rw [add_lie]; exact Submodule.add_mem _ hz hw
-  | smul r _ _ hz => rw [smul_lie]; exact Submodule.smul_mem _ r hz
+    obtain ⟨q, rfl⟩ := hw
+    rw [lie_cliffordBivector_cliffordBivector]
+    exact add_mem (cliffordBivector_mem_span Q _ _) (cliffordBivector_mem_span Q _ _)
+  | zero_left => rw [zero_lie]; exact Submodule.zero_mem _
+  | zero_right => rw [lie_zero]; exact Submodule.zero_mem _
+  | add_left _ _ _ _ _ _ h₁ h₂ => rw [add_lie]; exact Submodule.add_mem _ h₁ h₂
+  | add_right _ _ _ _ _ _ h₁ h₂ => rw [lie_add]; exact Submodule.add_mem _ h₁ h₂
+  | smul_left r _ _ _ _ h => rw [smul_lie]; exact Submodule.smul_mem _ r h
+  | smul_right r _ _ _ _ h => rw [lie_smul]; exact Submodule.smul_mem _ r h
 
 /-- **The quadratic elements of a Clifford algebra**, as a Lie subalgebra of `CliffordAlgebra Q`
 under the commutator bracket: the `R`-span of the Clifford bivectors
@@ -158,8 +151,8 @@ theorem cliffordBivector_mem_quadraticLieSubalgebra (a b : M) :
 
 /-- **The universal property of the quadratic elements**: any submodule containing every Clifford
 bivector contains them all. Every containment below is an instance of this. -/
-theorem quadraticLieSubalgebra_toSubmodule_le {P : Submodule R (CliffordAlgebra Q)}
-    (hP : ∀ a b : M, cliffordBivector Q a b ∈ P) :
+theorem quadraticLieSubalgebra_toSubmodule_le_of_cliffordBivector_mem
+    {P : Submodule R (CliffordAlgebra Q)} (hP : ∀ a b : M, cliffordBivector Q a b ∈ P) :
     (quadraticLieSubalgebra Q).toSubmodule ≤ P := by
   refine Submodule.span_le.2 ?_
   rintro _ ⟨p, rfl⟩
@@ -168,7 +161,8 @@ theorem quadraticLieSubalgebra_toSubmodule_le {P : Submodule R (CliffordAlgebra 
 /-- The quadratic elements are even. -/
 theorem quadraticLieSubalgebra_le_evenOdd_zero :
     (quadraticLieSubalgebra Q).toSubmodule ≤ evenOdd Q 0 :=
-  quadraticLieSubalgebra_toSubmodule_le Q (cliffordBivector_mem_evenOdd_zero Q)
+  quadraticLieSubalgebra_toSubmodule_le_of_cliffordBivector_mem Q
+    (cliffordBivector_mem_evenOdd_zero Q)
 
 /-- The quadratic elements lie in the even subalgebra. -/
 theorem quadraticLieSubalgebra_le_even :
@@ -179,7 +173,8 @@ theorem quadraticLieSubalgebra_le_even :
 /-- The quadratic elements have filtration degree at most two. -/
 theorem quadraticLieSubalgebra_le_filtration_two :
     (quadraticLieSubalgebra Q).toSubmodule ≤ filtration Q 2 :=
-  quadraticLieSubalgebra_toSubmodule_le Q (cliffordBivector_mem_filtration_two Q)
+  quadraticLieSubalgebra_toSubmodule_le_of_cliffordBivector_mem Q
+    (cliffordBivector_mem_filtration_two Q)
 
 /-- **The quadratic elements are the image of the second exterior power.** This is the sense in
 which the Lie subalgebra realizes `⋀[R]^2 M` inside the Clifford algebra; the map itself is
@@ -187,9 +182,17 @@ which the Lie subalgebra realizes `⋀[R]^2 M` inside the Clifford algebra; the 
 theorem quadraticLieSubalgebra_toSubmodule_eq_range :
     (quadraticLieSubalgebra Q).toSubmodule = LinearMap.range (cliffordBivectorExterior Q) :=
   le_antisymm
-    (quadraticLieSubalgebra_toSubmodule_le Q fun a b =>
+    (quadraticLieSubalgebra_toSubmodule_le_of_cliffordBivector_mem Q fun a b =>
       ⟨exteriorPower.ιMulti R 2 ![a, b], cliffordBivectorExterior_apply_ιMulti Q a b⟩)
-    (cliffordBivectorExterior_range_le Q _ (cliffordBivector_mem_quadraticLieSubalgebra Q))
+    (cliffordBivectorExterior_range_le_of_cliffordBivector_mem Q _
+      (cliffordBivector_mem_quadraticLieSubalgebra Q))
+
+/-- **Membership in the quadratic elements**: an element of the Clifford algebra is quadratic
+exactly when it is in the image of `⋀[R]^2 M` under
+`TauCeti.CliffordAlgebra.cliffordBivectorExterior`. -/
+theorem mem_quadraticLieSubalgebra_iff {x : CliffordAlgebra Q} :
+    x ∈ quadraticLieSubalgebra Q ↔ x ∈ LinearMap.range (cliffordBivectorExterior Q) := by
+  rw [← LieSubalgebra.mem_toSubmodule, quadraticLieSubalgebra_toSubmodule_eq_range]
 
 /-- **Quadratic elements preserve the generators.** Bracketing with a quadratic element sends
 `ι Q m` back into the image of `ι Q`; on the span of the generators it is therefore an
@@ -203,7 +206,7 @@ theorem lie_ι_mem_range_ι_of_mem_quadraticLieSubalgebra {x : CliffordAlgebra Q
         zero_mem' := fun m => by rw [zero_lie]; exact Submodule.zero_mem _
         smul_mem' := fun r _ hy m => by
           rw [smul_lie]; exact Submodule.smul_mem _ r (hy m) } :=
-    quadraticLieSubalgebra_toSubmodule_le Q fun a b m =>
+    quadraticLieSubalgebra_toSubmodule_le_of_cliffordBivector_mem Q fun a b m =>
       ⟨_, (cliffordBivector_lie_ι Q a b m).symm⟩
   exact key hx m
 

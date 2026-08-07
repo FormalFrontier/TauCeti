@@ -41,8 +41,8 @@ Layer 9 CAR worked instance.
 * `TauCeti.CliffordAlgebra.cliffordBivector_mem_evenOdd_zero` and
   `TauCeti.CliffordAlgebra.cliffordBivector_mem_filtration_two`: it is even and has filtration
   degree at most two.
-* `TauCeti.CliffordAlgebra.cliffordBivectorExterior_range_le`: the exterior-square map lands in
-  any submodule containing the Clifford bivectors.
+* `TauCeti.CliffordAlgebra.cliffordBivectorExterior_range_le_of_cliffordBivector_mem`: the
+  exterior-square map lands in any submodule containing the Clifford bivectors.
 
 ## References
 
@@ -144,7 +144,8 @@ theorem cliffordBivector_mem_filtration_two (a b : M) :
 
 /-- The image of the exterior-square Clifford bivector map lands in any submodule containing every
 Clifford bivector: the decomposable bivectors generate `⋀[R]^2 M`. -/
-theorem cliffordBivectorExterior_range_le (P : Submodule R (CliffordAlgebra Q))
+theorem cliffordBivectorExterior_range_le_of_cliffordBivector_mem
+    (P : Submodule R (CliffordAlgebra Q))
     (hP : ∀ a b : M, cliffordBivector Q a b ∈ P) :
     LinearMap.range (cliffordBivectorExterior Q) ≤ P := by
   rw [LinearMap.range_eq_map, Submodule.map_le_iff_le_comap,
@@ -163,12 +164,14 @@ theorem cliffordBivectorExterior_range_le (P : Submodule R (CliffordAlgebra Q))
 /-- The exterior-square Clifford bivector map takes values in the even component. -/
 theorem cliffordBivectorExterior_range_le_evenOdd_zero :
     LinearMap.range (cliffordBivectorExterior Q) ≤ evenOdd Q 0 :=
-  cliffordBivectorExterior_range_le Q _ (cliffordBivector_mem_evenOdd_zero Q)
+  cliffordBivectorExterior_range_le_of_cliffordBivector_mem Q _
+    (cliffordBivector_mem_evenOdd_zero Q)
 
 /-- The exterior-square Clifford bivector map takes values in filtration degree at most two. -/
 theorem cliffordBivectorExterior_range_le_filtration_two :
     LinearMap.range (cliffordBivectorExterior Q) ≤ filtration Q 2 :=
-  cliffordBivectorExterior_range_le Q _ (cliffordBivector_mem_filtration_two Q)
+  cliffordBivectorExterior_range_le_of_cliffordBivector_mem Q _
+    (cliffordBivector_mem_filtration_two Q)
 
 /-- The action-normalization identity for the half-normalized Clifford bivector. -/
 theorem cliffordBivector_lie_ι (a b x : M) :
