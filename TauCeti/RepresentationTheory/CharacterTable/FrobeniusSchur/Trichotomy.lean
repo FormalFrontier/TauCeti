@@ -4,8 +4,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.LinearAlgebra.BilinearForm.Multilinear
+public import TauCeti.LinearAlgebra.BilinearForm.Squares
 public import TauCeti.RepresentationTheory.CharacterTable.FrobeniusSchur.Basic
+public import TauCeti.RepresentationTheory.Dual
 public import TauCeti.RepresentationTheory.InvariantForm
 
 /-!
@@ -45,15 +46,14 @@ counting identities are stated first in that form, needing only an invertible `|
 `TauCeti.Representation.finrank_invariantForms_cast`); in characteristic `p` they are identities
 of residues, and it is the injectivity of `ℕ → k` that turns them into equalities of dimensions.
 
-The invariant forms themselves, the symmetric and the alternating ones among them, and their
-identification with the intertwiners into the dual are all in
-`TauCeti/RepresentationTheory/InvariantForm.lean`; this file only counts them.
-
-## Main definitions
-
-* `TauCeti.Representation.ofSymmetricSquareDual` and
-  `TauCeti.Representation.ofExteriorSquareDual`: a functional on the second symmetric or exterior
-  power, read as a bilinear form on `V`.
+Three ingredients come from earlier modules and are only applied here.  The invariant forms
+themselves, the symmetric and the alternating ones among them, and their identification with the
+intertwiners into the dual are in `TauCeti/RepresentationTheory/InvariantForm.lean`; the dictionary
+turning a functional on either square into a form is `TauCeti.BilinForm.ofSymmetricSquareDual` and
+`TauCeti.BilinForm.ofExteriorSquareDual`, in `TauCeti/LinearAlgebra/BilinearForm/Squares.lean`; and
+the invariants of a dual representation, with their count, are in
+`TauCeti/RepresentationTheory/Dual.lean`.  What this file adds is that the dictionary carries
+invariants to invariant forms, and the counting that follows.
 
 ## Main results
 
@@ -76,10 +76,10 @@ identification with the intertwiners into the dual are all in
 
 ## Implementation notes
 
-The two maps out of the dual squares are only ever used through their images, so they are built as
-plain linear maps rather than as equivalences onto the symmetric and alternating forms: injectivity
-plus the dimension count is what forces them onto those subspaces, and proving surjectivity
-directly would need the universal property of the symmetric square, which is not in Mathlib.
+The two maps out of the dual squares are only ever used through their images: injectivity plus the
+dimension count is what forces them onto the symmetric and the alternating forms, and proving
+surjectivity directly would need the universal property of the symmetric square, which is not in
+Mathlib.
 
 What connects the submodule of invariant forms to the character machinery is
 `TauCeti.Representation.invariantFormsEquivIntertwiningMapDual`: an equivalence with a space of
@@ -140,117 +140,43 @@ private theorem finrank_add_finrank_le_of_inf_eq_bot {K W : Type*} [Field K] [Ad
 
 end Helpers
 
-/-! ### Forms attached to functionals on the two squares -/
+/-! ### Invariant forms from invariant functionals on the two squares -/
 
-section Squares
+section SymmetricSquare
 
-variable [Field k] [Group G] [AddCommGroup V] [Module k V]
-
-/-- A functional on the second symmetric power of `V`, read as a bilinear form on `V`. -/
-noncomputable def ofSymmetricSquareDual :
-    Module.Dual k (Sym[k]^2V) →ₗ[k] BilinForm k V where
-  toFun ψ :=
-    MultilinearMap.toBilinForm
-      (ψ.compMultilinearMap (SymmetricPower.tprod k (ι := Fin 2) (M := V)))
-  map_add' ψ φ := by ext x y; simp
-  map_smul' c ψ := by ext x y; simp
-
-/-- A functional on the second exterior power of `V`, read as a bilinear form on `V`. -/
-noncomputable def ofExteriorSquareDual :
-    Module.Dual k (⋀[k]^2 V) →ₗ[k] BilinForm k V where
-  toFun ψ :=
-    MultilinearMap.toBilinForm
-      (ψ.compMultilinearMap (exteriorPower.ιMulti k 2 (M := V)).toMultilinearMap)
-  map_add' ψ φ := by ext x y; simp
-  map_smul' c ψ := by ext x y; simp
-
-@[simp]
-theorem ofSymmetricSquareDual_apply (ψ : Module.Dual k (Sym[k]^2V)) (x y : V) :
-    ofSymmetricSquareDual ψ x y = ψ (SymmetricPower.tprod k ![x, y]) := by
-  simp [ofSymmetricSquareDual]
-
-@[simp]
-theorem ofExteriorSquareDual_apply (ψ : Module.Dual k (⋀[k]^2 V)) (x y : V) :
-    ofExteriorSquareDual ψ x y = ψ (exteriorPower.ιMulti k 2 ![x, y]) := by
-  simp [ofExteriorSquareDual]
-
-/-- The form of a functional on the symmetric square is symmetric: the symmetric square does not
-see the order of the two arguments. -/
-theorem isSymm_ofSymmetricSquareDual (ψ : Module.Dual k (Sym[k]^2V)) :
-    (ofSymmetricSquareDual ψ).IsSymm := by
-  refine ⟨fun x y => ?_⟩
-  have hswap : (fun i => ![x, y] (Equiv.swap 0 1 i)) = ![y, x] := by
-    funext i; fin_cases i <;> simp
-  simp only [ofSymmetricSquareDual_apply]
-  rw [← SymmetricPower.tprod_equiv (Equiv.swap (0 : Fin 2) 1) ![x, y], hswap]
-
-/-- The form of a functional on the exterior square is alternating: a repeated argument wedges
-to zero. -/
-theorem isAlt_ofExteriorSquareDual (ψ : Module.Dual k (⋀[k]^2 V)) :
-    (ofExteriorSquareDual ψ).IsAlt := by
-  intro x
-  have hzero : exteriorPower.ιMulti k 2 ![x, x] = 0 :=
-    (exteriorPower.ιMulti k 2).map_eq_zero_of_eq ![x, x] (i := 0) (j := 1) (by simp) (by decide)
-  simp [hzero]
-
-/-- **A functional on the symmetric square is determined by the form it gives.** The pure tensors
-`tprod ![x, y]` span the symmetric square, and the values of the form are exactly the values of the
-functional on those, so a functional whose form vanishes vanishes on a spanning set. -/
-theorem ofSymmetricSquareDual_injective :
-    Function.Injective (ofSymmetricSquareDual (k := k) (V := V)) := by
-  refine (injective_iff_map_eq_zero _).mpr fun ψ hψ => ?_
-  refine LinearMap.ext_on (SymmetricPower.span_tprod_eq_top k (Fin 2) V) ?_
-  rintro _ ⟨f, rfl⟩
-  have hf : f = ![f 0, f 1] := by funext i; fin_cases i <;> simp
-  have := congrArg (fun B : BilinForm k V => B (f 0) (f 1)) hψ
-  simpa [hf.symm] using this
-
-/-- **A functional on the exterior square is determined by the form it gives.** The wedges
-`ιMulti ![x, y]` span the exterior square, and the values of the form are exactly the values of the
-functional on those, so a functional whose form vanishes vanishes on a spanning set. -/
-theorem ofExteriorSquareDual_injective :
-    Function.Injective (ofExteriorSquareDual (k := k) (V := V)) := by
-  refine (injective_iff_map_eq_zero _).mpr fun ψ hψ => ?_
-  refine LinearMap.ext_on (exteriorPower.ιMulti_span k 2 V) ?_
-  rintro _ ⟨f, rfl⟩
-  have hf : f = ![f 0, f 1] := by funext i; fin_cases i <;> simp
-  have := congrArg (fun B : BilinForm k V => B (f 0) (f 1)) hψ
-  simpa [hf.symm] using this
-
-/-- A functional invariant for the dual of a representation is unchanged by the action. -/
-theorem apply_of_mem_invariants_dual {W : Type*} [AddCommGroup W] [Module k W]
-    {σ : Representation k G W} {ψ : Module.Dual k W} (hψ : ψ ∈ σ.dual.invariants) (g : G)
-    (u : W) : ψ (σ g u) = ψ u := by
-  have h := DFunLike.congr_fun (hψ g⁻¹) u
-  simpa [Representation.dual_apply, Module.Dual.transpose_apply] using h
-
-variable (ρ : Representation k G V)
+variable [CommRing k] [Group G] [AddCommMonoid V] [Module k V]
 
 /-- An invariant functional on the symmetric square gives an invariant symmetric form. -/
-theorem ofSymmetricSquareDual_mem_symmetricInvariantForms {ψ : Module.Dual k (Sym[k]^2V)}
-    (hψ : ψ ∈ ((ρ.symmetricPower 2).dual).invariants) :
-    ofSymmetricSquareDual ψ ∈ symmetricInvariantForms ρ := by
+theorem ofSymmetricSquareDual_mem_symmetricInvariantForms (ρ : Representation k G V)
+    {ψ : Module.Dual k (Sym[k]^2V)} (hψ : ψ ∈ ((ρ.symmetricPower 2).dual).invariants) :
+    BilinForm.ofSymmetricSquareDual ψ ∈ symmetricInvariantForms ρ := by
   refine mem_symmetricInvariantForms.mpr
-    ⟨isInvariantForm_iff.mpr fun g x y => ?_, isSymm_ofSymmetricSquareDual ψ⟩
+    ⟨isInvariantForm_iff.mpr fun g x y => ?_, BilinForm.isSymm_ofSymmetricSquareDual ψ⟩
   have hvec : (fun i => ρ g (![x, y] i)) = ![ρ g x, ρ g y] := by
     funext i; fin_cases i <;> simp
-  simp only [ofSymmetricSquareDual_apply]
+  simp only [BilinForm.ofSymmetricSquareDual_apply]
   rw [← hvec, ← ρ.symmetricPower_apply_tprod 2 g ![x, y],
     apply_of_mem_invariants_dual hψ g]
 
+end SymmetricSquare
+
+section ExteriorSquare
+
+variable [CommRing k] [Group G] [AddCommGroup V] [Module k V]
+
 /-- An invariant functional on the exterior square gives an invariant alternating form. -/
-theorem ofExteriorSquareDual_mem_alternatingInvariantForms {ψ : Module.Dual k (⋀[k]^2 V)}
-    (hψ : ψ ∈ ((ρ.exteriorPower 2).dual).invariants) :
-    ofExteriorSquareDual ψ ∈ alternatingInvariantForms ρ := by
+theorem ofExteriorSquareDual_mem_alternatingInvariantForms (ρ : Representation k G V)
+    {ψ : Module.Dual k (⋀[k]^2 V)} (hψ : ψ ∈ ((ρ.exteriorPower 2).dual).invariants) :
+    BilinForm.ofExteriorSquareDual ψ ∈ alternatingInvariantForms ρ := by
   refine mem_alternatingInvariantForms.mpr
-    ⟨isInvariantForm_iff.mpr fun g x y => ?_, isAlt_ofExteriorSquareDual ψ⟩
+    ⟨isInvariantForm_iff.mpr fun g x y => ?_, BilinForm.isAlt_ofExteriorSquareDual ψ⟩
   have hvec : (ρ g ∘ ![x, y]) = ![ρ g x, ρ g y] := by
     funext i; fin_cases i <;> simp
-  simp only [ofExteriorSquareDual_apply]
+  simp only [BilinForm.ofExteriorSquareDual_apply]
   rw [← hvec, ← ρ.exteriorPower_apply_ιMulti 2 g ![x, y],
     apply_of_mem_invariants_dual hψ g]
 
-end Squares
+end ExteriorSquare
 
 /-! ### Counting the invariant forms -/
 
@@ -262,22 +188,6 @@ variable [FiniteDimensional k V] [Finite G]
 section Invertible
 
 variable [Invertible (Nat.card G : k)]
-
-/-- **The dual of a representation has as many invariants as the representation**, as an identity
-in `k`: both counts average the same character, one along `g` and the other along `g⁻¹`.
-
-Averaging characters only ever produces identities in `k`.  In characteristic `p` this is one of
-residues; see `TauCeti.Representation.finrank_invariants_dual` for the characteristic-zero form,
-where the two counts agree as natural numbers. -/
-theorem finrank_invariants_dual_cast {W : Type*} [AddCommGroup W] [Module k W]
-    [FiniteDimensional k W] (σ : Representation k G W) :
-    (finrank k σ.dual.invariants : k) = (finrank k σ.invariants : k) := by
-  have : Fintype G := Fintype.ofFinite G
-  rw [← Representation.card_inv_mul_sum_char_eq_finrank,
-    ← Representation.card_inv_mul_sum_char_eq_finrank]
-  refine congrArg _ ?_
-  simp only [Representation.char_dual]
-  exact Fintype.sum_equiv (Equiv.inv G) _ _ fun _ => rfl
 
 /-- **The invariant forms are as many as the invariants of the two squares together**, as an
 identity in `k`: both counts average `χ(g)²`, one of them along `g⁻¹`.
@@ -305,16 +215,6 @@ end Invertible
 
 variable [CharZero k]
 
-/-- **The dual of a representation has as many invariants as the representation**, as natural
-numbers.  Characteristic zero is what lifts
-`TauCeti.Representation.finrank_invariants_dual_cast` from an identity in `k`. -/
-theorem finrank_invariants_dual {W : Type*} [AddCommGroup W] [Module k W] [FiniteDimensional k W]
-    (σ : Representation k G W) :
-    finrank k σ.dual.invariants = finrank k σ.invariants := by
-  have : Invertible (Nat.card G : k) :=
-    invertibleOfNonzero (Nat.cast_ne_zero.mpr Nat.card_pos.ne')
-  exact_mod_cast finrank_invariants_dual_cast σ
-
 /-- **The invariant forms are as many as the invariants of the two squares together**, as natural
 numbers.  Characteristic zero is what lifts
 `TauCeti.Representation.finrank_invariantForms_cast` from an identity in `k`. -/
@@ -327,23 +227,27 @@ theorem finrank_invariantForms (ρ : Representation k G V) :
 
 private theorem finrank_invariants_symmetricPower_le (ρ : Representation k G V) :
     finrank k (ρ.symmetricPower 2).invariants ≤ finrank k (symmetricInvariantForms ρ) := by
-  have hmap : Submodule.map (ofSymmetricSquareDual (k := k) (V := V))
+  have hmap : Submodule.map (BilinForm.ofSymmetricSquareDual (k := k) (V := V))
       ((ρ.symmetricPower 2).dual).invariants ≤ symmetricInvariantForms ρ := by
     rintro _ ⟨ψ, hψ, rfl⟩
     exact ofSymmetricSquareDual_mem_symmetricInvariantForms ρ hψ
-  have hrank := (Submodule.equivMapOfInjective (ofSymmetricSquareDual (k := k) (V := V))
-    ofSymmetricSquareDual_injective ((ρ.symmetricPower 2).dual).invariants).finrank_eq
+  have hrank := (Submodule.equivMapOfInjective
+    (BilinForm.ofSymmetricSquareDual (k := k) (V := V))
+    BilinForm.ofSymmetricSquareDual_injective
+    ((ρ.symmetricPower 2).dual).invariants).finrank_eq
   rw [← finrank_invariants_dual, hrank]
   exact Submodule.finrank_mono hmap
 
 private theorem finrank_invariants_exteriorPower_le (ρ : Representation k G V) :
     finrank k (ρ.exteriorPower 2).invariants ≤ finrank k (alternatingInvariantForms ρ) := by
-  have hmap : Submodule.map (ofExteriorSquareDual (k := k) (V := V))
+  have hmap : Submodule.map (BilinForm.ofExteriorSquareDual (k := k) (V := V))
       ((ρ.exteriorPower 2).dual).invariants ≤ alternatingInvariantForms ρ := by
     rintro _ ⟨ψ, hψ, rfl⟩
     exact ofExteriorSquareDual_mem_alternatingInvariantForms ρ hψ
-  have hrank := (Submodule.equivMapOfInjective (ofExteriorSquareDual (k := k) (V := V))
-    ofExteriorSquareDual_injective ((ρ.exteriorPower 2).dual).invariants).finrank_eq
+  have hrank := (Submodule.equivMapOfInjective
+    (BilinForm.ofExteriorSquareDual (k := k) (V := V))
+    BilinForm.ofExteriorSquareDual_injective
+    ((ρ.exteriorPower 2).dual).invariants).finrank_eq
   rw [← finrank_invariants_dual, hrank]
   exact Submodule.finrank_mono hmap
 

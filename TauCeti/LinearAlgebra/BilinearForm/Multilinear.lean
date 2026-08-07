@@ -17,9 +17,8 @@ same data.  This file records the direction that is used downstream:
 
 The point of the construction is that the maps out of a second symmetric or exterior power are
 multilinear in exactly this sense, so a functional on `Sym²V` or on `⋀²V` becomes a bilinear form
-on `V` by composing with the universal multilinear map.  That is how
-`TauCeti.RepresentationTheory.CharacterTable.FrobeniusSchur.Trichotomy` turns invariants of the two
-squares into invariant forms.
+on `V` by composing with the universal multilinear map.  That is what
+`TauCeti/LinearAlgebra/BilinearForm/Squares.lean` builds on this file.
 
 ## Main definitions
 
