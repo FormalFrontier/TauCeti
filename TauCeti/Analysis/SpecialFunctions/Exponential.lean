@@ -7,6 +7,8 @@ module
 public import Mathlib.Analysis.SpecialFunctions.Exponential
 import Mathlib.Analysis.Calculus.Deriv.Mul
 import Mathlib.Analysis.Calculus.Deriv.Shift
+import Mathlib.Analysis.Calculus.Deriv.Slope
+import Mathlib.MeasureTheory.Integral.DominatedConvergence
 public import Mathlib.MeasureTheory.Integral.IntervalIntegral.FundThmCalculus
 import TauCeti.Analysis.Normed.Algebra.Basic
 
@@ -306,5 +308,81 @@ theorem expFDeriv_zero {𝕂 R : Type*} [NontriviallyNormedField 𝕂] [NormedRi
           · simp [zero_pow hi_zero]
         rw [hsum, smul_zero]
         simp
+
+section IntegralFormula
+
+variable {A : Type*} [NormedRing A] [NormedAlgebra ℝ A] [CompleteSpace A]
+
+/-- A real normed algebra regarded as a rational normed algebra within this section. -/
+noncomputable local instance normedAlgebraRatOfRealDerivativeIntegral : NormedAlgebra ℚ A :=
+  .restrictScalars ℚ ℝ A
+
+private noncomputable def expDerivativeIntegral (x y : A) (s : ℝ) : A :=
+  ∫ t in (0 : ℝ)..1, exp ((1 - t) • (x + s • y)) * y * exp (t • x)
+
+private theorem continuousAt_expDerivativeIntegral (x y : A) :
+    ContinuousAt (expDerivativeIntegral x y) 0 := by
+  let H : ℝ × ℝ → A := fun p ↦
+    exp ((1 - p.2) • (x + p.1 • y)) * y * exp (p.2 • x)
+  have hH : Continuous H := by
+    dsimp only [H]
+    fun_prop
+  have hK : IsCompact (Set.Icc (-1 : ℝ) 1 ×ˢ Set.uIcc (0 : ℝ) 1) :=
+    isCompact_Icc.prod isCompact_uIcc
+  obtain ⟨C, hC⟩ := (hK.image hH).isBounded.exists_norm_le
+  refine intervalIntegral.continuousAt_of_dominated_interval
+    (F := fun s t ↦ H (s, t)) (bound := fun _ ↦ C) ?_ ?_ intervalIntegrable_const ?_
+  · filter_upwards [] with s
+    exact (by fun_prop : Continuous fun t ↦ H (s, t)).aestronglyMeasurable.restrict
+  · filter_upwards [Metric.ball_mem_nhds (0 : ℝ) zero_lt_one] with s hs
+    filter_upwards with t ht
+    rw [Set.uIoc_of_le zero_le_one] at ht
+    have hsIcc : s ∈ Set.Icc (-1 : ℝ) 1 := by
+      rw [Metric.mem_ball, dist_zero_right, Real.norm_eq_abs] at hs
+      exact ⟨(abs_lt.mp hs).1.le, (abs_lt.mp hs).2.le⟩
+    have htUcc : t ∈ Set.uIcc (0 : ℝ) 1 := by
+      rw [Set.uIcc_of_le zero_le_one]
+      exact ⟨ht.1.le, ht.2⟩
+    exact hC _ ⟨(s, t), ⟨hsIcc, htUcc⟩, rfl⟩
+  · filter_upwards with t _ht
+    exact (by fun_prop : Continuous fun s ↦ H (s, t)).continuousAt
+
+private theorem hasDerivAt_exp_add_smul_integral (x y : A) :
+    HasDerivAt (fun s : ℝ ↦ exp (x + s • y)) (expDerivativeIntegral x y 0) 0 := by
+  rw [hasDerivAt_iff_tendsto_slope]
+  have hG : Filter.Tendsto (expDerivativeIntegral x y)
+      (nhdsWithin (0 : ℝ) ({0} : Set ℝ)ᶜ)
+      (nhds (expDerivativeIntegral x y 0)) :=
+    (continuousAt_expDerivativeIntegral x y).tendsto.mono_left inf_le_left
+  apply hG.congr'
+  filter_upwards [self_mem_nhdsWithin] with s hs
+  have hs0 : s ≠ 0 := hs
+  have hduhamel := exp_add_sub_exp_eq_integral x (s • y)
+  have hintegral :
+      (∫ t in (0 : ℝ)..1, exp ((1 - t) • (x + s • y)) * (s • y) * exp (t • x)) =
+        s • expDerivativeIntegral x y s := by
+    rw [expDerivativeIntegral, ← intervalIntegral.integral_smul]
+    apply intervalIntegral.integral_congr
+    intro t _ht
+    change exp ((1 - t) • (x + s • y)) * (s • y) * exp (t • x) =
+      s • (exp ((1 - t) • (x + s • y)) * y * exp (t • x))
+    rw [Algebra.mul_smul_comm, Algebra.smul_mul_assoc]
+  rw [slope, sub_zero, zero_smul, add_zero, vsub_eq_sub, hduhamel, hintegral,
+    inv_smul_smul₀ hs0]
+
+/-- The Fréchet derivative of the noncommutative exponential, applied to `y`, is its Duhamel
+integral. -/
+theorem expFDeriv_apply_eq_integral (x y : A) :
+    expFDeriv ℝ x y =
+      ∫ t in (0 : ℝ)..1, exp ((1 - t) • x) * y * exp (t • x) := by
+  have hline : HasDerivAt (fun s : ℝ ↦ x + s • y) y 0 := by
+    simpa using (hasDerivAt_id (0 : ℝ)).smul_const y |>.const_add x
+  have hseries : HasDerivAt (fun s : ℝ ↦ exp (x + s • y)) (expFDeriv ℝ x y) 0 := by
+    simpa only [Function.comp_apply, zero_smul, add_zero] using!
+      (hasFDerivAt_exp (𝕂 := ℝ) x).comp_hasDerivAt_of_eq 0 hline (by simp)
+  simpa only [expDerivativeIntegral, zero_smul, add_zero] using
+    hseries.unique (hasDerivAt_exp_add_smul_integral x y)
+
+end IntegralFormula
 
 end TauCeti
