@@ -54,9 +54,10 @@ omit [CompleteSpace R] in
 /-- At zero, the Banach-algebra dexp factor is the identity operator. -/
 @[simp]
 theorem banachDexpFactor_zero : banachDexpFactor (0 : R) = 1 := by
-  rw [banachDexpFactor, show continuousCommutator (0 : R) = 0 by
+  have hzero : continuousCommutator (0 : R) = 0 := by
     ext y
-    simp, oneSubExpNegDivSelf_zero]
+    simp
+  rw [banachDexpFactor, hzero, oneSubExpNegDivSelf_zero]
 
 /-- Multiplication by the commutator operator cancels the regularized denominator. -/
 theorem continuousCommutator_mul_banachDexpFactor (x : R) :
