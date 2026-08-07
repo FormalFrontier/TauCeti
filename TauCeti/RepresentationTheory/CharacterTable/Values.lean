@@ -224,11 +224,10 @@ and which every finite group satisfies in characteristic zero, then `V.ρ g` is 
 endomorphism. Over an algebraically closed field, `ℂ` for instance, this is its
 diagonalizability. -/
 theorem isSemisimple_ρ {k : Type u} [Field k] [NeZero (Nat.card G : k)] (V : FDRep k G)
-    (g : G) : End.IsSemisimple (V.ρ g) := by
-  refine Representation.isSemisimple_of_pow_eq_one V.ρ ?_ (pow_orderOf_eq_one g)
-  obtain ⟨m, hm⟩ := orderOf_dvd_natCard g
-  intro h
-  exact NeZero.ne (Nat.card G : k) (by rw [hm, Nat.cast_mul, h, zero_mul])
+    (g : G) : End.IsSemisimple (V.ρ g) :=
+  Representation.isSemisimple_of_pow_eq_one V.ρ
+    (ne_zero_of_dvd_ne_zero (NeZero.ne (Nat.card G : k))
+      (Nat.cast_dvd_cast (orderOf_dvd_natCard g))) (pow_orderOf_eq_one g)
 
 end FDRep
 

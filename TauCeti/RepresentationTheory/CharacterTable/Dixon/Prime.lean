@@ -45,9 +45,9 @@ supplies a concrete prime, as the dihedral instances in
 
 * `TauCeti.IsGoodDixonPrime.isSemisimpleRing`: the modular group algebra is semisimple.
 * `TauCeti.IsGoodDixonPrime.exists_isPrimitiveRoot` and
-  `TauCeti.IsGoodDixonPrime.splits_X_pow_exponent_sub_one`: `ZMod p` splits `X ^ e - 1`, with `e`
-  distinct roots.
-* `TauCeti.IsGoodDixonPrime.isSemisimple_ρ`: every group element acts semisimply in a
+  `TauCeti.IsGoodDixonPrime.splits_X_pow_exponent_sub_one`: `ZMod p` splits `X ^ e - 1`.
+* `TauCeti.IsGoodDixonPrime.card_nthRootsFinset`: that splitting has `e` distinct roots.
+* `TauCeti.IsGoodDixonPrime.isSemisimple_apply`: every group element acts semisimply in a
   representation over `ZMod p`.
 * `TauCeti.IsGoodDixonPrime.valMinAbs_intCast` and `TauCeti.IsGoodDixonPrime.eq_of_intCast_eq`: an
   integer bounded by `√|G|` is recovered from, and so determined by, its residue modulo `p`. This
@@ -105,8 +105,6 @@ variable {G : Type*} [Group G] {p : ℕ}
 found from. -/
 theorem fact_prime (hp : IsGoodDixonPrime G p) : Fact p.Prime := ⟨hp.prime⟩
 
-theorem one_lt (hp : IsGoodDixonPrime G p) : 1 < p := hp.prime.one_lt
-
 /-- **A group with a good Dixon prime is finite.** Every natural number divides `0`, so `p ∤ |G|`
 already rules out `Nat.card G = 0`; finiteness need not be assumed separately. -/
 theorem finite (hp : IsGoodDixonPrime G p) : Finite G :=
@@ -114,28 +112,30 @@ theorem finite (hp : IsGoodDixonPrime G p) : Finite G :=
 
 /-! #### The exponent condition -/
 
-/-- Every element of `G` is a `(p - 1)`-st root of unity: this is the reformulation of
-`Monoid.exponent G ∣ p - 1` that the eigenvalue arguments use. -/
-theorem pow_sub_one_eq_one (hp : IsGoodDixonPrime G p) (g : G) : g ^ (p - 1) = 1 :=
-  Monoid.exponent_dvd_iff_forall_pow_eq_one.1 hp.exponent_dvd g
-
 theorem orderOf_dvd_sub_one (hp : IsGoodDixonPrime G p) (g : G) : orderOf g ∣ p - 1 :=
   (Monoid.order_dvd_exponent g).trans hp.exponent_dvd
 
-/-- `ZMod p` contains a primitive `d`-th root of unity for every `d` dividing the exponent of `G`;
-in particular, taking `d = orderOf g`, the eigenvalues of any element of `G` in any representation
-over `ZMod p` are already in `ZMod p`. -/
-theorem exists_isPrimitiveRoot_of_dvd_exponent (hp : IsGoodDixonPrime G p) {d : ℕ}
-    (hd : d ∣ Monoid.exponent G) : ∃ ζ : ZMod p, IsPrimitiveRoot ζ d := by
+/-- **`ZMod p` has enough roots of unity of every order dividing `p - 1`.** This is the exponent
+condition in the form Mathlib's roots-of-unity API takes it, and everything below about roots of
+unity in `ZMod p` is derived from it. -/
+theorem hasEnoughRootsOfUnity (hp : IsGoodDixonPrime G p) {d : ℕ} (hd : d ∣ p - 1) :
+    HasEnoughRootsOfUnity (ZMod p) d := by
   have := hp.fact_prime
   have : NeZero (p - 1) := ⟨by have := hp.prime.two_le; omega⟩
-  have := HasEnoughRootsOfUnity.of_dvd (ZMod p) (hd.trans hp.exponent_dvd)
+  exact HasEnoughRootsOfUnity.of_dvd (ZMod p) hd
+
+/-- `ZMod p` contains a primitive `d`-th root of unity for every `d` dividing `p - 1`. This is the
+input to the fact that `X ^ d - 1` splits over `ZMod p`; the orders of elements of `G` all divide
+`p - 1`, by `TauCeti.IsGoodDixonPrime.orderOf_dvd_sub_one`. -/
+theorem exists_isPrimitiveRoot_of_dvd_sub_one (hp : IsGoodDixonPrime G p) {d : ℕ}
+    (hd : d ∣ p - 1) : ∃ ζ : ZMod p, IsPrimitiveRoot ζ d := by
+  have := hp.hasEnoughRootsOfUnity hd
   exact HasEnoughRootsOfUnity.exists_primitiveRoot (ZMod p) d
 
 /-- **`ZMod p` contains a primitive root of unity of order the exponent of `G`.** -/
 theorem exists_isPrimitiveRoot (hp : IsGoodDixonPrime G p) :
     ∃ ζ : ZMod p, IsPrimitiveRoot ζ (Monoid.exponent G) :=
-  hp.exists_isPrimitiveRoot_of_dvd_exponent dvd_rfl
+  hp.exists_isPrimitiveRoot_of_dvd_sub_one hp.exponent_dvd
 
 /-! #### The order condition: Maschke -/
 
@@ -198,29 +198,22 @@ theorem eq_of_intCast_eq (hp : IsGoodDixonPrime G p) {z w : ℤ}
 
 /-! #### Representations over `ZMod p` -/
 
-/-- The order of a group element is invertible modulo a good Dixon prime, since it divides
-`p - 1`. -/
+/-- The order of a group element is invertible modulo a good Dixon prime: it divides `|G|`, which
+is invertible by `TauCeti.IsGoodDixonPrime.natCast_natCard_ne_zero`. -/
 theorem natCast_orderOf_ne_zero (hp : IsGoodDixonPrime G p) (g : G) :
-    ((orderOf g : ℕ) : ZMod p) ≠ 0 := by
-  have hdvd := hp.orderOf_dvd_sub_one g
-  have h1 := hp.one_lt
-  have hpos : 0 < orderOf g :=
-    Nat.pos_of_ne_zero fun h => by rw [h, zero_dvd_iff] at hdvd; omega
-  have hle : orderOf g ≤ p - 1 := Nat.le_of_dvd (by omega) hdvd
-  rw [Ne, ZMod.natCast_eq_zero_iff]
-  exact fun hdvd' => absurd (Nat.le_of_dvd hpos hdvd') (by omega)
+    ((orderOf g : ℕ) : ZMod p) ≠ 0 :=
+  ne_zero_of_dvd_ne_zero hp.natCast_natCard_ne_zero (Nat.cast_dvd_cast (orderOf_dvd_natCard g))
 
 section Representation
 
-/- The `Fact` instance is only what puts the field structure on `ZMod p` that a representation
-over it needs in order to be stated; it is implied by the good-prime hypothesis. -/
-variable [Fact p.Prime] {V : Type*} [AddCommGroup V] [Module (ZMod p) V]
+variable {V : Type*} [AddCommGroup V] [Module (ZMod p) V]
 
 /-- **At a good Dixon prime every group element acts semisimply.** In a representation over
 `ZMod p`, `ρ g` is annihilated by `X ^ orderOf g - 1`, and that polynomial is squarefree because
-`orderOf g` divides `p - 1` and so is invertible modulo `p`. -/
-theorem isSemisimple_ρ (hp : IsGoodDixonPrime G p)
+`orderOf g` divides `|G|` and so is invertible modulo `p`. -/
+theorem isSemisimple_apply (hp : IsGoodDixonPrime G p)
     (ρ : Representation (ZMod p) G V) (g : G) : Module.End.IsSemisimple (ρ g) :=
+  have := hp.fact_prime
   Representation.isSemisimple_of_pow_eq_one ρ (hp.natCast_orderOf_ne_zero g)
     (pow_orderOf_eq_one g)
 
@@ -275,6 +268,19 @@ instance neZero : NeZero d.p := d.isGoodDixonPrime.neZero
 @[simp]
 theorem orderOf_root : orderOf d.root = Monoid.exponent G :=
   d.isPrimitiveRoot_root.eq_orderOf.symm
+
+/-- The defining property of the chosen root: it is an `e`-th root of unity, `e` the exponent of
+`G`. -/
+@[simp]
+theorem root_pow_exponent_eq_one : d.root ^ Monoid.exponent G = 1 :=
+  d.isPrimitiveRoot_root.pow_eq_one
+
+/-- The chosen root is a unit, so the finite-field computation may divide by it. -/
+theorem isUnit_root : IsUnit d.root :=
+  have := d.isGoodDixonPrime.finite
+  d.isPrimitiveRoot_root.isUnit Monoid.exponent_ne_zero_of_finite
+
+theorem root_ne_zero : d.root ≠ 0 := d.isUnit_root.ne_zero
 
 end DixonPrimeData
 

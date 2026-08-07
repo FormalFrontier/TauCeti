@@ -5,7 +5,7 @@ Authors: Claude
 -/
 module
 
-public import Mathlib.GroupTheory.SpecificGroups.Dihedral
+public import TauCeti.GroupTheory.SpecificGroups.Dihedral
 public import TauCeti.RepresentationTheory.CharacterTable.Dixon.Prime
 
 /-!
@@ -31,16 +31,10 @@ public section
 
 namespace TauCeti
 
-/-- The dihedral group of order `8` has exponent `4`. -/
-@[simp]
-theorem exponent_dihedralGroup_four : Monoid.exponent (DihedralGroup 4) = 4 := by
-  rw [DihedralGroup.exponent]
-  decide
-
 /-- **`5` is a good Dixon prime for the dihedral group of order `8`**, the worked example of the
 character-table algorithm: `5 ∤ 8`, the exponent `4` divides `4 = 5 - 1`, and
 `2⌊√8⌋ = 4 < 5`. -/
-theorem isGoodDixonPrime_dihedralGroup_four : IsGoodDixonPrime (DihedralGroup 4) 5 := by
+theorem isGoodDixonPrime_dihedralGroup_four_five : IsGoodDixonPrime (DihedralGroup 4) 5 := by
   refine ⟨by decide, ?_, ?_, ?_⟩
   · rw [DihedralGroup.nat_card]; decide
   · rw [exponent_dihedralGroup_four]
@@ -53,15 +47,10 @@ fourth root of unity modulo `5`. -/
 @[expose] def dihedralGroupFourDixonPrimeData : DixonPrimeData (DihedralGroup 4) where
   p := 5
   root := 2
-  isGoodDixonPrime := isGoodDixonPrime_dihedralGroup_four
+  isGoodDixonPrime := isGoodDixonPrime_dihedralGroup_four_five
   isPrimitiveRoot_root := by
     rw [exponent_dihedralGroup_four]
-    have h : orderOf (2 : ZMod 5) = 4 :=
-      orderOf_eq_of_pow_and_pow_div_prime (by norm_num) (by decide) fun q hq hq4 => by
-        have h2 := hq.two_le
-        have h4 := Nat.le_of_dvd (by norm_num) hq4
-        interval_cases q <;> revert hq4 <;> decide
-    exact h ▸ IsPrimitiveRoot.orderOf (2 : ZMod 5)
+    exact .mk_of_lt 2 (by norm_num) (by decide) fun l hl0 hl4 => by interval_cases l <;> decide
 
 /-- The prime carried by `TauCeti.dihedralGroupFourDixonPrimeData` is `5`. -/
 @[simp]
@@ -72,15 +61,9 @@ theorem dihedralGroupFourDixonPrimeData_p : dihedralGroupFourDixonPrimeData.p = 
 @[simp]
 theorem dihedralGroupFourDixonPrimeData_root : dihedralGroupFourDixonPrimeData.root = 2 := rfl
 
-/-- The dihedral group of order `6`, the symmetric group on three letters, has exponent `6`. -/
-@[simp]
-theorem exponent_dihedralGroup_three : Monoid.exponent (DihedralGroup 3) = 6 := by
-  rw [DihedralGroup.exponent]
-  decide
-
 /-- **`7` is a good Dixon prime for the dihedral group of order `6`**: `7 ∤ 6`, the exponent `6`
 divides `6 = 7 - 1`, and `2⌊√6⌋ = 4 < 7`. -/
-theorem isGoodDixonPrime_dihedralGroup_three : IsGoodDixonPrime (DihedralGroup 3) 7 := by
+theorem isGoodDixonPrime_dihedralGroup_three_seven : IsGoodDixonPrime (DihedralGroup 3) 7 := by
   refine ⟨by decide, ?_, ?_, ?_⟩
   · rw [DihedralGroup.nat_card]; decide
   · rw [exponent_dihedralGroup_three]
@@ -93,15 +76,10 @@ sixth root of unity modulo `7`. -/
 @[expose] def dihedralGroupThreeDixonPrimeData : DixonPrimeData (DihedralGroup 3) where
   p := 7
   root := 3
-  isGoodDixonPrime := isGoodDixonPrime_dihedralGroup_three
+  isGoodDixonPrime := isGoodDixonPrime_dihedralGroup_three_seven
   isPrimitiveRoot_root := by
     rw [exponent_dihedralGroup_three]
-    have h : orderOf (3 : ZMod 7) = 6 :=
-      orderOf_eq_of_pow_and_pow_div_prime (by norm_num) (by decide) fun q hq hq6 => by
-        have h2 := hq.two_le
-        have h6 := Nat.le_of_dvd (by norm_num) hq6
-        interval_cases q <;> revert hq6 <;> decide
-    exact h ▸ IsPrimitiveRoot.orderOf (3 : ZMod 7)
+    exact .mk_of_lt 3 (by norm_num) (by decide) fun l hl0 hl6 => by interval_cases l <;> decide
 
 /-- The prime carried by `TauCeti.dihedralGroupThreeDixonPrimeData` is `7`. -/
 @[simp]
