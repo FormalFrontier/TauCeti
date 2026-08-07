@@ -4,8 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Analysis.Semigroups.Resolvent.Identity
 public import Mathlib.Algebra.Algebra.Spectrum.Basic
+public import Mathlib.Analysis.Normed.Operator.NormedSpace
+public import Mathlib.Analysis.SpecificLimits.Normed
+public import Mathlib.LinearAlgebra.LinearPMap
+public import Mathlib.Tactic.Module
 
 /-!
 # The resolvent set of an unbounded operator
@@ -23,24 +26,23 @@ an `R` is unique when it exists, so the *resolvent set*
 `TauCeti.Semigroups.LinearPMap.resolvent` are well defined, and the resolvent obeys the usual
 identities.
 
+Nothing here mentions semigroups: the theory is stated for an arbitrary `A : X →ₗ.[ℝ] X`, which
+is what makes it usable for an operator not yet known to generate anything — the situation of
+the Hille--Yosida generation theorem, whose hypotheses read `(ω, ∞) ⊆ resolventSet A` together
+with a bound on `‖resolvent A l ^ n‖`.
+
 Two bridges keep this from being a parallel universe.
 
 * **To Mathlib's bounded notion.** A bounded operator `T : X →L[ℝ] X`, read as the everywhere
   defined unbounded operator `(T : X →ₗ[ℝ] X).toPMap ⊤`, has exactly Mathlib's resolvent set
   and resolvent (`LinearPMap.mem_resolventSet_toPMap_top_iff`,
-  `LinearPMap.resolvent_toPMap_top`).
+  `LinearPMap.resolvent_toPMap_top`), proved here.
 * **To the Laplace-transform resolvent.** For a C₀-semigroup `S` with growth bound `(ω, M)`,
-  every `lambda > ω` lies in the resolvent set of the generator, and the resolvent there *is*
-  the Laplace transform `∫₀^∞ e^{-λt} S(t) x dt` already built in
-  `TauCeti/Analysis/Semigroups/Resolvent/Basic.lean`
-  (`StronglyContinuousSemigroup.generator_resolvent_eq`). Consequently the Hille--Yosida
-  estimates proved there transfer verbatim to the abstract resolvent
-  (`StronglyContinuousSemigroup.norm_generator_resolvent_le`,
-  `StronglyContinuousSemigroup.norm_generator_resolvent_pow_le`).
-
-The second bridge is what makes the hypotheses of the Hille--Yosida generation theorem
-statable: they read `(ω, ∞) ⊆ resolventSet A` together with `‖resolvent A l ^ n‖ ≤
-M / (l - ω) ^ n`, for an operator `A` that is not yet known to generate anything.
+  every `lambda > ω` lies in the resolvent set of the generator and the resolvent there *is*
+  the Laplace transform `∫₀^∞ e^{-λt} S(t) x dt`
+  (`StronglyContinuousSemigroup.generator_resolvent_eq`). That bridge is proved downstream, in
+  `TauCeti/Analysis/Semigroups/Resolvent/Identity.lean`, which then derives the semigroup
+  resolvent identity from the abstract one below.
 
 ## Main definitions
 
@@ -60,8 +62,6 @@ M / (l - ω) ^ n`, for an operator `A` that is not yet known to generate anythin
   resolvent point, and the openness of the resolvent set it gives.
 * `TauCeti.Semigroups.LinearPMap.mem_resolventSet_toPMap_top_iff` and
   `TauCeti.Semigroups.LinearPMap.resolvent_toPMap_top`: the bounded bridge.
-* `TauCeti.Semigroups.StronglyContinuousSemigroup.generator_resolvent_eq`: the
-  Laplace-transform bridge.
 
 ## References
 
@@ -405,104 +405,6 @@ theorem resolvent_toPMap_top (T : X →L[ℝ] X) {lambda : ℝ}
 end Bounded
 
 end LinearPMap
-
-/-! ## The bridge to the Laplace-transform resolvent of a C₀-semigroup -/
-
-namespace StronglyContinuousSemigroup
-
-variable [CompleteSpace X]
-
-/-- For a C₀-semigroup with growth bound `(ω, M)` and `lambda > ω`, the Laplace-transform
-resolvent `R(lambda) x = ∫₀^∞ e^{-λt} S(t) x dt` inverts `lambda • I - A` for the generator `A`:
-it lands in `D(A)` (`StronglyContinuousSemigroup.resolvent_mem_domain`) and is a two-sided
-inverse there (`StronglyContinuousSemigroup.resolventRightInv`,
-`StronglyContinuousSemigroup.resolventLeftInv`). -/
-theorem isResolventAt_generator (S : StronglyContinuousSemigroup X) {omega M : ℝ}
-    (hb : S.HasGrowthBound omega M) {lambda : ℝ} (hlambda : omega < lambda) :
-    LinearPMap.IsResolventAt S.generator lambda (S.resolvent hb lambda hlambda) where
-  mem_domain y := by
-    rw [S.generator_domain]
-    exact S.resolvent_mem_domain hb lambda hlambda y
-  smul_sub_apply y := S.resolventRightInv hb lambda hlambda y
-  apply_smul_sub x :=
-    S.resolventLeftInv hb lambda hlambda ⟨(x : X), by rw [← S.generator_domain]; exact x.property⟩
-
-/-- Every `lambda` beyond the growth exponent lies in the resolvent set of the generator. -/
-theorem mem_resolventSet_generator (S : StronglyContinuousSemigroup X) {omega M : ℝ}
-    (hb : S.HasGrowthBound omega M) {lambda : ℝ} (hlambda : omega < lambda) :
-    lambda ∈ LinearPMap.resolventSet S.generator :=
-  (S.isResolventAt_generator hb hlambda).mem_resolventSet
-
-/-- The half-line `(ω, ∞)` lies in the resolvent set of the generator — the hypothesis `hρ` of
-the Hille--Yosida generation theorem, here in its (already available) converse direction. -/
-theorem Ioi_subset_resolventSet_generator (S : StronglyContinuousSemigroup X) {omega M : ℝ}
-    (hb : S.HasGrowthBound omega M) : Set.Ioi omega ⊆ LinearPMap.resolventSet S.generator :=
-  fun _ hlambda => S.mem_resolventSet_generator hb hlambda
-
-/-- **The Laplace-transform bridge.** The resolvent of the generator, in the unbounded sense, is
-the Laplace transform `R(lambda) x = ∫₀^∞ e^{-λt} S(t) x dt`. -/
-theorem generator_resolvent_eq (S : StronglyContinuousSemigroup X) {omega M : ℝ}
-    (hb : S.HasGrowthBound omega M) {lambda : ℝ} (hlambda : omega < lambda) :
-    LinearPMap.resolvent S.generator lambda = S.resolvent hb lambda hlambda :=
-  LinearPMap.resolvent_eq_of_isResolventAt (S.isResolventAt_generator hb hlambda)
-
-/-- **Hille--Yosida resolvent bound** for the resolvent of the generator:
-`‖R(lambda, A)‖ ≤ M / (lambda - ω)`. -/
-theorem norm_generator_resolvent_le (S : StronglyContinuousSemigroup X) {omega M : ℝ}
-    (hb : S.HasGrowthBound omega M) {lambda : ℝ} (hlambda : omega < lambda) :
-    ‖LinearPMap.resolvent S.generator lambda‖ ≤ M / (lambda - omega) := by
-  rw [S.generator_resolvent_eq hb hlambda]
-  exact S.resolvent_norm_le hb lambda hlambda
-
-/-- **Hille--Yosida power bound** for the resolvent of the generator:
-`‖R(lambda, A) ^ n‖ ≤ (M / (lambda - ω)) ^ n`, from submultiplicativity of the operator norm.
-This is the hypothesis `hbound` of the generation theorem, in the direction that the existence
-of `S` already supplies. (The sharp form `‖R(lambda, A) ^ n‖ ≤ M / (lambda - ω) ^ n` is a
-strictly stronger statement — it does not follow from `‖R(lambda, A)‖ ≤ M / (lambda - ω)` once
-`M > 1` — and needs the estimate for `∫₀^∞ tⁿ e^{-λt} S(t) x dt`, which the repository does not
-yet have; the two agree in the contraction case `(M, ω) = (1, 0)`.) -/
-theorem norm_generator_resolvent_pow_le (S : StronglyContinuousSemigroup X) {omega M : ℝ}
-    (hb : S.HasGrowthBound omega M) {lambda : ℝ} (hlambda : omega < lambda) (n : ℕ) :
-    ‖LinearPMap.resolvent S.generator lambda ^ n‖ ≤ (M / (lambda - omega)) ^ n := by
-  cases n with
-  | zero => exact ContinuousLinearMap.norm_id_le
-  | succ n =>
-      exact (norm_pow_le' _ n.succ_pos).trans
-        (pow_le_pow_left₀ (norm_nonneg _) (S.norm_generator_resolvent_le hb hlambda) (n + 1))
-
-end StronglyContinuousSemigroup
-
-namespace ContractionSemigroup
-
-variable [CompleteSpace X]
-
-/-- Every `lambda > 0` lies in the resolvent set of the generator of a contraction semigroup. -/
-theorem mem_resolventSet_generator (S : ContractionSemigroup X) {lambda : ℝ}
-    (hlambda : 0 < lambda) :
-    lambda ∈ LinearPMap.resolventSet S.toStronglyContinuousSemigroup.generator :=
-  S.toStronglyContinuousSemigroup.mem_resolventSet_generator S.hasGrowthBound
-    (by simpa using hlambda)
-
-/-- The resolvent of the generator of a contraction semigroup is its Laplace transform. -/
-theorem generator_resolvent_eq (S : ContractionSemigroup X) {lambda : ℝ} (hlambda : 0 < lambda) :
-    LinearPMap.resolvent S.toStronglyContinuousSemigroup.generator lambda
-      = S.resolvent lambda hlambda := by
-  rw [S.toStronglyContinuousSemigroup.generator_resolvent_eq S.hasGrowthBound
-    (by simpa using hlambda)]
-  ext y
-  rw [StronglyContinuousSemigroup.resolvent_apply, ContractionSemigroup.resolvent_apply]
-
-/-- **The Hille--Yosida power bounds in the contraction case**, `(M, ω) = (1, 0)`:
-`‖R(lambda, A) ^ n‖ ≤ (1 / lambda) ^ n` for `lambda > 0`; the specialization of
-`TauCeti.Semigroups.StronglyContinuousSemigroup.norm_generator_resolvent_pow_le`. -/
-theorem norm_generator_resolvent_pow_le (S : ContractionSemigroup X) {lambda : ℝ}
-    (hlambda : 0 < lambda) (n : ℕ) :
-    ‖LinearPMap.resolvent S.toStronglyContinuousSemigroup.generator lambda ^ n‖
-      ≤ (1 / lambda) ^ n := by
-  simpa using S.toStronglyContinuousSemigroup.norm_generator_resolvent_pow_le S.hasGrowthBound
-    (by simpa using hlambda) n
-
-end ContractionSemigroup
 
 end TauCeti.Semigroups
 

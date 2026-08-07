@@ -5,22 +5,37 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Analysis.Semigroups.Resolvent.Basic
+public import TauCeti.Analysis.Semigroups.Resolvent.Unbounded
 public import TauCeti.Analysis.Semigroups.Generator.OrbitDerivative
 
 /-!
-# The resolvent identity for strongly continuous semigroups
+# The Laplace-transform resolvent is the resolvent of the generator
 
 This file proves that the Laplace-transform resolvent is also a left inverse of
-`lambda • I - A` on the generator domain. It then derives the resolvent identity
-`R(lambda) - R(mu) = (mu - lambda) R(lambda) R(mu)` and commutativity of resolvents. The
-identity is recorded both for `resolvent` and for `resolventFun`, the resolvent seen as a
-function of the spectral parameter alone.
+`lambda • I - A` on the generator domain. Together with the right-inverse identity from
+`TauCeti/Analysis/Semigroups/Resolvent/Basic.lean` that identifies it as *the* resolvent of the
+generator in the unbounded sense of
+`TauCeti/Analysis/Semigroups/Resolvent/Unbounded.lean`:
+`StronglyContinuousSemigroup.generator_resolvent_eq` says
+`LinearPMap.resolvent S.generator lambda = S.resolvent hb lambda hlambda` for `lambda` beyond
+the growth exponent.
+
+Everything else here is read off that bridge. The resolvent identity
+`R(lambda) - R(mu) = (mu - lambda) R(lambda) R(mu)` and commutativity of resolvents are the
+abstract `LinearPMap.resolvent_sub_resolvent` and `LinearPMap.resolvent_comm` transported along
+it, rather than separate arguments; the identity is recorded both for `resolvent` and for
+`resolventFun`, the resolvent seen as a function of the spectral parameter alone. The bridge
+also transports the Laplace-transform norm estimates to the abstract resolvent, giving the
+Hille--Yosida bounds `‖R(lambda, A)‖ ≤ M / (lambda - omega)` and
+`‖R(lambda, A) ^ n‖ ≤ (M / (lambda - omega)) ^ n`, which are the hypotheses of the generation
+theorem in the direction an existing semigroup already supplies.
 
 ## References
 
 The argument follows Engel--Nagel, *One-Parameter Semigroups for Linear Evolution Equations*,
 Theorem II.1.10: integration of the derivative of `exp (-lambda * t) • S(t)x` gives the
-left-inverse formula, from which the algebraic resolvent identity follows.
+left-inverse formula, from which the algebraic resolvent identity follows. The generation
+estimates are Theorem II.3.5 there.
 -/
 
 public section
@@ -129,8 +144,73 @@ domain: `R(lambda) (lambda x - A x) = x`. -/
   rw [MeasureTheory.setIntegral_congr_fun measurableSet_Ioi (fun t _ => hpoint t)]
   rw [MeasureTheory.integral_neg, h_integral, neg_neg]
 
+/-! ## The bridge to the resolvent of the generator -/
+
+/-- For a C₀-semigroup with growth bound `(omega, M)` and `lambda > omega`, the
+Laplace-transform resolvent `R(lambda) x = ∫₀^∞ e^{-λt} S(t) x dt` inverts `lambda • I - A` for
+the generator `A`: it lands in `D(A)` (`StronglyContinuousSemigroup.resolvent_mem_domain`) and
+is a two-sided inverse there (`StronglyContinuousSemigroup.resolventRightInv`,
+`StronglyContinuousSemigroup.resolventLeftInv`). -/
+theorem isResolventAt_generator (S : StronglyContinuousSemigroup X) [CompleteSpace X]
+    {omega M : ℝ} (hb : S.HasGrowthBound omega M) {lambda : ℝ} (hlambda : omega < lambda) :
+    LinearPMap.IsResolventAt S.generator lambda (S.resolvent hb lambda hlambda) where
+  mem_domain y := by
+    rw [S.generator_domain]
+    exact S.resolvent_mem_domain hb lambda hlambda y
+  smul_sub_apply y := S.resolventRightInv hb lambda hlambda y
+  apply_smul_sub x :=
+    S.resolventLeftInv hb lambda hlambda ⟨(x : X), by rw [← S.generator_domain]; exact x.property⟩
+
+/-- Every `lambda` beyond the growth exponent lies in the resolvent set of the generator. -/
+theorem mem_resolventSet_generator (S : StronglyContinuousSemigroup X) [CompleteSpace X]
+    {omega M : ℝ} (hb : S.HasGrowthBound omega M) {lambda : ℝ} (hlambda : omega < lambda) :
+    lambda ∈ LinearPMap.resolventSet S.generator :=
+  (S.isResolventAt_generator hb hlambda).mem_resolventSet
+
+/-- The half-line `(omega, ∞)` lies in the resolvent set of the generator — the hypothesis `hρ`
+of the Hille--Yosida generation theorem, here in its (already available) converse direction. -/
+theorem Ioi_subset_resolventSet_generator (S : StronglyContinuousSemigroup X) [CompleteSpace X]
+    {omega M : ℝ} (hb : S.HasGrowthBound omega M) :
+    Set.Ioi omega ⊆ LinearPMap.resolventSet S.generator :=
+  fun _ hlambda => S.mem_resolventSet_generator hb hlambda
+
+/-- **The Laplace-transform bridge.** The resolvent of the generator, in the unbounded sense, is
+the Laplace transform `R(lambda) x = ∫₀^∞ e^{-λt} S(t) x dt`. -/
+theorem generator_resolvent_eq (S : StronglyContinuousSemigroup X) [CompleteSpace X]
+    {omega M : ℝ} (hb : S.HasGrowthBound omega M) {lambda : ℝ} (hlambda : omega < lambda) :
+    LinearPMap.resolvent S.generator lambda = S.resolvent hb lambda hlambda :=
+  LinearPMap.resolvent_eq_of_isResolventAt (S.isResolventAt_generator hb hlambda)
+
+/-- **Hille--Yosida resolvent bound** for the resolvent of the generator:
+`‖R(lambda, A)‖ ≤ M / (lambda - omega)`. -/
+theorem norm_generator_resolvent_le (S : StronglyContinuousSemigroup X) [CompleteSpace X]
+    {omega M : ℝ} (hb : S.HasGrowthBound omega M) {lambda : ℝ} (hlambda : omega < lambda) :
+    ‖LinearPMap.resolvent S.generator lambda‖ ≤ M / (lambda - omega) := by
+  rw [S.generator_resolvent_eq hb hlambda]
+  exact S.resolvent_norm_le hb lambda hlambda
+
+/-- **Hille--Yosida power bound** for the resolvent of the generator:
+`‖R(lambda, A) ^ n‖ ≤ (M / (lambda - omega)) ^ n`, from submultiplicativity of the operator
+norm. This is the hypothesis `hbound` of the generation theorem, in the direction that the
+existence of `S` already supplies. (The sharp form `‖R(lambda, A) ^ n‖ ≤ M / (lambda - omega) ^ n`
+is a strictly stronger statement — it does not follow from `‖R(lambda, A)‖ ≤ M / (lambda - omega)`
+once `M > 1` — and needs the estimate for `∫₀^∞ tⁿ e^{-λt} S(t) x dt`, which the repository does
+not yet have; the two agree in the contraction case `(M, omega) = (1, 0)`.) -/
+theorem norm_generator_resolvent_pow_le (S : StronglyContinuousSemigroup X) [CompleteSpace X]
+    {omega M : ℝ} (hb : S.HasGrowthBound omega M) {lambda : ℝ} (hlambda : omega < lambda)
+    (n : ℕ) :
+    ‖LinearPMap.resolvent S.generator lambda ^ n‖ ≤ (M / (lambda - omega)) ^ n := by
+  cases n with
+  | zero => exact ContinuousLinearMap.norm_id_le
+  | succ n =>
+      exact (norm_pow_le' _ n.succ_pos).trans
+        (pow_le_pow_left₀ (norm_nonneg _) (S.norm_generator_resolvent_le hb hlambda) (n + 1))
+
+/-! ## The resolvent identity -/
+
 /-- Pointwise form of the resolvent identity
-`R(lambda) - R(mu) = (mu - lambda) R(lambda) R(mu)`. -/
+`R(lambda) - R(mu) = (mu - lambda) R(lambda) R(mu)`; the abstract
+`TauCeti.Semigroups.LinearPMap.resolvent_sub_resolvent_apply` read through the bridge. -/
 theorem resolvent_sub_resolvent_apply (S : StronglyContinuousSemigroup X)
     {omegaLambda MLambda omegaMu MMu : ℝ} [CompleteSpace X]
     (hbLambda : S.HasGrowthBound omegaLambda MLambda)
@@ -139,36 +219,9 @@ theorem resolvent_sub_resolvent_apply (S : StronglyContinuousSemigroup X)
     S.resolvent hbLambda lambda hlambda x - S.resolvent hbMu mu hmu x =
       (mu - lambda) •
         S.resolvent hbLambda lambda hlambda (S.resolvent hbMu mu hmu x) := by
-  let y : S.domain :=
-    ⟨S.resolvent hbMu mu hmu x, S.resolvent_mem_domain hbMu mu hmu x⟩
-  have hleft := S.resolventLeftInv hbLambda lambda hlambda y
-  have hright := S.resolventRightInv hbMu mu hmu x
-  simp only [y] at hleft
-  have hleft' : lambda • S.resolvent hbLambda lambda hlambda (S.resolvent hbMu mu hmu x) -
-      S.resolvent hbLambda lambda hlambda
-        (S.generator ⟨S.resolvent hbMu mu hmu x, by
-          rw [S.generator_domain]
-          exact S.resolvent_mem_domain hbMu mu hmu x⟩) = S.resolvent hbMu mu hmu x := by
-    simpa only [map_sub, map_smul] using hleft
-  calc
-    _ = S.resolvent hbLambda lambda hlambda
-          (mu • S.resolvent hbMu mu hmu x -
-            S.generator ⟨S.resolvent hbMu mu hmu x, by
-              rw [S.generator_domain]
-              exact S.resolvent_mem_domain hbMu mu hmu x⟩) -
-          S.resolvent hbMu mu hmu x := by rw [hright]
-    _ = _ := by
-      simp only [map_sub, map_smul]
-      calc
-        _ = (mu - lambda) •
-              S.resolvent hbLambda lambda hlambda (S.resolvent hbMu mu hmu x) +
-            (lambda • S.resolvent hbLambda lambda hlambda (S.resolvent hbMu mu hmu x) -
-              S.resolvent hbLambda lambda hlambda
-                (S.generator ⟨S.resolvent hbMu mu hmu x, by
-                  rw [S.generator_domain]
-                  exact S.resolvent_mem_domain hbMu mu hmu x⟩) -
-              S.resolvent hbMu mu hmu x) := by module
-        _ = _ := by rw [hleft']; simp
+  rw [← S.generator_resolvent_eq hbLambda hlambda, ← S.generator_resolvent_eq hbMu hmu]
+  exact LinearPMap.resolvent_sub_resolvent_apply (S.mem_resolventSet_generator hbLambda hlambda)
+    (S.mem_resolventSet_generator hbMu hmu) x
 
 /-- The resolvent identity
 `R(lambda) - R(mu) = (mu - lambda) R(lambda) R(mu)` as an equality of continuous linear maps. -/
@@ -180,8 +233,9 @@ theorem resolvent_sub_resolvent (S : StronglyContinuousSemigroup X)
     S.resolvent hbLambda lambda hlambda - S.resolvent hbMu mu hmu =
       (mu - lambda) •
         (S.resolvent hbLambda lambda hlambda ∘L S.resolvent hbMu mu hmu) := by
-  ext x
-  exact S.resolvent_sub_resolvent_apply hbLambda hbMu lambda mu hlambda hmu x
+  rw [← S.generator_resolvent_eq hbLambda hlambda, ← S.generator_resolvent_eq hbMu hmu]
+  exact LinearPMap.resolvent_sub_resolvent (S.mem_resolventSet_generator hbLambda hlambda)
+    (S.mem_resolventSet_generator hbMu hmu)
 
 /-- The resolvent identity for `resolventFun`, written in the ring `X →L[ℝ] X`. -/
 theorem resolventFun_sub_resolventFun (S : StronglyContinuousSemigroup X) {omega M : ℝ}
@@ -199,32 +253,9 @@ theorem resolvent_comm (S : StronglyContinuousSemigroup X) {omegaLambda MLambda 
     (hlambda : omegaLambda < lambda) (hmu : omegaMu < mu) :
     S.resolvent hbLambda lambda hlambda ∘L S.resolvent hbMu mu hmu =
       S.resolvent hbMu mu hmu ∘L S.resolvent hbLambda lambda hlambda := by
-  ext x
-  by_cases h : lambda = mu
-  · subst mu
-    have heq : S.resolvent hbLambda lambda hlambda = S.resolvent hbMu lambda hmu := by
-      ext z
-      rw [S.resolvent_apply hbLambda, S.resolvent_apply hbMu]
-    rw [heq]
-  · have h1 := S.resolvent_sub_resolvent_apply hbLambda hbMu lambda mu hlambda hmu x
-    have h2 := S.resolvent_sub_resolvent_apply hbMu hbLambda mu lambda hmu hlambda x
-    simp only [ContinuousLinearMap.comp_apply] at ⊢
-    have h2' : S.resolvent hbLambda lambda hlambda x - S.resolvent hbMu mu hmu x =
-        (mu - lambda) •
-          S.resolvent hbMu mu hmu (S.resolvent hbLambda lambda hlambda x) := by
-      calc
-        _ = -(S.resolvent hbMu mu hmu x - S.resolvent hbLambda lambda hlambda x) := by abel
-        _ = -((lambda - mu) •
-            S.resolvent hbMu mu hmu (S.resolvent hbLambda lambda hlambda x)) := by rw [h2]
-        _ = _ := by module
-    have hz : (mu - lambda) •
-        (S.resolvent hbLambda lambda hlambda (S.resolvent hbMu mu hmu x) -
-          S.resolvent hbMu mu hmu (S.resolvent hbLambda lambda hlambda x)) = 0 := by
-      rw [h1] at h2'
-      rw [smul_sub, h2', sub_self]
-    rcases (smul_eq_zero.mp hz) with hzero | hzero
-    · exact (h (sub_eq_zero.mp hzero).symm).elim
-    · exact sub_eq_zero.mp hzero
+  rw [← S.generator_resolvent_eq hbLambda hlambda, ← S.generator_resolvent_eq hbMu hmu]
+  exact LinearPMap.resolvent_comm (S.mem_resolventSet_generator hbLambda hlambda)
+    (S.mem_resolventSet_generator hbMu hmu)
 
 end StronglyContinuousSemigroup
 
@@ -284,6 +315,32 @@ theorem resolvent_comm (S : ContractionSemigroup X) [CompleteSpace X]
     exact S.toStronglyContinuousSemigroup.resolvent_comm
       S.hasGrowthBound S.hasGrowthBound lambda mu
       (by simpa using hlambda) (by simpa using hmu)
+
+/-- Every `lambda > 0` lies in the resolvent set of the generator of a contraction semigroup. -/
+theorem mem_resolventSet_generator (S : ContractionSemigroup X) [CompleteSpace X] {lambda : ℝ}
+    (hlambda : 0 < lambda) :
+    lambda ∈ LinearPMap.resolventSet S.toStronglyContinuousSemigroup.generator :=
+  S.toStronglyContinuousSemigroup.mem_resolventSet_generator S.hasGrowthBound
+    (by simpa using hlambda)
+
+/-- The resolvent of the generator of a contraction semigroup is its Laplace transform. -/
+theorem generator_resolvent_eq (S : ContractionSemigroup X) [CompleteSpace X] {lambda : ℝ}
+    (hlambda : 0 < lambda) :
+    LinearPMap.resolvent S.toStronglyContinuousSemigroup.generator lambda
+      = S.resolvent lambda hlambda := by
+  rw [S.resolvent_eq_stronglyContinuousSemigroup_resolvent,
+    S.toStronglyContinuousSemigroup.generator_resolvent_eq S.hasGrowthBound
+      (by simpa using hlambda)]
+
+/-- **The Hille--Yosida power bounds in the contraction case**, `(M, omega) = (1, 0)`:
+`‖R(lambda, A) ^ n‖ ≤ (1 / lambda) ^ n` for `lambda > 0`; the specialization of
+`TauCeti.Semigroups.StronglyContinuousSemigroup.norm_generator_resolvent_pow_le`. -/
+theorem norm_generator_resolvent_pow_le (S : ContractionSemigroup X) [CompleteSpace X]
+    {lambda : ℝ} (hlambda : 0 < lambda) (n : ℕ) :
+    ‖LinearPMap.resolvent S.toStronglyContinuousSemigroup.generator lambda ^ n‖
+      ≤ (1 / lambda) ^ n := by
+  simpa using S.toStronglyContinuousSemigroup.norm_generator_resolvent_pow_le S.hasGrowthBound
+    (by simpa using hlambda) n
 
 end ContractionSemigroup
 
