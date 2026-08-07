@@ -26,11 +26,12 @@ Injectivity is `Measure.ext_of_bind_infinitePi_eq`, surjectivity is
 `deFinettiEquiv.symm` is therefore a genuine construction: it reads the mixing law off an
 exchangeable law.
 
-The correspondence is affine, `deFinettiBarycenter_smul_add_smul` giving the mixture identity on
-the barycenter side; and it takes the point masses of `ProbabilityMeasure α` exactly to the
-extreme exchangeable laws (`deFinettiBarycenter_mem_extremePoints_iff`,
-`deFinettiEquiv_dirac`). Reading `deFinettiBarycenter` as `deFinettiBarycenter_eq_join_map` does,
-this is the canonical decomposition of an exchangeable law over the extreme — equivalently the
+The correspondence is affine, `deFinettiBarycenter_add` and `deFinettiBarycenter_smul` giving
+the mixture identity on the barycenter side; and it takes the point masses of
+`ProbabilityMeasure α` exactly to the extreme exchangeable laws
+(`deFinettiBarycenter_mem_extremePoints_iff`, `deFinettiEquiv_dirac`). Reading
+`deFinettiBarycenter` as `deFinettiBarycenter_eq_join_map` does, this is the canonical
+decomposition of an exchangeable law over the extreme — equivalently the
 i.i.d. — exchangeable laws: the mixing law is unique, and the path laws it averages are extreme.
 
 This settles the first two sentences of the Layer 8 bullet "the affine and ergodic decomposition

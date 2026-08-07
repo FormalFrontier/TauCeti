@@ -133,7 +133,8 @@ private theorem cond_eq_of_extreme_iidMixture [StandardBorelSpace α]
   -- affinity of the barycenter turns the splitting of `p` into a splitting of `ρ`
   have hmix_split : deFinettiBarycenter p =
       p s • deFinettiBarycenter (p[|s]) + p sᶜ • deFinettiBarycenter (p[|sᶜ]) := by
-    rw [← deFinettiBarycenter_smul_add_smul, ← hp_split]
+    conv_lhs => rw [hp_split]
+    simp only [deFinettiBarycenter_add, deFinettiBarycenter_smul]
   have hopen : ρ ∈
       openSegment ℝ≥0∞ (deFinettiBarycenter (p[|s])) (deFinettiBarycenter (p[|sᶜ])) :=
     ⟨p s, p sᶜ, pos_iff_ne_zero.2 hs0, pos_iff_ne_zero.2 hsc0,

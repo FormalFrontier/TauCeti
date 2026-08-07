@@ -50,8 +50,8 @@ throughout the de Finetti development (`deFinetti_mixture`, `mixedIID_mixingLaw_
 
 * `deFinettiBarycenter` — the mixture of countable powers along a mixing law.
 * `deFinettiBarycenter_dirac` — a point mass mixes to a single i.i.d. law.
-* `deFinettiBarycenter_zero`, `deFinettiBarycenter_add`, `deFinettiBarycenter_smul`,
-  `deFinettiBarycenter_smul_add_smul` — affinity in the mixing law.
+* `deFinettiBarycenter_zero`, `deFinettiBarycenter_add`, `deFinettiBarycenter_smul` — affinity in
+  the mixing law.
 * `exchangeableLaw_deFinettiBarycenter` — every barycenter of a mixing probability law is an
   exchangeable path law.
 * `ExchangeableLaw.existsUnique_mixingLaw` — conversely, an exchangeable probability law on
@@ -144,14 +144,6 @@ theorem deFinettiBarycenter_add (π₁ π₂ : Measure (ProbabilityMeasure α)) 
 theorem deFinettiBarycenter_smul (c : ℝ≥0∞) (π : Measure (ProbabilityMeasure α)) :
     deFinettiBarycenter (c • π) = c • deFinettiBarycenter π :=
   Measure.bind_smul c π _
-
-/-- **The barycenter map is affine.** A weighted sum of mixing measures has the corresponding
-weighted sum of their barycenters as its own barycenter. For `a + b = 1` and `π₁`, `π₂` probability
-measures this is the convex-combination form: mixing the mixing laws mixes the path laws. -/
-theorem deFinettiBarycenter_smul_add_smul (a b : ℝ≥0∞) (π₁ π₂ : Measure (ProbabilityMeasure α)) :
-    deFinettiBarycenter (a • π₁ + b • π₂) =
-      a • deFinettiBarycenter π₁ + b • deFinettiBarycenter π₂ := by
-  rw [deFinettiBarycenter_add, deFinettiBarycenter_smul, deFinettiBarycenter_smul]
 
 /-- **A barycenter is an exchangeable path law.** Drawing `P` from `π` and then an i.i.d.
 `P`-sequence produces a law invariant under every permutation of the time coordinate.
