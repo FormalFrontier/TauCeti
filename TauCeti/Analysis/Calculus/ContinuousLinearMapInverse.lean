@@ -10,9 +10,9 @@ public import Mathlib.Analysis.Calculus.Deriv.Mul
 /-!
 # Differentiating inverse continuous linear maps
 
-This file packages the derivative of an inverse family of continuous linear maps at an invertible
-base point, including its action on a varying vector. The result is the analytic input for
-differentiating a vector-field pullback along a flow.
+This file packages the derivative of a differentiable inverse family of continuous linear maps at
+an invertible base point, including its action on a varying vector. The result is the analytic input
+for differentiating a vector-field pullback along a flow.
 
 This supplies a prerequisite for Deliverable A, Layer 1 of
 `TauCetiRoadmap/RepresentationTheory/LieGroups/README.md`.
@@ -39,7 +39,8 @@ variable {𝕜 E F : Type*} [NontriviallyNormedField 𝕜]
   [NormedAddCommGroup E] [NormedSpace 𝕜 E] [NormedAddCommGroup F] [NormedSpace 𝕜 F]
   {t₀ : 𝕜} {A : 𝕜 → E →L[𝕜] F} {A' : E →L[𝕜] F} {w : 𝕜 → F} {w' : F}
 
-/-- The derivative of an inverse family of continuous linear maps. -/
+/-- The derivative of an inverse family of continuous linear maps, assuming the inverse family is
+differentiable at the base point. -/
 theorem HasDerivAt.clm_inverse (hA : HasDerivAt A A' t₀)
     (hA0Inv : (A t₀).IsInvertible)
     (hInvDiff : DifferentiableAt 𝕜 (fun t => (A t).inverse) t₀) :
@@ -89,7 +90,7 @@ theorem HasDerivAt.clm_inverse (hA : HasDerivAt A A' t₀)
   exact hInvRaw
 
 /-- The derivative of an inverse family of continuous linear maps acting on a differentiable
-vector curve. -/
+vector curve, assuming the inverse family is differentiable at the base point. -/
 theorem HasDerivAt.clm_inverse_apply (hA : HasDerivAt A A' t₀)
     (hA0Inv : (A t₀).IsInvertible)
     (hInvDiff : DifferentiableAt 𝕜 (fun t => (A t).inverse) t₀)
