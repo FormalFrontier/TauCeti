@@ -58,8 +58,8 @@ path from an existential and knows only the formula.
 * `TauCeti.Path.range_ofContinuousOnIoo` — its range is `closure (g '' Ioo a b)`.
 * `TauCeti.mapsTo_Ioo_of_eq_lineMap`, `TauCeti.injOn_Ioo_of_eq_lineMap` and
   `TauCeti.eq_or_eq_endpoints_of_notMem_of_forall_mem_Ioo` — the reparametrisation-only lemmas
-  above, together with `TauCeti.unitInterval_eq_zero_or_eq_one_or_mem_Ioo`, the trichotomy on which
-  the last of them runs.
+  above; the last of them runs on Mathlib's trichotomy
+  `Set.eq_endpoints_or_mem_Ioo_of_mem_Icc`, read on the unit interval.
 
 ## Generality
 
@@ -94,16 +94,6 @@ private theorem lineMap_mem_Ioo (hab : a < b) {t : I}
   rw [← openSegment_eq_Ioo hab]
   exact lineMap_mem_openSegment ℝ a b (by simpa using ht)
 
-/-- A point of the unit interval is an endpoint or lies in its interior. -/
-theorem unitInterval_eq_zero_or_eq_one_or_mem_Ioo (t : I) :
-    t = 0 ∨ t = 1 ∨ t ∈ Ioo (0 : I) 1 := by
-  by_cases h0 : t = 0
-  · exact Or.inl h0
-  by_cases h1 : t = 1
-  · exact Or.inr (Or.inl h1)
-  exact Or.inr (Or.inr ⟨lt_of_le_of_ne t.2.1 (fun h => h0 h.symm),
-    lt_of_le_of_ne t.2.2 h1⟩)
-
 /-- **The interior of an affinely reparametrised curve stays where the curve does.** If `γ` follows
 `g` along `AffineMap.lineMap a b` on the interior of the unit interval and `g` maps `Ioo a b` into
 `S`, then `γ` maps that interior into `S`. -/
@@ -135,16 +125,16 @@ theorem eq_or_eq_endpoints_of_notMem_of_forall_mem_Ioo {S : Set X}
     (hmem : ∀ t ∈ Ioo (0 : I) 1, γ t ∈ S)
     (hinj : InjOn γ (Ioo (0 : I) 1)) ⦃x y : I⦄ (hxy : γ x = γ y) :
     x = y ∨ (x = 0 ∧ y = 1) ∨ (x = 1 ∧ y = 0) := by
-  rcases unitInterval_eq_zero_or_eq_one_or_mem_Ioo x with rfl | rfl | hx
-  · rcases unitInterval_eq_zero_or_eq_one_or_mem_Ioo y with rfl | rfl | hy
+  rcases eq_endpoints_or_mem_Ioo_of_mem_Icc (a := (0 : I)) (b := 1) x.2 with rfl | rfl | hx
+  · rcases eq_endpoints_or_mem_Ioo_of_mem_Icc (a := (0 : I)) (b := 1) y.2 with rfl | rfl | hy
     · exact Or.inl rfl
     · exact Or.inr (Or.inl ⟨rfl, rfl⟩)
     · exact absurd (by rw [hxy]; exact hmem y hy) hzero
-  · rcases unitInterval_eq_zero_or_eq_one_or_mem_Ioo y with rfl | rfl | hy
+  · rcases eq_endpoints_or_mem_Ioo_of_mem_Icc (a := (0 : I)) (b := 1) y.2 with rfl | rfl | hy
     · exact Or.inr (Or.inr ⟨rfl, rfl⟩)
     · exact Or.inl rfl
     · exact absurd (by rw [hxy]; exact hmem y hy) hone
-  · rcases unitInterval_eq_zero_or_eq_one_or_mem_Ioo y with rfl | rfl | hy
+  · rcases eq_endpoints_or_mem_Ioo_of_mem_Icc (a := (0 : I)) (b := 1) y.2 with rfl | rfl | hy
     · exact absurd (by rw [← hxy]; exact hmem x hx) hzero
     · exact absurd (by rw [← hxy]; exact hmem x hx) hone
     · exact Or.inl (hinj hx hy hxy)
