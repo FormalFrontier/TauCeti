@@ -38,7 +38,8 @@ is drawn in `TauCeti/RepresentationTheory/SU2/Character.lean`.
 * `TauCeti.SU2.isConj_iff_trace_eq`: two elements of `SU(2)` are conjugate if and only if they
   have the same trace.
 * `TauCeti.SU2.isConj_torusExp_iff_cos_eq`: on the maximal torus that criterion reads as the
-  equality of the cosines of the angles, the cosine being the invariant of the Weyl action.
+  equality of the cosines of the angles, the cosine being the invariant of the Weyl action on
+  angles read modulo `2π`.
 * `TauCeti.SU2.norm_trace_le_two` and `TauCeti.SU2.exists_trace_torusExp_eq_ofReal`: together with
   `TauCeti.SU2.isSelfAdjoint_trace`, the traces of elements of `SU(2)` are exactly the real
   numbers of absolute value at most `2`.
@@ -116,9 +117,11 @@ theorem isConj_iff_trace_eq {g h : SU2} :
 /-! ### Conjugacy on the maximal torus -/
 
 /-- Two torus elements are conjugate in `SU(2)` exactly when their angles have the same cosine:
-the Weyl group acts on the angle by negation, and the cosine is precisely the invariant of that
-action. This is `TauCeti.SU2.isConj_iff_trace_eq` in the angle parametrisation of the maximal
-torus, with the trace evaluated by `TauCeti.SU2.trace_torusExp`. -/
+the Weyl group acts on the angle by negation, and, on angles read modulo `2π`, the cosine is
+precisely the invariant of that action — equal cosines say exactly that `φ ≡ ±θ (mod 2π)`, which
+negation alone on `ℝ` does not. This is `TauCeti.SU2.isConj_iff_trace_eq` in the angle
+parametrisation of the maximal torus, with the trace evaluated by
+`TauCeti.SU2.trace_torusExp`. -/
 theorem isConj_torusExp_iff_cos_eq {θ φ : ℝ} :
     IsConj (torusExp θ) (torusExp φ) ↔ Real.cos φ = Real.cos θ := by
   rw [isConj_iff_trace_eq, trace_torusExp, trace_torusExp]
