@@ -136,7 +136,7 @@ end Normed
 section Map
 
 variable {A B : Type*} [NormedRing A] [NormedAlgebra ℚ A] [CompleteSpace A]
-  [NormedRing B] [Algebra ℚ B]
+  [Ring B] [Algebra ℚ B] [TopologicalSpace B] [IsTopologicalRing B] [T2Space B]
 
 /-- Any continuous ring homomorphism commutes with `oneSubExpNegDivSelf`. -/
 theorem map_oneSubExpNegDivSelf {F : Type*} [FunLike F A B] [RingHomClass F A B]
