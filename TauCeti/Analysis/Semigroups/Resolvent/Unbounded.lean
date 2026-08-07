@@ -4,7 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Analysis.Semigroups.Resolvent.PowerBounds
 public import TauCeti.Analysis.Semigroups.Resolvent.Identity
 public import Mathlib.Algebra.Algebra.Spectrum.Basic
 
@@ -35,10 +34,9 @@ Two bridges keep this from being a parallel universe.
   the Laplace transform `∫₀^∞ e^{-λt} S(t) x dt` already built in
   `TauCeti/Analysis/Semigroups/Resolvent/Basic.lean`
   (`StronglyContinuousSemigroup.generator_resolvent_eq`). Consequently the Hille--Yosida
-  estimates proved there and in `TauCeti/Analysis/Semigroups/Resolvent/PowerBounds.lean`
-  transfer verbatim to the abstract resolvent
+  estimates proved there transfer verbatim to the abstract resolvent
   (`StronglyContinuousSemigroup.norm_generator_resolvent_le`,
-  `ContractionSemigroup.norm_generator_resolvent_pow_le`).
+  `StronglyContinuousSemigroup.norm_generator_resolvent_pow_le`).
 
 The second bridge is what makes the hypotheses of the Hille--Yosida generation theorem
 statable: they read `(ω, ∞) ⊆ resolventSet A` together with `‖resolvent A l ^ n‖ ≤
@@ -133,7 +131,7 @@ theorem IsResolventAt.smul_sub_bijective (h : IsResolventAt A lambda R) :
 
 /-- The **resolvent set** of an unbounded operator `A : X →ₗ.[ℝ] X`: those `lambda : ℝ` for which
 `lambda • I - A : D(A) → X` is a bijection with bounded inverse. -/
-@[expose] def resolventSet (A : X →ₗ.[ℝ] X) : Set ℝ :=
+def resolventSet (A : X →ₗ.[ℝ] X) : Set ℝ :=
   {lambda | ∃ R : X →L[ℝ] X, IsResolventAt A lambda R}
 
 /-- Membership in the resolvent set unfolds to the existence of a bounded inverse of
@@ -183,12 +181,12 @@ theorem resolvent_mem_domain (h : lambda ∈ resolventSet A) (y : X) :
   (isResolventAt_resolvent h).mem_domain y
 
 /-- The right-inverse identity `(lambda • I - A) R(lambda) y = y`. -/
-theorem smul_sub_apply_resolvent (h : lambda ∈ resolventSet A) (y : X) :
+@[simp] theorem smul_sub_apply_resolvent (h : lambda ∈ resolventSet A) (y : X) :
     lambda • resolvent A lambda y - A ⟨resolvent A lambda y, resolvent_mem_domain h y⟩ = y :=
   (isResolventAt_resolvent h).smul_sub_apply y
 
 /-- The left-inverse identity `R(lambda) (lambda • x - A x) = x` on `D(A)`. -/
-theorem resolvent_smul_sub_apply (h : lambda ∈ resolventSet A) (x : A.domain) :
+@[simp] theorem resolvent_smul_sub_apply (h : lambda ∈ resolventSet A) (x : A.domain) :
     resolvent A lambda (lambda • (x : X) - A x) = (x : X) :=
   (isResolventAt_resolvent h).apply_smul_sub x
 
@@ -313,8 +311,7 @@ theorem mem_resolventSet_of_norm_mul_lt_one (h : lambda ∈ resolventSet A)
         = (lambda • resolvent A lambda (U y) -
             A ⟨resolvent A lambda (U y), resolvent_mem_domain h (U y)⟩) -
           (lambda - mu) • resolvent A lambda (U y) := by module
-    change mu • resolvent A lambda (U y) -
-      A ⟨resolvent A lambda (U y), resolvent_mem_domain h (U y)⟩ = y
+    simp only [ContinuousLinearMap.comp_apply]
     rw [h2, h1]
     simpa [hB] using hUright y
   · intro x
@@ -323,7 +320,7 @@ theorem mem_resolventSet_of_norm_mul_lt_one (h : lambda ∈ resolventSet A)
     have h1 : resolvent A lambda (mu • (x : X) - A x) = (x : X) - B (x : X) := by
       rw [hsplit, map_sub, map_smul, resolvent_smul_sub_apply h x, hB]
       rfl
-    change resolvent A lambda (U (mu • (x : X) - A x)) = (x : X)
+    simp only [ContinuousLinearMap.comp_apply]
     rw [hcomm' (mu • (x : X) - A x), h1, hUleft]
 
 /-- **The resolvent set is open.** -/
@@ -370,7 +367,7 @@ theorem isUnit_of_isResolventAt_toPMap_top
     ext y
     have h1 : R (lambda • y - T y) = y := h.apply_smul_sub ⟨y, Submodule.mem_top⟩
     simpa [algebraMap_sub_apply] using h1
-  exact ⟨⟨algebraMap ℝ (X →L[ℝ] X) lambda - T, R, hright, hleft⟩, rfl⟩
+  exact spectrum.mem_resolventSet_of_left_right_inverse hright hleft
 
 /-- A unit `lambda • I - T` of the algebra `X →L[ℝ] X` inverts `lambda • I - T` in the
 unbounded sense, with the algebra inverse as the resolvent. -/
@@ -457,6 +454,22 @@ theorem norm_generator_resolvent_le (S : StronglyContinuousSemigroup X) {omega M
   rw [S.generator_resolvent_eq hb hlambda]
   exact S.resolvent_norm_le hb lambda hlambda
 
+/-- **Hille--Yosida power bound** for the resolvent of the generator:
+`‖R(lambda, A) ^ n‖ ≤ (M / (lambda - ω)) ^ n`, from submultiplicativity of the operator norm.
+This is the hypothesis `hbound` of the generation theorem, in the direction that the existence
+of `S` already supplies. (The sharp form `‖R(lambda, A) ^ n‖ ≤ M / (lambda - ω) ^ n` is a
+strictly stronger statement — it does not follow from `‖R(lambda, A)‖ ≤ M / (lambda - ω)` once
+`M > 1` — and needs the estimate for `∫₀^∞ tⁿ e^{-λt} S(t) x dt`, which the repository does not
+yet have; the two agree in the contraction case `(M, ω) = (1, 0)`.) -/
+theorem norm_generator_resolvent_pow_le (S : StronglyContinuousSemigroup X) {omega M : ℝ}
+    (hb : S.HasGrowthBound omega M) {lambda : ℝ} (hlambda : omega < lambda) (n : ℕ) :
+    ‖LinearPMap.resolvent S.generator lambda ^ n‖ ≤ (M / (lambda - omega)) ^ n := by
+  cases n with
+  | zero => exact ContinuousLinearMap.norm_id_le
+  | succ n =>
+      exact (norm_pow_le' _ n.succ_pos).trans
+        (pow_le_pow_left₀ (norm_nonneg _) (S.norm_generator_resolvent_le hb hlambda) (n + 1))
+
 end StronglyContinuousSemigroup
 
 namespace ContractionSemigroup
@@ -480,14 +493,14 @@ theorem generator_resolvent_eq (S : ContractionSemigroup X) {lambda : ℝ} (hlam
   rw [StronglyContinuousSemigroup.resolvent_apply, ContractionSemigroup.resolvent_apply]
 
 /-- **The Hille--Yosida power bounds in the contraction case**, `(M, ω) = (1, 0)`:
-`‖R(lambda, A) ^ n‖ ≤ (1 / lambda) ^ n` for `lambda > 0`. This is the hypothesis `hbound` of the
-generation theorem, in the direction that the existence of `S` already supplies. -/
+`‖R(lambda, A) ^ n‖ ≤ (1 / lambda) ^ n` for `lambda > 0`; the specialization of
+`TauCeti.Semigroups.StronglyContinuousSemigroup.norm_generator_resolvent_pow_le`. -/
 theorem norm_generator_resolvent_pow_le (S : ContractionSemigroup X) {lambda : ℝ}
     (hlambda : 0 < lambda) (n : ℕ) :
     ‖LinearPMap.resolvent S.toStronglyContinuousSemigroup.generator lambda ^ n‖
       ≤ (1 / lambda) ^ n := by
-  rw [S.generator_resolvent_eq hlambda]
-  exact S.resolvent_pow_norm_le lambda hlambda n
+  simpa using S.toStronglyContinuousSemigroup.norm_generator_resolvent_pow_le S.hasGrowthBound
+    (by simpa using hlambda) n
 
 end ContractionSemigroup
 
