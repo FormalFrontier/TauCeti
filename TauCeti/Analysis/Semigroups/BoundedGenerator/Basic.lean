@@ -53,7 +53,7 @@ omit [CompleteSpace X] in
 /-- In the Banach algebra `X →L[ℝ] X`, the operator exponential is norm-bounded by the scalar
 exponential of the norm: `‖exp x‖ ≤ Real.exp ‖x‖`.  This is the termwise triangle inequality
 on the exponential series, using submultiplicativity `‖xⁿ‖ ≤ ‖x‖ⁿ`. -/
-private lemma norm_exp_le_exp_norm (x : X →L[ℝ] X) : ‖exp x‖ ≤ Real.exp ‖x‖ := by
+theorem norm_exp_le_exp_norm (x : X →L[ℝ] X) : ‖exp x‖ ≤ Real.exp ‖x‖ := by
   rw [exp_eq_tsum ℝ]
   refine (norm_tsum_le_tsum_norm (norm_expSeries_summable' (𝕂 := ℝ) x)).trans ?_
   rw [Real.exp_eq_exp_ℝ, exp_eq_tsum ℝ]

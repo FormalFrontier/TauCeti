@@ -309,6 +309,48 @@ theorem IsMDissipative.smul_sub_bijective {A : X →ₗ.[ℝ] X} (hA : IsMDissip
     Function.Bijective fun x : A.domain => lambda • (x : X) - A x :=
   ⟨hA.isDissipative.smul_sub_injective hlambda, hA.smul_sub_surjective hlambda⟩
 
+/-- For an m-dissipative operator, every positive real belongs to its resolvent set. Moreover,
+the inverse of `lambda • I - A` has norm at most `1 / lambda`.
+
+This packages the propagated range condition and the dissipativity estimate as the bounded
+inverse required by `LinearPMap.IsResolventAt`. -/
+theorem IsMDissipative.exists_isResolventAt_norm_le {A : X →ₗ.[ℝ] X} (hA : IsMDissipative A)
+    {lambda : ℝ} (hlambda : 0 < lambda) :
+    ∃ R : X →L[ℝ] X, LinearPMap.IsResolventAt A lambda R ∧ ‖R‖ ≤ lambda⁻¹ := by
+  obtain ⟨g, R, hRnorm, hgR, hright⟩ := hA.isDissipative.exists_bounded_rightInverse hlambda
+    (hA.smul_sub_surjective hlambda)
+  have hleft : ∀ x : A.domain, R (lambda • (x : X) - A x) = (x : X) := by
+    intro x
+    rw [← hgR]
+    exact congrArg Subtype.val (hA.isDissipative.smul_sub_injective hlambda (hright _))
+  have hmem : ∀ y : X, R y ∈ A.domain := by
+    intro y
+    rw [← hgR]
+    exact (g y).property
+  have hrightR : ∀ y : X, lambda • R y - A ⟨R y, hmem y⟩ = y := by
+    intro y
+    have hsubtype : (⟨R y, hmem y⟩ : A.domain) = g y := Subtype.ext (hgR y).symm
+    calc
+      lambda • R y - A ⟨R y, hmem y⟩ = lambda • (g y : X) - A (g y) :=
+        congrArg₂ (fun u v : X => lambda • u - v) (hgR y).symm (congrArg A hsubtype)
+      _ = y := hright y
+  exact ⟨R, ⟨hmem, hrightR, hleft⟩, hRnorm⟩
+
+/-- Every positive real lies in the resolvent set of an m-dissipative operator. -/
+theorem IsMDissipative.mem_resolventSet {A : X →ₗ.[ℝ] X} (hA : IsMDissipative A)
+    {lambda : ℝ} (hlambda : 0 < lambda) : lambda ∈ LinearPMap.resolventSet A :=
+  let ⟨_, hR, _⟩ := hA.exists_isResolventAt_norm_le hlambda
+  hR.mem_resolventSet
+
+/-- The resolvent of an m-dissipative operator satisfies the contraction bound
+`‖R(lambda, A)‖ ≤ 1 / lambda` at every `lambda > 0`. -/
+theorem IsMDissipative.norm_resolvent_le {A : X →ₗ.[ℝ] X} (hA : IsMDissipative A)
+    {lambda : ℝ} (hlambda : 0 < lambda) :
+    ‖LinearPMap.resolvent A lambda‖ ≤ lambda⁻¹ := by
+  obtain ⟨R, hR, hRnorm⟩ := hA.exists_isResolventAt_norm_le hlambda
+  rw [LinearPMap.resolvent_eq_of_isResolventAt hR]
+  exact hRnorm
+
 end CompleteSpace
 
 /-! ## The generator of a C₀-semigroup -/
