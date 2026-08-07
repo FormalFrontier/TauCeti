@@ -455,33 +455,16 @@ lemma antitoneOn (hf : IsCompletelyMonotoneOnIci f) : AntitoneOn f (Ici 0) := by
     exact hIoi (mem_Ioi.mpr hy_pos) (mem_Ioi.mpr ht_pos) hy_le
   · exact hIoi (mem_Ioi.mpr hs_pos) (mem_Ioi.mpr (hs_pos.trans_le hst)) hst
 
-/-- A closed-half-line completely monotone function is nonnegative at `0`. -/
-lemma nonneg_zero (hf : IsCompletelyMonotoneOnIci f) : 0 ≤ f 0 := by
-  have hy_tendsto_nhds : Tendsto (fun n : ℕ => 1 / ((n : ℝ) + 1)) atTop (nhds 0) := by
-    have hden : Tendsto (fun n : ℕ => (n : ℝ) + 1) atTop atTop := by
-      exact Filter.tendsto_atTop_add_const_right atTop 1
-        (tendsto_natCast_atTop_atTop (R := ℝ))
-    simpa using Filter.Tendsto.const_div_atTop hden (1 : ℝ)
-  have hy_mem : ∀ᶠ n : ℕ in atTop, 1 / ((n : ℝ) + 1) ∈ Ici (0 : ℝ) := by
-    filter_upwards with n
-    exact mem_Ici.mpr (by positivity)
-  have hy_tendsto : Tendsto (fun n : ℕ => 1 / ((n : ℝ) + 1)) atTop
-      (𝓝[Ici (0 : ℝ)] 0) := by
-    rw [nhdsWithin]
-    exact tendsto_inf.2 ⟨hy_tendsto_nhds, tendsto_principal.mpr hy_mem⟩
-  have hf_tendsto : Tendsto (fun n : ℕ => f (1 / ((n : ℝ) + 1))) atTop
-      (nhds (f 0)) :=
-    (hf.continuousOn.continuousWithinAt (mem_Ici.mpr le_rfl)).tendsto.comp hy_tendsto
-  refine ge_of_tendsto hf_tendsto ?_
-  filter_upwards with n
-  exact hf.isCompletelyMonotoneOnIoi.nonneg (by positivity)
-
-/-- A closed-half-line completely monotone function is nonnegative on `[0, ∞)`. -/
+/-- A closed-half-line completely monotone function is nonnegative on `[0, ∞)`:
+nonnegativity on the open half-line passes to `0` by continuity. -/
 @[grind =>]
-lemma nonneg (hf : IsCompletelyMonotoneOnIci f) {t : ℝ} (ht : 0 ≤ t) : 0 ≤ f t := by
-  rcases ht.eq_or_lt with rfl | ht_pos
-  · exact hf.nonneg_zero
-  · exact hf.isCompletelyMonotoneOnIoi.nonneg ht_pos
+lemma nonneg (hf : IsCompletelyMonotoneOnIci f) {t : ℝ} (ht : 0 ≤ t) : 0 ≤ f t :=
+  hf.isCompletelyMonotoneOnIoi.nonneg_of_continuousWithinAt
+    (hf.continuousOn.continuousWithinAt (by simp)) ht
+
+/-- A closed-half-line completely monotone function is nonnegative at `0`. -/
+lemma nonneg_zero (hf : IsCompletelyMonotoneOnIci f) : 0 ≤ f 0 :=
+  hf.nonneg le_rfl
 
 /-- A closed-half-line completely monotone function lies below its value at `0` on `[0, ∞)`. -/
 lemma le_apply_zero (hf : IsCompletelyMonotoneOnIci f) {t : ℝ} (ht : 0 ≤ t) : f t ≤ f 0 :=

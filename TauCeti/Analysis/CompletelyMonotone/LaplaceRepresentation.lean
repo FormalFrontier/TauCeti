@@ -100,6 +100,12 @@ lemma laplaceTransform_zero (μ : Measure ℝ≥0) [IsFiniteMeasure μ] :
     laplaceTransform μ 0 = μ.real univ := by
   simp [laplaceTransform]
 
+/-- The Laplace transform of the zero measure vanishes identically. -/
+@[simp]
+lemma laplaceTransform_zero_measure (t : ℝ) :
+    laplaceTransform (0 : Measure ℝ≥0) t = 0 := by
+  simp [laplaceTransform]
+
 /-- The Laplace transform of a positive measure is nonnegative. -/
 lemma laplaceTransform_nonneg (μ : Measure ℝ≥0) (t : ℝ) :
     0 ≤ laplaceTransform μ t := by
@@ -339,12 +345,8 @@ private lemma hasDerivAt_laplaceMomentTransform (μ : Measure ℝ≥0) [IsFinite
 
 private lemma abs_exp_neg_sub_one_le {a : ℝ} (ha : 0 ≤ a) :
     |Real.exp (-a) - 1| ≤ a := by
-  have hexp_le : Real.exp (-a) ≤ 1 := by
-    rw [Real.exp_le_one_iff]
-    exact neg_nonpos.mpr ha
-  have hlinear := Real.add_one_le_exp (-a)
-  rw [abs_of_nonpos (sub_nonpos.mpr hexp_le)]
-  linarith
+  rw [abs_of_nonpos (sub_nonpos.mpr (Real.exp_le_one_iff.mpr (neg_nonpos.mpr ha)))]
+  linarith [Real.one_sub_le_exp_neg a]
 
 private lemma norm_laplaceMomentKernel_slope_zero_le (n : ℕ) {y : ℝ} (hy : 0 ≤ y)
     (x : ℝ≥0) :
