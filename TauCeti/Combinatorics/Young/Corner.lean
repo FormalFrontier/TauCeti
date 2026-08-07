@@ -4,17 +4,20 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Combinatorics.Young.HookLength
+public import Mathlib.Data.Finset.Max
+public import TauCeti.Combinatorics.Young.Diagram
 
 /-!
 # Corners of a Young diagram
 
 A *corner* of a Young diagram `μ` is a cell of `μ` with neither the cell to its right nor the cell
-below it in `μ`; equivalently (`TauCeti.YoungDiagram.isCorner_iff_hookLength_eq_one`) a cell of hook
-length `1`.  Equivalently, the corners are the maximal cells of `μ`
+below it in `μ`.  Equivalently, the corners are the maximal cells of `μ`
 (`TauCeti.YoungDiagram.IsCorner.eq_of_le`): they are exactly the cells `c` for which removing `c`
 alone leaves a set of cells that is still a Young diagram.  So they index the ways of building `μ`
-one cell at a time, and hence the recursions that count standard Young tableaux.
+one cell at a time, and hence the recursions that count standard Young tableaux.  The corners are
+also exactly the cells of hook length `1`, which is
+`TauCeti.YoungDiagram.isCorner_iff_hookLength_eq_one` in
+`TauCeti.Combinatorics.Young.HookLength`, downstream of this file.
 
 Deletion is `TauCeti.YoungDiagram.erase`.  It is defined without any hypothesis on the cell — it
 removes the whole principal upper set of `c`, that is `c` together with every cell weakly below and
@@ -34,8 +37,6 @@ corner, and only at a cell of `μ` that is a corner, nothing but `c` itself is r
   `TauCeti.YoungDiagram.IsCorner.card_erase`: it drops the number of cells by one.
 * `TauCeti.YoungDiagram.exists_isCorner`: a nonempty Young diagram has a corner, so the corner
   recursions are not vacuous.
-* `TauCeti.YoungDiagram.isCorner_iff_hookLength_eq_one`: the corners of `μ` are its cells of hook
-  length `1`.
 * `TauCeti.YoungDiagram.corners_transpose` and `TauCeti.YoungDiagram.erase_transpose`: corners and
   deletion commute with transposition.
 
@@ -117,17 +118,14 @@ theorem exists_isCorner (hμ : 0 < μ.card) : ∃ c, IsCorner μ c := by
   obtain ⟨c, hc, hmax⟩ :=
     μ.cells.exists_max_image (fun d => d.1 + d.2) (Finset.card_pos.mp hμ)
   refine ⟨c, hc, fun hmem => ?_, fun hmem => ?_⟩
-  · simpa using hmax _ hmem
-  · simpa using hmax _ hmem
+  · have h := hmax _ hmem
+    omega
+  · have h := hmax _ hmem
+    omega
 
 theorem corners_nonempty (hμ : 0 < μ.card) : (corners μ).Nonempty := by
   obtain ⟨c, hc⟩ := exists_isCorner hμ
   exact ⟨c, mem_corners.mpr hc⟩
-
-/-- The corners of `μ` are its cells of hook length `1`. -/
-theorem isCorner_iff_hookLength_eq_one (hc : c ∈ μ) : IsCorner μ c ↔ hookLength μ c = 1 := by
-  rw [hookLength_eq_one_iff, isCorner_def]
-  exact and_iff_right hc
 
 /-! ### Deleting a corner -/
 
@@ -138,7 +136,7 @@ The definition is total, so that it can be summed over the corners of `μ` witho
 It is `Finset.erase` on cells exactly at a corner (`TauCeti.YoungDiagram.IsCorner.cells_erase`), and
 it leaves `μ` unchanged at a cell outside `μ`
 (`TauCeti.YoungDiagram.erase_eq_self_of_notMem`); at a cell of `μ` that is not a corner it deletes
-a whole staircase, which is the price of totality. -/
+the entire principal upper set of `c` in `μ`, which is the price of totality. -/
 def erase (μ : YoungDiagram) (c : ℕ × ℕ) : YoungDiagram where
   cells := μ.cells.filter fun d => ¬ c ≤ d
   isLowerSet := by

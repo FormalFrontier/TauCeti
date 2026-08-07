@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+public import Mathlib.Data.Fintype.BigOperators
 public import TauCeti.Combinatorics.Young.Corner
 public import TauCeti.Combinatorics.Young.StandardTableau.Basic
 
@@ -94,15 +95,14 @@ theorem isCorner_maxCell (hμ : 0 < μ.card) (T : StandardYoungTableau μ) :
     have := (T ⟨((maxCell hμ T).1 + 1, (maxCell hμ T).2), hmem⟩).isLt
     omega
 
-/-- A corner carries the largest label exactly when it is the cell
+/-- A cell carries the largest label exactly when it is the cell
 `TauCeti.StandardYoungTableau.maxCell`. -/
-theorem maxCell_eq_iff (hμ : 0 < μ.card) (T : StandardYoungTableau μ)
-    (hc : YoungDiagram.IsCorner μ c) :
-    maxCell hμ T = c ↔ (T ⟨c, hc.mem⟩).val + 1 = μ.card := by
+theorem maxCell_eq_iff (hμ : 0 < μ.card) (T : StandardYoungTableau μ) (hc : c ∈ μ) :
+    maxCell hμ T = c ↔ (T ⟨c, hc⟩).val + 1 = μ.card := by
   refine ⟨fun h => ?_, fun h => ?_⟩
   · subst h
     exact apply_maxCell hμ T
-  · have hval : T ⟨c, hc.mem⟩ = T ⟨maxCell hμ T, maxCell_mem hμ T⟩ :=
+  · have hval : T ⟨c, hc⟩ = T ⟨maxCell hμ T, maxCell_mem hμ T⟩ :=
       Fin.ext (by have := apply_maxCell hμ T; omega)
     have hcm : c = maxCell hμ T := congrArg Subtype.val (T.injective hval)
     exact hcm.symm
@@ -248,18 +248,23 @@ noncomputable def extend (hc : YoungDiagram.IsCorner μ c)
   row_strict' h hcell := extendFun_row hc T h hcell
   col_strict' h hcell := extendFun_col hc T h hcell
 
+@[simp]
 theorem extend_apply_val_of_eq (hc : YoungDiagram.IsCorner μ c)
     (T : StandardYoungTableau (YoungDiagram.erase μ c)) (d : ↥μ.cells) (h : d.1 = c) :
     (extend hc T d).val = μ.card - 1 :=
   extendFun_apply_of_eq hc T d h
 
+@[simp]
 theorem extend_apply_val_of_ne (hc : YoungDiagram.IsCorner μ c)
     (T : StandardYoungTableau (YoungDiagram.erase μ c)) (d : ↥μ.cells) (h : d.1 ≠ c) :
     (extend hc T d).val = (T ⟨d.1, hc.mem_erase_iff.mpr ⟨d.2, h⟩⟩).val :=
   extendFun_apply_of_ne hc T d h
 
 /-- The extended tableau does carry its largest label at the restored corner, so it lies in the
-fibre that `TauCeti.StandardYoungTableau.restrict` is defined on. -/
+fibre that `TauCeti.StandardYoungTableau.restrict` is defined on.
+
+This is deliberately not a `simp` lemma: `TauCeti.StandardYoungTableau.extend_apply_val_of_eq`
+rewrites its left-hand side to `μ.card - 1 + 1`, so its statement is not in simp-normal form. -/
 theorem extend_apply_self (hc : YoungDiagram.IsCorner μ c)
     (T : StandardYoungTableau (YoungDiagram.erase μ c)) :
     ((extend hc T) ⟨c, hc.mem⟩).val + 1 = μ.card := by
@@ -315,7 +320,7 @@ theorem standardCount_eq_sum_corners {μ : YoungDiagram} (hμ : 0 < μ.card) :
         StandardYoungTableau (YoungDiagram.erase μ c.1) :=
       (Equiv.subtypeEquivRight fun T => by
         rw [Subtype.ext_iff]
-        exact StandardYoungTableau.maxCell_eq_iff hμ T hc).trans
+        exact StandardYoungTableau.maxCell_eq_iff hμ T hc.mem).trans
         (StandardYoungTableau.cornerFiberEquiv hc)
     rw [standardCount_def, Fintype.card_congr e]
   rw [standardCount_def, ← Fintype.card_congr
