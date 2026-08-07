@@ -57,7 +57,7 @@ theorem hasDerivAt_parametric_pullback {F : 𝕜 × E → E} {W : E → E} {t₀
   have hz : HasDerivAt (fun t => F (t, x)) (timeFDeriv F t₀ x) t₀ := by
     have hFdiff : DifferentiableAt 𝕜 F (t₀, x) :=
       (hF.of_le le_minSmoothness).differentiableAt two_ne_zero
-    exact hasDerivAt_timeSlice hFdiff
+    exact hasDerivAt_parameterCurve hFdiff
   have hW0 : HasFDerivAt W (fderiv 𝕜 W x) (F (t₀, x)) := by
     simpa only [hF0] using hW.hasFDerivAt
   have hpull := hA.clm_inverse_apply (by

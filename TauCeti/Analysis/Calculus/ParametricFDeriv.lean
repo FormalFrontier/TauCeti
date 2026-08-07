@@ -26,7 +26,8 @@ This supplies a prerequisite for Deliverable A, Layer 1 of
 
 ## Main results
 
-* `hasDerivAt_timeSlice`: the parameter velocity differentiates the corresponding time slice.
+* `hasDerivAt_parameterCurve`: the parameter velocity differentiates the corresponding parameter
+  curve.
 * `hasDerivAt_spatialFDeriv`: the spatial Jacobian differentiates to the spatial derivative of the
   parameter velocity.
 * `deriv_spatialFDeriv_apply`: the parameter derivative of the spatial Jacobian equals the
@@ -67,7 +68,7 @@ theorem timeFDeriv_apply (F : 𝕜 × E → F') (t : 𝕜) (x : E) :
   (rfl)
 
 /-- The parameter velocity is the derivative of the corresponding time slice. -/
-theorem hasDerivAt_timeSlice {F : 𝕜 × E → F'} {t : 𝕜} {x : E}
+theorem hasDerivAt_parameterCurve {F : 𝕜 × E → F'} {t : 𝕜} {x : E}
     (hF : DifferentiableAt 𝕜 F (t, x)) :
     HasDerivAt (fun s => F (s, x)) (timeFDeriv F t x) t := by
   have hp : HasDerivAt (fun s : 𝕜 => (s, x)) (1, 0) t := by
