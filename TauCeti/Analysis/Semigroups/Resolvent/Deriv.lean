@@ -205,19 +205,6 @@ theorem iteratedDeriv_resolventFun (hb : S.HasGrowthBound omega M) (n : ℕ) {la
       push_cast [Nat.factorial_succ]
       ring
 
-/-- **The Hille--Yosida derivative bound**
-`‖dⁿR(lambda)/dlambdaⁿ‖ ≤ n! (M / (lambda - omega))ⁿ⁺¹`, obtained by combining the iterated
-derivative formula with `‖R(lambda)‖ ≤ M / (lambda - omega)`. -/
-theorem norm_iteratedDeriv_resolventFun_le (hb : S.HasGrowthBound omega M) (n : ℕ) {lambda : ℝ}
-    (hl : omega < lambda) :
-    ‖iteratedDeriv n (S.resolventFun hb) lambda‖
-      ≤ n ! * (M / (lambda - omega)) ^ (n + 1) := by
-  have hscalar : ‖((-1 : ℝ) ^ n * n !)‖ = (n ! : ℝ) := by simp
-  rw [S.iteratedDeriv_resolventFun hb n hl, norm_smul, hscalar]
-  refine mul_le_mul_of_nonneg_left ?_ (Nat.cast_nonneg _)
-  exact (norm_pow_le' _ n.succ_pos).trans
-    (pow_le_pow_left₀ (norm_nonneg _) (S.resolventFun_norm_le hb hl) (n + 1))
-
 /-- The resolvent is smooth on the half-line above the growth exponent. -/
 theorem contDiffOn_resolventFun (hb : S.HasGrowthBound omega M) :
     ContDiffOn ℝ ∞ (S.resolventFun hb) (Set.Ioi omega) := by
@@ -250,14 +237,6 @@ theorem iteratedDeriv_resolventFun (n : ℕ) {lambda : ℝ} (h : 0 < lambda) :
       = ((-1 : ℝ) ^ n * n !) • S.resolventFun lambda ^ (n + 1) := by
   rw [S.resolventFun_eq]
   exact S.toStronglyContinuousSemigroup.iteratedDeriv_resolventFun S.hasGrowthBound n h
-
-/-- The Hille--Yosida derivative bound `‖dⁿR(lambda)/dlambdaⁿ‖ ≤ n! / lambdaⁿ⁺¹` in the
-contraction case. -/
-theorem norm_iteratedDeriv_resolventFun_le (n : ℕ) {lambda : ℝ} (h : 0 < lambda) :
-    ‖iteratedDeriv n S.resolventFun lambda‖ ≤ n ! * (1 / lambda) ^ (n + 1) := by
-  have := S.toStronglyContinuousSemigroup.norm_iteratedDeriv_resolventFun_le S.hasGrowthBound n h
-  rw [sub_zero] at this
-  rwa [S.resolventFun_eq]
 
 /-- The contraction resolvent is smooth on `(0, ∞)`. -/
 theorem contDiffOn_resolventFun : ContDiffOn ℝ ∞ S.resolventFun (Set.Ioi 0) := by
