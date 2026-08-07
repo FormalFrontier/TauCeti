@@ -157,6 +157,7 @@ private theorem ofCoeffList_cyclotomicCoeffsAux (fuel : ℕ) :
         ← Nat.cons_self_properDivisors hn0, Finset.prod_cons]
 
 /-- **The computed coefficients are the coefficients of the cyclotomic polynomial.** -/
+@[simp]
 theorem ofCoeffList_cyclotomicCoeffs (n : ℕ) :
     ofCoeffList (cyclotomicCoeffs n) = cyclotomic n ℤ :=
   ofCoeffList_cyclotomicCoeffsAux n n le_rfl

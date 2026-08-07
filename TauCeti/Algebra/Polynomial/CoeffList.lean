@@ -159,7 +159,7 @@ theorem leadingCoeff_ofCoeffList {l : List R} (h : l = [] ∨ l.headD 0 ≠ 0) :
 
 /-- Two lists of the same length define the same polynomial only if they are equal.  This is not
 injectivity of `TauCeti.Polynomial.ofCoeffList`, which discards leading zeros. -/
-theorem eq_of_ofCoeffList_eq_of_length_eq {l l' : List R} (hlen : l.length = l'.length)
+theorem eq_of_length_eq_of_ofCoeffList_eq {l l' : List R} (hlen : l.length = l'.length)
     (h : ofCoeffList l = ofCoeffList l') : l = l' := by
   have hrev : l.reverse = l'.reverse := by
     refine List.ext_getElem (by simpa using hlen) fun i hi hi' => ?_
@@ -341,6 +341,7 @@ theorem ofCoeffList_divModByMonicList (t l : List R) :
 
 /-- **Synthetic division computes the quotient**: the first output of
 `TauCeti.Polynomial.divModByMonicList` is Mathlib's `/ₘ` by the monic divisor. -/
+@[simp]
 theorem ofCoeffList_divByMonicList (t l : List R) :
     ofCoeffList (divByMonicList t l) = ofCoeffList l /ₘ (X ^ t.length + ofCoeffList t) := by
   nontriviality R
@@ -352,6 +353,7 @@ theorem ofCoeffList_divByMonicList (t l : List R) :
 
 /-- **Synthetic division computes the remainder**: the second output of
 `TauCeti.Polynomial.divModByMonicList` is Mathlib's `%ₘ` by the monic divisor. -/
+@[simp]
 theorem ofCoeffList_modByMonicList (t l : List R) :
     ofCoeffList (modByMonicList t l) = ofCoeffList l %ₘ (X ^ t.length + ofCoeffList t) := by
   nontriviality R
