@@ -191,8 +191,8 @@ theorem infinitePi_mem_extremePoints_exchangeable (P : ProbabilityMeasure α) :
     rintro ν ⟨hν, hνprob⟩
     let : IsProbabilityMeasure ν := hνprob
     exact ⟨hν.contractableLaw.measurePreserving_shift, hνprob⟩
-  have hρPexch : ExchangeableLaw ρP := by
-    rw [show ρP = deFinettiBarycenter (Measure.dirac P) from (deFinettiBarycenter_dirac P).symm]
+  have hρPexch : ExchangeableLaw (Measure.infinitePi fun _ : ℕ => (P : Measure α)) := by
+    rw [← deFinettiBarycenter_dirac P]
     exact exchangeableLaw_deFinettiBarycenter
   exact inter_extremePoints_subset_extremePoints_of_subset hsubset
     ⟨⟨hρPexch, inferInstance⟩, hshiftExtreme⟩

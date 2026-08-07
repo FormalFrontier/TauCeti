@@ -10,9 +10,8 @@ public import TauCeti.MeasureTheory.Measure.ProductKernel
 public import TauCeti.Probability.Exchangeability.PathSpace.Law.Basic
 -- Public: `ExchangeableLaw.existsUnique_mixingLaw` is the path-law form of `deFinetti_mixture`.
 public import TauCeti.Probability.DeFinetti.Representation
--- Non-public: used only inside proofs — additivity of `bind`, the canonical conditionally i.i.d.
--- construction that realizes a barycenter as a path law, and the process/path-law bridge.
-import TauCeti.MeasureTheory.Measure.GiryMonad
+-- Non-public: used only inside proofs — injectivity of the mixture, the canonical conditionally
+-- i.i.d. construction that realizes a barycenter as a path law, and the process/path-law bridge.
 import TauCeti.MeasureTheory.Measure.MixtureInjective
 import TauCeti.Probability.Exchangeability.ConditionallyIID.Construct
 import TauCeti.Probability.Exchangeability.PathSpace.Law.Bridge
@@ -28,11 +27,12 @@ barycenter**
 deFinettiBarycenter π = ∫ P^{⊗ℕ} dπ(P)
 ```
 
-is the law on `ℕ → α` of a sequence drawn i.i.d. from a `π`-random probability measure. It is the
-`Measure.bind` of `π` against the countable-power kernel `P ↦ P^{⊗ℕ}`, equivalently the barycenter
-(`Measure.join`) of the law of `P^{⊗ℕ}` under `π`; that second reading is the one that makes the
-representation an *ergodic decomposition*, since every `P^{⊗ℕ}` is an extreme exchangeable law
-(`infinitePi_mem_extremePoints_exchangeable`).
+is the `Measure.bind` of `π` against the countable-power kernel `P ↦ P^{⊗ℕ}`, equivalently the
+barycenter (`Measure.join`) of the pushforward of `π` along `P ↦ P^{⊗ℕ}`; that second reading is
+the one that makes the representation an *ergodic decomposition*, since every `P^{⊗ℕ}` is an
+extreme exchangeable law (`infinitePi_mem_extremePoints_exchangeable`). The definition accepts an
+arbitrary measure `π`; when `π` is a probability measure the barycenter is the law on `ℕ → α` of a
+sequence drawn i.i.d. from a `π`-random probability measure.
 
 The map is affine in the mixing law — `deFinettiBarycenter_add` and Mathlib's `Measure.bind_smul`
 — sends probability measures to exchangeable probability measures, and, by de Finetti's theorem,
@@ -79,11 +79,9 @@ namespace Probability
 
 variable {α : Type*} [MeasurableSpace α]
 
-/-- The **de Finetti barycenter** of a mixing law `π` on `ProbabilityMeasure α`: the law on
-`ℕ → α` of a sequence drawn i.i.d. from a `π`-random probability measure,
-`∫ P^{⊗ℕ} dπ(P)`. -/
--- `@[expose]` is forced by the exported `rfl`-unfold `deFinettiBarycenter_def` below.
-@[expose]
+/-- The **de Finetti barycenter** of a mixing law `π` on `ProbabilityMeasure α`: the measure
+`∫ P^{⊗ℕ} dπ(P)` on `ℕ → α` mixing the countable powers against `π`. For `π` a probability
+measure this is the law of a sequence drawn i.i.d. from a `π`-random probability measure. -/
 def deFinettiBarycenter (π : Measure (ProbabilityMeasure α)) : Measure (ℕ → α) :=
   π.bind fun P => Measure.infinitePi fun _ : ℕ => (P : Measure α)
 
@@ -92,15 +90,17 @@ form in which the surrounding development states the mixture representation, so 
 to `deFinetti_mixture`, `mixedIID_mixingLaw_unique` and `Measure.ext_of_bind_infinitePi_eq`. -/
 theorem deFinettiBarycenter_def (π : Measure (ProbabilityMeasure α)) :
     deFinettiBarycenter π = π.bind fun P => Measure.infinitePi fun _ : ℕ => (P : Measure α) :=
-  rfl
+  (rfl)
 
-/-- The barycenter as the `Measure.join` of the law of `P^{⊗ℕ}` under the mixing law: the mixture
-representation read as a barycenter of path laws rather than of state laws. -/
+/-- The barycenter as the `Measure.join` of the pushforward of the mixing measure along
+`P ↦ P^{⊗ℕ}`: the mixture representation read as a barycenter of measures on `ℕ → α` rather than
+of measures on `α`. For `π` a probability measure this pushforward is the law of `P^{⊗ℕ}` under a
+`π`-random `P`. -/
 theorem deFinettiBarycenter_eq_join_map (π : Measure (ProbabilityMeasure α)) :
     deFinettiBarycenter π =
       (π.map fun P : ProbabilityMeasure α =>
         Measure.infinitePi fun _ : ℕ => (P : Measure α)).join :=
-  rfl
+  (rfl)
 
 /-- Evaluation of a barycenter on a measurable set: the `π`-average of the countable-power
 masses. -/
@@ -125,17 +125,21 @@ instance isProbabilityMeasure_deFinettiBarycenter (π : Measure (ProbabilityMeas
 
 /-- **The barycenter is additive in the mixing law.** -/
 theorem deFinettiBarycenter_add (π₁ π₂ : Measure (ProbabilityMeasure α)) :
-    deFinettiBarycenter (π₁ + π₂) = deFinettiBarycenter π₁ + deFinettiBarycenter π₂ :=
-  TauCeti.MeasureTheory.bind_add π₁ π₂ TauCeti.MeasureTheory.measurable_infinitePi_const
+    deFinettiBarycenter (π₁ + π₂) = deFinettiBarycenter π₁ + deFinettiBarycenter π₂ := by
+  simp only [deFinettiBarycenter_def]
+  rw [← Measure.sum_cond π₁ π₂,
+    Measure.bind_sum _ _ TauCeti.MeasureTheory.measurable_infinitePi_const.aemeasurable,
+    Measure.sum_bool]
+  rfl
 
 /-- **The barycenter is homogeneous in the mixing law.** -/
 theorem deFinettiBarycenter_smul (c : ℝ≥0∞) (π : Measure (ProbabilityMeasure α)) :
     deFinettiBarycenter (c • π) = c • deFinettiBarycenter π :=
   Measure.bind_smul c π _
 
-/-- **The barycenter map is affine.** A convex combination of mixing laws has the corresponding
-convex combination of their barycenters as its own barycenter; taking `a + b = 1` and `π₁`, `π₂`
-probability measures reads this as: mixing the mixing laws mixes the path laws. -/
+/-- **The barycenter map is affine.** A weighted sum of mixing measures has the corresponding
+weighted sum of their barycenters as its own barycenter. For `a + b = 1` and `π₁`, `π₂` probability
+measures this is the convex-combination form: mixing the mixing laws mixes the path laws. -/
 theorem deFinettiBarycenter_smul_add_smul (a b : ℝ≥0∞) (π₁ π₂ : Measure (ProbabilityMeasure α)) :
     deFinettiBarycenter (a • π₁ + b • π₂) =
       a • deFinettiBarycenter π₁ + b • deFinettiBarycenter π₂ := by

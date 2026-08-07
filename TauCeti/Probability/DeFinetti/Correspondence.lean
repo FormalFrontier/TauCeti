@@ -78,8 +78,6 @@ The forward map is `deFinettiBarycenter`; the inverse sends an exchangeable law 
 Injectivity is uniqueness of the mixing law and surjectivity is de Finetti's theorem, so the
 equivalence is exactly the content of `ExchangeableLaw.existsUnique_mixingLaw` in bijective
 form. -/
--- `@[expose]` is forced by the exported `rfl`-unfold `deFinettiEquiv_apply_coe` below.
-@[expose]
 def deFinettiEquiv [StandardBorelSpace α] :
     ProbabilityMeasure (ProbabilityMeasure α) ≃
       {ρ : ProbabilityMeasure (ℕ → α) // ExchangeableLaw (ρ : Measure (ℕ → α))} :=
@@ -100,7 +98,7 @@ theorem deFinettiEquiv_apply_coe [StandardBorelSpace α]
     (π : ProbabilityMeasure (ProbabilityMeasure α)) :
     ((deFinettiEquiv π : ProbabilityMeasure (ℕ → α)) : Measure (ℕ → α)) =
       deFinettiBarycenter (π : Measure (ProbabilityMeasure α)) :=
-  rfl
+  (rfl)
 
 /-- The inverse of the correspondence really is the mixing law: the barycenter of the mixing law
 of an exchangeable law recovers that law. -/

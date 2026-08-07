@@ -23,11 +23,6 @@ although all of their ingredients — `Measure.bind_bind`, `Measure.bind_dirac_e
 They are the shape mixture arguments want: `bind` is how a random measure is integrated against
 its mixing law, so pushing a mixture forward along a coordinate map (a marginal), or rewriting a
 mixture over a pushforward mixing law, are both routine steps.
-
-The file also records `bind_add`, additivity of `Measure.bind` in the mixing measure. Mathlib has
-the `ℝ≥0∞`-homogeneity `Measure.bind_smul` and the `Measure.sum`-indexed `Measure.bind_sum`, but
-not the binary sum; together with `Measure.bind_smul` it makes `bind` an affine operation on
-mixing measures.
 -/
 
 public section
@@ -64,20 +59,6 @@ theorem bind_map {μ : Measure S} {f : S → γ} (hf : AEMeasurable f μ)
     {g : γ → Measure δ} (hg : AEMeasurable g (μ.map f)) : (μ.map f).bind g = μ.bind (g ∘ f) := by
   unfold Measure.bind
   rw [AEMeasurable.map_map_of_aemeasurable hg hf]
-
-/-- **`Measure.bind` is additive in the mixing measure.** Mixing against the sum of two measures
-is the sum of the two mixtures.
-
-Together with Mathlib's `Measure.bind_smul` this says that a fixed measurable kernel acts affinely
-on mixing measures. Mathlib has the `Measure.sum`-indexed `Measure.bind_sum`, of which this is the
-binary case. -/
-theorem bind_add (μ ν : Measure S) {g : S → Measure γ} (hg : Measurable g) :
-    (μ + ν).bind g = μ.bind g + ν.bind g := by
-  unfold Measure.bind
-  rw [Measure.map_add _ _ hg]
-  ext s hs
-  rw [Measure.join_apply hs, Measure.add_apply, Measure.join_apply hs, Measure.join_apply hs,
-    lintegral_add_measure]
 
 end MeasureTheory
 
