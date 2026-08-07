@@ -267,17 +267,20 @@ theorem extend_apply_self (hc : YoungDiagram.IsCorner μ c)
   have := hc.card_pos
   omega
 
+@[simp]
 theorem restrict_extend (hc : YoungDiagram.IsCorner μ c)
     (T : StandardYoungTableau (YoungDiagram.erase μ c)) :
     restrict hc (extend hc T) (extend_apply_self hc T) = T := by
   refine DFunLike.ext _ _ fun d => Fin.ext ?_
   rw [restrict_apply_val, extend_apply_val_of_ne hc T _ (hc.mem_erase_iff.mp d.2).2]
 
+@[simp]
 theorem extend_restrict (hc : YoungDiagram.IsCorner μ c) (T : StandardYoungTableau μ)
     (hT : (T ⟨c, hc.mem⟩).val + 1 = μ.card) : extend hc (restrict hc T hT) = T := by
   refine DFunLike.ext _ _ fun d => Fin.ext ?_
   by_cases h : d.1 = c
-  · rw [extend_apply_val_of_eq hc _ d h, show d = ⟨c, hc.mem⟩ from Subtype.ext h]
+  · have hd : d = ⟨c, hc.mem⟩ := Subtype.ext h
+    rw [extend_apply_val_of_eq hc _ d h, hd]
     omega
   · rw [extend_apply_val_of_ne hc _ d h, restrict_apply_val]
 

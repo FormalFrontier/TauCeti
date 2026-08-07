@@ -11,9 +11,10 @@ public import TauCeti.Combinatorics.Young.HookLength
 
 A *corner* of a Young diagram `μ` is a cell of `μ` with neither the cell to its right nor the cell
 below it in `μ`; equivalently (`TauCeti.YoungDiagram.isCorner_iff_hookLength_eq_one`) a cell of hook
-length `1`.  The corners are exactly the cells whose deletion leaves a Young diagram, so they index
-the ways of building `μ` one cell at a time, and hence the recursions that count standard Young
-tableaux.
+length `1`.  Equivalently, the corners are the maximal cells of `μ`
+(`TauCeti.YoungDiagram.IsCorner.eq_of_le`): they are exactly the cells `c` for which removing `c`
+alone leaves a set of cells that is still a Young diagram.  So they index the ways of building `μ`
+one cell at a time, and hence the recursions that count standard Young tableaux.
 
 Deletion is `TauCeti.YoungDiagram.erase`.  It is defined without any hypothesis on the cell — it
 removes the whole principal upper set of `c`, that is `c` together with every cell weakly below and
@@ -58,7 +59,9 @@ variable {μ : YoungDiagram} {c d : ℕ × ℕ}
 /-! ### Corners -/
 
 /-- A **corner** of a Young diagram: a cell of `μ` with neither the cell to its right nor the cell
-below it in `μ`.  These are exactly the cells whose deletion leaves a Young diagram. -/
+below it in `μ`.  These are exactly the maximal cells of `μ`
+(`TauCeti.YoungDiagram.IsCorner.eq_of_le`), equivalently the cells whose removal on its own leaves a
+set of cells that is still a Young diagram. -/
 def IsCorner (μ : YoungDiagram) (c : ℕ × ℕ) : Prop :=
   c ∈ μ ∧ (c.1, c.2 + 1) ∉ μ ∧ (c.1 + 1, c.2) ∉ μ
 
