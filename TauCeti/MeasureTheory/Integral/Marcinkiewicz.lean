@@ -144,7 +144,7 @@ private theorem lintegral_rpow_le_of_mul_meas_ofReal_lt_le_of_measurable_of_sFin
     have hneg : (1 : ℝ) - p = -(p - 1) := by ring
     -- `f x ^ (p - 1) * f x = f x ^ p`, valid also at the values `0` and `∞`.
     have hsucc : f x ^ (p - 1) * f x = f x ^ p := by
-      conv_rhs => rw [show p = p - 1 + 1 by ring]
+      conv_rhs => rw [← sub_add_cancel p 1]
       rw [ENNReal.rpow_add_of_nonneg _ _ hp1.le zero_le_one, ENNReal.rpow_one]
     rw [lintegral_congr fun t => hGvalt t x, lintegral_mul_const _ (hrpow.indicator hcut),
       lintegral_indicator_ofReal_rpow_Ioi (by linarith) hc (f x), hexp, hneg, mul_assoc, hsucc]
