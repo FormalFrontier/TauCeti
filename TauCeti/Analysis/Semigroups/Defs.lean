@@ -6,7 +6,6 @@ module
 
 public import TauCeti.Analysis.Semigroups.Resolvent.Deriv
 public import TauCeti.Analysis.Semigroups.Resolvent.PowerBounds
-public import TauCeti.Analysis.Semigroups.Resolvent.Unbounded
 public import TauCeti.Analysis.Semigroups.BoundedGenerator
 public import TauCeti.Analysis.Semigroups.Generator
 
@@ -15,7 +14,7 @@ public import TauCeti.Analysis.Semigroups.Generator
 
 This module re-exports the strongly continuous semigroup, generator, orbit-derivative,
 growth-bound, and Laplace-transform resolvent API, the latter including the derivatives of the
-resolvent in the spectral parameter and the resolvent set of an unbounded operator.
+resolvent in the spectral parameter.
 
 ## References
 Ported and adapted (Apache 2.0) from `mrdouglasny/hille-yosida`; references include

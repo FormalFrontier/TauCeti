@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Analysis.Semigroups.Resolvent.Basic
-public import TauCeti.Analysis.Semigroups.Resolvent.Unbounded
+public import TauCeti.Analysis.Normed.Operator.Resolvent.Unbounded
 public import TauCeti.Analysis.Semigroups.Generator.OrbitDerivative
 
 /-!
@@ -15,7 +15,7 @@ This file proves that the Laplace-transform resolvent is also a left inverse of
 `lambda • I - A` on the generator domain. Together with the right-inverse identity from
 `TauCeti/Analysis/Semigroups/Resolvent/Basic.lean` that identifies it as *the* resolvent of the
 generator in the unbounded sense of
-`TauCeti/Analysis/Semigroups/Resolvent/Unbounded.lean`:
+`TauCeti/Analysis/Normed/Operator/Resolvent/Unbounded.lean`:
 `StronglyContinuousSemigroup.generator_resolvent_eq` says
 `LinearPMap.resolvent S.generator lambda = S.resolvent hb lambda hlambda` for `lambda` beyond
 the growth exponent.
@@ -25,10 +25,12 @@ Everything else here is read off that bridge. The resolvent identity
 abstract `LinearPMap.resolvent_sub_resolvent` and `LinearPMap.resolvent_comm` transported along
 it, rather than separate arguments; the identity is recorded both for `resolvent` and for
 `resolventFun`, the resolvent seen as a function of the spectral parameter alone. The bridge
-also transports the Laplace-transform norm estimates to the abstract resolvent, giving the
-Hille--Yosida bounds `‖R(lambda, A)‖ ≤ M / (lambda - omega)` and
-`‖R(lambda, A) ^ n‖ ≤ (M / (lambda - omega)) ^ n`, which are the hypotheses of the generation
-theorem in the direction an existing semigroup already supplies.
+also transports the Laplace-transform norm estimates to the abstract resolvent: the Hille--Yosida
+resolvent bound `‖R(lambda, A)‖ ≤ M / (lambda - omega)`, and the elementary power bound
+`‖R(lambda, A) ^ n‖ ≤ (M / (lambda - omega)) ^ n` that submultiplicativity of the operator norm
+draws from it. The latter is *weaker* than the generation theorem's hypothesis
+`‖R(lambda, A) ^ n‖ ≤ M / (lambda - omega) ^ n` as soon as `M > 1`; the two agree in the
+contraction case `(M, omega) = (1, 0)`, which is where the hypothesis is supplied here.
 
 ## References
 
@@ -189,13 +191,18 @@ theorem norm_generator_resolvent_le (S : StronglyContinuousSemigroup X) [Complet
   rw [S.generator_resolvent_eq hb hlambda]
   exact S.resolvent_norm_le hb lambda hlambda
 
-/-- **Hille--Yosida power bound** for the resolvent of the generator:
-`‖R(lambda, A) ^ n‖ ≤ (M / (lambda - omega)) ^ n`, from submultiplicativity of the operator
-norm. This is the hypothesis `hbound` of the generation theorem, in the direction that the
-existence of `S` already supplies. (The sharp form `‖R(lambda, A) ^ n‖ ≤ M / (lambda - omega) ^ n`
-is a strictly stronger statement — it does not follow from `‖R(lambda, A)‖ ≤ M / (lambda - omega)`
-once `M > 1` — and needs the estimate for `∫₀^∞ tⁿ e^{-λt} S(t) x dt`, which the repository does
-not yet have; the two agree in the contraction case `(M, omega) = (1, 0)`.) -/
+/-- **Power bound** for the resolvent of the generator:
+`‖R(lambda, A) ^ n‖ ≤ (M / (lambda - omega)) ^ n`, the elementary consequence of
+`TauCeti.Semigroups.StronglyContinuousSemigroup.norm_generator_resolvent_le` and
+submultiplicativity of the operator norm.
+
+This is *not* the hypothesis `hbound` of the Hille--Yosida generation theorem, which asks for
+`‖R(lambda, A) ^ n‖ ≤ M / (lambda - omega) ^ n`: that is strictly stronger once `M > 1`, it does
+not follow from `‖R(lambda, A)‖ ≤ M / (lambda - omega)`, and it needs the estimate for
+`∫₀^∞ tⁿ e^{-λt} S(t) x dt`, which the repository does not yet have. The two bounds agree in the
+contraction case `(M, omega) = (1, 0)`, where
+`TauCeti.Semigroups.ContractionSemigroup.norm_generator_resolvent_pow_le` does supply
+`hbound`. -/
 theorem norm_generator_resolvent_pow_le (S : StronglyContinuousSemigroup X) [CompleteSpace X]
     {omega M : ℝ} (hb : S.HasGrowthBound omega M) {lambda : ℝ} (hlambda : omega < lambda)
     (n : ℕ) :
@@ -210,7 +217,7 @@ theorem norm_generator_resolvent_pow_le (S : StronglyContinuousSemigroup X) [Com
 
 /-- Pointwise form of the resolvent identity
 `R(lambda) - R(mu) = (mu - lambda) R(lambda) R(mu)`; the abstract
-`TauCeti.Semigroups.LinearPMap.resolvent_sub_resolvent_apply` read through the bridge. -/
+`TauCeti.LinearPMap.resolvent_sub_resolvent_apply` read through the bridge. -/
 theorem resolvent_sub_resolvent_apply (S : StronglyContinuousSemigroup X)
     {omegaLambda MLambda omegaMu MMu : ℝ} [CompleteSpace X]
     (hbLambda : S.HasGrowthBound omegaLambda MLambda)
@@ -332,9 +339,11 @@ theorem generator_resolvent_eq (S : ContractionSemigroup X) [CompleteSpace X] {l
     S.toStronglyContinuousSemigroup.generator_resolvent_eq S.hasGrowthBound
       (by simpa using hlambda)]
 
-/-- **The Hille--Yosida power bounds in the contraction case**, `(M, omega) = (1, 0)`:
+/-- **The Hille--Yosida power bound in the contraction case**, `(M, omega) = (1, 0)`:
 `‖R(lambda, A) ^ n‖ ≤ (1 / lambda) ^ n` for `lambda > 0`; the specialization of
-`TauCeti.Semigroups.StronglyContinuousSemigroup.norm_generator_resolvent_pow_le`. -/
+`TauCeti.Semigroups.StronglyContinuousSemigroup.norm_generator_resolvent_pow_le`. Here `M = 1`
+makes `(1 / lambda) ^ n` and `1 / lambda ^ n` the same number, so this is the generation
+theorem's hypothesis `hbound` for contraction semigroups. -/
 theorem norm_generator_resolvent_pow_le (S : ContractionSemigroup X) [CompleteSpace X]
     {lambda : ℝ} (hlambda : 0 < lambda) (n : ℕ) :
     ‖LinearPMap.resolvent S.toStronglyContinuousSemigroup.generator lambda ^ n‖

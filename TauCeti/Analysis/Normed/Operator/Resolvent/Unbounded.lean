@@ -19,11 +19,11 @@ of that algebra. The infinitesimal generator of a C₀-semigroup is not such an 
 an unbounded operator, carried here by `LinearPMap` — so it needs its own resolvent notion.
 
 This file supplies it. For `A : X →ₗ.[ℝ] X` and `lambda : ℝ` we say that a *bounded* operator
-`R : X →L[ℝ] X` is a resolvent of `A` at `lambda` (`TauCeti.Semigroups.LinearPMap.IsResolventAt`)
+`R : X →L[ℝ] X` is a resolvent of `A` at `lambda` (`TauCeti.LinearPMap.IsResolventAt`)
 when `R` takes values in `D(A)` and is a two-sided inverse of `lambda • I - A : D(A) → X`. Such
 an `R` is unique when it exists, so the *resolvent set*
-`TauCeti.Semigroups.LinearPMap.resolventSet` and the *resolvent*
-`TauCeti.Semigroups.LinearPMap.resolvent` are well defined, and the resolvent obeys the usual
+`TauCeti.LinearPMap.resolventSet` and the *resolvent*
+`TauCeti.LinearPMap.resolvent` are well defined, and the resolvent obeys the usual
 identities.
 
 Nothing here mentions semigroups: the theory is stated for an arbitrary `A : X →ₗ.[ℝ] X`, which
@@ -46,22 +46,22 @@ Two bridges keep this from being a parallel universe.
 
 ## Main definitions
 
-* `TauCeti.Semigroups.LinearPMap.IsResolventAt`: `R` inverts `lambda • I - A`.
-* `TauCeti.Semigroups.LinearPMap.resolventSet`: the set of `lambda` at which such an `R` exists.
-* `TauCeti.Semigroups.LinearPMap.resolvent`: that `R`, chosen by `Classical.choose`.
+* `TauCeti.LinearPMap.IsResolventAt`: `R` inverts `lambda • I - A`.
+* `TauCeti.LinearPMap.resolventSet`: the set of `lambda` at which such an `R` exists.
+* `TauCeti.LinearPMap.resolvent`: that `R`, chosen by `Classical.choose`.
 
 ## Main results
 
-* `TauCeti.Semigroups.LinearPMap.IsResolventAt.unique`: the inverse is unique, so the resolvent
+* `TauCeti.LinearPMap.IsResolventAt.unique`: the inverse is unique, so the resolvent
   is well defined.
-* `TauCeti.Semigroups.LinearPMap.resolvent_sub_resolvent`: the resolvent identity
+* `TauCeti.LinearPMap.resolvent_sub_resolvent`: the resolvent identity
   `R(lambda) - R(mu) = (mu - lambda) R(lambda) R(mu)`, and
-  `TauCeti.Semigroups.LinearPMap.resolvent_comm`.
-* `TauCeti.Semigroups.LinearPMap.mem_resolventSet_of_norm_mul_lt_one` and
-  `TauCeti.Semigroups.LinearPMap.isOpen_resolventSet`: the Neumann-series perturbation of a
+  `TauCeti.LinearPMap.resolvent_comm`.
+* `TauCeti.LinearPMap.mem_resolventSet_of_norm_mul_lt_one` and
+  `TauCeti.LinearPMap.isOpen_resolventSet`: the Neumann-series perturbation of a
   resolvent point, and the openness of the resolvent set it gives.
-* `TauCeti.Semigroups.LinearPMap.mem_resolventSet_toPMap_top_iff` and
-  `TauCeti.Semigroups.LinearPMap.resolvent_toPMap_top`: the bounded bridge.
+* `TauCeti.LinearPMap.mem_resolventSet_toPMap_top_iff` and
+  `TauCeti.LinearPMap.resolvent_toPMap_top`: the bounded bridge.
 
 ## References
 
@@ -74,7 +74,7 @@ public section
 
 noncomputable section
 
-namespace TauCeti.Semigroups
+namespace TauCeti
 
 variable {X : Type*} [NormedAddCommGroup X] [NormedSpace ℝ X]
 
@@ -92,7 +92,7 @@ For an unbounded `A` this replaces the Banach-algebra condition
 `IsUnit (algebraMap ℝ (X →L[ℝ] X) lambda - A)` behind Mathlib's `resolventSet`, which cannot be
 formed because `A` is not an element of `X →L[ℝ] X`. The two conditions agree when `A` is a
 bounded operator read as an everywhere defined `LinearPMap`; see
-`TauCeti.Semigroups.LinearPMap.mem_resolventSet_toPMap_top_iff`. -/
+`TauCeti.LinearPMap.mem_resolventSet_toPMap_top_iff`. -/
 structure IsResolventAt (A : X →ₗ.[ℝ] X) (lambda : ℝ) (R : X →L[ℝ] X) : Prop where
   /-- The inverse takes its values in the domain of `A`. -/
   mem_domain (y : X) : R y ∈ A.domain
@@ -146,7 +146,7 @@ theorem IsResolventAt.mem_resolventSet (h : IsResolventAt A lambda R) :
   ⟨R, h⟩
 
 /-- An inverse of `lambda • I - A` exists conditionally on `lambda` lying in the resolvent set;
-this is what lets `TauCeti.Semigroups.LinearPMap.resolvent` be defined by `Classical.choose`
+this is what lets `TauCeti.LinearPMap.resolvent` be defined by `Classical.choose`
 without a decidability side-condition. -/
 private theorem exists_isResolventAt_of_mem (A : X →ₗ.[ℝ] X) (lambda : ℝ) :
     ∃ R : X →L[ℝ] X, lambda ∈ resolventSet A → IsResolventAt A lambda R := by
@@ -159,8 +159,8 @@ operator on `X`.
 
 Off the resolvent set the value is an unspecified junk value; every lemma below carries the
 hypothesis `lambda ∈ resolventSet A`. Uniqueness of the inverse
-(`TauCeti.Semigroups.LinearPMap.IsResolventAt.unique`) makes the choice immaterial on the
-resolvent set: `TauCeti.Semigroups.LinearPMap.resolvent_eq_of_isResolventAt` identifies it with
+(`TauCeti.LinearPMap.IsResolventAt.unique`) makes the choice immaterial on the
+resolvent set: `TauCeti.LinearPMap.resolvent_eq_of_isResolventAt` identifies it with
 any inverse one can exhibit. -/
 noncomputable def resolvent (A : X →ₗ.[ℝ] X) (lambda : ℝ) : X →L[ℝ] X :=
   (exists_isResolventAt_of_mem A lambda).choose
@@ -406,6 +406,6 @@ end Bounded
 
 end LinearPMap
 
-end TauCeti.Semigroups
+end TauCeti
 
 end
