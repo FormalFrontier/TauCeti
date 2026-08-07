@@ -38,6 +38,11 @@ variable {A : Type*} [NormedRing A] [NormedAlgebra ℝ A] [CompleteSpace A]
 private noncomputable def oneSubExpNegDivSelfIntegrand (a : A) (n : ℕ) : C(ℝ, A) :=
   ⟨fun t ↦ (n.factorial⁻¹ : ℝ) • ((t : ℝ) • (-a)) ^ n, by fun_prop⟩
 
+omit [CompleteSpace A] in
+@[simp]
+private theorem oneSubExpNegDivSelfIntegrand_apply (a : A) (n : ℕ) (t : ℝ) :
+    oneSubExpNegDivSelfIntegrand a n t = (n.factorial⁻¹ : ℝ) • (t • (-a)) ^ n := rfl
+
 omit [NormedAlgebra ℝ A] [CompleteSpace A] in
 private theorem norm_pow_le_max_one (x : A) (n : ℕ) :
     ‖x ^ n‖ ≤ max ‖(1 : A)‖ ‖x‖ ^ (n + 1) := by
@@ -78,12 +83,12 @@ private theorem summable_oneSubExpNegDivSelfIntegrand_norm (a : A) :
   refine (ContinuousMap.norm_le _ (by positivity)).2 ?_
   intro t
   rcases t with ⟨t, ht⟩
-  change ‖(n.factorial⁻¹ : ℝ) • (t • (-a)) ^ n‖ ≤ _
-  rw [norm_smul]
-  change t ∈ Set.uIcc 0 1 at ht
-  simp only [Set.mem_uIcc] at ht
+  simp only [ContinuousMap.restrict_apply]
+  rw [oneSubExpNegDivSelfIntegrand_apply, norm_smul]
+  have ht_uIcc : t ∈ Set.uIcc 0 1 := by simpa using ht
+  simp only [Set.mem_uIcc] at ht_uIcc
   have ht_norm : ‖t‖ ≤ 1 := by
-    rcases ht with ht | ht
+    rcases ht_uIcc with ht | ht
     · rw [Real.norm_eq_abs]
       exact abs_le.mpr ⟨by linarith [ht.1], ht.2⟩
     · linarith [ht.1, ht.2]
@@ -104,7 +109,7 @@ private theorem summable_oneSubExpNegDivSelfIntegrand_norm (a : A) :
 private theorem integral_oneSubExpNegDivSelfIntegrand (a : A) (n : ℕ) :
     ∫ t in (0 : ℝ)..1, oneSubExpNegDivSelfIntegrand a n t =
       (((n + 1).factorial)⁻¹ : ℝ) • (-a) ^ n := by
-  change (∫ t in (0 : ℝ)..1, (n.factorial⁻¹ : ℝ) • (t • (-a)) ^ n) = _
+  simp only [oneSubExpNegDivSelfIntegrand_apply]
   simp_rw [smul_pow, smul_smul]
   rw [intervalIntegral.integral_smul_const,
     intervalIntegral.integral_const_mul, integral_pow]
@@ -130,4 +135,4 @@ theorem oneSubExpNegDivSelf_eq_integral_exp (a : A) :
       apply intervalIntegral.integral_congr
       intro t _ht
       rw [exp_eq_tsum ℝ]
-      rfl
+      simp only [oneSubExpNegDivSelfIntegrand_apply]
