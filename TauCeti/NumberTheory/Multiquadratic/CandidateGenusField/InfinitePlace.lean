@@ -12,13 +12,12 @@ public import TauCeti.NumberTheory.NumberField.InfinitePlace
 
 For squarefree `d`, `candidateGenusField hd` is a finite extension of `ℚ` inside `ℂ`, hence a number
 field. When `d < 0` it contains a square root of `d < 0`
-(`exists_mem_candidateGenusField_sq_eq`), so it is totally complex — a special case of
-`TauCeti.NumberField.isTotallyComplex_of_sq_ratCast_of_neg`.
+(`exists_mem_candidateGenusField_sq_eq`), so no embedding into `ℂ` is real and it is totally
+complex — a special case of `TauCeti.NumberField.isTotallyComplex_of_sq_ratCast_of_neg`.
 
-Every subfield of a totally complex field is again totally complex, so in particular the embedded
-base `ℚ(√d)` is totally complex; a totally complex base has no real infinite places, so the
-candidate genus field is unramified at every infinite place over its base. This settles the
-archimedean half of the genus-field identification in the imaginary case.
+Total complexity is the archimedean input to the genus-field identification in the imaginary case:
+a totally complex field has no real infinite places. Deducing infinite-place unramifiedness of the
+candidate genus field over its base `ℚ(√d)` is later work.
 
 ## Main results
 
