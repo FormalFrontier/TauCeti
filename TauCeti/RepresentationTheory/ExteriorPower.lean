@@ -166,7 +166,7 @@ map induced by `e.symm`; that is what makes `exteriorPowerLinearEquiv_symm_toLin
 `exteriorPower_symm`, hold. Mathlib builds `TensorProduct.congr` the same way. -/
 private noncomputable def exteriorPowerLinearEquiv (e : ρ.Equiv σ) (d : ℕ) :
     (⋀[R]^d M) ≃ₗ[R] (⋀[R]^d N) :=
-  LinearEquiv.ofLinear
+  LinearEquiv.ofLinearMap
     (_root_.exteriorPower.map d e.toLinearMap)
     (_root_.exteriorPower.map d e.symm.toLinearMap)
     (by
@@ -179,12 +179,12 @@ private noncomputable def exteriorPowerLinearEquiv (e : ρ.Equiv σ) (d : ℕ) :
 private theorem exteriorPowerLinearEquiv_toLinearMap (e : ρ.Equiv σ) (d : ℕ) :
     (exteriorPowerLinearEquiv e d).toLinearMap =
       _root_.exteriorPower.map d e.toLinearMap :=
-  LinearEquiv.ofLinear_toLinearMap ..
+  rfl
 
 private theorem exteriorPowerLinearEquiv_symm_toLinearMap (e : ρ.Equiv σ) (d : ℕ) :
     (exteriorPowerLinearEquiv e d).symm.toLinearMap =
       _root_.exteriorPower.map d e.symm.toLinearMap :=
-  LinearEquiv.ofLinear_symm_toLinearMap ..
+  rfl
 
 /-- An equivalence of representations induces an equivalence of every exterior power. -/
 noncomputable def exteriorPower (e : ρ.Equiv σ) (d : ℕ) :

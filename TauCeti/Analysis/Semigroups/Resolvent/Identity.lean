@@ -127,8 +127,8 @@ domain: `R(lambda) (lambda x - A x) = x`. -/
     intro t ht
     simpa only [g, g', Ax] using S.hasDerivAt_exp_neg_smul_realOperator lambda x ht
   have hg'_int : IntegrableOn g' (Set.Ioi 0) := by
-    have hAx := S.integrable_resolvent_integrand hb lambda hlambda Ax
-    have hx := S.integrable_resolvent_integrand hb lambda hlambda (lambda • (x : X))
+    have hAx := S.integrableOn_resolvent_integrand hb lambda hlambda Ax
+    have hx := S.integrableOn_resolvent_integrand hb lambda hlambda (lambda • (x : X))
     convert hAx.sub hx using 1
     ext t
     simp only [g', Pi.sub_apply, map_smul, smul_sub, smul_smul]
@@ -267,14 +267,6 @@ theorem resolvent_comm (S : StronglyContinuousSemigroup X) {omegaLambda MLambda 
 end StronglyContinuousSemigroup
 
 namespace ContractionSemigroup
-
-private theorem resolvent_eq_stronglyContinuousSemigroup_resolvent
-    (S : ContractionSemigroup X) [CompleteSpace X] (lambda : ℝ) (hlambda : 0 < lambda) :
-    S.resolvent lambda hlambda =
-      S.toStronglyContinuousSemigroup.resolvent S.hasGrowthBound lambda
-        (by simpa using hlambda) := by
-  ext x
-  rw [S.resolvent_apply, S.toStronglyContinuousSemigroup.resolvent_apply]
 
 /-- The contraction resolvent is a left inverse to `lambda • I - A` on the generator domain. -/
 @[simp] theorem resolventLeftInv (S : ContractionSemigroup X) [CompleteSpace X]

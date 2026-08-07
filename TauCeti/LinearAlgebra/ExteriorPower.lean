@@ -166,7 +166,7 @@ theorem map_finrank_eq_det_smul [Nontrivial R] [Module.Free R M] [Module.Finite 
 identified with the scalars by sending an exterior product of vectors to their determinant against
 the basis. -/
 noncomputable def topEquiv (b : Module.Basis (Fin n) R M) : ⋀[R]^n M ≃ₗ[R] R :=
-  LinearEquiv.ofLinear (alternatingMapLinearEquiv b.det)
+  LinearEquiv.ofLinearMap (alternatingMapLinearEquiv b.det)
     (LinearMap.toSpanSingleton R (⋀[R]^n M) (ιMulti R n ⇑b))
     (by
       ext
