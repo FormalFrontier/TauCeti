@@ -48,8 +48,9 @@ point, in producing the two endpoint limits.
 This construction does not need injectivity. When `f` is injective on the disc, a companion
 theorem also places the endpoints on the image frontier and shows that only the two endpoints can
 be identified. Interior injectivity uses only the injectivity of `f`, Mathlib's
-`Complex.injOn_circleMap_of_abs_sub_le`, and the fact that `b - a < 2π`, fed to the
-reparametrisation lemmas `TauCeti.injOn_Ioo_of_eq_lineMap`, `TauCeti.mapsTo_Ioo_of_eq_lineMap` and
+`Complex.injOn_circleMap_of_abs_sub_le`, the fact that `b - a < 2π`, and the injectivity of
+`AffineMap.lineMap a b`; the last step, that a curve injective on the interior and avoiding both
+endpoint values there can repeat only between its endpoints, is
 `TauCeti.eq_or_eq_endpoints_of_notMem_of_forall_mem_Ioo` of the same file.
 
 ## Main result
@@ -267,24 +268,30 @@ theorem exists_path_range_eq_closure_image_ball_inter_sphere_of_injOn
       γ t = f (circleMap ζ ρ (AffineMap.lineMap a b (t : ℝ))) := by
     simpa only [a, b, φ] using hγformula
   -- The angular composite is injective, `circleMap` being injective on an arc shorter than a full
-  -- turn; the reparametrisation lemmas then carry that to the path.
+  -- turn; the affine parametrisation then carries that to the path.
   have hginj : InjOn (fun θ => f (circleMap ζ ρ θ)) (Ioo a b) := fun x hx y hy hxy =>
     injOn_circleMap_of_abs_sub_le (c := ζ) hρ.ne'
       (by rw [abs_sub_comm, abs_of_pos (sub_pos.mpr hab)]; exact hab2π.le)
       (by rw [uIoc_of_le hab.le]; exact ⟨hx.1, hx.2.le⟩)
       (by rw [uIoc_of_le hab.le]; exact ⟨hy.1, hy.2.le⟩)
       (hinj (hmaps hx) (hmaps hy) hxy)
-  have hγinj : InjOn γ (Ioo (0 : unitInterval) 1) :=
-    injOn_Ioo_of_eq_lineMap (g := fun θ => f (circleMap ζ ρ θ)) hab hginj hγformula'
+  have hline : ∀ t ∈ Ioo (0 : unitInterval) 1,
+      AffineMap.lineMap a b (t : ℝ) ∈ Ioo a b := fun t ht => by
+    rw [← openSegment_eq_Ioo hab]
+    exact lineMap_mem_openSegment ℝ a b (by simpa using ht)
+  have hγinj : InjOn γ (Ioo (0 : unitInterval) 1) := fun x hx y hy hxy => by
+    rw [hγformula' x hx, hγformula' y hy] at hxy
+    exact Subtype.ext (AffineMap.lineMap_injective ℝ hab.ne
+      (hginj (hline x hx) (hline y hy) hxy))
   have hγzero : γ 0 ∈ frontier (f '' ball c r) := by
     simpa only [Path.source] using hufrontier
   have hγone : γ 1 ∈ frontier (f '' ball c r) := by
     simpa only [Path.target] using hvfrontier
   have himageOpen : IsOpen (f '' ball c r) :=
     isOpen_image_of_differentiableOn_of_injOn isOpen_ball hf hinj
-  have hγmem : ∀ t ∈ Ioo (0 : unitInterval) 1, γ t ∈ f '' ball c r :=
-    mapsTo_Ioo_of_eq_lineMap (g := fun θ => f (circleMap ζ ρ θ)) hab
-      (fun θ hθ => ⟨circleMap ζ ρ θ, hmaps hθ, rfl⟩) hγformula'
+  have hγmem : ∀ t ∈ Ioo (0 : unitInterval) 1, γ t ∈ f '' ball c r := fun t ht => by
+    rw [hγformula' t ht]
+    exact ⟨circleMap ζ ρ _, hmaps (hline t ht), rfl⟩
   have hγsimple := eq_or_eq_endpoints_of_notMem_of_forall_mem_Ioo
     (himageOpen.frontier_eq ▸ hγzero).2 (himageOpen.frontier_eq ▸ hγone).2 hγmem hγinj
   exact ⟨u, v, γ, hγrange, hu, hv, hufrontier, hvfrontier, hγsimple, hγformula⟩
