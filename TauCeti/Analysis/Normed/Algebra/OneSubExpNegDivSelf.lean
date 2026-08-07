@@ -10,8 +10,9 @@ public import Mathlib.Analysis.Normed.Algebra.Exponential
 # The quotient `(1 - exp (-a)) / a`
 
 This file packages the power series representing `(1 - exp (-a)) / a` without requiring `a` to be
-invertible. In a complete normed algebra over an `RCLike` field the series is summable at every
-point. It is the analytic factor in the differential of a Lie-group exponential map.
+invertible. In a complete normed algebra over a normed characteristic-zero field the series is
+summable at every point. It is the analytic factor in the differential of a Lie-group exponential
+map.
 
 ## Main results
 
@@ -35,38 +36,53 @@ open NormedSpace
 
 noncomputable section
 
-variable {𝕂 A : Type*} [RCLike 𝕂] [NormedRing A] [NormedAlgebra 𝕂 A] [CompleteSpace A]
+variable {𝕂 A : Type*} [NontriviallyNormedField 𝕂] [CharZero 𝕂] [ContinuousSMul ℚ 𝕂]
+  [NormedRing A] [NormedAlgebra 𝕂 A] [CompleteSpace A]
 
 /-- The value of `(1 - exp (-a)) / a` with its removable singularity filled in, defined by a power
 series. The series is summable everywhere when `A` is complete. -/
-noncomputable def oneSubExpNegDivSelf (𝕂 : Type*) [RCLike 𝕂] {A : Type*} [NormedRing A]
-    [NormedAlgebra 𝕂 A] (a : A) : A :=
-  ∑' n : ℕ, ((n + 1).factorial⁻¹ : 𝕂) • (-a) ^ n
+noncomputable def oneSubExpNegDivSelf (𝕂 : Type*) [NontriviallyNormedField 𝕂]
+    {A : Type*} [NormedRing A] [NormedAlgebra 𝕂 A] (a : A) : A :=
+  FormalMultilinearSeries.ofScalarsSum
+    (E := A) (fun n ↦ ((n + 1).factorial⁻¹ : 𝕂)) (-a)
 
-omit [CompleteSpace A] in
+omit [CharZero 𝕂] [ContinuousSMul ℚ 𝕂] [CompleteSpace A] in
 /-- The defining series for `oneSubExpNegDivSelf`. -/
 theorem oneSubExpNegDivSelf_eq_tsum (a : A) :
     oneSubExpNegDivSelf 𝕂 a = ∑' n : ℕ, (((n + 1).factorial)⁻¹ : 𝕂) • (-a) ^ n := by
-  rfl
+  exact FormalMultilinearSeries.ofScalars_sum_eq _ _
 
 /-- The series defining `oneSubExpNegDivSelf` is summable in a complete normed algebra. -/
 theorem summable_oneSubExpNegDivSelf (a : A) :
     Summable fun n : ℕ ↦ ((n + 1).factorial⁻¹ : 𝕂) • (-a) ^ n := by
-  refine .of_norm_bounded_eventually (Real.summable_pow_div_factorial ‖-a‖) ?_
-  filter_upwards [Filter.eventually_cofinite_ne 0] with n hn
-  rw [norm_smul, mul_comm, norm_inv, RCLike.norm_natCast, ← div_eq_mul_inv]
-  gcongr
-  · exact norm_pow_le' _ (pos_iff_ne_zero.mpr hn)
-  · exact n.le_succ
+  let c : ℕ → 𝕂 := fun n ↦ ((n + 1).factorial⁻¹ : 𝕂)
+  have hc : (FormalMultilinearSeries.ofScalars A c).radius = ⊤ := by
+    apply FormalMultilinearSeries.ofScalars_radius_eq_top_of_tendsto A c
+    · exact Filter.Eventually.of_forall fun n ↦ inv_ne_zero (Nat.cast_ne_zero.mpr
+        (Nat.factorial_ne_zero (n + 1)))
+    · have hratio :
+          (fun n : ℕ ↦ ‖c n.succ‖ / ‖c n‖) =
+            fun n ↦ ‖(((n + 2 : ℕ) : 𝕂))⁻¹‖ := by
+        funext n
+        dsimp [c]
+        rw [← norm_div]
+        congr 1
+        rw [show n.succ + 1 = (n + 1) + 1 by omega, Nat.factorial_succ, Nat.cast_mul]
+        field_simp [Nat.factorial_ne_zero]
+      rw [hratio]
+      simpa [Function.comp_def] using
+        (tendsto_inv_atTop_nhds_zero_nat (𝕜 := 𝕂)).norm.comp
+          (Filter.tendsto_add_atTop_nat 2)
+  rw [← FormalMultilinearSeries.ofScalars_apply_eq'
+    (c := c) (-a)]
+  exact (FormalMultilinearSeries.ofScalars A c).summable
+    (hc.symm ▸ edist_lt_top (-a) 0)
 
-omit [CompleteSpace A] in
+omit [CharZero 𝕂] [ContinuousSMul ℚ 𝕂] [CompleteSpace A] in
 /-- The quotient with its removable singularity filled in takes the value `1` at zero. -/
 @[simp]
 theorem oneSubExpNegDivSelf_zero : oneSubExpNegDivSelf 𝕂 (0 : A) = 1 := by
-  rw [oneSubExpNegDivSelf_eq_tsum, tsum_eq_single 0]
-  · simp
-  · intro n hn
-    simp [hn]
+  simp [oneSubExpNegDivSelf]
 
 /-- Multiplying the filled-in quotient on the left by its argument recovers its numerator. -/
 @[simp]
@@ -83,7 +99,7 @@ theorem mul_oneSubExpNegDivSelf (a : A) :
   rw [hmul]
   noncomm_ring
 
-omit [CompleteSpace A] in
+omit [CharZero 𝕂] [ContinuousSMul ℚ 𝕂] [CompleteSpace A] in
 /-- The filled-in quotient commutes with its argument. -/
 theorem commute_oneSubExpNegDivSelf (a : A) : Commute a (oneSubExpNegDivSelf 𝕂 a) := by
   rw [oneSubExpNegDivSelf_eq_tsum]
