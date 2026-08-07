@@ -98,11 +98,8 @@ exponential rewritten as concrete conjugation. -/
 theorem banachDexpFactor_continuousCommutator_apply (x y : R) :
     banachDexpFactor x (continuousCommutator x y) =
       y - exp (-x) * y * exp x := by
-  have hneg : -continuousCommutator x = continuousCommutator (-x) :=
-    (map_neg continuousCommutator x).symm
-  have h := congrArg (fun f : R →L[ℝ] R ↦ f y)
-    (banachDexpFactor_mul_continuousCommutator x)
-  simpa only [mul_apply_eq_comp, one_apply_eq_self, sub_apply, hneg,
-    exp_continuousCommutator_apply, neg_neg] using h
+  rw [← mul_apply_eq_comp,
+    ← (commute_continuousCommutator_banachDexpFactor x).eq, mul_apply_eq_comp]
+  exact continuousCommutator_banachDexpFactor_apply x y
 
 end TauCeti.Lie
