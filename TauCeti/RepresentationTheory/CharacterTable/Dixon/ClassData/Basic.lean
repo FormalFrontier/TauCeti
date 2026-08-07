@@ -64,9 +64,10 @@ carries the same content and is what the class-multiplication matrices are index
 Dixon, *High speed computation of group characters*, Numer. Math. 10 (1967) 446-450.
 -/
 
--- Everything here exists to be run: a downstream module that evaluates class data for a concrete
--- group needs these bodies to reduce in the kernel, so the whole file is `@[expose]`d.
-@[expose] public section
+-- The definitions carrying the computation are individually `@[expose]`d below: a downstream
+-- module that evaluates class data for a concrete group needs exactly those bodies to reduce in
+-- the kernel. The theorems and the `ConjClasses`-indexed API stay opaque.
+public section
 
 namespace TauCeti
 
@@ -106,7 +107,7 @@ keep an element exactly when it is not conjugate to one already kept.
 
 The hypothesis, rather than `Finset.univ.toList`, is what keeps this computable: `Finset.toList`
 is noncomputable, whereas a concrete finite group comes with a concrete enumeration. -/
-def ofList (l : List G) (hl : ∀ g : G, g ∈ l) : ClassData G where
+@[expose] def ofList (l : List G) (hl : ∀ g : G, g ∈ l) : ClassData G where
   reps := l.pwFilter fun x y => ¬ IsConj x y
   pairwise_not_isConj := List.pairwise_pwFilter _
   exists_isConj g := by
@@ -130,10 +131,10 @@ noncomputable instance : Inhabited (ClassData G) :=
 variable (d : ClassData G)
 
 /-- The number of conjugacy classes of `G`, as numbered by `d`. -/
-def numClasses : ℕ := d.reps.length
+@[expose] def numClasses : ℕ := d.reps.length
 
 /-- The chosen representative of the `i`-th conjugacy class. -/
-def rep (i : Fin d.numClasses) : G := d.reps[(i : ℕ)]
+@[expose] def rep (i : Fin d.numClasses) : G := d.reps[(i : ℕ)]
 
 /-- The `i`-th conjugacy class, as an element of `ConjClasses G`. -/
 def classOf (i : Fin d.numClasses) : ConjClasses G := ConjClasses.mk (d.rep i)
@@ -159,7 +160,7 @@ theorem findIdx_lt (g : G) : (d.reps.findIdx fun x => IsConj x g) < d.numClasses
 
 /-- The number of the conjugacy class of `g`, found by searching `d.reps` for a representative
 conjugate to `g`. -/
-def index (g : G) : Fin d.numClasses :=
+@[expose] def index (g : G) : Fin d.numClasses :=
   ⟨d.reps.findIdx fun x => IsConj x g, d.findIdx_lt g⟩
 
 /-- The representative found by `TauCeti.ClassData.index` is conjugate to `g`. -/
@@ -228,7 +229,7 @@ theorem nodup_reps : d.reps.Nodup := by
 section Classes
 
 /-- The `i`-th conjugacy class, as a `Finset` of `G`. -/
-def classFinset (i : Fin d.numClasses) : Finset G := {g | d.index g = i}
+@[expose] def classFinset (i : Fin d.numClasses) : Finset G := {g | d.index g = i}
 
 @[simp]
 theorem mem_classFinset {i : Fin d.numClasses} {g : G} :
@@ -283,7 +284,7 @@ where `gₖ` is the `k`-th representative.
 
 `TauCeti.ClassData.structureConstant_eq` identifies this with `TauCeti.structureConstant`, which
 counts the factorizations `x * y = gₖ` themselves. -/
-def structureConstant (i j k : Fin d.numClasses) : ℕ :=
+@[expose] def structureConstant (i j k : Fin d.numClasses) : ℕ :=
   ((d.classFinset i).filter fun x => d.index (x⁻¹ * d.rep k) = j).card
 
 /-- **The computed structure constants are the structure constants**: recording a factorization by
@@ -343,7 +344,7 @@ theorem classMultMatrix_eq_submatrix (i : Fin d.numClasses) :
 /-- The structure constants of `d`, tabulated: the `k`-th entry of the `j`-th entry of the `i`-th
 entry is `aᵢⱼₖ`. This nested list is the whole input to the Dixon--Schneider algorithm for `G`,
 and, unlike the matrices it assembles, it can be compared with a literal by the kernel. -/
-def structureConstantTable : List (List (List ℕ)) :=
+@[expose] def structureConstantTable : List (List (List ℕ)) :=
   (List.finRange d.numClasses).map fun i =>
     (List.finRange d.numClasses).map fun j =>
       (List.finRange d.numClasses).map fun k => d.structureConstant i j k
