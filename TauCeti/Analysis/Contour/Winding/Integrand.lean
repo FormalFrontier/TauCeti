@@ -53,7 +53,7 @@ theorem realWindingIntegrand_mul_mul {c : ℂ} (hc : c ≠ 0) (z v : ℂ) :
 
 /-- Negating the velocity while keeping the position fixed negates the real winding integrand:
 it is the imaginary part of `z⁻¹ * (-v) = -(z⁻¹ * v)`. -/
-@[grind] theorem realWindingIntegrand_neg_right (z v : ℂ) :
+theorem realWindingIntegrand_neg_right (z v : ℂ) :
     realWindingIntegrand z (-v) = -realWindingIntegrand z v := by
   simp only [realWindingIntegrand_eq_div, Complex.neg_im, Complex.neg_re]; ring
 
