@@ -324,6 +324,36 @@ theorem integral_deriv_div_eq_log_neg_of_im_nonpos {g h : ℝ → ℂ} {a b : �
     _ = Complex.log (-(h b)) - Complex.log (-(h a)) := h_ftc
     _ = Complex.log (-(g b)) - Complex.log (-(g a)) := by rw [heq_a, heq_b]
 
+
+/-- **The comparison logarithmic FTC on the slit plane**: for a comparison function `h`
+slit-plane-valued on the closed interval, the logarithmic integral of `g` evaluates to
+the difference of endpoint logarithms. -/
+theorem integral_deriv_div_eq_log_of_slitPlane {g h : ℝ → ℂ} {a b : ℝ} (hab : a ≤ b)
+    (hh_cont : ContinuousOn h (Set.Icc a b))
+    (hh_diff : ∀ t ∈ Set.Ioo a b, DifferentiableAt ℝ h t)
+    (hh_deriv_cont : ContinuousOn (deriv h) (Set.Icc a b))
+    (hh_slit : ∀ t ∈ Set.Icc a b, h t ∈ Complex.slitPlane)
+    (heq : ∀ t ∈ Set.Ioo a b, g t = h t ∧ deriv g t = deriv h t)
+    (heq_a : g a = h a) (heq_b : g b = h b) :
+    IntervalIntegrable (fun t ↦ deriv g t / g t) volume a b ∧
+    ∫ t in a..b, deriv g t / g t = Complex.log (g b) - Complex.log (g a) := by
+  have hh_ne : ∀ t ∈ Set.Icc a b, h t ≠ 0 := fun t ht ↦
+    Complex.slitPlane_ne_zero (hh_slit t ht)
+  have hh_log_cont : ContinuousOn (fun t ↦ Complex.log (h t)) (Set.Icc a b) := fun t ht ↦
+    (continuousAt_clog (hh_slit t ht)).comp_continuousWithinAt (hh_cont t ht)
+  have hint_h : IntervalIntegrable (fun t ↦ deriv h t / h t) volume a b :=
+    ((hh_deriv_cont.div hh_cont hh_ne).mono
+      (Set.uIcc_of_le hab ▸ Set.Subset.rfl)).intervalIntegrable
+  obtain ⟨h_congr, hint_g⟩ :=
+    aeEq_and_intervalIntegrable_of_eqOn_Ioo hab heq hint_h
+  have h_ftc := intervalIntegral.integral_eq_sub_of_hasDerivAt_of_le hab hh_log_cont
+    (fun t ht ↦ (hh_diff t ht).hasDerivAt.clog_real (hh_slit t ⟨ht.1.le, ht.2.le⟩)) hint_h
+  refine ⟨hint_g, ?_⟩
+  calc ∫ t in a..b, deriv g t / g t
+      = ∫ t in a..b, deriv h t / h t := intervalIntegral.integral_congr_ae h_congr
+    _ = Complex.log (h b) - Complex.log (h a) := h_ftc
+    _ = Complex.log (g b) - Complex.log (g a) := by rw [heq_a, heq_b]
+
 end BoundaryTolerant
 
 
