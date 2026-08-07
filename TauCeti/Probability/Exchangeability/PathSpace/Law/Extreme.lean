@@ -18,7 +18,6 @@ import TauCeti.Probability.Exchangeability.ConditionallyIID.Construct
 import TauCeti.MeasureTheory.Measure.ProbabilityMeasureExt
 -- Non-public: uniqueness of the mixing law from its mixture of infinite powers.
 import TauCeti.MeasureTheory.Measure.MixtureInjective
-import Mathlib.Probability.Independence.InfinitePi
 
 /-!
 # Extreme exchangeable laws
@@ -102,19 +101,8 @@ process is independent and identically distributed under the product law, so Hew
 every shift-invariant event null or conull. -/
 theorem ergodic_shift_infinitePi_const (P : ProbabilityMeasure α) :
     Ergodic (shift α) (Measure.infinitePi fun _ : ℕ => (P : Measure α)) := by
-  let ρ := Measure.infinitePi fun _ : ℕ => (P : Measure α)
-  have hindep : iIndepFun (fun n (x : ℕ → α) => x n) ρ :=
-    iIndepFun_infinitePi (P := fun _ : ℕ => (P : Measure α))
-      (X := fun _ x => x) fun _ => measurable_id
-  have hident : ∀ n, IdentDistrib (fun x : ℕ → α => x n) (fun x => x 0) ρ ρ := fun n =>
-    ⟨(measurable_pi_apply n).aemeasurable, (measurable_pi_apply 0).aemeasurable, by
-      simp [ρ, Measure.infinitePi_map_eval]⟩
-  have hexch : Exchangeable ρ (fun n (x : ℕ → α) => x n) :=
-    Exchangeable.of_iIndepFun_identDistrib hindep hident
-  have hpath : pathLaw ρ (fun n (x : ℕ → α) => x n) = ρ := by simp [pathLaw_def]
-  have hexchLaw : ExchangeableLaw ρ :=
-    hpath ▸ (exchangeable_iff_exchangeableLaw_pathLaw
-      (fun n => (measurable_pi_apply n).aemeasurable)).1 hexch
+  have hexchLaw : ExchangeableLaw (Measure.infinitePi fun _ : ℕ => (P : Measure α)) :=
+    exchangeableLaw_infinitePi_const P
   refine { hexchLaw.contractableLaw.measurePreserving_shift with aeconst_set := ?_ }
   intro s hs hs_shift
   have hs_inv : MeasurableSet[MeasurableSpace.invariants (shift α)] s := ⟨hs, hs_shift⟩

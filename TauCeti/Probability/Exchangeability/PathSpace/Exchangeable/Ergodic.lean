@@ -6,8 +6,6 @@ module
 
 public import TauCeti.MeasureTheory.Group.CountableAction
 public import TauCeti.Probability.Exchangeability.PathSpace.HewittSavage
--- Non-public: used only inside the proof of `exchangeableLaw_infinitePi_const`.
-import Mathlib.Probability.Independence.InfinitePi
 
 /-!
 # Exchangeable laws and ergodicity of the finitely supported permutation action
@@ -71,7 +69,13 @@ permutations of `ℕ` acting on one-sided path space by reindexing.
 This is a type synonym for `↥(Equiv.Perm.finitary ℕ)`.  The synonym is deliberate: reindexing is
 an action on the *domain* of a path `x : ℕ → α`, whereas `Pi.instSMul` would make a subgroup of
 `Equiv.Perm ℕ` act on the *values* of a path whenever the state space `α` carries an action of it
-— which it does for `α = ℕ`.  Wrapping the group keeps the two actions from ever competing. -/
+— which it does for `α = ℕ`.  Wrapping the group keeps the two actions from ever competing.
+
+The group structure, and with it `toPerm_one`, `toPerm_mul` and `toPerm_inv`, is transported along
+the synonym, so those lemmas hold definitionally and by nothing else; the module system therefore
+requires this definition and `equivFinitary`, `toPerm`, `ofPerm` below to be `@[expose]`d.  The
+intended interface is nevertheless `equivFinitary`, `toPerm`, `ofPerm` and `TimePerm.ext`: no proof
+outside this section unfolds the synonym. -/
 @[expose]
 def TimePerm : Type := Equiv.Perm.finitary ℕ
 
@@ -81,19 +85,33 @@ instance instGroup : Group TimePerm := inferInstanceAs (Group (Equiv.Perm.finita
 
 instance instCountable : Countable TimePerm := inferInstanceAs (Countable (Equiv.Perm.finitary ℕ))
 
+/-- The identification of `TimePerm` with the finitary symmetric group it abbreviates.
+
+This is the one place the synonym is unfolded; every other declaration goes through it, so no
+proof elsewhere depends on how `TimePerm` is defined. -/
+@[expose]
+def equivFinitary : TimePerm ≃ Equiv.Perm.finitary ℕ := Equiv.refl _
+
 /-- The finitely supported permutation of `ℕ` underlying an element of `TimePerm`. -/
 @[expose]
-def toPerm (g : TimePerm) : Equiv.Perm ℕ := (show Equiv.Perm.finitary ℕ from g).val
+def toPerm (g : TimePerm) : Equiv.Perm ℕ := (equivFinitary g).val
 
 /-- The permutation underlying an element of `TimePerm` is finitely supported. -/
 theorem finite_compl_fixedBy_toPerm (g : TimePerm) :
     (MulAction.fixedBy ℕ (toPerm g))ᶜ.Finite :=
-  (show Equiv.Perm.finitary ℕ from g).2
+  Equiv.Perm.mem_finitary.mp (equivFinitary g).2
+
+/-- An element of `TimePerm` is determined by the permutation underlying it. -/
+theorem toPerm_injective : Function.Injective toPerm := fun _ _ h =>
+  equivFinitary.injective (Subtype.ext h)
+
+@[ext]
+theorem ext {g h : TimePerm} (hgh : toPerm g = toPerm h) : g = h := toPerm_injective hgh
 
 /-- Package a finitely supported permutation of `ℕ` as an element of `TimePerm`. -/
 @[expose]
 def ofPerm (π : Equiv.Perm ℕ) (hπ : (MulAction.fixedBy ℕ π)ᶜ.Finite) : TimePerm :=
-  (⟨π, hπ⟩ : Equiv.Perm.finitary ℕ)
+  equivFinitary.symm ⟨π, Equiv.Perm.mem_finitary.mpr hπ⟩
 
 @[simp]
 theorem toPerm_ofPerm (π : Equiv.Perm ℕ) (hπ : (MulAction.fixedBy ℕ π)ᶜ.Finite) :
@@ -224,23 +242,6 @@ theorem exchangeableSigma_trivial_iff_ergodicSMul {ρ : Measure (ℕ → α)} [I
       ErgodicSMul TimePerm (ℕ → α) ρ :=
   ⟨ergodicSMul_of_exchangeableSigma_trivial hρ,
     fun _ _ hs => measure_eq_zero_or_one_of_ergodicSMul hs⟩
-
-/-- An i.i.d. infinite product law is exchangeable: its coordinate process is i.i.d., hence
-exchangeable, and its path law is the product law back again. -/
-theorem exchangeableLaw_infinitePi_const (P : ProbabilityMeasure α) :
-    ExchangeableLaw (Measure.infinitePi fun _ : ℕ => (P : Measure α)) := by
-  set ρ := Measure.infinitePi fun _ : ℕ => (P : Measure α) with hρ_def
-  have hindep : iIndepFun (fun n (x : ℕ → α) => x n) ρ :=
-    iIndepFun_infinitePi (P := fun _ : ℕ => (P : Measure α)) (X := fun _ x => x) fun _ =>
-      measurable_id
-  have hident : ∀ n, IdentDistrib (fun x : ℕ → α => x n) (fun x => x 0) ρ ρ := fun n =>
-    ⟨(measurable_pi_apply n).aemeasurable, (measurable_pi_apply 0).aemeasurable, by
-      simp [hρ_def, Measure.infinitePi_map_eval]⟩
-  have hpath : pathLaw ρ (fun n (x : ℕ → α) => x n) = ρ := by simp [pathLaw_def]
-  have hlaw := (exchangeable_iff_exchangeableLaw_pathLaw
-    (X := fun n (x : ℕ → α) => x n) fun n => (measurable_pi_apply n).aemeasurable).mp
-      (Exchangeable.of_iIndepFun_identDistrib hindep hident)
-  rwa [hpath] at hlaw
 
 /-- **Hewitt–Savage in ergodic form.**  The finitely supported permutations of the time index act
 ergodically on an i.i.d. product law `P^{⊗ℕ}`.
