@@ -342,7 +342,25 @@ jobs:
       # policy; only the PR's TauCeti/ code stays untrusted and runs solely under landrun below.
       - name: Fetch Mathlib with the (bump-validated) config (network, no token; no PR code)
         if: ${{ env.INFRA != '1' }}
-        run: ( cd base && lake exe cache get ) && mkdir -p base/.lake/tmp
+        run: ( cd base && lake exe cache get 2>&1 | tee ../cache-get.log ) && mkdir -p base/.lake/tmp
+
+      # Backstop to bump-guard's step 2b, measuring the thing itself rather than a proxy.
+      # `lake exe cache get` exits 0 on a PARTIAL hit: it prints one warning and the build
+      # then quietly recompiles every module whose oleans never arrived. That is invisible
+      # in a green build and costs about an hour on every downstream build until the pin
+      # moves again, so catch it here (roughly 90 seconds in) rather than after the build.
+      #
+      # Only a bump is judged. A normal PR builds against the base pin, which it did not
+      # choose and cannot fix; failing those would take every PR in the repo down for as
+      # long as a bad pin sat on main, which is precisely backwards.
+      - name: Require a complete Mathlib cache for a bump
+        if: ${{ env.INFRA != '1' && env.BUMP == '1' }}
+        run: |
+          if grep -qF 'some files were not found in the cache' cache-get.log; then
+            echo "::error::the bump target's Mathlib cache is incomplete, so this pin would make every downstream build recompile the missing modules; bump to a commit upstream CI built"
+            exit 1
+          fi
+          echo "Mathlib cache is complete at the bump target."
 
       # Enable Lake's built-in artifact cache for the build below ONLY when the public read
       # endpoints are configured (repo variables). Until then this is a no-op: LAKE_*
