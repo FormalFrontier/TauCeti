@@ -21,9 +21,8 @@ candidate genus field over its base `ℚ(√d)` is later work.
 
 ## Main results
 
-* `TauCeti.Multiquadratic.instNumberFieldCandidateGenusField`: the candidate genus field is a number
-  field.
-* `TauCeti.Multiquadratic.isTotallyComplex_candidateGenusField`: for `d < 0` it is totally complex.
+* `TauCeti.Multiquadratic.isTotallyComplex_candidateGenusField`: for `d < 0` the candidate genus
+  field is totally complex. (Its `NumberField` instance lives in `CandidateGenusField/Degree`.)
 -/
 
 public section
@@ -31,13 +30,6 @@ public section
 open NumberField
 
 namespace TauCeti.Multiquadratic
-
-/-- The candidate genus field is a number field: a finite extension of `ℚ` (inside `ℂ`, so of
-characteristic zero). -/
-noncomputable instance instNumberFieldCandidateGenusField {d : ℤ} {hd : Squarefree d} :
-    NumberField (candidateGenusField hd) where
-  to_charZero := inferInstance
-  to_finiteDimensional := finiteDimensional_candidateGenusField
 
 /-- **The candidate genus field of an imaginary quadratic field is totally complex.** For squarefree
 `d < 0`, `candidateGenusField hd` contains a square root of the negative rational `d`, so no
