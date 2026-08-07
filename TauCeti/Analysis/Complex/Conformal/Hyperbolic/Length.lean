@@ -240,8 +240,9 @@ theorem hyperbolicLength_eq_integral (hab : a ≤ b)
     densityLength_eq_integral (ρ := fun z : ℂ => (1 - ‖z‖ ^ 2)⁻¹) hab hderiv
 
 /-- A path running through the open unit disc has nonnegative hyperbolic length, whichever way
-round its endpoints are: the Poincaré density is positive there. -/
-theorem hyperbolicLength_nonneg (hmem : ∀ t ∈ uIcc a b, ‖γ t‖ < 1) :
+round its endpoints are: the Poincaré density is positive there. Only the interior parameters are
+asked about, the two endpoints forming a null set. -/
+theorem hyperbolicLength_nonneg (hmem : ∀ t ∈ uIoo a b, ‖γ t‖ < 1) :
     0 ≤ hyperbolicLength γ a b :=
   densityLength_nonneg fun t ht =>
     inv_nonneg.2 (by nlinarith [norm_nonneg (γ t), hmem t ht])
@@ -259,10 +260,10 @@ private theorem intervalIntegrable_norm_div_one_sub_norm_sq (hab : a ≤ b)
   exact hpos.ne'
 
 /-- **The hyperbolic length of a path depends only on its parameter interval.** Two paths that
-agree on the interval with endpoints `a` and `b` have the same hyperbolic length over it: at an
+agree inside the interval with endpoints `a` and `b` have the same hyperbolic length over it: at an
 interior parameter they have the same germ, hence the same derivative, and the two endpoints form
 a null set. -/
-theorem hyperbolicLength_congr {δ : ℝ → ℂ} (hδ : EqOn δ γ (uIcc a b)) :
+theorem hyperbolicLength_congr {δ : ℝ → ℂ} (hδ : EqOn δ γ (uIoo a b)) :
     hyperbolicLength δ a b = hyperbolicLength γ a b :=
   densityLength_congr hδ
 
@@ -482,7 +483,8 @@ theorem hyperbolicLength_comp_eq_of_leftInvOn {f g : ℂ → ℂ}
     ((hf.analyticOnNhd isOpen_ball).deriv.continuousOn).comp hγ hball
   have key := hyperbolicLength_comp_le hg hgmaps (hf.continuousOn.comp hγ hball) hcomp
     (hγ'.mul hdf) hfmem
-  rwa [hyperbolicLength_congr (δ := g ∘ (f ∘ γ)) fun t ht => hgf (hball ht)] at key
+  rwa [hyperbolicLength_congr (δ := g ∘ (f ∘ γ)) fun t ht =>
+    hgf (hball (uIoo_subset_uIcc_self ht))] at key
 
 /-! ## The distance is a lower bound for the length -/
 

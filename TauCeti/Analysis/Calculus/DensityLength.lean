@@ -4,9 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.Analysis.Calculus.Deriv.CompMul
 public import Mathlib.Analysis.Calculus.Deriv.Shift
-public import Mathlib.Analysis.Calculus.Deriv.MeanValue
 public import Mathlib.MeasureTheory.Integral.IntervalIntegral.IntegrationByParts
 
 /-!
@@ -28,14 +26,16 @@ are.
 
 Everything proved below is a statement about the *parameter* side of the integral: how the length
 responds to reversing, splitting or substituting in the parameter interval, and to changing the
-path off that interval. None of it looks at the density, which is carried along as an arbitrary
-function of the point; and none of it looks at the codomain beyond its norm, so `F` is an
-arbitrary real normed space and `γ` an arbitrary map — not necessarily continuous, let alone
-differentiable, `deriv` reading its junk value where the path is not differentiable
-(`TauCeti.densityLength_eq_integral` is the reformulation for a path with a known derivative).
-The hypotheses appear only where the mathematics needs them: nonnegativity of the density for
-`TauCeti.densityLength_nonneg`, differentiability of the path for the two substitution rules,
-which differentiate the composite.
+path off that interval. The reparametrisation and interval-calculus results carry the density
+along unchanged, as an arbitrary function of the point, and only `TauCeti.densityLength_nonneg`
+inspects it at all, asking it to be nonnegative along the path; and none of it looks at the
+codomain beyond its norm, so `F` is an arbitrary real normed space and `γ` an arbitrary map — not
+necessarily continuous, let alone differentiable, `deriv` reading its junk value where the path is
+not differentiable (`TauCeti.densityLength_eq_integral` is the reformulation for a path with a
+known derivative). The hypotheses appear only where the mathematics needs them: nonnegativity of
+the density for `TauCeti.densityLength_nonneg`, differentiability of the path for the two
+substitution rules, which differentiate the composite. Each is asked at the *interior* parameters
+only, the two endpoints forming a null set.
 
 The integral is taken over the **unordered** interval `uIcc a b`, as in Mathlib's
 `Manifold.pathELength`. This is what makes the length independent of the orientation of the
@@ -74,7 +74,7 @@ through the chain rule; the affine rule is `intervalIntegral.integral_comp_mul_a
   derivative being needed only at the interior parameters.
 * `TauCeti.densityLength_nonneg` — a nonnegative density gives a nonnegative length.
 * `TauCeti.densityLength_congr` — the length depends on the path only through its restriction to
-  the parameter interval.
+  the interior of the parameter interval.
 * `TauCeti.densityLength_add` — additivity along the parameter interval.
 * `TauCeti.densityLength_comp_mul_add`, `TauCeti.densityLength_comp_of_deriv_nonneg`,
   `TauCeti.densityLength_comp_of_deriv_nonpos` — invariance under affine, monotone and antitone
@@ -134,14 +134,20 @@ theorem densityLength_const (ρ : F → ℝ) (c : F) (a b : ℝ) :
   rw [densityLength_def]
   simp
 
-/-- **Two paths with the same density-weighted speed over the parameter interval have the same
+/-- The length as an integral over the *open* parameter interval, the two endpoints forming a null
+set. This is what lets every hypothesis below be asked at the interior parameters only. -/
+private theorem densityLength_eq_setIntegral_uIoo (ρ : F → ℝ) (γ : ℝ → F) (a b : ℝ) :
+    densityLength ρ γ a b = ∫ t in uIoo a b, ρ (γ t) * ‖deriv γ t‖ := by
+  rw [densityLength_def, ← Icc_min_max, ← restrict_Ioo_eq_restrict_Icc, Ioo_min_max]
+
+/-- **Two paths with the same density-weighted speed inside the parameter interval have the same
 length.** This is the shape in which a symmetry of the pair `(ρ, γ)` — an isometry of the ambient
 space preserving the density, say — is fed to the length. -/
 theorem densityLength_congr_of_eqOn
-    (h : EqOn (fun t => ρ' (δ t) * ‖deriv δ t‖) (fun t => ρ (γ t) * ‖deriv γ t‖) (uIcc a b)) :
+    (h : EqOn (fun t => ρ' (δ t) * ‖deriv δ t‖) (fun t => ρ (γ t) * ‖deriv γ t‖) (uIoo a b)) :
     densityLength ρ' δ a b = densityLength ρ γ a b := by
-  rw [densityLength_def, densityLength_def]
-  exact setIntegral_congr_fun measurableSet_uIcc h
+  rw [densityLength_eq_setIntegral_uIoo, densityLength_eq_setIntegral_uIoo]
+  exact setIntegral_congr_fun measurableSet_Ioo h
 
 /-- The length over an ordered parameter interval as an interval integral of any function
 agreeing with the density-weighted speed at the interior parameters, the two endpoints forming a
@@ -165,30 +171,29 @@ theorem densityLength_eq_integral (hab : a ≤ b) (hderiv : ∀ t ∈ Ioo a b, H
     densityLength ρ γ a b = ∫ t in a..b, ρ (γ t) * ‖γ' t‖ :=
   densityLength_eq_intervalIntegral_of_eqOn hab fun t ht => by simp only [(hderiv t ht).deriv]
 
-/-- A path along which the density is nonnegative has nonnegative length, whichever way round its
-endpoints are. -/
-theorem densityLength_nonneg (hρ : ∀ t ∈ uIcc a b, 0 ≤ ρ (γ t)) : 0 ≤ densityLength ρ γ a b := by
-  rw [densityLength_def]
-  exact setIntegral_nonneg measurableSet_uIcc fun t ht => mul_nonneg (hρ t ht) (norm_nonneg _)
+/-- A path along which the density is nonnegative inside the parameter interval has nonnegative
+length, whichever way round its endpoints are. -/
+theorem densityLength_nonneg (hρ : ∀ t ∈ uIoo a b, 0 ≤ ρ (γ t)) : 0 ≤ densityLength ρ γ a b := by
+  rw [densityLength_eq_setIntegral_uIoo]
+  exact setIntegral_nonneg measurableSet_Ioo fun t ht => mul_nonneg (hρ t ht) (norm_nonneg _)
 
 /-- The congruence over an ordered parameter interval; the general case follows by symmetry. -/
-private theorem densityLength_congr_of_le (hab : a ≤ b) (hδ : EqOn δ γ (Icc a b)) :
+private theorem densityLength_congr_of_le (hab : a ≤ b) (hδ : EqOn δ γ (Ioo a b)) :
     densityLength ρ δ a b = densityLength ρ γ a b := by
   rw [densityLength_eq_intervalIntegral ρ γ hab]
   refine densityLength_eq_intervalIntegral_of_eqOn hab fun t ht => ?_
-  have hnhds : δ =ᶠ[nhds t] γ :=
-    Filter.eventuallyEq_of_mem (isOpen_Ioo.mem_nhds ht) (hδ.mono Ioo_subset_Icc_self)
-  simp only [hnhds.deriv_eq, hδ (Ioo_subset_Icc_self ht)]
+  have hnhds : δ =ᶠ[nhds t] γ := Filter.eventuallyEq_of_mem (isOpen_Ioo.mem_nhds ht) hδ
+  simp only [hnhds.deriv_eq, hδ ht]
 
-/-- **The length of a path depends only on its parameter interval.** Two paths that agree on the
-interval with endpoints `a` and `b` have the same length over it: at an interior parameter they
+/-- **The length of a path depends only on its parameter interval.** Two paths that agree inside
+the interval with endpoints `a` and `b` have the same length over it: at an interior parameter they
 have the same germ, hence the same derivative, and the two endpoints form a null set. -/
-theorem densityLength_congr (hδ : EqOn δ γ (uIcc a b)) :
+theorem densityLength_congr (hδ : EqOn δ γ (uIoo a b)) :
     densityLength ρ δ a b = densityLength ρ γ a b := by
   rcases le_total a b with hab | hab
-  · rw [uIcc_of_le hab] at hδ
+  · rw [uIoo_of_le hab] at hδ
     exact densityLength_congr_of_le hab hδ
-  · rw [uIcc_comm, uIcc_of_le hab] at hδ
+  · rw [uIoo_comm, uIoo_of_le hab] at hδ
     rw [densityLength_symm ρ δ b a, densityLength_symm ρ γ b a]
     exact densityLength_congr_of_le hab hδ
 
