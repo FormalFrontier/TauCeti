@@ -16,7 +16,7 @@ public section
 
 namespace TauCeti
 
-variable {R : Type*} [NormedRing R] [NormedAlgebra ℝ R]
+variable {R : Type*} [SeminormedRing R] [NormedAlgebra ℝ R]
 
 /-- A real normed algebra regarded as a rational normed algebra. -/
 noncomputable local instance normedAlgebraRatOfReal : NormedAlgebra ℚ R :=

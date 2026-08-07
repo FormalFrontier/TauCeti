@@ -91,7 +91,7 @@ section Real
 
 variable {R : Type*} [NormedRing R] [NormedAlgebra ℝ R] [CompleteSpace R]
 
-attribute [local instance] normedAlgebraRatOfReal
+attribute [local instance] TauCeti.normedAlgebraRatOfReal
 
 /-- The one-parameter subgroup law lifted from the algebra to its group of units. -/
 @[simp]
