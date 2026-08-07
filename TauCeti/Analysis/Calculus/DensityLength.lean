@@ -5,8 +5,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.Analysis.Calculus.Deriv.Shift
-public import Mathlib.MeasureTheory.Integral.IntervalIntegral.DistLEIntegral
 public import Mathlib.MeasureTheory.Integral.IntervalIntegral.IntegrationByParts
+import Mathlib.MeasureTheory.Integral.IntervalIntegral.DistLEIntegral
 
 /-!
 # The length of a path measured against a density
@@ -246,8 +246,10 @@ speed of `γ`, then `u` moves across the interval by at most the `ρ`-length of 
 whichever way round the endpoints are.
 
 This is how a length bounds a distance. Taking for `u` a quantity that the length is to dominate —
-`Real.artanh ‖γ‖` for the Poincaré density on the disc, say, or a linear functional applied to `γ`
-itself — reduces the bound to the *pointwise* comparison `hbound` between two speeds, exactly as
+for the Poincaré density on the disc, `Real.artanh ∘ (fun t => (v * γ t).re)` for a unit vector
+`v`, a linear functional of `γ` read through `Real.artanh` rather than `Real.artanh ‖γ‖`, which
+is not differentiable where the path crosses the origin — reduces the bound to the *pointwise*
+comparison `hbound` between two speeds, exactly as
 `TauCeti.densityLength_le_densityLength` reduces a comparison of two lengths to one. Nothing
 relates `u` to `γ` beyond that comparison, not even the space it runs in: `u` takes values in a
 normed space of its own, and the density-weighted speed of `γ` enters only as a real-valued upper
