@@ -5,8 +5,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Analysis.Contour.Winding.Integrand
-public import Mathlib.Analysis.Calculus.Deriv.Shift
 public import Mathlib.Analysis.Calculus.MeanValue
+import Mathlib.Analysis.Calculus.Deriv.Shift
 
 /-!
 # Boundedness of the real winding integrand at `C^{1,1}` crossings
@@ -63,45 +63,26 @@ private theorem norm_sub_sub_smul_derivWithin_le_of_lipschitzOnWith {γ : ℝ �
     ‖γ t - γ t₀ - (t - t₀) • derivWithin γ (Icc c d) t₀‖ ≤ K * (t - t₀) ^ 2 := by
   set D : ℝ → ℂ := derivWithin γ (Icc c d)
   set g : ℝ → ℂ := fun u => γ u - γ t₀ - (u - t₀) • D t₀ with hg_def
-  have hg_deriv : ∀ u ∈ Icc c d, HasDerivWithinAt g (D u - D t₀) (Icc c d) u := fun u hu => by
-    have h1 : HasDerivWithinAt (fun u => γ u - γ t₀) (D u) (Icc c d) u :=
-      (hdiff u hu).hasDerivWithinAt.sub_const _
-    have h2 : HasDerivWithinAt (fun u => (u - t₀) • D t₀) (D t₀) (Icc c d) u := by
+  have hsub : uIcc t₀ t ⊆ Icc c d := Icc_subset_Icc (le_min ht₀.1 ht.1) (max_le ht₀.2 ht.2)
+  have hg_deriv : ∀ u ∈ uIcc t₀ t, HasDerivWithinAt g (D u - D t₀) (uIcc t₀ t) u := fun u hu => by
+    have h1 : HasDerivWithinAt (fun u => γ u - γ t₀) (D u) (uIcc t₀ t) u :=
+      ((hdiff u (hsub hu)).hasDerivWithinAt.mono hsub).sub_const _
+    have h2 : HasDerivWithinAt (fun u => (u - t₀) • D t₀) (D t₀) (uIcc t₀ t) u := by
       simpa using (((hasDerivAt_id u).sub_const t₀).smul_const (D t₀)).hasDerivWithinAt
     exact h1.sub h2
-  have hK_nonneg : (0 : ℝ) ≤ (K : ℝ) := K.coe_nonneg
-  rcases le_total t₀ t with hle | hle
-  · have hIcc : Icc t₀ t ⊆ Icc c d := Icc_subset_Icc ht₀.1 ht.2
-    have hbound : ∀ u ∈ Ico t₀ t, ‖D u - D t₀‖ ≤ K * (t - t₀) := fun u hu => by
-      have h1 : dist (D u) (D t₀) ≤ K * dist u t₀ :=
-        lipschitzOnWith_iff_dist_le_mul.mp hlip u (hIcc ⟨hu.1, hu.2.le⟩) t₀ ht₀
-      rw [dist_eq_norm, Real.dist_eq] at h1
-      have h2 : |u - t₀| ≤ t - t₀ := by rw [abs_of_nonneg (by linarith [hu.1])]; linarith [hu.2.le]
-      calc ‖D u - D t₀‖ ≤ K * |u - t₀| := h1
-        _ ≤ K * (t - t₀) := by nlinarith
-    have := norm_image_sub_le_of_norm_deriv_le_segment'
-      (f := g) (a := t₀) (b := t) (f' := fun u => D u - D t₀)
-      (fun u hu => (hg_deriv u (hIcc hu)).mono hIcc) hbound t (right_mem_Icc.mpr hle)
-    have heq : g t - g t₀ = g t := by simp [hg_def]
-    rw [heq] at this
-    calc ‖g t‖ ≤ K * (t - t₀) * (t - t₀) := this
-      _ = K * (t - t₀) ^ 2 := by ring
-  · have hIcc : Icc t t₀ ⊆ Icc c d := Icc_subset_Icc ht.1 ht₀.2
-    have hbound : ∀ u ∈ Ico t t₀, ‖D u - D t₀‖ ≤ K * (t₀ - t) := fun u hu => by
-      have h1 : dist (D u) (D t₀) ≤ K * dist u t₀ :=
-        lipschitzOnWith_iff_dist_le_mul.mp hlip u (hIcc ⟨hu.1, hu.2.le⟩) t₀ ht₀
-      rw [dist_eq_norm, Real.dist_eq] at h1
-      have h2 : |u - t₀| ≤ t₀ - t := by
-        rw [abs_of_nonpos (by linarith [hu.2.le])]; linarith [hu.1]
-      calc ‖D u - D t₀‖ ≤ K * |u - t₀| := h1
-        _ ≤ K * (t₀ - t) := by nlinarith
-    have := norm_image_sub_le_of_norm_deriv_le_segment'
-      (f := g) (a := t) (b := t₀) (f' := fun u => D u - D t₀)
-      (fun u hu => (hg_deriv u (hIcc hu)).mono hIcc) hbound t₀ (right_mem_Icc.mpr hle)
-    have heq : g t₀ - g t = -g t := by simp [hg_def]
-    rw [heq, norm_neg] at this
-    calc ‖g t‖ ≤ K * (t₀ - t) * (t₀ - t) := this
-      _ = K * (t - t₀) ^ 2 := by ring
+  have hbound : ∀ u ∈ uIcc t₀ t, ‖D u - D t₀‖ ≤ K * |t - t₀| := fun u hu => by
+    have h1 : dist (D u) (D t₀) ≤ K * dist u t₀ :=
+      lipschitzOnWith_iff_dist_le_mul.mp hlip u (hsub hu) t₀ ht₀
+    rw [dist_eq_norm, Real.dist_eq] at h1
+    have h2 : |u - t₀| ≤ |t - t₀| := abs_sub_left_of_mem_uIcc hu
+    calc ‖D u - D t₀‖ ≤ K * |u - t₀| := h1
+      _ ≤ K * |t - t₀| := by gcongr
+  have hthis := Convex.norm_image_sub_le_of_norm_hasDerivWithin_le hg_deriv hbound
+    (convex_uIcc t₀ t) left_mem_uIcc right_mem_uIcc
+  have heq : g t - g t₀ = g t := by simp [hg_def]
+  rw [heq] at hthis
+  calc ‖g t‖ ≤ K * |t - t₀| * ‖t - t₀‖ := hthis
+    _ = K * (t - t₀) ^ 2 := by rw [Real.norm_eq_abs, ← sq_abs]; ring
 
 /-- **The cross product of two nearly parallel vectors is small.** The imaginary part of
 `u * conj z` is the two-dimensional cross product of `z` and `u`, so it vanishes when both are
@@ -210,9 +191,12 @@ is differentiable on `[t₀, d]` and `derivWithin γ (Icc t₀ d)` is `K`-Lipsch
 at `t₀`, where `γ t₀ = w`, then the real winding integrand (the ordinary derivative, which agrees
 with the within-piece one strictly inside `[t₀, d]`) is bounded on a small enough right-window
 `[t₀, t₀ + ρ]` -- no second derivative, pointwise or almost everywhere, is assumed to exist
-anywhere, and no assumption is made about `γ` to the left of `t₀`. This is the corner case of
-`Winding/BoundedIntegrand.lean`'s smooth-crossing result: `t₀` may coincide with a breakpoint of a
-piecewise-`C¹` immersion, where the left tangent may disagree with this one. -/
+anywhere, and no assumption is made about `γ` to the left of `t₀`. At `t₀` itself `deriv γ t₀` may
+take any junk value (it need not equal the one-sided `derivWithin`): the integrand there is
+`realWindingIntegrand 0 _`, independent of the velocity argument, so the junk value is harmless.
+This is the corner case of `Winding/BoundedIntegrand.lean`'s smooth-crossing result: `t₀` may
+coincide with a breakpoint of a piecewise-`C¹` immersion, where the left tangent may disagree with
+this one. -/
 theorem exists_isBounded_image_realWindingIntegrand_of_lipschitzOnWith_derivWithin_right
     {γ : ℝ → ℂ} {w : ℂ} {t₀ d : ℝ} {K : ℝ≥0} (htd : t₀ < d)
     (hdiff : DifferentiableOn ℝ γ (Icc t₀ d))
@@ -229,12 +213,13 @@ theorem exists_isBounded_image_realWindingIntegrand_of_lipschitzOnWith_derivWith
   refine ⟨ρ, hρ_pos, hρ_lt, Bornology.IsBounded.subset
     (Metric.isBounded_closedBall (x := (0 : ℝ)) (r := r)) ?_⟩
   rintro x ⟨t, ht, rfl⟩
+  -- Beta-reduce the `(fun t => ...) t` left behind by `rfl` above, so the next `rw` can see
+  -- `realWindingIntegrand` at the head of the goal.
   simp only []
   rw [Metric.mem_closedBall, dist_zero_right, Real.norm_eq_abs]
   rcases eq_or_ne t t₀ with rfl | htne
   · have hz0 : γ t - w = 0 := by rw [h_eq, sub_self]
-    rw [hz0, realWindingIntegrand_def]
-    simp only [inv_zero, zero_mul, Complex.zero_im, abs_zero]
+    rw [hz0, realWindingIntegrand_zero_left, abs_zero]
     exact hr_nonneg
   · have htcd : t ∈ Icc t₀ d := ⟨ht.1, by linarith [ht.2]⟩
     have hDeq : deriv γ t = derivWithin γ (Icc t₀ d) t :=
@@ -258,7 +243,7 @@ theorem exists_isBounded_image_realWindingIntegrand_of_lipschitzOnWith_derivWith
 
 /-- **The reflected piece is differentiable.** `Mathlib`'s generic composition rule
 (`DifferentiableOn.comp`) applied to the everywhere-differentiable reflection map. -/
-private theorem differentiableOn_reflect_of_differentiableOn {γ : ℝ → ℂ} {c t₀ : ℝ}
+private theorem differentiableOn_comp_const_sub {γ : ℝ → ℂ} {c t₀ : ℝ}
     (hdiff : DifferentiableOn ℝ γ (Icc c t₀)) :
     DifferentiableOn ℝ (fun s => γ (2 * t₀ - s)) (Icc t₀ (2 * t₀ - c)) := by
   have hmap : Set.MapsTo (fun s : ℝ => 2 * t₀ - s) (Icc t₀ (2 * t₀ - c)) (Icc c t₀) :=
@@ -268,7 +253,7 @@ private theorem differentiableOn_reflect_of_differentiableOn {γ : ℝ → ℂ} 
 /-- **The reflected derivative, as `derivWithin`.** `Mathlib`'s `derivWithin_comp_const_sub`,
 specialized to the reflection through `t₀` and simplified from a pointwise-negated-and-shifted
 set to the plain `Icc c t₀` it amounts to here. -/
-private theorem derivWithin_reflect_eq_neg (γ : ℝ → ℂ) (c t₀ t : ℝ) :
+private theorem derivWithin_comp_const_sub_Icc (γ : ℝ → ℂ) (c t₀ t : ℝ) :
     derivWithin (fun s => γ (2 * t₀ - s)) (Icc t₀ (2 * t₀ - c)) t
       = -derivWithin γ (Icc c t₀) (2 * t₀ - t) := by
   have hset : 2 * t₀ +ᵥ -Icc t₀ (2 * t₀ - c) = Icc c t₀ := by
@@ -280,28 +265,30 @@ private theorem derivWithin_reflect_eq_neg (γ : ℝ → ℂ) (c t₀ t : ℝ) :
   rw [derivWithin_comp_const_sub, hset]
 
 /-- **The reflected piece is `C^{1,1}` with the same Lipschitz constant.** Combines
-`derivWithin_reflect_eq_neg` with `γ`'s own Lipschitz bound: reflection and negation are both
+`derivWithin_comp_const_sub_Icc` with `γ`'s own Lipschitz bound: reflection and negation are both
 isometries of `ℝ`/`ℂ`, so the point-reflected piece is Lipschitz with the *same* constant `K`. -/
-private theorem lipschitzOnWith_derivWithin_reflect_of_lipschitzOnWith {γ : ℝ → ℂ} {c t₀ : ℝ}
+private theorem lipschitzOnWith_derivWithin_comp_const_sub {γ : ℝ → ℂ} {c t₀ : ℝ}
     {K : ℝ≥0} (hlip : LipschitzOnWith K (derivWithin γ (Icc c t₀)) (Icc c t₀)) :
     LipschitzOnWith K (derivWithin (fun s => γ (2 * t₀ - s)) (Icc t₀ (2 * t₀ - c)))
       (Icc t₀ (2 * t₀ - c)) := by
   rw [lipschitzOnWith_iff_dist_le_mul] at hlip ⊢
   intro t ht s hs
-  rw [derivWithin_reflect_eq_neg γ c t₀ t, derivWithin_reflect_eq_neg γ c t₀ s, dist_neg_neg]
+  rw [derivWithin_comp_const_sub_Icc γ c t₀ t, derivWithin_comp_const_sub_Icc γ c t₀ s,
+    dist_neg_neg]
   have hmem_t : 2 * t₀ - t ∈ Icc c t₀ := ⟨by linarith [ht.2], by linarith [ht.1]⟩
   have hmem_s : 2 * t₀ - s ∈ Icc c t₀ := ⟨by linarith [hs.2], by linarith [hs.1]⟩
-  have hdist_ts : dist (2 * t₀ - t) (2 * t₀ - s) = dist t s := by
-    rw [Real.dist_eq, Real.dist_eq, show 2 * t₀ - t - (2 * t₀ - s) = -(t - s) by ring, abs_neg]
-  rw [← hdist_ts]
+  rw [← dist_sub_left (2 * t₀) t s]
   exact hlip (2 * t₀ - t) hmem_t (2 * t₀ - s) hmem_s
 
-/-- **Boundedness of the real winding integrand at a `C^{1,1}` crossing, from the left.** The
-left-hand mirror of the `_right` version above: if `γ` is differentiable on `[c, t₀]` and
-`derivWithin γ (Icc c t₀)` is `K`-Lipschitz there and non-zero at
-`t₀`, where `γ t₀ = w`, the real winding integrand is bounded on a small enough left-window
-`[t₀ - ρ, t₀]`, with no assumption made about `γ` to the right of `t₀`. Derived from `_right` by
-applying it to the point-reflected curve `s ↦ γ (2 * t₀ - s)`, rather than repeating its proof. -/
+/-- **Boundedness of the real winding integrand at a `C^{1,1}` crossing, from the left.** If `γ`
+is differentiable on `[c, t₀]` and `derivWithin γ (Icc c t₀)` is `K`-Lipschitz there and non-zero
+at `t₀`, where `γ t₀ = w`, then the real winding integrand (the ordinary derivative, which agrees
+with the within-piece one strictly inside `[c, t₀]`) is bounded on a small enough left-window
+`[t₀ - ρ, t₀]` -- no second derivative, pointwise or almost everywhere, is assumed to exist
+anywhere, and no assumption is made about `γ` to the right of `t₀`. As in `_right`, `deriv γ t₀`'s
+junk value at the crossing itself is harmless: the integrand there is `realWindingIntegrand 0 _`,
+independent of the velocity argument. This is the mirror case of `_right` above, proved by applying
+it to the point-reflected curve `s ↦ γ (2 * t₀ - s)` rather than repeating its proof. -/
 theorem exists_isBounded_image_realWindingIntegrand_of_lipschitzOnWith_derivWithin_left
     {γ : ℝ → ℂ} {w : ℂ} {c t₀ : ℝ} {K : ℝ≥0} (hct : c < t₀)
     (hdiff : DifferentiableOn ℝ γ (Icc c t₀))
@@ -312,16 +299,16 @@ theorem exists_isBounded_image_realWindingIntegrand_of_lipschitzOnWith_derivWith
   set γ' : ℝ → ℂ := fun s => γ (2 * t₀ - s) with hγ'_def
   have hd'_gt : t₀ < 2 * t₀ - c := by linarith
   have hdiff' : DifferentiableOn ℝ γ' (Icc t₀ (2 * t₀ - c)) :=
-    differentiableOn_reflect_of_differentiableOn hdiff
+    differentiableOn_comp_const_sub hdiff
   have hlip' : LipschitzOnWith K (derivWithin γ' (Icc t₀ (2 * t₀ - c))) (Icc t₀ (2 * t₀ - c)) :=
-    lipschitzOnWith_derivWithin_reflect_of_lipschitzOnWith hlip
+    lipschitzOnWith_derivWithin_comp_const_sub hlip
   have h_eq' : γ' t₀ = w := by
     -- `rw [hγ'_def]` alone would leave the unapplied `(fun s => γ (2 * t₀ - s)) t₀`, since `rw`
     -- does not beta-reduce; `change` unfolds `γ'` and applies it in one step (both defeq to it).
     change γ (2 * t₀ - t₀) = w
     rw [show (2 : ℝ) * t₀ - t₀ = t₀ by ring]; exact h_eq
   have hvel' : derivWithin γ' (Icc t₀ (2 * t₀ - c)) t₀ ≠ 0 := by
-    rw [hγ'_def, derivWithin_reflect_eq_neg γ c t₀ t₀, show (2 : ℝ) * t₀ - t₀ = t₀ by ring]
+    rw [hγ'_def, derivWithin_comp_const_sub_Icc γ c t₀ t₀, show (2 : ℝ) * t₀ - t₀ = t₀ by ring]
     simpa using hvel
   obtain ⟨ρ, hρ_pos, hρ_lt, hbdd⟩ :=
     exists_isBounded_image_realWindingIntegrand_of_lipschitzOnWith_derivWithin_right
@@ -344,8 +331,7 @@ theorem exists_isBounded_image_realWindingIntegrand_of_lipschitzOnWith_derivWith
       -- zeroes it out on both.
       change realWindingIntegrand (γ (2 * t₀ - t) - w) (deriv γ (2 * t₀ - t))
         = -realWindingIntegrand (γ (2 * t₀ - t) - w) (deriv γ' t)
-      rw [hz2, realWindingIntegrand_def, realWindingIntegrand_def]
-      simp
+      rw [hz2, realWindingIntegrand_zero_left, realWindingIntegrand_zero_left, neg_zero]
     · have htlt : t₀ < t := lt_of_le_of_ne ht.1 (Ne.symm htne)
       have hint : t ∈ Ioo t₀ (2 * t₀ - c) := ⟨htlt, by linarith [ht.2]⟩
       have hDeq' : deriv γ' t = derivWithin γ' (Icc t₀ (2 * t₀ - c)) t :=
@@ -355,15 +341,14 @@ theorem exists_isBounded_image_realWindingIntegrand_of_lipschitzOnWith_derivWith
         (derivWithin_of_mem_nhds (Icc_mem_nhds hint2.1 hint2.2)).symm
       have hDeriv_eq : deriv γ' t = -deriv γ (2 * t₀ - t) := by
         rw [hDeq', show γ' = fun s => γ (2 * t₀ - s) from hγ'_def,
-          derivWithin_reflect_eq_neg γ c t₀ t, hDeq]
+          derivWithin_comp_const_sub_Icc γ c t₀ t, hDeq]
       -- Same defeq-not-syntactic gap as the `heq` case above: restate the position on both
       -- sides as `γ (2 * t₀ - t) - w` so the remaining rewrites only need to track the velocity.
       change realWindingIntegrand (γ (2 * t₀ - t) - w) (deriv γ (2 * t₀ - t))
         = -realWindingIntegrand (γ (2 * t₀ - t) - w) (deriv γ' t)
       rw [hDeriv_eq, realWindingIntegrand_neg_right, neg_neg]
-  rw [himg]
-  have hlip_neg : LipschitzWith 1 (Neg.neg : ℝ → ℝ) := fun x y => by simp [edist_neg_neg]
-  exact hlip_neg.isBounded_image hbdd
+  rw [himg, Set.image_neg_eq_neg]
+  exact hbdd.neg
 
 /-- **Boundedness of the real winding integrand on the full neighborhood of a `C^{1,1}` corner
 crossing.** Combines `_right` and `_left` above into the full two-sided window `[t₀ - ρ, t₀ + ρ]`,
