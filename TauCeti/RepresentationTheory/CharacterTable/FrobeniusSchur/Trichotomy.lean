@@ -242,31 +242,48 @@ theorem finrank_invariantForms (ρ : Representation k G V) :
     invertibleOfNonzero (Nat.cast_ne_zero.mpr Nat.card_pos.ne')
   exact_mod_cast finrank_invariantForms_cast ρ
 
+/- The image of the invariant functionals on the symmetric square, and its dimension.  Both halves
+are used twice: once for the inequality that feeds the squeeze, and once for the surjectivity that
+the squeeze then delivers. -/
+omit [FiniteDimensional k V] [Finite G] [CharZero k] in
+private theorem map_ofSymmetricSquareDual_le (ρ : Representation k G V) :
+    Submodule.map (BilinForm.ofSymmetricSquareDual (k := k) (V := V))
+      ((ρ.symmetricPower 2).dual).invariants ≤ symmetricInvariantForms ρ := by
+  rintro _ ⟨ψ, hψ, rfl⟩
+  exact ofSymmetricSquareDual_mem_symmetricInvariantForms ρ hψ
+
+private theorem finrank_map_ofSymmetricSquareDual (ρ : Representation k G V) :
+    finrank k (Submodule.map (BilinForm.ofSymmetricSquareDual (k := k) (V := V))
+        ((ρ.symmetricPower 2).dual).invariants) =
+      finrank k (ρ.symmetricPower 2).invariants := by
+  rw [← (Submodule.equivMapOfInjective (BilinForm.ofSymmetricSquareDual (k := k) (V := V))
+    BilinForm.ofSymmetricSquareDual_injective
+    ((ρ.symmetricPower 2).dual).invariants).finrank_eq, finrank_invariants_dual]
+
+omit [FiniteDimensional k V] [Finite G] [CharZero k] in
+private theorem map_ofExteriorSquareDual_le (ρ : Representation k G V) :
+    Submodule.map (BilinForm.ofExteriorSquareDual (k := k) (V := V))
+      ((ρ.exteriorPower 2).dual).invariants ≤ alternatingInvariantForms ρ := by
+  rintro _ ⟨ψ, hψ, rfl⟩
+  exact ofExteriorSquareDual_mem_alternatingInvariantForms ρ hψ
+
+private theorem finrank_map_ofExteriorSquareDual (ρ : Representation k G V) :
+    finrank k (Submodule.map (BilinForm.ofExteriorSquareDual (k := k) (V := V))
+        ((ρ.exteriorPower 2).dual).invariants) =
+      finrank k (ρ.exteriorPower 2).invariants := by
+  rw [← (Submodule.equivMapOfInjective (BilinForm.ofExteriorSquareDual (k := k) (V := V))
+    BilinForm.ofExteriorSquareDual_injective
+    ((ρ.exteriorPower 2).dual).invariants).finrank_eq, finrank_invariants_dual]
+
 private theorem finrank_invariants_symmetricPower_le (ρ : Representation k G V) :
     finrank k (ρ.symmetricPower 2).invariants ≤ finrank k (symmetricInvariantForms ρ) := by
-  have hmap : Submodule.map (BilinForm.ofSymmetricSquareDual (k := k) (V := V))
-      ((ρ.symmetricPower 2).dual).invariants ≤ symmetricInvariantForms ρ := by
-    rintro _ ⟨ψ, hψ, rfl⟩
-    exact ofSymmetricSquareDual_mem_symmetricInvariantForms ρ hψ
-  have hrank := (Submodule.equivMapOfInjective
-    (BilinForm.ofSymmetricSquareDual (k := k) (V := V))
-    BilinForm.ofSymmetricSquareDual_injective
-    ((ρ.symmetricPower 2).dual).invariants).finrank_eq
-  rw [← finrank_invariants_dual, hrank]
-  exact Submodule.finrank_mono hmap
+  rw [← finrank_map_ofSymmetricSquareDual ρ]
+  exact Submodule.finrank_mono (map_ofSymmetricSquareDual_le ρ)
 
 private theorem finrank_invariants_exteriorPower_le (ρ : Representation k G V) :
     finrank k (ρ.exteriorPower 2).invariants ≤ finrank k (alternatingInvariantForms ρ) := by
-  have hmap : Submodule.map (BilinForm.ofExteriorSquareDual (k := k) (V := V))
-      ((ρ.exteriorPower 2).dual).invariants ≤ alternatingInvariantForms ρ := by
-    rintro _ ⟨ψ, hψ, rfl⟩
-    exact ofExteriorSquareDual_mem_alternatingInvariantForms ρ hψ
-  have hrank := (Submodule.equivMapOfInjective
-    (BilinForm.ofExteriorSquareDual (k := k) (V := V))
-    BilinForm.ofExteriorSquareDual_injective
-    ((ρ.exteriorPower 2).dual).invariants).finrank_eq
-  rw [← finrank_invariants_dual, hrank]
-  exact Submodule.finrank_mono hmap
+  rw [← finrank_map_ofExteriorSquareDual ρ]
+  exact Submodule.finrank_mono (map_ofExteriorSquareDual_le ρ)
 
 omit [Finite G] in
 private theorem finrank_symmetricInvariantForms_add_le (ρ : Representation k G V) :
@@ -305,38 +322,20 @@ The injection is onto: it lands in the invariant symmetric forms, and the two ha
 dimension. -/
 theorem map_ofSymmetricSquareDual_eq_symmetricInvariantForms (ρ : Representation k G V) :
     Submodule.map (BilinForm.ofSymmetricSquareDual (k := k) (V := V))
-        ((ρ.symmetricPower 2).dual).invariants = symmetricInvariantForms ρ := by
-  have hle : Submodule.map (BilinForm.ofSymmetricSquareDual (k := k) (V := V))
-      ((ρ.symmetricPower 2).dual).invariants ≤ symmetricInvariantForms ρ := by
-    rintro _ ⟨ψ, hψ, rfl⟩
-    exact ofSymmetricSquareDual_mem_symmetricInvariantForms ρ hψ
-  have hrank : finrank k (symmetricInvariantForms ρ) =
-      finrank k (Submodule.map (BilinForm.ofSymmetricSquareDual (k := k) (V := V))
-        ((ρ.symmetricPower 2).dual).invariants) := by
-    rw [finrank_symmetricInvariantForms ρ,
-      ← (Submodule.equivMapOfInjective (BilinForm.ofSymmetricSquareDual (k := k) (V := V))
-        BilinForm.ofSymmetricSquareDual_injective
-        ((ρ.symmetricPower 2).dual).invariants).finrank_eq, finrank_invariants_dual]
-  exact Submodule.eq_of_le_of_finrank_le (K := k) (V := BilinForm k V) hle hrank.le
+        ((ρ.symmetricPower 2).dual).invariants = symmetricInvariantForms ρ :=
+  Submodule.eq_of_le_of_finrank_le (K := k) (V := BilinForm k V)
+    (map_ofSymmetricSquareDual_le ρ)
+    (by rw [finrank_map_ofSymmetricSquareDual, finrank_symmetricInvariantForms])
 
 /-- **Every invariant alternating form comes from an invariant functional on the exterior square.**
 The injection is onto: it lands in the invariant alternating forms, and the two have the same
 dimension. -/
 theorem map_ofExteriorSquareDual_eq_alternatingInvariantForms (ρ : Representation k G V) :
     Submodule.map (BilinForm.ofExteriorSquareDual (k := k) (V := V))
-        ((ρ.exteriorPower 2).dual).invariants = alternatingInvariantForms ρ := by
-  have hle : Submodule.map (BilinForm.ofExteriorSquareDual (k := k) (V := V))
-      ((ρ.exteriorPower 2).dual).invariants ≤ alternatingInvariantForms ρ := by
-    rintro _ ⟨ψ, hψ, rfl⟩
-    exact ofExteriorSquareDual_mem_alternatingInvariantForms ρ hψ
-  have hrank : finrank k (alternatingInvariantForms ρ) =
-      finrank k (Submodule.map (BilinForm.ofExteriorSquareDual (k := k) (V := V))
-        ((ρ.exteriorPower 2).dual).invariants) := by
-    rw [finrank_alternatingInvariantForms ρ,
-      ← (Submodule.equivMapOfInjective (BilinForm.ofExteriorSquareDual (k := k) (V := V))
-        BilinForm.ofExteriorSquareDual_injective
-        ((ρ.exteriorPower 2).dual).invariants).finrank_eq, finrank_invariants_dual]
-  exact Submodule.eq_of_le_of_finrank_le (K := k) (V := BilinForm k V) hle hrank.le
+        ((ρ.exteriorPower 2).dual).invariants = alternatingInvariantForms ρ :=
+  Submodule.eq_of_le_of_finrank_le (K := k) (V := BilinForm k V)
+    (map_ofExteriorSquareDual_le ρ)
+    (by rw [finrank_map_ofExteriorSquareDual, finrank_alternatingInvariantForms])
 
 /-- **The two invariant form counts add to the number of invariant forms.** -/
 theorem finrank_symmetricInvariantForms_add_finrank_alternatingInvariantForms

@@ -4,7 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.Data.Fin.Tuple.Reflection
 public import Mathlib.LinearAlgebra.ExteriorPower.Basic
 public import Mathlib.LinearAlgebra.TensorPower.Symmetric
 public import TauCeti.LinearAlgebra.BilinearForm.Multilinear
@@ -97,11 +96,12 @@ functional on those, so two functionals with the same form agree on a spanning s
 theorem ofSymmetricSquareDual_injective :
     Function.Injective (ofSymmetricSquareDual (k := k) (V := V)) := by
   intro ψ φ hψφ
+  have h : ψ.compMultilinearMap (SymmetricPower.tprod k (ι := Fin 2) (M := V)) =
+      φ.compMultilinearMap (SymmetricPower.tprod k (ι := Fin 2) (M := V)) :=
+    MultilinearMap.toBilinForm_injective hψφ
   refine LinearMap.ext_on (SymmetricPower.span_tprod_eq_top k (Fin 2) V) ?_
   rintro _ ⟨f, rfl⟩
-  have hf : f = ![f 0, f 1] := (FinVec.etaExpand_eq f).symm
-  have := congrArg (fun B : BilinForm k V => B (f 0) (f 1)) hψφ
-  simpa [hf.symm] using this
+  simpa using DFunLike.congr_fun h f
 
 end CommSemiring
 
@@ -135,12 +135,9 @@ theorem isAlt_ofExteriorSquareDual (ψ : Module.Dual k (⋀[k]^2 V)) :
 /-- **A functional on the exterior square is determined by the form it gives.** A functional is
 the alternating map the universal property attaches to it, and that map is the form. -/
 theorem ofExteriorSquareDual_injective :
-    Function.Injective (ofExteriorSquareDual (k := k) (V := V)) := by
-  intro ψ φ hψφ
-  refine exteriorPower.alternatingMapLinearEquiv.symm.injective (AlternatingMap.ext fun f => ?_)
-  have hf : f = ![f 0, f 1] := (FinVec.etaExpand_eq f).symm
-  have := congrArg (fun B : BilinForm k V => B (f 0) (f 1)) hψφ
-  simpa [hf.symm] using this
+    Function.Injective (ofExteriorSquareDual (k := k) (V := V)) := fun _ _ hψφ =>
+  exteriorPower.alternatingMapLinearEquiv.symm.injective
+    (AlternatingMap.coe_multilinearMap_injective (MultilinearMap.toBilinForm_injective hψφ))
 
 end CommRing
 

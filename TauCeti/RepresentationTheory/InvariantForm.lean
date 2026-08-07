@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+public import Mathlib.RepresentationTheory.Invariants
 public import Mathlib.RepresentationTheory.Irreducible
 public import TauCeti.LinearAlgebra.BilinearForm.Basic
 
@@ -52,6 +53,8 @@ representation, is what makes `G` a group.
 
 * `TauCeti.Representation.isInvariantForm_iff_isIntertwiningMap`: a form is invariant exactly when
   it intertwines `ρ` with `ρ.dual`.
+* `TauCeti.Representation.invariantForms_eq_invariants_linHom_dual`: the invariant forms are the
+  invariants of `linHom ρ ρ.dual`.
 * `TauCeti.Representation.symmetricInvariantForms_inf_alternatingInvariantForms`: away from
   characteristic two the symmetric and the alternating invariant forms meet only in `0`.
 * `TauCeti.Representation.IsInvariantForm.nondegenerate` and
@@ -83,9 +86,17 @@ into the dual.  That identification is recorded twice: once unbundled as
 `TauCeti.Representation.isInvariantForm_iff_isIntertwiningMap`, which is the shape the proofs
 below use, and once as the linear equivalence
 `TauCeti.Representation.invariantFormsEquivIntertwiningMapDual`, which is the shape a dimension
-count of the invariant forms needs.  That equivalence is not exposed either, so a downstream module
-uses it opaquely -- a dimension count goes through `LinearEquiv.finrank_eq` and never looks at a
-value.  When a value is needed, the two `simp` lemmas
+count of the invariant forms needs.  The equivalence is not built by hand: the invariant forms are
+literally the invariants of `linHom ρ ρ.dual`
+(`TauCeti.Representation.invariantForms_eq_invariants_linHom_dual`), so it is Mathlib's
+`Representation.invariantsEquivIntertwiningMap` transported along that equality.  Mathlib's
+`Representation.invariants` asks for a commutative ring and an additive group, which is why the two
+declarations sit in a narrower section than the rest of the file; the additive group on the space
+of maps `V → V*` is supplied explicitly, because a representation records only the additive monoid
+and the elaborator does not solve for a group structure inducing a given one.  The equivalence is
+not exposed,
+so a downstream module uses it opaquely -- a dimension count goes through `LinearEquiv.finrank_eq`
+and never looks at a value.  When a value is needed, the two `simp` lemmas
 `TauCeti.Representation.invariantFormsEquivIntertwiningMapDual_apply_toLinearMap` and
 `TauCeti.Representation.invariantFormsEquivIntertwiningMapDual_symm_apply_coe` are what identify
 it: they say the equivalence moves a form and an intertwiner to each other unchanged.
@@ -264,19 +275,33 @@ theorem isInvariantForm_iff_isIntertwiningMap (ρ : Representation k G V) (B : B
     have h := DFunLike.congr_fun (hB.isIntertwining g x) (ρ g y)
     simpa [Module.Dual.transpose_apply] using h
 
+end Group
+
+section GroupRing
+
+variable {k G V : Type*} [CommRing k] [Group G] [AddCommGroup V] [Module k V]
+
+/-- **The invariant forms of `ρ` are the invariants of `linHom ρ ρ.dual`.**  Invariance of a form
+is intertwining of the map `V → V*` it is, which is Mathlib's membership criterion for the
+invariants of a `Hom` representation. -/
+theorem invariantForms_eq_invariants_linHom_dual (ρ : Representation k G V) :
+    invariantForms ρ =
+      @Representation.invariants k G (V →ₗ[k] Module.Dual k V) _ _ LinearMap.addCommGroup _
+        (Representation.linHom ρ ρ.dual) := by
+  ext B
+  rw [mem_invariantForms, isInvariantForm_iff_isIntertwiningMap,
+    ← Representation.mem_linHom_invariants_iff_isIntertwining]
+  exact Iff.rfl
+
 /-- **The invariant forms of `ρ` are the intertwiners from `ρ` to its dual.**  This is the bundled
 form of `TauCeti.Representation.isInvariantForm_iff_isIntertwiningMap`, and it is what puts the
-invariant forms in reach of machinery that counts intertwiners. -/
+invariant forms in reach of machinery that counts intertwiners: it is Mathlib's
+`Representation.invariantsEquivIntertwiningMap`, transported along
+`TauCeti.Representation.invariantForms_eq_invariants_linHom_dual`. -/
 noncomputable def invariantFormsEquivIntertwiningMapDual (ρ : Representation k G V) :
-    invariantForms ρ ≃ₗ[k] Representation.IntertwiningMap ρ ρ.dual where
-  toFun B := (B : BilinForm k V).intertwiningMap_of_isIntertwiningMap ρ ρ.dual
-    ((isInvariantForm_iff_isIntertwiningMap ρ _).mp (mem_invariantForms.mp B.2)).isIntertwining
-  invFun f := ⟨f.toLinearMap, mem_invariantForms.mpr
-    ((isInvariantForm_iff_isIntertwiningMap ρ _).mpr ⟨f.isIntertwining⟩)⟩
-  map_add' _ _ := Representation.IntertwiningMap.ext_iff.mpr rfl
-  map_smul' _ _ := Representation.IntertwiningMap.ext_iff.mpr rfl
-  left_inv _ := rfl
-  right_inv _ := rfl
+    invariantForms ρ ≃ₗ[k] Representation.IntertwiningMap ρ ρ.dual :=
+  (LinearEquiv.ofEq _ _ (invariantForms_eq_invariants_linHom_dual ρ)).trans
+    (Representation.invariantsEquivIntertwiningMap ρ ρ.dual)
 
 /-- The intertwiner attached to an invariant form is that form, read as a map `V → V*`. -/
 @[simp]
@@ -292,7 +317,7 @@ theorem invariantFormsEquivIntertwiningMapDual_symm_apply_coe (ρ : Representati
     (((invariantFormsEquivIntertwiningMapDual ρ).symm f : invariantForms ρ) : BilinForm k V) =
       f.toLinearMap := (rfl)
 
-end Group
+end GroupRing
 
 /-! ### Invariant forms on an irreducible representation -/
 

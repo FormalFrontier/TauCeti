@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+public import Mathlib.Data.Fin.Tuple.Reflection
 public import Mathlib.LinearAlgebra.BilinearForm.Properties
 public import Mathlib.LinearAlgebra.Multilinear.Basic
 
@@ -31,6 +32,8 @@ on `V` by composing with the universal multilinear map.  That is what
   swapping its two arguments.
 * `TauCeti.MultilinearMap.isAlt_toBilinForm`: the form is alternating when `m` vanishes on a
   repeated argument.
+* `TauCeti.MultilinearMap.toBilinForm_injective`: the other half of "the same data" -- the form
+  determines the multilinear map.
 
 ## Implementation notes
 
@@ -73,6 +76,15 @@ theorem isSymm_toBilinForm {m : MultilinearMap R (fun _ : Fin 2 => V) R}
 theorem isAlt_toBilinForm {m : MultilinearMap R (fun _ : Fin 2 => V) R}
     (h : ∀ x : V, m ![x, x] = 0) : (toBilinForm m).IsAlt :=
   fun x => (toBilinForm_apply m x x).trans (h x)
+
+/-- **A multilinear map in two variables is determined by its bilinear form.**  Every argument of
+`m` is a `![x, y]`, and the form records the value of `m` there. -/
+theorem toBilinForm_injective : Function.Injective (toBilinForm (R := R) (V := V)) := by
+  intro m n h
+  ext f
+  have hf : f = ![f 0, f 1] := (FinVec.etaExpand_eq f).symm
+  have := congrArg (fun B : BilinForm R V => B (f 0) (f 1)) h
+  simpa [hf.symm] using this
 
 end MultilinearMap
 
