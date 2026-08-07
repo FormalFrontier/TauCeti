@@ -38,7 +38,9 @@ squares into invariant forms.
 Bilinearity is read off `MultilinearMap.map_update_add` and `MultilinearMap.map_update_smul` at the
 two indices of `Fin 2`, which is why the two private lemmas identifying `Function.update` on a
 two-element vector come first: they are what turn an update at `0` or at `1` back into the
-`![·, ·]` notation the statements are phrased in.
+`![·, ·]` notation the statements are phrased in.  Feeding those four facts to `LinearMap.mk₂`
+keeps the four linearity goals stated in that notation, so none of them has to be massaged into
+the nested form a bare `LinearMap` constructor would present.
 -/
 
 public section
@@ -62,22 +64,12 @@ private theorem update_two_one {V : Type*} (x y z : V) :
 variable {R V : Type*} [CommSemiring R] [AddCommMonoid V] [Module R V]
 
 /-- The bilinear form `(x, y) ↦ m ![x, y]` of a multilinear map `m` in two variables. -/
-def toBilinForm (m : MultilinearMap R (fun _ : Fin 2 => V) R) : BilinForm R V where
-  toFun x :=
-    { toFun := fun y => m ![x, y]
-      map_add' := fun y y' => by
-        simpa only [update_two_one] using m.map_update_add ![x, y] 1 y y'
-      map_smul' := fun c y => by
-        simpa only [update_two_one, RingHom.id_apply, smul_eq_mul] using
-          m.map_update_smul ![x, y] 1 c y }
-  map_add' x x' := by
-    ext y
-    change m ![x + x', y] = m ![x, y] + m ![x', y]
-    simpa only [update_two_zero] using m.map_update_add ![x, y] 0 x x'
-  map_smul' c x := by
-    ext y
-    change m ![c • x, y] = c * m ![x, y]
-    simpa only [update_two_zero, smul_eq_mul] using m.map_update_smul ![x, y] 0 c x
+def toBilinForm (m : MultilinearMap R (fun _ : Fin 2 => V) R) : BilinForm R V :=
+  LinearMap.mk₂ R (fun x y => m ![x, y])
+    (fun x x' y => by simpa only [update_two_zero] using m.map_update_add ![x, y] 0 x x')
+    (fun c x y => by simpa only [update_two_zero] using m.map_update_smul ![x, y] 0 c x)
+    (fun x y y' => by simpa only [update_two_one] using m.map_update_add ![x, y] 1 y y')
+    (fun c x y => by simpa only [update_two_one] using m.map_update_smul ![x, y] 1 c y)
 
 @[simp]
 theorem toBilinForm_apply (m : MultilinearMap R (fun _ : Fin 2 => V) R) (x y : V) :

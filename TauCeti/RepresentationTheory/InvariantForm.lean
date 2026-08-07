@@ -14,7 +14,8 @@ A bilinear form `B` on the space of a representation `ρ` of `G` is **invariant*
 preserves it, `B (ρ g x) (ρ g y) = B x y`.  The invariant forms are a submodule of all bilinear
 forms, and read as maps `V → V*` they are exactly the intertwiners from `ρ` to its dual
 representation -- the concrete form of the statement that they are the `G`-invariants of a space
-of bilinear forms.
+of bilinear forms.  Cutting the invariant forms down by symmetry, respectively by alternation,
+gives two further submodules, and away from characteristic two they meet only in `0`.
 
 On an **irreducible** representation the invariant forms are tightly constrained, and the three
 constraints proved here are the ones the Frobenius-Schur trichotomy is read off from.  First, the
@@ -30,21 +31,29 @@ orthogonal/symplectic dichotomy: an irreducible representation carries at most a
 forms, and -- in characteristic other than two -- any nonzero one on it is either symmetric or
 alternating.
 
-Nothing here needs a finite group, and the first two sections need neither a field nor finite
-dimensions: invariance is defined for a representation of a monoid on a module over a commutative
-semiring, and only the results that invoke Schur's lemma ask for an algebraically closed field and
-a finite-dimensional space.  The `g⁻¹` in `TauCeti.Representation.IsInvariantForm.apply_left`, and
-with it everything downstream of it, is what makes `G` a group from that point on.
+Nothing here needs a finite group, and almost nothing needs finite dimensions: invariance, and the
+symmetric and alternating invariant forms with it, are defined for a representation of a monoid on
+a module over a commutative semiring, and only the results that invoke Schur's lemma ask for an
+algebraically closed field and a finite-dimensional space.  The `g⁻¹` in
+`TauCeti.Representation.IsInvariantForm.apply_left`, and with it the comparison with the dual
+representation, is what makes `G` a group.
 
 ## Main definitions
 
 * `TauCeti.Representation.IsInvariantForm`: `B (ρ g x) (ρ g y) = B x y` for all `g`, `x`, `y`.
 * `TauCeti.Representation.invariantForms`: the invariant forms, as a submodule of `BilinForm k V`.
+* `TauCeti.Representation.symmetricInvariantForms` and
+  `TauCeti.Representation.alternatingInvariantForms`: the invariant forms that are symmetric,
+  respectively alternating.
+* `TauCeti.Representation.invariantFormsEquivIntertwiningMapDual`: the invariant forms of `ρ` as
+  the intertwiners from `ρ` to its dual.
 
 ## Main results
 
 * `TauCeti.Representation.isInvariantForm_iff_isIntertwiningMap`: a form is invariant exactly when
   it intertwines `ρ` with `ρ.dual`.
+* `TauCeti.Representation.symmetricInvariantForms_inf_alternatingInvariantForms`: away from
+  characteristic two the symmetric and the alternating invariant forms meet only in `0`.
 * `TauCeti.Representation.IsInvariantForm.nondegenerate`: a nonzero invariant form on an
   irreducible representation is nondegenerate.
 * `TauCeti.Representation.IsInvariantForm.exists_eq_smul`: over an algebraically closed field and
@@ -69,7 +78,11 @@ quantified equation would take `TauCeti.Representation.isInvariantForm_zero` and
 rejects.  What the file adds around that pair is the two rewritings that are *not*
 immediate -- moving a single `ρ g` across the form at the cost of an inverse
 (`TauCeti.Representation.IsInvariantForm.apply_left`), and the identification with intertwiners
-into the dual.
+into the dual.  That identification is recorded twice: once unbundled as
+`TauCeti.Representation.isInvariantForm_iff_isIntertwiningMap`, which is the shape the proofs
+below use, and once as the linear equivalence
+`TauCeti.Representation.invariantFormsEquivIntertwiningMapDual`, which is the shape a dimension
+count of the invariant forms needs.
 
 That identification is also what controls the left radical: the form is an intertwiner out of an
 irreducible representation, so `TauCeti.Representation.IsInvariantForm.ker_eq_bot` is Mathlib's
@@ -156,6 +169,69 @@ theorem isInvariantForm_trivial (B : BilinForm k V) :
 
 end Monoid
 
+/-! ### The symmetric and the alternating invariant forms -/
+
+section SymmetricAlternating
+
+variable {k G V : Type*} [CommSemiring k] [Monoid G] [AddCommMonoid V] [Module k V]
+variable {ρ : Representation k G V} {B : BilinForm k V}
+
+/-- The **invariant symmetric** bilinear forms of `ρ`, as a submodule of all bilinear forms. -/
+def symmetricInvariantForms (ρ : Representation k G V) : Submodule k (BilinForm k V) where
+  carrier := {B | IsInvariantForm ρ B ∧ B.IsSymm}
+  zero_mem' := ⟨isInvariantForm_zero, LinearMap.BilinForm.isSymm_zero⟩
+  add_mem' hB hC := ⟨hB.1.add hC.1, hB.2.add hC.2⟩
+  smul_mem' c _ hB := ⟨hB.1.smul c, hB.2.smul c⟩
+
+/-- The **invariant alternating** bilinear forms of `ρ`, as a submodule of all bilinear forms. -/
+def alternatingInvariantForms (ρ : Representation k G V) : Submodule k (BilinForm k V) where
+  carrier := {B | IsInvariantForm ρ B ∧ B.IsAlt}
+  zero_mem' := ⟨isInvariantForm_zero, LinearMap.BilinForm.isAlt_zero⟩
+  add_mem' hB hC := ⟨hB.1.add hC.1, hB.2.add hC.2⟩
+  smul_mem' c _ hB := ⟨hB.1.smul c, hB.2.smul c⟩
+
+/-- Membership in `TauCeti.Representation.symmetricInvariantForms` is invariance together with
+symmetry. -/
+@[simp]
+theorem mem_symmetricInvariantForms :
+    B ∈ symmetricInvariantForms ρ ↔ IsInvariantForm ρ B ∧ B.IsSymm := Iff.rfl
+
+/-- Membership in `TauCeti.Representation.alternatingInvariantForms` is invariance together with
+alternation. -/
+@[simp]
+theorem mem_alternatingInvariantForms :
+    B ∈ alternatingInvariantForms ρ ↔ IsInvariantForm ρ B ∧ B.IsAlt := Iff.rfl
+
+/-- An invariant symmetric form is in particular invariant. -/
+theorem symmetricInvariantForms_le (ρ : Representation k G V) :
+    symmetricInvariantForms ρ ≤ invariantForms ρ :=
+  fun _ hB => mem_invariantForms.mpr hB.1
+
+/-- An invariant alternating form is in particular invariant. -/
+theorem alternatingInvariantForms_le (ρ : Representation k G V) :
+    alternatingInvariantForms ρ ≤ invariantForms ρ :=
+  fun _ hB => mem_invariantForms.mpr hB.1
+
+end SymmetricAlternating
+
+section SymmetricAlternatingField
+
+variable {k G V : Type*} [Field k] [Monoid G] [AddCommGroup V] [Module k V]
+
+/-- Away from characteristic two, a form cannot be both symmetric and alternating, so the two
+invariant subspaces meet only in `0`. -/
+theorem symmetricInvariantForms_inf_alternatingInvariantForms (h2 : (2 : k) ≠ 0)
+    (ρ : Representation k G V) :
+    symmetricInvariantForms ρ ⊓ alternatingInvariantForms ρ = ⊥ := by
+  refine le_antisymm (fun B hB => ?_) bot_le
+  refine Submodule.mem_bot k |>.mpr (LinearMap.ext fun x => LinearMap.ext fun y => ?_)
+  have hsymm : B x y = B y x := hB.1.2.eq x y
+  have halt : -B x y = B y x := hB.2.2.neg_eq x y
+  have hzero : (2 : k) * B x y = 0 := by linear_combination hsymm - halt
+  simpa using (mul_eq_zero.mp hzero).resolve_left h2
+
+end SymmetricAlternatingField
+
 /-! ### Invariance as intertwining with the dual representation -/
 
 section Group
@@ -184,6 +260,35 @@ theorem isInvariantForm_iff_isIntertwiningMap (ρ : Representation k G V) (B : B
   · intro hB g x y
     have h := DFunLike.congr_fun (hB.isIntertwining g x) (ρ g y)
     simpa [Module.Dual.transpose_apply] using h
+
+/-- **The invariant forms of `ρ` are the intertwiners from `ρ` to its dual.**  This is the bundled
+form of `TauCeti.Representation.isInvariantForm_iff_isIntertwiningMap`, and it is what puts the
+invariant forms in reach of machinery that counts intertwiners. -/
+-- `@[expose]` so that the two characterizing lemmas below hold by `rfl` outside this module.
+@[expose] noncomputable def invariantFormsEquivIntertwiningMapDual (ρ : Representation k G V) :
+    invariantForms ρ ≃ₗ[k] Representation.IntertwiningMap ρ ρ.dual where
+  toFun B := (B : BilinForm k V).intertwiningMap_of_isIntertwiningMap ρ ρ.dual
+    ((isInvariantForm_iff_isIntertwiningMap ρ _).mp (mem_invariantForms.mp B.2)).isIntertwining
+  invFun f := ⟨f.toLinearMap, mem_invariantForms.mpr
+    ((isInvariantForm_iff_isIntertwiningMap ρ _).mpr ⟨f.isIntertwining⟩)⟩
+  map_add' _ _ := Representation.IntertwiningMap.ext_iff.mpr rfl
+  map_smul' _ _ := Representation.IntertwiningMap.ext_iff.mpr rfl
+  left_inv _ := rfl
+  right_inv _ := rfl
+
+/-- The intertwiner attached to an invariant form is that form, read as a map `V → V*`. -/
+@[simp]
+theorem invariantFormsEquivIntertwiningMapDual_apply_toLinearMap (ρ : Representation k G V)
+    (B : invariantForms ρ) :
+    (invariantFormsEquivIntertwiningMapDual ρ B).toLinearMap = (B : BilinForm k V) := rfl
+
+/-- The invariant form attached to an intertwiner `ρ → ρ.dual` is that intertwiner, read as a
+bilinear form. -/
+@[simp]
+theorem invariantFormsEquivIntertwiningMapDual_symm_apply_coe (ρ : Representation k G V)
+    (f : Representation.IntertwiningMap ρ ρ.dual) :
+    (((invariantFormsEquivIntertwiningMapDual ρ).symm f : invariantForms ρ) : BilinForm k V) =
+      f.toLinearMap := rfl
 
 end Group
 

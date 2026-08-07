@@ -41,16 +41,15 @@ Characteristic zero is used throughout, in two places: to move the counting iden
 equation in `k` to an equation of natural numbers, and to keep a form from being symmetric and
 alternating at once.
 
+The invariant forms themselves, the symmetric and the alternating ones among them, and their
+identification with the intertwiners into the dual are all in
+`TauCeti/RepresentationTheory/InvariantForm.lean`; this file only counts them.
+
 ## Main definitions
 
-* `TauCeti.Representation.symmetricInvariantForms` and
-  `TauCeti.Representation.alternatingInvariantForms`: the invariant forms that are symmetric,
-  respectively alternating.
 * `TauCeti.Representation.ofSymmetricSquareDual` and
   `TauCeti.Representation.ofExteriorSquareDual`: a functional on the second symmetric or exterior
   power, read as a bilinear form on `V`.
-* `TauCeti.Representation.invariantFormsEquivIntertwiningMapDual`: the invariant forms of `ρ` as
-  the intertwiners from `ρ` to its dual.
 
 ## Main results
 
@@ -74,18 +73,15 @@ plain linear maps rather than as equivalences onto the symmetric and alternating
 plus the dimension count is what forces them onto those subspaces, and proving surjectivity
 directly would need the universal property of the symmetric square, which is not in Mathlib.
 
-`TauCeti.Representation.invariantFormsEquivIntertwiningMapDual` is what connects the submodule of
-invariant forms of `TauCeti/RepresentationTheory/InvariantForm.lean` to the character machinery: it
-bundles the already-available `TauCeti.Representation.isInvariantForm_iff_isIntertwiningMap` into an
-equivalence, which is the shape Mathlib's
-`Representation.card_inv_mul_sum_char_mul_char_eq_finrank` counts.  It lives here rather than in
-that file because it is the character-theoretic reading, which no other consumer of the invariant
-forms uses.
+What connects the submodule of invariant forms to the character machinery is
+`TauCeti.Representation.invariantFormsEquivIntertwiningMapDual`: an equivalence with a space of
+intertwiners is the shape Mathlib's
+`Representation.card_inv_mul_sum_char_mul_char_eq_finrank` counts.
 
-Three dimension lemmas are proved for an abstract module and applied with that module supplied
-explicitly.  The reason is mechanical: the `AddCommMonoid` structure on a space of bilinear forms
-is the one on linear maps, and asking the elaborator to solve for an `AddCommGroup` structure
-inducing it does not terminate quickly.
+The dimension lemmas used below are stated for an abstract module and applied with that module
+supplied explicitly.  The reason is mechanical: the `AddCommMonoid` structure on a space of
+bilinear forms is the one on linear maps, and asking the elaborator to solve for an `AddCommGroup`
+structure inducing it does not terminate quickly.
 
 ## References
 
@@ -110,57 +106,6 @@ namespace TauCeti
 namespace Representation
 
 open LinearMap (BilinForm)
-
-/-! ### The symmetric and the alternating invariant forms -/
-
-section Submodules
-
-variable [Field k] [Group G] [AddCommGroup V] [Module k V] {ρ : Representation k G V}
-  {B : BilinForm k V}
-
-/-- The **invariant symmetric** bilinear forms of `ρ`, as a submodule of all bilinear forms. -/
-def symmetricInvariantForms (ρ : Representation k G V) : Submodule k (BilinForm k V) where
-  carrier := {B | IsInvariantForm ρ B ∧ B.IsSymm}
-  zero_mem' := ⟨isInvariantForm_zero, LinearMap.BilinForm.isSymm_zero⟩
-  add_mem' hB hC := ⟨hB.1.add hC.1, hB.2.add hC.2⟩
-  smul_mem' c _ hB := ⟨hB.1.smul c, hB.2.smul c⟩
-
-/-- The **invariant alternating** bilinear forms of `ρ`, as a submodule of all bilinear forms. -/
-def alternatingInvariantForms (ρ : Representation k G V) : Submodule k (BilinForm k V) where
-  carrier := {B | IsInvariantForm ρ B ∧ B.IsAlt}
-  zero_mem' := ⟨isInvariantForm_zero, LinearMap.BilinForm.isAlt_zero⟩
-  add_mem' hB hC := ⟨hB.1.add hC.1, hB.2.add hC.2⟩
-  smul_mem' c _ hB := ⟨hB.1.smul c, hB.2.smul c⟩
-
-@[simp]
-theorem mem_symmetricInvariantForms :
-    B ∈ symmetricInvariantForms ρ ↔ IsInvariantForm ρ B ∧ B.IsSymm := Iff.rfl
-
-@[simp]
-theorem mem_alternatingInvariantForms :
-    B ∈ alternatingInvariantForms ρ ↔ IsInvariantForm ρ B ∧ B.IsAlt := Iff.rfl
-
-theorem symmetricInvariantForms_le (ρ : Representation k G V) :
-    symmetricInvariantForms ρ ≤ invariantForms ρ :=
-  fun _ hB => mem_invariantForms.mpr hB.1
-
-theorem alternatingInvariantForms_le (ρ : Representation k G V) :
-    alternatingInvariantForms ρ ≤ invariantForms ρ :=
-  fun _ hB => mem_invariantForms.mpr hB.1
-
-/-- Away from characteristic two, a form cannot be both symmetric and alternating, so the two
-invariant subspaces meet only in `0`. -/
-theorem symmetricInvariantForms_inf_alternatingInvariantForms (h2 : (2 : k) ≠ 0)
-    (ρ : Representation k G V) :
-    symmetricInvariantForms ρ ⊓ alternatingInvariantForms ρ = ⊥ := by
-  refine le_antisymm (fun B hB => ?_) bot_le
-  refine Submodule.mem_bot k |>.mpr (LinearMap.ext fun x => LinearMap.ext fun y => ?_)
-  have hsymm : B x y = B y x := hB.1.2.eq x y
-  have halt : -B x y = B y x := hB.2.2.neg_eq x y
-  have hzero : (2 : k) * B x y = 0 := by linear_combination hsymm - halt
-  simpa using (mul_eq_zero.mp hzero).resolve_left h2
-
-end Submodules
 
 /-! ### Dimension helpers on a space of bilinear forms -/
 
@@ -240,6 +185,9 @@ theorem isAlt_ofExteriorSquareDual (ψ : Module.Dual k (⋀[k]^2 V)) :
     (exteriorPower.ιMulti k 2).map_eq_zero_of_eq ![x, x] (i := 0) (j := 1) (by simp) (by decide)
   simp [hzero]
 
+/-- **A functional on the symmetric square is determined by the form it gives.** The pure tensors
+`tprod ![x, y]` span the symmetric square, and the values of the form are exactly the values of the
+functional on those, so a functional whose form vanishes vanishes on a spanning set. -/
 theorem ofSymmetricSquareDual_injective :
     Function.Injective (ofSymmetricSquareDual (k := k) (V := V)) := by
   refine (injective_iff_map_eq_zero _).mpr fun ψ hψ => ?_
@@ -249,6 +197,9 @@ theorem ofSymmetricSquareDual_injective :
   have := congrArg (fun B : BilinForm k V => B (f 0) (f 1)) hψ
   simpa [hf.symm] using this
 
+/-- **A functional on the exterior square is determined by the form it gives.** The wedges
+`ιMulti ![x, y]` span the exterior square, and the values of the form are exactly the values of the
+functional on those, so a functional whose form vanishes vanishes on a spanning set. -/
 theorem ofExteriorSquareDual_injective :
     Function.Injective (ofExteriorSquareDual (k := k) (V := V)) := by
   refine (injective_iff_map_eq_zero _).mpr fun ψ hψ => ?_
@@ -271,7 +222,8 @@ variable (ρ : Representation k G V)
 theorem ofSymmetricSquareDual_mem_symmetricInvariantForms {ψ : Module.Dual k (Sym[k]^2V)}
     (hψ : ψ ∈ ((ρ.symmetricPower 2).dual).invariants) :
     ofSymmetricSquareDual ψ ∈ symmetricInvariantForms ρ := by
-  refine ⟨isInvariantForm_iff.mpr fun g x y => ?_, isSymm_ofSymmetricSquareDual ψ⟩
+  refine mem_symmetricInvariantForms.mpr
+    ⟨isInvariantForm_iff.mpr fun g x y => ?_, isSymm_ofSymmetricSquareDual ψ⟩
   have hvec : (fun i => ρ g (![x, y] i)) = ![ρ g x, ρ g y] := by
     funext i; fin_cases i <;> simp
   simp only [ofSymmetricSquareDual_apply]
@@ -282,7 +234,8 @@ theorem ofSymmetricSquareDual_mem_symmetricInvariantForms {ψ : Module.Dual k (S
 theorem ofExteriorSquareDual_mem_alternatingInvariantForms {ψ : Module.Dual k (⋀[k]^2 V)}
     (hψ : ψ ∈ ((ρ.exteriorPower 2).dual).invariants) :
     ofExteriorSquareDual ψ ∈ alternatingInvariantForms ρ := by
-  refine ⟨isInvariantForm_iff.mpr fun g x y => ?_, isAlt_ofExteriorSquareDual ψ⟩
+  refine mem_alternatingInvariantForms.mpr
+    ⟨isInvariantForm_iff.mpr fun g x y => ?_, isAlt_ofExteriorSquareDual ψ⟩
   have hvec : (ρ g ∘ ![x, y]) = ![ρ g x, ρ g y] := by
     funext i; fin_cases i <;> simp
   simp only [ofExteriorSquareDual_apply]
@@ -296,21 +249,6 @@ end Squares
 section Counting
 
 variable [Field k] [Group G] [AddCommGroup V] [Module k V]
-
-/-- **The invariant forms of `ρ` are the intertwiners from `ρ` to its dual.**  This is the bundled
-form of `TauCeti.Representation.isInvariantForm_iff_isIntertwiningMap`, and it is what puts the
-invariant forms in reach of the character machinery, which counts intertwiners. -/
-noncomputable def invariantFormsEquivIntertwiningMapDual (ρ : Representation k G V) :
-    invariantForms ρ ≃ₗ[k] Representation.IntertwiningMap ρ ρ.dual where
-  toFun B := (B : BilinForm k V).intertwiningMap_of_isIntertwiningMap ρ ρ.dual
-    ((isInvariantForm_iff_isIntertwiningMap ρ _).mp (mem_invariantForms.mp B.2)).isIntertwining
-  invFun f := ⟨f.toLinearMap, mem_invariantForms.mpr
-    ((isInvariantForm_iff_isIntertwiningMap ρ _).mpr ⟨f.isIntertwining⟩)⟩
-  map_add' _ _ := Representation.IntertwiningMap.ext_iff.mpr rfl
-  map_smul' _ _ := Representation.IntertwiningMap.ext_iff.mpr rfl
-  left_inv _ := rfl
-  right_inv _ := rfl
-
 variable [FiniteDimensional k V] [Finite G] [CharZero k]
 
 /-- **The dual of a representation has as many invariants as the representation.** Both counts
@@ -457,7 +395,7 @@ theorem frobeniusSchurIndicator_eq_one_of_isSymm (hB : IsInvariantForm ρ B) (hB
     exact finrank_span_singleton (K := k) (V := BilinForm k V) hB0
   have hle : 1 ≤ finrank k (symmetricInvariantForms ρ) :=
     Submodule.one_le_finrank_iff (R := k) (M := BilinForm k V) |>.mpr
-      ((Submodule.ne_bot_iff _).mpr ⟨B, ⟨hB, hsymm⟩, hB0⟩)
+      ((Submodule.ne_bot_iff _).mpr ⟨B, mem_symmetricInvariantForms.mpr ⟨hB, hsymm⟩, hB0⟩)
   have hadd := finrank_symmetricInvariantForms_add_finrank_alternatingInvariantForms ρ
   have hs : finrank k (symmetricInvariantForms ρ) = 1 := by omega
   have ha : finrank k (alternatingInvariantForms ρ) = 0 := by omega
@@ -474,7 +412,7 @@ theorem frobeniusSchurIndicator_eq_neg_one_of_isAlt (hB : IsInvariantForm ρ B) 
     exact finrank_span_singleton (K := k) (V := BilinForm k V) hB0
   have hle : 1 ≤ finrank k (alternatingInvariantForms ρ) :=
     Submodule.one_le_finrank_iff (R := k) (M := BilinForm k V) |>.mpr
-      ((Submodule.ne_bot_iff _).mpr ⟨B, ⟨hB, halt⟩, hB0⟩)
+      ((Submodule.ne_bot_iff _).mpr ⟨B, mem_alternatingInvariantForms.mpr ⟨hB, halt⟩, hB0⟩)
   have hadd := finrank_symmetricInvariantForms_add_finrank_alternatingInvariantForms ρ
   have hs : finrank k (symmetricInvariantForms ρ) = 0 := by omega
   have ha : finrank k (alternatingInvariantForms ρ) = 1 := by omega
