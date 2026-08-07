@@ -91,29 +91,6 @@ theorem continuous_coeff_prod_X_sub_C (s : Finset ι) (k : ℕ) :
 
 end Continuity
 
-/-! ### The chart read on ordered tuples
-
-These two lemmas are pure algebra; they live here because this is the first file in which both
-`TauCeti.Sym.ofFn` and `TauCeti.Sym.toMonic` are in scope. -/
-
-section Algebra
-
-variable {R K : Type*} [CommRing R] [Nontrivial R] [Field K] [IsAlgClosed K] {n : ℕ}
-
-/-- The monic polynomial of the unordered tuple underlying `f : Fin n → R` is the product of the
-corresponding linear factors. -/
-theorem toMonic_ofFn (f : Fin n → R) : (toMonic (ofFn f) : R[X]) = ∏ i, (X - C (f i)) := by
-  rw [coe_toMonic, coe_ofFn]
-  simp [← List.prod_ofFn, List.map_ofFn, Function.comp_def]
-
-/-- The chart of an unordered tuple presented by `f : Fin n → K` reads off the coefficients of the
-product of the linear factors of `f`. -/
-theorem coeffEquiv_ofFn_apply (f : Fin n → K) (i : Fin n) :
-    coeffEquiv K n (ofFn f) i = (∏ j, (X - C (f j))).coeff i := by
-  rw [coeffEquiv_apply_eq_coeff, toMonic_ofFn]
-
-end Algebra
-
 section Chart
 
 variable {K : Type*} [NormedField K] [IsAlgClosed K] {n : ℕ}
