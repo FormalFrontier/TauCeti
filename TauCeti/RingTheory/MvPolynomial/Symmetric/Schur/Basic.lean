@@ -62,6 +62,8 @@ involution, a separate target of the Schur-Weyl roadmap, and none of the results
 * `TauCeti.coeff_diagramSchurPoly`: the coefficients of a Schur polynomial are the images of the
   Kostka numbers, `TauCeti.coeff_schurPoly` is its form in an arbitrary finite alphabet, and
   `TauCeti.coeff_schurPoly_partWeight` reads it at the exponent of a partition.
+* `TauCeti.eval_diagramSchurPoly`: evaluating a Schur polynomial sums the monomials of its
+  tableaux.
 * `TauCeti.diagramSchurPoly_eq_zero_iff` and `TauCeti.schurPoly_eq_zero_iff`: a Schur polynomial
   vanishes exactly for a shape taller than its alphabet.
 * `TauCeti.isHomogeneous_diagramSchurPoly` and `TauCeti.isHomogeneous_schurPoly`: a Schur
@@ -181,6 +183,17 @@ theorem coeff_diagramSchurPoly (d : Fin N →₀ ℕ) :
   simp only [coeff_monomial]
   rw [Finset.sum_boole, ← BoundedSSYT.card_weight_eq d, Nat.card_eq_fintype_card,
     Fintype.card_subtype]
+
+/-- **A Schur polynomial is the generating function of its tableaux**, in the literal sense: at any
+family of values it is the sum, over the bounded tableaux of its shape, of the product of the
+values raised to the multiplicities of the corresponding letters. -/
+theorem eval_diagramSchurPoly (y : Fin N → R) :
+    eval y (diagramSchurPoly N R μ)
+      = ∑ T : BoundedSSYT N μ, ∏ i, y i ^ BoundedSSYT.weight T i := by
+  rw [diagramSchurPoly, map_sum]
+  refine Finset.sum_congr rfl fun T _ => ?_
+  rw [eval_monomial, one_mul]
+  exact Finsupp.prod_fintype _ _ fun _ => pow_zero _
 
 /-- Scalars pass through a Schur polynomial: every coefficient is the cast of a natural number,
 namely of a Kostka number, and casts of natural numbers are preserved by semiring homomorphisms. -/
