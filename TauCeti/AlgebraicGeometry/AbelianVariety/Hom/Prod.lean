@@ -150,7 +150,6 @@ the decomposition of a homomorphism into a product is a natural transformation i
 
 /-- Naturality of the equivalence in the source: precomposition by `h : D ⟶ C` corresponds to
 componentwise precomposition by `h`. -/
-@[simp]
 lemma prodMulEquiv_naturality (h : D ⟶ C) (f : C ⟶ prod A B) :
     prodMulEquiv A B D (h ≫ f) =
       (h ≫ (prodMulEquiv A B C f).1, h ≫ (prodMulEquiv A B C f).2) := by
@@ -159,7 +158,6 @@ lemma prodMulEquiv_naturality (h : D ⟶ C) (f : C ⟶ prod A B) :
 /-- The `prod.lift` form of naturality: pulling a precomposition through pairing distributes into
 each argument. This is the categorical `prod.comp_lift` re-stated for direct symmetry with
 `prodMulEquiv_naturality`. -/
-@[simp]
 lemma prodMulEquiv_symm_naturality (h : D ⟶ C) (p : (C ⟶ A) × (C ⟶ B)) :
     (prodMulEquiv A B D).symm (h ≫ p.1, h ≫ p.2) =
       h ≫ (prodMulEquiv A B C).symm p := by
