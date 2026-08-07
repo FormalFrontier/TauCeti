@@ -24,6 +24,8 @@ the arrows of `Reflect V i`, by `TauCeti.Quiver.hom_reflectAt_eq_hom_reflect` �
 
 ## Main results
 
+* `TauCeti.Quiver.reflectAt_reflectAt`: reflecting twice at the same vertex returns the quiver
+  structure it started from.
 * `TauCeti.Quiver.hom_reflectList` and `TauCeti.Quiver.hom_reflectList_of_not_iff`: reflecting
   along a repetition-free list reverses exactly the arrows joining a vertex of the list to a
   vertex outside it.
@@ -74,6 +76,25 @@ theorem hom_reflectAt (q : _root_.Quiver.{v} V) (i a b : V) :
 theorem hom_reflectAt_eq_hom_reflect [q : _root_.Quiver.{v} V] (i a b : V) :
     @_root_.Quiver.Hom V (reflectAt q i) a b = @_root_.Quiver.Hom (Reflect V i) _ a b :=
   (hom_reflectAt q i a b).trans (hom_reflect i a b).symm
+
+/-- The arrow-type form of `TauCeti.Quiver.reflectAt_reflectAt`: an arrow incident to `i` is
+reversed twice, and an arrow avoiding `i` is left alone twice. -/
+private theorem hom_reflectAt_reflectAt (q : _root_.Quiver.{v} V) (i a b : V) :
+    @_root_.Quiver.Hom V (reflectAt (reflectAt q i) i) a b = @_root_.Quiver.Hom V q a b := by
+  rw [hom_reflectAt]
+  rcases eq_or_ne a i with rfl | ha
+  · rw [@reflectHom_left V (reflectAt q a) a b, hom_reflectAt, @reflectHom_right V q a b]
+  · rcases eq_or_ne b i with rfl | hb
+    · rw [@reflectHom_right V (reflectAt q b) b a, hom_reflectAt, @reflectHom_left V q b a]
+    · rw [@reflectHom_of_ne_of_ne V (reflectAt q i) i a b ha hb, hom_reflectAt,
+        @reflectHom_of_ne_of_ne V q i a b ha hb]
+
+/-- **Reflection at a vertex is an involution.** Reflecting twice at the same vertex reverses the
+arrows meeting it twice, returning the quiver structure it started from. -/
+@[simp]
+theorem reflectAt_reflectAt (q : _root_.Quiver.{v} V) (i : V) :
+    reflectAt (reflectAt q i) i = q :=
+  congrArg _root_.Quiver.mk (funext fun a ↦ funext fun b ↦ hom_reflectAt_reflectAt q i a b)
 
 /-! ### Reflecting along a list of vertices -/
 
