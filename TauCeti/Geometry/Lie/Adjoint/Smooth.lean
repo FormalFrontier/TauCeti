@@ -116,5 +116,11 @@ theorem contMDiff_tangentAd_apply :
   change @id E (tangentAd (I := I) p.1 v) =
     @id E ((mfderiv I I (conjDiffeomorph (I := I) (n := 3) p.1) 1) v)
   rw [tangentAd_apply, adjointContinuousLinearMap_apply]
+  have hconj :
+      (conjDiffeomorph (I := I) (n := 1) p.1 : G → G) =
+        (conjDiffeomorph (I := I) (n := 3) p.1 : G → G) := by
+    funext x
+    simp only [conjDiffeomorph_apply]
+  exact congrArg (fun L : E →L[ℝ] E ↦ @id E (L v)) (mfderiv_congr hconj)
 
 end TauCeti.Lie
