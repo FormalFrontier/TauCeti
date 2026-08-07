@@ -4,8 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.AlgebraicGeometry.FinitelyPresentedSheaf.Basic
 public import Mathlib.Algebra.Category.Grp.AB
+public import Mathlib.AlgebraicGeometry.Modules.Sheaf
 public import Mathlib.CategoryTheory.Abelian.GrothendieckAxioms.Sheaf
 public import Mathlib.CategoryTheory.Abelian.GrothendieckCategory.HasExt
 public import Mathlib.CategoryTheory.Sites.SheafCohomology.Basic
@@ -23,13 +23,14 @@ For a scheme `X` and `M : X.Modules`, the main declarations are:
 * `Scheme.Modules.cohomologyMap f i`, the map on cohomology induced by a morphism of
   `𝒪_X`-modules;
 * `Scheme.Modules.cohomologyFunctor X i`, functoriality in the coefficient sheaf;
-* `Scheme.Modules.cohomologyIso e i`, invariance under an isomorphism of coefficient sheaves;
+* `Scheme.Modules.cohomologyEquivOfIso e i`, invariance under an isomorphism of coefficient
+  sheaves;
 * `Scheme.Modules.cohomologyZeroEquiv`, the canonical equivalence
   `H⁰(X, M) ≃+ Γ(X, M)` with global sections.
 
 The construction is stated for every sheaf of modules, which is the natural generality of sheaf
-cohomology. In particular it applies to `FinitelyPresentedSheaf X` through its underlying object,
-and hence supplies the `Hⁱ(X, ℱ)` used for coherent sheaves in
+cohomology. In particular it applies to finitely presented sheaves through their underlying
+objects, and hence supplies the `Hⁱ(X, ℱ)` used for coherent sheaves in
 `TauCetiRoadmap/JacobianChallenge/README.md`, Layer B. Finite-dimensionality for proper schemes,
 vanishing on curves, and the comparison with Čech cohomology remain later Layer B work.
 
@@ -107,25 +108,17 @@ lemma cohomologyMap_add_apply {M N : X.Modules} (f g : M ⟶ N) (i : ℕ)
     ((_root_.SheafOfModules.toSheaf X.ringCatSheaf).map f)
     ((_root_.SheafOfModules.toSheaf X.ringCatSheaf).map g) x
 
-/-- The zero morphism induces the zero map on cohomology. -/
-@[simp]
-lemma cohomologyMap_zero_apply (M N : X.Modules) (i : ℕ) (x : cohomology M i) :
-    cohomologyMap (0 : M ⟶ N) i x = 0 := by
-  have h := cohomologyMap_add_apply (0 : M ⟶ N) (0 : M ⟶ N) i x
-  simp only [zero_add] at h
-  apply add_left_cancel (a := cohomologyMap (0 : M ⟶ N) i x)
-  simpa only [add_zero] using h.symm
-
 /-- Degree-`i` cohomology as an additive functor from sheaves of modules to abelian groups. -/
 abbrev cohomologyFunctor (X : Scheme.{u}) (i : ℕ) : X.Modules ⥤ AddCommGrpCat.{u} :=
   _root_.SheafOfModules.toSheaf X.ringCatSheaf ⋙
     CategoryTheory.Sheaf.functorH.{u} _ i
 
-instance (X : Scheme.{u}) (i : ℕ) : (cohomologyFunctor X i).Additive where
-  map_add := by
-    intro M N f g
-    ext x
-    exact cohomologyMap_add_apply f g i x
+/-- Degreewise cohomology is additive. This is Mathlib's instance for a composite of additive
+functors; it has to be restated because inference does not see through the `X.Modules` type
+synonym. -/
+instance (X : Scheme.{u}) (i : ℕ) : (cohomologyFunctor X i).Additive :=
+  inferInstanceAs ((_root_.SheafOfModules.toSheaf X.ringCatSheaf ⋙
+    CategoryTheory.Sheaf.functorH.{u} _ i).Additive)
 
 /-- The morphism of the cohomology functor is `cohomologyMap`. -/
 @[simp]
@@ -133,24 +126,35 @@ lemma cohomologyFunctor_map_hom {M N : X.Modules} (f : M ⟶ N) (i : ℕ) :
     ((cohomologyFunctor X i).map f).hom = cohomologyMap f i :=
   (rfl)
 
+/-- The zero morphism induces the zero map on cohomology. -/
+@[simp]
+lemma cohomologyMap_zero_apply (M N : X.Modules) (i : ℕ) (x : cohomology M i) :
+    cohomologyMap (0 : M ⟶ N) i x = 0 := by
+  rw [← cohomologyFunctor_map_hom, (cohomologyFunctor X i).map_zero]
+  rfl
+
 /-- Isomorphic sheaves of modules have canonically additively equivalent cohomology groups. -/
-def cohomologyIso {M N : X.Modules} (e : M ≅ N) (i : ℕ) :
+def cohomologyEquivOfIso {M N : X.Modules} (e : M ≅ N) (i : ℕ) :
     cohomology M i ≃+ cohomology N i :=
   ((cohomologyFunctor X i).mapIso e).addCommGroupIsoToAddEquiv
 
-/-- The forward map of `cohomologyIso` is the cohomology map induced by the forward morphism. -/
+/-- The forward map of `cohomologyEquivOfIso` is the cohomology map induced by the forward
+morphism. -/
 @[simp]
-lemma cohomologyIso_apply {M N : X.Modules} (e : M ≅ N) (i : ℕ)
+lemma cohomologyEquivOfIso_apply {M N : X.Modules} (e : M ≅ N) (i : ℕ)
     (x : cohomology M i) :
-    cohomologyIso e i x = cohomologyMap e.hom i x :=
-  (rfl)
+    cohomologyEquivOfIso e i x = cohomologyMap e.hom i x := by
+  rw [← cohomologyFunctor_map_hom, ← Functor.mapIso_hom]
+  exact ((cohomologyFunctor X i).mapIso e).addCommGroupIsoToAddEquiv_apply x
 
-/-- The inverse of `cohomologyIso` is the cohomology map induced by the inverse morphism. -/
+/-- The inverse of `cohomologyEquivOfIso` is the cohomology map induced by the inverse
+morphism. -/
 @[simp]
-lemma cohomologyIso_symm_apply {M N : X.Modules} (e : M ≅ N) (i : ℕ)
+lemma cohomologyEquivOfIso_symm_apply {M N : X.Modules} (e : M ≅ N) (i : ℕ)
     (x : cohomology N i) :
-    (cohomologyIso e i).symm x = cohomologyMap e.inv i x :=
-  (rfl)
+    (cohomologyEquivOfIso e i).symm x = cohomologyMap e.inv i x := by
+  rw [← cohomologyFunctor_map_hom, ← Functor.mapIso_inv]
+  exact ((cohomologyFunctor X i).mapIso e).addCommGroupIsoToAddEquiv_symm_apply x
 
 /-- Zeroth cohomology is canonically equivalent to the group of global sections. -/
 def cohomologyZeroEquiv (M : X.Modules) :
