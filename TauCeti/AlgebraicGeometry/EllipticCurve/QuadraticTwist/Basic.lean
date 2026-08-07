@@ -59,10 +59,10 @@ section CommRing
 variable {A : Type*} [CommRing A] (E : WeierstrassCurve A)
 
 /-- The quadratic twist of `E` by parameters `t` and `n`, interpreted as the trace and norm of a
-quadratic element. The discriminant of its minimal polynomial is `t ^ 2 - 4 * n`.
+quadratic element. The discriminant of its defining quadratic polynomial is `t ^ 2 - 4 * n`.
 
-This formula is valid in every characteristic. In characteristic different from two, setting
-`t = 0` recovers the usual square-class twist after a harmless square rescaling. In
+This formula is valid in every characteristic. Over a field of characteristic different from two,
+setting `t = 0` recovers the usual square-class twist after a harmless square rescaling. In
 characteristic two it also captures Artin–Schreier twists. -/
 def quadraticTwistOf (t n : A) : WeierstrassCurve A where
   a₁ := t * E.a₁
