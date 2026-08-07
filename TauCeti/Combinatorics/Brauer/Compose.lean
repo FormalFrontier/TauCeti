@@ -286,7 +286,6 @@ the middle point `a` reached as a top point of the lower diagram `D₂`, so the 
 the arc of `D₂` at `Sum.inr a`. The value is `Sum.inl y` when that arc leaves the stack at the
 outer point `y`, and `Sum.inr t` when it crosses the middle boundary again, at the middle state
 `t`. -/
-@[expose]
 def stackStep (D₁ D₂ : BrauerDiagram k) : Fin k ⊕ Fin k → (Fin k ⊕ Fin k) ⊕ (Fin k ⊕ Fin k)
   | Sum.inl a =>
     (D₁.val (Sum.inl a)).elim (fun a' => Sum.inr (Sum.inr a')) fun j => Sum.inl (Sum.inr j)
@@ -298,12 +297,39 @@ its first arc, an arc of `D₂` at a bottom point `x = Sum.inl i` and an arc of 
 `x = Sum.inr j`. The value is `Sum.inl y` when that arc already leaves the stack, at the outer
 point `y`, and `Sum.inr s` when it crosses the middle boundary, at the middle state `s` of
 `TauCeti.stackStep`. -/
-@[expose]
 def stackStart (D₁ D₂ : BrauerDiagram k) : Fin k ⊕ Fin k → (Fin k ⊕ Fin k) ⊕ (Fin k ⊕ Fin k)
   | Sum.inl i =>
     (D₂.val (Sum.inl i)).elim (fun i' => Sum.inl (Sum.inl i')) fun a => Sum.inr (Sum.inl a)
   | Sum.inr j =>
     (D₁.val (Sum.inr j)).elim (fun a => Sum.inr (Sum.inr a)) fun j' => Sum.inl (Sum.inr j')
+
+/-- A strand at the middle point `a`, about to run up through `D₁`, follows the arc of `D₁`
+at `Sum.inl a`. -/
+@[simp]
+theorem stackStep_inl (D₁ D₂ : BrauerDiagram k) (a : Fin k) : stackStep D₁ D₂ (Sum.inl a) =
+    (D₁.val (Sum.inl a)).elim (fun a' => Sum.inr (Sum.inr a')) fun j => Sum.inl (Sum.inr j) :=
+  (rfl)
+
+/-- A strand at the middle point `a`, about to run down through `D₂`, follows the arc of `D₂`
+at `Sum.inr a`. -/
+@[simp]
+theorem stackStep_inr (D₁ D₂ : BrauerDiagram k) (a : Fin k) : stackStep D₁ D₂ (Sum.inr a) =
+    (D₂.val (Sum.inr a)).elim (fun i => Sum.inl (Sum.inl i)) fun a' => Sum.inr (Sum.inl a') :=
+  (rfl)
+
+/-- A strand starting at the bottom point `i` of the stack follows the arc of `D₂` at
+`Sum.inl i`. -/
+@[simp]
+theorem stackStart_inl (D₁ D₂ : BrauerDiagram k) (i : Fin k) : stackStart D₁ D₂ (Sum.inl i) =
+    (D₂.val (Sum.inl i)).elim (fun i' => Sum.inl (Sum.inl i')) fun a => Sum.inr (Sum.inl a) :=
+  (rfl)
+
+/-- A strand starting at the top point `j` of the stack follows the arc of `D₁` at
+`Sum.inr j`. -/
+@[simp]
+theorem stackStart_inr (D₁ D₂ : BrauerDiagram k) (j : Fin k) : stackStart D₁ D₂ (Sum.inr j) =
+    (D₁.val (Sum.inr j)).elim (fun a => Sum.inr (Sum.inr a)) fun j' => Sum.inl (Sum.inr j') :=
+  (rfl)
 
 namespace BrauerDiagram
 
@@ -319,18 +345,18 @@ private theorem walk_inl_eq (x : Fin k ⊕ Fin k) :
     walk D₁ D₂ (Sum.inl x) = (stackStart D₁ D₂ x).elim Sum.inl fun s => Sum.inr s.swap := by
   rcases x with i | j
   · rcases h : D₂.val (Sum.inl i) with i' | a <;>
-      simp [walk_inl_inl, stackStart, h, glue, lowerPt]
+      simp [walk_inl_inl, stackStart_inl, h, glue, lowerPt]
   · rcases h : D₁.val (Sum.inr j) with a | j' <;>
-      simp [walk_inl_inr, stackStart, h, glue, upperPt]
+      simp [walk_inl_inr, stackStart_inr, h, glue, upperPt]
 
 /-- A later step of the walk, read off the next arc of the strand. -/
 private theorem walk_inr_swap (s : Fin k ⊕ Fin k) :
     walk D₁ D₂ (Sum.inr s.swap) = (stackStep D₁ D₂ s).elim Sum.inl fun t => Sum.inr t.swap := by
   rcases s with a | a
   · rcases h : D₁.val (Sum.inl a) with a' | j <;>
-      simp [walk_inr_inr, stackStep, h, glue, upperPt]
+      simp [walk_inr_inr, stackStep_inl, h, glue, upperPt]
   · rcases h : D₂.val (Sum.inr a) with i | a' <;>
-      simp [walk_inr_inl, stackStep, h, glue, lowerPt]
+      simp [walk_inr_inl, stackStep_inr, h, glue, lowerPt]
 
 /-- A strand whose first arc crosses the middle boundary at the middle state `s` is walked from
 `s` on. -/
