@@ -9,7 +9,7 @@ public import Mathlib.FieldTheory.Finite.Basic
 public import Mathlib.NumberTheory.PrimesCongruentOne
 public import Mathlib.RepresentationTheory.Maschke
 public import Mathlib.RingTheory.Polynomial.Cyclotomic.Basic
-public import TauCeti.LinearAlgebra.End.FiniteOrder
+public import TauCeti.RepresentationTheory.CharacterTable.Values
 public import TauCeti.RingTheory.RootsOfUnity.PrimitiveRoots
 
 /-!
@@ -31,8 +31,8 @@ determined by its residue modulo `p`.
 
 Such primes always exist: there are arbitrarily large primes congruent to `1` modulo `e`
 (`Nat.exists_prime_gt_modEq_one`, itself a cyclotomic-polynomial argument), and any of them beyond
-`|G|` is good. The existence proof is not part of any computation; a concrete group supplies a
-concrete prime, as the dihedral instances in
+`max |G| (2⌊√|G|⌋)` is good. The existence proof is not part of any computation; a concrete group
+supplies a concrete prime, as the dihedral instances in
 `TauCeti/RepresentationTheory/CharacterTable/Dixon/Dihedral.lean` do.
 
 ## Main definitions
@@ -107,6 +107,11 @@ theorem fact_prime (hp : IsGoodDixonPrime G p) : Fact p.Prime := ⟨hp.prime⟩
 
 theorem one_lt (hp : IsGoodDixonPrime G p) : 1 < p := hp.prime.one_lt
 
+/-- **A group with a good Dixon prime is finite.** Every natural number divides `0`, so `p ∤ |G|`
+already rules out `Nat.card G = 0`; finiteness need not be assumed separately. -/
+theorem finite (hp : IsGoodDixonPrime G p) : Finite G :=
+  Nat.finite_of_card_ne_zero fun h => hp.not_dvd_natCard (h ▸ dvd_zero p)
+
 /-! #### The exponent condition -/
 
 /-- Every element of `G` is a `(p - 1)`-st root of unity: this is the reformulation of
@@ -123,7 +128,7 @@ over `ZMod p` are already in `ZMod p`. -/
 theorem exists_isPrimitiveRoot_of_dvd_exponent (hp : IsGoodDixonPrime G p) {d : ℕ}
     (hd : d ∣ Monoid.exponent G) : ∃ ζ : ZMod p, IsPrimitiveRoot ζ d := by
   have := hp.fact_prime
-  refine exists_isPrimitiveRoot_of_dvd_card_units (ZMod p) (hd.trans ?_)
+  refine exists_isPrimitiveRoot_of_dvd_natCard_units (ZMod p) (hd.trans ?_)
   rw [Nat.card_eq_fintype_card, ZMod.card_units p]
   exact hp.exponent_dvd
 
@@ -144,9 +149,10 @@ theorem neZero_natCard (hp : IsGoodDixonPrime G p) : NeZero ((Nat.card G : ZMod 
 
 /-- **Maschke's theorem at a good Dixon prime**: the modular group algebra `ZMod p [G]` is a
 semisimple ring. -/
-theorem isSemisimpleRing [Finite G] (hp : IsGoodDixonPrime G p) :
+theorem isSemisimpleRing (hp : IsGoodDixonPrime G p) :
     IsSemisimpleRing (MonoidAlgebra (ZMod p) G) := by
   have := hp.fact_prime
+  have := hp.finite
   have := hp.neZero_natCard
   infer_instance
 
@@ -154,9 +160,10 @@ theorem isSemisimpleRing [Finite G] (hp : IsGoodDixonPrime G p) :
 
 /-- **`X ^ e - 1` splits over `ZMod p`**, `e` the exponent of `G`: this is the sense in which a
 good Dixon prime makes `ZMod p` a substitute for `ℂ`. -/
-theorem splits_X_pow_exponent_sub_one [Finite G] (hp : IsGoodDixonPrime G p) :
+theorem splits_X_pow_exponent_sub_one (hp : IsGoodDixonPrime G p) :
     (X ^ Monoid.exponent G - 1 : (ZMod p)[X]).Splits := by
   have := hp.fact_prime
+  have := hp.finite
   obtain ⟨ζ, hζ⟩ := hp.exists_isPrimitiveRoot
   rw [X_pow_sub_one_eq_prod (Nat.pos_of_ne_zero Monoid.exponent_ne_zero_of_finite) hζ]
   exact Splits.prod fun _ _ => Splits.X_sub_C _
@@ -217,8 +224,8 @@ theorem natCast_orderOf_ne_zero (hp : IsGoodDixonPrime G p) (g : G) :
 `orderOf g` divides `p - 1` and so is invertible modulo `p`. -/
 theorem isSemisimple_representation_apply (hp : IsGoodDixonPrime G p)
     (ρ : Representation (ZMod p) G V) (g : G) : Module.End.IsSemisimple (ρ g) :=
-  End.isSemisimple_of_pow_eq_one (hp.natCast_orderOf_ne_zero g)
-    (by rw [← map_pow, pow_orderOf_eq_one, map_one])
+  Representation.isSemisimple_of_pow_eq_one ρ (hp.natCast_orderOf_ne_zero g)
+    (pow_orderOf_eq_one g)
 
 end Representation
 
@@ -227,8 +234,9 @@ end IsGoodDixonPrime
 /-! ### Existence -/
 
 /-- **Good Dixon primes exist.** Take a prime congruent to `1` modulo the exponent of `G` and
-larger than `|G|`; there are arbitrarily large such primes. This is a statement about the
-algorithm, not a step in it: a concrete group is handed a concrete prime instead. -/
+larger than `max |G| (2⌊√|G|⌋)`, the second half being Dixon's size bound; there are arbitrarily
+large such primes. This is a statement about the algorithm, not a step in it: a concrete group is
+handed a concrete prime instead. -/
 theorem exists_isGoodDixonPrime (G : Type*) [Group G] [Finite G] :
     ∃ p : ℕ, IsGoodDixonPrime G p := by
   obtain ⟨p, hprime, hgt, hmod⟩ :=
@@ -261,6 +269,7 @@ namespace DixonPrimeData
 variable {G : Type*} [Group G] (d : DixonPrimeData G)
 
 /-- The chosen root has order exactly the exponent of `G`. -/
+@[simp]
 theorem orderOf_root : orderOf d.root = Monoid.exponent G :=
   d.isPrimitiveRoot_root.eq_orderOf.symm
 

@@ -20,7 +20,7 @@ raises that root to the `j`-th power, it raises every `n`-th root of unity to th
 
 ## Main results
 
-* `TauCeti.exists_isPrimitiveRoot_of_dvd_card_units`: a finite field contains a primitive `d`-th
+* `TauCeti.exists_isPrimitiveRoot_of_dvd_natCard_units`: a finite field contains a primitive `d`-th
   root of unity for every `d` dividing the order of its unit group.
 * `TauCeti.IsPrimitiveRoot.map_eq_pow`: a ring endomorphism sending a primitive `n`-th root of
   unity `ζ` to `ζ ^ j` sends every `n`-th root of unity `μ` to `μ ^ j`.
@@ -34,7 +34,7 @@ universe u
 
 /-- A finite field contains a primitive `d`-th root of unity for every `d` dividing the order of
 its unit group, because that unit group is cyclic. -/
-theorem exists_isPrimitiveRoot_of_dvd_card_units (F : Type*) [Field F] [Finite F] {d : ℕ}
+theorem exists_isPrimitiveRoot_of_dvd_natCard_units (F : Type*) [Field F] [Finite F] {d : ℕ}
     (hd : d ∣ Nat.card Fˣ) : ∃ ζ : F, IsPrimitiveRoot ζ d := by
   obtain ⟨u, hu⟩ := IsCyclic.exists_ofOrder_eq_natCard (α := Fˣ)
   have hcard : Nat.card Fˣ ≠ 0 := Nat.card_pos.ne'
