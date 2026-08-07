@@ -17,7 +17,7 @@ point. It is the analytic factor in the differential of a Lie-group exponential 
 
 * `oneSubExpNegDivSelf`: the series `∑ n, (n + 1)!⁻¹ • (-a)ⁿ`.
 * `summable_oneSubExpNegDivSelf`: the series is summable in a complete normed algebra.
-* `oneSubExpNegDivSelf_commute`: the series commutes with its argument.
+* `commute_oneSubExpNegDivSelf`: the series commutes with its argument.
 * `mul_oneSubExpNegDivSelf`: multiplying the series by `a` gives `1 - exp (-a)`.
 * `oneSubExpNegDivSelf_mul`: the corresponding right-multiplication identity.
 
