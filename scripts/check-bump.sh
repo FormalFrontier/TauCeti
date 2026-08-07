@@ -18,6 +18,8 @@
 #      inputRev's history* — a genuine forward move on the nominated branch (via
 #      the GitHub compare API; the SHA requirement makes the compared revs
 #      immutable, so what we validate is exactly what Lake will resolve and build).
+#      Its new rev is also one upstream CI actually built, so its oleans are in the
+#      cache (see step 2b).
 #   3. The PR manifest's package set, MINUS mathlib, is EXACTLY mathlib's own
 #      lake-manifest at the new rev, field-for-field (type/url/rev/inputRev) — no
 #      package added, removed, renamed, retyped (e.g. a `path` dep), duplicated, or
@@ -136,6 +138,26 @@ else
     *) fail "mathlib new rev $ML_REV_P is not on branch '$NOMINATED_BRANCH' (compare status: ${st_branch:-unknown})" ;;
   esac
   echo "bump-guard: mathlib $ML_REV_B -> $ML_REV_P is a forward move on '$NOMINATED_BRANCH'."
+
+  # --- 2b. the new rev is one upstream CI actually built (so its cache exists) --
+  # Being on master is not enough. Mathlib lands in batches: bors tests a batch and
+  # fast-forwards master over all of its commits, but only the commit it tested gets
+  # built, and only a built commit has its oleans uploaded to the cache. A batch's
+  # intermediate commits are perfectly good ancestors carrying no cache at all, so
+  # pinning to one silently costs every downstream build a full recompile of whatever
+  # that commit invalidated: a rename in a core algebra file is ~1400 modules and about
+  # an hour, on every CI run and every pr-build, until the pin moves again.
+  #
+  # bors stamps exactly the commits it tested, and a batch intermediate carries no
+  # commit status at all, which makes this a clean and cheap test. Requiring it is
+  # conservative in the right direction: a commit whose CI has not finished yet also
+  # has no cache yet, and waiting for the next candidate is what we want.
+  bors_state="$(gh api "repos/$ML_SLUG/commits/$ML_REV_P/status" \
+    --jq 'first(.statuses[] | select(.context == "bors") | .state) // ""' 2>/dev/null)" \
+    || fail "commit status API failed for $ML_SLUG $ML_REV_P"
+  [ "$bors_state" = "success" ] \
+    || fail "mathlib rev $ML_REV_P has no successful 'bors' status (got '${bors_state:-none}'), so upstream CI never built it and its oleans are not in the cache; bump to the tested commit of that batch instead"
+  echo "bump-guard: mathlib $ML_REV_P was built upstream (bors: success), so its cache exists."
 fi
 
 # --- 3. the rest of the manifest is EXACTLY mathlib's own manifest at the new rev
