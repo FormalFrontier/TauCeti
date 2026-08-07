@@ -131,6 +131,8 @@ private theorem conjDiffeomorph_inv (g : G) :
   have h := map_inv (conj (I := I) (n := 1)) g
   simpa only [conj_apply, TauCeti.Diffeomorph.inv_def] using h
 
+/-- The inverse of the derivative of conjugation by `g` is the derivative of conjugation by
+`g⁻¹` at the conjugated point. -/
 theorem inverse_mfderiv_conjugation (g x : G) :
     (mfderiv I I (conjDiffeomorph (I := I) (n := 1) g) x).inverse =
       mfderiv I I (conjDiffeomorph (I := I) (n := 1) g⁻¹)
@@ -150,6 +152,8 @@ theorem inverse_mfderiv_conjugation (g x : G) :
   change mfderiv I I hΦ.localInverse (Φ x) = mfderiv I I Φ.symm (Φ x)
   exact Filter.EventuallyEq.mfderiv_eq (I := I) (I' := I) heq
 
+/-- The derivative of conjugation by `g` transports a left-invariant vector field to the field
+whose value at the identity is the adjoint image. -/
 theorem mfderiv_conjugation_mulInvariantVectorField (g x : G)
     (X : GroupLieAlgebra I G) :
     mfderiv I I (conjDiffeomorph (I := I) (n := 1) g) x
@@ -196,6 +200,8 @@ theorem mpullback_conjugation (g x : G) (V : ∀ y : G, TangentSpace I y) :
     (f' := conjDiffeomorph (I := I) (n := 1) g) (by simp)]
   rfl
 
+/-- Pullback by conjugation by `g⁻¹` sends the left-invariant field of `X` to the
+left-invariant field of the adjoint image of `X`. -/
 theorem mpullback_conjugation_mulInvariantVectorField (g : G)
     (X : GroupLieAlgebra I G) :
     VectorField.mpullback I I (conjDiffeomorph (I := I) (n := 1) g⁻¹)
@@ -212,6 +218,7 @@ theorem mpullback_conjugation_mulInvariantVectorField (g : G)
   rw [hpoint] at hpush
   exact hpush
 
+/-- At the identity, pullback by conjugation by `g⁻¹` is the adjoint differential of `g`. -/
 theorem mpullback_conjugation_one (g : G) (V : ∀ x : G, TangentSpace I x) :
     VectorField.mpullback I I (conjDiffeomorph (I := I) (n := 1) g⁻¹) V 1 =
       adjointContinuousLinearMap (I := I) g (V 1) := by
@@ -297,6 +304,7 @@ theorem tangentAd_mul [CompleteSpace E] (g h : G) :
     (fun f : GroupLieAlgebra I G →L[ℝ] GroupLieAlgebra I G ↦ f X)
     (adjointContinuousLinearMap_mul (I := I) g h)
 
+/-- The tangent adjoint automorphism of `g⁻¹` is the inverse of that of `g`. -/
 @[simp]
 theorem tangentAd_inv [CompleteSpace E] (g : G) :
     tangentAd (I := I) g⁻¹ = (tangentAd (I := I) g).symm := by
