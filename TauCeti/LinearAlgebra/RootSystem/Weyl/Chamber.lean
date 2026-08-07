@@ -25,8 +25,9 @@ together make it a bijection from the Weyl group onto the set of open chambers, 
 transitivity means here. The second fact is what covers the weights: it is how every *regular*
 weight is shown to lie in an open chamber.
 
-The weights lying in an open chamber are exactly the **regular** ones, those killed by no coroot
-functional. That is the sense in which the open chambers are the complement of the walls:
+The weights lying in an open chamber are exactly the **regular** ones (`TauCeti.IsRegularWeight`,
+defined with the dominant chamber), those killed by no coroot functional. That is the sense in
+which the open chambers are the complement of the walls:
 `TauCeti.iUnion_openWeylChamber_eq_setOf_isRegularWeight` identifies their union with the regular
 weights, and `TauCeti.existsUnique_mem_openWeylChamber` puts each regular weight in exactly one of
 them.
@@ -40,10 +41,10 @@ dominant weight to offer. So it is carried as an explicit argument, and
 
 ## Main definitions
 
-* `TauCeti.IsRegularWeight`: a weight on which no coroot functional vanishes.
 * `TauCeti.weylChamber` and `TauCeti.openWeylChamber`: the Weyl translates of the closed and the
   open dominant chamber.
-* `TauCeti.openWeylChambers`: the set of open Weyl chambers of a base.
+* `TauCeti.openWeylChambers`: the set of open Weyl chambers of a base, carrying the Weyl-group
+  action restricted from the pointwise action on `Set M`.
 * `TauCeti.weylGroupEquivOpenWeylChambers`: the Weyl group as an index set for the open chambers.
 
 ## Main results
@@ -52,10 +53,10 @@ dominant weight to offer. So it is carried as an explicit argument, and
   sign-pattern cone of the coroot functionals of the roots `w(αᵢ)`.
 * `TauCeti.eq_of_mem_openWeylChamber_of_mem_weylChamber`: an open chamber meets the closed chamber
   of no other Weyl-group element; hence `TauCeti.pairwise_disjoint_openWeylChamber`.
-* `TauCeti.openWeylChamber_injective` and `TauCeti.stabilizer_openWeylChamber_eq_bot`: the Weyl
-  group acts freely on the open chambers.
-* `TauCeti.exists_smul_eq_of_mem_openWeylChambers`: the Weyl group acts transitively on the open
-  chambers.
+* `TauCeti.openWeylChamber_injective`, `TauCeti.stabilizer_openWeylChamber_eq_bot` and
+  `TauCeti.openWeylChambers.stabilizer_eq_bot`: the Weyl group acts freely on the open chambers.
+* `TauCeti.exists_smul_eq_of_mem_openWeylChambers` and the `MulAction.IsPretransitive` instance on
+  `TauCeti.openWeylChambers`: the Weyl group acts transitively on the open chambers.
 * `TauCeti.iUnion_openWeylChamber_eq_setOf_isRegularWeight` and
   `TauCeti.existsUnique_mem_openWeylChamber`: the open chambers partition the regular weights.
 
@@ -64,12 +65,14 @@ dominant weight to offer. So it is carried as an explicit argument, and
 Chambers are indexed by Weyl-group elements rather than cut out one at a time by a sign pattern,
 because that is the form simple transitivity takes: the content of the theorem is that the
 indexing is injective. The sign-pattern description is recovered as
-`TauCeti.mem_openWeylChamber_iff`.
+`TauCeti.mem_openWeylChamber_iff`. Both readings of "acts simply transitively" are available: the
+labelling bijection `TauCeti.weylGroupEquivOpenWeylChambers`, and the transitive free action on
+the type `TauCeti.openWeylChambers P b`.
 
-Regularity quantifies over *all* root indices, not just the positive ones. The two are equivalent,
-since the coroot functional of a negated root is the negative of the original, and quantifying
-over everything keeps the predicate manifestly Weyl-invariant
-(`TauCeti.isRegularWeight_smul`), which is what the covering argument uses.
+The covering statements are proved as `..._of_finite_weylGroup`, which asks only that the Weyl
+group be finite, and the root-system forms are read off from those using
+`TauCeti.RootPairing.finite_weylGroup`; this follows the shape of
+`TauCeti.exists_mem_dominantChamber_of_finite_weylGroup`, which is what they consume.
 
 ## References
 
@@ -95,34 +98,7 @@ variable {ι R M N : Type*}
   [CommRing R] [AddCommGroup M] [Module R M] [AddCommGroup N] [Module R N]
   (P : _root_.RootPairing ι R M N)
 
-/-! ### Regular weights -/
-
-/-- A weight is **regular** when no coroot functional vanishes on it, that is, when it lies on none
-of the walls `ker αᵢ^∨`. -/
-def IsRegularWeight (x : M) : Prop := ∀ i, P.coroot' i x ≠ 0
-
-lemma isRegularWeight_iff (x : M) : IsRegularWeight P x ↔ ∀ i, P.coroot' i x ≠ 0 := Iff.rfl
-
-/-- **Regularity is a Weyl-invariant condition on weights.** A Weyl-group element matches the
-coroot functional of a root with that of its image, so it can neither create nor destroy a
-zero. -/
-lemma isRegularWeight_smul (w : P.weylGroup) (x : M) :
-    IsRegularWeight P (w • x) ↔ IsRegularWeight P x := by
-  refine ⟨fun h i ↦ ?_, fun h i ↦ ?_⟩
-  · rw [← RootPairing.coroot'_weylGroupToPerm_smul P w i x]
-    exact h _
-  · have h' := h ((P.weylGroupToPerm w).symm i)
-    rw [← RootPairing.coroot'_weylGroupToPerm_smul P w _ x, Equiv.apply_symm_apply] at h'
-    exact h'
-
 variable [LinearOrder R] (b : P.Base)
-
-/-- A dominant weight is strictly dominant as soon as it is regular: nonnegativity that is never
-an equality is positivity. -/
-lemma mem_openDominantChamber_of_isRegularWeight {x : M} (hx : x ∈ dominantChamber P b)
-    (hreg : IsRegularWeight P x) : x ∈ openDominantChamber P b :=
-  (mem_openDominantChamber P b x).mpr fun i hi ↦
-    lt_of_le_of_ne ((mem_dominantChamber P b x).mp hx i hi) (Ne.symm (hreg i))
 
 /-! ### The chambers -/
 
@@ -191,6 +167,9 @@ lemma mem_openWeylChamber_iff (w : P.weylGroup) (x : M) :
 chamber. -/
 def openWeylChambers : Set (Set M) := Set.range (openWeylChamber P b)
 
+/-- Membership in the set of open Weyl chambers: a set is a chamber exactly when some Weyl-group
+element labels it. -/
+@[simp]
 lemma mem_openWeylChambers {C : Set M} :
     C ∈ openWeylChambers P b ↔ ∃ w : P.weylGroup, openWeylChamber P b w = C := Iff.rfl
 
@@ -210,21 +189,36 @@ theorem exists_smul_eq_of_mem_openWeylChambers {C D : Set M} (hC : C ∈ openWey
   obtain ⟨w, rfl⟩ := hD
   exact ⟨w * v⁻¹, by rw [smul_openWeylChamber, inv_mul_cancel_right]⟩
 
+/-- The Weyl group acts on the open chambers themselves: a translate of a chamber is a chamber, so
+the pointwise action on `Set M` restricts to `TauCeti.openWeylChambers`. -/
+instance : SMul P.weylGroup (openWeylChambers P b) where
+  smul v C := ⟨v • (C : Set M), by
+    obtain ⟨w, hw⟩ := C.2
+    exact ⟨v * w, by rw [← smul_openWeylChamber, hw]⟩⟩
+
+/-- The action on the chambers is the pointwise action on the underlying set. -/
+@[simp]
+lemma openWeylChambers.coe_smul (v : P.weylGroup) (C : openWeylChambers P b) :
+    ((v • C : openWeylChambers P b) : Set M) = v • (C : Set M) := (rfl)
+
+/-- The restricted action is a `MulAction`, inherited from the pointwise action on `Set M`. -/
+instance : MulAction P.weylGroup (openWeylChambers P b) where
+  one_smul _ := Subtype.ext (one_smul _ _)
+  mul_smul _ _ _ := Subtype.ext (mul_smul _ _ _)
+
+/-- **The Weyl group acts transitively on the open chambers**, as an action on the chambers
+themselves. -/
+instance : MulAction.IsPretransitive P.weylGroup (openWeylChambers P b) where
+  exists_smul_eq C D := by
+    obtain ⟨u, hu⟩ := exists_smul_eq_of_mem_openWeylChambers P b C.2 D.2
+    exact ⟨u, Subtype.ext ((openWeylChambers.coe_smul P b u C).trans hu)⟩
+
 /-! ### Simple transitivity -/
 
 section Regular
 
 variable [IsStrictOrderedRing R] [Finite ι] [P.IsCrystallographic] [P.IsReduced]
   [P.flip.IsReduced]
-
-/-- **A strictly dominant weight is regular.** Every root is positive or negative, and the two
-kinds of coroot functional are respectively positive and negative on the open dominant chamber. -/
-lemma isRegularWeight_of_mem_openDominantChamber {x : M} (hx : x ∈ openDominantChamber P b) :
-    IsRegularWeight P x := by
-  intro i
-  rcases mem_posRoots_or_mem_negRoots P b i with hi | hi
-  · exact (coroot'_pos_of_mem_posRoots P b hx hi).ne'
-  · exact (coroot'_neg_of_mem_negRoots P b hx hi).ne
 
 /-- **A weight in an open Weyl chamber is regular**, regularity being Weyl-invariant. -/
 lemma isRegularWeight_of_mem_openWeylChamber {w : P.weylGroup} {x : M}
@@ -289,6 +283,17 @@ theorem stabilizer_openWeylChamber_eq_bot (hne : (openDominantChamber P b).Nonem
   rw [MulAction.mem_stabilizer_iff, Subgroup.mem_bot]
   exact ⟨eq_one_of_smul_openWeylChamber_eq P b hne, fun h ↦ by rw [h, one_smul]⟩
 
+/-- **The Weyl group acts freely on the open chambers**: the stabilizer of a chamber, as an element
+of `TauCeti.openWeylChambers`, is trivial. Together with the transitivity instance above this is
+simple transitivity of the action on the chambers. -/
+theorem openWeylChambers.stabilizer_eq_bot (hne : (openDominantChamber P b).Nonempty)
+    (C : openWeylChambers P b) : MulAction.stabilizer P.weylGroup C = ⊥ := by
+  obtain ⟨w, hw⟩ := C.2
+  ext v
+  rw [MulAction.mem_stabilizer_iff, ← Subtype.coe_inj, openWeylChambers.coe_smul, ← hw,
+    Subgroup.mem_bot]
+  exact ⟨eq_one_of_smul_openWeylChamber_eq P b hne, fun h ↦ by rw [h, one_smul]⟩
+
 /-- **The Weyl group acts simply transitively on the open Weyl chambers**: labelling a chamber by
 the Weyl-group element carrying the dominant one to it is a bijection.
 
@@ -312,11 +317,6 @@ section Nonempty
 variable [IsStrictOrderedRing R] [Invertible (2 : R)] [Finite ι] [P.IsCrystallographic]
   [P.IsReduced]
 
-/-- **The open dominant chamber is nonempty** once `2` is invertible: the Weyl vector `ρ` pairs to
-`1` with every simple coroot, so it is strictly dominant. -/
-theorem openDominantChamber_nonempty : (openDominantChamber P b).Nonempty :=
-  ⟨weylVector P b, weylVector_mem_openDominantChamber P b⟩
-
 /-- Every open Weyl chamber is nonempty once `2` is invertible. -/
 theorem openWeylChamber_nonempty (w : P.weylGroup) : (openWeylChamber P b w).Nonempty :=
   (openDominantChamber_nonempty P b).image _
@@ -328,28 +328,47 @@ end Nonempty
 section Covering
 
 variable [IsStrictOrderedRing R] [Finite ι] [P.IsCrystallographic] [P.IsReduced]
-  [P.flip.IsReduced] [P.IsRootSystem]
+  [P.flip.IsReduced]
 
-/-- **The open Weyl chambers cover exactly the regular weights.** A regular weight is
-Weyl-conjugate into the closed dominant chamber, and regularity upgrades that to the open one;
-conversely every weight in an open chamber is regular. -/
-theorem iUnion_openWeylChamber_eq_setOf_isRegularWeight :
+section FiniteWeylGroup
+
+variable [Finite P.weylGroup]
+
+/-- **The open Weyl chambers cover exactly the regular weights**, for a pairing whose Weyl group is
+finite. A regular weight is Weyl-conjugate into the closed dominant chamber, and regularity
+upgrades that to the open one; conversely every weight in an open chamber is regular. -/
+theorem iUnion_openWeylChamber_eq_setOf_isRegularWeight_of_finite_weylGroup :
     ⋃ w : P.weylGroup, openWeylChamber P b w = {x : M | IsRegularWeight P x} := by
   refine Set.eq_of_subset_of_subset (Set.iUnion_subset fun w x hx ↦ ?_) fun x hx ↦ ?_
   · exact isRegularWeight_of_mem_openWeylChamber P b hx
-  · obtain ⟨w, hw⟩ := exists_mem_dominantChamber P b x
+  · obtain ⟨w, hw⟩ := exists_mem_dominantChamber_of_finite_weylGroup P b x
     refine Set.mem_iUnion.mpr ⟨w⁻¹, ?_⟩
     rw [mem_openWeylChamber, inv_inv]
     exact mem_openDominantChamber_of_isRegularWeight P b hw ((isRegularWeight_smul P w x).mpr hx)
 
-/-- **Every regular weight lies in exactly one open Weyl chamber.** -/
-theorem existsUnique_mem_openWeylChamber {x : M} (hx : IsRegularWeight P x) :
+/-- **Every regular weight lies in exactly one open Weyl chamber**, for a pairing whose Weyl group
+is finite. -/
+theorem existsUnique_mem_openWeylChamber_of_finite_weylGroup {x : M} (hx : IsRegularWeight P x) :
     ∃! w : P.weylGroup, x ∈ openWeylChamber P b w := by
   have hmem : x ∈ ⋃ w : P.weylGroup, openWeylChamber P b w := by
-    rw [iUnion_openWeylChamber_eq_setOf_isRegularWeight]
+    rw [iUnion_openWeylChamber_eq_setOf_isRegularWeight_of_finite_weylGroup]
     exact hx
   obtain ⟨w, hw⟩ := Set.mem_iUnion.mp hmem
   exact ⟨w, hw, fun v hv ↦ eq_of_mem_openWeylChamber P b hv hw⟩
+
+end FiniteWeylGroup
+
+/-- **The open Weyl chambers cover exactly the regular weights.** -/
+theorem iUnion_openWeylChamber_eq_setOf_isRegularWeight [P.IsRootSystem] :
+    ⋃ w : P.weylGroup, openWeylChamber P b w = {x : M | IsRegularWeight P x} :=
+  letI := RootPairing.finite_weylGroup P
+  iUnion_openWeylChamber_eq_setOf_isRegularWeight_of_finite_weylGroup P b
+
+/-- **Every regular weight lies in exactly one open Weyl chamber.** -/
+theorem existsUnique_mem_openWeylChamber [P.IsRootSystem] {x : M} (hx : IsRegularWeight P x) :
+    ∃! w : P.weylGroup, x ∈ openWeylChamber P b w :=
+  letI := RootPairing.finite_weylGroup P
+  existsUnique_mem_openWeylChamber_of_finite_weylGroup P b hx
 
 end Covering
 

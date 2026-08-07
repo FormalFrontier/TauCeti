@@ -46,6 +46,8 @@ remaining roots with `αᵢ^∨` cancel in pairs and only `⟨αᵢ, αᵢ^∨�
 * `TauCeti.add_weylVector_mem_openDominantChamber` and
   `TauCeti.weylVector_mem_openDominantChamber`: over a linearly ordered coefficient ring the
   `ρ`-shift of a dominant weight is strictly dominant, and `ρ` itself is a regular weight.
+* `TauCeti.openDominantChamber_nonempty`: consequently the open dominant chamber has a point,
+  which over a general coefficient ring is a genuine hypothesis rather than a formality.
 
 ## References
 
@@ -214,6 +216,11 @@ dominant chamber. -/
 theorem weylVector_mem_openDominantChamber :
     weylVector P b ∈ openDominantChamber P b := by
   simpa using add_weylVector_mem_openDominantChamber P b (zero_mem_dominantChamber P b)
+
+/-- **The open dominant chamber is nonempty** once `2` is invertible: the Weyl vector `ρ` pairs to
+`1` with every simple coroot, so it is strictly dominant. -/
+theorem openDominantChamber_nonempty : (openDominantChamber P b).Nonempty :=
+  ⟨weylVector P b, weylVector_mem_openDominantChamber P b⟩
 
 end Ordered
 
