@@ -130,14 +130,11 @@ open LinearMap (BilinForm)
 section Helpers
 
 /-
-The two lemmas below are stated for an abstract module `W` and applied with `W` given explicitly.
-Leaving `W` to unification at those applications makes the elaborator look for an `AddCommGroup`
+The lemma below is stated for an abstract module `W` and applied with `W` given explicitly.
+Leaving `W` to unification at that application makes the elaborator look for an `AddCommGroup`
 structure on a space of linear maps whose `AddCommMonoid` structure is already fixed, which it
-does not find quickly.  The same holds of the Mathlib lemmas `finrank_span_singleton` and
-`Submodule.one_le_finrank_iff` where they are used below.  The second lemma is Mathlib's
-`Submodule.eq_of_le_of_finrank_le` with its `FiniteDimensional` hypothesis moved from the larger
-submodule to the ambient module, which is what makes that hypothesis cheap to discharge on a space
-of bilinear forms.
+does not find quickly.  The same holds of the Mathlib lemmas `Submodule.eq_of_le_of_finrank_le`,
+`finrank_span_singleton` and `Submodule.one_le_finrank_iff` where they are used below.
 -/
 
 /-- Two submodules meeting only in `0` have dimensions adding to at most that of any submodule
@@ -150,12 +147,6 @@ private theorem finrank_add_finrank_le_of_inf_eq_bot {K W : Type*} [Field K] [Ad
   rw [h, finrank_bot, add_zero] at hsup
   rw [← hsup]
   exact Submodule.finrank_mono (sup_le hS hT)
-
-/-- A submodule of another with no less dimension is that other submodule. -/
-private theorem eq_of_le_of_finrank_le {K W : Type*} [Field K] [AddCommGroup W] [Module K W]
-    [FiniteDimensional K W] {S T : Submodule K W} (hST : S ≤ T)
-    (h : finrank K T ≤ finrank K S) : S = T :=
-  Submodule.eq_of_le_of_finrank_le hST h
 
 end Helpers
 
@@ -326,7 +317,7 @@ theorem map_ofSymmetricSquareDual_eq_symmetricInvariantForms (ρ : Representatio
       ← (Submodule.equivMapOfInjective (BilinForm.ofSymmetricSquareDual (k := k) (V := V))
         BilinForm.ofSymmetricSquareDual_injective
         ((ρ.symmetricPower 2).dual).invariants).finrank_eq, finrank_invariants_dual]
-  exact eq_of_le_of_finrank_le (K := k) (W := BilinForm k V) hle hrank.le
+  exact Submodule.eq_of_le_of_finrank_le (K := k) (V := BilinForm k V) hle hrank.le
 
 /-- **Every invariant alternating form comes from an invariant functional on the exterior square.**
 The injection is onto: it lands in the invariant alternating forms, and the two have the same
@@ -345,7 +336,7 @@ theorem map_ofExteriorSquareDual_eq_alternatingInvariantForms (ρ : Representati
       ← (Submodule.equivMapOfInjective (BilinForm.ofExteriorSquareDual (k := k) (V := V))
         BilinForm.ofExteriorSquareDual_injective
         ((ρ.exteriorPower 2).dual).invariants).finrank_eq, finrank_invariants_dual]
-  exact eq_of_le_of_finrank_le (K := k) (W := BilinForm k V) hle hrank.le
+  exact Submodule.eq_of_le_of_finrank_le (K := k) (V := BilinForm k V) hle hrank.le
 
 /-- **The two invariant form counts add to the number of invariant forms.** -/
 theorem finrank_symmetricInvariantForms_add_finrank_alternatingInvariantForms
