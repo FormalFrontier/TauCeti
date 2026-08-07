@@ -463,92 +463,51 @@ theorem composeDiagram_val_eq_iff {x y : Fin k ⊕ Fin k} :
 /-- **A cap of the lower diagram is a cap of the composite.** -/
 theorem composeDiagram_val_inl_eq_inl_of_cap_lower {i i' : Fin k}
     (h : D₂.val (Sum.inl i) = Sum.inl i') :
-    (composeDiagram D₁ D₂).val (Sum.inl i) = Sum.inl i' := by
-  rw [BrauerDiagram.composeDiagram_val]
-  refine BrauerDiagram.stackVal_eq_of_exit D₁ D₂ (n := 0) ?_ (by simp)
-  rw [pow_one, BrauerDiagram.walk_inl_inl, h]
-  rfl
+    (composeDiagram D₁ D₂).val (Sum.inl i) = Sum.inl i' :=
+  (composeDiagram_val_eq_iff D₁ D₂).mpr <| Or.inl <| by rw [stackStart_inl, h, Sum.elim_inl]
 
 /-- **A cup of the upper diagram is a cup of the composite.** -/
 theorem composeDiagram_val_inr_eq_inr_of_cup_upper {j j' : Fin k}
     (h : D₁.val (Sum.inr j) = Sum.inr j') :
-    (composeDiagram D₁ D₂).val (Sum.inr j) = Sum.inr j' := by
-  rw [BrauerDiagram.composeDiagram_val]
-  refine BrauerDiagram.stackVal_eq_of_exit D₁ D₂ (n := 0) ?_ (by simp)
-  rw [pow_one, BrauerDiagram.walk_inl_inr, h]
-  rfl
+    (composeDiagram D₁ D₂).val (Sum.inr j) = Sum.inr j' :=
+  (composeDiagram_val_eq_iff D₁ D₂).mpr <| Or.inl <| by rw [stackStart_inr, h, Sum.elim_inr]
 
 /-- **A through strand of the lower diagram continued by a through strand of the upper diagram
 is a through strand of the composite.** -/
 theorem composeDiagram_val_inl_eq_inr_of_through {i a j : Fin k}
     (h₂ : D₂.val (Sum.inl i) = Sum.inr a) (h₁ : D₁.val (Sum.inl a) = Sum.inr j) :
-    (composeDiagram D₁ D₂).val (Sum.inl i) = Sum.inr j := by
-  have hstep : BrauerDiagram.walk D₁ D₂ (Sum.inl (Sum.inl i)) = Sum.inr (Sum.inr a) := by
-    rw [BrauerDiagram.walk_inl_inl, h₂]
-    rfl
-  rw [BrauerDiagram.composeDiagram_val]
-  refine BrauerDiagram.stackVal_eq_of_exit D₁ D₂ (n := 1) ?_ fun m hm => ?_
-  · rw [pow_succ', Equiv.Perm.mul_apply, pow_one, hstep, BrauerDiagram.walk_inr_inr, h₁]
-    rfl
-  · have hm0 : m = 0 := by omega
-    rw [hm0, zero_add, pow_one, hstep]
-    simp
+    (composeDiagram D₁ D₂).val (Sum.inl i) = Sum.inr j :=
+  (composeDiagram_val_eq_iff D₁ D₂).mpr <| Or.inr
+    ⟨Sum.inl a, Sum.inl a, by rw [stackStart_inl, h₂, Sum.elim_inr], .refl,
+      by rw [stackStep_inl, h₁, Sum.elim_inr]⟩
 
 /-- **A through strand of the composite, read from its top endpoint.** -/
 theorem composeDiagram_val_inr_eq_inl_of_through {i a j : Fin k}
     (h₁ : D₁.val (Sum.inr j) = Sum.inl a) (h₂ : D₂.val (Sum.inr a) = Sum.inl i) :
     (composeDiagram D₁ D₂).val (Sum.inr j) = Sum.inl i :=
-  (composeDiagram D₁ D₂).apply_eq_of_apply_eq
-    (composeDiagram_val_inl_eq_inr_of_through D₁ D₂ (D₂.apply_eq_of_apply_eq h₂)
-      (D₁.apply_eq_of_apply_eq h₁))
+  (composeDiagram_val_eq_iff D₁ D₂).mpr <| Or.inr
+    ⟨Sum.inr a, Sum.inr a, by rw [stackStart_inr, h₁, Sum.elim_inl], .refl,
+      by rw [stackStep_inr, h₂, Sum.elim_inl]⟩
 
 /-- **A cap of the upper diagram, reached by two through strands of the lower one, is a cap of
 the composite.** -/
 theorem composeDiagram_val_inl_eq_inl_of_cap_upper {i a a' i' : Fin k}
     (h₂ : D₂.val (Sum.inl i) = Sum.inr a) (h₁ : D₁.val (Sum.inl a) = Sum.inl a')
     (h₂' : D₂.val (Sum.inr a') = Sum.inl i') :
-    (composeDiagram D₁ D₂).val (Sum.inl i) = Sum.inl i' := by
-  have hstep : BrauerDiagram.walk D₁ D₂ (Sum.inl (Sum.inl i)) = Sum.inr (Sum.inr a) := by
-    rw [BrauerDiagram.walk_inl_inl, h₂]
-    rfl
-  have hstep' : BrauerDiagram.walk D₁ D₂ (Sum.inr (Sum.inr a)) = Sum.inr (Sum.inl a') := by
-    rw [BrauerDiagram.walk_inr_inr, h₁]
-    rfl
-  rw [BrauerDiagram.composeDiagram_val]
-  refine BrauerDiagram.stackVal_eq_of_exit D₁ D₂ (n := 2) ?_ fun m hm => ?_
-  · rw [pow_succ', Equiv.Perm.mul_apply, pow_succ', Equiv.Perm.mul_apply, pow_one, hstep, hstep',
-      BrauerDiagram.walk_inr_inl, h₂']
-    rfl
-  · have hm' : m = 0 ∨ m = 1 := by omega
-    rcases hm' with rfl | rfl
-    · rw [zero_add, pow_one, hstep]
-      simp
-    · rw [pow_succ', Equiv.Perm.mul_apply, pow_one, hstep, hstep']
-      simp
+    (composeDiagram D₁ D₂).val (Sum.inl i) = Sum.inl i' :=
+  (composeDiagram_val_eq_iff D₁ D₂).mpr <| Or.inr
+    ⟨Sum.inl a, Sum.inr a', by rw [stackStart_inl, h₂, Sum.elim_inr],
+      .single (by rw [stackStep_inl, h₁, Sum.elim_inl]), by rw [stackStep_inr, h₂', Sum.elim_inl]⟩
 
 /-- **A cup of the lower diagram, reached by two through strands of the upper one, is a cup of
 the composite.** -/
 theorem composeDiagram_val_inr_eq_inr_of_cup_lower {j a a' j' : Fin k}
     (h₁ : D₁.val (Sum.inr j) = Sum.inl a) (h₂ : D₂.val (Sum.inr a) = Sum.inr a')
     (h₁' : D₁.val (Sum.inl a') = Sum.inr j') :
-    (composeDiagram D₁ D₂).val (Sum.inr j) = Sum.inr j' := by
-  have hstep : BrauerDiagram.walk D₁ D₂ (Sum.inl (Sum.inr j)) = Sum.inr (Sum.inl a) := by
-    rw [BrauerDiagram.walk_inl_inr, h₁]
-    rfl
-  have hstep' : BrauerDiagram.walk D₁ D₂ (Sum.inr (Sum.inl a)) = Sum.inr (Sum.inr a') := by
-    rw [BrauerDiagram.walk_inr_inl, h₂]
-    rfl
-  rw [BrauerDiagram.composeDiagram_val]
-  refine BrauerDiagram.stackVal_eq_of_exit D₁ D₂ (n := 2) ?_ fun m hm => ?_
-  · rw [pow_succ', Equiv.Perm.mul_apply, pow_succ', Equiv.Perm.mul_apply, pow_one, hstep, hstep',
-      BrauerDiagram.walk_inr_inr, h₁']
-    rfl
-  · have hm' : m = 0 ∨ m = 1 := by omega
-    rcases hm' with rfl | rfl
-    · rw [zero_add, pow_one, hstep]
-      simp
-    · rw [pow_succ', Equiv.Perm.mul_apply, pow_one, hstep, hstep']
-      simp
+    (composeDiagram D₁ D₂).val (Sum.inr j) = Sum.inr j' :=
+  (composeDiagram_val_eq_iff D₁ D₂).mpr <| Or.inr
+    ⟨Sum.inr a, Sum.inl a', by rw [stackStart_inr, h₁, Sum.elim_inl],
+      .single (by rw [stackStep_inr, h₂, Sum.elim_inr]), by rw [stackStep_inl, h₁', Sum.elim_inr]⟩
 
 namespace BrauerDiagram
 
