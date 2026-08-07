@@ -38,8 +38,6 @@ Both halves are elementary, but neither is formal:
 * `TauCeti.Sym.isProperMap_coeffEquiv_comp_ofFn`: consequently the coefficient map
   `(Fin n → K) → (Fin n → K)` is proper.
 * `TauCeti.Sym.coeffHomeomorph`: the **elementary symmetric chart** `Sym K n ≃ₜ (Fin n → K)`.
-* `TauCeti.Sym.isClosedMap_ofFn` and `TauCeti.Sym.instT2Space`: the quotient map is closed and the
-  symmetric power is Hausdorff.
 
 Lane F4.1 of the analytic Heegaard Floer roadmap opens with "`Sym^g(Σ)` geometry: smooth complex
 structure (elementary symmetric functions)", after Ozsváth--Szabó
@@ -198,22 +196,6 @@ theorem coeffHomeomorph_apply (s : Sym K n) : coeffHomeomorph K n s = coeffEquiv
 theorem coeffHomeomorph_symm_apply (f : Fin n → K) :
     ((coeffHomeomorph K n).symm f : Sym K n) = (coeffEquiv K n).symm f := by
   simp [coeffHomeomorph]
-
-variable {K n}
-
-/-- The quotient map from ordered to unordered tuples is closed. -/
-theorem isClosedMap_ofFn : IsClosedMap (ofFn : (Fin n → K) → Sym K n) := by
-  have : (ofFn : (Fin n → K) → Sym K n) =
-      (coeffHomeomorph K n).symm ∘ fun f => coeffEquiv K n (ofFn f) := by
-    funext f
-    simp
-  rw [this]
-  exact (coeffHomeomorph K n).symm.isClosedMap.comp isProperMap_coeffEquiv_comp_ofFn.isClosedMap
-
-/-- The symmetric power of a proper algebraically closed normed field is Hausdorff, being
-homeomorphic to affine space. -/
-instance instT2Space : T2Space (Sym K n) :=
-  (coeffHomeomorph K n).isEmbedding.t2Space
 
 end Chart
 
