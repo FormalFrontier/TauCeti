@@ -429,19 +429,19 @@ theorem frobeniusSchurIndicator_eq_neg_one_of_isAlt (hB : IsInvariantForm ρ B) 
   rw [frobeniusSchurIndicator_eq_sub_finrank_invariantForms, hs, ha]
   simp
 
-omit [Fintype G] in
-/-- **An irreducible representation is orthogonal, symplectic or complex.** Over an algebraically
-closed field of characteristic zero it carries a nonzero invariant symmetric form, or a nonzero
-invariant alternating form, or no nonzero invariant form at all.  This is the case split the three
-values of the indicator are read off from. -/
-theorem exists_isSymm_or_exists_isAlt_or_invariantForms_eq_bot :
+omit [CharZero k] [Fintype G] in
+/-- **An irreducible representation is orthogonal, symplectic or complex.** Away from
+characteristic two, over an algebraically closed field it carries a nonzero invariant symmetric
+form, or a nonzero invariant alternating form, or no nonzero invariant form at all.  This is the
+case split the three values of the indicator are read off from. -/
+theorem exists_isSymm_or_exists_isAlt_or_invariantForms_eq_bot (h2 : (2 : k) ≠ 0) :
     (∃ B : BilinForm k V, IsInvariantForm ρ B ∧ B ≠ 0 ∧ B.IsSymm) ∨
       (∃ B : BilinForm k V, IsInvariantForm ρ B ∧ B ≠ 0 ∧ B.IsAlt) ∨ invariantForms ρ = ⊥ := by
   by_cases hbot : invariantForms ρ = ⊥
   · exact Or.inr (Or.inr hbot)
   · obtain ⟨C, hCmem, hC0⟩ := (Submodule.ne_bot_iff _).mp hbot
     have hC : IsInvariantForm ρ C := mem_invariantForms.mp hCmem
-    rcases hC.isSymm_or_isAlt (by norm_num) hC0 with hsymm | halt
+    rcases hC.isSymm_or_isAlt h2 hC0 with hsymm | halt
     · exact Or.inl ⟨C, hC, hC0, hsymm⟩
     · exact Or.inr (Or.inl ⟨C, hC, hC0, halt⟩)
 
@@ -450,7 +450,7 @@ algebraically closed field of characteristic zero takes only the values `1`, `0`
 theorem frobeniusSchurIndicator_eq_one_or_eq_zero_or_eq_neg_one :
     frobeniusSchurIndicator ρ = 1 ∨ frobeniusSchurIndicator ρ = 0 ∨
       frobeniusSchurIndicator ρ = -1 := by
-  rcases exists_isSymm_or_exists_isAlt_or_invariantForms_eq_bot ρ with
+  rcases exists_isSymm_or_exists_isAlt_or_invariantForms_eq_bot ρ (by norm_num) with
     ⟨_, hB, hB0, hsymm⟩ | ⟨_, hB, hB0, halt⟩ | hbot
   · exact Or.inl (frobeniusSchurIndicator_eq_one_of_isSymm ρ hB hB0 hsymm)
   · exact Or.inr (Or.inr (frobeniusSchurIndicator_eq_neg_one_of_isAlt ρ hB hB0 halt))
@@ -462,7 +462,7 @@ theorem frobeniusSchurIndicator_eq_one_iff :
       ∃ B : BilinForm k V, IsInvariantForm ρ B ∧ B ≠ 0 ∧ B.IsSymm := by
   refine ⟨fun h => ?_, fun ⟨_, hB, hB0, hsymm⟩ =>
     frobeniusSchurIndicator_eq_one_of_isSymm ρ hB hB0 hsymm⟩
-  rcases exists_isSymm_or_exists_isAlt_or_invariantForms_eq_bot ρ with
+  rcases exists_isSymm_or_exists_isAlt_or_invariantForms_eq_bot ρ (by norm_num) with
     hsymm | ⟨_, hB, hB0, halt⟩ | hbot
   · exact hsymm
   · rw [frobeniusSchurIndicator_eq_neg_one_of_isAlt ρ hB hB0 halt] at h
@@ -476,7 +476,7 @@ theorem frobeniusSchurIndicator_eq_neg_one_iff :
       ∃ B : BilinForm k V, IsInvariantForm ρ B ∧ B ≠ 0 ∧ B.IsAlt := by
   refine ⟨fun h => ?_, fun ⟨_, hB, hB0, halt⟩ =>
     frobeniusSchurIndicator_eq_neg_one_of_isAlt ρ hB hB0 halt⟩
-  rcases exists_isSymm_or_exists_isAlt_or_invariantForms_eq_bot ρ with
+  rcases exists_isSymm_or_exists_isAlt_or_invariantForms_eq_bot ρ (by norm_num) with
     ⟨_, hB, hB0, hsymm⟩ | halt | hbot
   · rw [frobeniusSchurIndicator_eq_one_of_isSymm ρ hB hB0 hsymm] at h
     exact absurd h (by norm_num)
@@ -489,7 +489,7 @@ carries no nonzero invariant bilinear form at all. -/
 theorem frobeniusSchurIndicator_eq_zero_iff :
     frobeniusSchurIndicator ρ = 0 ↔ invariantForms ρ = ⊥ := by
   refine ⟨fun h => ?_, frobeniusSchurIndicator_eq_zero_of_invariantForms_eq_bot ρ⟩
-  rcases exists_isSymm_or_exists_isAlt_or_invariantForms_eq_bot ρ with
+  rcases exists_isSymm_or_exists_isAlt_or_invariantForms_eq_bot ρ (by norm_num) with
     ⟨_, hB, hB0, hsymm⟩ | ⟨_, hB, hB0, halt⟩ | hbot
   · rw [frobeniusSchurIndicator_eq_one_of_isSymm ρ hB hB0 hsymm] at h
     exact absurd h one_ne_zero
