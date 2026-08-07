@@ -46,6 +46,8 @@ distributed yet has a Dirac path law, under which every event is trivial.
 * `hewittSavage_trivial_of_iIndep` — the zero-one law, from `iIndepFun` and `IdentDistrib`.
 * `measure_eq_zero_or_one_of_exchangeableSigma` — the abstract form, over an exchangeable path law
   in which cylinders over disjoint index blocks are independent.
+* `exchangeableSigma_trivial_of_infinitePi` and `exchangeableLaw_infinitePi_const` — the zero-one
+  law and the exchangeability of the i.i.d. product law `P^{⊗ℕ}` itself.
 
 Everything else in this file is `private` proof infrastructure: the block permutation, the
 reindexed-cylinder change of variables, the cylinder approximation, the disjoint-block product
@@ -389,6 +391,27 @@ theorem hewittSavage_trivial_of_iIndep {μ : Measure Ω} {X : ℕ → Ω → α}
     (fun {_F _G} hFG {_S} hS {_T} hT =>
       measure_pathLaw_inter_cylinder_of_disjoint hX h_indep hFG hS hT) hs
 
+/-- The coordinate process of `P^{⊗ℕ}` is independent. -/
+private theorem iIndepFun_coord_infinitePi (P : ProbabilityMeasure α) :
+    ProbabilityTheory.iIndepFun (fun n (x : ℕ → α) => x n)
+      (Measure.infinitePi fun _ : ℕ => (P : Measure α)) :=
+  ProbabilityTheory.iIndepFun_infinitePi (P := fun _ : ℕ => (P : Measure α))
+    (X := fun _ x => x) fun _ => measurable_id
+
+/-- The coordinate process of `P^{⊗ℕ}` is identically distributed. -/
+private theorem identDistrib_coord_infinitePi (P : ProbabilityMeasure α) (n : ℕ) :
+    ProbabilityTheory.IdentDistrib (fun x : ℕ → α => x n) (fun x => x 0)
+      (Measure.infinitePi fun _ : ℕ => (P : Measure α))
+      (Measure.infinitePi fun _ : ℕ => (P : Measure α)) :=
+  ⟨(measurable_pi_apply n).aemeasurable, (measurable_pi_apply 0).aemeasurable, by
+    simp [Measure.infinitePi_map_eval]⟩
+
+/-- The path law of the coordinate process of `P^{⊗ℕ}` is `P^{⊗ℕ}` again. -/
+private theorem pathLaw_coord_infinitePi (P : ProbabilityMeasure α) :
+    pathLaw (Measure.infinitePi fun _ : ℕ => (P : Measure α)) (fun n (x : ℕ → α) => x n) =
+      Measure.infinitePi fun _ : ℕ => (P : Measure α) := by
+  simp [pathLaw_def]
+
 /-- **The zero-one law for an i.i.d. product law.** Every exchangeable event has probability `0` or
 `1` under `P^{⊗ℕ}`.
 
@@ -399,17 +422,20 @@ theorem exchangeableSigma_trivial_of_infinitePi (P : ProbabilityMeasure α) {s :
     (hs : MeasurableSet[exchangeableSigma α] s) :
     (Measure.infinitePi fun _ : ℕ => (P : Measure α)) s = 0 ∨
       (Measure.infinitePi fun _ : ℕ => (P : Measure α)) s = 1 := by
-  let ρ := Measure.infinitePi fun _ : ℕ => (P : Measure α)
-  have hindep : ProbabilityTheory.iIndepFun (fun n (x : ℕ → α) => x n) ρ :=
-    ProbabilityTheory.iIndepFun_infinitePi (P := fun _ : ℕ => (P : Measure α))
-      (X := fun _ x => x) fun _ => measurable_id
-  have hident : ∀ n, ProbabilityTheory.IdentDistrib
-      (fun x : ℕ → α => x n) (fun x => x 0) ρ ρ := fun n =>
-    ⟨(measurable_pi_apply n).aemeasurable, (measurable_pi_apply 0).aemeasurable, by
-      simp [ρ, Measure.infinitePi_map_eval]⟩
-  have hpath : pathLaw ρ (fun n (x : ℕ → α) => x n) = ρ := by simp [pathLaw_def]
-  have hzeroOne := hewittSavage_trivial_of_iIndep hindep hident hs
-  rwa [hpath] at hzeroOne
+  have hzeroOne := hewittSavage_trivial_of_iIndep (iIndepFun_coord_infinitePi P)
+    (identDistrib_coord_infinitePi P) hs
+  rwa [pathLaw_coord_infinitePi] at hzeroOne
+
+/-- **An i.i.d. product law is exchangeable.** Under `P^{⊗ℕ}` the coordinates are independent and
+identically distributed, hence exchangeable, and the path law of the coordinate process is the
+product law back again. -/
+theorem exchangeableLaw_infinitePi_const (P : ProbabilityMeasure α) :
+    ExchangeableLaw (Measure.infinitePi fun _ : ℕ => (P : Measure α)) := by
+  have hlaw := (exchangeable_iff_exchangeableLaw_pathLaw
+    (X := fun n (x : ℕ → α) => x n) fun n => (measurable_pi_apply n).aemeasurable).mp
+      (Exchangeable.of_iIndepFun_identDistrib (iIndepFun_coord_infinitePi P)
+        (identDistrib_coord_infinitePi P))
+  rwa [pathLaw_coord_infinitePi] at hlaw
 
 end HewittSavage
 
