@@ -18,7 +18,7 @@ invertible.
 ## Main result
 
 * `oneSubExpNegDivSelf_eq_integral_exp`:
-  `oneSubExpNegDivSelf a = ∫ t in 0..1, exp (t • -a)`.
+  `oneSubExpNegDivSelf ℝ a = ∫ t in 0..1, exp (t • -a)`.
 
 ## References
 
@@ -115,7 +115,7 @@ private theorem integral_oneSubExpNegDivSelfIntegrand (a : A) (n : ℕ) :
 /-- The regularized exponential quotient is the integral of the exponential along the line
 segment from `0` to `-a`. -/
 theorem oneSubExpNegDivSelf_eq_integral_exp (a : A) :
-    oneSubExpNegDivSelf a = ∫ t in (0 : ℝ)..1, exp (t • (-a)) := by
+    oneSubExpNegDivSelf ℝ a = ∫ t in (0 : ℝ)..1, exp (t • (-a)) := by
   rw [oneSubExpNegDivSelf_eq_tsum]
   calc
     ∑' n : ℕ, (((n + 1).factorial)⁻¹ : ℝ) • (-a) ^ n =
