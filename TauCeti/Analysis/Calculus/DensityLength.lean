@@ -186,19 +186,21 @@ theorem densityLength_nonneg (hρ : ∀ t ∈ uIoo a b, 0 ≤ ρ (γ t)) : 0 ≤
 density-weighted speed of `δ` is at most that of `γ`, and both speeds are integrable over the
 parameter interval, then `δ` is no longer than `γ` over it, whichever way round its endpoints are.
 
-Nothing relates the two paths, or the two densities, beyond that pointwise comparison, which is the
-form in which a contraction property of a map post-composed with a path — a Schwarz--Pick estimate,
-say — arrives: the chain rule turns the density-weighted speed of the composite into a factor
-bounded by the density at the point times the speed of the path. The comparison is the inequality
-counterpart of `TauCeti.densityLength_congr_of_eqOn`, which needs no integrability because equal
-integrands have equal integrals whether or not they are integrable. As there, the comparison is
-between the integrands that define the two lengths, and is asked at the interior parameters only,
-the two endpoints forming a null set; a path with an explicit derivative is read through
-`HasDerivAt.deriv`. Integrability, unlike that comparison, is a genuinely additional hypothesis:
-the density being arbitrary here, regularity of the path alone does not supply it, and it is the
-`C¹` path *together with* a density continuous along it that does — as in the hyperbolic
+Nothing relates the two paths, or the two densities, beyond that pointwise comparison — not even
+the space they run in, the hypotheses comparing only their real-valued weighted speeds — which is
+the form in which a contraction property of a map post-composed with a path — a Schwarz--Pick
+estimate, say — arrives: the chain rule turns the density-weighted speed of the composite into a
+factor bounded by the density at the point times the speed of the path. The comparison is the
+inequality counterpart of `TauCeti.densityLength_congr_of_eqOn`, which needs no integrability
+because equal integrands have equal integrals whether or not they are integrable. As there, the
+comparison is between the integrands that define the two lengths, and is asked at the interior
+parameters only, the two endpoints forming a null set; a path with an explicit derivative is read
+through `HasDerivAt.deriv`. Integrability, unlike that comparison, is a genuinely additional
+hypothesis: the density being arbitrary here, regularity of the path alone does not supply it, and
+it is the `C¹` path *together with* a density continuous along it that does — as in the hyperbolic
 application, where the path stays in the open disc on which the Poincaré density is continuous. -/
-theorem densityLength_le_densityLength
+theorem densityLength_le_densityLength {G : Type*} [NormedAddCommGroup G] [NormedSpace ℝ G]
+    {ρ' : G → ℝ} {δ : ℝ → G}
     (hδint : IntervalIntegrable (fun t => ρ' (δ t) * ‖deriv δ t‖) volume a b)
     (hγint : IntervalIntegrable (fun t => ρ (γ t) * ‖deriv γ t‖) volume a b)
     (h : ∀ t ∈ uIoo a b, ρ' (δ t) * ‖deriv δ t‖ ≤ ρ (γ t) * ‖deriv γ t‖) :
