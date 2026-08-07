@@ -22,7 +22,7 @@ invertible.
 ## References
 
 * [Lie groups and the Lie algebra correspondence roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/LieGroups/README.md),
-  Deliverable A, Layer 1, "Differential of the exponential".
+  Deliverable A, Layer 1, "The conjugation formulas".
 -/
 
 public section
