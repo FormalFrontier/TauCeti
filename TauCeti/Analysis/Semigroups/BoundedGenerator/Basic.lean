@@ -68,7 +68,7 @@ theorem norm_exp_le_exp_norm (x : X →L[ℝ] X) : ‖exp x‖ ≤ Real.exp ‖x
 /-- The operator exponential is additive on commuting elements of `X →L[ℝ] X`, phrased over the
 scalar field `ℝ` (the `ℚ`-algebra instance required by `NormedSpace.exp_add_of_commute` is not
 available here). -/
-private lemma exp_add_of_commute {x y : X →L[ℝ] X} (h : Commute x y) :
+theorem exp_add_of_commute {x y : X →L[ℝ] X} (h : Commute x y) :
     exp (x + y) = exp x * exp y :=
   exp_add_of_commute_of_mem_ball (𝕂 := ℝ) h
     ((expSeries_radius_eq_top ℝ (X →L[ℝ] X)).symm ▸ edist_lt_top _ _)

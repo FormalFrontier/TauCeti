@@ -314,7 +314,8 @@ the inverse of `lambda • I - A` has norm at most `1 / lambda`.
 
 This packages the propagated range condition and the dissipativity estimate as the bounded
 inverse required by `LinearPMap.IsResolventAt`. -/
-theorem IsMDissipative.exists_isResolventAt_norm_le {A : X →ₗ.[ℝ] X} (hA : IsMDissipative A)
+private theorem IsMDissipative.exists_isResolventAt_norm_le {A : X →ₗ.[ℝ] X}
+    (hA : IsMDissipative A)
     {lambda : ℝ} (hlambda : 0 < lambda) :
     ∃ R : X →L[ℝ] X, LinearPMap.IsResolventAt A lambda R ∧ ‖R‖ ≤ lambda⁻¹ := by
   obtain ⟨g, R, hRnorm, hgR, hright⟩ := hA.isDissipative.exists_bounded_rightInverse hlambda
