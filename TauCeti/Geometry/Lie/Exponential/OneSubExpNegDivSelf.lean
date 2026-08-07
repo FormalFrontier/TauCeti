@@ -78,7 +78,8 @@ theorem mul_oneSubExpNegDivSelf (a : A) :
       (summable_oneSubExpNegDivSelf (𝕂 := 𝕂) a).tsum_mul_left (-a)
   simp only [exp_eq_tsum 𝕂]
   rw [(expSeries_summable' (𝕂 := 𝕂) (-a)).tsum_eq_zero_add]
-  rw [show ((0 : ℕ).factorial : 𝕂)⁻¹ • (-a) ^ 0 = 1 by simp, hmul]
+  simp only [Nat.factorial_zero, Nat.cast_one, inv_one, one_smul, pow_zero]
+  rw [hmul]
   noncomm_ring
 
 omit [CompleteSpace A] in
