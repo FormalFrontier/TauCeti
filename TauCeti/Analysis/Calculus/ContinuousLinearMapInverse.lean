@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+public import Mathlib.Analysis.Calculus.ContDiff.Operations
 public import Mathlib.Analysis.Calculus.Deriv.Mul
 
 /-!
@@ -11,7 +12,7 @@ public import Mathlib.Analysis.Calculus.Deriv.Mul
 
 This file packages the derivative of a differentiable inverse family of continuous linear maps at
 an invertible base point, including its action on a varying vector. The result is the analytic input
-for differentiating a vector-field pullback along a flow.
+for differentiating a vector-field pullback along a parametric family.
 
 This supplies a prerequisite for Deliverable A, Layer 1 of
 `TauCetiRoadmap/RepresentationTheory/LieGroups/README.md`.
@@ -20,6 +21,8 @@ This supplies a prerequisite for Deliverable A, Layer 1 of
 
 * `HasDerivAt.clm_inverse`: differentiates `(A t)⁻¹`.
 * `HasDerivAt.clm_inverse_apply`: differentiates `(A t)⁻¹ (w t)`.
+* `HasDerivAt.clm_inverse_of_completeSpace`: the Banach-space specialization, where
+  differentiability of inversion is automatic.
 
 ## References
 
@@ -97,3 +100,20 @@ theorem HasDerivAt.clm_inverse_apply (hA : HasDerivAt A A' t₀)
     HasDerivAt (fun t => (A t).inverse (w t))
       ((A t₀).inverse w' - (A t₀).inverse (A' ((A t₀).inverse (w t₀)))) t₀ := by
   simpa [sub_eq_add_neg, add_comm] using (hA.clm_inverse hA0Inv hInvDiff).clm_apply hw
+
+/-- The derivative of an inverse family of continuous linear maps between Banach spaces. -/
+theorem HasDerivAt.clm_inverse_of_completeSpace [CompleteSpace E]
+    (hA : HasDerivAt A A' t₀) (hA0Inv : (A t₀).IsInvertible) :
+    HasDerivAt (fun t => (A t).inverse)
+      (-((A t₀).inverse.comp (A'.comp (A t₀).inverse))) t₀ := by
+  apply hA.clm_inverse hA0Inv
+  exact (hA0Inv.contDiffAt_map_inverse (n := 1)).differentiableAt one_ne_zero |>.comp t₀
+    hA.differentiableAt
+
+/-- The derivative of an inverse family of continuous linear maps between Banach spaces, acting
+on a differentiable vector curve. -/
+theorem HasDerivAt.clm_inverse_apply_of_completeSpace [CompleteSpace E]
+    (hA : HasDerivAt A A' t₀) (hA0Inv : (A t₀).IsInvertible) (hw : HasDerivAt w w' t₀) :
+    HasDerivAt (fun t => (A t).inverse (w t))
+      ((A t₀).inverse w' - (A t₀).inverse (A' ((A t₀).inverse (w t₀)))) t₀ := by
+  simpa [sub_eq_add_neg, add_comm] using (hA.clm_inverse_of_completeSpace hA0Inv).clm_apply hw

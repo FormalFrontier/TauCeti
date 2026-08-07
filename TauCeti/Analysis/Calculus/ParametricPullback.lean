@@ -22,12 +22,15 @@ This supplies a prerequisite for Deliverable A, Layer 1 of
 
 ## Main result
 
-* `hasDerivAt_parametric_pullback`: differentiating the parametric pullback gives the Lie bracket.
+* `VectorField.hasDerivAt_parametric_pullback`: differentiating the parametric pullback gives the
+  Lie bracket.
 
 ## References
 
 * [Lie groups and the Lie algebra correspondence roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/LieGroups/README.md),
   Deliverable A, Layer 1, "The infinitesimal adjoint".
+* Sébastien Gouëzel, `Mathlib/Analysis/Calculus/VectorField.lean`, definitions
+  `VectorField.pullback` and `VectorField.lieBracket`.
 -/
 
 public section
@@ -40,6 +43,8 @@ open scoped Topology
 variable {𝕜 E : Type*} [NontriviallyNormedField 𝕜]
   [NormedAddCommGroup E] [NormedSpace 𝕜 E]
 
+namespace VectorField
+
 /-- Let `F` have the minimum smoothness needed for symmetric second derivatives at `(t₀, x)` and
 agree with the identity to first order at `x` when `t = t₀`. If the inverse spatial-Jacobian
 family is differentiable at `t₀` and `W` is differentiable at `x`, then the derivative of the
@@ -51,8 +56,8 @@ theorem hasDerivAt_parametric_pullback {F : 𝕜 × E → E} {W : E → E} {t₀
     (hInvDiff : DifferentiableAt 𝕜 (fun t => (spatialFDeriv F x t).inverse) t₀)
     (hW : DifferentiableAt 𝕜 W x) :
     HasDerivAt
-      (fun t => VectorField.pullback 𝕜 (fun y => F (t, y)) W x)
-      (VectorField.lieBracket 𝕜 (timeFDeriv F t₀) W x) t₀ := by
+      (fun t => pullback 𝕜 (fun y => F (t, y)) W x)
+      (lieBracket 𝕜 (timeFDeriv F t₀) W x) t₀ := by
   have hA := hasDerivAt_spatialFDeriv hF
   have hz : HasDerivAt (fun t => F (t, x)) (timeFDeriv F t₀ x) t₀ := by
     have hFdiff : DifferentiableAt 𝕜 F (t₀, x) :=
@@ -64,16 +69,35 @@ theorem hasDerivAt_parametric_pullback {F : 𝕜 × E → E} {W : E → E} {t₀
     rw [hA0]
     exact ⟨ContinuousLinearEquiv.refl 𝕜 E, rfl⟩)
     hInvDiff (hW0.comp_hasDerivAt t₀ hz)
-  have hslice : (fun t => VectorField.pullback 𝕜 (fun y => F (t, y)) W x) =ᶠ[𝓝 t₀]
+  have hslice : (fun t => pullback 𝕜 (fun y => F (t, y)) W x) =ᶠ[𝓝 t₀]
       fun t => (spatialFDeriv F x t).inverse (W (F (t, x))) := by
     have hpath : ContinuousAt (fun t : 𝕜 => (t, x)) t₀ := by fun_prop
     filter_upwards [hpath.eventually (hF.eventually (by norm_num))] with t ht
-    unfold VectorField.pullback
-    congr 2
-    exact fderiv_timeSlice ((ht.of_le le_minSmoothness).differentiableAt two_ne_zero)
+    simp only [pullback,
+      fderiv_timeSlice ((ht.of_le le_minSmoothness).differentiableAt two_ne_zero)]
   have hpull' : HasDerivAt
       (fun t => (spatialFDeriv F x t).inverse (W (F (t, x))))
-      (VectorField.lieBracket 𝕜 (timeFDeriv F t₀) W x) t₀ := by
+      (lieBracket 𝕜 (timeFDeriv F t₀) W x) t₀ := by
     simpa only [Function.comp_apply, hF0, hA0, ContinuousLinearMap.inverse_id,
-      ContinuousLinearMap.id_apply, VectorField.lieBracket] using hpull
+      ContinuousLinearMap.id_apply, lieBracket] using hpull
   exact hpull'.congr_of_eventuallyEq hslice
+
+/-- The Banach-space specialization of `hasDerivAt_parametric_pullback`, where differentiability
+of the inverse spatial-Jacobian family follows automatically from invertibility at the base
+point. -/
+theorem hasDerivAt_parametric_pullback_of_completeSpace [CompleteSpace E]
+    {F : 𝕜 × E → E} {W : E → E} {t₀ : 𝕜} {x : E}
+    (hF : ContDiffAt 𝕜 (minSmoothness 𝕜 2) F (t₀, x)) (hF0 : F (t₀, x) = x)
+    (hA0 : spatialFDeriv F x t₀ = ContinuousLinearMap.id 𝕜 E)
+    (hW : DifferentiableAt 𝕜 W x) :
+    HasDerivAt (fun t => pullback 𝕜 (fun y => F (t, y)) W x)
+      (lieBracket 𝕜 (timeFDeriv F t₀) W x) t₀ := by
+  apply hasDerivAt_parametric_pullback hF hF0 hA0
+  · have hA0Inv : (spatialFDeriv F x t₀).IsInvertible := by
+      rw [hA0]
+      exact ⟨ContinuousLinearEquiv.refl 𝕜 E, rfl⟩
+    exact (hA0Inv.contDiffAt_map_inverse (n := 1)).differentiableAt one_ne_zero |>.comp t₀
+      (hasDerivAt_spatialFDeriv hF).differentiableAt
+  · exact hW
+
+end VectorField
