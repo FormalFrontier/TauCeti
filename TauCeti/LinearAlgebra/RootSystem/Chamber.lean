@@ -107,12 +107,17 @@ of the walls `ker αᵢ^∨`. -/
 def IsRegularWeight (x : M) : Prop := ∀ i, P.coroot' i x ≠ 0
 
 /-- The defining condition of `TauCeti.IsRegularWeight`, as an `Iff`: the predicate is not exposed,
-so this is how it is introduced and eliminated outside this file. -/
+so this is how it is introduced and eliminated outside this file.
+
+Not a `simp` lemma: unfolding the predicate would take `TauCeti.isRegularWeight_smul` out of
+simp-normal form, and would dissolve `IsRegularWeight` out of the goals its own API is stated
+about. Use it explicitly, as `rw [isRegularWeight_iff]` or `simp [isRegularWeight_iff]`. -/
 lemma isRegularWeight_iff (x : M) : IsRegularWeight P x ↔ ∀ i, P.coroot' i x ≠ 0 := Iff.rfl
 
 /-- **Regularity is a Weyl-invariant condition on weights.** A Weyl-group element matches the
 coroot functional of a root with that of its image, so it can neither create nor destroy a
 zero. -/
+@[simp]
 lemma isRegularWeight_smul (w : P.weylGroup) (x : M) :
     IsRegularWeight P (w • x) ↔ IsRegularWeight P x := by
   refine ⟨fun h i ↦ ?_, fun h i ↦ ?_⟩
