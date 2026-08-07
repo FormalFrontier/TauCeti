@@ -85,7 +85,7 @@ theorem mul_oneSubExpNegDivSelf (a : A) :
 
 omit [CompleteSpace A] in
 /-- The filled-in quotient commutes with its argument. -/
-theorem oneSubExpNegDivSelf_commute (a : A) : Commute a (oneSubExpNegDivSelf 𝕂 a) := by
+theorem commute_oneSubExpNegDivSelf (a : A) : Commute a (oneSubExpNegDivSelf 𝕂 a) := by
   rw [oneSubExpNegDivSelf_eq_tsum]
   exact Commute.tsum_right _ fun n ↦ ((Commute.refl a).neg_right.pow_right n).smul_right _
 
@@ -93,7 +93,7 @@ theorem oneSubExpNegDivSelf_commute (a : A) : Commute a (oneSubExpNegDivSelf �
 @[simp]
 theorem oneSubExpNegDivSelf_mul (a : A) :
     oneSubExpNegDivSelf 𝕂 a * a = 1 - exp (-a) := by
-  rw [← (oneSubExpNegDivSelf_commute a).eq, mul_oneSubExpNegDivSelf]
+  rw [← (commute_oneSubExpNegDivSelf a).eq, mul_oneSubExpNegDivSelf]
 
 /-- At an invertible argument, the filled-in quotient is left division by that argument. -/
 theorem oneSubExpNegDivSelf_eq_invOf_mul (a : A) [Invertible a] :
