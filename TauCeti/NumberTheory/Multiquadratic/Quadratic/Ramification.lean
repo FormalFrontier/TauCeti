@@ -7,7 +7,6 @@ module
 public import TauCeti.NumberTheory.Multiquadratic.Quadratic.Discriminant
 public import TauCeti.NumberTheory.Multiquadratic.FundamentalDiscriminant.Factorization
 public import TauCeti.NumberTheory.NumberField.Quadratic.TotalRamification
-public import TauCeti.NumberTheory.NumberField.RamifiedPrimes
 import Mathlib.Algebra.BigOperators.Associated
 
 /-!
@@ -184,7 +183,7 @@ theorem ramificationIdx_eq_two_of_dvd_fundamentalDiscriminant (hmin : minpoly �
     (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) (hsf : Squarefree d) (hp : p.Prime)
     (hdvd : (p : ℤ) ∣ fundamentalDiscriminant d) : 𝔭.ramificationIdx ℤ = 2 :=
   TauCeti.NumberField.ramificationIdx_eq_two_of_mem_ramifiedPrimes
-    (TauCeti.NumberField.finrank_rat_eq_two hmin hgen) hp
+    (TauCeti.NumberField.finrank_rat_eq_two hmin hgen)
     ((mem_ramifiedPrimes_iff_dvd_fundamentalDiscriminant hmin hgen hsf hp).mpr hdvd) 𝔭
 
 /-- **`p 𝓞 K = 𝔭 ^ 2` at a prime dividing the discriminant of `ℚ(√d)`.** -/
@@ -193,7 +192,7 @@ theorem map_span_eq_sq_of_dvd_fundamentalDiscriminant (hmin : minpoly ℤ θ = X
     (hdvd : (p : ℤ) ∣ fundamentalDiscriminant d) :
     (Ideal.span {(p : ℤ)} : Ideal ℤ).map (algebraMap ℤ (𝓞 K)) = 𝔭 ^ 2 :=
   TauCeti.NumberField.map_span_eq_sq_of_mem_ramifiedPrimes
-    (TauCeti.NumberField.finrank_rat_eq_two hmin hgen) hp
+    (TauCeti.NumberField.finrank_rat_eq_two hmin hgen)
     ((mem_ramifiedPrimes_iff_dvd_fundamentalDiscriminant hmin hgen hsf hp).mpr hdvd) 𝔭
 
 /-- **The quadratic field of a prime discriminant is totally ramified at its one ramified prime.**
@@ -206,7 +205,7 @@ theorem map_span_primeDiscriminantPrime_eq_sq {D : ℤ} (hD : IsPrimeDiscriminan
     {𝔮 : Ideal (𝓞 K)} [𝔮.IsPrime] [𝔮.LiesOver (Ideal.span {(primeDiscriminantPrime D : ℤ)})] :
     (Ideal.span {(primeDiscriminantPrime D : ℤ)} : Ideal ℤ).map (algebraMap ℤ (𝓞 K)) = 𝔮 ^ 2 :=
   TauCeti.NumberField.map_span_eq_sq_of_mem_ramifiedPrimes
-    (TauCeti.NumberField.finrank_rat_eq_two hmin hgen) (prime_primeDiscriminantPrime hD)
+    (TauCeti.NumberField.finrank_rat_eq_two hmin hgen)
     (by rw [ramifiedPrimes_eq_singleton hD hmin hgen]; exact rfl) 𝔮
 
 end TauCeti.Multiquadratic
