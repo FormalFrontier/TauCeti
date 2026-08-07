@@ -20,17 +20,17 @@ monic polynomial.
 
 `TauCeti.ofCoeffList l` is the polynomial whose coefficients are the entries of `l`, read from the
 highest degree down, so that it inverts Mathlib's `Polynomial.coeffList`
-(`TauCeti.coeffList_ofCoeffList`).  Its defining recursion is Horner's,
-`ofCoeffList (l ++ [a]) = ofCoeffList l * X + C a`, and every proof below runs along it.  It is a
-`noncomputable` specification map: the *lists* are what compute.
+(`TauCeti.coeffList_ofCoeffList` and `TauCeti.ofCoeffList_coeffList`).  Its defining recursion is
+Horner's, `ofCoeffList (l ++ [a]) = ofCoeffList l * X + C a`, and every proof below runs along it.
+It is a `noncomputable` specification map: the *lists* are what compute.
 
-`TauCeti.divModMonicList t l` is long division of `ofCoeffList l` by the monic polynomial
+`TauCeti.divModByMonicList t l` is long division of `ofCoeffList l` by the monic polynomial
 `X ^ t.length + ofCoeffList t`, carried out as the usual synthetic division: a window of
 `t.length` remainder coefficients is carried along the dividend, and at each step the coefficient
 shifted out of the window is the next quotient coefficient and is used to clear the window against
 the divisor.  Presenting the divisor by the list `t` of the coefficients *below* its leading one
-makes it monic by construction, so `TauCeti.ofCoeffList_divMonicList` and
-`TauCeti.ofCoeffList_modMonicList`, which identify the two outputs with Mathlib's `/ₘ` and `%ₘ`,
+makes it monic by construction, so `TauCeti.ofCoeffList_divByMonicList` and
+`TauCeti.ofCoeffList_modByMonicList`, which identify the two outputs with Mathlib's `/ₘ` and `%ₘ`,
 need no hypotheses at all.  The division is stated over a commutative ring, where clearing the
 window by `x - c * y` matches Mathlib's convention `f = g * q + r` with the divisor on the left.
 
@@ -61,8 +61,8 @@ noncomputable def ofCoeffList (l : List R) : R[X] :=
 theorem ofCoeffList_nil : ofCoeffList ([] : List R) = 0 := by
   simp [ofCoeffList]
 
-/-- The Horner recursion defining `TauCeti.ofCoeffList`: appending a coefficient at the bottom
-multiplies by `X`. -/
+/-- The Horner recursion defining `TauCeti.ofCoeffList`: appending the coefficient `a` at the
+bottom multiplies the polynomial so far by `X` and adds the constant `C a`. -/
 theorem ofCoeffList_concat (l : List R) (a : R) :
     ofCoeffList (l ++ [a]) = ofCoeffList l * X + C a := by
   simp [ofCoeffList]
@@ -132,10 +132,12 @@ theorem coeff_ofCoeffList_length_sub_one (l : List R) :
       List.getD_append_right _ _ _ _ (by simp)]
     simp
 
-/-- A list whose head is not zero has exactly one more entry than the degree of the polynomial it
-defines. -/
-theorem natDegree_ofCoeffList {l : List R} (h : l.headD 0 ≠ 0) :
+/-- A list with no leading zero has exactly one more entry than the degree of the polynomial it
+defines.  The empty list is allowed: it defines `0`, of degree `0`. -/
+theorem natDegree_ofCoeffList {l : List R} (h : l = [] ∨ l.headD 0 ≠ 0) :
     (ofCoeffList l).natDegree = l.length - 1 := by
+  rcases h with rfl | h
+  · simp
   have hl : l ≠ [] := by rintro rfl; exact h rfl
   have hc : (ofCoeffList l).coeff (l.length - 1) ≠ 0 := by
     rw [coeff_ofCoeffList_length_sub_one]; exact h
@@ -146,9 +148,9 @@ theorem natDegree_ofCoeffList {l : List R} (h : l.headD 0 ≠ 0) :
   have : l.length ≠ 0 := by simpa using hl
   omega
 
-/-- A list whose head is not zero has that head as the leading coefficient of the polynomial it
-defines. -/
-theorem leadingCoeff_ofCoeffList {l : List R} (h : l.headD 0 ≠ 0) :
+/-- A list with no leading zero has its head as the leading coefficient of the polynomial it
+defines.  The empty list is allowed: it defines `0`, whose leading coefficient is `0`. -/
+theorem leadingCoeff_ofCoeffList {l : List R} (h : l = [] ∨ l.headD 0 ≠ 0) :
     (ofCoeffList l).leadingCoeff = l.headD 0 := by
   rw [leadingCoeff, natDegree_ofCoeffList h, coeff_ofCoeffList_length_sub_one]
 
@@ -164,17 +166,19 @@ theorem ofCoeffList_injective {l l' : List R} (hlen : l.length = l'.length)
   simpa using congrArg List.reverse hrev
 
 /-- `TauCeti.ofCoeffList` inverts Mathlib's `Polynomial.coeffList` on the lists that arise as
-coefficient lists, namely those whose head is nonzero. -/
-theorem coeffList_ofCoeffList {l : List R} (h : l.headD 0 ≠ 0) :
+coefficient lists, namely those with no leading zero. -/
+theorem coeffList_ofCoeffList {l : List R} (h : l = [] ∨ l.headD 0 ≠ 0) :
     (ofCoeffList l).coeffList = l := by
   classical
+  rcases h with rfl | h
+  · simp
   have hl : l ≠ [] := by rintro rfl; exact h rfl
   have hlpos : l.length ≠ 0 := by simpa using hl
   have hne : ofCoeffList l ≠ 0 := by
     intro h0
     exact h (by rw [← coeff_ofCoeffList_length_sub_one, h0, coeff_zero])
   have hlen : (ofCoeffList l).coeffList.length = l.length := by
-    rw [Polynomial.length_coeffList_eq_ite, if_neg hne, natDegree_ofCoeffList h]
+    rw [Polynomial.length_coeffList_eq_ite, if_neg hne, natDegree_ofCoeffList (Or.inr h)]
     omega
   have hdeg : (ofCoeffList l).degree.succ = l.length := by
     rw [← Polynomial.length_coeffList_eq_withBotSucc_degree]; exact hlen
@@ -185,11 +189,46 @@ theorem coeffList_ofCoeffList {l : List R} (h : l.headD 0 ≠ 0) :
   congr 1
   omega
 
+/-- `TauCeti.ofCoeffList` is a left inverse of Mathlib's `Polynomial.coeffList`: every polynomial
+is recovered from its coefficient list. -/
+@[simp]
+theorem ofCoeffList_coeffList (p : R[X]) : ofCoeffList p.coeffList = p := by
+  rcases eq_or_ne p 0 with rfl | hp
+  · simp
+  have hsucc : p.degree.succ = p.natDegree + 1 := withBotSucc_degree_eq_natDegree_add_one hp
+  ext i
+  rw [coeff_ofCoeffList, Polynomial.coeffList, List.map_reverse, List.reverse_reverse]
+  rcases lt_or_ge i (p.natDegree + 1) with h | h
+  · rw [List.getD_eq_getElem _ _ (by simp [hsucc]; omega)]
+    simp
+  · rw [List.getD_eq_getElem?_getD, List.getElem?_eq_none (by simp [hsucc]; omega),
+      Option.getD_none]
+    exact (coeff_eq_zero_of_natDegree_lt (by omega)).symm
+
+/-- The divisor `X ^ t.length + ofCoeffList t` of `TauCeti.divModByMonicList` is monic. -/
+theorem monic_xPow_add_ofCoeffList (t : List R) : (X ^ t.length + ofCoeffList t).Monic :=
+  monic_X_pow_add (degree_ofCoeffList_lt t)
+
+/-- The divisor `X ^ t.length + ofCoeffList t` has degree exactly `t.length`. -/
+theorem degree_xPow_add_ofCoeffList [Nontrivial R] (t : List R) :
+    (X ^ t.length + ofCoeffList t).degree = ((t.length : ℕ) : WithBot ℕ) := by
+  rw [degree_add_eq_left_of_degree_lt (by simpa using degree_ofCoeffList_lt t), degree_X_pow]
+
+/-- A monic polynomial is `X ^ n` plus the polynomial of its remaining coefficients.  This is how
+a computed coefficient list is recognized as a divisor for `TauCeti.divByMonicList`. -/
+theorem xPow_add_ofCoeffList_tail {l : List R} (hhead : l.headD 0 ≠ 0)
+    (hmonic : (ofCoeffList l).Monic) :
+    X ^ l.tail.length + ofCoeffList l.tail = ofCoeffList l := by
+  have hl : l ≠ [] := by rintro rfl; exact hhead rfl
+  have ha : l.headD 0 = 1 := by
+    rw [← leadingCoeff_ofCoeffList (Or.inr hhead), hmonic.leadingCoeff]
+  rw [ofCoeffList_eq_headD_add_tail hl, ha, map_one, one_mul]
+
 end Semiring
 
-section CommRing
+section Ring
 
-variable [CommRing R]
+variable [Ring R]
 
 /-- Subtracting a scalar multiple of one list of coefficients from another, entrywise. -/
 theorem ofCoeffList_zipWith_sub (c : R) {l l' : List R} (h : l.length = l'.length) :
@@ -203,120 +242,118 @@ theorem ofCoeffList_zipWith_sub (c : R) {l l' : List R} (h : l.length = l'.lengt
     | cons b l' =>
       have hlen : l.length = l'.length := by simpa using h
       rw [List.zipWith_cons_cons, ofCoeffList_cons, ofCoeffList_cons, ofCoeffList_cons,
-        ih hlen, List.length_zipWith, hlen, min_self, C_sub, C_mul]
-      ring
+        ih hlen, List.length_zipWith, hlen, min_self, C_sub, C_mul, sub_mul, mul_add,
+        ← mul_assoc]
+      exact sub_add_sub_comm _ _ _ _
+
+end Ring
+
+section CommRing
+
+variable [CommRing R]
 
 /-- One step of synthetic division by the monic polynomial `X ^ t.length + ofCoeffList t`: the
 pair `qr` holds the quotient coefficients found so far together with a window of `t.length`
 remainder coefficients, and `a` is the next coefficient of the dividend. -/
-@[expose] def divModMonicStep (t : List R) (qr : List R × List R) (a : R) : List R × List R :=
+@[expose] def divModByMonicStep (t : List R) (qr : List R × List R) (a : R) :
+    List R × List R :=
   let w := qr.2 ++ [a]
   let c := w.headD 0
   (qr.1 ++ [c], List.zipWith (fun x y => x - c * y) w.tail t)
 
+/-- One step of synthetic division appends the coefficient shifted out of the remainder window to
+the quotient. -/
+@[simp]
+theorem divModByMonicStep_fst (t : List R) (qr : List R × List R) (a : R) :
+    (divModByMonicStep t qr a).1 = qr.1 ++ [(qr.2 ++ [a]).headD 0] :=
+  rfl
+
+/-- One step of synthetic division clears the remaining window against the divisor. -/
+@[simp]
+theorem divModByMonicStep_snd (t : List R) (qr : List R × List R) (a : R) :
+    (divModByMonicStep t qr a).2
+      = List.zipWith (fun x y => x - (qr.2 ++ [a]).headD 0 * y) (qr.2 ++ [a]).tail t :=
+  rfl
+
 /-- Long division of the polynomial with coefficient list `l` by the monic polynomial
 `X ^ t.length + ofCoeffList t`, by synthetic division.  The first component is the coefficient
 list of the quotient, the second that of the remainder. -/
-@[expose] def divModMonicList (t l : List R) : List R × List R :=
-  l.foldl (divModMonicStep t) ([], List.replicate t.length 0)
+@[expose] def divModByMonicList (t l : List R) : List R × List R :=
+  l.foldl (divModByMonicStep t) ([], List.replicate t.length 0)
 
 /-- The quotient of `ofCoeffList l` by the monic polynomial `X ^ t.length + ofCoeffList t`, as a
 coefficient list. -/
-@[expose] def divMonicList (t l : List R) : List R := (divModMonicList t l).1
+@[expose] def divByMonicList (t l : List R) : List R := (divModByMonicList t l).1
 
 /-- The remainder of `ofCoeffList l` on division by the monic polynomial
 `X ^ t.length + ofCoeffList t`, as a coefficient list. -/
-@[expose] def modMonicList (t l : List R) : List R := (divModMonicList t l).2
+@[expose] def modByMonicList (t l : List R) : List R := (divModByMonicList t l).2
 
 /-- Dividing the zero polynomial leaves the empty quotient and the zero remainder window. -/
 @[simp]
-theorem divModMonicList_nil (t : List R) :
-    divModMonicList t ([] : List R) = ([], List.replicate t.length 0) := rfl
+theorem divModByMonicList_nil (t : List R) :
+    divModByMonicList t ([] : List R) = ([], List.replicate t.length 0) := rfl
 
 /-- The division sweeps the dividend from the top coefficient down, one step per coefficient. -/
-theorem divModMonicList_concat (t l : List R) (a : R) :
-    divModMonicList t (l ++ [a]) = divModMonicStep t (divModMonicList t l) a := by
-  simp [divModMonicList]
+theorem divModByMonicList_concat (t l : List R) (a : R) :
+    divModByMonicList t (l ++ [a]) = divModByMonicStep t (divModByMonicList t l) a := by
+  simp [divModByMonicList]
 
 /-- The remainder window keeps the length of the divisor's degree throughout the division. -/
-theorem length_divModMonicList_snd (t l : List R) :
-    (divModMonicList t l).2.length = t.length := by
+theorem length_divModByMonicList_snd (t l : List R) :
+    (divModByMonicList t l).2.length = t.length := by
   induction l using List.reverseRecOn with
   | nil => simp
-  | append_singleton l a ih => simp [divModMonicList_concat, divModMonicStep, ih]
+  | append_singleton l a ih => simp [divModByMonicList_concat, ih]
 
 /-- The computed remainder has the length of the divisor's degree. -/
 @[simp]
-theorem length_modMonicList (t l : List R) : (modMonicList t l).length = t.length :=
-  length_divModMonicList_snd t l
+theorem length_modByMonicList (t l : List R) : (modByMonicList t l).length = t.length :=
+  length_divModByMonicList_snd t l
 
 /-- **The division identity for synthetic division**: at every stage of the sweep, the part of the
 dividend read so far is the divisor times the quotient found so far, plus the remainder window. -/
-theorem ofCoeffList_divModMonicList (t l : List R) :
-    ofCoeffList l = (X ^ t.length + ofCoeffList t) * ofCoeffList (divModMonicList t l).1
-      + ofCoeffList (divModMonicList t l).2 := by
+theorem ofCoeffList_divModByMonicList (t l : List R) :
+    ofCoeffList l = (X ^ t.length + ofCoeffList t) * ofCoeffList (divModByMonicList t l).1
+      + ofCoeffList (divModByMonicList t l).2 := by
   induction l using List.reverseRecOn with
   | nil => simp
   | append_singleton l a ih =>
-    have hlen : (divModMonicList t l).2.length = t.length := length_divModMonicList_snd t l
-    have hwne : (divModMonicList t l).2 ++ [a] ≠ [] := by simp
-    have hwlen : ((divModMonicList t l).2 ++ [a]).tail.length = t.length := by
+    have hlen : (divModByMonicList t l).2.length = t.length := length_divModByMonicList_snd t l
+    have hwne : (divModByMonicList t l).2 ++ [a] ≠ [] := by simp
+    have hwlen : ((divModByMonicList t l).2 ++ [a]).tail.length = t.length := by
       simp [hlen]
-    have hw1 : ofCoeffList ((divModMonicList t l).2 ++ [a])
-        = ofCoeffList (divModMonicList t l).2 * X + C a := ofCoeffList_concat _ _
-    have hw2 : ofCoeffList ((divModMonicList t l).2 ++ [a])
-        = C (((divModMonicList t l).2 ++ [a]).headD 0) * X ^ t.length
-          + ofCoeffList ((divModMonicList t l).2 ++ [a]).tail := by
+    have hw1 : ofCoeffList ((divModByMonicList t l).2 ++ [a])
+        = ofCoeffList (divModByMonicList t l).2 * X + C a := ofCoeffList_concat _ _
+    have hw2 : ofCoeffList ((divModByMonicList t l).2 ++ [a])
+        = C (((divModByMonicList t l).2 ++ [a]).headD 0) * X ^ t.length
+          + ofCoeffList ((divModByMonicList t l).2 ++ [a]).tail := by
       rw [ofCoeffList_eq_headD_add_tail hwne, hwlen]
-    rw [ofCoeffList_concat, ih, divModMonicList_concat]
-    change _ = (X ^ t.length + ofCoeffList t)
-        * ofCoeffList ((divModMonicList t l).1
-          ++ [((divModMonicList t l).2 ++ [a]).headD 0])
-      + ofCoeffList (List.zipWith (fun x y => x - ((divModMonicList t l).2 ++ [a]).headD 0 * y)
-          ((divModMonicList t l).2 ++ [a]).tail t)
-    rw [ofCoeffList_concat, ofCoeffList_zipWith_sub _ hwlen]
+    rw [ofCoeffList_concat, ih, divModByMonicList_concat, divModByMonicStep_fst,
+      divModByMonicStep_snd, ofCoeffList_concat, ofCoeffList_zipWith_sub _ hwlen]
     linear_combination hw1.symm.trans hw2
 
-/-- The divisor `X ^ t.length + ofCoeffList t` of `TauCeti.divModMonicList` is monic. -/
-theorem monic_xPow_add_ofCoeffList (t : List R) : (X ^ t.length + ofCoeffList t).Monic :=
-  monic_X_pow_add (degree_ofCoeffList_lt t)
-
-/-- The divisor `X ^ t.length + ofCoeffList t` has degree exactly `t.length`. -/
-theorem degree_xPow_add_ofCoeffList [Nontrivial R] (t : List R) :
-    (X ^ t.length + ofCoeffList t).degree = ((t.length : ℕ) : WithBot ℕ) := by
-  rw [degree_add_eq_left_of_degree_lt (by simpa using degree_ofCoeffList_lt t), degree_X_pow]
-
-/-- **Synthetic division computes the quotient**: the first output of `TauCeti.divModMonicList` is
-Mathlib's `/ₘ` by the monic divisor. -/
-theorem ofCoeffList_divMonicList (t l : List R) :
-    ofCoeffList (divMonicList t l) = ofCoeffList l /ₘ (X ^ t.length + ofCoeffList t) := by
+/-- **Synthetic division computes the quotient**: the first output of
+`TauCeti.divModByMonicList` is Mathlib's `/ₘ` by the monic divisor. -/
+theorem ofCoeffList_divByMonicList (t l : List R) :
+    ofCoeffList (divByMonicList t l) = ofCoeffList l /ₘ (X ^ t.length + ofCoeffList t) := by
   nontriviality R
-  refine ((div_modByMonic_unique (ofCoeffList (divMonicList t l))
-    (ofCoeffList (modMonicList t l)) (monic_xPow_add_ofCoeffList t) ⟨?_, ?_⟩).1).symm
-  · rw [add_comm]; exact (ofCoeffList_divModMonicList t l).symm
+  refine ((div_modByMonic_unique (ofCoeffList (divByMonicList t l))
+    (ofCoeffList (modByMonicList t l)) (monic_xPow_add_ofCoeffList t) ⟨?_, ?_⟩).1).symm
+  · rw [add_comm]; exact (ofCoeffList_divModByMonicList t l).symm
   · rw [degree_xPow_add_ofCoeffList]
-    exact lt_of_lt_of_le (degree_ofCoeffList_lt _) (by rw [length_modMonicList])
+    exact lt_of_lt_of_le (degree_ofCoeffList_lt _) (by rw [length_modByMonicList])
 
 /-- **Synthetic division computes the remainder**: the second output of
-`TauCeti.divModMonicList` is Mathlib's `%ₘ` by the monic divisor. -/
-theorem ofCoeffList_modMonicList (t l : List R) :
-    ofCoeffList (modMonicList t l) = ofCoeffList l %ₘ (X ^ t.length + ofCoeffList t) := by
+`TauCeti.divModByMonicList` is Mathlib's `%ₘ` by the monic divisor. -/
+theorem ofCoeffList_modByMonicList (t l : List R) :
+    ofCoeffList (modByMonicList t l) = ofCoeffList l %ₘ (X ^ t.length + ofCoeffList t) := by
   nontriviality R
-  refine ((div_modByMonic_unique (ofCoeffList (divMonicList t l))
-    (ofCoeffList (modMonicList t l)) (monic_xPow_add_ofCoeffList t) ⟨?_, ?_⟩).2).symm
-  · rw [add_comm]; exact (ofCoeffList_divModMonicList t l).symm
+  refine ((div_modByMonic_unique (ofCoeffList (divByMonicList t l))
+    (ofCoeffList (modByMonicList t l)) (monic_xPow_add_ofCoeffList t) ⟨?_, ?_⟩).2).symm
+  · rw [add_comm]; exact (ofCoeffList_divModByMonicList t l).symm
   · rw [degree_xPow_add_ofCoeffList]
-    exact lt_of_lt_of_le (degree_ofCoeffList_lt _) (by rw [length_modMonicList])
-
-/-- A monic polynomial is `X ^ n` plus the polynomial of its remaining coefficients.  This is how
-a computed coefficient list is recognized as a divisor for `TauCeti.divMonicList`. -/
-theorem xPow_add_ofCoeffList_tail {l : List R} (hhead : l.headD 0 ≠ 0)
-    (hmonic : (ofCoeffList l).Monic) :
-    X ^ l.tail.length + ofCoeffList l.tail = ofCoeffList l := by
-  have hl : l ≠ [] := by rintro rfl; exact hhead rfl
-  have ha : l.headD 0 = 1 := by
-    rw [← leadingCoeff_ofCoeffList hhead, hmonic.leadingCoeff]
-  rw [ofCoeffList_eq_headD_add_tail hl, ha, map_one, one_mul]
+    exact lt_of_lt_of_le (degree_ofCoeffList_lt _) (by rw [length_modByMonicList])
 
 end CommRing
 
