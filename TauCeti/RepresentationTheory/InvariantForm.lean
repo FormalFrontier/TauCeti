@@ -82,7 +82,10 @@ into the dual.  That identification is recorded twice: once unbundled as
 `TauCeti.Representation.isInvariantForm_iff_isIntertwiningMap`, which is the shape the proofs
 below use, and once as the linear equivalence
 `TauCeti.Representation.invariantFormsEquivIntertwiningMapDual`, which is the shape a dimension
-count of the invariant forms needs.
+count of the invariant forms needs.  That equivalence is not exposed either: its two `simp` lemmas
+`TauCeti.Representation.invariantFormsEquivIntertwiningMapDual_apply_toLinearMap` and
+`TauCeti.Representation.invariantFormsEquivIntertwiningMapDual_symm_apply_coe` say that it moves a
+form and an intertwiner to each other unchanged, and are the only route to it from another module.
 
 That identification is also what controls the left radical: the form is an intertwiner out of an
 irreducible representation, so `TauCeti.Representation.IsInvariantForm.ker_eq_bot` is Mathlib's
@@ -264,8 +267,7 @@ theorem isInvariantForm_iff_isIntertwiningMap (ρ : Representation k G V) (B : B
 /-- **The invariant forms of `ρ` are the intertwiners from `ρ` to its dual.**  This is the bundled
 form of `TauCeti.Representation.isInvariantForm_iff_isIntertwiningMap`, and it is what puts the
 invariant forms in reach of machinery that counts intertwiners. -/
--- `@[expose]` so that the two characterizing lemmas below hold by `rfl` outside this module.
-@[expose] noncomputable def invariantFormsEquivIntertwiningMapDual (ρ : Representation k G V) :
+noncomputable def invariantFormsEquivIntertwiningMapDual (ρ : Representation k G V) :
     invariantForms ρ ≃ₗ[k] Representation.IntertwiningMap ρ ρ.dual where
   toFun B := (B : BilinForm k V).intertwiningMap_of_isIntertwiningMap ρ ρ.dual
     ((isInvariantForm_iff_isIntertwiningMap ρ _).mp (mem_invariantForms.mp B.2)).isIntertwining
@@ -280,7 +282,7 @@ invariant forms in reach of machinery that counts intertwiners. -/
 @[simp]
 theorem invariantFormsEquivIntertwiningMapDual_apply_toLinearMap (ρ : Representation k G V)
     (B : invariantForms ρ) :
-    (invariantFormsEquivIntertwiningMapDual ρ B).toLinearMap = (B : BilinForm k V) := rfl
+    (invariantFormsEquivIntertwiningMapDual ρ B).toLinearMap = (B : BilinForm k V) := (rfl)
 
 /-- The invariant form attached to an intertwiner `ρ → ρ.dual` is that intertwiner, read as a
 bilinear form. -/
@@ -288,7 +290,7 @@ bilinear form. -/
 theorem invariantFormsEquivIntertwiningMapDual_symm_apply_coe (ρ : Representation k G V)
     (f : Representation.IntertwiningMap ρ ρ.dual) :
     (((invariantFormsEquivIntertwiningMapDual ρ).symm f : invariantForms ρ) : BilinForm k V) =
-      f.toLinearMap := rfl
+      f.toLinearMap := (rfl)
 
 end Group
 

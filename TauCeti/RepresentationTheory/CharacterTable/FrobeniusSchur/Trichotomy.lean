@@ -37,9 +37,13 @@ case), and `0` when it carries no nonzero invariant form at all (the complex cas
 invariant form of the first two cases is automatically nondegenerate, by
 `TauCeti.Representation.IsInvariantForm.nondegenerate`.
 
-Characteristic zero is used throughout, in two places: to move the counting identity from an
-equation in `k` to an equation of natural numbers, and to keep a form from being symmetric and
-alternating at once.
+Characteristic zero is used in two places, and only there: to move the counting identities from
+equations in `k` to equations of natural numbers, and to keep a form from being symmetric and
+alternating at once.  Averaging characters produces identities in `k` and nothing more, so the two
+counting identities are stated first in that form, needing only an invertible `|G|`
+(`TauCeti.Representation.finrank_invariants_dual_cast` and
+`TauCeti.Representation.finrank_invariantForms_cast`); in characteristic `p` they are identities
+of residues, and it is the injectivity of `ℕ → k` that turns them into equalities of dimensions.
 
 The invariant forms themselves, the symmetric and the alternating ones among them, and their
 identification with the intertwiners into the dual are all in
@@ -53,6 +57,10 @@ identification with the intertwiners into the dual are all in
 
 ## Main results
 
+* `TauCeti.Representation.finrank_invariantForms`: **the invariant forms are as many as the
+  invariants of the two squares together**, as an identity in `k` whenever `|G|` is invertible
+  (`TauCeti.Representation.finrank_invariantForms_cast`) and as natural numbers in characteristic
+  zero.
 * `TauCeti.Representation.finrank_symmetricInvariantForms` and
   `TauCeti.Representation.finrank_alternatingInvariantForms`: the two invariant form counts are the
   invariant counts of the two squares.
@@ -249,46 +257,73 @@ end Squares
 section Counting
 
 variable [Field k] [Group G] [AddCommGroup V] [Module k V]
-variable [FiniteDimensional k V] [Finite G] [CharZero k]
+variable [FiniteDimensional k V] [Finite G]
 
-/-- **The dual of a representation has as many invariants as the representation.** Both counts
-average the same character, one along `g` and the other along `g⁻¹`. -/
-theorem finrank_invariants_dual {W : Type*} [AddCommGroup W] [Module k W] [FiniteDimensional k W]
-    (σ : Representation k G W) :
-    finrank k σ.dual.invariants = finrank k σ.invariants := by
-  have : Fintype G := Fintype.ofFinite G
-  have : Invertible (Nat.card G : k) :=
-    invertibleOfNonzero (Nat.cast_ne_zero.mpr Nat.card_pos.ne')
-  have hcast : (finrank k σ.dual.invariants : k) = (finrank k σ.invariants : k) := by
-    rw [← Representation.card_inv_mul_sum_char_eq_finrank,
-      ← Representation.card_inv_mul_sum_char_eq_finrank]
-    refine congrArg _ ?_
-    simp only [Representation.char_dual]
-    exact Fintype.sum_equiv (Equiv.inv G) _ _ fun _ => rfl
-  exact_mod_cast hcast
+section Invertible
 
-/-- **The invariant forms are as many as the invariants of the two squares together.** Both counts
-average `χ(g)²`, one of them along `g⁻¹`. -/
-theorem finrank_invariantForms (ρ : Representation k G V) :
-    finrank k (invariantForms ρ) =
-      finrank k (ρ.symmetricPower 2).invariants + finrank k (ρ.exteriorPower 2).invariants := by
+variable [Invertible (Nat.card G : k)]
+
+/-- **The dual of a representation has as many invariants as the representation**, as an identity
+in `k`: both counts average the same character, one along `g` and the other along `g⁻¹`.
+
+Averaging characters only ever produces identities in `k`.  In characteristic `p` this is one of
+residues; see `TauCeti.Representation.finrank_invariants_dual` for the characteristic-zero form,
+where the two counts agree as natural numbers. -/
+theorem finrank_invariants_dual_cast {W : Type*} [AddCommGroup W] [Module k W]
+    [FiniteDimensional k W] (σ : Representation k G W) :
+    (finrank k σ.dual.invariants : k) = (finrank k σ.invariants : k) := by
   have : Fintype G := Fintype.ofFinite G
-  have : Invertible (Nat.card G : k) :=
-    invertibleOfNonzero (Nat.cast_ne_zero.mpr Nat.card_pos.ne')
+  rw [← Representation.card_inv_mul_sum_char_eq_finrank,
+    ← Representation.card_inv_mul_sum_char_eq_finrank]
+  refine congrArg _ ?_
+  simp only [Representation.char_dual]
+  exact Fintype.sum_equiv (Equiv.inv G) _ _ fun _ => rfl
+
+/-- **The invariant forms are as many as the invariants of the two squares together**, as an
+identity in `k`: both counts average `χ(g)²`, one of them along `g⁻¹`.
+
+As with `TauCeti.Representation.finrank_invariants_dual_cast`, in characteristic `p` this is an
+identity of residues only; see `TauCeti.Representation.finrank_invariantForms` for the
+characteristic-zero form. -/
+theorem finrank_invariantForms_cast (ρ : Representation k G V) :
+    (finrank k (invariantForms ρ) : k) =
+      (finrank k (ρ.symmetricPower 2).invariants : k) +
+        (finrank k (ρ.exteriorPower 2).invariants : k) := by
+  have : Fintype G := Fintype.ofFinite G
   have hsum : ∀ g : G, ρ.character g * ρ.character g =
       (ρ.symmetricPower 2).character g + (ρ.exteriorPower 2).character g := fun g => by
     rw [← Representation.char_tensorSquare ρ g, sq]
-  have hcast : (finrank k (invariantForms ρ) : k) =
-      (finrank k (ρ.symmetricPower 2).invariants : k) +
-        (finrank k (ρ.exteriorPower 2).invariants : k) := by
-    rw [(invariantFormsEquivIntertwiningMapDual ρ).finrank_eq,
-      ← Representation.card_inv_mul_sum_char_mul_char_eq_finrank,
-      ← Representation.card_inv_mul_sum_char_eq_finrank,
-      ← Representation.card_inv_mul_sum_char_eq_finrank, ← mul_add, ← Finset.sum_add_distrib]
-    refine congrArg _ ?_
-    simp only [Representation.char_dual, ← hsum]
-    exact Fintype.sum_equiv (Equiv.inv G) _ _ fun _ => rfl
-  exact_mod_cast hcast
+  rw [(invariantFormsEquivIntertwiningMapDual ρ).finrank_eq,
+    ← Representation.card_inv_mul_sum_char_mul_char_eq_finrank,
+    ← Representation.card_inv_mul_sum_char_eq_finrank,
+    ← Representation.card_inv_mul_sum_char_eq_finrank, ← mul_add, ← Finset.sum_add_distrib]
+  refine congrArg _ ?_
+  simp only [Representation.char_dual, ← hsum]
+  exact Fintype.sum_equiv (Equiv.inv G) _ _ fun _ => rfl
+
+end Invertible
+
+variable [CharZero k]
+
+/-- **The dual of a representation has as many invariants as the representation**, as natural
+numbers.  Characteristic zero is what lifts
+`TauCeti.Representation.finrank_invariants_dual_cast` from an identity in `k`. -/
+theorem finrank_invariants_dual {W : Type*} [AddCommGroup W] [Module k W] [FiniteDimensional k W]
+    (σ : Representation k G W) :
+    finrank k σ.dual.invariants = finrank k σ.invariants := by
+  have : Invertible (Nat.card G : k) :=
+    invertibleOfNonzero (Nat.cast_ne_zero.mpr Nat.card_pos.ne')
+  exact_mod_cast finrank_invariants_dual_cast σ
+
+/-- **The invariant forms are as many as the invariants of the two squares together**, as natural
+numbers.  Characteristic zero is what lifts
+`TauCeti.Representation.finrank_invariantForms_cast` from an identity in `k`. -/
+theorem finrank_invariantForms (ρ : Representation k G V) :
+    finrank k (invariantForms ρ) =
+      finrank k (ρ.symmetricPower 2).invariants + finrank k (ρ.exteriorPower 2).invariants := by
+  have : Invertible (Nat.card G : k) :=
+    invertibleOfNonzero (Nat.cast_ne_zero.mpr Nat.card_pos.ne')
+  exact_mod_cast finrank_invariantForms_cast ρ
 
 private theorem finrank_invariants_symmetricPower_le (ρ : Representation k G V) :
     finrank k (ρ.symmetricPower 2).invariants ≤ finrank k (symmetricInvariantForms ρ) := by
