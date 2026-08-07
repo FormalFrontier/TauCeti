@@ -85,20 +85,6 @@ variable {μ : YoungDiagram}
 noncomputable local instance (t : YoungTableau μ) : DecidablePred (· ∈ colSubgroup t) :=
   Classical.decPred _
 
-/-! ### The column antisymmetrizer as an operator -/
-
-/-- The column antisymmetrizer of `t` acts on any representation as the signed sum of the
-permutations in the column group of `t`. -/
-theorem asAlgebraHom_columnAntisymmetrizer_apply {V : Type*} [AddCommGroup V] [Module ℚ V]
-    (ρ : Representation ℚ (Equiv.Perm (Fin μ.card)) V) (t : YoungTableau μ) (v : V) :
-    ρ.asAlgebraHom (columnAntisymmetrizer t) v =
-      ∑ q : colSubgroup t,
-        ((Equiv.Perm.sign (q : Equiv.Perm (Fin μ.card)) : ℤ) : ℚ) • ρ q v := by
-  rw [columnAntisymmetrizer_def, map_sum, LinearMap.sum_apply]
-  refine Finset.sum_congr rfl fun q _ => ?_
-  rw [map_smul, MonoidAlgebra.of_apply, Representation.asAlgebraHom_single_one,
-    LinearMap.smul_apply]
-
 /-! ### James's lemma: the column antisymmetrizer of a tabloid -/
 
 /-- **James's Lemma 4.6.**  The column antisymmetrizer of `t` sends a `μ`-tabloid to a rational
