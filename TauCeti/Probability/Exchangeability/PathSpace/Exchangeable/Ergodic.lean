@@ -86,10 +86,8 @@ instance instGroup : Group TimePerm := inferInstanceAs (Group (Equiv.Perm.finita
 
 instance instCountable : Countable TimePerm := inferInstanceAs (Countable (Equiv.Perm.finitary ℕ))
 
-/-- The identification of `TimePerm` with the finitary symmetric group it abbreviates.
-
-This is the one place the synonym is unfolded; every other declaration goes through it, so no
-proof elsewhere depends on how `TimePerm` is defined. -/
+/-- The identification of `TimePerm` with the finitary symmetric group `Equiv.Perm.finitary ℕ`
+that it abbreviates. -/
 @[expose]
 def equivFinitary : TimePerm ≃ Equiv.Perm.finitary ℕ := Equiv.refl _
 
