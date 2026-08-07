@@ -196,6 +196,7 @@ theorem quadraticLieSubalgebra_toSubmodule_eq_range :
 /-- **Membership in the quadratic elements**: an element of the Clifford algebra is quadratic
 exactly when it is in the image of `⋀[R]^2 M` under
 `TauCeti.CliffordAlgebra.cliffordBivectorExterior`. -/
+@[simp]
 theorem mem_quadraticLieSubalgebra_iff {x : CliffordAlgebra Q} :
     x ∈ quadraticLieSubalgebra Q ↔ x ∈ LinearMap.range (cliffordBivectorExterior Q) := by
   rw [← LieSubalgebra.mem_toSubmodule, quadraticLieSubalgebra_toSubmodule_eq_range]
