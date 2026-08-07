@@ -19,7 +19,7 @@ every increment.
 
 ## Main result
 
-* `intervalIntegrable_exp_add_sub_exp`: the Duhamel integrand is interval integrable.
+* `intervalIntegrable_exp_smul_mul_mul_exp_smul`: the Duhamel integrand is interval integrable.
 * `exp_add_sub_exp_eq_integral`: `exp (x + h) - exp x` is the integral of
   `exp ((1 - t) (x + h)) * h * exp (t x)` over the unit interval.
 
@@ -58,7 +58,7 @@ private theorem hasDerivAt_exp_smul_mul_exp_smul (x h : A) (t : ℝ) :
   exact (hleft.fun_mul hright).congr_deriv (by noncomm_ring)
 
 /-- The integrand in Duhamel's finite-increment formula is interval integrable. -/
-theorem intervalIntegrable_exp_add_sub_exp (x h : A) :
+theorem intervalIntegrable_exp_smul_mul_mul_exp_smul (x h : A) :
     IntervalIntegrable
       (fun t : ℝ ↦ exp ((1 - t) • (x + h)) * h * exp (t • x)) volume 0 1 :=
   Continuous.intervalIntegrable (μ := volume) (by fun_prop) 0 1
@@ -74,7 +74,7 @@ theorem exp_add_sub_exp_eq_integral (x h : A) :
     intro t _ht
     exact hasDerivAt_exp_smul_mul_exp_smul x h t
   have hint : IntervalIntegrable F' volume (0 : ℝ) 1 := by
-    exact (intervalIntegrable_exp_add_sub_exp x h).neg
+    exact (intervalIntegrable_exp_smul_mul_mul_exp_smul x h).neg
   have hFTC := intervalIntegral.integral_eq_sub_of_hasDerivAt hderiv hint
   dsimp only [F, F'] at hFTC
   simp only [one_smul, sub_self, sub_zero, zero_smul, exp_zero, mul_one, one_mul,
