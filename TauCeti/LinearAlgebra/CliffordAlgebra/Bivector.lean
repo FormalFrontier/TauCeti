@@ -41,6 +41,8 @@ Layer 9 CAR worked instance.
 * `TauCeti.CliffordAlgebra.cliffordBivector_mem_evenOdd_zero` and
   `TauCeti.CliffordAlgebra.cliffordBivector_mem_filtration_two`: it is even and has filtration
   degree at most two.
+* `TauCeti.CliffordAlgebra.cliffordBivectorExterior_range_le`: the exterior-square map lands in
+  any submodule containing the Clifford bivectors.
 
 ## References
 
@@ -140,7 +142,9 @@ theorem cliffordBivector_mem_filtration_two (a b : M) :
   exact Submodule.smul_mem _ _ <|
     Submodule.sub_mem _ (ι_mul_ι_mem_filtration_two Q a b) (ι_mul_ι_mem_filtration_two Q b a)
 
-private theorem cliffordBivectorExterior_range_le (P : Submodule R (CliffordAlgebra Q))
+/-- The image of the exterior-square Clifford bivector map lands in any submodule containing every
+Clifford bivector: the decomposable bivectors generate `⋀[R]^2 M`. -/
+theorem cliffordBivectorExterior_range_le (P : Submodule R (CliffordAlgebra Q))
     (hP : ∀ a b : M, cliffordBivector Q a b ∈ P) :
     LinearMap.range (cliffordBivectorExterior Q) ≤ P := by
   rw [LinearMap.range_eq_map, Submodule.map_le_iff_le_comap,
