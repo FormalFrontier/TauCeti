@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Geometry.Lie.Exponential.OneSubExpNegDivSelf
+public import TauCeti.Analysis.Normed.Algebra.OneSubExpNegDivSelf
 public import Mathlib.Analysis.SpecialFunctions.Integrals.Basic
 public import Mathlib.MeasureTheory.Integral.DominatedConvergence
 
