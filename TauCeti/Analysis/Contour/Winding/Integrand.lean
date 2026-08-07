@@ -57,4 +57,8 @@ theorem realWindingIntegrand_neg_right (z v : ℂ) :
     realWindingIntegrand z (-v) = -realWindingIntegrand z v := by
   simp only [realWindingIntegrand_eq_div, Complex.neg_im, Complex.neg_re]; ring
 
+/-- The real winding integrand vanishes at the origin, for any velocity: `0⁻¹ = 0` in `ℂ`. -/
+theorem realWindingIntegrand_zero_left (v : ℂ) : realWindingIntegrand 0 v = 0 := by
+  simp
+
 end TauCeti.Contour
