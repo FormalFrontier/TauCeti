@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Geometry.Lie.Adjoint.Basic
+public import TauCeti.Geometry.Lie.Interior
 public import TauCeti.Geometry.Lie.Tangent.LieEquiv
 
 /-!
@@ -13,6 +14,10 @@ public import TauCeti.Geometry.Lie.Tangent.LieEquiv
 The tangent adjoint action is transported across the canonical Lie equivalence between the tangent
 space at the identity and left-invariant derivations. The result is the roadmap-facing group adjoint
 `Ad` on Mathlib's Lie algebra `LeftInvariantDerivation I G`.
+
+The Hausdorff hypothesis is inherited from the canonical derivation–tangent equivalence: its proof
+uses global smooth functions to identify point derivations with tangent vectors. No boundaryless
+manifold assumption is needed, because a Lie group's identity is automatically an interior point.
 
 This advances Deliverable A, Layer 1 of
 `TauCetiRoadmap/RepresentationTheory/LieGroups/README.md`.
@@ -23,7 +28,9 @@ This advances Deliverable A, Layer 1 of
 
 ## Main results
 
+* `TauCeti.Lie.Ad_one`: the identity acts trivially.
 * `TauCeti.Lie.Ad_mul`: the group adjoint respects multiplication.
+* `TauCeti.Lie.Ad_inv`: inversion corresponds to the inverse automorphism.
 
 ## References
 
@@ -42,7 +49,7 @@ open scoped Manifold ContDiff
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
   {H : Type*} [TopologicalSpace H] {I : ModelWithCorners ℝ E H}
   {G : Type*} [TopologicalSpace G] [ChartedSpace H G] [Group G]
-  [FiniteDimensional ℝ E] [LieGroup I ∞ G] [T2Space G] [BoundarylessManifold I G]
+  [FiniteDimensional ℝ E] [LieGroup I ∞ G] [T2Space G]
 
 attribute [local instance] LieGroup.minSmoothnessThree
 
@@ -50,27 +57,34 @@ attribute [local instance] LieGroup.minSmoothnessThree
 conjugation across evaluation at the identity. -/
 def Ad (g : G) : LeftInvariantDerivation I G ≃ₗ⁅ℝ⁆ LeftInvariantDerivation I G :=
   let e := leftInvariantDerivationLieEquivGroupLieAlgebra
-    (I := I) (G := G) BoundarylessManifold.isInteriorPoint
+    (I := I) (G := G) (ContMDiffMul.isInteriorPoint (I := I) (n := ∞) (by simp) (1 : G))
   (e.trans (tangentAd (I := I) g)).trans e.symm
 
+/-- Applying the derivation adjoint is applying the tangent adjoint through the canonical Lie
+equivalence. -/
 @[simp]
 theorem Ad_apply (g : G) (D : LeftInvariantDerivation I G) :
     Ad (I := I) g D =
       (leftInvariantDerivationLieEquivGroupLieAlgebra
-          (I := I) (G := G) BoundarylessManifold.isInteriorPoint).symm
+          (I := I) (G := G)
+          (ContMDiffMul.isInteriorPoint (I := I) (n := ∞) (by simp) (1 : G))).symm
         (tangentAd (I := I) g
           (leftInvariantDerivationLieEquivGroupLieAlgebra
-            (I := I) (G := G) BoundarylessManifold.isInteriorPoint D)) :=
+            (I := I) (G := G)
+            (ContMDiffMul.isInteriorPoint (I := I) (n := ∞) (by simp) (1 : G)) D)) :=
   (rfl)
 
+/-- The identity element acts trivially on left-invariant derivations. -/
 @[simp]
 theorem Ad_one : Ad (I := I) (1 : G) = LieEquiv.refl := by
   apply LieEquiv.ext
   intro D
   rw [Ad_apply, tangentAd_one, LieEquiv.refl_apply]
   exact (leftInvariantDerivationLieEquivGroupLieAlgebra
-    (I := I) (G := G) BoundarylessManifold.isInteriorPoint).symm_apply_apply D
+    (I := I) (G := G)
+    (ContMDiffMul.isInteriorPoint (I := I) (n := ∞) (by simp) (1 : G))).symm_apply_apply D
 
+/-- A product acts by the composite of the two derivation adjoint automorphisms. -/
 theorem Ad_mul (g h : G) :
     Ad (I := I) (g * h) = (Ad (I := I) h).trans (Ad (I := I) g) := by
   apply LieEquiv.ext
@@ -78,6 +92,7 @@ theorem Ad_mul (g h : G) :
   rw [Ad_apply, tangentAd_mul, LieEquiv.trans_apply, LieEquiv.trans_apply,
     Ad_apply, Ad_apply, LieEquiv.apply_symm_apply]
 
+/-- The adjoint of an inverse is the inverse adjoint automorphism. -/
 @[simp]
 theorem Ad_inv (g : G) : Ad (I := I) g⁻¹ = (Ad (I := I) g).symm := by
   apply LieEquiv.ext
