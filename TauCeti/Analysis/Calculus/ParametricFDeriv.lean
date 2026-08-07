@@ -20,6 +20,7 @@ This supplies a prerequisite for Deliverable A, Layer 1 of
 
 ## Main result
 
+* `hasDerivAt_timeFDeriv`: the parameter velocity differentiates the corresponding time slice.
 * `deriv_spatialFDeriv_apply`: the parameter derivative of the spatial Jacobian equals the
   derivative of the parameter-velocity field.
 
@@ -55,6 +56,15 @@ def timeFDeriv (F : ℝ × E → F') (x : E) : F' :=
 theorem timeFDeriv_apply (F : ℝ × E → F') (x : E) :
     timeFDeriv F x = fderiv ℝ F (0, x) (1, 0) :=
   (rfl)
+
+/-- The parameter velocity is the derivative at zero of the corresponding time slice. -/
+theorem hasDerivAt_timeFDeriv {F : ℝ × E → F'} {x : E}
+    (hF : DifferentiableAt ℝ F (0, x)) :
+    HasDerivAt (fun t => F (t, x)) (timeFDeriv F x) 0 := by
+  have hp : HasDerivAt (fun t : ℝ => (t, x)) (1, 0) 0 :=
+    (hasDerivAt_id (𝕜 := ℝ) (0 : ℝ)).prodMk (hasDerivAt_const (x := 0) x)
+  simpa only [timeFDeriv_apply, Function.comp_def] using
+    hF.hasFDerivAt.comp_hasDerivAt 0 hp
 
 /-- For a `C²` parametric map, the parameter derivative of its spatial Jacobian, applied to `w`,
 is the spatial derivative of its parameter-velocity field applied to `w`. -/

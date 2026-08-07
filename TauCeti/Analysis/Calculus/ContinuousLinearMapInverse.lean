@@ -35,50 +35,54 @@ noncomputable section
 open ContinuousLinearMap
 open scoped Topology
 
-variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
-  {A : ℝ → E →L[ℝ] E} {A' : E →L[ℝ] E} {w : ℝ → E} {w' : E}
+variable {𝕜 E F : Type*} [NontriviallyNormedField 𝕜]
+  [NormedAddCommGroup E] [NormedSpace 𝕜 E] [NormedAddCommGroup F] [NormedSpace 𝕜 F]
+  {t₀ : 𝕜} {A : 𝕜 → E →L[𝕜] F} {A' : E →L[𝕜] F} {w : 𝕜 → F} {w' : F}
 
 /-- The derivative of an inverse family of continuous linear maps. -/
-theorem HasDerivAt.clm_inverse (hA : HasDerivAt A A' 0)
-    (hA0Inv : (A 0).IsInvertible)
-    (hInvDiff : DifferentiableAt ℝ (fun t => (A t).inverse) 0) :
+theorem HasDerivAt.clm_inverse (hA : HasDerivAt A A' t₀)
+    (hA0Inv : (A t₀).IsInvertible)
+    (hInvDiff : DifferentiableAt 𝕜 (fun t => (A t).inverse) t₀) :
     HasDerivAt (fun t => (A t).inverse)
-      (-((A 0).inverse.comp (A'.comp (A 0).inverse))) 0 := by
-  have hAInv : ∀ᶠ t in 𝓝 0, (A t).IsInvertible := by
+      (-((A t₀).inverse.comp (A'.comp (A t₀).inverse))) t₀ := by
+  have hAInv : ∀ᶠ t in 𝓝 t₀, (A t).IsInvertible := by
     by_cases hE : Subsingleton E
-    · let _ : Subsingleton E := hE
+    · rcases hA0Inv with ⟨e, _⟩
+      let _ : Subsingleton E := hE
+      let _ : Subsingleton F := e.toEquiv.symm.subsingleton
       exact Filter.Eventually.of_forall fun t => by
+        -- Between subsingleton spaces every continuous linear map is the zero map.
         rw [show A t = 0 from Subsingleton.elim _ _, isInvertible_zero_iff]
         exact ⟨inferInstance, inferInstance⟩
-    · have hInv0Inv : ((A 0).inverse).IsInvertible := by
+    · have hInv0Inv : ((A t₀).inverse).IsInvertible := by
         rcases hA0Inv with ⟨e, he⟩
         rw [← he, inverse_equiv]
         exact isInvertible_equiv
-      have hInv0 : (A 0).inverse ≠ 0 := by
+      have hInv0 : (A t₀).inverse ≠ 0 := by
         intro hzero
         rw [hzero, isInvertible_zero_iff] at hInv0Inv
-        exact hE hInv0Inv.1
+        exact hE hInv0Inv.2
       filter_upwards [hInvDiff.continuousAt.eventually_ne hInv0] with t ht
       by_contra hAt
       exact ht (inverse_of_not_isInvertible hAt)
-  let B' : E →L[ℝ] E := _root_.deriv (fun t => (A t).inverse) 0
-  have hInvRaw : HasDerivAt (fun t => (A t).inverse) B' 0 := hInvDiff.hasDerivAt
-  have hB'eq : B' = -((A 0).inverse.comp (A'.comp (A 0).inverse)) := by
+  let B' : F →L[𝕜] E := _root_.deriv (fun t => (A t).inverse) t₀
+  have hInvRaw : HasDerivAt (fun t => (A t).inverse) B' t₀ := hInvDiff.hasDerivAt
+  have hB'eq : B' = -((A t₀).inverse.comp (A'.comp (A t₀).inverse)) := by
     apply ContinuousLinearMap.ext
     intro v
-    have hconst : HasDerivAt (fun _ : ℝ => v) 0 0 := hasDerivAt_const 0 v
+    have hconst : HasDerivAt (fun _ : 𝕜 => v) 0 t₀ := hasDerivAt_const t₀ v
     have hBv := hInvRaw.clm_apply hconst
     have hABv := hA.clm_apply hBv
-    have heq : (fun t => A t ((A t).inverse v)) =ᶠ[𝓝 0] fun _ => v := by
+    have heq : (fun t => A t ((A t).inverse v)) =ᶠ[𝓝 t₀] fun _ => v := by
       filter_upwards [hAInv] with t ht
       exact ht.self_apply_inverse v
-    have hzero : HasDerivAt (fun t => A t ((A t).inverse v)) 0 0 := by
+    have hzero : HasDerivAt (fun t => A t ((A t).inverse v)) 0 t₀ := by
       exact hconst.congr_of_eventuallyEq heq
     have hderivZero := hABv.unique hzero
     simp only [map_zero, add_zero] at hderivZero
     apply hA0Inv.injective
-    -- Unfold the composition wrappers to compare both sides after applying `A 0`.
-    change (A 0) (B' v) = (A 0) (-((A 0).inverse (A' ((A 0).inverse v))))
+    -- Unfold the composition wrappers to compare both sides after applying `A t₀`.
+    change (A t₀) (B' v) = (A t₀) (-((A t₀).inverse (A' ((A t₀).inverse v))))
     rw [map_neg, hA0Inv.self_apply_inverse]
     exact eq_neg_of_add_eq_zero_right hderivZero
   rw [hB'eq] at hInvRaw
@@ -86,10 +90,10 @@ theorem HasDerivAt.clm_inverse (hA : HasDerivAt A A' 0)
 
 /-- The derivative of an inverse family of continuous linear maps acting on a differentiable
 vector curve. -/
-theorem HasDerivAt.clm_inverse_apply (hA : HasDerivAt A A' 0)
-    (hA0Inv : (A 0).IsInvertible)
-    (hInvDiff : DifferentiableAt ℝ (fun t => (A t).inverse) 0)
-    (hw : HasDerivAt w w' 0) :
+theorem HasDerivAt.clm_inverse_apply (hA : HasDerivAt A A' t₀)
+    (hA0Inv : (A t₀).IsInvertible)
+    (hInvDiff : DifferentiableAt 𝕜 (fun t => (A t).inverse) t₀)
+    (hw : HasDerivAt w w' t₀) :
     HasDerivAt (fun t => (A t).inverse (w t))
-      ((A 0).inverse w' - (A 0).inverse (A' ((A 0).inverse (w 0)))) 0 := by
+      ((A t₀).inverse w' - (A t₀).inverse (A' ((A t₀).inverse (w t₀)))) t₀ := by
   simpa [sub_eq_add_neg, add_comm] using (hA.clm_inverse hA0Inv hInvDiff).clm_apply hw

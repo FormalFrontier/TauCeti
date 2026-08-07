@@ -11,10 +11,10 @@ public import TauCeti.Analysis.Calculus.ParametricFDeriv
 /-!
 # Differentiating a parametric pullback
 
-The derivative at zero of the pullback of a vector field along a parametric family that agrees
-with the identity to first order at a point is the Lie bracket with the family's initial velocity.
-This is the vector-space calculus statement underlying the infinitesimal adjoint action of a Lie
-group.
+For a differentiable vector field and a parametric family whose inverse spatial Jacobian is
+differentiable, the derivative at zero of its pullback is the Lie bracket with the family's initial
+velocity when the family is `C²` and agrees with the identity to first order at the point. This is
+the vector-space calculus statement underlying the infinitesimal adjoint action of a Lie group.
 
 This supplies a prerequisite for Deliverable A, Layer 1 of
 `TauCetiRoadmap/RepresentationTheory/LieGroups/README.md`.
@@ -39,7 +39,8 @@ open scoped Topology
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
 
 /-- Let `F` be `C²` at `(0, x)` and agree with the identity to first order at `x` when `t = 0`.
-Then the derivative of the pullback of `W` along `F` is the Lie bracket of the initial velocity of
+If the inverse spatial-Jacobian family is differentiable at zero and `W` is differentiable at `x`,
+then the derivative of the pullback of `W` along `F` is the Lie bracket of the initial velocity of
 `F` with `W`. -/
 theorem hasDerivAt_parametric_pullback {F : ℝ × E → E} {W : E → E} {x : E}
     (hF : ContDiffAt ℝ 2 F (0, x)) (hF0 : F (0, x) = x)
@@ -49,13 +50,10 @@ theorem hasDerivAt_parametric_pullback {F : ℝ × E → E} {W : E → E} {x : E
     HasDerivAt
       (fun t => VectorField.pullback ℝ (fun y => F (t, y)) W x)
       (VectorField.lieBracket ℝ (timeFDeriv F) W x) 0 := by
-  have hp : HasDerivAt (fun t : ℝ => (t, x)) (1, 0) 0 :=
-    (hasDerivAt_id (𝕜 := ℝ) (0 : ℝ)).prodMk (hasDerivAt_const (x := 0) x)
   have hA := hasDerivAt_spatialFDeriv hF
   have hz : HasDerivAt (fun t => F (t, x)) (timeFDeriv F x) 0 := by
     have hFdiff : DifferentiableAt ℝ F (0, x) := hF.differentiableAt (by norm_num)
-    simpa only [timeFDeriv_apply, Function.comp_def] using
-      hFdiff.hasFDerivAt.comp_hasDerivAt 0 hp
+    exact hasDerivAt_timeFDeriv hFdiff
   have hW0 : HasFDerivAt W (fderiv ℝ W x) (F (0, x)) := by
     simpa only [hF0] using hW.hasFDerivAt
   have hpull := hA.clm_inverse_apply (by
@@ -64,7 +62,7 @@ theorem hasDerivAt_parametric_pullback {F : ℝ × E → E} {W : E → E} {x : E
     hInvDiff (hW0.comp_hasDerivAt 0 hz)
   have hslice : (fun t => VectorField.pullback ℝ (fun y => F (t, y)) W x) =ᶠ[𝓝 0]
       fun t => (spatialFDeriv F x t).inverse (W (F (t, x))) := by
-    have hpath : ContinuousAt (fun t : ℝ => (t, x)) 0 := hp.continuousAt
+    have hpath : ContinuousAt (fun t : ℝ => (t, x)) 0 := by fun_prop
     filter_upwards [hpath.eventually (hF.eventually (by norm_num))] with t ht
     unfold VectorField.pullback
     congr 2
