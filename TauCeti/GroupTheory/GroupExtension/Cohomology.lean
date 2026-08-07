@@ -208,6 +208,13 @@ class. -/
 noncomputable def isCohomologousSetoid : Setoid (FactorSet G M) :=
   Setoid.ker (cohomologyClass : FactorSet G M → H2 (Rep.ofMulDistribMulAction G M))
 
+/-- The relation of `TauCeti.FactorSet.isCohomologousSetoid` is being cohomologous, so a coboundary
+witness gives `Quotient.sound`. -/
+@[simp]
+theorem isCohomologousSetoid_apply {α β : FactorSet G M} :
+    isCohomologousSetoid G M α β ↔ IsCohomologous α β :=
+  Setoid.ker_def.trans isCohomologous_iff_cohomologyClass_eq.symm
+
 variable (G M) in
 /-- **`H²(G, M)` classifies factor sets up to cohomology.** The cohomology class descends to a
 bijection from the factor sets of `G` with values in `M`, taken modulo the cohomologous relation,
