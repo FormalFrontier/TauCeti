@@ -122,6 +122,7 @@ theorem coe_spechtIdealToSubrepresentation_apply (t : YoungTableau μ) (x : spec
 
 /-- The coefficient of `{t}` in `c_t · {t}` is the order of the row group.  In particular the
 canonical comparison map does not annihilate the generator of the Young-symmetrizer ideal. -/
+@[simp]
 theorem youngSymmetrizer_smul_tabloid_coeff_tabloid (t : YoungTableau μ) :
     ((permutationModule (shapePartition μ)).ρ.asAlgebraHom (youngSymmetrizer t)
         (MonoidAlgebra.single (tabloid t) 1)).coeff (tabloid t) =
