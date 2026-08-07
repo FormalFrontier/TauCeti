@@ -7,6 +7,7 @@ module
 public import Mathlib.Analysis.SpecialFunctions.Exponential
 public import Mathlib.Topology.Algebra.ContinuousMonoidHom
 public import Mathlib.Topology.ContinuousMap.Units
+public import TauCeti.Analysis.Normed.Algebra.Basic
 
 /-!
 # Banach-algebra exponentials as units
@@ -90,9 +91,7 @@ section Real
 
 variable {R : Type*} [NormedRing R] [NormedAlgebra ℝ R] [CompleteSpace R]
 
-/-- A real normed algebra regarded as a rational normed algebra within this module. -/
-noncomputable local instance normedAlgebraRatOfReal : NormedAlgebra ℚ R :=
-  .restrictScalars ℚ ℝ R
+attribute [local instance] TauCeti.normedAlgebraRatOfReal
 
 /-- The one-parameter subgroup law lifted from the algebra to its group of units. -/
 @[simp]
