@@ -28,6 +28,11 @@ antiderivative for such an `s`, while `TauCeti.lintegral_ofReal_rpow_Ioi` record
 `∫⁻ t in (0, ∞), t ^ s` diverges — the latter for *every* exponent `s`, since a power that is
 integrable at the origin is not integrable at infinity and conversely.
 
+`TauCeti.lintegral_indicator_ofReal_rpow_Ioi` packages the two together as the single formula the
+real interpolation method uses: the integral over `(0, ∞)` of `t ^ s` cut off at the height where
+`c * t` reaches a threshold `a : ℝ≥0∞`, which is the finite antiderivative when `a` is finite and
+`∞` when it is not.
+
 The layer cake formula `∫⁻ u ^ p = p * ∫⁻ t in (0, ∞), ν {u > t} * t ^ (p - 1)` is in Mathlib as
 `MeasureTheory.lintegral_rpow_eq_lintegral_meas_lt_mul`, but only for a nonnegative *real-valued*
 `u`. Analysis in `ℝ≥0∞` — where the operators of interpolation theory naturally land, since a
@@ -46,8 +51,10 @@ used, and it is why the statement needs no finiteness hypothesis on `u`.
 ## Main declarations
 
 * `TauCeti.lintegral_ofReal_rpow_Ioo`: `∫⁻ t in (0, a), t ^ s = a ^ (s + 1) / (s + 1)` for
-  `-1 < s`.
+  `-1 < s` and `0 ≤ a`.
 * `TauCeti.lintegral_ofReal_rpow_Ioi`: `∫⁻ t in (0, ∞), t ^ s = ∞`, for every `s`.
+* `TauCeti.lintegral_indicator_ofReal_rpow_Ioi`: the same integral truncated at the height where
+  `c * t` reaches `a : ℝ≥0∞`, evaluated to `c ^ (-(s + 1)) / (s + 1) * a ^ (s + 1)`.
 * `TauCeti.lintegral_rpow_eq_lintegral_meas_ofReal_lt_mul`: the layer cake formula for an
   `ℝ≥0∞`-valued function.
 
@@ -65,8 +72,11 @@ open scoped ENNReal
 
 variable {s : ℝ}
 
-/-- The lower integral of `t ^ s` over a bounded interval `(0, a)`, for `-1 < s`: the power is
-integrable at the origin and the value is the expected antiderivative. -/
+/-- The lower integral of `t ^ s` over a bounded interval `(0, a)`, for `-1 < s` and `0 ≤ a`: the
+power is integrable at the origin and the value is the expected antiderivative.
+
+Nonnegativity of `a` is needed: for `a < 0` the interval is empty while `a ^ (s + 1)`, a real power
+at a negative base, need not vanish. -/
 theorem lintegral_ofReal_rpow_Ioo (hs : -1 < s) {a : ℝ} (ha : 0 ≤ a) :
     ∫⁻ t in Ioo (0 : ℝ) a, ENNReal.ofReal (t ^ s) = ENNReal.ofReal (a ^ (s + 1) / (s + 1)) := by
   have hs1 : (0 : ℝ) < s + 1 := by linarith
@@ -87,11 +97,66 @@ theorem lintegral_ofReal_rpow_Ioi (s : ℝ) :
     ∫⁻ t in Ioi (0 : ℝ), ENNReal.ofReal (t ^ s) = ∞ := by
   by_contra hne
   have hmeas : Measurable fun t : ℝ => t ^ s := measurable_id.pow measurable_const
-  refine not_integrableOn_Ioi_rpow s ⟨hmeas.aestronglyMeasurable, ?_⟩
-  rw [hasFiniteIntegral_iff_enorm]
-  refine lt_of_le_of_lt (le_of_eq ?_) (lt_top_iff_ne_top.2 hne)
-  refine setLIntegral_congr_fun measurableSet_Ioi fun t ht => ?_
-  exact Real.enorm_eq_ofReal (Real.rpow_nonneg (le_of_lt ht) s)
+  have hnn : 0 ≤ᵐ[volume.restrict (Ioi (0 : ℝ))] fun t : ℝ => t ^ s := by
+    filter_upwards [ae_restrict_mem measurableSet_Ioi] with t ht
+    exact Real.rpow_nonneg (le_of_lt ht) s
+  exact not_integrableOn_Ioi_rpow s
+    ⟨hmeas.aestronglyMeasurable, (hasFiniteIntegral_iff_ofReal hnn).2 (lt_top_iff_ne_top.2 hne)⟩
+
+/-- The lower integral of `t ^ s` over `(0, ∞)`, truncated at the height where `c * t` reaches a
+threshold `a : ℝ≥0∞`: for `-1 < s` and `0 < c`,
+
+`∫⁻ t in (0, ∞), [c * t < a] * t ^ s = c ^ (-(s + 1)) / (s + 1) * a ^ (s + 1)`.
+
+For a finite `a` the cut-off makes this the integral over `(0, a / c)` evaluated by
+`TauCeti.lintegral_ofReal_rpow_Ioo`; for `a = ∞` the cut-off is vacuous and both sides are `∞`, by
+`TauCeti.lintegral_ofReal_rpow_Ioi`. This is the inner integral of the real interpolation method,
+where `a` is the value of the function being interpolated at a point. -/
+theorem lintegral_indicator_ofReal_rpow_Ioi (hs : -1 < s) {c : ℝ} (hc : 0 < c) (a : ℝ≥0∞) :
+    ∫⁻ t in Ioi (0 : ℝ),
+        {t : ℝ | ENNReal.ofReal (c * t) < a}.indicator (fun t => ENNReal.ofReal (t ^ s)) t =
+      ENNReal.ofReal (c ^ (-(s + 1)) / (s + 1)) * a ^ (s + 1) := by
+  have hs1 : (0 : ℝ) < s + 1 := by linarith
+  have hconst : (0 : ℝ) < c ^ (-(s + 1)) / (s + 1) := by positivity
+  rcases eq_or_ne a ∞ with rfl | ha
+  · -- The cut-off is vacuous and the integral diverges.
+    have hmem : ∀ t : ℝ, t ∈ {t : ℝ | ENNReal.ofReal (c * t) < ∞} := fun t =>
+      Set.mem_ofPred.2 ENNReal.ofReal_lt_top
+    rw [setLIntegral_congr_fun measurableSet_Ioi
+        (fun t _ => Set.indicator_of_mem (hmem t) _),
+      lintegral_ofReal_rpow_Ioi, ENNReal.top_rpow_of_pos hs1,
+      ENNReal.mul_top (ENNReal.ofReal_pos.2 hconst).ne']
+  rcases eq_or_ne a 0 with rfl | ha0
+  · -- The cut-off is empty and both sides vanish.
+    simp [ENNReal.zero_rpow_of_pos hs1]
+  set b : ℝ := a.toReal with hbdef
+  have hb0 : 0 < b := ENNReal.toReal_pos ha0 ha
+  have hab : a = ENNReal.ofReal b := (ENNReal.ofReal_toReal ha).symm
+  -- On `(0, ∞)` the cut-off is the interval `(0, b / c)`.
+  have heq : ∀ t ∈ Ioi (0 : ℝ),
+      {t : ℝ | ENNReal.ofReal (c * t) < a}.indicator (fun t => ENNReal.ofReal (t ^ s)) t =
+        (Ioo (0 : ℝ) (b / c)).indicator (fun t => ENNReal.ofReal (t ^ s)) t := by
+    intro t ht
+    have ht' : (0 : ℝ) < t := ht
+    have hiff : ENNReal.ofReal (c * t) < a ↔ t < b / c := by
+      rw [hab, ENNReal.ofReal_lt_ofReal_iff hb0, lt_div_iff₀ hc, mul_comm]
+    rcases lt_or_ge t (b / c) with hmem | hmem
+    · have hcut : t ∈ {t : ℝ | ENNReal.ofReal (c * t) < a} := Set.mem_ofPred.2 (hiff.2 hmem)
+      rw [Set.indicator_of_mem hcut, Set.indicator_of_mem (Set.mem_Ioo.2 ⟨ht', hmem⟩)]
+    · have hcut : t ∉ {t : ℝ | ENNReal.ofReal (c * t) < a} := fun hcon =>
+        absurd (hiff.1 (Set.mem_ofPred.1 hcon)) (not_lt.2 hmem)
+      rw [Set.indicator_of_notMem hcut,
+        Set.indicator_of_notMem fun hcon => absurd (Set.mem_Ioo.1 hcon).2 (not_lt.2 hmem)]
+  -- The elementary real identity behind the constant `c ^ (-(s + 1))`.
+  have hreal : (b / c) ^ (s + 1) / (s + 1) = c ^ (-(s + 1)) / (s + 1) * b ^ (s + 1) := by
+    have hcp : c ^ (s + 1) ≠ 0 := (Real.rpow_pos_of_pos hc _).ne'
+    rw [Real.div_rpow hb0.le hc.le, Real.rpow_neg hc.le]
+    field_simp
+  rw [setLIntegral_congr_fun measurableSet_Ioi heq, lintegral_indicator measurableSet_Ioo,
+    Measure.restrict_restrict measurableSet_Ioo,
+    Set.inter_eq_self_of_subset_left Ioo_subset_Ioi_self,
+    lintegral_ofReal_rpow_Ioo hs (by positivity), hab,
+    ENNReal.ofReal_rpow_of_nonneg hb0.le hs1.le, ← ENNReal.ofReal_mul hconst.le, hreal]
 
 variable {β : Type*} [MeasurableSpace β]
 
