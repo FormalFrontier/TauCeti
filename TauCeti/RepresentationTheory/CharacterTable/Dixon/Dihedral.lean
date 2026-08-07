@@ -32,6 +32,7 @@ public section
 namespace TauCeti
 
 /-- The dihedral group of order `8` has exponent `4`. -/
+@[simp]
 theorem exponent_dihedral_four : Monoid.exponent (DihedralGroup 4) = 4 := by
   rw [DihedralGroup.exponent]
   decide
@@ -63,6 +64,7 @@ def dihedralFourDixonPrimeData : DixonPrimeData (DihedralGroup 4) where
     exact h ▸ IsPrimitiveRoot.orderOf (2 : ZMod 5)
 
 /-- The dihedral group of order `6`, the symmetric group on three letters, has exponent `6`. -/
+@[simp]
 theorem exponent_dihedral_three : Monoid.exponent (DihedralGroup 3) = 6 := by
   rw [DihedralGroup.exponent]
   decide

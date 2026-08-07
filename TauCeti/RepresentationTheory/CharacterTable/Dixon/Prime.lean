@@ -163,10 +163,8 @@ good Dixon prime makes `ZMod p` a substitute for `ℂ`. -/
 theorem splits_X_pow_exponent_sub_one (hp : IsGoodDixonPrime G p) :
     (X ^ Monoid.exponent G - 1 : (ZMod p)[X]).Splits := by
   have := hp.fact_prime
-  have := hp.finite
   obtain ⟨ζ, hζ⟩ := hp.exists_isPrimitiveRoot
-  rw [X_pow_sub_one_eq_prod (Nat.pos_of_ne_zero Monoid.exponent_ne_zero_of_finite) hζ]
-  exact Splits.prod fun _ _ => Splits.X_sub_C _
+  simpa using X_pow_sub_one_splits hζ
 
 /-- The `e`-th roots of unity in `ZMod p` are `e` in number: `X ^ e - 1` splits with *distinct*
 roots, which is what makes the elements of `G` act semisimply. The `Fact` instance is what puts the
