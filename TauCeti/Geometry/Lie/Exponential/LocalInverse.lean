@@ -40,9 +40,7 @@ variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
   {H : Type*} [TopologicalSpace H] {I : ModelWithCorners ℝ E H}
   {G : Type*} [TopologicalSpace G] [ChartedSpace H G] [Group G]
   [IsManifold I 1 G]
-local instance lieGroupMinSmoothnessLocalInverse [LieGroup I ∞ G] :
-    LieGroup I (minSmoothness ℝ 3) G := by
-  simpa using (inferInstance : LieGroup I (3 : ℕ∞ω) G)
+attribute [local instance] LieGroup.minSmoothnessThree
 
 private theorem smoothOrder_ne_zero : (∞ : ℕ∞ω) ≠ 0 := by
   simp

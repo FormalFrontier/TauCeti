@@ -51,10 +51,10 @@ theorem intervalIntegral_fdBoundary_segment4_eq_neg_segment1 {E : Type*}
       -∫ t in (0 : ℝ)..1, deriv (fdBoundary H) t • φ (fdBoundary H t) := by
   have hsub : (∫ t in (3 : ℝ)..4, deriv (fdBoundary H) t • φ (fdBoundary H t)) =
       ∫ u in (0 : ℝ)..1, deriv (fdBoundary H) (4 - u) • φ (fdBoundary H (4 - u)) := by
-    have h := intervalIntegral.integral_comp_sub_left (a := 0) (b := 1)
-      (fun t ↦ deriv (fdBoundary H) t • φ (fdBoundary H t)) 4
-    norm_num at h
-    exact h.symm
+    have h41 : (4 : ℝ) - 1 = 3 := by norm_num
+    have h40 : (4 : ℝ) - 0 = 4 := by norm_num
+    have h := intervalIntegral_comp_fdBoundary_four_sub H φ (a := 0) (b := 1)
+    rwa [h41, h40] at h
   rw [hsub, ← intervalIntegral.integral_neg]
   refine intervalIntegral.integral_congr_Ioo_of_le (by norm_num) fun u hu ↦ ?_
   rw [fdBoundary_four_sub_vertical H ⟨hu.1.le, hu.2.le⟩,

@@ -7,6 +7,7 @@ module
 public import Mathlib.Algebra.MonoidAlgebra.Basic
 public import Mathlib.Algebra.Group.Subgroup.Finite
 public import Mathlib.GroupTheory.Perm.Sign
+public import Mathlib.RepresentationTheory.Basic
 public import TauCeti.RepresentationTheory.Symmetric.RowColumnSubgroup
 
 /-!
@@ -23,6 +24,8 @@ These are the elementary inputs to the essential-idempotence theorem for `c_t` a
 construction of Specht modules.  The two extreme shapes are also evaluated here: a trivial row or
 column group collapses the corresponding factor to `1`, so on a shape with at most one row the
 whole group fixes `c_t`, and on a shape with at most one column it scales `c_t` by the sign.
+Finally, `b_t` acting on an arbitrary representation is unfolded into the signed sum over the
+column group, which is how every downstream computation with the operator `b_t` begins.
 
 The symmetrizers are built over `ℚ`, which is what the essential-idempotence theorem and the
 Specht-module constructions downstream of this file work over.  The coefficients of `c_t` are in
@@ -328,6 +331,20 @@ theorem single_mul_youngSymmetrizer_of_colSubgroup_eq_top (t : YoungTableau μ)
       ((Equiv.Perm.sign g : ℤ) : ℚ) • youngSymmetrizer t := by
   rw [youngSymmetrizer_eq_columnAntisymmetrizer t (rowSubgroup_eq_bot_of_colSubgroup_eq_top t h)]
   exact mul_columnAntisymmetrizer_left t ⟨g, by rw [h]; exact Subgroup.mem_top g⟩
+
+/-! ### The column antisymmetrizer as an operator -/
+
+/-- The column antisymmetrizer of `t` acts on any representation as the signed sum of the
+permutations in the column group of `t`. -/
+theorem asAlgebraHom_columnAntisymmetrizer_apply {V : Type*} [AddCommGroup V] [Module ℚ V]
+    (ρ : Representation ℚ (Equiv.Perm (Fin μ.card)) V) (t : YoungTableau μ) (v : V) :
+    ρ.asAlgebraHom (columnAntisymmetrizer t) v =
+      ∑ q : colSubgroup t,
+        ((Equiv.Perm.sign (q : Equiv.Perm (Fin μ.card)) : ℤ) : ℚ) • ρ q v := by
+  rw [columnAntisymmetrizer_def, map_sum, LinearMap.sum_apply]
+  refine Finset.sum_congr rfl fun q _ => ?_
+  rw [map_smul, MonoidAlgebra.of_apply, Representation.asAlgebraHom_single_one,
+    LinearMap.smul_apply]
 
 section Transport
 

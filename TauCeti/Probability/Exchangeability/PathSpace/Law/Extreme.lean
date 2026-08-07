@@ -118,10 +118,8 @@ theorem ergodic_shift_infinitePi_const (P : ProbabilityMeasure α) :
   refine { hexchLaw.contractableLaw.measurePreserving_shift with aeconst_set := ?_ }
   intro s hs hs_shift
   have hs_inv : MeasurableSet[MeasurableSpace.invariants (shift α)] s := ⟨hs, hs_shift⟩
-  have hs_exch : MeasurableSet[exchangeableSigma α] s :=
-    invariants_shift_le_exchangeableSigma (α := α) s hs_inv
-  have hzeroOne := hewittSavage_trivial_of_iIndep hindep hident hs_exch
-  rw [hpath] at hzeroOne
+  have hzeroOne := exchangeableSigma_trivial_of_infinitePi P
+    (invariants_shift_le_exchangeableSigma (α := α) s hs_inv)
   refine eventuallyConst_set.2 ?_
   rcases hzeroOne with hzero | hone
   · exact Or.inr (ae_iff.mpr (by simpa using hzero))
