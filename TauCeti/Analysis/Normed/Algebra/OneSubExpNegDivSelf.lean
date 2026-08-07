@@ -42,7 +42,7 @@ variable {𝕂 A : Type*} [Field 𝕂] [Ring A] [Algebra 𝕂 A] [TopologicalSpa
   [IsTopologicalRing A]
 
 /-- The value of `(1 - exp (-a)) / a` with its removable singularity filled in, defined by a power
-series. The series is summable everywhere when `A` is complete. -/
+series. The series is summable everywhere in the complete normed-algebra setting below. -/
 noncomputable def oneSubExpNegDivSelf (𝕂 : Type*) [Field 𝕂] {A : Type*} [Ring A]
     [Algebra 𝕂 A] [TopologicalSpace A] [IsTopologicalRing A] (a : A) : A :=
   FormalMultilinearSeries.ofScalarsSum
@@ -87,7 +87,9 @@ theorem summable_oneSubExpNegDivSelf (a : A) :
         dsimp [c]
         rw [← norm_div]
         congr 1
-        rw [show n.succ + 1 = (n + 1) + 1 by omega, Nat.factorial_succ, Nat.cast_mul]
+        -- Expose the outer successor so `Nat.factorial_succ` rewrites the denominator.
+        have hsucc : n.succ + 1 = (n + 1) + 1 := by omega
+        rw [hsucc, Nat.factorial_succ, Nat.cast_mul]
         field_simp [Nat.factorial_ne_zero]
       rw [hratio]
       simpa [Function.comp_def] using
@@ -130,3 +132,22 @@ theorem oneSubExpNegDivSelf_eq_mul_invOf (a : A) [Invertible a] :
   rw [← oneSubExpNegDivSelf_mul (𝕂 := 𝕂), mul_assoc, mul_invOf_self, mul_one]
 
 end Normed
+
+section Map
+
+variable {A B : Type*} [NormedRing A] [NormedAlgebra ℚ A] [CompleteSpace A]
+  [NormedRing B] [NormedAlgebra ℚ B]
+
+/-- Any continuous ring homomorphism commutes with `oneSubExpNegDivSelf`. -/
+theorem map_oneSubExpNegDivSelf {F : Type*} [FunLike F A B] [RingHomClass F A B]
+    (f : F) (hf : Continuous f) (a : A) :
+    f (oneSubExpNegDivSelf ℚ a) = oneSubExpNegDivSelf ℚ (f a) := by
+  rw [oneSubExpNegDivSelf_eq_tsum, oneSubExpNegDivSelf_eq_tsum]
+  refine ((summable_oneSubExpNegDivSelf (𝕂 := ℚ) a).hasSum.map f hf).tsum_eq.symm.trans ?_
+  dsimp only [Function.comp_def]
+  apply tsum_congr
+  intro n
+  rw [map_inv_natCast_smul f ℚ ℚ]
+  simp
+
+end Map
