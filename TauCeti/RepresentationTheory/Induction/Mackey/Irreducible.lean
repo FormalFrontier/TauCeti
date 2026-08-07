@@ -42,33 +42,31 @@ quantifies over the group elements `s ∉ H` instead.
 * `TauCeti.simple_indFDRep_iff_doubleCoset`: the Mackey irreducibility criterion over the double
   cosets.
 * `TauCeti.simple_indFDRep_iff`: the same criterion quantified over the elements outside `H`.
-* `TauCeti.finrank_hom_res_mackeyToH_conj`: the Mackey term depends only on the double coset.
-* `TauCeti.characterPairing_mackeyClassFunction_conj`: the class-function form of that invariance,
-  which needs neither an algebraically closed field nor a representation.
+* `TauCeti.mackeyDisjoint_conj_iff`: Mackey disjointness depends only on the double coset.
 
 ## Implementation notes
 
 `TauCeti.MackeyDisjoint` is stated as `Subsingleton` of the intertwining space; the
 intertwining-number formula produces the dimension of that space instead, and
 `TauCeti.mackeyDisjoint_iff_finrank_eq_zero` is the bridge between the two readings, along which
-both criteria are proved.
+the double-coset criterion is proved.  That bridge is deliberately not a `simp` lemma: the named
+predicate is the form the criteria are stated in and the form its own API
+(`TauCeti.mackeyDisjoint_conj_iff`) applies to, so unfolding it to a dimension on sight would be
+the wrong normal form.
 
 The step in those proofs that the arithmetic does not hand over for free is that `dim End_H A`
 cannot be `0`: a representation with no nonzero endomorphism is a zero object, and then every term
-of the sum vanishes too, so the total could not be `1`.  That is what the `ZeroObject` section
-below records.
+of the sum vanishes too, so the total could not be `1`.  That is what the two private helpers of
+the `ZeroObject` section below record.
 
 Passing between the two forms of the criterion needs the Mackey term to be constant on a double
-coset, which is `TauCeti.finrank_hom_res_mackeyToH_conj`.  That invariance is proved on class
-functions, where replacing `s` by `h₁ s h₂` is a reindexing of the pairing along conjugation by
-`h₁` (`TauCeti.mackeySubgroupOfCongr`) together with the fact that a class function is blind to
-the conjugation by `h₂` left over on the twisted factor.
+coset, which is `TauCeti.finrank_hom_res_mackeyToH_conj`, proved with the formula it belongs to;
+`TauCeti.mackeyDisjoint_conj_iff` is its reading through the predicate.
 
 The characteristic-zero hypothesis is inherited from
 `TauCeti.finrank_hom_indFDRep_mackey_erase`: the intertwining-number formula is proved as an
 identity in `k` of the casts of the dimensions, and reading it back as an identity of natural
-numbers -- which is what lets the summands be compared one by one -- needs `ℕ → k` injective.  The
-invariance `TauCeti.characterPairing_mackeyClassFunction_conj` itself is free of that hypothesis.
+numbers -- which is what lets the summands be compared one by one -- needs `ℕ → k` injective.
 
 The normal-subgroup corollary -- for `H ◁ G`, irreducibility of `Ind_H^G A` is equivalent to
 irreducibility of `A` together with `{}^s A ≇ A` for every `s ∉ H` -- is the remaining Layer 4
@@ -95,7 +93,7 @@ open CategoryTheory Limits
 
 namespace TauCeti
 
-universe u v
+universe u
 
 section ZeroObject
 
@@ -103,63 +101,20 @@ variable {k : Type u} [Field k]
 
 /-- A representation whose only endomorphism is `0` is a zero object: its identity is that
 endomorphism. -/
-theorem isZero_of_finrank_end_eq_zero {S : Type u} [Monoid S] (A : FDRep k S)
+private theorem isZero_of_finrank_end_eq_zero {S : Type u} [Monoid S] (A : FDRep k S)
     (h : Module.finrank k (A ⟶ A) = 0) : IsZero A :=
   have : Subsingleton (A ⟶ A) := Module.finrank_zero_iff.mp h
   (IsZero.iff_id_eq_zero A).mpr (Subsingleton.elim _ _)
 
 /-- The intertwining space into a zero object is trivial. -/
-theorem finrank_hom_eq_zero_of_isZero {S : Type u} [Monoid S] {X Y : FDRep k S} (h : IsZero Y) :
+private theorem finrank_hom_eq_zero_of_isZero {S : Type u} [Monoid S] {X Y : FDRep k S}
+    (h : IsZero Y) :
     Module.finrank k (X ⟶ Y) = 0 :=
   have : Subsingleton (X ⟶ Y) :=
     ⟨fun f g => by rw [h.eq_zero_of_tgt f, h.eq_zero_of_tgt g]⟩
   Module.finrank_zero_of_subsingleton
 
 end ZeroObject
-
-section Representative
-
-variable {k : Type u} {G : Type v} [Field k] [Group G] {H : Subgroup G}
-
-open scoped Classical in
-/-- **The Mackey term of the intertwining-number formula, on class functions, depends only on the
-double coset**: replacing the representative `s` by `h₁ s h₂` with `h₁, h₂ ∈ H` does not change the
-pairing of the conjugated class function with the restricted one.
-
-This is the class-function shadow of `TauCeti.finrank_hom_res_mackeyToH_conj`; no representation,
-no algebraic closure and no characteristic assumption enter. -/
-theorem characterPairing_mackeyClassFunction_conj [Fintype H] {h₁ h₂ : G} (hh₁ : h₁ ∈ H)
-    (hh₂ : h₂ ∈ H) (s : G) (f : ClassFunction k H) :
-    ClassFunction.characterPairing (mackeyClassFunction (h₁ * s * h₂) H H f)
-        (ClassFunction.comap ((mackeySubgroup (h₁ * s * h₂) H H).subgroupOf H).subtype f) =
-      ClassFunction.characterPairing (mackeyClassFunction s H H f)
-        (ClassFunction.comap ((mackeySubgroup s H H).subgroupOf H).subtype f) := by
-  -- Both pairings are averages over the Mackey subgroup, and `mackeySubgroupOfCongr` reindexes
-  -- one sum into the other by conjugation with `h₁`.
-  have hcard : Nat.card ((mackeySubgroup (h₁ * s * h₂) H H).subgroupOf H) =
-      Nat.card ((mackeySubgroup s H H).subgroupOf H) :=
-    Nat.card_congr (mackeySubgroupOfCongr hh₁ hh₂ s).symm.toEquiv
-  rw [ClassFunction.characterPairing_apply, ClassFunction.characterPairing_apply, hcard]
-  congr 1
-  refine (Fintype.sum_equiv (mackeySubgroupOfCongr hh₁ hh₂ s).toEquiv _ _ fun y => ?_).symm
-  -- Conjugating `y` by `h₁` conjugates `s⁻¹ y s` by `h₂` instead.
-  have hconj : mackeyToH (h₁ * s * h₂) H H (mackeySubgroupOfCongr hh₁ hh₂ s y) =
-      (⟨h₂, hh₂⟩ : H)⁻¹ * mackeyToH s H H y * (⟨h₂, hh₂⟩ : H)⁻¹⁻¹ :=
-    Subtype.ext (by
-      push_cast [coe_mackeyToH_apply, coe_mackeySubgroupOfCongr_apply]
-      group)
-  have hinv : ((mackeySubgroupOfCongr hh₁ hh₂ s y : H))⁻¹ =
-      (⟨h₁, hh₁⟩ : H) * ((y : H))⁻¹ * (⟨h₁, hh₁⟩ : H)⁻¹ :=
-    Subtype.ext (by
-      push_cast [coe_mackeySubgroupOfCongr_apply]
-      group)
-  simp only [MulEquiv.toEquiv_eq_coe, MulEquiv.coe_toEquiv, mackeyClassFunction_coe,
-    mackeyClassFun_apply, ClassFunction.comap_apply, Subgroup.coe_subtype, Subgroup.coe_inv,
-    hconj, hinv]
-  -- Neither conjugation is visible to a class function.
-  rw [ClassFunction.mem_iff.mp f.2, ClassFunction.mem_iff.mp f.2]
-
-end Representative
 
 section Disjoint
 
@@ -183,40 +138,21 @@ theorem mackeyDisjoint_iff_finrank_eq_zero (A : FDRep k H) (s : G) :
         (Action.res (FGModuleCat k) (mackeyToH s H H)).obj A) = 0 :=
   Module.finrank_zero_iff.symm
 
+/-- **Mackey disjointness depends only on the double coset**: it holds at `h₁ s h₂` with
+`h₁, h₂ ∈ H` exactly when it holds at `s`.  This is the predicate form of
+`TauCeti.finrank_hom_res_mackeyToH_conj`, and is what moves the criterion between its double-coset
+and its elementwise reading. -/
+theorem mackeyDisjoint_conj_iff [Finite G] [CharZero k] (A : FDRep k H) {h₁ h₂ : G} (hh₁ : h₁ ∈ H)
+    (hh₂ : h₂ ∈ H) (s : G) : MackeyDisjoint A (h₁ * s * h₂) ↔ MackeyDisjoint A s := by
+  rw [mackeyDisjoint_iff_finrank_eq_zero, mackeyDisjoint_iff_finrank_eq_zero,
+    finrank_hom_res_mackeyToH_conj A hh₁ hh₂ s]
+
 end Disjoint
 
 section Criterion
 
 variable {k G : Type u} [Field k] [Group G] [Finite G] [IsAlgClosed k] [CharZero k]
   {H : Subgroup G}
-
-omit [IsAlgClosed k] in
-/-- **The Mackey term depends only on the double coset**, as a dimension: the intertwining space
-`Hom_{H ⊓ sHs⁻¹}(Res A, {}^s A)` has the same dimension at `s` and at `h₁ s h₂` for `h₁, h₂ ∈ H`. -/
-theorem finrank_hom_res_mackeyToH_conj (A : FDRep k H) {h₁ h₂ : G} (hh₁ : h₁ ∈ H) (hh₂ : h₂ ∈ H)
-    (s : G) :
-    Module.finrank k (resFDRep ((mackeySubgroup (h₁ * s * h₂) H H).subgroupOf H) A ⟶
-        (Action.res (FGModuleCat k) (mackeyToH (h₁ * s * h₂) H H)).obj A) =
-      Module.finrank k (resFDRep ((mackeySubgroup s H H).subgroupOf H) A ⟶
-        (Action.res (FGModuleCat k) (mackeyToH s H H)).obj A) := by
-  classical
-  let := Fintype.ofFinite H
-  -- Each dimension is a character pairing, and the pairings agree by
-  -- `characterPairing_mackeyClassFunction_conj`.
-  have key : ∀ t : G,
-      ClassFunction.characterPairing (mackeyClassFunction t H H (ClassFunction.ofFDRep A))
-          (ClassFunction.comap ((mackeySubgroup t H H).subgroupOf H).subtype
-            (ClassFunction.ofFDRep A)) =
-        (Module.finrank k (resFDRep ((mackeySubgroup t H H).subgroupOf H) A ⟶
-          (Action.res (FGModuleCat k) (mackeyToH t H H)).obj A) : k) := by
-    intro t
-    let : Invertible (Nat.card ((mackeySubgroup t H H).subgroupOf H) : k) :=
-      (isUnit_iff_ne_zero.mpr (Nat.cast_ne_zero.mpr Nat.card_pos.ne')).invertible
-    rw [← ofFDRep_res_mackeyToH, ClassFunction.comap_subtype_ofFDRep,
-      ClassFunction.characterPairing_ofFDRep_eq_finrank]
-  have hpair := characterPairing_mackeyClassFunction_conj hh₁ hh₂ s (ClassFunction.ofFDRep A)
-  rw [key, key] at hpair
-  exact_mod_cast hpair
 
 /-- **The Mackey irreducibility criterion.**  The representation induced from `A` is irreducible
 exactly when `A` is irreducible and every double coset `HsH` other than `H` itself, read at its
@@ -255,13 +191,12 @@ of one chosen representative of every non-identity double coset. -/
 theorem simple_indFDRep_iff (A : FDRep k H) :
     Simple (indFDRep A) ↔ Simple A ∧ ∀ s ∉ H, MackeyDisjoint A s := by
   rw [simple_indFDRep_iff_doubleCoset]
-  -- The Mackey term is constant on a double coset, and the double cosets meeting `H` are the
+  -- Disjointness is constant on a double coset, and the double cosets meeting `H` are the
   -- identity one.
-  simp only [mackeyDisjoint_iff_finrank_eq_zero]
   refine and_congr_right fun _ => ⟨fun h s hs => ?_, fun h D hD => ?_⟩
   · obtain ⟨a, ha, b, hb, hab⟩ :=
       (DoubleCoset.eq H H (DoubleCoset.mk H H s).out s).mp (DoubleCoset.out_eq' H H _)
-    exact hab ▸ (finrank_hom_res_mackeyToH_conj A ha hb _).trans
+    exact hab ▸ (mackeyDisjoint_conj_iff A ha hb _).mpr
       (h _ fun hc => hs ((doubleCoset_mk_eq_mk_one_iff H s).mp hc))
   · exact h D.out fun hmem =>
       hD ((DoubleCoset.out_eq' H H D).symm.trans ((doubleCoset_mk_eq_mk_one_iff H D.out).mpr hmem))
