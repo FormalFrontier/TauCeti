@@ -446,31 +446,33 @@ theorem frobeniusSchurIndicator_eq_one_or_eq_zero_or_eq_neg_one :
   · exact Or.inr (Or.inr (frobeniusSchurIndicator_eq_neg_one_of_isAlt ρ hB hB0 halt))
   · exact Or.inr (Or.inl (frobeniusSchurIndicator_eq_zero_of_invariantForms_eq_bot ρ hbot))
 
-/-- **The indicator is `1` exactly in the orthogonal case.** -/
+/-- **The indicator is `1` exactly in the orthogonal case**, that is, exactly when the
+representation carries a nonzero invariant symmetric form, which is then nondegenerate. -/
 theorem frobeniusSchurIndicator_eq_one_iff :
     frobeniusSchurIndicator ρ = 1 ↔
-      ∃ B : BilinForm k V, IsInvariantForm ρ B ∧ B ≠ 0 ∧ B.IsSymm := by
-  refine ⟨fun h => ?_, fun ⟨_, hB, hB0, hsymm⟩ =>
+      ∃ B : BilinForm k V, IsInvariantForm ρ B ∧ B ≠ 0 ∧ B.IsSymm ∧ B.Nondegenerate := by
+  refine ⟨fun h => ?_, fun ⟨_, hB, hB0, hsymm, _⟩ =>
     frobeniusSchurIndicator_eq_one_of_isSymm ρ hB hB0 hsymm⟩
   rcases exists_isSymm_or_exists_isAlt_or_invariantForms_eq_bot ρ (by norm_num) with
-    hsymm | ⟨_, hB, hB0, halt⟩ | hbot
-  · exact hsymm
+    ⟨C, hC, hC0, hsymm⟩ | ⟨_, hB, hB0, halt⟩ | hbot
+  · exact ⟨C, hC, hC0, hsymm, hC.nondegenerate hC0⟩
   · rw [frobeniusSchurIndicator_eq_neg_one_of_isAlt ρ hB hB0 halt] at h
     exact absurd h (by norm_num)
   · rw [frobeniusSchurIndicator_eq_zero_of_invariantForms_eq_bot ρ hbot] at h
     exact absurd h.symm one_ne_zero
 
-/-- **The indicator is `-1` exactly in the symplectic case.** -/
+/-- **The indicator is `-1` exactly in the symplectic case**, that is, exactly when the
+representation carries a nonzero invariant alternating form, which is then nondegenerate. -/
 theorem frobeniusSchurIndicator_eq_neg_one_iff :
     frobeniusSchurIndicator ρ = -1 ↔
-      ∃ B : BilinForm k V, IsInvariantForm ρ B ∧ B ≠ 0 ∧ B.IsAlt := by
-  refine ⟨fun h => ?_, fun ⟨_, hB, hB0, halt⟩ =>
+      ∃ B : BilinForm k V, IsInvariantForm ρ B ∧ B ≠ 0 ∧ B.IsAlt ∧ B.Nondegenerate := by
+  refine ⟨fun h => ?_, fun ⟨_, hB, hB0, halt, _⟩ =>
     frobeniusSchurIndicator_eq_neg_one_of_isAlt ρ hB hB0 halt⟩
   rcases exists_isSymm_or_exists_isAlt_or_invariantForms_eq_bot ρ (by norm_num) with
-    ⟨_, hB, hB0, hsymm⟩ | halt | hbot
+    ⟨_, hB, hB0, hsymm⟩ | ⟨C, hC, hC0, halt⟩ | hbot
   · rw [frobeniusSchurIndicator_eq_one_of_isSymm ρ hB hB0 hsymm] at h
     exact absurd h (by norm_num)
-  · exact halt
+  · exact ⟨C, hC, hC0, halt, hC.nondegenerate hC0⟩
   · rw [frobeniusSchurIndicator_eq_zero_of_invariantForms_eq_bot ρ hbot] at h
     exact absurd h (by norm_num)
 
