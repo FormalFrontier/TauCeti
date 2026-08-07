@@ -21,9 +21,9 @@ element of `G` is conjugate to an entry. From those two facts alone the whole in
 a representative `d.rep i` for each `i : Fin d.numClasses`, an inverse `d.index g` computed by a
 list search, and the equivalence `d.equivConjClasses : Fin d.numClasses ≃ ConjClasses G` that
 transports statements about `ConjClasses G` to the numbering. All of these are genuine `def`s: the
-numbering data itself asks only for `[Group G]`, the searches computed from it for `[Fintype G]`
-and `[DecidableEq G]`, and `TauCeti.ClassData.ofList` builds class data from any list that exhausts
-`G`.
+numbering data itself asks only for `[Group G]`, the searches computed from it for a decidable
+conjugacy relation, the classes as `Finset`s for `[Fintype G]`, and `TauCeti.ClassData.ofList`
+builds class data from any list that exhausts `G`.
 
 On top of the numbering the file gives the two computational objects the algorithm consumes: the
 structure constants `d.structureConstant i j k`, counted by a single scan of the `i`-th class rather
@@ -81,7 +81,8 @@ variable {G : Type*} [Group G]
 /-- **Executable conjugacy-class data** for a group: a list `reps` containing exactly one element of
 each conjugacy class. The two fields are the two halves of "exactly one": distinct entries name
 distinct classes, and no class is missed. Carrying the data asks nothing of `G` beyond its group
-structure; finiteness and decidable equality are what the searches computed from it need.
+structure; a decidable conjugacy relation is what the searches computed from it need, and
+finiteness what turns the classes into `Finset`s.
 
 The order of `reps` is the arbitrary but fixed numbering of the conjugacy classes that a
 computation indexes by; `TauCeti.ClassData.equivConjClasses` identifies it with
@@ -111,7 +112,7 @@ representatives occur in `l`.
 
 The hypothesis, rather than `Finset.univ.toList`, is what keeps this computable: `Finset.toList`
 is noncomputable, whereas a concrete finite group comes with a concrete enumeration. -/
-@[expose] def ofList [Fintype G] [DecidableEq G] (l : List G) (hl : ∀ g : G, g ∈ l) :
+@[expose] def ofList [DecidableRel (IsConj : G → G → Prop)] (l : List G) (hl : ∀ g : G, g ∈ l) :
     ClassData G where
   reps := l.pwFilter fun x y => ¬ IsConj x y
   pairwise_not_isConj := List.pairwise_pwFilter _
@@ -132,13 +133,13 @@ is noncomputable, whereas a concrete finite group comes with a concrete enumerat
 later retained entry: the characteristic property of `TauCeti.ClassData.ofList`, so that a client
 never has to unfold the filtering itself. -/
 @[simp]
-theorem reps_ofList [Fintype G] [DecidableEq G] (l : List G) (hl : ∀ g : G, g ∈ l) :
+theorem reps_ofList [DecidableRel (IsConj : G → G → Prop)] (l : List G) (hl : ∀ g : G, g ∈ l) :
     (ofList l hl).reps = l.pwFilter fun x y => ¬ IsConj x y := (rfl)
 
 /-- Every finite group has class data; the witness is noncomputable only because
 `Finset.toList` is. -/
 noncomputable instance [Fintype G] : Inhabited (ClassData G) :=
-  letI := Classical.decEq G
+  letI := Classical.decRel (IsConj : G → G → Prop)
   ⟨ofList (Finset.univ : Finset G).toList fun g => Finset.mem_toList.mpr (Finset.mem_univ g)⟩
 
 variable (d : ClassData G)
@@ -171,10 +172,12 @@ theorem nodup_reps : d.reps.Nodup := by
   rintro rfl
   exact h (IsConj.refl a)
 
--- Finiteness and decidable equality on `G` are what make the search below, and everything computed
--- from it, executable: together they decide conjugacy and form the classes as `Finset`s. The
--- numbering data itself needs neither.
-variable [Fintype G] [DecidableEq G]
+section Executable
+
+-- A decidable conjugacy relation is what makes the search below, and everything computed from it,
+-- executable; the numbering data itself needs none. A finite `G` with decidable equality supplies
+-- the instance, so a concrete group asks for nothing extra.
+variable [DecidableRel (IsConj : G → G → Prop)]
 
 /-- The number of the conjugacy class of `g`, found by searching `d.reps` for a representative
 conjugate to `g`. The search succeeds because some representative is conjugate to `g`. -/
@@ -236,7 +239,7 @@ theorem equivConjClasses_apply (i : Fin d.numClasses) : d.equivConjClasses i = d
 theorem equivConjClasses_symm_apply (C : ConjClasses G) :
     d.equivConjClasses.symm C = d.indexClass C := (rfl)
 
-omit [Fintype G] [DecidableEq G] in
+omit [DecidableRel (IsConj : G → G → Prop)] in
 /-- **The numbering has the expected length**: `d.reps` lists as many elements as `G` has
 conjugacy classes. The bijection is the one underlying `TauCeti.ClassData.equivConjClasses`, but it
 is exhibited here from the two fields directly, since the count itself needs neither a finite `G`
@@ -256,6 +259,10 @@ theorem numClasses_eq_card_conjClasses : d.numClasses = Nat.card (ConjClasses G)
       -- the representative `d.rep ⟨i, hi⟩` is the list entry `d.reps[i]` by definition
       exact hxg
   simpa using Nat.card_congr (Equiv.ofBijective _ hbij)
+
+-- Finiteness enters only from here: it is what presents a conjugacy class as a `Finset`, and so
+-- what lets the structure constants be counted.
+variable [Fintype G]
 
 section Classes
 
@@ -318,6 +325,55 @@ counts the factorizations `x * y = gₖ` themselves. -/
 @[expose] def structureConstant (i j k : Fin d.numClasses) : ℕ :=
   ((d.classFinset i).filter fun x => d.index (x⁻¹ * d.rep k) = j).card
 
+/-- The class-multiplication matrix `Mᵢ` of the `i`-th class, numbered by `d`. As in
+`TauCeti.classMultMatrix`, the entry `(Mᵢ)ⱼₖ` is `aᵢₖⱼ`; that transposed index order is what makes
+`Mᵢ` the matrix of multiplication by the `i`-th class sum on the centre of the group algebra, and
+so what makes the central-character rows *left* eigenvectors of the family. -/
+def classMultMatrix (i : Fin d.numClasses) :
+    Matrix (Fin d.numClasses) (Fin d.numClasses) ℤ :=
+  Matrix.of fun j k => (d.structureConstant i k j : ℤ)
+
+@[simp]
+theorem classMultMatrix_apply (i j k : Fin d.numClasses) :
+    d.classMultMatrix i j k = (d.structureConstant i k j : ℤ) :=
+  (rfl)
+
+/-- The structure constants of `d`, tabulated: the `k`-th entry of the `j`-th entry of the `i`-th
+entry is `aᵢⱼₖ`. This nested list is the whole input to the Dixon--Schneider algorithm for `G`,
+and, unlike the matrices it assembles, it can be compared with a literal by the kernel. -/
+@[expose] def structureConstantTable : List (List (List ℕ)) :=
+  (List.finRange d.numClasses).map fun i =>
+    (List.finRange d.numClasses).map fun j =>
+      (List.finRange d.numClasses).map fun k => d.structureConstant i j k
+
+@[simp]
+theorem length_structureConstantTable : d.structureConstantTable.length = d.numClasses := by
+  simp [structureConstantTable]
+
+/-- **The `i`-th row of the table** is the table of the structure constants with first index `i`.
+Together with `List.getElem_map` and `List.getElem_finRange` this reduces a lookup at any depth:
+in particular `simp` sends the depth-three entry `d.structureConstantTable[i][j][k]` to `aᵢⱼₖ`,
+so no separate entry lemma is needed. -/
+@[simp]
+theorem getElem_structureConstantTable (i : ℕ) (hi : i < d.structureConstantTable.length) :
+    d.structureConstantTable[i] =
+      (List.finRange d.numClasses).map fun j =>
+        (List.finRange d.numClasses).map fun k =>
+          d.structureConstant ⟨i, d.length_structureConstantTable ▸ hi⟩ j k := by
+  simp [structureConstantTable]
+
+end StructureConstants
+
+end Executable
+
+section ClassIndexed
+
+-- The `ConjClasses`-indexed theory the results below compare with is stated under decidable
+-- equality on `G`, from which Mathlib derives the decidable conjugacy. Assuming that same
+-- hypothesis here is what makes the two sides of a comparison decide conjugacy the same way, so
+-- that they are the one computation renumbered rather than two.
+variable [Fintype G] [DecidableEq G]
+
 /-- **The computed structure constants are the structure constants**: recording a factorization by
 its first factor matches the single scan with the double scan of the definition. -/
 theorem structureConstant_eq (i j k : Fin d.numClasses) :
@@ -350,19 +406,6 @@ theorem structureConstant_eq (i j k : Fin d.numClasses) :
     have hp' : (p.1 : G) * (p.2 : G) = d.rep k := (Finset.mem_filter.mp hp).2
     exact Prod.ext (Subtype.ext rfl) (Subtype.ext (eq_inv_mul_iff_mul_eq.mpr hp').symm)
 
-/-- The class-multiplication matrix `Mᵢ` of the `i`-th class, numbered by `d`. As in
-`TauCeti.classMultMatrix`, the entry `(Mᵢ)ⱼₖ` is `aᵢₖⱼ`; that transposed index order is what makes
-`Mᵢ` the matrix of multiplication by the `i`-th class sum on the centre of the group algebra, and
-so what makes the central-character rows *left* eigenvectors of the family. -/
-def classMultMatrix (i : Fin d.numClasses) :
-    Matrix (Fin d.numClasses) (Fin d.numClasses) ℤ :=
-  Matrix.of fun j k => (d.structureConstant i k j : ℤ)
-
-@[simp]
-theorem classMultMatrix_apply (i j k : Fin d.numClasses) :
-    d.classMultMatrix i j k = (d.structureConstant i k j : ℤ) :=
-  (rfl)
-
 /-- **The numbered class-multiplication matrix is a renumbering of the class-indexed one.** Every
 statement about `TauCeti.classMultMatrix` therefore transports to the numbered family. -/
 theorem classMultMatrix_eq_submatrix (i : Fin d.numClasses) :
@@ -372,30 +415,6 @@ theorem classMultMatrix_eq_submatrix (i : Fin d.numClasses) :
   rw [classMultMatrix_apply, Matrix.submatrix_apply, equivConjClasses_apply, equivConjClasses_apply,
     TauCeti.classMultMatrix_apply, structureConstant_eq]
 
-/-- The structure constants of `d`, tabulated: the `k`-th entry of the `j`-th entry of the `i`-th
-entry is `aᵢⱼₖ`. This nested list is the whole input to the Dixon--Schneider algorithm for `G`,
-and, unlike the matrices it assembles, it can be compared with a literal by the kernel. -/
-@[expose] def structureConstantTable : List (List (List ℕ)) :=
-  (List.finRange d.numClasses).map fun i =>
-    (List.finRange d.numClasses).map fun j =>
-      (List.finRange d.numClasses).map fun k => d.structureConstant i j k
-
-@[simp]
-theorem length_structureConstantTable : d.structureConstantTable.length = d.numClasses := by
-  simp [structureConstantTable]
-
-/-- **The `i`-th row of the table** is the table of the structure constants with first index `i`.
-Together with `List.getElem_map` and `List.getElem_finRange` this reduces a lookup at any depth:
-in particular `simp` sends the depth-three entry `d.structureConstantTable[i][j][k]` to `aᵢⱼₖ`,
-so no separate entry lemma is needed. -/
-@[simp]
-theorem getElem_structureConstantTable (i : ℕ) (hi : i < d.structureConstantTable.length) :
-    d.structureConstantTable[i] =
-      (List.finRange d.numClasses).map fun j =>
-        (List.finRange d.numClasses).map fun k =>
-          d.structureConstant ⟨i, d.length_structureConstantTable ▸ hi⟩ j k := by
-  simp [structureConstantTable]
-
 /-- The numbered class-multiplication matrices commute pairwise, the centre of the group algebra
 being commutative. -/
 theorem classMultMatrix_commute (i j : Fin d.numClasses) :
@@ -404,7 +423,7 @@ theorem classMultMatrix_commute (i j : Fin d.numClasses) :
   rw [Matrix.submatrix_mul_equiv, Matrix.submatrix_mul_equiv,
     (TauCeti.classMultMatrix_commute (d.classOf i) (d.classOf j)).eq]
 
-end StructureConstants
+end ClassIndexed
 
 end ClassData
 
