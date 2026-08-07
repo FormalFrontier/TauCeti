@@ -5,8 +5,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.GroupTheory.GroupAction.ConjAct
-public import Mathlib.LinearAlgebra.Projection
-public import Mathlib.RepresentationTheory.Intertwining
 public import Mathlib.RepresentationTheory.Semisimple
 public import TauCeti.RepresentationTheory.Induction.Conjugate
 public import TauCeti.RepresentationTheory.Irreducible
@@ -75,6 +73,15 @@ conjugates enters.  Finite-dimensionality is used only to *produce* an atom, in
 * `TauCeti.Representation.finrank_eq_finrank_of_isAtom`: consequently all the constituents have the
   same `Module.finrank` over `k`.
 
+## Implementation notes
+
+The three constructions above are opaque: their bodies are not exported, and everything downstream
+goes through their characteristic lemmas `toSubmodule_conjSubrep`, `conjSubrepOrderIso_apply`,
+`conjSubrepOrderIso_symm_apply` and `coe_conjSubrepEquiv_apply` instead.  Those four lemmas are
+proved by `(rfl)` rather than by `rfl`: a bare `rfl` body asks in addition that the equation stay
+true by `rfl` *outside* this file, which for an unexposed definition it is not.  The parenthesized
+form checks the proof here, where the bodies are visible, and exports only the statement.
+
 ## References
 
 This file builds the **Clifford's theorem** milestone of Layer 5 (Clifford theory over a normal
@@ -121,10 +128,8 @@ again stable under `N` because `N` is normal.
 For `g ∈ N` this is `σ` itself; in general it is a possibly different subspace, carrying the
 representation of `N` obtained from `σ` by conjugating with `g` (`conjSubrepEquiv`).
 
-`@[expose]`, and only here: the carrier is `σ.toSubmodule.map (ρ g)` on the nose, which is what
-lets `toSubmodule_conjSubrep` be an exported `rfl` and so lets everything below reason through the
-submodule lattice rather than through this definition. -/
-@[expose]
+The carrier is `σ.toSubmodule.map (ρ g)` (`toSubmodule_conjSubrep`), which is how everything below
+reasons about a translate: through the submodule lattice rather than through this definition. -/
 def conjSubrep (g : G) (σ : Subrepresentation (ρ.comp N.subtype)) :
     Subrepresentation (ρ.comp N.subtype) where
   toSubmodule := σ.toSubmodule.map (ρ g)
@@ -138,7 +143,7 @@ variable {ρ}
 @[simp]
 theorem toSubmodule_conjSubrep (g : G) (σ : Subrepresentation (ρ.comp N.subtype)) :
     (conjSubrep ρ g σ).toSubmodule = σ.toSubmodule.map (ρ g) :=
-  rfl
+  (rfl)
 
 @[simp]
 theorem mem_conjSubrep_iff {g : G} {σ : Subrepresentation (ρ.comp N.subtype)} {v : V} :
@@ -173,11 +178,8 @@ theorem conjSubrep_top (g : G) : conjSubrep ρ g (⊤ : Subrepresentation (ρ.co
 
 variable (ρ) in
 /-- Translation by `ρ g` is an order isomorphism of the lattice of `N`-subrepresentations, with
-inverse translation by `ρ g⁻¹`.  In particular it takes atoms to atoms.
-
-`@[expose]` for the same reason as `conjSubrep`: the point of this order isomorphism is that it
-*is* `conjSubrep ρ g`, which is what `@[simps]` records and what `isAtom_conjSubrep_iff` reads. -/
-@[expose, simps]
+inverse translation by `ρ g⁻¹`.  In particular it takes atoms to atoms
+(`isAtom_conjSubrep_iff`). -/
 def conjSubrepOrderIso (g : G) :
     Subrepresentation (ρ.comp N.subtype) ≃o Subrepresentation (ρ.comp N.subtype) where
   toFun := conjSubrep ρ g
@@ -191,9 +193,20 @@ def conjSubrepOrderIso (g : G) :
       (_root_.Representation.apply_bijective ρ g).injective _ _
 
 @[simp]
+theorem conjSubrepOrderIso_apply (g : G) (σ : Subrepresentation (ρ.comp N.subtype)) :
+    conjSubrepOrderIso ρ g σ = conjSubrep ρ g σ :=
+  (rfl)
+
+@[simp]
+theorem conjSubrepOrderIso_symm_apply (g : G) (σ : Subrepresentation (ρ.comp N.subtype)) :
+    (conjSubrepOrderIso ρ g).symm σ = conjSubrep ρ g⁻¹ σ :=
+  (rfl)
+
+@[simp]
 theorem isAtom_conjSubrep_iff {g : G} {σ : Subrepresentation (ρ.comp N.subtype)} :
-    IsAtom (conjSubrep ρ g σ) ↔ IsAtom σ :=
-  (conjSubrepOrderIso ρ g).isAtom_iff σ
+    IsAtom (conjSubrep ρ g σ) ↔ IsAtom σ := by
+  rw [← conjSubrepOrderIso_apply g σ]
+  exact (conjSubrepOrderIso ρ g).isAtom_iff σ
 
 variable (ρ) in
 /-- Translation by `ρ g` identifies `σ`, with its action of `N` twisted by conjugation by `g`,
@@ -207,16 +220,23 @@ as the plain composition rather than through `Rep.of`, which would need `V` to b
 where this section asks only for an `AddCommMonoid`; `exists_equiv_comp_conjNormal`, where that
 hypothesis is present anyway, is stated in the bundled form.  Read on isomorphism classes, this says
 that `conjSubrep ρ g σ` represents the image of the class of `σ` under the conjugation action of `g`
-on representations of `N`. -/
+on representations of `N`.
+
+The underlying map is `ρ g` (`coe_conjSubrepEquiv_apply`). -/
 noncomputable def conjSubrepEquiv (g : G) (σ : Subrepresentation (ρ.comp N.subtype)) :
     _root_.Representation.Equiv
-      (σ.toRepresentation.comp (MulAut.conjNormal g⁻¹ : MulAut N).toMonoidHom)
+      (σ.toRepresentation.comp ((MulAut.conjNormal g⁻¹ : MulAut N) : N →* N))
       (conjSubrep ρ g σ).toRepresentation :=
   _root_.Representation.Equiv.mk
     (σ.toSubmodule.equivMapOfInjective (ρ g) (_root_.Representation.apply_bijective ρ g).injective)
     (fun n => by
       ext u
       exact apply_conjNormal_inv ρ g n u)
+
+@[simp]
+theorem coe_conjSubrepEquiv_apply (g : G) (σ : Subrepresentation (ρ.comp N.subtype))
+    (u : σ.toSubmodule) : (conjSubrepEquiv ρ g σ u : V) = ρ g (u : V) :=
+  (rfl)
 
 end Translate
 
