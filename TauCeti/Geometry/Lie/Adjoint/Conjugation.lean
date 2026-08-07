@@ -63,6 +63,12 @@ theorem conjDiffeomorph_apply (g x : G) :
   ConjAct.toConjAct_smul g x
 
 @[simp]
+theorem conjDiffeomorph_coe (g : G) :
+    (conjDiffeomorph (I := I) (n := n) g : G → G) = fun x ↦ g * x * g⁻¹ := by
+  funext x
+  exact conjDiffeomorph_apply g x
+
+@[simp]
 theorem conjDiffeomorph_symm_apply (g x : G) :
     (conjDiffeomorph (I := I) (n := n) g).symm x = g⁻¹ * x * g :=
   ConjAct.toConjAct_inv_smul g x
