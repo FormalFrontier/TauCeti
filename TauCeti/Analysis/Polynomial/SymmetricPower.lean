@@ -61,21 +61,21 @@ namespace Sym
 
 section Continuity
 
-variable {ι K : Type*} [NormedField K]
+variable {ι R : Type*} [CommRing R] [TopologicalSpace R] [IsTopologicalRing R]
 
 /-- The coefficients of `∏ i ∈ s, (X - C (f i))` depend continuously on the tuple `f` of roots.
 
 This is the elementary half of the chart: each coefficient is, up to sign, an elementary symmetric
-function of the roots. -/
+function of the roots, so continuity of the ring operations is all that is used. -/
 theorem continuous_coeff_prod_X_sub_C (s : Finset ι) (k : ℕ) :
-    Continuous fun f : ι → K => (∏ i ∈ s, (X - C (f i))).coeff k := by
+    Continuous fun f : ι → R => (∏ i ∈ s, (X - C (f i))).coeff k := by
   classical
   induction s using Finset.induction_on generalizing k with
   | empty => simpa using continuous_const
   | @insert a s ha ih =>
     cases k with
     | zero =>
-      have hpt : (fun f : ι → K => (∏ i ∈ insert a s, (X - C (f i))).coeff 0) =
+      have hpt : (fun f : ι → R => (∏ i ∈ insert a s, (X - C (f i))).coeff 0) =
           fun f => -f a * (∏ i ∈ s, (X - C (f i))).coeff 0 := by
         funext f
         rw [Finset.prod_insert ha, mul_coeff_zero]
@@ -83,7 +83,7 @@ theorem continuous_coeff_prod_X_sub_C (s : Finset ι) (k : ℕ) :
       rw [hpt]
       exact (continuous_apply a).neg.mul (ih 0)
     | succ k =>
-      have hpt : (fun f : ι → K => (∏ i ∈ insert a s, (X - C (f i))).coeff (k + 1)) =
+      have hpt : (fun f : ι → R => (∏ i ∈ insert a s, (X - C (f i))).coeff (k + 1)) =
           fun f => (∏ i ∈ s, (X - C (f i))).coeff k
             - f a * (∏ i ∈ s, (X - C (f i))).coeff (k + 1) := by
         funext f
@@ -93,23 +93,32 @@ theorem continuous_coeff_prod_X_sub_C (s : Finset ι) (k : ℕ) :
 
 end Continuity
 
-section Chart
+/-! ### The chart read on ordered tuples
 
-variable {K : Type*} [NormedField K] {n : ℕ}
+These two lemmas are pure algebra; they live here because this is the first file in which both
+`TauCeti.Sym.ofFn` and `TauCeti.Sym.toMonic` are in scope. -/
 
-/-- The monic polynomial of the unordered tuple underlying `f : Fin n → K` is the product of the
+section Algebra
+
+variable {R K : Type*} [CommRing R] [Nontrivial R] [Field K] [IsAlgClosed K] {n : ℕ}
+
+/-- The monic polynomial of the unordered tuple underlying `f : Fin n → R` is the product of the
 corresponding linear factors. -/
-theorem toMonic_ofFn (f : Fin n → K) : (toMonic (ofFn f) : K[X]) = ∏ i, (X - C (f i)) := by
+theorem toMonic_ofFn (f : Fin n → R) : (toMonic (ofFn f) : R[X]) = ∏ i, (X - C (f i)) := by
   rw [coe_toMonic, coe_ofFn]
   simp [← List.prod_ofFn, List.map_ofFn, Function.comp_def]
-
-variable [IsAlgClosed K]
 
 /-- The chart of an unordered tuple presented by `f : Fin n → K` reads off the coefficients of the
 product of the linear factors of `f`. -/
 theorem coeffEquiv_ofFn_apply (f : Fin n → K) (i : Fin n) :
     coeffEquiv K n (ofFn f) i = (∏ j, (X - C (f j))).coeff i := by
   rw [coeffEquiv_apply_eq_coeff, toMonic_ofFn]
+
+end Algebra
+
+section Chart
+
+variable {K : Type*} [NormedField K] [IsAlgClosed K] {n : ℕ}
 
 /-- The coefficient map `(Fin n → K) → (Fin n → K)`, the elementary symmetric chart read on ordered
 tuples, is continuous. -/
@@ -128,16 +137,16 @@ theorem norm_le_norm_coeffEquiv_ofFn_add_one (f : Fin n → K) :
   have hnonneg : (0 : ℝ) ≤ ‖coeffEquiv K n (ofFn f)‖ + 1 := by positivity
   refine (pi_norm_le_iff_of_nonneg hnonneg).2 fun j => ?_
   have hmonic : (toMonic (ofFn f) : K[X]).Monic := monic_toMonic _
-  have hroot : (toMonic (ofFn f) : K[X]).IsRoot (f j) := mem_iff_isRoot.1 (mem_ofFn.2 ⟨j, rfl⟩)
+  have hroot : (toMonic (ofFn f) : K[X]).IsRoot (f j) :=
+    mem_iff_isRoot.1 (_root_.Sym.mem_coe.2 (mem_ofFn.2 ⟨j, rfl⟩))
   have hcauchy := hroot.norm_lt_cauchyBound hmonic.ne_zero
   have hbound : cauchyBound (toMonic (ofFn f) : K[X]) ≤ ‖coeffEquiv K n (ofFn f)‖₊ + 1 := by
     have hsup : ((Finset.range n).sup fun i => ‖(toMonic (ofFn f) : K[X]).coeff i‖₊)
         ≤ ‖coeffEquiv K n (ofFn f)‖₊ := by
       refine Finset.sup_le fun i hi => ?_
       rw [Finset.mem_range] at hi
-      rw [show (toMonic (ofFn f) : K[X]).coeff i = coeffEquiv K n (ofFn f) ⟨i, hi⟩ from
-        (coeffEquiv_apply_eq_coeff _ ⟨i, hi⟩).symm]
-      exact nnnorm_le_pi_nnnorm _ _
+      have hcoord := nnnorm_le_pi_nnnorm (coeffEquiv K n (ofFn f)) ⟨i, hi⟩
+      rwa [coeffEquiv_apply_eq_coeff] at hcoord
     rw [cauchyBound, hmonic.leadingCoeff, nnnorm_one, div_one, natDegree_toMonic]
     exact add_le_add hsup le_rfl
   have : ‖f j‖₊ < ‖coeffEquiv K n (ofFn f)‖₊ + 1 := hcauchy.trans_le hbound
@@ -161,8 +170,8 @@ theorem isClosedMap_coeffEquiv : IsClosedMap (coeffEquiv K n) := by
   intro C hC
   have himage : coeffEquiv K n '' C =
       (fun f : Fin n → K => coeffEquiv K n (ofFn f)) '' (ofFn ⁻¹' C) := by
-    rw [show (fun f : Fin n → K => coeffEquiv K n (ofFn f)) = coeffEquiv K n ∘ ofFn from rfl,
-      Set.image_comp, Set.image_preimage_eq _ ofFn_surjective]
+    rw [← Set.image_image (coeffEquiv K n) ofFn (ofFn ⁻¹' C),
+      Set.image_preimage_eq _ ofFn_surjective]
   rw [himage]
   exact isProperMap_coeffEquiv_comp_ofFn.isClosedMap _ (hC.preimage continuous_ofFn)
 
@@ -175,24 +184,20 @@ continuously and with continuous inverse, by the lower coefficients of its monic
 Continuity of the inverse is the classical continuity of the roots of a monic polynomial in its
 coefficients; it comes from `TauCeti.Sym.isProperMap_coeffEquiv_comp_ofFn`, and hence from Cauchy's
 bound. -/
-@[expose]
-noncomputable def coeffHomeomorph : Sym K n ≃ₜ (Fin n → K) where
-  toEquiv := coeffEquiv K n
-  continuous_toFun := continuous_iff_comp_ofFn.2 continuous_coeffEquiv_comp_ofFn
-  continuous_invFun := continuous_iff_isClosed.2 fun C hC => by
-    rw [Equiv.invFun_as_coe, ← Equiv.image_eq_preimage_symm]
-    exact isClosedMap_coeffEquiv C hC
+noncomputable def coeffHomeomorph : Sym K n ≃ₜ (Fin n → K) :=
+  (coeffEquiv K n).toHomeomorphOfContinuousClosed
+    (continuous_iff_comp_ofFn.2 continuous_coeffEquiv_comp_ofFn) isClosedMap_coeffEquiv
 
 /-- The chart homeomorphism is the chart equivalence. -/
 @[simp]
-theorem coeffHomeomorph_apply (s : Sym K n) : coeffHomeomorph K n s = coeffEquiv K n s :=
-  rfl
+theorem coeffHomeomorph_apply (s : Sym K n) : coeffHomeomorph K n s = coeffEquiv K n s := by
+  simp [coeffHomeomorph]
 
 /-- The inverse chart homeomorphism is the inverse chart equivalence. -/
 @[simp]
 theorem coeffHomeomorph_symm_apply (f : Fin n → K) :
-    ((coeffHomeomorph K n).symm f : Sym K n) = (coeffEquiv K n).symm f :=
-  rfl
+    ((coeffHomeomorph K n).symm f : Sym K n) = (coeffEquiv K n).symm f := by
+  simp [coeffHomeomorph]
 
 variable {K n}
 

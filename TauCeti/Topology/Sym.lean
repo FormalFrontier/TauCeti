@@ -18,8 +18,8 @@ this file gives it the corresponding quotient topology, together with the API th
 topology is used through: the quotient map is continuous, and a map out of `Sym α n` is continuous
 exactly when its composition with the quotient map is.
 
-The quotient map is `TauCeti.Sym.ofFn`, which reads an ordered tuple as an unordered one. Mathlib
-already has the analogous map `Sym.ofVector` out of `List.Vector α n`; the `Fin n → α` form is the
+The quotient map is `TauCeti.Sym.ofFn`, which reads an ordered tuple as an unordered one. It is
+Mathlib's quotient map `Sym.ofVector` composed with `List.Vector.ofFn`; the `Fin n → α` form is the
 one that carries a product topology, so it is what the quotient topology is defined against.
 
 ## Main declarations
@@ -51,18 +51,20 @@ variable {α β : Type*} {n : ℕ}
 
 /-- The ordered `n`-tuple `f : Fin n → α` read as an unordered `n`-tuple.
 
-This is the map that `Sym α n` carries the quotient topology along. -/
-@[expose]
+This is Mathlib's quotient map `Sym.ofVector` precomposed with `List.Vector.ofFn`; it is the map
+that `Sym α n` carries the quotient topology along. -/
 def ofFn (f : Fin n → α) : Sym α n :=
-  ⟨↑(List.ofFn f), by simp⟩
+  Sym.ofVector (List.Vector.ofFn f)
 
 /-- The multiset underlying `ofFn f` is the list of values of `f`. -/
 @[simp]
 theorem coe_ofFn (f : Fin n → α) : (ofFn f : Multiset α) = ↑(List.ofFn f) :=
-  rfl
+  congrArg _ (List.Vector.toList_ofFn f)
 
 /-- The points of `ofFn f` are exactly the values of `f`. -/
-theorem mem_ofFn {a : α} {f : Fin n → α} : a ∈ (ofFn f : Multiset α) ↔ ∃ i, f i = a := by
+@[simp]
+theorem mem_ofFn {a : α} {f : Fin n → α} : a ∈ ofFn f ↔ ∃ i, f i = a := by
+  rw [← _root_.Sym.mem_coe, coe_ofFn]
   simp
 
 /-- Every unordered `n`-tuple is the image of an ordered one: `ofFn` is the quotient map
