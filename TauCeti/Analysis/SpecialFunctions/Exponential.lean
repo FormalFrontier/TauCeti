@@ -103,12 +103,14 @@ vector in every position among `n` copies of the base point.
 ### Main results
 
 * `TauCeti.expFDerivTerm_apply`: the pointwise insertion formula for one term.
+* `TauCeti.expFDeriv_eq_tsum`: the operator-valued defining series.
 * `TauCeti.summable_expFDerivTerm`: summability of the operator-valued series.
 * `TauCeti.summable_expFDerivTerm_apply`: pointwise summability of the insertion series.
 * `TauCeti.expFDeriv_apply`: the pointwise formula for the summed operator.
 * `TauCeti.hasStrictFDerivAt_exp`: the exponential has strict derivative `expFDeriv 𝕂 x` at `x`.
 * `TauCeti.hasFDerivAt_exp`: the corresponding ordinary Fréchet derivative statement.
 * `TauCeti.fderiv_exp`: the derivative expressed using `fderiv`.
+* `TauCeti.expFDeriv_eq_smul_one`: the commutative-algebra specialization.
 * `TauCeti.expFDeriv_zero`: at zero, the derivative is the identity.
 -/
 
@@ -130,15 +132,11 @@ noncomputable def expFDerivTerm (𝕂 : Type*) [NontriviallyNormedField 𝕂] {R
       x ^ (n - i) •> ContinuousLinearMap.id 𝕂 R <• x ^ i
 
 /-- The sum of the Fréchet-derivative series of the Banach-algebra exponential. It converges when
-the algebra is complete; as usual for `tsum`, it has the junk value zero when the series is not
-summable. -/
+`𝕂` is `RCLike` and the algebra is complete (see `summable_expFDerivTerm`); as usual for `tsum`, it
+has the junk value zero when the series is not summable. -/
 noncomputable def expFDeriv (𝕂 : Type*) [NontriviallyNormedField 𝕂] {R : Type*} [NormedRing R]
     [NormedAlgebra 𝕂 R] (x : R) : R →L[𝕂] R :=
   ∑' n : ℕ, expFDerivTerm 𝕂 x n
-
-private theorem insertion_apply (x y : R) (a b : ℕ) :
-    (x ^ a •> ContinuousLinearMap.id 𝕂 R <• x ^ b) y = x ^ a * y * x ^ b := by
-  simp
 
 /-- Evaluating a homogeneous derivative term inserts the tangent vector in every possible
 position. -/
@@ -178,18 +176,22 @@ omit [CompleteSpace R] in
 private theorem norm_insertion_le (x : R) {n i : ℕ} (hi : i < n + 1) :
     ‖x ^ (n - i) •> ContinuousLinearMap.id 𝕂 R <• x ^ i‖ ≤
       max 1 (max ‖(1 : R)‖ ‖x‖) ^ (n + 2) := by
-  refine ContinuousLinearMap.opNorm_le_bound _
-    (pow_nonneg (zero_le_one.trans (le_max_left _ _)) (n + 2)) ?_
-  intro y
-  rw [insertion_apply]
+  have hinsertion :
+      x ^ (n - i) •> ContinuousLinearMap.id 𝕂 R <• x ^ i =
+        ContinuousLinearMap.mulLeftRight 𝕂 R (x ^ (n - i)) (x ^ i) := by
+    ext y
+    simp
+  rw [hinsertion]
   calc
-    ‖x ^ (n - i) * y * x ^ i‖ ≤ ‖x ^ (n - i)‖ * ‖y‖ * ‖x ^ i‖ := norm_mul₃_le
-    _ ≤ max 1 (max ‖(1 : R)‖ ‖x‖) ^ (n - i + 1) * ‖y‖ *
+    ‖ContinuousLinearMap.mulLeftRight 𝕂 R (x ^ (n - i)) (x ^ i)‖ ≤
+        ‖x ^ (n - i)‖ * ‖x ^ i‖ :=
+      ContinuousLinearMap.opNorm_mulLeftRight_apply_apply_le 𝕂 R _ _
+    _ ≤ max 1 (max ‖(1 : R)‖ ‖x‖) ^ (n - i + 1) *
         max 1 (max ‖(1 : R)‖ ‖x‖) ^ (i + 1) := by
       gcongr <;> exact norm_pow_le_growth_bound x _
-    _ = max 1 (max ‖(1 : R)‖ ‖x‖) ^ (n + 2) * ‖y‖ := by
-      rw [mul_assoc, mul_comm ‖y‖, ← mul_assoc, ← pow_add]
-      congr 2
+    _ = max 1 (max ‖(1 : R)‖ ‖x‖) ^ (n + 2) := by
+      rw [← pow_add]
+      congr 1
       omega
 
 omit [CompleteSpace R] in
@@ -315,6 +317,7 @@ theorem fderiv_exp (x : R) : fderiv 𝕂 exp x = expFDeriv 𝕂 x :=
 
 /-- In a commutative Banach algebra, the insertion sum agrees with scalar multiplication by the
 exponential. -/
+@[simp]
 theorem expFDeriv_eq_smul_one {R : Type*} [NormedCommRing R] [NormedAlgebra 𝕂 R]
     [CompleteSpace R] (x : R) :
     expFDeriv 𝕂 x = exp x • (1 : R →L[𝕂] R) :=
@@ -322,8 +325,27 @@ theorem expFDeriv_eq_smul_one {R : Type*} [NormedCommRing R] [NormedAlgebra 𝕂
 
 /-- At zero, the derivative is the identity continuous linear map. -/
 @[simp]
-theorem expFDeriv_zero : expFDeriv 𝕂 (0 : R) = 1 :=
-  (hasFDerivAt_exp (𝕂 := 𝕂) (0 : R)).unique
-    (hasFDerivAt_exp_zero (𝕂 := 𝕂))
+theorem expFDeriv_zero {𝕂 R : Type*} [NontriviallyNormedField 𝕂] [NormedRing R]
+    [NormedAlgebra 𝕂 R] : expFDeriv 𝕂 (0 : R) = 1 := by
+  rw [expFDeriv]
+  rw [tsum_eq_single 0]
+  · ext y
+    simp [expFDerivTerm]
+  · intro n hn
+    cases n with
+    | zero => exact (hn rfl).elim
+    | succ n =>
+        ext y
+        rw [expFDerivTerm_apply]
+        have hsum :
+            ∑ i ∈ Finset.range (n + 1 + 1), (0 : R) ^ (n + 1 - i) * y * 0 ^ i = 0 := by
+          apply Finset.sum_eq_zero
+          intro i _hi
+          by_cases hi_zero : i = 0
+          · subst i
+            simp
+          · simp [zero_pow hi_zero]
+        rw [hsum, smul_zero]
+        simp
 
 end TauCeti
