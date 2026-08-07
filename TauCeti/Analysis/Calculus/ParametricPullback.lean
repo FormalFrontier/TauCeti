@@ -38,14 +38,13 @@ open scoped Topology
 
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
 
-/-- Let `F t` be a twice continuously differentiable family of maps that agrees with the identity
-to first order at `x` when `t = 0`. Then the derivative of the pullback of `W` along `F` is the Lie
-bracket of the initial velocity of `F` with `W`. -/
+/-- Let `F` be `C²` at `(0, x)` and agree with the identity to first order at `x` when `t = 0`.
+Then the derivative of the pullback of `W` along `F` is the Lie bracket of the initial velocity of
+`F` with `W`. -/
 theorem hasDerivAt_parametric_pullback {F : ℝ × E → E} {W : E → E} {x : E}
     (hF : ContDiffAt ℝ 2 F (0, x)) (hF0 : F (0, x) = x)
     (hA0 : spatialFDeriv F x 0 = ContinuousLinearMap.id ℝ E)
     (hInvDiff : DifferentiableAt ℝ (fun t => (spatialFDeriv F x t).inverse) 0)
-    (hAInv : ∀ᶠ t in 𝓝 0, (spatialFDeriv F x t).IsInvertible)
     (hW : DifferentiableAt ℝ W x) :
     HasDerivAt
       (fun t => VectorField.pullback ℝ (fun y => F (t, y)) W x)
@@ -62,7 +61,7 @@ theorem hasDerivAt_parametric_pullback {F : ℝ × E → E} {W : E → E} {x : E
   have hpull := hA.clm_inverse_apply (by
     rw [hA0]
     exact ⟨ContinuousLinearEquiv.refl ℝ E, rfl⟩)
-    hInvDiff hAInv (hW0.comp_hasDerivAt 0 hz)
+    hInvDiff (hW0.comp_hasDerivAt 0 hz)
   have hslice : (fun t => VectorField.pullback ℝ (fun y => F (t, y)) W x) =ᶠ[𝓝 0]
       fun t => (spatialFDeriv F x t).inverse (W (F (t, x))) := by
     have hpath : ContinuousAt (fun t : ℝ => (t, x)) 0 := hp.continuousAt
