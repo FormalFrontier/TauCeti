@@ -71,7 +71,7 @@ namespace Quiver
 vertex type: `reflectAt q i` has the arrows of `q` with every arrow incident to `i` reversed.
 Unlike the type synonym `TauCeti.Quiver.Reflect`, this form iterates, which is what a sequence of
 reflections needs. -/
-@[expose, instance_reducible]
+@[instance_reducible]
 noncomputable def reflectAt (q : _root_.Quiver.{v} V) (i : V) : _root_.Quiver.{v} V :=
   ⟨@reflectHom V q i⟩
 
@@ -79,7 +79,7 @@ noncomputable def reflectAt (q : _root_.Quiver.{v} V) (i : V) : _root_.Quiver.{v
 @[simp]
 theorem hom_reflectAt (q : _root_.Quiver.{v} V) (i a b : V) :
     @_root_.Quiver.Hom V (reflectAt q i) a b = @reflectHom V q i a b :=
-  rfl
+  (rfl)
 
 /-- `reflectAt` reproduces the quiver carried by the type synonym `TauCeti.Quiver.Reflect`. -/
 theorem hom_reflectAt_eq_hom_reflect [q : _root_.Quiver.{v} V] (i a b : V) :
@@ -87,18 +87,18 @@ theorem hom_reflectAt_eq_hom_reflect [q : _root_.Quiver.{v} V] (i a b : V) :
   (hom_reflectAt q i a b).trans (hom_reflect i a b).symm
 
 /-- Reflection at each vertex of a list in turn, starting from the head. -/
-@[expose, instance_reducible]
+@[instance_reducible]
 noncomputable def reflectList (q : _root_.Quiver.{v} V) (l : List V) : _root_.Quiver.{v} V :=
   l.foldl reflectAt q
 
 @[simp]
 theorem reflectList_nil (q : _root_.Quiver.{v} V) : reflectList q [] = q :=
-  rfl
+  (rfl)
 
 @[simp]
 theorem reflectList_cons (q : _root_.Quiver.{v} V) (i : V) (l : List V) :
     reflectList q (i :: l) = reflectList (reflectAt q i) l :=
-  rfl
+  (rfl)
 
 /-! ### Sink-admissible lists -/
 
@@ -106,12 +106,18 @@ theorem reflectList_cons (q : _root_.Quiver.{v} V) (i : V) (l : List V) :
 entries is a sink of the quiver obtained by reflecting `q` at all the entries preceding it. This
 is the hypothesis under which the reflection functors at the successive entries can be composed
 into a Coxeter functor. -/
-@[expose]
 def IsSinkAdmissible (q : _root_.Quiver.{v} V) (l : List V) : Prop :=
   ∀ t u : List V, ∀ i : V, l = t ++ i :: u → @IsSink V (reflectList q t) i
 
+/-- The defining condition for a sink-admissible list. -/
+theorem isSinkAdmissible_def (q : _root_.Quiver.{v} V) (l : List V) :
+    IsSinkAdmissible q l ↔ ∀ t u : List V, ∀ i : V, l = t ++ i :: u →
+      @IsSink V (reflectList q t) i :=
+  (Iff.rfl)
+
 @[simp]
 theorem isSinkAdmissible_nil (q : _root_.Quiver.{v} V) : IsSinkAdmissible q [] := by
+  rw [isSinkAdmissible_def]
   intro t u i h
   simp at h
 
@@ -119,6 +125,7 @@ theorem isSinkAdmissible_nil (q : _root_.Quiver.{v} V) : IsSinkAdmissible q [] :
 the quiver reflected at that head. -/
 theorem isSinkAdmissible_cons {q : _root_.Quiver.{v} V} {i : V} {l : List V} :
     IsSinkAdmissible q (i :: l) ↔ @IsSink V q i ∧ IsSinkAdmissible (reflectAt q i) l := by
+  simp only [isSinkAdmissible_def]
   constructor
   · intro h
     refine ⟨h [] l i rfl, fun t u j ht ↦ ?_⟩
