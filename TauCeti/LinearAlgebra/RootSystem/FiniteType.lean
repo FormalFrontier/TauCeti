@@ -417,15 +417,28 @@ theorem pairwise_apply_eq_zero (h : IsFiniteType A) {i : B} {s : Finset B} (his 
   · rintro rfl; exact his hj
   · rintro rfl; exact his hk
 
-/-- **The two-index case of the star bound.** Two non-adjacent indices `j` and `k`, both distinct
-from `i`, carry Cartan products with `i` summing to less than `4`; neither is required to be a
-neighbour of `i`, an absent edge contributing `0`. Here `j ≠ k` need not be assumed: it follows
-from `A j k = 0`, since the diagonal entries are `2`. -/
+/-- **The two-index case of the star bound.** Three pairwise distinct indices `i`, `j`, `k` are such
+that the Cartan products of `i` with `j` and with `k` sum to less than `4`; neither `j` nor `k` is
+required to be a neighbour of `i`, an absent edge contributing `0`. No non-adjacency of `j` and `k`
+is assumed: if both are neighbours of `i` the no-triangle theorem supplies it, and otherwise the
+rank-two bound alone already caps the sum at `3`. -/
 theorem apply_mul_apply_add_apply_mul_apply_lt_four (h : IsFiniteType A) {i j k : B} (hij : i ≠ j)
-    (hik : i ≠ k) (h0 : A j k = 0) :
+    (hik : i ≠ k) (hjk : j ≠ k) :
     A i j * A j i + A i k * A k i < 4 := by
   classical
-  have hjk : j ≠ k := fun hc ↦ by rw [hc, h.apply_self k] at h0; omega
+  -- If either of `j`, `k` misses `i`, the rank-two bound on the other edge is already enough.
+  have hmemj := h.apply_mul_apply_mem_of_ne hij
+  have hmemk := h.apply_mul_apply_mem_of_ne hik
+  simp only [Set.mem_insert_iff, Set.mem_singleton_iff] at hmemj hmemk
+  rcases eq_or_ne (A i j) 0 with hzj | hnej
+  · simp only [hzj, zero_mul, zero_add]
+    omega
+  rcases eq_or_ne (A i k) 0 with hzk | hnek
+  · simp only [hzk, zero_mul, add_zero]
+    omega
+  -- Otherwise `j` and `k` are both neighbours of `i`, so the no-triangle theorem separates them and
+  -- the star bound applies to the star `{j, k}`.
+  have h0 : A j k = 0 := h.apply_eq_zero_of_apply_ne_zero hij hik hjk hnej hnek
   have hkj : A k j = 0 := h.apply_eq_zero_symm h0
   have hi : i ∉ ({j, k} : Finset B) := by simp [hij, hik]
   have hp : ((({j, k} : Finset B) : Set B)).Pairwise fun p q ↦ A p q = 0 := by
@@ -442,13 +455,8 @@ assumed: the no-triangle theorem supplies it. -/
 theorem apply_mul_apply_le_one_of_two_le (h : IsFiniteType A) {i j k : B} (hij : i ≠ j)
     (hik : i ≠ k) (hjk : j ≠ k) (hj : 2 ≤ A i j * A j i) :
     A i k * A k i ≤ 1 := by
-  -- Either `k` is not a neighbour of `i` at all, or the triangle `i, j, k` is forbidden and the
-  -- two-index case of the star bound applies.
-  rcases eq_or_ne (A i k) 0 with h0 | h0
-  · simp [h0]
-  have hne : A i j ≠ 0 := fun hc ↦ by simp [hc] at hj
-  have := h.apply_mul_apply_add_apply_mul_apply_lt_four hij hik
-    (h.apply_eq_zero_of_apply_ne_zero hij hik hjk hne h0)
+  -- The two-index case of the star bound leaves less than `2` for the edge to `k`.
+  have := h.apply_mul_apply_add_apply_mul_apply_lt_four hij hik hjk
   omega
 
 /-- **A triple edge is isolated.** An index joined to `j` by a triple edge is joined to no index
@@ -462,12 +470,10 @@ theorem apply_eq_zero_of_apply_mul_apply_eq_three (h : IsFiniteType A) {i j k : 
     rintro rfl
     rw [h.apply_self] at hj
     omega
-  -- Were `k` a neighbour of `i` too, the triangle `i, j, k` would be forbidden.
+  -- A triple edge already exhausts the two-index case of the star bound, leaving no room for `k`.
   by_contra h0
-  have hne : A i j ≠ 0 := fun hc ↦ by simp [hc] at hj
   have h1 := h.one_le_apply_mul_apply h0
-  have := h.apply_mul_apply_add_apply_mul_apply_lt_four hij hik
-    (h.apply_eq_zero_of_apply_ne_zero hij hik hjk hne h0)
+  have := h.apply_mul_apply_add_apply_mul_apply_lt_four hij hik hjk
   omega
 
 /-- **The degree bound: an index of a finite-type matrix has at most three neighbours**, so a
