@@ -9,11 +9,12 @@ public import TauCeti.RepresentationTheory.CharacterTable.VirtualCharacter
 /-!
 # Real conjugacy classes and inversion-invariant rows of the character table
 
-A conjugacy class of a group is **real** when it contains an element conjugate to its own inverse;
-equivalently, when it is fixed by the inversion involution on `ConjClasses G`. A row of the
-character table is **inversion-invariant** when the character it lists takes the same value at `g`
-and at `g⁻¹`; over `ℂ` that is exactly the row being real-valued, because complex conjugation of a
-character value inverts the group element.
+A conjugacy class of a group is **real** (`TauCeti.IsRealClass`, defined with the inversion
+involution it is about in `TauCeti/Algebra/Group/Conj.lean`) when it contains an element conjugate
+to its own inverse. A row of the character table is **inversion-invariant** when the character it
+lists takes the same value at `g` and at `g⁻¹`; over `ℂ` that is exactly the row being real-valued,
+because complex conjugation of a character value inverts the group element
+(`TauCeti.conj_characterTable`).
 
 This file proves that a finite group has as many inversion-invariant rows as real classes, and over
 `ℂ` as many real-valued irreducible characters as real classes.
@@ -35,8 +36,6 @@ no irreducibility of the dual representation is needed as an input.
 
 ## Main statements
 
-* `TauCeti.IsRealClass`: a conjugacy class containing an element conjugate to its own inverse,
-  with `TauCeti.isRealClass_iff_inv_eq` identifying it with being fixed by inversion.
 * `TauCeti.card_inv_mul_sum_irreducibleCharacter_sq`: the row quantity `|G|⁻¹ ∑_g χᵢ(g)²` is `1`
   when the `i`-th row is inversion-invariant and `0` otherwise.
 * `TauCeti.sum_characterTable_sq`: the column quantity `∑_i χᵢ(C)²` is `|G| / |C|` when `C` is
@@ -58,41 +57,6 @@ public section
 namespace TauCeti
 
 universe u v
-
-section RealClass
-
-variable {G : Type v} [Group G]
-
-/-- **A real conjugacy class**: one containing an element conjugate to its own inverse. -/
-def IsRealClass (C : ConjClasses G) : Prop :=
-  ∃ g : G, ConjClasses.mk g = C ∧ IsConj g g⁻¹
-
-/-- **A class is real exactly when inversion fixes it.** -/
-@[simp]
-theorem isRealClass_iff_inv_eq {C : ConjClasses G} : IsRealClass C ↔ C⁻¹ = C := by
-  constructor
-  · rintro ⟨g, rfl, hg⟩
-    rw [ConjClasses.inv_mk, ConjClasses.mk_eq_mk_iff_isConj]
-    exact hg.symm
-  · intro h
-    obtain ⟨g, rfl⟩ := ConjClasses.exists_rep C
-    rw [ConjClasses.inv_mk, ConjClasses.mk_eq_mk_iff_isConj] at h
-    exact ⟨g, rfl, h.symm⟩
-
--- Not a `simp` lemma: `isRealClass_iff_inv_eq` and `ConjClasses.inv_mk` already rewrite the
--- left-hand side to `ConjClasses.mk g⁻¹ = ConjClasses.mk g`, so tagging it makes `simpNF` fail.
-/-- The class of `g` is real exactly when `g` is conjugate to `g⁻¹`. -/
-theorem isRealClass_mk_iff {g : G} : IsRealClass (ConjClasses.mk g) ↔ IsConj g g⁻¹ := by
-  rw [isRealClass_iff_inv_eq, ConjClasses.inv_mk, ConjClasses.mk_eq_mk_iff_isConj]
-  exact ⟨IsConj.symm, IsConj.symm⟩
-
--- Not a `simp` lemma: `simp` already proves it from `isRealClass_iff_inv_eq` and
--- `ConjClasses.inv_one`.
-/-- The class of the identity is real. -/
-theorem isRealClass_one : IsRealClass (1 : ConjClasses G) :=
-  isRealClass_iff_inv_eq.mpr ConjClasses.inv_one
-
-end RealClass
 
 section Rows
 
@@ -188,15 +152,6 @@ theorem sum_characterTable_sq (C : ConjClasses G) :
         Finset.sum_congr rfl fun i _ => pow_two _
     _ = if IsConj g g⁻¹ then (Nat.card G : k) / Nat.card (ConjClasses.mk g).carrier else 0 := h
     _ = _ := if_congr isRealClass_mk_iff.symm rfl rfl
-
-/-- **Complex conjugation of a character-table entry inverts the class**, in the class-indexed
-form: `TauCeti.conj_characterTable_apply` is the same statement about a representative. -/
-@[simp]
-theorem conj_characterTable {G : Type v} [Group G] [Finite G]
-    (i : Fin (Nat.card (ConjClasses G))) (C : ConjClasses G) :
-    (starRingEnd ℂ) (characterTable ℂ G i C) = characterTable ℂ G i C⁻¹ := by
-  obtain ⟨g, rfl⟩ := ConjClasses.exists_rep C
-  rw [ConjClasses.inv_mk, conj_characterTable_apply]
 
 end Columns
 
