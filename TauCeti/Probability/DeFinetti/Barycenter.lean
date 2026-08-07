@@ -50,7 +50,8 @@ throughout the de Finetti development (`deFinetti_mixture`, `mixedIID_mixingLaw_
 
 * `deFinettiBarycenter` — the mixture of countable powers along a mixing law.
 * `deFinettiBarycenter_dirac` — a point mass mixes to a single i.i.d. law.
-* `deFinettiBarycenter_add`, `deFinettiBarycenter_smul_add_smul` — affinity in the mixing law.
+* `deFinettiBarycenter_zero`, `deFinettiBarycenter_add`, `deFinettiBarycenter_smul`,
+  `deFinettiBarycenter_smul_add_smul` — affinity in the mixing law.
 * `exchangeableLaw_deFinettiBarycenter` — every barycenter of a mixing probability law is an
   exchangeable path law.
 * `ExchangeableLaw.existsUnique_mixingLaw` — conversely, an exchangeable probability law on
@@ -123,7 +124,13 @@ instance isProbabilityMeasure_deFinettiBarycenter (π : Measure (ProbabilityMeas
   isProbabilityMeasure_bind TauCeti.MeasureTheory.measurable_infinitePi_const.aemeasurable
     (.of_forall fun _ => inferInstance)
 
+/-- **The zero mixing law has the zero barycenter.** -/
+@[simp]
+theorem deFinettiBarycenter_zero : deFinettiBarycenter (0 : Measure (ProbabilityMeasure α)) = 0 :=
+  Measure.bind_zero_left _
+
 /-- **The barycenter is additive in the mixing law.** -/
+@[simp]
 theorem deFinettiBarycenter_add (π₁ π₂ : Measure (ProbabilityMeasure α)) :
     deFinettiBarycenter (π₁ + π₂) = deFinettiBarycenter π₁ + deFinettiBarycenter π₂ := by
   simp only [deFinettiBarycenter_def]
@@ -133,6 +140,7 @@ theorem deFinettiBarycenter_add (π₁ π₂ : Measure (ProbabilityMeasure α)) 
   rfl
 
 /-- **The barycenter is homogeneous in the mixing law.** -/
+@[simp]
 theorem deFinettiBarycenter_smul (c : ℝ≥0∞) (π : Measure (ProbabilityMeasure α)) :
     deFinettiBarycenter (c • π) = c • deFinettiBarycenter π :=
   Measure.bind_smul c π _
