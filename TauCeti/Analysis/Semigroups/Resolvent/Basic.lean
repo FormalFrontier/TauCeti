@@ -6,7 +6,7 @@ module
 
 public import TauCeti.Analysis.Semigroups.Generator.Basic
 public import TauCeti.Analysis.Semigroups.ExponentialShift
-public import TauCeti.MeasureTheory.Integral.ExpDecay
+import TauCeti.MeasureTheory.Integral.ExpDecay
 public import Mathlib.Analysis.SpecialFunctions.ExpDeriv
 public import Mathlib.MeasureTheory.Integral.ExpDecay
 public import Mathlib.MeasureTheory.Integral.IntervalIntegral.FundThmCalculus
@@ -75,8 +75,7 @@ lemma StronglyContinuousSemigroup.norm_resolvent_integrand_le
   simpa only [pow_zero, one_mul, neg_mul] using
     S.norm_pow_mul_resolvent_integrand_le hb 0 lambda x ht.le
 
-/-- Strong measurability of a polynomially weighted semigroup orbit. -/
-lemma StronglyContinuousSemigroup.aestronglyMeasurable_pow_mul_resolvent_integrand
+private lemma StronglyContinuousSemigroup.aestronglyMeasurable_pow_mul_resolvent_integrand
     (S : StronglyContinuousSemigroup X) (n : ℕ) (lambda : ℝ) (x : X) :
     AEStronglyMeasurable
       (fun t : ℝ => (t ^ n * Real.exp (-(lambda * t))) • S.realOperator t x)
@@ -383,8 +382,10 @@ theorem ContractionSemigroup.resolvent_eq_stronglyContinuousSemigroup_resolvent
     (S : ContractionSemigroup X) (lambda : ℝ) (hlambda : 0 < lambda) :
     S.resolvent lambda hlambda =
       S.toStronglyContinuousSemigroup.resolvent S.hasGrowthBound lambda
-        (by simpa using hlambda) :=
-  (rfl)
+        (by simpa using hlambda) := by
+  ext x
+  rw [ContractionSemigroup.resolvent_apply,
+    StronglyContinuousSemigroup.resolvent_apply]
 
 /-- The contraction resolvent maps into the generator domain. -/
 theorem ContractionSemigroup.resolvent_mem_domain (S : ContractionSemigroup X)

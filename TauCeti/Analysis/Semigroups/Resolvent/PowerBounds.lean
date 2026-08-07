@@ -5,7 +5,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Analysis.Semigroups.Resolvent.Deriv
-public import Mathlib.Analysis.Calculus.ParametricIntegral
+import TauCeti.MeasureTheory.Integral.ExpDecay
+import Mathlib.Analysis.Calculus.ParametricIntegral
 
 /-!
 # Integral formulas and power bounds for semigroup resolvents
@@ -121,13 +122,15 @@ private theorem hasDerivAt_resolventMoment (hb : S.HasGrowthBound omega M) (n : 
       (M * ‖x‖)
   have hF_meas : ∀ᶠ l in 𝓝 lambda,
       AEStronglyMeasurable (F l) (volume.restrict (Set.Ioi 0)) := by
-    filter_upwards [] with l
-    exact S.aestronglyMeasurable_pow_mul_resolvent_integrand n l x
+    filter_upwards [isOpen_Ioi.eventually_mem hlambda] with l hl
+    exact (S.integrableOn_pow_mul_resolvent_integrand hb n l hl x).aestronglyMeasurable
   have hF'_meas : AEStronglyMeasurable (F' lambda) (volume.restrict (Set.Ioi 0)) := by
-    convert (S.aestronglyMeasurable_pow_mul_resolvent_integrand (n + 1) lambda x).neg using 1
-    funext t
-    dsimp only [F']
-    rw [neg_smul, Pi.neg_apply]
+    have hmeas : AEStronglyMeasurable
+        (fun t : ℝ => (t ^ (n + 1) * Real.exp (-(lambda * t))) • S.realOperator t x)
+        (volume.restrict (Set.Ioi 0)) :=
+      (S.integrableOn_pow_mul_resolvent_integrand hb (n + 1) lambda hlambda x).aestronglyMeasurable
+    refine hmeas.neg.congr (ae_of_all _ fun t => ?_)
+    simp only [F', neg_smul, Pi.neg_apply]
   have hdom : ∀ᵐ t ∂volume.restrict (Set.Ioi 0), ∀ l ∈ U, ‖F' l t‖ ≤ bound t := by
     apply (ae_restrict_mem measurableSet_Ioi).mono
     intro t ht l hl
