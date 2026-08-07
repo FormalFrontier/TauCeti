@@ -91,6 +91,15 @@ private theorem lie_mul (x y z : CliffordAlgebra Q) :
   simp only [Ring.lie_def]
   noncomm_ring
 
+/-- Bracketing with an element that moves each of the two generators of a Clifford bivector to
+another generator takes that bivector to the sum of the two bivectors obtained by moving one
+generator at a time — the derivation property, written on the half-normalized commutator. -/
+private theorem lie_cliffordBivector_of_lie_ι {x : CliffordAlgebra Q} {c d c' d' : M}
+    (hc : ⁅x, ι Q c⁆ = ι Q c') (hd : ⁅x, ι Q d⁆ = ι Q d') :
+    ⁅x, cliffordBivector Q c d⁆ = cliffordBivector Q c' d + cliffordBivector Q c d' := by
+  simp only [cliffordBivector_def, lie_smul, lie_sub, lie_mul, hc, hd]
+  module
+
 /-- **The bracket of two Clifford bivectors.** Bracketing with `cliffordBivector Q a b` is a
 derivation which rotates a generator by `x ↦ polar Q b x • a - polar Q a x • b`, so it takes the
 Clifford bivector of `(c, d)` to the sum of the Clifford bivectors of the two rotated pairs. This
@@ -100,11 +109,8 @@ theorem lie_cliffordBivector_cliffordBivector (a b c d : M) :
       cliffordBivector Q
           (QuadraticMap.polar Q b c • a - QuadraticMap.polar Q a c • b) d +
         cliffordBivector Q c
-          (QuadraticMap.polar Q b d • a - QuadraticMap.polar Q a d • b) := by
-  rw [cliffordBivector_def Q c d, lie_smul, lie_sub, lie_mul, lie_mul, cliffordBivector_lie_ι,
-    cliffordBivector_lie_ι, cliffordBivector_def Q _ d, cliffordBivector_def Q c _, ← smul_add]
-  congr 1
-  abel
+          (QuadraticMap.polar Q b d • a - QuadraticMap.polar Q a d • b) :=
+  lie_cliffordBivector_of_lie_ι Q (cliffordBivector_lie_ι Q a b c) (cliffordBivector_lie_ι Q a b d)
 
 /-- The set of Clifford bivectors of `Q`, indexed by pairs of vectors. -/
 private def bivectorSet : Set (CliffordAlgebra Q) :=
