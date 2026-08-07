@@ -111,7 +111,7 @@ vector in every position among `n` copies of the base point.
 * `TauCeti.hasFDerivAt_exp`: the corresponding ordinary Fréchet derivative statement.
 * `TauCeti.fderiv_exp`: the derivative expressed using `fderiv`.
 * `TauCeti.expFDeriv_eq_smul_one`: the commutative-algebra specialization.
-* `TauCeti.expFDeriv_zero`: at zero, the derivative is the identity.
+* `TauCeti.expFDeriv_zero`: at zero, the formal derivative-series operator is the identity.
 -/
 
 open scoped RightActions
@@ -323,7 +323,7 @@ theorem expFDeriv_eq_smul_one {R : Type*} [NormedCommRing R] [NormedAlgebra 𝕂
     expFDeriv 𝕂 x = exp x • (1 : R →L[𝕂] R) :=
   (hasFDerivAt_exp (𝕂 := 𝕂) x).unique _root_.hasFDerivAt_exp
 
-/-- At zero, the derivative is the identity continuous linear map. -/
+/-- At zero, the formal derivative-series operator is the identity continuous linear map. -/
 @[simp]
 theorem expFDeriv_zero {𝕂 R : Type*} [NontriviallyNormedField 𝕂] [NormedRing R]
     [NormedAlgebra 𝕂 R] : expFDeriv 𝕂 (0 : R) = 1 := by
