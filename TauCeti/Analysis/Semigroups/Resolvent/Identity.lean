@@ -110,11 +110,11 @@ domain: `R(lambda) (lambda x - A x) = x`. -/
     intro t ht
     simpa only [g, g', Ax] using S.hasDerivAt_exp_neg_smul_realOperator lambda x ht
   have hg'_int : IntegrableOn g' (Set.Ioi 0) := by
-    have hAx := S.integrableOn_pow_mul_resolvent_integrand hb 0 lambda hlambda Ax
-    have hx := S.integrableOn_pow_mul_resolvent_integrand hb 0 lambda hlambda (lambda • (x : X))
+    have hAx := S.integrableOn_resolvent_integrand hb lambda hlambda Ax
+    have hx := S.integrableOn_resolvent_integrand hb lambda hlambda (lambda • (x : X))
     convert hAx.sub hx using 1
     ext t
-    simp only [g', Pi.sub_apply, map_smul, smul_sub, smul_smul, pow_zero, one_mul]
+    simp only [g', Pi.sub_apply, map_smul, smul_sub, smul_smul]
   have h_integral : ∫ t in Set.Ioi (0 : ℝ), g' t = -(x : X) := by
     rw [MeasureTheory.integral_Ioi_of_hasDerivAt_of_tendsto (hg_cont 0 Set.self_mem_Ici)
       hg_deriv hg'_int (S.tendsto_exp_neg_smul_realOperator_atTop hb hlambda x)]

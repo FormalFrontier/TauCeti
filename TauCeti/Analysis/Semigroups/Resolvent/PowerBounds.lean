@@ -32,6 +32,9 @@ The corresponding pointwise estimates and the bound for the scaled contraction r
 theorem: every C₀-semigroup's Laplace-transform resolvent satisfies the power bound that the
 generation theorem assumes for an abstract operator.
 
+The sharp derivative bound obtained from the power formula is recorded here in both the general
+growth-bound and contraction cases.
+
 ## References
 
 Engel--Nagel, *One-Parameter Semigroups for Linear Evolution Equations*, Theorem II.1.10 and
@@ -50,37 +53,9 @@ namespace TauCeti.Semigroups
 
 variable {X : Type*} [NormedAddCommGroup X] [NormedSpace ℝ X] [CompleteSpace X]
 
-/-- The elementary Gamma-integral evaluation used in the resolvent-power estimate. -/
-private theorem integral_pow_mul_exp_neg_mul_Ioi (n : ℕ) {a : ℝ} (ha : 0 < a) :
-    ∫ t : ℝ in Set.Ioi 0, t ^ n * Real.exp (-(a * t)) = n.factorial / a ^ (n + 1) := by
-  have h := Real.integral_rpow_mul_exp_neg_mul_Ioi
-    (a := ((n + 1 : ℕ) : ℝ)) (r := a) (by positivity) ha
-  simp only [Nat.cast_add, Nat.cast_one, add_sub_cancel_right,
-    Real.Gamma_nat_eq_factorial] at h
-  have hcast : (n : ℝ) + 1 = ((n + 1 : ℕ) : ℝ) := by norm_num
-  rw [hcast, Real.rpow_natCast] at h
-  have h' : ∫ t : ℝ in Set.Ioi 0, t ^ n * Real.exp (-(a * t)) =
-      (1 / a) ^ (n + 1) * n.factorial := by
-    rw [← h]
-    apply MeasureTheory.setIntegral_congr_fun measurableSet_Ioi
-    intro t ht
-    dsimp
-    rw [Real.rpow_natCast t n]
-  rw [h', one_div, div_eq_mul_inv, inv_pow]
-  ring
-
 namespace StronglyContinuousSemigroup
 
 variable (S : StronglyContinuousSemigroup X) {omega M : ℝ}
-
-/-- Strong measurability of a polynomially weighted semigroup orbit. -/
-private theorem aestronglyMeasurable_pow_mul_resolvent_integrand (n : ℕ) (lambda : ℝ)
-    (x : X) : AEStronglyMeasurable
-      (fun t : ℝ => (t ^ n * Real.exp (-(lambda * t))) • S.realOperator t x)
-      (volume.restrict (Set.Ioi 0)) := by
-  apply ContinuousOn.aestronglyMeasurable _ measurableSet_Ioi
-  exact (by fun_prop : Continuous (fun t : ℝ => t ^ n * Real.exp (-(lambda * t)))).continuousOn.smul
-    ((S.realOperator_continuousOn_Ici x).mono Set.Ioi_subset_Ici_self)
 
 omit [CompleteSpace X] in
 /-- A common exponential majorant when the spectral parameter stays above a fixed lower
@@ -204,9 +179,12 @@ private theorem iteratedDeriv_resolventFun_apply
   have hcont := (S.contDiffOn_resolventFun hb).contDiffAt (isOpen_Ioi.mem_nhds hlambda)
   have h := ev.iteratedFDeriv_comp_left hcont (i := n) (WithTop.coe_le_coe.mpr le_top)
   rw [iteratedDeriv_eq_iteratedFDeriv, iteratedDeriv_eq_iteratedFDeriv]
-  change (iteratedFDeriv ℝ n (ev ∘ S.resolventFun hb) lambda) (fun _ => 1) = _
-  rw [h]
-  rfl
+  have hcomp : (fun l => S.resolventFun hb l x) = ev ∘ S.resolventFun hb := by
+    funext l
+    simp [ev]
+  rw [hcomp, h]
+  simp only [ev, ContinuousLinearMap.compContinuousMultilinearMap_coe,
+    Function.comp_apply, ContinuousLinearMap.apply_apply]
 
 /-- Pointwise iterated derivatives of the resolvent are scalar multiples of resolvent powers. -/
 private theorem iteratedDeriv_resolventFun_apply_eq_pow

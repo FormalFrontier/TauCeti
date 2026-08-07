@@ -6,8 +6,8 @@ module
 
 public import TauCeti.Analysis.Semigroups.Generator.Basic
 public import TauCeti.Analysis.Semigroups.ExponentialShift
+public import TauCeti.MeasureTheory.Integral.ExpDecay
 public import Mathlib.Analysis.SpecialFunctions.ExpDeriv
-public import Mathlib.Analysis.SpecialFunctions.Gaussian.GaussianIntegral
 public import Mathlib.MeasureTheory.Integral.ExpDecay
 public import Mathlib.MeasureTheory.Integral.IntervalIntegral.FundThmCalculus
 public import Mathlib.Analysis.SpecialFunctions.ImproperIntegrals
@@ -42,14 +42,6 @@ variable {X : Type*} [NormedAddCommGroup X] [NormedSpace ℝ X] [CompleteSpace X
 
 open MeasureTheory
 
-/-- Natural powers times an exponentially decaying factor are integrable on `(0, ∞)`. -/
-theorem integrableOn_pow_mul_exp_neg_mul_Ioi (n : ℕ) {b : ℝ} (hb : 0 < b) :
-    IntegrableOn (fun t : ℝ => t ^ n * Real.exp (-(b * t))) (Set.Ioi 0) := by
-  have h := integrableOn_rpow_mul_exp_neg_mul_rpow
-    (p := (1 : ℝ)) (s := (n : ℝ)) (b := b)
-    (lt_of_lt_of_le (by norm_num) (Nat.cast_nonneg n)) one_pos hb
-  simpa only [Real.rpow_one, Real.rpow_natCast, neg_mul] using h
-
 omit [CompleteSpace X] in
 /-- The growth-bound estimate for a polynomially weighted Laplace-transform integrand:
 `‖t^n e^{-λt} S(t) x‖ ≤ M ‖x‖ t^n e^{-(λ-ω)t}` for `t > 0`. -/
@@ -73,6 +65,26 @@ lemma StronglyContinuousSemigroup.norm_pow_mul_resolvent_integrand_le
         rw [h_exp_exponent, Real.exp_add]
         ring
 
+omit [CompleteSpace X] in
+/-- The growth-bound estimate for the integrand in the defining resolvent integral. -/
+lemma StronglyContinuousSemigroup.norm_resolvent_integrand_le
+    (S : StronglyContinuousSemigroup X) {ω M : ℝ} (hb : S.HasGrowthBound ω M)
+    (lambda : ℝ) (x : X) {t : ℝ} (ht : 0 < t) :
+    ‖Real.exp (-(lambda * t)) • S.realOperator t x‖ ≤
+      M * ‖x‖ * Real.exp (-(lambda - ω) * t) := by
+  simpa only [pow_zero, one_mul, neg_mul] using
+    S.norm_pow_mul_resolvent_integrand_le hb 0 lambda x ht
+
+/-- Strong measurability of a polynomially weighted semigroup orbit. -/
+lemma StronglyContinuousSemigroup.aestronglyMeasurable_pow_mul_resolvent_integrand
+    (S : StronglyContinuousSemigroup X) (n : ℕ) (lambda : ℝ) (x : X) :
+    AEStronglyMeasurable
+      (fun t : ℝ => (t ^ n * Real.exp (-(lambda * t))) • S.realOperator t x)
+      (volume.restrict (Set.Ioi 0)) := by
+  apply ContinuousOn.aestronglyMeasurable _ measurableSet_Ioi
+  exact (by fun_prop : Continuous (fun t : ℝ => t ^ n * Real.exp (-(lambda * t)))).continuousOn.smul
+    ((S.realOperator_continuousOn_Ici x).mono Set.Ioi_subset_Ici_self)
+
 /-- The polynomially weighted Laplace-transform integrand `t^n e^{-λt} S(t) x` is integrable
 on `(0, ∞)` for `ω < λ`. -/
 lemma StronglyContinuousSemigroup.integrableOn_pow_mul_resolvent_integrand
@@ -84,13 +96,18 @@ lemma StronglyContinuousSemigroup.integrableOn_pow_mul_resolvent_integrand
   unfold MeasureTheory.IntegrableOn
   apply MeasureTheory.Integrable.mono'
     ((integrableOn_pow_mul_exp_neg_mul_Ioi n hpos).integrable.const_mul (M * ‖x‖))
-  · apply ContinuousOn.aestronglyMeasurable _ measurableSet_Ioi
-    apply ContinuousOn.smul
-    · fun_prop
-    · exact (S.realOperator_continuousOn_Ici x).mono Set.Ioi_subset_Ici_self
+  · exact S.aestronglyMeasurable_pow_mul_resolvent_integrand n lambda x
   · apply (ae_restrict_mem measurableSet_Ioi).mono
     intro t (ht : 0 < t)
     exact S.norm_pow_mul_resolvent_integrand_le hb n lambda x ht
+
+/-- The integrand in the defining resolvent integral is integrable on `(0, ∞)` for `ω < λ`. -/
+lemma StronglyContinuousSemigroup.integrableOn_resolvent_integrand
+    (S : StronglyContinuousSemigroup X) {ω M : ℝ} (hb : S.HasGrowthBound ω M)
+    (lambda : ℝ) (hlam : ω < lambda) (x : X) :
+    IntegrableOn (fun t => Real.exp (-(lambda * t)) • S.realOperator t x) (Set.Ioi 0) := by
+  simpa only [pow_zero, one_mul] using
+    S.integrableOn_pow_mul_resolvent_integrand hb 0 lambda hlam x
 
 /-- The resolvent `R(λ) x = ∫₀^∞ e^{-λt} S(t)x dt` of a C₀-semigroup with growth bound
 `(ω, M)`, for `λ > ω`. A pointwise `X`-valued Bochner integral (so it is well-defined for
@@ -104,12 +121,8 @@ noncomputable def StronglyContinuousSemigroup.resolvent
       map_add' := fun x y => by
         simp only [ContinuousLinearMap.map_add, smul_add]
         exact integral_add
-          (by
-            simpa using
-              (S.integrableOn_pow_mul_resolvent_integrand hb 0 lambda hlam x).integrable)
-          (by
-            simpa using
-              (S.integrableOn_pow_mul_resolvent_integrand hb 0 lambda hlam y).integrable)
+          (S.integrableOn_resolvent_integrand hb lambda hlam x).integrable
+          (S.integrableOn_resolvent_integrand hb lambda hlam y).integrable
       map_smul' := fun c x => by
         simp only [RingHom.id_apply, map_smul]
         have h : ∀ t : ℝ, Real.exp (-(lambda * t)) • c • (S.realOperator t) x =
@@ -128,15 +141,13 @@ noncomputable def StronglyContinuousSemigroup.resolvent
             · exact (exp_neg_integrableOn_Ioi 0 hpos).integrable.const_mul (M * ‖x‖)
             · apply (ae_restrict_mem measurableSet_Ioi).mono
               intro t (ht : 0 < t)
-              convert S.norm_pow_mul_resolvent_integrand_le hb 0 lambda x ht using 1 <;> ring_nf
+              exact S.norm_resolvent_integrand_le hb lambda x ht
         _ = M / (lambda - ω) * ‖x‖ := by
             rw [MeasureTheory.integral_const_mul]
             have h_eval :
                 ∫ t in Set.Ioi 0, Real.exp (-(lambda - ω) * t) = (lambda - ω)⁻¹ := by
-              have h := integral_comp_mul_left_Ioi (fun t => Real.exp (-t)) 0 hpos
-              simp only [mul_zero] at h
-              simp only [neg_mul]
-              rw [h, integral_exp_neg_Ioi_zero, smul_eq_mul, mul_one]
+              simpa only [pow_zero, one_mul, Nat.factorial_zero, Nat.cast_one, pow_one,
+                one_div, neg_mul, zero_add] using integral_pow_mul_exp_neg_mul_Ioi 0 hpos
             rw [h_eval, div_eq_mul_inv]; ring)
 
 /-- The resolvent in integral form (characteristic lemma). -/
@@ -192,7 +203,7 @@ private theorem StronglyContinuousSemigroup.resolvent_shift_identity
   have h_push : S.realOperator h Rlx = Real.exp (lambda * h) • ∫ u in Set.Ioi h, f u := by
     have hRlx : Rlx = ∫ t in Set.Ioi 0, f t := S.resolvent_apply hb lambda hlam x
     rw [hRlx, ← ContinuousLinearMap.integral_comp_comm _
-      (by simpa using (S.integrableOn_pow_mul_resolvent_integrand hb 0 lambda hlam x).integrable)]
+      (S.integrableOn_resolvent_integrand hb lambda hlam x).integrable]
     have h_eq : ∀ t ∈ Set.Ioi (0 : ℝ),
         (S.realOperator h) (f t) = Real.exp (lambda * h) • f (t + h) := by
       intro t ht
@@ -209,7 +220,7 @@ private theorem StronglyContinuousSemigroup.resolvent_shift_identity
   -- Step 2: split `∫_{Ioi h} = Rlx - ∫_{Ioc 0 h} f`
   have h_split : ∫ u in Set.Ioi h, f u = Rlx - ∫ u in Set.Ioc 0 h, f u := by
     have hsplit := integral_Ioi_eq_Ioc_add_Ioi f hh
-      (by simpa using S.integrableOn_pow_mul_resolvent_integrand hb 0 lambda hlam x)
+      (S.integrableOn_resolvent_integrand hb lambda hlam x)
     have hRlx : Rlx = ∫ t in Set.Ioi 0, f t := S.resolvent_apply hb lambda hlam x
     rw [hRlx, hsplit]; abel
   -- Step 3: combine into the key identity
