@@ -5,10 +5,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Analysis.Contour.Winding.Integrand
-public import Mathlib.Algebra.Order.Group.Pointwise.Bounds
 public import Mathlib.Analysis.Calculus.Deriv.Shift
 public import Mathlib.Analysis.Calculus.MeanValue
-public import Mathlib.Topology.Order.Bornology
 
 /-!
 # Boundedness of the real winding integrand at `C^{1,1}` crossings
@@ -364,13 +362,8 @@ theorem exists_isBounded_image_realWindingIntegrand_of_lipschitzOnWith_derivWith
         = -realWindingIntegrand (γ (2 * t₀ - t) - w) (deriv γ' t)
       rw [hDeriv_eq, realWindingIntegrand_neg_right, neg_neg]
   rw [himg]
-  have hbdd_iff : Bornology.IsBounded (Neg.neg '' ((fun t =>
-      realWindingIntegrand (γ' t - w) (deriv γ' t)) '' Icc t₀ (t₀ + ρ)))
-      ↔ Bornology.IsBounded ((fun t => realWindingIntegrand (γ' t - w) (deriv γ' t)) ''
-          Icc t₀ (t₀ + ρ)) := by
-    rw [Set.image_neg_eq_neg, isBounded_iff_bddBelow_bddAbove, isBounded_iff_bddBelow_bddAbove,
-      bddBelow_neg, bddAbove_neg, and_comm]
-  exact hbdd_iff.mpr hbdd
+  have hlip_neg : LipschitzWith 1 (Neg.neg : ℝ → ℝ) := fun x y => by simp [edist_neg_neg]
+  exact hlip_neg.isBounded_image hbdd
 
 /-- **Boundedness of the real winding integrand on the full neighborhood of a `C^{1,1}` corner
 crossing.** Combines `_right` and `_left` above into the full two-sided window `[t₀ - ρ, t₀ + ρ]`,
