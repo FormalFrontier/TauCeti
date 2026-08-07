@@ -151,3 +151,22 @@ theorem map_oneSubExpNegDivSelf {F : Type*} [FunLike F A B] [RingHomClass F A B]
   simp
 
 end Map
+
+section ContinuousAlgHom
+
+variable {𝕂 A B : Type*} [NontriviallyNormedField 𝕂] [CharZero 𝕂]
+  [ContinuousSMul ℚ 𝕂] [NormedRing A] [NormedAlgebra 𝕂 A] [CompleteSpace A]
+  [NormedRing B] [NormedAlgebra 𝕂 B]
+
+/-- Continuous algebra homomorphisms preserve `oneSubExpNegDivSelf` over their scalar field. -/
+theorem ContinuousAlgHom.map_oneSubExpNegDivSelf (f : A →A[𝕂] B) (a : A) :
+    f (oneSubExpNegDivSelf 𝕂 a) = oneSubExpNegDivSelf 𝕂 (f a) := by
+  rw [oneSubExpNegDivSelf_eq_tsum, oneSubExpNegDivSelf_eq_tsum]
+  have hsum := (summable_oneSubExpNegDivSelf (𝕂 := 𝕂) a).hasSum.map f f.continuous
+  refine hsum.tsum_eq.symm.trans ?_
+  dsimp only [Function.comp_apply]
+  apply tsum_congr
+  intro n
+  rw [map_smul, map_pow, map_neg]
+
+end ContinuousAlgHom
