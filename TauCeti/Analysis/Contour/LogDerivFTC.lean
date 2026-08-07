@@ -273,7 +273,7 @@ theorem integral_deriv_div_eq_log_of_im_nonneg {g h : ℝ → ℂ} {a b : ℝ} (
     IntervalIntegrable (fun t ↦ deriv g t / g t) volume a b ∧
     ∫ t in a..b, deriv g t / g t = Complex.log (g b) - Complex.log (g a) := by
   have hh_log_cont : ContinuousOn (fun t ↦ Complex.log (h t)) (Set.Icc a b) :=
-    TauCeti.continuousOn_log_im_nonneg.comp hh_cont
+    TauCeti.continuousOn_log_im_nonneg_ne_zero.comp hh_cont
       fun t ht ↦ ⟨hh_im_nn t ht, hh_ne t ht⟩
   have hint_h : IntervalIntegrable (fun t ↦ deriv h t / h t) volume a b :=
     ((hh_deriv_cont.div hh_cont hh_ne).mono
@@ -304,7 +304,7 @@ theorem integral_deriv_div_eq_log_neg_of_im_nonpos {g h : ℝ → ℂ} {a b : �
     ∫ t in a..b, deriv g t / g t =
       Complex.log (-(g b)) - Complex.log (-(g a)) := by
   have hnh_log_cont : ContinuousOn (fun t ↦ Complex.log (-(h t))) (Set.Icc a b) :=
-    TauCeti.continuousOn_log_im_nonneg.comp hh_cont.neg fun t ht ↦
+    TauCeti.continuousOn_log_im_nonneg_ne_zero.comp hh_cont.neg fun t ht ↦
       ⟨by simpa using hh_im_np t ht, neg_ne_zero.mpr (hh_ne t ht)⟩
   have hint_h : IntervalIntegrable (fun t ↦ deriv h t / h t) volume a b :=
     ((hh_deriv_cont.div hh_cont hh_ne).mono
