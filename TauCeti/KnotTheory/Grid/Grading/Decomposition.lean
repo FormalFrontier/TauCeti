@@ -118,12 +118,11 @@ section Decomposition
 
 variable (G) (R : Type*) [Semiring R]
 
-set_option backward.privateInPublic true in
 /-- Split a grid chain into its homogeneous auxiliary `(M_O, 2A)` pieces.
 
 Implementation-only linear map underlying `doubledAlexanderPieceDecomposition`. External users
 should access the decomposition through `DirectSum.decompose`. -/
-private noncomputable def doubledAlexanderDecomposition :
+noncomputable def doubledAlexanderDecomposition :
     GridChain R n →ₗ[R] DirectSum (ℤ × ℤ) fun d ↦ G.doubledAlexanderPiece R d :=
   Finsupp.lsum ℕ fun x : GridState n ↦
     (DirectSum.lof R (ℤ × ℤ) (G.doubledAlexanderPiece R ·)
@@ -131,8 +130,7 @@ private noncomputable def doubledAlexanderDecomposition :
       (LinearMap.codRestrict _ (Finsupp.lsingle x) fun a ↦
         G.single_mem_doubledAlexanderPiece x a)
 
-set_option backward.privateInPublic true in
-private theorem doubledAlexanderDecomposition_single (x : GridState n) (a : R) :
+theorem doubledAlexanderDecomposition_single (x : GridState n) (a : R) :
     doubledAlexanderDecomposition G R (Finsupp.single x a) =
       DirectSum.lof R (ℤ × ℤ) (G.doubledAlexanderPiece R ·)
         (G.doubledAlexanderBidegree x)
@@ -141,10 +139,9 @@ private theorem doubledAlexanderDecomposition_single (x : GridState n) (a : R) :
   simp [doubledAlexanderDecomposition]
   congr
 
-set_option backward.privateInPublic true in
 /-- The implementation map takes a homogeneous chain to its own summand. This is the reusable
 characterization used to prove the direct-sum right-inverse law. -/
-private theorem doubledAlexanderDecomposition_of_mem {d : ℤ × ℤ} (c : GridChain R n)
+theorem doubledAlexanderDecomposition_of_mem {d : ℤ × ℤ} (c : GridChain R n)
     (hc : c ∈ G.doubledAlexanderPiece R d) :
     doubledAlexanderDecomposition G R c =
       DirectSum.lof R (ℤ × ℤ) (G.doubledAlexanderPiece R ·) d ⟨c, hc⟩ := by
@@ -172,8 +169,6 @@ private theorem doubledAlexanderDecomposition_of_mem {d : ℤ × ℤ} (c : GridC
       rw [map_add, doubledAlexanderDecomposition_single G R x a, ih hc', ← map_add]
       congr
 
-set_option backward.privateInPublic true in
-set_option backward.privateInPublic.warn false in
 /-- Grid chains are the internal direct sum of the submodules at each auxiliary `(M_O, 2A)`
 bidegree. -/
 noncomputable instance doubledAlexanderPieceDecomposition :
@@ -198,8 +193,6 @@ noncomputable instance doubledAlexanderPieceDecomposition :
       exact doubledAlexanderDecomposition_of_mem G R c c.property
     exact DFunLike.congr_fun h
 
-set_option backward.privateInPublic true in
-set_option backward.privateInPublic.warn false in
 /-- The doubled-Alexander direct-sum decomposition sends a grid-state generator to its summand. -/
 @[simp]
 theorem decompose_doubledAlexanderPiece_single (x : GridState n) (a : R) :
