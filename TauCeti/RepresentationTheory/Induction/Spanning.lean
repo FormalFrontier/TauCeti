@@ -11,7 +11,7 @@ public import Mathlib.GroupTheory.SpecificGroups.Cyclic.Basic
 public import Mathlib.LinearAlgebra.BilinearForm.Orthogonal
 
 /-!
-# Artin's induction theorem
+# Induction from a covering family of subgroups spans the class functions
 
 Let `𝒮` be a family of subgroups of a finite group `G` that **covers `G` up to conjugacy**: every
 element of `G` has a conjugate lying in some member of `𝒮`.  Over a field `k` in which `|G|` is
@@ -25,18 +25,31 @@ orthogonality to *every* class function induced from `S` into the vanishing of t
 `h` to `S`, and a class function whose restriction to every member of `𝒮` vanishes is zero, because
 each `x` is conjugate into some member and a class function is constant on conjugacy classes.
 
-**Artin's induction theorem** is the case where `𝒮` is the family of cyclic subgroups
-(`TauCeti.ClassFunction.cyclicInduced_eq_top`), which covers `G` for the trivial reason that `x`
-generates a cyclic subgroup containing it.  The covering hypothesis is stated for a general family
-because that is the shape Brauer's induction theorem needs, with the elementary subgroups in place
-of the cyclic ones.
+The cyclic subgroups cover `G`, for the trivial reason that `x` generates a cyclic subgroup
+containing it, so the class functions induced from them span
+(`TauCeti.ClassFunction.cyclicInduced_eq_top`).  The covering hypothesis is stated for a general
+family because the elementary subgroups, which Brauer's induction theorem uses, satisfy it too.
 
 Over an algebraically closed `k` the spanning set can be cut down to genuine induced *characters*:
 the irreducible characters of `S` span the class functions of `S`, so
 `TauCeti.ClassFunction.cyclicInducedCharacters_eq_top` says that the characters induced from the
-irreducible characters of the cyclic subgroups already span.  Applied to the character of a
-representation of `G`, this is Artin's theorem in its usual phrasing: every character of `G` is a
-linear combination of characters induced from cyclic subgroups.
+irreducible characters of the cyclic subgroups already span.
+
+## What this is not: Artin's induction theorem
+
+Artin's induction theorem is the sharper *arithmetic* statement, about the virtual-character
+lattice `TauCeti.virtualCharacters` rather than about the class functions: over a
+characteristic-zero splitting field, `|G| • χ` is a `ℤ`-linear combination of characters induced
+from cyclic subgroups, and equivalently every character is a `ℚ`-linear combination of them —
+surjectivity of `⨁_{C cyclic} R(C) → R(G)` after tensoring with `ℚ`.  **Neither statement is
+proved here, and neither follows from what is**: every result below produces coefficients that are
+arbitrary elements of `k` and says nothing about their arithmetic.
+
+What this file supplies is the duality half of that development, run on the class functions instead
+of on `ℚ ⊗ R(G)`: the `k`-linear spanning statement, together with the covering-family formulation
+that the elementary-subgroup case will reuse.  The arithmetic half — rationality of the
+coefficients, and integrality after multiplying by `|G|` — is the part of the roadmap's Artin item
+that remains open, as do Brauer's induction theorem and Brauer's characterization of characters.
 
 ## Main definitions
 
@@ -51,14 +64,13 @@ linear combination of characters induced from cyclic subgroups.
 
 * `TauCeti.ClassFunction.inducedFrom_eq_top`: induction from a family of subgroups covering `G` up
   to conjugacy spans all class functions, and
-  `TauCeti.ClassFunction.cyclicInduced_eq_top`: **Artin's induction theorem**, its cyclic case, with
+  `TauCeti.ClassFunction.cyclicInduced_eq_top`: its cyclic case, with
   `TauCeti.ClassFunction.exists_sum_smul_ind` the explicit finite-combination form.
 * `TauCeti.ClassFunction.inducedCharactersFrom_eq_inducedFrom`: over an algebraically closed field,
   inducing only the irreducible characters of the subgroups spans as much as inducing all their
   class functions, whence `TauCeti.ClassFunction.inducedCharactersFrom_eq_top` and
   `TauCeti.ClassFunction.cyclicInducedCharacters_eq_top`, with
-  `TauCeti.ClassFunction.exists_sum_smul_ind_ofCharacter` the explicit form.  Specialized to the
-  character of a representation of `G` this is the classical statement of Artin's theorem.
+  `TauCeti.ClassFunction.exists_sum_smul_ind_ofCharacter` the explicit form.
 
 ## Implementation notes
 
@@ -71,21 +83,20 @@ is used.
 The covering hypothesis is written out as `∀ x : G, ∃ S ∈ 𝒮, ∃ y : G, y * x * y⁻¹ ∈ S` rather than
 bundled into a predicate: it is used once, and the cyclic instance discharges it with `y = 1`.
 
-The coefficients produced here are elements of `k`.  Artin's sharper theorem says that over `ℂ` they
-may be taken rational, and that `|G| • χ` is even an integral combination of induced characters;
-both refinements need the virtual-character lattice rather than the class functions, and neither is
-proved here.
+The coefficients produced here are elements of `k`, and the statements are about the `k`-vector
+space of class functions, not about `TauCeti.virtualCharacters`; see the discussion above of what
+separates this from Artin's induction theorem.
 
 ## References
 
-This is the "Artin's induction theorem" item of Layer 6 in
-`TauCetiRoadmap/RepresentationTheory/InductionRestriction/README.md`, in the spanning
-(equivalently, surjectivity) form that the layer calls for; the integral `|G| • χ` form and the
-rational refinement remain open, as do Brauer's induction theorem and Brauer's characterization of
-characters.
+This is a prerequisite for the "Artin's induction theorem" item of Layer 6 in
+`TauCetiRoadmap/RepresentationTheory/InductionRestriction/README.md`, which asks for the
+`ℤ`-membership of `|G| • χ` in the subgroup generated by cyclic-induced characters and, separately,
+for the rational surjectivity of `⨁_{C cyclic} R(C) → R(G)`.  That item is not proved here.
 
 * J.-P. Serre, *Linear Representations of Finite Groups*, Springer GTM 42 (1977), Section 9.2,
-  Theorem 17 and its corollary.
+  Theorem 17, whose duality argument this follows.  Serre runs it on `ℚ ⊗ R(G)`, which is what
+  makes his conclusion the rational one; here it runs on the class functions over `k`.
 * C. W. Curtis, I. Reiner, *Methods of Representation Theory, Vol. I*, Wiley (1981), Section 15.
 -/
 
@@ -112,8 +123,8 @@ noncomputable def inducedFrom (𝒮 : Set (Subgroup G)) : Submodule k (ClassFunc
 /-- The submodule of class functions of `G` spanned by the class functions induced from its cyclic
 subgroups.
 
-Artin's induction theorem, `TauCeti.ClassFunction.cyclicInduced_eq_top`, is the statement that this
-submodule is everything as soon as `|G|` is invertible in `k`. -/
+`TauCeti.ClassFunction.cyclicInduced_eq_top` is the statement that this submodule is everything as
+soon as `|G|` is invertible in `k`. -/
 noncomputable def cyclicInduced : Submodule k (ClassFunction k G) :=
   inducedFrom k G {S | IsCyclic S}
 
@@ -168,9 +179,8 @@ theorem orthogonal_inducedFrom_eq_bot [Fintype G] [Invertible (Nat.card G : k)]
 element of the finite group `G` is conjugate into a member of `𝒮`, and `|G|` is invertible in `k`,
 then the class functions induced from the members of `𝒮` span all class functions of `G`.
 
-`TauCeti.ClassFunction.cyclicInduced_eq_top` is Artin's induction theorem, the case of the cyclic
-subgroups; the family of elementary subgroups, which Brauer's induction theorem uses, satisfies the
-same hypothesis. -/
+`TauCeti.ClassFunction.cyclicInduced_eq_top` is the case of the cyclic subgroups; the family of
+elementary subgroups, which Brauer's induction theorem uses, satisfies the same hypothesis. -/
 theorem inducedFrom_eq_top [Invertible (Nat.card G : k)] {𝒮 : Set (Subgroup G)}
     (h𝒮 : ∀ x : G, ∃ S ∈ 𝒮, ∃ y : G, y * x * y⁻¹ ∈ S) :
     inducedFrom k G 𝒮 = ⊤ := by
@@ -182,20 +192,25 @@ theorem inducedFrom_eq_top [Invertible (Nat.card G : k)] {𝒮 : Set (Subgroup G
         (LinearMap.BilinForm.orthogonal_orthogonal characterPairing_nondegenerate hrefl _).symm
     _ = ⊤ := by rw [orthogonal_inducedFrom_eq_bot h𝒮, LinearMap.BilinForm.orthogonal_bot]
 
-/-- **Artin's induction theorem.**  Over a field in which the order of the finite group `G` is
-invertible, the class functions induced from the cyclic subgroups of `G` span all class functions
-of `G`.
+/-- **The class functions induced from the cyclic subgroups span.**  Over a field in which the order
+of the finite group `G` is invertible, the class functions induced from the cyclic subgroups of `G`
+span all class functions of `G`; equivalently, the induction map
+`⨁_{C cyclic} ClassFunction k C → ClassFunction k G` is surjective.
 
-Equivalently, the induction map `⨁_{C cyclic} ClassFunction k C → ClassFunction k G` is surjective.
 The explicit finite-combination form is `TauCeti.ClassFunction.exists_sum_smul_ind`, and
 `TauCeti.ClassFunction.cyclicInducedCharacters_eq_top` refines the spanning set to induced
-characters. -/
+characters.
+
+This is *not* Artin's induction theorem: the coefficients here are arbitrary elements of `k`, while
+Artin's theorem asserts that they may be taken rational, and that `|G| • χ` is an integral
+combination of induced characters.  Both are statements about `TauCeti.virtualCharacters`, and both
+remain open; see the module docstring. -/
 theorem cyclicInduced_eq_top [Invertible (Nat.card G : k)] : cyclicInduced k G = ⊤ :=
   inducedFrom_eq_top fun x =>
     ⟨Subgroup.zpowers x, Subgroup.isCyclic_zpowers x, 1, by simp⟩
 
-/-- **Artin's induction theorem**, written out: every class function of `G` is a finite `k`-linear
-combination of class functions induced from cyclic subgroups. -/
+/-- `TauCeti.ClassFunction.cyclicInduced_eq_top` written out: every class function of `G` is a
+finite `k`-linear combination of class functions induced from cyclic subgroups. -/
 theorem exists_sum_smul_ind [Invertible (Nat.card G : k)] (f : ClassFunction k G) :
     ∃ (n : ℕ) (C : Fin n → Subgroup G) (_ : ∀ i, IsCyclic (C i))
       (ψ : ∀ i, ClassFunction k (C i)) (c : Fin n → k),
@@ -281,21 +296,23 @@ theorem inducedCharactersFrom_eq_top [IsAlgClosed k] [Invertible (Nat.card G : k
     inducedCharactersFrom k G 𝒮 = ⊤ :=
   top_le_iff.mp ((inducedFrom_eq_top h𝒮).ge.trans (inducedFrom_le_inducedCharactersFrom 𝒮))
 
-/-- **Artin's induction theorem, in its character form.**  Over an algebraically closed field in
-which the order of the finite group `G` is invertible, the characters induced from the irreducible
-characters of the cyclic subgroups of `G` span all class functions of `G`.
+/-- **The characters induced from the irreducible characters of the cyclic subgroups span.**  Over
+an algebraically closed field in which the order of the finite group `G` is invertible, they span
+all class functions of `G`.
 
-In particular every character of `G` is a linear combination of characters induced from cyclic
-subgroups; `TauCeti.ClassFunction.exists_sum_smul_ind_ofCharacter` writes that combination out. -/
+In particular every character of `G` is a `k`-linear combination of characters induced from cyclic
+subgroups; `TauCeti.ClassFunction.exists_sum_smul_ind_ofCharacter` writes that combination out.
+The coefficients are arbitrary elements of `k`; Artin's induction theorem, which asserts that they
+may be taken rational, is not proved here. -/
 theorem cyclicInducedCharacters_eq_top [IsAlgClosed k] [Invertible (Nat.card G : k)] :
     cyclicInducedCharacters k G = ⊤ :=
   inducedCharactersFrom_eq_top fun x =>
     ⟨Subgroup.zpowers x, Subgroup.isCyclic_zpowers x, 1, by simp⟩
 
-/-- **Artin's induction theorem**, written out over an algebraically closed field: every class
-function of `G` — in particular, by `TauCeti.ClassFunction.ofCharacter`, every character of `G` — is
-a finite `k`-linear combination of characters induced from irreducible characters of cyclic
-subgroups. -/
+/-- `TauCeti.ClassFunction.cyclicInducedCharacters_eq_top` written out over an algebraically closed
+field: every class function of `G` — in particular, by `TauCeti.ClassFunction.ofCharacter`, every
+character of `G` — is a finite `k`-linear combination of characters induced from irreducible
+characters of cyclic subgroups. -/
 theorem exists_sum_smul_ind_ofCharacter [IsAlgClosed k] [Invertible (Nat.card G : k)]
     (f : ClassFunction k G) :
     ∃ (n : ℕ) (C : Fin n → Subgroup G) (_ : ∀ i, IsCyclic (C i)) (d : Fin n → ℕ)
