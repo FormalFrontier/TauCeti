@@ -71,11 +71,12 @@ an action on the *domain* of a path `x : ℕ → α`, whereas `Pi.instSMul` woul
 `Equiv.Perm ℕ` act on the *values* of a path whenever the state space `α` carries an action of it
 — which it does for `α = ℕ`.  Wrapping the group keeps the two actions from ever competing.
 
-The group structure, and with it `toPerm_one`, `toPerm_mul` and `toPerm_inv`, is transported along
-the synonym, so those lemmas hold definitionally and by nothing else; the module system therefore
-requires this definition and `equivFinitary`, `toPerm`, `ofPerm` below to be `@[expose]`d.  The
-intended interface is nevertheless `equivFinitary`, `toPerm`, `ofPerm` and `TimePerm.ext`: no proof
-outside this section unfolds the synonym. -/
+The interface is `equivFinitary`, `toPerm`, `ofPerm` and `TimePerm.ext`; no proof outside this
+section unfolds the synonym. -/
+-- The group structure, and with it `toPerm_one`, `toPerm_mul` and `toPerm_inv`, is transported
+-- along the synonym, so those lemmas hold definitionally and by nothing else; the module system
+-- therefore requires this definition and `equivFinitary`, `toPerm`, `ofPerm` below to be
+-- `@[expose]`d.
 @[expose]
 def TimePerm : Type := Equiv.Perm.finitary ℕ
 
