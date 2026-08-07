@@ -113,9 +113,7 @@ private theorem integral_oneSubExpNegDivSelfIntegrand (a : A) (n : ℕ) :
   simp_rw [smul_pow, smul_smul]
   rw [intervalIntegral.integral_smul_const,
     intervalIntegral.integral_const_mul, integral_pow]
-  rw [one_pow, zero_pow (Nat.succ_ne_zero n), sub_zero]
-  rw [Nat.factorial_succ, Nat.cast_mul, Nat.cast_add, Nat.cast_one]
-  field_simp
+  simp [Nat.factorial_succ]
 
 /-- The regularized exponential quotient is the integral of the exponential along the line
 segment from `0` to `-a`. -/
