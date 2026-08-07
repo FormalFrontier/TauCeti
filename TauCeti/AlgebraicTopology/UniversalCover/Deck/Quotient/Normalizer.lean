@@ -132,6 +132,12 @@ theorem normalizerHomeomorph_apply (γ : _root_.Subgroup.normalizer (H : Set Γ)
     normalizerHomeomorph hq γ (q e) = q ((γ : Γ) • e) :=
   normalizerMap_apply hq γ e
 
+/-- The inverse of the descended translation is translation by the inverse. -/
+@[simp]
+theorem normalizerHomeomorph_symm_apply (γ : _root_.Subgroup.normalizer (H : Set Γ)) (e : E) :
+    (normalizerHomeomorph hq γ).symm (q e) = q ((γ : Γ)⁻¹ • e) := by
+  rw [Homeomorph.symm_apply_eq, normalizerHomeomorph_apply, smul_inv_smul]
+
 end Descend
 
 section DeckHom
@@ -157,6 +163,13 @@ translation by that element. -/
 theorem normalizerDeckHom_apply (γ : _root_.Subgroup.normalizer (H : Set Γ)) (e : E) :
     (normalizerDeckHom hp hq hr γ).1 (q e) = q ((γ : Γ) • e) :=
   normalizerMap_apply hq γ e
+
+/-- The inverse of the deck transformation attached to a normalizer element is the descent of
+translation by the inverse element. -/
+@[simp]
+theorem normalizerDeckHom_symm_apply (γ : _root_.Subgroup.normalizer (H : Set Γ)) (e : E) :
+    (normalizerDeckHom hp hq hr γ).1.symm (q e) = q ((γ : Γ)⁻¹ • e) := by
+  rw [Homeomorph.symm_apply_eq, normalizerDeckHom_apply, smul_inv_smul]
 
 /-- The kernel of the normalizer-to-deck homomorphism is `H`: a translation descends to the
 identity exactly when it is an `H`-translation, because the `Γ`-action is free. -/
@@ -284,6 +297,13 @@ def deckHomOfNormal : Γ →* Deck r :=
 theorem deckHomOfNormal_apply (γ : Γ) (e : E) :
     (deckHomOfNormal hp hq hr γ).1 (q e) = q (γ • e) :=
   normalizerDeckHom_apply hp hq hr _ e
+
+/-- The inverse of the deck transformation attached to `γ` is the descent of translation by
+`γ⁻¹`. -/
+@[simp]
+theorem deckHomOfNormal_symm_apply (γ : Γ) (e : E) :
+    (deckHomOfNormal hp hq hr γ).1.symm (q e) = q (γ⁻¹ • e) :=
+  normalizerDeckHom_symm_apply hp hq hr _ e
 
 /-- **For a normal subgroup, the deck group of the intermediate covering is `Γ ⧸ H`.** This is
 the general normalizer-quotient identification, read through the algebraic comparison
