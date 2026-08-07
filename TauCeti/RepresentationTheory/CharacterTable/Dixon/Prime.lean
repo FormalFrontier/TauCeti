@@ -5,12 +5,12 @@ Authors: Claude
 -/
 module
 
-public import Mathlib.FieldTheory.Finite.Basic
 public import Mathlib.NumberTheory.PrimesCongruentOne
 public import Mathlib.RepresentationTheory.Maschke
 public import Mathlib.RingTheory.Polynomial.Cyclotomic.Basic
+public import Mathlib.RingTheory.ZMod.Torsion
+public import TauCeti.Data.ZMod.ValMinAbs
 public import TauCeti.RepresentationTheory.CharacterTable.Values
-public import TauCeti.RingTheory.RootsOfUnity.PrimitiveRoots
 
 /-!
 # Good Dixon primes
@@ -47,8 +47,8 @@ supplies a concrete prime, as the dihedral instances in
 * `TauCeti.IsGoodDixonPrime.exists_isPrimitiveRoot` and
   `TauCeti.IsGoodDixonPrime.splits_X_pow_exponent_sub_one`: `ZMod p` splits `X ^ e - 1`, with `e`
   distinct roots.
-* `TauCeti.IsGoodDixonPrime.isSemisimple_representation_apply`: every group element acts semisimply
-  in a representation over `ZMod p`.
+* `TauCeti.IsGoodDixonPrime.isSemisimple_ρ`: every group element acts semisimply in a
+  representation over `ZMod p`.
 * `TauCeti.IsGoodDixonPrime.valMinAbs_intCast` and `TauCeti.IsGoodDixonPrime.eq_of_intCast_eq`: an
   integer bounded by `√|G|` is recovered from, and so determined by, its residue modulo `p`. This
   is what the size bound is for.
@@ -128,9 +128,9 @@ over `ZMod p` are already in `ZMod p`. -/
 theorem exists_isPrimitiveRoot_of_dvd_exponent (hp : IsGoodDixonPrime G p) {d : ℕ}
     (hd : d ∣ Monoid.exponent G) : ∃ ζ : ZMod p, IsPrimitiveRoot ζ d := by
   have := hp.fact_prime
-  refine exists_isPrimitiveRoot_of_dvd_natCard_units (ZMod p) (hd.trans ?_)
-  rw [Nat.card_eq_fintype_card, ZMod.card_units p]
-  exact hp.exponent_dvd
+  have : NeZero (p - 1) := ⟨by have := hp.prime.two_le; omega⟩
+  have := HasEnoughRootsOfUnity.of_dvd (ZMod p) (hd.trans hp.exponent_dvd)
+  exact HasEnoughRootsOfUnity.exists_primitiveRoot (ZMod p) d
 
 /-- **`ZMod p` contains a primitive root of unity of order the exponent of `G`.** -/
 theorem exists_isPrimitiveRoot (hp : IsGoodDixonPrime G p) :
@@ -140,12 +140,12 @@ theorem exists_isPrimitiveRoot (hp : IsGoodDixonPrime G p) :
 /-! #### The order condition: Maschke -/
 
 /-- The order of `G` is invertible modulo a good Dixon prime. -/
-theorem natCard_ne_zero (hp : IsGoodDixonPrime G p) : (Nat.card G : ZMod p) ≠ 0 := by
+theorem natCast_natCard_ne_zero (hp : IsGoodDixonPrime G p) : (Nat.card G : ZMod p) ≠ 0 := by
   rw [Ne, ZMod.natCast_eq_zero_iff]
   exact hp.not_dvd_natCard
 
-theorem neZero_natCard (hp : IsGoodDixonPrime G p) : NeZero ((Nat.card G : ZMod p)) :=
-  ⟨hp.natCard_ne_zero⟩
+theorem neZero_natCast_natCard (hp : IsGoodDixonPrime G p) : NeZero ((Nat.card G : ZMod p)) :=
+  ⟨hp.natCast_natCard_ne_zero⟩
 
 /-- **Maschke's theorem at a good Dixon prime**: the modular group algebra `ZMod p [G]` is a
 semisimple ring. -/
@@ -153,7 +153,7 @@ theorem isSemisimpleRing (hp : IsGoodDixonPrime G p) :
     IsSemisimpleRing (MonoidAlgebra (ZMod p) G) := by
   have := hp.fact_prime
   have := hp.finite
-  have := hp.neZero_natCard
+  have := hp.neZero_natCast_natCard
   infer_instance
 
 /-! #### Splitting the roots of unity -/
@@ -184,26 +184,19 @@ residue window wide enough that an integer of absolute value at most `⌊√|G|�
 `ZMod.valMinAbs` from its residue. This is the first stage of the cyclotomic lift: a rational
 character value, reduced modulo `p`, is recovered exactly. -/
 theorem valMinAbs_intCast (hp : IsGoodDixonPrime G p) {z : ℤ}
-    (hz : z.natAbs ≤ Nat.sqrt (Nat.card G)) : ((z : ZMod p)).valMinAbs = z := by
-  have := hp.neZero
-  have hlt := hp.two_mul_sqrt_lt
-  refine (ZMod.valMinAbs_spec _ _).2 ⟨rfl, ?_, ?_⟩ <;> omega
+    (hz : z.natAbs ≤ Nat.sqrt (Nat.card G)) : ((z : ZMod p)).valMinAbs = z :=
+  ZMod.valMinAbs_intCast_of_two_mul_natAbs_lt (by have := hp.two_mul_sqrt_lt; omega)
 
 /-- **Dixon's size bound opens a wide enough residue window.** Two integers of absolute value at
 most `⌊√|G|⌋` that agree modulo `p` are equal, so an integer of that size is determined by its
 residue. This is why the lift is unambiguous. -/
 theorem eq_of_intCast_eq (hp : IsGoodDixonPrime G p) {z w : ℤ}
     (hz : z.natAbs ≤ Nat.sqrt (Nat.card G)) (hw : w.natAbs ≤ Nat.sqrt (Nat.card G))
-    (h : (z : ZMod p) = w) : z = w := by
-  rw [← hp.valMinAbs_intCast hz, ← hp.valMinAbs_intCast hw, h]
+    (h : (z : ZMod p) = w) : z = w :=
+  ZMod.eq_of_intCast_eq_of_two_mul_natAbs_lt (by have := hp.two_mul_sqrt_lt; omega)
+    (by have := hp.two_mul_sqrt_lt; omega) h
 
 /-! #### Representations over `ZMod p` -/
-
-section Representation
-
-/- The `Fact` instance is again only what puts the field structure on `ZMod p` that a
-representation over it needs in order to be stated; it is implied by the good-prime hypothesis. -/
-variable [Fact p.Prime] {V : Type*} [AddCommGroup V] [Module (ZMod p) V]
 
 /-- The order of a group element is invertible modulo a good Dixon prime, since it divides
 `p - 1`. -/
@@ -217,10 +210,16 @@ theorem natCast_orderOf_ne_zero (hp : IsGoodDixonPrime G p) (g : G) :
   rw [Ne, ZMod.natCast_eq_zero_iff]
   exact fun hdvd' => absurd (Nat.le_of_dvd hpos hdvd') (by omega)
 
+section Representation
+
+/- The `Fact` instance is only what puts the field structure on `ZMod p` that a representation
+over it needs in order to be stated; it is implied by the good-prime hypothesis. -/
+variable [Fact p.Prime] {V : Type*} [AddCommGroup V] [Module (ZMod p) V]
+
 /-- **At a good Dixon prime every group element acts semisimply.** In a representation over
 `ZMod p`, `ρ g` is annihilated by `X ^ orderOf g - 1`, and that polynomial is squarefree because
 `orderOf g` divides `p - 1` and so is invertible modulo `p`. -/
-theorem isSemisimple_representation_apply (hp : IsGoodDixonPrime G p)
+theorem isSemisimple_ρ (hp : IsGoodDixonPrime G p)
     (ρ : Representation (ZMod p) G V) (g : G) : Module.End.IsSemisimple (ρ g) :=
   Representation.isSemisimple_of_pow_eq_one ρ (hp.natCast_orderOf_ne_zero g)
     (pow_orderOf_eq_one g)
@@ -265,6 +264,12 @@ structure DixonPrimeData (G : Type*) [Group G] where
 namespace DixonPrimeData
 
 variable {G : Type*} [Group G] (d : DixonPrimeData G)
+
+/-- The prime is prime, as the `Fact` the field structure on `ZMod d.p` is found from. Unlike for
+the hypothesis `IsGoodDixonPrime`, this can be an instance, because `d` is data. -/
+instance fact_prime : Fact d.p.Prime := ⟨d.isGoodDixonPrime.prime⟩
+
+instance neZero : NeZero d.p := d.isGoodDixonPrime.neZero
 
 /-- The chosen root has order exactly the exponent of `G`. -/
 @[simp]
