@@ -123,6 +123,7 @@ theorem star_torusMatrix (z : Circle) : star (torusMatrix z) = torusMatrix z⁻�
   ext i
   fin_cases i <;> simp [hz]
 
+/-- The trace of the torus matrix `diag (z, z⁻¹)` is `z + z⁻¹`. -/
 @[simp]
 theorem trace_torusMatrix (z : Circle) :
     (torusMatrix z).trace = (z : ℂ) + ((z : ℂ))⁻¹ := by
@@ -356,21 +357,21 @@ Conjugation preserves the trace, and the trace separates torus elements up to in
 theorem eq_or_eq_inv_of_conj_torusHom {z w : Circle} {g : SU2}
     (h : g * torusHom z * g⁻¹ = torusHom w) : w = z ∨ w = z⁻¹ := by
   refine eq_or_eq_inv_of_trace_torusMatrix_eq ?_
-  have hBA : ((g⁻¹ : SU2) : Matrix (Fin 2) (Fin 2) ℂ) * (g : Matrix (Fin 2) (Fin 2) ℂ) = 1 := by
-    have hval := congrArg Subtype.val (inv_mul_cancel g)
-    simpa only [Submonoid.coe_mul, OneMemClass.coe_one] using hval
   have hmat : (g : Matrix (Fin 2) (Fin 2) ℂ) * torusMatrix z
       * ((g⁻¹ : SU2) : Matrix (Fin 2) (Fin 2) ℂ) = torusMatrix w := by
     have hval := congrArg Subtype.val h
     simpa only [Submonoid.coe_mul, coe_torusHom] using hval
-  rw [← hmat, Matrix.trace_mul_comm, ← Matrix.mul_assoc, hBA, Matrix.one_mul]
+  rw [← hmat, Matrix.trace_mul_cycle, ← Submonoid.coe_mul, inv_mul_cancel, OneMemClass.coe_one,
+    Matrix.one_mul]
 
 /-! ### The angle parametrisation -/
 
 /-- The torus element `diag (e^{iθ}, e^{-iθ})` of `SU(2)`. -/
 noncomputable def torusExp (θ : ℝ) : SU2 := torusHom (Circle.exp θ)
 
-theorem torusExp_eq_torusHom (θ : ℝ) : torusExp θ = torusHom (Circle.exp θ) := (rfl)
+/-- Unfolding lemma for `TauCeti.SU2.torusExp`: it is `torusHom (Circle.exp θ)`. Since `torusExp`
+is not `@[expose]`d, this is how lemmas about `torusHom` are brought to bear on it. -/
+theorem torusExp_def (θ : ℝ) : torusExp θ = torusHom (Circle.exp θ) := (rfl)
 
 @[simp]
 theorem coe_torusExp (θ : ℝ) :

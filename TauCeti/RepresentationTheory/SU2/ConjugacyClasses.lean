@@ -4,7 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.RepresentationTheory.Continuous.Character
 public import TauCeti.RepresentationTheory.SU2.TorusConjugacy
 
 /-!
@@ -28,11 +27,10 @@ what makes `[0, π]` a strict fundamental domain for the Weyl action on angles
 integration formula for `SU(2)` integrates over.
 
 The immediate use is for class functions. A conjugation-invariant function on `SU(2)` factors
-through the trace (`TauCeti.SU2.eq_of_conjInvariant_of_trace_eq`), and in particular the character
-of a continuous finite-dimensional representation is a function of the trace
-(`TauCeti.SU2.character_eq_of_trace_eq`). This sharpens
+through the trace (`TauCeti.SU2.eq_of_conjInvariant_of_trace_eq`). This sharpens
 `TauCeti.SU2.eq_of_conjInvariant_of_eqOn_torus`, which reduces a class function to the torus but
-does not say how much of the torus is needed.
+does not say how much of the torus is needed. The consequence for characters is drawn in
+`TauCeti/RepresentationTheory/SU2/Character.lean`.
 
 ## Main results
 
@@ -46,8 +44,8 @@ does not say how much of the torus is needed.
 * `TauCeti.SU2.exists_isConj_torusExp_mem_Icc` and
   `TauCeti.SU2.angle_eq_of_isConj_torusExp_of_mem_Icc`: `[0, π]` is a strict fundamental domain,
   every element of `SU(2)` being conjugate to `diag (e^{iθ}, e^{-iθ})` for exactly one `θ` in it.
-* `TauCeti.SU2.eq_of_conjInvariant_of_trace_eq` and `TauCeti.SU2.character_eq_of_trace_eq`: a
-  class function on `SU(2)`, and in particular a character, is a function of the trace.
+* `TauCeti.SU2.eq_of_conjInvariant_of_trace_eq`: a class function on `SU(2)` is a function of the
+  trace.
 
 ## References
 
@@ -86,18 +84,16 @@ theorem trace_eq_of_isConj {g h : SU2} (hgh : IsConj g h) :
     Matrix.trace (g : Matrix (Fin 2) (Fin 2) ℂ)
       = Matrix.trace (h : Matrix (Fin 2) (Fin 2) ℂ) := by
   obtain ⟨u, rfl⟩ := isConj_iff.mp hgh
-  have hu : ((u⁻¹ : SU2) : Matrix (Fin 2) (Fin 2) ℂ) * (u : Matrix (Fin 2) (Fin 2) ℂ) = 1 := by
-    have hval := congrArg Subtype.val (inv_mul_cancel u)
-    simpa only [Submonoid.coe_mul, OneMemClass.coe_one] using hval
   simp only [Submonoid.coe_mul]
-  rw [Matrix.trace_mul_comm, ← Matrix.mul_assoc, hu, Matrix.one_mul]
+  rw [Matrix.trace_mul_cycle, ← Submonoid.coe_mul, inv_mul_cancel, OneMemClass.coe_one,
+    Matrix.one_mul]
 
 /-- The trace of the torus element `diag (e^{iθ}, e^{-iθ})` is `2 cos θ`. This is not a `simp`
 lemma: `TauCeti.SU2.coe_torusExp` already rewrites the underlying matrix to a diagonal one, so its
 left-hand side is not in simp-normal form. -/
 theorem trace_coe_torusExp (θ : ℝ) :
     Matrix.trace ((torusExp θ : SU2) : Matrix (Fin 2) (Fin 2) ℂ) = 2 * (Real.cos θ : ℂ) := by
-  rw [torusExp_eq_torusHom, coe_torusHom, trace_torusMatrix, Circle.coe_exp, ← Complex.exp_neg,
+  rw [torusExp_def, coe_torusHom, trace_torusMatrix, Circle.coe_exp, ← Complex.exp_neg,
     Complex.ofReal_cos, Complex.two_cos, neg_mul]
 
 /-- **The trace of an element of `SU(2)` has absolute value at most `2`**: it is `2 cos θ` for
@@ -152,11 +148,11 @@ action. -/
 theorem isConj_torusExp_iff {θ φ : ℝ} :
     IsConj (torusExp θ) (torusExp φ) ↔ Real.cos φ = Real.cos θ := by
   refine ⟨fun h => cos_eq_of_trace_torusExp_eq (trace_eq_of_isConj h), fun h => ?_⟩
-  rw [torusExp_eq_torusHom, torusExp_eq_torusHom]
+  rw [torusExp_def, torusExp_def]
   refine isConj_torusHom_iff.mpr (eq_or_eq_inv_of_trace_torusMatrix_eq ?_)
   have hφ := trace_coe_torusExp φ
   have hθ := trace_coe_torusExp θ
-  rw [torusExp_eq_torusHom, coe_torusHom] at hφ hθ
+  rw [torusExp_def, coe_torusHom] at hφ hθ
   rw [hφ, hθ, h]
 
 /-! ### The trace as a complete conjugacy invariant -/
@@ -206,18 +202,6 @@ theorem eq_of_conjInvariant_of_trace_eq {α : Type*} {f : SU2 → α}
       = Matrix.trace (h : Matrix (Fin 2) (Fin 2) ℂ)) : f g = f h := by
   obtain ⟨u, hu⟩ := isConj_iff.mp (isConj_iff_trace_eq.mpr htr)
   rw [← hu, hf]
-
-/-- **The character of a continuous finite-dimensional representation of `SU(2)` is a function of
-the trace.** Combined with `TauCeti.SU2.exists_isConj_torusExp_mem_Icc` this is what lets a
-character of `SU(2)` be computed from its values `θ ↦ χ (diag (e^{iθ}, e^{-iθ}))` on the Weyl
-chamber `[0, π]` alone. -/
-theorem character_eq_of_trace_eq {V : Type*} [NormedAddCommGroup V] [NormedSpace ℂ V]
-    [FiniteDimensional ℂ V] (ρ : ContRepresentation ℂ SU2 V) (hρ : Continuous ρ) {g h : SU2}
-    (htr : Matrix.trace (g : Matrix (Fin 2) (Fin 2) ℂ)
-      = Matrix.trace (h : Matrix (Fin 2) (Fin 2) ℂ)) :
-    ContRepresentation.character ρ hρ g = ContRepresentation.character ρ hρ h :=
-  eq_of_conjInvariant_of_trace_eq
-    (fun u g => ContRepresentation.character_conj ρ hρ g u) htr
 
 end SU2
 
