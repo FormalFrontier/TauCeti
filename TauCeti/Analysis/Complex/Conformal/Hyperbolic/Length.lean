@@ -565,7 +565,7 @@ private theorem artanh_norm_le_hyperbolicLength (hab : a ≤ b) (hγ : Continuou
     exact hpos t htI
   rw [hyperbolicLength]
   have key := norm_sub_le_densityLength (ρ := fun z : ℂ => (1 - ‖z‖ ^ 2)⁻¹) (γ := γ)
-    hcont hdiff hbound hint2
+    hcont hdiff (.of_forall hbound) hint2
   simp only [hψa, hψb, Real.artanh_zero, sub_zero, Real.norm_eq_abs] at key
   exact (le_abs_self _).trans key
 
