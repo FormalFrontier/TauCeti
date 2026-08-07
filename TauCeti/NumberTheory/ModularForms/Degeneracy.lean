@@ -76,7 +76,6 @@ lemma coe_scaleGL [NeZero d] :
   rw [scaleGL, diagGL_coe, Matrix.diagonal_fin_two]
   simp
 
-@[simp]
 lemma coe_inv_scaleGL [NeZero d] :
     (((scaleGL d)⁻¹ : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ) = !![(d : ℝ)⁻¹, 0; 0, 1] := by
   rw [scaleGL, ← map_inv, diagGL_coe, Matrix.diagonal_fin_two]
