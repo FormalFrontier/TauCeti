@@ -4,10 +4,10 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+public import TauCeti.RepresentationTheory.Quiver.Acyclic.Basic
 public import TauCeti.RepresentationTheory.Quiver.Representation.DimensionVector
 public import TauCeti.RepresentationTheory.Quiver.Representation.Subrepresentation
 public import Mathlib.Algebra.Category.ModuleCat.Simple
-public import Mathlib.CategoryTheory.Limits.FunctorCategory.EpiMono
 
 /-!
 # The vertex simple representations of a quiver
@@ -36,7 +36,8 @@ line through `x` at `i` and zero elsewhere, which is `Sᵢ`.
 * `TauCeti.simpleRepSelfEquiv`: the identification `(Sᵢ)ᵢ ≃ₗ[k] k`, and
   `TauCeti.simpleRepGenerator`: the element of `(Sᵢ)ᵢ` it sends to `1`.
 * `TauCeti.simpleRepHom`: the morphism `Sᵢ ⟶ M` sending the generator to a chosen vector of `Mᵢ`,
-  for a representation `M` of an acyclic quiver that vanishes away from `i`.
+  for a representation `M` that vanishes away from `i`, at a vertex `i` carrying no nontrivial
+  closed path.
 
 ## Main results
 
@@ -248,13 +249,13 @@ theorem dimVector_simpleRep [DecidableEq Q] (i : Q) :
 /-! ### The vertex simples are the only simples over an acyclic quiver -/
 
 open scoped Classical in
-/-- **The morphism `Sᵢ ⟶ M` determined by a vector at `i`**, for a representation `M` of an acyclic
-quiver that vanishes away from `i`. It carries the generator of the line `(Sᵢ)ᵢ` to `x`, and is the
-zero map at every other vertex, where the target vanishes. Acyclicity enters through naturality:
-a path from `i` to itself is trivial, so there is no condition to check there. -/
-@[expose]
-noncomputable def simpleRepHom (hQ : Quiver.IsAcyclic Q) {i : Q} {M : QuiverRep k Q}
-    (x : M.obj ((Paths.of Q).obj i)) (hM : ∀ a : Q, a ≠ i → IsZero (M.obj a)) :
+/-- **The morphism `Sᵢ ⟶ M` determined by a vector at `i`**, for a representation `M` that vanishes
+away from `i`. It carries the generator of the line `(Sᵢ)ᵢ` to `x`, and is the zero map at every
+other vertex, where the target vanishes. The hypothesis `hnil` enters through naturality: a path
+from `i` to itself is trivial, so there is no condition to check there. -/
+noncomputable def simpleRepHom {i : Q} (hnil : ∀ p : Quiver.Path i i, p = Quiver.Path.nil)
+    {M : QuiverRep k Q} (x : M.obj ((Paths.of Q).obj i))
+    (hM : ∀ a : Q, a ≠ i → IsZero (M.obj a)) :
     simpleRep k Q i ⟶ M where
   app a :=
     if h : a = i then
@@ -264,22 +265,34 @@ noncomputable def simpleRepHom (hQ : Quiver.IsAcyclic Q) {i : Q} {M : QuiverRep 
   naturality {a b} p := by
     rcases eq_or_ne a i with rfl | ha
     · rcases eq_or_ne b a with rfl | hb
-      · have hp : p = 𝟙 _ := hQ.eq_nil p
+      · have hp : p = 𝟙 _ := hnil p
         rw [hp]
         simp
       · exact (hM b hb).eq_of_tgt _ _
     · exact (isZero_simpleRep_obj ha).eq_of_src _ _
 
+/-- Away from `i`, the morphism `Sᵢ ⟶ M` attached to `x : Mᵢ` vanishes. -/
+@[simp]
+theorem simpleRepHom_app_of_ne {i : Q} (hnil : ∀ p : Quiver.Path i i, p = Quiver.Path.nil)
+    {M : QuiverRep k Q} (x : M.obj ((Paths.of Q).obj i))
+    (hM : ∀ a : Q, a ≠ i → IsZero (M.obj a)) {a : Q} (ha : a ≠ i) :
+    (simpleRepHom hnil x hM).app a = 0 :=
+  dif_neg ha
+
 /-- The morphism `Sᵢ ⟶ M` attached to `x : Mᵢ` carries the generator of `(Sᵢ)ᵢ` to `x`. -/
 @[simp]
-theorem simpleRepHom_app_generator (hQ : Quiver.IsAcyclic Q) {i : Q} {M : QuiverRep k Q}
-    (x : M.obj ((Paths.of Q).obj i)) (hM : ∀ a : Q, a ≠ i → IsZero (M.obj a)) :
-    (simpleRepHom hQ x hM).app ((Paths.of Q).obj i) (simpleRepGenerator k i) = x := by
-  have happ : (simpleRepHom hQ x hM).app ((Paths.of Q).obj i)
+theorem simpleRepHom_app_generator {i : Q} (hnil : ∀ p : Quiver.Path i i, p = Quiver.Path.nil)
+    {M : QuiverRep k Q} (x : M.obj ((Paths.of Q).obj i))
+    (hM : ∀ a : Q, a ≠ i → IsZero (M.obj a)) :
+    (simpleRepHom hnil x hM).app ((Paths.of Q).obj i) (simpleRepGenerator k i) = x := by
+  have happ : (simpleRepHom hnil x hM).app ((Paths.of Q).obj i)
       = eqToHom (simpleRep_obj_self i) ≫
         ModuleCat.ofHom (LinearMap.toSpanSingleton k (M.obj ((Paths.of Q).obj i))
           (M.map (𝟙 ((Paths.of Q).obj i)) x)) := dif_pos rfl
   rw [happ, M.map_id]
+  -- `eqToHom` composed with `ModuleCat.ofHom` is not a rewrite target: `eqToHom` transports along
+  -- `simpleRep_obj_self i`, which is what `simpleRepSelfEquiv` is defined from, so the two sides
+  -- differ only by the definitional unfolding of that equivalence and of `ModuleCat` composition.
   change LinearMap.toSpanSingleton k (M.obj ((Paths.of Q).obj i)) x
       (simpleRepSelfEquiv k i (simpleRepGenerator k i)) = x
   rw [simpleRepSelfEquiv_apply_generator]
@@ -303,6 +316,8 @@ theorem exists_iso_simpleRep_of_simple (hQ : Quiver.IsAcyclic Q) (M : QuiverRep 
       rw [← not_subsingleton_iff_nontrivial]
       exact fun hs ↦ hi (ModuleCat.isZero_iff_subsingleton.2 hs)
     exact exists_ne 0
+  -- acyclicity is used only through the closed paths at `i`
+  have hnil : ∀ p : Quiver.Path i i, p = Quiver.Path.nil := fun p ↦ hQ.eq_nil p
   -- the paths of positive length out of `i` span nothing at all
   have h1 : ∀ a : Q, (QuiverSubrep.pathSpan (i := i) x 1).toSubmodule a = ⊥ := by
     rcases (QuiverSubrep.pathSpan (i := i) x 1).toSubmodule_eq_bot_or_eq_top with h | h
@@ -311,7 +326,7 @@ theorem exists_iso_simpleRep_of_simple (hQ : Quiver.IsAcyclic Q) (M : QuiverRep 
       have hmem : x ∈ (QuiverSubrep.pathSpan (i := i) x 1).toSubmodule i := by
         rw [h i]
         trivial
-      rw [QuiverSubrep.pathSpan_one_self_of_isAcyclic (i := i) hQ x] at hmem
+      rw [QuiverSubrep.pathSpan_one_self_of_forall_path_eq_nil (i := i) hnil x] at hmem
       exact (Submodule.mem_bot k).1 hmem
   -- so the vector `x` generates all of `M`
   have h0 : ∀ a : Q, (QuiverSubrep.pathSpan (i := i) x 0).toSubmodule a = ⊤ := by
@@ -332,41 +347,39 @@ theorem exists_iso_simpleRep_of_simple (hQ : Quiver.IsAcyclic Q) (M : QuiverRep 
     exact (Submodule.mem_bot k).1 hy
   -- and at `i` it is the line through `x`
   have hspan0 := h0 i
-  rw [QuiverSubrep.pathSpan_zero_self_of_isAcyclic (i := i) hQ x] at hspan0
+  rw [QuiverSubrep.pathSpan_zero_self_of_forall_path_eq_nil (i := i) hnil x] at hspan0
   have hspan : Submodule.span k ({x} : Set (M.obj ((Paths.of Q).obj i))) = ⊤ := hspan0
   refine ⟨i, ⟨?_⟩⟩
-  -- at `i` the morphism attached to `x` is the isomorphism `k ≃ k · x`
-  have hisoi : IsIso ((simpleRepHom hQ x hM).app ((Paths.of Q).obj i)) := by
+  -- at `i` the morphism attached to `x` is `(Sᵢ)ᵢ ≃ k` followed by `c ↦ c • x`
+  have hcoe : ∀ y, (simpleRepHom hnil x hM).app ((Paths.of Q).obj i) y
+      = LinearMap.toSpanSingleton k (M.obj ((Paths.of Q).obj i)) x (simpleRepSelfEquiv k i y) := by
+    intro y
+    obtain ⟨c, rfl⟩ := exists_eq_smul_simpleRepGenerator k y
+    simp [LinearMap.toSpanSingleton_apply]
+  have hisoi : IsIso ((simpleRepHom hnil x hM).app ((Paths.of Q).obj i)) := by
     rw [ConcreteCategory.isIso_iff_bijective]
     constructor
     · intro y z hyz
-      obtain ⟨c, rfl⟩ := exists_eq_smul_simpleRepGenerator k y
-      obtain ⟨d, rfl⟩ := exists_eq_smul_simpleRepGenerator k z
-      simp only [map_smul, simpleRepHom_app_generator] at hyz
-      have hcd : (c - d) • x = 0 := by
-        rw [sub_smul, hyz, sub_self]
-      rcases smul_eq_zero.1 hcd with hc | hc
-      · rw [sub_eq_zero] at hc
-        rw [hc]
-      · exact absurd hc hx
+      refine (simpleRepSelfEquiv k i).injective
+        (LinearMap.ker_eq_bot.1 (LinearMap.ker_toSpanSingleton k hx) ?_)
+      rw [← hcoe, ← hcoe]
+      exact hyz
     · intro y
-      have hy : y ∈ Submodule.span k ({x} : Set (M.obj ((Paths.of Q).obj i))) := by
-        rw [hspan]
-        trivial
-      obtain ⟨c, rfl⟩ := Submodule.mem_span_singleton.1 hy
-      exact ⟨c • simpleRepGenerator k i, by simp only [map_smul, simpleRepHom_app_generator]⟩
-  have hiso : IsIso (simpleRepHom hQ x hM) := by
+      obtain ⟨c, hc⟩ :=
+        LinearMap.range_eq_top.1 ((LinearMap.range_toSpanSingleton x).trans hspan) y
+      exact ⟨(simpleRepSelfEquiv k i).symm c, by rw [hcoe, LinearEquiv.apply_symm_apply]; exact hc⟩
+  have hiso : IsIso (simpleRepHom hnil x hM) := by
     rw [NatTrans.isIso_iff_isIso_app]
     intro a
     change Q at a
-    change IsIso ((simpleRepHom hQ x hM).app ((Paths.of Q).obj a))
+    change IsIso ((simpleRepHom hnil x hM).app ((Paths.of Q).obj a))
     rcases eq_or_ne a i with rfl | ha
     · exact hisoi
     · have hs : IsZero ((simpleRep k Q i).obj ((Paths.of Q).obj a)) := isZero_simpleRep_obj ha
       have ht : IsZero (M.obj ((Paths.of Q).obj a)) := hM a ha
-      rw [hs.eq_of_src ((simpleRepHom hQ x hM).app ((Paths.of Q).obj a)) (hs.iso ht).hom]
+      rw [hs.eq_of_src ((simpleRepHom hnil x hM).app ((Paths.of Q).obj a)) (hs.iso ht).hom]
       infer_instance
-  exact (asIso (simpleRepHom hQ x hM)).symm
+  exact (asIso (simpleRepHom hnil x hM)).symm
 
 /-- Vertex simples at distinct vertices are not isomorphic: their dimension vectors differ. -/
 theorem not_nonempty_simpleRep_iso {i j : Q} (h : i ≠ j) :
