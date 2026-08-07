@@ -6,6 +6,7 @@ module
 
 public import Mathlib.RingTheory.Polynomial.Cyclotomic.Basic
 public import Mathlib.Data.List.Nodup
+public import Mathlib.Data.List.TakeWhile
 public import TauCeti.Algebra.Polynomial.CoeffList
 
 /-!
@@ -19,9 +20,9 @@ right.
 The algorithm is the defining recursion `∏_{d ∣ n} Φ_d = X ^ n - 1` read as a division: starting
 from the coefficients of `X ^ n - 1`, divide successively by `Φ_d` for each proper divisor `d` of
 `n`, each of which is monic and already computed, and what is left is `Φ_n`.  The divisions are
-the synthetic division of `TauCeti.divByMonicList`; the recursion is made structural by passing a
-fuel argument, so that `TauCeti.cyclotomicCoeffs` reduces in the kernel, as the closing examples
-check.
+the synthetic division of `TauCeti.Polynomial.divByMonicList`; the recursion is made structural by
+passing a fuel argument, so that `TauCeti.cyclotomicCoeffs` reduces in the kernel, as the closing
+examples check.
 
 `TauCeti.cyclotomicCoeffs_eq_coeffList` identifies the computed list with Mathlib's
 `Polynomial.coeffList` of `Polynomial.cyclotomic n ℤ`, so it is not merely *a* list of
@@ -34,9 +35,9 @@ power basis, and reducing a product modulo `Φ_e` needs the coefficients of `Φ_
 
 public section
 
-namespace TauCeti
+open Polynomial TauCeti.Polynomial
 
-open Polynomial
+namespace TauCeti
 
 /-- The coefficients of `X ^ n - 1`, highest degree first, for `n ≠ 0`. -/
 @[expose] def xPowSubOneCoeffs (n : ℕ) : List ℤ :=
@@ -80,18 +81,6 @@ theorem ofCoeffList_dropWhile_beq_zero (l : List ℤ) :
     · subst ha; simpa [List.dropWhile_cons] using ih
     · simp [ha]
 
-/-- What is left after dropping the leading zeros does not start with a zero. -/
-theorem headD_dropWhile_beq_zero_ne_zero {l : List ℤ} (h : l.dropWhile (· == 0) ≠ []) :
-    (l.dropWhile (· == 0)).headD 0 ≠ 0 := by
-  induction l with
-  | nil => simp at h
-  | cons a t ih =>
-    by_cases ha : a = 0
-    · rw [List.dropWhile_cons, if_pos (by simp [ha])] at h ⊢
-      exact ih h
-    · rw [List.dropWhile_cons, if_neg (by simp [ha])]
-      simpa using ha
-
 /-- The computed coefficient list never starts with a zero: it is either `[1]` or the result of
 dropping the leading zeros. -/
 private theorem headD_cyclotomicCoeffsAux_ne_zero (fuel n : ℕ)
@@ -102,8 +91,14 @@ private theorem headD_cyclotomicCoeffsAux_ne_zero (fuel n : ℕ)
     rw [cyclotomicCoeffsAux] at h ⊢
     by_cases hn0 : n = 0
     · rw [if_pos hn0]; simp
-    · rw [if_neg hn0] at h ⊢
-      exact headD_dropWhile_beq_zero_ne_zero h
+    · -- what is left after dropping the leading zeros does not start with a zero
+      have hdrop : ∀ l : List ℤ, l.dropWhile (· == 0) ≠ [] →
+          (l.dropWhile (· == 0)).headD 0 ≠ 0 := fun l hl => by
+        have hpos : 0 < (l.dropWhile (· == 0)).length := List.length_pos_iff.2 hl
+        simpa [List.head?_eq_getElem?, List.getElem?_eq_getElem hpos] using
+          List.dropWhile_get_zero_not (· == 0) l hpos
+      rw [if_neg hn0] at h ⊢
+      exact hdrop _ h
 
 /-- **Dividing out a known family of monic factors.**  If the polynomial of `l` is `A` times the
 product of the cyclotomic polynomials indexed by `L`, then dividing successively by those factors
@@ -194,7 +189,11 @@ theorem length_cyclotomicCoeffs (n : ℕ) : (cyclotomicCoeffs n).length = n.toti
   omega
 
 /-- **`TauCeti.cyclotomicCoeffs n` is the coefficient list of `Polynomial.cyclotomic n ℤ`**: the
-computation returns the canonical list, leading coefficient first and with no leading zeros. -/
+computation returns the canonical list, leading coefficient first and with no leading zeros.
+
+This is deliberately not a `simp` lemma: it would rewrite `cyclotomicCoeffs` away, and then
+`TauCeti.length_cyclotomicCoeffs` — which does normalize the vector size, and is `simp` — has a
+left-hand side that is no longer in simp normal form, which the `simpNF` linter rejects. -/
 theorem cyclotomicCoeffs_eq_coeffList (n : ℕ) :
     cyclotomicCoeffs n = (cyclotomic n ℤ).coeffList := by
   rw [← ofCoeffList_cyclotomicCoeffs n,
@@ -207,8 +206,9 @@ of multiplication in the exact cyclotomic integers. -/
 @[expose] def modByCyclotomic (e : ℕ) (l : List ℤ) : List ℤ :=
   modByMonicList (cyclotomicCoeffs e).tail l
 
-/-- The computed list, presented as `TauCeti.divByMonicList` and `TauCeti.modByMonicList` consume a
-monic divisor: `Φ_e` is `X ^ φ e` plus the polynomial of the remaining coefficients. -/
+/-- The computed list, presented as `TauCeti.Polynomial.divByMonicList` and
+`TauCeti.Polynomial.modByMonicList` consume a monic divisor: `Φ_e` is `X ^ φ e` plus the polynomial
+of the remaining coefficients. -/
 theorem xPow_add_ofCoeffList_tail_cyclotomicCoeffs (e : ℕ) :
     X ^ (cyclotomicCoeffs e).tail.length + ofCoeffList (cyclotomicCoeffs e).tail
       = cyclotomic e ℤ := by
