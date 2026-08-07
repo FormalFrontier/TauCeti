@@ -54,6 +54,8 @@ def window (N : ℕ) (i : ℕ) (j : ℕ) : ℕ := (i + 1) * N + j
 @[simp]
 theorem window_def (N i j : ℕ) : window N i j = (i + 1) * N + j := (rfl)
 
+/-- **The windows are ordered.** An index inside window `i` precedes every index of any later
+window `i'`, provided the offset `j` stays inside the window. -/
 theorem window_lt_window {N : ℕ} {i i' j j' : ℕ} (hj : j < N) (hi : i < i') :
     window N i j < window N i' j' := by
   have h1 : (i + 1) * N + j < (i + 1) * N + N := by omega
@@ -71,22 +73,6 @@ theorem window_selection_injective {m N : ℕ} (js : Fin m → Fin N) :
   rcases lt_or_gt_of_ne (fun h : (a : ℕ) = (b : ℕ) => hne (Fin.ext h)) with h | h
   · exact absurd hab (window_lt_window (js a).isLt h).ne
   · exact absurd hab.symm (window_lt_window (js b).isLt h).ne
-
-/-- **A product of block averages is an average of products.** Purely algebraic: the product of
-sums distributes by `Fintype.prod_sum`, and the normalisations multiply. Disjointness of the
-selections plays no role here — it matters only for what the individual terms mean. -/
-theorem prod_blockAverage_eq_expect {m N : ℕ} (Y : Fin m → ℕ → Ω → ℝ) (k : Fin m → Fin N → ℕ)
-    (ω : Ω) :
-    (∏ i : Fin m, blockAverage (Y i) (k i) ω)
-      = 𝔼 js : Fin m → Fin N, ∏ i : Fin m, Y i (k i (js i)) ω := by
-  classical
-  have hL : (∏ i : Fin m, blockAverage (Y i) (k i) ω)
-      = ((N : ℝ)⁻¹) ^ m * ∏ i : Fin m, ∑ j : Fin N, Y i (k i j) ω := by
-    simp [blockAverage_apply, Finset.prod_mul_distrib]
-  rw [hL, Fintype.prod_sum fun i (j : Fin N) => Y i (k i j) ω, Fintype.expect_eq_sum_div_card]
-  simp only [Fintype.card_pi, Fintype.card_fin, Finset.prod_const, card_univ, div_eq_inv_mul]
-  push_cast
-  simp [inv_pow]
 
 /-- **The disjoint-window instance.** The expansion of the previous theorem at the windows
 `window N i`, where every tuple is an injective selection by `window_selection_injective`. -/

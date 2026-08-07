@@ -94,6 +94,23 @@ theorem blockAverage_apply_of_forall_eq {n : ℕ} (hn : 0 < n) {k : Fin n → �
   rw [blockAverage, Finset.expect_apply, Finset.expect_congr rfl fun i _ => h i,
     Fintype.expect_const]
 
+omit [MeasurableSpace Ω] in
+/-- **A product of block averages is an average of products.** Purely algebraic: the product of
+sums distributes by `Fintype.prod_sum`, and the normalisations multiply. Disjointness of the
+selections plays no role here — it matters only for what the individual terms mean. -/
+theorem prod_blockAverage_eq_expect {m N : ℕ} (Y : Fin m → ℕ → Ω → ℝ) (k : Fin m → Fin N → ℕ)
+    (ω : Ω) :
+    (∏ i : Fin m, blockAverage (Y i) (k i) ω)
+      = 𝔼 js : Fin m → Fin N, ∏ i : Fin m, Y i (k i (js i)) ω := by
+  classical
+  have hL : (∏ i : Fin m, blockAverage (Y i) (k i) ω)
+      = ((N : ℝ)⁻¹) ^ m * ∏ i : Fin m, ∑ j : Fin N, Y i (k i j) ω := by
+    simp [blockAverage_apply, Finset.prod_mul_distrib]
+  rw [hL, Fintype.prod_sum fun i (j : Fin N) => Y i (k i j) ω, Fintype.expect_eq_sum_div_card]
+  simp only [Fintype.card_pi, Fintype.card_fin, Finset.prod_const, card_univ, div_eq_inv_mul]
+  push_cast
+  simp [inv_pow]
+
 /-- A block average of `L²` coordinates is itself `L²`. -/
 theorem memLp_blockAverage {n : ℕ} (k : Fin n → ℕ) (hX_L2 : ∀ i, MemLp (X (k i)) 2 μ) :
     MemLp (blockAverage X k) 2 μ := by
