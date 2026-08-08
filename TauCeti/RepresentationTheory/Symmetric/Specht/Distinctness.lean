@@ -253,7 +253,7 @@ private theorem spechtToPermutationIntertwiningMapOfIso_apply {n : ℕ}
           (permutationModule (shapePartition (diagramOf ν))).V) :=
   rfl
 
-/-- A nonzero morphism from `S^μ` to `S^ν` forces `μ` to dominate `ν`. -/
+/-- An isomorphism from `S^μ` to `S^ν` forces `μ` to dominate `ν`. -/
 private theorem dominates_of_spechtModule_iso {n : ℕ} {μ ν : n.Partition}
     (i : spechtModule μ ≅ spechtModule ν) : Dominates μ ν := by
   refine dominates_iff.mpr fun k => ?_
@@ -279,7 +279,8 @@ private theorem dominates_of_spechtModule_iso {n : ℕ} {μ ν : n.Partition}
 
 /-- **Specht modules have distinct partition labels.** Two rational Specht modules for `Sₙ` are
 isomorphic if and only if their indexing partitions are equal. -/
-theorem nonempty_spechtModule_iso_iff {n : ℕ} {μ ν : n.Partition} :
+@[simp]
+theorem spechtModule_iso_iff {n : ℕ} {μ ν : n.Partition} :
     Nonempty (spechtModule μ ≅ spechtModule ν) ↔ μ = ν := by
   constructor
   · rintro ⟨i⟩
