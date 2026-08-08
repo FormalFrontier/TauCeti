@@ -209,6 +209,48 @@ theorem apply_mk_one_ne_zero : M i (ConjClasses.mk 1) ≠ 0 := by
   rw [hMd]
   exact_mod_cast hd.ne'
 
+omit hM i in
+/-- Two class functions proportional with constants `e` and `d` have weighted self-pairings
+proportional with constants `e ^ 2` and `d ^ 2`. -/
+private theorem sq_mul_sum_mul_conj_eq_of_mul_eq_mul {e d : ℕ} {r t : ConjClasses G → ℂ}
+    (key : ∀ C, (e : ℂ) * r C = (d : ℂ) * t C) :
+    (e : ℂ) ^ 2 * ∑ C : ConjClasses G, (Nat.card C.carrier : ℂ) * r C * (starRingEnd ℂ) (r C) =
+      (d : ℂ) ^ 2 * ∑ C : ConjClasses G,
+        (Nat.card C.carrier : ℂ) * t C * (starRingEnd ℂ) (t C) := by
+  rw [Finset.mul_sum, Finset.mul_sum]
+  refine Finset.sum_congr rfl fun C _ => ?_
+  have hconj : (e : ℂ) * (starRingEnd ℂ) (r C) = (d : ℂ) * (starRingEnd ℂ) (t C) := by
+    simpa using congrArg (starRingEnd ℂ) (key C)
+  calc (e : ℂ) ^ 2 * ((Nat.card C.carrier : ℂ) * r C * (starRingEnd ℂ) (r C))
+      = (Nat.card C.carrier : ℂ) * ((e : ℂ) * r C) * ((e : ℂ) * (starRingEnd ℂ) (r C)) := by ring
+    _ = (Nat.card C.carrier : ℂ) * ((d : ℂ) * t C) *
+          ((d : ℂ) * (starRingEnd ℂ) (t C)) := by rw [key C, hconj]
+    _ = (d : ℂ) ^ 2 * ((Nat.card C.carrier : ℂ) * t C * (starRingEnd ℂ) (t C)) := by ring
+
+omit hM in
+/-- Given that the normalized row `i` of `M` is the central character row `j` (`hj`), and that its
+identity entry is nonzero with value `d`, the row of `M` and row `j` of the character table are
+proportional with those identity entries as the constants. The full specification
+`IsCharacterTableSpec` never enters. -/
+private theorem characterDegree_mul_apply_eq_mul_characterTable {d : ℕ}
+    (hMi : M i (ConjClasses.mk 1) ≠ 0) (hMd : M i (ConjClasses.mk 1) = (d : ℂ))
+    {j : Fin (Nat.card (ConjClasses G))}
+    (hj : centralCharacterTable ℂ G j = centralCharacterRow M i) (C : ConjClasses G) :
+    (characterDegree ℂ j : ℂ) * M i C = (d : ℂ) * characterTable ℂ G j C := by
+  have hcard : (Nat.card (ConjClasses.carrier C) : ℂ) ≠ 0 :=
+    Nat.cast_ne_zero.mpr (ConjClasses.card_carrier_pos C).ne'
+  have h₁ := centralCharacterRow_mul hMi C
+  have h₂ := centralCharacterTable_mul_characterDegree (k := ℂ) j C
+  rw [hMd] at h₁
+  rw [hj] at h₂
+  refine mul_left_cancel₀ hcard ?_
+  calc (Nat.card C.carrier : ℂ) * ((characterDegree ℂ j : ℂ) * M i C)
+      = (characterDegree ℂ j : ℂ) * ((Nat.card C.carrier : ℂ) * M i C) := by ring
+    _ = (characterDegree ℂ j : ℂ) * (centralCharacterRow M i C * (d : ℂ)) := by rw [h₁]
+    _ = (d : ℂ) * (centralCharacterRow M i C * (characterDegree ℂ j : ℂ)) := by ring
+    _ = (d : ℂ) * ((Nat.card C.carrier : ℂ) * characterTable ℂ G j C) := by rw [h₂]
+    _ = (Nat.card C.carrier : ℂ) * ((d : ℂ) * characterTable ℂ G j C) := by ring
+
 /-- **Every row of a matrix satisfying the specification is a row of the character table.**
 
 Its normalized row is a normalized common left eigenrow of the class-multiplication matrices, hence
@@ -218,43 +260,12 @@ theorem exists_eq_characterTable : ∃ j, ∀ C, M i C = characterTable ℂ G j 
   obtain ⟨d, hdpos, hMd, -⟩ := hM.exists_degree i
   obtain ⟨j, hj⟩ := (isClassEigenrow_iff_exists_centralCharacterTable_eq
     (centralCharacterRow_mk_one (hM.apply_mk_one_ne_zero i))).mp (hM.row_eigen i)
-  have hcard : ∀ C : ConjClasses G, (Nat.card (ConjClasses.carrier C) : ℂ) ≠ 0 := fun C =>
-    Nat.cast_ne_zero.mpr (ConjClasses.card_carrier_pos C).ne'
   have he : (characterDegree ℂ j : ℂ) ≠ 0 :=
     Nat.cast_ne_zero.mpr (characterDegree_pos ℂ j).ne'
-  -- The two rows are proportional, with the degrees as the constants of proportionality.
-  have key : ∀ C, (characterDegree ℂ j : ℂ) * M i C = (d : ℂ) * characterTable ℂ G j C := by
-    intro C
-    have h₁ := centralCharacterRow_mul (hM.apply_mk_one_ne_zero i) C
-    have h₂ := centralCharacterTable_mul_characterDegree (k := ℂ) j C
-    rw [hMd] at h₁
-    rw [hj] at h₂
-    refine mul_left_cancel₀ (hcard C) ?_
-    calc (Nat.card C.carrier : ℂ) * ((characterDegree ℂ j : ℂ) * M i C)
-        = (characterDegree ℂ j : ℂ) * ((Nat.card C.carrier : ℂ) * M i C) := by ring
-      _ = (characterDegree ℂ j : ℂ) * (centralCharacterRow M i C * (d : ℂ)) := by rw [h₁]
-      _ = (d : ℂ) * (centralCharacterRow M i C * (characterDegree ℂ j : ℂ)) := by ring
-      _ = (d : ℂ) * ((Nat.card C.carrier : ℂ) * characterTable ℂ G j C) := by rw [h₂]
-      _ = (Nat.card C.carrier : ℂ) * ((d : ℂ) * characterTable ℂ G j C) := by ring
-  -- Both rows have self-pairing `1`, so the two constants of proportionality have equal squares.
   have hG : (Nat.card G : ℂ) ≠ 0 := Nat.cast_ne_zero.mpr Nat.card_pos.ne'
-  have hsum : (characterDegree ℂ j : ℂ) ^ 2 * ∑ C : ConjClasses G,
-        (Nat.card C.carrier : ℂ) * M i C * (starRingEnd ℂ) (M i C) =
-      (d : ℂ) ^ 2 * ∑ C : ConjClasses G, (Nat.card C.carrier : ℂ) *
-        characterTable ℂ G j C * (starRingEnd ℂ) (characterTable ℂ G j C) := by
-    rw [Finset.mul_sum, Finset.mul_sum]
-    refine Finset.sum_congr rfl fun C _ => ?_
-    have hconj : (characterDegree ℂ j : ℂ) * (starRingEnd ℂ) (M i C) =
-        (d : ℂ) * (starRingEnd ℂ) (characterTable ℂ G j C) := by
-      simpa using congrArg (starRingEnd ℂ) (key C)
-    calc (characterDegree ℂ j : ℂ) ^ 2 *
-          ((Nat.card C.carrier : ℂ) * M i C * (starRingEnd ℂ) (M i C))
-        = (Nat.card C.carrier : ℂ) * ((characterDegree ℂ j : ℂ) * M i C) *
-            ((characterDegree ℂ j : ℂ) * (starRingEnd ℂ) (M i C)) := by ring
-      _ = (Nat.card C.carrier : ℂ) * ((d : ℂ) * characterTable ℂ G j C) *
-            ((d : ℂ) * (starRingEnd ℂ) (characterTable ℂ G j C)) := by rw [key C, hconj]
-      _ = (d : ℂ) ^ 2 * ((Nat.card C.carrier : ℂ) * characterTable ℂ G j C *
-            (starRingEnd ℂ) (characterTable ℂ G j C)) := by ring
+  have key := characterDegree_mul_apply_eq_mul_characterTable i (hM.apply_mk_one_ne_zero i) hMd hj
+  -- Both rows have self-pairing `1`, so the two constants of proportionality have equal squares.
+  have hsum := sq_mul_sum_mul_conj_eq_of_mul_eq_mul (G := G) key
   have hMii := hM.row_orthonormal i i
   rw [if_pos rfl] at hMii
   have hTjj := card_inv_mul_sum_card_conjClass_mul_characterTable_mul_conj j j

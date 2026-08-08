@@ -11,7 +11,7 @@ public import TauCeti.NumberTheory.ModularForms.LevelOne.FundamentalDomainBounda
 import TauCeti.Analysis.Contour.NullHomologous
 import TauCeti.NumberTheory.ModularForms.LevelOne.FundamentalDomainBoundary.Immersion
 import TauCeti.NumberTheory.ModularForms.LevelOne.FundamentalDomainBoundary.Interior
-import TauCeti.NumberTheory.ModularForms.LevelOne.FundamentalDomainBoundary.Winding
+import TauCeti.NumberTheory.ModularForms.LevelOne.FundamentalDomainBoundary.Winding.Basic
 
 /-!
 # The residue sum along the boundary contour
