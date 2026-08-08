@@ -37,6 +37,9 @@ kernel says nothing about the Lie bracket, which appears at second order.
 The synonym `CounitAlgebra` is a fresh scope for the point-induced algebra structure,
 as the dictionary requires; it does not install instances on `B` itself, and
 `Bialgebra.CounitAlgebra.algEquivSelf` transports back to `B` as an `R`-algebra.
+An algebra homomorphism between coefficient algebras transports these synonyms via
+`Bialgebra.CounitAlgebra.mapAlgHom`; `Bialgebra.CounitAlgebra.map` records that this
+transport is linear for the actions induced by the counit.
 
 ## The exterior convolution product
 
@@ -198,6 +201,125 @@ lemma algebraMap_apply (a : A) :
 end Bialgebra.CounitAlgebra
 
 end BialgebraPointScalar
+
+section CounitAlgebraMap
+
+namespace Bialgebra.CounitAlgebra
+
+variable {R A B C : Type*} [CommSemiring R] [CommSemiring A] [Bialgebra R A]
+  [CommSemiring B] [Algebra R B] [CommSemiring C] [Algebra R C]
+
+/-- An algebra homomorphism of coefficients, transported to the counit coefficient
+algebras. -/
+noncomputable def mapAlgHom (phi : B →ₐ[R] C) :
+    CounitAlgebra R A B →ₐ[R] CounitAlgebra R A C :=
+  (algEquivSelf R A C).symm.toAlgHom.comp (phi.comp (algEquivSelf R A B).toAlgHom)
+
+omit [CommSemiring A] [Bialgebra R A] in
+/-- The coefficient algebra map is the original map under the canonical
+identifications with its source and target. -/
+lemma algEquivSelf_mapAlgHom (phi : B →ₐ[R] C) (b : CounitAlgebra R A B) :
+    algEquivSelf R A C (mapAlgHom (A := A) phi b) =
+      phi (algEquivSelf R A B b) := by
+  -- The public equivalences are the API for crossing the coefficient synonyms;
+  -- `change` exposes the composite through those equivalences once.
+  change algEquivSelf R A C
+      ((algEquivSelf R A C).symm (phi (algEquivSelf R A B b))) = _
+  rw [AlgEquiv.apply_symm_apply]
+
+omit [CommSemiring A] [Bialgebra R A] in
+/-- Transport of counit coefficient algebras acts pointwise by the original
+coefficient homomorphism. -/
+@[simp]
+lemma mapAlgHom_apply (phi : B →ₐ[R] C) (b : CounitAlgebra R A B) :
+    mapAlgHom (A := A) phi b = phi b := by
+  change (algEquivSelf R A C).symm (phi (algEquivSelf R A B b)) = phi b
+  rw [algEquivSelf_apply, algEquivSelf_symm_apply]
+
+omit [CommSemiring A] [Bialgebra R A] in
+/-- The identity coefficient homomorphism induces the identity homomorphism of
+counit coefficient algebras. -/
+@[simp]
+lemma mapAlgHom_id :
+    mapAlgHom (A := A) (AlgHom.id R B) =
+      AlgHom.id R (CounitAlgebra R A B) := by
+  ext b
+  apply (algEquivSelf R A B).injective
+  rw [algEquivSelf_mapAlgHom, AlgHom.id_apply, AlgHom.id_apply]
+
+omit [CommSemiring A] [Bialgebra R A] in
+/-- Homomorphisms of counit coefficient algebras preserve composition. -/
+@[simp]
+lemma mapAlgHom_comp {D : Type*} [CommSemiring D] [Algebra R D]
+    (psi : C →ₐ[R] D) (phi : B →ₐ[R] C) :
+    mapAlgHom (A := A) (psi.comp phi) =
+      (mapAlgHom (A := A) psi).comp (mapAlgHom (A := A) phi) := by
+  ext b
+  apply (algEquivSelf R A D).injective
+  rw [algEquivSelf_mapAlgHom, AlgHom.comp_apply, AlgHom.comp_apply,
+    algEquivSelf_mapAlgHom, algEquivSelf_mapAlgHom]
+
+/-- An algebra map between coefficient algebras, regarded as a linear map for the
+`A`-module structures induced by the counit. -/
+noncomputable def map (phi : B →ₐ[R] C) :
+    CounitAlgebra R A B →ₗ[A] CounitAlgebra R A C where
+  toFun := mapAlgHom (A := A) phi
+  map_add' := map_add (mapAlgHom (A := A) phi)
+  map_smul' a b := by
+    have hB : algEquivSelf R A B (algebraMap A (CounitAlgebra R A B) a) =
+        algebraMap R B (counit a) := calc
+      _ = algEquivSelf R A B
+          (algebraMap R (CounitAlgebra R A B) (counit a)) :=
+        congrArg (algEquivSelf R A B) (algebraMap_apply R A B a)
+      _ = _ := (algEquivSelf R A B).commutes (counit a)
+    have hC : algEquivSelf R A C (algebraMap A (CounitAlgebra R A C) a) =
+        algebraMap R C (counit a) := calc
+      _ = algEquivSelf R A C
+          (algebraMap R (CounitAlgebra R A C) (counit a)) :=
+        congrArg (algEquivSelf R A C) (algebraMap_apply R A C a)
+      _ = _ := (algEquivSelf R A C).commutes (counit a)
+    rw [Algebra.smul_def, Algebra.smul_def]
+    apply (algEquivSelf R A C).injective
+    rw [algEquivSelf_mapAlgHom, map_mul, map_mul, map_mul, algEquivSelf_mapAlgHom,
+      hB, RingHom.id_apply, hC, phi.commutes]
+
+/-- The linear coefficient map has the same underlying function as the coefficient
+algebra map. -/
+@[simp]
+lemma map_apply (phi : B →ₐ[R] C) (b : CounitAlgebra R A B) :
+    map (A := A) phi b = phi b := by
+  -- `map` is a structure-valued definition with no generated application theorem;
+  -- unfolding its `toFun` field is stable and exposes exactly `mapAlgHom`.
+  change mapAlgHom (A := A) phi b = _
+  rw [mapAlgHom_apply]
+
+/-- The identity algebra homomorphism induces the identity coefficient map. -/
+@[simp]
+lemma map_id :
+    map (A := A) (AlgHom.id R B) =
+      LinearMap.id (R := A) (M := CounitAlgebra R A B) := by
+  ext b
+  apply (algEquivSelf R A B).injective
+  rw [map_apply, LinearMap.id_apply, algEquivSelf_apply]
+  change (AlgHom.id R B) (algEquivSelf R A B b) = algEquivSelf R A B b
+  rw [AlgHom.id_apply]
+
+/-- Coefficient maps preserve composition. -/
+@[simp]
+lemma map_comp {D : Type*} [CommSemiring D] [Algebra R D]
+    (psi : C →ₐ[R] D) (phi : B →ₐ[R] C) :
+    map (A := A) (psi.comp phi) =
+      (map (A := A) psi).comp (map (A := A) phi) := by
+  ext b
+  apply (algEquivSelf R A D).injective
+  rw [map_apply, LinearMap.comp_apply, map_apply, map_apply]
+  change (psi.comp phi) (algEquivSelf R A B b) =
+    psi (phi (algEquivSelf R A B b))
+  rw [AlgHom.comp_apply]
+
+end Bialgebra.CounitAlgebra
+
+end CounitAlgebraMap
 
 section CommPointScalar
 
