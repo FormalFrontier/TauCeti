@@ -6,6 +6,7 @@ module
 
 public import TauCeti.Analysis.Semigroups.BoundedGenerator.Basic
 public import TauCeti.Analysis.Semigroups.Dissipative.Basic
+import TauCeti.Analysis.Normed.Operator.Exponential
 
 /-!
 # Yosida approximations
