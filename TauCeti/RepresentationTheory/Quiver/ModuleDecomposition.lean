@@ -90,15 +90,15 @@ variable (M : Type*) [AddCommMonoid M] [Module k M] [Module (pathAlgebra k Q) M]
 
 /-- The **vertex component** `eᵥ M` of a module over the path algebra: the `k`-subspace on which
 the vertex idempotent at `v` acts as the identity. It is the value at `v` of the representation of
-`Q` attached to `M`. -/
+`Q` attached to `M`.
+
+The body is exposed: it is literally the piece `eᵥ • (⊤ : Submodule k M)` cut out by the vertex
+idempotent, so both Mathlib's pointwise API and the general lemmas about such a piece —
+`TauCeti.mem_smul_top_iff_smul_eq_self`, `TauCeti.isInternal_smul_top`, … — apply to it as it
+stands. -/
+@[expose]
 noncomputable def vertexComponent (v : Q) : Submodule k M :=
   vertexIdempotent k v • (⊤ : Submodule k M)
-
-/-- The vertex component is the piece `eᵥ • M` cut out by the vertex idempotent, so both Mathlib's
-pointwise API for `e • (⊤ : Submodule k M)` and the general lemmas about it —
-`TauCeti.mem_smul_top_iff_smul_eq_self`, `TauCeti.isInternal_smul_top`, … — apply to it. -/
-theorem vertexComponent_eq_smul_top (v : Q) :
-    vertexComponent k M v = vertexIdempotent k v • (⊤ : Submodule k M) := (rfl)
 
 variable {k M}
 
@@ -149,7 +149,9 @@ theorem coe_pathMap_apply {a b : Q} (p : _root_.Quiver.Path a b)
 theorem pathMap_nil (a : Q) :
     pathMap k M (_root_.Quiver.Path.nil : _root_.Quiver.Path a a) = LinearMap.id := by
   ext x
-  rw [coe_pathMap_apply, ← vertexIdempotent_eq_ofPath,
+  -- the trivial path at `a` is the vertex idempotent `eₐ`, both being the basis element `single`
+  -- of that path with coefficient one
+  rw [coe_pathMap_apply, ofPath_eq_single, ← vertexIdempotent_eq_single,
     vertexIdempotent_smul_eq_self_of_mem_vertexComponent x.2]
   simp
 

@@ -508,10 +508,6 @@ variable (k) in
 noncomputable def vertexIdempotent (v : Q) : pathAlgebra k Q :=
   ofPath ⟨v, v, _root_.Quiver.Path.nil⟩
 
-/-- The vertex idempotent is the basis element of the trivial path at its vertex. -/
-theorem vertexIdempotent_eq_ofPath (v : Q) :
-    vertexIdempotent k v = (ofPath ⟨v, v, _root_.Quiver.Path.nil⟩ : pathAlgebra k Q) := (rfl)
-
 /-- The vertex idempotent is the basis element of the trivial path, with coefficient one. -/
 theorem vertexIdempotent_eq_single (v : Q) :
     vertexIdempotent k v
