@@ -52,6 +52,9 @@ theorem HasDerivAt.clm_inverse (hA : HasDerivAt A A' t₀)
     HasDerivAt (fun t => (A t).inverse)
       (-((A t₀).inverse.comp (A'.comp (A t₀).inverse))) t₀ := by
   have hAInv : ∀ᶠ t in 𝓝 t₀, (A t).IsInvertible := by
+    -- The continuity argument below needs the inverse at `t₀` to be nonzero, which fails exactly
+    -- when `E` is a subsingleton; in that case all maps involved are zero and invertibility is
+    -- instead immediate from the induced subsingleton structures.
     by_cases hE : Subsingleton E
     · rcases hA0Inv with ⟨e, _⟩
       let _ : Subsingleton E := hE
@@ -70,6 +73,8 @@ theorem HasDerivAt.clm_inverse (hA : HasDerivAt A A' t₀)
         exact hE hInv0Inv.2
       filter_upwards [hInvDiff.continuousAt.eventually_ne hInv0] with t ht
       by_contra hAt
+      -- A non-invertible map has zero `inverse`, contradicting continuity near the nonzero inverse
+      -- at the base point.
       exact ht (inverse_of_not_isInvertible hAt)
   let B' : F →L[𝕜] E := _root_.deriv (fun t => (A t).inverse) t₀
   have hInvRaw : HasDerivAt (fun t => (A t).inverse) B' t₀ := hInvDiff.hasDerivAt
@@ -102,7 +107,8 @@ theorem HasDerivAt.clm_inverse_apply (hA : HasDerivAt A A' t₀)
     (hw : HasDerivAt w w' t₀) :
     HasDerivAt (fun t => (A t).inverse (w t))
       ((A t₀).inverse w' - (A t₀).inverse (A' ((A t₀).inverse (w t₀)))) t₀ := by
-  simpa [sub_eq_add_neg, add_comm] using (hA.clm_inverse hA0Inv hInvDiff).clm_apply hw
+  simpa only [neg_apply, ContinuousLinearMap.comp_apply, sub_eq_neg_add] using
+    (hA.clm_inverse hA0Inv hInvDiff).clm_apply hw
 
 /-- In a Banach space, the inverse of a differentiable family is differentiable at an invertible
 base point. -/
@@ -125,4 +131,5 @@ theorem HasDerivAt.clm_inverse_apply_of_completeSpace [CompleteSpace E]
     (hA : HasDerivAt A A' t₀) (hA0Inv : (A t₀).IsInvertible) (hw : HasDerivAt w w' t₀) :
     HasDerivAt (fun t => (A t).inverse (w t))
       ((A t₀).inverse w' - (A t₀).inverse (A' ((A t₀).inverse (w t₀)))) t₀ := by
-  simpa [sub_eq_add_neg, add_comm] using (hA.clm_inverse_of_completeSpace hA0Inv).clm_apply hw
+  exact hA.clm_inverse_apply hA0Inv
+    (DifferentiableAt.clm_inverse_of_completeSpace hA.differentiableAt hA0Inv) hw

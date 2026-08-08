@@ -96,6 +96,9 @@ theorem fderiv_timeSlice {F : 𝕜 × E → F'} {t : 𝕜} {x : E}
 theorem hasDerivAt_spatialFDeriv {F : 𝕜 × E → F'} {t : 𝕜} {x : E}
     (hF : ContDiffAt 𝕜 (minSmoothness 𝕜 2) F (t, x)) :
     HasDerivAt (spatialFDeriv F x) (fderiv 𝕜 (timeFDeriv F t) x) t := by
+  -- Compute the parameter derivative of `s ↦ DF (s, x) (0, w)` and the spatial
+  -- derivative of `timeFDeriv F t = fun z ↦ DF (t, z) (1, 0)`. Symmetry of the
+  -- second derivative identifies these two mixed partials, pointwise in `w`.
   let DF : 𝕜 × E → (𝕜 × E →L[𝕜] F') := fderiv 𝕜 F
   have hDFdiff : DifferentiableAt 𝕜 DF (t, x) :=
     (hF.fderiv_right (m := 1) le_minSmoothness).differentiableAt one_ne_zero
@@ -110,34 +113,34 @@ theorem hasDerivAt_spatialFDeriv {F : 𝕜 × E → F'} {t : 𝕜} {x : E}
     have hDF := hDFdiff.hasFDerivAt
     have hspace : HasDerivAt (fun _ : 𝕜 => ((0 : 𝕜), w)) 0 t :=
       hasDerivAt_const (x := t) _
-    have hAraw :=
+    have hParamRaw :=
       (hDF.comp_hasDerivAt t (hasFDerivAt_prodMk_left t x).hasDerivAt).clm_apply hspace
-    have hA : HasDerivAt (fun s => DF (s, x) (0, w))
+    have hParam : HasDerivAt (fun s => DF (s, x) (0, w))
         (fderiv 𝕜 DF (t, x) (1, 0) (0, w)) t := by
       simpa only [Function.comp_apply, ContinuousLinearMap.inl_apply, map_zero, add_zero] using
-        hAraw
+        hParamRaw
     have hone : HasFDerivAt (fun _ : E => ((1 : 𝕜), (0 : E)))
         (0 : E →L[𝕜] 𝕜 × E) x :=
       hasFDerivAt_const (x := x) ((1 : 𝕜), (0 : E))
-    have hVraw :=
+    have hSpatialRaw :=
       (hDF.comp x (hasFDerivAt_prodMk_right t x)).clm_apply hone
-    have hV : HasFDerivAt (timeFDeriv F t) (fderiv 𝕜 DF (t, x) ∘L
+    have hSpatial : HasFDerivAt (timeFDeriv F t) (fderiv 𝕜 DF (t, x) ∘L
         ContinuousLinearMap.inr 𝕜 𝕜 E |>.flip (1, 0)) x := by
       rw [show timeFDeriv F t = fun z => fderiv 𝕜 F (t, z) (1, 0) from
         funext (timeFDeriv_apply F t)]
       simpa only [DF, Function.comp_apply, map_zero, add_zero,
-        ContinuousLinearMap.comp_zero, zero_add] using hVraw
-    have hdA : _root_.deriv (fun s => spatialFDeriv F x s w) t =
+        ContinuousLinearMap.comp_zero, zero_add] using hSpatialRaw
+    have hParamDeriv : _root_.deriv (fun s => spatialFDeriv F x s w) t =
         fderiv 𝕜 DF (t, x) (1, 0) (0, w) := by
-      simpa only [DF, spatialFDeriv_apply] using hA.deriv
+      simpa only [DF, spatialFDeriv_apply] using hParam.deriv
     have hsymm := hF.isSymmSndFDerivAt le_rfl
     have hw : HasDerivAt (fun _ : 𝕜 => w) 0 t := hasDerivAt_const t w
     calc
       _ = _root_.deriv (fun s => spatialFDeriv F x s w) t := by
         simpa only [map_zero, add_zero] using (hdiff.hasDerivAt.clm_apply hw).deriv.symm
-      _ = fderiv 𝕜 DF (t, x) (1, 0) (0, w) := hdA
+      _ = fderiv 𝕜 DF (t, x) (1, 0) (0, w) := hParamDeriv
       _ = _ := by
-        rw [hV.fderiv]
+        rw [hSpatial.fderiv]
         simpa only [DF, ContinuousLinearMap.flip_apply, ContinuousLinearMap.comp_apply,
           ContinuousLinearMap.inr_apply] using hsymm (1, 0) (0, w)
   rw [← heq]
