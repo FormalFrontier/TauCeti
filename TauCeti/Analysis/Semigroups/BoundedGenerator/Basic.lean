@@ -57,9 +57,9 @@ def ofBounded (A : X →L[ℝ] X) : StronglyContinuousSemigroup X where
   map_zero' := by
     rw [NNReal.coe_zero, zero_smul, exp_zero, ContinuousLinearMap.one_def]
   map_add' s t := by
+    let +nondep : NormedAlgebra ℚ (X →L[ℝ] X) := .restrictScalars ℚ ℝ _
     rw [NNReal.coe_add, add_smul,
-      ContinuousLinearMap.exp_add_of_commute (((Commute.refl A).smul_left _).smul_right _),
-      ContinuousLinearMap.mul_def]
+      exp_add_of_commute (((Commute.refl A).smul_left _).smul_right _), ContinuousLinearMap.mul_def]
   continuousAt_zero' x :=
     (((differentiable_exp_smul_const ℝ A).continuous.comp NNReal.continuous_coe).clm_apply
       continuous_const).continuousAt
@@ -101,7 +101,8 @@ theorem ofBounded_realOperator_continuousOn_Ici (A : X →L[ℝ] X) :
 theorem ofBounded_hasGrowthBound (A : X →L[ℝ] X) : (ofBounded A).HasGrowthBound ‖A‖ 1 := by
   refine hasGrowthBound_of_bound le_rfl (fun t ht => ?_)
   rw [one_mul, ofBounded_realOperator_of_nonneg A ht]
-  calc ‖exp (t • A)‖ ≤ Real.exp ‖t • A‖ := ContinuousLinearMap.norm_exp_le_exp_norm _
+  calc ‖exp (t • A)‖ ≤ Real.exp ‖t • A‖ :=
+        TauCeti.norm_exp_le_exp_norm ContinuousLinearMap.norm_id_le _
     _ = Real.exp (‖A‖ * t) := by
         rw [norm_smul, Real.norm_eq_abs, abs_of_nonneg ht, mul_comm]
 

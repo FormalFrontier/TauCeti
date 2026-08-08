@@ -12,8 +12,8 @@ import TauCeti.Analysis.Normed.Operator.Exponential
 # Yosida approximations
 
 This file constructs the bounded approximations used in the generation theorems for strongly
-continuous semigroups. For an m-dissipative operator `A` and `lambda > 0`, its Yosida
-approximation is
+continuous semigroups. For an operator `A` whose resolvent at `lambda > 0` satisfies the
+contraction bound, its Yosida approximation is
 
 `A_lambda = lambda ^ 2 R(lambda, A) - lambda I = lambda A R(lambda, A)`.
 
@@ -52,8 +52,8 @@ variable {X : Type*} [NormedAddCommGroup X] [NormedSpace ℝ X] [CompleteSpace X
 /-- The **Yosida approximation** of an unbounded operator `A` at `lambda`:
 `A_lambda = lambda ^ 2 R(lambda, A) - lambda I`.
 
-The definition is meaningful when `lambda` belongs to the resolvent set of `A`; the theorems in
-this file obtain that membership from m-dissipativity and `lambda > 0`. -/
+The definition is meaningful when `lambda` belongs to the resolvent set of `A`; its algebraic API
+carries that membership explicitly, while the norm estimates carry the resolvent bound they use. -/
 def yosidaApproximation (A : X →ₗ.[ℝ] X) (lambda : ℝ) : X →L[ℝ] X :=
   lambda ^ 2 • LinearPMap.resolvent A lambda - lambda • 1
 
@@ -75,26 +75,19 @@ theorem yosidaApproximation_apply_eq_smul_apply_resolvent {A : X →ₗ.[ℝ] X}
   rw [yosidaApproximation_apply, LinearPMap.apply_resolvent hlambda]
   module
 
-/-- The rescaled resolvent `lambda R(lambda, A)` of an m-dissipative operator is a contraction. -/
-theorem norm_smul_resolvent_le_one {A : X →ₗ.[ℝ] X} (hA : IsMDissipative A)
-    {lambda : ℝ} (hlambda : 0 < lambda) :
-    ‖lambda • LinearPMap.resolvent A lambda‖ ≤ 1 := by
-  rw [norm_smul, Real.norm_eq_abs, abs_of_pos hlambda]
-  calc
-    lambda * ‖LinearPMap.resolvent A lambda‖ ≤ lambda * lambda⁻¹ := by
-      gcongr
-      exact hA.norm_resolvent_le hlambda
-    _ = 1 := mul_inv_cancel₀ hlambda.ne'
-
+omit [CompleteSpace X] in
 /-- The Yosida approximation has the elementary bound `‖A_lambda‖ ≤ 2 lambda`. -/
-theorem norm_yosidaApproximation_le {A : X →ₗ.[ℝ] X} (hA : IsMDissipative A)
-    {lambda : ℝ} (hlambda : 0 < lambda) : ‖yosidaApproximation A lambda‖ ≤ 2 * lambda := by
-  have hres : ‖lambda • (lambda • LinearPMap.resolvent A lambda)‖ ≤ lambda := by
+theorem norm_yosidaApproximation_le {A : X →ₗ.[ℝ] X} {lambda : ℝ}
+    (hres : lambda * ‖LinearPMap.resolvent A lambda‖ ≤ 1) (hlambda : 0 < lambda) :
+    ‖yosidaApproximation A lambda‖ ≤ 2 * lambda := by
+  have hscaled : ‖lambda • (lambda • LinearPMap.resolvent A lambda)‖ ≤ lambda := by
     calc
       ‖lambda • (lambda • LinearPMap.resolvent A lambda)‖
           = lambda * ‖lambda • LinearPMap.resolvent A lambda‖ := by
         rw [norm_smul, Real.norm_eq_abs, abs_of_pos hlambda]
-      _ ≤ lambda * 1 := by gcongr; exact norm_smul_resolvent_le_one hA hlambda
+      _ ≤ lambda * 1 := by
+        rw [norm_smul, Real.norm_eq_abs, abs_of_pos hlambda]
+        gcongr
       _ = lambda := mul_one _
   have hone : ‖lambda • (1 : X →L[ℝ] X)‖ ≤ lambda := by
     calc
@@ -108,7 +101,7 @@ theorem norm_yosidaApproximation_le {A : X →ₗ.[ℝ] X} (hA : IsMDissipative 
       rw [yosidaApproximation, smul_smul, pow_two]
     _ ≤ ‖lambda • (lambda • LinearPMap.resolvent A lambda)‖ + ‖lambda • (1 : X →L[ℝ] X)‖ :=
       norm_sub_le _ _
-    _ ≤ lambda + lambda := add_le_add hres hone
+    _ ≤ lambda + lambda := add_le_add hscaled hone
     _ = 2 * lambda := (two_mul lambda).symm
 
 private theorem exp_yosidaApproximation_eq {A : X →ₗ.[ℝ] X} (lambda t : ℝ) :
@@ -121,22 +114,12 @@ private theorem exp_yosidaApproximation_eq {A : X →ₗ.[ℝ] X} (lambda t : �
     rw [yosidaApproximation, smul_sub]
     module
   rw [hsplit]
-  exact ContinuousLinearMap.exp_add_of_commute
-    (Commute.one_left _ |>.smul_left _ |>.smul_right _)
-
-omit [CompleteSpace X] in
-private theorem exp_smul_one_eq (c : ℝ) :
-    exp (c • (1 : X →L[ℝ] X)) = Real.exp c • 1 := by
-  calc
-    exp (c • (1 : X →L[ℝ] X)) = exp (algebraMap ℝ (X →L[ℝ] X) c) := by
-      rw [Algebra.smul_def, mul_one]
-    _ = algebraMap ℝ (X →L[ℝ] X) (exp c) := (algebraMap_exp_comm c).symm
-    _ = Real.exp c • 1 := by
-      rw [Real.exp_eq_exp_ℝ, Algebra.smul_def, mul_one]
+  let +nondep : NormedAlgebra ℚ (X →L[ℝ] X) := .restrictScalars ℚ ℝ _
+  exact exp_add_of_commute (Commute.one_left _ |>.smul_left _ |>.smul_right _)
 
 /-- The exponential of a positive-time multiple of a Yosida approximation is contractive. -/
-theorem norm_exp_yosidaApproximation_le_one {A : X →ₗ.[ℝ] X} (hA : IsMDissipative A)
-    {lambda t : ℝ} (hlambda : 0 < lambda) (ht : 0 ≤ t) :
+theorem norm_exp_smul_yosidaApproximation_le_one {A : X →ₗ.[ℝ] X} {lambda t : ℝ}
+    (hres : lambda * ‖LinearPMap.resolvent A lambda‖ ≤ 1) (hlambda : 0 < lambda) (ht : 0 ≤ t) :
     ‖exp (t • yosidaApproximation A lambda)‖ ≤ 1 := by
   calc
     ‖exp (t • yosidaApproximation A lambda)‖ =
@@ -145,80 +128,66 @@ theorem norm_exp_yosidaApproximation_le_one {A : X →ₗ.[ℝ] X} (hA : IsMDiss
       rw [exp_yosidaApproximation_eq]
     _ ≤ ‖exp ((-(t * lambda)) • (1 : X →L[ℝ] X))‖ *
           ‖exp ((t * lambda ^ 2) • LinearPMap.resolvent A lambda)‖ := norm_mul_le _ _
-    _ = Real.exp (-(t * lambda)) * ‖(1 : X →L[ℝ] X)‖ *
-          ‖exp ((t * lambda ^ 2) • LinearPMap.resolvent A lambda)‖ := by
-      rw [exp_smul_one_eq, norm_smul, Real.norm_eq_abs,
-        abs_of_nonneg (Real.exp_nonneg _)]
-    _
-        ≤ Real.exp (-(t * lambda)) *
+    _ ≤ Real.exp (-(t * lambda)) *
           Real.exp ‖(t * lambda ^ 2) • LinearPMap.resolvent A lambda‖ := by
-      have hone : ‖(1 : X →L[ℝ] X)‖ ≤ 1 := ContinuousLinearMap.norm_id_le
-      have hexp := ContinuousLinearMap.norm_exp_le_exp_norm
-        ((t * lambda ^ 2) • LinearPMap.resolvent A lambda)
-      calc
-        Real.exp (-(t * lambda)) * ‖(1 : X →L[ℝ] X)‖ *
-            ‖exp ((t * lambda ^ 2) • LinearPMap.resolvent A lambda)‖
-            ≤ Real.exp (-(t * lambda)) * 1 *
-              ‖exp ((t * lambda ^ 2) • LinearPMap.resolvent A lambda)‖ := by gcongr
-        _ ≤ Real.exp (-(t * lambda)) * 1 *
-              Real.exp ‖(t * lambda ^ 2) • LinearPMap.resolvent A lambda‖ := by gcongr
-        _ = Real.exp (-(t * lambda)) *
-              Real.exp ‖(t * lambda ^ 2) • LinearPMap.resolvent A lambda‖ := by ring
+      gcongr
+      · exact ContinuousLinearMap.norm_exp_smul_one_le _
+      · exact TauCeti.norm_exp_le_exp_norm ContinuousLinearMap.norm_id_le _
     _ ≤ Real.exp (-(t * lambda)) * Real.exp (t * lambda) := by
       gcongr
       rw [norm_smul, Real.norm_eq_abs, abs_of_nonneg (by positivity : 0 ≤ t * lambda ^ 2)]
       calc
         t * lambda ^ 2 * ‖LinearPMap.resolvent A lambda‖
             = t * lambda * (lambda * ‖LinearPMap.resolvent A lambda‖) := by ring
-        _ ≤ t * lambda * 1 := by
-          gcongr
-          simpa [norm_smul, Real.norm_eq_abs, abs_of_pos hlambda] using
-            norm_smul_resolvent_le_one hA hlambda
+        _ ≤ t * lambda * 1 := by gcongr
         _ = t * lambda := mul_one _
     _ = 1 := by rw [← Real.exp_add]; simp
 
 /-- The uniformly continuous contraction semigroup generated by the Yosida approximation. -/
-def yosidaSemigroup (A : X →ₗ.[ℝ] X) (hA : IsMDissipative A) (lambda : ℝ)
+def yosidaSemigroup (A : X →ₗ.[ℝ] X) (lambda : ℝ)
+    (hres : lambda * ‖LinearPMap.resolvent A lambda‖ ≤ 1)
     (hlambda : 0 < lambda) : ContractionSemigroup X where
   toStronglyContinuousSemigroup := StronglyContinuousSemigroup.ofBounded
     (yosidaApproximation A lambda)
   contracting t := by
+    -- The `contracting` field exposes the raw `toFun`; it is definitionally the same function
+    -- as the semigroup coercion used by `ofBounded_apply`.
     calc
       ‖(StronglyContinuousSemigroup.ofBounded (yosidaApproximation A lambda)).toFun t‖ =
           ‖exp ((t : ℝ) • yosidaApproximation A lambda)‖ :=
         congrArg norm (StronglyContinuousSemigroup.ofBounded_apply _ t)
-      _ ≤ 1 := norm_exp_yosidaApproximation_le_one hA hlambda t.property
+      _ ≤ 1 := norm_exp_smul_yosidaApproximation_le_one hres hlambda t.property
 
 /-- The C₀-semigroup underlying the Yosida semigroup is the bounded-generator semigroup of the
 Yosida approximation. -/
 @[simp]
-theorem yosidaSemigroup_toStronglyContinuousSemigroup (A : X →ₗ.[ℝ] X) (hA : IsMDissipative A)
-    (lambda : ℝ) (hlambda : 0 < lambda) :
-    (yosidaSemigroup A hA lambda hlambda).toStronglyContinuousSemigroup =
+theorem yosidaSemigroup_toStronglyContinuousSemigroup (A : X →ₗ.[ℝ] X) (lambda : ℝ)
+    (hres : lambda * ‖LinearPMap.resolvent A lambda‖ ≤ 1) (hlambda : 0 < lambda) :
+    (yosidaSemigroup A lambda hres hlambda).toStronglyContinuousSemigroup =
       StronglyContinuousSemigroup.ofBounded (yosidaApproximation A lambda) := by
   simp [yosidaSemigroup]
 
 /-- The Yosida semigroup is the exponential of the Yosida approximation. -/
 @[simp]
-theorem yosidaSemigroup_apply (A : X →ₗ.[ℝ] X) (hA : IsMDissipative A) (lambda : ℝ)
-    (hlambda : 0 < lambda) (t : NNReal) :
-    yosidaSemigroup A hA lambda hlambda t = exp ((t : ℝ) • yosidaApproximation A lambda) := by
+theorem yosidaSemigroup_apply (A : X →ₗ.[ℝ] X) (lambda : ℝ)
+    (hres : lambda * ‖LinearPMap.resolvent A lambda‖ ≤ 1) (hlambda : 0 < lambda) (t : NNReal) :
+    yosidaSemigroup A lambda hres hlambda t = exp ((t : ℝ) • yosidaApproximation A lambda) := by
   rw [← ContractionSemigroup.toStronglyContinuousSemigroup_apply,
     yosidaSemigroup_toStronglyContinuousSemigroup, StronglyContinuousSemigroup.ofBounded_apply]
 
 /-- The Yosida semigroup is continuous in operator norm, not merely strongly continuous. -/
-theorem continuous_yosidaSemigroup (A : X →ₗ.[ℝ] X) (hA : IsMDissipative A) (lambda : ℝ)
-    (hlambda : 0 < lambda) :
-    Continuous fun t : NNReal => yosidaSemigroup A hA lambda hlambda t := by
+theorem continuous_yosidaSemigroup (A : X →ₗ.[ℝ] X) (lambda : ℝ)
+    (hres : lambda * ‖LinearPMap.resolvent A lambda‖ ≤ 1) (hlambda : 0 < lambda) :
+    Continuous fun t : NNReal => yosidaSemigroup A lambda hres hlambda t := by
   refine (StronglyContinuousSemigroup.ofBounded_continuous
     (yosidaApproximation A lambda)).congr fun t => ?_
   exact (StronglyContinuousSemigroup.ofBounded_apply _ t).trans
-    (yosidaSemigroup_apply A hA lambda hlambda t).symm
+    (yosidaSemigroup_apply A lambda hres hlambda t).symm
 
 /-- The generator of the Yosida semigroup is the everywhere-defined Yosida approximation. -/
-theorem yosidaSemigroup_generator (A : X →ₗ.[ℝ] X) (hA : IsMDissipative A) (lambda : ℝ)
-    (hlambda : 0 < lambda) :
-    (yosidaSemigroup A hA lambda hlambda).toStronglyContinuousSemigroup.generator =
+theorem yosidaSemigroup_generator (A : X →ₗ.[ℝ] X) (lambda : ℝ)
+    (hres : lambda * ‖LinearPMap.resolvent A lambda‖ ≤ 1) (hlambda : 0 < lambda) :
+    (yosidaSemigroup A lambda hres hlambda).toStronglyContinuousSemigroup.generator =
       (yosidaApproximation A lambda : X →ₗ[ℝ] X).toPMap ⊤ := by
   rw [yosidaSemigroup_toStronglyContinuousSemigroup,
     StronglyContinuousSemigroup.ofBounded_generator]
