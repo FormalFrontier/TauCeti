@@ -74,12 +74,17 @@ private noncomputable def quadraticActionEnd :
   (vectorLieEquiv Q).symm.lieConj.toLieHom.comp
     (LieModule.toEnd R (quadraticLieSubalgebra Q) (vectorLieSubmodule Q))
 
+private theorem vectorLieEquiv_quadraticActionEnd_apply
+    (x : quadraticLieSubalgebra Q) (m : M) :
+    vectorLieEquiv Q (quadraticActionEnd Q x m) = ⁅x, vectorLieEquiv Q m⁆ := by
+  simp only [quadraticActionEnd, LieHom.comp_apply, LieEquiv.coe_toLieHom,
+    LinearEquiv.lieConj_apply, LinearEquiv.conj_apply_apply, LinearEquiv.symm_symm,
+    LieModule.toEnd_apply_apply, LinearEquiv.apply_symm_apply]
+
 private theorem ι_quadraticActionEnd_apply (x : quadraticLieSubalgebra Q) (m : M) :
     ι Q (quadraticActionEnd Q x m) = ⁅(x : CliffordAlgebra Q), ι Q m⁆ := by
-  rw [quadraticActionEnd, LieHom.comp_apply, LieEquiv.coe_toLieHom,
-    LinearEquiv.lieConj_apply, LinearEquiv.conj_apply_apply, LinearEquiv.symm_symm,
-    ← coe_vectorLieEquiv_apply Q, LinearEquiv.apply_symm_apply,
-    LieModule.toEnd_apply_apply, LieSubmodule.coe_bracket, coe_vectorLieEquiv_apply,
+  rw [← coe_vectorLieEquiv_apply Q, vectorLieEquiv_quadraticActionEnd_apply,
+    LieSubmodule.coe_bracket, coe_vectorLieEquiv_apply,
     LieSubalgebra.coe_bracket_of_module]
 
 private theorem quadraticActionEnd_cliffordBivector_apply (a b m : M) :
@@ -128,13 +133,19 @@ noncomputable def quadraticLieAction :
       apply Subtype.ext
       exact (quadraticActionEnd Q).map_lie x y }
 
+private theorem quadraticLieAction_apply (x : quadraticLieSubalgebra Q) (m : M) :
+    (((quadraticLieAction Q x :
+      skewAdjointLieSubalgebra (QuadraticMap.polarBilin Q)) : Module.End R M) m) =
+      quadraticActionEnd Q x m :=
+  rfl
+
 /-- The quadratic action agrees with the ambient Clifford commutator after applying `ι`. -/
 @[simp]
 theorem ι_quadraticLieAction_apply (x : quadraticLieSubalgebra Q) (m : M) :
     ι Q (((quadraticLieAction Q x :
       skewAdjointLieSubalgebra (QuadraticMap.polarBilin Q)) : Module.End R M) m) =
-      ⁅(x : CliffordAlgebra Q), ι Q m⁆ :=
-  ι_quadraticActionEnd_apply Q x m
+      ⁅(x : CliffordAlgebra Q), ι Q m⁆ := by
+  rw [quadraticLieAction_apply, ι_quadraticActionEnd_apply]
 
 /-- A Clifford bivector acts by the infinitesimal rotation determined by the polar form. -/
 @[simp]
@@ -142,8 +153,8 @@ theorem quadraticLieAction_cliffordBivector_apply (a b m : M) :
     (((quadraticLieAction Q
         ⟨cliffordBivector Q a b, cliffordBivector_mem_quadraticLieSubalgebra Q a b⟩ :
       skewAdjointLieSubalgebra (QuadraticMap.polarBilin Q)) : Module.End R M) m) =
-      QuadraticMap.polar Q b m • a - QuadraticMap.polar Q a m • b :=
-  quadraticActionEnd_cliffordBivector_apply Q a b m
+      QuadraticMap.polar Q b m • a - QuadraticMap.polar Q a m • b := by
+  rw [quadraticLieAction_apply, quadraticActionEnd_cliffordBivector_apply]
 
 end CommRing
 
