@@ -40,13 +40,15 @@ model vector space, so the naming records a difference of setting, not of mathem
   `TauCeti.IsPseudoholomorphicAt.mfderiv_isComplexLinear`: the manifold derivative of a
   pseudoholomorphic map intertwines the two structures, and their within-set analogues.
 * `TauCeti.IsPseudoholomorphicAt.comp`: pseudoholomorphic maps compose.
-* `TauCeti.isPseudoholomorphicAt_neg_neg`: reversing both structures changes nothing.
+* `TauCeti.isPseudoholomorphicAt_neg_neg_iff` and its within-set, setwise, and global analogues:
+  reversing both structures changes nothing.
 * `TauCeti.isPseudoholomorphicAt_stdComplexLine_iff`: for a curve out of the standard complex
   line the equation reduces to the single coordinate identity `∂_t w = J(w) ∂_s w`.
-* `TauCeti.isPseudoholomorphicAt_iff_isJHolomorphicAt`: on model vector spaces the predicate is
-  the existing normed-space one.
-* `TauCeti.isPseudoholomorphicAt_constSmooth_iff`: for constant structures on model vector spaces
-  it is the flat, constant-structure predicate.
+* `TauCeti.isPseudoholomorphicAt_iff_isJHolomorphicAt` and its within-set, setwise, and global
+  analogues: on model vector spaces the predicate is the existing normed-space one.
+* `TauCeti.isPseudoholomorphicAt_constSmooth_iff` and its within-set, setwise, and global
+  analogues: for constant structures on model vector spaces it is the flat, constant-structure
+  predicate.
 
 No regularity beyond the existence of a derivative is imposed: as with the normed-space
 predicates, smoothness of `u` is a separate hypothesis for the results that need it, and taming
@@ -252,7 +254,7 @@ theorem IsPseudoholomorphicAt.isPseudoholomorphicWithinAt
 
 /-- Pseudoholomorphicity within a set that is a neighbourhood of the point upgrades to
 pseudoholomorphicity at the point. -/
-theorem IsPseudoholomorphicWithinAt.isPseudoholomorphicAt
+theorem IsPseudoholomorphicWithinAt.isPseudoholomorphicAt_of_mem_nhds
     (hu : IsPseudoholomorphicWithinAt j J u s x) (hs : s ∈ nhds x) :
     IsPseudoholomorphicAt j J u x := by
   obtain ⟨u', hu', hlin⟩ := hu
@@ -278,7 +280,7 @@ theorem IsPseudoholomorphic.isPseudoholomorphicOn (hu : IsPseudoholomorphic j J 
 @[simp]
 theorem isPseudoholomorphicWithinAt_univ :
     IsPseudoholomorphicWithinAt j J u Set.univ x ↔ IsPseudoholomorphicAt j J u x :=
-  ⟨fun hu ↦ hu.isPseudoholomorphicAt Filter.univ_mem,
+  ⟨fun hu ↦ hu.isPseudoholomorphicAt_of_mem_nhds Filter.univ_mem,
     fun hu ↦ hu.isPseudoholomorphicWithinAt⟩
 
 /-- Pseudoholomorphicity on the whole space is global pseudoholomorphicity. -/
@@ -297,6 +299,18 @@ theorem isPseudoholomorphicAt_id (j : SmoothAlmostComplexStructure I M) (x : M) 
     IsPseudoholomorphicAt j j id x :=
   isPseudoholomorphicAt_of_hasMFDerivAt (hasMFDerivAt_id x) fun _ ↦ rfl
 
+/-- The identity map is pseudoholomorphic within every set at every point. -/
+@[simp]
+theorem isPseudoholomorphicWithinAt_id (j : SmoothAlmostComplexStructure I M) (s : Set M)
+    (x : M) : IsPseudoholomorphicWithinAt j j id s x :=
+  (isPseudoholomorphicAt_id j x).isPseudoholomorphicWithinAt
+
+/-- The identity map is pseudoholomorphic on every set. -/
+@[simp]
+theorem isPseudoholomorphicOn_id (j : SmoothAlmostComplexStructure I M) (s : Set M) :
+    IsPseudoholomorphicOn j j id s :=
+  fun x _ ↦ isPseudoholomorphicWithinAt_id j s x
+
 /-- The identity map is pseudoholomorphic. -/
 @[simp]
 theorem isPseudoholomorphic_id (j : SmoothAlmostComplexStructure I M) :
@@ -310,6 +324,20 @@ theorem isPseudoholomorphicAt_const (j : SmoothAlmostComplexStructure I M)
     (J : SmoothAlmostComplexStructure I' M') (c : M') (x : M) :
     IsPseudoholomorphicAt j J (fun _ ↦ c) x :=
   isPseudoholomorphicAt_of_hasMFDerivAt (hasMFDerivAt_const c x) fun _ ↦ by simp
+
+/-- A constant map is pseudoholomorphic within every set at every point. -/
+@[simp]
+theorem isPseudoholomorphicWithinAt_const (j : SmoothAlmostComplexStructure I M)
+    (J : SmoothAlmostComplexStructure I' M') (c : M') (s : Set M) (x : M) :
+    IsPseudoholomorphicWithinAt j J (fun _ ↦ c) s x :=
+  (isPseudoholomorphicAt_const j J c x).isPseudoholomorphicWithinAt
+
+/-- A constant map is pseudoholomorphic on every set. -/
+@[simp]
+theorem isPseudoholomorphicOn_const (j : SmoothAlmostComplexStructure I M)
+    (J : SmoothAlmostComplexStructure I' M') (c : M') (s : Set M) :
+    IsPseudoholomorphicOn j J (fun _ ↦ c) s :=
+  fun x _ ↦ isPseudoholomorphicWithinAt_const j J c s x
 
 /-- A constant map is pseudoholomorphic. -/
 @[simp]
@@ -352,17 +380,36 @@ theorem IsPseudoholomorphic.comp (hv : IsPseudoholomorphic J K v)
 
 /-! ### Reversing the structures -/
 
+/-- Reversing both almost complex structures preserves pseudoholomorphicity within a set: a map is
+`(j, J)`-holomorphic there exactly when it is `(-j, -J)`-holomorphic. -/
+@[simp]
+theorem isPseudoholomorphicWithinAt_neg_neg_iff :
+    IsPseudoholomorphicWithinAt (-j) (-J) u s x ↔ IsPseudoholomorphicWithinAt j J u s x := by
+  rw [isPseudoholomorphicWithinAt_iff_isComplexLinearMap,
+    isPseudoholomorphicWithinAt_iff_isComplexLinearMap]
+  simp only [SmoothAlmostComplexStructure.neg_almostComplexStructureAt]
+  exact exists_congr fun _ ↦ and_congr_right fun _ ↦ isComplexLinearMap_neg_neg_iff
+
 /-- Reversing both almost complex structures preserves pseudoholomorphicity: a map is
 `(j, J)`-holomorphic exactly when it is `(-j, -J)`-holomorphic. -/
 @[simp]
-theorem isPseudoholomorphicAt_neg_neg :
+theorem isPseudoholomorphicAt_neg_neg_iff :
     IsPseudoholomorphicAt (-j) (-J) u x ↔ IsPseudoholomorphicAt j J u x := by
-  simp only [IsPseudoholomorphicAt, SmoothAlmostComplexStructure.neg_apply]
-  refine exists_congr fun u' ↦ and_congr_right fun _ ↦ ⟨fun h w ↦ ?_, fun h w ↦ ?_⟩
-  · have := h w
-    rw [map_neg] at this
-    exact neg_injective this
-  · rw [map_neg, h w]
+  rw [isPseudoholomorphicAt_iff_isComplexLinearMap, isPseudoholomorphicAt_iff_isComplexLinearMap]
+  simp only [SmoothAlmostComplexStructure.neg_almostComplexStructureAt]
+  exact exists_congr fun _ ↦ and_congr_right fun _ ↦ isComplexLinearMap_neg_neg_iff
+
+/-- Reversing both almost complex structures preserves pseudoholomorphicity on a set. -/
+@[simp]
+theorem isPseudoholomorphicOn_neg_neg_iff :
+    IsPseudoholomorphicOn (-j) (-J) u s ↔ IsPseudoholomorphicOn j J u s :=
+  forall₂_congr fun _ _ ↦ isPseudoholomorphicWithinAt_neg_neg_iff
+
+/-- Reversing both almost complex structures preserves global pseudoholomorphicity. -/
+@[simp]
+theorem isPseudoholomorphic_neg_neg_iff :
+    IsPseudoholomorphic (-j) (-J) u ↔ IsPseudoholomorphic j J u :=
+  forall_congr' fun _ ↦ isPseudoholomorphicAt_neg_neg_iff
 
 /-! ### Curves from the standard complex line -/
 
@@ -420,6 +467,28 @@ theorem isPseudoholomorphicAt_iff_isJHolomorphicAt
   rw [isPseudoholomorphicAt_iff_isComplexLinearMap]
   exact exists_congr fun _ ↦ and_congr_left' hasMFDerivAt_iff_hasFDerivAt
 
+/-- On model vector spaces, pseudoholomorphicity within a set at a point is the existing
+varying-structure predicate for maps between normed spaces. -/
+theorem isPseudoholomorphicWithinAt_iff_isJHolomorphicWithinAt
+    (j : SmoothAlmostComplexStructure (modelWithCornersSelf ℝ V) V)
+    (J : SmoothAlmostComplexStructure (modelWithCornersSelf ℝ W) W) (u : V → W) (s : Set V)
+    (x : V) :
+    IsPseudoholomorphicWithinAt j J u s x ↔
+      IsJHolomorphicWithinAt j.almostComplexStructureAt J.almostComplexStructureAt u s x := by
+  refine Iff.trans ?_ (isJHolomorphicWithinAt_iff _ _ _ _ _).symm
+  rw [isPseudoholomorphicWithinAt_iff_isComplexLinearMap]
+  exact exists_congr fun _ ↦ and_congr_left' hasMFDerivWithinAt_iff_hasFDerivWithinAt
+
+/-- On model vector spaces, pseudoholomorphicity on a set is the existing varying-structure
+predicate for maps between normed spaces. -/
+theorem isPseudoholomorphicOn_iff_isJHolomorphicOn
+    (j : SmoothAlmostComplexStructure (modelWithCornersSelf ℝ V) V)
+    (J : SmoothAlmostComplexStructure (modelWithCornersSelf ℝ W) W) (u : V → W) (s : Set V) :
+    IsPseudoholomorphicOn j J u s ↔
+      IsJHolomorphicOn j.almostComplexStructureAt J.almostComplexStructureAt u s := by
+  refine Iff.trans ?_ (isJHolomorphicOn_iff _ _ _ _).symm
+  exact forall₂_congr fun x _ ↦ isPseudoholomorphicWithinAt_iff_isJHolomorphicWithinAt j J u s x
+
 /-- On model vector spaces, pseudoholomorphicity is the existing varying-structure predicate for
 maps between normed spaces. -/
 theorem isPseudoholomorphic_iff_isJHolomorphic
@@ -443,6 +512,28 @@ theorem isPseudoholomorphicAt_constSmooth_iff (Jv : AlmostComplexStructure V)
   refine Iff.trans ?_ (isConstStructureJHolomorphicAt_iff Jv Jw u x).symm
   simp only [AlmostComplexStructure.constSmooth_almostComplexStructureAt]
   exact exists_congr fun _ ↦ and_congr_left' hasMFDerivAt_iff_hasFDerivAt
+
+/-- For the constant smooth structures of two pointwise almost complex structures on model vector
+spaces, pseudoholomorphicity within a set at a point is the flat, constant-structure predicate. -/
+theorem isPseudoholomorphicWithinAt_constSmooth_iff (Jv : AlmostComplexStructure V)
+    (Jw : AlmostComplexStructure W) (u : V → W) (s : Set V) (x : V) :
+    IsPseudoholomorphicWithinAt Jv.constSmooth Jw.constSmooth u s x ↔
+      IsConstStructureJHolomorphicWithinAt Jv Jw u s x := by
+  rw [isPseudoholomorphicWithinAt_iff_isComplexLinearMap]
+  refine Iff.trans ?_ (isConstStructureJHolomorphicWithinAt_iff Jv Jw u s x).symm
+  simp only [AlmostComplexStructure.constSmooth_almostComplexStructureAt]
+  exact exists_congr fun _ ↦ and_congr_left' hasMFDerivWithinAt_iff_hasFDerivWithinAt
+
+/-- For the constant smooth structures of two pointwise almost complex structures on model vector
+spaces, pseudoholomorphicity on a set is the flat, constant-structure predicate. -/
+theorem isPseudoholomorphicOn_constSmooth_iff (Jv : AlmostComplexStructure V)
+    (Jw : AlmostComplexStructure W) (u : V → W) (s : Set V) :
+    IsPseudoholomorphicOn Jv.constSmooth Jw.constSmooth u s ↔
+      IsConstStructureJHolomorphicOn Jv Jw u s := by
+  refine Iff.trans ?_ (isConstStructureJHolomorphicOn_iff Jv Jw u s).symm
+  refine forall₂_congr fun x _ ↦
+    Iff.trans (isPseudoholomorphicWithinAt_constSmooth_iff Jv Jw u s x) ?_
+  exact isConstStructureJHolomorphicWithinAt_iff Jv Jw u s x
 
 /-- For the constant smooth structures of two pointwise almost complex structures on model vector
 spaces, global pseudoholomorphicity is the flat, constant-structure predicate. -/
