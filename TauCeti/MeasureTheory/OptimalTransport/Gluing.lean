@@ -150,7 +150,6 @@ theorem fst_glue [SFinite π] [IsMarkovKernel κ] : (glue π κ).fst = π.fst :=
 
 /-- The middle marginal of a gluing is the middle marginal of the plan it extends: gluing does not
 disturb the coordinate the kernel is indexed by. -/
-@[simp]
 theorem fst_snd_glue [SFinite π] [IsMarkovKernel κ] : (glue π κ).snd.fst = π.snd := by
   rw [snd_glue, MeasureTheory.Measure.fst_compProd]
 
