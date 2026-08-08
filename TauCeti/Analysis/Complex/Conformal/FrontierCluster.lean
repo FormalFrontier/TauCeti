@@ -278,8 +278,8 @@ theorem clusterSetOn_subset_frontier_image_inter_frontier_image (hρ : 0 < ρ)
 boundary point.** If `f` agrees on `ball c r` with a map `F` continuous on `closedBall c r`, then
 at each `ζ` on the boundary circle and each `ε > 0` there is a crosscut radius `ρ > 0` and a bounded
 set `E` enclosing the cut-off piece with `diam (f '' (ball c r ∩ sphere ζ ρ) ∪ E) ≤ ε` — the
-hypothesis of `TauCeti.subsingleton_clusterSetOn_ball_of_forall_exists_diam_union_le`, satisfied
-with `E` a small closed ball around `F ζ`.
+hypothesis of `TauCeti.subsingleton_clusterSetOn_of_forall_exists_diam_union_le`, satisfied with
+`E` a small closed ball around `F ζ`.
 
 This is where `TauCeti.frontier_image_inter_frontier_image_subset_biUnion_clusterSetOn` does its
 work: continuity of `F` bounds the *cluster sets* over the cut-off arc, each of them being the
@@ -322,10 +322,10 @@ theorem exists_diam_union_le_of_continuousOn_closedBall_eqOn (hr : 0 < r)
 
 /-- **The crosscut criterion characterizes continuous extendability.** For `f` holomorphic and
 injective on `ball c r` with bounded image, the hypothesis of
-`TauCeti.exists_continuousOn_closedBall_eqOn_of_forall_exists_diam_union_le` — at every boundary
-point and every tolerance, a crosscut radius and a bounded set enclosing the cut-off piece, small
-together with the image crosscut — holds **exactly** when `f` extends continuously to the closed
-disc.
+`TauCeti.exists_continuousOn_closure_eqOn_of_forall_exists_diam_union_le`, read on the disc — at
+every boundary point and every tolerance, a crosscut radius and a bounded set enclosing the cut-off
+piece, small together with the image crosscut — holds **exactly** when `f` extends continuously to
+the closed disc.
 
 The forward direction is that criterion; the converse is
 `TauCeti.exists_diam_union_le_of_continuousOn_closedBall_eqOn`. So the criterion is not stronger
@@ -338,9 +338,12 @@ theorem forall_exists_diam_union_le_iff_exists_continuousOn_closedBall_eqOn (hr 
     (∀ w ∈ sphere c r, ∀ ε > 0, ∃ ρ > 0, ∃ E : Set ℂ, Bornology.IsBounded E ∧
         frontier (f '' ball c r) ∩ frontier (f '' (ball c r ∩ ball w ρ)) ⊆ E ∧
         diam (f '' (ball c r ∩ sphere w ρ) ∪ E) ≤ ε) ↔
-      ∃ F : ℂ → ℂ, ContinuousOn F (closedBall c r) ∧ EqOn F f (ball c r) :=
-  ⟨exists_continuousOn_closedBall_eqOn_of_forall_exists_diam_union_le hr hd hinj hb,
-    fun ⟨_, hFc, hFf⟩ _ hw _ hε =>
-      exists_diam_union_le_of_continuousOn_closedBall_eqOn hr hd hinj hFc hFf hw hε⟩
+      ∃ F : ℂ → ℂ, ContinuousOn F (closedBall c r) ∧ EqOn F f (ball c r) := by
+  refine ⟨fun h => ?_, fun ⟨_, hFc, hFf⟩ _ hw _ hε =>
+    exists_diam_union_le_of_continuousOn_closedBall_eqOn hr hd hinj hFc hFf hw hε⟩
+  obtain ⟨F, hFc, hFf⟩ :=
+    exists_continuousOn_closure_eqOn_of_forall_exists_diam_union_le isOpen_ball hd hinj hb
+      fun w hw => h w (by rwa [frontier_ball c hr.ne'] at hw)
+  exact ⟨F, closure_ball c hr.ne' ▸ hFc, hFf⟩
 
 end TauCeti
