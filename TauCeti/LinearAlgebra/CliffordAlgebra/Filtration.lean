@@ -129,6 +129,21 @@ theorem mem_filtrationPreviousRestricted_iff (Q : QuadraticForm R M) (k : ℕ)
       (x : CliffordAlgebra Q) ∈ filtrationPrevious Q k :=
   Iff.rfl
 
+/-- The restricted preceding filtration is trivial in degree zero. -/
+@[simp]
+theorem filtrationPreviousRestricted_zero (Q : QuadraticForm R M) :
+    filtrationPreviousRestricted Q 0 = ⊥ := by
+  ext x
+  simp [filtrationPreviousRestricted, Submodule.submoduleOf]
+
+/-- In successor degree, the restricted preceding filtration is the preceding filtration step
+viewed inside the successor step. -/
+@[simp]
+theorem filtrationPreviousRestricted_succ (Q : QuadraticForm R M) (k : ℕ) :
+    filtrationPreviousRestricted Q (k + 1) =
+      (filtration Q k).submoduleOf (filtration Q (k + 1)) := by
+  simp [filtrationPreviousRestricted]
+
 /-- The degree-`k` piece of the associated graded Clifford filtration. -/
 abbrev FiltrationGradedPiece (Q : QuadraticForm R M) (k : ℕ) : Type max u v :=
   filtration Q k ⧸ filtrationPreviousRestricted Q k

@@ -95,8 +95,7 @@ private theorem zero_form_filtrationPreviousRestricted_succ (k : ℕ) :
     filtrationPreviousRestricted (0 : QuadraticForm R M) (k + 1) =
       Submodule.comap (filtration (0 : QuadraticForm R M) (k + 1)).subtype
         (filtration (0 : QuadraticForm R M) k) := by
-  ext x
-  rw [mem_filtrationPreviousRestricted_iff, filtrationPrevious_succ, Submodule.mem_comap]
+  rw [filtrationPreviousRestricted_succ]
   rfl
 
 /-- The successive zero-form Clifford filtration quotient is the degree `k + 1` exterior power. -/
