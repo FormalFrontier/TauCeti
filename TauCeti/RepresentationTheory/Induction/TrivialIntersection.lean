@@ -20,9 +20,11 @@ its norm.  Concretely, if `f` is a class function on `H` with `f 1 = 0` then
 
 The first statement is `TauCeti.ClassFunction.comap_subtype_ind_eq_self` and the second is
 `TauCeti.characterPairing_ind_ind`.  This is the isometry that the exceptional-character route to
-Frobenius's theorem runs on: it is what makes a difference `χᵢ - χⱼ` of irreducible characters of
-`H`, which vanishes at `1` and has norm `2`, induce to a norm-`2` virtual character of `G`, so that
-it is `±` a difference of two irreducible characters of `G`.
+Frobenius's theorem runs on: it is what makes a difference `χᵢ - χⱼ` of two *distinct* ordinary
+irreducible characters of `H` *of the same degree*, which then vanishes at `1` and has norm `2`,
+induce to a norm-`2` virtual character of `G`, so that it is `±` a difference of two irreducible
+characters of `G`.  (Both qualifications are needed: `(χᵢ - χⱼ) 1 = χᵢ 1 - χⱼ 1` is the difference
+of the two degrees, and the norm is `2` by orthonormality only for distinct ordinary characters.)
 
 The hypothesis is not the tautology that `f` vanishes off `H`, which holds for every class function
 on `H` and gives no such conclusion.  What is used is the trivial-intersection condition: for
@@ -35,9 +37,9 @@ terms all equal `f x`.
 * `TauCeti.indClassFun_apply_coe`: the induced class function agrees with `f` on `H`.
 * `TauCeti.ClassFunction.comap_subtype_ind_eq_self`: restriction undoes induction, `Res ∘ Ind = id`.
 * `TauCeti.characterPairing_ind_ind`: induction preserves the character pairing.
-* `TauCeti.characterPairing_ind_ind_of_isTISet` and
-  `TauCeti.characterPairing_ind_self_of_isTISet`: the same, for a class function supported on a
-  trivial-intersection set of a Frobenius complement, which is the form Frobenius's theorem uses.
+* `TauCeti.characterPairing_ind_ind_of_isTISet` and `TauCeti.isometry_ind_of_isTISet`: the same,
+  for a class function supported on a trivial-intersection set of a Frobenius complement, which is
+  the form Frobenius's theorem uses.
 
 ## Implementation notes
 
@@ -142,10 +144,14 @@ theorem characterPairing_ind_ind_of_isTISet [Fintype G] (hG : IsUnit (Nat.card G
 
 open scoped Classical in
 /-- **Induction from a trivial-intersection set preserves the norm**, the special case of
-`TauCeti.characterPairing_ind_ind_of_isTISet` at equal arguments.  A difference of two irreducible
-characters of `H` is supported off the identity and has norm `2`, so it induces to a norm-`2`
-virtual character of `G`; that is the step the exceptional-character correspondence begins with. -/
-theorem characterPairing_ind_self_of_isTISet [Fintype G] (hG : IsUnit (Nat.card G : k))
+`TauCeti.characterPairing_ind_ind_of_isTISet` at equal arguments.  A difference of two distinct
+ordinary irreducible characters of `H` of the same degree is supported off the identity and has
+norm `2`, so it induces to a norm-`2` virtual character of `G`; that is the step the
+exceptional-character correspondence begins with.
+
+The name is the one the character-theory roadmap pins for this result: preserving the pairing at
+equal arguments is preservation of the norm, which is what "isometry" refers to. -/
+theorem isometry_ind_of_isTISet [Fintype G] (hG : IsUnit (Nat.card G : k))
     (hH : IsFrobeniusComplement H) (hS : IsTISet S H) (f : ClassFunction k H)
     (hf : ∀ y : H, (y : G) ∉ S → f.1 y = 0) :
     ClassFunction.characterPairing (ClassFunction.ind H f) (ClassFunction.ind H f) =

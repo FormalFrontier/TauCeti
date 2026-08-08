@@ -38,7 +38,7 @@ argument for Frobenius's theorem.  That induction statement is
 ## Main results
 
 * `TauCeti.isTISubgroup_iff_inf_conj_smul_eq_bot`: the lattice form of the definition.
-* `TauCeti.IsTISubgroup.normalizer_eq`: a nontrivial trivial-intersection subgroup is
+* `TauCeti.IsTISubgroup.normalizer_eq_self`: a nontrivial trivial-intersection subgroup is
   self-normalizing.
 * `TauCeti.IsTISubgroup.isTISet`: an `H`-invariant subset of `H` avoiding the identity is a
   trivial-intersection set, and in particular so is the nonidentity part of `H`.
@@ -85,7 +85,7 @@ theorem conj_notMem (hH : IsTISubgroup H) {g x : G} (hg : g ∉ H) (hx : x ∈ H
 /-- **A nontrivial trivial-intersection subgroup is self-normalizing.**  An element of the
 normalizer conjugates a chosen nonidentity element of `H` back into `H`, so it cannot lie outside
 `H`. -/
-theorem normalizer_eq (hH : IsTISubgroup H) (hne : H ≠ ⊥) :
+theorem normalizer_eq_self (hH : IsTISubgroup H) (hne : H ≠ ⊥) :
     Subgroup.normalizer (H : Set G) = H := by
   refine le_antisymm (fun g hg => ?_) Subgroup.le_normalizer
   obtain ⟨⟨x, hx⟩, hx1⟩ := Subgroup.ne_bot_iff_exists_ne_one.mp hne
@@ -110,7 +110,7 @@ theorem isTISubgroup_iff_inf_conj_smul_eq_bot :
     exact hH (g := g⁻¹) (by simpa using hg) hyH (by simpa using (key g y).mp hyc)
   · intro hH g x hg hx hgx
     have hmem : g * x * g⁻¹ ∈ H ⊓ MulAut.conj g • H :=
-      Subgroup.mem_inf.mpr ⟨hgx, (key g _).mpr (by rwa [show g⁻¹ * (g * x * g⁻¹) * g = x by group])⟩
+      Subgroup.mem_inf.mpr ⟨hgx, (key g _).mpr (by simpa [mul_assoc] using hx)⟩
     have h1 : g * x * g⁻¹ = 1 := (Subgroup.eq_bot_iff_forall _).mp (hH g hg) _ hmem
     exact mul_eq_left.mp (mul_inv_eq_one.mp h1)
 
@@ -144,8 +144,7 @@ theorem conj_image_eq (hS : IsTISet S H) {h : G} (hh : h ∈ H) :
   · intro x hx
     refine ⟨h⁻¹ * x * h, ?_, ?_⟩
     · simpa using hS.conj_mem h⁻¹ (H.inv_mem hh) x hx
-    · change h * (h⁻¹ * x * h) * h⁻¹ = x
-      group
+    · group
 
 /-- **Distinct conjugates of a trivial-intersection set are disjoint**, in the form the name of the
 notion refers to. -/
@@ -203,9 +202,9 @@ structure IsFrobeniusComplement (H : Subgroup G) : Prop where
 namespace IsFrobeniusComplement
 
 /-- A Frobenius complement is self-normalizing. -/
-theorem normalizer_eq (hH : IsFrobeniusComplement H) :
+theorem normalizer_eq_self (hH : IsFrobeniusComplement H) :
     Subgroup.normalizer (H : Set G) = H :=
-  hH.isTISubgroup.normalizer_eq hH.ne_bot
+  hH.isTISubgroup.normalizer_eq_self hH.ne_bot
 
 /-- The nonidentity part of a Frobenius complement is a trivial-intersection set. -/
 theorem isTISet_diff_one (hH : IsFrobeniusComplement H) : IsTISet ((H : Set G) \ {1}) H :=
@@ -216,7 +215,7 @@ normalizer is not the whole group. -/
 theorem not_normal (hH : IsFrobeniusComplement H) : ¬H.Normal := by
   intro hnorm
   have htop : Subgroup.normalizer (H : Set G) = ⊤ := Subgroup.normalizer_eq_top_iff.mpr hnorm
-  exact hH.ne_top (hH.normalizer_eq ▸ htop)
+  exact hH.ne_top (hH.normalizer_eq_self ▸ htop)
 
 end IsFrobeniusComplement
 
