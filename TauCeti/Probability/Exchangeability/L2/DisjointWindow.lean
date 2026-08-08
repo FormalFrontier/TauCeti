@@ -74,8 +74,9 @@ theorem window_selection_injective {m N : ℕ} (js : Fin m → Fin N) :
   · exact absurd hab (window_lt_window (js a).isLt h).ne
   · exact absurd hab.symm (window_lt_window (js b).isLt h).ne
 
-/-- **The disjoint-window instance.** The expansion of the previous theorem at the windows
-`window N i`, where every tuple is an injective selection by `window_selection_injective`. -/
+/-- **The disjoint-window instance.** This specialises `prod_blockAverage_eq_expect`, imported from
+`L2/BlockAverages.lean`, to the windows `window N i`, where every tuple is an injective selection by
+`window_selection_injective`. -/
 theorem prod_blockAverage_window_eq_expect {m N : ℕ} (Y : Fin m → ℕ → Ω → ℝ) (ω : Ω) :
     (∏ i : Fin m, blockAverage (Y i) (fun j : Fin N => window N (i : ℕ) (j : ℕ)) ω)
       = 𝔼 js : Fin m → Fin N, ∏ i : Fin m, Y i (window N (i : ℕ) (js i : ℕ)) ω :=

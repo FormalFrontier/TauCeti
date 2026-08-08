@@ -40,6 +40,8 @@ restriction of an intertwiner, the functor laws, naturality — is used straight
 
 * `TauCeti.resFunctor_comp`, `TauCeti.actionRes_comp`: restriction along a composite is
   restriction twice over.
+* `TauCeti.finrank_hom_res_mulEquiv`: restriction along an isomorphism of groups preserves the
+  dimension of an intertwining space.
 * `TauCeti.isIrreducible_comp_surjective_iff`: restriction along a surjective monoid homomorphism
   preserves irreducibility, with `TauCeti.isIrreducible_comp_equiv_iff` as the isomorphism case.
 
@@ -115,6 +117,23 @@ theorem resFunctorEquiv_inverse (e : H ≃* K) :
   (rfl)
 
 end Functor
+
+section Intertwining
+
+variable [Field k] {M M' : Type u} [Group M] [Group M']
+
+/-- Restriction along an isomorphism of groups is an equivalence of representation categories, so
+it leaves the dimension of an intertwining space unchanged. -/
+theorem finrank_hom_res_mulEquiv (e : M ≃* M') (X Y : FDRep k M') :
+    Module.finrank k ((Action.res (FGModuleCat k) (e : M →* M')).obj X ⟶
+        (Action.res (FGModuleCat k) (e : M →* M')).obj Y) = Module.finrank k (X ⟶ Y) :=
+  have hff : (Action.res (FGModuleCat.{u, u} k) (e : M →* M')).FullyFaithful :=
+    (Action.resEquiv (FGModuleCat.{u, u} k) e).fullyFaithfulFunctor
+  (LinearEquiv.ofBijective
+    ((Action.res (FGModuleCat.{u, u} k) (e : M →* M')).mapLinearMap k (X := X) (Y := Y))
+    hff.homEquiv.bijective).finrank_eq.symm
+
+end Intertwining
 
 section Subrepresentation
 

@@ -16,8 +16,8 @@ suppose `N` is an indecomposable direct summand of `M`. Then `N` is isomorphic t
 summands `Q i₀`, and it may be *exchanged* for it: `M` is also the direct sum of `N` and the
 remaining summands `⨆ j ≠ i₀, Q j`.
 
-The argument is the classical one. Writing `p` for the projection of `M` onto `N`, the
-endomorphisms of `N` obtained by projecting `N` into `Q i` and back sum to the identity, because the
+The argument is the classical one. The endomorphisms of `N` obtained by projecting `N` into `Q i`
+and back sum to the identity, because the
 projections `TauCeti.internalProjection` onto the summands do
 (`TauCeti.sum_coe_internalProjection`). The hypothesis is that `Module.End A N` is local, and in a
 local ring a finite sum can only be a unit if one of its terms is
@@ -62,6 +62,22 @@ universe u v w
 
 variable {A : Type u} {M : Type v} [Ring A] [AddCommGroup M] [Module A M]
 
+/-- The components of the identity of `N` along the decomposition `Q`: projecting `N` into the
+summand `Q i` and back onto `N` along its complement `S` gives a family of endomorphisms of `N`
+summing to the identity, because the projections onto the summands sum to the identity of `M`. -/
+private theorem sum_projectionOnto_comp_internalProjection_eq_one {ι : Type w} [Fintype ι]
+    {Q : ι → Submodule A M} (hQi : iSupIndep Q) (hQt : ⨆ i, Q i = ⊤) {N S : Submodule A M}
+    (hNS : IsCompl N S) :
+    ∑ i, ((N.projectionOnto S hNS ∘ₗ (Q i).subtype) ∘ₗ
+      (internalProjection hQi hQt i).domRestrict N) = 1 := by
+  refine LinearMap.ext fun x ↦ ?_
+  have hx : N.projectionOnto S hNS (∑ i, ((internalProjection hQi hQt i (x : M) : M))) = x := by
+    rw [sum_coe_internalProjection hQi hQt, Submodule.projectionOnto_apply_left]
+  rw [map_sum] at hx
+  rw [LinearMap.sum_apply]
+  simpa only [LinearMap.comp_apply, LinearMap.domRestrict_apply, Submodule.subtype_apply,
+    Module.End.one_apply] using hx
+
 /-- **Azumaya's exchange lemma.** Let `M` be the internal direct sum of a finite family `Q` of
 indecomposable submodules, and let `N` be a direct summand of `M` whose endomorphism ring is local
 (so in particular `N` is nonzero). Then `N` is isomorphic to one of the `Q i₀`, and can be exchanged
@@ -76,51 +92,22 @@ theorem exists_linearEquiv_and_isCompl_biSup_ne
     ∃ i₀ : ι, Nonempty (N ≃ₗ[A] Q i₀) ∧ IsCompl N (⨆ j, ⨆ (_ : j ≠ i₀), Q j) := by
   have _ : Fintype ι := Fintype.ofFinite ι
   have _ : Nontrivial N := nontrivial_of_isLocalRing_end (A := A)
-  set p : M →ₗ[A] N := N.projectionOnto S hNS with hp
-  set f : ι → Module.End A N :=
-    fun i ↦ (p ∘ₗ (Q i).subtype) ∘ₗ (internalProjection hQi hQt i ∘ₗ N.subtype) with hf
-  -- The components of the identity of `N` along the decomposition `Q`.
-  have hsum : ∑ i, f i = 1 := by
-    refine LinearMap.ext fun x ↦ ?_
-    have hx : p (∑ i, ((internalProjection hQi hQt i (x : M) : M))) = x := by
-      rw [sum_coe_internalProjection hQi hQt, hp, Submodule.projectionOnto_apply_left]
-    rw [map_sum] at hx
-    rw [LinearMap.sum_apply]
-    exact hx
   -- Locality of `Module.End A N` picks out an index whose component is invertible.
-  obtain ⟨i₀, -, hunit⟩ : ∃ i₀ ∈ Finset.univ, IsUnit (f i₀) :=
-    IsLocalRing.exists_of_isUnit_sum (by rw [hsum]; exact isUnit_one)
-  set α : N →ₗ[A] Q i₀ := internalProjection hQi hQt i₀ ∘ₗ N.subtype with hα
-  have hbij : Function.Bijective α :=
-    (hQind i₀).bijective_of_bijective_comp (g := p ∘ₗ (Q i₀).subtype)
+  obtain ⟨i₀, -, hunit⟩ : ∃ i₀ ∈ Finset.univ, IsUnit ((N.projectionOnto S hNS ∘ₗ (Q i₀).subtype)
+      ∘ₗ (internalProjection hQi hQt i₀).domRestrict N) :=
+    IsLocalRing.exists_of_isUnit_sum
+      (by rw [sum_projectionOnto_comp_internalProjection_eq_one]; exact isUnit_one)
+  -- A split injection into the indecomposable `Q i₀` is already an isomorphism.
+  have hbij : Function.Bijective ((internalProjection hQi hQt i₀).domRestrict N) :=
+    (hQind i₀).bijective_of_bijective_comp (g := N.projectionOnto S hNS ∘ₗ (Q i₀).subtype)
       ((Module.End.isUnit_iff _).mp hunit)
-  refine ⟨i₀, ⟨LinearEquiv.ofBijective α hbij⟩, ?_⟩
-  set T : Submodule A M := ⨆ j, ⨆ (_ : j ≠ i₀), Q j with hT
-  -- `T` is exactly what the `i₀`-projection kills.
-  have hTker : T = LinearMap.ker (internalProjection hQi hQt i₀) := by
-    rw [hT, ker_internalProjection]
-  -- Each element of `M` differs from its `i₀`-component by an element of `T`.
-  have hrest : ∀ x : M, x - ((internalProjection hQi hQt i₀ x : M)) ∈ T := fun x ↦ by
-    rw [hTker, LinearMap.mem_ker, map_sub, internalProjection_apply, sub_self]
-  constructor
-  · rw [Submodule.disjoint_def]
-    intro x hxN hxT
-    have hzero : α ⟨x, hxN⟩ = 0 := by
-      rw [hα, LinearMap.comp_apply, Submodule.subtype_apply, ← LinearMap.mem_ker, ← hTker]
-      exact hxT
-    have hx0 := hbij.1 (hzero.trans (map_zero α).symm)
-    simpa using congrArg Subtype.val hx0
-  · rw [codisjoint_iff, eq_top_iff]
-    intro m _
-    obtain ⟨n, hn⟩ := hbij.2 (internalProjection hQi hQt i₀ m)
-    have hcomp : ((internalProjection hQi hQt i₀ (n : M) : M)) =
-        ((internalProjection hQi hQt i₀ m : M)) := by
-      rw [← hn, hα, LinearMap.comp_apply, Submodule.subtype_apply]
-    have hmem : ((internalProjection hQi hQt i₀ m : M)) ∈ N ⊔ T := by
-      rw [← hcomp, ← sub_sub_cancel (n : M) ((internalProjection hQi hQt i₀ (n : M) : M))]
-      exact Submodule.sub_mem _ (Submodule.mem_sup_left n.2)
-        (Submodule.mem_sup_right (hrest (n : M)))
-    rw [← sub_add_cancel m ((internalProjection hQi hQt i₀ m : M))]
-    exact Submodule.add_mem _ (Submodule.mem_sup_right (hrest m)) hmem
+  -- The exchange is the kernel characterisation of injectivity and surjectivity on `N`,
+  -- since the remaining summands are exactly the kernel of the `i₀`-projection.
+  refine ⟨i₀, ⟨LinearEquiv.ofBijective _ hbij⟩, ?_, ?_⟩
+  · rw [← ker_internalProjection hQi hQt i₀]
+    exact LinearMap.injective_domRestrict_iff.mp hbij.1
+  · rw [← ker_internalProjection hQi hQt i₀]
+    exact (LinearMap.surjective_domRestrict_iff
+      (internalProjection_surjective hQi hQt i₀)).mp hbij.2
 
 end TauCeti
