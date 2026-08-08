@@ -21,13 +21,13 @@ public import Mathlib.RingTheory.SimpleRing.Matrix
 public import TauCeti.Algebra.CentralSimple.Opposite
 -- `TauCeti.Algebra.IsSplittingField` occurs in the statements below.
 public import TauCeti.Algebra.CentralSimple.Splitting
--- `TauCeti.IsSimpleRing.moduleEnd` supplies the simplicity half of the central simple structure on
--- `Module.End K V`, which is part of a statement below.
-public import TauCeti.RingTheory.Semisimple.EndAlgebra
--- Non-public: the matrix identity `Mₚ(Mᵩ(R)) ≃ₐ Mₚ˟ᵩ(R)` and the prime field of the worked
--- example are used only inside proofs, so downstream importers do not pay for them.
+-- Non-public: the matrix identity `Mₚ(Mᵩ(R)) ≃ₐ Mₚ˟ᵩ(R)`, the prime field of the worked example,
+-- and `TauCeti.IsSimpleRing.moduleEnd` -- which proves, but does not appear in, the
+-- `IsSimpleRing (Module.End K V)` instance declared below -- are used only inside proofs, so
+-- downstream importers do not pay for them.
 import Mathlib.Data.Matrix.Composition
 import Mathlib.Algebra.Field.ZMod
+import TauCeti.RingTheory.Semisimple.EndAlgebra
 
 /-!
 # Brauer triviality
