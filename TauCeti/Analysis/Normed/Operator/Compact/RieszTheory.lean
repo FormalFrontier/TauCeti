@@ -65,11 +65,10 @@ variable {K : X →L[𝕜] X}
 /-- The kernel of `1 - K` is the `1`-eigenspace of `K`. -/
 @[simp]
 theorem ker_one_sub (K : X →L[𝕜] X) :
-    LinearMap.ker ((1 - K : X →L[𝕜] X) : X →ₗ[𝕜] X) = End.eigenspace (K : X →ₗ[𝕜] X) 1 := by
+    LinearMap.ker (1 - (K : X →ₗ[𝕜] X)) = End.eigenspace (K : X →ₗ[𝕜] X) 1 := by
   ext x
   rw [LinearMap.mem_ker, End.mem_eigenspace_iff]
-  simp only [ContinuousLinearMap.coe_coe, sub_apply, one_apply_eq_self]
-  rw [sub_eq_zero, one_smul]
+  rw [LinearMap.sub_apply, Module.End.one_apply, one_smul, sub_eq_zero]
   exact eq_comm
 
 namespace IsCompactOperator
@@ -142,7 +141,7 @@ theorem exists_pos_mul_norm_le_of_disjoint_ker (hK : IsCompactOperator K) {M : S
       (((1 : X →L[𝕜] X) - K).continuous.tendsto y).comp hvsub
     have h0 : Tendsto (fun k => (1 - K : X →L[𝕜] X) (v (ψ k))) atTop (𝓝 0) :=
       hAtendsto.comp hψ.tendsto_atTop
-    simpa using tendsto_nhds_unique h1 h0
+    exact LinearMap.mem_ker.mpr (tendsto_nhds_unique h1 h0)
   have hy0 : y = 0 := by simpa using hdisj.le_bot ⟨hyker, hyM⟩
   have hyge : ‖c‖⁻¹ ≤ ‖y‖ := ge_of_tendsto' hvsub.norm fun k => hvge (ψ k)
   rw [hy0, norm_zero] at hyge
@@ -220,7 +219,8 @@ variable [CompleteSpace 𝕜]
 /-- The kernel of a compact perturbation of the identity is finite dimensional. -/
 theorem finiteDimensional_ker_one_sub (hK : IsCompactOperator K) :
     FiniteDimensional 𝕜 (LinearMap.ker ((1 - K : X →L[𝕜] X) : X →ₗ[𝕜] X)) := by
-  rw [TauCeti.ker_one_sub]
+  rw [ContinuousLinearMap.toLinearMap_sub, ContinuousLinearMap.toLinearMap_one,
+    TauCeti.ker_one_sub]
   exact finiteDimensional_eigenspace hK one_ne_zero
 
 variable [IsRCLikeNormedField 𝕜] [CompleteSpace X]
