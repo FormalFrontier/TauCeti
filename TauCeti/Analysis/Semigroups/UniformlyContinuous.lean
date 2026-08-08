@@ -26,8 +26,8 @@ generator uniqueness identifies the semigroup with its operator exponential.
 
 ## Main results
 
-* `StronglyContinuousSemigroup.domain_eq_top_of_continuous`: an operator-norm continuous
-  semigroup has full generator domain.
+* `StronglyContinuousSemigroup.domain_eq_top_of_continuousAt_zero`: operator-norm continuity at
+  zero implies that the generator has full domain.
 * `StronglyContinuousSemigroup.continuous_iff_domain_eq_top`: operator-norm continuity is
   equivalent to boundedness of the generator.
 
@@ -57,12 +57,71 @@ private theorem normalizedIntegral_sub_one_eq (S : StronglyContinuousSemigroup X
     intervalIntegral.integral_const, smul_sub, smul_smul, sub_zero,
     inv_mul_cancel₀ ht.ne', one_smul]
 
-/-- If a strongly continuous semigroup is continuous in operator norm, then every vector lies in
-the domain of its generator. -/
-theorem domain_eq_top_of_continuous (S : StronglyContinuousSemigroup X)
-    (hS : Continuous fun t : NNReal ↦ S t) : S.domain = ⊤ := by
+private theorem continuous_of_continuousAt_zero (S : StronglyContinuousSemigroup X)
+    (hS : ContinuousAt (fun t : NNReal ↦ S t) 0) : Continuous fun t : NNReal ↦ S t := by
+  obtain ⟨ω, M, hb⟩ := S.existsGrowthBound
+  rw [continuous_iff_continuousAt]
+  intro t₀
+  rw [Metric.continuousAt_iff]
+  intro ε hε
+  let C := max ‖S t₀‖ (M * Real.exp (|ω| * t₀)) + 1
+  have hC : 0 < C := by
+    dsimp [C]
+    positivity
+  obtain ⟨δ, hδ, hsmall⟩ := Metric.continuousAt_iff.mp hS (ε / C) (div_pos hε hC)
+  refine ⟨δ, hδ, fun t ht ↦ ?_⟩
+  rcases le_total t₀ t with ht₀t | htt₀
+  · have hdiff : S t - S t₀ = (S t₀).comp (S (t - t₀) - 1) := by
+      have hmap := S.map_add t₀ (t - t₀)
+      rw [add_tsub_cancel_of_le ht₀t] at hmap
+      rw [hmap, ContinuousLinearMap.comp_sub]
+      congr 1
+    have hsmall' : ‖S (t - t₀) - 1‖ < ε / C := by
+      simpa only [S.map_zero, ContinuousLinearMap.one_def, dist_eq_norm] using
+        hsmall (by simpa [NNReal.dist_eq, NNReal.coe_sub ht₀t] using ht)
+    rw [dist_eq_norm, hdiff]
+    calc
+      ‖(S t₀).comp (S (t - t₀) - 1)‖
+          ≤ ‖S t₀‖ * ‖S (t - t₀) - 1‖ := ContinuousLinearMap.opNorm_comp_le _ _
+      _ < C * (ε / C) := by
+        gcongr
+        dsimp [C]
+        linarith [le_max_left ‖S t₀‖ (M * Real.exp (|ω| * t₀))]
+      _ = ε := by field_simp
+  · have hdiff : S t - S t₀ = (S t).comp (1 - S (t₀ - t)) := by
+      have hmap := S.map_add t (t₀ - t)
+      rw [add_tsub_cancel_of_le htt₀] at hmap
+      rw [hmap, ContinuousLinearMap.comp_sub]
+      congr 1
+    have hsmall' : ‖1 - S (t₀ - t)‖ < ε / C := by
+      rw [← norm_neg, neg_sub]
+      simpa only [S.map_zero, ContinuousLinearMap.one_def, dist_eq_norm] using
+        hsmall (by simpa [NNReal.dist_eq, NNReal.coe_sub htt₀, abs_sub_comm] using ht)
+    have hSt : ‖S t‖ < C := by
+      have hω : ω * (t : ℝ) ≤ |ω| * (t₀ : ℝ) := calc
+        ω * (t : ℝ) ≤ |ω| * (t : ℝ) :=
+          mul_le_mul_of_nonneg_right (le_abs_self ω) t.2
+        _ ≤ |ω| * (t₀ : ℝ) := mul_le_mul_of_nonneg_left (by exact_mod_cast htt₀) (abs_nonneg ω)
+      have hbound : ‖S t‖ ≤ M * Real.exp (|ω| * t₀) := by
+        rw [← S.realOperator_coe]
+        exact (hb.bound t t.2).trans (mul_le_mul_of_nonneg_left
+          (Real.exp_le_exp.mpr hω) (zero_le_one.trans hb.one_le))
+      dsimp [C]
+      linarith [hbound, le_max_right ‖S t₀‖ (M * Real.exp (|ω| * t₀))]
+    rw [dist_eq_norm, hdiff]
+    calc
+      ‖(S t).comp (1 - S (t₀ - t))‖
+          ≤ ‖S t‖ * ‖1 - S (t₀ - t)‖ := ContinuousLinearMap.opNorm_comp_le _ _
+      _ < C * (ε / C) := by gcongr
+      _ = ε := by field_simp
+
+/-- If a strongly continuous semigroup is continuous in operator norm at zero, then every vector
+lies in the domain of its generator. -/
+theorem domain_eq_top_of_continuousAt_zero (S : StronglyContinuousSemigroup X)
+    (hS : ContinuousAt (fun t : NNReal ↦ S t) 0) : S.domain = ⊤ := by
+  have hS' := S.continuous_of_continuousAt_zero hS
   have hreal : Continuous fun t : ℝ ↦ S.realOperator t :=
-    (hS.comp continuous_real_toNNReal).congr fun t ↦ (S.realOperator_eq_toNNReal t).symm
+    (hS'.comp continuous_real_toNNReal).congr fun t ↦ (S.realOperator_eq_toNNReal t).symm
   obtain ⟨δ, hδ, hsmall⟩ := Metric.continuousAt_iff.mp hreal.continuousAt (1 / 2) (by norm_num)
   let t : ℝ := δ / 2
   have ht : 0 < t := half_pos hδ
@@ -110,6 +169,12 @@ theorem domain_eq_top_of_continuous (S : StronglyContinuousSemigroup X)
   rw [hB_apply, horbit]
   exact S.domain.smul_mem t⁻¹ (S.integral_orbit_mem_domain x ht)
 
+/-- If a strongly continuous semigroup is continuous in operator norm, then every vector lies in
+the domain of its generator. -/
+theorem domain_eq_top_of_continuous (S : StronglyContinuousSemigroup X)
+    (hS : Continuous fun t : NNReal ↦ S t) : S.domain = ⊤ :=
+  S.domain_eq_top_of_continuousAt_zero hS.continuousAt
+
 private noncomputable def generatorDomainEquivOfDomainEqTop
     (S : StronglyContinuousSemigroup X) (hS : S.domain = ⊤) : X ≃ₗ[ℝ] S.generator.domain :=
   Submodule.topEquiv.symm.trans <| LinearEquiv.ofEq _ _ ((S.generator_domain.trans hS).symm)
@@ -121,10 +186,11 @@ private noncomputable def generatorLinearMapOfDomainEqTop (S : StronglyContinuou
 omit [CompleteSpace X] in
 @[simp]
 private theorem generatorLinearMapOfDomainEqTop_apply (S : StronglyContinuousSemigroup X)
-    (hS : S.domain = ⊤) (x : X) :
+    (hS : S.domain = ⊤) (x : X) (hx : x ∈ S.generator.domain) :
     S.generatorLinearMapOfDomainEqTop hS x =
-      S.generator ⟨x, by rw [S.generator_domain, hS]; exact Submodule.mem_top⟩ := by
-  rfl
+      S.generator ⟨x, hx⟩ := by
+  change S.generator _ = S.generator _
+  congr
 
 omit [CompleteSpace X] in
 private theorem generator_eq_toPMap_generatorLinearMapOfDomainEqTop
@@ -132,8 +198,9 @@ private theorem generator_eq_toPMap_generatorLinearMapOfDomainEqTop
     S.generator = (S.generatorLinearMapOfDomainEqTop hS).toPMap ⊤ := by
   apply LinearPMap.ext
   · simp [hS]
-  · intro x hx _
-    rfl
+  · intro x hx hg
+    simp only [LinearMap.toPMap_domain, LinearMap.toPMap_apply] at hg ⊢
+    exact (S.generatorLinearMapOfDomainEqTop_apply hS x hx).symm
 
 private theorem isClosed_graph_generatorLinearMapOfDomainEqTop
     (S : StronglyContinuousSemigroup X) (hS : S.domain = ⊤) :
@@ -171,7 +238,7 @@ theorem continuous_iff_domain_eq_top (S : StronglyContinuousSemigroup X) :
       (S.isClosed_graph_generatorLinearMapOfDomainEqTop hS)
     have hgen : S.generator = (A : X →ₗ[ℝ] X).toPMap ⊤ := by
       rw [S.generator_eq_toPMap_generatorLinearMapOfDomainEqTop hS]
-      congr 1
+      rw [ContinuousLinearMap.coe_ofIsClosedGraph]
     rw [S.eq_ofBounded_of_generator_eq A hgen]
     exact ofBounded_continuous A
 
