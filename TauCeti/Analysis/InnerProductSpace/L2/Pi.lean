@@ -288,55 +288,51 @@ theorem setIntegral_pi_eq_zero_of_forall_inner {h : Lp 𝕜 2 (Measure.pi μ)}
     _ = inner 𝕜 (L2piMul F) h := (L2.inner_def _ _).symm
     _ = 0 := hz F
 
+/-- Orthogonality to every elementary tensor makes the integral of `h` vanish on the intersection
+of any measurable set with a product box of spanning sets. -/
+private theorem setIntegral_inter_univ_pi_spanningSets_eq_zero {h : Lp 𝕜 2 (Measure.pi μ)}
+    (hz : ∀ F : ∀ i, Lp 𝕜 2 (μ i), inner 𝕜 (L2piMul F) h = 0) {u : Set (∀ i, α i)}
+    (hu : MeasurableSet u) (n : ℕ) :
+    ∫ x in u ∩ (Set.univ.pi fun i => spanningSets (μ i) n), h x ∂(Measure.pi μ) = 0 := by
+  classical
+  have hboxfin : Measure.pi μ (Set.univ.pi fun i => spanningSets (μ i) n) < ⊤ := by
+    rw [Measure.pi_pi]
+    exact ENNReal.prod_lt_top fun i _ => measure_spanningSets_lt_top (μ i) n
+  have huniv : ∫ x, h x ∂((Measure.pi μ).restrict
+      (Set.univ.pi fun i => spanningSets (μ i) n)) = 0 :=
+    setIntegral_pi_eq_zero_of_forall_inner hz _ (fun i => measurableSet_spanningSets (μ i) n)
+      (fun i => (measure_spanningSets_lt_top (μ i) n).ne)
+  have hS : ∀ t ∈ (Set.pi Set.univ '' Set.pi Set.univ fun i => {v : Set (α i) | MeasurableSet v}),
+      ∫ x in t, h x ∂((Measure.pi μ).restrict
+        (Set.univ.pi fun i => spanningSets (μ i) n)) = 0 := by
+    rintro _ ⟨t, ht, rfl⟩
+    rw [Measure.restrict_restrict
+      (MeasurableSet.univ_pi fun i => ht i (Set.mem_univ i)), ← Set.pi_inter_distrib]
+    exact setIntegral_pi_eq_zero_of_forall_inner hz _
+      (fun i => (ht i (Set.mem_univ i)).inter (measurableSet_spanningSets (μ i) n))
+      (fun i => (lt_of_le_of_lt (measure_mono Set.inter_subset_right)
+        (measure_spanningSets_lt_top (μ i) n)).ne)
+  have hdyn := setIntegral_eq_zero_of_isPiSystem generateFrom_pi.symm isPiSystem_pi
+    (integrableOn_Lp_of_measure_ne_top h one_le_two hboxfin.ne) huniv hS u hu
+  rwa [Measure.restrict_restrict hu] at hdyn
+
 /-- A vector orthogonal to every elementary tensor has vanishing integral over every measurable set
 of finite measure. -/
 theorem setIntegral_eq_zero_of_forall_inner_pi {h : Lp 𝕜 2 (Measure.pi μ)}
     (hz : ∀ F : ∀ i, Lp 𝕜 2 (μ i), inner 𝕜 (L2piMul F) h = 0)
     (u : Set (∀ i, α i)) (hu : MeasurableSet u) (hfin : Measure.pi μ u < ⊤) :
     ∫ x in u, h x ∂(Measure.pi μ) = 0 := by
-  classical
-  have hboxm : ∀ n, MeasurableSet (Set.univ.pi fun i => spanningSets (μ i) n) := fun n =>
-    MeasurableSet.univ_pi fun i => measurableSet_spanningSets (μ i) n
-  have hboxfin : ∀ n, Measure.pi μ (Set.univ.pi fun i => spanningSets (μ i) n) < ⊤ := by
-    intro n
-    rw [Measure.pi_pi]
-    exact ENNReal.prod_lt_top fun i _ => measure_spanningSets_lt_top (μ i) n
-  have hb : ∀ n, ∫ x in u ∩ (Set.univ.pi fun i => spanningSets (μ i) n),
-      h x ∂(Measure.pi μ) = 0 := by
-    intro n
-    have huniv : ∫ x, h x ∂((Measure.pi μ).restrict
-        (Set.univ.pi fun i => spanningSets (μ i) n)) = 0 :=
-      setIntegral_pi_eq_zero_of_forall_inner hz _ (fun i => measurableSet_spanningSets (μ i) n)
-        (fun i => (measure_spanningSets_lt_top (μ i) n).ne)
-    have hS : ∀ t ∈ (Set.pi Set.univ '' Set.pi Set.univ fun i => {v : Set (α i) | MeasurableSet v}),
-        ∫ x in t, h x ∂((Measure.pi μ).restrict
-          (Set.univ.pi fun i => spanningSets (μ i) n)) = 0 := by
-      rintro _ ⟨t, ht, rfl⟩
-      rw [Measure.restrict_restrict
-        (MeasurableSet.univ_pi fun i => ht i (Set.mem_univ i)), ← Set.pi_inter_distrib]
-      exact setIntegral_pi_eq_zero_of_forall_inner hz _
-        (fun i => (ht i (Set.mem_univ i)).inter (measurableSet_spanningSets (μ i) n))
-        (fun i => (lt_of_le_of_lt (measure_mono Set.inter_subset_right)
-          (measure_spanningSets_lt_top (μ i) n)).ne)
-    have hdyn := setIntegral_eq_zero_of_isPiSystem generateFrom_pi.symm isPiSystem_pi
-      (integrableOn_Lp_of_measure_ne_top h one_le_two (hboxfin n).ne) huniv hS u hu
-    rwa [Measure.restrict_restrict hu] at hdyn
   have hmono : Monotone fun n => u ∩ (Set.univ.pi fun i => spanningSets (μ i) n) := fun m n hmn =>
     Set.inter_subset_inter_right _ (Set.pi_mono fun i _ => monotone_spanningSets (μ i) hmn)
   have hcover : ⋃ n, u ∩ (Set.univ.pi fun i => spanningSets (μ i) n) = u := by
-    rw [← Set.inter_iUnion]
-    have hcov : ⋃ n, (Set.univ.pi fun i => spanningSets (μ i) n) = Set.univ := by
-      refine Set.eq_univ_of_forall fun x => ?_
-      have hx : ∀ i, ∃ m, x i ∈ spanningSets (μ i) m := fun i =>
-        Set.mem_iUnion.1 (by rw [iUnion_spanningSets]; trivial)
-      choose m hm using hx
-      exact Set.mem_iUnion.2 ⟨Finset.univ.sup m, fun i _ =>
-        monotone_spanningSets (μ i) (Finset.le_sup (Finset.mem_univ i)) (hm i)⟩
-    rw [hcov, Set.inter_univ]
-  have htend := tendsto_setIntegral_of_monotone (fun n => hu.inter (hboxm n)) hmono
+    rw [← Set.inter_iUnion,
+      Set.iUnion_univ_pi_of_monotone fun i => monotone_spanningSets (μ i)]
+    simp [iUnion_spanningSets, Set.pi_univ]
+  have htend := tendsto_setIntegral_of_monotone
+    (fun n => hu.inter (MeasurableSet.univ_pi fun i => measurableSet_spanningSets (μ i) n)) hmono
     (by rw [hcover]; exact integrableOn_Lp_of_measure_ne_top h one_le_two hfin.ne)
   rw [hcover] at htend
-  simp only [hb] at htend
+  simp only [setIntegral_inter_univ_pi_spanningSets_eq_zero hz hu] at htend
   exact tendsto_nhds_unique htend tendsto_const_nhds
 
 /-- **Completeness of the tensor family.** The tensors built from coordinatewise Hilbert bases have
