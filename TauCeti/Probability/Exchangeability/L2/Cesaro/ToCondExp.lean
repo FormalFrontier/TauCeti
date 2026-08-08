@@ -100,8 +100,7 @@ theorem Contractable.tendsto_integral_abs_blockAverage_sub_condExp_of_memLp {μ 
   have ha_lim : ∀ r : ℕ, Tendsto
       (fun m => ∫ ω, |blockAverage (fun i ω => f (X i ω))
         (fun j : Fin (m + 1) => r + (j : ℕ)) ω - a ω| ∂μ) atTop (𝓝 0) := fun r =>
-    ha_lim' (fun n j => r + (j : ℕ))
-      (Eventually.of_forall fun _ => (add_right_injective r).comp Fin.val_injective)
+    by simpa only [fixedStart_eq] using ha_lim' (fixedStart r) (injective_fixedStart r)
   have ha_int : Integrable a μ := ha_L1.integrable le_rfl
   have hA_int : ∀ m : ℕ,
       Integrable (blockAverage (fun i ω => f (X i ω)) fun j : Fin (m + 1) => 0 + (j : ℕ)) μ :=
@@ -171,11 +170,9 @@ theorem Contractable.ae_eq_condExp_tailProcess_of_tendsto_integral_abs {μ : Mea
       (fun m => (hA_int m).aestronglyMeasurable) integrable_condExp.aestronglyMeasurable
       (TauCeti.MeasureTheory.tendsto_eLpNorm_one_of_tendsto_integral_norm_sub hA_int
         integrable_condExp (by
-          simpa [Real.norm_eq_abs] using
+          simpa [Real.norm_eq_abs, fixedStart_eq] using
             hX.tendsto_integral_abs_blockAverage_sub_condExp_of_memLp hX_meas hf hf_L2
-              (fun _ j => r + (j : ℕ))
-              (Eventually.of_forall fun _ =>
-                (add_right_injective r).comp Fin.val_injective))))
+              (fixedStart r) (injective_fixedStart r))))
 
 end Probability
 

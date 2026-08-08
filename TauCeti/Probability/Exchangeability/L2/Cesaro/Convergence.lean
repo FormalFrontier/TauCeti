@@ -272,10 +272,9 @@ limit.
 The selection `k m` may **move** with the length `m + 1`, and need only be injective
 *eventually* — finitely many degenerate initial selections cannot affect a limit. This costs
 nothing because the underlying `L²` comparison is bounded in terms of the block lengths and not
-their positions. Fixed starts are the instance `k m j = r + j`, injective by
-`(add_right_injective r).comp Fin.val_injective`. Disjoint windows are the instance
-`k m j = i * (m + 1) + j`, and fixed starts cannot give them: windows from distinct fixed starts
-overlap once the common length exceeds the gap between the starts.
+their positions. Fixed starts are the instance `fixedStart r`, with `injective_fixedStart`.
+Disjoint windows are the instance `k m j = c * (m + 1) + j`, which fixed starts cannot give:
+windows from distinct fixed starts overlap once the common length exceeds the gap between them.
 
 The limit `a` does not depend on the selection: it is the prefix limit, so every moving selection
 converges to the *same* function. The successor in the length avoids assigning any special meaning
@@ -328,6 +327,22 @@ theorem weighted_sums_converge_L1_of_memLp {μ : Measure Ω} [IsFiniteMeasure μ
   simpa only [Pi.sub_apply, Real.norm_eq_abs] using
     TauCeti.MeasureTheory.tendsto_integral_norm_of_tendsto_eLpNorm_two
       (fun m => ((hW_L2 m).sub ha_L2).aestronglyMeasurable) hL2
+
+/-- The **fixed-start selection**: the window of length `n + 1` beginning at `r`. -/
+def fixedStart (r : ℕ) : ∀ n : ℕ, Fin (n + 1) → ℕ := fun _ j => r + (j : ℕ)
+
+@[simp]
+theorem fixedStart_apply (r n : ℕ) (j : Fin (n + 1)) : fixedStart r n j = r + (j : ℕ) := (rfl)
+
+/-- The fixed-start selection as a function, for rewriting a raw `fun j => r + j` into the named
+form and back. -/
+theorem fixedStart_eq (r n : ℕ) : fixedStart r n = fun j : Fin (n + 1) => r + (j : ℕ) := (rfl)
+
+/-- The fixed-start selection is injective at every length, in the eventual form the
+moving-selection theorems take. -/
+theorem injective_fixedStart (r : ℕ) :
+    ∀ᶠ n in atTop, Function.Injective (fixedStart r n) :=
+  Eventually.of_forall fun _ => (add_right_injective r).comp Fin.val_injective
 
 /-- **Bounded-observable form**, the shape the Layer 3 roadmap names. A uniform bound on `f` gives
 square-integrability of the composite on a finite measure space, so this is the direct entry point
