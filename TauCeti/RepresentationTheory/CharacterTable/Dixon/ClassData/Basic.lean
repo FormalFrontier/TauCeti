@@ -23,7 +23,7 @@ list search, and the equivalence `d.equivConjClasses : Fin d.numClasses ≃ Conj
 transports statements about `ConjClasses G` to the numbering. All of these are genuine `def`s: the
 numbering data itself asks only for `[Group G]`, the searches computed from it for a decidable
 conjugacy relation, the classes as `Finset`s for `[Fintype G]`, and `TauCeti.ClassData.ofList`
-builds class data from any list that exhausts `G`.
+builds class data from any list that meets every conjugacy class.
 
 On top of the numbering the file gives the two computational objects the algorithm consumes: the
 structure constants `d.structureConstant i j k`, counted by a single scan of the `i`-th class rather
@@ -38,11 +38,12 @@ order `8` as a closed instance of everything here.
 
 ## Main definitions
 
-* `TauCeti.ClassData`: a numbered list of conjugacy-class representatives of a finite group.
-* `TauCeti.ClassData.ofList`: such a list, extracted from any list that exhausts the group.
+* `TauCeti.ClassData`: a numbered list of conjugacy-class representatives of a group.
+* `TauCeti.ClassData.ofList`: such a list, extracted from any list meeting every conjugacy class.
 * `TauCeti.ClassData.index`, `TauCeti.ClassData.rep`: the numbering and its representatives.
 * `TauCeti.ClassData.equivConjClasses`: the numbering as an equivalence with `ConjClasses G`.
-* `TauCeti.ClassData.classFinset`: the `i`-th conjugacy class, as a `Finset`.
+* `TauCeti.ClassData.classFinset`, `TauCeti.ClassData.classes`: the `i`-th conjugacy class and the
+  executable list of all conjugacy classes.
 * `TauCeti.ClassData.structureConstant`, `TauCeti.ClassData.structureConstantTable`,
   `TauCeti.ClassData.classMultMatrix`: the single-scan structure constants, tabulated, and the
   matrices they assemble.
@@ -50,6 +51,8 @@ order `8` as a closed instance of everything here.
 ## Main results
 
 * `TauCeti.ClassData.numClasses_eq_card_conjClasses`: the numbering has the expected length.
+* `TauCeti.ClassData.exists_mem_classes`, `TauCeti.ClassData.pairwise_disjoint_classes`: the
+  executable list covers the group and its entries are pairwise disjoint.
 * `TauCeti.ClassData.sum_card_classFinset`: the numbered classes partition the group.
 * `TauCeti.ClassData.structureConstant_eq` and
   `TauCeti.ClassData.classMultMatrix_eq_submatrix`: the computed constants and matrices are the
@@ -59,10 +62,10 @@ order `8` as a closed instance of everything here.
 
 This implements the object `ClassData` and the executable `structureConstant` of Layer 6 of the
 [character theory roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/CharacterTheory/README.md),
-the layer that makes the Burnside--Dixon--Schneider algorithm executable. The roadmap suggests
-carrying the classes as a `List (Finset G)`; the `Fin`-indexed family `classFinset` supplied here
-carries the same content and is what the class-multiplication matrices are indexed by. See J. D.
-Dixon, *High speed computation of group characters*, Numer. Math. 10 (1967) 446-450.
+the layer that makes the Burnside--Dixon--Schneider algorithm executable. The `Fin`-indexed family
+`classFinset` is what the class-multiplication matrices are indexed by, while `classes` packages
+the same family as the executable `List (Finset G)` requested there. See J. D. Dixon, *High speed
+computation of group characters*, Numer. Math. 10 (1967) 446-450.
 -/
 
 -- The definitions carrying the computation are individually `@[expose]`d below: a downstream
@@ -105,14 +108,15 @@ theorem ext {d₁ d₂ : ClassData G} (h : d₁.reps = d₂.reps) : d₁ = d₂ 
   subst h
   rfl
 
-/-- Class data extracted from a list `l` that contains every element of `G`: keep an entry exactly
+/-- Class data extracted from a list `l` that meets every conjugacy class: keep an entry exactly
 when it is not conjugate to any entry kept from the part of `l` after it. Since `List.pwFilter`
 recurses from the right, this keeps the *last* representative of each class, in the order those
 representatives occur in `l`.
 
 The hypothesis, rather than `Finset.univ.toList`, is what keeps this computable: `Finset.toList`
-is noncomputable, whereas a concrete finite group comes with a concrete enumeration. -/
-@[expose] def ofList [DecidableRel (IsConj : G → G → Prop)] (l : List G) (hl : ∀ g : G, g ∈ l) :
+is noncomputable, whereas a concrete finite group can supply concrete representatives. -/
+@[expose] def ofList [DecidableRel (IsConj : G → G → Prop)] (l : List G)
+    (hl : ∀ g : G, ∃ x ∈ l, IsConj x g) :
     ClassData G where
   reps := l.pwFilter fun x y => ¬ IsConj x y
   pairwise_not_isConj := List.pairwise_pwFilter _
@@ -126,21 +130,25 @@ is noncomputable, whereas a concrete finite group comes with a concrete enumerat
     have hall : ∀ b ∈ l.pwFilter fun x y => ¬ IsConj x y, ¬ IsConj g b := by
       intro b hb hgb
       exact hg ⟨b, hb, hgb.symm⟩
-    exact (List.forall_mem_pwFilter (R := fun x y : G => ¬ IsConj x y) hneg g l).mp hall g (hl g)
-      (IsConj.refl g)
+    obtain ⟨x, hxl, hxg⟩ := hl g
+    exact (List.forall_mem_pwFilter (R := fun x y : G => ¬ IsConj x y) hneg g l).mp hall x hxl
+      hxg.symm
 
 /-- **The representatives extracted from `l`** are the entries of `l` that are not conjugate to any
 later retained entry: the characteristic property of `TauCeti.ClassData.ofList`, so that a client
 never has to unfold the filtering itself. -/
 @[simp]
-theorem reps_ofList [DecidableRel (IsConj : G → G → Prop)] (l : List G) (hl : ∀ g : G, g ∈ l) :
+theorem reps_ofList [DecidableRel (IsConj : G → G → Prop)] (l : List G)
+    (hl : ∀ g : G, ∃ x ∈ l, IsConj x g) :
     (ofList l hl).reps = l.pwFilter fun x y => ¬ IsConj x y := (rfl)
 
 /-- Every finite group has class data; the witness is noncomputable only because
 `Finset.toList` is. -/
-noncomputable instance [Fintype G] : Inhabited (ClassData G) :=
+noncomputable instance [Finite G] : Inhabited (ClassData G) := by
+  letI := Fintype.ofFinite G
   letI := Classical.decRel (IsConj : G → G → Prop)
-  ⟨ofList (Finset.univ : Finset G).toList fun g => Finset.mem_toList.mpr (Finset.mem_univ g)⟩
+  exact ⟨ofList (Finset.univ : Finset G).toList fun g =>
+    ⟨g, Finset.mem_toList.mpr (Finset.mem_univ g), IsConj.refl g⟩⟩
 
 variable (d : ClassData G)
 
@@ -304,6 +312,33 @@ theorem disjoint_classFinset {i j : Fin d.numClasses} (hij : i ≠ j) :
   simp only [Finset.disjoint_left, mem_classFinset]
   rintro a rfl h
   exact hij h
+
+/-- The conjugacy classes, in the order determined by `d`. -/
+@[expose] def classes : List (Finset G) :=
+  (List.finRange d.numClasses).map d.classFinset
+
+/-- There is one entry of `classes` for each class number. -/
+@[simp]
+theorem length_classes : d.classes.length = d.numClasses := by
+  simp [classes]
+
+/-- Looking up the `i`-th entry of `classes` gives the `i`-th numbered class. -/
+@[simp]
+theorem getElem_classes (i : ℕ) (hi : i < d.classes.length) :
+    d.classes[i] = d.classFinset ⟨i, d.length_classes ▸ hi⟩ := by
+  simp [classes]
+
+/-- The list `classes` covers every element of the group. -/
+theorem exists_mem_classes (g : G) : ∃ C ∈ d.classes, g ∈ C := by
+  refine ⟨d.classFinset (d.index g), ?_, d.mem_classFinset.mpr rfl⟩
+  simp [classes]
+
+/-- Distinct entries of `classes` are disjoint. -/
+theorem pairwise_disjoint_classes : d.classes.Pairwise Disjoint := by
+  rw [List.pairwise_iff_getElem]
+  intro i j hi hj hij
+  rw [d.getElem_classes i hi, d.getElem_classes j hj]
+  exact d.disjoint_classFinset (Fin.ne_of_val_ne (Nat.ne_of_lt hij))
 
 /-- **The numbered classes partition the group**: their sizes sum to `|G|`. This is the
 `Fin`-indexed reading of the class equation `sum_conjClasses_card_eq_card`. -/

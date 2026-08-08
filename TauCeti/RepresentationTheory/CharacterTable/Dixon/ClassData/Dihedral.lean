@@ -43,7 +43,8 @@ namespace TauCeti
 `TauCeti.dihedralElements`. The body is exposed so that a module downstream of this one can still
 `decide` statements about the class data of a concrete dihedral group. -/
 @[expose] def dihedralClassData (n : ℕ) [NeZero n] : ClassData (DihedralGroup n) :=
-  ClassData.ofList (dihedralElements n) mem_dihedralElements
+  ClassData.ofList (dihedralElements n) fun g =>
+    ⟨g, mem_dihedralElements g, IsConj.refl g⟩
 
 /-- **The dihedral group of order `8` has five conjugacy classes**, computed by the kernel from
 `TauCeti.dihedralClassData`. -/
@@ -54,8 +55,7 @@ The order is the one `TauCeti.ClassData.ofList` produces from `TauCeti.dihedralE
 representatives `1`, `r²`, `sr²`, `r³`, `sr³`: the identity, the central rotation, one pair of
 reflections, the pair of rotations of order `4`, and the other pair of reflections. -/
 theorem card_classFinset_dihedralClassData_four :
-    (List.finRange (dihedralClassData 4).numClasses).map
-      (fun i => ((dihedralClassData 4).classFinset i).card) = [1, 1, 2, 2, 2] := by
+    (dihedralClassData 4).classes.map Finset.card = [1, 1, 2, 2, 2] := by
   decide
 
 /-- **The structure constants of the dihedral group of order `8`**, computed by the kernel; this
