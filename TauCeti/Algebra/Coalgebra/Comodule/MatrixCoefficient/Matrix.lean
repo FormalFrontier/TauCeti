@@ -63,8 +63,10 @@ If `eⱼ` is a basis and `eⁱ` its coordinate functionals, the `(i, j)` entry i
 def coefficientMatrix (b : Basis ι R M) : Matrix ι ι C :=
   fun i j ↦ matrixCoefficient (R := R) (C := C) (b.coord i) (b j)
 
-/-- An entry of the coefficient matrix is the corresponding basis matrix coefficient. -/
-@[simp]
+/-- An entry of the coefficient matrix is the corresponding basis matrix coefficient.
+
+This is not a `simp` lemma: the coefficient matrix is the normal form, and the coalgebra
+identities below are stated for its entries. -/
 theorem coefficientMatrix_apply (b : Basis ι R M) (i j : ι) :
     coefficientMatrix (C := C) b i j =
       matrixCoefficient (R := R) (C := C) (b.coord i) (b j) := by
