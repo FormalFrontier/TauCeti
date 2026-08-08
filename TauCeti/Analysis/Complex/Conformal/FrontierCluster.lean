@@ -73,8 +73,8 @@ upper one makes containing those over the *closed* arc **sufficient**. Neither p
 enclosing `E` is only required to contain the cut-off piece and may be far larger than either union
 — what the upper inclusion bounds is the cut-off piece, not `E`.
 
-They do **not** let `E` be *taken* to be those cluster sets. The lower inclusion at `w = ζ` —
-`TauCeti.clusterSetOn_subset_frontier_image_inter_frontier_image` — says the cut-off piece always
+They do **not** let `E` be *taken* to be those cluster sets. The lower inclusion read at `w = ζ`
+itself — `ζ` lies in `sphere c r ∩ ball ζ ρ` for every `ρ > 0` — says the cut-off piece always
 contains `clusterSetOn f (ball c r) ζ` outright, so a bounded `E` enclosing it and of diameter at
 most `ε` for every `ε` forces `clusterSetOn f (ball c r) ζ` to be a subsingleton on the spot. Any
 criterion whose hypothesis bounds the diameter of the cluster sets themselves therefore already
@@ -108,9 +108,8 @@ the cluster set it runs on is stated for arbitrary topological spaces.
   `TauCeti.frontier_image_inter_frontier_image_subset_biUnion_clusterSetOn` — the conformal form:
   the piece of `∂Ω` cut off is covered by the cluster sets over the cut-off arc.
 * `TauCeti.biUnion_clusterSetOn_subset_frontier_image_inter_frontier_image` — the reverse
-  inclusion, over the open arc.
-* `TauCeti.clusterSetOn_subset_frontier_image_inter_frontier_image` — its case `w = ζ`: the cut-off
-  piece always contains the cluster set at `ζ`, whatever the crosscut radius.
+  inclusion, over the open arc; read at `w = ζ` it says the cut-off piece always contains the
+  cluster set at `ζ`, whatever the crosscut radius.
 * `TauCeti.exists_diam_union_le_of_continuousOn_closedBall_eqOn` and
   `TauCeti.forall_exists_diam_union_le_iff_exists_continuousOn_closedBall_eqOn` — a conformal map
   that extends continuously to the closed disc satisfies the crosscut criterion of
@@ -255,21 +254,6 @@ theorem biUnion_clusterSetOn_subset_frontier_image_inter_frontier_image
     rw [(isOpen_image_of_differentiableOn_of_injOn isOpen_ball hd hinj).frontier_eq] at hvfr
     exact fun hmem => hvfr.2 (image_mono inter_subset_left hmem)
   exact ⟨clusterSetOn_subset_closure_image hv, fun hint => hvn (interior_subset hint)⟩
-
-/-- **A cluster value at a boundary point lies on the piece every crosscut at that point cuts
-off.** The case `w = ζ` of
-`TauCeti.biUnion_clusterSetOn_subset_frontier_image_inter_frontier_image`, recorded because it is
-what fixes the standing of the cut-off piece: *any* set enclosing it, at any crosscut radius,
-already contains the whole cluster set of `f` at `ζ`. So the enclosing set `E` of
-`Conformal/CutDiameter.lean` cannot be taken to be the cluster sets over the cut-off arc — that
-would put the conclusion of those criteria into their hypothesis — and has to come from geometry of
-`∂Ω`, which is what local connectedness supplies. -/
-theorem clusterSetOn_subset_frontier_image_inter_frontier_image (hρ : 0 < ρ)
-    (hζ : ζ ∈ sphere c r) (hd : DifferentiableOn ℂ f (ball c r)) (hinj : InjOn f (ball c r)) :
-    clusterSetOn f (ball c r) ζ
-      ⊆ frontier (f '' ball c r) ∩ frontier (f '' (ball c r ∩ ball ζ ρ)) :=
-  fun _ hv => biUnion_clusterSetOn_subset_frontier_image_inter_frontier_image hd hinj
-    (mem_biUnion ⟨hζ, mem_ball_self hρ⟩ hv)
 
 /-! ## The crosscut criterion is exactly continuous extendability -/
 
