@@ -141,8 +141,8 @@ viewed inside the successor step. -/
 @[simp]
 theorem filtrationPreviousRestricted_succ (Q : QuadraticForm R M) (k : ℕ) :
     filtrationPreviousRestricted Q (k + 1) =
-      (filtration Q k).submoduleOf (filtration Q (k + 1)) := by
-  simp [filtrationPreviousRestricted]
+      Submodule.comap (filtration Q (k + 1)).subtype (filtration Q k) := by
+  rfl
 
 /-- The degree-`k` piece of the associated graded Clifford filtration. -/
 abbrev FiltrationGradedPiece (Q : QuadraticForm R M) (k : ℕ) : Type max u v :=
