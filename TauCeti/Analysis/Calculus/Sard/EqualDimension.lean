@@ -90,7 +90,8 @@ theorem addHaar_image_eq_zero_of_not_surjective_fderivWithin
     intro y
     obtain ⟨z, hz⟩ := LinearMap.injective_iff_surjective.mp hinj (e y)
     refine ⟨z, e.injective ?_⟩
-    exact hz
+    simpa only [g', ContinuousLinearMap.coe_coe, ContinuousLinearMap.comp_apply,
+      ContinuousLinearEquiv.coe_coe] using hz
   have hnull : (addHaar : Measure E) (g '' s) = 0 :=
     addHaar_image_eq_zero_of_det_fderivWithin_eq_zero addHaar hg' hdet
   have hpreimage : ν (e ⁻¹' (g '' s)) = 0 :=
