@@ -171,6 +171,7 @@ theorem euclideanHalfSpaceBoundaryProj_param {n : ℕ}
   ext i
   simp
 
+@[simp]
 theorem euclideanHalfSpaceBoundaryParam_proj {n : ℕ}
     {x : EuclideanSpace ℝ (Fin (n + 1))} (hx : x ∈ euclideanHalfSpaceBoundary n) :
     euclideanHalfSpaceBoundaryParam n (euclideanHalfSpaceBoundaryProj n x) = x := by
