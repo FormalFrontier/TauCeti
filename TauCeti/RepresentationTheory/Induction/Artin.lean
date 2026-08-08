@@ -146,8 +146,9 @@ variable {k G : Type u} [Field k] [Group G]
 
 /-- **A character induced from a subgroup is a virtual character.**  Inducing the class function of
 a finite-dimensional representation gives the class function of the induced representation
-(`TauCeti.ClassFunction.ind_ofFDRep`), and a character is a virtual character. -/
-@[simp]
+(`TauCeti.ClassFunction.ind_ofFDRep`), and a character is a virtual character.  This is deliberately
+not a simp lemma: its left-hand side reduces through `ind_ofFDRep` to the existing
+`TauCeti.character_mem_virtualCharacters` simp lemma. -/
 theorem ind_ofFDRep_mem_virtualCharacters (S : Subgroup G) [S.FiniteIndex] (A : FDRep k S) :
     ((ind S (ofFDRep A) : ClassFunction k G) : G → k) ∈ virtualCharacters k G := by
   rw [ClassFunction.ind_ofFDRep]
