@@ -48,18 +48,22 @@ def jointPathLaw (μ : Measure Ω) (X : ℕ → Ω → α) (ν : Ω → Probabil
 
 /-- The definitional expansion of `jointPathLaw`: the pushforward of `μ` along
 `ω ↦ (ν ω, fun i => X i ω)`. -/
+@[simp]
 theorem jointPathLaw_def (μ : Measure Ω) (X : ℕ → Ω → α) (ν : Ω → ProbabilityMeasure α) :
     jointPathLaw μ X ν = μ.map fun ω => (ν ω, fun i => X i ω) := (rfl)
 
 /-- The first marginal of the joint path law is the law of the directing measure. -/
-@[simp]
+-- `@[grind =>]` rather than `@[simp]`: `jointPathLaw_def` is the registered simp normal form, so
+-- simp rewrites this left-hand side away before the lemma could fire and `simpNF` rejects the
+-- annotation; `grind` is not subject to that normalisation.
+@[grind =>]
 theorem map_fst_jointPathLaw (hX : ∀ i, AEMeasurable (X i) μ) :
     (jointPathLaw μ X ν).map Prod.fst = μ.map ν := by
   rw [jointPathLaw_def]
   exact Measure.fst_map_prodMk₀ (aemeasurable_pi_lambda _ hX)
 
 /-- The second marginal of the joint path law is the law of the path. -/
-@[simp]
+@[grind =>]
 theorem map_snd_jointPathLaw (hν : AEMeasurable ν μ) :
     (jointPathLaw μ X ν).map Prod.snd = pathLaw μ X := by
   rw [jointPathLaw_def, pathLaw_def]

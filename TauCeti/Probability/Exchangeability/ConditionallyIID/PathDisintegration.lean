@@ -32,9 +32,10 @@ prefix. For the joint law that prefix marginal is the defining identity of `Cond
 at the selection `Fin n → ℕ`, which is
 `map_prefixProjPair_jointPathLaw_eq_disintegration`. For the mixture law it is
 `map_prefixProjPair_iidMixtureLaw`, proved fibrewise: over each point `t` of the mixing law the
-fibre `δ_t ⊗ (P t)^{⊗ℕ}` projects to `δ_t ⊗ (P t)^{⊗ Fin n}`, by `Measure.dirac_prod` and
-`map_prefixProj_infinitePi_const`. Instantiating that at the identity kernel and pushing the bind
-back along `ν` makes the two prefix marginals agree, and
+fibre `δ_t ⊗ (P t)^{⊗ℕ}` projects to `δ_t ⊗ (P t)^{⊗ Fin n}`, which is
+`map_infinitePi_pair_block` at the prefix selection — the tag `t` and the sampled law `P t`
+differ there, which is why that lemma carries an arbitrary tag. Instantiating at the identity
+kernel and pushing the bind back along `ν` makes the two prefix marginals agree, and
 `measure_eq_of_prefixProjPair_map_eq` promotes the agreement to equality of the full measures.
 
 That last step is where the paired prefix maps `prefixProjPair` earn their keep. Mathlib's
@@ -69,8 +70,8 @@ variable {Ω α : Type*} [MeasurableSpace Ω] [MeasurableSpace α]
 
 /-- The prefix pushforward of the joint path law is the block-level disintegration, by the defining
 identity at the first `n` coordinates. -/
-theorem map_prefixProjPair_jointPathLaw_eq_disintegration (h : ConditionallyIIDWith μ X ν)
-    (hX : ∀ i, AEMeasurable (X i) μ) (n : ℕ) :
+theorem ConditionallyIIDWith.map_prefixProjPair_jointPathLaw_eq_disintegration
+    (h : ConditionallyIIDWith μ X ν) (hX : ∀ i, AEMeasurable (X i) μ) (n : ℕ) :
     (jointPathLaw μ X ν).map (prefixProjPair (ProbabilityMeasure α) α n)
       = μ.bind fun ω =>
           (Measure.dirac (ν ω)).prod (ProbabilityMeasure.pi fun _ : Fin n => ν ω).toMeasure := by
@@ -93,18 +94,12 @@ theorem map_prefixProjPair_iidMixtureLaw {T : Type*} [MeasurableSpace T] {π : M
           (prefixProjPair T α n)
         = (Measure.dirac t).prod (ProbabilityMeasure.pi fun _ : Fin n => P t).toMeasure := by
     intro t
-    have hblk : Measurable fun x : ℕ → α => fun i : Fin n => x (i : ℕ) :=
-      measurable_pi_lambda _ fun i => measurable_pi_apply (i : ℕ)
     have hcomp : (prefixProjPair T α n) ∘ (Prod.mk t)
         = fun x : ℕ → α => (t, fun i : Fin n => x (i : ℕ)) := by
       funext x; simp [prefixProjPair_apply]
-    have hfac : (fun x : ℕ → α => (t, fun i : Fin n => x (i : ℕ)))
-        = (Prod.mk t) ∘ fun x : ℕ → α => fun i : Fin n => x (i : ℕ) := rfl
     rw [Measure.dirac_prod,
-      Measure.map_map (measurable_prefixProjPair T α n) measurable_prodMk_left, hcomp, hfac,
-      ← Measure.map_map measurable_prodMk_left hblk,
-      TauCeti.MeasureTheory.map_prefixProj_infinitePi_const (P t) n,
-      ProbabilityMeasure.toMeasure_pi, Measure.dirac_prod]
+      Measure.map_map (measurable_prefixProjPair T α n) measurable_prodMk_left, hcomp]
+    exact TauCeti.MeasureTheory.map_infinitePi_pair_block t (P t) Fin.val_injective
   rw [iidMixtureLaw_def,
     TauCeti.MeasureTheory.map_bind hker.aemeasurable (measurable_prefixProjPair T α n)]
   simp_rw [hstep]
@@ -128,7 +123,7 @@ theorem ConditionallyIIDWith.jointPathLaw_eq_iidMixtureLaw [IsFiniteMeasure μ]
   have hker : Measurable F :=
     TauCeti.MeasureTheory.measurable_dirac_prod_probabilityMeasure_pi_const_toMeasure _
       measurable_id
-  rw [map_prefixProjPair_jointPathLaw_eq_disintegration h hX n,
+  rw [ConditionallyIIDWith.map_prefixProjPair_jointPathLaw_eq_disintegration h hX n,
     map_prefixProjPair_iidMixtureLaw
       (P := (id : ProbabilityMeasure α → ProbabilityMeasure α)) measurable_id n]
   simp only [id_eq]
