@@ -70,6 +70,9 @@ every theorem added in layers L0–L6, the results below are stated for maps of 
   bounded domain the boundary cluster sets cover, hence exactly exhaust, the frontier of the image.
   The case a Riemann map presents is the unit disc, where `frontier_ball` rewrites `frontier U` to
   the unit circle.
+* `TauCeti.exists_mem_frontier_inter_closure_mem_clusterSetOn` — surjectivity is moreover *local*
+  in the domain: a boundary point of the image adherent to `f '' (U ∩ A)` is already a cluster
+  value over `frontier U ∩ closure A`. The previous item is the case `A = univ`.
 
 ## Coordination with upstream Mathlib
 
@@ -166,15 +169,45 @@ theorem injOn_closure_of_injOn_frontier (hUo : IsOpen U) (hfd : DifferentiableOn
 
 /-! ## The boundary correspondence is onto -/
 
+/-- **A boundary point of the image adherent to the image of a part of the domain is a cluster
+value on the part of the frontier that part clings to.** If `f` is holomorphic and injective on a
+bounded open `U` and a point `v` of `frontier (f '' U)` is adherent to `f '' (U ∩ A)`, then `v` is
+already approached by `f` at a point of `frontier U ∩ closure A`.
+
+All the work is done by the general covering theorem
+`TauCeti.exists_mem_frontier_mem_clusterSetOn_of_notMem_image`, applied to `U ∩ A` rather than to
+`U`: it needs only that `closure (U ∩ A)` be compact — here, boundedness of `U` — and that `f` be
+continuous there. What conformality contributes is that `f '' U` is *open*, so that
+`frontier (f '' U)` is `closure (f '' U) \ f '' U` and the boundary value `v` is an adherent value
+of the image that is not attained, a fortiori not attained on `U ∩ A`.
+
+The witness it returns lies on `frontier (U ∩ A) ⊆ closure U ∩ closure A`, and enlarging the
+approach region from `U ∩ A` back to `U` keeps `v` a cluster value. That the witness is on
+`frontier U` and not interior to `U` is the same argument once more: at an interior point the
+cluster set of `f` on `U` is the single value `f w`, which `v` is not, the image being open. -/
+theorem exists_mem_frontier_inter_closure_mem_clusterSetOn {A : Set ℂ} (hUo : IsOpen U)
+    (hUb : Bornology.IsBounded U) (hfd : DifferentiableOn ℂ f U) (hfi : InjOn f U)
+    (hv : v ∈ frontier (f '' U)) (hvA : v ∈ closure (f '' (U ∩ A))) :
+    ∃ w ∈ frontier U ∩ closure A, v ∈ clusterSetOn f U w := by
+  rw [(isOpen_image_of_differentiableOn_of_injOn hUo hfd hfi).frontier_eq] at hv
+  obtain ⟨w, hw, hvw⟩ := exists_mem_frontier_mem_clusterSetOn_of_notMem_image
+    (hUb.subset inter_subset_left).isCompact_closure (hfd.continuousOn.mono inter_subset_left) hvA
+    fun hmem => hv.2 (image_mono inter_subset_left hmem)
+  have hvw' : v ∈ clusterSetOn f U w := clusterSetOn_mono inter_subset_left hvw
+  have hwcl : w ∈ closure U ∩ closure A :=
+    closure_inter_subset_inter_closure _ _ (frontier_subset_closure hw)
+  refine ⟨w, ⟨hUo.frontier_eq ▸ ⟨hwcl.1, fun hwU => ?_⟩, hwcl.2⟩, hvw'⟩
+  rw [clusterSetOn_eq_singleton_of_continuousWithinAt hwU (hfd.continuousOn w hwU),
+    mem_singleton_iff] at hvw'
+  exact hv.2 (hvw' ▸ mem_image_of_mem f hwU)
+
 /-- **Every boundary point of the image is a boundary cluster value.** If `f` is holomorphic and
 injective on a bounded open `U`, then each point of `frontier (f '' U)` is approached by `f` at some
 point of `frontier U`.
 
-All the work is done by the general covering theorem
-`TauCeti.exists_mem_frontier_mem_clusterSetOn_of_notMem_image`, which needs only that `closure U` be
-compact — here, boundedness of `U` — and that `f` be continuous on `U`. What conformality
-contributes is that `f '' U` is *open*, so that `frontier (f '' U)` is `closure (f '' U) \ f '' U`
-and the boundary value `v` is an adherent value of the image that is not attained.
+This is the case `A = univ` of
+`TauCeti.exists_mem_frontier_inter_closure_mem_clusterSetOn`, every point of `frontier (f '' U)`
+being adherent to the image.
 
 This is the converse of `TauCeti.clusterSetOn_subset_frontier_image`, and the two together say that
 the boundary correspondence `w ↦ clusterSetOn f U w` is onto `frontier (f '' U)`. Carathéodory's
@@ -186,9 +219,9 @@ The surjectivity below holds with no hypothesis on `frontier U` whatever. -/
 theorem exists_mem_frontier_mem_clusterSetOn (hUo : IsOpen U) (hUb : Bornology.IsBounded U)
     (hfd : DifferentiableOn ℂ f U) (hfi : InjOn f U) (hv : v ∈ frontier (f '' U)) :
     ∃ w ∈ frontier U, v ∈ clusterSetOn f U w := by
-  rw [(isOpen_image_of_differentiableOn_of_injOn hUo hfd hfi).frontier_eq] at hv
-  exact exists_mem_frontier_mem_clusterSetOn_of_notMem_image hUb.isCompact_closure hfd.continuousOn
-    hv.1 hv.2
+  obtain ⟨w, hw, hvw⟩ := exists_mem_frontier_inter_closure_mem_clusterSetOn (A := univ) hUo hUb hfd
+    hfi hv (by simpa using frontier_subset_closure hv)
+  exact ⟨w, hw.1, hvw⟩
 
 /-- **The boundary cluster sets exhaust the frontier of the image.** For a conformal map of a
 bounded open set, the union of the cluster sets over `frontier U` is exactly `frontier (f '' U)`.
