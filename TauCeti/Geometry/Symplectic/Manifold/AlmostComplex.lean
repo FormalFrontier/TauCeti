@@ -98,7 +98,8 @@ lemma atPoint_toLinearMap (J : SmoothAlmostComplexStructure I M) (x : M) :
     (J.atPoint x).toLinearMap = (J.toEndomorphism x).toLinearMap :=
   (rfl)
 
-@[simp]
+/-- Not a `simp` lemma: `simp` already rewrites the left-hand side through
+`atPoint_toLinearMap`. -/
 lemma atPoint_apply (J : SmoothAlmostComplexStructure I M) (x : M) (v : TangentSpace I x) :
     J.atPoint x v = J x v :=
   (rfl)
@@ -154,7 +155,8 @@ lemma neg_toEndomorphism (J : SmoothAlmostComplexStructure I M) :
     (-J).toEndomorphism = -J.toEndomorphism :=
   (rfl)
 
-@[simp]
+/-- Not a `simp` lemma: `simp` already rewrites the left-hand side through
+`neg_toEndomorphism`. -/
 lemma neg_apply (J : SmoothAlmostComplexStructure I M) (x : M) (v : TangentSpace I x) :
     (-J) x v = -J x v :=
   (rfl)
