@@ -58,15 +58,15 @@ theorem coe_cliffordBivectorExteriorEquivQuadraticLieSubalgebra_apply
   rw [cliffordBivectorExteriorEquivQuadraticLieSubalgebra, LinearEquiv.trans_apply,
     LinearEquiv.coe_ofEq_apply, LinearEquiv.ofInjective_apply]
 
-/-- Coercing the forward-after-inverse exterior-square equivalence recovers the quadratic
-element. -/
-theorem coe_cliffordBivectorExteriorEquivQuadraticLieSubalgebra_apply_symm_apply
+/-- The exterior-algebra element underlying the inverse equivalence is the exterior model of the
+quadratic Clifford element. -/
+theorem coe_cliffordBivectorExteriorEquivQuadraticLieSubalgebra_symm_apply
     (Q : QuadraticForm R M) [Invertible (2 : R)] (x : quadraticLieSubalgebra Q) :
-    ((cliffordBivectorExteriorEquivQuadraticLieSubalgebra Q
-      ((cliffordBivectorExteriorEquivQuadraticLieSubalgebra Q).symm x) : quadraticLieSubalgebra Q) :
-      CliffordAlgebra Q) = x :=
-  congr_arg Subtype.val
-    ((cliffordBivectorExteriorEquivQuadraticLieSubalgebra Q).apply_symm_apply x)
+    (((cliffordBivectorExteriorEquivQuadraticLieSubalgebra Q).symm x : ⋀[R]^2 M) :
+      ExteriorAlgebra R M) = equivExterior Q x := by
+  rw [← equivExterior_cliffordBivectorExterior Q,
+    ← coe_cliffordBivectorExteriorEquivQuadraticLieSubalgebra_apply,
+    LinearEquiv.apply_symm_apply]
 
 end CliffordAlgebra
 
