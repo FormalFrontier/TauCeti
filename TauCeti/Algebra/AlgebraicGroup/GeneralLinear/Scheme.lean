@@ -137,7 +137,7 @@ lemma isClosedImmersion_groupSchemeMap_iff
   let c := ((AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map f.op).hom.hom.left
   let e := (eqToHom (groupScheme_eq_hopfSpec R n).symm).hom.hom.left
   have he : IsIso e :=
-    isIso_hom_hom_left_eqToHom (groupScheme_eq_hopfSpec R n).symm
+    isIso_eqToHom_hom_hom_left (groupScheme_eq_hopfSpec R n).symm
   rw [groupSchemeMap, comp_hom_hom_left]
   -- The preceding computation lemma exposes the composite; this `change` only folds its two
   -- components to keep the categorical cancellation statement readable.

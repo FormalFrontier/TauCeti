@@ -24,7 +24,7 @@ the same universe, which is reflected in the declaration in this file.
 
 ## Main declarations
 
-* `TauCeti.isIso_hom_hom_left_eqToHom`: equality transport between group schemes is an
+* `TauCeti.isIso_eqToHom_hom_hom_left`: equality transport between group schemes is an
   isomorphism on underlying schemes.
 * `TauCeti.CommHopfAlgCat.isClosedImmersion_hopfSpec_map_iff`: the coordinate criterion for a
   morphism of Hopf spectra to be a closed immersion.
@@ -42,7 +42,7 @@ open AlgebraicGeometry
 
 /-- Equality transport between group schemes is an isomorphism on their underlying scheme
 morphisms. -/
-lemma isIso_hom_hom_left_eqToHom {S : Scheme.{u}} {G G' : Grp (Over S)} (h : G = G') :
+lemma isIso_eqToHom_hom_hom_left {S : Scheme.{u}} {G G' : Grp (Over S)} (h : G = G') :
     IsIso (eqToHom h).hom.hom.left :=
   ((Over.forget S).mapIso ((Grp.forget (Over S)).mapIso (eqToIso h))).isIso_hom
 

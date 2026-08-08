@@ -97,7 +97,7 @@ theorem mem_coefficientMatrixSet_iff (b : Basis ι R M) (c : C) :
 
 /-- Every entry of a coefficient matrix belongs to its set of entries. -/
 @[simp]
-theorem coefficientMatrix_mem_set (b : Basis ι R M) (i j : ι) :
+theorem coefficientMatrix_mem_coefficientMatrixSet (b : Basis ι R M) (i j : ι) :
     coefficientMatrix (C := C) b i j ∈ coefficientMatrixSet (C := C) b :=
   ⟨(i, j), rfl⟩
 
@@ -133,7 +133,8 @@ theorem span_coefficientMatrixSet [Finite ι] (b : Basis ι R M) :
         ((b.dualBasis.repr φ) i)
         (Submodule.smul_mem (Submodule.span R (coefficientMatrixSet (C := C) b))
           ((b.repr m) j)
-          (Submodule.subset_span (coefficientMatrix_mem_set (C := C) b i j)))
+          (Submodule.subset_span
+            (coefficientMatrix_mem_coefficientMatrixSet (C := C) b i j)))
 
 /-- The counit of a coefficient entry is the corresponding identity-matrix entry. -/
 @[simp]

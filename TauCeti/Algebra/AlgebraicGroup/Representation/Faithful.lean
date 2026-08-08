@@ -43,7 +43,7 @@ lie in the same universe. The comodule carrier remains universe-polymorphic.
 ## References
 
 This is the faithful-representation criterion of J. S. Milne, *Algebraic Groups* (2017),
-Remark 4.1 and Theorems 4.9 and 4.14. It advances `ReductiveGroups/README.md`, Layer 1,
+Remark 4.1 and Theorem 4.9. It advances `ReductiveGroups/README.md`, Layer 1,
 "Faithfulness done right".
 -/
 
@@ -108,10 +108,8 @@ theorem isFaithful_iff_matrixCoefficientSubalgebraWithAntipode_eq_top
       matrixCoefficientSubalgebraWithAntipode (R := R) (H := H) (M := M) = ⊤ := by
   unfold IsFaithful groupSchemeMap
   rw [GeneralLinear.isClosedImmersion_groupSchemeMap_iff,
-    ← BialgHom.coe_toAlgHom,
     hom_coordinateHom,
-    ← AlgHom.range_eq_top,
-    coordinateBialgHom_range]
+    coordinateBialgHom_surjective_iff]
 
 /-- Faithfulness is independent of the chosen finite basis and its index cardinality. -/
 theorem isFaithful_basis_independent {m : ℕ}
