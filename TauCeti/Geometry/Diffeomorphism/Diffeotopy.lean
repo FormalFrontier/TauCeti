@@ -180,7 +180,8 @@ def refl [IsManifold J n M] : Diffeotopy J n M where
   snd_toDiffeomorph_zero _ := rfl
 
 @[simp]
-theorem refl_apply [IsManifold J n M] (p : I × M) : refl (J := J) (n := n) p = p.2 :=
+theorem refl_apply [IsManifold J n M] (p : I × M) :
+    ((refl (J := J) (n := n) (M := M)).toDiffeomorph p).2 = p.2 :=
   by
     rw [refl.eq_def]
     rfl
@@ -202,7 +203,7 @@ def trans [IsManifold J n M] (Psi : Diffeotopy J n M) : Diffeotopy J n M where
 
 @[simp]
 theorem trans_apply [IsManifold J n M] (Psi : Diffeotopy J n M) (p : I × M) :
-    Phi.trans Psi p = Psi (p.1, Phi p) := by
+    ((Phi.trans Psi).toDiffeomorph p).2 = Psi (p.1, Phi p) := by
   rw [trans.eq_def]
   exact congrArg (fun q => (Psi.toDiffeomorph q).2) (Phi.toDiffeomorph_apply p)
 
@@ -213,7 +214,8 @@ theorem slice_trans [IsManifold J n M] (Psi : Diffeotopy J n M) (t : I) :
   apply _root_.Diffeomorph.ext
   intro x
   have hcomp := congrFun (_root_.Diffeomorph.coe_trans (Phi.slice t) (Psi.slice t)) x
-  rw [slice_apply, trans_apply, hcomp, Function.comp_apply, slice_apply, slice_apply]
+  rw [slice_apply, apply_eq_snd_toDiffeomorph, trans_apply, hcomp, Function.comp_apply,
+    slice_apply, slice_apply]
 
 /-- Taking the final diffeomorphism commutes with pointwise composition. -/
 @[simp]
@@ -232,10 +234,9 @@ def symm [IsManifold J n M] : Diffeotopy J n M where
 
 @[simp]
 theorem symm_apply [IsManifold J n M] (p : I × M) :
-    Phi.symm p = (Phi.toDiffeomorph.symm p).2 :=
+    (Phi.symm.toDiffeomorph p).2 = (Phi.toDiffeomorph.symm p).2 :=
   by
     rw [symm.eq_def]
-    rfl
 
 /-- Taking a time slice commutes with pointwise inversion of a diffeotopy. -/
 @[simp]
@@ -243,30 +244,29 @@ theorem slice_symm [IsManifold J n M] (t : I) :
     Phi.symm.slice t = (Phi.slice t).symm := by
   apply _root_.Diffeomorph.ext
   intro x
-  rw [slice_apply, symm_apply, slice_symm_apply]
+  rw [slice_apply, apply_eq_snd_toDiffeomorph, symm_apply, slice_symm_apply]
 
 /-- The final diffeomorphism of the inverse diffeotopy is the inverse final diffeomorphism. -/
 @[simp]
 theorem final_symm [IsManifold J n M] : Phi.symm.final = Phi.final.symm :=
   Phi.slice_symm 1
 
-@[simp]
 theorem toAmbientIsotopy_refl_apply [IsManifold J n M] (p : I × M) :
     (refl (J := J) (n := n) (M := M)).toAmbientIsotopy.toContinuousMap p = p.2 :=
   refl_apply p
 
-@[simp]
 theorem toAmbientIsotopy_trans_apply [IsManifold J n M] (Psi : Diffeotopy J n M) (p : I × M) :
     (Phi.trans Psi).toAmbientIsotopy.toContinuousMap p =
       (Phi.toAmbientIsotopy.trans Psi.toAmbientIsotopy).toContinuousMap p := by
-  rw [toAmbientIsotopy_apply, trans_apply, AmbientIsotopy.trans_apply,
+  rw [toAmbientIsotopy_apply, apply_eq_snd_toDiffeomorph, trans_apply,
+    AmbientIsotopy.trans_apply,
     toAmbientIsotopy_apply, toAmbientIsotopy_apply]
 
-@[simp]
 theorem toAmbientIsotopy_symm_apply [IsManifold J n M] (p : I × M) :
     Phi.symm.toAmbientIsotopy.toContinuousMap p =
       Phi.toAmbientIsotopy.symm.toContinuousMap p := by
-  rw [toAmbientIsotopy_apply, symm_apply, AmbientIsotopy.symm_apply]
+  rw [toAmbientIsotopy_apply, apply_eq_snd_toDiffeomorph, symm_apply,
+    AmbientIsotopy.symm_apply]
   have htotal : Phi.toAmbientIsotopy.totalHomeomorph = Phi.toDiffeomorph.toHomeomorph := by
     apply Homeomorph.ext
     intro q
