@@ -4,7 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Probability.Exchangeability.L2.BlockAverages
+public import TauCeti.Probability.Process.BlockAverage
+import Mathlib.Tactic.Ring
 
 /-!
 # Expanding a product of averages over disjoint windows
@@ -27,6 +28,12 @@ tuple, whose entries are indices in `Fin N`, always carry distinct indices
 (`window_selection_injective`). This is what removes the diagonal terms that an expansion
 over a *single* window would produce, and it is why the factorization can apply a
 contractability argument to every term of the average without exception.
+
+## References
+
+Nothing here involves a measure or the `L²` theory: the module is index arithmetic plus
+block-average algebra, which is why it sits with the process API rather than under
+`Exchangeability/L2/`.
 
 ## References
 
@@ -54,6 +61,13 @@ def window (N : ℕ) (i : ℕ) (j : ℕ) : ℕ := (i + 1) * N + j
 @[simp]
 theorem window_def (N i j : ℕ) : window N i j = (i + 1) * N + j := (rfl)
 
+/-- **The windows sit above the initial block.** Every window index exceeds every index of the
+first `N` coordinates, so an initial selection and a window selection never collide. -/
+theorem lt_window {N i j j' : ℕ} (hj : j < N) : j < window N i j' := by
+  have : N ≤ (i + 1) * N := Nat.le_mul_of_pos_left _ (by omega)
+  simp only [window_def]
+  omega
+
 /-- **The windows are ordered.** An index inside window `i` precedes every index of any later
 window `i'`, provided the offset `j` stays inside the window. -/
 theorem window_lt_window {N : ℕ} {i i' j j' : ℕ} (hj : j < N) (hi : i < i') :
@@ -75,8 +89,8 @@ theorem window_selection_injective {m N : ℕ} (js : Fin m → Fin N) :
   · exact absurd hab.symm (window_lt_window (js b).isLt h).ne
 
 /-- **The disjoint-window instance.** This specialises `prod_blockAverage_eq_expect`, imported from
-`L2/BlockAverages.lean`, to the windows `window N i`, where every tuple is an injective selection by
-`window_selection_injective`. -/
+`Process/BlockAverage.lean`, to the windows `window N i`, where every tuple is an injective
+selection by `window_selection_injective`. -/
 theorem prod_blockAverage_window_eq_expect {m N : ℕ} (Y : Fin m → ℕ → Ω → ℝ) (ω : Ω) :
     (∏ i : Fin m, blockAverage (Y i) (fun j : Fin N => window N (i : ℕ) (j : ℕ)) ω)
       = 𝔼 js : Fin m → Fin N, ∏ i : Fin m, Y i (window N (i : ℕ) (js i : ℕ)) ω :=
