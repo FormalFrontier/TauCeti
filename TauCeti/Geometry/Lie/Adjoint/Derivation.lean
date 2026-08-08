@@ -76,7 +76,7 @@ theorem Ad_apply (g : G) (D : LeftInvariantDerivation I G) :
   (rfl)
 
 /-- Evaluation at the identity intertwines the derivation and tangent adjoint actions. -/
-@[simp]
+@[simp high]
 theorem leftInvariantDerivationLieEquivGroupLieAlgebra_Ad
     (g : G) (D : LeftInvariantDerivation I G) :
     leftInvariantDerivationLieEquivGroupLieAlgebra
@@ -113,6 +113,8 @@ theorem Ad_mul (g h : G) :
 theorem Ad_inv (g : G) : Ad (I := I) g⁻¹ = (Ad (I := I) g).symm := by
   let e := leftInvariantDerivationLieEquivGroupLieAlgebra
     (I := I) (G := G) (ContMDiffMul.isInteriorPoint (I := I) (n := ∞) (by simp) (1 : G))
+  -- Expose the transported action so `tangentAd_inv` rewrites its middle equivalence; the inverse
+  -- of the resulting composite is then definitionally the composite on the right.
   change (e.trans (tangentAd (I := I) g⁻¹)).trans e.symm =
     ((e.trans (tangentAd (I := I) g)).trans e.symm).symm
   rw [tangentAd_inv]

@@ -130,10 +130,11 @@ theorem leftInvariantDerivationLieEquivGroupLieAlgebra_apply
 /-- The inverse Lie equivalence sends a tangent vector to its left-invariant derivation. -/
 @[simp]
 theorem leftInvariantDerivationLieEquivGroupLieAlgebra_symm_apply
-    [FiniteDimensional ℝ E] [T2Space G] (h₁ : I.IsInteriorPoint (1 : G))
+    [FiniteDimensional ℝ E] (h₁ : I.IsInteriorPoint (1 : G))
     (v : GroupLieAlgebra I G) :
     (leftInvariantDerivationLieEquivGroupLieAlgebra h₁).symm v =
       tangentToLeftInvariantDerivation v := by
+  let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
   let e := leftInvariantDerivationLieEquivGroupLieAlgebra h₁
   let e₀ := leftInvariantDerivationEquivGroupLieAlgebra h₁
   apply e.symm_apply_eq.mpr
