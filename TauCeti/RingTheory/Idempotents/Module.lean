@@ -261,7 +261,13 @@ surjectivity is spanning, `TauCeti.iSup_smulRange_eq_top`. -/
 theorem isInternal_smulRange (he : CompleteOrthogonalIdempotents e) :
     DirectSum.IsInternal fun i => smulRange S M (e i) := by
   -- `DirectSum.IsInternal` is bijectivity of `DirectSum.coeAddMonoidHom`, which is the underlying
-  -- function of `DirectSum.coeLinearMap`.
+  -- function of `DirectSum.coeLinearMap`. Mathlib's
+  -- `DirectSum.isInternal_submodule_of_iSupIndep_of_iSup_eq_top` cannot be used to assemble it from
+  -- `TauCeti.iSupIndep_smulRange` and `TauCeti.iSup_smulRange_eq_top`: it lives in the `Ring`
+  -- section of `Mathlib/Algebra/DirectSum/Module.lean` and, as its own note there records, "is not
+  -- generally true for `[Semiring R]`", while `S` is only a semiring here. Independence is
+  -- therefore replaced by the stronger `TauCeti.smul_coeLinearMap_smulRange`, which recovers each
+  -- component of a sum outright; only surjectivity goes through Mathlib.
   refine ⟨fun z w hzw => DFinsupp.ext fun j => Subtype.ext ?_, ?_⟩
   · replace hzw : DirectSum.coeLinearMap (fun i => smulRange S M (e i)) z
         = DirectSum.coeLinearMap (fun i => smulRange S M (e i)) w := hzw
