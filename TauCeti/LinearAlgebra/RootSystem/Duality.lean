@@ -72,7 +72,7 @@ namespace RootPairing
 /-- **Flipping a root pairing transposes its integral pairing.** The pairing of the flipped pairing
 is transposed by definition (`RootPairing.pairing_flip`); the content here is that the *chosen*
 preimage in `S` is transposed too, which needs `algebraMap S R` to be injective. -/
-lemma pairingIn_flip (S : Type*) [CommRing S] [Algebra S R] [FaithfulSMul S R]
+@[simp] lemma pairingIn_flip (S : Type*) [CommRing S] [Algebra S R] [FaithfulSMul S R]
     (P : RootPairing ι R M N) [P.IsValuedIn S] (i j : ι) :
     P.flip.pairingIn S i j = P.pairingIn S j i :=
   FaithfulSMul.algebraMap_injective S R <| by simp
@@ -85,12 +85,13 @@ Cartan matrices of the base and of its flip are indexed by. -/
 def flipSupportEquiv {P : RootPairing ι R M N} (b : P.Base) : b.flip.support ≃ b.support :=
   Equiv.subtypeEquivRight fun _ ↦ by rw [RootPairing.Base.flip_support]
 
-@[simp] lemma coe_flipSupportEquiv {P : RootPairing ι R M N} (b : P.Base) (i : b.flip.support) :
+@[simp] lemma coe_flipSupportEquiv_apply {P : RootPairing ι R M N} (b : P.Base)
+    (i : b.flip.support) :
     (flipSupportEquiv b i : ι) = i := (rfl)
 
 /-- **The Cartan matrix of the flipped base is the transpose of the Cartan matrix of the base.** -/
-lemma cartanMatrix_flip [CharZero R] {P : RootPairing ι R M N} [P.IsCrystallographic] (b : P.Base)
-    (i j : b.flip.support) :
+@[simp] lemma cartanMatrix_flip [CharZero R] {P : RootPairing ι R M N} [P.IsCrystallographic]
+    (b : P.Base) (i j : b.flip.support) :
     b.flip.cartanMatrix i j = b.cartanMatrix (flipSupportEquiv b j) (flipSupportEquiv b i) := by
   have h₁ : b.flip.cartanMatrix i j = P.flip.pairingIn ℤ (i : ι) (j : ι) :=
     RootPairing.Base.cartanMatrixIn_def _ _ _ _
@@ -99,7 +100,7 @@ lemma cartanMatrix_flip [CharZero R] {P : RootPairing ι R M N} [P.IsCrystallogr
   rw [h₁, h₂, pairingIn_flip]
 
 /-- Flipping a base twice returns the original base. -/
-lemma flip_flip {P : RootPairing ι R M N} (b : P.Base) : b.flip.flip = b := rfl
+@[simp] lemma flip_flip {P : RootPairing ι R M N} (b : P.Base) : b.flip.flip = b := rfl
 
 end Base
 
