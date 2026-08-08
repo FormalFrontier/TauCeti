@@ -14,9 +14,13 @@ public import TauCeti.RepresentationTheory.Induction.FrobeniusReciprocity
 Let `H` be a trivial-intersection subgroup of a finite group `G`: one meeting each of its distinct
 conjugates trivially (`TauCeti.IsTISubgroup`).  A class function on `H` that vanishes at the
 identity then induces to `G` *without changing its values on `H`*, and therefore without changing
-its norm.  Concretely, if `f` is a class function on `H` with `f 1 = 0` then
+its norm, as long as the relevant group order is invertible in the coefficient field `k` — the
+characteristic of `k` must not divide it, as everywhere in this theory, because induction divides
+by that order.  Concretely, if `f` is a class function on `H` with `f 1 = 0` then
 
-`Res_H (Ind_H^G f) = f`,  hence  `⟨Ind f, Ind f⟩_G = ⟨f, f⟩_H`.
+`Res_H (Ind_H^G f) = f`  when `(|H| : k)` is a unit,  hence  `⟨Ind f, Ind f⟩_G = ⟨f, f⟩_H`  when
+`(|G| : k)` is (which gives the former, by `TauCeti.isUnit_natCard_subgroup`).  All the statements
+below carry that hypothesis.
 
 The first statement is `TauCeti.ClassFunction.comap_subtype_ind_eq_self` and the second is
 `TauCeti.characterPairing_ind_ind`.  This is the isometry that the exceptional-character route to
@@ -38,8 +42,8 @@ terms all equal `f x`.
 * `TauCeti.ClassFunction.comap_subtype_ind_eq_self`: restriction undoes induction, `Res ∘ Ind = id`.
 * `TauCeti.characterPairing_ind_ind`: induction preserves the character pairing.
 * `TauCeti.characterPairing_ind_ind_of_isTISet` and `TauCeti.isometry_ind_of_isTISet`: the same,
-  for a class function supported on a trivial-intersection set of a Frobenius complement, which is
-  the form Frobenius's theorem uses.
+  for a class function supported on a trivial-intersection set of a proper trivial-intersection
+  subgroup, which is the form Frobenius's theorem uses (applied there to a Frobenius complement).
 
 ## Implementation notes
 
@@ -130,17 +134,18 @@ theorem characterPairing_ind_ind [Fintype G] (hG : IsUnit (Nat.card G : k))
     ClassFunction.comap_subtype_ind_eq_self hH (isUnit_natCard_subgroup H hG) f₂ hf₂]
 
 open scoped Classical in
-/-- **A class function supported on a trivial-intersection set of a Frobenius complement induces
-isometrically.**  The support condition supplies the vanishing at the identity that
-`TauCeti.characterPairing_ind_ind` asks for, because a trivial-intersection set for a proper
-subgroup does not contain the identity. -/
+/-- **A class function supported on a trivial-intersection set of a proper trivial-intersection
+subgroup induces isometrically.**  The support condition supplies the vanishing at the identity
+that `TauCeti.characterPairing_ind_ind` asks for, because a trivial-intersection set for a proper
+subgroup does not contain the identity.  Nontriviality of `H` plays no part, so this asks only for
+the two halves of `TauCeti.IsFrobeniusComplement` that the argument uses; for a Frobenius
+complement `hH`, pass `hH.isTISubgroup` and `hH.ne_top`. -/
 theorem characterPairing_ind_ind_of_isTISet [Fintype G] (hG : IsUnit (Nat.card G : k))
-    (hH : IsFrobeniusComplement H) (hS : IsTISet S H) (f₁ f₂ : ClassFunction k H)
+    (hH : IsTISubgroup H) (hne_top : H ≠ ⊤) (hS : IsTISet S H) (f₁ f₂ : ClassFunction k H)
     (hf₂ : ∀ y : H, (y : G) ∉ S → f₂.1 y = 0) :
     ClassFunction.characterPairing (ClassFunction.ind H f₁) (ClassFunction.ind H f₂) =
       ClassFunction.characterPairing f₁ f₂ :=
-  characterPairing_ind_ind hG hH.isTISubgroup f₁ f₂
-    (hf₂ 1 (by simpa using hS.one_notMem hH.ne_top))
+  characterPairing_ind_ind hG hH f₁ f₂ (hf₂ 1 (by simpa using hS.one_notMem hne_top))
 
 open scoped Classical in
 /-- **Induction from a trivial-intersection set preserves the norm**, the special case of
@@ -152,10 +157,10 @@ exceptional-character correspondence begins with.
 The name is the one the character-theory roadmap pins for this result: preserving the pairing at
 equal arguments is preservation of the norm, which is what "isometry" refers to. -/
 theorem isometry_ind_of_isTISet [Fintype G] (hG : IsUnit (Nat.card G : k))
-    (hH : IsFrobeniusComplement H) (hS : IsTISet S H) (f : ClassFunction k H)
+    (hH : IsTISubgroup H) (hne_top : H ≠ ⊤) (hS : IsTISet S H) (f : ClassFunction k H)
     (hf : ∀ y : H, (y : G) ∉ S → f.1 y = 0) :
     ClassFunction.characterPairing (ClassFunction.ind H f) (ClassFunction.ind H f) =
       ClassFunction.characterPairing f f :=
-  characterPairing_ind_ind_of_isTISet hG hH hS f f hf
+  characterPairing_ind_ind_of_isTISet hG hH hne_top hS f f hf
 
 end TauCeti
