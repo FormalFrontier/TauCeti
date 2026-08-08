@@ -21,8 +21,8 @@ The proof has two steps beyond that lemma.
 
 * **Off the tabloid basis.** James's dominance lemma sees the column antisymmetrizer `b_t` only on
   a single tabloid.  When `lam` fails to dominate `μ` the lemma says `b_t` kills every tabloid, so
-  by linearity it kills all of `M^μ`
-  (`TauCeti.YoungTableau.asAlgebraHom_columnAntisymmetrizer_apply_eq_zero_of_not_dominates`).
+  by linearity it kills all of `M^μ`; that extension lives beside the lemma itself, as
+  `TauCeti.YoungTableau.dominates_of_asAlgebraHom_columnAntisymmetrizer_apply_ne_zero`.
 * **Producing a preimage of the polytabloid inside `S^{lam}`.** The polytabloid is `e_t = b_t·{t}`,
   but the tabloid `{t}` is not in the Specht module, so `b_t` cannot be moved across a map defined
   only on `S^{lam}`.  The tabloid form supplies an invariant complement `M^{lam} = S^{lam} ⊕ W`
@@ -41,17 +41,11 @@ here.
 
 ## Main results
 
-* `TauCeti.YoungTableau.asAlgebraHom_columnAntisymmetrizer_apply_eq_zero_of_not_dominates` and
-  `TauCeti.YoungTableau.dominates_of_asAlgebraHom_columnAntisymmetrizer_apply_ne_zero`: James's
-  dominance lemma for an arbitrary vector of `M^μ`.
 * `TauCeti.YoungTableau.exists_mem_asAlgebraHom_columnAntisymmetrizer_eq_polytabloid`: the
   polytabloid is `b_t` applied to a vector already inside the Specht module.
 * `TauCeti.dominates_of_intertwiningMap_ne_zero`: a nonzero map `S^{lam} → M^μ` forces dominance.
-* `TauCeti.intertwiningMap_eq_zero_of_not_dominates` and
-  `TauCeti.subsingleton_intertwiningMap_of_not_dominates`: the contrapositive, as the vanishing of
-  the whole `Hom` space.
-* `TauCeti.dominates_of_injective_intertwiningMap`: the Specht module of `lam` embeds in a
-  permutation module `M^μ` only if `lam` dominates `μ`.
+* `TauCeti.intertwiningMap_eq_zero_of_not_dominates`: the contrapositive, as the vanishing of the
+  whole `Hom` space.
 
 ## References
 
@@ -70,42 +64,6 @@ open scoped BigOperators
 variable {lam : YoungDiagram}
 
 namespace YoungTableau
-
-/-! ### The column antisymmetrizer off the tabloid basis -/
-
-/-- **The column antisymmetrizer of a non-dominating shape annihilates the whole permutation
-module.**  James's dominance lemma says that `b_t` kills every `μ`-tabloid once the shape of `t`
-fails to dominate `μ`; the tabloids span `M^μ`, so `b_t` kills all of it.
-
-This is to `TauCeti.dominates_of_asAlgebraHom_columnAntisymmetrizer_ne_zero` what
-`TauCeti.YoungTableau.exists_eq_smul_polytabloid` is to
-`TauCeti.YoungTableau.exists_eq_smul_polytabloid_single`: the same statement, extended off the
-tabloid basis by linearity. -/
-theorem asAlgebraHom_columnAntisymmetrizer_apply_eq_zero_of_not_dominates (t : YoungTableau lam)
-    (μ : lam.card.Partition) (h : ¬Dominates (shapePartition lam) μ)
-    (x : (permutationModule μ).V) :
-    (permutationModule μ).ρ.asAlgebraHom (columnAntisymmetrizer t) x = 0 := by
-  have hx : x ∈ Submodule.span ℚ (Set.range (permutationModuleBasis μ)) := by
-    rw [Module.Basis.span_eq]
-    exact Submodule.mem_top
-  induction hx using Submodule.span_induction with
-  | mem w hw =>
-    obtain ⟨q, rfl⟩ := hw
-    rw [MonoidAlgebra.basis_apply]
-    by_contra hne
-    exact h (dominates_of_asAlgebraHom_columnAntisymmetrizer_ne_zero t μ q hne)
-  | zero => rw [map_zero]
-  | add u v _ _ hu hv => rw [map_add, hu, hv, add_zero]
-  | smul r u _ hu => rw [map_smul, hu, smul_zero]
-
-/-- **James's dominance lemma for an arbitrary vector.**  If the column antisymmetrizer of a
-`lam`-tableau does not annihilate some vector of `M^μ`, then the shape of `lam` dominates `μ`. -/
-theorem dominates_of_asAlgebraHom_columnAntisymmetrizer_apply_ne_zero (t : YoungTableau lam)
-    (μ : lam.card.Partition) {x : (permutationModule μ).V}
-    (hx : (permutationModule μ).ρ.asAlgebraHom (columnAntisymmetrizer t) x ≠ 0) :
-    Dominates (shapePartition lam) μ := by
-  by_contra h
-  exact hx (asAlgebraHom_columnAntisymmetrizer_apply_eq_zero_of_not_dominates t μ h x)
 
 /-! ### A preimage of the polytabloid inside the Specht module -/
 
@@ -205,11 +163,19 @@ theorem dominates_of_intertwiningMap_ne_zero (μ : lam.card.Partition)
   set E : (spechtSubrepresentation lam).toSubmodule :=
     ∑ q : colSubgroup t, ((Equiv.Perm.sign (q : Equiv.Perm (Fin lam.card)) : ℤ) : ℚ) •
       (spechtSubrepresentation lam).toRepresentation q ⟨e, he⟩ with hE
+  -- the action on the Specht module is the restriction of the ambient action
+  have hact : ∀ (g : Equiv.Perm (Fin lam.card)) (v : (spechtSubrepresentation lam).toSubmodule),
+      ((spechtSubrepresentation lam).toRepresentation g v :
+          (permutationModule (shapePartition lam)).V) =
+        (permutationModule (shapePartition lam)).ρ g v :=
+    fun g v =>
+      LinearMap.coe_restrict_apply ((spechtSubrepresentation lam).apply_mem_toSubmodule g) v
   have hEcoe : (E : (permutationModule (shapePartition lam)).V) = polytabloid t := by
     rw [hE, ← hbe, asAlgebraHom_columnAntisymmetrizer_apply]
     push_cast
-    rfl
-  have hEne : E ≠ 0 := fun h => polytabloid_ne_zero t (by rw [← hEcoe, h]; rfl)
+    exact Finset.sum_congr rfl fun q _ => by rw [hact]
+  have hEne : E ≠ 0 := fun h =>
+    polytabloid_ne_zero t (by rw [← hEcoe, h, ZeroMemClass.coe_zero])
   -- and `f` carries it to `b_t` applied to `f ⟨e, he⟩`
   have hfE : (permutationModule μ).ρ.asAlgebraHom (columnAntisymmetrizer t) (f ⟨e, he⟩) = f E := by
     rw [asAlgebraHom_columnAntisymmetrizer_apply, hE, map_sum]
@@ -229,35 +195,5 @@ theorem intertwiningMap_eq_zero_of_not_dominates (μ : lam.card.Partition)
     f = 0 := by
   by_contra hf
   exact h (dominates_of_intertwiningMap_ne_zero μ hf)
-
-/-- The `Hom` space from the Specht module of `lam` to `M^μ` is trivial unless the shape of `lam`
-dominates `μ`. -/
-theorem subsingleton_intertwiningMap_of_not_dominates (μ : lam.card.Partition)
-    (h : ¬Dominates (shapePartition lam) μ) :
-    Subsingleton (Representation.IntertwiningMap (spechtSubrepresentation lam).toRepresentation
-      (permutationModule μ).ρ) :=
-  ⟨fun f g => by
-    rw [intertwiningMap_eq_zero_of_not_dominates μ h f,
-      intertwiningMap_eq_zero_of_not_dominates μ h g]⟩
-
-/-- **A Specht module embeds in a permutation module only above it in the dominance order.**  If
-the Specht module of `lam` embeds in `M^μ`, then the shape of `lam` dominates `μ`.
-
-This is the form the classification of the Specht modules uses: a Specht module always sits inside
-the permutation module of its own shape, so an isomorphism between two Specht modules produces
-such an embedding.  Injectivity is not really an extra hypothesis, since the Specht module is
-irreducible and so every nonzero map out of it is injective; it is the convenient one to check. -/
-theorem dominates_of_injective_intertwiningMap (μ : lam.card.Partition)
-    {f : Representation.IntertwiningMap (spechtSubrepresentation lam).toRepresentation
-      (permutationModule μ).ρ} (hf : Function.Injective f) :
-    Dominates (shapePartition lam) μ := by
-  obtain ⟨t⟩ := YoungTableau.nonempty lam
-  refine dominates_of_intertwiningMap_ne_zero (f := f) μ fun h => ?_
-  have hzero : (⟨polytabloid t, polytabloid_mem_spechtSubrepresentation t⟩ :
-      (spechtSubrepresentation lam).toSubmodule) = 0 := by
-    refine hf ?_
-    rw [h, map_zero]
-    rfl
-  exact polytabloid_ne_zero t (congrArg Subtype.val hzero)
 
 end TauCeti
