@@ -286,58 +286,70 @@ theorem weylModule_ne_bot [Nontrivial k] (t : YoungTableau μ) (hn : μ.colLen 0
   rw [hbot', Submodule.mem_bot k] at hmem
   exact repr_symmetrizer_tensorPowerBasis_ne_zero t hn (by rw [hmem, map_zero]; rfl)
 
+/-- When `μ` has more than `n` rows, any index function `p : Fin μ.card → Fin n` repeats a value on
+the first column of `t`: two distinct labels of that column carry the same basis index. -/
+private theorem exists_ne_and_apply_eq_of_lt_colLen (t : YoungTableau μ) (hn : n < μ.colLen 0)
+    (p : Fin μ.card → Fin n) :
+    ∃ a b : Fin μ.card, colIndex t a = 0 ∧ colIndex t b = 0 ∧ a ≠ b ∧ p a = p b := by
+  classical
+  have hcard : Fintype.card {ℓ : Fin μ.card // colIndex t ℓ = 0} = μ.colLen 0 := by
+    rw [μ.colLen_eq_card, ← Fintype.card_coe]
+    exact Fintype.card_congr (colFiberEquiv t 0)
+  obtain ⟨a, b, hab, hpab⟩ :=
+    Fintype.exists_ne_map_eq_of_card_lt (fun ℓ : {ℓ : Fin μ.card // colIndex t ℓ = 0} => p ℓ)
+      (by rw [hcard, Fintype.card_fin]; exact hn)
+  exact ⟨a, b, a.2, b.2, fun h => hab (Subtype.ext h), hpab⟩
+
+/-- Transposing two labels of the same column that `p` sends to the same basis index fixes the
+monomial basis vector at `p` while negating `c_t`, so the symmetrizer's value there is its own
+negative. -/
+private theorem permTensorActionAlgHom_youngSymmetrizerOver_tensorPowerBasis_eq_neg
+    (t : YoungTableau μ) {p : Fin μ.card → Fin n} {a b : Fin μ.card}
+    (hcol : colIndex t a = colIndex t b) (hab : a ≠ b) (hpab : p a = p b) :
+    permTensorActionAlgHom k n μ.card (youngSymmetrizerOver k t)
+        (tensorPowerBasis k n μ.card p) =
+      -permTensorActionAlgHom k n μ.card (youngSymmetrizerOver k t)
+        (tensorPowerBasis k n μ.card p) := by
+  have hτ : Equiv.swap a b ∈ colSubgroup t := swap_mem_colSubgroup hcol
+  -- the transposition permutes the index function back to itself
+  have hswap : (fun i => p ((Equiv.swap a b).symm i)) = p :=
+    funext fun i => by rw [Equiv.symm_swap]; exact Equiv.apply_swap_eq_self hpab i
+  have h : permTensorActionAlgHom k n μ.card
+        (youngSymmetrizerOver k t * MonoidAlgebra.single (Equiv.swap a b) 1)
+        (tensorPowerBasis k n μ.card p) =
+      permTensorActionAlgHom k n μ.card (youngSymmetrizerOver k t)
+        (tensorPowerBasis k n μ.card p) := by
+    rw [map_mul, Module.End.mul_apply, permTensorActionAlgHom_single_tensorPowerBasis, one_smul,
+      hswap]
+  -- a transposition of the column group has sign `-1`, and `c_t` is alternating under it
+  have hneg : youngSymmetrizerOver k t * MonoidAlgebra.single (Equiv.swap a b) 1 =
+      -youngSymmetrizerOver k t := by
+    simpa [Equiv.Perm.sign_swap hab] using mul_youngSymmetrizerOver_right k t ⟨_, hτ⟩
+  conv_lhs => rw [← h]
+  rw [hneg, map_neg, LinearMap.neg_apply]
+
 /-- **The symmetrizer annihilates the whole tensor power when `μ` has more than `n` rows.** On each
 monomial basis vector two labels of the first column share a basis index, so their transposition
 fixes it while negating `c_t`; the value is its own negative, hence zero since `2` is invertible. -/
 private theorem permTensorActionAlgHom_youngSymmetrizerOver_eq_zero (t : YoungTableau μ)
     (hn : n < μ.colLen 0) :
     permTensorActionAlgHom k n μ.card (youngSymmetrizerOver k t) = 0 := by
-  classical
   have : Invertible (2 : ℚ) := invertibleOfNonzero (by norm_num)
   have : Invertible (2 : k) := by
     have h := Invertible.map (algebraMap ℚ k) (2 : ℚ)
     rwa [map_ofNat] at h
-  -- the labels of the first column outnumber the basis indices
-  have hcard : Fintype.card {ℓ : Fin μ.card // colIndex t ℓ = 0} = μ.colLen 0 := by
-    rw [μ.colLen_eq_card, ← Fintype.card_coe]
-    exact Fintype.card_congr (colFiberEquiv t 0)
   refine (tensorPowerBasis k n μ.card).ext fun p => ?_
   rw [LinearMap.zero_apply]
-  -- two labels of the first column carry the same basis index
-  obtain ⟨a, b, hab, hpab⟩ :=
-    Fintype.exists_ne_map_eq_of_card_lt (fun ℓ : {ℓ : Fin μ.card // colIndex t ℓ = 0} => p ℓ)
-      (by rw [hcard, Fintype.card_fin]; exact hn)
-  have hxy : (a : Fin μ.card) ≠ (b : Fin μ.card) := fun h => hab (Subtype.ext h)
-  have hτ : Equiv.swap (a : Fin μ.card) (b : Fin μ.card) ∈ colSubgroup t :=
-    swap_mem_colSubgroup (by rw [a.2, b.2])
-  -- the transposition permutes the index function back to itself
-  have hswap : (fun i => p ((Equiv.swap (a : Fin μ.card) (b : Fin μ.card)).symm i)) = p :=
-    funext fun i => by rw [Equiv.symm_swap]; exact Equiv.apply_swap_eq_self hpab i
-  have h : permTensorActionAlgHom k n μ.card (youngSymmetrizerOver k t *
-        MonoidAlgebra.single (Equiv.swap (a : Fin μ.card) (b : Fin μ.card)) 1)
-        (tensorPowerBasis k n μ.card p) =
-      permTensorActionAlgHom k n μ.card (youngSymmetrizerOver k t)
-        (tensorPowerBasis k n μ.card p) := by
-    rw [map_mul, Module.End.mul_apply, permTensorActionAlgHom_single_tensorPowerBasis, one_smul,
-      hswap]
-  have hneg : permTensorActionAlgHom k n μ.card (youngSymmetrizerOver k t)
-        (tensorPowerBasis k n μ.card p) =
-      -permTensorActionAlgHom k n μ.card (youngSymmetrizerOver k t)
-        (tensorPowerBasis k n μ.card p) := by
-    -- a transposition of the column group has sign `-1`, and `c_t` is alternating under it
-    have hneg' : youngSymmetrizerOver k t *
-        MonoidAlgebra.single (Equiv.swap (a : Fin μ.card) (b : Fin μ.card)) 1 =
-        -youngSymmetrizerOver k t := by
-      simpa [Equiv.Perm.sign_swap hxy] using mul_youngSymmetrizerOver_right k t ⟨_, hτ⟩
-    conv_lhs => rw [← h]
-    rw [hneg', map_neg, LinearMap.neg_apply]
+  obtain ⟨a, b, ha, hb, hab, hpab⟩ := exists_ne_and_apply_eq_of_lt_colLen t hn p
+  have hneg :=
+    permTensorActionAlgHom_youngSymmetrizerOver_tensorPowerBasis_eq_neg (k := k) t
+      (ha.trans hb.symm) hab hpab
   have htwo : (2 : k) • permTensorActionAlgHom k n μ.card (youngSymmetrizerOver k t)
       (tensorPowerBasis k n μ.card p) = 0 := by
     rw [two_smul]
     nth_rewrite 2 [hneg]
     rw [add_neg_cancel]
-  have := congrArg (fun w => (⅟(2 : k)) • w) htwo
-  simpa [smul_smul] using this
+  simpa [smul_smul] using congrArg (fun w => (⅟(2 : k)) • w) htwo
 
 /-- The Weyl module of a `μ`-tableau vanishes as soon as `μ` has more than `n` rows.
 
