@@ -67,7 +67,7 @@ per-crossing windows along the sorted crossing list.
 New assembly for this roadmap target (HW Prop 2.3), built from existing Tau Ceti
 contour-integration infrastructure: the per-crossing window value
 (`exists_radius_perWindow_tendsto_log_norm_add_arg`), the existence-and-real-part aggregation
-(`hasCauchyPVAt_of_perWindow_tendsto_of_interiorDisjoint_re_boundary`), and the integral-identity
+(`cauchyPVExistsAt_of_perWindow_tendsto_of_interiorDisjoint_re_boundary`), and the integral-identity
 bridge (`HasCauchyPVAt.im_eq_integral_realWindingIntegrand`). This file's own content is the
 log-norm derivative machinery (feeding the real-part telescoping hypothesis of the aggregation
 theorem) and deriving the real winding integrand's boundedness and interval-integrability from
@@ -511,7 +511,7 @@ theorem bounded_integrable_eq_real_integral_of_closed_interior_crossings
   -- the plain pieces telescope in real part to the log-norm difference
   -- (`re_integral_inv_sub_mul_deriv_eq_log_norm`), and each window's explicit limit value has
   -- exactly that real part built in already (`exists_radius_perWindow_tendsto_log_norm_add_arg`).
-  obtain ⟨L, hHCPV, hRe0⟩ := hasCauchyPVAt_of_perWindow_tendsto_of_interiorDisjoint_re_boundary
+  obtain ⟨L, hHCPV, hRe0⟩ := cauchyPVExistsAt_of_perWindow_tendsto_of_interiorDisjoint_re_boundary
     (g := fun z => (z - s)⁻¹) (Ψ := fun t => Real.log ‖γ t - s‖) hab.le T
     (fun _ => hρ_pos.le)
     (fun t ht => by linarith [(h_endpts t ht).1])

@@ -42,7 +42,7 @@ simple-pole and higher-order per-window theorems both discharge them.
   right edges may already reach `b`, since `h_hi` is `t + r ≤ b`. They cannot express windows
   that touch each other or that start at `a`; reach for the `_of_interiorDisjoint` forms above
   when either matters.
-* `Contour.hasCauchyPVAt_of_perWindow_tendsto_of_interiorDisjoint_re_boundary` — like the first
+* `Contour.cauchyPVExistsAt_of_perWindow_tendsto_of_interiorDisjoint_re_boundary` — like the first
   form above, but returns the aggregated value explicitly and pins its **real part** to the
   difference of a real boundary function `Ψ`, given only the real part of each piece and window
   value. Weaker than the telescoping form's shared complex antiderivative `Φ`, so it applies even
@@ -219,7 +219,7 @@ private theorem hasCauchyPVAt_along_sorted {γ : ℝ → ℂ} {s : ℂ} {g : ℂ
 `hasCauchyPVAt_along_sorted`, but tracks only the real part of the aggregated value against a
 real-valued boundary function `Ψ`, needing only the (avoidance-conditioned) real part of each
 piece and window value rather than a full `HasCauchyPVAt` witness for either. Kept private: used
-only to assemble `hasCauchyPVAt_of_perWindow_tendsto_of_interiorDisjoint_re_boundary` below. -/
+only to assemble `cauchyPVExistsAt_of_perWindow_tendsto_of_interiorDisjoint_re_boundary` below. -/
 private theorem re_windowPieceSum_along_sorted {γ : ℝ → ℂ} {s : ℂ} {p : ℝ → ℝ → ℂ} {w : ℝ → ℂ}
     {Ψ : ℝ → ℝ} {A b r m : ℝ}
     (h_piece : ∀ l u : ℝ, A ≤ l → l ≤ u → u ≤ b → (∀ t ∈ Icc l u, m ≤ ‖γ t - s‖) →
@@ -276,7 +276,7 @@ weaker than sharing one complex antiderivative `Φ` across every window, as
 need different branch choices for their imaginary part, so no single `Φ` need exist). Returns the
 aggregated principal value explicitly, together with the fact that its real part telescopes to
 `Ψ b - Ψ a`. -/
-theorem hasCauchyPVAt_of_perWindow_tendsto_of_interiorDisjoint_re_boundary
+theorem cauchyPVExistsAt_of_perWindow_tendsto_of_interiorDisjoint_re_boundary
     {γ : ℝ → ℂ} {s : ℂ} {g : ℂ → ℂ} {Ψ : ℝ → ℝ} {a b r m : ℝ}
     (hab : a ≤ b) (crossings : Finset ℝ) (hr_nonneg : crossings.Nonempty → 0 ≤ r)
     (h_lo : ∀ t ∈ crossings, a ≤ t - r) (h_hi : ∀ t ∈ crossings, t + r ≤ b)
