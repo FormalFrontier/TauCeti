@@ -89,7 +89,7 @@ instance instFunLike : FunLike (Diffeotopy J M) (I × M) M where
 theorem ext {Phi Psi : Diffeotopy J M} (h : ∀ p, Phi p = Psi p) : Phi = Psi :=
   DFunLike.ext Phi Psi h
 
-theorem apply_eq_snd_toDiffeomorph (p : I × M) : Phi p = (Phi.toDiffeomorph p).2 :=
+private theorem apply_eq_snd_toDiffeomorph (p : I × M) : Phi p = (Phi.toDiffeomorph p).2 :=
   rfl
 
 /-- A diffeotopy starts at the identity. -/
@@ -344,19 +344,19 @@ theorem final_symm [IsManifold J ∞ M] : Phi.symm.final = Phi.final.symm :=
   Phi.slice_symm 1
 
 /-- Forgetting the constant diffeotopy gives the constant ambient isotopy pointwise. -/
-theorem toAmbientIsotopy_refl_apply [IsManifold J ∞ M] (p : I × M) :
+private theorem toAmbientIsotopy_refl_apply [IsManifold J ∞ M] (p : I × M) :
     (refl (J := J) (M := M)).toAmbientIsotopy.toContinuousMap p = p.2 :=
   refl_apply p
 
 /-- Forgetting pointwise composition of diffeotopies preserves composition pointwise. -/
-theorem toAmbientIsotopy_trans_apply [IsManifold J ∞ M] (Psi : Diffeotopy J M) (p : I × M) :
+private theorem toAmbientIsotopy_trans_apply [IsManifold J ∞ M] (Psi : Diffeotopy J M) (p : I × M) :
     (Phi.trans Psi).toAmbientIsotopy.toContinuousMap p =
       (Phi.toAmbientIsotopy.trans Psi.toAmbientIsotopy).toContinuousMap p := by
   rw [toAmbientIsotopy_apply, trans_apply, AmbientIsotopy.trans_apply,
     toAmbientIsotopy_apply, toAmbientIsotopy_apply]
 
 /-- Forgetting pointwise inversion of a diffeotopy preserves inversion pointwise. -/
-theorem toAmbientIsotopy_symm_apply (p : I × M) :
+private theorem toAmbientIsotopy_symm_apply (p : I × M) :
     Phi.symm.toAmbientIsotopy.toContinuousMap p =
       Phi.toAmbientIsotopy.symm.toContinuousMap p := by
   rw [toAmbientIsotopy_apply, symm_apply, AmbientIsotopy.symm_apply]
