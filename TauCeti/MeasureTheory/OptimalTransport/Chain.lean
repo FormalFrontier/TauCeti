@@ -3,7 +3,9 @@ Copyright (c) 2026 Tau Ceti Project. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Codex
 -/
-import Mathlib.Probability.Kernel.IonescuTulcea.Traj
+module
+
+public import Mathlib.Probability.Kernel.IonescuTulcea.Traj
 
 /-!
 # Gluing a countable chain of transport plans
@@ -20,6 +22,8 @@ Finite-chain gluing follows by projecting this path law to any initial segment; 
 `TauCeti.Measure.map_adjacent_restrictChainMeasure`. This is the iteration of the two-plan gluing
 lemma needed by optimal transport, without rebuilding Mathlib's trajectory-measure construction.
 -/
+
+public section
 
 open Finset MeasurableSpace MeasureTheory Preorder ProbabilityTheory
 open scoped ENNReal MeasureTheory ProbabilityTheory
