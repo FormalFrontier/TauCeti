@@ -76,14 +76,13 @@ private theorem exists_one_sided_tangents {γ : ℝ → ℂ} {a b t₀ : ℝ}
     hasDerivWithinAt_Iio_of_tendsto_deriv h_cont h_diff_L h_tend_L⟩
 
 /-- **Value-exposing form of the per-crossing window radius.** Around each interior crossing
-there is a radius `R > 0` and nonzero complex witnesses `L_R`, `L_L` (the one-sided tangent
-values used internally to build the explicit limit below, though the statement here only records
-their non-vanishing) such that at every window radius `ρ ≤ R` whose window lies inside `[a, b]`
+there is a radius `R > 0` and nonzero complex constants `L_R`, `L_L` appearing in the explicit
+limit value below, such that at every window radius `ρ ≤ R` whose window lies inside `[a, b]`
 and contains no other crossing, the truncated window integral of the Cauchy kernel converges to
-the explicit log-norm-plus-argument value of `perWindow_truncated_integral_tendsto`, rather than
-to a merely existentially-bound limit. A consumer that only needs existence of the limit (not its
-value) can take the displayed value itself as the existential witness, so no separate
-existence-only wrapper is kept here. -/
+that explicit log-norm-plus-argument value (the value `perWindow_truncated_integral_tendsto`
+supplies), rather than to a merely existentially-bound limit. A consumer that only needs
+existence of the limit (not its value) can take the displayed value itself as the existential
+witness, so no separate existence-only wrapper is kept here. -/
 theorem exists_radius_perWindow_tendsto_log_norm_add_arg
     {γ : ℝ → ℂ} {a b t₀ : ℝ} {s : ℂ}
     (h_imm : IsPwC1ImmersionOn γ a b) (hab : a < b) (ht₀ : t₀ ∈ Ioo a b) (h_at : γ t₀ = s) :

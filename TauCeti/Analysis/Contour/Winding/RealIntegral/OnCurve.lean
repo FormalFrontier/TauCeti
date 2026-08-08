@@ -420,8 +420,8 @@ private theorem isBounded_intervalIntegrable_cauchyPV_of_interior_crossings
   -- `_right`/`_left` windows never need computing and re-combining by hand.
   choose! ρ_lip hρ_lip_pos hρ_lip_lt hρ_lip_bdd using fun t₀ (ht₀ : t₀ ∈ T) =>
     exists_isBounded_image_realWindingIntegrand_of_lipschitzOnWith_derivWithin_corner
-      (show t₀ - εL t₀ < t₀ by linarith [hεL_pos t₀ ht₀])
-      (show t₀ < t₀ + εR t₀ by linarith [hεR_pos t₀ ht₀])
+      (c := t₀ - εL t₀) (d := t₀ + εR t₀) (by linarith [hεL_pos t₀ ht₀])
+      (by linarith [hεR_pos t₀ ht₀])
       (hdiffR t₀ ht₀) (hlipR t₀ ht₀) (hdiffL t₀ ht₀) (hlipL t₀ ht₀) (hT_mem.mp ht₀).2
       (derivWithin_ne_zero_of_isPwC1ImmersionOn_right h_imm (h_Ico t₀ ht₀) (hdiffR t₀ ht₀)
         (by linarith [hεR_pos t₀ ht₀]))
@@ -603,14 +603,15 @@ private theorem bounded_integrable_eq_real_integral_of_closed_interior_crossings
   field_simp
   ring
 
-/-- **The real winding integrand is bounded on all of `[a, b]` for a closed piecewise-`C¹`
-immersion's crossings** (Hungerbühler–Wasem Prop 2.3, boundedness half). Projection of
-`bounded_integrable_eq_real_integral_of_closed_interior_crossings`; see
-`windingNumber_eq_real_integral_of_closed_interior_crossings` below for the full documentation of
-the hypotheses. -/
+/-- **The real winding integrand is bounded on all of `[a, b]` for an immersion with interior
+crossings** (Hungerbühler–Wasem Prop 2.3, boundedness half). Projection of
+`isBounded_intervalIntegrable_cauchyPV_of_interior_crossings`; needs no closedness, only that
+every crossing of `s` is interior to `[a, b]`. See
+`windingNumber_eq_real_integral_of_closed_interior_crossings` below for the closed-curve
+equality and the full documentation of `hγ_lip`. -/
 theorem isBounded_image_realWindingIntegrand_of_closed_interior_crossings
     {γ : ℝ → ℂ} {a b : ℝ} {s : ℂ} (h_imm : IsPwC1ImmersionOn γ a b) (hab : a ≤ b)
-    (hclosed : γ a = γ b) (hsa : γ a ≠ s)
+    (h_interior : ∀ t ∈ Icc a b, γ t = s → t ∈ Ioo a b)
     (hγ_lip : ∀ t ∈ Icc a b, γ t = s → ∃ εR > 0, ∃ KR : ℝ≥0,
       DifferentiableOn ℝ γ (Icc t (t + εR)) ∧ LipschitzOnWith KR (derivWithin γ (Icc t (t + εR)))
         (Icc t (t + εR)) ∧
@@ -618,17 +619,17 @@ theorem isBounded_image_realWindingIntegrand_of_closed_interior_crossings
       DifferentiableOn ℝ γ (Icc (t - εL) t) ∧ LipschitzOnWith KL (derivWithin γ (Icc (t - εL) t))
         (Icc (t - εL) t)) :
     Bornology.IsBounded ((fun t => realWindingIntegrand (γ t - s) (deriv γ t)) '' Icc a b) :=
-  (bounded_integrable_eq_real_integral_of_closed_interior_crossings
-    h_imm hab hclosed hsa hγ_lip).1
+  (isBounded_intervalIntegrable_cauchyPV_of_interior_crossings h_imm hab h_interior hγ_lip).1
 
-/-- **The real winding integrand is interval-integrable along a closed piecewise-`C¹` immersion
-with crossings** (Hungerbühler–Wasem Prop 2.3, integrability half). Projection of
-`bounded_integrable_eq_real_integral_of_closed_interior_crossings`; see
-`windingNumber_eq_real_integral_of_closed_interior_crossings` below for the full documentation of
-the hypotheses. -/
+/-- **The real winding integrand is interval-integrable along an immersion with interior
+crossings** (Hungerbühler–Wasem Prop 2.3, integrability half). Projection of
+`isBounded_intervalIntegrable_cauchyPV_of_interior_crossings`; needs no closedness, only that
+every crossing of `s` is interior to `[a, b]`. See
+`windingNumber_eq_real_integral_of_closed_interior_crossings` below for the closed-curve
+equality and the full documentation of `hγ_lip`. -/
 theorem intervalIntegrable_realWindingIntegrand_of_closed_interior_crossings
     {γ : ℝ → ℂ} {a b : ℝ} {s : ℂ} (h_imm : IsPwC1ImmersionOn γ a b) (hab : a ≤ b)
-    (hclosed : γ a = γ b) (hsa : γ a ≠ s)
+    (h_interior : ∀ t ∈ Icc a b, γ t = s → t ∈ Ioo a b)
     (hγ_lip : ∀ t ∈ Icc a b, γ t = s → ∃ εR > 0, ∃ KR : ℝ≥0,
       DifferentiableOn ℝ γ (Icc t (t + εR)) ∧ LipschitzOnWith KR (derivWithin γ (Icc t (t + εR)))
         (Icc t (t + εR)) ∧
@@ -636,8 +637,7 @@ theorem intervalIntegrable_realWindingIntegrand_of_closed_interior_crossings
       DifferentiableOn ℝ γ (Icc (t - εL) t) ∧ LipschitzOnWith KL (derivWithin γ (Icc (t - εL) t))
         (Icc (t - εL) t)) :
     IntervalIntegrable (fun t => realWindingIntegrand (γ t - s) (deriv γ t)) volume a b :=
-  (bounded_integrable_eq_real_integral_of_closed_interior_crossings
-    h_imm hab hclosed hsa hγ_lip).2.1
+  (isBounded_intervalIntegrable_cauchyPV_of_interior_crossings h_imm hab h_interior hγ_lip).2.1
 
 /-- **The real bounded-integrand formula, allowing crossings** (Hungerbühler–Wasem Prop 2.3).
 For a closed piecewise-`C¹` immersion `γ` on `[a, b]` that avoids `s` at the basepoint `a`
