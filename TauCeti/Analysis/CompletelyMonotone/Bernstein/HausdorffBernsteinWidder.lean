@@ -5,8 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Analysis.CompletelyMonotone.Laplace.Representation
--- Non-public: tightness criteria for the shifted representing measures.
-import Mathlib.MeasureTheory.Measure.TightNormed
+-- Non-public: the metrizability class of the finite-set tightness lemmas.
 import Mathlib.Topology.Metrizable.CompletelyMetrizable
 -- Non-public: Bernstein's existence theorem supplies the representing measures of the shifts.
 import TauCeti.Analysis.CompletelyMonotone.Bernstein.Theorem
@@ -129,7 +128,7 @@ private lemma lintegral_ofReal_one_sub_exp_eq_of_representsLaplace
 /-- Markov tail bound: the mass outside the closed ball of radius `R` is controlled by the `∫⁻`
 of `p ↦ 1 - exp(-x·p)` divided by its boundary value `1 - exp(-x·R)` (for `x, R > 0`). -/
 private lemma measure_closedBall_compl_le_lintegral_div
-    {μ : Measure ℝ≥0} [IsFiniteMeasure μ] {x R : ℝ} (hx : 0 < x) (hR : 0 < R) :
+    {μ : Measure ℝ≥0} {x R : ℝ} (hx : 0 < x) (hR : 0 < R) :
     μ (Metric.closedBall (0 : ℝ≥0) R)ᶜ ≤
       (∫⁻ p : ℝ≥0, ENNReal.ofReal (1 - Real.exp (-(x * (p : ℝ)))) ∂μ)
         / ENNReal.ofReal (1 - Real.exp (-(x * R))) := by
@@ -171,7 +170,6 @@ private lemma measure_closedBall_compl_le_of_representsLaplace_shift
     (hx : 0 < x) (hR : 0 < R) :
     μ (Metric.closedBall (0 : ℝ≥0) R)ᶜ ≤
       ENNReal.ofReal ((f δ - f (x + δ)) / (1 - Real.exp (-(x * R)))) := by
-  have := hμ.isFiniteMeasure
   have hc_pos : 0 < 1 - Real.exp (-(x * R)) := one_sub_exp_neg_mul_pos hx hR
   calc
     μ (Metric.closedBall (0 : ℝ≥0) R)ᶜ
@@ -203,23 +201,18 @@ private lemma exists_shift_uniform_gap_bound
     have hexp_lt : Real.exp (-1) < 1 := Real.exp_lt_one_iff.mpr (by norm_num)
     dsimp [c0]
     linarith
-  have heta_pos : 0 < η * c0 / 2 := by positivity
-  have hnear := (Metric.tendsto_nhds.mp hf_tendsto0) (η * c0 / 2) heta_pos
-  obtain ⟨m, hm⟩ := eventually_atTop.1 hnear
+  have hetac : 0 < η * c0 := mul_pos hη hc0_pos
+  obtain ⟨m, hm⟩ :=
+    (hf_tendsto0.eventually (eventually_gt_nhds (by linarith : f 0 - η * c0 < f 0))).exists
   let x : ℝ := a m
   have hx_pos : 0 < x := ha_pos m
-  have hx_close : dist (f x) (f 0) < η * c0 / 2 := hm m le_rfl
-  have hgap_limit_lt : f 0 - f x < η * c0 / 2 := by
-    rw [Real.dist_eq] at hx_close
-    have hx_abs := abs_lt.mp hx_close
-    linarith
+  have hlim_lt : f 0 - f x < η * c0 := by
+    simpa [x, sub_lt_comm] using hm
   have hfx_tendsto : Tendsto (fun n => f (x + a n)) atTop (𝓝 (f x)) :=
     tendsto_apply_add_of_continuousOn hf hx_pos.le ha_pos ha
   have hgap_tendsto :
       Tendsto (fun n => f (a n) - f (x + a n)) atTop (𝓝 (f 0 - f x)) :=
     hf_tendsto0.sub hfx_tendsto
-  have hlim_lt : f 0 - f x < η * c0 := by
-    nlinarith [hgap_limit_lt, hη, hc0_pos]
   have hgap_event :
       ∀ᶠ n : ℕ in atTop, (f (a n) - f (x + a n)) / c0 ≤ η := by
     filter_upwards [hgap_tendsto.eventually_lt_const hlim_lt] with n hn
