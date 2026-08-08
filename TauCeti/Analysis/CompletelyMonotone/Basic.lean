@@ -452,7 +452,7 @@ private lemma antitone_comp_max {f : ℝ → ℝ} {a : ℝ} (hf : AntitoneOn f (
   hf (mem_Ici.mpr (le_max_right _ _)) (mem_Ici.mpr (le_max_right _ _)) (max_le_max_right a hab)
 
 /-- A function antitone and bounded below on a closed half-line converges at infinity. -/
-lemma exists_tendsto_atTop_of_antitoneOn_Ici {f : ℝ → ℝ} {a : ℝ} (hf : AntitoneOn f (Ici a))
+private lemma exists_tendsto_atTop_of_antitoneOn_Ici {f : ℝ → ℝ} {a : ℝ} (hf : AntitoneOn f (Ici a))
     (hbdd : BddBelow (f '' Ici a)) :
     ∃ L, Tendsto f atTop (𝓝 L) := by
   set g := fun t : ℝ => f (max t a) with hg
@@ -465,7 +465,7 @@ lemma exists_tendsto_atTop_of_antitoneOn_Ici {f : ℝ → ℝ} {a : ℝ} (hf : A
     (eventually_atTop.mpr ⟨a, fun t ht => by simp [hg, max_eq_left ht]⟩)
 
 /-- A function antitone on a closed half-line lies above its limit at infinity there. -/
-lemma le_of_tendsto_atTop_of_antitoneOn_Ici {f : ℝ → ℝ} {a : ℝ} (hf : AntitoneOn f (Ici a))
+private lemma le_of_tendsto_atTop_of_antitoneOn_Ici {f : ℝ → ℝ} {a : ℝ} (hf : AntitoneOn f (Ici a))
     {L : ℝ} (hL : Tendsto f atTop (𝓝 L)) {T : ℝ} (hT : a ≤ T) : L ≤ f T := by
   set g₀ := fun t : ℝ => f (max t a) with hg₀
   have hg_anti : Antitone g₀ := antitone_comp_max hf

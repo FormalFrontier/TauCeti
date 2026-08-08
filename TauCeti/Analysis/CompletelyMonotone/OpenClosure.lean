@@ -8,11 +8,13 @@ public import TauCeti.Analysis.CompletelyMonotone.Basic
 public import Mathlib.Analysis.Calculus.IteratedDeriv.Lemmas
 
 /-!
-# Open-half-line closure for completely monotone functions
+# Half-line closure for completely monotone functions
 
 This file extends the API for `TauCeti.IsCompletelyMonotoneOnIoi`, the ordinary-derivative
 version of complete monotonicity on `(0, ∞)`, with the multiplicative and differential closure
-properties needed by the Bernstein-function part of the one-parameter-semigroups roadmap.
+properties needed by the Bernstein-function part of the one-parameter-semigroups roadmap, and
+derives the corresponding multiplicative closure for the closed-half-line predicate
+`TauCeti.IsCompletelyMonotoneOnIci`.
 
 The closed-half-line predicate `TauCeti.IsCompletelyMonotone` already has product and
 negated-derivative closure in `TauCeti.Analysis.CompletelyMonotone.Closure`. The open version is
@@ -29,6 +31,9 @@ derivative at `0`, so their derivative is naturally completely monotone only on 
   there.
 * `TauCeti.IsCompletelyMonotoneOnIoi.neg_deriv`: the negated ordinary derivative of a completely
   monotone function on `(0, ∞)` is completely monotone there.
+* `TauCeti.IsCompletelyMonotoneOnIci.mul`, `TauCeti.IsCompletelyMonotoneOnIci.prod`,
+  `TauCeti.IsCompletelyMonotoneOnIci.pow`: the closed-half-line predicate is closed under
+  pointwise multiplication, finite products, and natural powers.
 
 ## References
 
