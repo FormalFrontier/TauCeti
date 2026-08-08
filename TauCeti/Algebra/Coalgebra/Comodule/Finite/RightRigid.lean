@@ -8,7 +8,7 @@ public import Mathlib.CategoryTheory.Monoidal.Rigid.Basic
 public import Mathlib.LinearAlgebra.Coevaluation
 public import TauCeti.Algebra.Coalgebra.Comodule.Finite.Dual
 public import TauCeti.Algebra.Coalgebra.Comodule.Finite.Monoidal
-public import TauCeti.Algebra.Coalgebra.Comodule.MatrixCoefficient.Matrix
+import TauCeti.Algebra.Coalgebra.Comodule.MatrixCoefficient.Matrix
 
 /-!
 # Right rigidity of finite-dimensional comodules
