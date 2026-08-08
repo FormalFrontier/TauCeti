@@ -162,7 +162,6 @@ instance : Zero (SmoothTwoForm I M) :=
 lemma zero_toContinuousBilinForm :
     (0 : SmoothTwoForm I M).toContinuousBilinForm = 0 := (rfl)
 
-@[simp]
 lemma zero_apply (x : M) (v w : TangentSpace I x) :
     (0 : SmoothTwoForm I M) x v w = 0 := (rfl)
 
@@ -179,7 +178,6 @@ lemma add_toContinuousBilinForm (form form' : SmoothTwoForm I M) :
     (form + form').toContinuousBilinForm =
       form.toContinuousBilinForm + form'.toContinuousBilinForm := (rfl)
 
-@[simp]
 lemma add_apply (form form' : SmoothTwoForm I M) (x : M) (v w : TangentSpace I x) :
     (form + form') x v w = form x v w + form' x v w := by
   rfl
@@ -196,7 +194,6 @@ instance : Neg (SmoothTwoForm I M) :=
 lemma neg_toContinuousBilinForm (form : SmoothTwoForm I M) :
     (-form).toContinuousBilinForm = -form.toContinuousBilinForm := (rfl)
 
-@[simp]
 lemma neg_apply (form : SmoothTwoForm I M) (x : M) (v w : TangentSpace I x) :
     (-form) x v w = -form x v w := by
   rfl
@@ -214,7 +211,6 @@ lemma sub_toContinuousBilinForm (form form' : SmoothTwoForm I M) :
     (form - form').toContinuousBilinForm =
       form.toContinuousBilinForm - form'.toContinuousBilinForm := (rfl)
 
-@[simp]
 lemma sub_apply (form form' : SmoothTwoForm I M) (x : M) (v w : TangentSpace I x) :
     (form - form') x v w = form x v w - form' x v w := by
   rfl
@@ -231,7 +227,6 @@ instance : SMul ℝ (SmoothTwoForm I M) :=
 lemma smul_toContinuousBilinForm (c : ℝ) (form : SmoothTwoForm I M) :
     (c • form).toContinuousBilinForm = c • form.toContinuousBilinForm := (rfl)
 
-@[simp]
 lemma smul_apply (c : ℝ) (form : SmoothTwoForm I M) (x : M) (v w : TangentSpace I x) :
     (c • form) x v w = c * form x v w := by
   rfl
