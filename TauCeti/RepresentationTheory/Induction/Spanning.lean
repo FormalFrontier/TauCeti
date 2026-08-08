@@ -132,12 +132,6 @@ theorem mem_indSet {𝒮 : Set (Subgroup G)} {f : ClassFunction k G} :
     f ∈ indSet k G 𝒮 ↔ ∃ S ∈ 𝒮, ∃ ψ : ClassFunction k S, ind S ψ = f :=
   Iff.rfl
 
-/-- The definition of `TauCeti.ClassFunction.indSpan`, exposed for consumers that need its
-generating set. -/
-theorem indSpan_def (𝒮 : Set (Subgroup G)) :
-    indSpan k G 𝒮 = Submodule.span k (indSet k G 𝒮) :=
-  by rw [indSpan]
-
 variable {k G}
 
 /-- A class function induced from a member of `𝒮` lies in `TauCeti.ClassFunction.indSpan`, the
@@ -160,12 +154,14 @@ conjugacy.  Frobenius reciprocity turns orthogonality to all of `Ind_S^G (ClassF
 orthogonality of the restriction of `h` to `S` against all class functions of `S`, so that
 restriction is zero by nondegeneracy of the pairing on `S`.  Any conjugate of `x` lying in `S` then
 evaluates `h` at `x`. -/
-theorem eq_zero_of_characterPairing_indSpan_eq_zero [Fintype G]
-    [Invertible (Nat.card G : k)] {𝒮 : Set (Subgroup G)}
+theorem eq_zero_of_characterPairing_indSpan_eq_zero [Invertible (Nat.card G : k)]
+    {𝒮 : Set (Subgroup G)}
     (h𝒮 : ∀ x : G, ∃ S ∈ 𝒮, ∃ y : G, y * x * y⁻¹ ∈ S) {h : ClassFunction k G}
-    (hh : ∀ f ∈ indSpan k G 𝒮, characterPairing f h = 0) :
+    (hh : ∀ f ∈ indSpan k G 𝒮,
+      (@characterPairing k G _ _ (Fintype.ofFinite G)) f h = 0) :
     h = 0 := by
   classical
+  let _ := Fintype.ofFinite G
   have hG : IsUnit (Nat.card G : k) := isUnit_of_invertible _
   refine Subtype.ext (funext fun x => ?_)
   obtain ⟨S, hS, y, hy⟩ := h𝒮 x
@@ -260,12 +256,6 @@ theorem mem_indCharacterSet {𝒮 : Set (Subgroup G)} {f : ClassFunction k G} :
       ∃ S ∈ 𝒮, ∃ (n : ℕ) (ρ : Representation k S (Fin n → k)),
         ρ.IsIrreducible ∧ ind S (ofCharacter ρ) = f :=
   Iff.rfl
-
-/-- The definition of `TauCeti.ClassFunction.indCharacterSpan`, exposed for consumers that need its
-generating set. -/
-theorem indCharacterSpan_def (𝒮 : Set (Subgroup G)) :
-    indCharacterSpan k G 𝒮 = Submodule.span k (indCharacterSet k G 𝒮) :=
-  by rw [indCharacterSpan]
 
 variable {k G}
 
