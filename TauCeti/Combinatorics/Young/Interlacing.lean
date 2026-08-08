@@ -44,6 +44,8 @@ way keeps every type non-dependent, so the resulting sum decomposition
 
 * `TauCeti.BoundedSSYT.restrictShape_mem_interlacingShapes`: the sub-shape of small entries
   interlaces `μ` and has at most `n` rows.
+* `TauCeti.BoundedSSYT.content_restrict`: erasing the top letter leaves unchanged how often each
+  of the remaining letters occurs.
 * `TauCeti.BoundedSSYT.fiberEquiv`: the tableaux of shape `μ` in `n + 1` letters with a given
   sub-shape `ν` of small entries are the tableaux of shape `ν` in `n` letters.
 * `TauCeti.BoundedSSYT.sum_eq_sum_interlacingShapes`: the resulting decomposition of a sum over
@@ -163,7 +165,7 @@ theorem restrictShape_le (T : BoundedSSYT (n + 1) μ) : restrictShape T ≤ μ :
 /-- **The sub-shape of small entries interlaces the shape.**  Every cell of `μ` in row `i + 1`
 carries an entry at most `n`, so column strictness makes the entry of the cell directly above it
 smaller than `n`, and that cell is therefore small: this is the inequality `μᵢ₊₁ ≤ νᵢ`. -/
-theorem restrictShape_interlaces (T : BoundedSSYT (n + 1) μ) :
+theorem interlaces_restrictShape (T : BoundedSSYT (n + 1) μ) :
     YoungDiagram.Interlaces μ (restrictShape T) :=
   fun i => ⟨YoungDiagram.le_rowLen_of_forall_mem fun j hj => by
       have hc : ((i + 1, j) : ℕ × ℕ) ∈ μ := _root_.YoungDiagram.mem_iff_lt_rowLen.mpr hj
@@ -186,7 +188,7 @@ theorem colLen_zero_restrictShape_le (T : BoundedSSYT (n + 1) μ) :
 theorem restrictShape_mem_interlacingShapes (T : BoundedSSYT (n + 1) μ) :
     restrictShape T ∈ YoungDiagram.interlacingShapes n μ :=
   YoungDiagram.mem_interlacingShapes.mpr
-    ⟨restrictShape_interlaces T, colLen_zero_restrictShape_le T⟩
+    ⟨interlaces_restrictShape T, colLen_zero_restrictShape_le T⟩
 
 /-- **Erasing the top letter, as a filling**: keep the entries on the sub-shape `ν` of small
 entries and drop the rest.  The shape is passed as a parameter, together with the equation
@@ -227,6 +229,29 @@ theorem restrict_apply (T : BoundedSSYT (n + 1) μ) (ν : _root_.YoungDiagram)
     (hν : restrictShape T = ν) (i j : ℕ) :
     (restrict T ν hν).1 i j = if ((i, j) : ℕ × ℕ) ∈ ν then T.1 i j else 0 :=
   restrictTableau_apply T ν hν i j
+
+/-- **Erasing the top letter changes no other multiplicity**: the cells of `μ` carrying a letter
+smaller than the top letter `n` are exactly the cells of the sub-shape `ν`, and there the two
+tableaux agree, so each such letter occupies as many cells of `ν` as it does of `μ`. -/
+@[simp]
+theorem content_restrict (T : BoundedSSYT (n + 1) μ) (hν : restrictShape T = ν) {i : ℕ}
+    (hi : i < n) :
+    SemistandardYoungTableau.content (restrict T ν hν).1 i
+      = SemistandardYoungTableau.content T.1 i := by
+  have hcells : (ν.cells.filter fun c => (restrict T ν hν).1 c.1 c.2 = i)
+      = μ.cells.filter fun c => T.1 c.1 c.2 = i := by
+    ext c
+    obtain ⟨a, b⟩ := c
+    simp only [Finset.mem_filter, _root_.YoungDiagram.mem_cells, restrict_apply]
+    constructor
+    · rintro ⟨hc, hT⟩
+      rw [if_pos hc] at hT
+      exact ⟨((mem_iff_of_restrictShape_eq hν).mp hc).1, hT⟩
+    · rintro ⟨hc, hT⟩
+      have hmem : ((a, b) : ℕ × ℕ) ∈ ν :=
+        (mem_iff_of_restrictShape_eq hν).mpr ⟨hc, by rw [hT]; exact hi⟩
+      exact ⟨hmem, by rw [if_pos hmem]; exact hT⟩
+  rw [SemistandardYoungTableau.content_apply, SemistandardYoungTableau.content_apply, hcells]
 
 /-- **Restoring the top letter, as a filling**: keep the entries of `T` on `ν` and write the letter
 `n` on every cell of `μ / ν`.  Columns stay strict because `ν` interlaces `μ`, so no column of

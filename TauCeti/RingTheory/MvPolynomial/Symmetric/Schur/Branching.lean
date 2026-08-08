@@ -35,8 +35,9 @@ is exactly why the specialization, rather than the polynomial itself, is what fa
 
 ## Main results
 
-* `TauCeti.BoundedSSYT.weight_restrict`: erasing the top letter of a tableau does not change how
-  often any of the remaining letters occurs.
+* `TauCeti.BoundedSSYT.weight_restrict`: the weight form of `TauCeti.BoundedSSYT.content_restrict`,
+  that erasing the top letter of a tableau does not change how often any of the remaining letters
+  occurs.
 * `TauCeti.eval_diagramSchurPoly_of_apply_last_eq_one`: the branching rule, for any evaluation
   sending the last variable to `1`, and `TauCeti.eval_snoc_one_diagramSchurPoly`, its form for the
   evaluation built by appending `1` to a family of values.
@@ -62,25 +63,12 @@ namespace BoundedSSYT
 
 variable {n : ℕ} {μ ν : _root_.YoungDiagram}
 
-/-- **Erasing the top letter changes no other multiplicity.**  The cells of `μ` carrying a letter
-smaller than `n` are exactly the cells of the sub-shape `ν`, and there the two tableaux agree, so
-each such letter occurs equally often in both. -/
+/-- **Erasing the top letter changes no other multiplicity**, read on weights: the combinatorial
+statement is `TauCeti.BoundedSSYT.content_restrict`, and the weight of a bounded tableau is its
+content restricted to the alphabet. -/
 theorem weight_restrict (T : BoundedSSYT (n + 1) μ) (hν : restrictShape T = ν) (i : Fin n) :
     weight (restrict T ν hν) i = weight T i.castSucc := by
-  have hcells : (ν.cells.filter fun c => (restrict T ν hν).1 c.1 c.2 = (i : ℕ))
-      = μ.cells.filter fun c => T.1 c.1 c.2 = (i : ℕ) := by
-    ext c
-    obtain ⟨a, b⟩ := c
-    simp only [Finset.mem_filter, _root_.YoungDiagram.mem_cells, restrict_apply]
-    constructor
-    · rintro ⟨hc, hT⟩
-      rw [if_pos hc] at hT
-      exact ⟨((mem_iff_of_restrictShape_eq hν).mp hc).1, hT⟩
-    · rintro ⟨hc, hT⟩
-      have hmem : ((a, b) : ℕ × ℕ) ∈ ν :=
-        (mem_iff_of_restrictShape_eq hν).mpr ⟨hc, by rw [hT]; exact i.isLt⟩
-      exact ⟨hmem, by rw [if_pos hmem]; exact hT⟩
-  simp only [weight_apply, SemistandardYoungTableau.content_apply, Fin.val_castSucc, hcells]
+  rw [weight_apply, weight_apply, Fin.val_castSucc, content_restrict T hν i.isLt]
 
 end BoundedSSYT
 
