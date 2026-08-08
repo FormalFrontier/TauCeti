@@ -4,7 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.Algebra.Category.Grp.AB
 public import Mathlib.AlgebraicGeometry.Modules.Sheaf
 public import Mathlib.CategoryTheory.Abelian.GrothendieckCategory.HasExt
 public import Mathlib.CategoryTheory.Sites.SheafCohomology.Basic
@@ -68,18 +67,10 @@ def cohomologyMap {M N : X.Modules} (f : M ⟶ N) (i : ℕ) :
   CategoryTheory.Sheaf.H.map
     ((_root_.SheafOfModules.toSheaf X.ringCatSheaf).map f) i
 
-/-- Applying the cohomology map is applying Mathlib's map on the underlying abelian sheaves. -/
-lemma cohomologyMap_apply {M N : X.Modules} (f : M ⟶ N) (i : ℕ)
-    (x : cohomology M i) :
-    cohomologyMap f i x = CategoryTheory.Sheaf.H.map
-      ((_root_.SheafOfModules.toSheaf X.ringCatSheaf).map f) i x :=
-  (rfl)
-
 /-- The identity morphism induces the identity on cohomology. -/
 @[simp]
 lemma cohomologyMap_id_apply (M : X.Modules) (i : ℕ) (x : cohomology M i) :
     cohomologyMap (𝟙 M) i x = x := by
-  rw [cohomologyMap_apply]
   exact CategoryTheory.Sheaf.H.map_id_apply x
 
 /-- The map induced by a composite is the composite of the induced cohomology maps. -/
@@ -111,17 +102,13 @@ instance (X : Scheme.{u}) (i : ℕ) : (cohomologyFunctor X i).Additive :=
   inferInstanceAs ((_root_.SheafOfModules.toSheaf X.ringCatSheaf ⋙
     CategoryTheory.Sheaf.functorH.{u} _ i).Additive)
 
-/-- The morphism of the cohomology functor is `cohomologyMap`. -/
-@[simp]
-lemma cohomologyFunctor_map_hom {M N : X.Modules} (f : M ⟶ N) (i : ℕ) :
-    ((cohomologyFunctor X i).map f).hom = cohomologyMap f i :=
-  (rfl)
-
 /-- The zero morphism induces the zero map on cohomology. -/
 @[simp]
 lemma cohomologyMap_zero_apply (M N : X.Modules) (i : ℕ) (x : cohomology M i) :
     cohomologyMap (0 : M ⟶ N) i x = 0 := by
-  rw [← cohomologyFunctor_map_hom, (cohomologyFunctor X i).map_zero]
+  rw [show cohomologyMap (0 : M ⟶ N) i =
+    ((cohomologyFunctor X i).map (0 : M ⟶ N)).hom from rfl,
+    (cohomologyFunctor X i).map_zero]
   rfl
 
 /-- Isomorphic sheaves of modules have canonically additively equivalent cohomology groups. -/
@@ -135,7 +122,8 @@ morphism. -/
 lemma cohomologyEquivOfIso_apply {M N : X.Modules} (e : M ≅ N) (i : ℕ)
     (x : cohomology M i) :
     cohomologyEquivOfIso e i x = cohomologyMap e.hom i x := by
-  rw [← cohomologyFunctor_map_hom, ← Functor.mapIso_hom]
+  rw [show cohomologyMap e.hom i = ((cohomologyFunctor X i).map e.hom).hom from rfl,
+    ← Functor.mapIso_hom]
   exact ((cohomologyFunctor X i).mapIso e).addCommGroupIsoToAddEquiv_apply x
 
 /-- The inverse of `cohomologyEquivOfIso` is the cohomology map induced by the inverse
@@ -144,7 +132,8 @@ morphism. -/
 lemma cohomologyEquivOfIso_symm_apply {M N : X.Modules} (e : M ≅ N) (i : ℕ)
     (x : cohomology N i) :
     (cohomologyEquivOfIso e i).symm x = cohomologyMap e.inv i x := by
-  rw [← cohomologyFunctor_map_hom, ← Functor.mapIso_inv]
+  rw [show cohomologyMap e.inv i = ((cohomologyFunctor X i).map e.inv).hom from rfl,
+    ← Functor.mapIso_inv]
   exact ((cohomologyFunctor X i).mapIso e).addCommGroupIsoToAddEquiv_symm_apply x
 
 /-- Zeroth cohomology is canonically equivalent to the group of global sections. -/
