@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.NumberTheory.NumberField.InfinitePlace.TotallyRealComplex
+public import Mathlib.NumberTheory.NumberField.InfinitePlace.Ramification
 
 /-!
 # Totally complex number fields from a negative square
@@ -42,5 +43,15 @@ theorem isTotallyComplex_of_sq_ratCast_of_neg {x : K} {r : ℚ} (hx2 : x ^ 2 = a
     exact_mod_cast h
   have hrR : (r : ℝ) < 0 := by exact_mod_cast hr
   nlinarith [sq_nonneg (hφ.embedding x), hψsq, hrR]
+
+omit [NumberField K] in
+/-- **A totally complex base has no ramified infinite places.** If `K` is totally complex, every
+infinite place of `K` is unramified in an extension `L`: a totally complex field has only complex
+infinite places, and a complex place never ramifies. -/
+theorem isUnramifiedIn_of_isTotallyComplex (hK : IsTotallyComplex K) {L : Type*} [Field L]
+    [NumberField L] [Algebra K L] (w : InfinitePlace K) : w.IsUnramifiedIn L := by
+  intro v hv
+  rw [InfinitePlace.isUnramified_iff]
+  exact Or.inr (by rw [hv]; exact hK.isComplex w)
 
 end TauCeti.NumberField

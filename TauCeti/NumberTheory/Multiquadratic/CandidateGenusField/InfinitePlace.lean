@@ -65,10 +65,8 @@ theorem isTotallyComplex_candidateGenusFieldBase (hd : Squarefree d) (hneg : d <
 ramifies. This is the archimedean half of the genus-field identification in the imaginary case. -/
 theorem isUnramifiedIn_candidateGenusField (hd : Squarefree d) (hneg : d < 0)
     (w : InfinitePlace (candidateGenusFieldBase hd)) :
-    w.IsUnramifiedIn (candidateGenusField hd) := by
-  have hbase := isTotallyComplex_candidateGenusFieldBase hd hneg
-  intro v hv
-  rw [InfinitePlace.isUnramified_iff]
-  exact Or.inr (by rw [hv]; exact hbase.isComplex w)
+    w.IsUnramifiedIn (candidateGenusField hd) :=
+  TauCeti.NumberField.isUnramifiedIn_of_isTotallyComplex
+    (isTotallyComplex_candidateGenusFieldBase hd hneg) w
 
 end TauCeti.Multiquadratic
