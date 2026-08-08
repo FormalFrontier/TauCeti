@@ -1,0 +1,260 @@
+/-
+Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+-/
+module
+
+public import TauCeti.Geometry.Lie.Adjoint.Infinitesimal
+public import TauCeti.Geometry.Lie.Adjoint.Representation
+
+/-!
+# The differential of the adjoint representation
+
+The differential at the identity of the group adjoint representation is Mathlib's Lie-algebra
+adjoint map. This is the roadmap-facing form of the infinitesimal adjoint identity, stated on the
+canonical Lie algebra of left-invariant derivations.
+
+This advances Deliverable A, Layer 1 of
+`TauCetiRoadmap/RepresentationTheory/LieGroups/README.md`.
+
+## Main result
+
+* `TauCeti.Lie.mvfderiv_Ad_apply`: the identity `d(Ad)_1(X)(Y) = ad X Y`.
+* `TauCeti.Lie.mvfderiv_continuousAdjointRepresentation`: the operator identity
+  `d(Ad)_1(X) = ad X`.
+
+## References
+
+* [Lie groups and the Lie algebra correspondence roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/LieGroups/README.md),
+  Deliverable A, Layer 1, "The infinitesimal adjoint".
+-/
+
+public section
+
+noncomputable section
+
+namespace TauCeti.Lie
+
+open scoped ContDiff Manifold
+
+variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
+  {H : Type*} [TopologicalSpace H] {I : ModelWithCorners ℝ E H}
+  {G : Type*} [TopologicalSpace G] [ChartedSpace H G] [Group G]
+  [FiniteDimensional ℝ E] [LieGroup I ∞ G] [T2Space G]
+
+local instance lieGroupMinSmoothnessThreeRepresentationDifferential :
+    LieGroup I (minSmoothness ℝ 3) G :=
+  LieGroup.of_le (I := I) (G := G) (m := minSmoothness ℝ 3) (n := ∞)
+    (by simpa using (inferInstance : ENat.LEInfty (3 : ℕ∞ω)).out)
+
+local instance lieGroupBoundarylessManifoldRepresentationDifferential :
+    BoundarylessManifold I G where
+  isInteriorPoint' g :=
+    ContMDiffMul.isInteriorPoint (I := I) (n := ∞) (by simp) g
+
+/-- Mathlib's algebraic adjoint map, regarded as a bounded operator on the finite-dimensional Lie
+algebra. -/
+def adContinuousLinearMap (X : LeftInvariantDerivation I G) :
+    LeftInvariantDerivation I G →L[ℝ] LeftInvariantDerivation I G := by
+  let _ : FiniteDimensional ℝ (LeftInvariantDerivation I G) :=
+    finiteDimensional_leftInvariantDerivation BoundarylessManifold.isInteriorPoint
+  exact LinearMap.toContinuousLinearMap
+    (LieAlgebra.ad ℝ (LeftInvariantDerivation I G) X)
+
+@[simp]
+theorem adContinuousLinearMap_apply (X Y : LeftInvariantDerivation I G) :
+    adContinuousLinearMap (I := I) X Y =
+      LieAlgebra.ad ℝ (LeftInvariantDerivation I G) X Y := by
+  rw [adContinuousLinearMap]
+  rfl
+
+/-- The differential at the identity of the group adjoint action, evaluated on `X` and `Y`, is
+the Lie-algebra adjoint `ad X Y`. -/
+theorem mvfderiv_Ad_apply (X Y : LeftInvariantDerivation I G) :
+    mvfderiv I (fun g : G => Ad (I := I) g Y) 1
+        (leftInvariantDerivationLieEquivGroupLieAlgebra
+          (I := I) (G := G) BoundarylessManifold.isInteriorPoint X) =
+      LieAlgebra.ad ℝ (LeftInvariantDerivation I G) X Y := by
+  let eLie := leftInvariantDerivationLieEquivGroupLieAlgebra
+    (I := I) (G := G) BoundarylessManifold.isInteriorPoint
+  let eIso := leftInvariantDerivationLinearIsometryEquivModelVectorSpace
+    (I := I) (G := G)
+  have eLie_symm_apply (v : GroupLieAlgebra I G) :
+      eLie.symm v = tangentToLeftInvariantDerivation (I := I) (G := G) v := by
+    apply eLie.injective
+    calc
+      eLie (eLie.symm v) = v := eLie.apply_symm_apply v
+      _ = eLie (tangentToLeftInvariantDerivation v) := by
+        rw [leftInvariantDerivationLieEquivGroupLieAlgebra_apply]
+        rw [← leftInvariantDerivationEquivGroupLieAlgebra_symm_apply
+          (I := I) (G := G) BoundarylessManifold.isInteriorPoint v]
+        exact (leftInvariantDerivationEquivGroupLieAlgebra
+          (I := I) (G := G) BoundarylessManifold.isInteriorPoint).apply_symm_apply v |>.symm
+  let A : G → LeftInvariantDerivation I G := fun g => Ad (I := I) g Y
+  have hA : ContMDiff I 𝓘(ℝ, LeftInvariantDerivation I G) ∞ A := by
+    have hpair : ContMDiff I
+        (I.prod 𝓘(ℝ, LeftInvariantDerivation I G)) ∞
+        (fun g : G => (g, Y)) := contMDiff_id.prodMk contMDiff_const
+    exact (contMDiff_Ad_apply (I := I) (G := G)).comp hpair
+  have hcurve := hasMFDerivAt_mulInvariantExp_smul
+    (I := I) (G := G) (eLie X)
+  have hzero : mulInvariantExp (I := I) (G := G) ((0 : ℝ) • eLie X) = 1 := by
+    rw [zero_smul, mulInvariantExp_zero]
+  have hAmf := hA.mdifferentiable (by simp) (1 : G) |>.hasMFDerivAt
+  rw [← hzero] at hAmf
+  have hcomp := hAmf.comp 0 hcurve
+  rw [hzero] at hcomp
+  have hcompF : HasFDerivAt
+      (A ∘ fun t : ℝ => mulInvariantExp (I := I) (G := G) (t • eLie X))
+      ((mvfderiv I A 1).comp ((1 : ℝ →L[ℝ] ℝ).smulRight (eLie X))) 0 := by
+    with_unfolding_all exact hcomp.hasFDerivAt
+  have hchain : HasDerivAt
+      (fun t : ℝ => A (mulInvariantExp (I := I) (G := G) (t • eLie X)))
+      (mvfderiv I A 1 (eLie X)) 0 := by
+    apply hcompF.hasDerivAt.congr_deriv
+    simp only [ContinuousLinearMap.comp_apply, ContinuousLinearMap.smulRight_apply,
+      one_apply_eq_self, one_smul]
+  have htangent := hasDerivAt_tangentAd_mulInvariantExp_smul_apply
+    (I := I) (G := G) (eLie X) (eLie Y)
+  have htransport := eIso.symm.toContinuousLinearEquiv.hasFDerivAt.comp_hasDerivAt 0 htangent
+  have hpath : HasDerivAt
+      (fun t : ℝ => A (mulInvariantExp (I := I) (G := G) (t • eLie X)))
+      (LieAlgebra.ad ℝ (LeftInvariantDerivation I G) X Y) 0 := by
+    rw [show (fun t : ℝ =>
+        A (mulInvariantExp (I := I) (G := G) (t • eLie X))) =
+      eIso.symm ∘ fun t : ℝ => @id E (tangentAd (I := I)
+        (mulInvariantExp (I := I) (G := G) (t • eLie X)) (eLie Y)) by
+      funext t
+      simp only [A, Function.comp_apply, Ad_apply]
+      change eLie.symm (tangentAd (I := I)
+          (mulInvariantExp (I := I) (G := G) (t • eLie X)) (eLie Y)) =
+        eIso.symm (@id E (tangentAd (I := I)
+          (mulInvariantExp (I := I) (G := G) (t • eLie X)) (eLie Y)))
+      rw [eLie_symm_apply]
+      simp only [eIso,
+        leftInvariantDerivationLinearIsometryEquivModelVectorSpace_symm_apply]
+      rfl]
+    apply htransport.congr_deriv
+    simp only [LieAlgebra.ad_apply]
+    rw [← eLie.map_lie]
+    calc
+      eIso.symm (@id E (eLie (⁅X, Y⁆))) = eLie.symm (eLie (⁅X, Y⁆)) := by
+        rw [eLie_symm_apply]
+        simp only [eIso,
+          leftInvariantDerivationLinearIsometryEquivModelVectorSpace_symm_apply]
+        rfl
+      _ = ⁅X, Y⁆ := eLie.symm_apply_apply _
+  simpa only [A, eLie] using hchain.unique hpath
+
+/-- The differential at the identity of the bounded-operator-valued adjoint representation is
+Mathlib's Lie-algebra adjoint map. -/
+theorem mvfderiv_continuousAdjointRepresentation (X : LeftInvariantDerivation I G) :
+    mvfderiv I
+      (continuousAdjointRepresentation (I := I) (G := G)) 1
+      (leftInvariantDerivationLieEquivGroupLieAlgebra
+        (I := I) (G := G) BoundarylessManifold.isInteriorPoint X) =
+      adContinuousLinearMap (I := I) X := by
+  let eLie := leftInvariantDerivationLieEquivGroupLieAlgebra
+    (I := I) (G := G) BoundarylessManifold.isInteriorPoint
+  let dOp : LeftInvariantDerivation I G →L[ℝ] LeftInvariantDerivation I G :=
+    mvfderiv I
+      (continuousAdjointRepresentation (I := I) (G := G)) 1 (eLie X)
+  change
+    dOp = adContinuousLinearMap (I := I) X
+  apply ContinuousLinearMap.ext
+  intro Y
+  let evalY :
+      (LeftInvariantDerivation I G →L[ℝ] LeftInvariantDerivation I G) →L[ℝ]
+        LeftInvariantDerivation I G :=
+    (ContinuousLinearMap.apply ℝ (LeftInvariantDerivation I G)) Y
+  have hOp :=
+    (contMDiff_continuousAdjointRepresentation (I := I) (G := G)).mdifferentiable
+      (by simp) (1 : G) |>.hasMFDerivAt
+  have hEvalF : HasFDerivAt evalY evalY
+      (continuousAdjointRepresentation (I := I) (G := G) 1) :=
+    evalY.hasFDerivAt
+  have hEval := hEvalF.hasMFDerivAt
+  have hComp := hEval.comp (1 : G) hOp
+  let AY : G → LeftInvariantDerivation I G := fun g => Ad (I := I) g Y
+  have hCompAY : HasMFDerivAt I 𝓘(ℝ, LeftInvariantDerivation I G) AY 1
+      (evalY.comp (mfderiv I
+        𝓘(ℝ, LeftInvariantDerivation I G →L[ℝ] LeftInvariantDerivation I G)
+        (continuousAdjointRepresentation (I := I) (G := G)) 1)) := by
+    apply hComp.congr_of_eventuallyEq
+    filter_upwards [] with g
+    simp only [AY, Function.comp_apply, evalY, ContinuousLinearMap.apply_apply,
+      continuousAdjointRepresentation_apply]
+  have hAY : ContMDiff I 𝓘(ℝ, LeftInvariantDerivation I G) ∞ AY := by
+    have hpair : ContMDiff I
+        (I.prod 𝓘(ℝ, LeftInvariantDerivation I G)) ∞
+        (fun g : G => (g, Y)) := contMDiff_id.prodMk contMDiff_const
+    exact (contMDiff_Ad_apply (I := I) (G := G)).comp hpair
+  have hCanonical := hAY.mdifferentiable (by simp) (1 : G) |>.hasMFDerivAt
+  have hDeriv := hasMFDerivAt_unique hCompAY hCanonical
+  have hApply := congrArg (fun L => L (eLie X)) hDeriv
+  have hAYone : AY 1 = Y := by
+    simpa only [AY, Ad_one] using
+      (LieEquiv.refl_apply (R := ℝ) (L₁ := LeftInvariantDerivation I G) Y)
+  rw [hAYone] at hApply
+  have hApply' := congrArg (NormedSpace.fromTangentSpace (𝕜 := ℝ) Y) hApply
+  have hLeft :
+      NormedSpace.fromTangentSpace (𝕜 := ℝ) Y
+        ((evalY.comp (mfderiv I
+          𝓘(ℝ, LeftInvariantDerivation I G →L[ℝ] LeftInvariantDerivation I G)
+          (continuousAdjointRepresentation (I := I) (G := G)) 1)) (eLie X)) =
+        dOp Y := by
+    rfl
+  have hRight :
+      NormedSpace.fromTangentSpace (𝕜 := ℝ) Y
+        ((mfderiv I 𝓘(ℝ, LeftInvariantDerivation I G) AY 1) (eLie X)) =
+        mvfderiv I AY 1 (eLie X) := by
+    rw [mvfderiv, ContinuousLinearMap.comp_apply, hAYone]
+    rfl
+  calc
+    dOp Y = mvfderiv I AY 1 (eLie X) := by
+      exact hLeft.symm.trans (hApply'.trans hRight)
+    _ = LieAlgebra.ad ℝ (LeftInvariantDerivation I G) X Y := by
+      simpa only [AY, eLie] using mvfderiv_Ad_apply (I := I) (G := G) X Y
+    _ = adContinuousLinearMap (I := I) X Y :=
+      (adContinuousLinearMap_apply (I := I) X Y).symm
+
+/-- Along the one-parameter subgroup generated by `X`, the initial derivative of the adjoint
+action on `Y` is `ad X Y`. -/
+theorem hasDerivAt_Ad_mulInvariantExp_smul_apply
+    (X Y : LeftInvariantDerivation I G) :
+    HasDerivAt
+      (fun t : ℝ => Ad (I := I)
+        (mulInvariantExp (I := I) (G := G)
+          (t • leftInvariantDerivationLieEquivGroupLieAlgebra
+            (I := I) (G := G) BoundarylessManifold.isInteriorPoint X)) Y)
+      (LieAlgebra.ad ℝ (LeftInvariantDerivation I G) X Y) 0 := by
+  let eLie := leftInvariantDerivationLieEquivGroupLieAlgebra
+    (I := I) (G := G) BoundarylessManifold.isInteriorPoint
+  let A : G → LeftInvariantDerivation I G := fun g => Ad (I := I) g Y
+  have hA : ContMDiff I 𝓘(ℝ, LeftInvariantDerivation I G) ∞ A := by
+    have hpair : ContMDiff I
+        (I.prod 𝓘(ℝ, LeftInvariantDerivation I G)) ∞
+        (fun g : G => (g, Y)) := contMDiff_id.prodMk contMDiff_const
+    exact (contMDiff_Ad_apply (I := I) (G := G)).comp hpair
+  have hcurve := hasMFDerivAt_mulInvariantExp_smul
+    (I := I) (G := G) (eLie X)
+  have hzero : mulInvariantExp (I := I) (G := G) ((0 : ℝ) • eLie X) = 1 := by
+    rw [zero_smul, mulInvariantExp_zero]
+  have hAmf := hA.mdifferentiable (by simp) (1 : G) |>.hasMFDerivAt
+  rw [← hzero] at hAmf
+  have hcomp := hAmf.comp 0 hcurve
+  rw [hzero] at hcomp
+  have hcompF : HasFDerivAt
+      (A ∘ fun t : ℝ => mulInvariantExp (I := I) (G := G) (t • eLie X))
+      ((mvfderiv I A 1).comp ((1 : ℝ →L[ℝ] ℝ).smulRight (eLie X))) 0 := by
+    with_unfolding_all exact hcomp.hasFDerivAt
+  have hchain : HasDerivAt
+      (fun t : ℝ => A (mulInvariantExp (I := I) (G := G) (t • eLie X)))
+      (mvfderiv I A 1 (eLie X)) 0 := by
+    apply hcompF.hasDerivAt.congr_deriv
+    simp only [ContinuousLinearMap.comp_apply, ContinuousLinearMap.smulRight_apply,
+      one_apply_eq_self, one_smul]
+  apply hchain.congr_deriv
+  simpa only [A, eLie] using mvfderiv_Ad_apply (I := I) (G := G) X Y
+
+end TauCeti.Lie
