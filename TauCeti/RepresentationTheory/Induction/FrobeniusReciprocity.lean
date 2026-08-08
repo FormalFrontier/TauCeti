@@ -5,6 +5,7 @@ Authors: Claude
 -/
 module
 
+public import TauCeti.GroupTheory.Index
 public import TauCeti.RepresentationTheory.CharacterTable.Pairing
 public import TauCeti.RepresentationTheory.Induction.ClassFunction
 public import TauCeti.RepresentationTheory.Induction.FiniteDimensional
@@ -49,7 +50,7 @@ Only the coefficient field and the invertibility of `Nat.card G` are assumed; no
 is needed, because each side is computed by
 `TauCeti.ClassFunction.characterPairing_ofFDRep_eq_finrank` rather than by orthogonality of
 irreducible characters.  Invertibility of `Nat.card S` is not a separate hypothesis: it follows
-from `Subgroup.card_mul_index`.
+from `Subgroup.card_mul_index`, via `TauCeti.isUnit_natCard_subgroup`.
 
 That pairing-to-dimension lemma computes `⟨χ_V, χ_W⟩` as `finrank k (W ⟶ V)`, exchanging the two
 arguments.  So the identity stated in the order `⟨Ind χ, ψ⟩ = ⟨χ, Res ψ⟩` is read off the *second*
@@ -80,13 +81,6 @@ open CategoryTheory
 namespace TauCeti
 
 universe u v
-
-/-- If the order of a finite group is invertible in `k`, then so is the order of any subgroup,
-because the two differ by the index. -/
-private theorem isUnit_natCard_subgroup {k : Type u} {G : Type v} [Field k] [Group G] [Finite G]
-    (S : Subgroup G) (hG : IsUnit (Nat.card G : k)) : IsUnit (Nat.card S : k) := by
-  refine isUnit_of_mul_isUnit_left (y := (S.index : k)) ?_
-  rwa [← Nat.cast_mul, S.card_mul_index]
 
 section HomSpaces
 

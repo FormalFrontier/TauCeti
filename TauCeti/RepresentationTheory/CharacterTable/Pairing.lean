@@ -98,6 +98,15 @@ theorem characterPairing_isSymm :
     characterPairing (k := k) (G := G).IsSymm :=
   ⟨characterPairing_symm⟩
 
+/-- **The character pairing is invariant under inverting the group element**: the inversion twist
+`TauCeti.ClassFunction.invMap` is an isometry of the pairing. -/
+@[simp]
+theorem characterPairing_invMap_invMap (f₁ f₂ : ClassFunction k G) :
+    characterPairing (invMap f₁) (invMap f₂) = characterPairing f₁ f₂ := by
+  rw [characterPairing_apply, characterPairing_apply]
+  congr 1
+  exact Fintype.sum_equiv (Equiv.inv G) _ _ fun g => by simp
+
 /-- **Pairing against a class indicator evaluates a class function.** Pairing `f` with the indicator
 of the class of `x⁻¹` returns the value of `f` at `x`, weighted by the size of the class of `x` and
 the normalization `|G|⁻¹`. -/
