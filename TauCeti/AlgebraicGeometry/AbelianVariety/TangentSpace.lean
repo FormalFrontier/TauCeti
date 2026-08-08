@@ -55,7 +55,6 @@ abbrev zeroSection (A : AbelianVariety K) : Spec (.of K) ⟶ A.toScheme :=
   η[A.toOver].left
 
 /-- The identity section is a section of the structure morphism of `A`. -/
-@[reassoc (attr := simp)]
 lemma zeroSection_comp_toOver_hom (A : AbelianVariety K) :
     A.zeroSection ≫ A.toOver.hom = 𝟙 (Spec (.of K)) := by
   simpa only [zeroSection, Over.tensorUnit_hom] using η[A.toOver].w
@@ -111,7 +110,7 @@ abbrev tangentSpace (A : AbelianVariety K) : Type u :=
 
 /-- Restrict scalars on `T₀A` from `κ(0)` to `K` along the canonical residue-field
 equivalence. -/
-instance tangentSpace_module (A : AbelianVariety K) : Module K A.tangentSpace :=
+instance tangentSpaceModule (A : AbelianVariety K) : Module K A.tangentSpace :=
   Module.compHom A.tangentSpace A.zeroResidueFieldRingEquiv.symm.toRingHom
 
 /-- The ground-field action, the residue-field action, and the tangent-space action form the

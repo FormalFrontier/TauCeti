@@ -73,7 +73,6 @@ instance zariskiTangentSpace_finiteDimensional (X : Scheme.{u}) [IsLocallyNoethe
   inferInstance
 
 /-- The tangent and cotangent spaces of a scheme have the same dimension. -/
-@[simp]
 lemma finrank_zariskiTangentSpace_eq (X : Scheme.{u}) (x : X) :
     Module.finrank (IsLocalRing.ResidueField (X.presheaf.stalk x))
         (ZariskiTangentSpace X x) =
