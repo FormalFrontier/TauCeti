@@ -75,9 +75,10 @@ bare `rfl` does not compile here.
 * [Character theory roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/CharacterTheory/README.md),
   Layer 7, “The indicator on the module spine” and “The symmetric and exterior squares”. The
   invariant bilinear forms of that layer, and the trichotomy `ν₂ ∈ {+1, 0, -1}` for an irreducible
-  representation over `ℂ`, are not proved here: they need the identification of the invariant forms
-  with the invariants of the two squares of the dual representation, which is not in the
-  repository. What this file supplies is the counting identity those statements are read off from.
+  representation over `ℂ`, are proved in the sibling module
+  `TauCeti/RepresentationTheory/CharacterTable/FrobeniusSchur/Trichotomy.lean`, which identifies
+  the invariant forms with the invariants of the duals of the symmetric and exterior squares.
+  What this file supplies is the counting identity those statements are read off from.
 * I. M. Isaacs, *Character Theory of Finite Groups* (1976), Lemma 4.4 and Theorem 4.5.
 * J.-P. Serre, *Linear Representations of Finite Groups*, GTM 42 (1977), §13.2.
 -/

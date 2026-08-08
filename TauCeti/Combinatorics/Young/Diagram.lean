@@ -18,7 +18,9 @@ counts the cells of a diagram row by row: the row lengths sum to the number of c
 first `k` row lengths sum to the number of cells lying in the first `k` rows, whether those
 lengths are summed as `∑ i ∈ Finset.range k, μ.rowLen i` or as `(μ.rowLens.take k).sum`.  Since
 the rows exhaust the cells, the row lengths also determine the diagram
-(`TauCeti.YoungDiagram.rowLen_injective`).
+(`TauCeti.YoungDiagram.rowLen_injective`).  Cutting the same count column by column,
+`TauCeti.YoungDiagram.card_filter_fst_lt_filter_snd_eq` counts the cells of the first `k` rows
+lying in a fixed column.
 
 The partial sums are the shape of every dominance statement about partitions, since dominance
 compares partial sums of decreasingly sorted parts, and the sorted parts of a partition are the
@@ -123,6 +125,25 @@ theorem sum_take_rowLens_eq_card_filter_fst (μ : YoungDiagram) (k : ℕ) :
 @[simp]
 theorem sum_rowLens (μ : YoungDiagram) : μ.rowLens.sum = μ.card := by
   rw [_root_.YoungDiagram.rowLens, sum_list_range, ← card_eq_sum_range_rowLen μ le_rfl]
+
+/-- The cells of a Young diagram lying in a fixed column and in one of the first `k` rows are the
+top `min k (colLen j)` cells of that column. -/
+theorem card_filter_fst_lt_filter_snd_eq (lam : YoungDiagram) (k j : ℕ) :
+    (((lam.cells.filter fun c => c.1 < k)).filter fun c => c.2 = j).card
+      = min k (lam.colLen j) := by
+  have himg : (((lam.cells.filter fun c => c.1 < k)).filter fun c => c.2 = j)
+      = (Finset.range (min k (lam.colLen j))).image fun i => (i, j) := by
+    ext c
+    simp only [Finset.mem_filter, Finset.mem_image, Finset.mem_range, lt_min_iff,
+      _root_.YoungDiagram.mem_cells]
+    constructor
+    · rintro ⟨⟨hc, hk⟩, hj⟩
+      refine ⟨c.1, ⟨hk, ?_⟩, ?_⟩
+      · exact _root_.YoungDiagram.mem_iff_lt_colLen.mp (hj ▸ hc)
+      · rw [← hj]
+    · rintro ⟨i, ⟨hik, hicol⟩, rfl⟩
+      exact ⟨⟨_root_.YoungDiagram.mem_iff_lt_colLen.mpr hicol, hik⟩, rfl⟩
+  rw [himg, Finset.card_image_of_injective _ fun _ _ h => congrArg Prod.fst h, Finset.card_range]
 
 /-- A row of a sub-diagram is no longer than the corresponding row. -/
 theorem rowLen_le_of_le {μ ν : YoungDiagram} (h : ν ≤ μ) (i : ℕ) : ν.rowLen i ≤ μ.rowLen i := by

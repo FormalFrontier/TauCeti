@@ -82,6 +82,59 @@ private theorem hasDerivAt_realOperator_sub {S : StronglyContinuousSemigroup X} 
     exact h.hasDerivAt (Ici_mem_nhds hrpos)
   exact HasDerivAt.comp_const_sub t s hpsi
 
+omit [CompleteSpace X] in
+/-- **The generator difference quotient, based at `s`.** The defining quotient of `T.generator` at
+`y`, reparametrised so that it approaches `s` from the right rather than `0`. -/
+private theorem tendsto_generator_diff_quotient {T : StronglyContinuousSemigroup X} {y a : X}
+    (hy : y ∈ T.generator.domain) (hTa : T.generator ⟨y, hy⟩ = a) (s : ℝ) :
+    Tendsto (fun u : ℝ => (u - s)⁻¹ • (T.realOperator (u - s) y - y)) (𝓝[>] s) (𝓝 a) := by
+  have hyT : y ∈ T.domain := by rwa [T.generator_domain] at hy
+  have hshift : Tendsto (fun u : ℝ => u - s) (𝓝[>] s) (𝓝[>] 0) := by
+    simpa [sub_eq_add_neg] using tendsto_map (f := fun u : ℝ => u + -s) (x := 𝓝[>] s)
+  simpa [Function.comp_def, one_div, hTa] using (T.generator_tendsto ⟨y, hyT⟩).comp hshift
+
+omit [CompleteSpace X] in
+/-- **The slope of the interpolation splits.** Using the semigroup law to rebase `T u x` at `s`,
+the difference quotient of `u ↦ S (t - u) (T u x)` separates into the contribution of the inner
+semigroup `T`, pushed through `S (t - u)`, and that of the outer semigroup `S`. -/
+private theorem slope_interpolate_eq {S T : StronglyContinuousSemigroup X} {t : ℝ} {x : X}
+    {s : ℝ} (hs0 : 0 ≤ s) {u : ℝ} (hu : s ≤ u) :
+    slope (fun u : ℝ => S.realOperator (t - u) (T.realOperator u x)) s u
+      = S.realOperator (t - u)
+          ((u - s)⁻¹ • (T.realOperator (u - s) (T.realOperator s x) - T.realOperator s x))
+        + slope (fun u : ℝ => S.realOperator (t - u) (T.realOperator s x)) s u := by
+  have hus : 0 ≤ u - s := sub_nonneg.mpr hu
+  have hTu : T.realOperator u x = T.realOperator (u - s) (T.realOperator s x) := by
+    rw [← ContinuousLinearMap.comp_apply, ← T.realOperator_add (u - s) s hus hs0, sub_add_cancel]
+  simp only [slope_def_module, hTu, map_smul, map_sub, smul_sub]
+  abel
+
+/-- **The two contributions cancel.** Given the inner difference quotient converging to `a` and the
+outer backwards orbit differentiating to `-S (t - s) a`, the interpolation has vanishing right
+derivative: pushing the first through `S (t - u)` produces `S (t - s) a`, cancelling the second. -/
+private theorem hasDerivWithinAt_interpolate_of_tendsto {S T : StronglyContinuousSemigroup X}
+    {t s : ℝ} {x y a : X} (hrpos : 0 < t - s) (hs0 : 0 ≤ s) (hy : T.realOperator s x = y)
+    (hquot : Tendsto (fun u : ℝ => (u - s)⁻¹ • (T.realOperator (u - s) y - y)) (𝓝[>] s) (𝓝 a))
+    (hrho : HasDerivAt (fun u : ℝ => S.realOperator (t - u) y) (-(S.realOperator (t - s) a)) s) :
+    HasDerivWithinAt (fun u : ℝ => S.realOperator (t - u) (T.realOperator u x)) 0
+      (Set.Ici s) s := by
+  subst hy
+  have htime : Tendsto (fun u : ℝ => t - u) (𝓝[>] s) (𝓝 (t - s)) :=
+    ((continuous_sub_left t).tendsto s).mono_left nhdsWithin_le_nhds
+  have hterm1 : Tendsto (fun u : ℝ => S.realOperator (t - u)
+      ((u - s)⁻¹ • (T.realOperator (u - s) (T.realOperator s x) - T.realOperator s x)))
+      (𝓝[>] s) (𝓝 (S.realOperator (t - s) a)) :=
+    S.tendsto_realOperator_apply htime
+      ((htime.eventually_const_lt hrpos).mono fun _ h => h.le) hrpos.le hquot
+  have hterm2 : Tendsto (slope (fun u : ℝ => S.realOperator (t - u) (T.realOperator s x)) s)
+      (𝓝[>] s) (𝓝 (-(S.realOperator (t - s) a))) :=
+    hrho.tendsto_slope.mono_left (nhdsWithin_mono s fun _ hu => hu.ne')
+  rw [hasDerivWithinAt_iff_tendsto_slope, Set.Ici_sdiff_left]
+  have hsum := hterm1.add hterm2
+  rw [add_neg_cancel] at hsum
+  exact hsum.congr' (by
+    filter_upwards [self_mem_nhdsWithin] with u hu using (slope_interpolate_eq hs0 hu.le).symm)
+
 /-- The interpolation `u ↦ S (t - u) (T u x)` between the two semigroups has vanishing right
 derivative at every `u ∈ [0, t)`.
 
@@ -107,40 +160,9 @@ private theorem hasDerivWithinAt_interpolate {S T : StronglyContinuousSemigroup 
       (-(S.realOperator (t - s) a)) s :=
     hasDerivAt_realOperator_sub hrpos hyS' hSa
   -- The inner factor: the defining difference quotient of the generator of `T` at `y`.
-  have hshift : Tendsto (fun u : ℝ => u - s) (𝓝[>] s) (𝓝[>] 0) := by
-    refine tendsto_nhdsWithin_iff.mpr ⟨?_, ?_⟩
-    · simpa using ((continuous_sub_right s).tendsto s).mono_left nhdsWithin_le_nhds
-    · filter_upwards [self_mem_nhdsWithin] with u hu
-      simp only [Set.mem_Ioi] at hu ⊢
-      linarith
   have hquot : Tendsto (fun u : ℝ => (u - s)⁻¹ • (T.realOperator (u - s) y - y))
-      (𝓝[>] s) (𝓝 a) := by
-    simpa [Function.comp_def, one_div] using (T.generator_tendsto ⟨y, hyT⟩).comp hshift
-  have htime : Tendsto (fun u : ℝ => t - u) (𝓝[>] s) (𝓝 (t - s)) :=
-    ((continuous_sub_left t).tendsto s).mono_left nhdsWithin_le_nhds
-  have hterm1 : Tendsto (fun u : ℝ => S.realOperator (t - u)
-      ((u - s)⁻¹ • (T.realOperator (u - s) y - y))) (𝓝[>] s) (𝓝 (S.realOperator (t - s) a)) :=
-    S.tendsto_realOperator_apply htime
-      ((htime.eventually_const_lt hrpos).mono fun _ h => h.le) hrpos.le hquot
-  have hterm2 : Tendsto (slope (fun u : ℝ => S.realOperator (t - u) y) s) (𝓝[>] s)
-      (𝓝 (-(S.realOperator (t - s) a))) :=
-    hrho.tendsto_slope.mono_left (nhdsWithin_mono s fun _ hu => hu.ne')
-  -- The slope of the interpolation splits into the two contributions.
-  have hslope : ∀ u ∈ Set.Ioi s,
-      slope (fun u : ℝ => S.realOperator (t - u) (T.realOperator u x)) s u
-        = S.realOperator (t - u) ((u - s)⁻¹ • (T.realOperator (u - s) y - y))
-          + slope (fun u : ℝ => S.realOperator (t - u) y) s u := by
-    intro u hu
-    have hus : 0 ≤ u - s := (sub_pos.mpr hu).le
-    have hTu : T.realOperator u x = T.realOperator (u - s) y := by
-      rw [hy_def, ← ContinuousLinearMap.comp_apply, ← T.realOperator_add (u - s) s hus hs0,
-        sub_add_cancel]
-    simp only [slope_def_module, hTu, map_smul, map_sub, smul_sub]
-    abel
-  rw [hasDerivWithinAt_iff_tendsto_slope, Set.Ici_sdiff_left]
-  have hsum := hterm1.add hterm2
-  rw [add_neg_cancel] at hsum
-  exact hsum.congr' (by filter_upwards [self_mem_nhdsWithin] with u hu using (hslope u hu).symm)
+      (𝓝[>] s) (𝓝 a) := tendsto_generator_diff_quotient hyT' rfl s
+  exact hasDerivWithinAt_interpolate_of_tendsto hrpos hs0 hy_def.symm hquot hrho
 
 /-- Two strongly continuous semigroups with the same generator agree on the generator domain,
 at every nonnegative time. -/
