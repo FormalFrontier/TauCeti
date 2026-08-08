@@ -142,25 +142,34 @@ with probability at most `(Fintype.card ι).choose 2 / Fintype.card κ`.
 
 This is the union bound over the unordered pairs of coordinates.  It remains valid when the
 right-hand side exceeds one, avoiding an unnecessary size assumption on the sample. -/
-theorem uniformOn_not_injective_le [LinearOrder ι] [MeasurableSpace κ]
-    [MeasurableSingletonClass κ] [Nonempty κ] :
+theorem uniformOn_not_injective_le [MeasurableSpace κ] [MeasurableSingletonClass κ] :
     uniformOn (Set.univ : Set (ι → κ)) {x | ¬Function.Injective x} ≤
       (Fintype.card ι).choose 2 / Fintype.card κ := by
   classical
-  rw [not_injective_set_eq_iUnion]
-  calc
-    uniformOn (Set.univ : Set (ι → κ))
-        (⋃ p ∈ coordinatePairs ι, {x | x p.1 = x p.2})
-      ≤ ∑ p ∈ coordinatePairs ι,
-          uniformOn (Set.univ : Set (ι → κ)) {x | x p.1 = x p.2} :=
-        measure_biUnion_finset_le _ _
-    _ = ∑ _p ∈ coordinatePairs ι, 1 / (Fintype.card κ : ℝ≥0∞) := by
-      apply Finset.sum_congr rfl
-      intro p hp
-      exact uniformOn_apply_eq_apply p.1 p.2 (mem_coordinatePairs p |>.1 hp).ne
-    _ = (Fintype.card ι).choose 2 / Fintype.card κ := by
-      rw [Finset.sum_const, nsmul_eq_mul, card_coordinatePairs]
-      simp [div_eq_mul_inv]
+  let _ : LinearOrder ι := (Fintype.equivFin ι).linearOrder
+  cases isEmpty_or_nonempty κ with
+  | inl hκ =>
+      cases isEmpty_or_nonempty ι with
+      | inl hι => simp [Function.Injective]
+      | inr hι =>
+          rw [Set.univ_eq_empty_iff.mpr (inferInstance : IsEmpty (ι → κ)),
+            uniformOn_empty_meas]
+          exact bot_le
+  | inr hκ =>
+      rw [not_injective_set_eq_iUnion]
+      calc
+        uniformOn (Set.univ : Set (ι → κ))
+            (⋃ p ∈ coordinatePairs ι, {x | x p.1 = x p.2})
+          ≤ ∑ p ∈ coordinatePairs ι,
+              uniformOn (Set.univ : Set (ι → κ)) {x | x p.1 = x p.2} :=
+            measure_biUnion_finset_le _ _
+        _ = ∑ _p ∈ coordinatePairs ι, 1 / (Fintype.card κ : ℝ≥0∞) := by
+          apply Finset.sum_congr rfl
+          intro p hp
+          exact uniformOn_apply_eq_apply p.1 p.2 (mem_coordinatePairs p |>.1 hp).ne
+        _ = (Fintype.card ι).choose 2 / Fintype.card κ := by
+          rw [Finset.sum_const, nsmul_eq_mul, card_coordinatePairs]
+          simp [div_eq_mul_inv]
 
 private theorem injective_set_nonempty (hcard : Fintype.card ι ≤ Fintype.card κ) :
     Set.Nonempty {x : ι → κ | Function.Injective x} := by
@@ -218,27 +227,31 @@ private theorem uniformOn_univ_le_add_compl {Ω : Type*} [Finite Ω] [Measurable
 collision event: for every event `A`, its without-replacement probability is at most its
 with-replacement probability plus the collision probability. -/
 theorem uniformOn_injective_le_add [MeasurableSpace κ] [MeasurableSingletonClass κ]
-    [Nonempty κ] (hcard : Fintype.card ι ≤ Fintype.card κ) (A : Set (ι → κ)) :
+    (hcard : Fintype.card ι ≤ Fintype.card κ) (A : Set (ι → κ)) :
     uniformOn {x : ι → κ | Function.Injective x} A ≤
       uniformOn Set.univ A + uniformOn Set.univ {x : ι → κ | ¬Function.Injective x} := by
+  let h_injective := injective_set_nonempty hcard
+  let _ : Nonempty (ι → κ) := ⟨h_injective.some⟩
   simpa only [Set.compl_ofPred] using
-    uniformOn_le_univ_add_compl (A := A) (injective_set_nonempty hcard)
+    uniformOn_le_univ_add_compl (A := A) h_injective
 
 /-- Uniform sampling with replacement differs from sampling without replacement only on the
 collision event: for every event `A`, its with-replacement probability is at most its
 without-replacement probability plus the collision probability. -/
 theorem uniformOn_univ_le_injective_add [MeasurableSpace κ] [MeasurableSingletonClass κ]
-    [Nonempty κ] (hcard : Fintype.card ι ≤ Fintype.card κ) (A : Set (ι → κ)) :
+    (hcard : Fintype.card ι ≤ Fintype.card κ) (A : Set (ι → κ)) :
     uniformOn Set.univ A ≤ uniformOn {x : ι → κ | Function.Injective x} A +
       uniformOn Set.univ {x : ι → κ | ¬Function.Injective x} := by
+  let h_injective := injective_set_nonempty hcard
+  let _ : Nonempty (ι → κ) := ⟨h_injective.some⟩
   simpa only [Set.compl_ofPred] using
-    uniformOn_univ_le_add_compl (A := A) (injective_set_nonempty hcard)
+    uniformOn_univ_le_add_compl (A := A) h_injective
 
 /-- **Quantitative finite-sampling bound, without replacement to with replacement.**  For every
 event `A`, the probability under uniform sampling without replacement is at most its probability
 under sampling with replacement plus `(Fintype.card ι).choose 2 / Fintype.card κ`. -/
-theorem uniformOn_injective_le_add_choose_two_div [LinearOrder ι] [MeasurableSpace κ]
-    [MeasurableSingletonClass κ] [Nonempty κ] (hcard : Fintype.card ι ≤ Fintype.card κ)
+theorem uniformOn_injective_le_add_choose_two_div [MeasurableSpace κ]
+    [MeasurableSingletonClass κ] (hcard : Fintype.card ι ≤ Fintype.card κ)
     (A : Set (ι → κ)) :
     uniformOn {x : ι → κ | Function.Injective x} A ≤
       uniformOn Set.univ A + (Fintype.card ι).choose 2 / Fintype.card κ :=
@@ -248,8 +261,8 @@ theorem uniformOn_injective_le_add_choose_two_div [LinearOrder ι] [MeasurableSp
 /-- **Quantitative finite-sampling bound, with replacement to without replacement.**  For every
 event `A`, the probability under uniform sampling with replacement is at most its probability
 under sampling without replacement plus `(Fintype.card ι).choose 2 / Fintype.card κ`. -/
-theorem uniformOn_univ_le_injective_add_choose_two_div [LinearOrder ι] [MeasurableSpace κ]
-    [MeasurableSingletonClass κ] [Nonempty κ] (hcard : Fintype.card ι ≤ Fintype.card κ)
+theorem uniformOn_univ_le_injective_add_choose_two_div [MeasurableSpace κ]
+    [MeasurableSingletonClass κ] (hcard : Fintype.card ι ≤ Fintype.card κ)
     (A : Set (ι → κ)) :
     uniformOn Set.univ A ≤ uniformOn {x : ι → κ | Function.Injective x} A +
       (Fintype.card ι).choose 2 / Fintype.card κ :=
