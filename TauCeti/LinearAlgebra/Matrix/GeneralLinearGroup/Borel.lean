@@ -306,6 +306,12 @@ theorem unipotentHom_val (b : R) :
     ((unipotentHom b : GL2Borel R) : GL (Fin 2) R) = Matrix.GeneralLinearGroup.upperRightHom b :=
   (rfl)
 
+/-- The unipotent radical is diagonally trivial: both diagonal entries of `!![1, b; 0, 1]`
+are `1`. -/
+@[simp]
+theorem diag_unipotentHom (b : R) : diag (unipotentHom b) = 1 := by
+  ext <;> simp [Matrix.GeneralLinearGroup.upperRightHom]
+
 /-- The kernel of the diagonal projection is the **unipotent radical**: the elements of the Borel
 subgroup with both diagonal entries `1`, that is, the image of
 `TauCeti.GL2Borel.unipotentHom`. -/
@@ -324,8 +330,7 @@ theorem mem_ker_diag_iff (g : GL2Borel R) :
     fin_cases i <;> fin_cases j <;>
       simp [Matrix.GeneralLinearGroup.upperRightHom, h₀, h₁, apply_one_zero g]
   · rintro ⟨b, rfl⟩
-    refine MonoidHom.mem_ker.mpr ?_
-    ext <;> simp [Matrix.GeneralLinearGroup.upperRightHom]
+    exact MonoidHom.mem_ker.mpr (diag_unipotentHom b)
 
 /-- **The Borel subgroup is `T U`**: every element of `B` is the diagonal matrix carrying its two
 torus coordinates times the unipotent matrix carrying the remaining upper-right coordinate. -/
