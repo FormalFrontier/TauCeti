@@ -8,7 +8,7 @@ public import TauCeti.Probability.DeFinetti.ViaL2.EmpiricalToDirecting
 public import TauCeti.MeasureTheory.Function.ProductL1Convergence
 
 /-!
-# Simultaneous convergence of a product of window averages
+# Convergence of a product of fixed-start window averages
 
 For a contractable process on a standard Borel state space, finitely many Cesàro window averages of
 indicators converge in `L¹`, *simultaneously*, to the product of the corresponding directing-measure
@@ -24,15 +24,22 @@ Each factor converges by
 product. The unit-ball hypotheses that lemma needs are exactly what indicators supply: a window
 average of an indicator lies in `[0, 1]`, and so does a probability-measure evaluation.
 
-The windows are allowed arbitrary start points `r : Fin m → ℕ`, in particular pairwise disjoint
-ones, which is the configuration the block factorization consumes: it needs the *joint* limit of a
-product over disjoint windows, not merely each factor's limit.
+⚠ The start points `r : Fin m → ℕ` are **fixed**, while the window length grows with `n`. For
+`m ≥ 2` the windows therefore overlap once `n` is large: this is *not* a disjoint-window statement.
+What it does give is the step from "each factor converges in `L¹`" to "the product converges in
+`L¹`", jointly in the sense that a single limit governs all `m` factors at once.
+
+The block factorization additionally needs the windows to be pairwise disjoint, which requires
+starts that grow with the window length — the scheme `window N i` of
+`Probability/Process/DisjointWindow.lean`. That is a *moving*-window statement: both the start
+`(i + 1) * N` and the length `N` grow together, so it does not follow from the fixed-start
+convergence used here and has to be established separately.
 
 ## References
 
 * Roadmap: `TauCetiRoadmap/Exchangeability/README.md`, **Layer 3** — the `L²` averaging library and
-  the standard-Borel de Finetti route. This is the "simultaneous disjoint-window product
-  convergence" step that the finite-block conditional factorization is built on.
+  the standard-Borel de Finetti route. This is the product step of the "simultaneous disjoint-window
+  product convergence" prerequisite; the disjointness half is separate, as noted above.
 -/
 
 public section
