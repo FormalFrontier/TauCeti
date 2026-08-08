@@ -70,7 +70,9 @@ theorem iteratedFDeriv_two_norm_rpow_apply (p : ℝ) {x : E} (hx : x ≠ 0) (v w
   rw [iteratedFDeriv_two_apply, hfd.fderiv_eq, fderiv_fun_smul hc hi]
   rw [((hasFDerivAt_norm_rpow_of_ne (p - 2) hx).const_mul p).fderiv]
   rw [(innerSL ℝ : E →L[ℝ] E →L[ℝ] ℝ).fderiv]
-  have hinner : (innerSL ℝ : E →L[ℝ] E →L[ℝ] ℝ) v w = ⟪v, w⟫_ℝ := rfl
+  -- `innerSL ℝ` is bundled as a conjugate-linear map, so this evaluation is not syntactically
+  -- an instance of `innerSL_apply_apply`; it is stated separately rather than proved by `rfl`.
+  have hinner : (innerSL ℝ : E →L[ℝ] E →L[ℝ] ℝ) v w = ⟪v, w⟫_ℝ := innerSL_apply_apply (𝕜 := ℝ) v w
   simp only [Fin.isValue, Matrix.cons_val_zero, add_apply, smul_apply,
     ContinuousLinearMap.smulRight_apply, coe_innerSL_apply, smul_eq_mul,
     Matrix.cons_val_one, Matrix.cons_val_fin_one]
