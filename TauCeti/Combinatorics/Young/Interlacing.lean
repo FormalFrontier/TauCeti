@@ -112,7 +112,7 @@ be too tall to be written in `n` letters. -/
 noncomputable def interlacingShapes (n : ℕ) (μ : _root_.YoungDiagram) :
     Finset _root_.YoungDiagram :=
   Set.Finite.toFinset (s := {ν : _root_.YoungDiagram | Interlaces μ ν ∧ ν.colLen 0 ≤ n})
-    ((finite_setOf_le μ).subset fun _ h => h.1.le)
+    ((finite_Iic μ).subset fun _ h => Set.mem_Iic.mpr h.1.le)
 
 @[simp]
 theorem mem_interlacingShapes {n : ℕ} :

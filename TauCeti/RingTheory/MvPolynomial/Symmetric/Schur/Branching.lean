@@ -15,15 +15,17 @@ variable fewer, of the shapes that **interlace** its own:
 
 `s_μ(x₀, …, x_{n-1}, 1) = ∑_{ν ≺ μ} s_ν(x₀, …, x_{n-1})`.
 
-This is `TauCeti.eval_diagramSchurPoly_of_apply_last_eq_one`, an identity of polynomials over an
-arbitrary commutative semiring.  Over `ℂ`, and for a shape `μ` of at most `n + 1` rows — so that
-`μ` is the highest weight of a polynomial irreducible of `GLₙ₊₁` and `s_μ` its character — it reads
-as the multiplicity-free branching rule for the restriction `GLₙ₊₁ ↓ GLₙ`: that irreducible
-restricts to the direct sum, each with multiplicity one, of the irreducibles whose highest weights
-interlace `μ`.  That reading is not proved here, and it does not transfer to positive
-characteristic: there the identity of characters no longer forces a direct-sum decomposition,
-because the representations of `GLₙ₊₁` are not semisimple in general.  The theorems below are the
-polynomial identity alone.
+This is `TauCeti.eval_diagramSchurPoly_of_apply_last_eq_one`, stated as an identity between the two
+*values*: both sides are evaluated, over an arbitrary commutative semiring, at an arbitrary family
+whose last member is `1`.  Nothing here says that the two polynomials themselves agree after
+specializing the last variable, which over a general semiring is a strictly stronger statement.
+Over `ℂ`, and for a shape `μ` of at most `n + 1` rows — so that `μ` is the highest weight of a
+polynomial irreducible of `GLₙ₊₁` and `s_μ` its character — the identity reads as the
+multiplicity-free branching rule for the restriction `GLₙ₊₁ ↓ GLₙ`: that irreducible restricts to
+the direct sum, each with multiplicity one, of the irreducibles whose highest weights interlace
+`μ`.  That reading is not proved here, and it does not transfer to positive characteristic: there
+the identity of characters no longer forces a direct-sum decomposition, because the representations
+of `GLₙ₊₁` are not semisimple in general.  The theorems below are the evaluation identity alone.
 
 Nothing analytic happens here.  `TauCeti.diagramSchurPoly` is by construction the generating
 function of the bounded semistandard tableaux of its shape, so the identity is the sum-over-a-
@@ -76,9 +78,10 @@ end BoundedSSYT
 family whose last member is `1` gives the sum of the `s_ν` in the first `n` variables, over the
 shapes `ν` interlacing `μ` with at most `n` rows, each occurring once.
 
-The identity is one of polynomials over an arbitrary commutative semiring.  Over `ℂ`, and for a
-shape `μ` of at most `n + 1` rows, it is the character form of the multiplicity-free branching rule
-for the restriction `GLₙ₊₁ ↓ GLₙ`. -/
+The identity is one of values in an arbitrary commutative semiring, holding at every such family;
+it is not stated as an equality of polynomials.  Over `ℂ`, and for a shape `μ` of at most `n + 1`
+rows, it is the character form of the multiplicity-free branching rule for the restriction
+`GLₙ₊₁ ↓ GLₙ`. -/
 theorem eval_diagramSchurPoly_of_apply_last_eq_one (n : ℕ) (μ : _root_.YoungDiagram)
     (x : Fin (n + 1) → R) (hx : x (Fin.last n) = 1) :
     eval x (diagramSchurPoly (n + 1) R μ)

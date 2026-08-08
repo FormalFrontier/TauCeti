@@ -28,7 +28,7 @@ row lengths of its Young diagram.
 
 Reading the rows also describes containment: one diagram is contained in another exactly when
 each of its rows is shorter (`TauCeti.YoungDiagram.le_iff_forall_rowLen_le`), from which a diagram
-has only finitely many sub-diagrams (`TauCeti.YoungDiagram.finite_setOf_le`).
+has only finitely many sub-diagrams (`TauCeti.YoungDiagram.finite_Iic`).
 -/
 
 public section
@@ -173,13 +173,13 @@ theorem le_rowLen_of_forall_mem {ν : YoungDiagram} {i k : ℕ}
     omega
 
 /-- A Young diagram has finitely many sub-diagrams, each being determined by its set of cells. -/
-theorem finite_setOf_le (μ : YoungDiagram) : {ν : YoungDiagram | ν ≤ μ}.Finite := by
-  have hinj : Set.InjOn _root_.YoungDiagram.cells {ν : YoungDiagram | ν ≤ μ} :=
+theorem finite_Iic (μ : YoungDiagram) : (Set.Iic μ).Finite := by
+  have hinj : Set.InjOn _root_.YoungDiagram.cells (Set.Iic μ) :=
     fun _ _ _ _ h => _root_.YoungDiagram.ext h
   refine Set.Finite.of_finite_image ?_ hinj
   refine Set.Finite.subset (μ.cells.powerset : Finset (Finset (ℕ × ℕ))).finite_toSet ?_
   rintro s ⟨ξ, hξ, rfl⟩
-  exact Finset.mem_coe.mpr (Finset.mem_powerset.mpr fun c hc => hξ hc)
+  exact Finset.mem_coe.mpr (Finset.mem_powerset.mpr fun c hc => Set.mem_Iic.mp hξ hc)
 
 end YoungDiagram
 
