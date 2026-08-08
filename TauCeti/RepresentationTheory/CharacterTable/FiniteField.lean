@@ -7,6 +7,7 @@ module
 
 public import Mathlib.LinearAlgebra.Matrix.Charpoly.FiniteField
 public import Mathlib.RingTheory.Artinian.Module
+public import TauCeti.FieldTheory.Finite.PowFixed
 public import TauCeti.RepresentationTheory.CharacterTable.ClassSum.Basis
 
 /-!
@@ -44,7 +45,7 @@ general finite coefficient field; the specialization to `ZMod p` at a good Dixon
 ## Main results
 
 * `TauCeti.pow_card_eq_self_of_mem_center`: the centre of `K[G]` is fixed by `x ↦ x ^ |K|`.
-* `TauCeti.bijective_algebraMap_center_quotient`: every residue field of the centre is `K`.
+* `TauCeti.algebraMap_center_quotient_bijective`: every residue field of the centre is `K`.
 * `TauCeti.centerAlgEquivPi`: the centre is the algebra of functions on its own maximal spectrum.
 * `TauCeti.card_maximalSpectrum_center`: that spectrum has one point per conjugacy class.
 * `TauCeti.nonempty_centerAlgEquiv_conjClasses`: `Z(K[G]) ≃ₐ[K] (ConjClasses G → K)`.
@@ -81,6 +82,7 @@ noncomputable def regularMatrix : MonoidAlgebra k G →ₐ[k] Matrix G G k :=
     (Algebra.lmul k (MonoidAlgebra k G))
 
 /-- The `(i, j)` entry of the left regular matrix of `u` is the coefficient of `u` at `i * j⁻¹`. -/
+@[simp]
 theorem regularMatrix_apply (u : MonoidAlgebra k G) (i j : G) :
     regularMatrix u i j = u.coeff (i * j⁻¹) := by
   simp [regularMatrix, LinearMap.toMatrixAlgEquiv_apply, MonoidAlgebra.basis]
@@ -136,60 +138,6 @@ theorem pow_card_eq_self_of_mem_center (hG : (Fintype.card G : K) ≠ 0)
 
 end Frobenius
 
-/-! ### Elementary consequences of `x ^ q = x` -/
-
-section PowSelf
-
-/-- A commutative ring in which `x ^ q = x` for some `q > 1` has no nonzero nilpotents: iterating
-gives `x ^ q ^ m = x`, and `q ^ m` outruns any nilpotency exponent. -/
-theorem isReduced_of_pow_eq_self {R : Type*} [CommRing R] {q : ℕ} (hq : 1 < q)
-    (h : ∀ x : R, x ^ q = x) : IsReduced R := by
-  refine ⟨fun x hx => ?_⟩
-  obtain ⟨n, hn⟩ := hx
-  have key : ∀ m : ℕ, x ^ q ^ m = x := by
-    intro m
-    induction m with
-    | zero => simp
-    | succ m ih => rw [pow_succ, pow_mul, ih, h]
-  have hle : n ≤ q ^ n := (Nat.lt_pow_self hq).le
-  calc x = x ^ q ^ n := (key n).symm
-    _ = x ^ n * x ^ (q ^ n - n) := by rw [← pow_add]; congr 1; omega
-    _ = 0 := by rw [hn, zero_mul]
-
-/-- **A field extension in which `x ^ |K| = x` is `K` itself.** Every element of `L` is then a root
-of `X ^ |K| - X`, a nonzero polynomial of degree `|K|`, so `L` has at most `|K|` elements; it has
-at least that many because `K` embeds in it. -/
-theorem bijective_algebraMap_of_pow_card_eq_self {K L : Type*} [Field K] [Fintype K] [CommRing L]
-    [IsDomain L] [Finite L] [Algebra K L] (h : ∀ x : L, x ^ Fintype.card K = x) :
-    Function.Bijective (algebraMap K L) := by
-  classical
-  have := Fintype.ofFinite L
-  have hinj : Function.Injective (algebraMap K L) := (algebraMap K L).injective
-  refine (Fintype.bijective_iff_injective_and_card _).2 ⟨hinj, le_antisymm ?_ ?_⟩
-  · exact Fintype.card_le_of_injective _ hinj
-  · have hcard : 1 < Fintype.card K := Fintype.one_lt_card
-    have hdeg : (Polynomial.X ^ Fintype.card K - Polynomial.X : Polynomial L).natDegree =
-        Fintype.card K := by
-      rw [Polynomial.natDegree_sub_eq_left_of_natDegree_lt] <;> simp [hcard]
-    have hne : (Polynomial.X ^ Fintype.card K - Polynomial.X : Polynomial L) ≠ 0 := by
-      intro h
-      rw [h, Polynomial.natDegree_zero] at hdeg
-      omega
-    have hsub : (Finset.univ : Finset L) ⊆
-        (Polynomial.X ^ Fintype.card K - Polynomial.X : Polynomial L).roots.toFinset := by
-      intro x _
-      simp only [Multiset.mem_toFinset, Polynomial.mem_roots hne, Polynomial.IsRoot.def]
-      simp [h x]
-    calc Fintype.card L = (Finset.univ : Finset L).card := (Finset.card_univ).symm
-      _ ≤ _ := Finset.card_le_card hsub
-      _ ≤ (Polynomial.X ^ Fintype.card K - Polynomial.X : Polynomial L).roots.card :=
-          Multiset.toFinset_card_le _
-      _ ≤ (Polynomial.X ^ Fintype.card K - Polynomial.X : Polynomial L).natDegree :=
-          Polynomial.card_roots' _
-      _ = Fintype.card K := hdeg
-
-end PowSelf
-
 /-! ### The splitting of the centre -/
 
 section Finiteness
@@ -227,14 +175,14 @@ theorem isReduced_center : IsReduced (Subalgebra.center K (MonoidAlgebra K G)) :
 
 /-- **Every residue field of the centre of `K[G]` is `K` itself.** This is the sense in which `K`
 splits `K[G]`: no residue field of `Z(K[G])` is a proper extension of `K`. -/
-theorem bijective_algebraMap_center_quotient
+theorem algebraMap_center_quotient_bijective
     (I : MaximalSpectrum (Subalgebra.center K (MonoidAlgebra K G))) :
     Function.Bijective
       (algebraMap K (Subalgebra.center K (MonoidAlgebra K G) ⧸ I.asIdeal)) := by
   have hmax := I.isMaximal
   have : Finite (Subalgebra.center K (MonoidAlgebra K G) ⧸ I.asIdeal) :=
     Finite.of_surjective _ Ideal.Quotient.mk_surjective
-  refine bijective_algebraMap_of_pow_card_eq_self (K := K)
+  refine algebraMap_bijective_of_pow_card_eq_self (K := K)
     (L := Subalgebra.center K (MonoidAlgebra K G) ⧸ I.asIdeal) fun x => ?_
   obtain ⟨z, rfl⟩ := Ideal.Quotient.mk_surjective x
   calc Ideal.Quotient.mk I.asIdeal z ^ Fintype.card K
@@ -246,7 +194,7 @@ theorem bijective_algebraMap_center_quotient
 indexed by its own maximal ideals.
 
 The centre is reduced, hence a product of its residue fields by Artinian structure theory, and each
-residue field is `K` by `TauCeti.bijective_algebraMap_center_quotient`. -/
+residue field is `K` by `TauCeti.algebraMap_center_quotient_bijective`. -/
 noncomputable def centerAlgEquivPi :
     Subalgebra.center K (MonoidAlgebra K G) ≃ₐ[K]
       (MaximalSpectrum (Subalgebra.center K (MonoidAlgebra K G)) → K) :=
@@ -259,7 +207,18 @@ noncomputable def centerAlgEquivPi :
   ((IsArtinianRing.equivPi _).restrictScalars K).trans
     (AlgEquiv.piCongrRight fun I =>
       (AlgEquiv.ofBijective (Algebra.ofId K _)
-        (bijective_algebraMap_center_quotient hG hexp I)).symm)
+        (algebraMap_center_quotient_bijective hG hexp I)).symm)
+
+/-- Evaluating `TauCeti.centerAlgEquivPi` at a maximal ideal is the quotient map followed by the
+inverse equivalence from that residue field to `K`. -/
+@[simp]
+theorem centerAlgEquivPi_apply (z : Subalgebra.center K (MonoidAlgebra K G))
+    (I : MaximalSpectrum (Subalgebra.center K (MonoidAlgebra K G))) :
+    centerAlgEquivPi hG hexp z I =
+      (AlgEquiv.ofBijective (Algebra.ofId K _)
+        (algebraMap_center_quotient_bijective hG hexp I)).symm
+        (Ideal.Quotient.mk I.asIdeal z) := by
+  rfl
 
 /-- **The number of blocks is the number of conjugacy classes.** Comparing `K`-dimensions in
 `TauCeti.centerAlgEquivPi` with the class-sum basis of the centre. -/
