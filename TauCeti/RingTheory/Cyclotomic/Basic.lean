@@ -6,7 +6,6 @@ module
 
 public import Mathlib.RingTheory.AdjoinRoot
 public import Mathlib.RingTheory.Polynomial.Cyclotomic.Roots
-public import Mathlib.RingTheory.RootsOfUnity.Complex
 public import TauCeti.RingTheory.Polynomial.Cyclotomic.Computable
 
 /-!
@@ -14,9 +13,10 @@ public import TauCeti.RingTheory.Polynomial.Cyclotomic.Computable
 
 This file defines `TauCeti.Cyclotomic e`, an exact, computable model of
 `ℤ[X] / (Polynomial.cyclotomic e ℤ)`.  Its elements are the `e.totient` coefficients of the
-canonical representative, in descending order.  Addition, negation, multiplication, and equality
-are genuine computations on finite lists of integers; multiplication convolves coefficient lists
-with `TauCeti.Polynomial.mulCoeffList` and then applies the computable cyclotomic reduction from
+canonical representative, in descending order; `TauCeti.Cyclotomic.coeff` reads off the coordinate
+of a single power of `ζ`.  Addition, negation, multiplication, and equality are genuine
+computations on finite lists of integers; multiplication convolves coefficient lists with
+`TauCeti.Polynomial.mulCoeffList` and then applies the computable cyclotomic reduction from
 `TauCeti.RingTheory.Polynomial.Cyclotomic.Computable`.
 
 The ring is identified with Mathlib's `AdjoinRoot (Polynomial.cyclotomic e ℤ)`.  For nonzero `e`,
@@ -58,6 +58,17 @@ theorem length_coeffs (x : Cyclotomic e) : x.coeffs.length = e.totient := x.2
 @[ext]
 theorem ext {x y : Cyclotomic e} (h : x.coeffs = y.coeffs) : x = y := Subtype.ext h
 
+/-- The coordinate of `ζ ^ j` on the power basis `ζ ^ (φ e - 1), …, ζ, 1`.  Since
+`TauCeti.Cyclotomic.coeffs` is in descending order this reads it backwards, and it is `0` beyond
+the `e.totient` slots the basis has. -/
+@[expose] def coeff (x : Cyclotomic e) (j : ℕ) : ℤ := x.coeffs.reverse.getD j 0
+
+/-- There is no coordinate beyond the `e.totient` elements of the power basis. -/
+theorem coeff_eq_zero_of_totient_le (x : Cyclotomic e) {j : ℕ} (h : e.totient ≤ j) :
+    x.coeff j = 0 := by
+  rw [coeff, List.getD_eq_getElem?_getD, List.getElem?_eq_none (by simpa using h),
+    Option.getD_none]
+
 /-- Reduce a descending coefficient list modulo `Φ_e` and regard the result as an exact
 cyclotomic integer. -/
 @[expose] def ofCoeffList (e : ℕ) (l : List ℤ) : Cyclotomic e :=
@@ -98,9 +109,41 @@ instance : Pow (Cyclotomic e) ℕ := ⟨fun x n => npowRec n x⟩
 instance : NatCast (Cyclotomic e) := ⟨fun n => ofCoeffList e [n]⟩
 instance : IntCast (Cyclotomic e) := ⟨fun z => ofCoeffList e [z]⟩
 
+/-! The notation of the classes above, and the fields of the `CommRing` structure assembled below,
+are the standalone operations defined here.  The next few lemmas name that identification once, so
+that the proofs which need it can rewrite rather than appeal to definitional unfolding.  None of
+them is `simp`: they unfold arithmetic into coefficient lists, which is the opposite direction to
+the normal form everything else is stated in. -/
+
+/-- Zero is the empty coefficient list. -/
+theorem zero_def : (0 : Cyclotomic e) = ofCoeffList e [] := rfl
+
+/-- One is the coefficient list `[1]`. -/
+theorem one_def : (1 : Cyclotomic e) = ofCoeffList e [1] := rfl
+
+/-- Addition adds coefficient lists entrywise. -/
+theorem add_def (x y : Cyclotomic e) :
+    x + y = ofCoeffList e (List.zipWith (fun a b => a + b) x.coeffs y.coeffs) := rfl
+
+/-- Negation negates every coefficient. -/
+theorem neg_def (x : Cyclotomic e) : -x = ofCoeffList e (x.coeffs.map (-·)) := rfl
+
+/-- `TauCeti.Cyclotomic.neg` is the negation of the `Neg` instance. -/
+theorem neg_eq (x : Cyclotomic e) : neg x = -x := rfl
+
+/-- Multiplication convolves coefficient lists and reduces modulo `Φ_e`. -/
+theorem mul_def (x y : Cyclotomic e) :
+    x * y = ofCoeffList e (mulCoeffList x.coeffs y.coeffs) := rfl
+
 /-- The polynomial represented by an exact cyclotomic integer. -/
 noncomputable def toPolynomial (x : Cyclotomic e) : ℤ[X] :=
   TauCeti.Polynomial.ofCoeffList x.coeffs
+
+/-- The coordinates of an exact cyclotomic integer are the coefficients of its canonical
+polynomial representative. -/
+@[simp]
+theorem coeff_toPolynomial (x : Cyclotomic e) (j : ℕ) : x.toPolynomial.coeff j = x.coeff j := by
+  rw [toPolynomial, TauCeti.Polynomial.coeff_ofCoeffList, coeff]
 
 /-- The comparison map from computable cyclotomic integers to Mathlib's quotient by `Φ_e`. -/
 noncomputable def toAdjoinRoot (x : Cyclotomic e) : AdjoinRoot (cyclotomic e ℤ) :=
@@ -133,24 +176,20 @@ theorem toAdjoinRoot_ofCoeffList (l : List ℤ) :
   rw [modByMonic_eq_sub_mul_div, sub_sub_cancel_left]
   exact dvd_neg.mpr (dvd_mul_right _ _)
 
--- These explicit rewrites expose the standalone computational operations before they are bundled
--- into the `CommRing` instance below.
-
 @[simp]
 theorem toAdjoinRoot_zero : toAdjoinRoot (0 : Cyclotomic e) = 0 := by
-  rw [show (0 : Cyclotomic e) = ofCoeffList e [] from rfl, toAdjoinRoot_ofCoeffList]
+  rw [zero_def, toAdjoinRoot_ofCoeffList]
   simp
 
 @[simp]
 theorem toAdjoinRoot_one : toAdjoinRoot (1 : Cyclotomic e) = 1 := by
-  rw [show (1 : Cyclotomic e) = ofCoeffList e [1] from rfl, toAdjoinRoot_ofCoeffList]
+  rw [one_def, toAdjoinRoot_ofCoeffList]
   simp [TauCeti.Polynomial.ofCoeffList_cons]
 
 @[simp]
 theorem toAdjoinRoot_add (x y : Cyclotomic e) :
     toAdjoinRoot (x + y) = toAdjoinRoot x + toAdjoinRoot y := by
-  rw [show x + y = ofCoeffList e (List.zipWith (fun a b => a + b) x.coeffs y.coeffs) from rfl,
-    toAdjoinRoot_ofCoeffList, toAdjoinRoot, toAdjoinRoot]
+  rw [add_def, toAdjoinRoot_ofCoeffList, toAdjoinRoot, toAdjoinRoot]
   rw [← map_add]
   congr 1
   simpa [sub_eq_add_neg, toPolynomial] using
@@ -159,21 +198,13 @@ theorem toAdjoinRoot_add (x y : Cyclotomic e) :
 @[simp]
 theorem toAdjoinRoot_neg (x : Cyclotomic e) :
     toAdjoinRoot (-x) = -toAdjoinRoot x := by
-  rw [show -x = ofCoeffList e (x.coeffs.map (-·)) from rfl, toAdjoinRoot_ofCoeffList,
-    toAdjoinRoot]
-  rw [← map_neg]
-  congr 1
-  ext n
-  rw [coeff_ofCoeffList, coeff_neg, toPolynomial, coeff_ofCoeffList, ← List.map_reverse,
-    show (List.map (fun z : ℤ => -z) x.coeffs.reverse).getD n 0 =
-      -x.coeffs.reverse.getD n 0 by simpa using
-        (List.getD_map (l := x.coeffs.reverse) (d := 0) (n := n) fun z : ℤ => -z)]
+  rw [neg_def, toAdjoinRoot_ofCoeffList, toAdjoinRoot, toPolynomial, ofCoeffList_map_neg, map_neg]
 
 @[simp]
 theorem toAdjoinRoot_mul (x y : Cyclotomic e) :
     toAdjoinRoot (x * y) = toAdjoinRoot x * toAdjoinRoot y := by
-  rw [show x * y = ofCoeffList e (mulCoeffList x.coeffs y.coeffs) from rfl,
-    toAdjoinRoot_ofCoeffList, toAdjoinRoot, toAdjoinRoot, ← map_mul, ofCoeffList_mulCoeffList]
+  rw [mul_def, toAdjoinRoot_ofCoeffList, toAdjoinRoot, toAdjoinRoot, ← map_mul,
+    ofCoeffList_mulCoeffList]
   simp only [toPolynomial]
 
 instance : CommRing (Cyclotomic e) where
@@ -219,18 +250,14 @@ instance : CommRing (Cyclotomic e) where
   zsmul_succ' := by intros; rfl
   zsmul_neg' := by intros; rfl
   neg_add_cancel a := toAdjoinRoot_injective (by
-    rw [toAdjoinRoot_add, show toAdjoinRoot (neg a) = -toAdjoinRoot a from toAdjoinRoot_neg a,
-      toAdjoinRoot_zero, neg_add_cancel])
+    rw [toAdjoinRoot_add, neg_eq, toAdjoinRoot_neg, toAdjoinRoot_zero, neg_add_cancel])
   intCast z := ofCoeffList e [z]
   intCast_ofNat n := rfl
   intCast_negSucc n := toAdjoinRoot_injective (by
-    -- The structure is still being assembled, so spell out its pending cast and negation fields.
+    -- The structure is still being assembled, so spell out its pending cast field.
     change toAdjoinRoot (ofCoeffList e [Int.negSucc n]) =
       toAdjoinRoot (neg (ofCoeffList e [(n + 1 : ℕ)]))
-    rw [toAdjoinRoot_ofCoeffList,
-      show toAdjoinRoot (neg (ofCoeffList e [(n + 1 : ℕ)])) =
-        -toAdjoinRoot (ofCoeffList e [(n + 1 : ℕ)]) from toAdjoinRoot_neg _,
-      toAdjoinRoot_ofCoeffList]
+    rw [toAdjoinRoot_ofCoeffList, neg_eq, toAdjoinRoot_neg, toAdjoinRoot_ofCoeffList]
     simp [TauCeti.Polynomial.ofCoeffList_cons])
   mul_comm a b := toAdjoinRoot_injective (by simp only [toAdjoinRoot_mul, mul_comm])
 
@@ -373,6 +400,12 @@ theorem reduceRingHom_apply (p : ℕ) [Fact p.Prime] [NeZero e]
     reduceRingHom p r hr x = reduce p r x := by
   rw [reduceRingHom, reduce, evalRingHom, RingHom.comp_apply, toAdjoinRootRingHom_apply,
     toAdjoinRoot, AdjoinRoot.lift_mk, evalCoeffs_eq_eval₂]
+
+/-- Reduction at an `e`-th primitive root sends the distinguished generator `ζ` to that root. -/
+@[simp]
+theorem reduce_zeta (p : ℕ) [Fact p.Prime] [NeZero e] (r : ZMod p) (hr : IsPrimitiveRoot r e) :
+    reduce p r (zeta e) = r := by
+  rw [← reduceRingHom_apply p r hr, reduceRingHom, evalRingHom_zeta]
 
 /-! ## The distinguished complex embedding -/
 

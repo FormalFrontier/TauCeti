@@ -275,6 +275,15 @@ section Ring
 
 variable [Ring R]
 
+/-- Negating every coefficient negates the polynomial. -/
+@[simp]
+theorem ofCoeffList_map_neg (l : List R) : ofCoeffList (l.map (-·)) = -ofCoeffList l := by
+  induction l using List.reverseRecOn with
+  | nil => simp
+  | append_singleton l a ih =>
+    rw [List.map_append, List.map_cons, List.map_nil, ofCoeffList_concat, ofCoeffList_concat, ih,
+      map_neg, neg_mul, ← neg_add]
+
 /-- Subtracting a right multiple of one list of coefficients from another, entrywise. -/
 theorem ofCoeffList_zipWith_sub (c : R) {l l' : List R} (h : l.length = l'.length) :
     ofCoeffList (List.zipWith (fun x y => x - y * c) l l')
