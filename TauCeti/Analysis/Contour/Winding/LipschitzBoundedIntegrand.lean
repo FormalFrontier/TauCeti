@@ -300,6 +300,9 @@ theorem exists_isBounded_image_realWindingIntegrand_of_lipschitzOnWith_derivWith
   -- Apply `_right` to the point-reflected curve `γ'` rather than repeating its proof.
   set γ' : ℝ → ℂ := fun s => γ (2 * t₀ - s) with hγ'_def
   have hd'_gt : t₀ < 2 * t₀ - c := by linarith
+  -- The crossing `t₀` reflects to itself; used at each of the several places below that need to
+  -- relate a fact about `γ'` (stated via `2 * t₀ - t₀`) back to the corresponding fact about `γ`.
+  have h2t₀ : (2 : ℝ) * t₀ - t₀ = t₀ := by ring
   have hdiff' : DifferentiableOn ℝ γ' (Icc t₀ (2 * t₀ - c)) :=
     differentiableOn_comp_const_sub hdiff
   have hlip' : LipschitzOnWith K (derivWithin γ' (Icc t₀ (2 * t₀ - c))) (Icc t₀ (2 * t₀ - c)) :=
@@ -308,9 +311,9 @@ theorem exists_isBounded_image_realWindingIntegrand_of_lipschitzOnWith_derivWith
     -- `rw [hγ'_def]` alone would leave the unapplied `(fun s => γ (2 * t₀ - s)) t₀`, since `rw`
     -- does not beta-reduce; `change` unfolds `γ'` and applies it in one step (both defeq to it).
     change γ (2 * t₀ - t₀) = w
-    rw [show (2 : ℝ) * t₀ - t₀ = t₀ by ring]; exact h_eq
+    rw [h2t₀]; exact h_eq
   have hvel' : derivWithin γ' (Icc t₀ (2 * t₀ - c)) t₀ ≠ 0 := by
-    rw [hγ'_def, derivWithin_comp_const_sub_Icc γ c t₀ t₀, show (2 : ℝ) * t₀ - t₀ = t₀ by ring]
+    rw [hγ'_def, derivWithin_comp_const_sub_Icc γ c t₀ t₀, h2t₀]
     simpa using hvel
   obtain ⟨ρ, hρ_pos, hρ_lt, hbdd⟩ :=
     exists_isBounded_image_realWindingIntegrand_of_lipschitzOnWith_derivWithin_right
@@ -326,7 +329,7 @@ theorem exists_isBounded_image_realWindingIntegrand_of_lipschitzOnWith_derivWith
     intro t ht
     rcases eq_or_ne t t₀ with heq | htne
     · have hz2 : γ (2 * t₀ - t) - w = 0 := by
-        rw [heq, show (2 : ℝ) * t₀ - t₀ = t₀ by ring, h_eq, sub_self]
+        rw [heq, h2t₀, h_eq, sub_self]
       -- `Set.image_congr`'s goal states the right side's position as `γ' t - w`, defeq (via
       -- `γ'`'s definition) but not syntactically equal to the `γ (2 * t₀ - t) - w` on the left;
       -- `change` records that both sides already talk about the same position, before `hz2`
