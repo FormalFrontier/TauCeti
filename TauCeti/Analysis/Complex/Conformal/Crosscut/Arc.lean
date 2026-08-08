@@ -6,9 +6,10 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Analysis.Complex.Conformal.Crosscut.Path
-public import TauCeti.Topology.JordanCurve.Path
+public import TauCeti.Topology.JordanCurve.Basic
 import TauCeti.Analysis.Complex.Conformal.Crosscut.Endpoints
 import TauCeti.Analysis.Complex.Conformal.Crosscut.Image
+import TauCeti.Topology.JordanCurve.Path
 
 /-!
 # The distinct-end case of an image crosscut
@@ -47,9 +48,9 @@ subsingleton says exactly `u ≠ v`.
 The point of producing an arc is that an arc can be closed into a Jordan curve. Any arc `B` of the
 image boundary running between the same two ends meets the closed image crosscut only there —
 `B` lies in `frontier (f '' ball c r)`, so the intersection lies in the boundary piece `{u, v}` —
-and `TauCeti.isJordanCurve_union_range_of_inter_eq_pair` glues the two arcs along those two points.
-That is
-`TauCeti.exists_forall_isJordanCurve_union_closure_image_ball_inter_sphere_of_not_subsingleton`.
+and `TauCeti.isJordanCurve_range_union_range_of_inter_eq_pair` glues the two arcs along those two
+points. That is
+`exists_forall_isJordanCurve_closure_image_ball_inter_sphere_union_range_of_not_subsingleton`.
 
 Which arc of the boundary to take, and which of the two pieces the crosscut cuts the domain into is
 enclosed by the resulting Jordan curve, is a planar separation question and is not settled here; the
@@ -61,7 +62,7 @@ about the region the curve encloses.
 * `TauCeti.exists_injective_path_range_eq_closure_image_ball_inter_sphere_of_not_subsingleton` —
   a finite-length image crosscut meeting the image boundary in more than one point closes to an
   arc, whose two endpoints are exactly the two points of that meeting.
-* `TauCeti.exists_forall_isJordanCurve_union_closure_image_ball_inter_sphere_of_not_subsingleton` —
+* `exists_forall_isJordanCurve_closure_image_ball_inter_sphere_union_range_of_not_subsingleton` —
   that arc together with any arc of the image boundary joining its two ends is a Jordan curve.
 
 ## Roadmap role
@@ -187,13 +188,13 @@ is a Jordan curve.
 The two arcs meet exactly in `{u, v}`: an intersection point lies on the image boundary because it
 lies on `range δ`, and on the closed image crosscut because it lies on the other arc, so it lies in
 the boundary piece; conversely `u` and `v` are endpoints of both. That is precisely the hypothesis
-of `TauCeti.isJordanCurve_union_range_of_inter_eq_pair`.
+of `TauCeti.isJordanCurve_range_union_range_of_inter_eq_pair`.
 
 Nothing is claimed about which of the two arcs the image boundary is cut into by `u` and `v` should
 be used, nor about the region the resulting Jordan curve encloses: both are planar separation
 questions. What the statement supplies is that whichever arc a separation argument selects, the
 closed curve it produces is a Jordan curve. -/
-theorem exists_forall_isJordanCurve_union_closure_image_ball_inter_sphere_of_not_subsingleton
+theorem exists_forall_isJordanCurve_closure_image_ball_inter_sphere_union_range_of_not_subsingleton
     (hζ : dist ζ c = r) (hρ : 0 < ρ) (hρr : ρ < 2 * r)
     (hf : DifferentiableOn ℂ f (ball c r)) (hinj : InjOn f (ball c r))
     (hfin : circleImageLength f (ball c r) ζ ρ ≠ ⊤)
@@ -208,7 +209,7 @@ theorem exists_forall_isJordanCurve_union_closure_image_ball_inter_sphere_of_not
       hf hinj hfin hends
   refine ⟨u, v, huv, hpair, fun δ hδinj hδsub => ?_⟩
   rw [← hγrange]
-  refine isJordanCurve_union_range_of_inter_eq_pair hγinj hδinj (subset_antisymm ?_ ?_)
+  refine isJordanCurve_range_union_range_of_inter_eq_pair hγinj hδinj (subset_antisymm ?_ ?_)
   · rintro w ⟨hwγ, hwδ⟩
     exact hpair ▸ ⟨hδsub hwδ, hγrange ▸ hwγ⟩
   · intro w hw

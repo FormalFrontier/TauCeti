@@ -34,7 +34,7 @@ second simplicity vocabulary alongside Mathlib's path API.
 
 The criterion has one immediate use that is worth naming on its own: two *arcs* — ranges of
 injective paths — that share their two endpoints and meet nowhere else glue to a Jordan curve
-(`TauCeti.isJordanCurve_union_range_of_inter_eq_pair`). The closed path traversed is
+(`TauCeti.isJordanCurve_range_union_range_of_inter_eq_pair`). The closed path traversed is
 `γ.trans δ.symm`, whose range is `range γ ∪ range δ`; the meeting hypothesis is what turns a
 coincidence between a value of `γ` and a value of `δ` into a coincidence of endpoints, and
 injectivity of each of the two paths handles the coincidences internal to one of them. The
@@ -45,8 +45,8 @@ equal endpoints repeats the value at the two distinct parameters `0` and `1`.
 
 * `TauCeti.isJordanCurve_range_of_eq_or_eq_endpoints` — the range of a closed path whose only
   possible repetition is its pair of endpoints is a Jordan curve.
-* `TauCeti.isJordanCurve_union_range_of_inter_eq_pair` — two arcs with the same two endpoints,
-  meeting exactly there, glue to a Jordan curve.
+* `TauCeti.isJordanCurve_range_union_range_of_inter_eq_pair` — two arcs with the same two
+  endpoints, meeting exactly there, glue to a Jordan curve.
 
 ## Roadmap role
 
@@ -55,8 +55,9 @@ This is the topological gluing step used by layer **L5** of
 finite-length image crosscut is already packaged as a path with exactly this simplicity property in
 `TauCeti/Analysis/Complex/Conformal/Crosscut/Path.lean`; when its two boundary ends coincide, the
 first result below identifies the closure of that crosscut as a Jordan curve, and when they are
-distinct the second closes that crosscut up with an arc of the boundary of the image domain. Both
-conformal specializations are in `TauCeti/Analysis/Complex/Conformal/Crosscut/Jordan.lean`.
+distinct the second closes that crosscut up with an arc of the boundary of the image domain. The
+coincident-end specialization is in `TauCeti/Analysis/Complex/Conformal/Crosscut/Jordan.lean` and
+the distinct-end one in `TauCeti/Analysis/Complex/Conformal/Crosscut/Arc.lean`.
 -/
 
 public section
@@ -152,13 +153,12 @@ at which the two halves are joined.
 
 Distinctness of `x` and `y` is a consequence rather than a hypothesis: `δ 0 = δ 1` would contradict
 injectivity of `δ`. -/
-theorem isJordanCurve_union_range_of_inter_eq_pair {y : X} {γ δ : Path x y}
+theorem isJordanCurve_range_union_range_of_inter_eq_pair {y : X} {γ δ : Path x y}
     (hγ : Function.Injective γ) (hδ : Function.Injective δ)
     (hmeet : range γ ∩ range δ = {x, y}) :
     IsJordanCurve (range γ ∪ range δ) := by
   have hrange : range (γ.trans δ.symm) = range γ ∪ range δ := by
     rw [Path.trans_range, Path.symm_range]
-  have hsymm : ∀ b : unitInterval, δ.symm b = δ (unitInterval.symm b) := fun _ => rfl
   rw [← hrange]
   refine isJordanCurve_range_of_eq_or_eq_endpoints _ fun s t hst => ?_
   rw [Path.trans_apply, Path.trans_apply] at hst
@@ -167,7 +167,7 @@ theorem isJordanCurve_union_range_of_inter_eq_pair {y : X} {γ δ : Path x y}
     have h : (2 : ℝ) * s = 2 * t := congrArg Subtype.val (hγ hst)
     exact Or.inl (Subtype.ext (show (s : ℝ) = (t : ℝ) by linarith))
   · -- The first parameter on `γ`, the second on `δ` read backwards.
-    rw [hsymm] at hst
+    simp only [Path.symm_apply, Function.comp_apply] at hst
     rcases eq_zero_and_eq_zero_or_eq_one_and_eq_one_of_apply_eq hγ hδ hmeet hst with ⟨ha, hb⟩ | h
     · have h1 : (2 : ℝ) * s = 0 := congrArg Subtype.val ha
       have h2 : 1 - (2 * (t : ℝ) - 1) = 0 := congrArg Subtype.val hb
@@ -177,7 +177,7 @@ theorem isJordanCurve_union_range_of_inter_eq_pair {y : X} {γ δ : Path x y}
       have h2 : 1 - (2 * (t : ℝ) - 1) = 1 := congrArg Subtype.val h.2
       exact Or.inl (Subtype.ext (show (s : ℝ) = (t : ℝ) by linarith))
   · -- The mirror image of the previous case.
-    rw [hsymm] at hst
+    simp only [Path.symm_apply, Function.comp_apply] at hst
     rcases eq_zero_and_eq_zero_or_eq_one_and_eq_one_of_apply_eq hγ hδ hmeet hst.symm with
       ⟨ha, hb⟩ | h
     · have h1 : (2 : ℝ) * t = 0 := congrArg Subtype.val ha
@@ -188,7 +188,7 @@ theorem isJordanCurve_union_range_of_inter_eq_pair {y : X} {γ δ : Path x y}
       have h2 : 1 - (2 * (s : ℝ) - 1) = 1 := congrArg Subtype.val h.2
       exact Or.inl (Subtype.ext (show (s : ℝ) = (t : ℝ) by linarith))
   · -- Both parameters on the second half: injectivity of `δ` read backwards.
-    rw [hsymm, hsymm] at hst
+    simp only [Path.symm_apply, Function.comp_apply] at hst
     have h : 1 - (2 * (s : ℝ) - 1) = 1 - (2 * (t : ℝ) - 1) := congrArg Subtype.val (hδ hst)
     exact Or.inl (Subtype.ext (show (s : ℝ) = (t : ℝ) by linarith))
 
