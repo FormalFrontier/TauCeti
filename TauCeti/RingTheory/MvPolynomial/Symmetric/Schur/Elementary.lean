@@ -32,7 +32,7 @@ directions are explicit: a tableau is sent to the set `TauCeti.BoundedSSYT.colFi
 entries of its column, and a set is sent back to the tableau `TauCeti.BoundedSSYT.ofColFinset`
 that lists it in increasing order, which is `Finset.orderEmbOfFin`.
 
-Symmetry is a corollary rather than an input: `TauCeti.isSymmetric_schurPoly_ones` records the
+Symmetry is a corollary rather than an input: `TauCeti.schurPoly_ones_isSymmetric` records the
 one-column case of the symmetry of the Schur polynomials, which is proved here without the
 Bender--Knuth involution that the general case needs.
 
@@ -54,7 +54,7 @@ Bender--Knuth involution that the general case needs.
 * `TauCeti.diagramSchurPoly_eq_esymm_of_rowLen_le_one`: the Schur polynomial of a one-column
   shape is an elementary symmetric polynomial.
 * `TauCeti.schurPoly_ones`: `s_{(1ⁿ)} = e_n`.
-* `TauCeti.isSymmetric_schurPoly_ones`: the Schur polynomial of a one-column partition is
+* `TauCeti.schurPoly_ones_isSymmetric`: the Schur polynomial of a one-column partition is
   symmetric.
 
 ## References
@@ -242,6 +242,13 @@ theorem colFinsetEquiv_apply_coe (h : μ.rowLen 0 ≤ 1) (T : BoundedSSYT N μ) 
     (colFinsetEquiv h T : Finset (Fin N)) = colFinset T :=
   (rfl)
 
+/-- The inverse of `colFinsetEquiv` lists a set of letters down the column in increasing order. -/
+@[simp]
+theorem colFinsetEquiv_symm_apply (h : μ.rowLen 0 ≤ 1)
+    (s : {s : Finset (Fin N) // s.card = μ.colLen 0}) :
+    (colFinsetEquiv h).symm s = ofColFinset h s.1 s.2 :=
+  (rfl)
+
 end BoundedSSYT
 
 /-! ### The Schur polynomial of a one-column shape -/
@@ -273,7 +280,7 @@ theorem schurPoly_ones (n : ℕ) : schurPoly σ R (Nat.Partition.ones n) = esymm
 /-- **The Schur polynomial of a one-column partition is symmetric.**  This is the one-column case
 of the symmetry of the Schur polynomials, which in general needs the Bender--Knuth involution and
 is not proved here; for `(1ⁿ)` it is the symmetry of the elementary symmetric polynomials. -/
-theorem isSymmetric_schurPoly_ones (n : ℕ) :
+theorem schurPoly_ones_isSymmetric (n : ℕ) :
     (schurPoly σ R (Nat.Partition.ones n)).IsSymmetric := by
   rw [schurPoly_ones]
   exact esymm_isSymmetric σ R n
