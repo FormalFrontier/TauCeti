@@ -5,7 +5,10 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.LinearAlgebra.Matrix.NonsingularInverse
+public import Mathlib.LinearAlgebra.Basis.Bilinear
+public import Mathlib.LinearAlgebra.Dual.Basis
 public import Mathlib.RingTheory.HopfAlgebra.Basic
+public import TauCeti.Algebra.Coalgebra.Comodule.MatrixCoefficient.Adjoin
 public import TauCeti.Algebra.Coalgebra.Comodule.MatrixCoefficient.Comul
 
 /-!
@@ -23,6 +26,9 @@ therefore a unit.
 ## Main declarations
 
 * `TauCeti.Comodule.coefficientMatrix`: the matrix of basis matrix coefficients.
+* `TauCeti.Comodule.coefficientMatrixSet`: the set of entries of a coefficient matrix.
+* `TauCeti.Comodule.adjoin_coefficientMatrixSet`: the entries of the coefficient matrix
+  generate the full matrix-coefficient algebra.
 * `TauCeti.Comodule.coact_basis_eq_sum_coefficientMatrix`: the coaction of a basis vector is the
   corresponding column of the coefficient matrix.
 * `TauCeti.Comodule.comul_coefficientMatrix_eq_sum` and
@@ -71,6 +77,27 @@ theorem coefficientMatrix_apply (b : Basis ι R M) (i j : ι) :
     coefficientMatrix (C := C) b i j =
       matrixCoefficient (R := R) (C := C) (b.coord i) (b j) := by
   rw [coefficientMatrix]
+
+/-- The set of entries of a coefficient matrix. -/
+def coefficientMatrixSet (b : Basis ι R M) : Set C :=
+  Set.range fun ij : ι × ι ↦ coefficientMatrix (C := C) b ij.1 ij.2
+
+/-- Membership in the set of entries of a coefficient matrix is witnessed by two basis
+indices. -/
+theorem mem_coefficientMatrixSet_iff (b : Basis ι R M) (c : C) :
+    c ∈ coefficientMatrixSet (C := C) b ↔
+      ∃ i j, coefficientMatrix (C := C) b i j = c := by
+  constructor
+  · rintro ⟨⟨i, j⟩, rfl⟩
+    exact ⟨i, j, rfl⟩
+  · rintro ⟨i, j, rfl⟩
+    exact ⟨(i, j), rfl⟩
+
+/-- Every entry of a coefficient matrix belongs to its set of entries. -/
+@[simp]
+theorem coefficientMatrix_mem_set (b : Basis ι R M) (i j : ι) :
+    coefficientMatrix (C := C) b i j ∈ coefficientMatrixSet (C := C) b :=
+  ⟨(i, j), rfl⟩
 
 /-- The counit of a coefficient entry is the corresponding identity-matrix entry. -/
 @[simp]
@@ -169,6 +196,47 @@ theorem isUnit_det_coefficientMatrix (b : Basis ι R M) :
   Matrix.isUnit_det_of_right_inverse (coefficientMatrix_mul_map_antipode (C := C) b)
 
 end CommRing
+
+section Adjoin
+
+variable [Semiring C] [Algebra R C] [Coalgebra R C] [Comodule R C M]
+variable [Finite ι]
+
+/-- The entries of a coefficient matrix generate the full matrix-coefficient algebra.
+
+Although the left-hand side uses only the coefficients indexed by a chosen finite basis, every
+matrix coefficient is an `R`-linear combination of these entries, so the resulting subalgebra is
+independent of the basis. -/
+theorem adjoin_coefficientMatrixSet (b : Basis ι R M) :
+    Algebra.adjoin R (coefficientMatrixSet (C := C) b) =
+      matrixCoefficientSubalgebra (R := R) (C := C) (M := M) := by
+  classical
+  let _ := Fintype.ofFinite ι
+  apply le_antisymm
+  · rw [Algebra.adjoin_le_iff]
+    intro c hc
+    obtain ⟨i, j, rfl⟩ := (mem_coefficientMatrixSet_iff (C := C) b c).mp hc
+    rw [coefficientMatrix_apply]
+    exact matrixCoefficient_mem_subalgebra (R := R) (C := C) (b.coord i) (b j)
+  · apply matrixCoefficientSubalgebra_le
+    intro φ m
+    rw [← matrixCoefficientBilinear_apply_apply]
+    rw [← LinearMap.sum_repr_mul_repr_mul (B :=
+      matrixCoefficientBilinear (R := R) (C := C) (M := M)) b.dualBasis b φ m]
+    simp only [Finsupp.sum]
+    apply Subalgebra.sum_mem
+    intro i _
+    apply Subalgebra.sum_mem
+    intro j _
+    simpa only [matrixCoefficientBilinear_apply_apply, Basis.coe_dualBasis,
+      coefficientMatrix_apply] using
+      Subalgebra.smul_mem (Algebra.adjoin R (coefficientMatrixSet (C := C) b))
+        (Subalgebra.smul_mem (Algebra.adjoin R (coefficientMatrixSet (C := C) b))
+          (Algebra.subset_adjoin (coefficientMatrix_mem_set (C := C) b i j))
+          ((b.repr m) j))
+        ((b.dualBasis.repr φ) i)
+
+end Adjoin
 
 end
 

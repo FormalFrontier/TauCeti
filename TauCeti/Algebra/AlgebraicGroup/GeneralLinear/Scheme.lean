@@ -35,6 +35,8 @@ lie in the same universe, so this file uses that same-universe setting.
 ## Main declarations
 
 * `TauCeti.GeneralLinear.groupScheme`: the general linear group scheme over `Spec R`.
+* `TauCeti.GeneralLinear.groupScheme_eq_hopfSpec`: its presentation as the Hopf spectrum of the
+  bundled coordinate algebra.
 * `TauCeti.GeneralLinear.groupSchemeSpecIso`: its canonical raw-coordinate presentation.
 * `TauCeti.GeneralLinear.groupSchemeMulSourceIso`: the tensor-coordinate presentation of the
   multiplication source.
@@ -89,7 +91,9 @@ noncomputable def groupScheme : Grp (Over (Spec (CommRingCat.of R))) :=
   (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).obj
     (Opposite.op (coordinateHopfAlgebra R n))
 
-private lemma groupScheme_eq_hopfSpec :
+/-- The general linear group scheme is definitionally presented as the Hopf spectrum of its
+bundled coordinate Hopf algebra. -/
+theorem groupScheme_eq_hopfSpec :
     groupScheme R n =
       (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).obj
         (Opposite.op (coordinateHopfAlgebra R n)) := by
