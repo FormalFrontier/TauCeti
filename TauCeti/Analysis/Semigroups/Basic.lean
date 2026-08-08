@@ -119,8 +119,10 @@ noncomputable def realOperator (S : StronglyContinuousSemigroup X) (t : ℝ) : X
   S t.toNNReal
 
 omit [CompleteSpace X] in
-/-- The real-time operator is the native semigroup operator at the nonnegative part of `t`. -/
-@[simp]
+/-- The real-time operator is the native semigroup operator at the nonnegative part of `t`.
+
+This is not a `simp` lemma: the simp normal form keeps `realOperator` folded, so that the more
+specific lemmas `realOperator_coe`, `realOperator_zero` and `realOperator_derivWithin_zero` fire. -/
 theorem realOperator_eq_toNNReal (S : StronglyContinuousSemigroup X) (t : ℝ) :
     S.realOperator t = S t.toNNReal := by
   rw [realOperator]
@@ -170,7 +172,7 @@ theorem realOperator_continuousWithinAt_zero (S : StronglyContinuousSemigroup X)
     S.continuousAt_zero_tendsto x
   simpa [ContinuousWithinAt] using (h_orbit.comp h_toNNReal).congr' (by
     filter_upwards with t
-    simp only [Function.comp_apply])
+    simp only [realOperator, Function.comp_apply])
 
 end StronglyContinuousSemigroup
 

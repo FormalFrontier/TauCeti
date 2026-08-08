@@ -121,19 +121,19 @@ private theorem id_genQuot_tendsto (x : X) :
 theorem mem_id_domain (x : X) :
     x ∈ (StronglyContinuousSemigroup.id X).domain :=
   ((StronglyContinuousSemigroup.id X).generator_eq_toPMap_top_of_forall_tendsto 0
-    (by simp)).1.ge trivial
+    (by simpa using id_genQuot_tendsto (X := X))).1.ge trivial
 
 /-- The generator domain of the identity semigroup is all of the space. -/
 @[simp]
 theorem id_domain_eq_top : (StronglyContinuousSemigroup.id X).domain = ⊤ :=
   ((StronglyContinuousSemigroup.id X).generator_eq_toPMap_top_of_forall_tendsto 0
-    (by simp)).1
+    (by simpa using id_genQuot_tendsto (X := X))).1
 
 /-- The generator of the identity semigroup is the zero operator. -/
 @[simp]
 theorem id_generator_eq_zero : (StronglyContinuousSemigroup.id X).generator = 0 := by
   rw [((StronglyContinuousSemigroup.id X).generator_eq_toPMap_top_of_forall_tendsto 0
-    (by simp)).2]
+    (by simpa using id_genQuot_tendsto (X := X))).2]
   rfl
 
 /-- A strongly continuous semigroup whose generator vanishes is the identity semigroup. -/
