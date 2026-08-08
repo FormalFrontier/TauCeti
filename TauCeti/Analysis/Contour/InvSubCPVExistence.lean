@@ -83,7 +83,8 @@ window integral of the Cauchy kernel converges to the explicit log-norm-plus-arg
 what a consumer that needs the real or imaginary part of the limit (not just its existence) calls;
 `exists_radius_perWindow_tendsto` below forgets `L_R`, `L_L` and the explicit value to recover the
 existence-only form. -/
-theorem exists_radius_perWindow_tendsto_value {γ : ℝ → ℂ} {a b t₀ : ℝ} {s : ℂ}
+theorem exists_radius_perWindow_tendsto_log_norm_add_arg
+    {γ : ℝ → ℂ} {a b t₀ : ℝ} {s : ℂ}
     (h_imm : IsPwC1ImmersionOn γ a b) (hab : a < b) (ht₀ : t₀ ∈ Ioo a b) (h_at : γ t₀ = s) :
     ∃ R > 0, ∃ L_R L_L : ℂ, L_R ≠ 0 ∧ L_L ≠ 0 ∧
       ∀ ρ : ℝ, 0 < ρ → ρ ≤ R → a < t₀ - ρ → t₀ + ρ ≤ b →
@@ -123,7 +124,7 @@ theorem exists_radius_perWindow_tendsto_value {γ : ℝ → ℂ} {a b t₀ : ℝ
 /-- Around each interior crossing there is a radius `R > 0` such that at every window radius
 `ρ ≤ R` whose window lies inside `[a, b]` and contains no other crossing, the truncated window
 integral of the Cauchy kernel converges. Existence-only forgetful form of
-`exists_radius_perWindow_tendsto_value`. -/
+`exists_radius_perWindow_tendsto_log_norm_add_arg`. -/
 private theorem exists_radius_perWindow_tendsto {γ : ℝ → ℂ} {a b t₀ : ℝ} {s : ℂ}
     (h_imm : IsPwC1ImmersionOn γ a b) (hab : a < b) (ht₀ : t₀ ∈ Ioo a b) (h_at : γ t₀ = s) :
     ∃ R > 0, ∀ ρ : ℝ, 0 < ρ → ρ ≤ R → a < t₀ - ρ → t₀ + ρ ≤ b →
@@ -131,7 +132,7 @@ private theorem exists_radius_perWindow_tendsto {γ : ℝ → ℂ} {a b t₀ : �
       ∃ v : ℂ, Tendsto (fun ε : ℝ => ∫ u in (t₀ - ρ)..(t₀ + ρ),
         if ‖γ u - s‖ > ε then (γ u - s)⁻¹ * deriv γ u else 0) (𝓝[>] (0 : ℝ)) (𝓝 v) := by
   obtain ⟨R, hR_pos, L_R, L_L, -, -, h_spec⟩ :=
-    exists_radius_perWindow_tendsto_value h_imm hab ht₀ h_at
+    exists_radius_perWindow_tendsto_log_norm_add_arg h_imm hab ht₀ h_at
   exact ⟨R, hR_pos, fun ρ hρ_pos hρ_le h_lo h_hi h_unique =>
     ⟨_, h_spec ρ hρ_pos hρ_le h_lo h_hi h_unique⟩⟩
 
