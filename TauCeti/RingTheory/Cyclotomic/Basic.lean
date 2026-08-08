@@ -351,8 +351,8 @@ theorem equivAdjoinRoot_apply (x : Cyclotomic e) : equivAdjoinRoot x = toAdjoinR
 @[expose] def zeta (e : ℕ) : Cyclotomic e := ofCoeffList e [1, 0]
 
 @[simp]
-theorem equivAdjoinRoot_zeta : equivAdjoinRoot (zeta e) = AdjoinRoot.root (cyclotomic e ℤ) := by
-  rw [equivAdjoinRoot_apply, zeta, toAdjoinRoot_ofCoeffList]
+theorem toAdjoinRoot_zeta : toAdjoinRoot (zeta e) = AdjoinRoot.root (cyclotomic e ℤ) := by
+  rw [zeta, toAdjoinRoot_ofCoeffList]
   rw [show TauCeti.Polynomial.ofCoeffList ([1, 0] : List ℤ) = X by
     simp [TauCeti.Polynomial.ofCoeffList_cons], AdjoinRoot.mk_X]
 
