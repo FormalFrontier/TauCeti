@@ -139,7 +139,13 @@ lemma cohomologyEquivOfIso_symm_apply {M N : X.Modules} (e : M ≅ N) (i : ℕ)
   rw [← cohomologyFunctor_map_hom, ← Functor.mapIso_inv]
   exact ((cohomologyFunctor X i).mapIso e).addCommGroupIsoToAddEquiv_symm_apply x
 
-/-- Zeroth cohomology is canonically equivalent to the group of global sections. -/
+/-- Zeroth cohomology is canonically equivalent to the group of global sections.
+
+The equivalence is natural in the coefficient sheaf: for `f : M ⟶ N`, the commutation of this
+equivalence, and of its inverse, with `cohomologyMap f 0` and `f.app ⊤` is Mathlib's
+`CategoryTheory.Sheaf.H.equiv₀_naturality`, respectively
+`CategoryTheory.Sheaf.H.equiv₀_symm_naturality`, applied to `isTerminalTop` and
+`(SheafOfModules.toSheaf X.ringCatSheaf).map f`. -/
 def cohomologyZeroEquiv (M : X.Modules) :
     cohomology M 0 ≃+ Γ(M, ⊤) :=
   CategoryTheory.Sheaf.H.equiv₀
