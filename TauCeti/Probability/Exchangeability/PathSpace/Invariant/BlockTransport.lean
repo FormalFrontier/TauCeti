@@ -10,6 +10,10 @@ import TauCeti.Probability.Exchangeability.PermutationExtension
 /-!
 # Moving a finite block through a reindexing, over an invariant event
 
+Nothing here is specific to a de Finetti route: the statements mention a contractable path law, a
+shift-invariant event and a finite selection, and no Koopman operator. The Koopman lane is the
+motivating consumer, and imports this.
+
 The Koopman block argument needs two things: to compare the integral of a block observable over a
 shift-invariant event with the integral of the *prefix* block over the same event, and to read
 Mathlib's mean ergodic theorem — stated for Birkhoff averages — in terms of prefix averages of the
