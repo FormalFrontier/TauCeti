@@ -102,13 +102,14 @@ omit [MeasurableSpace Ω] [MeasurableSpace α] in
 /-- **Sorting an injective block selection.** Any injective `k` can be permuted into strictly
 increasing order without changing the block event or any product over the selected sets.
 
-This packages the whole reduction that lets a proof handle only the *monotone* case: `Tuple.sort`
-supplies the permutation, `blockCylinder_comp_perm` says the event is unchanged, and the final
-clause says a product over the selected sets is unchanged, for any commutative monoid. Callers that
-establish an identity for strictly monotone selections get the injective case by `obtain`ing this
-and rewriting. -/
-theorem exists_perm_strictMono_comp_blockCylinder_eq (X : ℕ → Ω → α) {m : ℕ} {k : Fin m → ℕ}
-    (hk : Function.Injective k) (B : Fin m → Set α) :
+This packages the whole reduction that lets a proof handle only the *monotone* case, and the name
+records all three parts: `Tuple.sort` supplies the permutation, `blockCylinder_comp_perm` says the
+block event is unchanged (`_blockCylinder_eq`), and the final clause says a product over the
+selected sets is unchanged (`_and_prod_eq`), for any commutative monoid. Callers that establish an
+identity for strictly monotone selections get the injective case by `obtain`ing this and
+rewriting. -/
+theorem exists_perm_strictMono_comp_blockCylinder_eq_and_prod_eq (X : ℕ → Ω → α) {m : ℕ}
+    {k : Fin m → ℕ} (hk : Function.Injective k) (B : Fin m → Set α) :
     ∃ e : Equiv.Perm (Fin m), StrictMono (k ∘ e) ∧
       blockCylinder X k B = blockCylinder X (k ∘ e) (fun i => B (e i)) ∧
       ∀ {M : Type*} [CommMonoid M] (g : Set α → M), ∏ i, g (B (e i)) = ∏ i, g (B i) :=

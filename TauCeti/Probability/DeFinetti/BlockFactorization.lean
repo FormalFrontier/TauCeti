@@ -244,7 +244,7 @@ private theorem blockLaw_injective_eq_lintegral_prod_directingMeasure
     {B : Fin m → Set α} (hB : ∀ i, MeasurableSet (B i)) :
     blockLaw μ X k (Set.univ.pi B) = ∫⁻ ω, ∏ i, directingMeasure μ X ω (B i) ∂μ := by
   classical
-  obtain ⟨e, hsm, hcyl, hprod⟩ := exists_perm_strictMono_comp_blockCylinder_eq X hk B
+  obtain ⟨e, hsm, hcyl, hprod⟩ := exists_perm_strictMono_comp_blockCylinder_eq_and_prod_eq X hk B
   have hreindex : blockLaw μ X k (Set.univ.pi B)
       = blockLaw μ X (k ∘ e) (Set.univ.pi fun i => B (e i)) := by
     rw [blockLaw_blockCylinder X (fun i => (hX_meas (k i)).aemeasurable) hB,
