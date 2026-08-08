@@ -50,6 +50,18 @@ variable [NormedAddCommGroup E] [NormedSpace ℝ E]
 variable [TopologicalSpace H] {I : ModelWithCorners ℝ E H}
 variable [TopologicalSpace M] [ChartedSpace H M] [IsManifold I ∞ M]
 
+private def constantEndomorphismSection {V : Type*} [NormedAddCommGroup V]
+    [NormedSpace ℝ V] (Jc : V →L[ℝ] V) :
+    ContMDiffSection (modelWithCornersSelf ℝ V) (V →L[ℝ] V) ∞
+      (fun x : V ↦ TangentSpace (modelWithCornersSelf ℝ V) x →L[ℝ]
+        TangentSpace (modelWithCornersSelf ℝ V) x) :=
+  ⟨fun _ ↦ Jc, by
+    intro x
+    rw [contMDiffAt_hom_bundle]
+    refine ⟨contMDiffAt_id, ?_⟩
+    simpa [inCoordinates_tangent_bundle_core_model_space] using
+      (contMDiffAt_const (x := x) (c := Jc))⟩
+
 /-- A smooth almost complex structure on a manifold is a smooth tangent-bundle endomorphism
 whose square is fiberwise minus the identity.
 
@@ -180,13 +192,7 @@ def toSmoothModelSpace (J : AlmostComplexStructure V) :
     SmoothAlmostComplexStructure (modelWithCornersSelf ℝ V) V := by
   let Jc : V →L[ℝ] V := LinearMap.toContinuousLinearMap J.toLinearMap
   exact
-    { toEndomorphism :=
-      ⟨fun _ ↦ Jc, by
-      intro x
-      rw [contMDiffAt_hom_bundle]
-      refine ⟨contMDiffAt_id, ?_⟩
-      simpa [inCoordinates_tangent_bundle_core_model_space] using
-        (contMDiffAt_const (x := x) (c := Jc))⟩
+    { toEndomorphism := constantEndomorphismSection Jc
       square_neg := by
         intro x
         ext v
@@ -217,13 +223,7 @@ noncomputable def product (V : Type*) [NormedAddCommGroup V] [NormedSpace ℝ V]
   let Jc : V × V →L[ℝ] V × V :=
     (-ContinuousLinearMap.snd ℝ V V).prod (ContinuousLinearMap.fst ℝ V V)
   exact
-    { toEndomorphism :=
-      ⟨fun _ ↦ Jc, by
-      intro x
-      rw [contMDiffAt_hom_bundle]
-      refine ⟨contMDiffAt_id, ?_⟩
-      simpa [inCoordinates_tangent_bundle_core_model_space] using
-        (contMDiffAt_const (x := x) (c := Jc))⟩
+    { toEndomorphism := constantEndomorphismSection Jc
       square_neg := by
         intro x
         ext v
