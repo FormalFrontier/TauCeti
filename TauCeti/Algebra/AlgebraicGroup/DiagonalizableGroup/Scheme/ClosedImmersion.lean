@@ -43,13 +43,9 @@ theorem isClosedImmersion_groupSchemeMap_of_surjective {G H : FGCommGrpCat.{u}} 
   let e₂ := (eqToHom (groupScheme_def R G).symm).hom.hom.left
   let c := ((hopfSpec (CommRingCat.of R)).map (coordinateMap R φ).hom.op).hom.hom.left
   have he₁ : IsIso e₁ :=
-    ((Over.forget (Spec (CommRingCat.of R))).mapIso
-      ((Grp.forget (Over (Spec (CommRingCat.of R)))).mapIso
-        (eqToIso (groupScheme_def R H)))).isIso_hom
+    isIso_hom_hom_left_eqToHom (groupScheme_def R H)
   have he₂ : IsIso e₂ :=
-    ((Over.forget (Spec (CommRingCat.of R))).mapIso
-      ((Grp.forget (Over (Spec (CommRingCat.of R)))).mapIso
-        (eqToIso (groupScheme_def R G).symm))).isIso_hom
+    isIso_hom_hom_left_eqToHom (groupScheme_def R G).symm
   have hc : IsClosedImmersion c :=
     (CommHopfAlgCat.isClosedImmersion_hopfSpec_map_iff _).2
       (coordinateMap_surjective_of_surjective R φ hφ)
@@ -60,7 +56,7 @@ theorem isClosedImmersion_groupSchemeMap_of_surjective {G H : FGCommGrpCat.{u}} 
     (@MorphismProperty.cancel_left_of_respectsIso
       Scheme _ @IsClosedImmersion inferInstance _ _ _ e₁ (c ≫ e₂) he₁).2 hc₂
   rw [groupSchemeMap_def]
-  simp only [Grp.comp', Mon.comp_hom', Over.comp_left]
+  simp only [comp_hom_hom_left]
   exact he₁c₂
 
 end DiagonalizableGroup

@@ -21,6 +21,7 @@ same-universe restriction is inherited from Mathlib's current `hopfSpec` constru
 ## Main declarations
 
 * `TauCeti.hopfSpec_obj_X_left`: the underlying scheme of a Hopf spectrum.
+* `TauCeti.hopfSpec_map_hom_hom_left`: the underlying scheme morphism of a Hopf-spectrum map.
 * `TauCeti.hopfSpec_obj_X_hom`: its structural morphism.
 * `TauCeti.hopfSpec_obj_eq_asOver`: its bundled identification with the group object on the
   ordinary spectrum.
@@ -99,6 +100,15 @@ lemma algSpec_map_left_ofAlgHom {A B : Type u} [CommRing A] [CommRing B]
         Spec.map (CommRingCat.ofHom f.toRingHom) := by
   rw [AlgebraicGeometry.algSpec_map_left]
   rfl
+
+/-- The scheme morphism underlying the contravariant `hopfSpec` image of a Hopf-algebra
+morphism is the corresponding map of affine spectra. -/
+@[simp↓]
+lemma hopfSpec_map_hom_hom_left {A B : CommHopfAlgCat.{u} R} (f : A ⟶ B) :
+    ((AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map f.op).hom.hom.left =
+      Spec.map (CommRingCat.ofHom f.hom.toAlgHom.toRingHom) := by
+  rw [Functor.comp_map, Functor.mapGrp_map_hom_hom]
+  exact algSpec_map_left_ofAlgHom R f.hom.toAlgHom
 
 /-- Mathlib's `hopfSpec` object is the group object on the ordinary spectrum.
 

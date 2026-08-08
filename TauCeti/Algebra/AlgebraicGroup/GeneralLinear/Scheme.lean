@@ -115,6 +115,19 @@ noncomputable def groupSchemeMap {A : _root_.CommHopfAlgCat (CommRingCat.of R)}
   (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map f.op ≫
     eqToHom (groupScheme_eq_hopfSpec R n).symm
 
+/-- Under the canonical spectrum presentations, the underlying scheme morphism of
+`groupSchemeMap f` is induced by the coordinate Hopf-algebra morphism `f`.
+
+This is a heterogeneous equality because replacing the opaque source and target group schemes
+by their spectrum presentations changes the endpoint types of the morphism. -/
+lemma groupSchemeMap_hom_left {A : _root_.CommHopfAlgCat (CommRingCat.of R)}
+    (f : coordinateHopfAlgebra R n ⟶ A) :
+    (groupSchemeMap R n f).hom.hom.left ≍
+      Spec.map (CommRingCat.ofHom f.hom.toAlgHom.toRingHom) := by
+  unfold groupSchemeMap
+  rw [comp_hom_hom_left, eqToHom_hom_hom_left, comp_eqToHom_heq_iff]
+  exact heq_of_eq (hopfSpec_map_hom_hom_left R f)
+
 /-- The group-scheme morphism induced by a Hopf-algebra morphism is a closed immersion exactly
 when that Hopf-algebra morphism is surjective. -/
 lemma isClosedImmersion_groupSchemeMap_iff
@@ -124,13 +137,10 @@ lemma isClosedImmersion_groupSchemeMap_iff
   let c := ((AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map f.op).hom.hom.left
   let e := (eqToHom (groupScheme_eq_hopfSpec R n).symm).hom.hom.left
   have he : IsIso e :=
-    ((Over.forget (Spec (CommRingCat.of R))).mapIso
-      ((Grp.forget (Over (Spec (CommRingCat.of R)))).mapIso
-        (eqToIso (groupScheme_eq_hopfSpec R n).symm))).isIso_hom
-  rw [groupSchemeMap]
-  simp only [Grp.comp', Mon.comp_hom', Over.comp_left]
-  -- The forgetful functors expose the composite in an unfolded form; folding the two
-  -- let-bound scheme morphisms is definitional through the `Grp`/`Mon`/`Over` wrappers.
+    isIso_hom_hom_left_eqToHom (groupScheme_eq_hopfSpec R n).symm
+  rw [groupSchemeMap, comp_hom_hom_left]
+  -- The preceding computation lemma exposes the composite; this `change` only folds its two
+  -- components to keep the categorical cancellation statement readable.
   change IsClosedImmersion (c ≫ e) ↔ _
   rw [
     @MorphismProperty.cancel_right_of_respectsIso
