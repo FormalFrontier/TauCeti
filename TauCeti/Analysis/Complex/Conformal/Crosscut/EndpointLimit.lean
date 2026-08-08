@@ -383,7 +383,7 @@ private lemma lintegral_enorm_deriv_circleMap_ne_top (hζ : dist ζ c = r) (hρ 
   have hφπ2 := arccos_div_two_mul_lt_pi_div_two hρ hρr
   have hmem : ∀ θ ∈ Ioo ((c - ζ).arg - Real.arccos (ρ / (2 * r)))
       ((c - ζ).arg + Real.arccos (ρ / (2 * r))), circleMap ζ ρ θ ∈ ball c r :=
-    fun _ hθ => circleMap_mem_ball_of_mem_Ioo hζ hρ hρr hθ
+    fun θ hθ => ((ball_inter_sphere_eq_circleMap_image_Ioo hζ hρ hρr).ge ⟨θ, hθ, rfl⟩).1
   have hle : ∫⁻ θ in Ioo ((c - ζ).arg - Real.arccos (ρ / (2 * r)))
         ((c - ζ).arg + Real.arccos (ρ / (2 * r))), ‖deriv f (circleMap ζ ρ θ)‖ₑ ≤
       ∫⁻ θ in Ioc ((c - ζ).arg - Real.arccos (ρ / (2 * r)))
@@ -424,11 +424,11 @@ theorem subsingleton_clusterSetOn_ball_inter_sphere (hζ : dist ζ c = r) (hρ :
     (clusterSetOn f (ball c r ∩ sphere ζ ρ) e).Subsingleton := by
   have hφ0 := arccos_div_two_mul_pos hρ hρr
   have hφπ2 := arccos_div_two_mul_lt_pi_div_two hρ hρr
-  obtain ⟨θ₀, hθ₀, rfl⟩ :=
-    exists_mem_Icc_circleMap_eq_of_mem_closedBall_inter_sphere hζ hρ hρr he
+  obtain ⟨θ₀, hθ₀, rfl⟩ := (closedBall_inter_sphere_eq_circleMap_image_Icc hζ hρ hρr).le he
   rw [ball_inter_sphere_eq_circleMap_image_Ioo hζ hρ hρr]
   exact subsingleton_clusterSetOn_circleMap_image_Ioo isOpen_ball hf ζ (by linarith)
-    (by linarith [Real.pi_pos]) hθ₀ (fun _ hθ => circleMap_mem_ball_of_mem_Ioo hζ hρ hρr hθ)
+    (by linarith [Real.pi_pos]) hθ₀
+    (fun θ hθ => ((ball_inter_sphere_eq_circleMap_image_Ioo hζ hρ hρr).ge ⟨θ, hθ, rfl⟩).1)
     (lintegral_enorm_deriv_circleMap_ne_top hζ hρ hρr hfin)
 
 /-- **A circular crosscut of finite image length has a limit at each point of its closure.** This is
@@ -444,11 +444,11 @@ theorem exists_tendsto_nhdsWithin_ball_inter_sphere (hζ : dist ζ c = r) (hρ :
     ∃ v, Tendsto f (𝓝[ball c r ∩ sphere ζ ρ] e) (𝓝 v) := by
   have hφ0 := arccos_div_two_mul_pos hρ hρr
   have hφπ2 := arccos_div_two_mul_lt_pi_div_two hρ hρr
-  obtain ⟨θ₀, hθ₀, rfl⟩ :=
-    exists_mem_Icc_circleMap_eq_of_mem_closedBall_inter_sphere hζ hρ hρr he
+  obtain ⟨θ₀, hθ₀, rfl⟩ := (closedBall_inter_sphere_eq_circleMap_image_Icc hζ hρ hρr).le he
   rw [ball_inter_sphere_eq_circleMap_image_Ioo hζ hρ hρr]
   exact exists_tendsto_nhdsWithin_circleMap_image_Ioo isOpen_ball hf ζ (by linarith)
-    (by linarith [Real.pi_pos]) hθ₀ (fun _ hθ => circleMap_mem_ball_of_mem_Ioo hζ hρ hρr hθ)
+    (by linarith [Real.pi_pos]) hθ₀
+    (fun θ hθ => ((ball_inter_sphere_eq_circleMap_image_Ioo hζ hρ hρr).ge ⟨θ, hθ, rfl⟩).1)
     (lintegral_enorm_deriv_circleMap_ne_top hζ hρ hρr hfin)
 
 /-- **The end of a circular crosscut of finite image length is a single point.** This is
@@ -463,11 +463,11 @@ theorem exists_clusterSetOn_ball_inter_sphere_eq_singleton (hζ : dist ζ c = r)
     ∃ v, clusterSetOn f (ball c r ∩ sphere ζ ρ) e = {v} := by
   have hφ0 := arccos_div_two_mul_pos hρ hρr
   have hφπ2 := arccos_div_two_mul_lt_pi_div_two hρ hρr
-  obtain ⟨θ₀, hθ₀, rfl⟩ :=
-    exists_mem_Icc_circleMap_eq_of_mem_closedBall_inter_sphere hζ hρ hρr he
+  obtain ⟨θ₀, hθ₀, rfl⟩ := (closedBall_inter_sphere_eq_circleMap_image_Icc hζ hρ hρr).le he
   rw [ball_inter_sphere_eq_circleMap_image_Ioo hζ hρ hρr]
   exact exists_clusterSetOn_circleMap_image_Ioo_eq_singleton isOpen_ball hf ζ (by linarith)
-    (by linarith [Real.pi_pos]) hθ₀ (fun _ hθ => circleMap_mem_ball_of_mem_Ioo hζ hρ hρr hθ)
+    (by linarith [Real.pi_pos]) hθ₀
+    (fun θ hθ => ((ball_inter_sphere_eq_circleMap_image_Ioo hζ hρ hρr).ge ⟨θ, hθ, rfl⟩).1)
     (lintegral_enorm_deriv_circleMap_ne_top hζ hρ hρr hfin)
 
 /-- **The two ends of a circular crosscut of finite image length are two points.** The union of the

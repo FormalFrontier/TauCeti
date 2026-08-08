@@ -42,11 +42,7 @@ with its closure; they do not assert the continuous boundary extension itself.
   from `Real.arccos_pos` and `Real.arccos_lt_pi_div_two`.
 * `TauCeti.ball_inter_sphere_eq_circleMap_image_Ioo` and
   `TauCeti.closedBall_inter_sphere_eq_circleMap_image_Icc` identify the open and closed crosscut
-  arcs. `TauCeti.circleMap_mem_ball_of_mem_Ioo` and
-  `TauCeti.exists_mem_Icc_circleMap_eq_of_mem_closedBall_inter_sphere` are their one-sided
-  readings: the open window lands in the disc, and every point of the closed crosscut carries an
-  angle in the closed window. Those are the two directions in which the arc description is
-  actually spent downstream.
+  arcs.
 * `TauCeti.sphere_inter_sphere_eq_pair_circleMap` identifies their two distinct endpoints.
 * `TauCeti.isPathConnected_ball_inter_sphere` and
   `TauCeti.closure_ball_inter_sphere` give the corresponding topological packaging, and
@@ -181,15 +177,6 @@ theorem ball_inter_sphere_eq_circleMap_image_Ioo (hζ : dist ζ c = r) (hρ : 0 
       ⟨by linarith [hθ.1], by linarith [hθ.2]⟩
     simpa only [mul_comm] using ((div_lt_iff₀ (by positivity)).mp hcos)
 
-/-- **The open arc of angles of a genuine circular crosscut lands in the disc.** This is the half
-of `TauCeti.ball_inter_sphere_eq_circleMap_image_Ioo` that forgets the cutting circle, and it is
-the form in which the arc is fed to statements about a curve in `ball c r`. -/
-theorem circleMap_mem_ball_of_mem_Ioo (hζ : dist ζ c = r) (hρ : 0 < ρ) (hρr : ρ < 2 * r)
-    {θ : ℝ} (hθ : θ ∈ Ioo ((c - ζ).arg - Real.arccos (ρ / (2 * r)))
-      ((c - ζ).arg + Real.arccos (ρ / (2 * r)))) :
-    circleMap ζ ρ θ ∈ ball c r :=
-  ((ball_inter_sphere_eq_circleMap_image_Ioo hζ hρ hρr).ge ⟨θ, hθ, rfl⟩).1
-
 /-- The closure-side companion of
 `TauCeti.ball_inter_sphere_eq_circleMap_image_Ioo`: a genuine circular crosscut together with its
 two endpoints is one closed angular arc. -/
@@ -221,17 +208,6 @@ theorem closedBall_inter_sphere_eq_circleMap_image_Icc (hζ : dist ζ c = r) (h�
     have hcos := (Real.le_cos_iff_mem_Icc hx1.le ht).mpr
       ⟨by linarith [hθ.1], by linarith [hθ.2]⟩
     simpa only [mul_comm] using ((div_le_iff₀ (by positivity)).mp hcos)
-
-/-- **Every point of a genuine circular crosscut, endpoints included, carries an angle in the
-closed window.** This is the one-sided reading of
-`TauCeti.closedBall_inter_sphere_eq_circleMap_image_Icc` companion to
-`TauCeti.circleMap_mem_ball_of_mem_Ioo`, and it is the step by which a statement about a point of
-the closed crosscut is turned into one about its angle. -/
-theorem exists_mem_Icc_circleMap_eq_of_mem_closedBall_inter_sphere (hζ : dist ζ c = r)
-    (hρ : 0 < ρ) (hρr : ρ < 2 * r) {e : ℂ} (he : e ∈ closedBall c r ∩ sphere ζ ρ) :
-    ∃ θ₀ ∈ Icc ((c - ζ).arg - Real.arccos (ρ / (2 * r)))
-      ((c - ζ).arg + Real.arccos (ρ / (2 * r))), circleMap ζ ρ θ₀ = e :=
-  (closedBall_inter_sphere_eq_circleMap_image_Icc hζ hρ hρr).le he
 
 /-! ## The endpoints and topological packaging -/
 
@@ -356,8 +332,7 @@ theorem isPreconnected_ball_inter_sphere_inter_ball (hζ : dist ζ c = r) (hρ :
     (hρr : ρ < 2 * r) {e : ℂ} (he : e ∈ closedBall c r ∩ sphere ζ ρ) (δ : ℝ) :
     IsPreconnected (ball c r ∩ sphere ζ ρ ∩ ball e δ) := by
   have hφπ2 := arccos_div_two_mul_lt_pi_div_two hρ hρr
-  obtain ⟨θ₀, hθ₀, rfl⟩ :=
-    exists_mem_Icc_circleMap_eq_of_mem_closedBall_inter_sphere hζ hρ hρr he
+  obtain ⟨θ₀, hθ₀, rfl⟩ := (closedBall_inter_sphere_eq_circleMap_image_Icc hζ hρ hρr).le he
   rw [ball_inter_sphere_eq_circleMap_image_Ioo hζ hρ hρr, ← image_inter_preimage]
   refine IsPreconnected.image ?_ _ (continuous_circleMap ζ ρ).continuousOn
   have hpre : circleMap ζ ρ ⁻¹' ball (circleMap ζ ρ θ₀) δ
