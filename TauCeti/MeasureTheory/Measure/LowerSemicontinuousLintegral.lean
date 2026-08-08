@@ -29,7 +29,9 @@ the value `∞` is allowed on both sides.
 * `TauCeti.le_liminf_lintegral_of_tendsto`: the `liminf` form along a weakly convergent family.
 * `TauCeti.exists_isMinOn_lintegral`: a nonempty compact set of probability measures contains one
   minimising the integral, with no finiteness assumption on the minimum value.
-* `TauCeti.isClosed_setOf_lintegral_le`: the sublevel sets of the pairing are closed.
+* `TauCeti.isClosed_setOfPred_lintegral_le_finiteMeasure` and
+  `TauCeti.isClosed_setOfPred_lintegral_le_probabilityMeasure`: the sublevel sets of the pairing
+  are closed.
 
 ## Implementation notes
 
@@ -79,11 +81,11 @@ theorem lowerSemicontinuous_lintegral_finiteMeasure (hf : LowerSemicontinuous f)
 probability measure, for the topology of weak convergence. -/
 theorem lowerSemicontinuous_lintegral_probabilityMeasure (hf : LowerSemicontinuous f) :
     LowerSemicontinuous fun μ : ProbabilityMeasure Ω ↦ ∫⁻ x, f x ∂(μ : Measure Ω) := by
-  change LowerSemicontinuous
-    ((fun μ : FiniteMeasure Ω ↦ ∫⁻ x, f x ∂(μ : Measure Ω)) ∘
-      ProbabilityMeasure.toFiniteMeasure)
-  exact (lowerSemicontinuous_lintegral_finiteMeasure hf).comp
-    ProbabilityMeasure.toFiniteMeasure_continuous
+  convert (lowerSemicontinuous_lintegral_finiteMeasure hf).comp
+    ProbabilityMeasure.toFiniteMeasure_continuous using 1
+  funext μ
+  simp only [Function.comp_apply,
+    ProbabilityMeasure.toMeasure_comp_toFiniteMeasure_eq_toMeasure]
 
 /-- The `liminf` form of lower semicontinuity: along a weakly convergent family of probability
 measures, the integral of a lower semicontinuous integrand can only drop in the limit. -/
@@ -103,8 +105,16 @@ theorem le_liminf_lintegral_of_tendsto_finiteMeasure {γ : Type*} {L : Filter γ
   simpa [Function.comp_def] using h.liminf_le_liminf_comp
     (u := fun ν : FiniteMeasure Ω ↦ ∫⁻ x, f x ∂(ν : Measure Ω))
 
-/-- Sublevel sets of the pairing against a lower semicontinuous integrand are weakly closed. -/
-theorem isClosed_setOf_lintegral_le (hf : LowerSemicontinuous f) (a : ℝ≥0∞) :
+/-- Sublevel sets of the finite-measure pairing against a lower semicontinuous integrand are
+weakly closed. -/
+theorem isClosed_setOfPred_lintegral_le_finiteMeasure (hf : LowerSemicontinuous f) (a : ℝ≥0∞) :
+    IsClosed {μ : FiniteMeasure Ω | ∫⁻ x, f x ∂(μ : Measure Ω) ≤ a} :=
+  (lowerSemicontinuous_lintegral_finiteMeasure hf).isClosed_preimage a
+
+/-- Sublevel sets of the probability-measure pairing against a lower semicontinuous integrand are
+weakly closed. -/
+theorem isClosed_setOfPred_lintegral_le_probabilityMeasure (hf : LowerSemicontinuous f)
+    (a : ℝ≥0∞) :
     IsClosed {μ : ProbabilityMeasure Ω | ∫⁻ x, f x ∂(μ : Measure Ω) ≤ a} :=
   (lowerSemicontinuous_lintegral_probabilityMeasure hf).isClosed_preimage a
 
