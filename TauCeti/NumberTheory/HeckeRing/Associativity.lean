@@ -384,43 +384,12 @@ open DoubleCoset
 variable {G : Type*} [Group G] {Δ : Submonoid G} {H₁ H₂ H₃ H₄ : Subgroup G}
   (R : Type*) [Semiring R]
 
-/-- `Finsupp.sum_smul_index`, restated for the wrapper type `HeckeCosetModule Δ H₁ H₂ R`. -/
-private lemma sum_smul_index_T {N : Type*} [AddCommMonoid N] (a : R)
-    (f : HeckeCosetModule Δ H₁ H₂ R) (F : HeckeCoset Δ H₁ H₂ → R → N) (h0 : ∀ D, F D 0 = 0) :
-    (a • f).sum F = f.sum fun D c ↦ F D (a * c) :=
-  Finsupp.sum_smul_index h0
-
-/-- `Finsupp.smul_apply`, restated for the wrapper type `HeckeCosetModule Δ H₁ H₂ R`. -/
-private lemma smul_apply_T (a : R) (f : HeckeCosetModule Δ H₁ H₂ R) (D : HeckeCoset Δ H₁ H₂) :
-    (a • f) D = a * f D :=
-  rfl
-
-/-- Unfolding `Finsupp.sum` with the wrapper-type coercion. -/
-private lemma sum_eq_sum_T {N : Type*} [AddCommMonoid N] (f : HeckeCosetModule Δ H₁ H₂ R)
-    (F : HeckeCoset Δ H₁ H₂ → R → N) : f.sum F = ∑ D ∈ f.support, F D (f D) :=
-  rfl
-
-/-- `Finsupp.notMem_support_iff`, restated for the wrapper type `HeckeCosetModule Δ H₁ H₂ R`. -/
-private lemma apply_eq_zero_of_notMem_support_T (f : HeckeCosetModule Δ H₁ H₂ R)
-    (D : HeckeCoset Δ H₁ H₂) (h : D ∉ f.support) : f D = 0 :=
-  Finsupp.notMem_support_iff.mp h
-
-/-- `Finsupp.zero_apply`, restated for the wrapper type `HeckeCosetModule Δ H₁ H₂ R`. -/
-private lemma zero_apply_T (D : HeckeCoset Δ H₁ H₂) : (0 : HeckeCosetModule Δ H₁ H₂ R) D = 0 :=
-  rfl
-
-/-- `Finsupp.sum_apply`, restated for the wrapper type `HeckeCosetModule Δ H₁ H₂ R`. -/
-private lemma sum_apply_T {H₁ H₂ H₃ H₄ : Subgroup G} (f : HeckeCosetModule Δ H₁ H₂ R)
-    (F : HeckeCoset Δ H₁ H₂ → R → HeckeCosetModule Δ H₃ H₄ R) (D : HeckeCoset Δ H₃ H₄) :
-    (f.sum F) D = f.sum fun E c ↦ F E c D :=
-  Finsupp.sum_apply
-
 /-- The convolution product commutes with scalar multiplication on the left factor. (Note
 that the corresponding statement for the right factor fails over a noncommutative `R`.) -/
 lemma smul_mul [IsHeckeTriple Δ H₁ H₂] [IsHeckeTriple Δ H₂ H₃] (a : R)
     (f : HeckeCosetModule Δ H₁ H₂ R) (g : HeckeCosetModule Δ H₂ H₃ R) :
     mul R (a • f) g = a • mul R f g := by
-  rw [mul_eq_sum, mul_eq_sum, sum_smul_index_T R a f _ fun D₁ ↦ by
+  rw [mul_eq_sum, mul_eq_sum, sum_smul_index a f _ fun D₁ ↦ by
     simp only [zero_smul]; exact Finsupp.sum_fun_zero (f := g)]
   refine Eq.trans ?_ Finsupp.smul_sum.symm
   refine Finsupp.sum_congr fun D₁ c ↦ Eq.trans ?_ Finsupp.smul_sum.symm
@@ -465,17 +434,17 @@ theorem mul_assoc [IsHeckeTriple Δ H₁ H₂] [IsHeckeTriple Δ H₂ H₃]
       | hsingle D₃ b₃ =>
         rw [mul_single_single R D₁ D₂ b₁ b₂, smul_mul, smul_mul, mul_single,
           mul_single_single R D₂ D₃ b₂ b₃, single_mul,
-          sum_smul_index_T R b₂ _ _ fun F ↦ by simp,
-          sum_smul_index_T R b₃ _ _ fun F ↦ by simp]
+          sum_smul_index b₂ _ _ fun F ↦ by simp,
+          sum_smul_index b₃ _ _ fun F ↦ by simp]
         ext D
-        rw [smul_apply_T, smul_apply_T, sum_apply_T, sum_apply_T, sum_eq_sum_T, sum_eq_sum_T,
+        rw [smul_apply, smul_apply, sum_apply, sum_apply, sum_def, sum_def,
           Finset.sum_subset (support_structureConstants_subset R D₁.rep D₂.rep)
             (fun E _ hE ↦ by
-              simp [apply_eq_zero_of_notMem_support_T _ _ _ hE, zero_apply_T]),
+              simp [notMem_support_iff.mp hE, zero_apply]),
           Finset.sum_subset (support_structureConstants_subset R D₂.rep D₃.rep)
             (fun F _ hF ↦ by
-              simp [apply_eq_zero_of_notMem_support_T _ _ _ hF, zero_apply_T])]
-        simp only [smul_apply_T, structureConstants_apply]
+              simp [notMem_support_iff.mp hF, zero_apply])]
+        simp only [smul_apply, structureConstants_apply]
         have hL : ∀ E : HeckeCoset Δ H₁ H₃,
             ((multiplicity H₁ H₂ H₃ (D₁.rep : G) (D₂.rep : G) (E.rep : G) : R) *
               (b₃ * (multiplicity H₁ H₃ H₄ (E.rep : G) (D₃.rep : G) (D.rep : G) : R))) =

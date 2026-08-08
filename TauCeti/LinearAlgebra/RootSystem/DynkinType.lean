@@ -402,6 +402,14 @@ def HasCartanType (b : P.Base) (t : DynkinType) : Prop :=
 
 variable {P}
 
+/-- Having Cartan type `t`, unfolded to the relabelling it asserts to exist. The body of
+`TauCeti.HasCartanType` is deliberately not exposed, so this is the interface through which
+consumers in other modules build and destructure it. -/
+lemma hasCartanType_iff (b : P.Base) (t : DynkinType) :
+    HasCartanType P b t ↔
+      ∃ e : b.support ≃ Fin t.rank, ∀ i j, b.cartanMatrix i j = t.cartanMatrix (e i) (e j) :=
+  (Iff.rfl)
+
 /-- Having Cartan type `t`, expressed as a reindexing of matrices rather than entrywise. -/
 lemma hasCartanType_iff_reindex (b : P.Base) (t : DynkinType) :
     HasCartanType P b t ↔

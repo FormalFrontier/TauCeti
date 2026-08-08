@@ -230,6 +230,43 @@ private theorem exists_invariant_notMem_of_forall_lie_mem {d : ℕ}
     rw [← LieSubmodule.coe_bracket, hp]
     rfl
 
+omit [CharZero K] [IsAlgClosed K] in
+/-- **The reducible step.** If the proper submodule `N` admits a Lie submodule `W` that is neither
+`⊥` nor `N`, then `M` has an invariant vector outside `N`.
+
+Neither algebraic closure nor characteristic zero is needed here; those enter only through the
+Casimir argument on the irreducible branch. -/
+private theorem exists_invariant_notMem_of_ne_bot_of_ne_of_le {d : ℕ}
+    (ih : ∀ {M' : Type v} [AddCommGroup M'] [Module K M'] [LieRingModule L M'] [LieModule K L M'],
+      ∀ [FiniteDimensional K M'] (N' : LieSubmodule K L M'), finrank K M' ≤ d → N' ≠ ⊤ →
+        (∀ (x : L) (m : M'), ⁅x, m⁆ ∈ N') → ∃ v : M', v ∉ N' ∧ ∀ x : L, ⁅x, v⁆ = 0)
+    {M : Type v} [AddCommGroup M] [Module K M] [LieRingModule L M] [LieModule K L M]
+    [FiniteDimensional K M] {N W : LieSubmodule K L M} (hrank : finrank K M ≤ d + 1)
+    (hN : N ≠ ⊤) (htriv : ∀ (x : L) (m : M), ⁅x, m⁆ ∈ N) (hWbot : W ≠ ⊥) (hWN : W ≠ N)
+    (hWle : W ≤ N) : ∃ v : M, v ∉ N ∧ ∀ x : L, ⁅x, v⁆ = 0 := by
+  -- The inductive hypothesis is used twice: on the quotient `M ⧸ W`, which is strictly smaller
+  -- because `W` is nonzero, to get a vector outside `N` whose brackets land in `W`; and then,
+  -- through `exists_invariant_notMem_of_forall_lie_mem`, on `W + K v₀`.
+  have hNlt : finrank K N < finrank K M := Submodule.finrank_lt (fun hc ↦ hN
+    ((LieSubmodule.toSubmodule_inj _ _).1 (by rw [hc, LieSubmodule.top_toSubmodule])))
+  have hWnt : Nontrivial W := (LieSubmodule.nontrivial_iff_ne_bot K L _).2 hWbot
+  have hWpos : 0 < finrank K W := finrank_pos_iff.2 hWnt
+  have hWsub : (W : Submodule K M) < (N : Submodule K M) :=
+    lt_of_le_of_ne ((LieSubmodule.toSubmodule_le_toSubmodule _ _).2 hWle)
+      (fun hc ↦ hWN ((LieSubmodule.toSubmodule_inj _ _).1 hc))
+  have hWlt : finrank K W < finrank K N := Submodule.finrank_lt_finrank_of_lt hWsub
+  have hquot : finrank K (M ⧸ W) ≤ d := by
+    -- There is no cross-type conversion here to justify. Mathlib *defines* the Lie-submodule
+    -- quotient to be the submodule quotient, `HasQuotient M (LieSubmodule R L M)` being
+    -- `⟨fun N => M ⧸ N.toSubmodule⟩` in `Mathlib/Algebra/Lie/Quotient.lean`, and `↥W` carries the
+    -- submodule's own carrier. So the submodule rank identity *is* the identity for `M ⧸ W`;
+    -- ascribing the type is what states it in that form.
+    have hadd : finrank K (M ⧸ W) + finrank K W = finrank K M :=
+      Submodule.finrank_quotient_add_finrank (W : Submodule K M)
+    omega
+  obtain ⟨v₀, hv₀N, hv₀W⟩ := exists_notMem_forall_lie_mem_of_le ih hquot hN htriv hWle
+  exact exists_invariant_notMem_of_forall_lie_mem ih (by omega) hWle hv₀N hv₀W
+
 /-- The inductive form of `TauCeti.exists_invariant_notMem`, with the dimension of the ambient
 module bounded by an explicit `d`, since the induction changes the module. -/
 private theorem exists_invariant_notMem_aux (htop : t.toLieSubalgebra K = ⊤) (d : ℕ) :
@@ -257,24 +294,10 @@ private theorem exists_invariant_notMem_aux (htop : t.toLieSubalgebra K = ⊤) (
       rintro rfl
       obtain ⟨x, m, hm⟩ := hact
       exact hm (by simpa using htriv x m)
-    have hNlt : finrank K N < finrank K M := Submodule.finrank_lt (fun hc ↦ hN
-      ((LieSubmodule.toSubmodule_inj _ _).1 (by rw [hc, LieSubmodule.top_toSubmodule])))
     by_cases hred : ∃ W : LieSubmodule K L M, W ≠ ⊥ ∧ W ≠ N ∧ W ≤ N
     · -- `N` is reducible: pass to `M ⧸ W`, then to the submodule `W + K v₀`.
       obtain ⟨W, hWbot, hWN, hWle⟩ := hred
-      have hWnt : Nontrivial W := (LieSubmodule.nontrivial_iff_ne_bot K L _).2 hWbot
-      have hWpos : 0 < finrank K W := finrank_pos_iff.2 hWnt
-      have hWsub : (W : Submodule K M) < (N : Submodule K M) :=
-        lt_of_le_of_ne ((LieSubmodule.toSubmodule_le_toSubmodule _ _).2 hWle)
-          (fun hc ↦ hWN ((LieSubmodule.toSubmodule_inj _ _).1 hc))
-      have hWlt : finrank K W < finrank K N := Submodule.finrank_lt_finrank_of_lt hWsub
-      have hquot : finrank K (M ⧸ W) ≤ d := by
-        have hadd := Submodule.finrank_quotient_add_finrank (W : Submodule K M)
-        have hq : finrank K (M ⧸ (W : Submodule K M)) = finrank K (M ⧸ W) := rfl
-        have hw : finrank K ((W : Submodule K M) : Type _) = finrank K W := rfl
-        omega
-      obtain ⟨v₀, hv₀N, hv₀W⟩ := exists_notMem_forall_lie_mem_of_le ih hquot hN htriv hWle
-      exact exists_invariant_notMem_of_forall_lie_mem ih (by omega) hWle hv₀N hv₀W
+      exact exists_invariant_notMem_of_ne_bot_of_ne_of_le ih hrank hN htriv hWbot hWN hWle
     · -- `N` is irreducible: the Casimir operator supplies the invariant vector.
       push Not at hred
       exact exists_invariant_notMem_of_isIrreducible htop hN htriv hact

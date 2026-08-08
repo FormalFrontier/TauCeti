@@ -66,12 +66,12 @@ theorem coe_equivExteriorFiltration_symm_apply (Q : QuadraticForm R M) [Invertib
 
 private theorem equivExteriorFiltration_map_previous (Q : QuadraticForm R M) [Invertible (2 : R)]
     (k : ℕ) :
-    (Submodule.comap (filtration Q (k + 1)).subtype (filtration Q k)).map
+    (filtrationPreviousRestricted Q (k + 1)).map
         (equivExteriorFiltration Q (k + 1)).toLinearMap =
-      Submodule.comap (filtration (0 : QuadraticForm R M) (k + 1)).subtype
-        (filtration (0 : QuadraticForm R M) k) := by
+      filtrationPreviousRestricted (0 : QuadraticForm R M) (k + 1) := by
   ext x
-  rw [Submodule.mem_map_equiv]
+  rw [Submodule.mem_map_equiv, mem_filtrationPreviousRestricted_iff,
+    mem_filtrationPreviousRestricted_iff, filtrationPrevious_succ, filtrationPrevious_succ]
   -- The two submodules are over filtration subtypes, so expose their ambient carrier predicates.
   change (changeFormEquiv changeForm.associated_neg_proof).symm
       (x : CliffordAlgebra (0 : QuadraticForm R M)) ∈ filtration Q k ↔
@@ -84,8 +84,7 @@ private noncomputable def equivExteriorFiltrationQuotient (Q : QuadraticForm R M
     FiltrationGradedPiece Q (k + 1) ≃ₗ[R]
       FiltrationGradedPiece (0 : QuadraticForm R M) (k + 1) :=
   Submodule.Quotient.equiv _ _ (equivExteriorFiltration Q (k + 1))
-    (by
-      simpa only [filtrationPrevious_succ] using equivExteriorFiltration_map_previous Q k)
+    (equivExteriorFiltration_map_previous Q k)
 
 /-- The successive degree quotient of a Clifford algebra is the corresponding exterior power. -/
 noncomputable def filtrationGradedEquiv (Q : QuadraticForm R M) [Invertible (2 : R)] (k : ℕ) :

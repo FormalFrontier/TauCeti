@@ -7,6 +7,7 @@ module
 
 public import TauCeti.Analysis.InnerProductSpace.PolynomialCompleteness
 public import TauCeti.Analysis.SpecialFunctions.Hermite.Function.Orthonormal
+import TauCeti.Probability.Distributions.Gaussian.PolynomialMemLp
 
 /-!
 # The Hermite functions as a Hilbert basis of `L²(ℝ)`
@@ -17,9 +18,6 @@ the dilated Hermite polynomials `Hₙ(x√2)`, whose `√w`-envelope is exactly 
 
 ## Main statements
 
-* `TauCeti.integrable_exp_mul_abs_gaussianWeight` — the Gaussian weight has every exponential
-  moment finite, the hypothesis the completeness theorem
-  `TauCeti.orthogonal_span_range_bareNormalizedLp_eq_bot` needs.
 * `TauCeti.degree_hermiteDilated` — `Hₙ(x√2)` has degree exactly `n`.
 * `TauCeti.integral_hermiteDilated_mul_hermiteDilated_mul_gaussianWeight` — the orthogonality
   relation with normalization `cₙ = n!√π`, obtained from the Hermite function orthonormality
@@ -47,27 +45,12 @@ theorem degree_hermiteDilated (n : ℕ) : (hermiteDilated n).degree = (n : WithB
   rw [hermiteDilated_def, Polynomial.degree_comp (by rw [hq]; norm_num), hq, degree_hermiteℝ,
     mul_one]
 
-/-- **Finite exponential moments of the Gaussian weight.** For every rate `a`, `e^{a|x|}` is
-integrable against `e^{-x²}·dx`, because `a|x| ≤ (a² + x²)/2` gives the domination
-`e^{a|x|}e^{-x²} ≤ e^{a²/2}·e^{-x²/2}`. -/
-theorem integrable_exp_mul_abs_gaussianWeight (a : ℝ) :
-    Integrable (fun x : ℝ => Real.exp (a * |x|))
-      (volume.withDensity fun x => ENNReal.ofReal (Real.exp (-x ^ 2))) := by
-  have hgauss : Integrable (fun x : ℝ => Real.exp (a ^ 2 / 2) * Real.exp (-(1 / 2) * x ^ 2)) :=
-    (integrable_exp_neg_mul_sq (by norm_num : (0:ℝ) < 1 / 2)).const_mul _
-  have hcore : Integrable (fun x : ℝ => Real.exp (a * |x|) * Real.exp (-x ^ 2)) := by
-    refine hgauss.mono' (by fun_prop) (Filter.Eventually.of_forall fun x => ?_)
-    rw [← Real.exp_add, Real.norm_eq_abs, abs_of_pos (Real.exp_pos _), ← Real.exp_add]
-    refine Real.exp_le_exp.2 ?_
-    nlinarith [sq_nonneg (|x| - a), sq_abs x, abs_nonneg x]
-  rw [integrable_withDensity_iff_integrable_smul₀' (by fun_prop)
-    (Filter.Eventually.of_forall fun _ => ENNReal.ofReal_lt_top)]
-  have hfun : (fun x : ℝ => (ENNReal.ofReal (Real.exp (-x ^ 2))).toReal • Real.exp (a * |x|))
-      = fun x : ℝ => Real.exp (a * |x|) * Real.exp (-x ^ 2) := by
-    funext x
-    rw [smul_eq_mul, ENNReal.toReal_ofReal (Real.exp_pos _).le, mul_comm]
-  rw [hfun]
-  exact hcore
+/-- The exponential-moment hypothesis of the completeness theorem, at the width-`1` Gaussian
+weight `e^{-x²}` this file works with. -/
+private theorem exp_moment_gaussianWeight :
+    ∃ a : ℝ, 0 < a ∧ Integrable (fun x : ℝ => Real.exp (a * |x|))
+      (volume.withDensity fun x => ENNReal.ofReal (Real.exp (-x ^ 2))) :=
+  ⟨1, one_pos, by simpa using integrable_exp_mul_abs_gaussianWeight one_pos 1⟩
 
 /-- The Hermite normalization `cₙ = n!·√π` is positive. -/
 theorem hermiteNormalization_pos (n : ℕ) : (0 : ℝ) < (n.factorial : ℝ) * Real.sqrt Real.pi := by
@@ -113,7 +96,7 @@ private theorem memLp_hermiteDilated_normalized (n : ℕ) :
     MemLp (fun x : ℝ => (algebraMap ℝ 𝕜)
         ((hermiteDilated n).eval x / Real.sqrt ((n.factorial : ℝ) * Real.sqrt Real.pi))) 2
       (volume.withDensity fun x => ENNReal.ofReal (Real.exp (-x ^ 2))) :=
-  memLp_two_bareNormalized (𝕜 := 𝕜) ⟨1, one_pos, integrable_exp_mul_abs_gaussianWeight 1⟩
+  memLp_two_bareNormalized (𝕜 := 𝕜) exp_moment_gaussianWeight
     hermiteDilated (fun n => (n.factorial : ℝ) * Real.sqrt Real.pi) n
 
 /-- **Roadmap A3: the Hermite functions are a Hilbert basis of `L²(ℝ)`.** Orthonormality comes from
@@ -131,7 +114,7 @@ noncomputable def hermiteHilbertBasis : HilbertBasis ℕ 𝕜 (Lp 𝕜 2 (volume
     (orthogonal_span_range_bareNormalizedLp_eq_bot (𝕜 := 𝕜) hermiteDilated
       (fun x => Real.exp (-x ^ 2))
       (fun n => (n.factorial : ℝ) * Real.sqrt Real.pi) degree_hermiteDilated
-      hermiteNormalization_pos ⟨1, one_pos, integrable_exp_mul_abs_gaussianWeight 1⟩
+      hermiteNormalization_pos exp_moment_gaussianWeight
       (memLp_hermiteDilated_normalized 𝕜))
 
 /-- **The basis vectors are the Hermite functions.** Without this the construction would only
