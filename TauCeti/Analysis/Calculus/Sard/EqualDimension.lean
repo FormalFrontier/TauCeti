@@ -120,16 +120,7 @@ theorem Differentiable.dense_compl_image_criticalPoints
   let t : Set F := f '' {x | ¬ Surjective (fderiv ℝ f x)}
   have ht : (addHaar : Measure F) t = 0 :=
     Differentiable.addHaar_image_criticalPoints_eq_zero (ν := addHaar) hf hdim
-  refine dense_iff_inter_open.mpr fun U hU hUne ↦ ?_
-  by_contra h
-  have hUt : U ⊆ t := by
-    intro y hy
-    by_contra hyt
-    exact h ⟨y, hy, hyt⟩
-  have : (addHaar : Measure F) U = 0 := by
-    apply le_antisymm
-    · exact (measure_mono hUt).trans_eq ht
-    · exact bot_le
-  exact (hU.measure_pos (addHaar : Measure F) hUne).ne' this
+  have htc : ∀ᵐ x ∂(addHaar : Measure F), x ∈ tᶜ := ae_iff.mpr (by simpa using ht)
+  simpa only [ofPred_mem_eq, t] using Measure.dense_of_ae htc
 
 end TauCeti
