@@ -17,20 +17,28 @@ manifolds. A smooth almost complex structure is a smooth section of the endomorp
 the tangent bundle whose square is fiberwise minus the identity. Its value at each point is the
 existing pointwise almost complex structure on that tangent space.
 
-The smoothness is part of the structure itself, while relations to a symplectic form such as
-tameness and compatibility remain separate hypotheses. This is the manifold-level definition
-needed in Lane F2.1 of the analytic Heegaard Floer roadmap before manifold-valued
-`J`-holomorphic maps can be stated.
+The smoothness is part of the structure itself, while relations to a symplectic form are not
+fields of it. Tameness and compatibility are currently available only pointwise, as
+`TauCeti.SymplecticForm.Tames` and `TauCeti.SymplecticForm.Compatible` on a real module, so they
+can only be stated for the tangent-fiber structures produced by `almostComplexStructureAt`. This
+is the manifold-level definition needed in Lane F2.1 of the analytic Heegaard Floer roadmap
+before manifold-valued `J`-holomorphic maps can be stated.
 
 ## Main declarations
 
 * `TauCeti.SmoothAlmostComplexStructure`: a smooth tangent-bundle endomorphism squaring to `-1`.
-* `TauCeti.SmoothAlmostComplexStructure.atPoint`: the pointwise almost complex structure on a
-  tangent space.
-* `TauCeti.SmoothAlmostComplexStructure.contMDiff_apply`: applying the structure to a smooth
-  vector field gives a smooth vector field.
-* `TauCeti.AlmostComplexStructure.toSmoothModelSpace`: a constant pointwise structure gives a
-  smooth almost complex structure on its model vector space.
+* `TauCeti.SmoothAlmostComplexStructure.almostComplexStructureAt`: the pointwise almost complex
+  structure on a tangent space.
+* `TauCeti.SmoothAlmostComplexStructure.contMDiff_apply`: applying the structure to a `C^n` vector
+  field along a `C^n` map gives a `C^n` vector field along that map.
+* `TauCeti.SmoothAlmostComplexStructure.neg`: the negative of a smooth almost complex structure.
+* `TauCeti.SmoothAlmostComplexStructure.const`: a continuous endomorphism of a real normed space
+  squaring to `-1` gives the constant smooth almost complex structure on that model manifold.
+* `TauCeti.AlmostComplexStructure.constSmooth`: a pointwise almost complex structure on a
+  finite-dimensional real normed space gives the constant smooth almost complex structure on that
+  model manifold.
+* `TauCeti.SmoothAlmostComplexStructure.product`: the standard smooth almost complex structure on
+  `V × V`, sending `(v, w)` to `(-w, v)`.
 
 The definition follows McDuff--Salamon, *J-holomorphic Curves and Symplectic Topology*,
 Section 2.2.
@@ -86,7 +94,7 @@ instance : CoeFun (SmoothAlmostComplexStructure I M) fun _ =>
 
 /-- The value of a smooth almost complex structure at a point, as the existing pointwise
 `AlmostComplexStructure` on that tangent space. -/
-def atPoint (J : SmoothAlmostComplexStructure I M) (x : M) :
+def almostComplexStructureAt (J : SmoothAlmostComplexStructure I M) (x : M) :
     AlmostComplexStructure (TangentSpace I x) where
   toLinearMap := (J.toEndomorphism x).toLinearMap
   square_neg := by
@@ -96,30 +104,31 @@ def atPoint (J : SmoothAlmostComplexStructure I M) (x : M) :
     simpa using h
 
 @[simp]
-lemma atPoint_toLinearMap (J : SmoothAlmostComplexStructure I M) (x : M) :
-    (J.atPoint x).toLinearMap = (J.toEndomorphism x).toLinearMap :=
+lemma almostComplexStructureAt_toLinearMap (J : SmoothAlmostComplexStructure I M) (x : M) :
+    (J.almostComplexStructureAt x).toLinearMap = (J.toEndomorphism x).toLinearMap :=
   (rfl)
 
 /-- Evaluating the pointwise almost complex structure agrees with evaluating the smooth one. -/
 -- This is not a `simp` lemma: `simp` already rewrites the left-hand side through
--- `atPoint_toLinearMap`.
-lemma atPoint_apply (J : SmoothAlmostComplexStructure I M) (x : M) (v : TangentSpace I x) :
-    J.atPoint x v = J x v :=
+-- `almostComplexStructureAt_toLinearMap`.
+lemma almostComplexStructureAt_apply (J : SmoothAlmostComplexStructure I M) (x : M)
+    (v : TangentSpace I x) :
+    J.almostComplexStructureAt x v = J x v :=
   (rfl)
 
 /-- Applying a smooth almost complex structure twice gives the negative tangent vector. -/
 @[simp]
 lemma apply_apply (J : SmoothAlmostComplexStructure I M) (x : M) (v : TangentSpace I x) :
     J x (J x v) = -v :=
-  (J.atPoint x).apply_apply v
+  (J.almostComplexStructureAt x).apply_apply v
 
 /-- A smooth almost complex structure is fiberwise injective. -/
 lemma injective (J : SmoothAlmostComplexStructure I M) (x : M) : Function.Injective (J x) :=
-  (J.atPoint x).injective
+  (J.almostComplexStructureAt x).injective
 
 /-- A smooth almost complex structure is fiberwise surjective. -/
 lemma surjective (J : SmoothAlmostComplexStructure I M) (x : M) : Function.Surjective (J x) :=
-  (J.atPoint x).surjective
+  (J.almostComplexStructureAt x).surjective
 
 /-- Two smooth almost complex structures agreeing on every tangent vector are equal. -/
 @[ext]
@@ -128,19 +137,21 @@ lemma ext (h : ∀ (x : M) (v : TangentSpace I x), J x v = K x v) : J = K := by
   ext x v
   exact h x v
 
-/-- The underlying endomorphism field of a smooth almost complex structure is smooth. -/
-lemma contMDiff_toEndomorphism (J : SmoothAlmostComplexStructure I M) :
-    ContMDiff I (I.prod (modelWithCornersSelf ℝ (E →L[ℝ] E))) ∞
-      (fun x ↦ TotalSpace.mk' (E →L[ℝ] E) x (J.toEndomorphism x)) :=
-  J.toEndomorphism.contMDiff
+section ContMDiffApply
 
-/-- Applying a smooth almost complex structure to a smooth vector field gives a smooth vector
-field. -/
-lemma contMDiff_apply (J : SmoothAlmostComplexStructure I M)
-    {V : ∀ x : M, TangentSpace I x}
-    (hV : ContMDiff I I.tangent ∞ (fun x ↦ TotalSpace.mk' E x (V x))) :
-    ContMDiff I I.tangent ∞ (fun x ↦ TotalSpace.mk' E x (J x (V x))) :=
-  J.contMDiff_toEndomorphism.clm_bundle_apply hV
+variable {E' H' N : Type*} [NormedAddCommGroup E'] [NormedSpace ℝ E'] [TopologicalSpace H']
+  {I' : ModelWithCorners ℝ E' H'} [TopologicalSpace N] [ChartedSpace H' N]
+
+/-- Applying a smooth almost complex structure along a `C^n` map `b` to a `C^n` vector field along
+`b` gives a `C^n` vector field along `b`. Taking `b = id` this says that `J` preserves `C^n`
+vector fields on `M`. -/
+lemma contMDiff_apply {n : ℕ∞ω} [ENat.LEInfty n] (J : SmoothAlmostComplexStructure I M)
+    {b : N → M} (hb : ContMDiff I' I n b) {V : ∀ y : N, TangentSpace I (b y)}
+    (hV : ContMDiff I' I.tangent n (fun y ↦ TotalSpace.mk' E (b y) (V y))) :
+    ContMDiff I' I.tangent n (fun y ↦ TotalSpace.mk' E (b y) (J (b y) (V y))) :=
+  ((J.toEndomorphism.contMDiff.of_le ENat.LEInfty.out).comp hb).clm_bundle_apply hV
+
+end ContMDiffApply
 
 /-- Negating a smooth almost complex structure gives another smooth almost complex structure. -/
 def neg (J : SmoothAlmostComplexStructure I M) : SmoothAlmostComplexStructure I M where
@@ -170,9 +181,17 @@ lemma neg_neg (J : SmoothAlmostComplexStructure I M) : -(-J) = J := by
   ext x v
   simp
 
+/-- The pointwise structure of a negated smooth almost complex structure is the negation of the
+pointwise structure. -/
+@[simp]
+lemma neg_almostComplexStructureAt (J : SmoothAlmostComplexStructure I M) (x : M) :
+    (-J).almostComplexStructureAt x = -J.almostComplexStructureAt x := by
+  ext v
+  simp
+
 /-- A continuous endomorphism of a normed space squaring to `-1` defines a constant smooth almost
 complex structure on the corresponding model manifold. -/
-private def constantModelSpace {V : Type*} [NormedAddCommGroup V] [NormedSpace ℝ V]
+def const {V : Type*} [NormedAddCommGroup V] [NormedSpace ℝ V]
     (Jc : V →L[ℝ] V) (hJc : ∀ v, Jc (Jc v) = -v) :
     SmoothAlmostComplexStructure (modelWithCornersSelf ℝ V) V where
   toEndomorphism :=
@@ -185,14 +204,17 @@ private def constantModelSpace {V : Type*} [NormedAddCommGroup V] [NormedSpace �
   square_neg := by
     intro x
     ext v
-    -- For the self model with identity corners, `TangentSpace` reduces definitionally to `V`;
-    -- Mathlib has no separate conversion lemma for this identification.
-    change Jc (Jc v) = -v
+    -- After the composition and the negated identity are unfolded, the goal is `hJc v`: the
+    -- additive group instance on `TangentSpace 𝓘(ℝ, V) x` is the one of `V` itself.
+    simp only [ContinuousLinearMap.coe_comp, Function.comp_apply, _root_.neg_apply,
+      ContinuousLinearMap.coe_id', id_eq]
     exact hJc v
 
-private lemma constantModelSpace_apply {V : Type*} [NormedAddCommGroup V] [NormedSpace ℝ V]
+/-- The constant smooth almost complex structure of `Jc` evaluates to `Jc`. -/
+@[simp]
+lemma const_apply {V : Type*} [NormedAddCommGroup V] [NormedSpace ℝ V]
     (Jc : V →L[ℝ] V) (hJc : ∀ v, Jc (Jc v) = -v) (x v : V) :
-    constantModelSpace Jc hJc x v = Jc v :=
+    const Jc hJc x v = Jc v :=
   (rfl)
 
 end SmoothAlmostComplexStructure
@@ -203,21 +225,21 @@ variable {V : Type*} [NormedAddCommGroup V] [NormedSpace ℝ V] [FiniteDimension
 
 /-- A pointwise almost complex structure on a finite-dimensional normed vector space defines a
 constant smooth almost complex structure on the corresponding model manifold. -/
-def toSmoothModelSpace (J : AlmostComplexStructure V) :
+def constSmooth (J : AlmostComplexStructure V) :
     SmoothAlmostComplexStructure (modelWithCornersSelf ℝ V) V :=
-  SmoothAlmostComplexStructure.constantModelSpace (LinearMap.toContinuousLinearMap J.toLinearMap)
+  SmoothAlmostComplexStructure.const (LinearMap.toContinuousLinearMap J.toLinearMap)
     J.apply_apply
 
 @[simp]
-lemma toSmoothModelSpace_apply (J : AlmostComplexStructure V) (x v : V) :
-    J.toSmoothModelSpace x v = J v :=
-  SmoothAlmostComplexStructure.constantModelSpace_apply _ _ x v
+lemma constSmooth_apply (J : AlmostComplexStructure V) (x v : V) :
+    J.constSmooth x v = J v :=
+  SmoothAlmostComplexStructure.const_apply _ _ x v
 
 @[simp]
-lemma toSmoothModelSpace_atPoint (J : AlmostComplexStructure V) (x : V) :
-    J.toSmoothModelSpace.atPoint x = J := by
+lemma constSmooth_almostComplexStructureAt (J : AlmostComplexStructure V) (x : V) :
+    J.constSmooth.almostComplexStructureAt x = J := by
   ext v
-  exact toSmoothModelSpace_apply J x v
+  exact constSmooth_apply J x v
 
 end AlmostComplexStructure
 
@@ -226,17 +248,18 @@ namespace SmoothAlmostComplexStructure
 /-- The standard smooth almost complex structure on `V × V`, sending `(v, w)` to `(-w, v)`. -/
 noncomputable def product (V : Type*) [NormedAddCommGroup V] [NormedSpace ℝ V] :
     SmoothAlmostComplexStructure (modelWithCornersSelf ℝ (V × V)) (V × V) :=
-  constantModelSpace ((-ContinuousLinearMap.snd ℝ V V).prod (ContinuousLinearMap.fst ℝ V V))
-    fun _ ↦ rfl
+  const ((-ContinuousLinearMap.snd ℝ V V).prod (ContinuousLinearMap.fst ℝ V V))
+    fun v => by ext <;> simp
 
 @[simp]
 lemma product_apply {V : Type*} [NormedAddCommGroup V] [NormedSpace ℝ V] (x v : V × V) :
     product V x v = (-v.2, v.1) :=
-  constantModelSpace_apply _ _ x v
+  const_apply _ _ x v
 
 @[simp]
-lemma product_atPoint {V : Type*} [NormedAddCommGroup V] [NormedSpace ℝ V] (x : V × V) :
-    (product V).atPoint x = AlmostComplexStructure.product V := by
+lemma product_almostComplexStructureAt {V : Type*} [NormedAddCommGroup V] [NormedSpace ℝ V]
+    (x : V × V) :
+    (product V).almostComplexStructureAt x = AlmostComplexStructure.product V := by
   ext v
   exact product_apply x v
 
