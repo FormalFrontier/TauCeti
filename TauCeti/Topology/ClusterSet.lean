@@ -141,6 +141,7 @@ lemma clusterSetOn_mono {V : Set X} (h : U ⊆ V) : clusterSetOn f U w ⊆ clust
 leaves it unchanged, since `𝓝[U ∩ V] w = 𝓝[U] w` when `V ∈ 𝓝 w`. The converse inclusion to
 `TauCeti.clusterSetOn_mono` therefore holds for such a `V`, and a cluster set may be computed
 inside any ball about `w`. -/
+@[simp]
 lemma clusterSetOn_inter_of_mem_nhds {V : Set X} (hV : V ∈ 𝓝 w) :
     clusterSetOn f (U ∩ V) w = clusterSetOn f U w := by
   ext v
