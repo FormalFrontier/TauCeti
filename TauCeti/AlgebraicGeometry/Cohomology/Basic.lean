@@ -151,6 +151,24 @@ def cohomologyZeroEquiv (M : X.Modules) :
   CategoryTheory.Sheaf.H.equiv₀
     ((_root_.SheafOfModules.toSheaf X.ringCatSheaf).obj M) isTerminalTop
 
+/-- The degree-zero cohomology equivalence commutes with maps of coefficient sheaves. -/
+@[simp]
+lemma cohomologyZeroEquiv_naturality {M N : X.Modules} (f : M ⟶ N)
+    (x : cohomology M 0) :
+    f.app ⊤ (cohomologyZeroEquiv M x) =
+      cohomologyZeroEquiv N (cohomologyMap f 0 x) := by
+  exact CategoryTheory.Sheaf.H.equiv₀_naturality
+    isTerminalTop ((_root_.SheafOfModules.toSheaf X.ringCatSheaf).map f) x
+
+/-- The inverse degree-zero cohomology equivalence commutes with maps of coefficient sheaves. -/
+@[simp]
+lemma cohomologyZeroEquiv_symm_naturality {M N : X.Modules} (f : M ⟶ N)
+    (x : Γ(M, ⊤)) :
+    cohomologyMap f 0 ((cohomologyZeroEquiv M).symm x) =
+      (cohomologyZeroEquiv N).symm (f.app ⊤ x) := by
+  exact CategoryTheory.Sheaf.H.equiv₀_symm_naturality
+    isTerminalTop ((_root_.SheafOfModules.toSheaf X.ringCatSheaf).map f) x
+
 end Scheme.Modules
 
 end
