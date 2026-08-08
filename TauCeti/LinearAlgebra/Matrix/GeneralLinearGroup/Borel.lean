@@ -4,12 +4,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
--- `Mathlib.LinearAlgebra.Matrix.GeneralLinearGroup.Card` is imported publicly: `GL (Fin 2) R`
--- occurs in every statement below, and the cardinality of the general linear group over a finite
--- field is what the index computation runs on. It re-exports
--- `Mathlib.LinearAlgebra.Matrix.GeneralLinearGroup.Defs`, hence the `GL` notation, the coercion of
--- an element of `GL n R` to a function on indices, and `Matrix.GeneralLinearGroup.det`.
-public import Mathlib.LinearAlgebra.Matrix.GeneralLinearGroup.Card
+-- `GL (Fin 2) R` occurs in every statement below, hence the `GL` notation, the coercion of an
+-- element of `GL n R` to a function on indices, and `Matrix.GeneralLinearGroup.det`.
+public import Mathlib.LinearAlgebra.Matrix.GeneralLinearGroup.Defs
 -- `Matrix.GeneralLinearGroup.upperRightHom` and `Matrix.GeneralLinearGroup.scalar` occur in the
 -- statements below.
 public import Mathlib.LinearAlgebra.Matrix.GeneralLinearGroup.FinTwo
@@ -17,8 +14,10 @@ public import Mathlib.LinearAlgebra.Matrix.GeneralLinearGroup.FinTwo
 public import Mathlib.GroupTheory.Index
 -- `Matrix.BlockTriangular` occurs in the statement of `TauCeti.blockTriangular_id_iff`.
 public import Mathlib.LinearAlgebra.Matrix.Block
--- Non-public: the number of units of a finite field is used only inside proofs, so downstream
--- importers do not pay for it.
+-- Non-public: the cardinality of the general linear group over a finite field, and the number of
+-- units of a finite field, are used only inside the counting proofs, so downstream importers do
+-- not pay for them.
+import Mathlib.LinearAlgebra.Matrix.GeneralLinearGroup.Card
 import Mathlib.Algebra.GroupWithZero.Units.Fintype
 
 /-!
@@ -36,8 +35,9 @@ inverse of an invertible one is again upper triangular by
 
 * the two diagonal entries of an element of `B` are units, and reading them off is a **group
   homomorphism** `TauCeti.GL2Borel.diag : B →* Rˣ × Rˣ`, the diagonal projection; it is split by
-  the **split torus** `T`, the diagonal matrices `TauCeti.GL2Borel.torusHom : Rˣ × Rˣ →* B`, and it
-  is through the latter that a pair of characters `α, β` of `Rˣ` inflates to a character of `B`;
+  the **split torus** `T`, the diagonal matrices `TauCeti.GL2Borel.torusHom : Rˣ × Rˣ →* B`, which
+  is a section of it, and it is by composing with `TauCeti.GL2Borel.diag` that a pair of characters
+  `α, β` of `Rˣ` inflates to a character of `B`;
 * the kernel of the diagonal projection is the **unipotent radical** `U`, the image of
   `TauCeti.GL2Borel.unipotentHom`, and every element of `B` factors as a torus element times a
   unipotent one (`TauCeti.GL2Borel.eq_torusHom_mul_unipotentHom`) — the decomposition `B = T U`.
@@ -262,6 +262,7 @@ theorem diag_mk (a d : Rˣ) (b : R) : diag ⟨mk a d b, mk_mem a d b⟩ = (a, d)
 
 /-- The determinant of an element of the Borel subgroup is the product of the two torus
 coordinates. -/
+@[simp]
 theorem det_diag (g : GL2Borel R) :
     Matrix.GeneralLinearGroup.det (g : GL (Fin 2) R) = (diag g).1 * (diag g).2 := by
   ext
