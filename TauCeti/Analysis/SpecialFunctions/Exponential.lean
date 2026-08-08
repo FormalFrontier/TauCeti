@@ -102,6 +102,8 @@ inserts the tangent vector in every position among `n` copies of the base point.
 ### Main results
 
 * `TauCeti.expFDerivTerm_apply`: the pointwise insertion formula for one term.
+* `TauCeti.expFDerivTerm_eq_derivSeries`: the identification with Mathlib's formal derivative
+  series.
 * `TauCeti.expFDeriv_eq_tsum`: the operator-valued defining series.
 * `TauCeti.summable_expFDerivTerm`: summability of the operator-valued series.
 * `TauCeti.summable_expFDerivTerm_apply`: pointwise summability of the insertion series.
