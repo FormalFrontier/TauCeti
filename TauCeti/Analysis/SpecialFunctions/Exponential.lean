@@ -6,7 +6,6 @@ module
 
 public import Mathlib.Analysis.SpecialFunctions.Exponential
 import Mathlib.Analysis.Calculus.FDeriv.Pow
-import Mathlib.Analysis.Calculus.SmoothSeries
 import Mathlib.Analysis.Calculus.Deriv.Mul
 import Mathlib.Analysis.Calculus.Deriv.Shift
 public import Mathlib.MeasureTheory.Integral.IntervalIntegral.FundThmCalculus
@@ -91,9 +90,9 @@ end Duhamel
 /-!
 ## The Fréchet derivative series
 
-The Fréchet derivative of the exponential in a possibly noncommutative Banach algebra over an
-`RCLike` field is the convergent series whose `n`th homogeneous contribution inserts the tangent
-vector in every position among `n` copies of the base point.
+The Fréchet derivative of the exponential in a possibly noncommutative Banach algebra over a
+normed characteristic-zero field is the convergent series whose `n`th homogeneous contribution
+inserts the tangent vector in every position among `n` copies of the base point.
 
 ### Main definitions
 
@@ -131,9 +130,9 @@ noncomputable def expFDerivTerm (𝕂 : Type*) [NontriviallyNormedField 𝕂] {R
     ∑ i ∈ Finset.range (n + 1),
       x ^ (n - i) •> ContinuousLinearMap.id 𝕂 R <• x ^ i
 
-/-- The sum of the Fréchet-derivative series of the Banach-algebra exponential. It converges when
-`𝕂` is `RCLike` and the algebra is complete (see `summable_expFDerivTerm`); as usual for `tsum`, it
-has the junk value zero when the series is not summable. -/
+/-- The sum of the Fréchet-derivative series of the Banach-algebra exponential. It converges under
+the hypotheses of `summable_expFDerivTerm`; as usual for `tsum`, it has the junk value zero when
+the series is not summable. -/
 noncomputable def expFDeriv (𝕂 : Type*) [NontriviallyNormedField 𝕂] {R : Type*} [NormedRing R]
     [NormedAlgebra 𝕂 R] (x : R) : R →L[𝕂] R :=
   ∑' n : ℕ, expFDerivTerm 𝕂 x n
@@ -153,79 +152,70 @@ theorem expFDeriv_eq_tsum (x : R) :
 
 end Definitions
 
-variable [RCLike 𝕂] [NormedRing R] [NormedAlgebra 𝕂 R] [CompleteSpace R]
+variable [NontriviallyNormedField 𝕂] [CharZero 𝕂] [ContinuousSMul ℚ 𝕂]
+  [NormedRing R] [NormedAlgebra 𝕂 R] [CompleteSpace R]
 
-omit [NormedAlgebra 𝕂 R] [CompleteSpace R] in
-private theorem norm_pow_le_growth_bound (x : R) (n : ℕ) :
-    ‖x ^ n‖ ≤ max 1 (max ‖(1 : R)‖ ‖x‖) ^ (n + 1) := by
-  have hc : 1 ≤ max 1 (max ‖(1 : R)‖ ‖x‖) := le_max_left _ _
-  have hOne : ‖(1 : R)‖ ≤ max 1 (max ‖(1 : R)‖ ‖x‖) :=
-    (le_max_left _ _).trans (le_max_right _ _)
-  have hx : ‖x‖ ≤ max 1 (max ‖(1 : R)‖ ‖x‖) :=
-    (le_max_right _ _).trans (le_max_right _ _)
-  cases n with
-  | zero => simpa only [pow_zero, zero_add, pow_one] using hOne
-  | succ n =>
-      calc
-        ‖x ^ (n + 1)‖ ≤ ‖x‖ ^ (n + 1) := norm_pow_le' x (Nat.succ_pos n)
-        _ ≤ max 1 (max ‖(1 : R)‖ ‖x‖) ^ (n + 1) := by gcongr
-        _ ≤ max 1 (max ‖(1 : R)‖ ‖x‖) ^ (n + 1 + 1) :=
-          pow_le_pow_right₀ hc (Nat.le_succ _)
-
-omit [CompleteSpace R] in
-private theorem norm_insertion_le (x : R) {n i : ℕ} (hi : i < n + 1) :
-    ‖x ^ (n - i) •> ContinuousLinearMap.id 𝕂 R <• x ^ i‖ ≤
-      max 1 (max ‖(1 : R)‖ ‖x‖) ^ (n + 2) := by
-  have hinsertion :
-      x ^ (n - i) •> ContinuousLinearMap.id 𝕂 R <• x ^ i =
-        ContinuousLinearMap.mulLeftRight 𝕂 R (x ^ (n - i)) (x ^ i) := by
-    ext y
-    simp
-  rw [hinsertion]
-  calc
-    ‖ContinuousLinearMap.mulLeftRight 𝕂 R (x ^ (n - i)) (x ^ i)‖ ≤
-        ‖x ^ (n - i)‖ * ‖x ^ i‖ :=
-      ContinuousLinearMap.opNorm_mulLeftRight_apply_apply_le 𝕂 R _ _
-    _ ≤ max 1 (max ‖(1 : R)‖ ‖x‖) ^ (n - i + 1) *
-        max 1 (max ‖(1 : R)‖ ‖x‖) ^ (i + 1) := by
-      gcongr <;> exact norm_pow_le_growth_bound x _
-    _ = max 1 (max ‖(1 : R)‖ ‖x‖) ^ (n + 2) := by
-      rw [← pow_add]
-      congr 1
+omit [CharZero 𝕂] [ContinuousSMul ℚ 𝕂] in
+/-- The explicit insertion term is the corresponding term of Mathlib's derivative series for
+the exponential formal multilinear series. -/
+theorem expFDerivTerm_eq_derivSeries (x : R) (n : ℕ) :
+    expFDerivTerm 𝕂 x n = (expSeries 𝕂 R).derivSeries n (fun _ ↦ x) := by
+  let q : FormalMultilinearSeries 𝕂 R R := fun m ↦
+    if m = n + 1 then expSeries 𝕂 R m else 0
+  have hqzero : ∀ m, m ≠ n + 1 → q m = 0 := by
+    intro m hm
+    simp [q, hm]
+  have hqrad : q.radius = ⊤ := by
+    apply q.radius_eq_top_of_eventually_eq_zero
+    filter_upwards [Filter.eventually_gt_atTop (n + 1)] with m hm
+    exact hqzero m (Nat.ne_of_gt hm)
+  have hqsum : q.sum = fun z : R ↦ ((n + 1).factorial⁻¹ : 𝕂) • z ^ (n + 1) := by
+    funext z
+    rw [FormalMultilinearSeries.sum, tsum_eq_single (n + 1)]
+    · simp [q, expSeries, pow_succ']
+    · intro m hm
+      rw [hqzero m hm]
+      simp
+  have hqderiv : q.derivSeries.sum x = q.derivSeries n (fun _ ↦ x) := by
+    rw [FormalMultilinearSeries.sum, tsum_eq_single n]
+    intro m hm
+    rw [q.derivSeries_eq_zero]
+    · simp
+    · apply hqzero
       omega
-
-omit [CompleteSpace R] in
-private theorem norm_expFDerivTerm_le (x : R) (n : ℕ) :
-    ‖expFDerivTerm 𝕂 x n‖ ≤
-      max 1 (max ‖(1 : R)‖ ‖x‖) ^ (n + 2) / n.factorial := by
-  rw [expFDerivTerm, norm_smul]
-  have hfactorial : ‖((n + 1).factorial⁻¹ : 𝕂)‖ = ((n + 1).factorial : ℝ)⁻¹ := by
-    simp
-  calc
-    ‖((n + 1).factorial⁻¹ : 𝕂)‖ *
-        ‖∑ i ∈ Finset.range (n + 1),
-          x ^ (n - i) •> ContinuousLinearMap.id 𝕂 R <• x ^ i‖ ≤
-      ((n + 1).factorial : ℝ)⁻¹ *
-        ∑ i ∈ Finset.range (n + 1), max 1 (max ‖(1 : R)‖ ‖x‖) ^ (n + 2) := by
-          rw [hfactorial]
-          gcongr
-          refine norm_sum_le_of_le _ fun i hi ↦ ?_
-          exact norm_insertion_le x (Finset.mem_range.mp hi)
-    _ = max 1 (max ‖(1 : R)‖ ‖x‖) ^ (n + 2) / n.factorial := by
-      rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul, Nat.factorial_succ,
-        Nat.cast_mul, Nat.cast_add, Nat.cast_one]
-      field_simp
-
-private theorem summable_pow_succ_succ_div_factorial (c : ℝ) :
-    Summable fun n : ℕ ↦ c ^ (n + 2) / n.factorial := by
-  refine ((Real.summable_pow_div_factorial c).mul_left (c ^ 2)).congr fun n ↦ ?_
-  rw [← mul_div_assoc, ← pow_add, add_comm]
+  have hqterm : q.derivSeries n = (expSeries 𝕂 R).derivSeries n := by
+    ext v y
+    simp [q, add_comm, FormalMultilinearSeries.derivSeries,
+      FormalMultilinearSeries.changeOriginSeries,
+      FormalMultilinearSeries.changeOriginSeriesTerm]
+  have hx : ‖x‖ₑ < q.radius := by
+    rw [hqrad]
+    exact enorm_lt_top
+  have hformal := q.hasFDerivAt_sum (x := x) hx
+  rw [hqsum, hqderiv, hqterm] at hformal
+  have hformal' : HasFDerivAt
+      (((n + 1).factorial⁻¹ : 𝕂) • (fun z : R ↦ z ^ (n + 1)))
+      ((expSeries 𝕂 R).derivSeries n (fun _ ↦ x)) x :=
+    hformal.congr_of_eventuallyEq (Filter.Eventually.of_forall fun z ↦ by simp)
+  have hexplicit : HasFDerivAt
+      (((n + 1).factorial⁻¹ : 𝕂) • (fun z : R ↦ z ^ (n + 1)))
+      (expFDerivTerm 𝕂 x n) x := by
+    simpa only [expFDerivTerm, Nat.pred_succ] using
+      (hasFDerivAt_pow' (𝕜 := 𝕂) (n + 1) (x := x)).const_smul
+        ((n + 1).factorial⁻¹ : 𝕂)
+  exact hexplicit.unique hformal'
 
 /-- The operator-valued derivative series is summable. -/
 theorem summable_expFDerivTerm (x : R) : Summable (expFDerivTerm 𝕂 x) :=
-  Summable.of_norm_bounded
-    (summable_pow_succ_succ_div_factorial (max 1 (max ‖(1 : R)‖ ‖x‖)))
-    (norm_expFDerivTerm_le (𝕂 := 𝕂) x)
+  ((expSeries 𝕂 R).derivSeries.summable (by
+    have hr : (expSeries 𝕂 R).derivSeries.radius = ⊤ := by
+      apply top_unique
+      rw [← expSeries_radius_eq_top 𝕂 R]
+      exact (expSeries 𝕂 R).radius_le_radius_derivSeries
+    rw [hr]
+    rw [Metric.mem_eball, edist_zero_right]
+    exact enorm_lt_top)).congr
+      fun n ↦ (expFDerivTerm_eq_derivSeries (𝕂 := 𝕂) x n).symm
 
 /-- Applying the derivative terms to a fixed tangent vector gives a summable series. -/
 theorem summable_expFDerivTerm_apply (x y : R) :
@@ -238,70 +228,22 @@ theorem expFDeriv_apply (x y : R) :
     expFDeriv 𝕂 x y = ∑' n : ℕ, expFDerivTerm 𝕂 x n y := by
   exact (ContinuousLinearMap.apply 𝕂 R y).map_tsum (summable_expFDerivTerm x)
 
-omit [CompleteSpace R] in
-private theorem hasFDerivAt_inv_factorial_smul_pow_succ (n : ℕ) (x : R) :
-    HasFDerivAt (((n + 1).factorial⁻¹ : 𝕂) • (fun y : R ↦ y ^ (n + 1)))
-      (expFDerivTerm 𝕂 x n) x := by
-  simpa only [expFDerivTerm, Nat.pred_succ] using
-    (hasFDerivAt_pow' (𝕜 := 𝕂) (n + 1) (x := x)).const_smul
-      ((n + 1).factorial⁻¹ : 𝕂)
-
-private theorem exp_eq_one_add_tsum_succ (x : R) :
-    exp x = 1 + ∑' n : ℕ, ((n + 1).factorial⁻¹ : 𝕂) • x ^ (n + 1) := by
-  simp only [exp_eq_tsum 𝕂]
-  rw [(expSeries_summable' (𝕂 := 𝕂) x).tsum_eq_zero_add]
-  simp
-
 /-- The exponential in a possibly noncommutative Banach algebra has the convergent insertion sum
 `expFDeriv 𝕂 x` as its Fréchet derivative at `x`. -/
 theorem hasFDerivAt_exp (x : R) :
     HasFDerivAt exp (expFDeriv 𝕂 x) x := by
-  -- The real restriction supplies the normed-space structure used by convexity of metric balls.
-  let _ : NormedSpace ℝ R := NormedSpace.restrictScalars ℝ 𝕂 R
-  let r : ℝ := ‖x‖ + 1
-  let c : ℝ := max 1 (max ‖(1 : R)‖ r)
-  let u : ℕ → ℝ := fun n ↦ c ^ (n + 2) / n.factorial
-  have hu : Summable u := by
-    simpa only [u] using summable_pow_succ_succ_div_factorial c
-  have hr : 0 < r := add_pos_of_nonneg_of_pos (norm_nonneg x) zero_lt_one
-  have hderiv : ∀ n y, y ∈ Metric.ball (0 : R) r →
-      HasFDerivAt
-        (((n + 1).factorial⁻¹ : 𝕂) • (fun z : R ↦ z ^ (n + 1)))
-        (expFDerivTerm 𝕂 y n) y := fun n y _hy ↦
-    hasFDerivAt_inv_factorial_smul_pow_succ n y
-  have hbound : ∀ n y, y ∈ Metric.ball (0 : R) r → ‖expFDerivTerm 𝕂 y n‖ ≤ u n := by
-    intro n y hy
-    refine (norm_expFDerivTerm_le y n).trans ?_
-    dsimp only [u, c]
-    gcongr
-    have hyr : ‖y‖ < r := by simpa [Metric.mem_ball, dist_zero_right] using hy
-    exact hyr.le
-  have hx₀ : (0 : R) ∈ Metric.ball 0 r := by simp [Metric.mem_ball, hr]
-  have hsummableAtZero : Summable fun n : ℕ ↦
-      (((n + 1).factorial⁻¹ : 𝕂) • (fun z : R ↦ z ^ (n + 1))) 0 := by simp
-  have hx : x ∈ Metric.ball (0 : R) r := by simp [Metric.mem_ball, r]
-  have hseries :
-      HasFDerivAt
-        (fun y : R ↦ ∑' n : ℕ, (((n + 1).factorial⁻¹ : 𝕂) •
-          (fun z : R ↦ z ^ (n + 1))) y)
-        (∑' n : ℕ, expFDerivTerm 𝕂 x n) x := by
-    refine hasFDerivAt_tsum_of_isPreconnected (α := ℕ) (𝕜 := 𝕂) (E := R) (F := R)
-      (u := u)
-      (f := fun n ↦ ((n + 1).factorial⁻¹ : 𝕂) • (fun z : R ↦ z ^ (n + 1)))
-      (f' := fun n y ↦ expFDerivTerm 𝕂 y n) (s := Metric.ball 0 r) (x₀ := 0) (x := x)
-      hu Metric.isOpen_ball (convex_ball (0 : R) r).isPreconnected hderiv hbound hx₀
-        hsummableAtZero hx
-  have hadd := (hasFDerivAt_const (x := x) (c := (1 : R))).add hseries
-  have hadd' :
-      HasFDerivAt
-        ((fun _y : R ↦ (1 : R)) + fun y : R ↦
-          ∑' n : ℕ, (((n + 1).factorial⁻¹ : 𝕂) • (fun z : R ↦ z ^ (n + 1))) y)
-        (expFDeriv 𝕂 x) x := by
-    apply hadd.congr_fderiv
-    rw [zero_add, expFDeriv]
-  exact hadd'.congr_of_eventuallyEq (Filter.Eventually.of_forall fun y ↦ by
-    rw [Pi.add_apply, exp_eq_one_add_tsum_succ (𝕂 := 𝕂)]
-    simp only [Pi.smul_apply])
+  have hx : ‖x‖ₑ < (expSeries 𝕂 R).radius := by
+    rw [expSeries_radius_eq_top]
+    exact enorm_lt_top
+  have h := (expSeries 𝕂 R).hasFDerivAt_sum hx
+  have hderiv : (expSeries 𝕂 R).derivSeries.sum x = expFDeriv 𝕂 x := by
+    rw [FormalMultilinearSeries.sum, expFDeriv]
+    apply tsum_congr
+    intro n
+    exact (expFDerivTerm_eq_derivSeries (𝕂 := 𝕂) x n).symm
+  rw [hderiv] at h
+  exact h.congr_of_eventuallyEq (Filter.Eventually.of_forall fun y ↦
+    (expSeries_hasSum_exp (𝕂 := 𝕂) y).tsum_eq.symm)
 
 /-- The strict Fréchet-derivative form of `hasFDerivAt_exp`. -/
 theorem hasStrictFDerivAt_exp (x : R) :
@@ -318,7 +260,7 @@ theorem fderiv_exp (x : R) : fderiv 𝕂 exp x = expFDeriv 𝕂 x :=
 /-- In a commutative Banach algebra, the insertion sum agrees with scalar multiplication by the
 exponential. -/
 @[simp]
-theorem expFDeriv_eq_smul_one {R : Type*} [NormedCommRing R] [NormedAlgebra 𝕂 R]
+theorem expFDeriv_eq_smul_one {𝕂 R : Type*} [RCLike 𝕂] [NormedCommRing R] [NormedAlgebra 𝕂 R]
     [CompleteSpace R] (x : R) :
     expFDeriv 𝕂 x = exp x • (1 : R →L[𝕂] R) :=
   (hasFDerivAt_exp (𝕂 := 𝕂) x).unique _root_.hasFDerivAt_exp
