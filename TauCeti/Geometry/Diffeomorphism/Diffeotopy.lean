@@ -29,7 +29,7 @@ parametrized form appropriate for diffeotopies.
 
 ## Main definitions
 
-* `TauCeti.Diffeotopy I n M`: a level-preserving diffeomorphism of `[0, 1] × M` fixing the
+* `TauCeti.Diffeotopy I M`: a level-preserving smooth diffeomorphism of `[0, 1] × M` fixing the
   time-zero slice.
 * `TauCeti.Diffeotopy.slice`: the self-diffeomorphism at a given time.
 * `TauCeti.Diffeotopy.final`: the time-one self-diffeomorphism.
@@ -49,18 +49,18 @@ open scoped ContDiff Manifold
 
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
   {H : Type*} [TopologicalSpace H] {J : ModelWithCorners ℝ E H}
-  {M : Type*} [TopologicalSpace M] [ChartedSpace H M] {n : ℕ∞ω}
+  {M : Type*} [TopologicalSpace M] [ChartedSpace H M]
 
 /-- A **diffeotopy** of `M` is a diffeomorphism of the cylinder `[0, 1] × M` that preserves
 the time coordinate and restricts to the identity on the time-zero slice.
 
 The inverse cylinder diffeomorphism automatically preserves time as well, so this packages a
 jointly smooth family of self-diffeomorphisms together with its jointly smooth inverse. -/
-structure Diffeotopy (J : ModelWithCorners ℝ E H) (n : ℕ∞ω) (M : Type*)
+structure Diffeotopy (J : ModelWithCorners ℝ E H) (M : Type*)
     [TopologicalSpace M] [ChartedSpace H M] where
   /-- The level-preserving diffeomorphism of the cylinder. -/
   toDiffeomorph :
-    (I × M) ≃ₘ^n⟮(𝓡∂ 1).prod J, (𝓡∂ 1).prod J⟯ (I × M)
+    (I × M) ≃ₘ^∞⟮(𝓡∂ 1).prod J, (𝓡∂ 1).prod J⟯ (I × M)
   /-- The cylinder diffeomorphism preserves the time coordinate. -/
   fst_toDiffeomorph : ∀ p, (toDiffeomorph p).1 = p.1
   /-- The family starts at the identity. -/
@@ -68,9 +68,9 @@ structure Diffeotopy (J : ModelWithCorners ℝ E H) (n : ℕ∞ω) (M : Type*)
 
 namespace Diffeotopy
 
-variable (Phi : Diffeotopy J n M)
+variable (Phi : Diffeotopy J M)
 
-instance instFunLike : FunLike (Diffeotopy J n M) (I × M) M where
+instance instFunLike : FunLike (Diffeotopy J M) (I × M) M where
   coe Phi p := (Phi.toDiffeomorph p).2
   coe_injective Phi Psi h := by
     cases Phi with
@@ -84,7 +84,7 @@ instance instFunLike : FunLike (Diffeotopy J n M) (I × M) M where
 
 /-- Two diffeotopies are equal when their underlying smooth families agree pointwise. -/
 @[ext]
-theorem ext {Phi Psi : Diffeotopy J n M} (h : ∀ p, Phi p = Psi p) : Phi = Psi :=
+theorem ext {Phi Psi : Diffeotopy J M} (h : ∀ p, Phi p = Psi p) : Phi = Psi :=
   DFunLike.ext Phi Psi h
 
 @[simp]
@@ -104,7 +104,7 @@ theorem fst_toDiffeomorph_symm (p : I × M) : (Phi.toDiffeomorph.symm p).1 = p.1
     _ = p.1 := congrArg Prod.fst (Phi.toDiffeomorph.apply_symm_apply p)
 
 /-- The self-diffeomorphism of `M` at time `t`. -/
-def slice [IsManifold J n M] (t : I) : Diff J M n where
+def slice [IsManifold J ∞ M] (t : I) : Diff J M ∞ where
   toFun x := Phi (t, x)
   invFun x := (Phi.toDiffeomorph.symm (t, x)).2
   left_inv x := by
@@ -124,13 +124,13 @@ def slice [IsManifold J n M] (t : I) : Diff J M n where
       (Phi.toDiffeomorph.symm.contMDiff.comp (contMDiff_const.prodMk contMDiff_id))
 
 @[simp]
-theorem slice_apply [IsManifold J n M] (t : I) (x : M) : Phi.slice t x = Phi (t, x) :=
+theorem slice_apply [IsManifold J ∞ M] (t : I) (x : M) : Phi.slice t x = Phi (t, x) :=
   by
     rw [slice.eq_def]
     rfl
 
 @[simp]
-theorem slice_symm_apply [IsManifold J n M] (t : I) (x : M) :
+theorem slice_symm_apply [IsManifold J ∞ M] (t : I) (x : M) :
     (Phi.slice t).symm x = (Phi.toDiffeomorph.symm (t, x)).2 :=
   by
     rw [slice.eq_def]
@@ -138,16 +138,16 @@ theorem slice_symm_apply [IsManifold J n M] (t : I) (x : M) :
 
 /-- A diffeotopy's time-zero slice is the identity diffeomorphism. -/
 @[simp]
-theorem slice_zero [IsManifold J n M] : Phi.slice 0 = _root_.Diffeomorph.refl J M n := by
+theorem slice_zero [IsManifold J ∞ M] : Phi.slice 0 = _root_.Diffeomorph.refl J M ∞ := by
   apply _root_.Diffeomorph.ext
   exact Phi.snd_toDiffeomorph_zero
 
 /-- The final self-diffeomorphism of a diffeotopy. -/
-def final [IsManifold J n M] : Diff J M n :=
+def final [IsManifold J ∞ M] : Diff J M ∞ :=
   Phi.slice 1
 
 @[simp]
-theorem final_apply [IsManifold J n M] (x : M) : Phi.final x = Phi (1, x) :=
+theorem final_apply [IsManifold J ∞ M] (x : M) : Phi.final x = Phi (1, x) :=
   by
     rw [final.eq_def, slice_apply]
 
@@ -168,27 +168,27 @@ theorem toAmbientIsotopy_apply (p : I × M) :
     rfl
 
 @[simp]
-theorem toAmbientIsotopy_final [IsManifold J n M] :
+theorem toAmbientIsotopy_final [IsManifold J ∞ M] :
     Phi.toAmbientIsotopy.final = _root_.toContinuousMap Phi.final.toHomeomorph := by
   ext x
   rfl
 
 /-- The constant diffeotopy. -/
-def refl [IsManifold J n M] : Diffeotopy J n M where
-  toDiffeomorph := _root_.Diffeomorph.refl ((𝓡∂ 1).prod J) (I × M) n
+def refl [IsManifold J ∞ M] : Diffeotopy J M where
+  toDiffeomorph := _root_.Diffeomorph.refl ((𝓡∂ 1).prod J) (I × M) ∞
   fst_toDiffeomorph _ := rfl
   snd_toDiffeomorph_zero _ := rfl
 
 @[simp]
-theorem refl_apply [IsManifold J n M] (p : I × M) :
-    ((refl (J := J) (n := n) (M := M)).toDiffeomorph p).2 = p.2 :=
+theorem refl_apply [IsManifold J ∞ M] (p : I × M) :
+    ((refl (J := J) (M := M)).toDiffeomorph p).2 = p.2 :=
   by
     rw [refl.eq_def]
     rfl
 
 /-- Pointwise composition of diffeotopies.  At time `t`, `Phi.trans Psi` first applies `Phi t`
 and then `Psi t`. -/
-def trans [IsManifold J n M] (Psi : Diffeotopy J n M) : Diffeotopy J n M where
+def trans [IsManifold J ∞ M] (Psi : Diffeotopy J M) : Diffeotopy J M where
   toDiffeomorph := Phi.toDiffeomorph.trans Psi.toDiffeomorph
   fst_toDiffeomorph p := by
     exact (Psi.fst_toDiffeomorph (Phi.toDiffeomorph p)).trans
@@ -202,14 +202,14 @@ def trans [IsManifold J n M] (Psi : Diffeotopy J n M) : Diffeotopy J n M where
     exact Psi.snd_toDiffeomorph_zero x
 
 @[simp]
-theorem trans_apply [IsManifold J n M] (Psi : Diffeotopy J n M) (p : I × M) :
+theorem trans_apply [IsManifold J ∞ M] (Psi : Diffeotopy J M) (p : I × M) :
     ((Phi.trans Psi).toDiffeomorph p).2 = Psi (p.1, Phi p) := by
   rw [trans.eq_def]
   exact congrArg (fun q => (Psi.toDiffeomorph q).2) (Phi.toDiffeomorph_apply p)
 
 /-- Taking a time slice commutes with pointwise composition of diffeotopies. -/
 @[simp]
-theorem slice_trans [IsManifold J n M] (Psi : Diffeotopy J n M) (t : I) :
+theorem slice_trans [IsManifold J ∞ M] (Psi : Diffeotopy J M) (t : I) :
     (Phi.trans Psi).slice t = (Phi.slice t).trans (Psi.slice t) := by
   apply _root_.Diffeomorph.ext
   intro x
@@ -219,12 +219,12 @@ theorem slice_trans [IsManifold J n M] (Psi : Diffeotopy J n M) (t : I) :
 
 /-- Taking the final diffeomorphism commutes with pointwise composition. -/
 @[simp]
-theorem final_trans [IsManifold J n M] (Psi : Diffeotopy J n M) :
+theorem final_trans [IsManifold J ∞ M] (Psi : Diffeotopy J M) :
     (Phi.trans Psi).final = Phi.final.trans Psi.final :=
   Phi.slice_trans Psi 1
 
 /-- Pointwise inverse of a diffeotopy. -/
-def symm [IsManifold J n M] : Diffeotopy J n M where
+def symm [IsManifold J ∞ M] : Diffeotopy J M where
   toDiffeomorph := Phi.toDiffeomorph.symm
   fst_toDiffeomorph := Phi.fst_toDiffeomorph_symm
   snd_toDiffeomorph_zero x := by
@@ -233,14 +233,14 @@ def symm [IsManifold J n M] : Diffeotopy J n M where
     exact congrArg Prod.snd (hzero ▸ Phi.toDiffeomorph.symm_apply_apply (0, x))
 
 @[simp]
-theorem symm_apply [IsManifold J n M] (p : I × M) :
+theorem symm_apply [IsManifold J ∞ M] (p : I × M) :
     (Phi.symm.toDiffeomorph p).2 = (Phi.toDiffeomorph.symm p).2 :=
   by
     rw [symm.eq_def]
 
 /-- Taking a time slice commutes with pointwise inversion of a diffeotopy. -/
 @[simp]
-theorem slice_symm [IsManifold J n M] (t : I) :
+theorem slice_symm [IsManifold J ∞ M] (t : I) :
     Phi.symm.slice t = (Phi.slice t).symm := by
   apply _root_.Diffeomorph.ext
   intro x
@@ -248,21 +248,21 @@ theorem slice_symm [IsManifold J n M] (t : I) :
 
 /-- The final diffeomorphism of the inverse diffeotopy is the inverse final diffeomorphism. -/
 @[simp]
-theorem final_symm [IsManifold J n M] : Phi.symm.final = Phi.final.symm :=
+theorem final_symm [IsManifold J ∞ M] : Phi.symm.final = Phi.final.symm :=
   Phi.slice_symm 1
 
-theorem toAmbientIsotopy_refl_apply [IsManifold J n M] (p : I × M) :
-    (refl (J := J) (n := n) (M := M)).toAmbientIsotopy.toContinuousMap p = p.2 :=
+theorem toAmbientIsotopy_refl_apply [IsManifold J ∞ M] (p : I × M) :
+    (refl (J := J) (M := M)).toAmbientIsotopy.toContinuousMap p = p.2 :=
   refl_apply p
 
-theorem toAmbientIsotopy_trans_apply [IsManifold J n M] (Psi : Diffeotopy J n M) (p : I × M) :
+theorem toAmbientIsotopy_trans_apply [IsManifold J ∞ M] (Psi : Diffeotopy J M) (p : I × M) :
     (Phi.trans Psi).toAmbientIsotopy.toContinuousMap p =
       (Phi.toAmbientIsotopy.trans Psi.toAmbientIsotopy).toContinuousMap p := by
   rw [toAmbientIsotopy_apply, apply_eq_snd_toDiffeomorph, trans_apply,
     AmbientIsotopy.trans_apply,
     toAmbientIsotopy_apply, toAmbientIsotopy_apply]
 
-theorem toAmbientIsotopy_symm_apply [IsManifold J n M] (p : I × M) :
+theorem toAmbientIsotopy_symm_apply [IsManifold J ∞ M] (p : I × M) :
     Phi.symm.toAmbientIsotopy.toContinuousMap p =
       Phi.toAmbientIsotopy.symm.toContinuousMap p := by
   rw [toAmbientIsotopy_apply, apply_eq_snd_toDiffeomorph, symm_apply,
