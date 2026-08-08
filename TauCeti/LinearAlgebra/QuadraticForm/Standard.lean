@@ -98,39 +98,35 @@ private theorem lieEquivMatrix'_mem_skewAdjoint (J : Matrix n n R)
   simpa using (isAdjointPair_toLinearMap₂' (R := R) (J := J) (J' := J)
     (A := LinearMap.toMatrix' f) (A' := -(LinearMap.toMatrix' f))).symm
 
-omit [Invertible (2 : R)] in
-private noncomputable def skewAdjointLieEquivMatrix (J : Matrix n n R) :
-    skewAdjointLieSubalgebra (Matrix.toLinearMap₂' R J) ≃ₗ⁅R⁆
-      skewAdjointMatricesLieSubalgebra J :=
-  LieEquiv.ofSubalgebras _ _ lieEquivMatrix' <| by
-    ext A
-    simp only [Submodule.mem_map_equiv, LieSubalgebra.mem_map_submodule]
-    -- Expose the inverse-image carrier required by `LieEquiv.ofSubalgebras`.
-    change (lieEquivMatrix' (R := R) (n := n)).symm A ∈
-      skewAdjointLieSubalgebra (Matrix.toLinearMap₂' R J) ↔
-        A ∈ skewAdjointMatricesLieSubalgebra J
-    rw [lieEquivMatrix'_symm_apply]
-    simpa using (lieEquivMatrix'_mem_skewAdjoint R n J
-      ((lieEquivMatrix' (R := R) (n := n)).symm A)).symm
-
 /-- The skew-adjoint endomorphisms of the polar form of the standard quadratic form are Mathlib's
 matrix orthogonal Lie algebra. -/
 noncomputable def standardSkewAdjointLieEquiv :
     skewAdjointLieSubalgebra
         (QuadraticMap.polarBilin (QuadraticMap.weightedSumSquares R (1 : n → R))) ≃ₗ⁅R⁆
       LieAlgebra.Orthogonal.so n R :=
-  (LieEquiv.ofEq _ _ (by
-    rw [polarBilin_weightedSumSquares_one, skewAdjointLieSubalgebra_two_smul])).trans
-      (skewAdjointLieEquivMatrix R n (1 : Matrix n n R))
+  LieEquiv.ofSubalgebras _ _ lieEquivMatrix' <| by
+    ext A
+    simp only [Submodule.mem_map_equiv, LieSubalgebra.mem_map_submodule]
+    -- Expose the inverse-image carrier required by the subalgebra restriction.
+    change (lieEquivMatrix' (R := R) (n := n)).symm A ∈
+      skewAdjointLieSubalgebra
+          (QuadraticMap.polarBilin (QuadraticMap.weightedSumSquares R (1 : n → R))) ↔
+        A ∈ LieAlgebra.Orthogonal.so n R
+    rw [polarBilin_weightedSumSquares_one, skewAdjointLieSubalgebra_two_smul,
+      LieAlgebra.Orthogonal.so, lieEquivMatrix'_symm_apply]
+    simpa using (lieEquivMatrix'_mem_skewAdjoint R n (1 : Matrix n n R)
+      ((lieEquivMatrix' (R := R) (n := n)).symm A)).symm
 
+/-- The standard skew-adjoint equivalence sends an endomorphism to its matrix. -/
 @[simp]
 theorem coe_standardSkewAdjointLieEquiv_apply
     (f : skewAdjointLieSubalgebra
       (QuadraticMap.polarBilin (QuadraticMap.weightedSumSquares R (1 : n → R)))) :
     ((standardSkewAdjointLieEquiv R n f : LieAlgebra.Orthogonal.so n R) : Matrix n n R) =
       lieEquivMatrix' f := by
-  rfl
+  rw [standardSkewAdjointLieEquiv, LieEquiv.ofSubalgebras_apply]
 
+/-- The inverse standard skew-adjoint equivalence sends a matrix to its endomorphism. -/
 @[simp]
 theorem coe_standardSkewAdjointLieEquiv_symm_apply (A : LieAlgebra.Orthogonal.so n R) :
     (((standardSkewAdjointLieEquiv R n).symm A :
@@ -138,6 +134,6 @@ theorem coe_standardSkewAdjointLieEquiv_symm_apply (A : LieAlgebra.Orthogonal.so
         (QuadraticMap.polarBilin (QuadraticMap.weightedSumSquares R (1 : n → R)))) :
       Module.End R (n → R)) =
       (lieEquivMatrix' (R := R) (n := n)).symm A := by
-  rfl
+  rw [standardSkewAdjointLieEquiv, LieEquiv.ofSubalgebras_symm_apply]
 
 end TauCeti.QuadraticForm
