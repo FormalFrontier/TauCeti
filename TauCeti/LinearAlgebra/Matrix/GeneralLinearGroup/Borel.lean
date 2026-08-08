@@ -113,11 +113,11 @@ section CommRing
 variable (R : Type u) [CommRing R]
 
 /-- The **Borel subgroup** of `GL₂`: the invertible upper-triangular `2 × 2` matrices, that is,
-those `g` with `g 1 0 = 0`. It is a subgroup by Mathlib's block-triangular API: upper-triangular
-matrices are closed under multiplication (`Matrix.BlockTriangular.mul`), and the inverse of an
-invertible upper-triangular matrix is again upper triangular
-(`Matrix.blockTriangular_inv_of_blockTriangular`). -/
+those `g` with `g 1 0 = 0`. -/
 def GL2Borel : Subgroup (GL (Fin 2) R) where
+  -- Both closure axioms come from Mathlib's block-triangular API, through
+  -- `TauCeti.blockTriangular_id_iff`: `Matrix.BlockTriangular.mul` for products, and
+  -- `Matrix.blockTriangular_inv_of_blockTriangular` for inverses.
   carrier := {g | (g : Matrix (Fin 2) (Fin 2) R) 1 0 = 0}
   mul_mem' := by
     intro g h hg hh
@@ -188,10 +188,10 @@ theorem scalar_mem (u : Rˣ) : Matrix.GeneralLinearGroup.scalar (Fin 2) u ∈ GL
 variable {R}
 
 /-- The invertible upper-triangular matrix `!![a, b; 0, d]` with prescribed diagonal units `a`, `d`
-and prescribed upper-right entry `b`. Its inverse is written out, so no invertibility side
-condition is discharged twice. -/
+and prescribed upper-right entry `b`. -/
 def mk (a d : Rˣ) (b : R) : GL (Fin 2) R where
   val := !![(a : R), b; 0, (d : R)]
+  -- The inverse is written out, so no invertibility side condition is discharged twice.
   inv := !![((a⁻¹ : Rˣ) : R), -((a⁻¹ : Rˣ) * b * (d⁻¹ : Rˣ)); 0, ((d⁻¹ : Rˣ) : R)]
   val_inv := by
     rw [Matrix.mul_fin_two, Matrix.one_fin_two]
@@ -211,11 +211,11 @@ theorem mk_mem (a d : Rˣ) (b : R) : mk a d b ∈ GL2Borel R := by
   simp [mem_iff]
 
 /-- The **diagonal projection**: the two diagonal entries of an element of the Borel subgroup, as
-units of `R`. They are units because the inverse of `g` is again upper triangular, so the diagonal
-entries of `g` and of `g⁻¹` multiply to the diagonal entries of `1`; and this is a group
-homomorphism because the diagonal of a product of upper-triangular matrices is the product of the
-diagonals. It is the retraction onto the split torus `TauCeti.GL2Borel.torusHom`. -/
+units of `R`. It is the retraction onto the split torus `TauCeti.GL2Borel.torusHom`. -/
 def diag : GL2Borel R →* Rˣ × Rˣ where
+  -- The entries are units because the inverse of `g` is again upper triangular, so the diagonal
+  -- entries of `g` and of `g⁻¹` multiply to the diagonal entries of `1`; the map is multiplicative
+  -- because the diagonal of a product of upper-triangular matrices is the product of the diagonals.
   toFun g :=
     (⟨((g : GL (Fin 2) R) : Matrix (Fin 2) (Fin 2) R) 0 0,
         (((g : GL (Fin 2) R)⁻¹ : GL (Fin 2) R) : Matrix (Fin 2) (Fin 2) R) 0 0,
