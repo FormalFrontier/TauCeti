@@ -179,7 +179,8 @@ theorem toAmbientIsotopy_apply (p : I × M) :
 theorem toAmbientIsotopy_final [IsManifold J ∞ M] :
     Phi.toAmbientIsotopy.final = _root_.toContinuousMap Phi.final.toHomeomorph := by
   ext x
-  rfl
+  rw [AmbientIsotopy.final_apply, toAmbientIsotopy_apply, ← final_apply]
+  exact (congrFun (_root_.Diffeomorph.coe_toHomeomorph Phi.final) x).symm
 
 /-- The constant diffeotopy. -/
 def refl [IsManifold J ∞ M] : Diffeotopy J M where
@@ -343,11 +344,6 @@ theorem slice_symm [IsManifold J ∞ M] (t : I) :
 theorem final_symm [IsManifold J ∞ M] : Phi.symm.final = Phi.final.symm :=
   Phi.slice_symm 1
 
-/-- Forgetting the constant diffeotopy gives the constant ambient isotopy pointwise. -/
-private theorem toAmbientIsotopy_refl_apply [IsManifold J ∞ M] (p : I × M) :
-    (refl (J := J) (M := M)).toAmbientIsotopy.toContinuousMap p = p.2 :=
-  refl_apply p
-
 /-- Forgetting pointwise composition of diffeotopies preserves composition pointwise. -/
 private theorem toAmbientIsotopy_trans_apply [IsManifold J ∞ M] (Psi : Diffeotopy J M) (p : I × M) :
     (Phi.trans Psi).toAmbientIsotopy.toContinuousMap p =
@@ -372,7 +368,13 @@ private theorem toAmbientIsotopy_symm_apply (p : I × M) :
 @[simp]
 theorem toAmbientIsotopy_refl [IsManifold J ∞ M] :
     (refl (J := J) (M := M)).toAmbientIsotopy = AmbientIsotopy.refl M := by
-  rfl
+  have hmaps : (refl (J := J) (M := M)).toAmbientIsotopy.toContinuousMap =
+      (AmbientIsotopy.refl M).toContinuousMap := by
+    ext p
+    rw [toAmbientIsotopy_apply, refl_apply]
+    rfl
+  rw [toAmbientIsotopy.eq_def, AmbientIsotopy.refl.eq_def, AmbientIsotopy.mk.injEq]
+  exact hmaps
 
 /-- Forgetting pointwise composition of diffeotopies preserves composition. -/
 @[simp]
