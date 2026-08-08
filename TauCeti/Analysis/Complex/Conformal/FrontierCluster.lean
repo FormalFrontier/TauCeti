@@ -7,7 +7,6 @@ module
 
 public import TauCeti.Analysis.Complex.Conformal.ClusterSet
 import TauCeti.Analysis.Complex.Conformal.CutDiameter
-import TauCeti.Analysis.Complex.Conformal.ImageSimplyConnected
 
 /-!
 # The boundary piece a crosscut cuts off, as boundary cluster sets
