@@ -60,7 +60,6 @@ theorem coe_cliffordBivectorExteriorEquivQuadraticLieSubalgebra_apply
 
 /-- Coercing the forward-after-inverse exterior-square equivalence recovers the quadratic
 element. -/
-@[simp]
 theorem coe_cliffordBivectorExteriorEquivQuadraticLieSubalgebra_apply_symm_apply
     (Q : QuadraticForm R M) [Invertible (2 : R)] (x : quadraticLieSubalgebra Q) :
     ((cliffordBivectorExteriorEquivQuadraticLieSubalgebra Q

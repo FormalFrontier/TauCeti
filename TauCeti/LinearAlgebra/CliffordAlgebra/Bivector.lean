@@ -38,7 +38,8 @@ Layer 9 CAR worked instance.
   infinitesimal rotation determined by `QuadraticMap.polar`.
 * `TauCeti.CliffordAlgebra.cliffordBivectorExterior_apply_ιMulti`: the exterior-square map on a
   decomposable bivector.
-* `TauCeti.CliffordAlgebra.equivExterior_cliffordBivector` and
+* `TauCeti.CliffordAlgebra.equivExterior_cliffordBivector`,
+  `TauCeti.CliffordAlgebra.equivExterior_cliffordBivectorExterior`, and
   `TauCeti.CliffordAlgebra.cliffordBivectorExterior_injective`: the exterior model sends
   bivectors to exterior products, so the exterior-square map is injective.
 * `TauCeti.CliffordAlgebra.cliffordBivector_mem_evenOdd_zero` and
@@ -141,6 +142,14 @@ private theorem equivExterior_comp_cliffordBivectorExterior :
     LinearMap.compAlternatingMap_apply, LinearEquiv.coe_coe]
   rw [hx, cliffordBivectorExterior_apply_ιMulti, equivExterior_cliffordBivector]
   simp
+
+/-- The exterior model is a left inverse of the exterior-square Clifford bivector map.
+
+As with `equivExterior_basis`, this is not a simp lemma because simp unfolds `equivExterior`
+before rewriting its applications. -/
+theorem equivExterior_cliffordBivectorExterior (x : ⋀[R]^2 M) :
+    equivExterior Q (cliffordBivectorExterior Q x) = (x : ExteriorAlgebra R M) :=
+  LinearMap.congr_fun (equivExterior_comp_cliffordBivectorExterior Q) x
 
 /-- The exterior-square Clifford bivector map is injective. -/
 theorem cliffordBivectorExterior_injective : Function.Injective (cliffordBivectorExterior Q) := by
