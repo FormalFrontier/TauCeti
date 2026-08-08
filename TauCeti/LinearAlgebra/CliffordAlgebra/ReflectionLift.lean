@@ -204,16 +204,19 @@ theorem reflection_mul_reflection_mem_range_spinToOrthogonal_of_isSquare
       (⟨QuadraticMap.reflection Q v, QuadraticMap.reflection_mem_orthogonalGroup Q v⟩ :
         QuadraticMap.orthogonalGroup Q) *
       ⟨QuadraticMap.reflection Q w, QuadraticMap.reflection_mem_orthogonalGroup Q w⟩ := by
-    change lipschitzToOrthogonal Q
-      ((⟨unitι Q (reflectionPairScale Q v w h • v),
-          unitι_mem_lipschitzGroup _⟩ : lipschitzGroup Q) *
-        ⟨unitι Q w, unitι_mem_lipschitzGroup _⟩) = _
-    rw [map_mul, lipschitzToOrthogonal_unitι_eq, lipschitzToOrthogonal_unitι_eq]
+    have hmul :
+        (⟨unitι Q (reflectionPairScale Q v w h • v) * unitι Q w,
+          mul_mem (unitι_mem_lipschitzGroup _) (unitι_mem_lipschitzGroup _)⟩ : lipschitzGroup Q) =
+          (⟨unitι Q (reflectionPairScale Q v w h • v),
+            unitι_mem_lipschitzGroup _⟩ : lipschitzGroup Q) *
+            ⟨unitι Q w, unitι_mem_lipschitzGroup _⟩ := by
+      apply Subtype.ext
+      simp only [Subgroup.coe_mul]
+    rw [hmul,
+      map_mul, lipschitzToOrthogonal_unitι_eq, lipschitzToOrthogonal_unitι_eq]
     apply Subtype.ext
-    change QuadraticMap.reflection Q (reflectionPairScale Q v w h • v) *
-        QuadraticMap.reflection Q w =
-      QuadraticMap.reflection Q v * QuadraticMap.reflection Q w
-    rw [reflection_smul_eq Q]
+    exact congrArg (fun x : V ≃ₗ[K] V => x * QuadraticMap.reflection Q w)
+      (reflection_smul_eq Q (reflectionPairScale Q v w h) v)
   apply Subtype.ext
   apply LinearEquiv.ext
   intro m
