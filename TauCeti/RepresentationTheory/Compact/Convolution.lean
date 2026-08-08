@@ -203,28 +203,19 @@ theorem convolutionCLM_zero :
 theorem convolutionCLM_add (k₁ k₂ : C(G, 𝕜)) :
     convolutionCLM (k₁ + k₂) = convolutionCLM k₁ + convolutionCLM k₂ := by
   ext f x
-  change convolutionCLM (k₁ + k₂) f x = convolutionCLM k₁ f x + convolutionCLM k₂ f x
-  rw [convolutionCLM_apply_apply, convolutionCLM_apply_apply, convolutionCLM_apply_apply]
-  change (∫ y, (k₁ (x * y⁻¹) + k₂ (x * y⁻¹)) * f y ∂(haarProb G)) = _
-  calc
-    _ = ∫ y, k₁ (x * y⁻¹) * f y + k₂ (x * y⁻¹) * f y ∂(haarProb G) :=
-      integral_congr_ae (Filter.Eventually.of_forall fun y => add_mul _ _ _)
-    _ = _ := integral_add (integrable_convolution_integrand k₁ f x)
-      (integrable_convolution_integrand k₂ f x)
+  simp only [add_apply, ContinuousMap.add_apply, convolutionCLM_apply_apply]
+  rw [← integral_add (integrable_convolution_integrand k₁ f x)
+    (integrable_convolution_integrand k₂ f x)]
+  exact integral_congr_ae (Filter.Eventually.of_forall fun y => add_mul _ _ _)
 
 /-- Convolution is compatible with scalar multiplication of its kernel. -/
 @[simp]
 theorem convolutionCLM_smul (c : 𝕜) (k : C(G, 𝕜)) :
     convolutionCLM (c • k) = c • convolutionCLM k := by
   ext f x
-  change convolutionCLM (c • k) f x = c • convolutionCLM k f x
-  rw [convolutionCLM_apply_apply, convolutionCLM_apply_apply]
-  change (∫ y, (c * k (x * y⁻¹)) * f y ∂(haarProb G)) =
-    c * ∫ y, k (x * y⁻¹) * f y ∂(haarProb G)
-  calc
-    _ = ∫ y, c * (k (x * y⁻¹) * f y) ∂(haarProb G) :=
-      integral_congr_ae (Filter.Eventually.of_forall fun y => mul_assoc _ _ _)
-    _ = _ := integral_const_mul c _
+  simp only [smul_apply, ContinuousMap.smul_apply, smul_eq_mul, convolutionCLM_apply_apply]
+  rw [← integral_const_mul c]
+  exact integral_congr_ae (Filter.Eventually.of_forall fun y => mul_assoc _ _ _)
 
 /-- **Convolution is bounded from `L²(G)` into `C(G)`:** the uniform norm of `k * f` is at most the
 product of the uniform norm of the kernel and the `L²` norm of `f`. Normalized Haar measure is a
