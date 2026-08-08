@@ -77,7 +77,8 @@ private theorem coordinateAlgHom_counit (b : Basis (Fin n) R M) :
       Bialgebra.counitAlgHom R (GeneralLinear.coordinateHopfAlgebra R n) := by
   apply GeneralLinear.coordinateHopfAlgebra_algHom_ext R n
   intro i j
-  simp
+  simp only [AlgHom.comp_apply, Bialgebra.counitAlgHom_apply, coordinateAlgHom_X,
+    counit_coefficientMatrix, GeneralLinear.coordinateHopfAlgebra_counit_X]
 
 private theorem coordinateAlgHom_comul (b : Basis (Fin n) R M) :
     (Algebra.TensorProduct.map (coordinateAlgHom (H := H) b) (coordinateAlgHom (H := H) b)).comp

@@ -60,14 +60,15 @@ variable [AddCommMonoid C] [Module R C] [Coalgebra R C] [Comodule R C M]
 /-- The matrix of basis matrix coefficients of a comodule.
 
 If `eⱼ` is a basis and `eⁱ` its coordinate functionals, the `(i, j)` entry is `c(eⁱ, eⱼ)`. -/
-@[expose] def coefficientMatrix (b : Basis ι R M) : Matrix ι ι C :=
+def coefficientMatrix (b : Basis ι R M) : Matrix ι ι C :=
   fun i j ↦ matrixCoefficient (R := R) (C := C) (b.coord i) (b j)
 
 /-- An entry of the coefficient matrix is the corresponding basis matrix coefficient. -/
+@[simp]
 theorem coefficientMatrix_apply (b : Basis ι R M) (i j : ι) :
     coefficientMatrix (C := C) b i j =
-      matrixCoefficient (R := R) (C := C) (b.coord i) (b j) :=
-  rfl
+      matrixCoefficient (R := R) (C := C) (b.coord i) (b j) := by
+  rw [coefficientMatrix]
 
 /-- The counit of a coefficient entry is the corresponding identity-matrix entry. -/
 @[simp]
