@@ -8,7 +8,7 @@ public import TauCeti.Analysis.CompletelyMonotone.Basic
 public import Mathlib.MeasureTheory.Measure.MeasureSpaceDef
 public import Mathlib.MeasureTheory.Measure.Typeclasses.Finite
 public import Mathlib.MeasureTheory.Integral.Bochner.Basic
-public import TauCeti.Analysis.CompletelyMonotone.LaplaceRepresentation
+public import TauCeti.Analysis.CompletelyMonotone.Laplace.Representation
 -- Non-public: the Chafaï approximating measures, their tightness, and the Prokhorov extraction are
 -- used only inside the proof; the statement mentions none of them.
 import TauCeti.Analysis.CompletelyMonotone.Bernstein.Tightness

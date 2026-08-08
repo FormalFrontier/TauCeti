@@ -7,7 +7,7 @@ module
 public import Mathlib.MeasureTheory.Integral.BoundedContinuousFunction
 public import Mathlib.Probability.Moments.Basic
 public import TauCeti.Analysis.CompletelyMonotone.Basic
-public import TauCeti.Analysis.CompletelyMonotone.LaplaceKernel
+public import TauCeti.Analysis.CompletelyMonotone.Laplace.Kernel
 -- Non-public: dominated convergence and the `mgf` derivative and analyticity calculus, all
 -- consumed inside proofs only (the latter through the bridge `laplaceTransform_eq_mgf`).
 import Mathlib.MeasureTheory.Integral.DominatedConvergence

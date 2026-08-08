@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Analysis.CompletelyMonotone.LaplaceRepresentation
+public import TauCeti.Analysis.CompletelyMonotone.Laplace.Representation
 -- Non-public: tightness criteria for the shifted representing measures.
 import Mathlib.MeasureTheory.Measure.TightNormed
 import Mathlib.Topology.Metrizable.CompletelyMetrizable
@@ -26,7 +26,7 @@ The hard direction applies Bernstein's existence theorem
 positive shifts `t ↦ f (t + a)`, which satisfy the strong `IsCompletelyMonotone` predicate,
 and passes to a weak cluster point of the representing measures as `a ↓ 0`; the tightness of
 that family is an elementary Laplace-kernel tail estimate. The easy direction and the
-uniqueness both live in `LaplaceRepresentation.lean`.
+uniqueness both live in `Laplace/Representation.lean`.
 
 ## Main declarations
 
