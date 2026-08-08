@@ -50,8 +50,6 @@ namespace Probability
 
 variable {ι κ : Type*} [Fintype ι] [Fintype κ]
 
-local instance : DecidableEq ι := Classical.decEq ι
-
 private noncomputable def eqAtEquiv (i j : ι) (hij : i ≠ j) :
     {x : ι → κ // x i = x j} ≃ ({a : ι // a ≠ j} → κ) := by
   classical
