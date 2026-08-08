@@ -50,18 +50,6 @@ variable [NormedAddCommGroup E] [NormedSpace ℝ E]
 variable [TopologicalSpace H] {I : ModelWithCorners ℝ E H}
 variable [TopologicalSpace M] [ChartedSpace H M] [IsManifold I ∞ M]
 
-private def constantEndomorphismSection {V : Type*} [NormedAddCommGroup V]
-    [NormedSpace ℝ V] (Jc : V →L[ℝ] V) :
-    ContMDiffSection (modelWithCornersSelf ℝ V) (V →L[ℝ] V) ∞
-      (fun x : V ↦ TangentSpace (modelWithCornersSelf ℝ V) x →L[ℝ]
-        TangentSpace (modelWithCornersSelf ℝ V) x) :=
-  ⟨fun _ ↦ Jc, by
-    intro x
-    rw [contMDiffAt_hom_bundle]
-    refine ⟨contMDiffAt_id, ?_⟩
-    simpa [inCoordinates_tangent_bundle_core_model_space] using
-      (contMDiffAt_const (x := x) (c := Jc))⟩
-
 /-- A smooth almost complex structure on a manifold is a smooth tangent-bundle endomorphism
 whose square is fiberwise minus the identity.
 
@@ -90,6 +78,8 @@ theorem toEndomorphism_injective :
   subst h
   rfl
 
+/-- A smooth almost complex structure is applied as `J x v`, evaluating its endomorphism of the
+tangent space at `x` on the tangent vector `v`. -/
 instance : CoeFun (SmoothAlmostComplexStructure I M) fun _ =>
     (x : M) → TangentSpace I x → TangentSpace I x :=
   ⟨fun J x ↦ J.toEndomorphism x⟩
@@ -180,6 +170,31 @@ lemma neg_neg (J : SmoothAlmostComplexStructure I M) : -(-J) = J := by
   ext x v
   simp
 
+/-- A continuous endomorphism of a normed space squaring to `-1` defines a constant smooth almost
+complex structure on the corresponding model manifold. -/
+private def constantModelSpace {V : Type*} [NormedAddCommGroup V] [NormedSpace ℝ V]
+    (Jc : V →L[ℝ] V) (hJc : ∀ v, Jc (Jc v) = -v) :
+    SmoothAlmostComplexStructure (modelWithCornersSelf ℝ V) V where
+  toEndomorphism :=
+    ⟨fun _ ↦ Jc, by
+      intro x
+      rw [contMDiffAt_hom_bundle]
+      refine ⟨contMDiffAt_id, ?_⟩
+      simpa [inCoordinates_tangent_bundle_core_model_space] using
+        (contMDiffAt_const (x := x) (c := Jc))⟩
+  square_neg := by
+    intro x
+    ext v
+    -- For the self model with identity corners, `TangentSpace` reduces definitionally to `V`;
+    -- Mathlib has no separate conversion lemma for this identification.
+    change Jc (Jc v) = -v
+    exact hJc v
+
+private lemma constantModelSpace_apply {V : Type*} [NormedAddCommGroup V] [NormedSpace ℝ V]
+    (Jc : V →L[ℝ] V) (hJc : ∀ v, Jc (Jc v) = -v) (x v : V) :
+    constantModelSpace Jc hJc x v = Jc v :=
+  (rfl)
+
 end SmoothAlmostComplexStructure
 
 namespace AlmostComplexStructure
@@ -189,23 +204,14 @@ variable {V : Type*} [NormedAddCommGroup V] [NormedSpace ℝ V] [FiniteDimension
 /-- A pointwise almost complex structure on a finite-dimensional normed vector space defines a
 constant smooth almost complex structure on the corresponding model manifold. -/
 def toSmoothModelSpace (J : AlmostComplexStructure V) :
-    SmoothAlmostComplexStructure (modelWithCornersSelf ℝ V) V := by
-  let Jc : V →L[ℝ] V := LinearMap.toContinuousLinearMap J.toLinearMap
-  exact
-    { toEndomorphism := constantEndomorphismSection Jc
-      square_neg := by
-        intro x
-        ext v
-        -- For the self model with identity corners, `TangentSpace` reduces definitionally to `V`;
-        -- Mathlib has no separate conversion lemma for this identification.
-        change J.toLinearMap (J.toLinearMap v) = -v
-        exact J.apply_apply v }
+    SmoothAlmostComplexStructure (modelWithCornersSelf ℝ V) V :=
+  SmoothAlmostComplexStructure.constantModelSpace (LinearMap.toContinuousLinearMap J.toLinearMap)
+    J.apply_apply
 
 @[simp]
 lemma toSmoothModelSpace_apply (J : AlmostComplexStructure V) (x v : V) :
-    J.toSmoothModelSpace x v = J v := by
-  rw [toSmoothModelSpace]
-  rfl
+    J.toSmoothModelSpace x v = J v :=
+  SmoothAlmostComplexStructure.constantModelSpace_apply _ _ x v
 
 @[simp]
 lemma toSmoothModelSpace_atPoint (J : AlmostComplexStructure V) (x : V) :
@@ -219,26 +225,14 @@ namespace SmoothAlmostComplexStructure
 
 /-- The standard smooth almost complex structure on `V × V`, sending `(v, w)` to `(-w, v)`. -/
 noncomputable def product (V : Type*) [NormedAddCommGroup V] [NormedSpace ℝ V] :
-    SmoothAlmostComplexStructure (modelWithCornersSelf ℝ (V × V)) (V × V) := by
-  let Jc : V × V →L[ℝ] V × V :=
-    (-ContinuousLinearMap.snd ℝ V V).prod (ContinuousLinearMap.fst ℝ V V)
-  exact
-    { toEndomorphism := constantEndomorphismSection Jc
-      square_neg := by
-        intro x
-        ext v
-        -- For the self model with identity corners, `TangentSpace` reduces definitionally to
-        -- `V × V`; Mathlib has no separate conversion lemma for this identification.
-        change Jc (Jc v) = -v
-        have hJc : Jc v = (-v.2, v.1) := by rfl
-        rw [hJc]
-        rfl }
+    SmoothAlmostComplexStructure (modelWithCornersSelf ℝ (V × V)) (V × V) :=
+  constantModelSpace ((-ContinuousLinearMap.snd ℝ V V).prod (ContinuousLinearMap.fst ℝ V V))
+    fun _ ↦ rfl
 
 @[simp]
 lemma product_apply {V : Type*} [NormedAddCommGroup V] [NormedSpace ℝ V] (x v : V × V) :
-    product V x v = (-v.2, v.1) := by
-  rw [product]
-  rfl
+    product V x v = (-v.2, v.1) :=
+  constantModelSpace_apply _ _ x v
 
 @[simp]
 lemma product_atPoint {V : Type*} [NormedAddCommGroup V] [NormedSpace ℝ V] (x : V × V) :
