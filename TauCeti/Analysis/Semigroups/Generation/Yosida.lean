@@ -215,7 +215,6 @@ theorem continuous_yosidaSemigroup (A : X →ₗ.[ℝ] X) (hA : IsMDissipative A
     (yosidaSemigroup_apply A hA lambda hlambda t).symm
 
 /-- The generator of the Yosida semigroup is the everywhere-defined Yosida approximation. -/
-@[simp]
 theorem yosidaSemigroup_generator (A : X →ₗ.[ℝ] X) (hA : IsMDissipative A) (lambda : ℝ)
     (hlambda : 0 < lambda) :
     (yosidaSemigroup A hA lambda hlambda).toStronglyContinuousSemigroup.generator =
