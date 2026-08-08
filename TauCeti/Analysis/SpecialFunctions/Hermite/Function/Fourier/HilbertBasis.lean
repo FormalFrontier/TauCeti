@@ -9,6 +9,7 @@ public import Mathlib.Analysis.Fourier.LpSpace
 public import TauCeti.Analysis.SpecialFunctions.Hermite.Function.Fourier.Basic
 public import TauCeti.Analysis.SpecialFunctions.Hermite.Function.HilbertBasis
 public import TauCeti.Analysis.SpecialFunctions.Hermite.Function.Schwartz
+import TauCeti.Probability.Distributions.Gaussian.PolynomialMemLp
 
 /-!
 # The Hermite functions diagonalize the Fourier transform of `L²(ℝ)`
@@ -193,6 +194,7 @@ theorem memLp_two_twoPiHermiteFunction (n : ℕ) :
   refine hdil.congr (Filter.Eventually.of_forall fun x => ?_)
   have hs : Real.sqrt (Real.sqrt (2 * Real.pi)) ^ 2 = Real.sqrt (2 * Real.pi) :=
     Real.sq_sqrt (Real.sqrt_nonneg _)
+  -- Unfold the dilated square and its Jacobian before expanding `twoPiHermiteFunction`.
   change Real.sqrt (2 * Real.pi) * hermiteFunction n (Real.sqrt (2 * Real.pi) * x) ^ 2
       = twoPiHermiteFunction n x ^ 2
   rw [twoPiHermiteFunction_def, mul_pow, hs]
@@ -395,6 +397,7 @@ theorem fourier_fourier_fourier_fourier (f : Lp ℂ 2 (volume : Measure ℝ)) :
     have h2 : (-Complex.I) ^ 2 = -1 := by
       rw [neg_pow]
       simp [Complex.I_sq]
+    -- Regroup the fourth power as the square of the square so that `h2` applies.
     rw [show (4 : ℕ) = 2 * 2 from rfl, pow_mul, h2]
     norm_num
   have hstep : ∀ (a : ℂ) (n : ℕ), 𝓕 (a • twoPiHermiteFunctionLp ℂ n)
@@ -405,6 +408,7 @@ theorem fourier_fourier_fourier_fourier (f : Lp ℂ 2 (volume : Measure ℝ)) :
       = twoPiHermiteFunctionLp ℂ n := by
     intro n
     have hpow : (-Complex.I) ^ n * (-Complex.I) ^ n * (-Complex.I) ^ n * (-Complex.I) ^ n = 1 := by
+      -- Combine the four copies of `n` into `4 * n` to use the fourth-root identity `hI`.
       rw [← pow_add, ← pow_add, ← pow_add, show n + n + n + n = 4 * n by ring, pow_mul, hI,
         one_pow]
     calc 𝓕 (𝓕 (𝓕 (𝓕 (twoPiHermiteFunctionLp ℂ n))))
