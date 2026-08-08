@@ -174,6 +174,18 @@ theorem rowLen_diagramOf {n : ℕ} (ν : n.Partition) (i : ℕ) :
     (diagramOf ν).rowLen i = (ν.parts.sort (· ≥ ·)).getD i 0 := by
   rw [← YoungDiagram.getD_rowLens, rowLens_diagramOf]
 
+/-- **The Young diagram of the partition `(1ⁿ)` is a single column**: every part is `1`, so every
+row has at most one cell. -/
+theorem rowLen_diagramOf_ones_le_one (n i : ℕ) :
+    (diagramOf (Nat.Partition.ones n)).rowLen i ≤ 1 := by
+  rw [rowLen_diagramOf, Nat.Partition.ones_parts]
+  rcases lt_or_ge i ((Multiset.replicate n 1).sort (· ≥ ·)).length with hi | hi
+  · rw [List.getD_eq_getElem _ _ hi]
+    exact le_of_eq (Multiset.eq_of_mem_replicate
+      ((Multiset.mem_sort (· ≥ ·)).mp (List.getElem_mem hi)))
+  · rw [List.getD_eq_default _ _ hi]
+    exact Nat.zero_le 1
+
 /-- The conjugate of a partition is obtained by transposing its Young diagram. -/
 noncomputable def conjugate {n : ℕ} (μ : n.Partition) : n.Partition :=
   (partitionEquivYoungDiagram n).symm
