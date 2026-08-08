@@ -31,13 +31,13 @@ diagonalizability theorem for the Cartan action; a weight `χ` enters the argume
 `LieModule.Weight.hasEigenvalueAt`, which extracts an honest eigenvector of a single `x : H` from a
 nonzero generalized weight space.
 
-The refinements `TauCeti.exists_nat_of_lie_coroot_eq_smul` and
-`TauCeti.exists_nat_neg_of_lie_coroot_eq_smul` replace `ℤ` by `ℕ` and by `-ℕ` for a vector on which
-`α^∨` acts by a scalar and which is killed by the root space `Lα`, respectively by `L₍₋α₎`: that is,
-for a highest, respectively lowest, weight vector in the `α` direction. The first is the form in
-which the classification of the finite-dimensional irreducibles consumes integrality: restricting a
-highest weight vector to the `sl₂` of each simple root is what forces its weight to be dominant
-integral.
+The refinements `TauCeti.exists_nat_of_lie_coroot_eq_smul_of_forall_rootSpace_lie_eq_zero` and
+`TauCeti.exists_nat_neg_of_lie_coroot_eq_smul_of_forall_rootSpace_neg_lie_eq_zero` replace `ℤ` by
+`ℕ` and by `-ℕ` for a vector on which `α^∨` acts by a scalar and which is killed by the root space
+`Lα`, respectively by `L₍₋α₎`: that is, for a highest, respectively lowest, weight vector in the
+`α` direction. The first is the form in which the classification of the finite-dimensional
+irreducibles consumes integrality: restricting a highest weight vector to the `sl₂` of each simple
+root is what forces its weight to be dominant integral.
 
 ## Main results
 
@@ -47,8 +47,9 @@ integral.
   finite-dimensional module and a root `α`, the value `χ (α^∨)` is an integer.
 * `TauCeti.exists_int_apply_of_mem_span_coroot`: a weight of a finite-dimensional module is
   `ℤ`-valued on the whole coroot lattice, the `ℤ`-span of the coroots.
-* `TauCeti.exists_nat_of_lie_coroot_eq_smul` and `TauCeti.exists_nat_neg_of_lie_coroot_eq_smul`: a
-  nonzero vector on which `α^∨` acts by the scalar `μ` and which is killed by the root space `Lα`,
+* `TauCeti.exists_nat_of_lie_coroot_eq_smul_of_forall_rootSpace_lie_eq_zero` and
+  `TauCeti.exists_nat_neg_of_lie_coroot_eq_smul_of_forall_rootSpace_neg_lie_eq_zero`: a nonzero
+  vector on which `α^∨` acts by the scalar `μ` and which is killed by the root space `Lα`,
   respectively `L₍₋α₎`, forces `μ` to be a natural number, respectively minus a natural number.
 * `TauCeti.genWeightSpaceOf_coroot_eq_bot_of_forall_ne_intCast`: the generalized eigenspace of a
   coroot at a non-integer scalar vanishes.
@@ -166,7 +167,8 @@ This is the step that turns the highest weight of a finite-dimensional irreducib
 integral weight, applied to each simple root in turn. Only the action of `α^∨` on `v` is
 constrained, and it is constrained by a genuine eigenvector equation, which is strictly stronger
 than membership of a generalized weight space. -/
-theorem exists_nat_of_lie_coroot_eq_smul {α : Weight K H L} (hα : α.IsNonZero) {μ : K} {v : M}
+theorem exists_nat_of_lie_coroot_eq_smul_of_forall_rootSpace_lie_eq_zero {α : Weight K H L}
+    (hα : α.IsNonZero) {μ : K} {v : M}
     (hv0 : v ≠ 0) (hv : ⁅((IsKilling.coroot α : H) : L), v⁆ = μ • v)
     (hve : ∀ e ∈ rootSpace H α, ⁅e, v⁆ = 0) :
     ∃ n : ℕ, μ = (n : K) := by
@@ -180,14 +182,16 @@ theorem exists_nat_of_lie_coroot_eq_smul {α : Weight K H L} (hα : α.IsNonZero
 /-- **A lowest weight vector in the `α` direction has a non-positive coroot value.** If a nonzero
 `v` is an eigenvector of the coroot `α^∨` of a nonzero root `α`, of eigenvalue `μ`, and is
 annihilated by the root space `L₍₋α₎`, then `μ` is minus a natural number. -/
-theorem exists_nat_neg_of_lie_coroot_eq_smul {α : Weight K H L} (hα : α.IsNonZero) {μ : K} {v : M}
+theorem exists_nat_neg_of_lie_coroot_eq_smul_of_forall_rootSpace_neg_lie_eq_zero
+    {α : Weight K H L} (hα : α.IsNonZero) {μ : K} {v : M}
     (hv0 : v ≠ 0) (hv : ⁅((IsKilling.coroot α : H) : L), v⁆ = μ • v)
     (hvf : ∀ f ∈ rootSpace H (-α), ⁅f, v⁆ = 0) :
     ∃ n : ℕ, μ = -(n : K) := by
   have hv' : ⁅((IsKilling.coroot (-α) : H) : L), v⁆ = (-μ) • v := by
     rw [IsKilling.coroot_neg]
     simp [hv]
-  obtain ⟨n, hn⟩ := exists_nat_of_lie_coroot_eq_smul (M := M) hα.neg hv0 hv' hvf
+  obtain ⟨n, hn⟩ :=
+    exists_nat_of_lie_coroot_eq_smul_of_forall_rootSpace_lie_eq_zero (M := M) hα.neg hv0 hv' hvf
   exact ⟨n, by rw [← hn, neg_neg]⟩
 
 end TauCeti
