@@ -25,6 +25,8 @@ circle.
 
 ## Main results
 
+* `TauCeti.exp_mul_I_sub_exp_mul_I` — the polar form of the chord: the half-angle sine rotated a
+  quarter turn past the midpoint direction.
 * `TauCeti.dist_circleExp_eq_two_mul_abs_sin` — the chord subtended by an arc of angle `θ` of the
   unit circle has length `2 * |sin (θ / 2)|`.
 * `TauCeti.dist_circleMap_eq_two_mul_abs_sin` — its form for the circle `circleMap ζ ρ` of arbitrary
@@ -88,6 +90,30 @@ private lemma dist_circleExp_eq_norm_exp_sub_one (a b : ℝ) :
     exact Subtype.dist_eq _ _
   rw [hdist, hfactor, norm_mul, Circle.norm_coe, mul_one, Circle.coe_exp,
     mul_comm ((a - b : ℝ) : ℂ) Complex.I]
+
+/-- **The polar chord identity on the unit circle**: the difference of two unit-circle
+points is the half-angle sine, rotated a quarter turn past the midpoint direction. -/
+theorem exp_mul_I_sub_exp_mul_I (α β : ℝ) :
+    Complex.exp (α * Complex.I) - Complex.exp (β * Complex.I) =
+      2 * (Real.sin ((α - β) / 2) : ℂ) * Complex.I *
+        Complex.exp ((((α + β) / 2 : ℝ) : ℂ) * Complex.I) := by
+  have hsin : Complex.exp ((((α - β) / 2 : ℝ) : ℂ) * Complex.I) -
+      Complex.exp (-(((α - β) / 2 : ℝ) : ℂ) * Complex.I) =
+      2 * Complex.sin (((α - β) / 2 : ℝ) : ℂ) * Complex.I := by
+    have h2 := Complex.two_sin ((((α - β) / 2 : ℝ) : ℂ))
+    linear_combination (-Complex.I) * h2 +
+      (Complex.exp ((((α - β) / 2 : ℝ) : ℂ) * Complex.I) -
+        Complex.exp (-(((α - β) / 2 : ℝ) : ℂ) * Complex.I)) * Complex.I_sq
+  have h1 : (α : ℂ) * Complex.I =
+      ((α + β) / 2 : ℝ) * Complex.I + (((α - β) / 2 : ℝ) : ℂ) * Complex.I := by
+    push_cast
+    ring
+  have h2 : (β : ℂ) * Complex.I =
+      ((α + β) / 2 : ℝ) * Complex.I + -(((α - β) / 2 : ℝ) : ℂ) * Complex.I := by
+    push_cast
+    ring
+  rw [h1, h2, Complex.exp_add, Complex.exp_add, ← mul_sub, hsin, ← Complex.ofReal_sin]
+  ring
 
 /-- **The chord formula for the unit circle**: two points of the circle at angles `a` and `b` are at
 distance `2 * |sin ((a - b) / 2)|`. -/
