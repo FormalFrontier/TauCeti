@@ -11,9 +11,8 @@ import Mathlib.MeasureTheory.Integral.IntegralEqImproper
 import Mathlib.MeasureTheory.Integral.BoundedContinuousFunction
 import TauCeti.Analysis.CompletelyMonotone.Closure
 public import TauCeti.Analysis.CompletelyMonotone.Integral
--- Non-public: the bundled Laplace kernel and its integrability; consumers should import
--- `CompletelyMonotone.LaplaceRepresentation` directly.
-import TauCeti.Analysis.CompletelyMonotone.LaplaceRepresentation
+-- Non-public: the bundled Laplace kernel and its integrability.
+import TauCeti.Analysis.CompletelyMonotone.LaplaceKernel
 
 /-!
 # Approximating measures for Bernstein's theorem
@@ -43,7 +42,7 @@ These build on the `IsCompletelyMonotone` API in `CompletelyMonotone/Basic.lean`
   `TauCeti.bernsteinKernel_tendsto`: the rescaled Laplace kernel, its bundled
   bounded-continuous `p`-dependence on the nonnegative half-line, and its pointwise limit
   `e^{-xp}` (bundled as `TauCeti.laplaceKernelBoundedContinuous` in
-  `CompletelyMonotone/LaplaceRepresentation.lean`).
+  `CompletelyMonotone/LaplaceKernel.lean`).
 * `TauCeti.integral_exp_neg_mul_add_smul_dirac_zero`: adjoining an atom `c • δ₀` adds exactly
   `c` to the transform, the kernel being `1` at `0`.
 * `TauCeti.chafaiRescaled`, `TauCeti.chafaiRescaled_mass_eq`: the `ℝ≥0`-valued pushed-forward

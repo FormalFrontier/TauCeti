@@ -5,11 +5,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.MeasureTheory.Integral.BoundedContinuousFunction
-public import Mathlib.MeasureTheory.Integral.DominatedConvergence
 public import Mathlib.Probability.Moments.Basic
 public import TauCeti.Analysis.CompletelyMonotone.Basic
--- Non-public: the `mgf` derivative and analyticity calculus, consumed through the bridge
--- `laplaceTransform_eq_mgf` in proofs only.
+public import TauCeti.Analysis.CompletelyMonotone.LaplaceKernel
+-- Non-public: dominated convergence and the `mgf` derivative and analyticity calculus, all
+-- consumed inside proofs only (the latter through the bridge `laplaceTransform_eq_mgf`).
+import Mathlib.MeasureTheory.Integral.DominatedConvergence
 import Mathlib.Probability.Moments.MGFAnalytic
 -- Non-public: `Measure.ext_of_forall_integral_exp_neg_natCast_mul_eq` supplies the
 -- Laplace-determinacy step in the uniqueness proof.
@@ -22,11 +23,24 @@ This file contains the Laplace-transform side of the finite-measure
 Hausdorff--Bernstein--Widder theorem on `ℝ≥0`: helper lemmas for finite-measure Laplace
 transforms and the predicate that a finite measure represents a function by its Laplace transform.
 
+## Main declarations
+
+* `TauCeti.laplaceTransform`: the Laplace transform of a measure on `ℝ≥0`, with its algebraic
+  API and the bridge `TauCeti.laplaceTransform_eq_mgf` to Mathlib's moment-generating function.
+* `TauCeti.RepresentsLaplace`: the predicate that a finite measure represents a function by its
+  Laplace transform on `[0, ∞)`, with `congr`/`add`/`smul`/`unique` API.
+* `TauCeti.isCompletelyMonotoneOnIci_laplaceTransform`,
+  `TauCeti.isCompletelyMonotone_laplaceTransform_of_moments`: the easy direction of the
+  representation theorem, in the closed-half-line and all-moments forms.
+* `TauCeti.Measure.ext_of_forall_laplaceTransform_natCast_eq`: finite measures are determined
+  by their Laplace transforms at the natural numbers.
+
 ## References
 
 The finite-measure representation is the Hausdorff--Bernstein--Widder theorem, after
-S. Bernstein (1928) and D. V. Widder, *The Laplace Transform*, Chapter IV. This file provides
-the Laplace-transform API used by the finite-measure representation theorem.
+S. Bernstein (1928) and D. V. Widder, *The Laplace Transform*, Chapter IV; see also
+R. Schilling, R. Song, Z. Vondraček, *Bernstein Functions* (de Gruyter, 2nd ed. 2012),
+Theorem 1.4. This file provides the Laplace-transform API used by the representation theorem.
 
 * Roadmap: `TauCetiRoadmap/OneParameterSemigroups/README.md`, Part B (Bernstein theorem
   milestone).
@@ -55,43 +69,7 @@ lemma laplaceTransform_apply (μ : Measure ℝ≥0) (t : ℝ) :
     laplaceTransform μ t = ∫ x, Real.exp (-(t * (x : ℝ))) ∂μ := by
   rw [laplaceTransform]
 
-/-- The Laplace kernel `p ↦ e^{-tp}` is continuous in the coordinate variable. -/
-lemma continuous_exp_neg_mul (t : ℝ) :
-    Continuous fun x : ℝ≥0 => Real.exp (-(t * (x : ℝ))) := by
-  fun_prop
 
-/-- For `0 ≤ x` the Laplace kernel is bounded by `1` on `ℝ≥0`. -/
-lemma exp_neg_mul_le_one {x : ℝ} (hx : 0 ≤ x) (p : ℝ≥0) :
-    Real.exp (-(x * (p : ℝ))) ≤ 1 := by
-  rw [Real.exp_le_one_iff]
-  exact neg_nonpos.mpr (mul_nonneg hx p.2)
-
-/-- The limiting Laplace kernel as a bundled bounded continuous test function of the
-nonnegative variable `p`, for fixed nonnegative `x`. -/
-noncomputable def laplaceKernelBoundedContinuous {x : ℝ} (hx : 0 ≤ x) : ℝ≥0 →ᵇ ℝ where
-  toFun := fun p => Real.exp (-(x * (p : ℝ)))
-  continuous_toFun := Real.continuous_exp.comp ((continuous_const.mul continuous_subtype_val).neg)
-  map_bounded' :=
-    ⟨1, fun p q => by
-      rw [Real.dist_eq]
-      have hp0 : 0 < Real.exp (-(x * (p : ℝ))) := Real.exp_pos _
-      have hp1 := exp_neg_mul_le_one hx p
-      have hq0 : 0 < Real.exp (-(x * (q : ℝ))) := Real.exp_pos _
-      have hq1 := exp_neg_mul_le_one hx q
-      exact abs_sub_le_iff.mpr ⟨by linarith, by linarith⟩⟩
-
-/-- The bundled limiting Laplace kernel evaluates to the usual exponential kernel on `ℝ≥0`. -/
-@[simp]
-lemma laplaceKernelBoundedContinuous_apply {x : ℝ} (hx : 0 ≤ x) (p : ℝ≥0) :
-    laplaceKernelBoundedContinuous hx p = Real.exp (-(x * (p : ℝ))) := by
-  rw [laplaceKernelBoundedContinuous]; rfl
-
-/-- **The Laplace kernel is integrable against a finite measure.** For `0 ≤ x` the kernel
-`p ↦ e^{-xp}` is bounded and continuous on `ℝ≥0`, hence integrable against any finite measure. -/
-lemma integrable_exp_neg_mul (μ : Measure ℝ≥0) [IsFiniteMeasure μ] {x : ℝ} (hx : 0 ≤ x) :
-    Integrable (fun p : ℝ≥0 => Real.exp (-(x * (p : ℝ)))) μ := by
-  have h := (laplaceKernelBoundedContinuous hx).integrable μ
-  rwa [funext (laplaceKernelBoundedContinuous_apply hx)] at h
 
 /-- The Laplace transform is the moment-generating function of the coordinate negation
 `p ↦ -p` on `ℝ≥0`. This bridge lets the transform consume Mathlib's `mgf` calculus. -/
@@ -143,14 +121,12 @@ lemma laplaceTransform_add_measure (μ ν : Measure ℝ≥0) {t : ℝ}
   exact mgf_add_measure (by simpa [integrableExpSet, mul_neg] using hμ)
     (by simpa [integrableExpSet, mul_neg] using hν)
 
-/-- Scaling the measure by a finite scalar `c : ℝ≥0` scales the Laplace transform by `c`.
-
-Stated for `c : ℝ≥0` rather than `ℝ≥0∞`: at the infinite scalar `∞ • μ` (infinite mass) the
-Bochner integral returns its junk value and `∞.toReal = 0`, so an `ℝ≥0∞` form would falsely read
-"scaling by infinity gives `0`". -/
-lemma laplaceTransform_smul_measure (c : ℝ≥0) (μ : Measure ℝ≥0) (t : ℝ) :
-    laplaceTransform ((c : ℝ≥0∞) • μ) t = (c : ℝ) * laplaceTransform μ t := by
-  simp only [laplaceTransform_eq_mgf, mgf_smul_measure, ENNReal.coe_toReal]
+/-- Scaling the measure scales the Laplace transform by `c.toReal`. Unconditional in
+`c : ℝ≥0∞`: at `c = ∞` both sides degenerate to `0`, the Bochner integral over the infinite
+scalar multiple vanishing together with `∞.toReal`. -/
+lemma laplaceTransform_smul_measure (c : ℝ≥0∞) (μ : Measure ℝ≥0) (t : ℝ) :
+    laplaceTransform (c • μ) t = c.toReal * laplaceTransform μ t := by
+  simp only [laplaceTransform_eq_mgf, mgf_smul_measure]
 
 /-- The Laplace transform of the Dirac mass at `x₀` is the exponential kernel `exp (-(t · x₀))`;
 the point masses are the building blocks of the representing mixtures. -/
@@ -187,7 +163,9 @@ theorem continuousOn_Ici_laplaceTransform (μ : Measure ℝ≥0) [IsFiniteMeasur
 
 /-- The `n`-th signed moment kernel integral attached to a Laplace transform.
 
-For `0 < t`, this is the `n`-th ordinary derivative of `laplaceTransform μ` at `t`. -/
+When the Laplace kernel is integrable against `μ` at every positive parameter, this is the
+`n`-th ordinary derivative of `laplaceTransform μ` at each `0 < t`
+(`iteratedDeriv_laplaceTransform_eq_laplaceMomentTransform`). -/
 private noncomputable def laplaceMomentTransform (μ : Measure ℝ≥0) (n : ℕ) (t : ℝ) : ℝ :=
   ∫ x : ℝ≥0, (-(x : ℝ)) ^ n * Real.exp (-(t * (x : ℝ))) ∂μ
 
@@ -353,11 +331,12 @@ private lemma hasDerivWithinAt_laplaceMomentTransform_zero (μ : Measure ℝ≥0
 
 At positive parameters this is the existing open-neighbourhood differentiation theorem; at `0`
 it is the one-sided dominated-convergence argument using the next moment as a bound. -/
-private lemma hasDerivWithinAt_laplaceMomentTransform_Ici (μ : Measure ℝ≥0) [IsFiniteMeasure μ]
+private lemma hasDerivWithinAt_laplaceMomentTransform_Ici (μ : Measure ℝ≥0)
     (hmom : ∀ n : ℕ, Integrable (fun x : ℝ≥0 => (x : ℝ) ^ n) μ)
     (n : ℕ) {t : ℝ} (ht : 0 ≤ t) :
     HasDerivWithinAt (laplaceMomentTransform μ n) (laplaceMomentTransform μ (n + 1) t)
       (Ici 0) t := by
+  have : IsFiniteMeasure μ := isFiniteMeasure_of_integrable_moments μ hmom
   by_cases ht_pos : 0 < t
   · exact (hasDerivAt_laplaceMomentTransform μ
       (fun u hu => integrable_exp_neg_mul μ hu.le) n ht_pos).hasDerivWithinAt
@@ -367,7 +346,7 @@ private lemma hasDerivWithinAt_laplaceMomentTransform_Ici (μ : Measure ℝ≥0)
 
 /-- The derivative within `[0, ∞)` of the `n`-th signed Laplace moment kernel is the next
 signed moment kernel. -/
-private lemma derivWithin_laplaceMomentTransform_eq (μ : Measure ℝ≥0) [IsFiniteMeasure μ]
+private lemma derivWithin_laplaceMomentTransform_eq (μ : Measure ℝ≥0)
     (hmom : ∀ n : ℕ, Integrable (fun x : ℝ≥0 => (x : ℝ) ^ n) μ)
     (n : ℕ) {t : ℝ} (ht : 0 ≤ t) :
     derivWithin (laplaceMomentTransform μ n) (Ici 0) t =
@@ -378,7 +357,7 @@ private lemma derivWithin_laplaceMomentTransform_eq (μ : Measure ℝ≥0) [IsFi
 /-- On the closed half-line, the iterated within-derivatives of a finite-measure Laplace transform
 with all moments finite are the signed moment kernel integrals. -/
 private lemma iteratedDerivWithin_laplaceTransform_eq_laplaceMomentTransform_Ici
-    (μ : Measure ℝ≥0) [IsFiniteMeasure μ]
+    (μ : Measure ℝ≥0)
     (hmom : ∀ n : ℕ, Integrable (fun x : ℝ≥0 => (x : ℝ) ^ n) μ)
     (n : ℕ) {t : ℝ} (ht : 0 ≤ t) :
     iteratedDerivWithin n (laplaceTransform μ) (Ici 0) t =
@@ -516,7 +495,7 @@ protected lemma smul {f : ℝ → ℝ} {μ : Measure ℝ≥0} (c : ℝ≥0)
     rw [Measure.smul_apply, smul_eq_mul]
     exact ENNReal.mul_lt_top ENNReal.coe_lt_top (measure_lt_top μ univ)
   refine ⟨inferInstance, fun t ht => ?_⟩
-  rw [laplaceTransform_smul_measure, ← hf.eq_laplaceTransform ht]
+  rw [laplaceTransform_smul_measure, ENNReal.coe_toReal, ← hf.eq_laplaceTransform ht]
 
 end RepresentsLaplace
 

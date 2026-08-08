@@ -7,6 +7,7 @@ module
 public import TauCeti.Analysis.CompletelyMonotone.LaplaceRepresentation
 -- Non-public: tightness criteria for the shifted representing measures.
 import Mathlib.MeasureTheory.Measure.TightNormed
+import Mathlib.Topology.Metrizable.CompletelyMetrizable
 -- Non-public: Bernstein's existence theorem supplies the representing measures of the shifts.
 import TauCeti.Analysis.CompletelyMonotone.Bernstein.Theorem
 -- Non-public: `finite_measure_cluster_limit` extracts the weak cluster point.
@@ -53,10 +54,12 @@ namespace TauCeti
 /-- A finite set of finite measures is tight: singletons are tight and tightness is closed
 under unions. (The empty case routes through an arbitrary singleton, as Mathlib has no
 dedicated empty-set tightness lemma.) -/
-private lemma isTightMeasureSet_of_finite {S : Set (Measure ℝ≥0)} (hS : S.Finite)
+private lemma isTightMeasureSet_of_finite {α : Type*} [MeasurableSpace α] [TopologicalSpace α]
+    [TopologicalSpace.IsCompletelyPseudoMetrizableSpace α] [SecondCountableTopology α]
+    [BorelSpace α] {S : Set (Measure α)} (hS : S.Finite)
     (hfin : ∀ ν ∈ S, IsFiniteMeasure ν) : IsTightMeasureSet S := by
   induction S, hS using Set.Finite.induction_on with
-  | empty => exact (isTightMeasureSet_singleton (μ := 0)).subset (empty_subset _)
+  | empty => exact (isTightMeasureSet_singleton (μ := (0 : Measure α))).subset (empty_subset _)
   | @insert ν S _ _ ih =>
       have : IsFiniteMeasure ν := hfin ν (mem_insert _ _)
       rw [insert_eq]
@@ -64,7 +67,9 @@ private lemma isTightMeasureSet_of_finite {S : Set (Measure ℝ≥0)} (hS : S.Fi
 
 /-- A finite family of finite measures is tight. -/
 private lemma isTightMeasureSet_range_finite
-    {ι : Type*} [Finite ι] (μ : ι → Measure ℝ≥0)
+    {α ι : Type*} [MeasurableSpace α] [TopologicalSpace α]
+    [TopologicalSpace.IsCompletelyPseudoMetrizableSpace α] [SecondCountableTopology α]
+    [BorelSpace α] [Finite ι] (μ : ι → Measure α)
     (hfin : ∀ i, IsFiniteMeasure (μ i)) :
     IsTightMeasureSet (Set.range μ) :=
   isTightMeasureSet_of_finite (finite_range μ) (by rintro ν ⟨i, rfl⟩; exact hfin i)
@@ -178,19 +183,17 @@ private lemma measure_closedBall_compl_le_of_representsLaplace_shift
 
 /-- The continuity-at-`0` step behind the tightness of the shifted representing measures: for any
 `η > 0` there is a positive shift `x` and an index `N` beyond which the Laplace gap-quotient
-`(f (aₙ) - f (x + aₙ)) / (1 - e⁻¹)` is at most `η`. Extracted from
-`isTightMeasureSet_range_of_representsLaplace_shift` so that theorem is the
-uniform-tail-plus-finite-prefix
-compactness assembly. -/
+`(f (aₙ) - f (x + aₙ)) / (1 - e⁻¹)` is at most `η`: the uniform-tail input to the tightness
+of the shifted representing measures. -/
 private lemma exists_shift_uniform_gap_bound
-    {f : ℝ → ℝ} (hf : IsCompletelyMonotoneOnIci f)
+    {f : ℝ → ℝ} (hf : ContinuousOn f (Ici 0))
     {a : ℕ → ℝ} (ha_pos : ∀ n, 0 < a n)
     (ha : Tendsto a atTop (𝓝 0))
     {η : ℝ} (hη : 0 < η) :
     ∃ x, 0 < x ∧ ∃ N, ∀ n, N ≤ n →
       (f (a n) - f (x + a n)) / (1 - Real.exp (-1)) ≤ η := by
   have hf_tendsto0 : Tendsto (fun n => f (a n)) atTop (𝓝 (f 0)) := by
-    simpa using tendsto_apply_add_of_continuousOn hf.continuousOn le_rfl ha_pos ha
+    simpa using tendsto_apply_add_of_continuousOn hf le_rfl ha_pos ha
   let c0 : ℝ := 1 - Real.exp (-1)
   have hc0_pos : 0 < c0 := by
     have hexp_lt : Real.exp (-1) < 1 := Real.exp_lt_one_iff.mpr (by norm_num)
@@ -207,7 +210,7 @@ private lemma exists_shift_uniform_gap_bound
     have hx_abs := abs_lt.mp hx_close
     linarith
   have hfx_tendsto : Tendsto (fun n => f (x + a n)) atTop (𝓝 (f x)) :=
-    tendsto_apply_add_of_continuousOn hf.continuousOn hx_pos.le ha_pos ha
+    tendsto_apply_add_of_continuousOn hf hx_pos.le ha_pos ha
   have hgap_tendsto :
       Tendsto (fun n => f (a n) - f (x + a n)) atTop (𝓝 (f 0 - f x)) :=
     hf_tendsto0.sub hfx_tendsto
@@ -228,7 +231,7 @@ The proof combines the finite initial-segment tightness with a uniform tail esti
 remaining shifts (`exists_shift_uniform_gap_bound`) and the Laplace-kernel tail bound
 `measure_closedBall_compl_le_of_representsLaplace_shift`. -/
 private lemma isTightMeasureSet_range_of_representsLaplace_shift
-    {f : ℝ → ℝ} (hf : IsCompletelyMonotoneOnIci f)
+    {f : ℝ → ℝ} (hf : ContinuousOn f (Ici 0))
     {a : ℕ → ℝ} (ha_pos : ∀ n, 0 < a n)
     (ha : Tendsto a atTop (𝓝 0))
     {μ : ℕ → Measure ℝ≥0}
@@ -297,13 +300,9 @@ private lemma measure_univ_le_of_representsLaplace_shift
     _ ≤ ENNReal.ofReal (f 0) :=
         ENNReal.ofReal_le_ofReal (hreal ▸ hf.le_apply_zero hδ.le)
 
-/-- Existence of a finite representing measure for the closed-half-line predicate.
-
-Bernstein's existence theorem is applied to the positive shifts `t ↦ f (t + a)`, which satisfy
-the stronger Tau Ceti predicate. As `a ↓ 0`, the representing measures are uniformly tight by an
-elementary Laplace-kernel tail estimate and hence have a weak cluster point. Continuity at `0`
-then identifies that cluster point as a representing measure for the original closed-half-line
-function. -/
+/-- **Existence half of the Hausdorff--Bernstein--Widder theorem**: a function continuous on
+`[0, ∞)` and completely monotone on `(0, ∞)` is the Laplace transform of a finite positive
+measure on `ℝ≥0`. -/
 theorem exists_representsLaplace_of_isCompletelyMonotoneOnIci
     {f : ℝ → ℝ} (hf : IsCompletelyMonotoneOnIci f) :
     ∃ μ : Measure ℝ≥0, RepresentsLaplace μ f := by
@@ -321,7 +320,7 @@ theorem exists_representsLaplace_of_isCompletelyMonotoneOnIci
     simpa [a] using Filter.Tendsto.const_div_atTop hden (1 : ℝ)
   -- Stage 2: representing measures for the shifted functions, from Bernstein's theorem.
   have hshift_cm : ∀ n, IsCompletelyMonotone (fun t : ℝ => f (t + a n)) :=
-    fun n => hf.isCompletelyMonotone_comp_add_const (ha_pos n)
+    fun n => hf.isCompletelyMonotoneOnIoi.isCompletelyMonotone_comp_add_const (ha_pos n)
   choose μ hμ using fun n =>
     exists_representsLaplace_of_isCompletelyMonotone (hshift_cm n)
   -- Stage 3: a uniform mass bound and tightness give a weak cluster point.
@@ -332,7 +331,7 @@ theorem exists_representsLaplace_of_isCompletelyMonotoneOnIci
         measure_univ_le_of_representsLaplace_shift hf (ha_pos n) (hμ n)
       _ = (C : ENNReal) := ENNReal.ofReal_eq_coe_nnreal hf.nonneg_zero
   have htight : IsTightMeasureSet (Set.range μ) :=
-    isTightMeasureSet_range_of_representsLaplace_shift hf ha_pos ha hμ
+    isTightMeasureSet_range_of_representsLaplace_shift hf.continuousOn ha_pos ha hμ
   obtain ⟨μ₀, U, hUle, hμ₀_fin, _hmass₀, hweak⟩ :=
     finite_measure_cluster_limit (σ := μ) C hmass htight
   -- Stage 4: identify the cluster point as a representing measure via continuity at `0⁺`.

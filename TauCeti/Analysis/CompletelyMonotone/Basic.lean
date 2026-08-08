@@ -326,6 +326,28 @@ lemma _root_.TauCeti.IsCompletelyMonotone.isCompletelyMonotoneOnIoi
   ⟨hf.contDiffOn.mono Ioi_subset_Ici_self,
     fun n _ ht => hf.neg_one_pow_mul_iteratedDeriv_nonneg n ht⟩
 
+/-- Positive right-translates of a function completely monotone on `(0, ∞)` satisfy the
+strong closed-half-line predicate: the shift moves the boundary into the open half-line, where
+all derivatives exist. Compare `IsCompletelyMonotone.comp_add_const`, which keeps the strong
+predicate under nonnegative translates. -/
+lemma isCompletelyMonotone_comp_add_const (hf : IsCompletelyMonotoneOnIoi f) {a : ℝ}
+    (ha : 0 < a) :
+    IsCompletelyMonotone (fun t : ℝ => f (t + a)) := by
+  refine ⟨?_, fun n t ht => ?_⟩
+  · have hmaps : MapsTo (fun t : ℝ => t + a) (Ici 0) (Ioi 0) := fun t ht =>
+      mem_Ioi.mpr (by linarith [mem_Ici.mp ht])
+    exact hf.contDiffOn.comp (by fun_prop) hmaps
+  · have htpa : 0 < t + a := by linarith
+    have hcont : ContDiffAt ℝ (n : WithTop ℕ∞) (fun t : ℝ => f (t + a)) t := by
+      have hc : ContDiffAt ℝ (n : WithTop ℕ∞) f (t + a) :=
+        (hf.contDiffOn.contDiffAt
+          (isOpen_Ioi.mem_nhds htpa)).of_le (by exact_mod_cast le_top)
+      simpa [Function.comp_def] using hc.comp t
+        (by fun_prop : ContDiffAt ℝ (n : WithTop ℕ∞) (fun t : ℝ => t + a) t)
+    rw [iteratedDerivWithin_eq_iteratedDeriv (uniqueDiffOn_Ici 0) hcont (mem_Ici.mpr ht),
+      iteratedDeriv_comp_add_const]
+    exact hf.neg_one_pow_mul_iteratedDeriv_nonneg n htpa
+
 end IsCompletelyMonotoneOnIoi
 
 /-! ## Closed-half-line complete monotonicity -/
@@ -375,6 +397,8 @@ lemma smul (hf : IsCompletelyMonotoneOnIci f) {c : ℝ} (hc : 0 ≤ c) :
     IsCompletelyMonotoneOnIci (c • f) :=
   ⟨hf.continuousOn.const_smul c, hf.isCompletelyMonotoneOnIoi.smul hc⟩
 
+
+
 /-- A closed-half-line completely monotone function is nonincreasing on `[0, ∞)`: the
 derivative is nonpositive on the interior and continuity extends the monotonicity to the
 endpoint. -/
@@ -402,27 +426,6 @@ lemma nonneg_zero (hf : IsCompletelyMonotoneOnIci f) : 0 ≤ f 0 :=
 lemma le_apply_zero (hf : IsCompletelyMonotoneOnIci f) {t : ℝ} (ht : 0 ≤ t) : f t ≤ f 0 :=
   hf.antitoneOn (mem_Ici.mpr le_rfl) (mem_Ici.mpr ht) ht
 
-/-- Positive right-translates of a closed-half-line completely monotone function satisfy the
-strong predicate; compare `IsCompletelyMonotone.comp_add_const`, which keeps the strong
-predicate under nonnegative translates. -/
-lemma isCompletelyMonotone_comp_add_const (hf : IsCompletelyMonotoneOnIci f) {a : ℝ}
-    (ha : 0 < a) :
-    IsCompletelyMonotone (fun t : ℝ => f (t + a)) := by
-  refine ⟨?_, fun n t ht => ?_⟩
-  · have hmaps : MapsTo (fun t : ℝ => t + a) (Ici 0) (Ioi 0) := by
-      intro t ht
-      exact (by linarith [mem_Ici.mp ht] : 0 < t + a)
-    exact hf.isCompletelyMonotoneOnIoi.contDiffOn.comp (by fun_prop) hmaps
-  · have htpa : 0 < t + a := by linarith
-    have hcont : ContDiffAt ℝ (n : WithTop ℕ∞) (fun t : ℝ => f (t + a)) t := by
-      have hc : ContDiffAt ℝ (n : WithTop ℕ∞) f (t + a) :=
-        (hf.isCompletelyMonotoneOnIoi.contDiffOn.contDiffAt
-          (isOpen_Ioi.mem_nhds htpa)).of_le (by exact_mod_cast le_top)
-      simpa [Function.comp_def] using hc.comp t
-        (by fun_prop : ContDiffAt ℝ (n : WithTop ℕ∞) (fun t : ℝ => t + a) t)
-    rw [iteratedDerivWithin_eq_iteratedDeriv (uniqueDiffOn_Ici 0) hcont (mem_Ici.mpr ht),
-      iteratedDeriv_comp_add_const]
-    exact hf.isCompletelyMonotoneOnIoi.neg_one_pow_mul_iteratedDeriv_nonneg n htpa
 
 /-- Closed-half-line complete monotonicity is determined by values on `[0, ∞)`. -/
 lemma congr (hf : IsCompletelyMonotoneOnIci f) (h : EqOn g f (Ici 0)) :
@@ -430,21 +433,38 @@ lemma congr (hf : IsCompletelyMonotoneOnIci f) (h : EqOn g f (Ici 0)) :
   refine ⟨hf.continuousOn.congr fun x hx => h hx, ?_⟩
   exact hf.isCompletelyMonotoneOnIoi.congr fun x hx => h (Ioi_subset_Ici_self hx)
 
+/-- Closed-half-line complete monotonicity is closed under finite sums. -/
+protected lemma sum {ι : Type*} {s : Finset ι} {F : ι → ℝ → ℝ}
+    (hF : ∀ i ∈ s, IsCompletelyMonotoneOnIci (F i)) :
+    IsCompletelyMonotoneOnIci (fun t => ∑ i ∈ s, F i t) := by
+  classical
+  induction s using Finset.induction_on with
+  | empty =>
+      simpa using of_isCompletelyMonotone (isCompletelyMonotone_const le_rfl)
+  | insert i s hi ih =>
+      have h : IsCompletelyMonotoneOnIci (F i + fun t => ∑ j ∈ s, F j t) :=
+        (hF i (Finset.mem_insert_self i s)).add
+          (ih fun j hj => hF j (Finset.mem_insert_of_mem hj))
+      exact h.congr fun t _ => by simp [Finset.sum_insert hi, Pi.add_apply]
+
 end IsCompletelyMonotoneOnIci
 
 namespace IsCompletelyMonotoneOnIci
 
 variable {f : ℝ → ℝ}
 
+/-- The `max`-truncation of a function antitone on `[0, ∞)` is antitone everywhere: the
+shared totalization step of the two order-limit lemmas below. -/
+private lemma antitone_comp_max (hf : AntitoneOn f (Ici 0)) :
+    Antitone fun t : ℝ => f (max t 0) := fun _ _ hab =>
+  hf (mem_Ici.mpr (le_max_right _ _)) (mem_Ici.mpr (le_max_right _ _)) (max_le_max_right 0 hab)
+
 /-- A closed-half-line completely monotone function has a limit `L ≥ 0` at infinity: it is
 antitone on `[0, ∞)` and bounded below by `0`. -/
 lemma exists_nonneg_tendsto_atTop (hf : IsCompletelyMonotoneOnIci f) :
     ∃ L, Tendsto f atTop (nhds L) ∧ 0 ≤ L := by
-  have hanti := hf.antitoneOn
   set g := fun t : ℝ => f (max t 0) with hg
-  have hg_anti : Antitone g := fun a b hab =>
-    hanti (mem_Ici.mpr (le_max_right _ _)) (mem_Ici.mpr (le_max_right _ _))
-      (max_le_max_right 0 hab)
+  have hg_anti : Antitone g := antitone_comp_max hf.antitoneOn
   have hg_bdd : BddBelow (Set.range g) :=
     ⟨0, fun _ ⟨t, ht⟩ => ht ▸ hf.nonneg (le_max_right _ _)⟩
   refine ⟨⨅ i, g i, ?_, le_ciInf (fun _ => hf.nonneg (le_max_right _ _))⟩
@@ -456,9 +476,7 @@ lemma exists_nonneg_tendsto_atTop (hf : IsCompletelyMonotoneOnIci f) :
 lemma le_of_tendsto_atTop (hcm : IsCompletelyMonotoneOnIci f) {L : ℝ}
     (hL : Tendsto f atTop (nhds L)) {T : ℝ} (hT : 0 ≤ T) : L ≤ f T := by
   set g₀ := fun t : ℝ => f (max t 0) with hg₀
-  have hg_anti : Antitone g₀ := fun a b hab =>
-    hcm.antitoneOn (mem_Ici.mpr (le_max_right _ _)) (mem_Ici.mpr (le_max_right _ _))
-      (max_le_max_right 0 hab)
+  have hg_anti : Antitone g₀ := antitone_comp_max hcm.antitoneOn
   have := hg_anti.le_of_tendsto
     (hL.congr' (eventually_atTop.mpr ⟨0, fun t ht => by simp [hg₀, max_eq_left ht]⟩)) T
   simpa [hg₀, max_eq_left hT] using this
