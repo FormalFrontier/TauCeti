@@ -103,6 +103,8 @@ theorem hasDerivAt_spatialFDeriv {F : 𝕜 × E → F'} {t : 𝕜} {x : E}
   have hDFdiff : DifferentiableAt 𝕜 DF (t, x) :=
     (hF.fderiv_right (m := 1) le_minSmoothness).differentiableAt one_ne_zero
   have hdiff : DifferentiableAt 𝕜 (spatialFDeriv F x) t := by
+    -- The differentiability goal contains the whole function `spatialFDeriv F x`, whereas
+    -- `spatialFDeriv_def` rewrites one parameter value, so lift it to a function equality.
     rw [show spatialFDeriv F x = fun s =>
       (DF (s, x)).comp (ContinuousLinearMap.inr 𝕜 𝕜 E) from
         funext (spatialFDeriv_def F x)]
@@ -126,6 +128,8 @@ theorem hasDerivAt_spatialFDeriv {F : 𝕜 × E → F'} {t : 𝕜} {x : E}
       (hDF.comp x (hasFDerivAt_prodMk_right t x)).clm_apply hone
     have hSpatial : HasFDerivAt (timeFDeriv F t) (fderiv 𝕜 DF (t, x) ∘L
         ContinuousLinearMap.inr 𝕜 𝕜 E |>.flip (1, 0)) x := by
+      -- Likewise, `hSpatialRaw` differentiates the entire parameter-velocity function, so lift
+      -- the pointwise accessor `timeFDeriv_apply` to identify its function argument.
       rw [show timeFDeriv F t = fun z => fderiv 𝕜 F (t, z) (1, 0) from
         funext (timeFDeriv_apply F t)]
       simpa only [DF, Function.comp_apply, map_zero, add_zero,
