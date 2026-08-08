@@ -54,7 +54,7 @@ The list `TauCeti.kernelBasis` is the algorithm's output and `TauCeti.freeColumn
 mathematical object; they are kept apart because a `Module.Basis` is not computable data, its
 `repr` field being built from the axiom of choice. Each statement about the list has a counterpart
 about the family indexed by the free columns, which is the indexing the proofs are done in, and
-`TauCeti.range_kernelVector_isFreeColumn` is the passage between the two.
+`TauCeti.range_kernelVector_freeColumn_eq_kernelBasis` is the passage between the two.
 
 ## References
 
@@ -98,7 +98,7 @@ theorem rowReducePivot_eq_pivotColumn (i : Fin (rowReduce L).length) :
   rowReducePivot_apply L i
 
 /-- The pivot column of a reduced row, as the column recorded alongside it. -/
-theorem pivotColumn_eq (i : Fin (rowReduce L).length) :
+theorem pivotColumn_apply (i : Fin (rowReduce L).length) :
     pivotColumn L i = ((rowReduce L).get i).1 :=
   rfl
 
@@ -115,7 +115,7 @@ theorem not_isFreeColumn_iff {c : Fin n} :
     obtain ⟨i, rfl⟩ := List.mem_iff_get.mp hq
     exact ⟨i, rfl⟩
   · rintro ⟨i, rfl⟩
-    exact ⟨(rowReduce L).get i, List.get_mem _ _, (pivotColumn_eq L i).symm⟩
+    exact ⟨(rowReduce L).get i, List.get_mem _ _, (pivotColumn_apply L i).symm⟩
 
 /-- The pivot column of a reduced row is not free. -/
 theorem not_isFreeColumn_pivotColumn (i : Fin (rowReduce L).length) :
@@ -124,14 +124,15 @@ theorem not_isFreeColumn_pivotColumn (i : Fin (rowReduce L).length) :
 
 /-- **The reduced rows are the identity on the pivot columns**: the `i`-th reduced row is `1` in
 its own pivot column and `0` in every other. -/
+@[simp]
 theorem rowReduceMatrix_pivotColumn (i i' : Fin (rowReduce L).length) :
     rowReduceMatrix L i (pivotColumn L i') = if i' = i then 1 else 0 := by
-  rw [rowReduceMatrix_apply, pivotColumn_eq]
+  rw [rowReduceMatrix_apply, pivotColumn_apply]
   rcases eq_or_ne i' i with rfl | hne
   · simpa using rowReduce_self L (List.get_mem _ _)
   · rw [if_neg hne]
     exact rowReduce_eq_zero_of_ne L (List.get_mem _ _) (List.get_mem _ _)
-      (by simpa only [← pivotColumn_eq] using (pivotColumn_injective L).ne hne)
+      (by simpa only [← pivotColumn_apply] using (pivotColumn_injective L).ne hne)
 
 /-! ## The kernel vectors -/
 
@@ -154,6 +155,7 @@ theorem kernelVector_apply (j c : Fin n) :
 variable {L}
 
 /-- A kernel vector is `1` in its own column and `0` in every other free column. -/
+@[simp]
 theorem kernelVector_apply_of_isFreeColumn {c : Fin n} (hc : IsFreeColumn L c) (j : Fin n) :
     kernelVector L j c = if c = j then 1 else 0 := by
   rw [kernelVector_apply, sub_eq_self]
@@ -234,6 +236,7 @@ theorem mulVec_eq_zero_iff_rowReduceMatrix (v : Fin n → F) :
   · exact fun h => funext fun i => h (A i) ((List.mem_ofFn' A (A i)).mpr ⟨i, rfl⟩)
 
 /-- **The kernel vectors lie in the kernel of the matrix.** -/
+@[simp]
 theorem mulVec_kernelVector (j : Fin n) : A *ᵥ kernelVector (List.ofFn A) j = 0 :=
   (mulVec_eq_zero_iff_rowReduceMatrix A _).mpr fun i => dotProduct_rowReduceMatrix_kernelVector i j
 
@@ -258,53 +261,57 @@ theorem linearIndependent_kernelVector :
   simpa only [Finset.sum_apply, Pi.smul_apply, Pi.single_apply, smul_eq_mul, mul_ite, mul_one,
     mul_zero, Finset.sum_ite_eq, if_pos hj, Pi.zero_apply] using congrFun hg j
 
+/-- **Every vector in the kernel is the sum of the kernel vectors of the free columns**, with its
+own values in the free columns as coefficients. -/
+theorem eq_sum_smul_kernelVector_of_mulVec_eq_zero {v : Fin n → F} (hv : A *ᵥ v = 0) :
+    v = ∑ j : {j : Fin n // IsFreeColumn (List.ofFn A) j},
+      v j.1 • kernelVector (List.ofFn A) j.1 := by
+  set L := List.ofFn A
+  have hrow : ∀ i, rowReduceMatrix L i ⬝ᵥ v = 0 := (mulVec_eq_zero_iff_rowReduceMatrix A v).mp hv
+  funext c
+  rw [Finset.sum_apply]
+  by_cases hc : IsFreeColumn L c
+  · rw [Finset.sum_eq_single (⟨c, hc⟩ : {j : Fin n // IsFreeColumn L j})
+      (fun j _ hne => by
+        rw [Pi.smul_apply, kernelVector_apply_of_isFreeColumn hc,
+          if_neg fun h => hne (Subtype.ext h.symm), smul_zero])
+      (fun h => absurd (Finset.mem_univ _) h)]
+    rw [Pi.smul_apply, kernelVector_self hc, smul_eq_mul, mul_one]
+  obtain ⟨i, rfl⟩ := (not_isFreeColumn_iff L).mp hc
+  have hfree : ∑ c ∈ Finset.univ.filter (IsFreeColumn L), rowReduceMatrix L i c * v c =
+      ∑ j : {j : Fin n // IsFreeColumn L j}, rowReduceMatrix L i j.1 * v j.1 :=
+    Finset.sum_subtype _ (fun x => by simp) _
+  have himg : Finset.univ.filter (fun c => ¬IsFreeColumn L c) =
+      Finset.image (pivotColumn L) Finset.univ := by
+    ext c
+    simp [not_isFreeColumn_iff]
+  have hpivot : ∑ c ∈ Finset.univ.filter (fun c => ¬IsFreeColumn L c),
+      rowReduceMatrix L i c * v c = v (pivotColumn L i) := by
+    rw [himg, Finset.sum_image fun x _ y _ h => pivotColumn_injective L h]
+    simp
+  have hzero : ∑ j : {j : Fin n // IsFreeColumn L j}, rowReduceMatrix L i j.1 * v j.1 +
+      v (pivotColumn L i) = 0 := by
+    rw [← hfree, ← hpivot, Finset.sum_filter_add_sum_filter_not]
+    simpa only [dotProduct] using hrow i
+  have hrhs : ∑ j : {j : Fin n // IsFreeColumn L j},
+      (v j.1 • kernelVector L j.1) (pivotColumn L i) =
+      -∑ j : {j : Fin n // IsFreeColumn L j}, rowReduceMatrix L i j.1 * v j.1 := by
+    rw [← Finset.sum_neg_distrib]
+    exact Finset.sum_congr rfl fun j _ => by
+      rw [Pi.smul_apply, kernelVector_pivotColumn j.2 i, smul_eq_mul, mul_neg, mul_comm]
+  rw [hrhs, eq_neg_iff_add_eq_zero, add_comm]
+  exact hzero
+
 /-- **The kernel vectors of the free columns span the kernel**: a vector in the kernel is the
 combination of them with its own values in the free columns as coefficients. -/
 theorem span_kernelVector :
     Submodule.span F (Set.range fun j : {j : Fin n // IsFreeColumn (List.ofFn A) j} =>
       kernelVector (List.ofFn A) j.1) = LinearMap.ker A.mulVecLin := by
-  set L := List.ofFn A
   refine le_antisymm (Submodule.span_le.mpr ?_) fun v hv => ?_
   · rintro _ ⟨j, rfl⟩
     exact LinearMap.mem_ker.mpr (mulVec_kernelVector A j.1)
   rw [LinearMap.mem_ker, Matrix.mulVecLin_apply] at hv
-  have hrow : ∀ i, rowReduceMatrix L i ⬝ᵥ v = 0 := (mulVec_eq_zero_iff_rowReduceMatrix A v).mp hv
-  have hsum : v = ∑ j : {j : Fin n // IsFreeColumn L j}, v j.1 • kernelVector L j.1 := by
-    funext c
-    rw [Finset.sum_apply]
-    by_cases hc : IsFreeColumn L c
-    · rw [Finset.sum_eq_single (⟨c, hc⟩ : {j : Fin n // IsFreeColumn L j})
-        (fun j _ hne => by
-          rw [Pi.smul_apply, kernelVector_apply_of_isFreeColumn hc,
-            if_neg fun h => hne (Subtype.ext h.symm), smul_zero])
-        (fun h => absurd (Finset.mem_univ _) h)]
-      rw [Pi.smul_apply, kernelVector_self hc, smul_eq_mul, mul_one]
-    obtain ⟨i, rfl⟩ := (not_isFreeColumn_iff L).mp hc
-    have hfree : ∑ c ∈ Finset.univ.filter (IsFreeColumn L), rowReduceMatrix L i c * v c =
-        ∑ j : {j : Fin n // IsFreeColumn L j}, rowReduceMatrix L i j.1 * v j.1 :=
-      Finset.sum_subtype _ (fun x => by simp) _
-    have himg : Finset.univ.filter (fun c => ¬IsFreeColumn L c) =
-        Finset.image (pivotColumn L) Finset.univ := by
-      ext c
-      simp [not_isFreeColumn_iff]
-    have hpivot : ∑ c ∈ Finset.univ.filter (fun c => ¬IsFreeColumn L c),
-        rowReduceMatrix L i c * v c = v (pivotColumn L i) := by
-      rw [himg, Finset.sum_image fun x _ y _ h => pivotColumn_injective L h]
-      simp only [rowReduceMatrix_pivotColumn]
-      simp
-    have hzero : ∑ j : {j : Fin n // IsFreeColumn L j}, rowReduceMatrix L i j.1 * v j.1 +
-        v (pivotColumn L i) = 0 := by
-      rw [← hfree, ← hpivot, Finset.sum_filter_add_sum_filter_not]
-      simpa only [dotProduct] using hrow i
-    have hrhs : ∑ j : {j : Fin n // IsFreeColumn L j},
-        (v j.1 • kernelVector L j.1) (pivotColumn L i) =
-        -∑ j : {j : Fin n // IsFreeColumn L j}, rowReduceMatrix L i j.1 * v j.1 := by
-      rw [← Finset.sum_neg_distrib]
-      exact Finset.sum_congr rfl fun j _ => by
-        rw [Pi.smul_apply, kernelVector_pivotColumn j.2 i, smul_eq_mul, mul_neg, mul_comm]
-    rw [hrhs, eq_neg_iff_add_eq_zero, add_comm]
-    exact hzero
-  rw [hsum]
+  rw [eq_sum_smul_kernelVector_of_mulVec_eq_zero A hv]
   exact Submodule.sum_mem _ fun j _ =>
     Submodule.smul_mem _ _ (Submodule.subset_span ⟨j, rfl⟩)
 
@@ -358,7 +365,7 @@ theorem mem_kernelBasis {v : Fin n → F} :
   simp [kernelBasis, List.mem_filter]
 
 /-- `TauCeti.kernelBasis` lists exactly the kernel vectors of the free columns. -/
-theorem range_kernelVector_isFreeColumn :
+theorem range_kernelVector_freeColumn_eq_kernelBasis :
     (Set.range fun j : {j : Fin n // IsFreeColumn (List.ofFn A) j} =>
       kernelVector (List.ofFn A) j.1) = {v : Fin n → F | v ∈ kernelBasis A} := by
   ext v
@@ -372,7 +379,7 @@ theorem range_kernelVector_isFreeColumn :
 /-- **The vectors the algorithm returns are linearly independent.** -/
 theorem linearIndepOn_kernelBasis :
     LinearIndepOn F id {v : Fin n → F | v ∈ kernelBasis A} := by
-  rw [← range_kernelVector_isFreeColumn]
+  rw [← range_kernelVector_freeColumn_eq_kernelBasis]
   exact (linearIndepOn_id_range_iff (linearIndependent_kernelVector A).injective).mpr
     (linearIndependent_kernelVector A)
 
@@ -385,7 +392,7 @@ theorem mulVec_eq_zero_of_mem_kernelBasis {v : Fin n → F} (hv : v ∈ kernelBa
 /-- **The vectors the algorithm returns span the kernel.** -/
 theorem span_kernelBasis :
     Submodule.span F {v : Fin n → F | v ∈ kernelBasis A} = LinearMap.ker A.mulVecLin := by
-  rw [← range_kernelVector_isFreeColumn, span_kernelVector]
+  rw [← range_kernelVector_freeColumn_eq_kernelBasis, span_kernelVector]
 
 /-- **The algorithm returns no vector twice.** -/
 theorem nodup_kernelBasis : (kernelBasis A).Nodup := by
@@ -400,7 +407,15 @@ theorem nodup_kernelBasis : (kernelBasis A).Nodup := by
 /-- **The algorithm returns `n - rank` vectors**: the rank-nullity theorem, counted off the
 output. -/
 theorem length_kernelBasis : (kernelBasis A).length = n - A.rank := by
+  have hnodup :
+      ((List.finRange n).filter fun j => decide (IsFreeColumn (List.ofFn A) j)).Nodup :=
+    (List.nodup_finRange n).filter _
+  have htoFinset :
+      ((List.finRange n).filter fun j => decide (IsFreeColumn (List.ofFn A) j)).toFinset =
+        Finset.univ.filter (IsFreeColumn (List.ofFn A)) := by
+    ext j
+    simp
   rw [kernelBasis, List.length_map, ← card_isFreeColumn A, Fintype.card_subtype]
-  rfl
+  rw [← List.toFinset_card_of_nodup hnodup, htoFinset]
 
 end TauCeti
