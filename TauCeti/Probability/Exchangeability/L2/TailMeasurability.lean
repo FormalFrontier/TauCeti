@@ -99,7 +99,8 @@ theorem Contractable.exists_tailProcess_measurable_cesaro_limit_of_memLp {μ : M
   have ha₀_lim : ∀ r : ℕ, Tendsto
       (fun m => ∫ ω, |blockAverage (fun i ω => f (X i ω))
         (fun j : Fin (m + 1) => r + (j : ℕ)) ω - a₀ ω| ∂μ) atTop (𝓝 0) := fun r =>
-    by simpa only [fixedStart_eq] using ha₀_lim' (fixedStart r) (injective_fixedStart r)
+    by simpa only [funext (fixedStart_apply r _)] using
+      ha₀_lim' (fixedStart r) (fixedStart_eventually_injective r)
   have ha₀_int : Integrable a₀ μ := MemLp.integrable le_rfl ha₀_L1
   -- Contractability carries square-integrability from coordinate `0` to every coordinate.
   have hY_L2 : ∀ i : ℕ, MemLp (fun ω => f (X i ω)) 2 μ := hX.memLp_comp hX_ae hf hf_L2

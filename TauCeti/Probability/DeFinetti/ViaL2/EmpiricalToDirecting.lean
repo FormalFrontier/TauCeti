@@ -57,9 +57,9 @@ theorem Contractable.tendsto_integral_abs_blockAverage_indicator_sub_directingMe
           (fun j : Fin (m + 1) => r + (j : ℕ)) ω
         - (μ[fun ω => Set.indicator B (fun _ => (1 : ℝ)) (X 0 ω) | tailProcess X]) ω| ∂μ)
       atTop (𝓝 0) := by
-    simpa only [fixedStart_eq] using
+    simpa only [funext (fixedStart_apply r _)] using
       hX.tendsto_integral_abs_blockAverage_sub_condExp hX_meas hf hf_bdd
-        (fixedStart r) (injective_fixedStart r)
+        (fixedStart r) (fixedStart_eventually_injective r)
   -- Normalise the composition wrapper so the rewrite matches without relying on defeq.
   have hdir : (fun ω => (directingMeasure μ X ω).real B)
       =ᵐ[μ] μ[fun ω => Set.indicator B (fun _ => (1 : ℝ)) (X 0 ω) | tailProcess X] := by

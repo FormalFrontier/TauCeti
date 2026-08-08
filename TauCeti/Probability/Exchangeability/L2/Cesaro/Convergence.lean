@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Probability.Exchangeability.L2.BlockAverages
+public import TauCeti.Probability.Process.DisjointWindow
 import TauCeti.MeasureTheory.Function.L2ToL1Convergence
 import TauCeti.Probability.Exchangeability.Map
 import TauCeti.MeasureTheory.Function.BoundedMemLp
@@ -21,15 +22,15 @@ roadmap. For a measurable real-valued observable `f` of a contractable process `
 (m + 1)⁻¹ ∑_{i ≤ m} f(X_{k m i})
 ```
 
-converge in `L¹` to the same measurable limit, for **every** selection `k` that is eventually
-injective at each length. The selection may *move* with the length: fixed-start windows
+converge in `L¹` to the same measurable limit, for **every** selection `k` that is injective for
+all sufficiently large lengths. The selection may *move* with the length: fixed-start windows
 `k m i = r + i` are one instance, and disjoint windows `k m i = c * (m + 1) + i` — which fixed
 starts cannot express — are another.
 
 The proof first applies the two-window identity
 `Contractable.integral_sq_blockAverage_sub_of_disjoint` to compare two prefix averages through a
 third block disjoint from both. This makes the prefixes Cauchy in Mathlib's complete `L²` space.
-The same disjoint-block comparison shows that every eventually-injective selection converges to
+The same disjoint-block comparison shows that every such selection converges to
 the prefix limit: its bound depends on the block *lengths* and not on their positions, so a
 comparison block beyond the selection's range is available at every length. Finally,
 `eLpNorm_le_eLpNorm_mul_rpow_measure_univ` turns the `L²` convergence into `L¹`
@@ -212,7 +213,8 @@ private theorem cauchySeq_blockAverage_prefix_toLp {μ : Measure Ω} [IsFiniteMe
   linarith
 
 /-- **Compare a moving injective selection with the prefix in `L²`.** The selection `k n` may move
-with the length `n + 1`; only *eventual* injectivity is needed, since the conclusion is a limit.
+with the length `n + 1`; injectivity is needed only for all sufficiently large lengths, since
+the conclusion is a limit.
 
 This is where the length-only bound of `dist_blockAverages_toLp_le_via_disjoint` earns its keep:
 that bound is `√(2(v−c)/n) + √(2(v−c)/m)`, depending on the two block *lengths* and not on where
@@ -272,7 +274,8 @@ limit.
 The selection `k m` may **move** with the length `m + 1`, and need only be injective
 *eventually* — finitely many degenerate initial selections cannot affect a limit. This costs
 nothing because the underlying `L²` comparison is bounded in terms of the block lengths and not
-their positions. Fixed starts are the instance `fixedStart r`, with `injective_fixedStart`.
+their positions. Fixed starts are the instance `fixedStart r`, with
+`fixedStart_eventually_injective`.
 Disjoint windows are the instance `k m j = c * (m + 1) + j`, which fixed starts cannot give:
 windows from distinct fixed starts overlap once the common length exceeds the gap between them.
 
@@ -334,15 +337,36 @@ def fixedStart (r : ℕ) : ∀ n : ℕ, Fin (n + 1) → ℕ := fun _ j => r + (j
 @[simp]
 theorem fixedStart_apply (r n : ℕ) (j : Fin (n + 1)) : fixedStart r n j = r + (j : ℕ) := (rfl)
 
-/-- The fixed-start selection as a function, for rewriting a raw `fun j => r + j` into the named
-form and back. -/
-theorem fixedStart_eq (r n : ℕ) : fixedStart r n = fun j : Fin (n + 1) => r + (j : ℕ) := (rfl)
-
-/-- The fixed-start selection is injective at every length, in the eventual form the
-moving-selection theorems take. -/
-theorem injective_fixedStart (r : ℕ) :
+/-- The fixed-start selection is injective at every length, hence for all sufficiently large
+lengths — the form the moving-selection theorems take. -/
+theorem fixedStart_eventually_injective (r : ℕ) :
     ∀ᶠ n in atTop, Function.Injective (fixedStart r n) :=
   Eventually.of_forall fun _ => (add_right_injective r).comp Fin.val_injective
+
+/-- The **disjoint-window selection**: at length `n + 1`, factor `c` reads the window
+`window (n + 1) c`, occupying `[(c + 1)(n + 1), (c + 2)(n + 1))`. -/
+def disjointWindow (c : ℕ) : ∀ n : ℕ, Fin (n + 1) → ℕ :=
+  fun n j => window (n + 1) c (j : ℕ)
+
+@[simp]
+theorem disjointWindow_apply (c n : ℕ) (j : Fin (n + 1)) :
+    disjointWindow c n j = window (n + 1) c (j : ℕ) := (rfl)
+
+/-- Each disjoint window is an injective selection at every length. -/
+theorem disjointWindow_eventually_injective (c : ℕ) :
+    ∀ᶠ n in atTop, Function.Injective (disjointWindow c n) := by
+  refine Eventually.of_forall fun n a b hab => ?_
+  simp only [disjointWindow_apply, window_def] at hab
+  exact Fin.ext (Nat.add_left_cancel hab)
+
+/-- **Distinct factors never collide.** The windows of two different factors are disjoint at every
+length, which is exactly what fixed starts cannot provide. -/
+theorem disjointWindow_ne {c c' : ℕ} (h : c ≠ c') (n : ℕ) (j j' : Fin (n + 1)) :
+    disjointWindow c n j ≠ disjointWindow c' n j' := by
+  simp only [disjointWindow_apply]
+  rcases lt_or_gt_of_ne h with hlt | hlt
+  · exact (window_lt_window j.isLt hlt).ne
+  · exact (window_lt_window j'.isLt hlt).ne'
 
 /-- **Bounded-observable form**, the shape the Layer 3 roadmap names. A uniform bound on `f` gives
 square-integrability of the composite on a finite measure space, so this is the direct entry point
