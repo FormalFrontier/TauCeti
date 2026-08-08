@@ -121,6 +121,7 @@ private theorem exp_yosidaApproximation_eq {A : X →ₗ.[ℝ] X} (lambda t : �
 theorem norm_exp_smul_yosidaApproximation_le_one {A : X →ₗ.[ℝ] X} {lambda t : ℝ}
     (hres : lambda * ‖LinearPMap.resolvent A lambda‖ ≤ 1) (hlambda : 0 < lambda) (ht : 0 ≤ t) :
     ‖exp (t • yosidaApproximation A lambda)‖ ≤ 1 := by
+  let +nondep : NormedAlgebra ℚ (X →L[ℝ] X) := .restrictScalars ℚ ℝ _
   calc
     ‖exp (t • yosidaApproximation A lambda)‖ =
         ‖exp ((-(t * lambda)) • (1 : X →L[ℝ] X)) *

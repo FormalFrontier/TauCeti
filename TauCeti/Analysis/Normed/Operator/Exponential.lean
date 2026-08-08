@@ -7,9 +7,9 @@ module
 public import Mathlib.Analysis.SpecialFunctions.Exponential
 
 /-!
-# Exponentials in real normed algebras
+# Exponentials in normed algebras
 
-This file records basic facts about the exponential in real normed algebras, including the
+This file records basic facts about the exponential in normed algebras, including the
 specialization to continuous linear endomorphisms of a real normed space.
 -/
 
@@ -19,18 +19,19 @@ open NormedSpace
 
 namespace TauCeti
 
-variable {𝔸 : Type*} [NormedRing 𝔸] [NormedAlgebra ℝ 𝔸]
+variable {𝔸 : Type*} [NormedRing 𝔸] [NormedAlgebra ℚ 𝔸]
 
-/-- In a real normed algebra whose unit has norm at most one, the exponential is norm-bounded by
+/-- In a normed algebra whose unit has norm at most one, the exponential is norm-bounded by
 the scalar exponential of the norm: `‖exp x‖ ≤ Real.exp ‖x‖`. -/
 theorem norm_exp_le_exp_norm (h_one : ‖(1 : 𝔸)‖ ≤ 1) (x : 𝔸) :
     ‖exp x‖ ≤ Real.exp ‖x‖ := by
-  rw [exp_eq_tsum ℝ]
-  refine (norm_tsum_le_tsum_norm (norm_expSeries_summable' (𝕂 := ℝ) x)).trans ?_
+  rw [exp_eq_tsum ℚ]
+  refine (norm_tsum_le_tsum_norm (norm_expSeries_summable' (𝕂 := ℚ) x)).trans ?_
   rw [Real.exp_eq_exp_ℝ, exp_eq_tsum ℝ]
-  refine Summable.tsum_le_tsum (fun n => ?_) (norm_expSeries_summable' (𝕂 := ℝ) x)
+  refine Summable.tsum_le_tsum (fun n => ?_) (norm_expSeries_summable' (𝕂 := ℚ) x)
     (expSeries_summable' (𝕂 := ℝ) ‖x‖)
-  rw [norm_smul, Real.norm_eq_abs, abs_of_nonneg (by positivity), smul_eq_mul]
+  rw [norm_smul, ← Rat.norm_cast_real, Real.norm_eq_abs, Rat.cast_inv, Rat.cast_natCast,
+    abs_of_nonneg (by positivity), smul_eq_mul]
   gcongr
   cases n with
   | zero => simpa only [pow_zero] using h_one
@@ -42,6 +43,7 @@ namespace ContinuousLinearMap
 
 /-- The exponential of a real scalar multiple of the identity operator is the corresponding
 scalar exponential times the identity. -/
+@[simp]
 theorem exp_smul_one (c : ℝ) :
     exp (c • (1 : X →L[ℝ] X)) = Real.exp c • 1 := by
   calc
