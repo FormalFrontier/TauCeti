@@ -241,8 +241,8 @@ theorem exists_isBounded_image_realWindingIntegrand_of_lipschitzOnWith_derivWith
       _ = ‖derivWithin γ (Icc t₀ d) t₀‖ / 2 := by field_simp; ring
       _ ≤ ‖derivWithin γ (Icc t₀ d) t₀‖ := half_le_self (norm_nonneg _)
 
-/-- **The reflected piece is differentiable.** `Mathlib`'s generic composition rule
-(`DifferentiableOn.comp`) applied to the everywhere-differentiable reflection map. -/
+/-- **The point-reflected piece is differentiable.** If `γ` is differentiable on `[c, t₀]`, then
+`s ↦ γ (2 * t₀ - s)` is differentiable on the mirrored piece `[t₀, 2 * t₀ - c]`. -/
 private theorem differentiableOn_comp_const_sub {γ : ℝ → ℂ} {c t₀ : ℝ}
     (hdiff : DifferentiableOn ℝ γ (Icc c t₀)) :
     DifferentiableOn ℝ (fun s => γ (2 * t₀ - s)) (Icc t₀ (2 * t₀ - c)) := by
@@ -250,12 +250,14 @@ private theorem differentiableOn_comp_const_sub {γ : ℝ → ℂ} {c t₀ : ℝ
     fun s hs => ⟨by linarith [hs.2], by linarith [hs.1]⟩
   exact hdiff.comp (differentiable_id.const_sub (2 * t₀)).differentiableOn hmap
 
-/-- **The reflected derivative, as `derivWithin`.** `Mathlib`'s `derivWithin_comp_const_sub`,
-specialized to the reflection through `t₀` and simplified from a pointwise-negated-and-shifted
-set to the plain `Icc c t₀` it amounts to here. -/
+/-- **The within-derivative of the point-reflected piece.** The within-derivative of
+`s ↦ γ (2 * t₀ - s)` on `[t₀, 2 * t₀ - c]` is minus `γ`'s own within-derivative on `[c, t₀]` at
+the reflected point. -/
 private theorem derivWithin_comp_const_sub_Icc (γ : ℝ → ℂ) (c t₀ t : ℝ) :
     derivWithin (fun s => γ (2 * t₀ - s)) (Icc t₀ (2 * t₀ - c)) t
       = -derivWithin γ (Icc c t₀) (2 * t₀ - t) := by
+  -- `Mathlib`'s `derivWithin_comp_const_sub`, simplified from a pointwise-negated-and-shifted set
+  -- to the plain `Icc c t₀` it amounts to here.
   have hset : 2 * t₀ +ᵥ -Icc t₀ (2 * t₀ - c) = Icc c t₀ := by
     ext x
     simp only [Set.mem_vadd_set, Set.mem_neg, Set.mem_Icc, vadd_eq_add]
@@ -264,9 +266,9 @@ private theorem derivWithin_comp_const_sub_Icc (γ : ℝ → ℂ) (c t₀ t : �
     · rintro ⟨hx1, hx2⟩; exact ⟨x - 2 * t₀, ⟨by linarith, by linarith⟩, by ring⟩
   rw [derivWithin_comp_const_sub, hset]
 
-/-- **The reflected piece is `C^{1,1}` with the same Lipschitz constant.** Combines
-`derivWithin_comp_const_sub_Icc` with `γ`'s own Lipschitz bound: reflection and negation are both
-isometries of `ℝ`/`ℂ`, so the point-reflected piece is Lipschitz with the *same* constant `K`. -/
+/-- **The point-reflected piece is `C^{1,1}` with the same Lipschitz constant.** If
+`derivWithin γ (Icc c t₀)` is `K`-Lipschitz, so is the within-derivative of the point-reflected
+piece `s ↦ γ (2 * t₀ - s)` on `[t₀, 2 * t₀ - c]`, with the *same* constant `K`. -/
 private theorem lipschitzOnWith_derivWithin_comp_const_sub {γ : ℝ → ℂ} {c t₀ : ℝ}
     {K : ℝ≥0} (hlip : LipschitzOnWith K (derivWithin γ (Icc c t₀)) (Icc c t₀)) :
     LipschitzOnWith K (derivWithin (fun s => γ (2 * t₀ - s)) (Icc t₀ (2 * t₀ - c)))
@@ -287,8 +289,7 @@ with the within-piece one strictly inside `[c, t₀]`) is bounded on a small eno
 `[t₀ - ρ, t₀]` -- no second derivative, pointwise or almost everywhere, is assumed to exist
 anywhere, and no assumption is made about `γ` to the right of `t₀`. As in `_right`, `deriv γ t₀`'s
 junk value at the crossing itself is harmless: the integrand there is `realWindingIntegrand 0 _`,
-independent of the velocity argument. This is the mirror case of `_right` above, proved by applying
-it to the point-reflected curve `s ↦ γ (2 * t₀ - s)` rather than repeating its proof. -/
+independent of the velocity argument. The mirror case of `_right` above. -/
 theorem exists_isBounded_image_realWindingIntegrand_of_lipschitzOnWith_derivWithin_left
     {γ : ℝ → ℂ} {w : ℂ} {c t₀ : ℝ} {K : ℝ≥0} (hct : c < t₀)
     (hdiff : DifferentiableOn ℝ γ (Icc c t₀))
@@ -296,6 +297,7 @@ theorem exists_isBounded_image_realWindingIntegrand_of_lipschitzOnWith_derivWith
     (h_eq : γ t₀ = w) (hvel : derivWithin γ (Icc c t₀) t₀ ≠ 0) :
     ∃ ρ > 0, ρ < t₀ - c ∧ Bornology.IsBounded
       ((fun t => realWindingIntegrand (γ t - w) (deriv γ t)) '' Icc (t₀ - ρ) t₀) := by
+  -- Apply `_right` to the point-reflected curve `γ'` rather than repeating its proof.
   set γ' : ℝ → ℂ := fun s => γ (2 * t₀ - s) with hγ'_def
   have hd'_gt : t₀ < 2 * t₀ - c := by linarith
   have hdiff' : DifferentiableOn ℝ γ' (Icc t₀ (2 * t₀ - c)) :=
