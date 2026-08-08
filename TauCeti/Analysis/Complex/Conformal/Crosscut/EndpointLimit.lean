@@ -372,28 +372,6 @@ theorem exists_clusterSetOn_circleMap_image_Ioo_eq_singleton (hUo : IsOpen U)
 
 /-! ## The two ends of a circular crosscut -/
 
-/-- Half the angular width of a genuine circular crosscut is positive. -/
-private lemma arccos_div_two_mul_pos (hρ : 0 < ρ) (hρr : ρ < 2 * r) :
-    0 < Real.arccos (ρ / (2 * r)) :=
-  Real.arccos_pos.mpr ((div_lt_one (by linarith)).mpr hρr)
-
-/-- Half the angular width of a genuine circular crosscut is below `π / 2`: a crosscut spans less
-than half of its circle. -/
-private lemma arccos_div_two_mul_lt_pi_div_two (hρ : 0 < ρ) (hρr : ρ < 2 * r) :
-    Real.arccos (ρ / (2 * r)) < π / 2 :=
-  Real.arccos_lt_pi_div_two.mpr (div_pos hρ (by linarith))
-
-/-- The open arc of angles of a genuine circular crosscut lies in the disc: by
-`TauCeti.ball_inter_sphere_eq_circleMap_image_Ioo` it parametrises the crosscut itself. -/
-private lemma circleMap_mem_ball_of_mem_Ioo (hζ : dist ζ c = r) (hρ : 0 < ρ) (hρr : ρ < 2 * r)
-    {θ : ℝ} (hθ : θ ∈ Ioo ((c - ζ).arg - Real.arccos (ρ / (2 * r)))
-      ((c - ζ).arg + Real.arccos (ρ / (2 * r)))) :
-    circleMap ζ ρ θ ∈ ball c r := by
-  have hmem : circleMap ζ ρ θ ∈ ball c r ∩ sphere ζ ρ := by
-    rw [ball_inter_sphere_eq_circleMap_image_Ioo hζ hρ hρr]
-    exact ⟨θ, hθ, rfl⟩
-  exact hmem.1
-
 /-- The angular integral of the length density over the arc of a genuine circular crosscut is
 finite as soon as `TauCeti.circleImageLength f (ball c r) ζ ρ` is: the crosscut lies in `ball c r`,
 so the indicator in the definition of the latter is inert along it, and the crosscut spans less
@@ -446,10 +424,8 @@ theorem subsingleton_clusterSetOn_ball_inter_sphere (hζ : dist ζ c = r) (hρ :
     (clusterSetOn f (ball c r ∩ sphere ζ ρ) e).Subsingleton := by
   have hφ0 := arccos_div_two_mul_pos hρ hρr
   have hφπ2 := arccos_div_two_mul_lt_pi_div_two hρ hρr
-  obtain ⟨θ₀, hθ₀, rfl⟩ : ∃ θ₀ ∈ Icc ((c - ζ).arg - Real.arccos (ρ / (2 * r)))
-      ((c - ζ).arg + Real.arccos (ρ / (2 * r))), circleMap ζ ρ θ₀ = e := by
-    rw [closedBall_inter_sphere_eq_circleMap_image_Icc hζ hρ hρr] at he
-    exact he
+  obtain ⟨θ₀, hθ₀, rfl⟩ :=
+    exists_mem_Icc_circleMap_eq_of_mem_closedBall_inter_sphere hζ hρ hρr he
   rw [ball_inter_sphere_eq_circleMap_image_Ioo hζ hρ hρr]
   exact subsingleton_clusterSetOn_circleMap_image_Ioo isOpen_ball hf ζ (by linarith)
     (by linarith [Real.pi_pos]) hθ₀ (fun _ hθ => circleMap_mem_ball_of_mem_Ioo hζ hρ hρr hθ)
@@ -468,10 +444,8 @@ theorem exists_tendsto_nhdsWithin_ball_inter_sphere (hζ : dist ζ c = r) (hρ :
     ∃ v, Tendsto f (𝓝[ball c r ∩ sphere ζ ρ] e) (𝓝 v) := by
   have hφ0 := arccos_div_two_mul_pos hρ hρr
   have hφπ2 := arccos_div_two_mul_lt_pi_div_two hρ hρr
-  obtain ⟨θ₀, hθ₀, rfl⟩ : ∃ θ₀ ∈ Icc ((c - ζ).arg - Real.arccos (ρ / (2 * r)))
-      ((c - ζ).arg + Real.arccos (ρ / (2 * r))), circleMap ζ ρ θ₀ = e := by
-    rw [closedBall_inter_sphere_eq_circleMap_image_Icc hζ hρ hρr] at he
-    exact he
+  obtain ⟨θ₀, hθ₀, rfl⟩ :=
+    exists_mem_Icc_circleMap_eq_of_mem_closedBall_inter_sphere hζ hρ hρr he
   rw [ball_inter_sphere_eq_circleMap_image_Ioo hζ hρ hρr]
   exact exists_tendsto_nhdsWithin_circleMap_image_Ioo isOpen_ball hf ζ (by linarith)
     (by linarith [Real.pi_pos]) hθ₀ (fun _ hθ => circleMap_mem_ball_of_mem_Ioo hζ hρ hρr hθ)
@@ -489,10 +463,8 @@ theorem exists_clusterSetOn_ball_inter_sphere_eq_singleton (hζ : dist ζ c = r)
     ∃ v, clusterSetOn f (ball c r ∩ sphere ζ ρ) e = {v} := by
   have hφ0 := arccos_div_two_mul_pos hρ hρr
   have hφπ2 := arccos_div_two_mul_lt_pi_div_two hρ hρr
-  obtain ⟨θ₀, hθ₀, rfl⟩ : ∃ θ₀ ∈ Icc ((c - ζ).arg - Real.arccos (ρ / (2 * r)))
-      ((c - ζ).arg + Real.arccos (ρ / (2 * r))), circleMap ζ ρ θ₀ = e := by
-    rw [closedBall_inter_sphere_eq_circleMap_image_Icc hζ hρ hρr] at he
-    exact he
+  obtain ⟨θ₀, hθ₀, rfl⟩ :=
+    exists_mem_Icc_circleMap_eq_of_mem_closedBall_inter_sphere hζ hρ hρr he
   rw [ball_inter_sphere_eq_circleMap_image_Ioo hζ hρ hρr]
   exact exists_clusterSetOn_circleMap_image_Ioo_eq_singleton isOpen_ball hf ζ (by linarith)
     (by linarith [Real.pi_pos]) hθ₀ (fun _ hθ => circleMap_mem_ball_of_mem_Ioo hζ hρ hρr hθ)
