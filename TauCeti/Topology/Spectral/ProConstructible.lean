@@ -47,10 +47,11 @@ Recall that Mathlib orders topologies by *reverse* inclusion of their open sets,
 * `TauCeti.IsCompact.isProConstructible` — a quasi-compact open subset is pro-constructible. It is
   in fact clopen for the constructible topology, which is what makes the two previous families
   interact.
-* `TauCeti.IsProConstructible.inter`, `.iInter`, `.sInter`, `.union` — the calculus of
-  pro-constructible subsets. Arbitrary intersections are allowed, arbitrary unions are not.
+* `TauCeti.IsProConstructible.inter`, `.iInter`, `.sInter`, `.union`, `.iUnion` — the calculus of
+  pro-constructible subsets. Arbitrary intersections and finite unions are allowed.
 * `TauCeti.IsProConstructible.preimage` — pro-constructibility is stable under preimage along a
-  spectral map; `TauCeti.IsProConstructible.prod` and `.pi` — and under products.
+  spectral map; `TauCeti.IsProConstructible.prod` and `.pi` — and under products when the ambient
+  factors complementary to each projection are quasi-compact.
 * `TauCeti.IsProConstructible.isCompact` — a pro-constructible subset of a spectral space is
   quasi-compact.
 * `TauCeti.IsProConstructible.mem_of_isGenericPoint` — the generic point of the closure of a
@@ -132,6 +133,24 @@ theorem IsProConstructible.union {s t : Set X} (hs : IsProConstructible s)
     (ht : IsProConstructible t) : IsProConstructible (s ∪ t) :=
   IsClosed.union hs ht
 
+/-- A finite indexed union of pro-constructible subsets is pro-constructible. -/
+theorem IsProConstructible.iUnion {ι : Type*} [Finite ι] {f : ι → Set X}
+    (hf : ∀ i, IsProConstructible (f i)) : IsProConstructible (⋃ i, f i) := by
+  rw [IsProConstructible, Set.preimage_iUnion]
+  exact isClosed_iUnion_of_finite hf
+
+/-- A union of pro-constructible subsets over a finite set is pro-constructible. -/
+theorem Set.Finite.isProConstructible_biUnion {ι : Type*} {I : Set ι} {f : ι → Set X}
+    (hI : I.Finite) (hf : ∀ i ∈ I, IsProConstructible (f i)) :
+    IsProConstructible (⋃ i ∈ I, f i) := by
+  simp only [IsProConstructible, Set.preimage_iUnion]
+  exact hI.isClosed_biUnion hf
+
+/-- A union of pro-constructible subsets over a finset is pro-constructible. -/
+theorem Finset.isProConstructible_biUnion {ι : Type*} (I : Finset ι) {f : ι → Set X}
+    (hf : ∀ i ∈ I, IsProConstructible (f i)) : IsProConstructible (⋃ i ∈ I, f i) :=
+  Set.Finite.isProConstructible_biUnion I.finite_toSet hf
+
 theorem IsProConstructible.iInter {ι : Sort*} {f : ι → Set X}
     (hf : ∀ i, IsProConstructible (f i)) : IsProConstructible (⋂ i, f i) := by
   rw [IsProConstructible, Set.preimage_iInter]
@@ -201,21 +220,22 @@ theorem isSpectralMap_eval {ι : Type*} {Z : ι → Type*} [∀ i, TopologicalSp
     · rw [Function.update_of_ne hj]
       exact hZ j hj
 
-/-- A product of two pro-constructible subsets is pro-constructible. -/
+/-- A product of two pro-constructible subsets in compact ambient spaces is pro-constructible. -/
 theorem IsProConstructible.prod [CompactSpace X] [CompactSpace Y] {s : Set X} {t : Set Y}
     (hs : IsProConstructible s) (ht : IsProConstructible t) : IsProConstructible (s ×ˢ t) := by
   rw [Set.prod_eq]
   exact (hs.preimage isProperMap_fst_of_compactSpace.isSpectralMap).inter
     (ht.preimage isProperMap_snd_of_compactSpace.isSpectralMap)
 
-/-- A product of a family of pro-constructible subsets is pro-constructible. -/
+/-- A product of a family of pro-constructible subsets is pro-constructible when, for each
+coordinate, every other ambient factor is quasi-compact. -/
 theorem IsProConstructible.pi {ι : Type*} {Z : ι → Type*} [∀ i, TopologicalSpace (Z i)]
-    [∀ i, CompactSpace (Z i)] {s : ∀ i, Set (Z i)} (hs : ∀ i, IsProConstructible (s i)) :
-    IsProConstructible (Set.pi univ s) := by
+    {s : ∀ i, Set (Z i)} (hZ : ∀ i j, j ≠ i → IsCompact (univ : Set (Z j)))
+    (hs : ∀ i, IsProConstructible (s i)) : IsProConstructible (Set.pi univ s) := by
   have hpi : Set.pi univ s = ⋂ i, (fun f : ∀ i, Z i ↦ f i) ⁻¹' s i := by ext f; simp
   rw [hpi]
   exact IsProConstructible.iInter fun i ↦
-    (hs i).preimage (isSpectralMap_eval i fun j _ ↦ isCompact_univ)
+    (hs i).preimage (isSpectralMap_eval i (hZ i))
 
 /-! ### Pro-constructible subspaces of a spectral space -/
 
