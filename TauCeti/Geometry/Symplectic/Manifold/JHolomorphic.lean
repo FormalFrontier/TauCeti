@@ -151,6 +151,16 @@ theorem isPseudoholomorphicWithinAt_iff_isComplexLinearMap :
   simp only [SmoothAlmostComplexStructure.almostComplexStructureAt_apply,
     ContinuousLinearMap.coe_coe]
 
+/-- Restate setwise pseudoholomorphicity as the pointwise within-set condition. -/
+theorem isPseudoholomorphicOn_iff :
+    IsPseudoholomorphicOn j J u s ↔ ∀ x ∈ s, IsPseudoholomorphicWithinAt j J u s x :=
+  Iff.rfl
+
+/-- Restate global pseudoholomorphicity as pointwise pseudoholomorphicity everywhere. -/
+theorem isPseudoholomorphic_iff :
+    IsPseudoholomorphic j J u ↔ ∀ x, IsPseudoholomorphicAt j J u x :=
+  Iff.rfl
+
 /-- The continuous-linear manifold derivative witnessing pseudoholomorphicity at a point. -/
 theorem IsPseudoholomorphicAt.hasMFDerivAt (hu : IsPseudoholomorphicAt j J u x) :
     HasMFDerivAt I I' u x
@@ -293,6 +303,17 @@ theorem IsPseudoholomorphicWithinAt.mono (hu : IsPseudoholomorphicWithinAt j J u
     (hst : s ⊆ t) : IsPseudoholomorphicWithinAt j J u s x := by
   obtain ⟨u', hu', hlin⟩ := hu
   exact ⟨u', hu'.mono hst, hlin⟩
+
+/-- A map pseudoholomorphic on a set is pseudoholomorphic within that set at each of its
+points. -/
+theorem IsPseudoholomorphicOn.isPseudoholomorphicWithinAt (hu : IsPseudoholomorphicOn j J u s)
+    (hx : x ∈ s) : IsPseudoholomorphicWithinAt j J u s x :=
+  hu x hx
+
+/-- A pseudoholomorphic map is pseudoholomorphic at every point. -/
+theorem IsPseudoholomorphic.isPseudoholomorphicAt (hu : IsPseudoholomorphic j J u) (x : M) :
+    IsPseudoholomorphicAt j J u x :=
+  hu x
 
 /-- Pseudoholomorphicity on a set passes to smaller sets. -/
 theorem IsPseudoholomorphicOn.mono (hu : IsPseudoholomorphicOn j J u t) (hst : s ⊆ t) :
