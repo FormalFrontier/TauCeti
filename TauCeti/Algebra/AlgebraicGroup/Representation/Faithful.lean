@@ -85,13 +85,6 @@ noncomputable def groupSchemeMap (b : Basis (Fin n) R M) :
         (Opposite.op (_root_.CommHopfAlgCat.of R H)) ⟶ GeneralLinear.groupScheme R n :=
   GeneralLinear.groupSchemeMap R n (coordinateHom (H := H) b)
 
-/-- The representation map is the general-linear group-scheme map induced by its coordinate
-Hopf-algebra morphism. -/
-theorem groupSchemeMap_def (b : Basis (Fin n) R M) :
-    groupSchemeMap (H := H) b =
-      GeneralLinear.groupSchemeMap R n (coordinateHom (H := H) b) :=
-  by rw [groupSchemeMap]
-
 /-- Under the canonical spectrum presentations, the underlying scheme morphism of the
 representation is induced by its coordinate Hopf-algebra morphism.
 
@@ -109,21 +102,14 @@ group scheme is a closed immersion. -/
 def IsFaithful (b : Basis (Fin n) R M) : Prop :=
   AlgebraicGeometry.IsClosedImmersion (groupSchemeMap (H := H) b).hom.hom.left
 
-/-- Faithfulness means that the group-scheme morphism associated to the based comodule is a
-closed immersion. -/
-theorem isFaithful_def (b : Basis (Fin n) R M) :
-    IsFaithful (H := H) b ↔
-      AlgebraicGeometry.IsClosedImmersion (groupSchemeMap (H := H) b).hom.hom.left :=
-  Iff.rfl
-
 /-- A based finite free comodule is faithful exactly when the coefficients of the comodule and
 its dual generate the ambient Hopf algebra. -/
 theorem isFaithful_iff_matrixCoefficientSubalgebraWithAntipode_eq_top
     (b : Basis (Fin n) R M) :
     IsFaithful (H := H) b ↔
       matrixCoefficientSubalgebraWithAntipode (R := R) (H := H) (M := M) = ⊤ := by
-  rw [isFaithful_def, groupSchemeMap_def,
-    GeneralLinear.isClosedImmersion_groupSchemeMap_iff,
+  unfold IsFaithful groupSchemeMap
+  rw [GeneralLinear.isClosedImmersion_groupSchemeMap_iff,
     ← BialgHom.coe_toAlgHom,
     hom_coordinateHom,
     ← AlgHom.range_eq_top,
