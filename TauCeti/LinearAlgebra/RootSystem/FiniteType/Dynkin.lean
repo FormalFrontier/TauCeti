@@ -52,17 +52,18 @@ private lemma posDef_of_gram {m n : Type*} [Fintype m] [Fintype n] [DecidableEq 
   exact hgram.symm ▸ _root_.Matrix.PosDef.conjTranspose_mul_self B hinjective
 
 /-- The determinant of the symmetrization `fun i j ↦ dᵢ Mᵢⱼ` of an integer matrix by a rational
-vector. Scaling the rows by `d` is the matrix product with `Matrix.diagonal d`, which splits the
-determinant into the product of the scalars and the integral determinant of `M`; that is the shape
-in which Mathlib's determinants of the exceptional Cartan matrices are used below. -/
+vector. This is the ℤ-to-ℚ cast bridge of `Matrix.det_mul_column`, which does the row scaling, with
+`Int.cast_det`, which returns the rational determinant of the cast matrix to the integral
+determinant of `M`; the result is the shape in which Mathlib's determinants of the exceptional
+Cartan matrices are used below. -/
 private lemma det_mul_intCast {n : Type*} [Fintype n] [DecidableEq n]
     (d : n → ℚ) (M : _root_.Matrix n n ℤ) :
     (_root_.Matrix.of fun i j ↦ d i * (M i j : ℚ)).det = (∏ i, d i) * (M.det : ℚ) := by
-  have hsplit : (_root_.Matrix.of fun i j ↦ d i * (M i j : ℚ))
-      = _root_.Matrix.diagonal d * M.map (fun x : ℤ ↦ (x : ℚ)) := by
+  have hmap : (_root_.Matrix.of fun i j ↦ d i * (M i j : ℚ))
+      = _root_.Matrix.of fun i j ↦ d i * M.map (fun x : ℤ ↦ (x : ℚ)) i j := by
     ext i j
-    simp [_root_.Matrix.diagonal_mul]
-  rw [hsplit, _root_.Matrix.det_mul, _root_.Matrix.det_diagonal, Int.cast_det]
+    simp
+  rw [hmap, _root_.Matrix.det_mul_column, ← Int.cast_det]
 
 private def rootsE : _root_.Matrix (Fin 8) (Fin 8) ℚ :=
   !![ 1 / 2,  1, -1,  0,  0,  0,  0,  0;
