@@ -60,6 +60,33 @@ theorem intervalIntegral_fdBoundary_segment4_eq_neg_segment1 {E : Type*}
   rw [fdBoundary_four_sub_vertical H ⟨hu.1.le, hu.2.le⟩,
     deriv_fdBoundary_four_sub_vertical H hu, hφ.sub_eq, neg_smul]
 
+/-- The right-vertical integrability of a period-`1` integrand reflects to the left
+vertical: the reflection carries the integrand to its negation through the translation
+and the periodicity. -/
+theorem intervalIntegrable_deriv_smul_fdBoundary_segment4 {E : Type*}
+    [NormedAddCommGroup E] [NormedSpace ℂ E] {H : ℝ} {φ : ℂ → E}
+    (hφ : Function.Periodic φ 1)
+    (hint : IntervalIntegrable (fun t ↦ deriv (fdBoundary H) t • φ (fdBoundary H t))
+      volume 0 1) :
+    IntervalIntegrable (fun t ↦ deriv (fdBoundary H) t • φ (fdBoundary H t))
+      volume 3 4 := by
+  have hI := (hint.neg.comp_sub_left 4).symm
+  have h41 : (4 : ℝ) - 1 = 3 := by norm_num
+  have h40 : (4 : ℝ) - 0 = 4 := by norm_num
+  rw [h40, h41] at hI
+  refine hI.congr_uIoo ?_
+  rw [Set.uIoo_of_le (by norm_num : (3 : ℝ) ≤ 4)]
+  intro x hx
+  have hu : 4 - x ∈ Ioo (0 : ℝ) 1 := ⟨by linarith [hx.2], by linarith [hx.1]⟩
+  have hval := fdBoundary_four_sub_vertical H ⟨hu.1.le, hu.2.le⟩
+  have hder := deriv_fdBoundary_four_sub_vertical H hu
+  have hxx : (4 : ℝ) - (4 - x) = x := by ring
+  rw [hxx] at hval hder
+  have hval' : fdBoundary H (4 - x) = fdBoundary H x + 1 := by linear_combination -hval
+  have hder' : deriv (fdBoundary H) (4 - x) = -deriv (fdBoundary H) x := by
+    linear_combination hder
+  simp only [Pi.neg_apply, hval', hder', hφ (fdBoundary H x), neg_smul, neg_neg]
+
 end ModularForm
 
 end TauCeti
