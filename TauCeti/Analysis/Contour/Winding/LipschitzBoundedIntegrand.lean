@@ -345,8 +345,7 @@ theorem exists_isBounded_image_realWindingIntegrand_of_lipschitzOnWith_derivWith
       have hDeq : deriv γ (2 * t₀ - t) = derivWithin γ (Icc c t₀) (2 * t₀ - t) :=
         (derivWithin_of_mem_nhds (Icc_mem_nhds hint2.1 hint2.2)).symm
       have hDeriv_eq : deriv γ' t = -deriv γ (2 * t₀ - t) := by
-        rw [hDeq', show γ' = fun s => γ (2 * t₀ - s) from hγ'_def,
-          derivWithin_comp_const_sub_Icc γ c t₀ t, hDeq]
+        rw [hDeq', hγ'_def, derivWithin_comp_const_sub_Icc γ c t₀ t, hDeq]
       -- Same defeq-not-syntactic gap as the `heq` case above: restate the position on both
       -- sides as `γ (2 * t₀ - t) - w` so the remaining rewrites only need to track the velocity.
       change realWindingIntegrand (γ (2 * t₀ - t) - w) (deriv γ (2 * t₀ - t))
