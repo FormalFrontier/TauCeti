@@ -212,23 +212,14 @@ theorem ofCoeffList_coeffList (p : R[X]) : ofCoeffList p.coeffList = p := by
       Option.getD_none]
     exact (coeff_eq_zero_of_natDegree_lt (by omega)).symm
 
-/-- Convolution of two coefficient lists in ascending degree order.  The output has the usual
-`l.length + m.length - 1` slots; if either input is empty, all of those slots are zero.  This
-cannot be `private`, since the exposed body of `TauCeti.Polynomial.mulCoeffList` mentions it. -/
-@[expose] def coeffConvolution (l m : List R) : List R :=
-  List.ofFn fun i : Fin (l.length + m.length - 1) =>
-    ∑ jk ∈ Finset.antidiagonal (i : ℕ), l.getD jk.1 0 * m.getD jk.2 0
-
-/-- Multiplication of descending coefficient lists.  This is `@[expose]`d, since a consumer
-computing with it in another module reduces it in the kernel. -/
+/-- Multiplication of descending coefficient lists, by convolving them in ascending degree order.
+The output has the usual `l.length + m.length - 1` slots; if either input is empty, all of those
+slots are zero.  This is `@[expose]`d, since a consumer computing with it in another module
+reduces it in the kernel. -/
 @[expose] def mulCoeffList (l m : List R) : List R :=
-  (coeffConvolution l.reverse m.reverse).reverse
-
-/-- `TauCeti.Polynomial.coeffConvolution` produces the usual `l.length + m.length - 1`
-coefficients. -/
-theorem length_coeffConvolution (l m : List R) :
-    (coeffConvolution l m).length = l.length + m.length - 1 := by
-  simp [coeffConvolution]
+  (List.ofFn fun i : Fin (l.length + m.length - 1) =>
+    ∑ jk ∈ Finset.antidiagonal (i : ℕ),
+      l.reverse.getD jk.1 0 * m.reverse.getD jk.2 0).reverse
 
 /-- `TauCeti.Polynomial.mulCoeffList` lists the coefficients of a product of polynomials. -/
 theorem ofCoeffList_mulCoeffList (l m : List R) :
@@ -237,10 +228,10 @@ theorem ofCoeffList_mulCoeffList (l m : List R) :
   rw [coeff_ofCoeffList, coeff_mul]
   by_cases hn : n < l.length + m.length - 1
   · rw [mulCoeffList, List.reverse_reverse, List.getD_eq_getElem]
-    · simp only [coeffConvolution, List.getElem_ofFn, coeff_ofCoeffList]
-    · simpa [length_coeffConvolution] using hn
+    · simp
+    · simpa using hn
   · rw [List.getD_eq_getElem?_getD,
-      List.getElem?_eq_none (by simp [mulCoeffList, length_coeffConvolution]; omega),
+      List.getElem?_eq_none (by simp [mulCoeffList]; omega),
       Option.getD_none]
     simp only [coeff_ofCoeffList]
     symm
