@@ -21,6 +21,14 @@ cyclotomic reduction from `TauCeti.RingTheory.Polynomial.Cyclotomic.Computable`.
 The ring is identified with Mathlib's `AdjoinRoot (Polynomial.cyclotomic e ℤ)`.  For nonzero `e`,
 evaluation at `exp (2 * π * I / e)` then gives the distinguished embedding into `ℂ` used to state
 the correctness of exact character-table computations.
+
+The interface followed here is the one blueprinted in the character-theory roadmap
+(`RepresentationTheory/CharacterTheory/README.md` in TauCetiRoadmap, Layer 6: "Exact cyclotomic
+arithmetic", whose `Suggested.lean` pins `Cyclotomic e` with its `CommRing` instance, the
+generator `ζ_e` as the class of `X`, the reduction to `ZMod p`, and the *pinned* embedding into
+`ℂ` as a ring homomorphism together with its injectivity).  The choice of `exp (2 * π * I / e)`
+for that pin, of descending coefficient lists as the representation, and the identification with
+`AdjoinRoot` rather than the roadmap's `CyclotomicRing e ℤ ℚ` are this file's.
 -/
 
 public section
@@ -32,20 +40,24 @@ namespace TauCeti
 /-! ## Computable coefficient arithmetic -/
 
 /-- Convolution of two coefficient lists in ascending degree order.  The output has the usual
-`l.length + m.length - 1` slots; if either input is empty, all of those slots are zero. -/
-private def coeffConvolution (l m : List ℤ) : List ℤ :=
+`l.length + m.length - 1` slots; if either input is empty, all of those slots are zero.  This
+cannot be `private`, since the exposed body of `TauCeti.mulCoeffList` mentions it. -/
+@[expose] def coeffConvolution (l m : List ℤ) : List ℤ :=
   List.ofFn fun i : Fin (l.length + m.length - 1) =>
     ∑ jk ∈ Finset.antidiagonal (i : ℕ), l.getD jk.1 0 * m.getD jk.2 0
 
-/-- Multiplication of descending coefficient lists. -/
-private def mulCoeffList (l m : List ℤ) : List ℤ :=
+/-- Multiplication of descending coefficient lists.  This cannot be `private`, since the exposed
+body of `TauCeti.Cyclotomic.mul` mentions it. -/
+@[expose] def mulCoeffList (l m : List ℤ) : List ℤ :=
   (coeffConvolution l.reverse m.reverse).reverse
 
-private theorem length_coeffConvolution (l m : List ℤ) :
+/-- `TauCeti.coeffConvolution` produces the usual `l.length + m.length - 1` coefficients. -/
+theorem length_coeffConvolution (l m : List ℤ) :
     (coeffConvolution l m).length = l.length + m.length - 1 := by
   simp [coeffConvolution]
 
-private theorem ofCoeffList_mulCoeffList (l m : List ℤ) :
+/-- `TauCeti.mulCoeffList` lists the coefficients of a product of polynomials. -/
+theorem ofCoeffList_mulCoeffList (l m : List ℤ) :
     ofCoeffList (mulCoeffList l m) = ofCoeffList l * ofCoeffList m := by
   ext n
   rw [coeff_ofCoeffList, coeff_mul]
@@ -117,10 +129,7 @@ theorem coeffs_ofCoeffList (e : ℕ) (l : List ℤ) :
 
 /-- Polynomial convolution followed by canonical cyclotomic reduction. -/
 @[expose] def mul (x y : Cyclotomic e) : Cyclotomic e :=
-  ofCoeffList e
-    ((List.ofFn fun i : Fin (x.coeffs.length + y.coeffs.length - 1) =>
-      ∑ jk ∈ Finset.antidiagonal (i : ℕ),
-        x.coeffs.reverse.getD jk.1 0 * y.coeffs.reverse.getD jk.2 0).reverse)
+  ofCoeffList e (mulCoeffList x.coeffs y.coeffs)
 
 instance : Zero (Cyclotomic e) := ⟨zero e⟩
 instance : One (Cyclotomic e) := ⟨one e⟩
@@ -159,7 +168,11 @@ theorem toAdjoinRoot_injective : Function.Injective (toAdjoinRoot : Cyclotomic e
   simp only [toAdjoinRoot, AdjoinRoot.modByMonicHom_mk, modByMonic_toPolynomial] at h'
   exact ext (eq_of_length_eq_of_ofCoeffList_eq (x.length_coeffs.trans y.length_coeffs.symm) h')
 
-private theorem toAdjoinRoot_ofCoeffList (l : List ℤ) :
+/-- The comparison map sends the exact cyclotomic integer built from a coefficient list to the
+class of the polynomial with those coefficients: reduction modulo `Φ_e` is invisible in the
+quotient. -/
+@[simp]
+theorem toAdjoinRoot_ofCoeffList (l : List ℤ) :
     toAdjoinRoot (ofCoeffList e l) = AdjoinRoot.mk _ (TauCeti.Polynomial.ofCoeffList l) := by
   rw [toAdjoinRoot, toPolynomial, coeffs_ofCoeffList, ofCoeffList_modByCyclotomic,
     AdjoinRoot.mk_eq_mk]
@@ -205,12 +218,8 @@ theorem toAdjoinRoot_neg (x : Cyclotomic e) :
 @[simp]
 theorem toAdjoinRoot_mul (x y : Cyclotomic e) :
     toAdjoinRoot (x * y) = toAdjoinRoot x * toAdjoinRoot y := by
-  have hmul : x * y = ofCoeffList e (mulCoeffList x.coeffs y.coeffs) := by
-    simp only [HMul.hMul, Mul.mul, mul, mulCoeffList, coeffConvolution, List.length_reverse]
-    apply ext
-    rfl
-  rw [hmul, toAdjoinRoot_ofCoeffList, toAdjoinRoot, toAdjoinRoot, ← map_mul,
-    ofCoeffList_mulCoeffList]
+  rw [show x * y = ofCoeffList e (mulCoeffList x.coeffs y.coeffs) from rfl,
+    toAdjoinRoot_ofCoeffList, toAdjoinRoot, toAdjoinRoot, ← map_mul, ofCoeffList_mulCoeffList]
   simp only [toPolynomial]
 
 @[simp]
@@ -352,9 +361,9 @@ theorem equivAdjoinRoot_apply (x : Cyclotomic e) : equivAdjoinRoot x = toAdjoinR
 
 @[simp]
 theorem toAdjoinRoot_zeta : toAdjoinRoot (zeta e) = AdjoinRoot.root (cyclotomic e ℤ) := by
-  rw [zeta, toAdjoinRoot_ofCoeffList]
-  rw [show TauCeti.Polynomial.ofCoeffList ([1, 0] : List ℤ) = X by
-    simp [TauCeti.Polynomial.ofCoeffList_cons], AdjoinRoot.mk_X]
+  have hX : TauCeti.Polynomial.ofCoeffList ([1, 0] : List ℤ) = X := by
+    simp [TauCeti.Polynomial.ofCoeffList_cons]
+  rw [zeta, toAdjoinRoot_ofCoeffList, hX, AdjoinRoot.mk_X]
 
 /-! ## Evaluation and residue maps -/
 
@@ -362,6 +371,13 @@ theorem toAdjoinRoot_zeta : toAdjoinRoot (zeta e) = AdjoinRoot.root (cyclotomic 
 @[expose] noncomputable def evalRingHom {R : Type*} [CommRing R] (f : ℤ →+* R) (r : R)
     (hr : (cyclotomic e ℤ).eval₂ f r = 0) : Cyclotomic e →+* R :=
   (AdjoinRoot.lift f r hr).comp toAdjoinRootRingHom
+
+/-- Evaluation at a root of `Φ_e` is evaluation of the canonical polynomial representative. -/
+theorem evalRingHom_apply {R : Type*} [CommRing R] (f : ℤ →+* R) (r : R)
+    (hr : (cyclotomic e ℤ).eval₂ f r = 0) (x : Cyclotomic e) :
+    evalRingHom f r hr x = x.toPolynomial.eval₂ f r := by
+  rw [evalRingHom, RingHom.comp_apply, toAdjoinRootRingHom_apply, toAdjoinRoot,
+    AdjoinRoot.lift_mk]
 
 @[simp]
 theorem evalRingHom_ofCoeffList {R : Type*} [CommRing R] (f : ℤ →+* R) (r : R)
@@ -419,6 +435,9 @@ theorem reduceRingHom_apply (p : ℕ) [Fact p.Prime] [NeZero e]
 /-- The distinguished complex primitive `e`-th root `exp (2πi/e)`. -/
 noncomputable def complexRoot (e : ℕ) : ℂ := Complex.exp (2 * Real.pi * Complex.I / e)
 
+/-- For nonzero `e`, the distinguished root `TauCeti.Cyclotomic.complexRoot e = exp (2πi/e)` is a
+primitive `e`-th root of unity.  This is what pins which complex root `ζ` names, and hence which
+embedding `TauCeti.Cyclotomic.complexEmbedding` is. -/
 theorem isPrimitiveRoot_complexRoot [NeZero e] : IsPrimitiveRoot (complexRoot e) e :=
   Complex.isPrimitiveRoot_exp e (NeZero.ne e)
 
@@ -433,6 +452,11 @@ theorem eval₂_cyclotomic_complexRoot [NeZero e] :
 noncomputable def complexEmbedding [NeZero e] : Cyclotomic e →+* ℂ :=
   evalRingHom (Int.castRingHom ℂ) (complexRoot e) eval₂_cyclotomic_complexRoot
 
+/-- The pinned embedding evaluates the canonical polynomial representative at `exp (2πi/e)`. -/
+theorem complexEmbedding_apply [NeZero e] (x : Cyclotomic e) :
+    complexEmbedding x = Polynomial.aeval (complexRoot e) x.toPolynomial := by
+  rw [complexEmbedding, evalRingHom_apply, aeval_def, algebraMap_int_eq]
+
 @[simp]
 theorem complexEmbedding_zeta [NeZero e] : complexEmbedding (zeta e) = complexRoot e := by
   rw [complexEmbedding, zeta, evalRingHom_ofCoeffList]
@@ -444,8 +468,7 @@ theorem complexEmbedding_injective [NeZero e] :
   intro x y hxy
   have hzero : complexEmbedding (x - y) = 0 := by rw [map_sub, hxy, sub_self]
   have heval : Polynomial.aeval (complexRoot e) (x - y).toPolynomial = 0 := by
-    simpa [complexEmbedding, evalRingHom, RingHom.comp_apply, toAdjoinRootRingHom_apply,
-      toAdjoinRoot, AdjoinRoot.lift_mk, aeval_def] using hzero
+    rw [← complexEmbedding_apply]; exact hzero
   have hdiv : cyclotomic e ℤ ∣ (x - y).toPolynomial := by
     rw [cyclotomic_eq_minpoly isPrimitiveRoot_complexRoot (NeZero.pos e)]
     exact minpoly.isIntegrallyClosed_dvd
