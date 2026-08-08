@@ -185,8 +185,9 @@ the first; a diameter estimate obtained by splitting `V` into pieces consumes th
 theorem frontier_inter_closure_eq_frontier_inter_frontier (hAV : A ⊆ V) :
     frontier V ∩ closure A = frontier V ∩ frontier A := by
   rw [closure_eq_self_union_frontier, inter_union_distrib_left]
-  exact union_eq_right.mpr fun _ hx =>
-    ⟨hx.1, subset_closure hx.2, fun hint => hx.1.2 (interior_mono hAV hint)⟩
+  refine union_eq_right.mpr fun x hx =>
+    ⟨hx.1, (mem_frontier_iff_notMem_interior hx.2).mpr fun hint => ?_⟩
+  exact (mem_frontier_iff_notMem_interior (hAV hx.2)).mp hx.1 (interior_mono hAV hint)
 
 end Inside
 
