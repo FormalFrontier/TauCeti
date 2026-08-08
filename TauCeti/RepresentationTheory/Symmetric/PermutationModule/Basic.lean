@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+public import TauCeti.GroupTheory.QuotientGroup.Basic
 public import TauCeti.RepresentationTheory.Induction.Permutation
 public import TauCeti.RepresentationTheory.Symmetric.YoungSubgroup
 
@@ -14,9 +15,10 @@ For a partition `μ` of `n`, the Young permutation module `M^μ` is the rational
 representation of `Equiv.Perm (Fin n)` on the left cosets of the Young subgroup associated to
 `μ`. These cosets are the `μ`-tabloids.
 
-This file records the tabloid basis and its action, identifies `M^μ` with the representation
-induced from the trivial representation of the Young subgroup, and computes its dimension and
-character. In particular, the dimension is the multinomial coefficient
+This file records the tabloid basis and its action, computes the stabilizer of a tabloid as the
+group preserving its rows (`TauCeti.stabilizer_quotientGroup_mk_youngSubgroup`), identifies `M^μ`
+with the representation induced from the trivial representation of the Young subgroup, and
+computes its dimension and character. In particular, the dimension is the multinomial coefficient
 `n! / ∏ i, μᵢ!`, while the character at a permutation is the number of fixed tabloids.
 
 ## Main definitions
@@ -57,6 +59,16 @@ noncomputable abbrev permutationModuleBasis {n : ℕ} (μ : n.Partition) :
     Module.Basis (Equiv.Perm (Fin n) ⧸ youngSubgroup μ) ℚ
       (permutationModule μ).V :=
   MonoidAlgebra.basis (Equiv.Perm (Fin n) ⧸ youngSubgroup μ) ℚ
+
+/-- **The stabilizer of a tabloid.** A permutation fixes the coset `gH` of the Young subgroup of
+`μ` exactly when it preserves every fiber of the block map transported by `g`, that is, when it
+permutes the labels within the rows of the tabloid. -/
+theorem stabilizer_quotientGroup_mk_youngSubgroup {n : ℕ} (μ : n.Partition)
+    (g : Equiv.Perm (Fin n)) :
+    MulAction.stabilizer (Equiv.Perm (Fin n)) ((g : Equiv.Perm (Fin n) ⧸ youngSubgroup μ)) =
+      fiberSubgroup fun x => youngBlock μ (g⁻¹ x) := by
+  rw [stabilizer_quotientGroup_mk, youngSubgroup_eq_fiberSubgroup]
+  exact fiberSubgroup_map_conj g fun _ _ => by simp
 
 /-! ## Induction, dimension, and character -/
 
