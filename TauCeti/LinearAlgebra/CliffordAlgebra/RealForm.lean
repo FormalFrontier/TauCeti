@@ -125,13 +125,6 @@ theorem realCliffordForm_apply (p q : ℕ) (v : Fin (p + q) → ℝ) :
     realCliffordForm p q v = ∑ i, realCliffordWeight p q i * (v i * v i) := by
   simp [realCliffordForm]
 
-@[simp]
-theorem polar_realCliffordForm (p q : ℕ) (v w : Fin (p + q) → ℝ) :
-    polar (realCliffordForm p q) v w = 2 * ∑ i, realCliffordWeight p q i * (v i * w i) := by
-  simp only [polar, realCliffordForm_apply, Pi.add_apply, Finset.mul_sum,
-    ← Finset.sum_sub_distrib]
-  exact Finset.sum_congr rfl fun i _ => by ring
-
 /-- The signature forms are nondegenerate: the radical of a weighted sum of squares is spanned by
 the coordinates with weight zero, and every signature weight is `±1`. -/
 theorem nondegenerate_realCliffordForm (p q : ℕ) : (realCliffordForm p q).Nondegenerate := by
@@ -235,6 +228,12 @@ private def realCliffordZeroOneIsometry :
   ⟨(LinearEquiv.funUnique (Fin 1) ℝ ℝ : (Fin (0 + 1) → ℝ) ≃ₗ[ℝ] ℝ), fun v => by
     simp [realCliffordForm_zero_one_apply]⟩
 
+/-- `realCliffordZeroOneIsometry` reads off the single coordinate. -/
+private theorem realCliffordZeroOneIsometry_apply (v : Fin (0 + 1) → ℝ) :
+    realCliffordZeroOneIsometry v = v 0 := by
+  simp [realCliffordZeroOneIsometry, ← IsometryEquiv.coe_toLinearEquiv,
+    LinearEquiv.funUnique_apply]
+
 /-- **`Cliff(0,1) ≅ ℂ`**, the second base entry of the real periodicity table: a single generator
 squaring to `-1` is a square root of `-1`. -/
 noncomputable def realCliffordZeroOneEquivComplex :
@@ -255,9 +254,8 @@ theorem realCliffordZeroOneEquivComplex_ι (v : Fin (0 + 1) → ℝ) :
     realCliffordZeroOneEquivComplex (CliffordAlgebra.ι _ v) = v 0 • Complex.I := by
   rw [realCliffordZeroOneEquivComplex_eq, CliffordAlgebra.equivOfIsometry_apply,
     CliffordAlgebra.map_apply_ι]
-  simp only [IsometryEquiv.toIsometry_apply, realCliffordZeroOneIsometry,
+  simp only [IsometryEquiv.toIsometry_apply, realCliffordZeroOneIsometry_apply,
     CliffordAlgebraComplex.equiv_apply, CliffordAlgebraComplex.toComplex_ι, Complex.real_smul]
-  rfl
 
 /-! ### `Cliff(0,2) ≅ ℍ` -/
 
@@ -267,6 +265,12 @@ private def realCliffordZeroTwoIsometry :
     (realCliffordForm 0 2).IsometryEquiv (CliffordAlgebraQuaternion.Q (-1 : ℝ) (-1)) :=
   ⟨(LinearEquiv.finTwoArrow ℝ ℝ : (Fin (0 + 2) → ℝ) ≃ₗ[ℝ] ℝ × ℝ), fun v => by
     simp [realCliffordForm_zero_two_apply]⟩
+
+/-- `realCliffordZeroTwoIsometry` reads off the two coordinates. -/
+private theorem realCliffordZeroTwoIsometry_apply (v : Fin (0 + 2) → ℝ) :
+    realCliffordZeroTwoIsometry v = (v 0, v 1) := by
+  simp [realCliffordZeroTwoIsometry, ← IsometryEquiv.coe_toLinearEquiv,
+    LinearEquiv.finTwoArrow_apply]
 
 /-- **`Cliff(0,2) ≅ ℍ`**, the third base entry of the real periodicity table: two anticommuting
 generators squaring to `-1` are the quaternion units `i` and `j`. -/
@@ -293,8 +297,11 @@ theorem realCliffordZeroTwoEquivQuaternion_ι (v : Fin (0 + 2) → ℝ) :
   rw [realCliffordZeroTwoEquivQuaternion_eq, CliffordAlgebra.equivOfIsometry_apply,
     CliffordAlgebra.map_apply_ι]
   simp only [IsometryEquiv.toIsometry_apply, CliffordAlgebraQuaternion.equiv_apply,
-    CliffordAlgebraQuaternion.toQuaternion_ι]
-  rfl
+    CliffordAlgebraQuaternion.toQuaternion_ι, realCliffordZeroTwoIsometry_apply]
+  -- Both sides are now the same quadruple; they differ only in the instance path of the two zero
+  -- components, `CliffordAlgebraQuaternion.toQuaternion` producing them in `ℍ[ℝ,-1,-1]` and the
+  -- statement reading them in `ℍ[ℝ]`, so the components match on the nose.
+  ext <;> rfl
 
 /-! ### `Cliff(1,1) ≅ M₂(ℝ)` -/
 
