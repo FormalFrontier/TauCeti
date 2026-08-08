@@ -17,12 +17,13 @@ finite unions of quasi-compact opens and complements of quasi-compact opens, tha
 intersection of constructible sets.
 
 The point of the notion is the theorem at the end of this file: a pro-constructible subspace of a
-spectral space is again spectral. This is how spectrality is *transported*, and it is the only
-route available for the valuation spectra of adic geometry. There `Spa(A,A⁺)` sits inside
-`Spv(A,IA)` as a pro-constructible subset and inherits spectrality from it; the naive route —
-"a subspace of a spectral space is spectral" — is false, and even the inclusion `Spv(A,I) → Spv A`
-fails to be a spectral map, so nothing may be obtained by regarding one valuation spectrum as a
-subspace of another.
+spectral space is again spectral. This is how spectrality is *transported* to those subspaces of a
+valuation spectrum that adic geometry obtains by cutting: `Cont A` is closed in `Spv(A,IA)` and
+`Spa(A,A⁺)` is pro-constructible in it, and each inherits spectrality this way. Some such
+hypothesis is needed, since the naive statement — "a subspace of a spectral space is spectral" —
+is false. It is not a universal substitute either: `Spv(A,I)` is *not* obtained from `Spv A` by
+such a cut, since the inclusion `Spv(A,I) → Spv A` is not even a spectral map, and its spectrality
+is established by a separate retraction argument instead.
 
 ## Implementation notes
 
@@ -66,7 +67,7 @@ Recall that Mathlib orders topologies by *reverse* inclusion of their open sets,
 * The Stacks Project, tag 08YF.
 -/
 
-@[expose] public section
+public section
 
 namespace TauCeti
 
@@ -108,6 +109,9 @@ The definition is phrased through Mathlib's type synonym `WithConstructibleTopol
 def IsProConstructible (s : Set X) : Prop :=
   IsClosed (WithTopology.ofTopology ⁻¹' s : Set (WithConstructibleTopology X))
 
+/-- Pro-constructibility of `s` is closedness of `s` for the constructible topology of `X`,
+carried explicitly as `IsClosed[constructibleTopology X] s` rather than through the type synonym
+`WithConstructibleTopology X` used in the definition. -/
 theorem isProConstructible_iff_isClosed {s : Set X} :
     IsProConstructible s ↔ IsClosed[constructibleTopology X] s :=
   WithConstructibleTopology.isClosed_iff
@@ -145,12 +149,11 @@ theorem IsProConstructible.sInter {S : Set (Set X)} (hS : ∀ s ∈ S, IsProCons
 /-- A quasi-compact open subset is pro-constructible: it is even clopen for the constructible
 topology, since it and its complement both belong to the defining subbasis. -/
 theorem IsCompact.isProConstructible {s : Set X} (hcomp : IsCompact s) (hopen : IsOpen s) :
-    IsProConstructible s := by
-  rw [IsProConstructible, ← isOpen_compl_iff, ← Set.preimage_compl]
-  refine WithConstructibleTopology.isOpen_iff.2 ?_
-  change IsOpen[constructibleTopology X] sᶜ
-  exact IsCompact.isOpen_constructibleTopology_of_isClosed (by simpa using hcomp)
-    hopen.isClosed_compl
+    IsProConstructible s :=
+  isProConstructible_iff_isClosed.2 <|
+    (@isOpen_compl_iff X s (constructibleTopology X)).1 <|
+      IsCompact.isOpen_constructibleTopology_of_isClosed (by simpa using hcomp)
+        hopen.isClosed_compl
 
 /-- A closed subset of a prespectral space is pro-constructible. -/
 theorem IsClosed.isProConstructible [PrespectralSpace X] {s : Set X} (hs : IsClosed s) :
@@ -180,19 +183,23 @@ theorem IsProConstructible.preimage {f : X → Y} {s : Set Y} (hs : IsProConstru
       (IsSpectralMap.continuous_constructibleTopology hf) s
       (isProConstructible_iff_isClosed.1 hs))
 
-/-- Evaluation at a coordinate is a spectral map on a product of quasi-compact spaces. -/
-theorem isSpectralMap_eval {ι : Type*} {Z : ι → Type*} [∀ i, TopologicalSpace (Z i)]
-    [∀ i, CompactSpace (Z i)] (i : ι) : IsSpectralMap (fun f : ∀ i, Z i ↦ f i) where
+/-- Evaluation at a coordinate `i` is a spectral map as soon as every *other* factor is
+quasi-compact: the preimage of a quasi-compact open is a box with that set in the `i`-th slot and
+the whole space elsewhere, so only those other slots need a compactness hypothesis. -/
+theorem isSpectralMap_eval {ι : Type*} {Z : ι → Type*} [∀ i, TopologicalSpace (Z i)] (i : ι)
+    (hZ : ∀ j, j ≠ i → IsCompact (univ : Set (Z j))) :
+    IsSpectralMap (fun f : ∀ i, Z i ↦ f i) where
   toContinuous := continuous_apply i
   isCompact_preimage_of_isOpen := fun U _ hUc ↦ by
     classical
-    rw [show (fun f : ∀ i, Z i ↦ f i) ⁻¹' U = Set.pi univ (Function.update (fun _ ↦ univ) i U) from
-      Set.eval_preimage]
+    have hpre : (fun f : ∀ i, Z i ↦ f i) ⁻¹' U =
+        Set.pi univ (Function.update (fun _ ↦ univ) i U) := Set.eval_preimage
+    rw [hpre]
     refine isCompact_univ_pi fun j ↦ ?_
     rcases eq_or_ne j i with rfl | hj
     · simpa using hUc
     · rw [Function.update_of_ne hj]
-      exact isCompact_univ
+      exact hZ j hj
 
 /-- A product of two pro-constructible subsets is pro-constructible. -/
 theorem IsProConstructible.prod [CompactSpace X] [CompactSpace Y] {s : Set X} {t : Set Y}
@@ -205,8 +212,10 @@ theorem IsProConstructible.prod [CompactSpace X] [CompactSpace Y] {s : Set X} {t
 theorem IsProConstructible.pi {ι : Type*} {Z : ι → Type*} [∀ i, TopologicalSpace (Z i)]
     [∀ i, CompactSpace (Z i)] {s : ∀ i, Set (Z i)} (hs : ∀ i, IsProConstructible (s i)) :
     IsProConstructible (Set.pi univ s) := by
-  rw [show Set.pi univ s = ⋂ i, (fun f : ∀ i, Z i ↦ f i) ⁻¹' s i by ext f; simp]
-  exact IsProConstructible.iInter fun i ↦ (hs i).preimage (isSpectralMap_eval i)
+  have hpi : Set.pi univ s = ⋂ i, (fun f : ∀ i, Z i ↦ f i) ⁻¹' s i := by ext f; simp
+  rw [hpi]
+  exact IsProConstructible.iInter fun i ↦
+    (hs i).preimage (isSpectralMap_eval i fun j _ ↦ isCompact_univ)
 
 /-! ### Pro-constructible subspaces of a spectral space -/
 
@@ -326,14 +335,13 @@ theorem IsProConstructible.quasiSober (hs : IsProConstructible s) : QuasiSober s
     have h₁ := IsEmbedding.subtypeVal.isInducing.closure_eq_preimage_closure_image
       ({ζ} : Set s)
     have h₂ := IsEmbedding.subtypeVal.isInducing.closure_eq_preimage_closure_image (Z : Set s)
-    change closure ({ζ} : Set s) = Z
-    rw [h₁, Set.image_singleton, hη, ← h₂, hZcl.closure_eq]
+    rw [isGenericPoint_def, h₁, Set.image_singleton, hη, ← h₂, hZcl.closure_eq]
 
 /-- **A pro-constructible subspace of a spectral space is spectral.**
 
-This is the transport principle behind the spectrality of the valuation spectra of adic geometry:
-`Spv(A,I)`, `Cont A` and `Spa(A,A⁺)` are all obtained by cutting a space already known to be
-spectral along pro-constructible conditions. -/
+This is the transport principle behind the spectrality of `Cont A` and of `Spa(A,A⁺)` in adic
+geometry: both are obtained by cutting a space already known to be spectral along a
+pro-constructible condition. `Spv(A,I)` is not of this form and is handled separately. -/
 theorem IsProConstructible.spectralSpace (hs : IsProConstructible s) : SpectralSpace s where
   __ := hs.compactSpace
   __ := hs.quasiSober
