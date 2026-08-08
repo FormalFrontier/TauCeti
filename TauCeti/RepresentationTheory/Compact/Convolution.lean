@@ -7,7 +7,6 @@ module
 public import TauCeti.RepresentationTheory.Compact.Averaging
 public import Mathlib.MeasureTheory.Function.ContinuousMapDense
 public import Mathlib.MeasureTheory.Function.L2Space
-public import Mathlib.Analysis.InnerProductSpace.Adjoint
 public import Mathlib.Analysis.InnerProductSpace.Spectrum
 public import Mathlib.Topology.ContinuousMap.Bounded.ArzelaAscoli
 
@@ -29,8 +28,9 @@ Composing with `ContinuousMap.toLp` gives the convolution operator `convolutionO
 (`k g⁻¹ = conj (k g)`), it commutes with right translation, and it is a **compact operator**.
 Together these say that the eigenspace of a symmetric convolution operator at a nonzero eigenvalue
 is a *finite-dimensional* right-translation-invariant subspace of `L²(G)` all of whose elements
-have continuous representatives, and that such eigenspaces exist and span a dense subspace. This is
-how the Peter-Weyl theorem manufactures finite-dimensional representations of `G` without
+have continuous representatives, and that such eigenspaces exist; the eigenspaces at *all*
+eigenvalues, the possibly infinite-dimensional kernel included, together span a dense subspace.
+This is how the Peter-Weyl theorem manufactures finite-dimensional representations of `G` without
 presupposing that any exist.
 
 ## Main definitions
@@ -58,8 +58,8 @@ presupposing that any exist.
   invariant under right translation.
 * `TauCeti.exists_hasEigenvalue_ne_zero_convolutionOperator`: a nonzero symmetric convolution
   operator has a nonzero eigenvalue, so such an eigenspace really exists.
-* `TauCeti.orthogonalComplement_iSup_eigenspace_convolutionOperator_eq_bot`: the eigenspaces of a
-  symmetric convolution operator span a dense subspace of `L²(G)`.
+* `TauCeti.orthogonalComplement_iSup_eigenspaces_convolutionOperator_eq_bot`: the eigenspaces of a
+  symmetric convolution operator, at every eigenvalue, span a dense subspace of `L²(G)`.
 
 ## Implementation notes
 
@@ -447,10 +447,12 @@ private theorem norm_convolutionCLM_apply_sub_apply_le (k : C(G, 𝕜)) (f : Lp 
   rw [convolutionCLM_apply_apply', convolutionCLM_apply_apply', ← inner_sub_left]
   exact norm_inner_le_norm _ _
 
-/-- The image of the closed unit ball of `L²(G)` under convolution against `k`, read in the bounded
-continuous functions on `G`, where Mathlib's Arzelà-Ascoli theorem lives. -/
+/-- The image of the closed unit ball of `L²(G)` under convolution against `k`, carried by the
+isometry `ContinuousMap.isometryEquivBoundedOfCompact` into the bounded continuous functions on
+`G`, where Mathlib's Arzelà-Ascoli theorem lives. -/
 private noncomputable def convolutionUnitBallImage (k : C(G, 𝕜)) : Set (G →ᵇ 𝕜) :=
-  (fun f : Lp 𝕜 2 (haarProb G) => BoundedContinuousFunction.mkOfCompact (convolutionCLM k f)) ''
+  (fun f : Lp 𝕜 2 (haarProb G) =>
+      ContinuousMap.isometryEquivBoundedOfCompact G 𝕜 (convolutionCLM k f)) ''
     Metric.closedBall 0 1
 
 /-- Convolutions of the closed unit ball take values in the closed ball of radius `‖k‖`. -/
@@ -458,6 +460,8 @@ private theorem convolutionUnitBallImage_apply_mem_closedBall (k : C(G, 𝕜)) (
     (hF : F ∈ convolutionUnitBallImage k) : F x ∈ Metric.closedBall (0 : 𝕜) ‖k‖ := by
   obtain ⟨f, hf, rfl⟩ := hF
   rw [Metric.mem_closedBall, dist_zero_right] at hf ⊢
+  rw [ContinuousMap.isometryEquivBoundedOfCompact_apply,
+    BoundedContinuousFunction.mkOfCompact_apply]
   refine ((convolutionCLM k f).norm_coe_le_norm x).trans ?_
   calc ‖convolutionCLM k f‖ ≤ ‖k‖ * ‖f‖ := norm_convolutionCLM_apply_le k f
     _ ≤ ‖k‖ * 1 := by gcongr
@@ -493,15 +497,15 @@ The unit ball of `L²(G)` is carried to a uniformly bounded equicontinuous famil
 functions, which Arzelà-Ascoli makes relatively compact for the uniform norm. -/
 theorem isCompactOperator_convolutionCLM (k : C(G, 𝕜)) :
     IsCompactOperator (convolutionCLM (G := G) k) := by
-  refine (isCompactOperator_iff_exists_mem_nhds_image_subset_compact _).mpr
-    ⟨Metric.closedBall 0 1, Metric.closedBall_mem_nhds _ one_pos,
-      (ContinuousMap.isometryEquivBoundedOfCompact G 𝕜).symm ''
+  refine (isCompactOperator_iff_image_closedBall_subset_compact
+    (convolutionCLM (G := G) k).toLinearMap one_pos).2
+    ⟨(ContinuousMap.isometryEquivBoundedOfCompact G 𝕜).symm ''
         closure (convolutionUnitBallImage k),
       (isCompact_closure_convolutionUnitBallImage k).image
         (ContinuousMap.isometryEquivBoundedOfCompact G 𝕜).symm.continuous, ?_⟩
   rintro - ⟨f, hf, rfl⟩
-  exact ⟨BoundedContinuousFunction.mkOfCompact (convolutionCLM k f),
-    subset_closure ⟨f, hf, rfl⟩, rfl⟩
+  exact ⟨_, subset_closure ⟨f, hf, rfl⟩,
+    (ContinuousMap.isometryEquivBoundedOfCompact G 𝕜).symm_apply_apply _⟩
 
 /-- **The convolution operator on `L²(G)` is compact.** It factors through the uniform norm of
 `C(G)`, where `isCompactOperator_convolutionCLM` already gives compactness, and reading a
@@ -525,7 +529,9 @@ theorem finiteDimensional_eigenspace_convolutionOperator (k : C(G, 𝕜)) {μ : 
 
 /-- **Eigenvectors at a nonzero eigenvalue are continuous.** An eigenvector `f` is `μ⁻¹` times its
 own convolution `k * f`, and the latter is a genuine continuous function on `G`, not merely an
-almost-everywhere class. This is what places the eigenspace inside the representative ring. -/
+almost-everywhere class. This supplies the continuous representatives that the later construction
+of the representative ring needs; membership in that ring additionally requires realizing the
+finite-dimensional invariant eigenspace as a continuous representation. -/
 theorem ae_eq_smul_convolutionCLM_of_mem_eigenspace (k : C(G, 𝕜)) {μ : 𝕜} (hμ : μ ≠ 0)
     {f : Lp 𝕜 2 (haarProb G)}
     (hf : f ∈ Module.End.eigenspace (convolutionOperator (G := G) k).toLinearMap μ) :
@@ -581,7 +587,7 @@ theorem exists_hasEigenvalue_ne_zero_convolutionOperator (k : C(G, 𝕜))
 subspace of `L²(G)`, in the sense that their supremum has trivial orthogonal complement. Together
 with `finiteDimensional_eigenspace_convolutionOperator` this says that `L²(G)` is exhausted, up to
 the kernel of the operator, by finite-dimensional translation-invariant subspaces. -/
-theorem orthogonalComplement_iSup_eigenspace_convolutionOperator_eq_bot (k : C(G, 𝕜))
+theorem orthogonalComplement_iSup_eigenspaces_convolutionOperator_eq_bot (k : C(G, 𝕜))
     (hk : ∀ g : G, k g⁻¹ = (starRingEnd 𝕜) (k g)) :
     (⨆ μ : 𝕜, Module.End.eigenspace (convolutionOperator (G := G) k).toLinearMap μ)ᗮ = ⊥ :=
   ContinuousLinearMap.orthogonalComplement_iSup_eigenspaces_eq_bot
