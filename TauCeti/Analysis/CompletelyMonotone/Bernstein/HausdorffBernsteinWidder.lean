@@ -55,23 +55,31 @@ private lemma isTightMeasureSet_range_finite
     {ι : Type*} [Finite ι] (μ : ι → Measure ℝ≥0)
     (hfin : ∀ i, IsFiniteMeasure (μ i)) :
     IsTightMeasureSet (Set.range μ) := by
-  classical
-  let := Fintype.ofFinite ι
-  rw [isTightMeasureSet_iff_exists_isCompact_measure_compl_le]
-  intro ε hε
-  have hchoose : ∀ i, ∃ K : Set ℝ≥0, IsCompact K ∧ (μ i) Kᶜ ≤ ε := by
-    intro i
-    have : IsFiniteMeasure (μ i) := hfin i
-    have htight : IsTightMeasureSet ({μ i} : Set (Measure ℝ≥0)) :=
-      isTightMeasureSet_singleton
-    obtain ⟨K, hKc, hKtail⟩ :=
-      isTightMeasureSet_iff_exists_isCompact_measure_compl_le.mp htight ε hε
-    exact ⟨K, hKc, hKtail (μ i) (by simp)⟩
-  choose K hK_comp hK_tail using hchoose
-  refine ⟨⋃ i, K i, isCompact_iUnion hK_comp, ?_⟩
-  intro ν hν
-  rcases hν with ⟨i, rfl⟩
-  exact (measure_mono (compl_subset_compl.mpr (subset_iUnion K i))).trans (hK_tail i)
+  have h : ∀ S : Set (Measure ℝ≥0), S.Finite → (∀ ν ∈ S, IsFiniteMeasure ν) →
+      IsTightMeasureSet S := by
+    intro S hS
+    induction S, hS using Set.Finite.induction_on with
+    | empty =>
+        exact fun _ => (isTightMeasureSet_singleton (μ := 0)).subset (empty_subset _)
+    | @insert ν S _ _ ih =>
+        intro hfin'
+        have : IsFiniteMeasure ν := hfin' ν (mem_insert _ _)
+        rw [insert_eq]
+        exact isTightMeasureSet_singleton.union
+          (ih fun ρ hρ => hfin' ρ (mem_insert_of_mem _ hρ))
+  exact h _ (finite_range μ) (by rintro ν ⟨i, rfl⟩; exact hfin i)
+
+/-- Along a positive null sequence `aₙ ↓ 0`, the values `f (c + aₙ)` of a function continuous
+within `[0, ∞)` converge to `f c`, for any `c ≥ 0`. -/
+private lemma tendsto_apply_add_of_continuousOn
+    {f : ℝ → ℝ} (hf : ContinuousOn f (Ici 0)) {c : ℝ} (hc : 0 ≤ c)
+    {a : ℕ → ℝ} (ha_pos : ∀ n, 0 < a n) (ha : Tendsto a atTop (𝓝 0)) :
+    Tendsto (fun n => f (c + a n)) atTop (𝓝 (f c)) := by
+  have hmem : Tendsto (fun n => c + a n) atTop (𝓝[Ici (0 : ℝ)] c) :=
+    tendsto_nhdsWithin_iff.mpr
+      ⟨by simpa using tendsto_const_nhds.add ha,
+        .of_forall fun n => mem_Ici.mpr (add_nonneg hc (ha_pos n).le)⟩
+  exact (hf.continuousWithinAt (mem_Ici.mpr hc)).tendsto.comp hmem
 
 /-- The `∫⁻` of the bounded coordinate `p ↦ 1 - exp(-x·p)` against a measure that represents
 `t ↦ f (t + δ)` by its Laplace transform equals `f δ - f (x + δ)` (for `x > 0`). This is the
@@ -106,7 +114,7 @@ private lemma lintegral_ofReal_one_sub_exp_representsLaplace
             have h0 := hμ.eq_laplaceTransform (t := 0) le_rfl
             have hxrep := hμ.eq_laplaceTransform (t := x) hx.le
             have h0' : f δ = μ.real univ := by
-              simpa [laplaceTransform_zero] using h0
+              simpa [laplaceTransform_zero'] using h0
             rw [← h0', ← hxrep]
   rw [← ofReal_integral_eq_lintegral_ofReal hint h_nonneg, h_int]
 
@@ -178,18 +186,18 @@ private lemma shiftedMeasure_closedBall_compl_le
 /-- The continuity-at-`0` step behind the tightness of the shifted representing measures: for any
 `η > 0` there is a positive shift `x` and an index `N` beyond which the Laplace gap-quotient
 `(f (aₙ) - f (x + aₙ)) / (1 - e⁻¹)` is at most `η`. Extracted from
-`shiftedRepresentingMeasures_tight` so that theorem is the uniform-tail-plus-finite-prefix
+`isTightMeasureSet_range_of_representsLaplace_shift` so that theorem is the
+uniform-tail-plus-finite-prefix
 compactness assembly. -/
 private lemma exists_shift_uniform_gap_bound
     {f : ℝ → ℝ} (hf : IsCompletelyMonotoneOnIci f)
     {a : ℕ → ℝ} (ha_pos : ∀ n, 0 < a n)
-    (ha_tendsto_nhds : Tendsto a atTop (nhds 0))
-    (ha_tendsto_Ici : Tendsto a atTop (𝓝[Ici (0 : ℝ)] 0))
+    (ha : Tendsto a atTop (𝓝 0))
     {η : ℝ} (hη : 0 < η) :
     ∃ x, 0 < x ∧ ∃ N, ∀ n, N ≤ n →
       (f (a n) - f (x + a n)) / (1 - Real.exp (-1)) ≤ η := by
-  have hf_tendsto0 : Tendsto (fun n => f (a n)) atTop (nhds (f 0)) :=
-    (hf.continuousOn.continuousWithinAt (mem_Ici.mpr le_rfl)).tendsto.comp ha_tendsto_Ici
+  have hf_tendsto0 : Tendsto (fun n => f (a n)) atTop (𝓝 (f 0)) := by
+    simpa using tendsto_apply_add_of_continuousOn hf.continuousOn le_rfl ha_pos ha
   let c0 : ℝ := 1 - Real.exp (-1)
   have hc0_pos : 0 < c0 := by
     have hexp_lt : Real.exp (-1) < 1 := by
@@ -202,24 +210,15 @@ private lemma exists_shift_uniform_gap_bound
   obtain ⟨m, hm⟩ := eventually_atTop.1 hnear
   let x : ℝ := a m
   have hx_pos : 0 < x := ha_pos m
-  have hx_mem : x ∈ Ici (0 : ℝ) := mem_Ici.mpr hx_pos.le
   have hx_close : dist (f x) (f 0) < η * c0 / 2 := hm m le_rfl
   have hgap_limit_lt : f 0 - f x < η * c0 / 2 := by
     rw [Real.dist_eq] at hx_close
     have hx_abs := abs_lt.mp hx_close
     linarith
-  have hx_a_tendsto_nhds : Tendsto (fun n => x + a n) atTop (nhds x) := by
-    simpa [add_zero] using tendsto_const_nhds.add ha_tendsto_nhds
-  have hx_a_mem : ∀ᶠ n : ℕ in atTop, x + a n ∈ Ici (0 : ℝ) := by
-    filter_upwards with n
-    exact mem_Ici.mpr (add_nonneg hx_pos.le (ha_pos n).le)
-  have hx_a_tendsto_Ici : Tendsto (fun n => x + a n) atTop (𝓝[Ici (0 : ℝ)] x) := by
-    rw [nhdsWithin]
-    exact tendsto_inf.2 ⟨hx_a_tendsto_nhds, tendsto_principal.mpr hx_a_mem⟩
-  have hfx_tendsto : Tendsto (fun n => f (x + a n)) atTop (nhds (f x)) :=
-    (hf.continuousOn.continuousWithinAt hx_mem).tendsto.comp hx_a_tendsto_Ici
+  have hfx_tendsto : Tendsto (fun n => f (x + a n)) atTop (𝓝 (f x)) :=
+    tendsto_apply_add_of_continuousOn hf.continuousOn hx_pos.le ha_pos ha
   have hgap_tendsto :
-      Tendsto (fun n => f (a n) - f (x + a n)) atTop (nhds (f 0 - f x)) :=
+      Tendsto (fun n => f (a n) - f (x + a n)) atTop (𝓝 (f 0 - f x)) :=
     hf_tendsto0.sub hfx_tendsto
   have hlim_lt : f 0 - f x < η * c0 := by
     nlinarith [hgap_limit_lt, hη, hc0_pos]
@@ -237,11 +236,10 @@ function are uniformly tight as the shifts tend to `0`.
 The proof combines the finite initial-segment tightness with a uniform tail estimate for the
 remaining shifts (`exists_shift_uniform_gap_bound`) and the Laplace-kernel tail bound
 `shiftedMeasure_closedBall_compl_le`. -/
-private lemma shiftedRepresentingMeasures_tight
+private lemma isTightMeasureSet_range_of_representsLaplace_shift
     {f : ℝ → ℝ} (hf : IsCompletelyMonotoneOnIci f)
     {a : ℕ → ℝ} (ha_pos : ∀ n, 0 < a n)
-    (ha_tendsto_nhds : Tendsto a atTop (nhds 0))
-    (ha_tendsto_Ici : Tendsto a atTop (𝓝[Ici (0 : ℝ)] 0))
+    (ha : Tendsto a atTop (𝓝 0))
     {μ : ℕ → Measure ℝ≥0}
     (hμ : ∀ n, RepresentsLaplace (fun t : ℝ => f (t + a n)) (μ n)) :
     IsTightMeasureSet (Set.range μ) := by
@@ -255,7 +253,7 @@ private lemma shiftedRepresentingMeasures_tight
     exact le_top
   have hε_real_pos : 0 < ε.toReal := ENNReal.toReal_pos hε.ne' hε_top
   obtain ⟨x, hx_pos, N, hN⟩ :=
-    exists_shift_uniform_gap_bound hf ha_pos ha_tendsto_nhds ha_tendsto_Ici hε_real_pos
+    exists_shift_uniform_gap_bound hf ha_pos ha hε_real_pos
   let μfin : {n // n < N} → Measure ℝ≥0 := fun n => μ n
   have hfin_tight : IsTightMeasureSet (Set.range μfin) :=
     isTightMeasureSet_range_finite μfin (fun n => hμ_fin n)
@@ -294,6 +292,20 @@ private lemma shiftedRepresentingMeasures_tight
             ((f (a n) - f (x + a n)) / (1 - Real.exp (-(x * R)))) := htail
       _ ≤ ε := hquot
 
+/-- The representing measure of the positive shift `t ↦ f (t + δ)` has total mass
+`f δ ≤ f 0`. -/
+private lemma measure_univ_le_of_representsLaplace_shift
+    {f : ℝ → ℝ} (hf : IsCompletelyMonotoneOnIci f) {δ : ℝ} (hδ : 0 < δ)
+    {μ : Measure ℝ≥0} (hμ : RepresentsLaplace (fun t : ℝ => f (t + δ)) μ) :
+    μ univ ≤ ENNReal.ofReal (f 0) := by
+  have := hμ.isFiniteMeasure
+  have hreal : μ.real univ = f δ := by
+    simpa [laplaceTransform_zero'] using (hμ.eq_laplaceTransform (t := 0) le_rfl).symm
+  calc
+    μ univ = ENNReal.ofReal (μ.real univ) := by rw [ofReal_measureReal]
+    _ ≤ ENNReal.ofReal (f 0) :=
+        ENNReal.ofReal_le_ofReal (hreal ▸ hf.le_apply_zero hδ.le)
+
 /-- Existence of a finite representing measure for the closed-half-line predicate.
 
 Bernstein's existence theorem is applied to the positive shifts `t ↦ f (t + a)`, which satisfy
@@ -305,74 +317,45 @@ theorem exists_representsLaplace_of_isCompletelyMonotoneOnIci
     {f : ℝ → ℝ} (hf : IsCompletelyMonotoneOnIci f) :
     ∃ μ : Measure ℝ≥0, RepresentsLaplace f μ := by
   classical
+  -- Stage 1: the positive null sequence of shifts `aₙ = 1/(n+1)`.
   let a : ℕ → ℝ := fun n => 1 / ((n : ℝ) + 1)
   have ha_pos : ∀ n, 0 < a n := by
     intro n
     dsimp [a]
     positivity
-  have ha_tendsto_nhds : Tendsto a atTop (nhds 0) := by
+  have ha : Tendsto a atTop (𝓝 0) := by
     have hden : Tendsto (fun n : ℕ => (n : ℝ) + 1) atTop atTop := by
       exact Filter.tendsto_atTop_add_const_right atTop 1
         (tendsto_natCast_atTop_atTop (R := ℝ))
     simpa [a] using Filter.Tendsto.const_div_atTop hden (1 : ℝ)
-  have ha_mem : ∀ᶠ n : ℕ in atTop, a n ∈ Ici (0 : ℝ) := by
-    filter_upwards with n
-    exact mem_Ici.mpr (ha_pos n).le
-  have ha_tendsto_Ici : Tendsto a atTop (𝓝[Ici (0 : ℝ)] 0) := by
-    rw [nhdsWithin]
-    exact tendsto_inf.2 ⟨ha_tendsto_nhds, tendsto_principal.mpr ha_mem⟩
+  -- Stage 2: representing measures for the shifted functions, from Bernstein's theorem.
   have hshift_cm : ∀ n, IsCompletelyMonotone (fun t : ℝ => f (t + a n)) :=
-    fun n => hf.shift_pos (ha_pos n)
+    fun n => hf.isCompletelyMonotone_comp_add_const (ha_pos n)
   choose μ hμ using fun n =>
     exists_representsLaplace_of_isCompletelyMonotone (hshift_cm n)
-  have hμ_fin : ∀ n, IsFiniteMeasure (μ n) := fun n => (hμ n).isFiniteMeasure
+  -- Stage 3: a uniform mass bound and tightness give a weak cluster point.
   let C : ℝ≥0 := ⟨f 0, hf.nonneg_zero⟩
-  have hmass : ∀ n, (μ n) univ ≤ (C : ENNReal) := by
-    intro n
-    have : IsFiniteMeasure (μ n) := hμ_fin n
-    have h0 := (hμ n).eq_laplaceTransform (t := 0) le_rfl
-    have hreal : (μ n).real univ = f (a n) := by
-      simpa [laplaceTransform_zero] using h0.symm
-    have hle : (μ n).real univ ≤ f 0 := by
-      rw [hreal]
-      exact hf.le_apply_zero (ha_pos n).le
+  have hmass : ∀ n, (μ n) univ ≤ (C : ENNReal) := fun n =>
     calc
-      (μ n) univ = ENNReal.ofReal ((μ n).real univ) := by
-        rw [ofReal_measureReal]
-      _ ≤ ENNReal.ofReal (f 0) := ENNReal.ofReal_le_ofReal hle
-      _ = (C : ENNReal) := by
-            have hC : f 0 = (C : ℝ) := rfl
-            rw [hC]
-            exact ENNReal.ofReal_coe_nnreal
+      (μ n) univ ≤ ENNReal.ofReal (f 0) :=
+        measure_univ_le_of_representsLaplace_shift hf (ha_pos n) (hμ n)
+      _ = (C : ENNReal) := ENNReal.ofReal_eq_coe_nnreal hf.nonneg_zero
   have htight : IsTightMeasureSet (Set.range μ) :=
-    shiftedRepresentingMeasures_tight hf ha_pos ha_tendsto_nhds ha_tendsto_Ici hμ
+    isTightMeasureSet_range_of_representsLaplace_shift hf ha_pos ha hμ
   obtain ⟨μ₀, U, hUle, hμ₀_fin, _hmass₀, hweak⟩ :=
     finite_measure_cluster_limit (σ := μ) C hmass htight
+  -- Stage 4: identify the cluster point as a representing measure via continuity at `0⁺`.
   refine ⟨μ₀, representsLaplace_iff.mpr ⟨hμ₀_fin, fun t ht => ?_⟩⟩
-  have ht_a_tendsto_nhds : Tendsto (fun n => t + a n) atTop (nhds t) := by
-    simpa [add_zero] using tendsto_const_nhds.add ha_tendsto_nhds
-  have ht_a_mem : ∀ᶠ n : ℕ in atTop, t + a n ∈ Ici (0 : ℝ) := by
-    filter_upwards with n
-    exact mem_Ici.mpr (add_nonneg ht (ha_pos n).le)
-  have ht_a_tendsto_Ici : Tendsto (fun n => t + a n) atTop (𝓝[Ici (0 : ℝ)] t) := by
-    rw [nhdsWithin]
-    exact tendsto_inf.2 ⟨ht_a_tendsto_nhds, tendsto_principal.mpr ht_a_mem⟩
-  have hf_arg_atTop : Tendsto (fun n => f (t + a n)) atTop (nhds (f t)) :=
-    (hf.continuousOn.continuousWithinAt (mem_Ici.mpr ht)).tendsto.comp ht_a_tendsto_Ici
-  have hf_arg_U : Tendsto (fun n => f (t + a n)) (U : Filter ℕ) (nhds (f t)) :=
-    hf_arg_atTop.mono_left hUle
-  have hlaplace_U :
-      Tendsto (fun n => laplaceTransform (μ n) t) (U : Filter ℕ) (nhds (f t)) := by
-    exact Tendsto.congr'
-      (Filter.Eventually.of_forall fun n => (hμ n).eq_laplaceTransform (t := t) ht)
-      hf_arg_U
+  have hf_arg_U : Tendsto (fun n => f (t + a n)) (U : Filter ℕ) (𝓝 (f t)) :=
+    (tendsto_apply_add_of_continuousOn hf.continuousOn ht ha_pos ha).mono_left hUle
   have hshift_laplace :
       Tendsto (fun n => ∫ p, Real.exp (-(t * (p : ℝ))) ∂(μ n)) (U : Filter ℕ)
-        (nhds (f t)) := by
-    simpa [laplaceTransform_apply] using hlaplace_U
+        (𝓝 (f t)) := by
+    refine Tendsto.congr (fun n => ?_) hf_arg_U
+    rw [(hμ n).eq_laplaceTransform (t := t) ht, laplaceTransform_apply]
   have hweak_laplace :
       Tendsto (fun n => ∫ p, Real.exp (-(t * (p : ℝ))) ∂(μ n)) (U : Filter ℕ)
-        (nhds (laplaceTransform μ₀ t)) := by
+        (𝓝 (laplaceTransform μ₀ t)) := by
     rw [laplaceTransform_apply]
     simpa using hweak (laplaceKernelBoundedContinuous ht)
   exact tendsto_nhds_unique hshift_laplace hweak_laplace
@@ -396,7 +379,7 @@ theorem hausdorff_bernstein_widder (f : ℝ → ℝ) :
 theorem hausdorff_bernstein_widder_unique (f : ℝ → ℝ) :
     IsCompletelyMonotoneOnIci f ↔ ∃! μ : Measure ℝ≥0, RepresentsLaplace f μ := by
   rw [hausdorff_bernstein_widder]
-  exact ⟨fun ⟨μ, hμ⟩ => ⟨μ, hμ, fun ν hν => laplaceTransform_unique hν hμ⟩,
+  exact ⟨fun ⟨μ, hμ⟩ => ⟨μ, hμ, fun ν hν => hν.unique hμ⟩,
     fun ⟨μ, hμ, _⟩ => ⟨μ, hμ⟩⟩
 
 end TauCeti

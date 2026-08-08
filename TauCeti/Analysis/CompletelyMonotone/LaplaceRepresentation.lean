@@ -4,7 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.Analysis.Calculus.ParametricIntegral
 public import Mathlib.MeasureTheory.Integral.BoundedContinuousFunction
 public import Mathlib.MeasureTheory.Integral.DominatedConvergence
 public import Mathlib.Probability.Moments.Basic
@@ -56,8 +55,8 @@ lemma laplaceTransform_apply (μ : Measure ℝ≥0) (t : ℝ) :
     laplaceTransform μ t = ∫ x, Real.exp (-(t * (x : ℝ))) ∂μ := by
   rw [laplaceTransform]
 
-/-- The Laplace kernel is continuous as a function of the measure variable. -/
-lemma continuous_laplaceKernel (t : ℝ) :
+/-- The Laplace kernel `p ↦ e^{-tp}` is continuous in the coordinate variable. -/
+lemma continuous_exp_neg_mul (t : ℝ) :
     Continuous fun x : ℝ≥0 => Real.exp (-(t * (x : ℝ))) := by
   fun_prop
 
@@ -109,9 +108,10 @@ private lemma Ioi_subset_interior_integrableExpSet (μ : Measure ℝ≥0) [IsFin
     Ioi (0 : ℝ) ⊆ interior (integrableExpSet (fun p : ℝ≥0 => -(p : ℝ)) μ) := fun t ht =>
   interior_mono (Ici_subset_integrableExpSet μ) (by rw [interior_Ici]; exact ht)
 
-/-- The value of the Laplace transform at zero is the total finite mass. -/
+/-- The value of the Laplace transform at the parameter `0` is the total mass (under the
+total Bochner-integral convention both sides are `0` for an infinite measure). -/
 @[simp]
-lemma laplaceTransform_zero (μ : Measure ℝ≥0) [IsFiniteMeasure μ] :
+lemma laplaceTransform_zero' (μ : Measure ℝ≥0) :
     laplaceTransform μ 0 = μ.real univ := by
   rw [laplaceTransform_eq_mgf, mgf_zero']
 
@@ -129,7 +129,7 @@ lemma laplaceTransform_nonneg (μ : Measure ℝ≥0) (t : ℝ) :
 
 /-- Additivity of the Laplace transform in the measure, on the nonnegative half-line where the
 kernel is integrable. -/
-lemma laplaceTransform_add (μ ν : Measure ℝ≥0) [IsFiniteMeasure μ] [IsFiniteMeasure ν]
+lemma laplaceTransform_add_measure (μ ν : Measure ℝ≥0) [IsFiniteMeasure μ] [IsFiniteMeasure ν]
     {t : ℝ} (ht : 0 ≤ t) :
     laplaceTransform (μ + ν) t = laplaceTransform μ t + laplaceTransform ν t := by
   simp only [laplaceTransform_eq_mgf]
@@ -140,7 +140,7 @@ lemma laplaceTransform_add (μ ν : Measure ℝ≥0) [IsFiniteMeasure μ] [IsFin
 Stated for `c : ℝ≥0` rather than `ℝ≥0∞`: at the infinite scalar `∞ • μ` (infinite mass) the
 Bochner integral returns its junk value and `∞.toReal = 0`, so an `ℝ≥0∞` form would falsely read
 "scaling by infinity gives `0`". -/
-lemma laplaceTransform_smul (c : ℝ≥0) (μ : Measure ℝ≥0) (t : ℝ) :
+lemma laplaceTransform_smul_measure (c : ℝ≥0) (μ : Measure ℝ≥0) (t : ℝ) :
     laplaceTransform ((c : ℝ≥0∞) • μ) t = (c : ℝ) * laplaceTransform μ t := by
   simp only [laplaceTransform_eq_mgf, mgf_smul_measure, ENNReal.coe_toReal]
 
@@ -163,7 +163,7 @@ theorem continuousOn_Ici_laplaceTransform (μ : Measure ℝ≥0) [IsFiniteMeasur
       (bound := fun _ : ℝ≥0 => (1 : ℝ)) (s := Ici (0 : ℝ))
       (by
         intro t _ht
-        exact (continuous_laplaceKernel t).aestronglyMeasurable)
+        exact (continuous_exp_neg_mul t).aestronglyMeasurable)
       (by
         intro t ht
         refine Filter.Eventually.of_forall fun x => ?_
@@ -329,7 +329,7 @@ private lemma hasDerivWithinAt_laplaceMomentTransform_zero (μ : Measure ℝ≥0
       _ = ∫ x : ℝ≥0, (y - 0)⁻¹ * (K y x - K 0 x) ∂μ := by
             rw [integral_const_mul]
       _ = ∫ x : ℝ≥0, slope (fun z : ℝ => K z x) 0 y ∂μ := by
-            congr with x
+            simp [slope_def_field, div_eq_inv_mul]
   rw [hasDerivWithinAt_iff_tendsto_slope]
   have hlim' :
       Tendsto (fun y : ℝ => ∫ x : ℝ≥0, slope (fun z : ℝ => K z x) 0 y ∂μ) l
@@ -486,7 +486,7 @@ protected lemma add {f g : ℝ → ℝ} {μ ν : Measure ℝ≥0}
   have := hg.isFiniteMeasure
   refine ⟨inferInstance, fun t ht => ?_⟩
   rw [Pi.add_apply, hf.eq_laplaceTransform ht, hg.eq_laplaceTransform ht,
-    laplaceTransform_add μ ν ht]
+    laplaceTransform_add_measure μ ν ht]
 
 /-- Scaling a representing measure by `c : ℝ≥0` represents the scaled function. -/
 protected lemma smul {f : ℝ → ℝ} {μ : Measure ℝ≥0} (c : ℝ≥0)
@@ -498,9 +498,13 @@ protected lemma smul {f : ℝ → ℝ} {μ : Measure ℝ≥0} (c : ℝ≥0)
     rw [Measure.smul_apply, smul_eq_mul]
     exact ENNReal.mul_lt_top ENNReal.coe_lt_top (measure_lt_top μ univ)
   refine ⟨inferInstance, fun t ht => ?_⟩
-  rw [laplaceTransform_smul, ← hf.eq_laplaceTransform ht]
+  rw [laplaceTransform_smul_measure, ← hf.eq_laplaceTransform ht]
 
 end RepresentsLaplace
+
+/-- The zero measure represents the zero function. -/
+lemma representsLaplace_zero : RepresentsLaplace 0 (0 : Measure ℝ≥0) :=
+  ⟨inferInstance, fun t _ => by simp⟩
 
 /-- The Dirac mass at `x₀` represents the exponential kernel `t ↦ exp (-(t · x₀))`. -/
 lemma representsLaplace_dirac (x₀ : ℝ≥0) :
@@ -513,9 +517,9 @@ lemma representsLaplace_dirac (x₀ : ℝ≥0) :
 /-- Finite measures on `ℝ≥0` are determined by their Laplace transforms on `(0, ∞)`.
 
 Equality of the transforms on the open half-line extends to the total mass at `t = 0` by
-continuity, after which `Measure.ext_of_forall_integral_exp_neg_natCast_mul_eq` pins the
-measures down from the transform values at the natural numbers alone. -/
-theorem laplaceTransform_ext
+continuity, after which `Measure.ext_of_forall_integral_exp_neg_mul_eq` pins the measures
+down. -/
+theorem Measure.ext_of_forall_laplaceTransform_eq
     {μ ν : Measure ℝ≥0} [IsFiniteMeasure μ] [IsFiniteMeasure ν]
     (h : ∀ t : ℝ, 0 < t → laplaceTransform μ t = laplaceTransform ν t) :
     μ = ν := by
@@ -533,17 +537,17 @@ theorem laplaceTransform_ext
         eventually_nhdsWithin_of_forall fun s hs => h s hs
       exact tendsto_nhds_unique (hμ0.congr' heq) hν0
     · exact h t ht_pos
-  refine Measure.ext_of_forall_integral_exp_neg_natCast_mul_eq fun n => ?_
-  simpa [laplaceTransform_apply, neg_mul] using h' (n : ℝ) (Nat.cast_nonneg n)
+  refine Measure.ext_of_forall_integral_exp_neg_mul_eq fun t ht => ?_
+  simpa [laplaceTransform_apply, neg_mul] using h' t ht
 
 /-- A function has at most one finite representing measure. -/
-theorem laplaceTransform_unique
+protected lemma RepresentsLaplace.unique
     {f : ℝ → ℝ} {μ ν : Measure ℝ≥0}
     (hμ : RepresentsLaplace f μ) (hν : RepresentsLaplace f ν) :
     μ = ν := by
   have := hμ.isFiniteMeasure
   have := hν.isFiniteMeasure
-  exact laplaceTransform_ext fun t ht => by
+  exact Measure.ext_of_forall_laplaceTransform_eq fun t ht => by
     rw [← hμ.eq_laplaceTransform ht.le, ← hν.eq_laplaceTransform ht.le]
 
 end TauCeti

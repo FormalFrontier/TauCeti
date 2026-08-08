@@ -627,7 +627,7 @@ private lemma integral_chafaiDensity_le_tendsto_sub (f : ℝ → ℝ)
     (hL : Tendsto f atTop (nhds L)) (T : ℝ) (hT : 0 < T) :
     ∫ t in (0 : ℝ)..T, chafaiDensity f n t ≤ f 0 - L := by
   linarith [integral_chafaiDensity_le_sub f hcm n hn T hT,
-    hcm.le_of_tendsto_atTop hL hT.le]
+    (IsCompletelyMonotoneOnIci.of_isCompletelyMonotone hcm).le_of_tendsto_atTop hL hT.le]
 
 private lemma chafaiDensity_integrableOn_Ioi_of_tendsto (f : ℝ → ℝ)
     (hcm : IsCompletelyMonotone f) (n : ℕ) (hn : 1 ≤ n) (L : ℝ) (hL : Tendsto f atTop (nhds L)) :
@@ -701,7 +701,8 @@ lemma chafaiMeasure_finite_mass (f : ℝ → ℝ) (hcm : IsCompletelyMonotone f)
       ∀ n,
         IsFiniteMeasure (chafaiMeasure f n) ∧
         (chafaiMeasure f n) univ ≤ ENNReal.ofReal (f 0 - L) := by
-  obtain ⟨L, hL, hL_nn⟩ := hcm.exists_nonneg_tendsto_atTop
+  obtain ⟨L, hL, hL_nn⟩ :=
+    (IsCompletelyMonotoneOnIci.of_isCompletelyMonotone hcm).exists_nonneg_tendsto_atTop
   exact ⟨L, hL, hL_nn, fun n => chafaiMeasure_finite_mass_of_tendsto f hcm n L hL⟩
 
 /-- **Natural rescaled total mass bound**: for a completely monotone `f`, the rescaled
@@ -758,7 +759,8 @@ lemma chafaiRescaled_prokhorov_mass_bound (f : ℝ → ℝ) (hcm : IsCompletelyM
         IsFiniteMeasure (chafaiRescaled f n) ∧
         (chafaiRescaled f n) univ ≤ (C : ENNReal) := by
   obtain ⟨L, hL, hL_nn, hfinite⟩ := chafaiRescaled_finite_mass f hcm
-  have hL_le : L ≤ f 0 := hcm.le_of_tendsto_atTop hL le_rfl
+  have hL_le : L ≤ f 0 :=
+    (IsCompletelyMonotoneOnIci.of_isCompletelyMonotone hcm).le_of_tendsto_atTop hL le_rfl
   let C : ℝ≥0 := ⟨f 0 - L, sub_nonneg.mpr hL_le⟩
   refine ⟨L, C, hL, hL_nn, rfl, fun n => ?_⟩
   refine ⟨(hfinite n).1, ?_⟩

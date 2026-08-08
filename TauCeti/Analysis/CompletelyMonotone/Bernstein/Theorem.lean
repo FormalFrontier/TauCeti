@@ -130,7 +130,7 @@ private theorem sub_eq_integral_exp_neg_mul_of_weak_limit {L : ℝ} {C : ℝ≥0
 /-- **Bernstein's theorem, existence half.** A completely monotone function on `[0, ∞)` is the
 Laplace transform of a finite positive measure on `ℝ≥0`.
 
-Uniqueness of that measure is not asserted here; it is `TauCeti.laplaceTransform_unique`, and
+Uniqueness of that measure is not asserted here; it is `TauCeti.RepresentsLaplace.unique`, and
 the two combine in the Hausdorff--Bernstein--Widder theorem. -/
 theorem exists_representsLaplace_of_isCompletelyMonotone
     (hcm : IsCompletelyMonotone f) :

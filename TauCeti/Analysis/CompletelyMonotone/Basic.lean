@@ -41,8 +41,8 @@ point `0`); on the open half-line it agrees with the ordinary iterated derivativ
 * `TauCeti.IsCompletelyMonotone.nonneg`, `TauCeti.IsCompletelyMonotone.derivWithin_nonpos`,
   `TauCeti.IsCompletelyMonotone.antitoneOn`: a completely monotone function is nonnegative
   and nonincreasing on `[0, ∞)`.
-* `TauCeti.IsCompletelyMonotone.exists_nonneg_tendsto_atTop`,
-  `TauCeti.IsCompletelyMonotone.le_of_tendsto_atTop`: order-limit consequences of
+* `TauCeti.IsCompletelyMonotoneOnIci.exists_nonneg_tendsto_atTop`,
+  `TauCeti.IsCompletelyMonotoneOnIci.le_of_tendsto_atTop`: order-limit consequences of
   nonnegativity and monotonicity on `[0, ∞)`.
 * `TauCeti.IsCompletelyMonotone.neg_one_pow_mul_iteratedDeriv_nonneg`: on the open half-line,
   the sign condition also holds for ordinary iterated derivatives.
@@ -403,8 +403,10 @@ lemma le_apply_zero (hf : IsCompletelyMonotoneOnIci f) {t : ℝ} (ht : 0 ≤ t) 
   hf.antitoneOn (mem_Ici.mpr le_rfl) (mem_Ici.mpr ht) ht
 
 /-- Positive right-translates of a closed-half-line completely monotone function satisfy the
-strong closed-half-line predicate. -/
-lemma shift_pos (hf : IsCompletelyMonotoneOnIci f) {a : ℝ} (ha : 0 < a) :
+strong predicate; compare `IsCompletelyMonotone.comp_add_const`, which keeps the strong
+predicate under nonnegative translates. -/
+lemma isCompletelyMonotone_comp_add_const (hf : IsCompletelyMonotoneOnIci f) {a : ℝ}
+    (ha : 0 < a) :
     IsCompletelyMonotone (fun t : ℝ => f (t + a)) := by
   refine ⟨?_, fun n t ht => ?_⟩
   · have hmaps : MapsTo (fun t : ℝ => t + a) (Ici 0) (Ioi 0) := by
@@ -430,18 +432,13 @@ lemma congr (hf : IsCompletelyMonotoneOnIci f) (h : EqOn g f (Ici 0)) :
 
 end IsCompletelyMonotoneOnIci
 
-namespace IsCompletelyMonotone
+namespace IsCompletelyMonotoneOnIci
 
 variable {f : ℝ → ℝ}
 
-/-- A completely monotone function is nonincreasing on `[0, ∞)`: the strong predicate
-implies the closed-half-line one, whose monotonicity applies. -/
-lemma antitoneOn (hf : IsCompletelyMonotone f) : AntitoneOn f (Ici 0) :=
-  (IsCompletelyMonotoneOnIci.of_isCompletelyMonotone hf).antitoneOn
-
-/-- A completely monotone function has a limit `L ≥ 0` at infinity: it is antitone on `[0, ∞)`
-and bounded below by `0`. -/
-lemma exists_nonneg_tendsto_atTop (hf : IsCompletelyMonotone f) :
+/-- A closed-half-line completely monotone function has a limit `L ≥ 0` at infinity: it is
+antitone on `[0, ∞)` and bounded below by `0`. -/
+lemma exists_nonneg_tendsto_atTop (hf : IsCompletelyMonotoneOnIci f) :
     ∃ L, Tendsto f atTop (nhds L) ∧ 0 ≤ L := by
   have hanti := hf.antitoneOn
   set g := fun t : ℝ => f (max t 0) with hg
@@ -454,8 +451,9 @@ lemma exists_nonneg_tendsto_atTop (hf : IsCompletelyMonotone f) :
   exact (tendsto_atTop_ciInf hg_anti hg_bdd).congr'
     (eventually_atTop.mpr ⟨0, fun t ht => by simp [hg, max_eq_left ht]⟩)
 
-/-- A completely monotone function lies above its limit at infinity on `[0, ∞)`. -/
-lemma le_of_tendsto_atTop (hcm : IsCompletelyMonotone f) {L : ℝ}
+/-- A closed-half-line completely monotone function lies above its limit at infinity on
+`[0, ∞)`. -/
+lemma le_of_tendsto_atTop (hcm : IsCompletelyMonotoneOnIci f) {L : ℝ}
     (hL : Tendsto f atTop (nhds L)) {T : ℝ} (hT : 0 ≤ T) : L ≤ f T := by
   set g₀ := fun t : ℝ => f (max t 0) with hg₀
   have hg_anti : Antitone g₀ := fun a b hab =>
@@ -464,6 +462,17 @@ lemma le_of_tendsto_atTop (hcm : IsCompletelyMonotone f) {L : ℝ}
   have := hg_anti.le_of_tendsto
     (hL.congr' (eventually_atTop.mpr ⟨0, fun t ht => by simp [hg₀, max_eq_left ht]⟩)) T
   simpa [hg₀, max_eq_left hT] using this
+
+end IsCompletelyMonotoneOnIci
+
+namespace IsCompletelyMonotone
+
+variable {f : ℝ → ℝ}
+
+/-- A completely monotone function is nonincreasing on `[0, ∞)`: the strong predicate
+implies the closed-half-line one, whose monotonicity applies. -/
+lemma antitoneOn (hf : IsCompletelyMonotone f) : AntitoneOn f (Ici 0) :=
+  (IsCompletelyMonotoneOnIci.of_isCompletelyMonotone hf).antitoneOn
 
 end IsCompletelyMonotone
 
