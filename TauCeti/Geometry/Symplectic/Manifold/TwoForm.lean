@@ -90,7 +90,7 @@ lemma bilinFormAt_apply (form : SmoothTwoForm I M) (x : M) (v w : TangentSpace I
     form.bilinFormAt x v w = form x v w := (rfl)
 
 /-- The pointwise algebraic bilinear form is alternating. -/
-lemma bilinFormAt_isAlt (form : SmoothTwoForm I M) (x : M) :
+lemma isAlt_bilinFormAt (form : SmoothTwoForm I M) (x : M) :
     (form.bilinFormAt x).IsAlt :=
   fun v ↦ form.alternating x v
 
@@ -103,7 +103,7 @@ lemma self_eq_zero (form : SmoothTwoForm I M) (x : M) (v : TangentSpace I x) :
 /-- A smooth two-form is skew-symmetric in the usual additive form. -/
 lemma neg_eq (form : SmoothTwoForm I M) (x : M) (v w : TangentSpace I x) :
     -form x v w = form x w v :=
-  (form.bilinFormAt_isAlt x).neg_eq v w
+  (form.isAlt_bilinFormAt x).neg_eq v w
 
 /-- The underlying smooth bilinear section determines a smooth two-form. -/
 theorem toContinuousBilinForm_injective :
@@ -133,11 +133,15 @@ variable {E' H' N : Type*} [NormedAddCommGroup E'] [NormedSpace ℝ E'] [Topolog
 /-- Evaluating a smooth two-form on two smooth tangent fields along a smooth map gives a smooth
 real-valued function. -/
 lemma contMDiff_apply {n : ℕ∞ω} [ENat.LEInfty n] (form : SmoothTwoForm I M)
-    {b : N → M} (hb : ContMDiff I' I n b)
+    {b : N → M}
     {V W : ∀ y : N, TangentSpace I (b y)}
     (hV : ContMDiff I' I.tangent n (fun y ↦ TotalSpace.mk' E (b y) (V y)))
     (hW : ContMDiff I' I.tangent n (fun y ↦ TotalSpace.mk' E (b y) (W y))) :
     ContMDiff I' 𝓘(ℝ) n (fun y ↦ form (b y) (V y) (W y)) := by
+  have hb : ContMDiff I' I n b := fun y ↦ by
+    have hy := hV y
+    rw [← contMDiffWithinAt_univ] at hy ⊢
+    exact (contMDiffWithinAt_totalSpace.mp hy).1
   have hform := (form.toContinuousBilinForm.contMDiff.of_le ENat.LEInfty.out).comp hb
   have htotal := ContMDiff.clm_bundle_apply₂
     (F₁ := E) (F₂ := E) (F₃ := ℝ) (E₁ := TangentSpace I) (E₂ := TangentSpace I)
@@ -239,11 +243,21 @@ instance : AddCommGroup (SmoothTwoForm I M) :=
     zero_toContinuousBilinForm add_toContinuousBilinForm neg_toContinuousBilinForm
     sub_toContinuousBilinForm
     (fun form n ↦ by
-      rw [show n • form = (n : ℝ) • form from rfl, smul_toContinuousBilinForm]
-      exact Nat.cast_smul_eq_nsmul ℝ n form.toContinuousBilinForm)
+      apply ContMDiffSection.ext
+      intro x
+      ext v w
+      change ((((n : ℝ) • form).toContinuousBilinForm x) v) w = _
+      rw [smul_toContinuousBilinForm]
+      exact congrArg (fun s ↦ s x v w)
+        (Nat.cast_smul_eq_nsmul ℝ n form.toContinuousBilinForm))
     (fun form n ↦ by
-      rw [show n • form = (n : ℝ) • form from rfl, smul_toContinuousBilinForm]
-      exact Int.cast_smul_eq_zsmul ℝ n form.toContinuousBilinForm)
+      apply ContMDiffSection.ext
+      intro x
+      ext v w
+      change ((((n : ℝ) • form).toContinuousBilinForm x) v) w = _
+      rw [smul_toContinuousBilinForm]
+      exact congrArg (fun s ↦ s x v w)
+        (Int.cast_smul_eq_zsmul ℝ n form.toContinuousBilinForm))
 
 /-- Smooth two-forms form a real vector space under pointwise scalar multiplication. -/
 instance : Module ℝ (SmoothTwoForm I M) :=
