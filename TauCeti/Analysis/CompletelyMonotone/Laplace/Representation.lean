@@ -221,11 +221,6 @@ private lemma hasDerivAt_laplaceMomentTransform (μ : Measure ℝ≥0)
   simp only [mul_neg] at h
   exact h
 
-private lemma abs_exp_neg_sub_one_le {a : ℝ} (ha : 0 ≤ a) :
-    |Real.exp (-a) - 1| ≤ a := by
-  rw [abs_of_nonpos (sub_nonpos.mpr (Real.exp_le_one_iff.mpr (neg_nonpos.mpr ha)))]
-  linarith [Real.one_sub_le_exp_neg a]
-
 private lemma norm_slope_neg_pow_mul_exp_neg_mul_le (n : ℕ) {y : ℝ} (hy : 0 ≤ y)
     (x : ℝ≥0) :
     ‖slope (fun z : ℝ => (-(x : ℝ)) ^ n * Real.exp (-(z * (x : ℝ)))) 0 y‖ ≤
@@ -241,9 +236,11 @@ private lemma norm_slope_neg_pow_mul_exp_neg_mul_le (n : ℕ) {y : ℝ} (hy : 0 
   have hquot :
       |(Real.exp (-(y * (x : ℝ))) - 1) / y| ≤ (x : ℝ) := by
     rw [abs_div, abs_of_pos hy_pos]
+    have habs : |Real.exp (-(y * (x : ℝ))) - 1| ≤ y * (x : ℝ) := by
+      rw [abs_of_nonpos (sub_nonpos.mpr (Real.exp_le_one_iff.mpr (neg_nonpos.mpr harg_nonneg)))]
+      linarith [Real.one_sub_le_exp_neg (y * (x : ℝ))]
     exact (div_le_iff₀ hy_pos).mpr
-      (by simpa [mul_comm, mul_left_comm, mul_assoc] using
-        abs_exp_neg_sub_one_le harg_nonneg)
+      (by simpa [mul_comm, mul_left_comm, mul_assoc] using habs)
   have hpow_nonneg : 0 ≤ (x : ℝ) ^ n := pow_nonneg hx n
   calc
     ‖slope (fun z : ℝ => (-(x : ℝ)) ^ n * Real.exp (-(z * (x : ℝ)))) 0 y‖
