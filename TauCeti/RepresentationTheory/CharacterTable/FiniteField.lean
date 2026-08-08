@@ -50,14 +50,6 @@ general finite coefficient field; the specialization to `ZMod p` at a good Dixon
 * `TauCeti.card_maximalSpectrum_center`: that spectrum has one point per conjugacy class.
 * `TauCeti.nonempty_centerAlgEquiv_conjClasses`: `Z(K[G]) ≃ₐ[K] (ConjClasses G → K)`.
 
-## Implementation notes
-
-The left regular matrix is built here as `TauCeti.regularMatrix` rather than taken from Mathlib's
-`Algebra.leftMulMatrix`, which is available only over a *commutative* algebra; the group algebra of
-a nonabelian group is not one. On the centre, where `Algebra.leftMulMatrix` does apply, it is
-already used for the class-multiplication matrices in
-`TauCeti/RepresentationTheory/CharacterTable/ClassSum/MultiplicationMatrix.lean`.
-
 ## References
 
 * J. D. Dixon, *High speed computation of group characters*, Numerische Mathematik 10 (1967),
@@ -75,23 +67,13 @@ section Regular
 
 variable {k G : Type*} [CommRing k] [Group G] [Fintype G] [DecidableEq G]
 
-/-- The left regular representation of a finite group algebra, as matrices in the group basis:
-`regularMatrix u` is the matrix of multiplication by `u` on the left, in the basis `{g}_{g : G}`. -/
-noncomputable def regularMatrix : MonoidAlgebra k G →ₐ[k] Matrix G G k :=
-  (LinearMap.toMatrixAlgEquiv (MonoidAlgebra.basis G k)).toAlgHom.comp
-    (Algebra.lmul k (MonoidAlgebra k G))
-
-/-- The `(i, j)` entry of the left regular matrix of `u` is the coefficient of `u` at `i * j⁻¹`. -/
-@[simp]
-theorem regularMatrix_apply (u : MonoidAlgebra k G) (i j : G) :
-    regularMatrix u i j = u.coeff (i * j⁻¹) := by
-  simp [regularMatrix, LinearMap.toMatrixAlgEquiv_apply, MonoidAlgebra.basis]
-
 /-- **The regular trace reads off the coefficient at the identity.** Every diagonal entry of the
 left regular matrix of `u` is the coefficient of `u` at `1`, so the trace is `|G|` times it. -/
-theorem trace_regularMatrix (u : MonoidAlgebra k G) :
-    Matrix.trace (regularMatrix u) = (Fintype.card G : k) * u.coeff 1 := by
-  simp [Matrix.trace, Matrix.diag, regularMatrix_apply, Finset.card_univ]
+theorem trace_leftMulMatrix_monoidAlgebra (u : MonoidAlgebra k G) :
+    Matrix.trace (Algebra.leftMulMatrix (MonoidAlgebra.basis G k) u) =
+      (Fintype.card G : k) * u.coeff 1 := by
+  simp [Matrix.trace, Matrix.diag, Algebra.leftMulMatrix_eq_repr_mul, MonoidAlgebra.basis,
+    Finset.card_univ]
 
 end Regular
 
@@ -110,9 +92,10 @@ combined with `a ^ |K| = a` in `K`. -/
 theorem coeff_one_pow_card (hG : (Fintype.card G : K) ≠ 0) (u : MonoidAlgebra K G) :
     (u ^ Fintype.card K).coeff 1 = u.coeff 1 := by
   classical
-  have h := FiniteField.trace_pow_card (regularMatrix (k := K) (G := G) u)
-  rw [← map_pow, trace_regularMatrix, trace_regularMatrix, mul_pow, FiniteField.pow_card,
-    FiniteField.pow_card] at h
+  have h := FiniteField.trace_pow_card
+    (Algebra.leftMulMatrix (MonoidAlgebra.basis G K) u)
+  rw [← map_pow, trace_leftMulMatrix_monoidAlgebra, trace_leftMulMatrix_monoidAlgebra, mul_pow,
+    FiniteField.pow_card, FiniteField.pow_card] at h
   exact mul_left_cancel₀ hG h
 
 /-- **The centre of the group algebra is fixed by the Frobenius of `K`.** Let `K` be a finite field
@@ -171,7 +154,9 @@ theorem center_pow_card (z : Subalgebra.center K (MonoidAlgebra K G)) :
 
 /-- The centre of `K[G]` is reduced. -/
 theorem isReduced_center : IsReduced (Subalgebra.center K (MonoidAlgebra K G)) :=
-  isReduced_of_pow_eq_self Fintype.one_lt_card (center_pow_card hG hexp)
+  (isReduced_iff_pow_one_lt (Fintype.card K) Fintype.one_lt_card).2 fun z hz => by
+    rw [center_pow_card hG hexp] at hz
+    exact hz
 
 /-- **Every residue field of the centre of `K[G]` is `K` itself.** This is the sense in which `K`
 splits `K[G]`: no residue field of `Z(K[G])` is a proper extension of `K`. -/
