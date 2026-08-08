@@ -48,18 +48,18 @@ open _root_.Coalgebra WithConv
 namespace Derivation
 
 variable {R A B C : Type*} [CommSemiring R] [CommSemiring A]
-  [CommSemiring B] [Algebra R B] [CommSemiring C] [Algebra R C]
 
 section Bialgebra
 
-variable [Bialgebra R A]
+variable [Bialgebra R A] [Semiring B] [Algebra R B] [Semiring C] [Algebra R C]
 
 /-- Postcomposition of a counit-valued derivation along an algebra homomorphism of
 coefficients. This is the functorial map on tangent vectors. -/
 noncomputable def mapValue (phi : B →ₐ[R] C) :
     Derivation R A (Bialgebra.CounitAlgebra R A B) →ₗ[R]
       Derivation R A (Bialgebra.CounitAlgebra R A C) :=
-  (Bialgebra.CounitAlgebra.map (A := A) phi).compDer |>.restrictScalars R
+  (Bialgebra.CounitAlgebra.map
+    (R := R) (A := A) (B := B) (C := C) phi).compDer |>.restrictScalars R
 
 /-- Postcomposition of a counit-valued derivation acts pointwise. -/
 @[simp]
@@ -97,7 +97,7 @@ theorem mapValue_id :
 
 /-- Postcomposition of counit-valued derivations preserves composition. -/
 @[simp]
-theorem mapValue_comp {D : Type*} [CommSemiring D] [Algebra R D]
+theorem mapValue_comp {D : Type*} [Semiring D] [Algebra R D]
     (psi : C →ₐ[R] D) (phi : B →ₐ[R] C) :
     mapValue (A := A) (psi.comp phi) =
       (mapValue (A := A) psi).comp (mapValue (A := A) phi) := by
@@ -108,7 +108,8 @@ end Bialgebra
 
 section Adjoint
 
-variable [HopfAlgebra R A]
+variable [HopfAlgebra R A] [CommSemiring B] [Algebra R B]
+  [CommSemiring C] [Algebra R C]
 
 /-- **The adjoint action is natural in the coefficient algebra.** Mapping a point and
 a tangent vector along `phi` and then applying the adjoint action gives the same
@@ -138,19 +139,6 @@ theorem mapValue_adDerivation (phi : B →ₐ[R] C)
   simp only [AlgHom.mapValue_apply, coe_mapValue_linearMap, AlgHom.comp_toLinearMap,
     toConv_ofConv]
   rfl
-
-/-- The valuewise adjoint representations intertwine the functorial maps on points
-and tangent vectors. -/
-theorem mapValue_adRepresentation (phi : B →ₐ[R] C)
-    (g : WithConv (A →ₐ[R] Bialgebra.CounitAlgebra R A B))
-    (d : Derivation R A (Bialgebra.CounitAlgebra R A B)) :
-    mapValue phi (adRepresentation B g d) =
-      adRepresentation C
-        (AlgHom.mapValue (R := R) (H := A)
-          (Bialgebra.CounitAlgebra.mapAlgHom
-            (R := R) (A := A) (B := B) (C := C) phi) g)
-        (mapValue phi d) := by
-  rw [adRepresentation_apply, adRepresentation_apply, mapValue_adDerivation]
 
 end Adjoint
 

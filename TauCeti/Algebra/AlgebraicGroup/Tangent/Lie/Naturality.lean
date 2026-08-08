@@ -92,6 +92,9 @@ theorem lieMapValue_id :
       LieHom.id (R := R) := by
   apply LieHom.ext
   intro d
+  -- `LieHom.ext` states the goal through function coercions, while the public
+  -- functoriality theorem is about underlying linear maps. Expose that stable
+  -- projection once so `lieMapValue_toLinearMap` and `mapValue_id` apply.
   change (lieMapValue (A := A) (AlgHom.id R B)).toLinearMap d =
     (LieHom.id (R := R)).toLinearMap d
   rw [lieMapValue_toLinearMap, mapValue_id]
@@ -105,6 +108,8 @@ theorem lieMapValue_comp {D : Type*} [CommRing D] [Algebra R D]
       (lieMapValue (A := A) psi).comp (lieMapValue (A := A) phi) := by
   apply LieHom.ext
   intro d
+  -- As above, this conversion connects `LieHom.ext` to the public underlying-map
+  -- API; it does not unfold the implementation of coefficient transport.
   change (lieMapValue (A := A) (psi.comp phi)).toLinearMap d =
     ((lieMapValue (A := A) psi).comp (lieMapValue (A := A) phi)).toLinearMap d
   rw [lieMapValue_toLinearMap, LieHom.toLinearMap_comp, lieMapValue_toLinearMap,

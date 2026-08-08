@@ -207,7 +207,7 @@ section CounitAlgebraMap
 namespace Bialgebra.CounitAlgebra
 
 variable {R A B C : Type*} [CommSemiring R] [CommSemiring A] [Bialgebra R A]
-  [CommSemiring B] [Algebra R B] [CommSemiring C] [Algebra R C]
+  [Semiring B] [Algebra R B] [Semiring C] [Algebra R C]
 
 /-- An algebra homomorphism of coefficients, transported to the counit coefficient
 algebras. -/
@@ -216,23 +216,14 @@ noncomputable def mapAlgHom (phi : B →ₐ[R] C) :
   (algEquivSelf R A C).symm.toAlgHom.comp (phi.comp (algEquivSelf R A B).toAlgHom)
 
 omit [CommSemiring A] [Bialgebra R A] in
-/-- The coefficient algebra map is the original map under the canonical
-identifications with its source and target. -/
-lemma algEquivSelf_mapAlgHom (phi : B →ₐ[R] C) (b : CounitAlgebra R A B) :
-    algEquivSelf R A C (mapAlgHom (A := A) phi b) =
-      phi (algEquivSelf R A B b) := by
-  -- The public equivalences are the API for crossing the coefficient synonyms;
-  -- `change` exposes the composite through those equivalences once.
-  change algEquivSelf R A C
-      ((algEquivSelf R A C).symm (phi (algEquivSelf R A B b))) = _
-  rw [AlgEquiv.apply_symm_apply]
-
-omit [CommSemiring A] [Bialgebra R A] in
 /-- Transport of counit coefficient algebras acts pointwise by the original
 coefficient homomorphism. -/
 @[simp]
 lemma mapAlgHom_apply (phi : B →ₐ[R] C) (b : CounitAlgebra R A B) :
     mapAlgHom (A := A) phi b = phi b := by
+  -- This is the first application theorem for `mapAlgHom`, so there is no
+  -- pointwise public lemma to rewrite with yet. Unfolding the composite through
+  -- its two public equivalences exposes exactly their application lemmas.
   change (algEquivSelf R A C).symm (phi (algEquivSelf R A B b)) = phi b
   rw [algEquivSelf_apply, algEquivSelf_symm_apply]
 
@@ -245,19 +236,28 @@ lemma mapAlgHom_id :
       AlgHom.id R (CounitAlgebra R A B) := by
   ext b
   apply (algEquivSelf R A B).injective
-  rw [algEquivSelf_mapAlgHom, AlgHom.id_apply, AlgHom.id_apply]
+  rw [mapAlgHom_apply]
+  -- The two identity homomorphisms have definitionally equal carriers but
+  -- distinct exported synonym types. `algEquivSelf_apply` cannot rewrite the
+  -- temporarily ill-typed coercion, so cross that boundary explicitly once.
+  change (AlgHom.id R B) (algEquivSelf R A B b) = algEquivSelf R A B b
+  rw [AlgHom.id_apply]
 
 omit [CommSemiring A] [Bialgebra R A] in
 /-- Homomorphisms of counit coefficient algebras preserve composition. -/
 @[simp]
-lemma mapAlgHom_comp {D : Type*} [CommSemiring D] [Algebra R D]
+lemma mapAlgHom_comp {D : Type*} [Semiring D] [Algebra R D]
     (psi : C →ₐ[R] D) (phi : B →ₐ[R] C) :
     mapAlgHom (A := A) (psi.comp phi) =
       (mapAlgHom (A := A) psi).comp (mapAlgHom (A := A) phi) := by
   ext b
   apply (algEquivSelf R A D).injective
-  rw [algEquivSelf_mapAlgHom, AlgHom.comp_apply, AlgHom.comp_apply,
-    algEquivSelf_mapAlgHom, algEquivSelf_mapAlgHom]
+  rw [mapAlgHom_apply]
+  -- As in `mapAlgHom_id`, the synonym boundary prevents further rewriting
+  -- even though all remaining maps are exposed by `mapAlgHom_apply`.
+  change (psi.comp phi) (algEquivSelf R A B b) =
+    psi (phi (algEquivSelf R A B b))
+  rw [AlgHom.comp_apply]
 
 /-- An algebra map between coefficient algebras, regarded as a linear map for the
 `A`-module structures induced by the counit. -/
@@ -266,22 +266,13 @@ noncomputable def map (phi : B →ₐ[R] C) :
   toFun := mapAlgHom (A := A) phi
   map_add' := map_add (mapAlgHom (A := A) phi)
   map_smul' a b := by
-    have hB : algEquivSelf R A B (algebraMap A (CounitAlgebra R A B) a) =
-        algebraMap R B (counit a) := calc
-      _ = algEquivSelf R A B
-          (algebraMap R (CounitAlgebra R A B) (counit a)) :=
-        congrArg (algEquivSelf R A B) (algebraMap_apply R A B a)
-      _ = _ := (algEquivSelf R A B).commutes (counit a)
-    have hC : algEquivSelf R A C (algebraMap A (CounitAlgebra R A C) a) =
-        algebraMap R C (counit a) := calc
-      _ = algEquivSelf R A C
-          (algebraMap R (CounitAlgebra R A C) (counit a)) :=
-        congrArg (algEquivSelf R A C) (algebraMap_apply R A C a)
-      _ = _ := (algEquivSelf R A C).commutes (counit a)
-    rw [Algebra.smul_def, Algebra.smul_def]
-    apply (algEquivSelf R A C).injective
-    rw [algEquivSelf_mapAlgHom, map_mul, map_mul, map_mul, algEquivSelf_mapAlgHom,
-      hB, RingHom.id_apply, hC, phi.commutes]
+    rw [mapAlgHom_apply, mapAlgHom_apply]
+    -- Scalar multiplication on each synonym is multiplication by the counit
+    -- image. No conversion lemma combines this with a map between two distinct
+    -- synonym types, so expose that stable pointwise formula explicitly.
+    change phi (algebraMap R B (counit a) * algEquivSelf R A B b) =
+      algebraMap R C (counit a) * phi (algEquivSelf R A B b)
+    rw [map_mul, phi.commutes]
 
 /-- The linear coefficient map has the same underlying function as the coefficient
 algebra map. -/
@@ -301,18 +292,22 @@ lemma map_id :
   ext b
   apply (algEquivSelf R A B).injective
   rw [map_apply, LinearMap.id_apply, algEquivSelf_apply]
+  -- `map_apply` exposes the public pointwise API, after which only the exported
+  -- coefficient synonym prevents `AlgHom.id_apply` from matching directly.
   change (AlgHom.id R B) (algEquivSelf R A B b) = algEquivSelf R A B b
   rw [AlgHom.id_apply]
 
 /-- Coefficient maps preserve composition. -/
 @[simp]
-lemma map_comp {D : Type*} [CommSemiring D] [Algebra R D]
+lemma map_comp {D : Type*} [Semiring D] [Algebra R D]
     (psi : C →ₐ[R] D) (phi : B →ₐ[R] C) :
     map (A := A) (psi.comp phi) =
       (map (A := A) psi).comp (map (A := A) phi) := by
   ext b
   apply (algEquivSelf R A D).injective
   rw [map_apply, LinearMap.comp_apply, map_apply, map_apply]
+  -- The application lemmas reduce both sides to coefficient homomorphisms; the
+  -- remaining conversion only identifies their exported synonym carriers.
   change (psi.comp phi) (algEquivSelf R A B b) =
     psi (phi (algEquivSelf R A B b))
   rw [AlgHom.comp_apply]
