@@ -54,7 +54,7 @@ noncomputable instance finiteDimensional_candidateGenusField {d : ℤ} {hd : Squ
   exact isIntegral_algebraMap
 
 /-- The candidate genus field is a number field: a finite extension of `ℚ` (inside `ℂ`). -/
-noncomputable instance instNumberFieldCandidateGenusField {d : ℤ} {hd : Squarefree d} :
+noncomputable instance numberField_candidateGenusField {d : ℤ} {hd : Squarefree d} :
     NumberField (candidateGenusField hd) :=
   NumberField.of_module_finite ℚ (candidateGenusField hd)
 
