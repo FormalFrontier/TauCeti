@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.LinearAlgebra.RootSystem.DynkinType
+public import TauCeti.LinearAlgebra.RootSystem.Flip
 
 public section
 
@@ -12,11 +13,12 @@ public section
 # Duality of Dynkin types
 
 Interchanging the roots and the coroots of a root pairing (`RootPairing.flip`) transposes every
-pairing `⟨αᵢ, αⱼ^∨⟩`, hence transposes the Cartan matrix of a base. On the classification side that
-operation permutes the Dynkin types, and this file pins the permutation: `TauCeti.DynkinType.dual`
-exchanges `Bₙ` with `Cₙ` and fixes every other type. Duality is what makes the orientation carried
-by `TauCeti.HasCartanType` meaningful, since `Bₙ` and `Cₙ` are exactly the pair of types that the
-orientation separates.
+pairing `⟨αᵢ, αⱼ^∨⟩`, hence transposes the Cartan matrix of a base
+(`TauCeti.RootPairing.Base.cartanMatrix_flip`, proved in `TauCeti.LinearAlgebra.RootSystem.Flip`).
+On the classification side that operation permutes the Dynkin types, and this file pins the
+permutation: `TauCeti.DynkinType.dual` exchanges `Bₙ` with `Cₙ` and fixes every other type.
+Duality is what makes the orientation carried by `TauCeti.HasCartanType` meaningful, since `Bₙ` and
+`Cₙ` are exactly the pair of types that the orientation separates.
 
 The dual type is not read off the transposed matrix on the nose. Transposing a Cartan matrix does
 not merely relabel the diagram, it reverses every arrow, and for `F₄` and `G₂` the reversed diagram
@@ -39,8 +41,6 @@ diagonal and at most two indices is itself a simultaneous relabelling.
 
 ## Main results
 
-* `TauCeti.RootPairing.pairingIn_flip` and `TauCeti.RootPairing.Base.cartanMatrix_flip`: flipping a
-  root pairing transposes the integral pairing, hence the Cartan matrix of a base.
 * `TauCeti.DynkinType.cartanMatrix_dual`: the standard Cartan matrix of the dual type is the
   transpose of the standard Cartan matrix, read through `dualNodeEquiv`.
 * `TauCeti.hasCartanType_flip_iff`: **the Cartan type of a base and the Cartan type of the flipped
@@ -62,51 +62,6 @@ Chapters 4-6*, plates I-IX, for the standard Cartan matrices and their duals.
 -/
 
 namespace TauCeti
-
-section Flip
-
-variable {ι R M N : Type*} [CommRing R] [AddCommGroup M] [Module R M] [AddCommGroup N] [Module R N]
-
-namespace RootPairing
-
-/-- **Flipping a root pairing transposes its integral pairing.** The pairing of the flipped pairing
-is transposed by definition (`RootPairing.pairing_flip`); the content here is that the *chosen*
-preimage in `S` is transposed too, which needs `algebraMap S R` to be injective. -/
-@[simp] lemma pairingIn_flip (S : Type*) [CommRing S] [Algebra S R] [FaithfulSMul S R]
-    (P : RootPairing ι R M N) [P.IsValuedIn S] (i j : ι) :
-    P.flip.pairingIn S i j = P.pairingIn S j i :=
-  FaithfulSMul.algebraMap_injective S R <| by simp
-
-namespace Base
-
-/-- A base of `P` is a base of `P.flip` supported on the same simple indices
-(`RootPairing.Base.flip`); this is the resulting identification of the two index types, which the
-Cartan matrices of the base and of its flip are indexed by. -/
-def flipSupportEquiv {P : RootPairing ι R M N} (b : P.Base) : b.flip.support ≃ b.support :=
-  Equiv.subtypeEquivRight fun _ ↦ by rw [RootPairing.Base.flip_support]
-
-@[simp] lemma coe_flipSupportEquiv_apply {P : RootPairing ι R M N} (b : P.Base)
-    (i : b.flip.support) :
-    (flipSupportEquiv b i : ι) = i := (rfl)
-
-/-- **The Cartan matrix of the flipped base is the transpose of the Cartan matrix of the base.** -/
-@[simp] lemma cartanMatrix_flip [CharZero R] {P : RootPairing ι R M N} [P.IsCrystallographic]
-    (b : P.Base) (i j : b.flip.support) :
-    b.flip.cartanMatrix i j = b.cartanMatrix (flipSupportEquiv b j) (flipSupportEquiv b i) := by
-  have h₁ : b.flip.cartanMatrix i j = P.flip.pairingIn ℤ (i : ι) (j : ι) :=
-    RootPairing.Base.cartanMatrixIn_def _ _ _ _
-  have h₂ : b.cartanMatrix (flipSupportEquiv b j) (flipSupportEquiv b i)
-      = P.pairingIn ℤ (j : ι) (i : ι) := RootPairing.Base.cartanMatrixIn_def _ _ _ _
-  rw [h₁, h₂, pairingIn_flip]
-
-/-- Flipping a base twice returns the original base. -/
-@[simp] lemma flip_flip {P : RootPairing ι R M N} (b : P.Base) : b.flip.flip = b := rfl
-
-end Base
-
-end RootPairing
-
-end Flip
 
 namespace DynkinType
 
@@ -216,7 +171,7 @@ relabelling `TauCeti.DynkinType.dualNodeEquiv`. For the simply-laced types the s
 are symmetric and there is nothing to move; for `Bₙ` and `Cₙ` the transposition is
 `CartanMatrix.B_transpose`; and for `F₄` and `G₂` the transpose is the matrix itself with its nodes
 reversed. -/
-theorem cartanMatrix_dual (t : DynkinType) (i j : Fin t.rank) :
+@[simp] theorem cartanMatrix_dual (t : DynkinType) (i j : Fin t.rank) :
     t.dual.cartanMatrix (t.dualNodeEquiv i) (t.dualNodeEquiv j) = t.cartanMatrix j i := by
   -- Splitting on `t` leaves the dependent indices to be reduced by hand; `change` carries out that
   -- reduction inside this module, after which the standard matrices are named by the
@@ -305,7 +260,7 @@ theorem HasCartanType.flip {b : P.Base} {t : DynkinType} (h : HasCartanType P b 
 /-- **A base has Cartan type `t` exactly when the flipped base has the dual type.** This is what
 gives `TauCeti.DynkinType.dual` its meaning: passing from a root system to its dual is passing from
 a Dynkin type to its dual. -/
-theorem hasCartanType_flip_iff {b : P.Base} {t : DynkinType} :
+@[simp] theorem hasCartanType_flip_iff {b : P.Base} {t : DynkinType} :
     HasCartanType P.flip b.flip t.dual ↔ HasCartanType P b t := by
   refine ⟨fun h ↦ ?_, HasCartanType.flip⟩
   have h' := h.flip
