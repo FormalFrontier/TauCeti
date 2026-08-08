@@ -56,6 +56,15 @@ def newtonianKernel (n : ℕ) (x : EuclideanSpace ℝ (Fin n)) : ℝ :=
       volume.real (ball (0 : EuclideanSpace ℝ (Fin n)) 1))⁻¹ *
     ‖x‖ ^ (2 - (n : ℝ))
 
+/-- The defining formula for the Newtonian kernel.  The body of `TauCeti.newtonianKernel` is not
+`@[expose]`d, so this is the form in which other modules reach the definition. -/
+theorem newtonianKernel_def (n : ℕ) (x : EuclideanSpace ℝ (Fin n)) :
+    newtonianKernel n x =
+      ((n : ℝ) * ((n : ℝ) - 2) *
+        volume.real (ball (0 : EuclideanSpace ℝ (Fin n)) 1))⁻¹ *
+      ‖x‖ ^ (2 - (n : ℝ)) := by
+  rw [newtonianKernel]
+
 /-- The totalized Newtonian kernel takes the value zero at its pole. -/
 @[simp]
 theorem newtonianKernel_zero (n : ℕ) :
@@ -83,7 +92,7 @@ theorem newtonianKernel_sub_comm (n : ℕ) (x a : EuclideanSpace ℝ (Fin n)) :
 theorem newtonianKernel_smul (n : ℕ) (r : ℝ)
     (x : EuclideanSpace ℝ (Fin n)) :
     newtonianKernel n (r • x) = ‖r‖ ^ (2 - (n : ℝ)) * newtonianKernel n x := by
-  rw [newtonianKernel, newtonianKernel, norm_smul,
+  rw [newtonianKernel_def, newtonianKernel_def, norm_smul,
     Real.mul_rpow (norm_nonneg r) (norm_nonneg x)]
   ring
 
@@ -100,7 +109,7 @@ theorem newtonianKernel_pos (n : ℕ) (hn : 3 ≤ n)
   have hnℝ : (3 : ℝ) ≤ n := by exact_mod_cast hn
   have hnpos : (0 : ℝ) < n := by positivity
   have hnsub : (0 : ℝ) < (n : ℝ) - 2 := by linarith
-  rw [newtonianKernel]
+  rw [newtonianKernel_def]
   exact mul_pos (inv_pos.mpr (mul_pos (mul_pos hnpos hnsub)
       (volume_real_unitBall_pos n)))
     (Real.rpow_pos_of_pos (norm_pos_iff.mpr hx) _)
@@ -180,7 +189,7 @@ theorem contDiffAt_newtonianKernel (n : ℕ)
         volume.real (ball (0 : EuclideanSpace ℝ (Fin n)) 1))⁻¹ •
         fun y : EuclideanSpace ℝ (Fin n) ↦ ‖y‖ ^ (2 - (n : ℝ)) := by
     funext y
-    simp only [newtonianKernel, Pi.smul_apply, smul_eq_mul]
+    simp only [newtonianKernel_def, Pi.smul_apply, smul_eq_mul]
   rw [hfun]
   have hpow : ContDiffAt ℝ 2 (fun y : EuclideanSpace ℝ (Fin n) ↦
       ‖y‖ ^ (2 - (n : ℝ))) x :=
@@ -198,7 +207,7 @@ theorem laplacian_newtonianKernel (n : ℕ)
         volume.real (ball (0 : EuclideanSpace ℝ (Fin n)) 1))⁻¹ •
         fun y : EuclideanSpace ℝ (Fin n) ↦ ‖y‖ ^ (2 - (n : ℝ)) := by
     funext y
-    simp only [newtonianKernel, Pi.smul_apply, smul_eq_mul]
+    simp only [newtonianKernel_def, Pi.smul_apply, smul_eq_mul]
   have hpow : ContDiffAt ℝ 2 (fun y : EuclideanSpace ℝ (Fin n) ↦
       ‖y‖ ^ (2 - (n : ℝ))) x :=
     (contDiffAt_norm ℝ hx).rpow_const_of_ne (norm_ne_zero_iff.mpr hx)
@@ -294,7 +303,7 @@ theorem newtonianKernel_three (x : EuclideanSpace ℝ (Fin 3)) :
     rw [Measure.real_def, EuclideanSpace.volume_ball_fin_three]
     simp only [one_pow, ENNReal.ofReal_one, one_mul]
     exact ENNReal.toReal_ofReal (by positivity)
-  rw [newtonianKernel, hvol]
+  rw [newtonianKernel_def, hvol]
   norm_num [Real.rpow_neg_one]
   field_simp [Real.pi_ne_zero]
 
