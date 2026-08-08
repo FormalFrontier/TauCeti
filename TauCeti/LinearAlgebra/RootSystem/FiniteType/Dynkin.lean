@@ -41,6 +41,9 @@ open scoped Matrix
 
 namespace TauCeti.DynkinType
 
+/-- An invertible rational Gram matrix is positive definite. Mathlib's
+`Matrix.PosSemidef.posDef_iff_isUnit` is only available over `RCLike` fields, so over `ℚ` we use the
+generic `Matrix.PosDef.conjTranspose_mul_self` criterion after deriving column injectivity. -/
 private lemma posDef_of_gram {m n : Type*} [Fintype m] [Fintype n] [DecidableEq n]
     (M : _root_.Matrix n n ℚ) (B : _root_.Matrix m n ℚ) (hgram : M = Bᴴ * B)
     (hunit : IsUnit M) : M.PosDef := by
