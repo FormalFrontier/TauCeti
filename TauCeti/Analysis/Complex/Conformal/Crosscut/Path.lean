@@ -139,7 +139,8 @@ theorem exists_path_range_eq_closure_image_ball_inter_sphere (hζ : dist ζ c = 
   let a : ℝ := (c - ζ).arg - φ
   let b : ℝ := (c - ζ).arg + φ
   let g : ℝ → ℂ := fun θ => f (circleMap ζ ρ θ)
-  have hφ0 : 0 < φ := arccos_div_two_mul_pos hρ hρr
+  have hr : 0 < r := by linarith
+  have hφ0 : 0 < φ := arccos_div_two_mul_pos hr hρr
   have hab : a < b := by simp only [a, b]; linarith
   have hcrosscut : ball c r ∩ sphere ζ ρ = circleMap ζ ρ '' Ioo a b := by
     simpa only [a, b, φ] using ball_inter_sphere_eq_circleMap_image_Ioo hζ hρ hρr
@@ -179,7 +180,7 @@ private theorem mem_frontier_image_ball_of_tendsto_arc_endpoint
       θ = (c - ζ).arg + Real.arccos (ρ / (2 * r)))
     {w : ℂ} (hw : Tendsto f (𝓝[ball c r ∩ sphere ζ ρ] (circleMap ζ ρ θ)) (𝓝 w)) :
     w ∈ frontier (f '' ball c r) := by
-  have hφ0 := arccos_div_two_mul_pos hρ hρr
+  have hφ0 := arccos_div_two_mul_pos (show (0 : ℝ) < r by linarith) hρr
   have heclosed : circleMap ζ ρ θ ∈ closedBall c r ∩ sphere ζ ρ := by
     rw [closedBall_inter_sphere_eq_circleMap_image_Icc hζ hρ hρr]
     refine ⟨θ, ?_, rfl⟩
@@ -240,9 +241,10 @@ theorem exists_path_range_eq_closure_image_ball_inter_sphere_of_injOn
   let φ : ℝ := Real.arccos (ρ / (2 * r))
   let a : ℝ := (c - ζ).arg - φ
   let b : ℝ := (c - ζ).arg + φ
-  have hφ0 : 0 < φ := arccos_div_two_mul_pos hρ hρr
+  have hr : 0 < r := by linarith
+  have hφ0 : 0 < φ := arccos_div_two_mul_pos hr hρr
   have hab : a < b := by simp only [a, b]; linarith
-  have hφπ2 : φ < π / 2 := arccos_div_two_mul_lt_pi_div_two hρ hρr
+  have hφπ2 : φ < π / 2 := arccos_div_two_mul_lt_pi_div_two hρ hr
   have hab2π : b - a < 2 * π := by simp only [a, b]; linarith [Real.pi_pos]
   have hcrosscut : ball c r ∩ sphere ζ ρ = circleMap ζ ρ '' Ioo a b := by
     simpa only [a, b, φ] using ball_inter_sphere_eq_circleMap_image_Ioo hζ hρ hρr

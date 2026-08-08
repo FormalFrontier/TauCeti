@@ -92,7 +92,7 @@ variable {c ζ : ℂ} {r ρ : ℝ}
 /-- **The half-angle of a genuine circular crosscut is positive**, so the crosscut occupies a
 nondegenerate arc of angles. This is `Real.arccos_pos` at `ρ / (2 * r)`, the argument being below
 `1` exactly because `ρ < 2 * r`. -/
-theorem arccos_div_two_mul_pos (hρ : 0 < ρ) (hρr : ρ < 2 * r) :
+theorem arccos_div_two_mul_pos (hr : 0 < r) (hρr : ρ < 2 * r) :
     0 < Real.arccos (ρ / (2 * r)) :=
   Real.arccos_pos.mpr ((div_lt_one (by linarith)).mpr hρr)
 
@@ -103,7 +103,7 @@ This is `Real.arccos_lt_pi_div_two` at `ρ / (2 * r)`, the argument being positi
 The bound is what makes the chord distance along a crosscut unimodal
 (`TauCeti.isPreconnected_ball_inter_sphere_inter_ball`) and what keeps the closed arc of angles
 inside one period, so that `TauCeti.circleMap` is injective on it. -/
-theorem arccos_div_two_mul_lt_pi_div_two (hρ : 0 < ρ) (hρr : ρ < 2 * r) :
+theorem arccos_div_two_mul_lt_pi_div_two (hρ : 0 < ρ) (hr : 0 < r) :
     Real.arccos (ρ / (2 * r)) < π / 2 :=
   Real.arccos_lt_pi_div_two.mpr (div_pos hρ (by linarith))
 
@@ -171,7 +171,7 @@ theorem ball_inter_sphere_eq_circleMap_image_Ioo (hζ : dist ζ c = r) (hρ : 0 
     refine ⟨?_, circleMap_mem_sphere ζ hρ.le θ⟩
     rw [circleMap_mem_ball_iff hζ hρ]
     have ht : θ - (c - ζ).arg ∈ Icc (-π) π := by
-      have hφπ2 := arccos_div_two_mul_lt_pi_div_two hρ hρr
+      have hφπ2 := arccos_div_two_mul_lt_pi_div_two hρ hr
       constructor <;> linarith [hθ.1, hθ.2, Real.pi_pos]
     have hcos := (Real.lt_cos_iff_mem_Ioo (by linarith) ht).mpr
       ⟨by linarith [hθ.1], by linarith [hθ.2]⟩
@@ -203,7 +203,7 @@ theorem closedBall_inter_sphere_eq_circleMap_image_Icc (hζ : dist ζ c = r) (h�
     refine ⟨?_, circleMap_mem_sphere ζ hρ.le θ⟩
     rw [circleMap_mem_closedBall_iff hζ hρ]
     have ht : θ - (c - ζ).arg ∈ Icc (-π) π := by
-      have hφπ2 := arccos_div_two_mul_lt_pi_div_two hρ hρr
+      have hφπ2 := arccos_div_two_mul_lt_pi_div_two hρ hr
       constructor <;> linarith [hθ.1, hθ.2, Real.pi_pos]
     have hcos := (Real.le_cos_iff_mem_Icc hx1.le ht).mpr
       ⟨by linarith [hθ.1], by linarith [hθ.2]⟩
@@ -215,8 +215,9 @@ theorem closedBall_inter_sphere_eq_circleMap_image_Icc (hζ : dist ζ c = r) (h�
 theorem circleMap_crosscut_endpoints_ne (hρ : 0 < ρ) (hρr : ρ < 2 * r) (c ζ : ℂ) :
     circleMap ζ ρ ((c - ζ).arg - Real.arccos (ρ / (2 * r))) ≠
       circleMap ζ ρ ((c - ζ).arg + Real.arccos (ρ / (2 * r))) := by
-  have hφ0 := arccos_div_two_mul_pos hρ hρr
-  have hφπ2 := arccos_div_two_mul_lt_pi_div_two hρ hρr
+  have hr : 0 < r := by linarith
+  have hφ0 := arccos_div_two_mul_pos hr hρr
+  have hφπ2 := arccos_div_two_mul_lt_pi_div_two hρ hr
   intro h
   have heq := eq_of_circleMap_eq hρ.ne'
     (by rw [abs_lt]; constructor <;> linarith [Real.pi_pos]) h
@@ -272,22 +273,23 @@ theorem isPathConnected_ball_inter_sphere (hζ : dist ζ c = r) (hρ : 0 < ρ)
   have hne : (Ioo ((c - ζ).arg - Real.arccos (ρ / (2 * r)))
       ((c - ζ).arg + Real.arccos (ρ / (2 * r)))).Nonempty := by
     rw [nonempty_Ioo]
-    linarith [arccos_div_two_mul_pos hρ hρr]
+    linarith [arccos_div_two_mul_pos (show (0 : ℝ) < r by linarith) hρr]
   exact ((convex_Ioo _ _).isPathConnected hne).image (continuous_circleMap ζ ρ)
 
 /-- A genuine circular crosscut together with its endpoints is path connected. -/
 theorem isPathConnected_closedBall_inter_sphere (hζ : dist ζ c = r) (hρ : 0 < ρ)
     (hρr : ρ < 2 * r) : IsPathConnected (closedBall c r ∩ sphere ζ ρ) := by
   rw [closedBall_inter_sphere_eq_circleMap_image_Icc hζ hρ hρr]
-  exact ((convex_Icc _ _).isPathConnected (nonempty_Icc.2
-    (by linarith [arccos_div_two_mul_pos hρ hρr]))).image (continuous_circleMap ζ ρ)
+  exact ((convex_Icc _ _).isPathConnected (nonempty_Icc.2 (by
+    linarith [arccos_div_two_mul_pos (show (0 : ℝ) < r by linarith) hρr]))).image
+    (continuous_circleMap ζ ρ)
 
 /-- Closing a genuine open circular crosscut adds exactly its two endpoints. -/
 theorem closure_ball_inter_sphere (hζ : dist ζ c = r) (hρ : 0 < ρ) (hρr : ρ < 2 * r) :
     closure (ball c r ∩ sphere ζ ρ) = closedBall c r ∩ sphere ζ ρ := by
   rw [ball_inter_sphere_eq_circleMap_image_Ioo hζ hρ hρr,
     closedBall_inter_sphere_eq_circleMap_image_Icc hζ hρ hρr]
-  have hφ0 := arccos_div_two_mul_pos hρ hρr
+  have hφ0 := arccos_div_two_mul_pos (show (0 : ℝ) < r by linarith) hρr
   let a := (c - ζ).arg - Real.arccos (ρ / (2 * r))
   let b := (c - ζ).arg + Real.arccos (ρ / (2 * r))
   have hab : a < b := by dsimp [a, b]; linarith
@@ -331,7 +333,7 @@ whole crosscut. -/
 theorem isPreconnected_ball_inter_sphere_inter_ball (hζ : dist ζ c = r) (hρ : 0 < ρ)
     (hρr : ρ < 2 * r) {e : ℂ} (he : e ∈ closedBall c r ∩ sphere ζ ρ) (δ : ℝ) :
     IsPreconnected (ball c r ∩ sphere ζ ρ ∩ ball e δ) := by
-  have hφπ2 := arccos_div_two_mul_lt_pi_div_two hρ hρr
+  have hφπ2 := arccos_div_two_mul_lt_pi_div_two hρ (show (0 : ℝ) < r by linarith)
   obtain ⟨θ₀, hθ₀, rfl⟩ := (closedBall_inter_sphere_eq_circleMap_image_Icc hζ hρ hρr).le he
   rw [ball_inter_sphere_eq_circleMap_image_Ioo hζ hρ hρr, ← image_inter_preimage]
   refine IsPreconnected.image ?_ _ (continuous_circleMap ζ ρ).continuousOn
