@@ -20,7 +20,7 @@ function `Φₙ(x) = √(√(2π)) ψₙ(√(2π)x)`, the family adapted to Math
 statement about the *operator*: `Φₙ` is a Hilbert basis of `L²(ℝ)`, and Mathlib's unitary Fourier
 transform `MeasureTheory.Lp.fourierTransformₗᵢ` is diagonal in it, with eigenvalue `(-i)ⁿ` on the
 `n`-th vector. Every `L²` function therefore has its Fourier transform given by the termwise
-rescaling of its Hermite expansion, and the transform has order four.
+rescaling of its Hermite expansion, and the fourth iterate of the transform is the identity.
 
 The basis is assembled by the roadmap's family-agnostic bridge
 `TauCeti.hilbertBasisOfOrthogonalSystem`, exactly as `TauCeti.hermiteHilbertBasis` is, but at the
@@ -40,7 +40,8 @@ Gaussian weight of any width has finite exponential moments.
   an arbitrary `f ∈ L²(ℝ; ℂ)` is its Hermite expansion with the `n`-th coefficient multiplied
   by `(-i)ⁿ`; `TauCeti.repr_fourier_twoPiHermiteHilbertBasis` is the same fact read on the
   coefficients.
-* `TauCeti.fourier_fourier_fourier_fourier` — the Fourier transform of `L²(ℝ; ℂ)` has order four.
+* `TauCeti.fourier_fourier_fourier_fourier` — the fourth iterate of the Fourier transform of
+  `L²(ℝ; ℂ)` is the identity.
 
 ## References
 
@@ -318,6 +319,7 @@ theorem toLp_twoPiHermiteSchwartzMap (n : ℕ) :
 
 /-- **The Fourier eigenrelation in Schwartz space.** This is the pointwise
 `TauCeti.fourier_twoPiHermiteFunction` read as an identity between Schwartz functions. -/
+@[simp]
 theorem fourier_twoPiHermiteSchwartzMap (n : ℕ) :
     𝓕 (twoPiHermiteSchwartzMap n) = (-Complex.I) ^ n • twoPiHermiteSchwartzMap n := by
   refine SchwartzMap.ext fun x => ?_
@@ -333,6 +335,7 @@ theorem fourier_twoPiHermiteSchwartzMap (n : ℕ) :
 /-- **The Fourier eigenrelation for the unitary Fourier transform of `L²(ℝ; ℂ)`.** The `n`-th
 rescaled Hermite function is an eigenvector of `MeasureTheory.Lp.fourierTransformₗᵢ` with
 eigenvalue `(-i)ⁿ`. -/
+@[simp]
 theorem fourier_twoPiHermiteFunctionLp (n : ℕ) :
     𝓕 (twoPiHermiteFunctionLp ℂ n) = (-Complex.I) ^ n • twoPiHermiteFunctionLp ℂ n := by
   rw [← toLp_twoPiHermiteSchwartzMap, SchwartzMap.toLp_fourier_eq,
@@ -341,6 +344,7 @@ theorem fourier_twoPiHermiteFunctionLp (n : ℕ) :
 
 /-- The inverse Fourier transform of `L²(ℝ; ℂ)` acts on the same eigenvectors with the conjugate
 eigenvalue `iⁿ`. -/
+@[simp]
 theorem fourierInv_twoPiHermiteFunctionLp (n : ℕ) :
     𝓕⁻ (twoPiHermiteFunctionLp ℂ n) = Complex.I ^ n • twoPiHermiteFunctionLp ℂ n := by
   have hmul : Complex.I ^ n * (-Complex.I) ^ n = 1 := by
@@ -389,8 +393,9 @@ theorem repr_fourier_twoPiHermiteHilbertBasis (f : Lp ℂ 2 (volume : Measure �
     coe_twoPiHermiteHilbertBasis, ← hinner, ← mul_assoc, mul_comm ((-Complex.I) ^ n),
     hmul, one_mul]
 
-/-- **The Fourier transform of `L²(ℝ; ℂ)` has order four.** Each eigenvalue `(-i)ⁿ` is a fourth
-root of unity, so the fourth iterate is the identity on every basis vector, hence on `L²(ℝ)`. -/
+/-- **The fourth iterate of the Fourier transform of `L²(ℝ; ℂ)` is the identity.** Each eigenvalue
+`(-i)ⁿ` is a fourth root of unity, so the fourth iterate fixes every basis vector, hence all of
+`L²(ℝ)`. -/
 theorem fourier_fourier_fourier_fourier (f : Lp ℂ 2 (volume : Measure ℝ)) :
     𝓕 (𝓕 (𝓕 (𝓕 f))) = f := by
   have hI : (-Complex.I) ^ 4 = 1 := by
