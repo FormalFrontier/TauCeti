@@ -51,19 +51,18 @@ private lemma posDef_of_gram {m n : Type*} [Fintype m] [Fintype n] [DecidableEq 
     rw [← _root_.Matrix.mulVec_mulVec x Bᴴ B, ← _root_.Matrix.mulVec_mulVec y Bᴴ B, hxy]
   exact hgram.symm ▸ _root_.Matrix.PosDef.conjTranspose_mul_self B hinjective
 
-private lemma det_intCast {n : Type*} [Fintype n] [DecidableEq n]
-    (M : _root_.Matrix n n ℤ) :
-    (_root_.Matrix.of fun i j ↦ (M i j : ℚ)).det = (M.det : ℚ) := by
-  rw [show _root_.Matrix.of (fun i j ↦ (M i j : ℚ)) = M.map (fun x ↦ (x : ℚ)) from rfl,
-    ← Int.cast_det]
-
+/-- The determinant of the symmetrization `fun i j ↦ dᵢ Mᵢⱼ` of an integer matrix by a rational
+vector. Scaling the rows by `d` is the matrix product with `Matrix.diagonal d`, which splits the
+determinant into the product of the scalars and the integral determinant of `M`; that is the shape
+in which Mathlib's determinants of the exceptional Cartan matrices are used below. -/
 private lemma det_mul_intCast {n : Type*} [Fintype n] [DecidableEq n]
     (d : n → ℚ) (M : _root_.Matrix n n ℤ) :
     (_root_.Matrix.of fun i j ↦ d i * (M i j : ℚ)).det = (∏ i, d i) * (M.det : ℚ) := by
-  calc
-    _ = (_root_.Matrix.of fun i j ↦ d i * (M.map fun x ↦ (x : ℚ)) i j).det := rfl
-    _ = (∏ i, d i) * (M.map fun x ↦ (x : ℚ)).det := _root_.Matrix.det_mul_column d _
-    _ = (∏ i, d i) * (M.det : ℚ) := by rw [← Int.cast_det]
+  have hsplit : (_root_.Matrix.of fun i j ↦ d i * (M i j : ℚ))
+      = _root_.Matrix.diagonal d * M.map (fun x : ℤ ↦ (x : ℚ)) := by
+    ext i j
+    simp [_root_.Matrix.diagonal_mul]
+  rw [hsplit, _root_.Matrix.det_mul, _root_.Matrix.det_diagonal, Int.cast_det]
 
 private def rootsE : _root_.Matrix (Fin 8) (Fin 8) ℚ :=
   !![ 1 / 2,  1, -1,  0,  0,  0,  0,  0;
@@ -84,17 +83,17 @@ theorem isFiniteType_cartanMatrix_E6 : IsFiniteType E6.cartanMatrix := by
     (fun i j hij ↦ cartanMatrix_apply_le_zero_of_ne E6 hij)
     (d := fun _ ↦ 1) (fun _ ↦ by positivity) ?_
   have hgram :
-      _root_.Matrix.of (fun i j ↦ (CartanMatrix.E₆ i j : ℚ)) = rootsE6ᴴ * rootsE6 := by
+      _root_.Matrix.of (fun i j ↦ (1 : ℚ) * (CartanMatrix.E₆ i j : ℚ)) = rootsE6ᴴ * rootsE6 := by
     ext i j
     fin_cases i <;> fin_cases j <;>
       norm_num [rootsE6, rootsE, Fin.castAdd, Fin.castLE, CartanMatrix.E₆,
         _root_.Matrix.mul_apply, Fin.sum_univ_succ, _root_.Matrix.cons_val_succ]
-  have hunit : IsUnit (rootsE6ᴴ * rootsE6) := by
-    rw [← hgram, _root_.Matrix.isUnit_iff_isUnit_det, isUnit_iff_ne_zero]
-    rw [det_intCast, CartanMatrix.E₆_det]
+  have hunit : IsUnit (_root_.Matrix.of fun i j ↦ (1 : ℚ) * (CartanMatrix.E₆ i j : ℚ)) := by
+    rw [_root_.Matrix.isUnit_iff_isUnit_det, isUnit_iff_ne_zero, det_mul_intCast,
+      CartanMatrix.E₆_det]
     norm_num
-  simp only [cartanMatrix_E6, one_mul]
-  exact posDef_of_gram _ _ hgram (hgram.symm ▸ hunit)
+  simp only [cartanMatrix_E6]
+  exact posDef_of_gram _ _ hgram hunit
 
 private def rootsE7 : _root_.Matrix (Fin 8) (Fin 7) ℚ :=
   rootsE.submatrix id (Fin.castAdd 1)
@@ -105,16 +104,16 @@ theorem isFiniteType_cartanMatrix_E7 : IsFiniteType E7.cartanMatrix := by
     (fun i j hij ↦ cartanMatrix_apply_le_zero_of_ne E7 hij)
     (d := fun _ ↦ 1) (fun _ ↦ by positivity) ?_
   have hgram :
-      _root_.Matrix.of (fun i j ↦ (CartanMatrix.E₇ i j : ℚ)) = rootsE7ᴴ * rootsE7 := by
+      _root_.Matrix.of (fun i j ↦ (1 : ℚ) * (CartanMatrix.E₇ i j : ℚ)) = rootsE7ᴴ * rootsE7 := by
     ext i j
     fin_cases i <;> fin_cases j <;>
       norm_num [rootsE7, rootsE, Fin.castAdd, Fin.castLE, CartanMatrix.E₇,
         _root_.Matrix.mul_apply, Fin.sum_univ_succ, _root_.Matrix.cons_val_succ]
-  have hunit : IsUnit (_root_.Matrix.of fun i j ↦ (CartanMatrix.E₇ i j : ℚ)) := by
-    rw [_root_.Matrix.isUnit_iff_isUnit_det, isUnit_iff_ne_zero]
-    rw [det_intCast, CartanMatrix.E₇_det]
+  have hunit : IsUnit (_root_.Matrix.of fun i j ↦ (1 : ℚ) * (CartanMatrix.E₇ i j : ℚ)) := by
+    rw [_root_.Matrix.isUnit_iff_isUnit_det, isUnit_iff_ne_zero, det_mul_intCast,
+      CartanMatrix.E₇_det]
     norm_num
-  simp only [cartanMatrix_E7, one_mul]
+  simp only [cartanMatrix_E7]
   exact posDef_of_gram _ _ hgram hunit
 
 /-- The standard Cartan matrix of type `E₈` is of finite type. -/
@@ -123,16 +122,16 @@ theorem isFiniteType_cartanMatrix_E8 : IsFiniteType E8.cartanMatrix := by
     (fun i j hij ↦ cartanMatrix_apply_le_zero_of_ne E8 hij)
     (d := fun _ ↦ 1) (fun _ ↦ by positivity) ?_
   have hgram :
-      _root_.Matrix.of (fun i j ↦ (CartanMatrix.E₈ i j : ℚ)) = rootsEᴴ * rootsE := by
+      _root_.Matrix.of (fun i j ↦ (1 : ℚ) * (CartanMatrix.E₈ i j : ℚ)) = rootsEᴴ * rootsE := by
     ext i j
     fin_cases i <;> fin_cases j <;>
       norm_num [rootsE, CartanMatrix.E₈, _root_.Matrix.mul_apply, Fin.sum_univ_succ,
         _root_.Matrix.cons_val_succ]
-  have hunit : IsUnit (_root_.Matrix.of fun i j ↦ (CartanMatrix.E₈ i j : ℚ)) := by
-    rw [_root_.Matrix.isUnit_iff_isUnit_det, isUnit_iff_ne_zero]
-    rw [det_intCast, CartanMatrix.E₈_det]
+  have hunit : IsUnit (_root_.Matrix.of fun i j ↦ (1 : ℚ) * (CartanMatrix.E₈ i j : ℚ)) := by
+    rw [_root_.Matrix.isUnit_iff_isUnit_det, isUnit_iff_ne_zero, det_mul_intCast,
+      CartanMatrix.E₈_det]
     norm_num
-  simp only [cartanMatrix_E8, one_mul]
+  simp only [cartanMatrix_E8]
   exact posDef_of_gram _ _ hgram hunit
 
 private def rootsF4 : _root_.Matrix (Fin 4) (Fin 4) ℚ :=
