@@ -118,6 +118,7 @@ theorem not_isFreeColumn_iff {c : Fin n} :
     exact ⟨(rowReduce L).get i, List.get_mem _ _, (pivotColumn_apply L i).symm⟩
 
 /-- The pivot column of a reduced row is not free. -/
+@[simp]
 theorem not_isFreeColumn_pivotColumn (i : Fin (rowReduce L).length) :
     ¬IsFreeColumn L (pivotColumn L i) :=
   (not_isFreeColumn_iff L).mpr ⟨i, rfl⟩
@@ -164,6 +165,7 @@ theorem kernelVector_apply_of_isFreeColumn {c : Fin n} (hc : IsFreeColumn L c) (
 
 /-- In a pivot column a kernel vector of a free column is the negated entry of the corresponding
 reduced row. -/
+@[simp]
 theorem kernelVector_pivotColumn {j : Fin n} (hj : IsFreeColumn L j)
     (i : Fin (rowReduce L).length) :
     kernelVector L j (pivotColumn L i) = -rowReduceMatrix L i j := by
@@ -229,7 +231,10 @@ theorem mulVec_eq_zero_iff_rowReduceMatrix (v : Fin n → F) :
   · rintro h r hr
     obtain ⟨i, rfl⟩ := (List.mem_ofFn' A r).mp hr
     simpa only [Matrix.mulVec, Pi.zero_apply] using congrFun h i
-  · exact fun h => funext fun i => h (A i) ((List.mem_ofFn' A (A i)).mpr ⟨i, rfl⟩)
+  · intro h
+    funext i
+    simpa only [Matrix.mulVec, Pi.zero_apply] using
+      h (A i) ((List.mem_ofFn' A (A i)).mpr ⟨i, rfl⟩)
 
 /-- **The kernel vectors lie in the kernel of the matrix.** -/
 @[simp]
@@ -355,6 +360,7 @@ column of the reduced row echelon form of the rows, in increasing order of that 
     (kernelVector (List.ofFn A))
 
 /-- The entries of `TauCeti.kernelBasis` are the kernel vectors of the free columns. -/
+@[simp]
 theorem mem_kernelBasis {v : Fin n → F} :
     v ∈ kernelBasis A ↔
       ∃ j, IsFreeColumn (List.ofFn A) j ∧ kernelVector (List.ofFn A) j = v := by
