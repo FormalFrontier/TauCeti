@@ -28,9 +28,10 @@ on `ℝ≥0`.
 
 This is the **existence** half of the Bernstein milestone in
 `TauCetiRoadmap/OneParameterSemigroups/README.md`, Part B. Uniqueness of the representing measure
-(Laplace-transform injectivity) and the converse direction are not proved here, so the roadmap's
-reserved name `bernstein` — stated there as a single `∃!` biconditional — stays free for the
-assembly that combines all three.
+is `TauCeti.RepresentsLaplace.unique`, the converse direction is
+`TauCeti.isCompletelyMonotoneOnIci_laplaceTransform`, and all three combine in
+`Bernstein/HausdorffBernsteinWidder.lean` as `TauCeti.hausdorff_bernstein_widder` and
+`TauCeti.hausdorff_bernstein_widder_unique`.
 
 Finiteness of the representing measure is not an extra hypothesis but a consequence of complete
 monotonicity on the *closed* half-line: `IsCompletelyMonotone` builds in `Set.Ici 0`, so `f` takes a

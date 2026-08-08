@@ -60,6 +60,12 @@ lemma continuous_exp_neg_mul (t : ℝ) :
     Continuous fun x : ℝ≥0 => Real.exp (-(t * (x : ℝ))) := by
   fun_prop
 
+/-- For `0 ≤ x` the Laplace kernel is bounded by `1` on `ℝ≥0`. -/
+lemma exp_neg_mul_le_one {x : ℝ} (hx : 0 ≤ x) (p : ℝ≥0) :
+    Real.exp (-(x * (p : ℝ))) ≤ 1 := by
+  rw [Real.exp_le_one_iff]
+  exact neg_nonpos.mpr (mul_nonneg hx p.2)
+
 /-- The limiting Laplace kernel as a bundled bounded continuous test function of the
 nonnegative variable `p`, for fixed nonnegative `x`. -/
 noncomputable def laplaceKernelBoundedContinuous {x : ℝ} (hx : 0 ≤ x) : ℝ≥0 →ᵇ ℝ where
@@ -69,13 +75,9 @@ noncomputable def laplaceKernelBoundedContinuous {x : ℝ} (hx : 0 ≤ x) : ℝ�
     ⟨1, fun p q => by
       rw [Real.dist_eq]
       have hp0 : 0 < Real.exp (-(x * (p : ℝ))) := Real.exp_pos _
-      have hp1 : Real.exp (-(x * (p : ℝ))) ≤ 1 := by
-        rw [Real.exp_le_one_iff]
-        exact neg_nonpos.mpr (mul_nonneg hx p.2)
+      have hp1 := exp_neg_mul_le_one hx p
       have hq0 : 0 < Real.exp (-(x * (q : ℝ))) := Real.exp_pos _
-      have hq1 : Real.exp (-(x * (q : ℝ))) ≤ 1 := by
-        rw [Real.exp_le_one_iff]
-        exact neg_nonpos.mpr (mul_nonneg hx q.2)
+      have hq1 := exp_neg_mul_le_one hx q
       exact abs_sub_le_iff.mpr ⟨by linarith, by linarith⟩⟩
 
 /-- The bundled limiting Laplace kernel evaluates to the usual exponential kernel on `ℝ≥0`. -/
@@ -168,8 +170,7 @@ theorem continuousOn_Ici_laplaceTransform (μ : Measure ℝ≥0) [IsFiniteMeasur
         intro t ht
         refine Filter.Eventually.of_forall fun x => ?_
         rw [Real.norm_eq_abs, abs_of_pos (Real.exp_pos _)]
-        rw [Real.exp_le_one_iff]
-        exact neg_nonpos.mpr (mul_nonneg ht x.2))
+        exact exp_neg_mul_le_one ht x)
       (integrable_const (1 : ℝ))
       (by
         refine Filter.Eventually.of_forall fun x => ?_
@@ -212,7 +213,7 @@ private lemma isFiniteMeasure_of_integrable_moments
 
 
 /-- Moment integrability controls the signed Laplace moment kernel on the closed half-line. -/
-private lemma integrable_laplaceMomentTransform_of_nonneg (μ : Measure ℝ≥0)
+private lemma integrable_neg_pow_mul_exp_neg_mul (μ : Measure ℝ≥0)
     (hmom : ∀ n : ℕ, Integrable (fun x : ℝ≥0 => (x : ℝ) ^ n) μ) (n : ℕ) {t : ℝ}
     (ht : 0 ≤ t) :
     Integrable (fun x : ℝ≥0 => (-(x : ℝ)) ^ n * Real.exp (-(t * (x : ℝ)))) μ := by
@@ -220,9 +221,7 @@ private lemma integrable_laplaceMomentTransform_of_nonneg (μ : Measure ℝ≥0)
   refine Filter.Eventually.of_forall fun x => ?_
   have hx : 0 ≤ (x : ℝ) := x.2
   have hpow : 0 ≤ (x : ℝ) ^ n := pow_nonneg hx n
-  have hexp_le : Real.exp (-(t * (x : ℝ))) ≤ 1 := by
-    rw [Real.exp_le_one_iff]
-    exact neg_nonpos.mpr (mul_nonneg ht hx)
+  have hexp_le : Real.exp (-(t * (x : ℝ))) ≤ 1 := exp_neg_mul_le_one ht x
   calc
     ‖(-(x : ℝ)) ^ n * Real.exp (-(t * (x : ℝ)))‖
         = (x : ℝ) ^ n * Real.exp (-(t * (x : ℝ))) := by
@@ -248,7 +247,7 @@ private lemma abs_exp_neg_sub_one_le {a : ℝ} (ha : 0 ≤ a) :
   rw [abs_of_nonpos (sub_nonpos.mpr (Real.exp_le_one_iff.mpr (neg_nonpos.mpr ha)))]
   linarith [Real.one_sub_le_exp_neg a]
 
-private lemma norm_laplaceMomentKernel_slope_zero_le (n : ℕ) {y : ℝ} (hy : 0 ≤ y)
+private lemma norm_slope_neg_pow_mul_exp_neg_mul_le (n : ℕ) {y : ℝ} (hy : 0 ≤ y)
     (x : ℝ≥0) :
     ‖slope (fun z : ℝ => (-(x : ℝ)) ^ n * Real.exp (-(z * (x : ℝ)))) 0 y‖ ≤
       (x : ℝ) ^ (n + 1) := by
@@ -282,10 +281,15 @@ private lemma norm_laplaceMomentKernel_slope_zero_le (n : ℕ) {y : ℝ} (hy : 0
           simpa [hpow_abs] using mul_le_mul_of_nonneg_left hquot hpow_nonneg
     _ = (x : ℝ) ^ (n + 1) := by rw [pow_succ]
 
+/-- One-sided differentiation under the integral at the endpoint `t = 0`: within `[0, ∞)` the
+`n`-th signed moment kernel integral has the `(n+1)`-st as derivative, provided all moments are
+finite. Dominated convergence over the pointwise slopes supplies the limit; the slope of the
+integral is first exchanged with the integral of the slopes. -/
 private lemma hasDerivWithinAt_laplaceMomentTransform_zero (μ : Measure ℝ≥0)
     (hmom : ∀ n : ℕ, Integrable (fun x : ℝ≥0 => (x : ℝ) ^ n) μ) (n : ℕ) :
     HasDerivWithinAt (laplaceMomentTransform μ n) (laplaceMomentTransform μ (n + 1) 0)
       (Ici 0) 0 := by
+  -- Stage 1: dominated convergence of the pointwise slopes, with the `(n+1)`-st moment as bound.
   let l : Filter ℝ := 𝓝[Ici (0 : ℝ) \ {0}] (0 : ℝ)
   let K : ℝ → ℝ≥0 → ℝ := fun y x =>
     (-(x : ℝ)) ^ n * Real.exp (-(y * (x : ℝ)))
@@ -301,7 +305,7 @@ private lemma hasDerivWithinAt_laplaceMomentTransform_zero (μ : Measure ℝ≥0
             (fun x : ℝ≥0 => (K y x - K 0 x) / (y - 0)) μ)
     · filter_upwards [eventually_mem_nhdsWithin] with y hy
       refine Filter.Eventually.of_forall fun x => ?_
-      exact norm_laplaceMomentKernel_slope_zero_le n hy.1 x
+      exact norm_slope_neg_pow_mul_exp_neg_mul_le n hy.1 x
     · refine Filter.Eventually.of_forall fun x => ?_
       have hderiv :
           HasDerivWithinAt (fun y : ℝ => K y x) ((-(x : ℝ)) ^ (n + 1)) (Ici 0) 0 := by
@@ -310,15 +314,16 @@ private lemma hasDerivWithinAt_laplaceMomentTransform_zero (μ : Measure ℝ≥0
         have hder := hlin.exp.const_mul ((-(x : ℝ)) ^ n)
         simpa [K, pow_succ, mul_assoc, mul_comm, mul_left_comm] using hder.hasDerivWithinAt
       exact (hasDerivWithinAt_iff_tendsto_slope.mp hderiv)
+  -- Stage 2: the slope of the integral is the integral of the pointwise slopes.
   have hslope :
       (fun y : ℝ => slope (laplaceMomentTransform μ n) 0 y)
         =ᶠ[l] fun y : ℝ => ∫ x : ℝ≥0, slope (fun z : ℝ => K z x) 0 y ∂μ := by
     filter_upwards [eventually_mem_nhdsWithin] with y hy
     have hy_nonneg : 0 ≤ y := hy.1
     have hKy : Integrable (fun x : ℝ≥0 => K y x) μ :=
-      integrable_laplaceMomentTransform_of_nonneg μ hmom n hy_nonneg
+      integrable_neg_pow_mul_exp_neg_mul μ hmom n hy_nonneg
     have hK0 : Integrable (fun x : ℝ≥0 => K 0 x) μ :=
-      integrable_laplaceMomentTransform_of_nonneg μ hmom n le_rfl
+      integrable_neg_pow_mul_exp_neg_mul μ hmom n le_rfl
     calc
       slope (laplaceMomentTransform μ n) 0 y
           = (y - 0)⁻¹ *
@@ -514,31 +519,15 @@ lemma representsLaplace_dirac (x₀ : ℝ≥0) :
 
 /-! ## Uniqueness: finite measures are determined by their Laplace transforms -/
 
-/-- Finite measures on `ℝ≥0` are determined by their Laplace transforms on `(0, ∞)`.
-
-Equality of the transforms on the open half-line extends to the total mass at `t = 0` by
-continuity, after which `Measure.ext_of_forall_integral_exp_neg_mul_eq` pins the measures
-down. -/
-theorem Measure.ext_of_forall_laplaceTransform_eq
+/-- Finite measures on `ℝ≥0` are determined by the values of their Laplace transforms at the
+natural numbers alone; this is the transform-level form of
+`Measure.ext_of_forall_integral_exp_neg_natCast_mul_eq`. -/
+theorem Measure.ext_of_forall_laplaceTransform_natCast_eq
     {μ ν : Measure ℝ≥0} [IsFiniteMeasure μ] [IsFiniteMeasure ν]
-    (h : ∀ t : ℝ, 0 < t → laplaceTransform μ t = laplaceTransform ν t) :
+    (h : ∀ n : ℕ, laplaceTransform μ n = laplaceTransform ν n) :
     μ = ν := by
-  -- Equality on the open half-line extends to `t = 0` (the total mass) by continuity at `0`.
-  have h' : ∀ t : ℝ, 0 ≤ t → laplaceTransform μ t = laplaceTransform ν t := by
-    intro t ht
-    rcases ht.eq_or_lt with rfl | ht_pos
-    · have hμ0 : Tendsto (laplaceTransform μ) (𝓝[>] (0 : ℝ)) (𝓝 (laplaceTransform μ 0)) :=
-        ((continuousOn_Ici_laplaceTransform μ).continuousWithinAt self_mem_Ici).tendsto.mono_left
-          (nhdsWithin_mono 0 Ioi_subset_Ici_self)
-      have hν0 : Tendsto (laplaceTransform ν) (𝓝[>] (0 : ℝ)) (𝓝 (laplaceTransform ν 0)) :=
-        ((continuousOn_Ici_laplaceTransform ν).continuousWithinAt self_mem_Ici).tendsto.mono_left
-          (nhdsWithin_mono 0 Ioi_subset_Ici_self)
-      have heq : (laplaceTransform μ) =ᶠ[𝓝[>] (0 : ℝ)] (laplaceTransform ν) :=
-        eventually_nhdsWithin_of_forall fun s hs => h s hs
-      exact tendsto_nhds_unique (hμ0.congr' heq) hν0
-    · exact h t ht_pos
-  refine Measure.ext_of_forall_integral_exp_neg_mul_eq fun t ht => ?_
-  simpa [laplaceTransform_apply, neg_mul] using h' t ht
+  refine Measure.ext_of_forall_integral_exp_neg_natCast_mul_eq fun n => ?_
+  simpa [laplaceTransform_apply, neg_mul] using h n
 
 /-- A function has at most one finite representing measure. -/
 protected lemma RepresentsLaplace.unique
@@ -547,7 +536,7 @@ protected lemma RepresentsLaplace.unique
     μ = ν := by
   have := hμ.isFiniteMeasure
   have := hν.isFiniteMeasure
-  exact Measure.ext_of_forall_laplaceTransform_eq fun t ht => by
-    rw [← hμ.eq_laplaceTransform ht.le, ← hν.eq_laplaceTransform ht.le]
+  exact Measure.ext_of_forall_laplaceTransform_natCast_eq fun n => by
+    rw [← hμ.eq_laplaceTransform (Nat.cast_nonneg n), ← hν.eq_laplaceTransform (Nat.cast_nonneg n)]
 
 end TauCeti
