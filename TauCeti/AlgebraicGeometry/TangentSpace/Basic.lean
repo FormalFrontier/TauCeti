@@ -60,14 +60,14 @@ abbrev ZariskiTangentSpace (X : Scheme.{u}) (x : X) : Type u :=
 
 /-- The cotangent space at a point of a locally Noetherian scheme is finite-dimensional over the
 residue field. -/
-instance zariskiCotangentSpace_finiteDimensional (X : Scheme.{u}) [IsLocallyNoetherian X]
+instance finiteDimensional_zariskiCotangentSpace (X : Scheme.{u}) [IsLocallyNoetherian X]
     (x : X) : FiniteDimensional (IsLocalRing.ResidueField (X.presheaf.stalk x))
       (ZariskiCotangentSpace X x) :=
   inferInstance
 
 /-- The tangent space at a point of a locally Noetherian scheme is finite-dimensional over the
 residue field. -/
-instance zariskiTangentSpace_finiteDimensional (X : Scheme.{u}) [IsLocallyNoetherian X]
+instance finiteDimensional_zariskiTangentSpace (X : Scheme.{u}) [IsLocallyNoetherian X]
     (x : X) : FiniteDimensional (IsLocalRing.ResidueField (X.presheaf.stalk x))
       (ZariskiTangentSpace X x) :=
   inferInstance

@@ -55,6 +55,7 @@ abbrev zeroSection (A : AbelianVariety K) : Spec (.of K) ⟶ A.toScheme :=
   η[A.toOver].left
 
 /-- The identity section is a section of the structure morphism of `A`. -/
+@[simp]
 lemma zeroSection_comp_toOver_hom (A : AbelianVariety K) :
     A.zeroSection ≫ A.toOver.hom = 𝟙 (Spec (.of K)) := by
   simpa only [zeroSection, Over.tensorUnit_hom] using η[A.toOver].w
@@ -64,10 +65,20 @@ unique point of `Spec K`. -/
 def zeroPoint (A : AbelianVariety K) : A.toScheme :=
   A.zeroSection (IsLocalRing.closedPoint K)
 
+/-- The identity point is the value of the identity section at the closed point of `Spec K`. -/
+@[simp]
+lemma zeroPoint_def (A : AbelianVariety K) :
+    A.zeroPoint = A.zeroSection (IsLocalRing.closedPoint K) := by
+  unfold zeroPoint
+  rfl
+
 /-- The structure morphism sends the identity point to the unique point of `Spec K`. -/
 @[simp]
 lemma toOver_hom_zeroPoint (A : AbelianVariety K) :
     A.toOver.hom A.zeroPoint = IsLocalRing.closedPoint K := by
+  rw [zeroPoint_def]
+  -- The carrier of `Spec (.of K)` is only reducibly equal to `PrimeSpectrum K`, so rewriting
+  -- with `Scheme.Hom.comp_apply` does not elaborate here; expose the pointwise composite first.
   change (A.zeroSection ≫ A.toOver.hom) (IsLocalRing.closedPoint K) = _
   rw [zeroSection_comp_toOver_hom]
   rfl
@@ -102,6 +113,14 @@ instance (A : AbelianVariety K) :
     Algebra K (IsLocalRing.ResidueField (A.toScheme.presheaf.stalk A.zeroPoint)) :=
   A.zeroResidueFieldRingEquiv.symm.toRingHom.toAlgebra
 
+/-- The residue-field equivalence sends the ground-field algebra map back to its input. -/
+@[simp]
+lemma zeroResidueFieldRingEquiv_algebraMap (A : AbelianVariety K) (k : K) :
+    A.zeroResidueFieldRingEquiv
+      (algebraMap K (IsLocalRing.ResidueField (A.toScheme.presheaf.stalk A.zeroPoint)) k) = k := by
+  rw [RingHom.algebraMap_toAlgebra]
+  exact A.zeroResidueFieldRingEquiv.apply_symm_apply k
+
 /-- The tangent space `T₀A` of an abelian variety at its identity. As a type it is the Zariski
 tangent space of the underlying scheme at `zeroPoint`; the instances below regard it as a vector
 space over the ground field `K`. -/
@@ -113,6 +132,11 @@ equivalence. -/
 instance tangentSpaceModule (A : AbelianVariety K) : Module K A.tangentSpace :=
   Module.compHom A.tangentSpace A.zeroResidueFieldRingEquiv.symm.toRingHom
 
+/-- Ground-field scalar multiplication on `T₀A` is restriction of the residue-field action. -/
+@[simp]
+lemma smul_tangentSpace (A : AbelianVariety K) (k : K) (v : A.tangentSpace) :
+    k • v = A.zeroResidueFieldRingEquiv.symm k • v := rfl
+
 /-- The ground-field action, the residue-field action, and the tangent-space action form the
 expected scalar tower. -/
 instance tangentSpace_isScalarTower (A : AbelianVariety K) : IsScalarTower K
@@ -122,7 +146,7 @@ instance tangentSpace_isScalarTower (A : AbelianVariety K) : IsScalarTower K
 /-- The tangent space of an abelian variety is finite-dimensional over its residue field.
 Smoothness implies finite type over the Noetherian field base, hence the underlying scheme is
 locally Noetherian. -/
-instance tangentSpace_finiteDimensional_residueField (A : AbelianVariety K) :
+instance finiteDimensional_tangentSpace_residueField (A : AbelianVariety K) :
     FiniteDimensional (IsLocalRing.ResidueField (A.toScheme.presheaf.stalk A.zeroPoint))
       A.tangentSpace := by
   let _ : IsLocallyNoetherian A.toScheme :=
@@ -130,7 +154,7 @@ instance tangentSpace_finiteDimensional_residueField (A : AbelianVariety K) :
   infer_instance
 
 /-- The tangent space of an abelian variety is finite-dimensional over the ground field. -/
-instance tangentSpace_finiteDimensional (A : AbelianVariety K) :
+instance finiteDimensional_tangentSpace (A : AbelianVariety K) :
     FiniteDimensional K A.tangentSpace := by
   exact Module.Finite.trans
     (IsLocalRing.ResidueField (A.toScheme.presheaf.stalk A.zeroPoint)) A.tangentSpace
