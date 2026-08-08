@@ -15,19 +15,24 @@ import Mathlib.MeasureTheory.Function.L2Space
 
 This file proves the `weighted_sums_converge_L1` milestone from Layer 3 of the Exchangeability
 roadmap. For a measurable real-valued observable `f` of a contractable process `X` with
-`f ∘ X 0` square-integrable — in particular for any bounded `f` — all fixed-start Cesàro windows
+`f ∘ X 0` square-integrable — in particular for any bounded `f` — the block averages
 
 ```text
-(m + 1)⁻¹ ∑_{i ≤ m} f(X_{r + i})
+(m + 1)⁻¹ ∑_{i ≤ m} f(X_{k m i})
 ```
 
-converge in `L¹` to the same measurable limit.
+converge in `L¹` to the same measurable limit, for **every** selection `k` that is eventually
+injective at each length. The selection may *move* with the length: fixed-start windows
+`k m i = r + i` are one instance, and disjoint windows `k m i = c * (m + 1) + i` — which fixed
+starts cannot express — are another.
 
 The proof first applies the two-window identity
 `Contractable.integral_sq_blockAverage_sub_of_disjoint` to compare two prefix averages through a
 third block disjoint from both. This makes the prefixes Cauchy in Mathlib's complete `L²` space.
-The same disjoint-block comparison shows that every fixed-start window converges to the prefix
-limit. Finally, `eLpNorm_le_eLpNorm_mul_rpow_measure_univ` turns the `L²` convergence into `L¹`
+The same disjoint-block comparison shows that every eventually-injective selection converges to
+the prefix limit: its bound depends on the block *lengths* and not on their positions, so a
+comparison block beyond the selection's range is available at every length. Finally,
+`eLpNorm_le_eLpNorm_mul_rpow_measure_univ` turns the `L²` convergence into `L¹`
 convergence, at the cost of the fixed factor `μ univ ^ (1 - 1/2)`.
 
 The mathematical argument follows the elementary `L²` route around Theorem 1.1 in Kallenberg,
@@ -207,7 +212,7 @@ private theorem cauchySeq_blockAverage_prefix_toLp {μ : Measure Ω} [IsFiniteMe
   linarith
 
 /-- **Compare a moving injective selection with the prefix in `L²`.** The selection `k n` may move
-with the length `n + 1`; only injectivity at each length is needed.
+with the length `n + 1`; only *eventual* injectivity is needed, since the conclusion is a limit.
 
 This is where the length-only bound of `dist_blockAverages_toLp_le_via_disjoint` earns its keep:
 that bound is `√(2(v−c)/n) + √(2(v−c)/m)`, depending on the two block *lengths* and not on where
@@ -216,7 +221,7 @@ prefix — is therefore available at every length, whatever the selection does. 
 private theorem tendsto_dist_blockAverage_moving_prefix_toLp {μ : Measure Ω}
     [IsFiniteMeasure μ] {Y : ℕ → Ω → ℝ} (hY : Contractable μ Y)
     (hY_L2 : ∀ i, MemLp (Y i) 2 μ) {k : ∀ n : ℕ, Fin (n + 1) → ℕ}
-    (hk : ∀ n, Function.Injective (k n)) :
+    (hk : ∀ᶠ n in atTop, Function.Injective (k n)) :
     Tendsto (fun m : ℕ =>
         dist ((memLp_blockAverage (k m) fun j => hY_L2 (k m j)).toLp (blockAverage Y (k m)))
           ((memLp_blockAverage (fun i : Fin (m + 1) => (i : ℕ)) fun i => hY_L2 i).toLp
@@ -233,7 +238,7 @@ private theorem tendsto_dist_blockAverage_moving_prefix_toLp {μ : Measure Ω}
     simpa using
       (Real.continuous_sqrt.continuousAt.tendsto.comp hquot).const_mul 2
   refine squeeze_zero' (Eventually.of_forall fun m => dist_nonneg) ?_ hsqrt
-  filter_upwards with m
+  filter_upwards [hk] with m hkm
   -- A block placed beyond both the selection's range and the prefix.
   set l : ℕ := max (Finset.univ.sup fun i : Fin (m + 1) => k m i) m + 1 with hl
   have hsel_lt : ∀ i : Fin (m + 1), k m i < l := by
@@ -256,7 +261,7 @@ private theorem tendsto_dist_blockAverage_moving_prefix_toLp {μ : Measure Ω}
   have hdist :=
     dist_blockAverages_toLp_le_via_disjoint hY hY_L2 hD
       (Nat.succ_pos m) (Nat.succ_pos m) (Nat.succ_pos m)
-      (hk m) Fin.val_injective hk₀ hsel_disjoint hpre_disjoint le_rfl le_rfl
+      hkm Fin.val_injective hk₀ hsel_disjoint hpre_disjoint le_rfl le_rfl
   simp only [Nat.cast_succ] at hdist
   linarith
 
@@ -264,8 +269,9 @@ private theorem tendsto_dist_blockAverage_moving_prefix_toLp {μ : Measure Ω}
 square-integrable has moving injective block averages converging in `L¹` to one common measurable
 limit.
 
-The selection `k m` may **move** with the length `m + 1`: only injectivity at each length is
-required, since the underlying `L²` comparison is bounded in terms of the block lengths and not
+The selection `k m` may **move** with the length `m + 1`, and need only be injective
+*eventually* — finitely many degenerate initial selections cannot affect a limit. This costs
+nothing because the underlying `L²` comparison is bounded in terms of the block lengths and not
 their positions. Fixed starts are the instance `k m j = r + j`, injective by
 `(add_right_injective r).comp Fin.val_injective`. Disjoint windows are the instance
 `k m j = i * (m + 1) + j`, and fixed starts cannot give them: windows from distinct fixed starts
@@ -281,7 +287,7 @@ theorem weighted_sums_converge_L1_of_memLp {μ : Measure Ω} [IsFiniteMeasure μ
     {X : ℕ → Ω → α} (hX : Contractable μ X) (hX_ae : ∀ i, AEMeasurable (X i) μ)
     {f : α → ℝ} (hf : Measurable f) (hf_L2 : MemLp (fun ω => f (X 0 ω)) 2 μ) :
     ∃ a : Ω → ℝ, Measurable a ∧ MemLp a 1 μ ∧
-      ∀ k : ∀ n : ℕ, Fin (n + 1) → ℕ, (∀ n, Function.Injective (k n)) →
+      ∀ k : ∀ n : ℕ, Fin (n + 1) → ℕ, (∀ᶠ n in atTop, Function.Injective (k n)) →
         Tendsto
           (fun m => ∫ ω, |blockAverage (fun i ω => f (X i ω)) (k m) ω - a ω| ∂μ)
           atTop (𝓝 0) := by
@@ -330,7 +336,7 @@ theorem weighted_sums_converge_L1 {μ : Measure Ω} [IsFiniteMeasure μ]
     {X : ℕ → Ω → α} (hX : Contractable μ X) (hX_ae : ∀ i, AEMeasurable (X i) μ)
     {f : α → ℝ} (hf : Measurable f) (hf_bdd : ∃ C, ∀ x, ‖f x‖ ≤ C) :
     ∃ a : Ω → ℝ, Measurable a ∧ MemLp a 1 μ ∧
-      ∀ k : ∀ n : ℕ, Fin (n + 1) → ℕ, (∀ n, Function.Injective (k n)) →
+      ∀ k : ∀ n : ℕ, Fin (n + 1) → ℕ, (∀ᶠ n in atTop, Function.Injective (k n)) →
         Tendsto
           (fun m => ∫ ω, |blockAverage (fun i ω => f (X i ω)) (k m) ω - a ω| ∂μ)
           atTop (𝓝 0) :=

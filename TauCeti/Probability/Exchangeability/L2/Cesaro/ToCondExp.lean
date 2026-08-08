@@ -86,9 +86,10 @@ This is the identification the Layer 3 route needs: the limit supplied by
 expectation of a single coordinate given the tail. -/
 theorem Contractable.tendsto_integral_abs_blockAverage_sub_condExp_of_memLp {μ : Measure Ω}
     [IsFiniteMeasure μ] {X : ℕ → Ω → α} (hX : Contractable μ X) (hX_meas : ∀ i, Measurable (X i))
-    {f : α → ℝ} (hf : Measurable f) (hf_L2 : MemLp (fun ω => f (X 0 ω)) 2 μ) (r : ℕ) :
+    {f : α → ℝ} (hf : Measurable f) (hf_L2 : MemLp (fun ω => f (X 0 ω)) 2 μ)
+    (k : ∀ n : ℕ, Fin (n + 1) → ℕ) (hk : ∀ᶠ n in atTop, Function.Injective (k n)) :
     Tendsto
-      (fun m => ∫ ω, |blockAverage (fun i ω => f (X i ω)) (fun j : Fin (m + 1) => r + j) ω
+      (fun m => ∫ ω, |blockAverage (fun i ω => f (X i ω)) (k m) ω
         - (μ[fun ω => f (X 0 ω) | tailProcess X]) ω| ∂μ)
       atTop (𝓝 0) := by
   have hX_ae : ∀ i, AEMeasurable (X i) μ := fun i => (hX_meas i).aemeasurable
@@ -99,7 +100,8 @@ theorem Contractable.tendsto_integral_abs_blockAverage_sub_condExp_of_memLp {μ 
   have ha_lim : ∀ r : ℕ, Tendsto
       (fun m => ∫ ω, |blockAverage (fun i ω => f (X i ω))
         (fun j : Fin (m + 1) => r + (j : ℕ)) ω - a ω| ∂μ) atTop (𝓝 0) := fun r =>
-    ha_lim' (fun n j => r + (j : ℕ)) (fun _ => (add_right_injective r).comp Fin.val_injective)
+    ha_lim' (fun n j => r + (j : ℕ))
+      (Eventually.of_forall fun _ => (add_right_injective r).comp Fin.val_injective)
   have ha_int : Integrable a μ := ha_L1.integrable le_rfl
   have hA_int : ∀ m : ℕ,
       Integrable (blockAverage (fun i ω => f (X i ω)) fun j : Fin (m + 1) => 0 + (j : ℕ)) μ :=
@@ -122,7 +124,7 @@ theorem Contractable.tendsto_integral_abs_blockAverage_sub_condExp_of_memLp {μ 
       TauCeti.MeasureTheory.condExp_ae_eq_of_forall_condExp_ae_eq_of_tendsto_eLpNorm ha_int hA_int
         (fun m => hX.condExp_blockAverage_tailProcess_ae_eq hX_meas hf
           (MemLp.integrable one_le_two (hY_L2 0)) _) hL1
-  refine (ha_lim r).congr fun m => integral_congr_ae ?_
+  refine (ha_lim' k hk).congr fun m => integral_congr_ae ?_
   filter_upwards [ha_eq] with ω hω
   rw [hω]
 
@@ -130,15 +132,16 @@ theorem Contractable.tendsto_integral_abs_blockAverage_sub_condExp_of_memLp {μ 
 finite measure space, matching the entry point of `weighted_sums_converge_L1`. -/
 theorem Contractable.tendsto_integral_abs_blockAverage_sub_condExp {μ : Measure Ω}
     [IsFiniteMeasure μ] {X : ℕ → Ω → α} (hX : Contractable μ X) (hX_meas : ∀ i, Measurable (X i))
-    {f : α → ℝ} (hf : Measurable f) (hf_bdd : ∃ C, ∀ x, ‖f x‖ ≤ C) (r : ℕ) :
+    {f : α → ℝ} (hf : Measurable f) (hf_bdd : ∃ C, ∀ x, ‖f x‖ ≤ C)
+    (k : ∀ n : ℕ, Fin (n + 1) → ℕ) (hk : ∀ᶠ n in atTop, Function.Injective (k n)) :
     Tendsto
-      (fun m => ∫ ω, |blockAverage (fun i ω => f (X i ω)) (fun j : Fin (m + 1) => r + j) ω
+      (fun m => ∫ ω, |blockAverage (fun i ω => f (X i ω)) (k m) ω
         - (μ[fun ω => f (X 0 ω) | tailProcess X]) ω| ∂μ)
       atTop (𝓝 0) :=
   let ⟨C, hC⟩ := hf_bdd
   hX.tendsto_integral_abs_blockAverage_sub_condExp_of_memLp hX_meas hf
     (memLp_comp_of_bound hf (hX_meas 0).aemeasurable C
-      (Eventually.of_forall fun ω => hC (X 0 ω)) 2) r
+      (Eventually.of_forall fun ω => hC (X 0 ω)) 2) k hk
 
 /-- **Any `L¹` limit of the Cesàro windows is the conditional expectation.** The identification
 form: one fixed start `r` suffices, since an `L¹` limit is a.e. unique. -/
@@ -169,7 +172,10 @@ theorem Contractable.ae_eq_condExp_tailProcess_of_tendsto_integral_abs {μ : Mea
       (TauCeti.MeasureTheory.tendsto_eLpNorm_one_of_tendsto_integral_norm_sub hA_int
         integrable_condExp (by
           simpa [Real.norm_eq_abs] using
-            hX.tendsto_integral_abs_blockAverage_sub_condExp_of_memLp hX_meas hf hf_L2 r)))
+            hX.tendsto_integral_abs_blockAverage_sub_condExp_of_memLp hX_meas hf hf_L2
+              (fun _ j => r + (j : ℕ))
+              (Eventually.of_forall fun _ =>
+                (add_right_injective r).comp Fin.val_injective))))
 
 end Probability
 

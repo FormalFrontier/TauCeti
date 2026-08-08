@@ -14,9 +14,10 @@ import Mathlib.MeasureTheory.Function.ConvergenceInMeasure
 /-!
 # The Cesàro limit of an observable of a contractable process is tail-measurable
 
-Layer 3 of the Exchangeability roadmap reaches `weighted_sums_converge_L1_of_memLp`: every
-fixed-start Cesàro window of a square-integrable observable of a contractable process converges in
-`L¹` to a common limit. That limit is produced as an abstract `L¹` limit, so nothing about
+Layer 3 of the Exchangeability roadmap reaches `weighted_sums_converge_L1_of_memLp`: the block
+averages of a square-integrable observable of a contractable process converge in `L¹` to a common
+limit, along every eventually-injective selection — fixed-start windows and disjoint windows
+alike. That limit is produced as an abstract `L¹` limit, so nothing about
 *where it lives* comes for free.
 
 `Contractable.exists_tailProcess_measurable_cesaro_limit_of_memLp` shows the limit has a
@@ -89,7 +90,7 @@ theorem Contractable.exists_tailProcess_measurable_cesaro_limit_of_memLp {μ : M
     (hX_ae : ∀ i, AEMeasurable (X i) μ) {f : α → ℝ} (hf : Measurable f)
     (hf_L2 : MemLp (fun ω => f (X 0 ω)) 2 μ) :
     ∃ a : Ω → ℝ, Measurable[tailProcess X] a ∧ MemLp a 1 μ ∧
-      ∀ k : ∀ n : ℕ, Fin (n + 1) → ℕ, (∀ n, Function.Injective (k n)) →
+      ∀ k : ∀ n : ℕ, Fin (n + 1) → ℕ, (∀ᶠ n in atTop, Function.Injective (k n)) →
         Tendsto
           (fun m => ∫ ω, |blockAverage (fun i ω => f (X i ω)) (k m) ω - a ω| ∂μ)
           atTop (𝓝 0) := by
@@ -98,7 +99,8 @@ theorem Contractable.exists_tailProcess_measurable_cesaro_limit_of_memLp {μ : M
   have ha₀_lim : ∀ r : ℕ, Tendsto
       (fun m => ∫ ω, |blockAverage (fun i ω => f (X i ω))
         (fun j : Fin (m + 1) => r + (j : ℕ)) ω - a₀ ω| ∂μ) atTop (𝓝 0) := fun r =>
-    ha₀_lim' (fun n j => r + (j : ℕ)) (fun _ => (add_right_injective r).comp Fin.val_injective)
+    ha₀_lim' (fun n j => r + (j : ℕ))
+      (Eventually.of_forall fun _ => (add_right_injective r).comp Fin.val_injective)
   have ha₀_int : Integrable a₀ μ := MemLp.integrable le_rfl ha₀_L1
   -- Contractability carries square-integrability from coordinate `0` to every coordinate.
   have hY_L2 : ∀ i : ℕ, MemLp (fun ω => f (X i ω)) 2 μ := hX.memLp_comp hX_ae hf hf_L2
@@ -139,7 +141,7 @@ theorem Contractable.exists_tailProcess_measurable_cesaro_limit {μ : Measure Ω
     {X : ℕ → Ω → α} (hX : Contractable μ X) (hX_ae : ∀ i, AEMeasurable (X i) μ)
     {f : α → ℝ} (hf : Measurable f) (hf_bdd : ∃ C, ∀ x, ‖f x‖ ≤ C) :
     ∃ a : Ω → ℝ, Measurable[tailProcess X] a ∧ MemLp a 1 μ ∧
-      ∀ k : ∀ n : ℕ, Fin (n + 1) → ℕ, (∀ n, Function.Injective (k n)) →
+      ∀ k : ∀ n : ℕ, Fin (n + 1) → ℕ, (∀ᶠ n in atTop, Function.Injective (k n)) →
         Tendsto
           (fun m => ∫ ω, |blockAverage (fun i ω => f (X i ω)) (k m) ω - a ω| ∂μ)
           atTop (𝓝 0) :=
