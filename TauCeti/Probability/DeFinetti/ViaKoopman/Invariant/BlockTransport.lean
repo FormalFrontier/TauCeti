@@ -6,9 +6,6 @@ module
 
 public import TauCeti.Probability.Exchangeability.PathSpace.Invariant.Transport
 import TauCeti.Probability.Exchangeability.PermutationExtension
-public import TauCeti.Probability.Exchangeability.PathSpace.ShiftAverage
-import Mathlib.Algebra.BigOperators.Fin
-public import Mathlib.Dynamics.BirkhoffSum.Average
 
 /-!
 # Moving a finite block through a reindexing, over an invariant event
@@ -23,9 +20,10 @@ process.
 * `ContractableLaw.setLIntegral_block_eq_prefix_of_measurableSet_invariants` — over an invariant
   event, a strictly increasing finite selection may be replaced by the prefix `0, 1, …, m - 1`.
 The Birkhoff/prefix-average bridge these results are read against is neutral process material and
-lives outside this route: `birkhoffAverage_eq_prefixAverage` in
+lives outside this route — `birkhoffAverage_eq_prefixAverage` in
 `Probability/Process/BlockAverage.lean`, and its shift instance
-`birkhoffAverage_shift_eq_prefixAverage` in `Exchangeability/PathSpace/ShiftAverage.lean`.
+`birkhoffAverage_shift_eq_prefixAverage` in `Exchangeability/PathSpace/ShiftAverage.lean`. This
+module does not import either: a consumer wanting them should import those modules directly.
 
 `prefixAverage` comes from the neutral `Probability/Process/BlockAverage.lean`, so this module
 does not depend on the `L²` averaging library for a measure-free definition.
