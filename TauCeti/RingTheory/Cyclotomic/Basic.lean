@@ -15,8 +15,9 @@ public import TauCeti.RingTheory.Polynomial.Cyclotomic.Computable
 This file defines `TauCeti.Cyclotomic e`, an exact, computable model of
 `ℤ[X] / (Polynomial.cyclotomic e ℤ)`.  Its elements are the `e.totient` coefficients of the
 canonical representative, in descending order.  Addition, negation, multiplication, and equality
-are genuine computations on finite lists of integers; multiplication uses the computable
-cyclotomic reduction from `TauCeti.RingTheory.Polynomial.Cyclotomic.Computable`.
+are genuine computations on finite lists of integers; multiplication convolves coefficient lists
+with `TauCeti.Polynomial.mulCoeffList` and then applies the computable cyclotomic reduction from
+`TauCeti.RingTheory.Polynomial.Cyclotomic.Computable`.
 
 The ring is identified with Mathlib's `AdjoinRoot (Polynomial.cyclotomic e ℤ)`.  For nonzero `e`,
 evaluation at `exp (2 * π * I / e)` then gives the distinguished embedding into `ℂ` used to state
@@ -36,53 +37,6 @@ public section
 open Polynomial TauCeti.Polynomial
 
 namespace TauCeti
-
-/-! ## Computable coefficient arithmetic -/
-
-/-- Convolution of two coefficient lists in ascending degree order.  The output has the usual
-`l.length + m.length - 1` slots; if either input is empty, all of those slots are zero.  This
-cannot be `private`, since the exposed body of `TauCeti.mulCoeffList` mentions it. -/
-@[expose] def coeffConvolution (l m : List ℤ) : List ℤ :=
-  List.ofFn fun i : Fin (l.length + m.length - 1) =>
-    ∑ jk ∈ Finset.antidiagonal (i : ℕ), l.getD jk.1 0 * m.getD jk.2 0
-
-/-- Multiplication of descending coefficient lists.  This cannot be `private`, since the exposed
-body of `TauCeti.Cyclotomic.mul` mentions it. -/
-@[expose] def mulCoeffList (l m : List ℤ) : List ℤ :=
-  (coeffConvolution l.reverse m.reverse).reverse
-
-/-- `TauCeti.coeffConvolution` produces the usual `l.length + m.length - 1` coefficients. -/
-theorem length_coeffConvolution (l m : List ℤ) :
-    (coeffConvolution l m).length = l.length + m.length - 1 := by
-  simp [coeffConvolution]
-
-/-- `TauCeti.mulCoeffList` lists the coefficients of a product of polynomials. -/
-theorem ofCoeffList_mulCoeffList (l m : List ℤ) :
-    ofCoeffList (mulCoeffList l m) = ofCoeffList l * ofCoeffList m := by
-  ext n
-  rw [coeff_ofCoeffList, coeff_mul]
-  by_cases hn : n < l.length + m.length - 1
-  · rw [mulCoeffList, List.reverse_reverse, List.getD_eq_getElem]
-    · simp only [coeffConvolution, List.getElem_ofFn, coeff_ofCoeffList]
-    · simpa [length_coeffConvolution] using hn
-  · rw [List.getD_eq_getElem?_getD,
-      List.getElem?_eq_none (by simp [mulCoeffList, length_coeffConvolution]; omega),
-      Option.getD_none]
-    simp only [coeff_ofCoeffList]
-    symm
-    apply Finset.sum_eq_zero
-    intro jk hjk
-    rw [Finset.mem_antidiagonal] at hjk
-    by_cases hl : jk.1 < l.length
-    · have hm : m.length ≤ jk.2 := by omega
-      have hm0 : m.reverse.getD jk.2 0 = 0 := by
-        rw [List.getD_eq_getElem?_getD, List.getElem?_eq_none (by simpa using hm),
-          Option.getD_none]
-      rw [hm0, mul_zero]
-    · have hl0 : l.reverse.getD jk.1 0 = 0 := by
-        rw [List.getD_eq_getElem?_getD, List.getElem?_eq_none (by simpa using hl),
-          Option.getD_none]
-      rw [hl0, zero_mul]
 
 /-! ## The exact ring -/
 
@@ -329,7 +283,7 @@ instance : CommRing (Cyclotomic e) where
 /-! ## Comparison with `AdjoinRoot` -/
 
 /-- The ring homomorphism identifying exact cyclotomic integers with the polynomial quotient. -/
-@[expose] noncomputable def toAdjoinRootRingHom : Cyclotomic e →+* AdjoinRoot (cyclotomic e ℤ) where
+noncomputable def toAdjoinRootRingHom : Cyclotomic e →+* AdjoinRoot (cyclotomic e ℤ) where
   toFun := toAdjoinRoot
   map_zero' := toAdjoinRoot_zero
   map_one' := toAdjoinRoot_one
@@ -347,14 +301,19 @@ theorem toAdjoinRoot_surjective : Function.Surjective (toAdjoinRoot : Cyclotomic
   refine ⟨ofCoeffList e p.coeffList, ?_⟩
   rw [toAdjoinRoot_ofCoeffList, TauCeti.Polynomial.ofCoeffList_coeffList]
 
+private theorem toAdjoinRootRingHom_bijective :
+    Function.Bijective (toAdjoinRootRingHom (e := e)) :=
+  ⟨fun _ _ h => toAdjoinRoot_injective (by simpa using h),
+    fun z => (toAdjoinRoot_surjective z).imp fun _ h => by simpa using h⟩
+
 /-- Exact cyclotomic integers are the quotient `ℤ[X] / (Φ_e)`. -/
-@[expose] noncomputable def equivAdjoinRoot :
+noncomputable def equivAdjoinRoot :
     Cyclotomic e ≃+* AdjoinRoot (cyclotomic e ℤ) :=
-  RingEquiv.ofBijective toAdjoinRootRingHom
-    ⟨toAdjoinRoot_injective, toAdjoinRoot_surjective⟩
+  RingEquiv.ofBijective toAdjoinRootRingHom toAdjoinRootRingHom_bijective
 
 @[simp]
-theorem equivAdjoinRoot_apply (x : Cyclotomic e) : equivAdjoinRoot x = toAdjoinRoot x := rfl
+theorem equivAdjoinRoot_apply (x : Cyclotomic e) : equivAdjoinRoot x = toAdjoinRoot x := by
+  rw [equivAdjoinRoot, RingEquiv.ofBijective_apply, toAdjoinRootRingHom_apply]
 
 /-- The distinguished generator `ζ`, represented by the polynomial `X`. -/
 @[expose] def zeta (e : ℕ) : Cyclotomic e := ofCoeffList e [1, 0]
@@ -365,10 +324,27 @@ theorem toAdjoinRoot_zeta : toAdjoinRoot (zeta e) = AdjoinRoot.root (cyclotomic 
     simp [TauCeti.Polynomial.ofCoeffList_cons]
   rw [zeta, toAdjoinRoot_ofCoeffList, hX, AdjoinRoot.mk_X]
 
+@[simp]
+theorem equivAdjoinRoot_symm_root :
+    (equivAdjoinRoot (e := e)).symm (AdjoinRoot.root (cyclotomic e ℤ)) = zeta e :=
+  equivAdjoinRoot.symm_apply_eq.2 (by rw [equivAdjoinRoot_apply, toAdjoinRoot_zeta])
+
+/-- A ring homomorphism out of the exact cyclotomic integers is determined by the image of the
+distinguished generator `ζ`: the integers admit a unique ring homomorphism, and `ζ` generates
+everything else. -/
+theorem ringHom_ext {R : Type*} [CommRing R] {g₁ g₂ : Cyclotomic e →+* R}
+    (h : g₁ (zeta e) = g₂ (zeta e)) : g₁ = g₂ := by
+  have key : g₁.comp (equivAdjoinRoot (e := e)).symm.toRingHom
+      = g₂.comp (equivAdjoinRoot (e := e)).symm.toRingHom :=
+    AdjoinRoot.ringHom_ext (RingHom.ext_int _ _) (by simpa using h)
+  refine RingHom.ext fun x => ?_
+  obtain ⟨y, rfl⟩ := equivAdjoinRoot.symm.surjective x
+  exact RingHom.congr_fun key y
+
 /-! ## Evaluation and residue maps -/
 
 /-- Evaluate exact cyclotomic integers at a root of the mapped cyclotomic polynomial. -/
-@[expose] noncomputable def evalRingHom {R : Type*} [CommRing R] (f : ℤ →+* R) (r : R)
+noncomputable def evalRingHom {R : Type*} [CommRing R] (f : ℤ →+* R) (r : R)
     (hr : (cyclotomic e ℤ).eval₂ f r = 0) : Cyclotomic e →+* R :=
   (AdjoinRoot.lift f r hr).comp toAdjoinRootRingHom
 
@@ -386,6 +362,20 @@ theorem evalRingHom_ofCoeffList {R : Type*} [CommRing R] (f : ℤ →+* R) (r : 
       (TauCeti.Polynomial.ofCoeffList l).eval₂ f r := by
   rw [evalRingHom, RingHom.comp_apply, toAdjoinRootRingHom_apply, toAdjoinRoot_ofCoeffList,
     AdjoinRoot.lift_mk]
+
+/-- Evaluation at a root `r` of `Φ_e` sends the distinguished generator `ζ` to `r`. -/
+@[simp]
+theorem evalRingHom_zeta {R : Type*} [CommRing R] (f : ℤ →+* R) (r : R)
+    (hr : (cyclotomic e ℤ).eval₂ f r = 0) : evalRingHom f r hr (zeta e) = r := by
+  rw [evalRingHom, RingHom.comp_apply, toAdjoinRootRingHom_apply, toAdjoinRoot_zeta,
+    AdjoinRoot.lift_root]
+
+/-- `TauCeti.Cyclotomic.evalRingHom f r hr` is the *only* ring homomorphism sending the
+distinguished generator `ζ` to `r`. -/
+theorem eq_evalRingHom {R : Type*} [CommRing R] (f : ℤ →+* R) (r : R)
+    (hr : (cyclotomic e ℤ).eval₂ f r = 0) (g : Cyclotomic e →+* R) (hg : g (zeta e) = r) :
+    g = evalRingHom f r hr :=
+  ringHom_ext (by rw [hg, evalRingHom_zeta])
 
 /-- Evaluate a coefficient vector by Horner's rule.  Unlike `Polynomial.eval₂`, this is a genuine
 computation because it works directly on the finite list. -/
