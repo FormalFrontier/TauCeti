@@ -351,6 +351,77 @@ theorem reflection_mem_orthogonalGroup : reflection Q v ∈ orthogonalGroup Q :=
 
 end Reflection
 
+section CartanDieudonneStep
+
+variable {R : Type u} {M : Type v} [CommRing R] [AddCommGroup M] [Module R M]
+variable (Q : QuadraticForm R M)
+
+/-- If `x` and `y` have the same quadratic value, reflecting `x` in `x - y` carries it to `y`
+whenever `x - y` has invertible norm. -/
+theorem reflection_sub_apply_eq_of_map_eq (x y : M) (hxy : Q x = Q y)
+    [Invertible (Q (x - y))] :
+    reflection Q (x - y) x = y := by
+  rw [reflection_apply]
+  have hpolar : polar Q (x - y) x = Q (x - y) := by
+    calc
+      _ = (2 : R) * Q x - polar Q y x := by
+        rw [polar_sub_left, polar_self]
+        ring
+      _ = Q (x - y) := by
+        conv_rhs =>
+          rw [sub_eq_add_neg, QuadraticMap.map_add ⇑Q, QuadraticMap.map_neg, polar_neg_right]
+        rw [hxy, QuadraticMap.polar_comm ⇑Q y x]
+        ring
+  rw [hpolar, invOf_mul_self, one_smul, sub_sub_cancel]
+
+/-- If `x` and `y` have the same quadratic value, reflecting `x` in `x + y` carries it to `-y`
+whenever `x + y` has invertible norm. -/
+theorem reflection_add_apply_eq_neg_of_map_eq (x y : M) (hxy : Q x = Q y)
+    [Invertible (Q (x + y))] :
+    reflection Q (x + y) x = -y := by
+  rw [reflection_apply]
+  have hpolar : polar Q (x + y) x = Q (x + y) := by
+    calc
+      _ = (2 : R) * Q x + polar Q y x := by
+        rw [polar_add_left, polar_self]
+        ring
+      _ = Q (x + y) := by
+        rw [QuadraticMap.map_add ⇑Q, hxy, QuadraticMap.polar_comm ⇑Q y x]
+        ring
+  rw [hpolar, invOf_mul_self, one_smul]
+  abel
+
+section Field
+
+variable {K : Type u} {V : Type v} [Field K] [AddCommGroup V] [Module K V]
+variable (Q : QuadraticForm K V) [Invertible (2 : K)]
+
+/-- If `x` and `y` have the same invertible quadratic value, at least one of `x - y` and `x + y`
+has invertible norm. -/
+theorem isUnit_sub_or_add_of_map_eq (x y : V) (hxy : Q x = Q y) [Invertible (Q y)] :
+    IsUnit (Q (x - y)) ∨ IsUnit (Q (x + y)) := by
+  rw [isUnit_iff_ne_zero, isUnit_iff_ne_zero]
+  by_cases hsub : Q (x - y) = 0
+  · right
+    intro hadd
+    have hsum : Q (x - y) + Q (x + y) = 4 * Q y := by
+      rw [sub_eq_add_neg, QuadraticMap.map_add ⇑Q, QuadraticMap.map_neg, polar_neg_right,
+        QuadraticMap.map_add ⇑Q, hxy]
+      ring
+    have hzero : (4 : K) * Q y = 0 := by simpa [hsub, hadd] using hsum.symm
+    have h2 : (2 : K) ≠ 0 := (isUnit_of_invertible (2 : K)).ne_zero
+    have h4 : (4 : K) ≠ 0 := by
+      have hfour : (4 : K) = 2 * 2 := by norm_num
+      rw [hfour]
+      exact mul_ne_zero h2 h2
+    exact (isUnit_of_invertible (Q y)).ne_zero
+      ((mul_eq_zero.mp hzero).resolve_left h4)
+  · exact Or.inl hsub
+
+end Field
+
+end CartanDieudonneStep
+
 end QuadraticMap
 
 end TauCeti
