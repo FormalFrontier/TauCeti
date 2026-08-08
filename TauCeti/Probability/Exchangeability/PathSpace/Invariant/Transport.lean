@@ -27,7 +27,10 @@ combine to give this, and keeping them apart is the point:
 
 * `preimage_reindex_eq_of_measurableSet_invariants_of_eventually_add` — the invariant-measurable
   form of reindexing stability;
-* `ContractableLaw.setLIntegral_comp_reindex_eq_of_measurableSet_invariants` — the transport itself.
+* `setLIntegral_comp_reindex_eq_of_measurableSet_invariants` — the transport itself, stated for a
+  measure-preserving reindexing;
+* `ContractableLaw.setLIntegral_comp_reindex_eq_of_measurableSet_invariants` — its contractable
+  instance.
 
 ## Source
 
@@ -69,18 +72,20 @@ theorem preimage_reindex_eq_of_measurableSet_invariants_of_eventually_add {m C :
   preimage_reindex_eq_of_preimage_shift_eq_of_eventually_add
     (MeasurableSpace.measurableSet_invariants.1 hA).2 hφ
 
-/-- **An eventually-translating strict reindexing acts trivially over an invariant event.** For a
-contractable path law `ρ`, a set `A` measurable in `MeasurableSpace.invariants (shift α)`, and a
-strictly increasing `φ` with `φ n = n + C` for all `n ≥ m`, reading a measurable path functional `f`
-through `φ` does not change its set-integral over `A`. -/
-theorem ContractableLaw.setLIntegral_comp_reindex_eq_of_measurableSet_invariants
-    {ρ : Measure (ℕ → α)} (hρ : ContractableLaw ρ) {φ : ℕ → ℕ} {m C : ℕ}
-    (hφ_mono : StrictMono φ) (hφ_add : ∀ n, m ≤ n → φ n = n + C)
+/-- **An eventually-translating measure-preserving reindexing acts trivially over an invariant
+event.** If reading a path through `φ` preserves `ρ`, and `φ n = n + C` for all `n ≥ m`, then the
+set-integral of a measurable path functional over a shift-invariant `A` is unchanged.
+
+Only measure preservation by *this* reindexing is used; contractability and strict monotonicity are
+one way to obtain it, not requirements. In particular a merely shift-invariant law with
+`φ = (· + C)` qualifies. -/
+theorem setLIntegral_comp_reindex_eq_of_measurableSet_invariants
+    {ρ : Measure (ℕ → α)} {φ : ℕ → ℕ} {m C : ℕ}
+    (hmp : MeasurePreserving (fun x : ℕ → α => fun k => x (φ k)) ρ ρ)
+    (hφ_add : ∀ n, m ≤ n → φ n = n + C)
     {A : Set (ℕ → α)} (hA : MeasurableSet[MeasurableSpace.invariants (shift α)] A)
     {f : (ℕ → α) → ℝ≥0∞} (hf : Measurable f) :
     ∫⁻ x in A, f (fun k => x (φ k)) ∂ρ = ∫⁻ x in A, f x ∂ρ := by
-  have hmp : MeasurePreserving (fun x : ℕ → α => fun k => x (φ k)) ρ ρ :=
-    hρ.measurePreserving_reindex hφ_mono
   have hpre : (fun x : ℕ → α => fun k => x (φ k)) ⁻¹' A = A :=
     preimage_reindex_eq_of_measurableSet_invariants_of_eventually_add hA hφ_add
   have hAmeas : MeasurableSet A := (MeasurableSpace.measurableSet_invariants.1 hA).1
@@ -89,6 +94,17 @@ theorem ContractableLaw.setLIntegral_comp_reindex_eq_of_measurableSet_invariants
         rw [hpre]
     _ = ∫⁻ x in A, f x ∂ρ := by
         rw [← hmp.setLIntegral_comp_preimage hAmeas hf]
+
+/-- **The contractable instance.** A strictly increasing reindexing preserves a contractable path
+law, which is the hypothesis the general statement wants. -/
+theorem ContractableLaw.setLIntegral_comp_reindex_eq_of_measurableSet_invariants
+    {ρ : Measure (ℕ → α)} (hρ : ContractableLaw ρ) {φ : ℕ → ℕ} {m C : ℕ}
+    (hφ_mono : StrictMono φ) (hφ_add : ∀ n, m ≤ n → φ n = n + C)
+    {A : Set (ℕ → α)} (hA : MeasurableSet[MeasurableSpace.invariants (shift α)] A)
+    {f : (ℕ → α) → ℝ≥0∞} (hf : Measurable f) :
+    ∫⁻ x in A, f (fun k => x (φ k)) ∂ρ = ∫⁻ x in A, f x ∂ρ :=
+  _root_.TauCeti.Probability.setLIntegral_comp_reindex_eq_of_measurableSet_invariants
+    (hρ.measurePreserving_reindex hφ_mono) hφ_add hA hf
 
 end Probability
 
