@@ -159,7 +159,8 @@ theorem mem_iff_of_rowLen_le_one {μ : YoungDiagram} (h : μ.rowLen 0 ≤ 1) {i 
   · rintro ⟨hi, rfl⟩
     exact _root_.YoungDiagram.mem_iff_lt_colLen.mpr hi
 
-/-- A Young diagram with at most one column is the top of that column. -/
+/-- The cells of a Young diagram with at most one column are exactly the cells `(i, 0)` with
+`i < μ.colLen 0`: the whole of its first column, and nothing else. -/
 theorem cells_eq_of_rowLen_le_one {μ : YoungDiagram} (h : μ.rowLen 0 ≤ 1) :
     μ.cells = Finset.range (μ.colLen 0) ×ˢ {0} := by
   ext c
