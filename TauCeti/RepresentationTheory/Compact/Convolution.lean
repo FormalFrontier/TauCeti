@@ -25,9 +25,9 @@ map `convolutionCLM k : L²(G) →L[𝕜] C(G)` is bounded by the uniform norm o
 Composing with `ContinuousMap.toLp` gives the convolution operator `convolutionOperator k` on
 `L²(G)`. Two of its properties are proved here: it is self-adjoint when the kernel is symmetric
 (`k g⁻¹ = conj (k g)`), and it commutes with right translation. Together these say that the
-eigenspaces of a symmetric convolution operator are right-translation-invariant subspaces of
-`L²(G)` consisting of continuous functions, which is how the Peter-Weyl theorem manufactures
-finite-dimensional representations of `G` without presupposing that any exist.
+nonzero eigenspaces of a symmetric convolution operator are right-translation-invariant subspaces
+of `L²(G)` whose elements admit continuous representatives, which is how the Peter-Weyl theorem
+manufactures finite-dimensional representations of `G` without presupposing that any exist.
 
 ## Main definitions
 
@@ -182,6 +182,50 @@ theorem convolutionCLM_apply_apply (k : C(G, 𝕜)) (f : Lp 𝕜 2 (haarProb G))
   refine integral_congr_ae (Filter.Eventually.of_forall fun y => ?_)
   simp only [convSectionCM_apply, RCLike.conj_conj]
 
+private theorem integrable_convolution_integrand (k : C(G, 𝕜))
+    (f : Lp 𝕜 2 (haarProb G)) (x : G) :
+    Integrable (fun y => k (x * y⁻¹) * f y) (haarProb G) := by
+  refine (L2.integrable_inner (convSection k x) f).congr ?_
+  filter_upwards [ContinuousMap.coeFn_toLp (E := 𝕜) (p := 2) (haarProb G) (𝕜 := 𝕜)
+    (convSectionCM k x)] with y hy
+  rw [convSection_apply, hy, RCLike.inner_apply, convSectionCM_apply, RCLike.conj_conj,
+    mul_comm]
+
+/-- Convolution is zero when its kernel is zero. -/
+@[simp]
+theorem convolutionCLM_zero :
+    convolutionCLM (G := G) (0 : C(G, 𝕜)) = 0 := by
+  ext f x
+  simp [convolutionCLM_apply_apply]
+
+/-- Convolution is additive in its kernel. -/
+@[simp]
+theorem convolutionCLM_add (k₁ k₂ : C(G, 𝕜)) :
+    convolutionCLM (k₁ + k₂) = convolutionCLM k₁ + convolutionCLM k₂ := by
+  ext f x
+  change convolutionCLM (k₁ + k₂) f x = convolutionCLM k₁ f x + convolutionCLM k₂ f x
+  rw [convolutionCLM_apply_apply, convolutionCLM_apply_apply, convolutionCLM_apply_apply]
+  change (∫ y, (k₁ (x * y⁻¹) + k₂ (x * y⁻¹)) * f y ∂(haarProb G)) = _
+  calc
+    _ = ∫ y, k₁ (x * y⁻¹) * f y + k₂ (x * y⁻¹) * f y ∂(haarProb G) :=
+      integral_congr_ae (Filter.Eventually.of_forall fun y => add_mul _ _ _)
+    _ = _ := integral_add (integrable_convolution_integrand k₁ f x)
+      (integrable_convolution_integrand k₂ f x)
+
+/-- Convolution is compatible with scalar multiplication of its kernel. -/
+@[simp]
+theorem convolutionCLM_smul (c : 𝕜) (k : C(G, 𝕜)) :
+    convolutionCLM (c • k) = c • convolutionCLM k := by
+  ext f x
+  change convolutionCLM (c • k) f x = c • convolutionCLM k f x
+  rw [convolutionCLM_apply_apply, convolutionCLM_apply_apply]
+  change (∫ y, (c * k (x * y⁻¹)) * f y ∂(haarProb G)) =
+    c * ∫ y, k (x * y⁻¹) * f y ∂(haarProb G)
+  calc
+    _ = ∫ y, c * (k (x * y⁻¹) * f y) ∂(haarProb G) :=
+      integral_congr_ae (Filter.Eventually.of_forall fun y => mul_assoc _ _ _)
+    _ = _ := integral_const_mul c _
+
 /-- **Convolution is bounded from `L²(G)` into `C(G)`:** the uniform norm of `k * f` is at most the
 product of the uniform norm of the kernel and the `L²` norm of `f`. Normalized Haar measure is a
 probability measure, so no measure-dependent constant appears. -/
@@ -208,6 +252,27 @@ noncomputable def convolutionOperator (k : C(G, 𝕜)) :
 theorem convolutionOperator_apply (k : C(G, 𝕜)) (f : Lp 𝕜 2 (haarProb G)) :
     convolutionOperator k f = ContinuousMap.toLp 2 (haarProb G) 𝕜 (convolutionCLM k f) :=
   (rfl)
+
+/-- The convolution operator is zero when its kernel is zero. -/
+@[simp]
+theorem convolutionOperator_zero :
+    convolutionOperator (G := G) (0 : C(G, 𝕜)) = 0 := by
+  ext f
+  simp [convolutionOperator_apply]
+
+/-- The convolution operator is additive in its kernel. -/
+@[simp]
+theorem convolutionOperator_add (k₁ k₂ : C(G, 𝕜)) :
+    convolutionOperator (k₁ + k₂) = convolutionOperator k₁ + convolutionOperator k₂ := by
+  ext f
+  simp [convolutionOperator_apply]
+
+/-- The convolution operator is compatible with scalar multiplication of its kernel. -/
+@[simp]
+theorem convolutionOperator_smul (c : 𝕜) (k : C(G, 𝕜)) :
+    convolutionOperator (c • k) = c • convolutionOperator k := by
+  ext f
+  simp [convolutionOperator_apply]
 
 /-- The convolution operator is represented, almost everywhere, by the continuous function
 `convolutionCLM k f`. -/
