@@ -18,7 +18,7 @@ builds that data and proves the three facts that make it a representation of `Q`
   (`TauCeti.isInternal_vertexComponent`);
 * a path from `a` to `b` carries `Mₐ` into `M_b` and annihilates every other vertex subspace
   (`TauCeti.ofPath_smul_mem_vertexComponent`,
-  `TauCeti.ofPath_smul_eq_zero_of_mem_vertexComponent`);
+  `TauCeti.ofPath_smul_eq_zero_of_ne_of_mem_vertexComponent`);
 * the resulting maps are functorial in the path (`TauCeti.pathMap_nil`,
   `TauCeti.pathMap_comp`) and in the module (`TauCeti.vertexComponentMap_id`,
   `TauCeti.vertexComponentMap_comp`), the two being compatible
@@ -54,8 +54,8 @@ target `quiverRepEquivalence` itself, of which this file is the object-and-morph
 ## Main results
 
 * `TauCeti.isInternal_vertexComponent`: `M = ⨁ᵥ eᵥ M`, with
-  `TauCeti.coe_isInternal_vertexComponent_symm_apply` reading off the component of `x` at `v` as
-  `eᵥ • x`.
+  `TauCeti.coe_ofBijective_coeLinearMap_symm_apply_vertexComponent` reading off the component of
+  `x` at `v` as `eᵥ • x`.
 * `TauCeti.finrank_eq_sum_finrank_vertexComponent`: for a `kQ`-module finite-dimensional over a
   field `k`, the dimension of `M` is the sum of the dimensions of the vertex subspaces — the total
   dimension read off the dimension vector.
@@ -80,7 +80,7 @@ namespace TauCeti
 
 open PathAlgebra
 
-open scoped DirectSum
+open scoped DirectSum Pointwise
 
 section Component
 
@@ -92,12 +92,13 @@ variable (M : Type*) [AddCommMonoid M] [Module k M] [Module (pathAlgebra k Q) M]
 the vertex idempotent at `v` acts as the identity. It is the value at `v` of the representation of
 `Q` attached to `M`. -/
 noncomputable def vertexComponent (v : Q) : Submodule k M :=
-  smulRange k M (vertexIdempotent k v)
+  vertexIdempotent k v • (⊤ : Submodule k M)
 
-/-- The vertex component is the piece cut out by the vertex idempotent, so the general API of
-`TauCeti.smulRange` applies to it. -/
-theorem vertexComponent_eq_smulRange (v : Q) :
-    vertexComponent k M v = smulRange k M (vertexIdempotent k v) := (rfl)
+/-- The vertex component is the piece `eᵥ • M` cut out by the vertex idempotent, so both Mathlib's
+pointwise API for `e • (⊤ : Submodule k M)` and the general lemmas about it —
+`TauCeti.mem_smul_top_iff_smul_eq_self`, `TauCeti.isInternal_smul_top`, … — apply to it. -/
+theorem vertexComponent_eq_smul_top (v : Q) :
+    vertexComponent k M v = vertexIdempotent k v • (⊤ : Submodule k M) := (rfl)
 
 variable {k M}
 
@@ -105,7 +106,7 @@ variable {k M}
 @[simp]
 theorem mem_vertexComponent_iff_smul_eq_self {v : Q} {x : M} :
     x ∈ vertexComponent k M v ↔ (vertexIdempotent k v : pathAlgebra k Q) • x = x :=
-  mem_smulRange_iff_smul_eq_self (vertexIdempotent_mul_self v)
+  mem_smul_top_iff_smul_eq_self (vertexIdempotent_mul_self v)
 
 /-- The vertex idempotent fixes its own component. -/
 theorem vertexIdempotent_smul_eq_self_of_mem_vertexComponent {v : Q} {x : M}
@@ -113,18 +114,18 @@ theorem vertexIdempotent_smul_eq_self_of_mem_vertexComponent {v : Q} {x : M}
   mem_vertexComponent_iff_smul_eq_self.1 hx
 
 /-- **A path lands in the component of its target.** Together with
-`TauCeti.ofPath_smul_eq_zero_of_mem_vertexComponent` this says that a path from `a` to `b` acts as
-a map from the component at its *source* to the component at its *target*, which is the
+`TauCeti.ofPath_smul_eq_zero_of_ne_of_mem_vertexComponent` this says that a path from `a` to `b`
+acts as a map from the component at its *source* to the component at its *target*, which is the
 orientation the *later factor first* product of the path algebra was chosen to produce. -/
 theorem ofPath_smul_mem_vertexComponent {a b : Q} (p : _root_.Quiver.Path a b) (x : M) :
     (ofPath ⟨a, b, p⟩ : pathAlgebra k Q) • x ∈ vertexComponent k M b :=
-  smul_mem_smulRange_of_mul_eq_self (vertexIdempotent_mul_ofPath p) x
+  smul_mem_smul_top_of_mul_eq_self (vertexIdempotent_mul_ofPath p) x
 
 /-- **A path annihilates every vertex component but that of its source.** -/
-theorem ofPath_smul_eq_zero_of_mem_vertexComponent {a b c : Q} (p : _root_.Quiver.Path a b)
+theorem ofPath_smul_eq_zero_of_ne_of_mem_vertexComponent {a b c : Q} (p : _root_.Quiver.Path a b)
     (h : c ≠ a) {x : M} (hx : x ∈ vertexComponent k M c) :
     (ofPath ⟨a, b, p⟩ : pathAlgebra k Q) • x = 0 :=
-  smul_eq_zero_of_mul_eq_zero_of_mem_smulRange (ofPath_mul_vertexIdempotent_of_ne _ h) hx
+  smul_eq_zero_of_mul_eq_zero_of_mem_smul_top (ofPath_mul_vertexIdempotent_of_ne _ h) hx
 
 variable (k M)
 
@@ -180,31 +181,31 @@ variable {M N P : Type*} [AddCommMonoid M] [Module k M] [Module (pathAlgebra k Q
 
 /-- A `kQ`-linear map restricts to a `k`-linear map between the components at each vertex: it
 commutes with the action of `eᵥ`, so it preserves the fixed points of `eᵥ`. This is
-`TauCeti.smulRangeMap` at the vertex idempotent. -/
+`TauCeti.smulTopMap` at the vertex idempotent. -/
 noncomputable def vertexComponentMap (f : M →ₗ[pathAlgebra k Q] N) (v : Q) :
     vertexComponent k M v →ₗ[k] vertexComponent k N v :=
-  smulRangeMap k (vertexIdempotent k v) f
+  smulTopMap k (vertexIdempotent k v) f
 
 @[simp]
 theorem coe_vertexComponentMap_apply (f : M →ₗ[pathAlgebra k Q] N) (v : Q)
     (x : vertexComponent k M v) : (vertexComponentMap k f v x : N) = f (x : M) :=
-  coe_smulRangeMap_apply _ f x
+  coe_smulTopMap_apply _ f x
 
 /-- **The restriction to the components is functorial**: the identity restricts to the identity.
-This is `TauCeti.smulRangeMap_id` at the vertex idempotent. -/
+This is `TauCeti.smulTopMap_id` at the vertex idempotent. -/
 @[simp]
 theorem vertexComponentMap_id (v : Q) :
     vertexComponentMap k (LinearMap.id : M →ₗ[pathAlgebra k Q] M) v = LinearMap.id :=
-  smulRangeMap_id _
+  smulTopMap_id _
 
 /-- **The restriction to the components is functorial**: a composite restricts to the composite of
-the restrictions. This is `TauCeti.smulRangeMap_comp` at the vertex idempotent. -/
+the restrictions. This is `TauCeti.smulTopMap_comp` at the vertex idempotent. -/
 @[simp]
 theorem vertexComponentMap_comp (g : N →ₗ[pathAlgebra k Q] P) (f : M →ₗ[pathAlgebra k Q] N)
     (v : Q) :
     vertexComponentMap k (g.comp f) v
       = (vertexComponentMap k g v).comp (vertexComponentMap k f v) :=
-  smulRangeMap_comp _ g f
+  smulTopMap_comp _ g f
 
 /-- **The path maps are natural in the module**: restricting a `kQ`-linear map to the vertex
 components commutes with the action of every path. This is the morphism half of the passage from
@@ -233,18 +234,18 @@ The component of `x` at `v` is `eᵥ • x`, and the decomposition is the one th
 theorem isInternal_vertexComponent :
     DirectSum.IsInternal fun v : Q => vertexComponent k M v := by
   let := Fintype.ofFinite Q
-  exact isInternal_smulRange (completeOrthogonalIdempotents_vertexIdempotent k Q)
+  exact isInternal_smul_top (completeOrthogonalIdempotents_vertexIdempotent k Q)
 
 /-- **The component of `x` at `v` is `eᵥ • x`**: the inverse of the decomposition, read off one
 vertex at a time. This is the fact the roadmap's inversion of `quiverRepEquivalence` runs on. -/
 @[simp]
-theorem coe_isInternal_vertexComponent_symm_apply (x : M) (v : Q) :
+theorem coe_ofBijective_coeLinearMap_symm_apply_vertexComponent (x : M) (v : Q) :
     (((LinearEquiv.ofBijective (DirectSum.coeLinearMap fun w : Q => vertexComponent k M w)
         (isInternal_vertexComponent k M)).symm x v : vertexComponent k M v) : M)
       = (vertexIdempotent k v : pathAlgebra k Q) • x := by
   let := Fintype.ofFinite Q
-  exact coe_isInternal_smulRange_symm_apply (completeOrthogonalIdempotents_vertexIdempotent k Q)
-    x v
+  exact coe_ofBijective_coeLinearMap_symm_apply_smul_top
+    (completeOrthogonalIdempotents_vertexIdempotent k Q) x v
 
 end Internal
 
@@ -258,7 +259,7 @@ variable (M : Type*) [AddCommGroup M] [Module k M] [Module (pathAlgebra k Q) M]
 components**: the total dimension is read off the dimension vector `v ↦ dim (eᵥ M)`. -/
 theorem finrank_eq_sum_finrank_vertexComponent :
     Module.finrank k M = ∑ v : Q, Module.finrank k (vertexComponent k M v : Submodule k M) :=
-  finrank_eq_sum_finrank_smulRange (completeOrthogonalIdempotents_vertexIdempotent k Q)
+  finrank_eq_sum_finrank_smul_top (completeOrthogonalIdempotents_vertexIdempotent k Q)
 
 end Finrank
 
