@@ -98,26 +98,14 @@ theorem characterPairing_isSymm :
     characterPairing (k := k) (G := G).IsSymm :=
   ⟨characterPairing_symm⟩
 
-omit [Fintype G] in
-private theorem card_conjClass_dvd_card [Finite G] (x : G) :
-    Nat.card (ConjClasses.mk x).carrier ∣ Nat.card G := by
-  classical
-  let : Fintype G := Fintype.ofFinite G
-  let : Fintype (ConjClasses.mk x).carrier := Fintype.ofFinite _
-  let : Fintype (MulAction.stabilizer (ConjAct G) x) := Fintype.ofFinite _
-  let : Fintype (MulAction.orbit (ConjAct G) x) := Fintype.ofFinite _
-  rw [Nat.card_eq_fintype_card, Nat.card_eq_fintype_card]
-  rw [ConjClasses.card_carrier]
-  apply Nat.div_dvd_of_dvd
-  refine ⟨Fintype.card (MulAction.orbit (ConjAct G) x), ?_⟩
-  simpa [Nat.card_eq_fintype_card, Nat.mul_comm] using
-    (MulAction.card_orbit_mul_card_stabilizer_eq_card_group (ConjAct G) x).symm
-
-omit [Fintype G] in
-private theorem card_conjClass_cast_ne_zero [Finite G] [Invertible (Nat.card G : k)] (x : G) :
-    (Nat.card (ConjClasses.mk x).carrier : k) ≠ 0 := by
-  exact ne_zero_of_dvd_ne_zero (Invertible.ne_zero _)
-    (Nat.cast_dvd_cast (α := k) (card_conjClass_dvd_card x))
+/-- **The character pairing is invariant under inverting the group element**: the inversion twist
+`TauCeti.ClassFunction.invMap` is an isometry of the pairing. -/
+@[simp]
+theorem characterPairing_invMap_invMap (f₁ f₂ : ClassFunction k G) :
+    characterPairing (invMap f₁) (invMap f₂) = characterPairing f₁ f₂ := by
+  rw [characterPairing_apply, characterPairing_apply]
+  congr 1
+  exact Fintype.sum_equiv (Equiv.inv G) _ _ fun g => by simp
 
 /-- **Pairing against a class indicator evaluates a class function.** Pairing `f` with the indicator
 of the class of `x⁻¹` returns the value of `f` at `x`, weighted by the size of the class of `x` and
@@ -170,7 +158,8 @@ theorem characterPairing_nondegenerate [Invertible (Nat.card G : k)] :
   have hpair := hf (classIndicator (k := k) x⁻¹)
   rw [characterPairing_classIndicator_inv] at hpair
   exact (mul_ne_zero (inv_ne_zero (Invertible.ne_zero _))
-    (mul_ne_zero (card_conjClass_cast_ne_zero (k := k) x) hfx)) hpair
+    (mul_ne_zero (ConjClasses.card_carrier_cast_ne_zero (R := k) _ (Invertible.ne_zero _))
+      hfx)) hpair
 
 /-- The pairing of two representation characters is Mathlib's normalized character sum. -/
 theorem characterPairing_ofCharacter {V W : Type*} [AddCommGroup V] [Module k V]

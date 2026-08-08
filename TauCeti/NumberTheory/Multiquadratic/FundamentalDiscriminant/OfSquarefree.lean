@@ -36,6 +36,8 @@ law in `Quadratic/Ramification.lean`: a prime coprime to `2` divides it exactly 
   `p ∣ fundamentalDiscriminant d ↔ p ∣ d` (the ramified odd primes are the divisors of `d`).
 * `TauCeti.Multiquadratic.two_not_dvd_fundamentalDiscriminant_iff_mod_four_eq_one`:
   `2 ∤ fundamentalDiscriminant d ↔ d ≡ 1 (mod 4)` (`2` is unramified exactly then).
+* `TauCeti.Multiquadratic.fundamentalDiscriminant_primeDiscriminantRadicand`: a prime discriminant
+  is the fundamental discriminant of its own radicand.
 -/
 
 public section
@@ -112,5 +114,17 @@ left-hand side is not a simp normal form (it is applied explicitly instead). -/
 theorem two_not_dvd_fundamentalDiscriminant_iff_mod_four_eq_one (d : ℤ) :
     ¬ (2 : ℤ) ∣ fundamentalDiscriminant d ↔ d % 4 = 1 := by
   rw [fundamentalDiscriminant_def]; split_ifs with h <;> omega
+
+/-- **A prime discriminant is the fundamental discriminant of its own radicand.** For an odd prime
+discriminant this is the congruence `p* ≡ 1 (mod 4)`; for `-4`, `8`, `-8` it is the factor `4`
+removed by `primeDiscriminantRadicand`. So `ℚ(√(radicand D))` is the quadratic field of
+discriminant `D`. -/
+theorem fundamentalDiscriminant_primeDiscriminantRadicand {D : ℤ} (hD : IsPrimeDiscriminant D) :
+    fundamentalDiscriminant (primeDiscriminantRadicand D) = D := by
+  rcases isPrimeDiscriminant_iff.mp hD with hev | ⟨p, _hp, hodd, rfl⟩
+  · rw [primeDiscriminantRadicand_of_isEvenPrimeDiscriminant hev]
+    rcases hev with rfl | rfl | rfl <;> norm_num [fundamentalDiscriminant_def]
+  · rw [primeDiscriminantRadicand_oddPrimeDiscriminant hodd,
+      fundamentalDiscriminant_of_mod_four_eq_one (oddPrimeDiscriminant_mod_four_eq_one hodd)]
 
 end TauCeti.Multiquadratic

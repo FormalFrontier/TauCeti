@@ -24,15 +24,22 @@ prime-power levels — the degree count of Shimura, Theorem 3.24 — which lives
 is congruence-subgroup arithmetic consumed by, but independent of, the Hecke-ring layer.
 
 Ported from the AINTLIB `LeanModularForms` project
-(`LeanModularForms/HeckeRIngs/GL2/Gamma1Pair.lean` and, for the index section,
-`LeanModularForms/HeckeRIngs/GL2/CongruenceIndex.lean`, Chris Birkbeck,
+(`LeanModularForms/HeckeRIngs/GL2/Gamma1Pair.lean`, for the index section
+`LeanModularForms/HeckeRIngs/GL2/CongruenceIndex.lean`, and for the level-antitonicity
+lemmas `LeanModularForms/HeckeRIngs/GL2/LevelEmbed.lean`, all Chris Birkbeck,
 <https://github.com/CBirkbeck/AINTLIB/tree/main/projects/LeanModularForms>), extracted from
 `TauCeti/NumberTheory/ModularForms/DiamondOperators.lean` as congruence-subgroup
 infrastructure independent of the diamond operators.
 
 ## Main results
 
+* `CongruenceSubgroup.Gamma1_le_Gamma1_of_dvd`, `CongruenceSubgroup.Gamma0_le_Gamma0_of_dvd`:
+  both families are antitone in the level, `Γ(N) ≤ Γ(M)` whenever `M ∣ N`.
+* `CongruenceSubgroup.isUnit_intCast_apply_zero_zero_of_mem_Gamma0`: a `Γ₀(N)` matrix has
+  unit upper-left entry modulo `N`.
 * `CongruenceSubgroup.Gamma0_normalizes_Gamma1`: conjugation by `Γ₀(N)` preserves `Γ₁(N)`.
+* `CongruenceSubgroup.Gamma1_map_le_Gamma0_map`: the inclusion `Γ₁(N) ≤ Γ₀(N)` after mapping to
+  `GL₂(ℝ)`.
 * `CongruenceSubgroup.Gamma1_map_inv_conjAct_eq`: `(Gamma1 N).map (mapGL ℝ)` is invariant
   under conjugation by `Γ₀(N)` elements in `GL₂(ℝ)`.
 * `CongruenceSubgroup.Gamma0Map_toHomUnits_surjective`: every unit of `ZMod N` is the
@@ -57,6 +64,33 @@ variable {N : ℕ}
 
 namespace CongruenceSubgroup
 
+/-- `Γ₁` is antitone in the level: if `M ∣ N` then `Γ₁(N) ≤ Γ₁(M)`, since reducing the
+congruences `a ≡ d ≡ 1`, `c ≡ 0` modulo `N` along `ZMod N → ZMod M` gives them modulo `M`. -/
+theorem Gamma1_le_Gamma1_of_dvd {M N : ℕ} (h : M ∣ N) : Gamma1 N ≤ Gamma1 M := by
+  intro A hA
+  rw [Gamma1_mem] at hA ⊢
+  exact ⟨by simpa [map_intCast, map_one, map_zero] using congr_arg (ZMod.castHom h (ZMod M)) hA.1,
+    by simpa [map_intCast, map_one, map_zero] using congr_arg (ZMod.castHom h (ZMod M)) hA.2.1,
+    by simpa [map_intCast, map_one, map_zero] using congr_arg (ZMod.castHom h (ZMod M)) hA.2.2⟩
+
+/-- `Γ₀` is antitone in the level: if `M ∣ N` then `Γ₀(N) ≤ Γ₀(M)`. -/
+theorem Gamma0_le_Gamma0_of_dvd {M N : ℕ} (h : M ∣ N) : Gamma0 N ≤ Gamma0 M := by
+  intro A hA
+  rw [Gamma0_mem] at hA ⊢
+  simpa [map_intCast, map_one, map_zero] using congr_arg (ZMod.castHom h (ZMod M)) hA
+
+/-- The upper-left entry of a `Γ₀(N)` matrix is a unit modulo `N`: the determinant is one
+and the lower-left entry vanishes modulo `N`, so `ad ≡ 1`. -/
+theorem isUnit_intCast_apply_zero_zero_of_mem_Gamma0 {N : ℕ} {σ : SL(2, ℤ)} (hσ : σ ∈ Gamma0 N) :
+    IsUnit ((σ.1 0 0 : ℤ) : ZMod N) := by
+  have h10 : ((σ.1 1 0 : ℤ) : ZMod N) = 0 := Gamma0_mem.mp hσ
+  have hdet : σ.1 0 0 * σ.1 1 1 - σ.1 0 1 * σ.1 1 0 = 1 :=
+    Matrix.det_fin_two σ.1 ▸ σ.2
+  have hcast := congrArg (fun z : ℤ ↦ (z : ZMod N)) hdet
+  push_cast at hcast
+  rw [h10, mul_zero, sub_zero] at hcast
+  exact IsUnit.of_mul_eq_one _ hcast
+
 /-- Conjugation by a `Gamma0 N` element preserves `Gamma1 N`.
 This is the foundation for the diamond operator `⟨d⟩` on modular forms. -/
 theorem Gamma0_normalizes_Gamma1 (g : ↥(Gamma0 N)) (h : SL(2, ℤ)) (hh : h ∈ Gamma1 N) :
@@ -64,6 +98,11 @@ theorem Gamma0_normalizes_Gamma1 (g : ↥(Gamma0 N)) (h : SL(2, ℤ)) (hh : h �
   (Gamma1_mem _ _).mpr <| (Gamma1_to_Gamma0_mem _).mp <|
     (Gamma0Map N).normal_ker.conj_mem ⟨h, Gamma1_in_Gamma0 N hh⟩
       ((Gamma1_to_Gamma0_mem _).mpr ((Gamma1_mem _ _).mp hh)) g
+
+/-- The inclusion `Γ₁(N) ≤ Γ₀(N)`, transported to `GL₂(ℝ)`. -/
+theorem Gamma1_map_le_Gamma0_map (N : ℕ) :
+    (Gamma1 N).map (mapGL ℝ) ≤ (Gamma0 N).map (mapGL ℝ) :=
+  Subgroup.map_mono (Gamma1_in_Gamma0 N)
 
 /-- `(Gamma1 N).map (mapGL ℝ)` is invariant under conjugation by `Gamma0 N` elements
 in `GL₂(ℝ)`. -/
@@ -302,16 +341,10 @@ private lemma Gamma0_relindex_step_surj (k : ℕ) (hk : 0 < k) :
   obtain ⟨q, hq⟩ : (↑(p ^ k) : ℤ) ∣ σ.1 1 0 := by
     rwa [← ZMod.intCast_zmod_eq_zero_iff_dvd, ← Gamma0_mem]
   push_cast at hq
-  have h00_unit : IsUnit ((σ.1 0 0 : ℤ) : ZMod p) := by
-    have h10 : ((σ.1 1 0 : ℤ) : ZMod p) = 0 := by
+  have h00_unit : IsUnit ((σ.1 0 0 : ℤ) : ZMod p) :=
+    isUnit_intCast_apply_zero_zero_of_mem_Gamma0 (Gamma0_mem.mpr (by
       rw [ZMod.intCast_zmod_eq_zero_iff_dvd]
-      exact hq ▸ dvd_mul_of_dvd_left (dvd_pow_self _ hk.ne') q
-    have hdet : σ.1 0 0 * σ.1 1 1 - σ.1 0 1 * σ.1 1 0 = 1 :=
-      Matrix.det_fin_two σ.1 ▸ σ.2
-    have hcast := congrArg (fun z : ℤ ↦ (z : ZMod p)) hdet
-    push_cast at hcast
-    rw [h10, mul_zero, sub_zero] at hcast
-    exact IsUnit.of_mul_eq_one _ hcast
+      exact hq ▸ dvd_mul_of_dvd_left (dvd_pow_self _ hk.ne') q))
   obtain ⟨c₀, hc₀⟩ := exists_dvd_sub_val_mul p q (σ.1 0 0) h00_unit
   refine ⟨⟨c₀.val, ZMod.val_lt c₀⟩, ?_⟩
   rw [QuotientGroup.eq, Subgroup.mem_subgroupOf]
@@ -336,10 +369,8 @@ theorem Gamma0_prime_power_index (p : ℕ) (hp : Nat.Prime p) (k : ℕ) (hk : 0 
   induction k, hk using Nat.le_induction with
   | base => simpa using Gamma0_prime_index p hp
   | succ m hm ih =>
-    have h_le : Gamma0 (p ^ (m + 1)) ≤ Gamma0 (p ^ m) := fun σ hσ ↦ by
-      rw [Gamma0_mem, ZMod.intCast_zmod_eq_zero_iff_dvd] at hσ ⊢
-      exact (Int.natCast_dvd_natCast.mpr (pow_dvd_pow p m.le_succ)).trans hσ
-    rw [Nat.add_sub_cancel, ← Subgroup.relIndex_mul_index h_le,
+    rw [Nat.add_sub_cancel,
+      ← Subgroup.relIndex_mul_index (Gamma0_le_Gamma0_of_dvd (pow_dvd_pow p m.le_succ)),
       Gamma0_relIndex_pow_succ p hp.pos m hm, ih, ← mul_assoc, ← pow_succ',
       Nat.sub_add_cancel hm]
 

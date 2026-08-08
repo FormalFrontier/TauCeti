@@ -4,17 +4,17 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+public import TauCeti.Combinatorics.Quiver.BoundedPaths
 public import TauCeti.RepresentationTheory.Quiver.Acyclic.Basic
-public import Mathlib.Data.Fintype.Prod
-public import Mathlib.Data.Fintype.Sigma
-public import Mathlib.Data.Fintype.Sum
 
 /-!
 # Finite paths in acyclic quivers
 
 This file proves that a finite quiver with finitely many arrows between any two vertices has only
 finitely many paths when it is acyclic. The result supplies the finiteness hypothesis needed for
-the finite-dimensionality of its path algebra.
+the finite-dimensionality of its path algebra. The bound that makes the count finite is the
+acyclic one: every path has length below the number of vertices, so the count reduces to the
+bounded-length count of `TauCeti.Combinatorics.Quiver.BoundedPaths`.
 
 ## References
 
@@ -34,40 +34,6 @@ variable {V : Type u} [Quiver.{v} V]
 
 noncomputable section
 
-/-- Paths of a fixed bounded length are finite when vertices and arrow types are finite. -/
-private theorem finite_boundedPaths [Finite V] [∀ a b : V, Finite (a ⟶ b)] (n : ℕ) (a b : V) :
-    Finite (_root_.Quiver.Path.BoundedPaths a b n) := by
-  induction n generalizing a b with
-  | zero => exact Finite.of_subsingleton
-  | succ n ih =>
-    let : Fintype V := Fintype.ofFinite V
-    let arrowFintype (x y : V) : Fintype (x ⟶ y) := Fintype.ofFinite _
-    let pathFinite (x y : V) : Finite (_root_.Quiver.Path.BoundedPaths x y n) := ih _ _
-    let pathFintype (x y : V) : Fintype (_root_.Quiver.Path.BoundedPaths x y n) :=
-      Fintype.ofFinite _
-    let zeroFintype : Fintype (_root_.Quiver.Path.BoundedPaths a b 0) := Fintype.ofFinite _
-    let f : (_root_.Quiver.Path.BoundedPaths a b 0 ⊕
-        (Σ c : V, (a ⟶ c) × _root_.Quiver.Path.BoundedPaths c b n)) →
-        _root_.Quiver.Path.BoundedPaths a b (n + 1) := fun x ↦
-      match x with
-      | .inl p => ⟨p.1, p.2.trans (Nat.zero_le _)⟩
-      | .inr ⟨c, e, q⟩ =>
-        ⟨e.toPath.comp q.1, by simpa [Nat.add_comm] using Nat.add_le_add_right q.2 1⟩
-    let : Finite (_root_.Quiver.Path.BoundedPaths a b 0 ⊕
-        (Σ c : V, (a ⟶ c) × _root_.Quiver.Path.BoundedPaths c b n)) :=
-      Finite.of_fintype _
-    apply Finite.of_surjective f
-    intro p
-    by_cases hp : p.1.length = 0
-    · exact ⟨.inl ⟨p.1, by omega⟩, Subtype.ext rfl⟩
-    · obtain ⟨c, e, q, hq, hpq⟩ :=
-        p.1.eq_toPath_comp_of_length_eq_succ (n := p.1.length - 1) (by omega)
-      have hq_le : q.length ≤ n := by
-        have hp_le : p.1.length ≤ n + 1 := p.2
-        rw [hq]
-        omega
-      exact ⟨.inr ⟨c, e, ⟨q, hq_le⟩⟩, Subtype.ext hpq.symm⟩
-
 namespace Quiver.IsAcyclic
 
 /-- Every path in an acyclic finite quiver has length strictly below the number of vertices. -/
@@ -83,7 +49,7 @@ private theorem finite_paths [Finite V] [∀ a b : V, Finite (a ⟶ b)] (h : Qui
     Finite (Σ a b : V, _root_.Quiver.Path a b) := by
   let : Fintype V := Fintype.ofFinite V
   let pathFinite (a b : V) : Finite (_root_.Quiver.Path.BoundedPaths a b (Fintype.card V - 1)) :=
-    finite_boundedPaths _ _ _
+    _root_.TauCeti.Quiver.finite_boundedPaths _ _ _
   let pathFintype (a b : V) : Fintype (_root_.Quiver.Path.BoundedPaths a b (Fintype.card V - 1)) :=
     Fintype.ofFinite _
   let f : (Σ a b : V, _root_.Quiver.Path.BoundedPaths a b (Fintype.card V - 1)) →

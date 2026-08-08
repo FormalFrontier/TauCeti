@@ -25,12 +25,20 @@ positive root is a nonnegative integer combination of the simple coroots.
 
 * `TauCeti.posRoots` is the set of positive roots relative to a base.
 * `TauCeti.negRoots` is its complementary set of negative roots.
+* `TauCeti.posRootsFinset` and `TauCeti.negRootsFinset` are the same two sets as finsets, for a
+  finite root index type, so that they can be summed over.
 
 ## Main results
 
 * `TauCeti.image_reflectionPerm_self_posRoots` says root negation exchanges the two sets.
+* `TauCeti.add_mem_posRoots` and `TauCeti.add_mem_negRoots` say each of the two sets is closed
+  under those sums of its members that are again roots, and
+  `TauCeti.reflectionPerm_self_notMem_posRoots`, `TauCeti.reflectionPerm_self_notMem_negRoots` say
+  neither contains a root together with its negative.
 * `TauCeti.bijOn_reflectionPerm_posRoots_diff_singleton` says a simple reflection permutes the
-  positive roots other than its own simple root.
+  positive roots other than its own simple root, and
+  `TauCeti.sum_posRootsFinset_erase_comp_reflectionPerm` is the resulting reindexing rule for sums
+  over those roots.
 * `TauCeti.RootPairing.Base.isPos_flip_iff` says a root is positive for a base exactly when its
   coroot is positive for that base, and `TauCeti.posRoots_flip` restates it for the sets.
 * `TauCeti.exists_coroot_eq_sum_nat_of_mem_posRoots` says the coroot of a positive root is a
@@ -106,6 +114,20 @@ lemma posRoots_finite [Finite ι] : (posRoots P b).Finite := Set.toFinite _
 /-- The negative roots form a finite set when the root index type is finite. -/
 lemma negRoots_finite [Finite ι] : (negRoots P b).Finite := Set.toFinite _
 
+/-- The positive roots of a base, as a finset, so that they can be summed over. -/
+noncomputable def posRootsFinset [Finite ι] : Finset ι := (posRoots_finite P b).toFinset
+
+/-- The negative roots of a base, as a finset, so that they can be summed over. -/
+noncomputable def negRootsFinset [Finite ι] : Finset ι := (negRoots_finite P b).toFinset
+
+@[simp]
+lemma mem_posRootsFinset [Finite ι] (i : ι) : i ∈ posRootsFinset P b ↔ i ∈ posRoots P b :=
+  (posRoots_finite P b).mem_toFinset
+
+@[simp]
+lemma mem_negRootsFinset [Finite ι] (i : ι) : i ∈ negRootsFinset P b ↔ i ∈ negRoots P b :=
+  (negRoots_finite P b).mem_toFinset
+
 /-- Every simple root is positive. -/
 lemma support_subset_posRoots : ↑b.support ⊆ posRoots P b := by
   intro i hi
@@ -139,6 +161,32 @@ lemma isPos_reflectionPerm_self_iff_mem_negRoots (i : ι) :
 lemma reflectionPerm_self_mem_posRoots_iff_mem_negRoots (i : ι) :
     P.reflectionPerm i i ∈ posRoots P b ↔ i ∈ negRoots P b := by
   exact (mem_posRoots P b _).trans (isPos_reflectionPerm_self_iff_mem_negRoots P b i)
+
+/-- Neither set contains a root together with its negative. -/
+lemma reflectionPerm_self_notMem_posRoots {i : ι} (hi : i ∈ posRoots P b) :
+    P.reflectionPerm i i ∉ posRoots P b := fun hcon =>
+  (reflectionPerm_self_mem_posRoots_iff_mem_negRoots P b i).mp hcon hi
+
+/-- Neither set contains a root together with its negative. -/
+lemma reflectionPerm_self_notMem_negRoots {i : ι} (hi : i ∈ negRoots P b) :
+    P.reflectionPerm i i ∉ negRoots P b := fun hcon =>
+  hi ((reflectionPerm_self_mem_negRoots_iff_mem_posRoots P b i).mp hcon)
+
+/-- The positive roots are closed under addition: a root that is the sum of two positive roots is
+positive, because heights add. -/
+lemma add_mem_posRoots {i j k : ι} (hi : i ∈ posRoots P b) (hj : j ∈ posRoots P b)
+    (hk : P.root k = P.root i + P.root j) : k ∈ posRoots P b :=
+  RootPairing.Base.IsPos.add hi hj hk
+
+/-- The negative roots are closed under addition: a root that is the sum of two negative roots is
+negative. -/
+lemma add_mem_negRoots {i j k : ι} (hi : i ∈ negRoots P b) (hj : j ∈ negRoots P b)
+    (hk : P.root k = P.root i + P.root j) : k ∈ negRoots P b := by
+  rw [← isPos_reflectionPerm_self_iff_mem_negRoots] at hi hj ⊢
+  refine RootPairing.Base.IsPos.add hi hj ?_
+  simp only [RootPairing.root_reflectionPerm, RootPairing.reflection_apply_self]
+  rw [hk]
+  abel
 
 /-- A positive root is a nonnegative natural-number combination of simple roots. -/
 lemma exists_root_eq_sum_nat_of_mem_posRoots {i : ι} (hi : i ∈ posRoots P b) :
@@ -229,6 +277,25 @@ positive roots other than its own simple root onto themselves. -/
 theorem image_reflectionPerm_posRoots_diff_singleton {i : ι} (hi : i ∈ b.support) :
     P.reflectionPerm i '' (posRoots P b \ {i}) = posRoots P b \ {i} :=
   (bijOn_reflectionPerm_posRoots_diff_singleton P b hi).image_eq
+
+/-- The finset form of `reflectionPerm_mem_posRoots_diff_singleton_iff`. -/
+lemma reflectionPerm_mem_posRootsFinset_erase_iff [DecidableEq ι] {i : ι} (hi : i ∈ b.support)
+    (j : ι) :
+    P.reflectionPerm i j ∈ (posRootsFinset P b).erase i ↔ j ∈ (posRootsFinset P b).erase i := by
+  have h := reflectionPerm_mem_posRoots_diff_singleton_iff P b hi j
+  simp only [Set.mem_sdiff, Set.mem_singleton_iff] at h
+  simp only [Finset.mem_erase, mem_posRootsFinset]
+  tauto
+
+/-- **Reindexing along a simple reflection leaves a sum over the other positive roots unchanged.**
+Since `sᵢ` permutes the positive roots other than `αᵢ`, summing any function over them is
+insensitive to precomposition with `sᵢ`. -/
+lemma sum_posRootsFinset_erase_comp_reflectionPerm [DecidableEq ι] {A : Type*} [AddCommMonoid A]
+    {i : ι} (hi : i ∈ b.support) (f : ι → A) :
+    ∑ j ∈ (posRootsFinset P b).erase i, f (P.reflectionPerm i j)
+      = ∑ j ∈ (posRootsFinset P b).erase i, f j :=
+  Finset.sum_equiv (P.reflectionPerm i)
+    (fun j ↦ (reflectionPerm_mem_posRootsFinset_erase_iff P b hi j).symm) fun _ _ ↦ rfl
 
 namespace RootPairing.Base
 

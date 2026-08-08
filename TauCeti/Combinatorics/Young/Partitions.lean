@@ -81,4 +81,26 @@ theorem partitionEquivYoungDiagram_symm_apply_parts (n : ℕ) (μ : {μ : YoungD
       (Multiset.sort_eq _ _).symm
     _ = ↑μ.1.rowLens := congrArg (fun w : List ℕ => (↑w : Multiset ℕ)) h.symm
 
+/-- The **shape partition** of a Young diagram: the partition of `μ.card` whose parts are the row
+lengths of `μ`.  It is the partition `partitionEquivYoungDiagram` sends back to `μ`, so it is the
+partition index to use whenever a construction indexed by partitions (a Young subgroup, a Young
+permutation module) is applied to a diagram. -/
+noncomputable def shapePartition (μ : YoungDiagram) : μ.card.Partition :=
+  (partitionEquivYoungDiagram μ.card).symm ⟨μ, rfl⟩
+
+/-- The parts of the shape partition are the row lengths of the diagram. -/
+@[simp]
+theorem shapePartition_parts (μ : YoungDiagram) :
+    (shapePartition μ).parts = μ.rowLens :=
+  partitionEquivYoungDiagram_symm_apply_parts μ.card ⟨μ, rfl⟩
+
+/-- Sorting the parts of the shape partition into decreasing order returns the row lengths, which
+are already decreasing.  This is not a `simp` lemma: `simp` rewrites the parts to `μ.rowLens` with
+`shapePartition_parts` and then sorts the coerced list itself. -/
+theorem shapePartition_parts_sort (μ : YoungDiagram) :
+    (shapePartition μ).parts.sort (· ≥ ·) = μ.rowLens := by
+  have h := partitionEquivYoungDiagram_apply_rowLens μ.card (shapePartition μ)
+  rw [shapePartition, Equiv.apply_symm_apply] at h
+  exact h.symm
+
 end TauCeti

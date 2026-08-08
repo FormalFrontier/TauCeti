@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.RepresentationTheory.Character
-public import TauCeti.RepresentationTheory.Symmetric.SpechtIdeal.Basic
+public import TauCeti.RepresentationTheory.Symmetric.Specht.Ideal.Basic
 
 /-!
 # Relabeling a Young tableau conjugates its Young symmetrizer
@@ -243,7 +243,6 @@ theorem spechtIdealRelabelRepIso_hom_hom_apply_coe (x : spechtIdeal (relabel σ 
 end
 
 /-- Relabeling does not change the dimension of the Young-symmetrizer left ideal. -/
-@[simp]
 theorem finrank_spechtIdeal_relabel :
     Module.finrank ℚ (spechtIdeal (relabel σ t)) = Module.finrank ℚ (spechtIdeal t) :=
   ((spechtIdealRelabelEquiv σ t).restrictScalars ℚ).finrank_eq

@@ -40,6 +40,10 @@ and no row of `t` meets a column of `relabel σ t` twice
 permutations whose sandwich is visibly nonzero, and it certifies that the permutations it does
 fire on lie outside the product set `Row(t) · Col(t)`.
 
+A relabelling can be moved from one argument of the criterion to the other by inverting it
+(`YoungTableau.rowMeetsColumnTwice_relabel_left_iff`), which is what lets the criterion be applied
+when it is the tableau whose *rows* are read that has been relabelled.
+
 Neither half is vacuous: `YoungTableau.exists_rowMeetsColumnTwice_relabel` produces a permutation
 the criterion fires on whenever `t` has a row and a column each containing two distinct labels, so
 `YoungTableau.exists_rowSymmetrizer_mul_single_mul_columnAntisymmetrizer_eq_zero` exhibits a
@@ -91,6 +95,23 @@ theorem rowMeetsColumnTwice_relabel_iff (t : YoungTableau μ) (σ : Equiv.Perm (
       ∃ x y, x ≠ y ∧ rowIndex t x = rowIndex t y ∧
         colIndex t (σ⁻¹ x) = colIndex t (σ⁻¹ y) := by
   simp only [rowMeetsColumnTwice_def, colIndex_relabel]
+
+/-- Relabelling moves across the criterion by inverting: a row of `relabel σ t` meets a column of
+`s` twice exactly when a row of `t` meets a column of `relabel σ⁻¹ s` twice.  Both sides say that
+two distinct labels share a row of `t` after applying `σ⁻¹` and share a column of `s`, read from
+the two ends.
+
+Not a `simp` lemma: neither side is simpler than the other, and pushing the relabelling to the
+right would fight `rowMeetsColumnTwice_relabel_iff`. -/
+theorem rowMeetsColumnTwice_relabel_left_iff (t s : YoungTableau μ)
+    (σ : Equiv.Perm (Fin μ.card)) :
+    RowMeetsColumnTwice (relabel σ t) s ↔ RowMeetsColumnTwice t (relabel σ⁻¹ s) := by
+  simp only [rowMeetsColumnTwice_def, rowIndex_relabel, colIndex_relabel, inv_inv]
+  constructor
+  · rintro ⟨x, y, hxy, hrow, hcol⟩
+    exact ⟨σ⁻¹ x, σ⁻¹ y, fun h => hxy (σ⁻¹.injective h), hrow, by simpa using hcol⟩
+  · rintro ⟨x, y, hxy, hrow, hcol⟩
+    exact ⟨σ x, σ y, fun h => hxy (σ.injective h), by simpa using hrow, hcol⟩
 
 /-- No row of a tableau meets one of its own columns twice: a label is determined by its row
 together with its column. -/

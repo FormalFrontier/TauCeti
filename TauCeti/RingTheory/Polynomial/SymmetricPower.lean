@@ -5,10 +5,10 @@ Authors: Claude
 -/
 module
 
-public import Mathlib.Data.Sym.Basic
 public import Mathlib.RingTheory.Polynomial.Basic
 public import Mathlib.RingTheory.Polynomial.Vieta
 public import Mathlib.FieldTheory.IsAlgClosed.Basic
+public import TauCeti.Data.Sym.Basic
 import Mathlib.Data.Fin.VecNotation
 
 /-!
@@ -48,6 +48,9 @@ are separate later steps.
   functions and `TauCeti.Sym.coeffEquiv_symm_apply` describing the inverse as a root-taking map.
 * `TauCeti.Sym.coeffEquiv_one_apply` and `TauCeti.Sym.coeffEquiv_two_apply`: the chart in degrees
   one and two, pinning down the sign convention.
+* `TauCeti.Sym.toMonic_ofFn` and `TauCeti.Sym.coeffEquiv_ofFn_apply`: read on an ordered tuple
+  `f : Fin n → R` through `TauCeti.Sym.ofFn`, the monic polynomial is the product
+  `∏ i, (X - C (f i))` of linear factors and the chart reads off its coefficients.
 
 Lane F4.1 of the analytic Heegaard Floer roadmap opens with "`Sym^g(Σ)` geometry: smooth complex
 structure (elementary symmetric functions), the totally real tori `T_α`, `T_β`, …", after
@@ -126,6 +129,12 @@ theorem toMonic_append (s : Sym R n) (t : Sym R m) :
     (toMonic (s.append t) : R[X]) = (toMonic s : R[X]) * (toMonic t : R[X]) := by
   simp only [coe_toMonic, Sym.coe_append]
   exact ofMultiset.map_add_eq_mul _ _
+
+/-- The monic polynomial of the unordered tuple underlying an ordered one `f : Fin n → R` is the
+product of the corresponding linear factors. -/
+theorem toMonic_ofFn (f : Fin n → R) : (toMonic (ofFn f) : R[X]) = ∏ i, (X - C (f i)) := by
+  rw [coe_toMonic, coe_ofFn]
+  simp [← List.prod_ofFn, List.map_ofFn, Function.comp_def]
 
 /-- The monic polynomial of a constant tuple is a pure power of a linear factor. -/
 @[simp]
@@ -276,6 +285,12 @@ tuple, in decreasing order and with alternating signs. -/
 theorem coeffEquiv_apply (s : Sym K n) (i : Fin n) :
     coeffEquiv K n s i = (-1) ^ (n - (i : ℕ)) * (s : Multiset K).esymm (n - (i : ℕ)) := by
   rw [coeffEquiv_apply_eq_coeff, coeff_toMonic s i.2.le]
+
+/-- The chart of an unordered tuple presented by an ordered one `f : Fin n → K` reads off the
+coefficients of the product of the linear factors of `f`. -/
+theorem coeffEquiv_ofFn_apply (f : Fin n → K) (i : Fin n) :
+    coeffEquiv K n (ofFn f) i = (∏ j, (X - C (f j))).coeff i := by
+  rw [coeffEquiv_apply_eq_coeff, toMonic_ofFn]
 
 /-- The inverse chart sends a coefficient tuple to the root multiset of the monic polynomial it
 determines. -/
