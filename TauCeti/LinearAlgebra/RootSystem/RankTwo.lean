@@ -49,8 +49,8 @@ the Cartan matrix of `A₁ × A₁`, of finite type but not irreducible.
   disjunction.
 * `TauCeti.isG2_of_hasCartanType_G2`: a base of type `G₂` makes its pairing Mathlib's
   `RootPairing.IsG2`.
-* `TauCeti.existsUnique_dynkinType_of_card_support_eq_one`: the rank-one case, which needs neither
-  finite type nor irreducibility.
+* `TauCeti.existsUnique_dynkinType_of_card_support_eq_one`: the rank-one case, which turns on the
+  diagonal entry `2` alone and so needs neither finiteness, finite type nor irreducibility.
 
 ## References
 
@@ -70,6 +70,7 @@ namespace DynkinType
 /-- **The valid Dynkin types of rank two are `A₂`, `B₂` and `G₂`.** The type `C 2` is excluded by
 `TauCeti.DynkinType.Valid`, being `B 2` transposed; every other type either has a different rank or
 fails validity at rank two. -/
+@[simp]
 theorem valid_and_rank_eq_two_iff {t : DynkinType} :
     t.Valid ∧ t.rank = 2 ↔ t = .A 2 ∨ t = .B 2 ∨ t = .G2 := by
   constructor
@@ -105,7 +106,7 @@ theorem cartanMatrix_G2_eq : G2.cartanMatrix = !![2, -1; -3, 2] := by
 
 end DynkinType
 
-/-! ### The classification of finite-type matrices on at most two indices -/
+/-! ### The classification of matrices on at most two indices -/
 
 namespace IsFiniteType
 
@@ -254,9 +255,13 @@ theorem existsUnique_dynkinType_of_card_eq_two (h : IsFiniteType A) (hcard : Fin
   · exact (hks.2.1 hp).trans (hkt.2.1 hp).symm
   · exact (hks.2.2 hp).trans (hkt.2.2 hp).symm
 
-/-- **A finite-type matrix on one index is `A₁`.** Only the diagonal entry `2` is in play, so
-neither the finite-type inequalities nor connectedness are used beyond that. -/
-theorem existsUnique_dynkinType_of_card_eq_one (h : IsFiniteType A) (hcard : Fintype.card B = 1) :
+end IsFiniteType
+
+/-- **A matrix on one index with diagonal entry `2` is `A₁`.** Only that entry is in play, so the
+hypothesis is the diagonal equation itself rather than `TauCeti.IsFiniteType`: neither the
+finite-type inequalities nor connectedness are used. -/
+theorem existsUnique_dynkinType_of_card_eq_one {B : Type*} [Fintype B] {A : Matrix B B ℤ}
+    (hdiag : ∀ i, A i i = 2) (hcard : Fintype.card B = 1) :
     ∃! t : DynkinType, t.Valid ∧
       ∃ e : B ≃ Fin t.rank, ∀ i j, A i j = t.cartanMatrix (e i) (e j) := by
   classical
@@ -264,7 +269,7 @@ theorem existsUnique_dynkinType_of_card_eq_one (h : IsFiniteType A) (hcard : Fin
   refine ⟨.A 1, ⟨by simp, e₀, fun i j ↦ ?_⟩, ?_⟩
   · have hij : i = j := e₀.injective (Subsingleton.elim _ _)
     subst hij
-    rw [DynkinType.cartanMatrix_apply_same, h.apply_self]
+    rw [DynkinType.cartanMatrix_apply_same, hdiag]
   · rintro s ⟨hsv, es, -⟩
     have hsr : s.rank = 1 := by
       have hc := Fintype.card_congr es
@@ -281,8 +286,6 @@ theorem existsUnique_dynkinType_of_card_eq_one (h : IsFiniteType A) (hcard : Fin
         rw [DynkinType.rank_D] at hsr; subst hsr
         exact absurd (DynkinType.valid_D.mp hsv) (by omega)
     | _ => simp at hsr
-
-end IsFiniteType
 
 /-! ### The classification of root systems of rank at most two -/
 
@@ -358,13 +361,14 @@ theorem isG2_of_hasCartanType_G2 [P.IsReduced] [P.IsIrreducible] {b : P.Base}
   rw [Equiv.apply_symm_apply, Equiv.apply_symm_apply] at hentry
   simpa [RootPairing.Base.cartanMatrixIn_def] using hentry
 
-/-- **A root system with a single simple root is of type `A₁`.** Neither finiteness nor
-irreducibility is needed: the Cartan matrix is the `1 × 1` matrix `[2]`. -/
-theorem existsUnique_dynkinType_of_card_support_eq_one [Finite ι] [CharZero R] [IsDomain R]
-    [P.IsRootSystem] (b : P.Base) (hb : b.support.card = 1) :
+/-- **A pairing with a single simple root is of type `A₁`.** Neither finiteness nor irreducibility
+is needed, nor even that the pairing is a root system: the Cartan matrix is the `1 × 1` matrix `[2]`
+by `RootPairing.Base.cartanMatrix_apply_same`, which is all the rank-one classification consumes. -/
+theorem existsUnique_dynkinType_of_card_support_eq_one [CharZero R] (b : P.Base)
+    (hb : b.support.card = 1) :
     ∃! t : DynkinType, t.Valid ∧ HasCartanType P b t := by
   simp only [hasCartanType_iff]
-  exact (isFiniteType_cartanMatrix b).existsUnique_dynkinType_of_card_eq_one (by simpa using hb)
+  exact existsUnique_dynkinType_of_card_eq_one b.cartanMatrix_apply_same (by simpa using hb)
 
 end RootPairing
 
