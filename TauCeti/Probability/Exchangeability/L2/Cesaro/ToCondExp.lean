@@ -99,7 +99,7 @@ theorem Contractable.tendsto_integral_abs_blockAverage_sub_condExp_of_memLp {μ 
   have ha_lim : ∀ r : ℕ, Tendsto
       (fun m => ∫ ω, |blockAverage (fun i ω => f (X i ω))
         (fun j : Fin (m + 1) => r + (j : ℕ)) ω - a ω| ∂μ) atTop (𝓝 0) := fun r =>
-    ha_lim' (fun n j => r + (j : ℕ)) (injective_fixedStart r)
+    ha_lim' (fun n j => r + (j : ℕ)) (fun _ => (add_right_injective r).comp Fin.val_injective)
   have ha_int : Integrable a μ := ha_L1.integrable le_rfl
   have hA_int : ∀ m : ℕ,
       Integrable (blockAverage (fun i ω => f (X i ω)) fun j : Fin (m + 1) => 0 + (j : ℕ)) μ :=
