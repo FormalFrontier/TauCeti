@@ -190,26 +190,26 @@ theorem coe_vertexComponentMap_apply (f : M →ₗ[pathAlgebra k Q] N) (v : Q)
     (x : vertexComponent k M v) : (vertexComponentMap k f v x : N) = f (x : M) :=
   coe_smulRangeMap_apply _ f x
 
-/-- **The restriction to the components is functorial**: the identity restricts to the identity. -/
+/-- **The restriction to the components is functorial**: the identity restricts to the identity.
+This is `TauCeti.smulRangeMap_id` at the vertex idempotent. -/
 @[simp]
 theorem vertexComponentMap_id (v : Q) :
-    vertexComponentMap k (LinearMap.id : M →ₗ[pathAlgebra k Q] M) v = LinearMap.id := by
-  ext x
-  simp
+    vertexComponentMap k (LinearMap.id : M →ₗ[pathAlgebra k Q] M) v = LinearMap.id :=
+  smulRangeMap_id _
 
 /-- **The restriction to the components is functorial**: a composite restricts to the composite of
-the restrictions. -/
+the restrictions. This is `TauCeti.smulRangeMap_comp` at the vertex idempotent. -/
 @[simp]
 theorem vertexComponentMap_comp (g : N →ₗ[pathAlgebra k Q] P) (f : M →ₗ[pathAlgebra k Q] N)
     (v : Q) :
     vertexComponentMap k (g.comp f) v
-      = (vertexComponentMap k g v).comp (vertexComponentMap k f v) := by
-  ext x
-  simp
+      = (vertexComponentMap k g v).comp (vertexComponentMap k f v) :=
+  smulRangeMap_comp _ g f
 
 /-- **The path maps are natural in the module**: restricting a `kQ`-linear map to the vertex
 components commutes with the action of every path. This is the morphism half of the passage from
 `kQ`-modules to representations of `Q`. -/
+@[simp]
 theorem vertexComponentMap_comp_pathMap (f : M →ₗ[pathAlgebra k Q] N) {a b : Q}
     (p : _root_.Quiver.Path a b) :
     (vertexComponentMap k f b).comp (pathMap k M p)

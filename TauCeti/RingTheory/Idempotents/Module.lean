@@ -21,7 +21,7 @@ direct sum of the `S`-submodules `eᵢ • M`,
 
 the component of `x` in position `i` being `eᵢ • x`. This file proves that
 (`TauCeti.isInternal_smulRange`) and records the dimension count `dim M = ∑ᵢ dim (eᵢ M)` that
-follows over a field.
+follows over a division ring.
 
 Mathlib has the family (`CompleteOrthogonalIdempotents`) and the converse direction — a
 decomposition of `R` itself into left ideals produces such a family
@@ -55,8 +55,8 @@ decomposition as additive submonoids, and an `S`-algebra structure on `R` togeth
 * `TauCeti.smul_coeLinearMap_smulRange`: multiplying by `eᵢ` reads off the `i`-th component of a
   sum. This is what makes the sum direct, and it describes the inverse of the decomposition
   (`TauCeti.coe_isInternal_smulRange_symm_apply`).
-* `TauCeti.finrank_eq_sum_finrank_smulRange`: for a module finite-dimensional over a field `S`,
-  the dimensions of the pieces add up to the dimension of the module.
+* `TauCeti.finrank_eq_sum_finrank_smulRange`: for a module finite-dimensional over a division
+  ring `S`, the dimensions of the pieces add up to the dimension of the module.
 
 ## References
 
@@ -143,9 +143,10 @@ end Defs
 
 section Map
 
-variable (S : Type*) {M N R : Type*} [Semiring S] [Semiring R]
+variable (S : Type*) {M N P R : Type*} [Semiring S] [Semiring R]
   [AddCommMonoid M] [Module S M] [Module R M] [SMulCommClass R S M]
   [AddCommMonoid N] [Module S N] [Module R N] [SMulCommClass R S N]
+  [AddCommMonoid P] [Module S P] [Module R P] [SMulCommClass R S P]
   [LinearMap.CompatibleSMul M N S R]
 
 /-- **The pieces are natural in the module**: an `R`-linear map carries `e • M` into `e • N`. -/
@@ -166,6 +167,22 @@ variable {S}
 theorem coe_smulRangeMap_apply (e : R) (f : M →ₗ[R] N) (x : smulRange S M e) :
     (smulRangeMap S e f x : N) = f (x : M) :=
   LinearMap.coe_restrict_apply _ x
+
+/-- **The restriction to the pieces is functorial**: the identity restricts to the identity. -/
+@[simp]
+theorem smulRangeMap_id [LinearMap.CompatibleSMul M M S R] (e : R) :
+    smulRangeMap S e (LinearMap.id : M →ₗ[R] M) = LinearMap.id := by
+  ext x
+  simp
+
+/-- **The restriction to the pieces is functorial**: a composite restricts to the composite of the
+restrictions. -/
+@[simp]
+theorem smulRangeMap_comp [LinearMap.CompatibleSMul N P S R] [LinearMap.CompatibleSMul M P S R]
+    (e : R) (g : N →ₗ[R] P) (f : M →ₗ[R] N) :
+    smulRangeMap S e (g.comp f) = (smulRangeMap S e g).comp (smulRangeMap S e f) := by
+  ext x
+  simp
 
 end Map
 
@@ -274,11 +291,11 @@ end Internal
 
 section Finrank
 
-variable {S M R ι : Type*} [Field S] [Semiring R]
+variable {S M R ι : Type*} [DivisionRing S] [Semiring R]
   [AddCommGroup M] [Module S M] [Module R M] [SMulCommClass R S M] {e : ι → R} [Fintype ι]
 
-/-- **The dimension count**: for a module finite-dimensional over a field `S`, the dimensions of
-the pieces add up to the dimension of the module. -/
+/-- **The dimension count**: for a module finite-dimensional over a division ring `S`, the
+dimensions of the pieces add up to the dimension of the module. -/
 theorem finrank_eq_sum_finrank_smulRange [Module.Finite S M]
     (he : CompleteOrthogonalIdempotents e) :
     Module.finrank S M = ∑ i, Module.finrank S (smulRange S M (e i) : Submodule S M) := by
