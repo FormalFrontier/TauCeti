@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.Algebra.BigOperators.Expect
+public import Mathlib.Algebra.BigOperators.Ring.Finset
 public import Mathlib.Data.Real.Basic
 
 /-!
@@ -94,6 +95,22 @@ theorem prefixAverage_apply (n : ℕ) (ω : Ω) :
 theorem followingAverage_apply (n : ℕ) (ω : Ω) :
     followingAverage X n ω = (n : ℝ)⁻¹ * ∑ i : Fin n, X (n + i) ω := by
   simp [followingAverage, blockAverage_apply]
+
+/-- **A product of block averages is an average of products.** Purely algebraic: the product of
+sums distributes by `Fintype.prod_sum`, and the normalisations multiply. Disjointness of the
+selections plays no role here — it matters only for what the individual terms mean. -/
+theorem prod_blockAverage_eq_expect {m N : ℕ} (Y : Fin m → ℕ → Ω → ℝ) (k : Fin m → Fin N → ℕ)
+    (ω : Ω) :
+    (∏ i : Fin m, blockAverage (Y i) (k i) ω)
+      = 𝔼 js : Fin m → Fin N, ∏ i : Fin m, Y i (k i (js i)) ω := by
+  classical
+  have hL : (∏ i : Fin m, blockAverage (Y i) (k i) ω)
+      = ((N : ℝ)⁻¹) ^ m * ∏ i : Fin m, ∑ j : Fin N, Y i (k i j) ω := by
+    simp [blockAverage_apply, Finset.prod_mul_distrib]
+  rw [hL, Fintype.prod_sum fun i (j : Fin N) => Y i (k i j) ω, Fintype.expect_eq_sum_div_card]
+  simp only [Fintype.card_pi, Fintype.card_fin, Finset.prod_const, card_univ, div_eq_inv_mul]
+  push_cast
+  simp [inv_pow]
 
 end Probability
 
