@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Geometry.Lie.Adjoint.BanachDexp
+public import TauCeti.Geometry.Lie.Adjoint.BanachDexp.Basic
 public import TauCeti.Analysis.Normed.Algebra.OneSubExpNegDivSelf.Integral
 
 /-!
@@ -59,6 +59,8 @@ theorem banachDexpFactor_apply_eq_integral_conj (x y : R) :
   rw [ContinuousLinearMap.intervalIntegral_apply (μ := volume) hint y]
   apply intervalIntegral.integral_congr
   intro t _ht
+  -- Applying the operator-valued exponential to `y` unfolds definitionally after the
+  -- pointwise interval-integral lemma above.
   change exp (t • (-continuousCommutator x)) y =
     exp ((-t) • x) * y * exp (t • x)
   have hscale :
