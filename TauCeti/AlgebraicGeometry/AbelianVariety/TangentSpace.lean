@@ -55,7 +55,6 @@ abbrev zeroSection (A : AbelianVariety K) : Spec (.of K) ⟶ A.toScheme :=
   η[A.toOver].left
 
 /-- The identity section is a section of the structure morphism of `A`. -/
-@[simp]
 lemma zeroSection_comp_toOver_hom (A : AbelianVariety K) :
     A.zeroSection ≫ A.toOver.hom = 𝟙 (Spec (.of K)) := by
   simpa only [zeroSection, Over.tensorUnit_hom] using η[A.toOver].w
@@ -66,7 +65,6 @@ def zeroPoint (A : AbelianVariety K) : A.toScheme :=
   A.zeroSection (IsLocalRing.closedPoint K)
 
 /-- The identity point is the value of the identity section at the closed point of `Spec K`. -/
-@[simp]
 lemma zeroPoint_def (A : AbelianVariety K) :
     A.zeroPoint = A.zeroSection (IsLocalRing.closedPoint K) := by
   unfold zeroPoint
