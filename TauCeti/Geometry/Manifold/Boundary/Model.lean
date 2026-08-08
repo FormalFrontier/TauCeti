@@ -64,6 +64,21 @@ private def euclideanHalfSpaceBoundaryLinearEquiv (n : ℕ) :
     apply (WithLp.equiv 2 _).injective
     exact funext fun _ ↦ rfl
 
+private theorem euclideanHalfSpaceBoundaryLinearEquiv_apply {n : ℕ}
+    (x : euclideanHalfSpaceBoundary n) (i : Fin n) :
+    euclideanHalfSpaceBoundaryLinearEquiv n x i = x.1 i.succ :=
+  rfl
+
+private theorem euclideanHalfSpaceBoundaryLinearEquiv_symm_apply_zero {n : ℕ}
+    (x : EuclideanSpace ℝ (Fin n)) :
+    ((euclideanHalfSpaceBoundaryLinearEquiv n).symm x).1 0 = 0 :=
+  rfl
+
+private theorem euclideanHalfSpaceBoundaryLinearEquiv_symm_apply_succ {n : ℕ}
+    (x : EuclideanSpace ℝ (Fin n)) (i : Fin n) :
+    ((euclideanHalfSpaceBoundaryLinearEquiv n).symm x).1 i.succ = x i :=
+  rfl
+
 /-- The continuous linear equivalence from the boundary hyperplane to its lower-dimensional
 Euclidean model. -/
 noncomputable def euclideanHalfSpaceBoundaryEquiv (n : ℕ) :
@@ -74,27 +89,27 @@ noncomputable def euclideanHalfSpaceBoundaryEquiv (n : ℕ) :
 theorem euclideanHalfSpaceBoundaryEquiv_apply {n : ℕ}
     (x : euclideanHalfSpaceBoundary n) (i : Fin n) :
     euclideanHalfSpaceBoundaryEquiv n x i = x.1 i.succ :=
-  by rfl
+  by
+    simpa only [euclideanHalfSpaceBoundaryEquiv, LinearEquiv.coe_toContinuousLinearEquiv'] using
+      euclideanHalfSpaceBoundaryLinearEquiv_apply x i
 
 @[simp]
 theorem euclideanHalfSpaceBoundaryEquiv_symm_apply_zero {n : ℕ}
     (x : EuclideanSpace ℝ (Fin n)) :
     ((euclideanHalfSpaceBoundaryEquiv n).symm x).1 0 = 0 :=
-  by rfl
+  by
+    simpa only [euclideanHalfSpaceBoundaryEquiv,
+      LinearEquiv.coe_toContinuousLinearEquiv_symm'] using
+      euclideanHalfSpaceBoundaryLinearEquiv_symm_apply_zero x
 
 @[simp]
 theorem euclideanHalfSpaceBoundaryEquiv_symm_apply_succ {n : ℕ}
     (x : EuclideanSpace ℝ (Fin n)) (i : Fin n) :
     ((euclideanHalfSpaceBoundaryEquiv n).symm x).1 i.succ = x i :=
-  by rfl
-
-theorem euclideanHalfSpaceBoundaryEquiv_contDiff {n : ℕ∞} (m : ℕ) :
-    ContDiff ℝ n (euclideanHalfSpaceBoundaryEquiv m) :=
-  (euclideanHalfSpaceBoundaryEquiv m).contDiff
-
-theorem euclideanHalfSpaceBoundaryEquiv_symm_contDiff {n : ℕ∞} (m : ℕ) :
-    ContDiff ℝ n (euclideanHalfSpaceBoundaryEquiv m).symm :=
-  (euclideanHalfSpaceBoundaryEquiv m).symm.contDiff
+  by
+    simpa only [euclideanHalfSpaceBoundaryEquiv,
+      LinearEquiv.coe_toContinuousLinearEquiv_symm'] using
+      euclideanHalfSpaceBoundaryLinearEquiv_symm_apply_succ x i
 
 /-- Insert a zero as the zeroth coordinate, parametrizing the boundary of a Euclidean
 half-space by a Euclidean space of dimension one less. -/
@@ -119,10 +134,8 @@ theorem euclideanHalfSpaceBoundaryParam_apply_succ {n : ℕ}
     Submodule.subtypeL_apply, ContinuousLinearEquiv.coe_coe] using
       euclideanHalfSpaceBoundaryEquiv_symm_apply_succ x i
 
-/-- Delete the zeroth coordinate of a point in `(n + 1)`-dimensional Euclidean space. -/
-noncomputable def euclideanHalfSpaceBoundaryProj (n : ℕ) :
-    EuclideanSpace ℝ (Fin (n + 1)) →L[ℝ] EuclideanSpace ℝ (Fin n) :=
-  LinearMap.toContinuousLinearMap
+private def euclideanHalfSpaceBoundaryProjLinearMap (n : ℕ) :
+    EuclideanSpace ℝ (Fin (n + 1)) →ₗ[ℝ] EuclideanSpace ℝ (Fin n) :=
     { toFun := fun x ↦ WithLp.toLp 2 (Fin.tail x)
       map_add' := by
         intro x y
@@ -133,11 +146,23 @@ noncomputable def euclideanHalfSpaceBoundaryProj (n : ℕ) :
         apply (WithLp.equiv 2 _).injective
         exact funext fun _ ↦ rfl }
 
+private theorem euclideanHalfSpaceBoundaryProjLinearMap_apply {n : ℕ}
+    (x : EuclideanSpace ℝ (Fin (n + 1))) (i : Fin n) :
+    euclideanHalfSpaceBoundaryProjLinearMap n x i = x i.succ :=
+  rfl
+
+/-- Delete the zeroth coordinate of a point in `(n + 1)`-dimensional Euclidean space. -/
+noncomputable def euclideanHalfSpaceBoundaryProj (n : ℕ) :
+    EuclideanSpace ℝ (Fin (n + 1)) →L[ℝ] EuclideanSpace ℝ (Fin n) :=
+  LinearMap.toContinuousLinearMap (euclideanHalfSpaceBoundaryProjLinearMap n)
+
 @[simp]
 theorem euclideanHalfSpaceBoundaryProj_apply {n : ℕ}
     (x : EuclideanSpace ℝ (Fin (n + 1))) (i : Fin n) :
     euclideanHalfSpaceBoundaryProj n x i = x i.succ :=
-  by rfl
+  by
+    simpa only [euclideanHalfSpaceBoundaryProj, LinearMap.coe_toContinuousLinearMap'] using
+      euclideanHalfSpaceBoundaryProjLinearMap_apply x i
 
 @[simp]
 theorem euclideanHalfSpaceBoundaryProj_param {n : ℕ}
@@ -187,21 +212,5 @@ theorem euclideanHalfSpaceBoundary_eq_frontier (n : ℕ) :
   rw [frontier_range_modelWithCornersEuclideanHalfSpace]
   ext x
   simp [eq_comm]
-
-/-- The boundary parametrization has image exactly the frontier of Mathlib's Euclidean
-half-space model. -/
-theorem range_euclideanHalfSpaceBoundaryParam_eq_frontier (n : ℕ) :
-    range (euclideanHalfSpaceBoundaryParam n) =
-      frontier (range (modelWithCornersEuclideanHalfSpace (n + 1))) := by
-  rw [range_euclideanHalfSpaceBoundaryParam,
-    euclideanHalfSpaceBoundary_eq_frontier]
-
-theorem euclideanHalfSpaceBoundaryParam_contDiff {n : ℕ∞} (m : ℕ) :
-    ContDiff ℝ n (euclideanHalfSpaceBoundaryParam m) :=
-  (euclideanHalfSpaceBoundaryParam m).contDiff
-
-theorem euclideanHalfSpaceBoundaryProj_contDiff {n : ℕ∞} (m : ℕ) :
-    ContDiff ℝ n (euclideanHalfSpaceBoundaryProj m) :=
-  (euclideanHalfSpaceBoundaryProj m).contDiff
 
 end TauCeti
