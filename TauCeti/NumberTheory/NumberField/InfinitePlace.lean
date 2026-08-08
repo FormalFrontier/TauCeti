@@ -5,17 +5,21 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.NumberTheory.NumberField.InfinitePlace.TotallyRealComplex
-public import Mathlib.NumberTheory.NumberField.InfinitePlace.Ramification
 
 /-!
-# Totally complex number fields from a negative square
+# Totally complex fields and their infinite places
 
-A number field containing an element whose square is a negative rational is totally complex: a real
-embedding would send that element to a real square root of a negative number.
+A field containing an element whose square is a negative rational is totally complex: a real
+embedding would send that element to a real square root of a negative number. A totally complex
+field, having only complex infinite places, is then unramified at every infinite place in any
+extension.
 
 ## Main results
 
-* `TauCeti.NumberField.isTotallyComplex_of_sq_ratCast_of_neg`.
+* `TauCeti.NumberField.isTotallyComplex_of_sq_ratCast_of_neg`: a negative square forces total
+  complexity.
+* `TauCeti.NumberField.IsUnramifiedAtInfinitePlaces.of_isTotallyComplex`: a totally complex base is
+  unramified at all infinite places of any extension.
 -/
 
 public section
@@ -44,14 +48,13 @@ theorem isTotallyComplex_of_sq_ratCast_of_neg {x : K} {r : ℚ} (hx2 : x ^ 2 = a
   have hrR : (r : ℝ) < 0 := by exact_mod_cast hr
   nlinarith [sq_nonneg (hφ.embedding x), hψsq, hrR]
 
-omit [NumberField K] in
-/-- **A totally complex base has no ramified infinite places.** If `K` is totally complex, every
-infinite place of `K` is unramified in an extension `L`: a totally complex field has only complex
-infinite places, and a complex place never ramifies. -/
-theorem isUnramifiedIn_of_isTotallyComplex (hK : IsTotallyComplex K) {L : Type*} [Field L]
-    [NumberField L] [Algebra K L] (w : InfinitePlace K) : w.IsUnramifiedIn L := by
-  intro v hv
-  rw [InfinitePlace.isUnramified_iff]
-  exact Or.inr (by rw [hv]; exact hK.isComplex w)
+/-- **A totally complex base is unramified at all infinite places.** Since a totally complex field
+has only complex infinite places and a complex place never ramifies, every infinite place is
+unramified in any extension `K` of a totally complex field `k`. -/
+lemma IsUnramifiedAtInfinitePlaces.of_isTotallyComplex {k K : Type*} [Field k] [Field K]
+    [Algebra k K] [IsTotallyComplex k] : IsUnramifiedAtInfinitePlaces k K where
+  isUnramified w := by
+    rw [InfinitePlace.isUnramified_iff]
+    exact Or.inr (IsTotallyComplex.isComplex _)
 
 end TauCeti.NumberField
