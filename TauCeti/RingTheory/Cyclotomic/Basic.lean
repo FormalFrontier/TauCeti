@@ -176,52 +176,6 @@ theorem toAdjoinRoot_mul (x y : Cyclotomic e) :
     toAdjoinRoot_ofCoeffList, toAdjoinRoot, toAdjoinRoot, ← map_mul, ofCoeffList_mulCoeffList]
   simp only [toPolynomial]
 
-@[simp]
-theorem toAdjoinRoot_sub (x y : Cyclotomic e) :
-    toAdjoinRoot (x - y) = toAdjoinRoot x - toAdjoinRoot y := by
-  rw [show x - y = x + -y from rfl, toAdjoinRoot_add, toAdjoinRoot_neg, sub_eq_add_neg]
-
-/-- The comparison map preserves natural scalar multiplication. -/
-theorem toAdjoinRoot_nsmul (n : ℕ) (x : Cyclotomic e) :
-    toAdjoinRoot (n • x) = n • toAdjoinRoot x := by
-  induction n with
-  | zero =>
-    rw [show (0 : ℕ) • x = (0 : Cyclotomic e) from rfl, zero_nsmul]
-    exact toAdjoinRoot_zero
-  | succ n ih =>
-    rw [show (n + 1) • x = n • x + x from rfl, succ_nsmul, toAdjoinRoot_add, ih]
-
-/-- The comparison map preserves integer scalar multiplication. -/
-theorem toAdjoinRoot_zsmul (z : ℤ) (x : Cyclotomic e) :
-    toAdjoinRoot (z • x) = z • toAdjoinRoot x := by
-  cases z with
-  | ofNat n =>
-    rw [show (Int.ofNat n : ℤ) • x = n • x from rfl, Int.ofNat_eq_natCast, natCast_zsmul]
-    exact toAdjoinRoot_nsmul n x
-  | negSucc n =>
-    rw [show Int.negSucc n • x = -((n + 1) • x) from rfl, negSucc_zsmul,
-      toAdjoinRoot_neg, toAdjoinRoot_nsmul]
-
-/-- The comparison map preserves natural powers. -/
-theorem toAdjoinRoot_pow (x : Cyclotomic e) (n : ℕ) :
-    toAdjoinRoot (x ^ n) = toAdjoinRoot x ^ n := by
-  induction n with
-  | zero => exact toAdjoinRoot_one
-  | succ n ih =>
-    rw [show x ^ (n + 1) = x ^ n * x from rfl, toAdjoinRoot_mul, ih, pow_succ]
-
-/-- The comparison map preserves natural-number casts. -/
-theorem toAdjoinRoot_natCast (n : ℕ) :
-    toAdjoinRoot (n : Cyclotomic e) = n := by
-  rw [show (n : Cyclotomic e) = ofCoeffList e [n] from rfl, toAdjoinRoot_ofCoeffList]
-  simp [TauCeti.Polynomial.ofCoeffList_cons]
-
-/-- The comparison map preserves integer casts. -/
-theorem toAdjoinRoot_intCast (z : ℤ) :
-    toAdjoinRoot (z : Cyclotomic e) = z := by
-  rw [show (z : Cyclotomic e) = ofCoeffList e [z] from rfl, toAdjoinRoot_ofCoeffList]
-  simp [TauCeti.Polynomial.ofCoeffList_cons]
-
 instance : CommRing (Cyclotomic e) where
   add := add
   add_assoc a b c := toAdjoinRoot_injective (by simp only [toAdjoinRoot_add, add_assoc])
