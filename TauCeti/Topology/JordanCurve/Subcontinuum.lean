@@ -61,14 +61,17 @@ for a Riemann map the first case always holds, so what this file leaves of it on
 side is exactly the exclusion of the other two.
 
 `TauCeti.IsJordanCurve.subsingleton_of_subset_closure_sdiff` excludes both at once from a single
-condition on the curve, and that is the step of the L5 argument this file exists for: fed to
+condition on the subcontinuum — that it be nowhere dense in the curve — and that is the step of the
+L5 argument this file exists for: fed to
 `TauCeti.exists_continuousOn_closure_eqOn_of_isBounded` — which
 `ConformalMapping/STATUS.md` names as "the topological form the estimate should be fed into" — it
 gives `TauCeti.exists_continuousOn_closure_eqOn_of_forall_subset_closure_sdiff`, a conformal map of
 a convex domain onto a bounded Jordan-bounded region none of whose boundary cluster sets has
 interior in the boundary curve extends continuously to `closure U`. That conclusion is the L5
-milestone's conclusion; the one hypothesis separating them is a statement about the image boundary
-alone.
+milestone's conclusion; the hypothesis separating them is relative nowhere density of each boundary
+cluster set in the curve. That is a condition on the cluster sets, which depend on the map, its
+domain and the boundary point, and not one on the curve by itself: what it drops is the analytic
+content of the milestone, not the map.
 
 Verifying that hypothesis for a Riemann map is not attempted here, and nothing here shortens or
 replaces the route `ConformalMapping/STATUS.md` sequences next for it: the length–area estimate,

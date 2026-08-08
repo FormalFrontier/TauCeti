@@ -92,10 +92,13 @@ Feeding that criterion to the extension theorem
 `TauCeti.exists_continuousOn_closure_eqOn_of_isBounded` gives
 `TauCeti.exists_continuousOn_closure_eqOn_of_forall_subset_closure_sdiff`: **a conformal map of a
 convex domain onto a bounded region with Jordan boundary, none of whose boundary cluster sets has
-interior in that boundary curve, extends continuously to the closure.** This is a sufficient
-condition for the L5 milestone stated entirely in terms of the boundary curve; what it does not do
-is *verify* the nowhere-density hypothesis for a Riemann map, which is the step still separating L5
-from its milestone and which the crosscut and length–area files are aimed at.
+interior in that boundary curve, extends continuously to the closure.** The hypothesis is not a
+property of the curve on its own: `clusterSetOn f U w` depends on the map, the domain and the
+boundary point, and what is asked of it is *relative nowhere density* — each of those cluster sets,
+one for every `w ∈ frontier U`, is to be nowhere dense in the curve. What the criterion does is
+trade the analytic content of the milestone for that purely topological condition on where the
+cluster sets sit; what it does not do is *verify* the condition for a Riemann map, which is the step
+still separating L5 from its milestone and which the crosscut and length–area files are aimed at.
 
 In accordance with the generality bar of `ConformalMapping/README.md`, which fixes scalar `ℂ` for
 every theorem added in layers L0–L6, the results below are stated for maps of `ℂ`, as in
@@ -474,8 +477,11 @@ frontier. Boundedness is asked of the image `f '' U`, not of the domain.
 This is the sufficient condition for the layer-**L5** milestone that the classification of
 subcontinua supplies: the extension criterion
 `TauCeti.exists_continuousOn_closure_eqOn_of_isBounded` asks exactly that every boundary cluster set
-be a subsingleton, and `TauCeti.subsingleton_clusterSetOn_of_subset_closure_sdiff` converts that
-into a statement about the image boundary alone. Verifying the hypothesis for a Riemann map is what
+be a subsingleton, and `TauCeti.subsingleton_clusterSetOn_of_subset_closure_sdiff` weakens that to
+relative nowhere density of each of those sets in the curve. The hypothesis `hnwd` remains a
+condition on the cluster sets, which depend on `f`, `U` and the boundary point, and not one on
+`frontier (f '' U)` by itself; what has gone is the analytic content, not the map.
+Verifying the hypothesis for a Riemann map is what
 the crosscut and length–area material is aimed at, and is not done here; nor is injectivity of the
 extension on `frontier U`, which `TauCeti.injOn_closure_of_injOn_frontier` still asks for
 separately. -/
