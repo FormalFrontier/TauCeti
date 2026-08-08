@@ -179,10 +179,7 @@ theorem exists_nat_of_lie_coroot_eq_smul {α : Weight K H L} (hα : α.IsNonZero
 
 /-- **A lowest weight vector in the `α` direction has a non-positive coroot value.** If a nonzero
 `v` is an eigenvector of the coroot `α^∨` of a nonzero root `α`, of eigenvalue `μ`, and is
-annihilated by the root space `L₍₋α₎`, then `μ` is minus a natural number.
-
-This is `TauCeti.exists_nat_of_lie_coroot_eq_smul` for the root `-α`, whose coroot is `-α^∨` and
-whose root space is `L₍₋α₎`. -/
+annihilated by the root space `L₍₋α₎`, then `μ` is minus a natural number. -/
 theorem exists_nat_neg_of_lie_coroot_eq_smul {α : Weight K H L} (hα : α.IsNonZero) {μ : K} {v : M}
     (hv0 : v ≠ 0) (hv : ⁅((IsKilling.coroot α : H) : L), v⁆ = μ • v)
     (hvf : ∀ f ∈ rootSpace H (-α), ⁅f, v⁆ = 0) :
