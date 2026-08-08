@@ -38,8 +38,7 @@ way keeps every type non-dependent, so the resulting sum decomposition
 * `TauCeti.YoungDiagram.interlacingShapes`: the shapes interlacing `μ` with at most `n` rows.
 * `TauCeti.BoundedSSYT.restrictShape`: the cells of `μ` whose entry is smaller than `n`.
 * `TauCeti.BoundedSSYT.restrict` and `TauCeti.BoundedSSYT.extend`: erasing the cells carrying the
-  top letter, and putting them back, together with the underlying fillings
-  `TauCeti.BoundedSSYT.restrictTableau` and `TauCeti.BoundedSSYT.extendTableau`.
+  top letter, and putting them back.
 
 ## Main results
 
@@ -191,8 +190,9 @@ theorem restrictShape_mem_interlacingShapes (T : BoundedSSYT (n + 1) μ) :
 
 /-- **Erasing the top letter, as a filling**: keep the entries on the sub-shape `ν` of small
 entries and drop the rest.  The shape is passed as a parameter, together with the equation
-identifying it, so that the result lives in a type that does not depend on `T`. -/
-def restrictTableau (T : BoundedSSYT (n + 1) μ) (ν : _root_.YoungDiagram)
+identifying it, so that the result lives in a type that does not depend on `T`.  Only the bounded
+form `TauCeti.BoundedSSYT.restrict` is part of the interface. -/
+private def restrictTableau (T : BoundedSSYT (n + 1) μ) (ν : _root_.YoungDiagram)
     (hν : restrictShape T = ν) : _root_.SemistandardYoungTableau ν where
   entry := fun i j => if ((i, j) : ℕ × ℕ) ∈ ν then T.1 i j else 0
   row_weak' := fun {i j₁ j₂} hj hc => by
@@ -205,9 +205,8 @@ def restrictTableau (T : BoundedSSYT (n + 1) μ) (ν : _root_.YoungDiagram)
     exact T.1.col_strict hi ((mem_iff_of_restrictShape_eq hν).mp hc).1
   zeros' := fun {_ _} hc => if_neg hc
 
-/-- The entries of `TauCeti.BoundedSSYT.restrictTableau`. -/
-@[simp]
-theorem restrictTableau_apply (T : BoundedSSYT (n + 1) μ) (ν : _root_.YoungDiagram)
+/-- The entries of the filling underlying `TauCeti.BoundedSSYT.restrict`. -/
+private theorem restrictTableau_apply (T : BoundedSSYT (n + 1) μ) (ν : _root_.YoungDiagram)
     (hν : restrictShape T = ν) (i j : ℕ) :
     restrictTableau T ν hν i j = if ((i, j) : ℕ × ℕ) ∈ ν then T.1 i j else 0 :=
   (rfl)
@@ -231,8 +230,9 @@ theorem restrict_apply (T : BoundedSSYT (n + 1) μ) (ν : _root_.YoungDiagram)
 
 /-- **Restoring the top letter, as a filling**: keep the entries of `T` on `ν` and write the letter
 `n` on every cell of `μ / ν`.  Columns stay strict because `ν` interlaces `μ`, so no column of
-`μ / ν` holds two cells. -/
-def extendTableau (h : YoungDiagram.Interlaces μ ν) (T : BoundedSSYT n ν) :
+`μ / ν` holds two cells.  Only the bounded form `TauCeti.BoundedSSYT.extend` is part of the
+interface. -/
+private def extendTableau (h : YoungDiagram.Interlaces μ ν) (T : BoundedSSYT n ν) :
     _root_.SemistandardYoungTableau μ where
   entry := fun i j =>
     if ((i, j) : ℕ × ℕ) ∈ ν then T.1 i j else if ((i, j) : ℕ × ℕ) ∈ μ then n else 0
@@ -257,9 +257,9 @@ def extendTableau (h : YoungDiagram.Interlaces μ ν) (T : BoundedSSYT n ν) :
   zeros' := fun {_ _} hc => by
     rw [if_neg fun hν => hc (h.le hν), if_neg hc]
 
-/-- The entries of `TauCeti.BoundedSSYT.extendTableau`. -/
-@[simp]
-theorem extendTableau_apply (h : YoungDiagram.Interlaces μ ν) (T : BoundedSSYT n ν) (i j : ℕ) :
+/-- The entries of the filling underlying `TauCeti.BoundedSSYT.extend`. -/
+private theorem extendTableau_apply (h : YoungDiagram.Interlaces μ ν) (T : BoundedSSYT n ν)
+    (i j : ℕ) :
     extendTableau h T i j =
       if ((i, j) : ℕ × ℕ) ∈ ν then T.1 i j else if ((i, j) : ℕ × ℕ) ∈ μ then n else 0 :=
   (rfl)
@@ -347,8 +347,8 @@ in the letters `{0, …, n}` is summing, over the shapes `ν` interlacing `μ` w
 over the tableaux of shape `ν` in the letters `{0, …, n - 1}`. -/
 theorem sum_eq_sum_interlacingShapes {M : Type*} [AddCommMonoid M] (n : ℕ)
     (μ : _root_.YoungDiagram) (f : ∀ ν : _root_.YoungDiagram, BoundedSSYT n ν → M) :
-    ∑ ν ∈ YoungDiagram.interlacingShapes n μ, ∑ T : BoundedSSYT n ν, f ν T
-      = ∑ T : BoundedSSYT (n + 1) μ, f (restrictShape T) (restrict T (restrictShape T) rfl) := by
+    ∑ T : BoundedSSYT (n + 1) μ, f (restrictShape T) (restrict T (restrictShape T) rfl)
+      = ∑ ν ∈ YoungDiagram.interlacingShapes n μ, ∑ T : BoundedSSYT n ν, f ν T := by
   classical
   rw [← Finset.sum_fiberwise_of_maps_to
     (fun T _ => restrictShape_mem_interlacingShapes T)
@@ -356,8 +356,8 @@ theorem sum_eq_sum_interlacingShapes {M : Type*} [AddCommMonoid M] (n : ℕ)
   refine Finset.sum_congr rfl fun ν hν => ?_
   rw [Finset.sum_subtype (p := fun T : BoundedSSYT (n + 1) μ => restrictShape T = ν) _
     (fun T => by simp)]
-  refine (Fintype.sum_equiv (fiberEquiv (YoungDiagram.mem_interlacingShapes.mp hν).1) _ _
-    fun T => ?_).symm
+  refine Fintype.sum_equiv (fiberEquiv (YoungDiagram.mem_interlacingShapes.mp hν).1) _ _
+    fun T => ?_
   obtain ⟨T, hT⟩ := T
   subst hT
   rfl
@@ -370,7 +370,7 @@ dimension is the number of such tableaux. -/
 theorem card_eq_sum_interlacingShapes (n : ℕ) (μ : _root_.YoungDiagram) :
     Fintype.card (BoundedSSYT (n + 1) μ)
       = ∑ ν ∈ YoungDiagram.interlacingShapes n μ, Fintype.card (BoundedSSYT n ν) := by
-  simpa using (sum_eq_sum_interlacingShapes n μ fun _ _ => (1 : ℕ)).symm
+  simpa using sum_eq_sum_interlacingShapes n μ fun _ _ => (1 : ℕ)
 
 end BoundedSSYT
 

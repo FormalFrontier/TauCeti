@@ -20,8 +20,10 @@ arbitrary commutative semiring.  Over `ℂ`, and for a shape `μ` of at most `n 
 `μ` is the highest weight of a polynomial irreducible of `GLₙ₊₁` and `s_μ` its character — it reads
 as the multiplicity-free branching rule for the restriction `GLₙ₊₁ ↓ GLₙ`: that irreducible
 restricts to the direct sum, each with multiplicity one, of the irreducibles whose highest weights
-interlace `μ`.  That reading is not proved here, and outside characteristic `0` there is no such
-decomposition to read off; the theorems below are the polynomial identity alone.
+interlace `μ`.  That reading is not proved here, and it does not transfer to positive
+characteristic: there the identity of characters no longer forces a direct-sum decomposition,
+because the representations of `GLₙ₊₁` are not semisimple in general.  The theorems below are the
+polynomial identity alone.
 
 Nothing analytic happens here.  `TauCeti.diagramSchurPoly` is by construction the generating
 function of the bounded semistandard tableaux of its shape, so the identity is the sum-over-a-
@@ -95,7 +97,7 @@ theorem eval_diagramSchurPoly_of_apply_last_eq_one (n : ℕ) (μ : _root_.YoungD
       = ∑ ν ∈ YoungDiagram.interlacingShapes n μ,
           eval (fun i : Fin n => x i.castSucc) (diagramSchurPoly n R ν) := by
   simp only [eval_diagramSchurPoly]
-  rw [BoundedSSYT.sum_eq_sum_interlacingShapes n μ
+  rw [← BoundedSSYT.sum_eq_sum_interlacingShapes n μ
     fun ν T => ∏ i : Fin n, x i.castSucc ^ BoundedSSYT.weight T i]
   refine Finset.sum_congr rfl fun T _ => ?_
   rw [Fin.prod_univ_castSucc, hx, one_pow, mul_one]
