@@ -151,6 +151,34 @@ theorem isPseudoholomorphicWithinAt_iff_isComplexLinearMap :
   simp only [SmoothAlmostComplexStructure.almostComplexStructureAt_apply,
     ContinuousLinearMap.coe_coe]
 
+/-- The continuous-linear manifold derivative witnessing pseudoholomorphicity at a point. -/
+theorem IsPseudoholomorphicAt.hasMFDerivAt (hu : IsPseudoholomorphicAt j J u x) :
+    HasMFDerivAt I I' u x
+      (Classical.choose (isPseudoholomorphicAt_iff_isComplexLinearMap.mp hu)) :=
+  (Classical.choose_spec (isPseudoholomorphicAt_iff_isComplexLinearMap.mp hu)).1
+
+/-- The chosen manifold derivative at a pseudoholomorphic point is complex-linear. -/
+theorem IsPseudoholomorphicAt.derivative_isComplexLinear
+    (hu : IsPseudoholomorphicAt j J u x) :
+    IsComplexLinearMap (j.almostComplexStructureAt x) (J.almostComplexStructureAt (u x))
+      (Classical.choose (isPseudoholomorphicAt_iff_isComplexLinearMap.mp hu)).toLinearMap :=
+  (Classical.choose_spec (isPseudoholomorphicAt_iff_isComplexLinearMap.mp hu)).2
+
+/-- The continuous-linear manifold derivative witnessing pseudoholomorphicity within a set. -/
+theorem IsPseudoholomorphicWithinAt.hasMFDerivWithinAt
+    (hu : IsPseudoholomorphicWithinAt j J u s x) :
+    HasMFDerivWithinAt I I' u s x
+      (Classical.choose (isPseudoholomorphicWithinAt_iff_isComplexLinearMap.mp hu)) :=
+  (Classical.choose_spec (isPseudoholomorphicWithinAt_iff_isComplexLinearMap.mp hu)).1
+
+/-- The chosen within-set manifold derivative is complex-linear. -/
+theorem IsPseudoholomorphicWithinAt.derivative_isComplexLinear
+    (hu : IsPseudoholomorphicWithinAt j J u s x) :
+    IsComplexLinearMap (j.almostComplexStructureAt x) (J.almostComplexStructureAt (u x))
+      (Classical.choose
+        (isPseudoholomorphicWithinAt_iff_isComplexLinearMap.mp hu)).toLinearMap :=
+  (Classical.choose_spec (isPseudoholomorphicWithinAt_iff_isComplexLinearMap.mp hu)).2
+
 /-! ### Differentiability and continuity -/
 
 /-- A map pseudoholomorphic at a point is differentiable there. -/
@@ -504,6 +532,7 @@ variable [FiniteDimensional ℝ V] [FiniteDimensional ℝ W]
 /-- For the constant smooth structures of two pointwise almost complex structures on model vector
 spaces, pseudoholomorphicity at a point is the flat, constant-structure predicate. This is the
 check that the manifold-level Cauchy--Riemann equation restricts to the linear one. -/
+@[simp]
 theorem isPseudoholomorphicAt_constSmooth_iff (Jv : AlmostComplexStructure V)
     (Jw : AlmostComplexStructure W) (u : V → W) (x : V) :
     IsPseudoholomorphicAt Jv.constSmooth Jw.constSmooth u x ↔
@@ -515,6 +544,7 @@ theorem isPseudoholomorphicAt_constSmooth_iff (Jv : AlmostComplexStructure V)
 
 /-- For the constant smooth structures of two pointwise almost complex structures on model vector
 spaces, pseudoholomorphicity within a set at a point is the flat, constant-structure predicate. -/
+@[simp]
 theorem isPseudoholomorphicWithinAt_constSmooth_iff (Jv : AlmostComplexStructure V)
     (Jw : AlmostComplexStructure W) (u : V → W) (s : Set V) (x : V) :
     IsPseudoholomorphicWithinAt Jv.constSmooth Jw.constSmooth u s x ↔
@@ -526,6 +556,7 @@ theorem isPseudoholomorphicWithinAt_constSmooth_iff (Jv : AlmostComplexStructure
 
 /-- For the constant smooth structures of two pointwise almost complex structures on model vector
 spaces, pseudoholomorphicity on a set is the flat, constant-structure predicate. -/
+@[simp]
 theorem isPseudoholomorphicOn_constSmooth_iff (Jv : AlmostComplexStructure V)
     (Jw : AlmostComplexStructure W) (u : V → W) (s : Set V) :
     IsPseudoholomorphicOn Jv.constSmooth Jw.constSmooth u s ↔
@@ -537,6 +568,7 @@ theorem isPseudoholomorphicOn_constSmooth_iff (Jv : AlmostComplexStructure V)
 
 /-- For the constant smooth structures of two pointwise almost complex structures on model vector
 spaces, global pseudoholomorphicity is the flat, constant-structure predicate. -/
+@[simp]
 theorem isPseudoholomorphic_constSmooth_iff (Jv : AlmostComplexStructure V)
     (Jw : AlmostComplexStructure W) (u : V → W) :
     IsPseudoholomorphic Jv.constSmooth Jw.constSmooth u ↔
