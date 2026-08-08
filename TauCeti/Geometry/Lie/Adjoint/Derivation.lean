@@ -55,26 +55,16 @@ variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
 
 attribute [local instance] LieGroup.minSmoothnessThree
 
-omit [FiniteDimensional ℝ E] in
-private theorem t2Space_of_lieGroup
-    (I : ModelWithCorners ℝ E H) (G : Type*) [TopologicalSpace G] [ChartedSpace H G]
-    [Group G] [LieGroup I ∞ G] : T2Space G := by
-  let _ : T1Space G := I.t1Space G
-  let _ : IsTopologicalGroup G := topologicalGroup_of_lieGroup I ∞
-  exact IsTopologicalGroup.t2Space_iff_one_closed.mpr isClosed_singleton
-
 /-- The group adjoint on left-invariant derivations, obtained by transporting the differential of
 conjugation across evaluation at the identity. -/
 def Ad (g : G) : LeftInvariantDerivation I G ≃ₗ⁅ℝ⁆ LeftInvariantDerivation I G :=
-  let _ : T2Space G := t2Space_of_lieGroup I G
   let e := leftInvariantDerivationLieEquivGroupLieAlgebra
     (I := I) (G := G) (ContMDiffMul.isInteriorPoint (I := I) (n := ∞) (by simp) (1 : G))
   (e.trans (tangentAd (I := I) g)).trans e.symm
 
 /-- Applying the derivation adjoint is applying the tangent adjoint through the canonical Lie
 equivalence. -/
-@[simp]
-theorem Ad_apply [T2Space G] (g : G) (D : LeftInvariantDerivation I G) :
+theorem Ad_apply (g : G) (D : LeftInvariantDerivation I G) :
     Ad (I := I) g D =
       (leftInvariantDerivationLieEquivGroupLieAlgebra
           (I := I) (G := G)
@@ -85,10 +75,23 @@ theorem Ad_apply [T2Space G] (g : G) (D : LeftInvariantDerivation I G) :
             (ContMDiffMul.isInteriorPoint (I := I) (n := ∞) (by simp) (1 : G)) D)) :=
   (rfl)
 
+/-- Evaluation at the identity intertwines the derivation and tangent adjoint actions. -/
+@[simp]
+theorem leftInvariantDerivationLieEquivGroupLieAlgebra_Ad
+    (g : G) (D : LeftInvariantDerivation I G) :
+    leftInvariantDerivationLieEquivGroupLieAlgebra
+        (I := I) (G := G)
+        (ContMDiffMul.isInteriorPoint (I := I) (n := ∞) (by simp) (1 : G))
+        (Ad (I := I) g D) =
+      tangentAd (I := I) g
+        (leftInvariantDerivationLieEquivGroupLieAlgebra
+          (I := I) (G := G)
+          (ContMDiffMul.isInteriorPoint (I := I) (n := ∞) (by simp) (1 : G)) D) := by
+  rw [Ad_apply, LieEquiv.apply_symm_apply]
+
 /-- The identity element acts trivially on left-invariant derivations. -/
 @[simp]
 theorem Ad_one : Ad (I := I) (1 : G) = LieEquiv.refl := by
-  let _ : T2Space G := t2Space_of_lieGroup I G
   apply LieEquiv.ext
   intro D
   rw [Ad_apply, tangentAd_one, LieEquiv.refl_apply]
@@ -97,9 +100,9 @@ theorem Ad_one : Ad (I := I) (1 : G) = LieEquiv.refl := by
     (ContMDiffMul.isInteriorPoint (I := I) (n := ∞) (by simp) (1 : G))).symm_apply_apply D
 
 /-- A product acts by the composite of the two derivation adjoint automorphisms. -/
+@[simp]
 theorem Ad_mul (g h : G) :
     Ad (I := I) (g * h) = (Ad (I := I) h).trans (Ad (I := I) g) := by
-  let _ : T2Space G := t2Space_of_lieGroup I G
   apply LieEquiv.ext
   intro D
   rw [Ad_apply, tangentAd_mul, LieEquiv.trans_apply, LieEquiv.trans_apply,
@@ -108,15 +111,11 @@ theorem Ad_mul (g h : G) :
 /-- The adjoint of an inverse is the inverse adjoint automorphism. -/
 @[simp]
 theorem Ad_inv (g : G) : Ad (I := I) g⁻¹ = (Ad (I := I) g).symm := by
-  apply LieEquiv.ext
-  intro D
-  apply (Ad (I := I) g).injective
-  change Ad (I := I) g (Ad (I := I) g⁻¹ D) =
-    Ad (I := I) g ((Ad (I := I) g).symm D)
-  rw [LieEquiv.apply_symm_apply]
-  have h := congrArg
-    (fun e : LeftInvariantDerivation I G ≃ₗ⁅ℝ⁆ LeftInvariantDerivation I G ↦ e D)
-    (Ad_mul (I := I) g g⁻¹)
-  simpa only [mul_inv_cancel, Ad_one, LieEquiv.refl_apply, LieEquiv.trans_apply] using h.symm
+  let e := leftInvariantDerivationLieEquivGroupLieAlgebra
+    (I := I) (G := G) (ContMDiffMul.isInteriorPoint (I := I) (n := ∞) (by simp) (1 : G))
+  change (e.trans (tangentAd (I := I) g⁻¹)).trans e.symm =
+    ((e.trans (tangentAd (I := I) g)).trans e.symm).symm
+  rw [tangentAd_inv]
+  rfl
 
 end TauCeti.Lie
