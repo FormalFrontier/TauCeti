@@ -187,18 +187,11 @@ private theorem eqOn_trans_comp_projIcc {X : Type*} [TopologicalSpace X] {x y z 
           rw [projIcc_of_mem _ (hmem u hu)]
     _ = r (projIcc (0 : ℝ) 1 zero_le_one (ψ u)) := r.extend_extends' _
 
-/-- **Continuations concatenate.** If `F` continues a germ along `p`, `G` continues a germ along
-`q`, and the germ `F` delivers at the end of `p` is the germ `G` starts from, then
-`TauCeti.transFamily F G` is a continuation along the concatenated path `p.trans q`.
-
-Its germ at parameter time `0` is that of `F 0` and its germ at time `1` is that of `G 1`
-(`TauCeti.transFamily_zero`, `TauCeti.transFamily_one`), so continuing along `p` and then along
-`q` carries the initial germ of `F` to the terminal germ of `G`. -/
-theorem IsAnalyticContinuationAlong.trans [CompleteSpace E] {p : Path a b} {q : Path b c}
-    (hF : IsAnalyticContinuationAlong F (⇑p) univ)
-    (hG : IsAnalyticContinuationAlong G (⇑q) univ) (hFG : F 1 =ᶠ[𝓝 b] G 0) :
-    IsAnalyticContinuationAlong (transFamily F G) (⇑(p.trans q)) univ := by
-  -- The first half of the concatenation is `p`, reparametrised by doubling.
+/-- The first half of `p.trans q` is `p` reparametrised by doubling, so `transFamily F G`
+continues along `p.trans q` on `{u | u ≤ 2⁻¹}`. -/
+private theorem isAnalyticContinuationAlong_transFamily_Iic [CompleteSpace E] {p : Path a b}
+    {q : Path b c} (hF : IsAnalyticContinuationAlong F (⇑p) univ) :
+    IsAnalyticContinuationAlong (transFamily F G) (⇑(p.trans q)) {u : I | (u : ℝ) ≤ 2⁻¹} := by
   have hφ₁ : Continuous fun u : I => projIcc (0 : ℝ) 1 zero_le_one (2 * u) :=
     continuous_projIcc.comp (by fun_prop)
   have h₁ := hF.reparam (φ := fun u : I => projIcc (0 : ℝ) 1 zero_le_one (2 * u))
@@ -211,12 +204,16 @@ theorem IsAnalyticContinuationAlong.trans [CompleteSpace E] {p : Path a b} {q : 
         ⟨by linarith [u.2.1], by linarith⟩)
       (fun u hu => have hu' : (u : ℝ) ≤ 2⁻¹ := hu
         Path.extend_trans_of_le_half p q (by rw [one_div]; exact hu'))
-  have h₁' : IsAnalyticContinuationAlong (transFamily F G) (⇑(p.trans q))
-      {u : I | (u : ℝ) ≤ 2⁻¹} :=
-    (h₁.congr_path hpath₁).congr fun u hu => by
-      rw [transFamily_of_le_half F G hu]
-      exact .rfl
-  -- The second half of the concatenation is `q`, reparametrised by doubling and shifting.
+  exact (h₁.congr_path hpath₁).congr fun u hu => by
+    rw [transFamily_of_le_half F G hu]
+    exact .rfl
+
+/-- The second half of `p.trans q` is `q` reparametrised by doubling and shifting, so
+`transFamily F G` continues along `p.trans q` on `{u | 2⁻¹ ≤ u}`. At the midpoint the two halves
+are reconciled by the matching hypothesis `hFG`. -/
+private theorem isAnalyticContinuationAlong_transFamily_Ici [CompleteSpace E] {p : Path a b}
+    {q : Path b c} (hG : IsAnalyticContinuationAlong G (⇑q) univ) (hFG : F 1 =ᶠ[𝓝 b] G 0) :
+    IsAnalyticContinuationAlong (transFamily F G) (⇑(p.trans q)) {u : I | 2⁻¹ ≤ (u : ℝ)} := by
   have hφ₂ : Continuous fun u : I => projIcc (0 : ℝ) 1 zero_le_one (2 * u - 1) :=
     continuous_projIcc.comp (by fun_prop)
   have h₂ := hG.reparam (φ := fun u : I => projIcc (0 : ℝ) 1 zero_le_one (2 * u - 1))
@@ -229,24 +226,34 @@ theorem IsAnalyticContinuationAlong.trans [CompleteSpace E] {p : Path a b} {q : 
         ⟨by linarith, by linarith [u.2.2]⟩)
       (fun u hu => have hu' : 2⁻¹ ≤ (u : ℝ) := hu
         Path.extend_trans_of_half_le p q (by rw [one_div]; exact hu'))
-  have h₂' : IsAnalyticContinuationAlong (transFamily F G) (⇑(p.trans q))
-      {u : I | 2⁻¹ ≤ (u : ℝ)} := by
-    refine (h₂.congr_path hpath₂).congr fun u hu => ?_
-    have hu' : 2⁻¹ ≤ (u : ℝ) := hu
-    rcases eq_or_lt_of_le hu' with heq | hlt
-    · -- At the junction the two halves are compared through the matching hypothesis.
-      have e₁ : projIcc (0 : ℝ) 1 zero_le_one (2 * u) = 1 := by norm_num [← heq]
-      have e₀ : projIcc (0 : ℝ) 1 zero_le_one (2 * u - 1) = 0 := by norm_num [← heq]
-      have hpt : (p.trans q) u = b := by rw [hpath₂ hu]; simp [e₀]
-      rw [transFamily_of_le_half F G heq.ge, e₁, hpt]
-      simpa [e₀] using hFG
-    · rw [transFamily_of_half_lt F G hlt]
-      exact .rfl
+  refine (h₂.congr_path hpath₂).congr fun u hu => ?_
+  have hu' : 2⁻¹ ≤ (u : ℝ) := hu
+  rcases eq_or_lt_of_le hu' with heq | hlt
+  · have e₁ : projIcc (0 : ℝ) 1 zero_le_one (2 * u) = 1 := by norm_num [← heq]
+    have e₀ : projIcc (0 : ℝ) 1 zero_le_one (2 * u - 1) = 0 := by norm_num [← heq]
+    have hpt : (p.trans q) u = b := by rw [hpath₂ hu]; simp [e₀]
+    rw [transFamily_of_le_half F G heq.ge, e₁, hpt]
+    simpa [e₀] using hFG
+  · rw [transFamily_of_half_lt F G hlt]
+    exact .rfl
+
+/-- **Continuations concatenate.** If `F` continues a germ along `p`, `G` continues a germ along
+`q`, and the germ `F` delivers at the end of `p` is the germ `G` starts from, then
+`TauCeti.transFamily F G` is a continuation along the concatenated path `p.trans q`.
+
+Its germ at parameter time `0` is that of `F 0` and its germ at time `1` is that of `G 1`
+(`TauCeti.transFamily_zero`, `TauCeti.transFamily_one`), so continuing along `p` and then along
+`q` carries the initial germ of `F` to the terminal germ of `G`. -/
+theorem IsAnalyticContinuationAlong.trans [CompleteSpace E] {p : Path a b} {q : Path b c}
+    (hF : IsAnalyticContinuationAlong F (⇑p) univ)
+    (hG : IsAnalyticContinuationAlong G (⇑q) univ) (hFG : F 1 =ᶠ[𝓝 b] G 0) :
+    IsAnalyticContinuationAlong (transFamily F G) (⇑(p.trans q)) univ := by
   -- The halves are the `Iic`/`Ici` pair at the midpoint: `I` carries the order induced from `ℝ`,
-  -- so the set-builder literals above are definitionally those intervals.
+  -- so the set-builder literals in the two halves are definitionally those intervals.
   rw [← Iic_union_Ici (a := (⟨2⁻¹, by norm_num⟩ : I))]
-  exact h₁'.union h₂' (isClosed_Iic (a := (⟨2⁻¹, by norm_num⟩ : I)))
-    (isClosed_Ici (a := (⟨2⁻¹, by norm_num⟩ : I)))
+  exact (isAnalyticContinuationAlong_transFamily_Iic hF).union
+    (isAnalyticContinuationAlong_transFamily_Ici hG hFG)
+    (isClosed_Iic (a := (⟨2⁻¹, by norm_num⟩ : I))) (isClosed_Ici (a := (⟨2⁻¹, by norm_num⟩ : I)))
 
 /-- **Continuability is transitive along a concatenation.** If `F` continues the germ of `f₀`
 along `p`, and the germ `F 1` it delivers at the end of `p` continues along `q`, then `f₀`
