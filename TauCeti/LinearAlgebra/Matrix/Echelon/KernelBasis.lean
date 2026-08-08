@@ -162,10 +162,6 @@ theorem kernelVector_apply_of_isFreeColumn {c : Fin n} (hc : IsFreeColumn L c) (
   refine Finset.sum_eq_zero fun i _ => if_neg fun h => ?_
   exact not_isFreeColumn_pivotColumn L i (h ▸ hc)
 
-@[simp]
-theorem kernelVector_self {j : Fin n} (hj : IsFreeColumn L j) : kernelVector L j j = 1 := by
-  simp [kernelVector_apply_of_isFreeColumn hj]
-
 /-- In a pivot column a kernel vector of a free column is the negated entry of the corresponding
 reduced row. -/
 theorem kernelVector_pivotColumn {j : Fin n} (hj : IsFreeColumn L j)
@@ -276,7 +272,7 @@ theorem eq_sum_smul_kernelVector_of_mulVec_eq_zero {v : Fin n → F} (hv : A *�
         rw [Pi.smul_apply, kernelVector_apply_of_isFreeColumn hc,
           if_neg fun h => hne (Subtype.ext h.symm), smul_zero])
       (fun h => absurd (Finset.mem_univ _) h)]
-    rw [Pi.smul_apply, kernelVector_self hc, smul_eq_mul, mul_one]
+    rw [Pi.smul_apply, kernelVector_apply_of_isFreeColumn hc, if_pos rfl, smul_eq_mul, mul_one]
   obtain ⟨i, rfl⟩ := (not_isFreeColumn_iff L).mp hc
   have hfree : ∑ c ∈ Finset.univ.filter (IsFreeColumn L), rowReduceMatrix L i c * v c =
       ∑ j : {j : Fin n // IsFreeColumn L j}, rowReduceMatrix L i j.1 * v j.1 :=
@@ -401,7 +397,8 @@ theorem nodup_kernelBasis : (kernelBasis A).Nodup := by
   have hjfree : IsFreeColumn (List.ofFn A) j := by simpa using (List.mem_filter.mp hj).2
   by_contra hne
   have := congrFun h j
-  rw [kernelVector_self hjfree, kernelVector_apply_of_isFreeColumn hjfree, if_neg hne] at this
+  rw [kernelVector_apply_of_isFreeColumn hjfree, if_pos rfl,
+    kernelVector_apply_of_isFreeColumn hjfree, if_neg hne] at this
   exact one_ne_zero this
 
 /-- **The algorithm returns `n - rank` vectors**: the rank-nullity theorem, counted off the
