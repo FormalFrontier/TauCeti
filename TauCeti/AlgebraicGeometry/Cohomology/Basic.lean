@@ -74,6 +74,7 @@ lemma cohomologyMap_id_apply (M : X.Modules) (i : ℕ) (x : cohomology M i) :
   exact CategoryTheory.Sheaf.H.map_id_apply x
 
 /-- The map induced by a composite is the composite of the induced cohomology maps. -/
+@[simp]
 lemma cohomologyMap_comp_apply {M N P : X.Modules} (f : M ⟶ N) (g : N ⟶ P)
     (i : ℕ) (x : cohomology M i) :
     cohomologyMap (f ≫ g) i x = cohomologyMap g i (cohomologyMap f i x) := by
