@@ -71,32 +71,13 @@ instance (X : Scheme.{u}) (i : ℕ) : (cohomologyFunctor X i).Additive :=
 
 /-- Zeroth cohomology is canonically equivalent to the group of global sections.
 
-The equivalence is natural in the coefficient sheaf; see `cohomologyZeroEquiv_naturality` and
-`cohomologyZeroEquiv_symm_naturality`. -/
+Naturality in the coefficient sheaf follows from `CategoryTheory.Sheaf.H.equiv₀_naturality`
+and `CategoryTheory.Sheaf.H.equiv₀_symm_naturality`, applied to `isTerminalTop` and the
+underlying sheaf morphism. -/
 def cohomologyZeroEquiv (M : X.Modules) :
     Cohomology M 0 ≃+ Γ(M, ⊤) :=
   CategoryTheory.Sheaf.H.equiv₀
     ((_root_.SheafOfModules.toSheaf X.ringCatSheaf).obj M) isTerminalTop
-
-/-- The degree-zero cohomology equivalence commutes with maps of coefficient sheaves. -/
-lemma cohomologyZeroEquiv_naturality {M N : X.Modules} (f : M ⟶ N)
-    (x : Cohomology M 0) :
-    f.app ⊤ (cohomologyZeroEquiv M x) =
-      cohomologyZeroEquiv N (((cohomologyFunctor X 0).map f).hom x) := by
-  -- The scheme-level section map and cohomology-functor map are definitionally the maps of the
-  -- underlying abelian sheaves.
-  exact CategoryTheory.Sheaf.H.equiv₀_naturality
-    isTerminalTop ((_root_.SheafOfModules.toSheaf X.ringCatSheaf).map f) x
-
-/-- The inverse degree-zero cohomology equivalence commutes with maps of coefficient sheaves. -/
-lemma cohomologyZeroEquiv_symm_naturality {M N : X.Modules} (f : M ⟶ N)
-    (x : Γ(M, ⊤)) :
-    ((cohomologyFunctor X 0).map f).hom ((cohomologyZeroEquiv M).symm x) =
-      (cohomologyZeroEquiv N).symm (f.app ⊤ x) := by
-  -- The scheme-level section map and cohomology-functor map are definitionally the maps of the
-  -- underlying abelian sheaves.
-  exact CategoryTheory.Sheaf.H.equiv₀_symm_naturality
-    isTerminalTop ((_root_.SheafOfModules.toSheaf X.ringCatSheaf).map f) x
 
 end Scheme.Modules
 
