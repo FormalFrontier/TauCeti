@@ -6,7 +6,7 @@ Authors: Joseph Tooby-Smith, Codex
 module
 
 public import Mathlib.MeasureTheory.Function.Jacobian
-import Mathlib.MeasureTheory.Measure.Haar.Disintegration
+import Mathlib.MeasureTheory.Measure.Haar.Unique
 import Mathlib.Analysis.Calculus.FDeriv.Equiv
 
 /-!
@@ -52,19 +52,13 @@ variable {E F : Type*}
   {s : Set E} {f : E → F} {f' : E → E →L[ℝ] F}
   (ν : Measure F) [IsAddHaarMeasure ν]
 
-omit [FiniteDimensional ℝ F] in
+omit [FiniteDimensional ℝ E] in
 /-- A continuous linear equivalence is nonsingular for any additive Haar measures on its source
 and target. -/
 private theorem ContinuousLinearEquiv.quasiMeasurePreserving_addHaar
     (μ : Measure E) (ν : Measure F) [IsAddHaarMeasure μ] [IsAddHaarMeasure ν]
-    (e : E ≃L[ℝ] F) : QuasiMeasurePreserving e μ ν := by
-  obtain ⟨c, -, hc⟩ :=
-    (e : E →ₗ[ℝ] F).exists_map_addHaar_eq_smul_addHaar μ ν e.surjective
-  refine ⟨e.continuous.measurable, ?_⟩
-  have hc' : Measure.map e μ = c • ν := by
-    simpa using hc
-  rw [hc']
-  exact smul_absolutelyContinuous
+    (e : E ≃L[ℝ] F) : QuasiMeasurePreserving e μ ν :=
+  ⟨e.continuous.measurable, absolutelyContinuous_isAddHaarMeasure (μ.map e) ν⟩
 
 /-- **Sard's lemma in equal dimensions.** Let `E` and `F` be finite-dimensional real normed
 spaces of equal dimension. If `f` is differentiable along `s` with derivative `f'`, and `f'` is
