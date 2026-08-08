@@ -45,7 +45,8 @@ diagonal and at most two indices is itself a simultaneous relabelling.
   transpose of the standard Cartan matrix, read through `dualNodeEquiv`.
 * `TauCeti.hasCartanType_flip_iff`: **the Cartan type of a base and the Cartan type of the flipped
   base are dual**. In particular a base is of type `Bₙ` exactly when the flipped base is of type
-  `Cₙ` (`TauCeti.hasCartanType_flip_C_iff`).
+  `Cₙ` (`TauCeti.hasCartanType_flip_C_iff`, and `TauCeti.hasCartanType_flip_B_iff` for the other
+  orientation).
 * `TauCeti.DynkinType.valid_dual_iff`: validity transfers along duality except for the pair
   `B 2`, `C 2`.
 * `TauCeti.hasCartanType_dual_iff_of_rank_le_two`: at rank at most two a type and its dual match
@@ -110,8 +111,10 @@ does. -/
 
 /-- **Validity transfers along duality away from the pair `B 2`, `C 2`.** The excluded pair is the
 low-rank coincidence `B 2 = C 2`: both names describe the same root system, and the enumeration
-keeps only `B 2` valid, so `TauCeti.DynkinType.valid_B_two_and_not_valid_dual` below records the
-failure on that pair. -/
+keeps only `B 2` valid. So both orientations of that pair genuinely fail — `B 2` is valid while its
+dual `C 2` is not, and `C 2` is not valid while its dual `B 2` is (`simp` proves either from
+`TauCeti.DynkinType.valid_B`, `TauCeti.DynkinType.valid_C` and `dual_B`, `dual_C`). No base is lost
+by keeping only the first name; see `TauCeti.hasCartanType_dual_iff_of_rank_le_two`. -/
 lemma valid_dual_iff {t : DynkinType} (hB : t ≠ B 2) (hC : t ≠ C 2) :
     t.dual.Valid ↔ t.Valid := by
   cases t with
@@ -124,16 +127,6 @@ lemma valid_dual_iff {t : DynkinType} (hB : t ≠ B 2) (hC : t ≠ C 2) :
       simp only [dual_C, valid_B, valid_C]
       omega
   | _ => simp
-
-/-- One orientation of the pair excluded from `TauCeti.DynkinType.valid_dual_iff`: `B 2` is a valid
-type whose dual `C 2` is not. Both orientations fail, since `(C 2).dual = B 2` is valid while `C 2`
-is not; the two names describe the same root system, and
-`TauCeti.hasCartanType_dual_iff_of_rank_le_two` shows that no base is lost by keeping only the
-first name. -/
-lemma valid_B_two_and_not_valid_dual : (B 2).Valid ∧ ¬ (B 2).dual.Valid := by
-  refine ⟨valid_B.mpr le_rfl, ?_⟩
-  rw [dual_B]
-  simp
 
 /-- **The relabelling of nodes carried by duality.** Transposing a Cartan matrix reverses the
 arrows of its diagram, and for the classical families and the `E` types the result is the standard
@@ -269,10 +262,20 @@ a Dynkin type to its dual. -/
 
 /-- **A base is of type `Bₙ` exactly when the flipped base is of type `Cₙ`.** This is the worked
 instance of `TauCeti.hasCartanType_flip_iff`: `Bₙ` and `Cₙ` are the pair of types that the oriented
-matching of `TauCeti.HasCartanType` keeps apart, and duality is what identifies them. -/
-theorem hasCartanType_flip_C_iff {b : P.Base} {n : ℕ} :
+matching of `TauCeti.HasCartanType` keeps apart, and duality is what identifies them.
+
+It is stated separately from `TauCeti.hasCartanType_flip_iff` because that lemma matches a flipped
+type `t.dual` syntactically, so neither `simp` nor `rw` recovers this instance from it: doing so
+would mean solving `.C n = ?t.dual` for `?t`. -/
+@[simp] theorem hasCartanType_flip_C_iff {b : P.Base} {n : ℕ} :
     HasCartanType P.flip b.flip (.C n) ↔ HasCartanType P b (.B n) :=
   hasCartanType_flip_iff (t := .B n)
+
+/-- The other orientation of `TauCeti.hasCartanType_flip_C_iff`: a base is of type `Cₙ` exactly
+when the flipped base is of type `Bₙ`. -/
+@[simp] theorem hasCartanType_flip_B_iff {b : P.Base} {n : ℕ} :
+    HasCartanType P.flip b.flip (.B n) ↔ HasCartanType P b (.C n) :=
+  hasCartanType_flip_iff (t := .C n)
 
 end HasCartanType
 
@@ -300,7 +303,7 @@ theorem hasCartanType_dual_iff_of_rank_le_two {b : P.Base} {t : DynkinType} (ht 
 
 /-- Types `B 2` and `C 2` match exactly the same bases, the low-rank coincidence that
 `TauCeti.DynkinType.Valid` resolves by keeping only `B 2`. -/
-theorem hasCartanType_C_two_iff_B_two {b : P.Base} :
+@[simp] theorem hasCartanType_C_two_iff_B_two {b : P.Base} :
     HasCartanType P b (.C 2) ↔ HasCartanType P b (.B 2) :=
   hasCartanType_dual_iff_of_rank_le_two (t := .B 2) le_rfl
 
