@@ -6,7 +6,7 @@ module
 
 public import TauCeti.Geometry.Lie.Adjoint.Derivation
 public import TauCeti.Geometry.Lie.Adjoint.Smooth
-public import Mathlib.RepresentationTheory.Basic
+public import Mathlib.RepresentationTheory.Continuous.Basic
 
 /-!
 # Smoothness of the group adjoint representation
@@ -45,47 +45,64 @@ open scoped ContDiff Manifold
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
   {H : Type*} [TopologicalSpace H] {I : ModelWithCorners ℝ E H}
   {G : Type*} [TopologicalSpace G] [ChartedSpace H G] [Group G]
-  [FiniteDimensional ℝ E] [LieGroup I ∞ G] [T2Space G]
+  [FiniteDimensional ℝ E] [LieGroup I ∞ G]
 
 attribute [local instance] LieGroup.minSmoothnessThree
 
+/-- Lie groups have no manifold boundary because every point is interior. -/
 local instance lieGroupBoundarylessManifoldAdjointRepresentation : BoundarylessManifold I G where
   isInteriorPoint' g :=
     ContMDiffMul.isInteriorPoint (I := I) (n := ∞) (by simp) g
 
+/-- The normed additive structure transported from the finite-dimensional tangent Lie algebra. -/
+local instance lieGroupNormedAddCommGroupAdjointRepresentation :
+    NormedAddCommGroup (LeftInvariantDerivation I G) := by
+  let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
+  exact LeftInvariantDerivation.instNormedAddCommGroup
+
+/-- The normed-space structure transported from the finite-dimensional tangent Lie algebra. -/
+local instance lieGroupNormedSpaceAdjointRepresentation :
+    NormedSpace ℝ (LeftInvariantDerivation I G) := by
+  let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
+  exact LeftInvariantDerivation.instNormedSpace
+
+/-- Left-invariant derivations are finite-dimensional under the Lie-group hypotheses. -/
+local instance lieGroupFiniteDimensionalAdjointRepresentation :
+    FiniteDimensional ℝ (LeftInvariantDerivation I G) := by
+  let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
+  exact finiteDimensional_leftInvariantDerivation
+    (ContMDiffMul.isInteriorPoint (I := I) (n := ∞) (by simp) (1 : G))
+
+/-- The adjoint representation valued in bounded operators. -/
+def continuousAdjointRepresentation :
+    ContRepresentation ℝ G (LeftInvariantDerivation I G) where
+  toMonoidHom :=
+    { toFun := fun g ↦ LinearMap.toContinuousLinearMap
+        (Ad (I := I) g).toLinearEquiv.toLinearMap
+      map_one' := by
+        ext D
+        simp
+      map_mul' := by
+        intro g h
+        ext D
+        rw [Ad_mul]
+        rfl }
+
 /-- The adjoint representation of a Lie group on its algebra of left-invariant derivations. -/
 def adjointRepresentation :
-    Representation ℝ G (LeftInvariantDerivation I G) where
-  toFun g := (Ad (I := I) g).toLinearEquiv.toLinearMap
-  map_one' := by
-    ext D
-    simp
-  map_mul' g h := by
-    ext D
-    rw [Ad_mul]
-    rfl
+    Representation ℝ G (LeftInvariantDerivation I G) :=
+  (continuousAdjointRepresentation (I := I) (G := G)).toRepresentation
 
-omit [T2Space G] in
 @[simp]
 theorem adjointRepresentation_apply (g : G) (D : LeftInvariantDerivation I G) :
     adjointRepresentation (I := I) g D = Ad (I := I) g D := by
-  rw [adjointRepresentation]
-  change (Ad (I := I) g).toLinearEquiv.toLinearMap D = Ad (I := I) g D
+  change LinearMap.toContinuousLinearMap
+    (Ad (I := I) g).toLinearEquiv.toLinearMap D = Ad (I := I) g D
   rfl
-
-/-- The adjoint representation valued in bounded operators. Finite-dimensionality makes every
-linear endomorphism of the Lie algebra continuous. -/
-def continuousAdjointRepresentation (g : G) :
-    LeftInvariantDerivation I G →L[ℝ] LeftInvariantDerivation I G := by
-  let _ : FiniteDimensional ℝ (LeftInvariantDerivation I G) :=
-    finiteDimensional_leftInvariantDerivation
-      (ContMDiffMul.isInteriorPoint (I := I) (n := ∞) (by simp) (1 : G))
-  exact LinearMap.toContinuousLinearMap (adjointRepresentation (I := I) g)
 
 @[simp]
 theorem continuousAdjointRepresentation_apply (g : G) (D : LeftInvariantDerivation I G) :
     continuousAdjointRepresentation (I := I) g D = Ad (I := I) g D := by
-  rw [continuousAdjointRepresentation]
   exact adjointRepresentation_apply g D
 
 /-- The group adjoint action on left-invariant derivations is jointly smooth. -/
@@ -93,6 +110,7 @@ theorem contMDiff_Ad_apply :
     ContMDiff (I.prod 𝓘(ℝ, LeftInvariantDerivation I G))
       𝓘(ℝ, LeftInvariantDerivation I G) ∞
       (fun p : G × LeftInvariantDerivation I G ↦ Ad (I := I) p.1 p.2) := by
+  let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
   let e := leftInvariantDerivationLinearIsometryEquivModelVectorSpace (I := I) (G := G)
   have hin : ContMDiff
       (I.prod 𝓘(ℝ, LeftInvariantDerivation I G)) (I.prod 𝓘(ℝ, E)) ∞
@@ -104,27 +122,7 @@ theorem contMDiff_Ad_apply :
   intro p
   simp only [Function.comp_apply]
   rw [Ad_apply]
-  have hsymm (v : GroupLieAlgebra I G) :
-      (leftInvariantDerivationLieEquivGroupLieAlgebra
-        (I := I) (G := G)
-        (ContMDiffMul.isInteriorPoint (I := I) (n := ∞) (by simp) (1 : G))).symm v =
-        tangentToLeftInvariantDerivation v := by
-    let eLie := leftInvariantDerivationLieEquivGroupLieAlgebra
-      (I := I) (G := G)
-      (ContMDiffMul.isInteriorPoint (I := I) (n := ∞) (by simp) (1 : G))
-    let e₀ := leftInvariantDerivationEquivGroupLieAlgebra
-      (I := I) (G := G)
-      (ContMDiffMul.isInteriorPoint (I := I) (n := ∞) (by simp) (1 : G))
-    apply eLie.injective
-    calc
-      eLie (eLie.symm v) = v := eLie.apply_symm_apply v
-      _ = eLie (tangentToLeftInvariantDerivation v) := by
-        rw [leftInvariantDerivationLieEquivGroupLieAlgebra_apply]
-        rw [← leftInvariantDerivationEquivGroupLieAlgebra_symm_apply
-          (I := I) (G := G)
-          (ContMDiffMul.isInteriorPoint (I := I) (n := ∞) (by simp) (1 : G)) v]
-        exact (e₀.apply_symm_apply v).symm
-  rw [hsymm]
+  rw [leftInvariantDerivationLieEquivGroupLieAlgebra_symm_apply]
   let v : E := show E from
     tangentAd (I := I) p.1 ((e p.2 : E) : GroupLieAlgebra I G)
   change tangentToLeftInvariantDerivation _ = e.symm v
@@ -140,9 +138,6 @@ theorem contMDiff_continuousAdjointRepresentation :
     ContMDiff I
       𝓘(ℝ, LeftInvariantDerivation I G →L[ℝ] LeftInvariantDerivation I G) ∞
       (continuousAdjointRepresentation (I := I) (G := G)) := by
-  let _ : FiniteDimensional ℝ (LeftInvariantDerivation I G) :=
-    finiteDimensional_leftInvariantDerivation
-      (ContMDiffMul.isInteriorPoint (I := I) (n := ∞) (by simp) (1 : G))
   let b := Module.Free.chooseBasis ℝ (LeftInvariantDerivation I G)
   let eLin :
       (LeftInvariantDerivation I G →L[ℝ] LeftInvariantDerivation I G) ≃ₗ[ℝ]
