@@ -70,6 +70,8 @@ namespace Diffeotopy
 
 variable (Phi : Diffeotopy J M)
 
+/-- A diffeotopy coerces to its time-dependent family `(t, x) ↦ Φₜ(x)`, obtained as the
+second component of its cylinder diffeomorphism. -/
 instance instFunLike : FunLike (Diffeotopy J M) (I × M) M where
   coe Phi p := (Phi.toDiffeomorph p).2
   coe_injective Phi Psi h := by
@@ -186,6 +188,21 @@ theorem refl_apply [IsManifold J ∞ M] (p : I × M) :
     rw [refl.eq_def]
     rfl
 
+/-- Every time slice of the constant diffeotopy is the identity diffeomorphism. -/
+@[simp]
+theorem slice_refl [IsManifold J ∞ M] (t : I) :
+    (refl (J := J) (M := M)).slice t = _root_.Diffeomorph.refl J M ∞ := by
+  apply _root_.Diffeomorph.ext
+  intro x
+  rw [slice_apply, apply_eq_snd_toDiffeomorph, refl_apply]
+  rfl
+
+/-- The final diffeomorphism of the constant diffeotopy is the identity. -/
+@[simp]
+theorem final_refl [IsManifold J ∞ M] :
+    (refl (J := J) (M := M)).final = _root_.Diffeomorph.refl J M ∞ :=
+  slice_refl 1
+
 /-- Pointwise composition of diffeotopies.  At time `t`, `Phi.trans Psi` first applies `Phi t`
 and then `Psi t`. -/
 def trans [IsManifold J ∞ M] (Psi : Diffeotopy J M) : Diffeotopy J M where
@@ -224,7 +241,7 @@ theorem final_trans [IsManifold J ∞ M] (Psi : Diffeotopy J M) :
   Phi.slice_trans Psi 1
 
 /-- Pointwise inverse of a diffeotopy. -/
-def symm [IsManifold J ∞ M] : Diffeotopy J M where
+def symm : Diffeotopy J M where
   toDiffeomorph := Phi.toDiffeomorph.symm
   fst_toDiffeomorph := Phi.fst_toDiffeomorph_symm
   snd_toDiffeomorph_zero x := by
@@ -233,10 +250,78 @@ def symm [IsManifold J ∞ M] : Diffeotopy J M where
     exact congrArg Prod.snd (hzero ▸ Phi.toDiffeomorph.symm_apply_apply (0, x))
 
 @[simp]
-theorem symm_apply [IsManifold J ∞ M] (p : I × M) :
+theorem symm_apply (p : I × M) :
     (Phi.symm.toDiffeomorph p).2 = (Phi.toDiffeomorph.symm p).2 :=
   by
     rw [symm.eq_def]
+
+/-- Composing a diffeotopy with the constant diffeotopy on the right changes nothing. -/
+@[simp]
+theorem trans_refl [IsManifold J ∞ M] : Phi.trans (refl (J := J) (M := M)) = Phi := by
+  apply ext
+  intro p
+  rw [apply_eq_snd_toDiffeomorph, trans_apply, apply_eq_snd_toDiffeomorph, refl_apply]
+
+/-- Composing the constant diffeotopy with a diffeotopy on the right changes nothing. -/
+@[simp]
+theorem refl_trans [IsManifold J ∞ M] : (refl (J := J) (M := M)).trans Phi = Phi := by
+  apply ext
+  intro p
+  simp only [apply_eq_snd_toDiffeomorph, trans_apply, refl_apply]
+
+/-- Pointwise composition of diffeotopies is associative. -/
+theorem trans_assoc [IsManifold J ∞ M] (Psi Xi : Diffeotopy J M) :
+    (Phi.trans Psi).trans Xi = Phi.trans (Psi.trans Xi) := by
+  apply ext
+  intro p
+  simp only [apply_eq_snd_toDiffeomorph, trans_apply]
+
+/-- A diffeotopy followed by its pointwise inverse is the constant diffeotopy. -/
+@[simp]
+theorem self_trans_symm [IsManifold J ∞ M] : Phi.trans Phi.symm = refl (J := J) (M := M) := by
+  apply ext
+  intro p
+  simp only [apply_eq_snd_toDiffeomorph, trans_apply, symm_apply, refl_apply]
+  change (Phi.toDiffeomorph.symm (p.1, Phi p)).2 = p.2
+  rw [← Phi.toDiffeomorph_apply, Phi.toDiffeomorph.symm_apply_apply]
+
+/-- A diffeotopy's pointwise inverse followed by the original is the constant diffeotopy. -/
+@[simp]
+theorem symm_trans_self [IsManifold J ∞ M] : Phi.symm.trans Phi = refl (J := J) (M := M) := by
+  apply ext
+  intro p
+  simp only [apply_eq_snd_toDiffeomorph, trans_apply, symm_apply, refl_apply]
+  have hpair : (p.1, (Phi.toDiffeomorph.symm p).2) = Phi.toDiffeomorph.symm p :=
+    Prod.ext (Phi.fst_toDiffeomorph_symm p).symm rfl
+  rw [hpair]
+  exact congrArg Prod.snd (Phi.toDiffeomorph.apply_symm_apply p)
+
+/-- The pointwise inverse of the constant diffeotopy is constant. -/
+@[simp]
+theorem symm_refl [IsManifold J ∞ M] :
+    (refl (J := J) (M := M)).symm = refl (J := J) (M := M) := by
+  apply ext
+  intro p
+  change p.2 = p.2
+  rfl
+
+/-- Taking pointwise inverses twice returns the original diffeotopy. -/
+@[simp]
+theorem symm_symm : Phi.symm.symm = Phi := by
+  apply ext
+  intro p
+  simp only [apply_eq_snd_toDiffeomorph, symm.eq_def]
+  rfl
+
+/-- The pointwise inverse of a composite reverses the order of composition. -/
+@[simp]
+theorem symm_trans' [IsManifold J ∞ M] (Psi : Diffeotopy J M) :
+    (Phi.trans Psi).symm = Psi.symm.trans Phi.symm := by
+  apply ext
+  intro p
+  change ((Phi.toDiffeomorph.trans Psi.toDiffeomorph).symm p).2 =
+    ((Psi.toDiffeomorph.symm.trans Phi.toDiffeomorph.symm) p).2
+  rw [_root_.Diffeomorph.symm_trans']
 
 /-- Taking a time slice commutes with pointwise inversion of a diffeotopy. -/
 @[simp]
@@ -251,10 +336,12 @@ theorem slice_symm [IsManifold J ∞ M] (t : I) :
 theorem final_symm [IsManifold J ∞ M] : Phi.symm.final = Phi.final.symm :=
   Phi.slice_symm 1
 
+/-- Forgetting the constant diffeotopy gives the constant ambient isotopy pointwise. -/
 theorem toAmbientIsotopy_refl_apply [IsManifold J ∞ M] (p : I × M) :
     (refl (J := J) (M := M)).toAmbientIsotopy.toContinuousMap p = p.2 :=
   refl_apply p
 
+/-- Forgetting pointwise composition of diffeotopies preserves composition pointwise. -/
 theorem toAmbientIsotopy_trans_apply [IsManifold J ∞ M] (Psi : Diffeotopy J M) (p : I × M) :
     (Phi.trans Psi).toAmbientIsotopy.toContinuousMap p =
       (Phi.toAmbientIsotopy.trans Psi.toAmbientIsotopy).toContinuousMap p := by
@@ -262,7 +349,8 @@ theorem toAmbientIsotopy_trans_apply [IsManifold J ∞ M] (Psi : Diffeotopy J M)
     AmbientIsotopy.trans_apply,
     toAmbientIsotopy_apply, toAmbientIsotopy_apply]
 
-theorem toAmbientIsotopy_symm_apply [IsManifold J ∞ M] (p : I × M) :
+/-- Forgetting pointwise inversion of a diffeotopy preserves inversion pointwise. -/
+theorem toAmbientIsotopy_symm_apply (p : I × M) :
     Phi.symm.toAmbientIsotopy.toContinuousMap p =
       Phi.toAmbientIsotopy.symm.toContinuousMap p := by
   rw [toAmbientIsotopy_apply, apply_eq_snd_toDiffeomorph, symm_apply,
@@ -274,6 +362,36 @@ theorem toAmbientIsotopy_symm_apply [IsManifold J ∞ M] (p : I × M) :
     exact (Phi.toDiffeomorph_apply q).symm
   rw [htotal]
   rfl
+
+private theorem ambientIsotopy_ext {F G : AmbientIsotopy M}
+    (h : F.toContinuousMap = G.toContinuousMap) : F = G := by
+  cases F
+  cases G
+  cases h
+  rfl
+
+/-- Forgetting the constant diffeotopy gives the constant ambient isotopy. -/
+@[simp]
+theorem toAmbientIsotopy_refl [IsManifold J ∞ M] :
+    (refl (J := J) (M := M)).toAmbientIsotopy = AmbientIsotopy.refl M := by
+  apply ambientIsotopy_ext
+  ext p
+  exact toAmbientIsotopy_refl_apply p
+
+/-- Forgetting pointwise composition of diffeotopies preserves composition. -/
+@[simp]
+theorem toAmbientIsotopy_trans [IsManifold J ∞ M] (Psi : Diffeotopy J M) :
+    (Phi.trans Psi).toAmbientIsotopy = Phi.toAmbientIsotopy.trans Psi.toAmbientIsotopy := by
+  apply ambientIsotopy_ext
+  ext p
+  exact Phi.toAmbientIsotopy_trans_apply Psi p
+
+/-- Forgetting pointwise inversion of a diffeotopy preserves inversion. -/
+@[simp]
+theorem toAmbientIsotopy_symm : Phi.symm.toAmbientIsotopy = Phi.toAmbientIsotopy.symm := by
+  apply ambientIsotopy_ext
+  ext p
+  exact Phi.toAmbientIsotopy_symm_apply p
 
 end Diffeotopy
 
