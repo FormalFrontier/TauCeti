@@ -120,7 +120,7 @@ private theorem exp_yosidaApproximation_eq {A : X →ₗ.[ℝ] X} (lambda t : �
     rw [yosidaApproximation, smul_sub]
     module
   rw [hsplit]
-  exact StronglyContinuousSemigroup.exp_add_of_commute
+  exact ContinuousLinearMap.exp_add_of_commute
     (Commute.one_left _ |>.smul_left _ |>.smul_right _)
 
 omit [CompleteSpace X] in
@@ -152,7 +152,7 @@ theorem norm_exp_yosidaApproximation_le_one {A : X →ₗ.[ℝ] X} (hA : IsMDiss
         ≤ Real.exp (-(t * lambda)) *
           Real.exp ‖(t * lambda ^ 2) • LinearPMap.resolvent A lambda‖ := by
       have hone : ‖(1 : X →L[ℝ] X)‖ ≤ 1 := ContinuousLinearMap.norm_id_le
-      have hexp := StronglyContinuousSemigroup.norm_exp_le_exp_norm
+      have hexp := ContinuousLinearMap.norm_exp_le_exp_norm
         ((t * lambda ^ 2) • LinearPMap.resolvent A lambda)
       calc
         Real.exp (-(t * lambda)) * ‖(1 : X →L[ℝ] X)‖ *
@@ -190,6 +190,7 @@ def yosidaSemigroup (A : X →ₗ.[ℝ] X) (hA : IsMDissipative A) (lambda : ℝ
 
 /-- The C₀-semigroup underlying the Yosida semigroup is the bounded-generator semigroup of the
 Yosida approximation. -/
+@[simp]
 theorem yosidaSemigroup_toStronglyContinuousSemigroup (A : X →ₗ.[ℝ] X) (hA : IsMDissipative A)
     (lambda : ℝ) (hlambda : 0 < lambda) :
     (yosidaSemigroup A hA lambda hlambda).toStronglyContinuousSemigroup =
