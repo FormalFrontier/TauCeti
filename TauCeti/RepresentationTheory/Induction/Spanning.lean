@@ -127,6 +127,7 @@ noncomputable def indSpan (𝒮 : Set (Subgroup G)) : Submodule k (ClassFunction
   Submodule.span k (indSet k G 𝒮)
 
 /-- Membership in the generating set for `TauCeti.ClassFunction.indSpan`. -/
+@[simp]
 theorem mem_indSet {𝒮 : Set (Subgroup G)} {f : ClassFunction k G} :
     f ∈ indSet k G 𝒮 ↔ ∃ S ∈ 𝒮, ∃ ψ : ClassFunction k S, ind S ψ = f :=
   Iff.rfl
@@ -253,6 +254,7 @@ noncomputable def indCharacterSpan (𝒮 : Set (Subgroup G)) : Submodule k (Clas
   Submodule.span k (indCharacterSet k G 𝒮)
 
 /-- Membership in the generating set for `TauCeti.ClassFunction.indCharacterSpan`. -/
+@[simp]
 theorem mem_indCharacterSet {𝒮 : Set (Subgroup G)} {f : ClassFunction k G} :
     f ∈ indCharacterSet k G 𝒮 ↔
       ∃ S ∈ 𝒮, ∃ (n : ℕ) (ρ : Representation k S (Fin n → k)),
