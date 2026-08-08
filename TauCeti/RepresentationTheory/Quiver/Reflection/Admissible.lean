@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.Order.Preorder.Finite
-public import TauCeti.RepresentationTheory.Quiver.Reflection.Acyclic
+public import TauCeti.RepresentationTheory.Quiver.Acyclic.Basic
 public import TauCeti.RepresentationTheory.Quiver.Reflection.Iterate
 
 /-!
@@ -30,7 +30,7 @@ for every finite acyclic quiver.
 * `TauCeti.Quiver.isSinkAdmissible_of_pairwise`: a repetition-free list along which no arrow runs
   forwards, whose entries carry no loop and emit no arrow off the list, is sink-admissible, with
   `TauCeti.Quiver.isSinkAdmissible_of_pairwise_of_forall_mem` the case of a list of all the
-  vertices, where the last two hypotheses are automatic.
+  vertices, where the last hypothesis — that no arrow leaves the list — is automatic.
 
 ## References
 
