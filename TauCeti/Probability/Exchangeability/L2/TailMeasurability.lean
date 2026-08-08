@@ -77,18 +77,21 @@ private theorem measurable_tailFamily_blockAverage {X : ℕ → Ω → α} {f : 
   exact (Finset.measurable_fun_sum Finset.univ fun j _ => hterm j).const_mul _
 
 /-- **The Cesàro limit lives on the tail.** For a measurable observable `f` whose composite with a
-single coordinate is square-integrable, the common `L¹` limit of the fixed-start Cesàro windows
-supplied by `weighted_sums_converge_L1_of_memLp` has a **`tailProcess X`-measurable**
-representative. -/
+single coordinate is square-integrable, the common `L¹` limit of the moving injective block
+averages supplied by `weighted_sums_converge_L1_of_memLp` has a **`tailProcess X`-measurable**
+representative.
+
+The limit is the same function for every selection, so the conclusion carries the general form
+through; fixed starts are only used *inside* the proof, where placing the limit on `tailFamily X r`
+needs a window that begins at `r`. -/
 theorem Contractable.exists_tailProcess_measurable_cesaro_limit_of_memLp {μ : Measure Ω}
     [IsFiniteMeasure μ] {X : ℕ → Ω → α} (hX : Contractable μ X)
     (hX_ae : ∀ i, AEMeasurable (X i) μ) {f : α → ℝ} (hf : Measurable f)
     (hf_L2 : MemLp (fun ω => f (X 0 ω)) 2 μ) :
     ∃ a : Ω → ℝ, Measurable[tailProcess X] a ∧ MemLp a 1 μ ∧
-      ∀ r : ℕ,
+      ∀ k : ∀ n : ℕ, Fin (n + 1) → ℕ, (∀ n, Function.Injective (k n)) →
         Tendsto
-          (fun m => ∫ ω, |blockAverage (fun i ω => f (X i ω))
-            (fun j : Fin (m + 1) => r + j) ω - a ω| ∂μ)
+          (fun m => ∫ ω, |blockAverage (fun i ω => f (X i ω)) (k m) ω - a ω| ∂μ)
           atTop (𝓝 0) := by
   obtain ⟨a₀, -, ha₀_L1, ha₀_lim'⟩ :=
     weighted_sums_converge_L1_of_memLp hX hX_ae hf hf_L2
@@ -124,8 +127,8 @@ theorem Contractable.exists_tailProcess_measurable_cesaro_limit_of_memLp {μ : M
   rw [← tailProcess_eq_iInf_tailFamily] at hiInf
   refine ⟨hiInf.mk a₀, hiInf.stronglyMeasurable_mk.measurable, ?_, ?_⟩
   · exact ha₀_L1.ae_eq hiInf.ae_eq_mk
-  · intro r
-    refine (ha₀_lim r).congr fun m => integral_congr_ae ?_
+  · intro k hk
+    refine (ha₀_lim' k hk).congr fun m => integral_congr_ae ?_
     filter_upwards [hiInf.ae_eq_mk] with ω hω
     rw [hω]
 
@@ -136,10 +139,9 @@ theorem Contractable.exists_tailProcess_measurable_cesaro_limit {μ : Measure Ω
     {X : ℕ → Ω → α} (hX : Contractable μ X) (hX_ae : ∀ i, AEMeasurable (X i) μ)
     {f : α → ℝ} (hf : Measurable f) (hf_bdd : ∃ C, ∀ x, ‖f x‖ ≤ C) :
     ∃ a : Ω → ℝ, Measurable[tailProcess X] a ∧ MemLp a 1 μ ∧
-      ∀ r : ℕ,
+      ∀ k : ∀ n : ℕ, Fin (n + 1) → ℕ, (∀ n, Function.Injective (k n)) →
         Tendsto
-          (fun m => ∫ ω, |blockAverage (fun i ω => f (X i ω))
-            (fun j : Fin (m + 1) => r + j) ω - a ω| ∂μ)
+          (fun m => ∫ ω, |blockAverage (fun i ω => f (X i ω)) (k m) ω - a ω| ∂μ)
           atTop (𝓝 0) :=
   let ⟨C, hC⟩ := hf_bdd
   hX.exists_tailProcess_measurable_cesaro_limit_of_memLp hX_ae hf

@@ -206,51 +206,6 @@ private theorem cauchySeq_blockAverage_prefix_toLp {μ : Measure Ω} [IsFiniteMe
   simp only [Nat.cast_succ] at hdist
   linarith
 
-/-- Every fixed-start window approaches the prefix of the same length in `L²`. -/
-private theorem tendsto_dist_blockAverage_window_prefix_toLp {μ : Measure Ω}
-    [IsFiniteMeasure μ] {Y : ℕ → Ω → ℝ} (hY : Contractable μ Y)
-    (hY_L2 : ∀ i, MemLp (Y i) 2 μ) (r : ℕ) :
-    Tendsto (fun m : ℕ =>
-        dist ((memLp_blockAverage (fun j : Fin (m + 1) => r + j) fun j => hY_L2 (r + j)).toLp
-            (blockAverage Y fun j : Fin (m + 1) => r + j))
-          ((memLp_blockAverage (fun i : Fin (m + 1) => (i : ℕ)) fun i => hY_L2 i).toLp
-            (blockAverage Y fun i : Fin (m + 1) => (i : ℕ))))
-      atTop (𝓝 0) := by
-  -- Compare window and prefix through a block lying beyond them both.
-  have hD := zero_le_variance_sub_covariance_of_contractable hY hY_L2
-  have hsqrt :
-      Tendsto (fun m : ℕ =>
-          2 * Real.sqrt (2 * (Var[Y 0; μ] - cov[Y 0, Y 1; μ]) / ((m : ℝ) + 1))) atTop (𝓝 0) := by
-    have hquot : Tendsto (fun n : ℕ => 2 * (Var[Y 0; μ] - cov[Y 0, Y 1; μ]) / ((n : ℝ) + 1))
-        atTop (𝓝 0) := by
-      simpa [Function.comp_def] using (tendsto_const_div_atTop_nhds_zero_nat
-        (2 * (Var[Y 0; μ] - cov[Y 0, Y 1; μ]))).comp (Filter.tendsto_add_atTop_nat 1)
-    simpa using
-      (Real.continuous_sqrt.continuousAt.tendsto.comp hquot).const_mul 2
-  refine squeeze_zero' (Eventually.of_forall fun m => dist_nonneg) ?_ hsqrt
-  filter_upwards with m
-  let l := r + m + 1
-  let k : Fin (m + 1) → ℕ := fun i => l + i
-  have hk : Function.Injective k := by
-    intro i j hij
-    exact Fin.ext (Nat.add_left_cancel hij)
-  have hprefix_disjoint : ∀ i : Fin (m + 1), ∀ j : Fin (m + 1), (i : ℕ) ≠ k j := by
-    intro i j
-    dsimp only [k, l]
-    omega
-  have hwindow_disjoint : ∀ i : Fin (m + 1), ∀ j : Fin (m + 1), r + (i : ℕ) ≠ k j := by
-    intro i j
-    dsimp only [k, l]
-    omega
-  have hdist :=
-    dist_blockAverages_toLp_le_via_disjoint hY hY_L2 hD
-      (Nat.succ_pos m) (Nat.succ_pos m) (Nat.succ_pos m)
-      (fun _ _ hij => Fin.ext (Nat.add_left_cancel hij)) Fin.val_injective hk
-      hwindow_disjoint hprefix_disjoint le_rfl le_rfl
-  simp only [Nat.cast_succ] at hdist
-  linarith
-
-
 /-- **Compare a moving injective selection with the prefix in `L²`.** The selection `k n` may move
 with the length `n + 1`; only injectivity at each length is needed.
 
@@ -306,7 +261,8 @@ private theorem tendsto_dist_blockAverage_moving_prefix_toLp {μ : Measure Ω}
   linarith
 
 /-- A measurable observable of a contractable process whose composite with a *single* coordinate is
-square-integrable has fixed-start Cesàro averages converging in `L¹` to one common measurable limit.
+square-integrable has moving injective block averages converging in `L¹` to one common measurable
+limit.
 
 The selection `k m` may **move** with the length `m + 1`: only injectivity at each length is
 required, since the underlying `L²` comparison is bounded in terms of the block lengths and not
@@ -372,9 +328,9 @@ theorem injective_fixedStart (r : ℕ) (n : ℕ) :
     Function.Injective (fun j : Fin (n + 1) => r + (j : ℕ)) :=
   fun _ _ hij => Fin.ext (Nat.add_left_cancel hij)
 
-/-- **Bounded-observable form**, the shape the Layer 3 roadmap names and the determining-class stage
-consumes. A uniform bound on `f` gives square-integrability of the composite on a finite measure
-space, so this is the direct entry point for bounded observables. -/
+/-- **Bounded-observable form**, the shape the Layer 3 roadmap names. A uniform bound on `f` gives
+square-integrability of the composite on a finite measure space, so this is the direct entry point
+for bounded observables. -/
 theorem weighted_sums_converge_L1 {μ : Measure Ω} [IsFiniteMeasure μ]
     {X : ℕ → Ω → α} (hX : Contractable μ X) (hX_ae : ∀ i, AEMeasurable (X i) μ)
     {f : α → ℝ} (hf : Measurable f) (hf_bdd : ∃ C, ∀ x, ‖f x‖ ≤ C) :
