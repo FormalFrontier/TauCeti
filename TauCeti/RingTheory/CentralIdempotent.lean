@@ -67,7 +67,9 @@ variable {R S : Type*} [Ring R] [Ring S]
 def centralIdempotents (R : Type*) [Ring R] : Set R :=
   {e | IsIdempotentElem e ∧ e ∈ Subring.center R}
 
-@[simp]
+-- Not `@[simp]`: unfolding membership everywhere would rewrite the left-hand side of
+-- `mem_centralIdempotents_pi` below, so only one of the two can be a simp lemma, and the
+-- coordinatewise form is the useful normal form.
 theorem mem_centralIdempotents {e : R} :
     e ∈ centralIdempotents R ↔ IsIdempotentElem e ∧ e ∈ Subring.center R := (Iff.rfl)
 
@@ -91,10 +93,8 @@ section Congr
 
 /-- A ring isomorphism preserves central idempotents. -/
 theorem map_mem_centralIdempotents (f : R ≃+* S) {e : R} (he : e ∈ centralIdempotents R) :
-    f e ∈ centralIdempotents S := by
-  refine ⟨he.1.map f, Subring.mem_center_iff.mpr fun y => ?_⟩
-  obtain ⟨x, rfl⟩ := f.surjective y
-  rw [← map_mul, ← map_mul, mul_comm_of_mem_centralIdempotents he]
+    f e ∈ centralIdempotents S :=
+  ⟨he.1.map f, MulEquivClass.apply_mem_center f he.2⟩
 
 /-- **A ring isomorphism restricts to a bijection of central idempotents.** -/
 def centralIdempotentsCongr (f : R ≃+* S) : centralIdempotents R ≃ centralIdempotents S where
@@ -124,17 +124,14 @@ variable {ι : Type*} (A : ι → Type*) [∀ i, Ring (A i)]
 
 /-- Both halves of being a central idempotent are coordinatewise conditions on a product of
 rings. -/
+@[simp]
 theorem mem_centralIdempotents_pi {e : ∀ i, A i} :
     e ∈ centralIdempotents (∀ i, A i) ↔ ∀ i, e i ∈ centralIdempotents (A i) := by
-  classical
-  constructor
-  · refine fun he i => ⟨congrFun he.1 i, Subring.mem_center_iff.mpr fun a => ?_⟩
-    -- Test centrality of `e` against the family supported at `i` with value `a`.
-    have := congrFun (Subring.mem_center_iff.mp he.2 (Pi.single i a)) i
-    simpa using this
-  · exact fun he =>
-      ⟨funext fun i => (he i).1, Subring.mem_center_iff.mpr fun x =>
-        funext fun i => Subring.mem_center_iff.mp (he i).2 (x i)⟩
+  have hcenter : e ∈ Subring.center (∀ i, A i) ↔ ∀ i, e i ∈ Subring.center (A i) := by
+    rw [← SetLike.mem_coe, Subring.coe_center, Set.center_pi, Set.mem_univ_pi]
+    exact forall_congr' fun _ => Iff.rfl
+  simp only [mem_centralIdempotents, hcenter, IsIdempotentElem, funext_iff, Pi.mul_apply,
+    ← forall_and]
 
 /-- **The central idempotents of a product of rings are the families of central idempotents.** -/
 def centralIdempotentsPiEquiv :
