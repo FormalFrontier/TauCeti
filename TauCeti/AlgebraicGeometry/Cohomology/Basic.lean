@@ -62,9 +62,7 @@ abbrev cohomologyFunctor (X : Scheme.{u}) (i : ℕ) : X.Modules ⥤ AddCommGrpCa
   _root_.SheafOfModules.toSheaf X.ringCatSheaf ⋙
     CategoryTheory.Sheaf.functorH.{u} _ i
 
-/-- Degreewise cohomology is additive. This is Mathlib's instance for a composite of additive
-functors; it has to be restated because inference does not see through the `X.Modules` type
-synonym. -/
+/-- Degreewise scheme-module cohomology preserves addition and zero morphisms. -/
 instance (X : Scheme.{u}) (i : ℕ) : (cohomologyFunctor X i).Additive :=
   inferInstanceAs ((_root_.SheafOfModules.toSheaf X.ringCatSheaf ⋙
     CategoryTheory.Sheaf.functorH.{u} _ i).Additive)
