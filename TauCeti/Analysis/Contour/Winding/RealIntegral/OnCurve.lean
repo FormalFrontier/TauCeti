@@ -58,8 +58,8 @@ per-crossing windows along the sorted crossing list.
 * `TauCeti.Contour.windingNumber_eq_real_integral_of_closed_interior_crossings` — the real
   bounded-integrand formula for a closed immersion that avoids `s` at its basepoint (so every
   crossing of `s`, if any, is automatically interior).
-* `TauCeti.Contour.bounded_integrable_eq_real_integral_of_closed_interior_crossings` — the same
-  formula bundled with the boundedness and interval-integrability facts it is built from, for
+* `isBounded_intervalIntegrable_windingNumber_eq_real_integral_of_closed_interior_crossings` — the
+  same formula bundled with the boundedness and interval-integrability facts it is built from, for
   callers that need those facts rather than just the equality.
 
 ## Provenance
@@ -359,11 +359,10 @@ projection of this theorem), and for the full documentation of the hypotheses.
 Unlike the off-curve case, the real winding integrand `h t := realWindingIntegrand (γ t - s)
 (deriv γ t)`'s boundedness and interval-integrability are not assumed here: both are derived from
 the crossing regularity, via
-`exists_isBounded_image_realWindingIntegrand_of_lipschitzOnWith_derivWithin_right`/`_left`'s
-boundedness at each `C^{1,1}` crossing, its continuity off the crossing itself giving the
-measurability half, and the ordinary avoidance argument between crossings — the actual content of
-HW Prop 2.3. -/
-theorem bounded_integrable_eq_real_integral_of_closed_interior_crossings
+`exists_isBounded_image_realWindingIntegrand_of_lipschitzOnWith_derivWithin_corner`'s boundedness
+at each `C^{1,1}` crossing, its continuity off the crossing itself giving the measurability half,
+and the ordinary avoidance argument between crossings — the actual content of HW Prop 2.3. -/
+theorem isBounded_intervalIntegrable_windingNumber_eq_real_integral_of_closed_interior_crossings
     {γ : ℝ → ℂ} {a b : ℝ}
     {s : ℂ} (h_imm : IsPwC1ImmersionOn γ a b) (hab : a ≤ b) (hclosed : γ a = γ b) (hsa : γ a ≠ s)
     (hγ_lip : ∀ t ∈ Icc a b, γ t = s → ∃ εR > 0, ∃ KR : ℝ≥0,
@@ -420,40 +419,27 @@ theorem bounded_integrable_eq_real_integral_of_closed_interior_crossings
     rw [min_eq_left hab.le, max_eq_right hab.le]; exact ⟨(h_Ioo t ht).1.le, (h_Ioo t ht).2⟩
   have h_Ioc : ∀ t ∈ T, t ∈ Ioc (min a b) (max a b) := fun t ht => by
     rw [min_eq_left hab.le, max_eq_right hab.le]; exact ⟨(h_Ioo t ht).1, (h_Ioo t ht).2.le⟩
-  choose! ρ_lipR hρ_lipR_pos hρ_lipR_lt hbddR using fun t₀ (ht₀ : t₀ ∈ T) =>
-    exists_isBounded_image_realWindingIntegrand_of_lipschitzOnWith_derivWithin_right
-      -- `show` pins the target type so `linarith` knows which strict inequality to prove,
-      -- rather than needing it inferred from `_right`'s expected first argument.
+  -- `_corner` gives one bounded symmetric window per crossing directly, so the one-sided
+  -- `_right`/`_left` windows never need computing and re-combining by hand.
+  choose! ρ_lip hρ_lip_pos hρ_lip_lt hρ_lip_bdd using fun t₀ (ht₀ : t₀ ∈ T) =>
+    exists_isBounded_image_realWindingIntegrand_of_lipschitzOnWith_derivWithin_corner
+      (show t₀ - εL t₀ < t₀ by linarith [hεL_pos t₀ ht₀])
       (show t₀ < t₀ + εR t₀ by linarith [hεR_pos t₀ ht₀])
-      (hdiffR t₀ ht₀) (hlipR t₀ ht₀) (hT_mem.mp ht₀).2
+      (hdiffR t₀ ht₀) (hlipR t₀ ht₀) (hdiffL t₀ ht₀) (hlipL t₀ ht₀) (hT_mem.mp ht₀).2
       (derivWithin_ne_zero_of_isPwC1ImmersionOn_right h_imm (h_Ico t₀ ht₀) (hdiffR t₀ ht₀)
         (by linarith [hεR_pos t₀ ht₀]))
-  choose! ρ_lipL hρ_lipL_pos hρ_lipL_lt hbddL using fun t₀ (ht₀ : t₀ ∈ T) =>
-    exists_isBounded_image_realWindingIntegrand_of_lipschitzOnWith_derivWithin_left
-      -- Same reason as the `_right` call above, mirrored to the left side.
-      (show t₀ - εL t₀ < t₀ by linarith [hεL_pos t₀ ht₀])
-      (hdiffL t₀ ht₀) (hlipL t₀ ht₀) (hT_mem.mp ht₀).2
       (derivWithin_ne_zero_of_isPwC1ImmersionOn_left h_imm (h_Ioc t₀ ht₀) (hdiffL t₀ ht₀)
         (by linarith [hεL_pos t₀ ht₀]))
-  -- Combine the two one-sided windows into one symmetric bounded window per crossing.
-  set ρ_lip : ℝ → ℝ := fun t => min (ρ_lipR t) (ρ_lipL t) with hρ_lip_def
-  have hρ_lip_pos : ∀ t ∈ T, 0 < ρ_lip t := fun t ht => lt_min (hρ_lipR_pos t ht) (hρ_lipL_pos t ht)
-  have hρ_lip_bdd : ∀ t₀ ∈ T, Bornology.IsBounded
-      ((fun t => realWindingIntegrand (γ t - s) (deriv γ t)) ''
-        Icc (t₀ - ρ_lip t₀) (t₀ + ρ_lip t₀)) := fun t₀ ht₀ => by
-    have hRsub : Icc t₀ (t₀ + ρ_lip t₀) ⊆ Icc t₀ (t₀ + ρ_lipR t₀) :=
-      Icc_subset_Icc le_rfl (by linarith [min_le_left (ρ_lipR t₀) (ρ_lipL t₀)])
-    have hLsub : Icc (t₀ - ρ_lip t₀) t₀ ⊆ Icc (t₀ - ρ_lipL t₀) t₀ :=
-      Icc_subset_Icc (by linarith [min_le_right (ρ_lipR t₀) (ρ_lipL t₀)]) le_rfl
-    -- Split the symmetric window at `t₀` so the left/right one-sided boundedness facts
-    -- `hbddL`/`hbddR` combine via `Set.image_union` into one on the whole window.
-    have hsplit : Icc (t₀ - ρ_lip t₀) (t₀ + ρ_lip t₀)
-        = Icc (t₀ - ρ_lip t₀) t₀ ∪ Icc t₀ (t₀ + ρ_lip t₀) :=
-      (Set.Icc_union_Icc_eq_Icc (by linarith [hρ_lip_pos t₀ ht₀])
-        (by linarith [hρ_lip_pos t₀ ht₀])).symm
-    rw [hsplit, Set.image_union]
-    exact ((hbddL t₀ ht₀).subset (Set.image_mono hLsub)).union
-      ((hbddR t₀ ht₀).subset (Set.image_mono hRsub))
+  -- The one-sided windows the window-integrability lemma needs are just the two halves of the
+  -- symmetric window `_corner` already bounded.
+  have hbddR : ∀ t₀ ∈ T, Bornology.IsBounded
+      ((fun t => realWindingIntegrand (γ t - s) (deriv γ t)) '' Icc t₀ (t₀ + ρ_lip t₀)) :=
+    fun t₀ ht₀ => (hρ_lip_bdd t₀ ht₀).subset (Set.image_mono
+      (Icc_subset_Icc (by linarith [hρ_lip_pos t₀ ht₀]) le_rfl))
+  have hbddL : ∀ t₀ ∈ T, Bornology.IsBounded
+      ((fun t => realWindingIntegrand (γ t - s) (deriv γ t)) '' Icc (t₀ - ρ_lip t₀) t₀) :=
+    fun t₀ ht₀ => (hρ_lip_bdd t₀ ht₀).subset (Set.image_mono
+      (Icc_subset_Icc le_rfl (by linarith [hρ_lip_pos t₀ ht₀])))
   -- Shrink the common window radius to also stay inside every crossing's bounded window.
   set R' : ℝ → ℝ := fun t => min (R t) (ρ_lip t) with hR'_def
   have hR'_pos : ∀ t ∈ T, 0 < R' t := fun t ht => lt_min (hR_pos t ht) (hρ_lip_pos t ht)
@@ -479,10 +465,12 @@ theorem bounded_integrable_eq_real_integral_of_closed_interior_crossings
         ((Finset.mem_sort _).mp ht') hne).le)
       (fun t ht => by
         have ht' := (Finset.mem_sort _).mp ht
-        have hL : ρ_lipL t ≤ εL t := by linarith [hρ_lipL_lt t ht']
-        have hR : ρ_lipR t ≤ εR t := by linarith [hρ_lipR_lt t ht']
-        have hρ_le_ρlipL : ρ ≤ ρ_lipL t := (hρ_le_ρlip t ht').trans (min_le_right _ _)
-        have hρ_le_ρlipR : ρ ≤ ρ_lipR t := (hρ_le_ρlip t ht').trans (min_le_left _ _)
+        have hlt := hρ_lip_lt t ht'
+        have hL : ρ_lip t ≤ εL t := by
+          linarith [min_le_right (t + εR t - t) (t - (t - εL t))]
+        have hR : ρ_lip t ≤ εR t := by
+          linarith [min_le_left (t + εR t - t) (t - (t - εL t))]
+        have hρ_le_ρlip' : ρ ≤ ρ_lip t := hρ_le_ρlip t ht'
         exact (intervalIntegrable_realWindingIntegrand_window (by linarith [hρ_pos])
             (Icc_subset_Icc (by linarith) le_rfl) (Icc_subset_Icc (by linarith) le_rfl)
             (hdiffL t ht') (hlipL t ht') (hbddL t ht')).trans
@@ -608,7 +596,7 @@ theorem windingNumber_eq_real_integral_of_closed_interior_crossings
     windingNumber γ a b s
       = ((1 / (2 * Real.pi)
           * ∫ t in a..b, realWindingIntegrand (γ t - s) (deriv γ t) : ℝ) : ℂ) :=
-  (bounded_integrable_eq_real_integral_of_closed_interior_crossings
+  (isBounded_intervalIntegrable_windingNumber_eq_real_integral_of_closed_interior_crossings
     h_imm hab hclosed hsa hγ_lip).2.2
 
 end TauCeti.Contour
