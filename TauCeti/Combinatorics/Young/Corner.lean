@@ -154,6 +154,7 @@ theorem mem_of_mem_erase (h : d ∈ erase μ c) : d ∈ μ :=
 theorem erase_le (μ : YoungDiagram) (c : ℕ × ℕ) : erase μ c ≤ μ :=
   Finset.filter_subset _ _
 
+@[simp]
 theorem erase_eq_self_of_notMem (h : c ∉ μ) : erase μ c = μ := by
   ext d
   refine ⟨fun hd => mem_of_mem_erase hd, fun hd => mem_erase.mpr ⟨hd, fun hcd => h ?_⟩⟩
@@ -165,6 +166,7 @@ theorem mem_erase_iff (h : IsCorner μ c) : d ∈ erase μ c ↔ d ∈ μ ∧ d 
   rw [YoungDiagram.mem_erase]
   exact and_congr_right fun hd => not_congr (h.le_iff hd)
 
+@[simp]
 theorem cells_erase (h : IsCorner μ c) : (erase μ c).cells = μ.cells.erase c := by
   ext d
   simp only [Finset.mem_erase, _root_.YoungDiagram.mem_cells, h.mem_erase_iff]
@@ -174,6 +176,7 @@ theorem notMem_erase (h : IsCorner μ c) : c ∉ erase μ c := fun hc =>
   (h.mem_erase_iff.mp hc).2 rfl
 
 /-- Erasing a corner drops the number of cells by exactly one. -/
+@[simp]
 theorem card_erase (h : IsCorner μ c) : (erase μ c).card + 1 = μ.card := by
   rw [YoungDiagram.card, h.cells_erase, Finset.card_erase_of_mem h.mem]
   exact Nat.succ_pred_eq_of_pos (Finset.card_pos.mpr ⟨c, h.mem⟩)
