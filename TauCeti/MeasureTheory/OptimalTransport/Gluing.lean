@@ -155,6 +155,7 @@ theorem fst_snd_glue [SFinite π] [IsMarkovKernel κ] : (glue π κ).snd.fst = �
 
 /-- Gluing against a deterministic kernel is a pushforward: the third coordinate is the image of
 the second. This is the graph-plan case, in which the glued measure carries no new randomness. -/
+@[simp]
 theorem glue_deterministic [SFinite π] {T : Y → Z} (hT : Measurable T) :
     glue π (Kernel.deterministic T hT) = π.map fun w ↦ (w.1, w.2, T w.2) := by
   have h : Kernel.prodMkLeft X (Kernel.deterministic T hT)
@@ -180,21 +181,45 @@ Two plans sharing a middle marginal, `π.snd = σ.fst`, admit a joint law on `X 
 `σ` as its two consecutive two-coordinate marginals. Only the last space is assumed standard Borel;
 the middle space `Y` carries no hypothesis.
 
-The explicit witness is `glue π σ.condKernel`; use it instead of this statement when the
-probability-measure or finiteness instances of the glued measure are needed. -/
-theorem exists_glue_of_standardBorel_right [StandardBorelSpace Z] [Nonempty Z] [SFinite π]
-    [IsFiniteMeasure σ] (hπσ : π.snd = σ.fst) :
-    ∃ γ : Measure (X × Y × Z), γ.map (Prod.map id Prod.fst) = π ∧ γ.snd = σ :=
-  ⟨glue π σ.condKernel, map_prodMap_id_fst_glue π _, snd_glue_condKernel π σ hπσ⟩
+When `Z` is nonempty, the explicit witness is `glue π σ.condKernel`; use it instead of this
+statement when the probability-measure or finiteness instances of the glued measure are needed. -/
+theorem exists_glue_of_standardBorel_right [StandardBorelSpace Z] [IsFiniteMeasure σ]
+    (hπσ : π.snd = σ.fst) :
+    ∃ γ : Measure (X × Y × Z), γ.map (Prod.map id Prod.fst) = π ∧ γ.snd = σ := by
+  let _ : IsFiniteMeasure π := ⟨by
+    rw [← MeasureTheory.Measure.snd_univ, hπσ]
+    exact measure_lt_top _ _⟩
+  rcases isEmpty_or_nonempty Z with hZ | hZ
+  · let _ := hZ
+    have hσ : σ = 0 := MeasureTheory.Measure.eq_zero_of_isEmpty σ
+    have hπ : π = 0 := by
+      rw [← MeasureTheory.Measure.measure_univ_eq_zero, ← MeasureTheory.Measure.snd_univ,
+        hπσ, hσ]
+      simp
+    exact ⟨0, by simp [hπ], by simp [hσ]⟩
+  · let _ := hZ
+    exact ⟨glue π σ.condKernel, map_prodMap_id_fst_glue π _, snd_glue_condKernel π σ hπσ⟩
 
 /-- **The gluing lemma**, obtained by disintegrating the first plan over the middle space.
 
 This is the mirror image of `TauCeti.Measure.exists_glue_of_standardBorel_right`: it assumes the
 *first* space standard Borel instead of the last one. Neither version implies the other, and the
 middle space `Y` again carries no hypothesis. -/
-theorem exists_glue_of_standardBorel_left [StandardBorelSpace X] [Nonempty X] [IsFiniteMeasure π]
-    [SFinite σ] (hπσ : π.snd = σ.fst) :
+theorem exists_glue_of_standardBorel_left [StandardBorelSpace X] [IsFiniteMeasure π]
+    (hπσ : π.snd = σ.fst) :
     ∃ γ : Measure (X × Y × Z), γ.map (Prod.map id Prod.fst) = π ∧ γ.snd = σ := by
+  let _ : IsFiniteMeasure σ := ⟨by
+    rw [← MeasureTheory.Measure.fst_univ, ← hπσ]
+    exact measure_lt_top _ _⟩
+  rcases isEmpty_or_nonempty X with hX | hX
+  · let _ := hX
+    have hπ : π = 0 := MeasureTheory.Measure.eq_zero_of_isEmpty π
+    have hσ : σ = 0 := by
+      rw [← MeasureTheory.Measure.measure_univ_eq_zero, ← MeasureTheory.Measure.fst_univ,
+        ← hπσ, hπ]
+      simp
+    exact ⟨0, by simp [hπ], by simp [hσ]⟩
+  let _ := hX
   -- Glue the swapped second plan `σ.map Prod.swap : Measure (Z × Y)` against a conditional kernel
   -- of the swapped first plan `π.map Prod.swap : Measure (Y × X)`, whose disintegration is the one
   -- `X` standard Borel provides, then permute the three coordinates back.
@@ -293,15 +318,15 @@ theorem exists_comp_lintegral_le_of_exists_glue
 
 /-- Two plans sharing a middle marginal compose to a plan with the two outer marginals, when the
 last space is standard Borel. -/
-theorem exists_comp_of_standardBorel_right [StandardBorelSpace Z] [Nonempty Z] [SFinite π]
-    [IsFiniteMeasure σ] (hπσ : π.snd = σ.fst) :
+theorem exists_comp_of_standardBorel_right [StandardBorelSpace Z] [IsFiniteMeasure σ]
+    (hπσ : π.snd = σ.fst) :
     ∃ ζ : Measure (X × Z), ζ.fst = π.fst ∧ ζ.snd = σ.snd :=
   exists_comp_of_exists_glue (exists_glue_of_standardBorel_right π σ hπσ)
 
 /-- Two plans sharing a middle marginal compose to a plan with the two outer marginals, when the
 first space is standard Borel. -/
-theorem exists_comp_of_standardBorel_left [StandardBorelSpace X] [Nonempty X] [IsFiniteMeasure π]
-    [SFinite σ] (hπσ : π.snd = σ.fst) :
+theorem exists_comp_of_standardBorel_left [StandardBorelSpace X] [IsFiniteMeasure π]
+    (hπσ : π.snd = σ.fst) :
     ∃ ζ : Measure (X × Z), ζ.fst = π.fst ∧ ζ.snd = σ.snd :=
   exists_comp_of_exists_glue (exists_glue_of_standardBorel_left π σ hπσ)
 
