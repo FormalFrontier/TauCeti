@@ -83,7 +83,6 @@ theorem newtonianKernel_map_linearIsometryEquiv (n : ℕ)
   simp [newtonianKernel]
 
 /-- The Newtonian kernel is symmetric under exchanging a point and its pole. -/
-@[simp]
 theorem newtonianKernel_sub_comm (n : ℕ) (x a : EuclideanSpace ℝ (Fin n)) :
     newtonianKernel n (x - a) = newtonianKernel n (a - x) := by
   simp [newtonianKernel, norm_sub_rev]
