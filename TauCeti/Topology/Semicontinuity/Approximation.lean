@@ -182,7 +182,6 @@ noncomputable def lscApprox (f : Ω → ℝ≥0∞) (n : ℕ) : Ω →ᵇ ℝ≥
         lscApproxAux_le_natCast f n y]
 
 /-- The value of the bundled approximation, as a nonnegative real. -/
-@[simp]
 theorem lscApprox_apply (f : Ω → ℝ≥0∞) (n : ℕ) (x : Ω) :
     lscApprox f n x = (lscApproxAux f n x).toNNReal :=
   (rfl)
