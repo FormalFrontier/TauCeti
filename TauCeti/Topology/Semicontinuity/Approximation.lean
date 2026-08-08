@@ -170,7 +170,7 @@ theorem iSup_ofReal_lscApproxAux (hf : LowerSemicontinuous f) (x : Ω) :
 
 /-- The truncated inf-convolution of `f : Ω → ℝ≥0∞`, bundled as a bounded continuous
 `ℝ≥0`-valued function. -/
-@[expose] noncomputable def lscApprox (f : Ω → ℝ≥0∞) (n : ℕ) : Ω →ᵇ ℝ≥0 where
+noncomputable def lscApprox (f : Ω → ℝ≥0∞) (n : ℕ) : Ω →ᵇ ℝ≥0 where
   toFun x := (lscApproxAux f n x).toNNReal
   continuous_toFun := continuous_real_toNNReal.comp (continuous_lscApproxAux f n)
   map_bounded' := by
@@ -185,12 +185,13 @@ theorem iSup_ofReal_lscApproxAux (hf : LowerSemicontinuous f) (x : Ω) :
 @[simp]
 theorem lscApprox_apply (f : Ω → ℝ≥0∞) (n : ℕ) (x : Ω) :
     lscApprox f n x = (lscApproxAux f n x).toNNReal :=
-  rfl
+  (rfl)
 
 /-- The value of the bundled approximation, as an element of `ℝ≥0∞`. -/
+@[simp]
 theorem coe_lscApprox_apply (f : Ω → ℝ≥0∞) (n : ℕ) (x : Ω) :
     (lscApprox f n x : ℝ≥0∞) = ENNReal.ofReal (lscApproxAux f n x) :=
-  rfl
+  (rfl)
 
 /-- The bundled approximations increase pointwise with `n`. -/
 theorem monotone_coe_lscApprox (f : Ω → ℝ≥0∞) :

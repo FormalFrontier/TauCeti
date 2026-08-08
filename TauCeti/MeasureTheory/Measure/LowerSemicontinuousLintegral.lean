@@ -79,10 +79,11 @@ theorem lowerSemicontinuous_lintegral_finiteMeasure (hf : LowerSemicontinuous f)
 probability measure, for the topology of weak convergence. -/
 theorem lowerSemicontinuous_lintegral_probabilityMeasure (hf : LowerSemicontinuous f) :
     LowerSemicontinuous fun μ : ProbabilityMeasure Ω ↦ ∫⁻ x, f x ∂(μ : Measure Ω) := by
-  intro μ a ha
-  have h := lowerSemicontinuous_lintegral_finiteMeasure hf μ.toFiniteMeasure a (by simpa using ha)
-  filter_upwards [ProbabilityMeasure.toFiniteMeasure_continuous.continuousAt.eventually h]
-    with ν hν using by simpa using hν
+  change LowerSemicontinuous
+    ((fun μ : FiniteMeasure Ω ↦ ∫⁻ x, f x ∂(μ : Measure Ω)) ∘
+      ProbabilityMeasure.toFiniteMeasure)
+  exact (lowerSemicontinuous_lintegral_finiteMeasure hf).comp
+    ProbabilityMeasure.toFiniteMeasure_continuous
 
 /-- The `liminf` form of lower semicontinuity: along a weakly convergent family of probability
 measures, the integral of a lower semicontinuous integrand can only drop in the limit. -/
