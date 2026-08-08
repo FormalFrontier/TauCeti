@@ -445,37 +445,51 @@ protected lemma sum {ι : Type*} {s : Finset ι} {F : ι → ℝ → ℝ}
 
 end IsCompletelyMonotoneOnIci
 
+/-- The `max`-truncation of a function antitone on `[0, ∞)` is antitone everywhere: the
+shared totalization step of the half-line limit lemmas below. -/
+private lemma antitone_comp_max {f : ℝ → ℝ} (hf : AntitoneOn f (Ici 0)) :
+    Antitone fun t : ℝ => f (max t 0) := fun _ _ hab =>
+  hf (mem_Ici.mpr (le_max_right _ _)) (mem_Ici.mpr (le_max_right _ _)) (max_le_max_right 0 hab)
+
+/-- A function antitone and bounded below on `[0, ∞)` converges at infinity. -/
+lemma exists_tendsto_atTop_of_antitoneOn_Ici {f : ℝ → ℝ} (hf : AntitoneOn f (Ici 0))
+    (hbdd : BddBelow (f '' Ici 0)) :
+    ∃ L, Tendsto f atTop (𝓝 L) := by
+  set g := fun t : ℝ => f (max t 0) with hg
+  have hg_anti : Antitone g := antitone_comp_max hf
+  have hg_bdd : BddBelow (Set.range g) := by
+    obtain ⟨b, hb⟩ := hbdd
+    exact ⟨b, by rintro y ⟨t, rfl⟩; exact hb ⟨max t 0, mem_Ici.mpr (le_max_right _ _), rfl⟩⟩
+  refine ⟨⨅ i, g i, ?_⟩
+  exact (tendsto_atTop_ciInf hg_anti hg_bdd).congr'
+    (eventually_atTop.mpr ⟨0, fun t ht => by simp [hg, max_eq_left ht]⟩)
+
+/-- A function antitone on `[0, ∞)` lies above its limit at infinity there. -/
+lemma le_of_tendsto_atTop_of_antitoneOn_Ici {f : ℝ → ℝ} (hf : AntitoneOn f (Ici 0)) {L : ℝ}
+    (hL : Tendsto f atTop (𝓝 L)) {T : ℝ} (hT : 0 ≤ T) : L ≤ f T := by
+  set g₀ := fun t : ℝ => f (max t 0) with hg₀
+  have hg_anti : Antitone g₀ := antitone_comp_max hf
+  have := hg_anti.le_of_tendsto
+    (hL.congr' (eventually_atTop.mpr ⟨0, fun t ht => by simp [hg₀, max_eq_left ht]⟩)) T
+  simpa [hg₀, max_eq_left hT] using this
+
 namespace IsCompletelyMonotoneOnIci
 
 variable {f : ℝ → ℝ}
 
-/-- The `max`-truncation of a function antitone on `[0, ∞)` is antitone everywhere: the
-shared totalization step of the two order-limit lemmas below. -/
-private lemma antitone_comp_max (hf : AntitoneOn f (Ici 0)) :
-    Antitone fun t : ℝ => f (max t 0) := fun _ _ hab =>
-  hf (mem_Ici.mpr (le_max_right _ _)) (mem_Ici.mpr (le_max_right _ _)) (max_le_max_right 0 hab)
-
 /-- A closed-half-line completely monotone function has a limit `L ≥ 0` at infinity: it is
 antitone on `[0, ∞)` and bounded below by `0`. -/
 lemma exists_nonneg_tendsto_atTop (hf : IsCompletelyMonotoneOnIci f) :
-    ∃ L, Tendsto f atTop (nhds L) ∧ 0 ≤ L := by
-  set g := fun t : ℝ => f (max t 0) with hg
-  have hg_anti : Antitone g := antitone_comp_max hf.antitoneOn
-  have hg_bdd : BddBelow (Set.range g) :=
-    ⟨0, fun _ ⟨t, ht⟩ => ht ▸ hf.nonneg (le_max_right _ _)⟩
-  refine ⟨⨅ i, g i, ?_, le_ciInf (fun _ => hf.nonneg (le_max_right _ _))⟩
-  exact (tendsto_atTop_ciInf hg_anti hg_bdd).congr'
-    (eventually_atTop.mpr ⟨0, fun t ht => by simp [hg, max_eq_left ht]⟩)
+    ∃ L, Tendsto f atTop (𝓝 L) ∧ 0 ≤ L := by
+  obtain ⟨L, hL⟩ := exists_tendsto_atTop_of_antitoneOn_Ici hf.antitoneOn
+    ⟨0, by rintro y ⟨x, hx, rfl⟩; exact hf.nonneg hx⟩
+  exact ⟨L, hL, ge_of_tendsto hL (eventually_atTop.mpr ⟨0, fun t ht => hf.nonneg ht⟩)⟩
 
 /-- A closed-half-line completely monotone function lies above its limit at infinity on
 `[0, ∞)`. -/
 lemma le_of_tendsto_atTop (hcm : IsCompletelyMonotoneOnIci f) {L : ℝ}
-    (hL : Tendsto f atTop (nhds L)) {T : ℝ} (hT : 0 ≤ T) : L ≤ f T := by
-  set g₀ := fun t : ℝ => f (max t 0) with hg₀
-  have hg_anti : Antitone g₀ := antitone_comp_max hcm.antitoneOn
-  have := hg_anti.le_of_tendsto
-    (hL.congr' (eventually_atTop.mpr ⟨0, fun t ht => by simp [hg₀, max_eq_left ht]⟩)) T
-  simpa [hg₀, max_eq_left hT] using this
+    (hL : Tendsto f atTop (𝓝 L)) {T : ℝ} (hT : 0 ≤ T) : L ≤ f T :=
+  le_of_tendsto_atTop_of_antitoneOn_Ici hcm.antitoneOn hL hT
 
 end IsCompletelyMonotoneOnIci
 
