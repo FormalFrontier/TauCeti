@@ -13,6 +13,8 @@ public import Mathlib.LinearAlgebra.Matrix.GeneralLinearGroup.FinTwo
 public import Mathlib.GroupTheory.Index
 -- `Matrix.BlockTriangular` occurs in the statement of `TauCeti.blockTriangular_id_iff`.
 public import Mathlib.LinearAlgebra.Matrix.Block
+-- `TauCeti.diagGL` is the body of `TauCeti.GL2Borel.torusHom`, so it must be imported publicly.
+public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Diagonal
 -- Non-public: the cardinality of the general linear group over a finite field, and the number of
 -- units of a finite field, are used only inside the counting proofs, so downstream importers do
 -- not pay for them.
@@ -270,19 +272,16 @@ theorem det_diag (g : GL2Borel R) :
 /-- The **split torus** `T`, as a homomorphic section of `TauCeti.GL2Borel.diag`: the diagonal
 matrix `!![a, 0; 0, d]`. Its existence is what upgrades the bijection
 `TauCeti.GL2Borel.equivProd` to a genuine splitting `B = T U`. -/
-def torusHom : Rˣ × Rˣ →* GL2Borel R where
-  toFun p := ⟨mk p.1 p.2 0, mk_mem _ _ _⟩
-  map_one' := by
-    refine Subtype.ext (Matrix.GeneralLinearGroup.ext fun i j => ?_)
-    fin_cases i <;> fin_cases j <;> simp
-  map_mul' p q := by
-    refine Subtype.ext (Matrix.GeneralLinearGroup.ext fun i j => ?_)
-    fin_cases i <;> fin_cases j <;> simp [Matrix.mul_apply, Fin.sum_univ_two]
+def torusHom : Rˣ × Rˣ →* GL2Borel R :=
+  (diagGL.comp <| MonoidHom.mk' (fun p : Rˣ × Rˣ => ![p.1, p.2]) fun p q => by
+      funext i; fin_cases i <;> rfl).codRestrict (GL2Borel R) fun p => by
+    simp [mem_iff]
 
 @[simp]
 theorem torusHom_val (p : Rˣ × Rˣ) :
-    ((torusHom p : GL2Borel R) : GL (Fin 2) R) = mk p.1 p.2 0 :=
-  (rfl)
+    ((torusHom p : GL2Borel R) : GL (Fin 2) R) = mk p.1 p.2 0 := by
+  refine Matrix.GeneralLinearGroup.ext fun i j => ?_
+  fin_cases i <;> fin_cases j <;> simp [torusHom, diagGL_apply]
 
 @[simp]
 theorem diag_torusHom (p : Rˣ × Rˣ) : diag (torusHom p) = p := by

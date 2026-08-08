@@ -5,26 +5,24 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.RepresentationTheory.ClassicalGroups.Standard
-public import Mathlib.Algebra.Group.Pi.Units
+public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Diagonal
 public import Mathlib.LinearAlgebra.Matrix.IsDiag
 
 /-!
-# Diagonal elements of the general linear group
+# Diagonal elements in the standard representation
 
-This file embeds coordinatewise units as invertible diagonal matrices and describes their
-action in the standard representation. These elements are the concrete points of the diagonal
-torus used to compute characters and weight spaces.
+This file describes the action of the invertible diagonal matrices `TauCeti.diagGL t` in the
+standard representation. These elements are the concrete points of the diagonal torus used to
+compute characters and weight spaces.
 
 Two facts about diagonal matrices proper are recorded alongside: invertibility of a diagonal
 matrix upgrades its diagonal entries to units, and a matrix commuting with a diagonal matrix
 has no entries away from the diagonal wherever that diagonal matrix separates two coordinates.
 
-## Main definitions
-
-* `TauCeti.diagGL` embeds a family of units as an invertible diagonal matrix.
-
 ## Main statements
 
+* `TauCeti.stdRep_diagGL_apply_basisFun`: every standard basis vector is an eigenvector of a
+  diagonal matrix.
 * `TauCeti.isUnit_apply_of_isDiag`: the diagonal entries of an invertible diagonal matrix are
   units.
 * `TauCeti.isDiag_of_commute_diagonal`: a matrix commuting with a diagonal matrix of pairwise
@@ -46,39 +44,6 @@ universe u
 namespace TauCeti
 
 variable {k : Type u} [CommRing k] {n : ℕ}
-
-/-- Coordinatewise units embed in `GL n k` as diagonal matrices. -/
-def diagGL : (Fin n → kˣ) →* GL (Fin n) k :=
-  (Units.map (Matrix.diagonalRingHom (Fin n) k).toMonoidHom).comp
-    (MulEquiv.piUnits).symm.toMonoidHom
-
-/-- The matrix underlying `diagGL t` is the diagonal matrix with entries `t i`. -/
-@[simp]
-theorem diagGL_coe (t : Fin n → kˣ) : (diagGL t : Matrix (Fin n) (Fin n) k) =
-      Matrix.diagonal fun i => (t i : k) := by
-  rfl
-
-/-- The entries of `diagGL t` vanish off the diagonal and equal `t i` on it. -/
-@[simp]
-theorem diagGL_apply (t : Fin n → kˣ) (i j : Fin n) :
-    diagGL t i j = if i = j then (t i : k) else 0 := by
-  rw [diagGL_coe]
-  exact Matrix.diagonal_apply ..
-
-/-- The determinant of a diagonal matrix is the product of its diagonal entries. -/
-@[simp]
-theorem det_diagGL (t : Fin n → kˣ) :
-    Matrix.GeneralLinearGroup.det (diagGL t) = ∏ i, t i := by
-  apply Units.ext
-  simp [Matrix.GeneralLinearGroup.val_det_apply, diagGL_coe, Matrix.det_diagonal]
-
-/-- The diagonal embedding is injective. -/
-theorem diagGL_injective : Function.Injective (diagGL (k := k) (n := n)) := by
-  intro t s h
-  funext i
-  apply Units.ext
-  have := congrArg (fun g : GL (Fin n) k => (g : Matrix (Fin n) (Fin n) k) i i) h
-  simpa using this
 
 /-- The standard representation acts at `diagGL t` by coordinatewise multiplication. -/
 @[simp↓]
