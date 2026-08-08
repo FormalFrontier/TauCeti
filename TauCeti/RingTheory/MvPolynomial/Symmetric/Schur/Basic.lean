@@ -169,7 +169,8 @@ noncomputable def diagramSchurPoly : MvPolynomial (Fin N) R :=
   ∑ T : BoundedSSYT N μ, monomial (BoundedSSYT.weight T) 1
 
 /-- The defining sum of a Schur polynomial, one weight monomial per bounded tableau of the
-shape. -/
+shape.  The definition is not exposed across module boundaries, so this restatement is the only
+way a downstream module can rewrite with it. -/
 theorem diagramSchurPoly_eq_sum :
     diagramSchurPoly N R μ = ∑ T : BoundedSSYT N μ, monomial (BoundedSSYT.weight T) 1 :=
   (rfl)
@@ -339,7 +340,8 @@ noncomputable def schurPoly (σ : Type*) [Fintype σ] (R : Type*) [CommSemiring 
   rename (Fintype.equivFin σ).symm (diagramSchurPoly (Fintype.card σ) R (diagramOf μ))
 
 /-- The Schur polynomial of a partition is the Schur polynomial of its Young diagram, renamed
-along the chosen ordering of the alphabet. -/
+along the chosen ordering of the alphabet.  The definition is not exposed across module
+boundaries, so this restatement is the only way a downstream module can rewrite with it. -/
 theorem schurPoly_eq_rename (μ : n.Partition) :
     schurPoly σ R μ
       = rename (Fintype.equivFin σ).symm (diagramSchurPoly (Fintype.card σ) R (diagramOf μ)) :=
