@@ -47,22 +47,14 @@ open scoped RealInnerProductSpace
 
 /-- The Newtonian kernel for the negative Laplacian on `ℝⁿ`.
 
-The normalization is the fundamental solution exactly in dimension `n ≥ 3`, which is therefore
-hypothesized on the results that need it rather than carried in the definition.  At the pole,
-Lean's convention for a negative real power of zero makes this total function take the value
-zero. -/
+For `3 ≤ n`, this normalization is the fundamental solution, and the exponent `2 - n` is
+negative.  Lean's convention for a negative real power of zero makes the kernel take the value
+zero at the pole in these dimensions.  Results that need the higher-dimensional regime state it
+as a hypothesis rather than carrying it in the definition. -/
 def newtonianKernel (n : ℕ) (x : EuclideanSpace ℝ (Fin n)) : ℝ :=
   ((n : ℝ) * ((n : ℝ) - 2) *
       volume.real (ball (0 : EuclideanSpace ℝ (Fin n)) 1))⁻¹ *
     ‖x‖ ^ (2 - (n : ℝ))
-
-/-- The defining formula for the Newtonian kernel. -/
-theorem newtonianKernel_def (n : ℕ) (x : EuclideanSpace ℝ (Fin n)) :
-    newtonianKernel n x =
-      ((n : ℝ) * ((n : ℝ) - 2) *
-        volume.real (ball (0 : EuclideanSpace ℝ (Fin n)) 1))⁻¹ *
-      ‖x‖ ^ (2 - (n : ℝ)) := by
-  rw [newtonianKernel]
 
 /-- The totalized Newtonian kernel takes the value zero at its pole. -/
 @[simp]
@@ -87,12 +79,12 @@ theorem newtonianKernel_sub_comm (n : ℕ) (x a : EuclideanSpace ℝ (Fin n)) :
     newtonianKernel n (x - a) = newtonianKernel n (a - x) := by
   simp [newtonianKernel, norm_sub_rev]
 
-/-- Positive dilation scales the Newtonian kernel with homogeneity `2 - n`. -/
-theorem newtonianKernel_smul (n : ℕ) {r : ℝ} (hr : 0 < r)
+/-- Real dilation scales the Newtonian kernel with radial homogeneity `2 - n`. -/
+theorem newtonianKernel_smul (n : ℕ) (r : ℝ)
     (x : EuclideanSpace ℝ (Fin n)) :
-    newtonianKernel n (r • x) = r ^ (2 - (n : ℝ)) * newtonianKernel n x := by
-  rw [newtonianKernel_def, newtonianKernel_def, norm_smul, Real.norm_of_nonneg hr.le,
-    Real.mul_rpow hr.le (norm_nonneg x)]
+    newtonianKernel n (r • x) = ‖r‖ ^ (2 - (n : ℝ)) * newtonianKernel n x := by
+  rw [newtonianKernel, newtonianKernel, norm_smul,
+    Real.mul_rpow (norm_nonneg r) (norm_nonneg x)]
   ring
 
 private theorem volume_real_unitBall_pos (n : ℕ) :
@@ -108,7 +100,7 @@ theorem newtonianKernel_pos (n : ℕ) (hn : 3 ≤ n)
   have hnℝ : (3 : ℝ) ≤ n := by exact_mod_cast hn
   have hnpos : (0 : ℝ) < n := by positivity
   have hnsub : (0 : ℝ) < (n : ℝ) - 2 := by linarith
-  rw [newtonianKernel_def]
+  rw [newtonianKernel]
   exact mul_pos (inv_pos.mpr (mul_pos (mul_pos hnpos hnsub)
       (volume_real_unitBall_pos n)))
     (Real.rpow_pos_of_pos (norm_pos_iff.mpr hx) _)
@@ -188,7 +180,7 @@ theorem contDiffAt_newtonianKernel (n : ℕ)
         volume.real (ball (0 : EuclideanSpace ℝ (Fin n)) 1))⁻¹ •
         fun y : EuclideanSpace ℝ (Fin n) ↦ ‖y‖ ^ (2 - (n : ℝ)) := by
     funext y
-    simp only [newtonianKernel_def, Pi.smul_apply, smul_eq_mul]
+    simp only [newtonianKernel, Pi.smul_apply, smul_eq_mul]
   rw [hfun]
   have hpow : ContDiffAt ℝ 2 (fun y : EuclideanSpace ℝ (Fin n) ↦
       ‖y‖ ^ (2 - (n : ℝ))) x :=
@@ -206,7 +198,7 @@ theorem laplacian_newtonianKernel (n : ℕ)
         volume.real (ball (0 : EuclideanSpace ℝ (Fin n)) 1))⁻¹ •
         fun y : EuclideanSpace ℝ (Fin n) ↦ ‖y‖ ^ (2 - (n : ℝ)) := by
     funext y
-    simp only [newtonianKernel_def, Pi.smul_apply, smul_eq_mul]
+    simp only [newtonianKernel, Pi.smul_apply, smul_eq_mul]
   have hpow : ContDiffAt ℝ 2 (fun y : EuclideanSpace ℝ (Fin n) ↦
       ‖y‖ ^ (2 - (n : ℝ))) x :=
     (contDiffAt_norm ℝ hx).rpow_const_of_ne (norm_ne_zero_iff.mpr hx)
@@ -302,7 +294,7 @@ theorem newtonianKernel_three (x : EuclideanSpace ℝ (Fin 3)) :
     rw [Measure.real_def, EuclideanSpace.volume_ball_fin_three]
     simp only [one_pow, ENNReal.ofReal_one, one_mul]
     exact ENNReal.toReal_ofReal (by positivity)
-  rw [newtonianKernel_def, hvol]
+  rw [newtonianKernel, hvol]
   norm_num [Real.rpow_neg_one]
   field_simp [Real.pi_ne_zero]
 
