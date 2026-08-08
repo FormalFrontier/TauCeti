@@ -256,8 +256,8 @@ of coordinates off the countable power `Q^{⊗ℕ}` and recording a tag `t` alon
 `δ_t ⊗ Q^{⊗ Fin m}`; injectivity is what makes the selected coordinates independent.
 
 The tag is arbitrary and need not be `Q` itself: a mixture law carries the *parameter* `t` while
-sampling from `P t`, so the two differ there. `map_infinitePi_pair_block_self` is the instance that
-tags with the law.
+sampling from `P t`, so the two differ there. Tagging with the law itself is the instance
+`map_infinitePi_pair_block Q Q`.
 
 This is `map_prefixProj_infinitePi_const` for an arbitrary injective block rather than a prefix,
 paired with a tag, which is the form a disintegration against a directing measure consumes. -/
@@ -277,14 +277,6 @@ theorem map_infinitePi_pair_block {T α : Type*} [MeasurableSpace T] [Measurable
         rw [Measure.map_infinitePi_infinitePi_of_inj hk, Measure.infinitePi_eq_pi]
     _ = (Measure.dirac t).prod (ProbabilityMeasure.pi fun _ : Fin m => Q).toMeasure := by
         rw [ProbabilityMeasure.toMeasure_pi, Measure.dirac_prod]
-
-/-- **The self-tagged instance**: recording the sampled law itself alongside the block. -/
-theorem map_infinitePi_pair_block_self {α : Type*} [MeasurableSpace α] (Q : ProbabilityMeasure α)
-    {m : ℕ} {k : Fin m → ℕ} (hk : Function.Injective k) :
-    (Measure.infinitePi fun _ : ℕ => (Q : Measure α)).map
-        (fun x : ℕ → α => (Q, fun i : Fin m => x (k i)))
-      = (Measure.dirac Q).prod (ProbabilityMeasure.pi fun _ : Fin m => Q).toMeasure :=
-  map_infinitePi_pair_block Q Q hk
 
 /-- **Bind-evaluation.** Evaluating the mixture
 `μ.bind fun ω => (ProbabilityMeasure.pi fun i => ν i ω).toMeasure` on a measurable set `s` gives

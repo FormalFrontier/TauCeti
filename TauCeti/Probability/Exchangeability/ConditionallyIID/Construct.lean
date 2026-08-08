@@ -153,7 +153,7 @@ theorem conditionallyIIDWith_iidMixtureLaw (hP : Measurable P) :
         (fun ω : T × (ℕ → α) => (P ω.1, fun i : Fin m => ω.2 (k i))) = g (P t) := by
     intro t
     rw [Measure.dirac_prod, Measure.map_map hsel measurable_prodMk_left]
-    exact TauCeti.MeasureTheory.map_infinitePi_pair_block_self (P t) hk
+    exact TauCeti.MeasureTheory.map_infinitePi_pair_block (P t) (P t) hk
   -- the left-hand side: naturality of `bind` pushes the selection through the mixture, fibre by
   -- fibre
   have hleft : (iidMixtureLaw π P).map (fun ω => (P ω.1, fun i : Fin m => ω.2 (k i)))
