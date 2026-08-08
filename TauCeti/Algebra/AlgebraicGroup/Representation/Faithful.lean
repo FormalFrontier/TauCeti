@@ -32,8 +32,6 @@ lie in the same universe. The comodule carrier remains universe-polymorphic.
 
 ## Main declarations
 
-* `TauCeti.Comodule.matrixCoefficientSubalgebraWithAntipode_eq_prod_dual`: coefficients and
-  their antipode images generate the coefficient algebra of `M × Mᵛ`.
 * `TauCeti.Comodule.coordinateHom`: the bundled coordinate Hopf-algebra morphism.
 * `TauCeti.Comodule.groupSchemeMap`: the group-scheme morphism associated to a based comodule.
 * `TauCeti.Comodule.IsFaithful`: faithfulness as a closed immersion into `GL(M)`.
