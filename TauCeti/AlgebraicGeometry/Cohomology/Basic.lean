@@ -6,9 +6,9 @@ module
 
 public import Mathlib.Algebra.Category.Grp.AB
 public import Mathlib.AlgebraicGeometry.Modules.Sheaf
-public import Mathlib.CategoryTheory.Abelian.GrothendieckAxioms.Sheaf
 public import Mathlib.CategoryTheory.Abelian.GrothendieckCategory.HasExt
 public import Mathlib.CategoryTheory.Sites.SheafCohomology.Basic
+public import Mathlib.Topology.Sheaves.Abelian
 
 /-!
 # Cohomology of sheaves of modules on a scheme
@@ -53,15 +53,6 @@ noncomputable section
 namespace Scheme.Modules
 
 variable {X : Scheme.{u}}
-
-/-- Abelian sheaves on the small Zariski site form a Grothendieck abelian category. This
-instance selects the `u`-small `Ext` groups used by `cohomology`. -/
-instance (X : Scheme.{u}) :
-    IsGrothendieckAbelian.{u}
-      (Sheaf (Opens.grothendieckTopology X) AddCommGrpCat.{u}) := by
-  have : EssentiallySmall.{u} X.Opens := inferInstance
-  exact Sheaf.isGrothendieckAbelian_of_essentiallySmall
-    (Opens.grothendieckTopology X) AddCommGrpCat.{u}
 
 /-- The `i`th cohomology group `Hⁱ(X, M)` of a sheaf of modules on a scheme.
 
