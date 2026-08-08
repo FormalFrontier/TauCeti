@@ -60,6 +60,7 @@ theorem coe_cliffordBivectorExteriorEquivQuadraticLieSubalgebra_apply
 
 /-- The exterior-algebra element underlying the inverse equivalence is the exterior model of the
 quadratic Clifford element. -/
+@[simp]
 theorem coe_cliffordBivectorExteriorEquivQuadraticLieSubalgebra_symm_apply
     (Q : QuadraticForm R M) [Invertible (2 : R)] (x : quadraticLieSubalgebra Q) :
     (((cliffordBivectorExteriorEquivQuadraticLieSubalgebra Q).symm x : ⋀[R]^2 M) :
