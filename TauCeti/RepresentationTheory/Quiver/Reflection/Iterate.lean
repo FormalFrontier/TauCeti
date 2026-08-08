@@ -77,19 +77,14 @@ theorem hom_reflectAt_eq_hom_reflect [q : _root_.Quiver.{v} V] (i a b : V) :
     @_root_.Quiver.Hom V (reflectAt q i) a b = @_root_.Quiver.Hom (Reflect V i) _ a b :=
   (hom_reflectAt q i a b).trans (hom_reflect i a b).symm
 
-/-- The arrow-type form of `TauCeti.Quiver.reflectAt_reflectAt`. Since `reflectAt` carries the
-arrows of the type synonym `TauCeti.Quiver.Reflect`, this is
-`TauCeti.Quiver.hom_reflect_reflect` read on quiver structures. -/
-private theorem hom_reflectAt_reflectAt (q : _root_.Quiver.{v} V) (i a b : V) :
-    @_root_.Quiver.Hom V (reflectAt (reflectAt q i) i) a b = @_root_.Quiver.Hom V q a b :=
-  @hom_reflect_reflect V q i a b
-
 /-- **Reflection at a vertex is an involution.** Reflecting twice at the same vertex reverses the
-arrows meeting it twice, returning the quiver structure it started from. -/
+arrows meeting it twice, returning the quiver structure it started from. Since `reflectAt` carries
+the arrows of the type synonym `TauCeti.Quiver.Reflect`, the arrow types agree by
+`TauCeti.Quiver.hom_reflect_reflect`. -/
 @[simp]
 theorem reflectAt_reflectAt (q : _root_.Quiver.{v} V) (i : V) :
     reflectAt (reflectAt q i) i = q :=
-  congrArg _root_.Quiver.mk (funext fun a ↦ funext fun b ↦ hom_reflectAt_reflectAt q i a b)
+  congrArg _root_.Quiver.mk (funext fun a ↦ funext fun b ↦ @hom_reflect_reflect V q i a b)
 
 /-! ### Reflecting along a list of vertices -/
 
