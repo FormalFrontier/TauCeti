@@ -4,33 +4,33 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
--- `TauCeti.Algebra.CentralSimple.End` is imported publicly: its simplicity instance, together with
--- the centrality instance it re-exports from `Mathlib.Algebra.Central.End`, is what lets
--- `CSA.of K (Module.End K V)` elaborate in the statement of
--- `TauCeti.isBrauerEquivalent_moduleEnd_base`. It re-exports `TauCeti.Algebra.CentralSimple.Degree`
--- and hence `TauCeti.Algebra.CentralSimple.TensorProduct`, whose instances
--- `TauCeti.Algebra.IsCentral.tensorProduct` and `TauCeti.IsSimpleRing.tensorProduct` make
--- `TauCeti.CSA.tensorProduct` well defined, together with `Mathlib.RingTheory.TensorProduct.Basic`
--- (hence the `⊗[K]` notation), `Mathlib.Algebra.Central.Basic` and
--- `Mathlib.RingTheory.SimpleRing.Basic`, which is why none of those is imported again here.
-public import TauCeti.Algebra.CentralSimple.End
+-- `TauCeti.Algebra.CentralSimple.TensorProduct` is imported publicly: its instances
+-- `TauCeti.Algebra.IsCentral.tensorProduct` and `TauCeti.IsSimpleRing.tensorProduct` are two of the
+-- three things that make `TauCeti.CSA.tensorProduct` well defined. It re-exports
+-- `Mathlib.RingTheory.TensorProduct.Basic` (hence the `⊗[K]` notation),
+-- `Mathlib.Algebra.Central.Basic` and `Mathlib.RingTheory.SimpleRing.Basic`, which is why none of
+-- those is imported again here.
+public import TauCeti.Algebra.CentralSimple.TensorProduct
+-- The third is finite-dimensionality of `A ⊗[K] B`, Mathlib's `Module.Finite.tensorProduct`.
+public import Mathlib.RingTheory.TensorProduct.Finite
+-- `CSA`, `IsBrauerEquivalent` and `BrauerGroup` occur in the statements below. This also
+-- re-exports `Mathlib.LinearAlgebra.Matrix.Reindex`, hence the reindexing `Matrix.reindexAlgEquiv`
+-- used below, which is why that is not imported again here.
 public import Mathlib.Algebra.BrauerGroup.Defs
--- The two matrix instances appear in the statements below, through `TauCeti.CSA.matrix` and
--- through `CSA.of K (Matrix (Fin n) (Fin n) K)`.
+-- The two matrix instances appear in the statements below, through `TauCeti.CSA.matrix`: they are
+-- what bundles `Mₙ(A)` as a term of `CSA K`.
 public import Mathlib.Algebra.Central.Matrix
 public import Mathlib.RingTheory.SimpleRing.Matrix
--- Non-public: the algebra isomorphisms doing the work occur only in proofs and in the bodies of
--- `TauCeti.Matrix.kroneckerTMulFinAlgEquiv` and `TauCeti.CSA.tensorProductMatrixAlgEquiv` --
--- Mathlib's Kronecker product of matrix algebras, and the composition and reindexing equivalences
--- of matrix algebras. Two more are not imported again here: `Matrix.compAlgEquiv`, which
--- `Mathlib.RingTheory.MatrixAlgebra` re-exports from `Mathlib.Data.Matrix.Composition`, and the
--- matrix presentation `algEquivMatrix` of an endomorphism algebra, which arrives with
--- `TauCeti.Algebra.CentralSimple.End`, where the simplicity proof runs on it.
-import Mathlib.LinearAlgebra.Matrix.Reindex
-import Mathlib.RingTheory.MatrixAlgebra
+-- Mathlib's Kronecker product of matrix algebras is the body of
+-- `TauCeti.Matrix.kroneckerTMulFinAlgEquiv`, and a compiled definition may not refer to a
+-- privately imported one, so this import is public too. It re-exports
+-- `Mathlib.Data.Matrix.Composition` and `Mathlib.RingTheory.TensorProduct.Maps`, hence the two
+-- further equivalences used in the proofs below, `Matrix.compAlgEquiv` and
+-- `Algebra.TensorProduct.congr`, which is why neither is imported again here.
+public import Mathlib.RingTheory.MatrixAlgebra
 
 /-!
-# Brauer equivalence: matrix algebras, split algebras, and the tensor product
+# Brauer equivalence: bundling central simple algebras, matrices, and the tensor product
 
 Two finite-dimensional central simple `K`-algebras are **Brauer equivalent** when they become
 isomorphic after passing to matrix algebras over them: `IsBrauerEquivalent A B` is Mathlib's
@@ -40,20 +40,19 @@ yet, and nothing is on record for the relation to be fed: `CSA K` is a structure
 so its constructor takes a bundled object rather than an algebra, and Mathlib names no member of
 it -- not even `Mₙ(A)`.
 
-This file supplies the working API. It builds the three constructors that the theory needs
-(`TauCeti.CSA.of`, `TauCeti.CSA.matrix`, `TauCeti.CSA.tensorProduct`, and the base field itself as
-`TauCeti.CSA.base`), proves the two structural facts that make the eventual group law on
-`BrauerGroup K` well defined -- passing to matrices does not change the Brauer class, and the
-tensor product respects Brauer equivalence -- and identifies the **Brauer-trivial** algebras that
-are the intended identity: a full matrix algebra over `K`, and the endomorphism algebra of a
-nonzero finite-dimensional `K`-vector space.
+This file supplies the working API. It builds the constructors that the theory needs
+(`TauCeti.CSA.of`, and on top of it `TauCeti.CSA.base`, `TauCeti.CSA.matrix` and
+`TauCeti.CSA.tensorProduct`), records the two moves that leave a Brauer class unchanged -- an
+isomorphism of algebras, and passage to matrices over the algebra -- and proves that the tensor
+product respects Brauer equivalence, so that it descends to `BrauerGroup K`.
 
 The group law itself is deliberately not installed here. Multiplication, commutativity,
 associativity and the identity are all available from the statements below, but the inverse is not:
 it rests on the separate opposite isomorphism `A ⊗[K] Aᵐᵒᵖ ≃ₐ[K] M_{finrank K A}(K)`, which belongs
 to the theory of the Azumaya map rather than to the Brauer-equivalence bookkeeping done here.
 Installing a monoid structure now, to replace it by a group structure later, would only create
-work; so `BrauerGroup K` is left as Mathlib's bare quotient.
+work; so `BrauerGroup K` is left as Mathlib's bare quotient. Which algebras are in the identity
+class is the subject of `TauCeti/Algebra/BrauerGroup/Trivial.lean`, which builds on this file.
 
 ## Matrix absorption
 
@@ -71,15 +70,15 @@ transport `Algebra.TensorProduct.congr`.
 
 `CSA.{u, v} K` places the algebra in a universe `v` of its own, and `IsBrauerEquivalent` compares
 two algebras in the *same* `v`. The general lemmas below are therefore stated for an arbitrary `v`,
-but every statement mentioning the base field -- `TauCeti.CSA.base`, and so all of the
-Brauer-triviality section -- needs `v = u`, since `K : Type u` cannot be moved. This is not a
-restriction in practice: `BrauerGroup K` is the interesting object at `v = u`.
+but every statement mentioning the base field -- `TauCeti.CSA.base`, and so
+`TauCeti.isBrauerEquivalent_tensorProduct_base` -- needs `v = u`, since `K : Type u` cannot be
+moved. This is not a restriction in practice: `BrauerGroup K` is the interesting object at `v = u`.
 
 ## Main definitions
 
-* `TauCeti.CSA.of`: an algebra with the three central-simple instances, as an element of `CSA K`;
+* `TauCeti.CSA.of`: an algebra with the three central-simple instances, as a term of `CSA K`;
   `TauCeti.CSA.base K` is `K` itself.
-* `TauCeti.CSA.matrix A n` and `TauCeti.CSA.tensorProduct A B`: `Mₙ(A)` and `A ⊗[K] B` as elements
+* `TauCeti.CSA.matrix A n` and `TauCeti.CSA.tensorProduct A B`: `Mₙ(A)` and `A ⊗[K] B` as terms
   of `CSA K`. The underlying type of each is the expected one by definition.
 * `TauCeti.Matrix.kroneckerTMulFinAlgEquiv`: matrix absorption
   `Mₘ(A) ⊗[R] Mₙ(B) ≃ₐ[R] M_{mn}(A ⊗[R] B)` for arbitrary algebras and sizes, and
@@ -87,19 +86,16 @@ restriction in practice: `BrauerGroup K` is the interesting object at `v = u`.
 
 ## Main results
 
-* `TauCeti.isBrauerEquivalent_matrix`: `Mₙ(A)` is Brauer equivalent to `A`. This is the
-  reflexivity that the relation is designed for, and it is what makes the Brauer class of a split
-  algebra the identity.
+* `TauCeti.IsBrauerEquivalent.of_algEquiv` and `TauCeti.isBrauerEquivalent_matrix`: the two moves
+  that leave a Brauer class unchanged -- an isomorphism of algebras, and passage to matrices over
+  the algebra. The second is the reason `IsBrauerEquivalent` is coarser than isomorphism, and it is
+  what makes the Brauer class of a split algebra the identity.
 * `TauCeti.isBrauerEquivalent_tensorProduct_congr`: **the tensor product respects Brauer
   equivalence**, so it descends to `BrauerGroup K`. With
   `TauCeti.isBrauerEquivalent_tensorProduct_comm`,
   `TauCeti.isBrauerEquivalent_tensorProduct_assoc` and
   `TauCeti.isBrauerEquivalent_tensorProduct_base` this is the commutative-monoid half of the group
   law.
-* `TauCeti.isBrauerEquivalent_base_of_nonempty_algEquiv_matrix`: **a split algebra is Brauer
-  trivial**, with the two standard instances
-  `TauCeti.isBrauerEquivalent_matrix_base` (`Mₙ(K)`) and
-  `TauCeti.isBrauerEquivalent_moduleEnd_base` (`Module.End K V`).
 
 ## References
 
@@ -121,59 +117,71 @@ variable (K : Type u) [Field K]
 
 /-! ### Constructing central simple algebras -/
 
-/-- A finite-dimensional central simple `K`-algebra, packaged as an element of Mathlib's `CSA K`.
+namespace CSA
 
-Mathlib's `CSA K` bundles the carrier as an `AlgCat K` together with its three properties; this is
-the convenient constructor, taking the algebra itself and reading the properties off instance
-search. The underlying type of `CSA.of K A` is `A` by definition, and the algebra structure on it
-is the given one, so an `A`-level isomorphism is a `CSA.of K A`-level isomorphism with no glue. -/
-@[expose]
-def CSA.of (A : Type v) [Ring A] [Algebra K A] [Algebra.IsCentral K A] [IsSimpleRing A]
+/-- A finite-dimensional central simple `K`-algebra, bundled as a term of Mathlib's `CSA K`.
+
+Mathlib's `CSA K` carries its algebra as an `AlgCat K` together with three instance fields; this
+is the constructor turning the unbundled hypotheses used everywhere else into that bundling. It is
+an `abbrev` so that the carrier of `TauCeti.CSA.of K A` is reducibly `A`, and instances stated for
+`A` are found for it. -/
+abbrev of (A : Type v) [Ring A] [Algebra K A] [Algebra.IsCentral K A] [IsSimpleRing A]
     [FiniteDimensional K A] : CSA.{u, v} K where
   toAlgCat := AlgCat.of K A
 
+theorem coe_of (A : Type v) [Ring A] [Algebra K A] [Algebra.IsCentral K A] [IsSimpleRing A]
+    [FiniteDimensional K A] : (of K A : Type v) = A :=
+  rfl
+
 /-- The base field as a central simple algebra over itself. This is the Brauer class of the split
 algebras, and the intended identity of `BrauerGroup K`. -/
-@[expose]
-def CSA.base : CSA.{u, u} K := CSA.of K K
+abbrev base : CSA.{u, u} K := of K K
 
 variable {K}
 
 /-- The `n × n` matrices over a central simple `K`-algebra, again a central simple `K`-algebra.
 Brauer equivalence is exactly the relation that identifies this with `A`
 (`TauCeti.isBrauerEquivalent_matrix`). -/
-@[expose]
-def CSA.matrix (A : CSA.{u, v} K) (n : ℕ) [NeZero n] : CSA.{u, v} K :=
-  CSA.of K (Matrix (Fin n) (Fin n) A)
+abbrev matrix (A : CSA.{u, v} K) (n : ℕ) [NeZero n] : CSA.{u, v} K :=
+  of K (Matrix (Fin n) (Fin n) A)
 
 /-- The tensor product of two central simple `K`-algebras, again a central simple `K`-algebra by
 `TauCeti.Algebra.IsCentral.tensorProduct` and `TauCeti.IsSimpleRing.tensorProduct`. This is the
 operation that descends to the group law on `BrauerGroup K`
 (`TauCeti.isBrauerEquivalent_tensorProduct_congr`). -/
-@[expose]
-def CSA.tensorProduct (A B : CSA.{u, v} K) : CSA.{u, v} K :=
-  CSA.of K (A ⊗[K] B)
+abbrev tensorProduct (A B : CSA.{u, v} K) : CSA.{u, v} K :=
+  of K (A ⊗[K] B)
 
-/-! ### Brauer equivalence -/
+end CSA
 
-/-- Isomorphic central simple algebras are Brauer equivalent. -/
-theorem isBrauerEquivalent_of_nonempty_algEquiv {A B : CSA.{u, v} K}
-    (e : Nonempty (A ≃ₐ[K] B)) : IsBrauerEquivalent A B :=
-  ⟨1, 1, one_ne_zero, one_ne_zero, e.map AlgEquiv.mapMatrix⟩
+/-! ### The two moves that preserve a Brauer class -/
 
-/-- **Passing to matrices does not change the Brauer class.** This is the whole point of the
-relation, and the reason `IsBrauerEquivalent` is coarser than isomorphism: `Mₙ(A)` and `A` are
-almost never isomorphic, their dimensions differing by a factor of `n ^ 2`. -/
+/-- **An isomorphism of algebras is a Brauer equivalence**: take one-by-one matrices on both
+sides. -/
+theorem IsBrauerEquivalent.of_algEquiv {A B : CSA.{u, v} K} (e : A ≃ₐ[K] B) :
+    IsBrauerEquivalent A B :=
+  ⟨1, 1, one_ne_zero, one_ne_zero, ⟨e.mapMatrix (m := Fin 1)⟩⟩
+
+/-- **Passing to matrices does not change the Brauer class.** This is the move making Brauer
+equivalence strictly coarser than isomorphism -- `Mₙ(A)` and `A` are almost never isomorphic, their
+dimensions differing by a factor of `n ^ 2` -- and it is why `Mₙ(K)` will be the identity class: it
+is `Mₙ` of the identity algebra.
+
+The witness is the smallest one available, `M₁(Mₙ(A)) ≃ₐ Mₙ(A)`, which is `Matrix.compAlgEquiv`
+followed by the reindexing `Fin 1 × Fin n ≃ Fin n`. -/
 theorem isBrauerEquivalent_matrix (A : CSA.{u, v} K) (n : ℕ) [NeZero n] :
     IsBrauerEquivalent (CSA.matrix A n) A :=
-  ⟨1, n, one_ne_zero, NeZero.ne n, ⟨(Matrix.compAlgEquiv (Fin 1) (Fin n) A K).trans
-    (Matrix.reindexAlgEquiv K A (finProdFinEquiv.trans (finCongr (one_mul n))))⟩⟩
+  ⟨1, n, one_ne_zero, NeZero.ne n,
+    ⟨(Matrix.compAlgEquiv (Fin 1) (Fin n) A K).trans
+      (Matrix.reindexAlgEquiv K A (finProdFinEquiv.trans (finCongr (one_mul n))))⟩⟩
 
 /-- Matrix algebras over Brauer equivalent algebras are Brauer equivalent, in any two sizes. -/
 theorem isBrauerEquivalent_matrix_congr {A B : CSA.{u, v} K} (h : IsBrauerEquivalent A B)
     (m n : ℕ) [NeZero m] [NeZero n] :
     IsBrauerEquivalent (CSA.matrix A m) (CSA.matrix B n) :=
-  ((isBrauerEquivalent_matrix A m).trans h).trans (isBrauerEquivalent_matrix B n).symm
+  ((isBrauerEquivalent_matrix K A m).trans h).trans (isBrauerEquivalent_matrix K B n).symm
+
+/-! ### Matrix absorption -/
 
 /-- **Matrix absorption**: `Mₘ(A) ⊗[R] Mₙ(B) ≃ₐ[R] M_{mn}(A ⊗[R] B)`, over any commutative
 semiring `R` and any two `R`-algebras, in any two sizes.
@@ -188,14 +196,20 @@ def Matrix.kroneckerTMulFinAlgEquiv (m n : ℕ) (R : Type*) [CommSemiring R] (A 
   (Matrix.kroneckerTMulAlgEquiv (Fin m) (Fin n) R R A B).trans
     (Matrix.reindexAlgEquiv R _ finProdFinEquiv)
 
+variable {K}
+
 /-- **Matrix absorption** for central simple algebras:
-`Mₘ(A) ⊗[K] Mₙ(B) ≃ₐ[K] M_{mn}(A ⊗[K] B)` as an isomorphism of elements of `CSA K`. This is
+`Mₘ(A) ⊗[K] Mₙ(B) ≃ₐ[K] M_{mn}(A ⊗[K] B)` as an isomorphism of terms of `CSA K`. This is
 `TauCeti.Matrix.kroneckerTMulFinAlgEquiv`, read through the constructors `TauCeti.CSA.matrix` and
 `TauCeti.CSA.tensorProduct`, whose underlying types are the expected ones by definition. -/
 def CSA.tensorProductMatrixAlgEquiv (A B : CSA.{u, v} K) (m n : ℕ) [NeZero m] [NeZero n] :
     CSA.tensorProduct (CSA.matrix A m) (CSA.matrix B n) ≃ₐ[K]
       CSA.matrix (CSA.tensorProduct A B) (m * n) :=
   Matrix.kroneckerTMulFinAlgEquiv m n K A B
+
+variable (K)
+
+/-! ### The tensor product of Brauer classes -/
 
 /-- **The tensor product respects Brauer equivalence**, so it descends to a binary operation on
 `BrauerGroup K`. -/
@@ -217,49 +231,19 @@ theorem isBrauerEquivalent_tensorProduct_congr {A A' B B' : CSA.{u, v} K}
 up to isomorphism, by `Algebra.TensorProduct.comm`. -/
 theorem isBrauerEquivalent_tensorProduct_comm (A B : CSA.{u, v} K) :
     IsBrauerEquivalent (CSA.tensorProduct A B) (CSA.tensorProduct B A) :=
-  isBrauerEquivalent_of_nonempty_algEquiv ⟨Algebra.TensorProduct.comm K A B⟩
+  IsBrauerEquivalent.of_algEquiv K (Algebra.TensorProduct.comm K A B)
 
 /-- The tensor product of central simple algebras is associative up to Brauer equivalence -- indeed
 up to isomorphism, by `Algebra.TensorProduct.assoc`. -/
 theorem isBrauerEquivalent_tensorProduct_assoc (A B C : CSA.{u, v} K) :
     IsBrauerEquivalent (CSA.tensorProduct (CSA.tensorProduct A B) C)
       (CSA.tensorProduct A (CSA.tensorProduct B C)) :=
-  isBrauerEquivalent_of_nonempty_algEquiv ⟨Algebra.TensorProduct.assoc K K K A B C⟩
-
-/-! ### Brauer-trivial algebras
-
-A central simple `K`-algebra is **split**, or **Brauer trivial**, when it is a full matrix algebra
-over `K`. Over an algebraically closed field every central simple algebra is split; over a general
-field the split algebras are exactly the class of `TauCeti.CSA.base K`, the identity of the
-eventual group law. -/
+  IsBrauerEquivalent.of_algEquiv K (Algebra.TensorProduct.assoc K K K A B C)
 
 /-- The base field is the identity for the tensor product, up to Brauer equivalence -- indeed up to
 isomorphism, by `Algebra.TensorProduct.rid`. -/
 theorem isBrauerEquivalent_tensorProduct_base (A : CSA.{u, u} K) :
     IsBrauerEquivalent (CSA.tensorProduct A (CSA.base K)) A :=
-  isBrauerEquivalent_of_nonempty_algEquiv ⟨Algebra.TensorProduct.rid K K A⟩
-
-/-- **A split central simple algebra is Brauer trivial.** -/
-theorem isBrauerEquivalent_base_of_nonempty_algEquiv_matrix {A : CSA.{u, u} K} {n : ℕ} [NeZero n]
-    (e : Nonempty (A ≃ₐ[K] Matrix (Fin n) (Fin n) K)) : IsBrauerEquivalent A (CSA.base K) :=
-  (isBrauerEquivalent_of_nonempty_algEquiv (B := CSA.matrix (CSA.base K) n) e).trans
-    (isBrauerEquivalent_matrix (CSA.base K) n)
-
-variable (K) in
-/-- **A full matrix algebra over `K` is Brauer trivial.** -/
-theorem isBrauerEquivalent_matrix_base (n : ℕ) [NeZero n] :
-    IsBrauerEquivalent (CSA.of K (Matrix (Fin n) (Fin n) K)) (CSA.base K) :=
-  isBrauerEquivalent_base_of_nonempty_algEquiv_matrix ⟨AlgEquiv.refl⟩
-
-variable (K) in
-/-- **The endomorphism algebra of a nonzero finite-dimensional vector space is Brauer trivial.**
-This is the form in which triviality is used: the identity class of `BrauerGroup K` contains
-`Module.End K V`, so exhibiting an algebra as endomorphisms of a vector space exhibits its Brauer
-class as trivial. -/
-theorem isBrauerEquivalent_moduleEnd_base (V : Type u) [AddCommGroup V] [Module K V]
-    [FiniteDimensional K V] [Nontrivial V] :
-    IsBrauerEquivalent (CSA.of K (Module.End K V)) (CSA.base K) :=
-  have : NeZero (Module.finrank K V) := ⟨Module.finrank_pos.ne'⟩
-  isBrauerEquivalent_base_of_nonempty_algEquiv_matrix ⟨algEquivMatrix (Module.finBasis K V)⟩
+  IsBrauerEquivalent.of_algEquiv K (Algebra.TensorProduct.rid K K A)
 
 end TauCeti
