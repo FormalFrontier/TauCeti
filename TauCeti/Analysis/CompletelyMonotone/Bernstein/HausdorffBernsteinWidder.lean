@@ -30,7 +30,7 @@ uniqueness both live in `LaplaceRepresentation.lean`.
 ## Main declarations
 
 * `TauCeti.exists_representsLaplace_of_isCompletelyMonotoneOnIci`
-* `TauCeti.hausdorff_bernstein_widder`, `TauCeti.hausdorff_bernstein_widder_unique`
+* `TauCeti.hausdorff_bernstein_widder`, `TauCeti.hausdorff_bernstein_widder_existsUnique`
 
 ## References
 
@@ -367,7 +367,7 @@ theorem hausdorff_bernstein_widder (f : ℝ → ℝ) :
       hμ.eq_laplaceTransform ht
 
 /-- Unique-existence form of the Hausdorff--Bernstein--Widder theorem. -/
-theorem hausdorff_bernstein_widder_unique (f : ℝ → ℝ) :
+theorem hausdorff_bernstein_widder_existsUnique (f : ℝ → ℝ) :
     IsCompletelyMonotoneOnIci f ↔ ∃! μ : Measure ℝ≥0, RepresentsLaplace μ f := by
   rw [hausdorff_bernstein_widder]
   exact ⟨fun ⟨μ, hμ⟩ => ⟨μ, hμ, fun ν hν => hν.unique hμ⟩,

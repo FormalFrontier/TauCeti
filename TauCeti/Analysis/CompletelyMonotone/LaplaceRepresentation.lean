@@ -133,13 +133,15 @@ lemma laplaceTransform_nonneg (μ : Measure ℝ≥0) (t : ℝ) :
   rw [laplaceTransform_eq_mgf]
   exact mgf_nonneg
 
-/-- Additivity of the Laplace transform in the measure, on the nonnegative half-line where the
-kernel is integrable. -/
-lemma laplaceTransform_add_measure (μ ν : Measure ℝ≥0) [IsFiniteMeasure μ] [IsFiniteMeasure ν]
-    {t : ℝ} (ht : 0 ≤ t) :
+/-- Additivity of the Laplace transform in the measure, wherever the kernel is integrable
+against both summands. -/
+lemma laplaceTransform_add_measure (μ ν : Measure ℝ≥0) {t : ℝ}
+    (hμ : Integrable (fun p : ℝ≥0 => Real.exp (-(t * (p : ℝ)))) μ)
+    (hν : Integrable (fun p : ℝ≥0 => Real.exp (-(t * (p : ℝ)))) ν) :
     laplaceTransform (μ + ν) t = laplaceTransform μ t + laplaceTransform ν t := by
   simp only [laplaceTransform_eq_mgf]
-  exact mgf_add_measure (Ici_subset_integrableExpSet μ ht) (Ici_subset_integrableExpSet ν ht)
+  exact mgf_add_measure (by simpa [integrableExpSet, mul_neg] using hμ)
+    (by simpa [integrableExpSet, mul_neg] using hν)
 
 /-- Scaling the measure by a finite scalar `c : ℝ≥0` scales the Laplace transform by `c`.
 
@@ -467,7 +469,7 @@ half-line. -/
 def RepresentsLaplace (μ : Measure ℝ≥0) (f : ℝ → ℝ) : Prop :=
   IsFiniteMeasure μ ∧ ∀ t : ℝ, 0 ≤ t → f t = laplaceTransform μ t
 
-/-- `RepresentsLaplace f μ` unfolds to finiteness of `μ` and equality with the Laplace transform
+/-- `RepresentsLaplace μ f` unfolds to finiteness of `μ` and equality with the Laplace transform
 on the nonnegative half-line. -/
 lemma representsLaplace_iff {f : ℝ → ℝ} {μ : Measure ℝ≥0} :
     RepresentsLaplace μ f ↔
@@ -502,7 +504,7 @@ protected lemma add {f g : ℝ → ℝ} {μ ν : Measure ℝ≥0}
   have := hg.isFiniteMeasure
   refine ⟨inferInstance, fun t ht => ?_⟩
   rw [Pi.add_apply, hf.eq_laplaceTransform ht, hg.eq_laplaceTransform ht,
-    laplaceTransform_add_measure μ ν ht]
+    laplaceTransform_add_measure μ ν (integrable_exp_neg_mul μ ht) (integrable_exp_neg_mul ν ht)]
 
 /-- Scaling a representing measure by `c : ℝ≥0` represents the scaled function. -/
 protected lemma smul {f : ℝ → ℝ} {μ : Measure ℝ≥0} (c : ℝ≥0)
