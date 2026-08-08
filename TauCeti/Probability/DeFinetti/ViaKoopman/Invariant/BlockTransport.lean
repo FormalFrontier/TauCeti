@@ -6,7 +6,8 @@ module
 
 public import TauCeti.Probability.Exchangeability.PathSpace.Invariant.Transport
 import TauCeti.Probability.Exchangeability.PermutationExtension
-public import TauCeti.Probability.Exchangeability.L2.LongTailAverages
+public import TauCeti.Probability.Process.BlockAverage
+import Mathlib.Algebra.BigOperators.Fin
 public import Mathlib.Dynamics.BirkhoffSum.Average
 
 /-!
@@ -23,6 +24,9 @@ process.
   event, a strictly increasing finite selection may be replaced by the prefix `0, 1, …, m - 1`.
 * `birkhoffAverage_shift_eq_prefixAverage` — the Birkhoff average of a coordinate observable *is*
   the prefix average of the process.
+
+`prefixAverage` comes from the neutral `Probability/Process/BlockAverage.lean`, so this module
+does not depend on the `L²` averaging library for a measure-free definition.
 
 The block comparison is the finite-selection form of
 `ContractableLaw.setLIntegral_comp_reindex_eq_of_measurableSet_invariants`, which transports an
