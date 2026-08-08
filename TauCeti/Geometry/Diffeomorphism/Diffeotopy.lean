@@ -368,33 +368,24 @@ private theorem toAmbientIsotopy_symm_apply (p : I × M) :
   rw [htotal]
   rfl
 
-private theorem ambientIsotopy_ext {F G : AmbientIsotopy M}
-    (h : F.toContinuousMap = G.toContinuousMap) : F = G := by
-  cases F
-  cases G
-  cases h
-  rfl
-
 /-- Forgetting the constant diffeotopy gives the constant ambient isotopy. -/
 @[simp]
 theorem toAmbientIsotopy_refl [IsManifold J ∞ M] :
     (refl (J := J) (M := M)).toAmbientIsotopy = AmbientIsotopy.refl M := by
-  apply ambientIsotopy_ext
-  ext p
-  exact toAmbientIsotopy_refl_apply p
+  rfl
 
 /-- Forgetting pointwise composition of diffeotopies preserves composition. -/
 @[simp]
 theorem toAmbientIsotopy_trans [IsManifold J ∞ M] (Psi : Diffeotopy J M) :
     (Phi.trans Psi).toAmbientIsotopy = Phi.toAmbientIsotopy.trans Psi.toAmbientIsotopy := by
-  apply ambientIsotopy_ext
+  rw [toAmbientIsotopy.eq_def, AmbientIsotopy.trans.eq_def, AmbientIsotopy.mk.injEq]
   ext p
   exact Phi.toAmbientIsotopy_trans_apply Psi p
 
 /-- Forgetting pointwise inversion of a diffeotopy preserves inversion. -/
 @[simp]
 theorem toAmbientIsotopy_symm : Phi.symm.toAmbientIsotopy = Phi.toAmbientIsotopy.symm := by
-  apply ambientIsotopy_ext
+  rw [toAmbientIsotopy.eq_def, AmbientIsotopy.symm.eq_def, AmbientIsotopy.mk.injEq]
   ext p
   exact Phi.toAmbientIsotopy_symm_apply p
 
