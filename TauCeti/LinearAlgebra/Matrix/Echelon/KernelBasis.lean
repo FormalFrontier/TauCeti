@@ -90,8 +90,9 @@ instance (L : List (Fin n → F)) : DecidablePred (IsFreeColumn L) := fun j =>
 
 variable (L : List (Fin n → F))
 
-/-- The pivot column of a reduced row is the column `TauCeti.rowReducePivot` records. -/
-@[simp]
+/-- The pivot column of a reduced row is the column `TauCeti.rowReducePivot` records. Not `simp`:
+`TauCeti.rowReducePivot_apply` already rewrites this left-hand side, to the unbundled
+`((rowReduce L).get i).1`. -/
 theorem rowReducePivot_eq_pivotColumn (i : Fin (rowReduce L).length) :
     rowReducePivot L i = (pivotColumn L i : WithTop (Fin n)) :=
   rowReducePivot_apply L i
