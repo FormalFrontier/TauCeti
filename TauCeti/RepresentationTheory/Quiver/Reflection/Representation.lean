@@ -28,7 +28,7 @@ reflection `sᵢ` of `TauCeti.RepresentationTheory.Quiver.Reflection.DimensionVe
 summing map is surjective: the reflected space at `i` then has dimension
 `∑_b #(b ⟶ i) · dim M_b - dim Mᵢ`, which is exactly `sᵢ` applied to the dimension vector of `M`,
 because a sink has no outgoing arrow. Surjectivity is the honest hypothesis here and it is not
-automatic: it fails exactly the way `TauCeti.not_surjective_incomingSum` records, for a
+automatic: it fails exactly the way `TauCeti.incomingSum_not_surjective` records, for a
 representation concentrated at `i`, of which the vertex simple `Sᵢ` is the example. The reflection
 kills such a representation, by `TauCeti.subsingleton_reflectRep_obj_self`.
 
@@ -36,39 +36,38 @@ kills such a representation, by `TauCeti.subsingleton_reflectRep_obj_self`.
 
 * `TauCeti.incomingSum`: the map `⨁_{a : b ⟶ i} M_b → Mᵢ` summing the arrows into a vertex,
   defined at every vertex of every representation.
-* `TauCeti.reflectRepObj`: the vertex spaces of the reflected representation.
 * `TauCeti.reflectRep`: the reflection `C⁺ᵢ M` of a representation at a sink `i`, a
   representation of `TauCeti.Quiver.Reflect Q i`.
 
 ## Main results
 
 * `TauCeti.reflectRep_obj_self` and `TauCeti.reflectRep_obj_of_ne`: the vertex spaces of `C⁺ᵢ M`.
-* `TauCeti.reflectRep_map_reflectArrow` and `TauCeti.reflectRep_map_arrow`: the action of a
-  reversed arrow, by a coordinate projection out of the kernel, and of an arrow away from `i`,
+* `TauCeti.reflectRep_map_reflectArrow` and `TauCeti.reflectRep_map_reflectArrowOfNe`: the action
+  of a reversed arrow, by a coordinate projection out of the kernel, and of an arrow away from `i`,
   unchanged.
 * `TauCeti.dimVector_reflectRep_of_ne` and `TauCeti.dimVector_reflectRep_self_add`: the dimension
   vector of `C⁺ᵢ M`, away from `i` and at `i`.
 * `TauCeti.dimVector_reflectRep`: `dim (C⁺ᵢ M) = sᵢ (dim M)` when the summing map is surjective.
-* `TauCeti.not_surjective_incomingSum`: that surjectivity fails for a representation concentrated
+* `TauCeti.incomingSum_not_surjective`: that surjectivity fails for a representation concentrated
   at `i`, and `TauCeti.subsingleton_reflectRep_obj_self`: the reflection kills such a
   representation. Together they are the vertex simple `Sᵢ`, the boundary case of the previous
   result.
 
 ## Implementation notes
 
-The vertex spaces branch on equality with `i`, so `TauCeti.reflectRepObj` is written with an `if`
-and is decided classically; no `DecidableEq Q` instance therefore appears in the interface of the
-construction, exactly as for `TauCeti.simpleRep`. Only the statements naming
-`TauCeti.vertexPreReflection` assume `DecidableEq Q`, because `Pi.single` needs one.
+The vertex spaces branch on equality with `i`, so they are written with an `if` and decided
+classically; no `DecidableEq Q` instance therefore appears in the interface of the construction,
+exactly as for `TauCeti.simpleRep`. Only the statements naming `TauCeti.vertexPreReflection` assume
+`DecidableEq Q`, because `Pi.single` needs one.
 
-`TauCeti.reflectRep` exposes its body: the two computation rules for the vertex spaces are
-definitional unfoldings of that `if`, and there is no way to state them otherwise. Their
-consequences are what downstream files should use.
+The vertex spaces and the prefunctor that `TauCeti.reflectRep` lifts are private, and
+`TauCeti.reflectRep` does not expose its body: the `reflectRep_obj_*` and `reflectRep_map_*`
+theorems are the whole interface, and they are what downstream files should use.
 
 The arrows of `TauCeti.Quiver.Reflect Q i` are given by `TauCeti.Quiver.reflectHom`, which is
 again an `if` on equality with `i`, so an arrow of the reflected quiver is a *cast* of an arrow of
-`Q`: `TauCeti.reflectArrow` and `TauCeti.unreflectArrow` name the two casts used below, and the
-computation rules for the action are stated on them. Both branches at `i` that a general vertex
+`Q`: `TauCeti.Quiver.reflectArrow` and `TauCeti.Quiver.reflectArrowOfNe` name the two casts, and
+the computation rules for the action are stated on them. Both branches at `i` that a general vertex
 would allow are impossible at a sink -- the reflected quiver has no arrow into `i` and `i` carries
 no loop -- and the definition discharges them from `TauCeti.Quiver.IsSink`.
 
@@ -123,51 +122,26 @@ theorem incomingSum_apply (M : QuiverRep.{u, v, w, max v w x} k Q) (i : Q)
     incomingSum M i f = ∑ e : Σ b : Q, (b ⟶ i), (M.map e.2.toPath).hom (f e) := by
   simp [incomingSum]
 
-/-- The source of `TauCeti.incomingSum` has dimension `∑_b #(b ⟶ i) · dim M_b`. -/
+/-- The source of `TauCeti.incomingSum` has dimension `∑_b #(b ⟶ i) · dim M_b`. Only the vertex
+spaces at the sources of arrows into `i` need be finite-dimensional; they are the only ones the
+domain is built from. -/
 theorem finrank_forall_incoming (M : QuiverRep.{u, v, w, max v w x} k Q) (i : Q)
-    (hM : ∀ j : Q, FiniteDimensional k (M.obj j)) :
+    (hM : ∀ e : Σ b : Q, (b ⟶ i), FiniteDimensional k (M.obj e.1)) :
     Module.finrank k ((e : Σ b : Q, (b ⟶ i)) → M.obj e.1)
       = ∑ b : Q, Fintype.card (b ⟶ i) * Module.finrank k (M.obj b) := by
-  have : ∀ e : Σ b : Q, (b ⟶ i), FiniteDimensional k (M.obj e.1) := fun e ↦ hM e.1
-  rw [Module.finrank_pi_fintype, Fintype.sum_sigma]
-  refine Finset.sum_congr rfl fun b _ ↦ ?_
-  change ∑ _y : (b ⟶ i), Module.finrank k (M.obj b)
-      = Fintype.card (b ⟶ i) * Module.finrank k (M.obj b)
-  rw [Finset.sum_const, Finset.card_univ, smul_eq_mul]
+  -- The summand depends only on the source vertex, so record first, for an arbitrary
+  -- `g : Q → ℕ`, that summing `g` over the arrows into `i` weights each vertex by its arrow
+  -- count. Stating that for a function on `Q` keeps the identification of `Q` with
+  -- `CategoryTheory.Paths Q` out of the way: `M.obj e.1` is type-correct only up to unfolding
+  -- `CategoryTheory.Paths`, which blocks a rewrite under the sigma projection.
+  have key : ∀ g : Q → ℕ,
+      (∑ e : Σ b : Q, (b ⟶ i), g e.1) = ∑ b : Q, Fintype.card (b ⟶ i) * g b := fun g ↦ by
+    rw [Fintype.sum_sigma]
+    exact Finset.sum_congr rfl fun b _ ↦ by simp
+  rw [Module.finrank_pi_fintype]
+  exact key fun b ↦ Module.finrank k (M.obj b)
 
 end IncomingSum
-
-/-! ### The arrows of the reflected quiver, named -/
-
-section Arrows
-
-/-- An arrow `b ⟶ i` of `Q`, read as the reversed arrow `i ⟶ b` of the reflected quiver. -/
-def reflectArrow (i : Q) {b : Q} (e : b ⟶ i) :
-    @_root_.Quiver.Hom (Reflect Q i) (reflectQuiver i) i b :=
-  cast ((hom_reflect i i b).trans (reflectHom_left i b)).symm e
-
-/-- An arrow `a ⟶ b` of `Q` between two vertices other than `i`, read as an arrow of the reflected
-quiver, where it is untouched. -/
-def unreflectArrow {i a b : Q} (ha : a ≠ i) (hb : b ≠ i) (e : a ⟶ b) :
-    @_root_.Quiver.Hom (Reflect Q i) (reflectQuiver i) a b :=
-  cast ((hom_reflect i a b).trans (reflectHom_of_ne_of_ne ha hb)).symm e
-
-/-- Casting a reversed arrow back to `Q` recovers the arrow it came from. Stated for an arbitrary
-proof of the type equality, since the definition of the reflection produces its own. -/
-@[simp]
-theorem cast_reflectArrow (i : Q) {b : Q} (e : b ⟶ i)
-    (h : @_root_.Quiver.Hom (Reflect Q i) (reflectQuiver i) i b = (b ⟶ i)) :
-    cast h (reflectArrow i e) = e :=
-  (cast_cast _ _ _).trans (cast_eq _ _)
-
-/-- Casting an arrow away from `i` back to `Q` recovers the arrow it came from. -/
-@[simp]
-theorem cast_unreflectArrow {i a b : Q} (ha : a ≠ i) (hb : b ≠ i) (e : a ⟶ b)
-    (h : @_root_.Quiver.Hom (Reflect Q i) (reflectQuiver i) a b = (a ⟶ b)) :
-    cast h (unreflectArrow ha hb e) = e :=
-  (cast_cast _ _ _).trans (cast_eq _ _)
-
-end Arrows
 
 /-! ### The reflected representation -/
 
@@ -176,31 +150,35 @@ section ReflectRep
 variable [Fintype Q] [∀ a b : Q, Fintype (a ⟶ b)]
 
 open scoped Classical in
-/-- **The vertex spaces of the reflected representation**: the kernel of `TauCeti.incomingSum` at
-`i`, and the vertex spaces of `M` everywhere else. -/
-noncomputable def reflectRepObj (M : QuiverRep.{u, v, w, max v w x} k Q) (i j : Q) :
+/-- The vertex spaces of the reflected representation: the kernel of `TauCeti.incomingSum` at `i`,
+and the vertex spaces of `M` everywhere else. An implementation helper for
+`TauCeti.reflectRep`, whose vertex spaces are described by `TauCeti.reflectRep_obj_self` and
+`TauCeti.reflectRep_obj_of_ne`. -/
+private noncomputable def reflectRepObj (M : QuiverRep.{u, v, w, max v w x} k Q) (i j : Q) :
     ModuleCat.{max v w x} k :=
   if j = i then ModuleCat.of k (LinearMap.ker (incomingSum M i)) else M.obj j
 
 /-- At the reflected vertex the vertex space is the kernel of `TauCeti.incomingSum`. -/
-theorem reflectRepObj_self (M : QuiverRep.{u, v, w, max v w x} k Q) (i : Q) :
+private theorem reflectRepObj_self (M : QuiverRep.{u, v, w, max v w x} k Q) (i : Q) :
     reflectRepObj M i i = ModuleCat.of k (LinearMap.ker (incomingSum M i)) :=
   if_pos rfl
 
 /-- Away from the reflected vertex the vertex spaces are those of `M`. -/
-theorem reflectRepObj_of_ne (M : QuiverRep.{u, v, w, max v w x} k Q) (i : Q) {j : Q} (h : j ≠ i) :
-    reflectRepObj M i j = M.obj j :=
+private theorem reflectRepObj_of_ne (M : QuiverRep.{u, v, w, max v w x} k Q) (i : Q) {j : Q}
+    (h : j ≠ i) : reflectRepObj M i j = M.obj j :=
   if_neg h
 
 open scoped Classical in
-/-- **The prefunctor underlying the reflection at a sink**: the vertex spaces of
-`TauCeti.reflectRepObj`, together with the action of a single arrow of the reflected quiver. A
-reversed arrow acts by the matching coordinate projection out of the kernel at `i`; every other
-arrow acts as it does in `M`.
+/-- The prefunctor underlying the reflection at a sink: the vertex spaces of `reflectRepObj`,
+together with the action of a single arrow of the reflected quiver. A reversed arrow acts by the
+matching coordinate projection out of the kernel at `i`; every other arrow acts as it does in `M`.
 
 At a sink the reflected quiver has no arrow into `i` and no loop at `i`, so those two branches are
-impossible and are discharged from the hypothesis. -/
-@[expose] noncomputable def reflectPrefunctor (M : QuiverRep.{u, v, w, max v w x} k Q) {i : Q}
+impossible and are discharged from the hypothesis.
+
+An implementation helper for `TauCeti.reflectRep`, whose action is described by
+`TauCeti.reflectRep_map_reflectArrow` and `TauCeti.reflectRep_map_reflectArrowOfNe`. -/
+private noncomputable def reflectPrefunctor (M : QuiverRep.{u, v, w, max v w x} k Q) {i : Q}
     (hi : IsSink i) : Reflect Q i ⥤q ModuleCat.{max v w x} k where
   obj j := reflectRepObj M i j
   map {a b} e :=
@@ -225,30 +203,32 @@ impossible and are discharged from the hypothesis. -/
 reflected quiver `TauCeti.Quiver.Reflect Q i` that agrees with `M` away from `i`, puts the kernel
 of `TauCeti.incomingSum` at `i`, and lets each reversed arrow act by the matching coordinate
 projection out of that kernel. -/
-@[expose] noncomputable def reflectRep (M : QuiverRep.{u, v, w, max v w x} k Q) {i : Q}
+noncomputable def reflectRep (M : QuiverRep.{u, v, w, max v w x} k Q) {i : Q}
     (hi : IsSink i) : QuiverRep k (Reflect Q i) :=
   Paths.lift (reflectPrefunctor M hi)
 
 variable (M : QuiverRep.{u, v, w, max v w x} k Q) {i : Q} (hi : IsSink i)
 
-/-- The vertex spaces of the reflection are `TauCeti.reflectRepObj`. -/
-theorem reflectRep_obj (j : Reflect Q i) : (reflectRep M hi).obj j = reflectRepObj M i j :=
+/-- The vertex spaces of the reflection are those of the prefunctor it is lifted from. -/
+private theorem reflectRep_obj (j : Reflect Q i) : (reflectRep M hi).obj j = reflectRepObj M i j :=
   rfl
 
-/-- A single arrow of the reflected quiver acts through `TauCeti.reflectPrefunctor`. -/
-theorem reflectRep_map_toPath {a b : Reflect Q i} (e : a ⟶ b) :
+/-- A single arrow of the reflected quiver acts through the prefunctor. -/
+private theorem reflectRep_map_toPath {a b : Reflect Q i} (e : a ⟶ b) :
     (reflectRep M hi).map e.toPath = (reflectPrefunctor M hi).map e :=
   Paths.lift_toPath _ e
 
 /-- **The reflected representation at the reflected vertex** is the kernel of the sum of the
 arrows into `i`. -/
+@[simp]
 theorem reflectRep_obj_self :
     (reflectRep M hi).obj i = ModuleCat.of k (LinearMap.ker (incomingSum M i)) :=
-  reflectRepObj_self M i
+  (reflectRep_obj M hi i).trans (reflectRepObj_self M i)
 
 /-- Away from `i` the reflected representation is unchanged. -/
+@[simp]
 theorem reflectRep_obj_of_ne {j : Q} (h : j ≠ i) : (reflectRep M hi).obj j = M.obj j :=
-  reflectRepObj_of_ne M i h
+  (reflectRep_obj M hi j).trans (reflectRepObj_of_ne M i h)
 
 /-- **A reversed arrow acts by a coordinate projection.** The arrow `i ⟶ b` of the reflected
 quiver coming from an arrow `e : b ⟶ i` of `Q` sends an element of the kernel at `i` to its
@@ -266,15 +246,15 @@ theorem reflectRep_map_reflectArrow {b : Q} (hb : b ≠ i) (e : b ⟶ i) :
   rfl
 
 /-- **An arrow away from the reflected vertex acts unchanged.** -/
-theorem reflectRep_map_arrow {a b : Q} (ha : a ≠ i) (hb : b ≠ i) (e : a ⟶ b) :
-    (reflectRep M hi).map (unreflectArrow ha hb e).toPath
+theorem reflectRep_map_reflectArrowOfNe {a b : Q} (ha : a ≠ i) (hb : b ≠ i) (e : a ⟶ b) :
+    (reflectRep M hi).map (reflectArrowOfNe ha hb e).toPath
       = eqToHom (reflectRep_obj_of_ne M hi ha) ≫ M.map e.toPath ≫
         eqToHom (reflectRep_obj_of_ne M hi hb).symm := by
   classical
   refine ((reflectRep_map_toPath (a := a) (b := b) M hi
-    (unreflectArrow ha hb e)).trans (dif_neg hb)).trans ?_
+    (reflectArrowOfNe ha hb e)).trans (dif_neg hb)).trans ?_
   refine (dif_neg ha).trans ?_
-  conv_lhs => rw [cast_unreflectArrow]
+  conv_lhs => rw [cast_reflectArrowOfNe]
   rfl
 
 end ReflectRep
@@ -287,6 +267,7 @@ variable [Fintype Q] [∀ a b : Q, Fintype (a ⟶ b)]
 variable (M : QuiverRep.{u, v, w, max v w x} k Q) {i : Q} (hi : IsSink i)
 
 /-- Away from the reflected vertex the dimension vector is unchanged. -/
+@[simp]
 theorem dimVector_reflectRep_of_ne {j : Q} (h : j ≠ i) :
     dimVector (reflectRep M hi) j = dimVector M j := by
   rw [dimVector_apply (M := reflectRep M hi) (i := j), dimVector_apply]
@@ -295,12 +276,14 @@ theorem dimVector_reflectRep_of_ne {j : Q} (h : j ≠ i) :
 
 /-- **The dimension of the reflected space at the sink.** When the sum of the arrows into `i` is
 onto, rank-nullity turns the kernel that the reflection puts at `i` into the arrow count
-`∑_b #(b ⟶ i) · dim M_b` less the old dimension at `i`. -/
-theorem dimVector_reflectRep_self_add (hM : ∀ j : Q, FiniteDimensional k (M.obj j))
+`∑_b #(b ⟶ i) · dim M_b` less the old dimension at `i`. Only the vertex spaces at the sources of
+arrows into `i` need be assumed finite-dimensional; surjectivity exhibits `Mᵢ` as a quotient of
+the resulting finite-dimensional domain. -/
+theorem dimVector_reflectRep_self_add
+    (hM : ∀ e : Σ b : Q, (b ⟶ i), FiniteDimensional k (M.obj e.1))
     (hs : Function.Surjective (incomingSum M i)) :
     dimVector (reflectRep M hi) i + dimVector M i
       = ∑ b : Q, Fintype.card (b ⟶ i) * dimVector M b := by
-  have hfin : ∀ e : Σ b : Q, (b ⟶ i), FiniteDimensional k (M.obj e.1) := fun e ↦ hM e.1
   have hker : dimVector (reflectRep M hi) i
       = Module.finrank k (LinearMap.ker (incomingSum M i)) := by
     rw [dimVector_apply (M := reflectRep M hi) (i := i)]
@@ -326,7 +309,7 @@ theorem dimVector_reflectRep [DecidableEq Q] (hM : ∀ j : Q, FiniteDimensional 
   · have hzero : ∀ v : Q, Fintype.card (j ⟶ v) = 0 := fun v ↦
       Fintype.card_eq_zero_iff.mpr (hi.isEmpty_hom v)
     rw [vertexPreReflection_apply_self]
-    have h := dimVector_reflectRep_self_add M hi hM hs
+    have h := dimVector_reflectRep_self_add M hi (fun e ↦ hM e.1) hs
     have h' : ((dimVector (reflectRep M hi) j : ℤ)) + (dimVector M j : ℤ)
         = ∑ b : Q, ((Fintype.card (b ⟶ j) : ℤ) * (dimVector M b : ℤ)) := by
       exact_mod_cast congrArg (fun n : ℕ ↦ (n : ℤ)) h
@@ -362,7 +345,7 @@ space at the source of an arrow into `i` vanishes while the space at `i` does no
 the vertex simple `Sᵢ` does at a sink: no arrow into a sink is a loop, so `Sᵢ` vanishes at every
 source of such an arrow. This is why the surjectivity hypothesis of
 `TauCeti.dimVector_reflectRep` cannot be dropped. -/
-theorem not_surjective_incomingSum (i : Q) (h : ∀ b : Q, (b ⟶ i) → Subsingleton (M.obj b))
+theorem incomingSum_not_surjective (i : Q) (h : ∀ b : Q, (b ⟶ i) → Subsingleton (M.obj b))
     (hne : Nontrivial (M.obj i)) : ¬ Function.Surjective (incomingSum M i) := by
   have := hne
   obtain ⟨y, hy⟩ := exists_ne (0 : M.obj i)
