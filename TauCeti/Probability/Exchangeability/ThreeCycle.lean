@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Probability.Exchangeability.Contractability
-public import TauCeti.Probability.Exchangeability.PathSpace.Shift
+public import TauCeti.Probability.Exchangeability.PathSpace.Shift.Basic
 public import Mathlib.MeasureTheory.Group.Measure
 public import Mathlib.Probability.UniformOn
 public import Mathlib.Data.ZMod.Basic

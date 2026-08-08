@@ -22,7 +22,7 @@ process.
 The Birkhoff/prefix-average bridge these results are read against is neutral process material and
 lives outside this route — `birkhoffAverage_eq_prefixAverage` in
 `Probability/Process/BlockAverage.lean`, and its shift instance
-`birkhoffAverage_shift_eq_prefixAverage` in `Exchangeability/PathSpace/ShiftAverage.lean`. This
+`birkhoffAverage_shift_eq_prefixAverage` in `Exchangeability/PathSpace/Shift/Average.lean`. This
 module does not import either: a consumer wanting them should import those modules directly.
 
 `prefixAverage` comes from the neutral `Probability/Process/BlockAverage.lean`, so this module
