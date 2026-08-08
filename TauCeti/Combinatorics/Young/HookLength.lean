@@ -6,7 +6,7 @@ module
 
 public import Mathlib.Algebra.BigOperators.Intervals
 public import Mathlib.Data.Nat.Factorial.BigOperators
-public import TauCeti.Combinatorics.Young.Diagram
+public import TauCeti.Combinatorics.Young.Corner
 
 /-!
 # Hooks and hook lengths of a Young diagram
@@ -38,7 +38,7 @@ for such a junk value carry the hypothesis `c ∈ μ` explicitly.
 * `TauCeti.YoungDiagram.hookLength_transpose`: transposition preserves hook lengths.
 * `TauCeti.YoungDiagram.hookLength_eq_one_iff`: a cell has hook length `1` exactly when neither the
   cell to its right nor the cell below it lies in the diagram; for a cell of the diagram this says
-  that it is a corner.
+  that it is a corner, which is `TauCeti.YoungDiagram.isCorner_iff_hookLength_eq_one`.
 * `TauCeti.YoungDiagram.prod_hookLength_eq_factorial_of_colLen_le_one`: the hook lengths of a
   one-row diagram multiply to `μ.card !`.
 
@@ -257,6 +257,10 @@ theorem hookLength_eq_one_iff :
     hookLength μ c = 1 ↔ (c.1, c.2 + 1) ∉ μ ∧ (c.1 + 1, c.2) ∉ μ := by
   rw [← armLength_eq_zero_iff, ← legLength_eq_zero_iff, hookLength_def]
   omega
+
+/-- The corners of `μ` are its cells of hook length `1`. -/
+theorem isCorner_iff_hookLength_eq_one : IsCorner μ c ↔ c ∈ μ ∧ hookLength μ c = 1 := by
+  rw [isCorner_def, hookLength_eq_one_iff]
 
 /-- Hook lengths strictly decrease from left to right along a row. -/
 theorem hookLength_lt_hookLength_of_col_lt (μ : YoungDiagram) {i j₁ j₂ : ℕ}

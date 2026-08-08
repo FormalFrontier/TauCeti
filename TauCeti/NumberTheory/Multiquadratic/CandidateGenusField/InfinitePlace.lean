@@ -1,0 +1,46 @@
+/-
+Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+-/
+module
+
+public import TauCeti.NumberTheory.Multiquadratic.CandidateGenusField.Degree
+public import TauCeti.NumberTheory.NumberField.InfinitePlace
+
+/-!
+# The candidate genus field of an imaginary quadratic field is totally complex
+
+For squarefree `d`, `candidateGenusField hd` is a finite extension of `ℚ` inside `ℂ`, hence a number
+field. When `d < 0` it contains a square root of `d < 0`
+(`exists_mem_candidateGenusField_sq_eq`), so no embedding into `ℂ` is real and it is totally
+complex — a special case of `TauCeti.NumberField.isTotallyComplex_of_sq_ratCast_of_neg`.
+
+Total complexity is the archimedean input to the genus-field identification in the imaginary case:
+a totally complex field has no real infinite places. Deducing infinite-place unramifiedness of the
+candidate genus field over its base `ℚ(√d)` is later work.
+
+## Main results
+
+* `TauCeti.Multiquadratic.isTotallyComplex_candidateGenusField`: for `d < 0` the candidate genus
+  field is totally complex. (Its `NumberField` instance lives in `CandidateGenusField/Degree`.)
+-/
+
+public section
+
+open NumberField
+
+namespace TauCeti.Multiquadratic
+
+/-- **The candidate genus field of an imaginary quadratic field is totally complex.** For squarefree
+`d < 0`, `candidateGenusField hd` contains a square root of the negative rational `d`, so no
+embedding into `ℂ` is real. -/
+theorem isTotallyComplex_candidateGenusField {d : ℤ} (hd : Squarefree d) (hneg : d < 0) :
+    IsTotallyComplex (candidateGenusField hd) := by
+  obtain ⟨x, hxmem, hx2⟩ := exists_mem_candidateGenusField_sq_eq hd
+  refine TauCeti.NumberField.isTotallyComplex_of_sq_ratCast_of_neg
+    (x := (⟨x, hxmem⟩ : candidateGenusField hd)) (r := ((d : ℤ) : ℚ)) ?_ (by exact_mod_cast hneg)
+  apply Subtype.ext
+  push_cast
+  exact_mod_cast hx2
+
+end TauCeti.Multiquadratic
