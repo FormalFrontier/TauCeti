@@ -195,10 +195,7 @@ theorem memLp_two_twoPiHermiteFunction (n : ℕ) :
   refine hdil.congr (Filter.Eventually.of_forall fun x => ?_)
   have hs : Real.sqrt (Real.sqrt (2 * Real.pi)) ^ 2 = Real.sqrt (2 * Real.pi) :=
     Real.sq_sqrt (Real.sqrt_nonneg _)
-  -- Unfold the dilated square and its Jacobian before expanding `twoPiHermiteFunction`.
-  change Real.sqrt (2 * Real.pi) * hermiteFunction n (Real.sqrt (2 * Real.pi) * x) ^ 2
-      = twoPiHermiteFunction n x ^ 2
-  rw [twoPiHermiteFunction_def, mul_pow, hs]
+  simp only [twoPiHermiteFunction_def, mul_pow, hs]
 
 section Basis
 
@@ -379,6 +376,7 @@ theorem hasSum_fourier_twoPiHermiteFunctionLp (f : Lp ℂ 2 (volume : Measure �
 /-- **Diagonalization, coefficient form.** Passing to the Fourier transform multiplies the `n`-th
 Hermite coefficient by `(-i)ⁿ`. This is the statement that the matrix of the Fourier transform in
 the rescaled Hermite basis is the diagonal matrix `diag((-i)ⁿ)`. -/
+@[simp]
 theorem repr_fourier_twoPiHermiteHilbertBasis (f : Lp ℂ 2 (volume : Measure ℝ)) (n : ℕ) :
     (twoPiHermiteHilbertBasis ℂ).repr (𝓕 f) n
       = (-Complex.I) ^ n * (twoPiHermiteHilbertBasis ℂ).repr f n := by
@@ -396,14 +394,15 @@ theorem repr_fourier_twoPiHermiteHilbertBasis (f : Lp ℂ 2 (volume : Measure �
 /-- **The fourth iterate of the Fourier transform of `L²(ℝ; ℂ)` is the identity.** Each eigenvalue
 `(-i)ⁿ` is a fourth root of unity, so the fourth iterate fixes every basis vector, hence all of
 `L²(ℝ)`. -/
+@[simp]
 theorem fourier_fourier_fourier_fourier (f : Lp ℂ 2 (volume : Measure ℝ)) :
     𝓕 (𝓕 (𝓕 (𝓕 f))) = f := by
   have hI : (-Complex.I) ^ 4 = 1 := by
     have h2 : (-Complex.I) ^ 2 = -1 := by
       rw [neg_pow]
       simp [Complex.I_sq]
-    -- Regroup the fourth power as the square of the square so that `h2` applies.
-    rw [show (4 : ℕ) = 2 * 2 from rfl, pow_mul, h2]
+    have hfour : (4 : ℕ) = 2 * 2 := by norm_num
+    rw [hfour, pow_mul, h2]
     norm_num
   have hstep : ∀ (a : ℂ) (n : ℕ), 𝓕 (a • twoPiHermiteFunctionLp ℂ n)
       = (a * (-Complex.I) ^ n) • twoPiHermiteFunctionLp ℂ n := by
@@ -413,9 +412,8 @@ theorem fourier_fourier_fourier_fourier (f : Lp ℂ 2 (volume : Measure ℝ)) :
       = twoPiHermiteFunctionLp ℂ n := by
     intro n
     have hpow : (-Complex.I) ^ n * (-Complex.I) ^ n * (-Complex.I) ^ n * (-Complex.I) ^ n = 1 := by
-      -- Combine the four copies of `n` into `4 * n` to use the fourth-root identity `hI`.
-      rw [← pow_add, ← pow_add, ← pow_add, show n + n + n + n = 4 * n by ring, pow_mul, hI,
-        one_pow]
+      have hadd : n + n + n + n = 4 * n := by omega
+      rw [← pow_add, ← pow_add, ← pow_add, hadd, pow_mul, hI, one_pow]
     calc 𝓕 (𝓕 (𝓕 (𝓕 (twoPiHermiteFunctionLp ℂ n))))
         = 𝓕 (𝓕 (𝓕 ((-Complex.I) ^ n • twoPiHermiteFunctionLp ℂ n))) := by
           rw [fourier_twoPiHermiteFunctionLp]
