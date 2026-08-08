@@ -7,11 +7,11 @@ module
 
 public import TauCeti.RepresentationTheory.Induction.VirtualCharacter
 public import TauCeti.RepresentationTheory.Induction.Spanning
-public import Mathlib.LinearAlgebra.Dimension.OrzechProperty
-public import Mathlib.LinearAlgebra.Dimension.StrongRankCondition
-public import Mathlib.LinearAlgebra.LinearIndependent.Lemmas
-public import Mathlib.LinearAlgebra.Matrix.Adjugate
-public import Mathlib.LinearAlgebra.Matrix.Basis
+import Mathlib.LinearAlgebra.Dimension.OrzechProperty
+import Mathlib.LinearAlgebra.Dimension.StrongRankCondition
+import Mathlib.LinearAlgebra.LinearIndependent.Lemmas
+import Mathlib.LinearAlgebra.Matrix.Adjugate
+import Mathlib.LinearAlgebra.Matrix.Basis
 
 /-!
 # Artin's induction theorem, rational form
