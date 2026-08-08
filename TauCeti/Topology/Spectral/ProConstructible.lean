@@ -180,20 +180,6 @@ theorem IsProConstructible.preimage {f : X → Y} {s : Set Y} (hs : IsProConstru
       (IsSpectralMap.continuous_constructibleTopology hf) s
       (isProConstructible_iff_isClosed.1 hs))
 
-/-- The first projection off a product with a quasi-compact factor is a spectral map. -/
-theorem isSpectralMap_fst [CompactSpace Y] : IsSpectralMap (Prod.fst : X × Y → X) where
-  toContinuous := continuous_fst
-  isCompact_preimage_of_isOpen := fun _ _ hUc ↦ by
-    rw [← Set.prod_univ]
-    exact hUc.prod isCompact_univ
-
-/-- The second projection off a product with a quasi-compact factor is a spectral map. -/
-theorem isSpectralMap_snd [CompactSpace X] : IsSpectralMap (Prod.snd : X × Y → Y) where
-  toContinuous := continuous_snd
-  isCompact_preimage_of_isOpen := fun _ _ hUc ↦ by
-    rw [← Set.univ_prod]
-    exact isCompact_univ.prod hUc
-
 /-- Evaluation at a coordinate is a spectral map on a product of quasi-compact spaces. -/
 theorem isSpectralMap_eval {ι : Type*} {Z : ι → Type*} [∀ i, TopologicalSpace (Z i)]
     [∀ i, CompactSpace (Z i)] (i : ι) : IsSpectralMap (fun f : ∀ i, Z i ↦ f i) where
@@ -212,7 +198,8 @@ theorem isSpectralMap_eval {ι : Type*} {Z : ι → Type*} [∀ i, TopologicalSp
 theorem IsProConstructible.prod [CompactSpace X] [CompactSpace Y] {s : Set X} {t : Set Y}
     (hs : IsProConstructible s) (ht : IsProConstructible t) : IsProConstructible (s ×ˢ t) := by
   rw [Set.prod_eq]
-  exact (hs.preimage isSpectralMap_fst).inter (ht.preimage isSpectralMap_snd)
+  exact (hs.preimage isProperMap_fst_of_compactSpace.isSpectralMap).inter
+    (ht.preimage isProperMap_snd_of_compactSpace.isSpectralMap)
 
 /-- A product of a family of pro-constructible subsets is pro-constructible. -/
 theorem IsProConstructible.pi {ι : Type*} {Z : ι → Type*} [∀ i, TopologicalSpace (Z i)]
