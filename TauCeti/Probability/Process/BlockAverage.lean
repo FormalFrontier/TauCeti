@@ -7,6 +7,8 @@ module
 public import Mathlib.Algebra.BigOperators.Expect
 public import Mathlib.Algebra.BigOperators.Ring.Finset
 public import Mathlib.Data.Real.Basic
+public import Mathlib.Dynamics.BirkhoffSum.Average
+import Mathlib.Algebra.BigOperators.Fin
 
 /-!
 # Block averages of a real-valued process
@@ -111,6 +113,18 @@ theorem prod_blockAverage_eq_expect {m N : ℕ} (Y : Fin m → ℕ → Ω → �
   simp only [Fintype.card_pi, Fintype.card_fin, Finset.prod_const, card_univ, div_eq_inv_mul]
   push_cast
   simp [inv_pow]
+
+/-- **A Birkhoff average is a prefix average of the iterated observable.** For any self-map `T` and
+any real observable `F`, `birkhoffAverage ℝ T F n` is the prefix average of `i ↦ F ∘ T^[i]`.
+
+Nothing about the shift or about coordinate observables enters: both sides are the same
+normalised sum. -/
+theorem birkhoffAverage_eq_prefixAverage {Ω : Type*} (T : Ω → Ω) (F : Ω → ℝ) (n : ℕ) :
+    birkhoffAverage ℝ T F n = prefixAverage (fun i (x : Ω) => F (T^[i] x)) n := by
+  funext x
+  rw [birkhoffAverage, birkhoffSum, prefixAverage_apply, smul_eq_mul]
+  congr 1
+  exact Finset.sum_range fun i => F (T^[i] x)
 
 end Probability
 

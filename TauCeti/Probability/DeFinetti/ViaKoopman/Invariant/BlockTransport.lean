@@ -6,7 +6,7 @@ module
 
 public import TauCeti.Probability.Exchangeability.PathSpace.Invariant.Transport
 import TauCeti.Probability.Exchangeability.PermutationExtension
-public import TauCeti.Probability.Process.BlockAverage
+public import TauCeti.Probability.Exchangeability.PathSpace.ShiftAverage
 import Mathlib.Algebra.BigOperators.Fin
 public import Mathlib.Dynamics.BirkhoffSum.Average
 
@@ -22,9 +22,10 @@ process.
 
 * `ContractableLaw.setLIntegral_block_eq_prefix_of_measurableSet_invariants` — over an invariant
   event, a strictly increasing finite selection may be replaced by the prefix `0, 1, …, m - 1`.
-* `birkhoffAverage_eq_prefixAverage` — a Birkhoff average is a prefix average of the iterated
-  observable, for any self-map;
-* `birkhoffAverage_shift_eq_prefixAverage` — its coordinate instance for the shift.
+The Birkhoff/prefix-average bridge these results are read against is neutral process material and
+lives outside this route: `birkhoffAverage_eq_prefixAverage` in
+`Probability/Process/BlockAverage.lean`, and its shift instance
+`birkhoffAverage_shift_eq_prefixAverage` in `Exchangeability/PathSpace/ShiftAverage.lean`.
 
 `prefixAverage` comes from the neutral `Probability/Process/BlockAverage.lean`, so this module
 does not depend on the `L²` averaging library for a measure-free definition.
@@ -84,34 +85,6 @@ theorem ContractableLaw.setLIntegral_block_eq_prefix_of_measurableSet_invariants
     intro x; funext i; simp only [prefixProj_apply, hφ_eq]
   simpa only [hcomp] using
     hρ.setLIntegral_comp_reindex_eq_of_measurableSet_invariants hφ_mono hφ_add hA hf
-
-omit [MeasurableSpace α] in
-/-- **A Birkhoff average is a prefix average of the iterated observable.** For any self-map `T` and
-any real observable `F`, `birkhoffAverage ℝ T F n` is the prefix average of `i ↦ F ∘ T^[i]`.
-
-Nothing about the shift or about coordinate observables enters: both sides are the same
-normalised sum. -/
-theorem birkhoffAverage_eq_prefixAverage {Ω : Type*} (T : Ω → Ω) (F : Ω → ℝ) (n : ℕ) :
-    birkhoffAverage ℝ T F n = prefixAverage (fun i (x : Ω) => F (T^[i] x)) n := by
-  funext x
-  rw [birkhoffAverage, birkhoffSum, prefixAverage_apply, smul_eq_mul]
-  congr 1
-  exact Finset.sum_range fun i => F (T^[i] x)
-
-omit [MeasurableSpace α] in
-/-- **The coordinate instance.** For the one-sided shift and a single-coordinate observable,
-`birkhoffAverage ℝ (shift α) (fun x => f (x 0)) n` is `prefixAverage (fun i x => f (x i)) n`.
-
-This is the bridge from the generic mean-ergodic theorem — which speaks of Birkhoff averages of a
-single observable under a measure-preserving map — to the block-average API, which speaks of
-averages of a process over a selection of coordinates. Neither side needs to know about the other:
-they are the same function. -/
-@[simp]
-theorem birkhoffAverage_shift_eq_prefixAverage (f : α → ℝ) (n : ℕ) :
-    birkhoffAverage ℝ (shift α) (fun x => f (x 0)) n
-      = prefixAverage (fun i (x : ℕ → α) => f (x i)) n := by
-  rw [birkhoffAverage_eq_prefixAverage]
-  simp [shift_iterate_apply]
 
 end Probability
 
