@@ -251,11 +251,72 @@ private theorem tendsto_dist_blockAverage_window_prefix_toLp {μ : Measure Ω}
   linarith
 
 
+/-- **Compare a moving injective selection with the prefix in `L²`.** The selection `k n` may move
+with the length `n + 1`; only injectivity at each length is needed.
+
+This is where the length-only bound of `dist_blockAverages_toLp_le_via_disjoint` earns its keep:
+that bound is `√(2(v−c)/n) + √(2(v−c)/m)`, depending on the two block *lengths* and not on where
+the blocks sit. A comparison block placed beyond both — past `sup (k m)` as well as past the
+prefix — is therefore available at every length, whatever the selection does. -/
+private theorem tendsto_dist_blockAverage_moving_prefix_toLp {μ : Measure Ω}
+    [IsFiniteMeasure μ] {Y : ℕ → Ω → ℝ} (hY : Contractable μ Y)
+    (hY_L2 : ∀ i, MemLp (Y i) 2 μ) {k : ∀ n : ℕ, Fin (n + 1) → ℕ}
+    (hk : ∀ n, Function.Injective (k n)) :
+    Tendsto (fun m : ℕ =>
+        dist ((memLp_blockAverage (k m) fun j => hY_L2 (k m j)).toLp (blockAverage Y (k m)))
+          ((memLp_blockAverage (fun i : Fin (m + 1) => (i : ℕ)) fun i => hY_L2 i).toLp
+            (blockAverage Y fun i : Fin (m + 1) => (i : ℕ))))
+      atTop (𝓝 0) := by
+  have hD := zero_le_variance_sub_covariance_of_contractable hY hY_L2
+  have hsqrt :
+      Tendsto (fun m : ℕ =>
+          2 * Real.sqrt (2 * (Var[Y 0; μ] - cov[Y 0, Y 1; μ]) / ((m : ℝ) + 1))) atTop (𝓝 0) := by
+    have hquot : Tendsto (fun n : ℕ => 2 * (Var[Y 0; μ] - cov[Y 0, Y 1; μ]) / ((n : ℝ) + 1))
+        atTop (𝓝 0) := by
+      simpa [Function.comp_def] using (tendsto_const_div_atTop_nhds_zero_nat
+        (2 * (Var[Y 0; μ] - cov[Y 0, Y 1; μ]))).comp (Filter.tendsto_add_atTop_nat 1)
+    simpa using
+      (Real.continuous_sqrt.continuousAt.tendsto.comp hquot).const_mul 2
+  refine squeeze_zero' (Eventually.of_forall fun m => dist_nonneg) ?_ hsqrt
+  filter_upwards with m
+  -- A block placed beyond both the selection's range and the prefix.
+  set l : ℕ := max (Finset.univ.sup fun i : Fin (m + 1) => k m i) m + 1 with hl
+  have hsel_lt : ∀ i : Fin (m + 1), k m i < l := by
+    intro i
+    have hle : k m i ≤ Finset.univ.sup fun i : Fin (m + 1) => k m i :=
+      Finset.le_sup (Finset.mem_univ i)
+    have := le_max_left (Finset.univ.sup fun i : Fin (m + 1) => k m i) m
+    omega
+  have hpre_lt : ∀ i : Fin (m + 1), (i : ℕ) < l := by
+    intro i
+    have := le_max_right (Finset.univ.sup fun i : Fin (m + 1) => k m i) m
+    have := i.isLt
+    omega
+  have hk₀ : Function.Injective (fun i : Fin (m + 1) => l + (i : ℕ)) :=
+    fun i j hij => Fin.ext (Nat.add_left_cancel hij)
+  have hsel_disjoint : ∀ i j : Fin (m + 1), k m i ≠ l + (j : ℕ) := by
+    intro i j; have := hsel_lt i; omega
+  have hpre_disjoint : ∀ i j : Fin (m + 1), (i : ℕ) ≠ l + (j : ℕ) := by
+    intro i j; have := hpre_lt i; omega
+  have hdist :=
+    dist_blockAverages_toLp_le_via_disjoint hY hY_L2 hD
+      (Nat.succ_pos m) (Nat.succ_pos m) (Nat.succ_pos m)
+      (hk m) Fin.val_injective hk₀ hsel_disjoint hpre_disjoint le_rfl le_rfl
+  simp only [Nat.cast_succ] at hdist
+  linarith
+
 /-- A measurable observable of a contractable process whose composite with a *single* coordinate is
 square-integrable has fixed-start Cesàro averages converging in `L¹` to one common measurable limit.
 
-The start `r` is fixed while the window length `m + 1` tends to infinity. The successor in the
-length avoids assigning any special meaning to an empty average.
+The selection `k m` may **move** with the length `m + 1`: only injectivity at each length is
+required, since the underlying `L²` comparison is bounded in terms of the block lengths and not
+their positions. Fixed starts are the instance `k m j = r + j` (`injective_fixedStart`), and
+disjoint windows — which fixed starts cannot give, since windows from distinct fixed starts
+eventually overlap as the common length grows — are the instance `k m j = i * (m + 1) + j`.
+
+The limit `a` does not depend on the selection: it is the prefix limit, so every moving selection
+converges to the *same* function. The successor in the length avoids assigning any special meaning
+to an empty average.
 
 Contractability makes the mapped coordinates identically distributed, so square-integrability at
 coordinate `0` carries to all of them. -/
@@ -263,10 +324,9 @@ theorem weighted_sums_converge_L1_of_memLp {μ : Measure Ω} [IsFiniteMeasure μ
     {X : ℕ → Ω → α} (hX : Contractable μ X) (hX_ae : ∀ i, AEMeasurable (X i) μ)
     {f : α → ℝ} (hf : Measurable f) (hf_L2 : MemLp (fun ω => f (X 0 ω)) 2 μ) :
     ∃ a : Ω → ℝ, Measurable a ∧ MemLp a 1 μ ∧
-      ∀ r : ℕ,
+      ∀ k : ∀ n : ℕ, Fin (n + 1) → ℕ, (∀ n, Function.Injective (k n)) →
         Tendsto
-          (fun m => ∫ ω,
-            |blockAverage (fun i ω => f (X i ω)) (fun j : Fin (m + 1) => r + j) ω - a ω| ∂μ)
+          (fun m => ∫ ω, |blockAverage (fun i ω => f (X i ω)) (k m) ω - a ω| ∂μ)
           atTop (𝓝 0) := by
   let Y : ℕ → Ω → ℝ := fun i ω => f (X i ω)
   have hY : Contractable μ Y := hX.map_values hf hX_ae
@@ -286,26 +346,31 @@ theorem weighted_sums_converge_L1_of_memLp {μ : Measure Ω} [IsFiniteMeasure μ
   have ha_L2 : MemLp a 2 μ := (memLp_congr_ae ha₂_ae).mp (Lp.memLp a₂)
   have ha_toLp : ha_L2.toLp a = a₂ :=
     Lp.ext (ha_L2.coeFn_toLp.trans ha₂_ae.symm)
-  refine ⟨a, ha_meas, ha_L2.mono_exponent one_le_two, fun r => ?_⟩
-  have hW_L2 : ∀ m : ℕ, MemLp (blockAverage Y fun j : Fin (m + 1) => r + j) 2 μ := fun m =>
-    memLp_blockAverage (fun j : Fin (m + 1) => r + j) fun j => hY_L2 (r + j)
-  let W₂ : ℕ → Lp ℝ 2 μ := fun m =>
-    (hW_L2 m).toLp (blockAverage Y fun j : Fin (m + 1) => r + j)
-  -- Each fixed-start window tracks the same-length prefix, so it shares the prefix limit.
+  refine ⟨a, ha_meas, ha_L2.mono_exponent one_le_two, fun k hk => ?_⟩
+  have hW_L2 : ∀ m : ℕ, MemLp (blockAverage Y (k m)) 2 μ := fun m =>
+    memLp_blockAverage (k m) fun j => hY_L2 (k m j)
+  let W₂ : ℕ → Lp ℝ 2 μ := fun m => (hW_L2 m).toLp (blockAverage Y (k m))
+  -- Every injective selection tracks the same-length prefix, so it shares the prefix limit.
   have hW₂_tendsto : Tendsto W₂ atTop (𝓝 a₂) := by
     refine tendsto_iff_dist_tendsto_zero.2 (squeeze_zero'
       (Eventually.of_forall fun _ => dist_nonneg) (Eventually.of_forall fun m =>
         dist_triangle _ (A₂ m) _) ?_)
     simpa only [zero_add] using
-      (tendsto_dist_blockAverage_window_prefix_toLp hY hY_L2 r).add
+      (tendsto_dist_blockAverage_moving_prefix_toLp hY hY_L2 hk).add
         (tendsto_iff_dist_tendsto_zero.mp ha₂)
   have hL2 : Tendsto (fun m : ℕ =>
-      eLpNorm (blockAverage Y (fun j : Fin (m + 1) => r + j) - a) 2 μ) atTop (𝓝 0) := by
+      eLpNorm (blockAverage Y (k m) - a) 2 μ) atTop (𝓝 0) := by
     rw [← Lp.tendsto_Lp_iff_tendsto_eLpNorm'' _ hW_L2 a ha_L2]
     simpa only [ha_toLp] using hW₂_tendsto
   simpa only [Pi.sub_apply, Real.norm_eq_abs] using
     TauCeti.MeasureTheory.tendsto_integral_norm_of_tendsto_eLpNorm_two
       (fun m => ((hW_L2 m).sub ha_L2).aestronglyMeasurable) hL2
+
+/-- **The fixed-start selection is injective**, so it is an instance of the moving form: at each
+length the window `j ↦ r + j` repeats no index. -/
+theorem injective_fixedStart (r : ℕ) (n : ℕ) :
+    Function.Injective (fun j : Fin (n + 1) => r + (j : ℕ)) :=
+  fun _ _ hij => Fin.ext (Nat.add_left_cancel hij)
 
 /-- **Bounded-observable form**, the shape the Layer 3 roadmap names and the determining-class stage
 consumes. A uniform bound on `f` gives square-integrability of the composite on a finite measure
@@ -314,10 +379,9 @@ theorem weighted_sums_converge_L1 {μ : Measure Ω} [IsFiniteMeasure μ]
     {X : ℕ → Ω → α} (hX : Contractable μ X) (hX_ae : ∀ i, AEMeasurable (X i) μ)
     {f : α → ℝ} (hf : Measurable f) (hf_bdd : ∃ C, ∀ x, ‖f x‖ ≤ C) :
     ∃ a : Ω → ℝ, Measurable a ∧ MemLp a 1 μ ∧
-      ∀ r : ℕ,
+      ∀ k : ∀ n : ℕ, Fin (n + 1) → ℕ, (∀ n, Function.Injective (k n)) →
         Tendsto
-          (fun m => ∫ ω,
-            |blockAverage (fun i ω => f (X i ω)) (fun j : Fin (m + 1) => r + j) ω - a ω| ∂μ)
+          (fun m => ∫ ω, |blockAverage (fun i ω => f (X i ω)) (k m) ω - a ω| ∂μ)
           atTop (𝓝 0) :=
   let ⟨C, hC⟩ := hf_bdd
   weighted_sums_converge_L1_of_memLp hX hX_ae hf
