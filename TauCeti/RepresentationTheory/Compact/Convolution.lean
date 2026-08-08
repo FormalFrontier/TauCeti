@@ -41,7 +41,7 @@ manufactures finite-dimensional representations of `G` without presupposing that
   `(k * f) x = ∫ y, k (x * y⁻¹) * f y`.
 * `TauCeti.norm_convolutionCLM_apply_le`: `‖k * f‖_∞ ≤ ‖k‖_∞ * ‖f‖₂`, so convolution against a
   continuous kernel is bounded from `L²(G)` into the uniform norm of `C(G)`.
-* `TauCeti.convolutionOperator_isSelfAdjoint`: a symmetric kernel gives a self-adjoint operator.
+* `TauCeti.isSelfAdjoint_convolutionOperator`: a symmetric kernel gives a self-adjoint operator.
 * `TauCeti.convolutionCLM_compMeasurePreserving_mul_right`: convolution commutes with right
   translation.
 
@@ -68,8 +68,9 @@ product is conjugate linear in its first argument; it is invisible in the pointw
 
 This is the opening of Layer 5 of the
 [compact-groups roadmap](https://github.com/TauCetiProject/TauCetiRoadmap), which names
-`convolutionOperator` and `convolutionOperator_isSelfAdjoint` as milestones on the non-circular
-route to the Peter-Weyl theorem.
+`convolutionOperator` and its self-adjointness for a symmetric kernel (there spelled
+`convolutionOperator_isSelfAdjoint`, renamed here to `isSelfAdjoint_convolutionOperator` for the
+predicate-prefix convention) as milestones on the non-circular route to the Peter-Weyl theorem.
 
 * G. B. Folland, *A Course in Abstract Harmonic Analysis*, 2nd ed., CRC (2016), Chapter 5.
 * D. Bump, *Lie Groups*, 2nd ed., Springer GTM 225 (2013), Chapter 2.
@@ -338,7 +339,7 @@ private theorem inner_convolutionOperator_toLp (k : C(G, 𝕜)) (f : Lp 𝕜 2 (
 /-- **Self-adjointness of the convolution operator for a symmetric kernel.** A kernel is symmetric
 when `k g⁻¹ = conj (k g)`; the pointwise identity `conj (k (x * y⁻¹)) = k (y * x⁻¹)` it supplies is
 what turns the average of the kernel sections weighted by `H` back into `k * H`. -/
-theorem convolutionOperator_isSelfAdjoint (k : C(G, 𝕜))
+theorem isSelfAdjoint_convolutionOperator (k : C(G, 𝕜))
     (hk : ∀ g : G, k g⁻¹ = (starRingEnd 𝕜) (k g)) :
     IsSelfAdjoint (convolutionOperator k) := by
   rw [ContinuousLinearMap.isSelfAdjoint_iff_isSymmetric]
