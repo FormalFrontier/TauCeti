@@ -29,7 +29,7 @@ parametrized form appropriate for diffeotopies.
 
 ## Main definitions
 
-* `TauCeti.Diffeotopy I M`: a level-preserving smooth diffeomorphism of `[0, 1] × M` fixing the
+* `TauCeti.Diffeotopy J M`: a level-preserving smooth diffeomorphism of `[0, 1] × M` fixing the
   time-zero slice.
 * `TauCeti.Diffeotopy.slice`: the self-diffeomorphism at a given time.
 * `TauCeti.Diffeotopy.final`: the time-one self-diffeomorphism.
@@ -92,11 +92,18 @@ theorem ext {Phi Psi : Diffeotopy J M} (h : ∀ p, Phi p = Psi p) : Phi = Psi :=
 theorem apply_eq_snd_toDiffeomorph (p : I × M) : Phi p = (Phi.toDiffeomorph p).2 :=
   rfl
 
+/-- A diffeotopy starts at the identity. -/
+@[simp]
+theorem apply_zero (x : M) : Phi (0, x) = x :=
+  Phi.snd_toDiffeomorph_zero x
+
 /-- A diffeotopy's cylinder diffeomorphism is the level-preserving total map of its family. -/
+@[simp]
 theorem toDiffeomorph_apply (p : I × M) : Phi.toDiffeomorph p = (p.1, Phi p) :=
   Prod.ext (Phi.fst_toDiffeomorph p) rfl
 
 /-- The inverse cylinder diffeomorphism also preserves the time coordinate. -/
+@[simp]
 theorem fst_toDiffeomorph_symm (p : I × M) : (Phi.toDiffeomorph.symm p).1 = p.1 := by
   calc
     (Phi.toDiffeomorph.symm p).1 =
@@ -300,16 +307,18 @@ theorem symm_refl [IsManifold J ∞ M] :
     (refl (J := J) (M := M)).symm = refl (J := J) (M := M) := by
   apply ext
   intro p
-  change p.2 = p.2
-  rfl
+  rw [apply_eq_snd_toDiffeomorph, apply_eq_snd_toDiffeomorph]
+  exact congrArg
+    (fun f : (I × M) ≃ₘ^∞⟮(𝓡∂ 1).prod J, (𝓡∂ 1).prod J⟯ (I × M) => (f p).2)
+    _root_.Diffeomorph.symm_refl
 
 /-- Taking pointwise inverses twice returns the original diffeotopy. -/
 @[simp]
 theorem symm_symm : Phi.symm.symm = Phi := by
   apply ext
   intro p
-  simp only [symm.eq_def]
-  rfl
+  rw [apply_eq_snd_toDiffeomorph, apply_eq_snd_toDiffeomorph]
+  exact congrArg Prod.snd (Equiv.symm_symm_apply Phi.toDiffeomorph.toEquiv p)
 
 /-- The pointwise inverse of a composite reverses the order of composition. -/
 @[simp]
@@ -317,9 +326,9 @@ theorem symm_trans' [IsManifold J ∞ M] (Psi : Diffeotopy J M) :
     (Phi.trans Psi).symm = Psi.symm.trans Phi.symm := by
   apply ext
   intro p
-  change ((Phi.toDiffeomorph.trans Psi.toDiffeomorph).symm p).2 =
-    ((Psi.toDiffeomorph.symm.trans Phi.toDiffeomorph.symm) p).2
-  rw [_root_.Diffeomorph.symm_trans']
+  rw [apply_eq_snd_toDiffeomorph, apply_eq_snd_toDiffeomorph]
+  exact congrArg (fun f => (f p).2)
+    (_root_.Diffeomorph.symm_trans' Phi.toDiffeomorph Psi.toDiffeomorph)
 
 /-- Taking a time slice commutes with pointwise inversion of a diffeotopy. -/
 @[simp]
