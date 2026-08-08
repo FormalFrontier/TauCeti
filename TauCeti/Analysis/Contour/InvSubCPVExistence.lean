@@ -34,6 +34,10 @@ window radius (`Contour.exists_common_window_radius`), each window integral conv
 * `Contour.IsPwC1ImmersionOn.cauchyPVExistsAt_inv_sub` — the single-point principal value at
   `s` of the Cauchy kernel exists along a piecewise-`C¹` immersion whose crossings of `s` are
   interior to `[a, b]`.
+* `Contour.exists_radius_perWindow_tendsto_log_norm_add_arg` — the same per-window convergence,
+  but with the limit's explicit log-norm-plus-argument value exposed rather than only its
+  existence, for callers (the on-curve real-integral formula) that need the limit's real or
+  imaginary part, not just that it exists.
 
 ## Provenance
 

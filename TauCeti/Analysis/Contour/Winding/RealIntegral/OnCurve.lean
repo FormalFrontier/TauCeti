@@ -6,12 +6,14 @@ module
 
 public import TauCeti.Analysis.Contour.Winding.RealIntegral.Basic
 public import TauCeti.Analysis.Contour.PwC1ImmersionOn
+import TauCeti.Analysis.Contour.Argument.Lift
 import TauCeti.Analysis.Contour.Crossing.Finiteness
 import TauCeti.Analysis.Contour.Crossing.PVAggregation
 import TauCeti.Analysis.Contour.Crossing.Windows
 import TauCeti.Analysis.Contour.InvSubCPVExistence
 import TauCeti.Analysis.Contour.PerWindow.CPV
 import TauCeti.Analysis.Contour.Winding.LipschitzBoundedIntegrand
+import TauCeti.Analysis.Contour.Winding.SegmentSum
 import TauCeti.Analysis.Contour.Winding.PrincipalValueRealIntegral
 import Mathlib.Analysis.InnerProductSpace.Calculus
 import Mathlib.Analysis.SpecialFunctions.Log.Deriv
@@ -58,8 +60,8 @@ per-crossing windows along the sorted crossing list.
 * `TauCeti.Contour.windingNumber_eq_real_integral_of_closed_interior_crossings` — the real
   bounded-integrand formula for a closed immersion that avoids `s` at its basepoint (so every
   crossing of `s`, if any, is automatically interior).
-* `TauCeti.Contour.isBounded_image_realWindingIntegrand_of_closed_interior_crossings` and
-  `TauCeti.Contour.intervalIntegrable_realWindingIntegrand_of_closed_interior_crossings` — the
+* `TauCeti.Contour.isBounded_image_realWindingIntegrand_of_interior_crossings` and
+  `TauCeti.Contour.intervalIntegrable_realWindingIntegrand_of_interior_crossings` — the
   boundedness and interval-integrability facts the formula above is built from, for callers that
   need those facts rather than just the equality.
 
@@ -99,72 +101,22 @@ namespace TauCeti.Contour
 
 /-! ### The real part of a complex derivative along the real embeddings -/
 
-/-- The derivative of the squared complex modulus, in the real-parameter chain-rule form used to
-differentiate the log-norm below. An instance of Mathlib's generic inner-product-space
-squared-norm derivative rule (`HasDerivAt.norm_sq`), rewritten from `⟪·,·⟫_ℝ` to `Complex.normSq`
-via `Complex.inner` and `Complex.normSq_eq_norm_sq`. -/
-private theorem hasDerivAt_normSq {f : ℝ → ℂ} {t : ℝ} {D : ℂ} (hf : HasDerivAt f D t) :
-    HasDerivAt (fun u => Complex.normSq (f u)) (2 * ((starRingEnd ℂ (f t) * D).re)) t := by
-  simpa [Complex.normSq_eq_norm_sq, Complex.inner, mul_comm] using HasDerivAt.norm_sq hf
-
-/-- **The log-norm derivative.** Wherever a real-parametrized curve is differentiable and avoids
-`0`, the real-valued function `t ↦ Real.log ‖f t‖` is differentiable, with derivative the real
-part of the index integrand `(f t)⁻¹ * deriv f t` — unconditionally, with no slit-plane or branch
-data: `Complex.log`'s real part `Real.log ∘ norm` never depends on a choice of branch. -/
-private theorem hasDerivAt_log_norm {f : ℝ → ℂ} {t : ℝ} {D : ℂ} (hf : HasDerivAt f D t)
-    (hne : f t ≠ 0) :
-    HasDerivAt (fun u => Real.log ‖f u‖) (((f t)⁻¹ * D).re) t := by
-  have hnsq := hasDerivAt_normSq hf
-  have hnsq_pos : (0 : ℝ) < Complex.normSq (f t) := Complex.normSq_pos.mpr hne
-  have hlog : HasDerivAt (fun u => Real.log (Complex.normSq (f u)))
-      ((Complex.normSq (f t))⁻¹ * (2 * ((starRingEnd ℂ (f t) * D).re))) t :=
-    HasDerivAt.comp t (Real.hasDerivAt_log hnsq_pos.ne') hnsq
-  have hval : ((Complex.normSq (f t))⁻¹ * (2 * ((starRingEnd ℂ (f t) * D).re)))
-      = 2 * (((f t)⁻¹ * D).re) := by
-    have hre : ((f t)⁻¹ * D).re = (Complex.normSq (f t))⁻¹ * (starRingEnd ℂ (f t) * D).re := by
-      have hrw : (f t)⁻¹ * D = ((Complex.normSq (f t) : ℝ)⁻¹ : ℂ) * (starRingEnd ℂ (f t) * D) := by
-        rw [Complex.inv_def]; push_cast; ring
-      rw [hrw, ← Complex.ofReal_inv, Complex.re_ofReal_mul]
-    rw [hre]; ring
-  rw [hval] at hlog
-  have hdiv := hlog.div_const 2
-  have heq2 : (fun u => Real.log (Complex.normSq (f u)) / 2) = fun u => Real.log ‖f u‖ := by
-    funext u
-    rw [Complex.norm_def, Real.log_sqrt (Complex.normSq_nonneg _)]
-  rw [heq2] at hdiv
-  have hval2 : 2 * (((f t)⁻¹ * D).re) / 2 = ((f t)⁻¹ * D).re := by ring
-  rwa [hval2] at hdiv
-
 /-- **The real part of the plain-piece contour integral telescopes to the log-norm difference of
-its endpoints**, with no slit-plane hypothesis needed: the real part of `Complex.log` never
-depends on a branch, unlike its imaginary part (the argument), which is exactly the content the
-generalized winding number keeps track of. -/
+its endpoints**, with no slit-plane hypothesis needed: taking real parts of
+`integral_inv_sub_mul_deriv_eq_log_norm_add_I_mul_sum_log_im`'s decomposition discards its
+imaginary sum term (a real number times `Complex.I`), leaving exactly the log-norm difference,
+independent of any branch choice on the partition
+`exists_continuousOn_arg_lift_with_partition` supplies. -/
 private theorem re_integral_inv_sub_mul_deriv_eq_log_norm {γ : ℝ → ℂ} {s : ℂ} {l u : ℝ}
     {P : Set ℝ} (hlu : l ≤ u) (hP : P.Countable) (hγ_cont : ContinuousOn γ (Icc l u))
     (hγ_diff : ∀ t ∈ Ioo l u \ P, DifferentiableAt ℝ γ t) (h_ne : ∀ t ∈ Icc l u, γ t ≠ s)
     (h_int : IntervalIntegrable (fun t => (γ t - s)⁻¹ * deriv γ t) volume l u) :
     (∫ t in l..u, (γ t - s)⁻¹ * deriv γ t).re = Real.log ‖γ u - s‖ - Real.log ‖γ l - s‖ := by
-  have hγ_cont' : ContinuousOn γ [[l, u]] := by rwa [uIcc_of_le hlu]
-  have h_ne' : ∀ t ∈ [[l, u]], γ t - s ≠ 0 := fun t ht =>
-    sub_ne_zero.mpr (h_ne t (by rwa [uIcc_of_le hlu] at ht))
-  have hcont : ContinuousOn (fun t => Real.log ‖γ t - s‖) [[l, u]] := fun t ht => by
-    have h2 : ContinuousWithinAt (fun t => ‖γ t - s‖) [[l, u]] t :=
-      ((hγ_cont' t ht).sub continuousWithinAt_const).norm
-    exact (Real.continuousAt_log (norm_ne_zero_iff.mpr (h_ne' t ht))).tendsto.comp h2
-  have hderiv : ∀ t ∈ Ioo (min l u) (max l u) \ P,
-      HasDerivAt (fun t => Real.log ‖γ t - s‖) (((γ t - s)⁻¹ * deriv γ t).re) t := by
-    intro t ht
-    rw [min_eq_left hlu, max_eq_right hlu] at ht
-    have hγt : DifferentiableAt ℝ γ t := hγ_diff t ht
-    have hγt' : HasDerivAt (fun t => γ t - s) (deriv γ t) t := hγt.hasDerivAt.sub_const s
-    have hne_t : γ t - s ≠ 0 := sub_ne_zero.mpr (h_ne t (Ioo_subset_Icc_self ht.1))
-    exact hasDerivAt_log_norm hγt' hne_t
-  have hint_re : IntervalIntegrable (fun t => ((γ t - s)⁻¹ * deriv γ t).re) volume l u :=
-    ⟨h_int.1.re, h_int.2.re⟩
-  have hFTC := integral_eq_of_hasDerivAt_off_countable
-    (fun t => Real.log ‖γ t - s‖) (fun t => ((γ t - s)⁻¹ * deriv γ t).re) hP hcont hderiv hint_re
-  rw [← RCLike.re_to_complex, ← intervalIntegral_re h_int]
-  simpa only [RCLike.re_to_complex] using hFTC
+  obtain ⟨N, part, -, hpart_zero, hpart_N, hpart_mono, -, -, h_slit, -, -⟩ :=
+    exists_continuousOn_arg_lift_with_partition hlu hγ_cont h_ne
+  have heq := integral_inv_sub_mul_deriv_eq_log_norm_add_I_mul_sum_log_im hP hpart_zero hpart_N
+    hpart_mono hγ_cont hγ_diff h_slit h_int
+  simp [heq]
 
 /-! ### Interval-integrability of the real winding integrand, allowing crossings -/
 
@@ -562,8 +514,8 @@ private theorem isBounded_intervalIntegrable_cauchyPV_of_interior_crossings
 /-- **The real bounded-integrand formula, allowing crossings** (Hungerbühler–Wasem Prop 2.3),
 bundled with the boundedness and interval-integrability facts it is built from. Kept private and
 conjunctive to avoid an overlong public name; see
-`isBounded_image_realWindingIntegrand_of_closed_interior_crossings`,
-`intervalIntegrable_realWindingIntegrand_of_closed_interior_crossings`, and
+`isBounded_image_realWindingIntegrand_of_interior_crossings`,
+`intervalIntegrable_realWindingIntegrand_of_interior_crossings`, and
 `windingNumber_eq_real_integral_of_closed_interior_crossings` below for its three public
 projections, and for the full documentation of the hypotheses.
 
@@ -609,7 +561,7 @@ crossings** (Hungerbühler–Wasem Prop 2.3, boundedness half). Projection of
 every crossing of `s` is interior to `[a, b]`. See
 `windingNumber_eq_real_integral_of_closed_interior_crossings` below for the closed-curve
 equality and the full documentation of `hγ_lip`. -/
-theorem isBounded_image_realWindingIntegrand_of_closed_interior_crossings
+theorem isBounded_image_realWindingIntegrand_of_interior_crossings
     {γ : ℝ → ℂ} {a b : ℝ} {s : ℂ} (h_imm : IsPwC1ImmersionOn γ a b) (hab : a ≤ b)
     (h_interior : ∀ t ∈ Icc a b, γ t = s → t ∈ Ioo a b)
     (hγ_lip : ∀ t ∈ Icc a b, γ t = s → ∃ εR > 0, ∃ KR : ℝ≥0,
@@ -627,7 +579,7 @@ crossings** (Hungerbühler–Wasem Prop 2.3, integrability half). Projection of
 every crossing of `s` is interior to `[a, b]`. See
 `windingNumber_eq_real_integral_of_closed_interior_crossings` below for the closed-curve
 equality and the full documentation of `hγ_lip`. -/
-theorem intervalIntegrable_realWindingIntegrand_of_closed_interior_crossings
+theorem intervalIntegrable_realWindingIntegrand_of_interior_crossings
     {γ : ℝ → ℂ} {a b : ℝ} {s : ℂ} (h_imm : IsPwC1ImmersionOn γ a b) (hab : a ≤ b)
     (h_interior : ∀ t ∈ Icc a b, γ t = s → t ∈ Ioo a b)
     (hγ_lip : ∀ t ∈ Icc a b, γ t = s → ∃ εR > 0, ∃ KR : ℝ≥0,
