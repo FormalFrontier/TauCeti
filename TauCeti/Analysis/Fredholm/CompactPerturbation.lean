@@ -70,8 +70,7 @@ theorem isFredholm_one_sub {K : E →L[𝕜] E} (hK : IsCompactOperator K) :
 theorem isFredholm_one_add {K : E →L[𝕜] E} (hK : IsCompactOperator K) :
     ContinuousLinearMap.IsFredholm (1 + K : E →L[𝕜] E) := by
   have hneg : IsCompactOperator (-K : E →L[𝕜] E) := by
-    change IsCompactOperator (-⇑K)
-    exact hK.neg
+    simpa only [FunLike.coe_neg] using hK.neg
   have hrw : (1 + K : E →L[𝕜] E) = 1 - (-K) := by abel
   rw [hrw]
   exact isFredholm_one_sub hneg
@@ -100,7 +99,10 @@ theorem _root_.ContinuousLinearMap.IsFredholm.add_of_isCompactOperator
     exact h
   have hcomp₁ : ContinuousLinearMap.IsFredholm (S.comp (T + C)) := by
     have hcompact : IsCompactOperator (S.comp C) := by
-      change IsCompactOperator (⇑S ∘ ⇑C)
+      have hcomp : (⇑(S.comp C) : E → E) = ⇑S ∘ ⇑C := by
+        ext x
+        rw [Function.comp_apply, ContinuousLinearMap.comp_apply]
+      rw [hcomp]
       exact hC.clm_comp S
     have hrw : S.comp (T + C) = (1 + S.comp C) + (S.comp T - 1) := by
       rw [ContinuousLinearMap.comp_add]
@@ -109,7 +111,10 @@ theorem _root_.ContinuousLinearMap.IsFredholm.add_of_isCompactOperator
     exact (isFredholm_one_add hcompact).add_of_finiteDimensional_range hleft
   have hcomp₂ : ContinuousLinearMap.IsFredholm ((T + C).comp S) := by
     have hcompact : IsCompactOperator (C.comp S) := by
-      change IsCompactOperator (⇑C ∘ ⇑S)
+      have hcomp : (⇑(C.comp S) : F → F) = ⇑C ∘ ⇑S := by
+        ext x
+        rw [Function.comp_apply, ContinuousLinearMap.comp_apply]
+      rw [hcomp]
       exact hC.comp_clm S
     have hrw : (T + C).comp S = (1 + C.comp S) + (T.comp S - 1) := by
       rw [ContinuousLinearMap.add_comp]
@@ -121,9 +126,9 @@ theorem _root_.ContinuousLinearMap.IsFredholm.add_of_isCompactOperator
     have hker : LinearMap.ker ((T + C : E →L[𝕜] F) : E →ₗ[𝕜] F)
         ≤ LinearMap.ker ((S.comp (T + C) : E →L[𝕜] E) : E →ₗ[𝕜] E) := by
       intro x hx
-      have hx0 : (T + C) x = 0 := hx
-      change S ((T + C) x) = 0
-      rw [hx0, map_zero]
+      rw [LinearMap.mem_ker] at hx ⊢
+      simpa only [ContinuousLinearMap.coe_coe, ContinuousLinearMap.comp_apply, map_zero] using
+        congrArg S hx
     have := ((isFredholm_iff_finite_ker_coker _).mp hcomp₁).1
     exact Submodule.finiteDimensional_of_le hker
   · -- The range of `T + C` contains that of `(T + C) ∘ S`.
@@ -156,8 +161,7 @@ theorem index_add_of_isCompactOperator (hT : ContinuousLinearMap.IsFredholm T)
 theorem index_one_sub_eq_zero {K : E →L[𝕜] E} (hK : IsCompactOperator K) :
     index (1 - K : E →L[𝕜] E) = 0 := by
   have hneg : IsCompactOperator (-K : E →L[𝕜] E) := by
-    change IsCompactOperator (-⇑K)
-    exact hK.neg
+    simpa only [FunLike.coe_neg] using hK.neg
   have hrw : (1 - K : E →L[𝕜] E) = ContinuousLinearMap.id 𝕜 E + (-K) := by
     ext x
     simp [sub_eq_add_neg]

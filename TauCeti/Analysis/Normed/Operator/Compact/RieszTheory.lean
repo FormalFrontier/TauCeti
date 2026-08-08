@@ -17,9 +17,10 @@ range is closed, and its cokernel is finite dimensional. Together they are the o
 half of the Riesz--Schauder theory, and they are what upgrades Mathlib's spectral Fredholm
 alternative for compact operators to a statement about Fredholm operators.
 
-All three arguments feed on the same compactness input, isolated here as
-`TauCeti.IsCompactOperator.exists_dist_lt_of_norm_le`: a compact operator cannot keep the images
-of a bounded sequence pairwise separated.
+Compactness enters the three arguments in different forms: the kernel argument uses the existing
+finite-dimensional eigenspace theorem, the range argument extracts a convergent subsequence with
+`TauCeti.IsCompactOperator.exists_subseq_tendsto`, and the cokernel argument uses the separation
+consequence `TauCeti.IsCompactOperator.exists_dist_lt_of_norm_le`.
 
 * The kernel is the `1`-eigenspace of `K`, already known to be finite dimensional.
 * For the range, split off a closed complement `M` of `ker A`, which exists because `ker A` is
@@ -34,8 +35,8 @@ of a bounded sequence pairwise separated.
 
 ## Main declarations
 
-* `TauCeti.IsCompactOperator.exists_dist_lt_of_norm_le`: the compactness input, in the form used
-  three times below.
+* `TauCeti.IsCompactOperator.exists_dist_lt_of_norm_le`: the compactness input to the descending
+  chain argument.
 * `TauCeti.IsCompactOperator.exists_pos_mul_norm_le_of_disjoint_ker`: `1 - K` is bounded below on
   any closed subspace meeting its kernel trivially.
 * `TauCeti.IsCompactOperator.finiteDimensional_ker_one_sub`: `ker (1 - K)` is finite dimensional.
@@ -79,7 +80,7 @@ theorem exists_subseq_tendsto (hK : IsCompactOperator K) (hu : ∀ n, ‖u n‖ 
 /-- A compact operator cannot keep the images of a bounded sequence pairwise separated: two
 distinct indices always have images within any prescribed positive distance.
 
-This is the single compactness input to the Riesz theory below. -/
+This is the compactness input to the descending-chain argument below. -/
 theorem exists_dist_lt_of_norm_le (hK : IsCompactOperator K) (hu : ∀ n, ‖u n‖ ≤ R) {ε : ℝ}
     (hε : 0 < ε) : ∃ m n, m ≠ n ∧ dist (K (u m)) (K (u n)) < ε := by
   obtain ⟨y, ψ, hψ, hψy⟩ := exists_subseq_tendsto hK hu
@@ -90,14 +91,18 @@ theorem exists_dist_lt_of_norm_le (hK : IsCompactOperator K) (hu : ∀ n, ‖u n
 
 end Separation
 
+end IsCompactOperator
+
 /-- The kernel of `1 - K` is the `1`-eigenspace of `K`. -/
 theorem ker_one_sub (K : X →L[𝕜] X) :
     LinearMap.ker ((1 - K : X →L[𝕜] X) : X →ₗ[𝕜] X) = End.eigenspace (K : X →ₗ[𝕜] X) 1 := by
   ext x
   rw [LinearMap.mem_ker, End.mem_eigenspace_iff]
-  change x - K x = 0 ↔ K x = (1 : 𝕜) • x
+  simp only [ContinuousLinearMap.coe_coe, sub_apply, one_apply_eq_self]
   rw [sub_eq_zero, one_smul]
   exact eq_comm
+
+namespace IsCompactOperator
 
 /-- On a closed subspace `M` meeting `ker (1 - K)` only in `0`, the operator `1 - K` is bounded
 below.
@@ -154,7 +159,7 @@ theorem exists_pos_mul_norm_le_of_disjoint_ker (hK : IsCompactOperator K) {M : S
   have hvsub : Tendsto (fun k => v (ψ k)) atTop (𝓝 y) := by
     have hsum : ∀ k, (1 - K : X →L[𝕜] X) (v (ψ k)) + K (v (ψ k)) = v (ψ k) := by
       intro k
-      change v (ψ k) - K (v (ψ k)) + K (v (ψ k)) = v (ψ k)
+      rw [sub_apply, one_apply_eq_self]
       abel
     have hlim : Tendsto (fun k => (1 - K : X →L[𝕜] X) (v (ψ k)) + K (v (ψ k))) atTop
         (𝓝 (0 + y)) := (hAtendsto.comp hψ.tendsto_atTop).add hψy
@@ -245,7 +250,7 @@ variable [CompleteSpace 𝕜]
 /-- The kernel of a compact perturbation of the identity is finite dimensional. -/
 theorem finiteDimensional_ker_one_sub (hK : IsCompactOperator K) :
     FiniteDimensional 𝕜 (LinearMap.ker ((1 - K : X →L[𝕜] X) : X →ₗ[𝕜] X)) := by
-  rw [ker_one_sub]
+  rw [TauCeti.ker_one_sub]
   exact finiteDimensional_eigenspace hK one_ne_zero
 
 variable [IsRCLikeNormedField 𝕜] [CompleteSpace X]
@@ -367,8 +372,11 @@ theorem finiteDimensional_quotient_range_one_sub (hK : IsCompactOperator K) :
     exact hz
   refine ⟨⟨x - (A ^ (p + 1)) z, ?_⟩, ?_⟩
   · rw [LinearMap.mem_ker]
-    change (A ^ (p + 1)) (x - (A ^ (p + 1)) z) = 0
-    rw [map_sub, hzz, sub_self]
+    have hzz' :
+        ((A ^ (p + 1) : X →L[𝕜] X) : X →ₗ[𝕜] X) ((A ^ (p + 1)) z) =
+          ((A ^ (p + 1) : X →L[𝕜] X) : X →ₗ[𝕜] X) x := by
+      simpa only [ContinuousLinearMap.coe_coe] using hzz
+    rw [map_sub, hzz', sub_self]
   · have hmem : (A ^ (p + 1)) z ∈ LinearMap.range (A : X →ₗ[𝕜] X) :=
       ⟨(A ^ p) z, by rw [pow_succ']; rfl⟩
     simp only [LinearMap.comp_apply, Submodule.subtype_apply, Submodule.mkQ_apply]
