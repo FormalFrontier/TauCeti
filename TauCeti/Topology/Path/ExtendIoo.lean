@@ -45,16 +45,18 @@ is injective on the interior, and that interior stays inside a set to which neit
 belongs, then the only repetition left is between the two endpoints. That is the statement "the
 path is a simple arc, except that it may be a loop".
 
-It is stated for a bare function `unitInterval → X` satisfying the parametrisation formula, rather
-than for `TauCeti.Path.ofContinuousOnIoo` itself, because a consumer typically receives its path
-from an existential and knows only the formula. Injectivity on the interior is left to the call
-site, being the injectivity of `g` composed with that of `AffineMap.lineMap a b`.
+It is stated for a bare function `unitInterval → X`, with no hypothesis relating it to `g` or to
+the extension, rather than for `TauCeti.Path.ofContinuousOnIoo` itself: a consumer typically
+receives its path from an existential and knows only a parametrisation formula for it, which it
+uses to establish the membership and injectivity hypotheses; a `Path` specializes through its
+coercion. Injectivity on the interior is likewise left to the call site, being the injectivity of
+`g` composed with that of `AffineMap.lineMap a b`.
 
 ## Main declarations
 
 * `TauCeti.extendIoo` — a function on `Ioo a b`, extended across both ends by prescribed values,
   with `TauCeti.extendIoo_apply_of_mem_Ioo`, `TauCeti.extendIoo_apply_of_le_left` and
-  `TauCeti.extendIoo_apply_of_right_le` computing it everywhere, and
+  `TauCeti.extendIoo_apply_of_left_lt_of_right_le` computing it at every point, and
   `TauCeti.continuousOn_Icc_extendIoo`, its continuity on `Icc a b`.
 * `TauCeti.Path.ofContinuousOnIoo` — the path traced by a function continuous on `Ioo a b` with a
   limit at each end, from the limit at `a` to the limit at `b`.
@@ -136,7 +138,10 @@ The two outer branches run over the whole of `Iic a` and `Ici b`, rather than ov
 alone, so that the definition computes everywhere and carries no side condition. The
 nondegeneracy `a < b` is not part of the definition, and is needed for the right-hand branch only:
 if instead `b ≤ a`, the interval is empty and the extension is `u` on `Iic a` and `v` on `Ioi a`,
-so that `b` itself is sent to `u`.
+so that `b` itself is sent to `u`. The value is therefore computed at every point of `α`,
+degenerate intervals included, by `TauCeti.extendIoo_apply_of_mem_Ioo`,
+`TauCeti.extendIoo_apply_of_le_left` and `TauCeti.extendIoo_apply_of_left_lt_of_right_le`, whose
+hypotheses are exactly the three branch conditions.
 
 Mathlib's `extendFrom` instead *recovers* the end values as limits, which is why its continuity
 theorem `continuousOn_Icc_extendFrom_Ioo` asks for a regular codomain and its identification
@@ -155,11 +160,14 @@ theorem extendIoo_apply_of_mem_Ioo (hx : x ∈ Ioo a b) : extendIoo a b u v g x 
 theorem extendIoo_apply_of_le_left (hx : x ≤ a) : extendIoo a b u v g x = u := by
   simp [extendIoo, hx]
 
-/-- At and above the right end the extension takes the prescribed value `v`, the interval being
-nondegenerate. -/
+/-- Above the left end and at or above the right end the extension takes the prescribed value `v`.
+These are exactly the conditions of the second branch, so together with
+`TauCeti.extendIoo_apply_of_mem_Ioo` and `TauCeti.extendIoo_apply_of_le_left` this computes the
+extension at every point, degenerate intervals included. -/
 @[simp]
-theorem extendIoo_apply_of_right_le (hab : a < b) (hx : b ≤ x) : extendIoo a b u v g x = v := by
-  simp [extendIoo, (hab.trans_le hx).not_ge, hx]
+theorem extendIoo_apply_of_left_lt_of_right_le (hax : a < x) (hx : b ≤ x) :
+    extendIoo a b u v g x = v := by
+  simp [extendIoo, hax.not_ge, hx]
 
 /-- **A function continuous on an open interval and converging at both ends extends continuously
 to the closed interval.** The extension is `TauCeti.extendIoo` by the two limits; being handed
@@ -179,7 +187,8 @@ theorem continuousOn_Icc_extendIoo [TopologicalSpace α] [OrderClosedTopology α
     rw [← Iio_insert, continuousWithinAt_insert_self]
     have heq : g =ᶠ[𝓝[<] b] extendIoo a b u v g := by
       filter_upwards [Ioo_mem_nhdsLT hab] with y hy using (extendIoo_apply_of_mem_Ioo hy).symm
-    simpa only [ContinuousWithinAt, extendIoo_apply_of_right_le hab le_rfl] using hv.congr' heq
+    simpa only [ContinuousWithinAt, extendIoo_apply_of_left_lt_of_right_le hab le_rfl] using
+      hv.congr' heq
   intro x hx
   rcases eq_endpoints_or_mem_Ioo_of_mem_Icc hx with rfl | rfl | hx
   · exact hleft
