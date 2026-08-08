@@ -96,19 +96,17 @@ theorem fderiv_timeSlice {F : 𝕜 × E → F'} {t : 𝕜} {x : E}
 theorem hasDerivAt_spatialFDeriv {F : 𝕜 × E → F'} {t : 𝕜} {x : E}
     (hF : ContDiffAt 𝕜 (minSmoothness 𝕜 2) F (t, x)) :
     HasDerivAt (spatialFDeriv F x) (fderiv 𝕜 (timeFDeriv F t) x) t := by
+  let DF : 𝕜 × E → (𝕜 × E →L[𝕜] F') := fderiv 𝕜 F
+  have hDFdiff : DifferentiableAt 𝕜 DF (t, x) :=
+    (hF.fderiv_right (m := 1) le_minSmoothness).differentiableAt one_ne_zero
   have hdiff : DifferentiableAt 𝕜 (spatialFDeriv F x) t := by
-    have hDFdiff : DifferentiableAt 𝕜 (fderiv 𝕜 F) (t, x) :=
-      (hF.fderiv_right (m := 1) le_minSmoothness).differentiableAt one_ne_zero
-    have hraw : DifferentiableAt 𝕜
-        (fun s => (fderiv 𝕜 F (s, x)).comp (ContinuousLinearMap.inr 𝕜 𝕜 E)) t := by
-      fun_prop
-    exact hraw
+    rw [show spatialFDeriv F x = fun s =>
+      (DF (s, x)).comp (ContinuousLinearMap.inr 𝕜 𝕜 E) from
+        funext (spatialFDeriv_def F x)]
+    fun_prop
   have heq : _root_.deriv (spatialFDeriv F x) t = fderiv 𝕜 (timeFDeriv F t) x := by
     apply ContinuousLinearMap.ext
     intro w
-    let DF : 𝕜 × E → (𝕜 × E →L[𝕜] F') := fderiv 𝕜 F
-    have hDFdiff : DifferentiableAt 𝕜 DF (t, x) :=
-      (hF.fderiv_right (m := 1) le_minSmoothness).differentiableAt one_ne_zero
     have hDF := hDFdiff.hasFDerivAt
     have hspace : HasDerivAt (fun _ : 𝕜 => ((0 : 𝕜), w)) 0 t :=
       hasDerivAt_const (x := t) _

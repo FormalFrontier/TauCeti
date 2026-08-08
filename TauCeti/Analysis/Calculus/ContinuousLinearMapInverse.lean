@@ -87,8 +87,7 @@ theorem HasDerivAt.clm_inverse (hA : HasDerivAt A A' t₀)
     have hderivZero := hABv.unique hzero
     simp only [map_zero, add_zero] at hderivZero
     apply hA0Inv.injective
-    -- Unfold the composition wrappers to compare both sides after applying `A t₀`.
-    change (A t₀) (B' v) = (A t₀) (-((A t₀).inverse (A' ((A t₀).inverse v))))
+    simp only [neg_apply, ContinuousLinearMap.comp_apply]
     rw [map_neg, hA0Inv.self_apply_inverse]
     exact eq_neg_of_add_eq_zero_right hderivZero
   rw [hB'eq] at hInvRaw
