@@ -18,7 +18,7 @@ abelian sheaf of an `𝒪_X`-module and packages the result in the scheme-module
 
 For a scheme `X` and `M : X.Modules`, the main declarations are:
 
-* `Scheme.Modules.cohomology M i`, the group `Hⁱ(X, M)`;
+* `Scheme.Modules.Cohomology M i`, the group `Hⁱ(X, M)`;
 * `Scheme.Modules.functorH X i`, functoriality in the coefficient sheaf;
 * `Scheme.Modules.cohomologyEquivOfIso e i`, invariance under an isomorphism of coefficient
   sheaves;
@@ -55,7 +55,7 @@ variable {X : Scheme.{u}}
 
 This is sheaf cohomology on the small Zariski site of `X`, obtained by forgetting the
 `𝒪_X`-module structure and applying Mathlib's `CategoryTheory.Sheaf.H`. -/
-abbrev cohomology (M : X.Modules) (i : ℕ) : Type u :=
+abbrev Cohomology (M : X.Modules) (i : ℕ) : Type u :=
   CategoryTheory.Sheaf.H.{u}
     ((_root_.SheafOfModules.toSheaf X.ringCatSheaf).obj M) i
 
@@ -73,14 +73,14 @@ instance (X : Scheme.{u}) (i : ℕ) : (functorH X i).Additive :=
 
 /-- Isomorphic sheaves of modules have canonically additively equivalent cohomology groups. -/
 def cohomologyEquivOfIso {M N : X.Modules} (e : M ≅ N) (i : ℕ) :
-    cohomology M i ≃+ cohomology N i :=
+    Cohomology M i ≃+ Cohomology N i :=
   ((functorH X i).mapIso e).addCommGroupIsoToAddEquiv
 
 /-- The forward map of `cohomologyEquivOfIso` is the cohomology map induced by the forward
 morphism. -/
 @[simp]
 lemma cohomologyEquivOfIso_apply {M N : X.Modules} (e : M ≅ N) (i : ℕ)
-    (x : cohomology M i) :
+    (x : Cohomology M i) :
     cohomologyEquivOfIso e i x = ((functorH X i).map e.hom).hom x := by
   rw [← Functor.mapIso_hom]
   exact ((functorH X i).mapIso e).addCommGroupIsoToAddEquiv_apply x
@@ -89,7 +89,7 @@ lemma cohomologyEquivOfIso_apply {M N : X.Modules} (e : M ≅ N) (i : ℕ)
 morphism. -/
 @[simp]
 lemma cohomologyEquivOfIso_symm_apply {M N : X.Modules} (e : M ≅ N) (i : ℕ)
-    (x : cohomology N i) :
+    (x : Cohomology N i) :
     (cohomologyEquivOfIso e i).symm x = ((functorH X i).map e.inv).hom x := by
   rw [← Functor.mapIso_inv]
   exact ((functorH X i).mapIso e).addCommGroupIsoToAddEquiv_symm_apply x
@@ -102,14 +102,14 @@ equivalence, and of its inverse, with `((functorH X 0).map f).hom` and `f.app �
 `CategoryTheory.Sheaf.H.equiv₀_symm_naturality`, applied to `isTerminalTop` and
 `(SheafOfModules.toSheaf X.ringCatSheaf).map f`. -/
 def cohomologyZeroEquiv (M : X.Modules) :
-    cohomology M 0 ≃+ Γ(M, ⊤) :=
+    Cohomology M 0 ≃+ Γ(M, ⊤) :=
   CategoryTheory.Sheaf.H.equiv₀
     ((_root_.SheafOfModules.toSheaf X.ringCatSheaf).obj M) isTerminalTop
 
 /-- The degree-zero cohomology equivalence commutes with maps of coefficient sheaves. -/
 @[simp]
 lemma cohomologyZeroEquiv_naturality {M N : X.Modules} (f : M ⟶ N)
-    (x : cohomology M 0) :
+    (x : Cohomology M 0) :
     f.app ⊤ (cohomologyZeroEquiv M x) =
       cohomologyZeroEquiv N (((functorH X 0).map f).hom x) := by
   exact CategoryTheory.Sheaf.H.equiv₀_naturality
