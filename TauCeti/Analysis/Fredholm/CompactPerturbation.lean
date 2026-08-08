@@ -158,6 +158,7 @@ theorem index_add_of_isCompactOperator (hT : ContinuousLinearMap.IsFredholm T)
   simpa using Continuous.index_eq_of_preconnectedSpace hcont hfred 1 0
 
 /-- A compact perturbation of the identity has index `0`. -/
+@[simp]
 theorem index_one_sub_eq_zero {K : E →L[𝕜] E} (hK : IsCompactOperator K) :
     index (1 - K : E →L[𝕜] E) = 0 := by
   have hneg : IsCompactOperator (-K : E →L[𝕜] E) := by

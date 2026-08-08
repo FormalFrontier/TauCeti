@@ -6,6 +6,7 @@ module
 
 public import Mathlib.Analysis.LocallyConvex.HahnBanach
 public import Mathlib.Analysis.Normed.Module.RieszLemma
+public import TauCeti.Analysis.Normed.Operator.Compact.Basic
 public import TauCeti.Analysis.Normed.Operator.Compact.Eigenspace
 
 /-!
@@ -35,8 +36,6 @@ consequence `TauCeti.IsCompactOperator.exists_dist_lt_of_norm_le`.
 
 ## Main declarations
 
-* `TauCeti.IsCompactOperator.exists_dist_lt_of_norm_le`: the compactness input to the descending
-  chain argument.
 * `TauCeti.IsCompactOperator.exists_pos_mul_norm_le_of_disjoint_ker`: `1 - K` is bounded below on
   any closed subspace meeting its kernel trivially.
 * `TauCeti.IsCompactOperator.finiteDimensional_ker_one_sub`: `ker (1 - K)` is finite dimensional.
@@ -63,37 +62,8 @@ variable {𝕜 X : Type*} [NontriviallyNormedField 𝕜]
 variable [NormedAddCommGroup X] [NormedSpace 𝕜 X]
 variable {K : X →L[𝕜] X}
 
-namespace IsCompactOperator
-
-section Separation
-
-variable {R : ℝ} {u : ℕ → X}
-
-/-- A compact operator sends a bounded sequence to a sequence with a convergent subsequence. -/
-theorem exists_subseq_tendsto (hK : IsCompactOperator K) (hu : ∀ n, ‖u n‖ ≤ R) :
-    ∃ (y : X) (ψ : ℕ → ℕ), StrictMono ψ ∧ Tendsto (fun k => K (u (ψ k))) atTop (𝓝 y) := by
-  obtain ⟨S, hS, hSsub⟩ := hK.image_closedBall_subset_compact R
-  obtain ⟨y, -, ψ, hψ, hψy⟩ :=
-    hS.tendsto_subseq fun n => hSsub ⟨u n, by simpa using hu n, rfl⟩
-  exact ⟨y, ψ, hψ, hψy⟩
-
-/-- A compact operator cannot keep the images of a bounded sequence pairwise separated: two
-distinct indices always have images within any prescribed positive distance.
-
-This is the compactness input to the descending-chain argument below. -/
-theorem exists_dist_lt_of_norm_le (hK : IsCompactOperator K) (hu : ∀ n, ‖u n‖ ≤ R) {ε : ℝ}
-    (hε : 0 < ε) : ∃ m n, m ≠ n ∧ dist (K (u m)) (K (u n)) < ε := by
-  obtain ⟨y, ψ, hψ, hψy⟩ := exists_subseq_tendsto hK hu
-  have hcauchy := hψy.cauchySeq
-  rw [Metric.cauchySeq_iff'] at hcauchy
-  obtain ⟨N, hN⟩ := hcauchy ε hε
-  exact ⟨ψ (N + 1), ψ N, by simp [hψ.injective.eq_iff], hN (N + 1) (Nat.le_succ N)⟩
-
-end Separation
-
-end IsCompactOperator
-
 /-- The kernel of `1 - K` is the `1`-eigenspace of `K`. -/
+@[simp]
 theorem ker_one_sub (K : X →L[𝕜] X) :
     LinearMap.ker ((1 - K : X →L[𝕜] X) : X →ₗ[𝕜] X) = End.eigenspace (K : X →ₗ[𝕜] X) 1 := by
   ext x
