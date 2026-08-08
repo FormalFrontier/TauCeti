@@ -16,7 +16,9 @@ coupling.
 
 These constructions form the finite multi-marginal part of Layer 0 of the optimal-transport
 roadmap. The definitions allow heterogeneous coordinate spaces; repeated-coordinate projections
-are also allowed, which is useful for forming diagonal marginals.
+are also allowed, which is useful for forming diagonal marginals. Finiteness of the index type
+is assumed only where the independent product measure is involved, since the marginal,
+projection, reindexing and coordinatewise-map API needs nothing beyond measurable pushforwards.
 -/
 
 public section
@@ -110,7 +112,9 @@ theorem isMultiCoupling_pi [Fintype ι] (μ : ∀ i, Measure (X i))
 
 end Measure
 
-/-- Probability measures on a dependent product with prescribed coordinate marginals. -/
+/-- Probability measures on a dependent product with prescribed coordinate marginals. The
+index type carries no finiteness assumption: it is `MultiCoupling.pi` and
+`MultiCoupling.instNonempty`, not the bundle itself, that need `ι` to be finite. -/
 abbrev MultiCoupling {ι : Type u} {X : ι → Type v}
     [∀ i, MeasurableSpace (X i)] (μ : ∀ i, ProbabilityMeasure (X i)) :=
   {π : ProbabilityMeasure (∀ i, X i) //
@@ -162,7 +166,7 @@ theorem ext {π κ : MultiCoupling μ} (h : π.1.toMeasure = κ.1.toMeasure) : �
   apply Subtype.ext
   exact ProbabilityMeasure.toMeasure_injective h
 
-/-- Project a coupling to a finite family of coordinates. The coordinate family need not be
+/-- Project a coupling to a family of coordinates. The coordinate family need not be
 injective. -/
 def project {κ : Type w} (π : MultiCoupling μ) (e : κ → ι) :
     MultiCoupling (fun j ↦ μ (e j)) :=
@@ -177,7 +181,7 @@ theorem coe_project {κ : Type w} (π : MultiCoupling μ) (e : κ → ι) :
       π.1.map (measurable_pi_lambda _ fun j ↦ measurable_pi_apply (e j)).aemeasurable :=
   (rfl)
 
-/-- Reindex a multi-marginal coupling along an equivalence of finite index types. -/
+/-- Reindex a multi-marginal coupling along an equivalence of index types. -/
 def reindex {κ : Type w} (π : MultiCoupling μ) (e : κ ≃ ι) :
     MultiCoupling (fun j ↦ μ (e j)) :=
   π.project e
