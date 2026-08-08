@@ -40,6 +40,8 @@ AINTLIB `LeanModularForms` project
 
 ## Main results
 
+* `SlashInvariantFormClass.SL_slash_eq`: a form invariant under the image of `Γ ≤ SL(2, ℤ)`
+  is fixed by the slash action of every element of `Γ`.
 * `Subgroup.IsArithmetic.isCusp_of_isCusp`: any two arithmetic groups have the same cusps.
 * `ModularForm.mem_range_ofLeₗ_iff`, `CuspForm.mem_range_ofLeₗ_iff`: for `Γ' ≤ Γ` with every
   cusp of `Γ` a cusp of `Γ'`, a form for `Γ'` extends to `Γ` exactly when it is `Γ`-slash
@@ -88,6 +90,15 @@ theorem _root_.ModularForm.slash_neg_one (k : ℤ) (f : ℍ → ℂ) :
   funext z
   rw [ModularForm.slash_apply]
   simp [UpperHalfPlane.σ, hzpow, hdet, mul_comm]
+
+/-- A form invariant under the image in `GL(2, ℝ)` of a subgroup `Γ ≤ SL(2, ℤ)` is fixed by
+the weight-`k` slash action of every element of `Γ` — the invariance condition read back at
+the `SL₂(ℤ)` level, where congruence subgroups are given. -/
+theorem _root_.SlashInvariantFormClass.SL_slash_eq {F : Type*} [FunLike F ℍ ℂ] {k : ℤ}
+    {Γ : Subgroup SL(2, ℤ)} [SlashInvariantFormClass F (Γ.map (mapGL ℝ)) k] (f : F)
+    (γ : SL(2, ℤ)) (hγ : γ ∈ Γ) : ⇑f ∣[k] γ = ⇑f := by
+  rw [ModularForm.SL_slash]
+  exact SlashInvariantFormClass.slash_action_eq f _ ⟨γ, hγ, rfl⟩
 
 /-! ### Changing the invariance group
 
