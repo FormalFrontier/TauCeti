@@ -12,17 +12,18 @@ public import TauCeti.LinearAlgebra.CliffordAlgebra.PinAction
 
 When the inverse negative norm of a vector is a square, the vector can be rescaled to have norm
 `-1`. It therefore defines an element of the Pin group whose twisted-conjugation action is the
-reflection in the original vector. Multiplying two such lifts gives an even element and hence a
-lift to the Spin group of the product of the two reflections. Over an algebraically closed field,
-the required square conditions hold automatically.
+reflection in the original vector. A pair of reflections needs only that the product of the
+inverse norms be a square: rescaling one vector then gives a unitary even product and hence a
+lift to the Spin group. Over an algebraically closed field, the required square conditions hold
+automatically.
 
 ## Main results
 
 * `TauCeti.CliffordAlgebra.reflection_mem_range_pinToOrthogonal_of_isSquare`: a reflection lifts
   through the Pin action when its normalization scalar is a square.
 * `TauCeti.CliffordAlgebra.reflection_mul_reflection_mem_range_spinToOrthogonal_of_isSquare`: a
-  product of two reflections lifts through the Spin action under the corresponding square
-  conditions. The versions without the suffix are algebraically closed-field corollaries.
+  product of two reflections lifts through the Spin action when the product of its normalization
+  scalars is a square. The version without the suffix is an algebraically closed-field corollary.
 
 ## References
 
@@ -64,6 +65,84 @@ private noncomputable def pinReflectionLift (v : V) [Invertible (Q v)]
     (hv : IsSquare (-⅟(Q v))) : pinGroup Q :=
   ⟨ι Q (reflectionScale Q v hv • v), ι_mem_pinGroup (reflectionScale_norm Q v hv)⟩
 
+private noncomputable def reflectionPairScale (v w : V) [Invertible (Q v)] [Invertible (Q w)]
+    (h : IsSquare (⅟(Q v) * ⅟(Q w))) : K :=
+  Classical.choose h
+
+private theorem reflectionPairScale_mul_self (v w : V) [Invertible (Q v)] [Invertible (Q w)]
+    (h : IsSquare (⅟(Q v) * ⅟(Q w))) :
+    reflectionPairScale Q v w h * reflectionPairScale Q v w h = ⅟(Q v) * ⅟(Q w) := by
+  simpa only [reflectionPairScale] using (Classical.choose_spec h).symm
+
+private theorem reflectionPairScale_norm (v w : V) [Invertible (Q v)] [Invertible (Q w)]
+    (h : IsSquare (⅟(Q v) * ⅟(Q w))) :
+    Q (reflectionPairScale Q v w h • v) = ⅟(Q w) := by
+  rw [QuadraticMap.map_smul, smul_eq_mul, reflectionPairScale_mul_self Q v w h, mul_assoc,
+    mul_comm (⅟(Q w)) (Q v), ← mul_assoc, invOf_mul_self, one_mul]
+
+private theorem reflectionPairScale_isUnit (v w : V) [Invertible (Q v)] [Invertible (Q w)]
+    (h : IsSquare (⅟(Q v) * ⅟(Q w))) : IsUnit (reflectionPairScale Q v w h) := by
+  rw [← isUnit_mul_self_iff, reflectionPairScale_mul_self Q v w h]
+  exact (isUnit_of_invertible (⅟(Q v))).mul (isUnit_of_invertible (⅟(Q w)))
+
+private theorem reflection_smul_eq (a : K) [Invertible a] (v : V) [Invertible (Q v)]
+    [Invertible (Q (a • v))] :
+    QuadraticMap.reflection Q (a • v) = QuadraticMap.reflection Q v := by
+  have hcoeff : ⅟(Q (a • v)) * a * a = ⅟(Q v) := by
+    rw [← mul_right_inj_of_invertible (c := Q v)]
+    calc
+      Q v * (⅟(Q (a • v)) * a * a) = ⅟(Q (a • v)) * (a * a * Q v) := by ring
+      _ = ⅟(Q (a • v)) * Q (a • v) := by
+        congr 1
+        exact (QuadraticMap.map_smul Q a v).symm
+      _ = 1 := invOf_mul_self _
+      _ = Q v * ⅟(Q v) := (mul_invOf_self _).symm
+  ext m
+  rw [QuadraticMap.reflection_apply, QuadraticMap.reflection_apply,
+    QuadraticMap.polar_smul_left]
+  simp only [smul_eq_mul, smul_smul]
+  congr 2
+  calc
+    ⅟(Q (a • v)) * (a * polar Q v m) * a =
+        (⅟(Q (a • v)) * a * a) * polar Q v m := by ring
+    _ = ⅟(Q v) * polar Q v m := by rw [hcoeff]
+
+private theorem reflectionPairLift_mem_pinGroup (v w : V) [Invertible (Q v)]
+    [Invertible (Q w)] (h : IsSquare (⅟(Q v) * ⅟(Q w))) :
+    ι Q (reflectionPairScale Q v w h • v) * ι Q w ∈ pinGroup Q := by
+  have : Invertible (reflectionPairScale Q v w h) :=
+    (reflectionPairScale_isUnit Q v w h).invertible
+  have hnorm := reflectionPairScale_norm Q v w h
+  have : Invertible (Q (reflectionPairScale Q v w h • v)) := hnorm ▸ inferInstance
+  have hprod : Q (reflectionPairScale Q v w h • v) * Q w = 1 := by
+    rw [hnorm, invOf_mul_self]
+  let x := unitι Q (reflectionPairScale Q v w h • v) * unitι Q w
+  have hx : (x : CliffordAlgebra Q) =
+      ι Q (reflectionPairScale Q v w h • v) * ι Q w := by
+    simp only [x, Units.val_mul, coe_unitι]
+  refine ⟨⟨x, mul_mem (unitι_mem_lipschitzGroup _) (unitι_mem_lipschitzGroup _), hx⟩,
+    (hx ▸ x.isUnit).mem_unitary_of_star_mul_self ?_⟩
+  rw [star_mul, star_ι, star_ι, neg_mul_neg]
+  calc
+    (ι Q w * ι Q (reflectionPairScale Q v w h • v)) *
+        (ι Q (reflectionPairScale Q v w h • v) * ι Q w) =
+        ι Q w * (ι Q (reflectionPairScale Q v w h • v) *
+          ι Q (reflectionPairScale Q v w h • v)) * ι Q w := by noncomm_ring
+    _ = ι Q w * algebraMap K _ (Q (reflectionPairScale Q v w h • v)) * ι Q w := by
+      rw [ι_sq_scalar]
+    _ = algebraMap K _ (Q (reflectionPairScale Q v w h • v)) * (ι Q w * ι Q w) := by
+      rw [← Algebra.commutes (Q (reflectionPairScale Q v w h • v)) (ι Q w)]
+      rw [mul_assoc]
+    _ = algebraMap K _ (Q (reflectionPairScale Q v w h • v)) * algebraMap K _ (Q w) := by
+      rw [ι_sq_scalar]
+    _ = algebraMap K _ (Q (reflectionPairScale Q v w h • v) * Q w) := by rw [map_mul]
+    _ = 1 := by rw [hprod, map_one]
+
+private noncomputable def spinReflectionPairLift (v w : V) [Invertible (Q v)]
+    [Invertible (Q w)] (h : IsSquare (⅟(Q v) * ⅟(Q w))) : spinGroup Q :=
+  ⟨ι Q (reflectionPairScale Q v w h • v) * ι Q w,
+    reflectionPairLift_mem_pinGroup Q v w h, ι_mul_ι_mem_evenOdd_zero Q _ _⟩
+
 variable [Invertible (2 : K)]
 
 private theorem pinToOrthogonal_pinReflectionLift (v : V) [Invertible (Q v)]
@@ -89,35 +168,70 @@ theorem reflection_mem_range_pinToOrthogonal_of_isSquare (v : V) [Invertible (Q 
   rw [MonoidHom.mem_range]
   exact ⟨pinReflectionLift Q v hv, pinToOrthogonal_pinReflectionLift Q v hv⟩
 
-private noncomputable def spinReflectionPairLift (v w : V) [Invertible (Q v)]
-    [Invertible (Q w)] (hv : IsSquare (-⅟(Q v))) (hw : IsSquare (-⅟(Q w))) : spinGroup Q :=
-  ⟨ι Q (reflectionScale Q v hv • v) * ι Q (reflectionScale Q w hw • w),
-    ⟨mul_mem (ι_mem_pinGroup (reflectionScale_norm Q v hv))
-        (ι_mem_pinGroup (reflectionScale_norm Q w hw)),
-      ι_mul_ι_mem_evenOdd_zero Q _ _⟩⟩
-
-omit [Invertible (2 : K)] in
-private theorem spinToPin_spinReflectionPairLift (v w : V) [Invertible (Q v)]
-    [Invertible (Q w)] (hv : IsSquare (-⅟(Q v))) (hw : IsSquare (-⅟(Q w))) :
-    spinToPin Q (spinReflectionPairLift Q v w hv hw) =
-      pinReflectionLift Q v hv * pinReflectionLift Q w hw := by
+private theorem lipschitzToOrthogonal_unitι_eq (v : V) [Invertible (Q v)] :
+    lipschitzToOrthogonal Q ⟨unitι Q v, unitι_mem_lipschitzGroup v⟩ =
+      ⟨QuadraticMap.reflection Q v, QuadraticMap.reflection_mem_orthogonalGroup Q v⟩ := by
   apply Subtype.ext
-  rw [coe_spinToPin_apply]
-  rfl
+  apply LinearEquiv.ext
+  intro m
+  rw [coe_lipschitzToOrthogonal_apply, lipschitzVectorAction_unitι]
 
-/-- If the two required normalization scalars are squares, the product of the reflections in `v`
-and `w` lifts through the Spin action. -/
+/-- If the product of the required normalization scalars is a square, the product of the
+reflections in `v` and `w` lifts through the Spin action. -/
 theorem reflection_mul_reflection_mem_range_spinToOrthogonal_of_isSquare
+    (v w : V) [Invertible (Q v)] [Invertible (Q w)]
+    (h : IsSquare (⅟(Q v) * ⅟(Q w))) :
+    (⟨QuadraticMap.reflection Q v, QuadraticMap.reflection_mem_orthogonalGroup Q v⟩ :
+        QuadraticMap.orthogonalGroup Q) *
+      ⟨QuadraticMap.reflection Q w, QuadraticMap.reflection_mem_orthogonalGroup Q w⟩ ∈
+        (spinToOrthogonal Q).range := by
+  have : Invertible (reflectionPairScale Q v w h) :=
+    (reflectionPairScale_isUnit Q v w h).invertible
+  have hnorm := reflectionPairScale_norm Q v w h
+  have : Invertible (Q (reflectionPairScale Q v w h • v)) := hnorm ▸ inferInstance
+  rw [MonoidHom.mem_range]
+  refine ⟨spinReflectionPairLift Q v w h, ?_⟩
+  have hpin : pinToLipschitz Q (spinToPin Q (spinReflectionPairLift Q v w h)) =
+      ⟨unitι Q (reflectionPairScale Q v w h • v) * unitι Q w,
+        mul_mem (unitι_mem_lipschitzGroup _) (unitι_mem_lipschitzGroup _)⟩ := by
+    apply Subtype.ext
+    apply Units.ext
+    simp only [coe_pinToLipschitz_apply, coe_spinToPin_apply, spinReflectionPairLift,
+      Units.val_mul, coe_unitι]
+  have hlipschitz : lipschitzToOrthogonal Q
+      ⟨unitι Q (reflectionPairScale Q v w h • v) * unitι Q w,
+        mul_mem (unitι_mem_lipschitzGroup _) (unitι_mem_lipschitzGroup _)⟩ =
+      (⟨QuadraticMap.reflection Q v, QuadraticMap.reflection_mem_orthogonalGroup Q v⟩ :
+        QuadraticMap.orthogonalGroup Q) *
+      ⟨QuadraticMap.reflection Q w, QuadraticMap.reflection_mem_orthogonalGroup Q w⟩ := by
+    change lipschitzToOrthogonal Q
+      ((⟨unitι Q (reflectionPairScale Q v w h • v),
+          unitι_mem_lipschitzGroup _⟩ : lipschitzGroup Q) *
+        ⟨unitι Q w, unitι_mem_lipschitzGroup _⟩) = _
+    rw [map_mul, lipschitzToOrthogonal_unitι_eq, lipschitzToOrthogonal_unitι_eq]
+    apply Subtype.ext
+    change QuadraticMap.reflection Q (reflectionPairScale Q v w h • v) *
+        QuadraticMap.reflection Q w =
+      QuadraticMap.reflection Q v * QuadraticMap.reflection Q w
+    rw [reflection_smul_eq Q]
+  apply Subtype.ext
+  apply LinearEquiv.ext
+  intro m
+  rw [← pinToOrthogonal_spinToPin, coe_pinToOrthogonal_apply, hpin]
+  exact (coe_lipschitzToOrthogonal_apply Q _ m).symm.trans
+    (congrArg (fun y : QuadraticMap.orthogonalGroup Q => (y : V ≃ₗ[K] V) m) hlipschitz)
+
+/-- If both individual normalization scalars are squares, the product of the reflections in `v`
+and `w` lifts through the Spin action. -/
+theorem reflection_mul_reflection_mem_range_spinToOrthogonal_of_isSquare_of_isSquare
     (v w : V) [Invertible (Q v)] [Invertible (Q w)]
     (hv : IsSquare (-⅟(Q v))) (hw : IsSquare (-⅟(Q w))) :
     (⟨QuadraticMap.reflection Q v, QuadraticMap.reflection_mem_orthogonalGroup Q v⟩ :
         QuadraticMap.orthogonalGroup Q) *
       ⟨QuadraticMap.reflection Q w, QuadraticMap.reflection_mem_orthogonalGroup Q w⟩ ∈
         (spinToOrthogonal Q).range := by
-  rw [MonoidHom.mem_range]
-  refine ⟨spinReflectionPairLift Q v w hv hw, ?_⟩
-  rw [← pinToOrthogonal_spinToPin, spinToPin_spinReflectionPairLift Q v w hv hw, map_mul,
-    pinToOrthogonal_pinReflectionLift Q v hv, pinToOrthogonal_pinReflectionLift Q w hw]
+  exact reflection_mul_reflection_mem_range_spinToOrthogonal_of_isSquare Q v w
+    (by simpa only [neg_mul_neg] using hv.mul hw)
 
 end Square
 
@@ -143,7 +257,7 @@ theorem reflection_mul_reflection_mem_range_spinToOrthogonal
       ⟨QuadraticMap.reflection Q w, QuadraticMap.reflection_mem_orthogonalGroup Q w⟩ ∈
         (spinToOrthogonal Q).range := by
   exact reflection_mul_reflection_mem_range_spinToOrthogonal_of_isSquare Q v w
-    (IsAlgClosed.exists_eq_mul_self (-⅟(Q v))) (IsAlgClosed.exists_eq_mul_self (-⅟(Q w)))
+    (IsAlgClosed.exists_eq_mul_self (⅟(Q v) * ⅟(Q w)))
 
 end IsAlgClosed
 
