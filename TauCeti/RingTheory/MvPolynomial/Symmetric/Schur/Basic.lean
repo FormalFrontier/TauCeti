@@ -168,8 +168,8 @@ the generating function of the semistandard Young tableaux of shape `μ` in the 
 noncomputable def diagramSchurPoly : MvPolynomial (Fin N) R :=
   ∑ T : BoundedSSYT N μ, monomial (BoundedSSYT.weight T) 1
 
-/-- The defining sum of a Schur polynomial, one squarefree-coefficient monomial per bounded
-tableau of the shape. -/
+/-- The defining sum of a Schur polynomial, one weight monomial per bounded tableau of the
+shape. -/
 theorem diagramSchurPoly_eq_sum :
     diagramSchurPoly N R μ = ∑ T : BoundedSSYT N μ, monomial (BoundedSSYT.weight T) 1 :=
   (rfl)

@@ -51,8 +51,8 @@ Bender--Knuth involution that the general case needs.
 
 * `TauCeti.BoundedSSYT.weight_eq_sum_single`: the weight of a one-column tableau is the indicator
   of the set of letters it uses.
-* `TauCeti.diagramSchurPoly_of_rowLen_le_one`: the Schur polynomial of a one-column shape is an
-  elementary symmetric polynomial.
+* `TauCeti.diagramSchurPoly_eq_esymm_of_rowLen_le_one`: the Schur polynomial of a one-column
+  shape is an elementary symmetric polynomial.
 * `TauCeti.schurPoly_ones`: `s_{(1ⁿ)} = e_n`.
 * `TauCeti.isSymmetric_schurPoly_ones`: the Schur polynomial of a one-column partition is
   symmetric.
@@ -97,12 +97,14 @@ def colFinset (T : BoundedSSYT N μ) : Finset (Fin N) :=
   Finset.image (colEntry T) Finset.univ
 
 /-- A letter is used by the first column of a bounded tableau exactly when some row carries it. -/
+@[simp]
 theorem mem_colFinset {T : BoundedSSYT N μ} {x : Fin N} :
     x ∈ colFinset T ↔ ∃ i, colEntry T i = x := by
   simp [colFinset]
 
 /-- **The first column of a bounded tableau uses one letter per row**, its entries being
 distinct. -/
+@[simp]
 theorem card_colFinset (T : BoundedSSYT N μ) : (colFinset T).card = μ.colLen 0 := by
   rw [colFinset, Finset.card_image_of_injective _ (colEntry_strictMono T).injective,
     Finset.card_univ, Fintype.card_fin]
@@ -163,7 +165,7 @@ theorem weight_eq_sum_single (h : μ.rowLen 0 ≤ 1) (T : BoundedSSYT N μ) :
 are read off by the monotone enumeration `Finset.orderEmbOfFin`, which needs the set to have one
 letter per row of the shape; that is the hypothesis `hs`.  There is no row condition to check,
 a one-column shape having at most one cell per row. -/
-def colTableau (h : μ.rowLen 0 ≤ 1) (s : Finset (Fin N)) (hs : s.card = μ.colLen 0) :
+private def colTableau (h : μ.rowLen 0 ≤ 1) (s : Finset (Fin N)) (hs : s.card = μ.colLen 0) :
     _root_.SemistandardYoungTableau μ where
   entry i j := if hij : i < μ.colLen 0 ∧ j = 0 then (s.orderEmbOfFin hs ⟨i, hij.1⟩ : ℕ) else 0
   row_weak' := by
@@ -179,8 +181,8 @@ def colTableau (h : μ.rowLen 0 ≤ 1) (s : Finset (Fin N)) (hs : s.card = μ.co
     intro i j hcell
     exact dif_neg fun hij => hcell ((YoungDiagram.mem_iff_of_rowLen_le_one h).mpr hij)
 
-theorem colTableau_apply (h : μ.rowLen 0 ≤ 1) (s : Finset (Fin N)) (hs : s.card = μ.colLen 0)
-    (i j : ℕ) :
+private theorem colTableau_apply (h : μ.rowLen 0 ≤ 1) (s : Finset (Fin N))
+    (hs : s.card = μ.colLen 0) (i j : ℕ) :
     colTableau h s hs i j
       = if hij : i < μ.colLen 0 ∧ j = 0 then (s.orderEmbOfFin hs ⟨i, hij.1⟩ : ℕ) else 0 :=
   (rfl)
@@ -211,8 +213,7 @@ theorem colFinset_ofColFinset (h : μ.rowLen 0 ≤ 1) (s : Finset (Fin N))
     (hs : s.card = μ.colLen 0) : colFinset (ofColFinset h s hs) = s := by
   refine Finset.coe_injective ?_
   rw [colFinset, Finset.coe_image, Finset.coe_univ, Set.image_univ,
-    show colEntry (ofColFinset h s hs) = ⇑(s.orderEmbOfFin hs) from
-      funext fun i => (colEntry_ofColFinset h s hs i)]
+    funext (colEntry_ofColFinset h s hs)]
   exact Finset.range_orderEmbOfFin s hs
 
 @[simp]
@@ -250,7 +251,7 @@ variable {N : ℕ} {R : Type*} [CommSemiring R] {μ : YoungDiagram}
 /-- **The Schur polynomial of a one-column shape is an elementary symmetric polynomial**: the
 tableaux of that shape are the sets of letters of size the number of rows, each contributing the
 squarefree monomial on the letters it uses. -/
-theorem diagramSchurPoly_of_rowLen_le_one (h : μ.rowLen 0 ≤ 1) :
+theorem diagramSchurPoly_eq_esymm_of_rowLen_le_one (h : μ.rowLen 0 ≤ 1) :
     diagramSchurPoly N R μ = esymm (Fin N) R μ.card := by
   rw [YoungDiagram.card_eq_colLen_of_rowLen_le_one h, esymm_eq_sum_monomial,
     Finset.sum_subtype _ (fun _ => Finset.mem_powersetCard_univ) _, diagramSchurPoly_eq_sum]
@@ -263,8 +264,10 @@ variable {σ : Type*} [Fintype σ]
 
 /-- **The Schur polynomial of the one-column partition `(1ⁿ)` is the `n`-th elementary symmetric
 polynomial**, `s_{(1ⁿ)} = e_n`. -/
+@[simp]
 theorem schurPoly_ones (n : ℕ) : schurPoly σ R (Nat.Partition.ones n) = esymm σ R n := by
-  rw [schurPoly_eq_rename, diagramSchurPoly_of_rowLen_le_one (rowLen_diagramOf_ones_le_one n 0),
+  rw [schurPoly_eq_rename,
+    diagramSchurPoly_eq_esymm_of_rowLen_le_one (rowLen_diagramOf_ones_le_one n 0),
     card_diagramOf, rename_esymm]
 
 /-- **The Schur polynomial of a one-column partition is symmetric.**  This is the one-column case
