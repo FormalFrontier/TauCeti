@@ -4,11 +4,10 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
--- `GL (Fin 2) R` occurs in every statement below, hence the `GL` notation, the coercion of an
--- element of `GL n R` to a function on indices, and `Matrix.GeneralLinearGroup.det`.
-public import Mathlib.LinearAlgebra.Matrix.GeneralLinearGroup.Defs
 -- `Matrix.GeneralLinearGroup.upperRightHom` and `Matrix.GeneralLinearGroup.scalar` occur in the
--- statements below.
+-- statements below, and this module re-exports `GeneralLinearGroup.Defs`, which supplies the `GL`
+-- notation, the coercion of an element of `GL n R` to a function on indices, and
+-- `Matrix.GeneralLinearGroup.det`.
 public import Mathlib.LinearAlgebra.Matrix.GeneralLinearGroup.FinTwo
 -- `Subgroup.index` occurs in the statements below.
 public import Mathlib.GroupTheory.Index
