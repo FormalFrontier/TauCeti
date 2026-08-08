@@ -26,9 +26,10 @@ namespace TauCeti
 open Filter
 open scoped Topology
 
-variable {𝕜 X : Type*} [NontriviallyNormedField 𝕜]
+variable {𝕜 X Y : Type*} [NontriviallyNormedField 𝕜]
 variable [NormedAddCommGroup X] [NormedSpace 𝕜 X]
-variable {K : X →L[𝕜] X}
+variable [NormedAddCommGroup Y] [NormedSpace 𝕜 Y]
+variable {K : X →L[𝕜] Y}
 
 namespace IsCompactOperator
 
@@ -38,7 +39,7 @@ variable {R : ℝ} {u : ℕ → X}
 
 /-- A compact operator sends a bounded sequence to a sequence with a convergent subsequence. -/
 theorem exists_subseq_tendsto (hK : IsCompactOperator K) (hu : ∀ n, ‖u n‖ ≤ R) :
-    ∃ (y : X) (ψ : ℕ → ℕ), StrictMono ψ ∧ Tendsto (fun k => K (u (ψ k))) atTop (𝓝 y) := by
+    ∃ (y : Y) (ψ : ℕ → ℕ), StrictMono ψ ∧ Tendsto (fun k => K (u (ψ k))) atTop (𝓝 y) := by
   obtain ⟨S, hS, hSsub⟩ := hK.image_closedBall_subset_compact R
   obtain ⟨y, -, ψ, hψ, hψy⟩ :=
     hS.tendsto_subseq fun n => hSsub ⟨u n, by simpa using hu n, rfl⟩

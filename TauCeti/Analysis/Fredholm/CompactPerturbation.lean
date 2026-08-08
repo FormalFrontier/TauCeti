@@ -42,7 +42,9 @@ forces the values at `c = 0` and `c = 1` to agree.
   operator is Fredholm.
 * `TauCeti.ContinuousLinearMap.index_add_of_isCompactOperator`: a compact perturbation leaves the
   index unchanged.
-* `TauCeti.ContinuousLinearMap.index_one_sub_eq_zero`: `1 - K` has index `0` for `K` compact.
+* `TauCeti.ContinuousLinearMap.index_one_sub_eq_zero` and
+  `TauCeti.ContinuousLinearMap.index_one_add_eq_zero`: `1 - K` and `1 + K` have index `0` for `K`
+  compact.
 
 The conventions follow McDuff--Salamon, *J-holomorphic Curves and Symplectic Topology*, Appendix
 A.1; the compact-perturbation statement is Atkinson's theorem together with the Riesz--Schauder
@@ -167,6 +169,13 @@ theorem index_one_sub_eq_zero {K : E →L[𝕜] E} (hK : IsCompactOperator K) :
     ext x
     simp [sub_eq_add_neg]
   rw [hrw, index_add_of_isCompactOperator isFredholm_id hneg, index_id]
+
+/-- A compact perturbation of the identity has index `0`, in additive form. -/
+@[simp]
+theorem index_one_add_eq_zero {K : E →L[𝕜] E} (hK : IsCompactOperator K) :
+    index (1 + K : E →L[𝕜] E) = 0 := by
+  have hrw : (1 + K : E →L[𝕜] E) = ContinuousLinearMap.id 𝕜 E + K := rfl
+  rw [hrw, index_add_of_isCompactOperator isFredholm_id hK, index_id]
 
 end ContinuousLinearMap
 
