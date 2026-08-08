@@ -6,7 +6,6 @@ module
 
 public import TauCeti.LinearAlgebra.RootSystem.FiniteType.Basic
 import Mathlib.Data.Rat.Star
-import Mathlib.Tactic.NormDet
 
 public section
 
@@ -52,15 +51,32 @@ private lemma posDef_of_gram {m n : Type*} [Fintype m] [Fintype n] [DecidableEq 
     rw [← _root_.Matrix.mulVec_mulVec x Bᴴ B, ← _root_.Matrix.mulVec_mulVec y Bᴴ B, hxy]
   exact hgram.symm ▸ _root_.Matrix.PosDef.conjTranspose_mul_self B hinjective
 
+private lemma det_intCast {n : Type*} [Fintype n] [DecidableEq n]
+    (M : _root_.Matrix n n ℤ) :
+    (_root_.Matrix.of fun i j ↦ (M i j : ℚ)).det = (M.det : ℚ) := by
+  rw [show _root_.Matrix.of (fun i j ↦ (M i j : ℚ)) = M.map (fun x ↦ (x : ℚ)) from rfl,
+    ← Int.cast_det]
+
+private lemma det_mul_intCast {n : Type*} [Fintype n] [DecidableEq n]
+    (d : n → ℚ) (M : _root_.Matrix n n ℤ) :
+    (_root_.Matrix.of fun i j ↦ d i * (M i j : ℚ)).det = (∏ i, d i) * (M.det : ℚ) := by
+  calc
+    _ = (_root_.Matrix.of fun i j ↦ d i * (M.map fun x ↦ (x : ℚ)) i j).det := rfl
+    _ = (∏ i, d i) * (M.map fun x ↦ (x : ℚ)).det := _root_.Matrix.det_mul_column d _
+    _ = (∏ i, d i) * (M.det : ℚ) := by rw [← Int.cast_det]
+
+private def rootsE : _root_.Matrix (Fin 8) (Fin 8) ℚ :=
+  !![ 1 / 2,  1, -1,  0,  0,  0,  0,  0;
+     -1 / 2,  1,  1, -1,  0,  0,  0,  0;
+     -1 / 2,  0,  0,  1, -1,  0,  0,  0;
+     -1 / 2,  0,  0,  0,  1, -1,  0,  0;
+     -1 / 2,  0,  0,  0,  0,  1, -1,  0;
+     -1 / 2,  0,  0,  0,  0,  0,  1, -1;
+     -1 / 2,  0,  0,  0,  0,  0,  0,  1;
+      1 / 2,  0,  0,  0,  0,  0,  0,  0]
+
 private def rootsE6 : _root_.Matrix (Fin 8) (Fin 6) ℚ :=
-  !![ 1 / 2,  1, -1,  0,  0,  0;
-     -1 / 2,  1,  1, -1,  0,  0;
-     -1 / 2,  0,  0,  1, -1,  0;
-     -1 / 2,  0,  0,  0,  1, -1;
-     -1 / 2,  0,  0,  0,  0,  1;
-     -1 / 2,  0,  0,  0,  0,  0;
-     -1 / 2,  0,  0,  0,  0,  0;
-      1 / 2,  0,  0,  0,  0,  0]
+  rootsE.submatrix id (Fin.castAdd 2)
 
 /-- The standard Cartan matrix of type `E₆` is of finite type. -/
 theorem isFiniteType_cartanMatrix_E6 : IsFiniteType E6.cartanMatrix := by
@@ -71,25 +87,17 @@ theorem isFiniteType_cartanMatrix_E6 : IsFiniteType E6.cartanMatrix := by
       _root_.Matrix.of (fun i j ↦ (CartanMatrix.E₆ i j : ℚ)) = rootsE6ᴴ * rootsE6 := by
     ext i j
     fin_cases i <;> fin_cases j <;>
-      norm_num [rootsE6, CartanMatrix.E₆, _root_.Matrix.mul_apply, Fin.sum_univ_succ,
-        _root_.Matrix.cons_val_succ]
+      norm_num [rootsE6, rootsE, Fin.castAdd, Fin.castLE, CartanMatrix.E₆,
+        _root_.Matrix.mul_apply, Fin.sum_univ_succ, _root_.Matrix.cons_val_succ]
   have hunit : IsUnit (rootsE6ᴴ * rootsE6) := by
     rw [← hgram, _root_.Matrix.isUnit_iff_isUnit_det, isUnit_iff_ne_zero]
-    change (CartanMatrix.E₆.map fun x ↦ (x : ℚ)).det ≠ 0
-    rw [← Int.cast_det, CartanMatrix.E₆_det]
+    rw [det_intCast, CartanMatrix.E₆_det]
     norm_num
   simp only [cartanMatrix_E6, one_mul]
   exact posDef_of_gram _ _ hgram (hgram.symm ▸ hunit)
 
 private def rootsE7 : _root_.Matrix (Fin 8) (Fin 7) ℚ :=
-  !![ 1 / 2,  1, -1,  0,  0,  0,  0;
-     -1 / 2,  1,  1, -1,  0,  0,  0;
-     -1 / 2,  0,  0,  1, -1,  0,  0;
-     -1 / 2,  0,  0,  0,  1, -1,  0;
-     -1 / 2,  0,  0,  0,  0,  1, -1;
-     -1 / 2,  0,  0,  0,  0,  0,  1;
-     -1 / 2,  0,  0,  0,  0,  0,  0;
-      1 / 2,  0,  0,  0,  0,  0,  0]
+  rootsE.submatrix id (Fin.castAdd 1)
 
 /-- The standard Cartan matrix of type `E₇` is of finite type. -/
 theorem isFiniteType_cartanMatrix_E7 : IsFiniteType E7.cartanMatrix := by
@@ -100,25 +108,14 @@ theorem isFiniteType_cartanMatrix_E7 : IsFiniteType E7.cartanMatrix := by
       _root_.Matrix.of (fun i j ↦ (CartanMatrix.E₇ i j : ℚ)) = rootsE7ᴴ * rootsE7 := by
     ext i j
     fin_cases i <;> fin_cases j <;>
-      norm_num [rootsE7, CartanMatrix.E₇, _root_.Matrix.mul_apply, Fin.sum_univ_succ,
-        _root_.Matrix.cons_val_succ]
+      norm_num [rootsE7, rootsE, Fin.castAdd, Fin.castLE, CartanMatrix.E₇,
+        _root_.Matrix.mul_apply, Fin.sum_univ_succ, _root_.Matrix.cons_val_succ]
   have hunit : IsUnit (_root_.Matrix.of fun i j ↦ (CartanMatrix.E₇ i j : ℚ)) := by
     rw [_root_.Matrix.isUnit_iff_isUnit_det, isUnit_iff_ne_zero]
-    change (CartanMatrix.E₇.map fun x ↦ (x : ℚ)).det ≠ 0
-    rw [← Int.cast_det, CartanMatrix.E₇_det]
+    rw [det_intCast, CartanMatrix.E₇_det]
     norm_num
   simp only [cartanMatrix_E7, one_mul]
   exact posDef_of_gram _ _ hgram hunit
-
-private def rootsE8 : _root_.Matrix (Fin 8) (Fin 8) ℚ :=
-  !![ 1 / 2,  1, -1,  0,  0,  0,  0,  0;
-     -1 / 2,  1,  1, -1,  0,  0,  0,  0;
-     -1 / 2,  0,  0,  1, -1,  0,  0,  0;
-     -1 / 2,  0,  0,  0,  1, -1,  0,  0;
-     -1 / 2,  0,  0,  0,  0,  1, -1,  0;
-     -1 / 2,  0,  0,  0,  0,  0,  1, -1;
-     -1 / 2,  0,  0,  0,  0,  0,  0,  1;
-      1 / 2,  0,  0,  0,  0,  0,  0,  0]
 
 /-- The standard Cartan matrix of type `E₈` is of finite type. -/
 theorem isFiniteType_cartanMatrix_E8 : IsFiniteType E8.cartanMatrix := by
@@ -126,15 +123,14 @@ theorem isFiniteType_cartanMatrix_E8 : IsFiniteType E8.cartanMatrix := by
     (fun i j hij ↦ cartanMatrix_apply_le_zero_of_ne E8 hij)
     (d := fun _ ↦ 1) (fun _ ↦ by positivity) ?_
   have hgram :
-      _root_.Matrix.of (fun i j ↦ (CartanMatrix.E₈ i j : ℚ)) = rootsE8ᴴ * rootsE8 := by
+      _root_.Matrix.of (fun i j ↦ (CartanMatrix.E₈ i j : ℚ)) = rootsEᴴ * rootsE := by
     ext i j
     fin_cases i <;> fin_cases j <;>
-      norm_num [rootsE8, CartanMatrix.E₈, _root_.Matrix.mul_apply, Fin.sum_univ_succ,
+      norm_num [rootsE, CartanMatrix.E₈, _root_.Matrix.mul_apply, Fin.sum_univ_succ,
         _root_.Matrix.cons_val_succ]
   have hunit : IsUnit (_root_.Matrix.of fun i j ↦ (CartanMatrix.E₈ i j : ℚ)) := by
     rw [_root_.Matrix.isUnit_iff_isUnit_det, isUnit_iff_ne_zero]
-    change (CartanMatrix.E₈.map fun x ↦ (x : ℚ)).det ≠ 0
-    rw [← Int.cast_det, CartanMatrix.E₈_det]
+    rw [det_intCast, CartanMatrix.E₈_det]
     norm_num
   simp only [cartanMatrix_E8, one_mul]
   exact posDef_of_gram _ _ hgram hunit
@@ -158,17 +154,9 @@ theorem isFiniteType_cartanMatrix_F4 : IsFiniteType F4.cartanMatrix := by
       norm_num [d, rootsF4, CartanMatrix.F₄, _root_.Matrix.mul_apply, Fin.sum_univ_succ,
         _root_.Matrix.cons_val_succ]
   have hunit : IsUnit (_root_.Matrix.of fun i j ↦ d i * (CartanMatrix.F₄ i j : ℚ)) := by
-    have hmatrix :
-        _root_.Matrix.of (fun i j ↦ d i * (CartanMatrix.F₄ i j : ℚ)) =
-          (!![2, -1, 0, 0; -1, 2, -2, 0; 0, -2, 4, -2; 0, 0, -2, 4] :
-            _root_.Matrix (Fin 4) (Fin 4) ℚ) := by
-      ext i j
-      fin_cases i <;> fin_cases j <;>
-        norm_num [d, CartanMatrix.F₄, _root_.Matrix.cons_val_succ]
-    rw [hmatrix]
     rw [_root_.Matrix.isUnit_iff_isUnit_det, isUnit_iff_ne_zero]
-    eval_det
-    norm_num
+    rw [det_mul_intCast, CartanMatrix.F₄_det]
+    norm_num [d, Fin.prod_univ_succ]
   simp only [cartanMatrix_F4]
   exact posDef_of_gram _ _ hgram hunit
 
@@ -190,15 +178,9 @@ theorem isFiniteType_cartanMatrix_G2 : IsFiniteType G2.cartanMatrix := by
       norm_num [d, rootsG2, CartanMatrix.G₂, _root_.Matrix.mul_apply, Fin.sum_univ_succ,
         _root_.Matrix.cons_val_succ]
   have hunit : IsUnit (_root_.Matrix.of fun i j ↦ d i * (CartanMatrix.G₂ᵀ i j : ℚ)) := by
-    have hmatrix :
-        _root_.Matrix.of (fun i j ↦ d i * (CartanMatrix.G₂ᵀ i j : ℚ)) =
-          (!![6, -3; -3, 2] : _root_.Matrix (Fin 2) (Fin 2) ℚ) := by
-      ext i j
-      fin_cases i <;> fin_cases j <;>
-        norm_num [d, CartanMatrix.G₂, _root_.Matrix.cons_val_succ]
-    rw [hmatrix]
     rw [_root_.Matrix.isUnit_iff_isUnit_det, isUnit_iff_ne_zero]
-    norm_num [norm_det]
+    rw [det_mul_intCast, _root_.Matrix.det_transpose, CartanMatrix.G₂_det]
+    norm_num [d, Fin.prod_univ_succ]
   simp only [cartanMatrix_G2]
   exact posDef_of_gram _ _ hgram hunit
 
