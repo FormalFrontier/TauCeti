@@ -56,8 +56,8 @@ per-crossing windows along the sorted crossing list.
 ## Main results
 
 * `TauCeti.Contour.windingNumber_eq_real_integral_of_closed_interior_crossings` — the real
-  bounded-integrand formula for a closed immersion whose crossings of `s`, if any, are interior,
-  bundled with the boundedness and interval-integrability facts it is built from.
+  bounded-integrand formula for a closed immersion that avoids `s` at its basepoint (so every
+  crossing of `s`, if any, is automatically interior).
 
 ## Provenance
 
@@ -275,21 +275,6 @@ private theorem intervalIntegrable_realWindingIntegrand_window_left {γ : ℝ �
   filter_upwards [MeasureTheory.ae_restrict_mem measurableSet_uIoc] with t ht
   exact hC _ ⟨t, huIoc_sub ht, rfl⟩
 
-/-- **Gluing interval-integrability of the real winding integrand along the sorted crossing
-list.** An instance of `sorted_crossing_gluing_induction`: only needs `IntervalIntegrable.trans` to
-concatenate plain pieces with windows — no limiting value to track. -/
-private theorem intervalIntegrable_along_sorted {γ : ℝ → ℂ} {s : ℂ} {A b r m : ℝ}
-    (h_piece : ∀ l u : ℝ, A ≤ l → l ≤ u → u ≤ b → (∀ t ∈ Icc l u, m ≤ ‖γ t - s‖) →
-      IntervalIntegrable (fun t => realWindingIntegrand (γ t - s) (deriv γ t)) volume l u) :
-    ∀ (sorted : List ℝ), sorted.SortedLT → (sorted ≠ [] → 0 ≤ r) →
-    ∀ a : ℝ, A ≤ a → a ≤ b → (∀ t ∈ sorted, a ≤ t - r) → (∀ t ∈ sorted, t + r ≤ b) →
-      (∀ t ∈ sorted, ∀ t' ∈ sorted, t' ≠ t → 2 * r ≤ |t - t'|) →
-      (∀ t ∈ sorted, IntervalIntegrable
-        (fun t => realWindingIntegrand (γ t - s) (deriv γ t)) volume (t - r) (t + r)) →
-      (∀ u ∈ Icc a b, (∀ t ∈ sorted, u ∉ Ioo (t - r) (t + r)) → m ≤ ‖γ u - s‖) →
-      IntervalIntegrable (fun t => realWindingIntegrand (γ t - s) (deriv γ t)) volume a b :=
-  sorted_crossing_gluing_induction h_piece (fun _ _ _ _ _ h₁ h₂ => h₁.trans h₂)
-
 /-! ### Boundedness of the derivative of a piecewise-`C¹` curve -/
 
 /-- The derivative of a curve that is `C¹` on `[c, d]` has bounded image on `[c, d]`: the
@@ -414,33 +399,21 @@ private theorem derivWithin_ne_zero_of_isPwC1ImmersionOn_left {γ : ℝ → ℂ}
 
 /-! ### Assembly -/
 
-/-- **The real bounded-integrand formula, allowing crossings** (Hungerbühler–Wasem Prop 2.3).
-For a closed piecewise-`C¹` immersion `γ` on `[a, b]` all of whose value-`s` parameters are
-interior and `C^{1,1}` on each side there (`derivWithin γ` Lipschitz on a one-sided closed piece
-ending or starting at the crossing, `hγ_lip` — the two sides need not agree, so a crossing may
-coincide with a breakpoint of the immersion) — in particular satisfied vacuously if `γ` never
-meets `s` — the real winding integrand `h t := realWindingIntegrand (γ t - s) (deriv γ t)` has
-bounded image on `[a, b]` (not just off the crossings, where it is continuous on the compact
-avoiding piece, but *at* them too, via the `C^{1,1}` regularity), is genuinely interval-integrable
-there given that boundedness together with a.e. strong measurability (not merely assigned
-Mathlib's junk `0` value for a non-integrable integrand), and the generalized winding number
-`n_s(γ)` is a real number equal to its ordinary (non-principal-value) integral:
+/-- **The real bounded-integrand formula, allowing crossings** (Hungerbühler–Wasem Prop 2.3),
+bundled with the boundedness and interval-integrability facts it is built from. See the public
+`windingNumber_eq_real_integral_of_closed_interior_crossings` below for the formula on its own,
+and for the full documentation of the hypotheses.
 
-`n_s(γ) = (1 / 2π) ∫_a^b (x ẏ - y ẋ) / (x² + y²) dt`, `x + i y = γ - s`.
-
-Unlike the off-curve case, `h`'s boundedness and interval-integrability are not assumed here: both
-are derived from the crossing regularity, via
+Unlike the off-curve case, the real winding integrand `h t := realWindingIntegrand (γ t - s)
+(deriv γ t)`'s boundedness and interval-integrability are not assumed here: both are derived from
+the crossing regularity, via
 `exists_isBounded_image_realWindingIntegrand_of_lipschitzOnWith_derivWithin_right`/`_left`'s
 boundedness at each `C^{1,1}` crossing, its continuity off the crossing itself giving the
 measurability half, and the ordinary avoidance argument between crossings — the actual content of
-HW Prop 2.3. The two sides of a crossing need not agree: `hγ_lip` allows the
-crossing to coincide with a breakpoint of the piecewise-`C¹` immersion (a corner), matching
-Hungerbühler–Wasem's own proof of Prop 2.3, which handles that case via the same one-sided
-splitting (arXiv:1808.00997, p. 9). -/
-theorem windingNumber_eq_real_integral_of_closed_interior_crossings
+HW Prop 2.3. -/
+private theorem bounded_integrable_eq_real_integral_of_closed_interior_crossings
     {γ : ℝ → ℂ} {a b : ℝ}
-    {s : ℂ} (h_imm : IsPwC1ImmersionOn γ a b) (hab : a ≤ b) (hclosed : γ a = γ b)
-    (h_interior : ∀ t ∈ Icc a b, γ t = s → t ∈ Ioo a b)
+    {s : ℂ} (h_imm : IsPwC1ImmersionOn γ a b) (hab : a ≤ b) (hclosed : γ a = γ b) (hsa : γ a ≠ s)
     (hγ_lip : ∀ t ∈ Icc a b, γ t = s → ∃ εR > 0, ∃ KR : ℝ≥0,
       ContDiffOn ℝ 1 γ (Icc t (t + εR)) ∧ LipschitzOnWith KR (derivWithin γ (Icc t (t + εR)))
         (Icc t (t + εR)) ∧
@@ -463,7 +436,13 @@ theorem windingNumber_eq_real_integral_of_closed_interior_crossings
   have hT_mem : ∀ {t : ℝ}, t ∈ T ↔ t ∈ Icc a b ∧ γ t = s := fun {_} => by
     rw [hT_def, h_imm.mem_toFinset_finite_crossings, uIcc_of_le hab.le]
   have h_complete : ∀ t ∈ Icc a b, γ t = s → t ∈ T := fun t ht h_eq => hT_mem.mpr ⟨ht, h_eq⟩
-  have h_Ioo : ∀ t ∈ T, t ∈ Ioo a b := fun t ht => h_interior t (hT_mem.mp ht).1 (hT_mem.mp ht).2
+  -- Every crossing is interior: on `[a, b]`, `t ∈ Ioo a b` reduces to `t ≠ a ∧ t ≠ b`, and both
+  -- endpoints avoid `s` -- `a` directly by `hsa`, `b` via `hclosed : γ a = γ b`.
+  have h_Ioo : ∀ t ∈ T, t ∈ Ioo a b := fun t ht => by
+    obtain ⟨ht_icc, ht_eq⟩ := hT_mem.mp ht
+    refine ⟨ht_icc.1.lt_of_ne ?_, ht_icc.2.lt_of_ne ?_⟩
+    · rintro rfl; exact hsa ht_eq
+    · intro h; exact hsa (hclosed.trans (h ▸ ht_eq))
   have hγ_cont : ContinuousOn γ (Icc a b) := h_imm.continuousOn.mono (uIcc_of_le hab.le).ge
   have h_int_tr : ∀ ε : ℝ, 0 < ε → IntervalIntegrable
       (fun t => if ‖γ t - s‖ > ε then (γ t - s)⁻¹ * deriv γ t else 0) volume a b :=
@@ -537,8 +516,8 @@ theorem windingNumber_eq_real_integral_of_closed_interior_crossings
   -- crossing's `C^{1,1}` regularity.
   have h_int : IntervalIntegrable (fun t => realWindingIntegrand (γ t - s) (deriv γ t)) volume
       a b := by
-    refine intervalIntegrable_along_sorted
-      (fun l u hA hlu hu h_far' => ?_)
+    refine sorted_crossing_gluing_induction
+      (fun l u hA hlu hu h_far' => ?_) (fun _ _ _ _ _ h₁ h₂ => h₁.trans h₂)
       (T.sort (· ≤ ·)) (Finset.sortedLT_sort T)
       (fun _ => hρ_pos.le) a le_rfl hab.le
       (fun t ht => by linarith [(h_endpts t ((Finset.mem_sort _).mp ht)).1])
@@ -647,6 +626,35 @@ theorem windingNumber_eq_real_integral_of_closed_interior_crossings
   push_cast
   field_simp
   ring
+
+/-- **The real bounded-integrand formula, allowing crossings** (Hungerbühler–Wasem Prop 2.3).
+For a closed piecewise-`C¹` immersion `γ` on `[a, b]` that avoids `s` at the basepoint `a`
+(`hsa`, so also at `b` by closedness — every other crossing of `s`, if any, is automatically
+interior to `[a, b]`) and is `C^{1,1}` on each side of any such crossing (`derivWithin γ`
+Lipschitz on a one-sided closed piece ending or starting there, `hγ_lip` — the two sides need not
+agree, so a crossing may coincide with a breakpoint of the immersion) — in particular satisfied
+vacuously if `γ` never meets `s` — the generalized winding number `n_s(γ)` is a real number equal
+to its ordinary (non-principal-value) integral:
+
+`n_s(γ) = (1 / 2π) ∫_a^b (x ẏ - y ẋ) / (x² + y²) dt`, `x + i y = γ - s`.
+
+The two sides of a crossing need not agree: `hγ_lip` allows the crossing to coincide with a
+breakpoint of the piecewise-`C¹` immersion (a corner), matching Hungerbühler–Wasem's own proof of
+Prop 2.3, which handles that case via the same one-sided splitting (arXiv:1808.00997, p. 9). -/
+theorem windingNumber_eq_real_integral_of_closed_interior_crossings
+    {γ : ℝ → ℂ} {a b : ℝ} {s : ℂ} (h_imm : IsPwC1ImmersionOn γ a b) (hab : a ≤ b)
+    (hclosed : γ a = γ b) (hsa : γ a ≠ s)
+    (hγ_lip : ∀ t ∈ Icc a b, γ t = s → ∃ εR > 0, ∃ KR : ℝ≥0,
+      ContDiffOn ℝ 1 γ (Icc t (t + εR)) ∧ LipschitzOnWith KR (derivWithin γ (Icc t (t + εR)))
+        (Icc t (t + εR)) ∧
+      ∃ εL > 0, ∃ KL : ℝ≥0,
+      ContDiffOn ℝ 1 γ (Icc (t - εL) t) ∧ LipschitzOnWith KL (derivWithin γ (Icc (t - εL) t))
+        (Icc (t - εL) t)) :
+    windingNumber γ a b s
+      = ((1 / (2 * Real.pi)
+          * ∫ t in a..b, realWindingIntegrand (γ t - s) (deriv γ t) : ℝ) : ℂ) :=
+  (bounded_integrable_eq_real_integral_of_closed_interior_crossings
+    h_imm hab hclosed hsa hγ_lip).2.2
 
 end TauCeti.Contour
 
