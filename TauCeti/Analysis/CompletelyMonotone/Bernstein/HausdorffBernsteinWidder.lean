@@ -96,10 +96,11 @@ private lemma one_sub_exp_neg_mul_pos {x R : ℝ} (hx : 0 < x) (hR : 0 < R) :
 `t ↦ f (t + δ)` by its Laplace transform equals `f δ - f (x + δ)` (for `x > 0`). This is the
 Laplace-value identity behind the shifted-measure tail estimate. -/
 private lemma lintegral_ofReal_one_sub_exp_eq_of_representsLaplace
-    {f : ℝ → ℝ} {μ : Measure ℝ≥0} [IsFiniteMeasure μ]
+    {f : ℝ → ℝ} {μ : Measure ℝ≥0}
     {δ x : ℝ} (hμ : RepresentsLaplace μ (fun t : ℝ => f (t + δ))) (hx : 0 < x) :
     ∫⁻ p : ℝ≥0, ENNReal.ofReal (1 - Real.exp (-(x * (p : ℝ)))) ∂μ
       = ENNReal.ofReal (f δ - f (x + δ)) := by
+  have := hμ.isFiniteMeasure
   have h_one : Integrable (fun _ : ℝ≥0 => (1 : ℝ)) μ := integrable_const 1
   have h_exp : Integrable (fun p : ℝ≥0 => Real.exp (-(x * (p : ℝ)))) μ :=
     integrable_exp_neg_mul μ hx.le
@@ -165,11 +166,12 @@ The estimate is Markov's inequality on the bounded coordinate `p ↦ 1 - exp (-x
 tightness input for shifting Bernstein's existence theorem back to the closed-half-line
 theorem. -/
 private lemma measure_closedBall_compl_le_of_representsLaplace_shift
-    {f : ℝ → ℝ} {μ : Measure ℝ≥0} [IsFiniteMeasure μ]
+    {f : ℝ → ℝ} {μ : Measure ℝ≥0}
     {δ x R : ℝ} (hμ : RepresentsLaplace μ (fun t : ℝ => f (t + δ)))
     (hx : 0 < x) (hR : 0 < R) :
     μ (Metric.closedBall (0 : ℝ≥0) R)ᶜ ≤
       ENNReal.ofReal ((f δ - f (x + δ)) / (1 - Real.exp (-(x * R)))) := by
+  have := hμ.isFiniteMeasure
   have hc_pos : 0 < 1 - Real.exp (-(x * R)) := one_sub_exp_neg_mul_pos hx hR
   calc
     μ (Metric.closedBall (0 : ℝ≥0) R)ᶜ
@@ -293,7 +295,7 @@ private lemma isTightMeasureSet_range_of_representsLaplace_shift
 /-- The representing measure of the positive shift `t ↦ f (t + δ)` has total mass
 `f δ ≤ f 0`. -/
 private lemma measure_univ_le_of_representsLaplace_shift
-    {f : ℝ → ℝ} (hf : IsCompletelyMonotoneOnIci f) {δ : ℝ} (hδ : 0 < δ)
+    {f : ℝ → ℝ} (hf : IsCompletelyMonotoneOnIci f) {δ : ℝ} (hδ : 0 ≤ δ)
     {μ : Measure ℝ≥0} (hμ : RepresentsLaplace μ (fun t : ℝ => f (t + δ))) :
     μ univ ≤ ENNReal.ofReal (f 0) := by
   have := hμ.isFiniteMeasure
@@ -302,7 +304,7 @@ private lemma measure_univ_le_of_representsLaplace_shift
   calc
     μ univ = ENNReal.ofReal (μ.real univ) := by rw [ofReal_measureReal]
     _ ≤ ENNReal.ofReal (f 0) :=
-        ENNReal.ofReal_le_ofReal (hreal ▸ hf.le_apply_zero hδ.le)
+        ENNReal.ofReal_le_ofReal (hreal ▸ hf.le_apply_zero hδ)
 
 /-- **Existence half of the Hausdorff--Bernstein--Widder theorem**: a function continuous on
 `[0, ∞)` and completely monotone on `(0, ∞)` is the Laplace transform of a finite positive
@@ -318,10 +320,7 @@ theorem exists_representsLaplace_of_isCompletelyMonotoneOnIci
     dsimp [a]
     positivity
   have ha : Tendsto a atTop (𝓝 0) := by
-    have hden : Tendsto (fun n : ℕ => (n : ℝ) + 1) atTop atTop := by
-      exact Filter.tendsto_atTop_add_const_right atTop 1
-        (tendsto_natCast_atTop_atTop (R := ℝ))
-    simpa [a] using Filter.Tendsto.const_div_atTop hden (1 : ℝ)
+    simpa [a] using tendsto_one_div_add_atTop_nhds_zero_nat (𝕜 := ℝ)
   -- Stage 2: representing measures for the shifted functions, from Bernstein's theorem.
   have hshift_cm : ∀ n, IsCompletelyMonotone (fun t : ℝ => f (t + a n)) :=
     fun n => hf.isCompletelyMonotoneOnIoi.isCompletelyMonotone_comp_add_const (ha_pos n)
@@ -332,7 +331,7 @@ theorem exists_representsLaplace_of_isCompletelyMonotoneOnIci
   have hmass : ∀ n, (μ n) univ ≤ (C : ENNReal) := fun n =>
     calc
       (μ n) univ ≤ ENNReal.ofReal (f 0) :=
-        measure_univ_le_of_representsLaplace_shift hf (ha_pos n) (hμ n)
+        measure_univ_le_of_representsLaplace_shift hf (ha_pos n).le (hμ n)
       _ = (C : ENNReal) := ENNReal.ofReal_eq_coe_nnreal hf.nonneg_zero
   have htight : IsTightMeasureSet (Set.range μ) :=
     isTightMeasureSet_range_of_representsLaplace_shift hf.continuousOn ha_pos ha hμ
@@ -365,9 +364,7 @@ theorem hausdorff_bernstein_widder (f : ℝ → ℝ) :
   constructor
   · exact exists_representsLaplace_of_isCompletelyMonotoneOnIci
   · rintro ⟨μ, hμ⟩
-    have := hμ.isFiniteMeasure
-    exact (isCompletelyMonotoneOnIci_laplaceTransform μ).congr fun t ht =>
-      hμ.eq_laplaceTransform ht
+    exact hμ.isCompletelyMonotoneOnIci
 
 /-- Unique-existence form of the Hausdorff--Bernstein--Widder theorem. -/
 theorem hausdorff_bernstein_widder_existsUnique (f : ℝ → ℝ) :

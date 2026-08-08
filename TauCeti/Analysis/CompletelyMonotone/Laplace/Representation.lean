@@ -466,6 +466,13 @@ lemma apply_zero (h : RepresentsLaplace μ f) : f 0 = μ.real univ := by
   have := h.isFiniteMeasure
   simpa [laplaceTransform_zero] using h.eq_laplaceTransform le_rfl
 
+/-- A represented function is continuous on `[0, ∞)` and completely monotone on `(0, ∞)`:
+the easy direction of the Hausdorff--Bernstein--Widder theorem, through the representation. -/
+lemma isCompletelyMonotoneOnIci (h : RepresentsLaplace μ f) : IsCompletelyMonotoneOnIci f := by
+  have := h.isFiniteMeasure
+  exact (isCompletelyMonotoneOnIci_laplaceTransform μ).congr fun t ht =>
+    h.eq_laplaceTransform ht
+
 /-- A representation transports along agreement on the nonnegative half-line: the predicate
 constrains `f` only there. -/
 protected lemma congr {g : ℝ → ℝ} (hf : RepresentsLaplace μ f) (h : EqOn g f (Ici 0)) :
