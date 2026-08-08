@@ -144,6 +144,7 @@ theorem coe_pathMap_apply {a b : Q} (p : _root_.Quiver.Path a b)
   (rfl)
 
 /-- **The trivial path acts as the identity.** -/
+@[simp]
 theorem pathMap_nil (a : Q) :
     pathMap k M (_root_.Quiver.Path.nil : _root_.Quiver.Path a a) = LinearMap.id := by
   ext x
@@ -153,6 +154,7 @@ theorem pathMap_nil (a : Q) :
 
 /-- **Concatenation of paths is composition of the maps they act by.** Together with
 `TauCeti.pathMap_nil` this says that `v ↦ eᵥ M` really is a representation of `Q`. -/
+@[simp]
 theorem pathMap_comp {a b c : Q} (p : _root_.Quiver.Path a b) (q : _root_.Quiver.Path b c) :
     pathMap k M (p.comp q) = (pathMap k M q).comp (pathMap k M p) := by
   ext x
@@ -197,8 +199,8 @@ end Naturality
 
 section Internal
 
-variable (k : Type w) {Q : Type u} [CommRing k] [Quiver.{v} Q] [Finite Q] [DecidableEq Q]
-variable (M : Type*) [AddCommGroup M] [Module k M] [Module (pathAlgebra k Q) M]
+variable (k : Type w) {Q : Type u} [CommSemiring k] [Quiver.{v} Q] [Finite Q] [DecidableEq Q]
+variable (M : Type*) [AddCommMonoid M] [Module k M] [Module (pathAlgebra k Q) M]
   [IsScalarTower k (pathAlgebra k Q) M]
 
 /-- **A module over the path algebra is the direct sum of its vertex components**, `M = ⨁ᵥ eᵥ M`.
