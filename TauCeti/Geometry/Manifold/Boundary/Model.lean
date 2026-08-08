@@ -1,4 +1,6 @@
-import Mathlib.Geometry.Manifold.Instances.Real
+module
+
+public import Mathlib.Geometry.Manifold.Instances.Real
 
 /-!
 # The boundary model of a Euclidean half-space
@@ -13,6 +15,8 @@ boundary of a manifold modeled on a Euclidean half-space, as prescribed by Layer
 GeometricTopology roadmap.  The parametrization and projection API below is intended to let
 boundary charts use this identification without unfolding its coordinate construction.
 -/
+
+public section
 
 open Function Set
 
