@@ -14,13 +14,11 @@ public import TauCeti.Algebra.CentralSimple.Degree
 -- as a central simple algebra. It also re-exports `Mathlib.Algebra.Module.LinearMap.End`, hence
 -- `Module.End` itself, which is why that is not imported again here.
 public import Mathlib.Algebra.Central.End
--- Non-public: the matrix presentation `algEquivMatrix (Module.finBasis K V)` and the matrix fact it
--- transports, `IsSimpleRing.matrix`, are used only inside a proof, as is the transport
--- `IsSimpleRing.of_ringEquiv` itself. The dimension count `Module.finrank_linearMap` needs no
--- import of its own: it arrives with `TauCeti.Algebra.CentralSimple.Degree`.
-import Mathlib.LinearAlgebra.Matrix.ToLin
-import Mathlib.RingTheory.SimpleRing.Congr
-import Mathlib.RingTheory.SimpleRing.Matrix
+-- Non-public: the general simplicity theorem for endomorphism rings over simple Artinian rings is
+-- used only to supply the field-specific instance below. The dimension count
+-- `Module.finrank_linearMap` needs no import of its own: it arrives with
+-- `TauCeti.Algebra.CentralSimple.Degree`.
+import TauCeti.RingTheory.Semisimple.EndAlgebra
 
 /-!
 # The endomorphism algebra of a finite-dimensional vector space is central simple
@@ -30,13 +28,13 @@ central simple over `K`: it is the untwisted, "split" central simple algebra of 
 `Module.finrank K V`. Centrality is already Mathlib's: its `Algebra.IsCentral` instance in
 `Mathlib.Algebra.Central.End` covers the endomorphisms of any free module. This file supplies the
 missing half, simplicity, as the instance typeclass inference needs, so that `Module.End K V` is
-available wherever a central simple algebra is asked for, and computes the degree.
+available wherever a central simple algebra is asked for, and computes the degree. The simplicity
+theorem itself is the more general `TauCeti.IsSimpleRing.moduleEnd`, for finite modules over simple
+Artinian rings; this file promotes its field specialization to an instance.
 
-Simplicity is not a new theorem. A choice of basis turns `Module.End K V` into the matrix algebra
-`Matrix (Fin n) (Fin n) K` with `n = Module.finrank K V` (Mathlib's `algEquivMatrix`), and Mathlib
-already knows that a matrix algebra over a simple ring is simple (`IsSimpleRing.matrix`); that fact
-is transported back along the isomorphism. The content is that the transport is available to
-instance search, which it is not while the isomorphism has to be produced by hand from a basis.
+Simplicity is not reproved here. The general theorem presents an endomorphism ring as a matrix
+algebra over the division ring supplied by Schur's lemma. The content of the declaration in this
+file is that its field specialization is available to instance search.
 
 Finite-dimensionality is essential for simplicity: on an infinite-dimensional `V` the endomorphisms
 of finite rank form a proper nonzero two-sided ideal of `Module.End K V`. The centre, by contrast,
@@ -45,8 +43,9 @@ hypothesis.
 
 ## Main results
 
-* `TauCeti.IsSimpleRing.moduleEnd`: `Module.End K V` is a simple ring, for `V` a nonzero
-  finite-dimensional `K`-vector space.
+* `TauCeti.IsSimpleRing.moduleEnd_of_field`: `Module.End K V` is a simple ring, for `V` a nonzero
+  finite-dimensional `K`-vector space, as an instance specialization of
+  `TauCeti.IsSimpleRing.moduleEnd`.
 * `TauCeti.Algebra.deg_moduleEnd`: the degree of `Module.End K V` is `Module.finrank K V`, for any
   finite-dimensional `V` -- nonzero or not, since the degree is defined for every algebra whose
   dimension is a square. Equivalently
@@ -78,10 +77,10 @@ variable [Nontrivial V]
 /-- **The endomorphism algebra of a nonzero finite-dimensional vector space is a simple ring.**
 
 Finite-dimensionality cannot be dropped: on an infinite-dimensional `V` the finite-rank
-endomorphisms are a proper nonzero two-sided ideal. -/
-instance IsSimpleRing.moduleEnd : IsSimpleRing (Module.End K V) :=
-  have : Nonempty (Fin (Module.finrank K V)) := ⟨⟨0, Module.finrank_pos⟩⟩
-  .of_ringEquiv (algEquivMatrix (Module.finBasis K V)).symm.toRingEquiv inferInstance
+endomorphisms are a proper nonzero two-sided ideal. This is the field specialization of
+`TauCeti.IsSimpleRing.moduleEnd`. -/
+instance IsSimpleRing.moduleEnd_of_field : IsSimpleRing (Module.End K V) :=
+  IsSimpleRing.moduleEnd
 
 end Nontrivial
 
@@ -90,8 +89,8 @@ degree-side reading of `Module.finrank_linearMap`, and it needs no hypothesis be
 finite-dimensionality: `TauCeti.Algebra.deg` is `Nat.sqrt` of the dimension, and the dimension of
 `Module.End K V` is a square whether or not `V` is nonzero. It is the degree of a *split central
 simple* algebra exactly when `V` is nonzero, which is the extra hypothesis
-`TauCeti.IsSimpleRing.moduleEnd` carries; for `V = 0` the ring `Module.End K V` is trivial, hence
-not simple, and both sides read `0`. -/
+`TauCeti.IsSimpleRing.moduleEnd_of_field` carries; for `V = 0` the ring `Module.End K V` is trivial,
+hence not simple, and both sides read `0`. -/
 @[simp]
 theorem Algebra.deg_moduleEnd : deg K (Module.End K V) = Module.finrank K V :=
   deg_eq_of_finrank_eq_sq (by rw [Module.finrank_linearMap, sq])
