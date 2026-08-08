@@ -21,7 +21,7 @@ For a scheme `X` and `M : X.Modules`, the main declarations are:
 * `Scheme.Modules.cohomology M i`, the group `Hⁱ(X, M)`;
 * `Scheme.Modules.cohomologyMap f i`, the map on cohomology induced by a morphism of
   `𝒪_X`-modules;
-* `Scheme.Modules.cohomologyFunctor X i`, functoriality in the coefficient sheaf;
+* `Scheme.Modules.functorH X i`, functoriality in the coefficient sheaf;
 * `Scheme.Modules.cohomologyEquivOfIso e i`, invariance under an isomorphism of coefficient
   sheaves;
 * `Scheme.Modules.cohomologyZeroEquiv`, the canonical equivalence
@@ -68,27 +68,27 @@ def cohomologyMap {M N : X.Modules} (f : M ⟶ N) (i : ℕ) :
     ((_root_.SheafOfModules.toSheaf X.ringCatSheaf).map f) i
 
 /-- Degree-`i` cohomology as an additive functor from sheaves of modules to abelian groups. -/
-abbrev cohomologyFunctor (X : Scheme.{u}) (i : ℕ) : X.Modules ⥤ AddCommGrpCat.{u} :=
+abbrev functorH (X : Scheme.{u}) (i : ℕ) : X.Modules ⥤ AddCommGrpCat.{u} :=
   _root_.SheafOfModules.toSheaf X.ringCatSheaf ⋙
     CategoryTheory.Sheaf.functorH.{u} _ i
 
 /-- Degreewise cohomology is additive. This is Mathlib's instance for a composite of additive
 functors; it has to be restated because inference does not see through the `X.Modules` type
 synonym. -/
-instance (X : Scheme.{u}) (i : ℕ) : (cohomologyFunctor X i).Additive :=
+instance (X : Scheme.{u}) (i : ℕ) : (functorH X i).Additive :=
   inferInstanceAs ((_root_.SheafOfModules.toSheaf X.ringCatSheaf ⋙
     CategoryTheory.Sheaf.functorH.{u} _ i).Additive)
 
 /-- Internally identify the standalone cohomology map with the map of the cohomology functor. -/
-private lemma cohomologyFunctor_map_hom {M N : X.Modules} (f : M ⟶ N) (i : ℕ) :
-    ((cohomologyFunctor X i).map f).hom = cohomologyMap f i :=
+private lemma functorH_map_hom {M N : X.Modules} (f : M ⟶ N) (i : ℕ) :
+    ((functorH X i).map f).hom = cohomologyMap f i :=
   rfl
 
 /-- The identity morphism induces the identity map on cohomology. -/
 @[simp]
 lemma cohomologyMap_id (M : X.Modules) (i : ℕ) :
     cohomologyMap (𝟙 M) i = AddMonoidHom.id (cohomology M i) := by
-  rw [← cohomologyFunctor_map_hom, (cohomologyFunctor X i).map_id]
+  rw [← functorH_map_hom, (functorH X i).map_id]
   rfl
 
 /-- The map induced by a composite is the composite of the induced cohomology maps. -/
@@ -113,13 +113,13 @@ lemma cohomologyMap_add {M N : X.Modules} (f g : M ⟶ N) (i : ℕ) :
 @[simp]
 lemma cohomologyMap_zero (M N : X.Modules) (i : ℕ) :
     cohomologyMap (0 : M ⟶ N) i = 0 := by
-  rw [← cohomologyFunctor_map_hom, (cohomologyFunctor X i).map_zero]
+  rw [← functorH_map_hom, (functorH X i).map_zero]
   rfl
 
 /-- Isomorphic sheaves of modules have canonically additively equivalent cohomology groups. -/
 def cohomologyEquivOfIso {M N : X.Modules} (e : M ≅ N) (i : ℕ) :
     cohomology M i ≃+ cohomology N i :=
-  ((cohomologyFunctor X i).mapIso e).addCommGroupIsoToAddEquiv
+  ((functorH X i).mapIso e).addCommGroupIsoToAddEquiv
 
 /-- The forward map of `cohomologyEquivOfIso` is the cohomology map induced by the forward
 morphism. -/
@@ -127,8 +127,8 @@ morphism. -/
 lemma cohomologyEquivOfIso_apply {M N : X.Modules} (e : M ≅ N) (i : ℕ)
     (x : cohomology M i) :
     cohomologyEquivOfIso e i x = cohomologyMap e.hom i x := by
-  rw [← cohomologyFunctor_map_hom, ← Functor.mapIso_hom]
-  exact ((cohomologyFunctor X i).mapIso e).addCommGroupIsoToAddEquiv_apply x
+  rw [← functorH_map_hom, ← Functor.mapIso_hom]
+  exact ((functorH X i).mapIso e).addCommGroupIsoToAddEquiv_apply x
 
 /-- The inverse of `cohomologyEquivOfIso` is the cohomology map induced by the inverse
 morphism. -/
@@ -136,8 +136,8 @@ morphism. -/
 lemma cohomologyEquivOfIso_symm_apply {M N : X.Modules} (e : M ≅ N) (i : ℕ)
     (x : cohomology N i) :
     (cohomologyEquivOfIso e i).symm x = cohomologyMap e.inv i x := by
-  rw [← cohomologyFunctor_map_hom, ← Functor.mapIso_inv]
-  exact ((cohomologyFunctor X i).mapIso e).addCommGroupIsoToAddEquiv_symm_apply x
+  rw [← functorH_map_hom, ← Functor.mapIso_inv]
+  exact ((functorH X i).mapIso e).addCommGroupIsoToAddEquiv_symm_apply x
 
 /-- Zeroth cohomology is canonically equivalent to the group of global sections.
 
