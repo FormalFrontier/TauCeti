@@ -37,13 +37,13 @@ lemma continuous_exp_neg_mul (t : ℝ) :
 lemma exp_neg_mul_le_one {x : ℝ} (hx : 0 ≤ x) (p : ℝ≥0) :
     Real.exp (-(x * (p : ℝ))) ≤ 1 := by
   rw [Real.exp_le_one_iff]
-  exact neg_nonpos.mpr (mul_nonneg hx p.2)
+  exact neg_nonpos.mpr (mul_nonneg hx p.coe_nonneg)
 
 /-- The Laplace kernel as a bundled bounded continuous test function of the nonnegative
 variable `p`, for fixed nonnegative `x`. -/
 noncomputable def laplaceKernelBoundedContinuous {x : ℝ} (hx : 0 ≤ x) : ℝ≥0 →ᵇ ℝ where
   toFun := fun p => Real.exp (-(x * (p : ℝ)))
-  continuous_toFun := Real.continuous_exp.comp ((continuous_const.mul continuous_subtype_val).neg)
+  continuous_toFun := continuous_exp_neg_mul x
   map_bounded' :=
     ⟨1, fun p q => by
       rw [Real.dist_eq]

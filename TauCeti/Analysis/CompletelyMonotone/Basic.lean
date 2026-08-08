@@ -437,15 +437,11 @@ lemma congr (hf : IsCompletelyMonotoneOnIci f) (h : EqOn g f (Ici 0)) :
 protected lemma sum {ι : Type*} {s : Finset ι} {F : ι → ℝ → ℝ}
     (hF : ∀ i ∈ s, IsCompletelyMonotoneOnIci (F i)) :
     IsCompletelyMonotoneOnIci (fun t => ∑ i ∈ s, F i t) := by
-  classical
-  induction s using Finset.induction_on with
-  | empty =>
-      simpa using of_isCompletelyMonotone (isCompletelyMonotone_const le_rfl)
-  | insert i s hi ih =>
-      have h : IsCompletelyMonotoneOnIci (F i + fun t => ∑ j ∈ s, F j t) :=
-        (hF i (Finset.mem_insert_self i s)).add
-          (ih fun j hj => hF j (Finset.mem_insert_of_mem hj))
-      exact h.congr fun t _ => by simp [Finset.sum_insert hi, Pi.add_apply]
+  have h := Finset.sum_induction F IsCompletelyMonotoneOnIci
+    (fun _ _ => IsCompletelyMonotoneOnIci.add)
+    (of_isCompletelyMonotone (isCompletelyMonotone_const le_rfl)) hF
+  have heq : (∑ i ∈ s, F i) = fun t => ∑ i ∈ s, F i t := funext fun t => Finset.sum_apply t s F
+  rwa [heq] at h
 
 end IsCompletelyMonotoneOnIci
 

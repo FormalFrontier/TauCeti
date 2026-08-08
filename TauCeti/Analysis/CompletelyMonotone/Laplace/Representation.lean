@@ -4,7 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.MeasureTheory.Integral.BoundedContinuousFunction
 public import Mathlib.Probability.Moments.Basic
 public import TauCeti.Analysis.CompletelyMonotone.Basic
 public import TauCeti.Analysis.CompletelyMonotone.Laplace.Kernel
@@ -78,11 +77,6 @@ lemma laplaceTransform_eq_mgf (μ : Measure ℝ≥0) :
   ext t
   simp only [laplaceTransform, mgf, mul_neg]
 
-/-- The nonnegative half-line lies in the `integrableExpSet` of the bridge variable `p ↦ -p`:
-this is `integrable_exp_neg_mul` restated for the moment-generating-function calculus. -/
-private lemma Ici_subset_integrableExpSet (μ : Measure ℝ≥0) [IsFiniteMeasure μ] :
-    Ici (0 : ℝ) ⊆ integrableExpSet (fun p : ℝ≥0 => -(p : ℝ)) μ := fun t ht => by
-  simpa [integrableExpSet, mul_neg] using integrable_exp_neg_mul μ (mem_Ici.mp ht)
 
 private lemma Ioi_subset_interior_integrableExpSet (μ : Measure ℝ≥0)
     (hint : ∀ t : ℝ, 0 < t → Integrable (fun p : ℝ≥0 => Real.exp (-(t * (p : ℝ)))) μ) :
@@ -176,7 +170,7 @@ private lemma neg_one_pow_mul_laplaceMomentTransform_nonneg
   rw [laplaceMomentTransform]
   rw [← integral_const_mul]
   refine integral_nonneg fun x => ?_
-  have hx : 0 ≤ (x : ℝ) := x.2
+  have hx : 0 ≤ (x : ℝ) := x.coe_nonneg
   have hpow : 0 ≤ (x : ℝ) ^ n := pow_nonneg hx n
   have hexp : 0 ≤ Real.exp (-(t * (x : ℝ))) := Real.exp_nonneg _
   have heq : (-1 : ℝ) ^ n * ((-(x : ℝ)) ^ n * Real.exp (-(t * (x : ℝ)))) =
@@ -203,7 +197,7 @@ private lemma integrable_neg_pow_mul_exp_neg_mul (μ : Measure ℝ≥0)
     Integrable (fun x : ℝ≥0 => (-(x : ℝ)) ^ n * Real.exp (-(t * (x : ℝ)))) μ := by
   refine (hmom n).mono' (by fun_prop) ?_
   refine Filter.Eventually.of_forall fun x => ?_
-  have hx : 0 ≤ (x : ℝ) := x.2
+  have hx : 0 ≤ (x : ℝ) := x.coe_nonneg
   have hpow : 0 ≤ (x : ℝ) ^ n := pow_nonneg hx n
   have hexp_le : Real.exp (-(t * (x : ℝ))) ≤ 1 := exp_neg_mul_le_one ht x
   calc
@@ -240,7 +234,7 @@ private lemma norm_slope_neg_pow_mul_exp_neg_mul_le (n : ℕ) {y : ℝ} (hy : 0 
   · subst y
     simp
   have hy_pos : 0 < y := lt_of_le_of_ne' hy hy_zero
-  have hx : 0 ≤ (x : ℝ) := x.2
+  have hx : 0 ≤ (x : ℝ) := x.coe_nonneg
   have harg_nonneg : 0 ≤ y * (x : ℝ) := mul_nonneg hy hx
   have hpow_abs : |(-(x : ℝ)) ^ n| = (x : ℝ) ^ n := by
     rw [abs_pow, abs_neg, abs_of_nonneg hx]
@@ -468,6 +462,12 @@ lemma isFiniteMeasure (h : RepresentsLaplace μ f) : IsFiniteMeasure μ := h.1
 lemma eq_laplaceTransform (h : RepresentsLaplace μ f) {t : ℝ} (ht : 0 ≤ t) :
     f t = laplaceTransform μ t :=
   h.2 t ht
+
+/-- A represented function's value at `0` is the total mass of the representing measure.
+(Not `@[simp]`: the left-hand side `f 0` has a variable head symbol.) -/
+lemma apply_zero (h : RepresentsLaplace μ f) : f 0 = μ.real univ := by
+  have := h.isFiniteMeasure
+  simpa [laplaceTransform_zero] using h.eq_laplaceTransform le_rfl
 
 /-- A representation transports along agreement on the nonnegative half-line: the predicate
 constrains `f` only there. -/

@@ -184,7 +184,9 @@ private lemma measure_closedBall_compl_le_of_representsLaplace_shift
 /-- The continuity-at-`0` step behind the tightness of the shifted representing measures: for any
 `η > 0` there is a positive shift `x` and an index `N` beyond which the Laplace gap-quotient
 `(f (aₙ) - f (x + aₙ)) / (1 - e⁻¹)` is at most `η`: the uniform-tail input to the tightness
-of the shifted representing measures. -/
+of the shifted representing measures. The denominator `1 - e⁻¹` is the Markov constant
+`1 - exp (-(x * R))` of `measure_closedBall_compl_le_of_representsLaplace_shift` at the radius
+`R = x⁻¹` that the tightness proof chooses, so that `x * R = 1`. -/
 private lemma exists_shift_uniform_gap_bound
     {f : ℝ → ℝ} (hf : ContinuousOn f (Ici 0))
     {a : ℕ → ℝ} (ha_pos : ∀ n, 0 < a n)
@@ -253,6 +255,8 @@ private lemma isTightMeasureSet_range_of_representsLaplace_shift
     isTightMeasureSet_range_finite μfin (fun n => hμ_fin n)
   obtain ⟨Kfin, hKfin_comp, hKfin_tail⟩ :=
     isTightMeasureSet_iff_exists_isCompact_measure_compl_le.mp hfin_tight ε hε
+  -- The radius is tied to the shift so that `x * R = 1`, matching the `1 - e⁻¹` denominator
+  -- in the gap bound above.
   let R : ℝ := x⁻¹
   have hR_pos : 0 < R := inv_pos.mpr hx_pos
   refine ⟨Kfin ∪ Metric.closedBall (0 : ℝ≥0) R,

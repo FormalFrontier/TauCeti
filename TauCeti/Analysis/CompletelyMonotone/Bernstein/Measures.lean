@@ -6,9 +6,6 @@ module
 
 public import Mathlib.Analysis.SpecialFunctions.Complex.LogBounds
 import Mathlib.MeasureTheory.Integral.IntegralEqImproper
--- Non-public: `BoundedContinuousFunction.integrable` supplies integrability of the bounded
--- kernels against a finite measure.
-import Mathlib.MeasureTheory.Integral.BoundedContinuousFunction
 import TauCeti.Analysis.CompletelyMonotone.Closure
 public import TauCeti.Analysis.CompletelyMonotone.Integral
 -- Non-public: the bundled Laplace kernel and its integrability.
