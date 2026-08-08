@@ -396,14 +396,19 @@ with the standard Cartan matrix of `t` after a single simultaneous relabelling o
 Matching without transposing is deliberate: from rank `3` on, `Bₙ` and `Cₙ` are different root
 systems with transposed Cartan matrices (`CartanMatrix.B_transpose`), so an unoriented match would
 identify them. It does not separate `B 2` from `C 2`, which are the same root system;
-`TauCeti.DynkinType.Valid` excludes `C 2`.
-
-This is `@[expose]`d so that consumers in other modules can destructure the relabelling directly,
-as the results in this file do. -/
-@[expose] def HasCartanType (b : P.Base) (t : DynkinType) : Prop :=
+`TauCeti.DynkinType.Valid` excludes `C 2`. -/
+def HasCartanType (b : P.Base) (t : DynkinType) : Prop :=
   ∃ e : b.support ≃ Fin t.rank, ∀ i j, b.cartanMatrix i j = t.cartanMatrix (e i) (e j)
 
 variable {P}
+
+/-- Having Cartan type `t`, unfolded to the relabelling it asserts to exist. The body of
+`TauCeti.HasCartanType` is deliberately not exposed, so this is the interface through which
+consumers in other modules build and destructure it. -/
+lemma hasCartanType_iff (b : P.Base) (t : DynkinType) :
+    HasCartanType P b t ↔
+      ∃ e : b.support ≃ Fin t.rank, ∀ i j, b.cartanMatrix i j = t.cartanMatrix (e i) (e j) :=
+  (Iff.rfl)
 
 /-- Having Cartan type `t`, expressed as a reindexing of matrices rather than entrywise. -/
 lemma hasCartanType_iff_reindex (b : P.Base) (t : DynkinType) :

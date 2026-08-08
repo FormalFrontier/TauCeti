@@ -39,8 +39,8 @@ diagonal and at most two indices is itself a simultaneous relabelling.
 
 ## Main results
 
-* `TauCeti.pairingIn_flip` and `TauCeti.cartanMatrix_flip`: flipping a root pairing transposes the
-  integral pairing, hence the Cartan matrix of a base.
+* `TauCeti.RootPairing.pairingIn_flip` and `TauCeti.RootPairing.Base.cartanMatrix_flip`: flipping a
+  root pairing transposes the integral pairing, hence the Cartan matrix of a base.
 * `TauCeti.DynkinType.cartanMatrix_dual`: the standard Cartan matrix of the dual type is the
   transpose of the standard Cartan matrix, read through `dualNodeEquiv`.
 * `TauCeti.hasCartanType_flip_iff`: **the Cartan type of a base and the Cartan type of the flipped
@@ -67,6 +67,8 @@ section Flip
 
 variable {ι R M N : Type*} [CommRing R] [AddCommGroup M] [Module R M] [AddCommGroup N] [Module R N]
 
+namespace RootPairing
+
 /-- **Flipping a root pairing transposes its integral pairing.** The pairing of the flipped pairing
 is transposed by definition (`RootPairing.pairing_flip`); the content here is that the *chosen*
 preimage in `S` is transposed too, which needs `algebraMap S R` to be injective. -/
@@ -74,6 +76,8 @@ lemma pairingIn_flip (S : Type*) [CommRing S] [Algebra S R] [FaithfulSMul S R]
     (P : RootPairing ι R M N) [P.IsValuedIn S] (i j : ι) :
     P.flip.pairingIn S i j = P.pairingIn S j i :=
   FaithfulSMul.algebraMap_injective S R <| by simp
+
+namespace Base
 
 /-- A base of `P` is a base of `P.flip` supported on the same simple indices
 (`RootPairing.Base.flip`); this is the resulting identification of the two index types, which the
@@ -95,7 +99,11 @@ lemma cartanMatrix_flip [CharZero R] {P : RootPairing ι R M N} [P.IsCrystallogr
   rw [h₁, h₂, pairingIn_flip]
 
 /-- Flipping a base twice returns the original base. -/
-lemma base_flip_flip {P : RootPairing ι R M N} (b : P.Base) : b.flip.flip = b := rfl
+lemma flip_flip {P : RootPairing ι R M N} (b : P.Base) : b.flip.flip = b := rfl
+
+end Base
+
+end RootPairing
 
 end Flip
 
@@ -104,7 +112,10 @@ namespace DynkinType
 /-- **The dual Dynkin type.** Duality reverses the arrows of a diagram, which exchanges the types
 `Bₙ` and `Cₙ` — the one pair whose standard Cartan matrices are transposes of one another without
 being equal — and fixes all the others. It is realized on root systems by `RootPairing.flip`; see
-`TauCeti.hasCartanType_flip_iff`. -/
+`TauCeti.hasCartanType_flip_iff`.
+
+This is `@[expose]`d because it occurs in the *type* of `TauCeti.DynkinType.dualNodeEquiv` below,
+whose constructor equations do not even elaborate unless `(.A n).dual.rank` reduces to `n`. -/
 @[expose] def dual : DynkinType → DynkinType
   | .A n => .A n
   | .B n => .C n
@@ -144,7 +155,7 @@ does. -/
 /-- **Validity transfers along duality away from the pair `B 2`, `C 2`.** The excluded pair is the
 low-rank coincidence `B 2 = C 2`: both names describe the same root system, and the enumeration
 keeps only `B 2` valid, so `TauCeti.DynkinType.valid_B_two_and_not_valid_dual` below records the
-one place where the transfer genuinely fails. -/
+failure on that pair. -/
 lemma valid_dual_iff {t : DynkinType} (hB : t ≠ B 2) (hC : t ≠ C 2) :
     t.dual.Valid ↔ t.Valid := by
   cases t with
@@ -158,8 +169,9 @@ lemma valid_dual_iff {t : DynkinType} (hB : t ≠ B 2) (hC : t ≠ C 2) :
       omega
   | _ => simp
 
-/-- The single failure of `TauCeti.DynkinType.valid_dual_iff`: `B 2` is a valid type whose dual
-`C 2` is not. The two name the same root system, and
+/-- One orientation of the pair excluded from `TauCeti.DynkinType.valid_dual_iff`: `B 2` is a valid
+type whose dual `C 2` is not. Both orientations fail, since `(C 2).dual = B 2` is valid while `C 2`
+is not; the two names describe the same root system, and
 `TauCeti.hasCartanType_dual_iff_of_rank_le_two` shows that no base is lost by keeping only the
 first name. -/
 lemma valid_B_two_and_not_valid_dual : (B 2).Valid ∧ ¬ (B 2).dual.Valid := by
@@ -172,7 +184,7 @@ arrows of its diagram, and for the classical families and the `E` types the resu
 matrix of the dual type already in the Bourbaki numbering. For `F₄` and `G₂` — the two types that
 are self-dual without being simply laced — the reversed diagram is the original one read backwards,
 so the relabelling there is `Fin.revPerm`. -/
-@[expose] def dualNodeEquiv : (t : DynkinType) → Fin t.rank ≃ Fin t.dual.rank
+def dualNodeEquiv : (t : DynkinType) → Fin t.rank ≃ Fin t.dual.rank
   | .A _ => Equiv.refl _
   | .B _ => Equiv.refl _
   | .C _ => Equiv.refl _
@@ -185,16 +197,18 @@ so the relabelling there is `Fin.revPerm`. -/
 
 -- Stated as equalities of equivalences rather than pointwise: the two sides of a pointwise
 -- statement live in `Fin t.rank` and `Fin t.dual.rank`, so its left-hand side would carry a
--- dependent type that `simp` rewrites, leaving it out of simp-normal form.
-@[simp] lemma dualNodeEquiv_A (n : ℕ) : (A n).dualNodeEquiv = Equiv.refl (Fin n) := rfl
-@[simp] lemma dualNodeEquiv_B (n : ℕ) : (B n).dualNodeEquiv = Equiv.refl (Fin n) := rfl
-@[simp] lemma dualNodeEquiv_C (n : ℕ) : (C n).dualNodeEquiv = Equiv.refl (Fin n) := rfl
-@[simp] lemma dualNodeEquiv_D (n : ℕ) : (D n).dualNodeEquiv = Equiv.refl (Fin n) := rfl
-@[simp] lemma dualNodeEquiv_E6 : E6.dualNodeEquiv = Equiv.refl (Fin 6) := rfl
-@[simp] lemma dualNodeEquiv_E7 : E7.dualNodeEquiv = Equiv.refl (Fin 7) := rfl
-@[simp] lemma dualNodeEquiv_E8 : E8.dualNodeEquiv = Equiv.refl (Fin 8) := rfl
-@[simp] lemma dualNodeEquiv_F4 : F4.dualNodeEquiv = Fin.revPerm := rfl
-@[simp] lemma dualNodeEquiv_G2 : G2.dualNodeEquiv = Fin.revPerm := rfl
+-- dependent type that `simp` rewrites, leaving it out of simp-normal form. The proofs are
+-- parenthesised because `dualNodeEquiv` is not `@[expose]`d, so a bare `rfl` body would demand
+-- that its equations be checkable from the exported signature alone.
+@[simp] lemma dualNodeEquiv_A (n : ℕ) : (A n).dualNodeEquiv = Equiv.refl (Fin n) := (rfl)
+@[simp] lemma dualNodeEquiv_B (n : ℕ) : (B n).dualNodeEquiv = Equiv.refl (Fin n) := (rfl)
+@[simp] lemma dualNodeEquiv_C (n : ℕ) : (C n).dualNodeEquiv = Equiv.refl (Fin n) := (rfl)
+@[simp] lemma dualNodeEquiv_D (n : ℕ) : (D n).dualNodeEquiv = Equiv.refl (Fin n) := (rfl)
+@[simp] lemma dualNodeEquiv_E6 : E6.dualNodeEquiv = Equiv.refl (Fin 6) := (rfl)
+@[simp] lemma dualNodeEquiv_E7 : E7.dualNodeEquiv = Equiv.refl (Fin 7) := (rfl)
+@[simp] lemma dualNodeEquiv_E8 : E8.dualNodeEquiv = Equiv.refl (Fin 8) := (rfl)
+@[simp] lemma dualNodeEquiv_F4 : F4.dualNodeEquiv = Fin.revPerm := (rfl)
+@[simp] lemma dualNodeEquiv_G2 : G2.dualNodeEquiv = Fin.revPerm := (rfl)
 
 /-- **The standard Cartan matrix of the dual type is the transpose**, read through the node
 relabelling `TauCeti.DynkinType.dualNodeEquiv`. For the simply-laced types the standard matrices
@@ -203,9 +217,9 @@ are symmetric and there is nothing to move; for `Bₙ` and `Cₙ` the transposit
 reversed. -/
 theorem cartanMatrix_dual (t : DynkinType) (i j : Fin t.rank) :
     t.dual.cartanMatrix (t.dualNodeEquiv i) (t.dualNodeEquiv j) = t.cartanMatrix j i := by
-  -- Splitting on `t` leaves the dependent indices to be reduced by hand; `dual` and
-  -- `dualNodeEquiv` are `@[expose]`d so that `change` can carry out that reduction, after which
-  -- the standard matrices are named by the `cartanMatrix_*` equations.
+  -- Splitting on `t` leaves the dependent indices to be reduced by hand; `change` carries out that
+  -- reduction inside this module, after which the standard matrices are named by the
+  -- `cartanMatrix_*` equations.
   cases t with
   | A n =>
       change Fin n at i j
@@ -277,14 +291,15 @@ variable {ι R M N : Type*} [CommRing R] [CharZero R] [AddCommGroup M] [Module R
   [AddCommGroup N] [Module R N] {P : RootPairing ι R M N} [P.IsCrystallographic]
 
 /-- **The Cartan type of a flipped base is the dual type.** Flipping transposes the Cartan matrix
-(`TauCeti.cartanMatrix_flip`), and transposing a standard Cartan matrix is passing to the dual type
-up to the node relabelling `TauCeti.DynkinType.dualNodeEquiv`. -/
+(`TauCeti.RootPairing.Base.cartanMatrix_flip`), and transposing a standard Cartan matrix is passing
+to the dual type up to the node relabelling `TauCeti.DynkinType.dualNodeEquiv`. -/
 theorem HasCartanType.flip {b : P.Base} {t : DynkinType} (h : HasCartanType P b t) :
     HasCartanType P.flip b.flip t.dual := by
-  obtain ⟨e, he⟩ := h
-  refine ⟨(flipSupportEquiv b).trans (e.trans t.dualNodeEquiv), fun i j ↦ ?_⟩
+  obtain ⟨e, he⟩ := (hasCartanType_iff b t).mp h
+  refine (hasCartanType_iff _ _).mpr
+    ⟨(RootPairing.Base.flipSupportEquiv b).trans (e.trans t.dualNodeEquiv), fun i j ↦ ?_⟩
   simp only [Equiv.trans_apply]
-  rw [cartanMatrix_flip b i j, he _ _, DynkinType.cartanMatrix_dual]
+  rw [RootPairing.Base.cartanMatrix_flip b i j, he _ _, DynkinType.cartanMatrix_dual]
 
 /-- **A base has Cartan type `t` exactly when the flipped base has the dual type.** This is what
 gives `TauCeti.DynkinType.dual` its meaning: passing from a root system to its dual is passing from
@@ -293,7 +308,7 @@ theorem hasCartanType_flip_iff {b : P.Base} {t : DynkinType} :
     HasCartanType P.flip b.flip t.dual ↔ HasCartanType P b t := by
   refine ⟨fun h ↦ ?_, HasCartanType.flip⟩
   have h' := h.flip
-  rw [DynkinType.dual_dual, base_flip_flip] at h'
+  rw [DynkinType.dual_dual, RootPairing.Base.flip_flip] at h'
   exact h'
 
 /-- **A base is of type `Bₙ` exactly when the flipped base is of type `Cₙ`.** This is the worked
@@ -318,8 +333,9 @@ theorem hasCartanType_dual_iff_of_rank_le_two {b : P.Base} {t : DynkinType} (ht 
     HasCartanType P b t.dual ↔ HasCartanType P b t := by
   -- Both directions are the same computation, so prove the general step once and apply it twice.
   have key : ∀ s : DynkinType, s.rank ≤ 2 → HasCartanType P b s → HasCartanType P b s.dual := by
-    rintro s hs ⟨e, he⟩
-    refine ⟨e.trans (Fin.revPerm.trans s.dualNodeEquiv), fun i j ↦ ?_⟩
+    intro s hs h
+    obtain ⟨e, he⟩ := (hasCartanType_iff b s).mp h
+    refine (hasCartanType_iff _ _).mpr ⟨e.trans (Fin.revPerm.trans s.dualNodeEquiv), fun i j ↦ ?_⟩
     rw [he i j]
     simp only [Equiv.trans_apply, Fin.revPerm_apply]
     rw [DynkinType.cartanMatrix_dual, DynkinType.cartanMatrix_rev_of_rank_le_two hs]
