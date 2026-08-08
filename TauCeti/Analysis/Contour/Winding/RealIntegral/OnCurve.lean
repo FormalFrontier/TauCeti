@@ -58,6 +58,9 @@ per-crossing windows along the sorted crossing list.
 * `TauCeti.Contour.windingNumber_eq_real_integral_of_closed_interior_crossings` — the real
   bounded-integrand formula for a closed immersion that avoids `s` at its basepoint (so every
   crossing of `s`, if any, is automatically interior).
+* `TauCeti.Contour.bounded_integrable_eq_real_integral_of_closed_interior_crossings` — the same
+  formula bundled with the boundedness and interval-integrability facts it is built from, for
+  callers that need those facts rather than just the equality.
 
 ## Provenance
 
@@ -348,9 +351,10 @@ private theorem derivWithin_ne_zero_of_isPwC1ImmersionOn_left {γ : ℝ → ℂ}
 /-! ### Assembly -/
 
 /-- **The real bounded-integrand formula, allowing crossings** (Hungerbühler–Wasem Prop 2.3),
-bundled with the boundedness and interval-integrability facts it is built from. See the public
-`windingNumber_eq_real_integral_of_closed_interior_crossings` below for the formula on its own,
-and for the full documentation of the hypotheses.
+bundled with the boundedness and interval-integrability facts it is built from, for callers that
+need those facts rather than just the equality. See
+`windingNumber_eq_real_integral_of_closed_interior_crossings` below for the equality alone (a thin
+projection of this theorem), and for the full documentation of the hypotheses.
 
 Unlike the off-curve case, the real winding integrand `h t := realWindingIntegrand (γ t - s)
 (deriv γ t)`'s boundedness and interval-integrability are not assumed here: both are derived from
@@ -359,7 +363,7 @@ the crossing regularity, via
 boundedness at each `C^{1,1}` crossing, its continuity off the crossing itself giving the
 measurability half, and the ordinary avoidance argument between crossings — the actual content of
 HW Prop 2.3. -/
-private theorem bounded_integrable_eq_real_integral_of_closed_interior_crossings
+theorem bounded_integrable_eq_real_integral_of_closed_interior_crossings
     {γ : ℝ → ℂ} {a b : ℝ}
     {s : ℂ} (h_imm : IsPwC1ImmersionOn γ a b) (hab : a ≤ b) (hclosed : γ a = γ b) (hsa : γ a ≠ s)
     (hγ_lip : ∀ t ∈ Icc a b, γ t = s → ∃ εR > 0, ∃ KR : ℝ≥0,

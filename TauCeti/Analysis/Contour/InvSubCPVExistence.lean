@@ -79,10 +79,9 @@ private theorem exists_one_sided_tangents {γ : ℝ → ℂ} {a b t₀ : ℝ}
 there is a radius `R > 0` and nonzero one-sided tangents `L_R`, `L_L` such that at every window
 radius `ρ ≤ R` whose window lies inside `[a, b]` and contains no other crossing, the truncated
 window integral of the Cauchy kernel converges to the explicit log-norm-plus-argument value of
-`perWindow_truncated_integral_tendsto`, rather than to a merely existentially-bound limit. This is
-what a consumer that needs the real or imaginary part of the limit (not just its existence) calls;
-`exists_radius_perWindow_tendsto` below forgets `L_R`, `L_L` and the explicit value to recover the
-existence-only form. -/
+`perWindow_truncated_integral_tendsto`, rather than to a merely existentially-bound limit. A
+consumer that only needs existence of the limit (not its value) can take the displayed value
+itself as the existential witness, so no separate existence-only wrapper is kept here. -/
 theorem exists_radius_perWindow_tendsto_log_norm_add_arg
     {γ : ℝ → ℂ} {a b t₀ : ℝ} {s : ℂ}
     (h_imm : IsPwC1ImmersionOn γ a b) (hab : a < b) (ht₀ : t₀ ∈ Ioo a b) (h_at : γ t₀ = s) :
@@ -121,21 +120,6 @@ theorem exists_radius_perWindow_tendsto_log_norm_add_arg
       (fun b' h1 h2 => hc_L (t₀ - ρ) b' (by linarith) h1 h2)
       (hc_plus ρ hρ_pos hρ_le) (hc_minus ρ hρ_pos hρ_le)⟩
 
-/-- Around each interior crossing there is a radius `R > 0` such that at every window radius
-`ρ ≤ R` whose window lies inside `[a, b]` and contains no other crossing, the truncated window
-integral of the Cauchy kernel converges. Existence-only forgetful form of
-`exists_radius_perWindow_tendsto_log_norm_add_arg`. -/
-private theorem exists_radius_perWindow_tendsto {γ : ℝ → ℂ} {a b t₀ : ℝ} {s : ℂ}
-    (h_imm : IsPwC1ImmersionOn γ a b) (hab : a < b) (ht₀ : t₀ ∈ Ioo a b) (h_at : γ t₀ = s) :
-    ∃ R > 0, ∀ ρ : ℝ, 0 < ρ → ρ ≤ R → a < t₀ - ρ → t₀ + ρ ≤ b →
-      (∀ t ∈ Icc (t₀ - ρ) (t₀ + ρ), γ t = s → t = t₀) →
-      ∃ v : ℂ, Tendsto (fun ε : ℝ => ∫ u in (t₀ - ρ)..(t₀ + ρ),
-        if ‖γ u - s‖ > ε then (γ u - s)⁻¹ * deriv γ u else 0) (𝓝[>] (0 : ℝ)) (𝓝 v) := by
-  obtain ⟨R, hR_pos, L_R, L_L, -, -, h_spec⟩ :=
-    exists_radius_perWindow_tendsto_log_norm_add_arg h_imm hab ht₀ h_at
-  exact ⟨R, hR_pos, fun ρ hρ_pos hρ_le h_lo h_hi h_unique =>
-    ⟨_, h_spec ρ hρ_pos hρ_le h_lo h_hi h_unique⟩⟩
-
 /-- **Existence of the Cauchy-kernel principal value along a piecewise-`C¹` immersion**: if
 every parameter of `[a, b]` where `γ` meets `s` is interior, the single-point Cauchy principal
 value of `t ↦ (γ t - s)⁻¹ * deriv γ t` at `s` exists on `[a, b]`. Endpoint crossings are
@@ -164,8 +148,8 @@ theorem IsPwC1ImmersionOn.cauchyPVExistsAt_inv_sub {γ : ℝ → ℂ} {a b : ℝ
       (exists_complement_windows_dist_lower_bound hγ_cont h_complete (fun _ => 1)
         fun t _ => one_pos)
     all_goals simp [hT_empty]
-  · choose! R hR_pos h_spec using fun t₀ (ht₀ : t₀ ∈ T) =>
-      exists_radius_perWindow_tendsto h_imm hab (h_Ioo t₀ ht₀) (hT_mem.mp ht₀).2
+  · choose! R hR_pos L_R L_L hL_R hL_L h_spec using fun t₀ (ht₀ : t₀ ∈ T) =>
+      exists_radius_perWindow_tendsto_log_norm_add_arg h_imm hab (h_Ioo t₀ ht₀) (hT_mem.mp ht₀).2
     -- one radius serving every crossing at once, below each per-crossing radius `R t`
     obtain ⟨ρ, hρ_pos, h_endpts, h_pair, hρ_le_R⟩ :=
       exists_common_window_radius_le h_Ioo R hR_pos
@@ -174,10 +158,10 @@ theorem IsPwC1ImmersionOn.cauchyPVExistsAt_inv_sub {γ : ℝ → ℂ} {a b : ℝ
       (fun t ht => by linarith [(h_endpts t ht).2])
       h_pair
       h_int_tr
-      (fun t₀ ht₀ => h_spec t₀ ht₀ ρ hρ_pos (hρ_le_R t₀ ht₀)
+      (fun t₀ ht₀ => ⟨_, h_spec t₀ ht₀ ρ hρ_pos (hρ_le_R t₀ ht₀)
         (by linarith [(h_endpts t₀ ht₀).1]) (by linarith [(h_endpts t₀ ht₀).2])
         fun t ht h_eq => eq_of_mem_window_of_eq_of_lt_of_two_mul_lt (h_endpts t₀ ht₀)
-          (h_pair t₀ ht₀) h_complete ht h_eq)
+          (h_pair t₀ ht₀) h_complete ht h_eq⟩)
       (exists_complement_windows_dist_lower_bound hγ_cont h_complete (fun _ => ρ)
         fun t _ => hρ_pos)
 
