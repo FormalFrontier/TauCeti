@@ -48,8 +48,9 @@ given an abbreviation, so that every lemma about a general `CliffordAlgebra` app
 unfolding.
 
 The scaffolding of the four constructions — the two transporting isometries and the two hand-built
-algebra maps together with their surjectivity — is `private`: the public interface is the four
-`AlgEquiv`s and the lemmas computing them on a generator, which is all a downstream file needs.
+algebra maps together with their surjectivity and the resulting bijectivity — is `private`: the
+public interface is the four `AlgEquiv`s and the lemmas computing them on a generator, which is all
+a downstream file needs.
 
 All four identifications are bundled `AlgEquiv`s rather than the `Nonempty` existence statements
 the roadmap asks for, and each comes with a lemma computing it on a generator: it is the
@@ -107,11 +108,13 @@ theorem realCliffordWeight_of_le {p q : ℕ} {i : Fin (p + q)} (hi : p ≤ (i : 
     realCliffordWeight p q i = -1 :=
   if_neg (not_lt.2 hi)
 
+@[simp]
 theorem realCliffordWeight_mul_self (p q : ℕ) (i : Fin (p + q)) :
     realCliffordWeight p q i * realCliffordWeight p q i = 1 := by
   unfold realCliffordWeight
   split <;> norm_num
 
+@[simp]
 theorem realCliffordWeight_ne_zero (p q : ℕ) (i : Fin (p + q)) :
     realCliffordWeight p q i ≠ 0 := by
   intro h
@@ -122,6 +125,7 @@ theorem realCliffordForm_apply (p q : ℕ) (v : Fin (p + q) → ℝ) :
     realCliffordForm p q v = ∑ i, realCliffordWeight p q i * (v i * v i) := by
   simp [realCliffordForm]
 
+@[simp]
 theorem polar_realCliffordForm (p q : ℕ) (v w : Fin (p + q) → ℝ) :
     polar (realCliffordForm p q) v w = 2 * ∑ i, realCliffordWeight p q i * (v i * w i) := by
   simp only [polar, realCliffordForm_apply, Pi.add_apply, Finset.mul_sum,
@@ -140,6 +144,7 @@ theorem nondegenerate_realCliffordForm (p q : ℕ) : (realCliffordForm p q).Nond
 /-- The real Clifford algebra of signature `(p, q)` has dimension `2 ^ (p + q)`, as every Clifford
 algebra of a space of that dimension does. This is the count that forces the surjections built
 below to be isomorphisms. -/
+@[simp]
 theorem finrank_cliffordAlgebra_realCliffordForm (p q : ℕ) :
     finrank ℝ (CliffordAlgebra (realCliffordForm p q)) = 2 ^ (p + q) := by
   rw [TauCeti.CliffordAlgebra.finrank_eq_two_pow, Module.finrank_pi, Fintype.card_fin]
@@ -197,22 +202,29 @@ private theorem realCliffordOneZeroToProd_surjective :
       + ((a - b) / 2) • CliffordAlgebra.ι (realCliffordForm 1 0) (Pi.single 0 1), ?_⟩
   ext <;> simp [realCliffordOneZeroToProd_ι] <;> ring
 
+/-- `realCliffordOneZeroToProd` is bijective: it is surjective, and both sides have dimension `2`,
+so surjectivity forces injectivity. -/
+private theorem realCliffordOneZeroToProd_bijective :
+    Function.Bijective realCliffordOneZeroToProd := by
+  have hrank : finrank ℝ (CliffordAlgebra (realCliffordForm 1 0)) = finrank ℝ (ℝ × ℝ) := by
+    rw [finrank_cliffordAlgebra_realCliffordForm, Module.finrank_prod, Module.finrank_self]
+    norm_num
+  exact ⟨(LinearMap.injective_iff_surjective_of_finrank_eq_finrank
+    (f := realCliffordOneZeroToProd.toLinearMap) hrank).2
+    realCliffordOneZeroToProd_surjective, realCliffordOneZeroToProd_surjective⟩
+
 /-- **`Cliff(1,0) ≅ ℝ × ℝ`**, the first base entry of the real periodicity table: a single
 generator squaring to `+1` splits the algebra. -/
 noncomputable def realCliffordOneZeroEquivProd :
     CliffordAlgebra (realCliffordForm 1 0) ≃ₐ[ℝ] ℝ × ℝ :=
-  AlgEquiv.ofBijective realCliffordOneZeroToProd <| by
-    have hrank : finrank ℝ (CliffordAlgebra (realCliffordForm 1 0)) = finrank ℝ (ℝ × ℝ) := by
-      rw [finrank_cliffordAlgebra_realCliffordForm, Module.finrank_prod, Module.finrank_self]
-      norm_num
-    exact ⟨(LinearMap.injective_iff_surjective_of_finrank_eq_finrank
-      (f := realCliffordOneZeroToProd.toLinearMap) hrank).2
-      realCliffordOneZeroToProd_surjective, realCliffordOneZeroToProd_surjective⟩
+  AlgEquiv.ofBijective realCliffordOneZeroToProd realCliffordOneZeroToProd_bijective
 
+/-- `realCliffordOneZeroEquivProd` sends the generator of the coordinate `v` to the pair
+`(v 0, -v 0)`: the two characters of `ℝ[e]/(e² - 1)` read off the two components. -/
 @[simp]
 theorem realCliffordOneZeroEquivProd_ι (v : Fin (1 + 0) → ℝ) :
-    realCliffordOneZeroEquivProd (CliffordAlgebra.ι _ v) = (v 0, -v 0) :=
-  realCliffordOneZeroToProd_ι v
+    realCliffordOneZeroEquivProd (CliffordAlgebra.ι _ v) = (v 0, -v 0) := by
+  rw [realCliffordOneZeroEquivProd, AlgEquiv.ofBijective_apply, realCliffordOneZeroToProd_ι]
 
 /-! ### `Cliff(0,1) ≅ ℂ` -/
 
@@ -236,6 +248,8 @@ private theorem realCliffordZeroOneEquivComplex_eq (x : CliffordAlgebra (realCli
       CliffordAlgebraComplex.equiv
         (CliffordAlgebra.equivOfIsometry realCliffordZeroOneIsometry x) := rfl
 
+/-- `realCliffordZeroOneEquivComplex` sends the generator of the coordinate `v` to the purely
+imaginary complex number `v 0 • Complex.I`. -/
 @[simp]
 theorem realCliffordZeroOneEquivComplex_ι (v : Fin (0 + 1) → ℝ) :
     realCliffordZeroOneEquivComplex (CliffordAlgebra.ι _ v) = v 0 • Complex.I := by
@@ -271,6 +285,8 @@ private theorem realCliffordZeroTwoEquivQuaternion_eq
       CliffordAlgebraQuaternion.equiv
         (CliffordAlgebra.equivOfIsometry realCliffordZeroTwoIsometry x) := rfl
 
+/-- `realCliffordZeroTwoEquivQuaternion` sends the generator of the coordinate `v` to the imaginary
+quaternion `v 0 * i + v 1 * j`. -/
 @[simp]
 theorem realCliffordZeroTwoEquivQuaternion_ι (v : Fin (0 + 2) → ℝ) :
     realCliffordZeroTwoEquivQuaternion (CliffordAlgebra.ι _ v) = ⟨0, v 0, v 1, 0⟩ := by
@@ -318,22 +334,30 @@ private theorem realCliffordOneOneToMatrix_surjective :
   fin_cases i <;> fin_cases j <;>
     simp [realCliffordOneOneToMatrix_ι, Algebra.algebraMap_eq_smul_one] <;> ring
 
+/-- `realCliffordOneOneToMatrix` is bijective: it is surjective, and both sides have dimension `4`,
+so surjectivity forces injectivity. -/
+private theorem realCliffordOneOneToMatrix_bijective :
+    Function.Bijective realCliffordOneOneToMatrix := by
+  have hrank : finrank ℝ (CliffordAlgebra (realCliffordForm 1 1)) =
+      finrank ℝ (Matrix (Fin 2) (Fin 2) ℝ) := by
+    rw [finrank_cliffordAlgebra_realCliffordForm, Module.finrank_matrix]
+    simp
+  exact ⟨(LinearMap.injective_iff_surjective_of_finrank_eq_finrank
+    (f := realCliffordOneOneToMatrix.toLinearMap) hrank).2
+    realCliffordOneOneToMatrix_surjective, realCliffordOneOneToMatrix_surjective⟩
+
 /-- **`Cliff(1,1) ≅ M₂(ℝ)`**, the fourth base entry of the real periodicity table and the seed of
 the periodicity step `Cliff(p+1, q+1) ≅ Cliff(p, q) ⊗ M₂(ℝ)`. -/
 noncomputable def realCliffordOneOneEquivMatrix :
     CliffordAlgebra (realCliffordForm 1 1) ≃ₐ[ℝ] Matrix (Fin 2) (Fin 2) ℝ :=
-  AlgEquiv.ofBijective realCliffordOneOneToMatrix <| by
-    have hrank : finrank ℝ (CliffordAlgebra (realCliffordForm 1 1)) =
-        finrank ℝ (Matrix (Fin 2) (Fin 2) ℝ) := by
-      rw [finrank_cliffordAlgebra_realCliffordForm, Module.finrank_matrix]
-      simp
-    exact ⟨(LinearMap.injective_iff_surjective_of_finrank_eq_finrank
-      (f := realCliffordOneOneToMatrix.toLinearMap) hrank).2
-      realCliffordOneOneToMatrix_surjective, realCliffordOneOneToMatrix_surjective⟩
+  AlgEquiv.ofBijective realCliffordOneOneToMatrix realCliffordOneOneToMatrix_bijective
 
+/-- `realCliffordOneOneEquivMatrix` sends the generator of the coordinate `v` to
+`!![v 0, v 1; -v 1, -v 0]`, the combination `v 0 • !![1, 0; 0, -1] + v 1 • !![0, 1; -1, 0]` of the
+images of the `+1` and `-1` generators. -/
 @[simp]
 theorem realCliffordOneOneEquivMatrix_ι (v : Fin (1 + 1) → ℝ) :
-    realCliffordOneOneEquivMatrix (CliffordAlgebra.ι _ v) = !![v 0, v 1; -v 1, -v 0] :=
-  realCliffordOneOneToMatrix_ι v
+    realCliffordOneOneEquivMatrix (CliffordAlgebra.ι _ v) = !![v 0, v 1; -v 1, -v 0] := by
+  rw [realCliffordOneOneEquivMatrix, AlgEquiv.ofBijective_apply, realCliffordOneOneToMatrix_ι]
 
 end TauCeti
