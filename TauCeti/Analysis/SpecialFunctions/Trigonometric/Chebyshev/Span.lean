@@ -110,8 +110,7 @@ lemma inner_polynomialEvalChebyshevLp (g : Lp ℝ 2 Polynomial.Chebyshev.measure
 
 /-- A vector orthogonal to every normalized Chebyshev mode has vanishing polynomial moments: this
 is the concrete integral form of `inner_polynomialEvalChebyshevLp_eq_zero`. -/
-theorem integral_polynomialEval_measureT_eq_zero
-    (g : Lp ℝ 2 Polynomial.Chebyshev.measureT)
+theorem integral_polynomialEval_measureT_eq_zero (g : Lp ℝ 2 Polynomial.Chebyshev.measureT)
     (hmode : ∀ n, inner ℝ g (normalizedChebyshevTLp ℝ n) = 0) (q : Polynomial ℝ) :
     ∫ x, g x * q.eval x ∂Polynomial.Chebyshev.measureT = 0 := by
   rw [← inner_polynomialEvalChebyshevLp g q]

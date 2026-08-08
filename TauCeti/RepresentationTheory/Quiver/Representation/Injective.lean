@@ -179,8 +179,7 @@ theorem dimVector_indecInjRep_eq_dimVector_indecProjRep (i j : Q) :
 
 /-- The morphism `M ⟶ Iᵢ` determined by a linear functional `φ` on `M` at the vertex `i`: at the
 vertex `j` it sends `x` to the function reading off `φ` of the action of a path `j → i` on `x`. -/
-def indecInjRepHom (i : Q) (M : QuiverRep k Q)
-    (φ : Module.Dual k (M.obj ((Paths.of Q).obj i))) :
+def indecInjRepHom (i : Q) (M : QuiverRep k Q) (φ : Module.Dual k (M.obj ((Paths.of Q).obj i))) :
     M ⟶ indecInjRep k Q i where
   app j := ModuleCat.ofHom (LinearMap.pi fun q : Quiver.Path (V := Q) j i ↦ φ ∘ₗ (M.map q).hom)
   naturality {a b} p := by
@@ -319,7 +318,7 @@ theorem finrank_hom_indecInjRep_indecInjRep (i j : Q) :
 of `(Iᵢ)_i`, since the trivial path is one of them. -/
 theorem not_isZero_indecInjRep (i : Q) : ¬ IsZero (indecInjRep k Q i) := by
   intro h
-  letI : Subsingleton ((indecInjRep k Q i).obj i) := ModuleCat.subsingleton_of_isZero (h.obj i)
+  let : Subsingleton ((indecInjRep k Q i).obj i) := ModuleCat.subsingleton_of_isZero (h.obj i)
   have h1 : (fun _ : Quiver.Path i i ↦ (1 : k)) = (fun _ : Quiver.Path i i ↦ (0 : k)) :=
     Subsingleton.elim (α := ((indecInjRep k Q i).obj i : Type _)) _ _
   exact one_ne_zero (congrFun h1 Quiver.Path.nil)

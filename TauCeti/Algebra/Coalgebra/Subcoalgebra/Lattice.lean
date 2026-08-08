@@ -185,8 +185,7 @@ theorem mem_iSup_of_directed {ι : Type*} [Nonempty ι] {D : ι → Subcoalgebra
 /-- The carrier of a nonempty directed supremum of subcoalgebras is the union of their
 carriers. -/
 theorem coe_iSup_of_directed {ι : Type*} [Nonempty ι] {D : ι → Subcoalgebra R C}
-    (hD : Directed (· ≤ ·) D) :
-    ((⨆ i, D i : Subcoalgebra R C) : Set C) = ⋃ i, (D i : Set C) := by
+    (hD : Directed (· ≤ ·) D) : ((⨆ i, D i : Subcoalgebra R C) : Set C) = ⋃ i, (D i : Set C) := by
   ext c
   simp only [SetLike.mem_coe, Set.mem_iUnion, mem_iSup_of_directed hD]
 
@@ -195,14 +194,13 @@ membership in one member of the set. -/
 theorem mem_sSup_of_directedOn {S : Set (Subcoalgebra R C)} (hne : S.Nonempty)
     (hS : DirectedOn (· ≤ ·) S) {c : C} :
     c ∈ sSup S ↔ ∃ D ∈ S, c ∈ D := by
-  haveI : Nonempty S := hne.to_subtype
+  have : Nonempty S := hne.to_subtype
   simp only [sSup_eq_iSup', mem_iSup_of_directed hS.directed_val, SetCoe.exists, exists_prop]
 
 /-- The carrier of the supremum of a nonempty directed set of subcoalgebras is the union of
 their carriers. -/
 theorem coe_sSup_of_directedOn {S : Set (Subcoalgebra R C)} (hne : S.Nonempty)
-    (hS : DirectedOn (· ≤ ·) S) :
-    (↑(sSup S) : Set C) = ⋃ D ∈ S, (D : Set C) := by
+    (hS : DirectedOn (· ≤ ·) S) : (↑(sSup S) : Set C) = ⋃ D ∈ S, (D : Set C) := by
   ext c
   simp [mem_sSup_of_directedOn hne hS]
 

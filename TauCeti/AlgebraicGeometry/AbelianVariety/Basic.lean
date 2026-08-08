@@ -111,7 +111,7 @@ lemma dim_def (A : AbelianVariety K) :
 
 /-- An abelian variety is smooth over the base field. -/
 instance smooth (A : AbelianVariety K) : Smooth A.toOver.hom := by
-  haveI : GrpObj (Over.mk A.toOver.hom) := inferInstanceAs (GrpObj A.toOver)
+  have : GrpObj (Over.mk A.toOver.hom) := inferInstanceAs (GrpObj A.toOver)
   exact smooth_of_grpObj A.toOver.hom
 
 /-- An abelian variety is geometrically connected over the base field. -/
@@ -142,8 +142,7 @@ noncomputable def ofGeometricallyIntegral (G : Over (Spec (.of K))) [GrpObj G]
 
 @[simp]
 lemma ofGeometricallyIntegral_toOver (G : Over (Spec (.of K))) [GrpObj G]
-    [IsProper G.hom] [GeometricallyIntegral G.hom] :
-    (ofGeometricallyIntegral G).toOver = G :=
+    [IsProper G.hom] [GeometricallyIntegral G.hom] : (ofGeometricallyIntegral G).toOver = G :=
   (rfl)
 
 /-- The unit of `ofGeometricallyIntegral G` is the unit of `G`. -/

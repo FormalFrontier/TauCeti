@@ -53,8 +53,7 @@ variable {σ : Type*} {M : Type*} [CommGroup M]
 to a commutative group `M` is the same data as a family `σ → M`. The forward map reads off the
 values on the standard generators `ofAdd (single i 1)`; the inverse extends a family to the
 unique homomorphism through `Finsupp.liftAddHom` and the `ℤ`-power homomorphism. -/
-@[expose] noncomputable def freeAbelianCharEquiv :
-    (Multiplicative (σ →₀ ℤ) →* M) ≃* (σ → M) where
+@[expose] noncomputable def freeAbelianCharEquiv : (Multiplicative (σ →₀ ℤ) →* M) ≃* (σ → M) where
   toFun χ i := χ (Multiplicative.ofAdd (Finsupp.single i 1))
   invFun c := AddMonoidHom.toMultiplicativeLeft
     (Finsupp.liftAddHom fun i => (zmultiplesHom (Additive M)) (Additive.ofMul (c i)))

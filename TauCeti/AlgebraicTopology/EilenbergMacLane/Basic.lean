@@ -87,9 +87,9 @@ protected theorem subsingleton_homotopyGroup (h : IsAspherical X x) (n : ℕ) :
 /-- Asphericity is preserved by a pointed homeomorphism. -/
 theorem of_homeomorph (hX : IsAspherical X x) (e : X ≃ₜ Y) (he : e x = y) :
     IsAspherical Y y := by
-  letI : PathConnectedSpace X := hX.pathConnectedSpace
+  let : PathConnectedSpace X := hX.pathConnectedSpace
   refine ⟨e.surjective.pathConnectedSpace e.continuous, fun n ↦ ?_⟩
-  letI : Subsingleton (π_ (n + 2) X x) := hX.subsingleton_homotopyGroup n
+  let : Subsingleton (π_ (n + 2) X x) := hX.subsingleton_homotopyGroup n
   exact
     (HomotopyGroup.homeomorphMulEquivOfEq (N := Fin (n + 2)) e he).toEquiv
       |>.subsingleton_congr.mp inferInstance
@@ -97,11 +97,11 @@ theorem of_homeomorph (hX : IsAspherical X x) (e : X ≃ₜ Y) (he : e x = y) :
 /-- The product of two aspherical spaces is aspherical. -/
 theorem prod (hX : IsAspherical X x) (hY : IsAspherical Y y) :
     IsAspherical (X × Y) (x, y) := by
-  letI : PathConnectedSpace X := hX.pathConnectedSpace
-  letI : PathConnectedSpace Y := hY.pathConnectedSpace
+  let : PathConnectedSpace X := hX.pathConnectedSpace
+  let : PathConnectedSpace Y := hY.pathConnectedSpace
   refine ⟨inferInstance, fun n ↦ ?_⟩
-  letI : Subsingleton (π_ (n + 2) X x) := hX.subsingleton_homotopyGroup n
-  letI : Subsingleton (π_ (n + 2) Y y) := hY.subsingleton_homotopyGroup n
+  let : Subsingleton (π_ (n + 2) X x) := hX.subsingleton_homotopyGroup n
+  let : Subsingleton (π_ (n + 2) Y y) := hY.subsingleton_homotopyGroup n
   exact
     (HomotopyGroup.prodEquiv (N := Fin (n + 2)) x y).subsingleton_congr.mpr inferInstance
 
@@ -110,9 +110,9 @@ variable {ι : Type w} {Z : ι → Type u} [∀ i, TopologicalSpace (Z i)] {z : 
 /-- An indexed product of aspherical spaces is aspherical. -/
 theorem pi (h : ∀ i, IsAspherical (Z i) (z i)) :
     IsAspherical (∀ i, Z i) z := by
-  letI : ∀ i, PathConnectedSpace (Z i) := fun i ↦ (h i).pathConnectedSpace
+  let : ∀ i, PathConnectedSpace (Z i) := fun i ↦ (h i).pathConnectedSpace
   refine ⟨inferInstance, fun n ↦ ?_⟩
-  letI : ∀ i, Subsingleton (π_ (n + 2) (Z i) (z i)) :=
+  let : ∀ i, Subsingleton (π_ (n + 2) (Z i) (z i)) :=
     fun i ↦ (h i).subsingleton_homotopyGroup n
   exact inferInstance
 
@@ -139,8 +139,7 @@ variable {G : Type u} {H : Type v} [Group G] [Group H]
 
 /-- Construct the `K(G, 1)` property from asphericity and an isomorphism between the
 fundamental group and `G`. -/
-protected theorem mk (hX : IsAspherical X x)
-    (hπ : Nonempty (FundamentalGroup X x ≃* G)) :
+protected theorem mk (hX : IsAspherical X x) (hπ : Nonempty (FundamentalGroup X x ≃* G)) :
     IsEilenbergMacLaneSpaceOne G X x :=
   ⟨hX, hπ⟩
 
@@ -150,8 +149,7 @@ protected theorem isAspherical (h : IsEilenbergMacLaneSpaceOne G X x) :
   h.1
 
 /-- The fundamental group of a `K(G, 1)` space is isomorphic to `G`. -/
-protected theorem nonempty_fundamentalGroupMulEquiv
-    (h : IsEilenbergMacLaneSpaceOne G X x) :
+protected theorem nonempty_fundamentalGroupMulEquiv (h : IsEilenbergMacLaneSpaceOne G X x) :
     Nonempty (FundamentalGroup X x ≃* G) :=
   h.2
 
@@ -161,8 +159,7 @@ theorem of_mulEquiv (h : IsEilenbergMacLaneSpaceOne G X x) (e : G ≃* H) :
   ⟨h.isAspherical, h.nonempty_fundamentalGroupMulEquiv.map fun f ↦ f.trans e⟩
 
 /-- The `K(G, 1)` property is preserved by a pointed homeomorphism. -/
-theorem of_homeomorph (h : IsEilenbergMacLaneSpaceOne G X x)
-    (e : X ≃ₜ Y) (he : e x = y) :
+theorem of_homeomorph (h : IsEilenbergMacLaneSpaceOne G X x) (e : X ≃ₜ Y) (he : e x = y) :
     IsEilenbergMacLaneSpaceOne G Y y :=
   ⟨h.isAspherical.of_homeomorph e he,
     h.nonempty_fundamentalGroupMulEquiv.map fun f ↦
@@ -174,8 +171,7 @@ variable {G₁ : Type u} {G₂ : Type v} [Group G₁] [Group G₂]
 
 /-- The product of a `K(G₁, 1)` space and a `K(G₂, 1)` space is a
 `K(G₁ × G₂, 1)` space. -/
-theorem prod (h₁ : IsEilenbergMacLaneSpaceOne G₁ X₁ x₁)
-    (h₂ : IsEilenbergMacLaneSpaceOne G₂ X₂ x₂) :
+theorem prod (h₁ : IsEilenbergMacLaneSpaceOne G₁ X₁ x₁) (h₂ : IsEilenbergMacLaneSpaceOne G₂ X₂ x₂) :
     IsEilenbergMacLaneSpaceOne (G₁ × G₂) (X₁ × X₂) (x₁, x₂) := by
   refine ⟨h₁.isAspherical.prod h₂.isAspherical, ?_⟩
   obtain ⟨e₁⟩ := h₁.nonempty_fundamentalGroupMulEquiv

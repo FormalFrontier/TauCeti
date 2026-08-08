@@ -166,8 +166,7 @@ tangent powers through the crossing-angle bridge. -/
 theorem ConditionB.pow_unit_tangent_eq_of_coeff_ne_zero {γ : ℝ → ℂ} {a b : ℝ} {f : ℂ → ℂ}
     (hB : ConditionB γ a b f) {S : Finset ℂ} {U : Set ℂ}
     (decomp : PolarPartDecomposition f S U) (hU : IsOpen U) (hSU : (S : Set ℂ) ⊆ U)
-    (s : S) (hMero : MeromorphicAt f ↑s)
-    (h_imm : IsPwC1ImmersionOn γ a b) (hab : a ≤ b)
+    (s : S) (hMero : MeromorphicAt f ↑s) (h_imm : IsPwC1ImmersionOn γ a b) (hab : a ≤ b)
     (h_interior : ∀ t ∈ Icc a b, γ t = (s : ℂ) → t ∈ Ioo a b)
     (h_ord : decomp.order s = meromorphicPolarOrderAt f ↑s) :
     ∀ k : Fin (decomp.order s), 1 ≤ k.val → decomp.coeff s k ≠ 0 →

@@ -350,8 +350,7 @@ variable (α β : FactorSet G M)
 /-- **Cohomologous factor sets build equivalent extensions.** Two factor sets whose quotient is a
 multiplicative `2`-coboundary give equivalent group extensions of `G` by `M`, the equivalence
 rescaling the canonical section by the function the coboundary comes from. -/
-theorem nonempty_groupExtensionEquiv
-    (h : IsMulCoboundary₂ fun p : G × G => α p / β p) :
+theorem nonempty_groupExtensionEquiv (h : IsMulCoboundary₂ fun p : G × G => α p / β p) :
     Nonempty (α.groupExtension.Equiv β.groupExtension) := by
   obtain ⟨x, hx⟩ := h
   refine ⟨rescaleEquiv α β x fun g h => ?_⟩
@@ -376,8 +375,7 @@ def trivial : FactorSet G M where
 @[simp] theorem trivial_apply (p : G × G) : trivial G M p = 1 := (rfl)
 
 /-- The extension attached to the trivial factor set is the semidirect product of `M` by `G`. -/
-def trivialMulEquiv :
-    (trivial G M).Extension ≃* M ⋊[MulDistribMulAction.toMulAut G M] G where
+def trivialMulEquiv : (trivial G M).Extension ≃* M ⋊[MulDistribMulAction.toMulAut G M] G where
   toFun x := ⟨x.left, x.right⟩
   invFun x := ⟨x.left, x.right⟩
   left_inv _ := rfl

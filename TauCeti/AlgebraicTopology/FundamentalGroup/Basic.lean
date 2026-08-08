@@ -50,8 +50,7 @@ theorem FundamentalGroup.map_range_eq_bot_of_subsingleton
 
 /-- A simply connected domain has trivial induced fundamental-group range. -/
 theorem FundamentalGroup.map_range_eq_bot_of_simplyConnectedSpace [SimplyConnectedSpace A]
-    (f : C(A, X)) (a₀ : A) :
-    (_root_.FundamentalGroup.map f a₀).range = ⊥ :=
+    (f : C(A, X)) (a₀ : A) : (_root_.FundamentalGroup.map f a₀).range = ⊥ :=
   FundamentalGroup.map_range_eq_bot_of_subsingleton f
 
 /-- If the source fundamental group is subsingleton, its induced-map range lies in any target

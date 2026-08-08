@@ -36,16 +36,14 @@ which is fully faithful with essential image the affine group schemes; the isomo
 of functors, and is the intended interface for computing with the equivalence. -/
 noncomputable def commHopfAlgCatOpEquivAffineGroupSchemeCat (S : CommRingCat.{u}) :
     (CommHopfAlgCat S)ᵒᵖ ≌ AffineGroupSchemeCat S :=
-  (hopfSpec S).toEssImage.asEquivalence.trans
-    (ObjectProperty.fullSubcategoryCongr
+  (hopfSpec S).toEssImage.asEquivalence.trans (ObjectProperty.fullSubcategoryCongr
       (funext fun G => propext (essImage_hopfSpec.trans (affineGroupSchemeProperty_iff G).symm)))
 
 /-- The forward functor of `commHopfAlgCatOpEquivAffineGroupSchemeCat`, followed by the
 inclusion of the full subcategory, is `hopfSpec`: the anti-equivalence really does act
 by `Spec`. Consumers should transport along this isomorphism (and its `app` components
 and naturality squares) rather than unfold the equivalence. -/
-noncomputable def commHopfAlgCatOpEquivAffineGroupSchemeCat.functorCompιIso
-    (S : CommRingCat.{u}) :
+noncomputable def commHopfAlgCatOpEquivAffineGroupSchemeCat.functorCompιIso (S : CommRingCat.{u}) :
     (commHopfAlgCatOpEquivAffineGroupSchemeCat S).functor ⋙
       (affineGroupSchemeProperty S).ι ≅ hopfSpec S := by
   -- The equivalence is built as `toEssImage.asEquivalence.trans (fullSubcategoryCongr _)`,

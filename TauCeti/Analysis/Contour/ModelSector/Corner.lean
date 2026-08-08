@@ -108,8 +108,7 @@ theorem deriv_twoRayCorner_of_ne {z₀ u v : ℂ} {t : ℝ} (ht : t ≠ 0) :
 
 /-- **The index integrand along a two-ray corner is `1 / t`,** on both rays: the direction cancels
 against itself, leaving the same real function on either side of the corner. -/
-private theorem integrand_twoRayCorner {z₀ u v : ℂ} (hu : u ≠ 0) (hv : v ≠ 0) {t : ℝ}
-    (ht : t ≠ 0) :
+private theorem integrand_twoRayCorner {z₀ u v : ℂ} (hu : u ≠ 0) (hv : v ≠ 0) {t : ℝ} (ht : t ≠ 0) :
     (twoRayCorner z₀ u v t - z₀)⁻¹ * deriv (twoRayCorner z₀ u v) t = ((t : ℂ))⁻¹ := by
   have htC : (t : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr ht
   rw [deriv_twoRayCorner_of_ne (z₀ := z₀) (u := u) (v := v) ht]

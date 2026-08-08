@@ -29,14 +29,30 @@ namespace TauCeti
 
 namespace Probability
 
-/-- A strictly monotone finite selection `k : Fin m → ℕ` extends to a strictly increasing
-self-map of `ℕ` that agrees with `k` on the first `m` inputs. -/
-theorem exists_strictMono_nat_extending_fin {m : ℕ} {k : Fin m → ℕ} (hk : StrictMono k) :
-    ∃ φ : ℕ → ℕ, StrictMono φ ∧ ∀ i : Fin m, φ i.val = k i := by
+/-- A strictly monotone finite selection `k : Fin m → ℕ` extends to a strictly increasing self-map
+of `ℕ` that agrees with `k` on the first `m` inputs and is **eventually a translation**: beyond the
+selection it adds a fixed constant `C`.
+
+The eventual-translation clause matters for **shift-invariant** events. Beyond the first `m`
+coordinates, reindexing by `φ` agrees with the fixed iterate `shift^[C]`, so for a set `S` with
+`shift ⁻¹' S = S` membership is unchanged: exact shift invariance gives both
+`x ∈ S ↔ shift^[C] x ∈ S` and insensitivity to the altered finite prefix.
+
+**Tail measurability alone does not suffice.** A tail event is insensitive to finitely many
+coordinates, but need not satisfy `shift ⁻¹' S = S`, and it is the shift invariance — not the
+prefix insensitivity — that supplies the `shift^[C]` step. So this clause serves
+`MeasurableSpace.invariants (shift α)`, not the path tail.
+
+This concerns **exact** invariance, sets literally unchanged by the shift. It says nothing about the
+a.e.-invariant formulation Mathlib's `ErgodicSMul` uses; relating the two is a separate matter. -/
+theorem exists_strictMono_nat_extending_fin_eventually_add {m : ℕ} {k : Fin m → ℕ}
+    (hk : StrictMono k) :
+    ∃ (φ : ℕ → ℕ) (C : ℕ), StrictMono φ ∧ (∀ i : Fin m, φ i.val = k i) ∧
+      ∀ n, m ≤ n → φ n = n + C := by
   classical
   let C := Finset.univ.sup k + 1
   let φ : ℕ → ℕ := fun n => if h : n < m then k ⟨n, h⟩ else n + C
-  refine ⟨φ, ?_, ?_⟩
+  refine ⟨φ, C, ?_, ?_, ?_⟩
   · intro a b hab
     dsimp only [φ]
     by_cases ha : a < m
@@ -53,6 +69,19 @@ theorem exists_strictMono_nat_extending_fin {m : ℕ} {k : Fin m → ℕ} (hk : 
         exact Nat.add_lt_add_right hab C
   · intro i
     simp [φ, i.isLt]
+  · intro n hn
+    simp [φ, Nat.not_lt.mpr hn]
+
+/-- A strictly monotone finite selection `k : Fin m → ℕ` extends to a strictly increasing
+self-map of `ℕ` that agrees with `k` on the first `m` inputs.
+
+The form most callers want. `exists_strictMono_nat_extending_fin_eventually_add` additionally
+records that the extension is eventually a translation, which is what a reindexing needs in order
+to preserve invariant events. -/
+theorem exists_strictMono_nat_extending_fin {m : ℕ} {k : Fin m → ℕ} (hk : StrictMono k) :
+    ∃ φ : ℕ → ℕ, StrictMono φ ∧ ∀ i : Fin m, φ i.val = k i :=
+  let ⟨φ, _, hφ, hφ_eq, _⟩ := exists_strictMono_nat_extending_fin_eventually_add hk
+  ⟨φ, hφ, hφ_eq⟩
 
 end Probability
 

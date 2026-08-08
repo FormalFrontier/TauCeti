@@ -41,8 +41,8 @@ private theorem index_powMonoidHom_range_le_of_closure_eq_top {G : Type*} [CommG
     (powMonoidHom n : G →* G).range.index ≤ n ^ S.card := by
   classical
   set H := (powMonoidHom n : G →* G).range with hH
-  haveI : Group.FG G := Group.fg_iff'.mpr ⟨S.card, S, rfl, hS⟩
-  haveI : Group.FG (G ⧸ H) := Group.fg_of_surjective (QuotientGroup.mk'_surjective H)
+  have : Group.FG G := Group.fg_iff'.mpr ⟨S.card, S, rfl, hS⟩
+  have : Group.FG (G ⧸ H) := Group.fg_of_surjective (QuotientGroup.mk'_surjective H)
   have hpow : ∀ q : G ⧸ H, q ^ n = 1 := fun q =>
     QuotientGroup.induction_on q fun g => by
       rw [← QuotientGroup.mk_pow, QuotientGroup.eq_one_iff]

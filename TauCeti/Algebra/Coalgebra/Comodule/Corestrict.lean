@@ -233,8 +233,7 @@ theorem corestrictHom_apply (f : C →ₗc[R] D) (g : Hom R C M N) (m : M) :
 /-- Corestriction of morphisms is unchanged on underlying linear maps under composition of
 coalgebra morphisms. -/
 @[simp]
-theorem corestrictHom_comp_coalg_toLinearMap (f : C →ₗc[R] D) (g : D →ₗc[R] E)
-    (h : Hom R C M N) :
+theorem corestrictHom_comp_coalg_toLinearMap (f : C →ₗc[R] D) (g : D →ₗc[R] E) (h : Hom R C M N) :
     (letI : Comodule R E M := Corestrict (R := R) (C := C) (D := E) (M := M) (g.comp f)
      letI : Comodule R E N := Corestrict (R := R) (C := C) (D := E) (M := N) (g.comp f)
      (corestrictHom (R := R) (C := C) (D := E) (M := M) (N := N) (g.comp f) h).toLinearMap) =
@@ -249,8 +248,7 @@ theorem corestrictHom_comp_coalg_toLinearMap (f : C →ₗc[R] D) (g : D →ₗc
 /-- Corestriction of morphisms is unchanged on elements under composition of coalgebra
 morphisms. -/
 @[simp]
-theorem corestrictHom_comp_coalg_apply (f : C →ₗc[R] D) (g : D →ₗc[R] E) (h : Hom R C M N)
-    (m : M) :
+theorem corestrictHom_comp_coalg_apply (f : C →ₗc[R] D) (g : D →ₗc[R] E) (h : Hom R C M N) (m : M) :
     (letI : Comodule R E M := Corestrict (R := R) (C := C) (D := E) (M := M) (g.comp f)
      letI : Comodule R E N := Corestrict (R := R) (C := C) (D := E) (M := N) (g.comp f)
      corestrictHom (R := R) (C := C) (D := E) (M := M) (N := N) (g.comp f) h m) =
@@ -269,7 +267,7 @@ theorem corestrictHom_id (f : C →ₗc[R] D) :
     corestrictHom (R := R) (C := C) (D := D) (M := M) (N := M) f (Hom.id R C M) =
       Hom.id R D M :=
   by
-    letI : Comodule R D M := Corestrict (R := R) (C := C) (D := D) (M := M) f
+    let : Comodule R D M := Corestrict (R := R) (C := C) (D := D) (M := M) f
     exact Hom.ext fun _ => rfl
 
 /-- Corestriction preserves composition of comodule morphisms. -/
@@ -284,9 +282,9 @@ theorem corestrictHom_comp {P : Type*} [AddCommMonoid P] [Module R P] [Comodule 
         (corestrictHom (R := R) (C := C) (D := D) (M := N) (N := P) f h)
         (corestrictHom (R := R) (C := C) (D := D) (M := M) (N := N) f g) :=
   by
-    letI : Comodule R D M := Corestrict (R := R) (C := C) (D := D) (M := M) f
-    letI : Comodule R D N := Corestrict (R := R) (C := C) (D := D) (M := N) f
-    letI : Comodule R D P := Corestrict (R := R) (C := C) (D := D) (M := P) f
+    let : Comodule R D M := Corestrict (R := R) (C := C) (D := D) (M := M) f
+    let : Comodule R D N := Corestrict (R := R) (C := C) (D := D) (M := N) f
+    let : Comodule R D P := Corestrict (R := R) (C := C) (D := D) (M := P) f
     exact Hom.ext fun _ => rfl
 
 end Comodule
@@ -322,16 +320,14 @@ theorem corestrict_obj (f : C →ₗc[R] D) (M : ComoduleCat.{u, v, x} R C) :
 
 /-- The corestriction functor leaves the underlying linear map of a morphism unchanged. -/
 @[simp]
-theorem corestrict_map_toLinearMap (f : C →ₗc[R] D) {M N : ComoduleCat.{u, v, x} R C}
-    (g : M ⟶ N) :
+theorem corestrict_map_toLinearMap (f : C →ₗc[R] D) {M N : ComoduleCat.{u, v, x} R C} (g : M ⟶ N) :
     ((corestrict (R := R) (C := C) (D := D) f).map g).toLinearMap = g.toLinearMap :=
   rfl
 
 /-- The corestriction functor leaves the underlying function of a morphism unchanged. -/
 @[simp]
 theorem corestrict_map_apply (f : C →ₗc[R] D) {M N : ComoduleCat.{u, v, x} R C}
-    (g : M ⟶ N) (m : M) :
-    (corestrict (R := R) (C := C) (D := D) f).map g m = g m :=
+    (g : M ⟶ N) (m : M) : (corestrict (R := R) (C := C) (D := D) f).map g m = g m :=
   rfl
 
 variable {E : Type*} [AddCommMonoid E] [Module R E] [Coalgebra R E]

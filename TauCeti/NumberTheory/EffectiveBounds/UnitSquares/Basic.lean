@@ -100,40 +100,34 @@ theorem units_sq_index_le (F : Type*) [Field F] [NumberField F] :
 index at most `2^n`. This is the monotone form of
 `TauCeti.NumberField.units_sq_index_le`, useful when the degree has been bounded separately. -/
 theorem units_sq_index_le_of_finrank_le (F : Type*) [Field F] [NumberField F] {n : ℕ}
-    (hn : finrank ℚ F ≤ n) :
-    (Subgroup.square (𝓞 F)ˣ).index ≤ 2 ^ n :=
+    (hn : finrank ℚ F ≤ n) : (Subgroup.square (𝓞 F)ˣ).index ≤ 2 ^ n :=
   (units_sq_index_le F).trans (Nat.pow_le_pow_right (by norm_num) hn)
 
 /-- Exact-degree specialization of `TauCeti.NumberField.units_sq_index_le`: if `[F : ℚ] = n`,
 then `[O_F^× : (O_F^×)^2] ≤ 2^n`. -/
 theorem units_sq_index_le_of_finrank_eq (F : Type*) [Field F] [NumberField F] {n : ℕ}
-    (hn : finrank ℚ F = n) :
-    (Subgroup.square (𝓞 F)ˣ).index ≤ 2 ^ n :=
+    (hn : finrank ℚ F = n) : (Subgroup.square (𝓞 F)ˣ).index ≤ 2 ^ n :=
   units_sq_index_le_of_finrank_le F (le_of_eq hn)
 
 /-- In a degree-one number field, the square subgroup of the unit group has index at most `2`. -/
 theorem units_sq_index_le_of_finrank_eq_one (F : Type*) [Field F] [NumberField F]
-    (hF : finrank ℚ F = 1) :
-    (Subgroup.square (𝓞 F)ˣ).index ≤ 2 := by
+    (hF : finrank ℚ F = 1) : (Subgroup.square (𝓞 F)ˣ).index ≤ 2 := by
   simpa using units_sq_index_le_of_finrank_eq F hF
 
 /-- The square subgroup of `ℤˣ` has index at most `2`, viewed as the unit group of the ring of
 integers of `ℚ`. -/
-theorem units_sq_index_rat_le_two :
-    (Subgroup.square (𝓞 ℚ)ˣ).index ≤ 2 :=
+theorem units_sq_index_rat_le_two : (Subgroup.square (𝓞 ℚ)ˣ).index ≤ 2 :=
   units_sq_index_le_of_finrank_eq_one ℚ (finrank_self ℚ)
 
 /-- In a quadratic number field, the square subgroup of the unit group has index at most `4`. -/
-theorem units_sq_index_le_quadratic (F : Type*) [Field F] [NumberField F]
-    (hF : finrank ℚ F = 2) :
+theorem units_sq_index_le_quadratic (F : Type*) [Field F] [NumberField F] (hF : finrank ℚ F = 2) :
     (Subgroup.square (𝓞 F)ˣ).index ≤ 4 := by
   simpa using units_sq_index_le_of_finrank_eq F hF
 
 /-- If a number field has degree at most two, the square subgroup of the unit group has index at
 most `4`. This is the form used when a quadratic-model argument supplies only `[F : ℚ] ≤ 2`. -/
 theorem units_sq_index_le_of_finrank_le_two (F : Type*) [Field F] [NumberField F]
-    (hF : finrank ℚ F ≤ 2) :
-    (Subgroup.square (𝓞 F)ˣ).index ≤ 4 := by
+    (hF : finrank ℚ F ≤ 2) : (Subgroup.square (𝓞 F)ˣ).index ≤ 4 := by
   simpa using units_sq_index_le_of_finrank_le F hF
 
 /-- If `[F : ℚ] ≤ n`, then the elementary-2 quotient `O_F^×/(O_F^×)^2` has at most `2^n`

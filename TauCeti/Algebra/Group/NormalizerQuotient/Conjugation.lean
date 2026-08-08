@@ -53,8 +53,7 @@ noncomputable abbrev normalizerEquivMap (H : Subgroup G) (e : G ≃* K) :
 /-- On underlying group elements, `normalizerEquivMap` is the given group isomorphism. -/
 @[simp]
 lemma normalizerEquivMap_apply_coe (H : Subgroup G) (e : G ≃* K)
-    (g : _root_.Subgroup.normalizer (H : Set G)) :
-    (normalizerEquivMap H e g : K) = e (g : G) :=
+    (g : _root_.Subgroup.normalizer (H : Set G)) : (normalizerEquivMap H e g : K) = e (g : G) :=
   rfl
 
 /-- On underlying group elements, the inverse of `normalizerEquivMap` is the inverse group
@@ -68,8 +67,7 @@ lemma normalizerEquivMap_symm_apply_coe (H : Subgroup G) (e : G ≃* K)
 /-- Transporting normalizer representatives along the identity group isomorphism is the identity
 on underlying representatives. -/
 @[simp]
-lemma normalizerEquivMap_refl (H : Subgroup G)
-    (g : _root_.Subgroup.normalizer (H : Set G)) :
+lemma normalizerEquivMap_refl (H : Subgroup G) (g : _root_.Subgroup.normalizer (H : Set G)) :
     normalizerEquivMap H (MulEquiv.refl G) g =
       ⟨(g : G), by simp [g.2]⟩ := by
   ext
@@ -95,8 +93,7 @@ lemma normalizerEquivMap_symm_apply_coe' (H : Subgroup G) (e : G ≃* K)
 /-- The copy of `H` inside its normalizer maps to the copy of `e(H)` inside the target
 normalizer. -/
 lemma subgroupOf_map_normalizerEquivMap (H : Subgroup G) (e : G ≃* K) :
-    (H.subgroupOf (_root_.Subgroup.normalizer (H : Set G))).map
-        ((normalizerEquivMap H e :
+    (H.subgroupOf (_root_.Subgroup.normalizer (H : Set G))).map ((normalizerEquivMap H e :
           _root_.Subgroup.normalizer (H : Set G) ≃*
             _root_.Subgroup.normalizer ((H.map (e : G →* K)) : Set K)) :
           _root_.Subgroup.normalizer (H : Set G) →*
@@ -136,8 +133,7 @@ lemma normalizerQuotientEquivMap_mk (H : Subgroup G) (e : G ≃* K)
 representative. -/
 lemma normalizerQuotientEquivMap_symm_mk (H : Subgroup G) (e : G ≃* K)
     (k : _root_.Subgroup.normalizer ((H.map (e : G →* K)) : Set K)) :
-    (normalizerQuotientEquivMap H e).symm
-        (normalizerQuotientMk (H.map (e : G →* K)) k) =
+    (normalizerQuotientEquivMap H e).symm (normalizerQuotientMk (H.map (e : G →* K)) k) =
       normalizerQuotientMk H ((normalizerEquivMap H e).symm k) :=
   rfl
 

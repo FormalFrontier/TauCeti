@@ -160,8 +160,7 @@ chosen generator to `(-1)^(ε P)` times that generator. -/
     (hd : Squarefree d) (ε : {P // P ∈ genusPrimeDiscriminants hd} → ZMod 2)
     (P : {P // P ∈ genusPrimeDiscriminants hd}) :
     ((galoisGroupEquivCandidateGenusField hd).symm (Multiplicative.ofAdd ε))
-        (candidateGenusFieldGen hd P) =
-      (-1) ^ (ε P).val * candidateGenusFieldGen hd P := by
+        (candidateGenusFieldGen hd P) = (-1) ^ (ε P).val * candidateGenusFieldGen hd P := by
   apply (candidateGenusFieldEquivAdjoin hd).injective
   simp only [map_mul, candidateGenusFieldEquivAdjoin_apply_gen]
   exact galoisGroupEquivPrimeDiscriminantRadicands_symm_apply_gen
@@ -174,7 +173,7 @@ chosen generator to `(-1)^(ε P)` times that generator. -/
 rational elements, so the field-generic multiquadratic abelian-Galois theorem applies. -/
 noncomputable instance isAbelianGalois_candidateGenusField {d : ℤ} {hd : Squarefree d} :
     IsAbelianGalois ℚ (candidateGenusField hd) := by
-  letI : IsAbelianGalois ℚ (adjoin ℚ (Set.range (genusFieldRoot hd))) :=
+  let : IsAbelianGalois ℚ (adjoin ℚ (Set.range (genusFieldRoot hd))) :=
     isAbelianGalois
       (d := fun P : {P // P ∈ genusPrimeDiscriminants hd} =>
         ((primeDiscriminantRadicand P.val : ℤ) : ℚ))

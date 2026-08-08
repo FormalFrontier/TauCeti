@@ -53,8 +53,8 @@ theorem existsUnique_isFiniteMeasure_integral_exp_neg_mul_eq_of_isCompletelyMono
     exists_isFiniteMeasure_integral_exp_neg_mul_eq_of_isCompletelyMonotone hcm
   refine ⟨μ, ⟨hμfin, hμ⟩, ?_⟩
   intro ν hν
-  letI : IsFiniteMeasure μ := hμfin
-  letI : IsFiniteMeasure ν := hν.1
+  let : IsFiniteMeasure μ := hμfin
+  let : IsFiniteMeasure ν := hν.1
   apply Measure.ext_of_forall_integral_exp_neg_mul_eq
   intro t ht
   rw [← hμ t ht, ← hν.2 t ht]

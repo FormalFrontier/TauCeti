@@ -95,8 +95,8 @@ theorem finrank_top_over_intermediateField [Finite ι] [NeZero (2 : K)]
     (F : IntermediateField K (adjoin K (Set.range root))) :
     Module.finrank F (adjoin K (Set.range root))
       = 2 ^ Module.finrank (ZMod 2) (intermediateFieldEquivSubmodule hroot hindep F).ofDual := by
-  haveI := isSplittingField hroot
-  haveI : FiniteDimensional K (adjoin K (Set.range root)) :=
+  have := isSplittingField hroot
+  have : FiniteDimensional K (adjoin K (Set.range root)) :=
     Polynomial.IsSplittingField.finiteDimensional _ (definingPolynomial d)
   have hpos : 0 < Module.finrank K F := Module.finrank_pos
   refine Nat.eq_of_mul_eq_mul_left hpos ?_
@@ -130,8 +130,7 @@ degree that the genus-field constructions read off over the quadratic base. -/
 theorem finrank_top_over_intermediateField_of_finrank_eq_two [Finite ι] [NeZero (2 : K)]
     (hroot : ∀ i, root i ^ 2 = algebraMap K L (d i))
     (hindep : ∀ S : Finset ι, S.Nonempty → ¬ IsSquare (∏ i ∈ S, d i))
-    (F : IntermediateField K (adjoin K (Set.range root)))
-    (hF : Module.finrank K F = 2) :
+    (F : IntermediateField K (adjoin K (Set.range root))) (hF : Module.finrank K F = 2) :
     Module.finrank F (adjoin K (Set.range root)) = 2 ^ (Nat.card ι - 1) := by
   rw [finrank_top_over_intermediateField hroot hindep F]
   congr 1

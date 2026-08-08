@@ -37,8 +37,7 @@ namespace StronglyContinuousSemigroup
 
 /-- At time zero, the right derivative of the orbit of a generator-domain vector is its
 generator. -/
-theorem realOperator_hasDerivWithinAt_zero (S : StronglyContinuousSemigroup X)
-    (x : S.domain) :
+theorem realOperator_hasDerivWithinAt_zero (S : StronglyContinuousSemigroup X) (x : S.domain) :
     HasDerivWithinAt (fun s : ℝ => S.realOperator s (x : X))
       (S.generator ⟨x, by rw [S.generator_domain]; exact x.property⟩) (Set.Ici 0) 0 := by
   rw [hasDerivWithinAt_iff_tendsto_slope]
@@ -53,16 +52,14 @@ theorem realOperator_differentiableWithinAt_zero (S : StronglyContinuousSemigrou
 
 /-- The right derivative at zero of the orbit of a generator-domain vector is its generator. -/
 @[simp]
-theorem realOperator_derivWithin_zero (S : StronglyContinuousSemigroup X)
-    (x : S.domain) :
+theorem realOperator_derivWithin_zero (S : StronglyContinuousSemigroup X) (x : S.domain) :
     derivWithin (fun s : ℝ => S.realOperator s (x : X)) (Set.Ici 0) 0 =
       S.generator ⟨x, by rw [S.generator_domain]; exact x.property⟩ :=
   (S.realOperator_hasDerivWithinAt_zero x).derivWithin (uniqueDiffWithinAt_Ici 0)
 
 /-- The orbit has right derivative `y` at zero exactly when its initial vector belongs to the
 generator domain and the generator value is `y`. -/
-theorem realOperator_hasDerivWithinAt_zero_iff (S : StronglyContinuousSemigroup X)
-    (x y : X) :
+theorem realOperator_hasDerivWithinAt_zero_iff (S : StronglyContinuousSemigroup X) (x y : X) :
     HasDerivWithinAt (fun s : ℝ => S.realOperator s x) y (Set.Ici 0) 0 ↔
       ∃ hx : x ∈ S.domain,
         S.generator ⟨x, by rw [S.generator_domain]; exact hx⟩ = y := by

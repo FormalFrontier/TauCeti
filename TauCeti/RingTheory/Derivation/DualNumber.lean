@@ -105,8 +105,7 @@ lemma derivationToDualNumberEquivLift_apply_snd (d : Derivation R A B) (a : A) :
   simp [derivationToDualNumberEquivLift, liftOfDerivation]
 
 @[simp]
-lemma derivationToDualNumberEquivLift_symm_apply
-    (ψ : {ψ : A →ₐ[R] DualNumber B //
+lemma derivationToDualNumberEquivLift_symm_apply (ψ : {ψ : A →ₐ[R] DualNumber B //
       (fstHom R B B).comp ψ = IsScalarTower.toAlgHom R A B}) (a : A) :
     (derivationToDualNumberEquivLift R A B).symm ψ a = snd (ψ.1 a) := by
   simp [derivationToDualNumberEquivLift]

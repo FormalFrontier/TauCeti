@@ -158,8 +158,7 @@ private theorem continuousOn_dslope_prod_of_convex {U : Set ℂ} (hU : Convex �
 
 /-- **Joint continuity of `(c, w) ↦ dslope f c w` on `U ×ˢ U`** for `f` differentiable on an
 arbitrary open set `U` (no convexity assumption). -/
-theorem continuousOn_dslope_prod {U : Set ℂ} (hU_open : IsOpen U)
-    (hf : DifferentiableOn ℂ f U) :
+theorem continuousOn_dslope_prod {U : Set ℂ} (hU_open : IsOpen U) (hf : DifferentiableOn ℂ f U) :
     ContinuousOn (fun p : ℂ × ℂ ↦ dslope f p.1 p.2) (U ×ˢ U) := by
   rintro ⟨c₀, w₀⟩ ⟨hc₀, hw₀⟩
   by_cases h_eq : c₀ = w₀

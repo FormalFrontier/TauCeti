@@ -84,7 +84,7 @@ theorem exists_mem_off_curve {γ : ℝ → ℂ} {Ω : Set ℂ} {a b : ℝ} (hΩ 
       obtain ⟨t, ht, hts⟩ := hcon w hw
       exact ⟨t, ht, hts⟩
   have hcompact : IsCompact Ω := himg ▸ isCompact_uIcc.image_of_continuousOn hγ
-  haveI : PreconnectedSpace ℂ := ⟨(convex_univ : Convex ℝ (univ : Set ℂ)).isPreconnected⟩
+  have : PreconnectedSpace ℂ := ⟨(convex_univ : Convex ℝ (univ : Set ℂ)).isPreconnected⟩
   have huniv : Ω = univ :=
     IsClopen.eq_univ ⟨hcompact.isClosed, hΩ⟩ ⟨γ a, hγΩ a left_mem_uIcc⟩
   exact noncompact_univ ℂ (huniv ▸ hcompact)

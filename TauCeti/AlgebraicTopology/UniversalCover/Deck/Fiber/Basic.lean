@@ -134,8 +134,7 @@ lemma fiber_smul_eq_fiberHomeomorph (φ : Deck p) (e : p ⁻¹' {b}) :
 /-- On underlying points, the fibre action is evaluation of the underlying deck
 transformation. -/
 @[simp]
-lemma fiber_smul_coe (φ : Deck p) (e : p ⁻¹' {b}) :
-    ((φ • e : p ⁻¹' {b}) : E) = φ.1 e.1 :=
+lemma fiber_smul_coe (φ : Deck p) (e : p ⁻¹' {b}) : ((φ • e : p ⁻¹' {b}) : E) = φ.1 e.1 :=
   rfl
 
 /-- The projection value of a point in the fibre is unchanged after the restricted deck
@@ -145,8 +144,7 @@ lemma map_fiber_smul (φ : Deck p) (e : p ⁻¹' {b}) :
   exact (φ • e).2
 
 /-- The restricted deck action keeps points in the fibre over `b`. -/
-lemma fiber_smul_mem (φ : Deck p) (e : p ⁻¹' {b}) :
-    (φ • e : E) ∈ p ⁻¹' {b} := by
+lemma fiber_smul_mem (φ : Deck p) (e : p ⁻¹' {b}) : (φ • e : E) ∈ p ⁻¹' {b} := by
   exact map_fiber_smul φ e
 
 /-- The restricted fibre action agrees with the ambient action on the total space after

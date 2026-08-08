@@ -32,14 +32,6 @@ namespace TauCeti.NumberField
 
 variable {K : Type*} [Field K] [NumberField K] {θ : 𝓞 K} {d : ℤ}
 
-/-- The quadratic field `K` has degree `2` over `ℚ`: its power basis has dimension
-`natDegree (X² - d) = 2`. -/
-private theorem finrank_rat_eq_two (hmin : minpoly ℤ θ = X ^ 2 - C d)
-    (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) : Module.finrank ℚ K = 2 := by
-  have hint : IsIntegral ℚ (θ : K) := θ.isIntegral_coe.tower_top
-  rw [(PowerBasis.ofAdjoinEqTop' hint hgen).finrank,
-    PowerBasis.ofAdjoinEqTop'_dim hint hgen, minpoly_rat_quadratic hmin, natDegree_X_pow_sub_C]
-
 /-- The generator `θ` of the quadratic field is nonzero (its minimal polynomial has degree `2`,
 not `1`). -/
 private theorem coe_gen_ne_zero (hmin : minpoly ℤ θ = X ^ 2 - C d) : (θ : K) ≠ 0 := by
@@ -53,8 +45,7 @@ private theorem coe_gen_ne_zero (hmin : minpoly ℤ θ = X ^ 2 - C d) : (θ : K)
 /-- Quadratic conjugation is a nontrivial automorphism: it does not equal the identity, since it
 sends the nonzero generator `θ` to its negative `-θ`. -/
 private theorem quadraticConj_ne_one (hmin : minpoly ℤ θ = X ^ 2 - C d)
-    (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) :
-    (1 : K ≃ₐ[ℚ] K) ≠ quadraticConj hmin hgen := by
+    (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) : (1 : K ≃ₐ[ℚ] K) ≠ quadraticConj hmin hgen := by
   intro h
   have hθ : (θ : K) = -(θ : K) := by
     have := DFunLike.congr_fun h (θ : K)
@@ -93,7 +84,7 @@ private theorem prod_aut_eq (hmin : minpoly ℤ θ = X ^ 2 - C d)
 private theorem norm_eq_mul_conj (hmin : minpoly ℤ θ = X ^ 2 - C d)
     (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) (y : K) :
     algebraMap ℚ K (Algebra.norm ℚ y) = y * quadraticConj hmin hgen y := by
-  haveI := isGalois_rat hmin hgen
+  have := isGalois_rat hmin hgen
   rw [Algebra.norm_eq_prod_automorphisms, prod_aut_eq hmin hgen]
 
 /-- **Key norm identity.** For `x : 𝓞 K`, the extension of its integral norm equals `x · σx`, the
@@ -129,8 +120,7 @@ private noncomputable def ringOfIntegersQuadraticConjₐ (hmin : minpoly ℤ θ 
 the product `I · σI` is a principal ideal, for every ideal `I` of `𝓞 K`. This is the
 genus-theoretic hypothesis fed to `mulEquiv_ringOfIntegersQuadraticConj_apply_eq_inv`. -/
 theorem isPrincipal_mul_map_ringOfIntegersQuadraticConj
-    (hmin : minpoly ℤ θ = X ^ 2 - C d) (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤)
-    (I : Ideal (𝓞 K)) :
+    (hmin : minpoly ℤ θ = X ^ 2 - C d) (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) (I : Ideal (𝓞 K)) :
     (I * Ideal.map (ringOfIntegersQuadraticConj hmin hgen) I).IsPrincipal := by
   -- For `I ≠ 0`, `I · σI = (Ideal.relNorm ℤ I).map (algebraMap ℤ (𝓞 K))`, the extension of a
   -- principal `ℤ`-ideal; the equality is obtained by matching relative norms and divisibility.

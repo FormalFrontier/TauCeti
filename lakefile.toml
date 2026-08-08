@@ -7,10 +7,9 @@ defaultTargets = ["TauCeti"]
 # the platform-independent mapping automatically.
 platformIndependent = true
 
-# mathlib's `rev` below normally stays on "master"; lake-manifest.json carries the actual pin.
-# An incompatibility PR opened by tauceti-review-bot may temporarily replace it with the exact
-# first-known-bad SHA so the repair builds reproducibly. bump-guard (scripts/check-bump.sh)
-# validates that single-line exception and the next compatible LKG bump restores "master".
+# Mathlib's `rev` below always stays on "master"; lake-manifest.json carries the exact,
+# reproducible commit used by builds. Dependency automation must update only that manifest pin
+# and the matching toolchain, including for first-known-bad repair PRs.
 [[require]]
 name = "mathlib"
 git = "https://github.com/leanprover-community/mathlib4"

@@ -6,7 +6,7 @@ module
 
 public import Mathlib.Analysis.ODE.ExistUnique
 public import Mathlib.Geometry.Manifold.Instances.UnitsOfNormedAlgebra
-public import TauCeti.Geometry.Lie.Exponential.Units
+public import TauCeti.Geometry.Lie.Exponential.Units.Basic
 
 /-!
 # One-parameter subgroups from the Banach algebra exponential
@@ -41,7 +41,7 @@ open scoped ContDiff Manifold
 
 variable {R : Type*} [NormedRing R] [NormedAlgebra ℝ R] [CompleteSpace R]
 
-attribute [local instance] normedAlgebraRatOfReal
+attribute [local instance] TauCeti.normedAlgebraRatOfReal
 
 /-- The algebra-valued exponential curve `t ↦ exp (t • x)` is real analytic. -/
 @[fun_prop]

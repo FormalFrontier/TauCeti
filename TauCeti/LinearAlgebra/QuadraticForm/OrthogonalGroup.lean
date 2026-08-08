@@ -203,8 +203,7 @@ theorem coe_orthogonalGroupCongr_apply (e : Q₁.IsometryEquiv Q₂) (f : orthog
 
 @[simp]
 theorem coe_orthogonalGroupCongr_symm_apply (e : Q₁.IsometryEquiv Q₂) (g : orthogonalGroup Q₂)
-    (m : M₁) :
-    ((orthogonalGroupCongr e).symm g : M₁ ≃ₗ[R] M₁) m
+    (m : M₁) : ((orthogonalGroupCongr e).symm g : M₁ ≃ₗ[R] M₁) m
       = e.toLinearEquiv.symm ((g : M₂ ≃ₗ[R] M₂) (e.toLinearEquiv m)) := by
   simp [orthogonalGroupCongr, congrAut_symm_apply]
 

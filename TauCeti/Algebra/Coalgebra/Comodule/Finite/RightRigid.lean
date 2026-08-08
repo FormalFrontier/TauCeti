@@ -52,8 +52,7 @@ variable (H : Type v) [Semiring H] [HopfAlgebra k H]
 
 attribute [local instance] Comodule.dual Comodule.tensor
 
-private theorem dualCoact_coord_eq_sum
-    {M : FGComoduleCat.{u, v, u} k H}
+private theorem dualCoact_coord_eq_sum {M : FGComoduleCat.{u, v, u} k H}
     (b : Module.Basis (Module.Basis.ofVectorSpaceIndex k M) k M)
     (i : Module.Basis.ofVectorSpaceIndex k M) :
     Comodule.dualCoact (R := k) (H := H) (M := M) (b.coord i) =
@@ -69,8 +68,7 @@ private theorem dualCoact_coord_eq_sum
     Module.Basis.repr_self_apply]
   simp
 
-private theorem lid_map_contractLeft_tensorCombine
-    {M : FGComoduleCat.{u, v, u} k H}
+private theorem lid_map_contractLeft_tensorCombine {M : FGComoduleCat.{u, v, u} k H}
     (x : Module.Dual k M ⊗[k] H) (y : M ⊗[k] H) :
     TensorProduct.lid k H
         (TensorProduct.map (contractLeft k M) (LinearMap.id : H →ₗ[k] H)
@@ -139,8 +137,7 @@ private theorem dualEvaluation_toLinearMap_aux (M : FGComoduleCat.{u, v, u} k H)
 
 /-- Evaluation applies the underlying functional to the vector. -/
 @[simp]
-theorem dualEvaluation_apply (M : FGComoduleCat.{u, v, u} k H)
-    (φ : dual k H M) (m : M) :
+theorem dualEvaluation_apply (M : FGComoduleCat.{u, v, u} k H) (φ : dual k H M) (m : M) :
     dualEvaluation k H M (φ ⊗ₜ[k] m) = φ m :=
   dualEvaluation_apply_aux k H M φ m
 
@@ -160,8 +157,7 @@ nor the canonical `Module.Basis.ofVectorSpace` choice, nor finite-dimensionality
 equality on the index type plays a part. -/
 private lemma sum_matrixCoefficient_mul_antipode_eq_algebraMap (R : Type*) [CommSemiring R]
     (A : Type*) [Semiring A] [HopfAlgebra R A] {M : Type*} [AddCommMonoid M] [Module R M]
-    [Comodule R A M] {ι : Type*} [Fintype ι] (b : Module.Basis ι R M) (p q : ι) :
-    (∑ x : ι,
+    [Comodule R A M] {ι : Type*} [Fintype ι] (b : Module.Basis ι R M) (p q : ι) : (∑ x : ι,
       Comodule.matrixCoefficient (R := R) (C := A) (b.coord p) (b x) *
       HopfAlgebra.antipode R
         (Comodule.matrixCoefficient (R := R) (C := A) (b.coord x) (b q))) =
@@ -176,8 +172,7 @@ private lemma sum_matrixCoefficient_mul_antipode_eq_algebraMap (R : Type*) [Comm
   rw [← Comodule.counit_matrixCoefficient (R := R) (C := A) (b.coord p) (b q)]
   exact HopfAlgebra.sum_mul_antipode_eq_algebraMap_counit repr
 
-private theorem tensorCoact_coevaluation_apply_one
-    (M : FGComoduleCat.{u, v, u} k H) :
+private theorem tensorCoact_coevaluation_apply_one (M : FGComoduleCat.{u, v, u} k H) :
     Comodule.tensorCoact (R := k) (C := H) (M := M) (N := Module.Dual k M)
         (coevaluation k M 1) =
       coevaluation k M 1 ⊗ₜ[k] (1 : H) := by
@@ -284,8 +279,7 @@ noncomputable instance instExactPairingDual
     exact fun x => LinearMap.congr_fun h x
 
 /-- Every finite-dimensional comodule has the antipode-twisted linear dual as a right dual. -/
-noncomputable instance instHasRightDual
-    (M : FGComoduleCat.{u, v, u} k H) : HasRightDual M :=
+noncomputable instance instHasRightDual (M : FGComoduleCat.{u, v, u} k H) : HasRightDual M :=
   ⟨dual k H M⟩
 
 /-- Finite-dimensional comodules over a Hopf algebra form a right rigid monoidal category. -/

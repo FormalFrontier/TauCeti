@@ -11,9 +11,7 @@ itself with the roadmap that chiefly motivates the cleanup.
 A PR gets exactly one label, decided in this order:
 
 1. `roadmap/none` -- the diff touches an infrastructure path (anything outside
-   `TauCeti/`, the root `TauCeti.lean`, and the two ordinary Lake pins). This also
-   covers the review bot's narrowly validated first-known-bad lakefile exception:
-   either way it is infrastructure, not roadmap work.
+   `TauCeti/`, the root `TauCeti.lean`, and the two ordinary Lake pins).
 2. `roadmap/none` -- the diff is a pin-only dependency bump.
 3. The one valid explicit ``Roadmap:`` declaration.
 4. One validated canonical ``focus`` in a ``tauceti-target:v1`` marker.
@@ -71,9 +69,6 @@ UNKNOWN_COLOR = "fbca04"   # yellow: needs a citation
 
 # A PR whose files all match this is one an AI author may land without a human
 # override: `TauCeti/`, the root aggregator, and the two bump-guarded Lake pins.
-# The build workflow has one author-aware extension to this set: a PR opened by the
-# trusted review bot may pin Mathlib's lakefile rev to an exactly validated SHA. It
-# remains an infrastructure PR and therefore still belongs under roadmap/none here.
 _ALLOWED_PATH = re.compile(r"^(?:TauCeti/|TauCeti\.lean$|lake-manifest\.json$|lean-toolchain$)")
 
 _PINS = {"lake-manifest.json", "lean-toolchain"}

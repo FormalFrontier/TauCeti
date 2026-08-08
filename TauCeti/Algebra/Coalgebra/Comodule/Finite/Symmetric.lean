@@ -113,14 +113,12 @@ theorem tensorBraiding_eq : tensorBraiding R C M N = β_ M N :=
 
 /-- The braiding sends `m ⊗ n` to `n ⊗ m`. -/
 @[simp]
-theorem braiding_hom_apply (m : M) (n : N) :
-    (β_ M N).hom (m ⊗ₜ[R] n) = n ⊗ₜ[R] m :=
+theorem braiding_hom_apply (m : M) (n : N) : (β_ M N).hom (m ⊗ₜ[R] n) = n ⊗ₜ[R] m :=
   TensorProduct.comm_tmul R M N m n
 
 /-- The inverse braiding sends `n ⊗ m` back to `m ⊗ n`. -/
 @[simp]
-theorem braiding_inv_apply (n : N) (m : M) :
-    (β_ M N).inv (n ⊗ₜ[R] m) = m ⊗ₜ[R] n :=
+theorem braiding_inv_apply (n : N) (m : M) : (β_ M N).inv (n ⊗ₜ[R] m) = m ⊗ₜ[R] n :=
   TensorProduct.comm_symm_tmul R M N m n
 
 end FGComoduleCat

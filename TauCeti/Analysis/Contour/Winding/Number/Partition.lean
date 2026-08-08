@@ -81,8 +81,7 @@ on each adjacent interval the model curve and assembled curve, and their derivat
 agree almost everywhere. If the Cauchy-kernel principal value exists along every model curve, the
 winding number of the assembled curve is the sum of the model-curve winding numbers. -/
 theorem windingNumber_eq_sum_range_of_ae {n : ℕ} {t : ℕ → ℝ} (piece : ℕ → ℝ → ℂ)
-    (heq : ∀ k < n, piece k =ᵐ[MeasureTheory.volume.restrict
-      (Set.uIoc (t k) (t (k + 1)))] γ)
+    (heq : ∀ k < n, piece k =ᵐ[MeasureTheory.volume.restrict (Set.uIoc (t k) (t (k + 1)))] γ)
     (hderiv : ∀ k < n, ∀ᵐ s ∂MeasureTheory.volume.restrict (Set.uIoc (t k) (t (k + 1))),
       piece k s ≠ z₀ → deriv (piece k) s = deriv γ s)
     (hpv : ∀ k < n, CauchyPVExistsAt (piece k) (t k) (t (k + 1)) κ[z₀] z₀) :

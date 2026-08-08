@@ -89,7 +89,7 @@ theorem finrank_pathAlgebra_eq_four [Fintype A] (h : Fintype.card A = 2) (k : Ty
 arrow. -/
 theorem finrank_pathAlgebra_eq_three [Unique A] (k : Type w) [DivisionRing k] :
     Module.finrank k (pathAlgebra k (Kronecker A)) = 3 := by
-  letI : Fintype A := Fintype.ofFinite A
+  let : Fintype A := Fintype.ofFinite A
   rw [finrank_pathAlgebra k, Fintype.card_unique]
 
 end Quiver.Kronecker

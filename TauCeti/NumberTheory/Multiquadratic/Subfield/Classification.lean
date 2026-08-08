@@ -7,7 +7,7 @@ module
 public import Mathlib.FieldTheory.IntermediateField.Basic
 public import Mathlib.FieldTheory.IntermediateField.Adjoin.Defs
 public import TauCeti.Data.Finset.Basic
-public import TauCeti.NumberTheory.Multiquadratic.QuadraticSubfield
+public import TauCeti.NumberTheory.Multiquadratic.Quadratic.Subfield
 public import TauCeti.NumberTheory.Multiquadratic.Subfield.Count
 
 /-!
@@ -16,7 +16,7 @@ public import TauCeti.NumberTheory.Multiquadratic.Subfield.Count
 For square roots `root i` of radicands `d i ∈ K` over a field `K` with `2 ≠ 0`, the nonempty
 subset products `∏_{i ∈ S} root i` generate quadratic subfields of the multiquadratic field
 `M = K(rootᵢ : i)`, and under square-class independence distinct nonempty subsets give distinct
-subfields (`TauCeti.NumberTheory.Multiquadratic.QuadraticSubfield`). Separately, `M` has exactly
+subfields (`TauCeti.NumberTheory.Multiquadratic.Quadratic.Subfield`). Separately, `M` has exactly
 `2ⁿ - 1` quadratic subfields (`TauCeti.NumberTheory.Multiquadratic.Subfield.Count`). Since the
 nonempty subsets of an `n`-element index type also number `2ⁿ - 1`, the injective subset-product
 assignment is forced by counting to be a **bijection**: every quadratic subfield of `M` is
@@ -65,11 +65,20 @@ variable {K L : Type*} [Field K] [Field L] [Algebra K L] {ι : Type*}
 @[simp] theorem prodRootMem_coe (S : Finset ι) :
     (prodRootMem (K := K) root S : L) = ∏ i ∈ S, root i := rfl
 
+/-- **The square of a subset-product root, computed inside `M`.** The `M`-level companion of
+`prod_root_sq`: `prodRootMem root S` squares to the image under `K → M` of the radicand product
+`∏_{i ∈ S} d i`. -/
+theorem prodRootMem_sq (hroot : ∀ i, root i ^ 2 = algebraMap K L (d i)) (S : Finset ι) :
+    prodRootMem (K := K) root S ^ 2 = algebraMap K (adjoin K (Set.range root)) (∏ i ∈ S, d i) := by
+  apply Subtype.ext
+  have h := prod_root_sq hroot S
+  norm_num at h ⊢
+  exact h
+
 /-- **A nonempty subset-product subfield of `M` is quadratic.** Computed inside `M`, the simple
 extension `K(∏_{i ∈ S} root i)` has the same degree as its `L`-level counterpart, which is `2`
 when the radicand product `∏_{i ∈ S} d i` is not a square. -/
-theorem finrank_adjoin_prodRootMem [NeZero (2 : K)]
-    (hroot : ∀ i, root i ^ 2 = algebraMap K L (d i))
+theorem finrank_adjoin_prodRootMem [NeZero (2 : K)] (hroot : ∀ i, root i ^ 2 = algebraMap K L (d i))
     {S : Finset ι} (hSsq : ¬ IsSquare (∏ i ∈ S, d i)) :
     Module.finrank K (adjoin K {prodRootMem (K := K) root S}) = 2 := by
   -- Transport the degree across the `M`-into-`L` lift algebra equivalence.
@@ -83,8 +92,7 @@ variable (hroot : ∀ i, root i ^ 2 = algebraMap K L (d i))
 /-- **The subset-product quadratic subfield of `M` attached to a nonempty subset.** Under
 square-class independence, each nonempty subset `S` of the index type names the quadratic subfield
 `K(∏_{i ∈ S} root i)` of `M = K(rootᵢ : i)`. -/
-@[expose] def quadraticSubfieldOfFinset [NeZero (2 : K)]
-    (S : {S : Finset ι // S.Nonempty}) :
+@[expose] def quadraticSubfieldOfFinset [NeZero (2 : K)] (S : {S : Finset ι // S.Nonempty}) :
     {F : IntermediateField K (adjoin K (Set.range root)) // Module.finrank K F = 2} :=
   ⟨adjoin K {prodRootMem (K := K) root S.1}, finrank_adjoin_prodRootMem hroot (hindep S.1 S.2)⟩
 
@@ -116,11 +124,11 @@ quadratic subfields) both have cardinality `2ⁿ - 1`, so the injection is a bij
 theorem quadraticSubfieldOfFinset_bijective [Finite ι] [NeZero (2 : K)] :
     Function.Bijective (quadraticSubfieldOfFinset hroot hindep) := by
   classical
-  letI := Fintype.ofFinite ι
+  let := Fintype.ofFinite ι
   -- The quadratic subfields form a finite type: they inject into the finite subspace lattice.
-  haveI : Finite (Submodule (ZMod 2) (ι → ZMod 2)) :=
+  have : Finite (Submodule (ZMod 2) (ι → ZMod 2)) :=
     Finite.of_injective _ (SetLike.coe_injective (A := Submodule (ZMod 2) (ι → ZMod 2)))
-  haveI : Finite (IntermediateField K (adjoin K (Set.range root))) :=
+  have : Finite (IntermediateField K (adjoin K (Set.range root))) :=
     Finite.of_equiv _
       ((intermediateFieldEquivSubmodule hroot hindep).toEquiv.trans OrderDual.ofDual).symm
   rw [Nat.bijective_iff_injective_and_card]

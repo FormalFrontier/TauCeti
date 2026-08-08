@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Analysis.Complex.Conformal.BoundaryCorrespondence
-public import TauCeti.Topology.JordanCurve
+public import TauCeti.Topology.JordanCurve.Basic
 public import TauCeti.Topology.UniformlyLocallyConnected
 import Mathlib.Analysis.Normed.Module.Connected
 import TauCeti.Analysis.Complex.Conformal.Biholomorph
@@ -48,9 +48,10 @@ are.
 
 ## Main results
 
-* `TauCeti.isJordanDomain_ball` — a disc of positive radius is a Jordan domain, the basic example
-  and the one Carathéodory's theorem compares every other Jordan domain to. Its frontier is a
-  circle, which `TauCeti.isJordanCurve_sphere` already knows to be a Jordan curve.
+* `TauCeti.isJordanDomain_of_convex` — a bounded convex domain of `ℂ` is a Jordan domain, on the
+  frontier statement `TauCeti.isJordanCurve_frontier_of_convex` that generalises the circle.
+* `TauCeti.isJordanDomain_ball` — its special case at a disc of positive radius, the basic example
+  and the one Carathéodory's theorem compares every other Jordan domain to.
 * `TauCeti.IsJordanDomain.locallyConnectedSpace_frontier` — the boundary of a Jordan domain is
   locally connected, which is the hypothesis the *hard* direction of the L5 milestone runs on:
   Carathéodory's continuity theorem produces a continuous extension of the Riemann map exactly for
@@ -69,8 +70,8 @@ are.
 In accordance with the generality bar of `ConformalMapping/README.md`, which fixes scalar `ℂ` for
 every theorem added in layers L0–L6, the results below are stated for maps of `ℂ`, as in
 `Conformal/BoundaryCorrespondence.lean`; the Jordan-curve vocabulary they are phrased in, together
-with the circle that models it, is in `TauCeti/Topology/JordanCurve.lean`, where the predicate and
-its transfer lemmas are stated for an arbitrary topological space.
+with the circle that models it, is in `TauCeti/Topology/JordanCurve/Basic.lean`, where the
+predicate and its transfer lemmas are stated for an arbitrary topological space.
 
 ## Coordination with upstream Mathlib
 
@@ -98,7 +99,7 @@ open Metric Set Topology
 
 variable {U : Set ℂ} {f F : ℂ → ℂ} {c : ℂ} {r : ℝ}
 
-/-! ## Jordan domains, and the discs among them -/
+/-! ## Jordan domains, and the convex domains among them -/
 
 /-- A **Jordan domain**: a bounded domain of `ℂ` bounded by a Jordan curve.
 
@@ -115,15 +116,31 @@ structure IsJordanDomain (U : Set ℂ) : Prop where
   /-- The frontier of a Jordan domain is a Jordan curve. -/
   isJordanCurve_frontier : IsJordanCurve (frontier U)
 
-/-- A disc of positive radius is a Jordan domain: its frontier is the circle of the same centre and
-radius. This is the model Jordan domain, and the target of every Riemann map. -/
-theorem isJordanDomain_ball (c : ℂ) (hr : 0 < r) : IsJordanDomain (ball c r) where
-  isOpen := isOpen_ball
-  isConnected := isConnected_ball hr
-  isBounded := isBounded_ball
-  isJordanCurve_frontier := by
-    rw [frontier_ball c hr.ne']
-    exact isJordanCurve_sphere c hr
+/-- **A bounded convex domain of `ℂ` is a Jordan domain.**
+
+This is `TauCeti.isJordanDomain_ball` with the disc weakened to an arbitrary convex domain, which it
+recovers at `U = Metric.ball c r`. An elliptical disc, the interior of a convex polygon, and any
+nonempty bounded intersection of *finitely many* open half-planes are Jordan domains — finitely
+many, since an infinite intersection of open half-planes is convex but need not be open.
+
+Of the four defining conditions, openness and boundedness are the hypotheses `ho` and `hb`, taken
+over unchanged. Connectedness is `hU` with `hne`: a nonempty convex set is connected. The Jordan
+frontier is `hU`, `hne` and `hb` together, by `TauCeti.isJordanCurve_frontier_of_convex`, whose
+solidity hypothesis `(interior U).Nonempty` is `hne` read through `ho`, the interior of an open set
+being the set itself. -/
+theorem isJordanDomain_of_convex (hU : Convex ℝ U) (ho : IsOpen U) (hne : U.Nonempty)
+    (hb : Bornology.IsBounded U) : IsJordanDomain U where
+  isOpen := ho
+  isConnected := hU.isConnected hne
+  isBounded := hb
+  isJordanCurve_frontier :=
+    isJordanCurve_frontier_of_convex hU (by rwa [ho.interior_eq]) hb
+
+/-- A disc of positive radius is a Jordan domain: it is a bounded convex domain, and its frontier is
+the circle of the same centre and radius. This is the model Jordan domain, and the target of every
+Riemann map. -/
+theorem isJordanDomain_ball (c : ℂ) (hr : 0 < r) : IsJordanDomain (ball c r) :=
+  isJordanDomain_of_convex (convex_ball c r) isOpen_ball (nonempty_ball.mpr hr) isBounded_ball
 
 /-! ## Elementary consequences of being a Jordan domain -/
 

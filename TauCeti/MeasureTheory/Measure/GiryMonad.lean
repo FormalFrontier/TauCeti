@@ -43,8 +43,7 @@ the Giry-monad identity `map F ∘ bind g = bind (map F ∘ g)`.
 
 Obtained from associativity of `bind` together with `bind_dirac_eq_map`. -/
 theorem map_bind {μ : Measure S} {g : S → Measure γ} (hg : AEMeasurable g μ)
-    {F : γ → δ} (hF : Measurable F) :
-    (μ.bind g).map F = μ.bind fun ω => (g ω).map F := by
+    {F : γ → δ} (hF : Measurable F) : (μ.bind g).map F = μ.bind fun ω => (g ω).map F := by
   have hdirac : AEMeasurable (fun x : γ => Measure.dirac (F x)) (μ.bind g) :=
     (Measure.measurable_dirac.comp hF).aemeasurable
   rw [← Measure.bind_dirac_eq_map (μ.bind g) hF, Measure.bind_bind hg hdirac]
@@ -57,8 +56,7 @@ This is the `Measure` form of `PMF.bind_map`, and like it is a `simp` lemma: it 
 a mapped measure into the canonical single-bind form. -/
 @[simp]
 theorem bind_map {μ : Measure S} {f : S → γ} (hf : AEMeasurable f μ)
-    {g : γ → Measure δ} (hg : AEMeasurable g (μ.map f)) :
-    (μ.map f).bind g = μ.bind (g ∘ f) := by
+    {g : γ → Measure δ} (hg : AEMeasurable g (μ.map f)) : (μ.map f).bind g = μ.bind (g ∘ f) := by
   unfold Measure.bind
   rw [AEMeasurable.map_map_of_aemeasurable hg hf]
 

@@ -78,8 +78,7 @@ private theorem meromorphicOrderAt_sub_leadingTerm_gt {g : ℂ → ℂ} {s : ℂ
 disc and `n < 0`, `∮_{C(c,R)} a·(· − s₀) ^ n = 2πi · residue (a·(· − s₀) ^ n) s₀` (the integral is
 `2πi·a` for a simple pole `n = −1` and `0` otherwise). -/
 private lemma circleIntegral_const_mul_zpow_sub {c s₀ : ℂ} {R : ℝ} {n : ℤ} (a : ℂ)
-    (hs₀ : s₀ ∈ ball c R) (hn : n < 0) :
-    (∮ z in C(c, R), a * (z - s₀) ^ n)
+    (hs₀ : s₀ ∈ ball c R) (hn : n < 0) : (∮ z in C(c, R), a * (z - s₀) ^ n)
       = 2 * ↑Real.pi * Complex.I * residue (fun z => a * (z - s₀) ^ n) s₀ := by
   -- Residue of the pure monomial: the Taylor coefficient of the constant `1` at index `−1 − n`.
   have hresQ : residue (fun z => (z - s₀) ^ n) s₀
@@ -330,8 +329,7 @@ closed disc `C(c, R)` (`R > 0`) and every point of nonzero meromorphic order lie
 non-poles vanish, `classicalResidueTheorem_circle_of_meromorphicOrderAt_neg` proves the same
 conclusion asking only the poles (points of negative order) to lie in `S`. -/
 theorem classicalResidueTheorem_circle {f : ℂ → ℂ} {c : ℂ} {R : ℝ} (hR : 0 < R) (S : Finset ℂ)
-    (hf : MeromorphicOn f (Metric.closedBall c R))
-    (hS : (S : Set ℂ) ⊆ Metric.ball c R)
+    (hf : MeromorphicOn f (Metric.closedBall c R)) (hS : (S : Set ℂ) ⊆ Metric.ball c R)
     (hsupp : ∀ z ∈ Metric.closedBall c R, meromorphicOrderAt f z ≠ 0 → z ∈ S) :
     circleIntegral f c R = 2 * (Real.pi : ℂ) * Complex.I * (∑ s ∈ S, residue f s) :=
   classicalResidueTheorem_circle_of_meromorphicOrderAt_neg hR S hf hS

@@ -159,8 +159,7 @@ theorem map_map (A : Subcoalgebra R C) (f : C →ₗc[R] D) (g : D →ₗc[R] E)
 
 /-- The image of a binary join is the binary join of the images. -/
 @[simp]
-theorem map_sup (f : C →ₗc[R] D) (A B : Subcoalgebra R C) :
-    (A ⊔ B).map f = A.map f ⊔ B.map f := by
+theorem map_sup (f : C →ₗc[R] D) (A B : Subcoalgebra R C) : (A ⊔ B).map f = A.map f ⊔ B.map f := by
   ext d
   rw [← mem_toSubmodule, map_toSubmodule, sup_toSubmodule, Submodule.map_sup,
     ← map_toSubmodule f A, ← map_toSubmodule f B, ← sup_toSubmodule, mem_toSubmodule]
@@ -176,8 +175,7 @@ theorem map_iSup {ι : Sort*} (f : C →ₗc[R] D) (A : ι → Subcoalgebra R C)
 
 /-- The image of a finite join is the finite join of the images. -/
 @[simp]
-theorem map_finset_sup {ι : Type*} (s : Finset ι) (f : C →ₗc[R] D)
-    (A : ι → Subcoalgebra R C) :
+theorem map_finset_sup {ι : Type*} (s : Finset ι) (f : C →ₗc[R] D) (A : ι → Subcoalgebra R C) :
     (s.sup A).map f = s.sup fun i => (A i).map f := by
   induction s using Finset.cons_induction with
   | empty => rw [Finset.sup_empty, Finset.sup_empty, map_bot]

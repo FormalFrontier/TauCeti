@@ -19,8 +19,8 @@ function on the whole domain**. Equivalently, on such a domain continuation crea
 branches, so "multi-valued analytic function" is a phenomenon of the topology of the domain and
 not of the germ.
 
-The hypothesis is `TauCeti.ContinuesInside f₀ U z₀` from `Conformal/Continuation.lean`: the germ
-of `f₀` at `z₀` continues along *every* path in `U` issuing from `z₀`. It is exactly what a
+The hypothesis is `TauCeti.ContinuesInside f₀ U z₀` from `Conformal/Continuation/Basic.lean`:
+the germ of `f₀` at `z₀` continues along *every* path in `U` issuing from `z₀`. It is exactly what a
 holomorphic function on `U` supplies (`TauCeti.ContinuesInside.of_differentiableOn`), and by the
 two-way form below it is supplied by nothing else once `U` is simply connected.
 
@@ -62,6 +62,14 @@ representative of the terminal germ at `z`, which is what analyticity at `z` nee
 identification at `z₀`, applied to the constant path, is what gives `F` the prescribed germ
 there.
 
+## Generality
+
+The germ carried is the germ of a map `ℂ → E` into a complex Banach space, as in
+`Continuation/Basic.lean`, where the choice is discussed; the conformal-mapping consumers
+instantiate `E = ℂ`. The domain `U` is a subset of `ℂ` throughout: it is the topology of `U` that
+the theorem is about, and the shear that moves the endpoint of a path is a statement about paths
+in `ℂ`.
+
 ## Relation to the roadmap and to Mathlib
 
 This completes the L4 target "the monodromy theorem (continuations along homotopic paths agree)"
@@ -93,7 +101,8 @@ namespace TauCeti
 
 open Filter Metric Set Topology unitInterval
 
-variable {U : Set ℂ} {z₀ : ℂ} {f₀ : ℂ → ℂ} {γ δ : I → ℂ} {f g : I → ℂ → ℂ}
+variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℂ E] [CompleteSpace E]
+  {U : Set ℂ} {z₀ : ℂ} {f₀ : ℂ → E} {γ δ : I → ℂ} {f g : I → ℂ → E}
 
 /-! ### Path independence and the global branch -/
 
@@ -113,7 +122,7 @@ theorem eventuallyEq_at_one (hUc : IsSimplyConnected U) (H : ContinuesInside f�
   -- hypothesis continues the germ along it — and apply `TauCeti.monodromy_theorem` to the
   -- resulting family. The two given continuations are then matched with the extreme members of
   -- that family by uniqueness along a fixed path.
-  haveI := hUc.simplyConnectedSpace
+  have := hUc.simplyConnectedSpace
   have hz₀U : z₀ ∈ U := hγ0 ▸ hγU 0
   -- The two paths, read in the subspace `↥U`, where simple connectivity lives.
   let p : Path (⟨z₀, hz₀U⟩ : U) (⟨γ 1, hγU 1⟩ : U) :=
@@ -150,6 +159,64 @@ theorem eventuallyEq_at_one (hUc : IsSimplyConnected U) (H : ContinuesInside f�
   rw [hend] at e₁
   exact (e₀.trans hmono.symm).trans e₁.symm
 
+/-- **A nearby path with a prescribed endpoint.** Given a point `w` within `r` of the endpoint of a
+path, there is a continuous path with the same start, ending at `w`, staying everywhere within `r`
+of the original.
+
+The witness is the shear `x ↦ δ x + x • (w - δ 1)`, which moves each point by at most
+`dist w (δ 1)`. Purely a statement about paths in `ℂ`: no analytic continuation, and no reference
+to `U`. -/
+private lemma exists_continuous_path_dist_lt {w : ℂ} {r : ℝ} (hδ : Continuous δ)
+    (hw : dist w (δ 1) < r) :
+    ∃ δ' : I → ℂ, Continuous δ' ∧ (∀ x, dist (δ' x) (δ x) < r) ∧ δ' 0 = δ 0 ∧ δ' 1 = w := by
+  refine ⟨fun x => δ x + (x : ℝ) • (w - δ 1), by fun_prop, fun x => ?_, by simp, by simp⟩
+  have hx : |(x : ℝ)| ≤ 1 := abs_le.2 ⟨by linarith [x.2.1], x.2.2⟩
+  have hd : dist (δ x + (x : ℝ) • (w - δ 1)) (δ x) = |(x : ℝ)| * dist w (δ 1) := by
+    rw [dist_eq_norm, dist_eq_norm]
+    simp
+  have hle : |(x : ℝ)| * dist w (δ 1) ≤ dist w (δ 1) :=
+    mul_le_of_le_one_left dist_nonneg hx
+  linarith [hd ▸ hle]
+
+/-- **The key step behind the monodromy theorem.** Given, for each `w ∈ U`, a chosen path `γ w`
+from `z₀` to `w` and a continuation `f w` along it, the candidate branch `w ↦ f w 1 w` agrees near
+the endpoint of *any* continuation `g` along *any* path `δ` that starts at `z₀` and stays in `U`,
+with that continuation's terminal germ.
+
+This is what makes the branch well defined: it says the value produced by the chosen paths does not
+depend on the choice. -/
+private theorem eventuallyEq_terminal_germ (hUo : IsOpen U) (hUc : IsSimplyConnected U)
+    (H : ContinuesInside f₀ U z₀) {γ : ℂ → I → ℂ} {f : ℂ → I → ℂ → E}
+    (hγc : ∀ w ∈ U, Continuous (γ w)) (hγU : ∀ w ∈ U, ∀ x, γ w x ∈ U)
+    (hγ0 : ∀ w ∈ U, γ w 0 = z₀) (hγ1 : ∀ w ∈ U, γ w 1 = w)
+    (hf : ∀ w ∈ U, IsAnalyticContinuationAlong (f w) (γ w) univ)
+    (hf₀' : ∀ w ∈ U, f w 0 =ᶠ[𝓝 z₀] f₀) {z : ℂ} {δ : I → ℂ} {g : I → ℂ → E}
+    (hδ : Continuous δ) (hδU : ∀ x, δ x ∈ U) (hδ0 : δ 0 = z₀) (hδ1 : δ 1 = z)
+    (hg : IsAnalyticContinuationAlong g δ univ) (hg0 : g 0 =ᶠ[𝓝 z₀] f₀) :
+    (fun w => f w 1 w) =ᶠ[𝓝 z] g 1 := by
+  -- One family of germs continues along every path uniformly `ρ`-close to `δ`, ...
+  obtain ⟨ρ, hρ, G, hGg, hGcont⟩ :=
+    hg.exists_isAnalyticContinuationAlong_of_dist_lt isCompact_univ
+  -- ... and an `ε`-neighbourhood of the compact `δ '' I` is still inside `U`.
+  obtain ⟨ε, hε, hεU⟩ := (isCompact_range hδ).exists_thickening_subset_open hUo
+    (range_subset_iff.2 hδU)
+  have hGone : G 1 =ᶠ[𝓝 z] g 1 := hδ1 ▸ hGg 1 (mem_univ 1)
+  filter_upwards [ball_mem_nhds z (lt_min hρ hε), hGone] with w hw hwG
+  -- The path `δ` sheared to end at `w` instead of `z`.
+  obtain ⟨δ', hδ'c, hdist, hδ'start, hδ'1⟩ :=
+    exists_continuous_path_dist_lt hδ (r := min ρ ε) (hδ1 ▸ mem_ball.1 hw)
+  have hδ'U : ∀ x, δ' x ∈ U := fun x =>
+    hεU (mem_thickening_iff.2 ⟨δ x, mem_range_self x, (hdist x).trans_le (min_le_right _ _)⟩)
+  have hwU : w ∈ U := hδ'1 ▸ hδ'U 1
+  have hGδ' : IsAnalyticContinuationAlong G δ' univ :=
+    hGcont δ' hδ'c.continuousOn fun t _ => (hdist t).trans_le (min_le_left _ _)
+  have hG0 : G 0 =ᶠ[𝓝 z₀] f₀ := (hδ0 ▸ hGg 0 (mem_univ 0)).trans hg0
+  -- Path independence: the chosen continuation to `w` and `G` end at the same germ.
+  have hval := (H.eventuallyEq_at_one hUc (hγc w hwU) (hγU w hwU) (hγ0 w hwU) hδ'c hδ'U
+    (hδ'start.trans hδ0) (by rw [hδ'1, hγ1 w hwU]) (hf w hwU) (hf₀' w hwU) hGδ' hG0).eq_of_nhds
+  rw [hγ1 w hwU] at hval
+  exact hval.trans hwG
+
 /-- **The monodromy theorem for a simply connected domain.** A germ that continues along every
 path of a simply connected open set `U` issuing from `z₀` is the germ at `z₀` of a single function
 analytic on all of `U`.
@@ -158,72 +225,30 @@ So on a simply connected domain analytic continuation produces no new branches, 
 "multi-valued analytic function" there is single-valued after all. -/
 theorem exists_analyticOnNhd (hUo : IsOpen U) (hUc : IsSimplyConnected U) (hz₀ : z₀ ∈ U)
     (H : ContinuesInside f₀ U z₀) :
-    ∃ F : ℂ → ℂ, AnalyticOnNhd ℂ F U ∧ F =ᶠ[𝓝 z₀] f₀ := by
+    ∃ F : ℂ → E, AnalyticOnNhd ℂ F U ∧ F =ᶠ[𝓝 z₀] f₀ := by
   -- A path from `z₀` to each point of `U`, and a continuation of the germ along it.
   have hpath : ∀ w ∈ U, ∃ γ : I → ℂ,
-      Continuous γ ∧ (∀ x, γ x ∈ U) ∧ γ 0 = z₀ ∧ γ 1 = w := by
-    intro w hw
-    obtain ⟨c, hc⟩ := hUc.isPathConnected.joinedIn z₀ hz₀ w hw
-    exact ⟨c, c.continuous, hc, c.source, c.target⟩
+      Continuous γ ∧ (∀ x, γ x ∈ U) ∧ γ 0 = z₀ ∧ γ 1 = w := fun w hw =>
+    have h := hUc.isPathConnected.joinedIn z₀ hz₀ w hw
+    ⟨h.somePath, h.somePath.continuous, h.somePath_mem, h.somePath.source, h.somePath.target⟩
   choose! γ hγc hγU hγ0 hγ1 using hpath
   choose! f hf hf₀ using fun w (hw : w ∈ U) =>
     continuesAlong_iff_exists.1 (H.continuesAlong (hγc w hw) (hγU w hw) (hγ0 w hw))
   have hf₀' : ∀ w ∈ U, f w 0 =ᶠ[𝓝 z₀] f₀ := fun w hw => by
     have := hf₀ w hw; rwa [hγ0 w hw] at this
   -- The candidate branch: the value at `w` of the terminal germ of the chosen continuation.
-  set F : ℂ → ℂ := fun w => f w 1 w with hFdef
-  -- **The key step.** Near the endpoint of *any* continuation of the germ, `F` is the value of
-  -- that continuation's terminal germ.
-  have key : ∀ z : ℂ, ∀ δ : I → ℂ, ∀ g : I → ℂ → ℂ, Continuous δ → (∀ x, δ x ∈ U) → δ 0 = z₀ →
-      δ 1 = z → IsAnalyticContinuationAlong g δ univ → g 0 =ᶠ[𝓝 z₀] f₀ → F =ᶠ[𝓝 z] g 1 := by
-    intro z δ g hδ hδU hδ0 hδ1 hg hg0
-    -- One family of germs continues along every path uniformly `ρ`-close to `δ`, ...
-    obtain ⟨ρ, hρ, G, hGg, hGcont⟩ :=
-      hg.exists_isAnalyticContinuationAlong_of_dist_lt isCompact_univ
-    -- ... and an `ε`-neighbourhood of the compact `δ '' I` is still inside `U`.
-    obtain ⟨ε, hε, hεU⟩ := (isCompact_range hδ).exists_thickening_subset_open hUo
-      (range_subset_iff.2 hδU)
-    have hGone : G 1 =ᶠ[𝓝 z] g 1 := by
-      have := hGg 1 (mem_univ 1); rwa [hδ1] at this
-    filter_upwards [ball_mem_nhds z (lt_min hρ hε), hGone] with w hw hwG
-    -- The path `δ` sheared to end at `w` instead of `z`.
-    set δ' : I → ℂ := fun x => δ x + (x : ℝ) • (w - z) with hδ'def
-    have hδ'c : Continuous δ' := by fun_prop
-    have hdist : ∀ x : I, dist (δ' x) (δ x) < min ρ ε := by
-      intro x
-      have hx : |(x : ℝ)| ≤ 1 := abs_le.2 ⟨by linarith [x.2.1], x.2.2⟩
-      have hd : dist (δ' x) (δ x) = |(x : ℝ)| * dist w z := by
-        rw [dist_eq_norm, dist_eq_norm, hδ'def]
-        simp
-      have hwz : dist w z < min ρ ε := mem_ball.1 hw
-      have : |(x : ℝ)| * dist w z ≤ dist w z :=
-        mul_le_of_le_one_left dist_nonneg hx
-      linarith [hd ▸ this]
-    have hδ'U : ∀ x, δ' x ∈ U := fun x =>
-      hεU (mem_thickening_iff.2 ⟨δ x, mem_range_self x, (hdist x).trans_le (min_le_right _ _)⟩)
-    have hδ'0 : δ' 0 = z₀ := by simp [hδ'def, hδ0]
-    have hδ'1 : δ' 1 = w := by simp [hδ'def, hδ1]
-    have hwU : w ∈ U := hδ'1 ▸ hδ'U 1
-    have hGδ' : IsAnalyticContinuationAlong G δ' univ :=
-      hGcont δ' hδ'c.continuousOn fun t _ => (hdist t).trans_le (min_le_left _ _)
-    have hG0 : G 0 =ᶠ[𝓝 z₀] f₀ := by
-      have := hGg 0 (mem_univ 0); rw [hδ0] at this; exact this.trans hg0
-    -- Path independence: the chosen continuation to `w` and `G` end at the same germ.
-    have hterm := H.eventuallyEq_at_one hUc (hγc w hwU) (hγU w hwU) (hγ0 w hwU) hδ'c hδ'U hδ'0
-      (by rw [hδ'1, hγ1 w hwU]) (hf w hwU) (hf₀' w hwU) hGδ' hG0
-    have hval := hterm.eq_of_nhds
-    rw [hγ1 w hwU] at hval
-    rw [hFdef]
-    exact hval.trans hwG
+  set F : ℂ → E := fun w => f w 1 w with hFdef
   refine ⟨F, fun z hz => ?_, ?_⟩
   · -- Analyticity at `z`: `F` agrees near `z` with the terminal germ of the continuation to `z`.
     have han : AnalyticAt ℂ (f z 1) z := by
-      have := (hf z hz).analyticAt 1 (mem_univ 1); rwa [hγ1 z hz] at this
-    exact han.congr
-      (key z (γ z) (f z) (hγc z hz) (hγU z hz) (hγ0 z hz) (hγ1 z hz) (hf z hz) (hf₀' z hz)).symm
+      simpa [hγ1 z hz] using (hf z hz).analyticAt 1 (mem_univ 1)
+    simpa only [hFdef] using han.congr
+      (eventuallyEq_terminal_germ hUo hUc H hγc hγU hγ0 hγ1 hf hf₀'
+        (hγc z hz) (hγU z hz) (hγ0 z hz) (hγ1 z hz) (hf z hz) (hf₀' z hz)).symm
   · -- The prescribed germ at `z₀`: apply the key step to the constant path.
-    exact key z₀ (fun _ => z₀) (fun _ => f₀) continuous_const (fun _ => hz₀) rfl rfl
-      (.const continuousOn_const fun _ _ => H.analyticAt hz₀) .rfl
+    simpa only [hFdef] using
+      eventuallyEq_terminal_germ hUo hUc H hγc hγU hγ0 hγ1 hf hf₀' continuous_const
+        (fun _ => hz₀) rfl rfl (.const continuousOn_const fun _ _ => H.analyticAt hz₀) .rfl
 
 end ContinuesInside
 
@@ -235,7 +260,7 @@ The forward direction is `TauCeti.ContinuesInside.exists_analyticOnNhd`; the rev
 observation that a holomorphic function is its own continuation. -/
 theorem continuesInside_iff_exists_analyticOnNhd (hUo : IsOpen U) (hUc : IsSimplyConnected U)
     (hz₀ : z₀ ∈ U) :
-    ContinuesInside f₀ U z₀ ↔ ∃ F : ℂ → ℂ, AnalyticOnNhd ℂ F U ∧ F =ᶠ[𝓝 z₀] f₀ := by
+    ContinuesInside f₀ U z₀ ↔ ∃ F : ℂ → E, AnalyticOnNhd ℂ F U ∧ F =ᶠ[𝓝 z₀] f₀ := by
   refine ⟨fun H => H.exists_analyticOnNhd hUo hUc hz₀, ?_⟩
   rintro ⟨F, hF, hFeq⟩
   exact .of_forall fun c hc hcU hc0 =>

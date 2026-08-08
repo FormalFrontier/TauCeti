@@ -94,8 +94,7 @@ noncomputable def faceInclusion (K : AbstractSimplicialComplex ι) (σ : Face K)
 
 /-- A face inclusion does not change the underlying barycentric coordinates. -/
 @[simp]
-theorem faceInclusion_val (K : AbstractSimplicialComplex ι) (σ : Face K)
-    (x : StandardSimplex σ.1) :
+theorem faceInclusion_val (K : AbstractSimplicialComplex ι) (σ : Face K) (x : StandardSimplex σ.1) :
     (faceInclusion K σ x : ι →₀ ℝ) = x := by
   exact Set.coe_inclusion
     (Geometry.SimplicialComplex.convexHull_subset_space
@@ -275,8 +274,7 @@ theorem mem_convexHull_carrier (K : AbstractSimplicialComplex ι) (x : Realizati
 
 /-- The carrier is contained in every finite vertex set whose closed simplex contains the point. -/
 theorem carrier_minimal (K : AbstractSimplicialComplex ι) (x : Realization K) {σ : Finset ι}
-    (hx : x.1 ∈ convexHull ℝ
-      (σ.image (fun v => Finsupp.single v (1 : ℝ)) : Set (ι →₀ ℝ))) :
+    (hx : x.1 ∈ convexHull ℝ (σ.image (fun v => Finsupp.single v (1 : ℝ)) : Set (ι →₀ ℝ))) :
     (carrier K x).1 ⊆ σ :=
   by
     rw [carrier_val]
@@ -341,7 +339,7 @@ instance realizationBotDiscreteTopology :
   intro σ
   rw [isOpen_coinduced]
   obtain ⟨v, hv⟩ := σ.2
-  haveI : Subsingleton (StandardSimplex σ.1) := by
+  have : Subsingleton (StandardSimplex σ.1) := by
     constructor
     intro x y
     apply Subtype.ext
@@ -400,8 +398,7 @@ noncomputable def realizationMap {K L : AbstractSimplicialComplex ι} (hKL : K �
 
 /-- An induced map of realizations does not change the underlying barycentric coordinates. -/
 @[simp]
-theorem realizationMap_val {K L : AbstractSimplicialComplex ι} (hKL : K ≤ L)
-    (x : Realization K) :
+theorem realizationMap_val {K L : AbstractSimplicialComplex ι} (hKL : K ≤ L) (x : Realization K) :
     (realizationMap hKL x : ι →₀ ℝ) = x := by
   exact Set.coe_inclusion (standardGeometricComplex_space_mono hKL) x
 

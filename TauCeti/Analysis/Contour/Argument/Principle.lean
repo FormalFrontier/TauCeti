@@ -7,6 +7,7 @@ module
 
 public import Mathlib.Analysis.Complex.CauchyIntegral
 public import Mathlib.Analysis.Meromorphic.Order
+public import TauCeti.Analysis.Contour.LogDerivFTC
 import Mathlib.Analysis.Meromorphic.NormalForm
 import Mathlib.Analysis.SpecialFunctions.Complex.LogDeriv
 import TauCeti.Analysis.Contour.Cauchy.Goursat
@@ -63,14 +64,6 @@ open Filter Topology Metric Complex
 open scoped Real
 
 namespace TauCeti.Contour
-
-/-- At a point where a function is analytic and non-vanishing, its logarithmic derivative
-`logDeriv f = deriv f / f` is analytic. Exposed for the residue-form of the argument principle
-(`TauCeti.Contour.residue_logDeriv_eq_meromorphicOrderAt`). -/
-lemma analyticAt_logDeriv_of_analyticAt {f : ℂ → ℂ} {z : ℂ} (hf : AnalyticAt ℂ f z)
-    (hz : f z ≠ 0) : AnalyticAt ℂ (logDeriv f) z := by
-  rw [logDeriv]
-  exact hf.deriv.div hf hz
 
 /-- The logarithmic derivative depends only on the germ. -/
 private lemma logDeriv_eq_of_eventuallyEq {f g : ℂ → ℂ} {z : ℂ} (h : f =ᶠ[𝓝 z] g) :
@@ -161,8 +154,7 @@ private theorem circleIntegral_principalPart {c : ℂ} {R : ℝ} (hR : 0 < R) (S
 on the disc with order `ord z` at each `z ∈ S` and is analytic and non-vanishing off `S`, then
 `logDeriv F − ∑_{s∈S} ord s · (· − s)⁻¹` is pole-free, so its circle integral vanishes. -/
 private theorem circleIntegral_logDeriv_sub_principalPart_eq_zero {F : ℂ → ℂ} {c : ℂ} {R : ℝ}
-    (hR : 0 < R) (S : Finset ℂ) (ord : ℂ → ℤ)
-    (hF_mero : MeromorphicOn F (Metric.closedBall c R))
+    (hR : 0 < R) (S : Finset ℂ) (ord : ℂ → ℤ) (hF_mero : MeromorphicOn F (Metric.closedBall c R))
     (hord_F : ∀ z ∈ S, meromorphicOrderAt F z = (ord z : WithTop ℤ))
     (hoffF : ∀ z ∈ Metric.closedBall c R, z ∉ S → AnalyticAt ℂ F z ∧ F z ≠ 0) :
     circleIntegral (fun z => logDeriv F z - ∑ s ∈ S, (ord s : ℂ) * (z - s)⁻¹) c R = 0 := by
@@ -202,8 +194,7 @@ then the contour integral of the logarithmic derivative counts the zeros minus t
 multiplicity:
 `∮_{C(c,R)} f'/f = 2πi · ∑_{z ∈ S} ord z`. -/
 theorem argumentPrinciple {f : ℂ → ℂ} {c : ℂ} {R : ℝ} (hR : 0 < R) (S : Finset ℂ) (ord : ℂ → ℤ)
-    (hf : MeromorphicOn f (Metric.closedBall c R))
-    (hS : (S : Set ℂ) ⊆ Metric.ball c R)
+    (hf : MeromorphicOn f (Metric.closedBall c R)) (hS : (S : Set ℂ) ⊆ Metric.ball c R)
     (hsupp : ∀ z ∈ Metric.closedBall c R, meromorphicOrderAt f z ≠ 0 → z ∈ S)
     (hord : ∀ z ∈ S, meromorphicOrderAt f z = (ord z : WithTop ℤ)) :
     circleIntegral (logDeriv f) c R = 2 * (Real.pi : ℂ) * Complex.I * (∑ z ∈ S, (ord z : ℂ)) := by

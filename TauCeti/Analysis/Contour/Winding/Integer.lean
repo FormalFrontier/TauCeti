@@ -80,10 +80,8 @@ same continuity, differentiability-off-a-countable-set, avoidance, and interval-
 assumptions on `[a, b]`, the winding number of the closed curve `γ` about `w` is an integer. The
 general oriented-interval statement reduces to this case by orientation reversal. -/
 private theorem exists_int_windingNumber_of_closed_of_le {γ : ℝ → ℂ} {w : ℂ} {a b : ℝ} {P : Set ℝ}
-    (hab : a ≤ b) (hclosed : γ a = γ b) (hP : P.Countable)
-    (hγ_cont : ContinuousOn γ (Icc a b))
-    (hγ_diff : ∀ t ∈ Ioo a b \ P, DifferentiableAt ℝ γ t)
-    (h_avoid : ∀ t ∈ Icc a b, γ t ≠ w)
+    (hab : a ≤ b) (hclosed : γ a = γ b) (hP : P.Countable) (hγ_cont : ContinuousOn γ (Icc a b))
+    (hγ_diff : ∀ t ∈ Ioo a b \ P, DifferentiableAt ℝ γ t) (h_avoid : ∀ t ∈ Icc a b, γ t ≠ w)
     (h_int : IntervalIntegrable (fun t ↦ (γ t - w)⁻¹ * deriv γ t) volume a b) :
     ∃ n : ℤ, windingNumber γ a b w = n := by
   -- The argument lift gives a monotone partition `s` and a polar form of `γ t - w` at each `t`.
@@ -133,8 +131,7 @@ differentiable off a countable set `P`, avoids `w` throughout `Set.uIcc a b`, an
 interval-integrable index integrand `(γ · - w)⁻¹ * deriv γ`, the generalized winding number
 `windingNumber γ a b w` is an integer. -/
 theorem exists_int_windingNumber_of_closed {γ : ℝ → ℂ} {w : ℂ} {a b : ℝ} {P : Set ℝ}
-    (hclosed : γ a = γ b) (hP : P.Countable)
-    (hγ_cont : ContinuousOn γ (Set.uIcc a b))
+    (hclosed : γ a = γ b) (hP : P.Countable) (hγ_cont : ContinuousOn γ (Set.uIcc a b))
     (hγ_diff : ∀ t ∈ Ioo (min a b) (max a b) \ P, DifferentiableAt ℝ γ t)
     (h_avoid : ∀ t ∈ Set.uIcc a b, γ t ≠ w)
     (h_int : IntervalIntegrable (fun t ↦ (γ t - w)⁻¹ * deriv γ t) volume a b) :

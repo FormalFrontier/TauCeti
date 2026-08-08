@@ -36,8 +36,7 @@ both `1`. -/
 theorem ncard_primesOver_eq_natCard_iff_of_isGaloisGroup {A B : Type*}
     [CommRing A] [IsDomain A] [CommRing B] [IsDomain B] [Algebra A B] [Module.Finite A B]
     [Module.Flat A B] (G : Type*) [Group G] [Finite G] [MulSemiringAction G B]
-    [IsGaloisGroup G A B] (P : Ideal A) [P.IsPrime] :
-    (primesOver P B).ncard = Nat.card G ↔
+    [IsGaloisGroup G A B] (P : Ideal A) [P.IsPrime] : (primesOver P B).ncard = Nat.card G ↔
       P.ramificationIdxIn B = 1 ∧ P.inertiaDegIn B = 1 := by
   have h_main := ncard_primesOver_mul_ramificationIdxIn_mul_inertiaDegIn P B G
   have hG : 0 < Nat.card G := Nat.card_pos

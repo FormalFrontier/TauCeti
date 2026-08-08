@@ -73,8 +73,8 @@ theorem isClosed_range_of_finite_coker (T : E →L[𝕜] F)
   set R := LinearMap.range (T : E →ₗ[𝕜] F) with hR
   -- A finite-dimensional algebraic complement `N` of `range T`.
   obtain ⟨N, hN⟩ := R.exists_isCompl
-  haveI : FiniteDimensional 𝕜 N := (Submodule.quotientEquivOfIsCompl R N hN).finiteDimensional
-  haveI : CompleteSpace N := FiniteDimensional.complete 𝕜 N
+  have : FiniteDimensional 𝕜 N := (Submodule.quotientEquivOfIsCompl R N hN).finiteDimensional
+  have : CompleteSpace N := FiniteDimensional.complete 𝕜 N
   -- The auxiliary map `Φ(x, n) = T x + n`, the coproduct of `T` and the inclusion of `N`,
   -- continuous linear from the Banach space `E × N`.
   set Φ : (E × N) →L[𝕜] F := T.coprod N.subtypeL with hΦdef
@@ -116,7 +116,7 @@ theorem _root_.ContinuousLinearMap.IsFredholm.of_finite_ker_coker (T : E →L[�
     have hclosed := by
       have := hcoker
       exact ContinuousLinearMap.isClosed_range_of_finite_coker T
-    letI : CompleteSpace T.range := hclosed.completeSpace_coe
+    let : CompleteSpace T.range := hclosed.completeSpace_coe
     rw [Topology.isStrictMap_iff_isQuotientMap_rangeFactorization]
     exact T.rangeRestrict.isQuotientMap Set.rangeFactorization_surjective
   isClosed_range := by

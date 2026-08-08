@@ -42,6 +42,8 @@ noncomputable section
 
 open MeasureTheory ProbabilityTheory
 
+open scoped ENNReal
+
 namespace TauCeti
 
 namespace Probability
@@ -89,6 +91,24 @@ theorem Contractable.identDistrib_coord {μ : Measure Ω} {X : ℕ → Ω → α
     (Subsingleton.strictMono (fun _ : Fin 1 => j)) (fun _ => hi_meas) (fun _ => hj_meas)
   have hcomp := hblock.comp (measurable_pi_apply (0 : Fin 1))
   convert hcomp using 1 <;> funext ω <;> simp [Function.comp]
+
+/-- **Integrability of an observable is a coordinate-free property.** For a contractable process,
+integrability of `f ∘ X i` for one coordinate `i` gives it for every coordinate `j`. -/
+theorem Contractable.integrable_comp {E : Type*} [MeasurableSpace E] [NormedAddCommGroup E]
+    [BorelSpace E] {μ : Measure Ω} {X : ℕ → Ω → α} (hX : Contractable μ X)
+    (hX_ae : ∀ n, AEMeasurable (X n) μ) {f : α → E} (hf : Measurable f) {i : ℕ}
+    (hf_int : Integrable (fun ω => f (X i ω)) μ) (j : ℕ) :
+    Integrable (fun ω => f (X j ω)) μ :=
+  ((hX.identDistrib_coord (hX_ae i) (hX_ae j)).comp hf).integrable_snd hf_int
+
+/-- **Membership in `L^p` is a coordinate-free property of an observable.** For a contractable
+process, `MemLp (f ∘ X i) p` for one coordinate `i` gives it for every coordinate `j`. -/
+theorem Contractable.memLp_comp {E : Type*} [MeasurableSpace E] [NormedAddCommGroup E]
+    [BorelSpace E] {μ : Measure Ω} {X : ℕ → Ω → α} (hX : Contractable μ X)
+    (hX_ae : ∀ n, AEMeasurable (X n) μ) {f : α → E} (hf : Measurable f) {p : ℝ≥0∞} {i : ℕ}
+    (hf_Lp : MemLp (fun ω => f (X i ω)) p μ) (j : ℕ) :
+    MemLp (fun ω => f (X j ω)) p μ :=
+  ((hX.identDistrib_coord (hX_ae i) (hX_ae j)).comp hf).memLp_snd hf_Lp
 
 /-- **Increasing pairs of a contractable process are identically distributed.** For a
 contractable process `X`, if the four selected coordinates are a.e. measurable and `i < j`,
@@ -167,7 +187,7 @@ theorem Contractable.measurePreserving_reindex {μ : Measure Ω} {X : ℕ → Ω
     (hX : Contractable μ X) (hX_meas : ∀ i, AEMeasurable (X i) μ) {φ : ℕ → ℕ} (hφ : StrictMono φ) :
     MeasurePreserving (fun x : ℕ → α => fun k => x (φ k)) (pathLaw μ X) (pathLaw μ X) := by
   refine ⟨measurable_pi_lambda _ fun k => measurable_pi_apply (φ k), ?_⟩
-  haveI : IsFiniteMeasure (pathLaw μ X) := by rw [pathLaw_def]; infer_instance
+  have : IsFiniteMeasure (pathLaw μ X) := by rw [pathLaw_def]; infer_instance
   refine measure_eq_of_prefixProj_map_eq ?_
   intro n
   rw [map_reindex_prefixProj_pathLaw μ hX_meas φ n,

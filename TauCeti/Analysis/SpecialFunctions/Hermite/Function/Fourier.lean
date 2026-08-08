@@ -299,10 +299,8 @@ private theorem fourier_twoPiHermiteFunction_zero :
     _ = fun x : ℝ => (twoPiHermiteFunction 0 x : ℂ) := hfun.symm
 
 private theorem twoPiHermiteFunction_succ_complex (n : ℕ) :
-    (fun x : ℝ => (twoPiHermiteFunction (n + 1) x : ℂ)) =
-      (Real.sqrt (2 * ((n : ℝ) + 1)) : ℂ)⁻¹ •
-        ((Real.sqrt (2 * Real.pi) : ℂ) •
-            (fun x : ℝ => x • (twoPiHermiteFunction n x : ℂ))
+    (fun x : ℝ => (twoPiHermiteFunction (n + 1) x : ℂ)) = (Real.sqrt (2 * ((n : ℝ) + 1)) : ℂ)⁻¹ •
+        ((Real.sqrt (2 * Real.pi) : ℂ) • (fun x : ℝ => x • (twoPiHermiteFunction n x : ℂ))
           + (-(Real.sqrt (2 * Real.pi) : ℂ)⁻¹) •
             (fun x : ℝ => ((deriv (twoPiHermiteFunction n) x : ℝ) : ℂ))) := by
   funext x
@@ -330,8 +328,7 @@ private theorem twoPiHermiteFunction_succ_complex (n : ℕ) :
       rw [Complex.real_smul]
       ring
 
-private theorem fourier_mul_twoPiHermiteFunction_of_eigen (n : ℕ) (eigen : ℂ)
-    (hfourier :
+private theorem fourier_mul_twoPiHermiteFunction_of_eigen (n : ℕ) (eigen : ℂ) (hfourier :
       𝓕 (fun x : ℝ => (twoPiHermiteFunction n x : ℂ)) =
         fun x => eigen * twoPiHermiteFunction n x) :
     𝓕 (fun x : ℝ => x • (twoPiHermiteFunction n x : ℂ)) =
@@ -362,8 +359,7 @@ private theorem fourier_mul_twoPiHermiteFunction_of_eigen (n : ℕ) (eigen : ℂ
   rw [pow_two, Complex.I_mul_I]
   ring
 
-private theorem fourier_deriv_twoPiHermiteFunction_of_eigen (n : ℕ) (eigen : ℂ)
-    (hfourier :
+private theorem fourier_deriv_twoPiHermiteFunction_of_eigen (n : ℕ) (eigen : ℂ) (hfourier :
       𝓕 (fun x : ℝ => (twoPiHermiteFunction n x : ℂ)) =
         fun x => eigen * twoPiHermiteFunction n x) :
     𝓕 (fun x : ℝ => ((deriv (twoPiHermiteFunction n) x : ℝ) : ℂ)) =
@@ -404,8 +400,7 @@ private theorem fourier_twoPiHermiteFunction_succ_eq (n : ℕ) (w : ℝ) :
     hadd, Pi.add_apply, fourier_const_smul, fourier_const_smul, Pi.smul_apply, Pi.smul_apply,
     smul_eq_mul, smul_eq_mul]
 
-private theorem fourier_twoPiHermiteFunction_succ (n : ℕ) (eigen : ℂ)
-    (hfourier :
+private theorem fourier_twoPiHermiteFunction_succ (n : ℕ) (eigen : ℂ) (hfourier :
       𝓕 (fun x : ℝ => (twoPiHermiteFunction n x : ℂ)) =
         fun x => eigen * twoPiHermiteFunction n x) :
     𝓕 (fun x : ℝ => (twoPiHermiteFunction (n + 1) x : ℂ)) =

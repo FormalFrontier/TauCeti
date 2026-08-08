@@ -25,9 +25,16 @@ equivalence class of `D`, and the associated projective space is `ℙ(L(D))` for
 Riemann–Roch space `L(D)`. The vector-space structure of `L(D)` is Layer B and needs coherent
 cohomology, so it is deliberately not built here; this file supplies the set `|D|`, its
 description in terms of principal divisors, and the facts that make it well behaved: it depends
-only on the divisor class of `D`, every member shares the class and hence (when principal
-divisors have degree zero) the degree of `D`, a divisor of negative degree has empty linear
-system, and a degree-zero divisor has only the zero effective representative.
+only on the divisor class of `D`, every member shares the class and hence — when principal
+divisors have weighted degree zero — the weighted degree of `D`, a divisor of negative weighted
+degree has empty linear system, and a weighted-degree-zero divisor has only the zero effective
+representative.
+
+Those facts are stated at the weighted level, for a weight `w : X → ℤ`, and are not restated for
+the unweighted `degree`. The unweighted statements are the constant weight `w = fun _ => 1`, where
+`weightedDegree_one_eq_degree` — a `simp` lemma — identifies `weightedDegree (fun _ => 1)` with
+`degree`, so a `degree`-shaped goal is reached from the weighted lemma by supplying that weight and
+normalising with it.
 
 This advances the Tau Ceti Jacobian roadmap, Layer A, "Divisors on a curve" and "Degree":
 `TauCetiRoadmap/JacobianChallenge/README.md`. It reuses Tau Ceti's existing `WeilDivisor` and
@@ -177,17 +184,6 @@ lemma mem_completeLinearSystem_iff_eq_zero_and_divisorClass_eq_zero_of_weightedD
   · rintro ⟨rfl, hclass⟩
     exact S.mem_completeLinearSystem_iff_divisorClass.mpr ⟨isEffective_zero, by simpa using hclass⟩
 
-/-- With positive weights and weighted-degree-zero principal divisors, membership in the
-complete linear system of a weighted-degree-zero divisor is equivalent to being zero and
-linearly equivalent to zero. -/
-lemma mem_completeLinearSystem_iff_eq_zero_and_linearlyEquivalent_zero_of_weightedDegree_zero
-    {w : X → ℤ} (hw : ∀ x, 0 < w x) (h : S.IsWeightedDegreeZero w)
-    {D E : WeilDivisor X} (hD : weightedDegree w D = 0) :
-    E ∈ S.completeLinearSystem D ↔ E = 0 ∧ S.LinearlyEquivalent D 0 := by
-  rw [S.mem_completeLinearSystem_iff_eq_zero_and_divisorClass_eq_zero_of_weightedDegree_zero
-    hw h hD, ← S.divisorClass_eq_iff]
-  simp
-
 /-- With positive weights and weighted-degree-zero principal divisors, nonemptiness of the
 complete linear system of a weighted-degree-zero divisor is equivalent to the divisor class
 being zero. -/
@@ -207,8 +203,7 @@ lemma nonempty_completeLinearSystem_iff_divisorClass_eq_zero_of_weightedDegree_z
 /-- With positive weights and weighted-degree-zero principal divisors, the complete linear system
 of `D` is `{0}` exactly when its divisor class is zero. -/
 lemma completeLinearSystem_eq_singleton_zero_iff_divisorClass_eq_zero_of_isWeightedDegreeZero
-    {w : X → ℤ} (hw : ∀ x, 0 < w x) (h : S.IsWeightedDegreeZero w)
-    {D : WeilDivisor X} :
+    {w : X → ℤ} (hw : ∀ x, 0 < w x) (h : S.IsWeightedDegreeZero w) {D : WeilDivisor X} :
     S.completeLinearSystem D = {0} ↔ S.divisorClass D = 0 := by
   constructor
   · intro hset
@@ -227,111 +222,9 @@ lemma completeLinearSystem_eq_singleton_zero_iff_divisorClass_eq_zero_of_isWeigh
       exact (S.mem_completeLinearSystem_iff_eq_zero_and_divisorClass_eq_zero_of_weightedDegree_zero
         hw h hD).mpr ⟨rfl, hclass⟩
 
-/-- With positive weights and weighted-degree-zero principal divisors, the complete linear system
-of `D` is `{0}` exactly when `D` is linearly equivalent to zero. -/
-lemma completeLinearSystem_eq_singleton_zero_iff_linearlyEquivalent_zero_of_isWeightedDegreeZero
-    {w : X → ℤ} (hw : ∀ x, 0 < w x) (h : S.IsWeightedDegreeZero w)
-    {D : WeilDivisor X} :
-    S.completeLinearSystem D = {0} ↔ S.LinearlyEquivalent D 0 := by
-  rw [S.completeLinearSystem_eq_singleton_zero_iff_divisorClass_eq_zero_of_isWeightedDegreeZero
-    hw h, ← S.divisorClass_eq_iff]
-  simp
-
-/-- With positive weights and weighted-degree-zero principal divisors, a weighted-degree-zero
-divisor has a nonempty complete linear system exactly when it is linearly equivalent to zero. -/
-lemma nonempty_completeLinearSystem_iff_linearlyEquivalent_zero_of_weightedDegree_zero
-    {w : X → ℤ} (hw : ∀ x, 0 < w x) (h : S.IsWeightedDegreeZero w)
-    {D : WeilDivisor X} (hD : weightedDegree w D = 0) :
-    (S.completeLinearSystem D).Nonempty ↔ S.LinearlyEquivalent D 0 := by
-  rw [S.nonempty_completeLinearSystem_iff_divisorClass_eq_zero_of_weightedDegree_zero hw h hD,
-    ← S.divisorClass_eq_iff]
-  simp
-
-/-- When principal divisors have unweighted degree zero, every member of `|D|` has the same
-unweighted degree as `D`. -/
-lemma degree_eq_of_mem_completeLinearSystem (h : S.IsUnweightedDegreeZero)
-    {D E : WeilDivisor X} (hE : E ∈ S.completeLinearSystem D) : degree E = degree D := by
-  have hcl : S.divisorClass D = S.divisorClass E :=
-    (S.mem_completeLinearSystem_iff_divisorClass.mp hE).2
-  rw [← unweightedDegreeClass_divisorClass h E, ← hcl, unweightedDegreeClass_divisorClass h D]
-
-/-- With unweighted-degree-zero principal divisors, a divisor of negative degree has empty
-complete linear system. -/
-lemma completeLinearSystem_eq_empty_of_degree_neg (h : S.IsUnweightedDegreeZero)
-    {D : WeilDivisor X} (hD : degree D < 0) : S.completeLinearSystem D = ∅ := by
-  rw [Set.eq_empty_iff_forall_notMem]
-  intro E hE
-  have hEeff : IsEffective E := (S.mem_completeLinearSystem.mp hE).1
-  have hdeg : degree E = degree D := S.degree_eq_of_mem_completeLinearSystem h hE
-  have hpos : 0 ≤ degree E := hEeff.degree_nonneg
-  rw [hdeg] at hpos
-  exact absurd hD (not_lt.mpr hpos)
-
-/-- In the unweighted theory, every member of the complete linear system of a degree-zero
-divisor is zero. -/
-lemma eq_zero_of_mem_completeLinearSystem_of_degree_zero (h : S.IsUnweightedDegreeZero)
-    {D E : WeilDivisor X} (hE : E ∈ S.completeLinearSystem D) (hD : degree D = 0) : E = 0 := by
-  exact S.eq_zero_of_mem_completeLinearSystem_of_weightedDegree_zero
-    (w := fun _ : X => (1 : ℤ)) (fun _ => zero_lt_one) h hE (by
-      simpa [weightedDegree_one_eq_degree D] using hD)
-
-/-- Assuming unweighted-degree-zero principal divisors, membership in the complete linear system
-of a degree-zero divisor is equivalent to being the zero divisor and the divisor class being
-zero. -/
-lemma mem_completeLinearSystem_iff_eq_zero_and_divisorClass_eq_zero_of_degree_zero
-    (h : S.IsUnweightedDegreeZero) {D E : WeilDivisor X} (hD : degree D = 0) :
-    E ∈ S.completeLinearSystem D ↔ E = 0 ∧ S.divisorClass D = 0 := by
-  exact S.mem_completeLinearSystem_iff_eq_zero_and_divisorClass_eq_zero_of_weightedDegree_zero
-    (w := fun _ : X => (1 : ℤ)) (fun _ => zero_lt_one) h (by
-      simpa [weightedDegree_one_eq_degree D] using hD)
-
-/-- Assuming unweighted-degree-zero principal divisors, membership in the complete linear system
-of a degree-zero divisor is equivalent to being zero and linearly equivalent to zero. -/
-lemma mem_completeLinearSystem_iff_eq_zero_and_linearlyEquivalent_zero_of_degree_zero
-    (h : S.IsUnweightedDegreeZero) {D E : WeilDivisor X} (hD : degree D = 0) :
-    E ∈ S.completeLinearSystem D ↔ E = 0 ∧ S.LinearlyEquivalent D 0 := by
-  exact S.mem_completeLinearSystem_iff_eq_zero_and_linearlyEquivalent_zero_of_weightedDegree_zero
-    (w := fun _ : X => (1 : ℤ)) (fun _ => zero_lt_one) h (by
-      simpa [weightedDegree_one_eq_degree D] using hD)
-
-/-- Assuming unweighted-degree-zero principal divisors, a degree-zero divisor has a nonempty
-complete linear system exactly when its divisor class is zero. -/
-lemma nonempty_completeLinearSystem_iff_divisorClass_eq_zero_of_degree_zero
-    (h : S.IsUnweightedDegreeZero) {D : WeilDivisor X} (hD : degree D = 0) :
-    (S.completeLinearSystem D).Nonempty ↔ S.divisorClass D = 0 := by
-  exact S.nonempty_completeLinearSystem_iff_divisorClass_eq_zero_of_weightedDegree_zero
-    (w := fun _ : X => (1 : ℤ)) (fun _ => zero_lt_one) h (by
-      simpa [weightedDegree_one_eq_degree D] using hD)
-
-/-- Assuming unweighted-degree-zero principal divisors, the complete linear system of `D` is
-`{0}` exactly when its divisor class is zero. -/
-lemma completeLinearSystem_eq_singleton_zero_iff_divisorClass_eq_zero_of_principal_degree_zero
-    (h : S.IsUnweightedDegreeZero) {D : WeilDivisor X} :
-    S.completeLinearSystem D = {0} ↔ S.divisorClass D = 0 :=
-  S.completeLinearSystem_eq_singleton_zero_iff_divisorClass_eq_zero_of_isWeightedDegreeZero
-    (w := fun _ : X => (1 : ℤ)) (fun _ => zero_lt_one) h
-
-/-- Assuming unweighted-degree-zero principal divisors, the complete linear system of `D` is
-`{0}` exactly when it is linearly equivalent to zero. -/
-lemma completeLinearSystem_eq_singleton_zero_iff_linearlyEquivalent_zero_of_principal_degree_zero
-    (h : S.IsUnweightedDegreeZero) {D : WeilDivisor X} :
-    S.completeLinearSystem D = {0} ↔ S.LinearlyEquivalent D 0 :=
-  S.completeLinearSystem_eq_singleton_zero_iff_linearlyEquivalent_zero_of_isWeightedDegreeZero
-    (w := fun _ : X => (1 : ℤ)) (fun _ => zero_lt_one) h
-
-/-- Assuming unweighted-degree-zero principal divisors, a degree-zero divisor has a nonempty
-complete linear system exactly when it is linearly equivalent to zero. -/
-lemma nonempty_completeLinearSystem_iff_linearlyEquivalent_zero_of_degree_zero
-    (h : S.IsUnweightedDegreeZero) {D : WeilDivisor X} (hD : degree D = 0) :
-    (S.completeLinearSystem D).Nonempty ↔ S.LinearlyEquivalent D 0 := by
-  exact S.nonempty_completeLinearSystem_iff_linearlyEquivalent_zero_of_weightedDegree_zero
-    (w := fun _ : X => (1 : ℤ)) (fun _ => zero_lt_one) h (by
-      simpa [weightedDegree_one_eq_degree D] using hD)
-
 /-- A complete linear system is nonempty exactly when the divisor class of `D` contains an
 effective divisor. -/
-lemma nonempty_completeLinearSystem_iff {D : WeilDivisor X} :
-    (S.completeLinearSystem D).Nonempty ↔
+lemma nonempty_completeLinearSystem_iff {D : WeilDivisor X} : (S.completeLinearSystem D).Nonempty ↔
       ∃ E, IsEffective E ∧ S.divisorClass E = S.divisorClass D := by
   constructor
   · rintro ⟨E, hE⟩

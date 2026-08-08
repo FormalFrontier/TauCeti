@@ -4,9 +4,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+public import TauCeti.Probability.Kernel.ProbabilityMeasure
 public import TauCeti.Probability.Process.Tail.Basic
 public import Mathlib.Probability.Kernel.CondDistrib
-public import Mathlib.MeasureTheory.Measure.ProbabilityMeasure
 
 /-!
 # The de Finetti directing measure
@@ -23,8 +23,14 @@ directingMeasure μ X ω = condDistrib (X 0) (id) μ ω    (conditioning on tail
 Because it lives over the **value** space `α`, it needs only `[StandardBorelSpace α]` (and
 `[Nonempty α]`); the sample space `Ω` is an arbitrary measurable space.
 
-This is the random directing measure of the martingale (and kernel-based Koopman) route to de
-Finetti's theorem. This file records its basic theory: it is a probability measure
+This is the tail-conditioned directing measure: the object the martingale route proves to be a
+`ConditionallyIIDWith` witness, and the one any route conditioning on `tailProcess X` will use. A
+route conditioning on a different σ-algebra builds its own conditional law — see
+`DeFinetti.ViaKoopman.InvariantConditionalLaw` for the shift-invariant candidate, which is not yet
+proved to direct anything — and whether two such objects agree a.e. is a theorem about them, not a
+property of this file.
+
+This file records the basic theory: it is a probability measure
 (`isProbabilityMeasure_directingMeasure`), its set evaluations are `tailProcess X`-measurable
 (`measurable_tailProcess_directingMeasure_coe`, with the ambient corollary
 `measurable_directingMeasure_coe`), and it is the conditional law of `X 0` given the tail
@@ -32,8 +38,8 @@ Finetti's theorem. This file records its basic theory: it is a probability measu
 `directingProbabilityMeasure`, measurable at the `tailProcess X` level
 (`measurable_tailProcess_directingProbabilityMeasure`, with the ambient corollary
 `measurable_directingProbabilityMeasure`) — the form `MixedIIDWith` consumes as its witness `ν`.
-The full block-product factorisation (conditional independence across a whole block) is left to a
-later step.
+The block-product factorisation (conditional independence across a whole block) is a separate
+concern and lives with the routes that establish it.
 
 Adapted from `cameronfreer/exchangeability` (`DeFinetti/ViaMartingale/DirectingMeasure.lean`, pin
 `e0532e59ceff23edab44dda9ab0655debbc9cc22`); that version conditions over `Ω` (needing
@@ -111,20 +117,20 @@ theorem directingMeasure_ae_eq_condExp {μ : Measure Ω} [IsFiniteMeasure μ] {X
 `MixedIIDWith` consumes as its witness `ν`. -/
 def directingProbabilityMeasure (μ : Measure Ω) [IsFiniteMeasure μ] (X : ℕ → Ω → α) (ω : Ω) :
     ProbabilityMeasure α :=
-  ⟨directingMeasure μ X ω, inferInstance⟩
+  Kernel.probabilityMeasure (mβ := tailProcess X)
+    (@condDistrib Ω Ω α _ _ _ _ (tailProcess X) (X 0) id μ _) ω
 
 /-- The underlying measure of the bundled directing measure is `directingMeasure μ X ω`. -/
 @[simp]
 theorem directingProbabilityMeasure_toMeasure {μ : Measure Ω} [IsFiniteMeasure μ] {X : ℕ → Ω → α}
     (ω : Ω) : (directingProbabilityMeasure μ X ω : Measure α) = directingMeasure μ X ω := by
-  simp only [directingProbabilityMeasure, ProbabilityMeasure.coe_mk]
+  simp only [directingProbabilityMeasure, Kernel.probabilityMeasure_toMeasure, directingMeasure]
 
 /-- The bundled directing measure is **`tailProcess X`-measurable** into `ProbabilityMeasure α`. -/
 theorem measurable_tailProcess_directingProbabilityMeasure {μ : Measure Ω} [IsFiniteMeasure μ]
-    {X : ℕ → Ω → α} : Measurable[tailProcess X] (directingProbabilityMeasure μ X) := by
-  refine Measurable.subtype_mk ?_
-  exact Measure.measurable_of_measurable_coe _ fun B hB =>
-    measurable_tailProcess_directingMeasure_coe hB
+    {X : ℕ → Ω → α} : Measurable[tailProcess X] (directingProbabilityMeasure μ X) :=
+  Kernel.measurable_probabilityMeasure (mβ := tailProcess X)
+    (@condDistrib Ω Ω α _ _ _ _ (tailProcess X) (X 0) id μ _)
 
 /-- The bundled directing measure is measurable into `ProbabilityMeasure α` — the ambient corollary
 of the `tailProcess X`-measurable form, the measurability that `MixedIIDWith` requires. -/
