@@ -63,14 +63,6 @@ theorem lintegral_eq_iSup_lintegral_lscApprox (hf : LowerSemicontinuous f) (μ :
     (monotone_coe_lscApprox f)]
   exact lintegral_congr fun x ↦ (iSup_coe_lscApprox hf x).symm
 
-/-- Integration of a bounded continuous nonnegative test function, read as an `ℝ≥0∞`-valued
-pairing, is continuous in the finite measure. This is `MeasureTheory.FiniteMeasure.testAgainstNN`
-with its `ℝ≥0`-valued output coerced back to `ℝ≥0∞`. -/
-theorem continuous_lintegral_boundedContinuous (g : Ω →ᵇ ℝ≥0) :
-    Continuous fun μ : FiniteMeasure Ω ↦ ∫⁻ x, (g x : ℝ≥0∞) ∂(μ : Measure Ω) := by
-  simp only [← FiniteMeasure.testAgainstNN_coe_eq]
-  exact ENNReal.continuous_coe.comp (FiniteMeasure.continuous_testAgainstNN_eval g)
-
 /-- Integration of a lower semicontinuous `f : Ω → ℝ≥0∞` is lower semicontinuous in the finite
 measure, for the topology of weak convergence. -/
 theorem lowerSemicontinuous_lintegral_finiteMeasure (hf : LowerSemicontinuous f) :
@@ -80,7 +72,8 @@ theorem lowerSemicontinuous_lintegral_finiteMeasure (hf : LowerSemicontinuous f)
     funext fun μ ↦ lintegral_eq_iSup_lintegral_lscApprox hf _
   rw [h]
   exact lowerSemicontinuous_iSup fun n ↦
-    (continuous_lintegral_boundedContinuous (lscApprox f n)).lowerSemicontinuous
+    (FiniteMeasure.continuous_lintegral_boundedContinuousFunction
+      (lscApprox f n)).lowerSemicontinuous
 
 /-- Integration of a lower semicontinuous `f : Ω → ℝ≥0∞` is lower semicontinuous in the
 probability measure, for the topology of weak convergence. -/
