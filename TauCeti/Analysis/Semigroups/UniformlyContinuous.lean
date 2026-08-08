@@ -28,6 +28,8 @@ generator uniqueness identifies the semigroup with its operator exponential.
 
 * `StronglyContinuousSemigroup.domain_eq_top_of_continuousAt_zero`: operator-norm continuity at
   zero implies that the generator has full domain.
+* `StronglyContinuousSemigroup.continuousAt_zero_iff_domain_eq_top`: operator-norm continuity at
+  zero is equivalent to boundedness of the generator.
 * `StronglyContinuousSemigroup.continuous_iff_domain_eq_top`: operator-norm continuity is
   equivalent to boundedness of the generator.
 
@@ -121,7 +123,7 @@ theorem domain_eq_top_of_continuousAt_zero (S : StronglyContinuousSemigroup X)
     (hS : ContinuousAt (fun t : NNReal ↦ S t) 0) : S.domain = ⊤ := by
   have hS' := S.continuous_of_continuousAt_zero hS
   have hreal : Continuous fun t : ℝ ↦ S.realOperator t :=
-    (hS'.comp continuous_real_toNNReal).congr fun t ↦ (S.realOperator_eq_toNNReal t).symm
+    (hS'.comp continuous_real_toNNReal).congr fun t ↦ (S.realOperator_def t).symm
   obtain ⟨δ, hδ, hsmall⟩ := Metric.continuousAt_iff.mp hreal.continuousAt (1 / 2) (by norm_num)
   let t : ℝ := δ / 2
   have ht : 0 < t := half_pos hδ
@@ -189,6 +191,9 @@ private theorem generatorLinearMapOfDomainEqTop_apply (S : StronglyContinuousSem
     (hS : S.domain = ⊤) (x : X) (hx : x ∈ S.generator.domain) :
     S.generatorLinearMapOfDomainEqTop hS x =
       S.generator ⟨x, hx⟩ := by
+  -- The domain equivalence sends `x` to the same underlying vector; its subtype proof is built
+  -- from `hS` rather than `hx`. Exposing the generator applications leaves only proof-irrelevant
+  -- equality of these two subtype values.
   change S.generator _ = S.generator _
   congr
 
@@ -226,13 +231,13 @@ private theorem isClosed_graph_generatorLinearMapOfDomainEqTop
       exact ⟨⟨p.1, Submodule.mem_top⟩, rfl, hp.symm⟩
   rwa [hgraph] at hclosed
 
-/-- A strongly continuous semigroup is continuous in operator norm if and only if its generator
-has full domain. Equivalently, the generator is a bounded operator and the semigroup is its
-operator exponential. -/
-theorem continuous_iff_domain_eq_top (S : StronglyContinuousSemigroup X) :
-    Continuous (fun t : NNReal ↦ S t) ↔ S.domain = ⊤ := by
+/-- A strongly continuous semigroup is continuous in operator norm at zero if and only if its
+generator has full domain. Equivalently, the generator is a bounded operator and the semigroup is
+its operator exponential. -/
+theorem continuousAt_zero_iff_domain_eq_top (S : StronglyContinuousSemigroup X) :
+    ContinuousAt (fun t : NNReal ↦ S t) 0 ↔ S.domain = ⊤ := by
   constructor
-  · exact S.domain_eq_top_of_continuous
+  · exact S.domain_eq_top_of_continuousAt_zero
   · intro hS
     let A : X →L[ℝ] X := ContinuousLinearMap.ofIsClosedGraph
       (S.isClosed_graph_generatorLinearMapOfDomainEqTop hS)
@@ -240,7 +245,15 @@ theorem continuous_iff_domain_eq_top (S : StronglyContinuousSemigroup X) :
       rw [S.generator_eq_toPMap_generatorLinearMapOfDomainEqTop hS]
       rw [ContinuousLinearMap.coe_ofIsClosedGraph]
     rw [S.eq_ofBounded_of_generator_eq A hgen]
-    exact ofBounded_continuous A
+    exact (ofBounded_continuous A).continuousAt
+
+/-- A strongly continuous semigroup is continuous in operator norm if and only if its generator
+has full domain. Equivalently, the generator is a bounded operator and the semigroup is its
+operator exponential. -/
+theorem continuous_iff_domain_eq_top (S : StronglyContinuousSemigroup X) :
+    Continuous (fun t : NNReal ↦ S t) ↔ S.domain = ⊤ := by
+  rw [← S.continuousAt_zero_iff_domain_eq_top]
+  exact ⟨fun h ↦ h.continuousAt, S.continuous_of_continuousAt_zero⟩
 
 end StronglyContinuousSemigroup
 

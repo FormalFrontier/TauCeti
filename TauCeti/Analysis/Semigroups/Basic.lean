@@ -123,7 +123,7 @@ omit [CompleteSpace X] in
 
 This is not a `simp` lemma: the simp normal form keeps `realOperator` folded, so that the more
 specific lemmas `realOperator_coe`, `realOperator_zero` and `realOperator_derivWithin_zero` fire. -/
-theorem realOperator_eq_toNNReal (S : StronglyContinuousSemigroup X) (t : ℝ) :
+theorem realOperator_def (S : StronglyContinuousSemigroup X) (t : ℝ) :
     S.realOperator t = S t.toNNReal := by
   rw [realOperator]
 
