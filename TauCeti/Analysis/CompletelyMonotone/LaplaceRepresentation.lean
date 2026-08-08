@@ -106,14 +106,18 @@ private lemma Ici_subset_integrableExpSet (μ : Measure ℝ≥0) [IsFiniteMeasur
     Ici (0 : ℝ) ⊆ integrableExpSet (fun p : ℝ≥0 => -(p : ℝ)) μ := fun t ht => by
   simpa [integrableExpSet, mul_neg] using integrable_exp_neg_mul μ (mem_Ici.mp ht)
 
-private lemma Ioi_subset_interior_integrableExpSet (μ : Measure ℝ≥0) [IsFiniteMeasure μ] :
-    Ioi (0 : ℝ) ⊆ interior (integrableExpSet (fun p : ℝ≥0 => -(p : ℝ)) μ) := fun t ht =>
-  interior_mono (Ici_subset_integrableExpSet μ) (by rw [interior_Ici]; exact ht)
+private lemma Ioi_subset_interior_integrableExpSet (μ : Measure ℝ≥0)
+    (hint : ∀ t : ℝ, 0 < t → Integrable (fun p : ℝ≥0 => Real.exp (-(t * (p : ℝ)))) μ) :
+    Ioi (0 : ℝ) ⊆ interior (integrableExpSet (fun p : ℝ≥0 => -(p : ℝ)) μ) := by
+  have hsub : Ioi (0 : ℝ) ⊆ integrableExpSet (fun p : ℝ≥0 => -(p : ℝ)) μ := fun u hu => by
+    simpa [integrableExpSet, mul_neg] using hint u hu
+  intro t ht
+  exact interior_mono hsub (by rwa [interior_Ioi])
 
 /-- The value of the Laplace transform at the parameter `0` is the total mass (under the
 total Bochner-integral convention both sides are `0` for an infinite measure). -/
 @[simp]
-lemma laplaceTransform_zero' (μ : Measure ℝ≥0) :
+lemma laplaceTransform_zero (μ : Measure ℝ≥0) :
     laplaceTransform μ 0 = μ.real univ := by
   rw [laplaceTransform_eq_mgf, mgf_zero']
 
@@ -234,11 +238,12 @@ private lemma integrable_neg_pow_mul_exp_neg_mul (μ : Measure ℝ≥0)
 
 /-- Differentiation of the signed Laplace moment kernels on `(0, ∞)`, supplied by Mathlib's
 moment-generating-function calculus through the bridge variable `p ↦ -p`. -/
-private lemma hasDerivAt_laplaceMomentTransform (μ : Measure ℝ≥0) [IsFiniteMeasure μ]
+private lemma hasDerivAt_laplaceMomentTransform (μ : Measure ℝ≥0)
+    (hint : ∀ t : ℝ, 0 < t → Integrable (fun p : ℝ≥0 => Real.exp (-(t * (p : ℝ)))) μ)
     (n : ℕ) {t : ℝ} (ht : 0 < t) :
     HasDerivAt (laplaceMomentTransform μ n) (laplaceMomentTransform μ (n + 1) t) t := by
   have h := hasDerivAt_integral_pow_mul_exp_real
-    (Ioi_subset_interior_integrableExpSet μ (mem_Ioi.mpr ht)) n
+    (Ioi_subset_interior_integrableExpSet μ hint (mem_Ioi.mpr ht)) n
   simp only [mul_neg] at h
   exact h
 
@@ -352,7 +357,8 @@ private lemma hasDerivWithinAt_laplaceMomentTransform_Ici (μ : Measure ℝ≥0)
     HasDerivWithinAt (laplaceMomentTransform μ n) (laplaceMomentTransform μ (n + 1) t)
       (Ici 0) t := by
   by_cases ht_pos : 0 < t
-  · exact (hasDerivAt_laplaceMomentTransform μ n ht_pos).hasDerivWithinAt
+  · exact (hasDerivAt_laplaceMomentTransform μ
+      (fun u hu => integrable_exp_neg_mul μ hu.le) n ht_pos).hasDerivWithinAt
   have ht_zero : t = 0 := le_antisymm (le_of_not_gt ht_pos) ht
   subst t
   exact hasDerivWithinAt_laplaceMomentTransform_zero μ hmom n
@@ -407,27 +413,31 @@ lemma contDiffOn_Ici_laplaceTransform_of_moments
 are the signed moment kernel integrals; this is Mathlib's `iteratedDeriv_mgf` through the
 bridge. -/
 private lemma iteratedDeriv_laplaceTransform_eq_laplaceMomentTransform
-    (μ : Measure ℝ≥0) [IsFiniteMeasure μ] (n : ℕ) {t : ℝ} (ht : 0 < t) :
+    (μ : Measure ℝ≥0)
+    (hint : ∀ t : ℝ, 0 < t → Integrable (fun p : ℝ≥0 => Real.exp (-(t * (p : ℝ)))) μ)
+    (n : ℕ) {t : ℝ} (ht : 0 < t) :
     iteratedDeriv n (laplaceTransform μ) t = laplaceMomentTransform μ n t := by
   rw [laplaceTransform_eq_mgf,
-    iteratedDeriv_mgf (Ioi_subset_interior_integrableExpSet μ (mem_Ioi.mpr ht)) n]
+    iteratedDeriv_mgf (Ioi_subset_interior_integrableExpSet μ hint (mem_Ioi.mpr ht)) n]
   simp only [laplaceMomentTransform, mul_neg]
 
 /-- A finite-measure Laplace transform is smooth on the open half-line: it is the
 moment-generating function of `p ↦ -p`, which is analytic on the interior of its
 integrability set. -/
-lemma contDiffOn_Ioi_laplaceTransform (μ : Measure ℝ≥0) [IsFiniteMeasure μ] :
+lemma contDiffOn_Ioi_laplaceTransform (μ : Measure ℝ≥0)
+    (hint : ∀ t : ℝ, 0 < t → Integrable (fun p : ℝ≥0 => Real.exp (-(t * (p : ℝ)))) μ) :
     ContDiffOn ℝ (⊤ : ℕ∞) (laplaceTransform μ) (Ioi 0) := by
   rw [laplaceTransform_eq_mgf]
-  exact (analyticOnNhd_mgf.mono (Ioi_subset_interior_integrableExpSet μ)).contDiffOn
+  exact (analyticOnNhd_mgf.mono (Ioi_subset_interior_integrableExpSet μ hint)).contDiffOn
     isOpen_Ioi.uniqueDiffOn
 
 /-- Every finite-measure Laplace transform is completely monotone on `(0, ∞)`. -/
 theorem isCompletelyMonotoneOnIoi_laplaceTransform
-    (μ : Measure ℝ≥0) [IsFiniteMeasure μ] :
+    (μ : Measure ℝ≥0)
+    (hint : ∀ t : ℝ, 0 < t → Integrable (fun p : ℝ≥0 => Real.exp (-(t * (p : ℝ)))) μ) :
     IsCompletelyMonotoneOnIoi (laplaceTransform μ) := by
-  refine ⟨contDiffOn_Ioi_laplaceTransform μ, fun n t ht => ?_⟩
-  rw [iteratedDeriv_laplaceTransform_eq_laplaceMomentTransform μ n ht]
+  refine ⟨contDiffOn_Ioi_laplaceTransform μ hint, fun n t ht => ?_⟩
+  rw [iteratedDeriv_laplaceTransform_eq_laplaceMomentTransform μ hint n ht]
   exact neg_one_pow_mul_laplaceMomentTransform_nonneg μ n t
 
 /-- The Laplace transform of a finite measure is completely monotone in the closed-half-line
@@ -436,7 +446,8 @@ theorem isCompletelyMonotoneOnIci_laplaceTransform
     (μ : Measure ℝ≥0) [hμ : IsFiniteMeasure μ] :
     IsCompletelyMonotoneOnIci (laplaceTransform μ) :=
   isCompletelyMonotoneOnIci_iff.mpr
-    ⟨continuousOn_Ici_laplaceTransform μ, isCompletelyMonotoneOnIoi_laplaceTransform μ⟩
+    ⟨continuousOn_Ici_laplaceTransform μ,
+      isCompletelyMonotoneOnIoi_laplaceTransform μ fun _ ht => integrable_exp_neg_mul μ ht.le⟩
 
 /-- Strong easy direction: with all moments finite, the Laplace transform satisfies the existing
 `IsCompletelyMonotone` predicate using derivatives within `[0, ∞)`. -/
@@ -453,13 +464,13 @@ theorem isCompletelyMonotone_laplaceTransform_of_moments
 
 /-- A finite measure represents a function by its Laplace transform on the nonnegative
 half-line. -/
-def RepresentsLaplace (f : ℝ → ℝ) (μ : Measure ℝ≥0) : Prop :=
+def RepresentsLaplace (μ : Measure ℝ≥0) (f : ℝ → ℝ) : Prop :=
   IsFiniteMeasure μ ∧ ∀ t : ℝ, 0 ≤ t → f t = laplaceTransform μ t
 
 /-- `RepresentsLaplace f μ` unfolds to finiteness of `μ` and equality with the Laplace transform
 on the nonnegative half-line. -/
 lemma representsLaplace_iff {f : ℝ → ℝ} {μ : Measure ℝ≥0} :
-    RepresentsLaplace f μ ↔
+    RepresentsLaplace μ f ↔
       IsFiniteMeasure μ ∧ ∀ t : ℝ, 0 ≤ t → f t = laplaceTransform μ t :=
   Iff.rfl
 
@@ -469,24 +480,24 @@ variable {f : ℝ → ℝ} {μ : Measure ℝ≥0}
 
 /-- A representing measure is finite. -/
 @[grind →]
-lemma isFiniteMeasure (h : RepresentsLaplace f μ) : IsFiniteMeasure μ := h.1
+lemma isFiniteMeasure (h : RepresentsLaplace μ f) : IsFiniteMeasure μ := h.1
 
 /-- A representing measure has the advertised Laplace-transform values on `[0, ∞)`. -/
 @[grind =>]
-lemma eq_laplaceTransform (h : RepresentsLaplace f μ) {t : ℝ} (ht : 0 ≤ t) :
+lemma eq_laplaceTransform (h : RepresentsLaplace μ f) {t : ℝ} (ht : 0 ≤ t) :
     f t = laplaceTransform μ t :=
   h.2 t ht
 
 /-- A representation transports along agreement on the nonnegative half-line: the predicate
 constrains `f` only there. -/
-protected lemma congr {g : ℝ → ℝ} (hf : RepresentsLaplace f μ) (h : EqOn g f (Ici 0)) :
-    RepresentsLaplace g μ :=
+protected lemma congr {g : ℝ → ℝ} (hf : RepresentsLaplace μ f) (h : EqOn g f (Ici 0)) :
+    RepresentsLaplace μ g :=
   ⟨hf.isFiniteMeasure, fun _ ht => (h (mem_Ici.mpr ht)).trans (hf.eq_laplaceTransform ht)⟩
 
 /-- The sum of two representing measures represents the sum of the functions. -/
 protected lemma add {f g : ℝ → ℝ} {μ ν : Measure ℝ≥0}
-    (hf : RepresentsLaplace f μ) (hg : RepresentsLaplace g ν) :
-    RepresentsLaplace (f + g) (μ + ν) := by
+    (hf : RepresentsLaplace μ f) (hg : RepresentsLaplace ν g) :
+    RepresentsLaplace (μ + ν) (f + g) := by
   have := hf.isFiniteMeasure
   have := hg.isFiniteMeasure
   refine ⟨inferInstance, fun t ht => ?_⟩
@@ -495,8 +506,8 @@ protected lemma add {f g : ℝ → ℝ} {μ ν : Measure ℝ≥0}
 
 /-- Scaling a representing measure by `c : ℝ≥0` represents the scaled function. -/
 protected lemma smul {f : ℝ → ℝ} {μ : Measure ℝ≥0} (c : ℝ≥0)
-    (hf : RepresentsLaplace f μ) :
-    RepresentsLaplace (fun t => (c : ℝ) * f t) ((c : ℝ≥0∞) • μ) := by
+    (hf : RepresentsLaplace μ f) :
+    RepresentsLaplace ((c : ℝ≥0∞) • μ) (fun t => (c : ℝ) * f t) := by
   have := hf.isFiniteMeasure
   have : IsFiniteMeasure ((c : ℝ≥0∞) • μ) := by
     refine ⟨?_⟩
@@ -508,12 +519,12 @@ protected lemma smul {f : ℝ → ℝ} {μ : Measure ℝ≥0} (c : ℝ≥0)
 end RepresentsLaplace
 
 /-- The zero measure represents the zero function. -/
-lemma representsLaplace_zero : RepresentsLaplace 0 (0 : Measure ℝ≥0) :=
+lemma representsLaplace_zero : RepresentsLaplace (0 : Measure ℝ≥0) 0 :=
   ⟨inferInstance, fun t _ => by simp⟩
 
 /-- The Dirac mass at `x₀` represents the exponential kernel `t ↦ exp (-(t · x₀))`. -/
 lemma representsLaplace_dirac (x₀ : ℝ≥0) :
-    RepresentsLaplace (fun t : ℝ => Real.exp (-(t * (x₀ : ℝ)))) (Measure.dirac x₀) := by
+    RepresentsLaplace (Measure.dirac x₀) (fun t : ℝ => Real.exp (-(t * (x₀ : ℝ)))) := by
   refine ⟨inferInstance, fun t _ht => ?_⟩
   rw [laplaceTransform_dirac]
 
@@ -532,7 +543,7 @@ theorem Measure.ext_of_forall_laplaceTransform_natCast_eq
 /-- A function has at most one finite representing measure. -/
 protected lemma RepresentsLaplace.unique
     {f : ℝ → ℝ} {μ ν : Measure ℝ≥0}
-    (hμ : RepresentsLaplace f μ) (hν : RepresentsLaplace f ν) :
+    (hμ : RepresentsLaplace μ f) (hν : RepresentsLaplace ν f) :
     μ = ν := by
   have := hμ.isFiniteMeasure
   have := hν.isFiniteMeasure

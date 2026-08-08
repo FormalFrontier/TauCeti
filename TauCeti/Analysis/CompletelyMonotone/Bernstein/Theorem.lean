@@ -135,7 +135,7 @@ Uniqueness of that measure is not asserted here; it is `TauCeti.RepresentsLaplac
 the two combine in the Hausdorff--Bernstein--Widder theorem. -/
 theorem exists_representsLaplace_of_isCompletelyMonotone
     (hcm : IsCompletelyMonotone f) :
-    ∃ μ : Measure ℝ≥0, RepresentsLaplace f μ := by
+    ∃ μ : Measure ℝ≥0, RepresentsLaplace μ f := by
   obtain ⟨L, C, hL, hL_nn, -, hmass⟩ := chafaiRescaled_prokhorov_mass_bound f hcm
   have hmass' : ∀ n, (chafaiRescaled f n) univ ≤ (C : ℝ≥0∞) := fun n => (hmass n).2
   obtain ⟨μ₀, U, hU, hμ₀fin, -, hweak⟩ :=

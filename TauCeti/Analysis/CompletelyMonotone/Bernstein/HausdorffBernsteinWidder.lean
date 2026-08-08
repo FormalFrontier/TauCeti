@@ -92,7 +92,7 @@ private lemma one_sub_exp_neg_mul_pos {x R : ℝ} (hx : 0 < x) (hR : 0 < R) :
 Laplace-value identity behind the shifted-measure tail estimate. -/
 private lemma lintegral_ofReal_one_sub_exp_eq_of_representsLaplace
     {f : ℝ → ℝ} {μ : Measure ℝ≥0} [IsFiniteMeasure μ]
-    {δ x : ℝ} (hμ : RepresentsLaplace (fun t : ℝ => f (t + δ)) μ) (hx : 0 < x) :
+    {δ x : ℝ} (hμ : RepresentsLaplace μ (fun t : ℝ => f (t + δ))) (hx : 0 < x) :
     ∫⁻ p : ℝ≥0, ENNReal.ofReal (1 - Real.exp (-(x * (p : ℝ)))) ∂μ
       = ENNReal.ofReal (f δ - f (x + δ)) := by
   have h_one : Integrable (fun _ : ℝ≥0 => (1 : ℝ)) μ := integrable_const 1
@@ -116,7 +116,7 @@ private lemma lintegral_ofReal_one_sub_exp_eq_of_representsLaplace
             have h0 := hμ.eq_laplaceTransform (t := 0) le_rfl
             have hxrep := hμ.eq_laplaceTransform (t := x) hx.le
             have h0' : f δ = μ.real univ := by
-              simpa [laplaceTransform_zero'] using h0
+              simpa [laplaceTransform_zero] using h0
             rw [← h0', ← hxrep]
   rw [← ofReal_integral_eq_lintegral_ofReal hint h_nonneg, h_int]
 
@@ -161,7 +161,7 @@ tightness input for shifting Bernstein's existence theorem back to the closed-ha
 theorem. -/
 private lemma measure_closedBall_compl_le_of_representsLaplace_shift
     {f : ℝ → ℝ} {μ : Measure ℝ≥0} [IsFiniteMeasure μ]
-    {δ x R : ℝ} (hμ : RepresentsLaplace (fun t : ℝ => f (t + δ)) μ)
+    {δ x R : ℝ} (hμ : RepresentsLaplace μ (fun t : ℝ => f (t + δ)))
     (hx : 0 < x) (hR : 0 < R) :
     μ (Metric.closedBall (0 : ℝ≥0) R)ᶜ ≤
       ENNReal.ofReal ((f δ - f (x + δ)) / (1 - Real.exp (-(x * R)))) := by
@@ -232,7 +232,7 @@ private lemma isTightMeasureSet_range_of_representsLaplace_shift
     {a : ℕ → ℝ} (ha_pos : ∀ n, 0 < a n)
     (ha : Tendsto a atTop (𝓝 0))
     {μ : ℕ → Measure ℝ≥0}
-    (hμ : ∀ n, RepresentsLaplace (fun t : ℝ => f (t + a n)) (μ n)) :
+    (hμ : ∀ n, RepresentsLaplace (μ n) (fun t : ℝ => f (t + a n))) :
     IsTightMeasureSet (Set.range μ) := by
   have hμ_fin : ∀ n, IsFiniteMeasure (μ n) := fun n => (hμ n).isFiniteMeasure
   rw [isTightMeasureSet_iff_exists_isCompact_measure_compl_le]
@@ -287,11 +287,11 @@ private lemma isTightMeasureSet_range_of_representsLaplace_shift
 `f δ ≤ f 0`. -/
 private lemma measure_univ_le_of_representsLaplace_shift
     {f : ℝ → ℝ} (hf : IsCompletelyMonotoneOnIci f) {δ : ℝ} (hδ : 0 < δ)
-    {μ : Measure ℝ≥0} (hμ : RepresentsLaplace (fun t : ℝ => f (t + δ)) μ) :
+    {μ : Measure ℝ≥0} (hμ : RepresentsLaplace μ (fun t : ℝ => f (t + δ))) :
     μ univ ≤ ENNReal.ofReal (f 0) := by
   have := hμ.isFiniteMeasure
   have hreal : μ.real univ = f δ := by
-    simpa [laplaceTransform_zero'] using (hμ.eq_laplaceTransform (t := 0) le_rfl).symm
+    simpa [laplaceTransform_zero] using (hμ.eq_laplaceTransform (t := 0) le_rfl).symm
   calc
     μ univ = ENNReal.ofReal (μ.real univ) := by rw [ofReal_measureReal]
     _ ≤ ENNReal.ofReal (f 0) :=
@@ -306,7 +306,7 @@ then identifies that cluster point as a representing measure for the original cl
 function. -/
 theorem exists_representsLaplace_of_isCompletelyMonotoneOnIci
     {f : ℝ → ℝ} (hf : IsCompletelyMonotoneOnIci f) :
-    ∃ μ : Measure ℝ≥0, RepresentsLaplace f μ := by
+    ∃ μ : Measure ℝ≥0, RepresentsLaplace μ f := by
   classical
   -- Stage 1: the positive null sequence of shifts `aₙ = 1/(n+1)`.
   let a : ℕ → ℝ := fun n => 1 / ((n : ℝ) + 1)
@@ -358,7 +358,7 @@ theorem exists_representsLaplace_of_isCompletelyMonotoneOnIci
 A function is continuous on `[0, ∞)` and completely monotone on `(0, ∞)` if and only if it is
 the Laplace transform of a finite positive measure on `ℝ≥0`. -/
 theorem hausdorff_bernstein_widder (f : ℝ → ℝ) :
-    IsCompletelyMonotoneOnIci f ↔ ∃ μ : Measure ℝ≥0, RepresentsLaplace f μ := by
+    IsCompletelyMonotoneOnIci f ↔ ∃ μ : Measure ℝ≥0, RepresentsLaplace μ f := by
   constructor
   · exact exists_representsLaplace_of_isCompletelyMonotoneOnIci
   · rintro ⟨μ, hμ⟩
@@ -368,7 +368,7 @@ theorem hausdorff_bernstein_widder (f : ℝ → ℝ) :
 
 /-- Unique-existence form of the Hausdorff--Bernstein--Widder theorem. -/
 theorem hausdorff_bernstein_widder_unique (f : ℝ → ℝ) :
-    IsCompletelyMonotoneOnIci f ↔ ∃! μ : Measure ℝ≥0, RepresentsLaplace f μ := by
+    IsCompletelyMonotoneOnIci f ↔ ∃! μ : Measure ℝ≥0, RepresentsLaplace μ f := by
   rw [hausdorff_bernstein_widder]
   exact ⟨fun ⟨μ, hμ⟩ => ⟨μ, hμ, fun ν hν => hν.unique hμ⟩,
     fun ⟨μ, hμ, _⟩ => ⟨μ, hμ⟩⟩
