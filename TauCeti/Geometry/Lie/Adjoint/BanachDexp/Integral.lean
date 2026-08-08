@@ -59,10 +59,7 @@ theorem banachDexpFactor_apply_eq_integral_conj (x y : R) :
   rw [ContinuousLinearMap.intervalIntegral_apply (μ := volume) hint y]
   apply intervalIntegral.integral_congr
   intro t _ht
-  -- Applying the operator-valued exponential to `y` unfolds definitionally after the
-  -- pointwise interval-integral lemma above.
-  change exp (t • (-continuousCommutator x)) y =
-    exp ((-t) • x) * y * exp (t • x)
+  dsimp only
   have hscale :
       t • (-continuousCommutator x) = continuousCommutator ((-t) • x) := by
     ext z
