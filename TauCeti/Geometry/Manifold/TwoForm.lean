@@ -62,9 +62,11 @@ structure SmoothTwoForm (I : ModelWithCorners ℝ E H) (M : Type*)
     ContMDiffSection I (E →L[ℝ] E →L[ℝ] ℝ) ∞
       (fun x : M ↦ TangentSpace I x →L[ℝ] TangentSpace I x →L[ℝ] ℝ)
   /-- The form vanishes when its two arguments agree. -/
-  alternating : ∀ x v, toContinuousBilinForm x v v = 0
+  isAlt : ∀ x v, toContinuousBilinForm x v v = 0
 
 namespace SmoothTwoForm
+
+attribute [simp] isAlt
 
 variable {form form' : SmoothTwoForm I M}
 
@@ -92,13 +94,7 @@ lemma bilinFormAt_apply (form : SmoothTwoForm I M) (x : M) (v w : TangentSpace I
 /-- The pointwise algebraic bilinear form is alternating. -/
 lemma isAlt_bilinFormAt (form : SmoothTwoForm I M) (x : M) :
     (form.bilinFormAt x).IsAlt :=
-  fun v ↦ form.alternating x v
-
-/-- A smooth two-form vanishes on the diagonal. -/
-@[simp]
-lemma self_eq_zero (form : SmoothTwoForm I M) (x : M) (v : TangentSpace I x) :
-    form x v v = 0 :=
-  form.alternating x v
+  fun v ↦ form.isAlt x v
 
 /-- A smooth two-form is skew-symmetric in the usual additive form. -/
 lemma neg_eq (form : SmoothTwoForm I M) (x : M) (v w : TangentSpace I x) :
@@ -157,7 +153,7 @@ end Evaluation
 /-- The zero smooth two-form. -/
 protected def zero : SmoothTwoForm I M where
   toContinuousBilinForm := 0
-  alternating x v := by simp
+  isAlt x v := by simp
 
 instance : Zero (SmoothTwoForm I M) :=
   ⟨SmoothTwoForm.zero⟩
@@ -172,7 +168,7 @@ lemma zero_apply (x : M) (v w : TangentSpace I x) :
 /-- The sum of two smooth two-forms. -/
 protected def add (form form' : SmoothTwoForm I M) : SmoothTwoForm I M where
   toContinuousBilinForm := form.toContinuousBilinForm + form'.toContinuousBilinForm
-  alternating x v := by simp
+  isAlt x v := by simp
 
 instance : Add (SmoothTwoForm I M) :=
   ⟨SmoothTwoForm.add⟩
@@ -189,7 +185,7 @@ lemma add_apply (form form' : SmoothTwoForm I M) (x : M) (v w : TangentSpace I x
 /-- The negative of a smooth two-form. -/
 protected def neg (form : SmoothTwoForm I M) : SmoothTwoForm I M where
   toContinuousBilinForm := -form.toContinuousBilinForm
-  alternating x v := by simp
+  isAlt x v := by simp
 
 instance : Neg (SmoothTwoForm I M) :=
   ⟨SmoothTwoForm.neg⟩
@@ -205,7 +201,7 @@ lemma neg_apply (form : SmoothTwoForm I M) (x : M) (v w : TangentSpace I x) :
 /-- The difference of two smooth two-forms. -/
 protected def sub (form form' : SmoothTwoForm I M) : SmoothTwoForm I M where
   toContinuousBilinForm := form.toContinuousBilinForm - form'.toContinuousBilinForm
-  alternating x v := by simp
+  isAlt x v := by simp
 
 instance : Sub (SmoothTwoForm I M) :=
   ⟨SmoothTwoForm.sub⟩
@@ -222,7 +218,7 @@ lemma sub_apply (form form' : SmoothTwoForm I M) (x : M) (v w : TangentSpace I x
 /-- The real scalar multiple of a smooth two-form. -/
 protected def smul (c : ℝ) (form : SmoothTwoForm I M) : SmoothTwoForm I M where
   toContinuousBilinForm := c • form.toContinuousBilinForm
-  alternating x v := by simp
+  isAlt x v := by simp
 
 instance : SMul ℝ (SmoothTwoForm I M) :=
   ⟨SmoothTwoForm.smul⟩
@@ -237,26 +233,19 @@ lemma smul_apply (c : ℝ) (form : SmoothTwoForm I M) (x : M) (v w : TangentSpac
 
 /-- Smooth two-forms form an additive commutative group under pointwise operations. -/
 instance : AddCommGroup (SmoothTwoForm I M) :=
+  -- The `ℕ`- and `ℤ`-actions are fixed to be the real action along the cast, so their
+  -- compatibility obligations below are the real-scalar lemma `smul_toContinuousBilinForm`
+  -- composed with `Nat.cast_smul_eq_nsmul` / `Int.cast_smul_eq_zsmul` on sections.
   letI : SMul ℕ (SmoothTwoForm I M) := ⟨fun n form ↦ (n : ℝ) • form⟩
   letI : SMul ℤ (SmoothTwoForm I M) := ⟨fun n form ↦ (n : ℝ) • form⟩
   Function.Injective.addCommGroup toContinuousBilinForm toContinuousBilinForm_injective
     zero_toContinuousBilinForm add_toContinuousBilinForm neg_toContinuousBilinForm
     sub_toContinuousBilinForm
-    (fun form n ↦ by
-      apply ContMDiffSection.ext
-      intro x
-      ext v w
-      change ((((n : ℝ) • form).toContinuousBilinForm x) v) w = _
-      rw [smul_toContinuousBilinForm]
-      exact congrArg (fun s ↦ s x v w)
+    (fun form n ↦
+      (smul_toContinuousBilinForm (n : ℝ) form).trans
         (Nat.cast_smul_eq_nsmul ℝ n form.toContinuousBilinForm))
-    (fun form n ↦ by
-      apply ContMDiffSection.ext
-      intro x
-      ext v w
-      change ((((n : ℝ) • form).toContinuousBilinForm x) v) w = _
-      rw [smul_toContinuousBilinForm]
-      exact congrArg (fun s ↦ s x v w)
+    (fun form n ↦
+      (smul_toContinuousBilinForm (n : ℝ) form).trans
         (Int.cast_smul_eq_zsmul ℝ n form.toContinuousBilinForm))
 
 /-- Smooth two-forms form a real vector space under pointwise scalar multiplication. -/
