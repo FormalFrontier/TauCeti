@@ -19,13 +19,16 @@ every increment.
 
 ## Main result
 
+* `intervalIntegrable_exp_smul_mul_mul_exp_smul`: the Duhamel integrand is interval integrable.
 * `exp_add_sub_exp_eq_integral`: `exp (x + h) - exp x` is the integral of
   `exp ((1 - t) (x + h)) * h * exp (t x)` over the unit interval.
 
 ## References
 
 * [Lie groups and the Lie algebra correspondence roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/LieGroups/README.md),
-  Deliverable A, Layer 1, "Differential of the exponential".
+  Deliverable A, Layer 1, "The conjugation formulas".
+* R. M. Wilcox, *Exponential Operators and Parameter Differentiation in Quantum Physics*, Journal
+  of Mathematical Physics 8 (1967), 962–982.
 -/
 
 public section
@@ -34,11 +37,13 @@ open NormedSpace MeasureTheory
 
 noncomputable section
 
+namespace TauCeti
+
 variable {A : Type*} [NormedRing A] [NormedAlgebra ℝ A] [CompleteSpace A]
 
 attribute [local instance] TauCeti.normedAlgebraRatOfReal
 
-private theorem hasDerivAt_duhamelPath (x h : A) (t : ℝ) :
+private theorem hasDerivAt_exp_smul_mul_exp_smul (x h : A) (t : ℝ) :
     HasDerivAt
       (fun s : ℝ ↦ exp ((1 - s) • (x + h)) * exp (s • x))
       (-(exp ((1 - t) • (x + h)) * h * exp (t • x))) t := by
@@ -50,10 +55,13 @@ private theorem hasDerivAt_duhamelPath (x h : A) (t : ℝ) :
       (fun s : ℝ ↦ exp (s • x))
       (x * exp (t • x)) t :=
     hasDerivAt_exp_smul_const' x t
-  convert hleft.mul hright using 1
-  · ext s
-    rfl
-  · noncomm_ring
+  exact (hleft.fun_mul hright).congr_deriv (by noncomm_ring)
+
+/-- The integrand in Duhamel's finite-increment formula is interval integrable. -/
+theorem intervalIntegrable_exp_smul_mul_mul_exp_smul (x h : A) :
+    IntervalIntegrable
+      (fun t : ℝ ↦ exp ((1 - t) • (x + h)) * h * exp (t • x)) volume 0 1 :=
+  Continuous.intervalIntegrable (μ := volume) (by fun_prop) 0 1
 
 /-- Duhamel's exact finite-increment formula for the exponential in a possibly noncommutative real
 Banach algebra. -/
@@ -64,12 +72,14 @@ theorem exp_add_sub_exp_eq_integral (x h : A) :
   let F' : ℝ → A := fun t ↦ -(exp ((1 - t) • (x + h)) * h * exp (t • x))
   have hderiv : ∀ t ∈ Set.uIcc (0 : ℝ) 1, HasDerivAt F (F' t) t := by
     intro t _ht
-    exact hasDerivAt_duhamelPath x h t
+    exact hasDerivAt_exp_smul_mul_exp_smul x h t
   have hint : IntervalIntegrable F' volume (0 : ℝ) 1 := by
-    exact Continuous.intervalIntegrable (μ := volume) (by fun_prop) 0 1
+    exact (intervalIntegrable_exp_smul_mul_mul_exp_smul x h).neg
   have hFTC := intervalIntegral.integral_eq_sub_of_hasDerivAt hderiv hint
   dsimp only [F, F'] at hFTC
   simp only [one_smul, sub_self, sub_zero, zero_smul, exp_zero, mul_one, one_mul,
     intervalIntegral.integral_neg] at hFTC
   have hneg := congrArg Neg.neg hFTC
   simpa only [neg_neg, neg_sub] using hneg.symm
+
+end TauCeti

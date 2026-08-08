@@ -9,8 +9,8 @@ public import Mathlib.Analysis.Normed.Algebra.Exponential
 /-!
 # The quotient `(1 - exp (-a)) / a`
 
-This file packages the power series representing `(1 - exp (-a)) / a` without requiring `a` to be
-invertible. In a complete normed algebra over a normed characteristic-zero field the series is
+This basic file packages the power series representing `(1 - exp (-a)) / a` without requiring `a`
+to be invertible. In a complete normed algebra over a normed characteristic-zero field the series is
 summable at every point. It is the analytic factor in the differential of a Lie-group exponential
 map.
 
@@ -136,7 +136,7 @@ end Normed
 section Map
 
 variable {A B : Type*} [NormedRing A] [NormedAlgebra ℚ A] [CompleteSpace A]
-  [NormedRing B] [NormedAlgebra ℚ B]
+  [Ring B] [Algebra ℚ B] [TopologicalSpace B] [IsTopologicalRing B] [T2Space B]
 
 /-- Any continuous ring homomorphism commutes with `oneSubExpNegDivSelf`. -/
 theorem map_oneSubExpNegDivSelf {F : Type*} [FunLike F A B] [RingHomClass F A B]
