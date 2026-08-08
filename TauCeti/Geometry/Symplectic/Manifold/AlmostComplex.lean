@@ -201,6 +201,12 @@ lemma toSmoothModelSpace_apply (J : AlmostComplexStructure V) (x v : V) :
   rw [toSmoothModelSpace]
   rfl
 
+@[simp]
+lemma toSmoothModelSpace_atPoint (J : AlmostComplexStructure V) (x : V) :
+    J.toSmoothModelSpace.atPoint x = J := by
+  ext v
+  exact toSmoothModelSpace_apply J x v
+
 end AlmostComplexStructure
 
 namespace SmoothAlmostComplexStructure
@@ -233,6 +239,12 @@ lemma product_apply {V : Type*} [NormedAddCommGroup V] [NormedSpace ℝ V] (x v 
     product V x v = (-v.2, v.1) := by
   rw [product]
   rfl
+
+@[simp]
+lemma product_atPoint {V : Type*} [NormedAddCommGroup V] [NormedSpace ℝ V] (x : V × V) :
+    (product V).atPoint x = AlmostComplexStructure.product V := by
+  ext v
+  exact product_apply x v
 
 end SmoothAlmostComplexStructure
 
