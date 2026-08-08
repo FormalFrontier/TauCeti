@@ -61,13 +61,12 @@ variable {K L : Type*} [Field K] [Field L] [Algebra K L] {ι : Type*}
   {d : ι → K} {root : ι → L}
 
 /-- The cardinality of an `𝔽₂`-subspace `U` of `ι → ℤ/2` is `2` to its dimension. -/
-private theorem card_submodule_eq_pow_finrank [Finite ι]
-    (U : Submodule (ZMod 2) (ι → ZMod 2)) :
+private theorem card_submodule_eq_pow_finrank [Finite ι] (U : Submodule (ZMod 2) (ι → ZMod 2)) :
     Nat.card U = 2 ^ Module.finrank (ZMod 2) U := by
   classical
-  haveI : Fact (Nat.Prime 2) := ⟨Nat.prime_two⟩
-  letI := Fintype.ofFinite ι
-  letI : Fintype U := Fintype.ofFinite U
+  have : Fact (Nat.Prime 2) := ⟨Nat.prime_two⟩
+  let := Fintype.ofFinite ι
+  let : Fintype U := Fintype.ofFinite U
   rw [Nat.card_eq_fintype_card, Module.card_eq_pow_finrank (K := ZMod 2) (V := U), ZMod.card]
 
 /-- The subspace attached to an intermediate field `F` of `M = K(rootᵢ : i)` has the same
@@ -104,10 +103,10 @@ theorem finrank_mul_card_intermediateFieldEquivSubmodule [Finite ι] [NeZero (2 
     Module.finrank K F
         * Nat.card (intermediateFieldEquivSubmodule hroot hindep F).ofDual
       = 2 ^ Nat.card ι := by
-  haveI := isSplittingField hroot
-  haveI : FiniteDimensional K (adjoin K (Set.range root)) :=
+  have := isSplittingField hroot
+  have : FiniteDimensional K (adjoin K (Set.range root)) :=
     Polynomial.IsSplittingField.finiteDimensional _ (definingPolynomial d)
-  haveI := isGalois hroot
+  have := isGalois hroot
   rw [card_intermediateFieldEquivSubmodule_ofDual hroot hindep F,
     IntermediateField.finrank_eq_fixingSubgroup_index (adjoin K (Set.range root)) F,
     Subgroup.index_mul_card F.fixingSubgroup]
@@ -136,7 +135,7 @@ theorem finrank_intermediateField_eq_two_pow [Finite ι] [NeZero (2 : K)]
     Module.finrank K F = 2 ^ (Nat.card ι
         - Module.finrank (ZMod 2) (intermediateFieldEquivSubmodule hroot hindep F).ofDual) := by
   classical
-  letI := Fintype.ofFinite ι
+  let := Fintype.ofFinite ι
   have h := finrank_mul_two_pow_finrank_intermediateFieldEquivSubmodule hroot hindep F
   set m := Module.finrank (ZMod 2) (intermediateFieldEquivSubmodule hroot hindep F).ofDual
   have hle : m ≤ Nat.card ι := by

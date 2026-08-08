@@ -140,14 +140,12 @@ variable {T : E →L[𝕜] F}
 
 /-- The underlying linear map of `e.comp T`, for a continuous linear equivalence `e`, written with
 the linear-equivalence coercion so that submodule and quotient lemmas apply. -/
-private lemma coe_equiv_comp (e : F ≃L[𝕜] G) :
-    (((e : F →L[𝕜] G).comp T : E →L[𝕜] G) : E →ₗ[𝕜] G) =
+private lemma coe_equiv_comp (e : F ≃L[𝕜] G) : (((e : F →L[𝕜] G).comp T : E →L[𝕜] G) : E →ₗ[𝕜] G) =
       (e.toLinearEquiv : F →ₗ[𝕜] G).comp (T : E →ₗ[𝕜] F) := by
   ext x; simp
 
 /-- The underlying linear map of `T.comp e`, for a continuous linear equivalence `e`. -/
-private lemma coe_comp_equiv (e : G ≃L[𝕜] E) :
-    ((T.comp (e : G →L[𝕜] E) : G →L[𝕜] F) : G →ₗ[𝕜] F) =
+private lemma coe_comp_equiv (e : G ≃L[𝕜] E) : ((T.comp (e : G →L[𝕜] E) : G →L[𝕜] F) : G →ₗ[𝕜] F) =
       (T : E →ₗ[𝕜] F).comp (e.toLinearEquiv : G →ₗ[𝕜] E) := by
   ext x; simp
 

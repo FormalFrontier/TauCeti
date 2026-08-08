@@ -49,8 +49,7 @@ variable [AddCommMonoid C] [Module R C] [Coalgebra R C]
 variable [AddCommMonoid M] [Module R M] [Comodule R C M]
 
 /-- The subcoalgebra spanned by the matrix coefficients of a finite free comodule. -/
-noncomputable def matrixCoefficientSubcoalgebra
-    [Module.Free R M] [Module.Finite R M] :
+noncomputable def matrixCoefficientSubcoalgebra [Module.Free R M] [Module.Finite R M] :
     Subcoalgebra R C :=
   Subcoalgebra.ofSubmodule
     (matrixCoefficientSubmodule (R := R) (C := C) (M := M)) <| by
@@ -83,15 +82,13 @@ noncomputable def matrixCoefficientSubcoalgebra
 /-- The underlying submodule of the coefficient subcoalgebra is the matrix-coefficient
 submodule. -/
 @[simp]
-theorem matrixCoefficientSubcoalgebra_toSubmodule
-    [Module.Free R M] [Module.Finite R M] :
+theorem matrixCoefficientSubcoalgebra_toSubmodule [Module.Free R M] [Module.Finite R M] :
     (matrixCoefficientSubcoalgebra (R := R) (C := C) (M := M)).toSubmodule =
       matrixCoefficientSubmodule (R := R) (C := C) (M := M) :=
   (rfl)
 
 /-- The underlying module of the coefficient subcoalgebra of a finite free comodule is finite. -/
-instance matrixCoefficientSubcoalgebra_finite
-    [Module.Free R M] [Module.Finite R M] :
+instance matrixCoefficientSubcoalgebra_finite [Module.Free R M] [Module.Finite R M] :
     Module.Finite R
       (matrixCoefficientSubcoalgebra (R := R) (C := C) (M := M)).toSubmodule := by
   rw [matrixCoefficientSubcoalgebra_toSubmodule]
@@ -100,8 +97,7 @@ instance matrixCoefficientSubcoalgebra_finite
 /-- Membership in the coefficient subcoalgebra is membership in the matrix-coefficient
 submodule. -/
 @[simp]
-theorem mem_matrixCoefficientSubcoalgebra
-    [Module.Free R M] [Module.Finite R M] {c : C} :
+theorem mem_matrixCoefficientSubcoalgebra [Module.Free R M] [Module.Finite R M] {c : C} :
     c ∈ matrixCoefficientSubcoalgebra (R := R) (C := C) (M := M) ↔
       c ∈ matrixCoefficientSubmodule (R := R) (C := C) (M := M) :=
   (Iff.rfl)

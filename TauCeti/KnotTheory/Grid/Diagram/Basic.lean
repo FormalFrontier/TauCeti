@@ -125,8 +125,7 @@ theorem mem_pointSet (x : GridState n) (p : Fin n × Fin n) :
     exact Finset.mem_image.mpr ⟨p.1, Finset.mem_univ _, by ext <;> simp [hp]⟩
 
 /-- The square `(c, r)` lies in a grid state's point set exactly when `x c = r`. -/
-theorem mk_mem_pointSet (x : GridState n) (c r : Fin n) :
-    (c, r) ∈ x.pointSet ↔ x c = r := by
+theorem mk_mem_pointSet (x : GridState n) (c r : Fin n) : (c, r) ∈ x.pointSet ↔ x c = r := by
   simp
 
 /-- The point set of a grid state has exactly `n` occupied squares. -/
@@ -267,8 +266,7 @@ theorem relabelRows_relabelColumns (ρ κ : Equiv.Perm (Fin n)) (x : GridState n
   simp
 
 /-- Membership in the point set after a row relabeling. -/
-theorem mem_pointSet_relabelRows (ρ : Equiv.Perm (Fin n)) (x : GridState n)
-    (p : Fin n × Fin n) :
+theorem mem_pointSet_relabelRows (ρ : Equiv.Perm (Fin n)) (x : GridState n) (p : Fin n × Fin n) :
     p ∈ (x.relabelRows ρ).pointSet ↔ (p.1, ρ.symm p.2) ∈ x.pointSet := by
   simp only [mem_pointSet, relabelRows_apply]
   constructor
@@ -280,8 +278,7 @@ theorem mem_pointSet_relabelRows (ρ : Equiv.Perm (Fin n)) (x : GridState n)
     simp
 
 /-- Membership in the point set after a column relabeling. -/
-theorem mem_pointSet_relabelColumns (κ : Equiv.Perm (Fin n)) (x : GridState n)
-    (p : Fin n × Fin n) :
+theorem mem_pointSet_relabelColumns (κ : Equiv.Perm (Fin n)) (x : GridState n) (p : Fin n × Fin n) :
     p ∈ (x.relabelColumns κ).pointSet ↔ (κ.symm p.1, p.2) ∈ x.pointSet := by
   simp
 
@@ -516,8 +513,7 @@ theorem mem_pointSet_inter_relabelColumns_iff (x : GridState n) (κ : Equiv.Perm
 
 /-- Swapping the same pair of rows twice is the identity on grid states. -/
 @[simp]
-theorem swapRows_swapRows (a b : Fin n) (x : GridState n) :
-    (x.swapRows a b).swapRows a b = x := by
+theorem swapRows_swapRows (a b : Fin n) (x : GridState n) : (x.swapRows a b).swapRows a b = x := by
   ext c
   simp [swapRows]
 
@@ -837,26 +833,22 @@ def relabelColumns (κ : Equiv.Perm (Fin n)) (G : GridDiagram n) : GridDiagram n
 
 /-- The `O` marking state of a row-relabeled grid diagram. -/
 @[simp]
-theorem relabelRows_O (ρ : Equiv.Perm (Fin n)) :
-    (G.relabelRows ρ).O = G.O.relabelRows ρ :=
+theorem relabelRows_O (ρ : Equiv.Perm (Fin n)) : (G.relabelRows ρ).O = G.O.relabelRows ρ :=
   rfl
 
 /-- The `X` marking state of a row-relabelled grid diagram. -/
 @[simp]
-theorem relabelRows_X (ρ : Equiv.Perm (Fin n)) :
-    (G.relabelRows ρ).X = G.X.relabelRows ρ :=
+theorem relabelRows_X (ρ : Equiv.Perm (Fin n)) : (G.relabelRows ρ).X = G.X.relabelRows ρ :=
   rfl
 
 /-- The `O` marking state of a column-relabelled grid diagram. -/
 @[simp]
-theorem relabelColumns_O (κ : Equiv.Perm (Fin n)) :
-    (G.relabelColumns κ).O = G.O.relabelColumns κ :=
+theorem relabelColumns_O (κ : Equiv.Perm (Fin n)) : (G.relabelColumns κ).O = G.O.relabelColumns κ :=
   rfl
 
 /-- The `X` marking state of a column-relabelled grid diagram. -/
 @[simp]
-theorem relabelColumns_X (κ : Equiv.Perm (Fin n)) :
-    (G.relabelColumns κ).X = G.X.relabelColumns κ :=
+theorem relabelColumns_X (κ : Equiv.Perm (Fin n)) : (G.relabelColumns κ).X = G.X.relabelColumns κ :=
   rfl
 
 /-- Row relabeling evaluates on the `O` marking by applying the row permutation. -/
@@ -915,26 +907,22 @@ def swapColumns (a b : Fin n) (G : GridDiagram n) : GridDiagram n :=
 
 /-- The `O` marking state of a row-swapped grid diagram. -/
 @[simp]
-theorem swapRows_O (a b : Fin n) :
-    (G.swapRows a b).O = G.O.swapRows a b :=
+theorem swapRows_O (a b : Fin n) : (G.swapRows a b).O = G.O.swapRows a b :=
   rfl
 
 /-- The `X` marking state of a row-swapped grid diagram. -/
 @[simp]
-theorem swapRows_X (a b : Fin n) :
-    (G.swapRows a b).X = G.X.swapRows a b :=
+theorem swapRows_X (a b : Fin n) : (G.swapRows a b).X = G.X.swapRows a b :=
   rfl
 
 /-- The `O` marking state of a column-swapped grid diagram. -/
 @[simp]
-theorem swapColumns_O (a b : Fin n) :
-    (G.swapColumns a b).O = G.O.swapColumns a b :=
+theorem swapColumns_O (a b : Fin n) : (G.swapColumns a b).O = G.O.swapColumns a b :=
   rfl
 
 /-- The `X` marking state of a column-swapped grid diagram. -/
 @[simp]
-theorem swapColumns_X (a b : Fin n) :
-    (G.swapColumns a b).X = G.X.swapColumns a b :=
+theorem swapColumns_X (a b : Fin n) : (G.swapColumns a b).X = G.X.swapColumns a b :=
   rfl
 
 /-- Row swaps transport the `O` marking set by the row transposition. -/
@@ -959,14 +947,12 @@ theorem mem_XSet_swapColumns (a b : Fin n) (p : Fin n × Fin n) :
 
 /-- Swapping the same pair of rows twice is the identity on grid diagrams. -/
 @[simp]
-theorem swapRows_swapRows (a b : Fin n) :
-    (G.swapRows a b).swapRows a b = G := by
+theorem swapRows_swapRows (a b : Fin n) : (G.swapRows a b).swapRows a b = G := by
   ext c <;> simp [swapRows]
 
 /-- Swapping the same pair of columns twice is the identity on grid diagrams. -/
 @[simp]
-theorem swapColumns_swapColumns (a b : Fin n) :
-    (G.swapColumns a b).swapColumns a b = G := by
+theorem swapColumns_swapColumns (a b : Fin n) : (G.swapColumns a b).swapColumns a b = G := by
   ext c <;> simp [swapColumns]
 
 /-- Relabeling rows by the identity permutation does not change a grid diagram. -/

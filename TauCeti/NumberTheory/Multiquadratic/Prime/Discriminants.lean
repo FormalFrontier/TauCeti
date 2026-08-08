@@ -35,6 +35,9 @@ discriminant `D ∈ {-4, 8, -8}`, the radicand is `D / 4`, so the three even cas
   squarefree.
 * `TauCeti.Multiquadratic.not_isSquare_primeDiscriminantRadicand_rat`: the associated rational
   radicand is not a square.
+* `TauCeti.Multiquadratic.primeDiscriminantPrime`: the single rational prime lying under a prime
+  discriminant, with `TauCeti.Multiquadratic.natCast_dvd_primeDiscriminant_iff` saying that it is
+  the only prime divisor.
 -/
 
 public section
@@ -53,8 +56,7 @@ theorem isPrimeDiscriminant_iff {D : ℤ} :
   Iff.rfl
 
 /-- Every even prime discriminant is a prime discriminant. -/
-theorem IsEvenPrimeDiscriminant.isPrimeDiscriminant {D : ℤ}
-    (hD : IsEvenPrimeDiscriminant D) :
+theorem IsEvenPrimeDiscriminant.isPrimeDiscriminant {D : ℤ} (hD : IsEvenPrimeDiscriminant D) :
     IsPrimeDiscriminant D :=
   Or.inl hD
 
@@ -79,8 +81,7 @@ theorem isPrimeDiscriminant_oddPrimeDiscriminant {p : ℕ} (hp : p.Prime) (hodd 
   Or.inr ⟨p, hp, hodd, rfl⟩
 
 /-- An odd prime discriminant is not one of the even prime discriminants. -/
-theorem not_isEvenPrimeDiscriminant_oddPrimeDiscriminant {p : ℕ}
-    (hodd : Odd p) :
+theorem not_isEvenPrimeDiscriminant_oddPrimeDiscriminant {p : ℕ} (hodd : Odd p) :
     ¬ IsEvenPrimeDiscriminant (oddPrimeDiscriminant p) := by
   intro hD
   have hp_ne_four : p ≠ 4 := by
@@ -139,8 +140,7 @@ theorem primeDiscriminantRadicand_of_isEvenPrimeDiscriminant {D : ℤ}
 
 /-- The radicand attached to an odd prime discriminant is the discriminant itself. -/
 @[simp]
-theorem primeDiscriminantRadicand_oddPrimeDiscriminant {p : ℕ}
-    (hodd : Odd p) :
+theorem primeDiscriminantRadicand_oddPrimeDiscriminant {p : ℕ} (hodd : Odd p) :
     primeDiscriminantRadicand (oddPrimeDiscriminant p) = oddPrimeDiscriminant p := by
   have hnot : ¬ (oddPrimeDiscriminant p = -4 ∨
       oddPrimeDiscriminant p = 8 ∨ oddPrimeDiscriminant p = -8) := by
@@ -149,8 +149,7 @@ theorem primeDiscriminantRadicand_oddPrimeDiscriminant {p : ℕ}
 
 /-- A prime discriminant is either its own radicand, or four times its radicand in the even
 cases. -/
-theorem primeDiscriminant_eq_radicand_or_eq_four_mul_radicand {D : ℤ}
-    (hD : IsPrimeDiscriminant D) :
+theorem primeDiscriminant_eq_radicand_or_eq_four_mul_radicand {D : ℤ} (hD : IsPrimeDiscriminant D) :
     D = primeDiscriminantRadicand D ∨ D = 4 * primeDiscriminantRadicand D := by
   rcases hD with hD | ⟨p, _hp, hodd, rfl⟩
   · exact Or.inr <| by
@@ -180,16 +179,14 @@ theorem dvd_primeDiscriminant_iff_dvd_radicand (D : ℤ) (hq : q ≠ 2) :
 
 /-- Away from `2`, an indexed family of integers and its associated prime-discriminant
 radicands have the same unramifiedness condition at `q`. -/
-theorem forall_not_dvd_primeDiscriminant_iff_radicand {ι : Type*} (D : ι → ℤ)
-    (hq : q ≠ 2) :
+theorem forall_not_dvd_primeDiscriminant_iff_radicand {ι : Type*} (D : ι → ℤ) (hq : q ≠ 2) :
     (∀ i, ¬ (q : ℤ) ∣ D i) ↔
       ∀ i, ¬ (q : ℤ) ∣ primeDiscriminantRadicand (D i) := by
   refine forall_congr' fun i => ?_
   exact not_congr (dvd_primeDiscriminant_iff_dvd_radicand (q := q) (D i) hq)
 
 /-- The radicand attached to a prime discriminant is nonzero. -/
-theorem primeDiscriminantRadicand_ne_zero {D : ℤ}
-    (hD : IsPrimeDiscriminant D) :
+theorem primeDiscriminantRadicand_ne_zero {D : ℤ} (hD : IsPrimeDiscriminant D) :
     primeDiscriminantRadicand D ≠ 0 := by
   rcases hD with hD | ⟨p, hp, hodd, rfl⟩
   · rw [primeDiscriminantRadicand_of_isEvenPrimeDiscriminant hD]
@@ -198,8 +195,7 @@ theorem primeDiscriminantRadicand_ne_zero {D : ℤ}
     exact (oddPrimeDiscriminant_ne_zero).2 hp.ne_zero
 
 /-- The radicand attached to a prime discriminant is squarefree. -/
-theorem squarefree_primeDiscriminantRadicand {D : ℤ}
-    (hD : IsPrimeDiscriminant D) :
+theorem squarefree_primeDiscriminantRadicand {D : ℤ} (hD : IsPrimeDiscriminant D) :
     Squarefree (primeDiscriminantRadicand D) := by
   rcases hD with hD | ⟨p, hp, hodd, rfl⟩
   · rw [primeDiscriminantRadicand_of_isEvenPrimeDiscriminant hD]
@@ -208,8 +204,7 @@ theorem squarefree_primeDiscriminantRadicand {D : ℤ}
     exact squarefree_oddPrimeDiscriminant hp.squarefree
 
 /-- The radicand attached to a prime discriminant is not a rational square. -/
-theorem not_isSquare_primeDiscriminantRadicand_rat {D : ℤ}
-    (hD : IsPrimeDiscriminant D) :
+theorem not_isSquare_primeDiscriminantRadicand_rat {D : ℤ} (hD : IsPrimeDiscriminant D) :
     ¬ IsSquare ((primeDiscriminantRadicand D : ℤ) : ℚ) := by
   rcases hD with hD | ⟨p, hp, hodd, rfl⟩
   · rw [primeDiscriminantRadicand_of_isEvenPrimeDiscriminant hD]
@@ -222,8 +217,7 @@ theorem not_isSquare_primeDiscriminantRadicand_rat {D : ℤ}
         simpa [oddPrimeDiscriminant_natAbs] using hp.ne_one)
 
 /-- An odd prime discriminant has odd radicand congruent to `1` modulo `4`. -/
-theorem primeDiscriminantRadicand_mod_four_eq_one_of_odd {p : ℕ}
-    (hodd : Odd p) :
+theorem primeDiscriminantRadicand_mod_four_eq_one_of_odd {p : ℕ} (hodd : Odd p) :
     primeDiscriminantRadicand (oddPrimeDiscriminant p) % 4 = 1 := by
   rw [primeDiscriminantRadicand_oddPrimeDiscriminant hodd]
   exact oddPrimeDiscriminant_mod_four_eq_one hodd
@@ -247,8 +241,7 @@ theorem isEvenPrimeDiscriminant_or_primeDiscriminantRadicand_mod_four_eq_one {D 
 /-- The only prime discriminant whose radicand has absolute value `1` is `-4`. This is the
 small exceptional case in the radicand map: the odd prime-discriminant radicands have prime
 absolute value, and the other even prime-discriminant radicands have absolute value `2`. -/
-theorem primeDiscriminantRadicand_natAbs_eq_one_iff {D : ℤ}
-    (hD : IsPrimeDiscriminant D) :
+theorem primeDiscriminantRadicand_natAbs_eq_one_iff {D : ℤ} (hD : IsPrimeDiscriminant D) :
     (primeDiscriminantRadicand D).natAbs = 1 ↔ D = -4 := by
   constructor
   · intro h
@@ -267,8 +260,7 @@ theorem primeDiscriminantRadicand_natAbs_eq_one_iff {D : ℤ}
 
 /-- Among prime discriminants, radicand `-1` comes only from the even prime discriminant
 `-4`. -/
-theorem primeDiscriminantRadicand_eq_neg_one_iff {D : ℤ}
-    (hD : IsPrimeDiscriminant D) :
+theorem primeDiscriminantRadicand_eq_neg_one_iff {D : ℤ} (hD : IsPrimeDiscriminant D) :
     primeDiscriminantRadicand D = -1 ↔ D = -4 := by
   constructor
   · intro h
@@ -277,8 +269,7 @@ theorem primeDiscriminantRadicand_eq_neg_one_iff {D : ℤ}
     rw [h, primeDiscriminantRadicand_neg_four]
 
 /-- Among prime discriminants, radicand `2` comes only from the even prime discriminant `8`. -/
-theorem primeDiscriminantRadicand_eq_two_iff {D : ℤ}
-    (hD : IsPrimeDiscriminant D) :
+theorem primeDiscriminantRadicand_eq_two_iff {D : ℤ} (hD : IsPrimeDiscriminant D) :
     primeDiscriminantRadicand D = 2 ↔ D = 8 := by
   constructor
   · intro h
@@ -295,8 +286,7 @@ theorem primeDiscriminantRadicand_eq_two_iff {D : ℤ}
 
 /-- Among prime discriminants, radicand `-2` comes only from the even prime discriminant
 `-8`. -/
-theorem primeDiscriminantRadicand_eq_neg_two_iff {D : ℤ}
-    (hD : IsPrimeDiscriminant D) :
+theorem primeDiscriminantRadicand_eq_neg_two_iff {D : ℤ} (hD : IsPrimeDiscriminant D) :
     primeDiscriminantRadicand D = -2 ↔ D = -8 := by
   constructor
   · intro h
@@ -372,5 +362,107 @@ theorem injective_primeDiscriminantRadicand_comp_iff {ι : Type*} {D : ι → �
   simpa only [Function.comp_def] using
     (Set.InjOn.injective_iff {D : ℤ | IsPrimeDiscriminant D} injOn_primeDiscriminantRadicand
       (by rintro _ ⟨i, rfl⟩; exact hD i))
+
+/-! ### The prime under a prime discriminant
+
+A prime discriminant is, up to sign, a power of a single rational prime: `p` for the odd prime
+discriminant `p*`, and `2` for each of `-4`, `8`, `-8`. That prime is the one ramifying in the
+quadratic field the discriminant belongs to, so the map below is what turns a prime-discriminant
+factorization of a fundamental discriminant into the list of ramified primes. -/
+
+/-- The rational prime lying under a prime discriminant `D`, when `IsPrimeDiscriminant D`: `p` for
+the odd prime discriminant `p*`, and `2` for the even prime discriminants `-4`, `8`, `-8`. That the
+value really is prime under that hypothesis is `prime_primeDiscriminantPrime`.
+
+The definition is total: on an integer that is not a prime discriminant it returns the junk value
+`D.natAbs` (unless `D` is one of `-4`, `8`, `-8`), which need not be prime — for instance
+`primeDiscriminantPrime 9 = 9`. -/
+def primeDiscriminantPrime (D : ℤ) : ℕ :=
+  if D = -4 ∨ D = 8 ∨ D = -8 then 2 else D.natAbs
+
+/-- The defining `if` expression for `primeDiscriminantPrime`. The body of
+`primeDiscriminantPrime` is not `@[expose]`d, so downstream files rewrite with this lemma — or with
+the evaluation lemmas below — rather than unfolding the definition. -/
+theorem primeDiscriminantPrime_def (D : ℤ) :
+    primeDiscriminantPrime D = if D = -4 ∨ D = 8 ∨ D = -8 then 2 else D.natAbs := by
+  rw [primeDiscriminantPrime]
+
+/-- The prime under an even prime discriminant is `2`. -/
+@[simp]
+theorem primeDiscriminantPrime_of_isEvenPrimeDiscriminant {D : ℤ}
+    (hD : IsEvenPrimeDiscriminant D) : primeDiscriminantPrime D = 2 := by
+  rcases hD with rfl | rfl | rfl <;> simp [primeDiscriminantPrime]
+
+/-- The prime under the odd prime discriminant `p*` is `p`. -/
+@[simp]
+theorem primeDiscriminantPrime_oddPrimeDiscriminant {p : ℕ} (hodd : Odd p) :
+    primeDiscriminantPrime (oddPrimeDiscriminant p) = p := by
+  have hnot : ¬ (oddPrimeDiscriminant p = -4 ∨
+      oddPrimeDiscriminant p = 8 ∨ oddPrimeDiscriminant p = -8) := by
+    simpa [IsEvenPrimeDiscriminant] using not_isEvenPrimeDiscriminant_oddPrimeDiscriminant hodd
+  simp [primeDiscriminantPrime, hnot]
+
+/-- The prime under a prime discriminant is a natural prime. -/
+theorem prime_primeDiscriminantPrime {D : ℤ} (hD : IsPrimeDiscriminant D) :
+    (primeDiscriminantPrime D).Prime := by
+  rcases hD with hev | ⟨p, hp, hodd, rfl⟩
+  · rw [primeDiscriminantPrime_of_isEvenPrimeDiscriminant hev]
+    exact Nat.prime_two
+  · rwa [primeDiscriminantPrime_oddPrimeDiscriminant hodd]
+
+/-- The prime under a prime discriminant divides it. -/
+theorem primeDiscriminantPrime_dvd {D : ℤ} (hD : IsPrimeDiscriminant D) :
+    (primeDiscriminantPrime D : ℤ) ∣ D := by
+  rcases hD with hev | ⟨p, _hp, hodd, rfl⟩
+  · rw [primeDiscriminantPrime_of_isEvenPrimeDiscriminant hev]
+    simpa using two_dvd_evenPrimeDiscriminant hev
+  · simp [primeDiscriminantPrime_oddPrimeDiscriminant hodd]
+
+/-- **A prime discriminant has exactly one prime divisor.** A natural prime divides a prime
+discriminant precisely when it is the prime under it. This is what makes the prime-discriminant
+factorization of a fundamental discriminant a list of ramified primes without repetition. -/
+theorem natCast_dvd_primeDiscriminant_iff {D : ℤ} (hD : IsPrimeDiscriminant D) {p : ℕ}
+    (hp : p.Prime) : (p : ℤ) ∣ D ↔ p = primeDiscriminantPrime D := by
+  refine ⟨fun hdvd => ?_, fun h => h ▸ primeDiscriminantPrime_dvd hD⟩
+  rcases hD with hev | ⟨r, hr, hodd, rfl⟩
+  · rw [primeDiscriminantPrime_of_isEvenPrimeDiscriminant hev]
+    have hd8 : D ∣ (8 : ℤ) := by
+      rcases hev with rfl | rfl | rfl
+      · exact ⟨-2, by norm_num⟩
+      · exact ⟨1, by norm_num⟩
+      · exact ⟨-1, by norm_num⟩
+    have hdvd8 : (p : ℤ) ∣ ((2 ^ 3 : ℕ) : ℤ) := by
+      simpa using hdvd.trans hd8
+    exact Nat.prime_eq_prime_of_dvd_pow hp Nat.prime_two (Int.natCast_dvd_natCast.mp hdvd8)
+  · rw [primeDiscriminantPrime_oddPrimeDiscriminant hodd]
+    rw [dvd_oddPrimeDiscriminant_iff] at hdvd
+    exact (Nat.prime_dvd_prime_iff_eq hp hr).mp (Int.natCast_dvd_natCast.mp hdvd)
+
+/-- **The prime under a prime discriminant determines it**, provided the two discriminants are not
+two distinct even prime discriminants (all three of which lie over `2`). -/
+theorem eq_of_primeDiscriminantPrime_eq {D E : ℤ} (hD : IsPrimeDiscriminant D)
+    (hE : IsPrimeDiscriminant E)
+    (heven : IsEvenPrimeDiscriminant D → IsEvenPrimeDiscriminant E → D = E)
+    (h : primeDiscriminantPrime D = primeDiscriminantPrime E) : D = E := by
+  rcases hD with hevD | ⟨p, _hp, hpodd, rfl⟩ <;> rcases hE with hevE | ⟨r, _hr, hrodd, rfl⟩
+  · exact heven hevD hevE
+  · rw [primeDiscriminantPrime_of_isEvenPrimeDiscriminant hevD,
+      primeDiscriminantPrime_oddPrimeDiscriminant hrodd] at h
+    rcases hrodd with ⟨k, hk⟩
+    omega
+  · rw [primeDiscriminantPrime_oddPrimeDiscriminant hpodd,
+      primeDiscriminantPrime_of_isEvenPrimeDiscriminant hevE] at h
+    rcases hpodd with ⟨k, hk⟩
+    omega
+  · rw [primeDiscriminantPrime_oddPrimeDiscriminant hpodd,
+      primeDiscriminantPrime_oddPrimeDiscriminant hrodd] at h
+    rw [h]
+
+/-- `primeDiscriminantPrime` is injective on a set of prime discriminants containing at most one
+even prime discriminant. -/
+theorem injOn_primeDiscriminantPrime {s : Set ℤ} (hs : ∀ D ∈ s, IsPrimeDiscriminant D)
+    (heven : ∀ D ∈ s, ∀ E ∈ s, IsEvenPrimeDiscriminant D → IsEvenPrimeDiscriminant E → D = E) :
+    Set.InjOn primeDiscriminantPrime s :=
+  fun D hD E hE h => eq_of_primeDiscriminantPrime_eq (hs D hD) (hs E hE) (heven D hD E hE) h
 
 end TauCeti.Multiquadratic

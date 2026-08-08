@@ -45,6 +45,8 @@ it separates; `TauCeti.diam_frontier` is what converts that into a bound on the 
   base point reaches the frontier no sooner than it reaches that point.
 * `TauCeti.diam_le_diam_frontier` and `TauCeti.diam_frontier` — a bounded set is exactly as wide as
   its frontier.
+* `TauCeti.diam_le_diam_of_frontier_subset` — hence a bounded set is no wider than any bounded set
+  containing its frontier, which is the form a boundary estimate is spent in.
 -/
 
 public section
@@ -123,5 +125,19 @@ theorem diam_frontier (hV : IsBounded V) : diam (frontier V) = diam V := by
   refine le_antisymm ?_ (diam_le_diam_frontier hV)
   calc diam (frontier V) ≤ diam (closure V) := diam_mono frontier_subset_closure hV.closure
     _ = diam V := diam_closure V
+
+/-- **A bounded set is no wider than anything bounded that contains its frontier.** Enclosing
+`frontier V` in a bounded set `W` bounds `diam V` by `diam W`, since by `TauCeti.diam_frontier` the
+set and its frontier have the same diameter.
+
+This is the form in which a boundary estimate is spent: what a geometric argument produces is a
+*cover* of the boundary of a piece — for a crosscut, the image of the cut together with the arc of
+the domain boundary it separates — and what is wanted is the width of the piece itself.
+Boundedness of `W` is what `Metric.diam_mono` needs and is not automatic from that of `V`, `W`
+being unconstrained apart from the inclusion. -/
+theorem diam_le_diam_of_frontier_subset {W : Set E} (hV : IsBounded V) (hW : IsBounded W)
+    (hVW : frontier V ⊆ W) : diam V ≤ diam W := by
+  rw [← diam_frontier hV]
+  exact diam_mono hVW hW
 
 end TauCeti

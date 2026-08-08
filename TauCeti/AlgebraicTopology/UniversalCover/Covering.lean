@@ -118,8 +118,7 @@ the concatenated based path `α.append γ`. -/
 theorem liftPath_apply_one_eq_ofBasedPath_append
     [LocallyPathConnectedSpace X] [PathConnectedSpace X]
     [SemilocallySimplyConnectedSpace X] {α : BasedPath x₀} {y : X}
-    (γ : Path (BasedPath.endpoint α) y) :
-    (isCoveringMap x₀).liftPath γ (ofBasedPath x₀ α)
+    (γ : Path (BasedPath.endpoint α) y) : (isCoveringMap x₀).liftPath γ (ofBasedPath x₀ α)
       (by simp) 1 =
       ofBasedPath x₀ (BasedPath.append α γ) := by
   let Γ : C(I, TauCeti.UniversalCover x₀) := by

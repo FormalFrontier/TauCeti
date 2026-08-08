@@ -51,8 +51,7 @@ variable {d : ℕ}
 /-- For effective divisors of the same fixed degree, equality of normalized Abel-Jacobi
 classes is exactly linear equivalence of the underlying divisors. -/
 lemma weightedAbelJacobiDivisorClass_one_effectiveDivisorOfDegree_eq_iff_linearlyEquivalent
-    (h : S.IsUnweightedDegreeZero) (x₀ : X)
-    (D E : EffectiveDivisorOfDegree X d) :
+    (h : S.IsUnweightedDegreeZero) (x₀ : X) (D E : EffectiveDivisorOfDegree X d) :
     S.weightedAbelJacobiDivisorClass (fun _ : X => (1 : ℤ)) h (x₀ := x₀) rfl
         (D : WeilDivisor X) =
         S.weightedAbelJacobiDivisorClass (fun _ : X => (1 : ℤ)) h (x₀ := x₀) rfl
@@ -65,8 +64,7 @@ lemma weightedAbelJacobiDivisorClass_one_effectiveDivisorOfDegree_eq_iff_linearl
 /-- The fixed-degree Abel-Jacobi fiber through `D` is the complete linear system `|D|`, restricted
 to effective divisors of the same degree. -/
 lemma weightedAbelJacobiDivisorClass_one_effectiveDivisorOfDegree_eq_iff_mem_completeLinearSystem
-    (h : S.IsUnweightedDegreeZero) (x₀ : X)
-    (D E : EffectiveDivisorOfDegree X d) :
+    (h : S.IsUnweightedDegreeZero) (x₀ : X) (D E : EffectiveDivisorOfDegree X d) :
     S.weightedAbelJacobiDivisorClass (fun _ : X => (1 : ℤ)) h (x₀ := x₀) rfl
         (E : WeilDivisor X) =
         S.weightedAbelJacobiDivisorClass (fun _ : X => (1 : ℤ)) h (x₀ := x₀) rfl
@@ -82,8 +80,7 @@ lemma weightedAbelJacobiDivisorClass_one_effectiveDivisorOfDegree_eq_iff_mem_com
 /-- As a set of fixed-degree effective divisors, the Abel-Jacobi fiber through `D` is the
 restriction of the complete linear system `|D|`. -/
 lemma setOf_weightedAbelJacobiDivisorClass_one_effectiveDivisorOfDegree_eq
-    (h : S.IsUnweightedDegreeZero) (x₀ : X)
-    (D : EffectiveDivisorOfDegree X d) :
+    (h : S.IsUnweightedDegreeZero) (x₀ : X) (D : EffectiveDivisorOfDegree X d) :
     {E : EffectiveDivisorOfDegree X d |
         S.weightedAbelJacobiDivisorClass (fun _ : X => (1 : ℤ)) h (x₀ := x₀) rfl
           (E : WeilDivisor X) =
@@ -114,8 +111,7 @@ lemma weightedAbelJacobiDivisorClass_one_ofSym_eq_iff_mem_completeLinearSystem
 /-- As a set of symmetric-power points, the Abel-Jacobi fiber through `s` is the preimage of the
 complete linear system `|ofSym s|`. -/
 lemma setOf_weightedAbelJacobiDivisorClass_one_ofSym_eq
-    (h : S.IsUnweightedDegreeZero) (x₀ : X) (s : Sym X d) :
-    {t : Sym X d |
+    (h : S.IsUnweightedDegreeZero) (x₀ : X) (s : Sym X d) : {t : Sym X d |
         S.weightedAbelJacobiDivisorClass (fun _ : X => (1 : ℤ)) h (x₀ := x₀) rfl
           (EffectiveDivisorOfDegree.ofSym t : WeilDivisor X) =
         S.weightedAbelJacobiDivisorClass (fun _ : X => (1 : ℤ)) h (x₀ := x₀) rfl

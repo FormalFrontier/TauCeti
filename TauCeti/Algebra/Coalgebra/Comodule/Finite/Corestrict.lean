@@ -82,8 +82,7 @@ theorem corestrict_obj_coact (f : C →ₗc[R] D) (M : FGComoduleCat.{u, v, x} R
 /-- The coaction after corestricting a finitely generated comodule evaluates as
 `(id ⊗ f) (ρ m)`. -/
 @[simp]
-theorem corestrict_obj_coact_apply (f : C →ₗc[R] D) (M : FGComoduleCat.{u, v, x} R C)
-    (m : M) :
+theorem corestrict_obj_coact_apply (f : C →ₗc[R] D) (M : FGComoduleCat.{u, v, x} R C) (m : M) :
     Comodule.coact (R := R) (C := D)
         (M := (corestrict (R := R) (C := C) (D := D) f).obj M) m =
       TensorProduct.map LinearMap.id f.toLinearMap
@@ -93,8 +92,7 @@ theorem corestrict_obj_coact_apply (f : C →ₗc[R] D) (M : FGComoduleCat.{u, v
 /-- Corestriction on finitely generated morphisms is corestriction on ambient comodule
 morphisms. -/
 @[simp]
-theorem corestrict_map_hom (f : C →ₗc[R] D) {M N : FGComoduleCat.{u, v, x} R C}
-    (g : M ⟶ N) :
+theorem corestrict_map_hom (f : C →ₗc[R] D) {M N : FGComoduleCat.{u, v, x} R C} (g : M ⟶ N) :
     ((corestrict (R := R) (C := C) (D := D) f).map g).hom =
       (ComoduleCat.corestrict (R := R) (C := C) (D := D) f).map g.hom :=
   rfl
@@ -103,8 +101,7 @@ theorem corestrict_map_hom (f : C →ₗc[R] D) {M N : FGComoduleCat.{u, v, x} R
 unchanged. -/
 @[simp]
 theorem corestrict_map_toLinearMap (f : C →ₗc[R] D) {M N : FGComoduleCat.{u, v, x} R C}
-    (g : M ⟶ N) :
-    (((corestrict (R := R) (C := C) (D := D) f).map g).hom).toLinearMap =
+    (g : M ⟶ N) : (((corestrict (R := R) (C := C) (D := D) f).map g).hom).toLinearMap =
       g.hom.toLinearMap :=
   rfl
 
@@ -112,8 +109,7 @@ theorem corestrict_map_toLinearMap (f : C →ₗc[R] D) {M N : FGComoduleCat.{u,
 unchanged. -/
 @[simp]
 theorem corestrict_map_apply (f : C →ₗc[R] D) {M N : FGComoduleCat.{u, v, x} R C}
-    (g : M ⟶ N) (m : M) :
-    (corestrict (R := R) (C := C) (D := D) f).map g m = g m :=
+    (g : M ⟶ N) (m : M) : (corestrict (R := R) (C := C) (D := D) f).map g m = g m :=
   rfl
 
 /-- Corestriction of finitely generated comodules commutes with the inclusion into all
@@ -129,8 +125,7 @@ theorem incl_corestrict_obj (f : C →ₗc[R] D) (M : FGComoduleCat.{u, v, x} R 
 /-- Corestriction of finitely generated comodules commutes with the inclusion into all
 comodules on morphisms. -/
 @[simp]
-theorem incl_corestrict_map (f : C →ₗc[R] D) {M N : FGComoduleCat.{u, v, x} R C}
-    (g : M ⟶ N) :
+theorem incl_corestrict_map (f : C →ₗc[R] D) {M N : FGComoduleCat.{u, v, x} R C} (g : M ⟶ N) :
     (incl (R := R) (C := D)).map
         ((corestrict (R := R) (C := C) (D := D) f).map g) =
       (ComoduleCat.corestrict (R := R) (C := C) (D := D) f).map
@@ -139,8 +134,7 @@ theorem incl_corestrict_map (f : C →ₗc[R] D) {M N : FGComoduleCat.{u, v, x} 
 
 /-- Corestriction leaves the underlying semimodule object unchanged. -/
 @[simp]
-theorem forget₂_semimoduleCat_corestrict_obj (f : C →ₗc[R] D)
-    (M : FGComoduleCat.{u, v, x} R C) :
+theorem forget₂_semimoduleCat_corestrict_obj (f : C →ₗc[R] D) (M : FGComoduleCat.{u, v, x} R C) :
     (forget₂ (FGComoduleCat.{u, w, x} R D) (SemimoduleCat.{x} R)).obj
         ((corestrict (R := R) (C := C) (D := D) f).obj M) =
       (forget₂ (FGComoduleCat.{u, v, x} R C) (SemimoduleCat.{x} R)).obj M :=

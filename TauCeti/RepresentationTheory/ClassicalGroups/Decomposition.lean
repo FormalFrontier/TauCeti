@@ -45,8 +45,7 @@ variable [CommRing k] [Invertible (2 : k)]
 
 /-- The tensor square of the standard representation is equivalent to the product of its
 symmetric and exterior squares. -/
-noncomputable abbrev tensorSquareRepEquiv :
-    (tensorPowerRep k n 2).Equiv
+noncomputable abbrev tensorSquareRepEquiv : (tensorPowerRep k n 2).Equiv
       ((symPowerRep k n 2).prod (extPowerRep k n 2)) :=
   (stdRep k n).tensorSquareEquivSymmetricExterior
 
@@ -64,8 +63,7 @@ noncomputable def tensorSquareFDRepIso :
 /-- The forward map of the bundled tensor-square decomposition is the natural representation
 equivalence. -/
 @[simp]
-theorem tensorSquareFDRepIso_hom_hom :
-    (tensorSquareFDRepIso k n).hom.hom =
+theorem tensorSquareFDRepIso_hom_hom : (tensorSquareFDRepIso k n).hom.hom =
       ConcreteCategory.ofHom (tensorSquareRepEquiv k n).toLinearMap :=
   by
     rw [tensorSquareFDRepIso]
@@ -74,8 +72,7 @@ theorem tensorSquareFDRepIso_hom_hom :
 /-- The inverse map of the bundled tensor-square decomposition is the inverse natural
 representation equivalence. -/
 @[simp]
-theorem tensorSquareFDRepIso_inv_hom :
-    (tensorSquareFDRepIso k n).inv.hom =
+theorem tensorSquareFDRepIso_inv_hom : (tensorSquareFDRepIso k n).inv.hom =
       ConcreteCategory.ofHom (tensorSquareRepEquiv k n).symm.toLinearMap :=
   by
     rw [tensorSquareFDRepIso]

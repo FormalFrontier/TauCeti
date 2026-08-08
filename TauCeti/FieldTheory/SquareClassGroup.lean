@@ -67,8 +67,7 @@ private theorem zmod_two_eq_zero_or_one (t : ZMod 2) : t = 0 ∨ t = 1 := by rev
 
 /-- A `ZMod 2`-linear combination of square classes is the class of the corresponding subset
 product (the subset where the coefficient is `1`). -/
-private theorem sum_smul_squareClass {ι : Type*} [Fintype ι] (d : ι → Kˣ)
-    (g : ι → ZMod 2) :
+private theorem sum_smul_squareClass {ι : Type*} [Fintype ι] (d : ι → Kˣ) (g : ι → ZMod 2) :
     ∑ i, g i • squareClass (d i)
       = squareClass (∏ i ∈ Finset.univ.filter (fun i => g i = 1), d i) := by
   rw [squareClass_prod, Finset.sum_filter]
@@ -85,7 +84,7 @@ theorem linearIndependent_squareClass_iff {ι : Type*} [Finite ι] (d : ι → K
     LinearIndependent (ZMod 2) (fun i => squareClass (d i)) ↔
       ∀ S : Finset ι, S.Nonempty → ¬ IsSquare (∏ i ∈ S, d i) := by
   classical
-  letI := Fintype.ofFinite ι
+  let := Fintype.ofFinite ι
   rw [Fintype.linearIndependent_iff]
   constructor
   · -- A nonempty square subset product would give a nontrivial linear dependence.

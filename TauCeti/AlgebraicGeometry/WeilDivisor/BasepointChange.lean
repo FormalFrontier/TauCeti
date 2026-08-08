@@ -59,14 +59,12 @@ noncomputable def weightedBasepointChangeClass (w : X → ℤ) (hdeg : S.IsWeigh
 
 @[simp]
 lemma coe_weightedBasepointChangeClass (w : X → ℤ) (hdeg : S.IsWeightedDegreeZero w)
-    {x₀ y₀ : X} (hxy : w x₀ = w y₀) :
-    (S.weightedBasepointChangeClass w hdeg hxy : S.ClassGroup) =
+    {x₀ y₀ : X} (hxy : w x₀ = w y₀) : (S.weightedBasepointChangeClass w hdeg hxy : S.ClassGroup) =
       S.divisorClass (pointDifference x₀ y₀) :=
   rfl
 
 @[simp]
-lemma weightedBasepointChangeClass_self (w : X → ℤ) (hdeg : S.IsWeightedDegreeZero w)
-    {x₀ : X} :
+lemma weightedBasepointChangeClass_self (w : X → ℤ) (hdeg : S.IsWeightedDegreeZero w) {x₀ : X} :
     S.weightedBasepointChangeClass w hdeg (x₀ := x₀) rfl = 0 := by
   apply Subtype.ext
   simp
@@ -123,8 +121,7 @@ lemma weightedBasepointChangeClass_eq_abelJacobiClass (w : X → ℤ)
 /-- In the class group, the difference between two weighted Abel-Jacobi classes with different
 base points is `w(x)` times the class `[x₀] - [y₀]`. -/
 lemma weightedAbelJacobiClass_sub_change_base_coe (w : X → ℤ)
-    (hdeg : S.IsWeightedDegreeZero w) {x₀ y₀ : X} (hx₀ : w x₀ = 1) (hy₀ : w y₀ = 1)
-    (x : X) :
+    (hdeg : S.IsWeightedDegreeZero w) {x₀ y₀ : X} (hx₀ : w x₀ = 1) (hy₀ : w y₀ = 1) (x : X) :
     (S.weightedAbelJacobiClass w hdeg hy₀ x : S.ClassGroup) -
         (S.weightedAbelJacobiClass w hdeg hx₀ x : S.ClassGroup) =
       w x • S.divisorClass (pointDifference x₀ y₀) := by

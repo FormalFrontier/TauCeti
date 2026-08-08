@@ -133,10 +133,10 @@ private lemma index_prodMap_of_finiteDimensional (T : E₁ →L[K] F₁) (S : E�
 lemma index_prodMap (T : E₁ →L[K] F₁) (S : E₂ →L[K] F₂)
     (hT : ContinuousLinearMap.IsFredholm T) (hS : ContinuousLinearMap.IsFredholm S) :
     index (T.prodMap S) = index T + index S := by
-  letI := hT.finite_ker
-  letI := hS.finite_ker
-  letI := hT.finite_coker
-  letI := hS.finite_coker
+  let := hT.finite_ker
+  let := hS.finite_ker
+  let := hT.finite_coker
+  let := hS.finite_coker
   exact index_prodMap_of_finiteDimensional T S
 
 end ContinuousLinearMap

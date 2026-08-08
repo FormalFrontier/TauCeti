@@ -71,8 +71,7 @@ omit [FiniteDimensional ℝ E] in
 
 For `c ≠ 0`, the function `y ↦ f (AffineMap.homothety a c y)` is `C²` at `x` iff `f` is `C²`
 at `AffineMap.homothety a c x`. -/
-private lemma contDiffAt_comp_homothety_right_iff (a : E) (c : ℝ) (hc : c ≠ 0) {f : E → F}
-    {x : E} :
+private lemma contDiffAt_comp_homothety_right_iff (a : E) (c : ℝ) (hc : c ≠ 0) {f : E → F} {x : E} :
     ContDiffAt ℝ 2 (fun y : E ↦ f (AffineMap.homothety a c y)) x ↔
       ContDiffAt ℝ 2 f (AffineMap.homothety a c x) := by
   constructor
@@ -105,8 +104,7 @@ private lemma contDiffAt_comp_homothety_right_iff (a : E) (c : ℝ) (hc : c ≠ 
 For `c ≠ 0`, the Laplacian of `y ↦ f (AffineMap.homothety a c y)` vanishes near `x` iff the
 Laplacian of `f` vanishes near `AffineMap.homothety a c x`. -/
 private lemma laplacian_eventuallyEq_zero_comp_homothety_right_iff (a : E) (c : ℝ) (hc : c ≠ 0)
-    {f : E → F} {x : E} :
-    (Δ (fun y : E ↦ f (AffineMap.homothety a c y)) =ᶠ[𝓝 x] 0) ↔
+    {f : E → F} {x : E} : (Δ (fun y : E ↦ f (AffineMap.homothety a c y)) =ᶠ[𝓝 x] 0) ↔
       (Δ f =ᶠ[𝓝 (AffineMap.homothety a c x)] 0) := by
   -- `e` realises the homothety as a homeomorphism so we can transport the neighbourhood filter.
   let e : E ≃ₜ E := homothetyHomeomorph a c hc
@@ -151,8 +149,7 @@ private lemma laplacian_eventuallyEq_zero_comp_homothety_right_iff (a : E) (c : 
 
 For `c ≠ 0`, the function `y ↦ f (AffineMap.homothety a c y)` is harmonic at `x` iff `f`
 is harmonic at `AffineMap.homothety a c x`. -/
-theorem harmonicAt_comp_homothety_right_iff (a : E) (c : ℝ) (hc : c ≠ 0) {f : E → F}
-    {x : E} :
+theorem harmonicAt_comp_homothety_right_iff (a : E) (c : ℝ) (hc : c ≠ 0) {f : E → F} {x : E} :
     HarmonicAt (fun y ↦ f (AffineMap.homothety a c y)) x ↔
       HarmonicAt f (AffineMap.homothety a c x) :=
   ⟨fun hf ↦ ⟨(contDiffAt_comp_homothety_right_iff a c hc).1 hf.1,
@@ -196,8 +193,7 @@ theorem harmonicAt_comp_smul_right_iff (c : ℝ) (hc : c ≠ 0) {f : E → F} {x
   rw [hfun, harmonicAt_comp_homothety_right_iff (0 : E) c hc, hx]
 
 /-- Harmonicity on a neighbourhood of a set is invariant under nonzero dilation. -/
-theorem harmonicOnNhd_comp_smul_right_iff (c : ℝ) (hc : c ≠ 0) {f : E → F}
-    {s : Set E} :
+theorem harmonicOnNhd_comp_smul_right_iff (c : ℝ) (hc : c ≠ 0) {f : E → F} {s : Set E} :
     HarmonicOnNhd (fun y ↦ f (c • y)) ((fun y ↦ c • y) ⁻¹' s) ↔
       HarmonicOnNhd f s := by
   have hfun : (fun y : E ↦ f (c • y)) =
@@ -236,8 +232,7 @@ theorem harmonicAt_comp_const_add_smul_iff (x : E) {c : ℝ} (hc : c ≠ 0) {f :
 
 For `c ≠ 0`, the function `z ↦ f (x + c • z)` is harmonic near `(fun z ↦ x + c • z) ⁻¹' s`
 iff `f` is harmonic near `s`. -/
-theorem harmonicOnNhd_comp_const_add_smul_iff (x : E) {c : ℝ} (hc : c ≠ 0) {f : E → F}
-    {s : Set E} :
+theorem harmonicOnNhd_comp_const_add_smul_iff (x : E) {c : ℝ} (hc : c ≠ 0) {f : E → F} {s : Set E} :
     HarmonicOnNhd (fun z ↦ f (x + c • z)) ((fun z ↦ x + c • z) ⁻¹' s) ↔
       HarmonicOnNhd f s := by
   have hfun : (fun z : E ↦ f (x + c • z)) = fun z ↦ (fun w : E ↦ f (w + x)) (c • z) := by

@@ -80,8 +80,7 @@ theorem target_eq_swapColumns : y = x.swapColumns R.left R.right := by
 /-- Oriented rectangles between `x` and `y` exist exactly when `y` is a column transposition of
 `x`. A rectangle realizes its side columns as a transposition taking `x` to `y`, and conversely a
 column transposition exhibits an oriented rectangle on those two columns. -/
-theorem nonempty_all_iff :
-    (all x y).Nonempty ↔ ∃ a b : Fin n, a ≠ b ∧ y = x.swapColumns a b := by
+theorem nonempty_all_iff : (all x y).Nonempty ↔ ∃ a b : Fin n, a ≠ b ∧ y = x.swapColumns a b := by
   constructor
   · rintro ⟨R, -⟩
     exact ⟨R.left, R.right, R.left_ne_right, R.target_eq_swapColumns⟩
@@ -125,29 +124,25 @@ theorem mem_pointSet_inter_iff (p : Fin n × Fin n) :
     GridState.mem_pointSet_inter_swapColumns_iff x R.left_ne_right p
 
 /-- The lower-left corner is not shared with the target state: it sits on a side column. -/
-theorem left_bottom_notMem_inter :
-    (R.left, R.bottom) ∉ x.pointSet ∩ y.pointSet := by
+theorem left_bottom_notMem_inter : (R.left, R.bottom) ∉ x.pointSet ∩ y.pointSet := by
   rw [mem_pointSet_inter_iff R]
   rintro ⟨_, hleft, _⟩
   exact hleft rfl
 
 /-- The upper-right corner is not shared with the target state: it sits on a side column. -/
-theorem right_top_notMem_inter :
-    (R.right, R.top) ∉ x.pointSet ∩ y.pointSet := by
+theorem right_top_notMem_inter : (R.right, R.top) ∉ x.pointSet ∩ y.pointSet := by
   rw [mem_pointSet_inter_iff R]
   rintro ⟨_, _, hright⟩
   exact hright rfl
 
 /-- The upper-left target corner is not shared with the source state: it sits on a side column. -/
-theorem left_top_notMem_inter :
-    (R.left, R.top) ∉ x.pointSet ∩ y.pointSet := by
+theorem left_top_notMem_inter : (R.left, R.top) ∉ x.pointSet ∩ y.pointSet := by
   rw [mem_pointSet_inter_iff R]
   rintro ⟨_, hleft, _⟩
   exact hleft rfl
 
 /-- The lower-right target corner is not shared with the source state: it sits on a side column. -/
-theorem right_bottom_notMem_inter :
-    (R.right, R.bottom) ∉ x.pointSet ∩ y.pointSet := by
+theorem right_bottom_notMem_inter : (R.right, R.bottom) ∉ x.pointSet ∩ y.pointSet := by
   rw [mem_pointSet_inter_iff R]
   rintro ⟨_, _, hright⟩
   exact hright rfl

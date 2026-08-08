@@ -39,7 +39,9 @@ simple `K`-algebra and `A` is central simple
 same dimension as `A` over `K` (`Module.finrank_baseChange`); so Mathlib's
 `IsSimpleRing.exists_algEquiv_matrix_of_isAlgClosed` writes it as `Matrix (Fin n) (Fin n) L`, whose
 dimension is `n ^ 2`. Only simplicity of the scalar extension is used: the sharper statement that
-`L ⊗[K] A` is central simple *over `L`* is not needed here, and is not proved.
+`L ⊗[K] A` is central simple *over `L`* is not needed here. It is proved separately, as
+`TauCeti.Algebra.IsCentral.baseChange` in `TauCeti/Algebra/Central/BaseChange.lean`, which this file
+does not import.
 
 Centrality of `A` over `K` is essential rather than decorative: `ℂ` is a simple, finite-dimensional
 `ℝ`-algebra whose dimension `2` is not a perfect square. That negative control is checked at the end
@@ -59,6 +61,10 @@ columns; that is recorded as
   `TauCeti.Algebra.deg_eq_mul_deg_of_algEquiv_matrix` off a Wedderburn presentation, and the
   splitting `TauCeti.IsSimpleRing.nonempty_algEquiv_matrix_baseChange_of_isAlgClosed` restated with
   matrix size `deg K A`.
+* `TauCeti.Algebra.finrank_tensorProduct_mulOpposite` and
+  `TauCeti.Algebra.deg_tensorProduct_mulOpposite`: the dimension `(Module.finrank K A) ^ 2` and the
+  degree `Module.finrank K A` of `A ⊗[K] Aᵐᵒᵖ`, for an arbitrary `K`-algebra `A`. These are the
+  counts behind `TauCeti/Algebra/CentralSimple/Opposite.lean`.
 
 ## Implementation notes
 
@@ -72,7 +78,8 @@ size of the matrix algebra `A` becomes over an algebraically closed extension. E
 computes a degree is derived from `TauCeti.Algebra.deg_eq_of_finrank_eq_sq`, so a downstream proof
 need never unfold the definition. The two exceptions do not compute a degree and go through
 `Nat.sqrt` directly, because there is no square dimension to feed the characteristic property:
-`TauCeti.Algebra.deg_eq_of_algEquiv`, which only transports it along a linear equivalence, and
+`TauCeti.Algebra.deg_eq_of_finrank_eq`, which only transports it along an equality of dimensions
+(and from which `TauCeti.Algebra.deg_eq_of_algEquiv` is read off), and
 `TauCeti.Algebra.deg_pos`, which only needs `Module.finrank_pos`.
 
 `TauCeti.IsSimpleRing.isSquare_finrank` covers every base field, so the finite-base-field
@@ -166,16 +173,49 @@ Every lemma below that computes a degree is derived from this one, rather than b
 theorem deg_eq_of_finrank_eq_sq {n : ℕ} (h : Module.finrank K A = n ^ 2) : deg K A = n := by
   rw [deg, h, Nat.sqrt_eq']
 
+/-- Algebras of the same dimension have the same degree, even over different base fields. The
+degree being an integer square root, this needs no squareness: it transports the definition rather
+than computing a degree from `TauCeti.Algebra.deg_eq_of_finrank_eq_sq`. -/
+theorem deg_eq_of_finrank_eq {L B : Type*} [Field L] [Ring B] [Algebra L B]
+    (h : Module.finrank L B = Module.finrank K A) : deg L B = deg K A := by
+  rw [deg, deg, h]
+
 /-- Two isomorphic `K`-algebras have the same degree. -/
 theorem deg_eq_of_algEquiv {B : Type*} [Ring B] [Algebra K B] (e : A ≃ₐ[K] B) :
-    deg K A = deg K B := by
-  rw [deg, deg, e.toLinearEquiv.finrank_eq]
+    deg K A = deg K B :=
+  deg_eq_of_finrank_eq e.toLinearEquiv.finrank_eq
 
 variable (K A)
 
 @[simp]
 theorem deg_self : deg K K = 1 :=
   deg_eq_of_finrank_eq_sq (by simp)
+
+/-- Passing to the opposite algebra does not change the dimension, so `A ⊗[K] Aᵐᵒᵖ` has dimension
+`(Module.finrank K A) ^ 2`. This is the count that turns injectivity of the Azumaya map into
+surjectivity in `TauCeti/Algebra/CentralSimple/Opposite.lean`, `Module.End K A` having the same
+dimension, and it is where the matrix size in `TauCeti.Algebra.tensorOpAlgEquivMatrix` comes from: a
+dimension, not a degree.
+
+No finiteness hypothesis is needed: if `A` is infinite-dimensional both sides are `0`. -/
+theorem finrank_tensorProduct_mulOpposite :
+    Module.finrank K (A ⊗[K] Aᵐᵒᵖ) = Module.finrank K A ^ 2 := by
+  rw [Module.finrank_tensorProduct, ← (MulOpposite.opLinearEquiv K (M := A)).finrank_eq, sq]
+
+/-- The degree of `A ⊗[K] Aᵐᵒᵖ` is the dimension of `A`. For `A` central simple this is the square
+of the degree of `A` (`TauCeti.Algebra.deg_sq`), and it is the degree-level shadow of
+`TauCeti.Algebra.tensorOpAlgEquivMatrix`: the reason the matrix size there is `Module.finrank K A`
+rather than `TauCeti.Algebra.deg K A`.
+
+As with the dimension count it rests on, no hypothesis on `A` is needed: the dimension of
+`A ⊗[K] Aᵐᵒᵖ` is a square for every `K`-algebra, and that alone pins the degree.
+
+Not a `simp` lemma: as soon as `A` is central simple and finite-dimensional, so is `Aᵐᵒᵖ`, and then
+`TauCeti.Algebra.deg_tensorProduct` already rewrites the left-hand side, to
+`TauCeti.Algebra.deg K A * TauCeti.Algebra.deg K Aᵐᵒᵖ`. Marking this one `simp` too would leave
+`simp` with two different normal forms for the same term. -/
+theorem deg_tensorProduct_mulOpposite : deg K (A ⊗[K] Aᵐᵒᵖ) = Module.finrank K A :=
+  deg_eq_of_finrank_eq_sq (finrank_tensorProduct_mulOpposite K A)
 
 section Nontrivial
 

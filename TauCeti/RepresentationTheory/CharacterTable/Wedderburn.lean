@@ -34,7 +34,13 @@ Two further statements about a Wedderburn presentation are deliberately not prov
 needed before the block count can be *called* the count of irreducible representations: that the
 blocks are in bijection with the isomorphism classes of simple `k[G]`-modules, and that the multiset
 of degrees does not depend on the chosen presentation. What this file supplies is the numerical
-half, which is what the dimension arguments can see.
+half, which is what the dimension arguments can see. Neither of the two is proved downstream in the
+stated form either, but the substance of the first is assembled in two steps:
+`TauCeti/RepresentationTheory/CharacterTable/BlockRepresentation.lean` shows each block to carry an
+irreducible representation and distinct blocks to carry inequivalent ones, and
+`TauCeti/RepresentationTheory/CharacterTable/Completeness.lean` shows, in
+`TauCeti.ClassFunction.exists_nonempty_equiv`, that the family so obtained exhausts the irreducible
+representations. The independence of the degrees from the presentation is still not proved.
 
 ## References
 
@@ -64,7 +70,7 @@ theorem sum_sq_eq_card_of_algEquiv_pi_matrix [Monoid G] [Finite G] [Fintype ι]
       = Module.finrank k (Π i, Matrix (Fin (d i)) (Fin (d i)) k) := (finrank_pi_matrix k d).symm
     _ = Module.finrank k (MonoidAlgebra k G) := e.toLinearEquiv.finrank_eq.symm
     _ = Nat.card G := by
-        letI := Fintype.ofFinite G
+        let := Fintype.ofFinite G
         rw [Module.finrank_eq_card_basis (MonoidAlgebra.basis G k), Fintype.card_eq_nat_card]
 
 /-- **The center of the group algebra splits**: a Wedderburn presentation of `k[G]` with blocks
@@ -131,7 +137,7 @@ theorem exists_algEquiv_pi_matrix_conjClasses :
     ∃ d : ConjClasses G → ℕ, (∀ i, NeZero (d i)) ∧ ∑ᶠ i, d i ^ 2 = Nat.card G ∧
       Nonempty (MonoidAlgebra k G ≃ₐ[k] Π i, Matrix (Fin (d i)) (Fin (d i)) k) := by
   obtain ⟨n, d, hd, ⟨e⟩⟩ := exists_algEquiv_pi_matrix k G
-  haveI := hd
+  have := hd
   obtain rfl : n = Nat.card (ConjClasses G) := by
     simpa using card_eq_card_conjClasses_of_algEquiv_pi_matrix e
   set σ := Finite.equivFin (ConjClasses G)

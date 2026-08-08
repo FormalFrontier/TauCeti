@@ -22,6 +22,8 @@ is needed.
 
 ## Main definitions
 
+* `TauCeti.tensorSwap` exchanges the two factors of a tensor square; it needs no hypothesis on
+  `2`, and is what the two orders on a tensor square are compared by.
 * `SymmetricPower.toTensorSquare` embeds a symmetric square by averaging the two orders.
 * `exteriorPower.toTensorSquare` embeds an exterior square by alternating the two orders.
 * `TauCeti.tensorSquareEquivSymmetricExterior` is the resulting direct-sum decomposition.
@@ -40,7 +42,6 @@ open scoped TensorProduct
 universe v
 
 variable (R : Type) (M : Type v)
-variable [CommRing R] [Invertible (2 : R)] [AddCommGroup M] [Module R M]
 
 namespace TauCeti
 
@@ -69,12 +70,42 @@ theorem perm_fin_two_eq_one_or_swap (e : Equiv.Perm (Fin 2)) :
         exact one_ne_zero (e.injective (h1'.trans h0'.symm))
       simpa using h1
 
-private noncomputable def tensorSwap :
-    (⨂[R]^2 M) ≃ₗ[R] ⨂[R]^2 M :=
+section Swap
+
+variable [CommSemiring R] [AddCommMonoid M] [Module R M]
+
+/-- The swap of the two factors of a tensor square, `x ⊗ₜ y ↦ y ⊗ₜ x`. -/
+noncomputable def tensorSwap : (⨂[R]^2 M) ≃ₗ[R] ⨂[R]^2 M :=
   PiTensorProduct.reindex R (fun _ : Fin 2 ↦ M) (Equiv.swap 0 1)
 
-private noncomputable def symmetricProjection :
-    (⨂[R]^2 M) →ₗ[R] ⨂[R]^2 M :=
+/-- The swap reads a pure tensor in the other order. -/
+@[simp]
+theorem tensorSwap_tprod (f : Fin 2 → M) :
+    tensorSwap R M (PiTensorProduct.tprod R f) =
+      PiTensorProduct.tprod R fun i ↦ f (Equiv.swap 0 1 i) := by
+  rw [tensorSwap, PiTensorProduct.reindex_tprod, Equiv.symm_swap]
+
+/-- The swap is its own inverse. -/
+@[simp]
+theorem tensorSwap_symm : (tensorSwap R M).symm = tensorSwap R M := by
+  rw [tensorSwap, PiTensorProduct.reindex_symm, Equiv.symm_swap]
+
+/-- Swapping the two factors of an arbitrary tensor twice is the identity. -/
+@[simp]
+theorem tensorSwap_tensorSwap (x : ⨂[R]^2 M) :
+    tensorSwap R M (tensorSwap R M x) = x := by
+  have h := (tensorSwap R M).symm_apply_apply x
+  rwa [tensorSwap_symm] at h
+
+end Swap
+
+end TauCeti
+
+variable [CommRing R] [Invertible (2 : R)] [AddCommGroup M] [Module R M]
+
+namespace TauCeti
+
+private noncomputable def symmetricProjection : (⨂[R]^2 M) →ₗ[R] ⨂[R]^2 M :=
   (⅟ (2 : R)) • (LinearMap.id + (tensorSwap R M).toLinearMap)
 
 private theorem symmetricProjection_rel :
@@ -168,8 +199,7 @@ end TauCeti
 namespace SymmetricPower
 
 /-- The symmetric quotient composed with the symmetric-square embedding is the identity. -/
-theorem mk_comp_toTensorSquare :
-    (SymmetricPower.mk R (Fin 2) M).comp
+theorem mk_comp_toTensorSquare : (SymmetricPower.mk R (Fin 2) M).comp
         (SymmetricPower.toTensorSquare R M) = LinearMap.id := by
   apply LinearMap.ext_on
     (SymmetricPower.span_tprod_eq_top (R := R) (ι := Fin 2) (M := M))
@@ -198,8 +228,7 @@ end SymmetricPower
 namespace exteriorPower
 
 /-- The exterior projection vanishes on the symmetric-square embedding. -/
-theorem lift_ιMulti_comp_symmetricPower_toTensorSquare :
-    (PiTensorProduct.lift
+theorem lift_ιMulti_comp_symmetricPower_toTensorSquare : (PiTensorProduct.lift
       (exteriorPower.ιMulti R 2 (M := M)).toMultilinearMap).comp
         (SymmetricPower.toTensorSquare R M) = 0 := by
   apply LinearMap.ext_on
@@ -226,8 +255,7 @@ end exteriorPower
 namespace SymmetricPower
 
 /-- The symmetric projection vanishes on the exterior-square embedding. -/
-theorem mk_comp_exteriorPower_toTensorSquare :
-    (SymmetricPower.mk R (Fin 2) M).comp
+theorem mk_comp_exteriorPower_toTensorSquare : (SymmetricPower.mk R (Fin 2) M).comp
         (exteriorPower.toTensorSquare R M) = 0 := by
   apply exteriorPower.linearMap_ext
   apply AlternatingMap.ext
@@ -251,8 +279,7 @@ end SymmetricPower
 namespace exteriorPower
 
 /-- The exterior projection composed with the exterior-square embedding is the identity. -/
-theorem lift_ιMulti_comp_toTensorSquare :
-    (PiTensorProduct.lift
+theorem lift_ιMulti_comp_toTensorSquare : (PiTensorProduct.lift
       (exteriorPower.ιMulti R 2 (M := M)).toMultilinearMap).comp
         (exteriorPower.toTensorSquare R M) = LinearMap.id := by
   apply exteriorPower.linearMap_ext
@@ -288,8 +315,7 @@ end exteriorPower
 
 namespace TauCeti
 
-private theorem symmetricExteriorToTensorSquare_comp :
-    (symmetricExteriorToTensorSquare R M).comp
+private theorem symmetricExteriorToTensorSquare_comp : (symmetricExteriorToTensorSquare R M).comp
         (tensorSquareToSymmetricExterior R M) = LinearMap.id := by
   rw [symmetricExteriorToTensorSquare, tensorSquareToSymmetricExterior,
     LinearMap.coprod_comp_prod]
@@ -306,8 +332,7 @@ private theorem symmetricExteriorToTensorSquare_comp :
   abel_nf
   rw [two_smul, ← add_smul, invOf_two_add_invOf_two, one_smul]
 
-private theorem tensorSquareToSymmetricExterior_comp :
-    (tensorSquareToSymmetricExterior R M).comp
+private theorem tensorSquareToSymmetricExterior_comp : (tensorSquareToSymmetricExterior R M).comp
         (symmetricExteriorToTensorSquare R M) = LinearMap.id := by
   rw [tensorSquareToSymmetricExterior, symmetricExteriorToTensorSquare,
     LinearMap.prod_comp, LinearMap.comp_coprod, LinearMap.comp_coprod,
@@ -321,8 +346,7 @@ private theorem tensorSquareToSymmetricExterior_comp :
 /-- The tensor square is naturally the direct sum of its symmetric and exterior squares when
 `2` is invertible. The forward map sends a tensor to its symmetric quotient and exterior
 product. -/
-noncomputable def tensorSquareEquivSymmetricExterior :
-    (⨂[R]^2 M) ≃ₗ[R] (Sym[R]^2 M) × (⋀[R]^2 M) :=
+noncomputable def tensorSquareEquivSymmetricExterior : (⨂[R]^2 M) ≃ₗ[R] (Sym[R]^2 M) × (⋀[R]^2 M) :=
   LinearEquiv.mk
     (tensorSquareToSymmetricExterior R M)
     (symmetricExteriorToTensorSquare R M)
@@ -341,8 +365,7 @@ theorem tensorSquareEquivSymmetricExterior_tprod (f : Fin 2 → M) :
 /-- The inverse tensor-square decomposition is the sum of the symmetric and exterior
 embeddings. -/
 @[simp]
-theorem tensorSquareEquivSymmetricExterior_symm_apply
-    (x : (Sym[R]^2M) × (⋀[R]^2 M)) :
+theorem tensorSquareEquivSymmetricExterior_symm_apply (x : (Sym[R]^2M) × (⋀[R]^2 M)) :
     (tensorSquareEquivSymmetricExterior R M).symm x =
       SymmetricPower.toTensorSquare R M x.1 + exteriorPower.toTensorSquare R M x.2 := by
   rfl

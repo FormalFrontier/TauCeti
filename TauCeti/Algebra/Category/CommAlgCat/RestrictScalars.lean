@@ -52,8 +52,7 @@ lemma algebraMap_restrictScalarsObj (f : k →+* K) (A : _root_.CommAlgCat.{x} K
 
 /-- Restrict a morphism of commutative `K`-algebras to a morphism of commutative
 `k`-algebras along `f : k →+* K`. -/
-noncomputable abbrev restrictScalarsMap {A B : _root_.CommAlgCat.{x} K}
-    (f : k →+* K) (χ : A ⟶ B) :
+noncomputable abbrev restrictScalarsMap {A B : _root_.CommAlgCat.{x} K} (f : k →+* K) (χ : A ⟶ B) :
     restrictScalarsObj f A ⟶ restrictScalarsObj f B :=
   letI : Algebra k K := f.toAlgebra
   letI : Algebra k A := Algebra.compHom A f
@@ -65,8 +64,7 @@ noncomputable abbrev restrictScalarsMap {A B : _root_.CommAlgCat.{x} K}
 /-- The underlying algebra hom of a restricted categorical morphism is restriction of scalars
 on the original algebra hom. -/
 @[simp]
-lemma restrictScalarsMap_hom {A B : _root_.CommAlgCat.{x} K}
-    (f : k →+* K) (χ : A ⟶ B) :
+lemma restrictScalarsMap_hom {A B : _root_.CommAlgCat.{x} K} (f : k →+* K) (χ : A ⟶ B) :
     (restrictScalarsMap f χ).hom =
       letI : Algebra k K := f.toAlgebra
       letI : Algebra k A := Algebra.compHom A f

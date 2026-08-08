@@ -417,7 +417,7 @@ homomorphism between point functors is induced by a coordinate Hopf-algebra morp
 instance pointsFunctor_full :
     (pointsFunctor (R := R) :
       (_root_.CommHopfAlgCat.{u} R)ᵒᵖ ⥤ CommAlgCat.{u} R ⥤ GrpCat.{u}).Full := by
-  letI : (groupYonedaPointsFunctor (R := R)).Full := by
+  let : (groupYonedaPointsFunctor (R := R)).Full := by
     dsimp [groupYonedaPointsFunctor]
     infer_instance
   exact Functor.Full.of_iso (groupYonedaPointsFunctorIso (R := R))
@@ -438,8 +438,7 @@ private theorem isRepresentable_unopUnop_comp_iff_isCorepresentable
           -- `unopUnop ⋙ F` map rules below record the actual variance calculation.
           change e.homEquiv ((f ≫ g).op) = F.map g (e.homEquiv f.op)
           rw [op_comp, e.homEquiv_comp, Functor.comp_map, unopUnop_map,
-            Quiver.Hom.unop_op, Quiver.Hom.unop_op]
-          rfl }
+            Quiver.Hom.unop_op, Quiver.Hom.unop_op] }
     exact c.isCorepresentable
   · rintro ⟨X, ⟨e⟩⟩
     let r : (unopUnop (CommAlgCat.{u} R) ⋙ F).RepresentableBy (op X) :=
@@ -451,8 +450,7 @@ private theorem isRepresentable_unopUnop_comp_iff_isCorepresentable
           change e.homEquiv ((f ≫ g).unop) =
             (unopUnop (CommAlgCat.{u} R) ⋙ F).map f.op (e.homEquiv g.unop)
           rw [unop_comp, e.homEquiv_comp, Functor.comp_map, unopUnop_map,
-            Quiver.Hom.unop_op]
-          rfl }
+            Quiver.Hom.unop_op] }
     exact r.isRepresentable
 
 /-- Transport the generic essential image of group-object Yoneda across the double-opposite

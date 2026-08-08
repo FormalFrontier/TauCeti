@@ -55,8 +55,7 @@ def principalSubgroupOfWeightedDegreeZero (w : X → ℤ) :
   S.principalSubgroup.comap (weightedDegreeZeroSubgroup w).subtype
 
 @[simp]
-lemma mem_principalSubgroupOfWeightedDegreeZero {w : X → ℤ}
-    {D : weightedDegreeZeroSubgroup w} :
+lemma mem_principalSubgroupOfWeightedDegreeZero {w : X → ℤ} {D : weightedDegreeZeroSubgroup w} :
     D ∈ S.principalSubgroupOfWeightedDegreeZero w ↔
       (D : WeilDivisor X) ∈ S.principalSubgroup :=
   Iff.rfl
@@ -79,8 +78,7 @@ def weightedDegreeZeroClassHom (w : X → ℤ) (h : S.IsWeightedDegreeZero w) :
 
 @[simp]
 lemma coe_weightedDegreeZeroClassHom_apply {w : X → ℤ} (h : S.IsWeightedDegreeZero w)
-    (D : weightedDegreeZeroSubgroup w) :
-    (S.weightedDegreeZeroClassHom w h D : S.ClassGroup) =
+    (D : weightedDegreeZeroSubgroup w) : (S.weightedDegreeZeroClassHom w h D : S.ClassGroup) =
       S.divisorClass (D : WeilDivisor X) :=
   rfl
 
@@ -146,8 +144,7 @@ lemma weightedDegreeZeroQuotientEquivPicZero_mk {w : X → ℤ}
 
 lemma coe_weightedDegreeZeroQuotientEquivPicZero_mk {w : X → ℤ}
     (h : S.IsWeightedDegreeZero w) (D : weightedDegreeZeroSubgroup w) :
-    (S.weightedDegreeZeroQuotientEquivPicZero w h
-      (QuotientAddGroup.mk D) : S.ClassGroup) =
+    (S.weightedDegreeZeroQuotientEquivPicZero w h (QuotientAddGroup.mk D) : S.ClassGroup) =
       S.divisorClass (D : WeilDivisor X) := by
   simp
 

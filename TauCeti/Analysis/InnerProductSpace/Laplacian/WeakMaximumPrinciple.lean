@@ -163,8 +163,7 @@ finite-dimensional real inner product space attains a maximum on the frontier. T
 `exists_mem_frontier_isMaxOn_of_laplacian_pos` for the strict case. -/
 theorem exists_mem_frontier_isMaxOn_of_laplacian_nonneg {K : Set E} (hK : IsCompact K)
     (hne : K.Nonempty) {f : E → ℝ} (hcont : ContinuousOn f K)
-    (hcd : ∀ ⦃x⦄, x ∈ interior K → ContDiffAt ℝ 2 f x)
-    (hlap : ∀ ⦃x⦄, x ∈ interior K → 0 ≤ Δ f x) :
+    (hcd : ∀ ⦃x⦄, x ∈ interior K → ContDiffAt ℝ 2 f x) (hlap : ∀ ⦃x⦄, x ∈ interior K → 0 ≤ Δ f x) :
     ∃ x ∈ frontier K, IsMaxOn f K x := by
   exact exists_mem_frontier_isMaxOn_of_le_frontier hK hne hcont fun hbdry =>
     le_of_laplacian_nonneg_le_frontier hK hcont hcd hlap hbdry
@@ -173,8 +172,7 @@ theorem exists_mem_frontier_isMaxOn_of_laplacian_nonneg {K : Set E} (hK : IsComp
 finite-dimensional real inner product space attains a minimum on the frontier. -/
 theorem exists_mem_frontier_isMinOn_of_laplacian_nonpos {K : Set E} (hK : IsCompact K)
     (hne : K.Nonempty) {f : E → ℝ} (hcont : ContinuousOn f K)
-    (hcd : ∀ ⦃x⦄, x ∈ interior K → ContDiffAt ℝ 2 f x)
-    (hlap : ∀ ⦃x⦄, x ∈ interior K → Δ f x ≤ 0) :
+    (hcd : ∀ ⦃x⦄, x ∈ interior K → ContDiffAt ℝ 2 f x) (hlap : ∀ ⦃x⦄, x ∈ interior K → Δ f x ≤ 0) :
     ∃ x ∈ frontier K, IsMinOn f K x := by
   obtain ⟨z, hzfr, hzmax⟩ := exists_mem_frontier_isMaxOn_of_laplacian_nonneg hK hne hcont.neg
     (fun y hy => (hcd hy).neg)

@@ -64,10 +64,9 @@ def prod (A B : AbelianVariety K) : AbelianVariety K :=
 
 /-- The group scheme underlying a product is the fibre product group scheme. -/
 @[simp]
-lemma prod_toOver (A B : AbelianVariety K) :
-    (prod A B).toOver = A.toOver ⊗ B.toOver := by
-  letI := isProper_tensor A B
-  letI := geometricallyIntegral_tensor A B
+lemma prod_toOver (A B : AbelianVariety K) : (prod A B).toOver = A.toOver ⊗ B.toOver := by
+  let := isProper_tensor A B
+  let := geometricallyIntegral_tensor A B
   exact ofGeometricallyIntegral_toOver _
 
 /-- The scheme underlying a product is the fibre product of the two underlying schemes over
@@ -82,8 +81,8 @@ lemma prod_toScheme (A B : AbelianVariety K) :
 lemma prod_one (A B : AbelianVariety K) :
     η[(prod A B).toOver] ≫ eqToHom (prod_toOver A B) =
       η[A.toOver ⊗ B.toOver] := by
-  letI := isProper_tensor A B
-  letI := geometricallyIntegral_tensor A B
+  let := isProper_tensor A B
+  let := geometricallyIntegral_tensor A B
   unfold prod
   exact ofGeometricallyIntegral_one _
 
@@ -93,8 +92,8 @@ lemma prod_mul (A B : AbelianVariety K) :
     μ[(prod A B).toOver] ≫ eqToHom (prod_toOver A B) =
       (eqToHom (prod_toOver A B) ⊗ₘ eqToHom (prod_toOver A B)) ≫
         μ[A.toOver ⊗ B.toOver] := by
-  letI := isProper_tensor A B
-  letI := geometricallyIntegral_tensor A B
+  let := isProper_tensor A B
+  let := geometricallyIntegral_tensor A B
   unfold prod
   exact ofGeometricallyIntegral_mul _
 
@@ -103,8 +102,8 @@ lemma prod_mul (A B : AbelianVariety K) :
 lemma prod_inv (A B : AbelianVariety K) :
     ι[(prod A B).toOver] ≫ eqToHom (prod_toOver A B) =
       eqToHom (prod_toOver A B) ≫ ι[A.toOver ⊗ B.toOver] := by
-  letI := isProper_tensor A B
-  letI := geometricallyIntegral_tensor A B
+  let := isProper_tensor A B
+  let := geometricallyIntegral_tensor A B
   unfold prod
   exact ofGeometricallyIntegral_inv _
 
@@ -115,18 +114,18 @@ def fst (A B : AbelianVariety K) : prod A B ⟶ A := by
   refine Hom.mk'
     (eqToHom (prod_toOver A B) ≫ CartesianMonoidalCategory.fst A.toOver B.toOver) ?_ ?_
   · rw [← Category.assoc, prod_one]
-    simp
+    simp only [IsMonHom.one_hom]
   · rw [← Category.assoc, prod_mul]
-    simp
+    simp only [Category.assoc, IsMonHom.mul_hom, tensorHom_comp_tensorHom_assoc]
 
 /-- The second projection from a product of abelian varieties. -/
 def snd (A B : AbelianVariety K) : prod A B ⟶ B := by
   refine Hom.mk'
     (eqToHom (prod_toOver A B) ≫ CartesianMonoidalCategory.snd A.toOver B.toOver) ?_ ?_
   · rw [← Category.assoc, prod_one]
-    simp
+    simp only [IsMonHom.one_hom]
   · rw [← Category.assoc, prod_mul]
-    simp
+    simp only [Category.assoc, IsMonHom.mul_hom, tensorHom_comp_tensorHom_assoc]
 
 /-- Pair two homomorphisms with a common source to obtain a homomorphism into a product. -/
 def lift {A B C : AbelianVariety K} (f : C ⟶ A) (g : C ⟶ B) :
@@ -134,8 +133,11 @@ def lift {A B C : AbelianVariety K} (f : C ⟶ A) (g : C ⟶ B) :
   refine Hom.mk'
     (CartesianMonoidalCategory.lift (Hom.toOverHom f) (Hom.toOverHom g) ≫
       eqToHom (prod_toOver A B).symm) ?_ ?_
-  · simp [← cancel_mono (eqToHom (prod_toOver A B))]
-  · simp [← cancel_mono (eqToHom (prod_toOver A B))]
+  · simp only [IsMonHom.one_hom_assoc, ← cancel_mono (eqToHom (prod_toOver A B)),
+      Category.assoc, eqToHom_trans, eqToHom_refl, Category.comp_id, prod_one]
+  · simp only [IsMonHom.mul_hom_assoc, ← cancel_mono (eqToHom (prod_toOver A B)),
+      Category.assoc, eqToHom_trans, eqToHom_refl, Category.comp_id, prod_mul,
+      tensorHom_comp_tensorHom_assoc]
 
 /-- The morphism over `Spec K` underlying the first projection is the pullback projection. -/
 @[simp]
@@ -179,8 +181,7 @@ lemma lift_snd {A B C : AbelianVariety K} (f : C ⟶ A) (g : C ⟶ B) :
 
 /-- Homomorphisms into a product are determined by their two projections. -/
 @[ext]
-lemma hom_ext {A B C : AbelianVariety K} {f g : C ⟶ prod A B}
-    (hfst : f ≫ fst A B = g ≫ fst A B)
+lemma hom_ext {A B C : AbelianVariety K} {f g : C ⟶ prod A B} (hfst : f ≫ fst A B = g ≫ fst A B)
     (hsnd : f ≫ snd A B = g ≫ snd A B) : f = g := by
   apply Hom.toOverHom_injective
   rw [← cancel_mono (eqToHom (prod_toOver A B))]

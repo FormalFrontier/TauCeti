@@ -282,8 +282,7 @@ with the two endpoints reversed and exchanged.
 
 Coordinate reversal reverses the cyclic order, so it turns the clockwise arc from `a` to `b` into
 the clockwise arc from `bᵒ` to `aᵒ`. -/
-theorem cIoo_image_rev (a b : Fin n) :
-    (cIoo a b).image Fin.rev = cIoo b.rev a.rev := by
+theorem cIoo_image_rev (a b : Fin n) : (cIoo a b).image Fin.rev = cIoo b.rev a.rev := by
   ext y
   rw [Finset.mem_image]
   constructor

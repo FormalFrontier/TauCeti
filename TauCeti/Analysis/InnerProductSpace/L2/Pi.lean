@@ -360,8 +360,7 @@ theorem orthogonal_span_range_L2piMul_eq_bot {κ : ι → Type*}
 
 /-- **The `Fintype`-indexed product Hilbert basis.** Pointwise products of coordinatewise Hilbert
 bases form a Hilbert basis of `L²(Measure.pi μ)`, indexed by the dependent function type. -/
-noncomputable def piHilbertBasis {κ : ι → Type*}
-    (b : ∀ i, HilbertBasis (κ i) 𝕜 (Lp 𝕜 2 (μ i))) :
+noncomputable def piHilbertBasis {κ : ι → Type*} (b : ∀ i, HilbertBasis (κ i) 𝕜 (Lp 𝕜 2 (μ i))) :
     HilbertBasis (∀ i, κ i) 𝕜 (Lp 𝕜 2 (Measure.pi μ)) :=
   HilbertBasis.mkOfOrthogonalEqBot (orthonormal_L2piMul fun i => (b i).orthonormal)
     (orthogonal_span_range_L2piMul_eq_bot b)

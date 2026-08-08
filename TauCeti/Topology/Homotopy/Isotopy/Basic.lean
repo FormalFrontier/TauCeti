@@ -208,17 +208,14 @@ theorem isEmbedding_right (F : Isotopy f₀ f₁) : IsEmbedding f₁ := by
 /-- Value of the concatenated homotopy on the first half `[0, 1 / 2]`, with the time parameter
 rescaled to `2 * t`. -/
 private theorem trans_toHomotopy_apply_of_le (F : Isotopy f₀ f₁) (G : Isotopy f₁ f₂) {t : I} (x : X)
-    (h : (t : ℝ) ≤ 1 / 2) :
-    (F.toHomotopy.trans G.toHomotopy) (t, x)
+    (h : (t : ℝ) ≤ 1 / 2) : (F.toHomotopy.trans G.toHomotopy) (t, x)
       = F.toHomotopy (⟨2 * t, (unitInterval.mul_pos_mem_iff zero_lt_two).2 ⟨t.2.1, h⟩⟩, x) := by
   rw [Homotopy.trans_apply, dif_pos h]
 
 /-- Value of the concatenated homotopy on the second half `[1 / 2, 1]`, with the time parameter
 rescaled to `2 * t - 1`. -/
 private theorem trans_toHomotopy_apply_of_not_le (F : Isotopy f₀ f₁) (G : Isotopy f₁ f₂) {t : I}
-    (x : X)
-    (h : ¬ (t : ℝ) ≤ 1 / 2) :
-    (F.toHomotopy.trans G.toHomotopy) (t, x)
+    (x : X) (h : ¬ (t : ℝ) ≤ 1 / 2) : (F.toHomotopy.trans G.toHomotopy) (t, x)
       = G.toHomotopy
           (⟨2 * t - 1, unitInterval.two_mul_sub_one_mem_iff.2 ⟨(not_le.1 h).le, t.2.2⟩⟩, x) := by
   rw [Homotopy.trans_apply, dif_neg h]
@@ -350,8 +347,7 @@ noncomputable def trans {f₂ : C(X, Y)} (F : Isotopy f₀ f₁) (G : Isotopy f�
 
 /-- The value of a concatenated isotopy is given by the first isotopy on `[0, 1 / 2]`
 and by the second isotopy on `[1 / 2, 1]`, with the time parameter rescaled linearly. -/
-theorem trans_apply {f₂ : C(X, Y)}
-    (F : Isotopy f₀ f₁) (G : Isotopy f₁ f₂) (x : I × X) :
+theorem trans_apply {f₂ : C(X, Y)} (F : Isotopy f₀ f₁) (G : Isotopy f₁ f₂) (x : I × X) :
     (F.trans G) x =
       if h : (x.1 : ℝ) ≤ 1 / 2 then
         F (⟨2 * x.1, (unitInterval.mul_pos_mem_iff zero_lt_two).2 ⟨x.1.2.1, h⟩⟩, x.2)
@@ -402,8 +398,7 @@ theorem symm (h : Isotopic f₀ f₁) : Isotopic f₁ f₀ :=
 
 /-- Isotopy is transitive. -/
 @[trans]
-theorem trans {f₂ : C(X, Y)}
-    (h₀₁ : Isotopic f₀ f₁) (h₁₂ : Isotopic f₁ f₂) : Isotopic f₀ f₂ :=
+theorem trans {f₂ : C(X, Y)} (h₀₁ : Isotopic f₀ f₁) (h₁₂ : Isotopic f₁ f₂) : Isotopic f₀ f₂ :=
   ⟨h₀₁.some.trans h₁₂.some⟩
 
 /-- The left endpoint of an isotopy relation is an embedding. -/

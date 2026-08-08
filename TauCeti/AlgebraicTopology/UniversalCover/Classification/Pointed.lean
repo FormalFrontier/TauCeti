@@ -125,8 +125,7 @@ theorem IsCoveringMap.exists_homeomorph_comp_eq_of_range_eq
     [PathConnectedSpace E] [LocallyPathConnectedSpace E]
     [PathConnectedSpace F] [LocallyPathConnectedSpace F]
     (hp : _root_.IsCoveringMap p) (hq : _root_.IsCoveringMap q) (hpe : p e₀ = x) (hqf : q f₀ = x)
-    (hrange : (mapOfEq ⟨p, hp.continuous⟩ hpe).range =
-      (mapOfEq ⟨q, hq.continuous⟩ hqf).range) :
+    (hrange : (mapOfEq ⟨p, hp.continuous⟩ hpe).range = (mapOfEq ⟨q, hq.continuous⟩ hqf).range) :
     ∃ h : E ≃ₜ F, h e₀ = f₀ ∧ q ∘ h = p := by
   obtain ⟨g, ⟨hg₀, hgc⟩, -⟩ :=
     IsCoveringMap.existsUnique_continuousMap_comp_eq_of_range_le hp.continuous hq hpe hqf hrange.le
@@ -176,8 +175,7 @@ noncomputable def IsCoveringMap.totalSpaceHomeomorphOfRangeEq
     [PathConnectedSpace E] [LocallyPathConnectedSpace E]
     [PathConnectedSpace F] [LocallyPathConnectedSpace F]
     (hp : _root_.IsCoveringMap p) (hq : _root_.IsCoveringMap q) (hpe : p e₀ = x) (hqf : q f₀ = x)
-    (hrange : (mapOfEq ⟨p, hp.continuous⟩ hpe).range =
-      (mapOfEq ⟨q, hq.continuous⟩ hqf).range) :
+    (hrange : (mapOfEq ⟨p, hp.continuous⟩ hpe).range = (mapOfEq ⟨q, hq.continuous⟩ hqf).range) :
     E ≃ₜ F :=
   (IsCoveringMap.exists_homeomorph_comp_eq_of_range_eq hp hq hpe hqf hrange).choose
 

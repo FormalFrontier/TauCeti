@@ -134,8 +134,7 @@ alias windingNumber_modelSector := indexIntegral_arc
 `[0, 2π]` specialization of `indexIntegral_arc` (`2π / 2π = 1`). Its value also follows from
 Mathlib's `circleIntegral.integral_sub_center_inv`; this is the raw-index-integral form of that
 normalization used as a Layer-1 target. -/
-theorem windingNumber_circle {c : ℂ} {r : ℝ} (hr : r ≠ 0) :
-    (2 * (Real.pi : ℂ) * Complex.I)⁻¹ *
+theorem windingNumber_circle {c : ℂ} {r : ℝ} (hr : r ≠ 0) : (2 * (Real.pi : ℂ) * Complex.I)⁻¹ *
         ∫ θ in (0 : ℝ)..(2 * Real.pi), deriv (circleMap c r) θ / (circleMap c r θ - c)
       = 1 := by
   have hpi : (Real.pi : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr Real.pi_ne_zero

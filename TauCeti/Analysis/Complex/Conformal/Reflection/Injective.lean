@@ -100,8 +100,7 @@ theorem mapsTo_schwarzReflection_im_pos
 /-- The reflected branch takes the lower part of a conjugation-symmetric domain into the open
 lower half-plane: it conjugates a value of `f` at a point of the open upper part, and conjugation
 reverses the sign of the imaginary part. -/
-theorem mapsTo_schwarzReflection_im_neg
-    (hΩ : Set.MapsTo (starRingEnd ℂ) Ω Ω)
+theorem mapsTo_schwarzReflection_im_neg (hΩ : Set.MapsTo (starRingEnd ℂ) Ω Ω)
     (hupper : Set.MapsTo f (Ω ∩ {z : ℂ | 0 < z.im}) {z : ℂ | 0 < z.im}) :
     Set.MapsTo (schwarzReflection f) (Ω ∩ {z : ℂ | z.im < 0}) {z : ℂ | z.im < 0} := by
   rintro z ⟨hzΩ, (hzim : z.im < 0)⟩
@@ -135,11 +134,9 @@ branch the injectivity of `f` applies, on the lower branch after cancelling the 
 
 Injectivity alone does not need `f` to be *real* on the axis, only to stay in the closed upper
 half-plane there; the corollaries below feed `haxis` from the reflection principle's `hreal`. -/
-theorem injOn_schwarzReflection_of_symmetric
-    (hΩ : Set.MapsTo (starRingEnd ℂ) Ω Ω)
+theorem injOn_schwarzReflection_of_symmetric (hΩ : Set.MapsTo (starRingEnd ℂ) Ω Ω)
     (hupper : Set.MapsTo f (Ω ∩ {z : ℂ | 0 < z.im}) {z : ℂ | 0 < z.im})
-    (haxis : ∀ z ∈ Ω, z.im = 0 → 0 ≤ (f z).im)
-    (hinj : Set.InjOn f (Ω ∩ {z : ℂ | 0 ≤ z.im})) :
+    (haxis : ∀ z ∈ Ω, z.im = 0 → 0 ≤ (f z).im) (hinj : Set.InjOn f (Ω ∩ {z : ℂ | 0 ≤ z.im})) :
     Set.InjOn (schwarzReflection f) Ω := by
   intro z hz w hw hzw
   rcases le_or_gt 0 z.im with hz0 | hz0 <;> rcases le_or_gt 0 w.im with hw0 | hw0
@@ -167,8 +164,7 @@ theorem injOn_schwarzReflection_of_symmetric
 /-- The image of the reflection extension is the image of the closed upper part together with its
 mirror image in the real axis. The real axis contributes to both pieces, since `f` is real
 there. -/
-theorem image_schwarzReflection_of_symmetric
-    (hΩ : Set.MapsTo (starRingEnd ℂ) Ω Ω)
+theorem image_schwarzReflection_of_symmetric (hΩ : Set.MapsTo (starRingEnd ℂ) Ω Ω)
     (hreal : ∀ z ∈ Ω, z.im = 0 → (f z).im = 0) :
     schwarzReflection f '' Ω =
       f '' (Ω ∩ {z : ℂ | 0 ≤ z.im}) ∪ (starRingEnd ℂ) '' (f '' (Ω ∩ {z : ℂ | 0 ≤ z.im})) := by
@@ -196,8 +192,7 @@ hypotheses of the reflection principle, together with injectivity of `f` on the 
 and the requirement that the open upper part goes to the open upper half-plane, the derivative of
 the extension vanishes nowhere on `Ω`. At a point of `Ω ∩ ℝ` this is a statement about the
 boundary behaviour of `f`, which is not assumed differentiable there. -/
-theorem deriv_schwarzReflection_ne_zero
-    (hΩopen : IsOpen Ω) (hΩ : Set.MapsTo (starRingEnd ℂ) Ω Ω)
+theorem deriv_schwarzReflection_ne_zero (hΩopen : IsOpen Ω) (hΩ : Set.MapsTo (starRingEnd ℂ) Ω Ω)
     (hcont : ContinuousOn f (Ω ∩ {z : ℂ | 0 ≤ z.im}))
     (hholo : DifferentiableOn ℂ f (Ω ∩ {z : ℂ | 0 < z.im}))
     (hreal : ∀ z ∈ Ω, z.im = 0 → (f z).im = 0)

@@ -94,8 +94,7 @@ theorem map_fixingSubgroup_diffCongr (e : M ≃ₘ^n⟮I, J⟯ N) (s : Set M) :
 /-- Conjugation by `e` maps the subgroup fixing `s` pointwise onto the subgroup fixing a named
 target `t` pointwise, when `t` is the image of `s`. -/
 theorem map_fixingSubgroup_diffCongr_of_image_eq (e : M ≃ₘ^n⟮I, J⟯ N) {s : Set M} {t : Set N}
-    (hst : e '' s = t) :
-    (fixingSubgroup (I := I) (n := n) s).map (diffCongr e).toMonoidHom =
+    (hst : e '' s = t) : (fixingSubgroup (I := I) (n := n) s).map (diffCongr e).toMonoidHom =
       fixingSubgroup (I := J) (n := n) t := by
   rw [← hst]
   exact map_fixingSubgroup_diffCongr e s
@@ -122,8 +121,7 @@ theorem diffCongr_symm_mem_fixingSubgroup (e : M ≃ₘ^n⟮I, J⟯ N) {s : Set 
 /-- Conjugation by a diffeomorphism identifies the relative diffeomorphism group fixing `s`
 pointwise with the relative diffeomorphism group fixing a named target `t` pointwise, when `t` is
 the image of `s`. -/
-def relativeDiffCongrOfImageEq (e : M ≃ₘ^n⟮I, J⟯ N) {s : Set M} {t : Set N}
-    (hst : e '' s = t) :
+def relativeDiffCongrOfImageEq (e : M ≃ₘ^n⟮I, J⟯ N) {s : Set M} {t : Set N} (hst : e '' s = t) :
     fixingSubgroup (I := I) (n := n) s ≃*
       fixingSubgroup (I := J) (n := n) t :=
   ((diffCongr e).subgroupMap (fixingSubgroup (I := I) (n := n) s)).trans
@@ -190,8 +188,7 @@ theorem relativeDiffCongr_symm_apply (e : M ≃ₘ^n⟮I, J⟯ N) (s : Set M)
 /-- Pointwise formula for the inverse named-target relative conjugation equivalence. -/
 @[grind =]
 theorem relativeDiffCongrOfImageEq_symm_apply_apply (e : M ≃ₘ^n⟮I, J⟯ N)
-    {s : Set M} {t : Set N} (hst : e '' s = t)
-    (ψ : fixingSubgroup (I := J) (n := n) t) (x : M) :
+    {s : Set M} {t : Set N} (hst : e '' s = t) (ψ : fixingSubgroup (I := J) (n := n) t) (x : M) :
     (((relativeDiffCongrOfImageEq e hst).symm ψ : M ≃ₘ^n⟮I, I⟯ M) x) =
       e.symm ((ψ : N ≃ₘ^n⟮J, J⟯ N) (e x)) := by
   rw [relativeDiffCongrOfImageEq_symm_apply]

@@ -56,8 +56,8 @@ theorem IsComplexLinearMap.map_complexModule_smul {J : AlmostComplexStructure V}
     letI := J.complexModule
     letI := J'.complexModule
     F (z • v) = z • F v := by
-  letI := J.complexModule
-  letI := J'.complexModule
+  let := J.complexModule
+  let := J'.complexModule
   rw [J.complexModule_smul_def z v, J'.complexModule_smul_def z (F v), map_add, map_smul,
     map_smul, (isComplexLinearMap_iff_apply J J' F).mp hF v]
 
@@ -69,8 +69,8 @@ theorem isComplexLinearMap_iff_complexModule_map_smul (J : AlmostComplexStructur
       letI := J.complexModule
       letI := J'.complexModule
       ∀ (z : ℂ) (v : V), F (z • v) = z • F v := by
-  letI := J.complexModule
-  letI := J'.complexModule
+  let := J.complexModule
+  let := J'.complexModule
   refine ⟨fun hF z v => hF.map_complexModule_smul z v, fun h => ?_⟩
   refine (isComplexLinearMap_iff_apply J J' F).mpr fun v => ?_
   have hv := h Complex.I v
@@ -108,10 +108,10 @@ theorem isComplexLinearMap_restrictScalars (J : AlmostComplexStructure V)
     letI := J.complexModule_isScalarTower
     letI := J'.complexModule_isScalarTower
     IsComplexLinearMap J J' (G.restrictScalars ℝ) := by
-  letI := J.complexModule
-  letI := J'.complexModule
-  letI := J.complexModule_isScalarTower
-  letI := J'.complexModule_isScalarTower
+  let := J.complexModule
+  let := J'.complexModule
+  let := J.complexModule_isScalarTower
+  let := J'.complexModule_isScalarTower
   refine (isComplexLinearMap_iff_apply J J' _).mpr fun v => ?_
   simp only [LinearMap.restrictScalars_apply]
   rw [← J.complexModule_I_smul v, ← J'.complexModule_I_smul (G v), map_smul]
@@ -126,10 +126,10 @@ theorem IsComplexLinearMap.restrictScalars_toComplexLinearMap {J : AlmostComplex
     letI := J.complexModule_isScalarTower
     letI := J'.complexModule_isScalarTower
     hF.toComplexLinearMap.restrictScalars ℝ = F := by
-  letI := J.complexModule
-  letI := J'.complexModule
-  letI := J.complexModule_isScalarTower
-  letI := J'.complexModule_isScalarTower
+  let := J.complexModule
+  let := J'.complexModule
+  let := J.complexModule_isScalarTower
+  let := J'.complexModule_isScalarTower
   exact LinearMap.ext fun _ => rfl
 
 /-- Forgetting a `ℂ`-linear map down to the real scalars and repackaging recovers the original
@@ -143,10 +143,10 @@ theorem toComplexLinearMap_isComplexLinearMap_restrictScalars (J : AlmostComplex
     letI := J.complexModule_isScalarTower
     letI := J'.complexModule_isScalarTower
     (isComplexLinearMap_restrictScalars J J' G).toComplexLinearMap = G := by
-  letI := J.complexModule
-  letI := J'.complexModule
-  letI := J.complexModule_isScalarTower
-  letI := J'.complexModule_isScalarTower
+  let := J.complexModule
+  let := J'.complexModule
+  let := J.complexModule_isScalarTower
+  let := J'.complexModule_isScalarTower
   exact LinearMap.ext fun _ => rfl
 
 /-- The morphism-level form of the dictionary between almost complex structures and complex module

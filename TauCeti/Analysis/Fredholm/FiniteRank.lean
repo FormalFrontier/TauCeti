@@ -29,13 +29,17 @@ namespace TauCeti
 
 open Module
 
+section Topological
+
 variable {𝕜 E F : Type*} [NontriviallyNormedField 𝕜] [CompleteSpace 𝕜]
-variable [NormedAddCommGroup E] [NormedSpace 𝕜 E]
-variable [NormedAddCommGroup F] [NormedSpace 𝕜 F]
+variable [AddCommGroup E] [Module 𝕜 E] [TopologicalSpace E]
+  [IsTopologicalAddGroup E] [ContinuousSMul 𝕜 E] [T2Space E]
+variable [AddCommGroup F] [Module 𝕜 F] [TopologicalSpace F]
+  [IsTopologicalAddGroup F] [ContinuousSMul 𝕜 F] [T2Space F]
 variable {T K : E →L[𝕜] F}
 
-/-- Over a complete nontrivially normed field, perturbing a Fredholm operator by an operator of
-finite rank leaves it Fredholm. -/
+/-- Over a complete nontrivially normed field, perturbing a Fredholm operator between Hausdorff
+topological vector spaces by an operator of finite rank leaves it Fredholm. -/
 theorem _root_.ContinuousLinearMap.IsFredholm.add_of_finiteDimensional_range
     (hT : ContinuousLinearMap.IsFredholm T)
     (hK : FiniteDimensional 𝕜 (LinearMap.range (K : E →ₗ[𝕜] F))) :
@@ -51,6 +55,13 @@ theorem _root_.ContinuousLinearMap.IsFredholm.add_of_finiteDimensional_range
     simpa only [ContinuousLinearMap.toLinearMap_add, add_sub_cancel_left]
       using (Submodule.fg_iff_finiteDimensional _).mpr hK
 
+end Topological
+
+variable {𝕜 E F : Type*} [NontriviallyNormedField 𝕜] [CompleteSpace 𝕜]
+variable [NormedAddCommGroup E] [NormedSpace 𝕜 E]
+variable [NormedAddCommGroup F] [NormedSpace 𝕜 F]
+variable {T K : E →L[𝕜] F}
+
 namespace ContinuousLinearMap
 
 /-- Over a complete nontrivially normed field, perturbing a Fredholm operator by an operator of
@@ -60,7 +71,7 @@ restriction. -/
 theorem index_add_of_finiteDimensional_range (hT : ContinuousLinearMap.IsFredholm T)
     (hK : FiniteDimensional 𝕜 (LinearMap.range (K : E →ₗ[𝕜] F))) :
     index (T + K) = index T := by
-  haveI := hK
+  have := hK
   set ι := (LinearMap.ker (K : E →ₗ[𝕜] F)).subtypeL with hι
   have hιF : ContinuousLinearMap.IsFredholm ι := isFredholm_ker_subtypeL hK
   have hcomp : (T + K).comp ι = T.comp ι := by

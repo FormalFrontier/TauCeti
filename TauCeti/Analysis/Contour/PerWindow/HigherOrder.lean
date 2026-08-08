@@ -125,10 +125,8 @@ theorem intervalIntegrable_pow_inv_mul_deriv_truncated {γ : ℝ → ℂ} {s : �
 interval avoiding the pole: the integral is the boundary difference of the antiderivative
 `c · (-(k-1)⁻¹ (· - s)^{-(k-1)}) ∘ γ`. -/
 theorem integral_pow_inv_mul_deriv_eq_sub {γ : ℝ → ℂ} {s : ℂ} {k : ℕ} (hk : 2 ≤ k) (c : ℂ)
-    {l u : ℝ} (hlu : l ≤ u) {P : Set ℝ} (hP : P.Countable)
-    (h_ne : ∀ t ∈ Icc l u, γ t ≠ s)
-    (h_diff : ∀ t ∈ Ioo l u \ P, DifferentiableAt ℝ γ t)
-    (hγ_cont : ContinuousOn γ (Icc l u))
+    {l u : ℝ} (hlu : l ≤ u) {P : Set ℝ} (hP : P.Countable) (h_ne : ∀ t ∈ Icc l u, γ t ≠ s)
+    (h_diff : ∀ t ∈ Ioo l u \ P, DifferentiableAt ℝ γ t) (hγ_cont : ContinuousOn γ (Icc l u))
     (hderiv_int : IntervalIntegrable (fun t => deriv γ t) MeasureTheory.volume l u) :
     ∫ t in l..u, c / (γ t - s) ^ k * deriv γ t =
       c * (-(↑(k - 1) : ℂ)⁻¹ * ((γ u - s) ^ (k - 1))⁻¹) -
@@ -188,8 +186,7 @@ private lemma integral_pow_inv_mul_deriv_eq_sub_of_subinterval {γ : ℝ → ℂ
     {k : ℕ} (hk : 2 ≤ k) (c : ℂ) {P : Set ℝ} (hP : P.Countable)
     (hγ_cont : ContinuousOn γ (Icc (t_i - r) (t_i + r)))
     (hγ_diffP : ∀ t ∈ Ioo (t_i - r) (t_i + r) \ P, DifferentiableAt ℝ γ t)
-    (hderiv_int : IntervalIntegrable (fun t => deriv γ t) MeasureTheory.volume
-      (t_i - r) (t_i + r))
+    (hderiv_int : IntervalIntegrable (fun t => deriv γ t) MeasureTheory.volume (t_i - r) (t_i + r))
     (h_unique : ∀ t ∈ Icc (t_i - r) (t_i + r), γ t = s → t = t_i)
     {l u : ℝ} (hlu : l ≤ u) (hl : t_i - r ≤ l) (hu : u ≤ t_i + r) (h_excl : t_i ∉ Icc l u) :
     ∫ t in l..u, c / (γ t - s) ^ k * deriv γ t =
@@ -210,20 +207,16 @@ unique crossing on the window, the `ε`-truncated window integral of the order-`
 `c / (z - s)^k` converges as `ε → 0⁺` to the boundary difference of its antiderivative. -/
 theorem perWindow_higherOrder_truncated_integral_tendsto {γ : ℝ → ℂ} {s : ℂ} {t_i r : ℝ}
     {L_R L_L : ℂ} {n k : ℕ} {P : Set ℝ} (hr_pos : 0 < r) (h_at : γ t_i = s)
-    (hγ_cont : ContinuousOn γ (Icc (t_i - r) (t_i + r)))
-    (hL_R : L_R ≠ 0) (hL_L : L_L ≠ 0)
+    (hγ_cont : ContinuousOn γ (Icc (t_i - r) (t_i + r))) (hL_R : L_R ≠ 0) (hL_L : L_L ≠ 0)
     (h_tendsto_R : Tendsto (deriv γ) (𝓝[>] t_i) (𝓝 L_R))
     (h_tendsto_L : Tendsto (deriv γ) (𝓝[<] t_i) (𝓝 L_L))
     (h_diff_R : ∀ᶠ t in 𝓝[>] t_i, DifferentiableAt ℝ γ t)
-    (h_diff_L : ∀ᶠ t in 𝓝[<] t_i, DifferentiableAt ℝ γ t)
-    (hP : P.Countable)
+    (h_diff_L : ∀ᶠ t in 𝓝[<] t_i, DifferentiableAt ℝ γ t) (hP : P.Countable)
     (hγ_diffP : ∀ t ∈ Ioo (t_i - r) (t_i + r) \ P, DifferentiableAt ℝ γ t)
-    (hderiv_int : IntervalIntegrable (fun t => deriv γ t) MeasureTheory.volume
-      (t_i - r) (t_i + r))
+    (hderiv_int : IntervalIntegrable (fun t => deriv γ t) MeasureTheory.volume (t_i - r) (t_i + r))
     (h_unique : ∀ t ∈ Icc (t_i - r) (t_i + r), γ t = s → t = t_i)
     (h_flat : FlatOfOrder γ t_i n) (hk : 2 ≤ k) (hkn : k ≤ n)
-    (h_B : (L_R / (‖L_R‖ : ℂ)) ^ (k - 1) = ((-L_L) / (‖L_L‖ : ℂ)) ^ (k - 1))
-    (c : ℂ) :
+    (h_B : (L_R / (‖L_R‖ : ℂ)) ^ (k - 1) = ((-L_L) / (‖L_L‖ : ℂ)) ^ (k - 1)) (c : ℂ) :
     Tendsto (fun ε : ℝ => ∫ t in (t_i - r)..(t_i + r),
         if ‖γ t - s‖ > ε then c / (γ t - s) ^ k * deriv γ t else 0)
       (𝓝[>] (0 : ℝ))

@@ -20,6 +20,10 @@ The genus field of `ℚ(√d)` is the compositum of the `ℚ(√(radicand D*))` 
 discriminants `D*` dividing the discriminant of `ℚ(√d)`; this function supplies that discriminant
 from the squarefree radicand `d`.
 
+It also records which primes divide the fundamental discriminant, feeding the prime-ramification
+law in `Quadratic/Ramification.lean`: a prime coprime to `2` divides it exactly when it divides
+`d`, and `2` divides it exactly when `d ≢ 1 (mod 4)`.
+
 ## Main definitions and results
 
 * `TauCeti.Multiquadratic.fundamentalDiscriminant`: `d` if `d ≡ 1 (mod 4)`, else `4 * d`, with its
@@ -28,6 +32,12 @@ from the squarefree radicand `d`.
   its fundamental discriminant is a fundamental discriminant.
 * `TauCeti.Multiquadratic.exists_sq_mul_eq_fundamentalDiscriminant`: it equals `c² * d` for some
   `c ∈ {1, 2}`, so it lies in the square class of `d`.
+* `TauCeti.Multiquadratic.dvd_fundamentalDiscriminant_iff`: for `p` coprime to `2`,
+  `p ∣ fundamentalDiscriminant d ↔ p ∣ d` (the ramified odd primes are the divisors of `d`).
+* `TauCeti.Multiquadratic.two_not_dvd_fundamentalDiscriminant_iff_mod_four_eq_one`:
+  `2 ∤ fundamentalDiscriminant d ↔ d ≡ 1 (mod 4)` (`2` is unramified exactly then).
+* `TauCeti.Multiquadratic.fundamentalDiscriminant_primeDiscriminantRadicand`: a prime discriminant
+  is the fundamental discriminant of its own radicand.
 -/
 
 public section
@@ -83,5 +93,38 @@ theorem isFundamentalDiscriminant_fundamentalDiscriminant {d : ℤ} (hd : Square
     exact Or.inl ⟨hmod, hd⟩
   · rw [fundamentalDiscriminant_of_mod_four_ne_one hmod, isFundamentalDiscriminant_iff]
     exact Or.inr ⟨d, rfl, by omega, hd⟩
+
+/-- For `p` coprime to `2`, divisibility by `fundamentalDiscriminant d` is the same as divisibility
+by `d`: the only extra factor in the `d ≢ 1 (mod 4)` case is `4`, which is coprime to `p`. -/
+@[simp] theorem dvd_fundamentalDiscriminant_iff {d p : ℤ} (hp : IsCoprime p 2) :
+    p ∣ fundamentalDiscriminant d ↔ p ∣ d := by
+  rw [fundamentalDiscriminant_def]
+  split_ifs with h
+  · exact Iff.rfl
+  · -- `p` is coprime to `2`, hence to `4 = 2 * 2`; so `p ∣ 4 * d ↔ p ∣ d`.
+    have hp4 : IsCoprime p 4 := by
+      have h : IsCoprime p (2 * 2) := hp.mul_right hp
+      norm_num at h; exact h
+    refine ⟨fun hpd => hp4.dvd_of_dvd_mul_right ?_, fun hpd => hpd.mul_left 4⟩
+    rwa [mul_comm] at hpd
+
+/-- The fundamental discriminant is odd exactly when `d ≡ 1 (mod 4)` (otherwise it is `4d`).
+Not `@[simp]`: `Int.two_dvd_ne_zero` already normalises `¬ 2 ∣ x` to `x % 2 = 1`, so this `¬ ∣`
+left-hand side is not a simp normal form (it is applied explicitly instead). -/
+theorem two_not_dvd_fundamentalDiscriminant_iff_mod_four_eq_one (d : ℤ) :
+    ¬ (2 : ℤ) ∣ fundamentalDiscriminant d ↔ d % 4 = 1 := by
+  rw [fundamentalDiscriminant_def]; split_ifs with h <;> omega
+
+/-- **A prime discriminant is the fundamental discriminant of its own radicand.** For an odd prime
+discriminant this is the congruence `p* ≡ 1 (mod 4)`; for `-4`, `8`, `-8` it is the factor `4`
+removed by `primeDiscriminantRadicand`. So `ℚ(√(radicand D))` is the quadratic field of
+discriminant `D`. -/
+theorem fundamentalDiscriminant_primeDiscriminantRadicand {D : ℤ} (hD : IsPrimeDiscriminant D) :
+    fundamentalDiscriminant (primeDiscriminantRadicand D) = D := by
+  rcases isPrimeDiscriminant_iff.mp hD with hev | ⟨p, _hp, hodd, rfl⟩
+  · rw [primeDiscriminantRadicand_of_isEvenPrimeDiscriminant hev]
+    rcases hev with rfl | rfl | rfl <;> norm_num [fundamentalDiscriminant_def]
+  · rw [primeDiscriminantRadicand_oddPrimeDiscriminant hodd,
+      fundamentalDiscriminant_of_mod_four_eq_one (oddPrimeDiscriminant_mod_four_eq_one hodd)]
 
 end TauCeti.Multiquadratic

@@ -86,8 +86,7 @@ For an integrable `f` and the process obtained by reversing an antitone filtrati
 number of upcrossings is uniformly bounded, independent of the time horizon `N`, by Doob's
 upcrossing inequality. The public `upcrossings_bdd_uniform` transfers this surrogate bound to the
 genuine antitone sequence `n ↦ μ[f | 𝔽 n]`. -/
-private lemma lintegral_upcrossings_revCEFinite_bdd
-    [IsFiniteMeasure μ]
+private lemma lintegral_upcrossings_revCEFinite_bdd [IsFiniteMeasure μ]
     (h_antitone : Antitone 𝔽) (h_le : ∀ n, 𝔽 n ≤ (inferInstance : MeasurableSpace Ω))
     (f : Ω → ℝ) (hf : Integrable f μ) (a b : ℝ) (hab : a < b) :
     ∃ C : ENNReal, C < ⊤ ∧ ∀ N,
@@ -161,8 +160,7 @@ private lemma upcrossingsBefore_condExp_le_upcrossings_neg_revCEFinite
 /-- Finite-horizon integral step: negating commutes a.e. with the reverse conditional-expectation
 process (via `condExp_neg`), so the upcrossing integrals of the negated process and of the reverse
 process of `-f` agree. -/
-private lemma lintegral_upcrossings_neg_revCEFinite_eq
-    (f : Ω → ℝ) (a b : ℝ) (N : ℕ) :
+private lemma lintegral_upcrossings_neg_revCEFinite_eq (f : Ω → ℝ) (a b : ℝ) (N : ℕ) :
     ∫⁻ ω, upcrossings (-b) (-a)
         (-(fun n => revCEFinite (μ := μ) f 𝔽 N n)) ω ∂μ
       = ∫⁻ ω, upcrossings (-b) (-a)
@@ -185,8 +183,7 @@ private lemma lintegral_upcrossings_neg_revCEFinite_eq
 the total `upcrossings` integral, by monotone convergence in the horizon `N`. The adapted process
 `g` supplies the measurability of each `upcrossingsBefore` count. -/
 private lemma lintegral_upcrossings_le_of_forall_lintegral_upcrossingsBefore_le
-    {g : ℕ → Ω → ℝ} {a b : ℝ} {C : ℝ≥0∞}
-    {ℱ : Filtration ℕ (inferInstance : MeasurableSpace Ω)}
+    {g : ℕ → Ω → ℝ} {a b : ℝ} {C : ℝ≥0∞} {ℱ : Filtration ℕ (inferInstance : MeasurableSpace Ω)}
     (h_adapted : StronglyAdapted ℱ g) (hab : a < b)
     (h_N_bound : ∀ N, ∫⁻ ω, ↑(upcrossingsBefore a b g N ω) ∂μ ≤ C) :
     ∫⁻ ω, upcrossings a b g ω ∂μ ≤ C := by

@@ -67,8 +67,7 @@ theorem expShift_apply (S : StronglyContinuousSemigroup X) (lambda : ℝ) (t : �
 
 omit [CompleteSpace X] in
 /-- Pointwise form of `StronglyContinuousSemigroup.expShift_apply`. -/
-theorem expShift_apply_apply (S : StronglyContinuousSemigroup X) (lambda : ℝ)
-    (t : ℝ≥0) (x : X) :
+theorem expShift_apply_apply (S : StronglyContinuousSemigroup X) (lambda : ℝ) (t : ℝ≥0) (x : X) :
     S.expShift lambda t x = Real.exp (-(lambda * (t : ℝ))) • S t x :=
   by rw [expShift_apply, smul_apply]
 
@@ -102,8 +101,7 @@ theorem expShift_realOperator_of_nonneg (S : StronglyContinuousSemigroup X)
 omit [CompleteSpace X] in
 /-- Pointwise real-time form of the shifted operator at nonnegative times. -/
 theorem expShift_realOperator_apply_of_nonneg (S : StronglyContinuousSemigroup X)
-    (lambda t : ℝ) (ht : 0 ≤ t) (x : X) :
-    (S.expShift lambda).realOperator t x =
+    (lambda t : ℝ) (ht : 0 ≤ t) (x : X) : (S.expShift lambda).realOperator t x =
       Real.exp (-(lambda * t)) • S.realOperator t x := by
   rw [S.expShift_realOperator_of_nonneg lambda t ht]
   rw [smul_apply]

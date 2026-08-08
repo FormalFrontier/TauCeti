@@ -63,10 +63,8 @@ an ideal `Q` of `𝓞 K` above `p`. Then `σ = 1` iff every `d i` is a quadratic
 Combined with the splitting law, this is the Frobenius-theoretic reading of complete
 splitting. -/
 theorem isArithFrobAt_multiquadratic_eq_one_iff (d : ι → ℤ) (r : ι → K)
-    (hr : ∀ i, r i ^ 2 = algebraMap ℤ K (d i))
-    (htop : IntermediateField.adjoin ℚ (Set.range r) = ⊤)
-    (hodd : p ≠ 2) (hcop : ∀ i, ¬ (p : ℤ) ∣ d i)
-    (Q : Ideal (𝓞 K)) [Q.LiesOver (span {(p : ℤ)})]
+    (hr : ∀ i, r i ^ 2 = algebraMap ℤ K (d i)) (htop : IntermediateField.adjoin ℚ (Set.range r) = ⊤)
+    (hodd : p ≠ 2) (hcop : ∀ i, ¬ (p : ℤ) ∣ d i) (Q : Ideal (𝓞 K)) [Q.LiesOver (span {(p : ℤ)})]
     {σ : K ≃ₐ[ℚ] K} (hσ : IsArithFrobAt ℤ σ Q) :
     σ = 1 ↔ ∀ i, legendreSym p (d i) = 1 := by
   constructor
@@ -87,8 +85,7 @@ the multiquadratic splitting law; the sign-vector description under `galoisGroup
 formed here (see the module docstring). The `IsGalois ℚ K` hypothesis holds in particular when
 the `r i` generate `K` (`TauCeti.Multiquadratic.isGalois` transported along `adjoin ℚ … = ⊤`). -/
 theorem exists_isArithFrobAt_multiquadratic [IsGalois ℚ K] (d : ι → ℤ) (r : ι → K)
-    (hr : ∀ i, r i ^ 2 = algebraMap ℤ K (d i))
-    (hodd : p ≠ 2) (hcop : ∀ i, ¬ (p : ℤ) ∣ d i)
+    (hr : ∀ i, r i ^ 2 = algebraMap ℤ K (d i)) (hodd : p ≠ 2) (hcop : ∀ i, ¬ (p : ℤ) ∣ d i)
     (Q : Ideal (𝓞 K)) [Q.IsPrime] [Q.LiesOver (span {(p : ℤ)})] :
     ∃ σ : K ≃ₐ[ℚ] K, IsArithFrobAt ℤ σ Q ∧
       ∀ i, σ (r i) = legendreSym p (d i) • r i := by
@@ -127,8 +124,7 @@ arithmetic Frobenius `σ` on `M` at a prime `Q` above `p`, the `i`-th coordinate
 pattern is `0` when `dᵢ` is a quadratic residue mod `p` and `1` otherwise. -/
 theorem signPattern_frobenius (hroot : ∀ i, root i ^ 2 = algebraMap ℤ L (d i))
     (p : ℕ) [Fact p.Prime] (hodd : p ≠ 2) (hcop : ∀ i, ¬ (p : ℤ) ∣ d i)
-    (Q : Ideal (𝓞 ↥(IntermediateField.adjoin ℚ (Set.range root))))
-    [Q.LiesOver (span {(p : ℤ)})]
+    (Q : Ideal (𝓞 ↥(IntermediateField.adjoin ℚ (Set.range root)))) [Q.LiesOver (span {(p : ℤ)})]
     {σ : ↥(IntermediateField.adjoin ℚ (Set.range root)) ≃ₐ[ℚ]
         ↥(IntermediateField.adjoin ℚ (Set.range root))}
     (hσ : IsArithFrobAt ℤ σ Q) (i : ι) :
@@ -155,12 +151,10 @@ independence of the `dᵢ` (so `TauCeti.Multiquadratic.galoisGroupEquiv` is the 
 `Gal(M/ℚ) ≅ (ℤ/2)ⁿ`), an arithmetic Frobenius `σ` at a prime `Q` above the odd prime `p ∤ dᵢ`
 maps to the vector of Legendre symbols `i ↦ (dᵢ/p)`. This is the roadmap's Layer 1 Frobenius
 statement. -/
-theorem galoisGroupEquiv_frobenius [Finite ι]
-    (hroot : ∀ i, root i ^ 2 = algebraMap ℤ L (d i))
+theorem galoisGroupEquiv_frobenius [Finite ι] (hroot : ∀ i, root i ^ 2 = algebraMap ℤ L (d i))
     (hindep : ∀ S : Finset ι, S.Nonempty → ¬ IsSquare (∏ i ∈ S, (d i : ℚ)))
     (p : ℕ) [Fact p.Prime] (hodd : p ≠ 2) (hcop : ∀ i, ¬ (p : ℤ) ∣ d i)
-    (Q : Ideal (𝓞 ↥(IntermediateField.adjoin ℚ (Set.range root))))
-    [Q.LiesOver (span {(p : ℤ)})]
+    (Q : Ideal (𝓞 ↥(IntermediateField.adjoin ℚ (Set.range root)))) [Q.LiesOver (span {(p : ℤ)})]
     {σ : ↥(IntermediateField.adjoin ℚ (Set.range root)) ≃ₐ[ℚ]
         ↥(IntermediateField.adjoin ℚ (Set.range root))}
     (hσ : IsArithFrobAt ℤ σ Q) :
