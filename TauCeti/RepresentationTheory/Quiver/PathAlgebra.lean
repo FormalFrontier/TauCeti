@@ -13,6 +13,7 @@ public import Mathlib.LinearAlgebra.Finsupp.VectorSpace
 public import Mathlib.LinearAlgebra.FiniteDimensional.Defs
 public import Mathlib.LinearAlgebra.FreeModule.Finite.Basic
 public import Mathlib.RingTheory.Adjoin.Basic
+public import Mathlib.RingTheory.Idempotents
 
 /-!
 # The path algebra of a quiver
@@ -46,7 +47,8 @@ idempotents `e`, so left multiplication by `α` carries the `i`-component of a l
 * `TauCeti.PathAlgebra.one_def`: the vertex idempotents sum to `1`; they are
   orthogonal by `TauCeti.PathAlgebra.vertexIdempotent_mul_vertexIdempotent_of_ne`, idempotent by
   `TauCeti.PathAlgebra.vertexIdempotent_mul_self` and nonzero by
-  `TauCeti.PathAlgebra.vertexIdempotent_ne_zero`.
+  `TauCeti.PathAlgebra.vertexIdempotent_ne_zero`. The first three are bundled as
+  `TauCeti.PathAlgebra.completeOrthogonalIdempotents_vertexIdempotent`.
 * `TauCeti.module_finite_pathAlgebra` and `TauCeti.finrank_pathAlgebra`: `kQ` is a free module of
   rank the number of paths of `Q`, with `TauCeti.pathAlgebraBasis_repr_single` reading off the
   coordinates of a basis path. The specialization to a finite acyclic quiver, whose paths are
@@ -506,6 +508,10 @@ variable (k) in
 noncomputable def vertexIdempotent (v : Q) : pathAlgebra k Q :=
   ofPath ⟨v, v, _root_.Quiver.Path.nil⟩
 
+/-- The vertex idempotent is the basis element of the trivial path at its vertex. -/
+theorem vertexIdempotent_eq_ofPath (v : Q) :
+    vertexIdempotent k v = (ofPath ⟨v, v, _root_.Quiver.Path.nil⟩ : pathAlgebra k Q) := (rfl)
+
 /-- The vertex idempotent is the basis element of the trivial path, with coefficient one. -/
 theorem vertexIdempotent_eq_single (v : Q) :
     vertexIdempotent k v
@@ -627,6 +633,16 @@ noncomputable instance : Semiring (pathAlgebra k Q) where
     | zero => exact zero_mul _
     | add f₁ f₂ ih₁ ih₂ => rw [add_mul, ih₁, ih₂]
     | single x r => exact single_mul_one x r
+
+variable (k Q) in
+/-- **The vertex idempotents are a complete orthogonal family of idempotents**: they are
+idempotent, pairwise orthogonal, and sum to `1`. This bundles `TauCeti.PathAlgebra.one_def`
+with the orthogonality and idempotency above. -/
+theorem completeOrthogonalIdempotents_vertexIdempotent [Fintype Q] :
+    CompleteOrthogonalIdempotents fun v : Q => (vertexIdempotent k v : pathAlgebra k Q) where
+  idem v := vertexIdempotent_mul_self v
+  ortho _ _ h := vertexIdempotent_mul_vertexIdempotent_of_ne h
+  complete := one_def.symm
 
 end Unit
 

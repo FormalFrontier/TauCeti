@@ -7,12 +7,13 @@ module
 public import Mathlib.Algebra.DirectSum.Module
 public import Mathlib.LinearAlgebra.Dimension.Constructions
 public import Mathlib.LinearAlgebra.FiniteDimensional.Basic
+public import Mathlib.LinearAlgebra.Projection
 public import Mathlib.RingTheory.Idempotents
 
 /-!
 # A complete family of orthogonal idempotents decomposes every module
 
-Let `R` be an `S`-algebra and let `e : ι → R` be a *complete orthogonal family of idempotents*:
+Let `R` be a semiring and let `e : ι → R` be a *complete orthogonal family of idempotents*:
 `eᵢ eⱼ = 0` for `i ≠ j` and `∑ᵢ eᵢ = 1`. Then every left `R`-module `M` splits as an internal
 direct sum of the `S`-submodules `eᵢ • M`,
 
@@ -30,14 +31,18 @@ module that the family induces.
 ## The two scalar rings
 
 The pieces `eᵢ • M` are *not* `R`-submodules: `R` is noncommutative in the intended applications,
-and `r • (eᵢ • x)` need not lie in `eᵢ • M`. They are submodules over any commutative ring `S`
-acting through the centre of `R`, which is exactly the data of an `S`-algebra structure on `R`
-together with `IsScalarTower S R M`; carrying that ambient `S` is what makes the dimension count
-below available. Taking `S = ℕ` recovers the decomposition as additive submonoids.
+and `r • (eᵢ • x)` need not lie in `eᵢ • M`. They are submodules over any second ring `S` whose
+action on `M` commutes with that of `R`, that is, under `SMulCommClass R S M`, which is exactly
+what makes multiplication by `e` an `S`-linear map (`DistribSMul.toLinearMap`); carrying that
+ambient `S` is what makes the dimension count below available. Taking `S = ℕ` recovers the
+decomposition as additive submonoids, and an `S`-algebra structure on `R` together with
+`IsScalarTower S R M` supplies the hypothesis in the intended applications.
 
 ## Main definitions
 
 * `TauCeti.smulRange S M e`: the `S`-submodule `e • M` of an `R`-module `M`.
+* `TauCeti.smulRangeMap S e f`: the restriction of an `R`-linear map `f : M →ₗ[R] N` to
+  `e • M →ₗ[S] e • N`.
 
 ## Main results
 
@@ -47,12 +52,11 @@ below available. Taking `S = ℕ` recovers the decomposition as additive submono
 * `TauCeti.isInternal_smulRange`: **the decomposition** `M = ⨁ᵢ eᵢ M`. Independence comes from
   orthogonality (`eᵢ` annihilates `eⱼ • M` for `j ≠ i`) and spanning from completeness
   (`x = ∑ᵢ eᵢ • x`).
-* `TauCeti.smul_coeLinearMap`: multiplying by `eᵢ` reads off the `i`-th component of a sum. This
-  is what makes the sum direct, and it describes the inverse of the decomposition
-  (`TauCeti.coe_smulRangeDirectSumEquiv_symm_apply`).
-* `TauCeti.finrank_eq_sum_finrank_smulRange`: the resulting dimension count over a field.
-* `TauCeti.smulRange_le_comap`: an `R`-linear map carries `e • M` into `e • N`, so the pieces are
-  natural in the module.
+* `TauCeti.smul_coeLinearMap_smulRange`: multiplying by `eᵢ` reads off the `i`-th component of a
+  sum. This is what makes the sum direct, and it describes the inverse of the decomposition
+  (`TauCeti.coe_isInternal_smulRange_symm_apply`).
+* `TauCeti.finrank_eq_sum_finrank_smulRange`: for a module finite-dimensional over a field `S`,
+  the dimensions of the pieces add up to the dimension of the module.
 
 ## References
 
@@ -60,6 +64,11 @@ This is the module-theoretic step behind the identification of representations o
 left modules over its path algebra (`quiverRepEquivalence`) in
 `TauCetiRoadmap/RepresentationTheory/QuiverRepresentations/README.md`, whose Layer 1 inverts
 "through the idempotent decomposition `M = ⨁ᵥ eᵥ M` guaranteed by `∑ᵥ eᵥ = 1`".
+
+The decomposition of a module along a complete orthogonal family of idempotents is the classical
+*Peirce decomposition*; see T. Y. Lam, *A First Course in Noncommutative Rings*, §21, or
+Assem--Simson--Skowroński, *Elements of the Representation Theory of Associative Algebras I*,
+Ch. I.4.
 -/
 
 public section
@@ -70,12 +79,12 @@ open scoped DirectSum
 
 section Defs
 
-variable (S M : Type*) {R : Type*} [CommSemiring S] [Semiring R] [Algebra S R]
-  [AddCommMonoid M] [Module S M] [Module R M] [IsScalarTower S R M]
+variable (S M : Type*) {R : Type*} [Semiring S] [Semiring R]
+  [AddCommMonoid M] [Module S M] [Module R M] [SMulCommClass R S M]
 
 /-- The `S`-submodule `e • M` of an `R`-module `M`, the range of multiplication by `e : R`.
 
-The scalars `S` act through the centre of `R`, so multiplication by `e` is `S`-linear even though
+The action of `S` commutes with that of `R`, so multiplication by `e` is `S`-linear even though
 it is not `R`-linear. For an idempotent `e` this submodule is the summand `e` cuts out; see
 `TauCeti.mem_smulRange_iff_smul_eq_self`. -/
 def smulRange (e : R) : Submodule S M :=
@@ -105,26 +114,39 @@ theorem smulRange_zero : smulRange S M (0 : R) = ⊥ := by
   obtain ⟨y, rfl⟩ := mem_smulRange_iff.1 hx
   simp
 
-/-- **Membership in `e • M` for an idempotent `e` is a fixed-point condition.** One direction is
-idempotency, the other is that a fixed point is its own multiple. -/
+/-- **Membership in `e • M` for an idempotent `e` is a fixed-point condition.** This is Mathlib's
+`LinearMap.IsIdempotentElem.mem_range_iff` for the idempotent endomorphism `x ↦ e • x`. -/
 theorem mem_smulRange_iff_smul_eq_self {e : R} (he : IsIdempotentElem e) {x : M} :
-    x ∈ smulRange S M e ↔ e • x = x := by
-  refine ⟨fun hx => ?_, fun hx => mem_smulRange_iff.2 ⟨x, hx⟩⟩
-  obtain ⟨y, rfl⟩ := mem_smulRange_iff.1 hx
-  rw [smul_smul, he.eq]
+    x ∈ smulRange S M e ↔ e • x = x :=
+  LinearMap.IsIdempotentElem.mem_range_iff (he.map (Module.toModuleEnd S M))
 
 /-- Multiplication by an idempotent `e` fixes `e • M` pointwise. -/
-theorem smul_of_mem_smulRange {e : R} (he : IsIdempotentElem e) {x : M}
+theorem smul_eq_self_of_mem_smulRange {e : R} (he : IsIdempotentElem e) {x : M}
     (hx : x ∈ smulRange S M e) : e • x = x :=
   (mem_smulRange_iff_smul_eq_self he).1 hx
+
+/-- **An element that `r` fixes on the left carries the whole module into `r • M`**: if
+`f * r = r` then every multiple of `r` lies in `f • M`. No idempotency is needed. -/
+theorem smul_mem_smulRange_of_mul_eq_self {f r : R} (hr : f * r = r) (x : M) :
+    r • x ∈ smulRange S M f := by
+  rw [← hr, mul_smul]
+  exact smul_mem_smulRange f _
+
+/-- **An element that kills `e` on the right annihilates `e • M`**: if `r * e = 0` then `r` sends
+every element of `e • M` to zero. No idempotency is needed. -/
+theorem smul_eq_zero_of_mul_eq_zero_of_mem_smulRange {r e : R} (hr : r * e = 0) {x : M}
+    (hx : x ∈ smulRange S M e) : r • x = 0 := by
+  obtain ⟨y, rfl⟩ := mem_smulRange_iff.1 hx
+  rw [smul_smul, hr, zero_smul]
 
 end Defs
 
 section Map
 
-variable {S M N R : Type*} [CommSemiring S] [Semiring R] [Algebra S R]
-  [AddCommMonoid M] [Module S M] [Module R M] [IsScalarTower S R M]
-  [AddCommMonoid N] [Module S N] [Module R N] [IsScalarTower S R N]
+variable (S : Type*) {M N R : Type*} [Semiring S] [Semiring R]
+  [AddCommMonoid M] [Module S M] [Module R M] [SMulCommClass R S M]
+  [AddCommMonoid N] [Module S N] [Module R N] [SMulCommClass R S N]
+  [LinearMap.CompatibleSMul M N S R]
 
 /-- **The pieces are natural in the module**: an `R`-linear map carries `e • M` into `e • N`. -/
 theorem smulRange_le_comap (e : R) (f : M →ₗ[R] N) :
@@ -133,18 +155,29 @@ theorem smulRange_le_comap (e : R) (f : M →ₗ[R] N) :
   obtain ⟨y, rfl⟩ := mem_smulRange_iff.1 hx
   exact mem_smulRange_iff.2 ⟨f y, (map_smul f e y).symm⟩
 
+/-- The restriction of an `R`-linear map `M → N` to the pieces cut out by `e`, an `S`-linear map
+`e • M → e • N`. This is `TauCeti.smulRange_le_comap` promoted to the map it describes. -/
+def smulRangeMap (e : R) (f : M →ₗ[R] N) : smulRange S M e →ₗ[S] smulRange S N e :=
+  (f.restrictScalars S).restrict (smulRange_le_comap S e f)
+
+variable {S}
+
+@[simp]
+theorem coe_smulRangeMap_apply (e : R) (f : M →ₗ[R] N) (x : smulRange S M e) :
+    (smulRangeMap S e f x : N) = f (x : M) :=
+  LinearMap.coe_restrict_apply _ x
+
 end Map
 
 section Orthogonal
 
-variable {S M R ι : Type*} [CommSemiring S] [Semiring R] [Algebra S R]
-  [AddCommMonoid M] [Module S M] [Module R M] [IsScalarTower S R M] {e : ι → R}
+variable {S M R ι : Type*} [Semiring S] [Semiring R]
+  [AddCommMonoid M] [Module S M] [Module R M] [SMulCommClass R S M] {e : ι → R}
 
 /-- An orthogonal idempotent annihilates the piece cut out by any of the others. -/
 theorem smul_eq_zero_of_mem_smulRange (he : OrthogonalIdempotents e)
-    {i j : ι} (hij : i ≠ j) {x : M} (hx : x ∈ smulRange S M (e j)) : e i • x = 0 := by
-  obtain ⟨y, rfl⟩ := mem_smulRange_iff.1 hx
-  rw [smul_smul, he.ortho hij, zero_smul]
+    {i j : ι} (hij : i ≠ j) {x : M} (hx : x ∈ smulRange S M (e j)) : e i • x = 0 :=
+  smul_eq_zero_of_mul_eq_zero_of_mem_smulRange (he.ortho hij) hx
 
 /-- The pieces cut out by an orthogonal family are independent: the piece at `i` meets the
 supremum of the others only in `0`, because `eᵢ` fixes the former and kills the latter. -/
@@ -158,12 +191,13 @@ theorem iSupIndep_smulRange (he : OrthogonalIdempotents e) :
     iSup_le fun j => iSup_le fun hj y hy =>
       LinearMap.mem_ker.2 (smul_eq_zero_of_mem_smulRange he (Ne.symm hj) hy)
   have hx0 : e i • x = 0 := LinearMap.mem_ker.1 (hker hx')
-  rw [← smul_of_mem_smulRange (he.idem i) hx, hx0]
+  rw [← smul_eq_self_of_mem_smulRange (he.idem i) hx, hx0]
 
 variable [Fintype ι]
 
 /-- **Completeness is the decomposition of an element**: `x = ∑ᵢ eᵢ • x`. -/
-theorem sum_smul_eq_self (he : CompleteOrthogonalIdempotents e) (x : M) :
+theorem sum_smul_eq_self_of_completeOrthogonalIdempotents
+    (he : CompleteOrthogonalIdempotents e) (x : M) :
     ∑ i, e i • x = x := by
   rw [← Finset.sum_smul, he.complete, one_smul]
 
@@ -171,7 +205,7 @@ theorem sum_smul_eq_self (he : CompleteOrthogonalIdempotents e) (x : M) :
 theorem iSup_smulRange_eq_top (he : CompleteOrthogonalIdempotents e) :
     (⨆ i, smulRange S M (e i)) = ⊤ := by
   refine eq_top_iff.2 fun x _ => ?_
-  rw [← sum_smul_eq_self he x]
+  rw [← sum_smul_eq_self_of_completeOrthogonalIdempotents he x]
   exact Submodule.sum_mem _ fun i _ =>
     Submodule.mem_iSup_of_mem i (smul_mem_smulRange (e i) x)
 
@@ -179,21 +213,22 @@ end Orthogonal
 
 section Internal
 
-variable {S M R ι : Type*} [CommSemiring S] [Semiring R] [Algebra S R]
-  [AddCommMonoid M] [Module S M] [Module R M] [IsScalarTower S R M] {e : ι → R}
+variable {S M R ι : Type*} [Semiring S] [Semiring R]
+  [AddCommMonoid M] [Module S M] [Module R M] [SMulCommClass R S M] {e : ι → R}
   [DecidableEq ι]
 
 /-- **Multiplying by `eⱼ` reads off the `j`-th component of a sum**: in `∑ᵢ zᵢ` with `zᵢ ∈ eᵢ M`,
 the idempotent `eⱼ` fixes the term at `j` and annihilates all the others. This is what makes the
 sum direct. -/
-theorem smul_coeLinearMap (he : OrthogonalIdempotents e) (z : ⨁ i, smulRange S M (e i)) (j : ι) :
+theorem smul_coeLinearMap_smulRange (he : OrthogonalIdempotents e)
+    (z : ⨁ i, smulRange S M (e i)) (j : ι) :
     e j • DirectSum.coeLinearMap (fun i => smulRange S M (e i)) z = (z j : M) := by
   induction z using DirectSum.induction_on with
   | zero => simp
   | of i x =>
     rcases eq_or_ne j i with rfl | hji
     · rw [DirectSum.coeLinearMap_of, DirectSum.of_eq_same,
-        smul_of_mem_smulRange (he.idem j) x.2]
+        smul_eq_self_of_mem_smulRange (he.idem j) x.2]
     · rw [DirectSum.coeLinearMap_of, DirectSum.of_eq_of_ne _ _ _ hji,
         smul_eq_zero_of_mem_smulRange he hji x.2, ZeroMemClass.coe_zero]
   | add z w hz hw =>
@@ -204,8 +239,8 @@ variable [Fintype ι]
 /-- **A complete orthogonal family of idempotents decomposes every module**: `M = ⨁ᵢ eᵢ M`.
 
 The `S`-submodule at `i` is `eᵢ • M`, and the component of `x` there is `eᵢ • x`. Injectivity is
-`TauCeti.smul_coeLinearMap`, which recovers each component from the sum, and surjectivity is
-spanning, `TauCeti.iSup_smulRange_eq_top`. -/
+`TauCeti.smul_coeLinearMap_smulRange`, which recovers each component from the sum, and
+surjectivity is spanning, `TauCeti.iSup_smulRange_eq_top`. -/
 theorem isInternal_smulRange (he : CompleteOrthogonalIdempotents e) :
     DirectSum.IsInternal fun i => smulRange S M (e i) := by
   -- `DirectSum.IsInternal` is bijectivity of `DirectSum.coeAddMonoidHom`, which is the underlying
@@ -213,48 +248,43 @@ theorem isInternal_smulRange (he : CompleteOrthogonalIdempotents e) :
   refine ⟨fun z w hzw => DFinsupp.ext fun j => Subtype.ext ?_, ?_⟩
   · replace hzw : DirectSum.coeLinearMap (fun i => smulRange S M (e i)) z
         = DirectSum.coeLinearMap (fun i => smulRange S M (e i)) w := hzw
-    rw [← smul_coeLinearMap he.toOrthogonalIdempotents z j,
-      ← smul_coeLinearMap he.toOrthogonalIdempotents w j, hzw]
+    rw [← smul_coeLinearMap_smulRange he.toOrthogonalIdempotents z j,
+      ← smul_coeLinearMap_smulRange he.toOrthogonalIdempotents w j, hzw]
   · exact (LinearMap.range_eq_top
       (f := DirectSum.coeLinearMap fun i => smulRange S M (e i))).1 (by
         rw [DirectSum.range_coeLinearMap, iSup_smulRange_eq_top he])
 
-/-- The module is `S`-linearly isomorphic to the direct sum of its pieces. -/
-noncomputable def smulRangeDirectSumEquiv (he : CompleteOrthogonalIdempotents e) :
-    (⨁ i, smulRange S M (e i)) ≃ₗ[S] M :=
-  LinearEquiv.ofBijective (DirectSum.coeLinearMap _) (isInternal_smulRange he)
-
-/-- The isomorphism `⨁ᵢ eᵢ M ≃ M` is the sum of the components. -/
-@[simp]
-theorem smulRangeDirectSumEquiv_apply (he : CompleteOrthogonalIdempotents e)
-    (z : ⨁ i, smulRange S M (e i)) :
-    smulRangeDirectSumEquiv he z = DirectSum.coeLinearMap (fun i => smulRange S M (e i)) z :=
-  (rfl)
-
 /-- **The component of `x` at `i` is `eᵢ • x`**: this is the inverse of the decomposition, read
-off one index at a time. -/
+off one index at a time. The isomorphism `⨁ᵢ eᵢ M ≃ₗ[S] M` is the canonical
+`LinearEquiv.ofBijective (DirectSum.coeLinearMap _)` of an internal direct sum, so Mathlib's
+`DirectSum.IsInternal.ofBijective_coeLinearMap_same` and friends apply to it as well. -/
 @[simp]
-theorem coe_smulRangeDirectSumEquiv_symm_apply (he : CompleteOrthogonalIdempotents e) (x : M)
-    (i : ι) : (((smulRangeDirectSumEquiv he).symm x i : smulRange S M (e i)) : M) = e i • x := by
+theorem coe_isInternal_smulRange_symm_apply (he : CompleteOrthogonalIdempotents e) (x : M)
+    (i : ι) :
+    (((LinearEquiv.ofBijective (DirectSum.coeLinearMap fun i => smulRange S M (e i))
+      (isInternal_smulRange he)).symm x i : smulRange S M (e i)) : M) = e i • x := by
   have h : DirectSum.coeLinearMap (fun i => smulRange S M (e i))
-      ((smulRangeDirectSumEquiv he).symm x) = x := by
-    rw [← smulRangeDirectSumEquiv_apply he, LinearEquiv.apply_symm_apply]
-  rw [← smul_coeLinearMap he.toOrthogonalIdempotents _ i, h]
+      ((LinearEquiv.ofBijective (DirectSum.coeLinearMap fun i => smulRange S M (e i))
+        (isInternal_smulRange he)).symm x) = x :=
+    (LinearEquiv.ofBijective (DirectSum.coeLinearMap fun i => smulRange S M (e i))
+      (isInternal_smulRange he)).apply_symm_apply x
+  rw [← smul_coeLinearMap_smulRange he.toOrthogonalIdempotents _ i, h]
 
 end Internal
 
 section Finrank
 
-variable {S M R ι : Type*} [Field S] [Semiring R] [Algebra S R]
-  [AddCommGroup M] [Module S M] [Module R M] [IsScalarTower S R M] {e : ι → R} [Fintype ι]
+variable {S M R ι : Type*} [Field S] [Semiring R]
+  [AddCommGroup M] [Module S M] [Module R M] [SMulCommClass R S M] {e : ι → R} [Fintype ι]
 
-/-- **The dimension count**: over a field the dimensions of the pieces add up to the dimension of
-the module. -/
+/-- **The dimension count**: for a module finite-dimensional over a field `S`, the dimensions of
+the pieces add up to the dimension of the module. -/
 theorem finrank_eq_sum_finrank_smulRange [Module.Finite S M]
     (he : CompleteOrthogonalIdempotents e) :
     Module.finrank S M = ∑ i, Module.finrank S (smulRange S M (e i) : Submodule S M) := by
   classical
-  rw [← (smulRangeDirectSumEquiv he).finrank_eq, Module.finrank_directSum]
+  rw [← (LinearEquiv.ofBijective (DirectSum.coeLinearMap fun i => smulRange S M (e i))
+    (isInternal_smulRange he)).finrank_eq, Module.finrank_directSum]
 
 end Finrank
 
