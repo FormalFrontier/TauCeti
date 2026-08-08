@@ -6,8 +6,8 @@ Authors: Joseph Tooby-Smith, Codex
 module
 
 public import Mathlib.MeasureTheory.Function.Jacobian
-public import Mathlib.MeasureTheory.Measure.Haar.Disintegration
-public import Mathlib.Analysis.Calculus.FDeriv.Equiv
+import Mathlib.MeasureTheory.Measure.Haar.Disintegration
+import Mathlib.Analysis.Calculus.FDeriv.Equiv
 
 /-!
 # Sard's lemma in equal dimensions
