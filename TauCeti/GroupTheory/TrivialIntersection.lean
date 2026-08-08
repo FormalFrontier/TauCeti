@@ -24,8 +24,10 @@ Alongside the subgroup notion there is a set-level one.  A **trivial-intersectio
 a subset `S ⊆ H` normalized by `H` whose distinct `G`-conjugates are pairwise disjoint.  The
 example that matters is the nonidentity part `H# = (H : Set G) \ {1}` of a Frobenius complement
 (`TauCeti.IsFrobeniusComplement.isTISet_diff_one`): a class function on `H` supported on such an
-`S` induces to `G` without changing its norm, which is the input to the exceptional-character
-argument for Frobenius's theorem.  That induction statement is
+`S` induces to `G` without changing its norm, as long as the order of `G` is invertible in the
+coefficient field `k` (`IsUnit (Nat.card G : k)`, as everywhere in this theory, because induction
+divides by that order).  That is the input to the exceptional-character argument for Frobenius's
+theorem.  That induction statement is
 `TauCeti.characterPairing_ind_ind_of_isTISet`, in
 `TauCeti/RepresentationTheory/Induction/TrivialIntersection.lean`.
 
