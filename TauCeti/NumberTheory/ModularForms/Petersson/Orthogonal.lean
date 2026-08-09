@@ -146,14 +146,17 @@ theorem le_peterssonOrthogonal_peterssonOrthogonal
 
 section PeterssonInnerProductSpace
 
+/-- The Petersson core, installed locally to access Mathlib's inner-product-space API. -/
 noncomputable local instance peterssonInnerCosetsCoreInstance :
     InnerProductSpace.Core ℂ (CuspForm (Γ.map (mapGL ℝ)) k) :=
   peterssonInnerCosetsCore
 
+/-- The normed additive structure induced locally by the Petersson core. -/
 noncomputable local instance peterssonNormedAddCommGroup :
     NormedAddCommGroup (CuspForm (Γ.map (mapGL ℝ)) k) :=
   InnerProductSpace.Core.toNormedAddCommGroup (𝕜 := ℂ)
 
+/-- The inner-product-space structure induced locally by the Petersson core. -/
 noncomputable local instance peterssonInnerProductSpace :
     InnerProductSpace ℂ (CuspForm (Γ.map (mapGL ℝ)) k) :=
   InnerProductSpace.ofCore _
