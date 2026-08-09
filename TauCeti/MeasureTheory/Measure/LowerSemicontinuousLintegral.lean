@@ -26,7 +26,9 @@ the value `∞` is allowed on both sides.
 
 * `TauCeti.lowerSemicontinuous_lintegral_finiteMeasure` and
   `TauCeti.lowerSemicontinuous_lintegral_probabilityMeasure`: the pairing is lower semicontinuous.
-* `TauCeti.le_liminf_lintegral_of_tendsto`: the `liminf` form along a weakly convergent family.
+* `TauCeti.le_liminf_lintegral_of_tendsto_probabilityMeasure` and
+  `TauCeti.le_liminf_lintegral_of_tendsto_finiteMeasure`: the `liminf` form along a weakly
+  convergent family.
 * `TauCeti.exists_isMinOn_lintegral`: a nonempty compact set of probability measures contains one
   minimising the integral, with no finiteness assumption on the minimum value.
 * `TauCeti.isClosed_setOfPred_lintegral_le_finiteMeasure` and
@@ -89,7 +91,8 @@ theorem lowerSemicontinuous_lintegral_probabilityMeasure (hf : LowerSemicontinuo
 
 /-- The `liminf` form of lower semicontinuity: along a weakly convergent family of probability
 measures, the integral of a lower semicontinuous integrand can only drop in the limit. -/
-theorem le_liminf_lintegral_of_tendsto {γ : Type*} {L : Filter γ} {μs : γ → ProbabilityMeasure Ω}
+theorem le_liminf_lintegral_of_tendsto_probabilityMeasure {γ : Type*} {L : Filter γ}
+    {μs : γ → ProbabilityMeasure Ω}
     {μ : ProbabilityMeasure Ω} (hf : LowerSemicontinuous f) (h : Tendsto μs L (𝓝 μ)) :
     ∫⁻ x, f x ∂(μ : Measure Ω) ≤ liminf (fun i ↦ ∫⁻ x, f x ∂(μs i : Measure Ω)) L := by
   refine ((lowerSemicontinuous_lintegral_probabilityMeasure hf).le_liminf μ).trans ?_

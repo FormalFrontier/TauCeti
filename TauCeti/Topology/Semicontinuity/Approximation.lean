@@ -62,8 +62,9 @@ constant `n`, increasing in `n`, and, when `f` is lower semicontinuous, increase
 noncomputable def lscApproxAux (f : Ω → ℝ≥0∞) (n : ℕ) (x : Ω) : ℝ :=
   ⨅ y : Ω, ((f y ⊓ (n : ℝ≥0∞)).toReal + n * dist x y)
 
-/-- The family whose infimum defines `TauCeti.lscApproxAux` is bounded below by `0`. -/
-theorem bddBelow_range_lscApproxAux (f : Ω → ℝ≥0∞) (n : ℕ) (x : Ω) :
+/-- The family whose infimum defines `TauCeti.lscApproxAux` is bounded below by `0`. This is an
+internal step towards `TauCeti.lscApproxAux_le_add`, which is the bound consumers use. -/
+private theorem bddBelow_range_lscApproxAux (f : Ω → ℝ≥0∞) (n : ℕ) (x : Ω) :
     BddBelow (range fun y : Ω ↦ (f y ⊓ (n : ℝ≥0∞)).toReal + n * dist x y) := by
   refine ⟨0, ?_⟩
   rintro _ ⟨y, rfl⟩
@@ -181,7 +182,10 @@ noncomputable def lscApprox (f : Ω → ℝ≥0∞) (n : ℕ) : Ω →ᵇ ℝ≥
       linarith [lscApproxAux_nonneg f n x, lscApproxAux_nonneg f n y, lscApproxAux_le_natCast f n x,
         lscApproxAux_le_natCast f n y]
 
-/-- The value of the bundled approximation, as a nonnegative real. -/
+/-- The value of the bundled approximation, as a nonnegative real. This is deliberately not
+`@[simp]`: the `ℝ≥0∞` coercion `TauCeti.coe_lscApprox_apply` is the simp-normal form, and marking
+this lemma as well would pre-simplify that lemma's left-hand side (the `simpNF` linter rejects
+the pair). -/
 theorem lscApprox_apply (f : Ω → ℝ≥0∞) (n : ℕ) (x : Ω) :
     lscApprox f n x = (lscApproxAux f n x).toNNReal :=
   (rfl)
