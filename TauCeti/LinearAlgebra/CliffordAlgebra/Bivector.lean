@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 import Mathlib.Tactic.NoncommRing
-public import Mathlib.Data.Fin.Tuple.Reflection
+import Mathlib.Data.Fin.Tuple.Reflection
 public import Mathlib.LinearAlgebra.ExteriorPower.Basic
 public import TauCeti.LinearAlgebra.CliffordAlgebra.Filtration
 
