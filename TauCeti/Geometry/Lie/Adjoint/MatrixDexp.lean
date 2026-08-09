@@ -38,14 +38,14 @@ variable {n : Type*} [Fintype n] [DecidableEq n]
 /-- The matrix dexp factor is the integral of conjugation by the matrix exponential. -/
 theorem matrixDexpFactor_apply_eq_integral_conj (A B : Matrix n n ℝ) :
     banachDexpFactor A B =
-      ∫ t in (0 : ℝ)..1, exp ((-t) • A) * B * exp (t • A) :=
+      ∫ t in (0 : ℝ)..1, exp (-(t • A)) * B * exp (t • A) :=
   banachDexpFactor_apply_eq_integral_conj A B
 
 /-- The matrix-exponential derivative is left multiplication by `exp A` followed by the integral
 of conjugations along the exponential line. -/
 theorem matrixFDerivExp_apply_eq_integral_conj (A B : Matrix n n ℝ) :
     fderiv ℝ exp A B =
-      exp A * (∫ t in (0 : ℝ)..1, exp ((-t) • A) * B * exp (t • A)) := by
+      exp A * (∫ t in (0 : ℝ)..1, exp (-(t • A)) * B * exp (t • A)) := by
   calc
     fderiv ℝ exp A B = expFDeriv ℝ A B := by
       exact congrArg
@@ -56,4 +56,3 @@ theorem matrixFDerivExp_apply_eq_integral_conj (A B : Matrix n n ℝ) :
     _ = _ := by rw [matrixDexpFactor_apply_eq_integral_conj]
 
 end TauCeti.Lie
-
