@@ -120,9 +120,9 @@ theorem twoRank_le_of_surjective [Module.Finite (ZMod 2) (ElementaryTwoQuotient 
   LinearMap.finrank_le_finrank_of_surjective (elementaryTwoQuotientMap_surjective hf)
 
 /-- **A quotient group loses no more 2-rank than its kernel carries.** If `f : G →* H` is
-surjective, then `twoRank G ≤ twoRank H + twoRank (ker f)`: by right exactness the kernel of
-`G/G² → H/H²` is a quotient of `ker f / (ker f)²`, and the rank-nullity formula adds it to
-`twoRank H`. -/
+surjective, and both `G/G²` and `ker f / (ker f)²` are finite-dimensional, then
+`twoRank G ≤ twoRank H + twoRank (ker f)`: by right exactness the kernel of `G/G² → H/H²` is a
+quotient of `ker f / (ker f)²`, and the rank-nullity formula adds it to `twoRank H`. -/
 theorem twoRank_le_twoRank_add_twoRank_ker
     [Module.Finite (ZMod 2) (ElementaryTwoQuotient G)]
     [Module.Finite (ZMod 2) (ElementaryTwoQuotient f.ker)]
@@ -175,7 +175,8 @@ theorem card_elementaryTwoQuotient_of_forall_sq_eq_one (h : ∀ g : G, g ^ 2 = 1
     exact h r
   rw [hsq, Subgroup.index_bot]
 
-/-- **The order of an elementary abelian `2`-group is `2 ^ twoRank`.** -/
+/-- **The order of an elementary abelian `2`-group is `2 ^ twoRank`** when its elementary-2
+quotient is finite-dimensional. -/
 theorem card_eq_two_pow_twoRank_of_forall_sq_eq_one
     [Module.Finite (ZMod 2) (ElementaryTwoQuotient G)] (h : ∀ g : G, g ^ 2 = 1) :
     Nat.card G = 2 ^ twoRank G := by

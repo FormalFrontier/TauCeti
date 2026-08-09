@@ -60,7 +60,7 @@ variable (R : Type*) [CommRing R] [IsDomain R]
 abbrev ElementaryTwoQuotient : Type _ := TauCeti.ElementaryTwoQuotient (ClassGroup R)
 
 /-- The class of an ideal class in the maximal elementary-2 quotient `Cl(R)/Cl(R)²`. -/
-noncomputable def elementaryTwoQuotientMk (C : ClassGroup R) : ElementaryTwoQuotient R :=
+@[expose] noncomputable def elementaryTwoQuotientMk (C : ClassGroup R) : ElementaryTwoQuotient R :=
   TauCeti.elementaryTwoQuotientMk C
 
 /-- An ideal class has trivial class in `Cl(R)/Cl(R)²` iff it is a square. -/
