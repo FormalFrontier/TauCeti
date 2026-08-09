@@ -19,7 +19,8 @@ canonically the matrix orthogonal Lie algebra. The forward map sends `u ∧ v` t
 with entries `2 * (u i * v j - v i * u j)`; the factor of two matches the polar form of the
 sum-of-squares quadratic form.
 
-The inverse reads the upper-triangular entries of a skew matrix in the standard exterior basis.
+The inverse reads `⅟ 2` times the upper-triangular entries of a skew matrix in the
+standard exterior basis.
 Lie compatibility is proved through the faithful Clifford generators and the established
 commutator action of Clifford bivectors, rather than by expanding a matrix commutator.
 
@@ -107,6 +108,11 @@ private noncomputable def exteriorBasis :
     Module.Basis (Set.powersetCard (Fin n) 2) R (⋀[R]^2 (Fin n → R)) :=
   (Pi.basisFun R (Fin n)).exteriorPower 2
 
+-- The imported basis interface has no usable proposition-level rewrite from `equivFun` to `repr`.
+private theorem exteriorBasis_equivFun_apply (x : ⋀[R]^2 (Fin n → R))
+    (s : Set.powersetCard (Fin n) 2) :
+    (exteriorBasis n R).equivFun x s = (exteriorBasis n R).repr x s := rfl
+
 variable [Invertible (2 : R)]
 
 private noncomputable def soCoordinates :
@@ -142,8 +148,7 @@ private theorem soCoordinates_standardBivectorToSoLinear
         ((standardBivectorToSoLinear n R (exteriorPower.ιMulti R 2 u) :
           LieAlgebra.Orthogonal.so (Fin n) R) : Matrix (Fin n) (Fin n) R) (e 0) (e 1) =
       (exteriorBasis n R).equivFun (exteriorPower.ιMulti R 2 u) s
-    rw [show (exteriorBasis n R).equivFun (exteriorPower.ιMulti R 2 u) s =
-        (exteriorBasis n R).repr (exteriorPower.ιMulti R 2 u) s by rfl]
+    rw [exteriorBasis_equivFun_apply]
     have hu : u = ![u 0, u 1] := by
       funext i
       fin_cases i <;> rfl
@@ -446,7 +451,7 @@ theorem bivectorEquivSo_apply_ιMulti (u v : Fin n → R) :
   rw [bivectorEquivSo_apply]
   exact standardBivectorToSoLinear_apply_ιMulti n R u v
 
-/-- The inverse of `bivectorEquivSo` reads an upper-triangular matrix entry as the
+/-- The inverse of `bivectorEquivSo` reads `⅟ 2` times an upper-triangular matrix entry as the
 corresponding coefficient in the standard exterior basis. -/
 @[simp]
 theorem bivectorEquivSo_symm_repr_apply (A : LieAlgebra.Orthogonal.so (Fin n) R)
@@ -478,6 +483,7 @@ theorem bivectorEquivSo_symm_repr_apply (A : LieAlgebra.Orthogonal.so (Fin n) R)
 
 /-- The standard exterior bivector `u ∧ v` acts on a vector by the polar-form-normalized
 infinitesimal rotation. -/
+@[simp]
 theorem bivectorEquivSo_apply_ιMulti_mulVec (u v x : Fin n → R) :
     let Q := QuadraticMap.weightedSumSquares R (1 : Fin n → R)
     letI := bivectorLieRing Q
