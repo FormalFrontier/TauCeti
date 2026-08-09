@@ -40,8 +40,9 @@ transporting the property back to a compact set from an image already known to b
 * `TauCeti.IsJordanCurve` — a set homeomorphic to the circle.
 * `TauCeti.jordanParam` — the parametrization of a Jordan curve by the circle underlying a
   homeomorphism of the curve with `Circle`.
-* `TauCeti.imageHomeomorphOfIsCompact` — the set-level form of `Continuous.homeoOfEquivCompactToT2`:
-  a map continuous and injective on a compact set is a homeomorphism of that set onto its image.
+* `TauCeti.imageHomeomorphOfIsCompactOfContinuousOnOfInjOn` — the set-level form of
+  `Continuous.homeoOfEquivCompactToT2`: a map continuous and injective on a compact set is a
+  homeomorphism of that set onto its image.
 
 ## Main results
 
@@ -118,8 +119,8 @@ carrying the subspace topology of a Hausdorff space. This is the set-level form 
 `Continuous.homeoOfEquivCompactToT2`, and the engine of both transfer lemmas below; it is also what
 turns the parametrization of an arc into a continuous injection of the arc into the line, in
 `TauCeti/Topology/JordanCurve/EmptyInterior.lean`. -/
-noncomputable def imageHomeomorphOfIsCompact [T2Space Y] (hC : IsCompact C) {g : X → Y}
-    (hg : ContinuousOn g C) (hgi : InjOn g C) : C ≃ₜ g '' C :=
+noncomputable def imageHomeomorphOfIsCompactOfContinuousOnOfInjOn [T2Space Y] (hC : IsCompact C)
+    {g : X → Y} (hg : ContinuousOn g C) (hgi : InjOn g C) : C ≃ₜ g '' C :=
   haveI : CompactSpace C := isCompact_iff_compactSpace.mp hC
   Continuous.homeoOfEquivCompactToT2 (f := hgi.bijOn_image.equiv g)
     (hg.mapsToRestrict hgi.bijOn_image.mapsTo)
@@ -162,7 +163,7 @@ theorem IsJordanCurve.image [T2Space Y] (h : IsJordanCurve C) {g : X → Y} (hg 
     (hgi : InjOn g C) : IsJordanCurve (g '' C) := by
   have hC := h.isCompact
   obtain ⟨e⟩ := h
-  exact ⟨(imageHomeomorphOfIsCompact hC hg hgi).symm.trans e⟩
+  exact ⟨(imageHomeomorphOfIsCompactOfContinuousOnOfInjOn hC hg hgi).symm.trans e⟩
 
 /-- **A compact set carried onto a Jordan curve by a continuous injection is a Jordan curve.**
 This is the converse of `TauCeti.IsJordanCurve.image`; compactness of the source has to be assumed
@@ -173,7 +174,7 @@ correspondence does with the boundary of a disc. -/
 theorem IsJordanCurve.of_image [T2Space Y] (hC : IsCompact C) {g : X → Y} (hg : ContinuousOn g C)
     (hgi : InjOn g C) (h : IsJordanCurve (g '' C)) : IsJordanCurve C := by
   obtain ⟨e⟩ := h
-  exact ⟨(imageHomeomorphOfIsCompact hC hg hgi).trans e⟩
+  exact ⟨(imageHomeomorphOfIsCompactOfContinuousOnOfInjOn hC hg hgi).trans e⟩
 
 /-- The image of a Jordan curve under a homeomorphism of the ambient spaces is a Jordan curve.
 Unlike `TauCeti.IsJordanCurve.image` this needs no separation axiom on the codomain, because

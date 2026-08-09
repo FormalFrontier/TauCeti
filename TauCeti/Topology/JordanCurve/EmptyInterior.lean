@@ -169,12 +169,13 @@ theorem interior_eq_empty_of_continuous_injective {ψ : C → ℝ} (hψc : Conti
 set of reals contains no disc.
 
 A continuous injection on a compact set is a homeomorphism onto its image
-(`TauCeti.imageHomeomorphOfIsCompact`), so the inverse parametrization is a continuous injection of
-the arc into `ℝ`, and `TauCeti.interior_eq_empty_of_continuous_injective` applies. Compactness is
-what makes that inverse continuous. -/
+(`TauCeti.imageHomeomorphOfIsCompactOfContinuousOnOfInjOn`), so the inverse parametrization is a
+continuous injection of the arc into `ℝ`, and
+`TauCeti.interior_eq_empty_of_continuous_injective` applies. Compactness is what makes that inverse
+continuous. -/
 theorem interior_image_eq_empty_of_isCompact_of_continuousOn_of_injOn {K : Set ℝ} (hK : IsCompact K)
     {γ : ℝ → ℂ} (hγ : ContinuousOn γ K) (hinj : Set.InjOn γ K) : interior (γ '' K) = ∅ := by
-  have e : K ≃ₜ γ '' K := imageHomeomorphOfIsCompact hK hγ hinj
+  have e : K ≃ₜ γ '' K := imageHomeomorphOfIsCompactOfContinuousOnOfInjOn hK hγ hinj
   exact interior_eq_empty_of_continuous_injective (ψ := fun x => ((e.symm x : K) : ℝ))
     (continuous_subtype_val.comp e.symm.continuous)
     fun x y h => e.symm.injective (Subtype.ext h)
