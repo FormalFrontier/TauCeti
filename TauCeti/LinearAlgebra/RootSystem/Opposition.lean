@@ -4,7 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.LinearAlgebra.RootSystem.CartanMatrix
 public import TauCeti.LinearAlgebra.RootSystem.LongestElement
 
 public section
@@ -14,9 +13,7 @@ public section
 
 The longest element `w₀` of a finite Weyl group exchanges the positive and the negative roots, so
 `α ↦ -w₀ α` permutes the positive roots. This file proves that it permutes the **simple** roots: it
-is an involution of the base, the **opposition involution** `TauCeti.opposition`, and it preserves
-the Cartan pairing, so the permutation it induces on the base is an automorphism of the Dynkin
-diagram.
+is an involution of the base, the **opposition involution** `TauCeti.opposition`.
 
 The proof is the classical one. A simple root is exactly a positive root that is not the sum of two
 positive roots — that is `TauCeti.mem_support_iff_forall_ne_add`, proved in
@@ -34,9 +31,6 @@ positive roots, so it preserves that description.
   involution of the root indices realising `α ↦ -w₀ α` on roots.
 * `TauCeti.opposition_mem_support` and `TauCeti.bijOn_opposition_support`: **the opposition
   involution permutes the simple roots.**
-* `TauCeti.pairing_opposition`, `TauCeti.pairingIn_opposition` and
-  `TauCeti.cartanMatrix_oppositionPerm`: it preserves the Cartan pairing and hence the Cartan
-  matrix, so `TauCeti.oppositionPerm` is an automorphism of the Dynkin diagram.
 
 ## Implementation notes
 
@@ -49,12 +43,17 @@ introduced by a `let` at every use site.
 
 ## References
 
-This completes the API of the longest element, the last item of Layer 4 in
-`TauCetiRoadmap/RepresentationTheory/RootSystems/README.md`, where `w₀` is pinned by
+The longest element `w₀` is the last item of Layer 4 in
+`TauCetiRoadmap/RepresentationTheory/RootSystems/README.md`, where it is pinned by
 `w₀ • posRoots b = negRoots b` and `w₀ ^ 2 = 1` — which say exactly that `-w₀` permutes the
-positive roots — and the statements here say that this permutation restricts to the base. The
-argument is the one in J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*,
-GTM 9, Ch. III, §10.3 and §13.1, and in N. Bourbaki, *Groupes et algèbres de Lie*, Ch. VI, §1.6.
+positive roots. That this permutation restricts to the base is the prerequisite consumed by
+`exists_invariantForm_iff_neg_longest_smul_eq` in
+`TauCetiRoadmap/RepresentationTheory/LieHighestWeight/Suggested.lean`, whose statement asks for a
+Weyl element carrying the dominant cone to its negative: dominance is a condition at the simple
+coroot indices, so transporting it along `-w₀` is exactly
+`TauCeti.opposition_mem_support`. The argument is the one in J. E. Humphreys, *Introduction to Lie
+Algebras and Representation Theory*, GTM 9, Ch. III, §10.3 and §13.1, and in N. Bourbaki, *Groupes
+et algèbres de Lie*, Ch. VI, §1.6.
 -/
 
 namespace TauCeti
@@ -81,18 +80,11 @@ noncomputable def opposition (i : ι) : ι :=
   P.reflectionPerm (P.weylGroupToPerm (longestElement P b) i)
     (P.weylGroupToPerm (longestElement P b) i)
 
-/-- The opposition involution, unfolded: root negation applied to the longest-element image. -/
-private theorem opposition_def (i : ι) :
-    opposition P b i =
-      P.reflectionPerm (P.weylGroupToPerm (longestElement P b) i)
-        (P.weylGroupToPerm (longestElement P b) i) :=
-  (rfl)
-
 /-- **The opposition involution negates the longest-element translate of a root.** -/
 @[simp]
 theorem root_opposition (i : ι) :
     P.root (opposition P b i) = -(longestElement P b • P.root i) := by
-  rw [opposition_def, RootPairing.root_reflectionPerm,
+  rw [opposition, RootPairing.root_reflectionPerm,
     RootPairing.reflection_apply_self, RootPairing.weylGroup_apply_root]
 
 variable {P b} in
@@ -101,7 +93,7 @@ theorem isPos_opposition {i : ι} (hi : b.IsPos i) : b.IsPos (opposition P b i) 
   -- The longest element sends a positive root to a negative root, and negating a negative root
   -- gives a positive one.
   let := P.indexNeg
-  rw [opposition_def, ← RootPairing.indexNeg_neg,
+  rw [opposition, ← RootPairing.indexNeg_neg,
     RootPairing.Base.IsPos.neg_iff_not, ← mem_negRoots]
   exact mapsTo_posRoots_negRoots_longestElement P b ((mem_posRoots P b i).mpr hi)
 
@@ -110,13 +102,9 @@ theorem opposition_involutive : Involutive (opposition P b) := fun i ↦ by
   -- Root negation commutes with the Weyl-group action on indices, and the longest element is an
   -- involution.
   let := P.indexNeg
-  rw [opposition_def, opposition_def, ← RootPairing.indexNeg_neg,
+  rw [opposition, opposition, ← RootPairing.indexNeg_neg,
     ← RootPairing.indexNeg_neg, RootPairing.weylGroupToPerm_neg, neg_neg]
   exact weylGroupToPerm_longestElement_involutive P b i
-
-/-- The opposition involution is a bijection of the root indices. -/
-theorem opposition_bijective : Bijective (opposition P b) :=
-  (opposition_involutive P b).bijective
 
 /-- **The opposition involution permutes the simple roots.** -/
 theorem opposition_mem_support {i : ι} (hi : i ∈ b.support) : opposition P b i ∈ b.support := by
@@ -155,35 +143,6 @@ noncomputable def oppositionPerm : Equiv.Perm b.support :=
 theorem coe_oppositionPerm (i : b.support) :
     (oppositionPerm P b i : ι) = opposition P b i :=
   (rfl)
-
-/-! ### The opposition involution is a diagram automorphism -/
-
-variable {P b} in
-/-- **The opposition involution preserves the Cartan pairing.** -/
-@[simp]
-theorem pairing_opposition (i j : ι) :
-    P.pairing (opposition P b i) (opposition P b j) = P.pairing i j := by
-  -- Negating both arguments preserves the pairing, and so does the Weyl group.
-  rw [opposition_def, opposition_def,
-    RootPairing.pairing_reflectionPerm_self_left, RootPairing.pairing_reflectionPerm_self_right,
-    neg_neg, ← RootPairing.root_coroot'_eq_pairing, ← RootPairing.root_coroot'_eq_pairing,
-    ← RootPairing.weylGroup_apply_root]
-  exact RootPairing.coroot'_weylGroupToPerm_smul P (longestElement P b) j (P.root i)
-
-variable {P b} in
-/-- **The opposition involution preserves the integral Cartan pairing**, that is, the entries of
-the Cartan matrix of the base. -/
-@[simp]
-theorem pairingIn_opposition (i j : ι) :
-    P.pairingIn ℤ (opposition P b i) (opposition P b j) = P.pairingIn ℤ i j :=
-  FaithfulSMul.algebraMap_injective ℤ R <| by
-    simpa only [RootPairing.algebraMap_pairingIn] using pairing_opposition (b := b) i j
-
-/-- **The permutation of the base induced by the opposition involution is an automorphism of the
-Dynkin diagram**: it preserves the Cartan matrix. -/
-theorem cartanMatrix_oppositionPerm (i j : b.support) :
-    b.cartanMatrix (oppositionPerm P b i) (oppositionPerm P b j) = b.cartanMatrix i j := by
-  simp only [RootPairing.Base.cartanMatrixIn_def, coe_oppositionPerm, pairingIn_opposition]
 
 end Opposition
 
