@@ -44,8 +44,8 @@ characteristic two that polynomial is the square `(a₁X + a₃)²`.
 ## Main results
 
 * `TauCeti.WeierstrassCurve.Affine.CoordinateRing.mul_conj`: `x * conj x` is the norm of `x`.
-* `TauCeti.WeierstrassCurve.Affine.CoordinateRing.add_conj_smul_basis`: `x + conj x` is the trace
-  of `x`, computed on the basis `{1, Y}`.
+* `TauCeti.WeierstrassCurve.Affine.CoordinateRing.add_negPolynomial_smul_basis`: the expanded
+  conjugation formula computes the trace on the basis `{1, Y}`.
 * `TauCeti.WeierstrassCurve.Affine.isIntegrallyClosed_coordinateRing`: the coordinate ring of an
   elliptic curve over a field is integrally closed.
 * `TauCeti.WeierstrassCurve.Affine.isDedekindDomain_coordinateRing`: it is a Dedekind domain.
@@ -156,7 +156,7 @@ lemma conj_smul_basis (p q : R[X]) :
 
 /-- The sum of an element of the coordinate ring and its conjugate is its trace `2p - qs`. -/
 @[simp]
-lemma add_conj_smul_basis (p q : R[X]) :
+lemma add_negPolynomial_smul_basis (p q : R[X]) :
     p • (1 : W.CoordinateRing) + q • AdjoinRoot.root W.polynomial +
         (p • 1 + AdjoinRoot.mk W.polynomial (q • W.negPolynomial)) =
       algebraMap R[X] W.CoordinateRing (2 * p - q * (C W.a₁ * X + C W.a₃)) := by
@@ -369,7 +369,7 @@ private theorem exists_algebraMap_eq [W.IsElliptic] {z : W.FunctionField}
         CoordinateRing.conj W (p • 1 + q • mk W Y) =
         algebraMap F[X] W.CoordinateRing (2 * p - q * (C W.a₁ * X + C W.a₃)) := by
       simpa only [AdjoinRoot.mk_X, map_add, map_smul, map_one, CoordinateRing.conj_mk_Y,
-        AdjoinRoot.smul_mk] using CoordinateRing.add_conj_smul_basis W p q
+        AdjoinRoot.smul_mk] using CoordinateRing.add_negPolynomial_smul_basis W p q
     have : algebraMap F[X] W.FunctionField (2 * p - q * (C W.a₁ * X + C W.a₃)) /
         algebraMap F[X] W.FunctionField d =
         algebraMap W.CoordinateRing W.FunctionField b / algebraMap F[X] W.FunctionField d +
