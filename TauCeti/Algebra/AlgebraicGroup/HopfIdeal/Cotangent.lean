@@ -115,7 +115,11 @@ theorem quotientCotangentMap_toCotangent (I : HopfIdeal k H)
         ⟨algebraMap H (H ⧸ I.toIdeal) x, by
           simpa [Bialgebra.AugmentationIdeal, RingHom.mem_ker] using x.property⟩ := by
   rw [quotientCotangentMap]
-  rfl
+  exact Ideal.mapCotangent_toCotangent
+    (Bialgebra.AugmentationIdeal k H)
+    (Bialgebra.AugmentationIdeal k (H ⧸ I.toIdeal))
+    (Algebra.ofId H (H ⧸ I.toIdeal))
+    (augmentationIdeal_le_comap_quotient I) x
 
 /-- The quotient cotangent map sends the first-order displacement of `x` to the first-order
 displacement of its quotient class. -/
@@ -190,17 +194,17 @@ theorem ker_quotientCotangentMap (I : HopfIdeal k H) :
     refine ⟨(x : H), ?_, ?_⟩
     · have h := (Ideal.mem_inf.mp (Submodule.mem_comap.mp hx)).1
       rw [Ideal.Quotient.algebraMap_eq, Ideal.mk_ker] at h
-      change (x : H) ∈ I.toIdeal at h
-      exact h
+      exact (Submodule.restrictScalars_mem k I.toIdeal (x : H)).mpr h
     · rw [Bialgebra.cotangentMap_augmentation]
   · rintro _ ⟨x, hx, rfl⟩
-    change x ∈ I.toIdeal at hx
-    refine ⟨⟨x, toIdeal_le_augmentationIdeal I hx⟩, ?_, ?_⟩
+    have hx' : x ∈ I.toIdeal :=
+      (Submodule.restrictScalars_mem k I.toIdeal x).mp hx
+    refine ⟨⟨x, toIdeal_le_augmentationIdeal I hx'⟩, ?_, ?_⟩
     · exact Submodule.mem_comap.mpr
         (Ideal.mem_inf.mpr ⟨by simpa only [Ideal.Quotient.algebraMap_eq, Ideal.mk_ker],
-          toIdeal_le_augmentationIdeal I hx⟩)
+          toIdeal_le_augmentationIdeal I hx'⟩)
     · exact (Bialgebra.cotangentMap_augmentation
-        (R := k) (A := H) ⟨x, toIdeal_le_augmentationIdeal I hx⟩).symm
+        (R := k) (A := H) ⟨x, toIdeal_le_augmentationIdeal I hx'⟩).symm
 
 end Ring
 
