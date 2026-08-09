@@ -36,7 +36,11 @@ universe u
 
 namespace TauCeti
 
-variable {k : Type u} [CommRing k] {n : ℕ}
+variable {k : Type u} {n : ℕ}
+
+section Semiring
+
+variable [Semiring k]
 
 /-- Coordinatewise units embed in `GL n k` as diagonal matrices. -/
 def diagGL : (Fin n → kˣ) →* GL (Fin n) k :=
@@ -56,13 +60,6 @@ theorem diagGL_apply (t : Fin n → kˣ) (i j : Fin n) :
   rw [diagGL_coe]
   exact Matrix.diagonal_apply ..
 
-/-- The determinant of a diagonal matrix is the product of its diagonal entries. -/
-@[simp]
-theorem det_diagGL (t : Fin n → kˣ) :
-    Matrix.GeneralLinearGroup.det (diagGL t) = ∏ i, t i := by
-  apply Units.ext
-  simp [Matrix.GeneralLinearGroup.val_det_apply, diagGL_coe, Matrix.det_diagonal]
-
 /-- The diagonal embedding is injective. -/
 theorem diagGL_injective : Function.Injective (diagGL (k := k) (n := n)) := by
   intro t s h
@@ -70,5 +67,14 @@ theorem diagGL_injective : Function.Injective (diagGL (k := k) (n := n)) := by
   apply Units.ext
   have := congrArg (fun g : GL (Fin n) k => (g : Matrix (Fin n) (Fin n) k) i i) h
   simpa using this
+
+end Semiring
+
+/-- The determinant of a diagonal matrix is the product of its diagonal entries. -/
+@[simp]
+theorem det_diagGL [CommRing k] (t : Fin n → kˣ) :
+    Matrix.GeneralLinearGroup.det (diagGL t) = ∏ i, t i := by
+  apply Units.ext
+  simp [Matrix.GeneralLinearGroup.val_det_apply, diagGL_coe, Matrix.det_diagonal]
 
 end TauCeti
