@@ -8,22 +8,22 @@ public import TauCeti.NumberTheory.NumberField.Quadratic.Conjugation.ClassGroup
 public import TauCeti.NumberTheory.NumberField.Quadratic.TotalRamification
 
 /-!
-# Quadratic conjugation fixes ramified primes; ambiguous classes are 2-torsion
+# Ramified primes are ambiguous 2-torsion classes
 
 For a quadratic field `K`, write `σ = ringOfIntegersQuadraticConj` for quadratic conjugation
 (defined from an integral generator `θ : 𝓞 K` with `minpoly ℤ θ = X² - d` and `ℚ⟮θ⟯ = K`). This
-file records two facts about `σ` at a ramified rational prime `p`:
+file records the arithmetic of ramified primes under `σ`:
 
-* quadratic conjugation **fixes** the unique prime `𝔭` of `𝓞 K` above `p` (`σ 𝔭 = 𝔭`), so `𝔭` is
-  an *ambiguous* ideal;
-* being fixed by `σ` is **equivalent** to being 2-torsion, since `σ` acts on `Cl(𝓞 K)` by inversion
-  (`mulEquiv_ringOfIntegersQuadraticConj_apply_eq_inv`); these are the *ambiguous* classes.
+* quadratic conjugation **fixes** the unique prime `𝔭` of `𝓞 K` above a ramified rational prime
+  `p` (`σ 𝔭 = 𝔭`), so `𝔭` is an *ambiguous* ideal;
+* the class `[𝔭]` in `Cl(𝓞 K)` is **2-torsion**, because `𝔭² = p 𝓞 K` is principal.
 
-Since `𝔭 · σ𝔭 = 𝔭²` is principal (`𝔭² = p 𝓞 K`), the class of a ramified prime is then a 2-torsion
-member of `Cl(𝓞 K)[2]` — the object measured by `card_elementaryTwoQuotient_eq_card_twoTorsion`.
-Together these are the lower-bound building block of the ambiguous-class-number / 2-rank theorem of
-genus theory; the matching upper bound (that such classes exhaust `Cl(𝓞 K)[2]`, with a single
-relation) is left to later work.
+By `mulEquiv_ringOfIntegersQuadraticConj_apply_eq_self_iff` the 2-torsion classes are exactly the
+ones fixed by `σ` (the ambiguous classes), so the ramified primes furnish explicit ambiguous
+2-torsion classes — members of `Cl(𝓞 K)[2]`, the object measured by
+`card_elementaryTwoQuotient_eq_card_twoTorsion`. This is the lower-bound building block of the
+ambiguous-class-number / 2-rank theorem of genus theory; the matching upper bound (that such classes
+exhaust `Cl(𝓞 K)[2]`, with a single relation) is left to later work.
 
 See D. A. Cox, *Primes of the Form x² + ny²*, and F. Lemmermeyer, *Reciprocity Laws*, for the
 classical genus theory these results underlie.
@@ -32,8 +32,8 @@ classical genus theory these results underlie.
 
 * `TauCeti.NumberField.map_ringOfIntegersQuadraticConj_eq_self_of_mem_ramifiedPrimes`: `σ 𝔭 = 𝔭`
   for the prime `𝔭` above a ramified `p`.
-* `TauCeti.NumberField.mulEquiv_ringOfIntegersQuadraticConj_apply_eq_self_iff`: a class is fixed by
-  `σ` iff it is 2-torsion.
+* `TauCeti.NumberField.classGroupMk0_sq_eq_one_of_mem_ramifiedPrimes`: the class of a ramified
+  prime is 2-torsion, in any degree-two number field.
 -/
 
 public section
@@ -64,13 +64,31 @@ theorem map_ringOfIntegersQuadraticConj_eq_self_of_mem_ramifiedPrimes
       (span {(p : ℤ)} : Ideal ℤ).primesOver (𝓞 K) := ⟨inferInstance, hlo⟩
   rwa [primesOver_eq_singleton_of_mem_ramifiedPrimes hK hmem 𝔭, Set.mem_singleton_iff] at hmemset
 
-/-- **A class is fixed by quadratic conjugation iff it is 2-torsion.** Because quadratic conjugation
-acts on `Cl(𝓞 K)` by inversion, the classes it fixes are exactly those equal to their own inverse,
-i.e. the 2-torsion. These are the *ambiguous* classes of genus theory. -/
-theorem mulEquiv_ringOfIntegersQuadraticConj_apply_eq_self_iff
-    (hmin : minpoly ℤ θ = X ^ 2 - C d) (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤)
-    (C : ClassGroup (𝓞 K)) :
-    ClassGroup.mulEquiv (ringOfIntegersQuadraticConj hmin hgen) C = C ↔ C ^ 2 = 1 := by
-  rw [mulEquiv_ringOfIntegersQuadraticConj_apply_eq_inv hmin hgen, inv_eq_iff_mul_eq_one, ← pow_two]
+/-- **The class of a ramified prime is 2-torsion.** In a degree-two number field, the prime `𝔭`
+above a ramified rational prime `p` satisfies `𝔭² = p 𝓞 K`, the extension of the principal ideal
+`(p)`, so its class in `Cl(𝓞 K)` squares to `1`: `[𝔭]` is an explicit element of the 2-torsion
+`Cl(𝓞 K)[2]`. By `mulEquiv_ringOfIntegersQuadraticConj_apply_eq_self_iff` it is thus an *ambiguous*
+class. -/
+theorem classGroupMk0_sq_eq_one_of_mem_ramifiedPrimes (hK : finrank ℚ K = 2)
+    {p : ℕ} (hmem : p ∈ ramifiedPrimes K) (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime]
+    [𝔭.LiesOver (span {(p : ℤ)})] :
+    ClassGroup.mk0 ⟨𝔭, by
+      refine mem_nonZeroDivisors_of_ne_zero ?_
+      rw [Ideal.zero_eq_bot]
+      exact Ideal.ne_bot_of_liesOver_of_ne_bot (I := span {(p : ℤ)})
+        (by rw [ne_eq, Ideal.span_singleton_eq_bot, Int.natCast_eq_zero]
+            exact (prime_of_mem_ramifiedPrimes hmem).pos.ne') 𝔭⟩ ^ 2 = 1 := by
+  have hnzd : 𝔭 ∈ nonZeroDivisors (Ideal (𝓞 K)) := by
+    refine mem_nonZeroDivisors_of_ne_zero ?_
+    rw [Ideal.zero_eq_bot]
+    exact Ideal.ne_bot_of_liesOver_of_ne_bot (I := span {(p : ℤ)})
+      (by rw [ne_eq, Ideal.span_singleton_eq_bot, Int.natCast_eq_zero]
+          exact (prime_of_mem_ramifiedPrimes hmem).pos.ne') 𝔭
+  have hsq : (⟨𝔭, hnzd⟩ : nonZeroDivisors (Ideal (𝓞 K))) ^ 2 = ⟨𝔭 ^ 2, pow_mem hnzd 2⟩ :=
+    Subtype.ext (by rw [SubmonoidClass.coe_pow])
+  -- `[𝔭]² = [𝔭²] = [p 𝓞 K] = 1`, as `𝔭² = p 𝓞 K` is the extension of the principal ideal `(p)`.
+  rw [← map_pow, hsq, ClassGroup.mk0_eq_one_iff,
+    ← map_span_eq_sq_of_mem_ramifiedPrimes hK hmem 𝔭, Ideal.map_span, Set.image_singleton]
+  exact ⟨_, rfl⟩
 
 end TauCeti.NumberField
