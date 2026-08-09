@@ -79,7 +79,6 @@ Nondegeneracy is genuinely a hypothesis: `ω` restricts to `0` on any isotropic 
   isAlt v := ω.isAlt (v : V)
   nondegenerate := h
 
-@[simp]
 lemma restrict_toBilinForm (ω : SymplecticForm V) (L : Submodule ℝ V)
     (h : (ω.toBilinForm.restrict L).Nondegenerate) :
     (ω.restrict L h).toBilinForm = ω.toBilinForm.restrict L :=
