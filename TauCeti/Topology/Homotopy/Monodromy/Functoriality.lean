@@ -146,44 +146,22 @@ theorem monodromyNatTrans_comp (hp : _root_.IsCoveringMap p)
   apply Subtype.ext
   rfl
 
-/-- The restrictions of an over-base homeomorphism to corresponding fibres. -/
-private noncomputable def fiberEquiv (h : E ≃ₜ F) (hh : q ∘ h = p) (x : X) :
-    p ⁻¹' {x} ≃ q ⁻¹' {x} :=
-  (h.subtype fun e ↦ by
-    simp only [Set.mem_preimage, Set.mem_singleton_iff]
-    rw [show q (h e) = p e by exact congrFun hh e]).toEquiv
-
-omit [TopologicalSpace X] in
-/-- The forward fibre equivalence is the canonical fibre restriction of the homeomorphism. -/
-@[simp]
-private theorem fiberEquiv_apply (h : E ≃ₜ F) (hh : q ∘ h = p) (x : X)
-    (e : p ⁻¹' {x}) : fiberEquiv h hh x e = fiberMap (h : C(E, F)) hh x e := by
-  apply Subtype.ext
-  rfl
-
-omit [TopologicalSpace X] in
-/-- The inverse fibre equivalence applies the inverse homeomorphism on underlying points. -/
-@[simp]
-private theorem fiberEquiv_symm_apply_coe (h : E ≃ₜ F) (hh : q ∘ h = p) (x : X)
-    (f : q ⁻¹' {x}) : ((fiberEquiv h hh x).symm f : E) = h.symm f := by
-  unfold fiberEquiv
-  exact Homeomorph.subtype_symm_apply_coe _ _ _
-
 /-- An isomorphism of covering spaces over `X` induces a natural isomorphism between their
-monodromy functors. Its component over `x` is the restriction of the homeomorphism to the fibre
-over `x`. -/
+monodromy functors. Its forward and inverse transformations are the ones induced by the
+homeomorphism and its inverse, so its component over `x` is the restriction of the
+homeomorphism to the fibre over `x`. -/
 noncomputable def monodromyNatIso (hp : _root_.IsCoveringMap p) (hq : _root_.IsCoveringMap q)
-    (h : E ≃ₜ F) (hh : q ∘ h = p) : hp.monodromyFunctor ≅ hq.monodromyFunctor :=
-  NatIso.ofComponents
-    (fun x ↦ (fiberEquiv h hh x.as).toIso)
-    (fun {x y} a ↦ by
-      have component_eq (z : FundamentalGroupoid X) :
-          (fiberEquiv h hh z.as).toIso.hom =
-            (monodromyNatTrans hp hq (h : C(E, F)) hh).app z := by
-        ext e
-        exact congrArg Subtype.val (fiberEquiv_apply h hh z.as e)
-      rw [component_eq x, component_eq y]
-      exact (monodromyNatTrans hp hq (h : C(E, F)) hh).naturality a)
+    (h : E ≃ₜ F) (hh : q ∘ h = p) : hp.monodromyFunctor ≅ hq.monodromyFunctor where
+  hom := monodromyNatTrans hp hq (h : C(E, F)) hh
+  inv := monodromyNatTrans hq hp (h.symm : C(F, E)) ((Equiv.comp_symm_eq h.toEquiv q p).2 hh.symm)
+  hom_inv_id := by
+    ext x e
+    apply Subtype.ext
+    exact h.symm_apply_apply _
+  inv_hom_id := by
+    ext x f
+    apply Subtype.ext
+    exact h.apply_symm_apply _
 
 /-- The forward natural transformation of the monodromy isomorphism is the canonical
 transformation induced by the homeomorphism. -/
@@ -191,9 +169,8 @@ transformation induced by the homeomorphism. -/
 theorem monodromyNatIso_hom (hp : _root_.IsCoveringMap p)
     (hq : _root_.IsCoveringMap q) (h : E ≃ₜ F) (hh : q ∘ h = p) :
     (monodromyNatIso hp hq h hh).hom =
-      monodromyNatTrans hp hq (h : C(E, F)) hh := by
-  ext x e
-  exact fiberEquiv_apply h hh x.as e
+      monodromyNatTrans hp hq (h : C(E, F)) hh :=
+  (rfl)
 
 /-- The inverse natural transformation of the monodromy isomorphism is induced by the inverse
 homeomorphism. -/
@@ -201,13 +178,9 @@ homeomorphism. -/
 theorem monodromyNatIso_inv (hp : _root_.IsCoveringMap p)
     (hq : _root_.IsCoveringMap q) (h : E ≃ₜ F) (hh : q ∘ h = p) :
     (monodromyNatIso hp hq h hh).inv =
-      monodromyNatTrans hq hp (h.symm : C(F, E)) (by
-        funext f
-        simpa only [ContinuousMap.coe_coe, Function.comp_apply, h.apply_symm_apply] using
-          (congrFun hh (h.symm (f : F))).symm) := by
-  ext x f
-  apply Subtype.ext
-  exact fiberEquiv_symm_apply_coe h hh x.as f
+      monodromyNatTrans hq hp (h.symm : C(F, E))
+        ((Equiv.comp_symm_eq h.toEquiv q p).2 hh.symm) :=
+  (rfl)
 
 end IsCoveringMap
 
