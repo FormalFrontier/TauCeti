@@ -70,6 +70,10 @@ supremum over the `i` of a fixed parity.
   `TauCeti.CliffordAlgebra.changeForm_mem_filtration_iff`: contraction and change of
   quadratic form respect the filtration, contraction lowers every positive step by one, and the
   change-form equivalence transports every step exactly.
+* `TauCeti.CliffordAlgebra.changeForm_prod_map_ι_sub_prod_map_ι_mem_filtration` and its
+  `Fin`-indexed form
+  `TauCeti.CliffordAlgebra.changeForm_prod_ofFn_ι_sub_prod_ofFn_ι_mem_filtration`: change of form
+  has identity symbol, that is, it moves a word of generators only by lower-degree terms.
 * `TauCeti.CliffordAlgebra.fg_filtration`: each step is a finitely generated module when `M` is.
 
 ## References
@@ -596,6 +600,44 @@ private theorem changeForm_prod_map_ι_mem_filtration (h : B.toQuadraticMap = Q'
       simpa [Nat.add_comm] using hmul
     · exact filtration_mono Q' (Nat.le_succ _)
         (contractLeft_mem_filtration Q' (B m) (changeForm_prod_map_ι_mem_filtration h l))
+
+/-- **Change of form has identity symbol.** Transporting a word of at most `k + 1` generators
+along `changeForm` changes it only by terms of filtration degree at most `k`: the difference
+between the word in the `ι Q` and the same word in the `ι Q'` drops one step.
+
+`changeForm_mem_filtration` says `changeForm` is a filtered map; this says its associated graded
+map is the identity, which is what makes the two routes to the degree quotients agree. The bound
+is phrased as `l.length ≤ k + 1` rather than through `l.length - 1` so that the empty list is not
+a special case of truncated subtraction. -/
+theorem changeForm_prod_map_ι_sub_prod_map_ι_mem_filtration (h : B.toQuadraticMap = Q' - Q) :
+    ∀ (l : List M) (k : ℕ), l.length ≤ k + 1 →
+      changeForm h (l.map (ι Q)).prod - (l.map (ι Q')).prod ∈ filtration Q' k
+  | [], _, _ => by simp
+  | m :: l, 0, hk => by
+      have hl : l = [] := List.length_eq_zero_iff.mp (by simpa using hk)
+      subst hl
+      simp
+  | m :: l, k + 1, hk => by
+      have hl : l.length ≤ k + 1 := by simpa using hk
+      rw [List.map_cons, List.prod_cons, List.map_cons, List.prod_cons, changeForm_ι_mul,
+        sub_right_comm, ← mul_sub]
+      refine Submodule.sub_mem _ ?_ ?_
+      · have hmul :=
+          Submodule.mul_mem_mul (ι_mem_filtration_one Q' m)
+            (changeForm_prod_map_ι_sub_prod_map_ι_mem_filtration h l k hl)
+        rw [filtration_mul Q' 1 k] at hmul
+        simpa [Nat.add_comm] using hmul
+      · exact contractLeft_mem_filtration Q' (B m)
+          (filtration_mono Q' hl (changeForm_prod_map_ι_mem_filtration Q h l))
+
+/-- The `Fin`-indexed form of `changeForm_prod_map_ι_sub_prod_map_ι_mem_filtration`, which is how
+the leading-term map presents its representatives. -/
+theorem changeForm_prod_ofFn_ι_sub_prod_ofFn_ι_mem_filtration (h : B.toQuadraticMap = Q' - Q)
+    (k : ℕ) (v : Fin (k + 1) → M) :
+    changeForm h (List.ofFn ((ι Q) ∘ v)).prod - (List.ofFn ((ι Q') ∘ v)).prod ∈
+      filtration Q' k := by
+  simpa only [List.map_ofFn] using
+    changeForm_prod_map_ι_sub_prod_map_ι_mem_filtration Q h (List.ofFn v) k (by simp)
 
 /-- Changing quadratic form by a bilinear form preserves each filtration step. -/
 theorem changeForm_mem_filtration (h : B.toQuadraticMap = Q' - Q) {k : ℕ}
