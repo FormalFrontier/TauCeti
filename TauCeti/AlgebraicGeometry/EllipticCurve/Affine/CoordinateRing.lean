@@ -92,8 +92,8 @@ private lemma mk_C_eq_algebraMap (r : R[X]) :
     mk W (C r) = algebraMap R[X] W.CoordinateRing r := by
   simp [AdjoinRoot.algebraMap_eq]
 
-private lemma smul_basis_eq_mk (p q : R[X]) :
-    p • (1 : W.CoordinateRing) + q • mk W Y = mk W (C p + C q * Y) := by
+private lemma smul_mk_eq_mk (p q : R[X]) (f : R[X][Y]) :
+    p • (1 : W.CoordinateRing) + q • mk W f = mk W (C p + C q * f) := by
   simp only [smul, mul_one, ← map_mul, ← map_add]
 
 private noncomputable def conjHom : W.CoordinateRing →ₐ[R[X]] W.CoordinateRing :=
@@ -151,15 +151,17 @@ lemma conj_conj (x : W.CoordinateRing) : conj W (conj W x) = x :=
 polynomial representative `p + q * W.negPolynomial`. -/
 lemma conj_smul_basis (p q : R[X]) :
     conj W (p • (1 : W.CoordinateRing) + q • mk W Y) = mk W (C p + C q * W.negPolynomial) := by
-  rw [smul_basis_eq_mk]
+  rw [smul_mk_eq_mk]
   simp only [map_add, map_mul, AdjoinRoot.mk_C, AdjoinRoot.mk_X, conj_mk_C, conj_mk_Y]
 
 /-- The sum of an element of the coordinate ring and its conjugate is its trace `2p - qs`. -/
 @[simp]
 lemma add_conj_smul_basis (p q : R[X]) :
-    p • (1 : W.CoordinateRing) + q • mk W Y + conj W (p • 1 + q • mk W Y) =
+    p • (1 : W.CoordinateRing) + q • AdjoinRoot.root W.polynomial +
+        (p • 1 + AdjoinRoot.mk W.polynomial (q • W.negPolynomial)) =
       algebraMap R[X] W.CoordinateRing (2 * p - q * (C W.a₁ * X + C W.a₃)) := by
-  rw [conj_smul_basis, smul_basis_eq_mk, ← map_add, ← mk_C_eq_algebraMap]
+  rw [← AdjoinRoot.mk_X, ← AdjoinRoot.smul_mk, smul_mk_eq_mk, smul_mk_eq_mk,
+    ← map_add, ← mk_C_eq_algebraMap]
   congr 1
   rw [negPolynomial]
   simp only [map_sub, map_mul, map_ofNat]
@@ -171,7 +173,7 @@ lemma mul_conj (x : W.CoordinateRing) :
     x * conj W x = algebraMap R[X] W.CoordinateRing (Algebra.norm R[X] x) := by
   obtain ⟨p, q, rfl⟩ := exists_smul_basis_eq x
   rw [conj_smul_basis, ← mk_C_eq_algebraMap, AdjoinRoot.mk_C, coe_norm_smul_basis,
-    smul_basis_eq_mk, ← map_mul, negPolynomial]
+    smul_mk_eq_mk, ← map_mul, negPolynomial]
 
 end CoordinateRing
 
@@ -364,12 +366,17 @@ private theorem exists_algebraMap_eq [W.IsElliptic] {z : W.FunctionField}
       algebraMap F[X] W.FunctionField d)) := hz.map (σ : W.FunctionField →ₐ[F[X]] W.FunctionField)
   have htr : d ∣ 2 * p - q * (C W.a₁ * X + C W.a₃) := by
     refine dvd_of_isIntegral_div (L := W.FunctionField) hd0 ?_
+    have hadd : p • (1 : W.CoordinateRing) + q • mk W Y +
+        CoordinateRing.conj W (p • 1 + q • mk W Y) =
+        algebraMap F[X] W.CoordinateRing (2 * p - q * (C W.a₁ * X + C W.a₃)) := by
+      simpa only [AdjoinRoot.mk_X, map_add, map_smul, map_one, CoordinateRing.conj_mk_Y,
+        AdjoinRoot.smul_mk] using CoordinateRing.add_conj_smul_basis W p q
     have : algebraMap F[X] W.FunctionField (2 * p - q * (C W.a₁ * X + C W.a₃)) /
         algebraMap F[X] W.FunctionField d =
         algebraMap W.CoordinateRing W.FunctionField b / algebraMap F[X] W.FunctionField d +
           σ (algebraMap W.CoordinateRing W.FunctionField b /
             algebraMap F[X] W.FunctionField d) := by
-      rw [hσz, ← add_div, ← map_add, hmap, ← hpq, CoordinateRing.add_conj_smul_basis]
+      rw [hσz, ← add_div, ← map_add, hmap, ← hpq, hadd]
     rw [this]
     exact hz.add hσzi
   have hnm : d ^ 2 ∣ p ^ 2 - p * q * (C W.a₁ * X + C W.a₃) -
