@@ -15,7 +15,7 @@ public import Mathlib.Data.Fintype.OfMap
 This file defines the parameters and indexing types for the eventual statement of the
 classification of finite simple groups. The Lie-type index records the family, rank, and finite
 field parameter as data. Its validity predicate first imposes the conventional rank and small-field
-ranges and then removes the five remaining duplicate representatives. A Lie-type index also
+ranges and then removes the six remaining duplicate representatives. A Lie-type index also
 determines its underlying untwisted Dynkin diagram, characteristic, and Frobenius parameter.
 
 The twenty-six sporadic names and the four-way `TauCeti.CFSGIndex` complete the indexing layer. No
@@ -68,6 +68,13 @@ structure PrimePower where
   deriving DecidableEq
 
 namespace PrimePower
+
+/-- Two prime-power parameters are equal when their bases and exponents are equal. -/
+@[ext]
+theorem ext (q r : PrimePower) (hp : q.p = r.p) (he : q.exponent = r.exponent) : q = r := by
+  cases q
+  cases r
+  simp_all
 
 /-- The cardinality represented by a prime-power parameter. -/
 def card (q : PrimePower) : ℕ := q.p ^ q.exponent
@@ -127,7 +134,7 @@ def InStandardRange : LieTypeIndex → Prop
   | .E6 _ | .E7 _ | .E8 _ | .F4 _ | .twistedE6 _ | .trialityD4 _ | .tits => True
 
 /-- Characterization of the conventional range restrictions on every Lie-type constructor. -/
-theorem inStandardRange_iff (d : LieTypeIndex) : d.InStandardRange ↔
+@[simp] theorem inStandardRange_iff (d : LieTypeIndex) : d.InStandardRange ↔
     match d with
     | .A rank q => 1 ≤ rank ∧ (rank = 1 → 4 ≤ q.card)
     | .twistedA rank q => 2 ≤ rank ∧ (rank = 2 → 3 ≤ q.card)
@@ -153,7 +160,7 @@ def IsDuplicateRepresentative : LieTypeIndex → Prop
   | _ => False
 
 /-- Characterization of the deliberately omitted duplicate representatives. -/
-theorem isDuplicateRepresentative_iff (d : LieTypeIndex) : d.IsDuplicateRepresentative ↔
+@[simp] theorem isDuplicateRepresentative_iff (d : LieTypeIndex) : d.IsDuplicateRepresentative ↔
     match d with
     | .A rank q =>
         (rank = 1 ∧ (q.card = 4 ∨ q.card = 5 ∨ q.card = 9)) ∨
@@ -171,7 +178,7 @@ def Valid (d : LieTypeIndex) : Prop :=
   d.InStandardRange ∧ ¬d.IsDuplicateRepresentative
 
 /-- A Lie-type index is valid exactly when it is in range and is the preferred representative. -/
-theorem valid_iff (d : LieTypeIndex) : d.Valid ↔
+@[simp] theorem valid_iff (d : LieTypeIndex) : d.Valid ↔
     d.InStandardRange ∧ ¬d.IsDuplicateRepresentative :=
   Iff.rfl
 
@@ -186,7 +193,7 @@ def UsesHalfFrobenius : LieTypeIndex → Prop
   | _ => False
 
 /-- Characterization of the families whose Steinberg map uses a half-Frobenius. -/
-theorem usesHalfFrobenius_iff (d : LieTypeIndex) : d.UsesHalfFrobenius ↔
+@[simp] theorem usesHalfFrobenius_iff (d : LieTypeIndex) : d.UsesHalfFrobenius ↔
     match d with
     | .suzuki _ | .reeG2 _ | .reeF4 _ | .tits => True
     | _ => False :=
@@ -211,47 +218,52 @@ def dynkinType : LieTypeIndex → DynkinType
   | .suzuki _ => .B 2
 
 @[simp] theorem dynkinType_A (n : ℕ) (q : PrimePower) : (A n q).dynkinType = .A n :=
-  dynkinType.eq_1 n q
+  by simp only [dynkinType]
 
 @[simp] theorem dynkinType_twistedA (n : ℕ) (q : PrimePower) :
-    (twistedA n q).dynkinType = .A n := dynkinType.eq_2 n q
+    (twistedA n q).dynkinType = .A n := by simp only [dynkinType]
 
 @[simp] theorem dynkinType_B (n : ℕ) (q : PrimePower) : (B n q).dynkinType = .B n :=
-  dynkinType.eq_3 n q
+  by simp only [dynkinType]
 
 @[simp] theorem dynkinType_C (n : ℕ) (q : PrimePower) : (C n q).dynkinType = .C n :=
-  dynkinType.eq_4 n q
+  by simp only [dynkinType]
 
 @[simp] theorem dynkinType_D (n : ℕ) (q : PrimePower) : (D n q).dynkinType = .D n :=
-  dynkinType.eq_5 n q
+  by simp only [dynkinType]
 
 @[simp] theorem dynkinType_twistedD (n : ℕ) (q : PrimePower) :
-    (twistedD n q).dynkinType = .D n := dynkinType.eq_6 n q
+    (twistedD n q).dynkinType = .D n := by simp only [dynkinType]
 
 @[simp] theorem dynkinType_trialityD4 (q : PrimePower) :
-    (trialityD4 q).dynkinType = .D 4 := dynkinType.eq_7 q
+    (trialityD4 q).dynkinType = .D 4 := by simp only [dynkinType]
 
-@[simp] theorem dynkinType_E6 (q : PrimePower) : (E6 q).dynkinType = .E6 := dynkinType.eq_8 q
+@[simp] theorem dynkinType_E6 (q : PrimePower) : (E6 q).dynkinType = .E6 :=
+  by simp only [dynkinType]
 
 @[simp] theorem dynkinType_twistedE6 (q : PrimePower) :
-    (twistedE6 q).dynkinType = .E6 := dynkinType.eq_9 q
+    (twistedE6 q).dynkinType = .E6 := by simp only [dynkinType]
 
-@[simp] theorem dynkinType_E7 (q : PrimePower) : (E7 q).dynkinType = .E7 := dynkinType.eq_10 q
+@[simp] theorem dynkinType_E7 (q : PrimePower) : (E7 q).dynkinType = .E7 :=
+  by simp only [dynkinType]
 
-@[simp] theorem dynkinType_E8 (q : PrimePower) : (E8 q).dynkinType = .E8 := dynkinType.eq_11 q
+@[simp] theorem dynkinType_E8 (q : PrimePower) : (E8 q).dynkinType = .E8 :=
+  by simp only [dynkinType]
 
-@[simp] theorem dynkinType_F4 (q : PrimePower) : (F4 q).dynkinType = .F4 := dynkinType.eq_12 q
+@[simp] theorem dynkinType_F4 (q : PrimePower) : (F4 q).dynkinType = .F4 :=
+  by simp only [dynkinType]
 
-@[simp] theorem dynkinType_reeF4 (m : ℕ) : (reeF4 m).dynkinType = .F4 := dynkinType.eq_13 m
+@[simp] theorem dynkinType_reeF4 (m : ℕ) : (reeF4 m).dynkinType = .F4 := by simp only [dynkinType]
 
-@[simp] theorem dynkinType_tits : tits.dynkinType = .F4 := dynkinType.eq_14
+@[simp] theorem dynkinType_tits : tits.dynkinType = .F4 := by simp only [dynkinType]
 
-@[simp] theorem dynkinType_G2 (q : PrimePower) : (G2 q).dynkinType = .G2 := dynkinType.eq_15 q
+@[simp] theorem dynkinType_G2 (q : PrimePower) : (G2 q).dynkinType = .G2 :=
+  by simp only [dynkinType]
 
-@[simp] theorem dynkinType_reeG2 (m : ℕ) : (reeG2 m).dynkinType = .G2 := dynkinType.eq_16 m
+@[simp] theorem dynkinType_reeG2 (m : ℕ) : (reeG2 m).dynkinType = .G2 := by simp only [dynkinType]
 
 @[simp] theorem dynkinType_suzuki (m : ℕ) : (suzuki m).dynkinType = .B 2 :=
-  dynkinType.eq_17 m
+  by simp only [dynkinType]
 
 /-- The characteristic of the field over which the ambient group will be constructed. -/
 def characteristic : LieTypeIndex → ℕ
@@ -261,54 +273,54 @@ def characteristic : LieTypeIndex → ℕ
   | .suzuki _ | .reeF4 _ | .tits => 2
 
 @[simp] theorem characteristic_A (n : ℕ) (q : PrimePower) : (A n q).characteristic = q.p :=
-  characteristic.eq_1 n q
+  by simp only [characteristic]
 
 @[simp] theorem characteristic_twistedA (n : ℕ) (q : PrimePower) :
-    (twistedA n q).characteristic = q.p := characteristic.eq_2 n q
+    (twistedA n q).characteristic = q.p := by simp only [characteristic]
 
 @[simp] theorem characteristic_B (n : ℕ) (q : PrimePower) : (B n q).characteristic = q.p :=
-  characteristic.eq_3 n q
+  by simp only [characteristic]
 
 @[simp] theorem characteristic_C (n : ℕ) (q : PrimePower) : (C n q).characteristic = q.p :=
-  characteristic.eq_4 n q
+  by simp only [characteristic]
 
 @[simp] theorem characteristic_D (n : ℕ) (q : PrimePower) : (D n q).characteristic = q.p :=
-  characteristic.eq_5 n q
+  by simp only [characteristic]
 
 @[simp] theorem characteristic_twistedD (n : ℕ) (q : PrimePower) :
-    (twistedD n q).characteristic = q.p := characteristic.eq_6 n q
+    (twistedD n q).characteristic = q.p := by simp only [characteristic]
 
 @[simp] theorem characteristic_E6 (q : PrimePower) : (E6 q).characteristic = q.p :=
-  characteristic.eq_7 q
+  by simp only [characteristic]
 
 @[simp] theorem characteristic_E7 (q : PrimePower) : (E7 q).characteristic = q.p :=
-  characteristic.eq_8 q
+  by simp only [characteristic]
 
 @[simp] theorem characteristic_E8 (q : PrimePower) : (E8 q).characteristic = q.p :=
-  characteristic.eq_9 q
+  by simp only [characteristic]
 
 @[simp] theorem characteristic_F4 (q : PrimePower) : (F4 q).characteristic = q.p :=
-  characteristic.eq_10 q
+  by simp only [characteristic]
 
 @[simp] theorem characteristic_G2 (q : PrimePower) : (G2 q).characteristic = q.p :=
-  characteristic.eq_11 q
+  by simp only [characteristic]
 
 @[simp] theorem characteristic_twistedE6 (q : PrimePower) :
-    (twistedE6 q).characteristic = q.p := characteristic.eq_12 q
+    (twistedE6 q).characteristic = q.p := by simp only [characteristic]
 
 @[simp] theorem characteristic_trialityD4 (q : PrimePower) :
-    (trialityD4 q).characteristic = q.p := characteristic.eq_13 q
+    (trialityD4 q).characteristic = q.p := by simp only [characteristic]
 
 @[simp] theorem characteristic_reeG2 (m : ℕ) : (reeG2 m).characteristic = 3 :=
-  characteristic.eq_14 m
+  by simp only [characteristic]
 
 @[simp] theorem characteristic_suzuki (m : ℕ) : (suzuki m).characteristic = 2 :=
-  characteristic.eq_15 m
+  by simp only [characteristic]
 
 @[simp] theorem characteristic_reeF4 (m : ℕ) : (reeF4 m).characteristic = 2 :=
-  characteristic.eq_16 m
+  by simp only [characteristic]
 
-@[simp] theorem characteristic_tits : tits.characteristic = 2 := characteristic.eq_17
+@[simp] theorem characteristic_tits : tits.characteristic = 2 := by simp only [characteristic]
 
 /-- The characteristic attached to a Lie-type index is prime. -/
 theorem characteristic_prime (d : LieTypeIndex) : d.characteristic.Prime := by
@@ -330,54 +342,54 @@ def fieldOrder : LieTypeIndex → ℕ
   | .tits => 2
 
 @[simp] theorem fieldOrder_A (n : ℕ) (q : PrimePower) : (A n q).fieldOrder = q.card :=
-  fieldOrder.eq_1 n q
+  by simp only [fieldOrder]
 
 @[simp] theorem fieldOrder_twistedA (n : ℕ) (q : PrimePower) :
-    (twistedA n q).fieldOrder = q.card := fieldOrder.eq_2 n q
+    (twistedA n q).fieldOrder = q.card := by simp only [fieldOrder]
 
 @[simp] theorem fieldOrder_B (n : ℕ) (q : PrimePower) : (B n q).fieldOrder = q.card :=
-  fieldOrder.eq_3 n q
+  by simp only [fieldOrder]
 
 @[simp] theorem fieldOrder_C (n : ℕ) (q : PrimePower) : (C n q).fieldOrder = q.card :=
-  fieldOrder.eq_4 n q
+  by simp only [fieldOrder]
 
 @[simp] theorem fieldOrder_D (n : ℕ) (q : PrimePower) : (D n q).fieldOrder = q.card :=
-  fieldOrder.eq_5 n q
+  by simp only [fieldOrder]
 
 @[simp] theorem fieldOrder_twistedD (n : ℕ) (q : PrimePower) :
-    (twistedD n q).fieldOrder = q.card := fieldOrder.eq_6 n q
+    (twistedD n q).fieldOrder = q.card := by simp only [fieldOrder]
 
 @[simp] theorem fieldOrder_E6 (q : PrimePower) : (E6 q).fieldOrder = q.card :=
-  fieldOrder.eq_7 q
+  by simp only [fieldOrder]
 
 @[simp] theorem fieldOrder_E7 (q : PrimePower) : (E7 q).fieldOrder = q.card :=
-  fieldOrder.eq_8 q
+  by simp only [fieldOrder]
 
 @[simp] theorem fieldOrder_E8 (q : PrimePower) : (E8 q).fieldOrder = q.card :=
-  fieldOrder.eq_9 q
+  by simp only [fieldOrder]
 
 @[simp] theorem fieldOrder_F4 (q : PrimePower) : (F4 q).fieldOrder = q.card :=
-  fieldOrder.eq_10 q
+  by simp only [fieldOrder]
 
 @[simp] theorem fieldOrder_G2 (q : PrimePower) : (G2 q).fieldOrder = q.card :=
-  fieldOrder.eq_11 q
+  by simp only [fieldOrder]
 
 @[simp] theorem fieldOrder_twistedE6 (q : PrimePower) :
-    (twistedE6 q).fieldOrder = q.card := fieldOrder.eq_12 q
+    (twistedE6 q).fieldOrder = q.card := by simp only [fieldOrder]
 
 @[simp] theorem fieldOrder_trialityD4 (q : PrimePower) :
-    (trialityD4 q).fieldOrder = q.card := fieldOrder.eq_13 q
+    (trialityD4 q).fieldOrder = q.card := by simp only [fieldOrder]
 
 @[simp] theorem fieldOrder_suzuki (m : ℕ) : (suzuki m).fieldOrder = 2 ^ (2 * m + 1) :=
-  fieldOrder.eq_14 m
+  by simp only [fieldOrder]
 
 @[simp] theorem fieldOrder_reeF4 (m : ℕ) : (reeF4 m).fieldOrder = 2 ^ (2 * m + 1) :=
-  fieldOrder.eq_15 m
+  by simp only [fieldOrder]
 
 @[simp] theorem fieldOrder_reeG2 (m : ℕ) : (reeG2 m).fieldOrder = 3 ^ (2 * m + 1) :=
-  fieldOrder.eq_16 m
+  by simp only [fieldOrder]
 
-@[simp] theorem fieldOrder_tits : tits.fieldOrder = 2 := fieldOrder.eq_17
+@[simp] theorem fieldOrder_tits : tits.fieldOrder = 2 := by simp only [fieldOrder]
 
 end LieTypeIndex
 
