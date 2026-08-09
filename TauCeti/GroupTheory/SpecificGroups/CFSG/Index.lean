@@ -7,7 +7,7 @@ module
 public import TauCeti.LinearAlgebra.RootSystem.DynkinType
 public import Mathlib.Algebra.IsPrimePow
 public import Mathlib.Data.Fintype.Card
-public import Mathlib.Tactic.DeriveFintype
+public import Mathlib.Data.Fintype.OfMap
 
 /-!
 # Indices for the classification of finite simple groups
@@ -489,7 +489,6 @@ example : (LieTypeIndex.B 3 q3).Valid := by
 
 @[expose] public section
 
-set_option backward.isDefEq.respectTransparency false in
 /-- The twenty-six sporadic group names. `Fi24Prime` denotes `Fi₂₄'`, and `B` and `M` denote
 the Baby Monster and Monster. -/
 inductive SporadicName where
@@ -499,7 +498,14 @@ inductive SporadicName where
   | Co1 | Co2 | Co3
   | Fi22 | Fi23 | Fi24Prime
   | HN | Ly | Th | B | M
-  deriving DecidableEq, Fintype
+  deriving DecidableEq
+
+/-- The finite enumeration of the twenty-six sporadic group names. -/
+instance : Fintype SporadicName :=
+  Fintype.ofList
+    [.M11, .M12, .M22, .M23, .M24, .J1, .J2, .J3, .J4, .HS, .McL, .He, .Ru, .Suz, .ONan,
+      .Co1, .Co2, .Co3, .Fi22, .Fi23, .Fi24Prime, .HN, .Ly, .Th, .B, .M]
+    (by intro x; cases x <;> simp)
 
 end
 
