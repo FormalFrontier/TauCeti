@@ -80,6 +80,44 @@ open Matrix Module
 
 universe u
 
+/-- **The adjugate combination recovers the determinant multiple.** If each `T j` is the
+`N`-combination `∑ i, N j i • B i`, then `∑ j, N.adjugate i j • T j = N.det • B i`. Neither family
+need be a basis. -/
+private theorem sum_adjugate_smul_eq_det_smul {R ι M : Type*} [CommRing R] [Fintype ι]
+    [DecidableEq ι] [AddCommMonoid M] [Module R M] (N : Matrix ι ι R) (B T : ι → M)
+    (hMN : ∀ j, ∑ i, N j i • B i = T j) (i : ι) :
+    ∑ j, N.adjugate i j • T j = N.det • B i :=
+  calc ∑ j, N.adjugate i j • T j
+      = ∑ j, ∑ l, (N.adjugate i j * N j l) • B l := by
+        simp_rw [← hMN, Finset.smul_sum, smul_smul]
+    _ = ∑ l, (∑ j, N.adjugate i j * N j l) • B l := by
+        rw [Finset.sum_comm]; simp_rw [← Finset.sum_smul]
+    _ = ∑ l, ((N.adjugate * N) i l) • B l := by simp_rw [Matrix.mul_apply]
+    _ = N.det • B i := by rw [Matrix.adjugate_mul]; simp [Matrix.one_apply]
+
+/-- **An integer matrix expressing a spanning family in a basis has nonzero determinant.** -/
+private theorem det_ne_zero_of_span_eq_top {k V ι : Type*} [Field k] [CharZero k] [AddCommGroup V]
+    [Module k V] [Fintype ι] [DecidableEq ι] (B : Basis ι k V) (T : ι → V) (N : Matrix ι ι ℤ)
+    (hMN : ∀ j, ∑ i, N j i • B i = T j) (hspan : Submodule.span k (Set.range T) = ⊤) :
+    N.det ≠ 0 := by
+  -- A spanning family of the right cardinality is a basis, and `N` is then the change-of-basis
+  -- matrix from `B`, whose determinant is a unit.
+  let B' : Basis ι k V :=
+    basisOfTopLeSpanOfCardEqFinrank T (by rw [hspan]) (finrank_eq_card_basis B).symm
+  have hB' : ⇑B' = T := coe_basisOfTopLeSpanOfCardEqFinrank _ _ _
+  have hrepr : ∀ j i, B.repr (T j) i = (N j i : k) := by
+    intro j i
+    rw [← hMN j]
+    simp [Finsupp.single_apply]
+  have htoMatrix : B.toMatrix ⇑B' = (N.map (Int.cast : ℤ → k))ᵀ := by
+    ext i j
+    rw [Basis.toMatrix_apply, hB', hrepr]
+    simp
+  have hdet : ((N.det : ℤ) : k) ≠ 0 := by
+    rw [Int.cast_det, ← Matrix.det_transpose, ← htoMatrix, ← Module.Basis.det_apply]
+    exact (B.isUnit_det B').ne_zero
+  simpa using hdet
+
 /-- The lattice descent behind Artin's theorem, as a statement of linear algebra: if a `ℤ`-lattice
 in a finite-dimensional vector space is spanned by a basis `B`, and a family `T` of lattice vectors
 spans the space over the field, then some nonzero integer multiple of every lattice vector is an
@@ -98,32 +136,10 @@ private theorem exists_zsmul_mem_span_int {k V ι : Type*} [Field k] [CharZero k
   choose M hM using fun j => (Submodule.mem_span_range_iff_exists_fun ℤ).mp (hT j)
   let N : Matrix ι ι ℤ := Matrix.of M
   have hMN : ∀ j, ∑ i, N j i • B i = T j := hM
-  let B' : Basis ι k V :=
-    basisOfTopLeSpanOfCardEqFinrank T (by rw [hspan]) (finrank_eq_card_basis B).symm
-  have hB' : ⇑B' = T := coe_basisOfTopLeSpanOfCardEqFinrank _ _ _
-  have hrepr : ∀ j i, B.repr (T j) i = (N j i : k) := by
-    intro j i
-    rw [← hMN j]
-    simp [Finsupp.single_apply]
-  have htoMatrix : B.toMatrix ⇑B' = (N.map (Int.cast : ℤ → k))ᵀ := by
-    ext i j
-    rw [Basis.toMatrix_apply, hB', hrepr]
-    simp
-  have hdet : ((N.det : ℤ) : k) ≠ 0 := by
-    rw [Int.cast_det, ← Matrix.det_transpose, ← htoMatrix, ← Module.Basis.det_apply]
-    exact (B.isUnit_det B').ne_zero
-  refine ⟨N.det, by simpa using hdet, ?_⟩
+  refine ⟨N.det, det_ne_zero_of_span_eq_top B T N hMN hspan, ?_⟩
   have hB : ∀ i, (N.det : ℤ) • B i ∈ Submodule.span ℤ (Set.range T) := by
     intro i
-    have key : ∑ j, N.adjugate i j • T j = (N.det : ℤ) • B i := by
-      calc ∑ j, N.adjugate i j • T j
-          = ∑ j, ∑ l, (N.adjugate i j * N j l) • B l := by
-            simp_rw [← hMN, Finset.smul_sum, smul_smul]
-        _ = ∑ l, (∑ j, N.adjugate i j * N j l) • B l := by
-            rw [Finset.sum_comm]; simp_rw [← Finset.sum_smul]
-        _ = ∑ l, ((N.adjugate * N) i l) • B l := by simp_rw [Matrix.mul_apply]
-        _ = (N.det : ℤ) • B i := by rw [Matrix.adjugate_mul]; simp [Matrix.one_apply]
-    rw [← key]
+    rw [← sum_adjugate_smul_eq_det_smul N B T hMN i]
     exact Submodule.sum_mem _ fun j _ =>
       Submodule.smul_mem _ _ (Submodule.subset_span ⟨j, rfl⟩)
   intro v hv

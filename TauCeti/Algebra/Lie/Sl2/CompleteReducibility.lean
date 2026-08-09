@@ -172,6 +172,35 @@ private theorem exists_notMem_forall_lie_mem_of_le {d : ℕ}
   simpa using hwinv x
 
 omit [CharZero K] [IsAlgClosed K] in
+/-- **The span of a Lie submodule and one extra vector is carried into that submodule**, provided
+every bracket of the extra vector already lies in it. -/
+private theorem lie_mem_of_mem_sup_span_singleton {M : Type v} [AddCommGroup M] [Module K M]
+    [LieRingModule L M] [LieModule K L M] {W : LieSubmodule K L M} {v₀ : M}
+    (hv₀W : ∀ x : L, ⁅x, v₀⁆ ∈ W) (x : L) {m : M}
+    (hm : m ∈ (W : Submodule K M) ⊔ Submodule.span K {v₀}) : ⁅x, m⁆ ∈ W := by
+  obtain ⟨y, hy, z, hz, rfl⟩ := Submodule.mem_sup.1 hm
+  obtain ⟨c, rfl⟩ := Submodule.mem_span_singleton.1 hz
+  rw [lie_add, lie_smul]
+  exact W.add_mem (W.lie_mem hy) (W.smul_mem c (hv₀W x))
+
+omit [CharZero K] [IsAlgClosed K] in
+/-- **A vector of `W + K v₀` lying outside `W` lies outside `N`**, when `W ≤ N` and `v₀ ∉ N`. -/
+private theorem notMem_of_mem_sup_span_singleton {M : Type v} [AddCommGroup M] [Module K M]
+    {N W : Submodule K M} {v₀ p : M} (hWle : W ≤ N) (hv₀N : v₀ ∉ N)
+    (hp : p ∈ W ⊔ Submodule.span K {v₀}) (hpW : p ∉ W) : p ∉ N := by
+  intro hcon
+  obtain ⟨y, hy, z, hz, hyz⟩ := Submodule.mem_sup.1 hp
+  obtain ⟨c, rfl⟩ := Submodule.mem_span_singleton.1 hz
+  rcases eq_or_ne c 0 with rfl | hc0
+  · exact hpW (by simpa [← hyz] using hy)
+  · refine hv₀N ?_
+    have hcv : c • v₀ ∈ N := by
+      have hsub : c • v₀ = p - y := by rw [← hyz]; abel
+      rw [hsub]
+      exact N.sub_mem hcon (hWle hy)
+    simpa [hc0] using N.smul_mem c⁻¹ hcv
+
+omit [CharZero K] [IsAlgClosed K] in
 /-- **A vector outside `N` whose brackets land in `W` upgrades to a genuinely invariant one.** This
 is the second half of the reducible step. The span `W + K v₀` is carried into `W` by `L`, so it is a
 Lie submodule; it has dimension at most `finrank W + 1`, so the induction applies to it with `W`
@@ -184,16 +213,10 @@ private theorem exists_invariant_notMem_of_forall_lie_mem {d : ℕ}
     {N W : LieSubmodule K L M} [FiniteDimensional K W] {v₀ : M} (hWrank : finrank K W + 1 ≤ d)
     (hWle : W ≤ N) (hv₀N : v₀ ∉ N) (hv₀W : ∀ x : L, ⁅x, v₀⁆ ∈ W) :
     ∃ v : M, v ∉ N ∧ ∀ x : L, ⁅x, v⁆ = 0 := by
-  have hlie : ∀ (x : L) (m : M),
-      m ∈ (W : Submodule K M) ⊔ Submodule.span K {v₀} → ⁅x, m⁆ ∈ W := by
-    intro x m hm
-    obtain ⟨y, hy, z, hz, rfl⟩ := Submodule.mem_sup.1 hm
-    obtain ⟨c, rfl⟩ := Submodule.mem_span_singleton.1 hz
-    rw [lie_add, lie_smul]
-    exact W.add_mem (W.lie_mem hy) (W.smul_mem c (hv₀W x))
   let P : LieSubmodule K L M :=
     { __ := (W : Submodule K M) ⊔ Submodule.span K {v₀}
-      lie_mem := fun {x m} hm ↦ Submodule.mem_sup_left (hlie x m hm) }
+      lie_mem := fun {x m} hm ↦
+        Submodule.mem_sup_left (lie_mem_of_mem_sup_span_singleton hv₀W _ hm) }
   have hPmem : ∀ m : M, m ∈ P ↔ m ∈ (W : Submodule K M) ⊔ Submodule.span K {v₀} :=
     fun _ ↦ Iff.rfl
   have hv₀P : v₀ ∈ P :=
@@ -213,22 +236,12 @@ private theorem exists_invariant_notMem_of_forall_lie_mem {d : ℕ}
     rw [Ne, LieSubmodule.comap_incl_eq_top]
     exact fun hc ↦ hv₀N (hWle (hc hv₀P))
   obtain ⟨p, hpmem, hpinv⟩ := ih (W.comap P.incl) hPrank hWcomap
-    (fun x q ↦ hlie x (q : M) ((hPmem _).1 q.2))
-  refine ⟨(p : M), ?_, fun x ↦ ?_⟩
-  · intro hcon
-    obtain ⟨y, hy, z, hz, hyz⟩ := Submodule.mem_sup.1 ((hPmem _).1 p.2)
-    obtain ⟨c, rfl⟩ := Submodule.mem_span_singleton.1 hz
-    rcases eq_or_ne c 0 with rfl | hc0
-    · exact hpmem (by simpa [← hyz] using hy)
-    · refine hv₀N ?_
-      have hcv : c • v₀ ∈ N := by
-        have hsub : c • v₀ = (p : M) - y := by rw [← hyz]; abel
-        rw [hsub]
-        exact N.sub_mem hcon (hWle hy)
-      simpa [hc0] using N.smul_mem c⁻¹ hcv
-  · have hp := hpinv x
-    rw [← LieSubmodule.coe_bracket, hp]
-    rfl
+    (fun x q ↦ lie_mem_of_mem_sup_span_singleton hv₀W x ((hPmem _).1 q.2))
+  refine ⟨(p : M), notMem_of_mem_sup_span_singleton hWle hv₀N ((hPmem _).1 p.2) hpmem,
+    fun x ↦ ?_⟩
+  have hp := hpinv x
+  rw [← LieSubmodule.coe_bracket, hp]
+  rfl
 
 omit [CharZero K] [IsAlgClosed K] in
 /-- **The reducible step.** If the proper submodule `N` admits a Lie submodule `W` that is neither

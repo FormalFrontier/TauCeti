@@ -73,6 +73,31 @@ theorem ker_one_sub (K : X →L[𝕜] X) :
 
 namespace IsCompactOperator
 
+/-- **A bounded sequence whose `(1 - K)`-images vanish in the limit has a subsequence converging
+to a point of `ker (1 - K)`.** The bound `R` on the sequence is arbitrary. -/
+private theorem exists_subseq_tendsto_mem_ker (hK : IsCompactOperator K) {R : ℝ} {v : ℕ → X}
+    (hvle : ∀ n, ‖v n‖ ≤ R)
+    (hAtendsto : Tendsto (fun n => (1 - K : X →L[𝕜] X) (v n)) atTop (𝓝 0)) :
+    ∃ (y : X) (ψ : ℕ → ℕ), StrictMono ψ ∧ Tendsto (fun k => v (ψ k)) atTop (𝓝 y) ∧
+      y ∈ LinearMap.ker ((1 - K : X →L[𝕜] X) : X →ₗ[𝕜] X) := by
+  obtain ⟨y, ψ, hψ, hψy⟩ := exists_subseq_tendsto hK hvle
+  have hvsub : Tendsto (fun k => v (ψ k)) atTop (𝓝 y) := by
+    -- `v = (1 - K) v + K v`, and both summands converge along the subsequence.
+    have hsum : ∀ k, (1 - K : X →L[𝕜] X) (v (ψ k)) + K (v (ψ k)) = v (ψ k) := by
+      intro k
+      rw [sub_apply, one_apply_eq_self]
+      abel
+    have hlim : Tendsto (fun k => (1 - K : X →L[𝕜] X) (v (ψ k)) + K (v (ψ k))) atTop
+        (𝓝 (0 + y)) := (hAtendsto.comp hψ.tendsto_atTop).add hψy
+    rw [zero_add] at hlim
+    exact Filter.Tendsto.congr hsum hlim
+  have h1 : Tendsto (fun k => (1 - K : X →L[𝕜] X) (v (ψ k))) atTop
+      (𝓝 ((1 - K : X →L[𝕜] X) y)) :=
+    (((1 : X →L[𝕜] X) - K).continuous.tendsto y).comp hvsub
+  have h0 : Tendsto (fun k => (1 - K : X →L[𝕜] X) (v (ψ k))) atTop (𝓝 0) :=
+    hAtendsto.comp hψ.tendsto_atTop
+  exact ⟨y, ψ, hψ, hvsub, LinearMap.mem_ker.mpr (tendsto_nhds_unique h1 h0)⟩
+
 /-- On a closed subspace `M` meeting `ker (1 - K)` only in `0`, the operator `1 - K` is bounded
 below.
 
@@ -111,37 +136,10 @@ theorem exists_pos_mul_norm_le_of_disjoint_ker (hK : IsCompactOperator K) {M : S
       _ ≤ ‖d n‖ * (1 / (n + 1) * ‖u n‖) := mul_le_mul_of_nonneg_left (hu n).le hdn
       _ = 1 / (n + 1) * ‖v n‖ := by rw [hv]; simp only [norm_smul]; ring
       _ ≤ 1 / (n + 1) := hstep
-  have hAtendsto : Tendsto (fun n => (1 - K : X →L[𝕜] X) (v n)) atTop (𝓝 0) := by
-    rw [NormedAddGroup.tendsto_nhds_zero]
-    intro ε hε
-    obtain ⟨N, hN⟩ := exists_nat_gt (1 / ε)
-    filter_upwards [eventually_ge_atTop N] with n hn
-    have hnpos : (0 : ℝ) < (n : ℝ) + 1 := by positivity
-    have hlt : 1 / ((n : ℝ) + 1) < ε := by
-      have hNn : (N : ℝ) ≤ (n : ℝ) := Nat.cast_le.mpr hn
-      have h1 : 1 / ε < (n : ℝ) + 1 := by linarith
-      rw [div_lt_iff₀ hε, mul_comm] at h1
-      rw [div_lt_iff₀ hnpos]
-      linarith
-    exact lt_of_le_of_lt (hAv n) hlt
-  obtain ⟨y, ψ, hψ, hψy⟩ := exists_subseq_tendsto hK hvle
-  have hvsub : Tendsto (fun k => v (ψ k)) atTop (𝓝 y) := by
-    have hsum : ∀ k, (1 - K : X →L[𝕜] X) (v (ψ k)) + K (v (ψ k)) = v (ψ k) := by
-      intro k
-      rw [sub_apply, one_apply_eq_self]
-      abel
-    have hlim : Tendsto (fun k => (1 - K : X →L[𝕜] X) (v (ψ k)) + K (v (ψ k))) atTop
-        (𝓝 (0 + y)) := (hAtendsto.comp hψ.tendsto_atTop).add hψy
-    rw [zero_add] at hlim
-    exact Filter.Tendsto.congr hsum hlim
+  have hAtendsto : Tendsto (fun n => (1 - K : X →L[𝕜] X) (v n)) atTop (𝓝 0) :=
+    squeeze_zero_norm hAv tendsto_one_div_add_atTop_nhds_zero_nat
+  obtain ⟨y, ψ, -, hvsub, hyker⟩ := exists_subseq_tendsto_mem_ker hK hvle hAtendsto
   have hyM : y ∈ M := hM.mem_of_tendsto hvsub (Eventually.of_forall fun k => hvM (ψ k))
-  have hyker : y ∈ LinearMap.ker ((1 - K : X →L[𝕜] X) : X →ₗ[𝕜] X) := by
-    have h1 : Tendsto (fun k => (1 - K : X →L[𝕜] X) (v (ψ k))) atTop
-        (𝓝 ((1 - K : X →L[𝕜] X) y)) :=
-      (((1 : X →L[𝕜] X) - K).continuous.tendsto y).comp hvsub
-    have h0 : Tendsto (fun k => (1 - K : X →L[𝕜] X) (v (ψ k))) atTop (𝓝 0) :=
-      hAtendsto.comp hψ.tendsto_atTop
-    exact LinearMap.mem_ker.mpr (tendsto_nhds_unique h1 h0)
   have hy0 : y = 0 := by simpa using hdisj.le_bot ⟨hyker, hyM⟩
   have hyge : ‖c‖⁻¹ ≤ ‖y‖ := ge_of_tendsto' hvsub.norm fun k => hvge (ψ k)
   rw [hy0, norm_zero] at hyge
