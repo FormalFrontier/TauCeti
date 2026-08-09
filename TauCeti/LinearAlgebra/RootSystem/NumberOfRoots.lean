@@ -12,14 +12,14 @@ public section
 # Numbers of roots of Dynkin types
 
 This file records the number of roots in each irreducible crystallographic Dynkin type. The value
-`TauCeti.DynkinType.numRoots` fixes the root-indexing type `Fin t.numRoots` used by the pinned
-simply connected root datum: unlike an abstract finite index type, this makes the carrier of that
-datum explicit for every family.
+`TauCeti.DynkinType.numRoots` fixes `Fin t.numRoots` as the root-index type intended for the
+pinned simply connected root datum, which is not constructed here: unlike an abstract finite index
+type, this makes that index type explicit for every family.
 
 The classical formulas are `n(n+1)` for `Aₙ`, `2n²` for `Bₙ` and `Cₙ`, and `2n(n-1)` for `Dₙ`.
 The exceptional types have respectively `72`, `126`, `240`, `48`, and `12` roots. For a valid
 Dynkin type, `TauCeti.DynkinType.rank_le_numRoots` ensures that the simple roots can occupy the
-first `t.rank` indices of `Fin t.numRoots`, as required by the pinned datum.
+first `t.rank` indices of `Fin t.numRoots`, as that future datum will require.
 
 ## Main definitions
 
@@ -40,9 +40,9 @@ This is the `DynkinType.numRoots` target of Layer 6 of
 
 namespace TauCeti.DynkinType
 
-/-- The number of roots of a Dynkin type. This is exposed because it occurs in the root-indexing
-type `Fin t.numRoots` of the pinned simply connected root datum, whose construction must reduce to
-the explicit family data rather than an abstract finite type. -/
+/-- The number of roots of a Dynkin type. This is exposed because it is meant to appear in the
+root-index type `Fin t.numRoots` of the future pinned simply connected root datum, whose
+construction must reduce to the explicit family data rather than an abstract finite type. -/
 @[expose] def numRoots : DynkinType → ℕ
   | .A n => n * (n + 1)
   | .B n | .C n => 2 * n ^ 2
