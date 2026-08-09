@@ -92,6 +92,8 @@ noncomputable def standardSkewAdjointLieEquiv :
     rw [polarBilin_weightedSumSquares_one, ← Nat.cast_smul_eq_nsmul R]
     rw [← ((Matrix.toLinearMap₂' R : Matrix n n R ≃ₗ[R]
       LinearMap.BilinForm R (n → R)).map_smul (↑(2 : ℕ) : R) (1 : Matrix n n R))]
+    -- `map_smul` rewrites the bilinear form but not its restricted-subalgebra carrier;
+    -- this definitionally equal restatement exposes the matrix form needed by the bridge lemma.
     change (lieEquivMatrix' (R := R) (n := n)).symm A ∈ skewAdjointLieSubalgebra
       (Matrix.toLinearMap₂' R ((2 : R) • (1 : Matrix n n R))) ↔ _
     conv_lhs => rw [← val_unitOfInvertible (2 : R)]
