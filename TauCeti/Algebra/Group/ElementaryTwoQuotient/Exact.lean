@@ -31,10 +31,6 @@ exactness properties of the maximal elementary-2 quotient developed in Layer 2 o
 Multiquadratic roadmap: they extend its existing functoriality by controlling the kernel and ranks
 of the induced map under a surjective homomorphism.
 
-The last group of results covers the degenerate case where `G` is *itself* elementary abelian: then
-the subgroup of squares is trivial and the quotient map `G → G/G²` is an isomorphism. If the
-quotient is finite-dimensional, then also `|G| = 2 ^ twoRank G`.
-
 ## Main results
 
 * `TauCeti.elementaryTwoQuotientMap_surjective`: the induced map is surjective.
@@ -43,12 +39,9 @@ quotient is finite-dimensional, then also `|G| = 2 ^ twoRank G`.
 * `TauCeti.twoRank_le_of_surjective`: `twoRank H ≤ twoRank G` when `G/G²` is finite-dimensional.
 * `TauCeti.twoRank_le_twoRank_add_twoRank_ker`: `twoRank G ≤ twoRank H + twoRank (ker f)` when
   `G/G²` and `ker f / (ker f)²` are finite-dimensional.
-* `TauCeti.elementaryTwoQuotientMap_injective_iff` and
+* `TauCeti.elementaryTwoQuotientMap_injective_iff_forall_isSquare_of_mem_ker` and
   `TauCeti.twoRank_eq_of_forall_isSquare_of_mem_ker`: the induced map is injective, and the two
   ranks agree when `ker f` consists of squares.
-* `TauCeti.card_elementaryTwoQuotient_of_forall_sq_eq_one` and
-  `TauCeti.card_eq_two_pow_twoRank_of_forall_sq_eq_one`: for an elementary abelian `2`-group the
-  quotient is the whole group, and `|G| = 2 ^ twoRank G` when the quotient is finite-dimensional.
 -/
 
 public section
@@ -78,10 +71,7 @@ theorem range_elementaryTwoQuotientMap_ker_subtype_le :
 
 /-- **Right exactness of the elementary-2 quotient.** For a surjection `f : G →* H`, an element of
 `G/G²` dies in `H/H²` exactly when it is the class of an element of `ker f`. Equivalently, the
-sequence `ker f / (ker f)² → G/G² → H/H² → 0` is exact.
-
-The nontrivial inclusion is the descent: if `f g = h²` then, choosing `a` with `f a = h`, the
-element `g · (a²)⁻¹` lies in `ker f` and has the same class as `g`. -/
+sequence `ker f / (ker f)² → G/G² → H/H² → 0` is exact. -/
 theorem ker_elementaryTwoQuotientMap (hf : Function.Surjective f) :
     LinearMap.ker (elementaryTwoQuotientMap f) =
       LinearMap.range (elementaryTwoQuotientMap f.ker.subtype) := by
@@ -99,7 +89,7 @@ theorem ker_elementaryTwoQuotientMap (hf : Function.Surjective f) :
 
 /-- Elementwise form of `TauCeti.ker_elementaryTwoQuotientMap`: for a surjection `f`, a class in
 `G/G²` maps to zero in `H/H²` iff it is represented by an element of `ker f`. -/
-theorem mem_ker_elementaryTwoQuotientMap_iff (hf : Function.Surjective f)
+@[simp] theorem mem_ker_elementaryTwoQuotientMap_iff (hf : Function.Surjective f)
     (x : ElementaryTwoQuotient G) :
     x ∈ LinearMap.ker (elementaryTwoQuotientMap f) ↔
       ∃ g ∈ f.ker, elementaryTwoQuotientMk g = x := by
@@ -121,8 +111,7 @@ theorem twoRank_le_of_surjective [Module.Finite (ZMod 2) (ElementaryTwoQuotient 
 
 /-- **A quotient group loses no more 2-rank than its kernel carries.** If `f : G →* H` is
 surjective, and both `G/G²` and `ker f / (ker f)²` are finite-dimensional, then
-`twoRank G ≤ twoRank H + twoRank (ker f)`: by right exactness the kernel of `G/G² → H/H²` is a
-quotient of `ker f / (ker f)²`, and the rank-nullity formula adds it to `twoRank H`. -/
+`twoRank G ≤ twoRank H + twoRank (ker f)`. -/
 theorem twoRank_le_twoRank_add_twoRank_ker
     [Module.Finite (ZMod 2) (ElementaryTwoQuotient G)]
     [Module.Finite (ZMod 2) (ElementaryTwoQuotient f.ker)]
@@ -139,7 +128,8 @@ theorem twoRank_le_twoRank_add_twoRank_ker
 /-- **When a quotient loses no 2-rank at all.** For a surjection `f : G →* H`, the induced map on
 elementary-2 quotients is injective — hence an isomorphism — exactly when every element of `ker f`
 is already a square in `G`. -/
-theorem elementaryTwoQuotientMap_injective_iff (hf : Function.Surjective f) :
+theorem elementaryTwoQuotientMap_injective_iff_forall_isSquare_of_mem_ker
+    (hf : Function.Surjective f) :
     Function.Injective (elementaryTwoQuotientMap f) ↔ ∀ g ∈ f.ker, IsSquare g := by
   rw [← LinearMap.ker_eq_bot, Submodule.eq_bot_iff]
   constructor
@@ -156,33 +146,8 @@ every element of `ker f` is a square in `G`, then `twoRank G = twoRank H`. -/
 theorem twoRank_eq_of_forall_isSquare_of_mem_ker (hf : Function.Surjective f)
     (h : ∀ g ∈ f.ker, IsSquare g) : twoRank G = twoRank H := by
   have hbij : Function.Bijective (elementaryTwoQuotientMap f) :=
-    ⟨(elementaryTwoQuotientMap_injective_iff hf).2 h, elementaryTwoQuotientMap_surjective hf⟩
+    ⟨(elementaryTwoQuotientMap_injective_iff_forall_isSquare_of_mem_ker hf).2 h,
+      elementaryTwoQuotientMap_surjective hf⟩
   simpa only [twoRank_def] using (LinearEquiv.ofBijective _ hbij).finrank_eq
-
-section ElementaryAbelian
-
-variable (G)
-
-/-- **An elementary abelian `2`-group is its own elementary-2 quotient** (in cardinality): if every
-element squares to `1` then the subgroup of squares is trivial, so `|G/G²| = |G|`. -/
-theorem card_elementaryTwoQuotient_of_forall_sq_eq_one (h : ∀ g : G, g ^ 2 = 1) :
-    Nat.card (ElementaryTwoQuotient G) = Nat.card G := by
-  rw [card_elementaryTwoQuotient_eq_index_square]
-  have hsq : Subgroup.square G = ⊥ := by
-    refine Subgroup.eq_bot_iff_forall _ |>.2 fun g hg => ?_
-    obtain ⟨r, rfl⟩ := Subgroup.mem_square.1 hg
-    rw [← pow_two]
-    exact h r
-  rw [hsq, Subgroup.index_bot]
-
-/-- **The order of an elementary abelian `2`-group is `2 ^ twoRank`** when its elementary-2
-quotient is finite-dimensional. -/
-theorem card_eq_two_pow_twoRank_of_forall_sq_eq_one
-    [Module.Finite (ZMod 2) (ElementaryTwoQuotient G)] (h : ∀ g : G, g ^ 2 = 1) :
-    Nat.card G = 2 ^ twoRank G := by
-  rw [← card_elementaryTwoQuotient_of_forall_sq_eq_one G h,
-    card_elementaryTwoQuotient_eq_two_pow_twoRank]
-
-end ElementaryAbelian
 
 end TauCeti
