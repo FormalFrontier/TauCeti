@@ -150,18 +150,6 @@ theorem filtrationGradedEquiv_symm_apply (Q : QuadraticForm R M) [Invertible (2 
   apply congrArg Submodule.Quotient.mk
   exact Subtype.ext (coe_equivExteriorFiltration_symm_apply Q (k + 1) _)
 
-/-- The change-of-form transport moves a word of `k + 1` generators to the corresponding exterior
-word, modulo the previous filtration step. -/
-private theorem equivExterior_prod_ofFn_sub_ιMulti_mem (Q : QuadraticForm R M)
-    [Invertible (2 : R)] (k : ℕ) (v : Fin (k + 1) → M) :
-    equivExterior Q (List.ofFn ((ι Q) ∘ v)).prod -
-        (exteriorPower.ιMulti R (k + 1) v : ExteriorAlgebra R M) ∈
-      filtration (0 : QuadraticForm R M) k := by
-  simpa only [equivExterior, changeFormEquiv_apply, exteriorPower.ιMulti_apply_coe,
-    ExteriorAlgebra.ιMulti_apply, Function.comp_def] using
-    changeForm_prod_ofFn_ι_sub_prod_ofFn_ι_mem_filtration Q
-      (Q' := (0 : QuadraticForm R M)) changeForm.associated_neg_proof k v
-
 /-- **The leading-term map and the graded equivalence are mutually inverse.** -/
 theorem filtrationGradedEquiv_comp_filtrationLeadingTerm (Q : QuadraticForm R M)
     [Invertible (2 : R)] (k : ℕ) :
@@ -174,14 +162,18 @@ theorem filtrationGradedEquiv_comp_filtrationLeadingTerm (Q : QuadraticForm R M)
   rw [← zeroFormFiltrationQuotientEquivExteriorPower_apply k (exteriorPower.ιMulti R (k + 1) v)]
   congr 1
   rw [Submodule.Quotient.eq, mem_filtrationPreviousRestricted_iff, filtrationPrevious_succ]
-  simpa using equivExterior_prod_ofFn_sub_ιMulti_mem Q k v
+  -- What remains is `changeForm`'s symbol computation at `Q' = 0`, read through `equivExterior`.
+  simpa only [equivExterior, changeFormEquiv_apply, exteriorPower.ιMulti_apply_coe,
+    ExteriorAlgebra.ιMulti_apply, Function.comp_def, AddSubgroupClass.coe_sub] using
+    changeForm_prod_ofFn_ι_sub_prod_ofFn_ι_mem_filtration Q
+      (Q' := (0 : QuadraticForm R M)) changeForm.associated_neg_proof k v
 
 /-- The leading-term map is the inverse of the graded equivalence. -/
 theorem filtrationLeadingTerm_eq_coe_symm (Q : QuadraticForm R M) [Invertible (2 : R)] (k : ℕ) :
     filtrationLeadingTerm Q k = (filtrationGradedEquiv Q k).symm.toLinearMap := by
-  refine LinearMap.ext fun x => (filtrationGradedEquiv Q k).injective ?_
-  simp only [LinearEquiv.coe_coe, LinearEquiv.apply_symm_apply]
-  exact LinearMap.congr_fun (filtrationGradedEquiv_comp_filtrationLeadingTerm Q k) x
+  rw [← LinearMap.comp_id (filtrationGradedEquiv Q k).symm.toLinearMap]
+  exact (LinearEquiv.eq_toLinearMap_symm_comp _ _).2
+    (filtrationGradedEquiv_comp_filtrationLeadingTerm Q k)
 
 /-- Consequently the leading-term map is bijective when `2` is invertible. -/
 theorem filtrationLeadingTerm_bijective (Q : QuadraticForm R M) [Invertible (2 : R)] (k : ℕ) :
