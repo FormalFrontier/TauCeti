@@ -57,6 +57,7 @@ private theorem dualMatrix_mul_neg {C : Type*} [CommRing C] {n : ℕ}
     (X : Matrix (Fin n) (Fin n) C) : dualMatrix X * dualMatrix (-X) = 1 := by
   apply Matrix.ext
   intro i j
+  -- Expose matrix multiplication so the two dual-number components can be computed separately.
   change (∑ x, dualMatrix X i x * dualMatrix (-X) x j) =
     (1 : Matrix (Fin n) (Fin n) (DualNumber C)) i j
   apply TrivSqZeroExt.ext
@@ -70,18 +71,7 @@ private theorem dualMatrix_mul_neg {C : Type*} [CommRing C] {n : ℕ}
 
 private theorem dualMatrix_neg_mul {C : Type*} [CommRing C] {n : ℕ}
     (X : Matrix (Fin n) (Fin n) C) : dualMatrix (-X) * dualMatrix X = 1 := by
-  apply Matrix.ext
-  intro i j
-  change (∑ x, dualMatrix (-X) i x * dualMatrix X x j) =
-    (1 : Matrix (Fin n) (Fin n) (DualNumber C)) i j
-  apply TrivSqZeroExt.ext
-  · simp only [dualMatrix, fst_sum, fst_mul, fst_add, fst_inl, fst_inr, add_zero]
-    classical simp [Matrix.one_apply]
-    split_ifs <;> simp
-  · simp only [dualMatrix, snd_sum, snd_mul, fst_add, fst_inl, fst_inr, snd_add,
-      snd_inl, snd_inr, add_zero, zero_add]
-    classical simp [Matrix.one_apply, Finset.sum_add_distrib]
-    split_ifs <;> simp
+  simpa only [neg_neg] using dualMatrix_mul_neg (-X)
 
 private noncomputable def dualMatrixGeneralLinear {C : Type*} [CommRing C] {n : ℕ}
     (X : Matrix (Fin n) (Fin n) C) : Matrix.GeneralLinearGroup (Fin n) (DualNumber C) where
@@ -113,6 +103,7 @@ noncomputable def tangentMatrix :
       (coordinateRingMap R n (MvPolynomial.X (i, j)))))
   map_add' d e := by
     ext i j
+    -- Expose the pointwise definition of `tangentMatrix` to use additivity of the derivation.
     change Bialgebra.CounitAlgebra.algEquivSelf R (H (R := R) n) B
         (d (coordinateHopfAlgebraAlgEquiv R n
             (coordinateRingMap R n (MvPolynomial.X (i, j)))) +
@@ -131,6 +122,7 @@ theorem tangentMatrix_apply (d : Derivation R (H (R := R) n)
       (d (coordinateHopfAlgebraAlgEquiv R n
         (coordinateRingMap R n (MvPolynomial.X (i, j))))) :=
   by
+    -- Expose the `toFun` field of the public linear map to state its computation rule.
     change Bialgebra.CounitAlgebra.algEquivSelf R (H (R := R) n) B
       (d (coordinateHopfAlgebraAlgEquiv R n
         (coordinateRingMap R n (MvPolynomial.X (i, j))))) = _
@@ -162,10 +154,12 @@ private theorem tangentPoint_matrix_fst (d : Derivation R (H (R := R) n)
   rw [dualNumberReduction_def, pointsMulEquiv_mapValue] at h
   have hij := congrArg (fun g : Matrix.GeneralLinearGroup (Fin n)
       (Bialgebra.CounitAlgebra R (H (R := R) n) B) ↦ g i j) h
+  -- Expose how reduction and the point equivalence act on matrix entries before using `map_one`.
   change fst ((pointsMulEquiv (R := R) n q.val) i j) =
     (pointsMulEquiv (R := R) n (1 : WithConv (H (R := R) n →ₐ[R]
       Bialgebra.CounitAlgebra R (H (R := R) n) B))) i j at hij
   rw [map_one] at hij
+  -- Identify the mapped identity with the identity matrix entry.
   change fst ((pointsMulEquiv (R := R) n q.val) i j) =
     (1 : Matrix.GeneralLinearGroup (Fin n)
       (Bialgebra.CounitAlgebra R (H (R := R) n) B)) i j
@@ -215,12 +209,14 @@ private theorem tangentMatrix_surjective :
   refine ⟨d, ?_⟩
   ext i j
   rw [tangentMatrix_apply]
-  rw [show d = ((derivationMulEquivTangentKer R (H (R := R) n) B).symm ⟨q, hq⟩).toAdd
-    from rfl, derivationMulEquivTangentKer_symm_apply]
+  dsimp only [d]
+  rw [derivationMulEquivTangentKer_symm_apply]
   rw [← pointToGeneralLinear_apply (R := R) n q i j]
   rw [← pointsMulEquiv_apply]
+  -- Expose the second dual-number component represented by the tangent point.
   change Bialgebra.CounitAlgebra.algEquivSelf R (H (R := R) n) B
       (snd ((pointsMulEquiv (R := R) n q) i j)) = X i j
+  -- Unfold the chosen point through the inverse of the point equivalence.
   rw [show pointsMulEquiv (R := R) n q = g from MulEquiv.apply_symm_apply _ g]
   rw [dualMatrixGeneralLinear_apply]
   simp only [snd_add, snd_inl, snd_inr, zero_add]
@@ -240,6 +236,7 @@ theorem tangentLinearEquivMatrix_apply (d : Derivation R (H (R := R) n)
     (Bialgebra.CounitAlgebra R (H (R := R) n) B)) :
     tangentLinearEquivMatrix n d = tangentMatrix n d :=
   by
+    -- `LinearEquiv.ofBijective` retains the original map as its forward function.
     change tangentMatrix n d = _
     rfl
 
@@ -258,7 +255,7 @@ theorem tangentMatrix_lie (d e : Derivation R (H (R := R) n)
 equivalence evaluates tangent derivations on the generic coordinate entries, and the bracket on
 matrices is the commutator. -/
 noncomputable def tangentLieEquivMatrix :
-    LieEquiv R
+    LieEquiv B
       (Derivation R (H (R := R) n)
         (Bialgebra.CounitAlgebra R (H (R := R) n) B))
       (Matrix (Fin n) (Fin n) B) where
@@ -271,10 +268,7 @@ noncomputable def tangentLieEquivMatrix :
     rw [← tangentLinearEquivMatrix_apply]
     exact (tangentLinearEquivMatrix n).apply_symm_apply X
   map_add' := map_add (tangentMatrix n)
-  map_smul' r d := by
-    ext i j
-    simp only [tangentMatrix_apply, Derivation.smul_apply, map_smul, RingHom.id_apply,
-      Matrix.smul_apply]
+  map_smul' b d := map_smul (tangentMatrix n) b d
   map_lie' := fun {d e} ↦ by
     exact tangentMatrix_lie n d e
 
