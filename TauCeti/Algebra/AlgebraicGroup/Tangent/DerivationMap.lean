@@ -189,6 +189,8 @@ noncomputable def derivationCompLinear (φ : A' →ₐc[R] A) :
     ext a
     apply (Bialgebra.CounitAlgebra.algEquivSelf R A' B).injective
     rw [derivationComp_apply, algEquivSelf_derivation_smul_apply, derivationComp_apply]
+    -- The coefficient modules indexed by `A` and `A'` are definitionally the same type, but no
+    -- rewrite lemma relates those two `CounitAlgebra` presentations; expose that identification.
     change Bialgebra.CounitAlgebra.algEquivSelf R A' B
         ((b • d) ((φ : A' →ₐ[R] A) a)) =
       b * Bialgebra.CounitAlgebra.algEquivSelf R A' B (d ((φ : A' →ₐ[R] A) a))
@@ -212,6 +214,8 @@ theorem derivationCompLinear_apply (φ : A' →ₐc[R] A)
     apply Derivation.ext
     intro a
     rw [derivationCompLinear]
+    -- The bundled map stores `derivationComp` in its `toFun` field; this theorem supplies the
+    -- missing application rule, so the field must be exposed definitionally in its own proof.
     change derivationComp (B := B) φ d a = _
     rw [derivationComp_apply]
 

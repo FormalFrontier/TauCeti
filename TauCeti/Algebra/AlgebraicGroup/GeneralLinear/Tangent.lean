@@ -131,9 +131,7 @@ theorem tangentMatrix_apply (d : Derivation R (H (R := R) n)
         (coordinateRingMap R n (MvPolynomial.X (i, j))))) = _
     rfl
 
-/-- The infinitesimal component of the matrix associated to a tangent derivation is its value on
-the corresponding generic coordinate. -/
-theorem tangentPoint_matrix_snd (d : Derivation R (H (R := R) n)
+private theorem tangentPoint_matrix_snd (d : Derivation R (H (R := R) n)
     (Bialgebra.CounitAlgebra R (H (R := R) n) B)) (i j : Fin n) :
     snd ((pointsMulEquiv (R := R) n
       (derivationMulEquivTangentKer R (H (R := R) n) B (.ofAdd d)).val) i j) =
@@ -142,9 +140,7 @@ theorem tangentPoint_matrix_snd (d : Derivation R (H (R := R) n)
   rw [pointsMulEquiv_apply, pointToGeneralLinear_apply]
   exact derivationMulEquivTangentKer_apply_snd (.ofAdd d) _
 
-/-- The classical component of the matrix associated to a tangent derivation is the identity
-matrix. -/
-theorem tangentPoint_matrix_fst (d : Derivation R (H (R := R) n)
+private theorem tangentPoint_matrix_fst (d : Derivation R (H (R := R) n)
     (Bialgebra.CounitAlgebra R (H (R := R) n) B)) (i j : Fin n) :
     fst ((pointsMulEquiv (R := R) n
       (derivationMulEquivTangentKer R (H (R := R) n) B (.ofAdd d)).val) i j) =
@@ -185,13 +181,14 @@ private theorem snd_det_eq_trace_of_fst_eq_one {C : Type*} [CommRing C] {n : ℕ
     apply Matrix.ext
     intro i j
     apply TrivSqZeroExt.ext
-    · -- Expose the first component of the pointwise matrix equality.
+    · -- `Matrix.ext` and `TrivSqZeroExt.ext` leave the matrix operations bundled; there is no
+      -- equation lemma for the private local lift `X'`, so expose this component definitionally.
       change fst (M i j) = fst ((1 : Matrix (Fin n) (Fin n) (DualNumber C)) i j +
           (inr (1 : C) : DualNumber C) * X' i j)
       rw [hM]
       simp only [Matrix.one_apply]
       split_ifs <;> simp [X']
-    · -- Expose the second component of the same pointwise equality.
+    · -- As above, the local lift `X'` has no equation lemma outside this proof.
       change snd (M i j) = snd ((1 : Matrix (Fin n) (Fin n) (DualNumber C)) i j +
           (inr (1 : C) : DualNumber C) * X' i j)
       simp only [Matrix.one_apply]
@@ -204,12 +201,13 @@ private theorem snd_det_eq_trace_of_fst_eq_one {C : Type*} [CommRing C] {n : ℕ
       simp only [DualNumber.inr_eq_smul_eps, one_smul, DualNumber.eps_pow_two, mul_zero,
         add_zero, snd_add, snd_one, snd_mul, DualNumber.snd_eps, smul_eq_mul, mul_one,
         DualNumber.fst_eps, MulOpposite.op_zero, zero_smul, zero_add]
-      -- Unfold trace and the local lifted matrix to compare the diagonal entries.
+      -- `Matrix.trace` and the private local lift `X'` have no applicable equation lemmas here,
+      -- so expose their diagonal sums definitionally.
       change fst (∑ i, X' i i) = ∑ i, X i i
       rw [fst_sum]
       apply Finset.sum_congr rfl
       intro i _
-      -- `X'` is definitionally the dual-number inclusion of `X`.
+      -- The private local lift `X'` has no equation lemma; unfold its diagonal entry once.
       change fst (inl (X i i) : DualNumber C) = X i i
       rfl
     _ = Matrix.trace (fun i j ↦ snd (M i j)) := rfl

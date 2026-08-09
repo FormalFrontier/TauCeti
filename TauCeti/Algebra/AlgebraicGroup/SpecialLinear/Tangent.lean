@@ -63,7 +63,7 @@ theorem mem_lieSubalgebra_definingHopfIdeal_iff
       (Bialgebra.CounitAlgebra R (GeneralLinear.coordinateHopfAlgebra R n) B)) :
     d ∈ HopfIdeal.lieSubalgebra (B := B) (definingHopfIdeal R n) ↔
       Matrix.trace (GeneralLinear.tangentMatrix n d) = 0 := by
-  rw [HopfIdeal.mem_lieSubalgebra_iff_span (B := B) (definingHopfIdeal R n)
+  rw [HopfIdeal.mem_lieSubalgebra_iff_of_toIdeal_eq_span (B := B) (definingHopfIdeal R n)
     (definingHopfIdeal_toIdeal R n) d]
   simp only [Set.mem_singleton_iff, forall_eq, map_sub, d.map_one_eq_zero, sub_zero]
   rw [GeneralLinear.trace_tangentMatrix]
@@ -94,7 +94,9 @@ theorem tangentMatrix_apply_coe
       GeneralLinear.tangentMatrix n
         (HopfIdeal.quotientLieHom (B := B) (definingHopfIdeal R n) d) := by
   rw [tangentMatrix]
-  -- Expose the value of the codomain restriction and the composed linear map.
+  -- This theorem is the application rule for the codomain restriction. Its proof must expose
+  -- that restriction and the composed map once because their stored `toFun` fields have no
+  -- equation lemma that rewrites this goal.
   change GeneralLinear.tangentMatrix n
     (HopfIdeal.quotientLinearMap (B := B) (definingHopfIdeal R n) d) = _
   rw [HopfIdeal.quotientLieHom_apply]
