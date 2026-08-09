@@ -5,7 +5,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.Analysis.Calculus.FDeriv.Symmetric
-public import TauCeti.Analysis.Calculus.ContinuousLinearMapInverse
 
 /-!
 # Mixed derivatives of a parametric map
@@ -52,6 +51,25 @@ open ContinuousLinearMap
 variable {𝕜 E F' : Type*} [NontriviallyNormedField 𝕜]
   [NormedAddCommGroup E] [NormedSpace 𝕜 E]
   [NormedAddCommGroup F'] [NormedSpace 𝕜 F']
+
+/-- Applying a differentiable family of continuous linear maps to a constant vector. -/
+private theorem HasDerivAt.clm_apply_const {t : 𝕜} {c : 𝕜 → E →L[𝕜] F'}
+    {c' : E →L[𝕜] F'} (hc : HasDerivAt c c' t) (u : E) :
+    HasDerivAt (fun s => c s u) (c' u) t := by
+  simpa only [map_zero, add_zero] using hc.clm_apply (hasDerivAt_const t u)
+
+section
+
+variable {G : Type*} [NormedAddCommGroup G] [NormedSpace 𝕜 G]
+
+/-- Applying a differentiable family of continuous linear maps to a constant vector. -/
+private theorem HasFDerivAt.clm_apply_const {c : E → F' →L[𝕜] G}
+    {c' : E →L[𝕜] F' →L[𝕜] G} {x : E} (hc : HasFDerivAt c c' x) (u : F') :
+    HasFDerivAt (fun y => c y u) (c'.flip u) x := by
+  simpa only [ContinuousLinearMap.comp_zero, zero_add] using
+    hc.clm_apply (hasFDerivAt_const (x := x) u)
+
+end
 
 /-- The spatial Jacobian of a parametric map at `x`, as a function of the parameter. If `F` is not
 differentiable at `(t, x)`, its value at `t` is the junk value `0`. -/

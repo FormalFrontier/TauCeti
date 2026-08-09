@@ -6,6 +6,7 @@ module
 
 public import Mathlib.Analysis.Calculus.VectorField
 public import TauCeti.Analysis.Calculus.ParametricFDeriv
+private import TauCeti.Analysis.Calculus.ContinuousLinearMapInverse
 
 /-!
 # Differentiating a parametric pullback

@@ -44,25 +44,6 @@ variable {𝕜 E F : Type*} [NontriviallyNormedField 𝕜]
   [NormedAddCommGroup E] [NormedSpace 𝕜 E] [NormedAddCommGroup F] [NormedSpace 𝕜 F]
   {t₀ : 𝕜} {A : 𝕜 → E →L[𝕜] F} {A' : E →L[𝕜] F} {w : 𝕜 → F} {w' : F}
 
-/-- Applying a differentiable family of continuous linear maps to a constant vector. -/
-theorem HasDerivAt.clm_apply_const {c : 𝕜 → E →L[𝕜] F} {c' : E →L[𝕜] F}
-    (hc : HasDerivAt c c' t₀) (u : E) :
-    HasDerivAt (fun t => c t u) (c' u) t₀ := by
-  simpa only [map_zero, add_zero] using hc.clm_apply (hasDerivAt_const t₀ u)
-
-section
-
-variable {G : Type*} [NormedAddCommGroup G] [NormedSpace 𝕜 G]
-
-/-- Applying a differentiable family of continuous linear maps to a constant vector. -/
-theorem HasFDerivAt.clm_apply_const {c : E → F →L[𝕜] G}
-    {c' : E →L[𝕜] F →L[𝕜] G} {x : E} (hc : HasFDerivAt c c' x) (u : F) :
-    HasFDerivAt (fun y => c y u) (c'.flip u) x := by
-  simpa only [ContinuousLinearMap.comp_zero, zero_add] using
-    hc.clm_apply (hasFDerivAt_const (x := x) u)
-
-end
-
 /-- The derivative of an inverse family of continuous linear maps, assuming the family is
 invertible at the base point and the inverse family is differentiable there. -/
 theorem HasDerivAt.clm_inverse (hA : HasDerivAt A A' t₀)
@@ -101,7 +82,7 @@ theorem HasDerivAt.clm_inverse (hA : HasDerivAt A A' t₀)
     apply ContinuousLinearMap.ext
     intro v
     have hconst : HasDerivAt (fun _ : 𝕜 => v) 0 t₀ := hasDerivAt_const t₀ v
-    have hBv := hInvRaw.clm_apply_const v
+    have hBv := hInvRaw.clm_apply hconst
     have hABv := hA.clm_apply hBv
     have heq : (fun t => A t ((A t).inverse v)) =ᶠ[𝓝 t₀] fun _ => v := by
       filter_upwards [hAInv] with t ht
@@ -109,6 +90,7 @@ theorem HasDerivAt.clm_inverse (hA : HasDerivAt A A' t₀)
     have hzero : HasDerivAt (fun t => A t ((A t).inverse v)) 0 t₀ := by
       exact hconst.congr_of_eventuallyEq heq
     have hderivZero := hABv.unique hzero
+    simp only [map_zero, add_zero] at hderivZero
     apply hA0Inv.injective
     simp only [neg_apply, ContinuousLinearMap.comp_apply]
     rw [map_neg, hA0Inv.self_apply_inverse]
