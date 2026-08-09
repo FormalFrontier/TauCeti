@@ -50,6 +50,7 @@ theorem ContMDiff.contMDiff_mvfderiv_apply {f : M → F}
   have hsnd : ContMDiff 𝓘(𝕜, F).tangent 𝓘(𝕜, F) m
       (fun p : TangentBundle 𝓘(𝕜, F) F => p.2) :=
     contMDiff_snd_tangentBundle_modelSpace F 𝓘(𝕜, F)
+  -- `TangentSpace 𝓘(𝕜, F) (f x)` is definitionally `F`; there is no lemma-based rewrite.
   change ContMDiff I 𝓘(𝕜, F) m
     (fun x => mfderiv I 𝓘(𝕜, F) f x (V x))
   have h := hsnd.comp (hdf.comp hV)

@@ -6,7 +6,6 @@ module
 
 public import Mathlib.Geometry.Manifold.Algebra.LeftInvariantDerivation
 import Mathlib.Geometry.Manifold.ContMDiffMFDeriv
-import Mathlib.Geometry.Manifold.VectorBundle.Tangent
 public import TauCeti.Geometry.Manifold.DerivationBundle
 public import TauCeti.Geometry.Lie.InvariantVectorField
 import TauCeti.Geometry.Manifold.VectorField.Regularity
