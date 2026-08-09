@@ -27,11 +27,11 @@ This file supplies that subgroup, together with its determinant-one subgroup and
 the hyperplanes of vectors of invertible norm. The orthogonal group is the target of the
 twisted-conjugation homomorphism out of the Pin group, so it is the object the Pin/Spin double
 covers are stated against, and the reflections are the generators an eventual Cartan-Dieudonné
-theorem factors an orthogonal automorphism into. Nothing here assumes the hypotheses that theorem
-needs (a field of characteristic not two, a nondegenerate form, finite dimension); the declarations
-below hold over an arbitrary commutative ring. The characteristic restriction is not incidental: in
-characteristic two `polar Q v v = 2 • Q v` vanishes, so `reflection Q v` fixes `v` instead of
-negating it and is a transvection rather than a reflection in `v ^ ⊥`.
+theorem factors an orthogonal automorphism into. The structural and reflection declarations below
+hold over an arbitrary commutative ring; only the final equal-norm dichotomy assumes a field in
+which `2` is nonzero. The characteristic restriction is not incidental: in characteristic two
+`polar Q v v = 2 • Q v` vanishes, so `reflection Q v` fixes `v` instead of negating it and is a
+transvection rather than a reflection in `v ^ ⊥`.
 
 ## Main definitions
 
@@ -76,7 +76,8 @@ subtraction in `M` and `N`, since `QuadraticMap.polar` is stated for `[AddCommGr
 [AddCommGroup N]`, but still no more than a `CommSemiring`; the determinant needs `M` to be an
 additive group over a `CommRing`, and the
 reflections need to divide by `Q v` and so are stated for a `QuadraticForm R M`, that is, for
-`N = R`.
+`N = R`. The closing Cartan--Dieudonne dichotomy additionally assumes a field, a nonzero common
+quadratic value, and `2 ≠ 0`.
 
 ## References
 
@@ -374,31 +375,14 @@ theorem reflection_sub_apply_eq_of_map_eq (x y : M) (hxy : Q x = Q y)
         ring
   rw [hpolar, invOf_mul_self, one_smul, sub_sub_cancel]
 
-/-- If `x` and `y` have the same quadratic value, reflecting `x` in `x + y` carries it to `-y`
-whenever `x + y` has invertible norm. -/
-theorem reflection_add_apply_eq_neg_of_map_eq (x y : M) (hxy : Q x = Q y)
-    [Invertible (Q (x + y))] :
-    reflection Q (x + y) x = -y := by
-  rw [reflection_apply]
-  have hpolar : polar Q (x + y) x = Q (x + y) := by
-    calc
-      _ = (2 : R) * Q x + polar Q y x := by
-        rw [polar_add_left, polar_self]
-        ring
-      _ = Q (x + y) := by
-        rw [QuadraticMap.map_add ⇑Q, hxy, QuadraticMap.polar_comm ⇑Q y x]
-        ring
-  rw [hpolar, invOf_mul_self, one_smul]
-  abel
-
 section Field
 
 variable {K : Type u} {V : Type v} [Field K] [AddCommGroup V] [Module K V]
-variable (Q : QuadraticForm K V) [Invertible (2 : K)]
+variable (Q : QuadraticForm K V) [NeZero (2 : K)]
 
-/-- If `x` and `y` have the same invertible quadratic value, at least one of `x - y` and `x + y`
-has invertible norm. -/
-theorem isUnit_sub_or_add_of_map_eq (x y : V) (hxy : Q x = Q y) [Invertible (Q y)] :
+/-- If `x` and `y` have the same nonzero quadratic value, at least one of `x - y` and `x + y`
+has nonzero, hence invertible, norm. -/
+theorem isUnit_sub_or_add_of_map_eq (x y : V) (hxy : Q x = Q y) (hy : Q y ≠ 0) :
     IsUnit (Q (x - y)) ∨ IsUnit (Q (x + y)) := by
   rw [isUnit_iff_ne_zero, isUnit_iff_ne_zero]
   by_cases hsub : Q (x - y) = 0
@@ -409,13 +393,10 @@ theorem isUnit_sub_or_add_of_map_eq (x y : V) (hxy : Q x = Q y) [Invertible (Q y
         QuadraticMap.map_add ⇑Q, hxy]
       ring
     have hzero : (4 : K) * Q y = 0 := by simpa [hsub, hadd] using hsum.symm
-    have h2 : (2 : K) ≠ 0 := (isUnit_of_invertible (2 : K)).ne_zero
     have h4 : (4 : K) ≠ 0 := by
-      have hfour : (4 : K) = 2 * 2 := by norm_num
-      rw [hfour]
-      exact mul_ne_zero h2 h2
-    exact (isUnit_of_invertible (Q y)).ne_zero
-      ((mul_eq_zero.mp hzero).resolve_left h4)
+      simpa only [show (4 : K) = 2 * 2 by norm_num] using
+        mul_ne_zero (NeZero.ne (2 : K)) (NeZero.ne (2 : K))
+    exact hy ((mul_eq_zero.mp hzero).resolve_left h4)
   · exact Or.inl hsub
 
 end Field
