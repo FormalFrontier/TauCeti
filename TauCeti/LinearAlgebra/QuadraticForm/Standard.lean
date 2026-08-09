@@ -21,8 +21,8 @@ are the orthogonal Lie algebra. It does not choose a basis for an abstract quadr
 
 ## Main results
 
-* `TauCeti.QuadraticForm.polarBilin_weightedSumSquares_one`: the polar form of the sum of squares
-  is twice the identity-matrix form.
+* `TauCeti.QuadraticForm.polarBilin_weightedSumSquares`: the polar form of a weighted sum of
+  squares is twice its diagonal-matrix form.
 * `TauCeti.QuadraticForm.standardSkewAdjointLieEquiv`: the Lie equivalence from the skew-adjoint
   endomorphisms of its polar form to Mathlib's matrix orthogonal Lie algebra.
 
@@ -44,19 +44,25 @@ attribute [local instance 100] LieRing.ofAssociativeRing
 
 variable (R : Type u) (n : Type*) [CommRing R] [Fintype n] [DecidableEq n]
 
+/-- The polar bilinear form of a weighted sum of squares is twice its diagonal-matrix form. -/
+theorem polarBilin_weightedSumSquares (w : n → R) :
+    QuadraticMap.polarBilin (QuadraticMap.weightedSumSquares R w) =
+      2 • Matrix.toLinearMap₂' R (Matrix.diagonal w) := by
+  have h : QuadraticMap.weightedSumSquares R w =
+      Matrix.toQuadraticForm' (Matrix.diagonal w) := by
+    ext x
+    simp [Matrix.toQuadraticForm', Matrix.toLinearMap₂'_apply, Matrix.diagonal,
+      QuadraticMap.weightedSumSquares_apply, mul_comm, mul_left_comm]
+  rw [h, Matrix.toQuadraticForm', LinearMap.BilinMap.polarBilin_toQuadraticMap]
+  ext x y
+  simp [Matrix.toLinearMap₂'_apply, Matrix.diagonal, mul_comm, mul_left_comm, mul_assoc, two_mul]
+
 /-- The polar bilinear form of the standard quadratic form is twice the identity-matrix form. -/
 @[simp]
 theorem polarBilin_weightedSumSquares_one :
     QuadraticMap.polarBilin (QuadraticMap.weightedSumSquares R (1 : n → R)) =
       2 • Matrix.toLinearMap₂' R (1 : Matrix n n R) := by
-  have h : QuadraticMap.weightedSumSquares R (1 : n → R) =
-      Matrix.toQuadraticForm' (1 : Matrix n n R) := by
-    ext x
-    simp [Matrix.toQuadraticForm', Matrix.toLinearMap₂'_apply, Matrix.one_apply,
-      QuadraticMap.weightedSumSquares_apply]
-  rw [h, Matrix.toQuadraticForm', LinearMap.BilinMap.polarBilin_toQuadraticMap]
-  ext x y
-  simp [Matrix.toLinearMap₂'_apply, Matrix.one_apply, mul_comm, two_mul]
+  simpa using polarBilin_weightedSumSquares R n (1 : n → R)
 
 private theorem lieEquivMatrix'_mem_skewAdjoint (J : Matrix n n R)
     (f : Module.End R (n → R)) :
