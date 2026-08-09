@@ -178,7 +178,7 @@ noncomputable def fgPointNatIsoHom :
 
 /-- The finite-comodule point action is obtained from the all-comodule action by precomposition
 and transport across the defining equality of the finite scalar-extension functor. -/
-theorem fgPointNatIsoHom_apply (g : WithConv (H →ₐ[R] A)) :
+private theorem fgPointNatIsoHom_apply (g : WithConv (H →ₐ[R] A)) :
     fgPointNatIsoHom R H A g =
       (Aut.autMulEquivOfIso
         (eqToIso (FGComoduleCat.scalarExtensionFunctor_eq R H A)).symm)
@@ -196,6 +196,8 @@ theorem fgPointNatIsoHom_hom_app (g : WithConv (H →ₐ[R] A))
         (Comodule.pointsAction M g).toModuleIsoₛ.hom ≫
           eqToHom (FGComoduleCat.scalarExtensionFunctor_obj R H A M).symm := by
   rw [fgPointNatIsoHom_apply]
+  -- Rewriting unfolds the outer monoid homomorphism application but does not expose the
+  -- hom component assembled by `autMulEquivOfIso` and whiskering, so reduce that component.
   change
     (eqToIso (FGComoduleCat.scalarExtensionFunctor_eq R H A).symm).inv.app M ≫
           (pointNatIso R H A g).hom.app
@@ -214,6 +216,8 @@ theorem fgPointNatIsoHom_inv_app (g : WithConv (H →ₐ[R] A))
         (Comodule.pointsAction M g).toModuleIsoₛ.inv ≫
           eqToHom (FGComoduleCat.scalarExtensionFunctor_obj R H A M).symm := by
   rw [fgPointNatIsoHom_apply]
+  -- Rewriting unfolds the outer monoid homomorphism application but does not expose the
+  -- inverse component assembled by `autMulEquivOfIso` and whiskering, so reduce that component.
   change
     (eqToIso (FGComoduleCat.scalarExtensionFunctor_eq R H A).symm).inv.app M ≫
           (pointNatIso R H A g).inv.app
