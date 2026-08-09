@@ -492,15 +492,11 @@ theorem exists_mem_subgroup_mul_eqOn_sup_span_singleton_of_reflection_mem
     QuadraticMap.map_app_of_mem_orthogonalGroup g.2 x
   have hgx : (g : V ≃ₗ[K] V) x ∈ B.orthogonal W := by
     intro w hw
-    calc
-      B w ((g : V ≃ₗ[K] V) x) =
-          B ((g : V ≃ₗ[K] V) w) ((g : V ≃ₗ[K] V) x) := by
-            rw [hfix w hw]
-      _ = B w x := by
-        simpa only [B, QuadraticMap.associated_apply, QuadraticMap.polar] using
-          congrArg (⅟(2 : Module.End K K) • ·)
-            (QuadraticMap.polar_apply_of_mem_orthogonalGroup g.2 w x)
-      _ = 0 := hx w hw
+    -- Expose the associated form hidden behind the local abbreviation.
+    change QuadraticMap.associated Q w ((g : V ≃ₗ[K] V) x) = 0
+    rw [← hfix w hw, QuadraticMap.associated_isOrtho,
+      QuadraticMap.isOrtho_iff_of_mem_orthogonalGroup g.2]
+    exact QuadraticMap.associated_isOrtho.mp (hx w hw)
   have hsub : (g : V ≃ₗ[K] V) x - x ∈ B.orthogonal W := by
     intro w hw
     have hwx : B w x = 0 := hx w hw
