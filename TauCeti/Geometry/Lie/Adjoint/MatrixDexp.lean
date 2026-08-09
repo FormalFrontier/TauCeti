@@ -14,9 +14,11 @@ For real square matrices, the regularized `dexp` factor is the integral of ordin
 conjugations. This is the matrix shadow of the left-trivialized differential-of-exponential
 factor.
 
-## Main result
+## Main results
 
 * `TauCeti.Lie.matrixDexpFactor_apply_eq_integral_conj`: the concrete matrix integral formula.
+* `TauCeti.Lie.matrixFDerivExp_apply_eq_integral_conj`: the concrete matrix-exponential derivative
+  formula.
 
 ## References
 
