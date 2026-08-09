@@ -57,7 +57,7 @@ step and are not proved here.
   `TauCeti.isBoundaryPoint_iff_mem_frontier_range`: interior and boundary points are detected in
   any chart of the atlas, against `range I`.
 * `TauCeti.mem_boundary_iff_of_mem_atlas`: the half-space form of the previous statement.
-* `TauCeti.boundary_isManifold`: the boundary is a `C^k` manifold over `EuclideanSpace ℝ (Fin n)`.
+* `TauCeti.isManifold_boundary`: the boundary is a `C^k` manifold over `EuclideanSpace ℝ (Fin n)`.
 * `TauCeti.boundary_boundary_eq_empty`: it is boundaryless.
 * `TauCeti.isClosedEmbedding_boundary_val`, `TauCeti.contMDiff_boundary_val`: the inclusion of the
   boundary is a closed topological embedding, and is `C^k`.
@@ -86,7 +86,7 @@ variable {𝕜 : Type*} [NontriviallyNormedField 𝕜] {E : Type*} [NormedAddCom
   {M : Type*} [TopologicalSpace M] [ChartedSpace H M] {k : WithTop ℕ∞} [IsManifold I k M]
   {e : OpenPartialHomeomorph M H} {x : M}
 
-/-- A point of a `C^k` manifold, `k ≠ 0`, is an interior point exactly when *some* chart of the
+/-- A point of a `C^k` manifold, `k ≠ 0`, is an interior point exactly when any chart of the
 atlas containing it in its source reads it inside the interior of the range of the model. -/
 theorem isInteriorPoint_iff_mem_interior_range (hk : k ≠ 0) (he : e ∈ atlas H M)
     (hx : x ∈ e.source) : I.IsInteriorPoint x ↔ I (e x) ∈ interior (range I) := by
@@ -94,7 +94,7 @@ theorem isInteriorPoint_iff_mem_interior_range (hk : k ≠ 0) (he : e ∈ atlas 
   exact ⟨fun h ↦ e.interior_extend_target_subset_interior_range h,
     fun h ↦ e.mem_interior_extend_target (e.map_source hx) h⟩
 
-/-- A point of a `C^k` manifold, `k ≠ 0`, is a boundary point exactly when *some* chart of the
+/-- A point of a `C^k` manifold, `k ≠ 0`, is a boundary point exactly when any chart of the
 atlas containing it in its source reads it on the frontier of the range of the model. -/
 theorem isBoundaryPoint_iff_mem_frontier_range (hk : k ≠ 0) (he : e ∈ atlas H M)
     (hx : x ∈ e.source) : I.IsBoundaryPoint x ↔ I (e x) ∈ frontier (range I) := by
@@ -110,20 +110,19 @@ variable {n : ℕ}
 
 /-- The parametrization of the frontier of the `(n + 1)`-dimensional Euclidean half-space by
 `EuclideanSpace ℝ (Fin n)`: insert a zero as the zeroth coordinate. -/
-@[expose] noncomputable def euclideanHalfSpaceParam (n : ℕ) :
+noncomputable def euclideanHalfSpaceParam (n : ℕ) :
     EuclideanSpace ℝ (Fin n) → EuclideanHalfSpace (n + 1) :=
   fun x ↦ ⟨euclideanHalfSpaceBoundaryParam n x, by simp⟩
 
 /-- Delete the zeroth coordinate of a point of the `(n + 1)`-dimensional Euclidean half-space. -/
-@[expose] noncomputable def euclideanHalfSpaceProj (n : ℕ) :
+noncomputable def euclideanHalfSpaceProj (n : ℕ) :
     EuclideanHalfSpace (n + 1) → EuclideanSpace ℝ (Fin n) :=
   fun y ↦ euclideanHalfSpaceBoundaryProj n y.1
 
 /-- The parametrized frontier point, read in the ambient Euclidean space. -/
 @[simp]
 theorem euclideanHalfSpaceParam_coe (x : EuclideanSpace ℝ (Fin n)) :
-    (euclideanHalfSpaceParam n x).1 = euclideanHalfSpaceBoundaryParam n x :=
-  rfl
+    (euclideanHalfSpaceParam n x).1 = euclideanHalfSpaceBoundaryParam n x := (rfl)
 
 /-- Deleting the zeroth coordinate undoes the parametrization. -/
 @[simp]
@@ -213,7 +212,7 @@ and delete its (vanishing) zeroth coordinate.
 
 The base point `p` only serves as the irrelevant value of the inverse outside the target; the
 boundary of `M` can be empty, so no such value is available otherwise. -/
-@[expose] noncomputable def boundaryChart (hk : k ≠ 0) (p : ↥((𝓡∂ (n + 1)).boundary M))
+noncomputable def boundaryChart (hk : k ≠ 0) (p : ↥((𝓡∂ (n + 1)).boundary M))
     (e : OpenPartialHomeomorph M (EuclideanHalfSpace (n + 1)))
     (he : e ∈ atlas (EuclideanHalfSpace (n + 1)) M) :
     OpenPartialHomeomorph ↥((𝓡∂ (n + 1)).boundary M) (EuclideanSpace ℝ (Fin n)) where
@@ -225,6 +224,8 @@ boundary of `M` can be empty, so no such value is available otherwise. -/
   source := Subtype.val ⁻¹' e.source
   target := euclideanHalfSpaceParam n ⁻¹' e.target
   map_source' q hq := by
+    -- Unfold the `toFun` and `target` fields currently being defined; their API lemmas can only be
+    -- stated after the `boundaryChart` definition is complete.
     change euclideanHalfSpaceParam n (euclideanHalfSpaceProj n (e q.1)) ∈ e.target
     rw [euclideanHalfSpaceParam_proj ((mem_boundary_iff_of_mem_atlas hk he hq).1 q.2)]
     exact e.map_source hq
@@ -239,6 +240,8 @@ boundary of `M` can be empty, so no such value is available otherwise. -/
       rw [hq']; exact e.map_source hq
     rw [dif_pos hq'']
     refine Subtype.ext ?_
+    -- Reduce equality in the boundary subtype to equality of its ambient points, and unfold the
+    -- selected `invFun` branch. Both are definitional reductions internal to this constructor.
     change (e.symm (euclideanHalfSpaceParam n (euclideanHalfSpaceProj n (e q.1))) : M) = (q : M)
     rw [hq', e.left_inv hq]
   right_inv' z hz := by
@@ -263,20 +266,17 @@ variable {hk : k ≠ 0} {p : ↥((𝓡∂ (n + 1)).boundary M)}
 /-- The source of a boundary chart is the part of the boundary the ambient chart sees. -/
 @[simp]
 theorem boundaryChart_source :
-    (boundaryChart hk p e he).source = Subtype.val ⁻¹' e.source :=
-  rfl
+    (boundaryChart hk p e he).source = Subtype.val ⁻¹' e.source := (rfl)
 
 /-- The target of a boundary chart is the ambient target, pulled back to the hyperplane. -/
 @[simp]
 theorem boundaryChart_target :
-    (boundaryChart hk p e he).target = euclideanHalfSpaceParam n ⁻¹' e.target :=
-  rfl
+    (boundaryChart hk p e he).target = euclideanHalfSpaceParam n ⁻¹' e.target := (rfl)
 
 /-- A boundary chart reads a point through the ambient chart and deletes the zeroth coordinate. -/
 @[simp]
 theorem boundaryChart_apply (q : ↥((𝓡∂ (n + 1)).boundary M)) :
-    boundaryChart hk p e he q = euclideanHalfSpaceProj n (e q.1) :=
-  rfl
+    boundaryChart hk p e he q = euclideanHalfSpaceProj n (e q.1) := (rfl)
 
 /-- On its target, the inverse of a boundary chart is the inverse of the ambient chart applied to
 the parametrized point. -/
@@ -289,13 +289,15 @@ theorem boundaryChart_symm_apply {z : EuclideanSpace ℝ (Fin n)}
   have key : (⟨e.symm (euclideanHalfSpaceParam n z), symm_param_mem_boundary hk he hz⟩ :
       ↥((𝓡∂ (n + 1)).boundary M)) = (boundaryChart hk p e he).symm z := by
     rw [(boundaryChart hk p e he).eq_symm_apply hw hz, boundaryChart_apply]
+    -- Reduce the ambient value of the explicitly constructed boundary subtype before applying the
+    -- inverse law for the ambient chart.
     change euclideanHalfSpaceProj n (e (e.symm (euclideanHalfSpaceParam n z))) = z
     rw [e.right_inv hz, euclideanHalfSpaceProj_param]
   rw [← key]
 
 variable (M) in
 /-- The boundary chart at a boundary point, built from the ambient preferred chart there. -/
-@[expose] noncomputable def boundaryChartAt (hk : k ≠ 0) (p : ↥((𝓡∂ (n + 1)).boundary M)) :
+noncomputable def boundaryChartAt (hk : k ≠ 0) (p : ↥((𝓡∂ (n + 1)).boundary M)) :
     OpenPartialHomeomorph ↥((𝓡∂ (n + 1)).boundary M) (EuclideanSpace ℝ (Fin n)) :=
   boundaryChart hk p (chartAt (EuclideanHalfSpace (n + 1)) p.1) (chart_mem_atlas _ _)
 
@@ -347,7 +349,7 @@ theorem contDiffOn_boundaryChart_symm_trans (hk : k ≠ 0)
 variable (M) in
 /-- **The boundary of a `C^k` manifold with boundary is a `C^k` manifold** of dimension one less:
 the transition maps between the boundary charts are `C^k`. -/
-theorem boundary_isManifold (hk : k ≠ 0) :
+theorem isManifold_boundary (hk : k ≠ 0) :
     letI := boundaryChartedSpace (n := n) M hk
     IsManifold 𝓘(ℝ, EuclideanSpace ℝ (Fin n)) k ↥((𝓡∂ (n + 1)).boundary M) := by
   let _ := boundaryChartedSpace (n := n) M hk
@@ -422,7 +424,7 @@ noncomputable instance instChartedSpaceBoundary :
 /-- The boundary of a `C^∞` manifold with boundary is a `C^∞` manifold. -/
 instance instIsManifoldBoundary :
     IsManifold 𝓘(ℝ, EuclideanSpace ℝ (Fin n)) ∞ ↥((𝓡∂ (n + 1)).boundary M) :=
-  boundary_isManifold (k := ∞) M (by simp)
+  isManifold_boundary (k := ∞) M (by simp)
 
 end Smooth
 
