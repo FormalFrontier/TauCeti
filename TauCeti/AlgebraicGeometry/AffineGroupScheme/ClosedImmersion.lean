@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.AlgebraicGeometry.Morphisms.ClosedImmersion
+public import TauCeti.AlgebraicGeometry.AffineGroupScheme.Basic
 public import TauCeti.AlgebraicGeometry.AffineGroupScheme.HopfSpec
 
 /-!
@@ -23,8 +24,6 @@ the same universe, which is reflected in the declaration in this file.
 
 ## Main declarations
 
-* `TauCeti.isIso_eqToHom_hom_hom_left`: equality transport between group schemes is an
-  isomorphism on underlying schemes.
 * `TauCeti.CommHopfAlgCat.isClosedImmersion_hopfSpec_map_iff`: the coordinate criterion for a
   morphism of Hopf spectra to be a closed immersion.
 -/
@@ -38,28 +37,6 @@ namespace TauCeti
 universe u
 
 open AlgebraicGeometry
-
-/-- Equality transport between group schemes is an isomorphism on their underlying scheme
-morphisms. -/
-lemma isIso_eqToHom_hom_hom_left {S : Scheme.{u}} {G G' : Grp (Over S)} (h : G = G') :
-    IsIso (eqToHom h).hom.hom.left :=
-  ((Over.forget S).mapIso ((Grp.forget (Over S)).mapIso (eqToIso h))).isIso_hom
-
-/-- Composition of group-scheme morphisms is composition on the underlying scheme morphisms. -/
-@[simp]
-lemma comp_hom_hom_left {S : Scheme.{u}} {G G' G'' : Grp (Over S)}
-    (f : G ⟶ G') (g : G' ⟶ G'') :
-    (f ≫ g).hom.hom.left = f.hom.hom.left ≫ g.hom.hom.left :=
-  rfl
-
-/-- Equality transport between group schemes becomes equality transport between their
-underlying schemes. -/
-@[simp]
-lemma eqToHom_hom_hom_left {S : Scheme.{u}} {G G' : Grp (Over S)} (h : G = G') :
-    (eqToHom h).hom.hom.left =
-      eqToHom (congrArg (fun K : Grp (Over S) ↦ K.X.left) h) := by
-  subst h
-  rfl
 
 namespace CommHopfAlgCat
 
