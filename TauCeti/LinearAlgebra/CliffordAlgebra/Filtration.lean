@@ -56,17 +56,15 @@ supremum over the `i` of a fixed parity.
 * `TauCeti.CliffordAlgebra.filtrationLeadingTerm` and
   `TauCeti.CliffordAlgebra.filtrationLeadingTerm_surjective`: the exterior-power leading-term map
   onto each successive filtration quotient, the surjectivity half of the associated-graded bridge.
-* `TauCeti.CliffordAlgebra.iSup_filtration_eq_top` and
-  `TauCeti.CliffordAlgebra.exists_mem_filtration`: the filtration is exhaustive.
+* `TauCeti.CliffordAlgebra.iSup_filtration_eq_top`: the filtration is exhaustive.
 * `TauCeti.CliffordAlgebra.involute_mem_filtration`,
   `TauCeti.CliffordAlgebra.reverse_mem_filtration` and
   `TauCeti.CliffordAlgebra.map_mem_filtration`: the filtration is preserved by the grade
   involution, by reversal, and by an isometry of quadratic forms.
 * `TauCeti.CliffordAlgebra.contractLeft_mem_filtration_succ` and
   `TauCeti.CliffordAlgebra.contractLeft_mem_filtration`,
-  `TauCeti.CliffordAlgebra.changeForm_mem_filtration`, and
-  `TauCeti.CliffordAlgebra.changeFormEquiv_map_filtration` and
-  `TauCeti.CliffordAlgebra.changeForm_mem_filtration_iff`: contraction and change of
+  `TauCeti.CliffordAlgebra.changeForm_mem_filtration` and
+  `TauCeti.CliffordAlgebra.changeFormEquiv_map_filtration`: contraction and change of
   quadratic form respect the filtration, contraction lowers every positive step by one, and the
   change-form equivalence transports every step exactly.
 * `TauCeti.CliffordAlgebra.fg_filtration`: each step is a finitely generated module when `M` is.
@@ -129,13 +127,6 @@ theorem mem_filtrationPreviousRestricted_iff (Q : QuadraticForm R M) (k : ℕ)
       (x : CliffordAlgebra Q) ∈ filtrationPrevious Q k :=
   Iff.rfl
 
-/-- The restricted preceding filtration is trivial in degree zero. -/
-@[simp]
-theorem filtrationPreviousRestricted_zero (Q : QuadraticForm R M) :
-    filtrationPreviousRestricted Q 0 = ⊥ := by
-  ext x
-  simp [filtrationPreviousRestricted, Submodule.submoduleOf]
-
 /-- In successor degree, the restricted preceding filtration is the preceding filtration step
 viewed inside the successor step. -/
 @[simp]
@@ -189,10 +180,6 @@ theorem filtration_zero : filtration Q 0 = 1 := by
 /-- `1` is the empty product of generators, so it lies in every step of the filtration. -/
 theorem one_mem_filtration (k : ℕ) : (1 : CliffordAlgebra Q) ∈ filtration Q k := by
   simpa using prod_map_ι_mem_filtration Q (l := []) (Nat.zero_le k)
-
-/-- The submodule form of `one_mem_filtration`: the scalars sit inside every step. -/
-theorem one_le_filtration (k : ℕ) : 1 ≤ filtration Q k :=
-  Submodule.one_le.2 (one_mem_filtration Q k)
 
 /-- Scalars lie in every step of the filtration, being multiples of the empty product. -/
 theorem algebraMap_mem_filtration (r : R) (k : ℕ) :
@@ -289,20 +276,6 @@ products of generators, so it lies in some step. -/
 theorem iSup_filtration_eq_top : ⨆ k, filtration Q k = ⊤ := by
   rw [eq_top_iff, ← iSup_ι_range_eq_top Q]
   exact iSup_mono' fun i => ⟨i, ι_range_pow_le_filtration Q i⟩
-
-/-- The pointwise form of `iSup_filtration_eq_top`, available because the filtration is a directed
-family. -/
-theorem exists_mem_filtration (x : CliffordAlgebra Q) : ∃ k, x ∈ filtration Q k := by
-  have hx : x ∈ ⨆ k, filtration Q k := by rw [iSup_filtration_eq_top]; exact Submodule.mem_top
-  rwa [Submodule.mem_iSup_of_directed _ (filtration_mono Q).directed_le] at hx
-
-/-- The generators of a Clifford algebra anticommute up to the polarization of `Q`, which is a
-scalar: the associated graded algebra of the filtration is graded-commutative in degree one, the
-symmetric sum `ι Q a * ι Q b + ι Q b * ι Q a` dropping to the previous step of the filtration. -/
-theorem ι_mul_ι_add_swap_mem_filtration_zero (a b : M) :
-    ι Q a * ι Q b + ι Q b * ι Q a ∈ filtration Q 0 := by
-  rw [ι_mul_ι_add_swap]
-  exact algebraMap_mem_filtration Q _ 0
 
 private theorem repeat_product_mem_filtration (a : M) :
     ∀ middle : List M,
@@ -615,13 +588,6 @@ private theorem changeFormEquiv_mem_filtration_iff_aux
     (x : CliffordAlgebra Q) : (changeFormEquiv h) x ∈ filtration Q' k ↔ x ∈ filtration Q k := by
   rw [← changeFormEquiv_map_filtration Q h k, Submodule.mem_map_equiv]
   rw [(changeFormEquiv h).symm_apply_apply]
-
-/-- Membership in the filtration is invariant under the change-form equivalence. The statement
-uses `changeForm`, the simplifier's normal form for applying `changeFormEquiv`. -/
-@[simp]
-theorem changeForm_mem_filtration_iff (h : B.toQuadraticMap = Q' - Q) (k : ℕ)
-    (x : CliffordAlgebra Q) : changeForm h x ∈ filtration Q' k ↔ x ∈ filtration Q k := by
-  simpa only [changeFormEquiv_apply] using changeFormEquiv_mem_filtration_iff_aux Q h k x
 
 end ChangeForm
 
