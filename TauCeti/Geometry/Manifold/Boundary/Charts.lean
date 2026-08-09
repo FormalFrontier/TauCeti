@@ -453,30 +453,12 @@ theorem isClosedEmbedding_boundary_val (hk : k ≠ 0) :
     Topology.IsClosedEmbedding (Subtype.val : ↥((𝓡∂ (n + 1)).boundary M) → M) :=
   ((𝓡∂ (n + 1)).isClosed_boundary hk).isClosedEmbedding_subtypeVal
 
-private def boundaryValComplementLinearEquiv (n : ℕ) :
-    (EuclideanSpace ℝ (Fin n) × ℝ) ≃ₗ[ℝ] EuclideanSpace ℝ (Fin (n + 1)) where
-  toFun x := WithLp.toLp 2 (Fin.cons x.2 x.1)
-  invFun x := (WithLp.toLp 2 (Fin.tail x), x 0)
-  left_inv x := by
-    apply Prod.ext
-    · apply (WithLp.equiv 2 _).injective
-      exact @Fin.tail_cons n (fun _ ↦ ℝ) x.2 x.1.ofLp
-    · rfl
-  right_inv x := by
-    apply (WithLp.equiv 2 _).injective
-    exact Fin.cons_self_tail x.ofLp
-  map_add' x y := by
-    apply (WithLp.equiv 2 _).injective
-    ext i
-    refine Fin.cases ?_ (fun j ↦ ?_) i <;> rfl
-  map_smul' c x := by
-    apply (WithLp.equiv 2 _).injective
-    ext i
-    refine Fin.cases ?_ (fun j ↦ ?_) i <;> rfl
-
 private noncomputable def boundaryValComplementEquiv (n : ℕ) :
     (EuclideanSpace ℝ (Fin n) × ℝ) ≃L[ℝ] EuclideanSpace ℝ (Fin (n + 1)) :=
-  (boundaryValComplementLinearEquiv n).toContinuousLinearEquiv
+  (ContinuousLinearEquiv.prodComm ℝ (EuclideanSpace ℝ (Fin n)) ℝ).trans <|
+    ((ContinuousLinearEquiv.refl ℝ ℝ).prodCongr (EuclideanSpace.equiv (Fin n) ℝ)).trans <|
+      (Fin.consEquivL ℝ (fun _ : Fin (n + 1) ↦ ℝ)).trans
+        (EuclideanSpace.equiv (Fin (n + 1)) ℝ).symm
 
 variable (M) in
 /-- The inclusion of the boundary into the manifold is a `C^k` immersion. In the preferred
@@ -512,7 +494,7 @@ theorem isImmersion_boundary_val (hk : k ≠ 0) :
     modelWithCornersEuclideanHalfSpace_param]
   ext i
   refine Fin.cases ?_ (fun j ↦ ?_) i <;>
-    simp [boundaryValComplementEquiv, boundaryValComplementLinearEquiv]
+    simp [boundaryValComplementEquiv]
 
 variable (M) in
 /-- The inclusion of the boundary into the manifold is `C^k`: in the boundary chart induced by an
