@@ -70,7 +70,9 @@ and the representation is stated in the `fourierAtom` convention rather than thr
   existence of a finite representing measure for a continuous positive-definite function.
 * `TauCeti.Measure.ext_of_forall_integral_fourierAtom_eq`: uniqueness of the representing
   measure.
-* `TauCeti.bochner`, with the Euclidean specialization `TauCeti.bochner_euclideanSpace`: **Bochner's theorem**, the equivalence between continuity together with
+* `TauCeti.bochner`, with the Euclidean specialization
+  `TauCeti.bochner_euclideanSpace`:
+  **Bochner's theorem**, the equivalence between continuity together with
   positive definiteness of the subtraction kernel and the unique Fourier representation.
 * `TauCeti.bochner_of_forall_star_eq_neg`: the same equivalence for the involutive
   positive-definiteness predicate under the negation involution.
