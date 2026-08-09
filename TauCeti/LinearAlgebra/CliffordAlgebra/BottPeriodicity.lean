@@ -6,6 +6,7 @@ Authors: Tau Ceti Project
 module
 
 public import TauCeti.LinearAlgebra.CliffordAlgebra.RealForm
+public import Mathlib.LinearAlgebra.CliffordAlgebra.Prod
 public import Mathlib.RingTheory.MatrixAlgebra
 
 /-!
@@ -152,26 +153,16 @@ private theorem hyperbolicVolume_sq : hyperbolicVolume Q * hyperbolicVolume Q = 
 
 private theorem hyperbolicBase_comm_volume (m : M) :
     Commute (_root_.CliffordAlgebra.ι _ (m, 0)) (hyperbolicVolume Q) := by
-  let i : HyperbolicAlgebra Q := _root_.CliffordAlgebra.ι _ (m, 0)
-  let a : HyperbolicAlgebra Q := hyperbolicE₀ Q
-  let b : HyperbolicAlgebra Q := hyperbolicE₁ Q
-  have h0 : (Q.prod (TauCeti.realCliffordForm 1 1)).IsOrtho
-      (m, 0) (0, Pi.single 0 1) := QuadraticMap.IsOrtho.inl_inr _ _
-  have h1 : (Q.prod (TauCeti.realCliffordForm 1 1)).IsOrtho
-      (m, 0) (0, Pi.single 1 1) := QuadraticMap.IsOrtho.inl_inr _ _
-  have hcomm0 : i * a = -(a * i) :=
-    _root_.CliffordAlgebra.ι_mul_ι_comm_of_isOrtho h0
-  have hcomm1 : i * b = -(b * i) :=
-    _root_.CliffordAlgebra.ι_mul_ι_comm_of_isOrtho h1
-  rw [Commute]
-  -- Expose the local generator abbreviations so the two anticommutation steps can be applied.
-  change i * (a * b) = a * b * i
-  calc
-    i * (a * b) = (i * a) * b := by simp [mul_assoc]
-    _ = (-(a * i)) * b := by rw [hcomm0]
-    _ = -a * (i * b) := by simp [mul_assoc]
-    _ = -a * (-(b * i)) := by rw [hcomm1]
-    _ = a * b * i := by simp [mul_assoc]
+  simpa [hyperbolicVolume, hyperbolicE₀, hyperbolicE₁] using
+    (_root_.CliffordAlgebra.commute_map_mul_map_of_isOrtho_of_mem_evenOdd_zero_right
+      (f₁ := QuadraticMap.Isometry.inl Q (TauCeti.realCliffordForm 1 1))
+      (f₂ := QuadraticMap.Isometry.inr Q (TauCeti.realCliffordForm 1 1))
+      (hf := fun _ _ => QuadraticMap.IsOrtho.inl_inr _ _)
+      (_root_.CliffordAlgebra.ι Q m)
+      (_root_.CliffordAlgebra.ι _ (Pi.single 0 1) * _root_.CliffordAlgebra.ι _ (Pi.single 1 1))
+      (_root_.CliffordAlgebra.ι_mem_evenOdd_one Q m)
+      (_root_.CliffordAlgebra.ι_mul_ι_mem_evenOdd_zero (TauCeti.realCliffordForm 1 1)
+        (Pi.single 0 1) (Pi.single 1 1)))
 
 private def hyperbolicBaseGenerator : M →ₗ[ℝ] HyperbolicAlgebra Q :=
   (LinearMap.mulRight ℝ (hyperbolicVolume Q)).comp
