@@ -24,6 +24,10 @@ This supplies a prerequisite for Deliverable A, Layer 1 of
 ## Main results
 
 * `mulRightInvariantVectorField_one`: the field has the prescribed value at the identity.
+* `mpullback_mulRightInvariantVectorField`: right-invariant fields are invariant under right
+  translations.
+* `mulRightInvariantVectorField_eq_mpullback`: a right-invariant field is reconstructed from its
+  value at the identity by pullback along right translation.
 * `contMDiff_mulRightInvariantVectorField_infty`: a right-invariant field is smooth.
 
 ## References
@@ -65,10 +69,75 @@ theorem mulRightInvariantVectorField_one (v : GroupLieAlgebra I G) :
   rw [show (fun x : G => x * 1) = id by funext x; simp, mfderiv_id]
   rfl
 
-/-- The right-invariant vector field is the derivative of right multiplication. -/
-theorem mulRightInvariantVectorField_apply (v : GroupLieAlgebra I G) (g : G) :
-    mulRightInvariantVectorField v g = mfderiv I I (fun x : G => x * g) 1 v :=
-  (rfl)
+set_option backward.isDefEq.respectTransparency false in
+theorem mulRightInvariantVectorField_add (v w : GroupLieAlgebra I G) :
+    mulRightInvariantVectorField (v + w) =
+      mulRightInvariantVectorField v + mulRightInvariantVectorField w := by
+  ext g
+  simp [mulRightInvariantVectorField]
+
+set_option backward.isDefEq.respectTransparency false in
+theorem mulRightInvariantVectorField_smul (c : 𝕜) (v : GroupLieAlgebra I G) :
+    mulRightInvariantVectorField (c • v) = c • mulRightInvariantVectorField v := by
+  ext g
+  simp [mulRightInvariantVectorField]
+
+section Pullback
+
+variable [LieGroup I (minSmoothness 𝕜 3) G]
+
+/-- The inverse derivative of right translation by `g` is the derivative of right translation by
+`g⁻¹`. -/
+@[simp]
+theorem inverse_mfderiv_mul_right {g h : G} :
+    (mfderiv I I (· * g) h).inverse = mfderiv I I (· * g⁻¹) (h * g) := by
+  have M : minSmoothness 𝕜 3 ≠ 0 := lt_of_lt_of_le (by simp) le_minSmoothness |>.ne'
+  have A : mfderiv I I ((· * g⁻¹) ∘ (· * g)) h = ContinuousLinearMap.id 𝕜 _ := by
+    have : (· * g⁻¹) ∘ (· * g) = id := by ext x; simp
+    rw [this, id_eq, mfderiv_id]
+  rw [mfderiv_comp (I' := I) _
+    (contMDiff_mul_right.contMDiffAt.mdifferentiableAt M)
+    (contMDiff_mul_right.contMDiffAt.mdifferentiableAt M)] at A
+  have A' : mfderiv I I ((· * g) ∘ (· * g⁻¹)) (h * g) =
+      ContinuousLinearMap.id 𝕜 _ := by
+    have : (· * g) ∘ (· * g⁻¹) = id := by ext x; simp
+    rw [this, id_eq, mfderiv_id]
+  rw [mfderiv_comp (I' := I) _
+    (contMDiff_mul_right.contMDiffAt.mdifferentiableAt M)
+    (contMDiff_mul_right.contMDiffAt.mdifferentiableAt M), mul_inv_cancel_right h g] at A'
+  exact ContinuousLinearMap.inverse_eq A' A
+
+/-- Right-invariant vector fields are invariant under pullback by right translations. -/
+theorem mpullback_mulRightInvariantVectorField (g : G) (v : GroupLieAlgebra I G) :
+    VectorField.mpullback I I (· * g) (mulRightInvariantVectorField v) =
+      mulRightInvariantVectorField v := by
+  have M : minSmoothness 𝕜 3 ≠ 0 := lt_of_lt_of_le (by simp) le_minSmoothness |>.ne'
+  ext h
+  simp only [VectorField.mpullback, inverse_mfderiv_mul_right, mulRightInvariantVectorField]
+  have D : (fun x ↦ x * h) = (· * g⁻¹) ∘ (fun x ↦ x * (h * g)) := by
+    ext x
+    simp only [Function.comp_apply]
+    group
+  rw [D, mfderiv_comp (I' := I)]
+  · congr 2
+    simp
+  · exact contMDiff_mul_right.contMDiffAt.mdifferentiableAt M
+  · exact contMDiff_mul_right.contMDiffAt.mdifferentiableAt M
+
+set_option backward.isDefEq.respectTransparency false in
+/-- A right-invariant vector field is reconstructed from its value at the identity by pullback
+along right translation. -/
+theorem mulRightInvariantVectorField_eq_mpullback (g : G)
+    (V : ∀ g : G, TangentSpace I g) :
+    mulRightInvariantVectorField (V 1) g =
+      VectorField.mpullback I I (· * g⁻¹) V g := by
+  have A : 1 = g * g⁻¹ := by simp
+  simp only [mulRightInvariantVectorField, VectorField.mpullback,
+    inverse_mfderiv_mul_right]
+  congr
+  simp
+
+end Pullback
 
 /-- In model coordinates, the right-invariant vector field is jointly `C^n` in its generating
 tangent vector and group point when multiplication is `C^(n + 1)`. -/
