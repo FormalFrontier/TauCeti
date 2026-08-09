@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Geometry.Lie.InvariantVectorField
+import TauCeti.Geometry.Manifold.VectorField.Regularity
 
 /-!
 # Right-invariant vector fields on Lie groups
@@ -60,6 +61,7 @@ def mulRightInvariantVectorField (v : GroupLieAlgebra I G) (g : G) : TangentSpac
 theorem mulRightInvariantVectorField_one (v : GroupLieAlgebra I G) :
     mulRightInvariantVectorField v (1 : G) = v := by
   rw [mulRightInvariantVectorField]
+  -- Right multiplication by `1` is the identity map, whose manifold derivative is the identity.
   rw [show (fun x : G => x * 1) = id by funext x; simp, mfderiv_id]
   rfl
 
@@ -101,21 +103,15 @@ theorem contMDiff_mulRightInvariantVectorField_modelSpace {n : ℕ∞ω}
   let F₁ : E × G → TangentBundle I G × TangentBundle I G := fun p => (fv p, fg p)
   have S₁ : ContMDiff (𝓘(𝕜, E).prod I) (I.tangent.prod I.tangent) n F₁ :=
     sfv.prodMk sfg
-  let F₂ : TangentBundle I G × TangentBundle I G → TangentBundle (I.prod I) (G × G) :=
-    (equivTangentBundleProd I G I G).symm
-  have S₂ : ContMDiff (I.tangent.prod I.tangent) (I.prod I).tangent n F₂ :=
-    contMDiff_equivTangentBundleProd_symm
-  let F₃ : TangentBundle (I.prod I) (G × G) → TangentBundle I G :=
-    tangentMap% (fun p : G × G => p.1 * p.2)
-  have S₃ : ContMDiff (I.prod I).tangent I.tangent n F₃ :=
-    (contMDiff_mul I (n + 1)).contMDiff_tangentMap le_rfl
-  let S := (S₃.comp S₂).comp S₁
+  let S :=
+    (contMDiff_tangentMap_mul_prod (I := I) (G := G) (m := n) (n := n + 1) le_rfl).comp S₁
   convert! S with p
-  · simp [F₁, F₂, F₃, fg, fv]
-  · simp only [Function.comp_apply, tangentMap, F₃, F₂, F₁, fg, fv]
-    rw [mfderiv_prod_eq_add_apply
-      ((contMDiff_mul I (n + 1)).mdifferentiableAt (by simp))]
-    simp +instances [mulRightInvariantVectorField, equivTangentBundleProd]
+  · simp [F₁, fg, fv]
+  · let _ : ContMDiffMul I 1 G :=
+      ContMDiffMul.of_le (m := 1) (n := n + 1) le_add_self
+    simp only [Function.comp_apply, F₁]
+    rw [tangentMap_mul_prod_apply]
+    simp [fg, fv, mulRightInvariantVectorField]
     rfl
 
 /-- A right-invariant vector field on a smooth Lie group is smooth. -/
@@ -134,17 +130,6 @@ theorem contMDiff_mvfderiv_mulRightInvariantVectorField
     [ContMDiffMul I ∞ G] (v : GroupLieAlgebra I G)
     (f : C^∞⟮I, G; 𝕜⟯) :
     ContMDiff I (modelWithCornersSelf 𝕜 𝕜) ∞
-      (fun g => mvfderiv I f g (mulRightInvariantVectorField v g)) := by
-  let df : TangentBundle I G → TangentBundle (modelWithCornersSelf 𝕜 𝕜) 𝕜 :=
-    tangentMap% (f : G → 𝕜)
-  have hdf : ContMDiff I.tangent (modelWithCornersSelf 𝕜 𝕜).tangent ∞ df :=
-    f.contMDiff.contMDiff_tangentMap (by simp)
-  have hsnd : ContMDiff (modelWithCornersSelf 𝕜 𝕜).tangent
-      (modelWithCornersSelf 𝕜 𝕜) ∞
-      (fun p : TangentBundle (modelWithCornersSelf 𝕜 𝕜) 𝕜 => p.2) :=
-    contMDiff_snd_tangentBundle_modelSpace 𝕜 (modelWithCornersSelf 𝕜 𝕜)
-  change ContMDiff I (modelWithCornersSelf 𝕜 𝕜) ∞
-    (fun g => mfderiv I (modelWithCornersSelf 𝕜 𝕜) f g
-      (mulRightInvariantVectorField v g))
-  have h := hsnd.comp (hdf.comp (contMDiff_mulRightInvariantVectorField_infty v))
-  exact h.congr fun g => rfl
+      (fun g => mvfderiv I f g (mulRightInvariantVectorField v g)) :=
+  f.contMDiff.contMDiff_mvfderiv_apply
+    (contMDiff_mulRightInvariantVectorField_infty v) (by simp)
