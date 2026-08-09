@@ -8,7 +8,6 @@ module
 public import TauCeti.Topology.JordanCurve.Basic
 public import TauCeti.Analysis.Complex.Conformal.ShortCrosscut
 import TauCeti.Analysis.Complex.Conformal.Crosscut.Arc
-import TauCeti.Analysis.Complex.Conformal.Crosscut.BoundaryEnds
 import TauCeti.Analysis.Complex.Conformal.Crosscut.Jordan
 import TauCeti.Topology.JordanCurve.SmallArc
 
@@ -152,9 +151,9 @@ theorem exists_isJordanCurve_containing_closure_image_ball_inter_sphere_diam_le
         _ ≤ ε := by dsimp [κ]; linarith [min_le_left (ε / 2) (δ / 2)]
 
 /-- **The bounded-image form of the small-Jordan-curve theorem.** A holomorphic injection of a
-disc onto a bounded domain has finite Dirichlet integral by the conformal area formula, so every
-closed image crosscut produced by the length--area method lies on an arbitrarily small Jordan
-curve in the closure of the image domain.
+disc onto a bounded domain has finite Dirichlet integral by the conformal area formula, so for
+every positive tolerance and radius bound, some closed image crosscut can be chosen on a Jordan
+curve in the closure of the image domain whose diameter is at most the tolerance.
 
 This is the form used for the Riemann map of a bounded Jordan domain. -/
 theorem exists_isJordanCurve_containing_closure_image_ball_inter_sphere_diam_le_of_isBounded
