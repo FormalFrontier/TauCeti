@@ -71,7 +71,6 @@ theorem fiberMap_id (x : X) (e : p ⁻¹' {x}) :
   rfl
 
 /-- Restriction to a fibre respects composition of maps over the base. -/
-@[simp]
 theorem fiberMap_comp (f : C(E, F)) (g : C(F, G))
     (hf : q ∘ f = p) (hg : r ∘ g = q) (x : X) (e : p ⁻¹' {x}) :
     fiberMap (g.comp f) (by
@@ -136,7 +135,6 @@ theorem monodromyNatTrans_id (hp : _root_.IsCoveringMap p) :
 
 /-- Composition of maps of covers induces vertical composition of their monodromy natural
 transformations. -/
-@[simp]
 theorem monodromyNatTrans_comp (hp : _root_.IsCoveringMap p)
     (hq : _root_.IsCoveringMap q) (hr : _root_.IsCoveringMap r)
     (f : C(E, F)) (g : C(F, G)) (hf : q ∘ f = p) (hg : r ∘ g = q) :
@@ -225,7 +223,6 @@ theorem monodromyNatIso_inv (hp : _root_.IsCoveringMap p)
 
 /-- The forward component of the monodromy natural isomorphism applies the underlying
 homeomorphism. -/
-@[simp]
 theorem monodromyNatIso_hom_app_apply (hp : _root_.IsCoveringMap p)
     (hq : _root_.IsCoveringMap q) (h : E ≃ₜ F) (hh : q ∘ h = p)
     (x : X) (e : p ⁻¹' {x}) :
@@ -237,7 +234,6 @@ theorem monodromyNatIso_hom_app_apply (hp : _root_.IsCoveringMap p)
 
 /-- The inverse component of the monodromy natural isomorphism applies the inverse
 homeomorphism. -/
-@[simp]
 theorem monodromyNatIso_inv_app_apply (hp : _root_.IsCoveringMap p)
     (hq : _root_.IsCoveringMap q) (h : E ≃ₜ F) (hh : q ∘ h = p)
     (x : X) (f : q ⁻¹' {x}) :
