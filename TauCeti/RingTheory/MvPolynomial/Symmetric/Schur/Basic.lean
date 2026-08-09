@@ -171,8 +171,9 @@ noncomputable def diagramSchurPoly : MvPolynomial (Fin N) R :=
   ∑ T : BoundedSSYT N μ, monomial (BoundedSSYT.weight T) 1
 
 /-- The defining sum of a Schur polynomial, one weight monomial per bounded tableau of the
-shape.  The definition is not exposed across module boundaries, so this restatement is the only
-way a downstream module can rewrite with it. -/
+shape.  `TauCeti.diagramSchurPoly` is public, but its *body* is not exposed — this file's
+`public section` carries no `@[expose]` — so no equation lemma for it reaches a downstream module;
+this restatement is what such a module rewrites with. -/
 theorem diagramSchurPoly_eq_sum :
     diagramSchurPoly N R μ = ∑ T : BoundedSSYT N μ, monomial (BoundedSSYT.weight T) 1 :=
   (rfl)
@@ -353,8 +354,9 @@ noncomputable def schurPoly (σ : Type*) [Fintype σ] (R : Type*) [CommSemiring 
   rename (Fintype.equivFin σ).symm (diagramSchurPoly (Fintype.card σ) R (diagramOf μ))
 
 /-- The Schur polynomial of a partition is the Schur polynomial of its Young diagram, renamed
-along the chosen ordering of the alphabet.  The definition is not exposed across module
-boundaries, so this restatement is the only way a downstream module can rewrite with it. -/
+along the chosen ordering of the alphabet.  As for `TauCeti.diagramSchurPoly_eq_sum`, the body of
+`TauCeti.schurPoly` is not exposed outside this module, so this restatement is what a downstream
+module rewrites with. -/
 theorem schurPoly_eq_rename (μ : n.Partition) :
     schurPoly σ R μ
       = rename (Fintype.equivFin σ).symm (diagramSchurPoly (Fintype.card σ) R (diagramOf μ)) :=

@@ -211,10 +211,8 @@ theorem colEntry_ofColFinset (h : μ.rowLen 0 ≤ 1) (s : Finset (Fin N)) (hs : 
 @[simp]
 theorem colFinset_ofColFinset (h : μ.rowLen 0 ≤ 1) (s : Finset (Fin N))
     (hs : s.card = μ.colLen 0) : colFinset (ofColFinset h s hs) = s := by
-  refine Finset.coe_injective ?_
-  rw [colFinset, Finset.coe_image, Finset.coe_univ, Set.image_univ,
-    funext (colEntry_ofColFinset h s hs)]
-  exact Finset.range_orderEmbOfFin s hs
+  rw [colFinset, funext (colEntry_ofColFinset h s hs)]
+  exact s.image_orderEmbOfFin_univ hs
 
 @[simp]
 theorem ofColFinset_colFinset (h : μ.rowLen 0 ≤ 1) (T : BoundedSSYT N μ) :
