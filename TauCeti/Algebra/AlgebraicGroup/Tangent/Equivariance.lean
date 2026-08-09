@@ -57,17 +57,12 @@ private lemma algEquivSelf_derivationComp_apply (φ : A' →ₐc[R] A)
   rw [derivationComp_apply]
   exact
     (Bialgebra.CounitAlgebra.algEquivSelf_apply R A' B
+      -- Both counit algebras are definitionally copies of `B`; this `show` transports
+      -- the value to the indexing expected by the `A'`-side equivalence.
       (show Bialgebra.CounitAlgebra R A' B from
         d ((φ : A' →ₐ[R] A) a))).trans
       (Bialgebra.CounitAlgebra.algEquivSelf_apply R A B
         (d ((φ : A' →ₐ[R] A) a))).symm
-
-private lemma mapDomain_toLinearMap (φ : A' →ₐc[R] A)
-    (g : WithConv (A →ₐ[R] Bialgebra.CounitAlgebra R A B)) :
-    (AlgHom.mapDomain (A := Bialgebra.CounitAlgebra R A' B) φ g).ofConv.toLinearMap =
-      g.ofConv.toLinearMap.comp (φ : A' →ₐc[R] A).toLinearMap := by
-  ext x
-  rfl
 
 private lemma derivationComp_toLinearMap (φ : A' →ₐc[R] A)
     (d : Derivation R A (Bialgebra.CounitAlgebra R A B)) :
@@ -80,18 +75,6 @@ private lemma derivationComp_toLinearMap (φ : A' →ₐc[R] A)
   -- the equality after that identification.
   change derivationComp (B := B) φ d x = d ((φ : A' →ₐ[R] A) x)
   exact derivationComp_apply φ d x
-
-private lemma mapDomain_inv_toLinearMap (φ : A' →ₐc[R] A)
-    (g : WithConv (A →ₐ[R] Bialgebra.CounitAlgebra R A B)) :
-    ((AlgHom.mapDomain (A := Bialgebra.CounitAlgebra R A' B) φ g)⁻¹).ofConv.toLinearMap =
-      (g⁻¹).ofConv.toLinearMap.comp (φ : A' →ₐc[R] A).toLinearMap := by
-  ext x
-  simp only [AlgHom.toLinearMap_apply, AlgHom.convInv_apply]
-  -- Precomposition is definitionally evaluation after `φ`; exposing it leaves precisely
-  -- preservation of the antipode by a bialgebra morphism.
-  change g.ofConv ((φ : A' →ₐ[R] A) (HopfAlgebra.antipode R x)) =
-    g.ofConv (HopfAlgebra.antipode R ((φ : A' →ₐ[R] A) x))
-  exact congrArg g.ofConv (BialgHomClass.map_antipode φ x)
 
 private lemma convTriple_comp_apply (φ : A' →ₐc[R] A)
     (f g h : A →ₗ[R] Bialgebra.CounitAlgebra R A B) (a : A') :
@@ -121,6 +104,10 @@ theorem derivationComp_adDerivation (φ : A' →ₐc[R] A)
       Derivation.adDerivation B
         (AlgHom.mapDomain (A := Bialgebra.CounitAlgebra R A' B) φ g)
         (derivationComp (B := B) φ d) := by
+  have mapDomain_inv :
+      (AlgHom.mapDomain (A := Bialgebra.CounitAlgebra R A' B) φ g)⁻¹ =
+        AlgHom.mapDomain (A := Bialgebra.CounitAlgebra R A' B) φ (g⁻¹) :=
+    ((AlgHom.mapDomain (A := Bialgebra.CounitAlgebra R A' B) φ).map_inv g).symm
   apply Derivation.ext
   intro a
   apply (Bialgebra.CounitAlgebra.algEquivSelf R A' B).injective
@@ -128,7 +115,8 @@ theorem derivationComp_adDerivation (φ : A' →ₐc[R] A)
     Derivation.adDerivation_apply,
     Bialgebra.CounitAlgebra.algEquivSelf_apply,
     Bialgebra.CounitAlgebra.algEquivSelf_apply, convTriple_comp_apply,
-    mapDomain_toLinearMap, derivationComp_toLinearMap, mapDomain_inv_toLinearMap]
+    mapDomain_inv, derivationComp_toLinearMap]
+  simp only [AlgHom.mapDomain_apply, ofConv_toConv, AlgHom.comp_toLinearMap]
   rfl
 
 end TauCeti

@@ -6,6 +6,7 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.Tangent.Adjoint
 public import TauCeti.Algebra.AlgebraicGroup.Tangent.Cotangent
+public import TauCeti.Algebra.AlgebraicGroup.Tangent.Equivariance
 public import TauCeti.Algebra.AlgebraicGroup.Tangent.Map
 public import TauCeti.Algebra.AlgebraicGroup.Tangent.Naturality
 
@@ -17,6 +18,7 @@ Aggregator for the tangent-level theory: the counit-valued derivations
 (`Tangent.Cotangent`), functoriality in the bialgebra
 (`Tangent.DerivationMap`, `Tangent.Map`) and coefficient algebra
 (`Tangent.Naturality`), and the adjoint action of the points
-(`Tangent.Adjoint`).
+(`Tangent.Adjoint`), including equivariance of the differential
+(`Tangent.Equivariance`).
 The Lie-algebra structure lives in the `Tangent.Lie` aggregator.
 -/
