@@ -25,10 +25,10 @@ they are one-dimensional, rather than merely deciding whether a tuple occurs.
 
 * `TauCeti.jointEigenspaceMatrix`: the matrix obtained by stacking all the eigenvector equations.
 * `TauCeti.jointEigenspaceBasis`: a computable basis of the corresponding common eigenspace.
-* `TauCeti.eigenvalueTupleSearch`: the finite product of the individual eigenvalue searches.
 * `TauCeti.jointEigenvalueSearch`: the tuples with nonzero common eigenspace.
-* `TauCeti.leftJointEigenspaceBasis` and `TauCeti.leftJointEigenvalueSearch`: the corresponding
-  objects for the common eigenrows used by Dixon--Schneider.
+
+Applying these definitions to the transposed family gives the common eigenrows used by
+Dixon--Schneider; the final section records their `ᵥ*` characterizations.
 
 ## Main results
 
@@ -37,6 +37,8 @@ they are one-dimensional, rather than merely deciding whether a tuple occurs.
 * `TauCeti.nonempty_jointEigenspaceBasis_iff`: its computed basis is nonempty exactly when a
   nonzero common eigenvector exists.
 * `TauCeti.mem_jointEigenvalueSearch`: correctness of the executable tuple search.
+* `TauCeti.mem_jointEigenvalueSearch_transpose`: the corresponding common-eigenrow
+  characterization.
 
 ## References
 
@@ -88,15 +90,13 @@ theorem jointEigenspaceMatrix_mulVec_eq_zero_iff
       funext j
       simpa only [Matrix.mulVec, jointEigenspaceMatrix_apply, Pi.zero_apply] using
         congrFun h (finProdFinEquiv (i, j))
-    rw [Matrix.sub_mulVec, sub_eq_zero, Matrix.scalar_apply, Matrix.diagonal_const_mulVec,
-      eq_comm] at hi
+    rw [scalar_sub_mulVec_eq_zero_iff] at hi
     exact hi
   · intro h
     funext k
     let ij := finProdFinEquiv.symm k
     have hi : (Matrix.scalar (Fin n) (a ij.1) - A ij.1) *ᵥ v = 0 := by
-      rw [Matrix.sub_mulVec, sub_eq_zero, Matrix.scalar_apply, Matrix.diagonal_const_mulVec,
-        eq_comm]
+      rw [scalar_sub_mulVec_eq_zero_iff]
       exact h ij.1
     rw [show k = finProdFinEquiv ij by exact (finProdFinEquiv.apply_symm_apply k).symm]
     simpa [Matrix.mulVec, jointEigenspaceMatrix] using congrFun hi ij.2
@@ -168,23 +168,12 @@ theorem nonempty_jointEigenspaceBasis_iff
     rw [← hspan] at hker
     exact hv ((Submodule.mem_bot F).mp hker)
 
-/-- The finite product of the individual matrix eigenvalue searches. -/
-@[expose] def eigenvalueTupleSearch (A : Fin m → Matrix (Fin n) (Fin n) F) :
-    Finset (Fin m → F) :=
-  Finset.univ.filter fun a => ∀ i, a i ∈ eigenvalueSearch (A i)
-
-/-- Membership in `TauCeti.eigenvalueTupleSearch` is componentwise membership in the individual
-searches. -/
-@[simp]
-theorem mem_eigenvalueTupleSearch {A : Fin m → Matrix (Fin n) (Fin n) F} {a : Fin m → F} :
-    a ∈ eigenvalueTupleSearch A ↔ ∀ i, a i ∈ eigenvalueSearch (A i) := by
-  simp [eigenvalueTupleSearch]
-
 /-- Search the finite product of the individual spectra and retain the tuples whose computed
 common-eigenspace basis is nonempty. -/
 @[expose] def jointEigenvalueSearch (A : Fin m → Matrix (Fin n) (Fin n) F) :
     Finset (Fin m → F) :=
-  (eigenvalueTupleSearch A).filter fun a => jointEigenspaceBasis A a ≠ []
+  (Fintype.piFinset fun i => eigenvalueSearch (A i)).filter fun a =>
+    jointEigenspaceBasis A a ≠ []
 
 /-- **Correctness of the common-eigenvalue search**: it returns exactly the tuples admitting a
 nonzero common eigenvector. -/
@@ -197,7 +186,7 @@ theorem mem_jointEigenvalueSearch {A : Fin m → Matrix (Fin n) (Fin n) F} {a : 
   · intro h
     obtain ⟨v, hv, heig⟩ := h
     refine ⟨?_, ⟨v, hv, heig⟩⟩
-    rw [mem_eigenvalueTupleSearch]
+    rw [Fintype.mem_piFinset]
     intro i
     rw [mem_eigenvalueSearch_iff_exists_mulVec]
     exact ⟨v, hv, heig i⟩
@@ -208,7 +197,7 @@ theorem apply_mem_eigenvalueSearch_of_mem_jointEigenvalueSearch
     {A : Fin m → Matrix (Fin n) (Fin n) F} {a : Fin m → F}
     (ha : a ∈ jointEigenvalueSearch A) (i : Fin m) :
     a i ∈ eigenvalueSearch (A i) := by
-  exact mem_eigenvalueTupleSearch.mp (Finset.mem_filter.mp ha).1 i
+  exact Fintype.mem_piFinset.mp (Finset.mem_filter.mp ha).1 i
 
 /-- The basis associated to a returned tuple is nonempty. -/
 theorem jointEigenspaceBasis_ne_nil_of_mem_jointEigenvalueSearch
@@ -216,62 +205,44 @@ theorem jointEigenspaceBasis_ne_nil_of_mem_jointEigenvalueSearch
     (ha : a ∈ jointEigenvalueSearch A) : jointEigenspaceBasis A a ≠ [] :=
   (Finset.mem_filter.mp ha).2
 
-/-! ## Left eigenvectors -/
-
-/-- A computable basis of the simultaneous *left* eigenspace for `a`. These are the eigenrows
-needed by the Dixon--Schneider character-table algorithm. -/
-@[expose] def leftJointEigenspaceBasis (A : Fin m → Matrix (Fin n) (Fin n) F)
-    (a : Fin m → F) : List (Fin n → F) :=
-  jointEigenspaceBasis (fun i => (A i)ᵀ) a
+/-! ## Left-eigenvector characterizations -/
 
 omit [Fintype F] in
-/-- Every vector returned by `TauCeti.leftJointEigenspaceBasis` is a left eigenvector of every
-matrix in the family. -/
-theorem vecMul_eq_smul_of_mem_leftJointEigenspaceBasis
+/-- Every vector returned for the transposed family is a left eigenvector of every original
+matrix. -/
+theorem vecMul_eq_smul_of_mem_jointEigenspaceBasis_transpose
     {A : Fin m → Matrix (Fin n) (Fin n) F} {a : Fin m → F} {v : Fin n → F}
-    (hv : v ∈ leftJointEigenspaceBasis A a) : ∀ i, v ᵥ* A i = a i • v := by
+    (hv : v ∈ jointEigenspaceBasis (fun i => (A i)ᵀ) a) : ∀ i, v ᵥ* A i = a i • v := by
   intro i
-  simpa [leftJointEigenspaceBasis, Matrix.mulVec_transpose] using
+  simpa [Matrix.mulVec_transpose] using
     mulVec_eq_smul_of_mem_jointEigenspaceBasis (A := fun i => (A i)ᵀ) (a := a) hv i
 
 omit [Fintype F] in
-/-- The left common-eigenspace basis is nonempty exactly when the tuple admits a nonzero common
-eigenrow. -/
-theorem nonempty_leftJointEigenspaceBasis_iff
+/-- The common-eigenspace basis for the transposed family is nonempty exactly when the tuple
+admits a nonzero common eigenrow. -/
+theorem nonempty_jointEigenspaceBasis_transpose_iff
     (A : Fin m → Matrix (Fin n) (Fin n) F) (a : Fin m → F) :
-    leftJointEigenspaceBasis A a ≠ [] ↔ ∃ v ≠ 0, ∀ i, v ᵥ* A i = a i • v := by
-  simpa [leftJointEigenspaceBasis, Matrix.mulVec_transpose] using
+    jointEigenspaceBasis (fun i => (A i)ᵀ) a ≠ [] ↔
+      ∃ v ≠ 0, ∀ i, v ᵥ* A i = a i • v := by
+  simpa [Matrix.mulVec_transpose] using
     nonempty_jointEigenspaceBasis_iff (fun i => (A i)ᵀ) a
 
-/-- Search for the tuples admitting a nonzero common eigenrow. -/
-@[expose] def leftJointEigenvalueSearch (A : Fin m → Matrix (Fin n) (Fin n) F) :
-    Finset (Fin m → F) :=
-  jointEigenvalueSearch fun i => (A i)ᵀ
-
-/-- **Correctness of the common eigenrow search**: it returns exactly the tuples admitting a
-nonzero common left eigenvector. -/
+/-- **Correctness of the common eigenrow search**: searching the transposed family returns exactly
+the tuples admitting a nonzero common left eigenvector. -/
 @[simp]
-theorem mem_leftJointEigenvalueSearch
+theorem mem_jointEigenvalueSearch_transpose
     {A : Fin m → Matrix (Fin n) (Fin n) F} {a : Fin m → F} :
-    a ∈ leftJointEigenvalueSearch A ↔ ∃ v ≠ 0, ∀ i, v ᵥ* A i = a i • v := by
-  rw [leftJointEigenvalueSearch, mem_jointEigenvalueSearch]
-  simp only [Matrix.mulVec_transpose]
+    a ∈ jointEigenvalueSearch (fun i => (A i)ᵀ) ↔
+      ∃ v ≠ 0, ∀ i, v ᵥ* A i = a i • v := by
+  simp [Matrix.mulVec_transpose]
 
-/-- A tuple returned by the left search has a nonempty computed eigenrow basis. -/
-theorem leftJointEigenspaceBasis_ne_nil_of_mem_leftJointEigenvalueSearch
+/-- Every component of a tuple returned by searching the transposed family is an eigenvalue of
+the corresponding original matrix. -/
+theorem apply_mem_eigenvalueSearch_of_mem_jointEigenvalueSearch_transpose
     {A : Fin m → Matrix (Fin n) (Fin n) F} {a : Fin m → F}
-    (ha : a ∈ leftJointEigenvalueSearch A) : leftJointEigenspaceBasis A a ≠ [] := by
-  rw [nonempty_leftJointEigenspaceBasis_iff]
-  exact mem_leftJointEigenvalueSearch.mp ha
-
-/-- Every component of a tuple returned by the common eigenrow search is an eigenvalue of the
-corresponding matrix. -/
-theorem apply_mem_eigenvalueSearch_of_mem_leftJointEigenvalueSearch
-    {A : Fin m → Matrix (Fin n) (Fin n) F} {a : Fin m → F}
-    (ha : a ∈ leftJointEigenvalueSearch A) (i : Fin m) :
+    (ha : a ∈ jointEigenvalueSearch (fun i => (A i)ᵀ)) (i : Fin m) :
     a i ∈ eigenvalueSearch (A i) := by
-  rw [mem_eigenvalueSearch_iff_exists_vecMul]
-  obtain ⟨v, hv, heig⟩ := mem_leftJointEigenvalueSearch.mp ha
-  exact ⟨v, hv, heig i⟩
+  rw [← eigenvalueSearch_transpose]
+  exact apply_mem_eigenvalueSearch_of_mem_jointEigenvalueSearch ha i
 
 end TauCeti

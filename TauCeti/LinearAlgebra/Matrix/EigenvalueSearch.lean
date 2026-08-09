@@ -128,12 +128,18 @@ theorem mem_eigenvalueSearch_iff_hasEigenvalue :
   rw [mem_eigenvalueSearch_iff_mem_spectrum, ← Matrix.spectrum_toLin',
     Module.End.hasEigenvalue_iff_mem_spectrum]
 
+omit [Fintype F] [DecidableEq F] in
+/-- The scalar-minus-matrix system is the corresponding eigenvector equation. -/
+theorem scalar_sub_mulVec_eq_zero_iff (A : Matrix n n F) (a : F) (v : n → F) :
+    (Matrix.scalar n a - A) *ᵥ v = 0 ↔ A *ᵥ v = a • v := by
+  rw [Matrix.sub_mulVec, sub_eq_zero, Matrix.scalar_apply, Matrix.diagonal_const_mulVec, eq_comm]
+
 /-- A scalar is found by the search exactly when it has a nonzero eigenvector. -/
 theorem mem_eigenvalueSearch_iff_exists_mulVec :
     a ∈ eigenvalueSearch A ↔ ∃ v ≠ 0, A *ᵥ v = a • v := by
   rw [mem_eigenvalueSearch, ← Matrix.exists_mulVec_eq_zero_iff]
   refine exists_congr fun v => and_congr_right fun _ => ?_
-  rw [Matrix.sub_mulVec, sub_eq_zero, Matrix.scalar_apply, Matrix.diagonal_const_mulVec, eq_comm]
+  exact scalar_sub_mulVec_eq_zero_iff A a v
 
 /-- A matrix and its transpose have the same eigenvalues. -/
 @[simp] theorem eigenvalueSearch_transpose (A : Matrix n n F) :
