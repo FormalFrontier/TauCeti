@@ -472,12 +472,16 @@ lemma exists_conjScale_mem_Gamma0_of_dvd (d M N : ℕ) (hdvd : d * M ∣ N) (γ 
 level `N` acts on a level-raised form `V_d f` as the diamond operator of level `M` at the
 reduction of `u` acts on `f`. Both sides are slashes by a matrix of `Γ₀`, related by the
 `diag(d, 1)`-conjugation, which preserves the lower-right entry. -/
-theorem CuspForm.diamondOpCusp_levelRaise {M d N : ℕ} [NeZero M] [NeZero d] [NeZero N]
+theorem CuspForm.diamondOpCusp_levelRaise {M d N : ℕ} [NeZero N]
     (hdvd : d * M ∣ N) (k : ℤ) (u : (ZMod N)ˣ)
     (f : CuspForm ((Gamma1 M).map (mapGL ℝ)) k) :
+    haveI : NeZero d := ⟨fun hd ↦ NeZero.ne N (by simpa [hd] using hdvd)⟩
+    haveI : NeZero M := ⟨fun hM ↦ NeZero.ne N (by simpa [hM] using hdvd)⟩
     diamondOpCusp k u (CuspForm.levelRaise d (Gamma1_map_le_conjAct_scaleGL_of_dvd hdvd) f) =
       CuspForm.levelRaise d (Gamma1_map_le_conjAct_scaleGL_of_dvd hdvd)
         (diamondOpCusp k (ZMod.unitsMap ((Dvd.intro_left d rfl).trans hdvd) u) f) := by
+  let _ : NeZero d := ⟨fun hd ↦ NeZero.ne N (by simpa [hd] using hdvd)⟩
+  let _ : NeZero M := ⟨fun hM ↦ NeZero.ne N (by simpa [hM] using hdvd)⟩
   obtain ⟨γ, hγ⟩ := Gamma0Map_toHomUnits_surjective u
   obtain ⟨c, hc, hm, heq⟩ := exists_conjScale_mem_Gamma0_of_dvd d M N hdvd γ
   refine DFunLike.coe_injective ?_
