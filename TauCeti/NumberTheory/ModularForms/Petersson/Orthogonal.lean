@@ -22,18 +22,15 @@ decomposition of Layer 3 of the ModularForms roadmap needs: it reverses `≤`, i
 supremum of subspaces into an infimum of complements, and orthogonality to the range of a
 linear map is tested on the map's values alone.
 
-The complement is built by hand rather than as `Submodule.orthogonal`, because
-`peterssonInnerCosets` is bundled only as an `InnerProductSpace.Core` and, deliberately, no
-`InnerProductSpace` instance on `S_k(Γ)` is derived from it — see the note on
-`CuspForm.peterssonInnerCosetsCore`. Everything below uses only the Hermitian axioms recorded
-in that core, so it transfers unchanged if such an instance is ever installed.
+The complement uses Mathlib's `Submodule.orthogonalBilin`, applied to the Petersson pairing
+bundled as a sesquilinear form. Deliberately, no `InnerProductSpace` instance on `S_k(Γ)` is
+derived from `CuspForm.peterssonInnerCosetsCore`; see the note on that definition.
 
 ## Main definitions
 
 * `TauCeti.CuspForm.peterssonOrthogonal`: the Petersson-orthogonal complement of a subspace of
   `S_k(Γ)`.
-* `TauCeti.CuspForm.peterssonInnerCosetsRight`: pairing against a fixed form, as a `ℂ`-linear
-  functional.
+* `TauCeti.CuspForm.peterssonInnerCosetsₛₗ`: the Petersson pairing as a sesquilinear form.
 
 ## Main results
 
@@ -74,16 +71,27 @@ variable {Γ : Subgroup SL(2, ℤ)} [Γ.FiniteIndex] {k : ℤ}
 variable {V W : Submodule ℂ (CuspForm (Γ.map (mapGL ℝ)) k)}
   {f : CuspForm (Γ.map (mapGL ℝ)) k}
 
+/-- The Petersson pairing as a sesquilinear form: conjugate-linear in the first cusp form and
+linear in the second. -/
+noncomputable def peterssonInnerCosetsₛₗ :
+    CuspForm (Γ.map (mapGL ℝ)) k →ₗ⋆[ℂ] CuspForm (Γ.map (mapGL ℝ)) k →ₗ[ℂ] ℂ where
+  toFun f :=
+    { toFun := peterssonInnerCosets f
+      map_add' := peterssonInnerCosets_add_right f
+      map_smul' c g := peterssonInnerCosets_smul_right c f g }
+  map_add' f₁ f₂ := LinearMap.ext fun g ↦ peterssonInnerCosets_add_left f₁ f₂ g
+  map_smul' c f := LinearMap.ext fun g ↦ peterssonInnerCosets_smul_left c f g
+
+@[simp]
+theorem peterssonInnerCosetsₛₗ_apply_apply (f g : CuspForm (Γ.map (mapGL ℝ)) k) :
+    peterssonInnerCosetsₛₗ f g = peterssonInnerCosets f g := (rfl)
+
 /-- The **Petersson-orthogonal complement** of a subspace `V` of `S_k(Γ)`: the cusp forms
 pairing to zero against every element of `V`. It is a subspace because the Petersson pairing
 is additive and `ℂ`-linear in its second argument. -/
-def peterssonOrthogonal (V : Submodule ℂ (CuspForm (Γ.map (mapGL ℝ)) k)) :
-    Submodule ℂ (CuspForm (Γ.map (mapGL ℝ)) k) where
-  carrier := {f | ∀ g ∈ V, peterssonInnerCosets g f = 0}
-  add_mem' hf₁ hf₂ g hg := by
-    rw [peterssonInnerCosets_add_right, hf₁ g hg, hf₂ g hg, add_zero]
-  zero_mem' g _ := peterssonInnerCosets_zero_right g
-  smul_mem' c _ hf g hg := by rw [peterssonInnerCosets_smul_right, hf g hg, mul_zero]
+noncomputable def peterssonOrthogonal (V : Submodule ℂ (CuspForm (Γ.map (mapGL ℝ)) k)) :
+    Submodule ℂ (CuspForm (Γ.map (mapGL ℝ)) k) :=
+  V.orthogonalBilin peterssonInnerCosetsₛₗ
 
 /-- Membership in the Petersson-orthogonal complement is orthogonality to every element. -/
 theorem mem_peterssonOrthogonal_iff :
@@ -101,14 +109,15 @@ theorem mem_peterssonOrthogonal_iff' :
 /-- The Petersson-orthogonal complement reverses inclusions. -/
 theorem peterssonOrthogonal_le_peterssonOrthogonal (h : V ≤ W) :
     peterssonOrthogonal W ≤ peterssonOrthogonal V :=
-  fun _ hf g hg ↦ hf g (h hg)
+  Submodule.orthogonalBilin_le h
 
 /-- Everything is orthogonal to the zero subspace. -/
 @[simp]
 theorem peterssonOrthogonal_bot :
     peterssonOrthogonal (⊥ : Submodule ℂ (CuspForm (Γ.map (mapGL ℝ)) k)) = ⊤ :=
   eq_top_iff.mpr fun f _ g hg ↦ by
-    rw [(Submodule.mem_bot ℂ).mp hg, peterssonInnerCosets_zero_left]
+    rw [(Submodule.mem_bot ℂ).mp hg, peterssonInnerCosetsₛₗ_apply_apply,
+      peterssonInnerCosets_zero_left]
 
 /-- Only `0` is orthogonal to all of `S_k(Γ)`: this is positive definiteness. -/
 @[simp]
@@ -127,9 +136,11 @@ theorem disjoint_peterssonOrthogonal (V : Submodule ℂ (CuspForm (Γ.map (mapGL
 /-- A subspace is contained in its double Petersson-orthogonal complement. -/
 theorem le_peterssonOrthogonal_peterssonOrthogonal
     (V : Submodule ℂ (CuspForm (Γ.map (mapGL ℝ)) k)) :
-    V ≤ peterssonOrthogonal (peterssonOrthogonal V) := by
-  intro f hf g hg
-  rw [← peterssonInnerCosets_conj_symm g f, hg f hf, map_zero]
+    V ≤ peterssonOrthogonal (peterssonOrthogonal V) :=
+  Submodule.le_orthogonalBilin_orthogonalBilin fun f g hfg ↦ by
+    have hfg' : peterssonInnerCosets f g = 0 := by simpa using hfg
+    rw [peterssonInnerCosetsₛₗ_apply_apply, ← peterssonInnerCosets_conj_symm g f,
+      hfg', map_zero]
 
 /-- **Taking the Petersson-orthogonal complement twice recovers the original subspace.** -/
 theorem peterssonOrthogonal_peterssonOrthogonal
@@ -203,23 +214,11 @@ theorem peterssonOrthogonal_iSup {ι : Sort*}
     (fun i y hy ↦ hf i y hy) (peterssonInnerCosets_zero_left f) fun g₁ g₂ h₁ h₂ ↦ ?_
   rw [peterssonInnerCosets_add_left, h₁, h₂, add_zero]
 
-/-- Pairing against a fixed form on the left, as a `ℂ`-linear functional: the Petersson product
-is linear in its second argument. -/
-noncomputable def peterssonInnerCosetsRight (f : CuspForm (Γ.map (mapGL ℝ)) k) :
-    CuspForm (Γ.map (mapGL ℝ)) k →ₗ[ℂ] ℂ where
-  toFun := peterssonInnerCosets f
-  map_add' := peterssonInnerCosets_add_right f
-  map_smul' c g := peterssonInnerCosets_smul_right c f g
-
-@[simp]
-theorem peterssonInnerCosetsRight_apply (f g : CuspForm (Γ.map (mapGL ℝ)) k) :
-    peterssonInnerCosetsRight f g = peterssonInnerCosets f g := (rfl)
-
 /-- **The orthogonal complement, as an adjunction.** A form lies in `Vᗮ` exactly when `V` sits
 inside the kernel of pairing against it; this is the form in which orthogonality is checked on
 a generating family, since the right-hand side is an inequality of subspaces. -/
 theorem mem_peterssonOrthogonal_iff_le_ker :
-    f ∈ peterssonOrthogonal V ↔ V ≤ LinearMap.ker (peterssonInnerCosetsRight f) :=
+    f ∈ peterssonOrthogonal V ↔ V ≤ LinearMap.ker (peterssonInnerCosetsₛₗ f) :=
   mem_peterssonOrthogonal_iff'
 
 /-- **Orthogonality to a range is orthogonality to the values.** -/

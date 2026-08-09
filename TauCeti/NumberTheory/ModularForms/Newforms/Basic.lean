@@ -203,7 +203,7 @@ theorem mem_cuspFormsNew_iff [NeZero N] {f : CuspForm ((Gamma1 N).map (mapGL ℝ
     (levelRaise_mem_cuspFormsOld h hM k g), fun h ↦ ?_⟩
   rw [CuspForm.mem_peterssonOrthogonal_iff_le_ker]
   refine cuspFormsOld_le fun M d _ hdvd hM g ↦ ?_
-  rw [LinearMap.mem_ker, CuspForm.peterssonInnerCosetsRight_apply,
+  rw [LinearMap.mem_ker, CuspForm.peterssonInnerCosetsₛₗ_apply_apply,
     ← peterssonInnerCosets_conj_symm, h M d hdvd hM g, map_zero]
 
 /-- **The old and new subspaces meet only in `0`**, by positive definiteness of the Petersson
