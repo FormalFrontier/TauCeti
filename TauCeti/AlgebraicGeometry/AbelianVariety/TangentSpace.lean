@@ -64,22 +64,12 @@ unique point of `Spec K`. -/
 def zeroPoint (A : AbelianVariety K) : A.toScheme :=
   A.zeroSection (IsLocalRing.closedPoint K)
 
-/-- The identity point is the value of the identity section at the closed point of `Spec K`. -/
-lemma zeroPoint_def (A : AbelianVariety K) :
-    A.zeroPoint = A.zeroSection (IsLocalRing.closedPoint K) := by
-  unfold zeroPoint
-  rfl
-
 /-- The structure morphism sends the identity point to the unique point of `Spec K`. -/
 @[simp]
 lemma toOver_hom_zeroPoint (A : AbelianVariety K) :
     A.toOver.hom A.zeroPoint = IsLocalRing.closedPoint K := by
-  rw [zeroPoint_def]
-  -- The carrier of `Spec (.of K)` is only reducibly equal to `PrimeSpectrum K`, so rewriting
-  -- with `Scheme.Hom.comp_apply` does not elaborate here; expose the pointwise composite first.
-  change (A.zeroSection ≫ A.toOver.hom) (IsLocalRing.closedPoint K) = _
-  rw [zeroSection_comp_toOver_hom]
-  rfl
+  simpa [zeroPoint] using
+    section_apply (zeroSection_comp_toOver_hom A) (IsLocalRing.closedPoint K)
 
 /-- The residue field of the unique point of `Spec K` is canonically isomorphic to `K`.
 
@@ -137,7 +127,7 @@ lemma smul_tangentSpace (A : AbelianVariety K) (k : K) (v : A.tangentSpace) :
 
 /-- The ground-field action, the residue-field action, and the tangent-space action form the
 expected scalar tower. -/
-instance tangentSpace_isScalarTower (A : AbelianVariety K) : IsScalarTower K
+instance isScalarTower_tangentSpace (A : AbelianVariety K) : IsScalarTower K
     (IsLocalRing.ResidueField (A.toScheme.presheaf.stalk A.zeroPoint)) A.tangentSpace :=
   IsScalarTower.of_compHom K _ _
 
@@ -181,7 +171,8 @@ lemma finrank_tangentSpace_eq_finrank_cotangentSpace (A : AbelianVariety K) :
     Module.finrank K A.tangentSpace =
       Module.finrank (IsLocalRing.ResidueField (A.toScheme.presheaf.stalk A.zeroPoint))
         (ZariskiCotangentSpace A.toScheme A.zeroPoint) := by
-  rw [finrank_tangentSpace_eq_finrank_residueField, finrank_zariskiTangentSpace_eq]
+  rw [finrank_tangentSpace_eq_finrank_residueField,
+    finrank_zariskiTangentSpace_eq_finrank_zariskiCotangentSpace]
 
 end
 
