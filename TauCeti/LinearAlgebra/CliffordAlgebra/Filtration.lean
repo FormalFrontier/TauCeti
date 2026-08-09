@@ -71,10 +71,9 @@ supremum over the `i` of a fixed parity.
   `TauCeti.CliffordAlgebra.changeForm_mem_filtration_iff`: contraction and change of
   quadratic form respect the filtration, contraction lowers every positive step by one, and the
   change-form equivalence transports every step exactly.
-* `TauCeti.CliffordAlgebra.changeForm_prod_map_ι_sub_prod_map_ι_mem_filtration` and its
-  `Fin`-indexed form
-  `TauCeti.CliffordAlgebra.changeForm_prod_ofFn_ι_sub_prod_ofFn_ι_mem_filtration`: change of form
-  has identity symbol, that is, it moves a word of generators only by lower-degree terms.
+* `TauCeti.CliffordAlgebra.changeForm_prod_map_ι_sub_prod_map_ι_mem_filtration`: change of form
+  has identity symbol, that is, it moves a word of generators only by terms two filtration degrees
+  lower.
 * `TauCeti.CliffordAlgebra.fg_filtration`: each step is a finitely generated module when `M` is.
 
 ## References
