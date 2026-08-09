@@ -21,9 +21,9 @@ is *split*: it is `K`-algebra isomorphic to a product of copies of `K`, one for 
 class of `G`.
 
 The point is that `K` is not algebraically closed, so nothing forces the residue fields of
-`Z(K[G])` to be `K` rather than proper extensions of it -- for a bad `K` they are proper
-extensions, and the splitting genuinely fails. What rules that out is the following trace
-argument, which is the whole content of the file.
+`Z(K[G])` to be `K` rather than proper extensions of it -- for some coefficient fields they can be
+proper extensions, and splitting can fail. What rules that out is the following trace argument,
+which is the whole content of the file.
 
 For any `u : K[G]`, the trace of the matrix `M` of left multiplication by `u` in the group basis
 is `|G|` times the coefficient of `u` at `1`, and over a finite field
