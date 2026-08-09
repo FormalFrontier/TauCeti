@@ -5,6 +5,7 @@ Authors: Claude
 -/
 module
 
+public import TauCeti.GroupTheory.DoubleCoset.Identity
 public import TauCeti.RepresentationTheory.Induction.FrobeniusReciprocity
 public import TauCeti.RepresentationTheory.Induction.Mackey.Basic
 
@@ -33,6 +34,10 @@ off is `TauCeti.characterPairing_ind_ind_mackey_erase`, and
 becomes `dim End_H A`: this is the shape in which the Mackey irreducibility criterion reads the
 formula.
 
+A term of the sum is read at a representative `s` of its double coset, but does not depend on that
+choice: replacing `s` by `h₁ s h₂` with `h₁ ∈ H` and `h₂ ∈ K` leaves the dimension unchanged
+(`TauCeti.finrank_hom_res_mackeyToH_mul_left_mul_right`).
+
 ## Main statements
 
 * `TauCeti.characterPairing_ind_ind_mackey`: the intertwining-number formula for class functions.
@@ -44,6 +49,8 @@ formula.
   identity double coset split off.
 * `TauCeti.finrank_hom_indFDRep_mackey_erase`: the same split for intertwining-space dimensions,
   whose identity-coset term is `dim End_H A`.
+* `TauCeti.finrank_hom_res_mackeyToH_mul_left_mul_right`: a term of the formula does not depend
+  on the representative chosen for its double coset.
 
 ## Implementation notes
 
@@ -54,7 +61,9 @@ function form, so it also covers class functions that are not characters.
 The dimension form is stated as an identity in `k` of the *casts* of the two dimensions, because
 that is what the character pairing computes.  Cancelling the cast needs `k` of characteristic
 zero, and `TauCeti.finrank_hom_indFDRep_mackey` carries that hypothesis; over a splitting field of
-positive characteristic only the cast identity is available.
+positive characteristic only the cast identity is available.  The invariance of a single term under
+a change of representative, on the other hand, is proved by transporting the intertwining space
+itself rather than its dimension in `k`, and so holds over any field.
 
 The right-hand argument of each intertwining space is the representation `TauCeti.mackeySummand`
 is induced from, written the way `TauCeti.mackeySummand` writes it: the restriction of `B` along
@@ -158,19 +167,6 @@ theorem characterPairing_mackeyClassFunction_of_mem [Fintype H] {s : G} (hs : s 
   rw [mackeyClassFunction_coe, mackeyClassFun_apply, hterm y, ClassFunction.comap_apply, hinv]
   rfl
 
-/-- The chosen representative of the identity double coset `H · 1 · H` lies in `H`. -/
-theorem out_mem_of_doubleCoset_mk_one (H : Subgroup G) :
-    (DoubleCoset.mk H H 1).out ∈ H := by
-  obtain ⟨a, ha, b, hb, hab⟩ :=
-    (DoubleCoset.eq H H (DoubleCoset.mk H H 1).out 1).mp
-      (DoubleCoset.out_eq' H H (DoubleCoset.mk H H 1))
-  have hout : (DoubleCoset.mk H H 1).out = a⁻¹ * b⁻¹ :=
-    calc (DoubleCoset.mk H H 1).out
-        = a⁻¹ * (a * (DoubleCoset.mk H H 1).out * b) * b⁻¹ := by group
-      _ = a⁻¹ * b⁻¹ := by rw [← hab]; group
-  rw [hout]
-  exact H.mul_mem (H.inv_mem ha) (H.inv_mem hb)
-
 open scoped Classical in
 /-- **The intertwining-number formula with the identity double coset split off.**  Inducing one
 class function `f` from `H` to `G`, the self-pairing of the result is `⟨f, f⟩_H` plus the Mackey
@@ -193,7 +189,8 @@ theorem characterPairing_ind_ind_mackey_erase [Fintype G] (hG : IsUnit (Nat.card
   let := Fintype.ofFinite (DoubleCoset.Quotient (H : Set G) (H : Set G))
   rw [characterPairing_ind_ind_mackey hG f f,
     ← Finset.add_sum_erase _ _ (Finset.mem_univ (DoubleCoset.mk H H 1)),
-    characterPairing_mackeyClassFunction_of_mem (out_mem_of_doubleCoset_mk_one H) f]
+    characterPairing_mackeyClassFunction_of_mem
+      ((doubleCosetMk_eq_mk_one_iff_mem H _).mp (DoubleCoset.out_eq' H H _)) f]
 
 end IdentityCoset
 
@@ -304,6 +301,67 @@ theorem finrank_hom_indFDRep_mackey_erase [Finite G] [CharZero k] (A : FDRep k H
   have hG : IsUnit (Nat.card G : k) :=
     isUnit_iff_ne_zero.mpr (Nat.cast_ne_zero.mpr Nat.card_pos.ne')
   exact_mod_cast natCast_finrank_hom_indFDRep_mackey_erase hG A
+
+open CategoryTheory in
+/-- **Conjugation intertwines two restrictions of one representation.**  If the two homomorphisms
+`σ ∘ φ` and `σ'` from `M` to `L` differ by conjugation by `g : L`, in the sense that
+`g * σ (φ y) = σ' y * g` for every `y`, then the automorphism `Action.ρAut A g` of the underlying
+object meets the compatibility condition of `Action.mkIso` between the two restrictions of `A` they
+name.  The source is written as a restriction along `φ` of a restriction along `σ` because that is
+the shape a change of representative produces below. -/
+private theorem res_ρ_comm_ρAut_hom {L M N : Type u} [Group L] [Monoid M] [Monoid N]
+    (A : FDRep k L) (g : L) (φ : M →* N) (σ : N →* L) (σ' : M →* L)
+    (hg : ∀ y : M, g * σ (φ y) = σ' y * g) (y : M) :
+    ((Action.res (FGModuleCat k) φ).obj ((Action.res (FGModuleCat k) σ).obj A)).ρ y ≫
+        (Action.ρAut A g).hom =
+      (Action.ρAut A g).hom ≫ ((Action.res (FGModuleCat k) σ').obj A).ρ y := by
+  -- Both restricted actions are, by the definition of `Action.res`, the action of `A` composed
+  -- with the homomorphism, and this reads them that way.  `Action.res_obj_ρ` is not usable as a
+  -- rewrite here: it rewrites the restricted action into one valued in `End A.V`, where the goal
+  -- is composing endomorphisms of `((Action.res _ σ').obj A).V`, and those two objects agree only
+  -- by unfolding `Action.res`, so the rewritten goal is rejected as not type-correct.  Stating the
+  -- step once, here, is what keeps that reading out of the two isomorphisms built below.
+  change Action.ρ A (σ (φ y)) ≫ Action.ρ A g = Action.ρ A g ≫ Action.ρ A (σ' y)
+  rw [← End.mul_def, ← End.mul_def, ← map_mul, ← map_mul, hg]
+
+open CategoryTheory in
+/-- **The Mackey term depends only on the double coset**, as a dimension: the intertwining space
+`Hom_{H ⊓ sKs⁻¹}(Res A, {}^s B)` has the same dimension at `s` and at `h₁ s h₂` for `h₁ ∈ H` and
+`h₂ ∈ K`, which is exactly the change of representative of the double coset `HsK`.
+
+Nothing is assumed of `k` beyond being a field: the two intertwining spaces are carried into one
+another by the action of `h₁` on `A` and of `h₂` on `B`. -/
+theorem finrank_hom_res_mackeyToH_mul_left_mul_right (A : FDRep k H) (B : FDRep k K) {h₁ h₂ : G}
+    (hh₁ : h₁ ∈ H) (hh₂ : h₂ ∈ K) (s : G) :
+    Module.finrank k (resFDRep ((mackeySubgroup (h₁ * s * h₂) K H).subgroupOf H) A ⟶
+        (Action.res (FGModuleCat k) (mackeyToH (h₁ * s * h₂) K H)).obj B) =
+      Module.finrank k (resFDRep ((mackeySubgroup s K H).subgroupOf H) A ⟶
+        (Action.res (FGModuleCat k) (mackeyToH s K H)).obj B) := by
+  -- Read both intertwining spaces over the Mackey subgroup of `s`, along the change of
+  -- representative `mackeySubgroupOfCongr`, which conjugates by `h₁`.
+  -- On the source, that conjugation is undone by the action of `h₁⁻¹`.  In both isomorphisms the
+  -- three homomorphisms of `res_ρ_comm_ρAut_hom` are left to unification, which reads them off the
+  -- ascribed type; naming them would only repeat that type.
+  let α : (Action.res (FGModuleCat k) ((mackeySubgroupOfCongr hh₁ hh₂ s) : _ →* _)).obj
+        (resFDRep ((mackeySubgroup (h₁ * s * h₂) K H).subgroupOf H) A) ≅
+      resFDRep ((mackeySubgroup s K H).subgroupOf H) A :=
+    Action.mkIso (Action.ρAut A (⟨h₁, hh₁⟩ : H)⁻¹) <|
+      res_ρ_comm_ρAut_hom A (⟨h₁, hh₁⟩ : H)⁻¹ _ _ _ fun y => Subtype.ext (by
+        simp only [MonoidHom.coe_coe, Subgroup.coe_subtype, coe_mackeySubgroupOfCongr_apply,
+          Subgroup.coe_mul, Subgroup.coe_inv]
+        group)
+  -- and on the twisted target, where `h₁` cancels against the representative, by the action
+  -- of `h₂`:
+  let β : (Action.res (FGModuleCat k) ((mackeySubgroupOfCongr hh₁ hh₂ s) : _ →* _)).obj
+        ((Action.res (FGModuleCat k) (mackeyToH (h₁ * s * h₂) K H)).obj B) ≅
+      (Action.res (FGModuleCat k) (mackeyToH s K H)).obj B :=
+    Action.mkIso (Action.ρAut B ⟨h₂, hh₂⟩) <|
+      res_ρ_comm_ρAut_hom B ⟨h₂, hh₂⟩ _ _ _ fun y => Subtype.ext (by
+        simp only [MonoidHom.coe_coe, coe_mackeyToH_apply, coe_mackeySubgroupOfCongr_apply,
+          Subgroup.coe_mul]
+        group)
+  rw [← finrank_hom_res_mulEquiv (mackeySubgroupOfCongr hh₁ hh₂ s)]
+  exact (Linear.homCongr k α β).finrank_eq
 
 end Representations
 

@@ -9,6 +9,7 @@ public import Mathlib.LinearAlgebra.Matrix.GeneralLinearGroup.Defs
 
 import Mathlib.Algebra.EuclideanDomain.Int
 import Mathlib.Data.Int.GCD
+import Mathlib.Data.Sign.Basic
 import Mathlib.LinearAlgebra.Determinant
 import Mathlib.LinearAlgebra.FreeModule.PID
 import Mathlib.LinearAlgebra.Matrix.Basis
@@ -110,6 +111,31 @@ private lemma sign_correct_unit_transform (A : Matrix (Fin n) (Fin n) ℤ) (d : 
     rw [show flip * L_mat * A * (Q_mat * flip) = flip * (L_mat * A * Q_mat) * flip from by
       simp only [Matrix.mul_assoc], hL_eq, hflip_diag]
 
+/-- **A diagonal matrix with nonzero entries in a strictly ordered commutative ring splits as a
+self-inverse matrix of unit determinant times a positive diagonal.** -/
+private lemma exists_involution_isUnit_det_mul_diagonal_pos {ι R : Type*} [Fintype ι]
+    [DecidableEq ι] [CommRing R] [LinearOrder R] [IsStrictOrderedRing R] {a : ι → R}
+    (ha_ne : ∀ i, a i ≠ 0) :
+    ∃ (s : Matrix ι ι R) (d : ι → R), (∀ i, 0 < d i) ∧ s * s = 1 ∧
+      IsUnit s.det ∧ Matrix.diagonal a = s * Matrix.diagonal d := by
+  set sv := fun i ↦ ((SignType.sign (a i) : SignType) : R) with hsv_def
+  have hsv_sq : ∀ i, sv i * sv i = 1 := fun i ↦ by
+    have h : SignType.sign (a i) * SignType.sign (a i) = 1 := by
+      simpa [pow_two] using
+        SignType.pow_even (SignType.sign (a i)) (by decide : Even 2)
+          (sign_ne_zero.mpr (ha_ne i))
+    simp only [hsv_def, ← SignType.coe_mul, h, SignType.coe_one]
+  have hss : Matrix.diagonal sv * Matrix.diagonal sv = 1 := by
+    rw [Matrix.diagonal_mul_diagonal, Matrix.diagonal_eq_one]
+    ext i
+    exact hsv_sq i
+  refine ⟨Matrix.diagonal sv, fun i ↦ |a i|, fun i ↦ abs_pos.mpr (ha_ne i), hss,
+    Matrix.isUnit_det_of_right_inverse hss, ?_⟩
+  · rw [Matrix.diagonal_mul_diagonal]
+    congr 1
+    ext i
+    exact (sign_mul_abs (a i)).symm
+
 /-- Refine a unit-determinant diagonalization `P⁻¹ * A * Q = diag a` (with `a i ≠ 0`) of a
 positive-determinant matrix to an `SL_n(ℤ)`-diagonalization with the positive diagonal `|a|`:
 absorb the signs of `a` into a diagonal `±1` matrix, then sign-correct the unit factors. -/
@@ -119,32 +145,15 @@ private lemma exists_SL_diagonal_of_unit_diagonalization (A P Q : Matrix (Fin n)
     ∃ (d : Fin n → ℤ) (_ : ∀ i, 0 < d i), ∃ (L R : SpecialLinearGroup (Fin n) ℤ),
       (L : Matrix (Fin n) (Fin n) ℤ) * A * (R : Matrix (Fin n) (Fin n) ℤ) =
       Matrix.diagonal d := by
-  set d := fun i ↦ |a i| with hd_def
-  have hd_pos : ∀ i, 0 < d i := fun i ↦ abs_pos.mpr (ha_ne i)
-  set sv := fun i ↦ if (0 : ℤ) < a i then (1 : ℤ) else -1 with hsv_def
-  have hsv_sq : ∀ i, sv i * sv i = 1 := fun i ↦ by simp only [hsv_def]; split_ifs <;> ring
-  have hsv_mul_d : ∀ i, sv i * d i = a i := fun i ↦ by
-    simp only [hsv_def, hd_def]; rcases lt_trichotomy (a i) 0 with h | h | h
-    · rw [if_neg (not_lt.mpr h.le), abs_of_neg h]; ring
-    · exact absurd h (ha_ne i)
-    · rw [if_pos h, abs_of_pos h, one_mul]
-  have h_sd : Matrix.diagonal a = Matrix.diagonal sv * Matrix.diagonal d := by
-    rw [Matrix.diagonal_mul_diagonal]; congr 1; ext i; exact (hsv_mul_d i).symm
-  have hss : Matrix.diagonal sv * Matrix.diagonal sv = 1 := by
-    rw [Matrix.diagonal_mul_diagonal]; ext i j; simp only [Matrix.diagonal_apply, Matrix.one_apply]
-    by_cases h : i = j
-    · subst h; simp [hsv_sq]
-    · simp [h]
-  have hs_det_unit : IsUnit (Matrix.diagonal sv).det := by
-    rw [Matrix.det_diagonal]; exact IsUnit.of_mul_eq_one _
-      (by rw [← Finset.prod_mul_distrib]; exact Finset.prod_eq_one (fun i _ ↦ hsv_sq i))
-  set L_mat := Matrix.diagonal sv * P⁻¹ with hL_def
+  obtain ⟨s, d, hd_pos, hss, hs_det_unit, h_sd⟩ :=
+    exists_involution_isUnit_det_mul_diagonal_pos ha_ne
+  set L_mat := s * P⁻¹ with hL_def
   have hL_eq : L_mat * A * Q = Matrix.diagonal d := by
     calc L_mat * A * Q
-        = Matrix.diagonal sv * (P⁻¹ * A * Q) := by rw [hL_def]; simp only [Matrix.mul_assoc]
-      _ = Matrix.diagonal sv * Matrix.diagonal a := by rw [hdiag]
-      _ = Matrix.diagonal sv * (Matrix.diagonal sv * Matrix.diagonal d) := by rw [h_sd]
-      _ = (Matrix.diagonal sv * Matrix.diagonal sv) * Matrix.diagonal d := by rw [Matrix.mul_assoc]
+        = s * (P⁻¹ * A * Q) := by rw [hL_def]; simp only [Matrix.mul_assoc]
+      _ = s * Matrix.diagonal a := by rw [hdiag]
+      _ = s * (s * Matrix.diagonal d) := by rw [h_sd]
+      _ = (s * s) * Matrix.diagonal d := by rw [Matrix.mul_assoc]
       _ = Matrix.diagonal d := by rw [hss, Matrix.one_mul]
   have hL_unit : IsUnit L_mat.det := by
     rw [hL_def, det_mul]; exact IsUnit.mul hs_det_unit (isUnit_nonsing_inv_det _ hP_unit)
@@ -607,6 +616,46 @@ private lemma divChain_prepend (k : ℕ) (c : ℤ) (d_tail' : Fin (k + 1) → �
     change d_tail' ⟨i, by omega⟩ ∣ d_tail' ⟨i + 1, by omega⟩
     exact htail i (by omega)
 
+/-- Assuming the divisibility-chain normalisation in dimension `k + 1`, every positive diagonal of
+length `k + 2` is `SL`-equivalent to a positive diagonal in divisibility-chain form. -/
+private lemma exists_divChain_of_pos_diagonal_succ {k : ℕ}
+    (ih : ∀ d : Fin (k + 1) → ℤ, (∀ i, 0 < d i) →
+      ∃ (d' : Fin (k + 1) → ℤ) (_ : ∀ i, 0 < d' i)
+        (_ : ∀ (i : ℕ) (hi : i + 1 < k + 1), d' ⟨i, by omega⟩ ∣ d' ⟨i + 1, hi⟩),
+      ∃ (L R : SpecialLinearGroup (Fin (k + 1)) ℤ),
+        (L : Matrix (Fin (k + 1)) (Fin (k + 1)) ℤ) * Matrix.diagonal d *
+          (R : Matrix (Fin (k + 1)) (Fin (k + 1)) ℤ) = Matrix.diagonal d')
+    (d : Fin (k + 2) → ℤ) (hd : ∀ i, 0 < d i) :
+      ∃ (d' : Fin (k + 2) → ℤ) (_ : ∀ i, 0 < d' i)
+        (_ : ∀ (i : ℕ) (hi : i + 1 < k + 2), d' ⟨i, by omega⟩ ∣ d' ⟨i + 1, hi⟩),
+      ∃ (L R : SpecialLinearGroup (Fin (k + 2)) ℤ),
+        (L : Matrix (Fin (k + 2)) (Fin (k + 2)) ℤ) * Matrix.diagonal d *
+          (R : Matrix (Fin (k + 2)) (Fin (k + 2)) ℤ) = Matrix.diagonal d' := by
+  obtain ⟨d₁, hd₁_pos, hd₁_div, L₁, R₁, hmul₁⟩ := make_first_divide_all k d hd
+  obtain ⟨d_tail', hd_tail'_pos, hd_tail'_chain, L_tail, R_tail, hmul_tail⟩ :=
+    ih (fun i : Fin (k + 1) ↦ d₁ ⟨i.val + 1, by omega⟩)
+      (fun i ↦ hd₁_pos ⟨i.val + 1, by omega⟩)
+  set d₂ : Fin (k + 2) → ℤ := fun i ↦
+    if i = (0 : Fin (k + 2)) then d₁ 0
+    else d_tail' ⟨i.val - 1, by omega⟩
+  have hd₂_pos : ∀ i, 0 < d₂ i := by
+    intro i; simp only [d₂]; split_ifs <;> [exact hd₁_pos 0; exact hd_tail'_pos _]
+  have hd₂_chain : ∀ (i : ℕ) (hi : i + 1 < k + 2),
+      d₂ ⟨i, by omega⟩ ∣ d₂ ⟨i + 1, hi⟩ :=
+    divChain_prepend k (d₁ 0) d_tail'
+      (dvd_diag_of_SL_transform (k + 1) (fun i : Fin (k + 1) ↦ d₁ ⟨i.val + 1, by omega⟩)
+        d_tail' (d₁ 0) (fun i ↦ hd₁_div ⟨i.val + 1, by omega⟩)
+        (L_tail : Matrix _ _ ℤ) (R_tail : Matrix _ _ ℤ) hmul_tail) hd_tail'_chain
+  refine ⟨d₂, hd₂_pos, hd₂_chain, slSuccEmbed L_tail * L₁, R₁ * slSuccEmbed R_tail, ?_⟩
+  simp only [SpecialLinearGroup.coe_mul]
+  -- reassociate to expose `L₁ * diagonal d * R₁`, the shape `hmul₁` rewrites
+  rw [show ((slSuccEmbed L_tail : Matrix _ _ ℤ) * (L₁ : Matrix _ _ ℤ)) * Matrix.diagonal d *
+    ((R₁ : Matrix _ _ ℤ) * (slSuccEmbed R_tail : Matrix _ _ ℤ)) =
+    (slSuccEmbed L_tail : Matrix _ _ ℤ) * ((L₁ : Matrix _ _ ℤ) * Matrix.diagonal d *
+    (R₁ : Matrix _ _ ℤ)) * (slSuccEmbed R_tail : Matrix _ _ ℤ)
+    by simp [Matrix.mul_assoc], hmul₁,
+    slSuccEmbed_mul_diagonal k d₁ L_tail R_tail d_tail' hmul_tail]
+
 private lemma exists_divChain_of_pos_diagonal (d : Fin n → ℤ) (hd : ∀ i, 0 < d i) :
     ∃ (d' : Fin n → ℤ) (_ : ∀ i, 0 < d' i)
       (_ : ∀ (i : ℕ) (hi : i + 1 < n), d' ⟨i, by omega⟩ ∣ d' ⟨i + 1, hi⟩),
@@ -621,40 +670,11 @@ private lemma exists_divChain_of_pos_diagonal (d : Fin n → ℤ) (hd : ∀ i, 0
         (R : Matrix (Fin m) (Fin m) ℤ) = Matrix.diagonal d' from h n d hd
   intro m
   induction m with
-  | zero =>
-    intro d hd
-    exact ⟨d, hd, fun i hi ↦ by omega, 1, 1, by simp⟩
+  | zero => exact fun d hd ↦ ⟨d, hd, fun i hi ↦ by omega, 1, 1, by simp⟩
   | succ m ih =>
     cases m with
-    | zero =>
-      intro d hd
-      exact ⟨d, hd, fun i hi ↦ by omega, 1, 1, by simp⟩
-    | succ k =>
-      intro d hd
-      obtain ⟨d₁, hd₁_pos, hd₁_div, L₁, R₁, hmul₁⟩ := make_first_divide_all k d hd
-      obtain ⟨d_tail', hd_tail'_pos, hd_tail'_chain, L_tail, R_tail, hmul_tail⟩ :=
-        ih (fun i : Fin (k + 1) ↦ d₁ ⟨i.val + 1, by omega⟩)
-          (fun i ↦ hd₁_pos ⟨i.val + 1, by omega⟩)
-      set d₂ : Fin (k + 2) → ℤ := fun i ↦
-        if i = (0 : Fin (k + 2)) then d₁ 0
-        else d_tail' ⟨i.val - 1, by omega⟩
-      have hd₂_pos : ∀ i, 0 < d₂ i := by
-        intro i; simp only [d₂]; split_ifs <;> [exact hd₁_pos 0; exact hd_tail'_pos _]
-      have hd₂_chain : ∀ (i : ℕ) (hi : i + 1 < k + 2),
-          d₂ ⟨i, by omega⟩ ∣ d₂ ⟨i + 1, hi⟩ :=
-        divChain_prepend k (d₁ 0) d_tail'
-          (dvd_diag_of_SL_transform (k + 1) (fun i : Fin (k + 1) ↦ d₁ ⟨i.val + 1, by omega⟩)
-            d_tail' (d₁ 0) (fun i ↦ hd₁_div ⟨i.val + 1, by omega⟩)
-            (L_tail : Matrix _ _ ℤ) (R_tail : Matrix _ _ ℤ) hmul_tail) hd_tail'_chain
-      refine ⟨d₂, hd₂_pos, hd₂_chain, slSuccEmbed L_tail * L₁, R₁ * slSuccEmbed R_tail, ?_⟩
-      simp only [SpecialLinearGroup.coe_mul]
-      -- reassociate to expose `L₁ * diagonal d * R₁`, the shape `hmul₁` rewrites
-      rw [show ((slSuccEmbed L_tail : Matrix _ _ ℤ) * (L₁ : Matrix _ _ ℤ)) * Matrix.diagonal d *
-        ((R₁ : Matrix _ _ ℤ) * (slSuccEmbed R_tail : Matrix _ _ ℤ)) =
-        (slSuccEmbed L_tail : Matrix _ _ ℤ) * ((L₁ : Matrix _ _ ℤ) * Matrix.diagonal d *
-        (R₁ : Matrix _ _ ℤ)) * (slSuccEmbed R_tail : Matrix _ _ ℤ)
-        by simp [Matrix.mul_assoc], hmul₁,
-        slSuccEmbed_mul_diagonal k d₁ L_tail R_tail d_tail' hmul_tail]
+    | zero => exact fun d hd ↦ ⟨d, hd, fun i hi ↦ by omega, 1, 1, by simp⟩
+    | succ k => exact exists_divChain_of_pos_diagonal_succ ih
 
 /-- Successive divisibility upgrades to divisibility along any `i ≤ j`. -/
 private lemma dvd_of_le_of_chain {d : Fin n → ℤ}

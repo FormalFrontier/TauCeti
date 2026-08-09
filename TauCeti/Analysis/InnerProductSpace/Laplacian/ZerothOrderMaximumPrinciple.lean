@@ -6,6 +6,8 @@ module
 
 public import Mathlib.Analysis.InnerProductSpace.Calculus
 public import TauCeti.Analysis.InnerProductSpace.Laplacian.WeakMaximumPrinciple
+-- Support only: the shared maximizer step is proof machinery, not part of this file's API.
+import TauCeti.Analysis.InnerProductSpace.Laplacian.BarrierMaximizer
 
 /-!
 # The weak maximum principle for `-Δ + c` with a nonnegative zeroth-order term
@@ -24,10 +26,11 @@ needed once `c ≠ 0`; on the set where `f ≤ 0 ≤ m` the estimate is automati
 has to control the set where `f` is positive, where `c · f ≥ 0` makes `f` subharmonic.)
 
 The proof reuses the perturbation `f + ε‖·‖²` of the bare-Laplacian file, but replaces the
-strictly-subharmonic boundary principle by the second-derivative obstruction
-`TauCeti.laplacian_nonpos_of_isLocalMax` applied at an interior maximum of the perturbation: at
-such a point either `f` is already negative (so the bound is free) or `f ≥ 0` forces
-`Δ(f + ε‖·‖²) > 0`, a contradiction. Letting `ε → 0` gives the bound.
+strictly-subharmonic boundary principle by the maximizer step `TauCeti.le_of_isMaxOn_add_smul` of
+`TauCeti.Analysis.InnerProductSpace.Laplacian.BarrierMaximizer`, run here with no drift and the
+quadratic barrier. At a maximizer of the perturbation the bound `f z ≤ m` either holds already, or
+`m < f z` puts `f z` above the nonnegative `m`, which forces `Δ(f + ε‖·‖²) > 0` and so contradicts
+local maximality. Letting `ε → 0` gives the bound.
 
 ## Main declarations
 
@@ -76,29 +79,15 @@ theorem le_of_mul_le_laplacian_le_frontier {K : Set E} (hK : IsCompact K) {c f :
   intro x hxK
   have hfrpos : (0 : ℝ) < Module.finrank ℝ E := by exact_mod_cast Module.finrank_pos
   refine le_of_forall_pos_exists_isMaxOn_perturbation hK.isBounded hxK fun ε hε => ?_
-  have hεsq : ∀ y : E, ContDiffAt ℝ 2 (fun z : E => ε • ‖z‖ ^ 2) y :=
-    fun y => ((contDiff_norm_sq ℝ).contDiffAt).const_smul ε
   have hgcont : ContinuousOn (fun y : E => f y + ε • ‖y‖ ^ 2) K := hcont.add (by fun_prop)
   -- The perturbation attains its maximum over `K` at some point `z`.
   obtain ⟨z, hzK, hzmax⟩ := hK.exists_isMaxOn ⟨x, hxK⟩ hgcont
-  refine ⟨z, hzK, hzmax, ?_⟩
-  -- At the maximizer either `f z ≤ m` (boundary or negative value) or we reach a contradiction.
-  by_cases hzint : z ∈ interior K
-  · -- Interior maximizer: rule out `0 ≤ f z` via the second-derivative obstruction.
-    by_contra hcon
-    rw [not_le] at hcon
-    have hfz0 : 0 ≤ f z := le_trans hm hcon.le
-    have hloc : IsLocalMax (fun y : E => f y + ε • ‖y‖ ^ 2) z :=
-      hzmax.isLocalMax (mem_interior_iff_mem_nhds.mp hzint)
-    have hgcd : ContDiffAt ℝ 2 (fun y : E => f y + ε • ‖y‖ ^ 2) z := (hcd hzint).add (hεsq z)
-    have hΔle : Δ (fun y : E => f y + ε • ‖y‖ ^ 2) z ≤ 0 :=
-      laplacian_nonpos_of_isLocalMax hgcd hloc
-    rw [laplacian_add_const_smul_norm_sq ε (hcd hzint)] at hΔle
-    have hΔf : 0 ≤ Δ f z := le_trans (mul_nonneg (hc hzint) hfz0) (hsub hzint)
-    have hpos : 0 < ε * (2 * (Module.finrank ℝ E : ℝ)) := mul_pos hε (mul_pos two_pos hfrpos)
-    linarith
-  · -- Boundary maximizer: `z ∈ frontier K`.
-    exact hbdry ⟨subset_closure hzK, hzint⟩
+  -- The maximizer step is the shared one, run with no drift and the quadratic barrier `‖·‖²`,
+  -- whose Laplacian `2 · finrank` is the strict positivity it asks for.
+  refine ⟨z, hzK, hzmax, le_of_isMaxOn_add_smul (v := 0) hε (fun h => hcd h) (fun hz hlt => ?_)
+    (fun hz => hbdry hz) hzK (fun _ => (contDiff_norm_sq ℝ).contDiffAt) (fun _ => ?_) hzmax⟩
+  · simpa using (mul_nonneg (hc hz) (hm.trans hlt.le)).trans (hsub hz)
+  · simpa [laplacian_norm_sq] using mul_pos two_pos hfrpos
 
 /-- **Comparison principle for `-Δ + c` with `c ≥ 0`.**
 

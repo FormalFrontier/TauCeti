@@ -143,7 +143,8 @@ lemma IsCompletelyMonotone.integral_neg_iteratedDerivWithin_one_Ici_eq_sub
 taken within the closed half-line `[0, ∞)`. -/
 lemma IsCompletelyMonotone.neg_iteratedDerivWithin_one_integrableOn (hcm : IsCompletelyMonotone f) :
     IntegrableOn (fun t => -iteratedDerivWithin 1 f (Ici 0) t) (Ioi 0) := by
-  obtain ⟨L, hL, -⟩ := hcm.exists_nonneg_tendsto_atTop
+  obtain ⟨L, hL, -⟩ :=
+    (IsCompletelyMonotoneOnIci.of_isCompletelyMonotone hcm).exists_nonneg_tendsto_atTop
   have hcont : ContinuousWithinAt f (Ici 0) 0 :=
     hcm.contDiffOn.continuousOn.continuousWithinAt self_mem_Ici
   have hderiv : ∀ t ∈ Ioi 0,

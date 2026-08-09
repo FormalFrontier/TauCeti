@@ -213,24 +213,13 @@ private theorem centralizerAlgHom_bijective : Function.Bijective (centralizerAlg
     simpa using h
   · -- Surjectivity: `φ` is left multiplication by `c = φ 1`, which centralizes `B`.
     set c : A := (Bimodule.of B.val).symm (φ (Bimodule.of B.val 1)) with hc
-    have hφ1 : φ (Bimodule.of B.val 1) = Bimodule.of B.val c := by rw [hc]; simp
-    -- Every element of `A` is `1` moved by the right action, so `φ` is multiplication by `c`.
-    have key : ∀ x : A, φ (Bimodule.of B.val x) = Bimodule.of B.val (c * x) := by
-      intro x
-      have hx : Bimodule.of B.val x
-          = ((1 : ↥B) ⊗ₜ MulOpposite.op x : ↥B ⊗[K] Aᵐᵒᵖ) • Bimodule.of B.val 1 := by
-        rw [Bimodule.smul_of]; simp
-      rw [hx, map_smul, hφ1, Bimodule.smul_of]
-      simp
+    -- `φ` is multiplication by `c`: this is the shared bimodule-map API at `f = g = B.val`.
+    have key : ∀ x : A, φ (Bimodule.of B.val x) = Bimodule.of B.val (c * x) := fun x => by
+      simpa [hc] using Bimodule.apply_of (φ := φ) x
     -- Linearity for the left action of `B` says exactly that `c` centralizes `B`.
-    have hcomm : ∀ b ∈ (B : Set A), b * c = c * b := by
-      intro b hb
-      have hb' : Bimodule.of B.val b
-          = ((⟨b, hb⟩ : ↥B) ⊗ₜ (1 : Aᵐᵒᵖ) : ↥B ⊗[K] Aᵐᵒᵖ) • Bimodule.of B.val 1 := by
-        rw [Bimodule.smul_of]; simp
-      have h := key b
-      rw [hb', map_smul, hφ1, Bimodule.smul_of] at h
-      simpa using ((Bimodule.of B.val).injective h.symm).symm
+    have hcomm : ∀ b ∈ (B : Set A), b * c = c * b := fun b hb => by
+      simpa [hc] using
+        (Bimodule.symm_apply_one_mul_eq_mul_symm_apply_one (φ := φ) ⟨b, hb⟩).symm
     refine ⟨⟨c, (Subalgebra.mem_centralizer_iff K).2 hcomm⟩, ?_⟩
     ext y
     obtain ⟨x, rfl⟩ := (Bimodule.of B.val).surjective y

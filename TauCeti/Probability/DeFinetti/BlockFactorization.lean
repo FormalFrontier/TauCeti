@@ -13,12 +13,11 @@ public import TauCeti.Probability.DeFinetti.DirectingMeasure.Integral
 public import Mathlib.Probability.Independence.Conditional
 public import Mathlib.MeasureTheory.Constructions.Polish.Basic
 -- Non-public: used only inside proofs — the tail factorization
--- `condExp_blockIndicatorProd_tailProcess_ae_eq_prod`, the path-law transfer and contractability
--- bridges, and `Tuple.sort` (the injective-selection reduction).
+-- `condExp_blockIndicatorProd_tailProcess_ae_eq_prod`, and the path-law transfer and
+-- contractability bridges.
 import TauCeti.Probability.DeFinetti.TailFactorization
 import TauCeti.Probability.Exchangeability.MixedIID.Map
 import TauCeti.Probability.Exchangeability.PathSpace.Law.Bridge
-import Mathlib.Data.Fin.Tuple.Sort
 
 /-!
 # Block-product factorisation and the de Finetti summit
@@ -245,24 +244,15 @@ private theorem blockLaw_injective_eq_lintegral_prod_directingMeasure
     {B : Fin m → Set α} (hB : ∀ i, MeasurableSet (B i)) :
     blockLaw μ X k (Set.univ.pi B) = ∫⁻ ω, ∏ i, directingMeasure μ X ω (B i) ∂μ := by
   classical
-  set e : Equiv.Perm (Fin m) := Tuple.sort k with he
-  have hsm : StrictMono (k ∘ e) :=
-    (Tuple.monotone_sort k).strictMono_of_injective (hk.comp e.injective)
+  obtain ⟨e, hsm, hcyl, hprod⟩ := exists_perm_strictMono_comp_blockCylinder_eq_and_prod_eq X hk B
   have hreindex : blockLaw μ X k (Set.univ.pi B)
       = blockLaw μ X (k ∘ e) (Set.univ.pi fun i => B (e i)) := by
-    rw [← map_blockLaw_reindex μ k (e : Fin m → Fin m) (fun j => (hX_meas (k j)).aemeasurable),
-      Measure.map_apply (measurable_pi_lambda _ fun i => measurable_pi_apply (e i))
-        (MeasurableSet.univ_pi fun i => hB (e i))]
-    congr 1
-    ext x
-    simp only [Set.mem_preimage, Set.mem_pi, Set.mem_univ, true_implies]
-    constructor
-    · intro h i; exact h (e i)
-    · intro h j; have hj := h (e.symm j); rwa [e.apply_symm_apply] at hj
+    rw [blockLaw_blockCylinder X (fun i => (hX_meas (k i)).aemeasurable) hB,
+      blockLaw_blockCylinder X (fun i => (hX_meas ((k ∘ e) i)).aemeasurable) (fun i => hB (e i)),
+      hcyl]
   rw [hreindex, blockLaw_strictMono_eq_lintegral_prod_directingMeasure hX hX_meas hsm
     (fun i => hB (e i))]
-  refine lintegral_congr fun ω => ?_
-  exact Equiv.prod_comp e fun j => directingMeasure μ X ω (B j)
+  exact lintegral_congr fun ω => hprod fun T => directingMeasure μ X ω T
 
 /-- **de Finetti's theorem, directed form.** A contractable process on a
 standard Borel space is mixed i.i.d. **with** witness the tail conditional law

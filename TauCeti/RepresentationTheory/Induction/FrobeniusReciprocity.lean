@@ -222,7 +222,77 @@ end Characters
 
 section ClassFunctions
 
-variable {k : Type u} {G : Type v} [Field k] [Group G] {S : Subgroup G}
+variable {k : Type u} {G : Type v} [Group G] {S : Subgroup G}
+
+/-! Both steps of the double count are cleared-denominator identities, so they live at the
+semiring level alongside `TauCeti.natCard_mul_indClassFun`; only the normalized statements below
+divide, and only those need a field. -/
+
+section Semiring
+
+variable [Semiring k]
+
+open scoped Classical in
+/-- **The inner sum of the double count.** For a fixed conjugating element `x`, pairing the
+conjugation summand `TauCeti.indTerm` against a class function of `G` over all of `G` already gives
+the pairing over the subgroup, with no dependence on `x` left.
+
+Reindexing by `y ↦ x y x⁻¹` turns the summand into the plain membership case split, and the sum
+then collapses onto `S` because the case split vanishes off it. Only `h` need be a class function;
+`f` is arbitrary. -/
+private theorem sum_indTerm_mul_eq_sum_subtype [Fintype G] (f : S → k) {h : G → k}
+    (hh : h ∈ ClassFunction k G) (x : G) :
+    (∑ g : G, indTerm f g x * h g⁻¹) = ∑ s : S, f s * h ((s : G)⁻¹) := by
+  have hinv (y : G) : (x * y * x⁻¹)⁻¹ = x * y⁻¹ * x⁻¹ := by group
+  calc (∑ g : G, indTerm f g x * h g⁻¹)
+      = ∑ y : G, indTerm f (x * y * x⁻¹) x * h (x * y * x⁻¹)⁻¹ := by
+        refine (Fintype.sum_equiv ((Equiv.mulRight x⁻¹).trans (Equiv.mulLeft x)) _ _ ?_).symm
+        intro y
+        simp [mul_assoc]
+    _ = ∑ y : G, (if hy : y ∈ S then f ⟨y, hy⟩ else 0) * h y⁻¹ := by
+        refine Finset.sum_congr rfl fun y _ => ?_
+        rw [indTerm_conj, inv_mul_cancel, indTerm_one]
+        congr 1
+        rw [hinv y]
+        exact ClassFunction.mem_iff.mp hh y⁻¹ x
+    _ = ∑ y ∈ Finset.univ.filter (fun y : G => y ∈ S),
+          (if hy : y ∈ S then f ⟨y, hy⟩ else 0) * h y⁻¹ := by
+        refine (Finset.sum_subset (Finset.filter_subset _ _) fun y _ hy => ?_).symm
+        rw [Finset.mem_filter] at hy
+        rw [dif_neg fun hy' => hy ⟨Finset.mem_univ y, hy'⟩, zero_mul]
+    _ = ∑ s : S, (if hy : (s : G) ∈ S then f ⟨(s : G), hy⟩ else 0) * h (s : G)⁻¹ :=
+        Finset.sum_subtype (p := fun y : G => y ∈ S) _ (by simp) _
+    _ = ∑ s : S, f s * h ((s : G)⁻¹) :=
+        Finset.sum_congr rfl fun s _ => by rw [dif_pos s.2]
+
+open scoped Classical in
+/-- **The double count, in cleared-denominator form.** Summing the induced class function against a
+class function of `G` over the group, then unfolding the induction into a sum over conjugating
+elements and exchanging the two sums, replaces the outer sum by `|G|` copies of the pairing over
+`S`. -/
+private theorem natCard_mul_sum_indClassFun_mul [Fintype G] {f : S → k}
+    (hf : f ∈ ClassFunction k S) {h : G → k} (hh : h ∈ ClassFunction k G) :
+    (Nat.card S : k) * ∑ g : G, indClassFun S f g * h g⁻¹
+      = (Nat.card G : k) * ∑ s : S, f s * h ((s : G)⁻¹) :=
+  calc (Nat.card S : k) * ∑ g : G, indClassFun S f g * h g⁻¹
+      = ∑ g : G, ((Nat.card S : k) * indClassFun S f g) * h g⁻¹ := by
+        rw [Finset.mul_sum]
+        exact Finset.sum_congr rfl fun g _ => (mul_assoc _ _ _).symm
+    _ = ∑ g : G, (∑ x : G, indTerm f g x) * h g⁻¹ := by
+        refine Finset.sum_congr rfl fun g _ => ?_
+        rw [natCard_mul_indClassFun hf g]
+        simp only [indTerm_apply]
+    _ = ∑ x : G, ∑ g : G, indTerm f g x * h g⁻¹ := by
+        rw [Finset.sum_comm]
+        exact Finset.sum_congr rfl fun g _ => by rw [Finset.sum_mul]
+    _ = ∑ _x : G, ∑ s : S, f s * h ((s : G)⁻¹) :=
+        Finset.sum_congr rfl fun x _ => sum_indTerm_mul_eq_sum_subtype f hh x
+    _ = (Nat.card G : k) * ∑ s : S, f s * h ((s : G)⁻¹) := by
+        simp [Nat.card_eq_fintype_card]
+
+end Semiring
+
+variable [Field k]
 
 open scoped Classical in
 /-- **Frobenius reciprocity for class functions.**  The normalized pairing over `G` of an induced
@@ -240,53 +310,12 @@ theorem frobenius_reciprocity_classFunction [Fintype G] (hG : IsUnit (Nat.card G
       (Nat.card S : k)⁻¹ * ∑ s : S, f.1 s * h.1 ((s : G)⁻¹) := by
   have hS : IsUnit (Nat.card S : k) := isUnit_natCard_subgroup S hG
   set X : k := ∑ s : S, f.1 s * h.1 ((s : G)⁻¹) with hX
-  -- For a fixed `x : G`, summing the conjugation summand against `h` over all of `G` gives `X`.
-  have hinner (x : G) :
-      (∑ g : G, indTerm f.1 g x * h.1 g⁻¹) = X := by
-    have hinv (y : G) : (x * y * x⁻¹)⁻¹ = x * y⁻¹ * x⁻¹ := by group
-    calc (∑ g : G, indTerm f.1 g x * h.1 g⁻¹)
-        = ∑ y : G, indTerm f.1 (x * y * x⁻¹) x * h.1 (x * y * x⁻¹)⁻¹ := by
-          refine (Fintype.sum_equiv ((Equiv.mulRight x⁻¹).trans (Equiv.mulLeft x)) _ _ ?_).symm
-          intro y
-          simp [mul_assoc]
-      _ = ∑ y : G, (if hy : y ∈ S then f.1 ⟨y, hy⟩ else 0) * h.1 y⁻¹ := by
-          refine Finset.sum_congr rfl fun y _ => ?_
-          rw [indTerm_conj, inv_mul_cancel, indTerm_one]
-          congr 1
-          rw [hinv y]
-          exact ClassFunction.mem_iff.mp h.2 y⁻¹ x
-      _ = ∑ y ∈ Finset.univ.filter (fun y : G => y ∈ S),
-            (if hy : y ∈ S then f.1 ⟨y, hy⟩ else 0) * h.1 y⁻¹ := by
-          refine (Finset.sum_subset (Finset.filter_subset _ _) fun y _ hy => ?_).symm
-          rw [Finset.mem_filter] at hy
-          rw [dif_neg fun hy' => hy ⟨Finset.mem_univ y, hy'⟩, zero_mul]
-      _ = ∑ s : S, (if hy : (s : G) ∈ S then f.1 ⟨(s : G), hy⟩ else 0) * h.1 (s : G)⁻¹ :=
-          Finset.sum_subtype (p := fun y : G => y ∈ S) _ (by simp) _
-      _ = X := by
-          rw [hX]
-          exact Finset.sum_congr rfl fun s _ => by rw [dif_pos s.2]
-  -- Summing over cosets and then over the subgroup turns the outer sum into `Nat.card G • X`.
-  have hmain : (Nat.card S : k) * ∑ g : G, indClassFun S f.1 g * h.1 g⁻¹
-      = (Nat.card G : k) * X := by
-    calc (Nat.card S : k) * ∑ g : G, indClassFun S f.1 g * h.1 g⁻¹
-        = ∑ g : G, ((Nat.card S : k) * indClassFun S f.1 g) * h.1 g⁻¹ := by
-          rw [Finset.mul_sum]
-          exact Finset.sum_congr rfl fun g _ => (mul_assoc _ _ _).symm
-      _ = ∑ g : G, (∑ x : G, indTerm f.1 g x) * h.1 g⁻¹ := by
-          refine Finset.sum_congr rfl fun g _ => ?_
-          rw [natCard_mul_indClassFun f.2 g]
-          simp only [indTerm_apply]
-      _ = ∑ x : G, ∑ g : G, indTerm f.1 g x * h.1 g⁻¹ := by
-          rw [Finset.sum_comm]
-          exact Finset.sum_congr rfl fun g _ => by rw [Finset.sum_mul]
-      _ = ∑ _x : G, X := Finset.sum_congr rfl fun x _ => hinner x
-      _ = (Nat.card G : k) * X := by
-          simp [Nat.card_eq_fintype_card]
   refine mul_left_cancel₀ hS.ne_zero ?_
   calc (Nat.card S : k) * ((Nat.card G : k)⁻¹ * ∑ g : G, indClassFun S f.1 g * h.1 g⁻¹)
       = (Nat.card G : k)⁻¹ * ((Nat.card S : k) * ∑ g : G, indClassFun S f.1 g * h.1 g⁻¹) := by
         ring
-    _ = (Nat.card G : k)⁻¹ * ((Nat.card G : k) * X) := by rw [hmain]
+    _ = (Nat.card G : k)⁻¹ * ((Nat.card G : k) * X) := by
+        rw [hX, natCard_mul_sum_indClassFun_mul f.2 h.2]
     _ = X := by rw [← mul_assoc, inv_mul_cancel₀ hG.ne_zero, one_mul]
     _ = (Nat.card S : k) * ((Nat.card S : k)⁻¹ * X) := by
         rw [← mul_assoc, mul_inv_cancel₀ hS.ne_zero, one_mul]
