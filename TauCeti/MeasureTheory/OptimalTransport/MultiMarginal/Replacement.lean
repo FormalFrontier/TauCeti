@@ -82,6 +82,7 @@ private theorem toMeasure_replaceMarginal (π : ProbabilityMeasure (∀ j, X j))
 
 /-- Replacing coordinate `i` changes its marginal to the second marginal of the replacement plan,
 provided the plan's first marginal agrees with the old `i`th marginal. -/
+@[simp]
 theorem map_eval_replaceMarginal_same (π : ProbabilityMeasure (∀ j, X j)) (i : ι)
     [StandardBorelSpace (X i)] (σ : ProbabilityMeasure (X i × X i))
     (hσ : σ.toMeasure.fst = π.toMeasure.map (Function.eval i)) :
@@ -123,6 +124,7 @@ theorem map_replaceMarginal_eq_of_update_eq {Y : Type w} [MeasurableSpace Y]
   rw [Measure.map_id']
 
 /-- Replacing coordinate `i` leaves the marginal at every different coordinate `j` unchanged. -/
+@[simp]
 theorem map_eval_replaceMarginal_of_ne (π : ProbabilityMeasure (∀ j, X j)) (i : ι)
     [StandardBorelSpace (X i)] (σ : ProbabilityMeasure (X i × X i)) {j : ι} (hji : j ≠ i) :
     (replaceMarginal π i σ).toMeasure.map (Function.eval j) =
@@ -134,6 +136,7 @@ theorem map_eval_replaceMarginal_of_ne (π : ProbabilityMeasure (∀ j, X j)) (i
 
 /-- Every joint projection avoiding the replaced coordinate has the same law before and after
 marginal replacement. -/
+@[simp]
 theorem map_project_replaceMarginal_of_forall_ne {κ : Type w}
     (π : ProbabilityMeasure (∀ j, X j)) (i : ι) [StandardBorelSpace (X i)]
     (σ : ProbabilityMeasure (X i × X i)) (e : κ → ι) (he : ∀ k, e k ≠ i) :
