@@ -464,6 +464,12 @@ noncomputable def reflectionFunctor (i : Q) (hi : IsSink i) :
         reflectRepMapApp_of_ne _ _ hj]
       exact eqToHom_conjugate_eq_comp _ _ (reflectRep_obj_of_ne _ hi hj) _ _ _ rfl
 
+/-- The representation supplied by `TauCeti.reflectionFunctor` is `TauCeti.reflectRep`. -/
+private theorem reflectionFunctor_obj (i : Q) (hi : IsSink i)
+    (M : QuiverRep.{u, v, w, max v w x} k Q) :
+    (reflectionFunctor i hi).obj M = reflectRep M hi :=
+  rfl
+
 /-- The vertex components of the map supplied by `TauCeti.reflectionFunctor`. -/
 private theorem reflectionFunctor_map_app
     {M N : QuiverRep.{u, v, w, max v w x} k Q} (η : M ⟶ N) {i : Q} (hi : IsSink i)
@@ -488,7 +494,7 @@ theorem reflectionFunctor_obj_self (i : Q) (hi : IsSink i)
     (M : QuiverRep.{u, v, w, max v w x} k Q) :
     ((reflectionFunctor i hi).obj M).obj i =
       ModuleCat.of k (LinearMap.ker (incomingSum M i)) := by
-  change (reflectRep M hi).obj i = _
+  rw [reflectionFunctor_obj]
   exact reflectRep_obj_self M hi
 
 /-- Away from the reflected vertex, the objects supplied by `TauCeti.reflectionFunctor` are those
@@ -497,7 +503,7 @@ of the original representation. -/
 theorem reflectionFunctor_obj_of_ne (i : Q) (hi : IsSink i)
     (M : QuiverRep.{u, v, w, max v w x} k Q) {j : Q} (hj : j ≠ i) :
     ((reflectionFunctor i hi).obj M).obj j = M.obj j := by
-  change (reflectRep M hi).obj j = _
+  rw [reflectionFunctor_obj]
   exact reflectRep_obj_of_ne M hi hj
 
 /-- At the reflected vertex, reflection sends a morphism to the coordinatewise map between the
