@@ -1,3 +1,7 @@
+/-
+Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+-/
 module
 
 public import TauCeti.LinearAlgebra.RootSystem.RootLength
@@ -26,7 +30,7 @@ the `CFSGStatement` roadmap's conventions for Steinberg endomorphisms.
 * `TauCeti.lengthPermF4`: the length-exchanging permutation for `F₄`.
 -/
 
-@[expose] public section
+public section
 
 namespace TauCeti
 
@@ -55,8 +59,8 @@ def lengthPermF4 : Equiv.Perm (Fin 4) :=
   graphPermA 4
 
 /-- The type-`A` graph permutation sends a node to its reversal. -/
-@[simp] lemma graphPermA_apply (n : ℕ) (i : Fin n) : graphPermA n i = i.rev :=
-  rfl
+@[simp] lemma graphPermA_apply (n : ℕ) (i : Fin n) : graphPermA n i = i.rev := by
+  simp [graphPermA]
 
 /-- Reversal of the type-`A` diagram is its own inverse. -/
 @[simp] lemma graphPermA_symm (n : ℕ) : (graphPermA n).symm = graphPermA n := by
@@ -104,7 +108,7 @@ lemma graphPermD_apply_of_ne (n : ℕ) (hn : 2 ≤ n) (i : Fin n)
 /-- The `E₆` graph permutation sends node `5` to node `0`. -/
 @[simp] lemma graphPermE6_apply_five : graphPermE6 5 = 0 := by decide
 
-/-- The `E₆` graph permutation has order two. -/
+/-- Applying the `E₆` graph permutation twice is the identity. -/
 @[simp] theorem graphPermE6_sq : graphPermE6 ^ 2 = 1 := by decide
 
 /-- Triality sends outer node `0` to outer node `2`. -/
@@ -116,7 +120,7 @@ lemma graphPermD_apply_of_ne (n : ℕ) (hn : 2 ≤ n) (i : Fin n)
 /-- Triality sends outer node `3` to outer node `0`. -/
 @[simp] lemma trialityPermD4_apply_three : trialityPermD4 3 = 0 := by decide
 
-/-- Triality has order three. -/
+/-- Applying triality three times is the identity. -/
 @[simp] theorem trialityPermD4_pow_three : trialityPermD4 ^ 3 = 1 := by decide
 
 /-- The rank-two length permutation sends node `0` to node `1`. -/
@@ -219,19 +223,19 @@ theorem cartanMatrix_D4_trialityPermD4 (i j : Fin 4) :
     simp [DynkinType.cartanMatrix_D, CartanMatrix.D]
 
 /-- The rank-two permutation exchanges the long and short nodes of `B₂`. -/
-theorem isLongSimpleRoot_B2_lengthPermRankTwo (i : Fin 2) :
+theorem isLongSimpleRoot_lengthPermRankTwo_iff_not_isLongSimpleRoot_B2 (i : Fin 2) :
     (DynkinType.B 2).IsLongSimpleRoot (lengthPermRankTwo i) ↔
       ¬ (DynkinType.B 2).IsLongSimpleRoot i := by
   fin_cases i <;> simp [DynkinType.isLongSimpleRoot_B, lengthPermRankTwo]
 
 /-- The rank-two permutation exchanges the long and short nodes of `G₂`. -/
-theorem isLongSimpleRoot_G2_lengthPermRankTwo (i : Fin 2) :
+theorem isLongSimpleRoot_lengthPermRankTwo_iff_not_isLongSimpleRoot_G2 (i : Fin 2) :
     DynkinType.G2.IsLongSimpleRoot (lengthPermRankTwo i) ↔
       ¬ DynkinType.G2.IsLongSimpleRoot i := by
   fin_cases i <;> simp [DynkinType.isLongSimpleRoot_G2, lengthPermRankTwo]
 
 /-- Diagram reversal exchanges the long and short nodes of `F₄`. -/
-theorem isLongSimpleRoot_F4_lengthPermF4 (i : Fin 4) :
+theorem isLongSimpleRoot_lengthPermF4_iff_not_isLongSimpleRoot_F4 (i : Fin 4) :
     DynkinType.F4.IsLongSimpleRoot (lengthPermF4 i) ↔
       ¬ DynkinType.F4.IsLongSimpleRoot i := by
   fin_cases i <;> simp [DynkinType.isLongSimpleRoot_F4, lengthPermF4, graphPermA]
