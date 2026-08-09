@@ -41,16 +41,16 @@ theorem finite_cotangent_ker_of_fg (f : A →ₐ[R] R)
     Algebra.Extension.ofSurjective f (fun r ↦ ⟨algebraMap R A r, f.commutes r⟩)
   have hmap : algebraMap P.Ring R = f.toRingHom := by
     exact RingHom.algebraMap_toAlgebra f.toRingHom
+  have hker : P.ker = RingHom.ker f.toRingHom := congrArg RingHom.ker hmap
   have hP : P.ker.FG := by
-    change (RingHom.ker (algebraMap P.Ring R)).FG
-    rw [hmap]
+    rw [hker]
     exact h
   let _ : Module.Finite R P.Cotangent :=
     Algebra.Extension.Cotangent.finite (P := P) hP
   have hfinite : Module.Finite R P.ker.Cotangent :=
     Module.Finite.equiv (P.cotangentEquivCotangentKer.restrictScalars R)
-  change Module.Finite R (RingHom.ker f.toRingHom).Cotangent
-  exact hmap ▸ hfinite
+  exact Module.Finite.equiv
+    ((Ideal.Cotangent.equivOfEq P.ker (RingHom.ker f.toRingHom) hker).restrictScalars R)
 
 /-- The cotangent space at an augmented point of a noetherian algebra is finite over the base.
 
