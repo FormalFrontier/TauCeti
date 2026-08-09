@@ -23,7 +23,8 @@ and shows that the inclusion is **strict**: for `Bool`-valued paths, the tail ev
 even and odd times.
 
 The reindexing stability of invariant events is elsewhere:
-`preimage_reindex_eq_of_preimage_shift_eq_of_eventually_add` in `PathSpace/Shift.lean`, and its
+`preimage_reindex_eq_of_preimage_shift_eq_of_eventually_add` in `PathSpace/Shift/Basic.lean`,
+and its
 invariant-measurable form in `PathSpace/Invariant/Transport.lean`.
 
 The Layer 2 exchangeability roadmap warns against silently identifying the tail σ-algebra with the

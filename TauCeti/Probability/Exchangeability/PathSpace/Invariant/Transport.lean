@@ -39,7 +39,7 @@ Both statements are Tau Ceti-native. The genuinely external inputs are
 `preimage_reindex_eq_of_preimage_shift_eq_of_eventually_add`, together with Mathlib's
 `MeasurePreserving.setLIntegral_comp_preimage`. Nothing here mentions a block, a selection or a
 Koopman operator; the Koopman-facing consumer credits the strategy it serves, in
-`DeFinetti/ViaKoopman/Invariant/BlockTransport.lean`.
+`PathSpace/Invariant/BlockTransport.lean`.
 
 ⚠ This is specific to *invariant* events. A tail event need not satisfy `shift ⁻¹' A = A`, and
 `invariants_shift_lt_pathTail` shows the inclusion is strict, so the tail-conditioned analogue
