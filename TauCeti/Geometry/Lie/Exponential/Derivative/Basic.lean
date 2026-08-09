@@ -41,6 +41,38 @@ variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
 
 attribute [local instance] LieGroup.minSmoothnessThree
 
+/-- **In identity coordinates the exponential along a ray is the integral curve of its
+direction.** -/
+private theorem extChartAt_mulInvariantExp_smul_eq [CompleteSpace E]
+    [LieGroup I (minSmoothness ℝ 3) G] [T2Space G] [BoundarylessManifold I G] (v : E) :
+    (fun t : ℝ => extChartAt I (1 : G)
+        (mulInvariantExp (I := I) (G := G) (((t • v : E) : GroupLieAlgebra I G)))) =
+      (extChartAt I (1 : G)) ∘
+        mulInvariantIntegralCurve (I := I) (G := G) (v : GroupLieAlgebra I G) 1 := by
+  funext t
+  simp only [Function.comp_apply]
+  apply congrArg (extChartAt I (1 : G))
+  have hsmul : ((t • v : E) : GroupLieAlgebra I G) = t • (v : GroupLieAlgebra I G) :=
+    (groupLieAlgebraEquivModelVectorSpace (I := I) (G := G)).symm.map_smul t v
+  rw [hsmul]
+  exact mulInvariantExp_smul (I := I) (G := G) (v : GroupLieAlgebra I G) t
+
+/-- **In model-space identity coordinates, the tangent-space exponential is differentiable at
+zero.** -/
+private theorem differentiableAt_extChartAt_mulInvariantExp_zero [FiniteDimensional ℝ E]
+    [LieGroup I ∞ G] [T2Space G] [BoundarylessManifold I G] :
+    DifferentiableAt ℝ (fun v : E => extChartAt I (1 : G)
+      (mulInvariantExp (I := I) (G := G) (v : GroupLieAlgebra I G))) 0 := by
+  have hsource : mulInvariantExp (I := I) (G := G)
+      (0 : GroupLieAlgebra I G) ∈ (chartAt H (1 : G)).source := by
+    rw [mulInvariantExp_zero]
+    exact mem_chart_source H (1 : G)
+  have hsmoothCoord := (contMDiffAt_iff_target_of_mem_source
+    (f := fun v : E => mulInvariantExp (I := I) (G := G)
+      (v : GroupLieAlgebra I G)) (y := (1 : G)) hsource).mp
+    (contMDiffAt_mulInvariantExp_modelSpace_zero (I := I) (G := G))
+  exact (hsmoothCoord.2.mdifferentiableAt (by simp)).differentiableAt
+
 /-- In model-space identity coordinates, the tangent-space exponential has derivative the identity
 at zero. -/
 theorem hasFDerivAt_extChartAt_mulInvariantExp_zero
@@ -50,54 +82,18 @@ theorem hasFDerivAt_extChartAt_mulInvariantExp_zero
         (mulInvariantExp (I := I) (G := G) (v : GroupLieAlgebra I G)))
       (ContinuousLinearMap.id ℝ E) 0 := by
   let _ : CompleteSpace E := FiniteDimensional.complete ℝ E
-  let F : E → E := fun v => extChartAt I (1 : G)
-    (mulInvariantExp (I := I) (G := G) (v : GroupLieAlgebra I G))
-  have hresult : HasFDerivAt F (ContinuousLinearMap.id ℝ E) 0 := by
-    have hexpZero : mulInvariantExp (I := I) (G := G)
-        (0 : GroupLieAlgebra I G) = 1 := mulInvariantExp_zero
-    have hsource : mulInvariantExp (I := I) (G := G)
-        (0 : GroupLieAlgebra I G) ∈ (chartAt H (1 : G)).source := by
-      rw [hexpZero]
-      exact mem_chart_source H (1 : G)
-    have hsmooth := contMDiffAt_mulInvariantExp_modelSpace_zero (I := I) (G := G)
-    have hsmoothCoord := (contMDiffAt_iff_target_of_mem_source
-      (f := fun v : E => mulInvariantExp (I := I) (G := G)
-        (v : GroupLieAlgebra I G)) (y := (1 : G)) hsource).mp hsmooth
-    have hFdiff : DifferentiableAt ℝ F 0 := by
-      have hcoordDiff := (hsmoothCoord.2.mdifferentiableAt (by simp)).differentiableAt
-      have hF_eq : F = (extChartAt I (1 : G)) ∘ fun v : E =>
-          mulInvariantExp (I := I) (G := G) (v : GroupLieAlgebra I G) := by
-        funext v
-        rfl
-      rw [hF_eq]
-      exact hcoordDiff
-    apply hFdiff.hasFDerivAt.congr_fderiv
-    apply ContinuousLinearMap.ext
-    intro v
-    have hscale : HasDerivAt (fun t : ℝ => t • v) v 0 := by
-      simpa using ((hasDerivAt_id (𝕜 := ℝ) (0 : ℝ)).smul_const v)
-    have hline : HasDerivAt (F ∘ fun t : ℝ => t • v) (fderiv ℝ F 0 v) 0 :=
-      hFdiff.hasFDerivAt.comp_hasDerivAt_of_eq 0 hscale (by simp)
-    have hcurveDeriv := hasDerivAt_extChartAt_mulInvariantIntegralCurve_zero
-      (I := I) (G := G) v
-    have hlineEq : (F ∘ fun t : ℝ => t • v) =
-          (extChartAt I (1 : G)) ∘
-            mulInvariantIntegralCurve (I := I) (G := G)
-              (v : GroupLieAlgebra I G) 1 := by
-      funext t
-      simp only [F, Function.comp_apply]
-      apply congrArg (extChartAt I (1 : G))
-      have hsmul : ((t • v : E) : GroupLieAlgebra I G) =
-          t • (v : GroupLieAlgebra I G) :=
-        (groupLieAlgebraEquivModelVectorSpace (I := I) (G := G)).symm.map_smul t v
-      rw [hsmul]
-      exact mulInvariantExp_smul (I := I) (G := G)
-        (v : GroupLieAlgebra I G) t
-    have hlineCurve : HasDerivAt (F ∘ fun t : ℝ => t • v) v 0 := by
-      rw [hlineEq]
-      exact hcurveDeriv
-    exact hline.unique hlineCurve
-  exact hresult
+  have hFdiff := differentiableAt_extChartAt_mulInvariantExp_zero (I := I) (G := G)
+  apply hFdiff.hasFDerivAt.congr_fderiv
+  apply ContinuousLinearMap.ext
+  intro v
+  have hscale : HasDerivAt (fun t : ℝ => t • v) v 0 := by
+    simpa using ((hasDerivAt_id (𝕜 := ℝ) (0 : ℝ)).smul_const v)
+  have hline := hFdiff.hasFDerivAt.comp_hasDerivAt_of_eq 0 hscale (by simp)
+  have hlineCurve : HasDerivAt (fun t : ℝ => extChartAt I (1 : G)
+      (mulInvariantExp (I := I) (G := G) (((t • v : E) : GroupLieAlgebra I G)))) v 0 := by
+    rw [extChartAt_mulInvariantExp_smul_eq v]
+    exact hasDerivAt_extChartAt_mulInvariantIntegralCurve_zero (I := I) (G := G) v
+  exact hline.unique hlineCurve
 
 /-- In identity-chart coordinates, the derivative of the derivation-based Lie exponential at zero
 is the canonical linear isometry from left-invariant derivations to the model space. -/

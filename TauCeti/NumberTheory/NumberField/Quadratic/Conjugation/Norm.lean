@@ -4,8 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.RingTheory.Ideal.Norm.RelNorm
 public import Mathlib.NumberTheory.NumberField.Norm
+public import TauCeti.NumberTheory.DedekindDomain.RelNorm
 public import TauCeti.NumberTheory.NumberField.Quadratic.Conjugation.Basic
 
 /-!
@@ -16,9 +16,9 @@ For a quadratic number field `K = ℚ(√d)` with quadratic conjugation
 key fact that `I · σI` is principal for every ideal `I` of `𝓞 K`.  This is the hypothesis
 consumed by `TauCeti.NumberField.mulEquiv_ringOfIntegersQuadraticConj_apply_eq_inv`.
 
-The proof idea, for `I ≠ 0`, runs through the relative ideal norm: `I · σI` has the same relative
-norm as `(Ideal.relNorm ℤ I).map (algebraMap ℤ (𝓞 K))` and contains it, hence equals it, and that
-extension of a principal `ℤ`-ideal is principal.  (The zero ideal is trivially principal.)
+The proof runs through the relative ideal norm: `I · σI` has the same relative norm as
+`(Ideal.relNorm ℤ I).map (algebraMap ℤ (𝓞 K))` and contains it, hence equals it, and that
+extension of a principal `ℤ`-ideal is principal.  The zero ideal needs no separate treatment.
 
 See D. A. Cox, *Primes of the Form x² + ny²*, and F. Lemmermeyer, *Reciprocity Laws*, for the
 classical genus theory this norm-principality underlies.
@@ -116,56 +116,50 @@ private noncomputable def ringOfIntegersQuadraticConjₐ (hmin : minpoly ℤ θ 
   AlgEquiv.ofRingEquiv (f := ringOfIntegersQuadraticConj hmin hgen)
     (fun z => by rw [algebraMap_int_eq]; exact map_intCast _ z)
 
+/-- Pushing an ideal forward along quadratic conjugation and along its `ℤ`-algebra form
+`ringOfIntegersQuadraticConjₐ` give the same ideal: the two wrappers carry the same underlying
+ring homomorphism. -/
+private theorem map_ringOfIntegersQuadraticConjₐ (hmin : minpoly ℤ θ = X ^ 2 - C d)
+    (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) (J : Ideal (𝓞 K)) :
+    Ideal.map (ringOfIntegersQuadraticConjₐ hmin hgen) J =
+      Ideal.map (ringOfIntegersQuadraticConj hmin hgen) J :=
+  rfl
+
+/-- The extension of the norm ideal of `J` is contained in `J · σJ`. -/
+private theorem map_relNorm_le_mul_map_ringOfIntegersQuadraticConj
+    (hmin : minpoly ℤ θ = X ^ 2 - C d) (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) (J : Ideal (𝓞 K)) :
+    Ideal.map (algebraMap ℤ (𝓞 K)) (Ideal.relNorm ℤ J) ≤
+      J * Ideal.map (ringOfIntegersQuadraticConj hmin hgen) J := by
+  -- Each generator of the extension is `N(x) = x · σx` for some `x ∈ J`.
+  rw [Ideal.map_relNorm, Ideal.span_le]
+  rintro _ ⟨x, hx, rfl⟩
+  rw [Function.comp_apply, algebraMap_intNorm_eq hmin hgen]
+  exact Ideal.mul_mem_mul hx (Ideal.mem_map_of_mem _ hx)
+
 /-- **Norm-principality (Lemma A).** For quadratic conjugation `σ = ringOfIntegersQuadraticConj`,
 the product `I · σI` is a principal ideal, for every ideal `I` of `𝓞 K`. This is the
 genus-theoretic hypothesis fed to `mulEquiv_ringOfIntegersQuadraticConj_apply_eq_inv`. -/
 theorem isPrincipal_mul_map_ringOfIntegersQuadraticConj
     (hmin : minpoly ℤ θ = X ^ 2 - C d) (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) (I : Ideal (𝓞 K)) :
     (I * Ideal.map (ringOfIntegersQuadraticConj hmin hgen) I).IsPrincipal := by
-  -- For `I ≠ 0`, `I · σI = (Ideal.relNorm ℤ I).map (algebraMap ℤ (𝓞 K))`, the extension of a
-  -- principal `ℤ`-ideal; the equality is obtained by matching relative norms and divisibility.
-  rcases eq_or_ne I 0 with rfl | hJne
-  · exact ⟨0, by simp⟩
-  set σ := ringOfIntegersQuadraticConj hmin hgen with hσdef
-  set J : Ideal (𝓞 K) := I with hJ
-  set A : Ideal (𝓞 K) := Ideal.map (algebraMap ℤ (𝓞 K)) (Ideal.relNorm ℤ J) with hA
-  set B : Ideal (𝓞 K) := J * Ideal.map σ J with hB
-  have hmapne : Ideal.map σ J ≠ 0 := by
-    simpa [Ideal.zero_eq_bot, Ideal.map_eq_bot_iff_of_injective σ.injective] using hJne
-  have hBne : B ≠ 0 := by rw [hB]; exact mul_ne_zero hJne hmapne
-  -- (1) `A` is principal (extension of a principal `ℤ`-ideal).
-  have hAprin : A.IsPrincipal := by
-    have : (Ideal.relNorm ℤ J).IsPrincipal := IsPrincipalIdealRing.principal _
-    rw [hA]
-    infer_instance
-  -- (2) `A ≤ B`: each generator `N(x) = x·σx` lies in `J · σJ`.
-  have hAB : A ≤ B := by
-    rw [hA, Ideal.map_relNorm, Ideal.span_le]
-    rintro _ ⟨x, hx, rfl⟩
-    rw [Function.comp_apply, algebraMap_intNorm_eq hmin hgen, hB]
-    exact Ideal.mul_mem_mul hx (Ideal.mem_map_of_mem σ hx)
-  -- (3) `relNorm A = relNorm B = (relNorm J)²`.
-  have hnorm : Ideal.relNorm ℤ A = Ideal.relNorm ℤ B := by
-    -- `relNorm` is invariant under `σ`, from `Ideal.relNorm_map_algEquiv` for its `ℤ`-algebra form.
-    have hreln : Ideal.relNorm ℤ (Ideal.map σ J) = Ideal.relNorm ℤ J :=
-      Ideal.relNorm_map_algEquiv (ringOfIntegersQuadraticConjₐ hmin hgen) J
-    rw [hB, map_mul (Ideal.relNorm ℤ), hreln, ← sq, hA,
-      Ideal.relNorm_algebraMap, finrank_int_eq_two hmin hgen]
-  -- (4) `A = B`, from `B ∣ A` together with the equal norms.
-  have hAeqB : A = B := by
-    obtain ⟨C, hC⟩ := Ideal.dvd_iff_le.mpr hAB
-    have hBnorm_ne : Ideal.relNorm ℤ B ≠ 0 := by
-      rw [Ne, Ideal.zero_eq_bot, Ideal.relNorm_eq_bot_iff, ← Ideal.zero_eq_bot]; exact hBne
-    have hC1 : Ideal.relNorm ℤ C = 1 := by
-      apply mul_left_cancel₀ hBnorm_ne
-      rw [mul_one, ← map_mul (Ideal.relNorm ℤ), ← hC, hnorm]
-    have hCtop : C = ⊤ := by
-      have hle : (⊤ : Ideal ℤ) ≤ Ideal.comap (algebraMap ℤ (𝓞 K)) C := by
-        rw [← Ideal.one_eq_top, ← hC1]; exact Ideal.relNorm_le_comap ℤ C
-      rw [Ideal.eq_top_iff_one]
-      have := hle (Submodule.mem_top (x := (1 : ℤ)))
-      rwa [Ideal.mem_comap, map_one] at this
-    rw [hC, hCtop, Ideal.mul_top]
-  rw [← hAeqB]; exact hAprin
+  -- `I · σI = (Ideal.relNorm ℤ I).map (algebraMap ℤ (𝓞 K))`, the extension of a principal
+  -- `ℤ`-ideal; the equality is obtained by matching relative norms and divisibility.
+  -- Conjugation preserves the relative norm: rewrite to the `ℤ`-algebra form, which is what
+  -- Mathlib's lemma takes.
+  have hreln : Ideal.relNorm ℤ (Ideal.map (ringOfIntegersQuadraticConj hmin hgen) I) =
+      Ideal.relNorm ℤ I := by
+    rw [← map_ringOfIntegersQuadraticConjₐ hmin hgen I,
+      Ideal.relNorm_map_algEquiv (ringOfIntegersQuadraticConjₐ hmin hgen) I]
+  -- So both ideals have relative norm `(relNorm I)²`.
+  have hnorm : Ideal.relNorm ℤ (Ideal.map (algebraMap ℤ (𝓞 K)) (Ideal.relNorm ℤ I)) =
+      Ideal.relNorm ℤ (I * Ideal.map (ringOfIntegersQuadraticConj hmin hgen) I) := by
+    rw [Ideal.relNorm_algebraMap, finrank_int_eq_two hmin hgen,
+      map_mul (Ideal.relNorm ℤ), hreln, ← sq]
+  -- So the containment is an equality, and the left side is principal, being the extension of the
+  -- principal `ℤ`-ideal `relNorm I`.
+  rw [← Ideal.eq_of_le_of_relNorm_eq
+    (map_relNorm_le_mul_map_ringOfIntegersQuadraticConj hmin hgen I) hnorm]
+  have : (Ideal.relNorm ℤ I).IsPrincipal := IsPrincipalIdealRing.principal _
+  infer_instance
 
 end TauCeti.NumberField

@@ -27,6 +27,9 @@ and proves that `𝓕 Φₙ = (-i)ⁿ Φₙ`. The dilation is load-bearing: the 
 * `TauCeti.twoPiHermiteFunction` is the `2π`-normalized Hermite family.
 * `TauCeti.fourier_twoPiHermiteFunction` states its Fourier eigenvalue `(-i)ⁿ`.
 
+The `L²` counterpart — the family as a Hilbert basis of `L²(ℝ)`, diagonalizing the unitary Fourier
+transform — is in `TauCeti.Analysis.SpecialFunctions.Hermite.Function.Fourier.HilbertBasis`.
+
 ## References
 
 * G. B. Folland, *Harmonic Analysis in Phase Space*, §1, for the standard normalization and

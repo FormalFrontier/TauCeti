@@ -132,54 +132,52 @@ private theorem adjoint_bijective (e : E ≃L[𝕜] F) :
     refine ⟨B x, ?_⟩
     simp only [← ContinuousLinearMap.comp_apply, hAB, ContinuousLinearMap.id_apply]
 
+/-- The adjoint maps into the orthogonal complement of the kernel. Mathlib's
+`ContinuousLinearMap.orthogonal_ker` identifies `(ker T)ᗮ` with the *closure* of the adjoint's
+range, and the range is contained in its closure. -/
+private theorem adjoint_mem_orthogonal_ker (T : E →L[𝕜] F) (y : F) :
+    (T†) y ∈ (LinearMap.ker (T : E →ₗ[𝕜] F))ᗮ := by
+  rw [T.orthogonal_ker]
+  exact Submodule.le_topologicalClosure _ (LinearMap.mem_range_self _ y)
+
+/-- The adjoint of `T`, restricted to the range of `T` and corestricted to `(ker T)ᗮ`, is
+surjective: it *is* the adjoint of the isomorphism `(ker T)ᗮ ≃L range T`, and the adjoint of an
+isomorphism is bijective. -/
+private theorem codRestrict_domRestrict_adjoint_surjective (T : E →L[𝕜] F)
+    (hT : IsClosed (LinearMap.range (T : E →ₗ[𝕜] F) : Set F)) :
+    Function.Surjective
+      (((T†).domRestrict (LinearMap.range (T : E →ₗ[𝕜] F))).codRestrict
+        (LinearMap.ker (T : E →ₗ[𝕜] F))ᗮ fun y => adjoint_mem_orthogonal_ker T y) := by
+  set K := LinearMap.ker (T : E →ₗ[𝕜] F) with hK
+  set R := LinearMap.range (T : E →ₗ[𝕜] F) with hR
+  set e : Kᗮ ≃L[𝕜] R := orthogonalKerEquivRange T hT with he
+  have he_apply (x : Kᗮ) : (e x : F) = T (x : E) := by
+    simpa only [he] using orthogonalKerEquivRange_apply T hT x
+  -- Peeling both restriction wrappers off the corestricted adjoint, once and by name.
+  have hcoe (y : R) :
+      ((((T†).domRestrict R).codRestrict Kᗮ (fun y => adjoint_mem_orthogonal_ker T y)) y : E)
+        = (T†) (y : F) :=
+    (ContinuousLinearMap.coe_codRestrict_apply _ _ _ y).trans
+      (congrFun (ContinuousLinearMap.coe_domRestrict (T†) R) y)
+  have hB : ((T†).domRestrict R).codRestrict Kᗮ (fun y => adjoint_mem_orthogonal_ker T y)
+      = ((e : Kᗮ →L[𝕜] R)†) :=
+    (ContinuousLinearMap.eq_adjoint_iff _ _).2 fun y x => by
+      rw [Submodule.coe_inner, hcoe, Submodule.coe_inner, T.adjoint_inner_left,
+        ContinuousLinearEquiv.coe_coe, he_apply]
+  rw [hB]
+  exact (adjoint_bijective e).2
+
 /-- A continuous linear map with closed range has adjoint range equal to the orthogonal
 complement of its kernel. -/
 theorem range_adjoint_eq_orthogonal_ker_of_isClosed_range (T : E →L[𝕜] F)
     (hT : IsClosed (LinearMap.range (T : E →ₗ[𝕜] F) : Set F)) :
     LinearMap.range (T† : F →ₗ[𝕜] E) =
       (LinearMap.ker (T : E →ₗ[𝕜] F))ᗮ := by
-  let K := LinearMap.ker (T : E →ₗ[𝕜] F)
-  let R := LinearMap.range (T : E →ₗ[𝕜] F)
-  let e : Kᗮ ≃L[𝕜] R := orthogonalKerEquivRange T hT
-  have he_apply (x : Kᗮ) : (e x : F) = T (x : E) := by
-    simpa only [e] using orthogonalKerEquivRange_apply T hT x
-  have hadj_mem (y : F) : (T†) y ∈ Kᗮ := by
-    rw [Submodule.mem_orthogonal]
-    intro x hx
-    have hx0 : T x = 0 := LinearMap.mem_ker.mp (by simpa [K] using hx)
-    rw [T.adjoint_inner_right, hx0]
-    simp
-  let B : R →L[𝕜] Kᗮ :=
-    ((T†).domRestrict R).codRestrict Kᗮ fun y => hadj_mem y
-  have hB : B = ((e : Kᗮ →L[𝕜] R)†) := by
-    apply ContinuousLinearMap.ext
-    intro y
-    refine ext_inner_left 𝕜 fun x => ?_
-    calc
-      inner 𝕜 x (B y) = inner 𝕜 (x : E) ((T†) (y : F)) := by
-        rw [Submodule.coe_inner]
-        -- `B` hides both restriction wrappers, so expose them in order before applying their
-        -- explicit coercion lemmas.
-        rw [show (B y : E) = ((T†).domRestrict R) y by
-          exact ContinuousLinearMap.coe_codRestrict_apply _ _ _ y]
-        rw [show ((T†).domRestrict R) y = (T†) (y : F) by
-          exact congrFun (ContinuousLinearMap.coe_domRestrict (T†) R) y]
-      _ = inner 𝕜 (T (x : E)) (y : F) := T.adjoint_inner_right x y
-      _ = inner 𝕜 ((e x : R) : F) (y : F) := by
-        rw [he_apply]
-      _ = inner 𝕜 (e x) y := (Submodule.coe_inner R (e x) y).symm
-      _ = inner 𝕜 x (((e : Kᗮ →L[𝕜] R)†) y) :=
-        (ContinuousLinearMap.adjoint_inner_right (e : Kᗮ →L[𝕜] R) x y).symm
-  have hB_surjective : Function.Surjective B := by
-    rw [hB]
-    exact (adjoint_bijective e).2
-  apply le_antisymm
+  refine le_antisymm ?_ fun x hx => ?_
   · rintro _ ⟨y, rfl⟩
-    exact hadj_mem y
-  · intro x hx
-    obtain ⟨y, hy⟩ := hB_surjective ⟨x, hx⟩
-    refine ⟨(y : F), ?_⟩
-    exact congr_arg Subtype.val hy
+    exact adjoint_mem_orthogonal_ker T y
+  · obtain ⟨y, hy⟩ := codRestrict_domRestrict_adjoint_surjective T hT ⟨x, hx⟩
+    exact ⟨(y : F), congr_arg Subtype.val hy⟩
 
 /-- If a continuous linear map between Hilbert spaces has closed range, then so does its
 adjoint. -/

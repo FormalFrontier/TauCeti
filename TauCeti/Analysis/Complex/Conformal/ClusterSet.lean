@@ -8,6 +8,7 @@ module
 public import TauCeti.Analysis.Complex.Conformal.BoundaryCorrespondence
 public import TauCeti.Topology.ClusterSet
 import TauCeti.Analysis.Complex.Conformal.ImageSimplyConnected
+import TauCeti.Topology.Frontier
 
 /-!
 # The boundary cluster set of a conformal map
@@ -37,6 +38,14 @@ extension from the hypotheses.
 * **Conversely, the boundary cluster sets exhaust the frontier of the image**, for a bounded
   domain: no boundary point of `f '' U` is missed. This is the surjectivity of the boundary
   correspondence, and it is what makes the inclusion of the first item an equality.
+* **Relatively: the boundary piece a subdomain clings to is the union of its own boundary cluster
+  sets.** For any `V ⊆ U` with compact closure,
+  `frontier (f '' U) ∩ frontier (f '' V) = ⋃ e ∈ frontier U ∩ closure V, clusterSetOn f V e`, the
+  cluster sets being taken *along `V`*. The previous item is the case `V = U`. The point of the
+  relative form is that `V` may be shrunk: taking `V` to be the ball neighbourhood
+  `U ∩ ball w ρ` of a boundary point identifies the boundary piece that neighbourhood clings to —
+  the piece the circle `sphere w ρ` cuts off, in the case where `U ∩ sphere w ρ` is a crosscut —
+  and letting `ρ` fall shrinks those pieces exactly to `clusterSetOn f U w`.
 
 A third ingredient is again not about conformality and is proved upstream, in
 `TauCeti/Analysis/Convex/ClusterSet.lean`: on a **convex** domain — the unit disc, in the
@@ -55,6 +64,16 @@ namely injectivity of the extension on `frontier U`, which `TauCeti.injOn_closur
 then propagates to `closure U` for `TauCeti.closureHomeomorph`. Neither the singleton property nor
 boundary injectivity is proved here.
 
+The relative form is what connects that vocabulary to the *geometric* criterion of
+`Conformal/CutDiameter.lean`. There,
+`TauCeti.exists_continuousOn_closure_eqOn_of_forall_exists_diam_union_le` produces the continuous
+extension from a bound on the diameter of `f '' (U ∩ sphere w ρ)` together with a bounded set
+enclosing `frontier (f '' U) ∩ frontier (f '' (U ∩ ball w ρ))`. The first of those two data is what
+the length–area method of `Conformal/LengthArea.lean` supplies; the second is the input still
+missing at layer L5, and what the relative form does is *name* it — as a union of cluster sets over
+the boundary points of `U` inside the closed disc — and show that these sets are precisely what the
+cluster set at `w` is the limit of. No estimate on them is claimed here.
+
 In accordance with the generality bar of `ConformalMapping/README.md`, which fixes scalar `ℂ` for
 every theorem added in layers L0–L6, the results below are stated for maps of `ℂ`, as in
 `Conformal/BoundaryCorrespondence.lean`.
@@ -70,6 +89,15 @@ every theorem added in layers L0–L6, the results below are stated for maps of 
   bounded domain the boundary cluster sets cover, hence exactly exhaust, the frontier of the image.
   The case a Riemann map presents is the unit disc, where `frontier_ball` rewrites `frontier U` to
   the unit circle.
+* `TauCeti.frontier_inter_closure_image_eq_biUnion_clusterSetOn` and
+  `TauCeti.frontier_inter_frontier_image_eq_biUnion_clusterSetOn` — **the relative form**: the
+  boundary piece a subdomain `V ⊆ U` clings to is the union of the cluster sets along `V` over the
+  boundary points of `U` adherent to `V`, whether that piece is read off `closure (f '' V)` or off
+  `frontier (f '' V)`.
+* `TauCeti.frontier_inter_frontier_image_inter_ball_eq_biUnion_clusterSetOn` and
+  `TauCeti.iInter_frontier_inter_frontier_image_inter_ball_eq_clusterSetOn` — **the boundary piece
+  at a point**: its identification for the ball neighbourhood `U ∩ ball w ρ`, and the fact that
+  these pieces shrink, as `ρ` falls, exactly to `clusterSetOn f U w`.
 
 ## Coordination with upstream Mathlib
 
@@ -190,19 +218,159 @@ theorem exists_mem_frontier_mem_clusterSetOn (hUo : IsOpen U) (hUb : Bornology.I
   exact exists_mem_frontier_mem_clusterSetOn_of_notMem_image hUb.isCompact_closure hfd.continuousOn
     hv.1 hv.2
 
+/-- **The boundary piece a subdomain clings to is the union of its own boundary cluster sets.** For
+`f` holomorphic and injective on an open `U` and any `V ⊆ U` with compact closure,
+
+> `frontier (f '' U) ∩ closure (f '' V) = ⋃ e ∈ frontier U ∩ closure V, clusterSetOn f V e`.
+
+So the part of the image boundary that the image of `V` reaches is not merely covered by cluster
+sets: it *is* the union of the cluster sets of `f` **along `V`** at the boundary points of `U`
+adherent to `V`. Taking `V = U` recovers
+`TauCeti.biUnion_clusterSetOn_eq_frontier_image`; the content of the relative form is that shrinking
+`V` shrinks both sides in step, which is what makes the boundary piece an object one can estimate.
+
+Both inclusions come from the same source. Closing `f '' V` adds exactly the cluster values along
+`V` over `frontier V` (`TauCeti.closure_image_eq_image_union_biUnion_clusterSetOn`, which is why
+`closure V` is asked to be compact); a value *taken* on `V` lies in the open set `f '' U`, which is
+disjoint from its own frontier, so only cluster values survive on the left; and a cluster value at
+a point `e` of `frontier V` lying in `U` would be `f e` by continuity, which is again a taken
+value, so the surviving `e` are exactly those outside `U`, that is on `frontier U`. Conversely a
+cluster set along `V` at a point of `frontier U` sits inside `clusterSetOn f U e`, hence on
+`frontier (f '' U)` by `TauCeti.clusterSetOn_subset_frontier_image`, and inside `closure (f '' V)`
+by construction.
+
+Neither `V` nor `U` is asked to be connected, and `V` need not be open. What layer **L5** of
+`TauCetiRoadmap/ConformalMapping/README.md` consumes are the two sides a circle cuts `U` into:
+`V = U ∩ ball ζ ρ`, whose closure is compact for every `U`, lying as it does in `closedBall ζ ρ`,
+and `V = U \ closedBall ζ ρ`, for which the compactness hypothesis is a real restriction — it
+holds when `U` is bounded, but for unbounded `U` that side has unbounded closure. -/
+theorem frontier_inter_closure_image_eq_biUnion_clusterSetOn (hUo : IsOpen U)
+    (hfd : DifferentiableOn ℂ f U) (hfi : InjOn f U) {V : Set ℂ} (hVU : V ⊆ U)
+    (hVc : IsCompact (closure V)) :
+    frontier (f '' U) ∩ closure (f '' V) = ⋃ e ∈ frontier U ∩ closure V, clusterSetOn f V e := by
+  have hopen : IsOpen (f '' U) := isOpen_image_of_differentiableOn_of_injOn hUo hfd hfi
+  refine subset_antisymm ?_ (iUnion₂_subset fun e he => subset_inter
+    (fun _ hv => clusterSetOn_subset_frontier_image hUo hfd hfi he.1 (clusterSetOn_mono hVU hv))
+    fun _ hv => clusterSetOn_subset_closure_image hv)
+  rintro u ⟨hufr, hucl⟩
+  have hunot : u ∉ f '' U := fun h =>
+    eq_empty_iff_forall_notMem.mp hopen.inter_frontier_eq u ⟨h, hufr⟩
+  rw [closure_image_eq_image_union_biUnion_clusterSetOn hVc (hfd.continuousOn.mono hVU)] at hucl
+  rcases hucl with hu | hu
+  · exact absurd (image_mono hVU hu) hunot
+  obtain ⟨e, he, hue⟩ := mem_iUnion₂.mp hu
+  have hecl : e ∈ closure V := frontier_subset_closure he
+  refine mem_iUnion₂.mpr ⟨e, ⟨?_, hecl⟩, hue⟩
+  rw [hUo.frontier_eq]
+  refine ⟨closure_mono hVU hecl, fun heU => ?_⟩
+  rw [clusterSetOn_eq_singleton_of_tendsto hecl
+    ((hfd.differentiableAt (hUo.mem_nhds heU)).continuousAt.continuousWithinAt),
+    mem_singleton_iff] at hue
+  exact hunot ⟨e, heU, hue.symm⟩
+
+/-- **The boundary piece a subdomain clings to, read on the frontier of its image.** The form of
+`TauCeti.frontier_inter_closure_image_eq_biUnion_clusterSetOn` that a domain-splitting estimate
+consumes:
+
+> `frontier (f '' U) ∩ frontier (f '' V) = ⋃ e ∈ frontier U ∩ closure V, clusterSetOn f V e`.
+
+The left-hand sides of the two statements agree because `f '' V` lies in the open set `f '' U`, so
+the boundary of `f '' U` reaches `closure (f '' V)` only through `frontier (f '' V)` — that is
+`TauCeti.frontier_inter_closure_eq_frontier_inter_frontier`, a fact of pure topology.
+
+The distinction matters because the two descriptions arise on opposite sides of the argument. The
+cluster-set description is produced by a *limit* argument, which naturally speaks of closures;
+`TauCeti.diam_image_inter_ball_le` of `Conformal/CutDiameter.lean` — which bounds the width of one
+side of a crosscut by the width of the crosscut together with the boundary piece it cuts off — asks
+for the *frontier* form, this being the shape in which the splitting lemma
+`TauCeti.frontier_image_subset_image_union_frontier_image` delivers it. -/
+theorem frontier_inter_frontier_image_eq_biUnion_clusterSetOn (hUo : IsOpen U)
+    (hfd : DifferentiableOn ℂ f U) (hfi : InjOn f U) {V : Set ℂ} (hVU : V ⊆ U)
+    (hVc : IsCompact (closure V)) :
+    frontier (f '' U) ∩ frontier (f '' V) = ⋃ e ∈ frontier U ∩ closure V, clusterSetOn f V e := by
+  rw [← frontier_inter_closure_eq_frontier_inter_frontier (image_mono hVU),
+    frontier_inter_closure_image_eq_biUnion_clusterSetOn hUo hfd hfi hVU hVc]
+
 /-- **The boundary cluster sets exhaust the frontier of the image.** For a conformal map of a
 bounded open set, the union of the cluster sets over `frontier U` is exactly `frontier (f '' U)`.
 
-One inclusion is `TauCeti.clusterSetOn_subset_frontier_image` — no boundary cluster value is
-attained, and none escapes the closure of the image — and the other is
-`TauCeti.exists_mem_frontier_mem_clusterSetOn`. Neither connectedness nor simple connectedness of
-`U` is used, and nothing is assumed about `frontier U`. -/
+This is the case `V = U` of `TauCeti.frontier_inter_closure_image_eq_biUnion_clusterSetOn`, where
+both intersections collapse: `frontier s ⊆ closure s` on each side. Neither connectedness nor
+simple connectedness of `U` is used, and nothing is assumed about `frontier U`. -/
 theorem biUnion_clusterSetOn_eq_frontier_image (hUo : IsOpen U) (hUb : Bornology.IsBounded U)
     (hfd : DifferentiableOn ℂ f U) (hfi : InjOn f U) :
-    ⋃ w ∈ frontier U, clusterSetOn f U w = frontier (f '' U) :=
-  subset_antisymm (iUnion₂_subset fun _ hw => clusterSetOn_subset_frontier_image hUo hfd hfi hw)
-    fun _ hv => by
-      obtain ⟨w, hw, hvw⟩ := exists_mem_frontier_mem_clusterSetOn hUo hUb hfd hfi hv
-      exact mem_biUnion hw hvw
+    ⋃ w ∈ frontier U, clusterSetOn f U w = frontier (f '' U) := by
+  have h := frontier_inter_closure_image_eq_biUnion_clusterSetOn hUo hfd hfi (subset_refl U)
+    hUb.isCompact_closure
+  rwa [inter_eq_self_of_subset_left (frontier_subset_closure (s := f '' U)),
+    inter_eq_self_of_subset_left (frontier_subset_closure (s := U)), eq_comm] at h
+
+/-! ## The boundary piece at a point -/
+
+/-- **The boundary piece the ball neighbourhood of a point clings to.** The instance of
+`TauCeti.frontier_inter_frontier_image_eq_biUnion_clusterSetOn` at `V = U ∩ ball w ρ`, whose closure
+is compact because it lies in `closedBall w ρ`:
+
+> `frontier (f '' U) ∩ frontier (f '' (U ∩ ball w ρ))`
+> `= ⋃ e ∈ frontier U ∩ closure (U ∩ ball w ρ), clusterSetOn f (U ∩ ball w ρ) e`.
+
+The left-hand side is exactly the set that
+`TauCeti.exists_continuousOn_closure_eqOn_of_forall_exists_diam_union_le` of
+`Conformal/CutDiameter.lean` asks to be enclosed in a small bounded set: what that criterion
+needs made small at each boundary point of `U`, alongside the image of the circle `sphere w ρ`. So
+this identifies its second geometric input — the first being the length–area estimate, which makes
+the image of that circle short — as a union of cluster sets *along the ball neighbourhood*, indexed
+by the boundary points of `U` that the neighbourhood reaches. Nothing here asks `U ∩ sphere w ρ` to
+be a crosscut; when it is one, `U ∩ ball w ρ` is the side of that crosscut towards `w` and the set
+below is the boundary piece it cuts off.
+
+It is not the middle piece `frontier (f '' U) ∩ closure (f '' (U ∩ sphere w ρ))` of
+`Conformal/Crosscut/Image.lean`, which is indexed by the boundary points *on the circle* and is
+small as soon as the image of that circle is. The piece here is indexed by the boundary points
+*inside* the closed disc, and making it small is the step layer **L5** still lacks. -/
+theorem frontier_inter_frontier_image_inter_ball_eq_biUnion_clusterSetOn (hUo : IsOpen U)
+    (hfd : DifferentiableOn ℂ f U) (hfi : InjOn f U) (w : ℂ) (ρ : ℝ) :
+    frontier (f '' U) ∩ frontier (f '' (U ∩ ball w ρ)) =
+      ⋃ e ∈ frontier U ∩ closure (U ∩ ball w ρ), clusterSetOn f (U ∩ ball w ρ) e :=
+  frontier_inter_frontier_image_eq_biUnion_clusterSetOn hUo hfd hfi inter_subset_left
+    ((isCompact_closedBall w ρ).of_isClosed_subset isClosed_closure
+      (closure_minimal (inter_subset_right.trans ball_subset_closedBall) isClosed_closedBall))
+
+/-- **The boundary pieces at a point shrink exactly to its cluster set.** At a boundary
+point `w` of `U`,
+
+> `⋂ ρ > 0, frontier (f '' U) ∩ frontier (f '' (U ∩ ball w ρ)) = clusterSetOn f U w`.
+
+The pieces decrease as `ρ` does — the ball neighbourhoods are nested, so by
+`TauCeti.frontier_inter_closure_eq_frontier_inter_frontier` and monotonicity of `closure` so are the
+pieces — and what they decrease to is precisely the set of values `f` approaches at `w`. So
+Carathéodory's assertion that a boundary cluster set is a singleton is
+equivalent to the boundary pieces at `w` shrinking to a point, which is the form the
+crosscut estimates of layer **L5** of `TauCetiRoadmap/ConformalMapping/README.md` aim at: they bound
+the *diameter* of a piece at a well-chosen radius rather than describe the pieces individually.
+
+The inclusion `⊇` is `TauCeti.clusterSetOn_subset_frontier_image` together with
+`TauCeti.clusterSetOn_inter_of_mem_nhds`, which says a cluster set may be computed inside any ball
+about the point, so the cluster set is adherent to the image of every ball neighbourhood. The
+inclusion `⊆` is `TauCeti.clusterSetOn_eq_iInter`: every approach region in `𝓝[U] w` contains some
+`U ∩ ball w ρ`, so a point adherent to the image of each of those is adherent to the image of each
+approach region. -/
+theorem iInter_frontier_inter_frontier_image_inter_ball_eq_clusterSetOn (hUo : IsOpen U)
+    (hfd : DifferentiableOn ℂ f U) (hfi : InjOn f U) (hw : w ∈ frontier U) :
+    ⋂ ρ > (0 : ℝ), frontier (f '' U) ∩ frontier (f '' (U ∩ ball w ρ)) = clusterSetOn f U w := by
+  refine subset_antisymm (fun u hu => ?_) (subset_iInter₂ fun ρ hρ => ?_)
+  · rw [clusterSetOn_eq_iInter]
+    refine mem_iInter₂.mpr fun s hs => ?_
+    obtain ⟨t, hto, hwt, hts⟩ := mem_nhdsWithin.mp hs
+    obtain ⟨ρ, hρ, hρt⟩ := Metric.isOpen_iff.mp hto w hwt
+    refine closure_mono (image_mono ?_) (frontier_subset_closure (mem_iInter₂.mp hu ρ hρ).2)
+    exact fun z hz => hts ⟨hρt hz.2, hz.1⟩
+  · have hwcl : w ∈ closure (U ∩ ball w ρ) := by
+      rw [mem_closure_iff_nhdsWithin_neBot,
+        nhdsWithin_inter_of_mem' (nhdsWithin_le_nhds (ball_mem_nhds w hρ))]
+      exact mem_closure_iff_nhdsWithin_neBot.mp (frontier_subset_closure hw)
+    rw [frontier_inter_frontier_image_inter_ball_eq_biUnion_clusterSetOn hUo hfd hfi w ρ,
+      ← clusterSetOn_inter_of_mem_nhds (f := f) (U := U) (ball_mem_nhds w hρ)]
+    exact subset_biUnion_of_mem ⟨hw, hwcl⟩
 
 end TauCeti
