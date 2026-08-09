@@ -51,10 +51,6 @@ open scoped Interval Real Topology
 
 namespace TauCeti.Contour.Cycle
 
-/-- The trace of a contour cycle is closed. -/
-private theorem isClosed_trace (C : Cycle) : IsClosed (trace C) :=
-  (isCompact_trace C).isClosed
-
 /-- An open set containing the trace of a nonzero cycle contains a point outside that trace. -/
 private theorem exists_mem_not_mem_trace {C : Cycle} {U : Set ℂ} (hU : IsOpen U)
     (hCU : IsIn C U) (hC : C ≠ 0) : ∃ w ∈ U, w ∉ trace C := by
@@ -184,7 +180,8 @@ private theorem differentiable_cycleDixonFunction {f : ℂ → ℂ} {C : Cycle} 
           (TauCeti.Contour.cauchy_integrand_intervalIntegrable hf.continuousOn γ.continuousOn
             (mapsTo_of_mem_support hCU hγ) γ.intervalIntegrable_deriv hoff)).const_mul
               (FreeAbelianGroup.coeff γ C : ℂ)
-    obtain ⟨ε, hε, hball⟩ := Metric.isOpen_iff.mp (isClosed_trace C).isOpen_compl w hwtrace
+    obtain ⟨ε, hε, hball⟩ :=
+      Metric.isOpen_iff.mp (isCompact_trace C).isClosed.isOpen_compl w hwtrace
     refine hH2.congr_of_eventuallyEq ?_
     filter_upwards [Metric.ball_mem_nhds w hε] with w' hw'
     have hw'trace : w' ∉ trace C := hball hw'
