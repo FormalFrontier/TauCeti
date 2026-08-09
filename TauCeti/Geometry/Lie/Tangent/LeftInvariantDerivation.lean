@@ -5,7 +5,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.Geometry.Manifold.Algebra.LeftInvariantDerivation
-import Mathlib.Geometry.Manifold.ContMDiffMFDeriv
 public import TauCeti.Geometry.Manifold.DerivationBundle
 public import TauCeti.Geometry.Lie.InvariantVectorField
 import TauCeti.Geometry.Manifold.VectorField.Regularity
