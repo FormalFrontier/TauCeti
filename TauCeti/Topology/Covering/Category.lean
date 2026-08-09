@@ -119,7 +119,6 @@ abbrev proj (p : CoveringSpace X) : (p : TopCat) ⟶ X :=
 theorem forget_obj_left (p : CoveringSpace X) : ((forget X).obj p).left = (p : TopCat) :=
   rfl
 
-@[simp]
 theorem forget_obj_hom (p : CoveringSpace X) : ((forget X).obj p).hom = p.proj :=
   rfl
 
@@ -146,7 +145,7 @@ theorem totalSpace_map {p q : CoveringSpace X} (f : p ⟶ q) :
   rfl
 
 /-- Construct a morphism of covering spaces from a continuous map over the base. -/
-abbrev homMk {p q : CoveringSpace X} (f : (p : TopCat) ⟶ (q : TopCat))
+@[expose] def homMk {p q : CoveringSpace X} (f : (p : TopCat) ⟶ (q : TopCat))
     (w : f ≫ q.proj = p.proj := by cat_disch) : p ⟶ q :=
   ObjectProperty.homMk (CategoryTheory.Over.homMk f w)
 
@@ -279,7 +278,7 @@ theorem totalSpace_map {p q : ConnectedCoveringSpace X} (f : p ⟶ q) :
   rfl
 
 /-- Construct a morphism of connected covering spaces from a continuous map over the base. -/
-abbrev homMk {p q : ConnectedCoveringSpace X} (f : (p : TopCat) ⟶ (q : TopCat))
+@[expose] def homMk {p q : ConnectedCoveringSpace X} (f : (p : TopCat) ⟶ (q : TopCat))
     (w : f ≫ q.proj = p.proj := by cat_disch) : p ⟶ q :=
   ObjectProperty.homMk (CategoryTheory.Over.homMk f w)
 
