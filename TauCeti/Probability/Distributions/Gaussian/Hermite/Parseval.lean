@@ -23,7 +23,6 @@ abstract `HilbertBasis.repr` coordinate as the Gaussian integral against `Hₙ /
 * `TauCeti.summable_norm_sq_gaussianHermite_coeff` gives square-summability of the coefficients.
 * `TauCeti.hasSum_gaussianHermite_expansion` reconstructs every `L²` vector from its Gaussian
   Hermite series.
-* `TauCeti.gaussianHermiteHilbertBasis_repr_self` identifies the coordinates of a basis vector.
 
 All statements hold for an arbitrary `RCLike` scalar field, simultaneously covering real and
 complex-valued `L²` functions.
@@ -76,14 +75,5 @@ theorem hasSum_gaussianHermite_expansion (f : Lp 𝕜 2 (gaussianReal 0 1)) :
           gaussianHermiteHilbertBasis 𝕜 n) f := by
   simpa only [gaussianHermiteHilbertBasis_repr_apply] using
     (gaussianHermiteHilbertBasis 𝕜).hasSum_repr f
-
-/-- The coordinates of the `n`-th normalized Hermite polynomial are a single `1` in position
-`n`. -/
-@[simp]
-theorem gaussianHermiteHilbertBasis_repr_self (n : ℕ) :
-    (gaussianHermiteHilbertBasis 𝕜).repr (gaussianHermiteHilbertBasis 𝕜 n) =
-      lp.single 2 n (1 : 𝕜) := by
-  classical
-  exact (gaussianHermiteHilbertBasis 𝕜).repr_self n
 
 end TauCeti
