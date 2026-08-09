@@ -62,7 +62,7 @@ combination of the simple coroots.
 
 `TauCeti.IsHighestWeightVector` is stated as the conjunction pinned by the roadmap rather than as a
 structure, and `TauCeti.isHighestWeightVector_iff` together with the three projections
-`TauCeti.IsHighestWeightVector.ne_zero`, `TauCeti.IsHighestWeightVector.lie_cartan` and
+`TauCeti.IsHighestWeightVector.ne_zero`, `TauCeti.IsHighestWeightVector.lie_eq_smul` and
 `TauCeti.IsHighestWeightVector.lie_eq_zero_of_mem_positiveNilradical` is its elimination API; no
 consumer needs to take the conjunction apart by hand.
 
@@ -71,10 +71,9 @@ The annihilator of a vector is a Lie subalgebra, by the Leibniz rule, and that i
 `TauCeti.positiveNilradical_le_iff` of the positive nilradical is stated against Lie subalgebras.
 The annihilator is kept private, being a device of that one proof.
 
-Finite-dimensionality of `M` is a hypothesis of the dominance theorem alone, and the `LieModule`
-axioms are needed only from the weight-space section on. The definitions and the elimination API
-are stated for an arbitrary module, since the Verma modules that Layer 3 of the roadmap builds next
-are infinite-dimensional and carry highest weight vectors all the same.
+Finite-dimensionality of `M` is a hypothesis of the dominance theorem alone: the definitions and
+the elimination API are stated for an arbitrary `L`-module, since the Verma modules that Layer 3 of
+the roadmap builds next are infinite-dimensional and carry highest weight vectors all the same.
 
 ## References
 
@@ -107,11 +106,11 @@ which is annihilated by the positive nilradical `n⁺`.
 
 For a single positive root this is `IsSl2Triple.HasPrimitiveVectorWith`, and that is how the
 dominance theorem `TauCeti.IsHighestWeightVector.isDominantIntegral` below consumes it. -/
-def IsHighestWeightVector (lam : Dual K H) (v : M) : Prop :=
+def IsHighestWeightVector [LieModule K L M] (lam : Dual K H) (v : M) : Prop :=
   v ≠ 0 ∧ (∀ x : H, ⁅(x : L), v⁆ = lam x • v) ∧
     ∀ x ∈ positiveNilradical H b, ⁅x, v⁆ = 0
 
-variable {b}
+variable [LieModule K L M] {b}
 
 /-- The three defining conditions on a highest weight vector. -/
 theorem isHighestWeightVector_iff {lam : Dual K H} {v : M} :
@@ -129,7 +128,7 @@ theorem ne_zero (hv : IsHighestWeightVector b lam v) : v ≠ 0 :=
   (isHighestWeightVector_iff.mp hv).1
 
 /-- The Cartan subalgebra acts on a highest weight vector through its weight. -/
-theorem lie_cartan (hv : IsHighestWeightVector b lam v) (x : H) : ⁅(x : L), v⁆ = lam x • v :=
+theorem lie_eq_smul (hv : IsHighestWeightVector b lam v) (x : H) : ⁅(x : L), v⁆ = lam x • v :=
   (isHighestWeightVector_iff.mp hv).2.1 x
 
 /-- The positive nilradical annihilates a highest weight vector. -/
@@ -149,16 +148,12 @@ theorem unique (hv : IsHighestWeightVector b lam v) (hw : IsHighestWeightVector 
     lam = mu := by
   ext x
   have h : (lam x - mu x) • v = 0 := by
-    rw [sub_smul, ← hv.lie_cartan x, ← hw.lie_cartan x, sub_self]
+    rw [sub_smul, ← hv.lie_eq_smul x, ← hw.lie_eq_smul x, sub_self]
   exact sub_eq_zero.mp ((smul_eq_zero.mp h).resolve_right hv.ne_zero)
 
 end IsHighestWeightVector
 
 /-! ### Recognising a highest weight vector on the root spaces -/
-
-section LieModule
-
-variable [LieModule K L M]
 
 /-- The elements of `L` annihilating a fixed vector `v` form a Lie subalgebra: the bracket is
 linear in its left argument, and the Leibniz rule `lie_lie` closes the set under brackets.
@@ -207,7 +202,7 @@ theorem isHighestWeightVector_iff_forall_rootSpace {lam : Dual K H} {v : M} :
       v ≠ 0 ∧ (∀ x : H, ⁅(x : L), v⁆ = lam x • v) ∧
         ∀ α ∈ posRoots (IsKilling.rootSystem H) b,
           ∀ x ∈ rootSpace H (α : H → K), ⁅x, v⁆ = 0 :=
-  ⟨fun hv => ⟨hv.ne_zero, hv.lie_cartan, fun _ hα _ hx => hv.lie_eq_zero_of_mem_rootSpace hα hx⟩,
+  ⟨fun hv => ⟨hv.ne_zero, hv.lie_eq_smul, fun _ hα _ hx => hv.lie_eq_zero_of_mem_rootSpace hα hx⟩,
     fun ⟨hv0, hcartan, hpos⟩ => isHighestWeightVector_of_forall_rootSpace hv0 hcartan hpos⟩
 
 /-! ### The weight exhibited by a highest weight vector -/
@@ -222,7 +217,7 @@ scale. -/
 theorem smul (hv : IsHighestWeightVector b lam v) {c : K} (hc : c ≠ 0) :
     IsHighestWeightVector b lam (c • v) :=
   isHighestWeightVector_iff.mpr
-    ⟨smul_ne_zero hc hv.ne_zero, fun x => by rw [lie_smul, hv.lie_cartan x, smul_comm],
+    ⟨smul_ne_zero hc hv.ne_zero, fun x => by rw [lie_smul, hv.lie_eq_smul x, smul_comm],
       fun x hx => by rw [lie_smul, hv.lie_eq_zero_of_mem_positiveNilradical hx, smul_zero]⟩
 
 /-- A highest weight vector lies in the generalized weight space of its weight; being an honest
@@ -232,7 +227,7 @@ theorem mem_genWeightSpace (hv : IsHighestWeightVector b lam v) :
   rw [LieModule.mem_genWeightSpace]
   refine fun x => ⟨1, ?_⟩
   have hx : (toEnd K H M x) v = lam x • v := by
-    rw [toEnd_apply_apply, LieSubalgebra.coe_bracket_of_module, hv.lie_cartan x]
+    rw [toEnd_apply_apply, LieSubalgebra.coe_bracket_of_module, hv.lie_eq_smul x]
   simp [hx]
 
 /-- The weight of a highest weight vector is a weight of the module: the vocabulary is not
@@ -252,8 +247,6 @@ theorem coe_weight (hv : IsHighestWeightVector b lam v) : (hv.weight : H → K) 
   (rfl)
 
 end IsHighestWeightVector
-
-end LieModule
 
 /-! ### Dominant integral weights -/
 
@@ -306,7 +299,7 @@ theorem IsDominantIntegral.exists_nat_apply_coroot {lam : Dual K H}
 
 /-! ### The weight of a highest weight vector is dominant integral -/
 
-variable [LieModule K L M] [FiniteDimensional K M]
+variable [FiniteDimensional K M]
 
 /-- **The weight of a highest weight vector is dominant integral.** For a highest weight vector `v`
 in a finite-dimensional module and a simple root `αᵢ`, the vector `v` is an eigenvector of the
@@ -323,18 +316,7 @@ theorem IsHighestWeightVector.isDominantIntegral {lam : Dual K H} {v : M}
     support_subset_posRoots (IsKilling.rootSystem H) b hi
   rw [IsKilling.rootSystem_coroot_apply]
   exact exists_nat_of_lie_coroot_eq_smul_of_forall_rootSpace_lie_eq_zero (M := M)
-    (LieSubalgebra.isNonZero_coe_root i) hv.ne_zero (hv.lie_cartan _)
+    (LieSubalgebra.isNonZero_coe_root i) hv.ne_zero (hv.lie_eq_smul _)
     fun _ he => hv.lie_eq_zero_of_mem_rootSpace hipos he
-
-/-- **Natural values on every positive coroot.** Combining
-`TauCeti.IsHighestWeightVector.isDominantIntegral` with
-`TauCeti.IsDominantIntegral.exists_nat_apply_coroot`: the weight of a highest weight vector in a
-finite-dimensional module is a natural number on the coroot of every positive root, so the vector
-is primitive in every positive direction at once and not only in the simple ones. -/
-theorem IsHighestWeightVector.exists_nat_apply_coroot {lam : Dual K H} {v : M}
-    (hv : IsHighestWeightVector b lam v) {i : H.root}
-    (hi : i ∈ posRoots (IsKilling.rootSystem H) b) :
-    ∃ n : ℕ, lam ((IsKilling.rootSystem H).coroot i) = (n : K) :=
-  hv.isDominantIntegral.exists_nat_apply_coroot hi
 
 end TauCeti
