@@ -10,8 +10,8 @@ public import TauCeti.NumberTheory.NumberField.Quadratic.TotalRamification
 /-!
 # Ramified primes are ambiguous 2-torsion classes
 
-For a quadratic field `K`, write `σ = ringOfIntegersQuadraticConj` for quadratic conjugation (defined
-from an integral generator `θ : 𝓞 K` with `minpoly ℤ θ = X² - d` and `ℚ⟮θ⟯ = K`). This file records
+For a quadratic field `K`, write `σ = ringOfIntegersQuadraticConj` for quadratic conjugation, defined
+from an integral generator `θ : 𝓞 K` with `minpoly ℤ θ = X² - d` and `ℚ⟮θ⟯ = K`. This file records
 the arithmetic at a ramified rational prime `p`:
 
 * quadratic conjugation **fixes** the unique prime `𝔭` of `𝓞 K` above `p`, so `𝔭` is an
