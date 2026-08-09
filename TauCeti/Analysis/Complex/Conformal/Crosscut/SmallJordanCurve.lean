@@ -31,10 +31,10 @@ closed image crosscut.
 
 ## Main result
 
-* `TauCeti.exists_isJordanCurve_containing_closure_image_ball_inter_sphere_diam_le` -- below every
+* `TauCeti.exists_isJordanCurve_superset_closure_image_ball_inter_sphere_diam_le` -- below every
   prescribed radius, a short image crosscut lies on an arbitrarily small Jordan curve contained in
   the closure of the image domain.
-* `TauCeti.exists_isJordanCurve_containing_closure_image_ball_inter_sphere_diam_le_of_isBounded` --
+* `TauCeti.exists_isJordanCurve_superset_closure_image_ball_inter_sphere_diam_le_of_isBounded` --
   the bounded-image form used for a Riemann map.
 
 ## Roadmap role
@@ -80,7 +80,7 @@ image crosscut and a small injective path along that frontier.
 No assertion is made about which component of the complement of `J` contains the crosscut
 neighbourhood. Identifying that component is the planar-separation input still needed by the
 Caratheodory boundary correspondence. -/
-theorem exists_isJordanCurve_containing_closure_image_ball_inter_sphere_diam_le
+theorem exists_isJordanCurve_superset_closure_image_ball_inter_sphere_diam_le
     (hζ : dist ζ c = r) (hr : 0 < r) (hf : DifferentiableOn ℂ f (ball c r))
     (hinj : InjOn f (ball c r)) (hdir : ∫⁻ z in ball c r, ‖deriv f z‖ₑ ^ 2 ≠ ⊤)
     (hfrontier : IsJordanCurve (frontier (f '' ball c r))) {ε R : ℝ}
@@ -88,6 +88,7 @@ theorem exists_isJordanCurve_containing_closure_image_ball_inter_sphere_diam_le
     ∃ ρ ∈ Ioo 0 R, ρ < 2 * r ∧ ∃ J : Set ℂ,
       IsJordanCurve J ∧
         closure (f '' (ball c r ∩ sphere ζ ρ)) ⊆ J ∧
+        J ⊆ closure (f '' (ball c r ∩ sphere ζ ρ)) ∪ frontier (f '' ball c r) ∧
         J ⊆ closure (f '' ball c r) ∧ diam J ≤ ε := by
   have hhalf : 0 < ε / 2 := by positivity
   obtain ⟨δ, hδ, hpath⟩ :=
@@ -110,7 +111,7 @@ theorem exists_isJordanCurve_containing_closure_image_ball_inter_sphere_diam_le
   by_cases hends :
       (frontier (f '' ball c r) ∩ closure (f '' (ball c r ∩ sphere ζ ρ))).Subsingleton
   · refine ⟨ρ, ⟨hρ.1, hρR⟩, hρr, closure (f '' (ball c r ∩ sphere ζ ρ)), ?_,
-      subset_rfl, hcrossSub, ?_⟩
+      subset_rfl, subset_union_left, hcrossSub, ?_⟩
     · exact isJordanCurve_closure_image_ball_inter_sphere_of_subsingleton hζ hρ.1 hρr
         hf hinj hlenFin hends
     · rw [diam_closure]
@@ -136,7 +137,7 @@ theorem exists_isJordanCurve_containing_closure_image_ball_inter_sphere_diam_le
     obtain ⟨γ, hγinj, hγsub, hγdiam⟩ := hpath hu.1 hv.1 huv huvδ
     refine ⟨ρ, ⟨hρ.1, hρR⟩, hρr,
       closure (f '' (ball c r ∩ sphere ζ ρ)) ∪ range γ,
-      hclose γ hγinj hγsub, subset_union_left, ?_, ?_⟩
+      hclose γ hγinj hγsub, subset_union_left, union_subset_union subset_rfl hγsub, ?_, ?_⟩
     · exact union_subset hcrossSub (hγsub.trans frontier_subset_closure)
     · have hinter :
           (closure (f '' (ball c r ∩ sphere ζ ρ)) ∩ range γ).Nonempty :=
@@ -156,7 +157,7 @@ every positive tolerance and radius bound, some closed image crosscut can be cho
 curve in the closure of the image domain whose diameter is at most the tolerance.
 
 This is the form used for the Riemann map of a bounded Jordan domain. -/
-theorem exists_isJordanCurve_containing_closure_image_ball_inter_sphere_diam_le_of_isBounded
+theorem exists_isJordanCurve_superset_closure_image_ball_inter_sphere_diam_le_of_isBounded
     (hζ : dist ζ c = r) (hr : 0 < r) (hf : DifferentiableOn ℂ f (ball c r))
     (hinj : InjOn f (ball c r)) (hb : IsBounded (f '' ball c r))
     (hfrontier : IsJordanCurve (frontier (f '' ball c r))) {ε R : ℝ}
@@ -164,8 +165,9 @@ theorem exists_isJordanCurve_containing_closure_image_ball_inter_sphere_diam_le_
     ∃ ρ ∈ Ioo 0 R, ρ < 2 * r ∧ ∃ J : Set ℂ,
       IsJordanCurve J ∧
         closure (f '' (ball c r ∩ sphere ζ ρ)) ⊆ J ∧
+        J ⊆ closure (f '' (ball c r ∩ sphere ζ ρ)) ∪ frontier (f '' ball c r) ∧
         J ⊆ closure (f '' ball c r) ∧ diam J ≤ ε :=
-  exists_isJordanCurve_containing_closure_image_ball_inter_sphere_diam_le hζ hr hf hinj
+  exists_isJordanCurve_superset_closure_image_ball_inter_sphere_diam_le hζ hr hf hinj
     (lintegral_enorm_deriv_sq_ne_top_of_isBounded isOpen_ball hf
       measurableSet_ball.nullMeasurableSet subset_rfl hinj hb)
     hfrontier hε hR
