@@ -20,8 +20,6 @@ reflections lift through the Pin group, so the correcting element lies in the ra
 
 * `TauCeti.CliffordAlgebra.exists_mem_range_pinToOrthogonal_mul_eqOn_sup_span_singleton`: a
   Pin-range correction extends a fixed subspace by one orthogonal anisotropic vector.
-* `TauCeti.CliffordAlgebra.exists_mem_range_pinToOrthogonal_mul_apply_eq_self`: the specialization
-  to the zero subspace corrects one vector.
 
 ## References
 
@@ -55,16 +53,6 @@ theorem exists_mem_range_pinToOrthogonal_mul_eqOn_sup_span_singleton
         (((r * g : QuadraticMap.orthogonalGroup Q) : V ≃ₗ[K] V) y) = y :=
   QuadraticMap.exists_mem_subgroup_mul_eqOn_sup_span_singleton_of_reflection_mem Q
     (pinToOrthogonal Q).range (reflection_mem_range_pinToOrthogonal Q) g W hfix x hx
-
-/-- Given an orthogonal automorphism `g` and a vector `v` of invertible norm, an element in the
-range of the Pin action can be multiplied into `g` so that the product fixes `v`. -/
-theorem exists_mem_range_pinToOrthogonal_mul_apply_eq_self
-    (g : QuadraticMap.orthogonalGroup Q) (v : V) [Invertible (Q v)] :
-    ∃ r : QuadraticMap.orthogonalGroup Q, r ∈ (pinToOrthogonal Q).range ∧
-      (((r * g : QuadraticMap.orthogonalGroup Q) : V ≃ₗ[K] V) v = v) := by
-  obtain ⟨r, hr, hfix⟩ :=
-    exists_mem_range_pinToOrthogonal_mul_eqOn_sup_span_singleton Q g ⊥ (by simp) v (by simp)
-  exact ⟨r, hr, hfix v (Submodule.mem_sup_right (Submodule.mem_span_singleton_self v))⟩
 
 end CliffordAlgebra
 end TauCeti
