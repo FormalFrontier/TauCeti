@@ -69,28 +69,48 @@ private noncomputable def descentEqualizerHom :
   AlgHom.codRestrict (IsScalarTower.toAlgHom R A B) _ fun a => by
     simp [faithfullyFlatDescentLeft, faithfullyFlatDescentRight, tmul_one_eq_one_tmul]
 
+omit [Module.FaithfullyFlat A B] in
+@[simp]
+private theorem descentEqualizerHom_apply_val (a : A) :
+    (descentEqualizerHom (R := R) A B a : B) = algebraMap A B a :=
+  rfl
+
+omit [Module.FaithfullyFlat A B] in
+private theorem mem_descentEqualizer_iff_eqLocus (b : B) :
+    b ∈ AlgHom.equalizer (faithfullyFlatDescentLeft (R := R) A (B := B))
+      (faithfullyFlatDescentRight (R := R) A (B := B)) ↔
+        b ∈ includeLeftRingHom.eqLocus includeRight.toRingHom (S := B ⊗[A] B) :=
+  Iff.rfl
+
 private theorem descentEqualizerHom_bijective :
     Function.Bijective (descentEqualizerHom (R := R) A B) := by
   constructor
   · intro a b hab
     apply FaithfulSMul.algebraMap_injective A B
-    exact congr_arg Subtype.val hab
+    simpa only [descentEqualizerHom_apply_val] using congr_arg Subtype.val hab
   · rintro ⟨b, hb⟩
     have hb' :
-        b ∈ includeLeftRingHom.eqLocus includeRight.toRingHom (S := B ⊗[A] B) := by
-      exact hb
+        b ∈ includeLeftRingHom.eqLocus includeRight.toRingHom (S := B ⊗[A] B) :=
+      (mem_descentEqualizer_iff_eqLocus (R := R) A B b).mp hb
     have hb'' : b ∈ Set.range (algebraMap A B) := by
       rw [← Algebra.IsEffective.eqLocus_includeLeft_includeRight
         (Algebra.IsEffective.of_faithfullyFlat A B)]
       exact hb'
     obtain ⟨a, ha⟩ := hb''
-    exact ⟨a, Subtype.ext ha⟩
+    refine ⟨a, Subtype.ext ?_⟩
+    simpa only [descentEqualizerHom_apply_val] using ha
 
 private noncomputable def descentEqualizerEquiv :
     A ≃ₐ[R] AlgHom.equalizer (faithfullyFlatDescentLeft (R := R) A (B := B))
       (faithfullyFlatDescentRight (R := R) A (B := B)) :=
   AlgEquiv.ofBijective (descentEqualizerHom (R := R) A B)
     (descentEqualizerHom_bijective (R := R) A B)
+
+@[simp]
+private theorem descentEqualizerEquiv_apply_val (a : A) :
+    (descentEqualizerEquiv (R := R) A B a : B) = algebraMap A B a := by
+  rw [descentEqualizerEquiv, AlgEquiv.ofBijective_apply]
+  exact descentEqualizerHom_apply_val (R := R) A B a
 
 /-- The subgroup of `B`-points satisfying faithfully flat descent along `A → B`.
 
@@ -111,6 +131,7 @@ private theorem mem_faithfullyFlatDescentSubgroup_iff_maps (f : WithConv (H →�
 
 omit [Module.FaithfullyFlat A B] in
 /-- Pointwise form of the faithfully flat descent condition. -/
+@[simp]
 theorem mem_faithfullyFlatDescentSubgroup_iff_apply (f : WithConv (H →ₐ[R] B)) :
     f ∈ faithfullyFlatDescentSubgroup (R := R) (H := H) A B ↔
       ∀ h, (includeLeft (R := A) (S := A) (A := B) (B := B)) (f h) =
@@ -137,6 +158,15 @@ private theorem faithfullyFlatDescentHom_apply (f : WithConv (H →ₐ[R] A)) :
       mapValue (H := H) (IsScalarTower.toAlgHom R A B) f :=
   rfl
 
+omit [Module.FaithfullyFlat A B] in
+@[simp]
+private theorem faithfullyFlatDescentHom_apply_apply (f : WithConv (H →ₐ[R] A)) (h : H) :
+    (faithfullyFlatDescentHom (R := R) (H := H) A B f :
+      faithfullyFlatDescentSubgroup (R := R) (H := H) A B).1.ofConv h =
+        algebraMap A B (f.ofConv h) := by
+  rw [faithfullyFlatDescentHom_apply, mapValue_apply, toConv_ofConv]
+  rfl
+
 private theorem faithfullyFlatDescentHom_bijective :
     Function.Bijective (faithfullyFlatDescentHom (R := R) (H := H) A B) := by
   constructor
@@ -144,14 +174,8 @@ private theorem faithfullyFlatDescentHom_bijective :
     apply WithConv.ofConv_injective
     ext h
     apply FaithfulSMul.algebraMap_injective A B
-    have hfg' :
-        ((faithfullyFlatDescentHom (R := R) (H := H) A B f :
-            faithfullyFlatDescentSubgroup (R := R) (H := H) A B) :
-          WithConv (H →ₐ[R] B)) =
-        (faithfullyFlatDescentHom (R := R) (H := H) A B g :
-          faithfullyFlatDescentSubgroup (R := R) (H := H) A B) :=
-      congr_arg Subtype.val hfg
-    exact congr_arg (fun p => p.ofConv h) hfg'
+    simpa only [faithfullyFlatDescentHom_apply_apply] using
+      congr_arg (fun p : faithfullyFlatDescentSubgroup (R := R) (H := H) A B => p.1.ofConv h) hfg
   · intro f
     let f' : H →ₐ[R]
         AlgHom.equalizer (faithfullyFlatDescentLeft (R := R) A (B := B))
@@ -162,7 +186,16 @@ private theorem faithfullyFlatDescentHom_bijective :
     refine ⟨toConv g, Subtype.ext ?_⟩
     apply WithConv.ofConv_injective
     ext h
-    exact congr_arg Subtype.val ((descentEqualizerEquiv (R := R) A B).apply_symm_apply (f' h))
+    rw [faithfullyFlatDescentHom_apply_apply, ofConv_toConv]
+    rw [show g h = (descentEqualizerEquiv (R := R) A B).symm (f' h) by rfl]
+    have hdesc :=
+      congr_arg Subtype.val ((descentEqualizerEquiv (R := R) A B).apply_symm_apply (f' h))
+    rw [descentEqualizerEquiv_apply_val] at hdesc
+    have hf' : (f' h : B) = f.1.ofConv h := by
+      dsimp only [f']
+      exact AlgHom.coe_codRestrict f.1.ofConv _ _ h
+    rw [hf'] at hdesc
+    exact hdesc
 
 /-- **Faithfully flat descent for affine group-valued points.** If `B` is faithfully flat over
 `A`, base change identifies the convolution group of `A`-points of `H` with the subgroup of
