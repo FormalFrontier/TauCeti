@@ -297,7 +297,7 @@ theorem boundaryChart_symm_apply {z : EuclideanSpace ℝ (Fin n)}
 
 variable (M) in
 /-- The boundary chart at a boundary point, built from the ambient preferred chart there. -/
-noncomputable def boundaryChartAt (hk : k ≠ 0) (p : ↥((𝓡∂ (n + 1)).boundary M)) :
+private noncomputable def boundaryChartAt (hk : k ≠ 0) (p : ↥((𝓡∂ (n + 1)).boundary M)) :
     OpenPartialHomeomorph ↥((𝓡∂ (n + 1)).boundary M) (EuclideanSpace ℝ (Fin n)) :=
   boundaryChart hk p (chartAt (EuclideanHalfSpace (n + 1)) p.1) (chart_mem_atlas _ _)
 
