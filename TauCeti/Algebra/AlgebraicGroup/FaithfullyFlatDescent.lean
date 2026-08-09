@@ -123,10 +123,9 @@ private theorem mem_descentEqualizer_iff_eqLocus (b : B) :
         b ∈ includeLeftRingHom.eqLocus includeRight.toRingHom (S := B ⊗[A] B) :=
   by
     rw [AlgHom.mem_equalizer, RingHom.mem_eqLocus]
-    change
-      (includeLeft : B →ₐ[A] B ⊗[A] B) b = (includeRight : B →ₐ[A] B ⊗[A] B) b ↔
-        includeLeftRingHom b = includeRight.toRingHom b
-    rfl
+    simp only [faithfullyFlatDescentLeft, faithfullyFlatDescentRight,
+      AlgHom.restrictScalars_apply, includeLeft_apply, includeLeftRingHom_apply,
+      AlgHom.toRingHom_eq_coe, AlgHom.coe_toRingHom, includeRight_apply]
 
 private theorem descentEqualizerHom_bijective :
     Function.Bijective (descentEqualizerHom (R := R) A B) := by
