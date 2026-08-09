@@ -4,8 +4,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Quotient.Basic
 public import TauCeti.Algebra.AlgebraicGroup.Tangent.Lie.Map
+public import TauCeti.Algebra.Bialgebra.Quotient
+public import TauCeti.Algebra.HopfAlgebra.HopfIdeal.Basic
 
 /-!
 # The Lie algebra of a closed affine subgroup
@@ -69,25 +70,8 @@ lemma quotientLieHom_apply_apply (I : HopfIdeal R H)
     quotientLieHom I d x =
       Bialgebra.CounitAlgebra.algEquivSelf R (H ⧸ I.toIdeal) B
         (d (Ideal.Quotient.mkₐ R I.toIdeal x)) := by
-  apply (Bialgebra.CounitAlgebra.algEquivSelf R H B).injective
-  rw [Bialgebra.CounitAlgebra.algEquivSelf_apply R H B
-    (Bialgebra.CounitAlgebra.algEquivSelf R (H ⧸ I.toIdeal) B
-      (d (Ideal.Quotient.mkₐ R I.toIdeal x)))]
-  rw [quotientLieHom, derivationCompLieHom_apply, derivationComp_apply]
-  have hq : (Bialgebra.Quotient.mkBialgHom I.toIdeal : H →ₐc[R] H ⧸ I.toIdeal) x =
-      Ideal.Quotient.mkₐ R I.toIdeal x := by
-    rw [Bialgebra.Quotient.mkBialgHom_apply, Ideal.Quotient.mkₐ_eq_mk]
-  calc
-    Bialgebra.CounitAlgebra.algEquivSelf R H B
-          (d ((Bialgebra.Quotient.mkBialgHom I.toIdeal : H →ₐc[R] H ⧸ I.toIdeal) x)) =
-        Bialgebra.CounitAlgebra.algEquivSelf R (H ⧸ I.toIdeal) B
-          (d ((Bialgebra.Quotient.mkBialgHom I.toIdeal : H →ₐc[R] H ⧸ I.toIdeal) x)) :=
-      (Bialgebra.CounitAlgebra.algEquivSelf_apply R H B _).trans
-        (Bialgebra.CounitAlgebra.algEquivSelf_apply R (H ⧸ I.toIdeal) B _).symm
-    _ = Bialgebra.CounitAlgebra.algEquivSelf R (H ⧸ I.toIdeal) B
-          (d (Ideal.Quotient.mkₐ R I.toIdeal x)) :=
-      congrArg (Bialgebra.CounitAlgebra.algEquivSelf R (H ⧸ I.toIdeal) B)
-        (congrArg d hq)
+  simp [quotientLieHom]
+  rfl
 
 /-- The differential of a closed-subgroup inclusion is injective. -/
 theorem quotientLieHom_injective (I : HopfIdeal R H) :
@@ -248,6 +232,22 @@ theorem quotientLieEquiv_apply_coe (I : HopfIdeal R H)
   congrArg Subtype.val
     (LieHom.equivRangeOfInjective_apply (quotientLieHom (B := B) I)
       (quotientLieHom_injective I) d)
+
+/-- The inverse of the canonical Lie equivalence descends an ambient derivation by evaluating
+on representatives of the quotient. -/
+@[simp]
+theorem quotientLieEquiv_symm_apply_mk (I : HopfIdeal R H)
+    (d : lieSubalgebra (B := B) I) (x : H) :
+    (quotientLieEquiv (B := B) I).symm d (Ideal.Quotient.mk I.toIdeal x) =
+      (d : Derivation R H (Bialgebra.CounitAlgebra R H B)) x := by
+  have h : quotientLieHom I ((quotientLieEquiv (B := B) I).symm d) =
+      (d : Derivation R H (Bialgebra.CounitAlgebra R H B)) :=
+    (quotientLieEquiv_apply_coe I ((quotientLieEquiv (B := B) I).symm d)).symm.trans
+      (congrArg Subtype.val ((quotientLieEquiv (B := B) I).apply_symm_apply d))
+  have hx := congrArg (fun e : Derivation R H (Bialgebra.CounitAlgebra R H B) => e x) h
+  rw [quotientLieHom_apply_apply] at hx
+  rw [← Ideal.Quotient.mkₐ_eq_mk (R₁ := R)]
+  exact (Bialgebra.CounitAlgebra.algEquivSelf_apply R (H ⧸ I.toIdeal) B _).symm.trans hx
 
 end HopfIdeal
 
