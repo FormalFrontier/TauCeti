@@ -5,7 +5,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.Analysis.SpecialFunctions.Exponential
-import Mathlib.Analysis.Calculus.FDeriv.Pow
 import Mathlib.Analysis.Calculus.Deriv.Mul
 import Mathlib.Analysis.Calculus.Deriv.Shift
 public import Mathlib.MeasureTheory.Integral.IntervalIntegral.FundThmCalculus
@@ -91,8 +90,9 @@ end Duhamel
 ## The Fréchet derivative series
 
 The Fréchet derivative of the exponential in a possibly noncommutative Banach algebra over a
-normed characteristic-zero field is the convergent series whose `n`th homogeneous contribution
-inserts the tangent vector in every position among `n` copies of the base point.
+normed characteristic-zero field with continuous rational scalar action is the convergent series
+whose `n`th homogeneous contribution inserts the tangent vector in every position among `n` copies
+of the base point.
 
 ### Main definitions
 
@@ -168,6 +168,8 @@ theorem expFDerivTerm_eq_derivSeries (x : R) (n : ℕ) :
     ContinuousLinearMap.compFormalMultilinearSeries_apply,
     ContinuousLinearMap.compContinuousMultilinearMap_coe, Function.comp_apply,
     FormalMultilinearSeries.changeOriginSeries, _root_.sum_apply]
+  -- Extensionality and the preceding unfoldings reduce the equality definitionally to evaluating
+  -- the curried change-origin term at `y`.
   change _ = continuousMultilinearCurryFin1 𝕂 R R _ y
   rw [continuousMultilinearCurryFin1_apply, _root_.sum_apply, Fin.snoc_zero]
   simp_rw [FormalMultilinearSeries.changeOriginSeriesTerm_apply]
@@ -202,7 +204,9 @@ theorem expFDerivTerm_eq_derivSeries (x : R) (n : ℕ) :
   simp_rw [if_pos (hi _), Nat.min_eq_left (hi _).le]
   have hsub (i : Fin (n + 1)) : 1 + n - ((i : ℕ) + 1) = n - i := by omega
   simp_rw [hsub]
-  rw [show 1 + n = n + 1 by omega]
+  rw [Nat.add_comm 1 n]
+  -- After normalizing the cardinality, the `Fin`-indexed summand is definitionally displayed as
+  -- the corresponding function of its coerced natural-number index.
   change _ = ∑ i : Fin (n + 1),
     (fun j : ℕ ↦ ((n + 1).factorial⁻¹ : 𝕂) • (x ^ j * (y * x ^ (n - j)))) i
   rw [Fin.sum_univ_eq_sum_range
