@@ -168,12 +168,8 @@ lemma add_conj_smul_basis (p q : R[X]) :
 lemma mul_conj (x : W.CoordinateRing) :
     x * conj W x = algebraMap R[X] W.CoordinateRing (Algebra.norm R[X] x) := by
   obtain ⟨p, q, rfl⟩ := exists_smul_basis_eq x
-  rw [conj_smul_basis, norm_smul_basis, smul_basis_eq_mk, ← map_mul,
-    ← mk_C_eq_algebraMap]
-  refine AdjoinRoot.mk_eq_mk.mpr ⟨-C q ^ 2, ?_⟩
-  rw [negPolynomial, polynomial]
-  simp only [map_sub, map_mul, map_add, map_pow]
-  ring1
+  rw [conj_smul_basis, ← mk_C_eq_algebraMap, AdjoinRoot.mk_C, coe_norm_smul_basis,
+    smul_basis_eq_mk, ← map_mul, negPolynomial]
 
 end CoordinateRing
 
@@ -201,9 +197,10 @@ private theorem dvd_and_dvd_of_prime [W.IsElliptic] {π p q : F[X]} (hπ : Prime
       rw [map_sub, map_mul, hg, div_mul_cancel₀ _ hqk, sub_self]
     -- transport the two divisibilities to `g`
     obtain ⟨f, hf⟩ : π ∣ 2 * g - (C W.a₁ * X + C W.a₃) := by
-      refine (hπ.dvd_or_dvd (show π ∣ q * (2 * g - (C W.a₁ * X + C W.a₃)) from ?_)).resolve_left hq
-      obtain ⟨t₁, ht₁⟩ := ht
-      exact ⟨t₁ - 2 * p₁, by linear_combination ht₁ - 2 * hp₁⟩
+      have hprod : π ∣ q * (2 * g - (C W.a₁ * X + C W.a₃)) := by
+        obtain ⟨t₁, ht₁⟩ := ht
+        exact ⟨t₁ - 2 * p₁, by linear_combination ht₁ - 2 * hp₁⟩
+      refine (hπ.dvd_or_dvd hprod).resolve_left hq
     obtain ⟨m, hm⟩ : π ^ 2 ∣ g ^ 2 - g * (C W.a₁ * X + C W.a₃) -
         (X ^ 3 + C W.a₂ * X ^ 2 + C W.a₄ * X + C W.a₆) := by
       refine hπ.pow_dvd_of_dvd_mul_left (a := q ^ 2) 2 (fun h => hq (hπ.dvd_of_dvd_pow h)) ?_
@@ -271,16 +268,18 @@ private theorem dvd_and_dvd [W.IsElliptic] (d : F[X]) : ∀ p q : F[X], d ≠ 0 
   obtain ⟨q', rfl⟩ := hq
   have ht' : a ∣ 2 * p' - q' * (C W.a₁ * X + C W.a₃) := by
     refine (mul_dvd_mul_iff_left hπ.ne_zero).mp ?_
-    rw [show π * (2 * p' - q' * (C W.a₁ * X + C W.a₃)) =
-      2 * (π * p') - π * q' * (C W.a₁ * X + C W.a₃) from by ring]
+    have htrace : π * (2 * p' - q' * (C W.a₁ * X + C W.a₃)) =
+        2 * (π * p') - π * q' * (C W.a₁ * X + C W.a₃) := by ring
+    rw [htrace]
     exact ht
   have hn' : a ^ 2 ∣ p' ^ 2 - p' * q' * (C W.a₁ * X + C W.a₃) -
       q' ^ 2 * (X ^ 3 + C W.a₂ * X ^ 2 + C W.a₄ * X + C W.a₆) := by
     refine (mul_dvd_mul_iff_left (pow_ne_zero 2 hπ.ne_zero)).mp ?_
-    rw [show π ^ 2 * (p' ^ 2 - p' * q' * (C W.a₁ * X + C W.a₃) -
-      q' ^ 2 * (X ^ 3 + C W.a₂ * X ^ 2 + C W.a₄ * X + C W.a₆)) =
-      (π * p') ^ 2 - π * p' * (π * q') * (C W.a₁ * X + C W.a₃) -
-        (π * q') ^ 2 * (X ^ 3 + C W.a₂ * X ^ 2 + C W.a₄ * X + C W.a₆) from by ring, ← mul_pow]
+    have hnorm : π ^ 2 * (p' ^ 2 - p' * q' * (C W.a₁ * X + C W.a₃) -
+        q' ^ 2 * (X ^ 3 + C W.a₂ * X ^ 2 + C W.a₄ * X + C W.a₆)) =
+        (π * p') ^ 2 - π * p' * (π * q') * (C W.a₁ * X + C W.a₃) -
+          (π * q') ^ 2 * (X ^ 3 + C W.a₂ * X ^ 2 + C W.a₄ * X + C W.a₆) := by ring
+    rw [hnorm, ← mul_pow]
     exact hn
   obtain ⟨hp', hq'⟩ := ih p' q' ha ht' hn'
   exact ⟨mul_dvd_mul_left π hp', mul_dvd_mul_left π hq'⟩
