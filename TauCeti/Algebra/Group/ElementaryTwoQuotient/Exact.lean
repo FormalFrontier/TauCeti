@@ -43,7 +43,7 @@ quotient is finite-dimensional, then also `|G| = 2 ^ twoRank G`.
 * `TauCeti.twoRank_le_of_surjective`: `twoRank H ≤ twoRank G` when `G/G²` is finite-dimensional.
 * `TauCeti.twoRank_le_twoRank_add_twoRank_ker`: `twoRank G ≤ twoRank H + twoRank (ker f)` when
   `G/G²` and `ker f / (ker f)²` are finite-dimensional.
-* `TauCeti.injective_elementaryTwoQuotientMap_iff` and
+* `TauCeti.elementaryTwoQuotientMap_injective_iff` and
   `TauCeti.twoRank_eq_of_forall_isSquare_of_mem_ker`: the induced map is injective, and the two
   ranks agree when `ker f` consists of squares.
 * `TauCeti.card_elementaryTwoQuotient_of_forall_sq_eq_one` and
@@ -139,7 +139,7 @@ theorem twoRank_le_twoRank_add_twoRank_ker
 /-- **When a quotient loses no 2-rank at all.** For a surjection `f : G →* H`, the induced map on
 elementary-2 quotients is injective — hence an isomorphism — exactly when every element of `ker f`
 is already a square in `G`. -/
-theorem injective_elementaryTwoQuotientMap_iff (hf : Function.Surjective f) :
+theorem elementaryTwoQuotientMap_injective_iff (hf : Function.Surjective f) :
     Function.Injective (elementaryTwoQuotientMap f) ↔ ∀ g ∈ f.ker, IsSquare g := by
   rw [← LinearMap.ker_eq_bot, Submodule.eq_bot_iff]
   constructor
@@ -156,7 +156,7 @@ every element of `ker f` is a square in `G`, then `twoRank G = twoRank H`. -/
 theorem twoRank_eq_of_forall_isSquare_of_mem_ker (hf : Function.Surjective f)
     (h : ∀ g ∈ f.ker, IsSquare g) : twoRank G = twoRank H := by
   have hbij : Function.Bijective (elementaryTwoQuotientMap f) :=
-    ⟨(injective_elementaryTwoQuotientMap_iff hf).2 h, elementaryTwoQuotientMap_surjective hf⟩
+    ⟨(elementaryTwoQuotientMap_injective_iff hf).2 h, elementaryTwoQuotientMap_surjective hf⟩
   simpa only [twoRank_def] using (LinearEquiv.ofBijective _ hbij).finrank_eq
 
 section ElementaryAbelian
