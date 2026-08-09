@@ -324,11 +324,7 @@ def characteristic : LieTypeIndex → ℕ
 
 /-- The characteristic attached to a Lie-type index is prime. -/
 theorem characteristic_prime (d : LieTypeIndex) : d.characteristic.Prime := by
-  cases d <;> simp only [characteristic_A, characteristic_twistedA, characteristic_B,
-    characteristic_C, characteristic_D, characteristic_twistedD, characteristic_E6,
-    characteristic_E7, characteristic_E8, characteristic_F4, characteristic_G2,
-    characteristic_twistedE6, characteristic_trialityD4, characteristic_reeG2,
-    characteristic_suzuki, characteristic_reeF4, characteristic_tits] <;>
+  cases d <;> simp only [characteristic] <;>
     first | exact PrimePower.prime_p _ | decide
 
 /-- The Frobenius/classification parameter `q`. For ordinary and graph-twisted families this is the
@@ -416,19 +412,10 @@ theorem dynkinType_valid (d : ValidLieTypeIndex) : d.1.dynkinType.Valid := by
   obtain ⟨d, hvalid⟩ := d
   rw [LieTypeIndex.valid_iff] at hvalid
   obtain ⟨hrange, -⟩ := hvalid
-  cases d <;> simp only [LieTypeIndex.dynkinType_A, LieTypeIndex.dynkinType_twistedA,
-    LieTypeIndex.dynkinType_B, LieTypeIndex.dynkinType_C, LieTypeIndex.dynkinType_D,
-    LieTypeIndex.dynkinType_twistedD, LieTypeIndex.dynkinType_trialityD4,
-    LieTypeIndex.dynkinType_E6, LieTypeIndex.dynkinType_twistedE6,
-    LieTypeIndex.dynkinType_E7, LieTypeIndex.dynkinType_E8, LieTypeIndex.dynkinType_F4,
-    LieTypeIndex.dynkinType_reeF4, LieTypeIndex.dynkinType_tits,
-    LieTypeIndex.dynkinType_G2, LieTypeIndex.dynkinType_reeG2,
-    LieTypeIndex.dynkinType_suzuki, DynkinType.valid_A, DynkinType.valid_B,
-    DynkinType.valid_C, DynkinType.valid_D, DynkinType.valid_E6, DynkinType.valid_E7,
-    DynkinType.valid_E8, DynkinType.valid_F4, DynkinType.valid_G2] <;>
-    first
-      | trivial
-      | (rw [LieTypeIndex.inStandardRange_iff] at hrange; omega)
+  cases d <;> simp only [LieTypeIndex.dynkinType] <;>
+    rw [LieTypeIndex.inStandardRange_iff] at hrange <;>
+    simp_all
+  omega
 
 /-- The rank of the underlying untwisted Dynkin diagram. This is derived from `dynkinType`, not
 tabulated independently. -/
@@ -474,7 +461,8 @@ classification list retains under its alternating name. -/
 example : ¬(LieTypeIndex.B 2 q2).InStandardRange := by
   norm_num [LieTypeIndex.inStandardRange_iff, q2]
 
-/-- The rank-two symplectic family is retained under the `B` name in every characteristic. -/
+/-- Whenever it is otherwise admissible, the rank-two symplectic family is retained under the `B`
+name. -/
 example : (LieTypeIndex.B 2 q4).Valid := by
   norm_num [LieTypeIndex.valid_iff, LieTypeIndex.inStandardRange_iff,
     LieTypeIndex.isDuplicateRepresentative_iff, q4]
