@@ -437,7 +437,7 @@ theorem hyperbolicEquivTensor_ι_hyperbolic (v : Fin (1 + 1) → ℝ) :
 
 /-- The inverse of `hyperbolicEquivTensor` on the tensor representing an original generator. -/
 @[simp]
-theorem hyperbolicEquivTensor_symm_ι_base (m : M) :
+theorem hyperbolicEquivTensor_symm_apply_ι_base (m : M) :
     (hyperbolicEquivTensor Q).symm
         (_root_.CliffordAlgebra.ι Q m ⊗ₜ[ℝ] !![0, 1; 1, 0]) =
       _root_.CliffordAlgebra.ι _ (m, 0) := by
@@ -446,7 +446,7 @@ theorem hyperbolicEquivTensor_symm_ι_base (m : M) :
 
 /-- The inverse of `hyperbolicEquivTensor` on a tensor representing a hyperbolic generator. -/
 @[simp]
-theorem hyperbolicEquivTensor_symm_ι_hyperbolic
+theorem hyperbolicEquivTensor_symm_apply_ι_hyperbolic
     (v : Fin (1 + 1) → ℝ) :
     (hyperbolicEquivTensor Q).symm (1 ⊗ₜ[ℝ] !![v 0, v 1; -v 1, -v 0]) =
       _root_.CliffordAlgebra.ι _ (0, v) := by
