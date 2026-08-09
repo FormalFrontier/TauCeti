@@ -147,12 +147,15 @@ lemma conj_mk_C (r : R[X]) : conj W (AdjoinRoot.of W.polynomial r) = mk W (C r) 
 lemma conj_conj (x : W.CoordinateRing) : conj W (conj W x) = x :=
   by simpa only [conj_apply] using conjHom_conjHom W x
 
+/-- In the basis `{1, Y}`, conjugation sends the element with coordinates `(p, q)` to the
+polynomial representative `p + q * W.negPolynomial`. -/
 lemma conj_smul_basis (p q : R[X]) :
     conj W (p • (1 : W.CoordinateRing) + q • mk W Y) = mk W (C p + C q * W.negPolynomial) := by
   rw [smul_basis_eq_mk]
   simp only [map_add, map_mul, AdjoinRoot.mk_C, AdjoinRoot.mk_X, conj_mk_C, conj_mk_Y]
 
 /-- The sum of an element of the coordinate ring and its conjugate is its trace `2p - qs`. -/
+@[simp]
 lemma add_conj_smul_basis (p q : R[X]) :
     p • (1 : W.CoordinateRing) + q • mk W Y + conj W (p • 1 + q • mk W Y) =
       algebraMap R[X] W.CoordinateRing (2 * p - q * (C W.a₁ * X + C W.a₃)) := by
@@ -163,6 +166,7 @@ lemma add_conj_smul_basis (p q : R[X]) :
   ring1
 
 /-- The product of an element of the coordinate ring and its conjugate is its norm. -/
+@[simp]
 lemma mul_conj (x : W.CoordinateRing) :
     x * conj W x = algebraMap R[X] W.CoordinateRing (Algebra.norm R[X] x) := by
   obtain ⟨p, q, rfl⟩ := exists_smul_basis_eq x
