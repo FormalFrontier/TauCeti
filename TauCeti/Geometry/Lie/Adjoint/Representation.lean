@@ -6,7 +6,7 @@ module
 
 public import TauCeti.Geometry.Lie.Adjoint.Derivation
 public import TauCeti.Geometry.Lie.Adjoint.Smooth
-public import Mathlib.RepresentationTheory.Continuous.Basic
+public import TauCeti.RepresentationTheory.Continuous.Transport
 
 /-!
 # The group adjoint representation
@@ -25,8 +25,6 @@ This advances Deliverable A, Layer 1 of
 
 ## Main results
 
-* `TauCeti.Lie.leftInvariantDerivationLinearIsometryEquivModelVectorSpace_Ad`: the canonical
-  derivation–model equivalence intertwines `Ad` and `tangentAd`.
 * `TauCeti.Lie.contMDiff_Ad_apply`: the joint action `(g, X) ↦ Ad g X` is smooth.
 * `TauCeti.Lie.contMDiff_continuousAdjointRepresentation`: the bounded-operator-valued
   representation is smooth.
@@ -55,89 +53,65 @@ attribute [local instance] LieGroup.minSmoothnessThree
 local instance : FiniteDimensional ℝ (LeftInvariantDerivation I G) :=
   finiteDimensional_leftInvariantDerivation BoundarylessManifold.isInteriorPoint
 
-/-- The canonical isometric identification with the model space intertwines the derivation and
-tangent adjoint actions. -/
-@[simp]
-theorem leftInvariantDerivationLinearIsometryEquivModelVectorSpace_Ad
-    (g : G) (D : LeftInvariantDerivation I G) :
-    (pointDerivationEquivTangentSpace (I := I) 1 BoundarylessManifold.isInteriorPoint
-        (LeftInvariantDerivation.evalAt 1 (Ad (I := I) g D)) : E) =
-      tangentAd (I := I) g
-        (leftInvariantDerivationLinearIsometryEquivModelVectorSpace (I := I) (G := G) D) := by
-  have h := leftInvariantDerivationLieEquivGroupLieAlgebra_Ad (I := I) g D
-  simpa only [leftInvariantDerivationLieEquivGroupLieAlgebra_apply,
-    leftInvariantDerivationLinearIsometryEquivModelVectorSpace_apply,
-    leftInvariantDerivationEquivGroupLieAlgebra_apply] using h
+private noncomputable def derivationModelEquiv :
+    LeftInvariantDerivation I G ≃L[ℝ] E :=
+  (leftInvariantDerivationLinearIsometryEquivModelVectorSpace
+    (I := I) (G := G)).toContinuousLinearEquiv
+
+private noncomputable def modelAdjointRepresentation : ContRepresentation ℝ G E :=
+  .ofMonoidHom
+    { toFun := fun g ↦ show E →L[ℝ] E from adjointContinuousLinearMap (I := I) g
+      map_one' := adjointContinuousLinearMap_one (I := I) (G := G)
+      map_mul' := by
+        intro g h
+        -- `GroupLieAlgebra I G` is definitionally the model space `E`; expose it before using the
+        -- operator-composition form of the adjoint multiplication law.
+        change (adjointContinuousLinearMap (I := I) (g * h) : E →L[ℝ] E) =
+          (adjointContinuousLinearMap (I := I) g).comp
+            (adjointContinuousLinearMap (I := I) h)
+        exact adjointContinuousLinearMap_mul (I := I) g h }
 
 /-- The adjoint representation valued in bounded operators. -/
-def continuousAdjointRepresentation :
-    ContRepresentation ℝ G (LeftInvariantDerivation I G) where
-  toMonoidHom := by
-    let e := (leftInvariantDerivationLinearIsometryEquivModelVectorSpace
-      (I := I) (G := G)).toContinuousLinearEquiv
-    let transport := (e.arrowCongr e).symm
-    let A : G → E →L[ℝ] E := fun g ↦
-      show E →L[ℝ] E from adjointContinuousLinearMap (I := I) g
-    have hA_one : A 1 = ContinuousLinearMap.id ℝ E := by
-      have h := adjointContinuousLinearMap_one (I := I) (G := G)
-      change A 1 = ContinuousLinearMap.id ℝ E at h
-      exact h
-    have hA_mul (g h : G) : A (g * h) = (A g).comp (A h) := by
-      have hmul := adjointContinuousLinearMap_mul (I := I) g h
-      change A (g * h) = (A g).comp (A h) at hmul
-      exact hmul
-    exact
-      { toFun := fun g ↦ transport (A g)
-        map_one' := by
-          apply ContinuousLinearMap.ext
-          intro D
-          simp only [transport, ContinuousLinearEquiv.arrowCongr_symm]
-          rw [ContinuousLinearEquiv.arrowCongr_apply, hA_one,
-            ContinuousLinearMap.id_apply]
-          simp only [ContinuousLinearEquiv.symm_symm, ContinuousLinearEquiv.symm_apply_apply,
-            one_apply_eq_self]
-        map_mul' := by
-          intro g h
-          apply ContinuousLinearMap.ext
-          intro D
-          simp only [transport, ContinuousLinearEquiv.arrowCongr_symm, mul_apply_eq_comp]
-          rw [hA_mul]
-          rw [ContinuousLinearEquiv.arrowCongr_apply, ContinuousLinearEquiv.arrowCongr_apply,
-            ContinuousLinearEquiv.arrowCongr_apply, ContinuousLinearMap.comp_apply]
-          apply e.injective
-          simp only [ContinuousLinearEquiv.symm_symm,
-            ContinuousLinearEquiv.apply_symm_apply] }
+def continuousAdjointRepresentation : ContRepresentation ℝ G (LeftInvariantDerivation I G) :=
+  TauCeti.ContRepresentation.congr (derivationModelEquiv (I := I) (G := G)).symm
+    (modelAdjointRepresentation (I := I) (G := G))
+
+private theorem continuousAdjointRepresentation_coe :
+    ⇑(continuousAdjointRepresentation (I := I) (G := G)) = fun g ↦
+      (derivationModelEquiv (I := I) (G := G)).symm.conjContinuousAlgEquiv
+        (show E →L[ℝ] E from adjointContinuousLinearMap (I := I) g) :=
+  by
+    funext g
+    apply ContinuousLinearMap.ext
+    intro D
+    exact TauCeti.ContRepresentation.congr_apply _ _ _ _
 
 @[simp]
 theorem continuousAdjointRepresentation_apply (g : G) (D : LeftInvariantDerivation I G) :
     continuousAdjointRepresentation (I := I) g D = Ad (I := I) g D := by
-  let e := (leftInvariantDerivationLinearIsometryEquivModelVectorSpace
-    (I := I) (G := G)).toContinuousLinearEquiv
-  apply e.injective
-  -- Unfold the direct operator transport so the two inverse-equivalence applications are visible.
-  change e (e.symm ((show E →L[ℝ] E from adjointContinuousLinearMap (I := I) g) (e D))) =
-    e (Ad (I := I) g D)
+  rw [continuousAdjointRepresentation, TauCeti.ContRepresentation.congr_apply]
+  apply (derivationModelEquiv (I := I) (G := G)).injective
   rw [ContinuousLinearEquiv.apply_symm_apply]
-  dsimp only [e]
-  have h := tangentAd_apply (I := I) g
+  -- `GroupLieAlgebra I G` is definitionally `E`; expose the conjugated model-space operator.
+  change (adjointContinuousLinearMap (I := I) g : E →L[ℝ] E)
+      (derivationModelEquiv (I := I) (G := G) D) =
+    derivationModelEquiv (I := I) (G := G) (Ad (I := I) g D)
+  dsimp only [derivationModelEquiv]
+  have htangent := tangentAd_apply (I := I) g
     ((leftInvariantDerivationLinearIsometryEquivModelVectorSpace
       (I := I) (G := G) D : E) : GroupLieAlgebra I G)
-  have hE := congrArg (fun X : GroupLieAlgebra I G ↦ show E from X) h
-  have hintertwine := congrArg (fun X : GroupLieAlgebra I G ↦ show E from X)
+  have htangentE := congrArg (fun X : GroupLieAlgebra I G ↦ show E from X) htangent
+  exact htangentE.symm.trans
     (leftInvariantDerivationLinearIsometryEquivModelVectorSpace_Ad (I := I) g D).symm
-  rw [← leftInvariantDerivationEquivGroupLieAlgebra_apply,
-    ← leftInvariantDerivationLinearIsometryEquivModelVectorSpace_apply] at hintertwine
-  exact hE.symm.trans hintertwine
 
 /-- The bounded-operator-valued adjoint representation is smooth. -/
 theorem contMDiff_continuousAdjointRepresentation :
     ContMDiff I
       𝓘(ℝ, LeftInvariantDerivation I G →L[ℝ] LeftInvariantDerivation I G) ∞
       (continuousAdjointRepresentation (I := I) (G := G)) := by
-  let e := (leftInvariantDerivationLinearIsometryEquivModelVectorSpace
-    (I := I) (G := G)).toContinuousLinearEquiv
-  let transport := (e.arrowCongr e).symm
-  exact transport.contDiff.contMDiff.comp
+  rw [continuousAdjointRepresentation_coe]
+  exact (derivationModelEquiv (I := I) (G := G)).symm.conjContinuousAlgEquiv
+    |>.toContinuousLinearEquiv.contDiff.contMDiff.comp
     (contMDiff_adjointContinuousLinearMap (I := I) (G := G))
 
 /-- The group adjoint action on left-invariant derivations is jointly smooth. -/
