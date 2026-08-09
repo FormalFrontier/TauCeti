@@ -114,56 +114,35 @@ theorem endOfPoint_eq_iff_eqOn_matrixCoefficientSubalgebra
   constructor
   · exact eqOn_matrixCoefficientSubalgebra_of_endOfPoint_eq g h
   · intro hcoeff
-    obtain ⟨n, p, i, _, _, hpi⟩ := Module.Finite.exists_comp_eq_id_of_projective R M
-    let b := Pi.basisFun R (Fin n)
-    have hframe :
-        LinearMap.id = ∑ j, (TensorProduct.mk R M C (p (b j))).comp
-          ((TensorProduct.lid R C).toLinearMap.comp
-            (TensorProduct.map (b.coord j ∘ₗ i) LinearMap.id)) := by
-      apply TensorProduct.ext'
-      intro m c
-      simp only [LinearMap.id_apply, LinearMap.comp_apply, LinearEquiv.coe_toLinearMap,
-        TensorProduct.map_tmul, LinearMap.id_apply, TensorProduct.lid_tmul,
-        LinearMap.coe_sum, Finset.sum_apply, TensorProduct.mk_apply, TensorProduct.tmul_smul]
-      have hm : ∑ j, (b.coord j) (i m) • p (b j) = m := by
-        calc
-          ∑ j, (b.coord j) (i m) • p (b j) =
-              p (∑ j, (b.coord j) (i m) • b j) := by
-                rw [map_sum]
-                simp only [map_smul]
-          _ = p (i m) := by
-            congr 1
-            simpa only [Module.Basis.coord_apply] using b.sum_repr (i m)
-          _ = m := by rw [← LinearMap.comp_apply, hpi, LinearMap.id_apply]
-      calc
-        m ⊗ₜ[R] c = (∑ j, (b.coord j) (i m) • p (b j)) ⊗ₜ[R] c :=
-          congrArg (fun z ↦ z ⊗ₜ[R] c) hm.symm
-        _ = ∑ j, ((b.coord j) (i m) • p (b j)) ⊗ₜ[R] c := by
-          simpa only using
-            (TensorProduct.sum_tmul Finset.univ (fun j ↦ (b.coord j) (i m) • p (b j)) c)
-    have hcoact (m : M) :
-        coact (R := R) (C := C) m =
-          ∑ j, p (b j) ⊗ₜ[R]
-            matrixCoefficient (R := R) (C := C) ((b.coord j).comp i) m := by
-      have h := LinearMap.congr_fun hframe (coact (R := R) (C := C) m)
-      simpa only [LinearMap.id_apply, LinearMap.coe_sum, Finset.sum_apply,
-        LinearMap.comp_apply, LinearEquiv.coe_toLinearMap, TensorProduct.mk_apply,
-        matrixCoefficient_def] using h
+    have hcontract (k : C →ₐ[R] A) (m : M) (φ : Module.Dual R M) :
+        dualTensorHom R (Module.Dual R M) A
+            (((Module.evalEquiv R M).rTensor A)
+              (LinearMap.lTensor M k.toLinearMap (coact (R := R) (C := C) m))) φ =
+          k (matrixCoefficient (R := R) (C := C) φ m) := by
+      rw [matrixCoefficient_def]
+      induction coact (R := R) (C := C) m using TensorProduct.induction_on with
+      | zero => simp
+      | add x y hx hy => simp [hx, hy]
+      | tmul m c => simp
     apply LinearMap.ext
     intro z
     induction z using TensorProduct.induction_on with
     | zero => simp
     | add z t hz ht => simp [hz, ht]
     | tmul a m =>
-        rw [endOfPoint_tmul, endOfPoint_tmul,
-          hcoact m]
-        simp only [map_sum, LinearMap.lTensor_tmul, AlgHom.toLinearMap_apply,
-          TensorProduct.comm_tmul]
+        rw [endOfPoint_tmul, endOfPoint_tmul]
         congr 1
-        apply Finset.sum_congr rfl
-        intro j _
-        rw [hcoeff (matrixCoefficient_mem_subalgebra (R := R) (C := C)
-          ((b.coord j).comp i) m)]
+        have hout :
+            LinearMap.lTensor M g.toLinearMap (coact (R := R) (C := C) m) =
+              LinearMap.lTensor M h.toLinearMap (coact (R := R) (C := C) m) := by
+          apply ((Module.evalEquiv R M).rTensor A).injective
+          apply (dualTensorHomEquiv R (Module.Dual R M) A).injective
+          change dualTensorHom R (Module.Dual R M) A _ =
+            dualTensorHom R (Module.Dual R M) A _
+          ext φ
+          rw [hcontract, hcontract]
+          exact hcoeff (matrixCoefficient_mem_subalgebra (R := R) (C := C) φ m)
+        exact congrArg (TensorProduct.comm R M A) hout
 
 end
 
