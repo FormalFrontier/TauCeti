@@ -22,9 +22,9 @@ records the arithmetic of `σ` at a ramified rational prime `p`:
 
 Together these exhibit the ramified primes as explicit ambiguous 2-torsion classes — the members of
 `Cl(𝓞 K)[2]` (the object measured by `card_elementaryTwoQuotient_eq_card_twoTorsion`) that the
-ambiguous-class-number / 2-rank theorem of genus theory counts. This is the lower-bound
-building block of that theorem; the matching upper bound (that these generate all of `Cl(𝓞 K)[2]`,
-with a single relation) is left to later work.
+ambiguous-class-number / 2-rank theorem of genus theory counts. This is the lower-bound building
+block of that theorem; the matching upper bound (that these generate all of `Cl(𝓞 K)[2]`, with a
+single relation) is left to later work.
 
 ## Main results
 
@@ -32,7 +32,7 @@ with a single relation) is left to later work.
   for the prime `𝔭` above a ramified `p`.
 * `TauCeti.NumberField.mulEquiv_ringOfIntegersQuadraticConj_apply_eq_self_iff`: a class is fixed by
   `σ` iff it is 2-torsion.
-* `TauCeti.NumberField.sq_classGroupMk0_eq_one_of_mem_ramifiedPrimes`: the class of a ramified prime
+* `TauCeti.NumberField.classGroupMk0_sq_eq_one_of_mem_ramifiedPrimes`: the class of a ramified prime
   is 2-torsion.
 -/
 
@@ -49,19 +49,18 @@ variable {K : Type*} [Field K] [NumberField K] {θ : 𝓞 K} {d : ℤ}
 ramified rational prime `p`, quadratic conjugation `σ` satisfies `σ 𝔭 = 𝔭`: the pushforward
 `𝔭.map σ` is again a prime of `𝓞 K` lying over `p`, and a ramified prime of a quadratic field has
 only one prime above it. In other words, `𝔭` is an *ambiguous* ideal. -/
+@[simp]
 theorem map_ringOfIntegersQuadraticConj_eq_self_of_mem_ramifiedPrimes
     (hmin : minpoly ℤ θ = X ^ 2 - C d) (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤)
     {p : ℕ} (hmem : p ∈ ramifiedPrimes K) (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime]
     [𝔭.LiesOver (span {(p : ℤ)})] :
     Ideal.map (ringOfIntegersQuadraticConj hmin hgen) 𝔭 = 𝔭 := by
   have hK : finrank ℚ K = 2 := finrank_rat_eq_two hmin hgen
-  -- Package `σ` as a `ℤ`-algebra automorphism, so that `𝔭.map σ` again lies over `(p)`.
-  let σₐ : 𝓞 K ≃ₐ[ℤ] 𝓞 K := AlgEquiv.ofRingEquiv
-    (f := ringOfIntegersQuadraticConj hmin hgen)
-    (fun z => by rw [algebraMap_int_eq]; exact map_intCast _ z)
-  -- `𝔭.map σₐ` (definitionally `𝔭.map σ`) is a prime of `𝓞 K` above `(p)`, so it is in `{𝔭}`.
-  have hmemset : Ideal.map σₐ 𝔭 ∈ (span {(p : ℤ)} : Ideal ℤ).primesOver (𝓞 K) :=
-    ⟨inferInstance, inferInstance⟩
+  -- Pass to the `ℤ`-algebra packaging `σₐ` (equal to `σ` on ideals by
+  -- `map_ringOfIntegersQuadraticConjₐ`), whose pushforward is again a prime lying over `(p)`.
+  rw [← map_ringOfIntegersQuadraticConjₐ hmin hgen 𝔭]
+  have hmemset : Ideal.map (ringOfIntegersQuadraticConjₐ hmin hgen) 𝔭 ∈
+      (span {(p : ℤ)} : Ideal ℤ).primesOver (𝓞 K) := ⟨inferInstance, inferInstance⟩
   rwa [primesOver_eq_singleton_of_mem_ramifiedPrimes hK hmem 𝔭, Set.mem_singleton_iff] at hmemset
 
 /-- **A class is fixed by quadratic conjugation iff it is 2-torsion.** Because quadratic conjugation
@@ -73,15 +72,26 @@ theorem mulEquiv_ringOfIntegersQuadraticConj_apply_eq_self_iff
     ClassGroup.mulEquiv (ringOfIntegersQuadraticConj hmin hgen) C = C ↔ C ^ 2 = 1 := by
   rw [mulEquiv_ringOfIntegersQuadraticConj_apply_eq_inv hmin hgen, inv_eq_iff_mul_eq_one, ← pow_two]
 
+/-- The prime above a ramified rational prime is a nonzero divisor of the ideal monoid: it lies over
+the nonzero ideal `(p)`, so it is itself nonzero. -/
+private theorem mem_nonZeroDivisors_of_mem_ramifiedPrimes {p : ℕ} (hmem : p ∈ ramifiedPrimes K)
+    (𝔭 : Ideal (𝓞 K)) [𝔭.LiesOver (span {(p : ℤ)})] : 𝔭 ∈ nonZeroDivisors (Ideal (𝓞 K)) := by
+  apply mem_nonZeroDivisors_of_ne_zero
+  rw [Ideal.zero_eq_bot]
+  refine Ideal.ne_bot_of_liesOver_of_ne_bot ?_ 𝔭
+  rw [ne_eq, Ideal.span_singleton_eq_bot]
+  exact_mod_cast (prime_of_mem_ramifiedPrimes hmem).pos.ne'
+
 /-- **The class of a ramified prime is 2-torsion.** The prime `𝔭` above a ramified rational prime
 `p` is fixed by quadratic conjugation (it is ambiguous), and `σ` acts on `Cl(𝓞 K)` by inversion, so
 the class `[𝔭]` equals its own inverse: `[𝔭]² = 1`. Concretely, `[𝔭]` is an explicit element of the
 2-torsion `Cl(𝓞 K)[2]`. -/
-theorem sq_classGroupMk0_eq_one_of_mem_ramifiedPrimes
+@[simp]
+theorem classGroupMk0_sq_eq_one_of_mem_ramifiedPrimes
     (hmin : minpoly ℤ θ = X ^ 2 - C d) (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤)
     {p : ℕ} (hmem : p ∈ ramifiedPrimes K) (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime]
-    [𝔭.LiesOver (span {(p : ℤ)})] (h𝔭 : 𝔭 ≠ ⊥) :
-    ClassGroup.mk0 ⟨𝔭, mem_nonZeroDivisors_of_ne_zero (by rwa [Ideal.zero_eq_bot])⟩ ^ 2 = 1 := by
+    [𝔭.LiesOver (span {(p : ℤ)})] :
+    ClassGroup.mk0 ⟨𝔭, mem_nonZeroDivisors_of_mem_ramifiedPrimes hmem 𝔭⟩ ^ 2 = 1 := by
   -- The class is 2-torsion because it is fixed by `σ` (ambiguity) and `σ` acts by inversion.
   rw [← mulEquiv_ringOfIntegersQuadraticConj_apply_eq_self_iff hmin hgen, ClassGroup.mulEquiv_mk0]
   exact congrArg (ClassGroup.mk0 ·)

@@ -88,7 +88,7 @@ private theorem finrank_int_eq_two (hmin : minpoly ℤ θ = X ^ 2 - C d)
 
 /-- Quadratic conjugation packaged as a `ℤ`-algebra automorphism of `𝓞 K` (every ring
 automorphism is automatically `ℤ`-linear). -/
-private noncomputable def ringOfIntegersQuadraticConjₐ (hmin : minpoly ℤ θ = X ^ 2 - C d)
+noncomputable def ringOfIntegersQuadraticConjₐ (hmin : minpoly ℤ θ = X ^ 2 - C d)
     (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) : 𝓞 K ≃ₐ[ℤ] 𝓞 K :=
   AlgEquiv.ofRingEquiv (f := ringOfIntegersQuadraticConj hmin hgen)
     (fun z => by rw [algebraMap_int_eq]; exact map_intCast _ z)
@@ -96,7 +96,7 @@ private noncomputable def ringOfIntegersQuadraticConjₐ (hmin : minpoly ℤ θ 
 /-- Pushing an ideal forward along quadratic conjugation and along its `ℤ`-algebra form
 `ringOfIntegersQuadraticConjₐ` give the same ideal: the two wrappers carry the same underlying
 ring homomorphism. -/
-private theorem map_ringOfIntegersQuadraticConjₐ (hmin : minpoly ℤ θ = X ^ 2 - C d)
+theorem map_ringOfIntegersQuadraticConjₐ (hmin : minpoly ℤ θ = X ^ 2 - C d)
     (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) (J : Ideal (𝓞 K)) :
     Ideal.map (ringOfIntegersQuadraticConjₐ hmin hgen) J =
       Ideal.map (ringOfIntegersQuadraticConj hmin hgen) J :=
