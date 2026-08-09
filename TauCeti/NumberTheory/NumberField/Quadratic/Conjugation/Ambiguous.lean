@@ -74,11 +74,11 @@ theorem mulEquiv_ringOfIntegersQuadraticConj_apply_eq_self_iff
 
 /-- The prime above a ramified rational prime is a nonzero divisor of the ideal monoid: it lies over
 the nonzero ideal `(p)`, so it is itself nonzero. -/
-private theorem mem_nonZeroDivisors_of_mem_ramifiedPrimes {p : ℕ} (hmem : p ∈ ramifiedPrimes K)
+theorem mem_nonZeroDivisors_of_mem_ramifiedPrimes {p : ℕ} (hmem : p ∈ ramifiedPrimes K)
     (𝔭 : Ideal (𝓞 K)) [𝔭.LiesOver (span {(p : ℤ)})] : 𝔭 ∈ nonZeroDivisors (Ideal (𝓞 K)) := by
   apply mem_nonZeroDivisors_of_ne_zero
   rw [Ideal.zero_eq_bot]
-  refine Ideal.ne_bot_of_liesOver_of_ne_bot ?_ 𝔭
+  refine Ideal.ne_bot_of_liesOver_of_ne_bot (?_ : (span {(p : ℤ)} : Ideal ℤ) ≠ ⊥) 𝔭
   rw [ne_eq, Ideal.span_singleton_eq_bot]
   exact_mod_cast (prime_of_mem_ramifiedPrimes hmem).pos.ne'
 
