@@ -5,6 +5,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Probability.Exchangeability.Basic
+import Mathlib.Logic.Equiv.Basic
+import Mathlib.Data.Fin.Tuple.Sort
 public import Mathlib.MeasureTheory.Integral.Bochner.Basic
 import Mathlib.MeasureTheory.Integral.Bochner.Set
 
@@ -80,6 +82,40 @@ theorem blockLaw_blockCylinder {μ : Measure Ω} (X : ℕ → Ω → α) {m : �
     {C : Fin m → Set α} (hX : ∀ i, AEMeasurable (X (k i)) μ) (hC : ∀ i, MeasurableSet (C i)) :
     blockLaw μ X k (Set.univ.pi C) = μ (blockCylinder X k C) := by
   rw [blockLaw_apply_rectangle μ X k hX C hC, blockCylinder]
+
+omit [MeasurableSpace Ω] [MeasurableSpace α] in
+/-- **A block cylinder is invariant under permuting the selection.** Reordering the coordinates of
+a block, and the sets along with them, describes the same event: membership is a conjunction over
+the index set, which a permutation does not change.
+
+This is what lets a proof supply only *strictly monotone* selections: `Tuple.sort` permutes an
+arbitrary injective `k` into increasing order, and this lemma says the event is unaffected. -/
+theorem blockCylinder_comp_perm (X : ℕ → Ω → α) {m : ℕ} (k : Fin m → ℕ) (C : Fin m → Set α)
+    (e : Equiv.Perm (Fin m)) :
+    blockCylinder X k C = blockCylinder X (k ∘ e) fun i => C (e i) := by
+  ext ω
+  simp only [mem_blockCylinder, Function.comp_apply]
+  exact ⟨fun h i => h (e i), fun h j => by
+    have := h (e.symm j); rwa [e.apply_symm_apply] at this⟩
+
+omit [MeasurableSpace Ω] [MeasurableSpace α] in
+/-- **Sorting an injective block selection.** Any injective `k` can be permuted into strictly
+increasing order without changing the block event or any product over the selected sets.
+
+This packages the whole reduction that lets a proof handle only the *monotone* case, and the name
+records all three parts: `Tuple.sort` supplies the permutation, `blockCylinder_comp_perm` says the
+block event is unchanged (`_blockCylinder_eq`), and the final clause says a product over the
+selected sets is unchanged (`_and_prod_eq`), for any commutative monoid. Callers that establish an
+identity for strictly monotone selections get the injective case by `obtain`ing this and
+rewriting. -/
+theorem exists_perm_strictMono_comp_blockCylinder_eq_and_prod_eq (X : ℕ → Ω → α) {m : ℕ}
+    {k : Fin m → ℕ} (hk : Function.Injective k) (B : Fin m → Set α) :
+    ∃ e : Equiv.Perm (Fin m), StrictMono (k ∘ e) ∧
+      blockCylinder X k B = blockCylinder X (k ∘ e) (fun i => B (e i)) ∧
+      ∀ {M : Type*} [CommMonoid M] (g : Set α → M), ∏ i, g (B (e i)) = ∏ i, g (B i) :=
+  ⟨Tuple.sort k,
+    (Tuple.monotone_sort k).strictMono_of_injective (hk.comp (Equiv.injective _)),
+    blockCylinder_comp_perm X k B _, fun g => Equiv.prod_comp _ fun i => g (B i)⟩
 
 /-- The product of the selected coordinate indicators, `∏ i, 𝟙_{C i}(X (k i) ω)`. -/
 def blockIndicatorProd (X : ℕ → Ω → α) {m : ℕ} (k : Fin m → ℕ) (C : Fin m → Set α) : Ω → ℝ :=

@@ -4,30 +4,31 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
--- `CSA`, `IsBrauerEquivalent` and `BrauerGroup` occur in the statements below.
-public import Mathlib.Algebra.BrauerGroup.Defs
--- The two halves of the central simple structure on a full matrix algebra, and the centrality of
--- an endomorphism algebra, are part of the statements below: they are what bundles `Mₙ(A)`,
--- `End_K V` and `A ⊗[K] Aᵐᵒᵖ` as terms of `CSA K`.
-public import Mathlib.Algebra.Central.End
-public import Mathlib.Algebra.Central.Matrix
-public import Mathlib.RingTheory.SimpleRing.Matrix
+-- `TauCeti.Algebra.BrauerGroup.Basic` is imported publicly: the bundling `TauCeti.CSA.of` and the
+-- base field `TauCeti.CSA.base` occur in the statements below, and the two moves that leave a
+-- Brauer class unchanged, `TauCeti.IsBrauerEquivalent.of_algEquiv` and
+-- `TauCeti.isBrauerEquivalent_matrix`, are what the triviality proofs run on. It re-exports
+-- `Mathlib.Algebra.BrauerGroup.Defs` (hence `CSA`, `IsBrauerEquivalent` and `BrauerGroup`), the two
+-- halves of the central simple structure on a full matrix algebra, which is what bundles `Mₙ(K)`
+-- as a term of `CSA K`, and `Mathlib.Data.Matrix.Composition`, hence the matrix identity
+-- `Mₚ(Mᵩ(R)) ≃ₐ Mₚ˟ᵩ(R)` used in a proof below; that is why none of those is imported again here.
+public import TauCeti.Algebra.BrauerGroup.Basic
+-- `TauCeti.Algebra.CentralSimple.End` is imported publicly: its simplicity instance
+-- `TauCeti.IsSimpleRing.moduleEnd_of_field`, together with the centrality instance it re-exports
+-- from `Mathlib.Algebra.Central.End`, is what bundles `End_K V` as a term of `CSA K` in the
+-- statements below.
+public import TauCeti.Algebra.CentralSimple.End
 -- `TauCeti.Algebra.CentralSimple.Opposite` is imported publicly: `A ⊗[K] Aᵐᵒᵖ` occurs in a
--- statement below, and this module supplies both the `⊗[K]` notation and the central simple
--- structure making it a `CSA`, as well as the isomorphism
--- `TauCeti.Algebra.tensorOpAlgEquivMatrix` that splits it.
+-- statement below, and this module supplies the central simple structure making it a `CSA`, as
+-- well as the isomorphism `TauCeti.Algebra.tensorOpAlgEquivMatrix` that splits it.
 -- It also re-exports `TauCeti.LinearAlgebra.Matrix.ToLin`, and with it
 -- `TauCeti.Algebra.endAlgEquivMatrix`.
 public import TauCeti.Algebra.CentralSimple.Opposite
 -- `TauCeti.Algebra.IsSplittingField` occurs in the statements below.
 public import TauCeti.Algebra.CentralSimple.Splitting
--- Non-public: the matrix identity `Mₚ(Mᵩ(R)) ≃ₐ Mₚ˟ᵩ(R)`, the prime field of the worked example,
--- and `TauCeti.IsSimpleRing.moduleEnd` -- which proves, but does not appear in, the
--- `IsSimpleRing (Module.End K V)` instance declared below -- are used only inside proofs, so
--- downstream importers do not pay for them.
-import Mathlib.Data.Matrix.Composition
+-- Non-public: the prime field of the worked example is used only inside a proof, so downstream
+-- importers do not pay for it.
 import Mathlib.Algebra.Field.ZMod
-import TauCeti.RingTheory.Semisimple.EndAlgebra
 
 /-!
 # Brauer triviality
@@ -35,9 +36,11 @@ import TauCeti.RingTheory.Semisimple.EndAlgebra
 Two finite-dimensional central simple `K`-algebras are **Brauer equivalent** when they become
 isomorphic after passing to matrix algebras over them (Mathlib's `IsBrauerEquivalent`), and
 `BrauerGroup K` is the quotient of `CSA K` by that relation. Mathlib stops there: the quotient
-carries no group structure yet. This file builds the part of the theory the identity element of
-that group will rest on -- which algebras are **Brauer trivial**, that is, equivalent to `K`
-itself -- and reads off the first two computations of a Brauer group.
+carries no group structure yet, and `TauCeti/Algebra/BrauerGroup/Basic.lean` supplies the
+constructors and the two moves that leave a Brauer class unchanged. This file builds the part of
+the theory the identity element of that group will rest on -- which algebras are **Brauer
+trivial**, that is, equivalent to `K` itself -- and reads off the first two computations of a
+Brauer group.
 
 The engine is a single observation. An algebra **split by `K`**, in the sense of
 `TauCeti.Algebra.IsSplittingField`, is a matrix algebra `Mₚ(K)`, and any two matrix algebras over
@@ -56,15 +59,10 @@ classes.
 
 ## Main definitions
 
-* `TauCeti.CSA.of`: a finite-dimensional central simple `K`-algebra, bundled as a term of Mathlib's
-  `CSA K`.
 * `TauCeti.IsBrauerTrivial`: Brauer equivalence to the base field.
 
 ## Main results
 
-* `TauCeti.IsBrauerEquivalent.of_algEquiv` and `TauCeti.isBrauerEquivalent_matrix`: the two moves
-  that leave a Brauer class unchanged -- an isomorphism of algebras, and passage to matrices over
-  the algebra.
 * `TauCeti.isBrauerEquivalent_of_isSplittingField`: **two algebras split by `K` are Brauer
   equivalent**, with `TauCeti.isBrauerTrivial_of_isSplittingField` the form having the base field
   on one side.
@@ -76,7 +74,7 @@ classes.
 
 ## Implementation notes
 
-`TauCeti.IsBrauerTrivial` compares an algebra with `TauCeti.CSA.of K K`, so it is stated for a
+`TauCeti.IsBrauerTrivial` compares an algebra with `TauCeti.CSA.base K`, so it is stated for a
 `CSA.{u, u} K`, an algebra in the universe of its own base field. That is not a restriction on the
 mathematics -- a finite-dimensional `K`-algebra has a model in `Type u` -- but Mathlib's
 `IsBrauerEquivalent` relates two algebras in one universe, and `K` lives in `Type u`. The
@@ -85,8 +83,8 @@ computations, stay at the full generality of `BrauerGroup.{u, v}`.
 
 The two splitting facts `TauCeti.Algebra.isSplittingField_end` and
 `TauCeti.Algebra.isSplittingField_tensorOp` are proved here rather than with the rest of the
-splitting API, because they consume `TauCeti.IsSimpleRing.moduleEnd` and the Azumaya isomorphism,
-which sit above `TauCeti/Algebra/CentralSimple/Splitting.lean` in the import order.
+splitting API, because they consume the simplicity of an endomorphism algebra and the Azumaya
+isomorphism, which sit above `TauCeti/Algebra/CentralSimple/Splitting.lean` in the import order.
 
 The converse of `TauCeti.isBrauerTrivial_of_isSplittingField` -- that a Brauer-trivial algebra is
 split -- is **not** proved here, and is not a formal consequence of these lemmas: it needs the
@@ -115,26 +113,6 @@ universe u v
 
 variable (K : Type u) [Field K]
 
-/-! ### Bundling a central simple algebra -/
-
-namespace CSA
-
-/-- A finite-dimensional central simple `K`-algebra, bundled as a term of Mathlib's `CSA K`.
-
-Mathlib's `CSA K` carries its algebra as an `AlgCat K` together with three instance fields; this
-is the constructor turning the unbundled hypotheses used everywhere else into that bundling. It is
-an `abbrev` so that the carrier of `TauCeti.CSA.of K A` is reducibly `A`, and instances stated for
-`A` are found for it. -/
-abbrev of (A : Type v) [Ring A] [Algebra K A] [Algebra.IsCentral K A] [IsSimpleRing A]
-    [FiniteDimensional K A] : CSA.{u, v} K where
-  toAlgCat := AlgCat.of K A
-
-theorem coe_of (A : Type v) [Ring A] [Algebra K A] [Algebra.IsCentral K A] [IsSimpleRing A]
-    [FiniteDimensional K A] : (of K A : Type v) = A :=
-  rfl
-
-end CSA
-
 /-- A finite-dimensional central simple `K`-algebra is **Brauer trivial** when it is Brauer
 equivalent to the base field, that is, when its Brauer class is the one that will be the identity
 of `BrauerGroup K`.
@@ -142,27 +120,7 @@ of `BrauerGroup K`.
 Every algebra split by `K` is Brauer trivial (`TauCeti.isBrauerTrivial_of_isSplittingField`); the
 converse needs the uniqueness of the division algebra in a Brauer class and is not proved here. -/
 abbrev IsBrauerTrivial {K : Type u} [Field K] (A : CSA.{u, u} K) : Prop :=
-  IsBrauerEquivalent A (CSA.of K K)
-
-/-! ### The two moves that preserve a Brauer class -/
-
-/-- **An isomorphism of algebras is a Brauer equivalence**: take one-by-one matrices on both
-sides. -/
-theorem IsBrauerEquivalent.of_algEquiv {A B : CSA.{u, v} K} (e : A ≃ₐ[K] B) :
-    IsBrauerEquivalent A B :=
-  ⟨1, 1, one_ne_zero, one_ne_zero, ⟨e.mapMatrix (m := Fin 1)⟩⟩
-
-/-- **Passing to matrices does not change the Brauer class.** This is the move making Brauer
-equivalence strictly coarser than isomorphism, and it is why `Mₙ(K)` will be the identity class: it
-is `Mₙ` of the identity algebra.
-
-The witness is the smallest one available, `M₁(Mₙ(A)) ≃ₐ Mₙ(A)`, which is `Matrix.compAlgEquiv`
-followed by the reindexing `Fin 1 × Fin n ≃ Fin n`. -/
-theorem isBrauerEquivalent_matrix (A : CSA.{u, v} K) (n : ℕ) [NeZero n] :
-    IsBrauerEquivalent (CSA.of K (Matrix (Fin n) (Fin n) A)) A :=
-  ⟨1, n, one_ne_zero, NeZero.ne n,
-    ⟨(Matrix.compAlgEquiv (Fin 1) (Fin n) A K).trans
-      (Matrix.reindexAlgEquiv K A (finProdFinEquiv.trans (finCongr (one_mul n))))⟩⟩
+  IsBrauerEquivalent A (CSA.base K)
 
 /-! ### The algebras split by the base field form one Brauer class -/
 
@@ -194,13 +152,13 @@ theorem isBrauerEquivalent_of_isSplittingField {A B : CSA.{u, v} K}
 the matrix move `TauCeti.isBrauerEquivalent_matrix` applied to the class of `K` itself. -/
 theorem isBrauerTrivial_matrix (n : ℕ) [NeZero n] :
     IsBrauerTrivial (CSA.of K (Matrix (Fin n) (Fin n) K)) :=
-  isBrauerEquivalent_matrix K (CSA.of K K) n
+  isBrauerEquivalent_matrix K (CSA.base K) n
 
 /-- **An algebra split by its own base field is Brauer trivial**: it is isomorphic to a full matrix
-algebra over `K`, so the two moves above compose to a Brauer equivalence with `K`.
+algebra over `K`, so the two class-preserving moves compose to a Brauer equivalence with `K`.
 
 Over an algebra in the universe of `K` this is the statement wanted downstream; the version for two
-algebras in an arbitrary universe, which cannot pass through `TauCeti.CSA.of K K` because `K` lives
+algebras in an arbitrary universe, which cannot pass through `TauCeti.CSA.base K` because `K` lives
 in `Type u`, is `TauCeti.isBrauerEquivalent_of_isSplittingField`. -/
 theorem isBrauerTrivial_of_isSplittingField {A : Type u} [Ring A] [Algebra K A]
     [Algebra.IsCentral K A] [IsSimpleRing A] [FiniteDimensional K A]
@@ -220,12 +178,6 @@ theorem Algebra.isSplittingField_end : Algebra.IsSplittingField K (Module.End K 
   (Algebra.isSplittingField_self_iff K _).2 ⟨_, ⟨Algebra.endAlgEquivMatrix K V rfl⟩⟩
 
 variable [Nontrivial V]
-
-/-- The endomorphism algebra of a nonzero finite-dimensional vector space is a simple ring. This is
-`TauCeti.IsSimpleRing.moduleEnd` over the simple Artinian ring `K`, made an instance because it is
-half of what bundles `End_K V` as a `CSA K`; the other half, centrality, is Mathlib's instance for
-`Module.End`. -/
-instance : IsSimpleRing (Module.End K V) := IsSimpleRing.moduleEnd
 
 /-- **The endomorphism algebra of a nonzero finite-dimensional vector space is Brauer trivial.**
 
