@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+public import TauCeti.Order.Filter.SmallSets
 public import TauCeti.RepresentationTheory.Compact.Convolution
 public import Mathlib.Topology.UrysohnsLemma
 
@@ -307,19 +308,6 @@ theorem tendsto_convolutionCLM_toLp {ι : Type*} {l : Filter ι} {U : ι → Set
   rw [dist_eq_norm]
   exact ((hki.mono hi).norm_convolutionCLM_toLp_sub_le f (half_pos hε).le hfV).trans_lt
     (half_lt_self hε)
-
-/-- **A filter indexes a nontrivial net by its own members.** A net indexed by the members of a
-filter `l` converges along this filter, the members read through `Filter.smallSets`, so that
-`∀ᶠ s in _, p s` says that `p` holds for every small enough member of `l`; it is not the bottom
-filter, every member of `l` being an index below itself.
-
-For `l = 𝓝 1` this is the index filter of
-`TauCeti.exists_isMollifier_tendsto_convolutionCLM_toLp`. -/
-theorem comap_val_smallSets_neBot {α : Type*} (l : Filter α) :
-    NeBot (comap (Subtype.val : {s : Set α // s ∈ l} → Set α) l.smallSets) := by
-  refine comap_neBot_iff.2 fun t ht => ?_
-  obtain ⟨V, hV, hVt⟩ := eventually_smallSets.1 ht
-  exact ⟨⟨V, hV⟩, hVt V subset_rfl⟩
 
 variable (𝕜 G) in
 /-- **The approximate identity itself: a single family of mollifying kernels that works for every
