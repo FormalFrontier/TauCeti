@@ -85,11 +85,8 @@ private theorem continuousAdjointRepresentation_coe :
       (derivationModelEquiv (I := I) (G := G)).symm.conjContinuousAlgEquiv
         (show E →L[ℝ] E from adjointContinuousLinearMap (I := I) g) :=
   by
-    funext g
-    apply ContinuousLinearMap.ext
-    intro D
-    rw [continuousAdjointRepresentation, TauCeti.ContRepresentation.congr_apply,
-      ContinuousLinearEquiv.conjContinuousAlgEquiv_apply_apply, modelAdjointRepresentation]
+    rw [continuousAdjointRepresentation, TauCeti.ContRepresentation.coe_congr,
+      modelAdjointRepresentation]
     rfl
 
 @[simp]
