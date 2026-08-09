@@ -61,7 +61,12 @@ theorem integral_exp_neg_two_pi_inner_eq_charFun_neg_two_pi_smul (a : V) :
   ring_nf
 
 /-- The Fourier-convention integral of a finite measure, written with the atom
-`exp (-2πi⟪a, q⟫)`, is Mathlib's characteristic function evaluated at `(-2π) • a`. -/
+`exp (-2πi⟪a, q⟫)`, is Mathlib's characteristic function evaluated at `(-2π) • a`.
+
+Not a `@[simp]` lemma: `simp` already proves it — `fourierAtom_apply` and `neg_mul` rewrite
+the left-hand side into that of the simp lemma
+`integral_exp_neg_two_pi_inner_eq_charFun_neg_two_pi_smul`, which the simpNF linter reports
+as a duplicate if this statement is also tagged `@[simp]`. -/
 theorem integral_fourierAtom_eq_charFun_neg_two_pi_smul (a : V) :
     ∫ q, fourierAtom a q ∂μ = MeasureTheory.charFun μ ((-2 * Real.pi) • a) := by
   simpa only [fourierAtom_apply, neg_mul] using

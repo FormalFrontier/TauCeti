@@ -33,7 +33,7 @@ import TauCeti.Analysis.PositiveDefinite.Kernel.Bounds
 /-!
 # Bochner's theorem
 
-A continuous function `F : V → ℂ` on a finite-dimensional real inner-product space has a
+A function `F : V → ℂ` on a finite-dimensional real inner-product space is continuous with a
 positive-definite subtraction kernel `(a, b) ↦ F (a - b)` if and only if it is the
 Fourier-convention transform `v ↦ ∫ q, fourierAtom v q ∂μ` of a unique finite Borel measure `μ`
 on `V`. This file assembles the final statement from the two analytic predecessors.
@@ -70,8 +70,8 @@ and the representation is stated in the `fourierAtom` convention rather than thr
   existence of a finite representing measure for a continuous positive-definite function.
 * `TauCeti.Measure.ext_of_forall_integral_fourierAtom_eq`: uniqueness of the representing
   measure.
-* `TauCeti.bochner`: **Bochner's theorem**, the equivalence between positive definiteness of
-  the subtraction kernel and the unique Fourier representation.
+* `TauCeti.bochner`: **Bochner's theorem**, the equivalence between continuity together with
+  positive definiteness of the subtraction kernel and the unique Fourier representation.
 * `TauCeti.bochner_of_forall_star_eq_neg`: the same equivalence for the involutive
   positive-definiteness predicate under the negation involution.
 
@@ -177,9 +177,7 @@ private theorem exists_probabilityMeasure_integral_fourierAtom_eq {G : V → ℂ
   -- the regularization parameters `ε n → 0⁺`
   set ε : ℕ → ℝ := fun n => 1 / ((n : ℝ) + 1)
   have hε_pos : ∀ n, 0 < ε n := fun n => by positivity
-  have hε_lim : Tendsto ε atTop (𝓝[>] 0) :=
-    tendsto_nhdsWithin_iff.mpr
-      ⟨tendsto_one_div_add_atTop_nhds_zero_nat, .of_forall fun n => Set.mem_Ioi.mpr (hε_pos n)⟩
+  have hε_lim : Tendsto ε atTop (𝓝 0) := tendsto_one_div_add_atTop_nhds_zero_nat (𝕜 := ℝ)
   -- the explicit representing measures of the regularizations
   set ν : ℕ → Measure V := fun n =>
     volume.withDensity fun ξ => ENNReal.ofReal (𝓕⁻ (gaussianRegularize G (ε n)) ξ).re
@@ -188,7 +186,8 @@ private theorem exists_probabilityMeasure_integral_fourierAtom_eq {G : V → ℂ
     isPositiveDefiniteKernel_gaussianRegularize hpd (hε_pos n).le
   have hν_rep : ∀ n v, ∫ q, fourierAtom v q ∂(ν n) = gaussianRegularize G (ε n) v := fun n v =>
     integral_fourierAtom_withDensity_re_fourierInv _ (hGn_pd n)
-      (integrable_gaussianRegularize hpd hcont (hε_pos n))
+      (integrable_gaussianRegularize (norm_apply_le_map_zero_re_of_isPositiveDefiniteKernel hpd)
+        hcont.aestronglyMeasurable (hε_pos n))
       (continuous_gaussianRegularize hcont (ε n)) v
   have hν_prob : ∀ n, IsProbabilityMeasure (ν n) := by
     intro n
@@ -285,15 +284,15 @@ theorem exists_isFiniteMeasure_integral_fourierAtom_eq_of_isPositiveDefiniteKern
     · rw [integral_smul_measure, ENNReal.toReal_ofReal hpos.le, hμ_rep v, hG_def,
         Complex.real_smul, ← mul_assoc, mul_inv_cancel₀ hcne, one_mul]
 
-/-- **Bochner's theorem.** A continuous function `F` on a finite-dimensional real inner-product
-space has a positive-definite subtraction kernel `(a, b) ↦ F (a - b)` if and only if it is the
-Fourier-convention transform `v ↦ ∫ q, fourierAtom v q ∂μ` of a unique finite Borel measure
-`μ`. Bochner (1932); Rudin, *Fourier Analysis on Groups*, Theorem 1.4.3. -/
-theorem bochner (F : V → ℂ) (hcont : Continuous F) :
-    (IsPositiveDefiniteKernel fun a b : V => F (a - b)) ↔
+/-- **Bochner's theorem.** A function `F` on a finite-dimensional real inner-product space is
+continuous with a positive-definite subtraction kernel `(a, b) ↦ F (a - b)` if and only if it
+is the Fourier-convention transform `v ↦ ∫ q, fourierAtom v q ∂μ` of a unique finite Borel
+measure `μ`. Bochner (1932); Rudin, *Fourier Analysis on Groups*, Theorem 1.4.3. -/
+theorem bochner (F : V → ℂ) :
+    (Continuous F ∧ IsPositiveDefiniteKernel fun a b : V => F (a - b)) ↔
       ∃! μ : Measure V, IsFiniteMeasure μ ∧ ∀ v, F v = ∫ q, fourierAtom v q ∂μ := by
   constructor
-  · intro hpd
+  · rintro ⟨hcont, hpd⟩
     obtain ⟨μ, hfin, hrep⟩ :=
       exists_isFiniteMeasure_integral_fourierAtom_eq_of_isPositiveDefiniteKernel F hcont hpd
     refine ⟨μ, ⟨hfin, hrep⟩, ?_⟩
@@ -304,20 +303,24 @@ theorem bochner (F : V → ℂ) (hcont : Continuous F) :
       fun v => (hνrep v).symm.trans (hrep v)
   · rintro ⟨μ, ⟨hfin, hrep⟩, -⟩
     have := hfin
-    have hfun : (fun a b : V => F (a - b)) =
-        fun a b : V => ∫ q, fourierAtom (a - b) q ∂μ := by
-      funext a b
-      exact hrep (a - b)
-    rw [hfun]
-    exact fourierConventionCharFun_isPositiveDefiniteKernel
+    refine ⟨?_, ?_⟩
+    · rw [funext hrep]
+      exact continuous_fourierConventionCharFun
+    · have hfun : (fun a b : V => F (a - b)) =
+          fun a b : V => ∫ q, fourierAtom (a - b) q ∂μ := by
+        funext a b
+        exact hrep (a - b)
+      rw [hfun]
+      exact fourierConventionCharFun_isPositiveDefiniteKernel
 
 /-- **Bochner's theorem for the involutive predicate.** Under the negation involution
-`star x = -x`, a continuous function is positive definite in the involutive sense if and only
-if it is the Fourier-convention transform of a unique finite Borel measure. -/
+`star x = -x`, a function is continuous and positive definite in the involutive sense if and
+only if it is the Fourier-convention transform of a unique finite Borel measure. -/
 theorem bochner_of_forall_star_eq_neg [StarAddMonoid V] (hstar : ∀ x : V, star x = -x)
-    (F : V → ℂ) (hcont : Continuous F) :
-    IsPositiveDefinite F ↔
+    (F : V → ℂ) :
+    (Continuous F ∧ IsPositiveDefinite F) ↔
       ∃! μ : Measure V, IsFiniteMeasure μ ∧ ∀ v, F v = ∫ q, fourierAtom v q ∂μ :=
-  (isPositiveDefinite_iff_isPositiveDefiniteKernel_sub hstar).trans (bochner F hcont)
+  (and_congr_right fun _ =>
+    isPositiveDefinite_iff_isPositiveDefiniteKernel_sub hstar).trans (bochner F)
 
 end TauCeti

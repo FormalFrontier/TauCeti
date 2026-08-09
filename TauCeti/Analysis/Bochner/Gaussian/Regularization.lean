@@ -18,7 +18,7 @@ import TauCeti.Analysis.PositiveDefinite.Kernel.Bounds
 
 The Gaussian regularization `φ_ε = φ · exp (-ε‖·‖²)` of a positive-definite function `φ` on a
 finite-dimensional real inner-product space is again positive definite (a Schur product with the
-Gaussian kernel), integrable, and converges to `φ` pointwise as `ε → 0⁺`. This is the
+Gaussian kernel), integrable, and converges to `φ` pointwise as `ε → 0`. This is the
 approximation device of the second step of Bochner's theorem: it replaces a merely bounded
 positive-definite function by an integrable one to which Fourier inversion applies. Its Fourier
 transform is integrable by `integrable_fourierIntegral_of_isPositiveDefiniteKernel`.
@@ -73,13 +73,13 @@ theorem continuous_gaussianRegularize {φ : V → ℂ} (hcont : Continuous φ) (
     Continuous (gaussianRegularize φ ε) :=
   hcont.mul (continuous_cexp_neg_mul_sq_norm ε)
 
-/-- The Gaussian regularization converges to `φ` pointwise as `ε → 0⁺`. -/
+/-- The Gaussian regularization converges to `φ` pointwise as `ε → 0`. -/
 theorem tendsto_gaussianRegularize (φ : V → ℂ) (x : V) :
-    Tendsto (fun ε : ℝ => gaussianRegularize φ ε x) (𝓝[>] 0) (𝓝 (φ x)) := by
+    Tendsto (fun ε : ℝ => gaussianRegularize φ ε x) (𝓝 0) (𝓝 (φ x)) := by
   have hc : Continuous fun ε : ℝ => Complex.exp (-(ε * ‖x‖ ^ 2 : ℝ)) := by fun_prop
   have h1 : Tendsto (fun ε : ℝ => Complex.exp (-(ε * ‖x‖ ^ 2 : ℝ))) (𝓝 0) (𝓝 1) := by
     simpa using hc.tendsto 0
-  simpa using tendsto_const_nhds.mul (tendsto_nhdsWithin_of_tendsto_nhds h1)
+  simpa using tendsto_const_nhds.mul h1
 
 end Regularize
 
@@ -96,22 +96,20 @@ theorem isPositiveDefiniteKernel_gaussianRegularize {φ : V → ℂ}
     IsPositiveDefiniteKernel fun a b : V => gaussianRegularize φ ε (a - b) :=
   isPositiveDefiniteKernel_mul hpd (isPositiveDefiniteKernel_cexp_neg_mul_sq_norm hε)
 
-/-- The Gaussian regularization of a continuous function with positive-definite subtraction
-kernel is integrable for every `ε > 0`: the function is bounded by `(φ 0).re` and the Gaussian
-factor is integrable. -/
-theorem integrable_gaussianRegularize {φ : V → ℂ}
-    (hpd : IsPositiveDefiniteKernel fun a b : V => φ (a - b))
-    (hcont : Continuous φ) {ε : ℝ} (hε : 0 < ε) :
+/-- The Gaussian regularization of a bounded a.e. strongly measurable function is integrable
+for every `ε > 0`: the Gaussian factor is integrable and dominates. In particular this applies
+to a continuous function with positive-definite subtraction kernel, which is bounded by
+`(φ 0).re`. -/
+theorem integrable_gaussianRegularize {φ : V → ℂ} {C : ℝ} (hb : ∀ x, ‖φ x‖ ≤ C)
+    (hm : AEStronglyMeasurable φ volume) {ε : ℝ} (hε : 0 < ε) :
     Integrable (gaussianRegularize φ ε) := by
-  have h0 : 0 ≤ (φ 0).re := map_zero_re_nonneg_of_isPositiveDefiniteKernel hpd
-  have hb : ∀ x, ‖φ x‖ ≤ (φ 0).re := norm_apply_le_map_zero_re_of_isPositiveDefiniteKernel hpd
   have hgauss : Integrable fun x : V => Complex.exp (-(ε * ‖x‖ ^ 2 : ℝ)) :=
     integrable_cexp_neg_mul_sq_norm hε
-  refine (hgauss.norm.const_mul (φ 0).re).mono
-    ((hcont.mul (continuous_cexp_neg_mul_sq_norm ε)).aestronglyMeasurable)
+  refine (hgauss.norm.const_mul C).mono
+    (hm.mul (continuous_cexp_neg_mul_sq_norm ε).aestronglyMeasurable)
     (ae_of_all _ fun x => ?_)
-  simp only [gaussianRegularize_apply, norm_mul, Real.norm_eq_abs, abs_of_nonneg h0, abs_norm]
-  exact mul_le_mul_of_nonneg_right (hb x) (norm_nonneg _)
+  simp only [gaussianRegularize_apply, norm_mul, Real.norm_eq_abs, abs_norm]
+  exact mul_le_mul_of_nonneg_right ((hb x).trans (le_abs_self C)) (norm_nonneg _)
 
 /-- The Fourier transform of a Gaussian regularization of a continuous positive-definite
 function is integrable, for every `ε > 0`. -/
@@ -121,7 +119,8 @@ theorem integrable_fourierIntegral_gaussianRegularize {φ : V → ℂ}
     Integrable (𝓕 (gaussianRegularize φ ε)) :=
   integrable_fourierIntegral_of_isPositiveDefiniteKernel _
     (isPositiveDefiniteKernel_gaussianRegularize hpd hε.le)
-    (integrable_gaussianRegularize hpd hcont hε)
+    (integrable_gaussianRegularize (norm_apply_le_map_zero_re_of_isPositiveDefiniteKernel hpd)
+      hcont.aestronglyMeasurable hε)
     (continuous_gaussianRegularize hcont ε)
 
 end TauCeti
