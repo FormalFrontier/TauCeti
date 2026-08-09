@@ -154,10 +154,10 @@ variable [CommSemiring A] [Algebra R A]
 /-- If every element belongs to a module-finite subcoalgebra, then the actions on the restricted
 regular comodules of all module-finite subcoalgebras jointly determine an algebra-valued point. -/
 theorem eq_of_forall_finiteSubcoalgebra_endOfPoint_eq_of_exists_mem
-    (hcover : ∀ c : C, ∃ D : Subcoalgebra R C, Module.Finite R D.toSubmodule ∧ c ∈ D)
     (g h : C →ₐ[R] A)
     (haction : ∀ (D : Subcoalgebra R C), Module.Finite R D.toSubmodule →
-      endOfPoint D.toRegularSubcomodule g = endOfPoint D.toRegularSubcomodule h) :
+      endOfPoint D.toRegularSubcomodule g = endOfPoint D.toRegularSubcomodule h)
+    (hcover : ∀ c : C, ∃ D : Subcoalgebra R C, Module.Finite R D.toSubmodule ∧ c ∈ D) :
     g = h := by
   apply AlgHom.ext
   intro c
@@ -190,8 +190,8 @@ theorem eq_of_forall_finiteSubcoalgebra_endOfPoint_eq (g h : C →ₐ[R] A) :
   dsimp only
   intro haction
   exact eq_of_forall_finiteSubcoalgebra_endOfPoint_eq_of_exists_mem
-    (fun c ↦ Subcoalgebra.exists_finite_subcoalgebra_mem (R := R) (C := C) c)
     g h haction
+    (fun c ↦ Subcoalgebra.exists_finite_subcoalgebra_mem (R := R) (C := C) c)
 
 end
 
