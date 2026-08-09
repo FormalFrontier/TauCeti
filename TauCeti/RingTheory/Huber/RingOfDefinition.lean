@@ -107,19 +107,20 @@ theorem isBounded_adjoinRing (B₀ : Subring A) (hB₀ : IsBounded (B₀ : Set A
         zero_mem' := (AddSubgroup.closure M).zero_mem
         add_mem' := fun hx hy ↦ (AddSubgroup.closure M).add_mem hx hy
         neg_mem' := fun hx ↦ (AddSubgroup.closure M).neg_mem hx }
+    have hC_carrier : (C : Set A) = AddSubgroup.closure M := rfl
     have hgen : (B₀ : Set A) ∪ (insert a S : Finset A) ⊆ (C : Set A) := by
       rw [Finset.coe_insert]
       rintro x (hx | hxa | hx)
-      · change x ∈ AddSubgroup.closure M
+      · rw [hC_carrier]
         simpa [M] using AddSubgroup.subset_closure (Set.mul_mem_mul (s := (B : Set A))
           (t := Set.range (a ^ · : ℕ → A))
           (Subring.subset_closure (Set.mem_union_left _ hx)) ⟨(0 : ℕ), rfl⟩)
       · subst x
-        change a ∈ AddSubgroup.closure M
+        rw [hC_carrier]
         simpa [M] using AddSubgroup.subset_closure (
           Set.mul_mem_mul (s := (B : Set A)) (t := Set.range (a ^ · : ℕ → A))
             B.one_mem ⟨(1 : ℕ), rfl⟩)
-      · change x ∈ AddSubgroup.closure M
+      · rw [hC_carrier]
         simpa [M] using AddSubgroup.subset_closure (Set.mul_mem_mul (s := (B : Set A))
           (t := Set.range (a ^ · : ℕ → A))
           (Subring.subset_closure (Set.mem_union_right _ hx)) ⟨(0 : ℕ), rfl⟩)
@@ -202,14 +203,15 @@ theorem adjoin_idealOfDefinition (P : PairOfDefinition A) (T : Finset A)
     (hT : ∀ t ∈ T, IsPowerBounded t) :
     (P.adjoin T hT).idealOfDefinition =
       P.idealOfDefinition.map (Subring.inclusion (P.le_adjoin T hT)) := by
+  have hadjoin_ideal : (P.adjoin T hT).idealOfDefinition =
+      P.idealOfDefinition.map (Subring.inclusion (P.le_adjoinRing T)) := rfl
   have hinclusion : Subring.inclusion (P.le_adjoinRing T) =
       Subring.inclusion (P.le_adjoin T hT) := by
     apply RingHom.ext
     intro x
     apply Subtype.ext
     rfl
-  change P.idealOfDefinition.map (Subring.inclusion (P.le_adjoinRing T)) = _
-  exact congrArg (fun f ↦ P.idealOfDefinition.map f) hinclusion
+  exact hadjoin_ideal.trans (congrArg (fun f ↦ P.idealOfDefinition.map f) hinclusion)
 
 /-- Every adjoined element belongs to the enlarged ring of definition. -/
 theorem mem_adjoin_of_mem (P : PairOfDefinition A) (T : Finset A)
