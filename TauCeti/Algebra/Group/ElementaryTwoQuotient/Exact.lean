@@ -91,9 +91,9 @@ theorem ker_elementaryTwoQuotientMap (hf : Function.Surjective f) :
 `G/G²` maps to zero in `H/H²` iff it is represented by an element of `ker f`. -/
 @[simp] theorem mem_ker_elementaryTwoQuotientMap_iff (hf : Function.Surjective f)
     (x : ElementaryTwoQuotient G) :
-    x ∈ LinearMap.ker (elementaryTwoQuotientMap f) ↔
+    elementaryTwoQuotientMap f x = 0 ↔
       ∃ g ∈ f.ker, elementaryTwoQuotientMk g = x := by
-  rw [ker_elementaryTwoQuotientMap hf, LinearMap.mem_range]
+  rw [← LinearMap.mem_ker, ker_elementaryTwoQuotientMap hf, LinearMap.mem_range]
   constructor
   · rintro ⟨y, rfl⟩
     obtain ⟨g, rfl⟩ := elementaryTwoQuotientMk_surjective (G := f.ker) y
