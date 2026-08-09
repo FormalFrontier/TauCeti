@@ -632,22 +632,6 @@ theorem fourierIntegral_eq_re_of_isPositiveDefiniteKernel (F : V → ℂ)
 
 /-! ### Integrability of the Fourier transform of a positive-definite function -/
 
-/-- The `L¹` Parseval/Fubini identity `∫ (𝓕 f) · g = ∫ f · (𝓕 g)`, the self-adjointness of the
-Fourier transform for the symmetric inner-product pairing. -/
-private theorem integral_fourierIntegral_mul (f g : V → ℂ)
-    (hf : Integrable f) (hg : Integrable g) :
-    ∫ ξ, 𝓕 f ξ * g ξ = ∫ x, f x * 𝓕 g x := by
-  have hbridge : ∀ (f : V → ℂ) (ξ : V),
-      VectorFourier.fourierIntegral 𝐞 volume (innerₗ V) f ξ = 𝓕 f ξ := fun f ξ => by
-    rw [Real.fourier_eq]
-    simp only [VectorFourier.fourierIntegral, innerₗ_apply_apply]
-  have h := VectorFourier.integral_fourierIntegral_smul_eq_flip (L := innerₗ V)
-    Real.continuous_fourierChar
-    (by simpa only [innerₗ_apply_apply] using continuous_inner :
-      Continuous fun p : V × V => (innerₗ V) p.1 p.2) hf hg
-  simp only [flip_innerₗ, smul_eq_mul, hbridge] at h
-  exact h
-
 /-- The Fourier transform of a Gaussian is integrable (it is again a Gaussian). -/
 private theorem integrable_fourierIntegral_gaussian {t : ℝ} (ht : 0 < t) :
     Integrable (𝓕 fun ξ : V => Complex.exp (-(t * ‖ξ‖ ^ 2 : ℝ))) := by
@@ -719,9 +703,19 @@ private theorem re_integral_fourierIntegral_mul_gaussian_le (F : V → ℂ)
   have hprod_int : Integrable fun x : V =>
       F x * 𝓕 (fun ξ : V => Complex.exp (-(t * ‖ξ‖ ^ 2 : ℝ))) x :=
     hft_gt_int.bdd_mul hcont.aestronglyMeasurable (ae_of_all _ hFbound)
+  -- The `L¹` Parseval identity, from `integral_fourierIntegral_smul_eq_flip` with the
+  -- symmetric pairing `innerₗ`.
+  have hbridge : ∀ (f : V → ℂ) (ξ : V),
+      VectorFourier.fourierIntegral 𝐞 volume (innerₗ V) f ξ = 𝓕 f ξ := fun f ξ => by
+    rw [Real.fourier_eq]
+    simp only [VectorFourier.fourierIntegral, innerₗ_apply_apply]
   have hpars : (∫ ξ, 𝓕 F ξ * Complex.exp (-(t * ‖ξ‖ ^ 2 : ℝ))) =
-      ∫ x, F x * 𝓕 (fun ξ : V => Complex.exp (-(t * ‖ξ‖ ^ 2 : ℝ))) x :=
-    integral_fourierIntegral_mul F _ hint hgt_int
+      ∫ x, F x * 𝓕 (fun ξ : V => Complex.exp (-(t * ‖ξ‖ ^ 2 : ℝ))) x := by
+    have h := VectorFourier.integral_fourierIntegral_smul_eq_flip (L := innerₗ V)
+      Real.continuous_fourierChar
+      (by simpa only [innerₗ_apply_apply] using continuous_inner :
+        Continuous fun p : V × V => (innerₗ V) p.1 p.2) hint hgt_int
+    simpa only [flip_innerₗ, smul_eq_mul, hbridge] using h
   rw [hpars]
   calc (∫ x, F x * 𝓕 (fun ξ : V => Complex.exp (-(t * ‖ξ‖ ^ 2 : ℝ))) x).re
       ≤ ‖∫ x, F x * 𝓕 (fun ξ : V => Complex.exp (-(t * ‖ξ‖ ^ 2 : ℝ))) x‖ :=
