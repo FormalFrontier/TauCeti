@@ -104,7 +104,7 @@ theorem harnack_inequality_center_of_nonneg_on_sphere (hf : HarmonicOnNhd f (clo
       ContinuousOn (re ∘ herglotzRieszKernel c w) (sphere c |R|) := by
     simpa [abs_of_pos hR] using continuousOn_re_herglotzRieszKernel hw
   have hkernelint : CircleIntegrable ((re ∘ herglotzRieszKernel c w) • f) c R :=
-    hfint.smul_of_continuousOn hkernelcont
+    hfint.continuousOn_smul hkernelcont
   have hnonneg' : ∀ z ∈ sphere c |R|, 0 ≤ f z := fun z hz =>
     hnonneg z (by simpa [abs_of_pos hR] using hz)
   have hmean : circleAverage f c R = f c := by
