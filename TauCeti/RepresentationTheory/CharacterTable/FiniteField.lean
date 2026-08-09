@@ -7,7 +7,7 @@ module
 
 public import Mathlib.LinearAlgebra.Matrix.Charpoly.FiniteField
 public import Mathlib.RingTheory.Artinian.Module
-public import TauCeti.FieldTheory.Finite.PowFixed
+public import TauCeti.FieldTheory.Finite.FrobeniusFixed
 public import TauCeti.RepresentationTheory.CharacterTable.ClassSum.Basis
 
 /-!
@@ -203,6 +203,9 @@ theorem centerAlgEquivPi_apply (z : Subalgebra.center K (MonoidAlgebra K G))
       (AlgEquiv.ofBijective (Algebra.ofId K _)
         (algebraMap_center_quotient_bijective hG hexp I)).symm
         (Ideal.Quotient.mk I.asIdeal z) := by
+  simp only [centerAlgEquivPi, AlgEquiv.trans_apply, AlgEquiv.restrictScalars_apply,
+    AlgEquiv.piCongrRight_apply, IsArtinianRing.equivPi_apply]
+  -- the two sides now differ only in the (irrelevant) bijectivity proof carried by `ofBijective`
   rfl
 
 /-- **The number of blocks is the number of conjugacy classes.** Comparing `K`-dimensions in
