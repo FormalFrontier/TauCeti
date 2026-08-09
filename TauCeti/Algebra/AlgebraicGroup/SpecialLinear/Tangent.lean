@@ -5,7 +5,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.Algebra.Lie.Classical
-public import Mathlib.LinearAlgebra.Matrix.Charpoly.Coeff
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Tangent
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Tangent
 public import TauCeti.Algebra.AlgebraicGroup.SpecialLinear.Basic
@@ -23,137 +22,28 @@ over the dual numbers has matrix `1 + εX`; the first-order part of its determin
 Consequently, the resulting equivalence is linear over the coefficient algebra and preserves the
 convolution and matrix-commutator Lie brackets.
 
-This gives the standard `SLₙ` worked example in the ReductiveGroups roadmap's Layer 2 milestone
-on tangent spaces, Lie algebras of closed subgroups, and dimension tools.
+This gives the standard `SLₙ` worked example in the ReductiveGroups roadmap's Layer 2 target on
+the tangent space at the identity / `Lie(G)` and the Lie algebra of a closed subgroup.
 
 ## Main declarations
 
-* `TauCeti.GeneralLinear.trace_tangentMatrix`: the derivative of the determinant on `GLₙ` is
-  matrix trace.
+* `TauCeti.SpecialLinear.mem_lieSubalgebra_definingHopfIdeal_iff`: an ambient tangent derivation
+  lies in the determinant-one Lie subalgebra exactly when its tangent matrix has trace zero.
 * `TauCeti.SpecialLinear.tangentMatrix`: a tangent vector to `SLₙ`, as a trace-zero matrix.
-* `TauCeti.SpecialLinear.tangentLinearEquivSl`: the resulting linear equivalence.
 * `TauCeti.SpecialLinear.tangentLieEquivSl`: the tangent Lie algebra of `SLₙ` is its classical
   special linear Lie algebra.
 
 ## References
 
 * J. S. Milne, *Algebraic Groups* (2017), §10.
+* The target Lie algebra is Mathlib's `LieAlgebra.SpecialLinear.sl`.
 -/
 
 public section
 
-open TrivSqZeroExt
-
 namespace TauCeti
 
 universe u w
-
-/-! ### The differential of the determinant -/
-
-/-- A dual-number matrix whose classical part is the identity has determinant with first-order
-part equal to the trace of its infinitesimal part. -/
-private theorem snd_det_eq_trace_of_fst_eq_one {C : Type*} [CommRing C] {n : ℕ}
-    (M : Matrix (Fin n) (Fin n) (DualNumber C))
-    (hM : ∀ i j, fst (M i j) = (1 : Matrix (Fin n) (Fin n) C) i j) :
-    snd (Matrix.det M) = Matrix.trace (fun i j ↦ snd (M i j)) := by
-  classical
-  let X : Matrix (Fin n) (Fin n) C := fun i j ↦ snd (M i j)
-  let X' : Matrix (Fin n) (Fin n) (DualNumber C) := fun i j ↦ inl (X i j)
-  have hmatrix : M = 1 + (inr (1 : C) : DualNumber C) • X' := by
-    apply Matrix.ext
-    intro i j
-    apply TrivSqZeroExt.ext
-    · change fst (M i j) = fst ((1 : Matrix (Fin n) (Fin n) (DualNumber C)) i j +
-          (inr (1 : C) : DualNumber C) * X' i j)
-      rw [hM]
-      simp only [Matrix.one_apply]
-      split_ifs <;> simp [X']
-    · change snd (M i j) = snd ((1 : Matrix (Fin n) (Fin n) (DualNumber C)) i j +
-          (inr (1 : C) : DualNumber C) * X' i j)
-      simp only [Matrix.one_apply]
-      split_ifs <;> simp [X, X']
-  calc
-    snd (Matrix.det M) =
-        snd (Matrix.det (1 + (inr (1 : C) : DualNumber C) • X')) := by rw [hmatrix]
-    _ = Matrix.trace X := by
-      rw [Matrix.det_one_add_smul]
-      simp only [DualNumber.inr_eq_smul_eps, one_smul, DualNumber.eps_pow_two, mul_zero,
-        add_zero, snd_add, snd_one, snd_mul, DualNumber.snd_eps, smul_eq_mul, mul_one,
-        DualNumber.fst_eps, MulOpposite.op_zero, zero_smul, zero_add]
-      change fst (∑ i, X' i i) = ∑ i, X i i
-      rw [fst_sum]
-      apply Finset.sum_congr rfl
-      intro i _
-      change fst (inl (X i i) : DualNumber C) = X i i
-      rfl
-    _ = Matrix.trace (fun i j ↦ snd (M i j)) := rfl
-
-namespace GeneralLinear
-
-open WithConv
-
-variable {R : Type u} [CommRing R] {B : Type w} [CommRing B] [Algebra R B]
-variable (n : ℕ)
-
-/-- **The differential of the determinant on `GLₙ` is matrix trace.** Evaluating a tangent
-derivation on the generic determinant, then identifying its counit-valued coefficient with `B`,
-equals the trace of its tangent matrix. -/
-theorem trace_tangentMatrix (d : Derivation R (coordinateHopfAlgebra R n)
-    (Bialgebra.CounitAlgebra R (coordinateHopfAlgebra R n) B)) :
-    Matrix.trace (tangentMatrix n d) =
-      Bialgebra.CounitAlgebra.algEquivSelf R (coordinateHopfAlgebra R n) B
-        (d (determinantGroupLike R n : coordinateHopfAlgebra R n)) := by
-  let q := derivationMulEquivTangentKer R (coordinateHopfAlgebra R n) B (.ofAdd d)
-  let M : Matrix (Fin n) (Fin n)
-      (DualNumber (Bialgebra.CounitAlgebra R (coordinateHopfAlgebra R n) B)) :=
-    (pointsMulEquiv (R := R) n q.val).val
-  have hfst (i j : Fin n) : fst (M i j) =
-      (1 : Matrix (Fin n) (Fin n)
-        (Bialgebra.CounitAlgebra R (coordinateHopfAlgebra R n) B)) i j := by
-    rw [show M i j = (pointsMulEquiv (R := R) n q.val) i j from rfl]
-    rw [pointsMulEquiv_apply, pointToGeneralLinear_apply]
-    rw [derivationMulEquivTangentKer_apply_fst]
-    apply (Bialgebra.CounitAlgebra.algEquivSelf R (coordinateHopfAlgebra R n) B).injective
-    by_cases hij : i = j
-    · subst j
-      simp only [Bialgebra.CounitAlgebra.algebraMap_apply, coordinateHopfAlgebra_counit_X,
-        ↓reduceIte, map_one, Matrix.one_apply_eq]
-      exact Bialgebra.CounitAlgebra.algEquivSelf_apply R (coordinateHopfAlgebra R n) B 1
-    · simp only [Bialgebra.CounitAlgebra.algebraMap_apply, coordinateHopfAlgebra_counit_X,
-        MonoidWithZeroHom.map_ite_one_zero]
-      rw [if_neg hij, Matrix.one_apply_ne hij]
-      rfl
-  have hsnd (i j : Fin n) : snd (M i j) = d
-      (coordinateHopfAlgebraAlgEquiv R n
-        (coordinateRingMap R n (MvPolynomial.X (i, j)))) := by
-    rw [show M i j = (pointsMulEquiv (R := R) n q.val) i j from rfl]
-    rw [pointsMulEquiv_apply, pointToGeneralLinear_apply]
-    exact derivationMulEquivTangentKer_apply_snd (.ofAdd d) _
-  have hdet : d (determinantGroupLike R n : coordinateHopfAlgebra R n) =
-      Matrix.trace (fun i j ↦ d (coordinateHopfAlgebraAlgEquiv R n
-        (coordinateRingMap R n (MvPolynomial.X (i, j))))) := by
-    calc
-      d (determinantGroupLike R n : coordinateHopfAlgebra R n) =
-          snd (q.val.ofConv (determinantGroupLike R n : coordinateHopfAlgebra R n)) := by
-        rw [derivationMulEquivTangentKer_apply_snd]
-        rfl
-      _ = snd (Matrix.det M) := by
-        rw [point_apply_determinantGroupLike]
-        rw [← pointsMulEquiv_apply]
-      _ = Matrix.trace (fun i j ↦ snd (M i j)) :=
-        snd_det_eq_trace_of_fst_eq_one M hfst
-      _ = _ := by simp only [hsnd]
-  rw [hdet]
-  simp only [Bialgebra.CounitAlgebra.algEquivSelf_apply]
-  apply Finset.sum_congr rfl
-  intro i _
-  change tangentMatrix n d i i = d
-    (coordinateHopfAlgebraAlgEquiv R n
-      (coordinateRingMap R n (MvPolynomial.X (i, i))))
-  rw [tangentMatrix_apply]
-  exact Bialgebra.CounitAlgebra.algEquivSelf_apply R (coordinateHopfAlgebra R n) B _
-
-end GeneralLinear
 
 /-! ### Trace-zero matrices from the determinant-one quotient -/
 
@@ -173,100 +63,26 @@ theorem mem_lieSubalgebra_definingHopfIdeal_iff
       (Bialgebra.CounitAlgebra R (GeneralLinear.coordinateHopfAlgebra R n) B)) :
     d ∈ HopfIdeal.lieSubalgebra (B := B) (definingHopfIdeal R n) ↔
       Matrix.trace (GeneralLinear.tangentMatrix n d) = 0 := by
-  rw [HopfIdeal.mem_lieSubalgebra_iff]
-  constructor
-  · intro hd
-    have hg := hd ((GeneralLinear.determinantGroupLike R n :
-        GeneralLinear.coordinateHopfAlgebra R n) - 1) (by
-      rw [definingHopfIdeal_toIdeal]
-      exact Ideal.mem_span_singleton_self _)
-    have hdet : d (GeneralLinear.determinantGroupLike R n :
-        GeneralLinear.coordinateHopfAlgebra R n) = 0 := by
-      simpa using hg
-    rw [GeneralLinear.trace_tangentMatrix, hdet]
-    exact Bialgebra.CounitAlgebra.algEquivSelf_apply R
-      (GeneralLinear.coordinateHopfAlgebra R n) B 0
-  · intro htrace x hx
-    have hdet : d (GeneralLinear.determinantGroupLike R n :
-        GeneralLinear.coordinateHopfAlgebra R n) = 0 := by
-      apply (Bialgebra.CounitAlgebra.algEquivSelf R
-        (GeneralLinear.coordinateHopfAlgebra R n) B).injective
-      rw [← GeneralLinear.trace_tangentMatrix]
-      exact htrace.trans (Bialgebra.CounitAlgebra.algEquivSelf_apply R
-        (GeneralLinear.coordinateHopfAlgebra R n) B 0).symm
-    rw [definingHopfIdeal_toIdeal] at hx
-    obtain ⟨a, rfl⟩ := Ideal.mem_span_singleton'.mp hx
-    have hdsub : d ((GeneralLinear.determinantGroupLike R n :
-        GeneralLinear.coordinateHopfAlgebra R n) - 1) = 0 := by
-      rw [map_sub, hdet, d.map_one_eq_zero, sub_zero]
-    have hcounit : Coalgebra.counit (R := R)
-        ((GeneralLinear.determinantGroupLike R n :
-          GeneralLinear.coordinateHopfAlgebra R n) - 1) = 0 := by simp
-    have hg_smul : ((GeneralLinear.determinantGroupLike R n :
-        GeneralLinear.coordinateHopfAlgebra R n) - 1) • d a = 0 := by
-      rw [Algebra.smul_def, Bialgebra.CounitAlgebra.algebraMap_apply, hcounit,
-        ← Bialgebra.CounitAlgebra.algebraMap_base R
-          (GeneralLinear.coordinateHopfAlgebra R n) B 0, map_zero, zero_mul]
-    rw [d.leibniz]
-    rw [hdsub, smul_zero, zero_add, hg_smul]
-
-/-- Evaluate a tangent derivation of `SLₙ` on the images of the generic matrix entries. -/
-private noncomputable def ambientTangentMatrix :
-    Derivation R (coordinateHopfAlgebra R n)
-        (Bialgebra.CounitAlgebra R (coordinateHopfAlgebra R n) B) →ₗ[B]
-      Matrix (Fin n) (Fin n) B where
-  toFun d i j := Bialgebra.CounitAlgebra.algEquivSelf R (coordinateHopfAlgebra R n) B
-    (d ((coordinateMap R n).hom (GeneralLinear.coordinateHopfAlgebraAlgEquiv R n
-      (GeneralLinear.coordinateRingMap R n (MvPolynomial.X (i, j))))))
-  map_add' d e := by
-    ext i j
-    change Bialgebra.CounitAlgebra.algEquivSelf R (coordinateHopfAlgebra R n) B
-      (d _ + e _) = _
-    rw [map_add]
-    rfl
-  map_smul' b d := by
-    ext i j
-    exact algEquivSelf_derivation_smul_apply b d _
-
-/-- Evaluating after the determinant-one quotient agrees with first including the derivation into
-the tangent algebra of `GLₙ` and then taking its ambient tangent matrix. -/
-private theorem ambientTangentMatrix_eq_generalLinear
-    (d : Derivation R (coordinateHopfAlgebra R n)
-      (Bialgebra.CounitAlgebra R (coordinateHopfAlgebra R n) B)) :
-    ambientTangentMatrix n d = GeneralLinear.tangentMatrix n
-      (HopfIdeal.quotientLieHom (B := B) (definingHopfIdeal R n) d) := by
-  ext i j
-  rw [GeneralLinear.tangentMatrix_apply, HopfIdeal.quotientLieHom_apply_apply]
-  change Bialgebra.CounitAlgebra.algEquivSelf R (coordinateHopfAlgebra R n) B
-      (d ((coordinateMap R n).hom (GeneralLinear.coordinateHopfAlgebraAlgEquiv R n
-        (GeneralLinear.coordinateRingMap R n (MvPolynomial.X (i, j)))))) =
-    Bialgebra.CounitAlgebra.algEquivSelf R
-      (GeneralLinear.coordinateHopfAlgebra R n) B
-      (Bialgebra.CounitAlgebra.algEquivSelf R (coordinateHopfAlgebra R n) B
-        (d (Ideal.Quotient.mkₐ R (definingHopfIdeal R n).toIdeal
-          (GeneralLinear.coordinateHopfAlgebraAlgEquiv R n
-            (GeneralLinear.coordinateRingMap R n (MvPolynomial.X (i, j)))))))
-  rw [coordinateMap_apply]
-  exact (Bialgebra.CounitAlgebra.algEquivSelf_apply R
-    (GeneralLinear.coordinateHopfAlgebra R n) B _).symm
+  rw [HopfIdeal.mem_lieSubalgebra_iff_span (B := B) (definingHopfIdeal R n)
+    (definingHopfIdeal_toIdeal R n) d]
+  simp only [Set.mem_singleton_iff, forall_eq, map_sub, d.map_one_eq_zero, sub_zero]
+  rw [GeneralLinear.trace_tangentMatrix]
+  exact (Bialgebra.CounitAlgebra.algEquivSelf R
+    (GeneralLinear.coordinateHopfAlgebra R n) B).map_eq_zero_iff.symm
 
 /-- The trace-zero matrix of a tangent vector to `SLₙ`. It is obtained by including the
 derivation into the tangent Lie algebra of `GLₙ` and evaluating on the generic matrix entries. -/
 noncomputable def tangentMatrix :
     Derivation R (coordinateHopfAlgebra R n)
         (Bialgebra.CounitAlgebra R (coordinateHopfAlgebra R n) B) →ₗ[B]
-      LieAlgebra.SpecialLinear.sl (Fin n) B where
-  toFun d := ⟨ambientTangentMatrix n d, by
-      rw [ambientTangentMatrix_eq_generalLinear]
-      apply (mem_lieSubalgebra_definingHopfIdeal_iff n _).mp
-      rw [← HopfIdeal.quotientLieEquiv_apply_coe]
-      exact (HopfIdeal.quotientLieEquiv (B := B) (definingHopfIdeal R n) d).property⟩
-  map_add' d e := by
-    apply Subtype.ext
-    exact map_add (ambientTangentMatrix n) d e
-  map_smul' b d := by
-    apply Subtype.ext
-    exact map_smul (ambientTangentMatrix n) b d
+      LieAlgebra.SpecialLinear.sl (Fin n) B :=
+  let ambient := (GeneralLinear.tangentMatrix (R := R) (B := B) n).comp
+    (HopfIdeal.quotientLinearMap (B := B) (definingHopfIdeal R n))
+  ambient.codRestrict (LieAlgebra.SpecialLinear.sl (Fin n) B) fun d => by
+    apply (mem_lieSubalgebra_definingHopfIdeal_iff n _).mp
+    rw [← HopfIdeal.quotientLieHom_apply]
+    rw [← HopfIdeal.quotientLieEquiv_apply_coe]
+    exact (HopfIdeal.quotientLieEquiv (B := B) (definingHopfIdeal R n) d).property
 
 /-- The underlying matrix of `SpecialLinear.tangentMatrix` is the ambient `GLₙ` tangent matrix
 after precomposition with the determinant-one quotient. -/
@@ -278,8 +94,10 @@ theorem tangentMatrix_apply_coe
       GeneralLinear.tangentMatrix n
         (HopfIdeal.quotientLieHom (B := B) (definingHopfIdeal R n) d) := by
   rw [tangentMatrix]
-  change ambientTangentMatrix n d = _
-  exact ambientTangentMatrix_eq_generalLinear n d
+  -- Expose the value of the codomain restriction and the composed linear map.
+  change GeneralLinear.tangentMatrix n
+    (HopfIdeal.quotientLinearMap (B := B) (definingHopfIdeal R n) d) = _
+  rw [HopfIdeal.quotientLieHom_apply]
 
 private theorem tangentMatrix_injective :
     Function.Injective (tangentMatrix (R := R) (B := B) n) := by
@@ -335,30 +153,17 @@ theorem tangentMatrix_lie
         LieAlgebra.SpecialLinear.sl (Fin n) B) := by
       rw [LieSubalgebra.coe_bracket, tangentMatrix_apply_coe, tangentMatrix_apply_coe]
 
-/-- **The tangent space at the identity of `SLₙ` is the space of trace-zero matrices.** -/
-noncomputable def tangentLinearEquivSl :
-    Derivation R (coordinateHopfAlgebra R n)
-        (Bialgebra.CounitAlgebra R (coordinateHopfAlgebra R n) B) ≃ₗ[B]
-      LieAlgebra.SpecialLinear.sl (Fin n) B :=
-  LinearEquiv.ofBijective (tangentMatrix (R := R) (B := B) n)
-    ⟨tangentMatrix_injective n, tangentMatrix_surjective n⟩
-
 /-- **The tangent Lie algebra of `SLₙ` is the special linear Lie algebra.** The equivalence is
 valid after extension to every commutative `R`-algebra `B`. -/
 noncomputable def tangentLieEquivSl :
     LieEquiv B
       (Derivation R (coordinateHopfAlgebra R n)
         (Bialgebra.CounitAlgebra R (coordinateHopfAlgebra R n) B))
-      (LieAlgebra.SpecialLinear.sl (Fin n) B) where
-  toFun := tangentMatrix n
-  invFun := (tangentLinearEquivSl n).symm
-  left_inv d := by
-    change (tangentLinearEquivSl n).symm (tangentMatrix n d) = d
-    exact (tangentLinearEquivSl n).symm_apply_apply d
-  right_inv X := (tangentLinearEquivSl n).apply_symm_apply X
-  map_add' := map_add (tangentMatrix n)
-  map_smul' b d := map_smul (tangentMatrix n) b d
-  map_lie' := fun {d e} ↦ tangentMatrix_lie n d e
+      (LieAlgebra.SpecialLinear.sl (Fin n) B) :=
+  LieEquiv.ofBijective
+    { tangentMatrix (R := R) (B := B) n with
+      map_lie' := fun {d e} => tangentMatrix_lie n d e }
+    ⟨tangentMatrix_injective n, tangentMatrix_surjective n⟩
 
 /-- The tangent Lie equivalence is implemented by `SpecialLinear.tangentMatrix`. -/
 @[simp]
@@ -366,8 +171,6 @@ theorem tangentLieEquivSl_apply
     (d : Derivation R (coordinateHopfAlgebra R n)
       (Bialgebra.CounitAlgebra R (coordinateHopfAlgebra R n) B)) :
     tangentLieEquivSl n d = tangentMatrix n d := by
-  rw [tangentLieEquivSl]
-  change tangentMatrix n d = tangentMatrix n d
   rfl
 
 end SpecialLinear

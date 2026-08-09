@@ -21,6 +21,8 @@ therefore comes from those two facts and is not reproved here.
 
 * `TauCeti.derivationComp`: precomposition of counit-valued derivations along a
   bialgebra morphism, as an `R`-linear map — the derivation form of the differential.
+* `TauCeti.derivationCompLinear`: for Hopf algebras, the same differential bundled linearly over
+  the coefficient algebra.
 * `TauCeti.derivationComp_apply`, `TauCeti.derivationComp_id`,
   `TauCeti.derivationComp_comp`: it acts by precomposition, functorially.
 
@@ -169,5 +171,50 @@ theorem derivationComp_comp {A'' : Type*} [CommSemiring A''] [Bialgebra R A'']
   rfl
 
 end DerivationMap
+
+section DerivationLinearMap
+
+variable {R A A' B : Type*} [CommSemiring R]
+  [CommSemiring A] [HopfAlgebra R A] [CommSemiring A'] [HopfAlgebra R A']
+  [CommSemiring B] [Algebra R B]
+
+/-- Precomposition of counit-valued derivations along a Hopf-algebra morphism, bundled linearly
+over the coefficient algebra. -/
+noncomputable def derivationCompLinear (φ : A' →ₐc[R] A) :
+    Derivation R A (Bialgebra.CounitAlgebra R A B) →ₗ[B]
+      Derivation R A' (Bialgebra.CounitAlgebra R A' B) where
+  toFun := derivationComp (B := B) φ
+  map_add' := map_add (derivationComp (B := B) φ)
+  map_smul' b d := by
+    ext a
+    apply (Bialgebra.CounitAlgebra.algEquivSelf R A' B).injective
+    rw [derivationComp_apply, algEquivSelf_derivation_smul_apply, derivationComp_apply]
+    change Bialgebra.CounitAlgebra.algEquivSelf R A' B
+        ((b • d) ((φ : A' →ₐ[R] A) a)) =
+      b * Bialgebra.CounitAlgebra.algEquivSelf R A' B (d ((φ : A' →ₐ[R] A) a))
+    calc
+      _ = Bialgebra.CounitAlgebra.algEquivSelf R A B
+          ((b • d) ((φ : A' →ₐ[R] A) a)) :=
+        (Bialgebra.CounitAlgebra.algEquivSelf_apply R A' B _).trans
+          (Bialgebra.CounitAlgebra.algEquivSelf_apply R A B _).symm
+      _ = b * Bialgebra.CounitAlgebra.algEquivSelf R A B (d ((φ : A' →ₐ[R] A) a)) :=
+        algEquivSelf_derivation_smul_apply b d _
+      _ = _ := congrArg (b * ·) <|
+        (Bialgebra.CounitAlgebra.algEquivSelf_apply R A B _).trans
+          (Bialgebra.CounitAlgebra.algEquivSelf_apply R A' B _).symm
+
+/-- The coefficient-linear differential acts by precomposition. -/
+@[simp]
+theorem derivationCompLinear_apply (φ : A' →ₐc[R] A)
+    (d : Derivation R A (Bialgebra.CounitAlgebra R A B)) :
+    derivationCompLinear (B := B) φ d = derivationComp φ d :=
+  by
+    apply Derivation.ext
+    intro a
+    rw [derivationCompLinear]
+    change derivationComp (B := B) φ d a = _
+    rw [derivationComp_apply]
+
+end DerivationLinearMap
 
 end TauCeti

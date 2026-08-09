@@ -58,40 +58,6 @@ variable {R : Type u} [CommRing R]
 variable {H K : _root_.CommHopfAlgCat.{v} R}
 variable {B : Type w} [CommRing B] [Algebra R B]
 
-/-- The ideal on which both the counit and a counit-valued derivation vanish.
-
-The counit condition is what makes the vanishing of the derivation stable under multiplication:
-if `ε(x) = 0` and `d(x) = 0`, then the Leibniz rule gives `d(a * x) = 0` for every `a`. This
-auxiliary ideal packages the generated-ideal argument in
-`derivationComp_eq_zero_iff_vanishes_kernelHopfIdeal`. -/
-private def derivationVanishingIdeal
-    (d : Derivation R K (Bialgebra.CounitAlgebra R K B)) : Ideal K where
-  carrier := {x | Coalgebra.counit (R := R) x = 0 ∧ d x = 0}
-  zero_mem' := by simp
-  add_mem' := by
-    rintro a b ⟨haε, had⟩ ⟨hbε, hbd⟩
-    simp [map_add, haε, hbε, had, hbd]
-  smul_mem' := by
-    rintro a b ⟨hbε, hbd⟩
-    constructor
-    · -- An ideal's scalar action is multiplication; no rewrite lemma exposes that notation here.
-      change Coalgebra.counit (R := R) (a * b) = 0
-      simp [hbε]
-    · -- Restate the same scalar action so that the derivation's Leibniz lemma applies.
-      change d (a * b) = 0
-      rw [d.leibniz]
-      have hb_smul : b • d a = 0 := by
-        rw [Algebra.smul_def, Bialgebra.CounitAlgebra.algebraMap_apply, hbε,
-          ← Bialgebra.CounitAlgebra.algebraMap_base R K B 0, map_zero, zero_mul]
-      rw [hbd, smul_zero, hb_smul, add_zero]
-
-/-- Membership in the auxiliary vanishing ideal is simultaneous vanishing of the counit and the
-derivation. -/
-private theorem mem_derivationVanishingIdeal_iff
-    (d : Derivation R K (Bialgebra.CounitAlgebra R K B)) (x : K) :
-    x ∈ derivationVanishingIdeal d ↔ Coalgebra.counit (R := R) x = 0 ∧ d x = 0 :=
-  Iff.rfl
-
 /-- The canonical linear identification of the copies of `B` indexed by `K` and `H`. -/
 private noncomputable def counitCoefficientEquiv :
     Bialgebra.CounitAlgebra R K B ≃ₗ[R] Bialgebra.CounitAlgebra R H B :=
@@ -135,20 +101,18 @@ theorem derivationComp_eq_zero_iff_vanishes_kernelHopfIdeal (f : H ⟶ K)
     derivationComp (B := B) f.hom d = 0 ↔
       ∀ x ∈ (kernelHopfIdeal f).toIdeal, d x = 0 := by
   constructor
-  · intro hcomp
-    have hle : (kernelHopfIdeal f).toIdeal ≤ derivationVanishingIdeal d := by
-      rw [kernelHopfIdeal_toIdeal, Ideal.map_le_iff_le_comap]
-      intro x hx
-      rw [Ideal.mem_comap, mem_derivationVanishingIdeal_iff]
-      have hxε : Coalgebra.counit (R := R) x = 0 :=
-        (HopfIdeal.mem_augmentation R H).mp (HopfIdeal.mem_toIdeal.mp hx)
-      constructor
-      · simpa using (CoalgHomClass.counit_comp_apply f.hom x).trans hxε
-      · have hvalue := DFunLike.congr_fun hcomp x
-        rw [derivationComp_apply_eq_counitCoefficientEquiv] at hvalue
-        exact counitCoefficientEquiv.map_eq_zero_iff.mp hvalue
-    intro x hx
-    exact (mem_derivationVanishingIdeal_iff d x).mp (hle hx) |>.2
+  · intro hcomp x hx
+    rw [kernelHopfIdeal_toIdeal, Ideal.map] at hx
+    apply HopfIdeal.derivation_eq_zero_of_mem_span d (x := x) (S := f.hom ''
+      ((HopfIdeal.augmentation R H).toIdeal : Set H)) _ _ hx
+    · rintro _ ⟨y, hy, rfl⟩
+      have hyε : Coalgebra.counit (R := R) y = 0 :=
+        (HopfIdeal.mem_augmentation R H).mp (HopfIdeal.mem_toIdeal.mp hy)
+      simpa using (CoalgHomClass.counit_comp_apply f.hom y).trans hyε
+    · rintro _ ⟨y, _, rfl⟩
+      have hvalue := DFunLike.congr_fun hcomp y
+      rw [derivationComp_apply_eq_counitCoefficientEquiv] at hvalue
+      exact counitCoefficientEquiv.map_eq_zero_iff.mp hvalue
   · intro hvanish
     apply Derivation.ext
     intro x
