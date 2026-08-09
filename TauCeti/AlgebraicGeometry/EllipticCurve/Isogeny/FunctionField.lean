@@ -42,11 +42,8 @@ variable {W₁ W₂ : WeierstrassCurve.Affine F}
 
 private theorem isIntegral_eval_of_isIntegral {K : Type*} [CommRing K] [Algebra F K]
     {x : K} (hx : IsIntegral F x) (p : F[X]) : IsIntegral F (aeval x p) := by
-  induction p using Polynomial.induction_on' with
-  | add p q hp hq => simpa only [map_add] using hp.add hq
-  | monomial n a =>
-      rw [aeval_def, eval₂_monomial]
-      exact (isIntegral_algebraMap (R := F) (A := K)).mul (hx.pow n)
+  rw [← mem_integralClosure_iff]
+  exact adjoin_le_integralClosure hx (Polynomial.aeval_mem_adjoin_singleton F x)
 
 private theorem isIntegral_of_isIntegral_map {A K : Type*} [CommRing A] [CommRing K] [Nontrivial K]
     [Algebra F K] (f : A →+* K) (hf : ∀ a, IsIntegral F (f a)) {x : K}
