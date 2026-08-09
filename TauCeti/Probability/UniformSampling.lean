@@ -177,19 +177,28 @@ theorem uniformOn_not_injective_le [MeasurableSpace κ] [MeasurableSingletonClas
 This is the upper half of the elementary coupling bound between a uniform law and its conditioning.
 It is kept private because the public consumers below specialize `E` to injectivity. -/
 private theorem uniformOn_le_univ_add_compl {Ω : Type*} [Finite Ω] [MeasurableSpace Ω]
-    [MeasurableSingletonClass Ω] [Nonempty Ω] (E A : Set Ω) :
+    [MeasurableSingletonClass Ω] (E A : Set Ω) :
     uniformOn E A ≤ uniformOn Set.univ A + uniformOn Set.univ Eᶜ := by
-  have hfactor : uniformOn E A * uniformOn Set.univ E = uniformOn Set.univ (A ∩ E) := by
-    rw [uniformOn_inter' Set.finite_univ, Set.univ_inter]
-  calc
-    uniformOn E A
-      = uniformOn E A * (uniformOn Set.univ E + uniformOn Set.univ Eᶜ) := by
-          rw [uniformOn_compl E Set.finite_univ Set.univ_nonempty, mul_one]
-    _ = uniformOn Set.univ (A ∩ E) +
-        uniformOn E A * uniformOn Set.univ Eᶜ := by rw [mul_add, hfactor]
-    _ ≤ uniformOn Set.univ A + uniformOn Set.univ Eᶜ := by
-      exact add_le_add (measure_mono Set.inter_subset_left)
-        (mul_le_of_le_one_left bot_le prob_le_one)
+  cases isEmpty_or_nonempty Ω with
+  | inl =>
+      have hE : E = ∅ := by ext x; exact isEmptyElim x
+      have hA : A = ∅ := by ext x; exact isEmptyElim x
+      subst E
+      subst A
+      simp
+  | inr =>
+      have hfactor : uniformOn E A * uniformOn Set.univ E =
+          uniformOn Set.univ (A ∩ E) := by
+        rw [uniformOn_inter' Set.finite_univ, Set.univ_inter]
+      calc
+        uniformOn E A
+          = uniformOn E A * (uniformOn Set.univ E + uniformOn Set.univ Eᶜ) := by
+              rw [uniformOn_compl E Set.finite_univ Set.univ_nonempty, mul_one]
+        _ = uniformOn Set.univ (A ∩ E) +
+            uniformOn E A * uniformOn Set.univ Eᶜ := by rw [mul_add, hfactor]
+        _ ≤ uniformOn Set.univ A + uniformOn Set.univ Eᶜ := by
+          exact add_le_add (measure_mono Set.inter_subset_left)
+            (mul_le_of_le_one_left bot_le prob_le_one)
 
 /-- Conditioning a finite uniform sample on an event `E` can decrease the probability of an event
 `A` by at most the original probability of `Eᶜ`.
@@ -197,46 +206,55 @@ private theorem uniformOn_le_univ_add_compl {Ω : Type*} [Finite Ω] [Measurable
 This is the lower half of the elementary coupling bound between a uniform law and its conditioning.
 It is kept private because the public consumers below specialize `E` to injectivity. -/
 private theorem uniformOn_univ_le_add_compl {Ω : Type*} [Finite Ω] [MeasurableSpace Ω]
-    [MeasurableSingletonClass Ω] [Nonempty Ω] (E A : Set Ω) :
+    [MeasurableSingletonClass Ω] (E A : Set Ω) :
     uniformOn Set.univ A ≤ uniformOn E A + uniformOn Set.univ Eᶜ := by
-  have hfactor : uniformOn E A * uniformOn Set.univ E = uniformOn Set.univ (A ∩ E) := by
-    rw [uniformOn_inter' Set.finite_univ, Set.univ_inter]
-  calc
-    uniformOn Set.univ A
-      ≤ uniformOn Set.univ (A ∩ E) + uniformOn Set.univ (A ∩ Eᶜ) := by
-        calc
-          uniformOn Set.univ A = uniformOn Set.univ ((A ∩ E) ∪ (A ∩ Eᶜ)) := by
-            congr 1
-            aesop
-          _ ≤ uniformOn Set.univ (A ∩ E) + uniformOn Set.univ (A ∩ Eᶜ) :=
-            measure_union_le _ _
-    _ = uniformOn E A * uniformOn Set.univ E + uniformOn Set.univ (A ∩ Eᶜ) := by
-      rw [hfactor]
-    _ ≤ uniformOn E A + uniformOn Set.univ Eᶜ := by
-      exact add_le_add (mul_le_of_le_one_right bot_le prob_le_one)
-        (measure_mono Set.inter_subset_right)
+  cases isEmpty_or_nonempty Ω with
+  | inl =>
+      have hE : E = ∅ := by ext x; exact isEmptyElim x
+      have hA : A = ∅ := by ext x; exact isEmptyElim x
+      subst E
+      subst A
+      simp
+  | inr =>
+      have hfactor : uniformOn E A * uniformOn Set.univ E =
+          uniformOn Set.univ (A ∩ E) := by
+        rw [uniformOn_inter' Set.finite_univ, Set.univ_inter]
+      calc
+        uniformOn Set.univ A
+          ≤ uniformOn Set.univ (A ∩ E) + uniformOn Set.univ (A ∩ Eᶜ) := by
+            calc
+              uniformOn Set.univ A = uniformOn Set.univ ((A ∩ E) ∪ (A ∩ Eᶜ)) := by
+                congr 1
+                aesop
+              _ ≤ uniformOn Set.univ (A ∩ E) + uniformOn Set.univ (A ∩ Eᶜ) :=
+                measure_union_le _ _
+        _ = uniformOn E A * uniformOn Set.univ E + uniformOn Set.univ (A ∩ Eᶜ) := by
+          rw [hfactor]
+        _ ≤ uniformOn E A + uniformOn Set.univ Eᶜ := by
+          exact add_le_add (mul_le_of_le_one_right bot_le prob_le_one)
+            (measure_mono Set.inter_subset_right)
 
+omit [Fintype ι] [Fintype κ] in
 /-- Uniform sampling without replacement differs from sampling with replacement only on the
 collision event: for every event `A`, its without-replacement probability is at most its
 with-replacement probability plus the collision probability. -/
-theorem uniformOn_injective_le_add [MeasurableSpace κ] [MeasurableSingletonClass κ]
-    (hcard : Fintype.card ι ≤ Fintype.card κ) (A : Set (ι → κ)) :
+theorem uniformOn_injective_le_add [Finite ι] [Finite κ] [MeasurableSpace κ]
+    [MeasurableSingletonClass κ]
+    (A : Set (ι → κ)) :
     uniformOn {x : ι → κ | Function.Injective x} A ≤
       uniformOn Set.univ A + uniformOn Set.univ {x : ι → κ | ¬Function.Injective x} := by
-  have : Nonempty (ι → κ) :=
-    ⟨(Function.Embedding.nonempty_of_card_le hcard).some⟩
   simpa only [Set.compl_ofPred] using
     uniformOn_le_univ_add_compl {x : ι → κ | Function.Injective x} A
 
+omit [Fintype ι] [Fintype κ] in
 /-- Uniform sampling with replacement differs from sampling without replacement only on the
 collision event: for every event `A`, its with-replacement probability is at most its
 without-replacement probability plus the collision probability. -/
-theorem uniformOn_univ_le_injective_add [MeasurableSpace κ] [MeasurableSingletonClass κ]
-    (hcard : Fintype.card ι ≤ Fintype.card κ) (A : Set (ι → κ)) :
+theorem uniformOn_univ_le_injective_add [Finite ι] [Finite κ] [MeasurableSpace κ]
+    [MeasurableSingletonClass κ]
+    (A : Set (ι → κ)) :
     uniformOn Set.univ A ≤ uniformOn {x : ι → κ | Function.Injective x} A +
       uniformOn Set.univ {x : ι → κ | ¬Function.Injective x} := by
-  have : Nonempty (ι → κ) :=
-    ⟨(Function.Embedding.nonempty_of_card_le hcard).some⟩
   simpa only [Set.compl_ofPred] using
     uniformOn_univ_le_add_compl {x : ι → κ | Function.Injective x} A
 
@@ -244,22 +262,20 @@ theorem uniformOn_univ_le_injective_add [MeasurableSpace κ] [MeasurableSingleto
 event `A`, the probability under uniform sampling without replacement is at most its probability
 under sampling with replacement plus `(Fintype.card ι).choose 2 / Fintype.card κ`. -/
 theorem uniformOn_injective_le_add_choose_two_div [MeasurableSpace κ]
-    [MeasurableSingletonClass κ] (hcard : Fintype.card ι ≤ Fintype.card κ)
-    (A : Set (ι → κ)) :
+    [MeasurableSingletonClass κ] (A : Set (ι → κ)) :
     uniformOn {x : ι → κ | Function.Injective x} A ≤
       uniformOn Set.univ A + (Fintype.card ι).choose 2 / Fintype.card κ :=
-  (uniformOn_injective_le_add hcard A).trans <|
+  (uniformOn_injective_le_add A).trans <|
     add_le_add le_rfl uniformOn_not_injective_le
 
 /-- **Quantitative finite-sampling bound, with replacement to without replacement.**  For every
 event `A`, the probability under uniform sampling with replacement is at most its probability
 under sampling without replacement plus `(Fintype.card ι).choose 2 / Fintype.card κ`. -/
 theorem uniformOn_univ_le_injective_add_choose_two_div [MeasurableSpace κ]
-    [MeasurableSingletonClass κ] (hcard : Fintype.card ι ≤ Fintype.card κ)
-    (A : Set (ι → κ)) :
+    [MeasurableSingletonClass κ] (A : Set (ι → κ)) :
     uniformOn Set.univ A ≤ uniformOn {x : ι → κ | Function.Injective x} A +
       (Fintype.card ι).choose 2 / Fintype.card κ :=
-  (uniformOn_univ_le_injective_add hcard A).trans <|
+  (uniformOn_univ_le_injective_add A).trans <|
     add_le_add le_rfl uniformOn_not_injective_le
 
 end Probability
