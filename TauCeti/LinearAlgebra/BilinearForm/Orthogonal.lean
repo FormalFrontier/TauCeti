@@ -15,7 +15,7 @@ form. It is the structural step used when a Cartan--Dieudonne argument enlarges 
 
 ## Main result
 
-* `TauCeti.BilinForm.restrict_sup_span_singleton_nondegenerate`: adjoining a vector with nonzero
+* `TauCeti.BilinForm.restrict_nondegenerate_sup_span_singleton`: adjoining a vector with nonzero
   self-pairing from the orthogonal complement preserves nondegeneracy.
 * `TauCeti.BilinForm.finrank_sup_span_singleton_of_mem_orthogonal`: adjoining a vector with
   nonzero self-pairing from the orthogonal complement increases finrank by one.
@@ -33,7 +33,7 @@ variable {K V : Type*} [Field K] [AddCommGroup V] [Module K V]
 
 /-- Adjoining a vector with nonzero self-pairing from the orthogonal complement of a nondegenerate
 subspace preserves nondegeneracy. -/
-theorem restrict_sup_span_singleton_nondegenerate
+theorem restrict_nondegenerate_sup_span_singleton
     (B : BilinForm K V) (hB : B.IsRefl) (W : Submodule K V)
     (hW : (B.restrict W).Nondegenerate) (x : V) (hxx : B x x ≠ 0)
     (hx : x ∈ B.orthogonal W) :

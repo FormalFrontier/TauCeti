@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.FieldTheory.IsSepClosed
+public import Mathlib.LinearAlgebra.BilinearForm.Orthogonal
 public import TauCeti.LinearAlgebra.CliffordAlgebra.ReflectionLift
 
 /-!
@@ -23,7 +24,8 @@ This is the one-vector reduction used by the finite-dimensional Cartan--Dieudonn
 * `TauCeti.CliffordAlgebra.exists_mem_range_pinToOrthogonal_mul_apply_eq_self`: an element in the
   range of the Pin action corrects an orthogonal automorphism to fix a chosen vector of invertible
   norm.
-* `TauCeti.CliffordAlgebra.exists_mem_range_pinToOrthogonal_mul_eqOn_sup`: the correction preserves
+* `TauCeti.CliffordAlgebra.exists_mem_range_pinToOrthogonal_mul_eqOn_sup_span_singleton`:
+  the correction preserves
   an arbitrary previously fixed subspace when the new vector is orthogonal to it.
 
 ## References
@@ -99,8 +101,9 @@ private theorem associated_apply_of_mem_orthogonalGroup
     (g : QuadraticMap.orthogonalGroup Q) (x y : V) :
     QuadraticMap.associated Q ((g : V ≃ₗ[K] V) x) ((g : V ≃ₗ[K] V) y) =
       QuadraticMap.associated Q x y := by
-  simp only [QuadraticMap.associated_apply, ← map_add,
-    QuadraticMap.map_app_of_mem_orthogonalGroup g.2]
+  simpa only [QuadraticMap.associated_apply, QuadraticMap.polar] using
+    congrArg (⅟(2 : Module.End K K) • ·)
+      (QuadraticMap.polar_apply_of_mem_orthogonalGroup g.2 x y)
 
 omit [IsSepClosed K] in
 private theorem reflection_fixes_of_mem_orthogonal
@@ -130,7 +133,7 @@ private theorem linearEquiv_eqOn_sup_span_singleton
 
 /-- Given an orthogonal automorphism that fixes `W` and an anisotropic vector `x` orthogonal to
 `W`, a Pin-range correction makes the product fix `W ⊔ K ∙ x` pointwise. -/
-theorem exists_mem_range_pinToOrthogonal_mul_eqOn_sup
+theorem exists_mem_range_pinToOrthogonal_mul_eqOn_sup_span_singleton
     (g : QuadraticMap.orthogonalGroup Q) (W : Submodule K V)
     (hfix : ∀ w ∈ W, ((g : V ≃ₗ[K] V) w) = w)
     (x : V) [Invertible (Q x)]
