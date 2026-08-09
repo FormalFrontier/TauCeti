@@ -73,39 +73,7 @@ namespace TauCeti
 variable {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V]
   [FiniteDimensional ℝ V] [MeasurableSpace V] [BorelSpace V]
 
-/-! ### Elementary consequences of positive definiteness of a subtraction kernel -/
-
-section KernelConsequences
-
-variable {ψ : V → ℂ}
-
-omit [InnerProductSpace ℝ V] [FiniteDimensional ℝ V] [MeasurableSpace V] [BorelSpace V] in
-/-- The value at `0` of a positive-definite subtraction kernel is a real number. -/
-private theorem map_zero_eq_ofReal_re_of_kernel
-    (hpd : IsPositiveDefiniteKernel fun a b : V => ψ (a - b)) : ψ 0 = ((ψ 0).re : ℂ) := by
-  have h0 : (0 : ℂ) ≤ ψ 0 := by
-    simpa using isPositiveDefiniteKernel_apply_self_nonneg hpd 0
-  have him := (Complex.nonneg_iff.mp h0).2
-  exact Complex.ext (by simp) (by simp [← him])
-
-omit [InnerProductSpace ℝ V] [FiniteDimensional ℝ V] [MeasurableSpace V] [BorelSpace V] in
-/-- A function with positive-definite subtraction kernel vanishing at `0` vanishes
-everywhere, by the kernel Cauchy–Schwarz inequality. -/
-private theorem eq_zero_of_kernel_of_map_zero_eq_zero
-    (hpd : IsPositiveDefiniteKernel fun a b : V => ψ (a - b)) (h0 : ψ 0 = 0) (v : V) :
-    ψ v = 0 := by
-  have h := isPositiveDefiniteKernel_eq_zero_of_apply_self_eq_zero_right hpd
-    (a := v) (b := (0 : V)) (by simpa using h0)
-  simpa using h
-
-end KernelConsequences
-
 /-! ### The normalized existence argument -/
-
-omit [FiniteDimensional ℝ V] [MeasurableSpace V] [BorelSpace V] in
-/-- The Fourier atom at frequency `0` is the constant `1`. -/
-private theorem fourierAtom_zero_left (q : V) : fourierAtom (0 : V) q = 1 := by
-  simp
 
 /-- The scaling constant `-2π` of the Fourier convention is nonzero. -/
 private theorem neg_two_pi_ne_zero : (-2 * Real.pi) ≠ 0 :=
@@ -140,7 +108,8 @@ private theorem exists_probabilityMeasure_integral_fourierAtom_eq {G : V → ℂ
       (integrable_fourierIntegral_gaussianRegularize hpd hcont (hε_pos n))
     have h0 := hν_rep n 0
     rw [gaussianRegularize_zero, hG0] at h0
-    simp only [fourierAtom_zero_left, integral_const, Complex.real_smul, mul_one,
+    simp only [fourierAtom_apply, inner_zero_right, Complex.ofReal_zero, mul_zero,
+      Complex.exp_zero, integral_const, Complex.real_smul, mul_one,
       Complex.ofReal_eq_one] at h0
     exact isProbabilityMeasure_iff_real.mpr h0
   -- the pointwise limit of the characteristic functions
@@ -193,12 +162,17 @@ theorem exists_isFiniteMeasure_integral_fourierAtom_eq_of_isPositiveDefiniteKern
     ∃ μ : Measure V, IsFiniteMeasure μ ∧ ∀ v, F v = ∫ q, fourierAtom v q ∂μ := by
   have h0re : 0 ≤ (F 0).re :=
     (Complex.nonneg_iff.mp (by simpa using isPositiveDefiniteKernel_apply_self_nonneg hpd 0)).1
-  have h0eq : F 0 = ((F 0).re : ℂ) := map_zero_eq_ofReal_re_of_kernel hpd
+  have h0eq : F 0 = ((F 0).re : ℂ) := by
+    have h0 : (0 : ℂ) ≤ F 0 := by
+      simpa using isPositiveDefiniteKernel_apply_self_nonneg hpd 0
+    exact Complex.ext (by simp) (by simp [← (Complex.nonneg_iff.mp h0).2])
   rcases h0re.eq_or_lt with hzero | hpos
   · -- degenerate case: `F 0 = 0` forces `F = 0`, represented by the zero measure
     have hF0 : F 0 = 0 := by rw [h0eq, ← hzero, Complex.ofReal_zero]
     exact ⟨0, inferInstance, fun v => by
-      simp [eq_zero_of_kernel_of_map_zero_eq_zero hpd hF0 v]⟩
+      simp [show F v = 0 by
+        simpa using isPositiveDefiniteKernel_eq_zero_of_apply_self_eq_zero_right hpd
+          (a := v) (b := (0 : V)) (by simpa using hF0)]⟩
   · -- main case: normalize to value `1` at the origin and scale the measure back
     set c : ℝ := (F 0).re
     have hcne : (c : ℂ) ≠ 0 := by exact_mod_cast hpos.ne'
