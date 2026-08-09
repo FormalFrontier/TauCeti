@@ -60,16 +60,14 @@ tangent adjoint actions. -/
 @[simp]
 theorem leftInvariantDerivationLinearIsometryEquivModelVectorSpace_Ad
     (g : G) (D : LeftInvariantDerivation I G) :
-    leftInvariantDerivationLinearIsometryEquivModelVectorSpace (I := I) (G := G)
-        (Ad (I := I) g D) =
+    (pointDerivationEquivTangentSpace (I := I) 1 BoundarylessManifold.isInteriorPoint
+        (LeftInvariantDerivation.evalAt 1 (Ad (I := I) g D)) : E) =
       tangentAd (I := I) g
         (leftInvariantDerivationLinearIsometryEquivModelVectorSpace (I := I) (G := G) D) := by
   have h := leftInvariantDerivationLieEquivGroupLieAlgebra_Ad (I := I) g D
-  -- `GroupLieAlgebra I G` is definitionally the model space `E`; map the equality across that
-  -- identification before rewriting the two derivation equivalences.
-  have hE := congrArg (fun X : GroupLieAlgebra I G ↦ show E from X) h
   simpa only [leftInvariantDerivationLieEquivGroupLieAlgebra_apply,
-    leftInvariantDerivationLinearIsometryEquivModelVectorSpace_apply] using hE
+    leftInvariantDerivationLinearIsometryEquivModelVectorSpace_apply,
+    leftInvariantDerivationEquivGroupLieAlgebra_apply] using h
 
 /-- The adjoint representation valued in bounded operators. -/
 def continuousAdjointRepresentation :
@@ -125,8 +123,11 @@ theorem continuousAdjointRepresentation_apply (g : G) (D : LeftInvariantDerivati
     ((leftInvariantDerivationLinearIsometryEquivModelVectorSpace
       (I := I) (G := G) D : E) : GroupLieAlgebra I G)
   have hE := congrArg (fun X : GroupLieAlgebra I G ↦ show E from X) h
-  exact hE.symm.trans
+  have hintertwine := congrArg (fun X : GroupLieAlgebra I G ↦ show E from X)
     (leftInvariantDerivationLinearIsometryEquivModelVectorSpace_Ad (I := I) g D).symm
+  rw [← leftInvariantDerivationEquivGroupLieAlgebra_apply,
+    ← leftInvariantDerivationLinearIsometryEquivModelVectorSpace_apply] at hintertwine
+  exact hE.symm.trans hintertwine
 
 /-- The bounded-operator-valued adjoint representation is smooth. -/
 theorem contMDiff_continuousAdjointRepresentation :
