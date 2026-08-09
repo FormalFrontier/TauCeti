@@ -6,7 +6,6 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Coordinate.HopfAlgebra
 public import TauCeti.Algebra.Coalgebra.Comodule.MatrixCoefficient.Dual
-public import TauCeti.Algebra.Coalgebra.Comodule.MatrixCoefficient.Matrix
 import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.FunctorOfPoints
 import TauCeti.Algebra.HopfAlgebra.Basic
 
