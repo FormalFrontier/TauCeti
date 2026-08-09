@@ -41,6 +41,17 @@ merges. The degree section is instead ported from the AINTLIB `LeanModularForms`
 * `HeckeCosetModule.single`: the basis element `b • [D]` of the Hecke coset module, with
   `single_apply`, `sum_single_index`, `smul_single_one`, `single_add`, `induction_linear`,
   and the `Module R` instance `HeckeCosetModule.instModule`.
+* Pointwise evaluation of the coset module: `zero_apply`, `add_apply`, `smul_apply`,
+  `mem_support_iff`, `notMem_support_iff`, `sum_def`, `sum_apply` and `sum_smul_index`.
+  `HeckeCosetModule` is a `def` over `Finsupp` carrying transported instances, so Mathlib's
+  `Finsupp` evaluation lemmas hold *definitionally* — they can be applied in term mode — but
+  `rw`, `simp` and `grind` match syntactically and so cannot see through the wrapper. These
+  restatements are what makes those facts usable tactically.
+
+  In particular these do not compete with their `Finsupp` originals: at this type
+  `simp [Finsupp.mem_support_iff]` reports the argument as unused and `simp [Finsupp.add_apply]`
+  makes no progress, because neither left-hand side matches through the wrapper. The wrapper
+  restatement is the only form `simp` can apply.
 * `HeckeCoset.degree`: the number of left cosets in the decomposition of a double coset,
   with `degree_eq_relIndex` and `degree_mk` presenting it as a relative index,
   `degree_eq_natCard_decompQuotient` as the (hypothesis-free) count of that quotient, and
@@ -310,5 +321,81 @@ lemma smul_single_one (D : HeckeCoset Δ H₁ H₂) (b : R) : b • single R D 1
   Finsupp.smul_single_one D b
 
 end SingleModule
+
+/-! ### Pointwise evaluation
+
+`HeckeCosetModule` is a `def` over `Finsupp`, so Mathlib's `Finsupp` evaluation lemmas hold
+definitionally but neither `rw` nor `simp` can match them through the wrapper. These are the
+wrapper-level restatements; without them every consumer re-derives its own private copies.
+Each is stated at the coefficient assumptions its underlying operation actually needs: the
+`FunLike` coercion and `Finsupp.support` need only `[Zero R]`, while the wrapper's `0`, `+`
+and `•` come from its `AddCommMonoid` and `Module` instances. -/
+
+section EvalSupport
+
+variable {R : Type*} [Zero R]
+
+/-- `Finsupp.mem_support_iff`, at the wrapper type. -/
+@[simp, grind =] lemma mem_support_iff {f : HeckeCosetModule Δ H₁ H₂ R}
+    {D : HeckeCoset Δ H₁ H₂} : D ∈ f.support ↔ f D ≠ 0 :=
+  Finsupp.mem_support_iff
+
+/-- `Finsupp.notMem_support_iff`, at the wrapper type: the elimination form of
+`mem_support_iff`. Deliberately unannotated — `mem_support_iff` is the `@[simp]` normal form,
+and `simp` discharges this direction from it. -/
+lemma notMem_support_iff {f : HeckeCosetModule Δ H₁ H₂ R} {D : HeckeCoset Δ H₁ H₂} :
+    D ∉ f.support ↔ f D = 0 :=
+  Finsupp.notMem_support_iff
+
+/-- `Finsupp.sum` unfolded to a `Finset.sum`, at the wrapper type. -/
+-- `rfl` rather than a cited lemma: `Finsupp.sum` is a plain `def` for exactly this
+-- `Finset.sum`, and Mathlib exposes no unfolding lemma to name here.
+lemma sum_def {N : Type*} [AddCommMonoid N] (f : HeckeCosetModule Δ H₁ H₂ R)
+    (F : HeckeCoset Δ H₁ H₂ → R → N) : f.sum F = ∑ D ∈ f.support, F D (f D) := (rfl)
+
+/-- `Finsupp.sum_apply`, at the wrapper type: evaluation commutes with a `Finsupp.sum`. The
+target coefficients are independent of the source's. -/
+@[simp, grind =] lemma sum_apply {S : Type*} [AddCommMonoid S] {H₃ H₄ : Subgroup G}
+    (f : HeckeCosetModule Δ H₁ H₂ R)
+    (F : HeckeCoset Δ H₁ H₂ → R → HeckeCosetModule Δ H₃ H₄ S) (D : HeckeCoset Δ H₃ H₄) :
+    (f.sum F) D = f.sum fun E c ↦ F E c D :=
+  Finsupp.sum_apply
+
+end EvalSupport
+
+section EvalZero
+
+variable {R : Type*} [AddCommMonoid R]
+
+/-- `Finsupp.zero_apply`, at the wrapper type. Not `@[grind =]`: unlike Mathlib's
+`Finsupp.zero_apply`, where `M` is recoverable from `(0 : α →₀ M)`, the wrapper's coercion
+leaves `R` and its `AddCommMonoid` uninstantiable, and `grind` rejects the pattern. -/
+@[simp] lemma zero_apply (D : HeckeCoset Δ H₁ H₂) :
+    (0 : HeckeCosetModule Δ H₁ H₂ R) D = 0 :=
+  Finsupp.zero_apply
+
+/-- `Finsupp.add_apply`, at the wrapper type. -/
+@[simp, grind =] lemma add_apply (f g : HeckeCosetModule Δ H₁ H₂ R) (D : HeckeCoset Δ H₁ H₂) :
+    (f + g) D = f D + g D :=
+  Finsupp.add_apply f g D
+
+end EvalZero
+
+section EvalSMul
+
+variable {R : Type*} [Semiring R]
+
+/-- `Finsupp.smul_apply`, at the wrapper type. -/
+@[simp, grind =] lemma smul_apply (a : R) (f : HeckeCosetModule Δ H₁ H₂ R)
+    (D : HeckeCoset Δ H₁ H₂) : (a • f) D = a * f D :=
+  (Finsupp.smul_apply a f D).trans (smul_eq_mul _ _)
+
+/-- `Finsupp.sum_smul_index`, at the wrapper type: a scalar pushes into a `Finsupp.sum`. -/
+@[grind =] lemma sum_smul_index {N : Type*} [AddCommMonoid N] (a : R)
+    (f : HeckeCosetModule Δ H₁ H₂ R) (F : HeckeCoset Δ H₁ H₂ → R → N) (h0 : ∀ D, F D 0 = 0) :
+    (a • f).sum F = f.sum fun D c ↦ F D (a * c) :=
+  Finsupp.sum_smul_index h0
+
+end EvalSMul
 
 end HeckeCosetModule

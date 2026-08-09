@@ -24,6 +24,9 @@ read from the highest degree down, so that it inverts Mathlib's `Polynomial.coef
 defining recursion is Horner's, `ofCoeffList (l ++ [a]) = ofCoeffList l * X + C a`, and every proof
 below runs along it.  It is a `noncomputable` specification map: the *lists* are what compute.
 
+`TauCeti.Polynomial.mulCoeffList` multiplies two such lists by convolving their coefficients, and
+`TauCeti.Polynomial.ofCoeffList_mulCoeffList` identifies the result with the product polynomial.
+
 `TauCeti.Polynomial.divModByMonicList t l` is long division of `ofCoeffList l` by the monic
 polynomial `X ^ t.length + ofCoeffList t`, carried out as the usual synthetic division: a window of
 `t.length` remainder coefficients is carried along the dividend, and at each step the coefficient
@@ -209,6 +212,43 @@ theorem ofCoeffList_coeffList (p : R[X]) : ofCoeffList p.coeffList = p := by
       Option.getD_none]
     exact (coeff_eq_zero_of_natDegree_lt (by omega)).symm
 
+/-- Multiplication of descending coefficient lists, by convolving them in ascending degree order.
+The output has the usual `l.length + m.length - 1` slots; if either input is empty, all of those
+slots are zero.  This is `@[expose]`d, since a consumer computing with it in another module
+reduces it in the kernel. -/
+@[expose] def mulCoeffList (l m : List R) : List R :=
+  (List.ofFn fun i : Fin (l.length + m.length - 1) =>
+    ∑ jk ∈ Finset.antidiagonal (i : ℕ),
+      l.reverse.getD jk.1 0 * m.reverse.getD jk.2 0).reverse
+
+/-- `TauCeti.Polynomial.mulCoeffList` lists the coefficients of a product of polynomials. -/
+theorem ofCoeffList_mulCoeffList (l m : List R) :
+    ofCoeffList (mulCoeffList l m) = ofCoeffList l * ofCoeffList m := by
+  ext n
+  rw [coeff_ofCoeffList, coeff_mul]
+  by_cases hn : n < l.length + m.length - 1
+  · rw [mulCoeffList, List.reverse_reverse, List.getD_eq_getElem]
+    · simp
+    · simpa using hn
+  · rw [List.getD_eq_getElem?_getD,
+      List.getElem?_eq_none (by simp [mulCoeffList]; omega),
+      Option.getD_none]
+    simp only [coeff_ofCoeffList]
+    symm
+    apply Finset.sum_eq_zero
+    intro jk hjk
+    rw [Finset.mem_antidiagonal] at hjk
+    by_cases hl : jk.1 < l.length
+    · have hm : m.length ≤ jk.2 := by omega
+      have hm0 : m.reverse.getD jk.2 0 = 0 := by
+        rw [List.getD_eq_getElem?_getD, List.getElem?_eq_none (by simpa using hm),
+          Option.getD_none]
+      rw [hm0, mul_zero]
+    · have hl0 : l.reverse.getD jk.1 0 = 0 := by
+        rw [List.getD_eq_getElem?_getD, List.getElem?_eq_none (by simpa using hl),
+          Option.getD_none]
+      rw [hl0, zero_mul]
+
 /-- The divisor `X ^ t.length + ofCoeffList t` of `TauCeti.Polynomial.divModByMonicList` is
 monic. -/
 theorem monic_X_pow_add_ofCoeffList (t : List R) : (X ^ t.length + ofCoeffList t).Monic :=
@@ -234,6 +274,15 @@ end Semiring
 section Ring
 
 variable [Ring R]
+
+/-- Negating every coefficient negates the polynomial. -/
+@[simp]
+theorem ofCoeffList_map_neg (l : List R) : ofCoeffList (l.map (-·)) = -ofCoeffList l := by
+  induction l using List.reverseRecOn with
+  | nil => simp
+  | append_singleton l a ih =>
+    rw [List.map_append, List.map_cons, List.map_nil, ofCoeffList_concat, ofCoeffList_concat, ih,
+      map_neg, neg_mul, ← neg_add]
 
 /-- Subtracting a right multiple of one list of coefficients from another, entrywise. -/
 theorem ofCoeffList_zipWith_sub (c : R) {l l' : List R} (h : l.length = l'.length) :

@@ -38,6 +38,10 @@ Layer 9 CAR worked instance.
   infinitesimal rotation determined by `QuadraticMap.polar`.
 * `TauCeti.CliffordAlgebra.cliffordBivectorExterior_apply_ιMulti`: the exterior-square map on a
   decomposable bivector.
+* `TauCeti.CliffordAlgebra.equivExterior_cliffordBivector`,
+  `TauCeti.CliffordAlgebra.equivExterior_cliffordBivectorExterior`, and
+  `TauCeti.CliffordAlgebra.cliffordBivectorExterior_injective`: the exterior model sends
+  bivectors to exterior products, so the exterior-square map is injective.
 * `TauCeti.CliffordAlgebra.cliffordBivector_mem_evenOdd_zero` and
   `TauCeti.CliffordAlgebra.cliffordBivector_mem_filtration_two`: it is even and has filtration
   degree at most two.
@@ -92,6 +96,9 @@ noncomputable def cliffordBivectorAlternating : M [⋀^Fin 2]→ₗ[R] CliffordA
       intro v i j h hij
       fin_cases i <;> fin_cases j <;> simp_all [cliffordBivector_def] }
 
+-- Proving the exported `cliffordBivectorAlternating_apply` by `rfl` directly would require
+-- `cliffordBivectorAlternating` to be `@[expose]`d, which it deliberately is not. The `rfl` is
+-- therefore done here, inside the module, and re-exported below.
 private theorem cliffordBivectorAlternating_apply_internal (a b : M) :
     cliffordBivectorAlternating Q ![a, b] = cliffordBivector Q a b := rfl
 
@@ -110,6 +117,50 @@ noncomputable def cliffordBivectorExterior : ⋀[R]^2 M →ₗ[R] CliffordAlgebr
 theorem cliffordBivectorExterior_apply_ιMulti (a b : M) :
     cliffordBivectorExterior Q (exteriorPower.ιMulti R 2 ![a, b]) = cliffordBivector Q a b := by
   simp [cliffordBivectorExterior]
+
+private theorem equivExterior_ι_mul_ι_sub_swap (a b : M) :
+    equivExterior Q (ι Q a * ι Q b - ι Q b * ι Q a) =
+      ExteriorAlgebra.ι R a * ExteriorAlgebra.ι R b -
+        ExteriorAlgebra.ι R b * ExteriorAlgebra.ι R a := by
+  simp only [equivExterior, map_sub, changeFormEquiv_apply, changeForm_ι_mul_ι]
+  rw [QuadraticMap.associated_isSymm R (-Q) a b]
+  module
+
+/-- The exterior model sends a half-normalized Clifford bivector to its exterior product. -/
+theorem equivExterior_cliffordBivector (a b : M) :
+    equivExterior Q (cliffordBivector Q a b) = ExteriorAlgebra.ι R a * ExteriorAlgebra.ι R b := by
+  rw [cliffordBivector_def, map_smul, equivExterior_ι_mul_ι_sub_swap]
+  rw [eq_neg_of_add_eq_zero_right (ExteriorAlgebra.ι_add_mul_swap a b),
+    sub_neg_eq_add, ← two_smul R, invOf_smul_smul]
+
+private theorem equivExterior_comp_cliffordBivectorExterior :
+    (equivExterior Q).toLinearMap.comp (cliffordBivectorExterior Q) = (⋀[R]^2 M).subtype := by
+  apply exteriorPower.linearMap_ext
+  apply AlternatingMap.ext
+  intro x
+  have hx : x = ![x 0, x 1] := by
+    funext i
+    fin_cases i <;> rfl
+  rw [LinearMap.compAlternatingMap_apply, LinearMap.comp_apply,
+    LinearMap.compAlternatingMap_apply, LinearEquiv.coe_coe]
+  rw [hx, cliffordBivectorExterior_apply_ιMulti, equivExterior_cliffordBivector]
+  simp
+
+/-- The exterior model is a left inverse of the exterior-square Clifford bivector map.
+
+As with `equivExterior_basis`, this is not a simp lemma because simp unfolds `equivExterior`
+before rewriting its applications. -/
+theorem equivExterior_cliffordBivectorExterior (x : ⋀[R]^2 M) :
+    equivExterior Q (cliffordBivectorExterior Q x) = (x : ExteriorAlgebra R M) :=
+  LinearMap.congr_fun (equivExterior_comp_cliffordBivectorExterior Q) x
+
+/-- The exterior-square Clifford bivector map is injective. -/
+theorem cliffordBivectorExterior_injective : Function.Injective (cliffordBivectorExterior Q) := by
+  apply Function.Injective.of_comp (f := equivExterior Q)
+  -- `of_comp` exposes function composition, while the named equation uses `LinearMap.comp`.
+  change Function.Injective ((equivExterior Q).toLinearMap.comp (cliffordBivectorExterior Q))
+  simpa only [equivExterior_comp_cliffordBivectorExterior] using
+    Submodule.subtype_injective (⋀[R]^2 M)
 
 /-- Interchanging the two vectors negates their Clifford bivector. -/
 theorem cliffordBivector_swap (a b : M) :
@@ -160,18 +211,6 @@ theorem cliffordBivectorExterior_range_le_of_cliffordBivector_mem
   change cliffordBivectorExterior Q (exteriorPower.ιMulti R 2 ![v 0, v 1]) ∈ P
   rw [cliffordBivectorExterior_apply_ιMulti]
   exact hP _ _
-
-/-- The exterior-square Clifford bivector map takes values in the even component. -/
-theorem cliffordBivectorExterior_range_le_evenOdd_zero :
-    LinearMap.range (cliffordBivectorExterior Q) ≤ evenOdd Q 0 :=
-  cliffordBivectorExterior_range_le_of_cliffordBivector_mem Q _
-    (cliffordBivector_mem_evenOdd_zero Q)
-
-/-- The exterior-square Clifford bivector map takes values in filtration degree at most two. -/
-theorem cliffordBivectorExterior_range_le_filtration_two :
-    LinearMap.range (cliffordBivectorExterior Q) ≤ filtration Q 2 :=
-  cliffordBivectorExterior_range_le_of_cliffordBivector_mem Q _
-    (cliffordBivector_mem_filtration_two Q)
 
 /-- The action-normalization identity for the half-normalized Clifford bivector. -/
 theorem cliffordBivector_lie_ι (a b x : M) :

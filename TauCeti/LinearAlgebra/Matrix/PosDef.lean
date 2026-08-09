@@ -39,27 +39,14 @@ namespace Matrix
 
 variable {n : Type*}
 
-/-- The finite case of `TauCeti.Matrix.posDef_map_intCast`, where positive definiteness can be
-tested against ordinary vectors. -/
-private theorem posDef_map_intCast_of_finite [Finite n] {A : Matrix n n ℤ} (hA : A.PosDef) :
-    (A.map (Int.cast : ℤ → ℚ)).PosDef := by
+/-- Clearing denominators: a nonzero rational vector on a finite index type is a nonzero integer
+vector scaled by a common nonzero denominator. -/
+private theorem exists_intCast_eq_mul_of_ne_zero [Finite n] {x : n → ℚ} (hx : x ≠ 0) :
+    ∃ (c : ℤ) (z : n → ℤ), c ≠ 0 ∧ z ≠ 0 ∧ ∀ i, (z i : ℚ) = (c : ℚ) * x i := by
   classical
   have _i : Fintype n := Fintype.ofFinite n
-  refine _root_.Matrix.PosDef.of_dotProduct_mulVec_pos ?_ fun x hx ↦ ?_
-  · ext i j
-    simpa using congrArg (fun m : ℤ ↦ (m : ℚ)) (hA.isHermitian.apply i j)
-  -- Expand both quadratic forms as double sums.
-  have expandQ : ∀ y : n → ℚ, star y ⬝ᵥ ((A.map (Int.cast : ℤ → ℚ)) *ᵥ y) =
-      ∑ i, ∑ j, y i * (A i j : ℚ) * y j := by
-    intro y
-    simp [_root_.dotProduct, _root_.Matrix.mulVec_apply_eq_sum, Finset.mul_sum, mul_assoc]
-  have expandZ : ∀ y : n → ℤ, star y ⬝ᵥ (A *ᵥ y) = ∑ i, ∑ j, y i * A i j * y j := by
-    intro y
-    simp [_root_.dotProduct, _root_.Matrix.mulVec_apply_eq_sum, Finset.mul_sum, mul_assoc]
-  -- Clear the denominators of `x`, producing an integer vector `z = c • x`.
   obtain ⟨c, hc⟩ := IsLocalization.exist_integer_multiples_of_finite (nonZeroDivisors ℤ) x
-  have hc' : ∀ i, ∃ y : ℤ, (y : ℚ) = ((c : ℤ) : ℚ) * x i := by
-    intro i
+  have hc' : ∀ i, ∃ y : ℤ, (y : ℚ) = ((c : ℤ) : ℚ) * x i := fun i => by
     obtain ⟨y, hy⟩ := hc i
     exact ⟨y, by simpa [Algebra.smul_def] using hy⟩
   choose z hz using hc'
@@ -70,20 +57,32 @@ private theorem posDef_map_intCast_of_finite [Finite n] {A : Matrix n n ℤ} (hA
     have hi := hz i
     rw [h] at hi
     simpa [hc0] using hi.symm
+  exact ⟨(c : ℤ), z, nonZeroDivisors.coe_ne_zero c, hzne, hz⟩
+
+/-- The finite case of `TauCeti.Matrix.posDef_map_intCast`, where positive definiteness can be
+tested against ordinary vectors. -/
+private theorem posDef_map_intCast_of_finite [Finite n] {A : Matrix n n ℤ} (hA : A.PosDef) :
+    (A.map (Int.cast : ℤ → ℚ)).PosDef := by
+  classical
+  have _i : Fintype n := Fintype.ofFinite n
+  refine _root_.Matrix.PosDef.of_dotProduct_mulVec_pos ?_ fun x hx ↦ ?_
+  · ext i j
+    simpa using congrArg (fun m : ℤ ↦ (m : ℚ)) (hA.isHermitian.apply i j)
+  -- Clear the denominators of `x`, producing a nonzero integer vector `z = c • x`.
+  obtain ⟨c, z, hc0, hzne, hz⟩ := exists_intCast_eq_mul_of_ne_zero hx
+  have hcQ : (c : ℚ) ≠ 0 := Int.cast_ne_zero.mpr hc0
   -- The two quadratic forms differ by the square of the common denominator.
   have key : ((star z ⬝ᵥ (A *ᵥ z) : ℤ) : ℚ) =
-      ((c : ℤ) : ℚ) ^ 2 * (star x ⬝ᵥ ((A.map (Int.cast : ℤ → ℚ)) *ᵥ x)) := by
-    rw [expandQ, expandZ, Finset.mul_sum]
+      (c : ℚ) ^ 2 * (star x ⬝ᵥ ((A.map (Int.cast : ℤ → ℚ)) *ᵥ x)) := by
+    simp only [_root_.Matrix.dot_mulVec_eq_sum_sum, star_trivial, Finset.mul_sum]
     push_cast
-    refine Finset.sum_congr rfl fun i _ ↦ ?_
-    rw [Finset.mul_sum]
-    refine Finset.sum_congr rfl fun j _ ↦ ?_
-    rw [hz, hz]
+    refine Finset.sum_congr rfl fun j _ ↦ Finset.sum_congr rfl fun i _ ↦ ?_
+    rw [hz, hz, _root_.Matrix.map_apply]
     ring
   have hpos : (0 : ℚ) < ((star z ⬝ᵥ (A *ᵥ z) : ℤ) : ℚ) := by
     exact_mod_cast hA.dotProduct_mulVec_pos hzne
   rw [key] at hpos
-  have hsq : (0 : ℚ) < ((c : ℤ) : ℚ) ^ 2 := by positivity
+  have hsq : (0 : ℚ) < (c : ℚ) ^ 2 := by positivity
   exact (mul_pos_iff_of_pos_left hsq).mp hpos
 
 /-- **An integer matrix positive definite over `ℤ` is positive definite over `ℚ`.** -/

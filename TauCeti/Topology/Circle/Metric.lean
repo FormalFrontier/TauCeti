@@ -25,6 +25,8 @@ circle.
 
 ## Main results
 
+* `TauCeti.exp_mul_I_sub_exp_mul_I` — the polar form of the chord: the half-angle sine rotated a
+  quarter turn past the midpoint direction.
 * `TauCeti.dist_circleExp_eq_two_mul_abs_sin` — the chord subtended by an arc of angle `θ` of the
   unit circle has length `2 * |sin (θ / 2)|`.
 * `TauCeti.dist_circleMap_eq_two_mul_abs_sin` — its form for the circle `circleMap ζ ρ` of arbitrary
@@ -46,7 +48,9 @@ circle.
   `cos (θ - arg (c - ζ))`, the angles it admits form an arc: it holds throughout an interval of
   angles inside a period centred at `arg (c - ζ)` as soon as it holds at both ends.
 * `TauCeti.lipschitzWith_one_circleExp` and `TauCeti.diam_circleExp_image_Icc_le` — the chord is at
-  most the arc, so an arc of angles of length `b - a` has image of diameter at most `b - a`.
+  most the arc, so an arc of angles of length `b - a` has image of diameter at most `b - a`, and
+  `TauCeti.diam_range_circlePath_le` — the same bound for Mathlib's arc `Circle.path x y`, whose
+  angle is `Circle.angleDiff x y`.
 * `TauCeti.min_angleDiff_le_pi_div_two_mul_dist` — the shorter of the two arcs joining two points of
   the circle has length at most `π / 2` times their distance.
 
@@ -88,6 +92,30 @@ private lemma dist_circleExp_eq_norm_exp_sub_one (a b : ℝ) :
     exact Subtype.dist_eq _ _
   rw [hdist, hfactor, norm_mul, Circle.norm_coe, mul_one, Circle.coe_exp,
     mul_comm ((a - b : ℝ) : ℂ) Complex.I]
+
+/-- **The polar chord identity on the unit circle**: the difference of two unit-circle
+points is the half-angle sine, rotated a quarter turn past the midpoint direction. -/
+theorem exp_mul_I_sub_exp_mul_I (α β : ℝ) :
+    Complex.exp (α * Complex.I) - Complex.exp (β * Complex.I) =
+      2 * (Real.sin ((α - β) / 2) : ℂ) * Complex.I *
+        Complex.exp ((((α + β) / 2 : ℝ) : ℂ) * Complex.I) := by
+  have hsin : Complex.exp ((((α - β) / 2 : ℝ) : ℂ) * Complex.I) -
+      Complex.exp (-(((α - β) / 2 : ℝ) : ℂ) * Complex.I) =
+      2 * Complex.sin (((α - β) / 2 : ℝ) : ℂ) * Complex.I := by
+    have h2 := Complex.two_sin ((((α - β) / 2 : ℝ) : ℂ))
+    linear_combination (-Complex.I) * h2 +
+      (Complex.exp ((((α - β) / 2 : ℝ) : ℂ) * Complex.I) -
+        Complex.exp (-(((α - β) / 2 : ℝ) : ℂ) * Complex.I)) * Complex.I_sq
+  have h1 : (α : ℂ) * Complex.I =
+      ((α + β) / 2 : ℝ) * Complex.I + (((α - β) / 2 : ℝ) : ℂ) * Complex.I := by
+    push_cast
+    ring
+  have h2 : (β : ℂ) * Complex.I =
+      ((α + β) / 2 : ℝ) * Complex.I + -(((α - β) / 2 : ℝ) : ℂ) * Complex.I := by
+    push_cast
+    ring
+  rw [h1, h2, Complex.exp_add, Complex.exp_add, ← mul_sub, hsin, ← Complex.ofReal_sin]
+  ring
 
 /-- **The chord formula for the unit circle**: two points of the circle at angles `a` and `b` are at
 distance `2 * |sin ((a - b) / 2)|`. -/
@@ -309,6 +337,20 @@ theorem diam_circleExp_image_Icc_le {a b : ℝ} (hab : a ≤ b) :
     Metric.diam (Circle.exp '' Icc a b) ≤ b - a := by
   simpa only [NNReal.coe_one, one_mul, Real.diam_Icc hab] using
     lipschitzWith_one_circleExp.diam_image_le (Icc a b) (isBounded_Icc a b)
+
+/-- **A closed arc is no wider than its angle.** Mathlib's arc `Circle.path x y`, which runs
+counterclockwise from `x` to `y`, has range of diameter at most the length `Circle.angleDiff x y`
+of that arc.
+
+This is `TauCeti.diam_circleExp_image_Icc_le` read through `Circle.range_path`, which presents the
+closed arc as the `Circle.exp` image of an interval of angles of length `Circle.angleDiff x y`. It
+is stated for the range rather than for the path so that it applies unchanged to the reversed arc,
+whose range is the same by `Path.symm_range`. -/
+theorem diam_range_circlePath_le (x y : Circle) :
+    Metric.diam (range (Circle.path x y)) ≤ Circle.angleDiff x y := by
+  rw [Circle.range_path]
+  simpa using diam_circleExp_image_Icc_le (a := Complex.arg (x : ℂ))
+    (b := Circle.angleDiff x y + Complex.arg (x : ℂ)) (by simp [Circle.angleDiff_nonneg])
 
 /-- **The shorter arc is controlled by the chord**: of the two arcs joining `x` to `y` on the
 circle, the shorter has length at most `π / 2` times the distance from `x` to `y`.
