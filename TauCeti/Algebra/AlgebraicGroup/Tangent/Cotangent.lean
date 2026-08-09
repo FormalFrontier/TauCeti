@@ -95,9 +95,7 @@ lemma cotangentMap_augmentation (x : AugmentationIdeal R A) :
     cotangentMap R A (x : A) = (AugmentationIdeal R A).toCotangent x := by
   rw [cotangentMap_apply]
   have hx : counit (R := R) (x : A) = 0 := by
-    have hx0 := x.prop
-    change counit (R := R) (x : A) = 0 at hx0
-    exact hx0
+    simpa [AugmentationIdeal] using x.prop
   apply (AugmentationIdeal R A).toCotangent.congr_arg
   ext
   simp [hx]
@@ -145,6 +143,15 @@ private lemma algEquivSelf_smul (a : A)
     (R := R) (A := A) (B := B)
     (algebraMap R B (counit a) : Bialgebra.CounitAlgebra R A B)
 
+omit [CommRing A] [Bialgebra R A] in
+private lemma algEquivSelf_coeff_smul (b : B)
+    (z : Bialgebra.CounitAlgebra R A B) :
+    Bialgebra.CounitAlgebra.algEquivSelf R A B (b • z) =
+      b • Bialgebra.CounitAlgebra.algEquivSelf R A B z := by
+  rw [Bialgebra.CounitAlgebra.algEquivSelf_apply,
+    Bialgebra.CounitAlgebra.algEquivSelf_apply]
+  rfl
+
 private noncomputable def ofCotangentLinearMap
     (f : Bialgebra.CotangentSpace R A →ₗ[R] B) :
     Derivation R A (Bialgebra.CounitAlgebra R A B) :=
@@ -177,13 +184,9 @@ private noncomputable def toCotangentLinearMap
     fun x y => by
       simp only [LinearMap.comp_apply]
       have hx : counit (R := R) (x : A) = 0 := by
-        have hx0 := x.prop
-        change counit (R := R) (x : A) = 0 at hx0
-        exact hx0
+        simpa [Bialgebra.AugmentationIdeal] using x.prop
       have hy : counit (R := R) (y : A) = 0 := by
-        have hy0 := y.prop
-        change counit (R := R) (y : A) = 0 at hy0
-        exact hy0
+        simpa [Bialgebra.AugmentationIdeal] using y.prop
       have hxy : d ((x : A) * (y : A)) = 0 := by
         rw [Derivation.leibniz]
         simp only [Bialgebra.CounitAlgebra.algebraMap_apply, hx, hy, map_zero,
@@ -204,12 +207,12 @@ private lemma toCotangentLinearMap_toCotangent
     toCotangentLinearMap d ((Bialgebra.AugmentationIdeal R A).toCotangent x) =
       Bialgebra.CounitAlgebra.algEquivSelf R A B (d x) := by
   simp only [toCotangentLinearMap, Ideal.Cotangent.lift_toCotangent,
-    LinearMap.comp_apply, AlgEquiv.toLinearMap_apply]
+    LinearMap.comp_apply, AlgEquiv.toLinearMap_apply,
+    LinearMap.restrictScalars_apply, Submodule.coe_subtype]
+  -- After the named coercion reductions, both sides are the same application of `d`.
   rfl
 
-/-- Linear functionals on the cotangent space are naturally equivalent to
-counit-valued derivations, i.e. tangent vectors at the identity. -/
-noncomputable def cotangentLinearEquiv :
+private noncomputable def cotangentLinearEquivBase :
     (Bialgebra.CotangentSpace R A →ₗ[R] B) ≃ₗ[R]
       Derivation R A (Bialgebra.CounitAlgebra R A B) where
   toFun := ofCotangentLinearMap
@@ -238,14 +241,44 @@ noncomputable def cotangentLinearEquiv :
     simp only [algEquivSelf_ofCotangentLinearMap_apply, LinearMap.smul_apply,
       RingHom.id_apply, Derivation.smul_apply, map_smul]
 
+private lemma cotangentLinearEquivBase_apply
+    (f : Bialgebra.CotangentSpace R A →ₗ[R] B) :
+    cotangentLinearEquivBase (R := R) (A := A) (B := B) f =
+      ofCotangentLinearMap f := rfl
+
+private lemma cotangentLinearEquivBase_map_smul (b : B)
+    (f : Bialgebra.CotangentSpace R A →ₗ[R] B) :
+    cotangentLinearEquivBase (R := R) (A := A) (B := B) (b • f) =
+      b • cotangentLinearEquivBase (R := R) (A := A) (B := B) f := by
+  ext a
+  apply (Bialgebra.CounitAlgebra.algEquivSelf R A B).injective
+  rw [cotangentLinearEquivBase_apply, cotangentLinearEquivBase_apply,
+    algEquivSelf_ofCotangentLinearMap_apply, LinearMap.smul_apply,
+    Derivation.smul_apply, algEquivSelf_coeff_smul,
+    algEquivSelf_ofCotangentLinearMap_apply]
+
+/-- Linear functionals on the cotangent space are naturally equivalent to
+counit-valued derivations, i.e. tangent vectors at the identity. The equivalence
+is linear over the coefficient ring. -/
+noncomputable def cotangentLinearEquiv :
+    (Bialgebra.CotangentSpace R A →ₗ[R] B) ≃ₗ[B]
+      Derivation R A (Bialgebra.CounitAlgebra R A B) :=
+  { (cotangentLinearEquivBase (R := R) (A := A) (B := B)).toEquiv with
+    map_add' := (cotangentLinearEquivBase (R := R) (A := A) (B := B)).map_add
+    map_smul' := cotangentLinearEquivBase_map_smul }
+
+private lemma cotangentLinearEquiv_apply
+    (f : Bialgebra.CotangentSpace R A →ₗ[R] B) :
+    cotangentLinearEquiv (R := R) (A := A) (B := B) f =
+      cotangentLinearEquivBase (R := R) (A := A) (B := B) f := rfl
+
 /-- The cotangent-duality equivalence sends a functional to its value on the
 first-order displacement. -/
 @[simp]
 lemma cotangentLinearEquiv_apply_apply
     (f : Bialgebra.CotangentSpace R A →ₗ[R] B) (a : A) :
     cotangentLinearEquiv f a = f (Bialgebra.cotangentMap R A a) := by
-  rw [show cotangentLinearEquiv (R := R) (A := A) (B := B) f =
-    ofCotangentLinearMap f from rfl]
+  rw [cotangentLinearEquiv_apply, cotangentLinearEquivBase_apply]
   apply (Bialgebra.CounitAlgebra.algEquivSelf R A B).injective
   rw [algEquivSelf_ofCotangentLinearMap_apply]
   exact (Bialgebra.CounitAlgebra.algEquivSelf_apply
@@ -267,14 +300,82 @@ lemma cotangentLinearEquiv_symm_toCotangent
 projective, `B` tensored with its dual is naturally the space of `B`-valued
 tangent vectors. The dual is identified with `Lie(G)(R)` by
 `cotangentLinearEquiv`. -/
-noncomputable def tangentScalarExtensionEquiv
+private noncomputable def tangentScalarExtensionEquivBase
     [Module.Finite R (Bialgebra.CotangentSpace R A)]
     [Module.Projective R (Bialgebra.CotangentSpace R A)] :
     B ⊗[R] Module.Dual R (Bialgebra.CotangentSpace R A) ≃ₗ[R]
       Derivation R A (Bialgebra.CounitAlgebra R A B) :=
   TensorProduct.comm R B _ ≪≫ₗ
     dualTensorHomEquiv R (Bialgebra.CotangentSpace R A) B ≪≫ₗ
-    cotangentLinearEquiv (R := R) (A := A) (B := B)
+    cotangentLinearEquivBase (R := R) (A := A) (B := B)
+
+private lemma tangentScalarExtensionEquivBase_apply
+    [Module.Finite R (Bialgebra.CotangentSpace R A)]
+    [Module.Projective R (Bialgebra.CotangentSpace R A)]
+    (x : B ⊗[R] Module.Dual R (Bialgebra.CotangentSpace R A)) :
+    tangentScalarExtensionEquivBase (R := R) (A := A) (B := B) x =
+      cotangentLinearEquivBase (R := R) (A := A) (B := B)
+        (dualTensorHom R (Bialgebra.CotangentSpace R A) B
+          (TensorProduct.comm R B _ x)) := by
+  simp [tangentScalarExtensionEquivBase, dualTensorHomEquiv]
+
+private lemma tangentScalarExtensionEquivBase_tmul_apply
+    [Module.Finite R (Bialgebra.CotangentSpace R A)]
+    [Module.Projective R (Bialgebra.CotangentSpace R A)]
+    (b : B) (f : Module.Dual R (Bialgebra.CotangentSpace R A)) (a : A) :
+    tangentScalarExtensionEquivBase (R := R) (A := A) (B := B) (b ⊗ₜ[R] f) a =
+      b * algebraMap R B (f (Bialgebra.cotangentMap R A a)) := by
+  apply (Bialgebra.CounitAlgebra.algEquivSelf R A B).injective
+  rw [tangentScalarExtensionEquivBase_apply, TensorProduct.comm_tmul,
+    cotangentLinearEquivBase_apply, algEquivSelf_ofCotangentLinearMap_apply]
+  calc
+    (dualTensorHom R (Bialgebra.CotangentSpace R A) B (f ⊗ₜ[R] b))
+        (Bialgebra.cotangentMap R A a) =
+        b * algebraMap R B (f (Bialgebra.cotangentMap R A a)) := by
+      simp [dualTensorHom_apply, Algebra.smul_def, mul_comm]
+    _ = Bialgebra.CounitAlgebra.algEquivSelf R A B
+        (b * algebraMap R B (f (Bialgebra.cotangentMap R A a)) :
+          Bialgebra.CounitAlgebra R A B) :=
+      (Bialgebra.CounitAlgebra.algEquivSelf_apply
+        (R := R) (A := A) (B := B)
+        (b * algebraMap R B (f (Bialgebra.cotangentMap R A a)) :
+          Bialgebra.CounitAlgebra R A B)).symm
+
+private lemma tangentScalarExtensionEquivBase_map_smul
+    [Module.Finite R (Bialgebra.CotangentSpace R A)]
+    [Module.Projective R (Bialgebra.CotangentSpace R A)]
+    (b : B) (x : B ⊗[R] Module.Dual R (Bialgebra.CotangentSpace R A)) :
+    tangentScalarExtensionEquivBase (R := R) (A := A) (B := B) (b • x) =
+      b • tangentScalarExtensionEquivBase (R := R) (A := A) (B := B) x := by
+  induction x using TensorProduct.induction_on with
+  | zero => simp
+  | tmul b' f =>
+      ext a
+      rw [TensorProduct.smul_tmul', tangentScalarExtensionEquivBase_tmul_apply,
+        Derivation.smul_apply, tangentScalarExtensionEquivBase_tmul_apply]
+      exact smul_mul_assoc b b' _
+  | add x y hx hy => simp [smul_add, hx, hy]
+
+/-- Scalar extension of tangent vectors. If the cotangent space is finite
+projective, `B` tensored with its dual is naturally the space of `B`-valued
+tangent vectors. The dual is identified with `Lie(G)(R)` by
+`cotangentLinearEquiv`. -/
+noncomputable def tangentScalarExtensionEquiv
+    [Module.Finite R (Bialgebra.CotangentSpace R A)]
+    [Module.Projective R (Bialgebra.CotangentSpace R A)] :
+    B ⊗[R] Module.Dual R (Bialgebra.CotangentSpace R A) ≃ₗ[B]
+      Derivation R A (Bialgebra.CounitAlgebra R A B) :=
+  { (tangentScalarExtensionEquivBase (R := R) (A := A) (B := B)).toEquiv with
+    map_add' := (tangentScalarExtensionEquivBase
+      (R := R) (A := A) (B := B)).map_add
+    map_smul' := tangentScalarExtensionEquivBase_map_smul }
+
+private lemma tangentScalarExtensionEquiv_apply
+    [Module.Finite R (Bialgebra.CotangentSpace R A)]
+    [Module.Projective R (Bialgebra.CotangentSpace R A)]
+    (x : B ⊗[R] Module.Dual R (Bialgebra.CotangentSpace R A)) :
+    tangentScalarExtensionEquiv (R := R) (A := A) (B := B) x =
+      tangentScalarExtensionEquivBase (R := R) (A := A) (B := B) x := rfl
 
 /-- On pure tensors, scalar extension evaluates the cotangent functional and
 multiplies it by the coefficient. -/
@@ -285,27 +386,8 @@ lemma tangentScalarExtensionEquiv_tmul_apply
     (b : B) (f : Module.Dual R (Bialgebra.CotangentSpace R A)) (a : A) :
     tangentScalarExtensionEquiv (R := R) (A := A) (B := B) (b ⊗ₜ[R] f) a =
       b * algebraMap R B (f (Bialgebra.cotangentMap R A a)) := by
-  apply (Bialgebra.CounitAlgebra.algEquivSelf R A B).injective
-  rw [show tangentScalarExtensionEquiv (R := R) (A := A) (B := B) (b ⊗ₜ[R] f) =
-      cotangentLinearEquiv (R := R) (A := A) (B := B)
-        (dualTensorHom R (Bialgebra.CotangentSpace R A) B (f ⊗ₜ[R] b)) by
-    simp [tangentScalarExtensionEquiv, dualTensorHomEquiv]]
-  rw [cotangentLinearEquiv_apply_apply]
-  let z := (dualTensorHom R (Bialgebra.CotangentSpace R A) B (f ⊗ₜ[R] b))
-    (Bialgebra.cotangentMap R A a)
-  calc
-    Bialgebra.CounitAlgebra.algEquivSelf R A B z = z :=
-      Bialgebra.CounitAlgebra.algEquivSelf_apply
-        (R := R) (A := A) (B := B) (z : Bialgebra.CounitAlgebra R A B)
-    _ = b * algebraMap R B (f (Bialgebra.cotangentMap R A a)) := by
-      simp [z, dualTensorHom_apply, Algebra.smul_def, mul_comm]
-    _ = Bialgebra.CounitAlgebra.algEquivSelf R A B
-        (b * algebraMap R B (f (Bialgebra.cotangentMap R A a)) :
-          Bialgebra.CounitAlgebra R A B) :=
-      (Bialgebra.CounitAlgebra.algEquivSelf_apply
-        (R := R) (A := A) (B := B)
-        (b * algebraMap R B (f (Bialgebra.cotangentMap R A a)) :
-          Bialgebra.CounitAlgebra R A B)).symm
+  rw [tangentScalarExtensionEquiv_apply,
+    tangentScalarExtensionEquivBase_tmul_apply]
 
 end Derivation
 
