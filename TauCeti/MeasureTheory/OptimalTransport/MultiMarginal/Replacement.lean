@@ -71,23 +71,14 @@ def replaceMarginal (π : ProbabilityMeasure (∀ j, X j)) (i : ι)
     Measure.isProbabilityMeasure_map hu⟩ : ProbabilityMeasure (∀ j, X j))
 
 private theorem toMeasure_replaceMarginal (π : ProbabilityMeasure (∀ j, X j)) (i : ι)
-    [DecidableEq ι] [StandardBorelSpace (X i)] [Nonempty (X i)]
+    [StandardBorelSpace (X i)] [Nonempty (X i)]
     (σ : ProbabilityMeasure (X i × X i)) :
     (replaceMarginal π i σ).toMeasure =
       (glue (π.toMeasure.map fun x ↦ (x, x i)) σ.toMeasure.condKernel).map
-        (fun q ↦ Function.update q.1 i q.2.2) := by
+        (fun q ↦ @Function.update ι X (Classical.decEq ι) q.1 i q.2.2) := by
   unfold replaceMarginal
   dsimp only
   simp only [ProbabilityMeasure.toMeasure]
-  congr
-  funext q j
-  by_cases h : j = i <;> simp [Function.update, h]
-
-/-- The coordinate used to glue the original joint law has the original `i`th marginal. -/
-private theorem snd_map_duplicateAt (π : ProbabilityMeasure (∀ j, X j)) (i : ι) :
-    (π.toMeasure.map fun x ↦ (x, x i)).snd = π.toMeasure.map (Function.eval i) := by
-  rw [Measure.snd_map_prodMk]
-  exact measurable_id
 
 /-- Replacing coordinate `i` changes its marginal to the second marginal of the replacement plan,
 provided the plan's first marginal agrees with the old `i`th marginal. -/
@@ -101,7 +92,8 @@ theorem map_eval_replaceMarginal_same (π : ProbabilityMeasure (∀ j, X j)) (i 
     π.toMeasure.map fun x ↦ (x, x i)
   have hρσ : ρ.snd = σ.toMeasure.fst := by
     dsimp only [ρ]
-    rw [snd_map_duplicateAt, ← hσ]
+    rw [Measure.snd_map_prodMk, ← hσ]
+    exact measurable_id
   rw [toMeasure_replaceMarginal]
   have hcomp : (Function.eval i) ∘ (fun q : (∀ j, X j) × X i × X i ↦
       Function.update q.1 i q.2.2) = Prod.snd ∘ Prod.snd := by
@@ -114,9 +106,9 @@ theorem map_eval_replaceMarginal_same (π : ProbabilityMeasure (∀ j, X j)) (i 
 /-- Replacing coordinate `i` leaves the law of every measurable statistic that does not depend on
 that coordinate unchanged. -/
 theorem map_replaceMarginal_eq_of_update_eq {Y : Type w} [MeasurableSpace Y]
-    (π : ProbabilityMeasure (∀ j, X j)) (i : ι) [DecidableEq ι] [StandardBorelSpace (X i)]
+    (π : ProbabilityMeasure (∀ j, X j)) (i : ι) [StandardBorelSpace (X i)]
     (σ : ProbabilityMeasure (X i × X i)) (f : (∀ j, X j) → Y) (hf : Measurable f)
-    (hfi : ∀ x y, f (Function.update x i y) = f x) :
+    (hfi : ∀ x y, f (@Function.update ι X (Classical.decEq ι) x i y) = f x) :
     (replaceMarginal π i σ).toMeasure.map f = π.toMeasure.map f := by
   classical
   let _ : Nonempty (X i) := σ.nonempty.map Prod.fst
@@ -128,8 +120,7 @@ theorem map_replaceMarginal_eq_of_update_eq {Y : Type w} [MeasurableSpace Y]
   rw [Measure.map_map hf (by fun_prop), hcomp,
     ← Measure.map_map hf measurable_fst, ← Measure.fst,
     fst_glue, Measure.fst_map_prodMk (measurable_pi_apply i)]
-  convert Measure.map_map (μ := π.toMeasure) hf measurable_id using 1
-  all_goals congr 2
+  rw [Measure.map_id']
 
 /-- Replacing coordinate `i` leaves the marginal at every different coordinate `j` unchanged. -/
 theorem map_eval_replaceMarginal_of_ne (π : ProbabilityMeasure (∀ j, X j)) (i : ι)
