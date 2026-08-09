@@ -122,8 +122,12 @@ variable {Q : QuadraticMap R M N}
 theorem mem_orthogonalGroup_iff {f : M ≃ₗ[R] M} :
     f ∈ orthogonalGroup Q ↔ ∀ m, Q (f m) = Q m := Iff.rfl
 
-/-- The defining property of an orthogonal automorphism, in the form in which it rewrites. -/
-@[simp]
+/-- The defining property of an orthogonal automorphism, in the form in which it rewrites.
+
+This is deliberately not a `simp` lemma: its left-hand side `Q (f m)` matches every application
+of every quadratic map to every linear equivalence, and discharging the side goal
+`f ∈ orthogonalGroup Q` unfolds through `mem_orthogonalGroup_iff` to `∀ m, Q (f m) = Q m`, which
+this lemma applies to again. Name it explicitly in the `simp` calls that want it. -/
 theorem map_app_of_mem_orthogonalGroup {f : M ≃ₗ[R] M} (hf : f ∈ orthogonalGroup Q) (m : M) :
     Q (f m) = Q m := hf m
 
