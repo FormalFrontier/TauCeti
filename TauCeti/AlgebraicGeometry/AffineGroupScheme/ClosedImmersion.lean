@@ -5,7 +5,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.AlgebraicGeometry.Morphisms.ClosedImmersion
-public import TauCeti.AlgebraicGeometry.AffineGroupScheme.Basic
 public import TauCeti.AlgebraicGeometry.AffineGroupScheme.HopfSpec
 
 /-!
@@ -61,20 +60,6 @@ lemma eqToHom_hom_hom_left {S : Scheme.{u}} {G G' : Grp (Over S)} (h : G = G') :
       eqToHom (congrArg (fun K : Grp (Over S) ↦ K.X.left) h) := by
   subst h
   rfl
-
-/-- Pre- and postcomposing a scheme morphism with equality transports does not change whether
-it is a closed immersion. -/
-@[simp]
-lemma isClosedImmersion_eqToHom_comp_comp_eqToHom_iff
-    {W X Y Z : Scheme.{u}} (h : W = X) (h' : Y = Z) (f : X ⟶ Y) :
-    IsClosedImmersion (eqToHom h ≫ (f ≫ eqToHom h')) ↔ IsClosedImmersion f := by
-  rw [
-    @MorphismProperty.cancel_left_of_respectsIso
-      Scheme _ @IsClosedImmersion inferInstance _ _ _ (eqToHom h) (f ≫ eqToHom h')
-        (inferInstance : IsIso (eqToHom h)),
-    @MorphismProperty.cancel_right_of_respectsIso
-      Scheme _ @IsClosedImmersion inferInstance _ _ _ f (eqToHom h')
-        (inferInstance : IsIso (eqToHom h'))]
 
 namespace CommHopfAlgCat
 

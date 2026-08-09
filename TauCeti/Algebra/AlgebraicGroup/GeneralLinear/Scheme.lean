@@ -7,7 +7,6 @@ module
 public import TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.SchemePoints
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.FunctorOfPoints
 public import TauCeti.AlgebraicGeometry.AffineGroupScheme.ClosedImmersion
-public import TauCeti.AlgebraicGeometry.AffineGroupScheme.HopfSpec
 
 /-!
 # The general linear group scheme
