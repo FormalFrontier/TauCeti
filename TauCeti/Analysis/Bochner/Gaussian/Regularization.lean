@@ -23,7 +23,8 @@ approximation device of the second step of Bochner's theorem: it replaces a mere
 positive-definite function by an integrable one to which Fourier inversion applies. Its Fourier
 transform is integrable by `integrable_fourierIntegral_of_isPositiveDefiniteKernel`.
 
-Adapted from the Bochner–Minlos formalization (`Bochner/Main.lean` in our bochner project);
+Adapted from the Bochner–Minlos formalization by Michael R. Douglas
+(https://github.com/mrdouglasny/bochner, revision `08eb302`), source file `Bochner/Main.lean`;
 the positive-definiteness hypotheses are restated through `TauCeti.IsPositiveDefiniteKernel`.
 
 ## Main declarations

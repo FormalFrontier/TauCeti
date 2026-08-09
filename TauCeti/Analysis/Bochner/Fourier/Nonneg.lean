@@ -44,8 +44,9 @@ Building on this, the Fourier transform of such a function is itself *integrable
 against a shrinking family of Gaussians and using the Parseval/Fubini identity bounds
 `∫ (𝓕 F) · exp (-t‖·‖²)` by `(F 0).re` uniformly in `t`, and Fatou's lemma passes to the limit.
 
-Adapted from the Bochner–Minlos formalization (`Bochner/FejerPD.lean` and `Bochner/Main.lean`
-in our bochner project); the arguments are ported with the positive-definiteness hypotheses
+Adapted from the Bochner–Minlos formalization by Michael R. Douglas
+(https://github.com/mrdouglasny/bochner, revision `08eb302`), source files `Bochner/FejerPD.lean`
+and `Bochner/Main.lean`; the arguments are ported with the positive-definiteness hypotheses
 restated through `IsPositiveDefiniteKernel`.
 
 ## Main declarations
@@ -83,19 +84,18 @@ private theorem integral_simpleFunc_comp (sn : SimpleFunc α α) (g : α → ℂ
     (μ : Measure α) [IsFiniteMeasure μ] :
     ∫ x, g (sn x) ∂μ = ∑ u ∈ sn.range, (μ (⇑sn ⁻¹' {u})).toReal • g u := by
   classical
-  have hpw : ∀ x, g (sn x) =
-      ∑ u ∈ sn.range, (⇑sn ⁻¹' {u}).indicator (fun _ => g u) x := by
-    intro x
-    simp only [Set.indicator, Set.mem_preimage, Set.mem_singleton_iff]
-    simp_rw [eq_comm (a := sn x)]
-    rw [Finset.sum_ite_eq' sn.range (sn x) (fun u => g u)]
-    simp
-  simp_rw [hpw]
-  rw [integral_finsetSum _ (fun u _ => (integrable_const _).indicator
-    (sn.measurableSet_preimage _))]
-  congr 1
-  ext u
-  rw [integral_indicator (sn.measurableSet_preimage _), setIntegral_const, measureReal_def]
+  have hmap : ∀ x, g (sn x) = sn.map g x := fun x => (SimpleFunc.map_apply g sn x).symm
+  simp_rw [hmap]
+  rw [(sn.map g).integral_eq_sum (SimpleFunc.integrable_of_isFiniteMeasure _),
+    SimpleFunc.range_map]
+  refine Finset.sum_image' _ fun b _ => ?_
+  calc μ.real (⇑(sn.map g) ⁻¹' {g b}) • g b
+      = (∑ u ∈ sn.range with g u = g b, μ (⇑sn ⁻¹' {u})).toReal • g b := by
+        rw [measureReal_def, SimpleFunc.map_preimage_singleton,
+          sn.sum_measure_preimage_singleton]
+    _ = ∑ u ∈ sn.range with g u = g b, (μ (⇑sn ⁻¹' {u})).toReal • g u := by
+        rw [ENNReal.toReal_sum fun u _ => measure_ne_top μ _, Finset.sum_smul]
+        exact Finset.sum_congr rfl fun u hu => by rw [(Finset.mem_filter.mp hu).2]
 
 end SimpleFuncExpansion
 
@@ -331,19 +331,18 @@ Since `closedBall 0 (R - ‖v‖) ⊆ closedBall 0 R ∩ closedBall v R`, the ra
 private theorem overlapRatio_tendsto_one (v : V) :
     Tendsto (fun n : ℕ => overlapRatio (n : ℝ) v) atTop (nhds 1) := by
   set d := Module.finrank ℝ V
-  apply Filter.Tendsto.squeeze'
-    -- Lower bound: `((n - ‖v‖) / n) ^ d → 1`.
-    (show Tendsto (fun n : ℕ =>
-        ((↑n - ‖v‖) / ↑n) ^ d) atTop (nhds 1) by
-      have h : Tendsto (fun n : ℕ => (↑n - ‖v‖) / (↑n : ℝ)) atTop (nhds 1) := by
-        have h1 : ∀ᶠ n : ℕ in atTop, (↑n - ‖v‖) / (↑n : ℝ) = 1 - ‖v‖ / ↑n := by
-          filter_upwards [Filter.eventually_gt_atTop 0] with n hn
-          field_simp
-        have hc : Tendsto (fun n : ℕ => ‖v‖ / (↑n : ℝ)) atTop (nhds 0) :=
-          tendsto_const_nhds.div_atTop tendsto_natCast_atTop_atTop
-        exact Tendsto.congr' (EventuallyEq.symm h1)
-          (by simpa using Tendsto.sub tendsto_const_nhds hc)
-      simpa using h.pow (n := d))
+  -- Lower bound: `((n - ‖v‖) / n) ^ d → 1`.
+  have hlower : Tendsto (fun n : ℕ => ((↑n - ‖v‖) / ↑n) ^ d) atTop (nhds 1) := by
+    have h : Tendsto (fun n : ℕ => (↑n - ‖v‖) / (↑n : ℝ)) atTop (nhds 1) := by
+      have h1 : ∀ᶠ n : ℕ in atTop, (↑n - ‖v‖) / (↑n : ℝ) = 1 - ‖v‖ / ↑n := by
+        filter_upwards [Filter.eventually_gt_atTop 0] with n hn
+        field_simp
+      have hc : Tendsto (fun n : ℕ => ‖v‖ / (↑n : ℝ)) atTop (nhds 0) :=
+        tendsto_const_nhds.div_atTop tendsto_natCast_atTop_atTop
+      exact Tendsto.congr' (EventuallyEq.symm h1)
+        (by simpa using Tendsto.sub tendsto_const_nhds hc)
+    simpa using h.pow (n := d)
+  apply Filter.Tendsto.squeeze' hlower
     -- Upper bound: the constant `1`.
     tendsto_const_nhds
     -- The ratio dominates the lower bound eventually.
@@ -475,9 +474,9 @@ private theorem fejer_indicator_form (ψ : V → ℂ) (R : ℝ) :
       funext v
       rw [← indicator_closedBall_inter ψ R x v, Set.indicator_of_mem hx]
     · rw [Set.indicator_of_notMem hx]
-      rw [show (fun v => (B ∩ Metric.closedBall v R).indicator (fun _ => ψ v) x) = 0 from by
-        funext v
-        exact Set.indicator_of_notMem (fun h => hx h.1) _]
+      have hzero : (fun v => (B ∩ Metric.closedBall v R).indicator (fun _ => ψ v) x) = 0 :=
+        funext fun v => Set.indicator_of_notMem (fun h => hx h.1) _
+      rw [hzero]
       simp
 
 /-- Fubini for the Fejér average: swapping the order of integration evaluates the inner integral
@@ -551,7 +550,8 @@ private theorem pd_integral_re_nonneg (ψ : V → ℂ)
       filter_upwards [Filter.eventually_ne_atTop 0] with n hn
       simp only [J, if_neg hn]
       exact (fejer_avg_eq_integral ψ hcont n (Nat.cast_pos.mpr (Nat.pos_of_ne_zero hn))).symm
-    rw [show (∫ x, ψ x) = ∫ x, (1 : ℂ) * ψ x by simp]
+    have hone : (∫ x, ψ x) = ∫ x, (1 : ℂ) * ψ x := by simp
+    rw [hone]
     apply tendsto_integral_of_dominated_convergence (fun v => ‖ψ v‖)
     · intro n
       exact (continuous_ofReal.measurable.comp

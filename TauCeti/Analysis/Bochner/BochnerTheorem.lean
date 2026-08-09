@@ -55,7 +55,8 @@ subsequence, whose limit represents `G` by passing to the limit in the character
 functions. Uniqueness reduces to Mathlib's `MeasureTheory.Measure.ext_of_charFun` through the
 `-2π` rescaling of `integral_fourierAtom_eq_charFun_neg_two_pi_smul`.
 
-Adapted from the Bochner–Minlos formalization (`Bochner/Main.lean` in our bochner project);
+Adapted from the Bochner–Minlos formalization by Michael R. Douglas
+(https://github.com/mrdouglasny/bochner, revision `08eb302`), source file `Bochner/Main.lean`;
 the positive-definiteness hypotheses are restated through `TauCeti.IsPositiveDefiniteKernel`,
 and the representation is stated in the `fourierAtom` convention rather than through
 `MeasureTheory.charFun`.
@@ -127,9 +128,10 @@ integrable. This is the total-mass half of the `L¹` case of Bochner's theorem. 
 theorem isFiniteMeasure_withDensity_re_fourierInv (F : V → ℂ)
     (hint_ft : Integrable (𝓕 F)) :
     IsFiniteMeasure (volume.withDensity fun ξ => ENNReal.ofReal (𝓕⁻ F ξ).re) := by
+  have h𝓕inv : 𝓕⁻ F = fun ξ : V => 𝓕 F (-ξ) :=
+    funext fun ξ => Real.fourierInv_eq_fourier_neg F ξ
   have hinv_int : Integrable (𝓕⁻ F) := by
-    rw [show 𝓕⁻ F = fun ξ : V => 𝓕 F (-ξ) from
-      funext fun ξ => Real.fourierInv_eq_fourier_neg F ξ]
+    rw [h𝓕inv]
     exact hint_ft.comp_neg
   exact isFiniteMeasure_withDensity_ofReal hinv_int.re.2
 
@@ -144,9 +146,10 @@ theorem integral_fourierAtom_withDensity_re_fourierInv (F : V → ℂ)
     ∫ q, fourierAtom v q ∂(volume.withDensity fun ξ => ENNReal.ofReal (𝓕⁻ F ξ).re) = F v := by
   have hft_int : Integrable (𝓕 F) :=
     integrable_fourierIntegral_of_isPositiveDefiniteKernel F hpd hint hcont
+  have h𝓕inv : 𝓕⁻ F = fun ξ : V => 𝓕 F (-ξ) :=
+    funext fun ξ => Real.fourierInv_eq_fourier_neg F ξ
   have hinv_cont : Continuous (𝓕⁻ F) := by
-    rw [show 𝓕⁻ F = fun ξ : V => 𝓕 F (-ξ) from
-      funext fun ξ => Real.fourierInv_eq_fourier_neg F ξ]
+    rw [h𝓕inv]
     exact (VectorFourier.fourierIntegral_continuous Real.continuous_fourierChar
     (by simpa only [innerₗ_apply_apply] using continuous_inner) hint).comp continuous_neg
   have hre : ∀ ξ, 0 ≤ (𝓕⁻ F ξ).re := fun ξ => by
@@ -260,10 +263,10 @@ theorem exists_isFiniteMeasure_integral_fourierAtom_eq_of_isPositiveDefiniteKern
   rcases h0re.eq_or_lt with hzero | hpos
   · -- degenerate case: `F 0 = 0` forces `F = 0`, represented by the zero measure
     have hF0 : F 0 = 0 := by rw [h0eq, ← hzero, Complex.ofReal_zero]
-    exact ⟨0, inferInstance, fun v => by
-      simp [show F v = 0 by
-        simpa using isPositiveDefiniteKernel_eq_zero_of_apply_self_eq_zero_right hpd
-          (a := v) (b := (0 : V)) (by simpa using hF0)]⟩
+    have hFv : ∀ v : V, F v = 0 := fun v => by
+      simpa using isPositiveDefiniteKernel_eq_zero_of_apply_self_eq_zero_right hpd
+        (a := v) (b := (0 : V)) (by simpa using hF0)
+    exact ⟨0, inferInstance, fun v => by simp [hFv v]⟩
   · -- main case: normalize to value `1` at the origin and scale the measure back
     set c : ℝ := (F 0).re
     have hcne : (c : ℂ) ≠ 0 := by exact_mod_cast hpos.ne'

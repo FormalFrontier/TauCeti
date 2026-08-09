@@ -69,8 +69,8 @@ theorem continuous_cexp_neg_mul_sq_norm (c : ℝ) :
 /-- The Gaussian `a ↦ exp (-c‖a‖²)` is integrable on `V` for every `c > 0`. -/
 theorem integrable_cexp_neg_mul_sq_norm {c : ℝ} (hc : 0 < c) :
     Integrable fun a : V => Complex.exp (-(c * ‖a‖ ^ 2 : ℝ)) := by
-  have h := GaussianFourier.integrable_cexp_neg_mul_sq_norm_add (V := V)
-    (show 0 < ((c : ℂ)).re by simpa using hc) 0 (0 : V)
+  have hre : 0 < (c : ℂ).re := by simpa using hc
+  have h := GaussianFourier.integrable_cexp_neg_mul_sq_norm_add (V := V) hre 0 (0 : V)
   simp only [zero_mul, add_zero] at h
   refine h.congr (ae_of_all _ fun a => ?_)
   push_cast
