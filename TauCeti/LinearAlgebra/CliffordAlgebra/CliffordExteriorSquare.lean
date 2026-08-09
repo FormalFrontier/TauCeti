@@ -93,16 +93,6 @@ noncomputable def cliffordBivectorLieAlgebra (Q : QuadraticForm R M) [Invertible
     LieAlgebra R (⋀[R]^2 M) :=
   (cliffordBivectorExteriorEquivQuadraticLieSubalgebra Q).lieAlgebra
 
-/-- The bracket transported to the second exterior power is the pullback of the commutator on
-the quadratic elements. -/
-theorem lie_eq_cliffordBivectorExteriorEquivQuadraticLieSubalgebra_symm
-    (Q : QuadraticForm R M) [Invertible (2 : R)] (x y : ⋀[R]^2 M) :
-    letI := cliffordBivectorLieRing Q
-    ⁅x, y⁆ = (cliffordBivectorExteriorEquivQuadraticLieSubalgebra Q).symm
-      ⁅cliffordBivectorExteriorEquivQuadraticLieSubalgebra Q x,
-        cliffordBivectorExteriorEquivQuadraticLieSubalgebra Q y⁆ :=
-  AddEquiv.bracket_def _ x y
-
 /-- The transported Lie equivalence between the second exterior power and the quadratic
 elements. -/
 noncomputable def cliffordBivectorLieEquiv (Q : QuadraticForm R M) [Invertible (2 : R)] :
