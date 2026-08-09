@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-import Mathlib.LinearAlgebra.ExteriorPower.Basis
+public import Mathlib.LinearAlgebra.ExteriorPower.Basis
 import Mathlib.LinearAlgebra.Matrix.ToLin
 import TauCeti.LinearAlgebra.CliffordAlgebra.Vectors
 import TauCeti.LinearAlgebra.QuadraticForm.Standard
@@ -25,9 +25,10 @@ commutator action of Clifford bivectors, rather than by expanding a matrix commu
 
 ## Main results
 
-* `TauCeti.CliffordAlgebra.soEquivBivector`: the standard exterior-bivector Lie equivalence.
-* `TauCeti.CliffordAlgebra.soEquivBivector_apply_ιMulti`: its value on a decomposable bivector.
-* `TauCeti.CliffordAlgebra.soEquivBivector_wedge_mulVec`: its normalized action on a vector.
+* `TauCeti.CliffordAlgebra.bivectorEquivSo`: the standard exterior-bivector Lie equivalence.
+* `TauCeti.CliffordAlgebra.bivectorEquivSo_apply_ιMulti`: its value on a decomposable bivector.
+* `TauCeti.CliffordAlgebra.bivectorEquivSo_symm_repr_apply`: the coefficients of its inverse.
+* `TauCeti.CliffordAlgebra.bivectorEquivSo_apply_ιMulti_mulVec`: its normalized action on a vector.
 
 ## References
 
@@ -407,7 +408,7 @@ private noncomputable def standardQuadraticToSoLieEquiv :
 /-- The second exterior power of the standard quadratic module is the matrix orthogonal Lie
 algebra. The Lie structure on the exterior power is the one transported from quadratic Clifford
 elements for the standard sum-of-squares form. -/
-noncomputable def soEquivBivector :
+noncomputable def bivectorEquivSo :
     let Q := QuadraticMap.weightedSumSquares R (1 : Fin n → R)
     letI := bivectorLieRing Q
     letI := bivectorLieAlgebra Q
@@ -417,44 +418,74 @@ noncomputable def soEquivBivector :
   let _ := bivectorLieAlgebra Q
   exact (bivectorLieEquiv Q).trans (standardQuadraticToSoLieEquiv n R)
 
-private theorem soEquivBivector_apply (x : ⋀[R]^2 (Fin n → R)) :
+private theorem bivectorEquivSo_apply (x : ⋀[R]^2 (Fin n → R)) :
     let Q := QuadraticMap.weightedSumSquares R (1 : Fin n → R)
     letI := bivectorLieRing Q
     letI := bivectorLieAlgebra Q
-    soEquivBivector n R x = standardBivectorToSoLinear n R x := by
+    bivectorEquivSo n R x = standardBivectorToSoLinear n R x := by
   let Q := QuadraticMap.weightedSumSquares R (1 : Fin n → R)
   let _ := bivectorLieRing Q
   let _ := bivectorLieAlgebra Q
-  rw [soEquivBivector]
+  rw [bivectorEquivSo]
   -- Expose the two constituent equivalences in the transported Lie equivalence.
   change standardBivectorToSoLinear n R
       ((bivectorExteriorEquivQuadraticLieSubalgebra Q).symm
         (bivectorLieEquiv Q x)) = _
   rw [bivectorLieEquiv_apply, LinearEquiv.symm_apply_apply]
 
-/-- On a decomposable bivector, `soEquivBivector` is the normalized skew matrix
+/-- On a decomposable bivector, `bivectorEquivSo` is the normalized skew matrix
 `2 * (u vᵀ - v uᵀ)`. -/
 @[simp]
-theorem soEquivBivector_apply_ιMulti (u v : Fin n → R) :
+theorem bivectorEquivSo_apply_ιMulti (u v : Fin n → R) :
     let Q := QuadraticMap.weightedSumSquares R (1 : Fin n → R)
     letI := bivectorLieRing Q
     letI := bivectorLieAlgebra Q
-    ((soEquivBivector n R (exteriorPower.ιMulti R 2 ![u, v]) :
+    ((bivectorEquivSo n R (exteriorPower.ιMulti R 2 ![u, v]) :
       LieAlgebra.Orthogonal.so (Fin n) R) : Matrix (Fin n) (Fin n) R) =
       fun i j => 2 * (u i * v j - v i * u j) := by
-  rw [soEquivBivector_apply]
+  rw [bivectorEquivSo_apply]
   exact standardBivectorToSoLinear_apply_ιMulti n R u v
+
+/-- The inverse of `bivectorEquivSo` reads an upper-triangular matrix entry as the
+corresponding coefficient in the standard exterior basis. -/
+@[simp]
+theorem bivectorEquivSo_symm_repr_apply (A : LieAlgebra.Orthogonal.so (Fin n) R)
+    (s : Set.powersetCard (Fin n) 2) :
+    let Q := QuadraticMap.weightedSumSquares R (1 : Fin n → R)
+    letI := bivectorLieRing Q
+    letI := bivectorLieAlgebra Q
+    ((Pi.basisFun R (Fin n)).exteriorPower 2).repr ((bivectorEquivSo n R).symm A) s =
+      let e := Set.powersetCard.ofFinEmbEquiv.symm s
+      (⅟ (2 : R)) * (A : Matrix (Fin n) (Fin n) R) (e 0) (e 1) := by
+  let Q := QuadraticMap.weightedSumSquares R (1 : Fin n → R)
+  let _ := bivectorLieRing Q
+  let _ := bivectorLieAlgebra Q
+  have hsymm : (bivectorEquivSo n R).symm A = soToExteriorLinear n R A := by
+    apply (bivectorEquivSo n R).injective
+    calc
+      (bivectorEquivSo n R) ((bivectorEquivSo n R).symm A) = A :=
+        (bivectorEquivSo n R).apply_symm_apply A
+      _ = standardBivectorToSoLinear n R (soToExteriorLinear n R A) :=
+        (standardBivectorToSoLinear_soToExteriorLinear n R A).symm
+      _ = (bivectorEquivSo n R) (soToExteriorLinear n R A) :=
+        (bivectorEquivSo_apply n R (soToExteriorLinear n R A)).symm
+  rw [hsymm]
+  -- Expose the basis equivalence inside the coordinate-map composition before its inverse law.
+  change (exteriorBasis n R).equivFun
+      ((exteriorBasis n R).equivFun.symm (soCoordinates n R A)) s = _
+  rw [LinearEquiv.apply_symm_apply]
+  rfl
 
 /-- The standard exterior bivector `u ∧ v` acts on a vector by the polar-form-normalized
 infinitesimal rotation. -/
-theorem soEquivBivector_wedge_mulVec (u v x : Fin n → R) :
+theorem bivectorEquivSo_apply_ιMulti_mulVec (u v x : Fin n → R) :
     let Q := QuadraticMap.weightedSumSquares R (1 : Fin n → R)
     letI := bivectorLieRing Q
     letI := bivectorLieAlgebra Q
-    (((soEquivBivector n R (exteriorPower.ιMulti R 2 ![u, v]) :
+    (((bivectorEquivSo n R (exteriorPower.ιMulti R 2 ![u, v]) :
       LieAlgebra.Orthogonal.so (Fin n) R) : Matrix (Fin n) (Fin n) R) *ᵥ x) =
       (2 * ∑ i, v i * x i) • u - (2 * ∑ i, u i * x i) • v := by
-  rw [soEquivBivector_apply]
+  rw [bivectorEquivSo_apply]
   exact standardBivectorToSoLinear_mulVec n R u v x
 
 end TauCeti.CliffordAlgebra
