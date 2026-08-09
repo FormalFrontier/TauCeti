@@ -205,7 +205,7 @@ private theorem dvd_and_dvd_of_prime [W.IsElliptic] {π p q : F[X]} (hπ : Prime
         obtain ⟨t₁, ht₁⟩ := ht
         exact ⟨t₁ - 2 * p₁, by linear_combination ht₁ - 2 * hp₁⟩
       refine (hπ.dvd_or_dvd hprod).resolve_left hq
-    obtain ⟨m, hm⟩ : π ^ 2 ∣ g ^ 2 - g * (C W.a₁ * X + C W.a₃) -
+    have hm : π ^ 2 ∣ g ^ 2 - g * (C W.a₁ * X + C W.a₃) -
         (X ^ 3 + C W.a₂ * X ^ 2 + C W.a₄ * X + C W.a₆) := by
       refine hπ.pow_dvd_of_dvd_mul_left (a := q ^ 2) 2 (fun h => hq (hπ.dvd_of_dvd_pow h)) ?_
       obtain ⟨n₁, hn₁⟩ := hn
@@ -223,16 +223,15 @@ private theorem dvd_and_dvd_of_prime [W.IsElliptic] {π p q : F[X]} (hπ : Prime
         ring1
       have hd' : π ∣ derivative g * (2 * g - (C W.a₁ * X + C W.a₃)) -
           (C W.a₁ * g + (3 * X ^ 2 + 2 * C W.a₂ * X + C W.a₄)) := by
-        rw [← hd, hm]
-        exact ⟨C 2 * derivative π * m + π * derivative m, by
-          simp only [derivative_mul, derivative_pow, map_ofNat, Nat.cast_ofNat]
-          ring1⟩
+        rw [← hd]
+        simpa using Polynomial.pow_sub_one_dvd_derivative_of_pow_dvd hm
       simpa using dvd_sub (Dvd.dvd.mul_left ⟨f, hf⟩ (derivative g)) hd'
     -- the three vanishings, read in the residue field
     have hev : ∀ r : F[X], π ∣ r → aeval (AdjoinRoot.root π) r = 0 := fun r hr => by
       rw [AdjoinRoot.aeval_eq]; exact AdjoinRoot.mk_eq_zero.mpr hr
     have h₁ := hev (g ^ 2 - g * (C W.a₁ * X + C W.a₃) -
-      (X ^ 3 + C W.a₂ * X ^ 2 + C W.a₄ * X + C W.a₆)) ⟨π * m, by linear_combination hm⟩
+      (X ^ 3 + C W.a₂ * X ^ 2 + C W.a₄ * X + C W.a₆))
+        ((dvd_pow_self π two_ne_zero).trans hm)
     have h₂ := hev (2 * g - (C W.a₁ * X + C W.a₃)) ⟨f, hf⟩
     have h₃ := hev _ hH₁
     simp only [map_sub, map_add, map_mul, map_pow, map_ofNat, aeval_C, aeval_X] at h₁ h₂ h₃
