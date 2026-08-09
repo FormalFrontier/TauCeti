@@ -229,7 +229,6 @@ theorem nonempty_jointEigenspaceBasis_transpose_iff
 
 /-- **Correctness of the common eigenrow search**: searching the transposed family returns exactly
 the tuples admitting a nonzero common left eigenvector. -/
-@[simp]
 theorem mem_jointEigenvalueSearch_transpose
     {A : Fin m → Matrix (Fin n) (Fin n) F} {a : Fin m → F} :
     a ∈ jointEigenvalueSearch (fun i => (A i)ᵀ) ↔
