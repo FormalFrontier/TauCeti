@@ -49,7 +49,6 @@ variable {K : Type*} [Field K] [NumberField K] {θ : 𝓞 K} {d : ℤ}
 ramified rational prime `p`, quadratic conjugation `σ` satisfies `σ 𝔭 = 𝔭`: the pushforward
 `𝔭.map σ` is again a prime of `𝓞 K` lying over `p`, and a ramified prime of a quadratic field has
 only one prime above it. In other words, `𝔭` is an *ambiguous* ideal. -/
-@[simp]
 theorem map_ringOfIntegersQuadraticConj_eq_self_of_mem_ramifiedPrimes
     (hmin : minpoly ℤ θ = X ^ 2 - C d) (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤)
     {p : ℕ} (hmem : p ∈ ramifiedPrimes K) (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime]
@@ -86,7 +85,6 @@ theorem mem_nonZeroDivisors_of_mem_ramifiedPrimes {p : ℕ} (hmem : p ∈ ramifi
 `p` is fixed by quadratic conjugation (it is ambiguous), and `σ` acts on `Cl(𝓞 K)` by inversion, so
 the class `[𝔭]` equals its own inverse: `[𝔭]² = 1`. Concretely, `[𝔭]` is an explicit element of the
 2-torsion `Cl(𝓞 K)[2]`. -/
-@[simp]
 theorem classGroupMk0_sq_eq_one_of_mem_ramifiedPrimes
     (hmin : minpoly ℤ θ = X ^ 2 - C d) (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤)
     {p : ℕ} (hmem : p ∈ ramifiedPrimes K) (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime]
