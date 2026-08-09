@@ -37,9 +37,12 @@ point uniquely.
   coefficient-generating comodule separates points.
 * `TauCeti.Comodule.endOfPoint_eq_iff_eqOn_matrixCoefficientSubalgebra`: equality of actions
   is characterized by the coefficient algebra for finite projective comodules.
+* `TauCeti.Comodule.eq_of_forall_finiteSubcoalgebra_endOfPoint_eq_of_exists_mem`: under an
+  elementwise finite-subcoalgebra covering hypothesis, the restricted regular comodules
+  collectively separate algebra-valued points.
 * `TauCeti.Comodule.eq_of_forall_finiteSubcoalgebra_endOfPoint_eq`: the restricted regular
-  comodules of finite subcoalgebras collectively separate algebra-valued points over a
-  commutative principal ideal domain.
+  comodules of finite subcoalgebras of a free coalgebra collectively separate algebra-valued
+  points over a commutative principal ideal domain.
 
 ## References
 
@@ -166,6 +169,29 @@ end
 
 end FiniteProjective
 
+section FiniteSubcoalgebraCover
+
+variable {R : Type u} {C : Type v} {A : Type w}
+variable [CommSemiring R] [Semiring C] [Algebra R C] [Coalgebra R C] [Module.Flat R C]
+variable [CommSemiring A] [Algebra R A]
+
+/-- If every element belongs to a module-finite subcoalgebra, then the actions on the restricted
+regular comodules of all module-finite subcoalgebras jointly determine an algebra-valued point. -/
+theorem eq_of_forall_finiteSubcoalgebra_endOfPoint_eq_of_exists_mem
+    (hcover : ∀ c : C, ∃ D : Subcoalgebra R C, Module.Finite R D.toSubmodule ∧ c ∈ D)
+    (g h : C →ₐ[R] A)
+    (haction : ∀ (D : Subcoalgebra R C), Module.Finite R D.toSubmodule →
+      endOfPoint D.toRegularSubcomodule g = endOfPoint D.toRegularSubcomodule h) :
+    g = h := by
+  apply AlgHom.ext
+  intro c
+  obtain ⟨D, hDfinite, hcD⟩ := hcover c
+  exact eqOn_matrixCoefficientSubalgebra_of_endOfPoint_eq g h
+    (haction D hDfinite)
+    (D.le_matrixCoefficientSubalgebra_toRegularSubcomodule hcD)
+
+end FiniteSubcoalgebraCover
+
 section PID
 
 variable {R : Type u} {C : Type v} {A : Type w}
@@ -187,13 +213,9 @@ theorem eq_of_forall_finiteSubcoalgebra_endOfPoint_eq (g h : C →ₐ[R] A) :
   let _ : Module.Flat R C := Module.Flat.of_free
   dsimp only
   intro haction
-  apply AlgHom.ext
-  intro c
-  obtain ⟨D, hDfinite, hcD⟩ :=
-    Subcoalgebra.exists_finite_subcoalgebra_mem (R := R) (C := C) c
-  exact eqOn_matrixCoefficientSubalgebra_of_endOfPoint_eq g h
-    (haction D hDfinite)
-    (D.le_matrixCoefficientSubalgebra_toRegularSubcomodule hcD)
+  exact eq_of_forall_finiteSubcoalgebra_endOfPoint_eq_of_exists_mem
+    (fun c ↦ Subcoalgebra.exists_finite_subcoalgebra_mem (R := R) (C := C) c)
+    g h haction
 
 end
 
