@@ -6,7 +6,6 @@ module
 
 public import TauCeti.RepresentationTheory.Compact.Convolution
 public import TauCeti.RepresentationTheory.Continuous.Representative
-public import Mathlib.Analysis.InnerProductSpace.Dual
 public import Mathlib.Analysis.Normed.Module.FiniteDimension
 
 /-!
@@ -34,8 +33,9 @@ quietly assume the theorem it serves.
 ## Main definitions
 
 * `TauCeti.rightRegularLp`: the right regular representation of `G` on `L²(G)`.
-* `TauCeti.rightTranslate`: the right translates of a continuous function, as a continuous map
-  `G → C(G, 𝕜)`; continuity is in the uniform norm.
+* `TauCeti.rightTranslate`: the right translates of a continuous map, as a continuous map
+  `G → C(G, X)`; continuity is for the compact-open topology, which for compact `G` is the
+  uniform norm.
 * `TauCeti.convolutionEigenspaceRep`: the restriction of the right regular representation to an
   eigenspace of a convolution operator.
 
@@ -88,6 +88,28 @@ open scoped InnerProductSpace
 
 namespace TauCeti
 
+/-! ### Right translates of a continuous map -/
+
+section RightTranslate
+
+variable {G X : Type*} [TopologicalSpace G] [Mul G] [ContinuousMul G] [TopologicalSpace X]
+
+/-- **The right translates of a continuous map**, as a continuous map `G → C(G, X)` sending `g`
+to `x ↦ F (x * g)`.
+
+Continuity of this map is continuity for the compact-open topology of `C(G, X)`, which for
+compact `G` and normed `X` is the uniform norm; it is exactly the statement that
+`(g, x) ↦ F (x * g)` curries, so it needs no uniform structure on `G`. -/
+def rightTranslate (F : C(G, X)) : C(G, C(G, X)) :=
+  ContinuousMap.curry
+    ⟨fun p : G × G => F (p.2 * p.1), F.continuous.comp (continuous_snd.mul continuous_fst)⟩
+
+@[simp]
+theorem rightTranslate_apply_apply (F : C(G, X)) (g x : G) : rightTranslate F g x = F (x * g) :=
+  (rfl)
+
+end RightTranslate
+
 section CompactGroup
 
 variable {𝕜 G : Type*} [RCLike 𝕜] [Group G] [TopologicalSpace G] [IsTopologicalGroup G]
@@ -129,8 +151,9 @@ noncomputable def rightRegularLp : ContRepresentation 𝕜 G (Lp 𝕜 2 (haarPro
           (funext fun y => (mul_assoc y g h).symm) x).trans ?_
         exact Lp.compMeasurePreserving_comp_apply x _ _ }
 
-/-- Right translation on `L²(G)`, unfolded. -/
-theorem rightRegularLp_apply (g : G) (f : Lp 𝕜 2 (haarProb G)) :
+/-- Right translation on `L²(G)`, unfolded to the underlying `Lp.compMeasurePreserving`. This is
+implementation bookkeeping; the characterization to use is `coeFn_rightRegularLp`. -/
+private theorem rightRegularLp_apply (g : G) (f : Lp 𝕜 2 (haarProb G)) :
     rightRegularLp 𝕜 G g f
       = Lp.compMeasurePreserving (· * g) (measurePreserving_mul_right (haarProb G) g) f :=
   (rfl)
@@ -147,23 +170,6 @@ theorem isUnitary_rightRegularLp : ContRepresentation.IsUnitary (rightRegularLp 
   rw [ContRepresentation.isUnitary_iff_norm_map]
   intro g f
   exact Lp.norm_compMeasurePreserving f _
-
-/-! ### Right translates of a continuous function -/
-
-/-- **The right translates of a continuous function on a compact group**, as a continuous map
-`G → C(G, 𝕜)` sending `g` to `x ↦ F (x * g)`.
-
-Continuity of this map is continuity in the *uniform* norm, the compact-open topology of
-`C(G, 𝕜)`; it is exactly the statement that `(g, x) ↦ F (x * g)` curries, so it needs no uniform
-structure on `G`. -/
-noncomputable def rightTranslate (F : C(G, 𝕜)) : C(G, C(G, 𝕜)) :=
-  ContinuousMap.curry
-    ⟨fun p : G × G => F (p.2 * p.1), F.continuous.comp (continuous_snd.mul continuous_fst)⟩
-
-omit [CompactSpace G] [MeasurableSpace G] [BorelSpace G] in
-@[simp]
-theorem rightTranslate_apply_apply (F : C(G, 𝕜)) (g x : G) : rightTranslate F g x = F (x * g) :=
-  (rfl)
 
 /-! ### The representation on an eigenspace of a convolution operator -/
 
