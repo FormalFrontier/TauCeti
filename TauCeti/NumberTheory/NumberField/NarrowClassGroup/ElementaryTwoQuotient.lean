@@ -40,7 +40,7 @@ subgroup `Cl⁺(K)[2]`.
 
 In the namespace `TauCeti.NumberField.NarrowClassGroup`:
 
-* `elementaryTwoQuotientMap_toClassGroup_surjective`: `Cl⁺(K)/Cl⁺(K)² ↠ Cl(K)/Cl(K)²`.
+* `ElementaryTwoQuotient` and `twoRank`: the quotient `Cl⁺(K)/Cl⁺(K)²` and its `𝔽₂`-dimension.
 * `mem_ker_elementaryTwoQuotientMap_toClassGroup_iff`: its kernel consists of the classes of the
   principal ideals.
 * `twoRank_classGroup_le_twoRank`: `twoRank Cl(K) ≤ twoRank Cl⁺(K)`.
@@ -62,11 +62,20 @@ namespace TauCeti.NumberField.NarrowClassGroup
 
 variable {K : Type*} [Field K] [NumberField K]
 
-/-- **Forgetting positivity is surjective on elementary-2 quotients.** The surjection
-`Cl⁺(K) → Cl(K)` induces a surjection `Cl⁺(K)/Cl⁺(K)² → Cl(K)/Cl(K)²`. -/
-theorem elementaryTwoQuotientMap_toClassGroup_surjective :
-    Function.Surjective (TauCeti.elementaryTwoQuotientMap (toClassGroup (K := K))) :=
-  TauCeti.elementaryTwoQuotientMap_surjective toClassGroup_surjective
+/-- **The maximal elementary-2 quotient `Cl⁺(K)/Cl⁺(K)²` of the narrow class group.** -/
+abbrev ElementaryTwoQuotient (K : Type*) [Field K] [NumberField K] : Type _ :=
+  TauCeti.ElementaryTwoQuotient (NarrowClassGroup K)
+
+/-- **The 2-rank of the narrow class group**: the `ZMod 2` dimension of
+`Cl⁺(K)/Cl⁺(K)²`. -/
+noncomputable def twoRank (K : Type*) [Field K] [NumberField K] : ℕ :=
+  TauCeti.twoRank (NarrowClassGroup K)
+
+/-- The 2-rank of the narrow class group is the `ZMod 2` dimension of its maximal elementary-2
+quotient. -/
+@[simp] theorem twoRank_def :
+    twoRank K = Module.finrank (ZMod 2) (ElementaryTwoQuotient K) :=
+  TauCeti.twoRank_def (NarrowClassGroup K)
 
 /-- **The kernel of `Cl⁺(K)/Cl⁺(K)² → Cl(K)/Cl(K)²` is spanned by the principal classes.** A narrow
 square class dies in `Cl(K)/Cl(K)²` exactly when it is the class of `mkPrincipal u` for some
@@ -76,7 +85,7 @@ only because its generator need not be totally positive.
 This is right exactness of `G ↦ G/G²` combined with the exactness of
 `Kˣ → Cl⁺(K) → Cl(K) → 1` at `Cl⁺(K)`. -/
 theorem mem_ker_elementaryTwoQuotientMap_toClassGroup_iff
-    (x : TauCeti.ElementaryTwoQuotient (NarrowClassGroup K)) :
+    (x : ElementaryTwoQuotient K) :
     x ∈ LinearMap.ker (TauCeti.elementaryTwoQuotientMap (toClassGroup (K := K))) ↔
       ∃ u : Kˣ, TauCeti.elementaryTwoQuotientMk (mkPrincipal u) = x := by
   rw [TauCeti.mem_ker_elementaryTwoQuotientMap_iff toClassGroup_surjective]
@@ -93,17 +102,19 @@ theorem mem_ker_elementaryTwoQuotientMap_toClassGroup_iff
 /-- **The ordinary `2`-rank never exceeds the narrow one.** Since `Cl⁺(K) ↠ Cl(K)`, the quotient
 `Cl(K)/Cl(K)²` is a quotient of `Cl⁺(K)/Cl⁺(K)²`. -/
 theorem twoRank_classGroup_le_twoRank :
-    TauCeti.ClassGroup.twoRank (𝓞 K) ≤ TauCeti.twoRank (NarrowClassGroup K) :=
-  TauCeti.twoRank_le_of_surjective toClassGroup_surjective
+    TauCeti.ClassGroup.twoRank (𝓞 K) ≤ twoRank K := by
+  rw [TauCeti.ClassGroup.twoRank_def, twoRank_def]
+  exact TauCeti.twoRank_le_of_surjective toClassGroup_surjective
 
 /-- **The narrow `2`-rank exceeds the ordinary one by at most the rank of the defect.** The kernel
 of `Cl⁺(K) → Cl(K)` measures how far a principal ideal is from having a totally positive generator;
 the narrow `2`-rank is at most the ordinary one plus the `2`-rank of that kernel. -/
 theorem twoRank_le_twoRank_classGroup_add_twoRank_ker :
-    TauCeti.twoRank (NarrowClassGroup K) ≤
+    twoRank K ≤
       TauCeti.ClassGroup.twoRank (𝓞 K) +
-        TauCeti.twoRank (MonoidHom.ker (toClassGroup (K := K))) :=
-  TauCeti.twoRank_le_twoRank_add_twoRank_ker toClassGroup_surjective
+        TauCeti.twoRank (MonoidHom.ker (toClassGroup (K := K))) := by
+  rw [twoRank_def, TauCeti.ClassGroup.twoRank_def]
+  exact TauCeti.twoRank_le_twoRank_add_twoRank_ker toClassGroup_surjective
 
 /-- **The narrow-versus-ordinary defect has order `2 ^ twoRank`.** The kernel of `Cl⁺(K) → Cl(K)` is
 an elementary abelian `2`-group (`sq_eq_one_of_mem_ker_toClassGroup`), so it coincides with its own
@@ -119,7 +130,8 @@ ordinary defect is carried by the classes `mkPrincipal u` of principal ideals; i
 already a square in `Cl⁺(K)`, then `Cl⁺(K)/Cl⁺(K)² → Cl(K)/Cl(K)²` is an isomorphism. -/
 theorem twoRank_eq_twoRank_classGroup_of_forall_isSquare
     (h : ∀ u : Kˣ, IsSquare (mkPrincipal (K := K) u)) :
-    TauCeti.twoRank (NarrowClassGroup K) = TauCeti.ClassGroup.twoRank (𝓞 K) := by
+    twoRank K = TauCeti.ClassGroup.twoRank (𝓞 K) := by
+  rw [twoRank_def, TauCeti.ClassGroup.twoRank_def]
   refine TauCeti.twoRank_eq_of_forall_isSquare_of_mem_ker toClassGroup_surjective ?_
   intro C hC
   rw [toClassGroup_ker] at hC
@@ -131,8 +143,9 @@ ordinary class groups themselves agree (`toClassGroupEquiv`). This is why the ge
 formula may be stated for `Cl(K)` in the imaginary quadratic case, while the real case genuinely
 needs `Cl⁺(K)`. -/
 theorem twoRank_eq_twoRank_classGroup [IsTotallyComplex K] :
-    TauCeti.twoRank (NarrowClassGroup K) = TauCeti.ClassGroup.twoRank (𝓞 K) :=
-  TauCeti.twoRank_eq_of_mulEquiv _ toClassGroupEquiv
+    twoRank K = TauCeti.ClassGroup.twoRank (𝓞 K) := by
+  rw [twoRank_def, TauCeti.ClassGroup.twoRank_def]
+  exact TauCeti.twoRank_eq_of_mulEquiv _ toClassGroupEquiv
 
 /-- **For a totally complex field the narrow class number is the class number.** The companion of
 `twoRank_eq_twoRank_classGroup` at the level of orders. -/

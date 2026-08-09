@@ -21,32 +21,34 @@ exact. (It is not left exact: the first map need not be injective, since an elem
 become a square in `G` without being a square in `N`.)
 
 The rank consequences are the reason for the file. Writing `twoRank` for the `𝔽₂`-dimension of the
-elementary-2 quotient, a surjection `G ↠ H` gives
+elementary-2 quotient, a surjection `G ↠ H` gives, under the finite-dimensionality hypotheses in
+the statements below,
 
 `twoRank H ≤ twoRank G ≤ twoRank H + twoRank (ker f)`,
 
 so a quotient can only lose 2-rank, and can lose no more than the kernel carries. In genus theory
 this is the comparison between the narrow class group `Cl⁺(K)` and the ordinary class group `Cl(K)`
 of a number field: the forgetful surjection `Cl⁺(K) → Cl(K)` has an elementary abelian `2`-group as
-its kernel, and the two 2-ranks agree exactly when that kernel dies.
+its kernel, and the two 2-ranks agree when that kernel dies.
 
 The last group of results covers the degenerate case where `G` is *itself* elementary abelian: then
-the subgroup of squares is trivial, the quotient map `G → G/G²` is an isomorphism, and
-`|G| = 2 ^ twoRank G`.
+the subgroup of squares is trivial and the quotient map `G → G/G²` is an isomorphism. If the
+quotient is finite-dimensional, then also `|G| = 2 ^ twoRank G`.
 
 ## Main results
 
 * `TauCeti.elementaryTwoQuotientMap_surjective`: the induced map is surjective.
 * `TauCeti.ker_elementaryTwoQuotientMap`: **right exactness** — its kernel is the range of the map
   induced by `ker f ↪ G`; `TauCeti.mem_ker_elementaryTwoQuotientMap_iff` is the elementwise form.
-* `TauCeti.twoRank_le_of_surjective`: `twoRank H ≤ twoRank G`.
-* `TauCeti.twoRank_le_twoRank_add_twoRank_ker`: `twoRank G ≤ twoRank H + twoRank (ker f)`.
+* `TauCeti.twoRank_le_of_surjective`: `twoRank H ≤ twoRank G` when `G/G²` is finite-dimensional.
+* `TauCeti.twoRank_le_twoRank_add_twoRank_ker`: `twoRank G ≤ twoRank H + twoRank (ker f)` when
+  `G/G²` and `ker f / (ker f)²` are finite-dimensional.
 * `TauCeti.injective_elementaryTwoQuotientMap_iff` and
   `TauCeti.twoRank_eq_of_forall_isSquare_of_mem_ker`: the induced map is injective, and the two
-  ranks agree, exactly when `ker f` consists of squares.
+  ranks agree when `ker f` consists of squares.
 * `TauCeti.card_elementaryTwoQuotient_of_forall_sq_eq_one` and
   `TauCeti.card_eq_two_pow_twoRank_of_forall_sq_eq_one`: for an elementary abelian `2`-group the
-  quotient is the whole group, so `|G| = 2 ^ twoRank G`.
+  quotient is the whole group, and `|G| = 2 ^ twoRank G` when the quotient is finite-dimensional.
 -/
 
 public section
@@ -63,11 +65,6 @@ theorem elementaryTwoQuotientMap_surjective (hf : Function.Surjective f) :
   obtain ⟨g, rfl⟩ := hf h
   exact ⟨elementaryTwoQuotientMk g, elementaryTwoQuotientMap_mk f g⟩
 
-/-- The induced map on elementary-2 quotients has range everything, for `f` surjective. -/
-theorem range_elementaryTwoQuotientMap_eq_top (hf : Function.Surjective f) :
-    LinearMap.range (elementaryTwoQuotientMap f) = ⊤ :=
-  LinearMap.range_eq_top.2 (elementaryTwoQuotientMap_surjective hf)
-
 /-- The classes coming from `ker f` are killed by the induced map. This is the easy inclusion of
 `TauCeti.ker_elementaryTwoQuotientMap`, and needs no surjectivity. -/
 theorem range_elementaryTwoQuotientMap_ker_subtype_le :
@@ -75,9 +72,9 @@ theorem range_elementaryTwoQuotientMap_ker_subtype_le :
       LinearMap.ker (elementaryTwoQuotientMap f) := by
   rintro x ⟨y, rfl⟩
   obtain ⟨g, rfl⟩ := elementaryTwoQuotientMk_surjective (G := f.ker) y
+  have hfg : f (g : G) = 1 := MonoidHom.mem_ker.1 g.2
   rw [LinearMap.mem_ker, elementaryTwoQuotientMap_mk, elementaryTwoQuotientMap_mk,
-    Subgroup.coe_subtype, show f (g : G) = 1 from MonoidHom.mem_ker.1 g.2,
-    elementaryTwoQuotientMk_one]
+    Subgroup.coe_subtype, hfg, elementaryTwoQuotientMk_one]
 
 /-- **Right exactness of the elementary-2 quotient.** For a surjection `f : G →* H`, an element of
 `G/G²` dies in `H/H²` exactly when it is the class of an element of `ker f`. Equivalently, the
@@ -131,7 +128,7 @@ theorem twoRank_le_twoRank_add_twoRank_ker
     [Module.Finite (ZMod 2) (ElementaryTwoQuotient f.ker)]
     (hf : Function.Surjective f) : twoRank G ≤ twoRank H + twoRank f.ker := by
   have hrk := (elementaryTwoQuotientMap f).finrank_range_add_finrank_ker
-  rw [range_elementaryTwoQuotientMap_eq_top hf, finrank_top] at hrk
+  rw [LinearMap.range_eq_top.2 (elementaryTwoQuotientMap_surjective hf), finrank_top] at hrk
   have hker : Module.finrank (ZMod 2) (LinearMap.ker (elementaryTwoQuotientMap f)) ≤
       twoRank f.ker := by
     rw [ker_elementaryTwoQuotientMap hf]
@@ -147,9 +144,9 @@ theorem injective_elementaryTwoQuotientMap_iff (hf : Function.Surjective f) :
   rw [← LinearMap.ker_eq_bot, Submodule.eq_bot_iff]
   constructor
   · intro h g hg
+    have hfg : f g = 1 := MonoidHom.mem_ker.1 hg
     refine (elementaryTwoQuotientMk_eq_zero_iff g).1 (h _ ?_)
-    rw [LinearMap.mem_ker, elementaryTwoQuotientMap_mk,
-      show f g = 1 from MonoidHom.mem_ker.1 hg, elementaryTwoQuotientMk_one]
+    rw [LinearMap.mem_ker, elementaryTwoQuotientMap_mk, hfg, elementaryTwoQuotientMk_one]
   · intro h x hx
     obtain ⟨g, hg, rfl⟩ := (mem_ker_elementaryTwoQuotientMap_iff hf x).1 hx
     exact (elementaryTwoQuotientMk_eq_zero_iff g).2 (h g hg)

@@ -49,7 +49,7 @@ narrow class group `Cl⁺(ℚ(√d))` is the ordinary class group, so the genus-
 computed with either. -/
 theorem twoRank_narrowClassGroup_eq_of_minpoly_eq_X_sq_sub_C_of_neg
     (hmin : minpoly ℤ θ = X ^ 2 - C d) (hd : d < 0) :
-    TauCeti.twoRank (NarrowClassGroup K) = TauCeti.ClassGroup.twoRank (𝓞 K) :=
+    NarrowClassGroup.twoRank K = TauCeti.ClassGroup.twoRank (𝓞 K) :=
   haveI := isTotallyComplex_of_minpoly_eq_X_sq_sub_C_of_neg hmin hd
   NarrowClassGroup.twoRank_eq_twoRank_classGroup
 
