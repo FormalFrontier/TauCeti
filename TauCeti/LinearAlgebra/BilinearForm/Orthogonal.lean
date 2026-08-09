@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.LinearAlgebra.BilinearForm.Orthogonal
+public import Mathlib.LinearAlgebra.FiniteDimensional.Lemmas
 
 /-!
 # Extending nondegenerate subspaces by an orthogonal vector
@@ -16,6 +17,8 @@ form. It is the structural step used when a Cartan--Dieudonne argument enlarges 
 
 * `TauCeti.BilinForm.restrict_sup_span_singleton_nondegenerate`: adjoining a vector with nonzero
   self-pairing from the orthogonal complement preserves nondegeneracy.
+* `TauCeti.BilinForm.finrank_sup_span_singleton_of_mem_orthogonal`: adjoining a vector with
+  nonzero self-pairing from the orthogonal complement increases finrank by one.
 -/
 
 public section
@@ -47,9 +50,7 @@ theorem restrict_sup_span_singleton_nondegenerate
     -- Expose the ambient bilinear form under its restriction to `S`.
     change B y w' = 0 at hyw
     rw [← hsum] at hyw
-    simpa only [map_add, LinearMap.add_apply, LinearMap.coe_restrictScalars,
-      LinearMap.coe_mk, AddHom.coe_mk, LinearMap.map_smul_of_tower, LinearMap.smul_apply,
-      hBxw', smul_eq_mul, mul_zero, add_zero] using hyw
+    simpa [hBxw'] using hyw
   have hw0 : w = 0 := congrArg Subtype.val (hW.1 ⟨w, hw⟩ hwzero)
   have hxS : x ∈ S := Submodule.mem_sup_right (Submodule.mem_span_singleton_self x)
   have hyx := hy ⟨x, hxS⟩
@@ -61,6 +62,17 @@ theorem restrict_sup_span_singleton_nondegenerate
     exact (mul_eq_zero.mp hyx).resolve_right hxx
   apply Subtype.ext
   simp [← hsum, hw0, ha]
+
+/-- Adjoining a vector with nonzero self-pairing from the orthogonal complement increases
+finrank by one. -/
+theorem finrank_sup_span_singleton_of_mem_orthogonal
+    [Module.Finite K V] (B : BilinForm K V) (W : Submodule K V) (x : V)
+    (hxx : B x x ≠ 0) (hx : x ∈ B.orthogonal W) :
+    Module.finrank K ↑(W ⊔ Submodule.span K {x} : Submodule K V) =
+      Module.finrank K W + 1 := by
+  apply Submodule.finrank_sup_span_singleton
+  intro hxW
+  exact hxx (hx x hxW)
 
 end BilinForm
 

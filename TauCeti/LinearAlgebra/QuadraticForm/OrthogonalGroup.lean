@@ -405,25 +405,6 @@ end Field
 
 end CartanDieudonneStep
 
-section FixedSubspaceStep
-
-variable {K : Type u} {V : Type v} [Field K] [AddCommGroup V] [Module K V]
-variable (Q : QuadraticForm K V) [Invertible (2 : K)]
-
-/-- Adjoining an anisotropic vector orthogonal to a subspace increases its finrank by one. -/
-theorem finrank_sup_span_singleton_of_mem_orthogonal
-    [Module.Finite K V] (W : Submodule K V) (x : V) [Invertible (Q x)]
-    (hx : x ∈ LinearMap.BilinForm.orthogonal (QuadraticMap.associated Q) W) :
-    Module.finrank K ↑(W ⊔ Submodule.span K {x} : Submodule K V) =
-      Module.finrank K W + 1 := by
-  apply Submodule.finrank_sup_span_singleton
-  intro hxW
-  have hzero := hx x hxW
-  rw [QuadraticMap.associated_eq_self_apply] at hzero
-  exact (isUnit_of_invertible (Q x)).ne_zero hzero
-
-end FixedSubspaceStep
-
 end QuadraticMap
 
 end TauCeti

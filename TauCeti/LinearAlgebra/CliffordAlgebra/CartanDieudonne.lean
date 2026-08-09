@@ -5,7 +5,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.FieldTheory.IsSepClosed
-public import TauCeti.LinearAlgebra.BilinearForm.Orthogonal
 public import TauCeti.LinearAlgebra.CliffordAlgebra.ReflectionLift
 
 /-!
@@ -25,7 +24,7 @@ This is the one-vector reduction used by the finite-dimensional Cartan--Dieudonn
   range of the Pin action corrects an orthogonal automorphism to fix a chosen vector of invertible
   norm.
 * `TauCeti.CliffordAlgebra.exists_mem_range_pinToOrthogonal_mul_eqOn_sup`: the correction preserves
-  a previously fixed nondegenerate subspace when the new vector is orthogonal to it.
+  an arbitrary previously fixed subspace when the new vector is orthogonal to it.
 
 ## References
 
