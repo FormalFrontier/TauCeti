@@ -16,10 +16,12 @@ For a uniform random map `x : ι → κ`, the probability that two coordinates c
 
 `(Fintype.card ι).choose 2 / Fintype.card κ`.
 
-Conditioning the random map to be injective is uniform sampling without replacement.  The main
-results compare every event under sampling with and without replacement, with the collision bound
-as error.  This is the coupling step used to compare a finite exchangeable law with the product of
-its empirical measure.
+When injective maps exist, conditioning the random map to be injective is uniform sampling without
+replacement.  The main results compare every event under the uniform measures on all maps and on
+injective maps, with the collision bound as error.  These inequalities remain valid when no
+injective map exists (when Mathlib's `uniformOn` is the zero measure); in the feasible case they are
+the coupling step used to compare a finite exchangeable law with the product of its empirical
+measure.
 
 The proof is the classical union bound over the unordered pairs of coordinates.  It uses
 Mathlib's `ProbabilityTheory.uniformOn`, `measure_biUnion_finset_le`, and
@@ -235,9 +237,12 @@ private theorem uniformOn_univ_le_add_compl {Ω : Type*} [Finite Ω] [Measurable
             (measure_mono Set.inter_subset_right)
 
 omit [Fintype ι] [Fintype κ] in
-/-- Uniform sampling without replacement differs from sampling with replacement only on the
-collision event: for every event `A`, its without-replacement probability is at most its
-with-replacement probability plus the collision probability. -/
+/-- The uniform measure on injective maps differs from the uniform measure on all maps only on the
+collision event: for every event `A`, the former is at most the latter plus the collision measure.
+
+When an injective map `ι → κ` exists, these are the probabilities for uniform sampling without and
+with replacement, respectively.  The inequality also holds when the set of injective maps is empty,
+in which case its `uniformOn` measure is zero. -/
 theorem uniformOn_injective_le_add [Finite ι] [Finite κ] [MeasurableSpace κ]
     [MeasurableSingletonClass κ]
     (A : Set (ι → κ)) :
@@ -247,9 +252,12 @@ theorem uniformOn_injective_le_add [Finite ι] [Finite κ] [MeasurableSpace κ]
     uniformOn_le_univ_add_compl {x : ι → κ | Function.Injective x} A
 
 omit [Fintype ι] [Fintype κ] in
-/-- Uniform sampling with replacement differs from sampling without replacement only on the
-collision event: for every event `A`, its with-replacement probability is at most its
-without-replacement probability plus the collision probability. -/
+/-- The uniform measure on all maps differs from the uniform measure on injective maps only on the
+collision event: for every event `A`, the former is at most the latter plus the collision measure.
+
+When an injective map `ι → κ` exists, these are the probabilities for uniform sampling with and
+without replacement, respectively.  The inequality also holds when the set of injective maps is
+empty, in which case its `uniformOn` measure is zero. -/
 theorem uniformOn_univ_le_injective_add [Finite ι] [Finite κ] [MeasurableSpace κ]
     [MeasurableSingletonClass κ]
     (A : Set (ι → κ)) :
@@ -258,9 +266,12 @@ theorem uniformOn_univ_le_injective_add [Finite ι] [Finite κ] [MeasurableSpace
   simpa only [Set.compl_ofPred] using
     uniformOn_univ_le_add_compl {x : ι → κ | Function.Injective x} A
 
-/-- **Quantitative finite-sampling bound, without replacement to with replacement.**  For every
-event `A`, the probability under uniform sampling without replacement is at most its probability
-under sampling with replacement plus `(Fintype.card ι).choose 2 / Fintype.card κ`. -/
+/-- **Quantitative finite-sampling bound, injective maps to all maps.**  For every event `A`, its
+uniform measure among injective maps is at most its uniform measure among all maps plus
+`(Fintype.card ι).choose 2 / Fintype.card κ`.
+
+When an injective map `ι → κ` exists, this compares uniform sampling without replacement to uniform
+sampling with replacement.  The inequality also holds in the degenerate case. -/
 theorem uniformOn_injective_le_add_choose_two_div [MeasurableSpace κ]
     [MeasurableSingletonClass κ] (A : Set (ι → κ)) :
     uniformOn {x : ι → κ | Function.Injective x} A ≤
@@ -268,9 +279,12 @@ theorem uniformOn_injective_le_add_choose_two_div [MeasurableSpace κ]
   (uniformOn_injective_le_add A).trans <|
     add_le_add le_rfl uniformOn_not_injective_le
 
-/-- **Quantitative finite-sampling bound, with replacement to without replacement.**  For every
-event `A`, the probability under uniform sampling with replacement is at most its probability
-under sampling without replacement plus `(Fintype.card ι).choose 2 / Fintype.card κ`. -/
+/-- **Quantitative finite-sampling bound, all maps to injective maps.**  For every event `A`, its
+uniform measure among all maps is at most its uniform measure among injective maps plus
+`(Fintype.card ι).choose 2 / Fintype.card κ`.
+
+When an injective map `ι → κ` exists, this compares uniform sampling with replacement to uniform
+sampling without replacement.  The inequality also holds in the degenerate case. -/
 theorem uniformOn_univ_le_injective_add_choose_two_div [MeasurableSpace κ]
     [MeasurableSingletonClass κ] (A : Set (ι → κ)) :
     uniformOn Set.univ A ≤ uniformOn {x : ι → κ | Function.Injective x} A +
