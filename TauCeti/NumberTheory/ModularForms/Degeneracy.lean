@@ -292,6 +292,18 @@ lemma levelRaise_levelRaise {d e : ℕ} [𝒢'.HasDetOne] [𝒢''.HasDetOne] [Ne
   refine _root_.CuspForm.ext fun τ ↦ ?_
   simp [scaleGL_mul, mul_smul]
 
+/-- The composition `V_d ∘ V_e = V_n` for any `n` presented as the product `e * d`, and any
+transport hypothesis for `V_n`: the level-raising operator does not depend on which proof of
+the conjugation condition it is given. -/
+lemma levelRaise_levelRaise_of_mul_eq {d e n : ℕ} [𝒢'.HasDetOne] [𝒢''.HasDetOne] [NeZero d]
+    [NeZero e] [NeZero n] (hn : e * d = n)
+    (h₁ : 𝒢'' ≤ ConjAct.toConjAct (scaleGL d)⁻¹ • 𝒢')
+    (h₂ : 𝒢' ≤ ConjAct.toConjAct (scaleGL e)⁻¹ • 𝒢)
+    (h₃ : 𝒢'' ≤ ConjAct.toConjAct (scaleGL n)⁻¹ • 𝒢) (f : CuspForm 𝒢 k) :
+    levelRaise d h₁ (levelRaise e h₂ f) = levelRaise n h₃ f := by
+  subst hn
+  exact levelRaise_levelRaise h₁ h₂ f
+
 end CuspForm
 
 end LevelRaise
