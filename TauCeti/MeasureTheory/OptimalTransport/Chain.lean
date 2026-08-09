@@ -19,9 +19,10 @@ The construction uses Mathlib's Ionescu--Tulcea trajectory measure. At step `n`,
 kernel of the prescribed `(n, n + 1)`-plan is pulled back along evaluation at the last point of the
 current finite trajectory. The main result is `TauCeti.Measure.map_adjacent_chainMeasure`.
 
-Finite-chain gluing follows by projecting this path law to any initial segment; see
-`TauCeti.Measure.map_adjacent_restrictChainMeasure`. This is the iteration of the two-plan gluing
-lemma needed by optimal transport, without rebuilding Mathlib's trajectory-measure construction.
+The finite-prefix results project this path law to any initial segment of the supplied countable
+chain; see `TauCeti.Measure.map_adjacent_prefixChainMeasure`. This is the iteration of the two-plan
+gluing lemma needed by optimal transport, without rebuilding Mathlib's trajectory-measure
+construction.
 -/
 
 public section
@@ -133,32 +134,41 @@ theorem map_adjacent_chainMeasure (pi : ∀ n, Measure (X n × X (n + 1)))
     (chainMeasure pi).map (fun x ↦ (x n, x (n + 1))) = pi n :=
   map_adjacent_chainMeasure_of_map_eval pi n (map_eval_chainMeasure pi hpi n)
 
-/-- The finite trajectory law obtained by restricting `chainMeasure pi` to coordinates at most
+/-- The finite trajectory law obtained by projecting `chainMeasure pi` to coordinates at most
 `N`. -/
-noncomputable def restrictChainMeasure (pi : ∀ n, Measure (X n × X (n + 1)))
+noncomputable def prefixChainMeasure (pi : ∀ n, Measure (X n × X (n + 1)))
     [∀ n, IsProbabilityMeasure (pi n)] (N : ℕ) : Measure ((i : Iic N) → X i) :=
   (chainMeasure pi).map (frestrictLe N)
 
-instance restrictChainMeasure.instIsProbabilityMeasure
+instance prefixChainMeasure.instIsProbabilityMeasure
     (pi : ∀ n, Measure (X n × X (n + 1))) [∀ n, IsProbabilityMeasure (pi n)] (N : ℕ) :
-    IsProbabilityMeasure (restrictChainMeasure pi N) := by
-  rw [restrictChainMeasure]
+    IsProbabilityMeasure (prefixChainMeasure pi N) := by
+  rw [prefixChainMeasure]
   exact Measure.isProbabilityMeasure_map (measurable_frestrictLe N).aemeasurable
+
+/-- Projecting a finite prefix further gives the corresponding shorter prefix. -/
+theorem map_frestrictLe₂_prefixChainMeasure
+    (pi : ∀ n, Measure (X n × X (n + 1))) [∀ n, IsProbabilityMeasure (pi n)]
+    {M N : ℕ} (hMN : M ≤ N) :
+    (prefixChainMeasure pi N).map (frestrictLe₂ hMN) = prefixChainMeasure pi M := by
+  rw [prefixChainMeasure, MeasureTheory.Measure.map_map (measurable_frestrictLe₂ hMN)
+    (measurable_frestrictLe N), frestrictLe₂_comp_frestrictLe]
+  rfl
 
 /-- Every adjacent projection of a finite prefix of the countable path law agrees with the
 prescribed plan, as long as both coordinates occur in the prefix. -/
-theorem map_adjacent_restrictChainMeasure
+theorem map_adjacent_prefixChainMeasure
     (pi : ∀ n, Measure (X n × X (n + 1))) [∀ n, IsProbabilityMeasure (pi n)]
     (hpi : ∀ n, (pi n).snd = (pi (n + 1)).fst) {n N : ℕ} (hn : n < N) :
-    (restrictChainMeasure pi N).map
+    (prefixChainMeasure pi N).map
         (fun x ↦ (x ⟨n, mem_Iic.mpr (Nat.le_of_lt hn)⟩, x ⟨n + 1, mem_Iic.mpr hn⟩)) = pi n := by
   let adjacent : ((i : Iic N) → X i) → X n × X (n + 1) :=
     fun x ↦ (x ⟨n, mem_Iic.mpr (Nat.le_of_lt hn)⟩, x ⟨n + 1, mem_Iic.mpr hn⟩)
   have hadjacent : Measurable adjacent := by fun_prop
   calc
-    (restrictChainMeasure pi N).map adjacent
+    (prefixChainMeasure pi N).map adjacent
         = (chainMeasure pi).map (adjacent ∘ frestrictLe N) := by
-            rw [restrictChainMeasure, MeasureTheory.Measure.map_map hadjacent
+            rw [prefixChainMeasure, MeasureTheory.Measure.map_map hadjacent
               (measurable_frestrictLe N)]
     _ = (chainMeasure pi).map (fun x ↦ (x n, x (n + 1))) := by
           congr 1
