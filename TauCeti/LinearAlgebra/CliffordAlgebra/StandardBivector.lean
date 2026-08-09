@@ -483,7 +483,6 @@ theorem bivectorEquivSo_symm_repr_apply (A : LieAlgebra.Orthogonal.so (Fin n) R)
 
 /-- The standard exterior bivector `u ∧ v` acts on a vector by the polar-form-normalized
 infinitesimal rotation. -/
-@[simp]
 theorem bivectorEquivSo_apply_ιMulti_mulVec (u v x : Fin n → R) :
     let Q := QuadraticMap.weightedSumSquares R (1 : Fin n → R)
     letI := bivectorLieRing Q
