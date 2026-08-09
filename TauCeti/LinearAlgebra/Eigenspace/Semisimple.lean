@@ -5,7 +5,6 @@ Authors: Claude
 -/
 module
 
-public import Mathlib.LinearAlgebra.Eigenspace.Minpoly
 public import Mathlib.LinearAlgebra.Eigenspace.Semisimple
 
 public section
@@ -16,60 +15,60 @@ public section
 Mathlib records that a semisimple endomorphism of a finite-dimensional vector space over an
 algebraically closed field is diagonalizable
 (`Module.End.IsSemisimple.iSup_eigenspace_eq_top`). This file proves the converse, which needs no
-hypothesis on the field: an endomorphism whose eigenspaces span is annihilated by the product of
-`X - μ` over its finitely many eigenvalues, a squarefree polynomial, so
-`Module.End.isSemisimple_of_squarefree_aeval_eq_zero` applies.
-
-The two together characterise semisimplicity over an algebraically closed field, which is
-`TauCeti.isSemisimple_iff_iSup_eigenspace_eq_top`.
+hypothesis on the field and no finiteness hypothesis on the space: an endomorphism whose
+eigenspaces span is, as a `K[X]`-module, the sum of those eigenspaces, and on each of them `X` acts
+by a scalar, so each is annihilated by the squarefree polynomial `X - C μ` and is semisimple.
 
 ## Main results
 
-* `TauCeti.isSemisimple_of_iSup_eigenspace_eq_top`: an endomorphism of a finite-dimensional vector
-  space whose eigenspaces span the space is semisimple.
-* `TauCeti.isSemisimple_iff_iSup_eigenspace_eq_top`: over an algebraically closed field,
-  semisimplicity is diagonalizability.
+* `TauCeti.isSemisimple_of_iSup_eigenspace_eq_top`: an endomorphism whose eigenspaces span the
+  space is semisimple.
 -/
 
 namespace TauCeti
 
 open Module Polynomial
 
-variable {K V : Type*} [Field K] [AddCommGroup V] [Module K V] [FiniteDimensional K V]
-  {f : End K V}
+variable {K V : Type*} [Field K] [AddCommGroup V] [Module K V] {f : End K V}
 
-/-- **A diagonalizable endomorphism is semisimple.** If the eigenspaces of `f` span a
-finite-dimensional vector space then `f` is semisimple.
+/-- **A diagonalizable endomorphism is semisimple.** If the eigenspaces of `f` span the space then
+`f` is semisimple.
 
-There are finitely many eigenvalues, and `f` is annihilated by the product of the `X - μ` over
-them: that product is squarefree, having distinct linear factors, so
-`Module.End.isSemisimple_of_squarefree_aeval_eq_zero` applies. No hypothesis on the field is
-needed; the converse `Module.End.IsSemisimple.iSup_eigenspace_eq_top` is where algebraic closure
-enters. -/
+Semisimplicity of `f` is semisimplicity of `V` as a `K[X]`-module, and the eigenspaces are
+`K[X]`-submodules spanning it, so it is enough that each is semisimple. On the `μ`-eigenspace `X`
+acts by the scalar `μ`, so the restriction of `f` is annihilated by the squarefree polynomial
+`X - C μ` and `Module.End.isSemisimple_of_squarefree_aeval_eq_zero` applies. Neither algebraic
+closure nor finite dimension is needed; the converse
+`Module.End.IsSemisimple.iSup_eigenspace_eq_top` is where both enter. -/
 theorem isSemisimple_of_iSup_eigenspace_eq_top (hf : ⨆ μ : K, f.eigenspace μ = ⊤) :
     f.IsSemisimple := by
-  classical
-  set s : Finset K := f.finite_hasEigenvalue.toFinset with hs
-  set p : K[X] := ∏ μ ∈ s, (X - C μ) with hp
-  refine End.isSemisimple_of_squarefree_aeval_eq_zero (p := p) ?_ ?_
-  · exact (separable_prod_X_sub_C_iff'.2 (Set.injOn_id _)).squarefree
-  · refine LinearMap.ker_eq_top.1 (top_le_iff.1 ?_)
-    refine hf ▸ iSup_le fun μ v hv ↦ ?_
-    by_cases hμ : f.HasEigenvalue μ
-    · have heval : p.eval μ = 0 := by
-        rw [hp, eval_prod]
-        exact Finset.prod_eq_zero (by simpa [hs] using hμ) (by simp)
-      have : aeval f p v = p.eval μ • v :=
-        End.aeval_apply_of_mem_apply_eq_smul (End.mem_eigenspace_iff.1 hv)
-      simp [LinearMap.mem_ker, this, heval]
-    · rw [End.hasEigenvalue_iff, not_not] at hμ
-      have hv0 : v = 0 := by simpa [hμ] using hv
-      simp [hv0]
-
-/-- **Semisimplicity is diagonalizability**, over an algebraically closed field and in finite
-dimension. -/
-theorem isSemisimple_iff_iSup_eigenspace_eq_top [IsAlgClosed K] :
-    f.IsSemisimple ↔ ⨆ μ : K, f.eigenspace μ = ⊤ :=
-  ⟨End.IsSemisimple.iSup_eigenspace_eq_top, isSemisimple_of_iSup_eigenspace_eq_top⟩
+  -- `f` acts on its `μ`-eigenspace as multiplication by `μ`, so that eigenspace is invariant
+  have hinv : ∀ μ : K, f.eigenspace μ ∈ (Algebra.lsmul K K V f).invtSubmodule := fun μ v hv ↦ by
+    rw [End.mem_eigenspace_iff] at hv
+    simp [hv]
+  have hss : ∀ μ : K,
+      IsSemisimpleModule K[X] (AEval.mapSubmodule K V f ⟨f.eigenspace μ, hinv μ⟩) := fun μ ↦ by
+    refine (AEval.restrict_equiv_mapSubmodule f _ (hinv μ)).isSemisimpleModule_iff.mp ?_
+    refine End.isSemisimple_of_squarefree_aeval_eq_zero (p := X - C μ)
+      (irreducible_X_sub_C μ).squarefree ?_
+    ext v
+    have hv := v.2
+    rw [End.mem_eigenspace_iff] at hv
+    simp only [map_sub, aeval_X, aeval_C, LinearMap.sub_apply, LinearMap.zero_apply,
+      Module.algebraMap_end_apply, Submodule.coe_sub, Submodule.coe_smul, ZeroMemClass.coe_zero]
+    -- the restriction of `f` to the `μ`-eigenspace is multiplication by `μ`
+    change f (v : V) - μ • (v : V) = 0
+    rw [hv, sub_self]
+  have htop : ⨆ μ : K, AEval.mapSubmodule K V f ⟨f.eigenspace μ, hinv μ⟩ = ⊤ := by
+    set Q := ⨆ μ : K, AEval.mapSubmodule K V f ⟨f.eigenspace μ, hinv μ⟩
+    have hle : (⊤ : Submodule K V) ≤ (Q.restrictScalars K).comap (AEval'.of f).toLinearMap := by
+      rw [← hf]
+      refine iSup_le fun μ v hv ↦ ?_
+      -- membership in the comap of `Q` is membership of the image in `Q`
+      change AEval'.of f v ∈ Q
+      exact Submodule.mem_iSup_of_mem μ (by simpa using hv)
+    refine Submodule.eq_top_iff'.2 fun m ↦ ?_
+    simpa using hle (Submodule.mem_top (x := (AEval'.of f).symm m))
+  exact isSemisimpleModule_of_isSemisimpleModule_submodule' hss htop
 
 end TauCeti

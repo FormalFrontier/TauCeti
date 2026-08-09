@@ -44,7 +44,6 @@ to honest.
 
 * `TauCeti.isSemisimple_toEnd_coroot`: a coroot acts semisimply on a finite-dimensional module.
 * `TauCeti.isSemisimple_toEnd_cartan`: **every element of the Cartan subalgebra acts semisimply.**
-* `TauCeti.iSup_eigenspace_toEnd_cartan_eq_top`: equivalently, it acts diagonalizably.
 * `TauCeti.genWeightSpace_eq_weightSpace`: **the generalized weight spaces are honest weight
   spaces**, with `TauCeti.mem_genWeightSpace_iff_forall_lie_eq_smul` the pointwise form: membership
   is the eigenvector equation `⁅x, m⁆ = χ x • m` for every `x : H`.
@@ -120,15 +119,10 @@ theorem isSemisimple_toEnd_cartan (x : H) : (toEnd K H M x).IsSemisimple := by
     exact hy.of_mem_adjoin_singleton
       (Subalgebra.smul_mem _ (Algebra.self_mem_adjoin_singleton _ _) c)
 
-/-- **The Cartan subalgebra acts diagonalizably.** The eigenspaces of the action of `x : H` on a
-finite-dimensional module span it. -/
-theorem iSup_eigenspace_toEnd_cartan_eq_top (x : H) :
-    ⨆ μ : K, (toEnd K H M x).eigenspace μ = ⊤ :=
-  (isSemisimple_toEnd_cartan (M := M) x).iSup_eigenspace_eq_top
-
 /-! ### Honest weight spaces -/
 
 /-- The generalized eigenspace of `x : H` at a scalar is an honest eigenspace. -/
+@[simp]
 theorem genWeightSpaceOf_eq_eigenspace (μ : K) (x : H) :
     (genWeightSpaceOf M μ x).toSubmodule = (toEnd K H M x).eigenspace μ :=
   (isSemisimple_toEnd_cartan (M := M) x).isFinitelySemisimple.maxGenEigenspace_eq_eigenspace μ
@@ -139,6 +133,7 @@ a Killing-semisimple Lie algebra, `LieModule.genWeightSpace M χ` is the simulta
 
 Mathlib's `LieModule.weightSpace_le_genWeightSpace` is the inclusion that holds always; this is the
 reverse one, and it is exactly the diagonalizability of the Cartan action. -/
+@[simp]
 theorem genWeightSpace_eq_weightSpace (χ : H → K) : genWeightSpace M χ = weightSpace M χ := by
   refine LieSubmodule.toSubmodule_injective ?_
   rw [genWeightSpace, LieSubmodule.iInf_toSubmodule]
@@ -147,7 +142,11 @@ theorem genWeightSpace_eq_weightSpace (χ : H → K) : genWeightSpace M χ = wei
 
 /-- **Membership of a weight space is the eigenvector equation.** An element of a
 finite-dimensional module lies in the `χ`-weight space exactly when every `x : H` acts on it by the
-scalar `χ x`. -/
+scalar `χ x`.
+
+This is deliberately not a `simp` lemma: `TauCeti.genWeightSpace_eq_weightSpace` already rewrites
+the left-hand side to `m ∈ LieModule.weightSpace M χ`, so tagging it would leave it in
+non-simp-normal form. -/
 theorem mem_genWeightSpace_iff_forall_lie_eq_smul {χ : H → K} {m : M} :
     m ∈ genWeightSpace M χ ↔ ∀ x : H, ⁅(x : L), m⁆ = χ x • m := by
   rw [genWeightSpace_eq_weightSpace, mem_weightSpace]
