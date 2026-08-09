@@ -134,7 +134,7 @@ theorem jointEigenspaceBasis_ne_nil_iff
         jointEigenspaceMatrix_mulVec_eq_zero_iff]
       exact heig
     have hspan := span_kernelBasis (A := jointEigenspaceMatrix A a)
-    change kernelBasis (jointEigenspaceMatrix A a) = [] at hnil
+    rw [jointEigenspaceBasis] at hnil
     rw [hnil] at hspan
     simp only [List.not_mem_nil, Set.ofPred_false, Submodule.span_empty] at hspan
     rw [← hspan] at hker
