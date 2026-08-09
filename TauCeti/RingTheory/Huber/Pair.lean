@@ -4,7 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.RingTheory.IntegralClosure.IntegrallyClosed
 public import TauCeti.RingTheory.Huber.Basic
 
 /-!
@@ -30,6 +29,7 @@ explicit.
 
 * `TauCeti.Huber.IsRingOfIntegralElements.mem_of_isTopologicallyNilpotent`: `A°° ⊆ A⁺` for
   every ring of integral elements.
+* `TauCeti.Huber.Pair.powerBounded`: `A⁺ = A°` is a ring of integral elements, the largest one.
 * `TauCeti.Huber.Pair.discrete`: a discrete ring is a Huber pair with `A⁺ = A`, so the
   definitions above are not vacuous.
 * `TauCeti.Huber.Pair.Hom.id`, `TauCeti.Huber.Pair.Hom.comp`: morphisms of Huber pairs compose,
@@ -177,6 +177,22 @@ def discrete [DiscreteTopology A] : Pair A where
 /-- The ring of integral elements of the discrete Huber pair is the whole ring. -/
 @[simp]
 theorem discrete_plus [DiscreteTopology A] : (discrete A).plus = ⊤ := (rfl)
+
+variable (A) in
+/-- The Huber pair with `A⁺ = A°`. This is a ring of integral elements because `A°` is open
+(`TauCeti.Huber.isOpen_powerBoundedSubring`) and integrally closed in `A`
+(`TauCeti.Huber.isPowerBounded_of_isIntegral`, Wedhorn Proposition 5.30(4)). Since every ring of
+integral elements is contained in `A°`, this is the largest one. -/
+def powerBounded : Pair A where
+  plus := powerBoundedSubring A
+  isRingOfIntegralElements :=
+    { isOpen := isOpen_powerBoundedSubring A
+      isIntegrallyClosedIn := inferInstance
+      le_powerBoundedSubring := le_rfl }
+
+/-- The ring of integral elements of the largest Huber pair is `A°`. -/
+@[simp]
+theorem powerBounded_plus : (powerBounded A).plus = powerBoundedSubring A := (rfl)
 
 end Pair
 
