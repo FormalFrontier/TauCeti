@@ -28,8 +28,11 @@ This file builds that space and supplies the one analytic input the general theo
 > disjoint neighbourhoods in the étalé space.
 
 Separatedness is the identity theorem in disguise, and it is genuinely analytic rather than
-formal — for the sheaf of *continuous* functions the same projection is not separated, two germs
-there being free to differ at a point while agreeing beside it. Two germs at `z` are
+formal — for the sheaf of *continuous* functions the same projection is not separated: the germs
+at `0` of the zero function and of `z ↦ (max z.re 0 : ℂ)` are distinct, yet the two functions
+agree on the open half plane `z.re < 0`, so they have the *same* germ at every point of it, and
+points of that half plane accumulate at `0`; every neighbourhood of the one germ at `0` therefore
+meets every neighbourhood of the other. Two germs at `z` are
 represented by functions holomorphic on a common ball `B` around `z`; if every neighbourhood of the
 first germ met every neighbourhood of the second, the two representatives would share a germ at
 some point of `B`, hence agree on a nonempty open subset of `B`, hence — `B` being connected —
@@ -133,12 +136,7 @@ noncomputable section
 
 /-- **Holomorphy as a local predicate.** A function `f` on an open set `U ⊆ ℂ` satisfies
 `TauCeti.holomorphicLocalPredicate.pred` when it is the restriction to `U` of a function
-holomorphic on `U`.
-
-Phrasing the predicate through an ambient function keeps the whole development inside Mathlib's
-`DifferentiableOn` API. It restricts because `DifferentiableOn` does, and it is local because a
-section may be extended by zero to an ambient function that agrees near every point with a locally
-chosen holomorphic representative. -/
+holomorphic on `U`. -/
 @[expose] def holomorphicLocalPredicate : TopCat.LocalPredicate (fun _ : TopCat.of ℂ => ℂ) where
   pred {U} f := ∃ g : ℂ → ℂ, DifferentiableOn ℂ g U ∧ ∀ x : U, g x = f x
   res := by
@@ -146,14 +144,15 @@ chosen holomorphic representative. -/
     exact ⟨g, hg.mono fun z hz => i.le hz, fun x => hgf ⟨x.1, i.le x.2⟩⟩
   locality := by
     intro U f hf
-    refine ⟨Function.extend Subtype.val f 0, ?_, fun x => Subtype.val_injective.extend_apply _ _ _⟩
+    -- The ambient function is the extension of the section by zero.
+    have hext : ∀ x : U, Function.extend (Subtype.val : U → ℂ) f 0 x = f x := fun x =>
+      Subtype.val_injective.extend_apply f 0 x
+    refine ⟨Function.extend Subtype.val f 0, ?_, hext⟩
     intro z hz
     obtain ⟨V, hzV, i, g, hg, hgf⟩ := hf ⟨z, hz⟩
     have hVU : (V : Set ℂ) ⊆ (U : Set ℂ) := fun w hw => i.le hw
-    have hgext : EqOn (Function.extend (Subtype.val : U → ℂ) f 0) g V := fun w hw => by
-      rw [show Function.extend (Subtype.val : U → ℂ) f 0 w = f ⟨w, hVU hw⟩ from
-        Subtype.val_injective.extend_apply f 0 ⟨w, hVU hw⟩]
-      exact (hgf ⟨w, hw⟩).symm
+    have hgext : EqOn (Function.extend (Subtype.val : U → ℂ) f 0) g V := fun w hw =>
+      (hext ⟨w, hVU hw⟩).trans (hgf ⟨w, hw⟩).symm
     exact (((hg z hzV).differentiableAt (V.isOpen.mem_nhds hzV)).congr_of_eventuallyEq
       (Filter.eventuallyEq_of_mem (V.isOpen.mem_nhds hzV) hgext)).differentiableWithinAt
 
@@ -171,6 +170,12 @@ theorem val_holomorphicSectionOf (U : Opens (TopCat.of ℂ)) (g : ℂ → ℂ)
     (hg : DifferentiableOn ℂ g U) (x : U) : (holomorphicSectionOf U g hg).1 x = g x :=
   rfl
 
+/-- **Extensionality for sections of `TauCeti.holomorphicSheaf`**: two sections over `U` taking the
+same value at every point of `U` are equal. -/
+theorem holomorphicSection_ext {U : Opens (TopCat.of ℂ)}
+    {s t : ToType (holomorphicSheaf.presheaf.obj (op U))} (h : ∀ x : U, s.1 x = t.1 x) : s = t :=
+  Subtype.ext (funext h)
+
 /-- Every section of `TauCeti.holomorphicSheaf` over `U` is cut out by a function analytic on a
 neighbourhood of each point of `U`; this is the form in which the identity theorem consumes it. -/
 theorem exists_analyticOnNhd_of_holomorphicSection {U : Opens (TopCat.of ℂ)}
@@ -182,10 +187,7 @@ theorem exists_analyticOnNhd_of_holomorphicSection {U : Opens (TopCat.of ℂ)}
 /-! ### The identity theorem for sections -/
 
 /-- **The identity theorem for sections of the sheaf of holomorphic functions.** Two sections over
-a preconnected open set that agree on a nonempty open subset of it are equal.
-
-The two sections are cut out by functions analytic on `U`; those agree on `W`, hence near a point
-of `W`, hence on all of `U` by `AnalyticOnNhd.eqOn_of_preconnected_of_eventuallyEq`. -/
+a preconnected open set that agree on a nonempty open subset of it are equal. -/
 theorem holomorphicSection_eq_of_eqOn {U : Opens (TopCat.of ℂ)} (hU : IsPreconnected (U : Set ℂ))
     (s t : ToType (holomorphicSheaf.presheaf.obj (op U))) {W : Set ℂ} (hWo : IsOpen W)
     (hWU : W ⊆ (U : Set ℂ)) (hW : W.Nonempty) (h : ∀ x : U, (x : ℂ) ∈ W → s.1 x = t.1 x) :
@@ -198,7 +200,7 @@ theorem holomorphicSection_eq_of_eqOn {U : Opens (TopCat.of ℂ)} (hU : IsPrecon
     filter_upwards [hWo.mem_nhds hw] with v hv
     rw [hgs ⟨v, hWU hv⟩, hgt ⟨v, hWU hv⟩]
     exact h ⟨v, hWU hv⟩ hv
-  exact Subtype.ext (funext fun x => by rw [← hgs x, ← hgt x, heq x.2])
+  exact holomorphicSection_ext fun x => by rw [← hgs x, ← hgt x, heq x.2]
 
 /-- **A section over a preconnected open set is determined by its germ at a single point.** This is
 the identity theorem in the form the étalé space uses: distinct sections over a connected open set
@@ -232,12 +234,7 @@ theorem isLocallyInjective_holomorphicGerm_base :
 /-- **The projection of the étalé space of holomorphic germs is a separated map**: two distinct
 germs at one and the same point have disjoint neighbourhoods in the étalé space.
 
-This is the analytic input to the abstract lifting theory, and it is the identity theorem: pick
-representatives of the two germs on a common ball `B` about the point. The germs of each
-representative at the points of `B` form a neighbourhood of the corresponding germ, and a point of
-both neighbourhoods would be a point of `B` at which the two representatives have the same germ;
-`TauCeti.holomorphicSection_eq_of_germ_eq` then makes the representatives equal on the whole of the
-connected `B`, so the two germs one started with coincide. -/
+This is the analytic input to the abstract lifting theory, and it is the identity theorem. -/
 theorem isSeparatedMap_holomorphicGerm_base :
     IsSeparatedMap (TopCat.Presheaf.EtaleSpace.base (F := holomorphicSheaf.presheaf)) := by
   rw [isSeparatedMap_iff_nhds]
@@ -270,15 +267,26 @@ theorem isSeparatedMap_holomorphicGerm_base :
 
 /-- The germ at `z` of a function holomorphic on an open set `U ∋ z`, as a point of the étalé
 space. -/
-@[expose] def holomorphicGermOf (U : Opens (TopCat.of ℂ)) (g : ℂ → ℂ)
+def holomorphicGermOf (U : Opens (TopCat.of ℂ)) (g : ℂ → ℂ)
     (hg : DifferentiableOn ℂ g U) (z : ℂ) (hz : z ∈ U) : HolomorphicGerm :=
   ⟨z, holomorphicSheaf.presheaf.germ U z hz (holomorphicSectionOf U g hg)⟩
 
 @[simp]
 theorem base_holomorphicGermOf (U : Opens (TopCat.of ℂ)) (g : ℂ → ℂ)
     (hg : DifferentiableOn ℂ g U) (z : ℂ) (hz : z ∈ U) :
-    (holomorphicGermOf U g hg z hz).base = z :=
-  rfl
+    (holomorphicGermOf U g hg z hz).base = z := by
+  rw [holomorphicGermOf]
+
+/-- The germ component of `TauCeti.holomorphicGermOf`, transported along
+`TauCeti.base_holomorphicGermOf` to the stalk at `z`: it is the germ at `z` of the section
+`TauCeti.holomorphicSectionOf`. -/
+@[simp]
+theorem germ_holomorphicGermOf (U : Opens (TopCat.of ℂ)) (g : ℂ → ℂ)
+    (hg : DifferentiableOn ℂ g U) (z : ℂ) (hz : z ∈ U) :
+    cast (congrArg (fun y : TopCat.of ℂ => ToType (holomorphicSheaf.presheaf.stalk y))
+        (base_holomorphicGermOf U g hg z hz)) (holomorphicGermOf U g hg z hz).germ =
+      holomorphicSheaf.presheaf.germ U z hz (holomorphicSectionOf U g hg) := by
+  rw [cast_eq_iff_heq, holomorphicGermOf]
 
 /-- **A holomorphic function is a lift.** The germs of a function holomorphic on `U`, taken at the
 points of `U`, depend continuously on the point; together with
@@ -286,8 +294,14 @@ points of `U`, depend continuously on the point; together with
 section of the étalé projection over `U`. -/
 theorem continuous_holomorphicGermOf (U : Opens (TopCat.of ℂ)) (g : ℂ → ℂ)
     (hg : DifferentiableOn ℂ g U) :
-    Continuous fun z : U => holomorphicGermOf U g hg z z.2 :=
-  TopCat.Presheaf.EtaleSpace.continuous_germSection U (holomorphicSectionOf U g hg)
+    Continuous fun z : U => holomorphicGermOf U g hg z z.2 := by
+  have h : (fun z : U => holomorphicGermOf U g hg z z.2) =
+      TopCat.Presheaf.EtaleSpace.germSection holomorphicSheaf.presheaf U
+        (holomorphicSectionOf U g hg) := by
+    funext z
+    rw [holomorphicGermOf, TopCat.Presheaf.EtaleSpace.germSection_apply]
+  rw [h]
+  exact TopCat.Presheaf.EtaleSpace.continuous_germSection U (holomorphicSectionOf U g hg)
 
 /-- **Every holomorphic germ is the germ of a holomorphic function.** So
 `TauCeti.holomorphicGermOf` exhausts the étalé space, and a statement about all of its points is a
@@ -297,9 +311,9 @@ theorem exists_holomorphicGermOf_eq (w : HolomorphicGerm) :
       holomorphicGermOf U g hg w.base hw = w := by
   obtain ⟨U, hwU, s, hs⟩ := holomorphicSheaf.presheaf.exists_germ_eq w.germ
   obtain ⟨g, hg, hgs⟩ := s.2
-  exact ⟨U, g, hg, hwU, by
-    rw [holomorphicGermOf, show holomorphicSectionOf U g hg = s from
-      Subtype.ext (funext fun x => hgs x), hs]⟩
+  have hsec : holomorphicSectionOf U g hg = s :=
+    holomorphicSection_ext fun x => (val_holomorphicSectionOf U g hg x).trans (hgs x)
+  exact ⟨U, g, hg, hwU, by rw [holomorphicGermOf, hsec, hs]⟩
 
 /-! ### Uniqueness of lifts, and monodromy -/
 
