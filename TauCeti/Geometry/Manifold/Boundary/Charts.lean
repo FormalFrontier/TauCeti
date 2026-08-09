@@ -57,6 +57,9 @@ step and are not proved here.
   `TauCeti.isBoundaryPoint_iff_mem_frontier_range`: interior and boundary points are detected in
   any chart of the atlas, against `range I`.
 * `TauCeti.mem_boundary_iff_of_mem_atlas`: the half-space form of the previous statement.
+* `TauCeti.boundaryChartedSpace_chartAt`, `TauCeti.boundaryChartedSpace_atlas`: the preferred chart
+  and the atlas of that structure are the boundary charts induced by the ambient preferred charts;
+  `TauCeti.boundaryChartedSpace_chartAt_source` and its companions read off the preferred chart.
 * `TauCeti.isManifold_boundary`: the boundary is a `C^k` manifold over `EuclideanSpace ℝ (Fin n)`.
 * `TauCeti.boundary_boundary_eq_empty`: it is boundaryless.
 * `TauCeti.isClosedEmbedding_boundary_val`, `TauCeti.contMDiff_boundary_val`: the inclusion of the
@@ -311,6 +314,62 @@ deleted, are charts modeled on `EuclideanSpace ℝ (Fin n)`. -/
   chartAt := boundaryChartAt M hk
   mem_chart_source p := mem_chart_source _ p.1
   chart_mem_atlas p := mem_range_self p
+
+variable (M) in
+/-- The preferred chart of the boundary at `p` is the boundary chart induced by the ambient
+preferred chart at `p`. -/
+theorem boundaryChartedSpace_chartAt (hk : k ≠ 0) (p : ↥((𝓡∂ (n + 1)).boundary M)) :
+    letI := boundaryChartedSpace (n := n) M hk
+    chartAt (EuclideanSpace ℝ (Fin n)) p =
+      boundaryChart hk p (chartAt (EuclideanHalfSpace (n + 1)) (p : M)) (chart_mem_atlas _ _) :=
+  (rfl)
+
+variable (M) in
+/-- The boundary atlas consists of the boundary charts induced by the ambient preferred charts. -/
+theorem boundaryChartedSpace_atlas (hk : k ≠ 0) :
+    letI := boundaryChartedSpace (n := n) M hk
+    atlas (EuclideanSpace ℝ (Fin n)) ↥((𝓡∂ (n + 1)).boundary M) =
+      range fun p : ↥((𝓡∂ (n + 1)).boundary M) ↦
+        boundaryChart hk p (chartAt (EuclideanHalfSpace (n + 1)) (p : M)) (chart_mem_atlas _ _) :=
+  (rfl)
+
+variable (M) in
+/-- The source of the preferred boundary chart at `p` is the part of the boundary the ambient
+preferred chart at `p` sees. -/
+theorem boundaryChartedSpace_chartAt_source (hk : k ≠ 0) (p : ↥((𝓡∂ (n + 1)).boundary M)) :
+    letI := boundaryChartedSpace (n := n) M hk
+    (chartAt (EuclideanSpace ℝ (Fin n)) p).source =
+      Subtype.val ⁻¹' (chartAt (EuclideanHalfSpace (n + 1)) (p : M)).source :=
+  boundaryChart_source (hk := hk) (p := p) (he := chart_mem_atlas _ _)
+
+variable (M) in
+/-- The target of the preferred boundary chart at `p` is the ambient target, pulled back to the
+coordinate hyperplane. -/
+theorem boundaryChartedSpace_chartAt_target (hk : k ≠ 0) (p : ↥((𝓡∂ (n + 1)).boundary M)) :
+    letI := boundaryChartedSpace (n := n) M hk
+    (chartAt (EuclideanSpace ℝ (Fin n)) p).target =
+      euclideanHalfSpaceParam n ⁻¹' (chartAt (EuclideanHalfSpace (n + 1)) (p : M)).target :=
+  boundaryChart_target (hk := hk) (p := p) (he := chart_mem_atlas _ _)
+
+variable (M) in
+/-- The preferred boundary chart at `p` reads a point through the ambient preferred chart at `p`
+and deletes the zeroth coordinate. -/
+theorem boundaryChartedSpace_chartAt_apply (hk : k ≠ 0) (p q : ↥((𝓡∂ (n + 1)).boundary M)) :
+    letI := boundaryChartedSpace (n := n) M hk
+    chartAt (EuclideanSpace ℝ (Fin n)) p q =
+      euclideanHalfSpaceProj n (chartAt (EuclideanHalfSpace (n + 1)) (p : M) (q : M)) :=
+  boundaryChart_apply (hk := hk) (p := p) (he := chart_mem_atlas _ _) q
+
+variable (M) in
+/-- On its target, the inverse of the preferred boundary chart at `p` is the inverse of the ambient
+preferred chart at `p`, applied to the parametrized point. -/
+theorem boundaryChartedSpace_chartAt_symm_apply (hk : k ≠ 0) (p : ↥((𝓡∂ (n + 1)).boundary M))
+    {z : EuclideanSpace ℝ (Fin n)}
+    (hz : euclideanHalfSpaceParam n z ∈ (chartAt (EuclideanHalfSpace (n + 1)) (p : M)).target) :
+    letI := boundaryChartedSpace (n := n) M hk
+    (((chartAt (EuclideanSpace ℝ (Fin n)) p).symm z : ↥((𝓡∂ (n + 1)).boundary M)) : M) =
+      (chartAt (EuclideanHalfSpace (n + 1)) (p : M)).symm (euclideanHalfSpaceParam n z) :=
+  boundaryChart_symm_apply (hk := hk) (p := p) (he := chart_mem_atlas _ _) hz
 
 /-- The transition map between two boundary charts is `C^k`: read through the parametrization of
 the coordinate hyperplane it is the ambient transition map, restricted to that hyperplane. -/
