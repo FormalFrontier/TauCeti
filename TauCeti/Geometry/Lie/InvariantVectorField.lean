@@ -23,6 +23,8 @@ left-invariant-derivation model of a Lie algebra.
   tangent bundles.
 * `tangentMap_mul_prod_apply`: the value of that tangent map is the sum of the two partial
   derivatives of multiplication.
+* `mfderiv_mul_left_mulInvariantVectorField`: left translation intertwines a left-invariant vector
+  field with itself.
 * `contMDiff_mulInvariantVectorField_infty`: a left-invariant vector field on a smooth Lie group is
   smooth.
 * `contMDiff_mulInvariantVectorField_modelSpace`: the invariant vector field is jointly `C^m` in
@@ -85,6 +87,21 @@ theorem mulInvariantVectorField_one (v : GroupLieAlgebra I G) :
   change mfderiv I I (fun x : G ↦ 1 * x) 1 v = v
   rw [show (fun x : G ↦ 1 * x) = id by funext x; simp, mfderiv_id]
   rfl
+
+/-- The derivative of left translation carries a left-invariant vector field to itself. -/
+theorem mfderiv_mul_left_mulInvariantVectorField [ContMDiffMul I 1 G]
+    (g x : G) (v : GroupLieAlgebra I G) :
+    mfderiv I I (fun y : G ↦ g * y) x (mulInvariantVectorField v x) =
+      mulInvariantVectorField v (g * x) := by
+  simp only [mulInvariantVectorField]
+  rw [← mfderiv_comp_apply_of_eq (I' := I) (f := fun y : G ↦ x * y)
+    (g := fun y : G ↦ g * y) (y := x) (1 : G)
+    ((contMDiffAt_mul_left (n := 1)).mdifferentiableAt (by simp))
+    ((contMDiffAt_mul_left (n := 1)).mdifferentiableAt (by simp)) (by simp)]
+  rw [show (fun y : G ↦ g * y) ∘ (fun y : G ↦ x * y) =
+      (fun y : G ↦ (g * x) * y) by
+    funext y
+    simp [mul_assoc]]
 
 /-- In model coordinates, the invariant vector field is jointly `C^m` in its generating tangent
 vector and the group point when multiplication is `C^n` and `m + 1 ≤ n`. -/

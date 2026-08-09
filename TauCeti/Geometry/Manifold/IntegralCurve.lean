@@ -16,9 +16,9 @@ smooth vector fields on boundaryless smooth manifolds are smooth.
 
 ## Main results
 
-* `IsMIntegralCurveOn.comp_of_mfderiv_eq`: a differentiable map that intertwines two vector fields
-  sends integral curves of the first field to integral curves of the second.
-* `IsMIntegralCurve.comp_of_mfderiv_eq`: the corresponding result for global integral curves.
+* `IsMIntegralCurveOn.map_of_mfderiv_eq`: a map differentiable along an integral curve whose
+  derivative intertwines the vector fields there sends it to an integral curve of the second field.
+* `IsMIntegralCurveAt.map_of_mfderiv_eq`: the corresponding result for local integral curves.
 * `IsMIntegralCurve.contMDiff_succ`: an integral curve of a `C^n` vector field is `C^(n + 1)`.
 * `IsMIntegralCurve.contMDiff`: an integral curve of a smooth vector field is smooth.
 * `IsMIntegralCurveAt.of_extChartAt_symm`: a coordinate solution gives a manifold integral curve.
@@ -46,9 +46,9 @@ variable {E' : Type*} [NormedAddCommGroup E'] [NormedSpace ℝ E']
   {M : Type*} [TopologicalSpace M] [ChartedSpace H M]
   {M' : Type*} [TopologicalSpace M'] [ChartedSpace H' M']
 
-/-- A differentiable map that intertwines two vector fields sends integral curves of the first
-field to integral curves of the second. -/
-theorem comp_of_mfderiv_eq {f : M → M'} {V : (x : M) → TangentSpace I x}
+/-- A map differentiable along an integral curve whose derivative intertwines the vector fields
+there sends it to an integral curve of the second field. -/
+theorem map_of_mfderiv_eq {f : M → M'} {V : (x : M) → TangentSpace I x}
     {W : (x : M') → TangentSpace I' x} {γ : ℝ → M} {s : Set ℝ}
     (hf : ∀ t ∈ s, MDifferentiableAt I I' f (γ t))
     (hVW : ∀ t ∈ s, mfderiv I I' f (γ t) (V (γ t)) = W (f (γ t)))
@@ -70,25 +70,30 @@ theorem comp_of_mfderiv_eq {f : M → M'} {V : (x : M) → TangentSpace I x}
 
 end IsMIntegralCurveOn
 
-namespace IsMIntegralCurve
+namespace IsMIntegralCurveAt
 
 variable {E' : Type*} [NormedAddCommGroup E'] [NormedSpace ℝ E']
   {H' : Type*} [TopologicalSpace H'] {I' : ModelWithCorners ℝ E' H'}
   {M : Type*} [TopologicalSpace M] [ChartedSpace H M]
   {M' : Type*} [TopologicalSpace M'] [ChartedSpace H' M']
 
-/-- A differentiable map that intertwines two vector fields sends global integral curves of the
-first field to global integral curves of the second. -/
-theorem comp_of_mfderiv_eq {f : M → M'} {V : (x : M) → TangentSpace I x}
-    {W : (x : M') → TangentSpace I' x} {γ : ℝ → M}
-    (hf : ∀ t, MDifferentiableAt I I' f (γ t))
-    (hVW : ∀ t, mfderiv I I' f (γ t) (V (γ t)) = W (f (γ t)))
-    (hγ : IsMIntegralCurve γ V) : IsMIntegralCurve (f ∘ γ) W := by
-  rw [isMIntegralCurve_iff_isMIntegralCurveOn]
-  exact (hγ.isMIntegralCurveOn Set.univ).comp_of_mfderiv_eq
-    (fun t _ ↦ hf t) (fun t _ ↦ hVW t)
+/-- A map eventually differentiable along a local integral curve whose derivative eventually
+intertwines the vector fields sends it to a local integral curve of the second field. -/
+theorem map_of_mfderiv_eq {f : M → M'} {V : (x : M) → TangentSpace I x}
+    {W : (x : M') → TangentSpace I' x} {γ : ℝ → M} {t₀ : ℝ}
+    (hf : ∀ᶠ t in 𝓝 t₀, MDifferentiableAt I I' f (γ t))
+    (hVW : ∀ᶠ t in 𝓝 t₀, mfderiv I I' f (γ t) (V (γ t)) = W (f (γ t)))
+    (hγ : IsMIntegralCurveAt γ V t₀) : IsMIntegralCurveAt (f ∘ γ) W t₀ := by
+  rw [isMIntegralCurveAt_iff] at hγ ⊢
+  obtain ⟨s, hs, hγs⟩ := hγ
+  rw [Filter.eventually_iff_exists_mem] at hf hVW
+  obtain ⟨sf, hsf, hf⟩ := hf
+  obtain ⟨sVW, hsVW, hVW⟩ := hVW
+  refine ⟨s ∩ sf ∩ sVW, Filter.inter_mem (Filter.inter_mem hs hsf) hsVW, ?_⟩
+  exact (hγs.mono fun _ ht ↦ ht.1.1).map_of_mfderiv_eq
+    (fun t ht ↦ hf t ht.1.2) (fun t ht ↦ hVW t ht.2)
 
-end IsMIntegralCurve
+end IsMIntegralCurveAt
 
 /-- Convert an ordinary derivative into the model-space derivative expected inside a manifold
 derivative. This is the single boundary where the tangent spaces of the self model on `ℝ` and of
