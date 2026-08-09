@@ -102,25 +102,6 @@ variable (n : ℕ)
 
 local notation "H" => coordinateHopfAlgebra
 
-private lemma algEquivSelf_derivation_smul_apply
-    (b : B) (d : Derivation R (H (R := R) n)
-      (Bialgebra.CounitAlgebra R (H (R := R) n) B)) (a : H (R := R) n) :
-    Bialgebra.CounitAlgebra.algEquivSelf R (H (R := R) n) B ((b • d) a) =
-      b * Bialgebra.CounitAlgebra.algEquivSelf R (H (R := R) n) B (d a) := by
-  let e := derivationLinearEquivTangentKer R (H (R := R) n) B
-  have hlin := e.map_smul b d
-  have hsnd := congrArg (fun ψ : Additive (tangentKer R (H (R := R) n) B) ↦
-    snd (ψ.toMul.val.ofConv a)) hlin
-  rw [derivationLinearEquivTangentKer_apply_snd,
-    tangentKer_smul_apply_snd, derivationLinearEquivTangentKer_apply_snd] at hsnd
-  calc
-    Bialgebra.CounitAlgebra.algEquivSelf R (H (R := R) n) B ((b • d) a) =
-        Bialgebra.CounitAlgebra.algEquivSelf R (H (R := R) n) B
-          ((Bialgebra.CounitAlgebra.algEquivSelf R (H (R := R) n) B).symm
-            (b * Bialgebra.CounitAlgebra.algEquivSelf R (H (R := R) n) B (d a))) :=
-      congrArg (Bialgebra.CounitAlgebra.algEquivSelf R (H (R := R) n) B) hsnd
-    _ = _ := (Bialgebra.CounitAlgebra.algEquivSelf R (H (R := R) n) B).apply_symm_apply _
-
 /-- The matrix of a tangent vector to `GLₙ`, obtained by evaluating the derivation on the
 generic coordinate entries. -/
 noncomputable def tangentMatrix :
@@ -141,7 +122,7 @@ noncomputable def tangentMatrix :
     rfl
   map_smul' b d := by
     ext i j
-    exact algEquivSelf_derivation_smul_apply n b d _
+    exact algEquivSelf_derivation_smul_apply b d _
 
 @[simp]
 theorem tangentMatrix_apply (d : Derivation R (H (R := R) n)
