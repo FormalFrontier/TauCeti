@@ -105,9 +105,8 @@ quotient class. -/
 theorem zeroFormFiltrationQuotientEquivExteriorPower_symm_apply (k : ℕ)
     (x : ⋀[R]^(k + 1) M) :
     (zeroFormFiltrationQuotientEquivExteriorPower k).symm x =
-      Submodule.Quotient.mk ⟨x, by
-        rw [zero_form_filtration_succ_eq_exteriorPower_sup]
-        exact Submodule.mem_sup_left x.property⟩ := by
+      Submodule.Quotient.mk
+        ⟨x, ι_range_pow_le_filtration (0 : QuadraticForm R M) (k + 1) x.property⟩ := by
   rw [zeroFormFiltrationQuotientEquivExteriorPower, LinearEquiv.trans_symm,
     LinearEquiv.trans_apply, quotientEquivOfEqSup_symm_apply]
   apply (Submodule.quotEquivOfEq _ _
@@ -120,9 +119,8 @@ that element. -/
 theorem zeroFormFiltrationQuotientEquivExteriorPower_apply (k : ℕ)
     (x : ⋀[R]^(k + 1) M) :
     zeroFormFiltrationQuotientEquivExteriorPower k
-      (Submodule.Quotient.mk ⟨x, by
-        rw [zero_form_filtration_succ_eq_exteriorPower_sup]
-        exact Submodule.mem_sup_left x.property⟩) = x := by
+      (Submodule.Quotient.mk
+        ⟨x, ι_range_pow_le_filtration (0 : QuadraticForm R M) (k + 1) x.property⟩) = x := by
   rw [← zeroFormFiltrationQuotientEquivExteriorPower_symm_apply k x,
     LinearEquiv.apply_symm_apply]
 

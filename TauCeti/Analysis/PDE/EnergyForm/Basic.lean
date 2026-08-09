@@ -168,20 +168,16 @@ lemma norm_energyIntegrand_apply_le_of_bounds (hLam : 0 ≤ Lam)
     (ha : ∀ η ξ : EuclideanSpace ℝ n, |η ⬝ᵥ (A *ᵥ ξ)| ≤ Lam * ‖η‖ * ‖ξ‖)
     (hb : ‖b₀‖ ≤ beta) (hc : ‖c₀‖ ≤ gamma) (U V : ℝ × EuclideanSpace ℝ n) :
     ‖energyIntegrand A b₀ c₀ U V‖ ≤ (Lam + beta + gamma) * ‖U‖ * ‖V‖ := by
-  have step : ∀ {K p q : ℝ}, 0 ≤ K → 0 ≤ p → 0 ≤ q → p ≤ ‖U‖ → q ≤ ‖V‖ →
-      K * p * q ≤ K * ‖U‖ * ‖V‖ := by
-    intro K p q hK hp hq hpU hqV
-    calc K * p * q = K * (p * q) := by ring
-      _ ≤ K * (‖U‖ * ‖V‖) :=
-          mul_le_mul_of_nonneg_left (mul_le_mul hpU hqV hq (hp.trans hpU)) hK
-      _ = K * ‖U‖ * ‖V‖ := by ring
+  -- bound `q` first, which needs only `0 ≤ K * p`, then `p`
+  have step : ∀ {K p q : ℝ}, 0 ≤ K → 0 ≤ p → p ≤ ‖U‖ → q ≤ ‖V‖ →
+      K * p * q ≤ K * ‖U‖ * ‖V‖ := fun hK hp hpU hqV =>
+    (mul_le_mul_of_nonneg_left hqV (mul_nonneg hK hp)).trans (by gcongr)
   have hbeta : 0 ≤ beta := (norm_nonneg b₀).trans hb
   have hgamma : 0 ≤ gamma := (norm_nonneg c₀).trans hc
   have hmat : ‖matrixBilinearForm A V.2 U.2‖ ≤ Lam * ‖U‖ * ‖V‖ := by
     have h := norm_matrixBilinearForm_le_of_upper_bound A ha V.2 U.2
     rw [mul_right_comm] at h
-    exact h.trans (step hLam (norm_nonneg _) (norm_nonneg _)
-      (norm_snd_le U) (norm_snd_le V))
+    exact h.trans (step hLam (norm_nonneg _) (norm_snd_le U) (norm_snd_le V))
   have hdrift : ‖driftForm b₀ V.1 U.2‖ ≤ beta * ‖U‖ * ‖V‖ := by
     rw [driftForm_apply, norm_mul]
     calc
@@ -192,14 +188,14 @@ lemma norm_energyIntegrand_apply_le_of_bounds (hLam : 0 ≤ Lam)
         gcongr
       _ = beta * ‖U.2‖ * ‖V.1‖ := by ring
       _ ≤ beta * ‖U‖ * ‖V‖ :=
-        step hbeta (norm_nonneg _) (norm_nonneg _) (norm_snd_le U) (norm_fst_le V)
+        step hbeta (norm_nonneg _) (norm_snd_le U) (norm_fst_le V)
   have hmass : ‖massForm c₀ U.1 V.1‖ ≤ gamma * ‖U‖ * ‖V‖ := by
     rw [massForm_apply, norm_mul, norm_mul]
     calc
       ‖c₀‖ * ‖U.1‖ * ‖V.1‖ ≤ gamma * ‖U.1‖ * ‖V.1‖ := by
         gcongr
       _ ≤ gamma * ‖U‖ * ‖V‖ :=
-        step hgamma (norm_nonneg _) (norm_nonneg _) (norm_fst_le U) (norm_fst_le V)
+        step hgamma (norm_nonneg _) (norm_fst_le U) (norm_fst_le V)
   rw [energyIntegrand_apply]
   calc ‖matrixBilinearForm A V.2 U.2 + driftForm b₀ V.1 U.2 + massForm c₀ U.1 V.1‖
       ≤ ‖matrixBilinearForm A V.2 U.2 + driftForm b₀ V.1 U.2‖

@@ -39,9 +39,12 @@ exported as a corollary.
 
 Ported from the AINTLIB `HasseWeil` project (Apache-2.0), revision `513e83879e2f`, file
 `HasseWeil/WeilPairing/Reduction.lean`, declarations `deg_eq_of_frobMatrix_data`,
-`qf_nonneg_of_frobMatrix_data`, `frob_det_congruence` and `deg_eq_of_frob_det_data`.
+`frob_det_congruence` and `deg_eq_of_frob_det_data`.
 
-Two deviations. The source's `det_smul_sub_smul_one_fin_two_of` takes `M.det = q` and
+Three deviations. The source's fourth declaration, `qf_nonneg_of_frobMatrix_data`, is **not**
+reproduced: it is a one-line `▸` transport of the equality theorem above it that repeats the whole
+matrix-data interface to do so, which is why the Main results section above leaves that step to
+consumers. The source's `det_smul_sub_smul_one_fin_two_of` takes `M.det = q` and
 `M.trace = t` as hypotheses; TauCeti already has the unconditional
 `Matrix.det_smul_sub_smul_one_fin_two` (merged as #2328), so that lemma is used and the
 hypotheses are substituted at the call site. And the source's `det_one_sub_fin_two` is not

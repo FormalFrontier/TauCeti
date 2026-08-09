@@ -38,6 +38,10 @@ circle.
   with the angular gap, so the distance to a fixed point of the circle is unimodal along it, and
   `TauCeti.ordConnected_inter_setOf_dist_circleMap_lt` — consequently a ball meets an arc of
   angular width at most `π` in a set of angles that is order connected.
+* `TauCeti.exists_mem_Ioo_circleMap_eq_and_abs_sub_lt_of_mem_ball_circleMap_image_Ioo` — the
+  inverse comparison on an arc that does not wrap: a point of the arc close enough to a fixed
+  point of it is the image of a
+  nearby angle, so closeness in the plane is closeness in angle.
 * `TauCeti.dist_circleMap_sq` — the law of cosines: the point of `circleMap ζ ρ` at angle `θ` is at
   distance `ρ ^ 2 + dist ζ c ^ 2 - 2 * ρ * dist ζ c * cos (θ - arg (c - ζ))`, squared, from an
   arbitrary point `c` of the plane.
@@ -48,7 +52,9 @@ circle.
   `cos (θ - arg (c - ζ))`, the angles it admits form an arc: it holds throughout an interval of
   angles inside a period centred at `arg (c - ζ)` as soon as it holds at both ends.
 * `TauCeti.lipschitzWith_one_circleExp` and `TauCeti.diam_circleExp_image_Icc_le` — the chord is at
-  most the arc, so an arc of angles of length `b - a` has image of diameter at most `b - a`.
+  most the arc, so an arc of angles of length `b - a` has image of diameter at most `b - a`, and
+  `TauCeti.diam_range_circlePath_le` — the same bound for Mathlib's arc `Circle.path x y`, whose
+  angle is `Circle.angleDiff x y`.
 * `TauCeti.min_angleDiff_le_pi_div_two_mul_dist` — the shorter of the two arcs joining two points of
   the circle has length at most `π / 2` times their distance.
 
@@ -176,6 +182,47 @@ theorem dist_circleMap_le_dist_circleMap_of_abs_sub_le (ζ : ℂ) (ρ : ℝ) {θ
     Real.sin_le_sin_of_le_of_le_pi_div_two
       (by linarith [abs_nonneg (u - θ₀), Real.pi_pos]) (by linarith) (by linarith)
   exact mul_le_mul_of_nonneg_left hsin (by positivity)
+
+/-- **The sine of a half-angle is smallest at an end of the range of angles.** For
+`0 < m ≤ t ≤ w < 2 * π`, `sin (t / 2)` is at least `min (sin (m / 2)) (sin (w / 2))`, a positive
+number: the half-angle stays in `[0, π]`, where the sine rises to `π / 2` and falls back, so it is
+bounded below by its value at whichever end of `[m / 2, w / 2]` the half-angle has not passed.
+
+If `w ≤ π` the first of the two is the binding one and the second is slack; both are needed exactly
+because an arc of angular width beyond `π` is allowed. -/
+private lemma min_sin_div_two_le_sin_div_two {m t w : ℝ} (hm : 0 < m) (hmt : m ≤ t) (htw : t ≤ w)
+    (hw : w < 2 * π) : min (Real.sin (m / 2)) (Real.sin (w / 2)) ≤ Real.sin (t / 2) := by
+  rcases le_total (t / 2) (π / 2) with h | h
+  · exact (min_le_left _ _).trans
+      (Real.sin_le_sin_of_le_of_le_pi_div_two (by linarith [Real.pi_pos]) h (by linarith))
+  · refine (min_le_right _ _).trans ?_
+    rw [← Real.sin_pi_sub (w / 2), ← Real.sin_pi_sub (t / 2)]
+    exact Real.sin_le_sin_of_le_of_le_pi_div_two (by linarith [Real.pi_pos]) (by linarith)
+      (by linarith)
+
+/-- **On a non-wrapping arc, closeness in the plane is closeness in angle.** A point of the arc
+`circleMap ζ ρ '' Ioo a b` lying within `2 * |ρ| * min (sin (m / 2)) (sin ((b - a) / 2))` of
+`circleMap ζ ρ θ₀` is the image of an angle within `m` of `θ₀`. -/
+theorem exists_mem_Ioo_circleMap_eq_and_abs_sub_lt_of_mem_ball_circleMap_image_Ioo (ζ : ℂ)
+    (ρ : ℝ) {a b θ₀ m : ℝ}
+    (hab2π : b - a < 2 * π) (hθ₀ : θ₀ ∈ Icc a b) (hm0 : 0 < m) {x : ℂ}
+    (hx : x ∈ circleMap ζ ρ '' Ioo a b ∩
+      ball (circleMap ζ ρ θ₀) (2 * |ρ| * min (Real.sin (m / 2)) (Real.sin ((b - a) / 2)))) :
+    ∃ θ ∈ Ioo a b, circleMap ζ ρ θ = x ∧ |θ - θ₀| < m := by
+  obtain ⟨⟨θ, hθ, rfl⟩, hx⟩ := hx
+  refine ⟨θ, hθ, rfl, ?_⟩
+  have hwidth : |θ - θ₀| ≤ b - a := by
+    rw [abs_le]
+    constructor <;> [linarith [hθ.1, hθ₀.2]; linarith [hθ.2, hθ₀.1]]
+  have hπ : |θ - θ₀| ≤ 2 * π := by linarith
+  rw [mem_ball, dist_circleMap_eq_two_mul_sin_abs ζ ρ hπ] at hx
+  rcases lt_or_ge |θ - θ₀| m with hlt | hcon
+  · exact hlt
+  · exfalso
+    -- the chord grows with the angular gap up to the width of the arc
+    have hmono : min (Real.sin (m / 2)) (Real.sin ((b - a) / 2)) ≤ Real.sin (|θ - θ₀| / 2) :=
+      min_sin_div_two_le_sin_div_two hm0 hcon hwidth hab2π
+    nlinarith [abs_nonneg ρ]
 
 /-- **An order-connected set of angles within half a turn of `θ₀` keeps that form when cut down by
 the distance to the point at `θ₀`.** For a set `s` of angles contained in the half-turn
@@ -335,6 +382,20 @@ theorem diam_circleExp_image_Icc_le {a b : ℝ} (hab : a ≤ b) :
     Metric.diam (Circle.exp '' Icc a b) ≤ b - a := by
   simpa only [NNReal.coe_one, one_mul, Real.diam_Icc hab] using
     lipschitzWith_one_circleExp.diam_image_le (Icc a b) (isBounded_Icc a b)
+
+/-- **A closed arc is no wider than its angle.** Mathlib's arc `Circle.path x y`, which runs
+counterclockwise from `x` to `y`, has range of diameter at most the length `Circle.angleDiff x y`
+of that arc.
+
+This is `TauCeti.diam_circleExp_image_Icc_le` read through `Circle.range_path`, which presents the
+closed arc as the `Circle.exp` image of an interval of angles of length `Circle.angleDiff x y`. It
+is stated for the range rather than for the path so that it applies unchanged to the reversed arc,
+whose range is the same by `Path.symm_range`. -/
+theorem diam_range_circlePath_le (x y : Circle) :
+    Metric.diam (range (Circle.path x y)) ≤ Circle.angleDiff x y := by
+  rw [Circle.range_path]
+  simpa using diam_circleExp_image_Icc_le (a := Complex.arg (x : ℂ))
+    (b := Circle.angleDiff x y + Complex.arg (x : ℂ)) (by simp [Circle.angleDiff_nonneg])
 
 /-- **The shorter arc is controlled by the chord**: of the two arcs joining `x` to `y` on the
 circle, the shorter has length at most `π / 2` times the distance from `x` to `y`.

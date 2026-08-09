@@ -502,6 +502,20 @@ private lemma fin1Sum_symm_inr (k : ℕ) (i : Fin k) :
     (fin1Sum k).symm (Sum.inr i) = ⟨i.val + 1, by omega⟩ :=
   (fin1Sum k).symm_apply_eq.mpr (fin1Sum_succ k i).symm
 
+/-- **A diagonal reindexed by the head-tail splitting is the block diagonal of its head entry and
+its tail.** Under `fin1Sum k`, the diagonal matrix of `f ∘ (fin1Sum k).symm` is the block diagonal
+with the `1 × 1` block `f 0` and the tail block `fun i ↦ f (i + 1)`. -/
+private lemma diagonal_comp_fin1Sum_symm {α : Type*} [Zero α] {k : ℕ} (f : Fin (k + 1) → α) :
+    Matrix.diagonal (f ∘ (fin1Sum k).symm) =
+      fromBlocks (Matrix.diagonal (fun _ : Fin 1 ↦ f 0)) 0 0
+        (Matrix.diagonal (fun i : Fin k ↦ f ⟨i.val + 1, by omega⟩)) := by
+  rw [Matrix.fromBlocks_diagonal]
+  congr 1
+  funext x
+  cases x with
+  | inl i => fin_cases i; simp [fin1Sum_symm_inl]
+  | inr i => simp [fin1Sum_symm_inr]
+
 private lemma make_first_divide_all (k : ℕ) (d : Fin (k + 2) → ℤ) (hd : ∀ i, 0 < d i) :
     ∃ (d' : Fin (k + 2) → ℤ) (_ : ∀ i, 0 < d' i) (_ : ∀ j, d' (0 : Fin (k + 2)) ∣ d' j),
     ∃ (L R : SpecialLinearGroup (Fin (k + 2)) ℤ),
@@ -549,46 +563,37 @@ private lemma slSuccEmbed_mul_diagonal (k : ℕ) (d : Fin (k + 2) → ℤ)
     (slSuccEmbed L : Matrix _ _ ℤ) * Matrix.diagonal d *
       (slSuccEmbed R : Matrix _ _ ℤ) = Matrix.diagonal d_out := by
   intro d_out
-  set e := fin1Sum (k + 1)
-  have he_inl : e.symm (Sum.inl (0 : Fin 1)) = (0 : Fin (k + 2)) := fin1Sum_symm_inl (k + 1)
-  have he_inr : ∀ i : Fin (k + 1), e.symm (Sum.inr i) = ⟨i.val + 1, by omega⟩ :=
-    fin1Sum_symm_inr (k + 1)
+  -- no `set` for the splitting: `diagonal_comp_fin1Sum_symm` spells `fin1Sum (k + 1)` out
   have hsub : ∀ f : Fin (k + 2) → ℤ,
-      (Matrix.diagonal (f ∘ e.symm)).submatrix e e = Matrix.diagonal f := fun f ↦ by
+      (Matrix.diagonal (f ∘ (fin1Sum (k + 1)).symm)).submatrix (fin1Sum (k + 1))
+        (fin1Sum (k + 1)) = Matrix.diagonal f := fun f ↦ by
     simp [Function.comp_def]
   -- re-express the diagonal through the reindexing, via the named identity `hsub`
-  rw [show Matrix.diagonal d = (Matrix.diagonal (d ∘ e.symm)).submatrix e e
+  rw [show Matrix.diagonal d =
+      (Matrix.diagonal (d ∘ (fin1Sum (k + 1)).symm)).submatrix (fin1Sum (k + 1)) (fin1Sum (k + 1))
       from (hsub d).symm]
   -- definitional: `slSuccEmbed` is the embedded block matrix
-  change (fromBlocks 1 0 0 (L : Matrix _ _ ℤ)).submatrix e e *
-    (Matrix.diagonal (d ∘ e.symm)).submatrix e e *
-    (fromBlocks 1 0 0 (R : Matrix _ _ ℤ)).submatrix e e = _
+  change (fromBlocks 1 0 0 (L : Matrix _ _ ℤ)).submatrix (fin1Sum (k + 1)) (fin1Sum (k + 1)) *
+    (Matrix.diagonal (d ∘ (fin1Sum (k + 1)).symm)).submatrix (fin1Sum (k + 1)) (fin1Sum (k + 1)) *
+    (fromBlocks 1 0 0 (R : Matrix _ _ ℤ)).submatrix (fin1Sum (k + 1)) (fin1Sum (k + 1)) = _
   simp only [Matrix.submatrix_mul_equiv]
-  have h_decomp : Matrix.diagonal (d ∘ e.symm) =
-      fromBlocks (Matrix.diagonal (fun _ : Fin 1 ↦ d 0))
-        0 0 (Matrix.diagonal (fun i : Fin (k + 1) ↦ d ⟨i.val + 1, by omega⟩)) := by
-    rw [Matrix.fromBlocks_diagonal]
-    congr 1
-    funext x
-    cases x with
-    | inl i => fin_cases i; simp [Function.comp, he_inl]
-    | inr i => simp [Function.comp, he_inr]
-  rw [h_decomp]
+  rw [diagonal_comp_fin1Sum_symm d]
   rw [fromBlocks_multiply]; simp only [Matrix.mul_zero, Matrix.zero_mul, add_zero, zero_add,
     Matrix.one_mul]
   rw [fromBlocks_multiply]; simp only [Matrix.mul_zero, Matrix.zero_mul, add_zero, zero_add,
     Matrix.mul_one]
   -- re-express the output diagonal through the reindexing before comparing blocks
-  rw [show Matrix.diagonal d_out = (Matrix.diagonal (d_out ∘ e.symm)).submatrix e e
+  rw [show Matrix.diagonal d_out =
+      (Matrix.diagonal (d_out ∘ (fin1Sum (k + 1)).symm)).submatrix (fin1Sum (k + 1))
+        (fin1Sum (k + 1))
       from (hsub d_out).symm]; congr 1
-  have h_out_decomp : Matrix.diagonal (d_out ∘ e.symm) =
+  have h_out_decomp : Matrix.diagonal (d_out ∘ (fin1Sum (k + 1)).symm) =
       fromBlocks (Matrix.diagonal (fun _ : Fin 1 ↦ d 0)) 0 0 (Matrix.diagonal d'_tail) := by
-    rw [Matrix.fromBlocks_diagonal]
-    congr 1
-    funext x
-    cases x with
-    | inl i => fin_cases i; simp [Function.comp, d_out, he_inl]
-    | inr i => simp [Function.comp, d_out, he_inr]
+    rw [diagonal_comp_fin1Sum_symm d_out]
+    have h0 : d_out 0 = d 0 := by simp [d_out]
+    have htail : (fun i : Fin (k + 1) ↦ d_out ⟨i.val + 1, by omega⟩) = d'_tail := by
+      funext i; simp [d_out]
+    rw [h0, htail]
   rw [h_out_decomp, hmul]
 
 /-- Prepending a head entry `c` that divides every entry of `d_tail'` to a divisibility chain
