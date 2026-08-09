@@ -39,7 +39,10 @@ with the permutation action of the Weyl group without coercions; `TauCeti.opposi
 restriction to the base, and `TauCeti.bijOn_opposition_support` the unbundled form of that
 restriction. The definition spells root negation as `P.reflectionPerm i i` rather than through
 Mathlib's `RootPairing.indexNeg`, since the latter is not a global instance and would have to be
-introduced by a `let` at every use site.
+introduced by a `let` at every use site. `TauCeti.oppositionPerm` is built directly as an
+equivalence of `↥b.support` rather than as the `Equiv.Perm.subtypePerm` of an ambient permutation,
+so that `TauCeti.coe_oppositionPerm` is a `simp` consequence of the construction rather than a
+definitional unfolding of two stacked wrappers.
 
 ## References
 
@@ -87,6 +90,12 @@ theorem root_opposition (i : ι) :
   rw [opposition, RootPairing.root_reflectionPerm,
     RootPairing.reflection_apply_self, RootPairing.weylGroup_apply_root]
 
+/-- **The opposition involution carries an additive decomposition of a root to one of its
+opposite.** -/
+theorem root_opposition_add {i j k : ι} (h : P.root i = P.root j + P.root k) :
+    P.root (opposition P b i) = P.root (opposition P b j) + P.root (opposition P b k) := by
+  simp only [root_opposition, h, smul_add, neg_add]
+
 variable {P b} in
 /-- **The opposition involution preserves positivity.** -/
 theorem isPos_opposition {i : ι} (hi : b.IsPos i) : b.IsPos (opposition P b i) := by
@@ -98,13 +107,17 @@ theorem isPos_opposition {i : ι} (hi : b.IsPos i) : b.IsPos (opposition P b i) 
   exact mapsTo_posRoots_negRoots_longestElement P b ((mem_posRoots P b i).mpr hi)
 
 /-- **The opposition involution is an involution.** -/
-theorem opposition_involutive : Involutive (opposition P b) := fun i ↦ by
+@[simp]
+theorem opposition_opposition (i : ι) : opposition P b (opposition P b i) = i := by
   -- Root negation commutes with the Weyl-group action on indices, and the longest element is an
   -- involution.
   let := P.indexNeg
   rw [opposition, opposition, ← RootPairing.indexNeg_neg,
     ← RootPairing.indexNeg_neg, RootPairing.weylGroupToPerm_neg, neg_neg]
   exact weylGroupToPerm_longestElement_involutive P b i
+
+/-- **The opposition involution is an involution**, in bundled form. -/
+theorem opposition_involutive : Involutive (opposition P b) := opposition_opposition P b
 
 /-- **The opposition involution permutes the simple roots.** -/
 theorem opposition_mem_support {i : ι} (hi : i ∈ b.support) : opposition P b i ∈ b.support := by
@@ -113,15 +126,14 @@ theorem opposition_mem_support {i : ι} (hi : i ∈ b.support) : opposition P b 
   rw [mem_support_iff_forall_ne_add]
   refine ⟨isPos_opposition (RootPairing.Base.isPos_of_mem_support hi), fun j k hj hk hjk ↦ ?_⟩
   refine root_ne_add_of_mem_support hi (isPos_opposition hj) (isPos_opposition hk) ?_
-  rw [root_opposition, root_opposition, ← neg_add, ← smul_add, ← hjk, root_opposition, smul_neg,
-    neg_neg, smul_smul_longestElement]
+  simpa only [opposition_opposition] using root_opposition_add P b hjk
 
 variable {P b} in
 /-- Membership of the base is invariant under the opposition involution. -/
 @[simp]
 theorem opposition_mem_support_iff {i : ι} : opposition P b i ∈ b.support ↔ i ∈ b.support := by
   refine ⟨fun h ↦ ?_, opposition_mem_support P b⟩
-  simpa only [opposition_involutive P b i] using opposition_mem_support P b h
+  simpa only [opposition_opposition] using opposition_mem_support P b h
 
 /-- **The opposition involution restricts to a bijection of the simple roots.** -/
 theorem bijOn_opposition_support :
@@ -129,20 +141,24 @@ theorem bijOn_opposition_support :
   ⟨fun _ hi ↦ opposition_mem_support P b hi, (opposition_involutive P b).injective.injOn,
     fun i hi ↦ ⟨opposition P b i, opposition_mem_support P b hi, opposition_involutive P b i⟩⟩
 
-/-- **The opposition involution fixes the base setwise.** -/
-theorem image_opposition_support :
-    opposition P b '' (b.support : Set ι) = (b.support : Set ι) :=
-  (bijOn_opposition_support P b).image_eq
-
 /-- **The permutation of the base induced by the opposition involution**, the bundled form of
 `TauCeti.bijOn_opposition_support`. -/
-noncomputable def oppositionPerm : Equiv.Perm b.support :=
-  ((opposition_involutive P b).toPerm _).subtypePerm fun _ ↦ opposition_mem_support_iff
+noncomputable def oppositionPerm : Equiv.Perm b.support where
+  toFun i := ⟨opposition P b i, opposition_mem_support P b i.2⟩
+  invFun i := ⟨opposition P b i, opposition_mem_support P b i.2⟩
+  left_inv i := Subtype.ext (opposition_opposition P b i)
+  right_inv i := Subtype.ext (opposition_opposition P b i)
 
 @[simp]
 theorem coe_oppositionPerm (i : b.support) :
-    (oppositionPerm P b i : ι) = opposition P b i :=
-  (rfl)
+    (oppositionPerm P b i : ι) = opposition P b i := by
+  simp [oppositionPerm]
+
+/-- **The induced permutation of the base is an involution.** -/
+@[simp]
+theorem oppositionPerm_oppositionPerm (i : b.support) :
+    oppositionPerm P b (oppositionPerm P b i) = i :=
+  Subtype.ext (by simp)
 
 end Opposition
 
