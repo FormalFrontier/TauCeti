@@ -32,8 +32,8 @@ for positive semidefinite matrices.
   force the corresponding row or column to vanish.
 * `TauCeti.isPositiveDefiniteKernel_norm_le_one_of_apply_self_eq_one`: normalized diagonal
   entries bound off-diagonal entries by `1`.
-* `TauCeti.re_map_zero_nonneg_of_isPositiveDefiniteKernel` and
-  `TauCeti.norm_le_re_map_zero_of_isPositiveDefiniteKernel`: for an `RCLike`-valued function
+* `TauCeti.map_zero_re_nonneg_of_isPositiveDefiniteKernel` and
+  `TauCeti.norm_apply_le_map_zero_re_of_isPositiveDefiniteKernel`: for an `RCLike`-valued function
   with positive-definite subtraction kernel, the value at `0` has nonnegative real part and
   bounds the function uniformly in norm.
 
@@ -119,7 +119,7 @@ variable {V : Type*} [AddGroup V] {ψ : V → 𝕜}
 
 /-- The value at `0` of a function with positive-definite subtraction kernel has nonnegative
 real part. -/
-theorem re_map_zero_nonneg_of_isPositiveDefiniteKernel
+theorem map_zero_re_nonneg_of_isPositiveDefiniteKernel
     (hpd : IsPositiveDefiniteKernel fun a b : V => ψ (a - b)) :
     0 ≤ RCLike.re (ψ 0) := by
   have h : (0 : 𝕜) ≤ ψ 0 := by
@@ -128,12 +128,12 @@ theorem re_map_zero_nonneg_of_isPositiveDefiniteKernel
 
 /-- A function with positive-definite subtraction kernel is uniformly bounded by the real part
 of its value at `0`. -/
-theorem norm_le_re_map_zero_of_isPositiveDefiniteKernel
+theorem norm_apply_le_map_zero_re_of_isPositiveDefiniteKernel
     (hpd : IsPositiveDefiniteKernel fun a b : V => ψ (a - b)) (z : V) :
     ‖ψ z‖ ≤ RCLike.re (ψ 0) := by
   have h := isPositiveDefiniteKernel_normSq_le hpd z 0
   simp only [sub_zero, sub_self, RCLike.normSq_eq_def'] at h
-  refine le_of_sq_le_sq ?_ (re_map_zero_nonneg_of_isPositiveDefiniteKernel hpd)
+  refine le_of_sq_le_sq ?_ (map_zero_re_nonneg_of_isPositiveDefiniteKernel hpd)
   calc ‖ψ z‖ ^ 2 ≤ RCLike.re (ψ 0) * RCLike.re (ψ 0) := h
     _ = RCLike.re (ψ 0) ^ 2 := (sq (RCLike.re (ψ 0))).symm
 

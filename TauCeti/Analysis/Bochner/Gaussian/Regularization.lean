@@ -103,8 +103,8 @@ theorem integrable_gaussianRegularize {φ : V → ℂ}
     (hpd : IsPositiveDefiniteKernel fun a b : V => φ (a - b))
     (hcont : Continuous φ) {ε : ℝ} (hε : 0 < ε) :
     Integrable (gaussianRegularize φ ε) := by
-  have h0 : 0 ≤ (φ 0).re := re_map_zero_nonneg_of_isPositiveDefiniteKernel hpd
-  have hb : ∀ x, ‖φ x‖ ≤ (φ 0).re := norm_le_re_map_zero_of_isPositiveDefiniteKernel hpd
+  have h0 : 0 ≤ (φ 0).re := map_zero_re_nonneg_of_isPositiveDefiniteKernel hpd
+  have hb : ∀ x, ‖φ x‖ ≤ (φ 0).re := norm_apply_le_map_zero_re_of_isPositiveDefiniteKernel hpd
   have hgauss : Integrable fun x : V => Complex.exp (-(ε * ‖x‖ ^ 2 : ℝ)) :=
     integrable_cexp_neg_mul_sq_norm hε
   refine (hgauss.norm.const_mul (φ 0).re).mono

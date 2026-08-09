@@ -144,7 +144,7 @@ private theorem pd_double_integral_re_nonneg (ψ : V → ℂ)
     have h_ptwise : ∀ x, Tendsto (fun n => hid.approx n x) atTop (nhds x) :=
       fun x => by simpa using hid.tendsto_approx x
     -- Uniform bound from positive definiteness: `‖ψ z‖ ≤ (ψ 0).re` for all `z`.
-    have hbound : ∀ z, ‖ψ z‖ ≤ (ψ 0).re := norm_le_re_map_zero_of_isPositiveDefiniteKernel hpd
+    have hbound : ∀ z, ‖ψ z‖ ≤ (ψ 0).re := norm_apply_le_map_zero_re_of_isPositiveDefiniteKernel hpd
     have hfm : IsFiniteMeasure μ :=
       ⟨by simpa [μ] using hSbdd.measure_lt_top⟩
     -- The inner integral converges for each `x` by dominated convergence.
@@ -538,7 +538,7 @@ private theorem pd_integral_re_nonneg (ψ : V → ℂ)
     intro n
     simp only [J]
     split_ifs with h
-    · exact re_map_zero_nonneg_of_isPositiveDefiniteKernel hpd
+    · exact map_zero_re_nonneg_of_isPositiveDefiniteKernel hpd
     · rw [Complex.smul_re]
       apply mul_nonneg (inv_nonneg.mpr ENNReal.toReal_nonneg)
       exact pd_double_integral_re_nonneg ψ hpd hcont _ Metric.isBounded_closedBall
@@ -641,7 +641,10 @@ private theorem integral_fourierIntegral_mul (f g : V → ℂ)
     Real.continuous_fourierChar
     (show Continuous fun p : V × V => (innerₗ V) p.1 p.2 from continuous_inner) hf hg
   simpa only [flip_innerₗ, smul_eq_mul,
-    show VectorFourier.fourierIntegral 𝐞 volume (innerₗ V) = fun f : V → ℂ => 𝓕 f from rfl]
+    -- `𝓕` on `V → ℂ` is *defined* as `VectorFourier.fourierIntegral 𝐞 volume (innerₗ V)`
+      -- (the `Real.instFourierTransform` field); Mathlib names only the pointwise
+      -- `Real.fourier_eq`, so the function-level bridge is this definitional rewrite.
+      show VectorFourier.fourierIntegral 𝐞 volume (innerₗ V) = fun f : V → ℂ => 𝓕 f from rfl]
     using h
 
 /-- The Fourier transform of a Gaussian is integrable (it is again a Gaussian). -/
@@ -711,7 +714,7 @@ private theorem re_integral_fourierIntegral_mul_gaussian_le (F : V → ℂ)
   have hgt_int : Integrable fun ξ : V => Complex.exp (-(t * ‖ξ‖ ^ 2 : ℝ)) :=
     integrable_cexp_neg_mul_sq_norm ht
   have hft_gt_int := integrable_fourierIntegral_gaussian (V := V) ht
-  have hFbound : ∀ x, ‖F x‖ ≤ (F 0).re := norm_le_re_map_zero_of_isPositiveDefiniteKernel hpd
+  have hFbound : ∀ x, ‖F x‖ ≤ (F 0).re := norm_apply_le_map_zero_re_of_isPositiveDefiniteKernel hpd
   have hprod_int : Integrable fun x : V =>
       F x * 𝓕 (fun ξ : V => Complex.exp (-(t * ‖ξ‖ ^ 2 : ℝ))) x :=
     hft_gt_int.bdd_mul hcont.aestronglyMeasurable (ae_of_all _ hFbound)

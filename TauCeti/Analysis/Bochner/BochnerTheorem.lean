@@ -47,7 +47,7 @@ Existence is proved by Gaussian regularization and a compactness argument. If `F
 kernel Cauchy–Schwarz inequality forces `F = 0` and the zero measure represents. Otherwise,
 after normalizing to `G 0 = 1`, the regularizations `G_n = G · exp (-‖·‖²/(n+1))` are
 integrable positive-definite functions, each represented by an explicit probability measure
-`ν_n` with density `(𝓕⁻ G_n).re` (`integral_fourierAtom_withDensity_re_fourierIntegralInv`).
+`ν_n` with density `(𝓕⁻ G_n).re` (`integral_fourierAtom_withDensity_re_fourierInv`).
 The characteristic functions of the `ν_n` converge pointwise to a rescaling of `G`, which is
 continuous at `0`, so the family is tight by the Lévy continuity theorem; Prokhorov's theorem
 and the metrizability of the space of probability measures extract a weakly convergent
@@ -62,8 +62,8 @@ and the representation is stated in the `fourierAtom` convention rather than thr
 
 ## Main declarations
 
-* `TauCeti.isFiniteMeasure_withDensity_re_fourierIntegralInv` and
-  `TauCeti.integral_fourierAtom_withDensity_re_fourierIntegralInv`: the measure
+* `TauCeti.isFiniteMeasure_withDensity_re_fourierInv` and
+  `TauCeti.integral_fourierAtom_withDensity_re_fourierInv`: the measure
   `volume.withDensity (ENNReal.ofReal (𝓕⁻ F ·).re)` is finite and recovers `F` through the
   Fourier atom — the `L¹` case of Bochner's theorem.
 * `TauCeti.exists_isFiniteMeasure_integral_fourierAtom_eq_of_isPositiveDefiniteKernel`:
@@ -122,7 +122,7 @@ variable {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V]
 
 /-- The measure with density `(𝓕⁻ F).re` against Lebesgue measure is finite whenever `𝓕 F` is
 integrable. This is the total-mass half of the `L¹` case of Bochner's theorem. -/
-theorem isFiniteMeasure_withDensity_re_fourierIntegralInv (F : V → ℂ)
+theorem isFiniteMeasure_withDensity_re_fourierInv (F : V → ℂ)
     (hint_ft : Integrable (𝓕 F)) :
     IsFiniteMeasure (volume.withDensity fun ξ => ENNReal.ofReal (𝓕⁻ F ξ).re) := by
   have hinv_int : Integrable (𝓕⁻ F) := by
@@ -136,7 +136,7 @@ theorem isFiniteMeasure_withDensity_re_fourierIntegralInv (F : V → ℂ)
 `v ↦ ∫ q, fourierAtom v q ∂μ` of the finite measure `μ` with density `(𝓕⁻ F).re` against
 Lebesgue measure. The identity is Fourier inversion `𝓕 (𝓕⁻ F) = F`, using that `𝓕⁻ F` is real
 and nonnegative. Rudin, *Fourier Analysis on Groups*, §1.4; Folland, §4.2. -/
-theorem integral_fourierAtom_withDensity_re_fourierIntegralInv (F : V → ℂ)
+theorem integral_fourierAtom_withDensity_re_fourierInv (F : V → ℂ)
     (hpd : IsPositiveDefiniteKernel fun a b : V => F (a - b))
     (hint : Integrable F) (hcont : Continuous F) (v : V) :
     ∫ q, fourierAtom v q ∂(volume.withDensity fun ξ => ENNReal.ofReal (𝓕⁻ F ξ).re) = F v := by
@@ -187,12 +187,12 @@ private theorem exists_probabilityMeasure_integral_fourierAtom_eq {G : V → ℂ
       fun a b : V => gaussianRegularize G (ε n) (a - b) := fun n =>
     isPositiveDefiniteKernel_gaussianRegularize hpd (hε_pos n).le
   have hν_rep : ∀ n v, ∫ q, fourierAtom v q ∂(ν n) = gaussianRegularize G (ε n) v := fun n v =>
-    integral_fourierAtom_withDensity_re_fourierIntegralInv _ (hGn_pd n)
+    integral_fourierAtom_withDensity_re_fourierInv _ (hGn_pd n)
       (integrable_gaussianRegularize hpd hcont (hε_pos n))
       (continuous_gaussianRegularize hcont (ε n)) v
   have hν_prob : ∀ n, IsProbabilityMeasure (ν n) := by
     intro n
-    have : IsFiniteMeasure (ν n) := isFiniteMeasure_withDensity_re_fourierIntegralInv _
+    have : IsFiniteMeasure (ν n) := isFiniteMeasure_withDensity_re_fourierInv _
       (integrable_fourierIntegral_gaussianRegularize hpd hcont (hε_pos n))
     have h0 := hν_rep n 0
     simp only [gaussianRegularize_apply, hG0, one_mul, norm_zero, ne_eq, OfNat.ofNat_ne_zero,
