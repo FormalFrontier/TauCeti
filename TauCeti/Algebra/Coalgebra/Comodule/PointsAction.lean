@@ -39,7 +39,8 @@ the functor of points on scalar extensions of `V`.
 ## References
 
 * W. C. Waterhouse, *Introduction to Affine Group Schemes*, §3.1–3.2.
-* J. S. Milne, *Algebraic Groups* (2017), Chapter 4.
+* J. S. Milne, *Algebraic Groups* (2017), §§4.5 and 9.4, for the tensor and unit
+  compatibility of point actions.
 -/
 
 public section
