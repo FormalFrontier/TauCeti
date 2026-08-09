@@ -5,7 +5,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Geometry.Symplectic.Finrank
-public import TauCeti.Geometry.Symplectic.Lagrangian.TotallyReal
 public import TauCeti.Geometry.Symplectic.Restrict
 
 /-!
@@ -45,8 +44,10 @@ are those of McDuff--Salamon, *J-holomorphic Curves and Symplectic Topology*, Se
 * `TauCeti.SymplecticForm.even_finrank` and `TauCeti.SymplecticForm.isEmpty_of_odd_finrank`: a
   symplectic vector space has even dimension, so an odd-dimensional space carries no symplectic
   form at all.
-* `TauCeti.SymplecticForm.IsLagrangian.exists_compatible_isMaximalTotallyReal`: every Lagrangian
-  subspace of a symplectic vector space is maximal totally real for some compatible structure.
+
+The Lagrangian consequence, that every Lagrangian subspace is maximal totally real for some
+compatible structure, lives downstream in
+`TauCeti/Geometry/Symplectic/Lagrangian/ExistsCompatible.lean`.
 -/
 
 public section
@@ -103,8 +104,8 @@ private lemma pairMap_injective (h : ω x y = 1) : Function.Injective (pairMap x
 
 private lemma range_pairMap (x y : V) :
     LinearMap.range (pairMap x y) = Submodule.span ℝ ({x, y} : Set V) := by
-  rw [pairMap, LinearMap.range_coprod, LinearMap.range_toSpanSingleton,
-    LinearMap.range_toSpanSingleton, ← Submodule.span_union, Set.singleton_union]
+  simp [pairMap, LinearMap.range_coprod, LinearMap.range_toSpanSingleton,
+    Submodule.span_insert]
 
 /-- The plane spanned by a hyperbolic pair `x, y` with `ω x y = 1`, presented as a linear copy of
 the standard plane `ℝ × ℝ`. -/
@@ -142,8 +143,8 @@ private lemma isSymplectomorphism_planeEquiv (h : ω x y = 1)
       (ω.restrict (Submodule.span ℝ ({x, y} : Set V)) hL) (ω.planeEquiv h) := by
   rw [isSymplectomorphism_iff]
   intro p q
-  rw [restrict_apply, coe_planeEquiv_apply, coe_planeEquiv_apply, ω.apply_smul_add_smul, h,
-    stdSymplecticForm_apply, Real.inner_apply, Real.inner_apply]
+  simp only [restrict_apply, coe_planeEquiv_apply, ω.apply_smul_add_smul, h,
+    stdSymplecticForm_apply, Real.inner_apply]
   ring
 
 /-- The plane spanned by a hyperbolic pair carries a compatible almost complex structure,
@@ -184,10 +185,14 @@ private theorem exists_compatible_aux (n : ℕ) :
     have hdisj : Disjoint (Submodule.span ℝ ({x, y} : Set U))
         (ω.orthogonal (Submodule.span ℝ ({x, y} : Set U))) :=
       ω.disjoint_span_pair_orthogonal (by simp [hxy])
-    have hL := ω.nondegenerate_restrict_of_disjoint_orthogonal hdisj
-    have hL' := ω.nondegenerate_restrict_of_disjoint_orthogonal
-      (ω.disjoint_orthogonal_orthogonal hdisj)
-    have hcompl := (ω.isCompl_orthogonal_iff_disjoint _).2 hdisj
+    have hdisj' : Disjoint (ω.orthogonal (Submodule.span ℝ ({x, y} : Set U)))
+        (ω.orthogonal (ω.orthogonal (Submodule.span ℝ ({x, y} : Set U)))) := by
+      simpa [ω.orthogonal_orthogonal] using hdisj.symm
+    have hL := ω.toBilinForm.nondegenerate_restrict_of_disjoint_orthogonal ω.isRefl hdisj
+    have hL' := ω.toBilinForm.nondegenerate_restrict_of_disjoint_orthogonal ω.isRefl hdisj'
+    have hcompl : IsCompl (Submodule.span ℝ ({x, y} : Set U))
+        (ω.orthogonal (Submodule.span ℝ ({x, y} : Set U))) :=
+      (LinearMap.BilinForm.isCompl_orthogonal_iff_disjoint ω.isRefl).2 hdisj
     obtain ⟨JL, hJL⟩ := ω.exists_compatible_restrict_span_pair hxy hL
     have hxmem : x ∈ Submodule.span ℝ ({x, y} : Set U) := Submodule.subset_span (by simp)
     have hUpos : 0 < finrank ℝ U := Module.finrank_pos_iff_exists_ne_zero.2 ⟨x, hx⟩
@@ -224,14 +229,6 @@ theorem even_finrank [FiniteDimensional ℝ V] (ω : SymplecticForm V) : Even (f
 theorem isEmpty_of_odd_finrank [FiniteDimensional ℝ V] (h : Odd (finrank ℝ V)) :
     IsEmpty (SymplecticForm V) :=
   ⟨fun ω => (Nat.not_even_iff_odd.2 h) ω.even_finrank⟩
-
-/-- Every Lagrangian subspace of a finite-dimensional symplectic vector space is maximal totally
-real for some compatible almost complex structure. -/
-theorem IsLagrangian.exists_compatible_isMaximalTotallyReal [FiniteDimensional ℝ V]
-    {ω : SymplecticForm V} {L : Submodule ℝ V} (hL : ω.IsLagrangian L) :
-    ∃ J : AlmostComplexStructure V, ω.Compatible J ∧ IsMaximalTotallyReal J.toLinearMap L :=
-  let ⟨J, hJ⟩ := ω.exists_compatible
-  ⟨J, hJ, hL.isMaximalTotallyReal_of_compatible hJ⟩
 
 end SymplecticForm
 

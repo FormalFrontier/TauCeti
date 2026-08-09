@@ -10,14 +10,16 @@ public import TauCeti.Geometry.Symplectic.Prod.Basic
 public import TauCeti.Geometry.Symplectic.SymplecticTransport
 
 /-!
-# Symplectic forms along complementary subspaces
+# Restricting a symplectic form to a subspace
 
-A symplectic form that restricts nondegenerately to a subspace and its symplectic complement is
-the product of those restrictions under the linear equivalence supplied by a complementary
-splitting.
+A symplectic form restricts to a subspace on which it stays nondegenerate, and a symplectic form
+that restricts nondegenerately to a subspace and its symplectic complement is the product of those
+restrictions under the linear equivalence supplied by a complementary splitting.
 
-## Main declaration
+## Main declarations
 
+* `TauCeti.SymplecticForm.restrict`: the restriction of `ω` to a subspace on which it stays
+  nondegenerate, again a symplectic form.
 * `TauCeti.SymplecticForm.isSymplectomorphism_prodEquivOfIsCompl`: the equivalence associated to
   `V = L ⊕ L^ω` is a symplectomorphism from the product of the restricted forms to `ω`.
 -/
@@ -29,6 +31,26 @@ namespace TauCeti
 namespace SymplecticForm
 
 variable {V : Type*} [AddCommGroup V] [Module ℝ V]
+
+/-- The restriction of a symplectic form to a subspace on which it remains nondegenerate.
+
+Nondegeneracy is genuinely a hypothesis: `ω` restricts to `0` on any isotropic subspace. -/
+@[expose] def restrict (ω : SymplecticForm V) (L : Submodule ℝ V)
+    (h : (ω.toBilinForm.restrict L).Nondegenerate) : SymplecticForm L where
+  toBilinForm := ω.toBilinForm.restrict L
+  isAlt v := ω.isAlt (v : V)
+  nondegenerate := h
+
+lemma restrict_toBilinForm (ω : SymplecticForm V) (L : Submodule ℝ V)
+    (h : (ω.toBilinForm.restrict L).Nondegenerate) :
+    (ω.restrict L h).toBilinForm = ω.toBilinForm.restrict L :=
+  rfl
+
+@[simp]
+lemma restrict_apply (ω : SymplecticForm V) (L : Submodule ℝ V)
+    (h : (ω.toBilinForm.restrict L).Nondegenerate) (v w : L) :
+    ω.restrict L h v w = ω (v : V) (w : V) :=
+  rfl
 
 /-- Along the splitting `V = L ⊕ L^ω`, the symplectic form is the product of its restrictions to
 the two summands: the cross terms vanish by the very definition of the symplectic complement. -/
