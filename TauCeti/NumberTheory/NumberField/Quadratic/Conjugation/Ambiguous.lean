@@ -55,12 +55,12 @@ theorem map_ringOfIntegersQuadraticConj_eq_self_of_mem_ramifiedPrimes
     [𝔭.LiesOver (span {(p : ℤ)})] :
     Ideal.map (ringOfIntegersQuadraticConj hmin hgen) 𝔭 = 𝔭 := by
   have hK : finrank ℚ K = 2 := finrank_rat_eq_two hmin hgen
-  -- Pass to the `ℤ`-algebra packaging `σₐ` (equal to `σ` on ideals by
-  -- `map_ringOfIntegersQuadraticConjₐ`), whose pushforward is again a prime lying over `(p)`.
-  rw [← map_ringOfIntegersQuadraticConjₐ hmin hgen 𝔭]
-  have hmemset : Ideal.map (ringOfIntegersQuadraticConjₐ hmin hgen) 𝔭 ∈
+  -- Push forward along `σ`'s canonical `ℤ`-algebra form `toIntAlgEquiv` (same underlying map, by
+  -- `RingEquiv.coe_toIntAlgEquiv`): it is again a prime of `𝓞 K` over `(p)`, hence equals `𝔭`.
+  have hmemset : Ideal.map (ringOfIntegersQuadraticConj hmin hgen).toIntAlgEquiv 𝔭 ∈
       (span {(p : ℤ)} : Ideal ℤ).primesOver (𝓞 K) := ⟨inferInstance, inferInstance⟩
-  rwa [primesOver_eq_singleton_of_mem_ramifiedPrimes hK hmem 𝔭, Set.mem_singleton_iff] at hmemset
+  rw [primesOver_eq_singleton_of_mem_ramifiedPrimes hK hmem 𝔭, Set.mem_singleton_iff] at hmemset
+  exact hmemset
 
 /-- **A class is fixed by quadratic conjugation iff it is 2-torsion.** Because quadratic conjugation
 acts on `Cl(𝓞 K)` by inversion, the classes it fixes are exactly those equal to their own inverse,
