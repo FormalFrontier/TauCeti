@@ -79,8 +79,10 @@ private theorem two_mul_mem_of_two_mul_gen_mem (hmin : minpoly (𝓞 K) θ = X ^
     rw [← hsq, pow_two]; exact Ideal.mul_mem_left 𝔓 _ h
   have h4 : 4 * a ∈ 𝔭 := by
     rw [Ideal.LiesOver.over (p := 𝔭) (P := 𝔓), Ideal.mem_under]; exact h4L
-  have h4' : (2 : 𝓞 K) * (2 * a) ∈ 𝔭 := by rw [show (2 : 𝓞 K) * (2 * a) = 4 * a by ring]; exact h4
-  rcases (‹𝔭.IsPrime›).mem_or_mem h4' with h2 | h2a
+  -- `4a = 2·(2a)`, so primeness of `𝔭` splits into `2 ∈ 𝔭` (absorbed) or `2a ∈ 𝔭`.
+  have hfac : (4 : 𝓞 K) * a = 2 * (2 * a) := by ring
+  rw [hfac] at h4
+  rcases (‹𝔭.IsPrime›).mem_or_mem h4 with h2 | h2a
   · exact 𝔭.mul_mem_right a h2
   · exact h2a
 
