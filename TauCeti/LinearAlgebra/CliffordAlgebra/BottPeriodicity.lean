@@ -19,6 +19,12 @@ negative generator is equivalent to tensoring with two-by-two real matrices.
 * `TauCeti.CliffordAlgebra.hyperbolicEquivTensor`: adjoining a hyperbolic plane to an arbitrary
   real quadratic module tensors its Clifford algebra with `M₂(ℝ)`;
 * `TauCeti.realCliffordBottEquiv`: the corresponding equivalence for the standard signature forms.
+
+## References
+
+* [Clifford algebras, Pin and Spin, and spin representations roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/SpinRepresentations/README.md),
+  Layer 7;
+* H. B. Lawson and M.-L. Michelsohn, *Spin Geometry* (1989), Chapter I.
 -/
 
 public section
@@ -408,6 +414,10 @@ private theorem hyperbolicEquivTensor_toAlgHom :
     (hyperbolicEquivTensor Q).toAlgHom = hyperbolicToTensor Q := by
   exact AlgEquiv.toAlgHom_ofAlgHom _ _ _ _
 
+private theorem hyperbolicEquivTensor_apply (x : HyperbolicAlgebra Q) :
+    hyperbolicEquivTensor Q x = hyperbolicToTensor Q x := by
+  exact DFunLike.congr_fun (hyperbolicEquivTensor_toAlgHom Q) x
+
 /-- The image of a generator under `hyperbolicEquivTensor`, split into its original-module and
 hyperbolic-plane components. -/
 @[simp]
@@ -416,8 +426,7 @@ theorem hyperbolicEquivTensor_ι
     hyperbolicEquivTensor Q (_root_.CliffordAlgebra.ι _ x) =
       _root_.CliffordAlgebra.ι Q x.1 ⊗ₜ[ℝ] !![0, 1; 1, 0] +
         1 ⊗ₜ[ℝ] !![x.2 0, x.2 1; -x.2 1, -x.2 0] := by
-  rw [show hyperbolicEquivTensor Q _ =
-    (hyperbolicEquivTensor Q).toAlgHom _ from rfl, hyperbolicEquivTensor_toAlgHom]
+  rw [hyperbolicEquivTensor_apply]
   conv_lhs =>
     rw [show x = (x.1, 0) + (0, x.2) by ext <;> simp]
   rw [map_add, map_add, hyperbolicToTensor_ι_base, hyperbolicToTensor_ι_hyperbolic]
@@ -427,8 +436,7 @@ theorem hyperbolicEquivTensor_ι
 theorem hyperbolicEquivTensor_ι_base (m : M) :
     hyperbolicEquivTensor Q (_root_.CliffordAlgebra.ι _ (m, 0)) =
       _root_.CliffordAlgebra.ι Q m ⊗ₜ[ℝ] !![0, 1; 1, 0] := by
-  rw [show hyperbolicEquivTensor Q _ =
-    (hyperbolicEquivTensor Q).toAlgHom _ from rfl, hyperbolicEquivTensor_toAlgHom]
+  rw [hyperbolicEquivTensor_apply]
   exact hyperbolicToTensor_ι_base Q m
 
 /-- The inverse of `hyperbolicEquivTensor` on the tensor representing an original generator. -/
@@ -472,6 +480,12 @@ private def realBottSplitLinearEquiv (p q : ℕ) :
   (LinearEquiv.piCongrLeft' ℝ (fun _ : Fin ((p + 1) + (q + 1)) ↦ ℝ)
       (realBottIndexEquiv p q)).trans
     (LinearEquiv.sumArrowLequivProdArrow _ _ ℝ ℝ)
+
+private theorem realBottSplitLinearEquiv_snd (p q : ℕ)
+    (v : Fin ((p + 1) + (q + 1)) → ℝ) (i : Fin 2) :
+    (realBottSplitLinearEquiv p q v).2 i =
+      v ((realBottIndexEquiv p q).symm (Sum.inr i)) := by
+  rfl
 
 private theorem realBottIndexEquiv_symm_inl_pos (p q : ℕ) (i : Fin p) :
     (realBottIndexEquiv p q).symm (Sum.inl (finSumFinEquiv (Sum.inl i))) =
@@ -562,6 +576,11 @@ def realBottSplitIsometry (p q : ℕ) :
           · simp [y, realBottSplitLinearEquiv, realBottWeight_inl]
           · simp [y, realBottSplitLinearEquiv, realBottWeight_inr] }
 
+private theorem realBottSplitIsometry_apply (p q : ℕ)
+    (v : Fin ((p + 1) + (q + 1)) → ℝ) :
+    realBottSplitIsometry p q v = realBottSplitLinearEquiv p q v := by
+  rfl
+
 /-- The positive coordinates retained by `realBottSplitIsometry`. -/
 @[simp]
 theorem realBottSplitIsometry_fst_pos (p q : ℕ)
@@ -586,7 +605,9 @@ theorem realBottSplitIsometry_snd_zero (p q : ℕ)
     (v : Fin ((p + 1) + (q + 1)) → ℝ) :
     (realBottSplitIsometry p q v).2 0 =
       v (Fin.castAdd (q + 1) (Fin.last p)) := by
-  rfl
+  rw [realBottSplitIsometry_apply]
+  rw [realBottSplitLinearEquiv_snd, realBottIndexEquiv_symm_inr_zero]
+  congr 1
 
 /-- The last negative coordinate extracted by `realBottSplitIsometry`. -/
 @[simp]
@@ -594,7 +615,9 @@ theorem realBottSplitIsometry_snd_one (p q : ℕ)
     (v : Fin ((p + 1) + (q + 1)) → ℝ) :
     (realBottSplitIsometry p q v).2 1 =
       v (Fin.natAdd (p + 1) (Fin.last q)) := by
-  rfl
+  rw [realBottSplitIsometry_apply]
+  rw [realBottSplitLinearEquiv_snd, realBottIndexEquiv_symm_inr_one]
+  congr 1
 
 /-- The hyperbolic Bott step for the standard real signature forms:
 `Cliff(p + 1, q + 1) ≅ Cliff(p, q) ⊗ M₂(ℝ)`. -/
@@ -620,5 +643,31 @@ theorem realCliffordBottEquiv_ι (p q : ℕ)
     _root_.CliffordAlgebra.map_apply_ι,
     CliffordAlgebra.hyperbolicEquivTensor_ι]
   rfl
+
+/-- The inverse of `realCliffordBottEquiv` on the tensor representing an original generator. -/
+@[simp]
+theorem realCliffordBottEquiv_symm_ι_base (p q : ℕ) (m : Fin (p + q) → ℝ) :
+    (realCliffordBottEquiv p q).symm
+        (_root_.CliffordAlgebra.ι (realCliffordForm p q) m ⊗ₜ[ℝ] !![0, 1; 1, 0]) =
+      _root_.CliffordAlgebra.ι _ ((realBottSplitIsometry p q).symm (m, 0)) := by
+  apply (realCliffordBottEquiv p q).injective
+  rw [AlgEquiv.apply_symm_apply, realCliffordBottEquiv_ι]
+  simp only [Nat.reduceAdd, IsometryEquiv.apply_symm_apply, Fin.isValue, Pi.zero_apply,
+    neg_zero, left_eq_add]
+  have hzero : (!![(0 : ℝ), 0; 0, 0] : Matrix (Fin 2) (Fin 2) ℝ) = 0 := by
+    ext i j
+    fin_cases i <;> fin_cases j <;> rfl
+  rw [hzero]
+  exact TensorProduct.tmul_zero (Matrix (Fin 2) (Fin 2) ℝ)
+    (1 : _root_.CliffordAlgebra (realCliffordForm p q))
+
+/-- The inverse of `realCliffordBottEquiv` on the tensor representing a hyperbolic generator. -/
+@[simp]
+theorem realCliffordBottEquiv_symm_ι_hyperbolic (p q : ℕ) (v : Fin 2 → ℝ) :
+    (realCliffordBottEquiv p q).symm (1 ⊗ₜ[ℝ] !![v 0, v 1; -v 1, -v 0]) =
+      _root_.CliffordAlgebra.ι _ ((realBottSplitIsometry p q).symm (0, v)) := by
+  apply (realCliffordBottEquiv p q).injective
+  rw [AlgEquiv.apply_symm_apply, realCliffordBottEquiv_ι]
+  simp
 
 end TauCeti
