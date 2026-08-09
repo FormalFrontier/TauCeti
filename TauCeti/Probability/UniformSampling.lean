@@ -5,9 +5,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.Probability.UniformOn
-public import Mathlib.Data.Fintype.BigOperators
-public import Mathlib.Data.Fintype.Pi
-public import Mathlib.Data.Fintype.Prod
+import Mathlib.Data.Fintype.BigOperators
+import Mathlib.Data.Fintype.Pi
 
 /-!
 # Uniform sampling with and without replacement
@@ -103,7 +102,8 @@ theorem uniformOn_apply_eq_apply [Finite ι] [MeasurableSpace κ]
     ← Set.ncard_eq_toFinset_card _ hfinite, card_eqAt i j hij, Fintype.card_fun]
   have hι : 0 < Fintype.card ι := Fintype.card_pos_iff.mpr ⟨i⟩
   have hκ : (Fintype.card κ : ℝ≥0∞) ≠ 0 := by simp
-  rw [show Fintype.card ι = (Fintype.card ι - 1) + 1 by omega, pow_succ]
+  have hcard_succ : Fintype.card ι = (Fintype.card ι - 1) + 1 := by omega
+  rw [hcard_succ, pow_succ]
   have hpow_zero : (Fintype.card κ : ℝ≥0∞) ^ (Fintype.card ι - 1) ≠ 0 :=
     pow_ne_zero _ hκ
   have hpow_top : (Fintype.card κ : ℝ≥0∞) ^ (Fintype.card ι - 1) ≠ ∞ := by simp
@@ -171,20 +171,13 @@ theorem uniformOn_not_injective_le [MeasurableSpace κ] [MeasurableSingletonClas
           rw [Finset.sum_const, nsmul_eq_mul, card_coordinatePairs]
           simp [div_eq_mul_inv]
 
-private theorem injective_set_nonempty (hcard : Fintype.card ι ≤ Fintype.card κ) :
-    Set.Nonempty {x : ι → κ | Function.Injective x} := by
-  let f : ι → κ := fun i => (Fintype.equivFin κ).symm
-    (Fin.castLE hcard (Fintype.equivFin ι i))
-  exact ⟨f, (Fintype.equivFin κ).symm.injective.comp
-    ((Fin.castLE_injective hcard).comp (Fintype.equivFin ι).injective)⟩
-
 /-- Conditioning a finite uniform sample on an event `E` can increase the probability of an event
 `A` by at most the original probability of `Eᶜ`.
 
 This is the upper half of the elementary coupling bound between a uniform law and its conditioning.
 It is kept private because the public consumers below specialize `E` to injectivity. -/
 private theorem uniformOn_le_univ_add_compl {Ω : Type*} [Finite Ω] [MeasurableSpace Ω]
-    [MeasurableSingletonClass Ω] [Nonempty Ω] {E A : Set Ω} (_hE : E.Nonempty) :
+    [MeasurableSingletonClass Ω] [Nonempty Ω] (E A : Set Ω) :
     uniformOn E A ≤ uniformOn Set.univ A + uniformOn Set.univ Eᶜ := by
   have hfactor : uniformOn E A * uniformOn Set.univ E = uniformOn Set.univ (A ∩ E) := by
     rw [uniformOn_inter' Set.finite_univ, Set.univ_inter]
@@ -204,7 +197,7 @@ private theorem uniformOn_le_univ_add_compl {Ω : Type*} [Finite Ω] [Measurable
 This is the lower half of the elementary coupling bound between a uniform law and its conditioning.
 It is kept private because the public consumers below specialize `E` to injectivity. -/
 private theorem uniformOn_univ_le_add_compl {Ω : Type*} [Finite Ω] [MeasurableSpace Ω]
-    [MeasurableSingletonClass Ω] [Nonempty Ω] {E A : Set Ω} (_hE : E.Nonempty) :
+    [MeasurableSingletonClass Ω] [Nonempty Ω] (E A : Set Ω) :
     uniformOn Set.univ A ≤ uniformOn E A + uniformOn Set.univ Eᶜ := by
   have hfactor : uniformOn E A * uniformOn Set.univ E = uniformOn Set.univ (A ∩ E) := by
     rw [uniformOn_inter' Set.finite_univ, Set.univ_inter]
@@ -230,10 +223,10 @@ theorem uniformOn_injective_le_add [MeasurableSpace κ] [MeasurableSingletonClas
     (hcard : Fintype.card ι ≤ Fintype.card κ) (A : Set (ι → κ)) :
     uniformOn {x : ι → κ | Function.Injective x} A ≤
       uniformOn Set.univ A + uniformOn Set.univ {x : ι → κ | ¬Function.Injective x} := by
-  let h_injective := injective_set_nonempty hcard
-  let _ : Nonempty (ι → κ) := ⟨h_injective.some⟩
+  have : Nonempty (ι → κ) :=
+    ⟨(Function.Embedding.nonempty_of_card_le hcard).some⟩
   simpa only [Set.compl_ofPred] using
-    uniformOn_le_univ_add_compl (A := A) h_injective
+    uniformOn_le_univ_add_compl {x : ι → κ | Function.Injective x} A
 
 /-- Uniform sampling with replacement differs from sampling without replacement only on the
 collision event: for every event `A`, its with-replacement probability is at most its
@@ -242,10 +235,10 @@ theorem uniformOn_univ_le_injective_add [MeasurableSpace κ] [MeasurableSingleto
     (hcard : Fintype.card ι ≤ Fintype.card κ) (A : Set (ι → κ)) :
     uniformOn Set.univ A ≤ uniformOn {x : ι → κ | Function.Injective x} A +
       uniformOn Set.univ {x : ι → κ | ¬Function.Injective x} := by
-  let h_injective := injective_set_nonempty hcard
-  let _ : Nonempty (ι → κ) := ⟨h_injective.some⟩
+  have : Nonempty (ι → κ) :=
+    ⟨(Function.Embedding.nonempty_of_card_le hcard).some⟩
   simpa only [Set.compl_ofPred] using
-    uniformOn_univ_le_add_compl (A := A) h_injective
+    uniformOn_univ_le_add_compl {x : ι → κ | Function.Injective x} A
 
 /-- **Quantitative finite-sampling bound, without replacement to with replacement.**  For every
 event `A`, the probability under uniform sampling without replacement is at most its probability
