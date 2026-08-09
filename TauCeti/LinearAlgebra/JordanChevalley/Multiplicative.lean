@@ -62,26 +62,16 @@ def IsSemisimple (g : GeneralLinearGroup K V) : Prop :=
 def IsUnipotent (g : GeneralLinearGroup K V) : Prop :=
   _root_.IsNilpotent ((g : End K V) - 1)
 
-/-- The semisimplicity predicate is read on the underlying endomorphism. -/
-lemma isSemisimple_iff (g : GeneralLinearGroup K V) :
-    IsSemisimple g ↔ Module.End.IsSemisimple (g : End K V) :=
-  Iff.rfl
-
-/-- The unipotence predicate is nilpotence of the difference from the identity. -/
-lemma isUnipotent_iff (g : GeneralLinearGroup K V) :
-    IsUnipotent g ↔ _root_.IsNilpotent ((g : End K V) - 1) :=
-  Iff.rfl
-
 /-- The identity automorphism is semisimple. -/
 @[simp]
 theorem isSemisimple_one : IsSemisimple (1 : GeneralLinearGroup K V) := by
-  rw [isSemisimple_iff]
+  unfold IsSemisimple
   exact Module.End.isSemisimple_id
 
 /-- The identity automorphism is unipotent. -/
 @[simp]
 theorem isUnipotent_one : IsUnipotent (1 : GeneralLinearGroup K V) := by
-  rw [isUnipotent_iff]
+  unfold IsUnipotent
   simp
 
 section PerfectField
@@ -119,9 +109,11 @@ private theorem exists_jordanDecomposition (g : GeneralLinearGroup K V) :
     apply Commute.units_of_val
     simpa only [hs'_val] using hfs.symm
   refine ⟨⟨s', u'⟩, ?_, ?_, ?_, ?_⟩
-  · rw [isSemisimple_iff, hs'_val]
+  · unfold IsSemisimple
+    rw [hs'_val]
     exact hs
-  · rw [isUnipotent_iff, hu'_sub]
+  · unfold IsUnipotent
+    rw [hu'_sub]
     exact hs'n.isNilpotent_mul_left hn
   · exact (Commute.refl s').inv_right.mul_right hs'g
   · dsimp only [u']
@@ -135,7 +127,7 @@ omit [PerfectField K] [FiniteDimensional K V] in
 private theorem additiveNilpotentPart_isNilpotent
     {s u : GeneralLinearGroup K V} (hu : IsUnipotent u) (hsu : Commute s u) :
     _root_.IsNilpotent (additiveNilpotentPart s u) := by
-  rw [isUnipotent_iff] at hu
+  unfold IsUnipotent at hu
   apply (hsu.units_val.sub_right (Commute.one_right _)).isNilpotent_mul_left
   exact hu
 
@@ -162,13 +154,15 @@ theorem isSemisimple_isUnipotent_unique
     (hs₂ : IsSemisimple s₂) (hu₂ : IsUnipotent u₂) (hc₂ : Commute s₂ u₂)
     (h : s₁ * u₁ = s₂ * u₂) :
     s₁ = s₂ ∧ u₁ = u₂ := by
+  change Module.End.IsSemisimple (s₁ : End K V) at hs₁
+  change Module.End.IsSemisimple (s₂ : End K V) at hs₂
   have hadd : additiveNilpotentPart s₁ u₁ + (s₁ : End K V) =
       additiveNilpotentPart s₂ u₂ + (s₂ : End K V) := by
     rw [additiveNilpotentPart_add, additiveNilpotentPart_add, h]
   have hs : (s₁ : End K V) = (s₂ : End K V) :=
     (Module.End.isNilpotent_isSemisimple_unique
-      (additiveNilpotentPart_isNilpotent hu₁ hc₁) ((isSemisimple_iff s₁).mp hs₁)
-      (additiveNilpotentPart_isNilpotent hu₂ hc₂) ((isSemisimple_iff s₂).mp hs₂)
+      (additiveNilpotentPart_isNilpotent hu₁ hc₁) hs₁
+      (additiveNilpotentPart_isNilpotent hu₂ hc₂) hs₂
       (additiveNilpotentPart_commute hc₁) (additiveNilpotentPart_commute hc₂) hadd).2
   have hs' : s₁ = s₂ := Units.ext hs
   subst s₂
