@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.Geometry.Manifold.ContMDiff.Defs
+public import Mathlib.Geometry.Manifold.SmoothEmbedding
 public import Mathlib.Geometry.Manifold.IsManifold.InteriorBoundary
 public import TauCeti.Geometry.Manifold.Boundary.Model
 
@@ -62,8 +62,9 @@ step and are not proved here.
   `TauCeti.boundaryChartedSpace_chartAt_source` and its companions read off the preferred chart.
 * `TauCeti.isManifold_boundary`: the boundary is a `C^k` manifold over `EuclideanSpace ℝ (Fin n)`.
 * `TauCeti.boundary_boundary_eq_empty`: it is boundaryless.
-* `TauCeti.isClosedEmbedding_boundary_val`, `TauCeti.contMDiff_boundary_val`: the inclusion of the
-  boundary is a closed topological embedding, and is `C^k`.
+* `TauCeti.isClosedEmbedding_boundary_val`, `TauCeti.isImmersion_boundary_val`,
+  `TauCeti.contMDiff_boundary_val`, `TauCeti.isSmoothEmbedding_boundary_val`: the inclusion of the
+  boundary is a closed `C^k` smooth embedding.
 * `TauCeti.boundary_euclideanHalfSpace`: the boundary of the model half-space is the coordinate
   hyperplane, which pins the construction down on a nonempty example.
 
@@ -437,6 +438,69 @@ theorem isClosedEmbedding_boundary_val (hk : k ≠ 0) :
     Topology.IsClosedEmbedding (Subtype.val : ↥((𝓡∂ (n + 1)).boundary M) → M) :=
   ((𝓡∂ (n + 1)).isClosed_boundary hk).isClosedEmbedding_subtypeVal
 
+private def boundaryValComplementLinearEquiv (n : ℕ) :
+    (EuclideanSpace ℝ (Fin n) × ℝ) ≃ₗ[ℝ] EuclideanSpace ℝ (Fin (n + 1)) where
+  toFun x := WithLp.toLp 2 (Fin.cons x.2 x.1)
+  invFun x := (WithLp.toLp 2 (Fin.tail x), x 0)
+  left_inv x := by
+    apply Prod.ext
+    · apply (WithLp.equiv 2 _).injective
+      exact @Fin.tail_cons n (fun _ ↦ ℝ) x.2 x.1.ofLp
+    · rfl
+  right_inv x := by
+    apply (WithLp.equiv 2 _).injective
+    exact Fin.cons_self_tail x.ofLp
+  map_add' x y := by
+    apply (WithLp.equiv 2 _).injective
+    ext i
+    refine Fin.cases ?_ (fun j ↦ ?_) i <;> rfl
+  map_smul' c x := by
+    apply (WithLp.equiv 2 _).injective
+    ext i
+    refine Fin.cases ?_ (fun j ↦ ?_) i <;> rfl
+
+private noncomputable def boundaryValComplementEquiv (n : ℕ) :
+    (EuclideanSpace ℝ (Fin n) × ℝ) ≃L[ℝ] EuclideanSpace ℝ (Fin (n + 1)) :=
+  (boundaryValComplementLinearEquiv n).toContinuousLinearEquiv
+
+variable (M) in
+/-- The inclusion of the boundary into the manifold is a `C^k` immersion. In the preferred
+boundary and ambient charts it is the coordinate inclusion with one-dimensional complement. -/
+theorem isImmersion_boundary_val (hk : k ≠ 0) :
+    letI := boundaryChartedSpace (n := n) M hk
+    Manifold.IsImmersion 𝓘(ℝ, EuclideanSpace ℝ (Fin n)) (𝓡∂ (n + 1)) k
+      (Subtype.val : ↥((𝓡∂ (n + 1)).boundary M) → M) := by
+  let _ := boundaryChartedSpace (n := n) M hk
+  let _ := isManifold_boundary (n := n) (k := k) M hk
+  apply Manifold.IsImmersionOfComplement.isImmersion (F := ℝ)
+  intro p
+  apply Manifold.IsImmersionAtOfComplement.mk_of_continuousAt
+    continuous_subtype_val.continuousAt (boundaryValComplementEquiv n)
+    (chartAt (EuclideanSpace ℝ (Fin n)) p)
+    (chartAt (EuclideanHalfSpace (n + 1)) (p : M))
+    (mem_chart_source _ p) (mem_chart_source _ (p : M))
+    (IsManifold.chart_mem_maximalAtlas p) (IsManifold.chart_mem_maximalAtlas (p : M))
+  intro z hz
+  rw [OpenPartialHomeomorph.extend_target] at hz
+  have hzdom : z ∈ (chartAt (EuclideanSpace ℝ (Fin n)) p).target := by
+    simpa only [modelWithCornersSelf_coe_symm, preimage_id_eq, id_eq] using hz.1
+  have hz' : euclideanHalfSpaceParam n z ∈
+      (chartAt (EuclideanHalfSpace (n + 1)) (p : M)).target := by
+    -- Unfold the preferred boundary-chart target as the pullback of the ambient chart target.
+    change euclideanHalfSpaceParam n z ∈
+      (chartAt (EuclideanHalfSpace (n + 1)) (p : M)).target at hzdom
+    exact hzdom
+  have h1 : ((chartAt (EuclideanSpace ℝ (Fin n)) p).symm z : M) =
+      (chartAt (EuclideanHalfSpace (n + 1)) (p : M)).symm
+        (euclideanHalfSpaceParam n z) :=
+    boundaryChartedSpace_chartAt_symm_apply M hk p hz'
+  simp only [Function.comp_apply, mfld_simps]
+  rw [h1, (chartAt (EuclideanHalfSpace (n + 1)) (p : M)).right_inv hz',
+    modelWithCornersEuclideanHalfSpace_param]
+  ext i
+  refine Fin.cases ?_ (fun j ↦ ?_) i <;>
+    simp [boundaryValComplementEquiv, boundaryValComplementLinearEquiv]
+
 variable (M) in
 /-- The inclusion of the boundary into the manifold is `C^k`: in the boundary chart induced by an
 ambient chart it reads as the linear parametrization of the coordinate hyperplane. -/
@@ -445,29 +509,17 @@ theorem contMDiff_boundary_val (hk : k ≠ 0) :
     ContMDiff 𝓘(ℝ, EuclideanSpace ℝ (Fin n)) (𝓡∂ (n + 1)) k
       (Subtype.val : ↥((𝓡∂ (n + 1)).boundary M) → M) := by
   let _ := boundaryChartedSpace (n := n) M hk
-  intro p
-  rw [contMDiffAt_iff]
-  refine ⟨continuous_subtype_val.continuousAt, ?_⟩
-  have hEq : ∀ z ∈ (boundaryChartAt M hk p).target,
-      (extChartAt (𝓡∂ (n + 1)) (p : M) ∘ Subtype.val ∘
-        (extChartAt 𝓘(ℝ, EuclideanSpace ℝ (Fin n)) p).symm) z =
-        euclideanHalfSpaceBoundaryParam n z := by
-    intro z hz
-    have hz' : euclideanHalfSpaceParam n z ∈
-        (chartAt (EuclideanHalfSpace (n + 1)) (p : M)).target := hz
-    have h1 : ((chartAt (EuclideanSpace ℝ (Fin n)) p).symm z : M) =
-        (chartAt (EuclideanHalfSpace (n + 1)) (p : M)).symm (euclideanHalfSpaceParam n z) :=
-      boundaryChart_symm_apply (hk := hk) (p := p)
-        (he := chart_mem_atlas (EuclideanHalfSpace (n + 1)) (p : M)) hz'
-    simp only [Function.comp_apply, mfld_simps]
-    rw [h1, (chartAt (EuclideanHalfSpace (n + 1)) (p : M)).right_inv hz',
-      modelWithCornersEuclideanHalfSpace_param]
-  have hmem : extChartAt 𝓘(ℝ, EuclideanSpace ℝ (Fin n)) p p ∈ (boundaryChartAt M hk p).target :=
-    (boundaryChartAt M hk p).map_source (mem_chart_source _ p)
-  refine ContDiffWithinAt.congr_of_eventuallyEq
-    (euclideanHalfSpaceBoundaryParam n).contDiff.contDiffAt.contDiffWithinAt
-    (Filter.eventuallyEq_of_mem (nhdsWithin_le_nhds
-      ((boundaryChartAt M hk p).open_target.mem_nhds hmem)) hEq) (hEq _ hmem)
+  exact (isImmersion_boundary_val (n := n) (k := k) M hk).contMDiff
+
+variable (M) in
+/-- The inclusion of the boundary into the manifold is a `C^k` smooth embedding. -/
+theorem isSmoothEmbedding_boundary_val (hk : k ≠ 0) :
+    letI := boundaryChartedSpace (n := n) M hk
+    Manifold.IsSmoothEmbedding 𝓘(ℝ, EuclideanSpace ℝ (Fin n)) (𝓡∂ (n + 1)) k
+      (Subtype.val : ↥((𝓡∂ (n + 1)).boundary M) → M) := by
+  let _ := boundaryChartedSpace (n := n) M hk
+  exact ⟨isImmersion_boundary_val (n := n) (k := k) M hk,
+    (isClosedEmbedding_boundary_val (n := n) (k := k) M hk).isEmbedding⟩
 
 end Boundary
 
