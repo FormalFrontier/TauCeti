@@ -1,0 +1,102 @@
+/-
+Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+-/
+module
+
+public import Mathlib.AlgebraicGeometry.EllipticCurve.Affine.Point
+
+/-!
+# Isogenies of Weierstrass curves
+
+An isogeny between affine Weierstrass curves over a field is represented contravariantly by a
+pullback from the target coordinate ring to the source function field. The pullback is required to
+send the source point at infinity to the target point at infinity. Algebraically, this means that
+the source coordinate ring is integral over the image of the target coordinate ring.
+
+This file introduces that data and its identity element. The integrality condition installs the
+algebra structure induced by the chosen pullback only locally: different pullbacks generally give
+different algebra structures on the same function field, so registering one globally would create
+a typeclass diamond.
+
+## Main definitions
+
+* `TauCeti.CoordinatePullback`: the contravariant coordinate-ring map of a morphism.
+* `TauCeti.CoordinatePullback.MapsInfinity`: the integrality condition expressing pointedness.
+* `TauCeti.Isogeny`: a coordinate pullback satisfying `MapsInfinity`.
+* `TauCeti.Isogeny.id`: the identity isogeny.
+
+This is the opening milestone of Layer 1 of the elliptic-curves roadmap. The definition is the
+coordinate-ring form of D. Angdinata's function-field definition of an isogeny. The geometric
+interpretation follows Silverman, *The Arithmetic of Elliptic Curves*, II.2.4. No ellipticity or
+normality assumption is needed to state the data.
+-/
+
+public section
+
+namespace TauCeti
+
+open WeierstrassCurve.Affine
+
+variable {F : Type*} [Field F]
+
+/-- A contravariant pullback from the target coordinate ring to the source function field. -/
+abbrev CoordinatePullback (W₁ W₂ : WeierstrassCurve.Affine F) :=
+  W₂.CoordinateRing →ₐ[F] W₁.FunctionField
+
+namespace CoordinatePullback
+
+/-- The source point at infinity maps to the target point at infinity: every element of the
+source coordinate ring is integral over the target coordinate ring acting through `pullback`.
+
+The algebra structure induced by `pullback` is deliberately local to the definition. -/
+def MapsInfinity {W₁ W₂ : WeierstrassCurve.Affine F}
+    (pullback : CoordinatePullback W₁ W₂) : Prop :=
+  letI := pullback.toRingHom.toAlgebra
+  ∀ x : W₁.CoordinateRing,
+    algebraMap W₁.CoordinateRing W₁.FunctionField x ∈
+      integralClosure W₂.CoordinateRing W₁.FunctionField
+
+/-- The identity coordinate pullback, embedding a coordinate ring into its fraction field. -/
+noncomputable def id (W : WeierstrassCurve.Affine F) : CoordinatePullback W W :=
+  IsScalarTower.toAlgHom F W.CoordinateRing W.FunctionField
+
+/-- The identity coordinate pullback maps infinity to infinity. -/
+theorem mapsInfinity_id (W : WeierstrassCurve.Affine F) : MapsInfinity (id W) := by
+  unfold MapsInfinity
+  have h : (id W).toRingHom.toAlgebra =
+      (inferInstance : Algebra W.CoordinateRing W.FunctionField) := by
+    apply Algebra.algebra_ext
+    intro x
+    rfl
+  rw [h]
+  exact fun _ ↦ isIntegral_algebraMap
+
+end CoordinatePullback
+
+/-- The pullback data of a nonzero isogeny between affine Weierstrass curves.
+
+The `mapsInfinity` field is the algebraic form of pointedness. Injectivity and finiteness of the
+induced extension are the next results in the isogeny development; they are consequences of this
+condition rather than additional structure fields. -/
+@[ext]
+structure Isogeny (W₁ W₂ : WeierstrassCurve.Affine F) where
+  /-- The contravariant map out of the target coordinate ring. -/
+  pullback : CoordinatePullback W₁ W₂
+  /-- The source point at infinity maps to the target point at infinity. -/
+  mapsInfinity : pullback.MapsInfinity
+
+namespace Isogeny
+
+/-- The identity isogeny. -/
+noncomputable def id (W : WeierstrassCurve.Affine F) : Isogeny W W where
+  pullback := CoordinatePullback.id W
+  mapsInfinity := CoordinatePullback.mapsInfinity_id W
+
+@[simp]
+theorem id_pullback (W : WeierstrassCurve.Affine F) : (id W).pullback = CoordinatePullback.id W :=
+  (rfl)
+
+end Isogeny
+
+end TauCeti
