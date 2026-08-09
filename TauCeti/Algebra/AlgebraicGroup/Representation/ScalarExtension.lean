@@ -12,8 +12,8 @@ public import TauCeti.Algebra.Coalgebra.Comodule.Finite.ScalarExtension
 
 Let `H` be a Hopf algebra over a commutative semiring `R`, and let `A` be a commutative
 `R`-algebra. Scalar extension of the underlying-module functor is constructed for all comodules
-in `TauCeti.Algebra.Coalgebra.Comodule.Finite.ScalarExtension` and restricted there to
-finitely generated comodules:
+in `TauCeti.Algebra.Coalgebra.Comodule.ScalarExtension` and restricted to finitely generated
+comodules in `TauCeti.Algebra.Coalgebra.Comodule.Finite.ScalarExtension`:
 
 ```text
 FGComoduleCat R H ⥤ SemimoduleCat A,    M ↦ A ⊗[R] M.
@@ -50,16 +50,16 @@ open scoped TensorProduct
 
 namespace TauCeti.Tannaka
 
-universe u v
+universe u v w x
 
 variable (R : Type u) [CommSemiring R]
 variable (H : Type v) [Semiring H] [HopfAlgebra R H]
-variable (A : Type u) [CommSemiring A] [Algebra R A]
+variable (A : Type x) [CommSemiring A] [Algebra R A]
 
 /-- An `A`-valued point of `H` acts by an automorphism on the scalar extension of each
 comodule. -/
 private noncomputable def pointIso (g : WithConv (H →ₐ[R] A))
-    (M : ComoduleCat.{u, v, u} R H) :
+    (M : ComoduleCat.{u, v, w} R H) :
     (ComoduleCat.scalarExtensionFunctor R H A).obj M ≅
       (ComoduleCat.scalarExtensionFunctor R H A).obj M :=
   (eqToIso (ComoduleCat.scalarExtensionFunctor_obj R H A M)).trans
@@ -70,7 +70,7 @@ private noncomputable def pointIso (g : WithConv (H →ₐ[R] A))
 formula for the opaque scalar-extension functor. -/
 @[simp]
 private theorem pointIso_hom (g : WithConv (H →ₐ[R] A))
-    (M : ComoduleCat.{u, v, u} R H) :
+    (M : ComoduleCat.{u, v, w} R H) :
     (pointIso R H A g M).hom =
       eqToHom (ComoduleCat.scalarExtensionFunctor_obj R H A M) ≫
         (Comodule.pointsAction M g).toModuleIsoₛ.hom ≫
@@ -81,7 +81,7 @@ private theorem pointIso_hom (g : WithConv (H →ₐ[R] A))
 the object formula for the opaque scalar-extension functor. -/
 @[simp]
 private theorem pointIso_inv (g : WithConv (H →ₐ[R] A))
-    (M : ComoduleCat.{u, v, u} R H) :
+    (M : ComoduleCat.{u, v, w} R H) :
     (pointIso R H A g M).inv =
       eqToHom (ComoduleCat.scalarExtensionFunctor_obj R H A M) ≫
         (Comodule.pointsAction M g).toModuleIsoₛ.inv ≫
@@ -110,7 +110,7 @@ noncomputable def pointNatIso (g : WithConv (H →ₐ[R] A)) :
 /-- The component of the point natural automorphism is the transported point action. -/
 @[simp]
 theorem pointNatIso_hom_app (g : WithConv (H →ₐ[R] A))
-    (M : ComoduleCat.{u, v, u} R H) :
+    (M : ComoduleCat.{u, v, w} R H) :
     (pointNatIso R H A g).hom.app M =
       eqToHom (ComoduleCat.scalarExtensionFunctor_obj R H A M) ≫
         (Comodule.pointsAction M g).toModuleIsoₛ.hom ≫
@@ -121,7 +121,7 @@ theorem pointNatIso_hom_app (g : WithConv (H →ₐ[R] A))
 action. -/
 @[simp]
 theorem pointNatIso_inv_app (g : WithConv (H →ₐ[R] A))
-    (M : ComoduleCat.{u, v, u} R H) :
+    (M : ComoduleCat.{u, v, w} R H) :
     (pointNatIso R H A g).inv.app M =
       eqToHom (ComoduleCat.scalarExtensionFunctor_obj R H A M) ≫
         (Comodule.pointsAction M g).toModuleIsoₛ.inv ≫
@@ -190,7 +190,7 @@ private theorem fgPointNatIsoHom_apply (g : WithConv (H →ₐ[R] A)) :
 /-- The component of the finite-comodule point automorphism is the transported point action. -/
 @[simp]
 theorem fgPointNatIsoHom_hom_app (g : WithConv (H →ₐ[R] A))
-    (M : FGComoduleCat.{u, v, u} R H) :
+    (M : FGComoduleCat.{u, v, w} R H) :
     (fgPointNatIsoHom R H A g).hom.app M =
       eqToHom (FGComoduleCat.scalarExtensionFunctor_obj R H A M) ≫
         (Comodule.pointsAction M g).toModuleIsoₛ.hom ≫
@@ -210,7 +210,7 @@ theorem fgPointNatIsoHom_hom_app (g : WithConv (H →ₐ[R] A))
 point action. -/
 @[simp]
 theorem fgPointNatIsoHom_inv_app (g : WithConv (H →ₐ[R] A))
-    (M : FGComoduleCat.{u, v, u} R H) :
+    (M : FGComoduleCat.{u, v, w} R H) :
     (fgPointNatIsoHom R H A g).inv.app M =
       eqToHom (FGComoduleCat.scalarExtensionFunctor_obj R H A M) ≫
         (Comodule.pointsAction M g).toModuleIsoₛ.inv ≫
