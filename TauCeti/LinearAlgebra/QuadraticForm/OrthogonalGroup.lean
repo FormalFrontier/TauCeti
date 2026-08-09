@@ -367,6 +367,19 @@ theorem coe_reflectionOrthogonal :
     (reflectionOrthogonal Q v : M ≃ₗ[R] M) = reflection Q v := by
   simp only [reflectionOrthogonal]
 
+/-- The bundled reflection is an involution, so it has order dividing two in the orthogonal
+group. -/
+theorem reflectionOrthogonal_mul_self :
+    reflectionOrthogonal Q v * reflectionOrthogonal Q v = 1 :=
+  Subtype.ext <| by
+    simp only [Subgroup.coe_mul, coe_reflectionOrthogonal, Subgroup.coe_one, reflection_mul_self]
+
+/-- The bundled reflection is its own inverse in the orthogonal group. -/
+@[simp]
+theorem reflectionOrthogonal_inv :
+    (reflectionOrthogonal Q v)⁻¹ = reflectionOrthogonal Q v :=
+  inv_eq_of_mul_eq_one_left (reflectionOrthogonal_mul_self Q v)
+
 end Reflection
 
 section CartanDieudonneStep
