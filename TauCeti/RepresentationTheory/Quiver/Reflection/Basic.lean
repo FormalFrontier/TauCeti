@@ -181,7 +181,8 @@ theorem hom_reflect (i : V) (a b : Reflect V i) : (a ⟶ b) = reflectHom i a b :
 
 An arrow of the reflected quiver is a *cast* of an arrow of `V`, because `TauCeti.Quiver.reflectHom`
 is an `if` on equality with `i`. The two casts that the reflection of a representation at a sink
-uses are named here, together with their computation rules. -/
+uses are named here, together with their computation rules and the matching elimination rules,
+which read an arbitrary arrow of the reflected quiver as one of the two. -/
 
 /-- An arrow `b ⟶ i` of `V`, read as the reversed arrow `i ⟶ b` of the reflected quiver. -/
 def reflectArrow (i : V) {b : V} (e : b ⟶ i) :
@@ -207,6 +208,28 @@ theorem cast_reflectArrow (i : V) {b : V} (e : b ⟶ i)
 theorem cast_reflectArrowOfNe {i a b : V} (ha : a ≠ i) (hb : b ≠ i) (e : a ⟶ b)
     (h : @_root_.Quiver.Hom (Reflect V i) (reflectQuiver i) a b = (a ⟶ b)) :
     cast h (reflectArrowOfNe ha hb e) = e :=
+  (cast_cast _ _ _).trans (cast_eq _ _)
+
+/-- **Every arrow out of `i` in the reflected quiver is a reversed arrow.** Reading such an arrow
+back as an arrow of `V` and reflecting it again recovers it, so a case analysis on the endpoints
+lets `TauCeti.Quiver.reflectArrow` eliminate an arbitrary arrow `i ⟶ b` of the reflected quiver.
+Stated for an arbitrary proof of the type equality, like `TauCeti.Quiver.cast_reflectArrow`. -/
+@[simp]
+theorem reflectArrow_cast (i : V) {b : V}
+    (e : @_root_.Quiver.Hom (Reflect V i) (reflectQuiver i) i b)
+    (h : @_root_.Quiver.Hom (Reflect V i) (reflectQuiver i) i b = (b ⟶ i)) :
+    reflectArrow i (cast h e) = e :=
+  (cast_cast _ _ _).trans (cast_eq _ _)
+
+/-- **Every arrow of the reflected quiver away from `i` is an untouched arrow.** Reading such an
+arrow back as an arrow of `V` and reflecting it again recovers it, so
+`TauCeti.Quiver.reflectArrowOfNe` eliminates an arbitrary arrow `a ⟶ b` of the reflected quiver
+with `a ≠ i` and `b ≠ i`. -/
+@[simp]
+theorem reflectArrowOfNe_cast {i a b : V} (ha : a ≠ i) (hb : b ≠ i)
+    (e : @_root_.Quiver.Hom (Reflect V i) (reflectQuiver i) a b)
+    (h : @_root_.Quiver.Hom (Reflect V i) (reflectQuiver i) a b = (a ⟶ b)) :
+    reflectArrowOfNe ha hb (cast h e) = e :=
   (cast_cast _ _ _).trans (cast_eq _ _)
 
 /-- Reflecting at a sink turns it into a source: no arrow of the reflected quiver enters `i`. -/

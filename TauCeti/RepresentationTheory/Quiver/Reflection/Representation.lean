@@ -233,6 +233,7 @@ theorem reflectRep_obj_of_ne {j : Q} (h : j ≠ i) : (reflectRep M hi).obj j = M
 /-- **A reversed arrow acts by a coordinate projection.** The arrow `i ⟶ b` of the reflected
 quiver coming from an arrow `e : b ⟶ i` of `Q` sends an element of the kernel at `i` to its
 coordinate at `e`. -/
+@[simp]
 theorem reflectRep_map_reflectArrow {b : Q} (hb : b ≠ i) (e : b ⟶ i) :
     (reflectRep M hi).map (reflectArrow i e).toPath
       = eqToHom (reflectRep_obj_self M hi) ≫
@@ -246,6 +247,7 @@ theorem reflectRep_map_reflectArrow {b : Q} (hb : b ≠ i) (e : b ⟶ i) :
   rfl
 
 /-- **An arrow away from the reflected vertex acts unchanged.** -/
+@[simp]
 theorem reflectRep_map_reflectArrowOfNe {a b : Q} (ha : a ≠ i) (hb : b ≠ i) (e : a ⟶ b) :
     (reflectRep M hi).map (reflectArrowOfNe ha hb e).toPath
       = eqToHom (reflectRep_obj_of_ne M hi ha) ≫ M.map e.toPath ≫
@@ -299,8 +301,11 @@ theorem dimVector_reflectRep_self_add
 
 /-- **The reflection acts on dimension vectors by the simple reflection at the sink.** The
 hypothesis is that the sum of the arrows into `i` is onto; it is exactly what makes the kernel at
-`i` have the dimension the reflection `sᵢ` predicts, and it fails for the vertex simple `Sᵢ`. -/
-theorem dimVector_reflectRep [DecidableEq Q] (hM : ∀ j : Q, FiniteDimensional k (M.obj j))
+`i` have the dimension the reflection `sᵢ` predicts, and it fails for the vertex simple `Sᵢ`. As
+in `TauCeti.dimVector_reflectRep_self_add`, only the vertex spaces at the sources of arrows into
+`i` need be finite-dimensional; away from `i` the dimension vector is unchanged. -/
+theorem dimVector_reflectRep [DecidableEq Q]
+    (hM : ∀ e : Σ b : Q, (b ⟶ i), FiniteDimensional k (M.obj e.1))
     (hs : Function.Surjective (incomingSum M i)) :
     (fun j : Q ↦ (dimVector (reflectRep M hi) j : ℤ))
       = vertexPreReflection Q i (fun j ↦ (dimVector M j : ℤ)) := by
@@ -309,7 +314,7 @@ theorem dimVector_reflectRep [DecidableEq Q] (hM : ∀ j : Q, FiniteDimensional 
   · have hzero : ∀ v : Q, Fintype.card (j ⟶ v) = 0 := fun v ↦
       Fintype.card_eq_zero_iff.mpr (hi.isEmpty_hom v)
     rw [vertexPreReflection_apply_self]
-    have h := dimVector_reflectRep_self_add M hi (fun e ↦ hM e.1) hs
+    have h := dimVector_reflectRep_self_add M hi hM hs
     have h' : ((dimVector (reflectRep M hi) j : ℤ)) + (dimVector M j : ℤ)
         = ∑ b : Q, ((Fintype.card (b ⟶ j) : ℤ) * (dimVector M b : ℤ)) := by
       exact_mod_cast congrArg (fun n : ℕ ↦ (n : ℤ)) h
