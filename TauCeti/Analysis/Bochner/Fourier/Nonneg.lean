@@ -637,15 +637,15 @@ Fourier transform for the symmetric inner-product pairing. -/
 private theorem integral_fourierIntegral_mul (f g : V → ℂ)
     (hf : Integrable f) (hg : Integrable g) :
     ∫ ξ, 𝓕 f ξ * g ξ = ∫ x, f x * 𝓕 g x := by
+  have hbridge : ∀ (f : V → ℂ) (ξ : V),
+      VectorFourier.fourierIntegral 𝐞 volume (innerₗ V) f ξ = 𝓕 f ξ := fun f ξ => by
+    rw [Real.fourier_eq]
+    simp only [VectorFourier.fourierIntegral, innerₗ_apply_apply]
   have h := VectorFourier.integral_fourierIntegral_smul_eq_flip (L := innerₗ V)
     Real.continuous_fourierChar
     (show Continuous fun p : V × V => (innerₗ V) p.1 p.2 from continuous_inner) hf hg
-  simpa only [flip_innerₗ, smul_eq_mul,
-    -- `𝓕` on `V → ℂ` is *defined* as `VectorFourier.fourierIntegral 𝐞 volume (innerₗ V)`
-      -- (the `Real.instFourierTransform` field); Mathlib names only the pointwise
-      -- `Real.fourier_eq`, so the function-level bridge is this definitional rewrite.
-      show VectorFourier.fourierIntegral 𝐞 volume (innerₗ V) = fun f : V → ℂ => 𝓕 f from rfl]
-    using h
+  simp only [flip_innerₗ, smul_eq_mul, hbridge] at h
+  exact h
 
 /-- The Fourier transform of a Gaussian is integrable (it is again a Gaussian). -/
 private theorem integrable_fourierIntegral_gaussian {t : ℝ} (ht : 0 < t) :
