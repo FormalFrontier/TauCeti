@@ -52,7 +52,9 @@ open Module
 
 universe u v
 
-variable {K : Type u} {V : Type v} [Field K] [AddCommGroup V] [Module K V]
+section Definitions
+
+variable {K : Type u} {V : Type v} [CommRing K] [AddCommGroup V] [Module K V]
 
 /-- A linear automorphism is semisimple if its underlying linear endomorphism is semisimple. -/
 def IsSemisimple (g : GeneralLinearGroup K V) : Prop :=
@@ -64,7 +66,8 @@ def IsUnipotent (g : GeneralLinearGroup K V) : Prop :=
 
 /-- The identity automorphism is semisimple. -/
 @[simp]
-theorem isSemisimple_one : IsSemisimple (1 : GeneralLinearGroup K V) := by
+theorem isSemisimple_one [IsSemisimpleModule K V] :
+    IsSemisimple (1 : GeneralLinearGroup K V) := by
   unfold IsSemisimple
   exact Module.End.isSemisimple_id
 
@@ -74,9 +77,12 @@ theorem isUnipotent_one : IsUnipotent (1 : GeneralLinearGroup K V) := by
   unfold IsUnipotent
   simp
 
+end Definitions
+
 section PerfectField
 
-variable [PerfectField K] [FiniteDimensional K V]
+variable {K : Type u} {V : Type v} [Field K] [AddCommGroup V] [Module K V]
+  [PerfectField K] [FiniteDimensional K V]
 
 private theorem exists_jordanDecomposition (g : GeneralLinearGroup K V) :
     ∃ p : GeneralLinearGroup K V × GeneralLinearGroup K V,
@@ -154,8 +160,7 @@ theorem isSemisimple_isUnipotent_unique
     (hs₂ : IsSemisimple s₂) (hu₂ : IsUnipotent u₂) (hc₂ : Commute s₂ u₂)
     (h : s₁ * u₁ = s₂ * u₂) :
     s₁ = s₂ ∧ u₁ = u₂ := by
-  change Module.End.IsSemisimple (s₁ : End K V) at hs₁
-  change Module.End.IsSemisimple (s₂ : End K V) at hs₂
+  unfold IsSemisimple at hs₁ hs₂
   have hadd : additiveNilpotentPart s₁ u₁ + (s₁ : End K V) =
       additiveNilpotentPart s₂ u₂ + (s₂ : End K V) := by
     rw [additiveNilpotentPart_add, additiveNilpotentPart_add, h]
