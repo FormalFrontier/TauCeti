@@ -63,8 +63,9 @@ supremum over the `i` of a fixed parity.
   involution, by reversal, and by an isometry of quadratic forms.
 * `TauCeti.CliffordAlgebra.contractLeft_mem_filtration_succ` and
   `TauCeti.CliffordAlgebra.contractLeft_mem_filtration`,
-  `TauCeti.CliffordAlgebra.changeForm_mem_filtration` and
-  `TauCeti.CliffordAlgebra.changeFormEquiv_map_filtration`: contraction and change of
+  `TauCeti.CliffordAlgebra.changeForm_mem_filtration`, and
+  `TauCeti.CliffordAlgebra.changeFormEquiv_map_filtration` and
+  `TauCeti.CliffordAlgebra.changeForm_mem_filtration_iff`: contraction and change of
   quadratic form respect the filtration, contraction lowers every positive step by one, and the
   change-form equivalence transports every step exactly.
 * `TauCeti.CliffordAlgebra.fg_filtration`: each step is a finitely generated module when `M` is.
@@ -126,6 +127,13 @@ theorem mem_filtrationPreviousRestricted_iff (Q : QuadraticForm R M) (k : ℕ)
     x ∈ filtrationPreviousRestricted Q k ↔
       (x : CliffordAlgebra Q) ∈ filtrationPrevious Q k :=
   Iff.rfl
+
+/-- The restricted preceding filtration is trivial in degree zero. -/
+@[simp]
+theorem filtrationPreviousRestricted_zero (Q : QuadraticForm R M) :
+    filtrationPreviousRestricted Q 0 = ⊥ := by
+  ext x
+  simp [filtrationPreviousRestricted, Submodule.submoduleOf]
 
 /-- In successor degree, the restricted preceding filtration is the preceding filtration step
 viewed inside the successor step. -/
@@ -588,6 +596,13 @@ private theorem changeFormEquiv_mem_filtration_iff_aux
     (x : CliffordAlgebra Q) : (changeFormEquiv h) x ∈ filtration Q' k ↔ x ∈ filtration Q k := by
   rw [← changeFormEquiv_map_filtration Q h k, Submodule.mem_map_equiv]
   rw [(changeFormEquiv h).symm_apply_apply]
+
+/-- Membership in the filtration is invariant under the change-form equivalence. The statement
+uses `changeForm`, the simplifier's normal form for applying `changeFormEquiv`. -/
+@[simp]
+theorem changeForm_mem_filtration_iff (h : B.toQuadraticMap = Q' - Q) (k : ℕ)
+    (x : CliffordAlgebra Q) : changeForm h x ∈ filtration Q' k ↔ x ∈ filtration Q k := by
+  simpa only [changeFormEquiv_apply] using changeFormEquiv_mem_filtration_iff_aux Q h k x
 
 end ChangeForm
 
