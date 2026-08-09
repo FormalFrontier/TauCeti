@@ -58,14 +58,6 @@ theorem windingNumber_eq_sum_support (C : Cycle) (z : ℂ) :
   conv_lhs => rw [FreeAbelianGroup.eq_sum_support_coeff_smul_of C]
   simp only [map_sum, map_zsmul, windingNumber_of, ← Int.cast_smul_eq_zsmul ℂ, smul_eq_mul]
 
-/-- A point outside the trace of a cycle is avoided by every curve in its canonical support. -/
-private theorem avoids_of_mem_support {C : Cycle} {z : ℂ} (hz : z ∉ trace C)
-    {γ : PiecewiseC1ClosedCurve} (hγ : γ ∈ FreeAbelianGroup.support C) :
-    ∀ t ∈ uIcc γ.a γ.b, γ t ≠ z := by
-  intro t ht htz
-  apply hz
-  exact mem_trace_iff.mpr ⟨γ, hγ, t, ht, htz⟩
-
 /-- **Ordinary-integral formula off the trace.** At a point `z` outside a contour cycle's trace,
 the generalized winding number is the normalized ordinary cycle integral of the Cauchy kernel
 `w ↦ (w - z)⁻¹`. No principal value remains: every generator in the canonical support avoids

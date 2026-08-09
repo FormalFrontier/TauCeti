@@ -88,25 +88,29 @@ private theorem filtrationGradedPreMul_apply (Q : QuadraticForm R M) (i j : ℕ)
   rfl
 
 private theorem filtrationGradedPreMul_mem_ker_left (Q : QuadraticForm R M) (i j : ℕ) :
-    Submodule.comap (filtration Q i).subtype (filtrationPrevious Q i) ≤
+    filtrationPreviousRestricted Q i ≤
       (filtrationGradedPreMul Q i j).ker := by
   rintro ⟨x, hx⟩ hprevious
+  rw [mem_filtrationPreviousRestricted_iff] at hprevious
   rw [LinearMap.mem_ker]
   ext y
   simp only [filtrationGradedPreMul_apply, LinearMap.zero_apply]
   rw [Submodule.Quotient.mk_eq_zero]
+  rw [mem_filtrationPreviousRestricted_iff]
   -- The filtration product lemma is stated for ambient Clifford-algebra elements.
   change (x : CliffordAlgebra Q) * (y : CliffordAlgebra Q) ∈ filtrationPrevious Q (i + j)
   exact mul_mem_filtrationPrevious_left Q i j hprevious y.property
 
 private theorem filtrationGradedPreMul_mem_ker_right (Q : QuadraticForm R M) (i j : ℕ) :
-    Submodule.comap (filtration Q j).subtype (filtrationPrevious Q j) ≤
+    filtrationPreviousRestricted Q j ≤
       (filtrationGradedPreMul Q i j).flip.ker := by
   rintro ⟨y, hy⟩ hprevious
+  rw [mem_filtrationPreviousRestricted_iff] at hprevious
   rw [LinearMap.mem_ker]
   ext x
   simp only [LinearMap.flip_apply, LinearMap.zero_apply]
   rw [filtrationGradedPreMul_apply, Submodule.Quotient.mk_eq_zero]
+  rw [mem_filtrationPreviousRestricted_iff]
   -- The filtration product lemma is stated for ambient Clifford-algebra elements.
   change (x : CliffordAlgebra Q) * (y : CliffordAlgebra Q) ∈ filtrationPrevious Q (i + j)
   exact mul_mem_filtrationPrevious_right Q i j x.property hprevious
@@ -139,9 +143,10 @@ private theorem filtrationGradedPiece_cast_mk' (Q : QuadraticForm R M) {i j : �
   subst j
   rfl
 
-private theorem filtration_subtype_cast (Q : QuadraticForm R M) {i j : ℕ}
+private theorem filtration_coe_cast (Q : QuadraticForm R M) {i j : ℕ}
     (h : i = j) (x : filtration Q i) :
-    (filtration Q j).subtype (cast (congrArg (fun k => ↥(filtration Q k)) h) x) = x := by
+    ((cast (congrArg (fun k => ↥(filtration Q k)) h) x : filtration Q j) :
+      CliffordAlgebra Q) = x := by
   subst j
   rfl
 
@@ -161,8 +166,8 @@ theorem filtrationGradedMul_assoc (Q : QuadraticForm R M) (i j k : ℕ)
               simp only [filtrationGradedMul_apply_mk]
               rw [filtrationGradedPiece_cast_mk' Q (Nat.add_assoc i j k)]
               apply (Submodule.Quotient.eq _).mpr
-              rw [Submodule.mem_comap, map_sub,
-                filtration_subtype_cast Q (Nat.add_assoc i j k)]
+              rw [mem_filtrationPreviousRestricted_iff, Submodule.coe_sub,
+                filtration_coe_cast Q (Nat.add_assoc i j k)]
               -- Compare the two representatives in the ambient Clifford algebra.
               change ((x : CliffordAlgebra Q) * y) * z - x * (y * z) ∈
                 filtrationPrevious Q (i + (j + k))
@@ -221,7 +226,7 @@ theorem filtrationGradedAlgebraMap₀_apply (Q : QuadraticForm R M) (r : R) :
       (⟨algebraMap R (CliffordAlgebra Q) 1, algebraMap_mem_filtration Q 1 0⟩ : filtration Q 0) =
     Submodule.Quotient.mk (⟨1, one_mem_filtration Q 0⟩ : filtration Q 0)
   apply (Submodule.Quotient.eq _).mpr
-  rw [Submodule.mem_comap]
+  rw [mem_filtrationPreviousRestricted_iff]
   -- Quotient equality is ambient membership, the form in which `map_one` applies.
   change algebraMap R (CliffordAlgebra Q) 1 - 1 ∈ filtrationPrevious Q 0
   rw [map_one, sub_self]
@@ -241,8 +246,8 @@ theorem filtrationGradedAlgebraMap₀_apply (Q : QuadraticForm R M) (r : R) :
       rw [filtrationGradedMul_apply_mk]
       rw [filtrationGradedPiece_cast_mk' Q (Nat.zero_add k).symm]
       apply (Submodule.Quotient.eq _).mpr
-      rw [Submodule.mem_comap, map_sub,
-        filtration_subtype_cast Q (Nat.zero_add k).symm]
+      rw [mem_filtrationPreviousRestricted_iff, Submodule.coe_sub,
+        filtration_coe_cast Q (Nat.zero_add k).symm]
       -- Quotient equality is now ambient membership, the form of the filtration product API.
       change (1 : CliffordAlgebra Q) * (x : CliffordAlgebra Q) - x ∈
         filtrationPrevious Q (0 + k)
@@ -263,8 +268,8 @@ theorem filtrationGradedAlgebraMap₀_apply (Q : QuadraticForm R M) (r : R) :
       rw [filtrationGradedMul_apply_mk]
       rw [filtrationGradedPiece_cast_mk' Q (Nat.add_zero k).symm]
       apply (Submodule.Quotient.eq _).mpr
-      rw [Submodule.mem_comap, map_sub,
-        filtration_subtype_cast Q (Nat.add_zero k).symm]
+      rw [mem_filtrationPreviousRestricted_iff, Submodule.coe_sub,
+        filtration_coe_cast Q (Nat.add_zero k).symm]
       -- Quotient equality is now ambient membership, the form of the filtration product API.
       change (x : CliffordAlgebra Q) * 1 - x ∈ filtrationPrevious Q (k + 0)
       rw [mul_one, sub_self]
@@ -372,7 +377,8 @@ noncomputable instance filtrationGradedGRing {Q : QuadraticForm R M} :
       -- The cast needs an ambient membership witness; `filtration_mul` supplies that witness.
       rw [filtrationGradedPiece_cast_mk' Q (Nat.zero_add k)]
       apply (Submodule.Quotient.eq _).mpr
-      rw [Submodule.mem_comap, map_sub, filtration_subtype_cast Q (Nat.zero_add k)]
+      rw [mem_filtrationPreviousRestricted_iff, Submodule.coe_sub,
+        filtration_coe_cast Q (Nat.zero_add k), Submodule.coe_smul]
       change algebraMap R (CliffordAlgebra Q) r * (x : CliffordAlgebra Q) - r • x ∈
         filtrationPrevious Q k
       rw [Algebra.smul_def, sub_self]
@@ -388,7 +394,7 @@ noncomputable instance filtrationGradedGRing {Q : QuadraticForm R M} :
     (Submodule.Quotient.mk _) = Submodule.Quotient.mk _
   rw [filtrationGradedMul_apply_mk]
   apply (Submodule.Quotient.eq _).mpr
-  rw [Submodule.mem_comap]
+  rw [mem_filtrationPreviousRestricted_iff]
   -- Quotient equality is ambient membership, the form in which `map_mul` applies.
   change algebraMap R (CliffordAlgebra Q) r * algebraMap R (CliffordAlgebra Q) s -
       algebraMap R (CliffordAlgebra Q) (r * s) ∈ filtrationPrevious Q 0
@@ -414,8 +420,8 @@ theorem filtrationGradedAlgebraMap₀_commutes (Q : QuadraticForm R M) (r : R) (
       rw [filtrationGradedMul_apply_mk, filtrationGradedMul_apply_mk]
       rw [filtrationGradedPiece_cast_mk' Q ((Nat.zero_add k).trans (Nat.add_zero k).symm)]
       apply (Submodule.Quotient.eq _).mpr
-      rw [Submodule.mem_comap, map_sub,
-        filtration_subtype_cast Q ((Nat.zero_add k).trans (Nat.add_zero k).symm)]
+      rw [mem_filtrationPreviousRestricted_iff, Submodule.coe_sub,
+        filtration_coe_cast Q ((Nat.zero_add k).trans (Nat.add_zero k).symm)]
       -- Quotient equality is ambient filtration membership; this exposes the coercions needed
       -- for the Clifford algebra's scalar-commutation theorem.
       change algebraMap R (CliffordAlgebra Q) r * (x : CliffordAlgebra Q) -

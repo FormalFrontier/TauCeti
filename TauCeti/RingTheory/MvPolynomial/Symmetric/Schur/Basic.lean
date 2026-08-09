@@ -62,6 +62,8 @@ involution, a separate target of the Schur-Weyl roadmap, and none of the results
 * `TauCeti.coeff_diagramSchurPoly`: the coefficients of a Schur polynomial are the images of the
   Kostka numbers, `TauCeti.coeff_schurPoly` is its form in an arbitrary finite alphabet, and
   `TauCeti.coeff_schurPoly_partWeight` reads it at the exponent of a partition.
+* `TauCeti.eval_diagramSchurPoly`: evaluating a Schur polynomial sums the monomials of its
+  tableaux.
 * `TauCeti.diagramSchurPoly_eq_zero_iff` and `TauCeti.schurPoly_eq_zero_iff`: a Schur polynomial
   vanishes exactly for a shape taller than its alphabet.
 * `TauCeti.isHomogeneous_diagramSchurPoly` and `TauCeti.isHomogeneous_schurPoly`: a Schur
@@ -168,6 +170,14 @@ the generating function of the semistandard Young tableaux of shape `μ` in the 
 noncomputable def diagramSchurPoly : MvPolynomial (Fin N) R :=
   ∑ T : BoundedSSYT N μ, monomial (BoundedSSYT.weight T) 1
 
+/-- The defining sum of a Schur polynomial, one weight monomial per bounded tableau of the
+shape.  `TauCeti.diagramSchurPoly` is public, but its *body* is not exposed — this file's
+`public section` carries no `@[expose]` — so no equation lemma for it reaches a downstream module;
+this restatement is what such a module rewrites with. -/
+theorem diagramSchurPoly_eq_sum :
+    diagramSchurPoly N R μ = ∑ T : BoundedSSYT N μ, monomial (BoundedSSYT.weight T) 1 :=
+  (rfl)
+
 variable {N R μ}
 
 /-- **The coefficients of a Schur polynomial are the Kostka numbers**: the coefficient of `x^d` in
@@ -181,6 +191,17 @@ theorem coeff_diagramSchurPoly (d : Fin N →₀ ℕ) :
   simp only [coeff_monomial]
   rw [Finset.sum_boole, ← BoundedSSYT.card_weight_eq d, Nat.card_eq_fintype_card,
     Fintype.card_subtype]
+
+/-- **A Schur polynomial is the generating function of its tableaux**, in the literal sense: at any
+family of values it is the sum, over the bounded tableaux of its shape, of the product of the
+values raised to the multiplicities of the corresponding letters. -/
+theorem eval_diagramSchurPoly (y : Fin N → R) :
+    eval y (diagramSchurPoly N R μ)
+      = ∑ T : BoundedSSYT N μ, ∏ i, y i ^ BoundedSSYT.weight T i := by
+  rw [diagramSchurPoly, map_sum]
+  refine Finset.sum_congr rfl fun T _ => ?_
+  rw [eval_monomial, one_mul]
+  exact Finsupp.prod_fintype _ _ fun _ => pow_zero _
 
 /-- Scalars pass through a Schur polynomial: every coefficient is the cast of a natural number,
 namely of a Kostka number, and casts of natural numbers are preserved by semiring homomorphisms. -/
@@ -331,6 +352,15 @@ not matter, `s_μ` being symmetric, but symmetry is not proved here. -/
 noncomputable def schurPoly (σ : Type*) [Fintype σ] (R : Type*) [CommSemiring R] {n : ℕ}
     (μ : n.Partition) : MvPolynomial σ R :=
   rename (Fintype.equivFin σ).symm (diagramSchurPoly (Fintype.card σ) R (diagramOf μ))
+
+/-- The Schur polynomial of a partition is the Schur polynomial of its Young diagram, renamed
+along the chosen ordering of the alphabet.  As for `TauCeti.diagramSchurPoly_eq_sum`, the body of
+`TauCeti.schurPoly` is not exposed outside this module, so this restatement is what a downstream
+module rewrites with. -/
+theorem schurPoly_eq_rename (μ : n.Partition) :
+    schurPoly σ R μ
+      = rename (Fintype.equivFin σ).symm (diagramSchurPoly (Fintype.card σ) R (diagramOf μ)) :=
+  (rfl)
 
 /-- The exponent vector on the alphabet `σ` recording the parts of `ν`, read through the ordering
 `Fintype.equivFin σ`: the image of `TauCeti.rowLenWeight` of the Young diagram of `ν`. -/

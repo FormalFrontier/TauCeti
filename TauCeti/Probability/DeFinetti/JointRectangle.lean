@@ -224,7 +224,7 @@ theorem conditionallyIIDWith_of_contractable_pathSpace
       (tailProcess_le_ambient 0 fun j _ => hY_meas j))
     fun m sel hsel S hS B hB => ?_
   simpa only [directingProbabilityMeasure_toMeasure] using
-    measure_inter_blockCylinder_eq_setLIntegral_of_injective hX hsel hB hS
+    measure_inter_blockCylinder_eq_setLIntegral_of_injective hX hsel.injective hB hS
 
 end Probability
 

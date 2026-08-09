@@ -26,6 +26,8 @@ under restriction and under nonnegative scalar multiples. Adding the range condi
 and expanding a Neumann series propagates the range condition from `lambda` to every
 `mu ∈ (0, 2 lambda)`, and iterating that step along the geometric sequence `(3/2)^n lambda`
 covers all of `(0, ∞)`, so `mu • I - A : D(A) → X` is bijective for every `mu > 0`.
+Equivalently, every positive `mu` belongs to the resolvent set, and the resolvent satisfies
+`‖R(mu, A)‖ ≤ 1 / mu`.
 
 The file then connects dissipativity to C₀-semigroups. For a semigroup with growth bound
 `(ω, M)` and `lambda > ω`, the Laplace-transform resolvent turns the bound `‖R(lambda)‖ ≤
@@ -45,6 +47,9 @@ dissipative.
 * `TauCeti.Semigroups.IsDissipative.smul_sub_surjective_of_lt_two_mul` and
   `TauCeti.Semigroups.IsMDissipative.smul_sub_surjective`: on a Banach space the range
   condition at one positive `lambda` propagates to every positive `lambda`.
+* `TauCeti.Semigroups.IsMDissipative.mem_resolventSet` and
+  `TauCeti.Semigroups.IsMDissipative.norm_resolvent_le`: every positive real is a resolvent
+  point, with the contraction bound `‖R(lambda, A)‖ ≤ 1 / lambda`.
 * `TauCeti.Semigroups.StronglyContinuousSemigroup.norm_le_norm_smul_sub_generator`: the
   resolvent-range inequality at a general growth bound `(ω, M)`.
 * `TauCeti.Semigroups.StronglyContinuousSemigroup.smul_sub_generator_bijective`:
@@ -147,8 +152,9 @@ and `lambda • I - A` maps `D(A)` onto `X` for *some* `lambda > 0`.
 The range condition is what upgrades the one-sided estimate of `IsDissipative` to a genuine
 resolvent, and one positive `lambda` already suffices: over a Banach space it propagates to
 every `lambda > 0` (`IsMDissipative.smul_sub_surjective`), so that `lambda • I - A : D(A) → X`
-is bijective there (`IsMDissipative.smul_sub_bijective`), with inverse bounded by `1 / lambda`
-through `IsDissipative.norm_le_of_smul_sub_eq`. Asking for a single `lambda` is the form the
+is bijective there (`IsMDissipative.mem_resolventSet` and
+`LinearPMap.smul_sub_bijective`), with inverse bounded by `1 / lambda` through
+`IsDissipative.norm_le_of_smul_sub_eq`. Asking for a single `lambda` is the form the
 hypothesis takes in the Lumer--Phillips generation theorem — that a densely defined
 m-dissipative operator *is* the generator of a contraction semigroup — which is not yet
 available in this library; its converse half is `ContractionSemigroup.isMDissipative_generator`
@@ -301,13 +307,59 @@ theorem IsMDissipative.smul_sub_surjective {A : X →ₗ.[ℝ] X} (hA : IsMDissi
   refine hA.isDissipative.smul_sub_surjective_of_lt_two_mul (by positivity) (key n) hlambda ?_
   linarith
 
-/-- For an m-dissipative operator, `lambda • I - A` is a bijection from `D(A)` onto `X` for
-every `lambda > 0`: injectivity comes from dissipativity, surjectivity from the propagated
-range condition. -/
-theorem IsMDissipative.smul_sub_bijective {A : X →ₗ.[ℝ] X} (hA : IsMDissipative A)
+/-- For an m-dissipative operator, every positive real belongs to its resolvent set. Moreover,
+the inverse of `lambda • I - A` has norm at most `1 / lambda`.
+
+This packages the propagated range condition and the dissipativity estimate as the bounded
+inverse required by `LinearPMap.IsResolventAt`. -/
+private theorem IsMDissipative.exists_isResolventAt_norm_le {A : X →ₗ.[ℝ] X}
+    (hA : IsMDissipative A)
     {lambda : ℝ} (hlambda : 0 < lambda) :
-    Function.Bijective fun x : A.domain => lambda • (x : X) - A x :=
-  ⟨hA.isDissipative.smul_sub_injective hlambda, hA.smul_sub_surjective hlambda⟩
+    ∃ R : X →L[ℝ] X, LinearPMap.IsResolventAt A lambda R ∧ ‖R‖ ≤ lambda⁻¹ := by
+  obtain ⟨g, R, hRnorm, hgR, hright⟩ := hA.isDissipative.exists_bounded_rightInverse hlambda
+    (hA.smul_sub_surjective hlambda)
+  have hleft : ∀ x : A.domain, R (lambda • (x : X) - A x) = (x : X) := by
+    intro x
+    rw [← hgR]
+    exact congrArg Subtype.val (hA.isDissipative.smul_sub_injective hlambda (hright _))
+  have hmem : ∀ y : X, R y ∈ A.domain := by
+    intro y
+    rw [← hgR]
+    exact (g y).property
+  have hrightR : ∀ y : X, lambda • R y - A ⟨R y, hmem y⟩ = y := by
+    intro y
+    have hsubtype : (⟨R y, hmem y⟩ : A.domain) = g y := Subtype.ext (hgR y).symm
+    calc
+      lambda • R y - A ⟨R y, hmem y⟩ = lambda • (g y : X) - A (g y) :=
+        congrArg₂ (fun u v : X => lambda • u - v) (hgR y).symm (congrArg A hsubtype)
+      _ = y := hright y
+  exact ⟨R, ⟨hmem, hrightR, hleft⟩, hRnorm⟩
+
+/-- Every positive real lies in the resolvent set of an m-dissipative operator. -/
+theorem IsMDissipative.mem_resolventSet {A : X →ₗ.[ℝ] X} (hA : IsMDissipative A)
+    {lambda : ℝ} (hlambda : 0 < lambda) : lambda ∈ LinearPMap.resolventSet A :=
+  let ⟨_, hR, _⟩ := hA.exists_isResolventAt_norm_le hlambda
+  hR.mem_resolventSet
+
+/-- The resolvent of an m-dissipative operator satisfies the contraction bound
+`‖R(lambda, A)‖ ≤ 1 / lambda` at every `lambda > 0`. -/
+theorem IsMDissipative.norm_resolvent_le {A : X →ₗ.[ℝ] X} (hA : IsMDissipative A)
+    {lambda : ℝ} (hlambda : 0 < lambda) :
+    ‖LinearPMap.resolvent A lambda‖ ≤ lambda⁻¹ := by
+  obtain ⟨R, hR, hRnorm⟩ := hA.exists_isResolventAt_norm_le hlambda
+  rw [LinearPMap.resolvent_eq_of_isResolventAt hR]
+  exact hRnorm
+
+/-- The scalar form of the contraction bound for the resolvent of an m-dissipative operator:
+`lambda * ‖R(lambda, A)‖ ≤ 1` for every `lambda > 0`. -/
+theorem IsMDissipative.mul_norm_resolvent_le_one {A : X →ₗ.[ℝ] X} (hA : IsMDissipative A)
+    {lambda : ℝ} (hlambda : 0 < lambda) :
+    lambda * ‖LinearPMap.resolvent A lambda‖ ≤ 1 := by
+  calc
+    lambda * ‖LinearPMap.resolvent A lambda‖ ≤ lambda * lambda⁻¹ := by
+      gcongr
+      exact hA.norm_resolvent_le hlambda
+    _ = 1 := mul_inv_cancel₀ hlambda.ne'
 
 end CompleteSpace
 

@@ -6,6 +6,7 @@ Authors: Chris Birkbeck
 module
 
 public import TauCeti.RingTheory.Valuation.ValuativeRel.Comap
+public import TauCeti.RingTheory.Valuation.Trivial
 public import Mathlib.RingTheory.Valuation.Quotient
 public import Mathlib.RingTheory.Valuation.ExtendToLocalization
 public import Mathlib.Topology.Order
@@ -30,11 +31,14 @@ We define the valuation spectrum `Spv A` following Wedhorn, *Adic Spaces*
 * `TauCeti.ValuationSpectrum.localizationComapSection S B v hS` : Lift `v` to a localization
   `Spv B`.
 * `TauCeti.ValuationSpectrum.suppFun` : The continuous support map `Spv A → Spec A`.
+* `TauCeti.ValuationSpectrum.trivialSection` : The continuous section of `suppFun` given by
+  the trivial valuation attached to a prime ideal; in particular `suppFun` is surjective
+  (`suppFun_surjective`).
 
 ## References
 
 * T. Wedhorn, *Adic Spaces*, arXiv:1910.05934v1, Definition 4.1, Remark 4.3, Remark 4.4,
-  Proposition 4.7(2)
+  Remark 4.6, Proposition 4.7(2)
 
 Ported from the open Mathlib pull request
 [leanprover-community/mathlib4#38009](https://github.com/leanprover-community/mathlib4/pull/38009)
@@ -381,6 +385,60 @@ theorem continuous_suppFun : Continuous (suppFun : Spv A → PrimeSpectrum A) :=
 theorem suppFun_comap {B : Type*} [CommRing B] (φ : A →+* B) (v : Spv B) :
     suppFun (comap φ v) = PrimeSpectrum.comap φ (suppFun v) := by
   ext; simp [mem_supp_iff, comap_vle]
+
+/-! ### The trivial-valuation section of the support map -/
+
+/-- The trivial-valuation section of the support map (Wedhorn, Remark 4.6): the point of
+`Spv A` given by the trivial valuation attached to a prime ideal. -/
+noncomputable def trivialSection (p : PrimeSpectrum A) : Spv A :=
+  ofValuation
+    (Valuation.trivialValuation p.asIdeal : Valuation A (WithZero (Multiplicative ℤ)))
+
+/-- The valuative relation of a trivial-valuation point: `v(f) ≤ v(s)` holds precisely
+when `f` lies in the prime or `s` does not. -/
+@[simp]
+lemma trivialSection_vle_iff (p : PrimeSpectrum A) (f s : A) :
+    (trivialSection p).toValuativeRel.vle f s ↔ f ∈ p.asIdeal ∨ s ∉ p.asIdeal := by
+  rw [trivialSection, vle_ofValuation, Valuation.trivialValuation_apply,
+    Valuation.trivialValuation_apply]
+  constructor
+  · intro h
+    by_cases hf : f ∈ p.asIdeal
+    · exact Or.inl hf
+    · refine Or.inr fun hs ↦ ?_
+      rw [if_neg hf, if_pos hs] at h
+      simp at h
+  · rintro (hf | hs)
+    · simp [hf]
+    · rw [if_neg hs]
+      split <;> simp
+
+/-- `trivialSection` is a section of the support map. -/
+@[simp]
+lemma suppFun_trivialSection (p : PrimeSpectrum A) : suppFun (trivialSection p) = p := by
+  ext x
+  rw [suppFun_asIdeal, trivialSection, supp_ofValuation, Valuation.mem_supp_iff,
+    Valuation.trivialValuation_eq_zero_iff]
+
+/-- The preimage of a basic open under `trivialSection` is the corresponding basic open of
+the prime spectrum: `trivialSection ⁻¹' Spv(A)(f/s) = D(s)`. -/
+lemma trivialSection_preimage_basicOpen (f s : A) :
+    trivialSection ⁻¹' basicOpen f s = (PrimeSpectrum.basicOpen s : Set (PrimeSpectrum A)) := by
+  ext p
+  have h0 : (0 : A) ∈ p.asIdeal := p.asIdeal.zero_mem
+  simp only [Set.mem_preimage, mem_basicOpen_iff, trivialSection_vle_iff, SetLike.mem_coe,
+    PrimeSpectrum.mem_basicOpen, h0, not_true_eq_false, or_false]
+  tauto
+
+/-- `trivialSection` is continuous. -/
+lemma continuous_trivialSection :
+    Continuous (trivialSection : PrimeSpectrum A → Spv A) :=
+  continuous_generateFrom_iff.mpr fun _ ⟨f, s, hU⟩ ↦
+    hU ▸ trivialSection_preimage_basicOpen f s ▸ (PrimeSpectrum.basicOpen s).isOpen
+
+/-- The support map is surjective; the trivial valuations provide a section. -/
+theorem suppFun_surjective : Function.Surjective (suppFun : Spv A → PrimeSpectrum A) :=
+  fun p ↦ ⟨trivialSection p, suppFun_trivialSection p⟩
 
 end PrimeSpectrum
 

@@ -63,39 +63,6 @@ noncomputable def tensor
   let _ : Comodule R H W := toComodule Psi
   ofComodule (Comodule.tensor R H V W)
 
-private theorem comm_tensorCombine_eq_distribBaseChange_symm_tmul
-    (_H : Type v) (A : CommAlgCat.{max u v w} R) (p : V ⊗[R] A) (q : W ⊗[R] A) :
-    TensorProduct.comm R (V ⊗[R] W) A
-        (Comodule.tensorCombine (R := R) (C := A) (M := V) (N := W) (p ⊗ₜ[R] q)) =
-      (TensorProduct.AlgebraTensorModule.distribBaseChange R A V W).symm
-        (TensorProduct.comm R V A p ⊗ₜ[A] TensorProduct.comm R W A q) := by
-  induction p using TensorProduct.induction_on with
-  | zero => simp
-  | add p p' hp hp' => simpa only [add_tmul, map_add] using congrArg₂ (fun a b ↦ a + b) hp hp'
-  | tmul v a =>
-      induction q using TensorProduct.induction_on with
-      | zero => simp
-      | add q q' hq hq' =>
-          simpa only [tmul_add, map_add] using congrArg₂ (fun a b ↦ a + b) hq hq'
-      | tmul w b => simp
-
-private theorem evaluated_tensorCombine
-    (A : CommAlgCat.{max u v w} R) (x : H →ₐ[R] A)
-    (p : V ⊗[R] H) (q : W ⊗[R] H) :
-    TensorProduct.comm R (V ⊗[R] W) A
-        (TensorProduct.map LinearMap.id x.toLinearMap
-          (Comodule.tensorCombine (R := R) (C := H) (M := V) (N := W) (p ⊗ₜ[R] q))) =
-      (TensorProduct.AlgebraTensorModule.distribBaseChange R A V W).symm
-        (TensorProduct.comm R V A (TensorProduct.map LinearMap.id x.toLinearMap p) ⊗ₜ[A]
-          TensorProduct.comm R W A (TensorProduct.map LinearMap.id x.toLinearMap q)) := by
-  have h := LinearMap.congr_fun
-    (Comodule.lTensor_comp_tensorCombine (R := R) (C := H) (D := A)
-      (M := V) (N := W) x) (p ⊗ₜ[R] q)
-  simp only [LinearMap.comp_apply, TensorProduct.map_tmul] at h
-  rw [LinearMap.lTensor_def] at h
-  rw [h]
-  exact comm_tensorCombine_eq_distribBaseChange_symm_tmul H A _ _
-
 /-- On a pure tensor, the tensor point action applies the two component actions diagonally and
 transports the result back through scalar-extension distributivity. -/
 @[simp]
@@ -110,15 +77,16 @@ theorem tensor_action_tmul
           (Psi.action A x).val (1 ⊗ₜ[R] w)) := by
   let _ : Comodule R H V := toComodule Theta
   let _ : Comodule R H W := toComodule Psi
-  rw [tensor, ofComodule_action_tmul, Comodule.tensor_coact, Comodule.tensorCoact_tmul]
-  rw [evaluated_tensorCombine A x.ofConv
-    (Comodule.coact (R := R) (C := H) (M := V) v)
-    (Comodule.coact (R := R) (C := H) (M := W) w)]
-  rw [← ofComodule_toComodule Theta, ← ofComodule_toComodule Psi,
-    ofComodule_action_tmul, ofComodule_action_tmul]
-  simp only [one_smul]
-  rw [← (TensorProduct.AlgebraTensorModule.distribBaseChange R A V W).symm.map_smul,
-    TensorProduct.smul_tmul']
+  have hTheta : (Theta.action A x).val = Comodule.endOfPoint V x.ofConv := by
+    simpa only [ofComodule_toComodule] using
+      (ofComodule_action_val_eq_endOfPoint (toComodule Theta) A x)
+  have hPsi : (Psi.action A x).val = Comodule.endOfPoint W x.ofConv := by
+    simpa only [ofComodule_toComodule] using
+      (ofComodule_action_val_eq_endOfPoint (toComodule Psi) A x)
+  rw [tensor, ofComodule_action_val_eq_endOfPoint, hTheta, hPsi]
+  simpa only [mul_one] using
+    (Comodule.endOfPoint_tensor_tmul (R := R) (H := H) (A := A)
+      x.ofConv a (1 : A) v w).symm
 
 /-- The tensor point action, expressed by conjugating the tensor of the two component linear maps
 through scalar-extension distributivity. -/
