@@ -34,6 +34,10 @@ dimension count but no isotropic/Lagrangian vocabulary, which this file supplies
 ## Main declarations
 
 * `TauCeti.SymplecticForm.orthogonal`: the symplectic complement `L^ω`.
+* `TauCeti.SymplecticForm.restrict`: the restriction of `ω` to a subspace on which it stays
+  nondegenerate, again a symplectic form.
+* `TauCeti.SymplecticForm.restrict_nondegenerate_iff_disjoint_orthogonal`: the restriction to `L`
+  is nondegenerate exactly when `L` meets `L^ω` only in `0`.
 * `TauCeti.SymplecticForm.IsIsotropic`, `IsCoisotropic`, `IsLagrangian`: the three size predicates.
 * `TauCeti.SymplecticForm.isIsotropic_iff`: isotropy is the vanishing of `ω` on `L × L`.
 * `TauCeti.SymplecticForm.isLagrangian_iff`: Lagrangian is isotropic and coisotropic.
@@ -66,6 +70,27 @@ orthogonal complement of `L` for the bilinear form `ω`. -/
 lemma orthogonal_def (ω : SymplecticForm V) (L : Submodule ℝ V) :
     ω.orthogonal L = ω.toBilinForm.orthogonal L := rfl
 
+/-- The restriction of a symplectic form to a subspace on which it remains nondegenerate.
+
+Nondegeneracy is genuinely a hypothesis: `ω` restricts to `0` on any isotropic subspace. -/
+@[expose] def restrict (ω : SymplecticForm V) (L : Submodule ℝ V)
+    (h : (ω.toBilinForm.restrict L).Nondegenerate) : SymplecticForm L where
+  toBilinForm := ω.toBilinForm.restrict L
+  isAlt v := ω.isAlt (v : V)
+  nondegenerate := h
+
+@[simp]
+lemma restrict_toBilinForm (ω : SymplecticForm V) (L : Submodule ℝ V)
+    (h : (ω.toBilinForm.restrict L).Nondegenerate) :
+    (ω.restrict L h).toBilinForm = ω.toBilinForm.restrict L :=
+  rfl
+
+@[simp]
+lemma restrict_apply (ω : SymplecticForm V) (L : Submodule ℝ V)
+    (h : (ω.toBilinForm.restrict L).Nondegenerate) (v w : L) :
+    ω.restrict L h v w = ω (v : V) (w : V) :=
+  rfl
+
 @[simp]
 lemma mem_orthogonal_iff {x : V} : x ∈ ω.orthogonal L ↔ ∀ y ∈ L, ω y x = 0 := Iff.rfl
 
@@ -76,6 +101,27 @@ lemma mem_orthogonal_iff' {x : V} : x ∈ ω.orthogonal L ↔ ∀ y ∈ L, ω x 
     linarith [ω.neg_eq x y]
   · have := h y hy
     linarith [ω.neg_eq y x]
+
+/-- The restriction of `ω` to `L` is nondegenerate exactly when `L` meets its symplectic
+complement only in `0`. -/
+lemma restrict_nondegenerate_iff_disjoint_orthogonal (ω : SymplecticForm V)
+    (L : Submodule ℝ V) :
+    (ω.toBilinForm.restrict L).Nondegenerate ↔ Disjoint L (ω.orthogonal L) := by
+  constructor
+  · intro h
+    rw [Submodule.disjoint_def]
+    intro v hv hv'
+    have hz : (⟨v, hv⟩ : L) = 0 := h.1 ⟨v, hv⟩ fun w => by
+      exact mem_orthogonal_iff'.1 hv' w w.2
+    exact congrArg Subtype.val hz
+  · exact ω.toBilinForm.nondegenerate_restrict_of_disjoint_orthogonal ω.isRefl
+
+/-- A subspace meeting its symplectic complement only in `0` carries a nondegenerate restriction
+of `ω`. -/
+lemma nondegenerate_restrict_of_disjoint_orthogonal (ω : SymplecticForm V)
+    {L : Submodule ℝ V} (h : Disjoint L (ω.orthogonal L)) :
+    (ω.toBilinForm.restrict L).Nondegenerate :=
+  (ω.restrict_nondegenerate_iff_disjoint_orthogonal L).2 h
 
 /-- The symplectic complement is antitone: a larger subspace has a smaller complement. -/
 lemma orthogonal_le (h : L ≤ L') : ω.orthogonal L' ≤ ω.orthogonal L :=
@@ -165,6 +211,20 @@ lemma finrank_orthogonal (ω : SymplecticForm V) (L : Submodule ℝ V) :
 lemma orthogonal_orthogonal (ω : SymplecticForm V) (L : Submodule ℝ V) :
     ω.orthogonal (ω.orthogonal L) = L :=
   ω.toBilinForm.orthogonal_orthogonal ω.nondegenerate ω.isRefl L
+
+/-- A subspace is complementary to its symplectic complement exactly when it meets it only in
+`0`. -/
+lemma isCompl_orthogonal_iff_disjoint (ω : SymplecticForm V) (L : Submodule ℝ V) :
+    IsCompl L (ω.orthogonal L) ↔ Disjoint L (ω.orthogonal L) :=
+  LinearMap.BilinForm.isCompl_orthogonal_iff_disjoint ω.isRefl
+
+/-- The symplectic complement of a subspace disjoint from it is itself disjoint from *its*
+symplectic complement, so `ω` restricts nondegenerately to it as well. -/
+lemma disjoint_orthogonal_orthogonal (ω : SymplecticForm V) {L : Submodule ℝ V}
+    (h : Disjoint L (ω.orthogonal L)) :
+    Disjoint (ω.orthogonal L) (ω.orthogonal (ω.orthogonal L)) := by
+  rw [ω.orthogonal_orthogonal L]
+  exact h.symm
 
 /-- An isotropic subspace has at most half the dimension of the ambient space. -/
 lemma IsIsotropic.two_mul_finrank_le (h : ω.IsIsotropic L) :
