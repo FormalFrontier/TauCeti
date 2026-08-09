@@ -17,15 +17,16 @@ type.  The proof exhibits each symmetrized Cartan matrix as `Bᴴ * B`, where th
 are the standard simple roots in rational Euclidean coordinates.  Linear independence of those
 columns then makes the Gram matrix positive definite.
 
-For the simply-laced types `E₆`, `E₇`, and `E₈`, the first columns of a single eight-dimensional
-coordinate model are used.  The nonsimply-laced types use the integral symmetrizers `(1, 1, 2, 2)`
-for `F₄` and `(3, 1)` for `G₂`.
+Only `E₈` needs the coordinate model among the simply-laced types: the `E₆` and `E₇` Cartan
+matrices are the principal submatrices of the `E₈` one on the first six and seven indices, so
+`TauCeti.IsFiniteType.submatrix` delivers them.  The nonsimply-laced types use the integral
+symmetrizers `(1, 1, 2, 2)` for `F₄` and `(3, 1)` for `G₂`.
 
 ## Main results
 
+* `TauCeti.DynkinType.isFiniteType_cartanMatrix_E8`
 * `TauCeti.DynkinType.isFiniteType_cartanMatrix_E6`
 * `TauCeti.DynkinType.isFiniteType_cartanMatrix_E7`
-* `TauCeti.DynkinType.isFiniteType_cartanMatrix_E8`
 * `TauCeti.DynkinType.isFiniteType_cartanMatrix_F4`
 * `TauCeti.DynkinType.isFiniteType_cartanMatrix_G2`
 
@@ -78,48 +79,6 @@ private def rootsE : _root_.Matrix (Fin 8) (Fin 8) ℚ :=
      -1 / 2,  0,  0,  0,  0,  0,  0,  1;
       1 / 2,  0,  0,  0,  0,  0,  0,  0]
 
-private def rootsE6 : _root_.Matrix (Fin 8) (Fin 6) ℚ :=
-  rootsE.submatrix id (Fin.castAdd 2)
-
-/-- The standard Cartan matrix of type `E₆` is of finite type. -/
-theorem isFiniteType_cartanMatrix_E6 : IsFiniteType E6.cartanMatrix := by
-  refine isFiniteType_of (fun i ↦ cartanMatrix_apply_same E6 i)
-    (fun i j hij ↦ cartanMatrix_apply_le_zero_of_ne E6 hij)
-    (d := fun _ ↦ 1) (fun _ ↦ by positivity) ?_
-  have hgram :
-      _root_.Matrix.of (fun i j ↦ (1 : ℚ) * (CartanMatrix.E₆ i j : ℚ)) = rootsE6ᴴ * rootsE6 := by
-    ext i j
-    fin_cases i <;> fin_cases j <;>
-      norm_num [rootsE6, rootsE, Fin.castAdd, Fin.castLE, CartanMatrix.E₆,
-        _root_.Matrix.mul_apply, Fin.sum_univ_succ, _root_.Matrix.cons_val_succ]
-  have hunit : IsUnit (_root_.Matrix.of fun i j ↦ (1 : ℚ) * (CartanMatrix.E₆ i j : ℚ)) := by
-    rw [_root_.Matrix.isUnit_iff_isUnit_det, isUnit_iff_ne_zero, det_mul_intCast,
-      CartanMatrix.E₆_det]
-    norm_num
-  simp only [cartanMatrix_E6]
-  exact posDef_of_gram _ _ hgram hunit
-
-private def rootsE7 : _root_.Matrix (Fin 8) (Fin 7) ℚ :=
-  rootsE.submatrix id (Fin.castAdd 1)
-
-/-- The standard Cartan matrix of type `E₇` is of finite type. -/
-theorem isFiniteType_cartanMatrix_E7 : IsFiniteType E7.cartanMatrix := by
-  refine isFiniteType_of (fun i ↦ cartanMatrix_apply_same E7 i)
-    (fun i j hij ↦ cartanMatrix_apply_le_zero_of_ne E7 hij)
-    (d := fun _ ↦ 1) (fun _ ↦ by positivity) ?_
-  have hgram :
-      _root_.Matrix.of (fun i j ↦ (1 : ℚ) * (CartanMatrix.E₇ i j : ℚ)) = rootsE7ᴴ * rootsE7 := by
-    ext i j
-    fin_cases i <;> fin_cases j <;>
-      norm_num [rootsE7, rootsE, Fin.castAdd, Fin.castLE, CartanMatrix.E₇,
-        _root_.Matrix.mul_apply, Fin.sum_univ_succ, _root_.Matrix.cons_val_succ]
-  have hunit : IsUnit (_root_.Matrix.of fun i j ↦ (1 : ℚ) * (CartanMatrix.E₇ i j : ℚ)) := by
-    rw [_root_.Matrix.isUnit_iff_isUnit_det, isUnit_iff_ne_zero, det_mul_intCast,
-      CartanMatrix.E₇_det]
-    norm_num
-  simp only [cartanMatrix_E7]
-  exact posDef_of_gram _ _ hgram hunit
-
 /-- The standard Cartan matrix of type `E₈` is of finite type. -/
 theorem isFiniteType_cartanMatrix_E8 : IsFiniteType E8.cartanMatrix := by
   refine isFiniteType_of (fun i ↦ cartanMatrix_apply_same E8 i)
@@ -137,6 +96,26 @@ theorem isFiniteType_cartanMatrix_E8 : IsFiniteType E8.cartanMatrix := by
     norm_num
   simp only [cartanMatrix_E8]
   exact posDef_of_gram _ _ hgram hunit
+
+/-- The standard Cartan matrix of type `E₆` is of finite type: it is the principal submatrix of the
+`E₈` Cartan matrix on the first six indices. -/
+theorem isFiniteType_cartanMatrix_E6 : IsFiniteType E6.cartanMatrix := by
+  have hsub : CartanMatrix.E₆
+      = CartanMatrix.E₈.submatrix (Fin.castAdd 2 : Fin 6 → Fin 8) (Fin.castAdd 2) := by
+    ext i j
+    fin_cases i <;> fin_cases j <;> rfl
+  simp only [cartanMatrix_E6, hsub]
+  exact (cartanMatrix_E8 ▸ isFiniteType_cartanMatrix_E8).submatrix (Fin.castAdd_injective 6 2)
+
+/-- The standard Cartan matrix of type `E₇` is of finite type: it is the principal submatrix of the
+`E₈` Cartan matrix on the first seven indices. -/
+theorem isFiniteType_cartanMatrix_E7 : IsFiniteType E7.cartanMatrix := by
+  have hsub : CartanMatrix.E₇
+      = CartanMatrix.E₈.submatrix (Fin.castAdd 1 : Fin 7 → Fin 8) (Fin.castAdd 1) := by
+    ext i j
+    fin_cases i <;> fin_cases j <;> rfl
+  simp only [cartanMatrix_E7, hsub]
+  exact (cartanMatrix_E8 ▸ isFiniteType_cartanMatrix_E8).submatrix (Fin.castAdd_injective 7 1)
 
 private def rootsF4 : _root_.Matrix (Fin 4) (Fin 4) ℚ :=
   !![ 1,  0,  0, -1;
