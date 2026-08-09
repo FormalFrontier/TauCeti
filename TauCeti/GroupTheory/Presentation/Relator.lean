@@ -46,8 +46,8 @@ abbrev PresentationWord (α : Type*) := List (α × Bool)
 /-- A human-readable relator expression.
 
 The commutator constructor uses the convention `[r, s] = r * s * r⁻¹ * s⁻¹`, matching
-Mathlib's `commutatorElement`. Sources using the opposite convention should exchange the arguments
-when transcribing a relation. -/
+Mathlib's `commutatorElement`. A source using the convention
+`[r, s] = r⁻¹ * s⁻¹ * r * s` should be transcribed as `comm (inv r) (inv s)`. -/
 inductive Relator (α : Type*) where
   /-- A generator. -/
   | gen (x : α)
