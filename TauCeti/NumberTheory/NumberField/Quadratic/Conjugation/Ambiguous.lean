@@ -55,12 +55,14 @@ theorem map_ringOfIntegersQuadraticConj_eq_self_of_mem_ramifiedPrimes
     [𝔭.LiesOver (span {(p : ℤ)})] :
     Ideal.map (ringOfIntegersQuadraticConj hmin hgen) 𝔭 = 𝔭 := by
   have hK : finrank ℚ K = 2 := finrank_rat_eq_two hmin hgen
-  -- Push forward along `σ`'s canonical `ℤ`-algebra form `toIntAlgEquiv` (same underlying map, by
-  -- `RingEquiv.coe_toIntAlgEquiv`): it is again a prime of `𝓞 K` over `(p)`, hence equals `𝔭`.
-  have hmemset : Ideal.map (ringOfIntegersQuadraticConj hmin hgen).toIntAlgEquiv 𝔭 ∈
-      (span {(p : ℤ)} : Ideal ℤ).primesOver (𝓞 K) := ⟨inferInstance, inferInstance⟩
-  rw [primesOver_eq_singleton_of_mem_ramifiedPrimes hK hmem 𝔭, Set.mem_singleton_iff] at hmemset
-  simpa only [RingEquiv.coe_toIntAlgEquiv] using hmemset
+  -- `𝔭.map σ` lies over `(p)`: `σ`'s `ℤ`-algebra form `toIntAlgEquiv` has the same underlying map
+  -- (`RingEquiv.coe_toIntAlgEquiv`) and carries `𝔭` to a prime over `(p)`.
+  have hlo : (Ideal.map (ringOfIntegersQuadraticConj hmin hgen) 𝔭).LiesOver (span {(p : ℤ)}) :=
+    Ideal.LiesOver.of_eq_map_equiv (span {(p : ℤ)})
+      (ringOfIntegersQuadraticConj hmin hgen).toIntAlgEquiv rfl
+  have hmemset : Ideal.map (ringOfIntegersQuadraticConj hmin hgen) 𝔭 ∈
+      (span {(p : ℤ)} : Ideal ℤ).primesOver (𝓞 K) := ⟨inferInstance, hlo⟩
+  rwa [primesOver_eq_singleton_of_mem_ramifiedPrimes hK hmem 𝔭, Set.mem_singleton_iff] at hmemset
 
 /-- **A class is fixed by quadratic conjugation iff it is 2-torsion.** Because quadratic conjugation
 acts on `Cl(𝓞 K)` by inversion, the classes it fixes are exactly those equal to their own inverse,
@@ -82,10 +84,10 @@ theorem mem_nonZeroDivisors_of_liesOver_of_ne_bot {I : Ideal ℤ} (hI : I ≠ �
 /-- The prime above a ramified rational prime is a nonzero divisor of the ideal monoid, the
 specialization of `mem_nonZeroDivisors_of_liesOver_of_ne_bot` to `I = (p)`. -/
 theorem mem_nonZeroDivisors_of_mem_ramifiedPrimes {p : ℕ} (hmem : p ∈ ramifiedPrimes K)
-    (𝔭 : Ideal (𝓞 K)) [𝔭.LiesOver (span {(p : ℤ)})] : 𝔭 ∈ nonZeroDivisors (Ideal (𝓞 K)) :=
-  mem_nonZeroDivisors_of_liesOver_of_ne_bot
-    (by rw [ne_eq, Ideal.span_singleton_eq_bot]
-        exact_mod_cast (prime_of_mem_ramifiedPrimes hmem).pos.ne') 𝔭
+    (𝔭 : Ideal (𝓞 K)) [𝔭.LiesOver (span {(p : ℤ)})] : 𝔭 ∈ nonZeroDivisors (Ideal (𝓞 K)) := by
+  refine mem_nonZeroDivisors_of_liesOver_of_ne_bot (I := span {(p : ℤ)}) ?_ 𝔭
+  rw [ne_eq, Ideal.span_singleton_eq_bot, Int.natCast_eq_zero]
+  exact (prime_of_mem_ramifiedPrimes hmem).pos.ne'
 
 /-- **The class of a ramified prime is 2-torsion.** In a degree-two number field, the prime `𝔭`
 above a ramified rational prime `p` satisfies `𝔭² = p 𝓞 K`, the extension of the principal ideal
@@ -96,9 +98,11 @@ theorem classGroupMk0_sq_eq_one_of_mem_ramifiedPrimes (hK : finrank ℚ K = 2)
     {p : ℕ} (hmem : p ∈ ramifiedPrimes K) (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime]
     [𝔭.LiesOver (span {(p : ℤ)})] :
     ClassGroup.mk0 ⟨𝔭, mem_nonZeroDivisors_of_mem_ramifiedPrimes hmem 𝔭⟩ ^ 2 = 1 := by
-  have h := mem_nonZeroDivisors_of_mem_ramifiedPrimes hmem 𝔭
+  have hnzd := mem_nonZeroDivisors_of_mem_ramifiedPrimes hmem 𝔭
+  have hsq : (⟨𝔭, hnzd⟩ : nonZeroDivisors (Ideal (𝓞 K))) ^ 2 = ⟨𝔭 ^ 2, pow_mem hnzd 2⟩ :=
+    Subtype.ext (by rw [SubmonoidClass.coe_pow])
   -- `[𝔭]² = [𝔭²] = [p 𝓞 K] = 1`, as `𝔭² = p 𝓞 K` is the extension of the principal ideal `(p)`.
-  rw [pow_two, ← map_mul, ClassGroup.mk0_eq_one_iff (mul_mem h h), ← pow_two,
+  rw [← map_pow, hsq, ClassGroup.mk0_eq_one_iff,
     ← map_span_eq_sq_of_mem_ramifiedPrimes hK hmem 𝔭, Ideal.map_span, Set.image_singleton]
   exact ⟨_, rfl⟩
 
