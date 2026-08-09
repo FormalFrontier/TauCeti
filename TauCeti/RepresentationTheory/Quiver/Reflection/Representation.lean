@@ -347,7 +347,52 @@ private theorem reflectRepMapApp_of_ne
   classical
   simp [reflectRepMapApp, hj]
 
-set_option backward.isDefEq.respectTransparency.types false in
+/-! The components of the reflected morphism are transports of components of the original one, so
+every identity about them is an identity of the original conjugated by `eqToHom`. The next four
+lemmas are those conjugations, stated generically. They are what the proofs below use instead of
+`simp`: the vertex `i` is used both as a vertex of `Q` and as an object of `CategoryTheory.Paths`
+of the reflected quiver, so a goal about the reflected representation is type-correct only up to
+unfolding the semireducible `CategoryTheory.Paths` and `TauCeti.Quiver.Reflect`, which is more than
+the transparency `rw` and `simp` use to build a motive. Conjugation is stripped by `subst` inside
+these lemmas, where no such identification is in play. -/
+
+/-- Transporting a morphism along object equalities and then back leaves it unchanged. -/
+private theorem eqToHom_conjugate_cancel {C : Type*} [Category* C] {X X' Y Y' : C}
+    (hX : X = X') (hY : Y = Y') (f : X' ⟶ Y') :
+    eqToHom hX.symm ≫ (eqToHom hX ≫ f ≫ eqToHom hY.symm) ≫ eqToHom hY = f := by
+  subst X'
+  subst Y'
+  simp
+
+/-- A conjugated identity is the identity. -/
+private theorem eqToHom_conjugate_eq_id {C : Type*} [Category* C] {X Y : C} (h : X = Y)
+    (f : Y ⟶ Y) (hf : f = 𝟙 Y) : eqToHom h ≫ f ≫ eqToHom h.symm = 𝟙 X := by
+  subst h
+  simp [hf]
+
+/-- Conjugation distributes over composition. -/
+private theorem eqToHom_conjugate_eq_comp {C : Type*} [Category* C] {X X' Y Y' Z Z' : C}
+    (hX : X = X') (hY : Y = Y') (hZ : Z = Z') (f : X' ⟶ Z') (g : X' ⟶ Y') (h : Y' ⟶ Z')
+    (hf : f = g ≫ h) :
+    eqToHom hX ≫ f ≫ eqToHom hZ.symm =
+      (eqToHom hX ≫ g ≫ eqToHom hY.symm) ≫ eqToHom hY ≫ h ≫ eqToHom hZ.symm := by
+  subst hX
+  subst hY
+  subst hZ
+  simp [hf]
+
+/-- Conjugating a commuting square by object equalities leaves it commuting. -/
+private theorem eqToHom_conjugate_square {C : Type*} [Category* C] {X X' Y Y' Z Z' W W' : C}
+    (hX : X = X') (hY : Y = Y') (hZ : Z = Z') (hW : W = W')
+    (f : X' ⟶ Y') (g : Y' ⟶ Z') (f' : X' ⟶ W') (g' : W' ⟶ Z') (hfg : f ≫ g = f' ≫ g') :
+    (eqToHom hX ≫ f ≫ eqToHom hY.symm) ≫ eqToHom hY ≫ g ≫ eqToHom hZ.symm =
+      (eqToHom hX ≫ f' ≫ eqToHom hW.symm) ≫ eqToHom hW ≫ g' ≫ eqToHom hZ.symm := by
+  subst hX
+  subst hY
+  subst hZ
+  subst hW
+  simpa using hfg
+
 /-- The components of the reflected morphism are natural for every arrow of the reflected
 quiver. -/
 private theorem reflectRepMapApp_naturality_arrow
@@ -378,8 +423,8 @@ private theorem reflectRepMapApp_naturality_arrow
     rw [reflectRep_map_reflectArrowOfNeOfNe M hi ha hb e',
       reflectRep_map_reflectArrowOfNeOfNe N hi ha hb e']
     rw [reflectRepMapApp_of_ne η hi ha, reflectRepMapApp_of_ne η hi hb]
-    simp only [Category.assoc, eqToHom_trans_assoc, eqToHom_refl, Category.id_comp]
-    rw [η.naturality_assoc]
+    exact eqToHom_conjugate_square _ _ (reflectRep_obj_of_ne N hi hb) _ _ _ _ _
+      (η.naturality e'.toPath)
 
 /-- The morphism between reflected representations induced by a morphism of representations. -/
 private noncomputable def reflectRepMap
@@ -387,7 +432,6 @@ private noncomputable def reflectRepMap
     reflectRep M hi ⟶ reflectRep N hi :=
   Paths.liftNatTrans (reflectRepMapApp η hi) (reflectRepMapApp_naturality_arrow η hi)
 
-set_option backward.isDefEq.respectTransparency.types false in
 /-- **The BGP reflection functor at a sink.** It sends a representation to
 `TauCeti.reflectRep` and a morphism to the induced map between the kernels at the reflected vertex,
 while leaving its components away from that vertex unchanged. -/
@@ -403,9 +447,9 @@ noncomputable def reflectionFunctor (i : Q) (hi : IsSink i) :
     by_cases hj : j = i
     · subst j
       rw [reflectRepMapApp_self]
-      simp
+      exact eqToHom_conjugate_eq_id _ _ (by simp)
     · rw [reflectRepMapApp_of_ne _ _ hj]
-      simp
+      exact eqToHom_conjugate_eq_id _ _ rfl
   map_comp η θ := by
     apply NatTrans.ext
     funext j
@@ -415,12 +459,10 @@ noncomputable def reflectionFunctor (i : Q) (hi : IsSink i) :
     by_cases hj : j = i
     · subst j
       rw [reflectRepMapApp_self, reflectRepMapApp_self, reflectRepMapApp_self]
-      set_option backward.isDefEq.respectTransparency.types false in
-        simp [Category.assoc]
+      exact eqToHom_conjugate_eq_comp _ _ (reflectRep_obj_self _ hi) _ _ _ (by simp)
     · rw [reflectRepMapApp_of_ne _ _ hj, reflectRepMapApp_of_ne _ _ hj,
         reflectRepMapApp_of_ne _ _ hj]
-      set_option backward.isDefEq.respectTransparency.types false in
-        simp [Category.assoc]
+      exact eqToHom_conjugate_eq_comp _ _ (reflectRep_obj_of_ne _ hi hj) _ _ _ rfl
 
 /-- The vertex components of the map supplied by `TauCeti.reflectionFunctor`. -/
 private theorem reflectionFunctor_map_app
@@ -428,14 +470,6 @@ private theorem reflectionFunctor_map_app
     (j : Reflect Q i) :
     ((reflectionFunctor i hi).map η).app j = reflectRepMapApp η hi j :=
   rfl
-
-/-- Transporting a morphism along object equalities and then back leaves it unchanged. -/
-private theorem eqToHom_conjugate_cancel {C : Type*} [Category* C] {X X' Y Y' : C}
-    (hX : X = X') (hY : Y = Y') (f : X' ⟶ Y') :
-    eqToHom hX.symm ≫ (eqToHom hX ≫ f ≫ eqToHom hY.symm) ≫ eqToHom hY = f := by
-  subst X'
-  subst Y'
-  simp
 
 /-- At the reflected vertex, the map supplied by `TauCeti.reflectionFunctor`, transported to the
 two kernels, is the induced kernel map. -/
@@ -496,8 +530,6 @@ theorem reflectionFunctor_map_app_of_ne
   have hN : reflectionFunctor_obj_of_ne i hi N hj = reflectRep_obj_of_ne N hi hj :=
     Subsingleton.elim _ _
   rw [hM, hN]
-  set_option backward.isDefEq.respectTransparency.types false in
-    rw [reflectionFunctor_map_app]
   exact reflectRepMapApp_of_ne η hi hj
 
 end ReflectRep
