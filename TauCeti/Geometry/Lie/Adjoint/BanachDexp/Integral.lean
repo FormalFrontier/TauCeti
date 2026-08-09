@@ -6,6 +6,7 @@ module
 
 public import TauCeti.Geometry.Lie.Adjoint.BanachDexp.Basic
 public import TauCeti.Analysis.Normed.Algebra.OneSubExpNegDivSelf.Integral
+import TauCeti.Analysis.Normed.Algebra.Basic
 
 /-!
 # The integral action formula for the Banach dexp factor
@@ -36,10 +37,7 @@ open NormedSpace MeasureTheory
 
 variable {R : Type*} [NormedRing R] [NormedAlgebra ℝ R] [CompleteSpace R]
 
-/-- Real continuous endomorphisms regarded as a rational normed algebra in this module. -/
-noncomputable local instance normedAlgebraRatContinuousLinearMapRealId :
-    NormedAlgebra ℚ (R →L[ℝ] R) :=
-  NormedAlgebra.restrictScalars ℚ ℝ _
+attribute [local instance] TauCeti.normedAlgebraRatOfReal
 
 /-- The Banach dexp factor is the integral of the corresponding operator exponential. -/
 theorem banachDexpFactor_eq_integral_exp (x : R) :
@@ -51,7 +49,7 @@ theorem banachDexpFactor_eq_integral_exp (x : R) :
 `exp (-t x)`. -/
 theorem banachDexpFactor_apply_eq_integral_conj (x y : R) :
     banachDexpFactor x y =
-      ∫ t in (0 : ℝ)..1, exp ((-t) • x) * y * exp (t • x) := by
+      ∫ t in (0 : ℝ)..1, exp (-(t • x)) * y * exp (t • x) := by
   rw [banachDexpFactor_eq_integral_exp]
   have hint : IntervalIntegrable
       (fun t : ℝ ↦ exp (t • (-continuousCommutator x))) volume 0 1 :=
@@ -62,8 +60,7 @@ theorem banachDexpFactor_apply_eq_integral_conj (x y : R) :
   dsimp only
   have hscale :
       t • (-continuousCommutator x) = continuousCommutator ((-t) • x) := by
-    ext z
-    simp [continuousCommutator_apply, smul_sub]
+    rw [map_smul, neg_smul, smul_neg]
   rw [hscale, exp_continuousCommutator_apply]
   simp
 
