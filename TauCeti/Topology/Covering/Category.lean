@@ -122,10 +122,21 @@ def isoMk {p q : CoveringSpace X} (e : (p : TopCat) ≅ (q : TopCat))
   hom := homMk e.hom w
   inv := homMk e.inv (by rw [e.inv_comp_eq, w])
 
+@[simp]
+theorem isoMk_hom_hom_left {p q : CoveringSpace X} (e : (p : TopCat) ≅ (q : TopCat))
+    (w : e.hom ≫ q.proj = p.proj) : (isoMk e w).hom.hom.left = e.hom := by
+  simp [isoMk]
+
+@[simp]
+theorem isoMk_inv_hom_left {p q : CoveringSpace X} (e : (p : TopCat) ≅ (q : TopCat))
+    (w : e.hom ≫ q.proj = p.proj) : (isoMk e w).inv.hom.left = e.inv := by
+  simp [isoMk]
+
 /-- Reconstructing a covering space from its projection gives an isomorphic object. -/
 def mkProjIso (p : CoveringSpace X) : mk p.proj p.isCoveringMap_proj ≅ p :=
   isoMk (Iso.refl _)
 
+/-- An isomorphism of covering spaces induces an isomorphism of their total spaces. -/
 instance {p q : CoveringSpace X} (f : p ⟶ q) [IsIso f] : IsIso f.hom.left :=
   inferInstanceAs (IsIso ((forget X ⋙ Over.forget X).map f))
 
@@ -219,10 +230,23 @@ def isoMk {p q : ConnectedCoveringSpace X} (e : (p : TopCat) ≅ (q : TopCat))
   hom := homMk e.hom w
   inv := homMk e.inv (by rw [e.inv_comp_eq, w])
 
+@[simp]
+theorem isoMk_hom_hom_left {p q : ConnectedCoveringSpace X}
+    (e : (p : TopCat) ≅ (q : TopCat)) (w : e.hom ≫ q.proj = p.proj) :
+    (isoMk e w).hom.hom.left = e.hom := by
+  simp [isoMk]
+
+@[simp]
+theorem isoMk_inv_hom_left {p q : ConnectedCoveringSpace X}
+    (e : (p : TopCat) ≅ (q : TopCat)) (w : e.hom ≫ q.proj = p.proj) :
+    (isoMk e w).inv.hom.left = e.inv := by
+  simp [isoMk]
+
 /-- Reconstructing a connected covering space from its projection gives an isomorphic object. -/
 def mkProjIso (p : ConnectedCoveringSpace X) : mk p.proj p.isCoveringMap_proj ≅ p :=
   isoMk (Iso.refl _)
 
+/-- An isomorphism of connected covering spaces induces an isomorphism of their total spaces. -/
 instance {p q : ConnectedCoveringSpace X} (f : p ⟶ q) [IsIso f] :
     IsIso f.hom.left :=
   inferInstanceAs (IsIso ((forget X ⋙ CoveringSpace.totalSpace X).map f))
