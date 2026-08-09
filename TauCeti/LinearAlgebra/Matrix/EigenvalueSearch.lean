@@ -128,9 +128,9 @@ theorem mem_eigenvalueSearch_iff_hasEigenvalue :
   rw [mem_eigenvalueSearch_iff_mem_spectrum, ← Matrix.spectrum_toLin',
     Module.End.hasEigenvalue_iff_mem_spectrum]
 
-omit [Fintype F] [DecidableEq F] in
 /-- The scalar-minus-matrix system is the corresponding eigenvector equation. -/
-theorem scalar_sub_mulVec_eq_zero_iff (A : Matrix n n F) (a : F) (v : n → F) :
+theorem scalar_sub_mulVec_eq_zero_iff {R : Type*} [Ring R]
+    (A : Matrix n n R) (a : R) (v : n → R) :
     (Matrix.scalar n a - A) *ᵥ v = 0 ↔ A *ᵥ v = a • v := by
   rw [Matrix.sub_mulVec, sub_eq_zero, Matrix.scalar_apply, Matrix.diagonal_const_mulVec, eq_comm]
 

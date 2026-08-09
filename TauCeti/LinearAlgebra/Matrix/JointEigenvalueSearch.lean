@@ -34,7 +34,7 @@ Dixon--Schneider; the final section records their `ᵥ*` characterizations.
 
 * `TauCeti.jointEigenspaceMatrix_mulVec_eq_zero_iff`: the stacked system expresses exactly the
   common eigenvector equations.
-* `TauCeti.nonempty_jointEigenspaceBasis_iff`: its computed basis is nonempty exactly when a
+* `TauCeti.jointEigenspaceBasis_ne_nil_iff`: its computed basis is nonempty exactly when a
   nonzero common eigenvector exists.
 * `TauCeti.mem_jointEigenvalueSearch`: correctness of the executable tuple search.
 * `TauCeti.mem_jointEigenvalueSearch_transpose`: the corresponding common-eigenrow
@@ -64,25 +64,25 @@ variable {m n : ℕ}
 
 The product row index is flattened to `Fin (m * n)` because `TauCeti.kernelBasis` operates on
 matrices with `Fin` row and column types. -/
-@[expose] def jointEigenspaceMatrix (A : Fin m → Matrix (Fin n) (Fin n) F)
-    (a : Fin m → F) : Matrix (Fin (m * n)) (Fin n) F := fun k j =>
+@[expose] def jointEigenspaceMatrix {R : Type u} [Ring R]
+    (A : Fin m → Matrix (Fin n) (Fin n) R)
+    (a : Fin m → R) : Matrix (Fin (m * n)) (Fin n) R := fun k j =>
   let ij := finProdFinEquiv.symm k
   (Matrix.scalar (Fin n) (a ij.1) - A ij.1) ij.2 j
 
-omit [Fintype F] [DecidableEq F] in
 /-- An entry in the `i`-th block of `TauCeti.jointEigenspaceMatrix`. -/
 @[simp]
-theorem jointEigenspaceMatrix_apply (A : Fin m → Matrix (Fin n) (Fin n) F)
-    (a : Fin m → F) (i : Fin m) (j k : Fin n) :
+theorem jointEigenspaceMatrix_apply {R : Type u} [Ring R]
+    (A : Fin m → Matrix (Fin n) (Fin n) R)
+    (a : Fin m → R) (i : Fin m) (j k : Fin n) :
     jointEigenspaceMatrix A a (finProdFinEquiv (i, j)) k =
       (Matrix.scalar (Fin n) (a i) - A i) j k := by
   simp [jointEigenspaceMatrix]
 
-omit [Fintype F] [DecidableEq F] in
 /-- The stacked matrix annihilates `v` exactly when `v` is an eigenvector (possibly zero) of
 every `A i`, with eigenvalue `a i`. -/
-theorem jointEigenspaceMatrix_mulVec_eq_zero_iff
-    (A : Fin m → Matrix (Fin n) (Fin n) F) (a : Fin m → F) (v : Fin n → F) :
+theorem jointEigenspaceMatrix_mulVec_eq_zero_iff {R : Type u} [Ring R]
+    (A : Fin m → Matrix (Fin n) (Fin n) R) (a : Fin m → R) (v : Fin n → R) :
     jointEigenspaceMatrix A a *ᵥ v = 0 ↔ ∀ i, A i *ᵥ v = a i • v := by
   constructor
   · intro h i
@@ -94,12 +94,14 @@ theorem jointEigenspaceMatrix_mulVec_eq_zero_iff
     exact hi
   · intro h
     funext k
-    let ij := finProdFinEquiv.symm k
-    have hi : (Matrix.scalar (Fin n) (a ij.1) - A ij.1) *ᵥ v = 0 := by
+    rcases hidx : finProdFinEquiv.symm k with ⟨i, j⟩
+    have hi : (Matrix.scalar (Fin n) (a i) - A i) *ᵥ v = 0 := by
       rw [scalar_sub_mulVec_eq_zero_iff]
-      exact h ij.1
-    rw [show k = finProdFinEquiv ij by exact (finProdFinEquiv.apply_symm_apply k).symm]
-    simpa [Matrix.mulVec, jointEigenspaceMatrix] using congrFun hi ij.2
+      exact h i
+    rw [← finProdFinEquiv.apply_symm_apply k]
+    rw [hidx]
+    simpa only [Matrix.mulVec, jointEigenspaceMatrix_apply, Pi.zero_apply] using
+      congrFun hi j
 
 /-- A computable basis of the simultaneous eigenspace for the eigenvalue tuple `a`. -/
 @[expose] def jointEigenspaceBasis (A : Fin m → Matrix (Fin n) (Fin n) F)
@@ -116,53 +118,23 @@ theorem mulVec_eq_smul_of_mem_jointEigenspaceBasis
   exact mulVec_eq_zero_of_mem_kernelBasis _ hv
 
 omit [Fintype F] in
-/-- The vectors returned for a common eigenspace are linearly independent. -/
-theorem linearIndepOn_jointEigenspaceBasis
-    (A : Fin m → Matrix (Fin n) (Fin n) F) (a : Fin m → F) :
-    LinearIndepOn F id {v : Fin n → F | v ∈ jointEigenspaceBasis A a} :=
-  linearIndepOn_kernelBasis _
-
-omit [Fintype F] in
-/-- The vectors returned for a common eigenspace span the kernel of the stacked system. -/
-theorem span_jointEigenspaceBasis
-    (A : Fin m → Matrix (Fin n) (Fin n) F) (a : Fin m → F) :
-    Submodule.span F {v : Fin n → F | v ∈ jointEigenspaceBasis A a} =
-      LinearMap.ker (jointEigenspaceMatrix A a).mulVecLin :=
-  span_kernelBasis _
-
-omit [Fintype F] in
-/-- The common-eigenspace basis contains no duplicate vectors. -/
-theorem nodup_jointEigenspaceBasis
-    (A : Fin m → Matrix (Fin n) (Fin n) F) (a : Fin m → F) :
-    (jointEigenspaceBasis A a).Nodup :=
-  nodup_kernelBasis _
-
-omit [Fintype F] in
-/-- The number of computed basis vectors is the nullity of the stacked system. In particular,
-the executable test that this length is one is the test that refinement has reached a
-one-dimensional common eigenspace. -/
-theorem length_jointEigenspaceBasis
-    (A : Fin m → Matrix (Fin n) (Fin n) F) (a : Fin m → F) :
-    (jointEigenspaceBasis A a).length = n - (jointEigenspaceMatrix A a).rank :=
-  length_kernelBasis _
-
-omit [Fintype F] in
 /-- The common-eigenspace basis is nonempty exactly when the eigenvalue tuple has a nonzero
 common eigenvector. -/
-theorem nonempty_jointEigenspaceBasis_iff
+theorem jointEigenspaceBasis_ne_nil_iff
     (A : Fin m → Matrix (Fin n) (Fin n) F) (a : Fin m → F) :
     jointEigenspaceBasis A a ≠ [] ↔ ∃ v ≠ 0, ∀ i, A i *ᵥ v = a i • v := by
   constructor
   · intro h
     obtain ⟨v, hv⟩ := List.exists_mem_of_ne_nil _ h
     refine ⟨v, ?_, mulVec_eq_smul_of_mem_jointEigenspaceBasis hv⟩
-    exact (linearIndepOn_jointEigenspaceBasis A a).ne_zero hv
+    exact (linearIndepOn_kernelBasis (A := jointEigenspaceMatrix A a)).ne_zero hv
   · rintro ⟨v, hv, heig⟩ hnil
     have hker : v ∈ LinearMap.ker (jointEigenspaceMatrix A a).mulVecLin := by
       rw [LinearMap.mem_ker, Matrix.mulVecLin_apply,
         jointEigenspaceMatrix_mulVec_eq_zero_iff]
       exact heig
-    have hspan := span_jointEigenspaceBasis A a
+    have hspan := span_kernelBasis (A := jointEigenspaceMatrix A a)
+    change kernelBasis (jointEigenspaceMatrix A a) = [] at hnil
     rw [hnil] at hspan
     simp only [List.not_mem_nil, Set.ofPred_false, Submodule.span_empty] at hspan
     rw [← hspan] at hker
@@ -180,7 +152,7 @@ nonzero common eigenvector. -/
 @[simp]
 theorem mem_jointEigenvalueSearch {A : Fin m → Matrix (Fin n) (Fin n) F} {a : Fin m → F} :
     a ∈ jointEigenvalueSearch A ↔ ∃ v ≠ 0, ∀ i, A i *ᵥ v = a i • v := by
-  rw [jointEigenvalueSearch, Finset.mem_filter, nonempty_jointEigenspaceBasis_iff]
+  rw [jointEigenvalueSearch, Finset.mem_filter, jointEigenspaceBasis_ne_nil_iff]
   constructor
   · exact fun h => h.2
   · intro h
@@ -220,12 +192,12 @@ theorem vecMul_eq_smul_of_mem_jointEigenspaceBasis_transpose
 omit [Fintype F] in
 /-- The common-eigenspace basis for the transposed family is nonempty exactly when the tuple
 admits a nonzero common eigenrow. -/
-theorem nonempty_jointEigenspaceBasis_transpose_iff
+theorem jointEigenspaceBasis_transpose_ne_nil_iff
     (A : Fin m → Matrix (Fin n) (Fin n) F) (a : Fin m → F) :
     jointEigenspaceBasis (fun i => (A i)ᵀ) a ≠ [] ↔
       ∃ v ≠ 0, ∀ i, v ᵥ* A i = a i • v := by
   simpa [Matrix.mulVec_transpose] using
-    nonempty_jointEigenspaceBasis_iff (fun i => (A i)ᵀ) a
+    jointEigenspaceBasis_ne_nil_iff (fun i => (A i)ᵀ) a
 
 /-- **Correctness of the common eigenrow search**: searching the transposed family returns exactly
 the tuples admitting a nonzero common left eigenvector. -/
