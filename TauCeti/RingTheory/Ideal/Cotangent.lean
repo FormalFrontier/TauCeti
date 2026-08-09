@@ -37,26 +37,20 @@ base. -/
 theorem finite_cotangent_ker_of_fg (f : A →ₐ[R] R)
     (h : (RingHom.ker f.toRingHom).FG) :
     Module.Finite R (RingHom.ker f.toRingHom).Cotangent := by
-  let algAR : Algebra A R := f.toAlgebra
   let P : Algebra.Extension R R :=
-    { Ring := A
-      algebra₂ := algAR
-      isScalarTower := @IsScalarTower.of_algebraMap_eq' R A R _ _ _ _ algAR _
-        f.comp_algebraMap.symm
-      σ := algebraMap R A
-      algebraMap_σ := f.commutes }
-  -- The extension's `A → R` algebra map is the augmentation `f` by construction.
-  have hker : P.ker = RingHom.ker f.toRingHom := by
-    ext x
-    change f x = 0 ↔ f x = 0
-    rfl
+    Algebra.Extension.ofSurjective f (fun r ↦ ⟨algebraMap R A r, f.commutes r⟩)
+  have hmap : algebraMap P.Ring R = f.toRingHom := by
+    exact RingHom.algebraMap_toAlgebra f.toRingHom
   have hP : P.ker.FG := by
-    rw [hker]
+    change (RingHom.ker (algebraMap P.Ring R)).FG
+    rw [hmap]
     exact h
   let _ : Module.Finite R P.Cotangent :=
     Algebra.Extension.Cotangent.finite (P := P) hP
-  rw [← hker]
-  exact Module.Finite.equiv (P.cotangentEquivCotangentKer.restrictScalars R)
+  have hfinite : Module.Finite R P.ker.Cotangent :=
+    Module.Finite.equiv (P.cotangentEquivCotangentKer.restrictScalars R)
+  change Module.Finite R (RingHom.ker f.toRingHom).Cotangent
+  exact hmap ▸ hfinite
 
 /-- The cotangent space at an augmented point of a noetherian algebra is finite over the base.
 
