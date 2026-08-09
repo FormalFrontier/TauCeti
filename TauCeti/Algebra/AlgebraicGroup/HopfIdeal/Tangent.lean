@@ -66,9 +66,13 @@ noncomputable def quotientLieHom (I : HopfIdeal R H) :
 lemma quotientLieHom_apply_apply (I : HopfIdeal R H)
     (d : Derivation R (H ⧸ I.toIdeal)
       (Bialgebra.CounitAlgebra R (H ⧸ I.toIdeal) B)) (x : H) :
-    Bialgebra.CounitAlgebra.algEquivSelf R H B (quotientLieHom I d x) =
+    quotientLieHom I d x =
       Bialgebra.CounitAlgebra.algEquivSelf R (H ⧸ I.toIdeal) B
         (d (Ideal.Quotient.mkₐ R I.toIdeal x)) := by
+  apply (Bialgebra.CounitAlgebra.algEquivSelf R H B).injective
+  rw [Bialgebra.CounitAlgebra.algEquivSelf_apply R H B
+    (Bialgebra.CounitAlgebra.algEquivSelf R (H ⧸ I.toIdeal) B
+      (d (Ideal.Quotient.mkₐ R I.toIdeal x)))]
   rw [quotientLieHom, derivationCompLieHom_apply, derivationComp_apply]
   have hq : (Bialgebra.Quotient.mkBialgHom I.toIdeal : H →ₐc[R] H ⧸ I.toIdeal) x =
       Ideal.Quotient.mkₐ R I.toIdeal x := by
@@ -95,7 +99,14 @@ theorem quotientLieHom_injective (I : HopfIdeal R H) :
   apply (Bialgebra.CounitAlgebra.algEquivSelf R (H ⧸ I.toIdeal) B).injective
   have hx := congrArg
     (fun f => Bialgebra.CounitAlgebra.algEquivSelf R H B (f x)) hde
-  simpa only [quotientLieHom_apply_apply] using hx
+  simp only [quotientLieHom_apply_apply] at hx
+  rw [Bialgebra.CounitAlgebra.algEquivSelf_apply R H B
+      (Bialgebra.CounitAlgebra.algEquivSelf R (H ⧸ I.toIdeal) B
+        (d (Ideal.Quotient.mkₐ R I.toIdeal x))),
+    Bialgebra.CounitAlgebra.algEquivSelf_apply R H B
+      (Bialgebra.CounitAlgebra.algEquivSelf R (H ⧸ I.toIdeal) B
+        (e (Ideal.Quotient.mkₐ R I.toIdeal x)))] at hx
+  exact hx
 
 /-- The Lie subalgebra of the ambient tangent Lie algebra cut out by a Hopf ideal.
 
@@ -204,19 +215,18 @@ theorem mem_lieSubalgebra_iff (I : HopfIdeal R H)
   constructor
   · rw [lieSubalgebra, LieHom.mem_range]
     rintro ⟨e, rfl⟩ x hx
-    apply (Bialgebra.CounitAlgebra.algEquivSelf R H B).injective
     rw [quotientLieHom_apply_apply]
     have hqx : Ideal.Quotient.mkₐ R I.toIdeal x = 0 := by
       simpa only [Ideal.Quotient.mkₐ_eq_mk] using
         (Ideal.Quotient.eq_zero_iff_mem.mpr hx)
     rw [hqx, map_zero]
-    exact (Bialgebra.CounitAlgebra.algEquivSelf_apply R (H ⧸ I.toIdeal) B 0).trans
-      (Bialgebra.CounitAlgebra.algEquivSelf_apply R H B 0).symm
+    exact Bialgebra.CounitAlgebra.algEquivSelf_apply R (H ⧸ I.toIdeal) B 0
   · intro hd
     rw [lieSubalgebra, LieHom.mem_range]
     refine ⟨descendDerivation I d hd, Derivation.ext fun x => ?_⟩
-    apply (Bialgebra.CounitAlgebra.algEquivSelf R H B).injective
-    rw [quotientLieHom_apply_apply, descendDerivation_mk]
+    rw [quotientLieHom_apply_apply]
+    exact (descendDerivation_mk I d hd x).trans
+      (Bialgebra.CounitAlgebra.algEquivSelf_apply R H B (d x))
 
 /-- The Lie algebra of the quotient Hopf algebra is canonically Lie-equivalent to its image in
 the ambient tangent Lie algebra. -/
