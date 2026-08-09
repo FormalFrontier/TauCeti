@@ -171,7 +171,7 @@ finite scalar-extension functor used in Tannakian reconstruction. -/
 noncomputable def fgPointNatIsoHom :
     WithConv (H →ₐ[R] A) →* Aut (FGComoduleCat.scalarExtensionFunctor R H A) :=
   (Aut.autMulEquivOfIso
-      (eqToIso (FGComoduleCat.scalarExtensionFunctor_eq R H A)).symm).toMonoidHom.comp
+      (eqToIso (FGComoduleCat.scalarExtensionFunctor_def R H A)).symm).toMonoidHom.comp
     ((((Functor.whiskeringLeft _ _ _).obj
       (FGComoduleCat.incl (R := R) (C := H))).mapAut
         (ComoduleCat.scalarExtensionFunctor R H A)).comp (pointNatIsoHom R H A))
@@ -181,7 +181,7 @@ and transport across the defining equality of the finite scalar-extension functo
 private theorem fgPointNatIsoHom_apply (g : WithConv (H →ₐ[R] A)) :
     fgPointNatIsoHom R H A g =
       (Aut.autMulEquivOfIso
-        (eqToIso (FGComoduleCat.scalarExtensionFunctor_eq R H A)).symm)
+        (eqToIso (FGComoduleCat.scalarExtensionFunctor_def R H A)).symm)
           ((((Functor.whiskeringLeft _ _ _).obj
             (FGComoduleCat.incl (R := R) (C := H))).mapIso
               (pointNatIsoHom R H A g))) :=
@@ -199,10 +199,10 @@ theorem fgPointNatIsoHom_hom_app (g : WithConv (H →ₐ[R] A))
   -- Rewriting unfolds the outer monoid homomorphism application but does not expose the
   -- hom component assembled by `autMulEquivOfIso` and whiskering, so reduce that component.
   change
-    (eqToIso (FGComoduleCat.scalarExtensionFunctor_eq R H A).symm).inv.app M ≫
+    (eqToIso (FGComoduleCat.scalarExtensionFunctor_def R H A).symm).inv.app M ≫
           (pointNatIso R H A g).hom.app
             ((FGComoduleCat.incl (R := R) (C := H)).obj M) ≫
-        (eqToIso (FGComoduleCat.scalarExtensionFunctor_eq R H A).symm).hom.app M = _
+        (eqToIso (FGComoduleCat.scalarExtensionFunctor_def R H A).symm).hom.app M = _
   rw [pointNatIso_hom_app]
   simp
 
@@ -219,10 +219,10 @@ theorem fgPointNatIsoHom_inv_app (g : WithConv (H →ₐ[R] A))
   -- Rewriting unfolds the outer monoid homomorphism application but does not expose the
   -- inverse component assembled by `autMulEquivOfIso` and whiskering, so reduce that component.
   change
-    (eqToIso (FGComoduleCat.scalarExtensionFunctor_eq R H A).symm).inv.app M ≫
+    (eqToIso (FGComoduleCat.scalarExtensionFunctor_def R H A).symm).inv.app M ≫
           (pointNatIso R H A g).inv.app
             ((FGComoduleCat.incl (R := R) (C := H)).obj M) ≫
-        (eqToIso (FGComoduleCat.scalarExtensionFunctor_eq R H A).symm).hom.app M = _
+        (eqToIso (FGComoduleCat.scalarExtensionFunctor_def R H A).symm).hom.app M = _
   rw [pointNatIso_inv_app]
   simp
 

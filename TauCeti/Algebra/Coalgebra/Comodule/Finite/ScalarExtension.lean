@@ -48,7 +48,7 @@ noncomputable def scalarExtensionFunctor :
 
 /-- Finite-comodule scalar extension is obtained by precomposing scalar extension on all
 comodules with the inclusion functor. -/
-theorem scalarExtensionFunctor_eq :
+theorem scalarExtensionFunctor_def :
     scalarExtensionFunctor R C A =
       incl ⋙ ComoduleCat.scalarExtensionFunctor R C A :=
   (rfl)
