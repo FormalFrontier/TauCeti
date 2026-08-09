@@ -35,7 +35,9 @@ higher-regularity Morse--Sard argument to the remaining case where the source di
   additive-Haar-null.
 * `TauCeti.not_surjective_fderiv_of_finrank_lt_finrank`: every derivative in this dimension range
   is nonsurjective.
-* `TauCeti.ContDiff.addHaar_image_criticalPoints_eq_zero_of_finrank_lt_finrank`: the critical
+* `TauCeti.setOf_not_surjective_fderiv_eq_univ_of_finrank_lt_finrank`: every point belongs to the
+  critical locus in this dimension range.
+* `TauCeti.ContDiff.addHaar_image_not_surjective_fderiv_eq_zero_of_finrank_lt_finrank`: the critical
   values are additive-Haar-null, in the form used by Sard's theorem.
 
 The Hausdorff-dimension argument follows the one used for the lower-dimensional Sard corollary in
@@ -98,16 +100,23 @@ theorem not_surjective_fderiv_of_finrank_lt_finrank (f : E → F)
   intro hsurj
   exact (not_le_of_gt hEF) (LinearMap.finrank_le_finrank_of_surjective hsurj)
 
+omit [FiniteDimensional ℝ F] [MeasurableSpace F] [BorelSpace F] in
+/-- When the source has strictly smaller finite dimension than the codomain, the critical locus
+of any function is the whole source. -/
+@[simp]
+theorem setOf_not_surjective_fderiv_eq_univ_of_finrank_lt_finrank (f : E → F)
+    (hEF : finrank ℝ E < finrank ℝ F) :
+    {x | ¬ Surjective (fderiv ℝ f x)} = (univ : Set E) :=
+  eq_univ_of_forall fun x ↦ not_surjective_fderiv_of_finrank_lt_finrank f hEF x
+
 /-- The critical values of a `C¹` map from a finite-dimensional real normed space to a strictly
 higher-dimensional one have additive Haar measure zero. In this dimension range every point is
 critical, but stating the result for the critical locus gives the Sard form consumed by later
 regular-value arguments. -/
-theorem ContDiff.addHaar_image_criticalPoints_eq_zero_of_finrank_lt_finrank
+theorem ContDiff.addHaar_image_not_surjective_fderiv_eq_zero_of_finrank_lt_finrank
     (hf : ContDiff ℝ 1 f) (hEF : finrank ℝ E < finrank ℝ F) :
     ν (f '' {x | ¬ Surjective (fderiv ℝ f x)}) = 0 := by
-  have hcritical : {x | ¬ Surjective (fderiv ℝ f x)} = (univ : Set E) :=
-    eq_univ_of_forall fun x ↦ not_surjective_fderiv_of_finrank_lt_finrank f hEF x
-  rw [hcritical, image_univ]
+  rw [setOf_not_surjective_fderiv_eq_univ_of_finrank_lt_finrank f hEF, image_univ]
   exact ContDiff.addHaar_range_eq_zero_of_finrank_lt_finrank ν hf hEF
 
 end TauCeti
