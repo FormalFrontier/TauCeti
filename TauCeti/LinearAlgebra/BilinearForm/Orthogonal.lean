@@ -1,0 +1,66 @@
+/-
+Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+-/
+module
+
+public import Mathlib.LinearAlgebra.BilinearForm.Orthogonal
+
+/-!
+# Extending nondegenerate subspaces by an orthogonal vector
+
+This file records that adjoining an anisotropic orthogonal vector to a nondegenerate subspace of a
+reflexive bilinear space preserves nondegeneracy. It is the structural step used when a
+Cartan--Dieudonne argument enlarges a fixed subspace.
+
+## Main result
+
+* `TauCeti.BilinForm.restrict_nondegenerate_sup_span_singleton`: adjoining an orthogonal vector
+  with nonzero self-pairing preserves nondegeneracy.
+-/
+
+public section
+
+namespace TauCeti
+
+open LinearMap (BilinForm)
+
+namespace BilinForm
+
+variable {K V : Type*} [CommRing K] [IsDomain K] [AddCommGroup V] [Module K V]
+
+/-- Adjoining a vector with nonzero self-pairing from the orthogonal complement of a nondegenerate
+subspace preserves nondegeneracy. -/
+theorem restrict_nondegenerate_sup_span_singleton
+    (B : BilinForm K V) (hB : B.IsRefl) (W : Submodule K V)
+    (hW : (B.restrict W).Nondegenerate) (x : V) (hxx : B x x ≠ 0)
+    (hx : x ∈ B.orthogonal W) :
+    (B.restrict (W ⊔ Submodule.span K {x})).Nondegenerate := by
+  let S : Submodule K V := W ⊔ Submodule.span K {x}
+  apply (hB.domRestrict S).nondegenerate_iff_separatingLeft.2
+  intro y hy
+  obtain ⟨w, hw, z, hz, hsum⟩ := Submodule.mem_sup.mp y.2
+  obtain ⟨a, rfl⟩ := Submodule.mem_span_singleton.mp hz
+  have hwzero : ∀ w' : W, B w w' = 0 := by
+    intro w'
+    have hBxw' : B x w' = 0 := hB.eq_zero (hx w' w'.2)
+    have hyw := hy ⟨w', Submodule.mem_sup_left w'.2⟩
+    -- Expose the ambient bilinear form under its restriction to `S`.
+    change B y w' = 0 at hyw
+    rw [← hsum] at hyw
+    simpa [hBxw'] using hyw
+  have hw0 : w = 0 := congrArg Subtype.val (hW.1 ⟨w, hw⟩ hwzero)
+  have hxS : x ∈ S := Submodule.mem_sup_right (Submodule.mem_span_singleton_self x)
+  have hyx := hy ⟨x, hxS⟩
+  -- Expose the ambient bilinear form under its restriction to `S`.
+  change B y x = 0 at hyx
+  rw [← hsum, hw0, zero_add] at hyx
+  have ha : a = 0 := by
+    rw [map_smul, LinearMap.smul_apply, smul_eq_mul] at hyx
+    exact (mul_eq_zero.mp hyx).resolve_right hxx
+  apply Subtype.ext
+  simp [← hsum, hw0, ha]
+
+end BilinForm
+
+end TauCeti
