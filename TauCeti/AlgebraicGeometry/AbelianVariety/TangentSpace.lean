@@ -87,11 +87,85 @@ def zeroResidueFieldIso (A : AbelianVariety K) :
   (residueFieldIsoOfSection (zeroSection_comp_toOver_hom A)
     (IsLocalRing.closedPoint K)).symm.trans (baseResidueFieldIso K)
 
+set_option backward.isDefEq.respectTransparency false in
+/-- The forward map of `zeroResidueFieldIso` is the residue-field map of the identity section,
+followed by the canonical maps identifying the residue field of `Spec K` with `K`. -/
+@[simp]
+lemma zeroResidueFieldIso_hom (A : AbelianVariety K) :
+    A.zeroResidueFieldIso.hom =
+      (A.toScheme.residueFieldCongr
+          (show A.zeroPoint = A.zeroSection (IsLocalRing.closedPoint K) from by
+            rw [zeroPoint])).hom ≫
+        A.zeroSection.residueFieldMap (IsLocalRing.closedPoint K) ≫
+          (Scheme.Spec.residueFieldIso (.of K) (IsLocalRing.closedPoint K)).hom ≫
+            (Ideal.algEquivResidueFieldOfField
+              (IsLocalRing.closedPoint K).asIdeal).symm.toRingEquiv.toCommRingCatIso.hom := by
+  simp only [zeroResidueFieldIso, zeroPoint, baseResidueFieldIso, Iso.trans_hom, Iso.symm_hom,
+    Scheme.residueFieldCongr_refl, Iso.refl_hom, Category.id_comp]
+  rw [residueFieldIsoOfSection_inv]
+
+set_option backward.isDefEq.respectTransparency false in
+/-- The inverse map of `zeroResidueFieldIso` is the canonical map from `K` to the residue field of
+`Spec K`, followed by the residue-field map of the structure morphism. -/
+@[simp]
+lemma zeroResidueFieldIso_inv (A : AbelianVariety K) :
+    A.zeroResidueFieldIso.inv =
+      (Ideal.algEquivResidueFieldOfField
+          (IsLocalRing.closedPoint K).asIdeal).symm.toRingEquiv.toCommRingCatIso.inv ≫
+        (Scheme.Spec.residueFieldIso (.of K) (IsLocalRing.closedPoint K)).inv ≫
+          ((Spec (.of K)).residueFieldCongr
+            (section_apply (zeroSection_comp_toOver_hom A)
+              (IsLocalRing.closedPoint K)).symm).hom ≫
+            A.toOver.hom.residueFieldMap
+              (A.zeroSection (IsLocalRing.closedPoint K)) ≫
+              (A.toScheme.residueFieldCongr
+                (show A.zeroPoint = A.zeroSection (IsLocalRing.closedPoint K) from by
+                  rw [zeroPoint])).inv := by
+  simp only [zeroResidueFieldIso, zeroPoint, baseResidueFieldIso, Iso.trans_inv, Iso.symm_inv,
+    Scheme.residueFieldCongr_refl, Iso.refl_inv, Category.comp_id]
+  rw [residueFieldIsoOfSection_hom]
+  simp only [Category.assoc]
+
 /-- The ring equivalence `κ(0) ≃+* K` underlying `zeroResidueFieldIso`. This formulation exposes
 the actual local-ring residue-field type used in the definition of the tangent space. -/
 def zeroResidueFieldRingEquiv (A : AbelianVariety K) :
     IsLocalRing.ResidueField (A.toScheme.presheaf.stalk A.zeroPoint) ≃+* K :=
   A.zeroResidueFieldIso.commRingCatIsoToRingEquiv
+
+/-- Applying `zeroResidueFieldRingEquiv` is applying the residue-field map of the identity section
+and the canonical residue-field equivalence for `Spec K`. -/
+@[simp]
+lemma zeroResidueFieldRingEquiv_apply (A : AbelianVariety K)
+    (z : IsLocalRing.ResidueField (A.toScheme.presheaf.stalk A.zeroPoint)) :
+    A.zeroResidueFieldRingEquiv z =
+      ((A.toScheme.residueFieldCongr
+          (show A.zeroPoint = A.zeroSection (IsLocalRing.closedPoint K) from by
+            rw [zeroPoint])).hom ≫
+        A.zeroSection.residueFieldMap (IsLocalRing.closedPoint K) ≫
+          (Scheme.Spec.residueFieldIso (.of K) (IsLocalRing.closedPoint K)).hom ≫
+            (Ideal.algEquivResidueFieldOfField
+              (IsLocalRing.closedPoint K).asIdeal).symm.toRingEquiv.toCommRingCatIso.hom) z := by
+  change A.zeroResidueFieldIso.hom z = _
+  rw [zeroResidueFieldIso_hom]
+
+/-- Applying the inverse of `zeroResidueFieldRingEquiv` is applying the canonical map from `K` to
+the residue field of `Spec K` and the residue-field map of the structure morphism. -/
+@[simp]
+lemma zeroResidueFieldRingEquiv_symm_apply (A : AbelianVariety K) (k : K) :
+    A.zeroResidueFieldRingEquiv.symm k =
+      ((Ideal.algEquivResidueFieldOfField
+          (IsLocalRing.closedPoint K).asIdeal).symm.toRingEquiv.toCommRingCatIso.inv ≫
+        (Scheme.Spec.residueFieldIso (.of K) (IsLocalRing.closedPoint K)).inv ≫
+          ((Spec (.of K)).residueFieldCongr
+            (section_apply (zeroSection_comp_toOver_hom A)
+              (IsLocalRing.closedPoint K)).symm).hom ≫
+            A.toOver.hom.residueFieldMap
+              (A.zeroSection (IsLocalRing.closedPoint K)) ≫
+              (A.toScheme.residueFieldCongr
+                (show A.zeroPoint = A.zeroSection (IsLocalRing.closedPoint K) from by
+                  rw [zeroPoint])).inv) k := by
+  change A.zeroResidueFieldIso.inv k = _
+  rw [zeroResidueFieldIso_inv]
 
 /-- The residue field at the identity is a `K`-algebra via the inverse of
 `zeroResidueFieldRingEquiv`. -/
@@ -129,16 +203,6 @@ instance isScalarTower_tangentSpace (A : AbelianVariety K) : IsScalarTower K
     (IsLocalRing.ResidueField (A.toScheme.presheaf.stalk A.zeroPoint)) A.tangentSpace :=
   IsScalarTower.of_compHom K _ _
 
-/-- The tangent space of an abelian variety is finite-dimensional over its residue field.
-Smoothness implies finite type over the Noetherian field base, hence the underlying scheme is
-locally Noetherian. -/
-instance finiteDimensional_tangentSpace_residueField (A : AbelianVariety K) :
-    FiniteDimensional (IsLocalRing.ResidueField (A.toScheme.presheaf.stalk A.zeroPoint))
-      A.tangentSpace := by
-  let _ : IsLocallyNoetherian A.toScheme :=
-    LocallyOfFiniteType.isLocallyNoetherian A.toOver.hom
-  infer_instance
-
 /-- The tangent space of an abelian variety is finite-dimensional over the ground field. -/
 instance finiteDimensional_tangentSpace (A : AbelianVariety K) :
     FiniteDimensional K A.tangentSpace := by
@@ -169,8 +233,7 @@ lemma finrank_tangentSpace_eq_finrank_cotangentSpace (A : AbelianVariety K) :
     Module.finrank K A.tangentSpace =
       Module.finrank (IsLocalRing.ResidueField (A.toScheme.presheaf.stalk A.zeroPoint))
         (ZariskiCotangentSpace A.toScheme A.zeroPoint) := by
-  rw [finrank_tangentSpace_eq_finrank_residueField,
-    finrank_zariskiTangentSpace_eq_finrank_zariskiCotangentSpace]
+  rw [finrank_tangentSpace_eq_finrank_residueField, Subspace.dual_finrank_eq]
 
 end
 

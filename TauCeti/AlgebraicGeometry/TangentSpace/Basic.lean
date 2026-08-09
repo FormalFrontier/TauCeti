@@ -4,7 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.AlgebraicGeometry.Noetherian
 public import Mathlib.AlgebraicGeometry.Properties
 public import Mathlib.LinearAlgebra.Dual.Lemmas
 public import Mathlib.RingTheory.Ideal.Cotangent
@@ -22,7 +21,7 @@ it the scheme-level interface needed by the Jacobian roadmap:
 
 * `ZariskiCotangentSpace X x` is `𝔪ₓ / 𝔪ₓ²` over `κ(x)`;
 * `ZariskiTangentSpace X x` is its `κ(x)`-linear dual;
-* both spaces are finite-dimensional when `X` is locally Noetherian;
+* Mathlib's existing instances make both spaces finite-dimensional when the stalk is Noetherian;
 * at a regular point, the dimension of the tangent space is the coheight of the point.
 
 The last statement combines Mathlib's cotangent-space criterion for regular local rings with its
@@ -59,37 +58,13 @@ abbrev ZariskiTangentSpace (X : Scheme.{u}) (x : X) : Type u :=
   Module.Dual (IsLocalRing.ResidueField (X.presheaf.stalk x))
     (ZariskiCotangentSpace X x)
 
-/-- The cotangent space at a point of a locally Noetherian scheme is finite-dimensional over the
-residue field. -/
-instance finiteDimensional_zariskiCotangentSpace (X : Scheme.{u}) [IsLocallyNoetherian X]
-    (x : X) : FiniteDimensional (IsLocalRing.ResidueField (X.presheaf.stalk x))
-      (ZariskiCotangentSpace X x) :=
-  inferInstance
-
-/-- The tangent space at a point of a locally Noetherian scheme is finite-dimensional over the
-residue field. -/
-instance finiteDimensional_zariskiTangentSpace (X : Scheme.{u}) [IsLocallyNoetherian X]
-    (x : X) : FiniteDimensional (IsLocalRing.ResidueField (X.presheaf.stalk x))
-      (ZariskiTangentSpace X x) :=
-  inferInstance
-
-/-- The tangent and cotangent spaces of a scheme have the same dimension. -/
-lemma finrank_zariskiTangentSpace_eq_finrank_zariskiCotangentSpace (X : Scheme.{u}) (x : X) :
-    Module.finrank (IsLocalRing.ResidueField (X.presheaf.stalk x))
-        (ZariskiTangentSpace X x) =
-      Module.finrank (IsLocalRing.ResidueField (X.presheaf.stalk x))
-        (ZariskiCotangentSpace X x) :=
-  Subspace.dual_finrank_eq
-
-/-- At a regular point of a locally Noetherian scheme, the dimension of the Zariski tangent
-space is the coheight of the point. Both sides are compared in `WithBot ℕ∞`, the codomain of
-Krull dimension. -/
-lemma finrank_zariskiTangentSpace_eq_coheight (X : Scheme.{u}) [IsLocallyNoetherian X] (x : X)
+/-- At a regular point of a scheme, the dimension of the Zariski tangent space is the coheight of
+the point. Both sides are compared in `WithBot ℕ∞`, the codomain of Krull dimension. -/
+lemma finrank_zariskiTangentSpace_eq_coheight (X : Scheme.{u}) (x : X)
     [IsRegularLocalRing (X.presheaf.stalk x)] :
     (Module.finrank (IsLocalRing.ResidueField (X.presheaf.stalk x))
       (ZariskiTangentSpace X x) : WithBot ℕ∞) = Order.coheight x := by
-  rw [finrank_zariskiTangentSpace_eq_finrank_zariskiCotangentSpace,
-    ← ringKrullDim_stalk_eq_coheight]
+  rw [Subspace.dual_finrank_eq, ← ringKrullDim_stalk_eq_coheight]
   exact (IsRegularLocalRing.iff_finrank_cotangentSpace _).mp inferInstance
 
 end

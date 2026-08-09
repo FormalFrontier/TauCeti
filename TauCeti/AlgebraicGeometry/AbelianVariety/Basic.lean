@@ -114,6 +114,10 @@ instance smooth (A : AbelianVariety K) : Smooth A.toOver.hom := by
   have : GrpObj (Over.mk A.toOver.hom) := inferInstanceAs (GrpObj A.toOver)
   exact smooth_of_grpObj A.toOver.hom
 
+/-- The underlying scheme of an abelian variety is locally Noetherian. -/
+instance isLocallyNoetherian (A : AbelianVariety K) : IsLocallyNoetherian A.toScheme :=
+  LocallyOfFiniteType.isLocallyNoetherian A.toOver.hom
+
 /-- An abelian variety is geometrically connected over the base field. -/
 instance geometricallyConnected (A : AbelianVariety K) :
     GeometricallyConnected A.toOver.hom :=
