@@ -19,6 +19,8 @@ left-invariant-derivation model of a Lie algebra.
 ## Main results
 
 * `mulInvariantVectorField_one`: at the identity, an invariant vector field equals its generator.
+* `contMDiff_tangentMap_mul_prod`: the tangent map of multiplication is smooth on a pair of
+  tangent bundles.
 * `contMDiff_mulInvariantVectorField_infty`: a left-invariant vector field on a smooth Lie group is
   smooth.
 * `contMDiff_mulInvariantVectorField_modelSpace`: the invariant vector field is jointly `C^n` in
@@ -51,6 +53,18 @@ theorem mulInvariantVectorField_one (v : GroupLieAlgebra I G) :
   change mfderiv I I (fun x : G ↦ 1 * x) 1 v = v
   rw [show (fun x : G ↦ 1 * x) = id by funext x; simp, mfderiv_id]
   rfl
+
+/-- The tangent map of multiplication, expressed on a pair of tangent bundles, is `C^n` when
+multiplication is `C^(n + 1)`. -/
+theorem contMDiff_tangentMap_mul_prod {n : ℕ∞ω}
+    [ContMDiffMul I (n + 1) G] :
+    let _ : IsManifold I 1 G := IsManifold.of_le (n := n + 1) le_add_self
+    ContMDiff (I.tangent.prod I.tangent) I.tangent n
+      ((tangentMap% (fun p : G × G => p.1 * p.2)) ∘
+        (equivTangentBundleProd I G I G).symm) := by
+  let _ : IsManifold I 1 G := IsManifold.of_le (n := n + 1) le_add_self
+  exact ((contMDiff_mul I (n + 1)).contMDiff_tangentMap le_rfl).comp
+    contMDiff_equivTangentBundleProd_symm
 
 /-- In model coordinates, the invariant vector field is jointly `C^n` in its generating tangent
 vector and the group point when multiplication is `C^(n + 1)`. -/
@@ -86,18 +100,10 @@ theorem contMDiff_mulInvariantVectorField_modelSpace {n : ℕ∞ω}
   let F₁ : E × G → TangentBundle I G × TangentBundle I G := fun p => (fg p, fv p)
   have S₁ : ContMDiff (𝓘(𝕜, E).prod I) (I.tangent.prod I.tangent) n F₁ :=
     sfg.prodMk sfv
-  let F₂ : TangentBundle I G × TangentBundle I G → TangentBundle (I.prod I) (G × G) :=
-    (equivTangentBundleProd I G I G).symm
-  have S₂ : ContMDiff (I.tangent.prod I.tangent) (I.prod I).tangent n F₂ :=
-    contMDiff_equivTangentBundleProd_symm
-  let F₃ : TangentBundle (I.prod I) (G × G) → TangentBundle I G :=
-    tangentMap% (fun p : G × G => p.1 * p.2)
-  have S₃ : ContMDiff (I.prod I).tangent I.tangent n F₃ :=
-    (contMDiff_mul I (n + 1)).contMDiff_tangentMap le_rfl
-  let S := (S₃.comp S₂).comp S₁
+  let S := (contMDiff_tangentMap_mul_prod (I := I) (G := G) (n := n)).comp S₁
   convert! S with p
-  · simp [F₁, F₂, F₃, fg, fv]
-  · simp only [comp_apply, tangentMap, F₃, F₂, F₁, fg, fv]
+  · simp [F₁, fg, fv]
+  · simp only [comp_apply, tangentMap, F₁, fg, fv]
     rw [mfderiv_prod_eq_add_apply
       ((contMDiff_mul I (n + 1)).mdifferentiableAt (by simp))]
     simp +instances [mulInvariantVectorField, equivTangentBundleProd]
