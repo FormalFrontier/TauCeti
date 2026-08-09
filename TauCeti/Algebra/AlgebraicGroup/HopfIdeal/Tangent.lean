@@ -209,6 +209,7 @@ private lemma descendDerivation_mk (I : HopfIdeal R H)
 
 /-- A tangent derivation belongs to the Lie algebra of the closed subgroup defined by `I`
 exactly when it vanishes on the defining Hopf ideal. -/
+@[simp]
 theorem mem_lieSubalgebra_iff (I : HopfIdeal R H)
     (d : Derivation R H (Bialgebra.CounitAlgebra R H B)) :
     d ∈ lieSubalgebra (B := B) I ↔ ∀ x ∈ I.toIdeal, d x = 0 := by
