@@ -62,11 +62,11 @@ variable {R : Type u} {H : Type v} {M : Type w}
 variable [CommRing R] [CommRing H] [HopfAlgebra R H]
 variable [AddCommMonoid M] [Module R M] [Comodule R H M]
 
-/-- A finite free comodule is faithful when its coefficients and their antipode images generate
-the ambient Hopf algebra. The theorem `isFaithful_iff_isClosedImmersion_groupSchemeMap` identifies
-this intrinsic condition with the associated group-scheme morphism being a closed immersion for
-every finite basis. -/
-def IsFaithful [Module.Free R M] [Module.Finite R M] : Prop :=
+/-- A comodule is faithful when its coefficients and their antipode images generate the ambient
+Hopf algebra. The theorem `isFaithful_iff_isClosedImmersion_groupSchemeMap` identifies this
+intrinsic condition with the associated group-scheme morphism being a closed immersion whenever
+the comodule has a finite basis. -/
+def IsFaithful : Prop :=
   matrixCoefficientSubalgebraWithAntipode (R := R) (H := H) (M := M) = ⊤
 
 end Faithful
@@ -96,22 +96,9 @@ noncomputable def groupSchemeMap (b : Basis (Fin n) R M) :
         (Opposite.op (_root_.CommHopfAlgCat.of R H)) ⟶ GeneralLinear.groupScheme R n :=
   GeneralLinear.groupSchemeMap R n (coordinateHom (H := H) b)
 
-/-- Under the canonical spectrum presentations, the underlying scheme morphism of the
-representation is induced by its coordinate Hopf-algebra morphism.
-
-This is a heterogeneous equality because the spectrum presentations change the endpoint types
-of the scheme morphism. -/
-theorem groupSchemeMap_hom_left (b : Basis (Fin n) R M) :
-    (groupSchemeMap (H := H) b).hom.hom.left ≍
-      AlgebraicGeometry.Spec.map (CommRingCat.ofHom
-        (coordinateHom (H := H) b).hom.toAlgHom.toRingHom) := by
-  unfold groupSchemeMap
-  exact GeneralLinear.groupSchemeMap_hom_left R n (coordinateHom (H := H) b)
-
 /-- A finite free comodule is faithful exactly when the group-scheme morphism associated to any
 finite basis is a closed immersion. -/
-theorem isFaithful_iff_isClosedImmersion_groupSchemeMap [Module.Free R M] [Module.Finite R M]
-    (b : Basis (Fin n) R M) :
+theorem isFaithful_iff_isClosedImmersion_groupSchemeMap (b : Basis (Fin n) R M) :
     IsFaithful (R := R) (H := H) (M := M) ↔
       AlgebraicGeometry.IsClosedImmersion (groupSchemeMap (H := H) b).hom.hom.left := by
   unfold IsFaithful groupSchemeMap

@@ -43,7 +43,7 @@ namespace CommHopfAlgCat
 /-- A map of affine spectra induced by a Hopf-algebra morphism is a closed immersion exactly
 when the Hopf-algebra morphism is surjective. -/
 @[simp↓]
-lemma isClosedImmersion_specMap_iff {S : CommRingCat.{u}}
+lemma isClosedImmersion_SpecMap_iff {S : CommRingCat.{u}}
     {A B : _root_.CommHopfAlgCat.{u} S} (f : A ⟶ B) :
     IsClosedImmersion (Spec.map (CommRingCat.ofHom f.hom.toAlgHom.toRingHom)) ↔
       Function.Surjective f.hom :=
@@ -58,7 +58,7 @@ lemma isClosedImmersion_hopfSpec_map_iff {S : CommRingCat.{u}}
     IsClosedImmersion ((AlgebraicGeometry.hopfSpec S).map f.op).hom.hom.left ↔
       Function.Surjective f.hom := by
   rw [hopfSpec_map_hom_hom_left]
-  exact isClosedImmersion_specMap_iff f
+  exact isClosedImmersion_SpecMap_iff f
 
 end CommHopfAlgCat
 
