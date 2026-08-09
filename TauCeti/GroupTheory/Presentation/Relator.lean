@@ -5,6 +5,7 @@ Authors: Codex
 -/
 module
 
+public import Mathlib.Algebra.Group.Commutator
 public import Mathlib.GroupTheory.FreeGroup.Basic
 
 /-!
@@ -19,8 +20,9 @@ The central result, `TauCeti.Relator.toWord_toFreeGroup`, proves that compilatio
 structural interpretation in the free group. This makes the compiler a checked link between a
 human-readable transcription and the relator used to define a presented group.
 
-The representation and its interpretation reuse `FreeGroup.mk`, `FreeGroup.invRev`, and their
-compatibility with multiplication, inversion, and natural powers from Mathlib.
+The representation and its interpretation reuse `FreeGroup.mk`, `FreeGroup.invRev`,
+`commutatorElement`, and their compatibility with multiplication, inversion, and natural powers
+from Mathlib.
 
 ## Main definitions
 
@@ -33,11 +35,25 @@ compatibility with multiplication, inversion, and natural powers from Mathlib.
 
 * `TauCeti.Relator.toWord_toFreeGroup`: compilation preserves the free-group element denoted by an
   expression.
+
+## References
+
+This file supplies the "relator expression type compiling to signed words" target of milestone S0
+of `TauCetiRoadmap/CFSGStatement/README.md`. The design is not original here: the expression
+language, its five constructors, the names `PresentationWord`, `Relator.toWord`,
+`Relator.toFreeGroup`, and the statement of `Relator.toWord_toFreeGroup` are adapted from the
+human-owned roadmap formalization in the accompanying `TauCetiRoadmap/CFSGStatement/Suggested.lean`,
+where they are pinned as target signatures (with `sorry`ed proofs) by the roadmap's authors. The
+adaptation replaces that file's bespoke `GeneratorLetter`/`PresentationWord.toFreeGroup` pair by
+Mathlib's `List (α × Bool)` words and `FreeGroup.mk`, generalizes the generator type from `Fin n` to
+an arbitrary `α`, and discharges the compilation theorem.
 -/
 
 public section
 
 namespace TauCeti
+
+open scoped commutatorElement
 
 /-- A left-to-right word in generators of `α` and their formal inverses. The Boolean convention is
 the one used by `FreeGroup.mk`: `true` is a generator and `false` is its inverse. -/
@@ -45,8 +61,8 @@ abbrev PresentationWord (α : Type*) := List (α × Bool)
 
 /-- A human-readable relator expression.
 
-The commutator constructor uses the convention `[r, s] = r * s * r⁻¹ * s⁻¹`, matching
-Mathlib's `commutatorElement`. A source using the convention
+The commutator constructor is Mathlib's `commutatorElement`, that is, the convention
+`⁅r, s⁆ = r * s * r⁻¹ * s⁻¹`. A source using the convention
 `[r, s] = r⁻¹ * s⁻¹ * r * s` should be transcribed as `comm (inv r) (inv s)`. -/
 inductive Relator (α : Type*) where
   /-- A generator. -/
@@ -57,7 +73,7 @@ inductive Relator (α : Type*) where
   | mul (r s : Relator α)
   /-- A relator expression raised to a natural power. -/
   | pow (r : Relator α) (n : ℕ)
-  /-- The commutator `[r, s] = r * s * r⁻¹ * s⁻¹`. -/
+  /-- The commutator `⁅r, s⁆ = r * s * r⁻¹ * s⁻¹`. -/
   | comm (r s : Relator α)
   deriving DecidableEq
 
@@ -82,7 +98,7 @@ def toFreeGroup {α : Type*} : Relator α → FreeGroup α
   | .inv r => r.toFreeGroup⁻¹
   | .mul r s => r.toFreeGroup * s.toFreeGroup
   | .pow r n => r.toFreeGroup ^ n
-  | .comm r s => r.toFreeGroup * s.toFreeGroup * r.toFreeGroup⁻¹ * s.toFreeGroup⁻¹
+  | .comm r s => ⁅r.toFreeGroup, s.toFreeGroup⁆
 
 /-- **The compiled word denotes the direct interpretation of the relator expression.**
 
@@ -97,7 +113,7 @@ theorem toWord_toFreeGroup {α : Type*} (r : Relator α) :
   | mul r s ihr ihs => rw [toWord, toFreeGroup, ← FreeGroup.mul_mk, ihr, ihs]
   | pow r n ih => rw [toWord, toFreeGroup, ← FreeGroup.pow_mk, ih]
   | comm r s ihr ihs =>
-    rw [toWord, toFreeGroup, ← FreeGroup.mul_mk, ← FreeGroup.mul_mk,
+    rw [toWord, toFreeGroup, commutatorElement_def, ← FreeGroup.mul_mk, ← FreeGroup.mul_mk,
       ← FreeGroup.mul_mk, ← FreeGroup.inv_mk, ← FreeGroup.inv_mk, ihr, ihs]
 
 end Relator
