@@ -80,16 +80,12 @@ section KernelConsequences
 variable {ψ : V → ℂ}
 
 omit [InnerProductSpace ℝ V] [FiniteDimensional ℝ V] [MeasurableSpace V] [BorelSpace V] in
-/-- The value at `0` of a positive-definite subtraction kernel is nonnegative. -/
-private theorem map_zero_nonneg_of_kernel
-    (hpd : IsPositiveDefiniteKernel fun a b : V => ψ (a - b)) : (0 : ℂ) ≤ ψ 0 := by
-  simpa using isPositiveDefiniteKernel_apply_self_nonneg hpd 0
-
-omit [InnerProductSpace ℝ V] [FiniteDimensional ℝ V] [MeasurableSpace V] [BorelSpace V] in
 /-- The value at `0` of a positive-definite subtraction kernel is a real number. -/
 private theorem map_zero_eq_ofReal_re_of_kernel
     (hpd : IsPositiveDefiniteKernel fun a b : V => ψ (a - b)) : ψ 0 = ((ψ 0).re : ℂ) := by
-  have him := (Complex.nonneg_iff.mp (map_zero_nonneg_of_kernel hpd)).2
+  have h0 : (0 : ℂ) ≤ ψ 0 := by
+    simpa using isPositiveDefiniteKernel_apply_self_nonneg hpd 0
+  have him := (Complex.nonneg_iff.mp h0).2
   exact Complex.ext (by simp) (by simp [← him])
 
 omit [InnerProductSpace ℝ V] [FiniteDimensional ℝ V] [MeasurableSpace V] [BorelSpace V] in
@@ -195,7 +191,8 @@ theorem exists_isFiniteMeasure_integral_fourierAtom_eq_of_isPositiveDefiniteKern
     (F : V → ℂ) (hcont : Continuous F)
     (hpd : IsPositiveDefiniteKernel fun a b : V => F (a - b)) :
     ∃ μ : Measure V, IsFiniteMeasure μ ∧ ∀ v, F v = ∫ q, fourierAtom v q ∂μ := by
-  have h0re : 0 ≤ (F 0).re := (Complex.nonneg_iff.mp (map_zero_nonneg_of_kernel hpd)).1
+  have h0re : 0 ≤ (F 0).re :=
+    (Complex.nonneg_iff.mp (by simpa using isPositiveDefiniteKernel_apply_self_nonneg hpd 0)).1
   have h0eq : F 0 = ((F 0).re : ℂ) := map_zero_eq_ofReal_re_of_kernel hpd
   rcases h0re.eq_or_lt with hzero | hpos
   · -- degenerate case: `F 0 = 0` forces `F = 0`, represented by the zero measure

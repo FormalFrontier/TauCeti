@@ -115,12 +115,6 @@ variable {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V]
 
 /-! ### Fourier-analytic helper lemmas -/
 
-/-- The Fourier transform of an integrable function is continuous. -/
-private theorem continuous_fourierIntegral (f : V → ℂ) (hf : Integrable f) :
-    Continuous (𝓕 f) :=
-  VectorFourier.fourierIntegral_continuous Real.continuous_fourierChar
-    (show Continuous fun p : V × V => (innerₗ V) p.1 p.2 from continuous_inner) hf
-
 /-- The `L¹` Parseval/Fubini identity `∫ (𝓕 f) · g = ∫ f · (𝓕 g)`, the self-adjointness of the
 Fourier transform for the symmetric inner-product pairing. -/
 private theorem integral_fourierIntegral_mul (f g : V → ℂ)
@@ -269,7 +263,9 @@ private theorem lintegral_enorm_fourierIntegral_mul_gaussian_le (F : V → ℂ)
     ∫⁻ ξ, ‖𝓕 F ξ * Complex.exp (-(t * ‖ξ‖ ^ 2 : ℝ))‖ₑ ≤ ENNReal.ofReal (F 0).re := by
   have hbound : ∀ ξ : V, ‖𝓕 F ξ‖ ≤ ∫ x, ‖F x‖ := fun ξ =>
     VectorFourier.norm_fourierIntegral_le_integral_norm 𝐞 volume (innerₗ V) F ξ
-  have hft_cont : Continuous (𝓕 F) := continuous_fourierIntegral F hint
+  have hft_cont : Continuous (𝓕 F) :=
+    VectorFourier.fourierIntegral_continuous Real.continuous_fourierChar
+    (by exact continuous_inner) hint
   have hprod_int : Integrable fun ξ : V => 𝓕 F ξ * Complex.exp (-(t * ‖ξ‖ ^ 2 : ℝ)) :=
     (integrable_gaussian ht).bdd_mul hft_cont.aestronglyMeasurable
       (ae_of_all _ fun ξ => hbound ξ)
@@ -299,7 +295,9 @@ theorem integrable_fourierIntegral_of_isPositiveDefiniteKernel (F : V → ℂ)
     (hpd : IsPositiveDefiniteKernel fun a b : V => F (a - b))
     (hint : Integrable F) (hcont : Continuous F) :
     Integrable (𝓕 F) := by
-  have hft_cont : Continuous (𝓕 F) := continuous_fourierIntegral F hint
+  have hft_cont : Continuous (𝓕 F) :=
+    VectorFourier.fourierIntegral_continuous Real.continuous_fourierChar
+    (by exact continuous_inner) hint
   set tn : ℕ → ℝ := fun n => 1 / ((n : ℝ) + 1) with htn_def
   have htn_pos : ∀ n, 0 < tn n := fun n => by positivity
   have htn_lim : Tendsto tn atTop (𝓝 0) := tendsto_one_div_add_atTop_nhds_zero_nat
@@ -372,7 +370,8 @@ theorem integral_fourierAtom_withDensity_re_fourierIntegralInv (F : V → ℂ)
   have hinv_cont : Continuous (𝓕⁻ F) := by
     rw [show 𝓕⁻ F = fun ξ : V => 𝓕 F (-ξ) from
       funext fun ξ => Real.fourierInv_eq_fourier_neg F ξ]
-    exact (continuous_fourierIntegral F hint).comp continuous_neg
+    exact (VectorFourier.fourierIntegral_continuous Real.continuous_fourierChar
+    (by exact continuous_inner) hint).comp continuous_neg
   have hre : ∀ ξ, 0 ≤ (𝓕⁻ F ξ).re := fun ξ => by
     rw [Real.fourierInv_eq_fourier_neg]
     exact fourierIntegral_re_nonneg_of_isPositiveDefiniteKernel F hpd hint hcont (-ξ)

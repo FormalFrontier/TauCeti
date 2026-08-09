@@ -106,13 +106,6 @@ private theorem re_sum_nonneg_of_kernel
   exact (Complex.nonneg_iff.mp h).1
 
 omit [InnerProductSpace ℝ V] [FiniteDimensional ℝ V] [MeasurableSpace V] [BorelSpace V] in
-/-- Hermitian symmetry of a positive-definite subtraction kernel: `conj (ψ v) = ψ (-v)`. -/
-private theorem conj_apply_of_kernel
-    (hpd : IsPositiveDefiniteKernel fun a b : V => ψ (a - b)) (v : V) :
-    conj (ψ v) = ψ (-v) := by
-  simpa using isPositiveDefiniteKernel_conj_symm hpd v 0
-
-omit [InnerProductSpace ℝ V] [FiniteDimensional ℝ V] [MeasurableSpace V] [BorelSpace V] in
 /-- The value at `0` of a function with positive-definite subtraction kernel has nonnegative
 real part. -/
 theorem re_map_zero_nonneg_of_isPositiveDefiniteKernel
@@ -636,7 +629,8 @@ theorem fourierIntegral_im_eq_zero_of_isPositiveDefiniteKernel (F : V → ℂ)
     rw [← integral_conj]
     have hpt : ∀ v : V, conj (fourierAtom ξ v * F v) = fourierAtom ξ (-v) * F (-v) := by
       intro v
-      rw [map_mul, conj_apply_of_kernel hpd v]
+      rw [map_mul, (fun v => by simpa using isPositiveDefiniteKernel_conj_symm hpd v 0 :
+    ∀ v, conj (F v) = F (-v)) v]
       congr 1
       rw [fourierAtom_eq_fourierChar, fourierAtom_eq_fourierChar,
         Circle.starRingEnd_addChar]
