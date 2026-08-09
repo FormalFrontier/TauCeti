@@ -66,28 +66,6 @@ private noncomputable def pointIso (g : WithConv (H →ₐ[R] A))
     ((Comodule.pointsAction M g).toModuleIsoₛ.trans
       (eqToIso (ComoduleCat.scalarExtensionFunctor_obj R H A M).symm))
 
-/-- The forward point automorphism is the usual point action, transported across the object
-formula for the opaque scalar-extension functor. -/
-@[simp]
-private theorem pointIso_hom (g : WithConv (H →ₐ[R] A))
-    (M : ComoduleCat.{u, v, w} R H) :
-    (pointIso R H A g M).hom =
-      eqToHom (ComoduleCat.scalarExtensionFunctor_obj R H A M) ≫
-        (Comodule.pointsAction M g).toModuleIsoₛ.hom ≫
-          eqToHom (ComoduleCat.scalarExtensionFunctor_obj R H A M).symm :=
-  (rfl)
-
-/-- The inverse point automorphism is the inverse of the usual point action, transported across
-the object formula for the opaque scalar-extension functor. -/
-@[simp]
-private theorem pointIso_inv (g : WithConv (H →ₐ[R] A))
-    (M : ComoduleCat.{u, v, w} R H) :
-    (pointIso R H A g M).inv =
-      eqToHom (ComoduleCat.scalarExtensionFunctor_obj R H A M) ≫
-        (Comodule.pointsAction M g).toModuleIsoₛ.inv ≫
-          eqToHom (ComoduleCat.scalarExtensionFunctor_obj R H A M).symm :=
-  (rfl)
-
 /-- Every algebra-valued point acts as a natural automorphism of the scalar-extension functor.
 Naturality is precisely the fact that scalar extension of a comodule morphism
 intertwines point actions. -/
@@ -95,7 +73,18 @@ noncomputable def pointNatIso (g : WithConv (H →ₐ[R] A)) :
     ComoduleCat.scalarExtensionFunctor R H A ≅
       ComoduleCat.scalarExtensionFunctor R H A :=
   NatIso.ofComponents (pointIso R H A g) (fun {M N} f ↦ by
-    rw [pointIso_hom, pointIso_hom, ComoduleCat.scalarExtensionFunctor_map]
+    -- Reduce the private component constructor directly so its formulas are stated only by the
+    -- public component theorems below.
+    change
+      (ComoduleCat.scalarExtensionFunctor R H A).map f ≫
+          eqToHom (ComoduleCat.scalarExtensionFunctor_obj R H A N) ≫
+            (Comodule.pointsAction N g).toModuleIsoₛ.hom ≫
+              eqToHom (ComoduleCat.scalarExtensionFunctor_obj R H A N).symm =
+        eqToHom (ComoduleCat.scalarExtensionFunctor_obj R H A M) ≫
+            (Comodule.pointsAction M g).toModuleIsoₛ.hom ≫
+              eqToHom (ComoduleCat.scalarExtensionFunctor_obj R H A M).symm ≫
+                (ComoduleCat.scalarExtensionFunctor R H A).map f
+    rw [ComoduleCat.scalarExtensionFunctor_map]
     simp only [Category.assoc]
     rw [cancel_epi]
     simp only [← Category.assoc]
