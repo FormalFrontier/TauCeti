@@ -144,6 +144,14 @@ theorem IsBounded.mul {S T : Set M} (hS : IsBounded S) (hT : IsBounded T) : IsBo
   obtain ⟨V, hV, hSV⟩ := hS W hW
   exact ⟨V, hV, by simpa [← mul_assoc] using (Set.mul_subset_mul_right hSV).trans hTW⟩
 
+/-- Every subset of a discrete ring is bounded: `{0}` is already a neighbourhood of zero. -/
+theorem isBounded_of_discreteTopology [DiscreteTopology M] (S : Set M) : IsBounded S := by
+  rw [isBounded_iff]
+  intro U hU
+  refine ⟨{0}, by simp, ?_⟩
+  rintro _ ⟨_, rfl, s, -, rfl⟩
+  simpa using mem_of_mem_nhds hU
+
 section ContinuousMul
 
 variable [ContinuousMul M]

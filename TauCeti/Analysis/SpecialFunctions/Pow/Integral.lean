@@ -103,6 +103,22 @@ theorem lintegral_ofReal_rpow_Ioi (s : ℝ) :
   exact not_integrableOn_Ioi_rpow s
     ⟨hmeas.aestronglyMeasurable, (hasFiniteIntegral_iff_ofReal hnn).2 (lt_top_iff_ne_top.2 hne)⟩
 
+/-- **A finite threshold on `c * t` cuts `(0, ∞)` down to a bounded interval.** For `0 < c` and
+`a ≠ ∞`, the indicator of `{t | ENNReal.ofReal (c * t) < a}` agrees at every positive `t` with the
+indicator of `(0, a.toReal / c)`, whatever the integrand. -/
+private theorem indicator_ofReal_mul_lt_eq_indicator_Ioo {a : ℝ≥0∞} (ha : a ≠ ∞) {c : ℝ}
+    (hc : 0 < c) (f : ℝ → ℝ≥0∞) {t : ℝ} (ht : t ∈ Ioi (0 : ℝ)) :
+    {t : ℝ | ENNReal.ofReal (c * t) < a}.indicator f t =
+      (Ioo (0 : ℝ) (a.toReal / c)).indicator f t := by
+  have ht' : (0 : ℝ) < t := ht
+  have hiff : t ∈ {t : ℝ | ENNReal.ofReal (c * t) < a} ↔ t ∈ Ioo (0 : ℝ) (a.toReal / c) := by
+    rw [Set.mem_ofPred, Set.mem_Ioo, ENNReal.ofReal_lt_iff_lt_toReal (by positivity) ha,
+      lt_div_iff₀ hc, mul_comm c t]
+    exact ⟨fun h => ⟨ht', h⟩, fun h => h.2⟩
+  by_cases hmem : t ∈ Ioo (0 : ℝ) (a.toReal / c)
+  · rw [Set.indicator_of_mem (hiff.2 hmem), Set.indicator_of_mem hmem]
+  · rw [Set.indicator_of_notMem fun h => hmem (hiff.1 h), Set.indicator_of_notMem hmem]
+
 /-- The lower integral of `t ^ s` over `(0, ∞)`, truncated at the height where `c * t` reaches a
 threshold `a : ℝ≥0∞`: for `-1 < s` and `0 < c`,
 
@@ -129,30 +145,18 @@ theorem lintegral_indicator_ofReal_rpow_Ioi (hs : -1 < s) {c : ℝ} (hc : 0 < c)
   rcases eq_or_ne a 0 with rfl | ha0
   · -- The cut-off is empty and both sides vanish.
     simp [ENNReal.zero_rpow_of_pos hs1]
-  set b : ℝ := a.toReal with hbdef
+  rw [setLIntegral_congr_fun measurableSet_Ioi
+    (fun t ht => indicator_ofReal_mul_lt_eq_indicator_Ioo ha hc _ ht)]
+  -- abbreviate only now: `set` folds `a.toReal`, which the cut-off lemma above spells out
+  set b : ℝ := a.toReal
   have hb0 : 0 < b := ENNReal.toReal_pos ha0 ha
   have hab : a = ENNReal.ofReal b := (ENNReal.ofReal_toReal ha).symm
-  -- On `(0, ∞)` the cut-off is the interval `(0, b / c)`.
-  have heq : ∀ t ∈ Ioi (0 : ℝ),
-      {t : ℝ | ENNReal.ofReal (c * t) < a}.indicator (fun t => ENNReal.ofReal (t ^ s)) t =
-        (Ioo (0 : ℝ) (b / c)).indicator (fun t => ENNReal.ofReal (t ^ s)) t := by
-    intro t ht
-    have ht' : (0 : ℝ) < t := ht
-    have hiff : ENNReal.ofReal (c * t) < a ↔ t < b / c := by
-      rw [hab, ENNReal.ofReal_lt_ofReal_iff hb0, lt_div_iff₀ hc, mul_comm]
-    rcases lt_or_ge t (b / c) with hmem | hmem
-    · have hcut : t ∈ {t : ℝ | ENNReal.ofReal (c * t) < a} := Set.mem_ofPred.2 (hiff.2 hmem)
-      rw [Set.indicator_of_mem hcut, Set.indicator_of_mem (Set.mem_Ioo.2 ⟨ht', hmem⟩)]
-    · have hcut : t ∉ {t : ℝ | ENNReal.ofReal (c * t) < a} := fun hcon =>
-        absurd (hiff.1 (Set.mem_ofPred.1 hcon)) (not_lt.2 hmem)
-      rw [Set.indicator_of_notMem hcut,
-        Set.indicator_of_notMem fun hcon => absurd (Set.mem_Ioo.1 hcon).2 (not_lt.2 hmem)]
   -- The elementary real identity behind the constant `c ^ (-(s + 1))`.
   have hreal : (b / c) ^ (s + 1) / (s + 1) = c ^ (-(s + 1)) / (s + 1) * b ^ (s + 1) := by
     have hcp : c ^ (s + 1) ≠ 0 := (Real.rpow_pos_of_pos hc _).ne'
     rw [Real.div_rpow hb0.le hc.le, Real.rpow_neg hc.le]
     field_simp
-  rw [setLIntegral_congr_fun measurableSet_Ioi heq, lintegral_indicator measurableSet_Ioo,
+  rw [lintegral_indicator measurableSet_Ioo,
     Measure.restrict_restrict measurableSet_Ioo,
     Set.inter_eq_self_of_subset_left Ioo_subset_Ioi_self,
     lintegral_ofReal_rpow_Ioo hs (by positivity), hab,
