@@ -59,8 +59,7 @@ theorem map_ringOfIntegersQuadraticConj_eq_self_of_mem_ramifiedPrimes
   let σₐ : 𝓞 K ≃ₐ[ℤ] 𝓞 K := AlgEquiv.ofRingEquiv
     (f := ringOfIntegersQuadraticConj hmin hgen)
     (fun z => by rw [algebraMap_int_eq]; exact map_intCast _ z)
-  show Ideal.map σₐ 𝔭 = 𝔭
-  -- `𝔭.map σₐ` is a prime of `𝓞 K` above `(p)`, so it lies in the singleton `{𝔭}`.
+  -- `𝔭.map σₐ` (definitionally `𝔭.map σ`) is a prime of `𝓞 K` above `(p)`, so it is in `{𝔭}`.
   have hmemset : Ideal.map σₐ 𝔭 ∈ (span {(p : ℤ)} : Ideal ℤ).primesOver (𝓞 K) :=
     ⟨inferInstance, inferInstance⟩
   rwa [primesOver_eq_singleton_of_mem_ramifiedPrimes hK hmem 𝔭, Set.mem_singleton_iff] at hmemset
@@ -84,8 +83,8 @@ theorem sq_classGroupMk0_eq_one_of_mem_ramifiedPrimes
     [𝔭.LiesOver (span {(p : ℤ)})] (h𝔭 : 𝔭 ≠ ⊥) :
     ClassGroup.mk0 ⟨𝔭, mem_nonZeroDivisors_of_ne_zero (by rwa [Ideal.zero_eq_bot])⟩ ^ 2 = 1 := by
   -- The class is 2-torsion because it is fixed by `σ` (ambiguity) and `σ` acts by inversion.
-  rw [← mulEquiv_ringOfIntegersQuadraticConj_apply_eq_self_iff hmin hgen, mulEquiv_mk0]
-  exact congrArg (fun I : (Ideal (𝓞 K))⁰ => ClassGroup.mk0 I)
+  rw [← mulEquiv_ringOfIntegersQuadraticConj_apply_eq_self_iff hmin hgen, ClassGroup.mulEquiv_mk0]
+  exact congrArg (ClassGroup.mk0 ·)
     (Subtype.ext (map_ringOfIntegersQuadraticConj_eq_self_of_mem_ramifiedPrimes hmin hgen hmem 𝔭))
 
 end TauCeti.NumberField
