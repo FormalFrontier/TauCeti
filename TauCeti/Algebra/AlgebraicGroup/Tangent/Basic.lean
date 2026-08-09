@@ -718,26 +718,6 @@ lemma tangentKer_smul_apply_snd
 
 end Hopf
 
-section DerivationScalars
-
-variable {R A B : Type*} [CommRing R] [CommRing A] [Bialgebra R A]
-  [CommRing B] [Algebra R B]
-
-namespace Derivation
-
-/-- The base-ring action and coefficient-ring action on counit-valued derivations form a scalar
-tower. -/
-noncomputable instance instIsScalarTowerCoefficient :
-    IsScalarTower R B (Derivation R A (Bialgebra.CounitAlgebra R A B)) :=
-  IsScalarTower.of_algebraMap_smul fun r d => by
-    ext a
-    simp only [Derivation.smul_apply]
-    exact algebraMap_smul B r (d a)
-
-end Derivation
-
-end DerivationScalars
-
 section DerivationLeibniz
 
 open WithConv TensorProduct
