@@ -71,7 +71,6 @@ theorem fiberMap_id (x : X) (e : p ⁻¹' {x}) :
   rfl
 
 /-- Restriction to a fibre respects composition of maps over the base. -/
-@[simp]
 theorem fiberMap_comp (f : C(E, F)) (g : C(F, G))
     (hf : q ∘ f = p) (hg : r ∘ g = q) (hgf : r ∘ g.comp f = p)
     (x : X) (e : p ⁻¹' {x}) :
@@ -134,7 +133,6 @@ theorem monodromyNatTrans_id (hp : _root_.IsCoveringMap p) :
 
 /-- Composition of maps of covers induces vertical composition of their monodromy natural
 transformations. -/
-@[simp]
 theorem monodromyNatTrans_comp (hp : _root_.IsCoveringMap p)
     (hq : _root_.IsCoveringMap q) (hr : _root_.IsCoveringMap r)
     (f : C(E, F)) (g : C(F, G)) (hf : q ∘ f = p) (hg : r ∘ g = q)
