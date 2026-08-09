@@ -16,7 +16,10 @@ form.
 
 This is the degree-quotient part of the Layer 0 `filtrationGradedEquiv` target in the
 [spin representations roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/SpinRepresentations/Suggested.lean#L62-L68).
-It does not construct the total associated-graded algebra or prove multiplication compatibility.
+It also identifies that equivalence with the leading-term map built in
+`TauCeti.LinearAlgebra.CliffordAlgebra.Filtration`, which reaches the same target by a different
+route, completing the bridge that file describes itself as having proved only half of. It does not
+construct the total associated-graded algebra or prove multiplication compatibility.
 
 ## Main definitions
 
@@ -30,6 +33,9 @@ It does not construct the total associated-graded algebra or prove multiplicatio
 * `TauCeti.CliffordAlgebra.equivExterior_mem_zero_form_filtration` and
   `TauCeti.CliffordAlgebra.equivExterior_symm_mem_filtration`: `equivExterior` and its inverse
   carry each Clifford filtration step to the corresponding zero-form step and back.
+* `TauCeti.CliffordAlgebra.filtrationGradedEquiv_comp_filtrationLeadingTerm`: the graded
+  equivalence inverts `Filtration.lean`'s leading-term map, so the two independent routes to the
+  degree quotient are the same map.
 
 ## References
 
@@ -143,6 +149,45 @@ theorem filtrationGradedEquiv_symm_apply (Q : QuadraticForm R M) [Invertible (2 
     Submodule.Quotient.equiv_apply, Submodule.mapQ_apply]
   apply congrArg Submodule.Quotient.mk
   exact Subtype.ext (coe_equivExteriorFiltration_symm_apply Q (k + 1) _)
+
+/-- The change-of-form transport moves a word of `k + 1` generators to the corresponding exterior
+word, modulo the previous filtration step. -/
+private theorem equivExterior_prod_ofFn_sub_ιMulti_mem (Q : QuadraticForm R M)
+    [Invertible (2 : R)] (k : ℕ) (v : Fin (k + 1) → M) :
+    equivExterior Q (List.ofFn ((ι Q) ∘ v)).prod -
+        (exteriorPower.ιMulti R (k + 1) v : ExteriorAlgebra R M) ∈
+      filtration (0 : QuadraticForm R M) k := by
+  simpa only [equivExterior, changeFormEquiv_apply, exteriorPower.ιMulti_apply_coe,
+    ExteriorAlgebra.ιMulti_apply, Function.comp_def] using
+    changeForm_prod_ofFn_ι_sub_prod_ofFn_ι_mem_filtration Q
+      (Q' := (0 : QuadraticForm R M)) changeForm.associated_neg_proof k v
+
+/-- **The leading-term map and the graded equivalence are mutually inverse.** -/
+theorem filtrationGradedEquiv_comp_filtrationLeadingTerm (Q : QuadraticForm R M)
+    [Invertible (2 : R)] (k : ℕ) :
+    (filtrationGradedEquiv Q k).toLinearMap ∘ₗ filtrationLeadingTerm Q k = LinearMap.id := by
+  apply exteriorPower.linearMap_ext
+  apply AlternatingMap.ext
+  intro v
+  simp only [LinearMap.compAlternatingMap_apply, LinearMap.comp_apply, LinearEquiv.coe_coe,
+    LinearMap.id_coe, id_eq, filtrationLeadingTerm_apply_ιMulti, filtrationGradedEquiv_apply_mk]
+  rw [← zeroFormFiltrationQuotientEquivExteriorPower_apply k (exteriorPower.ιMulti R (k + 1) v)]
+  congr 1
+  rw [Submodule.Quotient.eq, mem_filtrationPreviousRestricted_iff, filtrationPrevious_succ]
+  simpa using equivExterior_prod_ofFn_sub_ιMulti_mem Q k v
+
+/-- The leading-term map is the inverse of the graded equivalence. -/
+theorem filtrationLeadingTerm_eq_coe_symm (Q : QuadraticForm R M) [Invertible (2 : R)] (k : ℕ) :
+    filtrationLeadingTerm Q k = (filtrationGradedEquiv Q k).symm.toLinearMap := by
+  refine LinearMap.ext fun x => (filtrationGradedEquiv Q k).injective ?_
+  simp only [LinearEquiv.coe_coe, LinearEquiv.apply_symm_apply]
+  exact LinearMap.congr_fun (filtrationGradedEquiv_comp_filtrationLeadingTerm Q k) x
+
+/-- Consequently the leading-term map is bijective when `2` is invertible. -/
+theorem filtrationLeadingTerm_bijective (Q : QuadraticForm R M) [Invertible (2 : R)] (k : ℕ) :
+    Function.Bijective (filtrationLeadingTerm Q k) := by
+  rw [filtrationLeadingTerm_eq_coe_symm]
+  exact (filtrationGradedEquiv Q k).symm.bijective
 
 end CliffordAlgebra
 
