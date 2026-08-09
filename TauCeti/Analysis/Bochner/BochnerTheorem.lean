@@ -146,7 +146,7 @@ theorem integral_fourierAtom_withDensity_re_fourierInv (F : V → ℂ)
     rw [show 𝓕⁻ F = fun ξ : V => 𝓕 F (-ξ) from
       funext fun ξ => Real.fourierInv_eq_fourier_neg F ξ]
     exact (VectorFourier.fourierIntegral_continuous Real.continuous_fourierChar
-    (by exact continuous_inner) hint).comp continuous_neg
+    (by simpa only [innerₗ_apply_apply] using continuous_inner) hint).comp continuous_neg
   have hre : ∀ ξ, 0 ≤ (𝓕⁻ F ξ).re := fun ξ => by
     rw [Real.fourierInv_eq_fourier_neg]
     exact fourierIntegral_re_nonneg_of_isPositiveDefiniteKernel F hpd hint hcont (-ξ)

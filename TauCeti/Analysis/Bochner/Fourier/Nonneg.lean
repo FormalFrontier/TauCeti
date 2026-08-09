@@ -643,7 +643,8 @@ private theorem integral_fourierIntegral_mul (f g : V → ℂ)
     simp only [VectorFourier.fourierIntegral, innerₗ_apply_apply]
   have h := VectorFourier.integral_fourierIntegral_smul_eq_flip (L := innerₗ V)
     Real.continuous_fourierChar
-    (show Continuous fun p : V × V => (innerₗ V) p.1 p.2 from continuous_inner) hf hg
+    (by simpa only [innerₗ_apply_apply] using continuous_inner :
+      Continuous fun p : V × V => (innerₗ V) p.1 p.2) hf hg
   simp only [flip_innerₗ, smul_eq_mul, hbridge] at h
   exact h
 
@@ -746,7 +747,7 @@ private theorem lintegral_enorm_fourierIntegral_mul_gaussian_le (F : V → ℂ)
     VectorFourier.norm_fourierIntegral_le_integral_norm 𝐞 volume (innerₗ V) F ξ
   have hft_cont : Continuous (𝓕 F) :=
     VectorFourier.fourierIntegral_continuous Real.continuous_fourierChar
-    (by exact continuous_inner) hint
+    (by simpa only [innerₗ_apply_apply] using continuous_inner) hint
   have hprod_int : Integrable fun ξ : V => 𝓕 F ξ * Complex.exp (-(t * ‖ξ‖ ^ 2 : ℝ)) :=
     (integrable_cexp_neg_mul_sq_norm ht).bdd_mul hft_cont.aestronglyMeasurable
       (ae_of_all _ fun ξ => hbound ξ)
@@ -778,7 +779,7 @@ theorem integrable_fourierIntegral_of_isPositiveDefiniteKernel (F : V → ℂ)
     Integrable (𝓕 F) := by
   have hft_cont : Continuous (𝓕 F) :=
     VectorFourier.fourierIntegral_continuous Real.continuous_fourierChar
-    (by exact continuous_inner) hint
+    (by simpa only [innerₗ_apply_apply] using continuous_inner) hint
   set tn : ℕ → ℝ := fun n => 1 / ((n : ℝ) + 1) with htn_def
   have htn_pos : ∀ n, 0 < tn n := fun n => by positivity
   have htn_lim : Tendsto tn atTop (𝓝 0) := tendsto_one_div_add_atTop_nhds_zero_nat
