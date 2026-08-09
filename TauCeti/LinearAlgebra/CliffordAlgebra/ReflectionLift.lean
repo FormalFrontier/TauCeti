@@ -224,18 +224,6 @@ theorem reflection_mul_reflection_mem_range_spinToOrthogonal_of_isSquare
   exact (coe_lipschitzToOrthogonal_apply Q _ m).symm.trans
     (congrArg (fun y : QuadraticMap.orthogonalGroup Q => (y : V ≃ₗ[K] V) m) hlipschitz)
 
-/-- If both individual normalization scalars are squares, the product of the reflections in `v`
-and `w` lifts through the Spin action. -/
-theorem reflection_mul_reflection_mem_range_spinToOrthogonal_of_isSquare_of_isSquare
-    (v w : V) [Invertible (Q v)] [Invertible (Q w)]
-    (hv : IsSquare (-⅟(Q v))) (hw : IsSquare (-⅟(Q w))) :
-    (⟨QuadraticMap.reflection Q v, QuadraticMap.reflection_mem_orthogonalGroup Q v⟩ :
-        QuadraticMap.orthogonalGroup Q) *
-      ⟨QuadraticMap.reflection Q w, QuadraticMap.reflection_mem_orthogonalGroup Q w⟩ ∈
-        (spinToOrthogonal Q).range := by
-  exact reflection_mul_reflection_mem_range_spinToOrthogonal_of_isSquare Q v w
-    (by simpa only [neg_mul_neg] using hv.mul hw)
-
 end Square
 
 section IsAlgClosed
