@@ -176,6 +176,7 @@ private theorem peterssonOrthogonal_eq_orthogonal
   simp only [peterssonInner_apply]
 
 /-- **Taking the Petersson-orthogonal complement twice recovers the original subspace.** -/
+@[simp]
 theorem peterssonOrthogonal_peterssonOrthogonal
     (V : Submodule ℂ (CuspForm (Γ.map (mapGL ℝ)) k)) :
     peterssonOrthogonal (peterssonOrthogonal V) = V := by
@@ -214,7 +215,11 @@ inside the kernel of pairing against it; this is the form in which orthogonality
 a generating family, since the right-hand side is an inequality of subspaces. -/
 theorem mem_peterssonOrthogonal_iff_le_ker :
     f ∈ peterssonOrthogonal V ↔ V ≤ LinearMap.ker (peterssonInnerCosetsₛₗ f) :=
-  mem_peterssonOrthogonal_iff'
+  ⟨fun hf g hg ↦ by
+    rw [LinearMap.mem_ker, peterssonInnerCosetsₛₗ_apply_apply]
+    exact mem_peterssonOrthogonal_iff'.mp hf g hg,
+  fun h ↦ mem_peterssonOrthogonal_iff'.mpr fun g hg ↦ by
+    simpa only [LinearMap.mem_ker, peterssonInnerCosetsₛₗ_apply_apply] using h hg⟩
 
 /-- **Orthogonality to a range is orthogonality to the values.** -/
 theorem mem_peterssonOrthogonal_range_iff {E : Type*} [AddCommGroup E] [Module ℂ E]

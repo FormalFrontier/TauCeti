@@ -153,10 +153,14 @@ The factorization is `V_d = V_p ∘ V_{d/p}` when a prime `p` divides `d`, and
 `V₁ = V₁ ∘ V₁` through the level `N/p` for a prime `p` dividing `N/M` otherwise. -/
 theorem cuspFormsOld_le_of_prime [NeZero N]
     {V : Submodule ℂ (CuspForm ((Gamma1 N).map (mapGL ℝ)) k)}
-    (hV : ∀ (p L : ℕ), p.Prime → p * L = N → ∀ (d : ℕ), d = 1 ∨ d = p →
-      ∀ (h : d * L ∣ N) (g : CuspForm ((Gamma1 L).map (mapGL ℝ)) k),
-        haveI : NeZero d := ⟨fun hd ↦ NeZero.ne N (by simpa [hd] using h)⟩
-        CuspForm.levelRaise d (Gamma1_map_le_conjAct_scaleGL_of_dvd h) g ∈ V) :
+    (hV : ∀ (p L : ℕ), p.Prime → ∀ (hpL : p * L = N) (d : ℕ) (hd : d = 1 ∨ d = p),
+      ∀ g : CuspForm ((Gamma1 L).map (mapGL ℝ)) k,
+        have hdvd : d * L ∣ N := by
+          rcases hd with rfl | rfl
+          · exact ⟨p, by rw [← hpL]; ring⟩
+          · exact ⟨1, by rw [← hpL, mul_one]⟩
+        haveI : NeZero d := ⟨fun hd ↦ NeZero.ne N (by simpa [hd] using hdvd)⟩
+        CuspForm.levelRaise d (Gamma1_map_le_conjAct_scaleGL_of_dvd hdvd) g ∈ V) :
     cuspFormsOld N k ≤ V := by
   refine cuspFormsOld_le fun M d hdvd hM f ↦ ?_
   rcases eq_or_ne d 1 with rfl | hd1
@@ -168,9 +172,8 @@ theorem cuspFormsOld_le_of_prime [NeZero N]
       exact ⟨p, hp, q, hq⟩
     have hpL : p * (M * t) = N := by rw [hm, ht]; ring
     have : NeZero (M * t) := ⟨fun h ↦ NeZero.ne N (by rw [← hpL, h, mul_zero])⟩
-    have h1L : 1 * (M * t) ∣ N := ⟨p, by rw [one_mul, ← hpL]; ring⟩
     have h1M : 1 * M ∣ M * t := ⟨t, by rw [one_mul]⟩
-    have hmem := hV p (M * t) hp hpL 1 (Or.inl rfl) h1L
+    have hmem := hV p (M * t) hp hpL 1 (Or.inl rfl)
       (CuspForm.levelRaise 1 (Gamma1_map_le_conjAct_scaleGL_of_dvd h1M) f)
     simpa only [CuspForm.levelRaise_levelRaise, one_mul] using hmem
   · -- `V_d` with `d ≠ 1`: split off a prime factor `q` of `d`
@@ -182,9 +185,8 @@ theorem cuspFormsOld_le_of_prime [NeZero N]
     have : NeZero e := ⟨fun h ↦ NeZero.ne N (by rw [hs, he, h]; simp)⟩
     have hqL : q * (e * M * s) = N := by rw [hs, he]; ring
     have : NeZero (e * M * s) := ⟨fun h ↦ NeZero.ne N (by rw [← hqL, h, mul_zero])⟩
-    have hqLN : q * (e * M * s) ∣ N := hqL ▸ dvd_rfl
     have heM : e * M ∣ e * M * s := ⟨s, rfl⟩
-    have hmem := hV q (e * M * s) hq hqL q (Or.inr rfl) hqLN
+    have hmem := hV q (e * M * s) hq hqL q (Or.inr rfl)
       (CuspForm.levelRaise e (Gamma1_map_le_conjAct_scaleGL_of_dvd heM) f)
     have levelRaise_index : e * q = d := by rw [he, Nat.mul_comm]
     simpa only [CuspForm.levelRaise_levelRaise, levelRaise_index] using hmem
@@ -199,6 +201,7 @@ def cuspFormsNew (N : ℕ) [NeZero N] (k : ℤ) :
 
 /-- **Newness is tested on the level-raises.** A cusp form of level `N` is new exactly when it
 is Petersson-orthogonal to `V_d g` for every cusp form `g` of proper divisor level. -/
+@[simp]
 theorem mem_cuspFormsNew_iff [NeZero N] {f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k} :
     f ∈ cuspFormsNew N k ↔ ∀ (M d : ℕ) (h : d * M ∣ N), M ≠ N →
       ∀ g : CuspForm ((Gamma1 M).map (mapGL ℝ)) k,

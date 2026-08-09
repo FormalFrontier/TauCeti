@@ -459,14 +459,14 @@ lemma exists_conjScale_mem_Gamma0_of_dvd (d M N : ℕ) (hdvd : d * M ∣ N) (γ 
     ∃ (c : ℤ) (hc : (γ : SL(2, ℤ)) 1 0 = d * c) (hm : conjScale d γ c hc ∈ Gamma0 M),
       (Gamma0Map M).toHomUnits ⟨conjScale d γ c hc, hm⟩ =
         ZMod.unitsMap ((Dvd.intro_left d rfl).trans hdvd) ((Gamma0Map N).toHomUnits γ) := by
-  obtain ⟨t, ht⟩ : ((N : ℕ) : ℤ) ∣ (γ : SL(2, ℤ)) 1 0 :=
-    (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp (Gamma0_mem.mp γ.2)
-  obtain ⟨s, hs⟩ := hdvd
-  have hc : (γ : SL(2, ℤ)) 1 0 = d * ((M : ℤ) * ((s : ℤ) * t)) := by
-    rw [ht, hs]; push_cast; ring
-  refine ⟨_, hc, Gamma0_mem.mpr (by simp), ?_⟩
-  ext
-  simp [Gamma0Map, ZMod.unitsMap_def]
+  let γ' : ↥(Gamma0 (d * M)) := ⟨γ, Gamma0_le_Gamma0_of_dvd hdvd γ.2⟩
+  obtain ⟨c, hc, hm, heq⟩ := exists_conjScale_mem_Gamma0 d M γ'
+  refine ⟨c, hc, hm, heq.trans ?_⟩
+  have hγ : (Gamma0Map (d * M)).toHomUnits γ' =
+      ZMod.unitsMap hdvd ((Gamma0Map N).toHomUnits γ) := by
+    ext
+    simp [γ', Gamma0Map, ZMod.unitsMap_def]
+  rw [hγ, ← MonoidHom.comp_apply, ZMod.unitsMap_comp]
 
 /-- **`V_d` intertwines the diamond operators.** For `d * M ∣ N`, the diamond operator `⟨u⟩` of
 level `N` acts on a level-raised form `V_d f` as the diamond operator of level `M` at the
