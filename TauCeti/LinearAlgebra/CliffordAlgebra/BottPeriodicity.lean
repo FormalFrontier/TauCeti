@@ -17,7 +17,7 @@ negative generator is equivalent to tensoring with two-by-two real matrices.
 ## Main results
 
 * `TauCeti.CliffordAlgebra.hyperbolicEquivTensor`: adjoining a hyperbolic plane to an arbitrary
-  finite-dimensional real quadratic module tensors its Clifford algebra with `M₂(ℝ)`;
+  real quadratic module tensors its Clifford algebra with `M₂(ℝ)`;
 * `TauCeti.realCliffordBottEquiv`: the corresponding equivalence for the standard signature forms.
 -/
 
@@ -176,53 +176,264 @@ private theorem hyperbolicToMatrix_surjective :
       exact ⟨x' + y', by rw [map_add, hx', hy']⟩
   | h_std_basis i j x => exact hyperbolicToMatrix_single_surjective Q i j x
 
-private theorem hyperbolicToMatrix_bijective [FiniteDimensional ℝ M] :
-    Function.Bijective (hyperbolicToMatrix Q) := by
-  have hrank :
-      finrank ℝ (_root_.CliffordAlgebra (Q.prod (TauCeti.realCliffordForm 1 1))) =
-        finrank ℝ (Matrix (Fin 2) (Fin 2) (_root_.CliffordAlgebra Q)) := by
-    rw [Module.finrank_matrix, TauCeti.CliffordAlgebra.finrank_eq_two_pow,
-      Module.finrank_prod, TauCeti.CliffordAlgebra.finrank_eq_two_pow,
-      Module.finrank_pi, Fintype.card_fin]
-    ring
-  exact ⟨(LinearMap.injective_iff_surjective_of_finrank_eq_finrank
-    (f := (hyperbolicToMatrix Q).toLinearMap) hrank).2 (hyperbolicToMatrix_surjective Q),
-    hyperbolicToMatrix_surjective Q⟩
+private abbrev HyperbolicAlgebra :=
+  _root_.CliffordAlgebra (Q.prod (TauCeti.realCliffordForm 1 1))
 
-/-- Adjoining a hyperbolic plane to a finite-dimensional real quadratic module tensors its
+private def hyperbolicE₀ : HyperbolicAlgebra Q :=
+  _root_.CliffordAlgebra.ι _ (0, Pi.single 0 1)
+
+private def hyperbolicE₁ : HyperbolicAlgebra Q :=
+  _root_.CliffordAlgebra.ι _ (0, Pi.single 1 1)
+
+private def hyperbolicVolume : HyperbolicAlgebra Q := hyperbolicE₀ Q * hyperbolicE₁ Q
+
+private theorem hyperbolicVolume_sq : hyperbolicVolume Q * hyperbolicVolume Q = 1 := by
+  let a : HyperbolicAlgebra Q := hyperbolicE₀ Q
+  let b : HyperbolicAlgebra Q := hyperbolicE₁ Q
+  have h : (Q.prod (TauCeti.realCliffordForm 1 1)).IsOrtho
+      (0, Pi.single 1 1) (0, Pi.single 0 1) := by
+    simp [QuadraticMap.isOrtho_def, TauCeti.realCliffordForm_one_one_apply]
+  have hba : b * a = -(a * b) :=
+    _root_.CliffordAlgebra.ι_mul_ι_comm_of_isOrtho h
+  have haa : a * a = 1 := by
+    dsimp [a, hyperbolicE₀]
+    rw [_root_.CliffordAlgebra.ι_sq_scalar]
+    simp [TauCeti.realCliffordForm_one_one_apply]
+  have hbb : b * b = -1 := by
+    dsimp [b, hyperbolicE₁]
+    rw [_root_.CliffordAlgebra.ι_sq_scalar]
+    simp [TauCeti.realCliffordForm_one_one_apply]
+  change a * b * (a * b) = 1
+  calc
+    a * b * (a * b) = a * (b * a) * b := by simp [mul_assoc]
+    _ = a * (-(a * b)) * b := by rw [hba]
+    _ = -(a * a) * (b * b) := by simp [mul_assoc]
+    _ = 1 := by rw [haa, hbb]; simp
+
+private theorem hyperbolicBase_comm_volume (m : M) :
+    Commute (_root_.CliffordAlgebra.ι _ (m, 0)) (hyperbolicVolume Q) := by
+  let i : HyperbolicAlgebra Q := _root_.CliffordAlgebra.ι _ (m, 0)
+  let a : HyperbolicAlgebra Q := hyperbolicE₀ Q
+  let b : HyperbolicAlgebra Q := hyperbolicE₁ Q
+  have h0 : (Q.prod (TauCeti.realCliffordForm 1 1)).IsOrtho
+      (m, 0) (0, Pi.single 0 1) := QuadraticMap.IsOrtho.inl_inr _ _
+  have h1 : (Q.prod (TauCeti.realCliffordForm 1 1)).IsOrtho
+      (m, 0) (0, Pi.single 1 1) := QuadraticMap.IsOrtho.inl_inr _ _
+  have hcomm0 : i * a = -(a * i) :=
+    _root_.CliffordAlgebra.ι_mul_ι_comm_of_isOrtho h0
+  have hcomm1 : i * b = -(b * i) :=
+    _root_.CliffordAlgebra.ι_mul_ι_comm_of_isOrtho h1
+  rw [Commute]
+  change i * (a * b) = a * b * i
+  calc
+    i * (a * b) = (i * a) * b := by simp [mul_assoc]
+    _ = (-(a * i)) * b := by rw [hcomm0]
+    _ = -a * (i * b) := by simp [mul_assoc]
+    _ = -a * (-(b * i)) := by rw [hcomm1]
+    _ = a * b * i := by simp [mul_assoc]
+
+private def hyperbolicBaseGenerator : M →ₗ[ℝ] HyperbolicAlgebra Q :=
+  (LinearMap.mulRight ℝ (hyperbolicVolume Q)).comp
+    ((_root_.CliffordAlgebra.ι _).comp
+      (LinearMap.inl ℝ M (Fin (1 + 1) → ℝ)))
+
+private theorem hyperbolicBaseGenerator_sq (m : M) :
+    hyperbolicBaseGenerator Q m * hyperbolicBaseGenerator Q m = algebraMap ℝ _ (Q m) := by
+  change (_root_.CliffordAlgebra.ι _ (m, 0) * hyperbolicVolume Q) *
+    (_root_.CliffordAlgebra.ι _ (m, 0) * hyperbolicVolume Q) = _
+  rw [← pow_two, (hyperbolicBase_comm_volume Q m).mul_pow, pow_two, pow_two,
+    _root_.CliffordAlgebra.ι_sq_scalar, hyperbolicVolume_sq]
+  simp [QuadraticMap.prod_apply]
+
+private def hyperbolicBaseInclusion :
+    _root_.CliffordAlgebra Q →ₐ[ℝ] HyperbolicAlgebra Q :=
+  _root_.CliffordAlgebra.lift Q ⟨hyperbolicBaseGenerator Q, hyperbolicBaseGenerator_sq Q⟩
+
+private noncomputable def hyperbolicMatrixInclusion :
+    Matrix (Fin 2) (Fin 2) ℝ →ₐ[ℝ] HyperbolicAlgebra Q :=
+  (hyperbolicRightInclusion Q).comp TauCeti.realCliffordOneOneEquivMatrix.symm.toAlgHom
+
+private theorem hyperbolicVolume_anticomm_rightGenerator (v : Fin (1 + 1) → ℝ) :
+    hyperbolicVolume Q * _root_.CliffordAlgebra.ι _ (0, v) =
+      -(_root_.CliffordAlgebra.ι _ (0, v) * hyperbolicVolume Q) := by
+  let h0 := _root_.CliffordAlgebra.ι (TauCeti.realCliffordForm 1 1) (Pi.single 0 1)
+  let h1 := _root_.CliffordAlgebra.ι (TauCeti.realCliffordForm 1 1) (Pi.single 1 1)
+  have hh : h0 * h1 * _root_.CliffordAlgebra.ι _ v =
+      -(_root_.CliffordAlgebra.ι _ v * (h0 * h1)) := by
+    apply TauCeti.realCliffordOneOneEquivMatrix.injective
+    ext i j
+    fin_cases i <;> fin_cases j <;>
+      simp [h0, h1, TauCeti.realCliffordOneOneEquivMatrix_ι,
+        Matrix.mul_apply, Fin.sum_univ_two]
+  have hm := congrArg (hyperbolicRightInclusion Q) hh
+  dsimp [h0, h1] at hm
+  simpa [hyperbolicVolume, hyperbolicE₀, hyperbolicE₁,
+    hyperbolicRightInclusion, map_mul] using hm
+
+private theorem hyperbolicBaseInclusion_comm_rightInclusion
+    (x : _root_.CliffordAlgebra Q)
+    (y : _root_.CliffordAlgebra (TauCeti.realCliffordForm 1 1)) :
+    Commute (hyperbolicBaseInclusion Q x) (hyperbolicRightInclusion Q y) := by
+  have hgen : ∀ (m : M) (z : _root_.CliffordAlgebra (TauCeti.realCliffordForm 1 1)),
+      Commute (hyperbolicBaseInclusion Q (_root_.CliffordAlgebra.ι Q m))
+        (hyperbolicRightInclusion Q z) := by
+    intro m z
+    induction z using _root_.CliffordAlgebra.induction with
+    | algebraMap r =>
+        rw [(hyperbolicRightInclusion Q).commutes]
+        exact (Algebra.commutes r _).symm
+    | ι v =>
+        rw [hyperbolicBaseInclusion, _root_.CliffordAlgebra.lift_ι_apply]
+        simp only [hyperbolicBaseGenerator, LinearMap.comp_apply, LinearMap.mulRight_apply,
+          LinearMap.inl_apply, hyperbolicRightInclusion,
+          _root_.CliffordAlgebra.map_apply_ι, QuadraticMap.Isometry.inr_apply]
+        rw [Commute]
+        have hic := _root_.CliffordAlgebra.ι_mul_ι_comm_of_isOrtho
+          (QuadraticMap.IsOrtho.inl_inr (Q₁ := Q)
+            (Q₂ := TauCeti.realCliffordForm 1 1) m v)
+        have hoc := hyperbolicVolume_anticomm_rightGenerator Q v
+        calc
+          _ = _root_.CliffordAlgebra.ι _ (m, 0) *
+              (hyperbolicVolume Q * _root_.CliffordAlgebra.ι _ (0, v)) := by simp [mul_assoc]
+          _ = _root_.CliffordAlgebra.ι _ (m, 0) *
+              (-(_root_.CliffordAlgebra.ι _ (0, v) * hyperbolicVolume Q)) := by rw [hoc]
+          _ = -(_root_.CliffordAlgebra.ι _ (m, 0) *
+              _root_.CliffordAlgebra.ι _ (0, v)) * hyperbolicVolume Q := by simp [mul_assoc]
+          _ = -(-(_root_.CliffordAlgebra.ι _ (0, v) *
+              _root_.CliffordAlgebra.ι _ (m, 0))) * hyperbolicVolume Q := by rw [hic]
+          _ = _ := by simp [mul_assoc]
+    | mul a b ha hb => simpa only [map_mul] using ha.mul_right hb
+    | add a b ha hb => simpa only [map_add] using ha.add_right hb
+  induction x using _root_.CliffordAlgebra.induction with
+  | algebraMap r =>
+      rw [(hyperbolicBaseInclusion Q).commutes]
+      exact Algebra.commutes r _
+  | ι m => exact hgen m y
+  | mul a b ha hb => simpa only [map_mul] using ha.mul_left hb
+  | add a b ha hb => simpa only [map_add] using ha.add_left hb
+
+private noncomputable def tensorToHyperbolic :
+    (_root_.CliffordAlgebra Q ⊗[ℝ] Matrix (Fin 2) (Fin 2) ℝ) →ₐ[ℝ]
+      HyperbolicAlgebra Q :=
+  Algebra.TensorProduct.lift (hyperbolicBaseInclusion Q) (hyperbolicMatrixInclusion Q) (by
+    intro x y
+    change Commute (hyperbolicBaseInclusion Q x)
+      (hyperbolicRightInclusion Q (TauCeti.realCliffordOneOneEquivMatrix.symm.toAlgHom y))
+    exact hyperbolicBaseInclusion_comm_rightInclusion Q x
+      (TauCeti.realCliffordOneOneEquivMatrix.symm.toAlgHom y))
+
+private theorem hyperbolicMatrixInclusion_sigmaX :
+    hyperbolicMatrixInclusion Q !![(0 : ℝ), 1; 1, 0] = hyperbolicVolume Q := by
+  let h0 := _root_.CliffordAlgebra.ι (TauCeti.realCliffordForm 1 1) (Pi.single 0 1)
+  let h1 := _root_.CliffordAlgebra.ι (TauCeti.realCliffordForm 1 1) (Pi.single 1 1)
+  have he : TauCeti.realCliffordOneOneEquivMatrix (h0 * h1) = !![(0 : ℝ), 1; 1, 0] := by
+    ext i j
+    fin_cases i <;> fin_cases j <;>
+      simp [h0, h1, TauCeti.realCliffordOneOneEquivMatrix_ι,
+        Matrix.mul_apply, Fin.sum_univ_two]
+  rw [hyperbolicMatrixInclusion, AlgHom.comp_apply, ← he]
+  change hyperbolicRightInclusion Q
+    ((TauCeti.realCliffordOneOneEquivMatrix.symm.toAlgHom.comp
+      TauCeti.realCliffordOneOneEquivMatrix.toAlgHom) (h0 * h1)) = _
+  rw [AlgEquiv.symm_comp, AlgHom.id_apply]
+  dsimp [h0, h1, hyperbolicVolume, hyperbolicE₀, hyperbolicE₁]
+  rw [hyperbolicRightInclusion, map_mul, _root_.CliffordAlgebra.map_apply_ι,
+    _root_.CliffordAlgebra.map_apply_ι]
+  rfl
+
+private theorem hyperbolicMatrixInclusion_hyperbolic (v : Fin (1 + 1) → ℝ) :
+    hyperbolicMatrixInclusion Q !![v 0, v 1; -v 1, -v 0] =
+      _root_.CliffordAlgebra.ι _ (0, v) := by
+  rw [hyperbolicMatrixInclusion, AlgHom.comp_apply,
+    ← TauCeti.realCliffordOneOneEquivMatrix_ι v]
+  change hyperbolicRightInclusion Q
+    ((TauCeti.realCliffordOneOneEquivMatrix.symm.toAlgHom.comp
+      TauCeti.realCliffordOneOneEquivMatrix.toAlgHom)
+        (_root_.CliffordAlgebra.ι _ v)) = _
+  rw [AlgEquiv.symm_comp, AlgHom.id_apply]
+  simp [hyperbolicRightInclusion]
+
+private theorem tensorToHyperbolic_ι_base (m : M) :
+    tensorToHyperbolic Q
+        (_root_.CliffordAlgebra.ι Q m ⊗ₜ[ℝ] !![(0 : ℝ), 1; 1, 0]) =
+      _root_.CliffordAlgebra.ι _ (m, 0) := by
+  rw [tensorToHyperbolic, Algebra.TensorProduct.lift_tmul,
+    hyperbolicBaseInclusion, _root_.CliffordAlgebra.lift_ι_apply,
+    hyperbolicMatrixInclusion_sigmaX]
+  change (_root_.CliffordAlgebra.ι _ (m, 0) * hyperbolicVolume Q) *
+    hyperbolicVolume Q = _
+  rw [mul_assoc, hyperbolicVolume_sq]
+  simp
+
+private theorem tensorToHyperbolic_ι_hyperbolic (v : Fin (1 + 1) → ℝ) :
+    tensorToHyperbolic Q (1 ⊗ₜ[ℝ] !![v 0, v 1; -v 1, -v 0]) =
+      _root_.CliffordAlgebra.ι _ (0, v) := by
+  rw [tensorToHyperbolic, Algebra.TensorProduct.lift_tmul, map_one, one_mul,
+    hyperbolicMatrixInclusion_hyperbolic]
+
+private theorem tensorToHyperbolic_comp_hyperbolicToTensor :
+    (tensorToHyperbolic Q).comp (hyperbolicToTensor Q) = AlgHom.id ℝ _ := by
+  apply _root_.CliffordAlgebra.hom_ext
+  apply LinearMap.ext
+  rintro ⟨m, v⟩
+  change tensorToHyperbolic Q
+      (hyperbolicToTensor Q (_root_.CliffordAlgebra.ι _ (m, v))) =
+    _root_.CliffordAlgebra.ι _ (m, v)
+  rw [show (m, v) = (m, 0) + (0, v) by ext <;> simp, map_add, map_add,
+    hyperbolicToTensor_ι_base, hyperbolicToTensor_ι_hyperbolic]
+  rw [map_add, tensorToHyperbolic_ι_base, tensorToHyperbolic_ι_hyperbolic]
+
+private theorem hyperbolicToTensor_surjective :
+    Function.Surjective (hyperbolicToTensor Q) :=
+  (matrixEquivTensor (Fin 2) ℝ (_root_.CliffordAlgebra Q)).surjective.comp
+    (hyperbolicToMatrix_surjective Q)
+
+private theorem hyperbolicToTensor_comp_tensorToHyperbolic :
+    (hyperbolicToTensor Q).comp (tensorToHyperbolic Q) = AlgHom.id ℝ _ := by
+  apply DFunLike.ext _ _
+  have hleft : Function.LeftInverse (tensorToHyperbolic Q) (hyperbolicToTensor Q) :=
+    fun x ↦ DFunLike.congr_fun (tensorToHyperbolic_comp_hyperbolicToTensor Q) x
+  exact hleft.rightInverse_of_surjective (hyperbolicToTensor_surjective Q)
+
+/-- Adjoining a hyperbolic plane to a real quadratic module tensors its
 Clifford algebra with two-by-two real matrices. -/
-noncomputable def hyperbolicEquivTensor [FiniteDimensional ℝ M] :
+noncomputable def hyperbolicEquivTensor :
     _root_.CliffordAlgebra (Q.prod (TauCeti.realCliffordForm 1 1)) ≃ₐ[ℝ]
       (_root_.CliffordAlgebra Q ⊗[ℝ] Matrix (Fin 2) (Fin 2) ℝ) :=
-  (AlgEquiv.ofBijective (hyperbolicToMatrix Q) (hyperbolicToMatrix_bijective Q)).trans
-    (matrixEquivTensor (Fin 2) ℝ (_root_.CliffordAlgebra Q))
+  AlgEquiv.ofAlgHom (hyperbolicToTensor Q) (tensorToHyperbolic Q)
+    (hyperbolicToTensor_comp_tensorToHyperbolic Q)
+    (tensorToHyperbolic_comp_hyperbolicToTensor Q)
+
+private theorem hyperbolicEquivTensor_toAlgHom :
+    (hyperbolicEquivTensor Q).toAlgHom = hyperbolicToTensor Q := by
+  exact AlgEquiv.toAlgHom_ofAlgHom _ _ _ _
 
 /-- The image of a generator under `hyperbolicEquivTensor`, split into its original-module and
 hyperbolic-plane components. -/
 @[simp]
-theorem hyperbolicEquivTensor_ι [FiniteDimensional ℝ M]
+theorem hyperbolicEquivTensor_ι
     (x : M × (Fin (1 + 1) → ℝ)) :
     hyperbolicEquivTensor Q (_root_.CliffordAlgebra.ι _ x) =
       _root_.CliffordAlgebra.ι Q x.1 ⊗ₜ[ℝ] !![0, 1; 1, 0] +
         1 ⊗ₜ[ℝ] !![x.2 0, x.2 1; -x.2 1, -x.2 0] := by
-  -- Expose the defining hom before splitting the generator into its two summands.
-  change hyperbolicToTensor Q (_root_.CliffordAlgebra.ι _ x) = _
+  rw [show hyperbolicEquivTensor Q _ =
+    (hyperbolicEquivTensor Q).toAlgHom _ from rfl, hyperbolicEquivTensor_toAlgHom]
   conv_lhs =>
     rw [show x = (x.1, 0) + (0, x.2) by ext <;> simp]
   rw [map_add, map_add, hyperbolicToTensor_ι_base, hyperbolicToTensor_ι_hyperbolic]
 
 /-- The image of an original-module generator under `hyperbolicEquivTensor`. -/
 @[simp 1100]
-theorem hyperbolicEquivTensor_ι_base [FiniteDimensional ℝ M] (m : M) :
+theorem hyperbolicEquivTensor_ι_base (m : M) :
     hyperbolicEquivTensor Q (_root_.CliffordAlgebra.ι _ (m, 0)) =
       _root_.CliffordAlgebra.ι Q m ⊗ₜ[ℝ] !![0, 1; 1, 0] := by
-  -- Expose the defining hom so its generator equation applies directly.
-  change hyperbolicToTensor Q (_root_.CliffordAlgebra.ι _ (m, 0)) = _
+  rw [show hyperbolicEquivTensor Q _ =
+    (hyperbolicEquivTensor Q).toAlgHom _ from rfl, hyperbolicEquivTensor_toAlgHom]
   exact hyperbolicToTensor_ι_base Q m
 
 /-- The inverse of `hyperbolicEquivTensor` on the tensor representing an original generator. -/
 @[simp]
-theorem hyperbolicEquivTensor_symm_ι_base [FiniteDimensional ℝ M] (m : M) :
+theorem hyperbolicEquivTensor_symm_ι_base (m : M) :
     (hyperbolicEquivTensor Q).symm
         (_root_.CliffordAlgebra.ι Q m ⊗ₜ[ℝ] !![0, 1; 1, 0]) =
       _root_.CliffordAlgebra.ι _ (m, 0) := by
@@ -231,7 +442,7 @@ theorem hyperbolicEquivTensor_symm_ι_base [FiniteDimensional ℝ M] (m : M) :
 
 /-- The inverse of `hyperbolicEquivTensor` on a tensor representing a hyperbolic generator. -/
 @[simp]
-theorem hyperbolicEquivTensor_symm_ι_hyperbolic [FiniteDimensional ℝ M]
+theorem hyperbolicEquivTensor_symm_ι_hyperbolic
     (v : Fin (1 + 1) → ℝ) :
     (hyperbolicEquivTensor Q).symm (1 ⊗ₜ[ℝ] !![v 0, v 1; -v 1, -v 0]) =
       _root_.CliffordAlgebra.ι _ (0, v) := by
@@ -350,6 +561,40 @@ def realBottSplitIsometry (p q : ℕ) :
           rintro (i | i)
           · simp [y, realBottSplitLinearEquiv, realBottWeight_inl]
           · simp [y, realBottSplitLinearEquiv, realBottWeight_inr] }
+
+/-- The positive coordinates retained by `realBottSplitIsometry`. -/
+@[simp]
+theorem realBottSplitIsometry_fst_pos (p q : ℕ)
+    (v : Fin ((p + 1) + (q + 1)) → ℝ) (i : Fin p) :
+    (realBottSplitIsometry p q v).1 (Fin.castAdd q i) =
+      v (Fin.castAdd (q + 1) i.castSucc) := by
+  change (realBottSplitLinearEquiv p q v).1 _ = _
+  simp [realBottSplitLinearEquiv, realBottIndexEquiv, splitLastEquiv]
+
+/-- The negative coordinates retained by `realBottSplitIsometry`. -/
+@[simp]
+theorem realBottSplitIsometry_fst_neg (p q : ℕ)
+    (v : Fin ((p + 1) + (q + 1)) → ℝ) (i : Fin q) :
+    (realBottSplitIsometry p q v).1 (Fin.natAdd p i) =
+      v (Fin.natAdd (p + 1) i.castSucc) := by
+  change (realBottSplitLinearEquiv p q v).1 _ = _
+  simp [realBottSplitLinearEquiv, realBottIndexEquiv, splitLastEquiv]
+
+/-- The last positive coordinate extracted by `realBottSplitIsometry`. -/
+@[simp]
+theorem realBottSplitIsometry_snd_zero (p q : ℕ)
+    (v : Fin ((p + 1) + (q + 1)) → ℝ) :
+    (realBottSplitIsometry p q v).2 0 =
+      v (Fin.castAdd (q + 1) (Fin.last p)) := by
+  rfl
+
+/-- The last negative coordinate extracted by `realBottSplitIsometry`. -/
+@[simp]
+theorem realBottSplitIsometry_snd_one (p q : ℕ)
+    (v : Fin ((p + 1) + (q + 1)) → ℝ) :
+    (realBottSplitIsometry p q v).2 1 =
+      v (Fin.natAdd (p + 1) (Fin.last q)) := by
+  rfl
 
 /-- The hyperbolic Bott step for the standard real signature forms:
 `Cliff(p + 1, q + 1) ≅ Cliff(p, q) ⊗ M₂(ℝ)`. -/
