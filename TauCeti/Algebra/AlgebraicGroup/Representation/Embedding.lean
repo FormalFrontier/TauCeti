@@ -25,7 +25,9 @@ represented by `H` into `GLₙ`.
 
 ## Main declaration
 
-* `TauCeti.Comodule.exists_surjective_coordinateBialgHom`: a finite-type commutative Hopf
+* `TauCeti.Comodule.matrixCoefficientSubalgebra_le_coordinateBialgHom_range`: the matrix
+  coefficient subalgebra is contained in the range of the coordinate morphism.
+* `TauCeti.Comodule.exists_coordinateBialgHom_surjective`: a finite-type commutative Hopf
   algebra over a field admits a finite-dimensional regular subcomodule whose coordinate
   morphism from `O(GLₙ)` is surjective.
 
@@ -47,9 +49,12 @@ universe u v w
 noncomputable section
 
 variable {k : Type u} {H : Type v} {M : Type w}
-variable [Field k] [CommRing H] [HopfAlgebra k H]
-variable [AddCommMonoid M] [Module k M] [Comodule k H M]
 variable {n : ℕ}
+
+section Range
+
+variable [CommRing k] [CommRing H] [HopfAlgebra k H]
+variable [AddCommMonoid M] [Module k M] [Comodule k H M]
 
 private theorem matrixCoefficient_mem_range_coordinateBialgHom
     (b : Basis (Fin n) k M) (φ : M →ₗ[k] k) (m : M) :
@@ -76,6 +81,19 @@ private theorem matrixCoefficient_mem_range_coordinateBialgHom
   refine (coordinateBialgHom (H := H) b).toAlgHom.range.smul_mem ?_ (φ (b i))
   exact ⟨_, coordinateBialgHom_X b i j⟩
 
+/-- The matrix coefficient subalgebra of a finite free comodule is contained in the range of
+its coordinate bialgebra morphism. -/
+theorem matrixCoefficientSubalgebra_le_coordinateBialgHom_range
+    (b : Basis (Fin n) k M) :
+    matrixCoefficientSubalgebra (R := k) (C := H) (M := M) ≤
+      (coordinateBialgHom (H := H) b).toAlgHom.range :=
+  matrixCoefficientSubalgebra_le (R := k) (C := H) (M := M) fun φ m =>
+    matrixCoefficient_mem_range_coordinateBialgHom b φ m
+
+end Range
+
+variable [Field k] [CommRing H] [HopfAlgebra k H]
+
 /-- **A finite-type commutative Hopf algebra over a field is a quotient of the coordinate
 ring of some general linear group.** More precisely, it has a finite-dimensional subcomodule
 of its regular comodule and a basis for which the associated coordinate bialgebra morphism
@@ -83,7 +101,7 @@ of its regular comodule and a basis for which the associated coordinate bialgebr
 
 Contravariantly, the affine group scheme represented by `H` embeds as a closed subgroup of
 `GLₙ`. -/
-theorem exists_surjective_coordinateBialgHom [Algebra.FiniteType k H] :
+theorem exists_coordinateBialgHom_surjective [Algebra.FiniteType k H] :
     ∃ (M : Subcomodule k H H) (n : ℕ) (b : Basis (Fin n) k M),
       Function.Surjective (coordinateBialgHom (H := H) b) := by
   let _ : Ring H := Algebra.semiringToRing k
@@ -99,8 +117,7 @@ theorem exists_surjective_coordinateBialgHom [Algebra.FiniteType k H] :
     rw [← AlgHom.range_eq_top]
     apply top_unique
     rw [← hMcoeff]
-    exact matrixCoefficientSubalgebra_le (R := k) (C := H) (M := M) fun φ m =>
-      matrixCoefficient_mem_range_coordinateBialgHom b φ m
+    exact matrixCoefficientSubalgebra_le_coordinateBialgHom_range b
   exact hsurjective
 
 end
