@@ -280,7 +280,7 @@ private theorem dominates_of_spechtModule_iso {n : ℕ} {μ ν : n.Partition}
 /-- **Specht modules have distinct partition labels.** Two rational Specht modules for `Sₙ` are
 isomorphic if and only if their indexing partitions are equal. -/
 @[simp]
-theorem spechtModule_iso_iff {n : ℕ} {μ ν : n.Partition} :
+theorem spechtModule_iso_iff {n : ℕ} (μ ν : n.Partition) :
     Nonempty (spechtModule μ ≅ spechtModule ν) ↔ μ = ν := by
   constructor
   · rintro ⟨i⟩
