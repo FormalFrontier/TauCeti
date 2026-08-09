@@ -14,9 +14,10 @@ public import TauCeti.MeasureTheory.Function.PolynomialMemLp
 This file collects the family-agnostic facts that a real polynomial, evaluated pointwise, is
 integrable and square-integrable against a real Gaussian measure `gaussianReal μ v`, together with
 the companion statement that a polynomial times a Gaussian *envelope* `exp (-(x - μ)²/(2v))` is
-Lebesgue-integrable.  These hold for **any** `q : ℝ[X]` and feed the Hermite-specific `L²`
-membership in `TauCeti.Probability.Distributions.Gaussian.Hermite.MemLp` and the Hermite-function
-integrability in `TauCeti.Analysis.SpecialFunctions.Hermite.Function.MemLp`.
+Lebesgue-integrable and that a Gaussian weight has finite exponential moments. These hold for
+**any** `q : ℝ[X]` and feed the Hermite-specific `L²` membership in
+`TauCeti.Probability.Distributions.Gaussian.Hermite.MemLp` and the Hermite-function integrability
+in `TauCeti.Analysis.SpecialFunctions.Hermite.Function.MemLp`.
 
 The `L²` argument factors through the family-agnostic `memLp_two_eval_of_forall_integrable_pow`
 (`TauCeti.MeasureTheory.Function.PolynomialMemLp`), which holds for any reference measure on `ℝ`
@@ -37,6 +38,40 @@ namespace TauCeti
 open MeasureTheory ProbabilityTheory Polynomial
 
 open scoped NNReal ENNReal
+
+/-! ## Exponential moments of Gaussian weights -/
+
+/-- **Finite exponential moments of a Gaussian weight.** For every rate `a` and every width
+`b > 0`, the function `e^{a|x|}` is integrable against `e^{-bx²}·dx`, because
+`a|x| ≤ a²/(2b) + bx²/2` gives the domination `e^{a|x|}e^{-bx²} ≤ e^{a²/(2b)}·e^{-bx²/2}`. -/
+theorem integrable_exp_mul_abs_gaussianWeight {b : ℝ} (hb : 0 < b) (a : ℝ) :
+    Integrable (fun x : ℝ => Real.exp (a * |x|))
+      (volume.withDensity fun x => ENNReal.ofReal (Real.exp (-(b * x ^ 2)))) := by
+  have hgauss :
+      Integrable (fun x : ℝ => Real.exp (a ^ 2 / (2 * b)) * Real.exp (-(b / 2) * x ^ 2)) :=
+    (integrable_exp_neg_mul_sq (by positivity : (0:ℝ) < b / 2)).const_mul _
+  have hcore : Integrable (fun x : ℝ => Real.exp (a * |x|) * Real.exp (-(b * x ^ 2))) := by
+    refine hgauss.mono' (by fun_prop) (Filter.Eventually.of_forall fun x => ?_)
+    rw [← Real.exp_add, Real.norm_eq_abs, abs_of_pos (Real.exp_pos _), ← Real.exp_add]
+    refine Real.exp_le_exp.2 ?_
+    -- Cleared of the denominator `2b`, the bound is exactly `0 ≤ (a - b|x|)²`.
+    have hsq : 0 ≤ a ^ 2 - 2 * (a * b) * |x| + b ^ 2 * x ^ 2 := by
+      have h : (a - b * |x|) ^ 2 = a ^ 2 - 2 * (a * b) * |x| + b ^ 2 * x ^ 2 := by
+        rw [← sq_abs x]; ring
+      exact h ▸ sq_nonneg _
+    have hkey : a * |x| - b / 2 * x ^ 2 ≤ a ^ 2 / (2 * b) := by
+      rw [le_div_iff₀ (by positivity : (0 : ℝ) < 2 * b)]
+      nlinarith [hsq]
+    linarith
+  rw [integrable_withDensity_iff_integrable_smul₀' (by fun_prop)
+    (Filter.Eventually.of_forall fun _ => ENNReal.ofReal_lt_top)]
+  have hfun :
+      (fun x : ℝ => (ENNReal.ofReal (Real.exp (-(b * x ^ 2)))).toReal • Real.exp (a * |x|))
+        = fun x : ℝ => Real.exp (a * |x|) * Real.exp (-(b * x ^ 2)) := by
+    funext x
+    rw [smul_eq_mul, ENNReal.toReal_ofReal (Real.exp_pos _).le, mul_comm]
+  rw [hfun]
+  exact hcore
 
 /-! ## The Gaussian instance -/
 

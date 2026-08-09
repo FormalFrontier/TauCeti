@@ -61,6 +61,56 @@ private theorem sum_sum_eq_of_add_swap_eq {W : Type*} [Fintype W] {F G : W → W
   rw [hF, hG] at hsum
   linarith
 
+/-- Splitting a double sum at a sink `i`: the `i`-th row vanishes, so what is left is the column
+contribution `(∑ w, N w i * d w) * e i` plus the double sum away from `i`. -/
+private theorem sum_sum_eq_of_sink {W : Type*} [Fintype W] [DecidableEq W] (i : W)
+    (N : W → W → ℤ) (d e : W → ℤ) (hN : ∀ b : W, N i b = 0) :
+    ∑ a : W, ∑ b : W, N a b * (d a * e b)
+      = (∑ w : W, N w i * d w) * e i
+        + ∑ a ∈ Finset.univ.erase i, ∑ b ∈ Finset.univ.erase i, N a b * (d a * e b) := by
+  have hsplit : ∀ f : W → ℤ, ∑ w : W, f w = f i + ∑ w ∈ Finset.univ.erase i, f w := fun f ↦
+    (Finset.add_sum_erase _ f (Finset.mem_univ i)).symm
+  have hCd : ∑ w ∈ Finset.univ.erase i, N w i * d w = ∑ w : W, N w i * d w :=
+    Finset.sum_erase _ (by simp [hN i])
+  have hzero : ∑ b : W, N i b * (d i * e b) = 0 :=
+    Finset.sum_eq_zero fun b _ ↦ by rw [hN b, zero_mul]
+  rw [hsplit fun a ↦ ∑ b : W, N a b * (d a * e b), hzero, zero_add, ← hCd, Finset.sum_mul,
+    ← Finset.sum_add_distrib]
+  refine Finset.sum_congr rfl fun a _ ↦ ?_
+  rw [hsplit fun b ↦ N a b * (d a * e b)]
+  ring
+
+/-- The same split for the reflected data: the reflected matrix has a zero `i`-th column and an
+`i`-th row given by the original `i`-th column, so its `i`-th row contributes
+`d' i * ∑ w, N w i * e w` and the rest agrees with the original double sum away from `i`. -/
+private theorem sum_sum_reflect_eq {W : Type*} [Fintype W] [DecidableEq W] (i : W)
+    (N N' : W → W → ℤ) (d e d' e' : W → ℤ)
+    (hN'row : ∀ b : W, N' i b = N b i) (hN'col : ∀ a : W, N' a i = 0)
+    (hN' : ∀ a b : W, a ≠ i → b ≠ i → N' a b = N a b)
+    (hd : ∀ w : W, w ≠ i → d' w = d w) (he : ∀ w : W, w ≠ i → e' w = e w) :
+    ∑ a : W, ∑ b : W, N' a b * (d' a * e' b)
+      = d' i * (∑ w : W, N w i * e w)
+        + ∑ a ∈ Finset.univ.erase i, ∑ b ∈ Finset.univ.erase i, N a b * (d a * e b) := by
+  -- The diagonal entry vanishes: the row correspondence reads `N' i i = N i i`, and the reflected
+  -- column at `i` is zero.
+  have hNii : N i i = 0 := (hN'row i).symm.trans (hN'col i)
+  have hsplit : ∀ f : W → ℤ, ∑ w : W, f w = f i + ∑ w ∈ Finset.univ.erase i, f w := fun f ↦
+    (Finset.add_sum_erase _ f (Finset.mem_univ i)).symm
+  have hCe : ∑ w ∈ Finset.univ.erase i, N w i * e w = ∑ w : W, N w i * e w :=
+    Finset.sum_erase _ (by simp [hNii])
+  rw [hsplit fun a ↦ ∑ b : W, N' a b * (d' a * e' b)]
+  congr 1
+  · rw [hsplit fun b ↦ N' i b * (d' i * e' b), hN'row i, hNii, zero_mul, zero_add,
+      ← hCe, Finset.mul_sum]
+    refine Finset.sum_congr rfl fun b hb ↦ ?_
+    rw [hN'row b, he b (Finset.ne_of_mem_erase hb)]
+    ring
+  · refine Finset.sum_congr rfl fun a ha ↦ ?_
+    rw [hsplit fun b ↦ N' a b * (d' a * e' b), hN'col a, zero_mul, zero_add]
+    refine Finset.sum_congr rfl fun b hb ↦ ?_
+    rw [hN' a b (Finset.ne_of_mem_erase ha) (Finset.ne_of_mem_erase hb),
+      hd a (Finset.ne_of_mem_erase ha), he b (Finset.ne_of_mem_erase hb)]
+
 /-- The arithmetic heart of the reflection identity for the Euler form. Here `N` plays the role of
 the arrow-count matrix of the quiver, whose `i`-th row vanishes because `i` is a sink, and `N'`
 that of the quiver reflected at `i`; `d'` and `e'` are the reflections of `d` and `e`. -/
@@ -75,44 +125,15 @@ private theorem sub_sum_sum_eq_of_reflect_data {W : Type*} [Fintype W] (i : W)
   classical
   have hsplit : ∀ f : W → ℤ, ∑ w : W, f w = f i + ∑ w ∈ Finset.univ.erase i, f w := fun f ↦
     (Finset.add_sum_erase _ f (Finset.mem_univ i)).symm
-  have hCd : ∑ w ∈ Finset.univ.erase i, N w i * d w = ∑ w : W, N w i * d w :=
-    Finset.sum_erase _ (by simp [hN i])
-  have hCe : ∑ w ∈ Finset.univ.erase i, N w i * e w = ∑ w : W, N w i * e w :=
-    Finset.sum_erase _ (by simp [hN i])
   have h₁ : ∑ w : W, d' w * e' w
       = d' i * e' i + ∑ w ∈ Finset.univ.erase i, d w * e w := by
     rw [hsplit fun w ↦ d' w * e' w]
     congr 1
     refine Finset.sum_congr rfl fun w hw ↦ ?_
     rw [hd w (Finset.ne_of_mem_erase hw), he w (Finset.ne_of_mem_erase hw)]
-  have h₂ : ∑ w : W, d w * e w
-      = d i * e i + ∑ w ∈ Finset.univ.erase i, d w * e w := hsplit fun w ↦ d w * e w
-  have h₃ : ∑ a : W, ∑ b : W, N' a b * (d' a * e' b)
-      = d' i * (∑ w : W, N w i * e w)
-        + ∑ a ∈ Finset.univ.erase i, ∑ b ∈ Finset.univ.erase i, N a b * (d a * e b) := by
-    rw [hsplit fun a ↦ ∑ b : W, N' a b * (d' a * e' b)]
-    congr 1
-    · rw [hsplit fun b ↦ N' i b * (d' i * e' b), hN'row i, hN i, zero_mul, zero_add,
-        ← hCe, Finset.mul_sum]
-      refine Finset.sum_congr rfl fun b hb ↦ ?_
-      rw [hN'row b, he b (Finset.ne_of_mem_erase hb)]
-      ring
-    · refine Finset.sum_congr rfl fun a ha ↦ ?_
-      rw [hsplit fun b ↦ N' a b * (d' a * e' b), hN'col a, zero_mul, zero_add]
-      refine Finset.sum_congr rfl fun b hb ↦ ?_
-      rw [hN' a b (Finset.ne_of_mem_erase ha) (Finset.ne_of_mem_erase hb),
-        hd a (Finset.ne_of_mem_erase ha), he b (Finset.ne_of_mem_erase hb)]
-  have h₄ : ∑ a : W, ∑ b : W, N a b * (d a * e b)
-      = (∑ w : W, N w i * d w) * e i
-        + ∑ a ∈ Finset.univ.erase i, ∑ b ∈ Finset.univ.erase i, N a b * (d a * e b) := by
-    have hzero : ∑ b : W, N i b * (d i * e b) = 0 :=
-      Finset.sum_eq_zero fun b _ ↦ by rw [hN b, zero_mul]
-    rw [hsplit fun a ↦ ∑ b : W, N a b * (d a * e b), hzero, zero_add, ← hCd, Finset.sum_mul,
-      ← Finset.sum_add_distrib]
-    refine Finset.sum_congr rfl fun a _ ↦ ?_
-    rw [hsplit fun b ↦ N a b * (d a * e b)]
-    ring
-  rw [h₁, h₂, h₃, h₄, hdi, hei]
+  rw [h₁, hsplit fun w ↦ d w * e w,
+    sum_sum_reflect_eq i N N' d e d' e' hN'row hN'col hN' hd he,
+    sum_sum_eq_of_sink i N d e hN, hdi, hei]
   ring
 
 /-- Transposing an arrow-count matrix exchanges the two arguments of its Euler-form sum. -/
