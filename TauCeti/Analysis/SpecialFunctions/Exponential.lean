@@ -13,17 +13,19 @@ public import Mathlib.MeasureTheory.Integral.IntervalIntegral.FundThmCalculus
 import TauCeti.Analysis.Normed.Algebra.Basic
 
 /-!
-# Duhamel's formula for the Banach-algebra exponential
+# Duhamel formulas for the Banach-algebra exponential
 
 This file expresses a finite increment of the exponential in a possibly noncommutative real
 Banach algebra as an integral. Unlike a first-order derivative formula, the identity is exact for
-every increment.
+every increment. It also derives the corresponding integral formula for the Fréchet derivative.
 
-## Main result
+## Main results
 
 * `intervalIntegrable_exp_smul_mul_mul_exp_smul`: the Duhamel integrand is interval integrable.
 * `exp_add_sub_exp_eq_integral`: `exp (x + h) - exp x` is the integral of
   `exp ((1 - t) (x + h)) * h * exp (t x)` over the unit interval.
+* `TauCeti.expFDeriv_apply_eq_integral`: the Fréchet derivative is the corresponding Duhamel
+  integral linear in the increment.
 
 ## References
 
