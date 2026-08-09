@@ -37,8 +37,6 @@ are those of McDuff--Salamon, *J-holomorphic Curves and Symplectic Topology*, Se
 
 * `TauCeti.SymplecticForm.compatible_prod_transport_of_splitting`: compatible structures on the
   two summands of a symplectic splitting assemble into one on the whole space.
-* `TauCeti.SymplecticForm.disjoint_span_pair_orthogonal`: a pair with nonzero symplectic pairing
-  spans a symplectic subspace.
 * `TauCeti.SymplecticForm.exists_compatible` and `TauCeti.SymplecticForm.exists_tames`: the
   existence theorems.
 * `TauCeti.SymplecticForm.even_finrank` and `TauCeti.SymplecticForm.isEmpty_of_odd_finrank`: a
@@ -65,18 +63,17 @@ variable {V : Type*} [AddCommGroup V] [Module ℝ V]
 /-- Compatible structures on the two halves of a symplectic splitting `V = L ⊕ L^ω` assemble into
 a compatible structure on `V`. -/
 lemma compatible_prod_transport_of_splitting (ω : SymplecticForm V) {L : Submodule ℝ V}
-    (hL : (ω.toBilinForm.restrict L).Nondegenerate)
-    (hL' : (ω.toBilinForm.restrict (ω.orthogonal L)).Nondegenerate)
     (hcompl : IsCompl L (ω.orthogonal L))
     (JL : AlmostComplexStructure L) (JL' : AlmostComplexStructure (ω.orthogonal L))
-    (hJL : (ω.restrict L hL).Compatible JL)
-    (hJL' : (ω.restrict (ω.orthogonal L) hL').Compatible JL') :
+    (hJL : (ω.restrict L (ω.nondegenerate_restrict_of_isCompl hcompl)).Compatible JL)
+    (hJL' : (ω.restrict (ω.orthogonal L)
+      (ω.nondegenerate_restrict_orthogonal_of_isCompl hcompl)).Compatible JL') :
     ω.Compatible
       ((JL.prod JL').transport (Submodule.prodEquivOfIsCompl L (ω.orthogonal L) hcompl)) := by
   have hcomp := (prod_compatible hJL hJL').transport
     (Submodule.prodEquivOfIsCompl L (ω.orthogonal L) hcompl)
   rwa [isSymplectomorphism_iff_transport_eq.1
-    (ω.isSymplectomorphism_prodEquivOfIsCompl hL hL' hcompl)] at hcomp
+    (ω.isSymplectomorphism_prodEquivOfIsCompl hcompl)] at hcomp
 
 /-! ### Hyperbolic pairs and the standard plane -/
 
@@ -116,24 +113,6 @@ private noncomputable def planeEquiv (h : ω x y = 1) :
 
 private lemma coe_planeEquiv_apply (h : ω x y = 1) (p : ℝ × ℝ) :
     ((ω.planeEquiv h p : Submodule.span ℝ ({x, y} : Set V)) : V) = p.1 • x + p.2 • y := rfl
-
-/-- A pair with nonzero symplectic pairing spans a symplectic plane: it is disjoint from its own
-symplectic complement, so `ω` restricts to it nondegenerately. -/
-lemma disjoint_span_pair_orthogonal (h : ω x y ≠ 0) :
-    Disjoint (Submodule.span ℝ ({x, y} : Set V))
-      (ω.orthogonal (Submodule.span ℝ ({x, y} : Set V))) := by
-  rw [Submodule.disjoint_def]
-  intro v hv hv'
-  obtain ⟨a, b, rfl⟩ := Submodule.mem_span_pair.1 hv
-  have hxmem : x ∈ Submodule.span ℝ ({x, y} : Set V) := Submodule.subset_span (by simp)
-  have hymem : y ∈ Submodule.span ℝ ({x, y} : Set V) := Submodule.subset_span (by simp)
-  have haω : a * ω x y = 0 :=
-    (ω.apply_smul_add_smul_left x y a b).symm.trans (mem_orthogonal_iff'.1 hv' y hymem)
-  have hbω : b * ω x y = 0 :=
-    (ω.apply_smul_add_smul_right x y a b).symm.trans (mem_orthogonal_iff.1 hv' x hxmem)
-  have ha : a = 0 := (mul_eq_zero.1 haω).resolve_right h
-  have hb : b = 0 := (mul_eq_zero.1 hbω).resolve_right h
-  simp [ha, hb]
 
 /-- Read through the parametrization by a hyperbolic pair, `ω` becomes the standard symplectic
 form of the plane `ℝ × ℝ`. -/
@@ -185,15 +164,11 @@ private theorem exists_compatible_aux (n : ℕ) :
     have hdisj : Disjoint (Submodule.span ℝ ({x, y} : Set U))
         (ω.orthogonal (Submodule.span ℝ ({x, y} : Set U))) :=
       ω.disjoint_span_pair_orthogonal (by simp [hxy])
-    have hdisj' : Disjoint (ω.orthogonal (Submodule.span ℝ ({x, y} : Set U)))
-        (ω.orthogonal (ω.orthogonal (Submodule.span ℝ ({x, y} : Set U)))) := by
-      simpa [ω.orthogonal_orthogonal] using hdisj.symm
-    have hL := ω.toBilinForm.nondegenerate_restrict_of_disjoint_orthogonal ω.isRefl hdisj
-    have hL' := ω.toBilinForm.nondegenerate_restrict_of_disjoint_orthogonal ω.isRefl hdisj'
     have hcompl : IsCompl (Submodule.span ℝ ({x, y} : Set U))
         (ω.orthogonal (Submodule.span ℝ ({x, y} : Set U))) :=
       (LinearMap.BilinForm.isCompl_orthogonal_iff_disjoint ω.isRefl).2 hdisj
-    obtain ⟨JL, hJL⟩ := ω.exists_compatible_restrict_span_pair hxy hL
+    obtain ⟨JL, hJL⟩ :=
+      ω.exists_compatible_restrict_span_pair hxy (ω.nondegenerate_restrict_of_isCompl hcompl)
     have hxmem : x ∈ Submodule.span ℝ ({x, y} : Set U) := Submodule.subset_span (by simp)
     have hUpos : 0 < finrank ℝ U := Module.finrank_pos_iff_exists_ne_zero.2 ⟨x, hx⟩
     have hLpos : 0 < finrank ℝ (Submodule.span ℝ ({x, y} : Set U)) :=
@@ -201,8 +176,9 @@ private theorem exists_compatible_aux (n : ℕ) :
     have hlt : finrank ℝ (ω.orthogonal (Submodule.span ℝ ({x, y} : Set U))) < finrank ℝ U := by
       rw [ω.finrank_orthogonal _]
       exact Nat.sub_lt hUpos hLpos
-    obtain ⟨JL', hJL'⟩ := ih _ (lt_of_lt_of_le hlt hn) (ω.restrict _ hL') le_rfl
-    exact ⟨_, ω.compatible_prod_transport_of_splitting hL hL' hcompl JL JL' hJL hJL'⟩
+    obtain ⟨JL', hJL'⟩ := ih _ (lt_of_lt_of_le hlt hn)
+      (ω.restrict _ (ω.nondegenerate_restrict_orthogonal_of_isCompl hcompl)) le_rfl
+    exact ⟨_, ω.compatible_prod_transport_of_splitting hcompl JL JL' hJL hJL'⟩
 
 /-- **Every symplectic vector space carries a compatible almost complex structure.**
 

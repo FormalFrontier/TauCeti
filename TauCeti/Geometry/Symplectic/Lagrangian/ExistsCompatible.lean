@@ -19,7 +19,7 @@ is maximal totally real for *some* compatible structure, with no `J` given in ad
 
 ## Main declaration
 
-* `TauCeti.SymplecticForm.IsLagrangian.exists_compatible_isMaximalTotallyReal`: every Lagrangian
+* `TauCeti.SymplecticForm.IsLagrangian.exists_compatible_and_isMaximalTotallyReal`: every Lagrangian
   subspace of a finite-dimensional symplectic vector space is maximal totally real for some
   compatible almost complex structure.
 -/
@@ -34,7 +34,7 @@ variable {V : Type*} [AddCommGroup V] [Module ℝ V]
 
 /-- Every Lagrangian subspace of a finite-dimensional symplectic vector space is maximal totally
 real for some compatible almost complex structure. -/
-theorem IsLagrangian.exists_compatible_isMaximalTotallyReal [FiniteDimensional ℝ V]
+theorem IsLagrangian.exists_compatible_and_isMaximalTotallyReal [FiniteDimensional ℝ V]
     {ω : SymplecticForm V} {L : Submodule ℝ V} (hL : ω.IsLagrangian L) :
     ∃ J : AlmostComplexStructure V, ω.Compatible J ∧ IsMaximalTotallyReal J.toLinearMap L :=
   let ⟨J, hJ⟩ := ω.exists_compatible

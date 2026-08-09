@@ -12,14 +12,20 @@ public import TauCeti.Geometry.Symplectic.SymplecticTransport
 /-!
 # Restricting a symplectic form to a subspace
 
-A symplectic form restricts to a subspace on which it stays nondegenerate, and a symplectic form
-that restricts nondegenerately to a subspace and its symplectic complement is the product of those
-restrictions under the linear equivalence supplied by a complementary splitting.
+A symplectic form restricts to a subspace on which it stays nondegenerate. A subspace `L`
+complementary to its symplectic complement `L^ω` is automatically of that kind, as is `L^ω`, and
+then `ω` is the product of the two restrictions under the linear equivalence supplied by the
+splitting. A pair of vectors with nonzero symplectic pairing spans such a subspace.
 
 ## Main declarations
 
 * `TauCeti.SymplecticForm.restrict`: the restriction of `ω` to a subspace on which it stays
   nondegenerate, again a symplectic form.
+* `TauCeti.SymplecticForm.nondegenerate_restrict_of_isCompl` and
+  `TauCeti.SymplecticForm.nondegenerate_restrict_orthogonal_of_isCompl`: the splitting
+  `V = L ⊕ L^ω` already forces `ω` to restrict nondegenerately to both summands.
+* `TauCeti.SymplecticForm.disjoint_span_pair_orthogonal`: a pair with nonzero symplectic pairing
+  spans a subspace disjoint from its symplectic complement.
 * `TauCeti.SymplecticForm.isSymplectomorphism_prodEquivOfIsCompl`: the equivalence associated to
   `V = L ⊕ L^ω` is a symplectomorphism from the product of the restricted forms to `ω`.
 -/
@@ -52,13 +58,36 @@ lemma restrict_apply (ω : SymplecticForm V) (L : Submodule ℝ V)
     ω.restrict L h v w = ω (v : V) (w : V) :=
   rfl
 
+/-- A subspace complementary to its own symplectic complement carries a nondegenerate restriction
+of `ω`: complementarity in particular makes the two disjoint. -/
+lemma nondegenerate_restrict_of_isCompl (ω : SymplecticForm V) {L : Submodule ℝ V}
+    (hcompl : IsCompl L (ω.orthogonal L)) : (ω.toBilinForm.restrict L).Nondegenerate :=
+  ω.toBilinForm.nondegenerate_restrict_of_disjoint_orthogonal ω.isRefl hcompl.disjoint
+
+/-- The symplectic complement of a subspace complementary to it also carries a nondegenerate
+restriction of `ω`: a vector of `L^ω` orthogonal to `L^ω` is orthogonal to `L` as well, hence to
+`L ⊔ L^ω = V`, and nondegeneracy of `ω` makes it zero. Unlike
+`LinearMap.BilinForm.restrict_nondegenerate_iff_isCompl_orthogonal` this needs no
+finite-dimensionality. -/
+lemma nondegenerate_restrict_orthogonal_of_isCompl (ω : SymplecticForm V) {L : Submodule ℝ V}
+    (hcompl : IsCompl L (ω.orthogonal L)) :
+    (ω.toBilinForm.restrict (ω.orthogonal L)).Nondegenerate :=
+  ω.toBilinForm.nondegenerate_restrict_of_disjoint_orthogonal ω.isRefl <| by
+    rw [Submodule.disjoint_def]
+    intro v hv hv'
+    refine ω.separatingLeft v fun u => ?_
+    obtain ⟨a, b, ha, hb, rfl⟩ := Submodule.codisjoint_iff_exists_add_eq.1 hcompl.codisjoint u
+    have h₁ : ω v a = 0 := mem_orthogonal_iff'.1 hv a ha
+    have h₂ : ω v b = 0 := mem_orthogonal_iff'.1 hv' b hb
+    simp [h₁, h₂]
+
 /-- Along the splitting `V = L ⊕ L^ω`, the symplectic form is the product of its restrictions to
 the two summands: the cross terms vanish by the very definition of the symplectic complement. -/
 lemma isSymplectomorphism_prodEquivOfIsCompl (ω : SymplecticForm V) {L : Submodule ℝ V}
-    (hL : (ω.toBilinForm.restrict L).Nondegenerate)
-    (hL' : (ω.toBilinForm.restrict (ω.orthogonal L)).Nondegenerate)
     (hcompl : IsCompl L (ω.orthogonal L)) :
-    IsSymplectomorphism ((ω.restrict L hL).prod (ω.restrict (ω.orthogonal L) hL')) ω
+    IsSymplectomorphism
+      ((ω.restrict L (ω.nondegenerate_restrict_of_isCompl hcompl)).prod
+        (ω.restrict (ω.orthogonal L) (ω.nondegenerate_restrict_orthogonal_of_isCompl hcompl))) ω
       (Submodule.prodEquivOfIsCompl L (ω.orthogonal L) hcompl) := by
   rw [isSymplectomorphism_iff]
   intro p q
@@ -67,6 +96,24 @@ lemma isSymplectomorphism_prodEquivOfIsCompl (ω : SymplecticForm V) {L : Submod
   simp only [Submodule.coe_prodEquivOfIsCompl', prod_apply, restrict_apply, map_add,
     LinearMap.add_apply, h₁, h₂]
   ring
+
+/-- A pair with nonzero symplectic pairing spans a symplectic plane: it is disjoint from its own
+symplectic complement, so `ω` restricts to it nondegenerately. -/
+lemma disjoint_span_pair_orthogonal (ω : SymplecticForm V) {x y : V} (h : ω x y ≠ 0) :
+    Disjoint (Submodule.span ℝ ({x, y} : Set V))
+      (ω.orthogonal (Submodule.span ℝ ({x, y} : Set V))) := by
+  rw [Submodule.disjoint_def]
+  intro v hv hv'
+  obtain ⟨a, b, rfl⟩ := Submodule.mem_span_pair.1 hv
+  have hxmem : x ∈ Submodule.span ℝ ({x, y} : Set V) := Submodule.subset_span (by simp)
+  have hymem : y ∈ Submodule.span ℝ ({x, y} : Set V) := Submodule.subset_span (by simp)
+  have haω : a * ω x y = 0 :=
+    (ω.apply_smul_add_smul_left x y a b).symm.trans (mem_orthogonal_iff'.1 hv' y hymem)
+  have hbω : b * ω x y = 0 :=
+    (ω.apply_smul_add_smul_right x y a b).symm.trans (mem_orthogonal_iff.1 hv' x hxmem)
+  have ha : a = 0 := (mul_eq_zero.1 haω).resolve_right h
+  have hb : b = 0 := (mul_eq_zero.1 hbω).resolve_right h
+  simp [ha, hb]
 
 end SymplecticForm
 
