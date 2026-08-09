@@ -308,14 +308,15 @@ theorem tendsto_convolutionCLM_toLp {ι : Type*} {l : Filter ι} {U : ι → Set
   exact ((hki.mono hi).norm_convolutionCLM_toLp_sub_le f (half_pos hε).le hfV).trans_lt
     (half_lt_self hε)
 
-omit [IsTopologicalGroup G] [CompactSpace G] [MeasurableSpace G] [BorelSpace G] in
-variable (G) in
-/-- **The neighbourhood-directed index filter is nontrivial.** A net indexed by the neighbourhoods
-of `1` converges along this filter, the neighbourhoods read through `Filter.smallSets`, so that
-`∀ᶠ U in _, p U` says that `p` holds for every neighbourhood of `1` small enough; it is not the
-bottom filter, every neighbourhood of `1` being an index below itself. -/
-theorem comap_val_smallSets_nhds_one_neBot :
-    NeBot (comap (Subtype.val : {U : Set G // U ∈ 𝓝 (1 : G)} → Set G) (𝓝 (1 : G)).smallSets) := by
+/-- **A filter indexes a nontrivial net by its own members.** A net indexed by the members of a
+filter `l` converges along this filter, the members read through `Filter.smallSets`, so that
+`∀ᶠ s in _, p s` says that `p` holds for every small enough member of `l`; it is not the bottom
+filter, every member of `l` being an index below itself.
+
+For `l = 𝓝 1` this is the index filter of
+`TauCeti.exists_isMollifier_tendsto_convolutionCLM_toLp`. -/
+theorem comap_val_smallSets_neBot {α : Type*} (l : Filter α) :
+    NeBot (comap (Subtype.val : {s : Set α // s ∈ l} → Set α) l.smallSets) := by
   refine comap_neBot_iff.2 fun t ht => ?_
   obtain ⟨V, hV, hVt⟩ := eventually_smallSets.1 ht
   exact ⟨⟨V, hV⟩, hVt V subset_rfl⟩
@@ -326,7 +327,7 @@ function.** There is a kernel `k U` for each neighbourhood `U` of the identity, 
 supported in `U`, such that for *every* continuous `f` the convolutions `k U * f` converge
 uniformly to `f` as `U` shrinks to the identity.
 
-The index filter is the one of `TauCeti.comap_val_smallSets_nhds_one_neBot`, which is nontrivial,
+The index filter is the one of `TauCeti.comap_val_smallSets_neBot` at `𝓝 1`, which is nontrivial,
 so the convergence has content. Unlike
 `TauCeti.exists_isMollifier_norm_convolutionCLM_toLp_sub_le`, where the kernel may depend on the
 function being approximated, the family here is chosen once and for all. -/
