@@ -90,23 +90,29 @@ variable (M : Type*) [AddCommMonoid M] [Module k M] [Module (pathAlgebra k Q) M]
 
 /-- The **vertex component** `eᵥ M` of a module over the path algebra: the `k`-subspace on which
 the vertex idempotent at `v` acts as the identity. It is the value at `v` of the representation of
-`Q` attached to `M`.
-
-The body is exposed: it is literally the piece `eᵥ • (⊤ : Submodule k M)` cut out by the vertex
-idempotent, so both Mathlib's pointwise API and the general lemmas about such a piece —
-`TauCeti.mem_smul_top_iff_smul_eq_self`, `TauCeti.isInternal_smul_top`, … — apply to it as it
-stands. -/
-@[expose]
+`Q` attached to `M`. -/
 noncomputable def vertexComponent (v : Q) : Submodule k M :=
   vertexIdempotent k v • (⊤ : Submodule k M)
+
+/-- **The defining equation of the vertex component**: it is the piece `eᵥ • (⊤ : Submodule k M)`
+cut out by the vertex idempotent. This is the bridge to the general theory: through it both
+Mathlib's pointwise API and the general lemmas about such a piece —
+`TauCeti.mem_smul_top_iff_smul_eq_self`, `TauCeti.isInternal_smul_top`, … — apply to
+`TauCeti.vertexComponent`, without its body being exposed.
+
+Not `@[simp]`: rewriting with it would unfold the abstraction everywhere and take
+`TauCeti.mem_vertexComponent_iff_smul_eq_self` and the results below out of simp normal form. -/
+theorem vertexComponent_def (v : Q) :
+    vertexComponent k M v = vertexIdempotent k v • (⊤ : Submodule k M) := (rfl)
 
 variable {k M}
 
 /-- Membership in `eᵥ M` is the fixed-point condition for the vertex idempotent. -/
 @[simp]
 theorem mem_vertexComponent_iff_smul_eq_self {v : Q} {x : M} :
-    x ∈ vertexComponent k M v ↔ (vertexIdempotent k v : pathAlgebra k Q) • x = x :=
-  mem_smul_top_iff_smul_eq_self (vertexIdempotent_mul_self v)
+    x ∈ vertexComponent k M v ↔ (vertexIdempotent k v : pathAlgebra k Q) • x = x := by
+  rw [vertexComponent_def]
+  exact mem_smul_top_iff_smul_eq_self (vertexIdempotent_mul_self v)
 
 /-- The vertex idempotent fixes its own component. -/
 theorem vertexIdempotent_smul_eq_self_of_mem_vertexComponent {v : Q} {x : M}
@@ -118,14 +124,16 @@ theorem vertexIdempotent_smul_eq_self_of_mem_vertexComponent {v : Q} {x : M}
 acts as a map from the component at its *source* to the component at its *target*, which is the
 orientation the *later factor first* product of the path algebra was chosen to produce. -/
 theorem ofPath_smul_mem_vertexComponent {a b : Q} (p : _root_.Quiver.Path a b) (x : M) :
-    (ofPath ⟨a, b, p⟩ : pathAlgebra k Q) • x ∈ vertexComponent k M b :=
-  smul_mem_smul_top_of_mul_eq_self (vertexIdempotent_mul_ofPath p) x
+    (ofPath ⟨a, b, p⟩ : pathAlgebra k Q) • x ∈ vertexComponent k M b := by
+  rw [vertexComponent_def]
+  exact smul_mem_smul_top_of_mul_eq_self (vertexIdempotent_mul_ofPath p) x
 
 /-- **A path annihilates every vertex component but that of its source.** -/
 theorem ofPath_smul_eq_zero_of_ne_of_mem_vertexComponent {a b c : Q} (p : _root_.Quiver.Path a b)
     (h : c ≠ a) {x : M} (hx : x ∈ vertexComponent k M c) :
     (ofPath ⟨a, b, p⟩ : pathAlgebra k Q) • x = 0 :=
-  smul_eq_zero_of_mul_eq_zero_of_mem_smul_top (ofPath_mul_vertexIdempotent_of_ne _ h) hx
+  smul_eq_zero_of_mul_eq_zero_of_mem_smul_top (ofPath_mul_vertexIdempotent_of_ne _ h)
+    (by rwa [vertexComponent_def] at hx)
 
 variable (k M)
 
@@ -236,6 +244,7 @@ The component of `x` at `v` is `eᵥ • x`, and the decomposition is the one th
 theorem isInternal_vertexComponent :
     DirectSum.IsInternal fun v : Q => vertexComponent k M v := by
   let := Fintype.ofFinite Q
+  simp only [vertexComponent_def]
   exact isInternal_smul_top (completeOrthogonalIdempotents_vertexIdempotent k Q)
 
 /-- **The component of `x` at `v` is `eᵥ • x`**: the inverse of the decomposition, read off one
@@ -260,8 +269,9 @@ variable (M : Type*) [AddCommGroup M] [Module k M] [Module (pathAlgebra k Q) M]
 /-- **The dimension of a finite-dimensional `kQ`-module is the sum of the dimensions of its vertex
 components**: the total dimension is read off the dimension vector `v ↦ dim (eᵥ M)`. -/
 theorem finrank_eq_sum_finrank_vertexComponent :
-    Module.finrank k M = ∑ v : Q, Module.finrank k (vertexComponent k M v : Submodule k M) :=
-  finrank_eq_sum_finrank_smul_top (completeOrthogonalIdempotents_vertexIdempotent k Q)
+    Module.finrank k M = ∑ v : Q, Module.finrank k (vertexComponent k M v : Submodule k M) := by
+  rw [finrank_eq_sum_finrank_smul_top (completeOrthogonalIdempotents_vertexIdempotent k Q)]
+  exact Finset.sum_congr rfl fun v _ => by rw [vertexComponent_def]
 
 end Finrank
 
