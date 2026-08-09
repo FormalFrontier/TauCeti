@@ -7,14 +7,19 @@ module
 public import Mathlib.NumberTheory.NumberField.InfinitePlace.TotallyRealComplex
 
 /-!
-# Totally complex number fields from a negative square
+# Totally complex fields and their infinite places
 
-A number field containing an element whose square is a negative rational is totally complex: a real
-embedding would send that element to a real square root of a negative number.
+A field containing an element whose square is a negative rational is totally complex: a real
+embedding would send that element to a real square root of a negative number. A totally complex
+field, having only complex infinite places, is then unramified at every infinite place in any
+extension.
 
 ## Main results
 
-* `TauCeti.NumberField.isTotallyComplex_of_sq_ratCast_of_neg`.
+* `TauCeti.NumberField.isTotallyComplex_of_sq_ratCast_of_neg`: a negative square forces total
+  complexity.
+* `TauCeti.NumberField.IsUnramifiedAtInfinitePlaces_of_isTotallyComplex`: a totally complex base is
+  unramified at all infinite places of any extension.
 -/
 
 public section
@@ -42,5 +47,14 @@ theorem isTotallyComplex_of_sq_ratCast_of_neg {x : K} {r : ℚ} (hx2 : x ^ 2 = a
     exact_mod_cast h
   have hrR : (r : ℝ) < 0 := by exact_mod_cast hr
   nlinarith [sq_nonneg (hφ.embedding x), hψsq, hrR]
+
+/-- **A totally complex base is unramified at all infinite places.** Since a totally complex field
+has only complex infinite places and a complex place never ramifies, every infinite place is
+unramified in any extension `K` of a totally complex field `k`. -/
+lemma IsUnramifiedAtInfinitePlaces_of_isTotallyComplex {k K : Type*} [Field k] [Field K]
+    [Algebra k K] [IsTotallyComplex k] : IsUnramifiedAtInfinitePlaces k K where
+  isUnramified w := by
+    rw [InfinitePlace.isUnramified_iff]
+    exact Or.inr (IsTotallyComplex.isComplex _)
 
 end TauCeti.NumberField
