@@ -98,7 +98,9 @@ theorem conj_mulInvariantIntegralCurve (g : G) (X : GroupLieAlgebra I G) (x : G)
 theorem conj_mulInvariantExp (g : G) (X : GroupLieAlgebra I G) :
     g * mulInvariantExp (I := I) (G := G) X * g⁻¹ =
       mulInvariantExp (tangentAd (I := I) g X) := by
-  simp [mulInvariantExp_eq_mulInvariantIntegralCurve]
+  rw [mulInvariantExp_eq_mulInvariantIntegralCurve,
+    mulInvariantExp_eq_mulInvariantIntegralCurve]
+  simp
 
 /-- Conjugation commutes with the Lie-group exponential defined on left-invariant derivations. -/
 @[simp]
