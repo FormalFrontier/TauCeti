@@ -370,6 +370,7 @@ theorem coe_reflectionOrthogonal :
 
 /-- The bundled reflection is an involution, so it has order dividing two in the orthogonal
 group. -/
+@[simp]
 theorem reflectionOrthogonal_mul_self :
     reflectionOrthogonal Q v * reflectionOrthogonal Q v = 1 :=
   Subtype.ext <| by
