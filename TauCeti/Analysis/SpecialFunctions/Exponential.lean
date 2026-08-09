@@ -262,10 +262,12 @@ theorem fderiv_exp (x : R) : fderiv 𝕂 exp x = expFDeriv 𝕂 x :=
 /-- In a commutative Banach algebra, the insertion sum agrees with scalar multiplication by the
 exponential. -/
 @[simp]
-theorem expFDeriv_eq_smul_one {𝕂 R : Type*} [RCLike 𝕂] [NormedCommRing R] [NormedAlgebra 𝕂 R]
-    [CompleteSpace R] (x : R) :
+theorem expFDeriv_eq_smul_one {𝕂 R : Type*} [NontriviallyNormedField 𝕂] [CharZero 𝕂]
+    [ContinuousSMul ℚ 𝕂] [NormedCommRing R] [NormedAlgebra 𝕂 R] [CompleteSpace R] (x : R) :
     expFDeriv 𝕂 x = exp x • (1 : R →L[𝕂] R) :=
-  (hasFDerivAt_exp (𝕂 := 𝕂) x).unique _root_.hasFDerivAt_exp
+  (hasFDerivAt_exp (𝕂 := 𝕂) x).unique
+    (_root_.hasFDerivAt_exp_of_mem_ball
+      ((expSeries_radius_eq_top 𝕂 R).symm ▸ edist_lt_top _ _))
 
 /-- At zero, the formal derivative-series operator is the identity continuous linear map. -/
 @[simp]
