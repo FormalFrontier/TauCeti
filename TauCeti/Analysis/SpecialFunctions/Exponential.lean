@@ -157,55 +157,64 @@ end Definitions
 variable [NontriviallyNormedField 𝕂] [CharZero 𝕂] [ContinuousSMul ℚ 𝕂]
   [NormedRing R] [NormedAlgebra 𝕂 R] [CompleteSpace R]
 
-omit [CharZero 𝕂] [ContinuousSMul ℚ 𝕂] in
+omit [CharZero 𝕂] [ContinuousSMul ℚ 𝕂] [CompleteSpace R] in
 /-- The explicit insertion term is the corresponding term of Mathlib's derivative series for
 the exponential formal multilinear series. -/
 theorem expFDerivTerm_eq_derivSeries (x : R) (n : ℕ) :
     expFDerivTerm 𝕂 x n = (expSeries 𝕂 R).derivSeries n (fun _ ↦ x) := by
-  let q : FormalMultilinearSeries 𝕂 R R := fun m ↦
-    if m = n + 1 then expSeries 𝕂 R m else 0
-  have hqzero : ∀ m, m ≠ n + 1 → q m = 0 := by
-    intro m hm
-    simp [q, hm]
-  have hqrad : q.radius = ⊤ := by
-    apply q.radius_eq_top_of_eventually_eq_zero
-    filter_upwards [Filter.eventually_gt_atTop (n + 1)] with m hm
-    exact hqzero m (Nat.ne_of_gt hm)
-  have hqsum : q.sum = fun z : R ↦ ((n + 1).factorial⁻¹ : 𝕂) • z ^ (n + 1) := by
-    funext z
-    rw [FormalMultilinearSeries.sum, tsum_eq_single (n + 1)]
-    · simp [q, expSeries, pow_succ']
-    · intro m hm
-      rw [hqzero m hm]
-      simp
-  have hqderiv : q.derivSeries.sum x = q.derivSeries n (fun _ ↦ x) := by
-    rw [FormalMultilinearSeries.sum, tsum_eq_single n]
-    intro m hm
-    rw [q.derivSeries_eq_zero]
-    · simp
-    · apply hqzero
-      omega
-  have hqterm : q.derivSeries n = (expSeries 𝕂 R).derivSeries n := by
-    ext v y
-    simp [q, add_comm, FormalMultilinearSeries.derivSeries,
-      FormalMultilinearSeries.changeOriginSeries,
-      FormalMultilinearSeries.changeOriginSeriesTerm]
-  have hx : ‖x‖ₑ < q.radius := by
-    rw [hqrad]
-    exact enorm_lt_top
-  have hformal := q.hasFDerivAt_sum (x := x) hx
-  rw [hqsum, hqderiv, hqterm] at hformal
-  have hformal' : HasFDerivAt
-      (((n + 1).factorial⁻¹ : 𝕂) • (fun z : R ↦ z ^ (n + 1)))
-      ((expSeries 𝕂 R).derivSeries n (fun _ ↦ x)) x :=
-    hformal.congr_of_eventuallyEq (Filter.Eventually.of_forall fun z ↦ by simp)
-  have hexplicit : HasFDerivAt
-      (((n + 1).factorial⁻¹ : 𝕂) • (fun z : R ↦ z ^ (n + 1)))
-      (expFDerivTerm 𝕂 x n) x := by
-    simpa only [expFDerivTerm, Nat.pred_succ] using
-      (hasFDerivAt_pow' (𝕜 := 𝕂) (n + 1) (x := x)).const_smul
-        ((n + 1).factorial⁻¹ : 𝕂)
-  exact hexplicit.unique hformal'
+  ext y
+  rw [expFDerivTerm_apply]
+  simp only [FormalMultilinearSeries.derivSeries,
+    ContinuousLinearMap.compFormalMultilinearSeries_apply,
+    ContinuousLinearMap.compContinuousMultilinearMap_coe, Function.comp_apply,
+    FormalMultilinearSeries.changeOriginSeries, _root_.sum_apply]
+  change _ = continuousMultilinearCurryFin1 𝕂 R R _ y
+  rw [continuousMultilinearCurryFin1_apply, _root_.sum_apply, Fin.snoc_zero]
+  simp_rw [FormalMultilinearSeries.changeOriginSeriesTerm_apply]
+  let e : Fin (n + 1) ≃ Fin (1 + n) := finCongr (Nat.add_comm n 1)
+  have hsum :
+      (∑ s : {s : Finset (Fin (1 + n)) // s.card = n},
+          expSeries 𝕂 R (1 + n) (s.1.piecewise (fun _ ↦ x) fun _ ↦ y)) =
+        ∑ i : Fin (n + 1),
+          expSeries 𝕂 R (1 + n) (Function.update (fun _ ↦ x) (e i) y) := by
+    refine (Fintype.sum_bijective
+      ((fun a : Fin (1 + n) ↦ ⟨{a}ᶜ, by
+        rw [Finset.card_compl, Fintype.card_fin, Finset.card_singleton]
+        omega⟩) ∘ e) (.comp ?_ e.bijective) _ _ fun i ↦ ?_).symm
+    · use fun _ _ ↦
+        (Finset.singleton_injective <| compl_injective <| Subtype.ext_iff.mp ·)
+      intro ⟨s, hs⟩
+      have h : sᶜ.card = 1 := by
+        rw [Finset.card_compl, hs, Fintype.card_fin]
+        omega
+      obtain ⟨a, ha⟩ := Finset.card_eq_one.mp h
+      exact ⟨a, Subtype.ext (compl_eq_comm.mp ha)⟩
+    · rw [Function.comp_apply, Subtype.coe_mk, Finset.compl_singleton,
+        Finset.piecewise_erase_univ]
+  rw [hsum]
+  simp only [mul_assoc, expSeries, finCongr_apply, smul_apply,
+    ContinuousMultilinearMap.mkPiAlgebraFin_apply, List.ofFn_eq_map,
+    (List.nodup_finRange (1 + n)).map_update, List.mem_finRange, ↓reduceIte,
+    List.map_const', List.length_finRange, List.idxOf_finRange, Fin.val_cast, List.prod_set,
+    List.take_replicate, List.prod_replicate, List.length_replicate, mul_ite, mul_one,
+    List.drop_replicate, ite_mul, smul_ite, e]
+  have hi (i : Fin (n + 1)) : (i : ℕ) < 1 + n := by omega
+  simp_rw [if_pos (hi _), Nat.min_eq_left (hi _).le]
+  have hsub (i : Fin (n + 1)) : 1 + n - ((i : ℕ) + 1) = n - i := by omega
+  simp_rw [hsub]
+  rw [show 1 + n = n + 1 by omega]
+  change _ = ∑ i : Fin (n + 1),
+    (fun j : ℕ ↦ ((n + 1).factorial⁻¹ : 𝕂) • (x ^ j * (y * x ^ (n - j)))) i
+  rw [Fin.sum_univ_eq_sum_range
+    (fun j : ℕ ↦ ((n + 1).factorial⁻¹ : 𝕂) • (x ^ j * (y * x ^ (n - j))))]
+  rw [← Finset.smul_sum]
+  congr 1
+  rw [← Finset.sum_range_reflect (fun j ↦ x ^ j * (y * x ^ (n - j))) (n + 1)]
+  apply Finset.sum_congr rfl
+  intro i hi
+  simp only [Finset.mem_range] at hi
+  simp only [Nat.add_sub_cancel]
+  rw [Nat.sub_sub_self (by omega : i ≤ n)]
 
 /-- The operator-valued derivative series is summable. -/
 theorem summable_expFDerivTerm (x : R) : Summable (expFDerivTerm 𝕂 x) :=
