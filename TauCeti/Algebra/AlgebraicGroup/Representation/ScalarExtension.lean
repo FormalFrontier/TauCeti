@@ -5,20 +5,23 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.Representation.PointsAction
-public import TauCeti.Algebra.Coalgebra.Comodule.Finite.Basic
+public import TauCeti.Algebra.Coalgebra.Comodule.Finite.ScalarExtension
 
 /-!
-# Scalar extension of finite comodules
+# Point automorphisms of scalar extension
 
 Let `H` be a Hopf algebra over a commutative semiring `R`, and let `A` be a commutative
-`R`-algebra. This file constructs the scalar extension of the underlying-module functor
+`R`-algebra. Scalar extension of the underlying-module functor is constructed for all comodules
+in `TauCeti.Algebra.Coalgebra.Comodule.Finite.ScalarExtension` and restricted there to
+finitely generated comodules:
 
 ```text
 FGComoduleCat R H ⥤ SemimoduleCat A,    M ↦ A ⊗[R] M.
 ```
 
-Every `A`-valued point of `H` acts naturally and invertibly on this functor: its component at
-`M` is the usual point action on `A ⊗[R] M`.
+Every `A`-valued point of `H` acts naturally and invertibly on the all-comodule functor: its
+component at `M` is the usual point action on `A ⊗[R] M`. These automorphisms form a group
+homomorphism, which restricts by precomposition to the finite-comodule functor.
 
 This is the base change of the neutral underlying-module functor, without a faithfulness claim:
 scalar extension along an arbitrary `R → A` need not be faithful. Equipping this functor and
@@ -28,10 +31,10 @@ reductive-groups roadmap.
 
 ## Main declarations
 
-* `TauCeti.Tannaka.scalarExtensionFunctor`: scalar extension of the underlying-module functor on
-  finite comodules.
 * `TauCeti.Tannaka.pointIso`: the point action as an automorphism of one scalar extension.
 * `TauCeti.Tannaka.pointNatIso`: the point action as a natural automorphism of the functor.
+* `TauCeti.Tannaka.pointNatIsoHom`: points acting on all comodules, as a group homomorphism.
+* `TauCeti.Tannaka.fgPointNatIsoHom`: the induced action on finitely generated comodules.
 
 ## References
 
@@ -54,102 +57,130 @@ variable (R : Type u) [CommSemiring R]
 variable (H : Type v) [Semiring H] [HopfAlgebra R H]
 variable (A : Type u) [CommSemiring A] [Algebra R A]
 
-/-- Scalar extension of the underlying-module functor on finitely generated comodules. Over a
-field, its source is the category of finite-dimensional representations, and it sends `M` to
-`A ⊗[R] M`. No faithfulness property is asserted for the map `R → A`. -/
-noncomputable abbrev scalarExtensionFunctor :
-    FGComoduleCat.{u, v, u} R H ⥤ SemimoduleCat.{u} A :=
-  { obj M := SemimoduleCat.of A (A ⊗[R] M)
-    map f := SemimoduleCat.ofHom (f.hom.toLinearMap.baseChange A)
-    map_id M := by
-      apply SemimoduleCat.hom_ext
-      exact TensorProduct.AlgebraTensorModule.ext fun _ _ ↦ rfl
-    map_comp f g := by
-      apply SemimoduleCat.hom_ext
-      exact TensorProduct.AlgebraTensorModule.ext fun _ _ ↦ rfl }
-
-/-- The carrier of the functor at `M` is the scalar extension `A ⊗[R] M`. -/
-@[simp]
-theorem scalarExtensionFunctor_obj_carrier (M : FGComoduleCat.{u, v, u} R H) :
-    ((scalarExtensionFunctor R H A).obj M : Type u) = A ⊗[R] M :=
-  rfl
-
-/-- The linear map underlying the image of a comodule morphism is its scalar extension. -/
-@[simp]
-theorem scalarExtensionFunctor_map_hom {M N : FGComoduleCat.{u, v, u} R H} (f : M ⟶ N) :
-    ((scalarExtensionFunctor R H A).map f).hom = f.hom.toLinearMap.baseChange A :=
-  rfl
-
-/-- An `A`-valued point of `H` acts by an automorphism on the scalar extension of each finite
+/-- An `A`-valued point of `H` acts by an automorphism on the scalar extension of each
 comodule. -/
-noncomputable def pointIso (g : WithConv (H →ₐ[R] A)) (M : FGComoduleCat.{u, v, u} R H) :
-    (scalarExtensionFunctor R H A).obj M ≅ (scalarExtensionFunctor R H A).obj M :=
-  let e := Comodule.pointsAction M.obj g
-  { hom := ConcreteCategory.ofHom e.toLinearMap
-    inv := ConcreteCategory.ofHom e.symm.toLinearMap
-    hom_inv_id := by
-      apply SemimoduleCat.hom_ext
-      exact LinearMap.ext fun x ↦ e.symm_apply_apply x
-    inv_hom_id := by
-      apply SemimoduleCat.hom_ext
-      exact LinearMap.ext fun x ↦ e.apply_symm_apply x }
+noncomputable def pointIso (g : WithConv (H →ₐ[R] A)) (M : ComoduleCat.{u, v, u} R H) :
+    (ComoduleCat.scalarExtensionFunctor R H A).obj M ≅
+      (ComoduleCat.scalarExtensionFunctor R H A).obj M :=
+  (eqToIso (ComoduleCat.scalarExtensionFunctor_obj R H A M)).trans
+    ((Comodule.pointsAction M g).toModuleIsoₛ.trans
+      (eqToIso (ComoduleCat.scalarExtensionFunctor_obj R H A M).symm))
 
-/-- The linear map underlying the forward point automorphism is the usual point action. -/
+/-- The forward point automorphism is the usual point action, transported across the object
+formula for the opaque scalar-extension functor. -/
 @[simp]
-theorem pointIso_hom_hom (g : WithConv (H →ₐ[R] A))
-    (M : FGComoduleCat.{u, v, u} R H) :
-    (pointIso R H A g M).hom.hom = Comodule.endOfPoint M.obj g.ofConv :=
-  Comodule.pointsAction_toLinearMap M.obj g
+theorem pointIso_hom (g : WithConv (H →ₐ[R] A))
+    (M : ComoduleCat.{u, v, u} R H) :
+    (pointIso R H A g M).hom =
+      eqToHom (ComoduleCat.scalarExtensionFunctor_obj R H A M) ≫
+        (Comodule.pointsAction M g).toModuleIsoₛ.hom ≫
+          eqToHom (ComoduleCat.scalarExtensionFunctor_obj R H A M).symm :=
+  (rfl)
 
-/-- The linear map underlying the inverse point automorphism is the action of the inverse
-convolution point. -/
+/-- The inverse point automorphism is the inverse of the usual point action, transported across
+the object formula for the opaque scalar-extension functor. -/
 @[simp]
-theorem pointIso_inv_hom (g : WithConv (H →ₐ[R] A))
-    (M : FGComoduleCat.{u, v, u} R H) :
-    (pointIso R H A g M).inv.hom = Comodule.endOfPoint M.obj g⁻¹.ofConv := by
-  rw [← Comodule.pointsAction_toLinearMap M.obj g⁻¹]
-  exact congrArg LinearEquiv.toLinearMap (map_inv (Comodule.pointsAction M.obj) g).symm
+theorem pointIso_inv (g : WithConv (H →ₐ[R] A))
+    (M : ComoduleCat.{u, v, u} R H) :
+    (pointIso R H A g M).inv =
+      eqToHom (ComoduleCat.scalarExtensionFunctor_obj R H A M) ≫
+        (Comodule.pointsAction M g).toModuleIsoₛ.inv ≫
+          eqToHom (ComoduleCat.scalarExtensionFunctor_obj R H A M).symm :=
+  (rfl)
 
 /-- Every algebra-valued point acts as a natural automorphism of the scalar-extension functor.
 Naturality is precisely the fact that scalar extension of a comodule morphism
 intertwines point actions. -/
 noncomputable def pointNatIso (g : WithConv (H →ₐ[R] A)) :
-    scalarExtensionFunctor R H A ≅ scalarExtensionFunctor R H A :=
+    ComoduleCat.scalarExtensionFunctor R H A ≅
+      ComoduleCat.scalarExtensionFunctor R H A :=
   NatIso.ofComponents (pointIso R H A g) (fun {M N} f ↦ by
+    rw [pointIso_hom, pointIso_hom, ComoduleCat.scalarExtensionFunctor_map]
+    simp only [Category.assoc]
+    rw [cancel_epi]
+    simp only [← Category.assoc]
+    rw [cancel_mono]
+    simp only [Category.assoc, eqToHom_trans, eqToHom_refl, Category.comp_id,
+      LinearEquiv.toModuleIsoₛ_hom, Comodule.pointsAction_toLinearMap]
     apply SemimoduleCat.hom_ext
-    apply LinearMap.ext
-    intro x
-    induction x using TensorProduct.induction_on with
-    | zero => rw [map_zero, map_zero]
-    | add x y hx hy =>
-        rw [map_add, map_add, hx, hy]
-    | tmul a m =>
-        have h := LinearMap.congr_fun
-          (Comodule.baseChange_comp_endOfPoint f.hom g.ofConv).symm (a ⊗ₜ[R] m)
-        simp only [SemimoduleCat.hom_comp, pointIso_hom_hom, LinearMap.comp_apply]
-        -- Remove the `SemimoduleCat` object projections so `h`, stated for the unbundled
-        -- tensor-product modules, has exactly the displayed type.
-        change Comodule.endOfPoint N.obj g.ofConv
-            (f.hom.toLinearMap.baseChange A (a ⊗ₜ[R] m)) =
-          f.hom.toLinearMap.baseChange A
-            (Comodule.endOfPoint M.obj g.ofConv (a ⊗ₜ[R] m))
-        exact h)
+    simpa only [SemimoduleCat.hom_comp, LinearEquiv.toModuleIsoₛ_hom,
+      SemimoduleCat.hom_ofHom, Comodule.pointsAction_toLinearMap] using
+      (Comodule.baseChange_comp_endOfPoint f g.ofConv).symm)
 
-/-- The component of the point natural automorphism is the usual point action. -/
+/-- The component of the point natural automorphism is the transported point action. -/
 @[simp]
 theorem pointNatIso_hom_app (g : WithConv (H →ₐ[R] A))
-    (M : FGComoduleCat.{u, v, u} R H) :
-    ((pointNatIso R H A g).hom.app M).hom =
-      Comodule.endOfPoint M.obj g.ofConv :=
-  pointIso_hom_hom R H A g M
+    (M : ComoduleCat.{u, v, u} R H) :
+    (pointNatIso R H A g).hom.app M =
+      eqToHom (ComoduleCat.scalarExtensionFunctor_obj R H A M) ≫
+        (Comodule.pointsAction M g).toModuleIsoₛ.hom ≫
+          eqToHom (ComoduleCat.scalarExtensionFunctor_obj R H A M).symm :=
+  (rfl)
 
-/-- The inverse component of the point natural automorphism is the action of the inverse
-convolution point. -/
+/-- The inverse component of the point natural automorphism is the transported inverse point
+action. -/
 @[simp]
 theorem pointNatIso_inv_app (g : WithConv (H →ₐ[R] A))
-    (M : FGComoduleCat.{u, v, u} R H) :
-    ((pointNatIso R H A g).inv.app M).hom =
-      Comodule.endOfPoint M.obj g⁻¹.ofConv :=
-  pointIso_inv_hom R H A g M
+    (M : ComoduleCat.{u, v, u} R H) :
+    (pointNatIso R H A g).inv.app M =
+      eqToHom (ComoduleCat.scalarExtensionFunctor_obj R H A M) ≫
+        (Comodule.pointsAction M g).toModuleIsoₛ.inv ≫
+          eqToHom (ComoduleCat.scalarExtensionFunctor_obj R H A M).symm :=
+  (rfl)
+
+/-- Algebra-valued points act on the scalar-extension functor by natural automorphisms. -/
+noncomputable def pointNatIsoHom :
+    WithConv (H →ₐ[R] A) →* Aut (ComoduleCat.scalarExtensionFunctor R H A) where
+  toFun := pointNatIso R H A
+  map_one' := by
+    apply Aut.ext
+    apply NatTrans.ext
+    funext M
+    change (pointNatIso R H A 1).hom.app M = 𝟙 _
+    rw [pointNatIso_hom_app]
+    simp
+  map_mul' g h := by
+    apply Aut.ext
+    apply NatTrans.ext
+    funext M
+    change (pointNatIso R H A (g * h)).hom.app M =
+      (pointNatIso R H A h).hom.app M ≫ (pointNatIso R H A g).hom.app M
+    rw [pointNatIso_hom_app, pointNatIso_hom_app, pointNatIso_hom_app]
+    simp only [Category.assoc]
+    rw [cancel_epi]
+    simp only [← Category.assoc]
+    rw [cancel_mono]
+    simp only [map_mul, LinearEquiv.toModuleIsoₛ_hom, LinearEquiv.coe_toLinearMap_mul,
+      Comodule.pointsAction_toLinearMap, Category.assoc, eqToHom_trans, eqToHom_refl,
+      Category.comp_id]
+    apply SemimoduleCat.hom_ext
+    rfl
+
+/-- Evaluating the points action homomorphism gives the corresponding natural automorphism. -/
+@[simp]
+theorem pointNatIsoHom_apply (g : WithConv (H →ₐ[R] A)) :
+    pointNatIsoHom R H A g = pointNatIso R H A g :=
+  (rfl)
+
+/-- Restricting the point action to finitely generated comodules gives automorphisms of the
+finite scalar-extension functor used in Tannakian reconstruction. -/
+noncomputable def fgPointNatIsoHom :
+    WithConv (H →ₐ[R] A) →* Aut (FGComoduleCat.scalarExtensionFunctor R H A) :=
+  (Aut.autMulEquivOfIso
+      (eqToIso (FGComoduleCat.scalarExtensionFunctor_eq R H A)).symm).toMonoidHom.comp
+    ((((Functor.whiskeringLeft _ _ _).obj
+      (FGComoduleCat.incl (R := R) (C := H))).mapAut
+        (ComoduleCat.scalarExtensionFunctor R H A)).comp (pointNatIsoHom R H A))
+
+/-- The finite-comodule point action is obtained from the all-comodule action by precomposition
+and transport across the defining equality of the finite scalar-extension functor. -/
+theorem fgPointNatIsoHom_apply (g : WithConv (H →ₐ[R] A)) :
+    fgPointNatIsoHom R H A g =
+      (Aut.autMulEquivOfIso
+        (eqToIso (FGComoduleCat.scalarExtensionFunctor_eq R H A)).symm)
+          ((((Functor.whiskeringLeft _ _ _).obj
+            (FGComoduleCat.incl (R := R) (C := H))).mapIso
+              (pointNatIsoHom R H A g))) :=
+  (rfl)
 
 end TauCeti.Tannaka
