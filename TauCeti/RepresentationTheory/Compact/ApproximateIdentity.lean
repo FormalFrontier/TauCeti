@@ -19,8 +19,9 @@ changes it by as little as one likes in the uniform norm.
 A mollifying kernel is bundled as `TauCeti.IsMollifier U k`: the kernel is nonnegative, invariant
 under inversion, has unit mass for normalized Haar measure, and vanishes off `U`. Inversion
 invariance of a nonnegative kernel is the symmetry `k g⁻¹ = conj (k g)`, so `convolutionOperator k`
-is self-adjoint (`TauCeti.IsMollifier.isSelfAdjoint_convolutionOperator`); this is the hypothesis
-under which the spectral theorem applies to it.
+is self-adjoint (`TauCeti.IsMollifier.isSelfAdjoint_convolutionOperator`); this is one of the two
+hypotheses of the spectral theorem for compact self-adjoint operators, the other, compactness,
+being no concern of this file.
 
 ## Main definitions
 
@@ -41,6 +42,9 @@ under which the spectral theorem applies to it.
   kernel supported in `U` with `‖k * f - f‖ ≤ ε`.
 * `TauCeti.tendsto_convolutionCLM_toLp`: the same statement as convergence of a net of kernels
   whose supports shrink to `1`.
+* `TauCeti.exists_isMollifier_tendsto_convolutionCLM_toLp`: **the approximate identity as a single
+  family.** One mollifying kernel for each neighbourhood of `1`, whose convolutions converge
+  uniformly to `f` as the neighbourhood shrinks, simultaneously for every continuous `f`.
 
 ## Implementation notes
 
@@ -80,24 +84,24 @@ namespace TauCeti
 
 section CompactGroup
 
-variable {𝕜 G : Type*} [RCLike 𝕜] [Group G] [TopologicalSpace G] [IsTopologicalGroup G]
-  [CompactSpace G] [MeasurableSpace G] [BorelSpace G]
+variable {𝕜 E G : Type*} [RCLike 𝕜] [NormedAddCommGroup E] [Group G] [TopologicalSpace G]
+  [IsTopologicalGroup G] [CompactSpace G] [MeasurableSpace G] [BorelSpace G]
 
 /-! ### Uniform continuity on a compact group -/
 
 /-- The left translates `z ↦ (x ↦ f (z⁻¹ * x))` of a continuous function on a compact group,
-as a continuous map into `C(G, 𝕜)` with the uniform norm. -/
-private noncomputable def leftTranslateCM (f : C(G, 𝕜)) : C(G, C(G, 𝕜)) :=
+as a continuous map into `C(G, E)` with the uniform norm. -/
+private noncomputable def leftTranslateCM (f : C(G, E)) : C(G, C(G, E)) :=
   ContinuousMap.curry
     (f.comp ⟨fun p : G × G => p.1⁻¹ * p.2, continuous_fst.inv.mul continuous_snd⟩)
 
 omit [CompactSpace G] [MeasurableSpace G] [BorelSpace G] in
-private theorem leftTranslateCM_apply (f : C(G, 𝕜)) (z x : G) :
+private theorem leftTranslateCM_apply (f : C(G, E)) (z x : G) :
     leftTranslateCM f z x = f (z⁻¹ * x) :=
   (rfl)
 
 omit [CompactSpace G] [MeasurableSpace G] [BorelSpace G] in
-private theorem leftTranslateCM_one (f : C(G, 𝕜)) : leftTranslateCM f 1 = f := by
+private theorem leftTranslateCM_one (f : C(G, E)) : leftTranslateCM f 1 = f := by
   ext x
   rw [leftTranslateCM_apply, inv_one, one_mul]
 
@@ -107,11 +111,11 @@ a neighbourhood `V` of the identity such that translating the argument by any `z
 value of `f` by at most `ε`, *uniformly* in the argument.
 
 The uniform structure of `G` is not mentioned: the statement is continuity at `z = 1` of the map
-sending `z` to the left translate of `f` by `z`, which is continuous into `C(G, 𝕜)` for the
+sending `z` to the left translate of `f` by `z`, which is continuous into `C(G, E)` for the
 uniform norm because `G` is compact. -/
-theorem exists_mem_nhds_one_norm_sub_le (f : C(G, 𝕜)) {ε : ℝ} (hε : 0 < ε) :
+theorem exists_mem_nhds_one_norm_sub_le (f : C(G, E)) {ε : ℝ} (hε : 0 < ε) :
     ∃ V ∈ 𝓝 (1 : G), ∀ z ∈ V, ∀ x : G, ‖f (z⁻¹ * x) - f x‖ ≤ ε := by
-  have htendsto : Tendsto (leftTranslateCM (𝕜 := 𝕜) (G := G) f) (𝓝 1) (𝓝 f) := by
+  have htendsto : Tendsto (leftTranslateCM (E := E) (G := G) f) (𝓝 1) (𝓝 f) := by
     simpa only [leftTranslateCM_one] using (leftTranslateCM f).continuous.tendsto 1
   refine ⟨leftTranslateCM f ⁻¹' Metric.closedBall f ε,
     htendsto (Metric.closedBall_mem_nhds f hε), fun z hz x => ?_⟩
@@ -159,8 +163,9 @@ theorem inv_apply_eq_conj (h : IsMollifier U k) (g : G) : k g⁻¹ = (starRingEn
   rw [h.inv_apply]
   exact (RCLike.conj_eq_iff_im.2 (RCLike.nonneg_iff.1 (h.nonneg g)).2).symm
 
-/-- **The convolution operator of a mollifying kernel is self-adjoint**, so the spectral theorem
-for compact self-adjoint operators applies to it. -/
+/-- **The convolution operator of a mollifying kernel is self-adjoint.** This is one of the two
+hypotheses of the spectral theorem for compact self-adjoint operators; compactness of
+`convolutionOperator k` is a separate matter, not established here. -/
 theorem isSelfAdjoint_convolutionOperator (h : IsMollifier U k) :
     IsSelfAdjoint (convolutionOperator k) :=
   _root_.TauCeti.isSelfAdjoint_convolutionOperator k h.inv_apply_eq_conj
@@ -218,7 +223,7 @@ theorem exists_isMollifier [T2Space G] {U : Set G} (hU : U ∈ 𝓝 (1 : G)) :
     RCLike.continuous_ofReal.comp (continuous_const.mul ψ.continuous)⟩, ?_, ?_, ?_, ?_⟩
   · exact fun g => RCLike.ofReal_nonneg.2 (mul_nonneg (inv_nonneg.2 hmass.le) (hψ_nonneg g))
   · exact fun g => by simp only [ContinuousMap.coe_mk, hψ_inv]
-  · change ∫ g, ((c⁻¹ * ψ g : ℝ) : 𝕜) ∂(haarProb G) = 1
+  · simp only [ContinuousMap.coe_mk]
     rw [integral_ofReal, integral_const_mul, ← hcdef, inv_mul_cancel₀ hmass.ne',
       RCLike.ofReal_one]
   · exact fun g hg => by
@@ -292,17 +297,11 @@ theorem IsMollifier.norm_convolutionCLM_toLp_sub_le {U : Set G} {k : C(G, 𝕜)}
     · rw [norm_mul]
       exact mul_le_mul_of_nonneg_left (hf z hz x) (norm_nonneg _)
     · simp [h.eq_zero_of_notMem z hz]
-  have hint : Integrable (fun z : G => k z * (f (z⁻¹ * x) - f x)) (haarProb G) :=
-    integrable_continuousMap G
-      (⟨fun z => k z * (f (z⁻¹ * x) - f x),
-        k.continuous.mul
-          ((f.continuous.comp (continuous_id.inv.mul continuous_const)).sub continuous_const)⟩ :
-        C(G, 𝕜))
   rw [hval]
   calc ‖∫ z, k z * (f (z⁻¹ * x) - f x) ∂(haarProb G)‖
-      ≤ ∫ z, ‖k z * (f (z⁻¹ * x) - f x)‖ ∂(haarProb G) := norm_integral_le_integral_norm _
-    _ ≤ ∫ z, ‖k z‖ * ε ∂(haarProb G) :=
-        integral_mono hint.norm ((integrable_continuousMap G k).norm.mul_const ε) hbound
+      ≤ ∫ z, ‖k z‖ * ε ∂(haarProb G) :=
+        norm_integral_le_of_norm_le ((integrable_continuousMap G k).norm.mul_const ε)
+          (Eventually.of_forall hbound)
     _ = ε := by rw [integral_mul_const, h.integral_norm_eq_one, one_mul]
 
 variable (𝕜) in
@@ -327,8 +326,10 @@ variable (𝕜) in
 function is annihilated by every mollifying convolution operator, because convolving against a
 kernel supported near the identity moves a function by less than its own norm.
 
-This is why the Peter-Weyl argument can start: it guarantees a *nonzero* self-adjoint compact
-convolution operator to feed to the spectral theorem. -/
+This is why the Peter-Weyl argument can start: together with the self-adjointness above, and with
+compactness of `convolutionOperator k` established elsewhere, it supplies a *nonzero* operator to
+feed to the spectral theorem. Nonvanishing and self-adjointness are what is proved here;
+compactness is not. -/
 theorem exists_isMollifier_convolutionOperator_toLp_ne_zero [T2Space G] {f : C(G, 𝕜)} (hf : f ≠ 0)
     {U : Set G} (hU : U ∈ 𝓝 (1 : G)) :
     ∃ k : C(G, 𝕜), IsMollifier U k ∧
@@ -343,19 +344,50 @@ theorem exists_isMollifier_convolutionOperator_toLp_ne_zero [T2Space G] {f : C(G
   rw [hconv, zero_sub, norm_neg]
   exact half_lt_self hfpos
 
-/-- **The approximate identity as a net.** If the kernels `k i` are mollifying kernels whose
-supporting neighbourhoods `U i` eventually shrink inside every neighbourhood of the identity, then
-`k i * f` converges uniformly to `f` for every continuous `f`. -/
+/-- **The approximate identity as a net.** If the kernels `k i` are eventually mollifying kernels
+whose supporting neighbourhoods `U i` eventually shrink inside every neighbourhood of the identity,
+then `k i * f` converges uniformly to `f` for every continuous `f`. -/
 theorem tendsto_convolutionCLM_toLp {ι : Type*} {l : Filter ι} {U : ι → Set G} {k : ι → C(G, 𝕜)}
-    (hk : ∀ i, IsMollifier (U i) (k i)) (hU : ∀ V ∈ 𝓝 (1 : G), ∀ᶠ i in l, U i ⊆ V)
+    (hk : ∀ᶠ i in l, IsMollifier (U i) (k i)) (hU : ∀ V ∈ 𝓝 (1 : G), ∀ᶠ i in l, U i ⊆ V)
     (f : C(G, 𝕜)) :
     Tendsto (fun i => convolutionCLM (k i) (ContinuousMap.toLp 2 (haarProb G) 𝕜 f)) l (𝓝 f) := by
   refine Metric.tendsto_nhds.2 fun ε hε => ?_
   obtain ⟨V, hV, hfV⟩ := exists_mem_nhds_one_norm_sub_le f (half_pos hε)
-  filter_upwards [hU V hV] with i hi
+  filter_upwards [hk, hU V hV] with i hki hi
   rw [dist_eq_norm]
-  exact (((hk i).mono hi).norm_convolutionCLM_toLp_sub_le f (half_pos hε).le hfV).trans_lt
+  exact ((hki.mono hi).norm_convolutionCLM_toLp_sub_le f (half_pos hε).le hfV).trans_lt
     (half_lt_self hε)
+
+omit [IsTopologicalGroup G] [CompactSpace G] [MeasurableSpace G] [BorelSpace G] in
+variable (G) in
+/-- **The neighbourhood-directed index filter is nontrivial.** A net indexed by the neighbourhoods
+of `1` converges along this filter, the neighbourhoods read through `Filter.smallSets`, so that
+`∀ᶠ U in _, p U` says that `p` holds for every neighbourhood of `1` small enough; it is not the
+bottom filter, every neighbourhood of `1` being an index below itself. -/
+theorem neBot_comap_val_smallSets_nhds_one :
+    NeBot (comap (Subtype.val : {U : Set G // U ∈ 𝓝 (1 : G)} → Set G) (𝓝 (1 : G)).smallSets) := by
+  refine comap_neBot_iff.2 fun t ht => ?_
+  obtain ⟨V, hV, hVt⟩ := eventually_smallSets.1 ht
+  exact ⟨⟨V, hV⟩, hVt V subset_rfl⟩
+
+variable (𝕜 G) in
+/-- **The approximate identity itself: a single family of mollifying kernels that works for every
+function.** There is a kernel `k U` for each neighbourhood `U` of the identity, mollifying and
+supported in `U`, such that for *every* continuous `f` the convolutions `k U * f` converge
+uniformly to `f` as `U` shrinks to the identity.
+
+The index filter is the one of `TauCeti.neBot_comap_val_smallSets_nhds_one`, which is nontrivial,
+so the convergence has content. Unlike
+`TauCeti.exists_isMollifier_norm_convolutionCLM_toLp_sub_le`, where the kernel may depend on the
+function being approximated, the family here is chosen once and for all. -/
+theorem exists_isMollifier_tendsto_convolutionCLM_toLp [T2Space G] :
+    ∃ k : {U : Set G // U ∈ 𝓝 (1 : G)} → C(G, 𝕜), (∀ U, IsMollifier U.1 (k U)) ∧
+      ∀ f : C(G, 𝕜),
+        Tendsto (fun U => convolutionCLM (k U) (ContinuousMap.toLp 2 (haarProb G) 𝕜 f))
+          (comap Subtype.val (𝓝 (1 : G)).smallSets) (𝓝 f) := by
+  choose k hk using fun U : {U : Set G // U ∈ 𝓝 (1 : G)} => exists_isMollifier 𝕜 U.2
+  refine ⟨k, hk, fun f => tendsto_convolutionCLM_toLp (Eventually.of_forall hk) ?_ f⟩
+  exact fun V hV => (eventually_smallSets_subset.2 hV).comap Subtype.val
 
 end CompactGroup
 
