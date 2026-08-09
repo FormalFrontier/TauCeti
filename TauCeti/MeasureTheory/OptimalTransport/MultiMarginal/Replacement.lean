@@ -218,7 +218,6 @@ theorem coe_replaceMarginal (π : MultiCoupling μ) (i : ι) [StandardBorelSpace
     rfl
 
 /-- The replaced coordinate has the second marginal of the replacement plan. -/
-@[simp]
 theorem marginal_replaceMarginal_same (π : MultiCoupling μ) (i : ι)
     [StandardBorelSpace (X i)] (σ : ProbabilityMeasure (X i × X i))
     (hσ : σ.toMeasure.fst = (μ i).toMeasure) :
@@ -226,7 +225,6 @@ theorem marginal_replaceMarginal_same (π : MultiCoupling μ) (i : ι)
   simp
 
 /-- Every coordinate different from the replaced one keeps its original marginal. -/
-@[simp]
 theorem marginal_replaceMarginal_of_ne (π : MultiCoupling μ) (i : ι)
     [StandardBorelSpace (X i)] (σ : ProbabilityMeasure (X i × X i))
     (hσ : σ.toMeasure.fst = (μ i).toMeasure) {j : ι} (hji : j ≠ i) :
