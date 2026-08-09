@@ -1,0 +1,190 @@
+/-
+Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+-/
+module
+
+public import Mathlib.LinearAlgebra.FiniteDimensional.Lemmas
+public import TauCeti.Algebra.Group.ElementaryTwoQuotient.Basic
+
+/-!
+# Right exactness of the maximal elementary-2 quotient
+
+For a surjection `f : G →* H` of commutative groups, the induced map on maximal elementary-2
+quotients `G/G² → H/H²` (`TauCeti.elementaryTwoQuotientMap`) is again surjective, and its kernel is
+exactly the image of `ker f / (ker f)²`. In other words `G ↦ G/G²` is right exact: applying it to a
+short exact sequence `1 → N → G → H → 1` of commutative groups leaves the sequence
+
+`N/N² → G/G² → H/H² → 0`
+
+exact. (It is not left exact: the first map need not be injective, since an element of `N` can
+become a square in `G` without being a square in `N`.)
+
+The rank consequences are the reason for the file. Writing `twoRank` for the `𝔽₂`-dimension of the
+elementary-2 quotient, a surjection `G ↠ H` gives
+
+`twoRank H ≤ twoRank G ≤ twoRank H + twoRank (ker f)`,
+
+so a quotient can only lose 2-rank, and can lose no more than the kernel carries. In genus theory
+this is the comparison between the narrow class group `Cl⁺(K)` and the ordinary class group `Cl(K)`
+of a number field: the forgetful surjection `Cl⁺(K) → Cl(K)` has an elementary abelian `2`-group as
+its kernel, and the two 2-ranks agree exactly when that kernel dies.
+
+The last group of results covers the degenerate case where `G` is *itself* elementary abelian: then
+the subgroup of squares is trivial, the quotient map `G → G/G²` is an isomorphism, and
+`|G| = 2 ^ twoRank G`.
+
+## Main results
+
+* `TauCeti.elementaryTwoQuotientMap_surjective`: the induced map is surjective.
+* `TauCeti.ker_elementaryTwoQuotientMap`: **right exactness** — its kernel is the range of the map
+  induced by `ker f ↪ G`; `TauCeti.mem_ker_elementaryTwoQuotientMap_iff` is the elementwise form.
+* `TauCeti.twoRank_le_of_surjective`: `twoRank H ≤ twoRank G`.
+* `TauCeti.twoRank_le_twoRank_add_twoRank_ker`: `twoRank G ≤ twoRank H + twoRank (ker f)`.
+* `TauCeti.injective_elementaryTwoQuotientMap_iff` and
+  `TauCeti.twoRank_eq_of_forall_isSquare_of_mem_ker`: the induced map is injective, and the two
+  ranks agree, exactly when `ker f` consists of squares.
+* `TauCeti.card_elementaryTwoQuotient_of_forall_sq_eq_one` and
+  `TauCeti.card_eq_two_pow_twoRank_of_forall_sq_eq_one`: for an elementary abelian `2`-group the
+  quotient is the whole group, so `|G| = 2 ^ twoRank G`.
+-/
+
+public section
+
+namespace TauCeti
+
+variable {G H : Type*} [CommGroup G] [CommGroup H] {f : G →* H}
+
+/-- **A surjection of commutative groups induces a surjection of elementary-2 quotients.** -/
+theorem elementaryTwoQuotientMap_surjective (hf : Function.Surjective f) :
+    Function.Surjective (elementaryTwoQuotientMap f) := by
+  intro y
+  obtain ⟨h, rfl⟩ := elementaryTwoQuotientMk_surjective (G := H) y
+  obtain ⟨g, rfl⟩ := hf h
+  exact ⟨elementaryTwoQuotientMk g, elementaryTwoQuotientMap_mk f g⟩
+
+/-- The induced map on elementary-2 quotients has range everything, for `f` surjective. -/
+theorem range_elementaryTwoQuotientMap_eq_top (hf : Function.Surjective f) :
+    LinearMap.range (elementaryTwoQuotientMap f) = ⊤ :=
+  LinearMap.range_eq_top.2 (elementaryTwoQuotientMap_surjective hf)
+
+/-- The classes coming from `ker f` are killed by the induced map. This is the easy inclusion of
+`TauCeti.ker_elementaryTwoQuotientMap`, and needs no surjectivity. -/
+theorem range_elementaryTwoQuotientMap_ker_subtype_le :
+    LinearMap.range (elementaryTwoQuotientMap f.ker.subtype) ≤
+      LinearMap.ker (elementaryTwoQuotientMap f) := by
+  rintro x ⟨y, rfl⟩
+  obtain ⟨g, rfl⟩ := elementaryTwoQuotientMk_surjective (G := f.ker) y
+  rw [LinearMap.mem_ker, elementaryTwoQuotientMap_mk, elementaryTwoQuotientMap_mk,
+    Subgroup.coe_subtype, show f (g : G) = 1 from MonoidHom.mem_ker.1 g.2,
+    elementaryTwoQuotientMk_one]
+
+/-- **Right exactness of the elementary-2 quotient.** For a surjection `f : G →* H`, an element of
+`G/G²` dies in `H/H²` exactly when it is the class of an element of `ker f`. Equivalently, the
+sequence `ker f / (ker f)² → G/G² → H/H² → 0` is exact.
+
+The nontrivial inclusion is the descent: if `f g = h²` then, choosing `a` with `f a = h`, the
+element `g · (a²)⁻¹` lies in `ker f` and has the same class as `g`. -/
+theorem ker_elementaryTwoQuotientMap (hf : Function.Surjective f) :
+    LinearMap.ker (elementaryTwoQuotientMap f) =
+      LinearMap.range (elementaryTwoQuotientMap f.ker.subtype) := by
+  refine le_antisymm ?_ range_elementaryTwoQuotientMap_ker_subtype_le
+  intro x hx
+  obtain ⟨g, rfl⟩ := elementaryTwoQuotientMk_surjective (G := G) x
+  rw [LinearMap.mem_ker, elementaryTwoQuotientMap_mk, elementaryTwoQuotientMk_eq_zero_iff] at hx
+  obtain ⟨h, hh⟩ := hx
+  obtain ⟨a, rfl⟩ := hf h
+  have hmem : g * (a ^ 2)⁻¹ ∈ f.ker := by
+    rw [MonoidHom.mem_ker, map_mul, map_inv, map_pow, hh, pow_two, mul_inv_cancel]
+  refine ⟨elementaryTwoQuotientMk ⟨g * (a ^ 2)⁻¹, hmem⟩, ?_⟩
+  rw [elementaryTwoQuotientMap_mk, Subgroup.coe_subtype, elementaryTwoQuotientMk_mul,
+    (elementaryTwoQuotientMk_eq_zero_iff ((a ^ 2)⁻¹)).2 ⟨a⁻¹, by rw [pow_two, mul_inv]⟩, add_zero]
+
+/-- Elementwise form of `TauCeti.ker_elementaryTwoQuotientMap`: for a surjection `f`, a class in
+`G/G²` maps to zero in `H/H²` iff it is represented by an element of `ker f`. -/
+theorem mem_ker_elementaryTwoQuotientMap_iff (hf : Function.Surjective f)
+    (x : ElementaryTwoQuotient G) :
+    x ∈ LinearMap.ker (elementaryTwoQuotientMap f) ↔
+      ∃ g ∈ f.ker, elementaryTwoQuotientMk g = x := by
+  rw [ker_elementaryTwoQuotientMap hf, LinearMap.mem_range]
+  constructor
+  · rintro ⟨y, rfl⟩
+    obtain ⟨g, rfl⟩ := elementaryTwoQuotientMk_surjective (G := f.ker) y
+    refine ⟨(g : G), g.2, ?_⟩
+    rw [elementaryTwoQuotientMap_mk, Subgroup.coe_subtype]
+  · rintro ⟨g, hg, rfl⟩
+    exact ⟨elementaryTwoQuotientMk ⟨g, hg⟩, by rw [elementaryTwoQuotientMap_mk,
+      Subgroup.coe_subtype]⟩
+
+/-- **A quotient group can only lose 2-rank.** If `f : G →* H` is surjective and `G/G²` is
+finite-dimensional, then `twoRank H ≤ twoRank G`. -/
+theorem twoRank_le_of_surjective [Module.Finite (ZMod 2) (ElementaryTwoQuotient G)]
+    (hf : Function.Surjective f) : twoRank H ≤ twoRank G :=
+  LinearMap.finrank_le_finrank_of_surjective (elementaryTwoQuotientMap_surjective hf)
+
+/-- **A quotient group loses no more 2-rank than its kernel carries.** If `f : G →* H` is
+surjective, then `twoRank G ≤ twoRank H + twoRank (ker f)`: by right exactness the kernel of
+`G/G² → H/H²` is a quotient of `ker f / (ker f)²`, and the rank-nullity formula adds it to
+`twoRank H`. -/
+theorem twoRank_le_twoRank_add_twoRank_ker
+    [Module.Finite (ZMod 2) (ElementaryTwoQuotient G)]
+    [Module.Finite (ZMod 2) (ElementaryTwoQuotient f.ker)]
+    (hf : Function.Surjective f) : twoRank G ≤ twoRank H + twoRank f.ker := by
+  have hrk := (elementaryTwoQuotientMap f).finrank_range_add_finrank_ker
+  rw [range_elementaryTwoQuotientMap_eq_top hf, finrank_top] at hrk
+  have hker : Module.finrank (ZMod 2) (LinearMap.ker (elementaryTwoQuotientMap f)) ≤
+      twoRank f.ker := by
+    rw [ker_elementaryTwoQuotientMap hf]
+    exact LinearMap.finrank_range_le _
+  simp only [twoRank_def] at hker ⊢
+  omega
+
+/-- **When a quotient loses no 2-rank at all.** For a surjection `f : G →* H`, the induced map on
+elementary-2 quotients is injective — hence an isomorphism — exactly when every element of `ker f`
+is already a square in `G`. -/
+theorem injective_elementaryTwoQuotientMap_iff (hf : Function.Surjective f) :
+    Function.Injective (elementaryTwoQuotientMap f) ↔ ∀ g ∈ f.ker, IsSquare g := by
+  rw [← LinearMap.ker_eq_bot, Submodule.eq_bot_iff]
+  constructor
+  · intro h g hg
+    refine (elementaryTwoQuotientMk_eq_zero_iff g).1 (h _ ?_)
+    rw [LinearMap.mem_ker, elementaryTwoQuotientMap_mk,
+      show f g = 1 from MonoidHom.mem_ker.1 hg, elementaryTwoQuotientMk_one]
+  · intro h x hx
+    obtain ⟨g, hg, rfl⟩ := (mem_ker_elementaryTwoQuotientMap_iff hf x).1 hx
+    exact (elementaryTwoQuotientMk_eq_zero_iff g).2 (h g hg)
+
+/-- **A quotient by a kernel of squares preserves the 2-rank.** If `f : G →* H` is surjective and
+every element of `ker f` is a square in `G`, then `twoRank G = twoRank H`. -/
+theorem twoRank_eq_of_forall_isSquare_of_mem_ker (hf : Function.Surjective f)
+    (h : ∀ g ∈ f.ker, IsSquare g) : twoRank G = twoRank H := by
+  have hbij : Function.Bijective (elementaryTwoQuotientMap f) :=
+    ⟨(injective_elementaryTwoQuotientMap_iff hf).2 h, elementaryTwoQuotientMap_surjective hf⟩
+  simpa only [twoRank_def] using (LinearEquiv.ofBijective _ hbij).finrank_eq
+
+section ElementaryAbelian
+
+variable (G)
+
+/-- **An elementary abelian `2`-group is its own elementary-2 quotient** (in cardinality): if every
+element squares to `1` then the subgroup of squares is trivial, so `|G/G²| = |G|`. -/
+theorem card_elementaryTwoQuotient_of_forall_sq_eq_one (h : ∀ g : G, g ^ 2 = 1) :
+    Nat.card (ElementaryTwoQuotient G) = Nat.card G := by
+  rw [card_elementaryTwoQuotient_eq_index_square]
+  have hsq : Subgroup.square G = ⊥ := by
+    refine Subgroup.eq_bot_iff_forall _ |>.2 fun g hg => ?_
+    obtain ⟨r, rfl⟩ := Subgroup.mem_square.1 hg
+    rw [← pow_two]
+    exact h r
+  rw [hsq, Subgroup.index_bot]
+
+/-- **The order of an elementary abelian `2`-group is `2 ^ twoRank`.** -/
+theorem card_eq_two_pow_twoRank_of_forall_sq_eq_one
+    [Module.Finite (ZMod 2) (ElementaryTwoQuotient G)] (h : ∀ g : G, g ^ 2 = 1) :
+    Nat.card G = 2 ^ twoRank G := by
+  rw [← card_elementaryTwoQuotient_of_forall_sq_eq_one G h,
+    card_elementaryTwoQuotient_eq_two_pow_twoRank]
+
+end ElementaryAbelian
+
+end TauCeti
