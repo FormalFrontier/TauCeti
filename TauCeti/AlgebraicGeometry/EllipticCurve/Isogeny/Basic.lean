@@ -61,14 +61,23 @@ def MapsInfinity {W₁ W₂ : WeierstrassCurve.Affine F}
 noncomputable def id (W : WeierstrassCurve.Affine F) : CoordinatePullback W W :=
   IsScalarTower.toAlgHom F W.CoordinateRing W.FunctionField
 
+/-- The identity coordinate pullback is the canonical embedding into the function field. -/
+@[simp]
+theorem id_apply (W : WeierstrassCurve.Affine F) (x : W.CoordinateRing) :
+    id W x = algebraMap W.CoordinateRing W.FunctionField x := by
+  unfold id
+  exact IsScalarTower.toAlgHom_apply F W.CoordinateRing W.FunctionField x
+
 /-- The identity coordinate pullback maps infinity to infinity. -/
+@[simp]
 theorem mapsInfinity_id (W : WeierstrassCurve.Affine F) : MapsInfinity (id W) := by
   unfold MapsInfinity
   have h : (id W).toRingHom.toAlgebra =
       (inferInstance : Algebra W.CoordinateRing W.FunctionField) := by
     apply Algebra.algebra_ext
     intro x
-    rfl
+    change id W x = algebraMap W.CoordinateRing W.FunctionField x
+    exact id_apply W x
   rw [h]
   exact fun _ ↦ isIntegral_algebraMap
 
