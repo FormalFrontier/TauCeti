@@ -48,6 +48,8 @@ representation concentrated at `i` whose space at `i` is nontrivial, of which th
 * `TauCeti.reflectRep_map_reflectArrow` and `TauCeti.reflectRep_map_reflectArrowOfNeOfNe`: the
   action of a reversed arrow, by a coordinate projection out of the kernel, and of an arrow away
   from `i`, unchanged.
+* `TauCeti.reflectionFunctor_obj`: the functor sends `M` to `TauCeti.reflectRep M`, so the whole
+  `reflectRep` interface computes its objects.
 * `TauCeti.reflectionFunctor_map_app_self_apply` and
   `TauCeti.reflectionFunctor_map_app_of_ne`: the action of reflection on morphisms.
 * `TauCeti.dimVector_reflectRep_of_ne` and `TauCeti.dimVector_reflectRep_self_add`: the dimension
@@ -66,8 +68,12 @@ exactly as for `TauCeti.simpleRep`. Only the statements naming `TauCeti.vertexPr
 `DecidableEq Q`, because `Pi.single` needs one.
 
 The vertex spaces, the prefunctor that `TauCeti.reflectRep` lifts, and the kernel maps underlying
-the action on morphisms are private. The `reflectRep_obj_*`, `reflectRep_map_*`, and
-`reflectionFunctor_map_app_*` theorems provide the interface downstream files should use.
+the action on morphisms are private. The `reflectRep_obj_*`, `reflectRep_map_*`,
+`reflectionFunctor_obj`, and `reflectionFunctor_map_app_*` theorems provide the interface
+downstream files should use. The body of `TauCeti.reflectionFunctor` is not exposed outside this
+module, so `reflectionFunctor_obj` cannot be proved by `rfl` where it is stated; it restates a
+private unfolding lemma, and the two `reflectionFunctor_obj_*` computations then follow from the
+matching `reflectRep_obj_*` results.
 
 The arrows of `TauCeti.Quiver.Reflect Q i` are given by `TauCeti.Quiver.reflectHom`, which is
 again an `if` on equality with `i`, so an arrow of the reflected quiver is a *cast* of an arrow of
@@ -464,11 +470,22 @@ noncomputable def reflectionFunctor (i : Q) (hi : IsSink i) :
         reflectRepMapApp_of_ne _ _ hj]
       exact eqToHom_conjugate_eq_comp _ _ (reflectRep_obj_of_ne _ hi hj) _ _ _ rfl
 
-/-- The representation supplied by `TauCeti.reflectionFunctor` is `TauCeti.reflectRep`. -/
-private theorem reflectionFunctor_obj (i : Q) (hi : IsSink i)
+/-- Unfolding `TauCeti.reflectionFunctor` on objects. The body of the functor is not exposed
+outside this module, so the public `TauCeti.reflectionFunctor_obj` below cannot itself be proved
+by `rfl`; it restates this lemma. -/
+private theorem reflectionFunctor_obj_def (i : Q) (hi : IsSink i)
     (M : QuiverRep.{u, v, w, max v w x} k Q) :
     (reflectionFunctor i hi).obj M = reflectRep M hi :=
   rfl
+
+/-- **The objects of the BGP reflection functor.** The representation supplied by
+`TauCeti.reflectionFunctor` is `TauCeti.reflectRep`, so the whole `TauCeti.reflectRep` interface --
+its vertex spaces, the action of the reflected arrows, and its dimension vector -- describes it. -/
+@[simp]
+theorem reflectionFunctor_obj (i : Q) (hi : IsSink i)
+    (M : QuiverRep.{u, v, w, max v w x} k Q) :
+    (reflectionFunctor i hi).obj M = reflectRep M hi :=
+  reflectionFunctor_obj_def i hi M
 
 /-- The vertex components of the map supplied by `TauCeti.reflectionFunctor`. -/
 private theorem reflectionFunctor_map_app
@@ -488,8 +505,8 @@ private theorem reflectionFunctor_map_app_self
   exact eqToHom_conjugate_cancel _ _ _
 
 /-- At the reflected vertex, the object supplied by `TauCeti.reflectionFunctor` is the kernel of
-the incoming sum. -/
-@[simp]
+the incoming sum. This is not a `simp` lemma: `TauCeti.reflectionFunctor_obj` rewrites the object
+to `TauCeti.reflectRep`, after which `TauCeti.reflectRep_obj_self` applies. -/
 theorem reflectionFunctor_obj_self (i : Q) (hi : IsSink i)
     (M : QuiverRep.{u, v, w, max v w x} k Q) :
     ((reflectionFunctor i hi).obj M).obj i =
@@ -498,8 +515,8 @@ theorem reflectionFunctor_obj_self (i : Q) (hi : IsSink i)
   exact reflectRep_obj_self M hi
 
 /-- Away from the reflected vertex, the objects supplied by `TauCeti.reflectionFunctor` are those
-of the original representation. -/
-@[simp]
+of the original representation. As for `TauCeti.reflectionFunctor_obj_self`, this is left off `simp`
+in favour of `TauCeti.reflectionFunctor_obj` followed by `TauCeti.reflectRep_obj_of_ne`. -/
 theorem reflectionFunctor_obj_of_ne (i : Q) (hi : IsSink i)
     (M : QuiverRep.{u, v, w, max v w x} k Q) {j : Q} (hj : j ≠ i) :
     ((reflectionFunctor i hi).obj M).obj j = M.obj j := by
