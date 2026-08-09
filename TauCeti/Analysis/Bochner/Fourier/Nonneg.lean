@@ -9,13 +9,19 @@ public import Mathlib.MeasureTheory.Measure.Haar.OfBasis
 public import TauCeti.Analysis.PositiveDefinite.Kernel.Basic
 -- The remaining imports are proof-only: the Fejér averaging argument uses dominated convergence,
 -- Fubini, simple-function approximation, the Haar ball formulas and negation invariance, the
--- Fourier atom kernel with its Fourier-transform bridge, and the kernel Cauchy–Schwarz bounds.
+-- Fourier atom kernel with its Fourier-transform bridge, and the kernel Cauchy–Schwarz bounds;
+-- the integrability theorem additionally uses Fourier inversion, the Gaussian Fourier
+-- transform, the Gaussian kernel, and the real part of a Bochner integral.
+import Mathlib.Analysis.Fourier.Inversion
+import Mathlib.Analysis.SpecialFunctions.Gaussian.FourierTransform
 import Mathlib.MeasureTheory.Function.SimpleFuncDenseLp
+import Mathlib.MeasureTheory.Integral.Bochner.ContinuousLinearMap
 import Mathlib.MeasureTheory.Integral.DominatedConvergence
 import Mathlib.MeasureTheory.Integral.Prod
 import Mathlib.MeasureTheory.Measure.Haar.Unique
 import Mathlib.MeasureTheory.Measure.Lebesgue.EqHaar
 import TauCeti.Analysis.Bochner.Fourier.Convention
+import TauCeti.Analysis.Bochner.Gaussian.Basic
 import TauCeti.Analysis.PositiveDefinite.FourierAtom
 import TauCeti.Analysis.PositiveDefinite.Kernel.Bounds
 
@@ -34,9 +40,13 @@ double integral `J_R = vol(B_R)⁻¹ ∬_{B_R × B_R} ψ (x - y)` has nonnegativ
 is a limit of positive-definite double sums (simple-function approximation of the identity),
 while Fubini rewrites `J_R = ∫ ψ · overlapRatio R` whose dominated limit as `R → ∞` is `∫ ψ`.
 
-Adapted from the Bochner–Minlos formalization (`Bochner/FejerPD.lean` in our bochner project);
-the Fejér averaging argument is ported with the positive-definiteness hypothesis restated
-through `IsPositiveDefiniteKernel`.
+Building on this, the Fourier transform of such a function is itself *integrable*: testing
+against a shrinking family of Gaussians and using the Parseval/Fubini identity bounds
+`∫ (𝓕 F) · exp (-t‖·‖²)` by `(F 0).re` uniformly in `t`, and Fatou's lemma passes to the limit.
+
+Adapted from the Bochner–Minlos formalization (`Bochner/FejerPD.lean` and `Bochner/Main.lean`
+in our bochner project); the arguments are ported with the positive-definiteness hypotheses
+restated through `IsPositiveDefiniteKernel`.
 
 ## Main declarations
 
@@ -44,6 +54,8 @@ through `IsPositiveDefiniteKernel`.
   continuous integrable positive-definite function has nonnegative real part.
 * `TauCeti.fourierIntegral_im_eq_zero_of_isPositiveDefiniteKernel`: its imaginary part vanishes.
 * `TauCeti.fourierIntegral_eq_re_of_isPositiveDefiniteKernel`: it equals its own real part.
+* `TauCeti.integrable_fourierIntegral_of_isPositiveDefiniteKernel`: the Fourier transform of a
+  continuous integrable positive-definite function is integrable.
 
 ## References
 
@@ -55,7 +67,7 @@ through `IsPositiveDefiniteKernel`.
 public section
 
 open Complex ComplexConjugate Filter MeasureTheory
-open scoped ComplexOrder FourierTransform
+open scoped ComplexOrder FourierTransform Topology
 
 namespace TauCeti
 
@@ -589,6 +601,7 @@ theorem fourierIntegral_re_nonneg_of_isPositiveDefiniteKernel (F : V → ℂ)
 /-- The Fourier transform of a positive-definite function on a finite-dimensional real
 inner-product space has vanishing imaginary part, by Hermitian symmetry and the negation
 invariance of Haar measure. -/
+@[simp]
 theorem fourierIntegral_im_eq_zero_of_isPositiveDefiniteKernel (F : V → ℂ)
     (hpd : IsPositiveDefiniteKernel fun a b : V => F (a - b)) (ξ : V) :
     (𝓕 F ξ).im = 0 := by
@@ -616,5 +629,185 @@ theorem fourierIntegral_eq_re_of_isPositiveDefiniteKernel (F : V → ℂ)
     𝓕 F ξ = ((𝓕 F ξ).re : ℂ) := by
   refine Complex.ext (by simp) ?_
   simp [fourierIntegral_im_eq_zero_of_isPositiveDefiniteKernel F hpd ξ]
+
+/-! ### Integrability of the Fourier transform of a positive-definite function -/
+
+/-- The `L¹` Parseval/Fubini identity `∫ (𝓕 f) · g = ∫ f · (𝓕 g)`, the self-adjointness of the
+Fourier transform for the symmetric inner-product pairing. -/
+private theorem integral_fourierIntegral_mul (f g : V → ℂ)
+    (hf : Integrable f) (hg : Integrable g) :
+    ∫ ξ, 𝓕 f ξ * g ξ = ∫ x, f x * 𝓕 g x := by
+  have h := VectorFourier.integral_fourierIntegral_smul_eq_flip (L := innerₗ V)
+    Real.continuous_fourierChar
+    (show Continuous fun p : V × V => (innerₗ V) p.1 p.2 from continuous_inner) hf hg
+  simpa only [flip_innerₗ, smul_eq_mul,
+    show VectorFourier.fourierIntegral 𝐞 volume (innerₗ V) = fun f : V → ℂ => 𝓕 f from rfl]
+    using h
+
+/-- The Fourier transform of a Gaussian is integrable (it is again a Gaussian). -/
+private theorem integrable_fourierIntegral_gaussian {t : ℝ} (ht : 0 < t) :
+    Integrable (𝓕 fun ξ : V => Complex.exp (-(t * ‖ξ‖ ^ 2 : ℝ))) := by
+  have htre : 0 < ((t : ℂ)).re := by simpa using ht
+  have heq : (fun ξ : V => Complex.exp (-(t * ‖ξ‖ ^ 2 : ℝ)))
+      = fun v : V => Complex.exp (-(t : ℂ) * (‖v‖ : ℂ) ^ 2) := by
+    funext v
+    push_cast
+    ring_nf
+  rw [heq, funext fun w : V => fourier_gaussian_innerProductSpace htre w]
+  refine Integrable.const_mul ?_ _
+  have hint : Integrable fun w : V => Complex.exp (-(Real.pi ^ 2 / t * ‖w‖ ^ 2 : ℝ)) :=
+    integrable_cexp_neg_mul_sq_norm (by positivity)
+  refine hint.congr (ae_of_all _ fun w => ?_)
+  push_cast
+  ring_nf
+
+/-- The Fourier transform of a Gaussian integrates to `1`, by Fourier inversion at `0`. -/
+private theorem integral_fourierIntegral_gaussian_eq_one {t : ℝ} (ht : 0 < t) :
+    ∫ ξ : V, 𝓕 (fun x : V => Complex.exp (-(t * ‖x‖ ^ 2 : ℝ))) ξ = 1 := by
+  have hg_int : Integrable fun x : V => Complex.exp (-(t * ‖x‖ ^ 2 : ℝ)) :=
+    integrable_cexp_neg_mul_sq_norm ht
+  have hg_cont : Continuous fun x : V => Complex.exp (-(t * ‖x‖ ^ 2 : ℝ)) :=
+    continuous_cexp_neg_mul_sq_norm t
+  have hft_int := integrable_fourierIntegral_gaussian (V := V) ht
+  have h0 := congrFun (hg_cont.fourierInv_fourier_eq hg_int hft_int) 0
+  rw [Real.fourierInv_eq] at h0
+  simp only [inner_zero_right, AddChar.map_zero_eq_one, one_smul, norm_zero, ne_eq,
+    OfNat.ofNat_ne_zero, not_false_eq_true, zero_pow, mul_zero, neg_zero, Complex.ofReal_zero,
+    Complex.exp_zero] at h0
+  exact h0
+
+/-- The `L¹` norm of the Fourier transform of a Gaussian is `1`: the transform is real and
+nonnegative because the Gaussian has a positive-definite subtraction kernel. -/
+private theorem integral_norm_fourierIntegral_gaussian_eq_one {t : ℝ} (ht : 0 < t) :
+    ∫ ξ : V, ‖𝓕 (fun x : V => Complex.exp (-(t * ‖x‖ ^ 2 : ℝ))) ξ‖ = 1 := by
+  have hg_pd : IsPositiveDefiniteKernel
+      fun a b : V => Complex.exp (-(t * ‖a - b‖ ^ 2 : ℝ)) :=
+    isPositiveDefiniteKernel_cexp_neg_mul_sq_norm ht.le
+  have hg_int : Integrable fun x : V => Complex.exp (-(t * ‖x‖ ^ 2 : ℝ)) :=
+    integrable_cexp_neg_mul_sq_norm ht
+  have hg_cont : Continuous fun x : V => Complex.exp (-(t * ‖x‖ ^ 2 : ℝ)) :=
+    continuous_cexp_neg_mul_sq_norm t
+  have hft_int := integrable_fourierIntegral_gaussian (V := V) ht
+  have hnorm : ∀ ξ : V, ‖𝓕 (fun x : V => Complex.exp (-(t * ‖x‖ ^ 2 : ℝ))) ξ‖ =
+      (𝓕 (fun x : V => Complex.exp (-(t * ‖x‖ ^ 2 : ℝ))) ξ).re := by
+    intro ξ
+    have hre := fourierIntegral_re_nonneg_of_isPositiveDefiniteKernel _ hg_pd hg_int hg_cont ξ
+    rw [fourierIntegral_eq_re_of_isPositiveDefiniteKernel _ hg_pd ξ, Complex.norm_real,
+      Complex.ofReal_re, Real.norm_of_nonneg hre]
+  calc ∫ ξ : V, ‖𝓕 (fun x : V => Complex.exp (-(t * ‖x‖ ^ 2 : ℝ))) ξ‖
+      = ∫ ξ : V, (𝓕 (fun x : V => Complex.exp (-(t * ‖x‖ ^ 2 : ℝ))) ξ).re :=
+        integral_congr_ae (ae_of_all _ hnorm)
+    _ = (∫ ξ : V, 𝓕 (fun x : V => Complex.exp (-(t * ‖x‖ ^ 2 : ℝ))) ξ).re := by
+        simpa only [RCLike.re_to_complex] using integral_re hft_int
+    _ = 1 := by rw [integral_fourierIntegral_gaussian_eq_one ht, Complex.one_re]
+
+/-- For a continuous integrable positive-definite `F` and `t > 0`, the Gaussian-tested integral
+of `𝓕 F` is at most `(F 0).re`, by the Parseval/Fubini identity and the `L¹` bound on the
+Fourier transform of the Gaussian. -/
+private theorem re_integral_fourierIntegral_mul_gaussian_le (F : V → ℂ)
+    (hpd : IsPositiveDefiniteKernel fun a b : V => F (a - b))
+    (hint : Integrable F) (hcont : Continuous F) {t : ℝ} (ht : 0 < t) :
+    (∫ ξ, 𝓕 F ξ * Complex.exp (-(t * ‖ξ‖ ^ 2 : ℝ))).re ≤ (F 0).re := by
+  have hgt_int : Integrable fun ξ : V => Complex.exp (-(t * ‖ξ‖ ^ 2 : ℝ)) :=
+    integrable_cexp_neg_mul_sq_norm ht
+  have hft_gt_int := integrable_fourierIntegral_gaussian (V := V) ht
+  have hFbound : ∀ x, ‖F x‖ ≤ (F 0).re := norm_le_re_map_zero_of_isPositiveDefiniteKernel hpd
+  have hprod_int : Integrable fun x : V =>
+      F x * 𝓕 (fun ξ : V => Complex.exp (-(t * ‖ξ‖ ^ 2 : ℝ))) x :=
+    hft_gt_int.bdd_mul hcont.aestronglyMeasurable (ae_of_all _ hFbound)
+  have hpars : (∫ ξ, 𝓕 F ξ * Complex.exp (-(t * ‖ξ‖ ^ 2 : ℝ))) =
+      ∫ x, F x * 𝓕 (fun ξ : V => Complex.exp (-(t * ‖ξ‖ ^ 2 : ℝ))) x :=
+    integral_fourierIntegral_mul F _ hint hgt_int
+  rw [hpars]
+  calc (∫ x, F x * 𝓕 (fun ξ : V => Complex.exp (-(t * ‖ξ‖ ^ 2 : ℝ))) x).re
+      ≤ ‖∫ x, F x * 𝓕 (fun ξ : V => Complex.exp (-(t * ‖ξ‖ ^ 2 : ℝ))) x‖ :=
+        Complex.re_le_norm _
+    _ ≤ ∫ x, ‖F x * 𝓕 (fun ξ : V => Complex.exp (-(t * ‖ξ‖ ^ 2 : ℝ))) x‖ :=
+        norm_integral_le_integral_norm _
+    _ ≤ ∫ x, (F 0).re * ‖𝓕 (fun ξ : V => Complex.exp (-(t * ‖ξ‖ ^ 2 : ℝ))) x‖ := by
+        refine integral_mono hprod_int.norm ((hft_gt_int.norm).const_mul _) fun x => ?_
+        rw [norm_mul]
+        exact mul_le_mul_of_nonneg_right (hFbound x) (norm_nonneg _)
+    _ = (F 0).re * ∫ x, ‖𝓕 (fun ξ : V => Complex.exp (-(t * ‖ξ‖ ^ 2 : ℝ))) x‖ :=
+        integral_const_mul _ _
+    _ = (F 0).re := by rw [integral_norm_fourierIntegral_gaussian_eq_one ht, mul_one]
+
+/-- The Gaussian-damped lower integral of `‖𝓕 F‖ₑ` is bounded by `(F 0).re`, uniformly in the
+damping parameter: the damped transform is real and nonnegative, so its `L¹` norm equals the
+Gaussian-tested integral bounded by `re_integral_fourierIntegral_mul_gaussian_le`. -/
+private theorem lintegral_enorm_fourierIntegral_mul_gaussian_le (F : V → ℂ)
+    (hpd : IsPositiveDefiniteKernel fun a b : V => F (a - b))
+    (hint : Integrable F) (hcont : Continuous F) {t : ℝ} (ht : 0 < t) :
+    ∫⁻ ξ, ‖𝓕 F ξ * Complex.exp (-(t * ‖ξ‖ ^ 2 : ℝ))‖ₑ ≤ ENNReal.ofReal (F 0).re := by
+  have hbound : ∀ ξ : V, ‖𝓕 F ξ‖ ≤ ∫ x, ‖F x‖ := fun ξ =>
+    VectorFourier.norm_fourierIntegral_le_integral_norm 𝐞 volume (innerₗ V) F ξ
+  have hft_cont : Continuous (𝓕 F) :=
+    VectorFourier.fourierIntegral_continuous Real.continuous_fourierChar
+    (by exact continuous_inner) hint
+  have hprod_int : Integrable fun ξ : V => 𝓕 F ξ * Complex.exp (-(t * ‖ξ‖ ^ 2 : ℝ)) :=
+    (integrable_cexp_neg_mul_sq_norm ht).bdd_mul hft_cont.aestronglyMeasurable
+      (ae_of_all _ fun ξ => hbound ξ)
+  rw [← ofReal_integral_norm_eq_lintegral_enorm hprod_int]
+  refine ENNReal.ofReal_le_ofReal ?_
+  have hnorm_eq : ∀ ξ : V, ‖𝓕 F ξ * Complex.exp (-(t * ‖ξ‖ ^ 2 : ℝ))‖ =
+      (𝓕 F ξ * Complex.exp (-(t * ‖ξ‖ ^ 2 : ℝ))).re := by
+    intro ξ
+    rw [fourierIntegral_eq_re_of_isPositiveDefiniteKernel F hpd ξ, ← Complex.ofReal_neg,
+      ← Complex.ofReal_exp, ← Complex.ofReal_mul, Complex.norm_real, Complex.ofReal_re,
+      Real.norm_of_nonneg (mul_nonneg
+        (fourierIntegral_re_nonneg_of_isPositiveDefiniteKernel F hpd hint hcont ξ)
+        (Real.exp_nonneg _))]
+  calc ∫ ξ, ‖𝓕 F ξ * Complex.exp (-(t * ‖ξ‖ ^ 2 : ℝ))‖
+      = ∫ ξ, (𝓕 F ξ * Complex.exp (-(t * ‖ξ‖ ^ 2 : ℝ))).re :=
+        integral_congr_ae (ae_of_all _ hnorm_eq)
+    _ = (∫ ξ, 𝓕 F ξ * Complex.exp (-(t * ‖ξ‖ ^ 2 : ℝ))).re := by
+        simpa only [RCLike.re_to_complex] using integral_re hprod_int
+    _ ≤ (F 0).re := re_integral_fourierIntegral_mul_gaussian_le F hpd hint hcont ht
+
+/-- The Fourier transform of a continuous integrable positive-definite function is integrable.
+
+Testing `𝓕 F` against the Gaussians `exp (-‖·‖²/(n+1))` gives integrals uniformly bounded by
+`(F 0).re`, and Fatou's lemma passes the bound to `∫⁻ ‖𝓕 F‖ₑ`. Folland, *A Course in Abstract
+Harmonic Analysis*, §4.2. -/
+theorem integrable_fourierIntegral_of_isPositiveDefiniteKernel (F : V → ℂ)
+    (hpd : IsPositiveDefiniteKernel fun a b : V => F (a - b))
+    (hint : Integrable F) (hcont : Continuous F) :
+    Integrable (𝓕 F) := by
+  have hft_cont : Continuous (𝓕 F) :=
+    VectorFourier.fourierIntegral_continuous Real.continuous_fourierChar
+    (by exact continuous_inner) hint
+  set tn : ℕ → ℝ := fun n => 1 / ((n : ℝ) + 1) with htn_def
+  have htn_pos : ∀ n, 0 < tn n := fun n => by positivity
+  have htn_lim : Tendsto tn atTop (𝓝 0) := tendsto_one_div_add_atTop_nhds_zero_nat
+  have hf_meas : ∀ n : ℕ, Measurable fun ξ : V =>
+      ‖𝓕 F ξ * Complex.exp (-(tn n * ‖ξ‖ ^ 2 : ℝ))‖ₑ := fun n =>
+    ((hft_cont.mul (continuous_cexp_neg_mul_sq_norm (tn n))).measurable).enorm
+  have hf_tendsto : ∀ ξ : V, Tendsto
+      (fun n : ℕ => ‖𝓕 F ξ * Complex.exp (-(tn n * ‖ξ‖ ^ 2 : ℝ))‖ₑ)
+      atTop (𝓝 ‖𝓕 F ξ‖ₑ) := by
+    intro ξ
+    have hc : Continuous fun s : ℝ => Complex.exp (-(s * ‖ξ‖ ^ 2 : ℝ)) := by fun_prop
+    have h1 : Tendsto (fun s : ℝ => Complex.exp (-(s * ‖ξ‖ ^ 2 : ℝ))) (𝓝 0) (𝓝 1) := by
+      simpa using hc.tendsto 0
+    have h2 : Tendsto (fun n : ℕ => Complex.exp (-(tn n * ‖ξ‖ ^ 2 : ℝ))) atTop (𝓝 1) :=
+      h1.comp htn_lim
+    have h3 : Tendsto (fun n : ℕ => 𝓕 F ξ * Complex.exp (-(tn n * ‖ξ‖ ^ 2 : ℝ)))
+        atTop (𝓝 (𝓕 F ξ)) := by
+      simpa using tendsto_const_nhds.mul h2
+    exact h3.enorm
+  have hbound : ∫⁻ ξ, ‖𝓕 F ξ‖ₑ ≤ ENNReal.ofReal (F 0).re := by
+    calc ∫⁻ ξ, ‖𝓕 F ξ‖ₑ
+        = ∫⁻ ξ, liminf
+            (fun n : ℕ => ‖𝓕 F ξ * Complex.exp (-(tn n * ‖ξ‖ ^ 2 : ℝ))‖ₑ) atTop :=
+          lintegral_congr fun ξ => ((hf_tendsto ξ).liminf_eq).symm
+      _ ≤ liminf
+            (fun n : ℕ => ∫⁻ ξ, ‖𝓕 F ξ * Complex.exp (-(tn n * ‖ξ‖ ^ 2 : ℝ))‖ₑ) atTop :=
+          lintegral_liminf_le hf_meas
+      _ ≤ ENNReal.ofReal (F 0).re := by
+          apply liminf_le_of_le (h := fun b hb => ?_)
+          obtain ⟨n, hn⟩ := hb.exists
+          exact hn.trans
+            (lintegral_enorm_fourierIntegral_mul_gaussian_le F hpd hint hcont (htn_pos n))
+  exact ⟨hft_cont.aestronglyMeasurable, hbound.trans_lt ENNReal.ofReal_lt_top⟩
 
 end TauCeti

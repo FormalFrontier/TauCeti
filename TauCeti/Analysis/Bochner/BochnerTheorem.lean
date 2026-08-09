@@ -4,19 +4,29 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+public import Mathlib.Analysis.Fourier.FourierTransform
 public import Mathlib.MeasureTheory.Integral.Bochner.Basic
+public import Mathlib.MeasureTheory.Measure.Haar.OfBasis
+public import Mathlib.MeasureTheory.Measure.WithDensity
 public import TauCeti.Analysis.PositiveDefinite.FourierAtom
 public import TauCeti.Analysis.PositiveDefinite.Function.Kernel
--- The remaining imports are proof-only: the characteristic-function API and its uniqueness
--- theorem, the Lévy continuity theorem, Prokhorov's theorem with the Lévy–Prokhorov
+-- The remaining imports are proof-only: Fourier inversion, the negation invariance of Haar
+-- measure, the `withDensity` Bochner-integral formula, the characteristic-function API and its
+-- uniqueness theorem, the Lévy continuity theorem, Prokhorov's theorem with the Lévy–Prokhorov
 -- metrizability of the space of probability measures, sequential compactness, the
--- Fourier-convention bridge, the Gaussian regularization, and the kernel Cauchy–Schwarz bounds.
+-- Fourier-convention bridge, the nonnegativity and integrability of the Fourier transform of a
+-- positive-definite function, the Gaussian regularization, and the kernel Cauchy–Schwarz
+-- bounds.
+import Mathlib.Analysis.Fourier.Inversion
+import Mathlib.MeasureTheory.Group.Integral
+import Mathlib.MeasureTheory.Integral.Bochner.ContinuousLinearMap
 import Mathlib.MeasureTheory.Measure.CharacteristicFunction.Basic
 import Mathlib.MeasureTheory.Measure.LevyConvergence
 import Mathlib.MeasureTheory.Measure.LevyProkhorovMetric
 import Mathlib.MeasureTheory.Measure.Prokhorov
 import Mathlib.Topology.Sequences
 import TauCeti.Analysis.Bochner.Fourier.Convention
+import TauCeti.Analysis.Bochner.Fourier.Nonneg
 import TauCeti.Analysis.Bochner.Gaussian.Regularization
 import TauCeti.Analysis.PositiveDefinite.Kernel.Bounds
 
@@ -27,6 +37,11 @@ A continuous function `F : V → ℂ` on a finite-dimensional real inner-product
 positive-definite subtraction kernel `(a, b) ↦ F (a - b)` if and only if it is the
 Fourier-convention transform `v ↦ ∫ q, fourierAtom v q ∂μ` of a unique finite Borel measure `μ`
 on `V`. This file assembles the final statement from the two analytic predecessors.
+
+The `L¹` case comes first: for a continuous *integrable* positive-definite `F`, the finite
+measure with density `(𝓕⁻ F).re` against Lebesgue measure recovers `F` as the
+Fourier-convention transform `∫ q, fourierAtom · q` of the measure, by Fourier inversion; this
+is the representing measure of Bochner's theorem, given explicitly.
 
 Existence is proved by Gaussian regularization and a compactness argument. If `F 0 = 0` the
 kernel Cauchy–Schwarz inequality forces `F = 0` and the zero measure represents. Otherwise,
@@ -47,6 +62,10 @@ and the representation is stated in the `fourierAtom` convention rather than thr
 
 ## Main declarations
 
+* `TauCeti.isFiniteMeasure_withDensity_re_fourierIntegralInv` and
+  `TauCeti.integral_fourierAtom_withDensity_re_fourierIntegralInv`: the measure
+  `volume.withDensity (ENNReal.ofReal (𝓕⁻ F ·).re)` is finite and recovers `F` through the
+  Fourier atom — the `L¹` case of Bochner's theorem.
 * `TauCeti.exists_isFiniteMeasure_integral_fourierAtom_eq_of_isPositiveDefiniteKernel`:
   existence of a finite representing measure for a continuous positive-definite function.
 * `TauCeti.Measure.ext_of_forall_integral_fourierAtom_eq`: uniqueness of the representing
@@ -98,6 +117,53 @@ end Uniqueness
 
 variable {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V]
   [FiniteDimensional ℝ V] [MeasurableSpace V] [BorelSpace V]
+
+/-! ### The L¹ representing measure -/
+
+/-- The measure with density `(𝓕⁻ F).re` against Lebesgue measure is finite whenever `𝓕 F` is
+integrable. This is the total-mass half of the `L¹` case of Bochner's theorem. -/
+theorem isFiniteMeasure_withDensity_re_fourierIntegralInv (F : V → ℂ)
+    (hint_ft : Integrable (𝓕 F)) :
+    IsFiniteMeasure (volume.withDensity fun ξ => ENNReal.ofReal (𝓕⁻ F ξ).re) := by
+  have hinv_int : Integrable (𝓕⁻ F) := by
+    rw [show 𝓕⁻ F = fun ξ : V => 𝓕 F (-ξ) from
+      funext fun ξ => Real.fourierInv_eq_fourier_neg F ξ]
+    exact hint_ft.comp_neg
+  exact isFiniteMeasure_withDensity_ofReal hinv_int.re.2
+
+/-- **Bochner recovery for `L¹` positive-definite functions.** A continuous integrable function
+`F` with positive-definite subtraction kernel is the Fourier-convention transform
+`v ↦ ∫ q, fourierAtom v q ∂μ` of the finite measure `μ` with density `(𝓕⁻ F).re` against
+Lebesgue measure. The identity is Fourier inversion `𝓕 (𝓕⁻ F) = F`, using that `𝓕⁻ F` is real
+and nonnegative. Rudin, *Fourier Analysis on Groups*, §1.4; Folland, §4.2. -/
+theorem integral_fourierAtom_withDensity_re_fourierIntegralInv (F : V → ℂ)
+    (hpd : IsPositiveDefiniteKernel fun a b : V => F (a - b))
+    (hint : Integrable F) (hcont : Continuous F) (v : V) :
+    ∫ q, fourierAtom v q ∂(volume.withDensity fun ξ => ENNReal.ofReal (𝓕⁻ F ξ).re) = F v := by
+  have hft_int : Integrable (𝓕 F) :=
+    integrable_fourierIntegral_of_isPositiveDefiniteKernel F hpd hint hcont
+  have hinv_cont : Continuous (𝓕⁻ F) := by
+    rw [show 𝓕⁻ F = fun ξ : V => 𝓕 F (-ξ) from
+      funext fun ξ => Real.fourierInv_eq_fourier_neg F ξ]
+    exact (VectorFourier.fourierIntegral_continuous Real.continuous_fourierChar
+    (by exact continuous_inner) hint).comp continuous_neg
+  have hre : ∀ ξ, 0 ≤ (𝓕⁻ F ξ).re := fun ξ => by
+    rw [Real.fourierInv_eq_fourier_neg]
+    exact fourierIntegral_re_nonneg_of_isPositiveDefiniteKernel F hpd hint hcont (-ξ)
+  have hreal : ∀ ξ, 𝓕⁻ F ξ = ((𝓕⁻ F ξ).re : ℂ) := fun ξ => by
+    rw [Real.fourierInv_eq_fourier_neg]
+    exact fourierIntegral_eq_re_of_isPositiveDefiniteKernel F hpd (-ξ)
+  have hmeas : Measurable fun ξ : V => ENNReal.ofReal (𝓕⁻ F ξ).re :=
+    ENNReal.measurable_ofReal.comp (Complex.measurable_re.comp hinv_cont.measurable)
+  rw [integral_withDensity_eq_integral_toReal_smul₀ hmeas.aemeasurable
+    (ae_of_all _ fun ξ => ENNReal.ofReal_lt_top) _]
+  calc ∫ q, (ENNReal.ofReal (𝓕⁻ F q).re).toReal • fourierAtom v q
+      = ∫ q, fourierAtom v q * 𝓕⁻ F q := by
+        refine integral_congr_ae (ae_of_all _ fun q => ?_)
+        simp only [ENNReal.toReal_ofReal (hre q), Complex.real_smul]
+        rw [← hreal q, mul_comm]
+    _ = 𝓕 (𝓕⁻ F) v := (fourierIntegral_eq_integral_fourierAtom_mul (𝓕⁻ F) v).symm
+    _ = F v := by rw [hcont.fourier_fourierInv_eq hint hft_int]
 
 /-! ### The normalized existence argument -/
 

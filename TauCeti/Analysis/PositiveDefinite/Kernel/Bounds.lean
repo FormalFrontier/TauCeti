@@ -33,9 +33,9 @@ for positive semidefinite matrices.
 * `TauCeti.isPositiveDefiniteKernel_norm_le_one_of_apply_self_eq_one`: normalized diagonal
   entries bound off-diagonal entries by `1`.
 * `TauCeti.re_map_zero_nonneg_of_isPositiveDefiniteKernel` and
-  `TauCeti.norm_le_re_map_zero_of_isPositiveDefiniteKernel`: for a complex-valued function with
-  positive-definite subtraction kernel, the value at `0` has nonnegative real part and bounds
-  the function uniformly in norm.
+  `TauCeti.norm_le_re_map_zero_of_isPositiveDefiniteKernel`: for an `RCLike`-valued function
+  with positive-definite subtraction kernel, the value at `0` has nonnegative real part and
+  bounds the function uniformly in norm.
 
 ## References
 
@@ -115,27 +115,27 @@ theorem isPositiveDefiniteKernel_norm_le_one_of_apply_self_eq_one
 
 section SubtractionKernel
 
-variable {V : Type*} [AddGroup V] {ψ : V → ℂ}
+variable {V : Type*} [AddGroup V] {ψ : V → 𝕜}
 
 /-- The value at `0` of a function with positive-definite subtraction kernel has nonnegative
 real part. -/
 theorem re_map_zero_nonneg_of_isPositiveDefiniteKernel
     (hpd : IsPositiveDefiniteKernel fun a b : V => ψ (a - b)) :
-    0 ≤ (ψ 0).re := by
-  have h : (0 : ℂ) ≤ ψ 0 := by
+    0 ≤ RCLike.re (ψ 0) := by
+  have h : (0 : 𝕜) ≤ ψ 0 := by
     simpa using isPositiveDefiniteKernel_apply_self_nonneg hpd 0
-  exact (Complex.nonneg_iff.mp h).1
+  exact (RCLike.nonneg_iff.mp h).1
 
 /-- A function with positive-definite subtraction kernel is uniformly bounded by the real part
 of its value at `0`. -/
 theorem norm_le_re_map_zero_of_isPositiveDefiniteKernel
     (hpd : IsPositiveDefiniteKernel fun a b : V => ψ (a - b)) (z : V) :
-    ‖ψ z‖ ≤ (ψ 0).re := by
+    ‖ψ z‖ ≤ RCLike.re (ψ 0) := by
   have h := isPositiveDefiniteKernel_normSq_le hpd z 0
-  simp only [sub_zero, sub_self, RCLike.normSq_eq_def', RCLike.re_to_complex] at h
+  simp only [sub_zero, sub_self, RCLike.normSq_eq_def'] at h
   refine le_of_sq_le_sq ?_ (re_map_zero_nonneg_of_isPositiveDefiniteKernel hpd)
-  calc ‖ψ z‖ ^ 2 ≤ (ψ 0).re * (ψ 0).re := h
-    _ = (ψ 0).re ^ 2 := (sq ((ψ 0).re)).symm
+  calc ‖ψ z‖ ^ 2 ≤ RCLike.re (ψ 0) * RCLike.re (ψ 0) := h
+    _ = RCLike.re (ψ 0) ^ 2 := (sq (RCLike.re (ψ 0))).symm
 
 end SubtractionKernel
 

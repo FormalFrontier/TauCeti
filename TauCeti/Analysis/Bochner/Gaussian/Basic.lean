@@ -4,9 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+public import Mathlib.MeasureTheory.Measure.Haar.OfBasis
+public import Mathlib.Probability.Distributions.Gaussian.Multivariate
 public import TauCeti.Analysis.Bochner.CharFun.PositiveDefinite
 public import TauCeti.Analysis.PositiveDefinite.Pullback
-public import Mathlib.Probability.Distributions.Gaussian.Multivariate
+-- The remaining import is proof-only: the integrability of the complex Gaussian.
+import Mathlib.Analysis.SpecialFunctions.Gaussian.FourierTransform
 
 /-!
 # The Gaussian is a positive-definite function
@@ -33,6 +36,7 @@ negation involution `a⋆ = -a`. Rescaling the argument by `√(2c)` turns `exp 
 * `TauCeti.isPositiveDefiniteKernel_cexp_neg_mul_sq_norm`: the involution-free kernel form,
   `(a, b) ↦ exp (-c‖a - b‖²)` is a positive-definite kernel.
 * `TauCeti.continuous_cexp_neg_mul_sq_norm`: `a ↦ exp (-c‖a‖²)` is continuous.
+* `TauCeti.integrable_cexp_neg_mul_sq_norm`: `a ↦ exp (-c‖a‖²)` is integrable for `c > 0`.
 * `TauCeti.isPositiveDefinite_cexp_neg_sq_norm`: the positive-definiteness half of the Gaussian
   acceptance example (`c = 1`), `a ↦ exp (-‖a‖²)`.
 * `TauCeti.isPositiveDefiniteKernel_cexp_neg_sq_norm`: the involution-free kernel form of the
@@ -61,6 +65,16 @@ omit [InnerProductSpace ℝ V] [FiniteDimensional ℝ V] [MeasurableSpace V] [Bo
 theorem continuous_cexp_neg_mul_sq_norm (c : ℝ) :
     Continuous fun a : V => Complex.exp (-(c * ‖a‖ ^ 2 : ℝ)) := by
   fun_prop
+
+/-- The Gaussian `a ↦ exp (-c‖a‖²)` is integrable on `V` for every `c > 0`. -/
+theorem integrable_cexp_neg_mul_sq_norm {c : ℝ} (hc : 0 < c) :
+    Integrable fun a : V => Complex.exp (-(c * ‖a‖ ^ 2 : ℝ)) := by
+  have h := GaussianFourier.integrable_cexp_neg_mul_sq_norm_add (V := V)
+    (show 0 < ((c : ℂ)).re by simpa using hc) 0 (0 : V)
+  simp only [zero_mul, add_zero] at h
+  refine h.congr (ae_of_all _ fun a => ?_)
+  push_cast
+  ring_nf
 
 /-- The characteristic function of the standard Gaussian measure on `V`, with its argument
 rescaled by `√(2c)`, is the Gaussian `a ↦ exp (-c‖a‖²)`. -/
