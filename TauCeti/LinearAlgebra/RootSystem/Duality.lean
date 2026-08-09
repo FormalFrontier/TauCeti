@@ -109,6 +109,12 @@ does. -/
 @[simp] lemma isSimplyLaced_dual (t : DynkinType) : t.dual.IsSimplyLaced ↔ t.IsSimplyLaced := by
   cases t <;> simp
 
+/-- **A simply-laced type is self-dual**: the types `A`, `D` and `E` have only single edges, so
+there is no arrow for duality to reverse. The converse fails, since `F₄` and `G₂` are self-dual
+without being simply laced; `Bₙ` and `Cₙ` are the only types moved by duality at all. -/
+lemma dual_eq_self_of_isSimplyLaced {t : DynkinType} (ht : t.IsSimplyLaced) : t.dual = t := by
+  cases t <;> simp_all
+
 /-- **Validity transfers along duality away from the pair `B 2`, `C 2`.** The excluded pair is the
 low-rank coincidence `B 2 = C 2`: both names describe the same root system, and the enumeration
 keeps only `B 2` valid. So both orientations of that pair genuinely fail — `B 2` is valid while its
