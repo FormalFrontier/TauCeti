@@ -39,7 +39,7 @@ variable {n : Type*} [Fintype n] [DecidableEq n]
 theorem matrixDexpFactor_apply_eq_integral_conj (A B : Matrix n n ℝ) :
     banachDexpFactor A B =
       ∫ t in (0 : ℝ)..1, exp (-(t • A)) * B * exp (t • A) :=
-  banachDexpFactor_apply_eq_integral_conj A B
+  banachDexpFactor_apply_eq_integral A B
 
 /-- The matrix-exponential derivative is left multiplication by `exp A` followed by the integral
 of conjugations along the exponential line. -/
