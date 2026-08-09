@@ -35,12 +35,21 @@ construct the total associated-graded algebra or prove multiplication compatibil
   carry each Clifford filtration step to the corresponding zero-form step and back.
 * `TauCeti.CliffordAlgebra.filtrationGradedEquiv_comp_filtrationLeadingTerm`: the graded
   equivalence inverts `Filtration.lean`'s leading-term map, so the two independent routes to the
-  degree quotient are the same map.
+  degree quotient are the same map, with
+  `TauCeti.CliffordAlgebra.filtrationLeadingTerm_eq_filtrationGradedEquiv_symm` the map-level form.
 
 ## References
 
 * [Clifford algebras, Pin and Spin, and spin representations roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/SpinRepresentations/README.md),
   Layer 0, "The degree filtration".
+* The identification of the associated graded of the Clifford filtration with the exterior algebra
+  is the Clifford-algebra analogue of the Poincaré-Birkhoff-Witt theorem; see C. Chevalley, *The
+  Algebraic Theory of Spinors* (1954), Chapter II, and H. B. Lawson and M.-L. Michelsohn, *Spin
+  Geometry* (1989), Proposition I.1.2.
+* The transport used here is Bourbaki's `λ_B`, Mathlib's `CliffordAlgebra.changeForm`: it is
+  triangular with identity leading term rather than an antisymmetrisation, which is why the two
+  routes agree on the nose with no scalar. See N. Bourbaki, *Algèbre* IX §9, and
+  [grinberg_clifford_2016] as cited by Mathlib's `Contraction.lean`.
 -/
 
 public section
@@ -150,7 +159,9 @@ theorem filtrationGradedEquiv_symm_apply (Q : QuadraticForm R M) [Invertible (2 
   apply congrArg Submodule.Quotient.mk
   exact Subtype.ext (coe_equivExteriorFiltration_symm_apply Q (k + 1) _)
 
-/-- **The leading-term map and the graded equivalence are mutually inverse.** -/
+/-- **The graded equivalence undoes the leading-term map.** Together with
+`filtrationLeadingTerm_surjective`, which holds over any `CommRing`, this identifies the two
+independent routes `Filtration.lean` and this file take to the degree-`k + 1` quotient. -/
 theorem filtrationGradedEquiv_comp_filtrationLeadingTerm (Q : QuadraticForm R M)
     [Invertible (2 : R)] (k : ℕ) :
     (filtrationGradedEquiv Q k).toLinearMap ∘ₗ filtrationLeadingTerm Q k = LinearMap.id := by
@@ -164,22 +175,26 @@ theorem filtrationGradedEquiv_comp_filtrationLeadingTerm (Q : QuadraticForm R M)
   rw [Submodule.Quotient.eq, mem_filtrationPreviousRestricted_iff, filtrationPrevious_succ]
   -- What remains is `changeForm`'s symbol computation at `Q' = 0`, read through `equivExterior`.
   simpa only [equivExterior, changeFormEquiv_apply, exteriorPower.ιMulti_apply_coe,
-    ExteriorAlgebra.ιMulti_apply, Function.comp_def, AddSubgroupClass.coe_sub] using
-    changeForm_prod_ofFn_ι_sub_prod_ofFn_ι_mem_filtration Q
-      (Q' := (0 : QuadraticForm R M)) changeForm.associated_neg_proof k v
+    ExteriorAlgebra.ιMulti_apply, Function.comp_def, AddSubgroupClass.coe_sub,
+    List.map_ofFn] using
+    changeForm_prod_map_ι_sub_prod_map_ι_mem_filtration Q
+      (Q' := (0 : QuadraticForm R M)) changeForm.associated_neg_proof (List.ofFn v)
+      (by simp)
 
-/-- The leading-term map is the inverse of the graded equivalence. -/
-theorem filtrationLeadingTerm_eq_coe_symm (Q : QuadraticForm R M) [Invertible (2 : R)] (k : ℕ) :
+/-- The pointwise form, which is the one `simp` can use. -/
+@[simp]
+theorem filtrationGradedEquiv_filtrationLeadingTerm (Q : QuadraticForm R M) [Invertible (2 : R)]
+    (k : ℕ) (x : ⋀[R]^(k + 1) M) :
+    filtrationGradedEquiv Q k (filtrationLeadingTerm Q k x) = x :=
+  LinearMap.congr_fun (filtrationGradedEquiv_comp_filtrationLeadingTerm Q k) x
+
+/-- The leading-term map is `filtrationGradedEquiv`'s inverse. -/
+theorem filtrationLeadingTerm_eq_filtrationGradedEquiv_symm (Q : QuadraticForm R M)
+    [Invertible (2 : R)] (k : ℕ) :
     filtrationLeadingTerm Q k = (filtrationGradedEquiv Q k).symm.toLinearMap := by
   rw [← LinearMap.comp_id (filtrationGradedEquiv Q k).symm.toLinearMap]
   exact (LinearEquiv.eq_toLinearMap_symm_comp _ _).2
     (filtrationGradedEquiv_comp_filtrationLeadingTerm Q k)
-
-/-- Consequently the leading-term map is bijective when `2` is invertible. -/
-theorem filtrationLeadingTerm_bijective (Q : QuadraticForm R M) [Invertible (2 : R)] (k : ℕ) :
-    Function.Bijective (filtrationLeadingTerm Q k) := by
-  rw [filtrationLeadingTerm_eq_coe_symm]
-  exact (filtrationGradedEquiv Q k).symm.bijective
 
 end CliffordAlgebra
 
