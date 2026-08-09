@@ -67,8 +67,7 @@ theorem map_ringOfIntegersQuadraticConj_eq_self_of_mem_ramifiedPrimes
 /-- **The class of a ramified prime is 2-torsion.** In a degree-two number field, the prime `𝔭`
 above a ramified rational prime `p` satisfies `𝔭² = p 𝓞 K`, the extension of the principal ideal
 `(p)`, so its class in `Cl(𝓞 K)` squares to `1`: `[𝔭]` is an explicit element of the 2-torsion
-`Cl(𝓞 K)[2]`. By `mulEquiv_ringOfIntegersQuadraticConj_apply_eq_self_iff` it is thus an *ambiguous*
-class. -/
+`Cl(𝓞 K)[2]`. -/
 theorem classGroupMk0_sq_eq_one_of_mem_ramifiedPrimes (hK : finrank ℚ K = 2)
     {p : ℕ} (hmem : p ∈ ramifiedPrimes K) (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime]
     [𝔭.LiesOver (span {(p : ℤ)})] :
