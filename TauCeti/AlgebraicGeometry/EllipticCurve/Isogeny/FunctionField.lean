@@ -71,6 +71,35 @@ private theorem isIntegral_of_isIntegral_map {A K : Type*} [CommRing A] [CommRin
     rw [coeff_map]
     exact hf (p.coeff i)
 
+private theorem isIntegral_pullback_of_isIntegral_X (φ : Isogeny W₁ W₂)
+    (hX : IsIntegral F (φ.pullback (algebraMap F[X] W₂.CoordinateRing X)))
+    (a : W₂.CoordinateRing) : IsIntegral F (φ.pullback a) := by
+  let _ : Module.Finite F[X] W₂.CoordinateRing :=
+    Module.Finite.of_basis (CoordinateRing.basis W₂)
+  obtain ⟨P, hPmonic, hPa⟩ :=
+    (Algebra.IsIntegral.isIntegral (R := F[X]) a : IsIntegral F[X] a)
+  let e : F[X] →ₐ[F] W₁.FunctionField :=
+    φ.pullback.comp (IsScalarTower.toAlgHom F F[X] W₂.CoordinateRing)
+  have he_ring : e.toRingHom =
+      φ.pullback.toRingHom.comp (algebraMap F[X] W₂.CoordinateRing) := by
+    ext r
+    · exact congr_arg φ.pullback
+        (IsScalarTower.toAlgHom_apply F F[X] W₂.CoordinateRing (C r))
+    · exact congr_arg φ.pullback
+        (IsScalarTower.toAlgHom_apply F F[X] W₂.CoordinateRing X)
+  have he : e = aeval (φ.pullback (algebraMap F[X] W₂.CoordinateRing X)) := by
+    apply Polynomial.algHom_ext
+    simp [e]
+  apply isIntegral_of_isIntegral_map e.toRingHom (x := φ.pullback a)
+  · intro p
+    rw [he]
+    exact isIntegral_eval_of_isIntegral hX p
+  · refine ⟨P, hPmonic, ?_⟩
+    rw [e.toRingHom.algebraMap_toAlgebra, he_ring]
+    exact
+      (Polynomial.hom_eval₂ P (algebraMap F[X] W₂.CoordinateRing)
+        φ.pullback.toRingHom a).symm.trans (by rw [hPa, map_zero])
+
 /-- The coordinate pullback of any isogeny of affine Weierstrass curves over a field is
 injective. -/
 theorem pullback_injective (φ : Isogeny W₁ W₂) : Function.Injective φ.pullback := by
@@ -99,33 +128,8 @@ theorem pullback_injective (φ : Isogeny W₁ W₂) : Function.Injective φ.pull
     rw [heval, hnorm, map_mul, hz, zero_mul]
   have ht_algebraic : IsAlgebraic F t := ⟨N, hN₀, hN⟩
   have ht : IsIntegral F t := ht_algebraic.isIntegral
-  let _ : Module.Finite F[X] W₂.CoordinateRing :=
-    Module.Finite.of_basis (CoordinateRing.basis W₂)
-  have himage : ∀ a : W₂.CoordinateRing, IsIntegral F (φ.pullback a) := by
-    intro a
-    obtain ⟨P, hPmonic, hPa⟩ :=
-      (Algebra.IsIntegral.isIntegral (R := F[X]) a : IsIntegral F[X] a)
-    let e : F[X] →ₐ[F] W₁.FunctionField :=
-      φ.pullback.comp (IsScalarTower.toAlgHom F F[X] W₂.CoordinateRing)
-    have he_ring : e.toRingHom =
-        φ.pullback.toRingHom.comp (algebraMap F[X] W₂.CoordinateRing) := by
-      ext r
-      · exact congr_arg φ.pullback
-          (IsScalarTower.toAlgHom_apply F F[X] W₂.CoordinateRing (C r))
-      · exact congr_arg φ.pullback
-          (IsScalarTower.toAlgHom_apply F F[X] W₂.CoordinateRing X)
-    have he : e = aeval t := by
-      apply Polynomial.algHom_ext
-      simp [e, t, x₂]
-    apply isIntegral_of_isIntegral_map e.toRingHom (x := φ.pullback a)
-    · intro p
-      rw [he]
-      exact isIntegral_eval_of_isIntegral ht p
-    · refine ⟨P, hPmonic, ?_⟩
-      rw [e.toRingHom.algebraMap_toAlgebra, he_ring]
-      exact
-        (Polynomial.hom_eval₂ P (algebraMap F[X] W₂.CoordinateRing)
-          φ.pullback.toRingHom a).symm.trans (by rw [hPa, map_zero])
+  have himage : ∀ a : W₂.CoordinateRing, IsIntegral F (φ.pullback a) :=
+    isIntegral_pullback_of_isIntegral_X φ ht
   let x₁ : W₁.FunctionField :=
     algebraMap W₁.CoordinateRing W₁.FunctionField
       (algebraMap F[X] W₁.CoordinateRing X)
@@ -172,7 +176,7 @@ theorem fieldPullback_unique (φ : Isogeny W₁ W₂)
 
 /-- The identity isogeny induces the identity pullback on the function field. -/
 @[simp]
-theorem fieldPullback_id (W : WeierstrassCurve.Affine F) :
+theorem id_fieldPullback (W : WeierstrassCurve.Affine F) :
     (id W).fieldPullback = AlgHom.id F W.FunctionField := by
   symm
   apply (id W).fieldPullback_unique
