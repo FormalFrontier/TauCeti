@@ -72,8 +72,9 @@ the action on morphisms are private. The `reflectRep_obj_*`, `reflectRep_map_*`,
 `reflectionFunctor_obj`, and `reflectionFunctor_map_app_*` theorems provide the interface
 downstream files should use. The body of `TauCeti.reflectionFunctor` is not exposed outside this
 module, so `reflectionFunctor_obj` cannot be proved by `rfl` where it is stated; it restates a
-private unfolding lemma, and the two `reflectionFunctor_obj_*` computations then follow from the
-matching `reflectRep_obj_*` results.
+private unfolding lemma. A vertex space of a functor object is therefore computed by
+`reflectionFunctor_obj` followed by the matching `reflectRep_obj_*` result, and that composite is
+exactly the transport appearing in the `reflectionFunctor_map_app_*` statements.
 
 The arrows of `TauCeti.Quiver.Reflect Q i` are given by `TauCeti.Quiver.reflectHom`, which is
 again an `if` on equality with `i`, so an arrow of the reflected quiver is a *cast* of an arrow of
@@ -504,54 +505,47 @@ private theorem reflectionFunctor_map_app_self
   rw [reflectionFunctor_map_app η hi i, reflectRepMapApp_self]
   exact eqToHom_conjugate_cancel _ _ _
 
-/-- At the reflected vertex, the object supplied by `TauCeti.reflectionFunctor` is the kernel of
-the incoming sum. This is not a `simp` lemma: `TauCeti.reflectionFunctor_obj` rewrites the object
-to `TauCeti.reflectRep`, after which `TauCeti.reflectRep_obj_self` applies. -/
-theorem reflectionFunctor_obj_self (i : Q) (hi : IsSink i)
-    (M : QuiverRep.{u, v, w, max v w x} k Q) :
-    ((reflectionFunctor i hi).obj M).obj i =
-      ModuleCat.of k (LinearMap.ker (incomingSum M i)) := by
-  rw [reflectionFunctor_obj]
-  exact reflectRep_obj_self M hi
-
-/-- Away from the reflected vertex, the objects supplied by `TauCeti.reflectionFunctor` are those
-of the original representation. As for `TauCeti.reflectionFunctor_obj_self`, this is left off `simp`
-in favour of `TauCeti.reflectionFunctor_obj` followed by `TauCeti.reflectRep_obj_of_ne`. -/
-theorem reflectionFunctor_obj_of_ne (i : Q) (hi : IsSink i)
-    (M : QuiverRep.{u, v, w, max v w x} k Q) {j : Q} (hj : j ≠ i) :
-    ((reflectionFunctor i hi).obj M).obj j = M.obj j := by
-  rw [reflectionFunctor_obj]
-  exact reflectRep_obj_of_ne M hi hj
-
 /-- At the reflected vertex, reflection sends a morphism to the coordinatewise map between the
-kernels of the incoming sums. -/
+kernels of the incoming sums. The two vertex spaces are read off by `TauCeti.reflectionFunctor_obj`
+followed by `TauCeti.reflectRep_obj_self`, which is the transport in the statement. -/
 theorem reflectionFunctor_map_app_self_apply
     {M N : QuiverRep.{u, v, w, max v w x} k Q} (η : M ⟶ N) {i : Q} (hi : IsSink i)
     (f : LinearMap.ker (incomingSum M i)) (e : Σ b : Q, (b ⟶ i)) :
-    ((eqToHom (reflectionFunctor_obj_self i hi M).symm ≫
+    ((eqToHom ((congrArg (fun R : QuiverRep k (Reflect Q i) ↦ R.obj i)
+          (reflectionFunctor_obj i hi M)).trans (reflectRep_obj_self M hi)).symm ≫
         ((reflectionFunctor i hi).map η).app i ≫
-        eqToHom (reflectionFunctor_obj_self i hi N)) f).1 e = η.app e.1 (f.1 e) := by
-  have hM : reflectionFunctor_obj_self i hi M = reflectRep_obj_self M hi :=
-    Subsingleton.elim _ _
-  have hN : reflectionFunctor_obj_self i hi N = reflectRep_obj_self N hi :=
-    Subsingleton.elim _ _
+        eqToHom ((congrArg (fun R : QuiverRep k (Reflect Q i) ↦ R.obj i)
+          (reflectionFunctor_obj i hi N)).trans (reflectRep_obj_self N hi))) f).1 e
+      = η.app e.1 (f.1 e) := by
+  have hM : (congrArg (fun R : QuiverRep k (Reflect Q i) ↦ R.obj i)
+      (reflectionFunctor_obj i hi M)).trans (reflectRep_obj_self M hi)
+      = reflectRep_obj_self M hi := Subsingleton.elim _ _
+  have hN : (congrArg (fun R : QuiverRep k (Reflect Q i) ↦ R.obj i)
+      (reflectionFunctor_obj i hi N)).trans (reflectRep_obj_self N hi)
+      = reflectRep_obj_self N hi := Subsingleton.elim _ _
   rw [hM, hN]
   exact congrArg (fun g : ModuleCat.of k (LinearMap.ker (incomingSum M i)) ⟶
       ModuleCat.of k (LinearMap.ker (incomingSum N i)) ↦ (g f).1 e)
     (reflectionFunctor_map_app_self η hi)
 
-/-- Away from the reflected vertex, reflection leaves the components of a morphism unchanged. -/
+/-- Away from the reflected vertex, reflection leaves the components of a morphism unchanged. The
+two vertex spaces are read off by `TauCeti.reflectionFunctor_obj` followed by
+`TauCeti.reflectRep_obj_of_ne`, which is the transport in the statement. -/
 @[simp]
 theorem reflectionFunctor_map_app_of_ne
     {M N : QuiverRep.{u, v, w, max v w x} k Q} (η : M ⟶ N) {i : Q} (hi : IsSink i)
     {j : Q} (hj : j ≠ i) :
     ((reflectionFunctor i hi).map η).app j =
-      eqToHom (reflectionFunctor_obj_of_ne i hi M hj) ≫ η.app j ≫
-        eqToHom (reflectionFunctor_obj_of_ne i hi N hj).symm := by
-  have hM : reflectionFunctor_obj_of_ne i hi M hj = reflectRep_obj_of_ne M hi hj :=
-    Subsingleton.elim _ _
-  have hN : reflectionFunctor_obj_of_ne i hi N hj = reflectRep_obj_of_ne N hi hj :=
-    Subsingleton.elim _ _
+      eqToHom ((congrArg (fun R : QuiverRep k (Reflect Q i) ↦ R.obj j)
+          (reflectionFunctor_obj i hi M)).trans (reflectRep_obj_of_ne M hi hj)) ≫ η.app j ≫
+        eqToHom ((congrArg (fun R : QuiverRep k (Reflect Q i) ↦ R.obj j)
+          (reflectionFunctor_obj i hi N)).trans (reflectRep_obj_of_ne N hi hj)).symm := by
+  have hM : (congrArg (fun R : QuiverRep k (Reflect Q i) ↦ R.obj j)
+      (reflectionFunctor_obj i hi M)).trans (reflectRep_obj_of_ne M hi hj)
+      = reflectRep_obj_of_ne M hi hj := Subsingleton.elim _ _
+  have hN : (congrArg (fun R : QuiverRep k (Reflect Q i) ↦ R.obj j)
+      (reflectionFunctor_obj i hi N)).trans (reflectRep_obj_of_ne N hi hj)
+      = reflectRep_obj_of_ne N hi hj := Subsingleton.elim _ _
   rw [hM, hN]
   exact reflectRepMapApp_of_ne η hi hj
 
