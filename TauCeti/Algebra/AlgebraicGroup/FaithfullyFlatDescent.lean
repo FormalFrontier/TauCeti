@@ -187,7 +187,8 @@ private theorem faithfullyFlatDescentHom_bijective :
     apply WithConv.ofConv_injective
     ext h
     rw [faithfullyFlatDescentHom_apply_apply, ofConv_toConv]
-    rw [show g h = (descentEqualizerEquiv (R := R) A B).symm (f' h) by rfl]
+    rw [show g h = (descentEqualizerEquiv (R := R) A B).symm (f' h) by
+      exact AlgHom.comp_apply _ _ h]
     have hdesc :=
       congr_arg Subtype.val ((descentEqualizerEquiv (R := R) A B).apply_symm_apply (f' h))
     rw [descentEqualizerEquiv_apply_val] at hdesc
