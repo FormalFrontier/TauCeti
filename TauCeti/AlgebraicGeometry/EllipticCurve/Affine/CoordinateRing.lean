@@ -5,8 +5,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.AlgebraicGeometry.EllipticCurve.Affine.Point
-public import Mathlib.RingTheory.DedekindDomain.Basic
-public import Mathlib.RingTheory.IntegralClosure.IntegrallyClosed
 
 /-!
 # The coordinate ring of an elliptic curve is a Dedekind domain
