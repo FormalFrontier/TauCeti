@@ -79,7 +79,6 @@ theorem id_apply (W : WeierstrassCurve.Affine F) (x : W.CoordinateRing) :
   exact IsScalarTower.toAlgHom_apply F W.CoordinateRing W.FunctionField x
 
 /-- The identity coordinate pullback maps infinity to infinity. -/
-@[simp]
 theorem mapsInfinity_id (W : WeierstrassCurve.Affine F) : MapsInfinity (id W) := by
   unfold MapsInfinity
   have h : (id W).toRingHom.toAlgebra =
