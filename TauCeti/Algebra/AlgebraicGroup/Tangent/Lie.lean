@@ -4,11 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Algebra.AlgebraicGroup.Tangent.Lie.Adjoint
-public import TauCeti.Algebra.AlgebraicGroup.Tangent.Lie.Basic
 public import TauCeti.Algebra.AlgebraicGroup.Tangent.Lie.Cotangent
 public import TauCeti.Algebra.AlgebraicGroup.Tangent.Lie.Map
-public import TauCeti.Algebra.AlgebraicGroup.Tangent.Lie.Naturality
 
 /-!
 # The Lie algebra of the tangent space

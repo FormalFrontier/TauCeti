@@ -57,6 +57,8 @@ section Bialgebra
 
 variable [Bialgebra R H]
 
+section Base
+
 /-- The explicit derivation Lie ring used to transport the base cotangent-dual bracket. -/
 noncomputable local instance :
     LieRing (Derivation R H (Bialgebra.CounitAlgebra R H R)) :=
@@ -113,23 +115,23 @@ theorem cotangentLinearEquiv_bracket
       ⁅cotangentLinearEquiv f, cotangentLinearEquiv g⁆ :=
   (cotangentDualLieEquiv (R := R) (H := H)).map_lie f g
 
+end Base
+
 section ScalarExtension
 
 variable {B : Type*} [CommRing B] [Algebra R B]
 variable [Module.Finite R (Bialgebra.CotangentSpace R H)]
 variable [Module.Projective R (Bialgebra.CotangentSpace R H)]
 
-/-- The explicit coefficient-valued derivation Lie ring used in the scalar-extension
-comparison. -/
-noncomputable local instance :
-    LieRing (Derivation R H (Bialgebra.CounitAlgebra R H B)) :=
-  Derivation.instLieRing (R := R) (A := H) (B := B)
-
-/-- The explicit coefficient-valued derivation Lie algebra used in the scalar-extension
-comparison. -/
-noncomputable local instance :
-    LieAlgebra R (Derivation R H (Bialgebra.CounitAlgebra R H B)) :=
-  Derivation.instLieAlgebra (R := R) (A := H) (B := B)
+omit [Module.Finite R (Bialgebra.CotangentSpace R H)]
+  [Module.Projective R (Bialgebra.CotangentSpace R H)] in
+private theorem algEquivSelf_derivation_smul_apply'
+    (b : B) (d : Derivation R H (Bialgebra.CounitAlgebra R H B)) (h : H) :
+    Bialgebra.CounitAlgebra.algEquivSelf R H B ((b • d) h) =
+      b * Bialgebra.CounitAlgebra.algEquivSelf R H B (d h) := by
+  rw [Bialgebra.CounitAlgebra.algEquivSelf_apply,
+    Bialgebra.CounitAlgebra.algEquivSelf_apply]
+  rfl
 
 private theorem tangentScalarExtensionEquiv_tmul_eq
     (b : B) (f : Module.Dual R (Bialgebra.CotangentSpace R H)) :
@@ -137,13 +139,30 @@ private theorem tangentScalarExtensionEquiv_tmul_eq
       b • mapValue (A := H) (Algebra.ofId R B)
         (cotangentLinearEquiv (R := R) (A := H) (B := R) f) := by
   ext h
-  rw [tangentScalarExtensionEquiv_tmul_apply, Derivation.smul_apply, mapValue_apply,
-    cotangentLinearEquiv_apply_apply]
-  simp only [Algebra.ofId_apply]
-  -- Expose multiplication in the coefficient synonym so that both sides reduce definitionally.
-  change b * algebraMap R B (f (Bialgebra.cotangentMap R H h)) =
-    b * algebraMap R B (f (Bialgebra.cotangentMap R H h))
-  rfl
+  apply (Bialgebra.CounitAlgebra.algEquivSelf R H B).injective
+  calc
+    Bialgebra.CounitAlgebra.algEquivSelf R H B
+          (tangentScalarExtensionEquiv (R := R) (A := H) (B := B) (b ⊗ₜ[R] f) h) =
+        b * algebraMap R B (f (Bialgebra.cotangentMap R H h)) := by
+      rw [tangentScalarExtensionEquiv_tmul_apply]
+      exact Bialgebra.CounitAlgebra.algEquivSelf_apply
+        (R := R) (A := H) (B := B) _
+    _ = b * Bialgebra.CounitAlgebra.algEquivSelf R H B
+          (mapValue (A := H) (Algebra.ofId R B)
+            (cotangentLinearEquiv (R := R) (A := H) (B := R) f) h) := by
+      rw [mapValue_apply, cotangentLinearEquiv_apply_apply]
+      simp only [Algebra.ofId_apply]
+      exact congrArg (b * ·)
+        (Bialgebra.CounitAlgebra.algEquivSelf_apply
+          (R := R) (A := H) (B := B)
+          (algebraMap R B (f (Bialgebra.cotangentMap R H h)) :
+            Bialgebra.CounitAlgebra R H B)).symm
+    _ = Bialgebra.CounitAlgebra.algEquivSelf R H B
+          ((b • mapValue (A := H) (Algebra.ofId R B)
+            (cotangentLinearEquiv (R := R) (A := H) (B := R) f)) h) :=
+      (algEquivSelf_derivation_smul_apply' b
+        (mapValue (A := H) (Algebra.ofId R B)
+          (cotangentLinearEquiv (R := R) (A := H) (B := R) f)) h).symm
 
 omit [Module.Finite R (Bialgebra.CotangentSpace R H)]
   [Module.Projective R (Bialgebra.CotangentSpace R H)] in
@@ -152,34 +171,15 @@ private theorem bracket_smul (b c : B)
     ⁅b • d, c • e⁆ = (b * c) • ⁅d, e⁆ := by
   apply Derivation.ext
   intro h
-  rw [Derivation.bracket_apply, Derivation.smul_apply, Derivation.bracket_apply]
-  have hd : toConv (↑(b • d) : H →ₗ[R] Bialgebra.CounitAlgebra R H B) =
-      b • toConv (↑d : H →ₗ[R] Bialgebra.CounitAlgebra R H B) := by
-    rw [Derivation.coe_smul_linearMap, toConv_smul]
-  have he : toConv (↑(c • e) : H →ₗ[R] Bialgebra.CounitAlgebra R H B) =
-      c • toConv (↑e : H →ₗ[R] Bialgebra.CounitAlgebra R H B) := by
-    rw [Derivation.coe_smul_linearMap, toConv_smul]
-  -- Unfold the derivation bracket to the exported convolution normal form before distributing
-  -- the two coefficient scalars.
-  change
-    ((toConv (↑(b • d) : H →ₗ[R] Bialgebra.CounitAlgebra R H B) *
-        toConv (↑(c • e) : H →ₗ[R] Bialgebra.CounitAlgebra R H B) -
-      toConv (↑(c • e) : H →ₗ[R] Bialgebra.CounitAlgebra R H B) *
-        toConv (↑(b • d) : H →ₗ[R] Bialgebra.CounitAlgebra R H B)).ofConv h) =
-      (b * c) •
-        ((toConv (↑d : H →ₗ[R] Bialgebra.CounitAlgebra R H B) *
-          toConv (↑e : H →ₗ[R] Bialgebra.CounitAlgebra R H B) -
-        toConv (↑e : H →ₗ[R] Bialgebra.CounitAlgebra R H B) *
-          toConv (↑d : H →ₗ[R] Bialgebra.CounitAlgebra R H B)).ofConv h)
-  rw [hd, he, smul_mul_assoc, mul_smul_comm,
-    smul_mul_assoc, mul_smul_comm, smul_smul, smul_smul,
-    mul_comm c b]
-  rw [← smul_sub (b * c)
-    (toConv (↑d : H →ₗ[R] Bialgebra.CounitAlgebra R H B) *
-      toConv (↑e : H →ₗ[R] Bialgebra.CounitAlgebra R H B))
-    (toConv (↑e : H →ₗ[R] Bialgebra.CounitAlgebra R H B) *
-      toConv (↑d : H →ₗ[R] Bialgebra.CounitAlgebra R H B)),
-    ofConv_smul, LinearMap.smul_apply]
+  have hconv :
+      toConv (↑⁅b • d, c • e⁆ : H →ₗ[R] Bialgebra.CounitAlgebra R H B) =
+        toConv (↑((b * c) • ⁅d, e⁆) : H →ₗ[R] Bialgebra.CounitAlgebra R H B) := by
+    rw [toConv_coe_bracket, Derivation.coe_smul_linearMap, toConv_smul,
+      Derivation.coe_smul_linearMap, toConv_smul, Derivation.coe_smul_linearMap,
+      toConv_smul, toConv_coe_bracket, LieRing.of_associative_ring_bracket,
+      LieRing.of_associative_ring_bracket, smul_mul_assoc, mul_smul_comm,
+      smul_mul_assoc, mul_smul_comm, smul_smul, smul_smul, mul_comm c b, smul_sub]
+  exact DFunLike.congr_fun (congrArg ofConv hconv) h
 
 private theorem tangentScalarExtensionEquiv_bracket_tmul
     (b c : B) (f g : Module.Dual R (Bialgebra.CotangentSpace R H)) :
@@ -187,7 +187,7 @@ private theorem tangentScalarExtensionEquiv_bracket_tmul
         ⁅b ⊗ₜ[R] f, c ⊗ₜ[R] g⁆ =
       ⁅tangentScalarExtensionEquiv (R := R) (A := H) (B := B) (b ⊗ₜ[R] f),
         tangentScalarExtensionEquiv (R := R) (A := H) (B := B) (c ⊗ₜ[R] g)⁆ := by
-  rw [LieAlgebra.ExtendScalars.bracket_tmul,
+  simp only [LieAlgebra.ExtendScalars.bracket_tmul,
     tangentScalarExtensionEquiv_tmul_eq, tangentScalarExtensionEquiv_tmul_eq,
     tangentScalarExtensionEquiv_tmul_eq, bracket_smul]
   rw [cotangentLinearEquiv_bracket, mapValue_lie]
@@ -211,9 +211,9 @@ private theorem tangentScalarExtensionEquiv_bracket
 /-- Scalar extension of the cotangent-dual Lie algebra is canonically Lie-equivalent to the
 coefficient-valued tangent Lie algebra. -/
 noncomputable def tangentScalarExtensionLieEquiv :
-    LieEquiv R (B ⊗[R] Module.Dual R (Bialgebra.CotangentSpace R H))
+    LieEquiv B (B ⊗[R] Module.Dual R (Bialgebra.CotangentSpace R H))
       (Derivation R H (Bialgebra.CounitAlgebra R H B)) :=
-  { (tangentScalarExtensionEquiv (R := R) (A := H) (B := B)).restrictScalars R with
+  { tangentScalarExtensionEquiv (R := R) (A := H) (B := B) with
     map_lie' := fun {x y} => tangentScalarExtensionEquiv_bracket x y }
 
 /-- The scalar-extension Lie equivalence has the existing scalar-extension linear equivalence as
@@ -223,8 +223,8 @@ theorem tangentScalarExtensionLieEquiv_apply
     (x : B ⊗[R] Module.Dual R (Bialgebra.CotangentSpace R H)) :
     tangentScalarExtensionLieEquiv (R := R) (H := H) (B := B) x =
       tangentScalarExtensionEquiv (R := R) (A := H) (B := B) x := by
-  exact LinearEquiv.restrictScalars_apply R
-    (tangentScalarExtensionEquiv (R := R) (A := H) (B := B)) x
+  change tangentScalarExtensionEquiv (R := R) (A := H) (B := B) x = _
+  rfl
 
 end ScalarExtension
 
@@ -255,15 +255,10 @@ private theorem adjointAction_bracket_aux
 automorphism. -/
 noncomputable def adjointLieEquiv
     (A : CommAlgCat.{max u v} R) (g : HopfAlgebra.points (H := H) A) :
-    LieEquiv R (A ⊗[R] Module.Dual R (Bialgebra.CotangentSpace R H))
+    LieEquiv A (A ⊗[R] Module.Dual R (Bialgebra.CotangentSpace R H))
       (A ⊗[R] Module.Dual R (Bialgebra.CotangentSpace R H)) :=
   let e := (adjointAction A g).toLinearEquiv
-  { toFun := (adjointAction A g).val
-    invFun := e.symm
-    left_inv := e.symm_apply_apply
-    right_inv := e.apply_symm_apply
-    map_add' := (adjointAction A g).val.map_add
-    map_smul' := (e.restrictScalars R).map_smul
+  { e with
     map_lie' := fun {x y} => adjointAction_bracket_aux A g x y }
 
 /-- The adjoint Lie automorphism acts by the existing adjoint point representation. -/
@@ -272,6 +267,36 @@ theorem adjointLieEquiv_apply
     (A : CommAlgCat.{max u v} R) (g : HopfAlgebra.points (H := H) A)
     (x : A ⊗[R] Module.Dual R (Bialgebra.CotangentSpace R H)) :
     adjointLieEquiv (R := R) (H := H) A g x = (adjointAction A g).val x := (rfl)
+
+/-- The identity point acts as the identity Lie automorphism. -/
+@[simp]
+theorem adjointLieEquiv_one
+    (A : CommAlgCat.{max u v} R) :
+    adjointLieEquiv (R := R) (H := H) A 1 = 1 := by
+  ext x
+  rw [adjointLieEquiv_apply, LieEquiv.one_apply]
+  exact congrArg
+    (fun e : LinearMap.GeneralLinearGroup A
+        (A ⊗[R] Module.Dual R (Bialgebra.CotangentSpace R H)) => e.val x)
+    (map_one (adjointAction A).hom)
+
+/-- The adjoint Lie automorphism of a product is the composite of the two adjoint Lie
+automorphisms. -/
+theorem adjointLieEquiv_mul
+    (A : CommAlgCat.{max u v} R) (g h : HopfAlgebra.points (H := H) A) :
+    adjointLieEquiv (R := R) (H := H) A (g * h) =
+      (adjointLieEquiv (R := R) (H := H) A h).trans
+        (adjointLieEquiv (R := R) (H := H) A g) := by
+  ext x
+  rw [adjointLieEquiv_apply, LieEquiv.trans_apply,
+    adjointLieEquiv_apply, adjointLieEquiv_apply]
+  have hmul := congrArg
+    (fun e : LinearMap.GeneralLinearGroup A
+        (A ⊗[R] Module.Dual R (Bialgebra.CotangentSpace R H)) => e.val x)
+    (map_mul (adjointAction A).hom g h)
+  change (adjointAction A (g * h)).val x =
+    (adjointAction A g).val ((adjointAction A h).val x) at hmul
+  exact hmul
 
 /-- The adjoint point action preserves the bracket on the scalar-extended tangent space. -/
 @[simp]

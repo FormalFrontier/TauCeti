@@ -162,7 +162,9 @@ private lemma bracket_apply_ofConv
   simp only [Derivation.coeFn_coe, LinearMap.sub_apply] at h
   exact h
 
-private lemma toConv_coe_bracket
+/-- The bracket of tangent vectors is the convolution commutator of their underlying linear maps,
+viewed in the convolution algebra. -/
+lemma toConv_coe_bracket
     (d₁ d₂ : Derivation R A (Bialgebra.CounitAlgebra R A B)) :
     toConv (↑⁅d₁, d₂⁆ : A →ₗ[R] Bialgebra.CounitAlgebra R A B) =
       ⁅toConv (↑d₁ : A →ₗ[R] Bialgebra.CounitAlgebra R A B),
