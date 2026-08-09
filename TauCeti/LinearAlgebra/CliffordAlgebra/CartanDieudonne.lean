@@ -54,8 +54,7 @@ theorem exists_mem_range_pinToOrthogonal_mul_apply_eq_self
     ∃ r : QuadraticMap.orthogonalGroup Q, r ∈ (pinToOrthogonal Q).range ∧
       (((r * g : QuadraticMap.orthogonalGroup Q) : V ≃ₗ[K] V) v = v) := by
   have reflection_mem_range (w : V) [Invertible (Q w)] :
-      (⟨QuadraticMap.reflection Q w, QuadraticMap.reflection_mem_orthogonalGroup Q w⟩ :
-        QuadraticMap.orthogonalGroup Q) ∈ (pinToOrthogonal Q).range :=
+      QuadraticMap.reflectionOrthogonal Q w ∈ (pinToOrthogonal Q).range :=
     reflection_mem_range_pinToOrthogonal_of_isSquare Q w
       (IsSepClosed.exists_eq_mul_self _)
   have hmap : Q ((g : V ≃ₗ[K] V) v) = Q v :=
@@ -63,28 +62,16 @@ theorem exists_mem_range_pinToOrthogonal_mul_apply_eq_self
   rcases QuadraticMap.isUnit_sub_or_add_of_map_eq Q _ v hmap
       (isUnit_of_invertible (Q v)).ne_zero with hsub | hadd
   · let : Invertible (Q ((g : V ≃ₗ[K] V) v - v)) := hsub.invertible
-    let r : QuadraticMap.orthogonalGroup Q :=
-      ⟨QuadraticMap.reflection Q ((g : V ≃ₗ[K] V) v - v),
-        QuadraticMap.reflection_mem_orthogonalGroup Q _⟩
-    refine ⟨r, reflection_mem_range _, ?_⟩
-    -- Expose the underlying automorphisms of the subgroup product before applying the reflection
-    -- computation.
-    change QuadraticMap.reflection Q ((g : V ≃ₗ[K] V) v - v)
-      ((g : V ≃ₗ[K] V) v) = v
+    refine ⟨QuadraticMap.reflectionOrthogonal Q ((g : V ≃ₗ[K] V) v - v),
+      reflection_mem_range _, ?_⟩
+    simp only [Subgroup.coe_mul, QuadraticMap.coe_reflectionOrthogonal, LinearEquiv.mul_apply]
     exact QuadraticMap.reflection_sub_apply_eq_of_map_eq Q _ v hmap
   · have : Invertible (Q ((g : V ≃ₗ[K] V) v - -v)) := by
       simpa only [sub_neg_eq_add] using hadd.invertible
-    let r₁ : QuadraticMap.orthogonalGroup Q :=
-      ⟨QuadraticMap.reflection Q v, QuadraticMap.reflection_mem_orthogonalGroup Q _⟩
-    let r₂ : QuadraticMap.orthogonalGroup Q :=
-      ⟨QuadraticMap.reflection Q ((g : V ≃ₗ[K] V) v - -v),
-        QuadraticMap.reflection_mem_orthogonalGroup Q _⟩
-    refine ⟨r₁ * r₂,
+    refine ⟨QuadraticMap.reflectionOrthogonal Q v *
+        QuadraticMap.reflectionOrthogonal Q ((g : V ≃ₗ[K] V) v - -v),
       (pinToOrthogonal Q).range.mul_mem (reflection_mem_range v) (reflection_mem_range _), ?_⟩
-    -- Expose the two underlying reflections before applying their public computation equations.
-    change QuadraticMap.reflection Q v
-      (QuadraticMap.reflection Q ((g : V ≃ₗ[K] V) v - -v)
-        ((g : V ≃ₗ[K] V) v)) = v
+    simp only [Subgroup.coe_mul, QuadraticMap.coe_reflectionOrthogonal, LinearEquiv.mul_apply]
     rw [QuadraticMap.reflection_sub_apply_eq_of_map_eq Q _ (-v)
       (hmap.trans (Q.map_neg v).symm), map_neg, QuadraticMap.reflection_apply_self, neg_neg]
 
