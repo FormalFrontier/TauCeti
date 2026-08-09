@@ -125,12 +125,6 @@ theorem euclideanHalfSpaceParam_coe (x : EuclideanSpace ℝ (Fin n)) :
     (euclideanHalfSpaceParam n x).1 = euclideanHalfSpaceBoundaryParam n x :=
   rfl
 
-/-- The parametrization lands in the frontier: its zeroth coordinate vanishes. -/
-@[simp]
-theorem euclideanHalfSpaceParam_apply_zero (x : EuclideanSpace ℝ (Fin n)) :
-    (euclideanHalfSpaceParam n x).1 0 = 0 := by
-  simp
-
 /-- Deleting the zeroth coordinate undoes the parametrization. -/
 @[simp]
 theorem euclideanHalfSpaceProj_param (x : EuclideanSpace ℝ (Fin n)) :
