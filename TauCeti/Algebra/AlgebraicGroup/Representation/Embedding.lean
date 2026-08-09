@@ -6,6 +6,8 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.Representation.Coordinate
 public import TauCeti.Algebra.Coalgebra.Comodule.MatrixCoefficient.FiniteType
+public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Scheme
+public import TauCeti.AlgebraicGeometry.AffineGroupScheme.ClosedImmersion
 
 /-!
 # Embedding a finite-type affine group in a general linear group
@@ -23,13 +25,19 @@ O(GLₙ) ⟶ H
 is surjective. Contravariantly, its spectrum is a closed immersion of the affine group scheme
 represented by `H` into `GLₙ`.
 
-## Main declaration
+The coordinate-algebra statement permits independent universes for `k` and `H`. The final
+group-scheme statement uses the same universe for them, as required by Mathlib's current
+`hopfSpec` construction.
+
+## Main declarations
 
 * `TauCeti.Comodule.matrixCoefficientSubalgebra_le_coordinateBialgHom_range`: the matrix
   coefficient subalgebra is contained in the range of the coordinate morphism.
 * `TauCeti.Comodule.exists_coordinateBialgHom_surjective`: a finite-type commutative Hopf
   algebra over a field admits a finite-dimensional regular subcomodule whose coordinate
   morphism from `O(GLₙ)` is surjective.
+* `TauCeti.Comodule.exists_isClosedImmersion_coordinateGroupSchemeHom`: every finite-type
+  affine group scheme over a field embeds as a closed subgroup of some `GLₙ`.
 
 ## References
 
@@ -121,5 +129,65 @@ theorem exists_coordinateBialgHom_surjective [Algebra.FiniteType k H] :
   exact hsurjective
 
 end
+
+end TauCeti.Comodule
+
+namespace TauCeti.Comodule
+
+section GroupScheme
+
+open CategoryTheory AlgebraicGeometry
+
+variable {k H M : Type u} {n : ℕ}
+variable [CommRing k] [CommRing H] [HopfAlgebra k H]
+variable [AddCommMonoid M] [Module k M] [Comodule k H M]
+
+/-- The morphism from the affine group scheme represented by `H` to `GLₙ` associated to a
+comodule with a basis indexed by `Fin n`.
+
+This is relative spectrum applied contravariantly to the comodule's coordinate Hopf-algebra
+morphism `O(GLₙ) ⟶ H`. -/
+noncomputable def coordinateGroupSchemeHom (b : Basis (Fin n) k M) :
+    (hopfSpec (CommRingCat.of k)).obj (Opposite.op (CommHopfAlgCat.of k H)) ⟶
+      GeneralLinear.groupScheme k n :=
+  (hopfSpec (CommRingCat.of k)).map
+      (CommHopfAlgCat.ofHom (coordinateBialgHom (H := H) b)).op ≫
+    eqToHom (GeneralLinear.groupScheme_eq_hopfSpec k n).symm
+
+/-- The group-scheme morphism associated to a finite free comodule is a closed immersion if
+and only if its coordinate Hopf-algebra morphism is surjective. -/
+@[simp]
+theorem isClosedImmersion_coordinateGroupSchemeHom_iff (b : Basis (Fin n) k M) :
+    IsClosedImmersion (coordinateGroupSchemeHom (H := H) b).hom.hom.left ↔
+      Function.Surjective (coordinateBialgHom (H := H) b) := by
+  let _ : IsIso
+      (eqToHom (GeneralLinear.groupScheme_eq_hopfSpec k n).symm).hom.hom.left :=
+    ((Over.forget (Spec (CommRingCat.of k))).mapIso
+      ((Grp.forget (Over (Spec (CommRingCat.of k)))).mapIso
+        (eqToIso (GeneralLinear.groupScheme_eq_hopfSpec k n).symm))).isIso_hom
+  rw [coordinateGroupSchemeHom]
+  simp only [Grp.comp', Mon.comp_hom', Over.comp_left]
+  rw [MorphismProperty.cancel_right_of_respectsIso (P := @IsClosedImmersion)]
+  exact CommHopfAlgCat.isClosedImmersion_hopfSpec_map_iff _
+
+end GroupScheme
+
+section FiniteType
+
+open AlgebraicGeometry
+
+variable {k H : Type u}
+variable [Field k] [CommRing H] [HopfAlgebra k H]
+
+/-- **Every finite-type affine group scheme over a field embeds as a closed subgroup of some
+general linear group.** More precisely, a finite-dimensional subcomodule of the regular
+comodule and a basis determine a closed immersion into `GLₙ`. -/
+theorem exists_isClosedImmersion_coordinateGroupSchemeHom [Algebra.FiniteType k H] :
+    ∃ (M : Subcomodule k H H) (n : ℕ) (b : Basis (Fin n) k M),
+      IsClosedImmersion (coordinateGroupSchemeHom (H := H) b).hom.hom.left := by
+  obtain ⟨M, n, b, hb⟩ := exists_coordinateBialgHom_surjective (k := k) (H := H)
+  exact ⟨M, n, b, (isClosedImmersion_coordinateGroupSchemeHom_iff b).2 hb⟩
+
+end FiniteType
 
 end TauCeti.Comodule

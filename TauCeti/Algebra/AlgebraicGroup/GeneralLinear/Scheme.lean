@@ -89,7 +89,8 @@ noncomputable def groupScheme : Grp (Over (Spec (CommRingCat.of R))) :=
   (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).obj
     (Opposite.op (coordinateHopfAlgebra R n))
 
-private lemma groupScheme_eq_hopfSpec :
+/-- The general linear group scheme is the relative spectrum of its coordinate Hopf algebra. -/
+lemma groupScheme_eq_hopfSpec :
     groupScheme R n =
       (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).obj
         (Opposite.op (coordinateHopfAlgebra R n)) := by
