@@ -128,6 +128,11 @@ instance [CommSemiring R] [Semiring B] [Algebra R B] :
     SMulCommClass R B (CounitAlgebra R A B) :=
   inferInstanceAs (SMulCommClass R B B)
 
+/-- Base scalars act through the coefficient algebra on the coefficient synonym. -/
+instance [CommSemiring R] [Semiring B] [Algebra R B] :
+    IsScalarTower R B (CounitAlgebra R A B) :=
+  inferInstanceAs (IsScalarTower R B B)
+
 /-- Coefficient scalars associate with the synonym's multiplication, inherited from
 `B`. -/
 instance [Semiring B] : IsScalarTower B (CounitAlgebra R A B) (CounitAlgebra R A B) :=
@@ -712,6 +717,26 @@ lemma tangentKer_smul_apply_snd
     _ = _ := (Bialgebra.CounitAlgebra.algEquivSelf R A B).apply_symm_apply _ |>.symm
 
 end Hopf
+
+section DerivationScalars
+
+variable {R A B : Type*} [CommRing R] [CommRing A] [Bialgebra R A]
+  [CommRing B] [Algebra R B]
+
+namespace Derivation
+
+/-- The base-ring action and coefficient-ring action on counit-valued derivations form a scalar
+tower. -/
+noncomputable instance instIsScalarTowerCoefficient :
+    IsScalarTower R B (Derivation R A (Bialgebra.CounitAlgebra R A B)) :=
+  IsScalarTower.of_algebraMap_smul fun r d => by
+    ext a
+    simp only [Derivation.smul_apply]
+    exact algebraMap_smul B r (d a)
+
+end Derivation
+
+end DerivationScalars
 
 section DerivationLeibniz
 
