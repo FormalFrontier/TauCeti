@@ -234,8 +234,9 @@ point. -/
 @[simp]
 theorem mapValue_faithfullyFlatDescentMulEquiv_symm_apply
     (f : descentSubgroup (R := R) (H := H) A B) :
-    mapValue (H := H) (IsScalarTower.toAlgHom R A B)
-      ((faithfullyFlatDescentMulEquiv (R := R) (H := H) A B).symm f) = f.1 := by
+    WithConv.toConv ((IsScalarTower.toAlgHom R A B).comp
+      ((faithfullyFlatDescentMulEquiv (R := R) (H := H) A B).symm f).ofConv) = f.1 := by
+  rw [← mapValue_apply]
   rw [← faithfullyFlatDescentMulEquiv_apply]
   exact congr_arg Subtype.val
     ((faithfullyFlatDescentMulEquiv (R := R) (H := H) A B).apply_symm_apply f)
