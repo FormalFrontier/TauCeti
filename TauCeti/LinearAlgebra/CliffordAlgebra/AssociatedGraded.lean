@@ -280,19 +280,10 @@ noncomputable instance filtrationGradedGOne {Q : QuadraticForm R M} :
     GradedMonoid.GOne (FiltrationGradedPiece Q) where
   one := filtrationGradedOne Q
 
-/-- The `GOne` field is the named degree-zero filtration class. -/
-@[simp] theorem filtrationGradedGOne_def (Q : QuadraticForm R M) :
-    (GradedMonoid.GOne.one : FiltrationGradedPiece Q 0) = filtrationGradedOne Q := rfl
-
 /-- Homogeneous filtration multiplication supplies the `GMul` structure on filtration pieces. -/
 noncomputable instance filtrationGradedGMul {Q : QuadraticForm R M} :
     GradedMonoid.GMul (FiltrationGradedPiece Q) where
   mul {i j} := fun x y => filtrationGradedMul Q i j x y
-
-/-- The `GMul` field is the named homogeneous filtration product. -/
-@[simp] theorem filtrationGradedGMul_def (Q : QuadraticForm R M) {i j : ℕ}
-    (x : FiltrationGradedPiece Q i) (y : FiltrationGradedPiece Q j) :
-    GradedMonoid.GMul.mul (A := FiltrationGradedPiece Q) x y = filtrationGradedMul Q i j x y := rfl
 
 /-- The homogeneous unit and multiplication form a graded monoid of filtration pieces. -/
 noncomputable instance filtrationGradedGMonoid {Q : QuadraticForm R M} :
@@ -477,11 +468,6 @@ noncomputable instance filtrationGradedGAlgebra {Q : QuadraticForm R M} :
     simpa only [cast_cast, cast_eq] using
       congrArg (cast (congrArg (FiltrationGradedPiece Q) (Nat.zero_add k).symm))
         (filtrationGradedAlgebraMap₀_mul Q r k x)
-
-/-- The `GAlgebra` field is the named degree-zero scalar map. -/
-@[simp] theorem filtrationGradedGAlgebra_toFun_def (Q : QuadraticForm R M) (r : R) :
-    DirectSum.GAlgebra.toFun (A := FiltrationGradedPiece Q)
-      (self := filtrationGradedGAlgebra (Q := Q)) r = filtrationGradedAlgebraMap₀ Q r := rfl
 
 /-- The direct sum of homogeneous filtration pieces inherits its associated-graded
 ring structure. -/
