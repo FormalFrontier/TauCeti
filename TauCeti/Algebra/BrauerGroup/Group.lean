@@ -133,11 +133,6 @@ not an instance, so the quotient notation `⟦A⟧` is unavailable; this is the 
 that the lemmas below are stated in terms of. -/
 abbrev mk (A : CSA.{u, v} K) : BrauerGroup.{u, v} K := Quotient.mk (Brauer.CSA_Setoid K) A
 
-/-- Every Brauer class is the class of an algebra: this is the induction principle used to reduce
-statements about `BrauerGroup K` to statements about central simple algebras. -/
-theorem mk_surjective : Function.Surjective (mk : CSA.{u, v} K → BrauerGroup.{u, v} K) :=
-  Quotient.ind fun A ↦ ⟨A, rfl⟩
-
 /-- **Two algebras have the same Brauer class exactly when they are Brauer equivalent.** -/
 theorem mk_eq_mk_iff {A B : CSA.{u, v} K} : mk A = mk B ↔ IsBrauerEquivalent A B :=
   ⟨fun h ↦ Quotient.exact h, fun h ↦ Quotient.sound h⟩
