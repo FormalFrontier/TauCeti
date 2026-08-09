@@ -59,16 +59,16 @@ theorem const_mul_mulInvariantVectorField [LieGroup I (minSmoothness ℝ 3) G]
     (hγ : IsMIntegralCurveOn γ (mulInvariantVectorField v) s) (g : G) :
     IsMIntegralCurveOn (fun t ↦ g * γ t) (mulInvariantVectorField v) s := by
   have hpush := hγ.comp_of_mfderiv_eq (f := fun x : G ↦ g * x)
-    (fun x ↦ (contMDiffAt_mul_left (n := minSmoothness ℝ 3)).mdifferentiableAt (by simp))
-    (fun x ↦ by
-      have hpull := congrFun (mpullback_mulInvariantVectorField g v) x
+    (fun _ _ ↦ (contMDiffAt_mul_left (n := minSmoothness ℝ 3)).mdifferentiableAt (by simp))
+    (fun t _ ↦ by
+      have hpull := congrFun (mpullback_mulInvariantVectorField g v) (γ t)
       have hcancel :
-          mfderiv% (fun y : G ↦ g * y) x
-              (mfderiv% (fun y : G ↦ g⁻¹ * y) (g * x)
-                (mulInvariantVectorField v (g * x))) =
-            mulInvariantVectorField v (g * x) := by
+          mfderiv% (fun y : G ↦ g * y) (γ t)
+              (mfderiv% (fun y : G ↦ g⁻¹ * y) (g * γ t)
+                (mulInvariantVectorField v (g * γ t))) =
+            mulInvariantVectorField v (g * γ t) := by
         rw [← mfderiv_comp_apply_of_eq (I' := I) (f := fun y : G ↦ g⁻¹ * y)
-          (g := fun y : G ↦ g * y) (y := x) (g * x)
+          (g := fun y : G ↦ g * y) (y := γ t) (g * γ t)
           ((contMDiffAt_mul_left (n := minSmoothness ℝ 3)).mdifferentiableAt (by simp))
           ((contMDiffAt_mul_left (n := minSmoothness ℝ 3)).mdifferentiableAt (by simp))
           (by simp)]
@@ -78,7 +78,7 @@ theorem const_mul_mulInvariantVectorField [LieGroup I (minSmoothness ℝ 3) G]
         rw [D, mfderiv_id, ContinuousLinearMap.id_apply]
       rw [← hpull, mpullback, inverse_mfderiv_mul_left]
       exact hcancel)
-  change IsMIntegralCurveOn ((fun x : G ↦ g * x) ∘ γ) (mulInvariantVectorField v) s
+  rw [show (fun t ↦ g * γ t) = (fun x : G ↦ g * x) ∘ γ by rfl]
   exact hpush
 
 end IsMIntegralCurveOn

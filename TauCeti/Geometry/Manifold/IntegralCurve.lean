@@ -50,8 +50,8 @@ variable {E' : Type*} [NormedAddCommGroup E'] [NormedSpace ℝ E']
 field to integral curves of the second. -/
 theorem comp_of_mfderiv_eq {f : M → M'} {V : (x : M) → TangentSpace I x}
     {W : (x : M') → TangentSpace I' x} {γ : ℝ → M} {s : Set ℝ}
-    (hf : ∀ x, MDifferentiableAt I I' f x)
-    (hVW : ∀ x, mfderiv I I' f x (V x) = W (f x))
+    (hf : ∀ t ∈ s, MDifferentiableAt I I' f (γ t))
+    (hVW : ∀ t ∈ s, mfderiv I I' f (γ t) (V (γ t)) = W (f (γ t)))
     (hγ : IsMIntegralCurveOn γ V s) : IsMIntegralCurveOn (f ∘ γ) W s := by
   intro t ht
   have hder :
@@ -60,13 +60,13 @@ theorem comp_of_mfderiv_eq {f : M → M'} {V : (x : M) → TangentSpace I x}
     apply ContinuousLinearMap.ext
     intro c
     simp only [ContinuousLinearMap.comp_apply, ContinuousLinearMap.smulRight_apply, map_smul]
-    rw [hVW]
+    rw [hVW t ht]
   -- Unfold composition at the base point so the dependent target tangent spaces are definitionally
   -- identical; no rewrite lemma expresses this type-level conversion.
   change HasMFDerivAt[s] (f ∘ γ) t
     ((1 : ℝ →L[ℝ] ℝ).smulRight (W (f (γ t))))
   rw [← hder]
-  exact (hf (γ t)).hasMFDerivAt.comp_hasMFDerivWithinAt t (hγ t ht)
+  exact (hf t ht).hasMFDerivAt.comp_hasMFDerivWithinAt t (hγ t ht)
 
 end IsMIntegralCurveOn
 
@@ -81,11 +81,12 @@ variable {E' : Type*} [NormedAddCommGroup E'] [NormedSpace ℝ E']
 first field to global integral curves of the second. -/
 theorem comp_of_mfderiv_eq {f : M → M'} {V : (x : M) → TangentSpace I x}
     {W : (x : M') → TangentSpace I' x} {γ : ℝ → M}
-    (hf : ∀ x, MDifferentiableAt I I' f x)
-    (hVW : ∀ x, mfderiv I I' f x (V x) = W (f x))
+    (hf : ∀ t, MDifferentiableAt I I' f (γ t))
+    (hVW : ∀ t, mfderiv I I' f (γ t) (V (γ t)) = W (f (γ t)))
     (hγ : IsMIntegralCurve γ V) : IsMIntegralCurve (f ∘ γ) W := by
   rw [isMIntegralCurve_iff_isMIntegralCurveOn]
-  exact (hγ.isMIntegralCurveOn Set.univ).comp_of_mfderiv_eq hf hVW
+  exact (hγ.isMIntegralCurveOn Set.univ).comp_of_mfderiv_eq
+    (fun t _ ↦ hf t) (fun t _ ↦ hVW t)
 
 end IsMIntegralCurve
 
