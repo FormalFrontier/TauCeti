@@ -103,19 +103,21 @@ noncomputable def conjHom : W.CoordinateRing →ₐ[R[X]] W.CoordinateRing :=
       exact h.symm
 
 @[simp]
-lemma conjHom_mk_Y : conjHom W (mk W Y) = mk W W.negPolynomial :=
+lemma conjHom_mk_Y : conjHom W (AdjoinRoot.root W.polynomial) = mk W W.negPolynomial :=
   AdjoinRoot.liftAlgHom_root ..
 
 @[simp]
-lemma conjHom_mk_C (r : R[X]) : conjHom W (mk W (C r)) = mk W (C r) := by
-  rw [mk_C_eq_algebraMap, AlgHom.commutes]
+lemma conjHom_mk_C (r : R[X]) :
+    conjHom W (AdjoinRoot.of W.polynomial r) = mk W (C r) := by
+  simpa only [AdjoinRoot.algebraMap_eq, AdjoinRoot.mk_C] using (conjHom W).commutes r
 
 lemma conjHom_conjHom (x : W.CoordinateRing) : conjHom W (conjHom W x) = x := by
   have h : (conjHom W).comp (conjHom W) = AlgHom.id R[X] W.CoordinateRing := by
     refine AdjoinRoot.algHom_ext ?_
     change conjHom W (conjHom W (mk W Y)) = mk W Y
-    rw [conjHom_mk_Y, negPolynomial]
-    simp only [map_sub, map_neg, conjHom_mk_Y, conjHom_mk_C, negPolynomial]
+    rw [AdjoinRoot.mk_X, conjHom_mk_Y, negPolynomial]
+    simp only [map_sub, map_neg, AdjoinRoot.mk_X, AdjoinRoot.mk_C, conjHom_mk_Y,
+      conjHom_mk_C, negPolynomial]
     ring
   exact congrArg (fun f : W.CoordinateRing →ₐ[R[X]] W.CoordinateRing => f x) h
 
@@ -132,8 +134,9 @@ lemma conj_apply (x : W.CoordinateRing) : conj W x = conjHom W x := by
 
 lemma conj_smul_basis (p q : R[X]) :
     conj W (p • (1 : W.CoordinateRing) + q • mk W Y) = mk W (C p + C q * W.negPolynomial) := by
-  rw [conj_apply, map_add, smul, smul, map_mul, map_mul, conjHom_mk_Y, conjHom_mk_C,
-    conjHom_mk_C, map_one, mul_one, ← map_mul, ← map_add]
+  rw [conj_apply, map_add, smul, smul, map_mul, map_mul, AdjoinRoot.mk_X, AdjoinRoot.mk_C,
+    AdjoinRoot.mk_C, conjHom_mk_Y, conjHom_mk_C, conjHom_mk_C, map_one, mul_one, ← map_mul,
+    ← map_add]
 
 /-- The sum of an element of the coordinate ring and its conjugate is its trace `2p - qs`. -/
 lemma add_conj_smul_basis (p q : R[X]) :
