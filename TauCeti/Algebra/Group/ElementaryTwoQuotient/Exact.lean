@@ -29,10 +29,10 @@ the statements below,
 so a quotient can only lose 2-rank, and can lose no more than the kernel carries. These are the
 exactness properties of the maximal elementary-2 quotient developed in Layer 2 of the
 Multiquadratic roadmap (`TauCetiRoadmap/Multiquadratic/README.md`). The functoriality that layer
-already has transports `G/G²` along an isomorphism of groups; its remaining target, the
-ambiguous-class-number formula, instead compares the square classes of a class group with those
-of a quotient of it, and so needs the kernel and the 2-rank of the induced map along a
-*surjection* — the results below.
+already has produces the induced map, and inverts it when `f` is an isomorphism, but says nothing
+about its kernel or about 2-ranks; its remaining target, the ambiguous-class-number formula,
+compares the square classes of a class group with those of a quotient of it, and so needs the
+kernel and the rank of the induced map along a *surjection* — the results below.
 
 ## Main results
 
