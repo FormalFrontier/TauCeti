@@ -58,11 +58,11 @@ bilinear forms on the tangent bundle which vanishes when both arguments agree. -
 structure SmoothTwoForm (I : ModelWithCorners ℝ E H) (M : Type*)
     [TopologicalSpace M] [ChartedSpace H M] [IsManifold I ∞ M] where
   /-- The underlying smooth section of continuous bilinear forms on tangent fibers. -/
-  toContinuousBilinearMap :
+  toContMDiffSection :
     ContMDiffSection I (E →L[ℝ] E →L[ℝ] ℝ) ∞
       (fun x : M ↦ TangentSpace I x →L[ℝ] TangentSpace I x →L[ℝ] ℝ)
   /-- The form vanishes when its two arguments agree. -/
-  isAlt : ∀ x v, toContinuousBilinearMap x v v = 0
+  isAlt : ∀ x v, toContMDiffSection x v v = 0
 
 namespace SmoothTwoForm
 
@@ -73,13 +73,13 @@ variable {form form' : SmoothTwoForm I M}
 /-- A smooth two-form is evaluated as `form x v w`. -/
 instance : CoeFun (SmoothTwoForm I M) fun _ =>
     (x : M) → TangentSpace I x → TangentSpace I x → ℝ :=
-  ⟨fun form x v w ↦ form.toContinuousBilinearMap x v w⟩
+  ⟨fun form x v w ↦ form.toContMDiffSection x v w⟩
 
 /-- The continuous bilinear form underlying `form` at `x`, regarded as an algebraic bilinear
 form. -/
 def bilinFormAt (form : SmoothTwoForm I M) (x : M) :
     LinearMap.BilinForm ℝ (TangentSpace I x) :=
-  (form.toContinuousBilinearMap x).toBilinForm
+  (form.toContMDiffSection x).toBilinForm
 
 @[simp]
 lemma bilinFormAt_apply (form : SmoothTwoForm I M) (x : M) (v w : TangentSpace I x) :
@@ -91,9 +91,9 @@ lemma isAlt_bilinFormAt (form : SmoothTwoForm I M) (x : M) :
   fun v ↦ form.isAlt x v
 
 /-- The underlying smooth bilinear section determines a smooth two-form. -/
-theorem toContinuousBilinearMap_injective :
+theorem toContMDiffSection_injective :
     Function.Injective
-      (toContinuousBilinearMap : SmoothTwoForm I M →
+      (toContMDiffSection : SmoothTwoForm I M →
         ContMDiffSection I (E →L[ℝ] E →L[ℝ] ℝ) ∞
           (fun x : M ↦ TangentSpace I x →L[ℝ] TangentSpace I x →L[ℝ] ℝ)) := by
   rintro ⟨B, _⟩ ⟨C, _⟩ h
@@ -104,7 +104,7 @@ theorem toContinuousBilinearMap_injective :
 @[ext]
 lemma ext (h : ∀ (x : M) (v w : TangentSpace I x), form x v w = form' x v w) :
     form = form' := by
-  apply toContinuousBilinearMap_injective
+  apply toContMDiffSection_injective
   apply ContMDiffSection.ext
   intro x
   ext v w
@@ -127,7 +127,7 @@ lemma contMDiff_apply {n : ℕ∞ω} [ENat.LEInfty n] (form : SmoothTwoForm I M)
     have hy := hV y
     rw [← contMDiffWithinAt_univ] at hy ⊢
     exact (contMDiffWithinAt_totalSpace.mp hy).1
-  have hform := (form.toContinuousBilinearMap.contMDiff.of_le ENat.LEInfty.out).comp hb
+  have hform := (form.toContMDiffSection.contMDiff.of_le ENat.LEInfty.out).comp hb
   have htotal := ContMDiff.clm_bundle_apply₂
     (F₁ := E) (F₂ := E) (F₃ := ℝ) (E₁ := TangentSpace I) (E₂ := TangentSpace I)
     (E₃ := Bundle.Trivial M ℝ) (b := b) hform hV hW
@@ -141,31 +141,31 @@ end Evaluation
 
 /-- The zero smooth two-form. -/
 protected def zero : SmoothTwoForm I M where
-  toContinuousBilinearMap := 0
+  toContMDiffSection := 0
   isAlt x v := by simp
 
 instance : Zero (SmoothTwoForm I M) :=
   ⟨SmoothTwoForm.zero⟩
 
 @[simp]
-lemma zero_toContinuousBilinearMap :
-    (0 : SmoothTwoForm I M).toContinuousBilinearMap = 0 := (rfl)
+lemma zero_toContMDiffSection :
+    (0 : SmoothTwoForm I M).toContMDiffSection = 0 := (rfl)
 
 lemma zero_apply (x : M) (v w : TangentSpace I x) :
     (0 : SmoothTwoForm I M) x v w = 0 := (rfl)
 
 /-- The sum of two smooth two-forms. -/
 protected def add (form form' : SmoothTwoForm I M) : SmoothTwoForm I M where
-  toContinuousBilinearMap := form.toContinuousBilinearMap + form'.toContinuousBilinearMap
+  toContMDiffSection := form.toContMDiffSection + form'.toContMDiffSection
   isAlt x v := by simp
 
 instance : Add (SmoothTwoForm I M) :=
   ⟨SmoothTwoForm.add⟩
 
 @[simp]
-lemma add_toContinuousBilinearMap (form form' : SmoothTwoForm I M) :
-    (form + form').toContinuousBilinearMap =
-      form.toContinuousBilinearMap + form'.toContinuousBilinearMap := (rfl)
+lemma add_toContMDiffSection (form form' : SmoothTwoForm I M) :
+    (form + form').toContMDiffSection =
+      form.toContMDiffSection + form'.toContMDiffSection := (rfl)
 
 lemma add_apply (form form' : SmoothTwoForm I M) (x : M) (v w : TangentSpace I x) :
     (form + form') x v w = form x v w + form' x v w := by
@@ -173,15 +173,15 @@ lemma add_apply (form form' : SmoothTwoForm I M) (x : M) (v w : TangentSpace I x
 
 /-- The negative of a smooth two-form. -/
 protected def neg (form : SmoothTwoForm I M) : SmoothTwoForm I M where
-  toContinuousBilinearMap := -form.toContinuousBilinearMap
+  toContMDiffSection := -form.toContMDiffSection
   isAlt x v := by simp
 
 instance : Neg (SmoothTwoForm I M) :=
   ⟨SmoothTwoForm.neg⟩
 
 @[simp]
-lemma neg_toContinuousBilinearMap (form : SmoothTwoForm I M) :
-    (-form).toContinuousBilinearMap = -form.toContinuousBilinearMap := (rfl)
+lemma neg_toContMDiffSection (form : SmoothTwoForm I M) :
+    (-form).toContMDiffSection = -form.toContMDiffSection := (rfl)
 
 lemma neg_apply (form : SmoothTwoForm I M) (x : M) (v w : TangentSpace I x) :
     (-form) x v w = -form x v w := by
@@ -189,16 +189,16 @@ lemma neg_apply (form : SmoothTwoForm I M) (x : M) (v w : TangentSpace I x) :
 
 /-- The difference of two smooth two-forms. -/
 protected def sub (form form' : SmoothTwoForm I M) : SmoothTwoForm I M where
-  toContinuousBilinearMap := form.toContinuousBilinearMap - form'.toContinuousBilinearMap
+  toContMDiffSection := form.toContMDiffSection - form'.toContMDiffSection
   isAlt x v := by simp
 
 instance : Sub (SmoothTwoForm I M) :=
   ⟨SmoothTwoForm.sub⟩
 
 @[simp]
-lemma sub_toContinuousBilinearMap (form form' : SmoothTwoForm I M) :
-    (form - form').toContinuousBilinearMap =
-      form.toContinuousBilinearMap - form'.toContinuousBilinearMap := (rfl)
+lemma sub_toContMDiffSection (form form' : SmoothTwoForm I M) :
+    (form - form').toContMDiffSection =
+      form.toContMDiffSection - form'.toContMDiffSection := (rfl)
 
 lemma sub_apply (form form' : SmoothTwoForm I M) (x : M) (v w : TangentSpace I x) :
     (form - form') x v w = form x v w - form' x v w := by
@@ -206,15 +206,15 @@ lemma sub_apply (form form' : SmoothTwoForm I M) (x : M) (v w : TangentSpace I x
 
 /-- The real scalar multiple of a smooth two-form. -/
 protected def smul (c : ℝ) (form : SmoothTwoForm I M) : SmoothTwoForm I M where
-  toContinuousBilinearMap := c • form.toContinuousBilinearMap
+  toContMDiffSection := c • form.toContMDiffSection
   isAlt x v := by simp
 
 instance : SMul ℝ (SmoothTwoForm I M) :=
   ⟨SmoothTwoForm.smul⟩
 
 @[simp]
-lemma smul_toContinuousBilinearMap (c : ℝ) (form : SmoothTwoForm I M) :
-    (c • form).toContinuousBilinearMap = c • form.toContinuousBilinearMap := (rfl)
+lemma smul_toContMDiffSection (c : ℝ) (form : SmoothTwoForm I M) :
+    (c • form).toContMDiffSection = c • form.toContMDiffSection := (rfl)
 
 lemma smul_apply (c : ℝ) (form : SmoothTwoForm I M) (x : M) (v w : TangentSpace I x) :
     (c • form) x v w = c * form x v w := by
@@ -223,28 +223,28 @@ lemma smul_apply (c : ℝ) (form : SmoothTwoForm I M) (x : M) (v w : TangentSpac
 /-- Smooth two-forms form an additive commutative group under pointwise operations. -/
 instance : AddCommGroup (SmoothTwoForm I M) :=
   -- The `ℕ`- and `ℤ`-actions are fixed to be the real action along the cast, so their
-  -- compatibility obligations below are the real-scalar lemma `smul_toContinuousBilinearMap`
+  -- compatibility obligations below are the real-scalar lemma `smul_toContMDiffSection`
   -- composed with `Nat.cast_smul_eq_nsmul` / `Int.cast_smul_eq_zsmul` on sections.
   letI : SMul ℕ (SmoothTwoForm I M) := ⟨fun n form ↦ (n : ℝ) • form⟩
   letI : SMul ℤ (SmoothTwoForm I M) := ⟨fun n form ↦ (n : ℝ) • form⟩
-  Function.Injective.addCommGroup toContinuousBilinearMap toContinuousBilinearMap_injective
-    zero_toContinuousBilinearMap add_toContinuousBilinearMap neg_toContinuousBilinearMap
-    sub_toContinuousBilinearMap
+  Function.Injective.addCommGroup toContMDiffSection toContMDiffSection_injective
+    zero_toContMDiffSection add_toContMDiffSection neg_toContMDiffSection
+    sub_toContMDiffSection
     (fun form n ↦
-      (smul_toContinuousBilinearMap (n : ℝ) form).trans
-        (Nat.cast_smul_eq_nsmul ℝ n form.toContinuousBilinearMap))
+      (smul_toContMDiffSection (n : ℝ) form).trans
+        (Nat.cast_smul_eq_nsmul ℝ n form.toContMDiffSection))
     (fun form n ↦
-      (smul_toContinuousBilinearMap (n : ℝ) form).trans
-        (Int.cast_smul_eq_zsmul ℝ n form.toContinuousBilinearMap))
+      (smul_toContMDiffSection (n : ℝ) form).trans
+        (Int.cast_smul_eq_zsmul ℝ n form.toContMDiffSection))
 
 /-- Smooth two-forms form a real vector space under pointwise scalar multiplication. -/
 instance : Module ℝ (SmoothTwoForm I M) :=
   Function.Injective.module ℝ
-    { toFun := toContinuousBilinearMap
-      map_zero' := zero_toContinuousBilinearMap
-      map_add' := add_toContinuousBilinearMap }
-    toContinuousBilinearMap_injective
-    smul_toContinuousBilinearMap
+    { toFun := toContMDiffSection
+      map_zero' := zero_toContMDiffSection
+      map_add' := add_toContMDiffSection }
+    toContMDiffSection_injective
+    smul_toContMDiffSection
 
 end SmoothTwoForm
 
