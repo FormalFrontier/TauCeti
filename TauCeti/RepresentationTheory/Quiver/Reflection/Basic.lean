@@ -94,6 +94,11 @@ theorem IsSink.isEmpty_hom_self {i : V} (h : IsSink i) : IsEmpty (i ⟶ i) :=
 theorem IsSource.isEmpty_hom_self {i : V} (h : IsSource i) : IsEmpty (i ⟶ i) :=
   h.isEmpty_hom i
 
+/-- An arrow into a sink starts somewhere else, since a sink carries no loop. -/
+theorem IsSink.ne_of_hom {i b : V} (h : IsSink i) (e : b ⟶ i) : b ≠ i := by
+  rintro rfl
+  exact h.isEmpty_hom_self.elim e
+
 /-- A path out of a sink is trivial, so it ends where it started. -/
 theorem IsSink.eq_of_path {i b : V} (h : IsSink i) (p : Path i b) : i = b := by
   induction p with

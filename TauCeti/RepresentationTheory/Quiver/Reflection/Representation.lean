@@ -232,16 +232,18 @@ theorem reflectRep_obj_of_ne {j : Q} (h : j ≠ i) : (reflectRep M hi).obj j = M
 
 /-- **A reversed arrow acts by a coordinate projection.** The arrow `i ⟶ b` of the reflected
 quiver coming from an arrow `e : b ⟶ i` of `Q` sends an element of the kernel at `i` to its
-coordinate at `e`. -/
+coordinate at `e`. The source `b` of such an arrow is automatically distinct from `i`, since a
+sink carries no loop. -/
 @[simp]
-theorem reflectRep_map_reflectArrow {b : Q} (hb : b ≠ i) (e : b ⟶ i) :
+theorem reflectRep_map_reflectArrow {b : Q} (e : b ⟶ i) :
     (reflectRep M hi).map (reflectArrow i e).toPath
       = eqToHom (reflectRep_obj_self M hi) ≫
         ModuleCat.ofHom ((LinearMap.proj (⟨b, e⟩ : Σ b : Q, (b ⟶ i))).comp
           (LinearMap.ker (incomingSum M i)).subtype) ≫
-        eqToHom (reflectRep_obj_of_ne M hi hb).symm := by
+        eqToHom (reflectRep_obj_of_ne M hi (hi.ne_of_hom e)).symm := by
   classical
-  refine ((reflectRep_map_toPath M hi (reflectArrow i e)).trans (dif_neg hb)).trans ?_
+  refine ((reflectRep_map_toPath M hi (reflectArrow i e)).trans
+    (dif_neg (hi.ne_of_hom e))).trans ?_
   refine (dif_pos rfl).trans ?_
   conv_lhs => rw [cast_reflectArrow]
   rfl
