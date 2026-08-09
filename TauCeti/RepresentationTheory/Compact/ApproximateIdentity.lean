@@ -33,8 +33,6 @@ being no concern of this file.
 * `TauCeti.exists_mem_nhds_one_norm_sub_le`: uniform continuity of a continuous function on a
   compact group, in the form `‖f (z⁻¹ * x) - f x‖ ≤ ε` for `z` near `1`, uniformly in `x`.
 * `TauCeti.exists_isMollifier`: mollifying kernels exist supported in any neighbourhood of `1`.
-* `TauCeti.convolutionCLM_toLp_apply`: the translated form `(k * f) x = ∫ z, k z * f (z⁻¹ * x)` of
-  convolution against a continuous function.
 * `TauCeti.IsMollifier.norm_convolutionCLM_toLp_sub_le`: the uniform estimate
   `‖k * f - f‖ ≤ ε` for a kernel supported where `f` varies by at most `ε`.
 * `TauCeti.exists_isMollifier_norm_convolutionCLM_toLp_sub_le`: **the approximate identity.** For
@@ -230,55 +228,7 @@ theorem exists_isMollifier [T2Space G] {U : Set G} (hU : U ∈ 𝓝 (1 : G)) :
       simp only [ContinuousMap.coe_mk, hψ_zero g fun hc => hg (hWU hc), mul_zero,
         RCLike.ofReal_zero]
 
-/-! ### Convolution against a continuous function -/
-
-/-- **Convolution written by translating the function rather than the kernel**:
-`(k * f) x = ∫ z, k z * f (z⁻¹ * x)`.
-
-This is the form in which an approximate identity is read: the mass of `k` sits near `1`, so the
-integral averages the values of `f` near `x`. It follows from
-`TauCeti.convolutionCLM_apply_apply` by the substitution `y = z⁻¹ * x`, which preserves normalized
-Haar measure because it is inversion followed by right translation. -/
-theorem convolutionCLM_toLp_apply (k f : C(G, 𝕜)) (x : G) :
-    convolutionCLM k (ContinuousMap.toLp 2 (haarProb G) 𝕜 f) x
-      = ∫ z, k z * f (z⁻¹ * x) ∂(haarProb G) := by
-  set F : G → 𝕜 := fun y => k (x * y⁻¹) * f y with hFdef
-  have hcoe : convolutionCLM k (ContinuousMap.toLp 2 (haarProb G) 𝕜 f) x
-      = ∫ y, F y ∂(haarProb G) := by
-    rw [convolutionCLM_apply_apply]
-    refine integral_congr_ae ?_
-    filter_upwards [ContinuousMap.coeFn_toLp (E := 𝕜) (p := 2) (haarProb G) (𝕜 := 𝕜) f] with y hy
-    rw [hy]
-  rw [hcoe]
-  calc ∫ y, F y ∂(haarProb G)
-      = ∫ z, F (z * x) ∂(haarProb G) := (integral_mul_right_eq_self F x).symm
-    _ = ∫ z, F (z⁻¹ * x) ∂(haarProb G) :=
-        (integral_inv_eq_self (fun w => F (w * x)) (haarProb G)).symm
-    _ = ∫ z, k z * f (z⁻¹ * x) ∂(haarProb G) := by
-        refine integral_congr_ae (Eventually.of_forall fun z => ?_)
-        have hz : x * (z⁻¹ * x)⁻¹ = z := by group
-        rw [hFdef]
-        simp only [hz]
-
-/-- The error of an approximation of `f` by `k * f`, when the kernel `k` has unit mass: the average
-against `k` of the increments of `f`. -/
-theorem convolutionCLM_toLp_sub_apply (k f : C(G, 𝕜))
-    (hk : ∫ g, k g ∂(haarProb G) = 1) (x : G) :
-    convolutionCLM k (ContinuousMap.toLp 2 (haarProb G) 𝕜 f) x - f x
-      = ∫ z, k z * (f (z⁻¹ * x) - f x) ∂(haarProb G) := by
-  have h₁ : Integrable (fun z : G => k z * f (z⁻¹ * x)) (haarProb G) :=
-    integrable_continuousMap G
-      (⟨fun z => k z * f (z⁻¹ * x),
-        k.continuous.mul (f.continuous.comp (continuous_id.inv.mul continuous_const))⟩ :
-        C(G, 𝕜))
-  have h₂ : Integrable (fun z : G => k z * f x) (haarProb G) :=
-    (integrable_continuousMap G k).mul_const _
-  rw [convolutionCLM_toLp_apply]
-  have hsplit : ∫ z, k z * (f (z⁻¹ * x) - f x) ∂(haarProb G)
-      = (∫ z, k z * f (z⁻¹ * x) ∂(haarProb G)) - ∫ z, k z * f x ∂(haarProb G) := by
-    simp_rw [mul_sub]
-    exact integral_sub h₁ h₂
-  rw [hsplit, integral_mul_const, hk, one_mul]
+/-! ### Approximate-identity estimates -/
 
 /-- **The approximate-identity estimate.** If a mollifying kernel is supported where `f` varies by
 at most `ε`, then convolving `f` against it changes `f` by at most `ε` in the uniform norm. -/
@@ -364,7 +314,7 @@ variable (G) in
 of `1` converges along this filter, the neighbourhoods read through `Filter.smallSets`, so that
 `∀ᶠ U in _, p U` says that `p` holds for every neighbourhood of `1` small enough; it is not the
 bottom filter, every neighbourhood of `1` being an index below itself. -/
-theorem neBot_comap_val_smallSets_nhds_one :
+theorem comap_val_smallSets_nhds_one_neBot :
     NeBot (comap (Subtype.val : {U : Set G // U ∈ 𝓝 (1 : G)} → Set G) (𝓝 (1 : G)).smallSets) := by
   refine comap_neBot_iff.2 fun t ht => ?_
   obtain ⟨V, hV, hVt⟩ := eventually_smallSets.1 ht
@@ -376,7 +326,7 @@ function.** There is a kernel `k U` for each neighbourhood `U` of the identity, 
 supported in `U`, such that for *every* continuous `f` the convolutions `k U * f` converge
 uniformly to `f` as `U` shrinks to the identity.
 
-The index filter is the one of `TauCeti.neBot_comap_val_smallSets_nhds_one`, which is nontrivial,
+The index filter is the one of `TauCeti.comap_val_smallSets_nhds_one_neBot`, which is nontrivial,
 so the convergence has content. Unlike
 `TauCeti.exists_isMollifier_norm_convolutionCLM_toLp_sub_le`, where the kernel may depend on the
 function being approximated, the family here is chosen once and for all. -/
