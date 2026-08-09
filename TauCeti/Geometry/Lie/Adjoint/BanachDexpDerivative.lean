@@ -43,7 +43,7 @@ the regularized commutator factor. -/
 theorem expFDeriv_apply_eq_exp_mul_banachDexpFactor (x y : R) :
     expFDeriv ℝ x y = exp x * banachDexpFactor x y := by
   rw [TauCeti.expFDeriv_apply_eq_integral,
-    banachDexpFactor_apply_eq_integral_conj]
+    banachDexpFactor_apply_eq_integral]
   have hint : IntervalIntegrable
       (fun t : ℝ ↦ exp (-(t • x)) * y * exp (t • x)) volume 0 1 := by
     exact Continuous.intervalIntegrable (μ := volume) (by fun_prop) 0 1
