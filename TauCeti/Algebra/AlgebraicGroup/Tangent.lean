@@ -7,6 +7,7 @@ module
 public import TauCeti.Algebra.AlgebraicGroup.Tangent.Adjoint
 public import TauCeti.Algebra.AlgebraicGroup.Tangent.Cotangent
 public import TauCeti.Algebra.AlgebraicGroup.Tangent.Equivariance
+public import TauCeti.Algebra.AlgebraicGroup.Tangent.FiniteType
 public import TauCeti.Algebra.AlgebraicGroup.Tangent.Map
 public import TauCeti.Algebra.AlgebraicGroup.Tangent.Naturality
 
@@ -15,7 +16,8 @@ public import TauCeti.Algebra.AlgebraicGroup.Tangent.Naturality
 
 Aggregator for the tangent-level theory: the counit-valued derivations
 (`Tangent.Basic`), their description by the cotangent space
-(`Tangent.Cotangent`), functoriality in the bialgebra
+(`Tangent.Cotangent`), finiteness at an identity of finite type
+(`Tangent.FiniteType`), functoriality in the bialgebra
 (`Tangent.DerivationMap`, `Tangent.Map`) and coefficient algebra
 (`Tangent.Naturality`), and the adjoint action of the points
 (`Tangent.Adjoint`), including equivariance of the differential

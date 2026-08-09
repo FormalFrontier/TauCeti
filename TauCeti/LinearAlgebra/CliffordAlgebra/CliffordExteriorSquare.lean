@@ -19,12 +19,12 @@ spin representations roadmap. It does not construct that orthogonal Lie equivale
 
 ## Main results
 
-* `TauCeti.CliffordAlgebra.cliffordBivectorExteriorEquivQuadraticLieSubalgebra`: the exterior
+* `TauCeti.CliffordAlgebra.bivectorExteriorEquivQuadraticLieSubalgebra`: the exterior
   square is linearly equivalent to the quadratic Lie subalgebra.
-* `TauCeti.CliffordAlgebra.cliffordBivectorLieRing` and
-  `TauCeti.CliffordAlgebra.cliffordBivectorLieAlgebra`: the Lie structures transported to the
+* `TauCeti.CliffordAlgebra.bivectorLieRing` and
+  `TauCeti.CliffordAlgebra.bivectorLieAlgebra`: the Lie structures transported to the
   exterior square.
-* `TauCeti.CliffordAlgebra.cliffordBivectorLieEquiv`: the transported Lie equivalence with the
+* `TauCeti.CliffordAlgebra.bivectorLieEquiv`: the transported Lie equivalence with the
   quadratic Lie subalgebra.
 
 ## References
@@ -49,80 +49,80 @@ variable {R : Type u} {M : Type v} [CommRing R] [AddCommGroup M] [Module R M]
 
 /-- The second exterior power is linearly equivalent to the quadratic elements of the Clifford
 algebra through the half-normalized Clifford bivector map. -/
-noncomputable def cliffordBivectorExteriorEquivQuadraticLieSubalgebra
+noncomputable def bivectorExteriorEquivQuadraticLieSubalgebra
     (Q : QuadraticForm R M) [Invertible (2 : R)] :
     ⋀[R]^2 M ≃ₗ[R] ↥(quadraticLieSubalgebra Q) :=
-  (LinearEquiv.ofInjective (cliffordBivectorExterior Q)
-      (cliffordBivectorExterior_injective Q)).trans
+  (LinearEquiv.ofInjective (bivectorExterior Q)
+      (bivectorExterior_injective Q)).trans
     (LinearEquiv.ofEq _ _ (quadraticLieSubalgebra_toSubmodule_eq_range Q).symm)
 
 /-- The quadratic element underlying the exterior-square equivalence is the Clifford bivector
 map. -/
 @[simp]
-theorem coe_cliffordBivectorExteriorEquivQuadraticLieSubalgebra_apply
+theorem coe_bivectorExteriorEquivQuadraticLieSubalgebra_apply
     (Q : QuadraticForm R M) [Invertible (2 : R)] (x : ⋀[R]^2 M) :
-    ((cliffordBivectorExteriorEquivQuadraticLieSubalgebra Q x : quadraticLieSubalgebra Q) :
-      CliffordAlgebra Q) = cliffordBivectorExterior Q x := by
-  rw [cliffordBivectorExteriorEquivQuadraticLieSubalgebra, LinearEquiv.trans_apply,
+    ((bivectorExteriorEquivQuadraticLieSubalgebra Q x : quadraticLieSubalgebra Q) :
+      CliffordAlgebra Q) = bivectorExterior Q x := by
+  rw [bivectorExteriorEquivQuadraticLieSubalgebra, LinearEquiv.trans_apply,
     LinearEquiv.coe_ofEq_apply, LinearEquiv.ofInjective_apply]
 
 /-- The exterior-algebra element underlying the inverse equivalence is the exterior model of the
 quadratic Clifford element. -/
 @[simp]
-theorem coe_cliffordBivectorExteriorEquivQuadraticLieSubalgebra_symm_apply
+theorem coe_bivectorExteriorEquivQuadraticLieSubalgebra_symm_apply
     (Q : QuadraticForm R M) [Invertible (2 : R)] (x : quadraticLieSubalgebra Q) :
-    (((cliffordBivectorExteriorEquivQuadraticLieSubalgebra Q).symm x : ⋀[R]^2 M) :
+    (((bivectorExteriorEquivQuadraticLieSubalgebra Q).symm x : ⋀[R]^2 M) :
       ExteriorAlgebra R M) = equivExterior Q x := by
-  rw [← equivExterior_cliffordBivectorExterior Q,
-    ← coe_cliffordBivectorExteriorEquivQuadraticLieSubalgebra_apply,
+  rw [← equivExterior_bivectorExterior Q,
+    ← coe_bivectorExteriorEquivQuadraticLieSubalgebra_apply,
     LinearEquiv.apply_symm_apply]
 
 /-- The Lie ring structure on the second exterior power transported from the quadratic elements
-through `cliffordBivectorExteriorEquivQuadraticLieSubalgebra`. It is explicit in `Q` because the
+through `bivectorExteriorEquivQuadraticLieSubalgebra`. It is explicit in `Q` because the
 exterior square alone does not determine the quadratic form. -/
 @[instance_reducible]
-noncomputable def cliffordBivectorLieRing (Q : QuadraticForm R M) [Invertible (2 : R)] :
+noncomputable def bivectorLieRing (Q : QuadraticForm R M) [Invertible (2 : R)] :
     LieRing (⋀[R]^2 M) :=
-  (cliffordBivectorExteriorEquivQuadraticLieSubalgebra Q).toAddEquiv.lieRing
+  (bivectorExteriorEquivQuadraticLieSubalgebra Q).toAddEquiv.lieRing
 
 /-- The Lie algebra structure on the second exterior power transported from the quadratic
-elements. It is explicit in `Q` for the same reason as `cliffordBivectorLieRing`. -/
+elements. It is explicit in `Q` for the same reason as `bivectorLieRing`. -/
 @[instance_reducible]
-noncomputable def cliffordBivectorLieAlgebra (Q : QuadraticForm R M) [Invertible (2 : R)] :
-    letI := cliffordBivectorLieRing Q
+noncomputable def bivectorLieAlgebra (Q : QuadraticForm R M) [Invertible (2 : R)] :
+    letI := bivectorLieRing Q
     LieAlgebra R (⋀[R]^2 M) :=
-  (cliffordBivectorExteriorEquivQuadraticLieSubalgebra Q).lieAlgebra
+  (bivectorExteriorEquivQuadraticLieSubalgebra Q).lieAlgebra
 
 /-- The transported Lie equivalence between the second exterior power and the quadratic
 elements. -/
-noncomputable def cliffordBivectorLieEquiv (Q : QuadraticForm R M) [Invertible (2 : R)] :
-    letI := cliffordBivectorLieRing Q
-    letI := cliffordBivectorLieAlgebra Q
+noncomputable def bivectorLieEquiv (Q : QuadraticForm R M) [Invertible (2 : R)] :
+    letI := bivectorLieRing Q
+    letI := bivectorLieAlgebra Q
     ⋀[R]^2 M ≃ₗ⁅R⁆ quadraticLieSubalgebra Q :=
-  (cliffordBivectorExteriorEquivQuadraticLieSubalgebra Q).lieEquiv R
+  (bivectorExteriorEquivQuadraticLieSubalgebra Q).lieEquiv R
 
 /-- The transported Lie equivalence has the same forward map as the exterior-square linear
 equivalence. -/
 @[simp]
-theorem cliffordBivectorLieEquiv_apply (Q : QuadraticForm R M) [Invertible (2 : R)]
+theorem bivectorLieEquiv_apply (Q : QuadraticForm R M) [Invertible (2 : R)]
     (x : ⋀[R]^2 M) :
-    letI := cliffordBivectorLieRing Q
-    letI := cliffordBivectorLieAlgebra Q
-    cliffordBivectorLieEquiv Q x =
-      cliffordBivectorExteriorEquivQuadraticLieSubalgebra Q x := by
-  rw [cliffordBivectorLieEquiv]
+    letI := bivectorLieRing Q
+    letI := bivectorLieAlgebra Q
+    bivectorLieEquiv Q x =
+      bivectorExteriorEquivQuadraticLieSubalgebra Q x := by
+  rw [bivectorLieEquiv]
   exact LinearEquiv.lieEquiv_apply _ x
 
 /-- The inverse transported Lie equivalence has the same map as the inverse exterior-square
 linear equivalence. -/
 @[simp]
-theorem cliffordBivectorLieEquiv_symm_apply (Q : QuadraticForm R M) [Invertible (2 : R)]
+theorem bivectorLieEquiv_symm_apply (Q : QuadraticForm R M) [Invertible (2 : R)]
     (x : quadraticLieSubalgebra Q) :
-    letI := cliffordBivectorLieRing Q
-    letI := cliffordBivectorLieAlgebra Q
-    (cliffordBivectorLieEquiv Q).symm x =
-      (cliffordBivectorExteriorEquivQuadraticLieSubalgebra Q).symm x := by
-  rw [cliffordBivectorLieEquiv]
+    letI := bivectorLieRing Q
+    letI := bivectorLieAlgebra Q
+    (bivectorLieEquiv Q).symm x =
+      (bivectorExteriorEquivQuadraticLieSubalgebra Q).symm x := by
+  rw [bivectorLieEquiv]
   exact LinearEquiv.lieEquiv_symm_apply _ x
 
 end CliffordAlgebra

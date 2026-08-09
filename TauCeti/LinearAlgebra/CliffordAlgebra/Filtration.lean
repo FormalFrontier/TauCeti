@@ -49,7 +49,8 @@ supremum over the `i` of a fixed parity.
 * `TauCeti.CliffordAlgebra.filtration_mul`: the filtration is multiplicative, and in fact exactly
   so: `filtration Q i * filtration Q j = filtration Q (i + j)`. This is the statement that makes
   the associated graded object an algebra, and it is the prerequisite the roadmap asks for before
-  anything downstream; `TauCeti.CliffordAlgebra.filtration_pow` is its iterate.
+  anything downstream; `TauCeti.CliffordAlgebra.filtration_pow` is its iterate and
+  `TauCeti.CliffordAlgebra.mul_mem_filtration` its elementwise form.
 * `TauCeti.CliffordAlgebra.filtration_succ_eq_sup`: the recursion for the successor step.
 * `TauCeti.CliffordAlgebra.filtration_eq_iSup_pow`: the comparison with the submodule powers of
   `LinearMap.range (ι Q)`.
@@ -232,6 +233,13 @@ theorem filtration_mul (i j : ℕ) :
       (prod_map_ι_mem_filtration Q ?_)
     rw [List.length_drop]
     omega
+
+/-- The elementwise form of `filtration_mul`: a product of an element of the `i`-th step and an
+element of the `j`-th step lies in the `i + j`-th step. -/
+theorem mul_mem_filtration {i j : ℕ} {x y : CliffordAlgebra Q} (hx : x ∈ filtration Q i)
+    (hy : y ∈ filtration Q j) : x * y ∈ filtration Q (i + j) := by
+  rw [← filtration_mul Q i j]
+  exact Submodule.mul_mem_mul hx hy
 
 /-- Iterating `filtration_mul`: the `n`-th submodule power of the `i`-th step is the `i * n`-th
 step. -/

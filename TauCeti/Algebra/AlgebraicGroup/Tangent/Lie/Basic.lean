@@ -228,6 +228,17 @@ noncomputable instance instLieAlgebra :
       (lie_smul r (toConv (↑d₁ : A →ₗ[R] Bialgebra.CounitAlgebra R A B))
         (toConv (↑d₂ : A →ₗ[R] Bialgebra.CounitAlgebra R A B)))) a
 
+/-- The tangent space at the identity is a Lie algebra over the coefficient ring. -/
+noncomputable instance instLieAlgebraCoefficients :
+    LieAlgebra B (Derivation R A (Bialgebra.CounitAlgebra R A B)) where
+  lie_smul b d₁ d₂ := Derivation.ext fun a => by
+    let _ : LieRing (WithConv (A →ₗ[R] Bialgebra.CounitAlgebra R A B)) :=
+      LieRing.ofAssociativeRing
+    rw [Derivation.smul_apply, bracket_apply_ofConv, bracket_apply_ofConv,
+      Derivation.coe_smul_linearMap, toConv_smul, LieRing.of_associative_ring_bracket,
+      mul_smul_comm, smul_mul_assoc, ← smul_sub, ofConv_smul,
+      LieRing.of_associative_ring_bracket, LinearMap.smul_apply]
+
 end Lie
 
 end Derivation
