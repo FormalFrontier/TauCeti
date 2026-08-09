@@ -42,7 +42,8 @@ transvection rather than a reflection in `v ^ ⊥`.
   with `Q v` invertible, built from Mathlib's `Module.reflection`.
 * `TauCeti.QuadraticMap.reflectionOrthogonal Q v`: the same reflection bundled as an element of
   `orthogonalGroup Q`, so that statements about products of reflections and about the ranges of the
-  Pin and Spin actions can name it.
+  Pin and Spin actions can name it. `TauCeti.QuadraticMap.reflectionOrthogonal_mul_self` and
+  `TauCeti.QuadraticMap.reflectionOrthogonal_inv` are its group-level involution facts.
 
 ## Main results
 
