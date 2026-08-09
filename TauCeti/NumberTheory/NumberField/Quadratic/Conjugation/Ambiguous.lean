@@ -75,13 +75,13 @@ theorem classGroupMk0_sq_eq_one_of_mem_ramifiedPrimes (hK : finrank ℚ K = 2)
     ClassGroup.mk0 ⟨𝔭, by
       refine mem_nonZeroDivisors_of_ne_zero ?_
       rw [Ideal.zero_eq_bot]
-      exact Ideal.ne_bot_of_liesOver_of_ne_bot (I := span {(p : ℤ)})
+      exact Ideal.ne_bot_of_liesOver_of_ne_bot (p := span {(p : ℤ)})
         (by rw [ne_eq, Ideal.span_singleton_eq_bot, Int.natCast_eq_zero]
             exact (prime_of_mem_ramifiedPrimes hmem).pos.ne') 𝔭⟩ ^ 2 = 1 := by
   have hnzd : 𝔭 ∈ nonZeroDivisors (Ideal (𝓞 K)) := by
     refine mem_nonZeroDivisors_of_ne_zero ?_
     rw [Ideal.zero_eq_bot]
-    exact Ideal.ne_bot_of_liesOver_of_ne_bot (I := span {(p : ℤ)})
+    exact Ideal.ne_bot_of_liesOver_of_ne_bot (p := span {(p : ℤ)})
       (by rw [ne_eq, Ideal.span_singleton_eq_bot, Int.natCast_eq_zero]
           exact (prime_of_mem_ramifiedPrimes hmem).pos.ne') 𝔭
   have hsq : (⟨𝔭, hnzd⟩ : nonZeroDivisors (Ideal (𝓞 K))) ^ 2 = ⟨𝔭 ^ 2, pow_mem hnzd 2⟩ :=
