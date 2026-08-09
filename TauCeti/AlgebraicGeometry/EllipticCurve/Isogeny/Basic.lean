@@ -57,6 +57,16 @@ def MapsInfinity {W₁ W₂ : WeierstrassCurve.Affine F}
     algebraMap W₁.CoordinateRing W₁.FunctionField x ∈
       integralClosure W₂.CoordinateRing W₁.FunctionField
 
+/-- A coordinate pullback maps infinity to infinity exactly when the source coordinate ring is
+integral over the target coordinate ring acting through the pullback. -/
+@[simp]
+theorem mapsInfinity_iff {W₁ W₂ : WeierstrassCurve.Affine F}
+    (pullback : CoordinatePullback W₁ W₂) :
+    pullback.MapsInfinity ↔ ∀ x : W₁.CoordinateRing,
+      @IsIntegral W₂.CoordinateRing W₁.FunctionField _ _ pullback.toRingHom.toAlgebra
+        (algebraMap W₁.CoordinateRing W₁.FunctionField x) :=
+  Iff.rfl
+
 /-- The identity coordinate pullback, embedding a coordinate ring into its fraction field. -/
 noncomputable def id (W : WeierstrassCurve.Affine F) : CoordinatePullback W W :=
   IsScalarTower.toAlgHom F W.CoordinateRing W.FunctionField
@@ -76,7 +86,7 @@ theorem mapsInfinity_id (W : WeierstrassCurve.Affine F) : MapsInfinity (id W) :=
       (inferInstance : Algebra W.CoordinateRing W.FunctionField) := by
     apply Algebra.algebra_ext
     intro x
-    change id W x = algebraMap W.CoordinateRing W.FunctionField x
+    rw [RingHom.algebraMap_toAlgebra]
     exact id_apply W x
   rw [h]
   exact fun _ ↦ isIntegral_algebraMap
