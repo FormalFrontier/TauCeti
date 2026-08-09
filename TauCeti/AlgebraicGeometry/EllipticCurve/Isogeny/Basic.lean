@@ -80,8 +80,10 @@ theorem id_apply (W : WeierstrassCurve.Affine F) (x : W.CoordinateRing) :
 
 /-- The identity coordinate pullback maps infinity to infinity. -/
 @[simp]
-theorem mapsInfinity_id (W : WeierstrassCurve.Affine F) : MapsInfinity (id W) := by
-  unfold MapsInfinity
+theorem mapsInfinity_id (W : WeierstrassCurve.Affine F) :
+    ∀ x : W.CoordinateRing,
+      @IsIntegral W.CoordinateRing W.FunctionField _ _ (id W).toRingHom.toAlgebra
+        (algebraMap W.CoordinateRing W.FunctionField x) := by
   have h : (id W).toRingHom.toAlgebra =
       (inferInstance : Algebra W.CoordinateRing W.FunctionField) := by
     apply Algebra.algebra_ext
@@ -110,7 +112,8 @@ namespace Isogeny
 /-- The identity isogeny. -/
 noncomputable def id (W : WeierstrassCurve.Affine F) : Isogeny W W where
   pullback := CoordinatePullback.id W
-  mapsInfinity := CoordinatePullback.mapsInfinity_id W
+  mapsInfinity := (CoordinatePullback.mapsInfinity_iff _).2
+    (CoordinatePullback.mapsInfinity_id W)
 
 @[simp]
 theorem id_pullback (W : WeierstrassCurve.Affine F) : (id W).pullback = CoordinatePullback.id W :=
