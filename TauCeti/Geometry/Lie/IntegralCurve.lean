@@ -58,45 +58,28 @@ theorem const_mul_mulInvariantVectorField [LieGroup I (minSmoothness ℝ 3) G]
     {v : GroupLieAlgebra I G} {γ : ℝ → G} {s : Set ℝ}
     (hγ : IsMIntegralCurveOn γ (mulInvariantVectorField v) s) (g : G) :
     IsMIntegralCurveOn (fun t ↦ g * γ t) (mulInvariantVectorField v) s := by
-  intro t ht
-  have hg : MDiffAt (fun x : G ↦ g * x) (γ t) :=
-    (contMDiffAt_mul_left (n := minSmoothness ℝ 3)).mdifferentiableAt (by simp)
-  have hder :
-      (mfderiv% (fun x : G ↦ g * x) (γ t)).comp
-          ((1 : ℝ →L[ℝ] ℝ).smulRight (mulInvariantVectorField v (γ t))) =
-        (1 : ℝ →L[ℝ] ℝ).smulRight (mulInvariantVectorField v (g * γ t)) := by
-    have hvec : mfderiv% (fun x : G ↦ g * x) (γ t)
-        (mulInvariantVectorField v (γ t)) = mulInvariantVectorField v (g * γ t) := by
-      have hpull := congrFun (mpullback_mulInvariantVectorField g v) (γ t)
+  have hpush := hγ.comp_of_mfderiv_eq (f := fun x : G ↦ g * x)
+    (fun x ↦ (contMDiffAt_mul_left (n := minSmoothness ℝ 3)).mdifferentiableAt (by simp))
+    (fun x ↦ by
+      have hpull := congrFun (mpullback_mulInvariantVectorField g v) x
       have hcancel :
-          mfderiv% (fun x : G ↦ g * x) (γ t)
-              (mfderiv% (fun x : G ↦ g⁻¹ * x) (g * γ t)
-                (mulInvariantVectorField v (g * γ t))) =
-            mulInvariantVectorField v (g * γ t) := by
-        rw [← mfderiv_comp_apply_of_eq (I' := I) (f := fun x : G ↦ g⁻¹ * x)
-          (g := fun x : G ↦ g * x) (y := γ t) (g * γ t)
+          mfderiv% (fun y : G ↦ g * y) x
+              (mfderiv% (fun y : G ↦ g⁻¹ * y) (g * x)
+                (mulInvariantVectorField v (g * x))) =
+            mulInvariantVectorField v (g * x) := by
+        rw [← mfderiv_comp_apply_of_eq (I' := I) (f := fun y : G ↦ g⁻¹ * y)
+          (g := fun y : G ↦ g * y) (y := x) (g * x)
           ((contMDiffAt_mul_left (n := minSmoothness ℝ 3)).mdifferentiableAt (by simp))
           ((contMDiffAt_mul_left (n := minSmoothness ℝ 3)).mdifferentiableAt (by simp))
           (by simp)]
-        have D : (fun x : G ↦ g * x) ∘ (fun x : G ↦ g⁻¹ * x) = id := by
+        have D : (fun y : G ↦ g * y) ∘ (fun y : G ↦ g⁻¹ * y) = id := by
           funext z
           simp
         rw [D, mfderiv_id, ContinuousLinearMap.id_apply]
       rw [← hpull, mpullback, inverse_mfderiv_mul_left]
-      exact hcancel
-    calc
-      _ = (1 : ℝ →L[ℝ] ℝ).smulRight
-          (mfderiv% (fun x : G ↦ g * x) (γ t) (mulInvariantVectorField v (γ t))) := by
-        apply ContinuousLinearMap.ext
-        intro c
-        rw [ContinuousLinearMap.comp_apply, ContinuousLinearMap.smulRight_apply,
-          ContinuousLinearMap.smulRight_apply, map_smul]
-      _ = _ := by rw [hvec]
-  -- Write the translated curve as a composition so the manifold chain rule applies directly.
-  change HasMFDerivAt[s] ((fun x : G ↦ g * x) ∘ γ) t
-    ((1 : ℝ →L[ℝ] ℝ).smulRight (mulInvariantVectorField v (g * γ t)))
-  rw [← hder]
-  exact hg.hasMFDerivAt.comp_hasMFDerivWithinAt t (hγ t ht)
+      exact hcancel)
+  change IsMIntegralCurveOn ((fun x : G ↦ g * x) ∘ γ) (mulInvariantVectorField v) s
+  exact hpush
 
 end IsMIntegralCurveOn
 

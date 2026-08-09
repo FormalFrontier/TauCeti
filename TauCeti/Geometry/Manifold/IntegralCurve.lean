@@ -16,6 +16,9 @@ smooth vector fields on boundaryless smooth manifolds are smooth.
 
 ## Main results
 
+* `IsMIntegralCurveOn.comp_of_mfderiv_eq`: a differentiable map that intertwines two vector fields
+  sends integral curves of the first field to integral curves of the second.
+* `IsMIntegralCurve.comp_of_mfderiv_eq`: the corresponding result for global integral curves.
 * `IsMIntegralCurve.contMDiff_succ`: an integral curve of a `C^n` vector field is `C^(n + 1)`.
 * `IsMIntegralCurve.contMDiff`: an integral curve of a smooth vector field is smooth.
 * `IsMIntegralCurveAt.of_extChartAt_symm`: a coordinate solution gives a manifold integral curve.
@@ -25,7 +28,7 @@ smooth vector fields on boundaryless smooth manifolds are smooth.
 * Mathlib's proof of `exists_isMIntegralCurveAt_of_contMDiffAt_boundaryless`, whose extended-chart
   calculation is adapted by `IsMIntegralCurveAt.of_extChartAt_symm` in the reverse direction.
 * [Lie groups and the Lie algebra correspondence roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/LieGroups/README.md),
-  Deliverable A, Layer 0, "The exponential map".
+  Deliverable A, Layer 0, "The exponential map", and Layer 1, "The group adjoint".
 -/
 
 public section
@@ -35,6 +38,56 @@ open scoped ContDiff Manifold Topology
 
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
   {H : Type*} [TopologicalSpace H] {I : ModelWithCorners ℝ E H}
+
+namespace IsMIntegralCurveOn
+
+variable {E' : Type*} [NormedAddCommGroup E'] [NormedSpace ℝ E']
+  {H' : Type*} [TopologicalSpace H'] {I' : ModelWithCorners ℝ E' H'}
+  {M : Type*} [TopologicalSpace M] [ChartedSpace H M]
+  {M' : Type*} [TopologicalSpace M'] [ChartedSpace H' M']
+
+/-- A differentiable map that intertwines two vector fields sends integral curves of the first
+field to integral curves of the second. -/
+theorem comp_of_mfderiv_eq {f : M → M'} {V : (x : M) → TangentSpace I x}
+    {W : (x : M') → TangentSpace I' x} {γ : ℝ → M} {s : Set ℝ}
+    (hf : ∀ x, MDifferentiableAt I I' f x)
+    (hVW : ∀ x, mfderiv I I' f x (V x) = W (f x))
+    (hγ : IsMIntegralCurveOn γ V s) : IsMIntegralCurveOn (f ∘ γ) W s := by
+  intro t ht
+  have hder :
+      (mfderiv I I' f (γ t)).comp ((1 : ℝ →L[ℝ] ℝ).smulRight (V (γ t))) =
+        (1 : ℝ →L[ℝ] ℝ).smulRight (W (f (γ t))) := by
+    apply ContinuousLinearMap.ext
+    intro c
+    simp only [ContinuousLinearMap.comp_apply, ContinuousLinearMap.smulRight_apply, map_smul]
+    rw [hVW]
+  -- Unfold composition at the base point so the dependent target tangent spaces are definitionally
+  -- identical; no rewrite lemma expresses this type-level conversion.
+  change HasMFDerivAt[s] (f ∘ γ) t
+    ((1 : ℝ →L[ℝ] ℝ).smulRight (W (f (γ t))))
+  rw [← hder]
+  exact (hf (γ t)).hasMFDerivAt.comp_hasMFDerivWithinAt t (hγ t ht)
+
+end IsMIntegralCurveOn
+
+namespace IsMIntegralCurve
+
+variable {E' : Type*} [NormedAddCommGroup E'] [NormedSpace ℝ E']
+  {H' : Type*} [TopologicalSpace H'] {I' : ModelWithCorners ℝ E' H'}
+  {M : Type*} [TopologicalSpace M] [ChartedSpace H M]
+  {M' : Type*} [TopologicalSpace M'] [ChartedSpace H' M']
+
+/-- A differentiable map that intertwines two vector fields sends global integral curves of the
+first field to global integral curves of the second. -/
+theorem comp_of_mfderiv_eq {f : M → M'} {V : (x : M) → TangentSpace I x}
+    {W : (x : M') → TangentSpace I' x} {γ : ℝ → M}
+    (hf : ∀ x, MDifferentiableAt I I' f x)
+    (hVW : ∀ x, mfderiv I I' f x (V x) = W (f x))
+    (hγ : IsMIntegralCurve γ V) : IsMIntegralCurve (f ∘ γ) W := by
+  rw [isMIntegralCurve_iff_isMIntegralCurveOn]
+  exact (hγ.isMIntegralCurveOn Set.univ).comp_of_mfderiv_eq hf hVW
+
+end IsMIntegralCurve
 
 /-- Convert an ordinary derivative into the model-space derivative expected inside a manifold
 derivative. This is the single boundary where the tangent spaces of the self model on `ℝ` and of
