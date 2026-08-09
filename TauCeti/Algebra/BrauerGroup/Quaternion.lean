@@ -37,6 +37,6 @@ example : (BrauerGroup.mk (CSA.of ℝ ℍ[ℝ]))⁻¹ = BrauerGroup.mk (CSA.of �
 `2` -- so that `[ℍ[ℝ]]` generates a copy of `ℤ/2` inside `BrauerGroup ℝ` -- needs the class to be
 nontrivial, which the nonsplitting of `ℍ[ℝ]` does not yet give here. -/
 example : orderOf (BrauerGroup.mk (CSA.of ℝ ℍ[ℝ])) ∣ 2 :=
-  BrauerGroup.orderOf_mk_dvd_two _root_.Quaternion.starAe
+  BrauerGroup.orderOf_mk_dvd_two_of_algEquiv_op _root_.Quaternion.starAe
 
 end TauCeti

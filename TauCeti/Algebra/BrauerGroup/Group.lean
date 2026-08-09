@@ -64,8 +64,8 @@ stated in the universe-polymorphic form.
 * `TauCeti.BrauerGroup.mk_eq_one_iff`: a class is the identity exactly when its algebras are
   Brauer trivial; with `TauCeti.BrauerGroup.mk_eq_one_of_isSplittingField` and
   `TauCeti.BrauerGroup.mk_end` as the two standard sources of identity classes.
-* `TauCeti.BrauerGroup.orderOf_mk_dvd_two`: an algebra isomorphic to its own opposite has a class
-  of order dividing `2`. The real quaternions are the worked example in
+* `TauCeti.BrauerGroup.orderOf_mk_dvd_two`: an algebra Brauer equivalent to its own opposite has a
+  class of order dividing `2`. The real quaternions are the worked example in
   `TauCeti/Algebra/BrauerGroup/Quaternion.lean`.
 
 ## What is not proved here
@@ -229,6 +229,11 @@ theorem mk_end (V : Type u) [AddCommGroup V] [Module K V] [FiniteDimensional K V
 
 /-! ### Classes of order dividing two -/
 
+/-- **An algebra Brauer equivalent to its own opposite has a self-inverse Brauer class.** -/
+theorem inv_mk_eq_mk_of_isBrauerEquivalent_op {A : CSA.{u, u} K}
+    (h : IsBrauerEquivalent A (CSA.op A)) : (mk A)⁻¹ = mk A :=
+  (mk_op A).symm.trans (mk_eq_mk_iff.2 h.symm)
+
 /-- **An algebra isomorphic to its own opposite has a self-inverse Brauer class.**
 
 This is the Brauer-group reading of an isomorphism `A ≃ₐ[K] Aᵐᵒᵖ`: since the class of `Aᵐᵒᵖ` is the
@@ -236,17 +241,22 @@ inverse class, such an isomorphism says the class of `A` is its own inverse, equ
 `A ⊗[K] A` is Brauer trivial. -/
 theorem inv_mk_eq_mk_of_algEquiv_op {A : CSA.{u, u} K} (e : (A : Type u) ≃ₐ[K] (A : Type u)ᵐᵒᵖ) :
     (mk A)⁻¹ = mk A :=
-  (mk_op A).symm.trans (mk_eq_mk_of_algEquiv (A := CSA.op A) e.symm)
+  inv_mk_eq_mk_of_isBrauerEquivalent_op (IsBrauerEquivalent.of_algEquiv K e)
 
-/-- **An algebra isomorphic to its own opposite has a Brauer class of order dividing `2`.**
+/-- **An algebra Brauer equivalent to its own opposite has a class of order dividing `2`.**
 
 The order is exactly `2` unless the class is the identity, that is, unless `A` is Brauer trivial;
 ruling that out is a separate matter, discussed in the module docstring. -/
-theorem orderOf_mk_dvd_two {A : CSA.{u, u} K} (e : (A : Type u) ≃ₐ[K] (A : Type u)ᵐᵒᵖ) :
+theorem orderOf_mk_dvd_two {A : CSA.{u, u} K} (h : IsBrauerEquivalent A (CSA.op A)) :
     orderOf (mk A) ∣ 2 :=
   orderOf_dvd_of_pow_eq_one <| by
     rw [sq]
-    exact inv_eq_iff_mul_eq_one.1 (inv_mk_eq_mk_of_algEquiv_op e)
+    exact inv_eq_iff_mul_eq_one.1 (inv_mk_eq_mk_of_isBrauerEquivalent_op h)
+
+/-- **An algebra isomorphic to its own opposite has a class of order dividing `2`.** -/
+theorem orderOf_mk_dvd_two_of_algEquiv_op {A : CSA.{u, u} K}
+    (e : (A : Type u) ≃ₐ[K] (A : Type u)ᵐᵒᵖ) : orderOf (mk A) ∣ 2 :=
+  orderOf_mk_dvd_two (IsBrauerEquivalent.of_algEquiv K e)
 
 end BrauerGroup
 
