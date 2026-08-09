@@ -48,7 +48,7 @@ general finite coefficient field; the specialization to `ZMod p` at a good Dixon
 * `TauCeti.algebraMap_center_quotient_bijective`: every residue field of the centre is `K`.
 * `TauCeti.centerAlgEquivPi`: the centre is the algebra of functions on its own maximal spectrum.
 * `TauCeti.card_maximalSpectrum_center`: that spectrum has one point per conjugacy class.
-* `TauCeti.nonempty_centerAlgEquiv_conjClasses`: `Z(K[G]) ≃ₐ[K] (ConjClasses G → K)`.
+* `TauCeti.nonempty_center_algEquiv_conjClasses`: `Z(K[G]) ≃ₐ[K] (ConjClasses G → K)`.
 
 ## References
 
@@ -81,7 +81,7 @@ end Regular
 
 section Frobenius
 
-variable {K G : Type*} [Field K] [Fintype K] [Group G] [Fintype G]
+variable {K G : Type*} [Field K] [Fintype K] [Group G] [Finite G]
 
 /-- **Raising to the `|K|`-th power fixes the coefficient at the identity.** Over a finite field
 `K` whose characteristic does not divide `|G|`, the identity coefficient of `u ^ |K|` is that of
@@ -89,14 +89,17 @@ variable {K G : Type*} [Field K] [Fintype K] [Group G] [Fintype G]
 
 This is the trace identity `tr (M ^ |K|) = (tr M) ^ |K|` for the left regular matrix `M` of `u`,
 combined with `a ^ |K| = a` in `K`. -/
-theorem coeff_one_pow_card (hG : (Fintype.card G : K) ≠ 0) (u : MonoidAlgebra K G) :
+theorem coeff_one_pow_card (hG : (Nat.card G : K) ≠ 0) (u : MonoidAlgebra K G) :
     (u ^ Fintype.card K).coeff 1 = u.coeff 1 := by
   classical
+  let _ := Fintype.ofFinite G
+  have hG' : (Fintype.card G : K) ≠ 0 := by
+    rwa [← Nat.card_eq_fintype_card]
   have h := FiniteField.trace_pow_card
     (Algebra.leftMulMatrix (MonoidAlgebra.basis G K) u)
   rw [← map_pow, trace_leftMulMatrix_monoidAlgebra, trace_leftMulMatrix_monoidAlgebra, mul_pow,
     FiniteField.pow_card, FiniteField.pow_card] at h
-  exact mul_left_cancel₀ hG h
+  exact mul_left_cancel₀ hG' h
 
 /-- **The centre of the group algebra is fixed by the Frobenius of `K`.** Let `K` be a finite field
 whose characteristic does not divide `|G|` and whose multiplicative order kills `G`, that is
@@ -106,7 +109,7 @@ central element `y` of `K[G]` satisfies `y ^ |K| = y`.
 The proof tests `y` against the group elements: `(y * g⁻¹) ^ |K| = y ^ |K| * g⁻¹` because `y` is
 central and `g⁻¹` is fixed by the `|K|`-th power map, so `TauCeti.coeff_one_pow_card` applied to
 `y * g⁻¹` compares the coefficients of `y ^ |K|` and `y` at `g`. -/
-theorem pow_card_eq_self_of_mem_center (hG : (Fintype.card G : K) ≠ 0)
+theorem pow_card_eq_self_of_mem_center (hG : (Nat.card G : K) ≠ 0)
     (hexp : ∀ g : G, g ^ Fintype.card K = g) {y : MonoidAlgebra K G}
     (hy : y ∈ Subalgebra.center K (MonoidAlgebra K G)) :
     y ^ Fintype.card K = y := by
@@ -132,7 +135,7 @@ generated module over a finite ring, by its class-sum basis. -/
 instance instFiniteCenterMonoidAlgebra : Finite (Subalgebra.center K (MonoidAlgebra K G)) :=
   Module.finite_of_finite K
 
-/-- The centre of a finite group algebra over a finite field is an Artinian ring. -/
+/-- The centre of a finite group algebra over a finite Artinian commutative ring is Artinian. -/
 instance instIsArtinianRingCenterMonoidAlgebra [IsArtinianRing K] :
     IsArtinianRing (Subalgebra.center K (MonoidAlgebra K G)) :=
   IsArtinianRing.of_finite K _
@@ -141,8 +144,8 @@ end Finiteness
 
 section Splitting
 
-variable {K G : Type*} [Field K] [Fintype K] [Group G] [Fintype G]
-variable (hG : (Fintype.card G : K) ≠ 0) (hexp : ∀ g : G, g ^ Fintype.card K = g)
+variable {K G : Type*} [Field K] [Fintype K] [Group G] [Finite G]
+variable (hG : (Nat.card G : K) ≠ 0) (hexp : ∀ g : G, g ^ Fintype.card K = g)
 
 include hG hexp
 
@@ -222,7 +225,7 @@ is `K`-algebra isomorphic to the functions on the conjugacy classes of `G`.
 
 The indexing is by cardinality only: the canonical indexing of the factors is by the maximal ideals
 of the centre (`TauCeti.centerAlgEquivPi`), which `TauCeti.card_maximalSpectrum_center` counts. -/
-theorem nonempty_centerAlgEquiv_conjClasses :
+theorem nonempty_center_algEquiv_conjClasses :
     Nonempty (Subalgebra.center K (MonoidAlgebra K G) ≃ₐ[K] (ConjClasses G → K)) := by
   have := Fintype.ofFinite (MaximalSpectrum (Subalgebra.center K (MonoidAlgebra K G)))
   have := Fintype.ofFinite (ConjClasses G)

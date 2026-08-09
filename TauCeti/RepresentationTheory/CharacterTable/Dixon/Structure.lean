@@ -62,13 +62,12 @@ theorem pow_prime_eq_self (hp : IsGoodDixonPrime G p) (g : G) : g ^ p = g := by
 
 /-- The two hypotheses that `TauCeti.pow_card_eq_self_of_mem_center` runs on, read off a good
 Dixon prime: `|G|` is invertible in `ZMod p`, and the `|ZMod p|`-th power map fixes `G`. -/
-private theorem splitting_hypotheses [Fintype G] (hp : IsGoodDixonPrime G p) :
+private theorem splitting_hypotheses (hp : IsGoodDixonPrime G p) :
     haveI := hp.neZero
-    ((Fintype.card G : ZMod p) ≠ 0) ∧ ∀ g : G, g ^ Fintype.card (ZMod p) = g := by
+    ((Nat.card G : ZMod p) ≠ 0) ∧ ∀ g : G, g ^ Fintype.card (ZMod p) = g := by
   have := hp.neZero
   refine ⟨?_, fun g => ?_⟩
-  · rw [← Nat.card_eq_fintype_card]
-    exact hp.natCast_natCard_ne_zero
+  · exact hp.natCast_natCard_ne_zero
   · rw [ZMod.card]
     exact hp.pow_prime_eq_self g
 
@@ -81,7 +80,6 @@ theorem center_pow_prime (hp : IsGoodDixonPrime G p) {y : MonoidAlgebra (ZMod p)
   have := hp.fact_prime
   have := hp.neZero
   have := hp.finite
-  have := Fintype.ofFinite G
   obtain ⟨hcard, hexp⟩ := hp.splitting_hypotheses
   have h := pow_card_eq_self_of_mem_center hcard hexp hy
   rwa [ZMod.card] at h
@@ -99,9 +97,8 @@ theorem nonempty_center_algEquiv_conjClasses (hp : IsGoodDixonPrime G p) :
   have := hp.fact_prime
   have := hp.neZero
   have := hp.finite
-  have := Fintype.ofFinite G
   obtain ⟨hcard, hexp⟩ := hp.splitting_hypotheses
-  exact nonempty_centerAlgEquiv_conjClasses hcard hexp
+  exact TauCeti.nonempty_center_algEquiv_conjClasses hcard hexp
 
 /-- The good-prime structure theorem with the factors indexed by `Fin r` rather than by the
 conjugacy classes themselves: the shape in which the finite-field linear algebra of the
