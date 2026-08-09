@@ -57,7 +57,9 @@ namespace TauCeti
 finite field. Unlike the proposition `IsPrimePow`, this is parameter data rather than a property of
 an already specified cardinality. -/
 structure PrimePower where
+  /-- The prime base of the prime power. -/
   p : ℕ
+  /-- The positive exponent of the prime power. -/
   exponent : ℕ
   prime_p : p.Prime
   exponent_pos : 0 < exponent
