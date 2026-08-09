@@ -113,34 +113,6 @@ end Regularize
 variable {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V]
   [FiniteDimensional ℝ V] [MeasurableSpace V] [BorelSpace V]
 
-/-! ### Consequences of positive definiteness for a subtraction kernel -/
-
-section KernelConsequences
-
-variable {ψ : V → ℂ}
-
-omit [InnerProductSpace ℝ V] [FiniteDimensional ℝ V] [MeasurableSpace V] [BorelSpace V] in
-/-- The value at `0` of a positive-definite subtraction kernel has nonnegative real part. -/
-private theorem re_map_zero_nonneg_of_kernel
-    (hpd : IsPositiveDefiniteKernel fun a b : V => ψ (a - b)) :
-    0 ≤ (ψ 0).re := by
-  have h : (0 : ℂ) ≤ ψ 0 := by
-    simpa using isPositiveDefiniteKernel_apply_self_nonneg hpd 0
-  exact (Complex.nonneg_iff.mp h).1
-
-omit [InnerProductSpace ℝ V] [FiniteDimensional ℝ V] [MeasurableSpace V] [BorelSpace V] in
-/-- A positive-definite subtraction kernel is uniformly bounded by its value at `0`. -/
-private theorem norm_le_re_map_zero_of_kernel
-    (hpd : IsPositiveDefiniteKernel fun a b : V => ψ (a - b)) (z : V) :
-    ‖ψ z‖ ≤ (ψ 0).re := by
-  have h := isPositiveDefiniteKernel_normSq_le hpd z 0
-  simp only [sub_zero, sub_self, RCLike.normSq_eq_def', RCLike.re_to_complex] at h
-  refine le_of_sq_le_sq ?_ (re_map_zero_nonneg_of_kernel hpd)
-  calc ‖ψ z‖ ^ 2 ≤ (ψ 0).re * (ψ 0).re := h
-    _ = (ψ 0).re ^ 2 := (sq ((ψ 0).re)).symm
-
-end KernelConsequences
-
 /-! ### Fourier-analytic helper lemmas -/
 
 /-- The Fourier transform of an integrable function is continuous. -/
@@ -148,20 +120,6 @@ private theorem continuous_fourierIntegral (f : V → ℂ) (hf : Integrable f) :
     Continuous (𝓕 f) :=
   VectorFourier.fourierIntegral_continuous Real.continuous_fourierChar
     (show Continuous fun p : V × V => (innerₗ V) p.1 p.2 from continuous_inner) hf
-
-/-- The Fourier transform of an integrable function is bounded by the `L¹` norm. -/
-private theorem norm_fourierIntegral_le (f : V → ℂ) (ξ : V) :
-    ‖𝓕 f ξ‖ ≤ ∫ x, ‖f x‖ := by
-  rw [Real.fourier_eq]
-  refine (norm_integral_le_integral_norm _).trans (le_of_eq ?_)
-  simp only [Circle.norm_smul]
-
-/-- The Fourier transform written as the integral against the Fourier atom. -/
-private theorem fourier_eq_integral_fourierAtom_mul (f : V → ℂ) (ξ : V) :
-    𝓕 f ξ = ∫ x, fourierAtom ξ x * f x := by
-  rw [Real.fourier_eq]
-  refine integral_congr_ae (ae_of_all _ fun x => ?_)
-  simp only [Circle.smul_def, smul_eq_mul, fourierAtom_eq_fourierChar]
 
 /-- The `L¹` Parseval/Fubini identity `∫ (𝓕 f) · g = ∫ f · (𝓕 g)`, the self-adjointness of the
 Fourier transform for the symmetric inner-product pairing. -/
@@ -265,8 +223,9 @@ theorem integrable_gaussianRegularize {φ : V → ℂ}
     ((hcont.mul (continuous_cexp_neg_mul_sq_norm ε)).aestronglyMeasurable)
     (ae_of_all _ fun x => ?_)
   simp only [gaussianRegularize_apply, norm_mul, Real.norm_eq_abs,
-    abs_of_nonneg (re_map_zero_nonneg_of_kernel hpd), abs_norm]
-  exact mul_le_mul_of_nonneg_right (norm_le_re_map_zero_of_kernel hpd x) (norm_nonneg _)
+    abs_of_nonneg (re_map_zero_nonneg_of_isPositiveDefiniteKernel hpd), abs_norm]
+  exact mul_le_mul_of_nonneg_right
+    (norm_le_re_map_zero_of_isPositiveDefiniteKernel hpd x) (norm_nonneg _)
 
 /-! ### Integrability of the Fourier transform of a positive-definite function -/
 
@@ -280,7 +239,7 @@ private theorem re_integral_fourierIntegral_mul_gaussian_le (F : V → ℂ)
   have hgt_int : Integrable fun ξ : V => Complex.exp (-(t * ‖ξ‖ ^ 2 : ℝ)) :=
     integrable_gaussian ht
   have hft_gt_int := integrable_fourierIntegral_gaussian (V := V) ht
-  have hFbound : ∀ x, ‖F x‖ ≤ (F 0).re := norm_le_re_map_zero_of_kernel hpd
+  have hFbound : ∀ x, ‖F x‖ ≤ (F 0).re := norm_le_re_map_zero_of_isPositiveDefiniteKernel hpd
   have hprod_int : Integrable fun x : V =>
       F x * 𝓕 (fun ξ : V => Complex.exp (-(t * ‖ξ‖ ^ 2 : ℝ))) x :=
     hft_gt_int.bdd_mul hcont.aestronglyMeasurable (ae_of_all _ hFbound)
@@ -308,10 +267,12 @@ private theorem lintegral_enorm_fourierIntegral_mul_gaussian_le (F : V → ℂ)
     (hpd : IsPositiveDefiniteKernel fun a b : V => F (a - b))
     (hint : Integrable F) (hcont : Continuous F) {t : ℝ} (ht : 0 < t) :
     ∫⁻ ξ, ‖𝓕 F ξ * Complex.exp (-(t * ‖ξ‖ ^ 2 : ℝ))‖ₑ ≤ ENNReal.ofReal (F 0).re := by
+  have hbound : ∀ ξ : V, ‖𝓕 F ξ‖ ≤ ∫ x, ‖F x‖ := fun ξ =>
+    VectorFourier.norm_fourierIntegral_le_integral_norm 𝐞 volume (innerₗ V) F ξ
   have hft_cont : Continuous (𝓕 F) := continuous_fourierIntegral F hint
   have hprod_int : Integrable fun ξ : V => 𝓕 F ξ * Complex.exp (-(t * ‖ξ‖ ^ 2 : ℝ)) :=
     (integrable_gaussian ht).bdd_mul hft_cont.aestronglyMeasurable
-      (ae_of_all _ fun ξ => norm_fourierIntegral_le F ξ)
+      (ae_of_all _ fun ξ => hbound ξ)
   rw [← ofReal_integral_norm_eq_lintegral_enorm hprod_int]
   refine ENNReal.ofReal_le_ofReal ?_
   have hnorm_eq : ∀ ξ : V, ‖𝓕 F ξ * Complex.exp (-(t * ‖ξ‖ ^ 2 : ℝ))‖ =
@@ -427,7 +388,7 @@ theorem integral_fourierAtom_withDensity_re_fourierIntegralInv (F : V → ℂ)
         refine integral_congr_ae (ae_of_all _ fun q => ?_)
         change (ENNReal.ofReal (𝓕⁻ F q).re).toReal • fourierAtom v q = fourierAtom v q * 𝓕⁻ F q
         rw [ENNReal.toReal_ofReal (hre q), Complex.real_smul, ← hreal q, mul_comm]
-    _ = 𝓕 (𝓕⁻ F) v := (fourier_eq_integral_fourierAtom_mul (𝓕⁻ F) v).symm
+    _ = 𝓕 (𝓕⁻ F) v := (fourierIntegral_eq_integral_fourierAtom_mul (𝓕⁻ F) v).symm
     _ = F v := by rw [hcont.fourier_fourierInv_eq hint hft_int]
 
 end TauCeti
