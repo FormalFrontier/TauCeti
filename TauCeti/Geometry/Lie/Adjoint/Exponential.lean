@@ -71,11 +71,12 @@ theorem conj_mulInvariantIntegralCurve (g : G) (X : GroupLieAlgebra I G) (x : G)
   let γ := mulInvariantIntegralCurve (I := I) (G := G) X x
   have hcurve : IsMIntegralCurve (Φ ∘ γ)
       (mulInvariantVectorField (tangentAd (I := I) g X)) := by
-    apply (isMIntegralCurve_mulInvariantIntegralCurve
-      (I := I) (G := G) X x).comp_of_mfderiv_eq
-    · intro t
+    rw [isMIntegralCurve_iff_isMIntegralCurveOn]
+    apply ((isMIntegralCurve_mulInvariantIntegralCurve
+      (I := I) (G := G) X x).isMIntegralCurveOn Set.univ).map_of_mfderiv_eq
+    · intro t _
       exact Φ.contMDiff.mdifferentiable (by simp) (γ t)
-    · intro t
+    · intro t _
       dsimp only [Φ]
       rw [mfderiv_conjugation_mulInvariantVectorField, tangentAd_apply]
   have hzero : (Φ ∘ γ) 0 = g * x * g⁻¹ := by simp [Φ, γ]
