@@ -26,10 +26,10 @@ the statements below,
 
 `twoRank H ≤ twoRank G ≤ twoRank H + twoRank (ker f)`,
 
-so a quotient can only lose 2-rank, and can lose no more than the kernel carries. In genus theory
-this is the comparison between the narrow class group `Cl⁺(K)` and the ordinary class group `Cl(K)`
-of a number field: the forgetful surjection `Cl⁺(K) → Cl(K)` has an elementary abelian `2`-group as
-its kernel, and the two 2-ranks agree when that kernel dies.
+so a quotient can only lose 2-rank, and can lose no more than the kernel carries. These are the
+exactness properties of the maximal elementary-2 quotient developed in Layer 2 of the
+Multiquadratic roadmap: they extend its existing functoriality by controlling the kernel and ranks
+of the induced map under a surjective homomorphism.
 
 The last group of results covers the degenerate case where `G` is *itself* elementary abelian: then
 the subgroup of squares is trivial and the quotient map `G → G/G²` is an isomorphism. If the
