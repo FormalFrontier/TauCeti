@@ -61,7 +61,11 @@ private noncomputable def derivationModelEquiv :
 private noncomputable def modelAdjointRepresentation : ContRepresentation ℝ G E :=
   .ofMonoidHom
     { toFun := fun g ↦ show E →L[ℝ] E from adjointContinuousLinearMap (I := I) g
-      map_one' := adjointContinuousLinearMap_one (I := I) (G := G)
+      map_one' := by
+        -- `GroupLieAlgebra I G` is definitionally `E`; expose both it and the operator-space unit.
+        change (adjointContinuousLinearMap (I := I) (1 : G) : E →L[ℝ] E) =
+          ContinuousLinearMap.id ℝ E
+        exact adjointContinuousLinearMap_one (I := I) (G := G)
       map_mul' := by
         intro g h
         -- `GroupLieAlgebra I G` is definitionally the model space `E`; expose it before using the
@@ -84,7 +88,9 @@ private theorem continuousAdjointRepresentation_coe :
     funext g
     apply ContinuousLinearMap.ext
     intro D
-    exact TauCeti.ContRepresentation.congr_apply _ _ _ _
+    rw [continuousAdjointRepresentation, TauCeti.ContRepresentation.congr_apply,
+      ContinuousLinearEquiv.conjContinuousAlgEquiv_apply_apply, modelAdjointRepresentation]
+    rfl
 
 @[simp]
 theorem continuousAdjointRepresentation_apply (g : G) (D : LeftInvariantDerivation I G) :
@@ -97,6 +103,8 @@ theorem continuousAdjointRepresentation_apply (g : G) (D : LeftInvariantDerivati
       (derivationModelEquiv (I := I) (G := G) D) =
     derivationModelEquiv (I := I) (G := G) (Ad (I := I) g D)
   dsimp only [derivationModelEquiv]
+  -- The tangent adjoint is stated on `GroupLieAlgebra I G`, definitionally the model space `E`;
+  -- cast its equation back to `E` to compose it with the isometric intertwining identity.
   have htangent := tangentAd_apply (I := I) g
     ((leftInvariantDerivationLinearIsometryEquivModelVectorSpace
       (I := I) (G := G) D : E) : GroupLieAlgebra I G)
