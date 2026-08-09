@@ -329,25 +329,13 @@ private theorem continuousAt_expDerivativeIntegral (x y : A) :
   have hH : Continuous H := by
     dsimp only [H]
     fun_prop
-  have hK : IsCompact (Set.Icc (-1 : ℝ) 1 ×ˢ Set.uIcc (0 : ℝ) 1) :=
-    isCompact_Icc.prod isCompact_uIcc
-  obtain ⟨C, hC⟩ := (hK.image hH).isBounded.exists_norm_le
-  refine intervalIntegral.continuousAt_of_dominated_interval
-    (F := fun s t ↦ H (s, t)) (bound := fun _ ↦ C) ?_ ?_ intervalIntegrable_const ?_
-  · filter_upwards [] with s
-    exact (by fun_prop : Continuous fun t ↦ H (s, t)).aestronglyMeasurable.restrict
-  · filter_upwards [Metric.ball_mem_nhds (0 : ℝ) zero_lt_one] with s hs
-    filter_upwards with t ht
-    rw [Set.uIoc_of_le zero_le_one] at ht
-    have hsIcc : s ∈ Set.Icc (-1 : ℝ) 1 := by
-      rw [Metric.mem_ball, dist_zero_right, Real.norm_eq_abs] at hs
-      exact ⟨(abs_lt.mp hs).1.le, (abs_lt.mp hs).2.le⟩
-    have htUcc : t ∈ Set.uIcc (0 : ℝ) 1 := by
-      rw [Set.uIcc_of_le zero_le_one]
-      exact ⟨ht.1.le, ht.2⟩
-    exact hC _ ⟨(s, t), ⟨hsIcc, htUcc⟩, rfl⟩
-  · filter_upwards with t _ht
-    exact (by fun_prop : Continuous fun s ↦ H (s, t)).continuousAt
+  have hcontinuous :
+      Continuous (fun s : ℝ ↦ ∫ t in Set.Icc (0 : ℝ) 1, H (s, t)) :=
+    continuous_parametric_integral_of_continuous
+      (f := fun s t ↦ H (s, t)) hH isCompact_Icc
+  unfold expDerivativeIntegral
+  simpa only [intervalIntegral.integral_of_le zero_le_one,
+    ← integral_Icc_eq_integral_Ioc, H] using hcontinuous.continuousAt
 
 private theorem hasDerivAt_exp_add_smul_integral (x y : A) :
     HasDerivAt (fun s : ℝ ↦ exp (x + s • y)) (expDerivativeIntegral x y 0) 0 := by
@@ -366,6 +354,7 @@ private theorem hasDerivAt_exp_add_smul_integral (x y : A) :
     rw [expDerivativeIntegral, ← intervalIntegral.integral_smul]
     apply intervalIntegral.integral_congr
     intro t _ht
+    -- Expose the integral's integrand so the scalar can be moved through both multiplications.
     change exp ((1 - t) • (x + s • y)) * (s • y) * exp (t • x) =
       s • (exp ((1 - t) • (x + s • y)) * y * exp (t • x))
     rw [Algebra.mul_smul_comm, Algebra.smul_mul_assoc]
