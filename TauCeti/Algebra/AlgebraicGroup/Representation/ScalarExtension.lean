@@ -31,7 +31,6 @@ reductive-groups roadmap.
 
 ## Main declarations
 
-* `TauCeti.Tannaka.pointIso`: the point action as an automorphism of one scalar extension.
 * `TauCeti.Tannaka.pointNatIso`: the point action as a natural automorphism of the functor.
 * `TauCeti.Tannaka.pointNatIsoHom`: points acting on all comodules, as a group homomorphism.
 * `TauCeti.Tannaka.fgPointNatIsoHom`: the induced action on finitely generated comodules.
@@ -59,7 +58,8 @@ variable (A : Type u) [CommSemiring A] [Algebra R A]
 
 /-- An `A`-valued point of `H` acts by an automorphism on the scalar extension of each
 comodule. -/
-noncomputable def pointIso (g : WithConv (H →ₐ[R] A)) (M : ComoduleCat.{u, v, u} R H) :
+private noncomputable def pointIso (g : WithConv (H →ₐ[R] A))
+    (M : ComoduleCat.{u, v, u} R H) :
     (ComoduleCat.scalarExtensionFunctor R H A).obj M ≅
       (ComoduleCat.scalarExtensionFunctor R H A).obj M :=
   (eqToIso (ComoduleCat.scalarExtensionFunctor_obj R H A M)).trans
@@ -69,7 +69,7 @@ noncomputable def pointIso (g : WithConv (H →ₐ[R] A)) (M : ComoduleCat.{u, v
 /-- The forward point automorphism is the usual point action, transported across the object
 formula for the opaque scalar-extension functor. -/
 @[simp]
-theorem pointIso_hom (g : WithConv (H →ₐ[R] A))
+private theorem pointIso_hom (g : WithConv (H →ₐ[R] A))
     (M : ComoduleCat.{u, v, u} R H) :
     (pointIso R H A g M).hom =
       eqToHom (ComoduleCat.scalarExtensionFunctor_obj R H A M) ≫
@@ -80,7 +80,7 @@ theorem pointIso_hom (g : WithConv (H →ₐ[R] A))
 /-- The inverse point automorphism is the inverse of the usual point action, transported across
 the object formula for the opaque scalar-extension functor. -/
 @[simp]
-theorem pointIso_inv (g : WithConv (H →ₐ[R] A))
+private theorem pointIso_inv (g : WithConv (H →ₐ[R] A))
     (M : ComoduleCat.{u, v, u} R H) :
     (pointIso R H A g M).inv =
       eqToHom (ComoduleCat.scalarExtensionFunctor_obj R H A M) ≫
@@ -136,6 +136,8 @@ noncomputable def pointNatIsoHom :
     apply Aut.ext
     apply NatTrans.ext
     funext M
+    -- Extensionality exposes a component of `Aut`; reduction identifies that component
+    -- with the natural isomorphism supplied as `pointNatIsoHom.toFun`.
     change (pointNatIso R H A 1).hom.app M = 𝟙 _
     rw [pointNatIso_hom_app]
     simp
@@ -143,6 +145,8 @@ noncomputable def pointNatIsoHom :
     apply Aut.ext
     apply NatTrans.ext
     funext M
+    -- Multiplication in `Aut` is reverse isomorphism composition, so reducing the bundled
+    -- homomorphism turns this component into the following explicitly ordered composite.
     change (pointNatIso R H A (g * h)).hom.app M =
       (pointNatIso R H A h).hom.app M ≫ (pointNatIso R H A g).hom.app M
     rw [pointNatIso_hom_app, pointNatIso_hom_app, pointNatIso_hom_app]
@@ -182,5 +186,40 @@ theorem fgPointNatIsoHom_apply (g : WithConv (H →ₐ[R] A)) :
             (FGComoduleCat.incl (R := R) (C := H))).mapIso
               (pointNatIsoHom R H A g))) :=
   (rfl)
+
+/-- The component of the finite-comodule point automorphism is the transported point action. -/
+@[simp]
+theorem fgPointNatIsoHom_hom_app (g : WithConv (H →ₐ[R] A))
+    (M : FGComoduleCat.{u, v, u} R H) :
+    (fgPointNatIsoHom R H A g).hom.app M =
+      eqToHom (FGComoduleCat.scalarExtensionFunctor_obj R H A M) ≫
+        (Comodule.pointsAction M g).toModuleIsoₛ.hom ≫
+          eqToHom (FGComoduleCat.scalarExtensionFunctor_obj R H A M).symm := by
+  rw [fgPointNatIsoHom_apply]
+  change
+    (eqToIso (FGComoduleCat.scalarExtensionFunctor_eq R H A).symm).inv.app M ≫
+          (pointNatIso R H A g).hom.app
+            ((FGComoduleCat.incl (R := R) (C := H)).obj M) ≫
+        (eqToIso (FGComoduleCat.scalarExtensionFunctor_eq R H A).symm).hom.app M = _
+  rw [pointNatIso_hom_app]
+  simp
+
+/-- The inverse component of the finite-comodule point automorphism is the transported inverse
+point action. -/
+@[simp]
+theorem fgPointNatIsoHom_inv_app (g : WithConv (H →ₐ[R] A))
+    (M : FGComoduleCat.{u, v, u} R H) :
+    (fgPointNatIsoHom R H A g).inv.app M =
+      eqToHom (FGComoduleCat.scalarExtensionFunctor_obj R H A M) ≫
+        (Comodule.pointsAction M g).toModuleIsoₛ.inv ≫
+          eqToHom (FGComoduleCat.scalarExtensionFunctor_obj R H A M).symm := by
+  rw [fgPointNatIsoHom_apply]
+  change
+    (eqToIso (FGComoduleCat.scalarExtensionFunctor_eq R H A).symm).inv.app M ≫
+          (pointNatIso R H A g).inv.app
+            ((FGComoduleCat.incl (R := R) (C := H)).obj M) ≫
+        (eqToIso (FGComoduleCat.scalarExtensionFunctor_eq R H A).symm).hom.app M = _
+  rw [pointNatIso_inv_app]
+  simp
 
 end TauCeti.Tannaka
