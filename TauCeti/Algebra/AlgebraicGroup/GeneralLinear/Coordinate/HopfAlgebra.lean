@@ -301,6 +301,18 @@ theorem antipode_det_localizedGenericMatrix :
   rw [AlgHom.map_det, AlgHom.mapMatrix_apply, map_antipode_localizedGenericMatrix,
     Matrix.det_nonsing_inv]
 
+/-- **Every element of a localization away from `r` is an image times a power of the inverse of
+`r`.** This is the surjectivity half of the localization property, written with `Ring.inverse`
+rather than as a fraction. -/
+private theorem exists_eq_mul_inverse_algebraMap_pow {A : Type*} [CommSemiring A] (r : A)
+    {B : Type*} [CommSemiring B] [Algebra A B] [IsLocalization.Away r B] (z : B) :
+    ∃ (m : ℕ) (p : A), z = algebraMap A B p * Ring.inverse (algebraMap A B r) ^ m := by
+  obtain ⟨m, p, hz⟩ := IsLocalization.Away.surj r z
+  refine ⟨m, p, ?_⟩
+  rw [Ring.inverse_pow]
+  exact (Ring.eq_mul_inverse_iff_mul_eq _ _ _
+    ((IsLocalization.Away.algebraMap_isUnit r).pow m)).mpr hz
+
 private theorem adjoin_X_union_antipode_X :
     Algebra.adjoin R
         (Set.range (fun ij : Fin n × Fin n =>
@@ -344,15 +356,10 @@ private theorem adjoin_X_union_antipode_X :
     exact hantipodePoly _
   apply Algebra.eq_top_iff.mpr
   intro z
-  obtain ⟨m, p, hz⟩ := IsLocalization.Away.surj
-    (Matrix.det (Matrix.mvPolynomialX (Fin n) (Fin n) R)) z
-  have hz' : z = coordinateRingMap R n p *
-      Ring.inverse (Matrix.det (localizedGenericMatrix R n)) ^ m := by
-    rw [Ring.inverse_pow]
-    apply (Ring.eq_mul_inverse_iff_mul_eq _ _ _
-      ((isUnit_det_localizedGenericMatrix R n).pow m)).mpr
-    simpa [det_localizedGenericMatrix] using hz
-  rw [hz']
+  obtain ⟨m, p, hz⟩ :=
+    exists_eq_mul_inverse_algebraMap_pow (Matrix.det (Matrix.mvPolynomialX (Fin n) (Fin n) R)) z
+  simp only [← coordinateRingMap_apply, ← det_localizedGenericMatrix] at hz
+  rw [hz]
   exact B.mul_mem (hpoly p) (B.pow_mem hinv m)
 
 private theorem comul_coassoc :
@@ -586,6 +593,27 @@ theorem coordinateHopfAlgebra_antipode_X (i j : Fin n) :
           (coordinateRingMap R n (MvPolynomial.X (i, j)))) =
       coordinateHopfAlgebraAlgEquiv R n ((localizedGenericMatrix R n)⁻¹ i j) := by
   rw [coordinateHopfAlgebra_antipode_apply, antipode_X]
+
+/-- Two algebra homomorphisms out of the bundled coordinate Hopf algebra of `GLₙ` are equal if
+they agree on the localized generic entries. This is the bundled counterpart of
+`algHom_ext_away`. -/
+theorem coordinateHopfAlgebra_algHom_ext {T : Type*} [Semiring T] [Algebra R T]
+    {f g : coordinateHopfAlgebra R n →ₐ[R] T}
+    (h : ∀ i j, f (coordinateHopfAlgebraAlgEquiv R n
+        (coordinateRingMap R n (MvPolynomial.X (i, j)))) =
+      g (coordinateHopfAlgebraAlgEquiv R n
+        (coordinateRingMap R n (MvPolynomial.X (i, j))))) :
+    f = g := by
+  have hcomp : f.comp (coordinateHopfAlgebraAlgEquiv R n).toAlgHom =
+      g.comp (coordinateHopfAlgebraAlgEquiv R n).toAlgHom := by
+    apply algHom_ext_away R n
+    apply MvPolynomial.algHom_ext
+    rintro ⟨i, j⟩
+    simpa only [AlgHom.comp_apply, AlgEquiv.coe_toAlgHom] using h i j
+  apply AlgHom.ext
+  intro x
+  obtain ⟨y, rfl⟩ := (coordinateHopfAlgebraAlgEquiv R n).surjective x
+  exact DFunLike.congr_fun hcomp y
 
 /-- The localized generic entries and their images under the stored antipode generate the carrier
 of the bundled general linear coordinate Hopf algebra. -/

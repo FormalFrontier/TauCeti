@@ -425,6 +425,14 @@ theorem conj_characterTable_apply (i : Fin (Nat.card (ConjClasses G))) (g : G) :
       characterTable ℂ G i (ConjClasses.mk g⁻¹) := by
   rw [characterTable_apply, characterTable_apply, conj_irreducibleCharacter]
 
+/-- **Complex conjugation of a character-table entry inverts the class**, in the class-indexed
+form: `TauCeti.conj_characterTable_apply` is the same statement about a representative. -/
+@[simp]
+theorem conj_characterTable (i : Fin (Nat.card (ConjClasses G))) (C : ConjClasses G) :
+    (starRingEnd ℂ) (characterTable ℂ G i C) = characterTable ℂ G i C⁻¹ := by
+  obtain ⟨g, rfl⟩ := ConjClasses.exists_rep C
+  rw [ConjClasses.inv_mk, conj_characterTable_apply]
+
 /-- **First (row) orthogonality over `ℂ`**, in its Hermitian form: the rows of the complex character
 table are orthonormal for the Hermitian inner product on class functions. -/
 theorem card_inv_mul_sum_characterTable_mul_conj [Fintype G]

@@ -41,6 +41,10 @@ Chris Birkbeck), on top of the matrix-level Smith normal form
 * `diagCosetEquiv`: that bijection as an equivalence, the canonical index of the double
   cosets.
 * `span_diagElem_eq_top`: the elements `T(a₁,...,aₙ)` span the Hecke ring.
+* `diagElem_mul_of_mulMap_eq`: the product criterion `T(a) · T(b) = T(c)`, given that the
+  coset decomposition multiplies into `T(c)` alone and does so with multiplicity at most one.
+  The `GL_n` reading of `HeckeCosetModule.mul_single_single_of_mulMap_eq`, which carries the
+  argument at the level of arbitrary Hecke cosets and coefficients.
 
 ## References
 
@@ -373,5 +377,33 @@ theorem span_diagElem_eq_top :
   exact Submodule.finsuppSum_mem _ _ _ _ fun D _ ↦ hmem D (f D)
 
 end SmithNormalForm
+
+section ProductCriterion
+
+variable {n}
+
+-- The multiplication this section is about needs the arithmetic Hecke triple, whose
+-- instance carries `NeZero n`.
+variable [NeZero n]
+
+/-- **The product criterion for diagonal Hecke elements.** If every pair in the coset
+decomposition of `T(a) · T(b)` multiplies into the single double coset `T(c)`, and `T(c)`
+occurs there with multiplicity at most one, then `T(a) · T(b) = T(c)`.
+
+This is the structure-constant computation shared by every "a product of diagonal elements
+is again diagonal" result: the two hypotheses are all that vary between them. Both the
+scalar product `diagElem_const_mul` (Shimura 3.17) and the coprime product
+`diagElem_mul_of_coprime` (Shimura 3.16) are this lemma applied to their own inputs. -/
+theorem diagElem_mul_of_mulMap_eq (a b c : Fin n → ℕ)
+    (hmulMap : ∀ p, HeckeCoset.mulMap (SLnZ n) (SLnZ n) (SLnZ n)
+      (diagCoset a).rep (diagCoset b).rep p = diagCoset c)
+    (hmul : multiplicity (SLnZ n) (SLnZ n) (SLnZ n)
+      (((diagCoset a).rep : GL (Fin n) ℚ)) (((diagCoset b).rep : GL (Fin n) ℚ))
+      (((diagCoset c).rep : GL (Fin n) ℚ)) ≤ 1) :
+    diagElem a * diagElem b = diagElem c := by
+  rw [diagElem_def, diagElem_def, diagElem_def]
+  exact HeckeCosetModule.mul_single_single_of_mulMap_eq ℤ _ _ _ hmulMap hmul
+
+end ProductCriterion
 
 end HeckeRing.GLn

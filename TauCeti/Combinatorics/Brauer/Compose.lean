@@ -403,6 +403,83 @@ end BrauerDiagram
 
 variable (D₁ D₂ : BrauerDiagram k)
 
+/-- The middle leg of the strand. If the strand from `x` crosses the middle boundary at `s` and
+the stack exits at `y`, then it reaches some middle state `t` from which `stackStep` leaves at `y`.
+The exit time cannot be zero, because the first step lands in the middle. -/
+private theorem exists_reflTransGen_stackStep_eq_inl_of_stackStart_eq_inr
+    {x y s : Fin k ⊕ Fin k} (hstart : stackStart D₁ D₂ x = Sum.inr s)
+    (hexit : (BrauerDiagram.walk D₁ D₂ ^ (BrauerDiagram.exitTime D₁ D₂ x + 1)) (Sum.inl x)
+      = Sum.inl y) :
+    ∃ t, Relation.ReflTransGen (fun u v => stackStep D₁ D₂ u = Sum.inr v) s t ∧
+      stackStep D₁ D₂ t = Sum.inl y := by
+  have hshift := BrauerDiagram.walk_pow_succ_inl D₁ D₂ hstart
+  obtain ⟨n, hn⟩ : ∃ n, BrauerDiagram.exitTime D₁ D₂ x = n + 1 := by
+    rcases Nat.eq_zero_or_pos (BrauerDiagram.exitTime D₁ D₂ x) with h₀ | h₀
+    · rw [h₀, hshift 0] at hexit
+      exact absurd hexit (by simp)
+    · exact ⟨BrauerDiagram.exitTime D₁ D₂ x - 1, by omega⟩
+  rw [hn] at hexit
+  obtain ⟨t, ht, hpath⟩ := BrauerDiagram.exists_reflTransGen_of_walk_pow D₁ D₂ s n
+    fun m hm => by
+      rw [← hshift]
+      exact BrauerDiagram.not_isLeft_walk_pow_of_lt D₁ D₂ x (by omega)
+  refine ⟨t, hpath, ?_⟩
+  rw [hshift (n + 1), pow_succ', Equiv.Perm.mul_apply, ht,
+    BrauerDiagram.walk_inr_swap] at hexit
+  rcases hstep : stackStep D₁ D₂ t with y' | u
+  · rw [hstep] at hexit
+    simpa using hexit
+  · rw [hstep] at hexit
+    exact absurd hexit (by simp)
+
+/-- Forward direction of `composeDiagram_val_eq_iff`: if the stack sends `x` to `y`, then the
+strand from `x` either leaves at `y` immediately or crosses the middle boundary, runs through
+finitely many middle states, and leaves at `y`. -/
+private theorem stackStart_eq_or_exists_reflTransGen_of_composeDiagram_val
+    {x y : Fin k ⊕ Fin k} (hxy : (composeDiagram D₁ D₂).val x = y) :
+    stackStart D₁ D₂ x = Sum.inl y ∨
+      ∃ s t, stackStart D₁ D₂ x = Sum.inr s ∧
+        Relation.ReflTransGen (fun u v => stackStep D₁ D₂ u = Sum.inr v) s t ∧
+          stackStep D₁ D₂ t = Sum.inl y := by
+  rw [BrauerDiagram.composeDiagram_val] at hxy
+  have hexit : (BrauerDiagram.walk D₁ D₂ ^ (BrauerDiagram.exitTime D₁ D₂ x + 1)) (Sum.inl x)
+      = Sum.inl y := by rw [← BrauerDiagram.inl_stackVal, hxy]
+  rcases hstart : stackStart D₁ D₂ x with y' | s
+  · left
+    have h₁ : BrauerDiagram.walk D₁ D₂ (Sum.inl x) = Sum.inl y' := by
+      rw [BrauerDiagram.walk_inl_eq, hstart]; rfl
+    rcases Nat.eq_zero_or_pos (BrauerDiagram.exitTime D₁ D₂ x) with h₀ | h₀
+    · rwa [h₀, zero_add, pow_one, h₁] at hexit
+    · exact absurd (by rw [zero_add, pow_one, h₁]; rfl)
+        (BrauerDiagram.not_isLeft_walk_pow_of_lt D₁ D₂ x h₀)
+  · obtain ⟨t, hpath, hstep⟩ :=
+      exists_reflTransGen_stackStep_eq_inl_of_stackStart_eq_inr D₁ D₂ hstart hexit
+    exact Or.inr ⟨s, t, rfl, hpath, hstep⟩
+
+/-- Backward direction of `composeDiagram_val_eq_iff`: a strand that leaves the stack at `y`,
+immediately or after finitely many middle states, witnesses that the stack sends `x` to `y`. -/
+private theorem composeDiagram_val_eq_of_stackStart_eq_or_exists_reflTransGen
+    {x y : Fin k ⊕ Fin k}
+    (h :
+    stackStart D₁ D₂ x = Sum.inl y ∨
+      ∃ s t, stackStart D₁ D₂ x = Sum.inr s ∧
+        Relation.ReflTransGen (fun u v => stackStep D₁ D₂ u = Sum.inr v) s t ∧
+          stackStep D₁ D₂ t = Sum.inl y) :
+    (composeDiagram D₁ D₂).val x = y := by
+  rw [BrauerDiagram.composeDiagram_val]
+  rcases h with h | ⟨s, t, hstart, hpath, hstep⟩
+  · refine BrauerDiagram.stackVal_eq_of_exit D₁ D₂ (n := 0) ?_ (by simp)
+    rw [zero_add, pow_one, BrauerDiagram.walk_inl_eq, h]
+    rfl
+  · obtain ⟨n, hn, hmin⟩ := BrauerDiagram.exists_walk_pow_of_reflTransGen D₁ D₂ hpath
+    have hshift := BrauerDiagram.walk_pow_succ_inl D₁ D₂ hstart
+    refine BrauerDiagram.stackVal_eq_of_exit D₁ D₂ (n := n + 1) ?_ fun m hm => ?_
+    · rw [hshift (n + 1), pow_succ', Equiv.Perm.mul_apply, hn,
+        BrauerDiagram.walk_inr_swap, hstep]
+      rfl
+    · rw [hshift m]
+      exact hmin m (by omega)
+
 /-- **The strands of a stack of two Brauer diagrams.** The composite of `D₁` above `D₂` matches
 the outer points `x` and `y` exactly when the strand starting at `x` emerges at `y`: either its
 first arc already leaves the stack at `y`, or it crosses the middle boundary at a middle state
@@ -413,52 +490,9 @@ theorem composeDiagram_val_eq_iff {x y : Fin k ⊕ Fin k} :
       stackStart D₁ D₂ x = Sum.inl y ∨
         ∃ s t, stackStart D₁ D₂ x = Sum.inr s ∧
           Relation.ReflTransGen (fun u v => stackStep D₁ D₂ u = Sum.inr v) s t ∧
-            stackStep D₁ D₂ t = Sum.inl y := by
-  rw [BrauerDiagram.composeDiagram_val]
-  constructor
-  · intro hxy
-    have hexit : (BrauerDiagram.walk D₁ D₂ ^ (BrauerDiagram.exitTime D₁ D₂ x + 1)) (Sum.inl x)
-        = Sum.inl y := by rw [← BrauerDiagram.inl_stackVal, hxy]
-    rcases hstart : stackStart D₁ D₂ x with y' | s
-    · left
-      have h₁ : BrauerDiagram.walk D₁ D₂ (Sum.inl x) = Sum.inl y' := by
-        rw [BrauerDiagram.walk_inl_eq, hstart]; rfl
-      rcases Nat.eq_zero_or_pos (BrauerDiagram.exitTime D₁ D₂ x) with h₀ | h₀
-      · rwa [h₀, zero_add, pow_one, h₁] at hexit
-      · exact absurd (by rw [zero_add, pow_one, h₁]; rfl)
-          (BrauerDiagram.not_isLeft_walk_pow_of_lt D₁ D₂ x h₀)
-    · right
-      have hshift := BrauerDiagram.walk_pow_succ_inl D₁ D₂ hstart
-      obtain ⟨n, hn⟩ : ∃ n, BrauerDiagram.exitTime D₁ D₂ x = n + 1 := by
-        rcases Nat.eq_zero_or_pos (BrauerDiagram.exitTime D₁ D₂ x) with h₀ | h₀
-        · rw [h₀, hshift 0] at hexit
-          exact absurd hexit (by simp)
-        · exact ⟨BrauerDiagram.exitTime D₁ D₂ x - 1, by omega⟩
-      rw [hn] at hexit
-      obtain ⟨t, ht, hpath⟩ := BrauerDiagram.exists_reflTransGen_of_walk_pow D₁ D₂ s n
-        fun m hm => by
-          rw [← hshift]
-          exact BrauerDiagram.not_isLeft_walk_pow_of_lt D₁ D₂ x (by omega)
-      refine ⟨s, t, rfl, hpath, ?_⟩
-      rw [hshift (n + 1), pow_succ', Equiv.Perm.mul_apply, ht,
-        BrauerDiagram.walk_inr_swap] at hexit
-      rcases hstep : stackStep D₁ D₂ t with y' | u
-      · rw [hstep] at hexit
-        simpa using hexit
-      · rw [hstep] at hexit
-        exact absurd hexit (by simp)
-  · rintro (h | ⟨s, t, hstart, hpath, hstep⟩)
-    · refine BrauerDiagram.stackVal_eq_of_exit D₁ D₂ (n := 0) ?_ (by simp)
-      rw [zero_add, pow_one, BrauerDiagram.walk_inl_eq, h]
-      rfl
-    · obtain ⟨n, hn, hmin⟩ := BrauerDiagram.exists_walk_pow_of_reflTransGen D₁ D₂ hpath
-      have hshift := BrauerDiagram.walk_pow_succ_inl D₁ D₂ hstart
-      refine BrauerDiagram.stackVal_eq_of_exit D₁ D₂ (n := n + 1) ?_ fun m hm => ?_
-      · rw [hshift (n + 1), pow_succ', Equiv.Perm.mul_apply, hn,
-          BrauerDiagram.walk_inr_swap, hstep]
-        rfl
-      · rw [hshift m]
-        exact hmin m (by omega)
+            stackStep D₁ D₂ t = Sum.inl y :=
+  ⟨stackStart_eq_or_exists_reflTransGen_of_composeDiagram_val D₁ D₂,
+    composeDiagram_val_eq_of_stackStart_eq_or_exists_reflTransGen D₁ D₂⟩
 
 /-- **A cap of the lower diagram is a cap of the composite.** -/
 theorem composeDiagram_val_inl_eq_inl_of_cap_lower {i i' : Fin k}

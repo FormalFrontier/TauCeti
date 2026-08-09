@@ -58,6 +58,44 @@ open scoped ENNReal NNReal
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [MeasurableSpace E] [BorelSpace E]
   [FiniteDimensional ℝ E] (μ : Measure E) [μ.IsAddHaarMeasure]
 
+/-- A bump function has nonzero `p`-seminorm: it is continuous and equal to `1` at the origin. -/
+private theorem eLpNorm_contDiffBump_ne_zero {p : ℝ≥0∞} (hp₀ : p ≠ 0)
+    (φ : ContDiffBump (0 : E)) : eLpNorm (φ : E → ℝ) p μ ≠ 0 := by
+  intro h
+  have hcont : Continuous (φ : E → ℝ) := (φ.contDiff (n := 1)).continuous
+  have hae := (eLpNorm_eq_zero_iff hcont.aestronglyMeasurable hp₀).1 h
+  have hzero : (φ : E → ℝ) = 0 :=
+    (Continuous.ae_eq_iff_eq μ hcont continuous_const).1 hae
+  have h0 : (φ : E → ℝ) 0 = 1 := φ.one_of_mem_closedBall (by simp [φ.rIn_pos.le])
+  rw [hzero] at h0
+  norm_num at h0
+
+/-- Testing a putative Poincaré inequality on the dilate of a bump by `r` and cancelling the common
+factor `r ^ (n / p)` leaves a bound on the bump's own seminorm that degrades like `r⁻¹`. -/
+private theorem eLpNorm_le_ofReal_inv_mul_of_forall {p : ℝ≥0∞} (hp₀ : p ≠ 0) (hp : p ≠ ∞)
+    (φ : ContDiffBump (0 : E)) {C : ℝ≥0}
+    (hC : ∀ u : E → ℝ, ContDiff ℝ 1 u → HasCompactSupport u →
+      eLpNorm u p μ ≤ C * eLpNorm (fderiv ℝ u) p μ)
+    {r : ℝ} (hr : 0 < r) :
+    eLpNorm (φ : E → ℝ) p μ
+      ≤ ENNReal.ofReal r⁻¹ * (C * eLpNorm (fderiv ℝ (φ : E → ℝ)) p μ) := by
+  have hφ1 : ContDiff ℝ 1 (φ : E → ℝ) := φ.contDiff
+  have h1 := hC (fun x => φ (r⁻¹ • x))
+    (hφ1.comp (ContDiff.const_smul r⁻¹ (contDiff_id (𝕜 := ℝ) (E := E))))
+    (φ.hasCompactSupport.comp_homeomorph (Homeomorph.smul (Units.mk0 r⁻¹ (inv_ne_zero hr.ne'))))
+  rw [eLpNorm_comp_inv_smul μ _ hr hp₀ hp, eLpNorm_fderiv_comp_inv_smul μ _ hr hp₀ hp] at h1
+  set s := ENNReal.ofReal (r ^ ((finrank ℝ E : ℝ) / p.toReal)) with hs_def
+  have hs0 : s ≠ 0 := by
+    rw [hs_def, Ne, ENNReal.ofReal_eq_zero, not_le]
+    positivity
+  have hsplit : ENNReal.ofReal (r ^ ((finrank ℝ E : ℝ) / p.toReal - 1))
+      = s * ENNReal.ofReal r⁻¹ := by
+    rw [hs_def, ← ENNReal.ofReal_mul (by positivity), Real.rpow_sub hr, Real.rpow_one,
+      div_eq_mul_inv]
+  rw [hsplit] at h1
+  refine (ENNReal.mul_le_mul_iff_right hs0 ENNReal.ofReal_ne_top).1 (h1.trans (le_of_eq ?_))
+  ring
+
 /-- **No Poincaré inequality holds on the whole space.** There is no constant `C` with
 `‖u‖_p ≤ C ‖Du‖_p` for every compactly supported `C¹` function `u`, for any `0 < p < ∞`.
 
@@ -70,53 +108,22 @@ theorem not_exists_eLpNorm_le_const_mul_eLpNorm_fderiv {p : ℝ≥0∞} (hp₀ :
   rintro ⟨C, hC⟩
   -- Fix one bump function; every dilate of it is an admissible test function.
   set φ : ContDiffBump (0 : E) := ⟨1, 2, one_pos, one_lt_two⟩
-  have hφ2 : ContDiff ℝ 2 (φ : E → ℝ) := φ.contDiff
-  have hφ1 : ContDiff ℝ 1 (φ : E → ℝ) := φ.contDiff
-  have hφcs : HasCompactSupport (φ : E → ℝ) := φ.hasCompactSupport
-  set A := eLpNorm (φ : E → ℝ) p μ
-  set D := eLpNorm (fderiv ℝ (φ : E → ℝ)) p μ
-  -- The bump has positive seminorm: it is continuous and equal to `1` at the origin.
-  have hA : A ≠ 0 := by
-    intro h
-    have hae := (eLpNorm_eq_zero_iff hφ1.continuous.aestronglyMeasurable hp₀).1 h
-    have hzero : (φ : E → ℝ) = 0 :=
-      (Continuous.ae_eq_iff_eq μ hφ1.continuous continuous_const).1 hae
-    have h0 : (φ : E → ℝ) 0 = 1 := φ.one_of_mem_closedBall (by simp [φ.rIn_pos.le])
-    rw [hzero] at h0
-    norm_num at h0
+  set D := eLpNorm (fderiv ℝ (φ : E → ℝ)) p μ with hD_def
   -- Its derivative is continuous with compact support, hence of finite seminorm.
   have hD : D ≠ ∞ :=
-    ((hφ2.continuous_fderiv (by norm_num)).memLp_of_hasCompactSupport
-      (μ := μ) (p := p) (hφcs.fderiv (𝕜 := ℝ))).eLpNorm_lt_top.ne
-  -- Testing the putative inequality on the dilate by `r` and cancelling the common factor
-  -- `r ^ (n / p)` leaves a bound that degrades like `r⁻¹`.
-  have key : ∀ r : ℝ, 0 < r → A ≤ ENNReal.ofReal r⁻¹ * (C * D) := by
-    intro r hr
-    have h1 := hC (fun x => φ (r⁻¹ • x))
-      (hφ1.comp (ContDiff.const_smul r⁻¹ (contDiff_id (𝕜 := ℝ) (E := E))))
-      (hφcs.comp_homeomorph (Homeomorph.smul (Units.mk0 r⁻¹ (inv_ne_zero hr.ne'))))
-    rw [eLpNorm_comp_inv_smul μ _ hr hp₀ hp, eLpNorm_fderiv_comp_inv_smul μ _ hr hp₀ hp] at h1
-    set s := ENNReal.ofReal (r ^ ((finrank ℝ E : ℝ) / p.toReal)) with hs_def
-    have hs0 : s ≠ 0 := by
-      rw [hs_def, Ne, ENNReal.ofReal_eq_zero, not_le]
-      positivity
-    have hsplit : ENNReal.ofReal (r ^ ((finrank ℝ E : ℝ) / p.toReal - 1))
-        = s * ENNReal.ofReal r⁻¹ := by
-      rw [hs_def, ← ENNReal.ofReal_mul (by positivity), Real.rpow_sub hr, Real.rpow_one,
-        div_eq_mul_inv]
-    rw [hsplit] at h1
-    refine (ENNReal.mul_le_mul_iff_right hs0 ENNReal.ofReal_ne_top).1 (h1.trans (le_of_eq ?_))
-    ring
+    (((φ.contDiff (n := 2)).continuous_fderiv (by norm_num)).memLp_of_hasCompactSupport
+      (μ := μ) (p := p) (φ.hasCompactSupport.fderiv (𝕜 := ℝ))).eLpNorm_lt_top.ne
   -- Letting `r → ∞` forces the bump's own seminorm to vanish, a contradiction.
   have hlim : Tendsto (fun r : ℝ => ENNReal.ofReal r⁻¹ * (C * D)) atTop (𝓝 (0 * (C * D))) :=
     ENNReal.Tendsto.mul_const
       (by simpa using ENNReal.tendsto_ofReal (tendsto_inv_atTop_zero (𝕜 := ℝ)))
       (Or.inr (ENNReal.mul_ne_top ENNReal.coe_ne_top hD))
-  have hle : A ≤ 0 * (C * D) := by
+  have hle : eLpNorm (φ : E → ℝ) p μ ≤ 0 * (C * D) := by
     refine ge_of_tendsto hlim ?_
-    filter_upwards [eventually_gt_atTop (0 : ℝ)] with r hr using key r hr
+    filter_upwards [eventually_gt_atTop (0 : ℝ)] with r hr using
+      eLpNorm_le_ofReal_inv_mul_of_forall μ hp₀ hp φ hC hr
   rw [zero_mul, le_zero_iff] at hle
-  exact hA hle
+  exact eLpNorm_contDiffBump_ne_zero μ hp₀ φ hle
 
 /-- The Poincaré inequality fails on `ℝⁿ` with Lebesgue measure: the roadmap's form of
 `TauCeti.not_exists_eLpNorm_le_const_mul_eLpNorm_fderiv`. -/

@@ -114,10 +114,39 @@ theorem filtrationPrevious_succ (Q : QuadraticForm R M) (k : ℕ) :
     filtrationPrevious Q (k + 1) = filtration Q k :=
   (rfl)
 
+/-- The filtration step preceding degree `k`, viewed inside the degree-`k` filtration step. This is
+the relation defining the degree-`k` associated-graded quotient. -/
+def filtrationPreviousRestricted (Q : QuadraticForm R M) (k : ℕ) :
+    Submodule R (filtration Q k) :=
+  (filtrationPrevious Q k).submoduleOf (filtration Q k)
+
+/-- Membership in the restricted preceding filtration is ambient membership in the preceding
+filtration step. -/
+@[simp]
+theorem mem_filtrationPreviousRestricted_iff (Q : QuadraticForm R M) (k : ℕ)
+    (x : filtration Q k) :
+    x ∈ filtrationPreviousRestricted Q k ↔
+      (x : CliffordAlgebra Q) ∈ filtrationPrevious Q k :=
+  Iff.rfl
+
+/-- The restricted preceding filtration is trivial in degree zero. -/
+@[simp]
+theorem filtrationPreviousRestricted_zero (Q : QuadraticForm R M) :
+    filtrationPreviousRestricted Q 0 = ⊥ := by
+  ext x
+  simp [filtrationPreviousRestricted, Submodule.submoduleOf]
+
+/-- In successor degree, the restricted preceding filtration is the preceding filtration step
+viewed inside the successor step. -/
+@[simp]
+theorem filtrationPreviousRestricted_succ (Q : QuadraticForm R M) (k : ℕ) :
+    filtrationPreviousRestricted Q (k + 1) =
+      Submodule.comap (filtration Q (k + 1)).subtype (filtration Q k) := by
+  rfl
+
 /-- The degree-`k` piece of the associated graded Clifford filtration. -/
 abbrev FiltrationGradedPiece (Q : QuadraticForm R M) (k : ℕ) : Type max u v :=
-  filtration Q k ⧸
-    Submodule.comap (filtration Q k).subtype (filtrationPrevious Q k)
+  filtration Q k ⧸ filtrationPreviousRestricted Q k
 
 variable (Q : QuadraticForm R M)
 
@@ -373,8 +402,7 @@ private theorem filtrationLeadingTermRaw_mem_previous (k : ℕ) (v : Fin (k + 1)
 
 private noncomputable def filtrationLeadingTermAlternating (k : ℕ) :
     M [⋀^Fin (k + 1)]→ₗ[R] FiltrationGradedPiece Q (k + 1) :=
-  let P : Submodule R (filtration Q (k + 1)) :=
-    (filtrationPrevious Q (k + 1)).comap (filtration Q (k + 1)).subtype
+  let P := filtrationPreviousRestricted Q (k + 1)
   { toMultilinearMap :=
       P.mkQ.compMultilinearMap
         ((filtrationLeadingTermRaw Q k).codRestrict (filtration Q (k + 1))
@@ -416,7 +444,7 @@ An element of `filtration Q (k + 1)` lies in its image under the inclusion exact
 modulo `filtration Q k` is a leading term. -/
 private noncomputable def leadingTermPreimage (k : ℕ) : Submodule R (filtration Q (k + 1)) :=
   (LinearMap.range (filtrationLeadingTerm Q k)).comap
-    ((filtrationPrevious Q (k + 1)).comap (filtration Q (k + 1)).subtype).mkQ
+    (filtrationPreviousRestricted Q (k + 1)).mkQ
 
 /-- **The lower filtration consists of leading terms, trivially.** An element of `filtration Q k`
 has zero class modulo `filtration Q k`, and zero is a leading term. -/
@@ -426,10 +454,9 @@ private theorem filtration_le_map_leadingTermPreimage (k : ℕ) :
   have hz' : z ∈ filtration Q (k + 1) := filtration_mono Q (by omega) hz
   refine Submodule.mem_map.2 ⟨⟨z, hz'⟩, ?_, rfl⟩
   have hzero :
-      ((filtrationPrevious Q (k + 1)).comap (filtration Q (k + 1)).subtype).mkQ
-        ⟨z, hz'⟩ = 0 :=
+      (filtrationPreviousRestricted Q (k + 1)).mkQ ⟨z, hz'⟩ = 0 :=
     (Submodule.Quotient.mk_eq_zero _).mpr (by
-      rw [Submodule.mem_comap, filtrationPrevious_succ]
+      rw [mem_filtrationPreviousRestricted_iff, filtrationPrevious_succ]
       exact hz)
   simp [leadingTermPreimage, hzero]
 
@@ -468,7 +495,7 @@ theorem filtrationLeadingTerm_surjective (k : ℕ) :
   intro z
   obtain ⟨x, rfl⟩ :=
     Submodule.Quotient.mk_surjective
-      ((filtrationPrevious Q (k + 1)).comap (filtration Q (k + 1)).subtype) z
+      (filtrationPreviousRestricted Q (k + 1)) z
   obtain ⟨y, hy, hxy⟩ := Submodule.mem_map.1 (hle x.property)
   obtain rfl : y = x := Subtype.ext hxy
   simpa [leadingTermPreimage] using hy

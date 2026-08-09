@@ -41,6 +41,22 @@ instance.
   is Mathlib's `AlgHom.mulLeftRight` restricted along `f` on the left factor, so for
   `f = AlgHom.id K A` it is `AlgHom.mulLeftRight K A` itself.
 
+A `B ⊗[K] Aᵐᵒᵖ`-linear map `Bimodule f →ₗ Bimodule g`, transported along `of`, is determined by its
+value `u` at `1`, and that value intertwines `f` and `g`:
+
+* `TauCeti.Bimodule.symm_apply_eq_symm_apply_one_mul`: the transported map is `a ↦ u * a`.
+* `TauCeti.Bimodule.apply_of`: the untransported form, `φ (of f a) = of g (u * a)`.
+* `TauCeti.Bimodule.symm_apply_one_mul_eq_mul_symm_apply_one`: `u * f b = g b * u`.
+* `TauCeti.Bimodule.exists_symm_apply_one_mul_eq_one`: when `of g 1` is hit, `u` has a right
+  inverse.
+
+The two consumers take different halves. The Skolem-Noether argument in
+`TauCeti/Algebra/CentralSimple/SkolemNoether.lean` uses the right-inverse lemma
+`exists_symm_apply_one_mul_eq_one` and the intertwining lemma
+`symm_apply_one_mul_eq_mul_symm_apply_one`; the centralizer theorem in
+`TauCeti/Algebra/CentralSimple/Centralizer.lean` uses `apply_of` and the same intertwining lemma, at
+`f = g = B.val`.
+
 ## Implementation notes
 
 `TauCeti.Bimodule.smul_of` and `TauCeti.Bimodule.symm_smul` are the working interface: they compute
@@ -139,6 +155,64 @@ is `x ↦ f b * x * a`. -/
 theorem symm_smul (b : B) (a : Aᵐᵒᵖ) (y : Bimodule f) :
     (of f).symm ((b ⊗ₜ a : B ⊗[K] Aᵐᵒᵖ) • y) = f b * (of f).symm y * a.unop :=
   toEnd_tmul_apply f b a ((of f).symm y)
+
+section Map
+
+variable {f g : B →ₐ[K] A}
+
+/-- Transported along `Bimodule.of`, a `B ⊗[K] Aᵐᵒᵖ`-linear map `Bimodule f →ₗ Bimodule g` sends
+`a` to its value at `1`, multiplied by `a`. -/
+@[grind =]
+theorem symm_apply_eq_symm_apply_one_mul (φ : Bimodule f →ₗ[B ⊗[K] Aᵐᵒᵖ] Bimodule g) (a : A) :
+    (of g).symm (φ (of f a))
+      = (of g).symm (φ (of f 1)) * a := by
+  -- Linearity for the right action of `A` fixes `φ` everywhere from its value at `1`.
+  have ha : of f a = (1 ⊗ₜ MulOpposite.op a : B ⊗[K] Aᵐᵒᵖ) • of f 1 := by
+    rw [smul_of]; simp
+  rw [ha, map_smul, symm_smul]
+  simp
+
+/-- The untransported form of `symm_apply_eq_symm_apply_one_mul`: `φ` sends `of f a` to
+`of g (u * a)`, where `u` is its transported value at `1`. This is the `of`-side companion, in the
+same way that `smul_of` is the companion of `symm_smul`. -/
+@[grind =]
+theorem apply_of (φ : Bimodule f →ₗ[B ⊗[K] Aᵐᵒᵖ] Bimodule g) (a : A) :
+    φ (of f a) = of g ((of g).symm (φ (of f 1)) * a) :=
+  (of g).symm.injective (by simpa using symm_apply_eq_symm_apply_one_mul φ a)
+
+/-- The transported value at `1` intertwines `f` and `g`: writing `u` for it, `u * f b = g b * u`
+for every `b : B`. -/
+@[grind =]
+theorem symm_apply_one_mul_eq_mul_symm_apply_one
+    (φ : Bimodule f →ₗ[B ⊗[K] Aᵐᵒᵖ] Bimodule g) (b : B) :
+    (of g).symm (φ (of f 1)) * f b
+      = g b * (of g).symm (φ (of f 1)) := by
+  -- Linearity for the left action of `B`, read through `symm_apply_eq_symm_apply_one_mul`.
+  set u : A := (of g).symm (φ (of f 1)) with hu
+  have hu' : φ (of f 1) = of g u := by rw [hu]; simp
+  have h1 : (b ⊗ₜ (1 : Aᵐᵒᵖ) : B ⊗[K] Aᵐᵒᵖ) • of f 1 = of f (f b) := by
+    rw [smul_of]; simp
+  calc u * f b = (of g).symm (φ (of f (f b))) :=
+        (symm_apply_eq_symm_apply_one_mul φ (f b)).symm
+    _ = (of g).symm (φ ((b ⊗ₜ (1 : Aᵐᵒᵖ) : B ⊗[K] Aᵐᵒᵖ) • of f 1)) := by
+          rw [h1]
+    _ = (of g).symm ((b ⊗ₜ (1 : Aᵐᵒᵖ) : B ⊗[K] Aᵐᵒᵖ) • φ (of f 1)) := by
+          rw [map_smul]
+    _ = (of g).symm ((b ⊗ₜ (1 : Aᵐᵒᵖ) : B ⊗[K] Aᵐᵒᵖ) • of g u) := by rw [hu']
+    _ = g b * u := by rw [smul_of]; simp
+
+/-- Whenever `of g 1` is in the range of `φ`, the transported value at `1` has a right inverse
+in `A`. Surjectivity of `φ` is more than is needed: only this one value must be hit. -/
+theorem exists_symm_apply_one_mul_eq_one (φ : Bimodule f →ₗ[B ⊗[K] Aᵐᵒᵖ] Bimodule g)
+    (h1 : of g 1 ∈ LinearMap.range φ) :
+    ∃ v : A, (of g).symm (φ (of f 1)) * v = 1 := by
+  obtain ⟨y, hy⟩ := h1
+  refine ⟨(of f).symm y, ?_⟩
+  have h := symm_apply_eq_symm_apply_one_mul φ ((of f).symm y)
+  rw [LinearEquiv.apply_symm_apply, hy] at h
+  simpa using h.symm
+
+end Map
 
 end Bimodule
 
