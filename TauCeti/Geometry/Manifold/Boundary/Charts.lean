@@ -342,6 +342,7 @@ private theorem boundaryChartedSpace_atlas (hk : k ≠ 0) :
 variable (M) in
 /-- The source of the preferred boundary chart at `p` is the part of the boundary the ambient
 preferred chart at `p` sees. -/
+@[simp]
 theorem boundaryChartedSpace_chartAt_source (hk : k ≠ 0) (p : ↥((𝓡∂ (n + 1)).boundary M)) :
     letI := boundaryChartedSpace (n := n) M hk
     (chartAt (EuclideanSpace ℝ (Fin n)) p).source =
@@ -353,6 +354,7 @@ theorem boundaryChartedSpace_chartAt_source (hk : k ≠ 0) (p : ↥((𝓡∂ (n 
 variable (M) in
 /-- The target of the preferred boundary chart at `p` is the ambient target, pulled back to the
 coordinate hyperplane. -/
+@[simp]
 theorem boundaryChartedSpace_chartAt_target (hk : k ≠ 0) (p : ↥((𝓡∂ (n + 1)).boundary M)) :
     letI := boundaryChartedSpace (n := n) M hk
     (chartAt (EuclideanSpace ℝ (Fin n)) p).target =
@@ -364,6 +366,7 @@ theorem boundaryChartedSpace_chartAt_target (hk : k ≠ 0) (p : ↥((𝓡∂ (n 
 variable (M) in
 /-- The preferred boundary chart at `p` reads a point through the ambient preferred chart at `p`
 and deletes the zeroth coordinate. -/
+@[simp]
 theorem boundaryChartedSpace_chartAt_apply (hk : k ≠ 0) (p q : ↥((𝓡∂ (n + 1)).boundary M)) :
     letI := boundaryChartedSpace (n := n) M hk
     chartAt (EuclideanSpace ℝ (Fin n)) p q =
@@ -375,6 +378,7 @@ theorem boundaryChartedSpace_chartAt_apply (hk : k ≠ 0) (p q : ↥((𝓡∂ (n
 variable (M) in
 /-- On its target, the inverse of the preferred boundary chart at `p` is the inverse of the ambient
 preferred chart at `p`, applied to the parametrized point. -/
+@[simp]
 theorem boundaryChartedSpace_chartAt_symm_apply (hk : k ≠ 0) (p : ↥((𝓡∂ (n + 1)).boundary M))
     {z : EuclideanSpace ℝ (Fin n)}
     (hz : euclideanHalfSpaceParam n z ∈ (chartAt (EuclideanHalfSpace (n + 1)) (p : M)).target) :
