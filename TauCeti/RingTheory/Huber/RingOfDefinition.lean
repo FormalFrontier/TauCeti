@@ -78,9 +78,11 @@ private theorem mul_mem_addSubgroupClosure_mul_range_pow (B : Subring A) (a : A)
   | neg_left _ _ _ _ hx => simpa [neg_mul] using AddSubgroup.neg_mem _ hx
   | neg_right _ _ _ _ hx => simpa [mul_neg] using AddSubgroup.neg_mem _ hx
 
+omit [NonarchimedeanRing A] in
 /-- Adjoining finitely many power-bounded elements to a bounded subring gives a bounded subring.
 This is the boundedness input in Wedhorn's Corollary 6.4. -/
-theorem isBounded_adjoinRing (B₀ : Subring A) (hB₀ : IsBounded (B₀ : Set A)) (T : Finset A)
+theorem isBounded_adjoinRing [NonarchimedeanAddGroup A]
+    (B₀ : Subring A) (hB₀ : IsBounded (B₀ : Set A)) (T : Finset A)
     (hT : ∀ t ∈ T, IsPowerBounded t) :
     IsBounded (Subring.closure ((B₀ : Set A) ∪ (T : Set A)) : Set A) := by
   classical
