@@ -9,6 +9,7 @@ public import Mathlib.LinearAlgebra.Matrix.GeneralLinearGroup.Defs
 
 import Mathlib.Algebra.EuclideanDomain.Int
 import Mathlib.Data.Int.GCD
+import Mathlib.Data.Sign.Basic
 import Mathlib.LinearAlgebra.Determinant
 import Mathlib.LinearAlgebra.FreeModule.PID
 import Mathlib.LinearAlgebra.Matrix.Basis
@@ -110,6 +111,31 @@ private lemma sign_correct_unit_transform (A : Matrix (Fin n) (Fin n) ℤ) (d : 
     rw [show flip * L_mat * A * (Q_mat * flip) = flip * (L_mat * A * Q_mat) * flip from by
       simp only [Matrix.mul_assoc], hL_eq, hflip_diag]
 
+/-- **A diagonal matrix with nonzero entries in a strictly ordered commutative ring splits as a
+self-inverse matrix of unit determinant times a positive diagonal.** -/
+private lemma exists_involution_isUnit_det_mul_diagonal_pos {ι R : Type*} [Fintype ι]
+    [DecidableEq ι] [CommRing R] [LinearOrder R] [IsStrictOrderedRing R] {a : ι → R}
+    (ha_ne : ∀ i, a i ≠ 0) :
+    ∃ (s : Matrix ι ι R) (d : ι → R), (∀ i, 0 < d i) ∧ s * s = 1 ∧
+      IsUnit s.det ∧ Matrix.diagonal a = s * Matrix.diagonal d := by
+  set sv := fun i ↦ ((SignType.sign (a i) : SignType) : R) with hsv_def
+  have hsv_sq : ∀ i, sv i * sv i = 1 := fun i ↦ by
+    have h : SignType.sign (a i) * SignType.sign (a i) = 1 := by
+      simpa [pow_two] using
+        SignType.pow_even (SignType.sign (a i)) (by decide : Even 2)
+          (sign_ne_zero.mpr (ha_ne i))
+    simp only [hsv_def, ← SignType.coe_mul, h, SignType.coe_one]
+  have hss : Matrix.diagonal sv * Matrix.diagonal sv = 1 := by
+    rw [Matrix.diagonal_mul_diagonal, Matrix.diagonal_eq_one]
+    ext i
+    exact hsv_sq i
+  refine ⟨Matrix.diagonal sv, fun i ↦ |a i|, fun i ↦ abs_pos.mpr (ha_ne i), hss,
+    Matrix.isUnit_det_of_right_inverse hss, ?_⟩
+  · rw [Matrix.diagonal_mul_diagonal]
+    congr 1
+    ext i
+    exact (sign_mul_abs (a i)).symm
+
 /-- Refine a unit-determinant diagonalization `P⁻¹ * A * Q = diag a` (with `a i ≠ 0`) of a
 positive-determinant matrix to an `SL_n(ℤ)`-diagonalization with the positive diagonal `|a|`:
 absorb the signs of `a` into a diagonal `±1` matrix, then sign-correct the unit factors. -/
@@ -119,32 +145,15 @@ private lemma exists_SL_diagonal_of_unit_diagonalization (A P Q : Matrix (Fin n)
     ∃ (d : Fin n → ℤ) (_ : ∀ i, 0 < d i), ∃ (L R : SpecialLinearGroup (Fin n) ℤ),
       (L : Matrix (Fin n) (Fin n) ℤ) * A * (R : Matrix (Fin n) (Fin n) ℤ) =
       Matrix.diagonal d := by
-  set d := fun i ↦ |a i| with hd_def
-  have hd_pos : ∀ i, 0 < d i := fun i ↦ abs_pos.mpr (ha_ne i)
-  set sv := fun i ↦ if (0 : ℤ) < a i then (1 : ℤ) else -1 with hsv_def
-  have hsv_sq : ∀ i, sv i * sv i = 1 := fun i ↦ by simp only [hsv_def]; split_ifs <;> ring
-  have hsv_mul_d : ∀ i, sv i * d i = a i := fun i ↦ by
-    simp only [hsv_def, hd_def]; rcases lt_trichotomy (a i) 0 with h | h | h
-    · rw [if_neg (not_lt.mpr h.le), abs_of_neg h]; ring
-    · exact absurd h (ha_ne i)
-    · rw [if_pos h, abs_of_pos h, one_mul]
-  have h_sd : Matrix.diagonal a = Matrix.diagonal sv * Matrix.diagonal d := by
-    rw [Matrix.diagonal_mul_diagonal]; congr 1; ext i; exact (hsv_mul_d i).symm
-  have hss : Matrix.diagonal sv * Matrix.diagonal sv = 1 := by
-    rw [Matrix.diagonal_mul_diagonal]; ext i j; simp only [Matrix.diagonal_apply, Matrix.one_apply]
-    by_cases h : i = j
-    · subst h; simp [hsv_sq]
-    · simp [h]
-  have hs_det_unit : IsUnit (Matrix.diagonal sv).det := by
-    rw [Matrix.det_diagonal]; exact IsUnit.of_mul_eq_one _
-      (by rw [← Finset.prod_mul_distrib]; exact Finset.prod_eq_one (fun i _ ↦ hsv_sq i))
-  set L_mat := Matrix.diagonal sv * P⁻¹ with hL_def
+  obtain ⟨s, d, hd_pos, hss, hs_det_unit, h_sd⟩ :=
+    exists_involution_isUnit_det_mul_diagonal_pos ha_ne
+  set L_mat := s * P⁻¹ with hL_def
   have hL_eq : L_mat * A * Q = Matrix.diagonal d := by
     calc L_mat * A * Q
-        = Matrix.diagonal sv * (P⁻¹ * A * Q) := by rw [hL_def]; simp only [Matrix.mul_assoc]
-      _ = Matrix.diagonal sv * Matrix.diagonal a := by rw [hdiag]
-      _ = Matrix.diagonal sv * (Matrix.diagonal sv * Matrix.diagonal d) := by rw [h_sd]
-      _ = (Matrix.diagonal sv * Matrix.diagonal sv) * Matrix.diagonal d := by rw [Matrix.mul_assoc]
+        = s * (P⁻¹ * A * Q) := by rw [hL_def]; simp only [Matrix.mul_assoc]
+      _ = s * Matrix.diagonal a := by rw [hdiag]
+      _ = s * (s * Matrix.diagonal d) := by rw [h_sd]
+      _ = (s * s) * Matrix.diagonal d := by rw [Matrix.mul_assoc]
       _ = Matrix.diagonal d := by rw [hss, Matrix.one_mul]
   have hL_unit : IsUnit L_mat.det := by
     rw [hL_def, det_mul]; exact IsUnit.mul hs_det_unit (isUnit_nonsing_inv_det _ hP_unit)
