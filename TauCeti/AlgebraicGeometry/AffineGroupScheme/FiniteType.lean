@@ -4,7 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.AlgebraicGeometry.Morphisms.FiniteType
 public import Mathlib.CategoryTheory.ObjectProperty.Opposite
 public import TauCeti.Algebra.AlgebraicGroup.FiniteType.CommHopfAlgCat
 public import TauCeti.AlgebraicGeometry.AffineGroupScheme.Equivalence
@@ -82,16 +81,9 @@ lemma finiteTypeAffineGroupSchemeProperty_iff (S : CommRingCat.{u})
 schemes. This lets the predicate restrict equivalences to full subcategories. -/
 instance (S : CommRingCat.{u}) :
     (finiteTypeAffineGroupSchemeProperty S).IsClosedUnderIsomorphisms where
-  of_iso {X Y} e hX := by
-    change LocallyOfFiniteType _ at hX ⊢
-    let eOver := (Grp.forget _).mapIso ((affineGroupSchemeProperty S).ι.mapIso e)
-    let eScheme := (Over.forget _).mapIso eOver
-    change X.obj.X.left ≅ Y.obj.X.left at eScheme
-    rw [← MorphismProperty.cancel_left_of_respectsIso
-      (P := @LocallyOfFiniteType) eScheme.hom]
-    have hcomp : eScheme.hom ≫ Y.obj.X.hom = X.obj.X.hom := Over.w eOver.hom
-    rw [hcomp]
-    exact hX
+  of_iso e hX :=
+    (MorphismProperty.over_iso_iff (@LocallyOfFiniteType)
+      ((Grp.forget _).mapIso ((affineGroupSchemeProperty S).ι.mapIso e))).mp hX
 
 /-- The category of affine group schemes of finite type over the affine base `Spec S`.
 
@@ -140,9 +132,9 @@ theorem finiteTypeAffineGroupSchemeProperty_inverseImage
     (affineGroupSchemeProperty (CommRingCat.of R)).ι.preimageIso
       ((commHopfAlgCatOpEquivAffineGroupSchemeCat.functorCompιIso
         (CommRingCat.of R)).app H)
-  change LocallyOfFiniteType
-      ((commHopfAlgCatOpEquivAffineGroupSchemeCat
-        (CommRingCat.of R)).functor.obj H).obj.X.hom ↔ Algebra.FiniteType R H.unop
+  rw [ObjectProperty.prop_inverseImage_iff,
+    finiteTypeAffineGroupSchemeProperty_iff, ObjectProperty.op_iff,
+    finiteTypeCommHopfAlgProperty_iff]
   constructor
   · intro h
     have hG : finiteTypeAffineGroupSchemeProperty (CommRingCat.of R) G :=
@@ -166,6 +158,20 @@ noncomputable def finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat
       (CommRingCat.of R)).congrFullSubcategory
         (finiteTypeAffineGroupSchemeProperty_inverseImage R)
 
+/-- The forward restricted equivalence followed by the finite-type inclusion is definitionally
+the unrestricted equivalence applied after forgetting the finite-type proof. This private
+isomorphism isolates the representation boundary of `opEquivalence`, `trans`, and
+`congrFullSubcategory` from the public compatibility isomorphism below. -/
+private noncomputable def
+    finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCatFunctorCompιIso
+    (R : Type u) [CommRing R] :
+    (finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat R).functor ⋙
+        (finiteTypeAffineGroupSchemeProperty (CommRingCat.of R)).ι ≅
+      (forget₂ (FiniteTypeCommHopfAlgCat.{u, u} R)
+          (CommHopfAlgCat.{u} R)).op ⋙
+        (commHopfAlgCatOpEquivAffineGroupSchemeCat (CommRingCat.of R)).functor :=
+  Iso.refl _
+
 /-- The forward finite-type anti-equivalence, followed by the inclusions into affine group
 schemes and then all group schemes, is Mathlib's `hopfSpec` applied after forgetting the
 finite-type proof. This is the computation interface for the restricted equivalence. -/
@@ -177,12 +183,14 @@ noncomputable def
         (affineGroupSchemeProperty (CommRingCat.of R)).ι ≅
       (forget₂ (FiniteTypeCommHopfAlgCat.{u, u} R)
           (CommHopfAlgCat.{u} R)).op ⋙ hopfSpec (CommRingCat.of R) :=
-  NatIso.ofComponents
-    (fun H => (commHopfAlgCatOpEquivAffineGroupSchemeCat.functorCompιIso
-      (CommRingCat.of R)).app (op H.unop.obj))
-    (fun {H K} f => by
-      unfold finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat
-      exact (commHopfAlgCatOpEquivAffineGroupSchemeCat.functorCompιIso
-        (CommRingCat.of R)).hom.naturality f.unop.hom.op)
+  Functor.isoWhiskerRight
+      (finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCatFunctorCompιIso R)
+      (affineGroupSchemeProperty (CommRingCat.of R)).ι ≪≫
+    Functor.associator _ _ _ ≪≫
+    Functor.isoWhiskerLeft
+      (forget₂ (FiniteTypeCommHopfAlgCat.{u, u} R)
+        (CommHopfAlgCat.{u} R)).op
+      (commHopfAlgCatOpEquivAffineGroupSchemeCat.functorCompιIso
+        (CommRingCat.of R))
 
 end TauCeti
