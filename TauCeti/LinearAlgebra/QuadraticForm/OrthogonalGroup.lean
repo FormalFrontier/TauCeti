@@ -29,10 +29,10 @@ the hyperplanes of vectors of invertible norm. The orthogonal group is the targe
 twisted-conjugation homomorphism out of the Pin group, so it is the object the Pin/Spin double
 covers are stated against, and the reflections are the generators an eventual Cartan-Dieudonné
 theorem factors an orthogonal automorphism into. The structural and reflection declarations below
-hold over an arbitrary commutative ring; only the final equal-norm dichotomy assumes a field in
-which `2` is nonzero. The characteristic restriction is not incidental: in characteristic two
-`polar Q v v = 2 • Q v` vanishes, so `reflection Q v` fixes `v` instead of negating it and is a
-transvection rather than a reflection in `v ^ ⊥`.
+hold over an arbitrary commutative ring. The equal-norm dichotomy and fixed-subspace correction
+assume a field in which `2` is invertible. The characteristic restriction is not incidental: in
+characteristic two `polar Q v v = 2 • Q v` vanishes, so `reflection Q v` fixes `v` instead of
+negating it and is a transvection rather than a reflection in `v ^ ⊥`.
 
 ## Main definitions
 
@@ -84,8 +84,8 @@ subtraction in `M` and `N`, since `QuadraticMap.polar` is stated for `[AddCommGr
 [AddCommGroup N]`, but still no more than a `CommSemiring`; the determinant needs `M` to be an
 additive group over a `CommRing`, and the
 reflections need to divide by `Q v` and so are stated for a `QuadraticForm R M`, that is, for
-`N = R`. The closing Cartan--Dieudonne dichotomy additionally assumes a field, a nonzero common
-quadratic value, and `2 ≠ 0`.
+`N = R`. The fixed-subspace correction assumes a field and invertible `2`; the closing
+Cartan--Dieudonne dichotomy assumes a field, a nonzero common quadratic value, and `2 ≠ 0`.
 
 ## References
 
