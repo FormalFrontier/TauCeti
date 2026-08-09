@@ -15,10 +15,8 @@ module
 -- and opposite-matrix isomorphisms `AlgEquiv.op` and `AlgEquiv.mopMatrix`; that is why none of
 -- those is imported again here.
 public import TauCeti.Algebra.BrauerGroup.Trivial
--- Non-public: `orderOf` and the real quaternions occur only in the worked examples at the end of
--- the file, which are not part of this module's interface, so importers do not pay for either.
+-- Non-public: `orderOf` supports the order-divisibility result near the end of the file.
 import Mathlib.GroupTheory.OrderOfElement
-import TauCeti.Algebra.CentralSimple.Quaternion
 
 /-!
 # The Brauer group of a field is a commutative group
@@ -58,7 +56,8 @@ stated in the universe-polymorphic form.
 * `TauCeti.CSA.op`: the opposite of a central simple algebra, again a central simple algebra.
 * `TauCeti.isBrauerEquivalent_op_congr`: passing to the opposite algebra respects Brauer
   equivalence, so it descends to the classes.
-* `TauCeti.BrauerGroup.mk`: the Brauer class of a central simple algebra.
+* `TauCeti.BrauerGroup.mk`: the Brauer class of a central simple algebra, with
+  `TauCeti.BrauerGroup.inductionOn` its elimination principle.
 * `TauCeti.BrauerGroup.instCommGroup`: **the Brauer group of a field is a commutative group**, with
   multiplication induced by `⊗[K]`, identity the class of `K`, and the class of `Aᵐᵒᵖ` inverse to
   the class of `A`.
@@ -66,18 +65,19 @@ stated in the universe-polymorphic form.
   Brauer trivial; with `TauCeti.BrauerGroup.mk_eq_one_of_isSplittingField` and
   `TauCeti.BrauerGroup.mk_end` as the two standard sources of identity classes.
 * `TauCeti.BrauerGroup.orderOf_mk_dvd_two`: an algebra isomorphic to its own opposite has a class
-  of order dividing `2`. The real quaternions are the worked example.
+  of order dividing `2`. The real quaternions are the worked example in
+  `TauCeti/Algebra/BrauerGroup/Quaternion.lean`.
 
 ## What is not proved here
 
 The converse of `TauCeti.BrauerGroup.mk_eq_one_of_isSplittingField` -- that an algebra whose class
 is the identity is split by `K` -- needs the uniqueness of the division algebra in a Brauer class,
 which is not available yet. That is exactly what stands between the worked example
-`orderOf (mk (CSA.of ℝ ℍ[ℝ])) ∣ 2` proved below and the sharper `= 2`: the class of the real
-quaternions is its own inverse here, but showing it is *not* the identity would need the
-nonsplitting of `ℍ[ℝ]` (`TauCeti.Quaternion.isEmpty_algEquiv_matrix`) to be converted into Brauer
-nontriviality. The functoriality of `BrauerGroup` under base change, and splitting fields as the
-kernel of that homomorphism, are the next steps and are not taken here either.
+`orderOf (mk (CSA.of ℝ ℍ[ℝ])) ∣ 2` in `TauCeti/Algebra/BrauerGroup/Quaternion.lean` and the sharper
+`= 2`: the class of the real quaternions is its own inverse, but showing it is *not* the identity
+would need the nonsplitting of `ℍ[ℝ]` (`TauCeti.Quaternion.isEmpty_algEquiv_matrix`) to be converted
+into Brauer nontriviality. The functoriality of `BrauerGroup` under base change, and splitting
+fields as the kernel of that homomorphism, are the next steps and are not taken here either.
 
 ## References
 
@@ -90,8 +90,6 @@ R. S. Pierce, *Associative Algebras*, Springer GTM 88 (1982), Chapter 12.
 -/
 
 public section
-
-open scoped Quaternion
 
 universe u v
 
@@ -133,7 +131,15 @@ not an instance, so the quotient notation `⟦A⟧` is unavailable; this is the 
 that the lemmas below are stated in terms of. -/
 abbrev mk (A : CSA.{u, v} K) : BrauerGroup.{u, v} K := Quotient.mk (Brauer.CSA_Setoid K) A
 
+/-- To prove a property of every Brauer class, it suffices to prove it for the class of every
+finite-dimensional central simple algebra. -/
+@[elab_as_elim]
+protected theorem inductionOn {motive : BrauerGroup.{u, v} K → Prop} (x : BrauerGroup.{u, v} K)
+    (h : ∀ A : CSA.{u, v} K, motive (mk A)) : motive x :=
+  Quotient.inductionOn x h
+
 /-- **Two algebras have the same Brauer class exactly when they are Brauer equivalent.** -/
+@[simp]
 theorem mk_eq_mk_iff {A B : CSA.{u, v} K} : mk A = mk B ↔ IsBrauerEquivalent A B :=
   ⟨fun h ↦ Quotient.exact h, fun h ↦ Quotient.sound h⟩
 
@@ -200,6 +206,7 @@ theorem mk_op (A : CSA.{u, u} K) : mk (CSA.op A) = (mk A)⁻¹ :=
 This is the definition of `TauCeti.IsBrauerTrivial` read in the group: it is the statement that the
 identity class is the class of the split algebras, and every recognition of an identity class below
 goes through it. -/
+@[simp]
 theorem mk_eq_one_iff {A : CSA.{u, u} K} : mk A = 1 ↔ IsBrauerTrivial A := by
   rw [← mk_base]
   exact mk_eq_mk_iff
@@ -226,7 +233,7 @@ theorem mk_end (V : Type u) [AddCommGroup V] [Module K V] [FiniteDimensional K V
 
 This is the Brauer-group reading of an isomorphism `A ≃ₐ[K] Aᵐᵒᵖ`: since the class of `Aᵐᵒᵖ` is the
 inverse class, such an isomorphism says the class of `A` is its own inverse, equivalently that
-`A ⊗[K] A` is split. -/
+`A ⊗[K] A` is Brauer trivial. -/
 theorem inv_mk_eq_mk_of_algEquiv_op {A : CSA.{u, u} K} (e : (A : Type u) ≃ₐ[K] (A : Type u)ᵐᵒᵖ) :
     (mk A)⁻¹ = mk A :=
   (mk_op A).symm.trans (mk_eq_mk_of_algEquiv (A := CSA.op A) e.symm)
@@ -255,19 +262,6 @@ example (n : ℕ) [NeZero n] : BrauerGroup.mk (CSA.of K (Matrix (Fin n) (Fin n) 
 isomorphism `A ⊗[K] Aᵐᵒᵖ ≃ₐ[K] M_{finrank K A}(K)` once the group structure is in place. -/
 example (A : CSA.{u, u} K) : BrauerGroup.mk A * BrauerGroup.mk (CSA.op A) = 1 := by
   simp
-
-/-- **The Brauer class of the real quaternions is its own inverse.** Quaternion conjugation is an
-`ℝ`-algebra isomorphism `ℍ[ℝ] ≃ₐ[ℝ] ℍ[ℝ]ᵐᵒᵖ` (Mathlib's `Quaternion.starAe`), so this is
-`TauCeti.BrauerGroup.inv_mk_eq_mk_of_algEquiv_op`; concretely it is the isomorphism
-`ℍ[ℝ] ⊗[ℝ] ℍ[ℝ] ≃ₐ[ℝ] M₄(ℝ)` of `TauCeti.Quaternion.tensorSelfAlgEquivMatrix`. -/
-example : (BrauerGroup.mk (CSA.of ℝ ℍ[ℝ]))⁻¹ = BrauerGroup.mk (CSA.of ℝ ℍ[ℝ]) :=
-  BrauerGroup.inv_mk_eq_mk_of_algEquiv_op _root_.Quaternion.starAe
-
-/-- **The Brauer class of the real quaternions has order dividing `2`.** That the order is exactly
-`2` -- so that `[ℍ[ℝ]]` generates a copy of `ℤ/2` inside `BrauerGroup ℝ` -- needs the class to be
-nontrivial, which the nonsplitting of `ℍ[ℝ]` does not yet give here; see the module docstring. -/
-example : orderOf (BrauerGroup.mk (CSA.of ℝ ℍ[ℝ])) ∣ 2 :=
-  BrauerGroup.orderOf_mk_dvd_two _root_.Quaternion.starAe
 
 end Examples
 
