@@ -14,9 +14,9 @@ import Mathlib.Analysis.SpecialFunctions.Complex.Circle
 
 A Jordan curve of `ℂ` contains no disc: `TauCeti.IsJordanCurve.interior_eq_empty`. Neither does an
 arc, the continuous injective image of a compact set of reals
-(`TauCeti.interior_image_eq_empty_of_isCompact`). Both are the same one-dimensionality statement,
-and both come from the same source — a set of the plane carrying a continuous real-valued injection
-has empty interior — through the criterion `TauCeti.subsingleton_of_continuousOn_injOn` of
+(`TauCeti.interior_image_eq_empty_of_isCompact_of_continuousOn_of_injOn`). Both come from the same
+source — a set of the plane carrying a continuous real-valued injection has empty interior —
+through the criterion `TauCeti.subsingleton_of_continuousOn_injOn` of
 `TauCeti/Topology/Connected/OrderInjection.lean`: a preconnected set whose punctures stay
 preconnected does not inject into a line.
 
@@ -54,8 +54,8 @@ direction classically leans on ... are not established here", and that whoever a
 settle them first. That a curve is nowhere dense in the plane is the first of those facts and the
 standing hypothesis under which the others are read: it is what says the boundary of a Jordan
 domain — and hence every boundary cluster set inside it, and the closure of every image crosscut —
-is a genuine one-dimensional object rather than a set with interior, and it is an elementary
-ingredient of the Jordan curve theorem itself.
+contains no nonempty open subset of the plane, and it is an elementary ingredient of the Jordan
+curve theorem itself.
 `TauCeti/Analysis/Complex/Conformal/Crosscut/Image.lean` already argues from the same fact for a
 circular cut, where it is read off the explicit parametrization; for the image boundary, which is
 only known to be a Jordan curve, no parametrization is available and the statements below are what
@@ -66,16 +66,16 @@ is left.
 The curves are subsets of `ℂ`, matching the generality bar of `ConformalMapping/README.md`, which
 fixes scalar `ℂ` for layers L0–L6, and matching `TauCeti/Topology/JordanCurve/Separation.lean`,
 whose punctured-circle theorem is the geometric input. Nothing in the argument is special to `ℂ`
-beyond the two-dimensionality that keeps a punctured circle connected, but the punctured circle is
-available here and not in a general plane. The purely order-theoretic core is stated for an
-arbitrary densely ordered line in `TauCeti/Topology/Connected/OrderInjection.lean`.
+beyond a circle inside a ball having no cut point, but that is available here and not in a general
+plane. The purely order-theoretic core is stated for an arbitrary densely ordered line in
+`TauCeti/Topology/Connected/OrderInjection.lean`.
 
 ## Main results
 
 * `TauCeti.interior_eq_empty_of_continuous_injective` — a subset of `ℂ` carrying a continuous
   injection into `ℝ` has empty interior.
-* `TauCeti.interior_image_eq_empty_of_isCompact` — **an arc of the plane has empty interior**: the
-  continuous injective image of a compact set of reals contains no disc.
+* `TauCeti.interior_image_eq_empty_of_isCompact_of_continuousOn_of_injOn` — **an arc of the plane
+  has empty interior**: the continuous injective image of a compact set of reals contains no disc.
 * `TauCeti.IsJordanCurve.interior_eq_empty` — **a Jordan curve of the plane has empty interior**.
 * `TauCeti.IsJordanCurve.dense_compl` and `TauCeti.IsJordanCurve.frontier_eq_self` — the two
   readings of that: the complement of a Jordan curve is dense, and a Jordan curve is its own
@@ -169,15 +169,12 @@ theorem interior_eq_empty_of_continuous_injective {ψ : C → ℝ} (hψc : Conti
 set of reals contains no disc.
 
 A continuous injection on a compact set is a homeomorphism onto its image
-(`Continuous.homeoOfEquivCompactToT2`), so the inverse parametrization is a continuous injection of
+(`TauCeti.imageHomeomorphOfIsCompact`), so the inverse parametrization is a continuous injection of
 the arc into `ℝ`, and `TauCeti.interior_eq_empty_of_continuous_injective` applies. Compactness is
 what makes that inverse continuous. -/
-theorem interior_image_eq_empty_of_isCompact {K : Set ℝ} (hK : IsCompact K) {γ : ℝ → ℂ}
-    (hγ : ContinuousOn γ K) (hinj : Set.InjOn γ K) : interior (γ '' K) = ∅ := by
-  have : CompactSpace K := isCompact_iff_compactSpace.mp hK
-  have e : K ≃ₜ γ '' K :=
-    Continuous.homeoOfEquivCompactToT2 (f := hinj.bijOn_image.equiv γ)
-      (hγ.mapsToRestrict hinj.bijOn_image.mapsTo)
+theorem interior_image_eq_empty_of_isCompact_of_continuousOn_of_injOn {K : Set ℝ} (hK : IsCompact K)
+    {γ : ℝ → ℂ} (hγ : ContinuousOn γ K) (hinj : Set.InjOn γ K) : interior (γ '' K) = ∅ := by
+  have e : K ≃ₜ γ '' K := imageHomeomorphOfIsCompact hK hγ hinj
   exact interior_eq_empty_of_continuous_injective (ψ := fun x => ((e.symm x : K) : ℝ))
     (continuous_subtype_val.comp e.symm.continuous)
     fun x y h => e.symm.injective (Subtype.ext h)
@@ -195,6 +192,7 @@ circle `Metric.sphere z (r / 2)`, which misses the centre `z`. Deleting the corr
 `e z` of the model circle makes `Complex.arg` — composed with the rotation
 `u ↦ Circle.exp π * (e z)⁻¹ * u`, which carries `e z` to the point `-1` where `Complex.arg` jumps —
 a continuous injection of what is left into `ℝ`. -/
+@[simp]
 theorem IsJordanCurve.interior_eq_empty (h : IsJordanCurve C) : interior C = ∅ := by
   rw [eq_empty_iff_forall_notMem]
   intro z hz
@@ -234,8 +232,9 @@ closed with empty interior. -/
 theorem IsJordanCurve.dense_compl (h : IsJordanCurve C) : Dense Cᶜ :=
   interior_eq_empty_iff_dense_compl.mp h.interior_eq_empty
 
-/-- **A Jordan curve of the plane is its own frontier.** It is closed, so its frontier is what is
-left after removing its interior, and that is empty. -/
+/-- **A Jordan curve of the plane is its own frontier.** Being closed, it satisfies
+`frontier C = C \ interior C`; its interior is empty, so nothing is removed. -/
+@[simp]
 theorem IsJordanCurve.frontier_eq_self (h : IsJordanCurve C) : frontier C = C := by
   rw [h.isClosed.frontier_eq, h.interior_eq_empty, sdiff_empty]
 

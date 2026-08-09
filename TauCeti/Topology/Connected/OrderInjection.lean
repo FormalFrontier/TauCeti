@@ -23,14 +23,14 @@ order-connected (`IsPreconnected.Icc_subset`), so it contains every value `c` st
 Now delete `x`. The set `S \ {x}` is still preconnected and still contains `a` and `b`, so its
 image again contains `c` — but the only point of `S` taking the value `c` is `x`, which is gone.
 
-## A one-dimensional obstruction
+## Sets without cut points
 
-The hypothesis `∀ x ∈ S, IsPreconnected (S \ {x})` is what a set of topological dimension at least
-two satisfies and a curve does not: a disc of the plane keeps its punctures connected, an interval
-does not. So the theorem is the elementary fragment of invariance of dimension that separates
-*plane* from *line*, and it is used in that role by
-`TauCeti/Topology/JordanCurve/EmptyInterior.lean`, where the sets `S` are circles of `ℂ` sitting
-inside a curve and the line is `ℝ`.
+The hypothesis `∀ x ∈ S, IsPreconnected (S \ {x})` says that `S` has no cut point. A circle has
+none, and so does a disc; a closed interval has one at each of its interior points, and a line has
+one everywhere. So the theorem says that a preconnected set with no cut point and more than one
+point carries no continuous injection into a line — which is exactly how
+`TauCeti/Topology/JordanCurve/EmptyInterior.lean` uses it, with `S` a circle of `ℂ` sitting inside
+a curve and the line `ℝ`.
 
 Both hypotheses on `S` are needed. Dropping preconnectedness of `S` itself leaves the two-point
 set, whose punctures are singletons and which injects continuously into `ℝ`; dropping
@@ -68,8 +68,8 @@ preconnected image `ψ '' S` must attain, at a point `x` of `S` distinct from `a
 `x` keeps `S` preconnected and keeps `a` and `b`, so `c` is attained again — at a second point of
 `S`, contradicting injectivity.
 
-The hypothesis on the punctures is the one that fails for a line and holds in dimension at least
-two, so the statement is read as: no set of `S`'s kind is one-dimensional. -/
+The hypothesis on the punctures says that `S` has no cut point; it holds for a circle and for a
+disc, and fails for an interval and for a line. -/
 theorem subsingleton_of_continuousOn_injOn (hS : IsPreconnected S)
     (hpunct : ∀ x ∈ S, IsPreconnected (S \ {x})) (hψc : ContinuousOn ψ S) (hψi : S.InjOn ψ) :
     S.Subsingleton := by

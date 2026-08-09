@@ -40,6 +40,8 @@ transporting the property back to a compact set from an image already known to b
 * `TauCeti.IsJordanCurve` — a set homeomorphic to the circle.
 * `TauCeti.jordanParam` — the parametrization of a Jordan curve by the circle underlying a
   homeomorphism of the curve with `Circle`.
+* `TauCeti.imageHomeomorphOfIsCompact` — the set-level form of `Continuous.homeoOfEquivCompactToT2`:
+  a map continuous and injective on a compact set is a homeomorphism of that set onto its image.
 
 ## Main results
 
@@ -113,8 +115,10 @@ theorem isJordanCurve_iff : IsJordanCurve C ↔ Nonempty (C ≃ₜ Circle) := If
 
 /-- A continuous injection defined on a compact set is a homeomorphism onto its image, the image
 carrying the subspace topology of a Hausdorff space. This is the set-level form of
-`Continuous.homeoOfEquivCompactToT2`, and the engine of both transfer lemmas below. -/
-private noncomputable def imageHomeomorphOfIsCompact [T2Space Y] (hC : IsCompact C) {g : X → Y}
+`Continuous.homeoOfEquivCompactToT2`, and the engine of both transfer lemmas below; it is also what
+turns the parametrization of an arc into a continuous injection of the arc into the line, in
+`TauCeti/Topology/JordanCurve/EmptyInterior.lean`. -/
+noncomputable def imageHomeomorphOfIsCompact [T2Space Y] (hC : IsCompact C) {g : X → Y}
     (hg : ContinuousOn g C) (hgi : InjOn g C) : C ≃ₜ g '' C :=
   haveI : CompactSpace C := isCompact_iff_compactSpace.mp hC
   Continuous.homeoOfEquivCompactToT2 (f := hgi.bijOn_image.equiv g)
