@@ -65,7 +65,7 @@ namespace TauCeti
 
 section Regular
 
-variable {k G : Type*} [CommRing k] [Group G] [Fintype G] [DecidableEq G]
+variable {k G : Type*} [CommSemiring k] [Group G] [Fintype G] [DecidableEq G]
 
 /-- **The regular trace reads off the coefficient at the identity.** Every diagonal entry of the
 left regular matrix of `u` is the coefficient of `u` at `1`, so the trace is `|G|` times it. -/
