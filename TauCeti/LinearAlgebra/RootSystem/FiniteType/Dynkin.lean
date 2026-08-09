@@ -121,18 +121,17 @@ private def corootsF4 : _root_.Matrix (Fin 4) (Fin 4) ℚ :=
 
 /-- The standard Cartan matrix of type `F₄` is of finite type. -/
 theorem isFiniteType_cartanMatrix_F4 : IsFiniteType F4.cartanMatrix := by
-  let d : Fin 4 → ℚ := fun i ↦ if i.val < 2 then 1 else 2
-  have hgram : _root_.Matrix.of (fun i j ↦ d i * (CartanMatrix.F₄ i j : ℚ))
+  have hd : ∀ i, (0 : ℚ) < ![1, 1, 2, 2] i := by intro i; fin_cases i <;> norm_num
+  have hgram : _root_.Matrix.of (fun i j ↦ ![1, 1, 2, 2] i * (CartanMatrix.F₄ i j : ℚ))
       = corootsF4ᴴ * corootsF4 := by
     ext i j
     fin_cases i <;> fin_cases j <;>
-      norm_num [d, corootsF4, CartanMatrix.F₄, _root_.Matrix.mul_apply, Fin.sum_univ_succ,
+      norm_num [corootsF4, CartanMatrix.F₄, _root_.Matrix.mul_apply, Fin.sum_univ_succ,
         _root_.Matrix.cons_val_succ]
   have hdet : CartanMatrix.F₄.det ≠ 0 := by rw [CartanMatrix.F₄_det]; norm_num
   rw [cartanMatrix_F4]
   exact isFiniteType_of_conjTranspose_mul_self_of_det_ne_zero CartanMatrix.F₄_diag
-    CartanMatrix.F₄_off_diag_nonpos (d := d) (by intro i; dsimp only [d]; split <;> norm_num)
-    hgram hdet
+    CartanMatrix.F₄_off_diag_nonpos (d := ![1, 1, 2, 2]) hd hgram hdet
 
 /-- The coordinate model of type `G₂`: column `i` is the simple coroot `αᵢ₊₁^∨` of Bourbaki's plate
 IX, scaled by the common factor `√3` and written in an orthonormal basis of `ℚ³` for which the
@@ -147,12 +146,12 @@ private def corootsG2 : _root_.Matrix (Fin 3) (Fin 2) ℚ :=
 
 /-- The standard Bourbaki-numbered Cartan matrix of type `G₂` is of finite type. -/
 theorem isFiniteType_cartanMatrix_G2 : IsFiniteType G2.cartanMatrix := by
-  let d : Fin 2 → ℚ := fun i ↦ if i = 0 then 3 else 1
-  have hgram : _root_.Matrix.of (fun i j ↦ d i * (CartanMatrix.G₂ᵀ i j : ℚ))
+  have hd : ∀ i, (0 : ℚ) < ![3, 1] i := by intro i; fin_cases i <;> norm_num
+  have hgram : _root_.Matrix.of (fun i j ↦ ![3, 1] i * (CartanMatrix.G₂ᵀ i j : ℚ))
       = corootsG2ᴴ * corootsG2 := by
     ext i j
     fin_cases i <;> fin_cases j <;>
-      norm_num [d, corootsG2, CartanMatrix.G₂, _root_.Matrix.mul_apply, Fin.sum_univ_succ,
+      norm_num [corootsG2, CartanMatrix.G₂, _root_.Matrix.mul_apply, Fin.sum_univ_succ,
         _root_.Matrix.cons_val_succ]
   have hdet : CartanMatrix.G₂ᵀ.det ≠ 0 := by
     rw [_root_.Matrix.det_transpose, CartanMatrix.G₂_det]; norm_num
@@ -161,6 +160,6 @@ theorem isFiniteType_cartanMatrix_G2 : IsFiniteType G2.cartanMatrix := by
   exact isFiniteType_of_conjTranspose_mul_self_of_det_ne_zero
     (fun i ↦ CartanMatrix.G₂_diag i)
     (fun i j hij ↦ CartanMatrix.G₂_off_diag_nonpos j i hij.symm)
-    (d := d) (by intro i; dsimp only [d]; split <;> norm_num) hgram hdet
+    (d := ![3, 1]) hd hgram hdet
 
 end TauCeti.DynkinType
