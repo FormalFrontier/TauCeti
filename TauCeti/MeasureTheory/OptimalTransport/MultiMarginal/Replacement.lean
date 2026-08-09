@@ -162,28 +162,6 @@ namespace MultiCoupling
 variable {ι : Type u} {X : ι → Type v} [∀ j, MeasurableSpace (X j)]
   {μ : ∀ j, ProbabilityMeasure (X j)}
 
-/-- Replace one entry of a family of probability measures. This hides the irrelevant choice of a
-decidable equality on the index type from the marginal-replacement API. -/
-def replaceFamily (μ : ∀ j, ProbabilityMeasure (X j)) (i : ι)
-    (ν : ProbabilityMeasure (X i)) : ∀ j, ProbabilityMeasure (X j) := by
-  classical
-  exact Function.update μ i ν
-
-/-- The selected entry of `replaceFamily` is the replacement measure. -/
-@[simp]
-theorem replaceFamily_same (μ : ∀ j, ProbabilityMeasure (X j)) (i : ι)
-    (ν : ProbabilityMeasure (X i)) : replaceFamily μ i ν i = ν := by
-  classical
-  simp [replaceFamily]
-
-/-- Every unselected entry of `replaceFamily` is unchanged. -/
-@[simp]
-theorem replaceFamily_of_ne (μ : ∀ j, ProbabilityMeasure (X j)) (i : ι)
-    (ν : ProbabilityMeasure (X i)) {j : ι} (hji : j ≠ i) :
-    replaceFamily μ i ν j = μ j := by
-  classical
-  simp [replaceFamily, hji]
-
 /-- Replace the `i`th marginal of a multi-marginal coupling according to a two-coordinate plan.
 
 The replacement plan must start at the prescribed marginal `μ i`. Its second marginal becomes the
@@ -191,19 +169,21 @@ new prescribed marginal, while every other prescribed marginal remains unchanged
 def replaceMarginal (π : MultiCoupling μ) (i : ι) [StandardBorelSpace (X i)]
     (σ : ProbabilityMeasure (X i × X i))
     (hσ : σ.toMeasure.fst = (μ i).toMeasure) :
-    MultiCoupling (replaceFamily μ i (σ.map measurable_snd.aemeasurable)) := by
+    MultiCoupling (@Function.update ι (fun j ↦ ProbabilityMeasure (X j))
+      (Classical.decEq ι) μ i (σ.map measurable_snd.aemeasurable)) := by
   refine ⟨Measure.replaceMarginal π.1 i σ, ?_⟩
   constructor
   intro j
   by_cases hji : j = i
   · subst j
     rw [Measure.map_eval_replaceMarginal_same]
-    · simp only [replaceFamily_same, ProbabilityMeasure.toMeasure_map]
+    · simp only [Function.update_self, ProbabilityMeasure.toMeasure_map]
       rw [← Measure.snd]
     · rw [hσ]
       exact (π.2.marginal_eq i).symm
   · rw [Measure.map_eval_replaceMarginal_of_ne π.1 i σ hji, π.2.marginal_eq,
-      replaceFamily_of_ne μ i _ hji]
+      @Function.update_of_ne ι (fun j ↦ ProbabilityMeasure (X j)) (Classical.decEq ι)
+        j i hji (σ.map measurable_snd.aemeasurable) μ]
 
 /-- The underlying probability measure of a bundled marginal replacement is the raw
 gluing-and-update construction. -/
