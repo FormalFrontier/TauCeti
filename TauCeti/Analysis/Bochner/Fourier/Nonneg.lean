@@ -6,16 +6,17 @@ module
 
 public import Mathlib.Analysis.Fourier.FourierTransform
 public import Mathlib.MeasureTheory.Measure.Haar.OfBasis
-public import TauCeti.Analysis.PositiveDefinite.FourierAtom
 public import TauCeti.Analysis.PositiveDefinite.Kernel.Basic
 -- The remaining imports are proof-only: the Fejér averaging argument uses dominated convergence,
 -- Fubini, simple-function approximation, the Haar ball formulas and negation invariance, the
--- Fourier atom kernel, and the kernel Cauchy–Schwarz bound.
+-- Fourier atom kernel with its Fourier-transform bridge, and the kernel Cauchy–Schwarz bounds.
 import Mathlib.MeasureTheory.Function.SimpleFuncDenseLp
 import Mathlib.MeasureTheory.Integral.DominatedConvergence
 import Mathlib.MeasureTheory.Integral.Prod
 import Mathlib.MeasureTheory.Measure.Haar.Unique
 import Mathlib.MeasureTheory.Measure.Lebesgue.EqHaar
+import TauCeti.Analysis.Bochner.Fourier.Convention
+import TauCeti.Analysis.PositiveDefinite.FourierAtom
 import TauCeti.Analysis.PositiveDefinite.Kernel.Bounds
 
 /-!
@@ -105,28 +106,6 @@ private theorem re_sum_nonneg_of_kernel
   have h := (isPositiveDefiniteKernel_iff.mp hpd).2 x c
   exact (Complex.nonneg_iff.mp h).1
 
-omit [InnerProductSpace ℝ V] [FiniteDimensional ℝ V] [MeasurableSpace V] [BorelSpace V] in
-/-- The value at `0` of a function with positive-definite subtraction kernel has nonnegative
-real part. -/
-theorem re_map_zero_nonneg_of_isPositiveDefiniteKernel
-    (hpd : IsPositiveDefiniteKernel fun a b : V => ψ (a - b)) :
-    0 ≤ (ψ 0).re := by
-  have h : (0 : ℂ) ≤ ψ 0 := by
-    simpa using isPositiveDefiniteKernel_apply_self_nonneg hpd 0
-  exact (Complex.nonneg_iff.mp h).1
-
-omit [InnerProductSpace ℝ V] [FiniteDimensional ℝ V] [MeasurableSpace V] [BorelSpace V] in
-/-- A function with positive-definite subtraction kernel is uniformly bounded by the real part
-of its value at `0`. -/
-theorem norm_le_re_map_zero_of_isPositiveDefiniteKernel
-    (hpd : IsPositiveDefiniteKernel fun a b : V => ψ (a - b)) (z : V) :
-    ‖ψ z‖ ≤ (ψ 0).re := by
-  have h := isPositiveDefiniteKernel_normSq_le hpd z 0
-  simp only [sub_zero, sub_self, RCLike.normSq_eq_def', RCLike.re_to_complex] at h
-  refine le_of_sq_le_sq ?_ (re_map_zero_nonneg_of_isPositiveDefiniteKernel hpd)
-  calc ‖ψ z‖ ^ 2 ≤ (ψ 0).re * (ψ 0).re := h
-    _ = (ψ 0).re ^ 2 := (sq ((ψ 0).re)).symm
-
 end KernelConsequences
 
 /-! ### Step A: the positive-definite double integral has nonnegative real part -/
@@ -140,8 +119,7 @@ sum with real coefficients, so its real part is nonnegative. The sums converge t
 See Rudin, *Fourier Analysis on Groups*, proof of Theorem 1.4.3, step 1. -/
 private theorem pd_double_integral_re_nonneg (ψ : V → ℂ)
     (hpd : IsPositiveDefiniteKernel fun a b : V => ψ (a - b))
-    (hcont : Continuous ψ) (S : Set V) (_hSmeas : MeasurableSet S)
-    (hSbdd : Bornology.IsBounded S) :
+    (hcont : Continuous ψ) (S : Set V) (hSbdd : Bornology.IsBounded S) :
     0 ≤ (∫ x in S, ∫ y in S, ψ (x - y)).re := by
   classical
   let μ := (volume : Measure V).restrict S
@@ -307,7 +285,7 @@ private theorem measurable_overlapRatio (R : ℝ) : Measurable (overlapRatio R :
   unfold overlapRatio
   split_ifs with h
   · exact measurable_const
-  · apply Measurable.div_const
+  · refine Measurable.div_const ?_ _
     let E := {p : V × V | p.2 ∈ Metric.closedBall (0 : V) R ∧ dist p.2 p.1 ≤ R}
     have hE : MeasurableSet E :=
       .inter (measurableSet_closedBall.preimage measurable_snd)
@@ -317,8 +295,6 @@ private theorem measurable_overlapRatio (R : ℝ) : Measurable (overlapRatio R :
       intro v
       ext x
       simp [E, Metric.mem_closedBall, Set.mem_inter_iff, dist_comm x v]
-    change Measurable fun v => (volume (Metric.closedBall (0 : V) R ∩
-        Metric.closedBall v R)).toReal
     simp_rw [← hfib]
     exact (measurable_measure_prodMk_left hE (ν := volume)).ennreal_toReal
 
@@ -553,8 +529,7 @@ private theorem pd_integral_re_nonneg (ψ : V → ℂ)
     · exact re_map_zero_nonneg_of_isPositiveDefiniteKernel hpd
     · rw [Complex.smul_re]
       apply mul_nonneg (inv_nonneg.mpr ENNReal.toReal_nonneg)
-      exact pd_double_integral_re_nonneg ψ hpd hcont _ measurableSet_closedBall
-        Metric.isBounded_closedBall
+      exact pd_double_integral_re_nonneg ψ hpd hcont _ Metric.isBounded_closedBall
   -- `J n → ∫ ψ` via the Fubini identity and dominated convergence.
   have hconv : Tendsto J atTop (nhds (∫ x, ψ x)) := by
     suffices h : Tendsto
@@ -585,13 +560,6 @@ private theorem pd_integral_re_nonneg (ψ : V → ℂ)
   exact ge_of_tendsto' ((Complex.continuous_re.tendsto _).comp hconv) hnn
 
 /-! ### The main theorems -/
-
-/-- The Fourier transform written as the integral against the Fourier atom. -/
-theorem fourierIntegral_eq_integral_fourierAtom_mul (F : V → ℂ) (ξ : V) :
-    𝓕 F ξ = ∫ v, fourierAtom ξ v * F v := by
-  rw [Real.fourier_eq]
-  refine integral_congr_ae (ae_of_all _ fun v => ?_)
-  simp only [Circle.smul_def, smul_eq_mul, fourierAtom_eq_fourierChar]
 
 /-- The Fourier transform of a continuous integrable positive-definite function on a
 finite-dimensional real inner-product space has nonnegative real part.

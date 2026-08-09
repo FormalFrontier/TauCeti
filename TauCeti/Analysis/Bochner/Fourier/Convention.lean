@@ -4,6 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+public import Mathlib.Analysis.Fourier.FourierTransform
+public import Mathlib.MeasureTheory.Measure.Haar.OfBasis
 public import TauCeti.Analysis.Bochner.CharFun.PositiveDefinite
 public import TauCeti.Analysis.PositiveDefinite.FourierAtom
 public import TauCeti.Analysis.PositiveDefinite.Pullback
@@ -25,6 +27,8 @@ function API item asking for "a stated Fourier-convention conversion lemma betwe
 
 * `TauCeti.integral_fourierAtom_eq_charFun_neg_two_pi_smul`: the Fourier-convention integral is
   `charFun μ ((-2π) • a)`.
+* `TauCeti.fourierIntegral_eq_integral_fourierAtom_mul`: the Fourier transform `𝓕 F` is the
+  integral of `F` against the Fourier atom.
 * `TauCeti.fourierConventionCharFun_isPositiveDefiniteKernel`: the Fourier-convention
   translation-invariant kernel of a finite measure is positive definite.
 
@@ -38,7 +42,7 @@ function API item asking for "a stated Fourier-convention conversion lemma betwe
 public section
 
 open MeasureTheory Complex
-open scoped ComplexOrder
+open scoped ComplexOrder FourierTransform
 
 namespace TauCeti
 
@@ -62,6 +66,20 @@ theorem integral_fourierAtom_eq_charFun_neg_two_pi_smul (a : V) :
     ∫ q, fourierAtom a q ∂μ = MeasureTheory.charFun μ ((-2 * Real.pi) • a) := by
   simpa only [fourierAtom_apply, neg_mul] using
     integral_exp_neg_two_pi_inner_eq_charFun_neg_two_pi_smul (μ := μ) a
+
+section FourierIntegral
+
+variable {U : Type*} [NormedAddCommGroup U] [InnerProductSpace ℝ U] [FiniteDimensional ℝ U]
+  [MeasurableSpace U] [BorelSpace U]
+
+/-- The Fourier transform written as the integral against the Fourier atom. -/
+theorem fourierIntegral_eq_integral_fourierAtom_mul (F : U → ℂ) (ξ : U) :
+    𝓕 F ξ = ∫ v, fourierAtom ξ v * F v := by
+  rw [Real.fourier_eq]
+  refine integral_congr_ae (ae_of_all _ fun v => ?_)
+  simp only [Circle.smul_def, smul_eq_mul, fourierAtom_eq_fourierChar]
+
+end FourierIntegral
 
 variable {W : Type*} [SeminormedAddCommGroup W] [InnerProductSpace ℝ W]
   [MeasurableSpace W] [OpensMeasurableSpace W] {ν : Measure W} [IsFiniteMeasure ν]

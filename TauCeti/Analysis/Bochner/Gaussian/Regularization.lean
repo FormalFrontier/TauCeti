@@ -11,14 +11,15 @@ public import TauCeti.Analysis.PositiveDefinite.FourierAtom
 public import TauCeti.Analysis.PositiveDefinite.Kernel.Basic
 -- The remaining imports are proof-only: Fourier inversion and the Gaussian Fourier transform,
 -- negation invariance of Haar measure, the `withDensity` Bochner-integral formula, the
--- nonnegativity of the Fourier transform of a positive-definite function, the Gaussian kernel,
--- and the kernel Cauchy–Schwarz bound.
+-- Fourier-atom bridge, the nonnegativity of the Fourier transform of a positive-definite
+-- function, the Gaussian kernel, and the kernel Cauchy–Schwarz bounds.
 import Mathlib.Analysis.Fourier.Inversion
 import Mathlib.Analysis.SpecialFunctions.Gaussian.FourierTransform
 import Mathlib.MeasureTheory.Group.Integral
 import Mathlib.MeasureTheory.Integral.Bochner.ContinuousLinearMap
-import TauCeti.Analysis.Bochner.FourierNonneg
-import TauCeti.Analysis.Bochner.Gaussian
+import TauCeti.Analysis.Bochner.Fourier.Convention
+import TauCeti.Analysis.Bochner.Fourier.Nonneg
+import TauCeti.Analysis.Bochner.Gaussian.Basic
 import TauCeti.Analysis.PositiveDefinite.Kernel.Bounds
 
 /-!
@@ -50,8 +51,7 @@ and the recovered identity is stated in the `fourierAtom` convention rather than
 * `TauCeti.isPositiveDefiniteKernel_gaussianRegularize`: `φ_ε` has a positive-definite
   subtraction kernel whenever `φ` does.
 * `TauCeti.continuous_gaussianRegularize`, `TauCeti.integrable_gaussianRegularize`,
-  `TauCeti.gaussianRegularize_zero`, `TauCeti.tendsto_gaussianRegularize`: the basic analytic
-  facts about `φ_ε`.
+  `TauCeti.tendsto_gaussianRegularize`: the basic analytic facts about `φ_ε`.
 * `TauCeti.integrable_fourierIntegral_of_isPositiveDefiniteKernel`: the Fourier transform of a
   continuous integrable positive-definite function is integrable.
 * `TauCeti.integrable_fourierIntegral_gaussianRegularize`: the specialization to `φ_ε`.
@@ -80,8 +80,9 @@ section Regularize
 
 variable {V : Type*} [NormedAddCommGroup V]
 
-/-- The Gaussian regularization `φ_ε = φ · exp (-ε‖·‖²)` of a function `φ`. For `ε > 0` it
-decays like a Gaussian, and as `ε → 0⁺` it recovers `φ` pointwise. -/
+/-- The Gaussian regularization `φ_ε = φ · exp (-ε‖·‖²)` of a function `φ`. For `ε > 0` and
+bounded `φ` — in particular when `φ` has a positive-definite subtraction kernel — it decays
+like a Gaussian, and as `ε → 0⁺` it recovers `φ` pointwise. -/
 noncomputable def gaussianRegularize (φ : V → ℂ) (ε : ℝ) : V → ℂ :=
   fun x => φ x * Complex.exp (-(ε * ‖x‖ ^ 2 : ℝ))
 
@@ -90,10 +91,6 @@ noncomputable def gaussianRegularize (φ : V → ℂ) (ε : ℝ) : V → ℂ :=
 theorem gaussianRegularize_apply (φ : V → ℂ) (ε : ℝ) (x : V) :
     gaussianRegularize φ ε x = φ x * Complex.exp (-(ε * ‖x‖ ^ 2 : ℝ)) := by
   simp [gaussianRegularize]
-
-/-- The Gaussian regularization agrees with `φ` at the origin. -/
-theorem gaussianRegularize_zero (φ : V → ℂ) (ε : ℝ) : gaussianRegularize φ ε 0 = φ 0 := by
-  simp
 
 /-- The Gaussian regularization is continuous when `φ` is. -/
 theorem continuous_gaussianRegularize {φ : V → ℂ} (hcont : Continuous φ) (ε : ℝ) :
@@ -115,6 +112,13 @@ variable {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V]
 
 /-! ### Fourier-analytic helper lemmas -/
 
+/-- The vector Fourier integral for the inner-product pairing agrees with the real Fourier
+transform `𝓕`. This holds by definition: on a finite-dimensional real inner-product space,
+`Real.instFourierTransform` defines `𝓕` as exactly this vector Fourier integral, so the proof
+is `rfl`. -/
+private theorem vectorFourierIntegral_innerₗ_eq (f : V → ℂ) (ξ : V) :
+    VectorFourier.fourierIntegral 𝐞 volume (innerₗ V) f ξ = 𝓕 f ξ := rfl
+
 /-- The `L¹` Parseval/Fubini identity `∫ (𝓕 f) · g = ∫ f · (𝓕 g)`, the self-adjointness of the
 Fourier transform for the symmetric inner-product pairing. -/
 private theorem integral_fourierIntegral_mul (f g : V → ℂ)
@@ -123,9 +127,7 @@ private theorem integral_fourierIntegral_mul (f g : V → ℂ)
   have h := VectorFourier.integral_fourierIntegral_smul_eq_flip (L := innerₗ V)
     Real.continuous_fourierChar
     (show Continuous fun p : V × V => (innerₗ V) p.1 p.2 from continuous_inner) hf hg
-  have hL : ∀ (f : V → ℂ) (ξ : V),
-      VectorFourier.fourierIntegral 𝐞 volume (innerₗ V) f ξ = 𝓕 f ξ := fun f ξ => rfl
-  simp only [flip_innerₗ, smul_eq_mul, hL] at h
+  simp only [flip_innerₗ, smul_eq_mul, vectorFourierIntegral_innerₗ_eq] at h
   exact h
 
 /-! ### Gaussian Fourier facts -/
@@ -167,7 +169,10 @@ private theorem integral_fourierIntegral_gaussian_eq_one {t : ℝ} (ht : 0 < t) 
   have hft_int := integrable_fourierIntegral_gaussian (V := V) ht
   have h0 := congrFun (hg_cont.fourierInv_fourier_eq hg_int hft_int) 0
   rw [Real.fourierInv_eq] at h0
-  simpa using h0
+  simp only [inner_zero_right, AddChar.map_zero_eq_one, one_smul, norm_zero, ne_eq,
+    OfNat.ofNat_ne_zero, not_false_eq_true, zero_pow, mul_zero, neg_zero, Complex.ofReal_zero,
+    Complex.exp_zero] at h0
+  exact h0
 
 /-- The `L¹` norm of the Fourier transform of a Gaussian is `1`: the transform is real and
 nonnegative because the Gaussian has a positive-definite subtraction kernel. -/
@@ -385,8 +390,8 @@ theorem integral_fourierAtom_withDensity_re_fourierIntegralInv (F : V → ℂ)
   calc ∫ q, (ENNReal.ofReal (𝓕⁻ F q).re).toReal • fourierAtom v q
       = ∫ q, fourierAtom v q * 𝓕⁻ F q := by
         refine integral_congr_ae (ae_of_all _ fun q => ?_)
-        change (ENNReal.ofReal (𝓕⁻ F q).re).toReal • fourierAtom v q = fourierAtom v q * 𝓕⁻ F q
-        rw [ENNReal.toReal_ofReal (hre q), Complex.real_smul, ← hreal q, mul_comm]
+        simp only [ENNReal.toReal_ofReal (hre q), Complex.real_smul]
+        rw [← hreal q, mul_comm]
     _ = 𝓕 (𝓕⁻ F) v := (fourierIntegral_eq_integral_fourierAtom_mul (𝓕⁻ F) v).symm
     _ = F v := by rw [hcont.fourier_fourierInv_eq hint hft_int]
 

@@ -16,8 +16,8 @@ import Mathlib.MeasureTheory.Measure.LevyConvergence
 import Mathlib.MeasureTheory.Measure.LevyProkhorovMetric
 import Mathlib.MeasureTheory.Measure.Prokhorov
 import Mathlib.Topology.Sequences
-import TauCeti.Analysis.Bochner.FourierConvention
-import TauCeti.Analysis.Bochner.GaussianRegularization
+import TauCeti.Analysis.Bochner.Fourier.Convention
+import TauCeti.Analysis.Bochner.Gaussian.Regularization
 import TauCeti.Analysis.PositiveDefinite.Kernel.Bounds
 
 /-!
@@ -70,14 +70,36 @@ open scoped ComplexOrder FourierTransform Topology
 
 namespace TauCeti
 
+/-- The scaling constant `-2π` of the Fourier convention is nonzero. -/
+private theorem neg_two_pi_ne_zero : (-2 * Real.pi) ≠ 0 :=
+  mul_ne_zero (by norm_num) Real.pi_ne_zero
+
+/-! ### Uniqueness of the representing measure -/
+
+section Uniqueness
+
+variable {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V] [MeasurableSpace V]
+  [BorelSpace V] [SecondCountableTopology V] [CompleteSpace V]
+
+/-- **Uniqueness half of Bochner's theorem.** Two finite Borel measures with the same
+Fourier-convention transform coincide; this is Mathlib's characteristic-function uniqueness
+theorem, transported through the `-2π` rescaling. Stated on any complete second-countable real
+inner-product space; no finite-dimensionality is needed. -/
+theorem Measure.ext_of_forall_integral_fourierAtom_eq {μ ν : Measure V}
+    [IsFiniteMeasure μ] [IsFiniteMeasure ν]
+    (h : ∀ v, ∫ q, fourierAtom v q ∂μ = ∫ q, fourierAtom v q ∂ν) : μ = ν := by
+  refine MeasureTheory.Measure.ext_of_charFun (funext fun t => ?_)
+  have h' := h ((-2 * Real.pi)⁻¹ • t)
+  rwa [integral_fourierAtom_eq_charFun_neg_two_pi_smul,
+    integral_fourierAtom_eq_charFun_neg_two_pi_smul, smul_smul,
+    mul_inv_cancel₀ neg_two_pi_ne_zero, one_smul] at h'
+
+end Uniqueness
+
 variable {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V]
   [FiniteDimensional ℝ V] [MeasurableSpace V] [BorelSpace V]
 
 /-! ### The normalized existence argument -/
-
-/-- The scaling constant `-2π` of the Fourier convention is nonzero. -/
-private theorem neg_two_pi_ne_zero : (-2 * Real.pi) ≠ 0 :=
-  mul_ne_zero (by norm_num) Real.pi_ne_zero
 
 /-- **Existence, normalized case.** A continuous function `G` with positive-definite
 subtraction kernel and `G 0 = 1` is the Fourier-convention transform of a probability
@@ -107,7 +129,9 @@ private theorem exists_probabilityMeasure_integral_fourierAtom_eq {G : V → ℂ
     have : IsFiniteMeasure (ν n) := isFiniteMeasure_withDensity_re_fourierIntegralInv _
       (integrable_fourierIntegral_gaussianRegularize hpd hcont (hε_pos n))
     have h0 := hν_rep n 0
-    rw [gaussianRegularize_zero, hG0] at h0
+    simp only [gaussianRegularize_apply, hG0, one_mul, norm_zero, ne_eq, OfNat.ofNat_ne_zero,
+      not_false_eq_true, zero_pow, mul_zero, neg_zero, Complex.ofReal_zero,
+      Complex.exp_zero] at h0
     simp only [fourierAtom_apply, inner_zero_right, Complex.ofReal_zero, mul_zero,
       Complex.exp_zero, integral_const, Complex.real_smul, mul_one,
       Complex.ofReal_eq_one] at h0
@@ -194,18 +218,6 @@ theorem exists_isFiniteMeasure_integral_fourierAtom_eq_of_isPositiveDefiniteKern
       exact ENNReal.mul_lt_top ENNReal.ofReal_lt_top (measure_lt_top μ _)
     · rw [integral_smul_measure, ENNReal.toReal_ofReal hpos.le, hμ_rep v, hG_def,
         Complex.real_smul, ← mul_assoc, mul_inv_cancel₀ hcne, one_mul]
-
-/-- **Uniqueness half of Bochner's theorem.** Two finite Borel measures with the same
-Fourier-convention transform coincide; this is Mathlib's characteristic-function uniqueness
-theorem, transported through the `-2π` rescaling. -/
-theorem Measure.ext_of_forall_integral_fourierAtom_eq {μ ν : Measure V}
-    [IsFiniteMeasure μ] [IsFiniteMeasure ν]
-    (h : ∀ v, ∫ q, fourierAtom v q ∂μ = ∫ q, fourierAtom v q ∂ν) : μ = ν := by
-  refine MeasureTheory.Measure.ext_of_charFun (funext fun t => ?_)
-  have h' := h ((-2 * Real.pi)⁻¹ • t)
-  rwa [integral_fourierAtom_eq_charFun_neg_two_pi_smul,
-    integral_fourierAtom_eq_charFun_neg_two_pi_smul, smul_smul,
-    mul_inv_cancel₀ neg_two_pi_ne_zero, one_smul] at h'
 
 /-- **Bochner's theorem.** A continuous function `F` on a finite-dimensional real inner-product
 space has a positive-definite subtraction kernel `(a, b) ↦ F (a - b)` if and only if it is the
