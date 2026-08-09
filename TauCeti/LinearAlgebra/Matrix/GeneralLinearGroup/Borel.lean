@@ -32,7 +32,8 @@ representation.
 Everything except the two counting results is proved over an arbitrary commutative ring, where the
 subgroup already makes sense: upper-triangular matrices are closed under multiplication, and the
 inverse of an invertible one is again upper triangular by
-`Matrix.blockTriangular_inv_of_blockTriangular`. Two facts organize the subgroup:
+`Matrix.blockTriangular_inv_of_blockTriangular`. The constructor `TauCeti.GL2Borel.mk`, which does
+not mention the subgroup, needs only a ring. Two facts organize the subgroup:
 
 * the two diagonal entries of an element of `B` are units, and reading them off is a **group
   homomorphism** `TauCeti.GL2Borel.diag : B →* Rˣ × Rˣ`, the diagonal projection; it is split by
@@ -108,6 +109,36 @@ theorem blockTriangular_id_iff {R : Type u} [Zero R] {M : Matrix (Fin 2) (Fin 2)
     M.BlockTriangular id ↔ M 1 0 = 0 := by
   refine ⟨fun h => h (by decide), fun h i j hij => ?_⟩
   fin_cases i <;> fin_cases j <;> simp_all
+
+namespace GL2Borel
+
+section Ring
+
+variable {R : Type u} [Ring R]
+
+/-- The invertible upper-triangular matrix `!![a, b; 0, d]` with prescribed diagonal units `a`, `d`
+and prescribed upper-right entry `b`. -/
+def mk (a d : Rˣ) (b : R) : GL (Fin 2) R where
+  val := !![(a : R), b; 0, (d : R)]
+  -- The inverse is written out, so no invertibility side condition is discharged twice.
+  inv := !![((a⁻¹ : Rˣ) : R), -((a⁻¹ : Rˣ) * b * (d⁻¹ : Rˣ)); 0, ((d⁻¹ : Rˣ) : R)]
+  val_inv := by
+    rw [Matrix.mul_fin_two, Matrix.one_fin_two]
+    congr 1
+    simp [mul_assoc]
+  inv_val := by
+    rw [Matrix.mul_fin_two, Matrix.one_fin_two]
+    congr 1
+    simp [mul_assoc]
+
+@[simp]
+theorem mk_val (a d : Rˣ) (b : R) :
+    ((mk a d b : GL (Fin 2) R) : Matrix (Fin 2) (Fin 2) R) = !![(a : R), b; 0, (d : R)] :=
+  (rfl)
+
+end Ring
+
+end GL2Borel
 
 section CommRing
 
@@ -187,26 +218,6 @@ theorem scalar_mem (u : Rˣ) : Matrix.GeneralLinearGroup.scalar (Fin 2) u ∈ GL
   simp [mem_iff, Matrix.scalar_apply, Matrix.diagonal_apply_ne]
 
 variable {R}
-
-/-- The invertible upper-triangular matrix `!![a, b; 0, d]` with prescribed diagonal units `a`, `d`
-and prescribed upper-right entry `b`. -/
-def mk (a d : Rˣ) (b : R) : GL (Fin 2) R where
-  val := !![(a : R), b; 0, (d : R)]
-  -- The inverse is written out, so no invertibility side condition is discharged twice.
-  inv := !![((a⁻¹ : Rˣ) : R), -((a⁻¹ : Rˣ) * b * (d⁻¹ : Rˣ)); 0, ((d⁻¹ : Rˣ) : R)]
-  val_inv := by
-    rw [Matrix.mul_fin_two, Matrix.one_fin_two]
-    congr 1
-    simp [mul_comm, mul_left_comm, mul_assoc]
-  inv_val := by
-    rw [Matrix.mul_fin_two, Matrix.one_fin_two]
-    congr 1
-    simp
-
-@[simp]
-theorem mk_val (a d : Rˣ) (b : R) :
-    ((mk a d b : GL (Fin 2) R) : Matrix (Fin 2) (Fin 2) R) = !![(a : R), b; 0, (d : R)] :=
-  (rfl)
 
 theorem mk_mem (a d : Rˣ) (b : R) : mk a d b ∈ GL2Borel R := by
   simp [mem_iff]
