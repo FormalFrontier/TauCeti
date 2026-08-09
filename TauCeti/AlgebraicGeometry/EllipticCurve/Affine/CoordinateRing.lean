@@ -94,8 +94,11 @@ private lemma mk_C_eq_algebraMap (r : R[X]) :
     mk W (C r) = algebraMap R[X] W.CoordinateRing r := by
   simp [AdjoinRoot.algebraMap_eq]
 
-/-- The conjugation of the coordinate ring `R[W]` over `R[X]`, as an algebra homomorphism. -/
-noncomputable def conjHom : W.CoordinateRing →ₐ[R[X]] W.CoordinateRing :=
+private lemma smul_basis_eq_mk (p q : R[X]) :
+    p • (1 : W.CoordinateRing) + q • mk W Y = mk W (C p + C q * Y) := by
+  simp only [smul, mul_one, ← map_mul, ← map_add]
+
+private noncomputable def conjHom : W.CoordinateRing →ₐ[R[X]] W.CoordinateRing :=
   AdjoinRoot.liftAlgHom W.polynomial (Algebra.ofId R[X] W.CoordinateRing)
     (mk W W.negPolynomial) <| by
       have h := Polynomial.hom_eval₂ W.polynomial (C : R[X] →+* R[X][Y]) (mk W) W.negPolynomial
@@ -103,19 +106,18 @@ noncomputable def conjHom : W.CoordinateRing →ₐ[R[X]] W.CoordinateRing :=
       exact h.symm
 
 @[simp]
-lemma conjHom_mk_Y : conjHom W (AdjoinRoot.root W.polynomial) = mk W W.negPolynomial :=
+private lemma conjHom_mk_Y : conjHom W (AdjoinRoot.root W.polynomial) = mk W W.negPolynomial :=
   AdjoinRoot.liftAlgHom_root ..
 
 @[simp]
-lemma conjHom_mk_C (r : R[X]) :
+private lemma conjHom_mk_C (r : R[X]) :
     conjHom W (AdjoinRoot.of W.polynomial r) = mk W (C r) := by
   simpa only [AdjoinRoot.algebraMap_eq, AdjoinRoot.mk_C] using (conjHom W).commutes r
 
-lemma conjHom_conjHom (x : W.CoordinateRing) : conjHom W (conjHom W x) = x := by
+private lemma conjHom_conjHom (x : W.CoordinateRing) : conjHom W (conjHom W x) = x := by
   have h : (conjHom W).comp (conjHom W) = AlgHom.id R[X] W.CoordinateRing := by
     refine AdjoinRoot.algHom_ext ?_
-    change conjHom W (conjHom W (mk W Y)) = mk W Y
-    rw [AdjoinRoot.mk_X, conjHom_mk_Y, negPolynomial]
+    rw [AlgHom.comp_apply, AlgHom.id_apply, conjHom_mk_Y, negPolynomial]
     simp only [map_sub, map_neg, AdjoinRoot.mk_X, AdjoinRoot.mk_C, conjHom_mk_Y,
       conjHom_mk_C, negPolynomial]
     ring
@@ -129,21 +131,34 @@ noncomputable def conj : W.CoordinateRing ≃ₐ[R[X]] W.CoordinateRing :=
     (by ext; exact conjHom_conjHom W _)
 
 @[simp]
-lemma conj_apply (x : W.CoordinateRing) : conj W x = conjHom W x := by
+private lemma conj_apply (x : W.CoordinateRing) : conj W x = conjHom W x := by
   simp [conj]
+
+/-- Conjugation sends the coordinate `y` to `-y - (a₁X + a₃)`. -/
+@[simp]
+lemma conj_mk_Y : conj W (mk W Y) = mk W W.negPolynomial := by
+  rw [conj_apply, AdjoinRoot.mk_X, conjHom_mk_Y]
+
+/-- Conjugation fixes the coefficient ring `R[X]`. -/
+@[simp]
+lemma conj_mk_C (r : R[X]) : conj W (mk W (C r)) = mk W (C r) := by
+  simpa only [mk_C_eq_algebraMap] using (conj W).commutes r
+
+/-- Conjugation is an involution. -/
+@[simp]
+lemma conj_conj (x : W.CoordinateRing) : conj W (conj W x) = x :=
+  by simpa only [conj_apply] using conjHom_conjHom W x
 
 lemma conj_smul_basis (p q : R[X]) :
     conj W (p • (1 : W.CoordinateRing) + q • mk W Y) = mk W (C p + C q * W.negPolynomial) := by
-  rw [conj_apply, map_add, smul, smul, map_mul, map_mul, AdjoinRoot.mk_X, AdjoinRoot.mk_C,
-    AdjoinRoot.mk_C, conjHom_mk_Y, conjHom_mk_C, conjHom_mk_C, map_one, mul_one, ← map_mul,
-    ← map_add]
+  rw [smul_basis_eq_mk]
+  simp only [map_add, map_mul, conj_mk_C, conj_mk_Y]
 
 /-- The sum of an element of the coordinate ring and its conjugate is its trace `2p - qs`. -/
 lemma add_conj_smul_basis (p q : R[X]) :
     p • (1 : W.CoordinateRing) + q • mk W Y + conj W (p • 1 + q • mk W Y) =
       algebraMap R[X] W.CoordinateRing (2 * p - q * (C W.a₁ * X + C W.a₃)) := by
-  rw [conj_smul_basis, smul, smul, mul_one, ← map_mul, ← map_add, ← map_add,
-    ← mk_C_eq_algebraMap]
+  rw [conj_smul_basis, smul_basis_eq_mk, ← map_add, ← mk_C_eq_algebraMap]
   congr 1
   rw [negPolynomial]
   simp only [map_sub, map_mul, map_ofNat]
@@ -153,7 +168,7 @@ lemma add_conj_smul_basis (p q : R[X]) :
 lemma mul_conj (x : W.CoordinateRing) :
     x * conj W x = algebraMap R[X] W.CoordinateRing (Algebra.norm R[X] x) := by
   obtain ⟨p, q, rfl⟩ := exists_smul_basis_eq x
-  rw [conj_smul_basis, norm_smul_basis, smul, smul, mul_one, ← map_mul, ← map_add, ← map_mul,
+  rw [conj_smul_basis, norm_smul_basis, smul_basis_eq_mk, ← map_mul,
     ← mk_C_eq_algebraMap]
   refine AdjoinRoot.mk_eq_mk.mpr ⟨-C q ^ 2, ?_⟩
   rw [negPolynomial, polynomial]
@@ -393,8 +408,7 @@ theorem isIntegrallyClosed_coordinateRing [W.IsElliptic] : IsIntegrallyClosed W.
       fun hx => exists_algebraMap_eq W (isIntegral_trans _ hx)⟩
   exact IsIntegrallyClosed.of_isIntegrallyClosedIn W.CoordinateRing W.FunctionField
 
-/-- **The coordinate ring of an elliptic curve is a Dedekind domain.** Its maximal ideals are the
-affine places of the function field. -/
+/-- **The coordinate ring of an elliptic curve is a Dedekind domain.** -/
 theorem isDedekindDomain_coordinateRing [W.IsElliptic] : IsDedekindDomain W.CoordinateRing := by
   have := module_finite_coordinateRing W
   have : Algebra.IsIntegral F[X] W.CoordinateRing := Algebra.IsIntegral.of_finite _ _
