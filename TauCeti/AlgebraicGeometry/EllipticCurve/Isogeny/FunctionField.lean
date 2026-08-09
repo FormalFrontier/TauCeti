@@ -48,13 +48,31 @@ private theorem isIntegral_eval_of_isIntegral {K : Type*} [CommRing K] [Algebra 
       rw [aeval_def, eval₂_monomial]
       exact (isIntegral_algebraMap (R := F) (A := K)).mul (hx.pow n)
 
-/-- The coordinate pullback of an isogeny is injective.
+private theorem isIntegral_of_isIntegral_map {A K : Type*} [CommRing A] [CommRing K] [Nontrivial K]
+    [Algebra F K] (f : A →+* K) (hf : ∀ a, IsIntegral F (f a)) {x : K}
+    (hx : @IsIntegral A K _ _ f.toAlgebra x) : IsIntegral F x := by
+  obtain ⟨p, hp, hpx⟩ := hx
+  have hpdegree : p.natDegree ≠ 0 := by
+    intro hdegree
+    have hp_one : p = 1 := hp.natDegree_eq_zero.mp hdegree
+    rw [hp_one] at hpx
+    simp at hpx
+  apply IsIntegral.of_aeval_monic_of_isIntegral_coeff
+      (p := p.map f) (x := x)
+  · exact hp.map _
+  · rw [hp.natDegree_map]
+    exact hpdegree
+  · have hroot : (p.map f).eval x = 0 := by
+      rw [eval_map]
+      simpa only [RingHom.algebraMap_toAlgebra] using hpx
+    rw [hroot]
+    exact isIntegral_zero
+  · intro i
+    rw [coeff_map]
+    exact hf (p.coeff i)
 
-If a nonzero coordinate-ring element vanished under the pullback, its nonzero norm over `F[X]`
-would give an algebraic relation for the pulled-back target `X`-coordinate. Since the target
-coordinate ring is integral over `F[X]`, every pulled-back target function would then be integral
-over `F`. The `MapsInfinity` condition would make the source `X`-coordinate integral over `F`,
-contradicting the injectivity of `F[X] → F(W₁)`. -/
+/-- The coordinate pullback of any isogeny of affine Weierstrass curves over a field is
+injective. -/
 theorem pullback_injective (φ : Isogeny W₁ W₂) : Function.Injective φ.pullback := by
   apply (injective_iff_map_eq_zero φ.pullback).2
   intro z hz
@@ -99,26 +117,16 @@ theorem pullback_injective (φ : Isogeny W₁ W₂) : Function.Injective φ.pull
     have he : e = aeval t := by
       apply Polynomial.algHom_ext
       simp [e, t, x₂]
-    have hPdegree : P.natDegree ≠ 0 := by
-      exact Nat.ne_of_gt <| natDegree_pos_of_aeval_root hPmonic.ne_zero hPa
-        ((injective_iff_map_eq_zero _).1
-          (FaithfulSMul.algebraMap_injective F[X] W₂.CoordinateRing))
-    apply IsIntegral.of_aeval_monic_of_isIntegral_coeff
-        (p := P.map e.toRingHom) (x := φ.pullback a)
-    · exact hPmonic.map _
-    · rw [hPmonic.natDegree_map]
-      exact hPdegree
-    · have hroot : (P.map e.toRingHom).eval (φ.pullback a) = 0 := by
-        rw [eval_map, he_ring]
-        exact
-          (Polynomial.hom_eval₂ P (algebraMap F[X] W₂.CoordinateRing)
-            φ.pullback.toRingHom a).symm.trans (by rw [hPa, map_zero])
-      rw [hroot]
-      exact isIntegral_zero
-    · intro i
-      rw [coeff_map]
+    apply isIntegral_of_isIntegral_map e.toRingHom (x := φ.pullback a)
+    · intro p
       rw [he]
-      exact isIntegral_eval_of_isIntegral ht (P.coeff i)
+      exact isIntegral_eval_of_isIntegral ht p
+    · refine ⟨P, hPmonic, ?_⟩
+      change eval₂ e.toRingHom (φ.pullback a) P = 0
+      rw [he_ring]
+      exact
+        (Polynomial.hom_eval₂ P (algebraMap F[X] W₂.CoordinateRing)
+          φ.pullback.toRingHom a).symm.trans (by rw [hPa, map_zero])
   let x₁ : W₁.FunctionField :=
     algebraMap W₁.CoordinateRing W₁.FunctionField
       (algebraMap F[X] W₁.CoordinateRing X)
@@ -129,24 +137,8 @@ theorem pullback_injective (φ : Isogeny W₁ W₂) : Function.Injective φ.pull
       (algebraMap F[X] W₁.CoordinateRing X)
   obtain ⟨Q, hQmonic, hQx⟩ := hx₁_over_target
   have hx₁ : IsIntegral F x₁ := by
-    have hroot : eval₂ φ.pullback.toRingHom x₁ Q = 0 := by
-      simpa only [RingHom.algebraMap_toAlgebra] using hQx
-    have hQdegree : Q.natDegree ≠ 0 := by
-      intro hdegree
-      have hQ : Q = 1 := hQmonic.natDegree_eq_zero.mp hdegree
-      rw [hQ] at hroot
-      simp at hroot
-    apply IsIntegral.of_aeval_monic_of_isIntegral_coeff
-        (p := Q.map φ.pullback.toRingHom) (x := x₁)
-    · exact hQmonic.map _
-    · rw [hQmonic.natDegree_map]
-      exact hQdegree
-    · rw [eval_map]
-      rw [hroot]
-      exact isIntegral_zero
-    · intro i
-      rw [coeff_map]
-      exact himage (Q.coeff i)
+    exact isIntegral_of_isIntegral_map φ.pullback.toRingHom himage
+      ⟨Q, hQmonic, hQx⟩
   have hx₁_transcendental : Transcendental F x₁ := by
     have hx₁_eq : x₁ = algebraMap F[X] W₁.FunctionField X :=
       (IsScalarTower.algebraMap_apply F[X] W₁.CoordinateRing W₁.FunctionField X).symm
