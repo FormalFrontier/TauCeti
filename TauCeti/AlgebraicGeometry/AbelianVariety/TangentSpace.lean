@@ -25,13 +25,11 @@ explicit because `κ(0)` and `K` are not definitionally equal.
 * `AbelianVariety.finrank_tangentSpace_eq_finrank_cotangentSpace` computes its dimension as the
   dimension of `𝔪₀ / 𝔪₀²` over `κ(0)`.
 
-This is the direct type-theoretic prerequisite for
-`TauCetiRoadmap/JacobianChallenge/README.md`, Layer E, milestone
-"Tangent space `T₀ Pic⁰ ≅ H¹(X, 𝒪_X)`, hence `dim (Jac X) = g`". After this file, the milestone
-still requires construction of the Picard scheme and the comparison of its tangent space with
-cohomology. No formalization is vendored. The residue-field comparison reuses
-`residueFieldIsoOfSection`, and the tangent space reuses the scheme-level API in
-`TauCeti.AlgebraicGeometry.TangentSpace.Basic`.
+This supplies the tangent-space part of the abelian-variety infrastructure explicitly listed in
+`TauCetiRoadmap/JacobianChallenge/README.md` under "Inventory: what is missing (build here)" and
+Layer E. It does not construct `Pic⁰` or prove the later comparison `T₀ Pic⁰ ≅ H¹(X, 𝒪_X)`.
+No formalization is vendored. The residue-field comparison reuses `residueFieldIsoOfSection`, and
+the tangent space reuses the scheme-level API in `TauCeti.AlgebraicGeometry.TangentSpace.Basic`.
 -/
 
 public section

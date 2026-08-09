@@ -28,11 +28,12 @@ it the scheme-level interface needed by the Jacobian roadmap:
 The last statement combines Mathlib's cotangent-space criterion for regular local rings with its
 identification of the Krull dimension of `𝒪_{X,x}` and the coheight of `x`.
 
-This advances `TauCetiRoadmap/JacobianChallenge/README.md`, Layer E, milestone
-"Tangent space `T₀ Pic⁰ ≅ H¹(X, 𝒪_X)`, hence `dim (Jac X) = g`" by providing the scheme-level
-tangent-space type in which its left-hand side lives. No formalization is vendored; the
-construction reuses Mathlib's `IsLocalRing.CotangentSpace`, `Module.Dual`,
-`IsRegularLocalRing.iff_finrank_cotangentSpace`, and `ringKrullDim_stalk_eq_coheight`.
+This supplies the scheme-level foundation for the tangent-space infrastructure explicitly listed
+in `TauCetiRoadmap/JacobianChallenge/README.md` under "Inventory: what is missing (build here)"
+and Layer E. It does not construct `Pic⁰` or prove the later comparison
+`T₀ Pic⁰ ≅ H¹(X, 𝒪_X)`. No formalization is vendored; the construction reuses Mathlib's
+`IsLocalRing.CotangentSpace`, `Module.Dual`, `IsRegularLocalRing.iff_finrank_cotangentSpace`, and
+`ringKrullDim_stalk_eq_coheight`.
 -/
 
 public section
