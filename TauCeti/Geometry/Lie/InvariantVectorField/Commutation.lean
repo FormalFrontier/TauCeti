@@ -128,7 +128,7 @@ theorem HasMFDerivAt.hasDerivAt_comp_mulInvariantExp_smul_mul {f : G → ℝ} {g
     exact hf
   have hcomp := hfg.comp 1 hmul
   have h := HasMFDerivAt.hasDerivAt_comp_mulInvariantExp_smul hcomp X
-  rw [mulRightInvariantVectorField_apply]
+  change HasDerivAt _ (f' ((mfderiv I I (fun x : G => x * g) 1) X)) 0
   convert h using 1 <;> rfl
 
 /-- A smooth scalar function evaluated on two multiplied exponential lines is smooth in both
