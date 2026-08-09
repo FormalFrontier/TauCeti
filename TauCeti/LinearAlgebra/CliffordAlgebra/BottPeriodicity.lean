@@ -37,11 +37,6 @@ namespace TauCeti.CliffordAlgebra
 variable {M : Type*} [AddCommGroup M] [Module ℝ M]
 variable (Q : QuadraticForm ℝ M)
 
-omit [Module ℝ M] in
-private theorem hyperbolicGenerator_eq_components
-    (x : M × (Fin (1 + 1) → ℝ)) : x = (x.1, 0) + (0, x.2) := by
-  ext <;> simp
-
 private def hyperbolicMatrixGenerator :
     M × (Fin (1 + 1) → ℝ) →ₗ[ℝ] Matrix (Fin 2) (Fin 2) (_root_.CliffordAlgebra Q) :=
   { toFun := fun x =>
@@ -88,27 +83,21 @@ private theorem hyperbolicToTensor_ι_base (m : M) :
     hyperbolicToTensor Q (_root_.CliffordAlgebra.ι _ (m, 0)) =
       _root_.CliffordAlgebra.ι Q m ⊗ₜ[ℝ] !![0, 1; 1, 0] := by
   apply (matrixEquivTensor (Fin 2) ℝ (_root_.CliffordAlgebra Q)).symm.injective
-  rw [hyperbolicToTensor, AlgHom.comp_apply, hyperbolicToMatrix_ι]
-  simp only [Pi.zero_apply, map_zero, add_zero, sub_zero, neg_zero, AlgEquiv.coe_toAlgHom,
-    matrixEquivTensor_apply, Matrix.of_apply, Matrix.cons_val', Matrix.cons_val_fin_one, map_sum,
-    matrixEquivTensor_apply_symm, Matrix.map_single, map_one, Matrix.smul_single, smul_eq_mul,
-    mul_one]
+  rw [hyperbolicToTensor, AlgHom.comp_apply, AlgEquiv.coe_toAlgHom, AlgEquiv.symm_apply_apply,
+    hyperbolicToMatrix_ι, matrixEquivTensor_apply_symm]
   ext i j
-  rw [Matrix.sum_apply, Fintype.sum_prod_type, Fin.sum_univ_two, Fin.sum_univ_two]
-  fin_cases i <;> fin_cases j <;> simp [Matrix.single_apply]
+  fin_cases i <;> fin_cases j <;>
+    simp [Matrix.of_apply, Matrix.cons_val', Matrix.cons_val_fin_one]
 
 private theorem hyperbolicToTensor_ι_hyperbolic (v : Fin (1 + 1) → ℝ) :
     hyperbolicToTensor Q (_root_.CliffordAlgebra.ι _ (0, v)) =
       1 ⊗ₜ[ℝ] !![v 0, v 1; -v 1, -v 0] := by
   apply (matrixEquivTensor (Fin 2) ℝ (_root_.CliffordAlgebra Q)).symm.injective
-  rw [hyperbolicToTensor, AlgHom.comp_apply, hyperbolicToMatrix_ι]
-  simp only [Fin.isValue, map_zero, zero_add, zero_sub, AlgEquiv.coe_toAlgHom,
-    matrixEquivTensor_apply, Matrix.of_apply, Matrix.cons_val', Matrix.cons_val_fin_one, map_sum,
-    matrixEquivTensor_apply_symm, Matrix.map_single, map_one, Matrix.smul_single, smul_eq_mul,
-    mul_one, one_smul]
+  rw [hyperbolicToTensor, AlgHom.comp_apply, AlgEquiv.coe_toAlgHom, AlgEquiv.symm_apply_apply,
+    hyperbolicToMatrix_ι, matrixEquivTensor_apply_symm]
   ext i j
-  rw [Matrix.sum_apply, Fintype.sum_prod_type, Fin.sum_univ_two, Fin.sum_univ_two]
-  fin_cases i <;> fin_cases j <;> simp [Matrix.single_apply]
+  fin_cases i <;> fin_cases j <;>
+    simp [Matrix.of_apply, Matrix.cons_val', Matrix.cons_val_fin_one]
 
 private def hyperbolicRightInclusion :
     _root_.CliffordAlgebra (TauCeti.realCliffordForm 1 1) →ₐ[ℝ]
@@ -119,6 +108,15 @@ private def hyperbolicRightInclusion :
 private abbrev HyperbolicAlgebra :=
   _root_.CliffordAlgebra (Q.prod (TauCeti.realCliffordForm 1 1))
 
+private theorem realCliffordOneOneEquivMatrix_e₀_mul_e₁ :
+    TauCeti.realCliffordOneOneEquivMatrix
+        (_root_.CliffordAlgebra.ι (TauCeti.realCliffordForm 1 1) (Pi.single 0 1) *
+          _root_.CliffordAlgebra.ι _ (Pi.single 1 1)) =
+      !![(0 : ℝ), 1; 1, 0] := by
+  ext i j
+  fin_cases i <;> fin_cases j <;>
+    simp [TauCeti.realCliffordOneOneEquivMatrix_ι, Matrix.mul_apply, Fin.sum_univ_two]
+
 private def hyperbolicE₀ : HyperbolicAlgebra Q :=
   _root_.CliffordAlgebra.ι _ (0, Pi.single 0 1)
 
@@ -127,29 +125,38 @@ private def hyperbolicE₁ : HyperbolicAlgebra Q :=
 
 private def hyperbolicVolume : HyperbolicAlgebra Q := hyperbolicE₀ Q * hyperbolicE₁ Q
 
+private noncomputable def hyperbolicMatrixInclusion :
+    Matrix (Fin 2) (Fin 2) ℝ →ₐ[ℝ] HyperbolicAlgebra Q :=
+  (hyperbolicRightInclusion Q).comp TauCeti.realCliffordOneOneEquivMatrix.symm.toAlgHom
+
+private theorem hyperbolicMatrixInclusion_apply
+    (x : _root_.CliffordAlgebra (TauCeti.realCliffordForm 1 1)) :
+    hyperbolicMatrixInclusion Q (TauCeti.realCliffordOneOneEquivMatrix x) =
+      hyperbolicRightInclusion Q x := by
+  simp [hyperbolicMatrixInclusion]
+
+private theorem hyperbolicMatrixInclusion_comp_oneOneEquiv :
+    (hyperbolicMatrixInclusion Q).comp
+        TauCeti.realCliffordOneOneEquivMatrix.toAlgHom =
+      hyperbolicRightInclusion Q := by
+  apply AlgHom.ext
+  exact hyperbolicMatrixInclusion_apply Q
+
+private theorem hyperbolicMatrixInclusion_sigmaX :
+    hyperbolicMatrixInclusion Q !![(0 : ℝ), 1; 1, 0] = hyperbolicVolume Q := by
+  rw [← realCliffordOneOneEquivMatrix_e₀_mul_e₁, hyperbolicMatrixInclusion_apply]
+  dsimp [hyperbolicVolume, hyperbolicE₀, hyperbolicE₁]
+  rw [hyperbolicRightInclusion, map_mul, _root_.CliffordAlgebra.map_apply_ι,
+    _root_.CliffordAlgebra.map_apply_ι]
+  rfl
+
+private theorem sigmaX_sq :
+    (!![(0 : ℝ), 1; 1, 0] : Matrix (Fin 2) (Fin 2) ℝ) * !![0, 1; 1, 0] = 1 := by
+  ext i j
+  fin_cases i <;> fin_cases j <;> simp [Matrix.mul_apply, Fin.sum_univ_two]
+
 private theorem hyperbolicVolume_sq : hyperbolicVolume Q * hyperbolicVolume Q = 1 := by
-  let a : HyperbolicAlgebra Q := hyperbolicE₀ Q
-  let b : HyperbolicAlgebra Q := hyperbolicE₁ Q
-  have h : (Q.prod (TauCeti.realCliffordForm 1 1)).IsOrtho
-      (0, Pi.single 1 1) (0, Pi.single 0 1) := by
-    simp [QuadraticMap.isOrtho_def, TauCeti.realCliffordForm_one_one_apply]
-  have hba : b * a = -(a * b) :=
-    _root_.CliffordAlgebra.ι_mul_ι_comm_of_isOrtho h
-  have haa : a * a = 1 := by
-    dsimp [a, hyperbolicE₀]
-    rw [_root_.CliffordAlgebra.ι_sq_scalar]
-    simp [TauCeti.realCliffordForm_one_one_apply]
-  have hbb : b * b = -1 := by
-    dsimp [b, hyperbolicE₁]
-    rw [_root_.CliffordAlgebra.ι_sq_scalar]
-    simp [TauCeti.realCliffordForm_one_one_apply]
-  -- Expose the local generator abbreviations so the anticommutation calculation is explicit.
-  change a * b * (a * b) = 1
-  calc
-    a * b * (a * b) = a * (b * a) * b := by simp [mul_assoc]
-    _ = a * (-(a * b)) * b := by rw [hba]
-    _ = -(a * a) * (b * b) := by simp [mul_assoc]
-    _ = 1 := by rw [haa, hbb]; simp
+  rw [← hyperbolicMatrixInclusion_sigmaX, ← map_mul, sigmaX_sq, map_one]
 
 private theorem hyperbolicBase_comm_volume (m : M) :
     Commute (_root_.CliffordAlgebra.ι _ (m, 0)) (hyperbolicVolume Q) := by
@@ -187,23 +194,6 @@ private theorem hyperbolicBaseInclusion_ι (m : M) :
   rw [hyperbolicBaseInclusion, _root_.CliffordAlgebra.lift_ι_apply]
   simp [hyperbolicBaseGenerator]
 
-private noncomputable def hyperbolicMatrixInclusion :
-    Matrix (Fin 2) (Fin 2) ℝ →ₐ[ℝ] HyperbolicAlgebra Q :=
-  (hyperbolicRightInclusion Q).comp TauCeti.realCliffordOneOneEquivMatrix.symm.toAlgHom
-
-private theorem hyperbolicMatrixInclusion_apply
-    (x : _root_.CliffordAlgebra (TauCeti.realCliffordForm 1 1)) :
-    hyperbolicMatrixInclusion Q (TauCeti.realCliffordOneOneEquivMatrix x) =
-      hyperbolicRightInclusion Q x := by
-  simp [hyperbolicMatrixInclusion]
-
-private theorem hyperbolicMatrixInclusion_comp_oneOneEquiv :
-    (hyperbolicMatrixInclusion Q).comp
-        TauCeti.realCliffordOneOneEquivMatrix.toAlgHom =
-      hyperbolicRightInclusion Q := by
-  apply AlgHom.ext
-  exact hyperbolicMatrixInclusion_apply Q
-
 private theorem hyperbolicVolume_anticomm_rightGenerator (v : Fin (1 + 1) → ℝ) :
     hyperbolicVolume Q * _root_.CliffordAlgebra.ι _ (0, v) =
       -(_root_.CliffordAlgebra.ι _ (0, v) * hyperbolicVolume Q) := by
@@ -211,11 +201,17 @@ private theorem hyperbolicVolume_anticomm_rightGenerator (v : Fin (1 + 1) → �
   let h1 := _root_.CliffordAlgebra.ι (TauCeti.realCliffordForm 1 1) (Pi.single 1 1)
   have hh : h0 * h1 * _root_.CliffordAlgebra.ι _ v =
       -(_root_.CliffordAlgebra.ι _ v * (h0 * h1)) := by
+    -- Rewrite the volume factor as the preimage of `σₓ` before calculating with matrices.
+    rw [show h0 * h1 = TauCeti.realCliffordOneOneEquivMatrix.symm !![(0 : ℝ), 1; 1, 0] by
+      apply TauCeti.realCliffordOneOneEquivMatrix.injective
+      dsimp [h0, h1]
+      rw [realCliffordOneOneEquivMatrix_e₀_mul_e₁, AlgEquiv.apply_symm_apply]]
     apply TauCeti.realCliffordOneOneEquivMatrix.injective
+    simp only [map_mul, map_neg, AlgEquiv.apply_symm_apply,
+      TauCeti.realCliffordOneOneEquivMatrix_ι]
     ext i j
     fin_cases i <;> fin_cases j <;>
-      simp [h0, h1, TauCeti.realCliffordOneOneEquivMatrix_ι,
-        Matrix.mul_apply, Fin.sum_univ_two]
+      simp [Matrix.mul_apply, Fin.sum_univ_two]
   have hm := congrArg (hyperbolicRightInclusion Q) hh
   dsimp [h0, h1] at hm
   simpa [hyperbolicVolume, hyperbolicE₀, hyperbolicE₁,
@@ -272,21 +268,6 @@ private noncomputable def tensorToHyperbolic :
       hyperbolicBaseInclusion_comm_rightInclusion Q x
         (TauCeti.realCliffordOneOneEquivMatrix.symm.toAlgHom y))
 
-private theorem hyperbolicMatrixInclusion_sigmaX :
-    hyperbolicMatrixInclusion Q !![(0 : ℝ), 1; 1, 0] = hyperbolicVolume Q := by
-  let h0 := _root_.CliffordAlgebra.ι (TauCeti.realCliffordForm 1 1) (Pi.single 0 1)
-  let h1 := _root_.CliffordAlgebra.ι (TauCeti.realCliffordForm 1 1) (Pi.single 1 1)
-  have he : TauCeti.realCliffordOneOneEquivMatrix (h0 * h1) = !![(0 : ℝ), 1; 1, 0] := by
-    ext i j
-    fin_cases i <;> fin_cases j <;>
-      simp [h0, h1, TauCeti.realCliffordOneOneEquivMatrix_ι,
-        Matrix.mul_apply, Fin.sum_univ_two]
-  rw [← he, hyperbolicMatrixInclusion_apply]
-  dsimp [h0, h1, hyperbolicVolume, hyperbolicE₀, hyperbolicE₁]
-  rw [hyperbolicRightInclusion, map_mul, _root_.CliffordAlgebra.map_apply_ι,
-    _root_.CliffordAlgebra.map_apply_ι]
-  rfl
-
 private theorem hyperbolicMatrixInclusion_hyperbolic (v : Fin (1 + 1) → ℝ) :
     hyperbolicMatrixInclusion Q !![v 0, v 1; -v 1, -v 0] =
       _root_.CliffordAlgebra.ι _ (0, v) := by
@@ -316,7 +297,7 @@ private theorem tensorToHyperbolic_comp_hyperbolicToTensor :
   rintro ⟨m, v⟩
   simp only [LinearMap.comp_apply, AlgHom.toLinearMap_apply, AlgHom.comp_apply,
     AlgHom.id_apply]
-  rw [hyperbolicGenerator_eq_components (m, v), map_add, map_add,
+  rw [← Prod.fst_add_snd (m, v), map_add, map_add,
     hyperbolicToTensor_ι_base, hyperbolicToTensor_ι_hyperbolic]
   rw [map_add, tensorToHyperbolic_ι_base, tensorToHyperbolic_ι_hyperbolic]
 
@@ -336,11 +317,7 @@ private theorem hyperbolicToTensor_comp_baseInclusion :
     map_mul, hyperbolicToTensor_ι_base, hyperbolicToTensor_volume]
   rw [Algebra.TensorProduct.tmul_mul_tmul, mul_one,
     Algebra.TensorProduct.includeLeft_apply]
-  have hsigmaX_sq :
-      (!![(0 : ℝ), 1; 1, 0] : Matrix (Fin 2) (Fin 2) ℝ) * !![0, 1; 1, 0] = 1 := by
-    ext i j
-    fin_cases i <;> fin_cases j <;> simp [Matrix.mul_apply, Fin.sum_univ_two]
-  rw [hsigmaX_sq]
+  rw [sigmaX_sq]
 
 private theorem hyperbolicToTensor_baseInclusion (x : _root_.CliffordAlgebra Q) :
     hyperbolicToTensor Q (hyperbolicBaseInclusion Q x) =
@@ -390,13 +367,14 @@ noncomputable def hyperbolicEquivTensor :
     (hyperbolicToTensor_comp_tensorToHyperbolic Q)
     (tensorToHyperbolic_comp_hyperbolicToTensor Q)
 
-private theorem hyperbolicEquivTensor_toAlgHom :
-    (hyperbolicEquivTensor Q).toAlgHom = hyperbolicToTensor Q := by
-  exact AlgEquiv.toAlgHom_ofAlgHom _ _ _ _
-
-private theorem hyperbolicEquivTensor_apply (x : HyperbolicAlgebra Q) :
-    hyperbolicEquivTensor Q x = hyperbolicToTensor Q x := by
-  exact DFunLike.congr_fun (hyperbolicEquivTensor_toAlgHom Q) x
+@[simp]
+private theorem one_tmul_zeroMatrix :
+    (1 : _root_.CliffordAlgebra Q) ⊗ₜ[ℝ]
+      !![(0 : ℝ), 0; 0, 0] = 0 := by
+  rw [← TensorProduct.tmul_zero (Matrix (Fin 2) (Fin 2) ℝ) 1]
+  congr 1
+  ext i j
+  fin_cases i <;> fin_cases j <;> rfl
 
 /-- The image of a generator under `hyperbolicEquivTensor`, split into its original-module and
 hyperbolic-plane components. -/
@@ -406,25 +384,11 @@ theorem hyperbolicEquivTensor_ι
     hyperbolicEquivTensor Q (_root_.CliffordAlgebra.ι _ x) =
       _root_.CliffordAlgebra.ι Q x.1 ⊗ₜ[ℝ] !![0, 1; 1, 0] +
         1 ⊗ₜ[ℝ] !![x.2 0, x.2 1; -x.2 1, -x.2 0] := by
-  rw [hyperbolicEquivTensor_apply]
+  -- `AlgEquiv.ofAlgHom` exposes `hyperbolicToTensor` as the forward map.
+  change hyperbolicToTensor Q (_root_.CliffordAlgebra.ι _ x) = _
   conv_lhs =>
-    rw [hyperbolicGenerator_eq_components x]
+    rw [← Prod.fst_add_snd x]
   rw [map_add, map_add, hyperbolicToTensor_ι_base, hyperbolicToTensor_ι_hyperbolic]
-
-/-- The image of an original-module generator under `hyperbolicEquivTensor`. -/
-@[simp 1100]
-theorem hyperbolicEquivTensor_ι_base (m : M) :
-    hyperbolicEquivTensor Q (_root_.CliffordAlgebra.ι _ (m, 0)) =
-      _root_.CliffordAlgebra.ι Q m ⊗ₜ[ℝ] !![0, 1; 1, 0] := by
-  rw [hyperbolicEquivTensor_apply]
-  exact hyperbolicToTensor_ι_base Q m
-
-/-- The image of a hyperbolic-plane generator under `hyperbolicEquivTensor`. -/
-theorem hyperbolicEquivTensor_ι_hyperbolic (v : Fin (1 + 1) → ℝ) :
-    hyperbolicEquivTensor Q (_root_.CliffordAlgebra.ι _ (0, v)) =
-      1 ⊗ₜ[ℝ] !![v 0, v 1; -v 1, -v 0] := by
-  rw [hyperbolicEquivTensor_apply]
-  exact hyperbolicToTensor_ι_hyperbolic Q v
 
 /-- The inverse of `hyperbolicEquivTensor` on the tensor representing an original generator. -/
 @[simp]
@@ -433,7 +397,8 @@ theorem hyperbolicEquivTensor_symm_apply_ι_base (m : M) :
         (_root_.CliffordAlgebra.ι Q m ⊗ₜ[ℝ] !![0, 1; 1, 0]) =
       _root_.CliffordAlgebra.ι _ (m, 0) := by
   apply (hyperbolicEquivTensor Q).injective
-  rw [AlgEquiv.apply_symm_apply, hyperbolicEquivTensor_ι_base]
+  rw [AlgEquiv.apply_symm_apply, hyperbolicEquivTensor_ι]
+  simp only [Pi.zero_apply, neg_zero, one_tmul_zeroMatrix, add_zero]
 
 /-- The inverse of `hyperbolicEquivTensor` on a tensor representing a hyperbolic generator. -/
 @[simp]
