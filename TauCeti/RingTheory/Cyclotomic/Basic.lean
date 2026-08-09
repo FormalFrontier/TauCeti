@@ -69,6 +69,12 @@ theorem coeff_eq_zero_of_totient_le (x : Cyclotomic e) {j : ℕ} (h : e.totient 
   rw [coeff, List.getD_eq_getElem?_getD, List.getElem?_eq_none (by simpa using h),
     Option.getD_none]
 
+/-- An exact cyclotomic integer is determined by its coordinates on the power basis. -/
+theorem ext_coeff {x y : Cyclotomic e} (h : ∀ j, x.coeff j = y.coeff j) : x = y := by
+  refine ext (List.reverse_injective (List.ext_getElem (by simp) fun j hj hj' => ?_))
+  have hj₁ := h j
+  rwa [coeff, coeff, List.getD_eq_getElem _ _ hj, List.getD_eq_getElem _ _ hj'] at hj₁
+
 /-- Reduce a descending coefficient list modulo `Φ_e` and regard the result as an exact
 cyclotomic integer. -/
 @[expose] def ofCoeffList (e : ℕ) (l : List ℤ) : Cyclotomic e :=
@@ -381,11 +387,41 @@ theorem evalCoeffs_eq_eval₂ {R : Type*} [CommRing R] (f : ℤ →+* R) (r : R)
     evalCoeffs f r x = x.toPolynomial.eval₂ f r := by
   rw [evalCoeffs, toPolynomial, eval₂_ofCoeffList]
 
+/-- Horner's rule in closed form: coefficient-list evaluation is the sum of the evaluated
+coordinates against the powers of `r`, one term for each element of the power basis. -/
+theorem evalCoeffs_eq_sum {R : Type*} [CommRing R] (f : ℤ →+* R) (r : R) (x : Cyclotomic e) :
+    evalCoeffs f r x = ∑ j : Fin e.totient, f (x.coeff j) * r ^ (j : ℕ) := by
+  rw [evalCoeffs_eq_eval₂]
+  have hdeg : x.toPolynomial.degree < (e.totient : WithBot ℕ) :=
+    (degree_lt_iff_coeff_zero _ _).2 fun m hm => by
+      rw [coeff_toPolynomial]; exact coeff_eq_zero_of_totient_le x hm
+  rcases Nat.eq_zero_or_pos e.totient with h | h
+  · have hempty : (Finset.univ : Finset (Fin e.totient)) = ∅ :=
+      Finset.eq_empty_of_forall_notMem fun j => absurd j.isLt (by omega)
+    have hzero : x.toPolynomial = 0 :=
+      Polynomial.ext fun m => by
+        rw [coeff_toPolynomial, coeff_zero]
+        exact coeff_eq_zero_of_totient_le x (by omega)
+    rw [hzero, hempty]
+    simp
+  · have hnat : x.toPolynomial.natDegree < e.totient := by
+      rcases eq_or_ne x.toPolynomial 0 with h0 | h0
+      · simpa [h0] using h
+      · exact (natDegree_lt_iff_degree_lt h0).2 hdeg
+    rw [eval₂_eq_sum_range' f hnat,
+      Fin.sum_univ_eq_sum_range (fun j => f (x.coeff j) * r ^ j) e.totient]
+    exact Finset.sum_congr rfl fun j _ => by rw [coeff_toPolynomial]
+
 /-- Reduction of exact cyclotomic integers in `ZMod p`, evaluated at a chosen residue `r`.
 When `r` is an `e`-th primitive root, `TauCeti.Cyclotomic.reduceRingHom` packages this as a ring
 homomorphism. -/
 @[expose] def reduce (p : ℕ) (r : ZMod p) (x : Cyclotomic e) : ZMod p :=
   evalCoeffs (Int.castRingHom (ZMod p)) r x
+
+/-- Reduction is the sum of the reduced coordinates against the powers of the residue. -/
+theorem reduce_eq_sum (p : ℕ) (r : ZMod p) (x : Cyclotomic e) :
+    reduce p r x = ∑ j : Fin e.totient, ((x.coeff j : ℤ) : ZMod p) * r ^ (j : ℕ) :=
+  evalCoeffs_eq_sum _ _ _
 
 /-- Reduction at an `e`-th primitive root in a prime field is a ring homomorphism. -/
 noncomputable def reduceRingHom (p : ℕ) [Fact p.Prime] [NeZero e]
