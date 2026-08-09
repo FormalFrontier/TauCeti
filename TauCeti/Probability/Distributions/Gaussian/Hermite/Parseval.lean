@@ -19,10 +19,16 @@ abstract `HilbertBasis.repr` coordinate as the Gaussian integral against `Hₙ /
 ## Main statements
 
 * `TauCeti.gaussianHermiteHilbertBasis_repr_apply` identifies each coordinate with its integral.
-* `TauCeti.tsum_norm_sq_gaussianHermite_coeff` is Parseval's identity for those coefficients.
-* `TauCeti.summable_norm_sq_gaussianHermite_coeff` gives square-summability of the coefficients.
+* `TauCeti.tsum_norm_sq_integral_hermite_mul_gaussianReal` is Parseval's identity for those
+  coefficients.
+* `TauCeti.summable_norm_sq_integral_hermite_mul_gaussianReal` gives square-summability of the
+  coefficients.
 * `TauCeti.hasSum_gaussianHermite_expansion` reconstructs every `L²` vector from its Gaussian
   Hermite series.
+
+The coefficient itself has no name of its own: it is spelled out as the integral against
+`Hₙ / √(n!)`, so the two Parseval-side lemmas are named after that integral, as
+`TauCeti.memLp_hermite_gaussianReal` names the same normalized integrand.
 
 All statements hold for an arbitrary `RCLike` scalar field, simultaneously covering real and
 complex-valued `L²` functions.
@@ -52,7 +58,7 @@ theorem gaussianHermiteHilbertBasis_repr_apply
 
 /-- **Parseval's identity for the Gaussian Hermite basis.** The squared norms of the Gaussian
 Hermite coefficients of `f` sum to `‖f‖²`. -/
-theorem tsum_norm_sq_gaussianHermite_coeff (f : Lp 𝕜 2 (gaussianReal 0 1)) :
+theorem tsum_norm_sq_integral_hermite_mul_gaussianReal (f : Lp 𝕜 2 (gaussianReal 0 1)) :
     ∑' n : ℕ, ‖∫ x : ℝ, (algebraMap ℝ 𝕜)
       (aeval x (hermite n) / Real.sqrt (n.factorial : ℝ)) * f x ∂(gaussianReal 0 1)‖ ^ 2 =
         ‖f‖ ^ 2 := by
@@ -60,7 +66,7 @@ theorem tsum_norm_sq_gaussianHermite_coeff (f : Lp 𝕜 2 (gaussianReal 0 1)) :
     (gaussianHermiteHilbertBasis 𝕜).tsum_norm_sq_inner f
 
 /-- The squared norms of the Gaussian Hermite coefficients of an `L²` function are summable. -/
-theorem summable_norm_sq_gaussianHermite_coeff (f : Lp 𝕜 2 (gaussianReal 0 1)) :
+theorem summable_norm_sq_integral_hermite_mul_gaussianReal (f : Lp 𝕜 2 (gaussianReal 0 1)) :
     Summable fun n : ℕ => ‖∫ x : ℝ, (algebraMap ℝ 𝕜)
       (aeval x (hermite n) / Real.sqrt (n.factorial : ℝ)) * f x ∂(gaussianReal 0 1)‖ ^ 2 := by
   simpa only [← HilbertBasis.repr_apply_apply, gaussianHermiteHilbertBasis_repr_apply] using
