@@ -122,8 +122,7 @@ theorem pullback_injective (φ : Isogeny W₁ W₂) : Function.Injective φ.pull
       rw [he]
       exact isIntegral_eval_of_isIntegral ht p
     · refine ⟨P, hPmonic, ?_⟩
-      change eval₂ e.toRingHom (φ.pullback a) P = 0
-      rw [he_ring]
+      rw [e.toRingHom.algebraMap_toAlgebra, he_ring]
       exact
         (Polynomial.hom_eval₂ P (algebraMap F[X] W₂.CoordinateRing)
           φ.pullback.toRingHom a).symm.trans (by rw [hPa, map_zero])
