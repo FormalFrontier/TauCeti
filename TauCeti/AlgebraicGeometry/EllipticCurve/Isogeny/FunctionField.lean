@@ -170,6 +170,15 @@ theorem fieldPullback_unique (φ : Isogeny W₁ W₂)
     (A := W₂.CoordinateRing) (K := W₂.FunctionField) (L := W₁.FunctionField) fun x ↦ by
       exact (hf x).trans (fieldPullback_algebraMap φ x).symm
 
+/-- The identity isogeny induces the identity pullback on the function field. -/
+@[simp]
+theorem fieldPullback_id (W : WeierstrassCurve.Affine F) :
+    (id W).fieldPullback = AlgHom.id F W.FunctionField := by
+  symm
+  apply (id W).fieldPullback_unique
+  intro x
+  simp
+
 end Isogeny
 
 end TauCeti
