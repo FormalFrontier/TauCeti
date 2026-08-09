@@ -117,6 +117,39 @@ private theorem continuous_of_continuousAt_zero (S : StronglyContinuousSemigroup
       _ < C * (ε / C) := by gcongr
       _ = ε := by field_simp
 
+omit [CompleteSpace X] in
+/-- **A norm-continuous semigroup stays within any prescribed distance of the identity on a short
+enough initial interval.** -/
+private theorem exists_pos_forall_norm_realOperator_sub_one_le
+    (S : StronglyContinuousSemigroup X)
+    (hreal : ContinuousAt (fun t : ℝ ↦ S.realOperator t) 0) {c : ℝ} (hc : 0 < c) :
+    ∃ t : ℝ, 0 < t ∧ ∀ s ∈ Set.uIoc (0 : ℝ) t, ‖S.realOperator s - 1‖ ≤ c := by
+  obtain ⟨δ, hδ, hsmall⟩ := Metric.continuousAt_iff.mp hreal c hc
+  refine ⟨δ / 2, half_pos hδ, fun s hs ↦ ?_⟩
+  rw [Set.uIoc_of_le (half_pos hδ).le] at hs
+  have hsδ : dist s 0 < δ := by
+    rw [Real.dist_eq, sub_zero, abs_of_nonneg hs.1.le]
+    exact hs.2.trans_lt (half_lt_self hδ)
+  simpa only [S.realOperator_zero, ContinuousLinearMap.one_def, dist_eq_norm] using
+    (hsmall hsδ).le
+
+/-- **The normalized local orbit average inherits any uniform bound on the orbit's distance to
+the identity.** -/
+private theorem norm_normalizedIntegral_sub_one_le (S : StronglyContinuousSemigroup X)
+    {t c : ℝ} (ht : 0 < t) (hint : IntervalIntegrable S.realOperator volume 0 t)
+    (hnorm : ∀ s ∈ Set.uIoc (0 : ℝ) t, ‖S.realOperator s - 1‖ ≤ c) :
+    ‖t⁻¹ • (∫ s in (0 : ℝ)..t, S.realOperator s) - 1‖ ≤ c := by
+  rw [S.normalizedIntegral_sub_one_eq ht hint, norm_smul, Real.norm_eq_abs, abs_inv,
+    abs_of_pos ht]
+  calc
+    t⁻¹ * ‖∫ s in (0 : ℝ)..t, (S.realOperator s - 1)‖
+        ≤ t⁻¹ * (c * |t - 0|) := by
+          gcongr
+          exact intervalIntegral.norm_integral_le_of_norm_le_const hnorm
+    _ = c := by
+          simp only [sub_zero, abs_of_pos ht]
+          field_simp
+
 /-- If a strongly continuous semigroup is continuous in operator norm at zero, then every vector
 lies in the domain of its generator. -/
 theorem domain_eq_top_of_continuousAt_zero (S : StronglyContinuousSemigroup X)
@@ -124,51 +157,23 @@ theorem domain_eq_top_of_continuousAt_zero (S : StronglyContinuousSemigroup X)
   have hS' := S.continuous_of_continuousAt_zero hS
   have hreal : Continuous fun t : ℝ ↦ S.realOperator t :=
     (hS'.comp continuous_real_toNNReal).congr fun t ↦ (S.realOperator_def t).symm
-  obtain ⟨δ, hδ, hsmall⟩ := Metric.continuousAt_iff.mp hreal.continuousAt (1 / 2) (by norm_num)
-  let t : ℝ := δ / 2
-  have ht : 0 < t := half_pos hδ
-  have hnorm : ∀ s ∈ Set.uIoc (0 : ℝ) t, ‖S.realOperator s - 1‖ ≤ 1 / 2 := by
-    intro s hs
-    rw [Set.uIoc_of_le ht.le] at hs
-    have hsδ : dist s 0 < δ := by
-      rw [Real.dist_eq, sub_zero, abs_of_nonneg hs.1.le]
-      exact hs.2.trans_lt (half_lt_self hδ)
-    simpa only [S.realOperator_zero, ContinuousLinearMap.one_def, dist_eq_norm] using
-      (hsmall hsδ).le
-  let B : X →L[ℝ] X := t⁻¹ • ∫ s in (0 : ℝ)..t, S.realOperator s
-  have hB : ‖B - 1‖ < 1 := by
-    have hB_sub : B - 1 = t⁻¹ • ∫ s in (0 : ℝ)..t, (S.realOperator s - 1) :=
-      S.normalizedIntegral_sub_one_eq ht (hreal.intervalIntegrable 0 t)
-    rw [hB_sub]
-    rw [norm_smul, Real.norm_eq_abs, abs_inv, abs_of_pos ht]
-    calc
-      t⁻¹ * ‖∫ s in (0 : ℝ)..t, (S.realOperator s - 1)‖
-          ≤ t⁻¹ * ((1 / 2) * |t - 0|) := by
-            gcongr
-            exact intervalIntegral.norm_integral_le_of_norm_le_const hnorm
-      _ = 1 / 2 := by simp only [sub_zero, abs_of_pos ht]; field_simp
-      _ < 1 := by norm_num
-  have hBunit : IsUnit B := by
-    have hnorm_one_sub : ‖1 - B‖ < 1 := by
-      have hone_sub : 1 - B = -(B - 1) := by module
-      rw [hone_sub, norm_neg]
-      exact hB
-    have h := isUnit_one_sub_of_norm_lt_one hnorm_one_sub
-    simpa only [sub_sub_cancel] using h
-  have hBsurj : Function.Surjective B :=
-    (ContinuousLinearMap.isUnit_iff_bijective.mp hBunit).2
+  obtain ⟨t, ht, hnorm⟩ :=
+    S.exists_pos_forall_norm_realOperator_sub_one_le hreal.continuousAt (c := 1 / 2) (by norm_num)
+  have hint : IntervalIntegrable S.realOperator volume 0 t := hreal.intervalIntegrable 0 t
+  have hB : ‖t⁻¹ • (∫ s in (0 : ℝ)..t, S.realOperator s) - 1‖ < 1 :=
+    (S.norm_normalizedIntegral_sub_one_le ht hint hnorm).trans_lt (by norm_num)
+  have hBunit : IsUnit (t⁻¹ • ∫ s in (0 : ℝ)..t, S.realOperator s) := by
+    have hone_sub : ‖1 - t⁻¹ • (∫ s in (0 : ℝ)..t, S.realOperator s)‖ < 1 := by
+      rwa [norm_sub_rev]
+    simpa only [sub_sub_cancel] using isUnit_one_sub_of_norm_lt_one hone_sub
   apply top_unique
   intro y _
-  obtain ⟨x, hx⟩ := hBsurj y
+  obtain ⟨x, hx⟩ := (ContinuousLinearMap.isUnit_iff_bijective.mp hBunit).2 y
   rw [← hx]
-  have hint : IntervalIntegrable S.realOperator volume 0 t :=
-    (hreal.intervalIntegrable 0 t)
   have horbit : (∫ s in (0 : ℝ)..t, S.realOperator s) x =
       ∫ s in Set.Ioc 0 t, S.realOperator s x := by
     rw [ContinuousLinearMap.intervalIntegral_apply hint, intervalIntegral.integral_of_le ht.le]
-  have hB_apply : B x = t⁻¹ • (∫ s in (0 : ℝ)..t, S.realOperator s) x := by
-    rfl
-  rw [hB_apply, horbit]
+  rw [smul_apply, horbit]
   exact S.domain.smul_mem t⁻¹ (S.integral_orbit_mem_domain x ht)
 
 /-- If a strongly continuous semigroup is continuous in operator norm, then every vector lies in
