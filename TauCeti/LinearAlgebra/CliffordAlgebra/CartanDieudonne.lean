@@ -6,6 +6,7 @@ module
 
 public import Mathlib.FieldTheory.IsSepClosed
 public import TauCeti.LinearAlgebra.CliffordAlgebra.ReflectionLift
+public import TauCeti.LinearAlgebra.QuadraticForm.CartanDieudonne
 
 /-!
 # Pin corrections over fixed subspaces
@@ -20,6 +21,8 @@ reflections lift through the Pin group, so the correcting element lies in the ra
 
 * `TauCeti.CliffordAlgebra.exists_mem_range_pinToOrthogonal_mul_eqOn_sup_span_singleton`: a
   Pin-range correction extends a fixed subspace by one orthogonal anisotropic vector.
+* `TauCeti.CliffordAlgebra.pinToOrthogonal_surjective`: the Pin action is surjective on a
+  finite-dimensional nondegenerate quadratic space.
 
 ## References
 
@@ -54,5 +57,13 @@ theorem exists_mem_range_pinToOrthogonal_mul_eqOn_sup_span_singleton
   QuadraticMap.exists_mem_subgroup_mul_eqOn_sup_span_singleton_of_reflection_mem Q
     (pinToOrthogonal Q).range (reflection_mem_range_pinToOrthogonal Q) g W hfix x hx
 
+/-- The twisted-conjugation homomorphism from the Pin group is surjective for a
+finite-dimensional nondegenerate quadratic space over a separably closed field. -/
+theorem pinToOrthogonal_surjective
+    [FiniteDimensional K V] (Q : QuadraticForm K V) (hQ : Q.Nondegenerate) :
+    Function.Surjective (pinToOrthogonal Q) :=
+  MonoidHom.range_eq_top.mp <|
+    QuadraticMap.orthogonalGroup_subgroup_eq_top_of_reflection_mem
+      Q hQ (pinToOrthogonal Q).range (reflection_mem_range_pinToOrthogonal Q)
 end CliffordAlgebra
 end TauCeti
