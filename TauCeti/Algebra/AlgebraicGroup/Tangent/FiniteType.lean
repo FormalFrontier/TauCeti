@@ -4,8 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.RingTheory.Bialgebra.Basic
 public import Mathlib.RingTheory.FiniteType
+public import TauCeti.Algebra.AlgebraicGroup.Tangent.Cotangent
 public import TauCeti.RingTheory.Ideal.Cotangent
 
 /-!
@@ -18,8 +18,8 @@ representation in the ReductiveGroups roadmap, Layer 2.
 
 ## Main declarations
 
-* `TauCeti.Bialgebra.instModuleFiniteCotangent`: the specialization to the counit of a finite-type
-  commutative bialgebra.
+* `TauCeti.Bialgebra.instModuleFiniteCotangentSpace`: the specialization to the counit of a
+  finite-type commutative bialgebra.
 
 ## References
 
@@ -36,8 +36,8 @@ variable (R A : Type*) [CommRing R] [CommRing A] [Bialgebra R A]
 
 /-- The cotangent space at the identity of a finite-type commutative bialgebra over a noetherian
 base is finite over that base. -/
-instance instModuleFiniteCotangent [IsNoetherianRing R] [Algebra.FiniteType R A] :
-    Module.Finite R (RingHom.ker (counitAlgHom R A).toRingHom).Cotangent := by
+instance instModuleFiniteCotangentSpace [IsNoetherianRing R] [Algebra.FiniteType R A] :
+    Module.Finite R (CotangentSpace R A) := by
   let _ : IsNoetherianRing A := Algebra.FiniteType.isNoetherianRing R A
   exact AlgHom.finite_cotangent_ker (counitAlgHom R A)
 

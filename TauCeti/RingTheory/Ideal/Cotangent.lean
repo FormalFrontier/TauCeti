@@ -9,13 +9,11 @@ public import Mathlib.RingTheory.Extension.Basic
 /-!
 # Cotangent spaces of augmented algebras
 
-For an augmentation `f : A →ₐ[R] R`, the action of `A` on
-`ker(f) / ker(f)²` factors through `f`. Consequently, if the augmentation ideal is finitely
-generated over `A`, then its cotangent space is finite over `R`.
+For an augmentation `f : A →ₐ[R] R`, if the augmentation ideal is finitely generated over
+`A`, then its cotangent space is finite over `R`.
 
 ## Main declarations
 
-* `TauCeti.AlgHom.smul_eq_map_smul`: the ambient scalar action factors through the augmentation.
 * `TauCeti.AlgHom.finite_cotangent_ker_of_fg`: finite generation of the augmentation ideal gives
   finiteness of its cotangent space over the base.
 * `TauCeti.AlgHom.finite_cotangent_ker`: the noetherian specialization.
@@ -34,20 +32,6 @@ namespace AlgHom
 
 variable {R A : Type*} [CommRing R] [CommRing A] [Algebra R A]
 
-/-- On `ker(f) / ker(f)²`, multiplication by `a : A` agrees with scalar multiplication by
-`f a : R`, for an augmentation `f : A →ₐ[R] R`. -/
-@[simp]
-theorem smul_eq_map_smul (f : A →ₐ[R] R) (a : A)
-    (x : (RingHom.ker f.toRingHom).Cotangent) :
-    a • x = f a • x := by
-  let I := RingHom.ker f.toRingHom
-  have ha : a - algebraMap R A (f a) ∈ I := by
-    simp [I]
-  have hzero : (a - algebraMap R A (f a)) • x = 0 :=
-    Ideal.Cotangent.smul_eq_zero_of_mem ha x
-  rw [sub_smul, sub_eq_zero, algebraMap_smul] at hzero
-  exact hzero
-
 /-- The cotangent space of an augmentation with finitely generated kernel is finite over the
 base. -/
 theorem finite_cotangent_ker_of_fg (f : A →ₐ[R] R)
@@ -61,11 +45,18 @@ theorem finite_cotangent_ker_of_fg (f : A →ₐ[R] R)
         f.comp_algebraMap.symm
       σ := algebraMap R A
       algebraMap_σ := f.commutes }
-  have hP : P.ker.FG := h
+  -- The extension's `A → R` algebra map is the augmentation `f` by construction.
+  have hker : P.ker = RingHom.ker f.toRingHom := by
+    ext x
+    change f x = 0 ↔ f x = 0
+    rfl
+  have hP : P.ker.FG := by
+    rw [hker]
+    exact h
   let _ : Module.Finite R P.Cotangent :=
     Algebra.Extension.Cotangent.finite (P := P) hP
-  exact Module.Finite.equiv
-    (P.cotangentEquivCotangentKer.restrictScalars R)
+  rw [← hker]
+  exact Module.Finite.equiv (P.cotangentEquivCotangentKer.restrictScalars R)
 
 /-- The cotangent space at an augmented point of a noetherian algebra is finite over the base.
 
