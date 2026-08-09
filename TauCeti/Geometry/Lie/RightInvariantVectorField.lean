@@ -29,6 +29,14 @@ This supplies a prerequisite for Deliverable A, Layer 1 of
 
 * [Lie groups and the Lie algebra correspondence roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/LieGroups/README.md),
   Deliverable A, Layer 1, "The infinitesimal adjoint".
+* The definition mirrors Sébastien Gouëzel's Mathlib `mulInvariantVectorField`.
+* The smoothness proofs adapt `contMDiff_mulInvariantVectorField_modelSpace` and
+  `contMDiff_mulInvariantVectorField_infty` from
+  `TauCeti.Geometry.Lie.InvariantVectorField`; those results in turn adapt Gouëzel's proof of
+  Mathlib's `contMDiff_mulInvariantVectorField`.
+* The scalar directional-derivative proof adapts
+  `contMDiff_mvfderiv_mulInvariantVectorField` from
+  `TauCeti.Geometry.Lie.Tangent.LeftInvariantDerivation`.
 -/
 
 public section
