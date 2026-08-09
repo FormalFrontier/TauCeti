@@ -79,7 +79,13 @@ theorem conj_mulInvariantIntegralCurve (g : G) (X : GroupLieAlgebra I G) (x : G)
         one_apply_eq_self]
       dsimp only [Φ, γ]
       rw [map_smul, mfderiv_conjugation_mulInvariantVectorField, tangentAd_apply]
-    rw [hmap] at hcomp
+    -- `IsMIntegralCurve` expresses the source derivative using the tangent space of the source
+    -- model. Here that model is self-modeled `ℝ`, so the required identification with `ℝ` is
+    -- definitional rather than exposed by a rewrite lemma.
+    change HasMFDerivAt (modelWithCornersSelf ℝ ℝ) I (Φ ∘ γ) s
+      ((1 : ℝ →L[ℝ] ℝ).smulRight
+        (mulInvariantVectorField (tangentAd (I := I) g X) (Φ (γ s))))
+    rw [← hmap]
     exact hcomp
   have hzero : (Φ ∘ γ) 0 = g * x * g⁻¹ := by simp [Φ, γ]
   have heq : Φ ∘ γ =
@@ -92,9 +98,7 @@ theorem conj_mulInvariantIntegralCurve (g : G) (X : GroupLieAlgebra I G) (x : G)
 theorem conj_mulInvariantExp (g : G) (X : GroupLieAlgebra I G) :
     g * mulInvariantExp (I := I) (G := G) X * g⁻¹ =
       mulInvariantExp (tangentAd (I := I) g X) := by
-  rw [mulInvariantExp_eq_mulInvariantIntegralCurve,
-    mulInvariantExp_eq_mulInvariantIntegralCurve]
-  simpa using conj_mulInvariantIntegralCurve g X 1 1
+  simp [mulInvariantExp_eq_mulInvariantIntegralCurve]
 
 /-- Conjugation commutes with the Lie-group exponential defined on left-invariant derivations. -/
 @[simp]
@@ -103,7 +107,6 @@ theorem conj_lieExp (g : G) (X : LeftInvariantDerivation I G) :
   rw [lieExp_eq_mulInvariantExp, lieExp_eq_mulInvariantExp]
   rw [conj_mulInvariantExp]
   congr 1
-  rw [Ad_apply]
   rw [← leftInvariantDerivationLieEquivGroupLieAlgebra_apply,
     ← leftInvariantDerivationLieEquivGroupLieAlgebra_apply]
   exact (leftInvariantDerivationLieEquivGroupLieAlgebra_Ad (I := I) g X).symm
