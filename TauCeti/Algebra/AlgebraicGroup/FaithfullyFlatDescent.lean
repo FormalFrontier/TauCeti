@@ -53,15 +53,56 @@ namespace AlgHom
 universe u v w x
 
 variable {R : Type u} {H : Type v} (A : Type w) (B : Type x)
-variable [CommRing R] [Semiring H] [HopfAlgebra R H]
-variable [CommRing A] [CommRing B] [Algebra R A] [Algebra R B] [Algebra A B]
-variable [IsScalarTower R A B] [Module.FaithfullyFlat A B]
+variable [CommSemiring R] [Semiring H] [HopfAlgebra R H]
+
+section CommSemiring
+
+variable [CommSemiring A] [CommSemiring B] [Algebra R A] [Algebra R B] [Algebra A B]
+variable [IsScalarTower R A B]
 
 private noncomputable def faithfullyFlatDescentLeft : B →ₐ[R] (B ⊗[A] B) :=
   (includeLeft : B →ₐ[A] (B ⊗[A] B)).restrictScalars R
 
 private noncomputable def faithfullyFlatDescentRight : B →ₐ[R] (B ⊗[A] B) :=
   (includeRight : B →ₐ[A] (B ⊗[A] B)).restrictScalars R
+
+/-- The subgroup of `B`-points satisfying faithfully flat descent along `A → B`.
+
+A point `f : H →ₐ[R] B` belongs to this subgroup exactly when its two postcompositions
+`H →ₐ[R] B ⇉ B ⊗[A] B` agree. The subgroup structure comes from functoriality of
+convolution in the value algebra. -/
+noncomputable def faithfullyFlatDescentSubgroup :
+    Subgroup (WithConv (H →ₐ[R] B)) :=
+  MonoidHom.eqLocus (mapValue (H := H) (faithfullyFlatDescentLeft (R := R) A (B := B)))
+    (mapValue (H := H) (faithfullyFlatDescentRight (R := R) A (B := B)))
+
+private theorem mem_faithfullyFlatDescentSubgroup_iff_maps (f : WithConv (H →ₐ[R] B)) :
+    f ∈ faithfullyFlatDescentSubgroup (R := R) (H := H) A B ↔
+      mapValue (H := H) (faithfullyFlatDescentLeft (R := R) A (B := B)) f =
+        mapValue (H := H) (faithfullyFlatDescentRight (R := R) A (B := B)) f :=
+  Iff.rfl
+
+/-- Pointwise form of the faithfully flat descent condition. -/
+@[simp]
+theorem mem_faithfullyFlatDescentSubgroup_iff_apply (f : WithConv (H →ₐ[R] B)) :
+    f ∈ faithfullyFlatDescentSubgroup (R := R) (H := H) A B ↔
+      ∀ h, (includeLeft (R := A) (S := A) (A := B) (B := B)) (f h) =
+        (includeRight (R := A) (A := B) (B := B)) (f h) := by
+  rw [mem_faithfullyFlatDescentSubgroup_iff_maps]
+  constructor
+  · intro hf h
+    exact DFunLike.congr_fun (congr_arg WithConv.ofConv hf) h
+  · intro hf
+    apply WithConv.toConv_injective
+    ext h
+    exact hf h
+
+end CommSemiring
+
+section CommRing
+
+variable [CommRing A] [CommRing B] [Algebra R A] [Algebra R B] [Algebra A B]
+variable [IsScalarTower R A B] [Module.FaithfullyFlat A B]
 
 private noncomputable def descentEqualizerHom :
     A →ₐ[R] AlgHom.equalizer (faithfullyFlatDescentLeft (R := R) A (B := B))
@@ -111,39 +152,6 @@ private theorem descentEqualizerEquiv_apply_val (a : A) :
     (descentEqualizerEquiv (R := R) A B a : B) = algebraMap A B a := by
   rw [descentEqualizerEquiv, AlgEquiv.ofBijective_apply]
   exact descentEqualizerHom_apply_val (R := R) A B a
-
-/-- The subgroup of `B`-points satisfying faithfully flat descent along `A → B`.
-
-A point `f : H →ₐ[R] B` belongs to this subgroup exactly when its two postcompositions
-`H →ₐ[R] B ⇉ B ⊗[A] B` agree. The subgroup structure comes from functoriality of
-convolution in the value algebra. -/
-noncomputable def faithfullyFlatDescentSubgroup :
-    Subgroup (WithConv (H →ₐ[R] B)) :=
-  MonoidHom.eqLocus (mapValue (H := H) (faithfullyFlatDescentLeft (R := R) A (B := B)))
-    (mapValue (H := H) (faithfullyFlatDescentRight (R := R) A (B := B)))
-
-omit [Module.FaithfullyFlat A B] in
-private theorem mem_faithfullyFlatDescentSubgroup_iff_maps (f : WithConv (H →ₐ[R] B)) :
-    f ∈ faithfullyFlatDescentSubgroup (R := R) (H := H) A B ↔
-      mapValue (H := H) (faithfullyFlatDescentLeft (R := R) A (B := B)) f =
-        mapValue (H := H) (faithfullyFlatDescentRight (R := R) A (B := B)) f :=
-  Iff.rfl
-
-omit [Module.FaithfullyFlat A B] in
-/-- Pointwise form of the faithfully flat descent condition. -/
-@[simp]
-theorem mem_faithfullyFlatDescentSubgroup_iff_apply (f : WithConv (H →ₐ[R] B)) :
-    f ∈ faithfullyFlatDescentSubgroup (R := R) (H := H) A B ↔
-      ∀ h, (includeLeft (R := A) (S := A) (A := B) (B := B)) (f h) =
-        (includeRight (R := A) (A := B) (B := B)) (f h) := by
-  rw [mem_faithfullyFlatDescentSubgroup_iff_maps]
-  constructor
-  · intro hf h
-    exact DFunLike.congr_fun (congr_arg WithConv.ofConv hf) h
-  · intro hf
-    apply WithConv.toConv_injective
-    ext h
-    exact hf h
 
 private noncomputable def faithfullyFlatDescentHom :
     WithConv (H →ₐ[R] A) →* faithfullyFlatDescentSubgroup (R := R) (H := H) A B :=
@@ -219,7 +227,7 @@ theorem faithfullyFlatDescentMulEquiv_apply (f : WithConv (H →ₐ[R] A)) :
 /-- Descending a compatible `B`-point and extending it back to `B` recovers the original
 point. -/
 @[simp]
-theorem faithfullyFlatDescentMulEquiv_symm_apply_val
+theorem faithfullyFlatDescentMulEquiv_apply_symm_apply_val
     (f : faithfullyFlatDescentSubgroup (R := R) (H := H) A B) :
     toConv ((IsScalarTower.toAlgHom R A B).comp
       ((faithfullyFlatDescentMulEquiv (R := R) (H := H) A B).symm f).ofConv) = f.1 := by
@@ -227,6 +235,8 @@ theorem faithfullyFlatDescentMulEquiv_symm_apply_val
   rw [← faithfullyFlatDescentMulEquiv_apply]
   exact congr_arg Subtype.val
     ((faithfullyFlatDescentMulEquiv (R := R) (H := H) A B).apply_symm_apply f)
+
+end CommRing
 
 end AlgHom
 
