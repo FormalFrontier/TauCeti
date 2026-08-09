@@ -96,6 +96,9 @@ noncomputable def cliffordBivectorAlternating : M [⋀^Fin 2]→ₗ[R] CliffordA
       intro v i j h hij
       fin_cases i <;> fin_cases j <;> simp_all [cliffordBivector_def] }
 
+-- Proving the exported `cliffordBivectorAlternating_apply` by `rfl` directly would require
+-- `cliffordBivectorAlternating` to be `@[expose]`d, which it deliberately is not. The `rfl` is
+-- therefore done here, inside the module, and re-exported below.
 private theorem cliffordBivectorAlternating_apply_internal (a b : M) :
     cliffordBivectorAlternating Q ![a, b] = cliffordBivector Q a b := rfl
 
@@ -208,18 +211,6 @@ theorem cliffordBivectorExterior_range_le_of_cliffordBivector_mem
   change cliffordBivectorExterior Q (exteriorPower.ιMulti R 2 ![v 0, v 1]) ∈ P
   rw [cliffordBivectorExterior_apply_ιMulti]
   exact hP _ _
-
-/-- The exterior-square Clifford bivector map takes values in the even component. -/
-theorem cliffordBivectorExterior_range_le_evenOdd_zero :
-    LinearMap.range (cliffordBivectorExterior Q) ≤ evenOdd Q 0 :=
-  cliffordBivectorExterior_range_le_of_cliffordBivector_mem Q _
-    (cliffordBivector_mem_evenOdd_zero Q)
-
-/-- The exterior-square Clifford bivector map takes values in filtration degree at most two. -/
-theorem cliffordBivectorExterior_range_le_filtration_two :
-    LinearMap.range (cliffordBivectorExterior Q) ≤ filtration Q 2 :=
-  cliffordBivectorExterior_range_le_of_cliffordBivector_mem Q _
-    (cliffordBivector_mem_filtration_two Q)
 
 /-- The action-normalization identity for the half-normalized Clifford bivector. -/
 theorem cliffordBivector_lie_ι (a b x : M) :
