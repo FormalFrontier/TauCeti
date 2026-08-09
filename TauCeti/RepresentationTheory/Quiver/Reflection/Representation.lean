@@ -30,7 +30,8 @@ summing map is surjective: the reflected space at `i` then has dimension
 because a sink has no outgoing arrow. Surjectivity is the honest hypothesis here and it is not
 automatic: it fails exactly the way `TauCeti.incomingSum_not_surjective` records, for a
 representation concentrated at `i`, of which the vertex simple `Sᵢ` is the example. The reflection
-kills such a representation, by `TauCeti.subsingleton_reflectRep_obj_self`.
+has zero vertex space at `i` in this boundary case, by
+`TauCeti.subsingleton_reflectRep_obj_self`; in particular, it kills the vertex simple `Sᵢ`.
 
 ## Main definitions
 
@@ -49,9 +50,9 @@ kills such a representation, by `TauCeti.subsingleton_reflectRep_obj_self`.
   vector of `C⁺ᵢ M`, away from `i` and at `i`.
 * `TauCeti.dimVector_reflectRep`: `dim (C⁺ᵢ M) = sᵢ (dim M)` when the summing map is surjective.
 * `TauCeti.incomingSum_not_surjective`: that surjectivity fails for a representation concentrated
-  at `i`, and `TauCeti.subsingleton_reflectRep_obj_self`: the reflection kills such a
-  representation. Together they are the vertex simple `Sᵢ`, the boundary case of the previous
-  result.
+  at `i`, and `TauCeti.subsingleton_reflectRep_obj_self`: the reflected space at `i` vanishes under
+  the same source-vanishing hypothesis. Together they describe the vertex simple `Sᵢ`, the boundary
+  case of the previous result.
 
 ## Implementation notes
 
@@ -125,7 +126,7 @@ theorem incomingSum_apply (M : QuiverRep.{u, v, w, max v w x} k Q) (i : Q)
 /-- The source of `TauCeti.incomingSum` has dimension `∑_b #(b ⟶ i) · dim M_b`. Only the vertex
 spaces at the sources of arrows into `i` need be finite-dimensional; they are the only ones the
 domain is built from. -/
-theorem finrank_forall_incoming (M : QuiverRep.{u, v, w, max v w x} k Q) (i : Q)
+theorem finrank_pi_incoming (M : QuiverRep.{u, v, w, max v w x} k Q) (i : Q)
     (hM : ∀ e : Σ b : Q, (b ⟶ i), FiniteDimensional k (M.obj e.1)) :
     Module.finrank k ((e : Σ b : Q, (b ⟶ i)) → M.obj e.1)
       = ∑ b : Q, Fintype.card (b ⟶ i) * Module.finrank k (M.obj b) := by
@@ -297,7 +298,7 @@ theorem dimVector_reflectRep_self_add
     rw [LinearMap.range_eq_top.mpr hs, dimVector_apply]
     exact finrank_top _ _
   have hsum := LinearMap.finrank_range_add_finrank_ker (incomingSum M i)
-  rw [hker, hrange.symm, add_comm, hsum, finrank_forall_incoming M i hM]
+  rw [hker, hrange.symm, add_comm, hsum, finrank_pi_incoming M i hM]
   exact Finset.sum_congr rfl fun b _ ↦ congrArg (Fintype.card (b ⟶ i) * ·)
     (dimVector_apply M b).symm
 
@@ -361,9 +362,9 @@ theorem incomingSum_not_surjective (i : Q) (h : ∀ b : Q, (b ⟶ i) → Subsing
   rw [incomingSum_eq_zero M i h] at hf
   exact hy hf.symm
 
-/-- **The reflection kills a representation concentrated at the sink.** If every vertex space at
-the source of an arrow into `i` vanishes then the reflected space at `i` vanishes too; combined
-with `TauCeti.dimVector_reflectRep_of_ne` this says that the reflection annihilates the vertex
+/-- **The reflected space at the sink vanishes when all incoming sources vanish.** If every vertex
+space at the source of an arrow into `i` vanishes, then the reflected space at `i` vanishes too.
+In particular, this is the sink-vertex computation showing that reflection annihilates the vertex
 simple `Sᵢ`. -/
 theorem subsingleton_reflectRep_obj_self {i : Q} (hi : IsSink i)
     (h : ∀ b : Q, (b ⟶ i) → Subsingleton (M.obj b)) :
@@ -373,8 +374,8 @@ theorem subsingleton_reflectRep_obj_self {i : Q} (hi : IsSink i)
     ⟨fun a b ↦ Subtype.ext (Subsingleton.elim _ _)⟩
   exact reflectRep_obj_self M hi ▸ hker
 
-/-- The dimension vector of the reflection of a representation concentrated at the sink vanishes
-at the sink. -/
+/-- If every source of an arrow into the sink vanishes, the reflected dimension at the sink is
+zero. -/
 theorem dimVector_reflectRep_self_eq_zero {i : Q} (hi : IsSink i)
     (h : ∀ b : Q, (b ⟶ i) → Subsingleton (M.obj b)) :
     dimVector (reflectRep M hi) i = 0 := by
