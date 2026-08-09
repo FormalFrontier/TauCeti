@@ -70,7 +70,7 @@ and the representation is stated in the `fourierAtom` convention rather than thr
   existence of a finite representing measure for a continuous positive-definite function.
 * `TauCeti.Measure.ext_of_forall_integral_fourierAtom_eq`: uniqueness of the representing
   measure.
-* `TauCeti.bochner`: **Bochner's theorem**, the equivalence between continuity together with
+* `TauCeti.bochner`, with the Euclidean specialization `TauCeti.bochner_euclideanSpace`: **Bochner's theorem**, the equivalence between continuity together with
   positive definiteness of the subtraction kernel and the unique Fourier representation.
 * `TauCeti.bochner_of_forall_star_eq_neg`: the same equivalence for the involutive
   positive-definiteness predicate under the negation involution.
@@ -322,5 +322,14 @@ theorem bochner_of_forall_star_eq_neg [StarAddMonoid V] (hstar : ∀ x : V, star
       ∃! μ : Measure V, IsFiniteMeasure μ ∧ ∀ v, F v = ∫ q, fourierAtom v q ∂μ :=
   (and_congr_right fun _ =>
     isPositiveDefinite_iff_isPositiveDefiniteKernel_sub hstar).trans (bochner F)
+
+/-- **Bochner's theorem on `ℝᵈ`**: the specialization of `bochner` to Euclidean space. A
+function on `EuclideanSpace ℝ (Fin d)` is continuous with positive-definite subtraction kernel
+if and only if it is the Fourier transform of a unique finite positive measure. -/
+theorem bochner_euclideanSpace (d : ℕ) (F : EuclideanSpace ℝ (Fin d) → ℂ) :
+    (Continuous F ∧ IsPositiveDefiniteKernel fun a b => F (a - b)) ↔
+      ∃! μ : Measure (EuclideanSpace ℝ (Fin d)), IsFiniteMeasure μ ∧
+        ∀ v, F v = ∫ q, fourierAtom v q ∂μ :=
+  bochner F
 
 end TauCeti
