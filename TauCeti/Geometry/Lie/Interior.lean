@@ -22,7 +22,8 @@ This supplies a prerequisite for Deliverable A, Layer 1 of
 
 * `ContMDiffMul.isInteriorPoint`: every point of a group manifold with `C^n` multiplication, for
   `n ≠ 0`, is an interior point.
-* `ContMDiffMul.boundarylessManifold`: opt-in proof that such a group manifold is boundaryless.
+* `ContMDiffMul.boundarylessManifold`: a group manifold with `C^1` multiplication is boundaryless
+  (opt-in, not an instance).
 
 ## References
 
