@@ -16,9 +16,9 @@ Banach-algebra shadow of the left-trivialized differential-of-exponential factor
 
 ## Main results
 
-* `TauCeti.Lie.banachDexpFactor_eq_integral_exp`: the dexp factor is an integral of operator
-  exponentials.
-* `TauCeti.Lie.banachDexpFactor_apply_eq_integral_conj`: on an algebra element, the integrand is
+* `TauCeti.Lie.banachDexpFactor_eq_integral_exp`: the dexp factor is the integral of the operator
+  exponential along the line segment from `0` to `-ad x`.
+* `TauCeti.Lie.banachDexpFactor_apply_eq_integral`: on an algebra element, the integrand is
   conjugation by `exp (-t x)`.
 
 ## References
@@ -39,7 +39,8 @@ variable {R : Type*} [NormedRing R] [NormedAlgebra ℝ R] [CompleteSpace R]
 
 attribute [local instance] TauCeti.normedAlgebraRatOfReal
 
-/-- The Banach dexp factor is the integral of the corresponding operator exponential. -/
+/-- The Banach dexp factor is the integral of the operator exponential along the line segment from
+`0` to `-ad x`. -/
 theorem banachDexpFactor_eq_integral_exp (x : R) :
     banachDexpFactor x =
       ∫ t in (0 : ℝ)..1, exp (t • (-continuousCommutator x)) := by
@@ -47,7 +48,7 @@ theorem banachDexpFactor_eq_integral_exp (x : R) :
 
 /-- Applied to an algebra element, the Banach dexp factor is the integral of conjugation by
 `exp (-t x)`. -/
-theorem banachDexpFactor_apply_eq_integral_conj (x y : R) :
+theorem banachDexpFactor_apply_eq_integral (x y : R) :
     banachDexpFactor x y =
       ∫ t in (0 : ℝ)..1, exp (-(t • x)) * y * exp (t • x) := by
   rw [banachDexpFactor_eq_integral_exp]
