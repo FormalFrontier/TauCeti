@@ -8,6 +8,7 @@ module
 public import TauCeti.Analysis.Complex.Conformal.Crosscut.Image
 public import TauCeti.Analysis.Complex.Conformal.LengthArea
 import TauCeti.Analysis.Complex.Conformal.Crosscut.Endpoints
+import TauCeti.MeasureTheory.Integral.DominatedIncrement
 import TauCeti.Topology.Circle.Metric
 
 /-!
@@ -35,10 +36,17 @@ The engine is the chord bound of `Conformal/LengthArea.lean` in its primitive, s
 `TauCeti.ofReal_dist_le_mul_lintegral_Ioc`: the images of the endpoints of an arc of angles are at
 distance at most `|ρ|` times the angular integral of `‖deriv f‖` over *that* arc. Applied to a
 sub-arc, it says that the oscillation of `f` along a piece of the circle is controlled by the length
-carried by that piece alone. Since the total length is finite, Mathlib's absolute continuity of the
-integral (`MeasureTheory.exists_pos_setLIntegral_lt_of_measure_lt`) makes the length carried by a
-short sub-arc uniformly small: that is `TauCeti.exists_pos_forall_dist_le_of_lintegral_ne_top`, a
-modulus of continuity for `f` along the arc, in the angular parameter.
+carried by that piece alone — in the vocabulary of
+`TauCeti/MeasureTheory/Integral/DominatedIncrement.lean`, that the increments of
+`f ∘ circleMap ζ ρ` are *dominated* by the angular length density
+`θ ↦ |ρ| * ‖deriv f (circleMap ζ ρ θ)‖ₑ`. Neither of the two conclusions drawn from that
+domination sees the circle: a map on an order-connected subset of `ℝ` whose increments are
+dominated by a density of finite total integral has bounded image and is uniformly continuous, the
+latter by absolute continuity of the integral. Both are proved there, at that generality, and the
+two statements below are their instances at the arc —
+`TauCeti.exists_pos_forall_dist_le_of_lintegral_ne_top`, a modulus of continuity for `f` along the
+arc in the angular parameter, and
+`TauCeti.isBounded_image_circleMap_image_Ioo_of_lintegral_ne_top`.
 
 Turning the angular modulus into a statement about the plane needs the chord formula
 `TauCeti.dist_circleMap_eq_two_mul_sin_abs`: on an arc of angular width below a full turn the chord
@@ -148,16 +156,41 @@ private lemma ofReal_dist_le_mul_lintegral_Ioc_of_mem_Ioo (hUo : IsOpen U)
   ofReal_dist_le_mul_lintegral_Ioc hUo hf ζ hle fun _ hθ =>
     hmemU _ ⟨h₁.1.trans_le hθ.1, hθ.2.trans_lt h₂.2⟩
 
+/-- The chord bound in the form the increment estimates of
+`TauCeti/MeasureTheory/Integral/DominatedIncrement.lean` consume: along an arc of angles on which
+`f` is holomorphic, the increments of `f ∘ circleMap ζ ρ` are dominated by the *angular length
+density* `θ ↦ |ρ| * ‖deriv f (circleMap ζ ρ θ)‖ₑ`, whose integral over a sub-arc is the length of
+the image of that sub-arc. Moving the constant `|ρ|` inside the integral is all that separates the
+two forms. -/
+private lemma edist_le_setLIntegral_enorm_deriv_circleMap (hUo : IsOpen U)
+    (hf : DifferentiableOn ℂ f U) (ζ : ℂ) {ρ : ℝ} {a b : ℝ}
+    (hmemU : ∀ θ ∈ Ioo a b, circleMap ζ ρ θ ∈ U) :
+    ∀ θ₁ ∈ Ioo a b, ∀ θ₂ ∈ Ioo a b, θ₁ ≤ θ₂ →
+      edist (f (circleMap ζ ρ θ₁)) (f (circleMap ζ ρ θ₂)) ≤
+        ∫⁻ θ in Ioc θ₁ θ₂, ENNReal.ofReal |ρ| * ‖deriv f (circleMap ζ ρ θ)‖ₑ := by
+  intro θ₁ h₁ θ₂ h₂ hle
+  rw [edist_dist, lintegral_const_mul' _ _ ENNReal.ofReal_ne_top]
+  exact ofReal_dist_le_mul_lintegral_Ioc_of_mem_Ioo hUo hf ζ hmemU h₁ h₂ hle
+
+/-- An arc of finite image length carries a finite integral of the angular length density: the two
+differ by the finite factor `|ρ|`. -/
+private lemma setLIntegral_enorm_deriv_circleMap_ne_top {ρ : ℝ} {a b : ℝ}
+    (hfin : ∫⁻ θ in Ioo a b, ‖deriv f (circleMap ζ ρ θ)‖ₑ ≠ ⊤) :
+    (∫⁻ θ in Ioo a b, ENNReal.ofReal |ρ| * ‖deriv f (circleMap ζ ρ θ)‖ₑ) ≠ ⊤ := by
+  rw [lintegral_const_mul' _ _ ENNReal.ofReal_ne_top]
+  exact ENNReal.mul_ne_top ENNReal.ofReal_ne_top hfin
+
 /-- **A modulus of continuity along an arc of finite image length.** If `f` is holomorphic on an
 open set containing the piece of the circle of radius `ρ` about `ζ` cut out by the angles `Ioo a b`,
 and the angular integral of `‖deriv f‖` over that arc is finite, then for every tolerance `ε > 0`
 there is an angular gap `η > 0` within which the images of two angles of the arc stay `ε` apart.
 
 The gap is uniform over the arc, and in particular does not shrink as an end of the arc is
-approached: that is the whole content, and it comes from the absolute continuity of the integral,
-`MeasureTheory.exists_pos_setLIntegral_lt_of_measure_lt`. A short sub-arc carries little length,
-and by the chord bound `TauCeti.ofReal_dist_le_mul_lintegral_Ioc` the length a sub-arc carries
-bounds the distance between the images of its two ends.
+approached: that is the whole content. A short sub-arc carries little length, and by the chord
+bound `TauCeti.ofReal_dist_le_mul_lintegral_Ioc` the length a sub-arc carries bounds the distance
+between the images of its two ends; that is the domination hypothesis of
+`TauCeti.uniformContinuousOn_of_edist_le_setLIntegral`, which draws the modulus from the absolute
+continuity of the integral and knows nothing of circles.
 
 Uniform continuity in the angle is *not* uniform continuity of `f` on the arc as a subset of the
 plane, but on an arc of angular width below a full turn the two agree, which is what
@@ -171,50 +204,17 @@ theorem exists_pos_forall_dist_le_of_lintegral_ne_top (hUo : IsOpen U)
     (hfin : ∫⁻ θ in Ioo a b, ‖deriv f (circleMap ζ ρ θ)‖ₑ ≠ ⊤) {ε : ℝ} (hε : 0 < ε) :
     ∃ η > 0, ∀ θ₁ ∈ Ioo a b, ∀ θ₂ ∈ Ioo a b, |θ₁ - θ₂| ≤ η →
       dist (f (circleMap ζ ρ θ₁)) (f (circleMap ζ ρ θ₂)) ≤ ε := by
-  -- a circle of radius `0` is the single point `ζ`, where every distance in sight vanishes
-  rcases eq_or_ne ρ 0 with rfl | hρ
-  · exact ⟨1, one_pos, fun _ _ _ _ _ => by simp [hε.le]⟩
-  have hρpos : 0 < |ρ| := abs_pos.mpr hρ
-  have hρ0 : ENNReal.ofReal |ρ| ≠ 0 := (ENNReal.ofReal_pos.mpr hρpos).ne'
-  have hcne : ENNReal.ofReal (ε / |ρ|) ≠ 0 := (ENNReal.ofReal_pos.mpr (div_pos hε hρpos)).ne'
-  obtain ⟨δ, hδ, hδlt⟩ :=
-    exists_pos_setLIntegral_lt_of_measure_lt (μ := volume.restrict (Ioo a b)) hfin hcne
-  obtain ⟨d, hd0, hdδ⟩ := exists_between hδ
-  have hdtop : d ≠ ⊤ := (hdδ.trans_le le_top).ne
-  -- the estimate for a pair of angles in increasing order
-  have key : ∀ θ₁ ∈ Ioo a b, ∀ θ₂ ∈ Ioo a b, θ₁ ≤ θ₂ → θ₂ - θ₁ ≤ d.toReal →
-      dist (f (circleMap ζ ρ θ₁)) (f (circleMap ζ ρ θ₂)) ≤ ε := by
-    intro θ₁ h₁ θ₂ h₂ hle hgap
-    have hsub : Ioc θ₁ θ₂ ⊆ Ioo a b := fun θ hθ => ⟨h₁.1.trans hθ.1, hθ.2.trans_lt h₂.2⟩
-    have hmeas : (volume.restrict (Ioo a b)) (Ioc θ₁ θ₂) < δ := by
-      refine lt_of_le_of_lt ((Measure.restrict_apply_le _ _).trans ?_) hdδ
-      rw [Real.volume_Ioc, ← ENNReal.ofReal_toReal hdtop]
-      exact ENNReal.ofReal_le_ofReal hgap
-    have hres : (volume.restrict (Ioo a b)).restrict (Ioc θ₁ θ₂) = volume.restrict (Ioc θ₁ θ₂) := by
-      rw [Measure.restrict_restrict measurableSet_Ioc, inter_eq_self_of_subset_left hsub]
-    have hlt : ∫⁻ θ in Ioc θ₁ θ₂, ‖deriv f (circleMap ζ ρ θ)‖ₑ < ENNReal.ofReal (ε / |ρ|) := by
-      have hbound := hδlt (Ioc θ₁ θ₂) hmeas
-      rwa [hres] at hbound
-    have hmul : ENNReal.ofReal |ρ| * ∫⁻ θ in Ioc θ₁ θ₂, ‖deriv f (circleMap ζ ρ θ)‖ₑ
-        < ENNReal.ofReal ε := by
-      refine (ENNReal.mul_lt_mul_right hρ0 ENNReal.ofReal_ne_top hlt).trans_eq ?_
-      rw [← ENNReal.ofReal_mul (abs_nonneg ρ)]
-      congr 1
-      field_simp
-    exact ((ENNReal.ofReal_lt_ofReal_iff hε).mp
-      ((ofReal_dist_le_mul_lintegral_Ioc_of_mem_Ioo hUo hf ζ hmemU h₁ h₂ hle).trans_lt
-        hmul)).le
-  refine ⟨d.toReal, ENNReal.toReal_pos hd0.ne' hdtop, fun θ₁ h₁ θ₂ h₂ habs => ?_⟩
-  rcases le_total θ₁ θ₂ with hle | hle
-  · rw [abs_sub_comm, abs_of_nonneg (sub_nonneg.mpr hle)] at habs
-    exact key θ₁ h₁ θ₂ h₂ hle habs
-  · rw [abs_of_nonneg (sub_nonneg.mpr hle)] at habs
-    rw [dist_comm]
-    exact key θ₂ h₂ θ₁ h₁ hle habs
+  have huc : UniformContinuousOn (fun θ => f (circleMap ζ ρ θ)) (Ioo a b) :=
+    uniformContinuousOn_of_edist_le_setLIntegral ordConnected_Ioo
+      (edist_le_setLIntegral_enorm_deriv_circleMap hUo hf ζ hmemU)
+      (setLIntegral_enorm_deriv_circleMap_ne_top hfin)
+  obtain ⟨η, hη, hmod⟩ := Metric.uniformContinuousOn_iff_le.1 huc ε hε
+  exact ⟨η, hη, fun θ₁ h₁ θ₂ h₂ habs => hmod θ₁ h₁ θ₂ h₂ (by rwa [Real.dist_eq])⟩
 
 /-- **An arc of finite image length has bounded image.** The chord bound applied to the whole arc
-rather than to a sub-arc: any two of its points have images at distance at most
-`|ρ| * ∫⁻ θ in Ioo a b, ‖deriv f (circleMap ζ ρ θ)‖ₑ`, a finite number.
+rather than to a sub-arc: by `TauCeti.isBounded_image_of_edist_le_setLIntegral` any two of its
+points have images at distance at most `|ρ| * ∫⁻ θ in Ioo a b, ‖deriv f (circleMap ζ ρ θ)‖ₑ`, a
+finite number.
 
 This is what makes a subsingleton cluster set along the arc an honest limit, the compactness input
 of `TauCeti.exists_tendsto_of_clusterSetOn_subsingleton`. -/
@@ -223,24 +223,10 @@ theorem isBounded_image_circleMap_image_Ioo_of_lintegral_ne_top (hUo : IsOpen U)
     (hmemU : ∀ θ ∈ Ioo a b, circleMap ζ ρ θ ∈ U)
     (hfin : ∫⁻ θ in Ioo a b, ‖deriv f (circleMap ζ ρ θ)‖ₑ ≠ ⊤) :
     IsBounded (f '' (circleMap ζ ρ '' Ioo a b)) := by
-  set L : ℝ≥0∞ := ENNReal.ofReal |ρ| * ∫⁻ θ in Ioo a b, ‖deriv f (circleMap ζ ρ θ)‖ₑ with hL
-  have hLtop : L ≠ ⊤ := by
-    rw [hL]
-    exact ENNReal.mul_ne_top ENNReal.ofReal_ne_top hfin
-  have key : ∀ θ₁ ∈ Ioo a b, ∀ θ₂ ∈ Ioo a b, θ₁ ≤ θ₂ →
-      dist (f (circleMap ζ ρ θ₁)) (f (circleMap ζ ρ θ₂)) ≤ L.toReal := by
-    intro θ₁ h₁ θ₂ h₂ hle
-    refine (ENNReal.ofReal_le_iff_le_toReal hLtop).mp ?_
-    refine (ofReal_dist_le_mul_lintegral_Ioc_of_mem_Ioo hUo hf ζ hmemU h₁ h₂ hle).trans ?_
-    rw [hL]
-    gcongr
-    exact fun θ hθ => ⟨h₁.1.trans hθ.1, hθ.2.trans_lt h₂.2⟩
-  rw [image_image, Metric.isBounded_image_iff]
-  refine ⟨L.toReal, fun θ₁ h₁ θ₂ h₂ => ?_⟩
-  rcases le_total θ₁ θ₂ with hle | hle
-  · exact key θ₁ h₁ θ₂ h₂ hle
-  · rw [dist_comm]
-    exact key θ₂ h₂ θ₁ h₁ hle
+  rw [image_image]
+  exact isBounded_image_of_edist_le_setLIntegral ordConnected_Ioo
+    (edist_le_setLIntegral_enorm_deriv_circleMap hUo hf ζ hmemU)
+    (setLIntegral_enorm_deriv_circleMap_ne_top hfin)
 
 /-! ## The cluster sets of an arc of finite image length -/
 
