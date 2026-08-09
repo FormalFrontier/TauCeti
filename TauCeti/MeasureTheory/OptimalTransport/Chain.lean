@@ -6,6 +6,7 @@ Authors: Codex
 module
 
 public import Mathlib.Probability.Kernel.IonescuTulcea.Traj
+public import TauCeti.Probability.Kernel.Composition.MeasureCompProd
 
 /-!
 # Gluing a countable chain of transport plans
@@ -35,24 +36,6 @@ namespace Measure
 universe u
 
 variable {X : ℕ → Type u} [∀ n, MeasurableSpace (X n)]
-
-section MapCompProd
-
-variable {A B C : Type*} [MeasurableSpace A] [MeasurableSpace B] [MeasurableSpace C]
-
-private theorem map_prodMap_compProd_comap (mu : Measure A) [SFinite mu]
-    (kappa : Kernel B C) [IsSFiniteKernel kappa] {f : A → B} (hf : Measurable f) :
-    (mu ⊗ₘ kappa.comap f hf).map (Prod.map f id) = mu.map f ⊗ₘ kappa := by
-  ext s hs
-  rw [MeasureTheory.Measure.map_apply (hf.prodMap measurable_id) hs,
-    MeasureTheory.Measure.compProd_apply ((hf.prodMap measurable_id) hs),
-    MeasureTheory.Measure.compProd_apply hs,
-    MeasureTheory.lintegral_map']
-  · congr with a
-  · exact (kappa.measurable_kernel_prodMk_left hs).aemeasurable
-  · exact hf.aemeasurable
-
-end MapCompProd
 
 section Chain
 
