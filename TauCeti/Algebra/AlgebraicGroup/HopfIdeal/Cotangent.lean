@@ -73,6 +73,7 @@ noncomputable def conormalSubspace (I : HopfIdeal k H) :
 
 /-- Membership in the conormal subspace means being represented by an element of the defining
 Hopf ideal. -/
+@[simp]
 theorem mem_conormalSubspace_iff (I : HopfIdeal k H)
     (x : Bialgebra.CotangentSpace k H) :
     x ∈ conormalSubspace I ↔
