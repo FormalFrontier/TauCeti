@@ -65,13 +65,13 @@ theorem fiberMap_apply_coe (f : C(E, F)) (hf : q ∘ f = p) (x : X) (e : p ⁻¹
 
 /-- Restricting the identity map to a fibre gives the identity. -/
 @[simp]
-theorem fiberMap_id (x : X) (e : p ⁻¹' {x}) :
+theorem fiberMap_id_apply (x : X) (e : p ⁻¹' {x}) :
     fiberMap (p := p) (q := p) (ContinuousMap.id E) rfl x e = e := by
   apply Subtype.ext
   rfl
 
 /-- Restriction to a fibre respects composition of maps over the base. -/
-theorem fiberMap_comp (f : C(E, F)) (g : C(F, G))
+theorem fiberMap_comp_apply (f : C(E, F)) (g : C(F, G))
     (hf : q ∘ f = p) (hg : r ∘ g = q) (x : X) (e : p ⁻¹' {x}) :
     fiberMap (g.comp f) (by
       funext z
@@ -149,26 +149,16 @@ theorem monodromyNatTrans_comp (hp : _root_.IsCoveringMap p)
 /-- The restrictions of an over-base homeomorphism to corresponding fibres. -/
 private noncomputable def fiberEquiv (h : E ≃ₜ F) (hh : q ∘ h = p) (x : X) :
     p ⁻¹' {x} ≃ q ⁻¹' {x} :=
-  Equiv.ofBijective (fiberMap (h : C(E, F)) hh x) ⟨by
-    intro e e' he
-    apply Subtype.ext
-    apply h.injective
-    exact congrArg Subtype.val he, by
-    intro f
-    refine ⟨⟨h.symm f, ?_⟩, ?_⟩
-    · rw [Set.mem_preimage, Set.mem_singleton_iff]
-      have hbase : p (h.symm (f : F)) = q f := by
-        simpa only [Function.comp_apply, h.apply_symm_apply] using
-          (congrFun hh (h.symm (f : F))).symm
-      exact hbase.trans f.2
-    · apply Subtype.ext
-      exact h.apply_symm_apply f⟩
+  (h.subtype fun e ↦ by
+    simp only [Set.mem_preimage, Set.mem_singleton_iff]
+    rw [show q (h e) = p e by exact congrFun hh e]).toEquiv
 
 omit [TopologicalSpace X] in
 /-- The forward fibre equivalence is the canonical fibre restriction of the homeomorphism. -/
 @[simp]
 private theorem fiberEquiv_apply (h : E ≃ₜ F) (hh : q ∘ h = p) (x : X)
-    (e : p ⁻¹' {x}) : fiberEquiv h hh x e = fiberMap (h : C(E, F)) hh x e :=
+    (e : p ⁻¹' {x}) : fiberEquiv h hh x e = fiberMap (h : C(E, F)) hh x e := by
+  apply Subtype.ext
   rfl
 
 omit [TopologicalSpace X] in
@@ -176,10 +166,8 @@ omit [TopologicalSpace X] in
 @[simp]
 private theorem fiberEquiv_symm_apply_coe (h : E ≃ₜ F) (hh : q ∘ h = p) (x : X)
     (f : q ⁻¹' {x}) : ((fiberEquiv h hh x).symm f : E) = h.symm f := by
-  apply h.injective
-  rw [h.apply_symm_apply]
-  have hinv := (fiberEquiv h hh x).apply_symm_apply f
-  exact congrArg Subtype.val hinv
+  unfold fiberEquiv
+  exact Homeomorph.subtype_symm_apply_coe _ _ _
 
 /-- An isomorphism of covering spaces over `X` induces a natural isomorphism between their
 monodromy functors. Its component over `x` is the restriction of the homeomorphism to the fibre
@@ -188,14 +176,14 @@ noncomputable def monodromyNatIso (hp : _root_.IsCoveringMap p) (hq : _root_.IsC
     (h : E ≃ₜ F) (hh : q ∘ h = p) : hp.monodromyFunctor ≅ hq.monodromyFunctor :=
   NatIso.ofComponents
     (fun x ↦ (fiberEquiv h hh x.as).toIso)
-    (fun a ↦ by
-      ext e
-      change fiberEquiv h hh _ (hp.monodromy a e) =
-        hq.monodromy a (fiberEquiv h hh _ e)
-      have he : fiberEquiv h hh _ e = fiberMap (h : C(E, F)) hh _ e :=
-        fiberEquiv_apply h hh _ e
-      rw [he]
-      exact fiberMap_monodromy hp hq (h : C(E, F)) hh a e)
+    (fun {x y} a ↦ by
+      have component_eq (z : FundamentalGroupoid X) :
+          (fiberEquiv h hh z.as).toIso.hom =
+            (monodromyNatTrans hp hq (h : C(E, F)) hh).app z := by
+        ext e
+        exact congrArg Subtype.val (fiberEquiv_apply h hh z.as e)
+      rw [component_eq x, component_eq y]
+      exact (monodromyNatTrans hp hq (h : C(E, F)) hh).naturality a)
 
 /-- The forward natural transformation of the monodromy isomorphism is the canonical
 transformation induced by the homeomorphism. -/
@@ -220,28 +208,6 @@ theorem monodromyNatIso_inv (hp : _root_.IsCoveringMap p)
   ext x f
   apply Subtype.ext
   exact fiberEquiv_symm_apply_coe h hh x.as f
-
-/-- The forward component of the monodromy natural isomorphism applies the underlying
-homeomorphism. -/
-theorem monodromyNatIso_hom_app_apply (hp : _root_.IsCoveringMap p)
-    (hq : _root_.IsCoveringMap q) (h : E ≃ₜ F) (hh : q ∘ h = p)
-    (x : X) (e : p ⁻¹' {x}) :
-    Subtype.val (show q ⁻¹' {x} from
-      ((monodromyNatIso hp hq h hh).hom.app (FundamentalGroupoid.mk x)) e) = h e :=
-  by
-    rw [monodromyNatIso_hom]
-    rfl
-
-/-- The inverse component of the monodromy natural isomorphism applies the inverse
-homeomorphism. -/
-theorem monodromyNatIso_inv_app_apply (hp : _root_.IsCoveringMap p)
-    (hq : _root_.IsCoveringMap q) (h : E ≃ₜ F) (hh : q ∘ h = p)
-    (x : X) (f : q ⁻¹' {x}) :
-    Subtype.val (show p ⁻¹' {x} from
-      ((monodromyNatIso hp hq h hh).inv.app (FundamentalGroupoid.mk x)) f) = h.symm f :=
-  by
-    rw [monodromyNatIso_inv]
-    rfl
 
 end IsCoveringMap
 
