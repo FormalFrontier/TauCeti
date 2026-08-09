@@ -5,7 +5,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Algebra.Coalgebra.Comodule.Evaluation
-public import TauCeti.Algebra.Coalgebra.Comodule.MatrixCoefficient.Adjoin
 public import TauCeti.Algebra.Coalgebra.Comodule.MatrixCoefficient.Regular
 public import TauCeti.Algebra.Coalgebra.Subcoalgebra.Finite
 
@@ -136,9 +135,7 @@ theorem endOfPoint_eq_iff_eqOn_matrixCoefficientSubalgebra
             LinearMap.lTensor M g.toLinearMap (coact (R := R) (C := C) m) =
               LinearMap.lTensor M h.toLinearMap (coact (R := R) (C := C) m) := by
           apply ((Module.evalEquiv R M).rTensor A).injective
-          apply (dualTensorHomEquiv R (Module.Dual R M) A).injective
-          change dualTensorHom R (Module.Dual R M) A _ =
-            dualTensorHom R (Module.Dual R M) A _
+          apply (dualTensorHom_bijective (R := R) (M := Module.Dual R M) (N := A)).1
           ext φ
           rw [hcontract, hcontract]
           exact hcoeff (matrixCoefficient_mem_subalgebra (R := R) (C := C) φ m)
