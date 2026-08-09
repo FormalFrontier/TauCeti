@@ -449,6 +449,15 @@ lemma contDiffOn_fdBoundary (H : ℝ) {c d : ℝ}
   · exact (fdBoundary_piece4 H).mono h
   · exact (fdBoundary_piece5 H).mono h
 
+/-- The left vertical ascends affinely from the corner row to the ceiling. -/
+lemma im_fdBoundary_of_le_four (h3 : 3 < t) (h4 : t ≤ 4) :
+    (fdBoundary H t).im = Real.sqrt 3 / 2 + (t - 3) * (H - Real.sqrt 3 / 2) := by
+  rw [fdBoundary_of_le_four h3 h4, fdBoundary_segment4_apply, AffineMap.lineMap_apply_module']
+  have hchord : ((-1 / 2 + H * Complex.I : ℂ) - (ρ : ℂ)).im = H - Real.sqrt 3 / 2 := by
+    simp [ρ]
+  have hρ : (ρ : ℂ).im = Real.sqrt 3 / 2 := by simp [ρ]
+  rw [Complex.add_im, Complex.smul_im, hchord, hρ, smul_eq_mul, add_comm]
+
 /-- The right vertical has constant real part `1/2`. -/
 theorem re_fdBoundary_segment1 (H : ℝ) {t : ℝ} (ht : t ∈ Icc (0 : ℝ) 1) :
     (fdBoundary H t).re = 1 / 2 := by

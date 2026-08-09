@@ -167,6 +167,84 @@ open ClassFunction
 variable (k : Type u) (G : Type v) [Field k] [CharZero k] [Group G] [Finite G] [IsAlgClosed k]
   [Invertible (Nat.card G : k)]
 
+omit [CharZero k] in
+/-- A row of the character table is inversion-invariant exactly when the irreducible character it
+records is: the two say the same thing, one indexed by conjugacy classes and one by group
+elements. -/
+private theorem forall_characterTable_inv_iff (i : Fin (Nat.card (ConjClasses G))) :
+    (∀ C : ConjClasses G, characterTable k G i C⁻¹ = characterTable k G i C) ↔
+      ∀ g : G, irreducibleCharacter k i g⁻¹ = irreducibleCharacter k i g := by
+  refine ⟨fun h g => by simpa using h (ConjClasses.mk g), fun h C => ?_⟩
+  obtain ⟨g, rfl⟩ := ConjClasses.exists_rep C
+  simpa using h g
+
+omit [CharZero k] in
+/-- Summing the squares of an irreducible character over the group is the same as summing the
+squares of the corresponding character-table row over the conjugacy classes, each weighted by the
+size of its class. -/
+private theorem sum_irreducibleCharacter_sq_eq_sum_card_carrier_mul [Fintype G]
+    [Fintype (ConjClasses G)] (i : Fin (Nat.card (ConjClasses G))) :
+    ∑ g : G, irreducibleCharacter k i g ^ 2 =
+      ∑ C : ConjClasses G, (Nat.card C.carrier : k) * characterTable k G i C ^ 2 := by
+  have h := ClassFunction.sum_eq_sum_conjClasses
+    (ofConjClasses (k := k) fun C => characterTable k G i C ^ 2)
+  rw [toConjClasses_ofConjClasses] at h
+  rw [← h]
+  exact Finset.sum_congr rfl fun g _ => by
+    simp only [ofConjClasses_apply, characterTable_apply]
+
+omit [CharZero k] in
+open scoped Classical in
+/-- The contribution of one conjugacy class to the double count: its column sum of squares,
+weighted by the class size and normalised by `|G|`, is `1` for a real class and `0` otherwise.
+This is `TauCeti.sum_characterTable_sq` with the class size divided back out. -/
+private theorem card_inv_mul_card_carrier_mul_sum_characterTable_sq (C : ConjClasses G) :
+    (Nat.card G : k)⁻¹ * ((Nat.card C.carrier : k) *
+        ∑ i : Fin (Nat.card (ConjClasses G)), characterTable k G i C ^ 2) =
+      if IsRealClass C then (1 : k) else 0 := by
+  rw [sum_characterTable_sq]
+  have hG : (Nat.card G : k) ≠ 0 := Invertible.ne_zero _
+  have hC : (Nat.card C.carrier : k) ≠ 0 := ConjClasses.card_carrier_cast_ne_zero C hG
+  by_cases hR : IsRealClass C
+  · rw [if_pos hR, if_pos hR]
+    field_simp
+  · rw [if_neg hR, if_neg hR, mul_zero, mul_zero]
+
+open scoped Classical in
+/-- **The double count.** Counting inversion-invariant rows and real classes both come out of the
+same double sum `|G|⁻¹ ∑ᵢ ∑_C |C| · χᵢ(C)²`: summing over classes first turns each row into its
+invariance indicator, summing over rows first turns each class into its reality indicator. -/
+private theorem sum_ite_forall_characterTable_inv_eq_sum_ite_isRealClass
+    [Fintype (ConjClasses G)] :
+    ∑ i : Fin (Nat.card (ConjClasses G)),
+        (if ∀ C : ConjClasses G, characterTable k G i C⁻¹ = characterTable k G i C then
+          (1 : k) else 0) =
+      ∑ C : ConjClasses G, (if IsRealClass C then (1 : k) else 0) := by
+  let _ : Fintype G := Fintype.ofFinite G
+  calc ∑ i : Fin (Nat.card (ConjClasses G)),
+        (if ∀ C : ConjClasses G, characterTable k G i C⁻¹ = characterTable k G i C then
+          (1 : k) else 0)
+      = ∑ i : Fin (Nat.card (ConjClasses G)),
+          (Nat.card G : k)⁻¹ * ∑ g : G, irreducibleCharacter k i g ^ 2 := by
+        refine Finset.sum_congr rfl fun i _ => ?_
+        rw [card_inv_mul_sum_irreducibleCharacter_sq]
+        exact if_congr (forall_characterTable_inv_iff k G i) rfl rfl
+    _ = (Nat.card G : k)⁻¹ * ∑ i : Fin (Nat.card (ConjClasses G)),
+          ∑ C : ConjClasses G, (Nat.card C.carrier : k) * characterTable k G i C ^ 2 := by
+        rw [Finset.mul_sum]
+        exact Finset.sum_congr rfl fun i _ => by
+          rw [sum_irreducibleCharacter_sq_eq_sum_card_carrier_mul k G i]
+    _ = (Nat.card G : k)⁻¹ * ∑ C : ConjClasses G,
+          (Nat.card C.carrier : k) * ∑ i : Fin (Nat.card (ConjClasses G)),
+            characterTable k G i C ^ 2 := by
+        rw [Finset.sum_comm]
+        exact congrArg (fun x => (Nat.card G : k)⁻¹ * x)
+          (Finset.sum_congr rfl fun C _ => (Finset.mul_sum _ _ _).symm)
+    _ = ∑ C : ConjClasses G, (if IsRealClass C then (1 : k) else 0) := by
+        rw [Finset.mul_sum]
+        exact Finset.sum_congr rfl fun C _ =>
+          card_inv_mul_card_carrier_mul_sum_characterTable_sq k G C
+
 /-- **A finite group has as many inversion-invariant rows in its character table as real conjugacy
 classes.** -/
 theorem card_inversionInvariant_eq_card_realClasses :
@@ -174,62 +252,10 @@ theorem card_inversionInvariant_eq_card_realClasses :
         ∀ C : ConjClasses G, characterTable k G i C⁻¹ = characterTable k G i C} =
       Nat.card {C : ConjClasses G // IsRealClass C} := by
   classical
-  let _ : Fintype G := Fintype.ofFinite G
   let _ : Fintype (ConjClasses G) := Fintype.ofFinite (ConjClasses G)
-  have hG : (Nat.card G : k) ≠ 0 := Invertible.ne_zero _
-  have hcolumn : ∀ i : Fin (Nat.card (ConjClasses G)),
-      (∀ C : ConjClasses G, characterTable k G i C⁻¹ = characterTable k G i C) ↔
-        ∀ g : G, irreducibleCharacter k i g⁻¹ = irreducibleCharacter k i g := by
-    refine fun i => ⟨fun h g => by simpa using h (ConjClasses.mk g), fun h C => ?_⟩
-    obtain ⟨g, rfl⟩ := ConjClasses.exists_rep C
-    simpa using h g
-  have hclass : ∀ i : Fin (Nat.card (ConjClasses G)),
-      ∑ g : G, irreducibleCharacter k i g ^ 2 =
-        ∑ C : ConjClasses G, (Nat.card C.carrier : k) * characterTable k G i C ^ 2 := by
-    intro i
-    have h := ClassFunction.sum_eq_sum_conjClasses
-      (ofConjClasses (k := k) fun C => characterTable k G i C ^ 2)
-    rw [toConjClasses_ofConjClasses] at h
-    rw [← h]
-    exact Finset.sum_congr rfl fun g _ => by
-      simp only [ofConjClasses_apply, characterTable_apply]
-  have key : ∑ i : Fin (Nat.card (ConjClasses G)),
-        (if ∀ C : ConjClasses G, characterTable k G i C⁻¹ = characterTable k G i C then
-          (1 : k) else 0) =
-      ∑ C : ConjClasses G, (if IsRealClass C then (1 : k) else 0) :=
-    calc ∑ i : Fin (Nat.card (ConjClasses G)),
-          (if ∀ C : ConjClasses G, characterTable k G i C⁻¹ = characterTable k G i C then
-            (1 : k) else 0)
-        = ∑ i : Fin (Nat.card (ConjClasses G)),
-            (Nat.card G : k)⁻¹ * ∑ g : G, irreducibleCharacter k i g ^ 2 := by
-          refine Finset.sum_congr rfl fun i _ => ?_
-          rw [card_inv_mul_sum_irreducibleCharacter_sq]
-          exact if_congr (hcolumn i) rfl rfl
-      _ = (Nat.card G : k)⁻¹ * ∑ i : Fin (Nat.card (ConjClasses G)),
-            ∑ C : ConjClasses G, (Nat.card C.carrier : k) * characterTable k G i C ^ 2 := by
-          rw [Finset.mul_sum]
-          exact Finset.sum_congr rfl fun i _ => by rw [hclass i]
-      _ = (Nat.card G : k)⁻¹ * ∑ C : ConjClasses G,
-            (Nat.card C.carrier : k) * ∑ i : Fin (Nat.card (ConjClasses G)),
-              characterTable k G i C ^ 2 := by
-          rw [Finset.sum_comm]
-          exact congrArg (fun x => (Nat.card G : k)⁻¹ * x)
-            (Finset.sum_congr rfl fun C _ => (Finset.mul_sum _ _ _).symm)
-      _ = ∑ C : ConjClasses G, (if IsRealClass C then (1 : k) else 0) := by
-          rw [Finset.mul_sum]
-          refine Finset.sum_congr rfl fun C _ => ?_
-          rw [sum_characterTable_sq]
-          have hC : (Nat.card C.carrier : k) ≠ 0 := ConjClasses.card_carrier_cast_ne_zero C hG
-          by_cases hR : IsRealClass C
-          · rw [if_pos hR, if_pos hR]
-            field_simp
-          · rw [if_neg hR, if_neg hR, mul_zero, mul_zero]
-  have hcast : ((Nat.card {i : Fin (Nat.card (ConjClasses G)) //
-        ∀ C : ConjClasses G, characterTable k G i C⁻¹ = characterTable k G i C} : ℕ) : k) =
-      ((Nat.card {C : ConjClasses G // IsRealClass C} : ℕ) : k) := by
-    rw [natCast_card_subtype _ k, natCast_card_subtype _ k]
-    exact key
-  exact Nat.cast_injective hcast
+  refine Nat.cast_injective (R := k) ?_
+  rw [natCast_card_subtype _ k, natCast_card_subtype _ k]
+  exact sum_ite_forall_characterTable_inv_eq_sum_ite_isRealClass k G
 
 /-- **A finite group has as many real-valued irreducible complex characters as real conjugacy
 classes.**

@@ -356,6 +356,55 @@ end SemistandardYoungTableau
 
 /-! ### The bijection -/
 
+/-- **Reading a pattern off the tableau it names returns the pattern.** -/
+private theorem toGTPattern_toTableau_apply (n : ℕ) (μ : YoungDiagram) (hμ : μ.colLen 0 ≤ n)
+    (P : GTPattern n) (hP : ∀ i : Fin n, P.topRow i = (μ.rowLen i : ℤ)) (i j : ℕ) :
+    SemistandardYoungTableau.toGTPattern (P.toTableau hμ hP) n i j = P i j := by
+  have hnn := P.entry_nonneg fun k => by rw [hP k]; exact Int.natCast_nonneg _
+  rw [SemistandardYoungTableau.toGTPattern_apply]
+  simp only [SemistandardYoungTableau.patternEntry_def]
+  by_cases hjn : n < j
+  · rw [if_pos hjn, P.entry_eq_zero_of_lt hjn]
+  · rw [if_neg hjn]
+    have hj : j ≤ n := by omega
+    have hle : P i j ≤ (μ.rowLen i : ℤ) := by
+      rw [← P.entry_top_eq hμ hP]
+      exact P.entry_le_entry_of_nonneg_of_le (hnn i n) hj le_rfl
+    have hset : {c ∈ range (μ.rowLen i) | P.toTableau hμ hP i c < j}
+        = range (P i j).toNat := by
+      ext c
+      simp only [mem_filter, mem_range]
+      constructor
+      · rintro ⟨hc, hlt⟩
+        have := (P.toTableau_lt_iff hμ hP hj (YoungDiagram.mem_iff_lt_rowLen.mpr hc)).mp hlt
+        omega
+      · intro hc
+        have hcr : c < μ.rowLen i := by omega
+        exact ⟨hcr, (P.toTableau_lt_iff hμ hP hj
+          (YoungDiagram.mem_iff_lt_rowLen.mpr hcr)).mpr (by omega)⟩
+    rw [hset, card_range, Int.toNat_of_nonneg (hnn i j)]
+
+/-- **Naming the pattern read off a bounded tableau returns the tableau.** -/
+private theorem toTableau_toGTPattern_apply (n : ℕ) (μ : YoungDiagram) (hμ : μ.colLen 0 ≤ n)
+    (T : SemistandardYoungTableau μ) (hT : ∀ i c : ℕ, (i, c) ∈ μ → T i c < n) (i c : ℕ) :
+    (SemistandardYoungTableau.toGTPattern T n).toTableau hμ
+        (SemistandardYoungTableau.topRow_toGTPattern T n hT) i c = T i c := by
+  by_cases hc : (i, c) ∈ μ
+  · rw [GTPattern.toTableau_apply, if_pos hc]
+    simp only [GTPattern.tableauEntry_def]
+    have hset : {j ∈ range n | SemistandardYoungTableau.toGTPattern T n i (j + 1) ≤ (c : ℤ)}
+        = range (T i c) := by
+      ext j
+      simp only [mem_filter, mem_range]
+      constructor
+      · rintro ⟨hjn, hle⟩
+        exact (SemistandardYoungTableau.toGTPattern_succ_le_iff T n hjn hc).mp hle
+      · intro hj
+        have hjn : j < n := hj.trans (hT i c hc)
+        exact ⟨hjn, (SemistandardYoungTableau.toGTPattern_succ_le_iff T n hjn hc).mpr hj⟩
+    rw [hset, card_range]
+  · rw [GTPattern.toTableau_apply, if_neg hc, T.zeros hc]
+
 /-- **Gelfand-Tsetlin patterns are semistandard Young tableaux.**  For a shape `μ` with at most
 `n` rows, the patterns with `n` rows and top row `μ` correspond to the semistandard Young tableaux
 of shape `μ` whose entries lie in `{0, …, n - 1}`: row `j` of the pattern is the row-length
@@ -370,50 +419,11 @@ def gtPatternEquivSSYT (n : ℕ) (μ : YoungDiagram) (hμ : μ.colLen 0 ≤ n) :
   toFun P := ⟨P.1.toTableau hμ P.2, fun _ _ h => P.1.toTableau_lt hμ P.2 h⟩
   invFun T := ⟨SemistandardYoungTableau.toGTPattern T.1 n,
     SemistandardYoungTableau.topRow_toGTPattern T.1 n T.2⟩
-  left_inv := by
-    rintro ⟨P, hP⟩
-    have hnn := P.entry_nonneg fun k => by rw [hP k]; exact Int.natCast_nonneg _
-    refine Subtype.ext (GTPattern.ext fun i j => ?_)
-    rw [SemistandardYoungTableau.toGTPattern_apply]
-    simp only [SemistandardYoungTableau.patternEntry_def]
-    by_cases hjn : n < j
-    · rw [if_pos hjn, P.entry_eq_zero_of_lt hjn]
-    · rw [if_neg hjn]
-      have hj : j ≤ n := by omega
-      have hle : P i j ≤ (μ.rowLen i : ℤ) := by
-        rw [← P.entry_top_eq hμ hP]
-        exact P.entry_le_entry_of_nonneg_of_le (hnn i n) hj le_rfl
-      have hset : {c ∈ range (μ.rowLen i) | P.toTableau hμ hP i c < j}
-          = range (P i j).toNat := by
-        ext c
-        simp only [mem_filter, mem_range]
-        constructor
-        · rintro ⟨hc, hlt⟩
-          have := (P.toTableau_lt_iff hμ hP hj (YoungDiagram.mem_iff_lt_rowLen.mpr hc)).mp hlt
-          omega
-        · intro hc
-          have hcr : c < μ.rowLen i := by omega
-          exact ⟨hcr, (P.toTableau_lt_iff hμ hP hj
-            (YoungDiagram.mem_iff_lt_rowLen.mpr hcr)).mpr (by omega)⟩
-      rw [hset, card_range, Int.toNat_of_nonneg (hnn i j)]
-  right_inv := by
-    rintro ⟨T, hT⟩
-    refine Subtype.ext (SemistandardYoungTableau.ext fun i c => ?_)
-    by_cases hc : (i, c) ∈ μ
-    · rw [GTPattern.toTableau_apply, if_pos hc]
-      simp only [GTPattern.tableauEntry_def]
-      have hset : {j ∈ range n | SemistandardYoungTableau.toGTPattern T n i (j + 1) ≤ (c : ℤ)}
-          = range (T i c) := by
-        ext j
-        simp only [mem_filter, mem_range]
-        constructor
-        · rintro ⟨hjn, hle⟩
-          exact (SemistandardYoungTableau.toGTPattern_succ_le_iff T n hjn hc).mp hle
-        · intro hj
-          have hjn : j < n := hj.trans (hT i c hc)
-          exact ⟨hjn, (SemistandardYoungTableau.toGTPattern_succ_le_iff T n hjn hc).mpr hj⟩
-      rw [hset, card_range]
-    · rw [GTPattern.toTableau_apply, if_neg hc, T.zeros hc]
+  left_inv P :=
+    Subtype.ext (GTPattern.ext fun i j => toGTPattern_toTableau_apply n μ hμ P.1 P.2 i j)
+  right_inv T :=
+    Subtype.ext (SemistandardYoungTableau.ext fun i c =>
+      toTableau_toGTPattern_apply n μ hμ T.1 T.2 i c)
 
 /-- The bijection sends a pattern to the tableau `TauCeti.GTPattern.toTableau` it names. -/
 @[simp]

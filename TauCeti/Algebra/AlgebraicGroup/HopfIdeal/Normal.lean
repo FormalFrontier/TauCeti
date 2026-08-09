@@ -125,35 +125,32 @@ theorem isNormal_iff_quotientPointsSubgroup_normal
     let g : HopfAlgebra.points (R := R) (H := H) A :=
       toConv Algebra.TensorProduct.includeLeft
     let n : HopfAlgebra.points (R := R) (H := H) A :=
-      toConv (Algebra.TensorProduct.includeRight.comp (Ideal.Quotient.mkₐ R I.toIdeal))
-    have hn : n ∈ quotientPointsSubgroup H I A := by
-      rw [mem_quotientPointsSubgroup_iff]
-      intro y hy
-      simp only [n, AlgHom.comp_apply,
-        Algebra.TensorProduct.includeRight_apply]
-      have hyzero : (Ideal.Quotient.mkₐ R I.toIdeal) y = 0 :=
-        Ideal.Quotient.eq_zero_iff_mem.mpr ((HopfIdeal.mem_toIdeal (I := I)).mpr hy)
-      rw [hyzero, TensorProduct.tmul_zero]
+      quotientPointsHom H I A (toConv Algebra.TensorProduct.includeRight)
+    have hn : n ∈ quotientPointsSubgroup H I A :=
+      quotientPointsHom_mem_quotientPointsSubgroup H I A _
+    have hgof : g.ofConv = (Algebra.TensorProduct.includeLeft : H →ₐ[R] TensorProduct R H Q) :=
+      ofConv_toConv _
+    have hnof : n.ofConv =
+        (Algebra.TensorProduct.includeRight : Q →ₐ[R] TensorProduct R H Q).comp
+          (Ideal.Quotient.mkₐ R I.toIdeal) :=
+      AlgHom.ext fun h => quotientPointsHom_apply_apply H I A _ h
     have hconj := (hnormal A).conj_mem n hn g
     rw [mem_quotientPointsSubgroup_iff] at hconj
     have hzero := hconj x hx
     have heval :
         (Algebra.TensorProduct.productMap g.ofConv n.ofConv)
-            (HopfAlgebra.conjugationAlgHom (R := R) (H := H) x) = 0 := by
-      exact
-        (AlgHom.congr_fun
-          (HopfAlgebra.productMap_comp_conjugationAlgHom (R := R) (H := H) g n) x).trans
-            hzero
+            (HopfAlgebra.conjugationAlgHom (R := R) (H := H) x) = 0 :=
+      (AlgHom.congr_fun
+        (HopfAlgebra.productMap_comp_conjugationAlgHom (R := R) (H := H) g n) x).trans hzero
     have hproduct :
         Algebra.TensorProduct.productMap g.ofConv n.ofConv =
           Algebra.TensorProduct.map (AlgHom.id R H) (Ideal.Quotient.mkₐ R I.toIdeal) := by
-      apply Algebra.TensorProduct.ext'
-      intro y z
-      rw [Algebra.TensorProduct.productMap_apply_tmul, Algebra.TensorProduct.map_tmul]
-      simp only [g, n, Q, AlgHom.comp_apply, AlgHom.id_apply,
-        Algebra.TensorProduct.includeRight_apply]
-      rw [Algebra.TensorProduct.includeLeft_apply, Algebra.TensorProduct.tmul_mul_tmul,
-        mul_one, one_mul]
+      rw [hgof, hnof]
+      refine Algebra.TensorProduct.ext ?_ ?_
+      · rw [Algebra.TensorProduct.productMap_left,
+          Algebra.TensorProduct.map_comp_includeLeft, AlgHom.comp_id]
+      · exact (Algebra.TensorProduct.productMap_right _ _).trans
+          (Algebra.TensorProduct.map_comp_includeRight _ _).symm
     rw [hproduct] at heval
     have hmem := RingHom.mem_ker.mpr heval
     rw [HopfIdeal.ker_tensorProduct_map_id_quotient I.toIdeal] at hmem
