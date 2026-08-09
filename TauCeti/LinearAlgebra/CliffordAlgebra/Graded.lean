@@ -29,8 +29,7 @@ It does not construct the total associated-graded algebra or prove multiplicatio
 
 * `TauCeti.CliffordAlgebra.equivExterior_mem_zero_form_filtration` and
   `TauCeti.CliffordAlgebra.equivExterior_symm_mem_filtration`: `equivExterior` and its inverse
-  carry the degree `k + 1` filtration step to the zero-form one and back. These are the
-  memberships the characteristic lemmas of `filtrationGradedEquiv` name.
+  carry each Clifford filtration step to the corresponding zero-form step and back.
 
 ## References
 
@@ -93,25 +92,19 @@ private noncomputable def equivExteriorFiltrationQuotient (Q : QuadraticForm R M
   Submodule.Quotient.equiv _ _ (equivExteriorFiltration Q (k + 1))
     (equivExteriorFiltration_map_previous Q k)
 
-/-- `equivExterior` carries the degree `k + 1` filtration step into the zero-form one.
-
-Named so that `filtrationGradedEquiv_apply_mk` can state its representative as a term. -/
+/-- `equivExterior` carries each Clifford filtration step into the corresponding zero-form step. -/
 theorem equivExterior_mem_zero_form_filtration (Q : QuadraticForm R M) [Invertible (2 : R)]
-    (k : ℕ) (x : filtration Q (k + 1)) :
-    equivExterior Q x ∈ filtration (0 : QuadraticForm R M) (k + 1) := by
-  simpa only [coe_equivExteriorFiltration_apply] using
-    (equivExteriorFiltration Q (k + 1) x).property
+    (k : ℕ) (x : filtration Q k) :
+    equivExterior Q x ∈ filtration (0 : QuadraticForm R M) k := by
+  simpa only [coe_equivExteriorFiltration_apply] using (equivExteriorFiltration Q k x).property
 
-/-- The inverse of `equivExterior` carries a degree `k + 1` exterior element back into the degree
-`k + 1` filtration step.
-
-Named so that `filtrationGradedEquiv_symm_apply` can state its representative as a term. -/
+/-- The inverse of `equivExterior` carries each zero-form filtration step back into the
+corresponding Clifford step. -/
 theorem equivExterior_symm_mem_filtration (Q : QuadraticForm R M) [Invertible (2 : R)] (k : ℕ)
-    (x : ⋀[R]^(k + 1) M) : (equivExterior Q).symm x ∈ filtration Q (k + 1) := by
+    (x : filtration (0 : QuadraticForm R M) k) :
+    (equivExterior Q).symm x ∈ filtration Q k := by
   simpa only [coe_equivExteriorFiltration_symm_apply] using
-    ((equivExteriorFiltration Q (k + 1)).symm
-      (⟨x, exteriorPower_mem_zero_form_filtration k x⟩ :
-        filtration (0 : QuadraticForm R M) (k + 1))).property
+    ((equivExteriorFiltration Q k).symm x).property
 
 /-- The successive degree quotient of a Clifford algebra is the corresponding exterior power. -/
 noncomputable def filtrationGradedEquiv (Q : QuadraticForm R M) [Invertible (2 : R)] (k : ℕ) :
@@ -125,7 +118,7 @@ theorem filtrationGradedEquiv_apply_mk (Q : QuadraticForm R M) [Invertible (2 : 
     filtrationGradedEquiv Q k (Submodule.Quotient.mk x) =
       zeroFormFiltrationQuotientEquivExteriorPower k
         (Submodule.Quotient.mk
-          (⟨equivExterior Q x, equivExterior_mem_zero_form_filtration Q k x⟩ :
+          (⟨equivExterior Q x, equivExterior_mem_zero_form_filtration Q (k + 1) x⟩ :
             filtration (0 : QuadraticForm R M) (k + 1))) := by
   rw [filtrationGradedEquiv, LinearEquiv.trans_apply, equivExteriorFiltrationQuotient,
     Submodule.Quotient.equiv_apply, Submodule.mapQ_apply]
@@ -140,7 +133,8 @@ theorem filtrationGradedEquiv_symm_apply (Q : QuadraticForm R M) [Invertible (2 
     (x : ⋀[R]^(k + 1) M) :
     (filtrationGradedEquiv Q k).symm x =
       Submodule.Quotient.mk
-        (⟨(equivExterior Q).symm x, equivExterior_symm_mem_filtration Q k x⟩ :
+        (⟨(equivExterior Q).symm x, equivExterior_symm_mem_filtration Q (k + 1)
+            ⟨x, ι_range_pow_le_filtration (0 : QuadraticForm R M) (k + 1) x.property⟩⟩ :
           filtration Q (k + 1)) := by
   rw [filtrationGradedEquiv, LinearEquiv.trans_symm, LinearEquiv.trans_apply,
     zeroFormFiltrationQuotientEquivExteriorPower_symm_apply,

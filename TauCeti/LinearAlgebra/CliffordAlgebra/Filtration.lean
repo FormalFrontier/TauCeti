@@ -235,10 +235,7 @@ theorem filtration_mul (i j : ℕ) :
     omega
 
 /-- The elementwise form of `filtration_mul`: a product of an element of the `i`-th step and an
-element of the `j`-th step lies in the `i + j`-th step.
-
-This is the membership that the associated-graded product lemmas need in order to name their
-representatives, rather than rebuilding it from `filtration_mul` in each statement. -/
+element of the `j`-th step lies in the `i + j`-th step. -/
 theorem mul_mem_filtration {i j : ℕ} {x y : CliffordAlgebra Q} (hx : x ∈ filtration Q i)
     (hy : y ∈ filtration Q j) : x * y ∈ filtration Q (i + j) := by
   rw [← filtration_mul Q i j]

@@ -21,8 +21,6 @@ The generic change-of-form transport belongs in `TauCeti.LinearAlgebra.CliffordA
 
 ## Main results
 
-* `TauCeti.CliffordAlgebra.exteriorPower_mem_zero_form_filtration`: a degree `k + 1` exterior
-  element lies in the degree `k + 1` step of the zero-form filtration.
 * `TauCeti.CliffordAlgebra.exteriorPower_succ_disjoint_zero_form_filtration`: degree `k + 1` is
   disjoint from the lower zero-form filtration.
 * `TauCeti.CliffordAlgebra.zeroFormFiltrationQuotientEquivExteriorPower`: the successive
@@ -46,17 +44,6 @@ namespace TauCeti
 namespace CliffordAlgebra
 
 variable {R : Type u} {M : Type v} [CommRing R] [AddCommGroup M] [Module R M]
-
-/-- A degree `k + 1` exterior element lies in the degree `k + 1` step of the zero-form filtration.
-
-`⋀[R]^(k + 1) M` is the `k + 1`-st power of the range of `ExteriorAlgebra.ι`, and
-`ExteriorAlgebra R M` is `CliffordAlgebra (0 : QuadraticForm R M)`, so this is
-`ι_range_pow_le_filtration` at the zero form. It is stated separately so that the quotient
-equivalence's characteristic lemmas below can name this membership instead of rebuilding it
-inside their own statements. -/
-theorem exteriorPower_mem_zero_form_filtration (k : ℕ) (x : ⋀[R]^(k + 1) M) :
-    (x : CliffordAlgebra (0 : QuadraticForm R M)) ∈ filtration (0 : QuadraticForm R M) (k + 1) :=
-  ι_range_pow_le_filtration (0 : QuadraticForm R M) (k + 1) x.property
 
 /-- The degree `k + 1` exterior power is disjoint from the lower zero-form filtration. -/
 theorem exteriorPower_succ_disjoint_zero_form_filtration (k : ℕ) :
@@ -118,7 +105,8 @@ quotient class. -/
 theorem zeroFormFiltrationQuotientEquivExteriorPower_symm_apply (k : ℕ)
     (x : ⋀[R]^(k + 1) M) :
     (zeroFormFiltrationQuotientEquivExteriorPower k).symm x =
-      Submodule.Quotient.mk ⟨x, exteriorPower_mem_zero_form_filtration k x⟩ := by
+      Submodule.Quotient.mk
+        ⟨x, ι_range_pow_le_filtration (0 : QuadraticForm R M) (k + 1) x.property⟩ := by
   rw [zeroFormFiltrationQuotientEquivExteriorPower, LinearEquiv.trans_symm,
     LinearEquiv.trans_apply, quotientEquivOfEqSup_symm_apply]
   apply (Submodule.quotEquivOfEq _ _
@@ -131,7 +119,8 @@ that element. -/
 theorem zeroFormFiltrationQuotientEquivExteriorPower_apply (k : ℕ)
     (x : ⋀[R]^(k + 1) M) :
     zeroFormFiltrationQuotientEquivExteriorPower k
-      (Submodule.Quotient.mk ⟨x, exteriorPower_mem_zero_form_filtration k x⟩) = x := by
+      (Submodule.Quotient.mk
+        ⟨x, ι_range_pow_le_filtration (0 : QuadraticForm R M) (k + 1) x.property⟩) = x := by
   rw [← zeroFormFiltrationQuotientEquivExteriorPower_symm_apply k x,
     LinearEquiv.apply_symm_apply]
 
