@@ -6,11 +6,12 @@ module
 
 public import Mathlib.LinearAlgebra.Matrix.PosDef
 public import Mathlib.RingTheory.Localization.Integer
+import Mathlib.Data.Rat.Star
 
 public section
 
 /-!
-# Positive definiteness of an integer matrix, over the integers and over the rationals
+# Positive definiteness over the rationals
 
 `Matrix.PosDef` is stated relative to the coefficient ring, so for a matrix of integers it says
 that the associated quadratic form is positive on nonzero *integer* vectors. That is formally
@@ -25,10 +26,15 @@ denominator, which is positive. The index type need not be finite: a test vector
 `Matrix.PosDef` is finitely supported, so the general case follows from the finite one applied to
 the principal submatrix on the support of the vector.
 
+The file also records the standard way of certifying a rational matrix as positive definite: write
+it as `Bᴴ * B` for an explicit `B`, and check that it is invertible.
+
 ## Main results
 
 * `TauCeti.Matrix.posDef_map_intCast`: an integer matrix that is positive definite over `ℤ` is
   positive definite over `ℚ`.
+* `TauCeti.Matrix.posDef_conjTranspose_mul_self_of_isUnit`: an invertible rational matrix of the
+  form `Bᴴ * B` is positive definite.
 -/
 
 open scoped Matrix
@@ -105,6 +111,19 @@ theorem posDef_map_intCast {A : Matrix n n ℤ} (hA : A.PosDef) :
   have hne : Finsupp.comapDomain e x hinj.injOn ≠ 0 := fun h ↦ hx (by rw [← hmap, h]; simp)
   rw [← hmap]
   simpa [Finsupp.sum_mapDomain_index, add_mul, mul_add] using hsub.2 hne
+
+/-- **An invertible rational matrix of the form `Bᴴ * B` is positive definite.** Being of that
+form gives positive *semi*definiteness for free; invertibility upgrades it, by way of the
+injectivity hypothesis of `Matrix.PosDef.conjTranspose_mul_self`.
+
+Mathlib's `Matrix.PosSemidef.posDef_iff_isUnit` says the same thing in one step, but only over an
+`RCLike` field, which `ℚ` is not; `Matrix.PosDef.conjTranspose_mul_self` is the criterion that does
+apply here, needing only `StarOrderedRing` and `NoZeroDivisors`. -/
+theorem posDef_conjTranspose_mul_self_of_isUnit {m : Type*} [Fintype m] [Fintype n]
+    [DecidableEq n] (B : _root_.Matrix m n ℚ) (hunit : IsUnit (Bᴴ * B)) : (Bᴴ * B).PosDef := by
+  refine _root_.Matrix.PosDef.conjTranspose_mul_self B fun x y hxy ↦ ?_
+  apply _root_.Matrix.mulVec_injective_iff_isUnit.mpr hunit
+  rw [← _root_.Matrix.mulVec_mulVec x Bᴴ B, ← _root_.Matrix.mulVec_mulVec y Bᴴ B, hxy]
 
 end Matrix
 

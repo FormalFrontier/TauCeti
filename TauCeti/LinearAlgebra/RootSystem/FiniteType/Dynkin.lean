@@ -13,14 +13,23 @@ public section
 # Exceptional Cartan matrices are of finite type
 
 This file proves that the five exceptional Cartan matrices in `TauCeti.DynkinType` are of finite
-type.  The proof exhibits each symmetrized Cartan matrix as `Bᴴ * B`, where the columns of `B`
-are the standard simple roots in rational Euclidean coordinates.  Linear independence of those
-columns then makes the Gram matrix positive definite.
+type.  The proof exhibits each symmetrized Cartan matrix as `Bᴴ * B` for an explicit rational
+matrix `B` and reads off positive definiteness from
+`TauCeti.isFiniteType_of_conjTranspose_mul_self_of_det_ne_zero`.
 
-Only `E₈` needs the coordinate model among the simply-laced types: the `E₆` and `E₇` Cartan
-matrices are the principal submatrices of the `E₈` one on the first six and seven indices, so
+The columns of `B` are the simple **coroots** `αᵢ^∨ = 2 αᵢ / (αᵢ, αᵢ)`, in orthonormal rational
+coordinates and up to one common positive scale, rather than the simple roots themselves.  That is
+forced by the symmetrizer: the symmetrization `dᵢ Aᵢⱼ` is symmetric exactly when `dᵢ` is
+proportional to `1 / (αᵢ, αᵢ)`, and then `dᵢ Aᵢⱼ` is proportional to `(αᵢ^∨, αⱼ^∨)`.  The two
+readings agree for the simply-laced `E₈`, where all roots have the same length, and differ for
+`F₄` and `G₂`, where a column of `B` is longest exactly where the corresponding root is shortest.
+Node numbering is Bourbaki's throughout: column `i` belongs to node `i` of `TauCeti.DynkinType`.
+
+Only `E₈` needs a coordinate model among the simply-laced types: the `E₆` and `E₇` Cartan matrices
+are the principal submatrices of the `E₈` one on the first six and seven indices, so
 `TauCeti.IsFiniteType.submatrix` delivers them.  The nonsimply-laced types use the integral
-symmetrizers `(1, 1, 2, 2)` for `F₄` and `(3, 1)` for `G₂`.
+symmetrizers `(1, 1, 2, 2)` for `F₄` and `(3, 1)` for `G₂`, the inverse root lengths recorded in
+`TauCeti.DynkinType.rootLength_F4` and `TauCeti.DynkinType.rootLength_G2`.
 
 ## Main results
 
@@ -29,12 +38,16 @@ symmetrizers `(1, 1, 2, 2)` for `F₄` and `(3, 1)` for `G₂`.
 * `TauCeti.DynkinType.isFiniteType_cartanMatrix_E7`
 * `TauCeti.DynkinType.isFiniteType_cartanMatrix_F4`
 * `TauCeti.DynkinType.isFiniteType_cartanMatrix_G2`
+* `TauCeti.DynkinType.cartanMatrix_E6_eq_submatrix_E8` and
+  `TauCeti.DynkinType.cartanMatrix_E7_eq_submatrix_E8`: the nesting `E₆ ⊂ E₇ ⊂ E₈` at the level of
+  Cartan matrices, which is what makes the two derivations above possible.
 
 ## References
 
 This file advances the "classification of finite-type Cartan matrices" target in Layer 5 of
-`TauCetiRoadmap/RepresentationTheory/RootSystems/README.md`.  The coordinate models follow
-Bourbaki, *Lie Groups and Lie Algebras, Chapters 4--6*, plates V--IX; see also Humphreys,
+`TauCetiRoadmap/RepresentationTheory/RootSystems/README.md`.  The `E₈` model is the list of simple
+roots of Bourbaki, *Lie Groups and Lie Algebras, Chapters 4--6*, plate VII; the `F₄` and `G₂`
+models are the coroots dual to the simple roots of plates VIII and IX.  See also Humphreys,
 *Introduction to Lie Algebras and Representation Theory*, Chapter 11.
 -/
 
@@ -42,34 +55,10 @@ open scoped Matrix
 
 namespace TauCeti.DynkinType
 
-/-- An invertible rational Gram matrix is positive definite. Mathlib's
-`Matrix.PosSemidef.posDef_iff_isUnit` is only available over `RCLike` fields, so over `ℚ` we use the
-generic `Matrix.PosDef.conjTranspose_mul_self` criterion after deriving column injectivity. -/
-private lemma posDef_of_gram {m n : Type*} [Fintype m] [Fintype n] [DecidableEq n]
-    (M : _root_.Matrix n n ℚ) (B : _root_.Matrix m n ℚ) (hgram : M = Bᴴ * B)
-    (hunit : IsUnit M) : M.PosDef := by
-  have hunit' : IsUnit (Bᴴ * B) := hgram ▸ hunit
-  have hinjective : Function.Injective B.mulVec := by
-    intro x y hxy
-    apply (_root_.Matrix.mulVec_injective_iff_isUnit.mpr hunit')
-    rw [← _root_.Matrix.mulVec_mulVec x Bᴴ B, ← _root_.Matrix.mulVec_mulVec y Bᴴ B, hxy]
-  exact hgram.symm ▸ _root_.Matrix.PosDef.conjTranspose_mul_self B hinjective
-
-/-- The determinant of the symmetrization `fun i j ↦ dᵢ Mᵢⱼ` of an integer matrix by a rational
-vector. This is the ℤ-to-ℚ cast bridge of `Matrix.det_mul_column`, which does the row scaling, with
-`Int.cast_det`, which returns the rational determinant of the cast matrix to the integral
-determinant of `M`; the result is the shape in which Mathlib's determinants of the exceptional
-Cartan matrices are used below. -/
-private lemma det_mul_intCast {n : Type*} [Fintype n] [DecidableEq n]
-    (d : n → ℚ) (M : _root_.Matrix n n ℤ) :
-    (_root_.Matrix.of fun i j ↦ d i * (M i j : ℚ)).det = (∏ i, d i) * (M.det : ℚ) := by
-  have hmap : (_root_.Matrix.of fun i j ↦ d i * (M i j : ℚ))
-      = _root_.Matrix.of fun i j ↦ d i * M.map (fun x : ℤ ↦ (x : ℚ)) i j := by
-    ext i j
-    simp
-  rw [hmap, _root_.Matrix.det_mul_column, ← Int.cast_det]
-
-private def rootsE : _root_.Matrix (Fin 8) (Fin 8) ℚ :=
+/-- The coordinate model of type `E₈`: column `i` is the simple root `αᵢ₊₁` of Bourbaki's plate
+VII, in the orthonormal coordinates `ε₁, ..., ε₈` used there.  `E₈` being simply laced, these are
+also the simple coroots, and the Gram matrix of the columns is the `E₈` Cartan matrix itself. -/
+private def rootsE8 : _root_.Matrix (Fin 8) (Fin 8) ℚ :=
   !![ 1 / 2,  1, -1,  0,  0,  0,  0,  0;
      -1 / 2,  1,  1, -1,  0,  0,  0,  0;
      -1 / 2,  0,  0,  1, -1,  0,  0,  0;
@@ -81,43 +70,50 @@ private def rootsE : _root_.Matrix (Fin 8) (Fin 8) ℚ :=
 
 /-- The standard Cartan matrix of type `E₈` is of finite type. -/
 theorem isFiniteType_cartanMatrix_E8 : IsFiniteType E8.cartanMatrix := by
-  refine isFiniteType_of (fun i ↦ cartanMatrix_apply_same E8 i)
-    (fun i j hij ↦ cartanMatrix_apply_le_zero_of_ne E8 hij)
-    (d := fun _ ↦ 1) (fun _ ↦ by positivity) ?_
-  have hgram :
-      _root_.Matrix.of (fun i j ↦ (1 : ℚ) * (CartanMatrix.E₈ i j : ℚ)) = rootsEᴴ * rootsE := by
+  have hgram : _root_.Matrix.of (fun i j ↦ (1 : ℚ) * (CartanMatrix.E₈ i j : ℚ))
+      = rootsE8ᴴ * rootsE8 := by
     ext i j
     fin_cases i <;> fin_cases j <;>
-      norm_num [rootsE, CartanMatrix.E₈, _root_.Matrix.mul_apply, Fin.sum_univ_succ,
+      norm_num [rootsE8, CartanMatrix.E₈, _root_.Matrix.mul_apply, Fin.sum_univ_succ,
         _root_.Matrix.cons_val_succ]
-  have hunit : IsUnit (_root_.Matrix.of fun i j ↦ (1 : ℚ) * (CartanMatrix.E₈ i j : ℚ)) := by
-    rw [_root_.Matrix.isUnit_iff_isUnit_det, isUnit_iff_ne_zero, det_mul_intCast,
-      CartanMatrix.E₈_det]
-    norm_num
-  simp only [cartanMatrix_E8]
-  exact posDef_of_gram _ _ hgram hunit
+  have hdet : CartanMatrix.E₈.det ≠ 0 := by rw [CartanMatrix.E₈_det]; norm_num
+  rw [cartanMatrix_E8]
+  exact isFiniteType_of_conjTranspose_mul_self_of_det_ne_zero CartanMatrix.E₈_diag
+    CartanMatrix.E₈_off_diag_nonpos (d := fun _ ↦ 1) (fun _ ↦ by positivity) hgram hdet
+
+/-- The `E₆` Cartan matrix is the principal submatrix of the `E₈` one on the first six nodes: in
+Bourbaki's numbering the exceptional `E` diagrams are nested, `E₆ ⊂ E₇ ⊂ E₈`. -/
+theorem cartanMatrix_E6_eq_submatrix_E8 :
+    CartanMatrix.E₆
+      = CartanMatrix.E₈.submatrix (Fin.castAdd 2 : Fin 6 → Fin 8) (Fin.castAdd 2) := by
+  ext i j
+  fin_cases i <;> fin_cases j <;> decide
+
+/-- The `E₇` Cartan matrix is the principal submatrix of the `E₈` one on the first seven nodes: in
+Bourbaki's numbering the exceptional `E` diagrams are nested, `E₆ ⊂ E₇ ⊂ E₈`. -/
+theorem cartanMatrix_E7_eq_submatrix_E8 :
+    CartanMatrix.E₇
+      = CartanMatrix.E₈.submatrix (Fin.castAdd 1 : Fin 7 → Fin 8) (Fin.castAdd 1) := by
+  ext i j
+  fin_cases i <;> fin_cases j <;> decide
 
 /-- The standard Cartan matrix of type `E₆` is of finite type: it is the principal submatrix of the
 `E₈` Cartan matrix on the first six indices. -/
 theorem isFiniteType_cartanMatrix_E6 : IsFiniteType E6.cartanMatrix := by
-  have hsub : CartanMatrix.E₆
-      = CartanMatrix.E₈.submatrix (Fin.castAdd 2 : Fin 6 → Fin 8) (Fin.castAdd 2) := by
-    ext i j
-    fin_cases i <;> fin_cases j <;> rfl
-  simp only [cartanMatrix_E6, hsub]
+  simp only [cartanMatrix_E6, cartanMatrix_E6_eq_submatrix_E8]
   exact (cartanMatrix_E8 ▸ isFiniteType_cartanMatrix_E8).submatrix (Fin.castAdd_injective 6 2)
 
 /-- The standard Cartan matrix of type `E₇` is of finite type: it is the principal submatrix of the
 `E₈` Cartan matrix on the first seven indices. -/
 theorem isFiniteType_cartanMatrix_E7 : IsFiniteType E7.cartanMatrix := by
-  have hsub : CartanMatrix.E₇
-      = CartanMatrix.E₈.submatrix (Fin.castAdd 1 : Fin 7 → Fin 8) (Fin.castAdd 1) := by
-    ext i j
-    fin_cases i <;> fin_cases j <;> rfl
-  simp only [cartanMatrix_E7, hsub]
+  simp only [cartanMatrix_E7, cartanMatrix_E7_eq_submatrix_E8]
   exact (cartanMatrix_E8 ▸ isFiniteType_cartanMatrix_E8).submatrix (Fin.castAdd_injective 7 1)
 
-private def rootsF4 : _root_.Matrix (Fin 4) (Fin 4) ℚ :=
+/-- The coordinate model of type `F₄`: column `i` is the simple coroot `αᵢ₊₁^∨` of Bourbaki's plate
+VIII, in the orthonormal coordinates `ε₁, ..., ε₄` used there, cyclically relabelled so that `ε₁`
+comes last.  Columns `2` and `3` are the long ones, being dual to the two short simple roots
+recorded in `TauCeti.DynkinType.rootLength_F4`. -/
+private def corootsF4 : _root_.Matrix (Fin 4) (Fin 4) ℚ :=
   !![ 1,  0,  0, -1;
      -1,  1,  0, -1;
       0, -1,  2, -1;
@@ -126,23 +122,25 @@ private def rootsF4 : _root_.Matrix (Fin 4) (Fin 4) ℚ :=
 /-- The standard Cartan matrix of type `F₄` is of finite type. -/
 theorem isFiniteType_cartanMatrix_F4 : IsFiniteType F4.cartanMatrix := by
   let d : Fin 4 → ℚ := fun i ↦ if i.val < 2 then 1 else 2
-  refine isFiniteType_of (fun i ↦ cartanMatrix_apply_same F4 i)
-    (fun i j hij ↦ cartanMatrix_apply_le_zero_of_ne F4 hij)
-    (d := d) (by intro i; dsimp only [d]; split <;> norm_num) ?_
-  have hgram :
-      _root_.Matrix.of (fun i j ↦ d i * (CartanMatrix.F₄ i j : ℚ)) = rootsF4ᴴ * rootsF4 := by
+  have hgram : _root_.Matrix.of (fun i j ↦ d i * (CartanMatrix.F₄ i j : ℚ))
+      = corootsF4ᴴ * corootsF4 := by
     ext i j
     fin_cases i <;> fin_cases j <;>
-      norm_num [d, rootsF4, CartanMatrix.F₄, _root_.Matrix.mul_apply, Fin.sum_univ_succ,
+      norm_num [d, corootsF4, CartanMatrix.F₄, _root_.Matrix.mul_apply, Fin.sum_univ_succ,
         _root_.Matrix.cons_val_succ]
-  have hunit : IsUnit (_root_.Matrix.of fun i j ↦ d i * (CartanMatrix.F₄ i j : ℚ)) := by
-    rw [_root_.Matrix.isUnit_iff_isUnit_det, isUnit_iff_ne_zero]
-    rw [det_mul_intCast, CartanMatrix.F₄_det]
-    norm_num [d, Fin.prod_univ_succ]
-  simp only [cartanMatrix_F4]
-  exact posDef_of_gram _ _ hgram hunit
+  have hdet : CartanMatrix.F₄.det ≠ 0 := by rw [CartanMatrix.F₄_det]; norm_num
+  rw [cartanMatrix_F4]
+  exact isFiniteType_of_conjTranspose_mul_self_of_det_ne_zero CartanMatrix.F₄_diag
+    CartanMatrix.F₄_off_diag_nonpos (d := d) (by intro i; dsimp only [d]; split <;> norm_num)
+    hgram hdet
 
-private def rootsG2 : _root_.Matrix (Fin 3) (Fin 2) ℚ :=
+/-- The coordinate model of type `G₂`: column `i` is the simple coroot `αᵢ₊₁^∨` of Bourbaki's plate
+IX, scaled by the common factor `√3` and written in an orthonormal basis of `ℚ³` for which the
+scaled vectors have rational coordinates.  Plate IX's own coordinates are unusable as they stand,
+since `α₂^∨` has denominator `3` there; only the Gram matrix of the columns matters, and the
+scaling is what makes it integral.  Column `0` is the long one, being dual to the short simple root
+recorded in `TauCeti.DynkinType.rootLength_G2`. -/
+private def corootsG2 : _root_.Matrix (Fin 3) (Fin 2) ℚ :=
   !![ 1, -1;
      -2,  1;
       1,  0]
@@ -150,20 +148,19 @@ private def rootsG2 : _root_.Matrix (Fin 3) (Fin 2) ℚ :=
 /-- The standard Bourbaki-numbered Cartan matrix of type `G₂` is of finite type. -/
 theorem isFiniteType_cartanMatrix_G2 : IsFiniteType G2.cartanMatrix := by
   let d : Fin 2 → ℚ := fun i ↦ if i = 0 then 3 else 1
-  refine isFiniteType_of (fun i ↦ cartanMatrix_apply_same G2 i)
-    (fun i j hij ↦ cartanMatrix_apply_le_zero_of_ne G2 hij)
-    (d := d) (by intro i; dsimp only [d]; split <;> norm_num) ?_
-  have hgram :
-      _root_.Matrix.of (fun i j ↦ d i * (CartanMatrix.G₂ᵀ i j : ℚ)) = rootsG2ᴴ * rootsG2 := by
+  have hgram : _root_.Matrix.of (fun i j ↦ d i * (CartanMatrix.G₂ᵀ i j : ℚ))
+      = corootsG2ᴴ * corootsG2 := by
     ext i j
     fin_cases i <;> fin_cases j <;>
-      norm_num [d, rootsG2, CartanMatrix.G₂, _root_.Matrix.mul_apply, Fin.sum_univ_succ,
+      norm_num [d, corootsG2, CartanMatrix.G₂, _root_.Matrix.mul_apply, Fin.sum_univ_succ,
         _root_.Matrix.cons_val_succ]
-  have hunit : IsUnit (_root_.Matrix.of fun i j ↦ d i * (CartanMatrix.G₂ᵀ i j : ℚ)) := by
-    rw [_root_.Matrix.isUnit_iff_isUnit_det, isUnit_iff_ne_zero]
-    rw [det_mul_intCast, _root_.Matrix.det_transpose, CartanMatrix.G₂_det]
-    norm_num [d, Fin.prod_univ_succ]
-  simp only [cartanMatrix_G2]
-  exact posDef_of_gram _ _ hgram hunit
+  have hdet : CartanMatrix.G₂ᵀ.det ≠ 0 := by
+    rw [_root_.Matrix.det_transpose, CartanMatrix.G₂_det]; norm_num
+  rw [cartanMatrix_G2]
+  -- The generalized Cartan matrix axioms transpose: `G₂ᵀ i j` is `G₂ j i` by definition.
+  exact isFiniteType_of_conjTranspose_mul_self_of_det_ne_zero
+    (fun i ↦ CartanMatrix.G₂_diag i)
+    (fun i j hij ↦ CartanMatrix.G₂_off_diag_nonpos j i hij.symm)
+    (d := d) (by intro i; dsimp only [d]; split <;> norm_num) hgram hdet
 
 end TauCeti.DynkinType
