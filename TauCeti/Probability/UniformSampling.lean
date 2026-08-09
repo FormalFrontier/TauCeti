@@ -6,15 +6,18 @@ module
 
 public import Mathlib.Probability.UniformOn
 import Mathlib.Data.Fintype.BigOperators
-import Mathlib.Data.Fintype.Pi
 
 /-!
 # Uniform sampling with and without replacement
 
 This file gives the finite sampling estimate underlying quantitative finite de Finetti theorems.
-For a uniform random map `x : ι → κ`, the probability that two coordinates collide is at most
+When the finite function space `ι → κ` is nonempty, a uniform random map `x : ι → κ` has two
+coordinates collide with probability at most
 
 `(Fintype.card ι).choose 2 / Fintype.card κ`.
+
+When the function space is empty, Mathlib's `uniformOn` is instead the zero measure, and the same
+inequality remains valid under that convention.
 
 When injective maps exist, conditioning the random map to be injective is uniform sampling without
 replacement.  The main results compare every event under the uniform measures on all maps and on
@@ -93,6 +96,7 @@ omit [Fintype ι] in
 
 The result is stated for arbitrary finite index and value types.  The only measurable structure
 needed is discreteness of finite sets, expressed by `MeasurableSingletonClass`. -/
+@[simp]
 theorem uniformOn_apply_eq_apply [Finite ι] [MeasurableSpace κ]
     [MeasurableSingletonClass κ] [Nonempty κ]
     (i j : ι) (hij : i ≠ j) :
@@ -141,8 +145,10 @@ private theorem not_injective_set_eq_iUnion [LinearOrder ι] :
   · rintro ⟨⟨i, j⟩, hp, hij⟩ h_inj
     exact (mem_coordinatePairs _ |>.1 hp).ne (h_inj hij)
 
-/-- **Collision bound for uniform sampling.**  A uniform map from `ι` to `κ` fails to be injective
-with probability at most `(Fintype.card ι).choose 2 / Fintype.card κ`.
+/-- **Collision bound for uniform sampling.**  When the function space `ι → κ` is nonempty, a
+uniform map from `ι` to `κ` fails to be injective with probability at most
+`(Fintype.card ι).choose 2 / Fintype.card κ`.  When the function space is empty, `uniformOn` is the
+zero measure and the inequality remains valid under that convention.
 
 This is the union bound over the unordered pairs of coordinates.  It remains valid when the
 right-hand side exceeds one, avoiding an unnecessary size assumption on the sample. -/
@@ -176,7 +182,8 @@ theorem uniformOn_not_injective_le [MeasurableSpace κ] [MeasurableSingletonClas
           simp [div_eq_mul_inv]
 
 /-- Conditioning a finite uniform sample on an event `E` can increase the probability of an event
-`A` by at most the original probability of `Eᶜ`.
+`A` by at most the original probability of `Eᶜ`, provided `E` is nonempty.  When `E` is empty,
+Mathlib's `uniformOn E` is the zero measure and the inequality remains valid under that convention.
 
 This is the upper half of the elementary coupling bound between a uniform law and its
 conditioning. -/
@@ -205,38 +212,18 @@ theorem uniformOn_le_univ_add_compl {Ω : Type*} [Finite Ω] [MeasurableSpace Ω
             (mul_le_of_le_one_left bot_le prob_le_one)
 
 /-- Conditioning a finite uniform sample on an event `E` can decrease the probability of an event
-`A` by at most the original probability of `Eᶜ`.
+`A` by at most the original probability of `Eᶜ`, provided `E` is nonempty.  When `E` is empty,
+Mathlib's `uniformOn E` is the zero measure and the inequality remains valid under that convention.
 
 This is the lower half of the elementary coupling bound between a uniform law and its
 conditioning. -/
 theorem uniformOn_univ_le_add_compl {Ω : Type*} [Finite Ω] [MeasurableSpace Ω]
     [MeasurableSingletonClass Ω] (E A : Set Ω) :
     uniformOn Set.univ A ≤ uniformOn E A + uniformOn Set.univ Eᶜ := by
-  cases isEmpty_or_nonempty Ω with
-  | inl =>
-      have hE : E = ∅ := by ext x; exact isEmptyElim x
-      have hA : A = ∅ := by ext x; exact isEmptyElim x
-      subst E
-      subst A
-      simp
-  | inr =>
-      have hfactor : uniformOn E A * uniformOn Set.univ E =
-          uniformOn Set.univ (A ∩ E) := by
-        rw [uniformOn_inter' Set.finite_univ, Set.univ_inter]
-      calc
-        uniformOn Set.univ A
-          ≤ uniformOn Set.univ (A ∩ E) + uniformOn Set.univ (A ∩ Eᶜ) := by
-            calc
-              uniformOn Set.univ A = uniformOn Set.univ ((A ∩ E) ∪ (A ∩ Eᶜ)) := by
-                congr 1
-                aesop
-              _ ≤ uniformOn Set.univ (A ∩ E) + uniformOn Set.univ (A ∩ Eᶜ) :=
-                measure_union_le _ _
-        _ = uniformOn E A * uniformOn Set.univ E + uniformOn Set.univ (A ∩ Eᶜ) := by
-          rw [hfactor]
-        _ ≤ uniformOn E A + uniformOn Set.univ Eᶜ := by
-          exact add_le_add (mul_le_of_le_one_right bot_le prob_le_one)
-            (measure_mono Set.inter_subset_right)
+  rw [← uniformOn_add_compl_eq E A Set.finite_univ]
+  simp only [Set.univ_inter]
+  exact add_le_add (mul_le_of_le_one_right bot_le prob_le_one)
+    (mul_le_of_le_one_left bot_le prob_le_one)
 
 omit [Fintype ι] [Fintype κ] in
 /-- The uniform measure on injective maps differs from the uniform measure on all maps only on the
