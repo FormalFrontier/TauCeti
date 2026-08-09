@@ -40,12 +40,8 @@ variable {R L M : Type*} [CommRing R] [LieRing L]
 variable [AddCommGroup M] [Module R M] [LieRingModule L M]
 
 /-- **The irreducible Lie submodules are the atoms.** A Lie submodule `N` of `M` is irreducible as
-a Lie module exactly when it is an atom of `LieSubmodule R L M`.
-
-Left to right, a Lie submodule `W < N` of the ambient module pulls back along the inclusion to a
-Lie submodule of `N` which is not everything, hence is zero, and `W` meets `N` in it. Right to
-left, a proper Lie submodule of `N` pushes forward to a Lie submodule strictly below `N`, hence to
-zero, and the inclusion is injective. -/
+a Lie module exactly when it is an atom of `LieSubmodule R L M`, that is, when `N ≠ ⊥` and the only
+Lie submodule of `M` strictly below `N` is `⊥`. -/
 theorem isIrreducible_iff_isAtom (N : LieSubmodule R L M) :
     LieModule.IsIrreducible R L N ↔ IsAtom N := by
   constructor
