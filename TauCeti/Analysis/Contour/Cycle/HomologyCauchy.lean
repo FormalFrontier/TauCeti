@@ -25,9 +25,8 @@ are summed over the finite support of `C`. Their jump across the boundary of `U`
 number of the whole cycle, so cycle-level null-homology makes the sum entire; decay at infinity and
 Liouville then make it zero.
 
-## Main results
+## Main result
 
-* `TauCeti.Contour.Cycle.integral_eq_sum_support` — the support formula for a cycle integral.
 * `TauCeti.Contour.Cycle.homologyCauchyTheorem` — Cauchy's theorem for a null-homologous cycle.
 
 ## References
@@ -51,42 +50,6 @@ open Complex MeasureTheory Set Filter
 open scoped Interval Real Topology
 
 namespace TauCeti.Contour.Cycle
-
-/-- The integral over a cycle is the coefficient-weighted sum of the integrals over the curves in
-its canonical support. -/
-theorem integral_eq_sum_support {E : Type*} [NormedAddCommGroup E] [NormedSpace ℂ E]
-    (f : ℂ → E) (C : Cycle) :
-    integral f C = ∑ γ ∈ FreeAbelianGroup.support C,
-      FreeAbelianGroup.coeff γ C • (∫ t in γ.a..γ.b, deriv γ t • f (γ t)) := by
-  conv_lhs => rw [FreeAbelianGroup.eq_sum_support_coeff_smul_of C]
-  simp only [map_sum, map_zsmul, integral_of]
-
-/-- A supported generator of a cycle avoids every point outside the cycle's trace. -/
-private theorem avoids_of_not_mem_trace {C : Cycle} {z : ℂ}
-    (hz : z ∉ trace C) {γ : PiecewiseC1ClosedCurve}
-    (hγ : γ ∈ FreeAbelianGroup.support C) :
-    ∀ t ∈ uIcc γ.a γ.b, γ t ≠ z := by
-  intro t ht htz
-  exact hz (mem_trace_iff.mpr ⟨γ, hγ, t, ht, htz⟩)
-
-/-- The trace written as the finite union of the images of its supported generators. -/
-private theorem trace_eq_iUnion_support (C : Cycle) :
-    trace C = ⋃ γ ∈ FreeAbelianGroup.support C, γ '' uIcc γ.a γ.b := by
-  ext z
-  constructor
-  · intro hz
-    rw [mem_trace_iff] at hz
-    obtain ⟨γ, hγ, hz⟩ := hz
-    exact mem_iUnion₂.mpr ⟨γ, hγ, hz⟩
-  · rintro hz
-    obtain ⟨γ, hγ, hz⟩ := mem_iUnion₂.mp hz
-    exact mem_trace_iff.mpr ⟨γ, hγ, hz⟩
-
-/-- The trace of a contour cycle is compact. -/
-private theorem isCompact_trace (C : Cycle) : IsCompact (trace C) := by
-  rw [trace_eq_iUnion_support]
-  exact (FreeAbelianGroup.support C).isCompact_biUnion fun γ _ ↦
-    isCompact_uIcc.image_of_continuousOn γ.continuousOn
 
 /-- The trace of a contour cycle is closed. -/
 private theorem isClosed_trace (C : Cycle) : IsClosed (trace C) :=
@@ -149,7 +112,7 @@ private theorem cycleDixonH1_eq_cycleDixonH2_sub {f : ℂ → ℂ} {C : Cycle} {
           2 * (Real.pi : ℂ) * Complex.I *
             TauCeti.Contour.windingNumber γ γ.a γ.b w * f w := by
     intro γ hγ
-    have hoff := avoids_of_not_mem_trace hw hγ
+    have hoff := avoids_of_mem_support hw hγ
     have hγU := mapsTo_of_mem_support hCU hγ
     exact TauCeti.Contour.dixonH1_eq_dixonH2_sub_windingNumber_mul_f γ.continuousOn hoff
       (TauCeti.Contour.cauchy_integrand_intervalIntegrable hf γ.continuousOn hγU
@@ -216,7 +179,7 @@ private theorem differentiable_cycleDixonFunction {f : ℂ → ℂ} {C : Cycle} 
     have hH2 : DifferentiableAt ℂ (cycleDixonH2 f C) w := by
       unfold cycleDixonH2
       exact DifferentiableAt.fun_sum fun γ hγ ↦ by
-        have hoff := avoids_of_not_mem_trace hwtrace hγ
+        have hoff := avoids_of_mem_support hwtrace hγ
         exact (TauCeti.Contour.differentiableAt_dixonH2 γ.continuousOn hoff
           (TauCeti.Contour.cauchy_integrand_intervalIntegrable hf.continuousOn γ.continuousOn
             (mapsTo_of_mem_support hCU hγ) γ.intervalIntegrable_deriv hoff)).const_mul
@@ -274,7 +237,7 @@ private theorem cycleDixonH2_twist_eq_integral {f : ℂ → ℂ} {C : Cycle} {w 
   rw [TauCeti.Contour.dixonH2_def]
   refine intervalIntegral.integral_congr fun t ht ↦ ?_
   rw [mul_div_cancel_left₀ _ (sub_ne_zero.mpr
-    (avoids_of_not_mem_trace hw hγ t ht)), smul_eq_mul, mul_comm]
+    (avoids_of_mem_support hw hγ t ht)), smul_eq_mul, mul_comm]
 
 /-- **The homology Cauchy theorem for contour cycles.** Let `C` be a finite formal integer
 combination of closed piecewise-`C¹` curves whose trace lies in an open set `U`. If `C` is
