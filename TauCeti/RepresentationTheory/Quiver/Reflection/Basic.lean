@@ -30,7 +30,7 @@ and sources in finite acyclic quivers are proved in
 * `TauCeti.Quiver.reflectHom`: the arrow types of the quiver obtained by reversing every arrow
   incident to a given vertex.
 * `TauCeti.Quiver.Reflect`: that quiver, on the same vertex type.
-* `TauCeti.Quiver.reflectArrow` and `TauCeti.Quiver.reflectArrowOfNe`: an arrow of `V` into `i`,
+* `TauCeti.Quiver.reflectArrow` and `TauCeti.Quiver.reflectArrowOfNeOfNe`: an arrow of `V` into `i`,
   respectively an arrow of `V` between two vertices other than `i`, read as an arrow of the
   reflected quiver.
 
@@ -196,7 +196,7 @@ def reflectArrow (i : V) {b : V} (e : b ⟶ i) :
 
 /-- An arrow `a ⟶ b` of `V` between two vertices other than `i`, read as an arrow of the reflected
 quiver, where it is untouched. -/
-def reflectArrowOfNe {i a b : V} (ha : a ≠ i) (hb : b ≠ i) (e : a ⟶ b) :
+def reflectArrowOfNeOfNe {i a b : V} (ha : a ≠ i) (hb : b ≠ i) (e : a ⟶ b) :
     @_root_.Quiver.Hom (Reflect V i) (reflectQuiver i) a b :=
   cast ((hom_reflect i a b).trans (reflectHom_of_ne_of_ne ha hb)).symm e
 
@@ -210,9 +210,9 @@ theorem cast_reflectArrow (i : V) {b : V} (e : b ⟶ i)
 
 /-- Casting an arrow away from `i` back to `V` recovers the arrow it came from. -/
 @[simp]
-theorem cast_reflectArrowOfNe {i a b : V} (ha : a ≠ i) (hb : b ≠ i) (e : a ⟶ b)
+theorem cast_reflectArrowOfNeOfNe {i a b : V} (ha : a ≠ i) (hb : b ≠ i) (e : a ⟶ b)
     (h : @_root_.Quiver.Hom (Reflect V i) (reflectQuiver i) a b = (a ⟶ b)) :
-    cast h (reflectArrowOfNe ha hb e) = e :=
+    cast h (reflectArrowOfNeOfNe ha hb e) = e :=
   (cast_cast _ _ _).trans (cast_eq _ _)
 
 /-- **Every arrow out of `i` in the reflected quiver is a reversed arrow.** Reading such an arrow
@@ -228,13 +228,13 @@ theorem reflectArrow_cast (i : V) {b : V}
 
 /-- **Every arrow of the reflected quiver away from `i` is an untouched arrow.** Reading such an
 arrow back as an arrow of `V` and reflecting it again recovers it, so
-`TauCeti.Quiver.reflectArrowOfNe` eliminates an arbitrary arrow `a ⟶ b` of the reflected quiver
+`TauCeti.Quiver.reflectArrowOfNeOfNe` eliminates an arbitrary arrow `a ⟶ b` of the reflected quiver
 with `a ≠ i` and `b ≠ i`. -/
 @[simp]
-theorem reflectArrowOfNe_cast {i a b : V} (ha : a ≠ i) (hb : b ≠ i)
+theorem reflectArrowOfNeOfNe_cast {i a b : V} (ha : a ≠ i) (hb : b ≠ i)
     (e : @_root_.Quiver.Hom (Reflect V i) (reflectQuiver i) a b)
     (h : @_root_.Quiver.Hom (Reflect V i) (reflectQuiver i) a b = (a ⟶ b)) :
-    reflectArrowOfNe ha hb (cast h e) = e :=
+    reflectArrowOfNeOfNe ha hb (cast h e) = e :=
   (cast_cast _ _ _).trans (cast_eq _ _)
 
 /-- Reflecting at a sink turns it into a source: no arrow of the reflected quiver enters `i`. -/

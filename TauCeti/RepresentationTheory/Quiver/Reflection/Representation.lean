@@ -29,8 +29,8 @@ summing map is surjective: the reflected space at `i` then has dimension
 `∑_b #(b ⟶ i) · dim M_b - dim Mᵢ`, which is exactly `sᵢ` applied to the dimension vector of `M`,
 because a sink has no outgoing arrow. Surjectivity is the honest hypothesis here and it is not
 automatic: it fails exactly the way `TauCeti.incomingSum_not_surjective` records, for a
-representation concentrated at `i`, of which the vertex simple `Sᵢ` is the example. The reflection
-has zero vertex space at `i` in this boundary case, by
+representation concentrated at `i` whose space at `i` is nontrivial, of which the vertex simple
+`Sᵢ` is the example. The reflection has zero vertex space at `i` in this boundary case, by
 `TauCeti.subsingleton_reflectRep_obj_self`; in particular, it kills the vertex simple `Sᵢ`.
 
 ## Main definitions
@@ -43,16 +43,16 @@ has zero vertex space at `i` in this boundary case, by
 ## Main results
 
 * `TauCeti.reflectRep_obj_self` and `TauCeti.reflectRep_obj_of_ne`: the vertex spaces of `C⁺ᵢ M`.
-* `TauCeti.reflectRep_map_reflectArrow` and `TauCeti.reflectRep_map_reflectArrowOfNe`: the action
-  of a reversed arrow, by a coordinate projection out of the kernel, and of an arrow away from `i`,
-  unchanged.
+* `TauCeti.reflectRep_map_reflectArrow` and `TauCeti.reflectRep_map_reflectArrowOfNeOfNe`: the
+  action of a reversed arrow, by a coordinate projection out of the kernel, and of an arrow away
+  from `i`, unchanged.
 * `TauCeti.dimVector_reflectRep_of_ne` and `TauCeti.dimVector_reflectRep_self_add`: the dimension
   vector of `C⁺ᵢ M`, away from `i` and at `i`.
 * `TauCeti.dimVector_reflectRep`: `dim (C⁺ᵢ M) = sᵢ (dim M)` when the summing map is surjective.
 * `TauCeti.incomingSum_not_surjective`: that surjectivity fails for a representation concentrated
-  at `i`, and `TauCeti.subsingleton_reflectRep_obj_self`: the reflected space at `i` vanishes under
-  the same source-vanishing hypothesis. Together they describe the vertex simple `Sᵢ`, the boundary
-  case of the previous result.
+  at `i` with nontrivial space there, and `TauCeti.subsingleton_reflectRep_obj_self`: the reflected
+  space at `i` vanishes under the same source-vanishing hypothesis. Together they describe the
+  vertex simple `Sᵢ`, the boundary case of the previous result.
 
 ## Implementation notes
 
@@ -67,7 +67,7 @@ theorems are the whole interface, and they are what downstream files should use.
 
 The arrows of `TauCeti.Quiver.Reflect Q i` are given by `TauCeti.Quiver.reflectHom`, which is
 again an `if` on equality with `i`, so an arrow of the reflected quiver is a *cast* of an arrow of
-`Q`: `TauCeti.Quiver.reflectArrow` and `TauCeti.Quiver.reflectArrowOfNe` name the two casts, and
+`Q`: `TauCeti.Quiver.reflectArrow` and `TauCeti.Quiver.reflectArrowOfNeOfNe` name the two casts, and
 the computation rules for the action are stated on them. Both branches at `i` that a general vertex
 would allow are impossible at a sink -- the reflected quiver has no arrow into `i` and `i` carries
 no loop -- and the definition discharges them from `TauCeti.Quiver.IsSink`.
@@ -106,16 +106,19 @@ section IncomingSum
 
 variable [Fintype Q] [∀ a b : Q, Fintype (a ⟶ b)]
 
+open scoped Classical in
 /-- **The sum of the arrows into a vertex.** For a representation `M` of a finite quiver and a
 vertex `i`, this is the linear map `⨁_{a : b ⟶ i} M_b → Mᵢ` sending a family of vectors, indexed
 by the arrows into `i`, to the sum of their images under the corresponding arrows. Its kernel is
-the vector space that `TauCeti.reflectRep` puts at `i`.
+the vector space that `TauCeti.reflectRep` puts at `i`. It is `LinearMap.lsum` applied to the
+actions of the arrows into `i`; the decidable equality that combinator needs is supplied
+classically, so none appears in the interface.
 
 No hypothesis on `i` is imposed: the map is defined at every vertex, and it is the reflection that
 needs `i` to be a sink. -/
 noncomputable def incomingSum (M : QuiverRep.{u, v, w, max v w x} k Q) (i : Q) :
     ((e : Σ b : Q, (b ⟶ i)) → M.obj e.1) →ₗ[k] M.obj i :=
-  ∑ e : Σ b : Q, (b ⟶ i), (M.map e.2.toPath).hom ∘ₗ LinearMap.proj e
+  LinearMap.lsum k (fun e : Σ b : Q, (b ⟶ i) ↦ M.obj e.1) k fun e ↦ (M.map e.2.toPath).hom
 
 @[simp]
 theorem incomingSum_apply (M : QuiverRep.{u, v, w, max v w x} k Q) (i : Q)
@@ -178,7 +181,7 @@ At a sink the reflected quiver has no arrow into `i` and no loop at `i`, so thos
 impossible and are discharged from the hypothesis.
 
 An implementation helper for `TauCeti.reflectRep`, whose action is described by
-`TauCeti.reflectRep_map_reflectArrow` and `TauCeti.reflectRep_map_reflectArrowOfNe`. -/
+`TauCeti.reflectRep_map_reflectArrow` and `TauCeti.reflectRep_map_reflectArrowOfNeOfNe`. -/
 private noncomputable def reflectPrefunctor (M : QuiverRep.{u, v, w, max v w x} k Q) {i : Q}
     (hi : IsSink i) : Reflect Q i ⥤q ModuleCat.{max v w x} k where
   obj j := reflectRepObj M i j
@@ -251,15 +254,15 @@ theorem reflectRep_map_reflectArrow {b : Q} (e : b ⟶ i) :
 
 /-- **An arrow away from the reflected vertex acts unchanged.** -/
 @[simp]
-theorem reflectRep_map_reflectArrowOfNe {a b : Q} (ha : a ≠ i) (hb : b ≠ i) (e : a ⟶ b) :
-    (reflectRep M hi).map (reflectArrowOfNe ha hb e).toPath
+theorem reflectRep_map_reflectArrowOfNeOfNe {a b : Q} (ha : a ≠ i) (hb : b ≠ i) (e : a ⟶ b) :
+    (reflectRep M hi).map (reflectArrowOfNeOfNe ha hb e).toPath
       = eqToHom (reflectRep_obj_of_ne M hi ha) ≫ M.map e.toPath ≫
         eqToHom (reflectRep_obj_of_ne M hi hb).symm := by
   classical
   refine ((reflectRep_map_toPath (a := a) (b := b) M hi
-    (reflectArrowOfNe ha hb e)).trans (dif_neg hb)).trans ?_
+    (reflectArrowOfNeOfNe ha hb e)).trans (dif_neg hb)).trans ?_
   refine (dif_neg ha).trans ?_
-  conv_lhs => rw [cast_reflectArrowOfNe]
+  conv_lhs => rw [cast_reflectArrowOfNeOfNe]
   rfl
 
 end ReflectRep
@@ -369,9 +372,13 @@ simple `Sᵢ`. -/
 theorem subsingleton_reflectRep_obj_self {i : Q} (hi : IsSink i)
     (h : ∀ b : Q, (b ⟶ i) → Subsingleton (M.obj b)) :
     Subsingleton ((reflectRep M hi).obj i) := by
-  have hdom : ∀ e : Σ b : Q, (b ⟶ i), Subsingleton (M.obj e.1) := fun e ↦ h e.1 e.2
+  -- The domain of `TauCeti.incomingSum` is a product of the vanishing spaces, hence vanishes,
+  -- and the kernel is a subtype of it.
+  have hdom : Subsingleton ((e : Σ b : Q, (b ⟶ i)) → M.obj e.1) :=
+    have : ∀ e : Σ b : Q, (b ⟶ i), Subsingleton (M.obj e.1) := fun e ↦ h e.1 e.2
+    inferInstance
   have hker : Subsingleton (LinearMap.ker (incomingSum M i)) :=
-    ⟨fun a b ↦ Subtype.ext (Subsingleton.elim _ _)⟩
+    ⟨fun a b ↦ Subtype.ext (hdom.elim _ _)⟩
   exact reflectRep_obj_self M hi ▸ hker
 
 /-- If every source of an arrow into the sink vanishes, the reflected dimension at the sink is
