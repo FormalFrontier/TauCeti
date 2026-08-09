@@ -30,6 +30,8 @@ Mathlib's `ProbabilityTheory.uniformOn`, `measure_biUnion_finset_le`, and
 ## Main results
 
 * `uniformOn_not_injective_le` bounds the probability of a collision;
+* `uniformOn_le_univ_add_compl` and `uniformOn_univ_le_add_compl` give the general conditioning
+  comparison;
 * `uniformOn_injective_le_add` and `uniformOn_univ_le_injective_add` compare arbitrary events
   under sampling without and with replacement;
 * `uniformOn_injective_le_add_choose_two_div` and
@@ -176,9 +178,9 @@ theorem uniformOn_not_injective_le [MeasurableSpace κ] [MeasurableSingletonClas
 /-- Conditioning a finite uniform sample on an event `E` can increase the probability of an event
 `A` by at most the original probability of `Eᶜ`.
 
-This is the upper half of the elementary coupling bound between a uniform law and its conditioning.
-It is kept private because the public consumers below specialize `E` to injectivity. -/
-private theorem uniformOn_le_univ_add_compl {Ω : Type*} [Finite Ω] [MeasurableSpace Ω]
+This is the upper half of the elementary coupling bound between a uniform law and its
+conditioning. -/
+theorem uniformOn_le_univ_add_compl {Ω : Type*} [Finite Ω] [MeasurableSpace Ω]
     [MeasurableSingletonClass Ω] (E A : Set Ω) :
     uniformOn E A ≤ uniformOn Set.univ A + uniformOn Set.univ Eᶜ := by
   cases isEmpty_or_nonempty Ω with
@@ -205,9 +207,9 @@ private theorem uniformOn_le_univ_add_compl {Ω : Type*} [Finite Ω] [Measurable
 /-- Conditioning a finite uniform sample on an event `E` can decrease the probability of an event
 `A` by at most the original probability of `Eᶜ`.
 
-This is the lower half of the elementary coupling bound between a uniform law and its conditioning.
-It is kept private because the public consumers below specialize `E` to injectivity. -/
-private theorem uniformOn_univ_le_add_compl {Ω : Type*} [Finite Ω] [MeasurableSpace Ω]
+This is the lower half of the elementary coupling bound between a uniform law and its
+conditioning. -/
+theorem uniformOn_univ_le_add_compl {Ω : Type*} [Finite Ω] [MeasurableSpace Ω]
     [MeasurableSingletonClass Ω] (E A : Set Ω) :
     uniformOn Set.univ A ≤ uniformOn E A + uniformOn Set.univ Eᶜ := by
   cases isEmpty_or_nonempty Ω with
