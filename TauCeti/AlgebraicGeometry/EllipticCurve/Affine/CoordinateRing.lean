@@ -136,13 +136,13 @@ private lemma conj_apply (x : W.CoordinateRing) : conj W x = conjHom W x := by
 
 /-- Conjugation sends the coordinate `y` to `-y - (a₁X + a₃)`. -/
 @[simp]
-lemma conj_mk_Y : conj W (mk W Y) = mk W W.negPolynomial := by
-  rw [conj_apply, AdjoinRoot.mk_X, conjHom_mk_Y]
+lemma conj_mk_Y : conj W (AdjoinRoot.root W.polynomial) = mk W W.negPolynomial := by
+  rw [conj_apply, conjHom_mk_Y]
 
 /-- Conjugation fixes the coefficient ring `R[X]`. -/
 @[simp]
-lemma conj_mk_C (r : R[X]) : conj W (mk W (C r)) = mk W (C r) := by
-  simpa only [mk_C_eq_algebraMap] using (conj W).commutes r
+lemma conj_mk_C (r : R[X]) : conj W (AdjoinRoot.of W.polynomial r) = mk W (C r) := by
+  rw [conj_apply, conjHom_mk_C]
 
 /-- Conjugation is an involution. -/
 @[simp]
@@ -152,7 +152,7 @@ lemma conj_conj (x : W.CoordinateRing) : conj W (conj W x) = x :=
 lemma conj_smul_basis (p q : R[X]) :
     conj W (p • (1 : W.CoordinateRing) + q • mk W Y) = mk W (C p + C q * W.negPolynomial) := by
   rw [smul_basis_eq_mk]
-  simp only [map_add, map_mul, conj_mk_C, conj_mk_Y]
+  simp only [map_add, map_mul, AdjoinRoot.mk_C, AdjoinRoot.mk_X, conj_mk_C, conj_mk_Y]
 
 /-- The sum of an element of the coordinate ring and its conjugate is its trace `2p - qs`. -/
 lemma add_conj_smul_basis (p q : R[X]) :
