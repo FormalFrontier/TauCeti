@@ -60,7 +60,7 @@ theorem banachDexpFactor_apply_eq_integral_conj (x y : R) :
   dsimp only
   have hscale :
       t • (-continuousCommutator x) = continuousCommutator ((-t) • x) := by
-    rw [map_smul, neg_smul, smul_neg]
+    rw [map_smul, smul_neg]
   rw [hscale, exp_continuousCommutator_apply]
   simp
 
