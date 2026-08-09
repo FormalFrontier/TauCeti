@@ -51,7 +51,11 @@ namespace TauCeti.Derivation
 universe u v
 
 variable {R : Type u} {H : Type v}
-variable [CommRing R] [CommRing H] [HopfAlgebra R H]
+variable [CommRing R] [CommRing H]
+
+section Bialgebra
+
+variable [Bialgebra R H]
 variable [Module.Finite R (Bialgebra.CotangentSpace R H)]
 variable [Module.Projective R (Bialgebra.CotangentSpace R H)]
 
@@ -72,6 +76,12 @@ theorem mapValue_tangentScalarExtensionEquiv
       rw [mapValue_apply, tangentScalarExtensionEquiv_tmul_apply,
         GeneralLinear.scalarExtensionMap_tmul, tangentScalarExtensionEquiv_tmul_apply]
       rw [map_mul, phi.hom.commutes]
+
+end Bialgebra
+
+variable [HopfAlgebra R H]
+variable [Module.Finite R (Bialgebra.CotangentSpace R H)]
+variable [Module.Projective R (Bialgebra.CotangentSpace R H)]
 
 /-- Regard a point with values in `A` as one with values in the indexed copy of `A` carrying the
 counit-induced `H`-algebra structure. -/
@@ -206,6 +216,8 @@ noncomputable def adjointPointRepresentation :
     eqToHom (GeneralLinear.scalarExtensionAutomorphismsFunctor_obj
       (V := Module.Dual R (Bialgebra.CotangentSpace R H)) A).symm
   naturality A B phi := by
+    -- The functor object is definitionally the concrete scalar-extension automorphism group,
+    -- but that equality is opaque; no rewrite lemma exposes this natural-transformation field.
     change
       HopfAlgebra.mapPoints (H := H) phi ≫ adjointAction B ≫
           eqToHom (GeneralLinear.scalarExtensionAutomorphismsFunctor_obj
@@ -249,6 +261,19 @@ theorem adjointPointRepresentation_action
 noncomputable def adjointComodule :
     Comodule R H (Module.Dual R (Bialgebra.CotangentSpace R H)) :=
   HopfAlgebra.PointRepresentation.toComodule (adjointPointRepresentation (R := R) (H := H))
+
+/-- The adjoint coaction is the flipped action of the universal point. -/
+@[simp]
+theorem adjointComodule_coact_apply
+    (x : Module.Dual R (Bialgebra.CotangentSpace R H)) :
+    (adjointComodule (R := R) (H := H)).coact x =
+      TensorProduct.comm R H (Module.Dual R (Bialgebra.CotangentSpace R H))
+        (TensorProduct.map ULift.algEquiv.toLinearMap LinearMap.id
+          (((adjointPointRepresentation (R := R) (H := H)).action
+            (CommAlgCat.of R (ULift.{max u v} H))
+            (toConv ULift.algEquiv.symm.toAlgHom)).val (1 ⊗ₜ[R] x))) := by
+  unfold adjointComodule
+  exact HopfAlgebra.PointRepresentation.toComodule_coact_apply _ x
 
 /-- The point action of the adjoint comodule is convolution conjugation after the canonical
 scalar-extension identification of tangent vectors. -/
