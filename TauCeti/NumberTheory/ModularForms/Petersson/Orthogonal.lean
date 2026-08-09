@@ -4,7 +4,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+import Mathlib.Analysis.InnerProductSpace.Projection.Submodule
 public import TauCeti.NumberTheory.ModularForms.Petersson.FiniteIndex
+import TauCeti.NumberTheory.ModularForms.SturmBound
 
 /-!
 # Petersson-orthogonal complements
@@ -39,6 +41,10 @@ in that core, so it transfers unchanged if such an instance is ever installed.
   the other argument of the pairing, by Hermitian symmetry.
 * `TauCeti.CuspForm.disjoint_peterssonOrthogonal`: a subspace and its complement meet only in
   `0`; this is positive definiteness.
+* `TauCeti.CuspForm.peterssonOrthogonal_peterssonOrthogonal`: taking the complement twice
+  recovers the original subspace.
+* `TauCeti.CuspForm.sup_peterssonOrthogonal_eq_top`: a subspace and its complement span the full
+  cusp-form space.
 * `TauCeti.CuspForm.peterssonOrthogonal_iSup`: the complement of a supremum is the infimum of
   the complements.
 * `TauCeti.CuspForm.mem_peterssonOrthogonal_iff_le_ker`: membership in a complement, restated as
@@ -124,6 +130,64 @@ theorem le_peterssonOrthogonal_peterssonOrthogonal
     V ≤ peterssonOrthogonal (peterssonOrthogonal V) := by
   intro f hf g hg
   rw [← peterssonInnerCosets_conj_symm g f, hg f hf, map_zero]
+
+/-- **Taking the Petersson-orthogonal complement twice recovers the original subspace.** -/
+theorem peterssonOrthogonal_peterssonOrthogonal
+    (V : Submodule ℂ (CuspForm (Γ.map (mapGL ℝ)) k)) :
+    peterssonOrthogonal (peterssonOrthogonal V) = V := by
+  let _ : Module.Finite ℂ (CuspForm (Γ.map (mapGL ℝ)) k) :=
+    Module.Finite.of_injective CuspForm.toModularFormₗ CuspForm.toModularFormₗ_injective
+  let _ : InnerProductSpace.Core ℂ (CuspForm (Γ.map (mapGL ℝ)) k) :=
+    peterssonInnerCosetsCore
+  let _ : NormedAddCommGroup (CuspForm (Γ.map (mapGL ℝ)) k) :=
+    InnerProductSpace.Core.toNormedAddCommGroup (𝕜 := ℂ)
+  let _ : NormedSpace ℂ (CuspForm (Γ.map (mapGL ℝ)) k) :=
+    InnerProductSpace.Core.toNormedSpace (𝕜 := ℂ)
+  let peterssonPreCore : PreInnerProductSpace.Core ℂ (CuspForm (Γ.map (mapGL ℝ)) k) :=
+    { inner := peterssonInnerCosets
+      conj_inner_symm := peterssonInnerCosets_conj_symm
+      re_inner_nonneg := peterssonInnerCosets_self_re_nonneg
+      add_left := peterssonInnerCosets_add_left
+      smul_left := fun f g c ↦ peterssonInnerCosets_smul_left c f g }
+  let _ : InnerProductSpace ℂ (CuspForm (Γ.map (mapGL ℝ)) k) :=
+    { peterssonPreCore with
+      norm_sq_eq_re_inner := fun f ↦ by
+        change √((peterssonInnerCosetsCore : InnerProductSpace.Core ℂ
+          (CuspForm (Γ.map (mapGL ℝ)) k)).inner f f).re ^ 2 = (peterssonInnerCosets f f).re
+        rw [peterssonInnerCosetsCore_inner]
+        exact Real.sq_sqrt (peterssonInnerCosets_self_re_nonneg f) }
+  have hpeterssonOrthogonal
+      (W : Submodule ℂ (CuspForm (Γ.map (mapGL ℝ)) k)) : peterssonOrthogonal W = Wᗮ := by
+    ext f
+    rw [mem_peterssonOrthogonal_iff, Submodule.mem_orthogonal]
+    constructor
+    · intro h g hg
+      change peterssonInnerCosets g f = 0
+      exact h g hg
+    · intro h g hg
+      have hgf := h g hg
+      change peterssonInnerCosets g f = 0 at hgf
+      exact hgf
+  rw [hpeterssonOrthogonal, hpeterssonOrthogonal, Submodule.orthogonal_orthogonal]
+
+/-- **A subspace and its Petersson-orthogonal complement span the full cusp-form space.** -/
+theorem sup_peterssonOrthogonal_eq_top
+    (V : Submodule ℂ (CuspForm (Γ.map (mapGL ℝ)) k)) :
+    V ⊔ peterssonOrthogonal V = ⊤ := by
+  have horth : peterssonOrthogonal (V ⊔ peterssonOrthogonal V) = ⊥ := by
+    rw [eq_bot_iff]
+    intro f hf
+    have hfV : f ∈ peterssonOrthogonal V := fun g hg ↦ hf g (Submodule.mem_sup_left hg)
+    have hfVV : f ∈ peterssonOrthogonal (peterssonOrthogonal V) :=
+      fun g hg ↦ hf g (Submodule.mem_sup_right hg)
+    rw [peterssonOrthogonal_peterssonOrthogonal] at hfVV
+    exact Submodule.disjoint_def.mp (disjoint_peterssonOrthogonal V) f hfVV hfV
+  calc
+    V ⊔ peterssonOrthogonal V =
+        peterssonOrthogonal (peterssonOrthogonal (V ⊔ peterssonOrthogonal V)) :=
+      (peterssonOrthogonal_peterssonOrthogonal _).symm
+    _ = peterssonOrthogonal ⊥ := congrArg peterssonOrthogonal horth
+    _ = ⊤ := peterssonOrthogonal_bot
 
 /-- **The complement of a supremum is the infimum of the complements.** Orthogonality to a
 family of subspaces spreads to the subspace they generate, since the pairing is additive in

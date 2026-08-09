@@ -40,6 +40,8 @@ the upper half-plane to `τ ↦ f (d τ)`. It is the slash action by `diag(d, 1)
 * `TauCeti.ModularForm.slash_levelRaise_eq_smul`, `TauCeti.CuspForm.slash_levelRaise_eq_smul`:
   the eigenvalue transport. Slashing `V_d f` by `γ` produces the same scalar that slashing `f`
   by the conjugate matrix `conjScale d γ` does.
+* `TauCeti.CuspForm.diamondOpCusp_levelRaise`: `V_d` intertwines diamond operators between a
+  divisor level and any multiple of the raised level.
 * `TauCeti.ModularForm.levelRaise_mem_modFormCharSpace`,
   `TauCeti.CuspForm.levelRaise_mem_cuspFormCharSpace`: the nebentypus transport. Since the
   conjugate of a `Γ₀(dM)` matrix lies in `Γ₀(M)` with the same lower-right entry, `V_d` carries
@@ -292,18 +294,6 @@ lemma levelRaise_levelRaise {d e : ℕ} [𝒢'.HasDetOne] [𝒢''.HasDetOne] [Ne
   refine _root_.CuspForm.ext fun τ ↦ ?_
   simp [scaleGL_mul, mul_smul]
 
-/-- The composition `V_d ∘ V_e = V_n` for any `n` presented as the product `e * d`, and any
-transport hypothesis for `V_n`: the level-raising operator does not depend on which proof of
-the conjugation condition it is given. -/
-lemma levelRaise_levelRaise_of_mul_eq {d e n : ℕ} [𝒢'.HasDetOne] [𝒢''.HasDetOne] [NeZero d]
-    [NeZero e] [NeZero n] (hn : e * d = n)
-    (h₁ : 𝒢'' ≤ ConjAct.toConjAct (scaleGL d)⁻¹ • 𝒢')
-    (h₂ : 𝒢' ≤ ConjAct.toConjAct (scaleGL e)⁻¹ • 𝒢)
-    (h₃ : 𝒢'' ≤ ConjAct.toConjAct (scaleGL n)⁻¹ • 𝒢) (f : CuspForm 𝒢 k) :
-    levelRaise d h₁ (levelRaise e h₂ f) = levelRaise n h₃ f := by
-  subst hn
-  exact levelRaise_levelRaise h₁ h₂ f
-
 end CuspForm
 
 end LevelRaise
@@ -354,6 +344,14 @@ theorem Gamma1_map_le_conjAct_scaleGL (M d : ℕ) [NeZero d] :
     ⟨by simpa using congrArg (ZMod.castHom hdM (ZMod M)) h00,
       by simpa using congrArg (ZMod.castHom hdM (ZMod M)) h11, by simp⟩,
     (mapGL_conjScale γ _ hc).symm⟩
+
+/-- **Level transport at a divisor.** Whenever `d * M ∣ N`, conjugation by `diag(d, 1)` carries
+`Γ₁(N)` into `Γ₁(M)`: this is what makes `V_d` a map `S_k(Γ₁(M)) → S_k(Γ₁(N))`, not only for
+`N = d * M` but for every multiple of it. -/
+theorem Gamma1_map_le_conjAct_scaleGL_of_dvd {M d N : ℕ} [NeZero d] (h : d * M ∣ N) :
+    ((Gamma1 N).map (mapGL ℝ) : Subgroup (GL (Fin 2) ℝ)) ≤
+      ConjAct.toConjAct (scaleGL d)⁻¹ • ((Gamma1 M).map (mapGL ℝ)) :=
+  (Subgroup.map_mono (Gamma1_le_Gamma1_of_dvd h)).trans (Gamma1_map_le_conjAct_scaleGL M d)
 
 /-- **Level transport for `Γ₀`**: conjugation by `diag(d, 1)` carries `Γ₀(dM)` into `Γ₀(M)`. -/
 theorem Gamma0_map_le_conjAct_scaleGL (M d : ℕ) [NeZero d] :
@@ -452,6 +450,40 @@ lemma exists_conjScale_mem_Gamma0 (d M : ℕ) (γ : ↥(Gamma0 (d * M))) :
   refine ⟨_, hc, Gamma0_mem.mpr (by simp), ?_⟩
   ext
   simp [Gamma0Map, ZMod.unitsMap_def]
+
+/-- The `diag(d, 1)`-conjugate of a matrix of `Γ₀(N)` lies in `Γ₀(M)` whenever `d * M ∣ N`, and
+the conjugation leaves the lower-right entry alone: the diamond label of `γ` is read along the
+reduction `(ZMod N)ˣ → (ZMod M)ˣ`. This is the divisor form of
+`TauCeti.exists_conjScale_mem_Gamma0`. -/
+lemma exists_conjScale_mem_Gamma0_of_dvd (d M N : ℕ) (hdvd : d * M ∣ N) (γ : ↥(Gamma0 N)) :
+    ∃ (c : ℤ) (hc : (γ : SL(2, ℤ)) 1 0 = d * c) (hm : conjScale d γ c hc ∈ Gamma0 M),
+      (Gamma0Map M).toHomUnits ⟨conjScale d γ c hc, hm⟩ =
+        ZMod.unitsMap ((Dvd.intro_left d rfl).trans hdvd) ((Gamma0Map N).toHomUnits γ) := by
+  obtain ⟨t, ht⟩ : ((N : ℕ) : ℤ) ∣ (γ : SL(2, ℤ)) 1 0 :=
+    (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp (Gamma0_mem.mp γ.2)
+  obtain ⟨s, hs⟩ := hdvd
+  have hc : (γ : SL(2, ℤ)) 1 0 = d * ((M : ℤ) * ((s : ℤ) * t)) := by
+    rw [ht, hs]; push_cast; ring
+  refine ⟨_, hc, Gamma0_mem.mpr (by simp), ?_⟩
+  ext
+  simp [Gamma0Map, ZMod.unitsMap_def]
+
+/-- **`V_d` intertwines the diamond operators.** For `d * M ∣ N`, the diamond operator `⟨u⟩` of
+level `N` acts on a level-raised form `V_d f` as the diamond operator of level `M` at the
+reduction of `u` acts on `f`. Both sides are slashes by a matrix of `Γ₀`, related by the
+`diag(d, 1)`-conjugation, which preserves the lower-right entry. -/
+theorem CuspForm.diamondOpCusp_levelRaise {M d N : ℕ} [NeZero M] [NeZero d] [NeZero N]
+    (hdvd : d * M ∣ N) (k : ℤ) (u : (ZMod N)ˣ)
+    (f : CuspForm ((Gamma1 M).map (mapGL ℝ)) k) :
+    diamondOpCusp k u (CuspForm.levelRaise d (Gamma1_map_le_conjAct_scaleGL_of_dvd hdvd) f) =
+      CuspForm.levelRaise d (Gamma1_map_le_conjAct_scaleGL_of_dvd hdvd)
+        (diamondOpCusp k (ZMod.unitsMap ((Dvd.intro_left d rfl).trans hdvd) u) f) := by
+  obtain ⟨γ, hγ⟩ := Gamma0Map_toHomUnits_surjective u
+  obtain ⟨c, hc, hm, heq⟩ := exists_conjScale_mem_Gamma0_of_dvd d M N hdvd γ
+  refine DFunLike.coe_injective ?_
+  rw [coe_diamondOpCusp k u γ hγ, CuspForm.coe_levelRaise_slash _ f γ hc,
+    CuspForm.coe_levelRaise, coe_diamondOpCusp k _ ⟨conjScale d γ c hc, hm⟩ (heq.trans (by
+      rw [hγ]))]
 
 /-- **The nebentypus of a level-raise.** `V_d` carries `M_k(Γ₁(M), χ)` into
 `M_k(Γ₁(dM), χ ∘ (ZMod (dM))ˣ → (ZMod M)ˣ)`: the character of `V_d f` at level `dM` is the
