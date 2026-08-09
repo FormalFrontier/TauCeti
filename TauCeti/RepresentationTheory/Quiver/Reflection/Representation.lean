@@ -8,6 +8,7 @@ public import TauCeti.RepresentationTheory.Quiver.Reflection.Basic
 public import TauCeti.RepresentationTheory.Quiver.Reflection.DimensionVector
 public import TauCeti.RepresentationTheory.Quiver.Representation.DimensionVector
 public import Mathlib.LinearAlgebra.FiniteDimensional.Lemmas
+import Mathlib.CategoryTheory.PathCategory.MorphismProperty
 
 /-!
 # Reflecting a representation at a sink
@@ -21,7 +22,7 @@ nothing changes; at `i` the vector space `Mᵢ` is replaced by the kernel of the
 
 that sums the actions of the arrows into `i`, and each reversed arrow acts by the corresponding
 coordinate projection out of that kernel. This file builds that representation and computes its
-dimension vector.
+dimension vector, and bundles the construction as a functor on representations.
 
 The content of the computation is that on dimension vectors the construction realizes the simple
 reflection `sᵢ` of `TauCeti.RepresentationTheory.Quiver.Reflection.DimensionVector`, provided the
@@ -39,6 +40,7 @@ representation concentrated at `i` whose space at `i` is nontrivial, of which th
   defined at every vertex of every representation.
 * `TauCeti.reflectRep`: the reflection `C⁺ᵢ M` of a representation at a sink `i`, a
   representation of `TauCeti.Quiver.Reflect Q i`.
+* `TauCeti.reflectionFunctor`: the BGP reflection functor at a sink.
 
 ## Main results
 
@@ -46,6 +48,8 @@ representation concentrated at `i` whose space at `i` is nontrivial, of which th
 * `TauCeti.reflectRep_map_reflectArrow` and `TauCeti.reflectRep_map_reflectArrowOfNeOfNe`: the
   action of a reversed arrow, by a coordinate projection out of the kernel, and of an arrow away
   from `i`, unchanged.
+* `TauCeti.reflectionFunctor_map_app_self_apply` and
+  `TauCeti.reflectionFunctor_map_app_of_ne`: the action of reflection on morphisms.
 * `TauCeti.dimVector_reflectRep_of_ne` and `TauCeti.dimVector_reflectRep_self_add`: the dimension
   vector of `C⁺ᵢ M`, away from `i` and at `i`.
 * `TauCeti.dimVector_reflectRep`: `dim (C⁺ᵢ M) = sᵢ (dim M)` when the summing map is surjective.
@@ -61,9 +65,9 @@ classically; no `DecidableEq Q` instance therefore appears in the interface of t
 exactly as for `TauCeti.simpleRep`. Only the statements naming `TauCeti.vertexPreReflection` assume
 `DecidableEq Q`, because `Pi.single` needs one.
 
-The vertex spaces and the prefunctor that `TauCeti.reflectRep` lifts are private, and
-`TauCeti.reflectRep` does not expose its body: the `reflectRep_obj_*` and `reflectRep_map_*`
-theorems are the whole interface, and they are what downstream files should use.
+The vertex spaces, the prefunctor that `TauCeti.reflectRep` lifts, and the kernel maps underlying
+the action on morphisms are private. The `reflectRep_obj_*`, `reflectRep_map_*`, and
+`reflectionFunctor_map_app_*` theorems provide the interface downstream files should use.
 
 The arrows of `TauCeti.Quiver.Reflect Q i` are given by `TauCeti.Quiver.reflectHom`, which is
 again an `if` on equality with `i`, so an arrow of the reflected quiver is a *cast* of an arrow of
@@ -84,8 +88,8 @@ is `Q` itself only by unfolding a semireducible definition; as in the neighbouri
 ## References
 
 This implements the reflection at a sink of the reflection functors of Layer 4 of
-`TauCetiRoadmap/RepresentationTheory/QuiverRepresentations/README.md`; functoriality in `M` is not
-proved here. See Bernstein--Gelfand--Ponomarev, *Coxeter functors and Gabriel's theorem*, and
+`TauCetiRoadmap/RepresentationTheory/QuiverRepresentations/README.md`. See
+Bernstein--Gelfand--Ponomarev, *Coxeter functors and Gabriel's theorem*, and
 Derksen--Weyman, *An Introduction to Quiver Representations*, Ch. 2.
 -/
 
@@ -264,6 +268,237 @@ theorem reflectRep_map_reflectArrowOfNeOfNe {a b : Q} (ha : a ≠ i) (hb : b ≠
   refine (dif_neg ha).trans ?_
   conv_lhs => rw [cast_reflectArrowOfNeOfNe]
   rfl
+
+omit [Fintype Q] [∀ a b : Q, Fintype (a ⟶ b)] in
+/-- The pointwise map between the products indexed by arrows into `i`. -/
+private def incomingMap {M N : QuiverRep.{u, v, w, max v w x} k Q} (η : M ⟶ N) (i : Q) :
+    ((e : Σ b : Q, (b ⟶ i)) → M.obj e.1) →ₗ[k]
+      ((e : Σ b : Q, (b ⟶ i)) → N.obj e.1) where
+  toFun f e := η.app e.1 (f e)
+  map_add' f g := by ext e; simp
+  map_smul' r f := by ext e; simp
+
+/-- Naturality of a morphism of representations makes the square involving the two incoming sums
+commute. -/
+private theorem incomingSum_naturality {M N : QuiverRep.{u, v, w, max v w x} k Q}
+    (η : M ⟶ N) (i : Q) (f : (e : Σ b : Q, (b ⟶ i)) → M.obj e.1) :
+    incomingSum N i (incomingMap η i f) = η.app i (incomingSum M i f) := by
+  rw [incomingSum_apply, incomingSum_apply, map_sum]
+  apply Finset.sum_congr rfl
+  intro e _
+  exact congrArg (fun g : M.obj e.1 ⟶ N.obj i ↦ g.hom (f e))
+    (η.naturality e.2.toPath).symm
+
+/-- The map between the kernels of the incoming sums induced by a morphism of representations. -/
+private noncomputable def incomingKerMap {M N : QuiverRep.{u, v, w, max v w x} k Q}
+    (η : M ⟶ N) (i : Q) :
+    LinearMap.ker (incomingSum M i) →ₗ[k] LinearMap.ker (incomingSum N i) :=
+  LinearMap.codRestrict (LinearMap.ker (incomingSum N i))
+    ((incomingMap η i).domRestrict (LinearMap.ker (incomingSum M i))) fun f ↦ by
+      rw [LinearMap.mem_ker, LinearMap.domRestrict_apply, incomingSum_naturality, f.property,
+        map_zero]
+
+@[simp]
+private theorem incomingKerMap_id (M : QuiverRep.{u, v, w, max v w x} k Q) (i : Q) :
+    incomingKerMap (𝟙 M) i = LinearMap.id := by
+  ext f e
+  rfl
+
+@[simp]
+private theorem incomingKerMap_comp {M N P : QuiverRep.{u, v, w, max v w x} k Q}
+    (η : M ⟶ N) (θ : N ⟶ P) (i : Q) :
+    incomingKerMap (η ≫ θ) i = (incomingKerMap θ i).comp (incomingKerMap η i) := by
+  ext f e
+  rfl
+
+open scoped Classical in
+/-- The component at a vertex of the reflected morphism. -/
+private noncomputable def reflectRepMapApp
+    {M N : QuiverRep.{u, v, w, max v w x} k Q} (η : M ⟶ N) {i : Q} (hi : IsSink i)
+    (j : Reflect Q i) : (reflectRep M hi).obj j ⟶ (reflectRep N hi).obj j :=
+  if hj : j = i then
+    eqToHom ((congrArg (reflectRep M hi).obj hj).trans (reflectRep_obj_self M hi)) ≫
+      ModuleCat.ofHom (incomingKerMap η i) ≫
+      eqToHom ((congrArg (reflectRep N hi).obj hj).trans (reflectRep_obj_self N hi)).symm
+  else
+    eqToHom (reflectRep_obj_of_ne M hi hj) ≫ η.app j ≫
+      eqToHom (reflectRep_obj_of_ne N hi hj).symm
+
+@[simp]
+private theorem reflectRepMapApp_self
+    {M N : QuiverRep.{u, v, w, max v w x} k Q} (η : M ⟶ N) {i : Q} (hi : IsSink i) :
+    reflectRepMapApp η hi i =
+      eqToHom (reflectRep_obj_self M hi) ≫ ModuleCat.ofHom (incomingKerMap η i) ≫
+        eqToHom (reflectRep_obj_self N hi).symm := by
+  classical
+  unfold reflectRepMapApp
+  split
+  · rfl
+  · rename_i h
+    exact (h rfl).elim
+
+@[simp]
+private theorem reflectRepMapApp_of_ne
+    {M N : QuiverRep.{u, v, w, max v w x} k Q} (η : M ⟶ N) {i : Q} (hi : IsSink i)
+    {j : Reflect Q i} (hj : j ≠ i) :
+    reflectRepMapApp η hi j =
+      eqToHom (reflectRep_obj_of_ne M hi hj) ≫ η.app j ≫
+        eqToHom (reflectRep_obj_of_ne N hi hj).symm := by
+  classical
+  simp [reflectRepMapApp, hj]
+
+set_option backward.isDefEq.respectTransparency.types false in
+/-- The components of the reflected morphism are natural for every arrow of the reflected
+quiver. -/
+private theorem reflectRepMapApp_naturality_arrow
+    {M N : QuiverRep.{u, v, w, max v w x} k Q} (η : M ⟶ N) {i : Q} (hi : IsSink i)
+    {a b : Reflect Q i} (e : a ⟶ b) :
+    (reflectRep M hi).map e.toPath ≫ reflectRepMapApp η hi b =
+      reflectRepMapApp η hi a ≫ (reflectRep N hi).map e.toPath := by
+  classical
+  by_cases hb : b = i
+  · subst b
+    exact (hi.isSource_reflect.isEmpty_hom a).elim e
+  by_cases ha : a = i
+  · subst a
+    let e' : @_root_.Quiver.Hom Q _ b i :=
+      cast ((@hom_reflect Q _ i i b).trans (@reflectHom_left Q _ i b)) e
+    have he : @reflectArrow Q _ i b e' = e := @reflectArrow_cast Q _ i b e _
+    rw [← he]
+    rw [reflectRep_map_reflectArrow M hi e', reflectRep_map_reflectArrow N hi e']
+    rw [reflectRepMapApp_of_ne η hi hb, reflectRepMapApp_self η hi]
+    simp only [Category.assoc, eqToHom_trans_assoc, eqToHom_refl, Category.id_comp]
+    ext f
+    rfl
+  · let e' : @_root_.Quiver.Hom Q _ a b :=
+      cast ((@hom_reflect Q _ i a b).trans (@reflectHom_of_ne_of_ne Q _ i a b ha hb)) e
+    have he : @reflectArrowOfNeOfNe Q _ i a b ha hb e' = e :=
+      @reflectArrowOfNeOfNe_cast Q _ i a b ha hb e _
+    rw [← he]
+    rw [reflectRep_map_reflectArrowOfNeOfNe M hi ha hb e',
+      reflectRep_map_reflectArrowOfNeOfNe N hi ha hb e']
+    rw [reflectRepMapApp_of_ne η hi ha, reflectRepMapApp_of_ne η hi hb]
+    simp only [Category.assoc, eqToHom_trans_assoc, eqToHom_refl, Category.id_comp]
+    rw [η.naturality_assoc]
+
+/-- The morphism between reflected representations induced by a morphism of representations. -/
+private noncomputable def reflectRepMap
+    {M N : QuiverRep.{u, v, w, max v w x} k Q} (η : M ⟶ N) {i : Q} (hi : IsSink i) :
+    reflectRep M hi ⟶ reflectRep N hi :=
+  Paths.liftNatTrans (reflectRepMapApp η hi) (reflectRepMapApp_naturality_arrow η hi)
+
+set_option backward.isDefEq.respectTransparency.types false in
+/-- **The BGP reflection functor at a sink.** It sends a representation to
+`TauCeti.reflectRep` and a morphism to the induced map between the kernels at the reflected vertex,
+while leaving its components away from that vertex unchanged. -/
+noncomputable def reflectionFunctor (i : Q) (hi : IsSink i) :
+    QuiverRep.{u, v, w, max v w x} k Q ⥤ QuiverRep k (Reflect Q i) where
+  obj M := reflectRep M hi
+  map η := reflectRepMap η hi
+  map_id M := by
+    apply NatTrans.ext
+    funext j
+    classical
+    change reflectRepMapApp (𝟙 M) hi j = 𝟙 _
+    by_cases hj : j = i
+    · subst j
+      rw [reflectRepMapApp_self]
+      simp
+    · rw [reflectRepMapApp_of_ne _ _ hj]
+      simp
+  map_comp η θ := by
+    apply NatTrans.ext
+    funext j
+    classical
+    change reflectRepMapApp (η ≫ θ) hi j =
+      reflectRepMapApp η hi j ≫ reflectRepMapApp θ hi j
+    by_cases hj : j = i
+    · subst j
+      rw [reflectRepMapApp_self, reflectRepMapApp_self, reflectRepMapApp_self]
+      set_option backward.isDefEq.respectTransparency.types false in
+        simp [Category.assoc]
+    · rw [reflectRepMapApp_of_ne _ _ hj, reflectRepMapApp_of_ne _ _ hj,
+        reflectRepMapApp_of_ne _ _ hj]
+      set_option backward.isDefEq.respectTransparency.types false in
+        simp [Category.assoc]
+
+/-- The vertex components of the map supplied by `TauCeti.reflectionFunctor`. -/
+private theorem reflectionFunctor_map_app
+    {M N : QuiverRep.{u, v, w, max v w x} k Q} (η : M ⟶ N) {i : Q} (hi : IsSink i)
+    (j : Reflect Q i) :
+    ((reflectionFunctor i hi).map η).app j = reflectRepMapApp η hi j :=
+  rfl
+
+/-- Transporting a morphism along object equalities and then back leaves it unchanged. -/
+private theorem eqToHom_conjugate_cancel {C : Type*} [Category* C] {X X' Y Y' : C}
+    (hX : X = X') (hY : Y = Y') (f : X' ⟶ Y') :
+    eqToHom hX.symm ≫ (eqToHom hX ≫ f ≫ eqToHom hY.symm) ≫ eqToHom hY = f := by
+  subst X'
+  subst Y'
+  simp
+
+/-- At the reflected vertex, the map supplied by `TauCeti.reflectionFunctor`, transported to the
+two kernels, is the induced kernel map. -/
+private theorem reflectionFunctor_map_app_self
+    {M N : QuiverRep.{u, v, w, max v w x} k Q} (η : M ⟶ N) {i : Q} (hi : IsSink i) :
+    eqToHom (reflectRep_obj_self M hi).symm ≫
+        ((reflectionFunctor i hi).map η).app i ≫ eqToHom (reflectRep_obj_self N hi) =
+      ModuleCat.ofHom (incomingKerMap η i) := by
+  rw [reflectionFunctor_map_app η hi i, reflectRepMapApp_self]
+  exact eqToHom_conjugate_cancel _ _ _
+
+/-- At the reflected vertex, the object supplied by `TauCeti.reflectionFunctor` is the kernel of
+the incoming sum. -/
+@[simp]
+theorem reflectionFunctor_obj_self (i : Q) (hi : IsSink i)
+    (M : QuiverRep.{u, v, w, max v w x} k Q) :
+    ((reflectionFunctor i hi).obj M).obj i =
+      ModuleCat.of k (LinearMap.ker (incomingSum M i)) := by
+  change (reflectRep M hi).obj i = _
+  exact reflectRep_obj_self M hi
+
+/-- Away from the reflected vertex, the objects supplied by `TauCeti.reflectionFunctor` are those
+of the original representation. -/
+@[simp]
+theorem reflectionFunctor_obj_of_ne (i : Q) (hi : IsSink i)
+    (M : QuiverRep.{u, v, w, max v w x} k Q) {j : Q} (hj : j ≠ i) :
+    ((reflectionFunctor i hi).obj M).obj j = M.obj j := by
+  change (reflectRep M hi).obj j = _
+  exact reflectRep_obj_of_ne M hi hj
+
+/-- At the reflected vertex, reflection sends a morphism to the coordinatewise map between the
+kernels of the incoming sums. -/
+theorem reflectionFunctor_map_app_self_apply
+    {M N : QuiverRep.{u, v, w, max v w x} k Q} (η : M ⟶ N) {i : Q} (hi : IsSink i)
+    (f : LinearMap.ker (incomingSum M i)) (e : Σ b : Q, (b ⟶ i)) :
+    ((eqToHom (reflectionFunctor_obj_self i hi M).symm ≫
+        ((reflectionFunctor i hi).map η).app i ≫
+        eqToHom (reflectionFunctor_obj_self i hi N)) f).1 e = η.app e.1 (f.1 e) := by
+  have hM : reflectionFunctor_obj_self i hi M = reflectRep_obj_self M hi :=
+    Subsingleton.elim _ _
+  have hN : reflectionFunctor_obj_self i hi N = reflectRep_obj_self N hi :=
+    Subsingleton.elim _ _
+  rw [hM, hN]
+  exact congrArg (fun g : ModuleCat.of k (LinearMap.ker (incomingSum M i)) ⟶
+      ModuleCat.of k (LinearMap.ker (incomingSum N i)) ↦ (g f).1 e)
+    (reflectionFunctor_map_app_self η hi)
+
+/-- Away from the reflected vertex, reflection leaves the components of a morphism unchanged. -/
+@[simp]
+theorem reflectionFunctor_map_app_of_ne
+    {M N : QuiverRep.{u, v, w, max v w x} k Q} (η : M ⟶ N) {i : Q} (hi : IsSink i)
+    {j : Q} (hj : j ≠ i) :
+    ((reflectionFunctor i hi).map η).app j =
+      eqToHom (reflectionFunctor_obj_of_ne i hi M hj) ≫ η.app j ≫
+        eqToHom (reflectionFunctor_obj_of_ne i hi N hj).symm := by
+  have hM : reflectionFunctor_obj_of_ne i hi M hj = reflectRep_obj_of_ne M hi hj :=
+    Subsingleton.elim _ _
+  have hN : reflectionFunctor_obj_of_ne i hi N hj = reflectRep_obj_of_ne N hi hj :=
+    Subsingleton.elim _ _
+  rw [hM, hN]
+  set_option backward.isDefEq.respectTransparency.types false in
+    rw [reflectionFunctor_map_app]
+  exact reflectRepMapApp_of_ne η hi hj
 
 end ReflectRep
 
