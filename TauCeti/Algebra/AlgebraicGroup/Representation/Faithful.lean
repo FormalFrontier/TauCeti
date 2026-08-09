@@ -59,14 +59,14 @@ noncomputable section
 section Faithful
 
 variable {R : Type u} {H : Type v} {M : Type w}
-variable [CommSemiring R] [CommSemiring H] [HopfAlgebra R H]
+variable [CommRing R] [CommRing H] [HopfAlgebra R H]
 variable [AddCommMonoid M] [Module R M] [Comodule R H M]
 
-/-- A comodule is faithful when its coefficients and their antipode images generate the ambient
-Hopf algebra. For a finite free comodule, `isFaithful_iff_isClosedImmersion_groupSchemeMap`
-identifies this intrinsic condition with the associated group-scheme morphism being a closed
-immersion for every finite basis. -/
-def IsFaithful : Prop :=
+/-- A finite free comodule is faithful when its coefficients and their antipode images generate
+the ambient Hopf algebra. The theorem `isFaithful_iff_isClosedImmersion_groupSchemeMap` identifies
+this intrinsic condition with the associated group-scheme morphism being a closed immersion for
+every finite basis. -/
+def IsFaithful [Module.Free R M] [Module.Finite R M] : Prop :=
   matrixCoefficientSubalgebraWithAntipode (R := R) (H := H) (M := M) = ⊤
 
 end Faithful
@@ -110,7 +110,8 @@ theorem groupSchemeMap_hom_left (b : Basis (Fin n) R M) :
 
 /-- A finite free comodule is faithful exactly when the group-scheme morphism associated to any
 finite basis is a closed immersion. -/
-theorem isFaithful_iff_isClosedImmersion_groupSchemeMap (b : Basis (Fin n) R M) :
+theorem isFaithful_iff_isClosedImmersion_groupSchemeMap [Module.Free R M] [Module.Finite R M]
+    (b : Basis (Fin n) R M) :
     IsFaithful (R := R) (H := H) (M := M) ↔
       AlgebraicGeometry.IsClosedImmersion (groupSchemeMap (H := H) b).hom.hom.left := by
   unfold IsFaithful groupSchemeMap
