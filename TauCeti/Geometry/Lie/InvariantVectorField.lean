@@ -25,8 +25,8 @@ left-invariant-derivation model of a Lie algebra.
   derivatives of multiplication.
 * `contMDiff_mulInvariantVectorField_infty`: a left-invariant vector field on a smooth Lie group is
   smooth.
-* `contMDiff_mulInvariantVectorField_modelSpace`: the invariant vector field is jointly `C^n` in
-  its model-space generator and group argument when multiplication is `C^(n + 1)`.
+* `contMDiff_mulInvariantVectorField_modelSpace`: the invariant vector field is jointly `C^m` in
+  its model-space generator and group argument when multiplication is `C^n` and `m + 1 ≤ n`.
 
 ## References
 
@@ -86,25 +86,25 @@ theorem mulInvariantVectorField_one (v : GroupLieAlgebra I G) :
   rw [show (fun x : G ↦ 1 * x) = id by funext x; simp, mfderiv_id]
   rfl
 
-/-- In model coordinates, the invariant vector field is jointly `C^n` in its generating tangent
-vector and the group point when multiplication is `C^(n + 1)`. -/
-theorem contMDiff_mulInvariantVectorField_modelSpace {n : ℕ∞ω}
-    [ContMDiffMul I (n + 1) G] :
-    let _ : IsManifold I 1 G := IsManifold.of_le (n := n + 1) le_add_self
-    ContMDiff (𝓘(𝕜, E).prod I) I.tangent n
+/-- In model coordinates, the invariant vector field is jointly `C^m` in its generating tangent
+vector and the group point when multiplication is `C^n` and `m + 1 ≤ n`. -/
+theorem contMDiff_mulInvariantVectorField_modelSpace {m n : ℕ∞ω}
+    [ContMDiffMul I n G] (hmn : m + 1 ≤ n) :
+    let _ : IsManifold I 1 G := IsManifold.of_le (le_add_self.trans hmn)
+    ContMDiff (𝓘(𝕜, E).prod I) I.tangent m
       (fun p : E × G =>
         (mulInvariantVectorField (I := I) (G := G) p.1 p.2 : TangentBundle I G)) := by
-  let _ : IsManifold I 1 G := IsManifold.of_le (n := n + 1) le_add_self
+  let _ : IsManifold I 1 G := IsManifold.of_le (le_add_self.trans hmn)
   let fg : E × G → TangentBundle I G := fun p => TotalSpace.mk' E p.2 0
-  have sfg : ContMDiff (𝓘(𝕜, E).prod I) I.tangent n fg :=
+  have sfg : ContMDiff (𝓘(𝕜, E).prod I) I.tangent m fg :=
     (contMDiff_zeroSection 𝕜 (TangentSpace I : G → Type _)).comp contMDiff_snd
   let fv : E × G → TangentBundle I G := fun p => TotalSpace.mk' E 1 p.1
-  have sfv : ContMDiff (𝓘(𝕜, E).prod I) I.tangent n fv := by
+  have sfv : ContMDiff (𝓘(𝕜, E).prod I) I.tangent m fv := by
     intro p
     rw [Bundle.contMDiffAt_totalSpace]
     constructor
     · simpa only [fv] using
-        (contMDiffAt_const : ContMDiffAt (𝓘(𝕜, E).prod I) I n
+        (contMDiffAt_const : ContMDiffAt (𝓘(𝕜, E).prod I) I m
           (fun _ : E × G => (1 : G)) p)
     · have hone : (1 : G) ∈ (extChartAt I (1 : G)).source := mem_extChartAt_source _
       have hfun :
@@ -118,14 +118,14 @@ theorem contMDiff_mulInvariantVectorField_modelSpace {n : ℕ∞ω}
       rw [hfun]
       exact contMDiffAt_fst
   let F₁ : E × G → TangentBundle I G × TangentBundle I G := fun p => (fg p, fv p)
-  have S₁ : ContMDiff (𝓘(𝕜, E).prod I) (I.tangent.prod I.tangent) n F₁ :=
+  have S₁ : ContMDiff (𝓘(𝕜, E).prod I) (I.tangent.prod I.tangent) m F₁ :=
     sfg.prodMk sfv
   let S :=
-    (contMDiff_tangentMap_mul_prod (I := I) (G := G) (m := n) (n := n + 1) le_rfl).comp S₁
+    (contMDiff_tangentMap_mul_prod (I := I) (G := G) hmn).comp S₁
   convert! S with p
   · simp [F₁, fg, fv]
   · let _ : ContMDiffMul I 1 G :=
-      ContMDiffMul.of_le (m := 1) (n := n + 1) le_add_self
+      ContMDiffMul.of_le (m := 1) (n := n) (le_add_self.trans hmn)
     simp only [comp_apply, F₁]
     rw [tangentMap_mul_prod_apply]
     simp [fg, fv, mulInvariantVectorField]
@@ -136,7 +136,6 @@ theorem contMDiff_mulInvariantVectorField_infty
     [ContMDiffMul I ∞ G] (v : GroupLieAlgebra I G) :
     ContMDiff I I.tangent ∞
       (fun g : G ↦ (mulInvariantVectorField v g : TangentBundle I G)) := by
-  let _ : ContMDiffMul I (∞ + 1) G := by
-    simpa using (inferInstance : ContMDiffMul I ∞ G)
-  have h := contMDiff_mulInvariantVectorField_modelSpace (I := I) (G := G) (n := ∞)
+  have h := contMDiff_mulInvariantVectorField_modelSpace
+    (I := I) (G := G) (m := ∞) (n := ∞) (by simp)
   exact h.comp (contMDiff_const.prodMk contMDiff_id)
