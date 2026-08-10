@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.Geometry.Manifold.VectorField.LieBracket
-public import TauCeti.Geometry.Manifold.VectorField.Regularity
+import TauCeti.Geometry.Manifold.VectorField.Regularity
 
 /-!
 # Directional derivatives and the manifold Lie bracket
