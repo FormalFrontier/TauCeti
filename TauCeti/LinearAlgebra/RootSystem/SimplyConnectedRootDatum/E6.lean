@@ -137,7 +137,7 @@ lemma e6SimpleIndex_injective : Function.Injective e6SimpleIndex :=
 Writing a coroot as `β^∨ = ∑ i, cᵢ αᵢ^∨` in the simple coroots, the pairings of `β` against the
 simple coroots are `⟨β, αⱼ^∨⟩ = ∑ i, cᵢ ⟨αᵢ, αⱼ^∨⟩`, which is the `j`-th entry of the
 Cartan-matrix image of `c` because `CartanMatrix.E₆` is symmetric. -/
-theorem e6Root_eq_mulVec (j : Fin 72) : e6Root j = CartanMatrix.E₆ *ᵥ e6Coroot j := by
+@[simp] theorem e6Root_eq_mulVec (j : Fin 72) : e6Root j = CartanMatrix.E₆ *ᵥ e6Coroot j := by
   simp only [e6Root, Function.Embedding.coeFn_mk]
 
 /-- **The simple coroots are the standard basis.** This is what pins the cocharacter lattice as the
@@ -149,19 +149,23 @@ coroot lattice, so that the datum is the simply connected one. -/
 `i`-th simple root of the pinned type `E₆` datum is the `i`-th row of `CartanMatrix.E₆`, which is
 what pins the character lattice as the weight lattice. -/
 @[simp] theorem root_e6SimpleIndex (i : Fin 6) : e6Root (e6SimpleIndex i) = CartanMatrix.E₆ i := by
-  rw [e6Root_eq_mulVec, coroot_e6SimpleIndex]
-  fin_cases i <;> decide
+  rw [e6Root_eq_mulVec, coroot_e6SimpleIndex, Matrix.mulVec_single_one]
+  exact funext (CartanMatrix.E₆_isSymm.apply i)
 
 /-- The pairing of the pinned tables is symmetric. This is the simply-laced feature of `E₆`: the
 pairing is the symmetric bilinear form attached to `CartanMatrix.E₆`, read on the shared
 simple-root coordinates of a root and its coroot. -/
 theorem e6Root_dotProduct_e6Coroot_comm (i j : Fin 72) :
     e6Root i ⬝ᵥ e6Coroot j = e6Root j ⬝ᵥ e6Coroot i := by
-  have key : ∀ x y : Fin 6 → ℤ, (CartanMatrix.E₆ *ᵥ x) ⬝ᵥ y = (CartanMatrix.E₆ *ᵥ y) ⬝ᵥ x := by
-    intro x y
-    conv_lhs =>
-      rw [dotProduct_comm, dotProduct_mulVec, ← CartanMatrix.E₆_transpose, vecMul_transpose]
-  rw [e6Root_eq_mulVec, e6Root_eq_mulVec, key]
+  rw [e6Root_eq_mulVec, e6Root_eq_mulVec]
+  calc
+    (CartanMatrix.E₆ *ᵥ e6Coroot i) ⬝ᵥ e6Coroot j =
+        e6Coroot j ⬝ᵥ CartanMatrix.E₆ *ᵥ e6Coroot i := dotProduct_comm _ _
+    _ = e6Coroot i ⬝ᵥ CartanMatrix.E₆ᵀ *ᵥ e6Coroot j :=
+      (Matrix.dotProduct_transpose_mulVec CartanMatrix.E₆ (e6Coroot i) (e6Coroot j)).symm
+    _ = e6Coroot i ⬝ᵥ CartanMatrix.E₆ *ᵥ e6Coroot j := by
+      rw [CartanMatrix.E₆_isSymm.eq]
+    _ = (CartanMatrix.E₆ *ᵥ e6Coroot j) ⬝ᵥ e6Coroot i := dotProduct_comm _ _
 
 /-- The second half of the table lists the negatives of the coroots in the first half. -/
 @[simp] theorem e6Coroot_e6NegativeIndex (i : Fin 36) :
@@ -174,7 +178,7 @@ theorem e6Root_dotProduct_e6Coroot_comm (i j : Fin 72) :
   rw [e6Root_eq_mulVec, e6Root_eq_mulVec, e6Coroot_e6NegativeIndex, mulVec_neg]
 
 /-- Each root pairs with its own coroot to `2`. -/
-theorem e6Root_dotProduct_e6Coroot_self (i : Fin 72) : e6Root i ⬝ᵥ e6Coroot i = 2 := by
+@[simp] theorem e6Root_dotProduct_e6Coroot_self (i : Fin 72) : e6Root i ⬝ᵥ e6Coroot i = 2 := by
   decide +kernel +revert
 
 /-! ## The reflections -/
@@ -510,7 +514,7 @@ indices. -/
 /-- **The Cartan integers at the first six root indices are Mathlib's Bourbaki-numbered `E₆`
 matrix.** This pins the node order independently of the existential relabelling in
 `TauCeti.HasCartanType`. -/
-theorem pairing_e6SimpleIndex (i j : Fin 6) :
+@[simp] theorem pairing_e6SimpleIndex (i j : Fin 6) :
     e6SimplyConnectedRootDatum.pairing (e6SimpleIndex i) (e6SimpleIndex j) =
       CartanMatrix.E₆ i j := by
   rw [e6SimplyConnectedRootDatum_pairing, root_e6SimpleIndex, coroot_e6SimpleIndex,
