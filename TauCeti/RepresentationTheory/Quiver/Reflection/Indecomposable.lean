@@ -15,7 +15,7 @@ public import TauCeti.RepresentationTheory.Quiver.Representation.Simple
 
 The Bernstein-Gelfand-Ponomarev reflection at a sink `i` replaces the vertex space `Mᵢ` by the
 kernel of the sum `TauCeti.incomingSum` of the arrows into `i`, and it acts on dimension vectors by
-the simple reflection `sᵢ` exactly when that sum is onto (`TauCeti.dimVector_reflectRep`). This file
+the simple reflection `sᵢ` whenever that sum is onto (`TauCeti.dimVector_reflectRep`). This file
 discharges that hypothesis: the sum of the arrows into a sink is onto for every indecomposable
 representation except the vertex simple `Sᵢ`, which is the representation the reflection
 annihilates.
@@ -44,7 +44,7 @@ line, it says a representation concentrated at a sink is a line there, hence is 
 * `TauCeti.exists_ne_zero_span_eq_top_of_forall_subsingleton` and
   `TauCeti.nonempty_iso_simpleRep_of_forall_subsingleton`: an indecomposable representation
   concentrated at a sink is a line there, hence isomorphic to the vertex simple.
-* `TauCeti.surjective_incomingSum_of_indecomposable`: **the sum of the arrows into a sink is onto
+* `TauCeti.incomingSum_surjective_of_indecomposable`: **the sum of the arrows into a sink is onto
   for every indecomposable representation not isomorphic to the vertex simple there.**
 * `TauCeti.dimVector_reflectRep_of_indecomposable`: consequently the reflection at a sink acts on
   the dimension vector of such a representation by the simple reflection at that vertex.
@@ -298,7 +298,7 @@ representation is concentrated at that sink.** This is the surjectivity hypothes
 `TauCeti.dimVector_reflectRep`, discharged: the range of the incoming sum is a direct summand of
 `Mᵢ`, so a proper range would split `M`, and the only splitting an indecomposable representation
 admits leaves nothing outside the sink. -/
-theorem surjective_incomingSum_or_forall_subsingleton (hi : IsSink i) (hM : Indecomposable M) :
+theorem incomingSum_surjective_or_forall_subsingleton (hi : IsSink i) (hM : Indecomposable M) :
     Function.Surjective (incomingSum M i) ∨ ∀ a : Q, a ≠ i → Subsingleton (M.obj a) := by
   -- project onto the range of the incoming sum along a complement
   obtain ⟨U, hU⟩ := (LinearMap.range (incomingSum M i)).exists_isCompl
@@ -336,47 +336,12 @@ private theorem map_eq_zero_of_isSink (hi : IsSink i) (y : M.obj ((Paths.of Q).o
   rw [hi.path_self_eq_nil p] at hp
   exact absurd Quiver.Path.length_nil hp
 
-private theorem isIso_simpleRepHom_app_self (hi : IsSink i)
-    {y : M.obj ((Paths.of Q).obj i)} (hy : y ≠ 0) (hspan : Submodule.span k {y} = ⊤) :
-    IsIso ((simpleRepHom y (map_eq_zero_of_isSink hi y)).app ((Paths.of Q).obj i)) := by
-  rw [ConcreteCategory.isIso_iff_bijective]
-  -- the component carries `c` times the generator to `c • y`
-  have key : ∀ c : k, (simpleRepHom y (map_eq_zero_of_isSink hi y)).app ((Paths.of Q).obj i)
-      (c • simpleRepGenerator k i) = c • y := fun c ↦ by
-    rw [map_smul, simpleRepHom_app_generator]
-  constructor
-  · intro z₁ z₂ hz
-    obtain ⟨c₁, rfl⟩ := exists_eq_smul_simpleRepGenerator (k := k) z₁
-    obtain ⟨c₂, rfl⟩ := exists_eq_smul_simpleRepGenerator (k := k) z₂
-    rw [key, key] at hz
-    have hzero : (c₁ - c₂) • y = 0 := by rw [sub_smul, hz, sub_self]
-    rcases smul_eq_zero.mp hzero with h | h
-    · rw [sub_eq_zero.mp h]
-    · exact absurd h hy
-  · intro z
-    have hz : z ∈ Submodule.span k {y} := by rw [hspan]; trivial
-    obtain ⟨c, hc⟩ := Submodule.mem_span_singleton.mp hz
-    exact ⟨c • simpleRepGenerator k i, (key c).trans hc⟩
-
-private theorem isIso_simpleRepHom_app (hi : IsSink i) {y : M.obj ((Paths.of Q).obj i)}
-    (hy : y ≠ 0) (hspan : Submodule.span k {y} = ⊤)
-    (hsub : ∀ a : Q, a ≠ i → Subsingleton (M.obj a)) (a : Q) :
-    IsIso ((simpleRepHom y (map_eq_zero_of_isSink hi y)).app a) := by
-  rcases eq_or_ne a i with rfl | ha
-  · exact isIso_simpleRepHom_app_self hi hy hspan
-  · -- away from the sink both vertex spaces vanish, so every map between them is invertible
-    have hzs : Limits.IsZero ((simpleRep k Q i).obj a) := isZero_simpleRep_obj ha
-    have hzm : Limits.IsZero (M.obj a) :=
-      @ModuleCat.isZero_of_subsingleton k _ (M.obj a) (hsub a ha)
-    exact ⟨0, hzs.eq_of_src _ _, hzm.eq_of_src _ _⟩
-
 /-- **An indecomposable representation concentrated at a sink is the vertex simple there.** -/
 theorem nonempty_iso_simpleRep_of_forall_subsingleton (hi : IsSink i) (hM : Indecomposable M)
     (h : ∀ a : Q, a ≠ i → Subsingleton (M.obj a)) : Nonempty (M ≅ simpleRep k Q i) := by
   obtain ⟨y, hy, hspan⟩ := exists_ne_zero_span_eq_top_of_forall_subsingleton hi hM h
-  have hiso : ∀ a : Paths Q, IsIso ((simpleRepHom y (map_eq_zero_of_isSink hi y)).app a) := fun a ↦
-    isIso_simpleRepHom_app hi hy hspan h a
-  have := NatIso.isIso_of_isIso_app (simpleRepHom y (map_eq_zero_of_isSink hi y))
+  have := isIso_simpleRepHom y (map_eq_zero_of_isSink hi y) hy hspan fun a ha ↦
+    @ModuleCat.isZero_of_subsingleton k _ (M.obj a) (h a ha)
   exact ⟨(asIso (simpleRepHom y (map_eq_zero_of_isSink hi y))).symm⟩
 
 variable [Fintype Q] [∀ a b : Q, Fintype (a ⟶ b)]
@@ -384,9 +349,9 @@ variable [Fintype Q] [∀ a b : Q, Fintype (a ⟶ b)]
 /-- **The sum of the arrows into a sink is onto for every indecomposable representation other than
 the vertex simple there.** The vertex simple `Sᵢ` is genuinely excluded, by
 `TauCeti.incomingSum_not_surjective`. -/
-theorem surjective_incomingSum_of_indecomposable (hi : IsSink i) (hM : Indecomposable M)
+theorem incomingSum_surjective_of_indecomposable (hi : IsSink i) (hM : Indecomposable M)
     (hne : ¬ Nonempty (M ≅ simpleRep k Q i)) : Function.Surjective (incomingSum M i) :=
-  (surjective_incomingSum_or_forall_subsingleton hi hM).resolve_right fun h ↦
+  (incomingSum_surjective_or_forall_subsingleton hi hM).resolve_right fun h ↦
     hne (nonempty_iso_simpleRep_of_forall_subsingleton hi hM h)
 
 /-- **The reflection at a sink acts on the dimension vector of an indecomposable representation by
@@ -398,7 +363,7 @@ theorem dimVector_reflectRep_of_indecomposable [DecidableEq Q] (hi : IsSink i)
     (hfin : ∀ e : Σ b : Q, (b ⟶ i), FiniteDimensional k (M.obj e.1)) :
     (fun j : Q ↦ (dimVector (reflectRep M hi) j : ℤ))
       = vertexPreReflection Q i (fun j ↦ (dimVector M j : ℤ)) :=
-  dimVector_reflectRep M hi hfin (surjective_incomingSum_of_indecomposable hi hM hne)
+  dimVector_reflectRep M hi hfin (incomingSum_surjective_of_indecomposable hi hM hne)
 
 end VertexSimple
 
