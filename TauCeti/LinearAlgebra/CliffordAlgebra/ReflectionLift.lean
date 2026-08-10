@@ -148,8 +148,9 @@ variable [Invertible (2 : K)]
 private theorem pinToOrthogonal_pinReflectionLift (v : V) [Invertible (Q v)]
     (hv : IsSquare (-⅟(Q v))) :
     pinToOrthogonal Q (pinReflectionLift Q v hv) =
-      ⟨QuadraticMap.reflection Q v, QuadraticMap.reflection_mem_orthogonalGroup Q v⟩ := by
+      QuadraticMap.reflectionOrthogonal Q v := by
   apply Subtype.ext
+  rw [QuadraticMap.coe_reflectionOrthogonal]
   apply LinearEquiv.ext
   intro m
   rw [pinReflectionLift, pinToOrthogonal_ι_apply (reflectionScale_norm Q v hv),
@@ -163,15 +164,15 @@ private theorem pinToOrthogonal_pinReflectionLift (v : V) [Invertible (Q v)]
 action. -/
 theorem reflection_mem_range_pinToOrthogonal_of_isSquare (v : V) [Invertible (Q v)]
     (hv : IsSquare (-⅟(Q v))) :
-    (⟨QuadraticMap.reflection Q v, QuadraticMap.reflection_mem_orthogonalGroup Q v⟩ :
-      QuadraticMap.orthogonalGroup Q) ∈ (pinToOrthogonal Q).range := by
+    QuadraticMap.reflectionOrthogonal Q v ∈ (pinToOrthogonal Q).range := by
   rw [MonoidHom.mem_range]
   exact ⟨pinReflectionLift Q v hv, pinToOrthogonal_pinReflectionLift Q v hv⟩
 
 private theorem lipschitzToOrthogonal_unitι_eq (v : V) [Invertible (Q v)] :
     lipschitzToOrthogonal Q ⟨unitι Q v, unitι_mem_lipschitzGroup v⟩ =
-      ⟨QuadraticMap.reflection Q v, QuadraticMap.reflection_mem_orthogonalGroup Q v⟩ := by
+      QuadraticMap.reflectionOrthogonal Q v := by
   apply Subtype.ext
+  rw [QuadraticMap.coe_reflectionOrthogonal]
   apply LinearEquiv.ext
   intro m
   rw [coe_lipschitzToOrthogonal_apply, lipschitzVectorAction_unitι]
@@ -181,9 +182,7 @@ reflections in `v` and `w` lifts through the Spin action. -/
 theorem reflection_mul_reflection_mem_range_spinToOrthogonal_of_isSquare
     (v w : V) [Invertible (Q v)] [Invertible (Q w)]
     (h : IsSquare (⅟(Q v) * ⅟(Q w))) :
-    (⟨QuadraticMap.reflection Q v, QuadraticMap.reflection_mem_orthogonalGroup Q v⟩ :
-        QuadraticMap.orthogonalGroup Q) *
-      ⟨QuadraticMap.reflection Q w, QuadraticMap.reflection_mem_orthogonalGroup Q w⟩ ∈
+    QuadraticMap.reflectionOrthogonal Q v * QuadraticMap.reflectionOrthogonal Q w ∈
         (spinToOrthogonal Q).range := by
   have : Invertible (reflectionPairScale Q v w h) :=
     (reflectionPairScale_isUnit Q v w h).invertible
@@ -201,9 +200,7 @@ theorem reflection_mul_reflection_mem_range_spinToOrthogonal_of_isSquare
   have hlipschitz : lipschitzToOrthogonal Q
       ⟨unitι Q (reflectionPairScale Q v w h • v) * unitι Q w,
         mul_mem (unitι_mem_lipschitzGroup _) (unitι_mem_lipschitzGroup _)⟩ =
-      (⟨QuadraticMap.reflection Q v, QuadraticMap.reflection_mem_orthogonalGroup Q v⟩ :
-        QuadraticMap.orthogonalGroup Q) *
-      ⟨QuadraticMap.reflection Q w, QuadraticMap.reflection_mem_orthogonalGroup Q w⟩ := by
+      QuadraticMap.reflectionOrthogonal Q v * QuadraticMap.reflectionOrthogonal Q w := by
     have hmul :
         (⟨unitι Q (reflectionPairScale Q v w h • v) * unitι Q w,
           mul_mem (unitι_mem_lipschitzGroup _) (unitι_mem_lipschitzGroup _)⟩ : lipschitzGroup Q) =
@@ -215,6 +212,7 @@ theorem reflection_mul_reflection_mem_range_spinToOrthogonal_of_isSquare
     rw [hmul,
       map_mul, lipschitzToOrthogonal_unitι_eq, lipschitzToOrthogonal_unitι_eq]
     apply Subtype.ext
+    simp only [Subgroup.coe_mul, QuadraticMap.coe_reflectionOrthogonal]
     exact congrArg (fun x : V ≃ₗ[K] V => x * QuadraticMap.reflection Q w)
       (reflection_smul_eq Q (reflectionPairScale Q v w h) v)
   apply Subtype.ext
@@ -234,8 +232,7 @@ variable {K : Type u} {V : Type v} [Field K] [IsSepClosed K] [AddCommGroup V] [M
 /-- Over a separably closed field, every reflection in a vector of invertible norm lifts to
 the Pin group. -/
 theorem reflection_mem_range_pinToOrthogonal (v : V) [Invertible (Q v)] :
-    (⟨QuadraticMap.reflection Q v, QuadraticMap.reflection_mem_orthogonalGroup Q v⟩ :
-      QuadraticMap.orthogonalGroup Q) ∈ (pinToOrthogonal Q).range := by
+    QuadraticMap.reflectionOrthogonal Q v ∈ (pinToOrthogonal Q).range := by
   exact reflection_mem_range_pinToOrthogonal_of_isSquare Q v
     (IsSepClosed.exists_eq_mul_self (-⅟(Q v)))
 
@@ -243,9 +240,7 @@ theorem reflection_mem_range_pinToOrthogonal (v : V) [Invertible (Q v)] :
 norm lifts to the Spin group. -/
 theorem reflection_mul_reflection_mem_range_spinToOrthogonal
     (v w : V) [Invertible (Q v)] [Invertible (Q w)] :
-    (⟨QuadraticMap.reflection Q v, QuadraticMap.reflection_mem_orthogonalGroup Q v⟩ :
-        QuadraticMap.orthogonalGroup Q) *
-      ⟨QuadraticMap.reflection Q w, QuadraticMap.reflection_mem_orthogonalGroup Q w⟩ ∈
+    QuadraticMap.reflectionOrthogonal Q v * QuadraticMap.reflectionOrthogonal Q w ∈
         (spinToOrthogonal Q).range := by
   exact reflection_mul_reflection_mem_range_spinToOrthogonal_of_isSquare Q v w
     (IsSepClosed.exists_eq_mul_self (⅟(Q v) * ⅟(Q w)))

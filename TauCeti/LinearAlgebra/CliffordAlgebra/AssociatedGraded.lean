@@ -21,6 +21,34 @@ It advances the Layer 0 associated-graded-algebra target in the
 
 Its graded-algebra packaging adapts the pattern in Mathlib's
 [`TensorPower` construction](https://github.com/leanprover-community/mathlib4/blob/master/Mathlib/LinearAlgebra/TensorPower/Basic.lean).
+
+## Main definitions
+
+* `TauCeti.CliffordAlgebra.filtrationAssociatedGraded Q`: the direct sum
+  `⨁ k, FiltrationGradedPiece Q k` of the homogeneous pieces.
+* `TauCeti.CliffordAlgebra.filtrationGradedMul`: the product of two homogeneous pieces, induced by
+  Clifford multiplication through `filtration_mul`.
+* `TauCeti.CliffordAlgebra.filtrationGradedOne` and
+  `TauCeti.CliffordAlgebra.filtrationGradedAlgebraMap₀`: the degree-zero unit and the degree-zero
+  image of a scalar.
+
+## Main results
+
+* The graded structure instances assembling those pieces:
+  `TauCeti.CliffordAlgebra.filtrationGradedGOne`, `filtrationGradedGMul`,
+  `filtrationGradedGMonoid`, `filtrationGradedGRing`, `filtrationGradedGSemiring` and
+  `filtrationGradedGAlgebra`, culminating in
+  `TauCeti.CliffordAlgebra.filtrationAssociatedGradedRing`, the ring structure on the direct sum.
+
+## Implementation notes
+
+`filtrationGradedGSemiring` and `filtrationAssociatedGradedRing` are stated explicitly rather than
+left to instance search. `DirectSum.GRing` is declared over `[∀ i, AddCommGroup (A i)]`, so
+`DirectSum.GRing.toGSemiring` supplies the pointwise `AddCommMonoid` through
+`AddCommGroup.toAddCommMonoid`, which does not match the one instance search finds directly for
+`FiltrationGradedPiece`; without these two declarations neither
+`DirectSum.GSemiring (FiltrationGradedPiece Q)` nor `Ring (filtrationAssociatedGraded Q)` is
+synthesizable.
 -/
 
 public section
