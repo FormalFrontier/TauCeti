@@ -26,6 +26,8 @@ This supplies a prerequisite for Deliverable A, Layer 1 of
   right-invariant scalar differentiation commute at every group point.
 * `mlieBracket_mulRightInvariantVectorField_mulInvariantVectorField`: the corresponding
   vector-field bracket vanishes everywhere.
+* `mlieBracket_mulInvariantVectorField_mulRightInvariantVectorField`: the same vanishing result
+  with the bracket arguments reversed.
 
 ## References
 
@@ -227,5 +229,13 @@ theorem mlieBracket_mulRightInvariantVectorField_mulInvariantVectorField
       (by simp)).mdifferentiableAt]
   exact sub_eq_zero.mpr
     (mvfderiv_mulRightInvariantVectorField_mulInvariantVectorField_commute f g X Y)
+
+/-- Left- and right-invariant vector fields commute everywhere, with the bracket arguments in the
+opposite order. -/
+@[simp]
+theorem mlieBracket_mulInvariantVectorField_mulRightInvariantVectorField
+    (X Y : GroupLieAlgebra I G) :
+    mlieBracket I (mulInvariantVectorField X) (mulRightInvariantVectorField Y) = 0 := by
+  rw [mlieBracket_swap, mlieBracket_mulRightInvariantVectorField_mulInvariantVectorField, neg_zero]
 
 end TauCeti.Lie
