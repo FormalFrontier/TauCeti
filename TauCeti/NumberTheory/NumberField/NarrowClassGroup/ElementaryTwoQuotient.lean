@@ -72,7 +72,7 @@ noncomputable abbrev twoRank (K : Type*) [Field K] [NumberField K] : ℕ :=
   TauCeti.twoRank (NarrowClassGroup K)
 
 /-- The map `Cl⁺(K)/Cl⁺(K)² → Cl(K)/Cl(K)²` induced by forgetting positivity. -/
-@[expose] noncomputable def elementaryTwoQuotientMapToClassGroup :
+noncomputable def elementaryTwoQuotientMapToClassGroup :
     ElementaryTwoQuotient K →ₗ[ZMod 2] TauCeti.ClassGroup.ElementaryTwoQuotient (𝓞 K) :=
   TauCeti.elementaryTwoQuotientMap (toClassGroup (K := K))
 
@@ -81,7 +81,7 @@ noncomputable abbrev twoRank (K : Type*) [Field K] [NumberField K] : ℕ :=
 theorem elementaryTwoQuotientMapToClassGroup_def :
     elementaryTwoQuotientMapToClassGroup (K := K) =
       TauCeti.elementaryTwoQuotientMap (toClassGroup (K := K)) :=
-  rfl
+  (rfl)
 
 /-- The induced map to `Cl(K)/Cl(K)²` sends a narrow ideal class to its ordinary ideal class. -/
 @[simp] theorem elementaryTwoQuotientMapToClassGroup_mk (C : NarrowClassGroup K) :
