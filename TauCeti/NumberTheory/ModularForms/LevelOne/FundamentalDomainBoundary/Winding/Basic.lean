@@ -36,7 +36,7 @@ a radius below the corner chord `2·sin(π/12)` is stated once here rather than 
 * `TauCeti.ModularForm.isNullHomologous_fdBoundary`: the packaged null-homology.
 * `TauCeti.ModularForm.fdBoundaryArcExcisionHalfWidth`: the parameter half-width whose
   chord along the arc is a prescribed `ε` below the corner chord, characterised under that
-  bound by `TauCeti.ModularForm.fdBoundaryArcExcisionHalfWidth_spec`.
+  bound by `TauCeti.ModularForm.fdBoundaryArcExcisionHalfWidth_pos_and_lt_one_and_two_mul_sin_eq`.
 
 ## References
 
@@ -326,7 +326,7 @@ the unit-circle arc is the excision radius `ε`.
 
 The chord identity `2·sin(δ·π/12) = ε` holds throughout `|ε| ≤ 2`, the range on which
 `Real.arcsin` inverts the sine, and fails beyond it because `Real.arcsin` saturates.
-`fdBoundaryArcExcisionHalfWidth_spec` nonetheless assumes the narrower
+`fdBoundaryArcExcisionHalfWidth_pos_and_lt_one_and_two_mul_sin_eq` nonetheless assumes the narrower
 `0 < ε < 2·sin(π/12)`: that is the range the excision arguments need, because it also places
 the half-width strictly between `0` and `1`, inside the corner's own arc window. -/
 noncomputable def fdBoundaryArcExcisionHalfWidth (ε : ℝ) : ℝ := 12 / Real.pi * Real.arcsin (ε / 2)
@@ -341,7 +341,7 @@ reproduces `ε` as its own chord: `2·sin(δ·π/12) = ε`.
 
 This is the trigonometric content shared by the excision constructions at `i`, at `ρ` and at
 `ρ + 1`; it needs no upper bound on `ε` beyond the chord bound. -/
-lemma fdBoundaryArcExcisionHalfWidth_spec {ε : ℝ} (hε : 0 < ε)
+lemma fdBoundaryArcExcisionHalfWidth_pos_and_lt_one_and_two_mul_sin_eq {ε : ℝ} (hε : 0 < ε)
     (hε₃ : ε < 2 * Real.sin (Real.pi / 12)) :
     0 < fdBoundaryArcExcisionHalfWidth ε ∧ fdBoundaryArcExcisionHalfWidth ε < 1 ∧
       2 * Real.sin (fdBoundaryArcExcisionHalfWidth ε * (Real.pi / 12)) = ε := by
@@ -360,6 +360,7 @@ lemma fdBoundaryArcExcisionHalfWidth_spec {ε : ℝ} (hε : 0 < ε)
       field_simp
     rw [hδπ, Real.sin_arcsin (by linarith) (by linarith)]
     ring
+
 
 end ModularForm
 end TauCeti

@@ -35,7 +35,7 @@ These build on the `IsCompletelyMonotone` API in `CompletelyMonotone/Basic.lean`
 * `TauCeti.bernsteinKernel`, `TauCeti.continuous_bernsteinKernel`,
   `TauCeti.bernsteinKernel_nonneg`, `TauCeti.bernsteinKernel_le_one`,
   `TauCeti.bernsteinKernelBoundedContinuous`,
-  `TauCeti.bernsteinKernelBoundedContinuous_apply`,
+  `TauCeti.bernsteinKernelBoundedContinuous_apply`, `TauCeti.integrable_bernsteinKernel`,
   `TauCeti.bernsteinKernel_tendsto`: the rescaled Laplace kernel, its bundled
   bounded-continuous `p`-dependence on the nonnegative half-line, and its pointwise limit
   `e^{-xp}` (bundled as `TauCeti.laplaceKernelBoundedContinuous` in
@@ -260,6 +260,14 @@ noncomputable def bernsteinKernelBoundedContinuous (n : ℕ) {x : ℝ} (hx : 0 �
 lemma bernsteinKernelBoundedContinuous_apply (n : ℕ) {x : ℝ} (hx : 0 ≤ x) (p : ℝ≥0) :
     bernsteinKernelBoundedContinuous n hx p = bernsteinKernel n x (p : ℝ) := by
   rw [bernsteinKernelBoundedContinuous]; rfl
+
+/-- **The Bernstein kernel at a nonnegative point is integrable against a finite measure.** For
+`0 ≤ x`, the map `p ↦ bernsteinKernel n x p` is integrable against any finite measure on `ℝ≥0`.
+The companion of `TauCeti.integrable_exp_neg_mul`, which says the same of the Laplace kernel. -/
+lemma integrable_bernsteinKernel (μ : Measure ℝ≥0) [IsFiniteMeasure μ] (n : ℕ) {x : ℝ}
+    (hx : 0 ≤ x) : Integrable (fun p : ℝ≥0 => bernsteinKernel n x (p : ℝ)) μ := by
+  have h := (bernsteinKernelBoundedContinuous n hx).integrable μ
+  rwa [funext (bernsteinKernelBoundedContinuous_apply n hx)] at h
 
 /-- **An atom at `0` shifts the Laplace transform by its mass.** The kernel takes the value `1` at
 `p = 0`, so adjoining `c • δ₀` to a finite measure adds exactly `c`. -/

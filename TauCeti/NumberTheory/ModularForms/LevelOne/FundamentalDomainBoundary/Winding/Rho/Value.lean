@@ -347,23 +347,6 @@ private lemma norm_le_of_near_rho {δL δR : ℝ} (hH : Real.sqrt 3 / 2 < H) (h�
       abs_of_nonneg (by nlinarith [h3] : (0 : ℝ) ≤ (t - 3) * (H - Real.sqrt 3 / 2)), ← hlin]
     exact mul_le_mul_of_nonneg_right (by linarith [ht.2]) (by linarith)
 
-/-- Away from the excised corner the truncated integrand is the logarithmic one: wherever
-the contour stays farther than `ε` from `ρ` the excision test passes, and the endpoint where
-it may fail is a single point, hence null. -/
-private lemma ae_truncated_eq_logDeriv_rho {a b : ℝ} (hab : a ≤ b)
-    (hfar : ∀ s ∈ Ioo a b, ε < ‖fdBoundary H s - (UpperHalfPlane.ρ : ℂ)‖) :
-    ∀ᵐ s ∂volume, s ∈ uIoc a b →
-      deriv (fun r ↦ fdBoundary H r - (UpperHalfPlane.ρ : ℂ)) s /
-        (fdBoundary H s - (UpperHalfPlane.ρ : ℂ)) =
-        (if ε < ‖fdBoundary H s - (UpperHalfPlane.ρ : ℂ)‖
-          then (fdBoundary H s - (UpperHalfPlane.ρ : ℂ))⁻¹ * deriv (fdBoundary H) s
-          else 0) := by
-  have hb_ae : ({b} : Set ℝ)ᶜ ∈ ae volume := by simp [MeasureTheory.mem_ae_iff]
-  filter_upwards [hb_ae] with s hs_ne hmem
-  rw [uIoc_of_le hab] at hmem
-  rw [if_pos (hfar s ⟨hmem.1, lt_of_le_of_ne hmem.2 fun h ↦ hs_ne (mem_singleton_iff.mpr h)⟩),
-    deriv_sub_const, inv_mul_eq_div]
-
 /-- Over the excised window the truncated integrand vanishes identically, so it is
 integrable there and contributes nothing to the integral. -/
 private lemma excised_window_rho {δL δR : ℝ} (hH : Real.sqrt 3 / 2 < H) (hδL : 0 ≤ δL)
@@ -400,7 +383,8 @@ private lemma truncated_integral_spec_rho (hH : Real.sqrt 3 / 2 < H) (hε : 0 < 
     ∫ t in (0 : ℝ)..5, (if ε < ‖fdBoundary H t - (UpperHalfPlane.ρ : ℂ)‖
         then (fdBoundary H t - (UpperHalfPlane.ρ : ℂ))⁻¹ * deriv (fdBoundary H) t else 0) =
       -((Real.pi : ℂ) / 3) * Complex.I - ((Real.arcsin (ε / 2) : ℝ) : ℂ) * Complex.I := by
-  obtain ⟨hδL_pos, hδL_lt, h2sin⟩ := fdBoundaryArcExcisionHalfWidth_spec hε hε₃
+  obtain ⟨hδL_pos, hδL_lt, h2sin⟩ :=
+    fdBoundaryArcExcisionHalfWidth_pos_and_lt_one_and_two_mul_sin_eq hε hε₃
   set δL := fdBoundaryArcExcisionHalfWidth ε with hδL_def
   have hHpos : (0 : ℝ) < H - Real.sqrt 3 / 2 := by linarith
   set δR := ε / (H - Real.sqrt 3 / 2) with hδR_def
@@ -413,9 +397,11 @@ private lemma truncated_integral_spec_rho (hH : Real.sqrt 3 / 2 < H) (hε : 0 < 
     exact div_mul_cancel₀ ε hHpos.ne'
   obtain ⟨hi_left, hi_right, hval⟩ :=
     ftc_logDeriv_telescope_rho H hH hδL_pos hδL_lt hδR_pos hδR_le
-  have hae_left := ae_truncated_eq_logDeriv_rho (H := H) (a := (0 : ℝ)) (b := 3 - δL) (by linarith)
+  have hae_left := Contour.ae_logDeriv_sub_eq_truncated (γ := fdBoundary H)
+    (z₀ := (UpperHalfPlane.ρ : ℂ)) (a := (0 : ℝ)) (b := 3 - δL) (by linarith)
     fun s hs ↦ lt_norm_of_far_left_rho hε₁ hδL_pos hδL_lt h2sin ⟨hs.1.le, hs.2⟩
-  have hae_right := ae_truncated_eq_logDeriv_rho (H := H) (a := (3 + δR : ℝ)) (b := 5) (by linarith)
+  have hae_right := Contour.ae_logDeriv_sub_eq_truncated (γ := fdBoundary H)
+    (z₀ := (UpperHalfPlane.ρ : ℂ)) (a := (3 + δR : ℝ)) (b := 5) (by linarith)
     fun s hs ↦ lt_norm_of_far_right_rho hH hεH hδR_pos hlin ⟨hs.1, hs.2.le⟩
   obtain ⟨himid, hmid0⟩ :=
     excised_window_rho hH hδL_pos.le hδL_lt h2sin hδR_le hlin (by linarith)
