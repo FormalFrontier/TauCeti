@@ -320,14 +320,9 @@ private noncomputable def expDerivativeIntegral (x y : A) (s : ℝ) : A :=
 
 private theorem continuous_expDerivativeIntegral (x y : A) :
     Continuous (expDerivativeIntegral x y) := by
-  let H : ℝ × ℝ → A := fun p ↦
-    exp ((1 - p.2) • (x + p.1 • y)) * y * exp (p.2 • x)
-  have hH : Continuous H := by
-    dsimp only [H]
-    fun_prop
   unfold expDerivativeIntegral
-  exact intervalIntegral.continuous_parametric_intervalIntegral_of_continuous'
-    (f := fun s t ↦ H (s, t)) hH 0 1
+  apply intervalIntegral.continuous_parametric_intervalIntegral_of_continuous'
+  fun_prop
 
 private theorem hasDerivAt_exp_add_smul_integral (x y : A) :
     HasDerivAt (fun s : ℝ ↦ exp (x + s • y)) (expDerivativeIntegral x y 0) 0 := by
@@ -335,7 +330,7 @@ private theorem hasDerivAt_exp_add_smul_integral (x y : A) :
   have hG : Filter.Tendsto (expDerivativeIntegral x y)
       (nhdsWithin (0 : ℝ) ({0} : Set ℝ)ᶜ)
       (nhds (expDerivativeIntegral x y 0)) :=
-    (continuous_expDerivativeIntegral x y).continuousAt.tendsto.mono_left inf_le_left
+    (continuous_expDerivativeIntegral x y).continuousAt.tendsto.mono_left nhdsWithin_le_nhds
   apply hG.congr'
   filter_upwards [self_mem_nhdsWithin] with s hs
   have hs0 : s ≠ 0 := Set.mem_compl_singleton_iff.mp hs
