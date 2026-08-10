@@ -16,7 +16,7 @@ The longest element `w₀` of a finite Weyl group exchanges the positive and the
 is an involution of the base, the **opposition involution** `TauCeti.opposition`.
 
 The proof is the classical one. A simple root is exactly a positive root that is not the sum of two
-positive roots — that is `TauCeti.mem_support_iff_forall_ne_add`, proved in
+positive roots — that is `TauCeti.mem_support_iff_isPos_and_forall_ne_add`, proved in
 `TauCeti/LinearAlgebra/RootSystem/Positive.lean` — and `α ↦ -w₀ α` is an additive bijection of the
 positive roots, so it preserves that description.
 
@@ -90,12 +90,6 @@ theorem root_opposition (i : ι) :
   rw [opposition, RootPairing.root_reflectionPerm,
     RootPairing.reflection_apply_self, RootPairing.weylGroup_apply_root]
 
-/-- **The opposition involution carries an additive decomposition of a root to one of its
-opposite.** -/
-theorem root_opposition_add {i j k : ι} (h : P.root i = P.root j + P.root k) :
-    P.root (opposition P b i) = P.root (opposition P b j) + P.root (opposition P b k) := by
-  simp only [root_opposition, h, smul_add, neg_add]
-
 variable {P b} in
 /-- **The opposition involution preserves positivity.** -/
 theorem isPos_opposition {i : ι} (hi : b.IsPos i) : b.IsPos (opposition P b i) := by
@@ -123,10 +117,14 @@ theorem opposition_involutive : Involutive (opposition P b) := opposition_opposi
 theorem opposition_mem_support {i : ι} (hi : i ∈ b.support) : opposition P b i ∈ b.support := by
   -- A simple root is an indecomposable positive root; `-w₀` is additive, preserves positivity and
   -- is its own inverse, so applying it to a decomposition of `-w₀ αᵢ` decomposes `αᵢ` itself.
-  rw [mem_support_iff_forall_ne_add]
+  rw [mem_support_iff_isPos_and_forall_ne_add]
   refine ⟨isPos_opposition (RootPairing.Base.isPos_of_mem_support hi), fun j k hj hk hjk ↦ ?_⟩
   refine root_ne_add_of_mem_support hi (isPos_opposition hj) (isPos_opposition hk) ?_
-  simpa only [opposition_opposition] using root_opposition_add P b hjk
+  -- Additivity: `-w₀` carries a decomposition of a root to one of its opposite.
+  have hadd : ∀ a c d : ι, P.root a = P.root c + P.root d →
+      P.root (opposition P b a) = P.root (opposition P b c) + P.root (opposition P b d) :=
+    fun _ _ _ h ↦ by simp only [root_opposition, h, smul_add, neg_add]
+  simpa only [opposition_opposition] using hadd _ _ _ hjk
 
 variable {P b} in
 /-- Membership of the base is invariant under the opposition involution. -/

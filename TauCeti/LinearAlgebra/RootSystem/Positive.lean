@@ -39,8 +39,8 @@ positive root is a nonnegative integer combination of the simple coroots.
   positive roots other than its own simple root, and
   `TauCeti.sum_posRootsFinset_erase_comp_reflectionPerm` is the resulting reindexing rule for sums
   over those roots.
-* `TauCeti.mem_support_iff_forall_ne_add` says the simple roots are exactly the indecomposable
-  positive roots: those that are not the sum of two positive roots.
+* `TauCeti.mem_support_iff_isPos_and_forall_ne_add` says the simple roots are exactly the
+  indecomposable positive roots: those that are not the sum of two positive roots.
 * `TauCeti.RootPairing.Base.isPos_flip_iff` says a root is positive for a base exactly when its
   coroot is positive for that base, and `TauCeti.posRoots_flip` restates it for the sets.
 * `TauCeti.exists_coroot_eq_sum_nat_of_mem_posRoots` says the coroot of a positive root is a
@@ -60,7 +60,8 @@ This file implements the “Positive and negative roots” item in Layer 1 of
 `TauCetiRoadmap/RepresentationTheory/RootSystems/Suggested.lean`. The coroot-side positivity at the
 end of the file is the prerequisite that the fundamental-domain item of Layer 4 consumes; that
 argument is the one in J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*,
-GTM 9, Ch. III, §10. The decomposition half of `TauCeti.mem_support_iff_forall_ne_add` is the step
+GTM 9, Ch. III, §10. The decomposition half of `TauCeti.mem_support_iff_isPos_and_forall_ne_add` is
+the step
 that Mathlib currently performs only inside the proof of
 `RootPairing.Base.IsPos.induction_on_add`, isolated here as a statement of its own.
 -/
@@ -295,7 +296,7 @@ variable {P b} in
 /-- **The simple roots are exactly the indecomposable positive roots.** This is the description of
 the base that mentions only the additive structure of the positive roots, so it is the one that
 transports along an additive bijection of the positive roots. -/
-theorem mem_support_iff_forall_ne_add {i : ι} :
+theorem mem_support_iff_isPos_and_forall_ne_add {i : ι} :
     i ∈ b.support ↔
       b.IsPos i ∧ ∀ j k, b.IsPos j → b.IsPos k → P.root i ≠ P.root j + P.root k := by
   refine ⟨fun hi ↦ ⟨RootPairing.Base.isPos_of_mem_support hi,
