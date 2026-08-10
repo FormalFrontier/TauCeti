@@ -19,11 +19,11 @@ file records the arithmetic of ramified primes under `σ`:
 * the class `[𝔭]` in `Cl(𝓞 K)` is **2-torsion**, because `𝔭² = p 𝓞 K` is principal.
 
 By `mulEquiv_ringOfIntegersQuadraticConj_apply_eq_self_iff` the 2-torsion classes are exactly the
-ones fixed by `σ` (the ambiguous classes), so the ramified primes furnish explicit ambiguous
-2-torsion classes — members of `Cl(𝓞 K)[2]`, the object measured by
-`card_elementaryTwoQuotient_eq_card_twoTorsion`. This is the lower-bound building block of the
-ambiguous-class-number / 2-rank theorem of genus theory; the matching upper bound (that such classes
-generate `Cl(𝓞 K)[2]`) is left to later work.
+ones fixed by `σ` (the ambiguous classes), so the ramified primes furnish *individual* explicit
+ambiguous 2-torsion classes — members of `Cl(𝓞 K)[2]`, the object measured by
+`card_elementaryTwoQuotient_eq_card_twoTorsion`. Determining all of `Cl(𝓞 K)[2]` (the
+ambiguous-class-number / 2-rank theorem of genus theory, which for real fields carries a unit-index
+correction relating these strongly ambiguous classes to the ambiguous ones) is left to later work.
 
 See D. A. Cox, *Primes of the Form x² + ny²*, and F. Lemmermeyer, *Reciprocity Laws*, for the
 classical genus theory these results underlie.
