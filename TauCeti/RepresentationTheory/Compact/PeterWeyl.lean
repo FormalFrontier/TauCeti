@@ -10,6 +10,7 @@ public import TauCeti.RepresentationTheory.Compact.RepresentativeDensity
 public import TauCeti.RepresentationTheory.Continuous.Conjugate
 public import TauCeti.RepresentationTheory.Continuous.OrthogonalDecomposition
 public import TauCeti.RepresentationTheory.Continuous.Transport
+public import TauCeti.RepresentationTheory.Continuous.UnitaryEquivalence
 
 /-!
 # The Peter-Weyl theorem: the matrix coefficients are a Hilbert basis of `L²(G)`
@@ -35,10 +36,19 @@ such a family says nothing about which functions the basis consists of. Both are
   representation on a standard model space is carried onto some `models i` by a linear isometry
   equivalence. Exhaustion is asked for in unitary form, which is no restriction: between
   irreducible unitary representations Schur's lemma makes every intertwining isomorphism a scalar
-  multiple of an isometry.
+  multiple of an isometry (`TauCeti.ContRepresentation.exists_linearIsometryEquiv_congr_eq`).
 * `TauCeti.peterWeylBasis` is a `HilbertBasis`, defined outright rather than existentially, and
   `TauCeti.coe_peterWeylBasis` identifies its elements as the normalized matrix coefficients
   `TauCeti.peterWeylFamily`. The element-level content is therefore available on the nose.
+
+Nothing here is conditional on a skeleton being available: one is built at the end of the file.
+Because a model's carrier is a standard space `EuclideanSpace 𝕜 (Fin n)`, unitary equivalence is
+an equivalence relation on the *type* `TauCeti.IrrepModel 𝕜 G`, and choosing a representative in
+each class gives `TauCeti.IrrepClass.model`, a skeleton by
+`TauCeti.isIrrepSkeleton_model`. Feeding it to `TauCeti.peterWeylBasis` gives
+`TauCeti.stdPeterWeylBasis`, a Hilbert basis of `L²(G)` for every compact Hausdorff `G` with no
+hypothesis left over. Pairwise inequivalence of the representatives is the point where the
+rescaling above is used.
 
 ## The completeness argument
 
@@ -72,6 +82,10 @@ the span `TauCeti.modelSubmodule` of the matrix coefficients of the models insid
 * `TauCeti.peterWeylFamily`: the normalized matrix coefficients, indexed by
   `Σ i, Fin (models i).dim × Fin (models i).dim`.
 * `TauCeti.peterWeylBasis`: **the Peter-Weyl Hilbert basis of `L²(G)`.**
+* `TauCeti.IrrepClass`, `TauCeti.IrrepClass.model`: the models up to unitary equivalence, and the
+  representative chosen in each class.
+* `TauCeti.stdPeterWeylBasis`: the Peter-Weyl basis of `L²(G)` on the chosen representatives, with
+  no skeleton assumed.
 
 ## Main statements
 
@@ -82,6 +96,8 @@ the span `TauCeti.modelSubmodule` of the matrix coefficients of the models insid
 * `TauCeti.IsIrrepSkeleton.orthogonal_span_peterWeylFamily_eq_bot`: the completeness of the
   orthonormal system.
 * `TauCeti.coe_peterWeylBasis`: the basis is the normalized matrix coefficients.
+* `TauCeti.isIrrepSkeleton_model`: the chosen representatives are a skeleton, so the hypothesis of
+  `TauCeti.peterWeylBasis` is satisfiable and the theorem is not conditional.
 
 ## References
 
@@ -159,7 +175,8 @@ on a standard model space is carried onto some `models i` by a linear isometry e
 
 Exhaustion in *unitary* form is no restriction. Between finite-dimensional irreducible unitary
 representations Schur's lemma makes any intertwining isomorphism a scalar multiple of a unitary
-one, so a family exhaustive up to isomorphism is exhaustive up to unitary isomorphism. -/
+one (`TauCeti.ContRepresentation.exists_linearIsometryEquiv_congr_eq`), so a family exhaustive up
+to isomorphism is exhaustive up to unitary isomorphism. -/
 structure IsIrrepSkeleton (models : ι → IrrepModel 𝕜 G) : Prop where
   /-- Distinct members of the family are inequivalent. -/
   pairwise_isEmpty_equiv :
@@ -444,5 +461,93 @@ theorem coe_peterWeylBasis [IsAlgClosed 𝕜] {models : ι → IrrepModel 𝕜 G
   HilbertBasis.coe_mkOfOrthogonalEqBot _ _
 
 end Skeleton
+
+/-! ### A skeleton exists -/
+
+section Existence
+
+variable (𝕜 G : Type*) [RCLike 𝕜] [Group G] [TopologicalSpace G]
+
+/-- **Unitary equivalence of models.** Two models are equivalent when some linear isometry
+equivalence of their carriers transports one representation onto the other; by
+`TauCeti.ContRepresentation.congr_refl`, `TauCeti.ContRepresentation.congr_congr` and
+`TauCeti.ContRepresentation.congr_symm_congr` this is an equivalence relation.
+
+Asking the carriers to be the standard spaces is what makes this a relation on a *type*, so that
+one representative per class may be chosen; on "all irreducible unitary representations on all
+inner product spaces" there is no such type to quotient. -/
+instance IrrepModel.instSetoid : Setoid (IrrepModel 𝕜 G) where
+  r m m' := ∃ e : EuclideanSpace 𝕜 (Fin m.dim) ≃ₗᵢ[𝕜] EuclideanSpace 𝕜 (Fin m'.dim),
+    ContRepresentation.congr e.toContinuousLinearEquiv m.rep = m'.rep
+  iseqv :=
+    { refl m := by
+        refine ⟨LinearIsometryEquiv.refl 𝕜 _, ?_⟩
+        change ContRepresentation.congr (ContinuousLinearEquiv.refl 𝕜 _) m.rep = m.rep
+        exact ContRepresentation.congr_refl _
+      symm := by
+        rintro m m' ⟨e, he⟩
+        refine ⟨e.symm, ?_⟩
+        change ContRepresentation.congr e.toContinuousLinearEquiv.symm m'.rep = m.rep
+        rw [← he]
+        exact ContRepresentation.congr_symm_congr _ _
+      trans := by
+        rintro m m' m'' ⟨e, he⟩ ⟨f, hf⟩
+        refine ⟨e.trans f, ?_⟩
+        change ContRepresentation.congr
+          (e.toContinuousLinearEquiv.trans f.toContinuousLinearEquiv) m.rep = m''.rep
+        rw [← ContRepresentation.congr_congr, he, hf] }
+
+/-- **The unitary dual of `G` in its standard models**: the models of finite-dimensional
+irreducible unitary continuous representations, up to unitary equivalence. This is the index of
+the Peter-Weyl basis. -/
+def IrrepClass : Type _ := Quotient (IrrepModel.instSetoid 𝕜 G)
+
+variable {𝕜 G}
+
+/-- **The model chosen in a class.** Choice enters exactly here, and only to pick a representative
+of an equivalence class; everything the representative carries -- the carrier, the orthonormal
+basis, the representation -- is pinned by `TauCeti.IrrepModel`. -/
+noncomputable def IrrepClass.model (i : IrrepClass 𝕜 G) : IrrepModel 𝕜 G := Quotient.out i
+
+variable (𝕜 G)
+
+/-- **A skeleton of the unitary dual exists**: the chosen representatives of the unitary
+equivalence classes form one.
+
+Pairwise inequivalence is the substance. Distinct classes are inequivalent *unitarily* by
+construction, and `TauCeti.ContRepresentation.exists_linearIsometryEquiv_congr_eq` upgrades that
+to inequivalence outright, since between irreducible unitary representations every intertwining
+isomorphism can be rescaled to an isometry. Exhaustion is then the tautology that every model
+lies in its own class. -/
+theorem isIrrepSkeleton_model [IsAlgClosed 𝕜] :
+    IsIrrepSkeleton (IrrepClass.model (𝕜 := 𝕜) (G := G)) where
+  pairwise_isEmpty_equiv i j hne :=
+    ⟨fun φ ↦ hne <| Quotient.out_equiv_out.1 <|
+      ContRepresentation.exists_linearIsometryEquiv_congr_eq (Quotient.out i).isUnitary
+        (Quotient.out j).isUnitary (Quotient.out i).isIrreducible φ⟩
+  exists_congr_eq n π hπ hu hirr := by
+    refine ⟨Quotient.mk _ ⟨n, π, hπ, hu, hirr⟩, ?_⟩
+    exact Setoid.symm (Quotient.mk_out (s := IrrepModel.instSetoid 𝕜 G) ⟨n, π, hπ, hu, hirr⟩)
+
+end Existence
+
+section StandardBasis
+
+variable (𝕜 G : Type*) [RCLike 𝕜] [IsAlgClosed 𝕜] [Group G] [TopologicalSpace G]
+  [IsTopologicalGroup G] [CompactSpace G] [T2Space G] [MeasurableSpace G] [BorelSpace G]
+
+/-- **The Peter-Weyl theorem, unconditionally.** The normalized matrix coefficients of the models
+chosen in the unitary equivalence classes are a Hilbert basis of `L²(G)`, indexed by
+`Σ i, Fin (models i).dim × Fin (models i).dim`. No skeleton is assumed: `isIrrepSkeleton_model`
+supplies one.
+
+`TauCeti.coe_peterWeylBasis` identifies the elements of this basis with
+`TauCeti.peterWeylFamily IrrepClass.model`. -/
+noncomputable def stdPeterWeylBasis :
+    HilbertBasis (Σ i : IrrepClass 𝕜 G,
+      Fin (IrrepClass.model i).dim × Fin (IrrepClass.model i).dim) 𝕜 (Lp 𝕜 2 (haarProb G)) :=
+  peterWeylBasis (isIrrepSkeleton_model 𝕜 G)
+
+end StandardBasis
 
 end TauCeti

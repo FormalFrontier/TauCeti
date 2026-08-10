@@ -38,6 +38,8 @@ irreducible by.
 
 ## Main results
 
+* `TauCeti.Representation.IsIrreducible.nontrivial`: an irreducible representation has a nonzero
+  carrier.
 * `TauCeti.Representation.isIrreducible_of_finrank_eq_one`: a line is irreducible.
 * `TauCeti.Representation.isIrreducible_of_linearEquiv`: irreducibility transports along an
   equivariant linear equivalence.
@@ -63,6 +65,18 @@ namespace TauCeti
 namespace Representation
 
 variable {k G V : Type*} [Field k] [Monoid G] [AddCommGroup V] [Module k V]
+
+/-- **An irreducible representation has a nonzero carrier.** Irreducibility asks the lattice of
+subrepresentations to have two distinct elements `⊥` and `⊤`, which a zero space cannot supply. -/
+theorem IsIrreducible.nontrivial {ρ : Representation k G V} (h : ρ.IsIrreducible) :
+    Nontrivial V := by
+  have _ : ρ.IsIrreducible := h
+  rw [← not_subsingleton_iff_nontrivial]
+  intro hs
+  refine bot_ne_top (α := Subrepresentation ρ) (Subrepresentation.toSubmodule_injective ?_)
+  rw [Subrepresentation.toSubmodule_bot, Subrepresentation.toSubmodule_top]
+  ext x
+  simpa using Subsingleton.elim x 0
 
 /-- A representation on a one-dimensional vector space is irreducible. -/
 theorem isIrreducible_of_finrank_eq_one (ρ : Representation k G V)
@@ -90,13 +104,7 @@ theorem isIrreducible_of_linearEquiv {W : Type*} [AddCommGroup W] [Module k W]
     {ρ : Representation k G V} {σ : Representation k G W} (e : V ≃ₗ[k] W)
     (he : ∀ g v, e (ρ g v) = σ g (e v)) (h : ρ.IsIrreducible) : σ.IsIrreducible := by
   have _ : ρ.IsIrreducible := h
-  have hV : Nontrivial V := by
-    rw [← not_subsingleton_iff_nontrivial]
-    intro hs
-    refine bot_ne_top (α := Subrepresentation ρ) (Subrepresentation.toSubmodule_injective ?_)
-    rw [Subrepresentation.toSubmodule_bot, Subrepresentation.toSubmodule_top]
-    ext x
-    simpa using Subsingleton.elim x 0
+  have hV : Nontrivial V := IsIrreducible.nontrivial h
   have : Nontrivial W := e.symm.toEquiv.nontrivial
   have hne : (⊥ : Subrepresentation σ) ≠ ⊤ := fun hc =>
     bot_ne_top (α := Submodule k W) (by
