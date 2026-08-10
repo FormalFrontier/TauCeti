@@ -43,8 +43,8 @@ theorem matrixDexpFactor_apply_eq_integral_conj (A B : Matrix n n ℝ) :
       ∫ t in (0 : ℝ)..1, exp (-(t • A)) * B * exp (t • A) :=
   banachDexpFactor_apply_eq_integral A B
 
-/-- The matrix-exponential derivative is left multiplication by `exp A` followed by the integral
-of conjugations along the exponential line. -/
+/-- The matrix-exponential derivative is the integral of conjugations along the exponential line,
+followed by left multiplication by `exp A`. -/
 theorem matrixFDerivExp_apply_eq_integral_conj (A B : Matrix n n ℝ) :
     fderiv ℝ exp A B =
       exp A * (∫ t in (0 : ℝ)..1, exp (-(t • A)) * B * exp (t • A)) := by
