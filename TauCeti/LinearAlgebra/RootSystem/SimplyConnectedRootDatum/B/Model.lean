@@ -684,12 +684,6 @@ end Refl
 
 /-! ## Recovering the index from the root -/
 
-lemma two_smul_cancel {A B : Fin n → ℤ} (h : (2 : ℤ) • A = (2 : ℤ) • B) : A = B := by
-  funext k
-  have hk := congrFun h k
-  simp only [Pi.smul_apply, smul_eq_mul] at hk
-  omega
-
 /-- The signed basis vectors occurring in a root are exactly those pairing to `2` with it. -/
 lemma rootIdx_dotProduct_cwt_eq_two_iff (z : Fin (2 * n) × Fin n) (m : Fin (2 * n)) :
     rootIdx z ⬝ᵥ cwt m = 2 ↔ (m = z.1 ∨ m = shift z.1 z.2) := by

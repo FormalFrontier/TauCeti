@@ -147,7 +147,7 @@ lemma corootIdx_typeBReflIdx (z w : Fin (2 * n) × Fin n) :
   set u := w.1 with hu
   set v := shift w.1 w.2 with hv
   rw [typeBReflIdx, corootIdx_index hRw, corootIdx, corootIdx, rootIdx, ← hp, ← hq, ← hu, ← hv]
-  refine two_smul_cancel ?_
+  refine smul_right_injective _ (by norm_num : (2 : ℤ) ≠ 0) ?_
   have hc : (2 : ℤ) * (rootOfPair p q ⬝ᵥ half u v) =
       rootOfPair p q ⬝ᵥ cwt u + rootOfPair p q ⬝ᵥ cwt v := by
     rw [← dotProduct_add, ← half_add_half u v, dotProduct_add]
