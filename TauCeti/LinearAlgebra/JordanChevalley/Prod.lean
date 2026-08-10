@@ -5,13 +5,14 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.LinearAlgebra.JordanChevalley.Multiplicative
+public import TauCeti.LinearAlgebra.GeneralLinearGroup.Prod
 
 /-!
 # Products of multiplicative Jordan decompositions
 
-Semisimple and unipotent linear automorphisms are preserved by componentwise products.  Over a
-perfect field, the multiplicative Jordan decomposition of a product automorphism is therefore
-computed componentwise.
+Semisimple and unipotent linear automorphisms are preserved by componentwise products.  On
+finite-dimensional modules over a perfect field, the multiplicative Jordan decomposition of a
+product automorphism is therefore computed componentwise.
 
 This supplies product infrastructure for the linear-algebraic functoriality step in Layer 4 of the
 ReductiveGroups roadmap.
@@ -20,7 +21,6 @@ ReductiveGroups roadmap.
 
 * `IsNilpotent.prodMap`: a product of nilpotent endomorphisms is nilpotent.
 * `TauCeti.Module.End.IsSemisimple.prodMap`: a product of semisimple endomorphisms is semisimple.
-* `TauCeti.GeneralLinearGroup.prodMap`: the componentwise product of two linear automorphisms.
 * `TauCeti.GeneralLinearGroup.jordanDecomposition_prodMap`: Jordan decomposition is componentwise
   on product modules.
 
@@ -123,42 +123,6 @@ namespace GeneralLinearGroup
 
 universe u v w
 
-section Semiring
-
-variable {K : Type u} {V : Type v} {W : Type w}
-variable [Semiring K] [AddCommMonoid V] [Module K V] [AddCommMonoid W] [Module K W]
-
-/-- The product map of two linear automorphisms, acting componentwise on the product module. -/
-def prodMap (g : GeneralLinearGroup K V) (h : GeneralLinearGroup K W) :
-    GeneralLinearGroup K (V × W) :=
-  LinearMap.GeneralLinearGroup.ofLinearEquiv (g.toLinearEquiv.prodCongr h.toLinearEquiv)
-
-/-- The endomorphism underlying a product-map automorphism is `LinearMap.prodMap`. -/
-@[simp]
-theorem coe_prodMap (g : GeneralLinearGroup K V) (h : GeneralLinearGroup K W) :
-    (prodMap g h : Module.End K (V × W)) =
-      (g : Module.End K V).prodMap (h : Module.End K W) :=
-  (rfl)
-
-/-- Product maps preserve multiplication. -/
-@[simp]
-theorem prodMap_mul (g₁ g₂ : GeneralLinearGroup K V) (h₁ h₂ : GeneralLinearGroup K W) :
-    prodMap (g₁ * g₂) (h₁ * h₂) = prodMap g₁ h₁ * prodMap g₂ h₂ := by
-  ext x <;> rfl
-
-/-- The product map of two identity automorphisms is the identity. -/
-@[simp]
-theorem prodMap_one : prodMap (1 : GeneralLinearGroup K V) (1 : GeneralLinearGroup K W) = 1 := by
-  ext x <;> rfl
-
-/-- Product maps preserve inverses. -/
-@[simp]
-theorem prodMap_inv (g : GeneralLinearGroup K V) (h : GeneralLinearGroup K W) :
-    prodMap g⁻¹ h⁻¹ = (prodMap g h)⁻¹ := by
-  ext x <;> rfl
-
-end Semiring
-
 section CommRing
 
 variable {K : Type u} {V : Type v} {W : Type w}
@@ -168,6 +132,7 @@ variable [CommRing K] [AddCommGroup V] [Module K V] [AddCommGroup W] [Module K W
 theorem IsSemisimple.prodMap {g : GeneralLinearGroup K V} {h : GeneralLinearGroup K W}
     (hg : IsSemisimple g) (hh : IsSemisimple h) : IsSemisimple (prodMap g h) := by
   rw [isSemisimple_def] at hg hh ⊢
+  rw [coe_prodMap]
   exact Module.End.IsSemisimple.prodMap hg hh
 
 /-- The product map of two unipotent automorphisms is unipotent. -/
