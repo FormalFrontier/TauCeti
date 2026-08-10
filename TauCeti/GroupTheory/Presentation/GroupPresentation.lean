@@ -5,7 +5,6 @@ Authors: Codex
 -/
 module
 
-public import Mathlib.Data.Set.Finite.Basic
 public import Mathlib.GroupTheory.PresentedGroup
 public import TauCeti.GroupTheory.Presentation.Relator
 
@@ -13,13 +12,15 @@ public import TauCeti.GroupTheory.Presentation.Relator
 # Auditable finite group presentations
 
 This file packages a finite group presentation together with the metadata needed to audit a
-transcription from a published source. Generator names determine the arity of the relators, so a
-presentation cannot separately record an incompatible generator count. The expected generator and
-relator counts remain as checkable transcription metadata.
+transcription from a published source. The generator-name list alone fixes the relator index type
+to `Fin generatorNames.length`, so the relator arity cannot disagree with the generator names. The
+generator and relator counts stated by the source are separate metadata, checked against the
+transcribed data by `TauCeti.GroupPresentation.matchesMetadata`.
 
 The stored relators are human-readable `TauCeti.Relator` expressions. They are compiled to
-Mathlib's signed words and then interpreted by `FreeGroup.mk`; the resulting finite relation set
-defines `TauCeti.GroupPresentation.Group` using Mathlib's `PresentedGroup`.
+Mathlib's signed words and then interpreted by `FreeGroup.mk`; the resulting finite list of
+relations, regarded as a set, defines `TauCeti.GroupPresentation.Group` using Mathlib's
+`PresentedGroup`.
 
 ## Main definitions
 
@@ -27,7 +28,7 @@ defines `TauCeti.GroupPresentation.Group` using Mathlib's `PresentedGroup`.
 * `TauCeti.GroupPresentation.relators`: the compiled signed words.
 * `TauCeti.GroupPresentation.relatorSet`: the relations as free-group elements.
 * `TauCeti.GroupPresentation.Group`: the group defined by the presentation.
-* `TauCeti.GroupPresentation.matchesMetadata`: the executable generator and relator count check.
+* `TauCeti.GroupPresentation.matchesMetadata`: the decidable generator and relator count check.
 
 ## References
 
@@ -81,19 +82,24 @@ def relators (P : GroupPresentation) : List (PresentationWord (Fin P.generatorCo
 theorem length_relators (P : GroupPresentation) : P.relators.length = P.transcribed.length := by
   simp [relators]
 
+/-- The compiled words are exactly the compilations of the transcribed expressions. -/
+@[simp]
+theorem mem_relators_iff (P : GroupPresentation) (w : PresentationWord (Fin P.generatorCount)) :
+    w ∈ P.relators ↔ ∃ t ∈ P.transcribed, t.toWord = w := by
+  simp [relators]
+
 /-- The compiled relations, interpreted as elements of the free group. -/
 def relatorSet (P : GroupPresentation) : Set (FreeGroup (Fin P.generatorCount)) :=
   {r | r ∈ P.relators.map FreeGroup.mk}
 
-/-- Membership in the relation set is membership in the list of interpreted compiled words. -/
+/-- The relations are exactly the free-group elements denoted by the transcribed expressions.
+
+This is stated against `Relator.toFreeGroup` rather than against the compiled words, so a consumer
+discharging the relations of `PresentedGroup` never has to unfold the compiler. -/
 @[simp]
 theorem mem_relatorSet_iff (P : GroupPresentation) (r : FreeGroup (Fin P.generatorCount)) :
-    r ∈ P.relatorSet ↔ r ∈ P.relators.map FreeGroup.mk :=
-  Iff.rfl
-
-/-- The relation set of a `GroupPresentation` is finite. -/
-theorem relatorSet_finite (P : GroupPresentation) : P.relatorSet.Finite := by
-  simpa only [relatorSet] using (P.relators.map FreeGroup.mk).finite_toSet
+    r ∈ P.relatorSet ↔ ∃ t ∈ P.transcribed, t.toFreeGroup = r := by
+  simp [relatorSet]
 
 /-- The group defined by the generators and compiled relations of a presentation. -/
 abbrev Group (P : GroupPresentation) : Type :=
@@ -107,13 +113,30 @@ def matchesMetadata (P : GroupPresentation) : Prop :=
   P.generatorCount = P.expectedGeneratorCount ∧
     P.transcribed.length = P.expectedRelatorCount
 
-/-- A matching relator count ensures that the compiled relator list has the recorded length.
+/-- The metadata check unfolds to its two count equalities. -/
+@[simp]
+theorem matchesMetadata_iff (P : GroupPresentation) :
+    P.matchesMetadata ↔
+      P.generatorCount = P.expectedGeneratorCount ∧
+        P.transcribed.length = P.expectedRelatorCount :=
+  Iff.rfl
 
-A presentation satisfying `matchesMetadata` supplies this hypothesis as its second conjunct. -/
-theorem length_relators_eq_expected (P : GroupPresentation)
-    (h : P.transcribed.length = P.expectedRelatorCount) :
-    P.relators.length = P.expectedRelatorCount :=
-  P.length_relators.trans h
+instance (P : GroupPresentation) : Decidable P.matchesMetadata :=
+  decidable_of_iff _ (matchesMetadata_iff P).symm
+
+/-- A transcribed row discharges its count check by `decide`. The record below is an illustration
+of the format, not a transcription of a published source. -/
+example : GroupPresentation.matchesMetadata
+    { generatorNames := ["a", "b"]
+      source := "illustrative record"
+      sourceLocator := "none"
+      generatorConvention := "Mathlib's commutator bracket"
+      transcriptionNotes := "no normalization was needed"
+      expectedGeneratorCount := 2
+      expectedRelatorCount := 3
+      transcribed :=
+        [.pow (.gen 0) 2, .pow (.gen 1) 3, .pow (.mul (.gen 0) (.gen 1)) 2] } := by
+  decide
 
 end GroupPresentation
 
