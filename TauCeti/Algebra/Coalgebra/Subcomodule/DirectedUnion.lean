@@ -8,15 +8,16 @@ public import Mathlib.Data.Set.UnionLift
 public import TauCeti.Algebra.Coalgebra.Subcomodule.Finite
 
 /-!
-# Linear maps out of a union of finite subcomodules
+# Linear maps out of directed unions of submodules
 
-This file gives the universal property of the directed union of the finite subcomodules of a
-comodule. A compatible family of linear maps on the finite subcomodules glues to a linear map on
-the whole comodule as soon as every element lies in a finite subcomodule.
+This file gives the universal property of a directed union of submodules, then specializes it to
+the finite subcomodules of a comodule. A compatible family of linear maps on the finite
+subcomodules glues to a linear map on the whole comodule as soon as every element lies in a finite
+subcomodule.
 
-The construction is the linear analogue of `Subalgebra.iSupLift`. It uses `Set.liftCover` for the
-underlying function and the directedness of finite subcomodules to prove that the local maps agree
-on overlaps.
+The construction `TauCeti.Submodule.iSupLift` is the linear analogue of
+`Subalgebra.iSupLift`. It uses `Set.iUnionLift` and the directedness of the family to prove that the
+local maps agree on overlaps.
 
 This is a prerequisite for the Tannakian reconstruction step in the `ReductiveGroups` roadmap:
 the components of a tensor automorphism on the finite subcomodules of the regular comodule must be
@@ -24,6 +25,7 @@ assembled into one linear functional on the coordinate Hopf algebra.
 
 ## Main declarations
 
+* `TauCeti.Submodule.iSupLift`: glue compatible linear maps on a directed family of submodules.
 * `TauCeti.Subcomodule.finiteSubcomoduleLiftOfExistsMem`: glue a compatible family under an
   explicit covering hypothesis.
 * `TauCeti.Subcomodule.finiteSubcomoduleLift`: glue such a family when the coefficient coalgebra
@@ -40,6 +42,80 @@ namespace TauCeti
 
 universe u v w x
 
+namespace Submodule
+
+variable {R : Type u} {M : Type v} {P : Type w} {ι : Type x}
+variable [Semiring R] [AddCommMonoid M] [Module R M] [AddCommMonoid P] [Module R P]
+
+/-- Define a linear map on a submodule of a directed supremum by defining it compatibly on each
+member of the directed family. -/
+noncomputable def iSupLift [Nonempty ι] (K : ι → Submodule R M) (dir : Directed (· ≤ ·) K)
+    (f : ∀ i, K i →ₗ[R] P)
+    (hf : ∀ (i j : ι) (h : K i ≤ K j), f i = (f j).comp (Submodule.inclusion h))
+    (T : Submodule R M) (hT : T ≤ iSup K) : T →ₗ[R] P := by
+  let compatible :
+      ∀ (i j) (x : M) (hxi : x ∈ (K i : Set M)) (hxj : x ∈ (K j : Set M)),
+        f i ⟨x, hxi⟩ = f j ⟨x, hxj⟩ := by
+    intro i j m hmi hmj
+    obtain ⟨k, hik, hjk⟩ := dir i j
+    rw [hf i k hik, hf j k hjk]
+    rfl
+  let liftSup : (iSup K : Submodule R M) →ₗ[R] P :=
+    { toFun :=
+        Set.iUnionLift (fun i => (K i : Set M)) (fun i => f i) compatible
+          ((iSup K : Submodule R M) : Set M)
+          (le_of_eq (Submodule.coe_iSup_of_directed K dir))
+      map_add' := by
+        apply Set.iUnionLift_binary (Submodule.coe_iSup_of_directed K dir) dir _
+          (fun _ => (· + ·))
+        all_goals simp
+      map_smul' := fun r => by
+        dsimp
+        apply Set.iUnionLift_unary (Submodule.coe_iSup_of_directed K dir) _
+          (fun _ m => r • m)
+        all_goals simp }
+  exact liftSup.comp (Submodule.inclusion hT)
+
+/-- The map glued on a directed supremum agrees with a prescribed map on each member of the
+family. -/
+@[simp]
+theorem iSupLift_mk [Nonempty ι] {K : ι → Submodule R M} {dir : Directed (· ≤ ·) K}
+    {f : ∀ i, K i →ₗ[R] P}
+    {hf : ∀ (i j : ι) (h : K i ≤ K j), f i = (f j).comp (Submodule.inclusion h)}
+    {T : Submodule R M} {hT : T ≤ iSup K} {i : ι} (m : K i) (hm : (m : M) ∈ T) :
+    iSupLift K dir f hf T hT ⟨m, hm⟩ = f i m := by
+  unfold iSupLift
+  dsimp
+  rw [Submodule.inclusion_apply]
+  rw [Set.iUnionLift_mk]
+
+/-- Restricting the map glued on a directed supremum to a member of the family recovers the
+prescribed map. -/
+@[simp]
+theorem iSupLift_comp_inclusion [Nonempty ι] {K : ι → Submodule R M}
+    {dir : Directed (· ≤ ·) K} {f : ∀ i, K i →ₗ[R] P}
+    {hf : ∀ (i j : ι) (h : K i ≤ K j), f i = (f j).comp (Submodule.inclusion h)}
+    {T : Submodule R M} {hT : T ≤ iSup K} {i : ι} (h : K i ≤ T) :
+    (iSupLift K dir f hf T hT).comp (Submodule.inclusion h) = f i := by
+  ext m
+  exact iSupLift_mk (dir := dir) (hf := hf) m (h m.2)
+
+/-- A linear map on a submodule of a directed supremum is determined by its values on the members
+of the directed family. -/
+theorem iSupLift_unique [Nonempty ι] {K : ι → Submodule R M} {dir : Directed (· ≤ ·) K}
+    {f : ∀ i, K i →ₗ[R] P}
+    {hf : ∀ (i j : ι) (h : K i ≤ K j), f i = (f j).comp (Submodule.inclusion h)}
+    {T : Submodule R M} {hT : T ≤ iSup K} (g : T →ₗ[R] P)
+    (hg : ∀ (i : ι) (m : K i) (hm : (m : M) ∈ T), g ⟨m, hm⟩ = f i m) :
+    g = iSupLift K dir f hf T hT := by
+  ext m
+  obtain ⟨i, hi⟩ := (Submodule.mem_iSup_of_directed K dir).1 (hT m.2)
+  rw [hg i ⟨m, hi⟩ m.2]
+  simpa only using
+    (iSupLift_mk (dir := dir) (hf := hf) (m := ⟨m, hi⟩) m.2).symm
+
+end Submodule
+
 namespace Subcomodule
 
 variable {R : Type u} {C : Type v} {M : Type w} {P : Type x}
@@ -48,30 +124,21 @@ variable [AddCommMonoid C] [Module R C] [Coalgebra R C]
 variable [AddCommMonoid M] [Module R M] [Comodule R C M]
 variable [AddCommMonoid P] [Module R P]
 
-private theorem finiteSubcomodule_cover
-    (hM : ∀ m : M, ∃ N : Subcomodule R C M, Module.Finite R N.toSubmodule ∧ m ∈ N) :
-    (⋃ N : finiteSubcomodules (R := R) (C := C) (M := M), (N.1 : Set M)) =
-      Set.univ :=
-  iUnion_finiteSubcomodules_eq_univ_of_exists_mem hM
+private instance : Nonempty (finiteSubcomodules (R := R) (C := C) (M := M)) :=
+  nonempty_finiteSubcomodules.to_subtype
 
-private theorem finiteSubcomodule_compatible
-    (f : ∀ N : finiteSubcomodules (R := R) (C := C) (M := M), N.1 →ₗ[R] P)
-    (hf : ∀ (N Q : finiteSubcomodules (R := R) (C := C) (M := M))
-      (hNQ : N.1 ≤ Q.1),
-        f N = (f Q).comp (Submodule.inclusion hNQ))
-    (N Q : finiteSubcomodules (R := R) (C := C) (M := M)) (m : M)
-    (hmN : m ∈ N.1) (hmQ : m ∈ Q.1) :
-    f N ⟨m, hmN⟩ = f Q ⟨m, hmQ⟩ := by
-  have hdir : Directed (· ≤ ·)
-      (fun K : finiteSubcomodules (R := R) (C := C) (M := M) => K.1) :=
-    directedOn_finiteSubcomodules.directed_val
-  obtain ⟨K, hNK, hQK⟩ := hdir N Q
-  have hN := LinearMap.congr_fun (hf N K hNK) (⟨m, hmN⟩ : N.1)
-  have hQ := LinearMap.congr_fun (hf Q K hQK) (⟨m, hmQ⟩ : Q.1)
-  calc
-    f N ⟨m, hmN⟩ = f K ⟨m, hNK hmN⟩ := hN
-    _ = f K ⟨m, hQK hmQ⟩ := congrArg (f K) (Subtype.ext rfl)
-    _ = f Q ⟨m, hmQ⟩ := hQ.symm
+private theorem finiteSubcomodule_directed_toSubmodule :
+    Directed (· ≤ ·) (fun N : finiteSubcomodules (R := R) (C := C) (M := M) =>
+      N.1.toSubmodule) := by
+  intro N Q
+  obtain ⟨K, hNK, hQK⟩ := directedOn_finiteSubcomodules.directed_val N Q
+  exact ⟨K, toSubmodule_le_toSubmodule.2 hNK, toSubmodule_le_toSubmodule.2 hQK⟩
+
+private theorem iSup_finiteSubcomodule_toSubmodule_eq_top
+    (hM : ∀ m : M, ∃ N : Subcomodule R C M, Module.Finite R N.toSubmodule ∧ m ∈ N) :
+    (⨆ N : finiteSubcomodules (R := R) (C := C) (M := M), N.1.toSubmodule) = ⊤ := by
+  rw [← sSup_toSubmodule, sSup_finiteSubcomodules_eq_top_of_exists_mem hM]
+  rfl
 
 /-- Glue a compatible family of linear maps on the finite subcomodules of a comodule.
 
@@ -83,31 +150,13 @@ noncomputable def finiteSubcomoduleLiftOfExistsMem
     (f : ∀ N : finiteSubcomodules (R := R) (C := C) (M := M), N.1 →ₗ[R] P)
     (hf : ∀ (N Q : finiteSubcomodules (R := R) (C := C) (M := M))
       (hNQ : N.1 ≤ Q.1),
-        f N = (f Q).comp (Submodule.inclusion hNQ)) : M →ₗ[R] P := by
-  let S := fun N : finiteSubcomodules (R := R) (C := C) (M := M) => (N.1 : Set M)
-  refine
-    { toFun := Set.liftCover S (fun N => f N) (finiteSubcomodule_compatible f hf)
-        (finiteSubcomodule_cover hM)
-      map_add' := ?_
-      map_smul' := ?_ }
-  · intro m n
-    obtain ⟨N, hNfinite, hmnN⟩ :=
-      exists_finite_subcomodule_of_setFinite_of_exists_mem hM (Set.toFinite {m, n})
-    let N' : finiteSubcomodules (R := R) (C := C) (M := M) :=
-      ⟨N, mem_finiteSubcomodules.mpr hNfinite⟩
-    have hmN : m ∈ S N' := hmnN (Set.mem_insert m {n})
-    have hnN : n ∈ S N' := hmnN (Set.mem_insert_of_mem m (Set.mem_singleton n))
-    have haddN : m + n ∈ S N' := N.toSubmodule.add_mem hmN hnN
-    rw [Set.liftCover_of_mem haddN, Set.liftCover_of_mem hmN, Set.liftCover_of_mem hnN]
-    exact map_add (f N') ⟨m, hmN⟩ ⟨n, hnN⟩
-  · intro r m
-    obtain ⟨N, hNfinite, hmN⟩ := hM m
-    let N' : finiteSubcomodules (R := R) (C := C) (M := M) :=
-      ⟨N, mem_finiteSubcomodules.mpr hNfinite⟩
-    have hmN' : m ∈ S N' := hmN
-    have hsmulN : r • m ∈ S N' := N.toSubmodule.smul_mem r hmN
-    rw [Set.liftCover_of_mem hsmulN, Set.liftCover_of_mem hmN']
-    exact map_smul (f N') r ⟨m, hmN'⟩
+        f N = (f Q).comp (Submodule.inclusion hNQ)) : M →ₗ[R] P :=
+  (Submodule.iSupLift
+      (fun N : finiteSubcomodules (R := R) (C := C) (M := M) => N.1.toSubmodule)
+      finiteSubcomodule_directed_toSubmodule f
+      (fun N Q h => hf N Q (toSubmodule_le_toSubmodule.1 h)) ⊤
+      (iSup_finiteSubcomodule_toSubmodule_eq_top hM).symm.le).comp
+    (Submodule.topEquiv (R := R) (M := M)).symm.toLinearMap
 
 /-- The map glued from finite subcomodules agrees with the prescribed map on each finite
 subcomodule. -/
@@ -120,14 +169,25 @@ theorem finiteSubcomoduleLiftOfExistsMem_apply
         f N = (f Q).comp (Submodule.inclusion hNQ))
     (N : finiteSubcomodules (R := R) (C := C) (M := M)) (m : N.1) :
     finiteSubcomoduleLiftOfExistsMem hM f hf m = f N m := by
-  change Set.liftCover
-    (fun Q : finiteSubcomodules (R := R) (C := C) (M := M) => (Q.1 : Set M))
-    (fun Q => f Q) (finiteSubcomodule_compatible f hf) (finiteSubcomodule_cover hM)
-    (m : M) = f N m
-  exact Set.liftCover_coe
-    (S := fun Q : finiteSubcomodules (R := R) (C := C) (M := M) => (Q.1 : Set M))
-    (f := fun Q => f Q) (hf := finiteSubcomodule_compatible f hf)
-    (hS := finiteSubcomodule_cover hM) m
+  unfold finiteSubcomoduleLiftOfExistsMem
+  simp only [LinearMap.coe_comp, LinearEquiv.coe_coe, Function.comp_apply]
+  rw [show (Submodule.topEquiv (R := R) (M := M)).symm (m : M) =
+    (⟨m, Submodule.mem_top⟩ : (⊤ : Submodule R M)) from rfl]
+  apply Submodule.iSupLift_mk
+
+/-- Restricting the map glued from finite subcomodules to one finite subcomodule recovers its
+prescribed map. -/
+@[simp]
+theorem finiteSubcomoduleLiftOfExistsMem_comp_subtype
+    (hM : ∀ m : M, ∃ N : Subcomodule R C M, Module.Finite R N.toSubmodule ∧ m ∈ N)
+    (f : ∀ N : finiteSubcomodules (R := R) (C := C) (M := M), N.1 →ₗ[R] P)
+    (hf : ∀ (N Q : finiteSubcomodules (R := R) (C := C) (M := M))
+      (hNQ : N.1 ≤ Q.1),
+        f N = (f Q).comp (Submodule.inclusion hNQ))
+    (N : finiteSubcomodules (R := R) (C := C) (M := M)) :
+    (finiteSubcomoduleLiftOfExistsMem hM f hf).comp N.1.toSubmodule.subtype = f N := by
+  ext m
+  exact finiteSubcomoduleLiftOfExistsMem_apply hM f hf N m
 
 /-- A linear map out of a comodule is determined by its restrictions to all finite
 subcomodules. -/
@@ -166,6 +226,18 @@ theorem finiteSubcomoduleLift_apply [Module.Free R C]
     (N : finiteSubcomodules (R := R) (C := C) (M := M)) (m : N.1) :
     finiteSubcomoduleLift f hf m = f N m :=
   finiteSubcomoduleLiftOfExistsMem_apply exists_finite_subcomodule_mem f hf N m
+
+/-- Restricting the map glued from finite subcomodules over a free coefficient coalgebra to one
+finite subcomodule recovers its prescribed map. -/
+@[simp]
+theorem finiteSubcomoduleLift_comp_subtype [Module.Free R C]
+    (f : ∀ N : finiteSubcomodules (R := R) (C := C) (M := M), N.1 →ₗ[R] P)
+    (hf : ∀ (N Q : finiteSubcomodules (R := R) (C := C) (M := M))
+      (hNQ : N.1 ≤ Q.1),
+        f N = (f Q).comp (Submodule.inclusion hNQ))
+    (N : finiteSubcomodules (R := R) (C := C) (M := M)) :
+    (finiteSubcomoduleLift f hf).comp N.1.toSubmodule.subtype = f N :=
+  finiteSubcomoduleLiftOfExistsMem_comp_subtype exists_finite_subcomodule_mem f hf N
 
 /-- A linear map out of a comodule over a free coefficient coalgebra is determined by its
 restrictions to the finite subcomodules. -/
