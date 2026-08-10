@@ -184,8 +184,11 @@ instance (A : AbelianVariety K) :
     Algebra K (IsLocalRing.ResidueField (A.toScheme.presheaf.stalk A.zeroPoint)) :=
   A.zeroResidueFieldRingEquiv.symm.toRingHom.toAlgebra
 
-/-- The residue-field equivalence sends the ground-field algebra map back to its input. -/
-@[simp]
+/-- The residue-field equivalence sends the ground-field algebra map back to its input.
+
+This is stated in terms of the abstract equivalence, so it is not a simp lemma: the simp normal
+form of an application of `zeroResidueFieldRingEquiv` is the composite given by
+`zeroResidueFieldRingEquiv_apply`. -/
 lemma zeroResidueFieldRingEquiv_algebraMap (A : AbelianVariety K) (k : K) :
     A.zeroResidueFieldRingEquiv
       (algebraMap K (IsLocalRing.ResidueField (A.toScheme.presheaf.stalk A.zeroPoint)) k) = k := by
