@@ -5,8 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Algebra.Coalgebra.Comodule.Finite.Monoidal
-public import TauCeti.Algebra.Coalgebra.Comodule.Finite.ScalarExtension
-public import Mathlib.CategoryTheory.Monoidal.NaturalTransformation
+public import TauCeti.Algebra.Coalgebra.Comodule.Finite.ScalarExtension.Basic
 
 /-!
 # Monoidal scalar extension of finite comodules
@@ -41,6 +40,26 @@ variable (R : Type u) [CommSemiring R]
 variable (H : Type v) [Semiring H] [Bialgebra R H]
 variable (A : Type u) [CommSemiring A] [Algebra R A]
 
+/-- Evaluation of the two base-change composites in the associativity coherence law. -/
+private theorem scalarExtension_associativity_tmul
+    (M N P : FGComoduleCat.{u, v, u} R H) (m : M) (n : N) (p : P) :
+    (α_ (SemimoduleCat.of A (A ⊗[R] M))
+      (SemimoduleCat.of A (A ⊗[R] N))
+      (SemimoduleCat.of A (A ⊗[R] P))).hom
+        (((SemimoduleCat.ofHom
+          (TensorProduct.AlgebraTensorModule.distribBaseChange R A M N).toLinearMap) ▷
+            SemimoduleCat.of A (A ⊗[R] P))
+          (SemimoduleCat.ofHom
+            (TensorProduct.AlgebraTensorModule.distribBaseChange R A (M ⊗ N) P).toLinearMap
+              ((1 : A) ⊗ₜ[R] ((m ⊗ₜ[R] n) ⊗ₜ[R] p)))) =
+      (SemimoduleCat.of A (A ⊗[R] M) ◁ SemimoduleCat.ofHom
+        (TensorProduct.AlgebraTensorModule.distribBaseChange R A N P).toLinearMap)
+        (SemimoduleCat.ofHom
+          (TensorProduct.AlgebraTensorModule.distribBaseChange R A M (N ⊗ P)).toLinearMap
+            (SemimoduleCat.ofHom
+              ((TensorProduct.assoc R M N P).toLinearMap.baseChange A)
+                ((1 : A) ⊗ₜ[R] ((m ⊗ₜ[R] n) ⊗ₜ[R] p)))) := rfl
+
 /-- Scalar extension from finitely generated comodules to semimodules is strong monoidal. -/
 noncomputable abbrev instMonoidalScalarExtensionFunctor :
     (scalarExtensionFunctor.{u, v, u, u} R H A).Monoidal := by
@@ -69,16 +88,10 @@ noncomputable abbrev instMonoidalScalarExtensionFunctor :
     let _ : IsScalarTower R A P := IsScalarTower.of_algebraMap_smul fun _ _ ↦ rfl
     apply SemimoduleCat.hom_ext
     apply (LinearMap.liftBaseChangeEquiv A).symm.injective
-    have h' :
-        SemimoduleCat.ofHom ((LinearMap.liftBaseChangeEquiv A).symm f.hom) =
-          SemimoduleCat.ofHom ((LinearMap.liftBaseChangeEquiv A).symm g.hom) :=
-      SemimoduleCat.MonoidalCategory.tensor_ext fun m n ↦ by
-        change ((LinearMap.liftBaseChangeEquiv A).symm f.hom) (m ⊗ₜ[R] n) =
-          ((LinearMap.liftBaseChangeEquiv A).symm g.hom) (m ⊗ₜ[R] n)
-        rw [LinearMap.liftBaseChangeEquiv_symm_apply,
-          LinearMap.liftBaseChangeEquiv_symm_apply]
-        exact h m n
-    exact congrArg SemimoduleCat.Hom.hom h'
+    apply TensorProduct.ext
+    ext m n
+    simpa only [LinearMap.compr₂ₛₗ_apply, TensorProduct.mk_apply,
+      LinearMap.liftBaseChangeEquiv_symm_apply] using h m n
   let baseChangeTensorExt₃'
       {M N P : SemimoduleCat.{u} R} {Q : SemimoduleCat.{u} A}
       {f g : SemimoduleCat.of A (A ⊗[R] ((M ⊗[R] N) ⊗[R] P)) ⟶ Q}
@@ -88,16 +101,8 @@ noncomputable abbrev instMonoidalScalarExtensionFunctor :
     let _ : IsScalarTower R A Q := IsScalarTower.of_algebraMap_smul fun _ _ ↦ rfl
     apply SemimoduleCat.hom_ext
     apply (LinearMap.liftBaseChangeEquiv A).symm.injective
-    have h' :
-        SemimoduleCat.ofHom ((LinearMap.liftBaseChangeEquiv A).symm f.hom) =
-          SemimoduleCat.ofHom ((LinearMap.liftBaseChangeEquiv A).symm g.hom) :=
-      SemimoduleCat.MonoidalCategory.tensor_ext₃' fun m n p ↦ by
-        change ((LinearMap.liftBaseChangeEquiv A).symm f.hom) ((m ⊗ₜ[R] n) ⊗ₜ[R] p) =
-          ((LinearMap.liftBaseChangeEquiv A).symm g.hom) ((m ⊗ₜ[R] n) ⊗ₜ[R] p)
-        rw [LinearMap.liftBaseChangeEquiv_symm_apply,
-          LinearMap.liftBaseChangeEquiv_symm_apply]
-        exact h m n p
-    exact congrArg SemimoduleCat.Hom.hom h'
+    exact TensorProduct.ext_threefold fun m n p ↦ by
+      simpa only [LinearMap.liftBaseChangeEquiv_symm_apply] using h m n p
   let modelMonoidal : model.Monoidal := Functor.CoreMonoidal.toMonoidal
     (.mk'
       (εIso := (TensorProduct.AlgebraTensorModule.rid R A A).symm.toModuleIsoₛ)
@@ -113,8 +118,7 @@ noncomputable abbrev instMonoidalScalarExtensionFunctor :
         rfl)
       (oplax_associativity := fun M N P ↦ by
         -- `model` is local construction data, and the source monoidal product is bundled.
-        -- No heterogeneous evaluation lemma crosses both wrappers, so expose their canonical
-        -- carrier identifications once before applying the public tensor extensionality API.
+        -- Expose that carrier identification once, then use the evaluation lemma above.
         change
           SemimoduleCat.ofHom
                 (TensorProduct.AlgebraTensorModule.distribBaseChange R A (M ⊗ N) P).toLinearMap ≫
@@ -134,42 +138,7 @@ noncomputable abbrev instMonoidalScalarExtensionFunctor :
         erw [SemimoduleCat.comp_apply, SemimoduleCat.comp_apply,
           SemimoduleCat.comp_apply, SemimoduleCat.comp_apply]
         rw [FGComoduleCat.associator_hom_toLinearMap]
-        change
-          (α_ (SemimoduleCat.of A (A ⊗[R] M))
-            (SemimoduleCat.of A (A ⊗[R] N))
-            (SemimoduleCat.of A (A ⊗[R] P))).hom
-              (((SemimoduleCat.ofHom
-                    (TensorProduct.AlgebraTensorModule.distribBaseChange R A M N).toLinearMap ▷
-                  SemimoduleCat.of A (A ⊗[R] P))
-                (SemimoduleCat.ofHom
-                  (TensorProduct.AlgebraTensorModule.distribBaseChange R A (M ⊗ N) P).toLinearMap
-                    ((1 : A) ⊗ₜ[R] ((m ⊗ₜ[R] n) ⊗ₜ[R] p))))) =
-            (SemimoduleCat.of A (A ⊗[R] M) ◁ SemimoduleCat.ofHom
-              (TensorProduct.AlgebraTensorModule.distribBaseChange R A N P).toLinearMap)
-              (SemimoduleCat.ofHom
-                (TensorProduct.AlgebraTensorModule.distribBaseChange R A M (N ⊗ P)).toLinearMap
-                  (SemimoduleCat.ofHom
-                    ((TensorProduct.assoc R M N P).toLinearMap.baseChange A)
-                      ((1 : A) ⊗ₜ[R] ((m ⊗ₜ[R] n) ⊗ₜ[R] p))))
-        rw [SemimoduleCat.ofHom_apply, SemimoduleCat.ofHom_apply,
-          SemimoduleCat.ofHom_apply]
-        simp only [LinearMap.baseChange_tmul]
-        change
-          (α_ (SemimoduleCat.of A (A ⊗[R] M))
-            (SemimoduleCat.of A (A ⊗[R] N))
-            (SemimoduleCat.of A (A ⊗[R] P))).hom
-              ((((1 : A) ⊗ₜ[R] m) ⊗ₜ[A] ((1 : A) ⊗ₜ[R] n)) ⊗ₜ[A]
-                ((1 : A) ⊗ₜ[R] p)) =
-            (SemimoduleCat.of A (A ⊗[R] M) ◁ SemimoduleCat.ofHom
-              (TensorProduct.AlgebraTensorModule.distribBaseChange R A N P).toLinearMap)
-              (((1 : A) ⊗ₜ[R] m) ⊗ₜ[A] ((1 : A) ⊗ₜ[R] (n ⊗ₜ[R] p)))
-        rw [SemimoduleCat.MonoidalCategory.associator_hom_apply,
-          SemimoduleCat.MonoidalCategory.whiskerLeft_apply]
-        change _ = ((1 : A) ⊗ₜ[R] m) ⊗ₜ[A]
-          TensorProduct.AlgebraTensorModule.distribBaseChange R A N P
-            ((1 : A) ⊗ₜ[R] (n ⊗ₜ[R] p))
-        rw [TensorProduct.AlgebraTensorModule.distribBaseChange_tmul]
-        rfl)
+        exact scalarExtension_associativity_tmul R H A M N P m n p)
       (oplax_left_unitality := fun M ↦ by
         apply baseChangeExt
         intro m
