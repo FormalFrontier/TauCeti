@@ -54,15 +54,6 @@ private theorem two_le_infinite_smoothness :
     ((2 : ℕ∞) : ℕ∞ω) ≤ ((⊤ : ℕ∞) : ℕ∞ω) :=
   WithTop.coe_le_coe.mpr le_top
 
-omit [Group G] [LieGroup I ∞ G] in
-/-- The explicit identification of the tangent space of `ℝ` with `ℝ` used by `mvfderiv`. -/
-private theorem mvfderiv_apply_eq_mfderiv_apply (f : G → ℝ) (g : G)
-    (v : TangentSpace I g) :
-    mvfderiv I f g v = mfderiv I 𝓘(ℝ, ℝ) f g v := by
-  rw [mvfderiv, ContinuousLinearMap.comp_apply]
-  -- `fromTangentSpace` is Mathlib's explicit interface for this canonical identification.
-  rfl
-
 section Complete
 
 variable [CompleteSpace E]

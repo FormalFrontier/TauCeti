@@ -122,7 +122,7 @@ theorem HasMFDerivAt.hasDerivAt_comp_mul_mulInvariantExp_smul {f : G → ℝ} {g
   -- The dependent source fiber of `hcomp` is `TangentSpace I (g * 1)`, so the composition
   -- cannot be rewritten before transporting along `g * 1 = g`. After exposing the invariant
   -- field, the `rfl` goals below are exactly that fiber collapse and composition application.
-  change HasDerivAt _ (f' ((mfderiv I I (fun x : G => g * x) 1) Y)) 0
+  simp only [mulInvariantVectorField]
   convert h using 1
   all_goals rfl
 
