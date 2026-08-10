@@ -43,15 +43,8 @@ variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
   {G : Type*} [TopologicalSpace G] [ChartedSpace H G] [Group G]
   [FiniteDimensional ℝ E] [LieGroup I ∞ G]
 
-local instance lieGroupMinSmoothnessThreeRepresentationDifferential :
-    LieGroup I (minSmoothness ℝ 3) G :=
-  LieGroup.of_le (I := I) (G := G) (m := minSmoothness ℝ 3) (n := ∞)
-    (by simpa using (inferInstance : ENat.LEInfty (3 : ℕ∞ω)).out)
-
-local instance lieGroupBoundarylessManifoldRepresentationDifferential :
-    BoundarylessManifold I G where
-  isInteriorPoint' g :=
-    ContMDiffMul.isInteriorPoint (I := I) (n := ∞) (by simp) g
+attribute [local instance] LieGroup.minSmoothnessThree
+attribute [local instance] ContMDiffMul.boundarylessManifold
 
 /-- Mathlib's algebraic adjoint map, regarded as a bounded operator on the finite-dimensional Lie
 algebra. -/
