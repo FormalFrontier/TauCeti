@@ -32,6 +32,8 @@ so nothing is lost by pinning a model.
   `TauCeti.ContRepresentation.IsUnitary.congr`: the transport preserves continuity and unitarity.
 * `TauCeti.ContRepresentation.matrixCoeff_congr`: the matrix coefficients of the transport at the
   transported vectors are those of the original representation.
+* `TauCeti.ContRepresentation.matrixCoeff_congr_adjoint`: the same for an equivalence that is not
+  isometric, where the second vector moves along the adjoint of `e⁻¹` instead of along `e`.
 -/
 
 public section
@@ -105,6 +107,31 @@ theorem matrixCoeff_congr (e : V ≃ₗᵢ[𝕜] W) {π : ContRepresentation �
   simp
 
 end CongrIsometry
+
+section CongrAdjoint
+
+variable {𝕜 G V W : Type*} [RCLike 𝕜] [Monoid G] [TopologicalSpace G]
+  [NormedAddCommGroup V] [InnerProductSpace 𝕜 V] [CompleteSpace V]
+  [NormedAddCommGroup W] [InnerProductSpace 𝕜 W] [CompleteSpace W]
+
+/-- **Transport along an arbitrary continuous linear equivalence moves matrix coefficients along
+`e` and along the adjoint of `e⁻¹`.** For an `e` that is not isometric the second vector has to be
+moved by `(e⁻¹)†` rather than by `e`, since it is paired with the transported vector rather than
+transported itself.
+
+This is `TauCeti.ContRepresentation.matrixCoeff_congr` with the isometry hypothesis dropped: for a
+linear isometry equivalence `(e⁻¹)† = e`, and the two statements agree. It is what says that being
+a matrix coefficient depends only on the *equivalence class* of a representation, so a
+representation may be replaced by any conjugate of it — for instance by a unitary one. -/
+theorem matrixCoeff_congr_adjoint (e : V ≃L[𝕜] W) {π : ContRepresentation 𝕜 G V}
+    (hπ : Continuous π) (v w : V) :
+    matrixCoeff (congr e π) (continuous_congr e hπ) (e v)
+        (ContinuousLinearMap.adjoint (e.symm : W →L[𝕜] V) w) = matrixCoeff π hπ v w := by
+  ext g
+  rw [matrixCoeff_apply, matrixCoeff_apply, congr_apply, ContinuousLinearMap.adjoint_inner_right]
+  simp
+
+end CongrAdjoint
 
 end ContRepresentation
 
