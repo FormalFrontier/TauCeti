@@ -61,11 +61,11 @@ private abbrev repeatedWord : Relator (Fin 2) :=
   a ⬝ b ⬝ a ⬝ .inv b
 
 /-- The word `ab(abab⁻¹)³`, whose fifth power is an ATLAS relator for `J₁`. -/
-private abbrev orderFiveWord : Relator (Fin 2) :=
+private abbrev fifthPowerBase : Relator (Fin 2) :=
   a ⬝ b ⬝ .pow repeatedWord 3
 
 /-- The word `ab(abab⁻¹)⁶abab(ab⁻¹)²`, whose square is an ATLAS relator for `J₁`. -/
-private abbrev orderTwoWord : Relator (Fin 2) :=
+private abbrev squareBase : Relator (Fin 2) :=
   a ⬝ b ⬝ .pow repeatedWord 6 ⬝ a ⬝ b ⬝ a ⬝ b ⬝ .pow (a ⬝ .inv b) 2
 
 /-- The ATLAS version 3 finite presentation of the first Janko group `J₁` on its standard
@@ -91,8 +91,8 @@ def j1Presentation : GroupPresentation where
     [ .pow a 2,
       .pow b 3,
       .pow (a ⬝ b) 7,
-      .pow orderFiveWord 5,
-      .pow orderTwoWord 2 ]
+      .pow fifthPowerBase 5,
+      .pow squareBase 2 ]
 
 /-- The generator and relator counts recorded for `J₁` agree with the transcribed data. -/
 theorem j1Presentation_matchesMetadata : j1Presentation.matchesMetadata := by decide
