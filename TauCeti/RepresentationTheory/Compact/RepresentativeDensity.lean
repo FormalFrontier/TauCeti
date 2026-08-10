@@ -49,6 +49,13 @@ in them, so the images of the matrix coefficients span a dense subspace of `L²(
 orthogonal complement is therefore trivial. That vanishing complement is the hypothesis of
 `HilbertBasis.mkOfOrthogonalEqBot`, so it is the form in which Layer 5 consumes this file.
 
+## Implementation notes
+
+The uniform density and the point separation drawn from it are purely topological statements, so
+they take no measurable structure on `G`: the Haar measure their proofs run through is built on the
+Borel σ-algebra installed inside those proofs. Only the `L²` statements name a measure, and they
+alone carry `[MeasurableSpace G] [BorelSpace G]`.
+
 ## Main statements
 
 * `TauCeti.dense_representativeSubmodule`: **the Peter-Weyl density theorem.** The representative
@@ -89,18 +96,16 @@ open _root_.TauCeti.ContRepresentation
 section CompactGroup
 
 variable {𝕜 G : Type*} [RCLike 𝕜] [Group G] [TopologicalSpace G] [IsTopologicalGroup G]
-  [CompactSpace G] [T2Space G] [MeasurableSpace G] [BorelSpace G]
+  [CompactSpace G] [T2Space G]
 
 /-! ### Uniform density -/
 
 variable (𝕜 G) in
 /-- **The Peter-Weyl density theorem.** The representative ring `𝓡(G)` of a compact Hausdorff group
-is uniformly dense in `C(G, 𝕜)`.
-
-A continuous `f` is approximated to within `ε / 2` by `k * f` for a mollifying kernel `k` supported
-where `f` varies little, and `k * f` lies in the closure of `𝓡(G)` because a mollifying kernel is
-symmetric. So `f` lies in the closure of the closure of `𝓡(G)`. -/
+is uniformly dense in `C(G, 𝕜)`. -/
 theorem dense_representativeSubmodule : Dense (representativeSubmodule 𝕜 G : Set C(G, 𝕜)) := by
+  let : MeasurableSpace G := borel G
+  have : BorelSpace G := ⟨rfl⟩
   intro f
   rw [← closure_closure (s := (representativeSubmodule 𝕜 G : Set C(G, 𝕜)))]
   refine Metric.mem_closure_iff.2 fun ε hε => ?_
@@ -134,9 +139,7 @@ theorem representativeStarSubalgebra_dense :
 
 /-! ### Point separation -/
 
-/-- **The representative ring separates the points of a compact Hausdorff group.** A Urysohn
-function `F` takes the values `0` and `1` at two distinct points, and a member of `𝓡(G)` within
-`1 / 2` of `F` in the uniform norm cannot take equal values at them.
+/-- **The representative ring separates the points of a compact Hausdorff group.**
 
 Point separation is a *corollary* of `TauCeti.dense_representativeSubmodule`, and the roadmap's
 non-circular route to Peter-Weyl depends on its never being assumed beforehand. -/
@@ -173,25 +176,18 @@ theorem representativeStarSubalgebra_separatesPoints (x y : G) (hxy : x ≠ y) :
   obtain ⟨f, hf, hne⟩ := exists_mem_representativeSubmodule_apply_ne (𝕜 := 𝕜) x y hxy
   exact ⟨f, mem_representativeStarSubalgebra_iff.2 hf, hne⟩
 
-/-- **A single representative function already separates two distinct points.** A span separates
-two points only if one of its generators does, since the functions taking equal values at a fixed
-pair of points form a submodule. -/
+/-- **A single representative function already separates two distinct points**, and not merely a
+linear combination of representative functions. -/
 theorem exists_isRepresentative_apply_ne (x y : G) (hxy : x ≠ y) :
     ∃ f : C(G, 𝕜), IsRepresentative f ∧ f x ≠ f y := by
   by_contra hcon
-  have hall : ∀ f : C(G, 𝕜), IsRepresentative f → f x = f y := by
+  have hall : Set.EqOn (ContinuousMap.evalCLM 𝕜 x).toLinearMap
+      (ContinuousMap.evalCLM 𝕜 y).toLinearMap {f : C(G, 𝕜) | IsRepresentative f} := by
     intro f hf
     by_contra h
     exact hcon ⟨f, hf, h⟩
-  have hspan : ∀ f ∈ representativeSubmodule 𝕜 G, f x = f y := by
-    intro f hf
-    induction hf using Submodule.span_induction with
-    | mem a ha => exact hall a ha
-    | zero => rfl
-    | add a b _ _ iha ihb => rw [ContinuousMap.add_apply, ContinuousMap.add_apply, iha, ihb]
-    | smul c a _ ih => rw [ContinuousMap.smul_apply, ContinuousMap.smul_apply, ih]
   obtain ⟨g, hg, hgxy⟩ := exists_mem_representativeSubmodule_apply_ne (𝕜 := 𝕜) x y hxy
-  exact hgxy (hspan g hg)
+  exact hgxy (LinearMap.eqOn_span hall (representativeSubmodule_eq_span 𝕜 G ▸ hg))
 
 /-- **A compact Hausdorff group has enough finite-dimensional representations.** Two distinct
 elements of `G` act differently in some finite-dimensional continuous representation.
@@ -201,24 +197,23 @@ representations of a compact Hausdorff group are jointly faithful. -/
 theorem exists_contRepresentation_apply_ne (x y : G) (hxy : x ≠ y) :
     ∃ (n : ℕ) (π : ContRepresentation 𝕜 G (EuclideanSpace 𝕜 (Fin n))),
       Continuous π ∧ π x ≠ π y := by
-  obtain ⟨-, ⟨n, π, hπ, v, w, rfl⟩, hne⟩ := exists_isRepresentative_apply_ne (𝕜 := 𝕜) x y hxy
+  obtain ⟨f, hf, hne⟩ := exists_isRepresentative_apply_ne (𝕜 := 𝕜) x y hxy
+  obtain ⟨n, π, hπ, v, w, rfl⟩ := isRepresentative_iff.1 hf
   refine ⟨n, π, hπ, fun hcon => hne ?_⟩
   rw [matrixCoeff_apply, matrixCoeff_apply, hcon]
 
 /-! ### Density in `L²(G)` -/
 
+section LTwo
+
+variable [MeasurableSpace G] [BorelSpace G]
+
 variable (𝕜 G) in
-/-- **The representative ring is dense in `L²(G)`.** The continuous functions are dense in `L²` of a
-finite measure on a compact space, and `𝓡(G)` is uniformly dense in the continuous functions, so
-its image spans a dense subspace of `L²(G)`. -/
+/-- **The representative ring is dense in `L²(G)`.** -/
 theorem dense_image_toLp_representativeSubmodule :
-    Dense (ContinuousMap.toLp 2 (haarProb G) 𝕜 '' (representativeSubmodule 𝕜 G : Set C(G, 𝕜))) := by
-  rw [← dense_closure]
-  refine Dense.mono ?_
-    (ContinuousMap.toLp_denseRange (E := 𝕜) (p := 2) (haarProb G) 𝕜 (by simp))
-  rintro - ⟨f, rfl⟩
-  exact image_closure_subset_closure_image (ContinuousMap.toLp 2 (haarProb G) 𝕜).continuous
-    ⟨f, dense_representativeSubmodule 𝕜 G f, rfl⟩
+    Dense (ContinuousMap.toLp 2 (haarProb G) 𝕜 '' (representativeSubmodule 𝕜 G : Set C(G, 𝕜))) :=
+  (ContinuousMap.toLp_denseRange (E := 𝕜) (p := 2) (haarProb G) 𝕜 (by simp)).dense_image
+    (ContinuousMap.toLp 2 (haarProb G) 𝕜).continuous (dense_representativeSubmodule 𝕜 G)
 
 variable (𝕜 G) in
 /-- The image of the representative ring in `L²(G)` has topological closure everything. -/
@@ -241,6 +236,8 @@ theorem orthogonal_map_toLp_representativeSubmodule_eq_bot :
         C(G, 𝕜) →L[𝕜] Lp 𝕜 2 (haarProb G)).toLinearMap)ᗮ = ⊥ :=
   Submodule.topologicalClosure_eq_top_iff.1
     (map_toLp_representativeSubmodule_topologicalClosure_eq_top 𝕜 G)
+
+end LTwo
 
 end CompactGroup
 
