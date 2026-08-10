@@ -96,18 +96,6 @@ private def g2ReflectionPerm (i : Fin 12) : Fin 12 ≃ Fin 12 :=
 @[simp] private lemma g2ReflectionPerm_apply (i j : Fin 12) :
     g2ReflectionPerm i j = g2ReflectionIndex i j := rfl
 
-/-- The standard perfect pairing between the weight and coweight coordinate lattices. -/
-private def g2Pairing : (Fin 2 → ℤ) →ₗ[ℤ] (Fin 2 → ℤ) →ₗ[ℤ] ℤ :=
-  dotProductBilin ℤ ℤ
-
-private lemma g2Pairing_eq : g2Pairing = (dotProductEquiv ℤ (Fin 2)).toLinearMap := by
-  ext x y
-  simp [g2Pairing]
-
-private instance : g2Pairing.IsPerfPair := by
-  rw [g2Pairing_eq]
-  infer_instance
-
 private lemma g2ReflectionIndex_root (i j : Fin 12) :
     g2Root j - (g2Root j ⬝ᵥ g2Coroot i) • g2Root i =
       g2Root (g2ReflectionIndex i j) := by
@@ -124,20 +112,20 @@ Both lattices use `Fin 2 -> Z`: fundamental weights on the root side and simple 
 coroot side. Root indices `0` and `1` are the short and long simple roots respectively, as pinned
 by `g2SimplyConnectedRootDatum_pairing_castLE`. -/
 def g2SimplyConnectedRootDatum : RootDatum (Fin 12) (Fin 2 → ℤ) (Fin 2 → ℤ) where
-  toLinearMap := g2Pairing
+  toLinearMap := (dotProductEquiv ℤ (Fin 2)).toLinearMap
   root := g2Root
   coroot := g2Coroot
   root_coroot_two := by
     intro i
-    fin_cases i <;> norm_num [g2Pairing, g2Root, g2Coroot, dotProduct]
+    fin_cases i <;> norm_num [g2Root, g2Coroot, dotProduct]
   reflectionPerm := g2ReflectionPerm
   reflectionPerm_root := by
     intro i j
-    simpa only [g2Pairing, dotProductBilin_apply_apply, g2ReflectionPerm_apply] using
+    simpa [dotProductEquiv_apply_apply, g2ReflectionPerm_apply] using
       g2ReflectionIndex_root i j
   reflectionPerm_coroot := by
     intro i j
-    simpa only [g2Pairing, dotProductBilin_apply_apply, g2ReflectionPerm_apply] using
+    simpa [dotProductEquiv_apply_apply, g2ReflectionPerm_apply] using
       g2ReflectionIndex_coroot i j
 
 @[simp] lemma g2SimplyConnectedRootDatum_root : g2SimplyConnectedRootDatum.root = g2Root := (rfl)
