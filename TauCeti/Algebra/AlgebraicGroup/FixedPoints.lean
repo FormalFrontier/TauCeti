@@ -238,8 +238,9 @@ theorem coe_fixedPointsEquiv_apply (φ : A →ₐ[R] A)
       mapValue (H := H) (_root_.AlgHom.equalizer φ (_root_.AlgHom.id R A)).val g :=
   rfl
 
-/-- The identity endomorphism of the value algebra fixes every point. -/
-@[simp]
+/-- The identity endomorphism of the value algebra fixes every point. This is not `@[simp]`:
+`mapValue_id` already rewrites the left-hand side, after which `MonoidHom.eqLocus_same` closes
+the goal, so the statement below is never in simp-normal form. -/
 theorem eqLocus_mapValue_id_id :
     MonoidHom.eqLocus (mapValue (H := H) (_root_.AlgHom.id R A)) (MonoidHom.id _) = ⊤ := by
   rw [mapValue_id]
