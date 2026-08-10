@@ -6,7 +6,6 @@ module
 
 public import TauCeti.RepresentationTheory.Continuous.Schur
 public import TauCeti.RepresentationTheory.Continuous.Transport
-public import TauCeti.RepresentationTheory.Continuous.Unitary
 
 /-!
 # Equivalent irreducible unitary representations are unitarily equivalent
@@ -120,14 +119,13 @@ theorem exists_linearIsometryEquiv_congr_eq {π : ContRepresentation 𝕜 G V}
     intro v
     rw [hL, norm_smul, hbnorm, hnorm v, ← mul_assoc, inv_mul_cancel₀ hsqrt.ne', one_mul]
   set e : V ≃ₗᵢ[𝕜] W := ⟨L, hLnorm⟩
+  -- `e` is `L` with its norm bundled, so it acts as `L` does
+  have he : ∀ v : V, e v = b • T v := hL
+  have key : ∀ (g : G) (v : V), e (π g v) = ρ g (e v) := fun g v ↦ by
+    rw [he, he, hTapp, map_smul]
   refine ⟨e, DFunLike.ext _ _ fun g ↦ ContinuousLinearMap.ext fun x ↦ ?_⟩
-  have key : ∀ (g : G) (v : V), e (π g v) = ρ g (e v) := by
-    intro g v
-    change L (π g v) = ρ g (L v)
-    rw [hL, hL, hTapp, map_smul]
-  rw [congr_apply]
-  change e (π g (e.symm x)) = ρ g x
-  rw [key g (e.symm x), e.apply_symm_apply]
+  rw [congr_apply, LinearIsometryEquiv.coe_toContinuousLinearEquiv,
+    LinearIsometryEquiv.coe_symm_toContinuousLinearEquiv, key g (e.symm x), e.apply_symm_apply]
 
 end ContRepresentation
 

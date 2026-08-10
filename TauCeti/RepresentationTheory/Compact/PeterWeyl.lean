@@ -9,8 +9,7 @@ public import TauCeti.RepresentationTheory.Compact.Orthonormal
 public import TauCeti.RepresentationTheory.Compact.RepresentativeDensity
 public import TauCeti.RepresentationTheory.Continuous.Conjugate
 public import TauCeti.RepresentationTheory.Continuous.OrthogonalDecomposition
-public import TauCeti.RepresentationTheory.Continuous.Transport
-public import TauCeti.RepresentationTheory.Continuous.UnitaryEquivalence
+public import TauCeti.RepresentationTheory.Continuous.Unitary.Equivalence
 
 /-!
 # The Peter-Weyl theorem: the matrix coefficients are a Hilbert basis of `L²(G)`
@@ -427,7 +426,7 @@ theorem orthogonal_span_peterWeylFamily_eq_bot (h : IsIrrepSkeleton models) :
   have hsub : ContinuousMap.toLp 2 (haarProb G) 𝕜 '' (modelSubmodule models : Set C(G, 𝕜)) ⊆
       (P : Set (Lp 𝕜 2 (haarProb G))) := by
     rintro - ⟨F, hF, rfl⟩
-    change ContinuousMap.toLp 2 (haarProb G) 𝕜 F ∈ P
+    rw [SetLike.mem_coe]
     induction hF using Submodule.span_induction with
     | mem x hx =>
         obtain ⟨i, v, w, rfl⟩ := hx
@@ -482,20 +481,17 @@ instance IrrepModel.instSetoid : Setoid (IrrepModel 𝕜 G) where
   iseqv :=
     { refl m := by
         refine ⟨LinearIsometryEquiv.refl 𝕜 _, ?_⟩
-        change ContRepresentation.congr (ContinuousLinearEquiv.refl 𝕜 _) m.rep = m.rep
-        exact ContRepresentation.congr_refl _
+        rw [LinearIsometryEquiv.toContinuousLinearEquiv_refl, ContRepresentation.congr_refl]
       symm := by
         rintro m m' ⟨e, he⟩
         refine ⟨e.symm, ?_⟩
-        change ContRepresentation.congr e.toContinuousLinearEquiv.symm m'.rep = m.rep
-        rw [← he]
-        exact ContRepresentation.congr_symm_congr _ _
+        rw [LinearIsometryEquiv.toContinuousLinearEquiv_symm, ← he,
+          ContRepresentation.congr_symm_congr]
       trans := by
         rintro m m' m'' ⟨e, he⟩ ⟨f, hf⟩
         refine ⟨e.trans f, ?_⟩
-        change ContRepresentation.congr
-          (e.toContinuousLinearEquiv.trans f.toContinuousLinearEquiv) m.rep = m''.rep
-        rw [← ContRepresentation.congr_congr, he, hf] }
+        rw [LinearIsometryEquiv.toContinuousLinearEquiv_trans, ← ContRepresentation.congr_congr,
+          he, hf] }
 
 /-- **The unitary dual of `G` in its standard models**: the models of finite-dimensional
 irreducible unitary continuous representations, up to unitary equivalence. This is the index of

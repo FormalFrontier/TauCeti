@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.RepresentationTheory.Compact.Averaging
-public import TauCeti.RepresentationTheory.Continuous.Unitary
+public import TauCeti.RepresentationTheory.Continuous.Unitary.Basic
 public import Mathlib.Analysis.InnerProductSpace.Positive
 import Mathlib.MeasureTheory.Integral.Bochner.ContinuousLinearMap
 

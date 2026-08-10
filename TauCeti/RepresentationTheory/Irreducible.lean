@@ -66,17 +66,15 @@ namespace Representation
 
 variable {k G V : Type*} [Field k] [Monoid G] [AddCommGroup V] [Module k V]
 
-/-- **An irreducible representation has a nonzero carrier.** Irreducibility asks the lattice of
-subrepresentations to have two distinct elements `⊥` and `⊤`, which a zero space cannot supply. -/
+open scoped MonoidAlgebra in
+/-- **An irreducible representation has a nonzero carrier.** This is `IsSimpleModule.nontrivial`
+for `ρ.asModule`, read back on `V` along `ρ.asModuleEquiv`; the Mathlib statement is not an
+instance, so nothing supplies `Nontrivial V` without naming it. -/
 theorem IsIrreducible.nontrivial {ρ : Representation k G V} (h : ρ.IsIrreducible) :
-    Nontrivial V := by
+    Nontrivial V :=
   have _ : ρ.IsIrreducible := h
-  rw [← not_subsingleton_iff_nontrivial]
-  intro hs
-  refine bot_ne_top (α := Subrepresentation ρ) (Subrepresentation.toSubmodule_injective ?_)
-  rw [Subrepresentation.toSubmodule_bot, Subrepresentation.toSubmodule_top]
-  ext x
-  simpa using Subsingleton.elim x 0
+  have _ := IsSimpleModule.nontrivial k[G] ρ.asModule
+  ρ.asModuleEquiv.symm.toEquiv.nontrivial
 
 /-- A representation on a one-dimensional vector space is irreducible. -/
 theorem isIrreducible_of_finrank_eq_one (ρ : Representation k G V)
@@ -123,11 +121,11 @@ theorem isIrreducible_of_linearEquiv {W : Type*} [AddCommGroup W] [Module k W]
     Submodule.map_comap_eq_of_surjective e.surjective _
   refine (eq_bot_or_eq_top τ').imp (fun hτ => ?_) fun hτ => ?_
   · refine Subrepresentation.toSubmodule_injective ?_
-    rw [← hmap, show τ'.toSubmodule = (⊥ : Submodule k V) from congrArg _ hτ, Submodule.map_bot,
+    rw [← hmap, hτ, Subrepresentation.toSubmodule_bot, Submodule.map_bot,
       Subrepresentation.toSubmodule_bot]
   · refine Subrepresentation.toSubmodule_injective ?_
-    rw [← hmap, show τ'.toSubmodule = (⊤ : Submodule k V) from congrArg _ hτ,
-      Subrepresentation.toSubmodule_top, Submodule.map_top, LinearEquiv.range]
+    rw [← hmap, hτ, Subrepresentation.toSubmodule_top, Submodule.map_top, LinearEquiv.range,
+      Subrepresentation.toSubmodule_top]
 
 /-- A subrepresentation that is an **atom** of the lattice of subrepresentations -- nonzero, with
 no subrepresentation strictly between it and zero -- carries an irreducible representation.  The
