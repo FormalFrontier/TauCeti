@@ -6,7 +6,9 @@ module
 
 public import TauCeti.Algebra.Lie.Sl2.Classification
 public import TauCeti.Algebra.Lie.Sl2.CompleteReducibility
-public import TauCeti.Algebra.Lie.Submodule.Atom
+-- Non-public: `TauCeti.isIrreducible_iff_isAtom` appears only inside a proof, never in the type of
+-- an exported declaration.
+import TauCeti.Algebra.Lie.Submodule.Atom
 
 /-!
 # Every finite-dimensional `sl₂`-module is a direct sum of the `V(n)`

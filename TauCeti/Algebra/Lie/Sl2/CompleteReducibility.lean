@@ -6,7 +6,9 @@ module
 
 public import Mathlib.Algebra.Lie.Quotient
 public import TauCeti.Algebra.Lie.Sl2.Casimir
-public import TauCeti.Algebra.Lie.Submodule.Atom
+-- Non-public: `TauCeti.isIrreducible_iff_isAtom` appears only inside a proof, never in the type of
+-- an exported declaration.
+import TauCeti.Algebra.Lie.Submodule.Atom
 
 /-!
 # Complete reducibility for `sl₂`
