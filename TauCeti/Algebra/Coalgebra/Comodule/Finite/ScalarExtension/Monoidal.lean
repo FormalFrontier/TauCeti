@@ -61,7 +61,7 @@ private theorem scalarExtension_associativity_tmul
                 ((1 : A) ⊗ₜ[R] ((m ⊗ₜ[R] n) ⊗ₜ[R] p)))) := rfl
 
 /-- Scalar extension from finitely generated comodules to semimodules is strong monoidal. -/
-noncomputable abbrev instMonoidalScalarExtensionFunctor :
+noncomputable instance instMonoidalScalarExtensionFunctor :
     (scalarExtensionFunctor.{u, v, u, u} R H A).Monoidal := by
   let model : FGComoduleCat.{u, v, u} R H ⥤ SemimoduleCat.{u} A :=
     { obj := fun M ↦ SemimoduleCat.of A (A ⊗[R] M)
@@ -169,8 +169,6 @@ noncomputable abbrev instMonoidalScalarExtensionFunctor :
         (fun {M N} f ↦ by
           rw [scalarExtensionFunctor_map]
           simp [model]))
-
-attribute [instance] instMonoidalScalarExtensionFunctor
 
 open Functor.LaxMonoidal Functor.OplaxMonoidal
 
