@@ -86,7 +86,7 @@ theorem graphPermA_ne_one {n : ℕ} (hn : 2 ≤ n) : graphPermA n ≠ 1 := by
   simp [graphPermA, pow_two, Equiv.Perm.mul_apply]
 
 /-- Reversal of a chain of at least two nodes has order exactly two. -/
-theorem orderOf_graphPermA {n : ℕ} (hn : 2 ≤ n) : orderOf (graphPermA n) = 2 :=
+@[simp] theorem orderOf_graphPermA {n : ℕ} (hn : 2 ≤ n) : orderOf (graphPermA n) = 2 :=
   orderOf_eq_prime (graphPermA_sq n) (graphPermA_ne_one hn)
 
 /-- The final-index swap sends index `n - 2` to index `n - 1`; for `4 ≤ n`, these are the two
@@ -124,7 +124,7 @@ theorem graphPermD_ne_one (n : ℕ) (hn : 2 ≤ n) : graphPermD n hn ≠ 1 := by
   omega
 
 /-- Exchanging the final two indices has order exactly two. -/
-theorem orderOf_graphPermD (n : ℕ) (hn : 2 ≤ n) : orderOf (graphPermD n hn) = 2 :=
+@[simp] theorem orderOf_graphPermD (n : ℕ) (hn : 2 ≤ n) : orderOf (graphPermD n hn) = 2 :=
   orderOf_eq_prime (graphPermD_sq n hn) (graphPermD_ne_one n hn)
 
 /-- The `E₆` graph permutation sends node `0` to node `5`. -/
@@ -144,7 +144,7 @@ theorem orderOf_graphPermD (n : ℕ) (hn : 2 ≤ n) : orderOf (graphPermD n hn) 
 @[simp] theorem graphPermE6_sq : graphPermE6 ^ 2 = 1 := by decide
 
 /-- The `E₆` graph permutation has order exactly two. -/
-theorem orderOf_graphPermE6 : orderOf graphPermE6 = 2 :=
+@[simp] theorem orderOf_graphPermE6 : orderOf graphPermE6 = 2 :=
   orderOf_eq_prime graphPermE6_sq (by decide)
 
 /-- Triality sends outer node `0` to outer node `2`. -/
@@ -160,7 +160,7 @@ theorem orderOf_graphPermE6 : orderOf graphPermE6 = 2 :=
 @[simp] theorem trialityPermD4_pow_three : trialityPermD4 ^ 3 = 1 := by decide
 
 /-- Triality has order exactly three. -/
-theorem orderOf_trialityPermD4 : orderOf trialityPermD4 = 3 :=
+@[simp] theorem orderOf_trialityPermD4 : orderOf trialityPermD4 = 3 :=
   orderOf_eq_prime trialityPermD4_pow_three (by decide)
 
 /-- The rank-two length permutation sends node `0` to node `1`. -/

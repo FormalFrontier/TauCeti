@@ -196,12 +196,6 @@ fork. -/
 theorem four_le_of_twistedD_valid {n : ℕ} {q : PrimePower} (hv : (twistedD n q).Valid) : 4 ≤ n :=
   (inStandardRange_iff _).mp ((valid_iff _).mp hv).1
 
-/-- The rank bound of a valid `²Dₙ(q)` index in the form that indexing the last two nodes of a
-diagram requires. -/
-theorem two_le_of_twistedD_valid {n : ℕ} {q : PrimePower} (hv : (twistedD n q).Valid) : 2 ≤ n := by
-  have := four_le_of_twistedD_valid hv
-  omega
-
 /-- Whether the Steinberg map for an index is an odd power of a half-Frobenius. This selects the
 three Suzuki--Ree families and the Tits group, not the exceptional Dynkin types in general. -/
 def UsesHalfFrobenius : LieTypeIndex → Prop

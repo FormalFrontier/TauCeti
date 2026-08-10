@@ -61,8 +61,7 @@ namespace TauCeti
 
 namespace GraphTwistedIndex
 
-open LieTypeIndex (two_le_of_twistedA_valid two_le_of_twistedD_valid
-  four_le_of_twistedD_valid usesHalfFrobenius_iff)
+open LieTypeIndex (two_le_of_twistedA_valid four_le_of_twistedD_valid usesHalfFrobenius_iff)
 
 /-- The permutation `γ` of the Bourbaki-numbered simple roots that the Steinberg map of a
 graph-twisted index composes with the field Frobenius.
@@ -82,7 +81,8 @@ def diagramPerm : (d : GraphTwistedIndex) → Equiv.Perm (Fin d.1.rank)
   | ⟨⟨.F4 _, _⟩, _⟩ => 1
   | ⟨⟨.G2 _, _⟩, _⟩ => 1
   | ⟨⟨.twistedA n _, _⟩, _⟩ => graphPermA n
-  | ⟨⟨.twistedD n _, hv⟩, _⟩ => graphPermD n (two_le_of_twistedD_valid hv)
+  | ⟨⟨.twistedD n _, hv⟩, _⟩ =>
+      graphPermD n (by have := four_le_of_twistedD_valid hv; omega)
   | ⟨⟨.twistedE6 _, _⟩, _⟩ => graphPermE6
   | ⟨⟨.trialityD4 _, _⟩, _⟩ => trialityPermD4
   | ⟨⟨.suzuki _, _⟩, hh⟩ | ⟨⟨.reeG2 _, _⟩, hh⟩ | ⟨⟨.reeF4 _, _⟩, hh⟩ | ⟨⟨.tits, _⟩, hh⟩ =>
@@ -221,7 +221,8 @@ variable {n : ℕ} {q : PrimePower}
 /-- The family `²Dₙ(q)` twists by the exchange of the two fork nodes of the `Dₙ` diagram. -/
 @[simp] theorem diagramPerm_twistedD (hv : (LieTypeIndex.twistedD n q).Valid)
     (hh : ¬(LieTypeIndex.twistedD n q).UsesHalfFrobenius) :
-    diagramPerm ⟨⟨_, hv⟩, hh⟩ = graphPermD n (two_le_of_twistedD_valid hv) := by
+    diagramPerm ⟨⟨_, hv⟩, hh⟩ =
+      graphPermD n (by have := four_le_of_twistedD_valid hv; omega) := by
   simp only [diagramPerm]
   rfl
 
@@ -258,7 +259,7 @@ end Twisted
 /-- The permutation attached to a graph-twisted index is an automorphism of the Cartan matrix of
 its underlying Dynkin diagram. This is what allows it to be realized, on the pinned Chevalley group
 of that diagram, by an automorphism permuting the simple root subgroups accordingly. -/
-theorem cartanMatrix_diagramPerm : ∀ (d : GraphTwistedIndex) (i j : Fin d.1.rank),
+@[simp] theorem cartanMatrix_diagramPerm : ∀ (d : GraphTwistedIndex) (i j : Fin d.1.rank),
     d.1.dynkinType.cartanMatrix (d.diagramPerm i) (d.diagramPerm j) =
       d.1.dynkinType.cartanMatrix i j
   | ⟨⟨.A _ _, _⟩, _⟩, _, _ | ⟨⟨.B _ _, _⟩, _⟩, _, _ | ⟨⟨.C _ _, _⟩, _⟩, _, _
@@ -278,25 +279,9 @@ theorem cartanMatrix_diagramPerm : ∀ (d : GraphTwistedIndex) (i j : Fin d.1.ra
   | ⟨⟨.reeF4 _, _⟩, hh⟩, _, _ | ⟨⟨.tits, _⟩, hh⟩, _, _ =>
       absurd ((usesHalfFrobenius_iff _).mpr trivial) hh
 
-/-- The twist order annihilates the diagram permutation. On the twisted families this is the
-relation `γ ^ 2 = 1` for `²Aₙ`, `²Dₙ` and `²E₆` and `γ ^ 3 = 1` for `³D₄` required of a Steinberg
-map of the form `γ ∘ Frob_q`. -/
-@[simp] theorem diagramPerm_pow_twistOrder :
-    ∀ d : GraphTwistedIndex, d.diagramPerm ^ d.twistOrder = 1
-  | ⟨⟨.A _ _, _⟩, _⟩ | ⟨⟨.B _ _, _⟩, _⟩ | ⟨⟨.C _ _, _⟩, _⟩ | ⟨⟨.D _ _, _⟩, _⟩ | ⟨⟨.E6 _, _⟩, _⟩
-  | ⟨⟨.E7 _, _⟩, _⟩ | ⟨⟨.E8 _, _⟩, _⟩ | ⟨⟨.F4 _, _⟩, _⟩ | ⟨⟨.G2 _, _⟩, _⟩ => by
-      simp only [diagramPerm, twistOrder, one_pow]
-  | ⟨⟨.twistedA n _, _⟩, _⟩ => by simp only [diagramPerm, twistOrder]; exact graphPermA_sq n
-  | ⟨⟨.twistedD n _, _⟩, _⟩ => by simp only [diagramPerm, twistOrder]; exact graphPermD_sq n _
-  | ⟨⟨.twistedE6 _, _⟩, _⟩ => by simp only [diagramPerm, twistOrder]; exact graphPermE6_sq
-  | ⟨⟨.trialityD4 _, _⟩, _⟩ => by
-      simp only [diagramPerm, twistOrder]; exact trialityPermD4_pow_three
-  | ⟨⟨.suzuki _, _⟩, hh⟩ | ⟨⟨.reeG2 _, _⟩, hh⟩ | ⟨⟨.reeF4 _, _⟩, hh⟩ | ⟨⟨.tits, _⟩, hh⟩ =>
-      absurd ((usesHalfFrobenius_iff _).mpr trivial) hh
-
 /-- The twist order of an index is exactly the order of its diagram permutation, so the superscript
 in the family name is not an independent convention. -/
-theorem orderOf_diagramPerm : ∀ d : GraphTwistedIndex, orderOf d.diagramPerm = d.twistOrder
+@[simp] theorem orderOf_diagramPerm : ∀ d : GraphTwistedIndex, orderOf d.diagramPerm = d.twistOrder
   | ⟨⟨.A _ _, _⟩, _⟩ | ⟨⟨.B _ _, _⟩, _⟩ | ⟨⟨.C _ _, _⟩, _⟩ | ⟨⟨.D _ _, _⟩, _⟩ | ⟨⟨.E6 _, _⟩, _⟩
   | ⟨⟨.E7 _, _⟩, _⟩ | ⟨⟨.E8 _, _⟩, _⟩ | ⟨⟨.F4 _, _⟩, _⟩ | ⟨⟨.G2 _, _⟩, _⟩ => by
       simp only [diagramPerm, twistOrder, orderOf_one]
@@ -309,6 +294,14 @@ theorem orderOf_diagramPerm : ∀ d : GraphTwistedIndex, orderOf d.diagramPerm =
       simp only [diagramPerm, twistOrder]; exact orderOf_trialityPermD4
   | ⟨⟨.suzuki _, _⟩, hh⟩ | ⟨⟨.reeG2 _, _⟩, hh⟩ | ⟨⟨.reeF4 _, _⟩, hh⟩ | ⟨⟨.tits, _⟩, hh⟩ =>
       absurd ((usesHalfFrobenius_iff _).mpr trivial) hh
+
+/-- The twist order annihilates the diagram permutation. On the twisted families this is the
+relation `γ ^ 2 = 1` for `²Aₙ`, `²Dₙ` and `²E₆` and `γ ^ 3 = 1` for `³D₄` required of a Steinberg
+map of the form `γ ∘ Frob_q`. -/
+@[simp] theorem diagramPerm_pow_twistOrder (d : GraphTwistedIndex) :
+    d.diagramPerm ^ d.twistOrder = 1 := by
+  rw [← orderOf_diagramPerm d]
+  exact pow_orderOf_eq_one d.diagramPerm
 
 end GraphTwistedIndex
 
