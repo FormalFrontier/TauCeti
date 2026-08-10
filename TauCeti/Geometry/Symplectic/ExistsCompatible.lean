@@ -42,10 +42,6 @@ are those of McDuff--Salamon, *J-holomorphic Curves and Symplectic Topology*, Se
 * `TauCeti.SymplecticForm.even_finrank` and `TauCeti.SymplecticForm.isEmpty_of_odd_finrank`: a
   symplectic vector space has even dimension, so an odd-dimensional space carries no symplectic
   form at all.
-
-The Lagrangian consequence, that every Lagrangian subspace is maximal totally real for some
-compatible structure, lives downstream in
-`TauCeti/Geometry/Symplectic/Lagrangian/ExistsCompatible.lean`.
 -/
 
 public section
