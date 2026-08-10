@@ -67,7 +67,6 @@ lemma baseChange_obj (f : R →+* S) (G : AffineGroupSchemeCat (CommRingCat.of R
 
 /-- The underlying object over `Spec S` of a base-changed affine group scheme is the pullback of
 the original object over `Spec R`. -/
-@[simp]
 lemma baseChange_toOver (f : R →+* S) (G : AffineGroupSchemeCat (CommRingCat.of R)) :
     (baseChange f G).obj.X =
       (Over.pullback (Spec.map (CommRingCat.ofHom f))).obj G.obj.X :=
@@ -75,7 +74,6 @@ lemma baseChange_toOver (f : R →+* S) (G : AffineGroupSchemeCat (CommRingCat.o
 
 /-- The underlying scheme of a base-changed affine group scheme is the corresponding fibre
 product. -/
-@[simp]
 lemma baseChange_toScheme (f : R →+* S) (G : AffineGroupSchemeCat (CommRingCat.of R)) :
     (baseChange f G).obj.X.left =
       Limits.pullback G.obj.X.hom (Spec.map (CommRingCat.ofHom f)) :=
