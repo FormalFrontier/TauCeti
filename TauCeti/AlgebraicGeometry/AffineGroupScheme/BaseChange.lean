@@ -96,9 +96,8 @@ lemma baseChangeMap_hom (f : R ⟶ S) {G H : AffineGroupSchemeCat R} (g : G ⟶ 
 
 /-- Pullback along `Spec S ⟶ Spec R` defines a functor from affine group schemes over
 `Spec R` to affine group schemes over `Spec S`. It is the lift through the affineness property
-of the pullback functor on group objects, so its functor laws are the pullback functor's.
-Exposed so that the coherence isomorphisms below can see through the lift. -/
-@[expose] noncomputable def baseChangeFunctor (f : R ⟶ S) :
+of the pullback functor on group objects, so its functor laws are the pullback functor's. -/
+noncomputable def baseChangeFunctor (f : R ⟶ S) :
     AffineGroupSchemeCat R ⥤ AffineGroupSchemeCat S :=
   (affineGroupSchemeProperty S).lift
     ((affineGroupSchemeProperty R).ι ⋙ (Over.pullback (Spec.map f)).mapGrp)
@@ -110,11 +109,16 @@ lemma baseChangeFunctor_obj (f : R ⟶ S) (G : AffineGroupSchemeCat R) :
     (baseChangeFunctor f).obj G = baseChange f G :=
   (rfl)
 
-/-- The morphism part of `baseChangeFunctor` is base change of affine-group-scheme morphisms. -/
+/-- The morphism part of `baseChangeFunctor` is base change of affine-group-scheme morphisms,
+transported along `baseChangeFunctor_obj` at the source and target. -/
 @[simp]
 lemma baseChangeFunctor_map (f : R ⟶ S) {G H : AffineGroupSchemeCat R} (g : G ⟶ H) :
-    (baseChangeFunctor f).map g = baseChangeMap f g :=
-  (rfl)
+    (baseChangeFunctor f).map g =
+      eqToHom (baseChangeFunctor_obj f G) ≫ baseChangeMap f g ≫
+        eqToHom (baseChangeFunctor_obj f H).symm :=
+  by
+    unfold baseChangeFunctor baseChangeMap baseChange
+    rfl
 
 /-- Base change along the identity of `R` is the identity functor on affine group schemes over
 `Spec R`.
@@ -124,9 +128,11 @@ faithful inclusion of the affine full subcategory; the `eqToIso` only records `S
 which is not definitional. -/
 noncomputable def baseChangeFunctorIdIso :
     baseChangeFunctor (𝟙 R) ≅ 𝟭 (AffineGroupSchemeCat R) :=
-  Functor.fullyFaithfulCancelRight (affineGroupSchemeProperty R).ι
-    (Functor.isoWhiskerLeft _ (Functor.mapGrpNatIso
-      (eqToIso (by simp only [Spec.map_id]) ≪≫ Over.pullbackId) ≪≫ Functor.mapGrpIdIso))
+  by
+    unfold baseChangeFunctor
+    exact Functor.fullyFaithfulCancelRight (affineGroupSchemeProperty R).ι
+      (Functor.isoWhiskerLeft _ (Functor.mapGrpNatIso
+        (eqToIso (by simp only [Spec.map_id]) ≪≫ Over.pullbackId) ≪≫ Functor.mapGrpIdIso))
 
 /-- Base change along a composite `f ≫ g` of ring maps is base change along `f` followed by base
 change along `g`.
@@ -136,10 +142,12 @@ faithful inclusion of the affine full subcategory; the `eqToIso` only records `S
 which is not definitional. -/
 noncomputable def baseChangeFunctorCompIso (f : R ⟶ S) (g : S ⟶ T) :
     baseChangeFunctor (f ≫ g) ≅ baseChangeFunctor f ⋙ baseChangeFunctor g :=
-  Functor.fullyFaithfulCancelRight (affineGroupSchemeProperty T).ι
-    (Functor.isoWhiskerLeft _ (Functor.mapGrpNatIso
-      (eqToIso (by simp only [Spec.map_comp]) ≪≫ Over.pullbackComp (Spec.map g) (Spec.map f)) ≪≫
-        Functor.mapGrpCompIso))
+  by
+    unfold baseChangeFunctor
+    exact Functor.fullyFaithfulCancelRight (affineGroupSchemeProperty T).ι
+      (Functor.isoWhiskerLeft _ (Functor.mapGrpNatIso
+        (eqToIso (by simp only [Spec.map_comp]) ≪≫ Over.pullbackComp (Spec.map g) (Spec.map f)) ≪≫
+          Functor.mapGrpCompIso))
 
 end AffineGroupSchemeCat
 
