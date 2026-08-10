@@ -194,6 +194,17 @@ theorem tangentScalarExtensionLieEquiv_apply
   change tangentScalarExtensionEquiv (R := R) (A := H) (B := B) x = _
   rfl
 
+/-- The inverse scalar-extension Lie equivalence has the inverse scalar-extension linear
+equivalence as its underlying map. -/
+@[simp]
+theorem tangentScalarExtensionLieEquiv_symm_apply
+    (d : Derivation R H (Bialgebra.CounitAlgebra R H B)) :
+    (tangentScalarExtensionLieEquiv (R := R) (H := H) (B := B)).symm d =
+      (tangentScalarExtensionEquiv (R := R) (A := H) (B := B)).symm d := by
+  apply (tangentScalarExtensionLieEquiv (R := R) (H := H) (B := B)).symm_apply_eq.mpr
+  rw [tangentScalarExtensionLieEquiv_apply,
+    (tangentScalarExtensionEquiv (R := R) (A := H) (B := B)).apply_symm_apply]
+
 end ScalarExtension
 
 end Bialgebra

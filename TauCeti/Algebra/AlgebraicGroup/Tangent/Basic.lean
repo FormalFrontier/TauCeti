@@ -135,7 +135,8 @@ instance [CommSemiring R] [Semiring B] [Algebra R B] :
 
 /-- Coefficient scalars associate with the synonym's multiplication, inherited from
 `B`. -/
-instance [Semiring B] : IsScalarTower B (CounitAlgebra R A B) (CounitAlgebra R A B) :=
+instance instIsScalarTowerSemiring [Semiring B] :
+    IsScalarTower B (CounitAlgebra R A B) (CounitAlgebra R A B) :=
   inferInstanceAs (IsScalarTower B B B)
 
 end Bialgebra.CounitAlgebra
