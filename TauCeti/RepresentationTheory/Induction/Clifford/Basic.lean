@@ -55,6 +55,8 @@ conjugates enters.  Finite-dimensionality is used only to *produce* an atom, in
 * `TauCeti.Representation.isSemisimpleRepresentation_comp_subtype_of_isAtom`: if some
   `N`-subrepresentation of an irreducible representation `IsAtom`, then the restriction to `N` is
   semisimple.
+* `TauCeti.Representation.exists_isAtom_comp_subtype`: a finite-dimensional irreducible
+  representation has a minimal nonzero `N`-stable subspace.
 * `TauCeti.Representation.isSemisimpleRepresentation_comp_subtype`: the same conclusion for a
   **finite-dimensional** irreducible representation, where such an atom is automatic.
 
@@ -73,12 +75,12 @@ only the statement.
 This file supplies item (iii) of the **prerequisite** of Layer 5 (Clifford theory over a normal
 subgroup) of `TauCetiRoadmap/RepresentationTheory/InductionRestriction/README.md` — "restriction
 along a subgroup preserves semisimplicity" — in the normal-subgroup case Clifford theory uses,
-as `TauCeti.Representation.isSemisimpleRepresentation_comp_subtype`.  It stops there: the layer's
-**Clifford's theorem** milestone itself, which the roadmap orders after the whole of that
-prerequisite, is not claimed here, and nothing below mentions a decomposition, an isotypic
-component, a multiplicity or a `G`-orbit of constituents.  What the file does leave in place is the
-translation machinery that milestone runs on, since it is the same machinery the semisimplicity
-statement is proved from.
+as `TauCeti.Representation.isSemisimpleRepresentation_comp_subtype`.  It stops there: nothing below
+mentions a decomposition, an isotypic component, a multiplicity or a `G`-orbit of constituents.
+What the file does leave in place is the translation machinery the **Clifford's theorem** milestone
+runs on, since it is the same machinery the semisimplicity statement is proved from; the
+single-orbit half of that milestone is
+`TauCeti/RepresentationTheory/Induction/Clifford/Orbit.lean`.
 
 The mathematics is the classical argument of C. W. Curtis and I. Reiner, *Representation Theory of
 Finite Groups and Associative Algebras*, §49.
@@ -327,10 +329,14 @@ theorem isSemisimpleRepresentation_comp_subtype_of_isAtom [ρ.IsIrreducible]
   rw [← hTsSup, htop, ← Subrepresentation.subrepresentationSubmoduleOrderIso_apply,
     OrderIso.map_top]
 
-/-- **Restriction to a normal subgroup preserves semisimplicity.** The restriction to a normal
-subgroup of a finite-dimensional irreducible representation is semisimple. -/
-theorem isSemisimpleRepresentation_comp_subtype [ρ.IsIrreducible] [FiniteDimensional k V] :
-    _root_.Representation.IsSemisimpleRepresentation (ρ.comp N.subtype) := by
+omit [N.Normal] in
+/-- **A finite-dimensional irreducible representation has a minimal `N`-stable subspace.**  The
+whole space is `N`-stable and nonzero, and in finite dimension a nonzero subrepresentation contains
+an atom.  This is the only place finite-dimensionality enters the theory of translates.
+
+Normality of `N` plays no part: the statement is about the restriction along any subgroup. -/
+theorem exists_isAtom_comp_subtype [ρ.IsIrreducible] [FiniteDimensional k V] :
+    ∃ σ : Subrepresentation (ρ.comp N.subtype), IsAtom σ := by
   have hbot : (⊤ : Subrepresentation (ρ.comp N.subtype)) ≠ ⊥ := by
     intro h
     have h' : (⊤ : Submodule k V) = ⊥ := by
@@ -338,6 +344,13 @@ theorem isSemisimpleRepresentation_comp_subtype [ρ.IsIrreducible] [FiniteDimens
     exact (bot_ne_top (α := Subrepresentation ρ))
       (Subrepresentation.toSubmodule_injective (by simpa using h'.symm))
   obtain ⟨σ, -, hσ⟩ := exists_isAtom_le (ρ := ρ.comp N.subtype) hbot
+  exact ⟨σ, hσ⟩
+
+/-- **Restriction to a normal subgroup preserves semisimplicity.** The restriction to a normal
+subgroup of a finite-dimensional irreducible representation is semisimple. -/
+theorem isSemisimpleRepresentation_comp_subtype [ρ.IsIrreducible] [FiniteDimensional k V] :
+    _root_.Representation.IsSemisimpleRepresentation (ρ.comp N.subtype) := by
+  obtain ⟨σ, hσ⟩ := exists_isAtom_comp_subtype (N := N) ρ
   exact isSemisimpleRepresentation_comp_subtype_of_isAtom ρ hσ
 
 end Clifford
