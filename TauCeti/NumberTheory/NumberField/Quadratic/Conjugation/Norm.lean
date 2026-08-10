@@ -7,6 +7,7 @@ module
 public import Mathlib.NumberTheory.NumberField.Norm
 public import TauCeti.NumberTheory.DedekindDomain.RelNorm
 public import TauCeti.NumberTheory.NumberField.Quadratic.Conjugation.Basic
+import TauCeti.RingTheory.Norm.Quadratic
 
 /-!
 # Norm-principality for quadratic conjugation
@@ -45,47 +46,23 @@ private theorem coe_gen_ne_zero (hmin : minpoly ℤ θ = X ^ 2 - C d) : (θ : K)
 /-- Quadratic conjugation is a nontrivial automorphism: it does not equal the identity, since it
 sends the nonzero generator `θ` to its negative `-θ`. -/
 private theorem quadraticConj_ne_one (hmin : minpoly ℤ θ = X ^ 2 - C d)
-    (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) : (1 : K ≃ₐ[ℚ] K) ≠ quadraticConj hmin hgen := by
+    (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) : quadraticConj hmin hgen ≠ 1 := by
   intro h
   have hθ : (θ : K) = -(θ : K) := by
     have := DFunLike.congr_fun h (θ : K)
-    rwa [AlgEquiv.one_apply, quadraticConj_gen] at this
+    rw [quadraticConj_gen, AlgEquiv.one_apply] at this
+    exact this.symm
   have h2 : (θ : K) + (θ : K) = 0 := by nth_rewrite 2 [hθ]; ring
   exact coe_gen_ne_zero hmin (add_self_eq_zero.mp h2)
-
-/-- The automorphism group of the quadratic field `K/ℚ` has exactly `2` elements. -/
-private theorem card_aut_eq_two (hmin : minpoly ℤ θ = X ^ 2 - C d)
-    (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) : Fintype.card (K ≃ₐ[ℚ] K) = 2 := by
-  refine le_antisymm ?_ ?_
-  · exact (AlgEquiv.card_le).trans (finrank_rat_eq_two hmin hgen).le
-  · exact Fintype.one_lt_card_iff.mpr
-      ⟨1, quadraticConj hmin hgen, quadraticConj_ne_one hmin hgen⟩
-
-/-- The quadratic field `K` is Galois over `ℚ`: it has `finrank = 2` automorphisms
-(the identity and the conjugation). -/
-private theorem isGalois_rat (hmin : minpoly ℤ θ = X ^ 2 - C d)
-    (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) : IsGalois ℚ K :=
-  IsGalois.of_card_aut_eq_finrank ℚ K
-    (by rw [Nat.card_eq_fintype_card, card_aut_eq_two hmin hgen, finrank_rat_eq_two hmin hgen])
-
-/-- The product of an element over the Galois group `{1, σ}` of `K/ℚ` is `y · σy`. -/
-private theorem prod_aut_eq (hmin : minpoly ℤ θ = X ^ 2 - C d)
-    (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) (y : K) :
-    ∏ g : K ≃ₐ[ℚ] K, g y = y * quadraticConj hmin hgen y := by
-  classical
-  have hu : (Finset.univ : Finset (K ≃ₐ[ℚ] K)) = {1, quadraticConj hmin hgen} := by
-    refine (Finset.eq_of_subset_of_card_le (Finset.subset_univ _) ?_).symm
-    rw [Finset.card_univ, card_aut_eq_two hmin hgen,
-      Finset.card_pair (quadraticConj_ne_one hmin hgen)]
-  rw [hu, Finset.prod_pair (quadraticConj_ne_one hmin hgen), AlgEquiv.one_apply]
 
 /-- The relative-norm generator `N(y) = y · σy`: applying `Algebra.norm ℚ` to `y` and coercing to
 `K` gives the product with its conjugate. -/
 private theorem norm_eq_mul_conj (hmin : minpoly ℤ θ = X ^ 2 - C d)
     (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) (y : K) :
     algebraMap ℚ K (Algebra.norm ℚ y) = y * quadraticConj hmin hgen y := by
-  have := isGalois_rat hmin hgen
-  rw [Algebra.norm_eq_prod_automorphisms, prod_aut_eq hmin hgen]
+  have : Algebra.IsQuadraticExtension ℚ K := ⟨finrank_rat_eq_two hmin hgen⟩
+  exact Algebra.IsQuadraticExtension.algebraMap_norm_eq_mul ℚ K
+    (quadraticConj_ne_one hmin hgen) y
 
 /-- **Key norm identity.** For `x : 𝓞 K`, the extension of its integral norm equals `x · σx`, the
 product of `x` with its quadratic conjugate. -/
