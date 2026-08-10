@@ -93,6 +93,7 @@ theorem leftInvariantDerivationLieEquivGroupLieAlgebra_Ad
 
 /-- The canonical isometric identification with the model space intertwines the derivation and
 tangent adjoint actions. -/
+@[simp high]
 theorem leftInvariantDerivationLinearIsometryEquivModelVectorSpace_Ad
     [T2Space G] [BoundarylessManifold I G]
     (g : G) (D : LeftInvariantDerivation I G) :

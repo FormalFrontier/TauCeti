@@ -89,6 +89,7 @@ private theorem continuousAdjointRepresentation_coe :
       modelAdjointRepresentation]
     rfl
 
+/-- The packaged continuous adjoint representation acts by the derivation adjoint action. -/
 @[simp]
 theorem continuousAdjointRepresentation_apply (g : G) (D : LeftInvariantDerivation I G) :
     continuousAdjointRepresentation (I := I) g D = Ad (I := I) g D := by

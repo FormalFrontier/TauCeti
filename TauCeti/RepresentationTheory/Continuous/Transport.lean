@@ -58,13 +58,13 @@ noncomputable def congr (e : V ≃L[𝕜] W) (π : ContRepresentation 𝕜 G V) 
 
 omit [TopologicalSpace G] in
 /-- The action operators of a transported representation. -/
-@[simp]
 theorem congr_apply (e : V ≃L[𝕜] W) (π : ContRepresentation 𝕜 G V) (g : G) (x : W) :
     congr e π g x = e (π g (e.symm x)) :=
   (rfl)
 
 omit [TopologicalSpace G] in
 /-- The operator-valued function underlying a transported representation. -/
+@[simp]
 theorem coe_congr (e : V ≃L[𝕜] W) (π : ContRepresentation 𝕜 G V) :
     ⇑(congr e π) = fun g ↦ e.conjContinuousAlgEquiv (π g) := by
   funext g
