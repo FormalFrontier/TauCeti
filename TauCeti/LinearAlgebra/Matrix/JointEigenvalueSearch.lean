@@ -72,7 +72,7 @@ variable {F : Type u} [Field F] [Fintype F] [DecidableEq F]
 variable {m n : ℕ}
 
 /-- The rectangular matrix formed by stacking the systems
-`(a i • 1 - A i) v = 0`, one block of `n` rows for each `i : Fin m`.
+`(Matrix.diagonal (fun _ => a i) - A i) v = 0`, one block of `n` rows for each `i : Fin m`.
 
 The product row index is flattened to `Fin (m * n)` because `TauCeti.kernelBasis` operates on
 matrices with `Fin` row and column types. -/
