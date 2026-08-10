@@ -7,6 +7,7 @@ module
 public import Mathlib.AlgebraicGeometry.Morphisms.Smooth
 public import Mathlib.CategoryTheory.MorphismProperty.Comma
 public import Mathlib.CategoryTheory.ObjectProperty.Opposite
+public import TauCeti.Algebra.AlgebraicGroup.Smooth.CommHopfAlgCat
 public import TauCeti.AlgebraicGeometry.AffineGroupScheme.Equivalence
 public import TauCeti.AlgebraicGeometry.AffineGroupScheme.HopfSpec
 
@@ -29,7 +30,6 @@ characteristic-`p` base, such as `μₚ` and `αₚ`, remain in the ambient cate
 
 ## Main declarations
 
-* `TauCeti.smoothCommHopfAlgProperty`: the smooth object property on commutative Hopf algebras.
 * `TauCeti.smoothAffineGroupSchemeProperty`: the smooth structural-morphism property on affine
   group schemes.
 * `TauCeti.algebraSmooth_iff_smooth_hopfSpec`: compatibility of the algebraic and
@@ -58,94 +58,6 @@ private instance smooth_respectsIso :
     MorphismProperty.RespectsIso (@Smooth) := by
   rw [HasRingHomProperty.eq_affineLocally @Smooth]
   exact affineLocally_respectsIso (@RingHom.Smooth) RingHom.Smooth.respectsIso
-
-/-- The object property on commutative Hopf algebras selecting coordinate algebras smooth over
-the base ring. -/
-def smoothCommHopfAlgProperty (R : Type u) [CommRing R] :
-    ObjectProperty (CommHopfAlgCat.{u} R) :=
-  fun H => Algebra.Smooth R H
-
-/-- Membership in the smooth commutative-Hopf-algebra object property. -/
-@[simp]
-lemma smoothCommHopfAlgProperty_iff {R : Type u} [CommRing R]
-    (H : CommHopfAlgCat.{u} R) :
-    smoothCommHopfAlgProperty R H ↔ Algebra.Smooth R H :=
-  Iff.rfl
-
-/-- The category of commutative Hopf algebras smooth over a commutative ring `R`.
-
-Smoothness is kept as an object property rather than included in the Hopf algebra typeclass. -/
-abbrev SmoothCommHopfAlgCat (R : Type u) [CommRing R] :=
-  (smoothCommHopfAlgProperty R).FullSubcategory
-
-namespace SmoothCommHopfAlgCat
-
-variable {R : Type u} [CommRing R]
-
-instance : CoeSort (SmoothCommHopfAlgCat R) (Type u) :=
-  ⟨fun H => H.obj⟩
-
-instance commRing (H : SmoothCommHopfAlgCat R) : CommRing H :=
-  inferInstanceAs (CommRing H.obj)
-
-instance hopfAlgebra (H : SmoothCommHopfAlgCat R) : HopfAlgebra R H :=
-  inferInstanceAs (HopfAlgebra R H.obj)
-
-instance smooth (H : SmoothCommHopfAlgCat R) : Algebra.Smooth R H :=
-  (smoothCommHopfAlgProperty_iff H.obj).mp H.property
-
-variable (R) in
-/-- Construct a bundled smooth commutative Hopf algebra from the usual unbundled typeclasses. -/
-abbrev of (H : Type u) [CommRing H] [HopfAlgebra R H] [Algebra.Smooth R H] :
-    SmoothCommHopfAlgCat R :=
-  ⟨CommHopfAlgCat.of R H,
-    (smoothCommHopfAlgProperty_iff _).mpr (inferInstanceAs (Algebra.Smooth R H))⟩
-
-/-- Turn a morphism in `SmoothCommHopfAlgCat` back into a bialgebra morphism. -/
-abbrev toBialgHom {H K : SmoothCommHopfAlgCat R} (φ : H ⟶ K) :
-    H →ₐc[R] K :=
-  φ.hom.hom
-
-/-- Typecheck a bialgebra morphism between smooth commutative Hopf algebras as a morphism in
-`SmoothCommHopfAlgCat`. -/
-abbrev ofHom {H K : Type u} [CommRing H] [CommRing K]
-    [HopfAlgebra R H] [HopfAlgebra R K]
-    [Algebra.Smooth R H] [Algebra.Smooth R K] (φ : H →ₐc[R] K) :
-    of R H ⟶ of R K :=
-  ObjectProperty.homMk (CommHopfAlgCat.ofHom φ)
-
-/-- Two morphisms of smooth commutative Hopf algebras are equal when their underlying bialgebra
-morphisms are equal. -/
-@[ext]
-lemma hom_ext {H K : SmoothCommHopfAlgCat R} {φ ψ : H ⟶ K}
-    (h : toBialgHom φ = toBialgHom ψ) : φ = ψ :=
-  ObjectProperty.hom_ext (P := smoothCommHopfAlgProperty R)
-    (CommHopfAlgCat.hom_ext h)
-
-@[simp]
-lemma toBialgHom_id {H : SmoothCommHopfAlgCat R} :
-    toBialgHom (𝟙 H : H ⟶ H) = BialgHom.id R H :=
-  rfl
-
-@[simp]
-lemma toBialgHom_comp {H K L : SmoothCommHopfAlgCat R}
-    (φ : H ⟶ K) (ψ : K ⟶ L) :
-    toBialgHom (φ ≫ ψ) = (toBialgHom ψ).comp (toBialgHom φ) :=
-  rfl
-
-@[simp]
-lemma ofHom_toBialgHom {H K : SmoothCommHopfAlgCat R} (φ : H ⟶ K) :
-    ofHom (toBialgHom φ) = φ :=
-  rfl
-
-@[simp]
-lemma toBialgHom_ofHom {H K : Type u} [CommRing H] [CommRing K]
-    [HopfAlgebra R H] [HopfAlgebra R K]
-    [Algebra.Smooth R H] [Algebra.Smooth R K] (φ : H →ₐc[R] K) :
-    toBialgHom (ofHom (R := R) φ) = φ :=
-  rfl
-
-end SmoothCommHopfAlgCat
 
 /-- The object property on affine group schemes over `Spec S` selecting those whose structural
 morphism is smooth. -/
