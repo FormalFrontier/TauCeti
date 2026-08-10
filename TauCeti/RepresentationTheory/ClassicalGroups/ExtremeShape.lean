@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+public import Mathlib.Data.Nat.Factorial.NatCast
 public import TauCeti.LinearAlgebra.ExteriorPower
 public import TauCeti.LinearAlgebra.SymmetricPower
 public import TauCeti.RepresentationTheory.ClassicalGroups.ExteriorPower
@@ -88,13 +89,6 @@ open scoped TensorProduct
 universe u
 
 namespace TauCeti
-
-/-- Over a `ℚ`-algebra every factorial is invertible. -/
-private theorem isUnit_natCast_factorial (k : Type*) [CommRing k] [Algebra ℚ k] (d : ℕ) :
-    IsUnit (d.factorial : k) := by
-  have h : IsUnit (d.factorial : ℚ) :=
-    isUnit_iff_ne_zero.2 (Nat.cast_ne_zero.2 d.factorial_ne_zero)
-  simpa using h.map (algebraMap ℚ k)
 
 /-! ### The Young symmetrizer of an extreme shape -/
 
@@ -189,7 +183,8 @@ symmetrization `SymmetricPower.toTensorPower`. -/
 noncomputable def symPowerRepEquivWeylRep (t : YoungTableau μ) (h : μ.colLen 0 ≤ 1) :
     (symPowerRep k n μ.card).Equiv (YoungTableau.weylRep k n t) :=
   (symPowerToTensorPower k n μ.card).equivOfRange
-    (SymmetricPower.toTensorPower_injective (by simpa using isUnit_natCast_factorial k μ.card))
+    (SymmetricPower.toTensorPower_injective
+      (by simpa using IsUnit.natCast_factorial_of_algebra (A := k) ℚ μ.card))
     (by
       rw [symPowerToTensorPower_toLinearMap, YoungTableau.weylModule_toSubmodule,
         YoungTableau.permTensorActionAlgHom_youngSymmetrizerOver_of_rowSubgroup_eq_top k n t
@@ -247,7 +242,7 @@ antisymmetrization `exteriorPower.toTensorPower`. -/
 noncomputable def extPowerRepEquivWeylRep (t : YoungTableau μ) (h : μ.rowLen 0 ≤ 1) :
     (extPowerRep k n μ.card).Equiv (YoungTableau.weylRep k n t) :=
   (extPowerToTensorPower k n μ.card).equivOfRange
-    (exteriorPower.toTensorPower_injective μ.card (isUnit_natCast_factorial k μ.card))
+    (exteriorPower.toTensorPower_injective μ.card (IsUnit.natCast_factorial_of_algebra ℚ μ.card))
     (by
       rw [extPowerToTensorPower_toLinearMap, YoungTableau.weylModule_toSubmodule,
         YoungTableau.permTensorActionAlgHom_youngSymmetrizerOver_of_colSubgroup_eq_top k n t
