@@ -76,7 +76,7 @@ variable {m n : ℕ}
 
 The product row index is flattened to `Fin (m * n)` because `TauCeti.kernelBasis` operates on
 matrices with `Fin` row and column types. -/
-@[expose] def jointEigenspaceMatrix {R : Type u} [NonAssocRing R]
+@[expose] def jointEigenspaceMatrix {R : Type u} [NonUnitalNonAssocRing R]
     (A : Fin m → Matrix (Fin n) (Fin n) R)
     (a : Fin m → R) : Matrix (Fin (m * n)) (Fin n) R := fun k j =>
   let ij := finProdFinEquiv.symm k
@@ -84,7 +84,7 @@ matrices with `Fin` row and column types. -/
 
 /-- An entry in the `i`-th block of `TauCeti.jointEigenspaceMatrix`. -/
 @[simp]
-theorem jointEigenspaceMatrix_apply {R : Type u} [NonAssocRing R]
+theorem jointEigenspaceMatrix_apply {R : Type u} [NonUnitalNonAssocRing R]
     (A : Fin m → Matrix (Fin n) (Fin n) R)
     (a : Fin m → R) (i : Fin m) (j k : Fin n) :
     jointEigenspaceMatrix A a (finProdFinEquiv (i, j)) k =
@@ -93,7 +93,7 @@ theorem jointEigenspaceMatrix_apply {R : Type u} [NonAssocRing R]
 
 /-- The stacked matrix annihilates `v` exactly when `v` is an eigenvector (possibly zero) of
 every `A i`, with eigenvalue `a i`. -/
-theorem jointEigenspaceMatrix_mulVec_eq_zero_iff {R : Type u} [NonAssocRing R]
+theorem jointEigenspaceMatrix_mulVec_eq_zero_iff {R : Type u} [NonUnitalNonAssocRing R]
     (A : Fin m → Matrix (Fin n) (Fin n) R) (a : Fin m → R) (v : Fin n → R) :
     jointEigenspaceMatrix A a *ᵥ v = 0 ↔ ∀ i, A i *ᵥ v = a i • v := by
   constructor
