@@ -26,9 +26,9 @@ theory counts, while the objects being classified are representations.
   `ρ.asModule ≃ₗ σ.asModule` is an equivalence of representations.
 * `TauCeti.Representation.asModuleLinearEquivOfEquiv`: the converse.
 * `TauCeti.Representation.nonempty_equiv_iff`: the two notions of isomorphism agree.
-* `TauCeti.fdRepIsoOfAsModuleLinearEquiv`: over a field, and for finite-dimensional carriers, such
-  an isomorphism of modules is an isomorphism of the objects of `FDRep k G` that the representations
-  name.
+* `TauCeti.fdRepIsoOfAsModuleLinearEquiv`: over a commutative ring, and for module-finite carriers,
+  such an isomorphism of modules is an isomorphism of the objects of `FDRep k G` that the
+  representations name.
 -/
 
 public section
@@ -92,13 +92,13 @@ end Representation
 
 universe u v
 
-variable {k V W : Type u} {G : Type v} [Field k] [Monoid G]
-variable [AddCommGroup V] [Module k V] [FiniteDimensional k V]
-variable [AddCommGroup W] [Module k W] [FiniteDimensional k W]
+variable {k V W : Type u} {G : Type v} [CommRing k] [Monoid G]
+variable [AddCommGroup V] [Module k V] [Module.Finite k V]
+variable [AddCommGroup W] [Module k W] [Module.Finite k W]
 variable {ρ : Representation k G V} {σ : Representation k G W}
 
 /-- **A `k[G]`-linear isomorphism of the attached modules is an isomorphism in `FDRep k G`.** The
-finite-dimensional representations are a full subcategory of `Rep k G`, where an equivalence of
+finitely generated representations are a full subcategory of `Rep k G`, where an equivalence of
 representations is already an isomorphism. -/
 noncomputable def fdRepIsoOfAsModuleLinearEquiv (f : ρ.asModule ≃ₗ[k[G]] σ.asModule) :
     FDRep.of ρ ≅ FDRep.of σ :=
