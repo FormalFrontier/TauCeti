@@ -60,11 +60,14 @@ argument principle above all — into a statement about how often an image curve
   closed interval, differentiable on the open one off a countable set, has integrable logarithmic
   integrand, is confined to a closed half-plane, is nonvanishing at the two endpoints and
   slit-plane-valued strictly between them, and agrees with `g` both on the open interval and at
-  each endpoint — so endpoint values may sit on the negative-real boundary. A comparison confined
-  to the slit plane on the whole closed interval
-  needs no dedicated form: `integral_deriv_div_eq_log_sub_log` applies to it directly, and
-  `IntervalIntegrable.congr_uIoo` with `intervalIntegral.integral_congr_uIoo` transport its
-  conclusion across the interior agreement.
+  each endpoint — so endpoint values may sit on the negative-real boundary.
+* `intervalIntegrable_deriv_div_and_integral_deriv_div_eq_log_sub_log_of_mem_slitPlane` (in
+  `TauCeti.Contour`, unqualified here only to stay inside the line limit)
+  — the third member of that family, for a comparison confined to the slit plane on the whole
+  closed interval rather than held off the cut by a half-plane condition. Its conclusion could be
+  reached inline from `integral_deriv_div_eq_log_sub_log` plus `IntervalIntegrable.congr_uIoo` and
+  `intervalIntegral.integral_congr_uIoo`, but that transport is performed at nine call sites
+  across the winding developments, so it is factored here.
 * `TauCeti.Contour.integral_deriv_div_eq_log_sub_log` — the slit-plane logarithmic-derivative FTC in
   general `f' / f` form.
 * `TauCeti.Contour.integral_deriv_div_sub_eq_log` — its contour specialization to
@@ -350,6 +353,64 @@ theorem intervalIntegrable_deriv_div_and_integral_deriv_div_eq_log_neg_sub_log_n
     (fun t ht ↦ by simp only [Pi.neg_apply, heq ht])
     (by simp only [Pi.neg_apply, heq_a]) (by simp only [Pi.neg_apply, heq_b])
   rwa [hderiv_neg g] at hkey
+
+/-- **The comparison logarithmic FTC on the slit plane**: for a comparison function `h` that
+stays in the slit plane on the whole oriented closed interval — endpoints included — is
+continuous there, is differentiable strictly inside off a countable exceptional set `P`, and
+has interval-integrable logarithmic derivative, and for a `g` agreeing with `h` on the open
+interval and at both endpoints, the logarithmic integral of `g` is integrable and evaluates
+to the difference of its endpoint logarithms.
+
+Integrability of `deriv h / h` is assumed rather than derived: callers that have a continuous
+derivative and nonvanishing `h` get it from `ContinuousOn.div` plus
+`ContinuousOn.intervalIntegrable`.
+
+This is the sibling of the two half-plane forms above: there the comparison may touch the
+branch cut at an endpoint and is held off it by a half-plane condition, whereas here it is
+slit-plane-valued throughout and no half-plane hypothesis is needed. -/
+theorem intervalIntegrable_deriv_div_and_integral_deriv_div_eq_log_sub_log_of_mem_slitPlane
+    {P : Set ℝ} (hP : P.Countable) (hh_cont : ContinuousOn h (Set.uIcc a b))
+    (hh_diff : ∀ t ∈ Set.Ioo (min a b) (max a b) \ P, DifferentiableAt ℝ h t)
+    (hh_int : IntervalIntegrable (fun t ↦ deriv h t / h t) volume a b)
+    (hh_slit : ∀ t ∈ Set.uIcc a b, h t ∈ Complex.slitPlane)
+    (heq : Set.EqOn g h (Set.Ioo (min a b) (max a b)))
+    (heq_a : g a = h a) (heq_b : g b = h b) :
+    IntervalIntegrable (fun t ↦ deriv g t / g t) volume a b ∧
+    ∫ t in a..b, deriv g t / g t = Complex.log (g b) - Complex.log (g a) :=
+  comparison_core hP (hh_cont.clog fun t ht ↦ hh_slit t ht)
+    (fun t ht ↦ (hh_diff t ht).hasDerivAt.clog_real
+      (hh_slit t (Set.Ioo_subset_Icc_self ht.1)))
+    hh_int heq heq_a heq_b
+
+/-- **The comparison logarithmic FTC on the slit plane, ordered-interval form.** The form
+callers actually have to hand: an oriented interval `a ≤ b`, a comparison function `h`
+continuous with continuous derivative on `Icc a b`, slit-plane-valued there and
+differentiable strictly inside, and a `g` agreeing with `h` on `Ioo a b` and at both
+endpoints.
+
+Integrability of `deriv h / h` is derived rather than assumed — slit-plane confinement
+already forces `h` to be nonvanishing — and the interval hypotheses read on `Set.Icc a b`
+and `Set.Ioo a b` instead of through `min` and `max`. Everything else is
+`intervalIntegrable_deriv_div_and_integral_deriv_div_eq_log_sub_log_of_mem_slitPlane`, which
+remains the general statement to reach for when the interval is unoriented, the
+exceptional set is nonempty, or integrability comes from somewhere other than a continuous
+derivative. -/
+theorem intervalIntegrable_deriv_div_and_integral_deriv_div_eq_log_sub_log_of_mem_slitPlane_of_le
+    (hab : a ≤ b) (hh_cont : ContinuousOn h (Set.Icc a b))
+    (hh_diff : ∀ t ∈ Set.Ioo a b, DifferentiableAt ℝ h t)
+    (hh_deriv_cont : ContinuousOn (deriv h) (Set.Icc a b))
+    (hh_slit : ∀ t ∈ Set.Icc a b, h t ∈ Complex.slitPlane)
+    (heq : Set.EqOn g h (Set.Ioo a b)) (heq_a : g a = h a) (heq_b : g b = h b) :
+    IntervalIntegrable (fun t ↦ deriv g t / g t) volume a b ∧
+    ∫ t in a..b, deriv g t / g t = Complex.log (g b) - Complex.log (g a) := by
+  have hu : Set.uIcc a b = Set.Icc a b := uIcc_of_le hab
+  have ho : Set.Ioo (min a b) (max a b) = Set.Ioo a b := by
+    rw [min_eq_left hab, max_eq_right hab]
+  have hne : ∀ t ∈ Set.Icc a b, h t ≠ 0 := fun t ht ↦ Complex.slitPlane_ne_zero (hh_slit t ht)
+  exact intervalIntegrable_deriv_div_and_integral_deriv_div_eq_log_sub_log_of_mem_slitPlane
+    countable_empty (hu ▸ hh_cont) (fun t ht ↦ hh_diff t (ho ▸ ht.1))
+    ((hh_deriv_cont.div hh_cont hne).mono (hu ▸ Set.Subset.rfl)).intervalIntegrable
+    (fun t ht ↦ hh_slit t (hu ▸ ht)) (fun t ht ↦ heq (ho ▸ ht)) heq_a heq_b
 
 end BoundaryTolerant
 
