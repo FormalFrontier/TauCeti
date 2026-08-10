@@ -5,7 +5,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.Algebra.Lie.SkewAdjoint
-public import Mathlib.LinearAlgebra.BilinearForm.Properties
 public import Mathlib.LinearAlgebra.ExteriorPower.Basis
 public import TauCeti.LinearAlgebra.BilinearForm.Squares
 
@@ -52,41 +51,31 @@ private def alternatingBilinFormSubmodule : Submodule K (BilinForm K V) where
 private theorem mem_alternatingBilinFormSubmodule (A : BilinForm K V) :
     A ∈ alternatingBilinFormSubmodule (K := K) (V := V) ↔ A.IsAlt := Iff.rfl
 
-private def bilinFormAlternatingMap (A : BilinForm K V) (hA : A.IsAlt) :
-    V [⋀^Fin 2]→ₗ[K] K where
-  toMultilinearMap := {
-    toFun := fun x => A (x 0) (x 1)
-    map_update_add' := by
-      intro _ x i y z
-      fin_cases i <;> simp
-    map_update_smul' := by
-      intro _ x i c y
-      fin_cases i <;> simp }
-  map_eq_zero_of_eq' := by
-    intro x i j hij hne
-    fin_cases i <;> fin_cases j <;> simp_all [hA.self_eq_zero]
-
-private theorem bilinFormAlternatingMap_apply (A : BilinForm K V) (hA : A.IsAlt)
-    (x y : V) : bilinFormAlternatingMap A hA ![x, y] = A x y := rfl
+private theorem BilinForm.IsAlt.linearMapIsAlt {B : BilinForm K V} (hB : B.IsAlt) :
+    LinearMap.IsAlt B := by
+  simpa only [LinearMap.BilinForm.IsAlt] using hB
 
 private noncomputable def exteriorDualEquivAlternatingBilinForm :
     Module.Dual K (⋀[K]^2 V) ≃ₗ[K] alternatingBilinFormSubmodule (K := K) (V := V) where
   toFun ψ := ⟨BilinForm.ofExteriorSquareDual ψ,
     (mem_alternatingBilinFormSubmodule _).mpr (BilinForm.isAlt_ofExteriorSquareDual ψ)⟩
   invFun A := exteriorPower.alternatingMapLinearEquiv
-    (bilinFormAlternatingMap A ((mem_alternatingBilinFormSubmodule _).mp A.property))
+    (LinearMap.IsAlt.toAlternatingMap
+      (BilinForm.IsAlt.linearMapIsAlt ((mem_alternatingBilinFormSubmodule _).mp A.property)))
   left_inv ψ := by
     apply BilinForm.ofExteriorSquareDual_injective
     ext x y
     rw [BilinForm.ofExteriorSquareDual_apply,
       exteriorPower.alternatingMapLinearEquiv_apply_ιMulti,
-      bilinFormAlternatingMap_apply, BilinForm.ofExteriorSquareDual_apply]
+      LinearMap.IsAlt.toAlternatingMap_apply, BilinForm.ofExteriorSquareDual_apply]
+    simp
   right_inv A := by
     apply Subtype.ext
     ext x y
     rw [BilinForm.ofExteriorSquareDual_apply,
       exteriorPower.alternatingMapLinearEquiv_apply_ιMulti,
-      bilinFormAlternatingMap_apply]
+      LinearMap.IsAlt.toAlternatingMap_apply]
+    simp
   map_add' ψ φ := by
     apply Subtype.ext
     ext x y
@@ -181,10 +170,12 @@ private theorem skewAdjointEquivExteriorDual_apply_ιMulti
       (exteriorPower.ιMulti K 2 ![x, y]) = B ((f : Module.End K V) x) y := by
   -- Expose the composite equivalence as evaluation of its alternating-map representative.
   change exteriorPower.alternatingMapLinearEquiv
-    (bilinFormAlternatingMap (B.compLeft (f : Module.End K V)) _)
+    (LinearMap.IsAlt.toAlternatingMap
+      (BilinForm.IsAlt.linearMapIsAlt (isAlt_compLeft_of_skewAdjoint B hBsymm f f.property)))
       (exteriorPower.ιMulti K 2 ![x, y]) = _
   rw [exteriorPower.alternatingMapLinearEquiv_apply_ιMulti]
-  rfl
+  rw [LinearMap.IsAlt.toAlternatingMap_apply]
+  simp
 
 private theorem pairingDual_bijective (n : ℕ) :
     Function.Bijective (exteriorPower.pairingDual K V n) := by
