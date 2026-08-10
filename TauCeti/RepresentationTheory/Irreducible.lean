@@ -39,6 +39,8 @@ irreducible by.
 ## Main results
 
 * `TauCeti.Representation.isIrreducible_of_finrank_eq_one`: a line is irreducible.
+* `TauCeti.Representation.isIrreducible_of_linearEquiv`: irreducibility transports along an
+  equivariant linear equivalence.
 * `TauCeti.Representation.isIrreducible_toRepresentation_of_isAtom`: an atom of the lattice of
   subrepresentations carries an irreducible representation.
 * `TauCeti.Representation.isIrreducible_of_asAlgebraHom_surjective`: a representation whose
@@ -78,6 +80,46 @@ theorem isIrreducible_of_finrank_eq_one (ρ : Representation k G V)
 /-- The trivial representation of a monoid on the base field is irreducible, being a line. -/
 instance isIrreducible_trivial_self : (_root_.Representation.trivial k G k).IsIrreducible :=
   isIrreducible_of_finrank_eq_one _ (Module.finrank_self k)
+
+/-- **Irreducibility transports along an equivariant linear equivalence.** A linear equivalence
+intertwining two representations matches their lattices of subrepresentations, by taking preimages
+of invariant subspaces, so one is irreducible exactly when the other is.
+
+Only one direction is stated; the reverse is this one applied to `e.symm`. -/
+theorem isIrreducible_of_linearEquiv {W : Type*} [AddCommGroup W] [Module k W]
+    {ρ : Representation k G V} {σ : Representation k G W} (e : V ≃ₗ[k] W)
+    (he : ∀ g v, e (ρ g v) = σ g (e v)) (h : ρ.IsIrreducible) : σ.IsIrreducible := by
+  have _ : ρ.IsIrreducible := h
+  have hV : Nontrivial V := by
+    rw [← not_subsingleton_iff_nontrivial]
+    intro hs
+    refine bot_ne_top (α := Subrepresentation ρ) (Subrepresentation.toSubmodule_injective ?_)
+    rw [Subrepresentation.toSubmodule_bot, Subrepresentation.toSubmodule_top]
+    ext x
+    simpa using Subsingleton.elim x 0
+  have : Nontrivial W := e.symm.toEquiv.nontrivial
+  have hne : (⊥ : Subrepresentation σ) ≠ ⊤ := fun hc =>
+    bot_ne_top (α := Submodule k W) (by
+      rw [← Subrepresentation.toSubmodule_bot (ρ := σ), ← Subrepresentation.toSubmodule_top
+        (ρ := σ), hc])
+  have : Nontrivial (Subrepresentation σ) := ⟨⊥, ⊤, hne⟩
+  refine ⟨fun τ => ?_⟩
+  -- pull `τ` back along `e` to a subrepresentation of `ρ`
+  let τ' : Subrepresentation ρ :=
+    { toSubmodule := τ.toSubmodule.comap (e : V →ₗ[k] W)
+      apply_mem_toSubmodule g v hv := by
+        simp only [Submodule.mem_comap, LinearEquiv.coe_coe] at hv ⊢
+        rw [he]
+        exact τ.apply_mem_toSubmodule g hv }
+  have hmap : (τ'.toSubmodule).map (e : V →ₗ[k] W) = τ.toSubmodule :=
+    Submodule.map_comap_eq_of_surjective e.surjective _
+  refine (eq_bot_or_eq_top τ').imp (fun hτ => ?_) fun hτ => ?_
+  · refine Subrepresentation.toSubmodule_injective ?_
+    rw [← hmap, show τ'.toSubmodule = (⊥ : Submodule k V) from congrArg _ hτ, Submodule.map_bot,
+      Subrepresentation.toSubmodule_bot]
+  · refine Subrepresentation.toSubmodule_injective ?_
+    rw [← hmap, show τ'.toSubmodule = (⊤ : Submodule k V) from congrArg _ hτ,
+      Subrepresentation.toSubmodule_top, Submodule.map_top, LinearEquiv.range]
 
 /-- A subrepresentation that is an **atom** of the lattice of subrepresentations -- nonzero, with
 no subrepresentation strictly between it and zero -- carries an irreducible representation.  The

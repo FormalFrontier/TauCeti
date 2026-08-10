@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.RepresentationTheory.Continuous.MatrixCoefficient
+public import TauCeti.RepresentationTheory.Irreducible
 
 /-!
 # Transporting a continuous representation along a continuous linear equivalence
@@ -28,8 +29,10 @@ so nothing is lost by pinning a model.
 
 ## Main statements
 
-* `TauCeti.ContRepresentation.continuous_congr` and
-  `TauCeti.ContRepresentation.IsUnitary.congr`: the transport preserves continuity and unitarity.
+* `TauCeti.ContRepresentation.continuous_congr`,
+  `TauCeti.ContRepresentation.isIrreducible_congr` and
+  `TauCeti.ContRepresentation.IsUnitary.congr`: the transport preserves continuity,
+  irreducibility, and unitarity.
 * `TauCeti.ContRepresentation.matrixCoeff_congr`: the matrix coefficients of the transport at the
   transported vectors are those of the original representation.
 -/
@@ -77,6 +80,16 @@ continuous algebra equivalence `ContinuousLinearEquiv.conjContinuousAlgEquiv`. -
 theorem continuous_congr (e : V ≃L[𝕜] W) {π : ContRepresentation 𝕜 G V} (hπ : Continuous π) :
     Continuous (congr e π) :=
   (map_continuous e.conjContinuousAlgEquiv).comp hπ
+
+omit [TopologicalSpace G] in
+/-- Transport preserves irreducibility: `e` is an equivariant linear equivalence from `π` to its
+transport, and irreducibility is invariant under such an equivalence. -/
+theorem isIrreducible_congr (e : V ≃L[𝕜] W) {π : ContRepresentation 𝕜 G V}
+    (hπ : π.toRepresentation.IsIrreducible) : (congr e π).toRepresentation.IsIrreducible :=
+  Representation.isIrreducible_of_linearEquiv (e : V ≃ₗ[𝕜] W)
+    (fun g v ↦ by
+      change e (π g v) = congr e π g (e v)
+      rw [congr_apply, e.symm_apply_apply]) hπ
 
 end Congr
 
