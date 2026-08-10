@@ -368,8 +368,8 @@ theorem twoRank_eq_of_card_elementaryTwoQuotient_eq_two_pow
   rw [card_elementaryTwoQuotient_eq_two_pow_twoRank] at h
   exact Nat.pow_right_injective le_rfl h
 
-/-- **An elementary abelian `2`-group is its own elementary-2 quotient.** If every element of `G`
-squares to `1`, then `G²` is trivial, so `|G/G²| = |G|`. -/
+/-- **An elementary abelian `2`-group has the same cardinality as its elementary-2 quotient.**
+If every element of `G` squares to `1`, then `G²` is trivial, so `|G/G²| = |G|`. -/
 theorem card_elementaryTwoQuotient_eq_card_of_forall_sq_eq_one (h : ∀ g : G, g ^ 2 = 1) :
     Nat.card (ElementaryTwoQuotient G) = Nat.card G := by
   have hbot : Subgroup.square G = ⊥ := (Subgroup.eq_bot_iff_forall _).2 fun g hg => by

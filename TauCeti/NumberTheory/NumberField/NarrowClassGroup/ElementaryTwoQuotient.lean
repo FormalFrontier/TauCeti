@@ -127,7 +127,8 @@ theorem twoRank_le_classGroupTwoRank_add_twoRank_ker :
 
 /-- **The narrow-versus-ordinary defect has order `2 ^ TauCeti.twoRank (ker (Cl⁺(K) → Cl(K)))`.**
 The kernel of `Cl⁺(K) → Cl(K)` is an elementary abelian `2`-group
-(`sq_eq_one_of_mem_ker_toClassGroup`), so it coincides with its own elementary-2 quotient. -/
+(`sq_eq_one_of_mem_ker_toClassGroup`), so it has the same cardinality as its own elementary-2
+quotient. -/
 theorem card_ker_toClassGroup_eq_two_pow_twoRank_ker :
     Nat.card (MonoidHom.ker (toClassGroup (K := K))) =
       2 ^ TauCeti.twoRank (MonoidHom.ker (toClassGroup (K := K))) :=
