@@ -21,10 +21,21 @@ function factors through its cusp function — so the ceiling contour integral o
 logarithmic derivative equals the `q`-circle integral of the cusp function's logarithmic
 derivative.
 
+The same bridge serves the excised valence contour unchanged, because the excision never
+fires on the ceiling: the excision centres of the corner computations lie on the unit circle,
+so their heights are at most `1`, while the ceiling runs at height `H`. Once each centre
+clears `ε` below the ceiling the excised ceiling integrand *is* the unexcised one, and the
+ceiling still reads the cusp order.
+
 ## Main declarations
 
 * `TauCeti.ModularForm.intervalIntegral_fdBoundary_segment5_eq_circleIntegral_logDeriv_cuspFunction`
   (the ceiling bridge).
+* `TauCeti.ModularForm.not_exists_norm_fdBoundary_sub_le_of_mem_Icc_four_five` (the excision
+  never fires on the ceiling) and
+  `intervalIntegral_excised_logDeriv_fdBoundary_segment5_eq_two_pi_I_mul_qExpansionOrderAtCusp`
+  (same namespace; the fully qualified name does not fit the line limit — so the excised
+  ceiling integral is still `2πi · ord_∞`).
 
 ## References
 

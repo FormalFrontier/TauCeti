@@ -6,6 +6,7 @@ Authors: Chris Birkbeck
 module
 
 public import TauCeti.Analysis.Contour.Cauchy.PrincipalValue.Basic
+import TauCeti.Analysis.Contour.Curve.Distance
 import Mathlib.MeasureTheory.Integral.DominatedConvergence
 import Mathlib.Analysis.Calculus.Deriv.Inverse
 import Mathlib.Topology.Order.LeftRightNhds
@@ -722,9 +723,8 @@ private theorem isClosed_setOfPred_mem_uIcc_exists_norm_sub_le {γ : ℝ → ℂ
     simp only [Set.mem_ofPred_eq, Set.mem_iUnion, exists_prop]
     tauto
   rw [he]
-  refine isClosed_biUnion_finset fun s _ => ?_
-  exact ((hγ_cont.sub continuousOn_const).norm).preimage_isClosed_of_isClosed
-    (by rw [← Set.Icc_min_max]; exact isClosed_Icc) isClosed_Iic
+  exact isClosed_biUnion_finset fun s _ =>
+    isClosed_setOfPred_mem_uIcc_norm_sub_le hγ_cont s ε
 
 /-- Adjoining the excision points `S'` multiplies the truncated integrand by the indicator of the
 set of parameters at which the curve stays further than `ε` from every point of `S'`. -/
