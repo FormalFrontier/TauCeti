@@ -56,22 +56,22 @@ private theorem sqrtOfIsSquare_mul_self {a : K} (h : IsSquare a) :
     sqrtOfIsSquare h * sqrtOfIsSquare h = a :=
   (Classical.choose_spec h).symm
 
-private theorem reflectionScale_norm (v : V) [Invertible (Q v)] (hv : IsSquare (-⅟(Q v))) :
-    Q (sqrtOfIsSquare hv • v) = -1 := by
+private theorem sqrtOfIsSquare_smul_norm_eq_neg_one (v : V) [Invertible (Q v)]
+    (hv : IsSquare (-⅟(Q v))) : Q (sqrtOfIsSquare hv • v) = -1 := by
   rw [QuadraticMap.map_smul, smul_eq_mul, sqrtOfIsSquare_mul_self hv, neg_mul,
     invOf_mul_self]
 
 private noncomputable def pinReflectionLift (v : V) [Invertible (Q v)]
     (hv : IsSquare (-⅟(Q v))) : pinGroup Q :=
-  ⟨ι Q (sqrtOfIsSquare hv • v), ι_mem_pinGroup (reflectionScale_norm Q v hv)⟩
+  ⟨ι Q (sqrtOfIsSquare hv • v), ι_mem_pinGroup (sqrtOfIsSquare_smul_norm_eq_neg_one Q v hv)⟩
 
-private theorem reflectionPairScale_norm (v w : V) [Invertible (Q v)] [Invertible (Q w)]
+private theorem sqrtOfIsSquare_smul_norm_eq_invOf (v w : V) [Invertible (Q v)] [Invertible (Q w)]
     (h : IsSquare (⅟(Q v) * ⅟(Q w))) :
     Q (sqrtOfIsSquare h • v) = ⅟(Q w) := by
   rw [QuadraticMap.map_smul, smul_eq_mul, sqrtOfIsSquare_mul_self h, mul_assoc,
     mul_comm (⅟(Q w)) (Q v), ← mul_assoc, invOf_mul_self, one_mul]
 
-private theorem reflectionPairScale_isUnit (v w : V) [Invertible (Q v)] [Invertible (Q w)]
+private theorem isUnit_sqrtOfIsSquare (v w : V) [Invertible (Q v)] [Invertible (Q w)]
     (h : IsSquare (⅟(Q v) * ⅟(Q w))) : IsUnit (sqrtOfIsSquare h) := by
   rw [← isUnit_mul_self_iff, sqrtOfIsSquare_mul_self h]
   exact (isUnit_of_invertible (⅟(Q v))).mul (isUnit_of_invertible (⅟(Q w)))
@@ -102,8 +102,8 @@ private theorem reflectionPairLift_mem_pinGroup (v w : V) [Invertible (Q v)]
     [Invertible (Q w)] (h : IsSquare (⅟(Q v) * ⅟(Q w))) :
     ι Q (sqrtOfIsSquare h • v) * ι Q w ∈ pinGroup Q := by
   have : Invertible (sqrtOfIsSquare h) :=
-    (reflectionPairScale_isUnit Q v w h).invertible
-  have hnorm := reflectionPairScale_norm Q v w h
+    (isUnit_sqrtOfIsSquare Q v w h).invertible
+  have hnorm := sqrtOfIsSquare_smul_norm_eq_invOf Q v w h
   have : Invertible (Q (sqrtOfIsSquare h • v)) := by rw [hnorm]; infer_instance
   have hprod : Q (sqrtOfIsSquare h • v) * Q w = 1 := by
     rw [hnorm, invOf_mul_self]
@@ -144,7 +144,7 @@ private theorem pinToOrthogonal_pinReflectionLift (v : V) [Invertible (Q v)]
   rw [QuadraticMap.coe_reflectionOrthogonal]
   apply LinearEquiv.ext
   intro m
-  rw [pinReflectionLift, pinToOrthogonal_ι_apply (reflectionScale_norm Q v hv),
+  rw [pinReflectionLift, pinToOrthogonal_ι_apply (sqrtOfIsSquare_smul_norm_eq_neg_one Q v hv),
     QuadraticMap.reflection_apply, QuadraticMap.polar_smul_left, smul_eq_mul]
   simp only [smul_smul, sub_eq_add_neg]
   rw [mul_assoc (sqrtOfIsSquare hv) (polar Q v m) (sqrtOfIsSquare hv),
@@ -176,8 +176,8 @@ theorem reflection_mul_reflection_mem_range_spinToOrthogonal_of_isSquare
     QuadraticMap.reflectionOrthogonal Q v * QuadraticMap.reflectionOrthogonal Q w ∈
         (spinToOrthogonal Q).range := by
   have : Invertible (sqrtOfIsSquare h) :=
-    (reflectionPairScale_isUnit Q v w h).invertible
-  have hnorm := reflectionPairScale_norm Q v w h
+    (isUnit_sqrtOfIsSquare Q v w h).invertible
+  have hnorm := sqrtOfIsSquare_smul_norm_eq_invOf Q v w h
   have : Invertible (Q (sqrtOfIsSquare h • v)) := by rw [hnorm]; infer_instance
   rw [MonoidHom.mem_range]
   refine ⟨spinReflectionPairLift Q v w h, ?_⟩
