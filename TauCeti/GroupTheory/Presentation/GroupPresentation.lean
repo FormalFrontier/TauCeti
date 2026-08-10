@@ -101,6 +101,13 @@ theorem mem_relatorSet_iff (P : GroupPresentation) (r : FreeGroup (Fin P.generat
     r ∈ P.relatorSet ↔ ∃ t ∈ P.transcribed, t.toFreeGroup = r := by
   simp [relatorSet]
 
+/-- The relations of a presentation record are the relator set denoted by its transcribed
+expressions. -/
+theorem relatorSet_eq_relatorSet (P : GroupPresentation) :
+    P.relatorSet = Relator.relatorSet P.transcribed := by
+  ext r
+  simp
+
 /-- The group defined by the generators and compiled relations of a presentation. -/
 abbrev Group (P : GroupPresentation) : Type :=
   PresentedGroup P.relatorSet

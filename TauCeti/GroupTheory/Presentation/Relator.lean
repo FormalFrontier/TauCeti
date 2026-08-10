@@ -30,6 +30,7 @@ from Mathlib.
 * `TauCeti.Relator`: expressions built from generators, inverse, product, power, and commutator.
 * `TauCeti.Relator.toWord`: compilation of an expression to a signed word.
 * `TauCeti.Relator.toFreeGroup`: direct structural interpretation of an expression.
+* `TauCeti.Relator.relatorSet`: the free-group elements denoted by a list of expressions.
 
 ## Main result
 
@@ -107,6 +108,39 @@ def toFreeGroup {α : Type*} : Relator α → FreeGroup α
   | .mul r s => r.toFreeGroup * s.toFreeGroup
   | .pow r n => r.toFreeGroup ^ n
   | .comm r s => ⁅r.toFreeGroup, s.toFreeGroup⁆
+
+/-- The free-group elements denoted by a list of relator expressions. -/
+def relatorSet {α : Type*} (l : List (Relator α)) : Set (FreeGroup α) :=
+  {r | ∃ t ∈ l, t.toFreeGroup = r}
+
+@[simp]
+theorem mem_relatorSet {α : Type*} {l : List (Relator α)} {r : FreeGroup α} :
+    r ∈ relatorSet l ↔ ∃ t ∈ l, t.toFreeGroup = r :=
+  Iff.rfl
+
+/-- Appending relator lists unions their relator sets. -/
+theorem relatorSet_append {α : Type*} (l l' : List (Relator α)) :
+    relatorSet (l ++ l') = relatorSet l ∪ relatorSet l' := by
+  ext r
+  simp only [mem_relatorSet, List.mem_append, Set.mem_union]
+  constructor
+  · rintro ⟨t, ht | ht, rfl⟩
+    exacts [Or.inl ⟨t, ht, rfl⟩, Or.inr ⟨t, ht, rfl⟩]
+  · rintro (⟨t, ht, rfl⟩ | ⟨t, ht, rfl⟩)
+    exacts [⟨t, Or.inl ht, rfl⟩, ⟨t, Or.inr ht, rfl⟩]
+
+/-- The relator expression spelling out a nonempty word of generators, with no inverses. -/
+def ofGenerators {α : Type*} : α → List α → Relator α
+  | x, [] => .gen x
+  | x, y :: l => .mul (.gen x) (ofGenerators y l)
+
+/-- Compiling a spelled-out generator word returns exactly its letters, each with positive sign. -/
+@[simp]
+theorem toWord_ofGenerators {α : Type*} (x : α) (l : List α) :
+    (ofGenerators x l).toWord = (x, true) :: l.map (fun y => (y, true)) := by
+  induction l generalizing x with
+  | nil => rfl
+  | cons y l ih => simp [ofGenerators, toWord, ih]
 
 /-- **The compiled word denotes the direct interpretation of the relator expression.**
 
