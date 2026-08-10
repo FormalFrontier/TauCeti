@@ -136,8 +136,12 @@ lemma e6SimpleIndex_injective : Function.Injective e6SimpleIndex :=
 /-- **The root coordinates are the Cartan-matrix image of the coroot coordinates.**
 Writing a coroot as `β^∨ = ∑ i, cᵢ αᵢ^∨` in the simple coroots, the pairings of `β` against the
 simple coroots are `⟨β, αⱼ^∨⟩ = ∑ i, cᵢ ⟨αᵢ, αⱼ^∨⟩`, which is the `j`-th entry of the
-Cartan-matrix image of `c` because `CartanMatrix.E₆` is symmetric. -/
-@[simp] theorem e6Root_eq_mulVec (j : Fin 72) : e6Root j = CartanMatrix.E₆ *ᵥ e6Coroot j := by
+Cartan-matrix image of `c` because `CartanMatrix.E₆` is symmetric.
+
+This is deliberately not a `simp` lemma: unfolding a root into the Cartan-matrix image of its
+coroot is a change of representation, not a normal form, and it would take the left-hand sides of
+the lemmas below out of normal form. -/
+theorem e6Root_eq_mulVec (j : Fin 72) : e6Root j = CartanMatrix.E₆ *ᵥ e6Coroot j := by
   simp only [e6Root, Function.Embedding.coeFn_mk]
 
 /-- **The simple coroots are the standard basis.** This is what pins the cocharacter lattice as the
@@ -514,7 +518,7 @@ indices. -/
 /-- **The Cartan integers at the first six root indices are Mathlib's Bourbaki-numbered `E₆`
 matrix.** This pins the node order independently of the existential relabelling in
 `TauCeti.HasCartanType`. -/
-@[simp] theorem pairing_e6SimpleIndex (i j : Fin 6) :
+theorem pairing_e6SimpleIndex (i j : Fin 6) :
     e6SimplyConnectedRootDatum.pairing (e6SimpleIndex i) (e6SimpleIndex j) =
       CartanMatrix.E₆ i j := by
   rw [e6SimplyConnectedRootDatum_pairing, root_e6SimpleIndex, coroot_e6SimpleIndex,
