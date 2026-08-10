@@ -104,12 +104,26 @@ noncomputable def tangentSpaceLinearEquiv (A : AbelianVariety K) :
   map_add' := fun _ _ ↦ rfl
   map_smul' := fun _ _ ↦ rfl
 
+/-- The canonical equivalence sends a tangent vector to its underlying Zariski tangent vector. -/
+@[simp]
+lemma tangentSpaceLinearEquiv_apply (A : AbelianVariety K) (v : A.TangentSpace) :
+    HEq (A.tangentSpaceLinearEquiv v) v := by
+  unfold tangentSpaceLinearEquiv TangentSpace
+  rfl
+
 /-- Evaluate a tangent vector in `T₀A` on a Zariski cotangent vector through the canonical
 identification `tangentSpaceLinearEquiv`. -/
 noncomputable def tangentSpaceEval (A : AbelianVariety K) (v : A.TangentSpace)
     (m : ZariskiCotangentSpace A.toScheme A.zeroPoint) :
     IsLocalRing.ResidueField (A.toScheme.presheaf.stalk A.zeroPoint) :=
   A.tangentSpaceLinearEquiv v m
+
+/-- Evaluation in `T₀A` is application of the underlying Zariski tangent vector. -/
+@[simp]
+lemma tangentSpaceEval_apply (A : AbelianVariety K) (v : A.TangentSpace)
+    (m : ZariskiCotangentSpace A.toScheme A.zeroPoint) :
+    A.tangentSpaceEval v m = A.tangentSpaceLinearEquiv v m :=
+  by rw [tangentSpaceEval]
 
 /-- Restrict scalars on `T₀A` from `κ(0)` to `K` along the canonical residue-field
 equivalence. -/
