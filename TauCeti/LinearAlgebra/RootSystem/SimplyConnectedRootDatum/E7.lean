@@ -5,7 +5,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.LinearAlgebra.RootSystem.DynkinType
-public import Mathlib.LinearAlgebra.Matrix.Dual
 
 public section
 
@@ -159,26 +158,26 @@ def e7Root : Fin 126 ↪ (Fin 7 → ℤ) where
 theorem e7Root_apply (i : Fin 126) : e7Root i = e7Coroot i ᵥ* CartanMatrix.E₇ := (rfl)
 
 /-- The negative half of the coroot table is the negation of the positive half. -/
-@[simp] theorem e7Coroot_natAdd (i : Fin 63) :
+@[simp, grind =] theorem e7Coroot_addNat (i : Fin 63) :
     e7Coroot (Fin.addNat i 63) = -e7Coroot (Fin.castAdd 63 i) := by
   fin_cases i <;> decide
 
 /-- The negative half of the root table is the negation of the positive half. -/
-@[simp] theorem e7Root_natAdd (i : Fin 63) :
+@[simp, grind =] theorem e7Root_addNat (i : Fin 63) :
     e7Root (Fin.addNat i 63) = -e7Root (Fin.castAdd 63 i) := by
-  rw [e7Root_apply, e7Root_apply, e7Coroot_natAdd, Matrix.neg_vecMul]
+  rw [e7Root_apply, e7Root_apply, e7Coroot_addNat, Matrix.neg_vecMul]
 
 /-- Every listed `E7` root pairs to two with its corresponding coroot. -/
-@[simp] theorem e7Root_dotProduct_coroot (i : Fin 126) : e7Root i ⬝ᵥ e7Coroot i = 2 := by
+@[simp, grind =] theorem e7Root_dotProduct_coroot (i : Fin 126) : e7Root i ⬝ᵥ e7Coroot i = 2 := by
   fin_cases i <;> decide
 
 /-- The first seven coroots are the standard basis of the simple-coroot lattice. -/
-@[simp] theorem e7Coroot_simple (i : Fin 7) :
+@[simp, grind =] theorem e7Coroot_simple (i : Fin 7) :
     e7Coroot (Fin.castAdd 119 i) = Pi.single i 1 := by
   fin_cases i <;> decide
 
 /-- The first seven roots are the rows of the Bourbaki `E7` Cartan matrix. -/
-@[simp] theorem e7Root_simple (i : Fin 7) :
+@[simp, grind =] theorem e7Root_simple (i : Fin 7) :
     e7Root (Fin.castAdd 119 i) = CartanMatrix.E₇.row i := by
   rw [e7Root_apply, e7Coroot_simple, Matrix.single_one_vecMul]
 
@@ -187,7 +186,11 @@ theorem e7Coroot_nonneg (i : Fin 63) (j : Fin 7) : 0 ≤ e7Coroot (Fin.castAdd 6
   fin_cases i <;> fin_cases j <;> decide
 
 /-- The last positive entry of the coroot table has the Bourbaki marks `(2, 2, 3, 4, 3, 2, 1)`. -/
-@[simp] theorem e7Coroot_apply_62 : e7Coroot 62 = ![2, 2, 3, 4, 3, 2, 1] := by decide
+@[simp, grind =] theorem e7Coroot_apply_62 : e7Coroot 62 = ![2, 2, 3, 4, 3, 2, 1] := by decide
+
+/-- The last positive entry of the root table has fundamental-weight coordinates
+`(1, 0, 0, 0, 0, 0, 0)`. -/
+@[simp, grind =] theorem e7Root_apply_62 : e7Root 62 = ![1, 0, 0, 0, 0, 0, 0] := by decide
 
 /-- The last positive entry is the highest `E7` coroot: it dominates every entry of the table
 in each simple-coroot coordinate. -/
