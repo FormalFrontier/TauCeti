@@ -143,9 +143,8 @@ def e7Coroot : Fin 126 ↪ (Fin 7 → ℤ) where
       simp only at h ⊢
       omega
 
-/-- The 126 `E7` roots in the fundamental-weight basis. It is `@[expose]`d so that its defining
-equation `e7Root_apply` holds by `rfl`. -/
-@[expose] def e7Root : Fin 126 ↪ (Fin 7 → ℤ) where
+/-- The 126 `E7` roots in the fundamental-weight basis. -/
+def e7Root : Fin 126 ↪ (Fin 7 → ℤ) where
   toFun i := e7Coroot i ᵥ* CartanMatrix.E₇
   inj' := by
     intro i j hij
@@ -155,10 +154,9 @@ equation `e7Root_apply` holds by `rfl`. -/
     rw [sub_vecMul]
     exact sub_eq_zero.mpr hij
 
-/-- Each `E7` root is the `E7` Cartan matrix applied to the corresponding coroot. This is the
-defining equation of `e7Root`; it is deliberately not `@[simp]`, since it would rewrite the
-left-hand sides of the root-table lemmas below. -/
-theorem e7Root_apply (i : Fin 126) : e7Root i = e7Coroot i ᵥ* CartanMatrix.E₇ := rfl
+/-- Each `E7` root is the `E7` Cartan matrix applied to the corresponding coroot. -/
+-- This is not a simp theorem because it would rewrite the root-table lemmas below.
+theorem e7Root_apply (i : Fin 126) : e7Root i = e7Coroot i ᵥ* CartanMatrix.E₇ := (rfl)
 
 /-- The negative half of the coroot table is the negation of the positive half. -/
 @[simp] theorem e7Coroot_natAdd (i : Fin 63) :
