@@ -1,0 +1,253 @@
+/-
+Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+-/
+module
+
+public import Mathlib.GroupTheory.QuotientGroup.Defs
+public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Normal
+public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Points.Naturality
+
+/-!
+# The pointwise quotient presheaf of an affine group
+
+A normal Hopf ideal `I` in a commutative Hopf algebra `H` cuts out a normal closed subgroup
+`V(I)(A) ≤ G(A)` over every commutative value algebra `A`. This file forms the pointwise quotient
+
+`G(A) / V(I)(A)`
+
+and packages it as a group-valued functor on commutative algebras. The quotient projections are
+natural in `A`. At every value algebra the resulting group satisfies the quotient universal
+property: a homomorphism out of `G(A)` descends uniquely when it kills `V(I)(A)`.
+
+This is the presheaf quotient that precedes fppf sheafification in Layer 3 of the reductive-groups
+roadmap. It is not asserted to be an fppf sheaf or representable; those are separate downstream
+steps with additional hypotheses.
+
+## Main declarations
+
+* `TauCeti.CommHopfAlgCat.pointwiseQuotientGroup`: the group `G(A) / V(I)(A)`.
+* `TauCeti.CommHopfAlgCat.pointwiseQuotientFunctor`: the pointwise quotient presheaf.
+* `TauCeti.CommHopfAlgCat.pointwiseQuotientProjection`: the natural quotient projection.
+* `TauCeti.CommHopfAlgCat.pointwiseQuotientLift`: the quotient universal property at each value
+  algebra, with its factorization and uniqueness properties.
+
+## References
+
+See J. S. Milne, *Algebraic Groups* (2017), Section 5, for quotient sheaves. The group quotient
+and its universal property use Mathlib's `QuotientGroup.map` and `QuotientGroup.lift`.
+-/
+
+public section
+
+open CategoryTheory
+
+namespace TauCeti
+
+universe u v w
+
+namespace CommHopfAlgCat
+
+variable {R : Type u} [CommRing R]
+
+/-- The pointwise quotient `G(A) / V(I)(A)` associated to a normal Hopf ideal `I`.
+
+The denominator is the subgroup of `A`-points which vanish on `I`. Normality follows from the
+coordinate conjugation criterion `HopfIdeal.IsNormal`. -/
+noncomputable abbrev pointwiseQuotientGroup (H : _root_.CommHopfAlgCat.{v} R)
+    (I : HopfIdeal R H) (hI : I.IsNormal) (A : CommAlgCat.{w} R) : GrpCat.{max v w} := by
+  let _ : (quotientPointsSubgroup H I A).Normal :=
+    quotientPointsSubgroup_normal H I hI A
+  exact GrpCat.of
+    (HopfAlgebra.points (R := R) (H := H) A ⧸ quotientPointsSubgroup H I A)
+
+/-- The quotient projection from ambient points to the pointwise quotient. -/
+@[expose] noncomputable def pointwiseQuotientMk (H : _root_.CommHopfAlgCat.{v} R)
+    (I : HopfIdeal R H) (hI : I.IsNormal) (A : CommAlgCat.{w} R) :
+    HopfAlgebra.points (R := R) (H := H) A ⟶ pointwiseQuotientGroup H I hI A := by
+  let _ : (quotientPointsSubgroup H I A).Normal :=
+    quotientPointsSubgroup_normal H I hI A
+  exact GrpCat.ofHom (QuotientGroup.mk' (quotientPointsSubgroup H I A))
+
+/-- The pointwise quotient projection is surjective. -/
+theorem pointwiseQuotientMk_surjective (H : _root_.CommHopfAlgCat.{v} R)
+    (I : HopfIdeal R H) (hI : I.IsNormal) (A : CommAlgCat.{w} R) :
+    Function.Surjective (pointwiseQuotientMk H I hI A) := by
+  let _ : (quotientPointsSubgroup H I A).Normal :=
+    quotientPointsSubgroup_normal H I hI A
+  exact QuotientGroup.mk'_surjective (quotientPointsSubgroup H I A)
+
+/-- The map on pointwise quotients induced by a morphism of value algebras. -/
+@[expose] noncomputable def mapPointwiseQuotient (H : _root_.CommHopfAlgCat.{v} R)
+    (I : HopfIdeal R H) (hI : I.IsNormal) {A B : CommAlgCat.{w} R} (χ : A ⟶ B) :
+    pointwiseQuotientGroup H I hI A ⟶ pointwiseQuotientGroup H I hI B := by
+  let _ : (quotientPointsSubgroup H I A).Normal :=
+    quotientPointsSubgroup_normal H I hI A
+  let _ : (quotientPointsSubgroup H I B).Normal :=
+    quotientPointsSubgroup_normal H I hI B
+  exact GrpCat.ofHom <| QuotientGroup.map
+    (N := quotientPointsSubgroup H I A) (quotientPointsSubgroup H I B)
+      (HopfAlgebra.mapPoints (H := H) χ).hom
+      (fun _ hg => mapPoints_mem_quotientPointsSubgroup H I χ hg)
+
+/-- Mapping a quotient class is represented by mapping any ambient representative. -/
+@[simp]
+theorem mapPointwiseQuotient_mk (H : _root_.CommHopfAlgCat.{v} R)
+    (I : HopfIdeal R H) (hI : I.IsNormal) {A B : CommAlgCat.{w} R} (χ : A ⟶ B)
+    (g : HopfAlgebra.points (R := R) (H := H) A) :
+    mapPointwiseQuotient H I hI χ (pointwiseQuotientMk H I hI A g) =
+      pointwiseQuotientMk H I hI B (HopfAlgebra.mapPoints (H := H) χ g) := by
+  let _ : (quotientPointsSubgroup H I A).Normal :=
+    quotientPointsSubgroup_normal H I hI A
+  let _ : (quotientPointsSubgroup H I B).Normal :=
+    quotientPointsSubgroup_normal H I hI B
+  exact QuotientGroup.map_mk (N := quotientPointsSubgroup H I A)
+    (quotientPointsSubgroup H I B) (HopfAlgebra.mapPoints (H := H) χ).hom
+      (fun _ hg => mapPoints_mem_quotientPointsSubgroup H I χ hg) g
+
+/-- The pointwise quotient presheaf `A ↦ G(A) / V(I)(A)`. -/
+@[expose] noncomputable def pointwiseQuotientFunctor (H : _root_.CommHopfAlgCat.{v} R)
+    (I : HopfIdeal R H) (hI : I.IsNormal) :
+    CommAlgCat.{w} R ⥤ GrpCat.{max v w} where
+  obj A := pointwiseQuotientGroup H I hI A
+  map χ := mapPointwiseQuotient H I hI χ
+  map_id A := by
+    let _ : (quotientPointsSubgroup H I A).Normal :=
+      quotientPointsSubgroup_normal H I hI A
+    apply GrpCat.hom_ext
+    apply QuotientGroup.monoidHom_ext (quotientPointsSubgroup H I A)
+    apply MonoidHom.ext
+    intro g
+    exact mapPointwiseQuotient_mk H I hI (𝟙 A) g
+  map_comp {A B C} χ ψ := by
+    let _ : (quotientPointsSubgroup H I A).Normal :=
+      quotientPointsSubgroup_normal H I hI A
+    let _ : (quotientPointsSubgroup H I B).Normal :=
+      quotientPointsSubgroup_normal H I hI B
+    let _ : (quotientPointsSubgroup H I C).Normal :=
+      quotientPointsSubgroup_normal H I hI C
+    apply GrpCat.hom_ext
+    apply QuotientGroup.monoidHom_ext (quotientPointsSubgroup H I A)
+    apply MonoidHom.ext
+    intro g
+    have hcomp :
+        HopfAlgebra.mapPoints (H := H) (χ ≫ ψ) g =
+          HopfAlgebra.mapPoints (H := H) ψ (HopfAlgebra.mapPoints (H := H) χ g) :=
+      DFunLike.congr_fun
+        (congrArg GrpCat.Hom.hom (HopfAlgebra.mapPoints_comp (H := H) χ ψ)) g
+    calc
+      (mapPointwiseQuotient H I hI (χ ≫ ψ)).hom
+          (QuotientGroup.mk' (quotientPointsSubgroup H I A) g) =
+          pointwiseQuotientMk H I hI C (HopfAlgebra.mapPoints (H := H) (χ ≫ ψ) g) :=
+        mapPointwiseQuotient_mk H I hI (χ ≫ ψ) g
+      _ = pointwiseQuotientMk H I hI C
+          (HopfAlgebra.mapPoints (H := H) ψ (HopfAlgebra.mapPoints (H := H) χ g)) :=
+        congrArg (pointwiseQuotientMk H I hI C) hcomp
+      _ = mapPointwiseQuotient H I hI ψ
+          (pointwiseQuotientMk H I hI B (HopfAlgebra.mapPoints (H := H) χ g)) :=
+        (mapPointwiseQuotient_mk H I hI ψ _).symm
+      _ = mapPointwiseQuotient H I hI ψ
+          (mapPointwiseQuotient H I hI χ (pointwiseQuotientMk H I hI A g)) :=
+        congrArg (mapPointwiseQuotient H I hI ψ)
+          (mapPointwiseQuotient_mk H I hI χ g).symm
+      _ = (mapPointwiseQuotient H I hI χ ≫ mapPointwiseQuotient H I hI ψ).hom
+          (QuotientGroup.mk' (quotientPointsSubgroup H I A) g) := rfl
+
+/-- The object part of the pointwise quotient functor is the quotient group of ambient points by
+the subgroup cut out by `I`. -/
+@[simp]
+theorem pointwiseQuotientFunctor_obj (H : _root_.CommHopfAlgCat.{v} R)
+    (I : HopfIdeal R H) (hI : I.IsNormal) (A : CommAlgCat.{w} R) :
+    (pointwiseQuotientFunctor H I hI).obj A = pointwiseQuotientGroup H I hI A :=
+  rfl
+
+/-- The map part of the pointwise quotient functor is the map induced on quotient groups. -/
+@[simp]
+theorem pointwiseQuotientFunctor_map (H : _root_.CommHopfAlgCat.{v} R)
+    (I : HopfIdeal R H) (hI : I.IsNormal) {A B : CommAlgCat.{w} R} (χ : A ⟶ B) :
+    (pointwiseQuotientFunctor H I hI).map χ = mapPointwiseQuotient H I hI χ :=
+  rfl
+
+/-- The natural projection from the ambient functor of points to its pointwise quotient. -/
+@[expose] noncomputable def pointwiseQuotientProjection (H : _root_.CommHopfAlgCat.{v} R)
+    (I : HopfIdeal R H) (hI : I.IsNormal) :
+    HopfAlgebra.pointsFunctor (R := R) (H := H) ⟶ pointwiseQuotientFunctor H I hI where
+  app A := pointwiseQuotientMk H I hI A
+  naturality {A B} χ := by
+    apply GrpCat.hom_ext
+    apply MonoidHom.ext
+    intro g
+    exact (mapPointwiseQuotient_mk H I hI χ g).symm
+
+/-- Each component of the natural quotient projection is the ordinary quotient-group map. -/
+@[simp]
+theorem pointwiseQuotientProjection_app (H : _root_.CommHopfAlgCat.{v} R)
+    (I : HopfIdeal R H) (hI : I.IsNormal) (A : CommAlgCat.{w} R) :
+    (pointwiseQuotientProjection H I hI).app A = pointwiseQuotientMk H I hI A :=
+  rfl
+
+/-- A homomorphism from ambient points which kills the normal subgroup descends to the pointwise
+quotient group. -/
+noncomputable def pointwiseQuotientLift (H : _root_.CommHopfAlgCat.{v} R)
+    (I : HopfIdeal R H) (hI : I.IsNormal) (A : CommAlgCat.{w} R) (K : GrpCat.{max v w})
+    (f : HopfAlgebra.points (R := R) (H := H) A ⟶ K)
+    (hf : quotientPointsSubgroup H I A ≤ f.hom.ker) :
+    pointwiseQuotientGroup H I hI A ⟶ K := by
+  let _ : (quotientPointsSubgroup H I A).Normal :=
+    quotientPointsSubgroup_normal H I hI A
+  exact GrpCat.ofHom (QuotientGroup.lift (quotientPointsSubgroup H I A) f.hom hf)
+
+/-- The lift from a pointwise quotient agrees with the original homomorphism on every ambient
+representative. -/
+@[simp]
+theorem pointwiseQuotientLift_mk (H : _root_.CommHopfAlgCat.{v} R)
+    (I : HopfIdeal R H) (hI : I.IsNormal) (A : CommAlgCat.{w} R) (K : GrpCat.{max v w})
+    (f : HopfAlgebra.points (R := R) (H := H) A ⟶ K)
+    (hf : quotientPointsSubgroup H I A ≤ f.hom.ker)
+    (g : HopfAlgebra.points (R := R) (H := H) A) :
+    pointwiseQuotientLift H I hI A K f hf (pointwiseQuotientMk H I hI A g) = f g := by
+  let _ : (quotientPointsSubgroup H I A).Normal :=
+    quotientPointsSubgroup_normal H I hI A
+  rfl
+
+/-- The quotient lift composed with the quotient projection is the original homomorphism. -/
+@[simp]
+theorem pointwiseQuotientMk_comp_lift (H : _root_.CommHopfAlgCat.{v} R)
+    (I : HopfIdeal R H) (hI : I.IsNormal) (A : CommAlgCat.{w} R) (K : GrpCat.{max v w})
+    (f : HopfAlgebra.points (R := R) (H := H) A ⟶ K)
+    (hf : quotientPointsSubgroup H I A ≤ f.hom.ker) :
+    pointwiseQuotientMk H I hI A ≫ pointwiseQuotientLift H I hI A K f hf = f := by
+  apply GrpCat.hom_ext
+  apply MonoidHom.ext
+  intro g
+  exact pointwiseQuotientLift_mk H I hI A K f hf g
+
+/-- A homomorphism out of the pointwise quotient is uniquely determined by its composite with the
+quotient projection. -/
+theorem pointwiseQuotientLift_unique (H : _root_.CommHopfAlgCat.{v} R)
+    (I : HopfIdeal R H) (hI : I.IsNormal) (A : CommAlgCat.{w} R) (K : GrpCat.{max v w})
+    (f : HopfAlgebra.points (R := R) (H := H) A ⟶ K)
+    (hf : quotientPointsSubgroup H I A ≤ f.hom.ker)
+    (g : pointwiseQuotientGroup H I hI A ⟶ K)
+    (hg : pointwiseQuotientMk H I hI A ≫ g = f) :
+    g = pointwiseQuotientLift H I hI A K f hf := by
+  let _ : (quotientPointsSubgroup H I A).Normal :=
+    quotientPointsSubgroup_normal H I hI A
+  apply GrpCat.hom_ext
+  apply QuotientGroup.monoidHom_ext (quotientPointsSubgroup H I A)
+  apply MonoidHom.ext
+  intro x
+  calc
+    (g.hom.comp (QuotientGroup.mk' (quotientPointsSubgroup H I A))) x =
+        g (pointwiseQuotientMk H I hI A x) := rfl
+    _ = f x := by
+      exact (GrpCat.comp_apply (pointwiseQuotientMk H I hI A) g x).symm.trans
+        (ConcreteCategory.congr_hom hg x)
+    _ = pointwiseQuotientLift H I hI A K f hf (pointwiseQuotientMk H I hI A x) :=
+      (pointwiseQuotientLift_mk H I hI A K f hf x).symm
+    _ = ((pointwiseQuotientLift H I hI A K f hf).hom.comp
+        (QuotientGroup.mk' (quotientPointsSubgroup H I A))) x := rfl
+
+end CommHopfAlgCat
+
+end TauCeti
