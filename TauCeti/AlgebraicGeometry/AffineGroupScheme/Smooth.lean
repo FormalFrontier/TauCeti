@@ -71,8 +71,12 @@ This is the predicate-level compatibility needed to restrict the affine Hopf/gro
 anti-equivalence to smooth objects. -/
 theorem algebraSmooth_iff_smooth_hopfSpec
     (R : Type u) [CommRing R] (H : CommHopfAlgCat.{u} R) :
-    Algebra.Smooth R H ↔
-      Smooth (((hopfSpec (CommRingCat.of R)).obj (op H)).X.hom) := by
+    smoothCommHopfAlgProperty R H ↔
+      smoothAffineGroupSchemeProperty (CommRingCat.of R)
+        ⟨(hopfSpec (CommRingCat.of R)).obj (op H), by
+          rw [affineGroupSchemeProperty_iff, hopfSpec_obj_X_left]
+          infer_instance⟩ := by
+  rw [smoothCommHopfAlgProperty_iff, smoothAffineGroupSchemeProperty_iff]
   rw [hopfSpec_obj_X_hom]
   rw [MorphismProperty.cancel_left_of_respectsIso
     (P := @Smooth) (eqToHom (hopfSpec_obj_X_left R H))]
