@@ -151,7 +151,6 @@ comodule with a basis indexed by `Fin n`.
 
 This is relative spectrum applied contravariantly to the comodule's coordinate Hopf-algebra
 morphism `O(GLₙ) ⟶ H`. -/
-@[expose]
 noncomputable def coordinateGroupSchemeHom (b : Basis (Fin n) k M) :
     (hopfSpec (CommRingCat.of k)).obj (Opposite.op (CommHopfAlgCat.of k H)) ⟶
       GeneralLinear.groupScheme k n :=
@@ -165,7 +164,7 @@ theorem coordinateGroupSchemeHom_def (b : Basis (Fin n) k M) :
     coordinateGroupSchemeHom (H := H) b =
       (hopfSpec (CommRingCat.of k)).map
           (CommHopfAlgCat.ofHom (coordinateBialgHom (H := H) b)).op ≫
-        eqToHom (GeneralLinear.groupScheme_def k n).symm := rfl
+        eqToHom (GeneralLinear.groupScheme_def k n).symm := (rfl)
 
 /-- The group-scheme morphism associated to a finite free comodule is a closed immersion if
 and only if its coordinate Hopf-algebra morphism is surjective. -/
@@ -178,7 +177,7 @@ theorem isClosedImmersion_coordinateGroupSchemeHom_iff (b : Basis (Fin n) k M) :
     ((Over.forget (Spec (CommRingCat.of k))).mapIso
       ((Grp.forget (Over (Spec (CommRingCat.of k)))).mapIso
         (eqToIso (GeneralLinear.groupScheme_def k n).symm))).isIso_hom
-  rw [coordinateGroupSchemeHom]
+  rw [coordinateGroupSchemeHom_def]
   simp only [Grp.comp', Mon.comp_hom', Over.comp_left]
   rw [MorphismProperty.cancel_right_of_respectsIso (P := @IsClosedImmersion)]
   exact CommHopfAlgCat.isClosedImmersion_hopfSpec_map_iff _
