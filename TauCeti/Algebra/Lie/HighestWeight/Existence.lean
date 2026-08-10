@@ -55,9 +55,10 @@ The maximality statement is phrased on `LieModule.genWeightSpace` rather than on
 `TauCeti.genWeightSpace_eq_weightSpace`, and stating it on the generalized spaces is what lets the
 proof feed `LieModule.lie_mem_genWeightSpace_of_mem_genWeightSpace` directly.
 
-`TauCeti.nonempty_weight`, the only ingredient that does not mention the root system, is stated for
-an arbitrary finite-dimensional triangularizable module, which is all its proof uses; the
-Killing-semisimple setting supplies the `LieModule.IsTriangularizable` instance through
+That the set of weights is nonempty to begin with is `TauCeti.nonempty_weight`, which mentions no
+root system and so lives with the general weight theory in
+`TauCeti/Algebra/Lie/Weights/Diagonalizable.lean`; the Killing-semisimple setting supplies the
+`LieModule.IsTriangularizable` instance it wants through
 `LieModule.instIsTriangularizableOfIsAlgClosed`.
 
 The successor map is built by `choose` from the failure of maximality and iterated with
@@ -84,26 +85,6 @@ namespace TauCeti
 open LieAlgebra LieModule Module
 
 universe u v w
-
-section Triangularizable
-
-variable (K : Type u) (L : Type v) (M : Type w) [Field K] [LieRing L] [LieAlgebra K L]
-  [LieRing.IsNilpotent L]
-  [AddCommGroup M] [Module K M] [LieRingModule L M] [LieModule K L M] [FiniteDimensional K M]
-
-/-- A nonzero finite-dimensional triangularizable module has at least one weight: the *generalized*
-weight spaces span it (`LieModule.iSup_genWeightSpace_eq_top'`), and an empty supremum is `⊥`.
-`LieModule.Weight` is by definition indexed by the linear forms whose generalized weight space is
-nonzero, so no honest-weight-space hypothesis is available or needed here; nilpotency of `L` is
-carried only because `LieModule.Weight` demands it.
-
-Mathlib performs this step inside the proof of
-`LieModule.exists_nontrivial_weightSpace_of_isNilpotent` rather than naming it. -/
-theorem nonempty_weight [IsTriangularizable K L M] [Nontrivial M] : Nonempty (Weight K L M) := by
-  by_contra! contra
-  simpa only [iSup_of_empty, bot_ne_top] using iSup_genWeightSpace_eq_top' K L M
-
-end Triangularizable
 
 variable {K : Type u} {L : Type v} [Field K] [CharZero K] [IsAlgClosed K]
   [LieRing L] [LieAlgebra K L] [IsKilling K L] [FiniteDimensional K L]
