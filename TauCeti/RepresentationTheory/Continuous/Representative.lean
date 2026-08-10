@@ -53,9 +53,14 @@ unitarity is recorded with each of them
 `TauCeti.ContRepresentation.IsUnitary.congr`); on a *compact* group the distinction is empty
 anyway, since Haar averaging (Layer 1) unitarizes.
 
+`TauCeti.IsRepresentative` and `TauCeti.representativeSubmodule` are `@[expose]`d: the span
+structure of the latter is what downstream arguments induct over, and the existential shape of the
+former is what they destructure to extract a representation from a separating function.
+
 **Point separation is deliberately absent.** That `𝓡(G)` separates the points of a compact `G` is
 equivalent to the Peter-Weyl theorem, so it cannot be recorded at this stage without circularity;
-it is a Layer 5 corollary of the analytic density theorem, not an input to it.
+it is a Layer 5 corollary of the analytic density theorem, proved in
+`TauCeti/RepresentationTheory/Compact/RepresentativeDensity.lean`, not an input to it.
 
 ## Main definitions
 
@@ -97,14 +102,14 @@ variable {𝕜 G : Type*} [RCLike 𝕜] [Monoid G] [TopologicalSpace G]
 /-- **A representative function** on `G`: a matrix coefficient of a finite-dimensional continuous
 representation. The carrier is pinned to a standard model `EuclideanSpace 𝕜 (Fin n)`, which by
 `TauCeti.isRepresentative_matrixCoeff` is no restriction. -/
-def IsRepresentative (f : C(G, 𝕜)) : Prop :=
+@[expose] def IsRepresentative (f : C(G, 𝕜)) : Prop :=
   ∃ (n : ℕ) (π : ContRepresentation 𝕜 G (EuclideanSpace 𝕜 (Fin n))) (hπ : Continuous π)
     (v w : EuclideanSpace 𝕜 (Fin n)), f = matrixCoeff π hπ v w
 
 variable (𝕜 G) in
 /-- **The representative ring `𝓡(G)`**, as a submodule of `C(G, 𝕜)`: the span of the matrix
 coefficients of the finite-dimensional continuous representations of `G`. -/
-def representativeSubmodule : Submodule 𝕜 C(G, 𝕜) :=
+@[expose] def representativeSubmodule : Submodule 𝕜 C(G, 𝕜) :=
   Submodule.span 𝕜 {f : C(G, 𝕜) | IsRepresentative f}
 
 /-- A representative function lies in the representative ring. -/
