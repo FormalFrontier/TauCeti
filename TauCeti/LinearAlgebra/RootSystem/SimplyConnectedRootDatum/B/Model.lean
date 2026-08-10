@@ -56,8 +56,8 @@ reflection identity for coroots is proved.
 
 * `TauCeti.DynkinType.TypeB.wt` and `TauCeti.DynkinType.TypeB.cwt`: the coordinates of a signed
   basis vector and of its double.
-* `TauCeti.DynkinType.TypeB.rootOfPair` and `TauCeti.DynkinType.TypeB.corootOfPair`: the root and
-  coroot named by a pair of signed basis vectors.
+* `TauCeti.DynkinType.TypeB.rootOfPair` and `TauCeti.DynkinType.TypeB.half`: the root and coroot
+  named by a pair of signed basis vectors.
 * `TauCeti.DynkinType.TypeB.reflMap`: the signed permutation realising the reflection in a root.
 
 Only the coordinate definitions are `@[expose]`d, since the enumeration file computes with their
@@ -407,28 +407,13 @@ lemma shift_index {u v : Fin (2 * n)} (h : IsPair u v) :
 /-- The character coordinates of the root named by a pair of signed basis vectors. -/
 @[expose] def rootOfPair (u v : Fin (2 * n)) : Fin n → ℤ := if u = v then wt u else wt u + wt v
 
-/-- The cocharacter coordinates of the coroot named by a pair of signed basis vectors. -/
-def corootOfPair (u v : Fin (2 * n)) : Fin n → ℤ := half u v
-
-/-- The coroot named by a pair of signed basis vectors is `TauCeti.DynkinType.TypeB.half` of that
-pair, in the short case `u = v` as well as the long one; unlike
-`TauCeti.DynkinType.TypeB.rootOfPair` there is no case split to make. This is the interface through
-which the reflection formulas below compute with a coroot. -/
-lemma corootOfPair_eq_half (u v : Fin (2 * n)) : corootOfPair u v = half u v := (rfl)
-
 lemma rootOfPair_comm (u v : Fin (2 * n)) : rootOfPair u v = rootOfPair v u := by
   rcases eq_or_ne u v with rfl | huv
   · rfl
   · rw [rootOfPair, rootOfPair, if_neg huv, if_neg (Ne.symm huv), add_comm]
 
-lemma corootOfPair_comm (u v : Fin (2 * n)) : corootOfPair u v = corootOfPair v u := by
-  rw [corootOfPair_eq_half, corootOfPair_eq_half, half_comm]
-
 lemma rootOfPair_self (u : Fin (2 * n)) : rootOfPair u u = wt u := by
   rw [rootOfPair, if_pos rfl]
-
-lemma corootOfPair_self (u : Fin (2 * n)) : corootOfPair u u = cwt u := by
-  rw [corootOfPair, half_self]
 
 lemma rootOfPair_of_ne {u v : Fin (2 * n)} (h : u ≠ v) : rootOfPair u v = wt u + wt v := by
   rw [rootOfPair, if_neg h]
@@ -437,7 +422,7 @@ lemma rootOfPair_of_ne {u v : Fin (2 * n)} (h : u ≠ v) : rootOfPair u v = wt u
 @[expose] def rootIdx (z : Fin (2 * n) × Fin n) : Fin n → ℤ := rootOfPair z.1 (shift z.1 z.2)
 
 /-- The coroot indexed by an element of `Fin (2 * n) × Fin n`. -/
-@[expose] def corootIdx (z : Fin (2 * n) × Fin n) : Fin n → ℤ := corootOfPair z.1 (shift z.1 z.2)
+@[expose] def corootIdx (z : Fin (2 * n) × Fin n) : Fin n → ℤ := half z.1 (shift z.1 z.2)
 
 lemma rootIdx_index {u v : Fin (2 * n)} (h : IsPair u v) :
     rootIdx (index u v) = rootOfPair u v := by
@@ -446,26 +431,26 @@ lemma rootIdx_index {u v : Fin (2 * n)} (h : IsPair u v) :
   · rw [rootIdx, h2, h1, rootOfPair_comm]
 
 lemma corootIdx_index {u v : Fin (2 * n)} (h : IsPair u v) :
-    corootIdx (index u v) = corootOfPair u v := by
+    corootIdx (index u v) = half u v := by
   rcases shift_index h with ⟨h1, h2⟩ | ⟨h1, h2⟩
   · rw [corootIdx, h2, h1]
-  · rw [corootIdx, h2, h1, corootOfPair_comm]
+  · rw [corootIdx, h2, h1, half_comm]
 
 lemma two_mul_dotProduct_half (u p q : Fin (2 * n)) :
     2 * (wt u ⬝ᵥ half p q) = wt u ⬝ᵥ cwt p + wt u ⬝ᵥ cwt q := by
   rw [← dotProduct_add, ← half_add_half p q, dotProduct_add]
   ring
 
-lemma rootOfPair_dotProduct_corootOfPair {u v : Fin (2 * n)} (h : IsPair u v) :
-    rootOfPair u v ⬝ᵥ corootOfPair u v = 2 := by
+lemma rootOfPair_dotProduct_half {u v : Fin (2 * n)} (h : IsPair u v) :
+    rootOfPair u v ⬝ᵥ half u v = 2 := by
   rcases eq_or_ne u v with rfl | huv
-  · rw [rootOfPair_self, corootOfPair_self, wt_dotProduct_cwt_self]
+  · rw [rootOfPair_self, half_self, wt_dotProduct_cwt_self]
   · have hax : axis u ≠ axis v := h.resolve_left huv
     have h1 := two_mul_dotProduct_half u u v
     have h2 := two_mul_dotProduct_half v u v
     rw [wt_dotProduct_cwt_self, wt_dotProduct_cwt_of_axis_ne hax] at h1
     rw [wt_dotProduct_cwt_self, wt_dotProduct_cwt_of_axis_ne (Ne.symm hax)] at h2
-    rw [rootOfPair_of_ne huv, corootOfPair, add_dotProduct]
+    rw [rootOfPair_of_ne huv, add_dotProduct]
     omega
 
 /-! ## The reflection in a root -/
@@ -588,10 +573,10 @@ lemma isPair_reflMap (h : IsPair p q) {u v : Fin (2 * n)} (huv : IsPair u v) :
 
 /-- **The reflection formula on a single signed basis vector.** -/
 lemma wt_reflMap (h : IsPair p q) (u : Fin (2 * n)) :
-    wt (reflMap p q u) = wt u - (wt u ⬝ᵥ corootOfPair p q) • rootOfPair p q := by
+    wt (reflMap p q u) = wt u - (wt u ⬝ᵥ half p q) • rootOfPair p q := by
   rcases eq_or_ne p q with rfl | hpq
   · have hop := opp_ne_self p
-    rw [corootOfPair_self, rootOfPair_self]
+    rw [half_self, rootOfPair_self]
     by_cases c1 : u = p
     · rw [c1, reflMap_fst, if_pos rfl, wt_dotProduct_cwt_self, wt_opp]
       module
@@ -605,7 +590,7 @@ lemma wt_reflMap (h : IsPair p q) (u : Fin (2 * n)) :
     obtain ⟨h1, h2, h3, h4, h5, h6, h7, h8⟩ := long_ne hax
     have hpq' : wt p ⬝ᵥ cwt q = 0 := wt_dotProduct_cwt_of_axis_ne hax
     have hqp : wt q ⬝ᵥ cwt p = 0 := wt_dotProduct_cwt_of_axis_ne (Ne.symm hax)
-    rw [rootOfPair_of_ne h1, corootOfPair_eq_half]
+    rw [rootOfPair_of_ne h1]
     by_cases c1 : u = p
     · have hval := two_mul_dotProduct_half p p q
       rw [wt_dotProduct_cwt_self, hpq'] at hval
@@ -639,10 +624,10 @@ lemma wt_reflMap (h : IsPair p q) (u : Fin (2 * n)) :
 
 /-- **The reflection formula on the double of a single signed basis vector.** -/
 lemma cwt_reflMap (h : IsPair p q) (u : Fin (2 * n)) :
-    cwt (reflMap p q u) = cwt u - (rootOfPair p q ⬝ᵥ cwt u) • corootOfPair p q := by
+    cwt (reflMap p q u) = cwt u - (rootOfPair p q ⬝ᵥ cwt u) • half p q := by
   rcases eq_or_ne p q with rfl | hpq
   · have hop := opp_ne_self p
-    rw [corootOfPair_self, rootOfPair_self]
+    rw [half_self, rootOfPair_self]
     by_cases c1 : u = p
     · rw [c1, reflMap_fst, if_pos rfl, wt_dotProduct_cwt_self, cwt_opp]
       module
@@ -660,7 +645,7 @@ lemma cwt_reflMap (h : IsPair p q) (u : Fin (2 * n)) :
     have hsum := two_smul_half p q
     have hneg : ((-2 : ℤ)) • half p q = -(cwt p + cwt q) := by
       rw [← hsum, show ((-2 : ℤ)) • half p q = -((2 : ℤ) • half p q) from by module]
-    rw [rootOfPair_of_ne h1, corootOfPair_eq_half]
+    rw [rootOfPair_of_ne h1]
     by_cases c1 : u = p
     · rw [c1, add_dotProduct, wt_dotProduct_cwt_self, hqp, reflMap_fst, if_neg h1, cwt_opp,
         show (2 : ℤ) + 0 = 2 by ring, hsum]

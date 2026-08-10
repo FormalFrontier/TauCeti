@@ -155,20 +155,19 @@ lemma corootIdx_typeBReflIdx (z w : Fin (2 * n) × Fin n) :
       rootOfPair p q ⬝ᵥ cwt u + rootOfPair p q ⬝ᵥ cwt v := by
     rw [← dotProduct_add, ← half_add_half u v, dotProduct_add]
     ring
-  calc (2 : ℤ) • (corootOfPair u v - (rootOfPair p q ⬝ᵥ corootOfPair u v) • corootOfPair p q)
+  calc (2 : ℤ) • (half u v - (rootOfPair p q ⬝ᵥ half u v) • half p q)
       = (2 : ℤ) • half u v - ((2 : ℤ) * (rootOfPair p q ⬝ᵥ half u v)) • half p q := by
-        simp only [corootOfPair_eq_half, smul_sub, smul_smul]
+        simp only [smul_sub, smul_smul]
     _ = cwt u + cwt v - (rootOfPair p q ⬝ᵥ cwt u + rootOfPair p q ⬝ᵥ cwt v) • half p q := by
         rw [two_smul_half, hc]
-    _ = (cwt u - (rootOfPair p q ⬝ᵥ cwt u) • corootOfPair p q) +
-          (cwt v - (rootOfPair p q ⬝ᵥ cwt v) • corootOfPair p q) := by
-        simp only [corootOfPair_eq_half, add_smul]
+    _ = (cwt u - (rootOfPair p q ⬝ᵥ cwt u) • half p q) +
+          (cwt v - (rootOfPair p q ⬝ᵥ cwt v) • half p q) := by
+        simp only [add_smul]
         abel
     _ = cwt (reflMap p q u) + cwt (reflMap p q v) := by
         rw [cwt_reflMap hpq, cwt_reflMap hpq]
-    _ = (2 : ℤ) • corootOfPair (reflMap p q u) (reflMap p q v) := by
-        rw [corootOfPair_eq_half]
-        exact (two_smul_half _ _).symm
+    _ = (2 : ℤ) • half (reflMap p q u) (reflMap p q v) :=
+      (two_smul_half _ _).symm
 
 lemma rootIdx_injective : Injective (rootIdx : Fin (2 * n) × Fin n → Fin n → ℤ) := by
   intro z z' h
@@ -332,7 +331,7 @@ def typeBSimplyConnectedRootDatum (n : ℕ) :
   coroot := ⟨fun k => corootIdx ((typeBEnum n).symm k),
     corootIdx_injective.comp (typeBEnum n).symm.injective⟩
   root_coroot_two k :=
-    rootOfPair_dotProduct_corootOfPair
+    rootOfPair_dotProduct_half
       (isPair_shift ((typeBEnum n).symm k).1 ((typeBEnum n).symm k).2)
   reflectionPerm := typeBReflPerm n
   reflectionPerm_root := typeBReflPerm_root
@@ -403,7 +402,7 @@ coroot lattice, so that the datum is the simply connected one. -/
   by_cases hlast : (i : ℕ) + 1 = n
   · have hshort : shift (⟨n - 1, by omega⟩ : Fin (2 * n)) (⟨0, by omega⟩ : Fin n) =
         ⟨n - 1, by omega⟩ := shift_eq_self rfl
-    rw [typeBSimplePair, dif_pos hlast, typeBShortPair, hshort, corootOfPair_self,
+    rw [typeBSimplePair, dif_pos hlast, typeBShortPair, hshort, half_self,
       typeB_cwt_mk_lt _ (show n - 1 < n by omega)]
     funext k
     have hk := k.isLt
@@ -413,7 +412,7 @@ coroot lattice, so that the datum is the simply connected one. -/
     have hv : shift (⟨n + (i : ℕ) + 1, by omega⟩ : Fin (2 * n)) (⟨n - 1, by omega⟩ : Fin n) =
         ⟨(i : ℕ), by omega⟩ :=
       shift_mk _ _ _ (by split_ifs <;> omega)
-    rw [typeBSimplePair, dif_neg hlast, hv, corootOfPair_eq_half]
+    rw [typeBSimplePair, dif_neg hlast, hv]
     funext k
     have hk := k.isLt
     simp only [half, Pi.single_apply, Fin.ext_iff,
@@ -645,7 +644,7 @@ def typeBSimplyConnectedBase (n : ℕ) : (typeBSimplyConnectedRootDatum n).Base 
     rw [image_coroot_typeBSimpleSupport]
     obtain ⟨u, v, hcor⟩ : ∃ u v : Fin (2 * n),
         (typeBSimplyConnectedRootDatum n).coroot k = half u v :=
-      ⟨_, _, (coroot_typeBSimplyConnectedRootDatum k).trans (corootOfPair_eq_half _ _)⟩
+      ⟨_, _, by rw [coroot_typeBSimplyConnectedRootDatum, corootIdx]⟩
     rw [hcor]
     rcases sgn_eq_one_or_neg_one u with hsu | hsu <;>
       rcases sgn_eq_one_or_neg_one v with hsv | hsv
