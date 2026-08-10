@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 import Mathlib.Tactic.NoncommRing
+import Mathlib.Data.Fin.Tuple.Reflection
 public import Mathlib.LinearAlgebra.ExteriorPower.Basic
 public import TauCeti.LinearAlgebra.CliffordAlgebra.Filtration
 
@@ -138,9 +139,7 @@ private theorem equivExterior_comp_bivectorExterior :
   apply exteriorPower.linearMap_ext
   apply AlternatingMap.ext
   intro x
-  have hx : x = ![x 0, x 1] := by
-    funext i
-    fin_cases i <;> rfl
+  have hx : x = ![x 0, x 1] := (FinVec.etaExpand_eq x).symm
   rw [LinearMap.compAlternatingMap_apply, LinearMap.comp_apply,
     LinearMap.compAlternatingMap_apply, LinearEquiv.coe_coe]
   rw [hx, bivectorExterior_apply_ιMulti, equivExterior_bivector]
@@ -203,9 +202,7 @@ theorem bivectorExterior_range_le_of_bivector_mem
     ← exteriorPower.ιMulti_span R 2 M]
   refine Submodule.span_le.2 ?_
   rintro _ ⟨v, rfl⟩
-  have hv : v = ![v 0, v 1] := by
-    funext i
-    fin_cases i <;> rfl
+  have hv : v = ![v 0, v 1] := (FinVec.etaExpand_eq v).symm
   rw [hv]
   -- Rewriting does not unfold membership in the comap, so expose the map application explicitly.
   change bivectorExterior Q (exteriorPower.ιMulti R 2 ![v 0, v 1]) ∈ P
@@ -221,16 +218,9 @@ theorem bivector_lie_ι (a b x : M) :
   rw [map_sub, map_smul, map_smul]
   have hbx := ι_mul_ι_add_swap (Q := Q) b x
   have hax := ι_mul_ι_add_swap (Q := Q) a x
-  have hA (r : R) : ι Q a * algebraMap R (CliffordAlgebra Q) r = r • ι Q a := by
-    calc
-      ι Q a * algebraMap R (CliffordAlgebra Q) r = algebraMap R (CliffordAlgebra Q) r * ι Q a :=
-        (Algebra.commutes r (ι Q a)).symm
-      _ = r • ι Q a := (Algebra.smul_def r (ι Q a)).symm
-  have hB (r : R) : ι Q b * algebraMap R (CliffordAlgebra Q) r = r • ι Q b := by
-    calc
-      ι Q b * algebraMap R (CliffordAlgebra Q) r = algebraMap R (CliffordAlgebra Q) r * ι Q b :=
-        (Algebra.commutes r (ι Q b)).symm
-      _ = r • ι Q b := (Algebra.smul_def r (ι Q b)).symm
+  -- A generator commutes past a scalar, turning the product into a scalar action.
+  have hcomm (m : M) (r : R) : ι Q m * algebraMap R (CliffordAlgebra Q) r = r • ι Q m := by
+    rw [← Algebra.commutes r (ι Q m), Algebra.smul_def]
   have h :
       (ι Q a * ι Q b - ι Q b * ι Q a) * ι Q x -
           ι Q x * (ι Q a * ι Q b - ι Q b * ι Q a) =
@@ -251,7 +241,7 @@ theorem bivector_lie_ι (a b x : M) :
             rw [hbx, hax]
       _ = (2 : R) • (QuadraticMap.polar Q b x • ι Q a -
           QuadraticMap.polar Q a x • ι Q b) := by
-            rw [hA, hB, ← Algebra.smul_def, ← Algebra.smul_def]
+            rw [hcomm a, hcomm b, ← Algebra.smul_def, ← Algebra.smul_def]
             rw [two_smul R]
             abel
   rw [h]
