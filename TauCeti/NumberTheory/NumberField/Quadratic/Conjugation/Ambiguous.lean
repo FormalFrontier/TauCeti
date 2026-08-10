@@ -23,7 +23,7 @@ ones fixed by `σ` (the ambiguous classes), so the ramified primes furnish expli
 2-torsion classes — members of `Cl(𝓞 K)[2]`, the object measured by
 `card_elementaryTwoQuotient_eq_card_twoTorsion`. This is the lower-bound building block of the
 ambiguous-class-number / 2-rank theorem of genus theory; the matching upper bound (that such classes
-exhaust `Cl(𝓞 K)[2]`, with a single relation) is left to later work.
+generate `Cl(𝓞 K)[2]`) is left to later work.
 
 See D. A. Cox, *Primes of the Form x² + ny²*, and F. Lemmermeyer, *Reciprocity Laws*, for the
 classical genus theory these results underlie.
