@@ -115,7 +115,12 @@ theorem jointEigenspaceMatrix_mulVec_eq_zero_iff {R : Type u} [NonUnitalNonAssoc
     simpa only [Matrix.mulVec, jointEigenspaceMatrix_apply, Pi.zero_apply] using
       congrFun hi j
 
-/-- A computable basis of the simultaneous eigenspace for the eigenvalue tuple `a`. -/
+/-- A computable basis of the simultaneous eigenspace for the eigenvalue tuple `a`.
+
+This is the kernel basis of the stacked system, so the `TauCeti.kernelBasis` API applies to it
+verbatim: `TauCeti.linearIndepOn_kernelBasis (jointEigenspaceMatrix A a)` and
+`TauCeti.nodup_kernelBasis (jointEigenspaceMatrix A a)` are its linear independence and `Nodup`,
+with no unfolding needed. -/
 @[expose] def jointEigenspaceBasis (A : Fin m → Matrix (Fin n) (Fin n) F)
     (a : Fin m → F) : List (Fin n → F) :=
   kernelBasis (jointEigenspaceMatrix A a)
