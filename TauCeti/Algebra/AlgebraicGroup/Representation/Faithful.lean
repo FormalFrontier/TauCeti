@@ -34,10 +34,9 @@ equivalent to generation of the coordinate ring by matrix coefficients and their
 ## Main declarations
 
 * `TauCeti.Comodule.coordinateBialgHom_range`: the exact range of the coordinate morphism.
-* `TauCeti.Comodule.coordinateBialgHom_surjective_iff_matrixCoefficients`: its
-  matrix-coefficient surjectivity criterion.
-* `TauCeti.Comodule.isClosedImmersion_coordinateGroupSchemeHom_iff_matrixCoefficients`: the
-  faithful-representation criterion for affine group schemes.
+* `TauCeti.Comodule.IsFaithful`: the basis-independent predicate for a faithful comodule.
+* `TauCeti.Comodule.isFaithful_iff_matrixCoefficients_sup_antipode_eq_top`: the
+  matrix-coefficient criterion for faithfulness.
 * `TauCeti.Comodule.isClosedImmersion_coordinateGroupSchemeHom_iff_of_bases`: faithfulness is
   independent of the chosen finite basis.
 
@@ -146,7 +145,7 @@ theorem coordinateBialgHom_range (b : Basis (Fin n) R M) :
 
 /-- The coordinate morphism is surjective exactly when the matrix coefficients and their
 antipode images generate the coordinate Hopf algebra. -/
-theorem coordinateBialgHom_surjective_iff_matrixCoefficients
+theorem coordinateBialgHom_surjective_iff_matrixCoefficients_sup_antipode_eq_top
     (b : Basis (Fin n) R M) :
     Function.Surjective (coordinateBialgHom (H := H) b) ↔
       matrixCoefficientSubalgebra (R := R) (C := H) (M := M) ⊔
@@ -172,8 +171,8 @@ theorem coordinateBialgHom_range_eq_matrixCoefficientSubalgebra_prod_dual
   rw [coordinateBialgHom_range, matrixCoefficientSubalgebra_prod_dual]
 
 /-- The coordinate morphism is surjective exactly when the coefficients of the comodule and its
-dual generate the coordinate Hopf algebra. This is the rigid-category form of
-`coordinateBialgHom_surjective_iff_matrixCoefficients`. -/
+dual generate the coordinate Hopf algebra. This is the rigid-category form of the
+matrix-coefficient-and-antipode criterion above. -/
 theorem coordinateBialgHom_surjective_iff_matrixCoefficientSubalgebra_prod_dual
     (b : Basis (Fin n) R M) :
     Function.Surjective (coordinateBialgHom (H := H) b) ↔
@@ -194,17 +193,23 @@ variable {k H V : Type u} {d : ℕ}
 variable [CommRing k] [CommRing H] [HopfAlgebra k H]
 variable [AddCommMonoid V] [Module k V] [Comodule k H V]
 
+/-- A comodule is faithful if its representation morphism into a general linear group is a
+closed immersion for some finite basis. This property is independent of the witnessing basis. -/
+def IsFaithful : Prop :=
+  ∃ (d : ℕ) (b : Basis (Fin d) k V),
+    IsClosedImmersion (coordinateGroupSchemeHom (H := H) b).hom.hom.left
+
 /-- **Faithfulness is generation by matrix coefficients.** The affine group-scheme morphism
 associated to a finite free comodule is a closed immersion if and only if the coefficients of
 the comodule together with their antipode images generate the coordinate Hopf algebra. -/
-theorem isClosedImmersion_coordinateGroupSchemeHom_iff_matrixCoefficients
+theorem isClosedImmersion_coordinateGroupSchemeHom_iff_matrixCoefficients_sup_antipode_eq_top
     (b : Basis (Fin d) k V) :
     IsClosedImmersion (coordinateGroupSchemeHom (H := H) b).hom.hom.left ↔
       matrixCoefficientSubalgebra (R := k) (C := H) (M := V) ⊔
         (matrixCoefficientSubalgebra (R := k) (C := H) (M := V)).map
           (HopfAlgebra.antipodeAlgHom k H) = ⊤ := by
   rw [isClosedImmersion_coordinateGroupSchemeHom_iff,
-    coordinateBialgHom_surjective_iff_matrixCoefficients]
+    coordinateBialgHom_surjective_iff_matrixCoefficients_sup_antipode_eq_top]
 
 /-- Whether a finite free comodule defines a closed immersion into a general linear group is
 independent of the chosen basis. The two target general linear groups may use different finite
@@ -213,8 +218,31 @@ theorem isClosedImmersion_coordinateGroupSchemeHom_iff_of_bases
     {e : ℕ} (b : Basis (Fin d) k V) (c : Basis (Fin e) k V) :
     IsClosedImmersion (coordinateGroupSchemeHom (H := H) b).hom.hom.left ↔
       IsClosedImmersion (coordinateGroupSchemeHom (H := H) c).hom.hom.left := by
-  rw [isClosedImmersion_coordinateGroupSchemeHom_iff_matrixCoefficients,
-    isClosedImmersion_coordinateGroupSchemeHom_iff_matrixCoefficients]
+  rw [isClosedImmersion_coordinateGroupSchemeHom_iff_matrixCoefficients_sup_antipode_eq_top,
+    isClosedImmersion_coordinateGroupSchemeHom_iff_matrixCoefficients_sup_antipode_eq_top]
+
+/-- A finite basis witnesses faithfulness exactly when its coordinate group-scheme morphism is a
+closed immersion. -/
+theorem isFaithful_iff_isClosedImmersion_coordinateGroupSchemeHom
+    (b : Basis (Fin d) k V) :
+    IsFaithful (k := k) (H := H) (V := V) ↔
+      IsClosedImmersion (coordinateGroupSchemeHom (H := H) b).hom.hom.left := by
+  constructor
+  · rintro ⟨e, c, hc⟩
+    exact (isClosedImmersion_coordinateGroupSchemeHom_iff_of_bases c b).mp hc
+  · intro hb
+    exact ⟨d, b, hb⟩
+
+/-- A finite free comodule is faithful exactly when its matrix coefficients together with their
+antipode images generate the coordinate Hopf algebra. -/
+theorem isFaithful_iff_matrixCoefficients_sup_antipode_eq_top
+    (b : Basis (Fin d) k V) :
+    IsFaithful (k := k) (H := H) (V := V) ↔
+      matrixCoefficientSubalgebra (R := k) (C := H) (M := V) ⊔
+        (matrixCoefficientSubalgebra (R := k) (C := H) (M := V)).map
+          (HopfAlgebra.antipodeAlgHom k H) = ⊤ := by
+  rw [isFaithful_iff_isClosedImmersion_coordinateGroupSchemeHom (b := b),
+    isClosedImmersion_coordinateGroupSchemeHom_iff_matrixCoefficients_sup_antipode_eq_top]
 
 section Dual
 
@@ -224,12 +252,13 @@ attribute [local instance] dual Prod
 
 /-- In a finite projective comodule, the faithful-representation criterion can be read as
 generation by the coefficients of the comodule together with its dual. -/
-theorem isClosedImmersion_coordinateGroupSchemeHom_iff_matrixCoefficientSubalgebra_prod_dual
+theorem isFaithful_iff_matrixCoefficientSubalgebra_prod_dual
     (b : Basis (Fin d) k V) :
-    IsClosedImmersion (coordinateGroupSchemeHom (H := H) b).hom.hom.left ↔
+    IsFaithful (k := k) (H := H) (V := V) ↔
       matrixCoefficientSubalgebra (R := k) (C := H)
         (M := V × Module.Dual k V) = ⊤ := by
-  rw [isClosedImmersion_coordinateGroupSchemeHom_iff,
+  rw [isFaithful_iff_isClosedImmersion_coordinateGroupSchemeHom (b := b),
+    isClosedImmersion_coordinateGroupSchemeHom_iff,
     coordinateBialgHom_surjective_iff_matrixCoefficientSubalgebra_prod_dual]
 
 end Dual
