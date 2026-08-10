@@ -212,8 +212,7 @@ equals the trace of its tangent matrix. -/
 theorem trace_tangentMatrix (d : Derivation R (H (R := R) n)
     (Bialgebra.CounitAlgebra R (H (R := R) n) B)) :
     Matrix.trace (tangentMatrix n d) =
-      Bialgebra.CounitAlgebra.algEquivSelf R (H (R := R) n) B
-        (d (determinantGroupLike R n : H (R := R) n)) := by
+      d (determinantGroupLike R n : H (R := R) n) := by
   let q := derivationMulEquivTangentKer R (H (R := R) n) B (.ofAdd d)
   let M : Matrix (Fin n) (Fin n) (DualNumber (Bialgebra.CounitAlgebra R
       (H (R := R) n) B)) := (pointsMulEquiv (R := R) n q.val).val
@@ -236,11 +235,12 @@ theorem trace_tangentMatrix (d : Derivation R (H (R := R) n)
           exact tangentPoint_matrix_fst n d i j)
   -- Transport the entrywise identity through the coefficient equivalence.
   rw [hdet]
-  simp only [Matrix.trace, Matrix.diag_apply, map_sum]
+  simp only [Matrix.trace, Matrix.diag_apply]
   apply Finset.sum_congr rfl
   intro i _
   rw [tangentMatrix_apply]
   simp only [Matrix.map_apply, M, q, tangentPoint_matrix_snd]
+  exact Bialgebra.CounitAlgebra.algEquivSelf_apply R (H (R := R) n) B _
 
 private theorem tangentMatrix_injective :
     Function.Injective (tangentMatrix (R := R) (B := B) n) := by
