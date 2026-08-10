@@ -8,13 +8,15 @@ public import Mathlib.Geometry.Manifold.ContMDiffMFDeriv
 import Mathlib.Geometry.Manifold.VectorBundle.Tangent
 
 /-!
-# Regularity of directional derivatives along vector fields
+# Regularity of tangent-bundle sections and directional derivatives
 
-This file records the regularity of applying the manifold differential of a function to a smooth
-tangent-bundle section.
+This file records reusable regularity facts for tangent-bundle sections and for applying the
+manifold differential of a function to such a section.
 
-## Main result
+## Main results
 
+* `contMDiff_tangentBundle_zero_snd`: smoothness of the zero tangent vector over a varying point.
+* `contMDiff_tangentBundle_const_fst`: smoothness of a varying model vector over a fixed point.
 * `ContMDiff.contMDiff_mvfderiv_apply`: applying the differential of a `C^n` function to a `C^m`
   tangent-bundle section is `C^m` when `m + 1 ≤ n`.
 
@@ -35,6 +37,33 @@ variable {𝕜 : Type*} [NontriviallyNormedField 𝕜]
   {H : Type*} [TopologicalSpace H] {I : ModelWithCorners 𝕜 E H}
   {M : Type*} [TopologicalSpace M] [ChartedSpace H M] [IsManifold I 1 M]
   {n m : ℕ∞ω}
+
+/-- The zero tangent vector over the second component varies smoothly with a model-space and
+manifold pair. -/
+theorem contMDiff_tangentBundle_zero_snd (n : ℕ∞ω) :
+    ContMDiff (𝓘(𝕜, E).prod I) I.tangent n
+      (fun p : E × M => TotalSpace.mk' E p.2 0 : E × M → TangentBundle I M) :=
+  (contMDiff_zeroSection 𝕜 (TangentSpace I : M → Type _)).comp contMDiff_snd
+
+/-- A model-space vector placed in the tangent fiber over a fixed point varies smoothly. -/
+theorem contMDiff_tangentBundle_const_fst (n : ℕ∞ω) (x : M) :
+    ContMDiff (𝓘(𝕜, E).prod I) I.tangent n
+      (fun p : E × M => TotalSpace.mk' E x p.1 : E × M → TangentBundle I M) := by
+  intro p
+  rw [Bundle.contMDiffAt_totalSpace]
+  constructor
+  · exact contMDiffAt_const
+  · have hx : x ∈ (extChartAt I x).source := mem_extChartAt_source _
+    have hfun :
+        (fun q : E × M =>
+          (trivializationAt E (TangentSpace I) x (TotalSpace.mk' E x q.1)).2) = fun q => q.1 := by
+      funext q
+      rw [TangentBundle.trivializationAt_apply]
+      -- Both fibers are over `x`, so their coordinate change is the identity on the model space.
+      change tangentCoordChange I x x x q.1 = q.1
+      rw [tangentCoordChange_self hx]
+    rw [hfun]
+    exact contMDiffAt_fst
 
 /-- Applying the differential of a `C^n` function to a `C^m` tangent-bundle section is `C^m`
 when `m + 1 ≤ n`. -/

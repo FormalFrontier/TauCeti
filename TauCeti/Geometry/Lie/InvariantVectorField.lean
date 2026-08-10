@@ -6,6 +6,7 @@ module
 
 public import Mathlib.Geometry.Manifold.GroupLieAlgebra
 public import TauCeti.Geometry.Lie.Basic
+public import TauCeti.Geometry.Manifold.VectorField.Regularity
 import Mathlib.Geometry.Manifold.ContMDiffMFDeriv
 import Mathlib.Geometry.Manifold.VectorBundle.Tangent
 
@@ -14,8 +15,8 @@ import Mathlib.Geometry.Manifold.VectorBundle.Tangent
 
 This file records regularity properties of invariant vector fields expressed through Mathlib's
 tangent Lie algebra. These results depend only on `GroupLieAlgebra`, not on the separate
-left-invariant-derivation model of a Lie algebra. It also collects the shared tangent-bundle
-smoothness inputs used by both left- and right-invariant regularity proofs.
+left-invariant-derivation model of a Lie algebra. The regularity proofs reuse generic
+tangent-bundle smoothness inputs from `TauCeti.Geometry.Manifold.VectorField.Regularity`.
 
 ## Main results
 
@@ -26,8 +27,6 @@ smoothness inputs used by both left- and right-invariant regularity proofs.
   derivatives of multiplication.
 * `mfderiv_mul_left_mulInvariantVectorField`: left translation intertwines a left-invariant vector
   field with itself.
-* `contMDiff_tangentBundle_zero_snd`: smoothness of the zero tangent vector over a varying point.
-* `contMDiff_tangentBundle_const_fst`: smoothness of a varying model vector over a fixed point.
 * `contMDiff_tangentMap_mul_prod_comp`: regularity after feeding two smooth tangent-bundle inputs
   into the tangent map of multiplication.
 * `contMDiff_mulInvariantVectorField_infty`: a left-invariant vector field on a smooth Lie group is
@@ -82,51 +81,21 @@ theorem tangentMap_mul_prod_apply [ContMDiffMul I 1 G] (p q : TangentBundle I G)
 
 end Multiplication
 
-section TangentBundleInputs
-
-variable {G : Type*} [TopologicalSpace G] [ChartedSpace H G] [IsManifold I 1 G]
-
-/-- The zero tangent vector over the second component varies smoothly with a model-space and
-manifold pair. -/
-theorem contMDiff_tangentBundle_zero_snd (n : ℕ∞ω) :
-    ContMDiff (𝓘(𝕜, E).prod I) I.tangent n
-      (fun p : E × G => TotalSpace.mk' E p.2 0 : E × G → TangentBundle I G) :=
-  (contMDiff_zeroSection 𝕜 (TangentSpace I : G → Type _)).comp contMDiff_snd
-
-/-- A model-space vector placed in the tangent fiber over a fixed point varies smoothly. -/
-theorem contMDiff_tangentBundle_const_fst (n : ℕ∞ω) (x : G) :
-    ContMDiff (𝓘(𝕜, E).prod I) I.tangent n
-      (fun p : E × G => TotalSpace.mk' E x p.1 : E × G → TangentBundle I G) := by
-  intro p
-  rw [Bundle.contMDiffAt_totalSpace]
-  constructor
-  · exact contMDiffAt_const
-  · have hx : x ∈ (extChartAt I x).source := mem_extChartAt_source _
-    have hfun :
-        (fun q : E × G =>
-          (trivializationAt E (TangentSpace I) x (TotalSpace.mk' E x q.1)).2) = fun q => q.1 := by
-      funext q
-      rw [TangentBundle.trivializationAt_apply]
-      -- Both fibers are over `x`, so their coordinate change is the identity on the model space.
-      change tangentCoordChange I x x x q.1 = q.1
-      rw [tangentCoordChange_self hx]
-    rw [hfun]
-    exact contMDiffAt_fst
-
-end TangentBundleInputs
-
 section TangentMapInputs
 
 variable {G : Type*} [TopologicalSpace G] [ChartedSpace H G] [Mul G]
+  {E' : Type*} [NormedAddCommGroup E'] [NormedSpace 𝕜 E']
+  {H' : Type*} [TopologicalSpace H'] {J : ModelWithCorners 𝕜 E' H'}
+  {M : Type*} [TopologicalSpace M] [ChartedSpace H' M]
 
 /-- Composing the tangent map of multiplication with two smoothly varying tangent-bundle inputs
 preserves the regularity allowed by multiplication. -/
 theorem contMDiff_tangentMap_mul_prod_comp {m n : ℕ∞ω} [ContMDiffMul I n G]
-    (hmn : m + 1 ≤ n) (f g : E × G → TangentBundle I G) :
+    (hmn : m + 1 ≤ n) (f g : M → TangentBundle I G) :
     let _ : IsManifold I 1 G := IsManifold.of_le (le_add_self.trans hmn)
-    ContMDiff (𝓘(𝕜, E).prod I) I.tangent m f →
-      ContMDiff (𝓘(𝕜, E).prod I) I.tangent m g →
-      ContMDiff (𝓘(𝕜, E).prod I) I.tangent m
+    ContMDiff J I.tangent m f →
+      ContMDiff J I.tangent m g →
+      ContMDiff J I.tangent m
         (fun p => (tangentMap% (fun q : G × G => q.1 * q.2))
           ((equivTangentBundleProd I G I G).symm (f p, g p))) := by
   dsimp only
@@ -174,10 +143,10 @@ theorem contMDiff_mulInvariantVectorField_modelSpace {m n : ℕ∞ω}
   let _ : IsManifold I 1 G := IsManifold.of_le (le_add_self.trans hmn)
   let fg : E × G → TangentBundle I G := fun p => TotalSpace.mk' E p.2 0
   have sfg : ContMDiff (𝓘(𝕜, E).prod I) I.tangent m fg := by
-    simpa only [fg] using contMDiff_tangentBundle_zero_snd (I := I) (G := G) m
+    simpa only [fg] using contMDiff_tangentBundle_zero_snd (I := I) (M := G) m
   let fv : E × G → TangentBundle I G := fun p => TotalSpace.mk' E 1 p.1
   have sfv : ContMDiff (𝓘(𝕜, E).prod I) I.tangent m fv := by
-    simpa only [fv] using contMDiff_tangentBundle_const_fst (I := I) (G := G) m (1 : G)
+    simpa only [fv] using contMDiff_tangentBundle_const_fst (I := I) (M := G) m (1 : G)
   let S := contMDiff_tangentMap_mul_prod_comp (I := I) (G := G) hmn fg fv sfg sfv
   apply S.congr
   intro p

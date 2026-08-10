@@ -5,7 +5,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Geometry.Lie.InvariantVectorField
-import TauCeti.Geometry.Manifold.VectorField.Regularity
 
 /-!
 # Right-invariant vector fields on Lie groups
@@ -35,8 +34,6 @@ This supplies a prerequisite for Deliverable A, Layer 1 of
 * `contMDiff_mulRightInvariantVectorField_modelSpace`: joint finite regularity in the generator and
   group point.
 * `contMDiff_mulRightInvariantVectorField_infty`: a right-invariant field is smooth.
-* `contMDiff_mvfderiv_mulRightInvariantVectorField`: differentiating a smooth scalar function
-  along a right-invariant field is smooth.
 
 ## References
 
@@ -47,9 +44,6 @@ This supplies a prerequisite for Deliverable A, Layer 1 of
   `contMDiff_mulInvariantVectorField_infty` from
   `TauCeti.Geometry.Lie.InvariantVectorField`; those results in turn adapt Gouëzel's proof of
   Mathlib's `contMDiff_mulInvariantVectorField`.
-* The scalar directional-derivative proof adapts
-  `contMDiff_mvfderiv_mulInvariantVectorField` from
-  `TauCeti.Geometry.Lie.Tangent.LeftInvariantDerivation`.
 * The pullback results `inverse_mfderiv_mul_right`, `mpullback_mulRightInvariantVectorField`, and
   `mulRightInvariantVectorField_eq_mpullback`, together with the addition and scalar-multiplication
   statements, transpose the corresponding left-translation results in Sébastien Gouëzel's
@@ -170,10 +164,10 @@ theorem contMDiff_mulRightInvariantVectorField_modelSpace {m n : ℕ∞ω}
   let _ : IsManifold I 1 G := IsManifold.of_le (le_add_self.trans hmn)
   let fg : E × G → TangentBundle I G := fun p => TotalSpace.mk' E p.2 0
   have sfg : ContMDiff (𝓘(𝕜, E).prod I) I.tangent m fg := by
-    simpa only [fg] using contMDiff_tangentBundle_zero_snd (I := I) (G := G) m
+    simpa only [fg] using contMDiff_tangentBundle_zero_snd (I := I) (M := G) m
   let fv : E × G → TangentBundle I G := fun p => TotalSpace.mk' E 1 p.1
   have sfv : ContMDiff (𝓘(𝕜, E).prod I) I.tangent m fv := by
-    simpa only [fv] using contMDiff_tangentBundle_const_fst (I := I) (G := G) m (1 : G)
+    simpa only [fv] using contMDiff_tangentBundle_const_fst (I := I) (M := G) m (1 : G)
   let S := contMDiff_tangentMap_mul_prod_comp (I := I) (G := G) hmn fv fg sfv sfg
   apply S.congr
   intro p
@@ -191,13 +185,3 @@ theorem contMDiff_mulRightInvariantVectorField_infty
   have h := contMDiff_mulRightInvariantVectorField_modelSpace
     (I := I) (G := G) (m := ∞) (n := ∞) (by simp)
   exact h.comp (contMDiff_const.prodMk contMDiff_id)
-
-/-- Differentiating a smooth scalar function along a right-invariant vector field gives a smooth
-scalar function. -/
-theorem contMDiff_mvfderiv_mulRightInvariantVectorField
-    [ContMDiffMul I ∞ G] (v : GroupLieAlgebra I G)
-    (f : C^∞⟮I, G; 𝕜⟯) :
-    ContMDiff I (modelWithCornersSelf 𝕜 𝕜) ∞
-      (fun g => mvfderiv I f g (mulRightInvariantVectorField v g)) :=
-  f.contMDiff.contMDiff_mvfderiv_apply
-    (contMDiff_mulRightInvariantVectorField_infty v) (by simp)
