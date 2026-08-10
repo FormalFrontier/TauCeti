@@ -66,12 +66,11 @@ it through `TauCeti.DynkinType.cartanMatrix_A` and its siblings together with
 
 ## Implementation notes
 
-Every simple system above has each row supported on at most two coordinates, so all four are
-instances of `TauCeti.twoTermRows`, and the Gram matrix of such a system is computed once and for
-all in `TauCeti.twoTermRows_mul_conjTranspose_apply`. A row supported on a single coordinate is
-written with a zero second coefficient rather than with a separate constructor, using the clamped
-successor `Order.succ` for its second coordinate. A private helper selects the first coordinate of
-the type `D` fork row.
+Every simple system above has each row supported on at most two coordinates, so a private common
+construction and Gram-matrix calculation are shared by the three coordinate proofs. A row supported
+on a single coordinate is written with a zero second coefficient rather than with a separate
+constructor, using the clamped successor `Order.succ` for its second coordinate. A private helper
+selects the first coordinate of the type `D` fork row.
 
 ## References
 
@@ -92,12 +91,12 @@ variable {r c : ℕ}
 /-- The `r × c` rational matrix whose `i`-th row is `a i` in column `f i` plus `b i` in column
 `g i`. Each classical simple system below is of this shape, a simple coroot being supported on at
 most two of the standard coordinates. -/
-def twoTermRows (f g : Fin r → Fin c) (a b : Fin r → ℚ) : Matrix (Fin r) (Fin c) ℚ :=
+private def twoTermRows (f g : Fin r → Fin c) (a b : Fin r → ℚ) : Matrix (Fin r) (Fin c) ℚ :=
   .of fun i j ↦ (if j = f i then a i else 0) + (if j = g i then b i else 0)
 
 /-- The entries of a two-term system, in the shape the computations below consume. -/
 @[simp]
-lemma twoTermRows_apply (f g : Fin r → Fin c) (a b : Fin r → ℚ) (i : Fin r) (j : Fin c) :
+private lemma twoTermRows_apply (f g : Fin r → Fin c) (a b : Fin r → ℚ) (i : Fin r) (j : Fin c) :
     twoTermRows f g a b i j = (if j = f i then a i else 0) + (if j = g i then b i else 0) :=
   by simp only [twoTermRows, Matrix.of_apply]
 
@@ -105,7 +104,8 @@ lemma twoTermRows_apply (f g : Fin r → Fin c) (a b : Fin r → ℚ) (i : Fin r
 products of coefficients whose columns agree. Nothing is assumed of `f` and `g`: a row supported on
 a single column, written with `f i = g i` or with a vanishing coefficient, is covered as it
 stands. -/
-lemma twoTermRows_mul_conjTranspose_apply (f g : Fin r → Fin c) (a b : Fin r → ℚ) (i j : Fin r) :
+private lemma twoTermRows_mul_conjTranspose_apply (f g : Fin r → Fin c)
+    (a b : Fin r → ℚ) (i j : Fin r) :
     (twoTermRows f g a b * (twoTermRows f g a b)ᴴ) i j =
       ((if f i = f j then a i * a j else 0) + (if f i = g j then a i * b j else 0)) +
         ((if g i = f j then b i * a j else 0) + (if g i = g j then b i * b j else 0)) := by
@@ -123,7 +123,7 @@ lemma twoTermRows_mul_conjTranspose_apply (f g : Fin r → Fin c) (a b : Fin r �
 
 /-- **The coordinate sum of a row of a two-term system.** This is the linear functional that tells
 the fork row of type `D` from the chain rows, all of which it kills. -/
-lemma sum_twoTermRows_apply (f g : Fin r → Fin c) (a b : Fin r → ℚ) (i : Fin r) :
+private lemma sum_twoTermRows_apply (f g : Fin r → Fin c) (a b : Fin r → ℚ) (i : Fin r) :
     ∑ j, twoTermRows f g a b i j = a i + b i := by
   simp only [twoTermRows_apply]
   rw [Finset.sum_add_distrib]
@@ -152,18 +152,18 @@ private lemma forkIndex_val {k : ℕ} (i : Fin (k + 2)) :
 /-! ### Type `Aₙ` -/
 
 /-- **The simple coroots of type `Aₙ`**: the `i`-th row is `eᵢ - eᵢ₊₁` in `ℚ^{n+1}`. -/
-def simpleCorootsA (n : ℕ) : Matrix (Fin n) (Fin (n + 1)) ℚ :=
+private def simpleCorootsA (n : ℕ) : Matrix (Fin n) (Fin (n + 1)) ℚ :=
   twoTermRows Fin.castSucc Fin.succ (fun _ ↦ 1) (fun _ ↦ -1)
 
 /-- The entries of the simple-coroot matrix of type `Aₙ`. -/
 @[simp]
-lemma simpleCorootsA_apply (n : ℕ) (i : Fin n) (j : Fin (n + 1)) :
+private lemma simpleCorootsA_apply (n : ℕ) (i : Fin n) (j : Fin (n + 1)) :
     simpleCorootsA n i j = (if j = i.castSucc then 1 else 0) + (if j = i.succ then -1 else 0) :=
   by rw [simpleCorootsA, twoTermRows_apply]
 
 /-- The Gram matrix of the simple coroots of type `Aₙ` is the Cartan matrix itself: the family is
 simply laced, so it is its own symmetrisation. -/
-lemma simpleCorootsA_mul_conjTranspose (n : ℕ) :
+private lemma simpleCorootsA_mul_conjTranspose (n : ℕ) :
     simpleCorootsA n * (simpleCorootsA n)ᴴ =
       Matrix.of fun i j ↦ (1 : ℚ) * ((CartanMatrix.A n i j : ℤ) : ℚ) := by
   ext i j
@@ -173,7 +173,8 @@ lemma simpleCorootsA_mul_conjTranspose (n : ℕ) :
 
 /-- The simple coroots of type `Aₙ` are independent: dropping the last coordinate leaves the
 matrix upper triangular with unit diagonal. -/
-lemma simpleCorootsA_vecMul_injective (n : ℕ) : Function.Injective (simpleCorootsA n).vecMul := by
+private lemma simpleCorootsA_vecMul_injective (n : ℕ) :
+    Function.Injective (simpleCorootsA n).vecMul := by
   refine vecMul_injective_of_isUpperTriangular_comp Fin.castSucc (fun i j hji ↦ ?_) fun i ↦ ?_
   · have hji' : j.val < i.val := hji
     simp only [simpleCorootsA, twoTermRows_apply, Fin.ext_iff, Fin.val_castSucc, Fin.val_succ]
@@ -192,13 +193,13 @@ theorem isFiniteType_cartanMatrix_A (n : ℕ) : IsFiniteType (CartanMatrix.A n) 
 
 /-- **The simple coroots of type `Bₙ`**: the `i`-th row is `eᵢ - eᵢ₊₁` in `ℚ^n`, except for the last
 one, which is `2 e_{n-1}`, the coroot of the short simple root of the family. -/
-def simpleCorootsB (n : ℕ) : Matrix (Fin n) (Fin n) ℚ :=
+private def simpleCorootsB (n : ℕ) : Matrix (Fin n) (Fin n) ℚ :=
   twoTermRows id Order.succ (fun i ↦ if i.val + 1 < n then 1 else 2)
     (fun i ↦ if i.val + 1 < n then -1 else 0)
 
 /-- The entries of the simple-coroot matrix of type `Bₙ`. -/
 @[simp]
-lemma simpleCorootsB_apply (n : ℕ) (i j : Fin n) :
+private lemma simpleCorootsB_apply (n : ℕ) (i j : Fin n) :
     simpleCorootsB n i j =
       (if j = i then (if i.val + 1 < n then 1 else 2) else 0) +
         (if j = Order.succ i then (if i.val + 1 < n then -1 else 0) else 0) :=
@@ -207,7 +208,7 @@ lemma simpleCorootsB_apply (n : ℕ) (i j : Fin n) :
 /-- The Gram matrix of the simple coroots of type `Bₙ` is the symmetrisation of the Cartan matrix
 by `(1, …, 1, 2)`, the reciprocal squared root lengths of the family scaled to clear
 denominators. -/
-lemma simpleCorootsB_mul_conjTranspose (n : ℕ) :
+private lemma simpleCorootsB_mul_conjTranspose (n : ℕ) :
     simpleCorootsB n * (simpleCorootsB n)ᴴ =
       Matrix.of fun i j ↦ (if i.val + 1 < n then 1 else 2) * ((CartanMatrix.B n i j : ℤ) : ℚ) := by
   ext i j
@@ -219,7 +220,8 @@ lemma simpleCorootsB_mul_conjTranspose (n : ℕ) :
 
 /-- The simple coroots of type `Bₙ` are independent: the matrix is upper triangular, with
 diagonal `(1, …, 1, 2)`. -/
-lemma simpleCorootsB_vecMul_injective (n : ℕ) : Function.Injective (simpleCorootsB n).vecMul := by
+private lemma simpleCorootsB_vecMul_injective (n : ℕ) :
+    Function.Injective (simpleCorootsB n).vecMul := by
   refine vecMul_injective_of_isUpperTriangular_comp id (fun i j hji ↦ ?_) fun i ↦ ?_
   · have hji' : j.val < i.val := hji
     have hle := Order.le_succ i
@@ -247,12 +249,12 @@ theorem isFiniteType_cartanMatrix_C (n : ℕ) : IsFiniteType (CartanMatrix.C n) 
 except for the last one, which is `e_{n-2} + e_{n-1}`. The rank restriction `n ≥ 4` of the family
 is not imposed: the model is still the right one at `D 3 = A 3`, and at `D 2`, whose two orthogonal
 rows realize its two `A 1` components. -/
-def simpleCorootsD (k : ℕ) : Matrix (Fin (k + 2)) (Fin (k + 2)) ℚ :=
+private def simpleCorootsD (k : ℕ) : Matrix (Fin (k + 2)) (Fin (k + 2)) ℚ :=
   twoTermRows forkIndex Order.succ (fun _ ↦ 1) (fun i ↦ if i.val + 1 < k + 2 then -1 else 1)
 
 /-- The entries of the simple-coroot matrix of type `Dₙ`, with the fork row written directly. -/
 @[simp]
-lemma simpleCorootsD_apply (k : ℕ) (i j : Fin (k + 2)) :
+private lemma simpleCorootsD_apply (k : ℕ) (i j : Fin (k + 2)) :
     simpleCorootsD k i j =
       (if j = if i.val + 1 < k + 2 then i else (Fin.last k).castSucc then 1 else 0) +
         (if j = Order.succ i then (if i.val + 1 < k + 2 then -1 else 1) else 0) := by
@@ -260,7 +262,7 @@ lemma simpleCorootsD_apply (k : ℕ) (i j : Fin (k + 2)) :
 
 /-- The Gram matrix of the simple coroots of type `Dₙ` is the Cartan matrix itself: the family is
 simply laced, so it is its own symmetrisation. -/
-lemma simpleCorootsD_mul_conjTranspose (k : ℕ) :
+private lemma simpleCorootsD_mul_conjTranspose (k : ℕ) :
     simpleCorootsD k * (simpleCorootsD k)ᴴ =
       Matrix.of fun i j ↦ (1 : ℚ) * ((CartanMatrix.D (k + 2) i j : ℤ) : ℚ) := by
   ext i j
@@ -282,7 +284,8 @@ lemma simpleCorootsD_mul_conjTranspose (k : ℕ) :
 triangular, since the fork row shares both of its coordinates with earlier rows, so the argument
 runs in two steps: the coordinate sum kills every chain row, so a relation has no fork term, and
 the chain rows are then triangular on the coordinates below the top. -/
-lemma simpleCorootsD_vecMul_injective (k : ℕ) : Function.Injective (simpleCorootsD k).vecMul := by
+private lemma simpleCorootsD_vecMul_injective (k : ℕ) :
+    Function.Injective (simpleCorootsD k).vecMul := by
   refine (injective_iff_map_eq_zero (simpleCorootsD k).vecMulLinear.toAddMonoidHom).2 fun x hx ↦ ?_
   set M := simpleCorootsD k with hM
   have hx' : x ᵥ* M = 0 := by

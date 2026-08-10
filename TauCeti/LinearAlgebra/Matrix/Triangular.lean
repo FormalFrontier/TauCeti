@@ -30,7 +30,8 @@ variable {r c : ℕ}
 coordinate for each row makes the matrix upper triangular - `M i (e j) = 0` for `j < i` - with a
 nonzero diagonal, then the rows are independent: the selected columns form a square submatrix whose
 determinant is the product of that diagonal. -/
-theorem vecMul_injective_of_isUpperTriangular_comp {M : Matrix (Fin r) (Fin c) ℚ}
+theorem vecMul_injective_of_isUpperTriangular_comp {K : Type*} [Field K]
+    {M : Matrix (Fin r) (Fin c) K}
     (e : Fin r → Fin c) (hlt : ∀ i j, j < i → M i (e j) = 0) (hdiag : ∀ i, M i (e i) ≠ 0) :
     Function.Injective M.vecMul := by
   have hsub : Function.Injective (M.submatrix id e).vecMul := by
@@ -39,7 +40,7 @@ theorem vecMul_injective_of_isUpperTriangular_comp {M : Matrix (Fin r) (Fin c) �
       Matrix.det_of_isUpperTriangular (M := M.submatrix id e) fun i j hji ↦ hlt i j hji]
     exact Finset.prod_ne_zero_iff.2 fun i _ ↦ hdiag i
   refine fun x y hxy ↦ hsub (funext fun j ↦ ?_)
-  have hcol : ∀ z : Fin r → ℚ,
+  have hcol : ∀ z : Fin r → K,
       (fun v ↦ v ᵥ* M.submatrix id e) z j = (fun v ↦ v ᵥ* M) z (e j) := by
     intro z
     simp [Matrix.vecMul, dotProduct]
