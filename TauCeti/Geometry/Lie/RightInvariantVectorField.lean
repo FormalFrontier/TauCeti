@@ -70,18 +70,20 @@ theorem mulRightInvariantVectorField_one (v : GroupLieAlgebra I G) :
   rw [show (fun x : G => x * 1) = id by funext x; simp, mfderiv_id]
   rfl
 
-set_option backward.isDefEq.respectTransparency false in
 theorem mulRightInvariantVectorField_add (v w : GroupLieAlgebra I G) :
     mulRightInvariantVectorField (v + w) =
       mulRightInvariantVectorField v + mulRightInvariantVectorField w := by
-  ext g
-  simp [mulRightInvariantVectorField]
+  funext g
+  change mfderiv I I (fun x : G => x * g) 1 (v + w) =
+    mfderiv I I (fun x : G => x * g) 1 v + mfderiv I I (fun x : G => x * g) 1 w
+  exact map_add _ _ _
 
-set_option backward.isDefEq.respectTransparency false in
 theorem mulRightInvariantVectorField_smul (c : 𝕜) (v : GroupLieAlgebra I G) :
     mulRightInvariantVectorField (c • v) = c • mulRightInvariantVectorField v := by
-  ext g
-  simp [mulRightInvariantVectorField]
+  funext g
+  change mfderiv I I (fun x : G => x * g) 1 (c • v) =
+    c • mfderiv I I (fun x : G => x * g) 1 v
+  exact map_smul _ _ _
 
 section Pullback
 
@@ -125,18 +127,16 @@ theorem mpullback_mulRightInvariantVectorField (g : G) (v : GroupLieAlgebra I G)
   · exact contMDiff_mul_right.contMDiffAt.mdifferentiableAt M
   · exact contMDiff_mul_right.contMDiffAt.mdifferentiableAt M
 
-set_option backward.isDefEq.respectTransparency false in
 /-- A right-invariant vector field is reconstructed from its value at the identity by pullback
 along right translation. -/
 theorem mulRightInvariantVectorField_eq_mpullback (g : G)
     (V : ∀ g : G, TangentSpace I g) :
     mulRightInvariantVectorField (V 1) g =
       VectorField.mpullback I I (· * g⁻¹) V g := by
-  have A : 1 = g * g⁻¹ := by simp
-  simp only [mulRightInvariantVectorField, VectorField.mpullback,
-    inverse_mfderiv_mul_right]
-  congr
-  simp
+  rw [← congrFun (mpullback_mulRightInvariantVectorField (I := I) g⁻¹ (V 1)) g]
+  simp only [VectorField.mpullback]
+  congr 1
+  rw [show g * g⁻¹ = 1 by simp, mulRightInvariantVectorField_one]
 
 end Pullback
 
