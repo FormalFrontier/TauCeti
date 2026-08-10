@@ -4,7 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.LinearAlgebra.BilinearForm.Orthogonal
 public import Mathlib.LinearAlgebra.Determinant
 public import Mathlib.LinearAlgebra.GeneralLinearGroup.Basic
 public import Mathlib.LinearAlgebra.QuadraticForm.IsometryEquiv
@@ -30,7 +29,7 @@ twisted-conjugation homomorphism out of the Pin group, so it is the object the P
 covers are stated against, and the reflections are the generators an eventual Cartan-Dieudonné
 theorem factors an orthogonal automorphism into. The structural and reflection declarations below
 hold over an arbitrary commutative ring. The equal-norm dichotomy and fixed-subspace correction
-assume a field in which `2` is invertible. The characteristic restriction is not incidental: in
+assume a field in which `2` is nonzero. The characteristic restriction is not incidental: in
 characteristic two `polar Q v v = 2 • Q v` vanishes, so `reflection Q v` fixes `v` instead of
 negating it and is a transvection rather than a reflection in `v ^ ⊥`.
 
@@ -84,7 +83,7 @@ subtraction in `M` and `N`, since `QuadraticMap.polar` is stated for `[AddCommGr
 [AddCommGroup N]`, but still no more than a `CommSemiring`; the determinant needs `M` to be an
 additive group over a `CommRing`, and the
 reflections need to divide by `Q v` and so are stated for a `QuadraticForm R M`, that is, for
-`N = R`. The fixed-subspace correction assumes a field and invertible `2`; the closing
+`N = R`. The fixed-subspace correction assumes a field and `2 ≠ 0`; the closing
 Cartan--Dieudonne dichotomy assumes a field, a nonzero common quadratic value, and `2 ≠ 0`.
 
 ## References
@@ -444,9 +443,9 @@ end Field
 section FixedSubspace
 
 variable {K : Type u} {V : Type v} [Field K] [AddCommGroup V] [Module K V]
-variable (Q : QuadraticForm K V) [Invertible (2 : K)]
+variable (Q : QuadraticForm K V) [NeZero (2 : K)]
 
-omit [Invertible (2 : K)] in
+omit [NeZero (2 : K)] in
 private theorem linearEquiv_eqOn_sup_span_singleton
     (f : V ≃ₗ[K] V) (W : Submodule K V) (x : V)
     (hW : ∀ w ∈ W, f w = w) (hx : f x = x) :
@@ -473,28 +472,26 @@ theorem exists_mem_subgroup_mul_eqOn_sup_span_singleton_of_reflection_mem
     (g : QuadraticMap.orthogonalGroup Q) (W : Submodule K V)
     (hfix : ∀ w ∈ W, ((g : V ≃ₗ[K] V) w) = w)
     (x : V) [Invertible (Q x)]
-    (hx : x ∈ LinearMap.BilinForm.orthogonal (QuadraticMap.associated Q) W) :
+    (hx : ∀ w ∈ W, Q.IsOrtho x w) :
     ∃ r : QuadraticMap.orthogonalGroup Q, r ∈ H ∧
       ∀ y ∈ W ⊔ Submodule.span K {x},
         (((r * g : QuadraticMap.orthogonalGroup Q) : V ≃ₗ[K] V) y) = y := by
-  let B : LinearMap.BilinForm K V := QuadraticMap.associated Q
   have hmap : Q ((g : V ≃ₗ[K] V) x) = Q x :=
     QuadraticMap.map_app_of_mem_orthogonalGroup g.2 x
-  have hgx : (g : V ≃ₗ[K] V) x ∈ B.orthogonal W := by
+  have hgx : ∀ w ∈ W, Q.IsOrtho ((g : V ≃ₗ[K] V) x) w := by
     intro w hw
-    -- Expose the associated form hidden behind the local abbreviation.
-    change QuadraticMap.associated Q w ((g : V ≃ₗ[K] V) x) = 0
-    rw [← hfix w hw, QuadraticMap.associated_isOrtho,
-      QuadraticMap.isOrtho_iff_of_mem_orthogonalGroup g.2]
-    exact QuadraticMap.associated_isOrtho.mp (hx w hw)
-  have hsub : (g : V ≃ₗ[K] V) x - x ∈ B.orthogonal W := by
+    rw [← hfix w hw]
+    exact (QuadraticMap.isOrtho_iff_of_mem_orthogonalGroup g.2 x w).mpr (hx w hw)
+  have hsub : ∀ w ∈ W, Q.IsOrtho ((g : V ≃ₗ[K] V) x - x) w := by
     intro w hw
-    have hwx : B w x = 0 := hx w hw
-    simp only [map_sub, hgx w hw, hwx, sub_self]
-  have hadd : (g : V ≃ₗ[K] V) x + x ∈ B.orthogonal W := by
+    apply QuadraticMap.isOrtho_polarBilin.mp
+    simp only [QuadraticMap.polarBilin_apply_apply, QuadraticMap.polar_sub_left,
+      (hgx w hw).polar_eq_zero, (hx w hw).polar_eq_zero, sub_self]
+  have hadd : ∀ w ∈ W, Q.IsOrtho ((g : V ≃ₗ[K] V) x + x) w := by
     intro w hw
-    have hwx : B w x = 0 := hx w hw
-    simp only [map_add, hgx w hw, hwx, add_zero]
+    apply QuadraticMap.isOrtho_polarBilin.mp
+    simp only [QuadraticMap.polarBilin_apply_apply, QuadraticMap.polar_add_left,
+      (hgx w hw).polar_eq_zero, (hx w hw).polar_eq_zero, add_zero]
   rcases QuadraticMap.isUnit_sub_or_add_of_map_eq Q _ x hmap
       (isUnit_of_invertible (Q x)).ne_zero with hsubUnit | haddUnit
   · let : Invertible (Q ((g : V ≃ₗ[K] V) x - x)) := hsubUnit.invertible
@@ -508,15 +505,14 @@ theorem exists_mem_subgroup_mul_eqOn_sup_span_singleton_of_reflection_mem
         ((g : V ≃ₗ[K] V) w) = w
       rw [hfix w hw]
       apply QuadraticMap.reflection_apply_of_isOrtho
-      apply QuadraticMap.associated_isOrtho.mp
-      simpa only [QuadraticMap.associated_isSymm] using hsub w hw
+      exact hsub w hw
     · -- Expose the reflection underlying the subgroup product at the new generator.
       change QuadraticMap.reflection Q ((g : V ≃ₗ[K] V) x - x)
         ((g : V ≃ₗ[K] V) x) = x
       exact QuadraticMap.reflection_sub_apply_eq_of_map_eq Q _ x hmap
   · have : Invertible (Q ((g : V ≃ₗ[K] V) x - -x)) := by
       simpa only [sub_neg_eq_add] using haddUnit.invertible
-    have hadd' : (g : V ≃ₗ[K] V) x - -x ∈ B.orthogonal W := by
+    have hadd' : ∀ w ∈ W, Q.IsOrtho ((g : V ≃ₗ[K] V) x - -x) w := by
       simpa only [sub_neg_eq_add] using hadd
     let r₁ : QuadraticMap.orthogonalGroup Q :=
       QuadraticMap.reflectionOrthogonal Q x
@@ -530,16 +526,12 @@ theorem exists_mem_subgroup_mul_eqOn_sup_span_singleton_of_reflection_mem
         (QuadraticMap.reflection Q ((g : V ≃ₗ[K] V) x - -x)
           ((g : V ≃ₗ[K] V) w)) = w
       rw [hfix w hw]
-      have hfixr₂ :
-          QuadraticMap.reflection Q ((g : V ≃ₗ[K] V) x - -x) w = w := by
-        apply QuadraticMap.reflection_apply_of_isOrtho
-        apply QuadraticMap.associated_isOrtho.mp
-        simpa only [QuadraticMap.associated_isSymm] using hadd' w hw
-      have hfixr₁ : QuadraticMap.reflection Q x w = w := by
-        apply QuadraticMap.reflection_apply_of_isOrtho
-        apply QuadraticMap.associated_isOrtho.mp
-        simpa only [QuadraticMap.associated_isSymm] using hx w hw
-      rw [hfixr₂, hfixr₁]
+      have hfix₂ : QuadraticMap.reflection Q ((g : V ≃ₗ[K] V) x - -x) w = w :=
+        QuadraticMap.reflection_apply_of_isOrtho Q _
+        (hadd' w hw)
+      rw [hfix₂]
+      exact QuadraticMap.reflection_apply_of_isOrtho Q _
+        (hx w hw)
     · -- Expose the two reflections underlying the subgroup product at the new generator.
       change QuadraticMap.reflection Q x
         (QuadraticMap.reflection Q ((g : V ≃ₗ[K] V) x - -x)

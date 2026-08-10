@@ -47,7 +47,7 @@ theorem exists_mem_range_pinToOrthogonal_mul_eqOn_sup_span_singleton
     (g : QuadraticMap.orthogonalGroup Q) (W : Submodule K V)
     (hfix : ∀ w ∈ W, ((g : V ≃ₗ[K] V) w) = w)
     (x : V) [Invertible (Q x)]
-    (hx : x ∈ LinearMap.BilinForm.orthogonal (QuadraticMap.associated Q) W) :
+    (hx : ∀ w ∈ W, Q.IsOrtho x w) :
     ∃ r : QuadraticMap.orthogonalGroup Q, r ∈ (pinToOrthogonal Q).range ∧
       ∀ y ∈ W ⊔ Submodule.span K {x},
         (((r * g : QuadraticMap.orthogonalGroup Q) : V ≃ₗ[K] V) y) = y :=
