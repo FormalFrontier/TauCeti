@@ -143,7 +143,7 @@ theorem mapPointwiseQuotient_mk (H : _root_.CommHopfAlgCat.{v} R)
       (fun _ hg => mapPoints_mem_quotientPointsSubgroup H I χ hg) g
 
 /-- The pointwise quotient presheaf `A ↦ G(A) / V(I)(A)`. -/
-@[expose] noncomputable def pointwiseQuotientFunctor (H : _root_.CommHopfAlgCat.{v} R)
+noncomputable def pointwiseQuotientFunctor (H : _root_.CommHopfAlgCat.{v} R)
     (I : HopfIdeal R H) (hI : I.IsNormal) :
     CommAlgCat.{w} R ⥤ GrpCat.{max v w} where
   obj A := pointwiseQuotientGroup H I hI A
@@ -176,21 +176,32 @@ the subgroup cut out by `I`. -/
 theorem pointwiseQuotientFunctor_obj (H : _root_.CommHopfAlgCat.{v} R)
     (I : HopfIdeal R H) (hI : I.IsNormal) (A : CommAlgCat.{w} R) :
     (pointwiseQuotientFunctor H I hI).obj A = pointwiseQuotientGroup H I hI A :=
-  rfl
+  (rfl)
 
 /-- The map part of the pointwise quotient functor is the map induced on quotient groups. -/
 @[simp]
 theorem pointwiseQuotientFunctor_map (H : _root_.CommHopfAlgCat.{v} R)
     (I : HopfIdeal R H) (hI : I.IsNormal) {A B : CommAlgCat.{w} R} (χ : A ⟶ B) :
-    (pointwiseQuotientFunctor H I hI).map χ = mapPointwiseQuotient H I hI χ :=
-  rfl
+    (pointwiseQuotientFunctor H I hI).map χ =
+      eqToHom (pointwiseQuotientFunctor_obj H I hI A) ≫
+        mapPointwiseQuotient H I hI χ ≫
+          eqToHom (pointwiseQuotientFunctor_obj H I hI B).symm :=
+  (rfl)
 
 /-- The natural projection from the ambient functor of points to its pointwise quotient. -/
-@[expose] noncomputable def pointwiseQuotientProjection (H : _root_.CommHopfAlgCat.{v} R)
+noncomputable def pointwiseQuotientProjection (H : _root_.CommHopfAlgCat.{v} R)
     (I : HopfIdeal R H) (hI : I.IsNormal) :
     HopfAlgebra.pointsFunctor (R := R) (H := H) ⟶ pointwiseQuotientFunctor H I hI where
-  app A := pointwiseQuotientMk H I hI A
+  app A := pointwiseQuotientMk H I hI A ≫
+    eqToHom (pointwiseQuotientFunctor_obj H I hI A).symm
   naturality {A B} χ := by
+    let _ : (quotientPointsSubgroup H I A).Normal :=
+      quotientPointsSubgroup_normal H I hI A
+    let _ : (quotientPointsSubgroup H I B).Normal :=
+      quotientPointsSubgroup_normal H I hI B
+    rw [pointwiseQuotientFunctor_map]
+    change pointwiseQuotientMk H I hI A ≫ mapPointwiseQuotient H I hI χ =
+      HopfAlgebra.mapPoints (H := H) χ ≫ pointwiseQuotientMk H I hI B
     apply GrpCat.hom_ext
     apply MonoidHom.ext
     intro g
@@ -200,8 +211,10 @@ theorem pointwiseQuotientFunctor_map (H : _root_.CommHopfAlgCat.{v} R)
 @[simp]
 theorem pointwiseQuotientProjection_app (H : _root_.CommHopfAlgCat.{v} R)
     (I : HopfIdeal R H) (hI : I.IsNormal) (A : CommAlgCat.{w} R) :
-    (pointwiseQuotientProjection H I hI).app A = pointwiseQuotientMk H I hI A :=
-  rfl
+    (pointwiseQuotientProjection H I hI).app A =
+      pointwiseQuotientMk H I hI A ≫
+        eqToHom (pointwiseQuotientFunctor_obj H I hI A).symm :=
+  (rfl)
 
 /-- A homomorphism from ambient points which kills the normal subgroup descends to the pointwise
 quotient group. -/
@@ -242,18 +255,14 @@ theorem pointwiseQuotientLift_unique (H : _root_.CommHopfAlgCat.{v} R)
     quotientPointsSubgroup_normal H I hI A
   apply GrpCat.hom_ext
   apply QuotientGroup.monoidHom_ext (quotientPointsSubgroup H I A)
-  apply MonoidHom.ext
-  intro x
   calc
-    (g.hom.comp (QuotientGroup.mk' (quotientPointsSubgroup H I A))) x =
-        g (pointwiseQuotientMk H I hI A x) := rfl
-    _ = f x := by
-      exact (GrpCat.comp_apply (pointwiseQuotientMk H I hI A) g x).symm.trans
-        (ConcreteCategory.congr_hom hg x)
-    _ = pointwiseQuotientLift H I hI A K f hf (pointwiseQuotientMk H I hI A x) :=
-      (pointwiseQuotientLift_mk H I hI A K f hf x).symm
-    _ = ((pointwiseQuotientLift H I hI A K f hf).hom.comp
-        (QuotientGroup.mk' (quotientPointsSubgroup H I A))) x := rfl
+    g.hom.comp (QuotientGroup.mk' (quotientPointsSubgroup H I A)) = f.hom := by
+      simpa only [pointwiseQuotientMk, GrpCat.hom_comp, GrpCat.hom_ofHom] using
+        congrArg (fun q ↦ q.hom) hg
+    _ = (pointwiseQuotientLift H I hI A K f hf).hom.comp
+        (QuotientGroup.mk' (quotientPointsSubgroup H I A)) := by
+      simpa only [pointwiseQuotientLift, GrpCat.hom_ofHom] using
+        (QuotientGroup.lift_comp_mk' (quotientPointsSubgroup H I A) f.hom hf).symm
 
 end CommHopfAlgCat
 
