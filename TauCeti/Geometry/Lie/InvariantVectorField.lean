@@ -89,6 +89,7 @@ theorem mulInvariantVectorField_one (v : GroupLieAlgebra I G) :
   rfl
 
 /-- The derivative of left translation carries a left-invariant vector field to itself. -/
+@[simp]
 theorem mfderiv_mul_left_mulInvariantVectorField [ContMDiffMul I 1 G]
     (g x : G) (v : GroupLieAlgebra I G) :
     mfderiv I I (fun y : G ↦ g * y) x (mulInvariantVectorField v x) =
@@ -96,8 +97,7 @@ theorem mfderiv_mul_left_mulInvariantVectorField [ContMDiffMul I 1 G]
   simp only [mulInvariantVectorField]
   rw [← mfderiv_comp_apply_of_eq (I' := I) (f := fun y : G ↦ x * y)
     (g := fun y : G ↦ g * y) (y := x) (1 : G)
-    ((contMDiffAt_mul_left (n := 1)).mdifferentiableAt (by simp))
-    ((contMDiffAt_mul_left (n := 1)).mdifferentiableAt (by simp)) (by simp)]
+    (mdifferentiableAt_mul_left (a := g)) (mdifferentiableAt_mul_left (a := x)) (by simp)]
   rw [show (fun y : G ↦ g * y) ∘ (fun y : G ↦ x * y) =
       (fun y : G ↦ (g * x) * y) by
     funext y

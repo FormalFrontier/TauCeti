@@ -61,7 +61,7 @@ theorem const_mul_mulInvariantVectorField [LieGroup I (minSmoothness ℝ 3) G]
   let _ : ContMDiffMul I 1 G :=
     ContMDiffMul.of_le (m := 1) (n := minSmoothness ℝ 3) (by norm_num)
   have hpush := hγ.map_of_mfderiv_eq (f := fun x : G ↦ g * x)
-    (fun _ _ ↦ (contMDiffAt_mul_left (n := minSmoothness ℝ 3)).mdifferentiableAt (by simp))
+    (fun _ _ ↦ mdifferentiableAt_mul_left)
     (fun t _ ↦ mfderiv_mul_left_mulInvariantVectorField g (γ t) v)
   exact hpush
 
