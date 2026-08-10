@@ -80,7 +80,7 @@ theorem graphPermA_sq (n : ℕ) : graphPermA n ^ 2 = 1 := by
   simp [graphPermD]
 
 /-- The `Dₙ` graph permutation fixes every node except the two fork nodes. -/
-lemma graphPermD_apply_of_ne (n : ℕ) (hn : 2 ≤ n) (i : Fin n)
+@[simp] lemma graphPermD_apply_of_ne (n : ℕ) (hn : 2 ≤ n) (i : Fin n)
     (hi : (i : ℕ) ≠ n - 2) (hi' : (i : ℕ) ≠ n - 1) : graphPermD n hn i = i := by
   apply Equiv.swap_apply_of_ne_of_ne <;> simpa [Fin.ext_iff]
 
@@ -133,7 +133,8 @@ lemma graphPermD_apply_of_ne (n : ℕ) (hn : 2 ≤ n) (i : Fin n)
 order are those of `TauCeti.graphPermA`. -/
 @[simp] lemma lengthPermF4_eq_graphPermA : lengthPermF4 = graphPermA 4 := (rfl)
 
-/-- Reversal is an automorphism of the type-`A` Cartan matrix. -/
+/-- Reversal is an automorphism of the type-`A` Cartan matrix. This is not a `simp` lemma because
+`TauCeti.graphPermA_eq_revPerm` already rewrites its left-hand side. -/
 theorem cartanMatrix_A_graphPermA (n : ℕ) (i j : Fin n) :
     (DynkinType.A n).cartanMatrix (graphPermA n i) (graphPermA n j) =
       (DynkinType.A n).cartanMatrix i j := by
@@ -141,90 +142,76 @@ theorem cartanMatrix_A_graphPermA (n : ℕ) (i j : Fin n) :
     Fin.revPerm_apply, Fin.ext_iff, Fin.val_rev]
   split_ifs <;> omega
 
-private lemma cartanMatrix_D_fork_rows {n : ℕ} (hn : 4 ≤ n) (j : Fin n)
-    (hj : (j : ℕ) ≠ n - 2) (hj' : (j : ℕ) ≠ n - 1) :
-    CartanMatrix.D n ⟨n - 1, by omega⟩ j = CartanMatrix.D n ⟨n - 2, by omega⟩ j := by
-  simp only [CartanMatrix.D, Matrix.of_apply, Fin.ext_iff]
-  split_ifs <;> omega
+-- Every defining condition of `CartanMatrix.D n` is invariant under exchanging the two fork
+-- indices, hence so is the whole `if`-chain; `key` records that exchange on index values.
+private lemma cartanMatrix_D_swap_fork (n : ℕ) (hn : 4 ≤ n) (a b : Fin n) (ha : (a : ℕ) = n - 2)
+    (hb : (b : ℕ) = n - 1) (i j : Fin n) :
+    CartanMatrix.D n (Equiv.swap a b i) (Equiv.swap a b j) = CartanMatrix.D n i j := by
+  have key : ∀ k : Fin n,
+      ((Equiv.swap a b k : Fin n) : ℕ) = n - 1 ∧ (k : ℕ) = n - 2 ∨
+      ((Equiv.swap a b k : Fin n) : ℕ) = n - 2 ∧ (k : ℕ) = n - 1 ∨
+      ((Equiv.swap a b k : Fin n) : ℕ) = (k : ℕ) ∧ (k : ℕ) ≠ n - 2 ∧ (k : ℕ) ≠ n - 1 := by
+    intro k
+    rcases eq_or_ne k a with rfl | hka
+    · exact Or.inl ⟨by rw [Equiv.swap_apply_left, hb], ha⟩
+    · rcases eq_or_ne k b with rfl | hkb
+      · exact Or.inr (Or.inl ⟨by rw [Equiv.swap_apply_right, ha], hb⟩)
+      · exact Or.inr (Or.inr ⟨by rw [Equiv.swap_apply_of_ne_of_ne hka hkb],
+          fun h => hka (Fin.ext (ha ▸ h)), fun h => hkb (Fin.ext (hb ▸ h))⟩)
+  have hx := key i
+  have hy := key j
+  have hi := i.isLt
+  have hj := j.isLt
+  have e1 : ((Equiv.swap a b i : Fin n) : ℕ) = ((Equiv.swap a b j : Fin n) : ℕ) ↔
+      (i : ℕ) = (j : ℕ) := by omega
+  have e2 : ((Equiv.swap a b i : Fin n) : ℕ) + 1 = ((Equiv.swap a b j : Fin n) : ℕ) ∧
+      ((Equiv.swap a b j : Fin n) : ℕ) + 2 < n ↔ (i : ℕ) + 1 = (j : ℕ) ∧ (j : ℕ) + 2 < n := by
+    omega
+  have e3 : ((Equiv.swap a b j : Fin n) : ℕ) + 1 = ((Equiv.swap a b i : Fin n) : ℕ) ∧
+      ((Equiv.swap a b i : Fin n) : ℕ) + 2 < n ↔ (j : ℕ) + 1 = (i : ℕ) ∧ (i : ℕ) + 2 < n := by
+    omega
+  have e4 : ((Equiv.swap a b i : Fin n) : ℕ) + 3 = n ∧
+      (((Equiv.swap a b j : Fin n) : ℕ) + 2 = n ∨ ((Equiv.swap a b j : Fin n) : ℕ) + 1 = n) ↔
+      (i : ℕ) + 3 = n ∧ ((j : ℕ) + 2 = n ∨ (j : ℕ) + 1 = n) := by omega
+  have e5 : ((Equiv.swap a b j : Fin n) : ℕ) + 3 = n ∧
+      (((Equiv.swap a b i : Fin n) : ℕ) + 2 = n ∨ ((Equiv.swap a b i : Fin n) : ℕ) + 1 = n) ↔
+      (j : ℕ) + 3 = n ∧ ((i : ℕ) + 2 = n ∨ (i : ℕ) + 1 = n) := by omega
+  simp only [CartanMatrix.D, Matrix.of_apply, Fin.ext_iff, e1, e2, e3, e4, e5]
 
 /-- Swapping the fork nodes is an automorphism of the type-`D` Cartan matrix. -/
-theorem cartanMatrix_D_graphPermD (n : ℕ) (hn : 4 ≤ n) (i j : Fin n) :
+@[simp] theorem cartanMatrix_D_graphPermD (n : ℕ) (hn : 4 ≤ n) (i j : Fin n) :
     (DynkinType.D n).cartanMatrix (graphPermD n (by omega) i) (graphPermD n (by omega) j) =
       (DynkinType.D n).cartanMatrix i j := by
-  let a : Fin n := ⟨n - 2, by omega⟩
-  let b : Fin n := ⟨n - 1, by omega⟩
-  rw [DynkinType.cartanMatrix_D]
-  rcases eq_or_ne i a with rfl | hi
-  · rcases eq_or_ne j a with rfl | hj
-    · simp [a]
-    · rcases eq_or_ne j b with rfl | hj'
-      · rw [graphPermD_apply_left, graphPermD_apply_right]
-        simpa [a, b] using ((CartanMatrix.D_isSymm n).apply b a).symm
-      · have hja : (j : ℕ) ≠ n - 2 := by simpa [a, Fin.ext_iff] using hj
-        have hjb : (j : ℕ) ≠ n - 1 := by simpa [b, Fin.ext_iff] using hj'
-        rw [graphPermD_apply_left, graphPermD_apply_of_ne n (by omega) j hja hjb]
-        exact cartanMatrix_D_fork_rows hn j hja hjb
-  · rcases eq_or_ne i b with rfl | hi'
-    · rcases eq_or_ne j a with rfl | hj
-      · rw [graphPermD_apply_right, graphPermD_apply_left]
-        simpa [a, b] using (CartanMatrix.D_isSymm n).apply b a
-      · rcases eq_or_ne j b with rfl | hj'
-        · simp [b]
-        · have hja : (j : ℕ) ≠ n - 2 := by simpa [a, Fin.ext_iff] using hj
-          have hjb : (j : ℕ) ≠ n - 1 := by simpa [b, Fin.ext_iff] using hj'
-          rw [graphPermD_apply_right, graphPermD_apply_of_ne n (by omega) j hja hjb]
-          exact (cartanMatrix_D_fork_rows hn j hja hjb).symm
-    · have hia : (i : ℕ) ≠ n - 2 := by simpa [a, Fin.ext_iff] using hi
-      have hib : (i : ℕ) ≠ n - 1 := by simpa [b, Fin.ext_iff] using hi'
-      rw [graphPermD_apply_of_ne n (by omega) i hia hib]
-      rcases eq_or_ne j a with rfl | hj
-      · rw [graphPermD_apply_left]
-        calc
-          CartanMatrix.D n i ⟨n - 1, by omega⟩ =
-              CartanMatrix.D n ⟨n - 1, by omega⟩ i := (CartanMatrix.D_isSymm n).apply _ _
-          _ = CartanMatrix.D n ⟨n - 2, by omega⟩ i :=
-            cartanMatrix_D_fork_rows hn i hia hib
-          _ = CartanMatrix.D n i a := by
-            simpa [a] using ((CartanMatrix.D_isSymm n).apply a i).symm
-      · rcases eq_or_ne j b with rfl | hj'
-        · rw [graphPermD_apply_right]
-          calc
-            CartanMatrix.D n i ⟨n - 2, by omega⟩ =
-                CartanMatrix.D n ⟨n - 2, by omega⟩ i := (CartanMatrix.D_isSymm n).apply _ _
-            _ = CartanMatrix.D n ⟨n - 1, by omega⟩ i :=
-              (cartanMatrix_D_fork_rows hn i hia hib).symm
-            _ = CartanMatrix.D n i b := by
-              simpa [b] using ((CartanMatrix.D_isSymm n).apply b i).symm
-        · have hja : (j : ℕ) ≠ n - 2 := by simpa [a, Fin.ext_iff] using hj
-          have hjb : (j : ℕ) ≠ n - 1 := by simpa [b, Fin.ext_iff] using hj'
-          rw [graphPermD_apply_of_ne n (by omega) j hja hjb]
+  simp only [DynkinType.cartanMatrix_D, graphPermD]
+  exact cartanMatrix_D_swap_fork n hn _ _ rfl rfl i j
 
 /-- The pinned order-two permutation is an automorphism of the type-`E₆` Cartan matrix. -/
-theorem cartanMatrix_E6_graphPermE6 (i j : Fin 6) :
+@[simp] theorem cartanMatrix_E6_graphPermE6 (i j : Fin 6) :
     DynkinType.E6.cartanMatrix (graphPermE6 i) (graphPermE6 j) =
       DynkinType.E6.cartanMatrix i j := by
   fin_cases i <;> fin_cases j <;> simp [DynkinType.cartanMatrix_E6, CartanMatrix.E₆]
 
 /-- The pinned triality permutation is an automorphism of the type-`D₄` Cartan matrix. -/
-theorem cartanMatrix_D4_trialityPermD4 (i j : Fin 4) :
+@[simp] theorem cartanMatrix_D4_trialityPermD4 (i j : Fin 4) :
     (DynkinType.D 4).cartanMatrix (trialityPermD4 i) (trialityPermD4 j) =
       (DynkinType.D 4).cartanMatrix i j := by
   fin_cases i <;> fin_cases j <;>
     simp [DynkinType.cartanMatrix_D, CartanMatrix.D]
 
 /-- The rank-two permutation exchanges the long and short nodes of `B₂`. -/
-theorem isLongSimpleRoot_lengthPermRankTwo_iff_not_isLongSimpleRoot_B2 (i : Fin 2) :
+@[simp] theorem isLongSimpleRoot_lengthPermRankTwo_iff_not_isLongSimpleRoot_B2 (i : Fin 2) :
     (DynkinType.B 2).IsLongSimpleRoot (lengthPermRankTwo i) ↔
       ¬ (DynkinType.B 2).IsLongSimpleRoot i := by
   fin_cases i <;> simp [DynkinType.isLongSimpleRoot_B, lengthPermRankTwo]
 
 /-- The rank-two permutation exchanges the long and short nodes of `G₂`. -/
-theorem isLongSimpleRoot_lengthPermRankTwo_iff_not_isLongSimpleRoot_G2 (i : Fin 2) :
+@[simp] theorem isLongSimpleRoot_lengthPermRankTwo_iff_not_isLongSimpleRoot_G2 (i : Fin 2) :
     DynkinType.G2.IsLongSimpleRoot (lengthPermRankTwo i) ↔
       ¬ DynkinType.G2.IsLongSimpleRoot i := by
   fin_cases i <;> simp [DynkinType.isLongSimpleRoot_G2, lengthPermRankTwo]
 
-/-- Diagram reversal exchanges the long and short nodes of `F₄`. -/
+/-- Diagram reversal exchanges the long and short nodes of `F₄`. This is not a `simp` lemma
+because `TauCeti.lengthPermF4_eq_graphPermA` already rewrites its left-hand side. -/
 theorem isLongSimpleRoot_lengthPermF4_iff_not_isLongSimpleRoot_F4 (i : Fin 4) :
     DynkinType.F4.IsLongSimpleRoot (lengthPermF4 i) ↔
       ¬ DynkinType.F4.IsLongSimpleRoot i := by
