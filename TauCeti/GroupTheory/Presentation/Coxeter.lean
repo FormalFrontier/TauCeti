@@ -47,9 +47,8 @@ by mapping over Mathlib's `List.sym2`: the relator is not a function of the unor
 * `TauCeti.length_coxeterRelators`: the relator count of a diagram on `n` nodes.
 * `TauCeti.normalClosure_relationSet_coxeterRelators`: the finite list and Mathlib's ordered-pair
   set have the same normal closure.
-* `TauCeti.PresentedGroup.mulEquivOfNormalClosureEq` and
-  `TauCeti.GroupPresentation.mulEquivCoxeterGroup`: a transcription whose relators are the Coxeter
-  relators of `M` presents `M.Group`.
+* `TauCeti.mulEquivCoxeterGroup` and `TauCeti.GroupPresentation.mulEquivCoxeterGroup`: a
+  transcription whose relators are the Coxeter relators of `M` presents `M.Group`.
 * `TauCeti.yCoxeterMatrix_of_adjacent` and `TauCeti.yCoxeterMatrix_of_not_adjacent`: the `Y`-diagram
   entries, together with the shape lemmas `TauCeti.YAdjacent_pred` and
   `TauCeti.YAdjacent_secondArmHead_zero` pinning the arms and the centre.
@@ -123,28 +122,6 @@ theorem GroupPresentation.relatorSet_eq_relationSet (P : GroupPresentation) :
     P.relatorSet = Relator.relationSet P.transcribed := by
   ext r
   simp
-
-/-! ## Presented groups only see the normal closure of their relations -/
-
-namespace PresentedGroup
-
-/-- Two sets of relations with the same normal closure present the same group.
-
-Mathlib's `PresentedGroup.equivPresentedGroup` reindexes the generators; this instead compares two
-relation sets over the same generators, which is what happens when a published finite relator list
-is compared with an equivalent infinite family of relations. -/
-def mulEquivOfNormalClosureEq {α : Type*} {S T : Set (FreeGroup α)}
-    (h : Subgroup.normalClosure S = Subgroup.normalClosure T) :
-    PresentedGroup S ≃* PresentedGroup T :=
-  QuotientGroup.quotientMulEquivOfEq h
-
-@[simp]
-theorem mulEquivOfNormalClosureEq_of {α : Type*} {S T : Set (FreeGroup α)}
-    (h : Subgroup.normalClosure S = Subgroup.normalClosure T) (x : α) :
-    mulEquivOfNormalClosureEq h (PresentedGroup.of x) = PresentedGroup.of x :=
-  rfl
-
-end PresentedGroup
 
 /-! ## The Coxeter relators of a Coxeter matrix -/
 
@@ -282,12 +259,12 @@ theorem normalClosure_relationSet_coxeterRelators {n : ℕ} (M : CoxeterMatrix (
 /-- The group presented by the finite Coxeter relator list is Mathlib's Coxeter group. -/
 def mulEquivCoxeterGroup {n : ℕ} (M : CoxeterMatrix (Fin n)) :
     PresentedGroup (Relator.relationSet (coxeterRelators M)) ≃* M.Group :=
-  PresentedGroup.mulEquivOfNormalClosureEq (normalClosure_relationSet_coxeterRelators M)
+  QuotientGroup.quotientMulEquivOfEq (normalClosure_relationSet_coxeterRelators M)
 
 @[simp]
 theorem mulEquivCoxeterGroup_of {n : ℕ} (M : CoxeterMatrix (Fin n)) (i : Fin n) :
     mulEquivCoxeterGroup M (PresentedGroup.of i) = M.simple i :=
-  rfl
+  QuotientGroup.quotientMulEquivOfEq_mk _ _
 
 /-- **A transcription whose relators are the Coxeter relators of `M` presents `M.Group`.** This is
 the form an audited presentation row uses: the record supplies the generator names, the source, and
@@ -295,7 +272,7 @@ the count checks, and this identifies the group it defines. -/
 def GroupPresentation.mulEquivCoxeterGroup (P : GroupPresentation)
     (M : CoxeterMatrix (Fin P.generatorCount)) (h : P.transcribed = coxeterRelators M) :
     P.Group ≃* M.Group :=
-  PresentedGroup.mulEquivOfNormalClosureEq (by
+  QuotientGroup.quotientMulEquivOfEq (by
     rw [P.relatorSet_eq_relationSet, h, normalClosure_relationSet_coxeterRelators])
 
 end Coxeter
