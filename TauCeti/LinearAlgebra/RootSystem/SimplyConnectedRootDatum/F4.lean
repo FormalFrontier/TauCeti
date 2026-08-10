@@ -643,11 +643,6 @@ theorem hasCartanType_f4SimplyConnectedRootDatum :
       f4SimplyConnectedRootDatum_pairing, cartanMatrix_F4]
     decide
 
-/-- The coroots of the pinned `F4` datum span the cocharacter lattice, so the datum is the simply
-connected form. -/
-theorem span_coroot_f4SimplyConnectedRootDatum :
-    span ℤ (range f4SimplyConnectedRootDatum.coroot) = ⊤ := span_f4Coroot_eq_top
-
 end DynkinType
 
 end TauCeti
