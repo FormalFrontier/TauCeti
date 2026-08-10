@@ -12,37 +12,46 @@ module
 public import Mathlib.LinearAlgebra.TensorProduct.Opposite
 public import Mathlib.RingTheory.TensorProduct.Basic
 -- Non-public: neither appears in the type of an exported declaration. Mathlib's
--- `distribBaseChange`, `algEquivOfLinearEquivTensorProduct` and `congr` are used only inside
--- definition bodies and proofs, and neither definition below is `@[expose]`d.
+-- `distribBaseChange`, `cancelBaseChange`, `algEquivOfLinearEquivTensorProduct` and `congr` are
+-- used only inside definition bodies and proofs, and no definition below is `@[expose]`d.
 import Mathlib.LinearAlgebra.TensorProduct.Tower
 import Mathlib.RingTheory.TensorProduct.Maps
 
 /-!
-# Base change is compatible with `⊗` and with `ᵐᵒᵖ`
+# Base change is compatible with `⊗`, with `ᵐᵒᵖ`, and with itself
 
-Scalar extension along a commutative `K`-algebra `L` distributes over the tensor product and
-commutes with passing to the opposite algebra:
+Scalar extension along a commutative `K`-algebra `L` distributes over the tensor product, commutes
+with passing to the opposite algebra, and composes in stages:
 
 * `TauCeti.Algebra.TensorProduct.baseChangeTensorAlgEquiv`:
   `L ⊗[K] (A ⊗[K] B) ≃ₐ[L] (L ⊗[K] A) ⊗[L] (L ⊗[K] B)`;
-* `TauCeti.Algebra.TensorProduct.baseChangeOpAlgEquiv`: `L ⊗[K] Aᵐᵒᵖ ≃ₐ[L] (L ⊗[K] A)ᵐᵒᵖ`.
+* `TauCeti.Algebra.TensorProduct.baseChangeOpAlgEquiv`: `L ⊗[K] Aᵐᵒᵖ ≃ₐ[L] (L ⊗[K] A)ᵐᵒᵖ`;
+* `TauCeti.Algebra.TensorProduct.baseChangeTowerAlgEquiv`:
+  `M ⊗[L] (L ⊗[K] A) ≃ₐ[M] M ⊗[K] A` for a tower `K → L → M`.
 
-Neither is reproved from scratch: the first upgrades Mathlib's linear equivalence
-`TensorProduct.AlgebraTensorModule.distribBaseChange` to an algebra equivalence, and the second
+None is reproved from scratch: the first and third upgrade Mathlib's linear equivalences
+`TensorProduct.AlgebraTensorModule.distribBaseChange` and
+`TensorProduct.AlgebraTensorModule.cancelBaseChange` to algebra equivalences, and the second
 composes `AlgEquiv.toOpposite` with Mathlib's `Algebra.TensorProduct.opAlgEquiv`.
 
 ## Implementation notes
 
-Both equivalences are opaque: their bodies are not `@[expose]`d, and the four `_tmul` and
+All three equivalences are opaque: their bodies are not `@[expose]`d, and the `_tmul` and
 `_symm_tmul` simp lemmas below are the whole public interface, in both directions.
 
+Mathlib's `Algebra.TensorProduct.cancelBaseChange` is the third equivalence for a **commutative**
+algebra being extended; the algebras this file exists to serve are central simple, so they are not
+commutative in general, and the hypothesis has to go along with the chance to reuse that
+definition.
+
 These are statements about scalar extension as such, with no central-simplicity hypotheses. Their
-first consumer is `TauCeti/Algebra/CentralSimple/BaseChange.lean`, where they are what makes base
-change respect the multiplication and the inversion of Brauer classes.
+first consumer is `TauCeti/Algebra/CentralSimple/BaseChange.lean`, which re-exports them for
+`TauCeti/Algebra/BrauerGroup/BaseChange.lean`, where they are what makes base change respect the
+multiplication and the inversion of Brauer classes and compose along a tower of fields.
 
 ## References
 
-These are the two compatibilities asked for by the **Base change preserves central simplicity, then
+These are the compatibilities asked for by the **Base change preserves central simplicity, then
 is a homomorphism** bullet of Layer 6 of the
 [semisimple algebras roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/SemisimpleAlgebras/README.md).
 See P. Gille, T. Szamuely, *Central Simple Algebras and Galois Cohomology*, Section 2.2.
@@ -115,6 +124,51 @@ theorem baseChangeOpAlgEquiv_symm_tmul (l : L) (a : A) :
       l ⊗ₜ[K] MulOpposite.op a :=
   (baseChangeOpAlgEquiv K L A).symm_apply_eq.mpr <| by
     rw [baseChangeOpAlgEquiv_tmul, MulOpposite.unop_op]
+
+/-! ### Base change in stages -/
+
+section Tower
+
+variable (M : Type*) [CommSemiring M] [Algebra K M] [Algebra L M] [IsScalarTower K L M]
+
+/-- **Base change composes in stages**: for a tower `K → L → M`, extending `A` first to `L` and
+then to `M` is extending it to `M` in one step, `M ⊗[L] (L ⊗[K] A) ≃ₐ[M] M ⊗[K] A`.
+
+The underlying map is Mathlib's linear equivalence
+`TensorProduct.AlgebraTensorModule.cancelBaseChange`, which absorbs `L` into `M`; the content added
+here is that it is multiplicative, checked on pure tensors, where it comes down to
+`(l₁ • m₁) * (l₂ • m₂) = (l₁ * l₂) • (m₁ * m₂)` in the commutative `L`-algebra `M`.
+
+Mathlib's `Algebra.TensorProduct.cancelBaseChange` is this equivalence under the extra hypothesis
+that `A` is commutative, which the central simple algebras this serves are not. -/
+def baseChangeTowerAlgEquiv : M ⊗[L] (L ⊗[K] A) ≃ₐ[M] M ⊗[K] A :=
+  Algebra.TensorProduct.algEquivOfLinearEquivTensorProduct
+    (_root_.TensorProduct.AlgebraTensorModule.cancelBaseChange K L M M A)
+    (fun m₁ m₂ z₁ z₂ => by
+      induction z₁ using TensorProduct.induction_on with
+      | zero => simp
+      | add x y hx hy => simp [add_mul, TensorProduct.tmul_add, hx, hy]
+      | tmul l₁ a₁ =>
+        induction z₂ using TensorProduct.induction_on with
+        | zero => simp
+        | add x y hx hy => simp [mul_add, TensorProduct.tmul_add, hx, hy]
+        | tmul l₂ a₂ =>
+          simp [Algebra.TensorProduct.tmul_mul_tmul, smul_smul, mul_comm l₁ l₂])
+    (by simp [Algebra.TensorProduct.one_def])
+
+@[simp]
+theorem baseChangeTowerAlgEquiv_tmul (m : M) (l : L) (a : A) :
+    baseChangeTowerAlgEquiv K L A M (m ⊗ₜ[L] (l ⊗ₜ[K] a)) = (l • m) ⊗ₜ[K] a :=
+  (Algebra.TensorProduct.algEquivOfLinearEquivTensorProduct_apply _ _ _ _).trans
+    (_root_.TensorProduct.AlgebraTensorModule.cancelBaseChange_tmul ..)
+
+@[simp]
+theorem baseChangeTowerAlgEquiv_symm_tmul (m : M) (a : A) :
+    (baseChangeTowerAlgEquiv K L A M).symm (m ⊗ₜ[K] a) = m ⊗ₜ[L] (1 ⊗ₜ[K] a) :=
+  (baseChangeTowerAlgEquiv K L A M).symm_apply_eq.mpr <| by
+    rw [baseChangeTowerAlgEquiv_tmul, one_smul]
+
+end Tower
 
 end Algebra.TensorProduct
 
