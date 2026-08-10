@@ -33,9 +33,9 @@ so nothing is lost by pinning a model.
   `TauCeti.ContRepresentation.isIrreducible_congr` and
   `TauCeti.ContRepresentation.IsUnitary.congr`: the transport preserves continuity,
   irreducibility, and unitarity.
-* `TauCeti.ContRepresentation.congr_refl`, `TauCeti.ContRepresentation.congr_congr` and
-  `TauCeti.ContRepresentation.congr_symm_congr`: the transport is functorial, so "transportable
-  onto" is an equivalence relation on representations.
+* `TauCeti.ContRepresentation.congr_refl` and `TauCeti.ContRepresentation.congr_congr`: the
+  transport is functorial, so "transportable onto" is an equivalence relation on representations
+  (symmetry is `simp` from these two).
 * `TauCeti.ContRepresentation.matrixCoeff_congr`: the matrix coefficients of the transport at the
   transported vectors are those of the original representation.
 -/
@@ -106,15 +106,6 @@ theorem congr_congr {X : Type*} [NormedAddCommGroup X] [NormedSpace 𝕜 X] (e :
     (f : W ≃L[𝕜] X) (π : ContRepresentation 𝕜 G V) :
     congr f (congr e π) = congr (e.trans f) π :=
   DFunLike.ext _ _ fun _ ↦ ContinuousLinearMap.ext fun _ ↦ by simp
-
-omit [TopologicalSpace G] in
-/-- Transporting along `e` and back along `e⁻¹` changes nothing.
-
-This is not a `simp` lemma: `simp` reaches its statement through `congr_congr`, which normalizes
-the composite away, and `congr_refl`. -/
-theorem congr_symm_congr (e : V ≃L[𝕜] W) (π : ContRepresentation 𝕜 G V) :
-    congr e.symm (congr e π) = π := by
-  simp
 
 end Congr
 

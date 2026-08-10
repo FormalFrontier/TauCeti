@@ -94,7 +94,8 @@ the span `TauCeti.modelSubmodule` of the matrix coefficients of the models insid
   `C(G, 𝕜)`.
 * `TauCeti.IsIrrepSkeleton.orthogonal_span_peterWeylFamily_eq_bot`: the completeness of the
   orthonormal system.
-* `TauCeti.coe_peterWeylBasis`: the basis is the normalized matrix coefficients.
+* `TauCeti.coe_peterWeylBasis`, `TauCeti.coe_stdPeterWeylBasis`: the basis is the normalized
+  matrix coefficients.
 * `TauCeti.isIrrepSkeleton_model`: the chosen representatives are a skeleton, so the hypothesis of
   `TauCeti.peterWeylBasis` is satisfiable and the theorem is not conditional.
 
@@ -469,8 +470,8 @@ variable (𝕜 G : Type*) [RCLike 𝕜] [Group G] [TopologicalSpace G]
 
 /-- **Unitary equivalence of models.** Two models are equivalent when some linear isometry
 equivalence of their carriers transports one representation onto the other; by
-`TauCeti.ContRepresentation.congr_refl`, `TauCeti.ContRepresentation.congr_congr` and
-`TauCeti.ContRepresentation.congr_symm_congr` this is an equivalence relation.
+`TauCeti.ContRepresentation.congr_refl` and `TauCeti.ContRepresentation.congr_congr` this is an
+equivalence relation.
 
 Asking the carriers to be the standard spaces is what makes this a relation on a *type*, so that
 one representative per class may be chosen; on "all irreducible unitary representations on all
@@ -485,8 +486,8 @@ instance IrrepModel.instSetoid : Setoid (IrrepModel 𝕜 G) where
       symm := by
         rintro m m' ⟨e, he⟩
         refine ⟨e.symm, ?_⟩
-        rw [LinearIsometryEquiv.toContinuousLinearEquiv_symm, ← he,
-          ContRepresentation.congr_symm_congr]
+        rw [LinearIsometryEquiv.toContinuousLinearEquiv_symm, ← he]
+        simp
       trans := by
         rintro m m' m'' ⟨e, he⟩ ⟨f, hf⟩
         refine ⟨e.trans f, ?_⟩
@@ -537,12 +538,20 @@ chosen in the unitary equivalence classes are a Hilbert basis of `L²(G)`, index
 `Σ i, Fin (models i).dim × Fin (models i).dim`. No skeleton is assumed: `isIrrepSkeleton_model`
 supplies one.
 
-`TauCeti.coe_peterWeylBasis` identifies the elements of this basis with
+`TauCeti.coe_stdPeterWeylBasis` identifies the elements of this basis with
 `TauCeti.peterWeylFamily IrrepClass.model`. -/
 noncomputable def stdPeterWeylBasis :
     HilbertBasis (Σ i : IrrepClass 𝕜 G,
       Fin (IrrepClass.model i).dim × Fin (IrrepClass.model i).dim) 𝕜 (Lp 𝕜 2 (haarProb G)) :=
   peterWeylBasis (isIrrepSkeleton_model 𝕜 G)
+
+/-- **The unconditional Peter-Weyl basis is the normalized matrix coefficients of the chosen
+representatives.** As for `TauCeti.coe_peterWeylBasis`, the elements are on the nose the functions
+`g ↦ √(dim V_i) · ⟪(IrrepClass.model i).rep g e_a, e_b⟫`. -/
+@[simp]
+theorem coe_stdPeterWeylBasis :
+    ⇑(stdPeterWeylBasis 𝕜 G) = peterWeylFamily (IrrepClass.model (𝕜 := 𝕜) (G := G)) :=
+  coe_peterWeylBasis _
 
 end StandardBasis
 
