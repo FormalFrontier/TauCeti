@@ -95,6 +95,15 @@ theorem map_add_apply (S : StronglyContinuousSemigroup X) (s t : ℝ≥0) (x : X
   rfl
 
 omit [CompleteSpace X] in
+/-- **The increment of a semigroup over `[a, b]` factors through its value at `a`.** -/
+theorem sub_eq_comp_sub_one_of_le (S : StronglyContinuousSemigroup X) {a b : ℝ≥0} (hab : a ≤ b) :
+    S b - S a = (S a).comp (S (b - a) - 1) := by
+  have hmap := S.map_add a (b - a)
+  rw [add_tsub_cancel_of_le hab] at hmap
+  rw [hmap, ContinuousLinearMap.comp_sub, ContinuousLinearMap.one_def,
+    ContinuousLinearMap.comp_id]
+
+omit [CompleteSpace X] in
 /-- Submultiplicativity of the native nonnegative-time operator norm. -/
 theorem norm_map_add_le (S : StronglyContinuousSemigroup X) (s t : ℝ≥0) :
     ‖S (s + t)‖ ≤ ‖S s‖ * ‖S t‖ := by
