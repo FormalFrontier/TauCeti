@@ -69,12 +69,10 @@ private theorem ContMDiffMap.contDiff_comp_mulInvariantExp_conjParameters
   dsimp only
   have hX : ContMDiff 𝓘(ℝ, ℝ) I ∞
       (fun t : ℝ => mulInvariantExp (I := I) (G := G) (t • X)) := by
-    simpa only [mulInvariantOneParameterSubgroup_eq_mulInvariantExp_smul] using
-      contMDiff_mulInvariantOneParameterSubgroup (I := I) (G := G) X
+    exact contMDiff_mulInvariantExp_smul (I := I) (G := G) X
   have hnegX : ContMDiff 𝓘(ℝ, ℝ) I ∞
       (fun t : ℝ => mulInvariantExp (I := I) (G := G) (t • (-X))) := by
-    simpa only [mulInvariantOneParameterSubgroup_eq_mulInvariantExp_smul] using
-      contMDiff_mulInvariantOneParameterSubgroup (I := I) (G := G) (-X)
+    exact contMDiff_mulInvariantExp_smul (I := I) (G := G) (-X)
   have hMprod : ContMDiff (𝓘(ℝ, ℝ).prod 𝓘(ℝ, ℝ)) I ∞
       (fun p : ℝ × ℝ =>
         mulInvariantExp (I := I) (G := G) (p.1 • X) * g *
@@ -178,8 +176,7 @@ private theorem mvfderiv_conjugationGenerator_eq_bracket
   let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
   let RXf : C^∞⟮I, G; ℝ⟯ :=
     ⟨fun g => mvfderiv I f g (mulRightInvariantVectorField X g),
-      ContMDiff.contMDiff_mvfderiv_apply f.contMDiff
-        (contMDiff_mulRightInvariantVectorField_infty X) (by simp)⟩
+      contMDiff_mvfderiv_mulRightInvariantVectorField X f⟩
   let LXf : C^∞⟮I, G; ℝ⟯ :=
     ⟨fun g => mvfderiv I f g (mulInvariantVectorField X g),
       contMDiff_mvfderiv_mulInvariantVectorField X f⟩
@@ -236,16 +233,13 @@ private theorem ContMDiffMap.contDiff_comp_conj_mulInvariantExp_mulInvariantExp
   dsimp only
   have hX : ContMDiff 𝓘(ℝ, ℝ) I ∞
       (fun t : ℝ => mulInvariantExp (I := I) (G := G) (t • X)) := by
-    simpa only [mulInvariantOneParameterSubgroup_eq_mulInvariantExp_smul] using
-      contMDiff_mulInvariantOneParameterSubgroup (I := I) (G := G) X
+    exact contMDiff_mulInvariantExp_smul (I := I) (G := G) X
   have hY : ContMDiff 𝓘(ℝ, ℝ) I ∞
       (fun t : ℝ => mulInvariantExp (I := I) (G := G) (t • Y)) := by
-    simpa only [mulInvariantOneParameterSubgroup_eq_mulInvariantExp_smul] using
-      contMDiff_mulInvariantOneParameterSubgroup (I := I) (G := G) Y
+    exact contMDiff_mulInvariantExp_smul (I := I) (G := G) Y
   have hnegX : ContMDiff 𝓘(ℝ, ℝ) I ∞
       (fun t : ℝ => mulInvariantExp (I := I) (G := G) (t • (-X))) := by
-    simpa only [mulInvariantOneParameterSubgroup_eq_mulInvariantExp_smul] using
-      contMDiff_mulInvariantOneParameterSubgroup (I := I) (G := G) (-X)
+    exact contMDiff_mulInvariantExp_smul (I := I) (G := G) (-X)
   have hMprod : ContMDiff (𝓘(ℝ, ℝ).prod 𝓘(ℝ, ℝ)) I ∞
       (fun p : ℝ × ℝ =>
         mulInvariantExp (I := I) (G := G) (p.1 • X) *
@@ -276,8 +270,7 @@ theorem hasDerivAt_tangentAd_mulInvariantExp_smul_apply
   let γY : ℝ → G := fun t => mulInvariantExp (I := I) (G := G) (t • Y)
   let A : ℝ → E := fun t => @id E (tangentAd (I := I) (γX t) Y)
   have hγX : ContMDiff 𝓘(ℝ, ℝ) I ∞ γX := by
-    simpa only [γX, mulInvariantOneParameterSubgroup_eq_mulInvariantExp_smul] using
-      contMDiff_mulInvariantOneParameterSubgroup (I := I) (G := G) X
+    simpa only [γX] using contMDiff_mulInvariantExp_smul (I := I) (G := G) X
   have hA : ContDiff ℝ ∞ A := by
     have hpair : ContMDiff 𝓘(ℝ, ℝ) (I.prod 𝓘(ℝ, E)) ∞
         (fun t => (γX t, @id E Y)) := hγX.prodMk contMDiff_const
@@ -376,8 +369,7 @@ theorem hasDerivAt_tangentAd_mulInvariantExp_smul_apply
     simpa only [q] using hq.deriv
   let RXf : C^∞⟮I, G; ℝ⟯ :=
     ⟨fun g => mvfderiv I f g (mulRightInvariantVectorField X g),
-      ContMDiff.contMDiff_mvfderiv_apply f.contMDiff
-        (contMDiff_mulRightInvariantVectorField_infty X) (by simp)⟩
+      contMDiff_mvfderiv_mulRightInvariantVectorField X f⟩
   let LXf : C^∞⟮I, G; ℝ⟯ :=
     ⟨fun g => mvfderiv I f g (mulInvariantVectorField X g),
       contMDiff_mvfderiv_mulInvariantVectorField X f⟩
@@ -431,23 +423,13 @@ theorem mvfderiv_tangentAd_apply (X Y : GroupLieAlgebra I G) :
     have hpair : ContMDiff I (I.prod 𝓘(ℝ, E)) ∞
         (fun g : G => (g, @id E Y)) := contMDiff_id.prodMk contMDiff_const
     exact (contMDiff_tangentAd_apply (I := I) (G := G)).comp hpair
-  have hX := hasMFDerivAt_mulInvariantExp_smul (I := I) (G := G) X
-  have hzero : mulInvariantExp (I := I) (G := G) ((0 : ℝ) • X) = 1 := by
-    rw [zero_smul, mulInvariantExp_zero]
   have hTmf := hT.mdifferentiable (by simp) (1 : G) |>.hasMFDerivAt
-  rw [← hzero] at hTmf
-  have hcomp := hTmf.comp 0 hX
-  rw [hzero] at hcomp
-  have hcompF : HasFDerivAt
-      (T ∘ fun t : ℝ => mulInvariantExp (I := I) (G := G) (t • X))
-      ((mvfderiv I T 1).comp ((1 : ℝ →L[ℝ] ℝ).smulRight X)) 0 := by
-    with_unfolding_all exact hcomp.hasFDerivAt
+  have hchainRaw := HasMFDerivAt.hasDerivAt_comp_mulInvariantExp_smul hTmf X
   have hchain : HasDerivAt
       (fun t : ℝ => T (mulInvariantExp (I := I) (G := G) (t • X)))
       (mvfderiv I T 1 X) 0 := by
-    apply hcompF.hasDerivAt.congr_deriv
-    simp only [ContinuousLinearMap.comp_apply, ContinuousLinearMap.smulRight_apply,
-      one_apply_eq_self, one_smul]
+    apply hchainRaw.congr_deriv
+    with_unfolding_all rfl
   have hpath := hasDerivAt_tangentAd_mulInvariantExp_smul_apply (I := I) (G := G) X Y
   have hpathModel : HasDerivAt
       (fun t : ℝ => T (mulInvariantExp (I := I) (G := G) (t • X)))
