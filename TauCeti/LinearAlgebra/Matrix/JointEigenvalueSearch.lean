@@ -34,6 +34,9 @@ Dixon--Schneider; the final section records their `ᵥ*` characterizations.
 
 * `TauCeti.jointEigenspaceMatrix_mulVec_eq_zero_iff`: the stacked system expresses exactly the
   common eigenvector equations.
+* `TauCeti.mem_span_jointEigenspaceBasis`: that basis spans the common eigenspace.
+* `TauCeti.length_jointEigenspaceBasis`: its length is the nullity of the stacked system, which
+  is the executable test for a one-dimensional common eigenspace.
 * `TauCeti.jointEigenspaceBasis_ne_nil_iff`: its computed basis is nonempty exactly when a
   nonzero common eigenvector exists.
 * `TauCeti.mem_jointEigenvalueSearch`: correctness of the executable tuple search.
@@ -46,6 +49,15 @@ Layer 6 of the
 [character theory roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/CharacterTheory/README.md)
 requires an eigenvector search over `ZMod p` which combines `eigenvalueSearch` with
 `kernelBasis`. This is the common-eigenspace search at the core of that refinement.
+
+* J. D. Dixon, *High speed computation of group characters*, Numerische Mathematik 10 (1967),
+  446--450: the modular class-matrix method, in which the central characters are recovered as
+  the common eigenrows of the class matrices. This is the source of the `ᵥ*` orientation
+  recorded in the final section.
+* G. Schneider, *Dixon's character table algorithm revisited*, J. Symbolic Comput. 9 (1990),
+  601--606: the successive splitting of a common eigenspace by further class matrices until it
+  is one-dimensional. This is why the full kernel basis, and its length, are exposed here
+  rather than only the decision whether a tuple occurs.
 -/
 
 public section
@@ -118,6 +130,39 @@ theorem mulVec_eq_smul_of_mem_jointEigenspaceBasis
   exact mulVec_eq_zero_of_mem_kernelBasis _ hv
 
 omit [Fintype F] in
+/-- The computed common-eigenspace basis is linearly independent. -/
+theorem linearIndepOn_jointEigenspaceBasis
+    (A : Fin m → Matrix (Fin n) (Fin n) F) (a : Fin m → F) :
+    LinearIndepOn F id {v : Fin n → F | v ∈ jointEigenspaceBasis A a} :=
+  linearIndepOn_kernelBasis _
+
+omit [Fintype F] in
+/-- The computed common-eigenspace basis lists no vector twice. -/
+theorem nodup_jointEigenspaceBasis
+    (A : Fin m → Matrix (Fin n) (Fin n) F) (a : Fin m → F) :
+    (jointEigenspaceBasis A a).Nodup :=
+  nodup_kernelBasis _
+
+omit [Fintype F] in
+/-- The computed basis spans the common eigenspace: a vector lies in its span exactly when it
+satisfies every eigenvector equation. -/
+theorem mem_span_jointEigenspaceBasis
+    (A : Fin m → Matrix (Fin n) (Fin n) F) (a : Fin m → F) (v : Fin n → F) :
+    v ∈ Submodule.span F {w : Fin n → F | w ∈ jointEigenspaceBasis A a} ↔
+      ∀ i, A i *ᵥ v = a i • v := by
+  rw [jointEigenspaceBasis, span_kernelBasis, LinearMap.mem_ker, Matrix.mulVecLin_apply,
+    jointEigenspaceMatrix_mulVec_eq_zero_iff]
+
+omit [Fintype F] in
+/-- The number of computed basis vectors is the nullity of the stacked system. Comparing this
+length with `1` is the executable test that Dixon--Schneider refinement has reached a
+one-dimensional common eigenspace. -/
+theorem length_jointEigenspaceBasis
+    (A : Fin m → Matrix (Fin n) (Fin n) F) (a : Fin m → F) :
+    (jointEigenspaceBasis A a).length = n - (jointEigenspaceMatrix A a).rank :=
+  length_kernelBasis _
+
+omit [Fintype F] in
 /-- The common-eigenspace basis is nonempty exactly when the eigenvalue tuple has a nonzero
 common eigenvector. -/
 theorem jointEigenspaceBasis_ne_nil_iff
@@ -126,19 +171,14 @@ theorem jointEigenspaceBasis_ne_nil_iff
   constructor
   · intro h
     obtain ⟨v, hv⟩ := List.exists_mem_of_ne_nil _ h
-    refine ⟨v, ?_, mulVec_eq_smul_of_mem_jointEigenspaceBasis hv⟩
-    exact (linearIndepOn_kernelBasis (A := jointEigenspaceMatrix A a)).ne_zero hv
+    exact ⟨v, (linearIndepOn_jointEigenspaceBasis A a).ne_zero hv,
+      mulVec_eq_smul_of_mem_jointEigenspaceBasis hv⟩
   · rintro ⟨v, hv, heig⟩ hnil
-    have hker : v ∈ LinearMap.ker (jointEigenspaceMatrix A a).mulVecLin := by
-      rw [LinearMap.mem_ker, Matrix.mulVecLin_apply,
-        jointEigenspaceMatrix_mulVec_eq_zero_iff]
-      exact heig
-    have hspan := span_kernelBasis (A := jointEigenspaceMatrix A a)
-    rw [jointEigenspaceBasis] at hnil
-    rw [hnil] at hspan
-    simp only [List.not_mem_nil, Set.ofPred_false, Submodule.span_empty] at hspan
-    rw [← hspan] at hker
-    exact hv ((Submodule.mem_bot F).mp hker)
+    have hmem := (mem_span_jointEigenspaceBasis A a v).mpr heig
+    rw [hnil] at hmem
+    simp only [List.not_mem_nil, Set.ofPred_false, Submodule.span_empty,
+      Submodule.mem_bot] at hmem
+    exact hv hmem
 
 /-- Search the finite product of the individual spectra and retain the tuples whose computed
 common-eigenspace basis is nonempty. -/
