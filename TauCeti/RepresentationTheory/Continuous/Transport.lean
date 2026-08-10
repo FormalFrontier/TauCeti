@@ -123,6 +123,7 @@ This is `TauCeti.ContRepresentation.matrixCoeff_congr` with the isometry hypothe
 linear isometry equivalence `(e⁻¹)† = e`, and the two statements agree. It is what says that being
 a matrix coefficient depends only on the *equivalence class* of a representation, so a
 representation may be replaced by any conjugate of it — for instance by a unitary one. -/
+@[simp]
 theorem matrixCoeff_congr_adjoint (e : V ≃L[𝕜] W) {π : ContRepresentation 𝕜 G V}
     (hπ : Continuous π) (v w : V) :
     matrixCoeff (congr e π) (continuous_congr e hπ) (e v)

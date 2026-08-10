@@ -25,10 +25,12 @@ into a representation that *is* unitary for the given inner product:
 `TauCeti.ContRepresentation.exists_isUnitary_congr` produces `e : V ≃L[𝕜] V` with
 `IsUnitary (congr e π)`.
 
-So a downstream statement about unitary representations loses no generality, and the two
-consequences recorded here are the form that fact is consumed in: a matrix coefficient of an
-arbitrary finite-dimensional continuous representation is a matrix coefficient of a unitary one,
-and hence the representative ring `𝓡(G)` is spanned by the matrix coefficients of the **unitary**
+What this buys is a replacement of `π` by an equivalent representation, not by `π` itself, so a
+property may be proved for unitary representations alone exactly when it is invariant under
+conjugation by a continuous linear automorphism. The two consequences recorded here are the form
+that fact is consumed in, and both are of that kind: a matrix coefficient of an arbitrary
+finite-dimensional continuous representation is a matrix coefficient of a unitary one, and hence
+the representative ring `𝓡(G)` is spanned by the matrix coefficients of the **unitary**
 finite-dimensional continuous representations alone.
 
 ## Main statements
@@ -90,8 +92,9 @@ theorem exists_isUnitary_congr (π : ContRepresentation 𝕜 G V) (hπ : Continu
     ∃ e : V ≃L[𝕜] V, IsUnitary (congr e π) := by
   obtain ⟨A, hA⟩ := exists_continuousLinearEquiv_inner_map_map (gramOperator π hπ)
     (isSymmetric_gramOperator π hπ) fun _ hv ↦ re_inner_gramOperator_self_pos π hπ hv
-  have hsymm : ∀ v w : V, ⟪gramOperator π hπ v, w⟫_𝕜 = ⟪v, gramOperator π hπ w⟫_𝕜 := fun v w ↦ by
-    rw [inner_gramOperator_left, inner_gramOperator]
+  -- `isSymmetric_gramOperator` with the continuous-linear-map coercion, so that it rewrites.
+  have hsymm : ∀ v w : V, ⟪gramOperator π hπ v, w⟫_𝕜 = ⟪v, gramOperator π hπ w⟫_𝕜 :=
+    isSymmetric_gramOperator π hπ
   -- The averaged form is invariant, written with the Gram operator on the left.
   have hinv : ∀ (g : G) (v w : V), ⟪gramOperator π hπ (π g v), π g w⟫_𝕜
       = ⟪gramOperator π hπ v, w⟫_𝕜 := fun g v w ↦ by
