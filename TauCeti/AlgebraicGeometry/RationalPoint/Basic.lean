@@ -27,7 +27,7 @@ of an arbitrary morphism of schemes `f : X ⟶ S`, the hypothesis being `s ≫ f
 * `residueFieldRingEquivOfSection`: over a base `Spec K` with `K` a field, the residue field at a
   `K`-rational point *is* `K`, through the evaluation map that Mathlib attaches to any `K`-point,
   `X.descResidueField (Scheme.stalkClosedPointTo s)`. The section hypothesis makes that map
-  bijective (`bijective_descResidueField_of_section`), which is what lets a `K`-rational point
+  bijective (`descResidueField_bijective_of_section`), which is what lets a `K`-rational point
   transport `K`-structures to the fibre data at the point.
 
 The divisor-level consequences live in `TauCeti.AlgebraicGeometry.RationalPoint.Degree`, which
@@ -184,7 +184,7 @@ variable {K : Type u} [Field K] {X : Scheme.{u}} {f : X ⟶ Spec (.of K)} {s : S
 `𝒪_{X, s 0} ⟶ K` of Mathlib's `Scheme.stalkClosedPointTo` is surjective, because composing it
 with the stalk map of `f` gives the corresponding map for the identity of `Spec K`, which is an
 isomorphism. -/
-lemma surjective_stalkClosedPointTo_of_section (hs : s ≫ f = 𝟙 (Spec (.of K))) :
+lemma stalkClosedPointTo_surjective_of_section (hs : s ≫ f = 𝟙 (Spec (.of K))) :
     Function.Surjective (Scheme.stalkClosedPointTo s) := by
   -- The hypothesis is used through a universally quantified morphism, since the *type* of
   -- `Scheme.stalkClosedPointTo t` depends on `t`; substituting `t := 𝟙 _` avoids a transport.
@@ -207,10 +207,10 @@ lemma surjective_stalkClosedPointTo_of_section (hs : s ≫ f = 𝟙 (Spec (.of K
 
 /-- The canonical evaluation map `κ(s 0) ⟶ K` at a `K`-rational point is bijective: it is
 injective as a map of fields, and surjective because the stalk already surjects onto `K`. -/
-lemma bijective_descResidueField_of_section (hs : s ≫ f = 𝟙 (Spec (.of K))) :
+lemma descResidueField_bijective_of_section (hs : s ≫ f = 𝟙 (Spec (.of K))) :
     Function.Bijective (X.descResidueField (Scheme.stalkClosedPointTo s)) := by
   refine ⟨(X.descResidueField (Scheme.stalkClosedPointTo s)).hom.injective, fun k ↦ ?_⟩
-  obtain ⟨a, ha⟩ := surjective_stalkClosedPointTo_of_section hs k
+  obtain ⟨a, ha⟩ := stalkClosedPointTo_surjective_of_section hs k
   refine ⟨X.residue _ a, ?_⟩
   rw [← ha, ← ConcreteCategory.comp_apply, Scheme.residue_descResidueField]
 
@@ -219,7 +219,7 @@ the evaluation map of the point. -/
 noncomputable def residueFieldRingEquivOfSection (hs : s ≫ f = 𝟙 (Spec (.of K))) :
     IsLocalRing.ResidueField (X.presheaf.stalk (s (IsLocalRing.closedPoint K))) ≃+* K :=
   RingEquiv.ofBijective (X.descResidueField (Scheme.stalkClosedPointTo s)).hom
-    (bijective_descResidueField_of_section hs)
+    (descResidueField_bijective_of_section hs)
 
 /-- `residueFieldRingEquivOfSection` is the evaluation map of the rational point. -/
 @[simp]
