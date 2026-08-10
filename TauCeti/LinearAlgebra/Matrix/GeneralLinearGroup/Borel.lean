@@ -132,7 +132,7 @@ def mk (a d : Rˣ) (b : R) : GL (Fin 2) R where
     simp [mul_assoc]
 
 @[simp]
-theorem mk_val (a d : Rˣ) (b : R) :
+theorem coe_mk (a d : Rˣ) (b : R) :
     ((mk a d b : GL (Fin 2) R) : Matrix (Fin 2) (Fin 2) R) = !![(a : R), b; 0, (d : R)] :=
   (rfl)
 
@@ -196,14 +196,6 @@ theorem mul_apply_one_one {g h : GL (Fin 2) R} (hg : g ∈ GL2Borel R) :
   rw [mem_iff] at hg
   rw [Units.val_mul, Matrix.mul_apply, Fin.sum_univ_two, hg]
   ring
-
-/-- The determinant of an upper-triangular `2 × 2` matrix is the product of its diagonal
-entries. -/
-theorem det_val {g : GL (Fin 2) R} (hg : g ∈ GL2Borel R) :
-    ((Matrix.GeneralLinearGroup.det g : Rˣ) : R)
-      = (g : Matrix (Fin 2) (Fin 2) R) 0 0 * (g : Matrix (Fin 2) (Fin 2) R) 1 1 := by
-  rw [mem_iff] at hg
-  simp [Matrix.GeneralLinearGroup.det, Matrix.det_fin_two, hg]
 
 variable (R)
 
@@ -278,7 +270,9 @@ coordinates. -/
 theorem det_diag (g : GL2Borel R) :
     Matrix.GeneralLinearGroup.det (g : GL (Fin 2) R) = (diag g).1 * (diag g).2 := by
   ext
-  simpa using det_val g.2
+  rw [Units.val_mul, diag_fst_val, diag_snd_val, Matrix.GeneralLinearGroup.val_det_apply,
+    Matrix.det_of_isUpperTriangular (blockTriangular_id_iff.mpr (apply_one_zero g)),
+    Fin.prod_univ_two]
 
 /-- The **split torus** `T`, as a homomorphic section of `TauCeti.GL2Borel.diag`: the diagonal
 matrix `!![a, 0; 0, d]`. Its existence is what upgrades the bijection
@@ -289,7 +283,7 @@ def torusHom : Rˣ × Rˣ →* GL2Borel R :=
     simp [mem_iff]
 
 @[simp]
-theorem torusHom_val (p : Rˣ × Rˣ) :
+theorem coe_torusHom (p : Rˣ × Rˣ) :
     ((torusHom p : GL2Borel R) : GL (Fin 2) R) = mk p.1 p.2 0 := by
   refine Matrix.GeneralLinearGroup.ext fun i j => ?_
   fin_cases i <;> fin_cases j <;> simp [torusHom, diagGL_apply]
@@ -313,7 +307,7 @@ def unipotentHom : AddChar R (GL2Borel R) where
     Subtype.ext (Matrix.GeneralLinearGroup.upperRightHom.map_add_eq_mul a b)
 
 @[simp]
-theorem unipotentHom_val (b : R) :
+theorem coe_unipotentHom (b : R) :
     ((unipotentHom b : GL2Borel R) : GL (Fin 2) R) = Matrix.GeneralLinearGroup.upperRightHom b :=
   (rfl)
 
@@ -368,7 +362,7 @@ def equivProd : GL2Borel R ≃ (Rˣ × Rˣ) × R where
   invFun p := ⟨mk p.1.1 p.1.2 p.2, mk_mem _ _ _⟩
   left_inv g := by
     refine Subtype.ext (Matrix.GeneralLinearGroup.ext fun i j => ?_)
-    rw [mk_val, Matrix.eta_fin_two ((g : GL (Fin 2) R) : Matrix (Fin 2) (Fin 2) R)]
+    rw [coe_mk, Matrix.eta_fin_two ((g : GL (Fin 2) R) : Matrix (Fin 2) (Fin 2) R)]
     simp [apply_one_zero g]
   right_inv p := by simp
 
