@@ -18,22 +18,28 @@ lattices `Fin 4 → ℤ`. The character lattice is written in the fundamental-we
 cocharacter lattice in the simple-coroot basis. Thus the first four roots are the rows of the
 Bourbaki-numbered Cartan matrix, while their coroots are the standard basis vectors.
 
-The forty-eight roots are ordered with the four simple roots first, then the other twenty positive
-roots, and finally their negatives in the same order. The coordinate tables make both the carrier
-and every reflection explicit. The first two simple roots are long and the last two are short.
+The forty-eight roots are ordered with the four Bourbaki simple roots at indices `0` through `3`,
+then at indices `4` through `23` the remaining twenty positive roots in increasing lexicographic
+order of their tuple of simple-root coefficients — the order in which `f4RootCoefficients` lists
+those tuples — and finally at index `i + 24` the negative of the root at index `i`. The coordinate
+tables make both the carrier and every reflection explicit. The first two simple roots are long and
+the last two are short.
 
 ## Main definitions and results
 
 * `TauCeti.DynkinType.f4SimplyConnectedRootDatum` is the pinned forty-eight-root datum.
+* `TauCeti.DynkinType.f4ReflectionIndex` is its explicit action on root indices.
 * `TauCeti.DynkinType.f4SimplyConnectedBase` is its Bourbaki-numbered base.
-* `TauCeti.DynkinType.f4SimplyConnectedRootDatum_pairing_eq_cartanMatrix_F4` pins the numbering.
+* `TauCeti.DynkinType.f4SimplyConnectedRootDatum_pairing_eq_cartanMatrix_F₄` pins the numbering.
 * `TauCeti.DynkinType.hasCartanType_f4SimplyConnectedRootDatum` identifies its Cartan type.
 
 ## References
 
-The coordinates and numbering follow Bourbaki, *Lie Groups and Lie Algebras, Chapters 4--6*,
-Plate VIII. In the standard orthonormal coordinates the long roots are `±eᵢ ± eⱼ`, while the short
-roots are `±eᵢ` and `(±e₁ ± e₂ ± e₃ ± e₄) / 2`. This is the `F4` branch of Layer 6 in
+The node numbering and the Cartan matrix follow Bourbaki, *Lie Groups and Lie Algebras,
+Chapters 4--6*, Plate VIII. The coordinate tables here are not in Bourbaki's orthonormal model, in
+which the long roots are `±eᵢ ± eⱼ` and the short roots are `±eᵢ` and `(±e₁ ± e₂ ± e₃ ± e₄) / 2`:
+they are written in the fundamental-weight basis for the roots and the simple-coroot basis for the
+coroots. This is the `F4` branch of Layer 6 in
 `TauCetiRoadmap/RepresentationTheory/RootSystems/README.md`.
 -/
 
@@ -45,7 +51,7 @@ namespace DynkinType
 
 /-- The roots of `F4` in the fundamental-weight basis, with the simple roots first and the
 negative roots in the second half. -/
-def f4Root : Fin 48 ↪ (Fin 4 → ℤ) where
+@[expose] def f4Root : Fin 48 ↪ (Fin 4 → ℤ) where
   toFun := ![
     ![2, -1, 0, 0], ![-1, 2, -2, 0], ![0, -1, 2, -1], ![0, 0, -1, 2],
     ![0, -1, 1, 1], ![-1, 1, 0, -1], ![-1, 1, -1, 1], ![-1, 0, 2, -2],
@@ -62,7 +68,7 @@ def f4Root : Fin 48 ↪ (Fin 4 → ℤ) where
   inj' := by decide
 
 /-- The coroots of `F4` in the simple-coroot basis, ordered compatibly with `f4Root`. -/
-def f4Coroot : Fin 48 ↪ (Fin 4 → ℤ) where
+@[expose] def f4Coroot : Fin 48 ↪ (Fin 4 → ℤ) where
   toFun := ![
     ![1, 0, 0, 0], ![0, 1, 0, 0], ![0, 0, 1, 0], ![0, 0, 0, 1],
     ![0, 0, 1, 1], ![0, 2, 1, 0], ![0, 2, 1, 1], ![0, 1, 1, 0],
@@ -78,13 +84,31 @@ def f4Coroot : Fin 48 ↪ (Fin 4 → ℤ) where
     ![-2, -4, -3, -2], ![-1, -2, -2, -1], ![-1, -3, -2, -1], ![-2, -3, -2, -1]]
   inj' := by decide
 
+/-- The simple roots of `F4` sit at the first four indices, where they are the rows of Mathlib's
+Bourbaki-numbered Cartan matrix. -/
+@[simp] lemma f4Root_castAdd (i : Fin 4) : f4Root (Fin.castAdd 44 i) = CartanMatrix.F₄ i := by
+  fin_cases i <;> decide
+
+/-- The simple coroots of `F4` sit at the first four indices, where they are the standard basis of
+the cocharacter lattice. -/
+@[simp] lemma f4Coroot_castAdd (i : Fin 4) : f4Coroot (Fin.castAdd 44 i) = Pi.single i 1 := by
+  fin_cases i <;> decide
+
+/-- The root at index `i + 24` is the negative of the root at index `i`. -/
+@[simp] lemma f4Root_addNat (i : Fin 24) :
+    f4Root (Fin.addNat i 24) = -f4Root (Fin.castAdd 24 i) := by fin_cases i <;> decide
+
+/-- The coroot at index `i + 24` is the negative of the coroot at index `i`. -/
+@[simp] lemma f4Coroot_addNat (i : Fin 24) :
+    f4Coroot (Fin.addNat i 24) = -f4Coroot (Fin.castAdd 24 i) := by fin_cases i <;> decide
+
 /-- The first-half index underlying a root, identifying a negative root with its positive
 opposite. -/
-private def f4PositiveIndex (i : Fin 48) : Fin 24 := ⟨i % 24, Nat.mod_lt _ (by omega)⟩
+@[expose] def f4PositiveIndex (i : Fin 48) : Fin 24 := ⟨i % 24, Nat.mod_lt _ (by omega)⟩
 
 /-- The permutation table for reflection in each of the twenty-four positive `F4` roots. Reflection
 in the corresponding negative root is the same permutation. -/
-private def f4ReflectionTable : Fin 24 → Fin 48 → Fin 48 := ![
+@[expose] def f4ReflectionTable : Fin 24 → Fin 48 → Fin 48 := ![
   ![24, 10, 2, 3, 4, 11, 12, 13, 14, 15, 1, 5, 6, 7, 8, 9,
     16, 17, 18, 19, 20, 21, 23, 22, 0, 34, 26, 27, 28, 35, 36, 37,
     38, 39, 25, 29, 30, 31, 32, 33, 40, 41, 42, 43, 44, 45, 47, 46],
@@ -158,250 +182,62 @@ private def f4ReflectionTable : Fin 24 → Fin 48 → Fin 48 := ![
     39, 38, 37, 36, 35, 34, 24, 47, 22, 25, 26, 27, 28, 29, 30, 31,
     32, 33, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 0, 23]]
 
-private def f4ReflectionIndex (i j : Fin 48) : Fin 48 := f4ReflectionTable (f4PositiveIndex i) j
-
-private lemma f4ReflectionIndex_root_0 (j : Fin 48) :
-    f4Root j - (f4Root j ⬝ᵥ f4Coroot 0) • f4Root 0 = f4Root (f4ReflectionIndex 0 j) := by
-  decide +revert
-private lemma f4ReflectionIndex_root_1 (j : Fin 48) :
-    f4Root j - (f4Root j ⬝ᵥ f4Coroot 1) • f4Root 1 = f4Root (f4ReflectionIndex 1 j) := by
-  decide +revert
-private lemma f4ReflectionIndex_root_2 (j : Fin 48) :
-    f4Root j - (f4Root j ⬝ᵥ f4Coroot 2) • f4Root 2 = f4Root (f4ReflectionIndex 2 j) := by
-  decide +revert
-private lemma f4ReflectionIndex_root_3 (j : Fin 48) :
-    f4Root j - (f4Root j ⬝ᵥ f4Coroot 3) • f4Root 3 = f4Root (f4ReflectionIndex 3 j) := by
-  decide +revert
-private lemma f4ReflectionIndex_root_4 (j : Fin 48) :
-    f4Root j - (f4Root j ⬝ᵥ f4Coroot 4) • f4Root 4 = f4Root (f4ReflectionIndex 4 j) := by
-  decide +revert
-private lemma f4ReflectionIndex_root_5 (j : Fin 48) :
-    f4Root j - (f4Root j ⬝ᵥ f4Coroot 5) • f4Root 5 = f4Root (f4ReflectionIndex 5 j) := by
-  decide +revert
-private lemma f4ReflectionIndex_root_6 (j : Fin 48) :
-    f4Root j - (f4Root j ⬝ᵥ f4Coroot 6) • f4Root 6 = f4Root (f4ReflectionIndex 6 j) := by
-  decide +revert
-private lemma f4ReflectionIndex_root_7 (j : Fin 48) :
-    f4Root j - (f4Root j ⬝ᵥ f4Coroot 7) • f4Root 7 = f4Root (f4ReflectionIndex 7 j) := by
-  decide +revert
-private lemma f4ReflectionIndex_root_8 (j : Fin 48) :
-    f4Root j - (f4Root j ⬝ᵥ f4Coroot 8) • f4Root 8 = f4Root (f4ReflectionIndex 8 j) := by
-  decide +revert
-private lemma f4ReflectionIndex_root_9 (j : Fin 48) :
-    f4Root j - (f4Root j ⬝ᵥ f4Coroot 9) • f4Root 9 = f4Root (f4ReflectionIndex 9 j) := by
-  decide +revert
-private lemma f4ReflectionIndex_root_10 (j : Fin 48) :
-    f4Root j - (f4Root j ⬝ᵥ f4Coroot 10) • f4Root 10 = f4Root (f4ReflectionIndex 10 j) := by
-  decide +revert
-private lemma f4ReflectionIndex_root_11 (j : Fin 48) :
-    f4Root j - (f4Root j ⬝ᵥ f4Coroot 11) • f4Root 11 = f4Root (f4ReflectionIndex 11 j) := by
-  decide +revert
-private lemma f4ReflectionIndex_root_12 (j : Fin 48) :
-    f4Root j - (f4Root j ⬝ᵥ f4Coroot 12) • f4Root 12 = f4Root (f4ReflectionIndex 12 j) := by
-  decide +revert
-private lemma f4ReflectionIndex_root_13 (j : Fin 48) :
-    f4Root j - (f4Root j ⬝ᵥ f4Coroot 13) • f4Root 13 = f4Root (f4ReflectionIndex 13 j) := by
-  decide +revert
-private lemma f4ReflectionIndex_root_14 (j : Fin 48) :
-    f4Root j - (f4Root j ⬝ᵥ f4Coroot 14) • f4Root 14 = f4Root (f4ReflectionIndex 14 j) := by
-  decide +revert
-private lemma f4ReflectionIndex_root_15 (j : Fin 48) :
-    f4Root j - (f4Root j ⬝ᵥ f4Coroot 15) • f4Root 15 = f4Root (f4ReflectionIndex 15 j) := by
-  decide +revert
-private lemma f4ReflectionIndex_root_16 (j : Fin 48) :
-    f4Root j - (f4Root j ⬝ᵥ f4Coroot 16) • f4Root 16 = f4Root (f4ReflectionIndex 16 j) := by
-  decide +revert
-private lemma f4ReflectionIndex_root_17 (j : Fin 48) :
-    f4Root j - (f4Root j ⬝ᵥ f4Coroot 17) • f4Root 17 = f4Root (f4ReflectionIndex 17 j) := by
-  decide +revert
-private lemma f4ReflectionIndex_root_18 (j : Fin 48) :
-    f4Root j - (f4Root j ⬝ᵥ f4Coroot 18) • f4Root 18 = f4Root (f4ReflectionIndex 18 j) := by
-  decide +revert
-private lemma f4ReflectionIndex_root_19 (j : Fin 48) :
-    f4Root j - (f4Root j ⬝ᵥ f4Coroot 19) • f4Root 19 = f4Root (f4ReflectionIndex 19 j) := by
-  decide +revert
-private lemma f4ReflectionIndex_root_20 (j : Fin 48) :
-    f4Root j - (f4Root j ⬝ᵥ f4Coroot 20) • f4Root 20 = f4Root (f4ReflectionIndex 20 j) := by
-  decide +revert
-private lemma f4ReflectionIndex_root_21 (j : Fin 48) :
-    f4Root j - (f4Root j ⬝ᵥ f4Coroot 21) • f4Root 21 = f4Root (f4ReflectionIndex 21 j) := by
-  decide +revert
-private lemma f4ReflectionIndex_root_22 (j : Fin 48) :
-    f4Root j - (f4Root j ⬝ᵥ f4Coroot 22) • f4Root 22 = f4Root (f4ReflectionIndex 22 j) := by
-  decide +revert
-private lemma f4ReflectionIndex_root_23 (j : Fin 48) :
-    f4Root j - (f4Root j ⬝ᵥ f4Coroot 23) • f4Root 23 = f4Root (f4ReflectionIndex 23 j) := by
-  decide +revert
-
-private lemma f4ReflectionIndex_coroot_0 (j : Fin 48) :
-    f4Coroot j - (f4Root 0 ⬝ᵥ f4Coroot j) • f4Coroot 0 = f4Coroot (f4ReflectionIndex 0 j) := by
-  decide +revert
-private lemma f4ReflectionIndex_coroot_1 (j : Fin 48) :
-    f4Coroot j - (f4Root 1 ⬝ᵥ f4Coroot j) • f4Coroot 1 = f4Coroot (f4ReflectionIndex 1 j) := by
-  decide +revert
-private lemma f4ReflectionIndex_coroot_2 (j : Fin 48) :
-    f4Coroot j - (f4Root 2 ⬝ᵥ f4Coroot j) • f4Coroot 2 = f4Coroot (f4ReflectionIndex 2 j) := by
-  decide +revert
-private lemma f4ReflectionIndex_coroot_3 (j : Fin 48) :
-    f4Coroot j - (f4Root 3 ⬝ᵥ f4Coroot j) • f4Coroot 3 = f4Coroot (f4ReflectionIndex 3 j) := by
-  decide +revert
-private lemma f4ReflectionIndex_coroot_4 (j : Fin 48) :
-    f4Coroot j - (f4Root 4 ⬝ᵥ f4Coroot j) • f4Coroot 4 = f4Coroot (f4ReflectionIndex 4 j) := by
-  decide +revert
-private lemma f4ReflectionIndex_coroot_5 (j : Fin 48) :
-    f4Coroot j - (f4Root 5 ⬝ᵥ f4Coroot j) • f4Coroot 5 = f4Coroot (f4ReflectionIndex 5 j) := by
-  decide +revert
-private lemma f4ReflectionIndex_coroot_6 (j : Fin 48) :
-    f4Coroot j - (f4Root 6 ⬝ᵥ f4Coroot j) • f4Coroot 6 = f4Coroot (f4ReflectionIndex 6 j) := by
-  decide +revert
-private lemma f4ReflectionIndex_coroot_7 (j : Fin 48) :
-    f4Coroot j - (f4Root 7 ⬝ᵥ f4Coroot j) • f4Coroot 7 = f4Coroot (f4ReflectionIndex 7 j) := by
-  decide +revert
-private lemma f4ReflectionIndex_coroot_8 (j : Fin 48) :
-    f4Coroot j - (f4Root 8 ⬝ᵥ f4Coroot j) • f4Coroot 8 = f4Coroot (f4ReflectionIndex 8 j) := by
-  decide +revert
-private lemma f4ReflectionIndex_coroot_9 (j : Fin 48) :
-    f4Coroot j - (f4Root 9 ⬝ᵥ f4Coroot j) • f4Coroot 9 = f4Coroot (f4ReflectionIndex 9 j) := by
-  decide +revert
-private lemma f4ReflectionIndex_coroot_10 (j : Fin 48) :
-    f4Coroot j - (f4Root 10 ⬝ᵥ f4Coroot j) • f4Coroot 10 = f4Coroot (f4ReflectionIndex 10 j) := by
-  decide +revert
-private lemma f4ReflectionIndex_coroot_11 (j : Fin 48) :
-    f4Coroot j - (f4Root 11 ⬝ᵥ f4Coroot j) • f4Coroot 11 = f4Coroot (f4ReflectionIndex 11 j) := by
-  decide +revert
-private lemma f4ReflectionIndex_coroot_12 (j : Fin 48) :
-    f4Coroot j - (f4Root 12 ⬝ᵥ f4Coroot j) • f4Coroot 12 = f4Coroot (f4ReflectionIndex 12 j) := by
-  decide +revert
-private lemma f4ReflectionIndex_coroot_13 (j : Fin 48) :
-    f4Coroot j - (f4Root 13 ⬝ᵥ f4Coroot j) • f4Coroot 13 = f4Coroot (f4ReflectionIndex 13 j) := by
-  decide +revert
-private lemma f4ReflectionIndex_coroot_14 (j : Fin 48) :
-    f4Coroot j - (f4Root 14 ⬝ᵥ f4Coroot j) • f4Coroot 14 = f4Coroot (f4ReflectionIndex 14 j) := by
-  decide +revert
-private lemma f4ReflectionIndex_coroot_15 (j : Fin 48) :
-    f4Coroot j - (f4Root 15 ⬝ᵥ f4Coroot j) • f4Coroot 15 = f4Coroot (f4ReflectionIndex 15 j) := by
-  decide +revert
-private lemma f4ReflectionIndex_coroot_16 (j : Fin 48) :
-    f4Coroot j - (f4Root 16 ⬝ᵥ f4Coroot j) • f4Coroot 16 = f4Coroot (f4ReflectionIndex 16 j) := by
-  decide +revert
-private lemma f4ReflectionIndex_coroot_17 (j : Fin 48) :
-    f4Coroot j - (f4Root 17 ⬝ᵥ f4Coroot j) • f4Coroot 17 = f4Coroot (f4ReflectionIndex 17 j) := by
-  decide +revert
-private lemma f4ReflectionIndex_coroot_18 (j : Fin 48) :
-    f4Coroot j - (f4Root 18 ⬝ᵥ f4Coroot j) • f4Coroot 18 = f4Coroot (f4ReflectionIndex 18 j) := by
-  decide +revert
-private lemma f4ReflectionIndex_coroot_19 (j : Fin 48) :
-    f4Coroot j - (f4Root 19 ⬝ᵥ f4Coroot j) • f4Coroot 19 = f4Coroot (f4ReflectionIndex 19 j) := by
-  decide +revert
-private lemma f4ReflectionIndex_coroot_20 (j : Fin 48) :
-    f4Coroot j - (f4Root 20 ⬝ᵥ f4Coroot j) • f4Coroot 20 = f4Coroot (f4ReflectionIndex 20 j) := by
-  decide +revert
-private lemma f4ReflectionIndex_coroot_21 (j : Fin 48) :
-    f4Coroot j - (f4Root 21 ⬝ᵥ f4Coroot j) • f4Coroot 21 = f4Coroot (f4ReflectionIndex 21 j) := by
-  decide +revert
-private lemma f4ReflectionIndex_coroot_22 (j : Fin 48) :
-    f4Coroot j - (f4Root 22 ⬝ᵥ f4Coroot j) • f4Coroot 22 = f4Coroot (f4ReflectionIndex 22 j) := by
-  decide +revert
-private lemma f4ReflectionIndex_coroot_23 (j : Fin 48) :
-    f4Coroot j - (f4Root 23 ⬝ᵥ f4Coroot j) • f4Coroot 23 = f4Coroot (f4ReflectionIndex 23 j) := by
-  decide +revert
+/-- The explicit action of the reflection in the root of index `i` on root indices: it sends the
+index `j` to `f4ReflectionIndex i j`. -/
+@[expose] def f4ReflectionIndex (i j : Fin 48) : Fin 48 := f4ReflectionTable (f4PositiveIndex i) j
 
 private lemma f4ReflectionIndex_root_castAdd (i : Fin 24) (j : Fin 48) :
     f4Root j - (f4Root j ⬝ᵥ f4Coroot (Fin.castAdd 24 i)) • f4Root (Fin.castAdd 24 i) =
       f4Root (f4ReflectionIndex (Fin.castAdd 24 i) j) := by
-  refine Fin.cases (f4ReflectionIndex_root_0 j) (fun i => ?_) i
-  refine Fin.cases (f4ReflectionIndex_root_1 j) (fun i => ?_) i
-  refine Fin.cases (f4ReflectionIndex_root_2 j) (fun i => ?_) i
-  refine Fin.cases (f4ReflectionIndex_root_3 j) (fun i => ?_) i
-  refine Fin.cases (f4ReflectionIndex_root_4 j) (fun i => ?_) i
-  refine Fin.cases (f4ReflectionIndex_root_5 j) (fun i => ?_) i
-  refine Fin.cases (f4ReflectionIndex_root_6 j) (fun i => ?_) i
-  refine Fin.cases (f4ReflectionIndex_root_7 j) (fun i => ?_) i
-  refine Fin.cases (f4ReflectionIndex_root_8 j) (fun i => ?_) i
-  refine Fin.cases (f4ReflectionIndex_root_9 j) (fun i => ?_) i
-  refine Fin.cases (f4ReflectionIndex_root_10 j) (fun i => ?_) i
-  refine Fin.cases (f4ReflectionIndex_root_11 j) (fun i => ?_) i
-  refine Fin.cases (f4ReflectionIndex_root_12 j) (fun i => ?_) i
-  refine Fin.cases (f4ReflectionIndex_root_13 j) (fun i => ?_) i
-  refine Fin.cases (f4ReflectionIndex_root_14 j) (fun i => ?_) i
-  refine Fin.cases (f4ReflectionIndex_root_15 j) (fun i => ?_) i
-  refine Fin.cases (f4ReflectionIndex_root_16 j) (fun i => ?_) i
-  refine Fin.cases (f4ReflectionIndex_root_17 j) (fun i => ?_) i
-  refine Fin.cases (f4ReflectionIndex_root_18 j) (fun i => ?_) i
-  refine Fin.cases (f4ReflectionIndex_root_19 j) (fun i => ?_) i
-  refine Fin.cases (f4ReflectionIndex_root_20 j) (fun i => ?_) i
-  refine Fin.cases (f4ReflectionIndex_root_21 j) (fun i => ?_) i
-  refine Fin.cases (f4ReflectionIndex_root_22 j) (fun i => ?_) i
-  fin_cases i
-  exact f4ReflectionIndex_root_23 j
+  decide +revert
 
 private lemma f4ReflectionIndex_coroot_castAdd (i : Fin 24) (j : Fin 48) :
-    f4Coroot j - (f4Root (Fin.castAdd 24 i) ⬝ᵥ f4Coroot j) •
-        f4Coroot (Fin.castAdd 24 i) = f4Coroot (f4ReflectionIndex (Fin.castAdd 24 i) j) := by
-  refine Fin.cases (f4ReflectionIndex_coroot_0 j) (fun i => ?_) i
-  refine Fin.cases (f4ReflectionIndex_coroot_1 j) (fun i => ?_) i
-  refine Fin.cases (f4ReflectionIndex_coroot_2 j) (fun i => ?_) i
-  refine Fin.cases (f4ReflectionIndex_coroot_3 j) (fun i => ?_) i
-  refine Fin.cases (f4ReflectionIndex_coroot_4 j) (fun i => ?_) i
-  refine Fin.cases (f4ReflectionIndex_coroot_5 j) (fun i => ?_) i
-  refine Fin.cases (f4ReflectionIndex_coroot_6 j) (fun i => ?_) i
-  refine Fin.cases (f4ReflectionIndex_coroot_7 j) (fun i => ?_) i
-  refine Fin.cases (f4ReflectionIndex_coroot_8 j) (fun i => ?_) i
-  refine Fin.cases (f4ReflectionIndex_coroot_9 j) (fun i => ?_) i
-  refine Fin.cases (f4ReflectionIndex_coroot_10 j) (fun i => ?_) i
-  refine Fin.cases (f4ReflectionIndex_coroot_11 j) (fun i => ?_) i
-  refine Fin.cases (f4ReflectionIndex_coroot_12 j) (fun i => ?_) i
-  refine Fin.cases (f4ReflectionIndex_coroot_13 j) (fun i => ?_) i
-  refine Fin.cases (f4ReflectionIndex_coroot_14 j) (fun i => ?_) i
-  refine Fin.cases (f4ReflectionIndex_coroot_15 j) (fun i => ?_) i
-  refine Fin.cases (f4ReflectionIndex_coroot_16 j) (fun i => ?_) i
-  refine Fin.cases (f4ReflectionIndex_coroot_17 j) (fun i => ?_) i
-  refine Fin.cases (f4ReflectionIndex_coroot_18 j) (fun i => ?_) i
-  refine Fin.cases (f4ReflectionIndex_coroot_19 j) (fun i => ?_) i
-  refine Fin.cases (f4ReflectionIndex_coroot_20 j) (fun i => ?_) i
-  refine Fin.cases (f4ReflectionIndex_coroot_21 j) (fun i => ?_) i
-  refine Fin.cases (f4ReflectionIndex_coroot_22 j) (fun i => ?_) i
-  fin_cases i
-  exact f4ReflectionIndex_coroot_23 j
+    f4Coroot j - (f4Root (Fin.castAdd 24 i) ⬝ᵥ f4Coroot j) • f4Coroot (Fin.castAdd 24 i) =
+      f4Coroot (f4ReflectionIndex (Fin.castAdd 24 i) j) := by
+  decide +revert
 
-private lemma f4Root_natAdd (i : Fin 24) :
-    f4Root (Fin.addNat i 24) = -f4Root (Fin.castAdd 24 i) := by fin_cases i <;> decide
-
-private lemma f4Coroot_natAdd (i : Fin 24) :
-    f4Coroot (Fin.addNat i 24) = -f4Coroot (Fin.castAdd 24 i) := by fin_cases i <;> decide
-
-private lemma f4ReflectionIndex_natAdd (i : Fin 24) (j : Fin 48) :
+/-- Reflection in a negative root is the same permutation of root indices as reflection in its
+positive opposite. -/
+lemma f4ReflectionIndex_addNat (i : Fin 24) (j : Fin 48) :
     f4ReflectionIndex (Fin.addNat i 24) j = f4ReflectionIndex (Fin.castAdd 24 i) j := by
   fin_cases i <;> rfl
 
-private lemma f4ReflectionIndex_root (i j : Fin 48) :
-    f4Root j - (f4Root j ⬝ᵥ f4Coroot i) • f4Root i = f4Root (f4ReflectionIndex i j) := by
+/-- Every root index is either one of the first twenty-four or the index of the negative of one. -/
+private lemma f4Index_cases (i : Fin 48) :
+    (∃ k : Fin 24, i = Fin.castAdd 24 k) ∨ ∃ k : Fin 24, i = Fin.addNat k 24 := by
   by_cases hi : (i : ℕ) < 24
-  · let k : Fin 24 := ⟨i, hi⟩
-    have hik : i = Fin.castAdd 24 k := Fin.ext rfl
-    rw [hik]
-    exact f4ReflectionIndex_root_castAdd k j
-  · let k : Fin 24 := ⟨(i : ℕ) - 24, by omega⟩
-    have hik : i = Fin.addNat k 24 := by ext; simp [k]; omega
-    rw [hik]
-    simpa [f4Root_natAdd, f4Coroot_natAdd,
-      f4ReflectionIndex_natAdd] using
-      f4ReflectionIndex_root_castAdd k j
+  · exact Or.inl ⟨⟨i, hi⟩, Fin.ext rfl⟩
+  · exact Or.inr ⟨⟨(i : ℕ) - 24, by omega⟩, Fin.ext (by simp only [Fin.val_addNat]; omega)⟩
+
+/-- Extend a reflection identity from the first twenty-four indices to all forty-eight, given that
+passing to the negative index negates the vector and the reflection coefficient and leaves the
+permutation of indices unchanged. -/
+private lemma reflection_eq_of_castAdd {M : Type*} [AddCommGroup M] {f : Fin 48 → M}
+    {c : Fin 48 → Fin 48 → ℤ} {σ : Fin 48 → Fin 48 → Fin 48}
+    (hf : ∀ k : Fin 24, f (Fin.addNat k 24) = -f (Fin.castAdd 24 k))
+    (hc : ∀ (k : Fin 24) (j : Fin 48), c (Fin.addNat k 24) j = -c (Fin.castAdd 24 k) j)
+    (hσ : ∀ (k : Fin 24) (j : Fin 48), σ (Fin.addNat k 24) j = σ (Fin.castAdd 24 k) j)
+    (h : ∀ (k : Fin 24) (j : Fin 48),
+      f j - c (Fin.castAdd 24 k) j • f (Fin.castAdd 24 k) = f (σ (Fin.castAdd 24 k) j))
+    (i j : Fin 48) : f j - c i j • f i = f (σ i j) := by
+  obtain ⟨k, rfl⟩ | ⟨k, rfl⟩ := f4Index_cases i
+  · exact h k j
+  · rw [hf, hc, hσ, neg_smul, smul_neg, neg_neg]
+    exact h k j
+
+private lemma f4ReflectionIndex_root (i j : Fin 48) :
+    f4Root j - (f4Root j ⬝ᵥ f4Coroot i) • f4Root i = f4Root (f4ReflectionIndex i j) :=
+  reflection_eq_of_castAdd (f := ⇑f4Root) (c := fun i j => f4Root j ⬝ᵥ f4Coroot i)
+    (σ := f4ReflectionIndex) f4Root_addNat
+    (fun k j => by rw [f4Coroot_addNat, dotProduct_neg]) f4ReflectionIndex_addNat
+    f4ReflectionIndex_root_castAdd i j
 
 private lemma f4ReflectionIndex_coroot (i j : Fin 48) :
-    f4Coroot j - (f4Root i ⬝ᵥ f4Coroot j) • f4Coroot i =
-      f4Coroot (f4ReflectionIndex i j) := by
-  by_cases hi : (i : ℕ) < 24
-  · let k : Fin 24 := ⟨i, hi⟩
-    have hik : i = Fin.castAdd 24 k := Fin.ext rfl
-    rw [hik]
-    exact f4ReflectionIndex_coroot_castAdd k j
-  · let k : Fin 24 := ⟨(i : ℕ) - 24, by omega⟩
-    have hik : i = Fin.addNat k 24 := by ext; simp [k]; omega
-    rw [hik]
-    simpa [f4Root_natAdd, f4Coroot_natAdd,
-      f4ReflectionIndex_natAdd] using
-      f4ReflectionIndex_coroot_castAdd k j
+    f4Coroot j - (f4Root i ⬝ᵥ f4Coroot j) • f4Coroot i = f4Coroot (f4ReflectionIndex i j) :=
+  reflection_eq_of_castAdd (f := ⇑f4Coroot) (c := fun i j => f4Root i ⬝ᵥ f4Coroot j)
+    (σ := f4ReflectionIndex) f4Coroot_addNat
+    (fun k j => by rw [f4Root_addNat, neg_dotProduct]) f4ReflectionIndex_addNat
+    f4ReflectionIndex_coroot_castAdd i j
 
 private lemma f4Root_coroot_two (i : Fin 48) : f4Root i ⬝ᵥ f4Coroot i = 2 := by
   fin_cases i <;> decide
@@ -433,53 +269,65 @@ noncomputable def f4SimplyConnectedRootDatum :
     f4SimplyConnectedRootDatum.coroot = f4Coroot := (rfl)
 
 /-- The perfect pairing of the pinned `F4` datum is the standard dot product. -/
-@[simp] lemma f4SimplyConnectedRootDatum_toLinearMap_apply (x y : Fin 4 → ℤ) :
-    f4SimplyConnectedRootDatum.toLinearMap x y = x ⬝ᵥ y := (rfl)
+@[simp] lemma f4SimplyConnectedRootDatum_toLinearMap_apply_apply (x y : Fin 4 → ℤ) :
+    f4SimplyConnectedRootDatum.toLinearMap x y = x ⬝ᵥ y :=
+  dotProductEquiv_apply_apply ℤ (Fin 4) x y
 
 /-- Pairing a pinned `F4` root with a coroot computes as their coordinate dot product. -/
 @[simp] lemma f4SimplyConnectedRootDatum_pairing (i j : Fin 48) :
-    f4SimplyConnectedRootDatum.pairing i j = f4Root i ⬝ᵥ f4Coroot j := (rfl)
+    f4SimplyConnectedRootDatum.pairing i j = f4Root i ⬝ᵥ f4Coroot j := by
+  rw [← RootPairing.root_coroot_eq_pairing]
+  simp
+
+/-- The Weyl action of the pinned `F4` datum on root indices is the explicit table
+`f4ReflectionIndex`. -/
+@[simp] lemma f4SimplyConnectedRootDatum_reflectionPerm (i j : Fin 48) :
+    f4SimplyConnectedRootDatum.reflectionPerm i j = f4ReflectionIndex i j := by
+  refine f4Root.injective ?_
+  have h := f4SimplyConnectedRootDatum.reflectionPerm_root i j
+  simp only [f4SimplyConnectedRootDatum_root, f4SimplyConnectedRootDatum_coroot,
+    f4SimplyConnectedRootDatum_toLinearMap_apply_apply] at h
+  rw [← h]
+  exact f4ReflectionIndex_root i j
 
 private lemma f4Root_23 : f4Root 23 = Pi.single 0 1 := by decide
 private lemma f4Root_22_add_23 : f4Root 22 + f4Root 23 = Pi.single 1 1 := by decide
 private lemma f4Root_19_add_20 : f4Root 19 + f4Root 20 = Pi.single 2 1 := by decide
 private lemma f4Root_20 : f4Root 20 = Pi.single 3 1 := by decide
-private lemma f4Coroot_0 : f4Coroot 0 = Pi.single 0 1 := by decide
-private lemma f4Coroot_1 : f4Coroot 1 = Pi.single 1 1 := by decide
-private lemma f4Coroot_2 : f4Coroot 2 = Pi.single 2 1 := by decide
-private lemma f4Coroot_3 : f4Coroot 3 = Pi.single 3 1 := by decide
+
+private lemma span_eq_top_of_pi_single {f : Fin 48 → (Fin 4 → ℤ)}
+    (h : ∀ k : Fin 4, Pi.single k 1 ∈ span ℤ (range f)) : span ℤ (range f) = ⊤ := by
+  refine top_unique ?_
+  rw [← (Pi.basisFun ℤ (Fin 4)).span_eq]
+  refine span_le.mpr ?_
+  rintro _ ⟨i, rfl⟩
+  simpa only [Pi.basisFun_apply, SetLike.mem_coe] using h i
 
 private lemma span_f4Root_eq_top : span ℤ (range f4Root) = ⊤ := by
-  apply top_unique
-  rw [← (Pi.basisFun ℤ (Fin 4)).span_eq]
-  apply span_le.mpr
-  rintro _ ⟨i, rfl⟩
-  simp only [Pi.basisFun_apply]
-  let S := span ℤ (range f4Root)
-  have hr (j : Fin 48) : f4Root j ∈ S := subset_span ⟨j, rfl⟩
-  fin_cases i
-  · simpa only using (f4Root_23 ▸ hr 23)
-  · simpa only using (f4Root_22_add_23 ▸ S.add_mem (hr 22) (hr 23))
-  · simpa only using (f4Root_19_add_20 ▸ S.add_mem (hr 19) (hr 20))
-  · simpa only using (f4Root_20 ▸ hr 20)
+  refine span_eq_top_of_pi_single fun k => ?_
+  have hr (j : Fin 48) : f4Root j ∈ span ℤ (range ⇑f4Root) := subset_span ⟨j, rfl⟩
+  fin_cases k
+  · exact f4Root_23 ▸ hr 23
+  · exact f4Root_22_add_23 ▸ (span ℤ (range ⇑f4Root)).add_mem (hr 22) (hr 23)
+  · exact f4Root_19_add_20 ▸ (span ℤ (range ⇑f4Root)).add_mem (hr 19) (hr 20)
+  · exact f4Root_20 ▸ hr 20
 
-private lemma span_f4Coroot_eq_top : span ℤ (range f4Coroot) = ⊤ := by
-  apply top_unique
-  rw [← (Pi.basisFun ℤ (Fin 4)).span_eq]
-  apply span_le.mpr
-  rintro _ ⟨i, rfl⟩
-  simp only [Pi.basisFun_apply]
-  fin_cases i
-  · simpa only using (f4Coroot_0 ▸ (subset_span ⟨0, rfl⟩))
-  · simpa only using (f4Coroot_1 ▸ (subset_span ⟨1, rfl⟩))
-  · simpa only using (f4Coroot_2 ▸ (subset_span ⟨2, rfl⟩))
-  · simpa only using (f4Coroot_3 ▸ (subset_span ⟨3, rfl⟩))
+private lemma span_f4Coroot_eq_top : span ℤ (range f4Coroot) = ⊤ :=
+  span_eq_top_of_pi_single fun k => f4Coroot_castAdd k ▸ subset_span ⟨Fin.castAdd 44 k, rfl⟩
 
 /-- The pinned `F4` datum is a root system: its roots and coroots span the character and
 cocharacter lattices. Coroot spanning is the simply connected lattice condition. -/
 instance : f4SimplyConnectedRootDatum.IsRootSystem where
   span_root_eq_top := span_f4Root_eq_top
   span_coroot_eq_top := span_f4Coroot_eq_top
+
+/-- The support of the Bourbaki-numbered base of the pinned `F4` datum: the first four root
+indices, which carry the simple roots. -/
+def f4Support : Finset (Fin 48) := {0, 1, 2, 3}
+
+/-- The support of the base consists exactly of the four indices below `4`. -/
+@[simp] lemma mem_f4Support {i : Fin 48} : i ∈ f4Support ↔ (i : ℕ) < 4 := by
+  fin_cases i <;> decide
 
 /-- The coefficients of the positive `F4` roots in the ordered simple-root basis. -/
 private def f4RootCoefficients : Fin 24 → Fin 4 → ℕ := ![
@@ -497,91 +345,73 @@ private def f4CorootCoefficients (i : Fin 24) (k : Fin 4) : ℕ :=
   (f4Coroot (Fin.castAdd 24 i) k).toNat
 
 private lemma f4Root_eq_sum (i : Fin 24) :
-    ∑ k, f4RootCoefficients i k • f4Root (Fin.castAdd 44 k) =
-      f4Root (Fin.castAdd 24 i) := by
+    f4Root (Fin.castAdd 24 i) =
+      ∑ k, f4RootCoefficients i k • f4Root (Fin.castAdd 44 k) := by
   fin_cases i <;> decide
 
 private lemma f4Coroot_eq_sum (i : Fin 24) :
-    ∑ k, f4CorootCoefficients i k • f4Coroot (Fin.castAdd 44 k) =
-      f4Coroot (Fin.castAdd 24 i) := by
+    f4Coroot (Fin.castAdd 24 i) =
+      ∑ k, f4CorootCoefficients i k • f4Coroot (Fin.castAdd 44 k) := by
   fin_cases i <;> decide
 
 private lemma mem_or_neg_mem_of_coefficients (f : Fin 48 → (Fin 4 → ℤ))
     (c : Fin 24 → Fin 4 → ℕ)
-    (hc : ∀ i, ∑ k, c i k • f (Fin.castAdd 44 k) = f (Fin.castAdd 24 i))
+    (hc : ∀ i, f (Fin.castAdd 24 i) = ∑ k, c i k • f (Fin.castAdd 44 k))
     (hneg : ∀ i, f (Fin.addNat i 24) = -f (Fin.castAdd 24 i)) (i : Fin 48) :
-    f i ∈ AddSubmonoid.closure (f '' (↑({0, 1, 2, 3} : Finset (Fin 48)) : Set (Fin 48))) ∨
+    f i ∈ AddSubmonoid.closure (f '' (↑f4Support : Set (Fin 48))) ∨
       -f i ∈ AddSubmonoid.closure
-        (f '' (↑({0, 1, 2, 3} : Finset (Fin 48)) : Set (Fin 48))) := by
-  let C := AddSubmonoid.closure (f '' (↑({0, 1, 2, 3} : Finset (Fin 48)) : Set (Fin 48)))
+        (f '' (↑f4Support : Set (Fin 48))) := by
+  let C := AddSubmonoid.closure (f '' (↑f4Support : Set (Fin 48)))
   have hs (k : Fin 4) : f (Fin.castAdd 44 k) ∈ C :=
     AddSubmonoid.subset_closure ⟨Fin.castAdd 44 k, by fin_cases k <;> simp, rfl⟩
   have hsum (k : Fin 24) : f (Fin.castAdd 24 k) ∈ C := by
-    rw [← hc k]
-    simpa using C.sum_mem (t := Finset.univ) (fun j _ => C.nsmul_mem (hs j) _)
-  by_cases hi : (i : ℕ) < 24
-  · left
-    let k : Fin 24 := ⟨i, hi⟩
-    simpa [C, k] using hsum k
-  · right
-    let k : Fin 24 := ⟨(i : ℕ) - 24, by omega⟩
-    have hik : i = Fin.addNat k 24 := by ext; simp [k]; omega
-    rw [hik, hneg]
-    simpa [C] using hsum k
+    rw [hc k]
+    exact C.sum_mem (t := Finset.univ) fun j _ => C.nsmul_mem (hs j) _
+  obtain ⟨k, rfl⟩ | ⟨k, rfl⟩ := f4Index_cases i
+  · exact Or.inl (hsum k)
+  · exact Or.inr (by rw [hneg, neg_neg]; exact hsum k)
 
 private lemma f4Root_mem_or_neg_mem (i : Fin 48) :
     f4Root i ∈
-        AddSubmonoid.closure (f4Root '' (↑({0, 1, 2, 3} : Finset (Fin 48)) : Set (Fin 48))) ∨
+        AddSubmonoid.closure (f4Root '' (↑f4Support : Set (Fin 48))) ∨
       -f4Root i ∈
-        AddSubmonoid.closure (f4Root '' (↑({0, 1, 2, 3} : Finset (Fin 48)) : Set (Fin 48))) :=
-  mem_or_neg_mem_of_coefficients f4Root f4RootCoefficients f4Root_eq_sum f4Root_natAdd i
+        AddSubmonoid.closure (f4Root '' (↑f4Support : Set (Fin 48))) :=
+  mem_or_neg_mem_of_coefficients f4Root f4RootCoefficients f4Root_eq_sum f4Root_addNat i
 
 private lemma f4Coroot_mem_or_neg_mem (i : Fin 48) :
     f4Coroot i ∈
-        AddSubmonoid.closure (f4Coroot '' (↑({0, 1, 2, 3} : Finset (Fin 48)) : Set (Fin 48))) ∨
+        AddSubmonoid.closure (f4Coroot '' (↑f4Support : Set (Fin 48))) ∨
       -f4Coroot i ∈ AddSubmonoid.closure
-        (f4Coroot '' (↑({0, 1, 2, 3} : Finset (Fin 48)) : Set (Fin 48))) :=
-  mem_or_neg_mem_of_coefficients f4Coroot f4CorootCoefficients f4Coroot_eq_sum f4Coroot_natAdd i
+        (f4Coroot '' (↑f4Support : Set (Fin 48))) :=
+  mem_or_neg_mem_of_coefficients f4Coroot f4CorootCoefficients f4Coroot_eq_sum f4Coroot_addNat i
 
-private def f4SimpleIndex (i : Fin 4) : Fin 48 := Fin.castAdd 44 i
-
+/-- The support of the base, as a set, is the range of `Fin.castAdd 44`. -/
 private lemma coe_f4Support :
-    (↑({0, 1, 2, 3} : Finset (Fin 48)) : Set (Fin 48)) = range f4SimpleIndex := by
+    (↑f4Support : Set (Fin 48)) = range (Fin.castAdd 44 : Fin 4 → Fin 48) := by
   ext i
   fin_cases i <;> decide
 
 private lemma linearIndepOn_f4Root :
-    LinearIndepOn ℤ f4Root (↑({0, 1, 2, 3} : Finset (Fin 48)) : Set (Fin 48)) := by
-  have hinj : Function.Injective f4SimpleIndex := by
-    intro i j h
-    apply Fin.ext
-    simpa only [f4SimpleIndex, Fin.val_castAdd] using congrArg Fin.val h
-  rw [coe_f4Support, linearIndepOn_range_iff hinj]
-  have hrows : LinearIndependent ℤ (CartanMatrix.F₄.row) :=
-    Matrix.linearIndependent_rows_of_det_ne_zero (A := CartanMatrix.F₄)
-      (by rw [CartanMatrix.F₄_det]; norm_num)
-  convert hrows using 1
-  ext i j
-  fin_cases i <;> fin_cases j <;> decide
+    LinearIndepOn ℤ f4Root (↑f4Support : Set (Fin 48)) := by
+  rw [coe_f4Support, linearIndepOn_range_iff (Fin.castAdd_injective 4 44)]
+  have hcomp : ⇑f4Root ∘ (Fin.castAdd 44 : Fin 4 → Fin 48) = fun i => CartanMatrix.F₄ i :=
+    funext f4Root_castAdd
+  rw [hcomp]
+  exact Matrix.linearIndependent_rows_of_det_ne_zero (A := CartanMatrix.F₄)
+    (by rw [CartanMatrix.F₄_det]; norm_num)
 
 private lemma linearIndepOn_f4Coroot :
-    LinearIndepOn ℤ f4Coroot (↑({0, 1, 2, 3} : Finset (Fin 48)) : Set (Fin 48)) := by
-  have hinj : Function.Injective f4SimpleIndex := by
-    intro i j h
-    apply Fin.ext
-    simpa only [f4SimpleIndex, Fin.val_castAdd] using congrArg Fin.val h
-  rw [coe_f4Support, linearIndepOn_range_iff hinj]
-  have hid : LinearIndependent ℤ ((1 : Matrix (Fin 4) (Fin 4) ℤ).row) :=
-    Matrix.linearIndependent_rows_of_det_ne_zero (A := (1 : Matrix (Fin 4) (Fin 4) ℤ))
-      (by simp)
-  convert hid using 1
-  ext i j
-  fin_cases i <;> fin_cases j <;> decide
+    LinearIndepOn ℤ f4Coroot (↑f4Support : Set (Fin 48)) := by
+  rw [coe_f4Support, linearIndepOn_range_iff (Fin.castAdd_injective 4 44)]
+  have hcomp : ⇑f4Coroot ∘ (Fin.castAdd 44 : Fin 4 → Fin 48) =
+      fun i : Fin 4 => Pi.single i (1 : ℤ) := funext f4Coroot_castAdd
+  rw [hcomp]
+  exact Pi.linearIndependent_single_one (Fin 4) ℤ
 
 /-- The Bourbaki-numbered base of the pinned simply connected `F4` datum. Its support is the first
 four root indices, with the two long simple roots followed by the two short simple roots. -/
 def f4SimplyConnectedBase : f4SimplyConnectedRootDatum.Base where
-  support := {0, 1, 2, 3}
+  support := f4Support
   linearIndepOn_root := by simpa only [f4SimplyConnectedRootDatum_root] using linearIndepOn_f4Root
   linearIndepOn_coroot := by
     simpa only [f4SimplyConnectedRootDatum_coroot] using linearIndepOn_f4Coroot
@@ -589,21 +419,25 @@ def f4SimplyConnectedBase : f4SimplyConnectedRootDatum.Base where
   coroot_mem_or_neg_mem := f4Coroot_mem_or_neg_mem
 
 @[simp] lemma f4SimplyConnectedBase_support :
-    f4SimplyConnectedBase.support = {0, 1, 2, 3} := (rfl)
+    f4SimplyConnectedBase.support = f4Support := (rfl)
 
-/-- The Cartan integers at the first four root indices are Mathlib's Bourbaki-numbered `F4`
-matrix. This pins the node order independently of the existential relabelling in `HasCartanType`. -/
-@[simp] theorem f4SimplyConnectedRootDatum_pairing_eq_cartanMatrix_F4 (i j : Fin 4) :
-    f4Root (Fin.castAdd 44 i) ⬝ᵥ f4Coroot (Fin.castAdd 44 j) =
+/-- The Cartan integers of the pinned datum at the first four root indices are Mathlib's
+Bourbaki-numbered `F4` matrix. This pins the node order independently of the existential
+relabelling in `HasCartanType`. -/
+theorem f4SimplyConnectedRootDatum_pairing_eq_cartanMatrix_F₄ (i j : Fin 4) :
+    f4SimplyConnectedRootDatum.pairing (Fin.castAdd 44 i) (Fin.castAdd 44 j) =
       CartanMatrix.F₄ i j := by
+  rw [f4SimplyConnectedRootDatum_pairing]
   fin_cases i <;> fin_cases j <;> decide
 
-private def f4SimplyConnectedBaseEquiv : f4SimplyConnectedBase.support ≃ Fin 4 where
+/-- The Bourbaki numbering of the support of `f4SimplyConnectedBase`: the simple root at support
+element `i` is Bourbaki node `i + 1`. -/
+def f4SimplyConnectedBaseEquiv : f4SimplyConnectedBase.support ≃ Fin 4 where
   toFun i := ⟨i, by
     have hi := i.property
-    simp only [f4SimplyConnectedBase_support, Finset.mem_insert, Finset.mem_singleton] at hi
+    simp only [f4SimplyConnectedBase_support, mem_f4Support] at hi
     omega⟩
-  invFun i := ⟨Fin.castAdd 44 i, by fin_cases i <;> decide⟩
+  invFun i := ⟨Fin.castAdd 44 i, by simp⟩
   left_inv i := by apply Subtype.ext; apply Fin.ext; simp
   right_inv i := by apply Fin.ext; simp
 
@@ -611,14 +445,13 @@ private def f4SimplyConnectedBaseEquiv : f4SimplyConnectedBase.support ≃ Fin 4
 theorem hasCartanType_f4SimplyConnectedRootDatum :
     HasCartanType f4SimplyConnectedRootDatum f4SimplyConnectedBase F4 := by
   rw [hasCartanType_iff]
-  refine ⟨f4SimplyConnectedBaseEquiv, ?_⟩
-  intro i j
-  fin_cases i <;> fin_cases j
-  all_goals
-    rw [← (FaithfulSMul.algebraMap_injective ℤ ℤ).eq_iff]
-    simp only [RootPairing.Base.algebraMap_cartanMatrixIn_apply,
-      f4SimplyConnectedRootDatum_pairing, cartanMatrix_F4]
-    decide
+  refine ⟨f4SimplyConnectedBaseEquiv, fun i j => ?_⟩
+  have hi : (i : Fin 48) = Fin.castAdd 44 (f4SimplyConnectedBaseEquiv i) := rfl
+  have hj : (j : Fin 48) = Fin.castAdd 44 (f4SimplyConnectedBaseEquiv j) := rfl
+  rw [← (FaithfulSMul.algebraMap_injective ℤ ℤ).eq_iff,
+    RootPairing.Base.algebraMap_cartanMatrixIn_apply, cartanMatrix_F4, hi, hj,
+    f4SimplyConnectedRootDatum_pairing_eq_cartanMatrix_F₄]
+  exact rfl
 
 end DynkinType
 
