@@ -46,18 +46,19 @@ The cyclic offset `TauCeti.DynkinType.TypeB.shift` turns the unordered pair into
 `Fin n`; this is the index type the datum is built on, and `TauCeti.DynkinType.TypeB.index` is the
 inverse normalisation.
 
-The coroot is *uniform* in the pair while the root is not: `TauCeti.DynkinType.TypeB.half` computes
+The coroot is *uniform* in the pair while the root is not:
+`TauCeti.DynkinType.TypeB.corootOfPair` computes
 the simple-coroot coordinates of the coroot from the pair, and specialises to the short coroot when
-the two entries agree, since `(e_a)^∨ = 2 e_a = e_a + e_a`. It is a genuine half, and
-`TauCeti.DynkinType.TypeB.half_add_half` is the integral form of that statement, which is how the
-reflection identity for coroots is proved.
+the two entries agree, since `(e_a)^∨ = 2 e_a = e_a + e_a`. It is a genuine half, and the integral
+identity `TauCeti.DynkinType.TypeB.corootOfPair_add_self` is how the reflection identity for
+coroots is proved.
 
 ## Main definitions
 
 * `TauCeti.DynkinType.TypeB.wt` and `TauCeti.DynkinType.TypeB.cwt`: the coordinates of a signed
   basis vector and of its double.
-* `TauCeti.DynkinType.TypeB.rootOfPair` and `TauCeti.DynkinType.TypeB.half`: the root and coroot
-  named by a pair of signed basis vectors.
+* `TauCeti.DynkinType.TypeB.rootOfPair` and `TauCeti.DynkinType.TypeB.corootOfPair`: the root and
+  coroot named by a pair of signed basis vectors.
 * `TauCeti.DynkinType.TypeB.reflMap`: the signed permutation realising the reflection in a root.
 
 The coordinate definitions are used through their defining and case-characterization lemmas below;
@@ -255,17 +256,17 @@ lemma wt_dotProduct_cwt_of_axis_ne {u v : Fin (2 * n)} (h : axis u ≠ axis v) :
 /-- The simple-coroot coordinates of the coroot named by the pair `{u, v}`: the half of
 `cwt u + cwt v`, which is integral. When `u = v` this is the short coroot `cwt u`, and otherwise it
 is the long coroot `± e_a ± e_b` itself. -/
-def half (u v : Fin (2 * n)) : Fin n → ℤ := fun k =>
+def corootOfPair (u v : Fin (2 * n)) : Fin n → ℤ := fun k =>
   if (k : ℕ) + 1 = n then (if sgn u = sgn v then sgn u else 0)
   else sgn u * (if axis u ≤ (k : ℕ) then 1 else 0) + sgn v * (if axis v ≤ (k : ℕ) then 1 else 0)
-lemma half_apply (u v : Fin (2 * n)) (k : Fin n) : half u v k =
+lemma corootOfPair_apply (u v : Fin (2 * n)) (k : Fin n) : corootOfPair u v k =
     if (k : ℕ) + 1 = n then (if sgn u = sgn v then sgn u else 0)
     else sgn u * (if axis u ≤ (k : ℕ) then 1 else 0) + sgn v *
       (if axis v ≤ (k : ℕ) then 1 else 0) := (rfl)
 
-lemma half_comm (u v : Fin (2 * n)) : half u v = half v u := by
+lemma corootOfPair_comm (u v : Fin (2 * n)) : corootOfPair u v = corootOfPair v u := by
   funext k
-  simp only [half]
+  simp only [corootOfPair]
   by_cases hk : (k : ℕ) + 1 = n
   · rw [if_pos hk, if_pos hk]
     by_cases hs : sgn u = sgn v
@@ -274,10 +275,10 @@ lemma half_comm (u v : Fin (2 * n)) : half u v = half v u := by
   · rw [if_neg hk, if_neg hk]
     ring
 
-@[simp] lemma half_self (u : Fin (2 * n)) : half u u = cwt u := by
+@[simp] lemma corootOfPair_self (u : Fin (2 * n)) : corootOfPair u u = cwt u := by
   funext k
   have hlt := axis_lt u
-  simp only [half, cwt, coweight, Pi.smul_apply, smul_eq_mul]
+  simp only [corootOfPair, cwt, coweight, Pi.smul_apply, smul_eq_mul]
   by_cases hk : (k : ℕ) + 1 = n
   · rw [if_pos hk, if_pos hk, if_pos (show axis u ≤ (k : ℕ) by omega)]
     simp
@@ -285,11 +286,12 @@ lemma half_comm (u v : Fin (2 * n)) : half u v = half v u := by
     ring
 
 /-- **The integral form of the halving.** -/
-lemma half_add_half (u v : Fin (2 * n)) : half u v + half u v = cwt u + cwt v := by
+lemma corootOfPair_add_self (u v : Fin (2 * n)) :
+    corootOfPair u v + corootOfPair u v = cwt u + cwt v := by
   funext k
   have hlt := axis_lt u
   have hlt' := axis_lt v
-  simp only [half, cwt, coweight, Pi.add_apply, Pi.smul_apply, smul_eq_mul]
+  simp only [corootOfPair, cwt, coweight, Pi.add_apply, Pi.smul_apply, smul_eq_mul]
   by_cases hk : (k : ℕ) + 1 = n
   · rw [if_pos hk, if_pos hk, if_pos (show axis u ≤ (k : ℕ) by omega),
       if_pos (show axis v ≤ (k : ℕ) by omega)]
@@ -298,9 +300,10 @@ lemma half_add_half (u v : Fin (2 * n)) : half u v + half u v = cwt u + cwt v :=
   · rw [if_neg hk, if_neg hk]
     ring
 
-lemma two_smul_half (u v : Fin (2 * n)) : (2 : ℤ) • half u v = cwt u + cwt v := by
+lemma two_smul_corootOfPair (u v : Fin (2 * n)) :
+    (2 : ℤ) • corootOfPair u v = cwt u + cwt v := by
   rw [two_smul]
-  exact half_add_half u v
+  exact corootOfPair_add_self u v
 
 /-! ## Cyclic offsets and the index of a pair -/
 
@@ -437,8 +440,10 @@ def rootIdx (z : Fin (2 * n) × Fin n) : Fin n → ℤ := rootOfPair z.1 (shift 
 lemma rootIdx_def (z : Fin (2 * n) × Fin n) : rootIdx z = rootOfPair z.1 (shift z.1 z.2) := (rfl)
 
 /-- The coroot indexed by an element of `Fin (2 * n) × Fin n`. -/
-def corootIdx (z : Fin (2 * n) × Fin n) : Fin n → ℤ := half z.1 (shift z.1 z.2)
-lemma corootIdx_def (z : Fin (2 * n) × Fin n) : corootIdx z = half z.1 (shift z.1 z.2) := (rfl)
+def corootIdx (z : Fin (2 * n) × Fin n) : Fin n → ℤ :=
+  corootOfPair z.1 (shift z.1 z.2)
+lemma corootIdx_def (z : Fin (2 * n) × Fin n) :
+    corootIdx z = corootOfPair z.1 (shift z.1 z.2) := (rfl)
 
 lemma rootIdx_index {u v : Fin (2 * n)} (h : IsPair u v) :
     rootIdx (index u v) = rootOfPair u v := by
@@ -447,23 +452,23 @@ lemma rootIdx_index {u v : Fin (2 * n)} (h : IsPair u v) :
   · rw [rootIdx, h2, h1, rootOfPair_comm]
 
 lemma corootIdx_index {u v : Fin (2 * n)} (h : IsPair u v) :
-    corootIdx (index u v) = half u v := by
+    corootIdx (index u v) = corootOfPair u v := by
   rcases shift_index h with ⟨h1, h2⟩ | ⟨h1, h2⟩
   · rw [corootIdx, h2, h1]
-  · rw [corootIdx, h2, h1, half_comm]
+  · rw [corootIdx, h2, h1, corootOfPair_comm]
 
-lemma two_mul_dotProduct_half (u p q : Fin (2 * n)) :
-    2 * (wt u ⬝ᵥ half p q) = wt u ⬝ᵥ cwt p + wt u ⬝ᵥ cwt q := by
-  rw [← dotProduct_add, ← half_add_half p q, dotProduct_add]
+lemma two_mul_dotProduct_corootOfPair (u p q : Fin (2 * n)) :
+    2 * (wt u ⬝ᵥ corootOfPair p q) = wt u ⬝ᵥ cwt p + wt u ⬝ᵥ cwt q := by
+  rw [← dotProduct_add, ← corootOfPair_add_self p q, dotProduct_add]
   ring
 
-lemma rootOfPair_dotProduct_half {u v : Fin (2 * n)} (h : IsPair u v) :
-    rootOfPair u v ⬝ᵥ half u v = 2 := by
+lemma rootOfPair_dotProduct_corootOfPair {u v : Fin (2 * n)} (h : IsPair u v) :
+    rootOfPair u v ⬝ᵥ corootOfPair u v = 2 := by
   rcases eq_or_ne u v with rfl | huv
-  · rw [rootOfPair_self, half_self, wt_dotProduct_cwt_self]
+  · rw [rootOfPair_self, corootOfPair_self, wt_dotProduct_cwt_self]
   · have hax : axis u ≠ axis v := h.resolve_left huv
-    have h1 := two_mul_dotProduct_half u u v
-    have h2 := two_mul_dotProduct_half v u v
+    have h1 := two_mul_dotProduct_corootOfPair u u v
+    have h2 := two_mul_dotProduct_corootOfPair v u v
     rw [wt_dotProduct_cwt_self, wt_dotProduct_cwt_of_axis_ne hax] at h1
     rw [wt_dotProduct_cwt_self, wt_dotProduct_cwt_of_axis_ne (Ne.symm hax)] at h2
     rw [rootOfPair_of_ne huv, add_dotProduct]
@@ -589,10 +594,12 @@ lemma isPair_reflMap (h : IsPair p q) {u v : Fin (2 * n)} (huv : IsPair u v) :
 
 /-- **The reflection formula on a single signed basis vector.** -/
 lemma wt_reflMap (h : IsPair p q) (u : Fin (2 * n)) :
-    wt (reflMap p q u) = wt u - (wt u ⬝ᵥ half p q) • rootOfPair p q := by
+    wt (reflMap p q u) = wt u - (wt u ⬝ᵥ corootOfPair p q) • rootOfPair p q := by
+  -- A short root only swaps `p` and `opp p`; all other signed basis vectors are fixed and pair
+  -- trivially with its coroot.
   rcases eq_or_ne p q with rfl | hpq
   · have hop := opp_ne_self p
-    rw [half_self, rootOfPair_self]
+    rw [corootOfPair_self, rootOfPair_self]
     by_cases c1 : u = p
     · rw [c1, reflMap_fst, if_pos rfl, wt_dotProduct_cwt_self, wt_opp]
       module
@@ -607,43 +614,50 @@ lemma wt_reflMap (h : IsPair p q) (u : Fin (2 * n)) :
     have hpq' : wt p ⬝ᵥ cwt q = 0 := wt_dotProduct_cwt_of_axis_ne hax
     have hqp : wt q ⬝ᵥ cwt p = 0 := wt_dotProduct_cwt_of_axis_ne (Ne.symm hax)
     rw [rootOfPair_of_ne h1]
+    -- For a long root, split the signed basis vectors into `p`, `q`, their opposites, and the
+    -- complement. The pairing is respectively `1`, `1`, `-1`, `-1`, and `0`.
     by_cases c1 : u = p
-    · have hval := two_mul_dotProduct_half p p q
+    · have hval := two_mul_dotProduct_corootOfPair p p q
       rw [wt_dotProduct_cwt_self, hpq'] at hval
-      rw [c1, show wt p ⬝ᵥ half p q = 1 by omega, reflMap_fst, if_neg h1, wt_opp]
+      rw [c1, show wt p ⬝ᵥ corootOfPair p q = 1 by omega, reflMap_fst, if_neg h1,
+        wt_opp]
       module
     by_cases c2 : u = q
-    · have hval := two_mul_dotProduct_half q p q
+    · have hval := two_mul_dotProduct_corootOfPair q p q
       rw [wt_dotProduct_cwt_self, hqp] at hval
-      rw [c2, show wt q ⬝ᵥ half p q = 1 by omega, reflMap_snd h3, wt_opp]
+      rw [c2, show wt q ⬝ᵥ corootOfPair p q = 1 by omega, reflMap_snd h3, wt_opp]
       module
     by_cases c3 : u = opp p
     · have e1 : wt (opp p) ⬝ᵥ cwt p = -2 := by
         rw [wt_opp, neg_dotProduct, wt_dotProduct_cwt_self]
       have e2 : wt (opp p) ⬝ᵥ cwt q = 0 := by rw [wt_opp, neg_dotProduct, hpq', neg_zero]
-      have hval := two_mul_dotProduct_half (opp p) p q
+      have hval := two_mul_dotProduct_corootOfPair (opp p) p q
       rw [e1, e2] at hval
-      rw [c3, show wt (opp p) ⬝ᵥ half p q = -1 by omega, reflMap_opp_fst h5, if_neg h1, wt_opp]
+      rw [c3, show wt (opp p) ⬝ᵥ corootOfPair p q = -1 by omega,
+        reflMap_opp_fst h5, if_neg h1, wt_opp]
       module
     by_cases c4 : u = opp q
     · have e1 : wt (opp q) ⬝ᵥ cwt p = 0 := by rw [wt_opp, neg_dotProduct, hqp, neg_zero]
       have e2 : wt (opp q) ⬝ᵥ cwt q = -2 := by
         rw [wt_opp, neg_dotProduct, wt_dotProduct_cwt_self]
-      have hval := two_mul_dotProduct_half (opp q) p q
+      have hval := two_mul_dotProduct_corootOfPair (opp q) p q
       rw [e1, e2] at hval
-      rw [c4, show wt (opp q) ⬝ᵥ half p q = -1 by omega, reflMap_opp_snd h7 h8, wt_opp]
+      rw [c4, show wt (opp q) ⬝ᵥ corootOfPair p q = -1 by omega,
+        reflMap_opp_snd h7 h8, wt_opp]
       module
-    · have hval := two_mul_dotProduct_half u p q
+    · have hval := two_mul_dotProduct_corootOfPair u p q
       rw [wt_dotProduct_cwt_eq_zero c1 c3, wt_dotProduct_cwt_eq_zero c2 c4] at hval
-      rw [show wt u ⬝ᵥ half p q = 0 by omega, reflMap_of_ne c1 c2 c3 c4]
+      rw [show wt u ⬝ᵥ corootOfPair p q = 0 by omega, reflMap_of_ne c1 c2 c3 c4]
       module
 
 /-- **The reflection formula on the double of a single signed basis vector.** -/
 lemma cwt_reflMap (h : IsPair p q) (u : Fin (2 * n)) :
-    cwt (reflMap p q u) = cwt u - (rootOfPair p q ⬝ᵥ cwt u) • half p q := by
+    cwt (reflMap p q u) = cwt u - (rootOfPair p q ⬝ᵥ cwt u) • corootOfPair p q := by
+  -- The short-root case has the same two-point orbit as `wt_reflMap`, now on the doubled
+  -- coweight coordinates.
   rcases eq_or_ne p q with rfl | hpq
   · have hop := opp_ne_self p
-    rw [half_self, rootOfPair_self]
+    rw [corootOfPair_self, rootOfPair_self]
     by_cases c1 : u = p
     · rw [c1, reflMap_fst, if_pos rfl, wt_dotProduct_cwt_self, cwt_opp]
       module
@@ -658,10 +672,13 @@ lemma cwt_reflMap (h : IsPair p q) (u : Fin (2 * n)) :
     obtain ⟨h1, h2, h3, h4, h5, h6, h7, h8⟩ := long_ne hax
     have hpq' : wt p ⬝ᵥ cwt q = 0 := wt_dotProduct_cwt_of_axis_ne hax
     have hqp : wt q ⬝ᵥ cwt p = 0 := wt_dotProduct_cwt_of_axis_ne (Ne.symm hax)
-    have hsum := two_smul_half p q
-    have hneg : ((-2 : ℤ)) • half p q = -(cwt p + cwt q) := by
-      rw [← hsum, show ((-2 : ℤ)) • half p q = -((2 : ℤ) • half p q) from by module]
+    have hsum := two_smul_corootOfPair p q
+    have hneg : ((-2 : ℤ)) • corootOfPair p q = -(cwt p + cwt q) := by
+      rw [← hsum, show ((-2 : ℤ)) • corootOfPair p q =
+        -((2 : ℤ) • corootOfPair p q) from by module]
     rw [rootOfPair_of_ne h1]
+    -- As above, the long-root reflection has four exceptional signed basis vectors. Their
+    -- root-pairing values are `2`, `2`, `-2`, and `-2`; the complement pairs to zero.
     by_cases c1 : u = p
     · rw [c1, add_dotProduct, wt_dotProduct_cwt_self, hqp, reflMap_fst, if_neg h1, cwt_opp,
         show (2 : ℤ) + 0 = 2 by ring, hsum]
@@ -734,7 +751,7 @@ lemma two_mul_wt_dotProduct_corootIdx_iff (z : Fin (2 * n) × Fin n) (m : Fin (2
       (m = z.1 ∨ m = shift z.1 z.2) := by
   have hpair : IsPair z.1 (shift z.1 z.2) := isPair_shift z.1 z.2
   have hval : 2 * (wt m ⬝ᵥ corootIdx z) = wt m ⬝ᵥ cwt z.1 + wt m ⬝ᵥ cwt (shift z.1 z.2) :=
-    two_mul_dotProduct_half m z.1 (shift z.1 z.2)
+    two_mul_dotProduct_corootOfPair m z.1 (shift z.1 z.2)
   rw [hval, wt_dotProduct_cwt, wt_dotProduct_cwt]
   rcases eq_or_ne z.1 (shift z.1 z.2) with heq | hne
   · rw [← heq]

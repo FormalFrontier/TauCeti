@@ -154,23 +154,26 @@ private lemma corootIdx_typeBReflIdx (z w : Fin (2 * n) × Fin n) :
   rw [typeBReflIdx, corootIdx_index hRw, corootIdx_def, corootIdx_def, rootIdx_def,
     ← hp, ← hq, ← hu, ← hv]
   refine smul_right_injective _ (by norm_num : (2 : ℤ) ≠ 0) ?_
-  have hc : (2 : ℤ) * (rootOfPair p q ⬝ᵥ half u v) =
+  have hc : (2 : ℤ) * (rootOfPair p q ⬝ᵥ corootOfPair u v) =
       rootOfPair p q ⬝ᵥ cwt u + rootOfPair p q ⬝ᵥ cwt v := by
-    rw [← dotProduct_add, ← half_add_half u v, dotProduct_add]
+    rw [← dotProduct_add, ← corootOfPair_add_self u v, dotProduct_add]
     ring
-  calc (2 : ℤ) • (half u v - (rootOfPair p q ⬝ᵥ half u v) • half p q)
-      = (2 : ℤ) • half u v - ((2 : ℤ) * (rootOfPair p q ⬝ᵥ half u v)) • half p q := by
+  calc (2 : ℤ) • (corootOfPair u v -
+        (rootOfPair p q ⬝ᵥ corootOfPair u v) • corootOfPair p q)
+      = (2 : ℤ) • corootOfPair u v -
+          ((2 : ℤ) * (rootOfPair p q ⬝ᵥ corootOfPair u v)) • corootOfPair p q := by
         simp only [smul_sub, smul_smul]
-    _ = cwt u + cwt v - (rootOfPair p q ⬝ᵥ cwt u + rootOfPair p q ⬝ᵥ cwt v) • half p q := by
-        rw [two_smul_half, hc]
-    _ = (cwt u - (rootOfPair p q ⬝ᵥ cwt u) • half p q) +
-          (cwt v - (rootOfPair p q ⬝ᵥ cwt v) • half p q) := by
+    _ = cwt u + cwt v -
+          (rootOfPair p q ⬝ᵥ cwt u + rootOfPair p q ⬝ᵥ cwt v) • corootOfPair p q := by
+        rw [two_smul_corootOfPair, hc]
+    _ = (cwt u - (rootOfPair p q ⬝ᵥ cwt u) • corootOfPair p q) +
+          (cwt v - (rootOfPair p q ⬝ᵥ cwt v) • corootOfPair p q) := by
         simp only [add_smul]
         abel
     _ = cwt (reflMap p q u) + cwt (reflMap p q v) := by
         rw [cwt_reflMap hpq, cwt_reflMap hpq]
-    _ = (2 : ℤ) • half (reflMap p q u) (reflMap p q v) :=
-      (two_smul_half _ _).symm
+    _ = (2 : ℤ) • corootOfPair (reflMap p q u) (reflMap p q v) :=
+      (two_smul_corootOfPair _ _).symm
 
 private lemma rootIdx_injective : Injective (rootIdx : Fin (2 * n) × Fin n → Fin n → ℤ) := by
   intro z z' h
@@ -322,6 +325,11 @@ private lemma typeBReflPerm_coroot (k l : Fin (2 * n ^ 2)) :
   rw [typeBReflPerm_apply]
   exact corootIdx_typeBReflIdx _ _
 
+private lemma rootIdx_dotProduct_corootIdx (z : Fin (2 * n) × Fin n) :
+    rootIdx z ⬝ᵥ corootIdx z = 2 := by
+  rw [rootIdx_def, corootIdx_def]
+  exact rootOfPair_dotProduct_corootOfPair (isPair_shift z.1 z.2)
+
 /-- The pinned simply connected root datum of type `Bₙ`.
 
 Both lattices are `Fin n → ℤ`: the character lattice in the fundamental-weight basis and the
@@ -335,11 +343,7 @@ def typeBSimplyConnectedRootDatum (n : ℕ) :
     rootIdx_injective.comp (typeBEnum n).symm.injective⟩
   coroot := ⟨fun k => corootIdx ((typeBEnum n).symm k),
     corootIdx_injective.comp (typeBEnum n).symm.injective⟩
-  root_coroot_two k := by
-    change rootIdx ((typeBEnum n).symm k) ⬝ᵥ corootIdx ((typeBEnum n).symm k) = 2
-    rw [rootIdx_def, corootIdx_def]
-    exact rootOfPair_dotProduct_half
-      (isPair_shift ((typeBEnum n).symm k).1 ((typeBEnum n).symm k).2)
+  root_coroot_two k := rootIdx_dotProduct_corootIdx ((typeBEnum n).symm k)
   reflectionPerm := typeBReflPerm n
   reflectionPerm_root := typeBReflPerm_root
   reflectionPerm_coroot := typeBReflPerm_coroot
@@ -357,6 +361,34 @@ private lemma pairing_typeBSimplyConnectedRootDatum (k l : Fin (2 * n ^ 2)) :
     (typeBSimplyConnectedRootDatum n).pairing k l =
       (typeBSimplyConnectedRootDatum n).root k ⬝ᵥ (typeBSimplyConnectedRootDatum n).coroot l :=
   (rfl)
+
+/-- The roots of the pinned type `Bₙ` datum are exactly the roots constructed from admissible
+unordered pairs of signed basis vectors. -/
+theorem mem_range_root_typeBSimplyConnectedRootDatum_iff {x : Fin n → ℤ} :
+    x ∈ range (typeBSimplyConnectedRootDatum n).root ↔
+      ∃ u v : Fin (2 * n), IsPair u v ∧ x = rootOfPair u v := by
+  constructor
+  · rintro ⟨k, rfl⟩
+    refine ⟨((typeBEnum n).symm k).1, shift ((typeBEnum n).symm k).1
+      ((typeBEnum n).symm k).2, isPair_shift _ _, ?_⟩
+    rw [root_typeBSimplyConnectedRootDatum, rootIdx_def]
+  · rintro ⟨u, v, huv, rfl⟩
+    refine ⟨typeBEnum n (index u v), ?_⟩
+    rw [root_typeBSimplyConnectedRootDatum, Equiv.symm_apply_apply, rootIdx_index huv]
+
+/-- The coroots of the pinned type `Bₙ` datum are exactly the coroots constructed from admissible
+unordered pairs of signed basis vectors. -/
+theorem mem_range_coroot_typeBSimplyConnectedRootDatum_iff {x : Fin n → ℤ} :
+    x ∈ range (typeBSimplyConnectedRootDatum n).coroot ↔
+      ∃ u v : Fin (2 * n), IsPair u v ∧ x = corootOfPair u v := by
+  constructor
+  · rintro ⟨k, rfl⟩
+    refine ⟨((typeBEnum n).symm k).1, shift ((typeBEnum n).symm k).1
+      ((typeBEnum n).symm k).2, isPair_shift _ _, ?_⟩
+    rw [coroot_typeBSimplyConnectedRootDatum, corootIdx_def]
+  · rintro ⟨u, v, huv, rfl⟩
+    refine ⟨typeBEnum n (index u v), ?_⟩
+    rw [coroot_typeBSimplyConnectedRootDatum, Equiv.symm_apply_apply, corootIdx_index huv]
 
 /-! ## The simple roots and coroots -/
 
@@ -409,7 +441,7 @@ coroot lattice, so that the datum is the simply connected one. -/
   by_cases hlast : (i : ℕ) + 1 = n
   · have hshort : shift (⟨n - 1, by omega⟩ : Fin (2 * n)) (⟨0, by omega⟩ : Fin n) =
         ⟨n - 1, by omega⟩ := shift_eq_self rfl
-    rw [typeBSimplePair, dif_pos hlast, typeBShortPair, hshort, half_self,
+    rw [typeBSimplePair, dif_pos hlast, typeBShortPair, hshort, corootOfPair_self,
       typeB_cwt_mk_lt _ (show n - 1 < n by omega)]
     funext k
     have hk := k.isLt
@@ -422,7 +454,7 @@ coroot lattice, so that the datum is the simply connected one. -/
     rw [typeBSimplePair, dif_neg hlast, hv]
     funext k
     have hk := k.isLt
-    simp only [half_apply, Pi.single_apply, Fin.ext_iff,
+    simp only [corootOfPair_apply, Pi.single_apply, Fin.ext_iff,
       typeB_sgn_mk_ge (n := n) (a := n + (i : ℕ) + 1) (by omega)
         (show n ≤ n + (i : ℕ) + 1 by omega),
       typeB_sgn_mk_lt (n := n) (a := (i : ℕ)) (by omega) (show (i : ℕ) < n by omega),
@@ -554,45 +586,47 @@ private lemma typeB_mem_closure_single {w : Fin n → ℤ} (hw : ∀ j, 0 ≤ w 
   exact AddSubmonoid.sum_mem _ fun j _ =>
     nsmul_mem (AddSubmonoid.subset_closure (Set.mem_range_self j)) _
 
-private lemma half_apply_last {u v : Fin (2 * n)} {j : Fin n} (hj : (j : ℕ) + 1 = n) :
-    half u v j = if sgn u = sgn v then sgn u else 0 := by
-  rw [half_apply, if_pos hj]
+private lemma corootOfPair_apply_last {u v : Fin (2 * n)} {j : Fin n}
+    (hj : (j : ℕ) + 1 = n) :
+    corootOfPair u v j = if sgn u = sgn v then sgn u else 0 := by
+  rw [corootOfPair_apply, if_pos hj]
 
-private lemma half_apply_of_ne {u v : Fin (2 * n)} {j : Fin n} (hj : (j : ℕ) + 1 ≠ n) :
-    half u v j = sgn u * (if axis u ≤ (j : ℕ) then 1 else 0) +
+private lemma corootOfPair_apply_of_ne {u v : Fin (2 * n)} {j : Fin n}
+    (hj : (j : ℕ) + 1 ≠ n) :
+    corootOfPair u v j = sgn u * (if axis u ≤ (j : ℕ) then 1 else 0) +
       sgn v * (if axis v ≤ (j : ℕ) then 1 else 0) := by
-  rw [half_apply, if_neg hj]
+  rw [corootOfPair_apply, if_neg hj]
 
-private lemma typeB_half_nonneg_of_sgn_eq_one {u v : Fin (2 * n)} (hsu : sgn u = 1)
-    (hsv : sgn v = 1) (j : Fin n) : 0 ≤ half u v j := by
+private lemma typeB_corootOfPair_nonneg_of_sgn_eq_one {u v : Fin (2 * n)} (hsu : sgn u = 1)
+    (hsv : sgn v = 1) (j : Fin n) : 0 ≤ corootOfPair u v j := by
   by_cases hj : (j : ℕ) + 1 = n
-  · rw [half_apply_last hj, hsu, hsv, if_pos rfl]
+  · rw [corootOfPair_apply_last hj, hsu, hsv, if_pos rfl]
     omega
-  · rw [half_apply_of_ne hj, hsu, hsv]
+  · rw [corootOfPair_apply_of_ne hj, hsu, hsv]
     split_ifs <;> omega
 
-private lemma typeB_half_nonpos_of_sgn_eq_neg_one {u v : Fin (2 * n)} (hsu : sgn u = -1)
-    (hsv : sgn v = -1) (j : Fin n) : half u v j ≤ 0 := by
+private lemma typeB_corootOfPair_nonpos_of_sgn_eq_neg_one {u v : Fin (2 * n)}
+    (hsu : sgn u = -1) (hsv : sgn v = -1) (j : Fin n) : corootOfPair u v j ≤ 0 := by
   by_cases hj : (j : ℕ) + 1 = n
-  · rw [half_apply_last hj, hsu, hsv, if_pos rfl]
+  · rw [corootOfPair_apply_last hj, hsu, hsv, if_pos rfl]
     omega
-  · rw [half_apply_of_ne hj, hsu, hsv]
+  · rw [corootOfPair_apply_of_ne hj, hsu, hsv]
     split_ifs <;> omega
 
-private lemma typeB_half_nonneg_of_sgn_eq_one_of_sgn_eq_neg_one_of_axis_le
+private lemma typeB_corootOfPair_nonneg_of_sgn_eq_one_of_sgn_eq_neg_one_of_axis_le
     {u v : Fin (2 * n)} (hsu : sgn u = 1) (hsv : sgn v = -1)
-    (hle : axis u ≤ axis v) (j : Fin n) : 0 ≤ half u v j := by
+    (hle : axis u ≤ axis v) (j : Fin n) : 0 ≤ corootOfPair u v j := by
   by_cases hj : (j : ℕ) + 1 = n
-  · rw [half_apply_last hj, hsu, hsv, if_neg (show ¬((1 : ℤ) = -1) by norm_num)]
-  · rw [half_apply_of_ne hj, hsu, hsv]
+  · rw [corootOfPair_apply_last hj, hsu, hsv, if_neg (show ¬((1 : ℤ) = -1) by norm_num)]
+  · rw [corootOfPair_apply_of_ne hj, hsu, hsv]
     split_ifs <;> omega
 
-private lemma typeB_half_nonpos_of_sgn_eq_one_of_sgn_eq_neg_one_of_axis_le
+private lemma typeB_corootOfPair_nonpos_of_sgn_eq_one_of_sgn_eq_neg_one_of_axis_le
     {u v : Fin (2 * n)} (hsu : sgn u = 1) (hsv : sgn v = -1)
-    (hle : axis v ≤ axis u) (j : Fin n) : half u v j ≤ 0 := by
+    (hle : axis v ≤ axis u) (j : Fin n) : corootOfPair u v j ≤ 0 := by
   by_cases hj : (j : ℕ) + 1 = n
-  · rw [half_apply_last hj, hsu, hsv, if_neg (show ¬((1 : ℤ) = -1) by norm_num)]
-  · rw [half_apply_of_ne hj, hsu, hsv]
+  · rw [corootOfPair_apply_last hj, hsu, hsv, if_neg (show ¬((1 : ℤ) = -1) by norm_num)]
+  · rw [corootOfPair_apply_of_ne hj, hsu, hsv]
     split_ifs <;> omega
 
 /-- The Bourbaki-numbered base of the pinned simply connected root datum of type `Bₙ`. Its support
@@ -656,27 +690,28 @@ def typeBSimplyConnectedBase (n : ℕ) : (typeBSimplyConnectedRootDatum n).Base 
   coroot_mem_or_neg_mem k := by
     rw [image_coroot_typeBSimpleSupport]
     obtain ⟨u, v, hcor⟩ : ∃ u v : Fin (2 * n),
-        (typeBSimplyConnectedRootDatum n).coroot k = half u v :=
+        (typeBSimplyConnectedRootDatum n).coroot k = corootOfPair u v :=
       ⟨_, _, by rw [coroot_typeBSimplyConnectedRootDatum, corootIdx_def]⟩
     rw [hcor]
     rcases sgn_eq_one_or_neg_one u with hsu | hsu <;>
       rcases sgn_eq_one_or_neg_one v with hsv | hsv
-    · exact Or.inl (typeB_mem_closure_single (typeB_half_nonneg_of_sgn_eq_one hsu hsv))
+    · exact Or.inl
+        (typeB_mem_closure_single (typeB_corootOfPair_nonneg_of_sgn_eq_one hsu hsv))
     · rcases le_total (axis u) (axis v) with hle | hle
       · exact Or.inl (typeB_mem_closure_single
-          (typeB_half_nonneg_of_sgn_eq_one_of_sgn_eq_neg_one_of_axis_le hsu hsv hle))
+          (typeB_corootOfPair_nonneg_of_sgn_eq_one_of_sgn_eq_neg_one_of_axis_le hsu hsv hle))
       · exact Or.inr (typeB_mem_closure_single fun j =>
           neg_nonneg.mpr
-            (typeB_half_nonpos_of_sgn_eq_one_of_sgn_eq_neg_one_of_axis_le hsu hsv hle j))
-    · rw [half_comm]
+            (typeB_corootOfPair_nonpos_of_sgn_eq_one_of_sgn_eq_neg_one_of_axis_le hsu hsv hle j))
+    · rw [corootOfPair_comm]
       rcases le_total (axis v) (axis u) with hle | hle
       · exact Or.inl (typeB_mem_closure_single
-          (typeB_half_nonneg_of_sgn_eq_one_of_sgn_eq_neg_one_of_axis_le hsv hsu hle))
+          (typeB_corootOfPair_nonneg_of_sgn_eq_one_of_sgn_eq_neg_one_of_axis_le hsv hsu hle))
       · exact Or.inr (typeB_mem_closure_single fun j =>
           neg_nonneg.mpr
-            (typeB_half_nonpos_of_sgn_eq_one_of_sgn_eq_neg_one_of_axis_le hsv hsu hle j))
+            (typeB_corootOfPair_nonpos_of_sgn_eq_one_of_sgn_eq_neg_one_of_axis_le hsv hsu hle j))
     · exact Or.inr (typeB_mem_closure_single fun j =>
-        neg_nonneg.mpr (typeB_half_nonpos_of_sgn_eq_neg_one hsu hsv j))
+        neg_nonneg.mpr (typeB_corootOfPair_nonpos_of_sgn_eq_neg_one hsu hsv j))
 
 /-- Membership in the pinned base support is exactly membership among the first `n` root
 indices. -/
@@ -696,7 +731,28 @@ def typeBBaseEquiv (n : ℕ) : (typeBSimplyConnectedBase n).support ≃ Fin n wh
     apply Fin.ext
     simp
 
-lemma pairing_typeBSimpleIndex (i j : Fin n) :
+private lemma typeBBaseEquiv_apply_eq (x : (typeBSimplyConnectedBase n).support) :
+    typeBBaseEquiv n x = ⟨x.1.1, mem_typeBSimplyConnectedBase_support.mp x.2⟩ := rfl
+
+private lemma typeBBaseEquiv_symm_apply_eq (i : Fin n) :
+    (typeBBaseEquiv n).symm i =
+      ⟨typeBSimpleIndex n i, mem_typeBSimplyConnectedBase_support.mpr (by simp)⟩ := rfl
+
+/-- The base equivalence sends a supported root index to the `Fin n` index with the same value. -/
+@[simp] theorem typeBBaseEquiv_apply (x : (typeBSimplyConnectedBase n).support) :
+    typeBBaseEquiv n x = ⟨x.1.1, mem_typeBSimplyConnectedBase_support.mp x.2⟩ :=
+  typeBBaseEquiv_apply_eq x
+
+/-- The inverse base equivalence returns the supported root index selected by
+`typeBSimpleIndex`. -/
+@[simp] theorem typeBBaseEquiv_symm_apply (i : Fin n) :
+    (typeBBaseEquiv n).symm i =
+      ⟨typeBSimpleIndex n i, mem_typeBSimplyConnectedBase_support.mpr (by simp)⟩ :=
+  typeBBaseEquiv_symm_apply_eq i
+
+/-- The pairing of two Bourbaki-indexed simple roots and coroots is the corresponding entry of
+the type-`B` Cartan matrix. -/
+@[simp] lemma pairing_typeBSimpleIndex (i j : Fin n) :
     (typeBSimplyConnectedRootDatum n).pairing (typeBSimpleIndex n i) (typeBSimpleIndex n j) =
       CartanMatrix.B n i j := by
   rw [pairing_typeBSimplyConnectedRootDatum, root_typeBSimpleIndex, coroot_typeBSimpleIndex,
