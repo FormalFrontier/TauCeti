@@ -41,8 +41,8 @@ also make the reflection-stability axioms of `RootPairing` decidable finite calc
 * Its `RootPairing.IsRootSystem` instance records that the roots and the coroots span their
   lattices; coroot spanning is the simply connected condition.
 * `TauCeti.DynkinType.g2SimplyConnectedBase` is its Bourbaki-numbered base.
-* `TauCeti.DynkinType.g2SimplyConnectedRootDatum_pairing_castLE` pins that numbering entrywise:
-  on the two base indices the Cartan integers are the Bourbaki matrix `!![2, -1; -3, 2]`.
+* `TauCeti.DynkinType.g2SimplyConnectedRootDatum_pairing_eq_cartanMatrix_G2` pins that numbering
+  entrywise: on the two base indices the Cartan integers are the Bourbaki matrix `!![2, -1; -3, 2]`.
 * `TauCeti.DynkinType.hasCartanType_g2SimplyConnectedRootDatum` identifies its Cartan type as `G2`.
 
 ## References
@@ -110,7 +110,7 @@ private lemma g2ReflectionIndex_coroot (i j : Fin 12) :
 
 Both lattices use `Fin 2 -> Z`: fundamental weights on the root side and simple coroots on the
 coroot side. Root indices `0` and `1` are the short and long simple roots respectively, as pinned
-by `g2SimplyConnectedRootDatum_pairing_castLE`. -/
+by `g2SimplyConnectedRootDatum_pairing_eq_cartanMatrix_G2`. -/
 def g2SimplyConnectedRootDatum : RootDatum (Fin 12) (Fin 2 → ℤ) (Fin 2 → ℤ) where
   toLinearMap := (dotProductEquiv ℤ (Fin 2)).toLinearMap
   root := g2Root
@@ -128,14 +128,20 @@ def g2SimplyConnectedRootDatum : RootDatum (Fin 12) (Fin 2 → ℤ) (Fin 2 → �
     simpa [dotProductEquiv_apply_apply, g2ReflectionPerm_apply] using
       g2ReflectionIndex_coroot i j
 
+/-- The roots of the pinned `G2` datum are the coordinate table `g2Root`. -/
 @[simp] lemma g2SimplyConnectedRootDatum_root : g2SimplyConnectedRootDatum.root = g2Root := (rfl)
 
+/-- The coroots of the pinned `G2` datum are the coordinate table `g2Coroot`. -/
 @[simp] lemma g2SimplyConnectedRootDatum_coroot :
     g2SimplyConnectedRootDatum.coroot = g2Coroot := (rfl)
 
+/-- The perfect pairing of the pinned `G2` datum is the dot product of coordinate vectors, the
+fundamental-weight and simple-coroot bases being dual to one another. -/
 @[simp] lemma g2SimplyConnectedRootDatum_toLinearMap (x y : Fin 2 → ℤ) :
     g2SimplyConnectedRootDatum.toLinearMap x y = x ⬝ᵥ y := (rfl)
 
+/-- The Cartan integer of the pinned `G2` datum at a pair of root indices is the dot product of the
+tabulated root and coroot coordinates. -/
 @[simp] lemma g2SimplyConnectedRootDatum_pairing (i j : Fin 12) :
     g2SimplyConnectedRootDatum.pairing i j = g2Root i ⬝ᵥ g2Coroot j := (rfl)
 
@@ -206,7 +212,7 @@ private lemma g2Coroot_mem_or_neg_mem (i : Fin 12) :
 
 /-- The Bourbaki-numbered base of the pinned simply connected `G2` root datum. Its support is the
 first two root indices, short root first and long root second; see
-`g2SimplyConnectedRootDatum_pairing_castLE`. -/
+`g2SimplyConnectedRootDatum_pairing_eq_cartanMatrix_G2`. -/
 def g2SimplyConnectedBase : g2SimplyConnectedRootDatum.Base where
   support := {0, 1}
   linearIndepOn_root := by
@@ -243,7 +249,7 @@ private lemma g2SimplyConnectedBase_coe_eq_zero_or_eq_one (i : g2SimplyConnected
 long one. This is what pins the numbering; `hasCartanType_g2SimplyConnectedRootDatum` cannot,
 since the relabelling in `HasCartanType` is existential and at rank two it may transpose the two
 off-diagonal entries. -/
-theorem g2SimplyConnectedRootDatum_pairing_castLE (i j : Fin 2) :
+theorem g2SimplyConnectedRootDatum_pairing_eq_cartanMatrix_G2 (i j : Fin 2) :
     g2SimplyConnectedRootDatum.pairing (Fin.castLE (by omega) i) (Fin.castLE (by omega) j) =
       !![2, -1; -3, 2] i j := by
   fin_cases i <;> fin_cases j <;> decide
@@ -265,7 +271,7 @@ private def g2SimplyConnectedBaseEquiv : g2SimplyConnectedBase.support ≃ Fin 2
 
 /-- The pinned simply connected `G2` datum has Cartan type `G2`. The relabelling supplied by
 `HasCartanType` is existential, so the Bourbaki node numbering itself is pinned separately by
-`g2SimplyConnectedRootDatum_pairing_castLE`. -/
+`g2SimplyConnectedRootDatum_pairing_eq_cartanMatrix_G2`. -/
 theorem hasCartanType_g2SimplyConnectedRootDatum :
     HasCartanType g2SimplyConnectedRootDatum g2SimplyConnectedBase G2 := by
   rw [hasCartanType_iff]
