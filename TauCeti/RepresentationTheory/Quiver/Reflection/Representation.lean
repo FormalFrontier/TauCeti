@@ -310,6 +310,13 @@ private def incomingMap {M N : QuiverRep.{u, v, w, max v w x} k Q} (η : M ⟶ N
   map_add' f g := by ext e; simp
   map_smul' r f := by ext e; simp
 
+omit [Fintype Q] [∀ a b : Q, Fintype (a ⟶ b)] in
+/-- `TauCeti.incomingMap` applies its morphism in each coordinate. -/
+private theorem incomingMap_apply {M N : QuiverRep.{u, v, w, max v w x} k Q} (η : M ⟶ N) (i : Q)
+    (f : (e : Σ b : Q, (b ⟶ i)) → M.obj e.1) :
+    incomingMap η i f = fun e ↦ η.app e.1 (f e) :=
+  rfl
+
 /-- **The sum of the arrows into a vertex is natural in the representation.** Applying a morphism
 `η` coordinatewise to a family indexed by the arrows into `i` and then summing is the same as
 summing first and applying `η` at `i`; it is the naturality of `η` along those arrows, read off one
@@ -329,9 +336,8 @@ private noncomputable def incomingKerMap {M N : QuiverRep.{u, v, w, max v w x} k
     LinearMap.ker (incomingSum M i) →ₗ[k] LinearMap.ker (incomingSum N i) :=
   LinearMap.codRestrict (LinearMap.ker (incomingSum N i))
     ((incomingMap η i).domRestrict (LinearMap.ker (incomingSum M i))) fun f ↦ by
-      rw [LinearMap.mem_ker, LinearMap.domRestrict_apply]
-      change incomingSum N i (fun e ↦ η.app e.1 (f.1 e)) = 0
-      rw [incomingSum_naturality, f.property, map_zero]
+      rw [LinearMap.mem_ker, LinearMap.domRestrict_apply, incomingMap_apply,
+        incomingSum_naturality, f.property, map_zero]
 
 @[simp]
 private theorem incomingKerMap_id (M : QuiverRep.{u, v, w, max v w x} k Q) (i : Q) :
@@ -383,16 +389,20 @@ private theorem reflectRepMapApp_of_ne
   simp [reflectRepMapApp, hj]
 
 /-! The components of the reflected morphism are transports of components of the original one, so
-every identity about them is an identity of the original conjugated by `eqToHom`. The next four
+every identity about them is an identity of the original conjugated by `eqToHom`. The next five
 lemmas are those conjugations, stated generically. They are what the proofs below use instead of
 `simp`: the vertex `i` is used both as a vertex of `Q` and as an object of `CategoryTheory.Paths`
 of the reflected quiver, so a goal about the reflected representation is type-correct only up to
 unfolding the semireducible `CategoryTheory.Paths` and `TauCeti.Quiver.Reflect`, which is more than
 the transparency `rw` and `simp` use to build a motive. Conjugation is stripped by `subst` inside
-these lemmas, where no such identification is in play. -/
+these lemmas, where no such identification is in play.
+
+The first of them is public: that obstruction, and this remedy for it, recur wherever the
+reflection functor is used, so it is available to `TauCeti.reflectionFunctor`'s consumers rather
+than copied by each of them. -/
 
 /-- Transporting a morphism along object equalities and then back leaves it unchanged. -/
-private theorem eqToHom_conjugate_cancel {C : Type*} [Category* C] {X X' Y Y' : C}
+theorem eqToHom_conjugate_cancel {C : Type*} [Category* C] {X X' Y Y' : C}
     (hX : X = X') (hY : Y = Y') (f : X' ⟶ Y') :
     eqToHom hX.symm ≫ (eqToHom hX ≫ f ≫ eqToHom hY.symm) ≫ eqToHom hY = f := by
   subst X'
@@ -508,6 +518,15 @@ noncomputable def reflectionFunctor (i : Q) (hi : IsSink i) :
         reflectRepMapApp_of_ne _ _ hj]
       exact eqToHom_conjugate_eq_comp _ _ (reflectRep_obj_of_ne _ hi hj) _ _ _ rfl
 
+/-- The vertex components of the map supplied by `TauCeti.reflectionFunctor`. The functor sends a
+morphism to `reflectRepMap`, a `CategoryTheory.Paths.liftNatTrans` of `reflectRepMapApp`, so this
+is `rfl`; the two definitions are not exposed outside this module, so nothing public says it. -/
+private theorem reflectionFunctor_map_app
+    {M N : QuiverRep.{u, v, w, max v w x} k Q} (η : M ⟶ N) {i : Q} (hi : IsSink i)
+    (j : Reflect Q i) :
+    ((reflectionFunctor i hi).map η).app j = reflectRepMapApp η hi j :=
+  rfl
+
 /-- The induced map between the kernels is additive in the morphism, coordinate by coordinate. -/
 private theorem incomingKerMap_add {M N : QuiverRep.{u, v, w, max v w x} k Q} (η θ : M ⟶ N)
     (i : Q) : incomingKerMap (η + θ) i = incomingKerMap η i + incomingKerMap θ i := by
@@ -523,7 +542,8 @@ instance reflectionFunctor_additive (i : Q) (hi : IsSink i) :
     apply NatTrans.ext
     funext j
     classical
-    change reflectRepMapApp (η + θ) hi j = reflectRepMapApp η hi j + reflectRepMapApp θ hi j
+    rw [NatTrans.app_add, reflectionFunctor_map_app (η + θ) hi j, reflectionFunctor_map_app η hi j,
+      reflectionFunctor_map_app θ hi j]
     by_cases hj : j = i
     · subst j
       rw [reflectRepMapApp_self, reflectRepMapApp_self, reflectRepMapApp_self]
@@ -548,13 +568,6 @@ theorem reflectionFunctor_obj (i : Q) (hi : IsSink i)
     (M : QuiverRep.{u, v, w, max v w x} k Q) :
     (reflectionFunctor i hi).obj M = reflectRep M hi :=
   reflectionFunctor_obj_def i hi M
-
-/-- The vertex components of the map supplied by `TauCeti.reflectionFunctor`. -/
-private theorem reflectionFunctor_map_app
-    {M N : QuiverRep.{u, v, w, max v w x} k Q} (η : M ⟶ N) {i : Q} (hi : IsSink i)
-    (j : Reflect Q i) :
-    ((reflectionFunctor i hi).map η).app j = reflectRepMapApp η hi j :=
-  rfl
 
 /-- At the reflected vertex, the map supplied by `TauCeti.reflectionFunctor`, transported to the
 two kernels, is the induced kernel map. -/

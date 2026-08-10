@@ -9,15 +9,20 @@ import Mathlib.Algebra.Module.Projective
 import Mathlib.CategoryTheory.PathCategory.MorphismProperty
 
 /-!
-# The reflection functor is fully faithful away from the vertex simple
+# The reflection functor is fully faithful where the incoming sum is onto
 
 The Bernstein-Gelfand-Ponomarev reflection `C⁺ᵢ` at a sink `i` replaces the vertex space `Mᵢ` by
 the kernel of the sum `TauCeti.incomingSum` of the arrows into `i`. It annihilates the vertex
 simple `Sᵢ`, so it cannot be an equivalence; what it *is*, is fully faithful on the representations
-that avoid that boundary case. This file proves that: whenever the sum of the arrows into `i` is
-onto for `M`, the map `(M ⟶ N) → (C⁺ᵢ M ⟶ C⁺ᵢ N)` supplied by
-`TauCeti.reflectionFunctor` is a bijection. Only the source `M` needs the hypothesis; the target
-`N` is arbitrary.
+whose incoming sum at `i` is onto. This file proves that: whenever the sum of the arrows into `i`
+is onto for `M`, the map `(M ⟶ N) → (C⁺ᵢ M ⟶ C⁺ᵢ N)` supplied by `TauCeti.reflectionFunctor` is a
+bijection. Only the source `M` needs the hypothesis; the target `N` is arbitrary.
+
+Surjectivity of the incoming sum is the hypothesis throughout; it is not equivalent to avoiding
+`Sᵢ`. It is `TauCeti.incomingSum_surjective_of_indecomposable` that ties the two together, and only
+for an *indecomposable* `M`: such an `M` has its incoming sum at `i` onto as soon as it is not
+isomorphic to `Sᵢ`. So the vertex simple names the exceptional case only among indecomposables, and
+that is the only place below where it is mentioned.
 
 Both halves are elementary once the incoming sum is available. **Faithfulness** is the surjectivity
 of that sum: a morphism reflecting to zero has vanishing components away from `i`, hence, by
@@ -58,8 +63,8 @@ As in the neighbouring files, a vertex `i : Q` is used both as an object of `Cat
 and as a vertex of `TauCeti.Quiver.Reflect Q i`, identifications that hold only by unfolding
 semireducible definitions. Goals mentioning both are therefore not type-correct at the transparency
 `rw` and `simp` build motives with, so every step that strips a conjugation by `eqToHom` is
-factored through one of the four private helpers at the top of the file, each of which `subst`s the
-object equalities away before doing anything.
+factored through `TauCeti.eqToHom_conjugate_cancel` or one of the two private helpers at the top of
+the file, each of which `subst`s the object equalities away before doing anything.
 
 The linear section of the incoming sum used to build the preimage exists because a vector space is
 projective; the private `sinkSection` is a choice of one. Nothing downstream depends on which
@@ -92,9 +97,10 @@ variable {M N : QuiverRep.{u, v, w, max v w x} k Q} {i : Q}
 
 /-! ### Stripping conjugations by `eqToHom`
 
-Each of the four helpers below `subst`s its object equalities before touching the morphisms, which
-is what makes them usable on goals that mention a vertex both as an object of
-`CategoryTheory.Paths` and as a vertex of the reflected quiver. -/
+Each of the two helpers below, like `TauCeti.eqToHom_conjugate_cancel` from
+`TauCeti.RepresentationTheory.Quiver.Reflection.Representation`, `subst`s its object equalities
+before touching the morphisms, which is what makes them usable on goals that mention a vertex both
+as an object of `CategoryTheory.Paths` and as a vertex of the reflected quiver. -/
 
 /-- Two morphisms conjugated to the same morphism are equal. -/
 private theorem eq_of_eqToHom_conj {C : Type*} [Category* C] {X X' Y Y' : C} (hX : X' = X)
@@ -103,14 +109,6 @@ private theorem eq_of_eqToHom_conj {C : Type*} [Category* C] {X X' Y Y' : C} (hX
   subst hX
   subst hY
   simpa using h
-
-/-- Conjugating a morphism and conjugating back leaves it unchanged. -/
-private theorem eqToHom_conj_cancel {C : Type*} [Category* C] {X X' Y Y' : C} (hX : X = X')
-    (hY : Y = Y') (f : X ⟶ Y) :
-    eqToHom hX ≫ (eqToHom hX.symm ≫ f ≫ eqToHom hY) ≫ eqToHom hY.symm = f := by
-  subst hX
-  subst hY
-  simp
 
 /-- A commuting square whose two horizontal edges are conjugates commutes after the conjugations
 are moved onto the vertical edges. -/
@@ -352,7 +350,8 @@ private theorem reflectionFunctor_map_homPreimage (hs : Function.Surjective (inc
     refine (reflectionFunctor_map_app_of_ne (homPreimage θ hs) hi hj).trans ?_
     exact (congrArg (fun g : M.obj j ⟶ N.obj j ↦ eqToHom (reflectObj_of_ne M hi hj) ≫ g ≫
       eqToHom (reflectObj_of_ne N hi hj).symm) happ).trans
-      (eqToHom_conj_cancel (reflectObj_of_ne M hi hj) (reflectObj_of_ne N hi hj) (θ.app j))
+      (eqToHom_conjugate_cancel (reflectObj_of_ne M hi hj).symm (reflectObj_of_ne N hi hj).symm
+        (θ.app j))
 
 /-! ### Full faithfulness, and indecomposability -/
 
@@ -365,8 +364,8 @@ theorem reflectionFunctor_map_surjective (hs : Function.Surjective (incomingSum 
   fun θ ↦ ⟨homPreimage θ hs, reflectionFunctor_map_homPreimage θ hs⟩
 
 /-- **The reflection functor at a sink is fully faithful** on the representations whose incoming
-sum there is onto, which by `TauCeti.incomingSum_surjective_of_indecomposable` is every
-indecomposable representation other than the vertex simple `Sᵢ`. -/
+sum there is onto, a class that by `TauCeti.incomingSum_surjective_of_indecomposable` contains
+every indecomposable representation other than the vertex simple `Sᵢ`. -/
 theorem reflectionFunctor_map_bijective (hs : Function.Surjective (incomingSum M i)) :
     Function.Bijective fun η : M ⟶ N ↦ (reflectionFunctor i hi).map η :=
   ⟨reflectionFunctor_map_injective hi hs, reflectionFunctor_map_surjective hi hs⟩
