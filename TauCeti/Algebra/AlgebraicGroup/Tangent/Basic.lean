@@ -232,8 +232,8 @@ end DerivationCoefficients
 
 section DerivationSpan
 
-variable {R H B : Type*} [CommRing R] [CommRing H] [Bialgebra R H]
-  [CommRing B] [Algebra R B]
+variable {R H B : Type*} [CommSemiring R] [CommSemiring H] [Bialgebra R H]
+  [CommSemiring B] [Algebra R B]
 
 namespace Derivation
 
