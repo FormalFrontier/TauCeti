@@ -110,8 +110,8 @@ private theorem ContMDiffMap.hasDerivAt_comp_conj_mulInvariantExp_smul
     exact (hF.differentiable (by simp) (0, 0)).hasFDerivAt.comp_hasDerivAt
       (f := fun t : ℝ => (t, t)) 0 hemb
   have hfAt := f.contMDiff.mdifferentiable (by simp) g |>.hasMFDerivAt
-  have hright := HasMFDerivAt.hasDerivAt_comp_mulInvariantExp_smul_mul hfAt X
-  have hleftNeg := HasMFDerivAt.hasDerivAt_comp_mul_mulInvariantExp_smul hfAt (-X)
+  have hright := HasMFDerivAt.hasDerivAt_comp_mulInvariantExp_smul_mul_zero hfAt X
+  have hleftNeg := HasMFDerivAt.hasDerivAt_comp_mul_mulInvariantExp_smul_zero hfAt (-X)
   have ht : fderiv ℝ F (0, 0) (1, 0) =
       mvfderiv I f g (mulRightInvariantVectorField X g) := by
     have hemb : HasDerivAt (fun t : ℝ => (t, (0 : ℝ))) (1, 0) 0 :=
@@ -304,7 +304,7 @@ theorem hasDerivAt_tangentAd_mulInvariantExp_smul_apply
     have hpartial : HasDerivAt (fun s => F (t, s)) (spatialFDeriv F 0 t 1) 0 := by
       simpa only [Function.comp_def, spatialFDeriv_apply, zero_smul, one_smul] using hpartialRaw
     have hfOne := f.contMDiff.mdifferentiable (by simp) (1 : G) |>.hasMFDerivAt
-    have hdirection := HasMFDerivAt.hasDerivAt_comp_mulInvariantExp_smul hfOne
+    have hdirection := HasMFDerivAt.hasDerivAt_comp_mulInvariantExp_smul_zero hfOne
       (tangentAd (I := I) (γX t) Y)
     have hcurve : (fun s : ℝ => F (t, s)) =
         fun s => f (mulInvariantExp (I := I) (G := G)
@@ -387,7 +387,7 @@ theorem hasDerivAt_tangentAd_mulInvariantExp_smul_apply
     ⟨fun g => mvfderiv I f g
       (mulRightInvariantVectorField X g - mulInvariantVectorField X g), hgeneratorSmooth⟩
   have hHmf := H.contMDiff.mdifferentiable (by simp) (1 : G) |>.hasMFDerivAt
-  have hHcurve := HasMFDerivAt.hasDerivAt_comp_mulInvariantExp_smul hHmf Y
+  have hHcurve := HasMFDerivAt.hasDerivAt_comp_mulInvariantExp_smul_zero hHmf Y
   -- The exponential-line chain rule is expressed through the same canonical `mvfderiv` map.
   with_unfolding_all change HasDerivAt (fun s => H (γY s)) (mvfderiv I H 1 Y) 0 at hHcurve
   have hrightDeriv : deriv (fun s =>
@@ -425,7 +425,7 @@ theorem mvfderiv_tangentAd_apply (X Y : GroupLieAlgebra I G) :
         (fun g : G => (g, @id E Y)) := contMDiff_id.prodMk contMDiff_const
     exact (contMDiff_tangentAd_apply (I := I) (G := G)).comp hpair
   have hTmf := hT.mdifferentiable (by simp) (1 : G) |>.hasMFDerivAt
-  have hchainRaw := HasMFDerivAt.hasDerivAt_comp_mulInvariantExp_smul hTmf X
+  have hchainRaw := HasMFDerivAt.hasDerivAt_comp_mulInvariantExp_smul_zero hTmf X
   have hchain : HasDerivAt
       (fun t : ℝ => T (mulInvariantExp (I := I) (G := G) (t • X)))
       (mvfderiv I T 1 X) 0 := by
