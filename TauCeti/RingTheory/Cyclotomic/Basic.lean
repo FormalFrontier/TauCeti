@@ -271,6 +271,15 @@ instance : CommRing (Cyclotomic e) where
     simp [TauCeti.Polynomial.ofCoeffList_cons])
   mul_comm a b := toAdjoinRoot_injective (by simp only [toAdjoinRoot_mul, mul_comm])
 
+/-- Every coordinate of `0` vanishes, its canonical representative being the zero polynomial. -/
+@[simp]
+theorem coeff_zero (j : ℕ) : (0 : Cyclotomic e).coeff j = 0 := by
+  have hdvd : cyclotomic e ℤ ∣ (0 : Cyclotomic e).toPolynomial := by
+    rw [← AdjoinRoot.mk_eq_zero, ← toAdjoinRoot]
+    exact toAdjoinRoot_zero
+  rw [← coeff_toPolynomial, eq_zero_of_dvd_of_degree_lt hdvd (degree_toPolynomial_lt _),
+    Polynomial.coeff_zero]
+
 /-! ## Comparison with `AdjoinRoot` -/
 
 /-- The ring homomorphism identifying exact cyclotomic integers with the polynomial quotient. -/
@@ -404,7 +413,7 @@ theorem evalCoeffs_eq_sum {R : Type*} [CommRing R] (f : ℤ →+* R) (r : R) (x 
       Finset.eq_empty_of_forall_notMem fun j => absurd j.isLt (by omega)
     have hzero : x.toPolynomial = 0 :=
       Polynomial.ext fun m => by
-        rw [coeff_toPolynomial, coeff_zero]
+        rw [coeff_toPolynomial, Polynomial.coeff_zero]
         exact coeff_eq_zero_of_totient_le x (by omega)
     rw [hzero, hempty]
     simp

@@ -97,7 +97,11 @@ the residue tuple, and `TauCeti.Cyclotomic.coeff_lift` with the correctness, uni
 theorems for the lift.  `TauCeti.Cyclotomic.conjugateVandermonde` and
 `TauCeti.Cyclotomic.liftResidues`, the linear algebra the lift runs on, stay public declarations
 none the less, because `TauCeti.Cyclotomic.coeff_lift` — the coordinate formula, which is public
-interface — is stated in terms of `TauCeti.Cyclotomic.liftResidues`.
+interface — is stated in terms of `TauCeti.Cyclotomic.liftResidues`.  Each of the two is described
+by a lemma rather than by its body: `TauCeti.Cyclotomic.conjugateVandermonde_apply` gives the
+matrix entries, and `TauCeti.Cyclotomic.conjugateVandermonde_mulVec_liftResidues` says that the
+recovered coordinate vector solves the Vandermonde system, which determines it since that system
+is invertible.
 
 ## References
 
@@ -228,11 +232,13 @@ theorem conjugateResiduesRingHom_apply [Fact p.Prime] [NeZero e] {α : ZMod p}
     conjugateResiduesRingHom hα x = conjugateResidues α x :=
   funext fun _ => reduceRingHom_apply _ _ _ _
 
-/-- The residue tuple of `0` is `0`. -/
+/-- The residue tuple of `0` is `0`.  Unlike the other componentwise rules this needs no
+primitive root: every coordinate of `0` vanishes, so every residue does. -/
 @[simp]
-theorem conjugateResidues_zero [Fact p.Prime] [NeZero e] {α : ZMod p}
-    (hα : IsPrimitiveRoot α e) : conjugateResidues α (0 : Cyclotomic e) = 0 := by
-  rw [← conjugateResiduesRingHom_apply hα, map_zero]
+theorem conjugateResidues_zero {α : ZMod p} : conjugateResidues α (0 : Cyclotomic e) = 0 := by
+  funext j
+  rw [conjugateResidues_apply, reduce_eq_sum]
+  simp
 
 /-- The residue tuple of `1` is `1`. -/
 @[simp]
@@ -271,6 +277,12 @@ def conjugateVandermonde (e : ℕ) {p : ℕ} (α : ZMod p) :
     Matrix (Fin e.totient) (Fin e.totient) (ZMod p) :=
   Matrix.vandermonde (conjugateRoot e α)
 
+/-- The entries of the Vandermonde matrix are the powers of the conjugate roots: its `i`-th row
+reads the coordinate vector against the powers of the `i`-th conjugate root. -/
+theorem conjugateVandermonde_apply (e : ℕ) (α : ZMod p) (i j : Fin e.totient) :
+    conjugateVandermonde e α i j = conjugateRoot e α i ^ (j : ℕ) := by
+  rw [conjugateVandermonde, Matrix.vandermonde_apply]
+
 /-- **The Vandermonde matrix of the conjugate roots is invertible**, because those roots are
 pairwise distinct. -/
 theorem det_conjugateVandermonde_ne_zero [Fact p.Prime] {α : ZMod p}
@@ -293,6 +305,15 @@ def liftResidues (e : ℕ) {p : ℕ} (α : ZMod p) (r : Fin e.totient → ZMod p
     Fin e.totient → ZMod p :=
   ((conjugateVandermonde e α).det)⁻¹ • Matrix.cramer (conjugateVandermonde e α) r
 
+/-- **The recovered coordinate vector solves the Vandermonde system it was recovered from.**  This
+characterizes `TauCeti.Cyclotomic.liftResidues`, the matrix of the system being invertible, and is
+what Cramer's rule is used for. -/
+theorem conjugateVandermonde_mulVec_liftResidues [Fact p.Prime] {α : ZMod p}
+    (hα : IsPrimitiveRoot α e) (r : Fin e.totient → ZMod p) :
+    conjugateVandermonde e α *ᵥ liftResidues e α r = r := by
+  rw [liftResidues, Matrix.mulVec_smul, Matrix.mulVec_cramer,
+    inv_smul_smul₀ (det_conjugateVandermonde_ne_zero hα)]
+
 /-- **The lift.**  The exact cyclotomic integer whose coordinates are the balanced representatives
 of the coordinate residues recovered from `r`.  This is a computation on the coefficient vector:
 the determinants Cramer's rule takes, the inverse in `ZMod p` and `ZMod.valMinAbs` all are. -/
@@ -313,6 +334,7 @@ theorem coeff_lift (e : ℕ) (α : ZMod p) (r : Fin e.totient → ZMod p) (j : F
     List.getElem_ofFn]
 
 /-- Inverting the Vandermonde system returns the reduced coordinates it was built from. -/
+@[simp]
 theorem liftResidues_conjugateResidues [Fact p.Prime] {α : ZMod p} (hα : IsPrimitiveRoot α e)
     (x : Cyclotomic e) (j : Fin e.totient) :
     liftResidues e α (conjugateResidues α x) j = ((x.coeff j : ℤ) : ZMod p) := by
@@ -365,8 +387,7 @@ theorem conjugateResidues_lift [Fact p.Prime] {α : ZMod p} (hα : IsPrimitiveRo
     funext j
     rw [coeff_lift]
     exact ZMod.coe_valMinAbs _
-  rw [← conjugateVandermonde_mulVec, hc, liftResidues, Matrix.mulVec_smul, Matrix.mulVec_cramer,
-    inv_smul_smul₀ (det_conjugateVandermonde_ne_zero hα)]
+  rw [← conjugateVandermonde_mulVec, hc, conjugateVandermonde_mulVec_liftResidues hα]
 
 /-! ## Worked examples
 
