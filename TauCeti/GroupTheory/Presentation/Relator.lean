@@ -82,7 +82,12 @@ namespace Relator
 /-- Compile a relator expression to a flat signed word.
 
 Inversion uses Mathlib's `FreeGroup.invRev`, which reverses the word and flips every sign. Powers
-are compiled by repeating the whole word, rather than by expanding the expression recursively. -/
+are compiled by repeating the whole word, rather than by expanding the expression recursively.
+
+The body is exposed because compilation is an audit computation: a module carrying transcribed
+relators checks the letters and the length of the compiled words against its published source, and
+those checks need this definition to reduce. -/
+@[expose]
 def toWord {α : Type*} : Relator α → PresentationWord α
   | .gen x => [(x, true)]
   | .inv r => FreeGroup.invRev r.toWord

@@ -26,6 +26,8 @@ relations, regarded as a set, defines `TauCeti.GroupPresentation.Group` using Ma
 
 * `TauCeti.GroupPresentation`: cited presentation data and its transcription metadata.
 * `TauCeti.GroupPresentation.relators`: the compiled signed words.
+* `TauCeti.GroupPresentation.totalLength`: the number of letters in the compiled words, for checking
+  against a published presentation length.
 * `TauCeti.GroupPresentation.relatorSet`: the relations as free-group elements.
 * `TauCeti.GroupPresentation.Group`: the group defined by the presentation.
 * `TauCeti.GroupPresentation.matchesMetadata`: the decidable generator and relator count check.
@@ -73,7 +75,11 @@ namespace GroupPresentation
 /-- The number of generators in a presentation, determined by its generator-name list. -/
 abbrev generatorCount (P : GroupPresentation) : ℕ := P.generatorNames.length
 
-/-- The relator expressions compiled to left-to-right signed words. -/
+/-- The relator expressions compiled to left-to-right signed words.
+
+The body is exposed so that the compiled words of a transcribed presentation reduce in the module
+that carries it, where they are checked letter by letter against the published source. -/
+@[expose]
 def relators (P : GroupPresentation) : List (PresentationWord (Fin P.generatorCount)) :=
   P.transcribed.map Relator.toWord
 
@@ -87,6 +93,26 @@ theorem length_relators (P : GroupPresentation) : P.relators.length = P.transcri
 theorem mem_relators_iff (P : GroupPresentation) (w : PresentationWord (Fin P.generatorCount)) :
     w ∈ P.relators ↔ ∃ t ∈ P.transcribed, t.toWord = w := by
   simp [relators]
+
+/-- The compiled relator words, with each generator index displayed as a natural number.
+
+A transcription is audited by comparing the compiled letters with the published relators, and this
+form of them is the one to state such a comparison against: the index type of a word depends on the
+generator-name list, whereas the letters here do not, so the comparison needs no arithmetic on that
+dependency. -/
+@[expose]
+def relatorLetters (P : GroupPresentation) : List (List (ℕ × Bool)) :=
+  P.relators.map (List.map fun letter => (letter.1.val, letter.2))
+
+/-- The total number of letters in the compiled relator words.
+
+Sources for finite presentations customarily publish this figure, usually calling it the length of
+the presentation, so comparing it with the transcribed data is a third decidable check on a
+transcription alongside the two counts of `TauCeti.GroupPresentation.matchesMetadata`. A published
+length is normally measured after free and cyclic reduction of each relator, so a row using it as a
+check should also record that its compiled words are reduced. -/
+@[expose]
+def totalLength (P : GroupPresentation) : ℕ := (P.relators.map List.length).sum
 
 /-- The compiled relations, interpreted as elements of the free group. -/
 def relatorSet (P : GroupPresentation) : Set (FreeGroup (Fin P.generatorCount)) :=
