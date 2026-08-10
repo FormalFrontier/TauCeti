@@ -39,7 +39,8 @@ algebraically closed.
 * C. W. Curtis and I. Reiner, *Representation Theory of Finite Groups and Associative Algebras*,
   §25 and §41.
 * [Character theory roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/CharacterTheory/README.md),
-  Layer 3, the group-algebra center and the count of irreducibles.
+  Layer 2, "#irreducibles = #conjugacy classes", consuming the Layer 1 item "the class sums are a
+  basis of the center" through `TauCeti.finrank_center_monoidAlgebra`.
 -/
 
 public section
@@ -56,7 +57,12 @@ as the conjugacy classes of `G`.
 
 Equality is a splitting-field statement, and fails over `ℝ` already for a cyclic group of order
 three, where the two nontrivial complex characters combine into a single two-dimensional real
-irreducible. -/
+irreducible.
+
+`TauCeti.ClassFunction.card_le_card_conjClasses` is the character-theoretic form of the same bound,
+for a family of pairwise inequivalent irreducible representations rather than for the isomorphism
+classes; it is proved from the linear independence of characters, so it asks for an algebraically
+closed field, which this statement does not. -/
 theorem card_simpleSubmoduleClasses_le_card_conjClasses :
     Nat.card (SimpleSubmoduleClasses k[G] k[G]) ≤ Nat.card (ConjClasses G) := by
   rw [Nat.card_congr (simpleSubmoduleClassesEquiv k[G] k[G]), ← finrank_center_monoidAlgebra k G]

@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.Algebra.Algebra.Subalgebra.Centralizer
+public import Mathlib.Algebra.Algebra.Subalgebra.Basic
 public import Mathlib.LinearAlgebra.DFinsupp
 public import Mathlib.LinearAlgebra.Dimension.Finite
 public import TauCeti.RingTheory.Semisimple.RegularIsotypicComponent
@@ -24,12 +24,12 @@ of blocks, and the argument here says exactly that intrinsically. Where
 `TauCeti.card_blocks_eq` compares two presentations, this bound mentions none.
 
 The mechanism is that each isotypic component of the regular module contains a nonzero *central*
-element (`TauCeti.exists_ne_zero_mem_center_of_mem_isotypicComponents`). Writing `1 = ∑_c e_c` along
-the decomposition of `R` into its isotypic components, the summand `e_c` is central because for
-`z : R` the two decompositions `z = ∑_c z * e_c` and `z = ∑_c e_c * z` have their `c`-th terms in
-the same summand: the first because `c` is a left ideal, the second because an isotypic component of
-the regular module is *two-sided* (`TauCeti.isTwoSided_of_mem_isotypicComponents`, Mathlib's
-`isFullyInvariant_iff_isTwoSided` read on `isotypicComponents R R`). It is nonzero because the same
+element (`TauCeti.exists_mem_ne_zero_mem_center_of_mem_isotypicComponents`). Writing `1 = ∑_c e_c`
+along the decomposition of `R` into its isotypic components, the summand `e_c` is central because
+for `z : R` the two decompositions `z = ∑_c z * e_c` and `z = ∑_c e_c * z` have their `c`-th terms
+in the same summand: the first because `c` is a left ideal, the second because an isotypic component
+of the regular module is a *two-sided* ideal, which is Mathlib's `isFullyInvariant_iff_isTwoSided`
+read through `Submodule.IsFullyInvariant.of_mem_isotypicComponents`. It is nonzero because the same
 uniqueness gives `x * e_c = x` for `x ∈ c`. Elements chosen one from each summand of an independent
 family are linearly independent, so the components are at most as many as the dimension of the
 center.
@@ -39,10 +39,8 @@ Nothing here needs `R` itself to be finite-dimensional: only the center is assum
 
 ## Main results
 
-* `TauCeti.isTwoSided_of_mem_isotypicComponents`: an isotypic component of the regular module is a
-  two-sided ideal.
-* `TauCeti.exists_ne_zero_mem_center_of_mem_isotypicComponents`: it contains a nonzero central
-  element.
+* `TauCeti.exists_mem_ne_zero_mem_center_of_mem_isotypicComponents`: an isotypic component of the
+  regular module contains a nonzero central element.
 * `TauCeti.card_isotypicComponents_le_finrank_center`: the number of isotypic components of the
   regular module is at most the dimension of the center.
 
@@ -52,7 +50,11 @@ Nothing here needs `R` itself to be finite-dimensional: only the center is assum
 * C. W. Curtis and I. Reiner, *Representation Theory of Finite Groups and Associative Algebras*,
   §25.
 * [Semisimple algebras roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/SemisimpleAlgebras/README.md),
-  Layer 2, "Artin-Wedderburn, assembled with uniqueness".
+  Layer 1, "the isotypic decomposition as counted data", whose counting spine for the regular module
+  this bound serves; the roadmap directs that spine at the
+  [character theory roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/CharacterTheory/README.md)
+  Layer 2 item "#irreducibles = #conjugacy classes". The bound itself is not separately itemised on
+  either roadmap.
 -/
 
 public section
@@ -61,25 +63,14 @@ namespace TauCeti
 
 open scoped BigOperators
 
-variable {R : Type*} [Ring R]
-
-/-- **An isotypic component of the regular module is a two-sided ideal.** Mathlib's
-`Submodule.IsFullyInvariant.of_mem_isotypicComponents` makes it invariant under every endomorphism
-of the regular module, and those endomorphisms are the right multiplications. -/
-theorem isTwoSided_of_mem_isotypicComponents {c : Ideal R} (hc : c ∈ isotypicComponents R R) :
-    c.IsTwoSided :=
-  isFullyInvariant_iff_isTwoSided.mp (Submodule.IsFullyInvariant.of_mem_isotypicComponents hc)
-
-section Field
-
-variable (k R : Type*) [Field k] [Ring R] [Algebra k R] [IsSemisimpleRing R]
+variable (R : Type*) [Ring R] [IsSemisimpleRing R]
 
 /-- The decomposition of `1` along the isotypic components of the regular module: a family of
-nonzero central elements, one in each component. This is the whole content of the section; the two
+nonzero central elements, one in each component. This is the whole content of the file; the two
 public statements below read off the parts of it that they need. -/
 private theorem exists_center_family :
     ∃ e : isotypicComponents R R → R, (∀ c, e c ∈ c.1) ∧ (∀ c, e c ≠ 0) ∧
-      ∀ c, e c ∈ Subalgebra.center k R := by
+      ∀ c, e c ∈ Set.center R := by
   classical
   let _ : Fintype (isotypicComponents R R) := Fintype.ofFinite _
   have hind : iSupIndep fun c : isotypicComponents R R ↦ c.1 :=
@@ -107,23 +98,31 @@ private theorem exists_center_family :
         if_pos (Finset.mem_univ c)]
     simpa [hc] using (huniq _ _ (hleft x) hb hsum c).symm
   · -- Centrality: multiplying `1 = ∑ e_d` on either side decomposes the same element.
-    rw [Subalgebra.mem_center_iff]
+    rw [Semigroup.mem_center_iff]
     intro z
     have hright : ∀ d : isotypicComponents R R, (v d : R) * z ∈ d.1 := fun d ↦ by
-      have := isTwoSided_of_mem_isotypicComponents d.2
+      -- An isotypic component of the regular module is a two-sided ideal.
+      have : Ideal.IsTwoSided d.1 := isFullyInvariant_iff_isTwoSided.mp
+        (Submodule.IsFullyInvariant.of_mem_isotypicComponents d.2)
       exact Ideal.mul_mem_right z _ (v d).2
     have hsum : ∑ d, z * (v d : R) = ∑ d, (v d : R) * z := by
       rw [← Finset.mul_sum, ← Finset.sum_mul, hv, mul_one, one_mul]
     exact huniq _ _ (hleft z) hright hsum c
 
+variable {R}
+
 /-- **Every isotypic component of the regular module contains a nonzero central element.** It is the
-corresponding summand of the decomposition of `1`; only these two properties are recorded, being all
-that the dimension count below consumes. -/
-theorem exists_ne_zero_mem_center_of_mem_isotypicComponents {c : Submodule R R}
+corresponding summand of the decomposition of `1`; only these three properties are recorded, being
+all that the dimension count below consumes. -/
+theorem exists_mem_ne_zero_mem_center_of_mem_isotypicComponents {c : Submodule R R}
     (hc : c ∈ isotypicComponents R R) :
-    ∃ e : R, e ∈ c ∧ e ≠ 0 ∧ e ∈ Subalgebra.center k R := by
-  obtain ⟨e, hmem, hne, hcen⟩ := exists_center_family k R
+    ∃ e : R, e ∈ c ∧ e ≠ 0 ∧ e ∈ Set.center R := by
+  obtain ⟨e, hmem, hne, hcen⟩ := exists_center_family R
   exact ⟨e ⟨c, hc⟩, hmem ⟨c, hc⟩, hne ⟨c, hc⟩, hcen ⟨c, hc⟩⟩
+
+section Field
+
+variable (k R : Type*) [Field k] [Ring R] [Algebra k R] [IsSemisimpleRing R]
 
 /-- **The center bounds the number of isomorphism classes of simple modules.** Over a semisimple
 `k`-algebra whose center is finite-dimensional, the isotypic components of the regular module, which
@@ -136,7 +135,7 @@ theorem card_isotypicComponents_le_finrank_center [Module.Finite k (Subalgebra.c
     Nat.card (isotypicComponents R R) ≤ Module.finrank k (Subalgebra.center k R) := by
   classical
   let _ : Fintype (isotypicComponents R R) := Fintype.ofFinite _
-  obtain ⟨e, hmem, hne, hcen⟩ := exists_center_family k R
+  obtain ⟨e, hmem, hne, hcen⟩ := exists_center_family R
   have hind : iSupIndep fun c : isotypicComponents R R ↦ c.1 :=
     (sSupIndep_iff _).mp (sSupIndep_isotypicComponents R R)
   -- The chosen elements are linearly independent over `k`, one from each independent summand.
@@ -148,10 +147,12 @@ theorem card_isotypicComponents_le_finrank_center [Module.Finite k (Subalgebra.c
         c.1.smul_mem (algebraMap k R (g c)) (hmem c)
     have hzero := (iSupIndep_iff_finsetSum_eq_zero_imp_eq_zero _).mp hind s
       (fun c ↦ g c • e c) hmem' hg i hi
-    by_contra hgi
-    exact hne i (by rw [← one_smul k (e i), ← inv_mul_cancel₀ hgi, mul_smul, hzero, smul_zero])
+    have : Nontrivial R := nontrivial_of_ne _ _ (hne i)
+    exact (smul_eq_zero.mp hzero).resolve_right (hne i)
   -- Read the independence inside the center and count.
-  have hli' : LinearIndependent k fun c ↦ (⟨e c, hcen c⟩ : Subalgebra.center k R) :=
+  have hli' : LinearIndependent k
+      fun c ↦ (⟨e c, Subalgebra.mem_center_iff.mpr (Semigroup.mem_center_iff.mp (hcen c))⟩ :
+        Subalgebra.center k R) :=
     LinearIndependent.of_comp (Subalgebra.center k R).val.toLinearMap hli
   simpa using hli'.fintype_card_le_finrank
 

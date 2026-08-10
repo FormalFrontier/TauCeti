@@ -25,6 +25,8 @@ theory counts, while the objects being classified are representations.
 * `TauCeti.Representation.equivOfAsModuleLinearEquiv`: a `k[G]`-linear isomorphism
   `ρ.asModule ≃ₗ σ.asModule` is an equivalence of representations.
 * `TauCeti.Representation.asModuleLinearEquivOfEquiv`: the converse.
+* `TauCeti.Representation.equivEquivAsModuleLinearEquiv`: the two are mutually inverse, so the
+  dictionary is itself a bijection.
 * `TauCeti.Representation.nonempty_equiv_iff`: the two notions of isomorphism agree.
 * `TauCeti.fdRepIsoOfAsModuleLinearEquiv`: over a commutative ring, and for module-finite carriers,
   such an isomorphism of modules is an isomorphism of the objects of `FDRep k G` that the
@@ -51,12 +53,19 @@ noncomputable def equivOfAsModuleLinearEquiv (f : ρ.asModule ≃ₗ[k[G]] σ.as
     ((_root_.Representation.IntertwiningMap.equivLinearMapAsModule ρ σ).symm f.toLinearMap)
     f.bijective
 
+/-- The two sides are definitionally equal, through three unfoldings that Mathlib states no lemma
+for: `Representation.asModule` is a type synonym for `V` and `Representation.asModuleEquiv` is
+`LinearEquiv.refl` on it, `Representation.IntertwiningMap.ofBijective` keeps the underlying map, and
+so does the `invFun` field of `Representation.IntertwiningMap.equivLinearMapAsModule`. The middle
+step is `Representation.IntertwiningMap.coe_ofBijective`, but rewriting with it is not type-correct
+at reducible transparency: the bijectivity argument is a `Function.Bijective` of a map
+`ρ.asModule → σ.asModule`, and only unfolding the synonym makes it one of a map `V → W`. -/
 @[simp]
 theorem equivOfAsModuleLinearEquiv_apply (f : ρ.asModule ≃ₗ[k[G]] σ.asModule) (v : V) :
     equivOfAsModuleLinearEquiv f v = σ.asModuleEquiv (f (ρ.asModuleEquiv.symm v)) :=
   (rfl)
 
-/-- **An equivalence of representations is a `k`[G]`-linear isomorphism of the attached modules.**
+/-- **An equivalence of representations is a `k[G]`-linear isomorphism of the attached modules.**
 The inverse of `TauCeti.Representation.equivOfAsModuleLinearEquiv`; the underlying map is the one
 `Representation.IntertwiningMap.equivLinearMapAsModule` attaches to the intertwining map. -/
 noncomputable def asModuleLinearEquivOfEquiv (φ : ρ.Equiv σ) : ρ.asModule ≃ₗ[k[G]] σ.asModule :=
@@ -64,6 +73,9 @@ noncomputable def asModuleLinearEquivOfEquiv (φ : ρ.Equiv σ) : ρ.asModule �
     (_root_.Representation.IntertwiningMap.equivLinearMapAsModule ρ σ φ.toIntertwiningMap)
     φ.bijective
 
+/-- Definitional in the same way as `TauCeti.Representation.equivOfAsModuleLinearEquiv_apply`, with
+`LinearEquiv.ofBijective` in place of `Representation.IntertwiningMap.ofBijective` and the `toFun`
+field of `Representation.IntertwiningMap.equivLinearMapAsModule` in place of its `invFun`. -/
 @[simp]
 theorem asModuleLinearEquivOfEquiv_apply (φ : ρ.Equiv σ) (x : ρ.asModule) :
     asModuleLinearEquivOfEquiv φ x = σ.asModuleEquiv.symm (φ (ρ.asModuleEquiv x)) :=
@@ -82,11 +94,33 @@ theorem asModuleLinearEquivOfEquiv_equivOfAsModuleLinearEquiv
   ext x
   simp
 
+variable (ρ σ) in
+/-- **The dictionary is a bijection.** The equivalences of representations `ρ → σ` correspond to the
+`k[G]`-linear isomorphisms `ρ.asModule ≃ₗ σ.asModule`, by the two constructions above. Use this to
+transport a family of isomorphisms; for the isomorphism classes alone,
+`TauCeti.Representation.nonempty_equiv_iff` is enough. -/
+noncomputable def equivEquivAsModuleLinearEquiv :
+    ρ.Equiv σ ≃ (ρ.asModule ≃ₗ[k[G]] σ.asModule) where
+  toFun := asModuleLinearEquivOfEquiv
+  invFun := equivOfAsModuleLinearEquiv
+  left_inv := equivOfAsModuleLinearEquiv_asModuleLinearEquivOfEquiv
+  right_inv := asModuleLinearEquivOfEquiv_equivOfAsModuleLinearEquiv
+
+@[simp]
+theorem equivEquivAsModuleLinearEquiv_apply (φ : ρ.Equiv σ) :
+    equivEquivAsModuleLinearEquiv ρ σ φ = asModuleLinearEquivOfEquiv φ :=
+  (rfl)
+
+@[simp]
+theorem equivEquivAsModuleLinearEquiv_symm_apply (f : ρ.asModule ≃ₗ[k[G]] σ.asModule) :
+    (equivEquivAsModuleLinearEquiv ρ σ).symm f = equivOfAsModuleLinearEquiv f :=
+  (rfl)
+
 /-- **The two notions of isomorphism agree.** Two representations are equivalent exactly when the
 `k[G]`-modules they carry are isomorphic. -/
 theorem nonempty_equiv_iff :
     Nonempty (ρ.Equiv σ) ↔ Nonempty (ρ.asModule ≃ₗ[k[G]] σ.asModule) :=
-  ⟨fun ⟨φ⟩ ↦ ⟨asModuleLinearEquivOfEquiv φ⟩, fun ⟨f⟩ ↦ ⟨equivOfAsModuleLinearEquiv f⟩⟩
+  Equiv.nonempty_congr (equivEquivAsModuleLinearEquiv ρ σ)
 
 end Representation
 

@@ -35,8 +35,8 @@ open, and is what a corresponding classification over `ℂ` would need.
 ## Main results
 
 * `TauCeti.spechtModuleClass`: the isomorphism class of the simple `ℚ[Sₙ]`-module `S^μ`.
-* `TauCeti.partitionEquivSimpleModuleClasses`: **the classification**, `μ ↦ S^μ` as a bijection from
-  `Nat.Partition n` to the isomorphism classes of simple `ℚ[Sₙ]`-modules.
+* `TauCeti.partitionEquivSimpleSubmoduleClasses`: **the classification**, `μ ↦ S^μ` as a bijection
+  from `Nat.Partition n` to the isomorphism classes of simple `ℚ[Sₙ]`-modules.
 * `TauCeti.exists_nonempty_linearEquiv_spechtModule`: every simple `ℚ[Sₙ]`-module is isomorphic to
   a Specht module.
 * `TauCeti.exists_nonempty_equiv_spechtModule`: every irreducible rational representation of `Sₙ` is
@@ -58,11 +58,6 @@ open scoped MonoidAlgebra
 
 variable {n : ℕ}
 
-/-- The order of a symmetric group is nonzero in `ℚ`, so `ℚ[Sₙ]` is semisimple by Maschke's
-theorem. This is what puts the isotypic theory at the disposal of the classification. -/
-private instance : NeZero ((Nat.card (Equiv.Perm (Fin n)) : ℚ)) :=
-  ⟨Nat.cast_ne_zero.mpr Nat.card_pos.ne'⟩
-
 /-- **The isomorphism class of the Specht module `S^μ`**, as a simple module over the rational
 group algebra of `Sₙ`.
 
@@ -73,8 +68,13 @@ noncomputable def spechtModuleClass (μ : n.Partition) :
   simpleModuleClass _ (_root_.Representation.asModule (spechtModule μ).ρ)
 
 /-- The defining equation of `TauCeti.spechtModuleClass`: it is the class of the `ℚ[Sₙ]`-module
-carried by the Specht module `S^μ`. -/
-@[simp]
+carried by the Specht module `S^μ`.
+
+This is deliberately not a `simp` lemma: its right-hand side is not a simp normal form, since
+`spechtModule μ` is an `FDRep.of` and the `simp` lemma `FDRep.of_ρ'` rewrites `(spechtModule μ).ρ`
+into the composite that `spechtModule` is built from. Tagging it would make that composite the
+normal form of `spechtModuleClass μ`, which is exactly what keeping `TauCeti.spechtModuleClass` an
+unexposed `def` is for. Use it with `rw`, as the two proofs below do. -/
 theorem spechtModuleClass_def (μ : n.Partition) :
     spechtModuleClass μ =
       simpleModuleClass _ (_root_.Representation.asModule (spechtModule μ).ρ) :=
@@ -103,15 +103,12 @@ theorem spechtModuleClass_injective : Function.Injective (spechtModuleClass (n :
   exact (nonempty_linearEquiv_spechtModule_asModule_iff μ ν).mp h
 
 /-- **The Specht modules exhaust the simple `ℚ[Sₙ]`-modules.** They are as many as the conjugacy
-classes of `Sₙ` and pairwise non-isomorphic, and no field admits more isomorphism classes of simple
-modules over the group algebra than the group has conjugacy classes. -/
+classes of `Sₙ` and pairwise non-isomorphic, and over any field whose group algebra is semisimple
+there are no more isomorphism classes of simple modules than the group has conjugacy classes. -/
 theorem spechtModuleClass_bijective : Function.Bijective (spechtModuleClass (n := n)) := by
-  classical
   have : Finite (SimpleSubmoduleClasses ℚ[Equiv.Perm (Fin n)] ℚ[Equiv.Perm (Fin n)]) :=
     .of_equiv _ (simpleSubmoduleClassesEquiv _ _).symm
-  let _ := Fintype.ofFinite (SimpleSubmoduleClasses ℚ[Equiv.Perm (Fin n)] ℚ[Equiv.Perm (Fin n)])
-  refine (Fintype.bijective_iff_injective_and_card _).mpr ⟨spechtModuleClass_injective, ?_⟩
-  rw [← Nat.card_eq_fintype_card, ← Nat.card_eq_fintype_card]
+  refine (Nat.bijective_iff_injective_and_card _).mpr ⟨spechtModuleClass_injective, ?_⟩
   refine le_antisymm (Nat.card_le_card_of_injective _ spechtModuleClass_injective) ?_
   exact (card_simpleSubmoduleClasses_le_card_conjClasses ℚ (Equiv.Perm (Fin n))).trans
     (Nat.card_congr (partitionEquivConjClasses n).symm).le
@@ -119,13 +116,13 @@ theorem spechtModuleClass_bijective : Function.Bijective (spechtModuleClass (n :
 /-- **The classification of the irreducible rational representations of the symmetric group.**
 Sending a partition of `n` to the isomorphism class of the Specht module `S^μ` is a bijection onto
 the isomorphism classes of simple `ℚ[Sₙ]`-modules. -/
-noncomputable def partitionEquivSimpleModuleClasses (n : ℕ) :
+noncomputable def partitionEquivSimpleSubmoduleClasses (n : ℕ) :
     n.Partition ≃ SimpleSubmoduleClasses ℚ[Equiv.Perm (Fin n)] ℚ[Equiv.Perm (Fin n)] :=
   Equiv.ofBijective _ spechtModuleClass_bijective
 
 @[simp]
-theorem partitionEquivSimpleModuleClasses_apply (μ : n.Partition) :
-    partitionEquivSimpleModuleClasses n μ = spechtModuleClass μ :=
+theorem partitionEquivSimpleSubmoduleClasses_apply (μ : n.Partition) :
+    partitionEquivSimpleSubmoduleClasses n μ = spechtModuleClass μ :=
   (rfl)
 
 /-- **Every simple `ℚ[Sₙ]`-module is a Specht module.** -/
