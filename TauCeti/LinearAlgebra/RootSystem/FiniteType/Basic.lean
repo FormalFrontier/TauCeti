@@ -361,8 +361,10 @@ positive definiteness forbids. Edges off the cycle only lower the value further,
 not be chordless, and the scaling by the symmetrizer is what keeps the test vector rational: the
 geometric argument takes unit vectors along the coroots and needs their square roots.
 
-The affine diagrams `Ãₙ` are what this excludes, and at three indices every triangle:
-`TauCeti.IsFiniteType.apply_eq_zero_of_apply_ne_zero` is the case `m = 3`. -/
+The affine diagrams `Ãₙ` for `n ≥ 2`, the ones whose diagrams are cycles, are what this excludes,
+and at three indices every triangle: `TauCeti.IsFiniteType.apply_eq_zero_of_apply_ne_zero` is the
+case `m = 3`. The remaining affine diagram `Ã₁` is a double edge on two indices rather than a cycle,
+and is excluded instead by the rank-two bound `TauCeti.IsFiniteType.apply_mul_apply_mem_of_ne`. -/
 private theorem exists_apply_succ_eq_zero_fin {m : ℕ} [NeZero m] (hm : 3 ≤ m)
     {T : Matrix (Fin m) (Fin m) ℤ} (h : IsFiniteType T) :
     ∃ k, T k (k + 1) = 0 := by
@@ -384,7 +386,7 @@ private theorem exists_apply_succ_eq_zero_fin {m : ℕ} [NeZero m] (hm : 3 ≤ m
     rw [hval2, Fin.val_zero] at hval
     omega
   have hsucc : ∀ i : Fin m, i + 1 ≠ i := fun i hc ↦
-    hone (add_left_cancel (show i + 1 = i + 0 by simpa using hc))
+    hone (add_left_cancel (hc.trans (add_zero i).symm))
   have hpred : ∀ i : Fin m, i - 1 ≠ i := by
     intro i hc
     have h1 : i - 1 + 1 = i + 1 := by rw [hc]
