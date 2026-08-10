@@ -107,10 +107,13 @@ def matchesMetadata (P : GroupPresentation) : Prop :=
   P.generatorCount = P.expectedGeneratorCount ∧
     P.transcribed.length = P.expectedRelatorCount
 
-/-- Matching metadata ensures that the compiled relator list has the recorded length. -/
-theorem length_relators_eq_expected (P : GroupPresentation) (h : P.matchesMetadata) :
+/-- A matching relator count ensures that the compiled relator list has the recorded length.
+
+A presentation satisfying `matchesMetadata` supplies this hypothesis as its second conjunct. -/
+theorem length_relators_eq_expected (P : GroupPresentation)
+    (h : P.transcribed.length = P.expectedRelatorCount) :
     P.relators.length = P.expectedRelatorCount :=
-  P.length_relators.trans h.2
+  P.length_relators.trans h
 
 end GroupPresentation
 
