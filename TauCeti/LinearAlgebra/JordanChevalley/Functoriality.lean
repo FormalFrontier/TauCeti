@@ -88,15 +88,17 @@ end Predicates
 section PerfectField
 
 variable [Field K] [AddCommGroup V] [Module K V] [AddCommGroup W] [Module K W]
-variable [PerfectField K] [FiniteDimensional K V] [FiniteDimensional K W]
+variable [PerfectField K] [FiniteDimensional K V]
 
 /-- The multiplicative Jordan--Chevalley decomposition commutes with transport by a linear
 equivalence. -/
 theorem jordanDecomposition_congrLinearEquiv
     (e : V ≃ₗ[K] W) (g : GeneralLinearGroup K V) :
+    letI := FiniteDimensional.of_surjective e.toLinearMap e.surjective
     jordanDecomposition (LinearMap.GeneralLinearGroup.congrLinearEquiv e g) =
       (LinearMap.GeneralLinearGroup.congrLinearEquiv e (semisimplePart g),
         LinearMap.GeneralLinearGroup.congrLinearEquiv e (unipotentPart g)) := by
+  let _ := FiniteDimensional.of_surjective e.toLinearMap e.surjective
   symm
   apply (eq_jordanDecomposition_iff
     (LinearMap.GeneralLinearGroup.congrLinearEquiv e g) _ _).2
@@ -111,9 +113,11 @@ a linear equivalence. -/
 @[simp]
 theorem semisimplePart_congrLinearEquiv
     (e : V ≃ₗ[K] W) (g : GeneralLinearGroup K V) :
+    letI := FiniteDimensional.of_surjective e.toLinearMap e.surjective
     semisimplePart (LinearMap.GeneralLinearGroup.ofLinearEquiv
       (e.symm.trans (g.toLinearEquiv.trans e))) =
       LinearMap.GeneralLinearGroup.congrLinearEquiv e (semisimplePart g) := by
+  let _ := FiniteDimensional.of_surjective e.toLinearMap e.surjective
   rw [← LinearMap.GeneralLinearGroup.congrLinearEquiv_apply e g]
   rw [semisimplePart_def (LinearMap.GeneralLinearGroup.congrLinearEquiv e g)]
   exact congrArg Prod.fst (jordanDecomposition_congrLinearEquiv e g)
@@ -123,9 +127,11 @@ linear equivalence. -/
 @[simp]
 theorem unipotentPart_congrLinearEquiv
     (e : V ≃ₗ[K] W) (g : GeneralLinearGroup K V) :
+    letI := FiniteDimensional.of_surjective e.toLinearMap e.surjective
     unipotentPart (LinearMap.GeneralLinearGroup.ofLinearEquiv
       (e.symm.trans (g.toLinearEquiv.trans e))) =
       LinearMap.GeneralLinearGroup.congrLinearEquiv e (unipotentPart g) := by
+  let _ := FiniteDimensional.of_surjective e.toLinearMap e.surjective
   rw [← LinearMap.GeneralLinearGroup.congrLinearEquiv_apply e g]
   rw [unipotentPart_def (LinearMap.GeneralLinearGroup.congrLinearEquiv e g)]
   exact congrArg Prod.snd (jordanDecomposition_congrLinearEquiv e g)
