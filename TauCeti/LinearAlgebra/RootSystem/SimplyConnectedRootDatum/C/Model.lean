@@ -278,7 +278,7 @@ This is a root only under `y ≠ signedNeg x`; on the excluded diagonal `y = -x`
 which is no root. -/
 def pairRoot (x y : Signed n) : Fin n → ℤ := signedWeight x + signedWeight y
 
-lemma pairRoot_eq (x y : Signed n) : pairRoot x y = signedWeight x + signedWeight y := by
+lemma pairRoot_def (x y : Signed n) : pairRoot x y = signedWeight x + signedWeight y := by
   rw [pairRoot]
 
 /-- The coroot of the root `p + q`, in simple-coroot coordinates. It is `p + q` again for the short
@@ -289,10 +289,10 @@ is no root `x + y` and the value here is auxiliary data. -/
 def pairCoroot (x y : Signed n) : Fin n → ℤ :=
   if x = y then signedCoweight x else signedCoweight x + signedCoweight y
 
-lemma pairCoroot_self (x : Signed n) : pairCoroot x x = signedCoweight x :=
+@[simp] lemma pairCoroot_self (x : Signed n) : pairCoroot x x = signedCoweight x :=
   if_pos rfl
 
-lemma pairCoroot_of_ne {x y : Signed n} (h : x ≠ y) :
+@[simp] lemma pairCoroot_of_ne {x y : Signed n} (h : x ≠ y) :
     pairCoroot x y = signedCoweight x + signedCoweight y :=
   if_neg h
 
@@ -387,29 +387,29 @@ def signedReflection (p q z : Signed n) : Signed n :=
   else if z = q then signedNeg p
   else z
 
-lemma signedReflection_left (p q : Signed n) :
+@[simp] lemma signedReflection_left (p q : Signed n) :
     signedReflection p q p = signedNeg q := by
   rw [signedReflection, if_pos rfl]
 
-lemma signedReflection_signedNeg_right {p q : Signed n} (h : q ≠ signedNeg p) :
+@[simp] lemma signedReflection_signedNeg_right {p q : Signed n} (h : q ≠ signedNeg p) :
     signedReflection p q (signedNeg q) = p := by
   rw [signedReflection, if_neg fun hc => h (by rw [← hc, signedNeg_signedNeg]), if_pos rfl]
 
-lemma signedReflection_signedNeg_left {p q : Signed n} (h : q ≠ signedNeg p) :
+@[simp] lemma signedReflection_signedNeg_left {p q : Signed n} (h : q ≠ signedNeg p) :
     signedReflection p q (signedNeg p) = q := by
   rcases eq_or_ne p q with rfl | hne
   · rw [signedReflection, if_neg (signedNeg_ne p), if_pos rfl]
   · rw [signedReflection, if_neg (signedNeg_ne p), if_neg fun hc => hne (signedNeg_injective hc),
       if_pos rfl]
 
-lemma signedReflection_right {p q : Signed n} (h : q ≠ signedNeg p) :
+@[simp] lemma signedReflection_right {p q : Signed n} (h : q ≠ signedNeg p) :
     signedReflection p q q = signedNeg p := by
   rcases eq_or_ne p q with rfl | hne
   · rw [signedReflection, if_pos rfl]
   · rw [signedReflection, if_neg hne.symm, if_neg (Ne.symm (signedNeg_ne q)), if_neg h,
       if_pos rfl]
 
-lemma signedReflection_of_ne {p q z : Signed n} (h1 : z ≠ p) (h2 : z ≠ q)
+@[simp] lemma signedReflection_of_ne {p q z : Signed n} (h1 : z ≠ p) (h2 : z ≠ q)
     (h3 : z ≠ signedNeg p) (h4 : z ≠ signedNeg q) : signedReflection p q z = z := by
   rw [signedReflection, if_neg h1, if_neg h4, if_neg h3, if_neg h2]
 

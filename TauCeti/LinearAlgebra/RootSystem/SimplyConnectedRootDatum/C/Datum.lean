@@ -155,12 +155,12 @@ private lemma typeCSnd_mk_of_not_lt {a b : Fin n} (h : ¬ a < b) (s : Bool) :
 
 private lemma typeCRoot_mk_of_lt {a b : Fin n} (h : a < b) (s : Bool) :
     typeCRoot ((a, b, s) : TypeCIndex n) = signedWeight (a, s) - signedWeight (b, s) := by
-  rw [typeCRoot, typeCFst_mk, typeCSnd_mk_of_lt h, pairRoot_eq, signedWeight_signedNeg]
+  rw [typeCRoot, typeCFst_mk, typeCSnd_mk_of_lt h, pairRoot_def, signedWeight_signedNeg]
   exact (sub_eq_add_neg _ _).symm
 
 private lemma typeCRoot_mk_of_not_lt {a b : Fin n} (h : ¬ a < b) (s : Bool) :
     typeCRoot ((a, b, s) : TypeCIndex n) = signedWeight (a, s) + signedWeight (b, s) := by
-  rw [typeCRoot, typeCFst_mk, typeCSnd_mk_of_not_lt h, pairRoot_eq]
+  rw [typeCRoot, typeCFst_mk, typeCSnd_mk_of_not_lt h, pairRoot_def]
 
 private lemma typeCCoroot_mk_of_lt {a b : Fin n} (h : a < b) (s : Bool) :
     typeCCoroot ((a, b, s) : TypeCIndex n) = signedCoweight (a, s) - signedCoweight (b, s) := by
@@ -477,13 +477,13 @@ private lemma typeCSnd_simple_of_last {i : Fin n} (h : (i : ℕ) + 1 = n) :
 
 private lemma typeCSimpleRoot_of_lt {i : Fin n} (h : (i : ℕ) + 1 < n) :
     typeCSimpleRoot i = weight n (i : ℕ) - weight n ((i : ℕ) + 1) := by
-  rw [typeCSimpleRoot, typeCRoot, typeCFst_simple, typeCSnd_simple_of_lt h, pairRoot_eq,
+  rw [typeCSimpleRoot, typeCRoot, typeCFst_simple, typeCSnd_simple_of_lt h, pairRoot_def,
     signedWeight_false, signedWeight_true, typeCSucc_of_lt h]
   exact (sub_eq_add_neg _ _).symm
 
 private lemma typeCSimpleRoot_of_last {i : Fin n} (h : (i : ℕ) + 1 = n) :
     typeCSimpleRoot i = weight n (i : ℕ) + weight n (i : ℕ) := by
-  rw [typeCSimpleRoot, typeCRoot, typeCFst_simple, typeCSnd_simple_of_last h, pairRoot_eq,
+  rw [typeCSimpleRoot, typeCRoot, typeCFst_simple, typeCSnd_simple_of_last h, pairRoot_def,
     signedWeight_false]
 
 private lemma typeCSimpleCoroot_eq (i : Fin n) :
