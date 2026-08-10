@@ -67,8 +67,7 @@ theorem mem_lieSubalgebra_definingHopfIdeal_iff
     (definingHopfIdeal_toIdeal R n) d]
   simp only [Set.mem_singleton_iff, forall_eq, map_sub, d.map_one_eq_zero, sub_zero]
   rw [GeneralLinear.trace_tangentMatrix]
-  exact (Bialgebra.CounitAlgebra.algEquivSelf R
-    (GeneralLinear.coordinateHopfAlgebra R n) B).map_eq_zero_iff.symm
+  rfl
 
 /-- The trace-zero matrix of a tangent vector to `SLₙ`. It is obtained by including the
 derivation into the tangent Lie algebra of `GLₙ` and evaluating on the generic matrix entries. -/

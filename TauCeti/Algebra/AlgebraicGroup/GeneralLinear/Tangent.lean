@@ -215,11 +215,11 @@ private theorem snd_det_eq_trace_of_fst_eq_one {C : Type*} [CommRing C] {n : ℕ
 /-- **The differential of the determinant on `GLₙ` is matrix trace.** Evaluating a tangent
 derivation on the generic determinant, then identifying its counit-valued coefficient with `B`,
 equals the trace of its tangent matrix. -/
+@[simp]
 theorem trace_tangentMatrix (d : Derivation R (H (R := R) n)
     (Bialgebra.CounitAlgebra R (H (R := R) n) B)) :
     Matrix.trace (tangentMatrix n d) =
-      Bialgebra.CounitAlgebra.algEquivSelf R (H (R := R) n) B
-        (d (determinantGroupLike R n : H (R := R) n)) := by
+      d (determinantGroupLike R n : H (R := R) n) := by
   let q := derivationMulEquivTangentKer R (H (R := R) n) B (.ofAdd d)
   let M : Matrix (Fin n) (Fin n) (DualNumber (Bialgebra.CounitAlgebra R
       (H (R := R) n) B)) := (pointsMulEquiv (R := R) n q.val).val
@@ -239,7 +239,6 @@ theorem trace_tangentMatrix (d : Derivation R (H (R := R) n)
       _ = _ := by simp only [M, q, tangentPoint_matrix_snd]
   -- Transport the entrywise identity through the coefficient equivalence.
   rw [hdet]
-  simp only [Bialgebra.CounitAlgebra.algEquivSelf_apply]
   apply Finset.sum_congr rfl
   intro i _
   -- Unfold the diagonal projections in the two traces before applying the entrywise API.
