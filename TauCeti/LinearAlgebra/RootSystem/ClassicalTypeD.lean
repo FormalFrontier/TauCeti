@@ -138,11 +138,6 @@ private lemma typeDRawRoot_injective : Injective (typeDRawRoot (n := n)) := by
   intro r s h
   exact typeDRawVector_injective (congrArg Subtype.val h)
 
-private lemma sq_eq_one_of_sq_le_two {z : ℤ} (hz : z ^ 2 ≤ 2) (hne : z ≠ 0) : z ^ 2 = 1 := by
-  have hzlow : -1 ≤ z := by nlinarith [sq_nonneg (z + 1)]
-  have hzhigh : z ≤ 1 := by nlinarith [sq_nonneg (z - 1)]
-  interval_cases z <;> simp_all
-
 private lemma typeDRoot_sq_le_two (x : TypeDRoot n) (i : Fin n) : x.1 i ^ 2 ≤ 2 := by
   have hnonneg : ∀ j : Fin n, 0 ≤ x.1 j ^ 2 := fun j => sq_nonneg _
   have hi : x.1 i ^ 2 ≤ ∑ j : Fin n, x.1 j ^ 2 :=
@@ -159,7 +154,7 @@ private lemma typeDRoot_support_card (x : TypeDRoot n) :
     intro i
     split_ifs with hi
     · simp [hi]
-    · exact sq_eq_one_of_sq_le_two (typeDRoot_sq_le_two x i) hi
+    · exact Int.sq_eq_one_of_sq_le_three ((typeDRoot_sq_le_two x i).trans (by norm_num)) hi
   have hsum : ∑ i : Fin n, (if x.1 i = 0 then 0 else (1 : ℤ)) = 2 := by
     calc
       _ = ∑ i : Fin n, x.1 i ^ 2 := Finset.sum_congr rfl fun i _ => (hsquare i).symm
@@ -214,9 +209,9 @@ private lemma typeDRawRoot_surjective : Surjective (typeDRawRoot (n := n)) := by
   have ha0 : x.1 a ≠ 0 := (Finset.mem_filter.mp hamem).2
   have hb0 : x.1 b ≠ 0 := (Finset.mem_filter.mp hbmem).2
   have ha : x.1 a = 1 ∨ x.1 a = -1 := sq_eq_one_iff.mp
-    (sq_eq_one_of_sq_le_two (typeDRoot_sq_le_two x a) ha0)
+    (Int.sq_eq_one_of_sq_le_three ((typeDRoot_sq_le_two x a).trans (by norm_num)) ha0)
   have hb : x.1 b = 1 ∨ x.1 b = -1 := sq_eq_one_iff.mp
-    (sq_eq_one_of_sq_le_two (typeDRoot_sq_le_two x b) hb0)
+    (Int.sq_eq_one_of_sq_le_three ((typeDRoot_sq_le_two x b).trans (by norm_num)) hb0)
   rcases lt_or_gt_of_ne hab with hab | hba
   · exact exists_typeDRawRoot_eq_of_lt x hab hsupp ha hb
   · exact exists_typeDRawRoot_eq_of_lt x hba (by simpa [Finset.pair_comm] using hsupp) hb ha
