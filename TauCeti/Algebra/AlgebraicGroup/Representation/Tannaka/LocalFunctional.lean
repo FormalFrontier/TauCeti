@@ -110,24 +110,6 @@ theorem regularInclusion_toLinearMap
   unfold regularInclusion
   rfl
 
-/-- Apply the coalgebra counit to the second factor of a scalar-extended finite regular
-subcomodule. -/
-noncomputable def counitEvaluation
-    (N : Subcomodule.finiteSubcomodules (R := k) (C := H) (M := H)) :
-    A ⊗[k] N.1 →ₗ[k] A :=
-  (TensorProduct.rid k A).toLinearMap.comp <|
-    TensorProduct.map LinearMap.id
-      ((Coalgebra.counit (R := k) (A := H)).comp (SMulMemClass.subtype N.1))
-
-/-- Evaluation by the counit on a pure tensor. -/
-@[simp]
-theorem counitEvaluation_tmul
-    (N : Subcomodule.finiteSubcomodules (R := k) (C := H) (M := H))
-    (a : A) (n : N.1) :
-    counitEvaluation k H A N (a ⊗ₜ[k] n) =
-      Coalgebra.counit (R := k) (n : H) • a := by
-  simp [counitEvaluation]
-
 /-- The component of a tensor automorphism on a finite regular subcomodule, transported from the
 object chosen by the scalar-extension functor to the explicit tensor product `A ⊗[k] N`. -/
 noncomputable def finiteRegularComponent
@@ -190,35 +172,6 @@ theorem finiteRegularComponent_natural
     (iQ.inv ≫ aQ ≫ iQ.hom).hom ∘ₗ bmap.hom
   simpa only [SemimoduleCat.hom_comp] using congrArg SemimoduleCat.Hom.hom hcat
 
-/-- Applying the counit after scalar-extending an inclusion of finite regular subcomodules does
-not depend on the chosen ambient subcomodule. -/
-theorem counitEvaluation_baseChange
-    (N Q : Subcomodule.finiteSubcomodules (R := k) (C := H) (M := H))
-    (hNQ : N.1 ≤ Q.1) (x : A ⊗[k] N.1) :
-    counitEvaluation k H A Q ((Submodule.inclusion hNQ).baseChange A x) =
-      counitEvaluation k H A N x := by
-  induction x using TensorProduct.induction_on with
-  | zero => simp
-  | add x y hx hy => simp [hx, hy]
-  | tmul a n => simp [counitEvaluation]
-
-/-- Counit evaluation is scalar-extended evaluation against the restriction of the counit. -/
-theorem counitEvaluation_eq_baseChangeEvaluation
-    (N : Subcomodule.finiteSubcomodules (R := k) (C := H) (M := H))
-    (x : A ⊗[k] N.1) :
-    counitEvaluation k H A N x =
-      TauCeti.Module.Dual.baseChangeEvaluation (R := k) (M := N.1) (A := A)
-        (1 ⊗ₜ[k] ((Coalgebra.counit (R := k) (A := H)).comp
-          (SMulMemClass.subtype N.1))) x := by
-  induction x using TensorProduct.induction_on with
-  | zero => simp
-  | add x y hx hy => simp [hx, hy]
-  | tmul a n =>
-      simp only [counitEvaluation_tmul,
-        TauCeti.Module.Dual.baseChangeEvaluation_tmul, LinearMap.comp_apply,
-        SMulMemClass.subtype_apply, one_mul]
-      rw [Algebra.smul_def, mul_comm]
-
 /-- The linear functional on a finite subcomodule of the regular comodule extracted from a
 tensor automorphism. It applies the automorphism to `1 ⊗ n` and then evaluates the regular
 coordinate by the counit. -/
@@ -227,7 +180,9 @@ noncomputable def localFunctional
     (N : Subcomodule.finiteSubcomodules (R := k) (C := H) (M := H)) :
     N.1 →ₗ[k] A := by
   let _ : Module.Finite k N.1 := Subcomodule.mem_finiteSubcomodules.mp N.2
-  exact (counitEvaluation k H A N).comp <|
+  exact ((TauCeti.Module.Dual.baseChangeEvaluation (R := k) (M := N.1) (A := A)
+    (1 ⊗ₜ[k] ((Coalgebra.counit (R := k) (A := H)).comp
+      (SMulMemClass.subtype N.1)))).restrictScalars k).comp <|
     ((finiteRegularComponent k H A η N).restrictScalars k).comp
       (TensorProduct.mk k A N.1 (1 : A))
 
@@ -236,7 +191,9 @@ theorem localFunctional_apply
     (η : Aut (FGComoduleCat.scalarExtensionMonoidalFunctor k H A))
     (N : Subcomodule.finiteSubcomodules (R := k) (C := H) (M := H)) (n : N.1) :
     localFunctional k H A η N n =
-      counitEvaluation k H A N
+      TauCeti.Module.Dual.baseChangeEvaluation (R := k) (M := N.1) (A := A)
+        (1 ⊗ₜ[k] ((Coalgebra.counit (R := k) (A := H)).comp
+          (SMulMemClass.subtype N.1)))
         (finiteRegularComponent k H A η N (1 ⊗ₜ[k] n)) :=
   by
     unfold localFunctional
@@ -256,7 +213,16 @@ theorem localFunctional_mono
   have happ := LinearMap.congr_fun (finiteRegularComponent_natural k H A η N Q hNQ)
     (1 ⊗ₜ[k] n)
   simp only [LinearMap.comp_apply, LinearMap.baseChange_tmul] at happ
-  rw [← counitEvaluation_baseChange k H A N Q hNQ, happ]
+  rw [← happ]
+  induction finiteRegularComponent k H A η N (1 ⊗ₜ[k] n) using
+    TensorProduct.induction_on with
+  | zero => simp
+  | add x y hx hy => simp [hx, hy]
+  | tmul a m =>
+      simp only [LinearMap.baseChange_tmul,
+        TauCeti.Module.Dual.baseChangeEvaluation_tmul, LinearMap.comp_apply,
+        SMulMemClass.subtype_apply, one_mul]
+      rfl
 
 /-- The finite regular component of the tensor automorphism induced by a point is the usual
 point action on that finite subcomodule. -/
@@ -286,7 +252,6 @@ theorem localFunctional_fgPointTensorIso
     localFunctional k H A (fgPointTensorIsoHom k H A g) N n = g.ofConv n := by
   rw [localFunctional_apply, finiteRegularComponent_fgPointTensorIso]
   rw [Comodule.pointsAction_toLinearMap]
-  rw [counitEvaluation_eq_baseChangeEvaluation]
   let φ : Module.Dual k N.1 :=
     (Coalgebra.counit (R := k) (A := H)).comp (SMulMemClass.subtype N.1)
   have hcoeff : Comodule.matrixCoefficient (R := k) (C := H) φ n = (n : H) := by
