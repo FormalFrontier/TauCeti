@@ -36,7 +36,9 @@ constructed directly on the set of squared-length-two vectors and proved involut
 * `TauCeti.DynkinType.sum_smul_typeDSimpleRootCoordinates` expands every root in that basis, and
   `TauCeti.DynkinType.typeDSimpleRootCoordinates_nonneg_or_nonpos` says the expansion has
   coefficients of one sign.
-* `TauCeti.DynkinType.typeDRootReflectionEquiv` is reflection in a root.
+* `TauCeti.DynkinType.linearIndependent_typeDSimpleRoot` says that basis is linearly independent.
+* `TauCeti.DynkinType.typeDRootReflectionEquiv` is reflection in a root, acting on the coordinates
+  by `TauCeti.DynkinType.typeDSimpleRootCoordinates_typeDRootReflection`.
 
 ## References
 
@@ -426,14 +428,16 @@ def typeDSimpleRoot (n : ℕ) (hn : 4 ≤ n) (i : Fin n) : Fin n → ℤ :=
   else
     Pi.single ⟨n - 2, by omega⟩ 1 + Pi.single ⟨n - 1, by omega⟩ 1
 
-/-- The chain simple roots of type `Dₙ`, namely the Bourbaki nodes `1` to `n - 1`: the `i`-th one
-is `e_i - e_{i+1}`. -/
+/-- The chain simple roots of type `Dₙ`, the `Fin`-indices `0` to `n - 2`: the `i`-th one is
+`e_i - e_{i+1}`. Here and below both the simple roots and the coordinates `e_j` are indexed from
+zero, so `Fin`-index `i` is Bourbaki node `i + 1`. -/
 theorem typeDSimpleRoot_of_add_one_lt (hn : 4 ≤ n) {i : Fin n} (hi : (i : ℕ) + 1 < n) :
     typeDSimpleRoot n hn i = Pi.single i 1 - Pi.single ⟨(i : ℕ) + 1, hi⟩ 1 :=
   dif_pos hi
 
-/-- The fork simple root of type `Dₙ`, namely the Bourbaki node `n`: it is `e_{n-2} + e_{n-1}`, the
-only simple root that is not a difference of two coordinates. -/
+/-- The fork simple root of type `Dₙ`, the `Fin`-index `n - 1` and so Bourbaki node `n`: in the
+zero-based coordinates it is `e_{n-2} + e_{n-1}`, the only simple root that is not a difference of
+two coordinates. -/
 theorem typeDSimpleRoot_of_not_add_one_lt (hn : 4 ≤ n) {i : Fin n} (hi : ¬(i : ℕ) + 1 < n) :
     typeDSimpleRoot n hn i =
       Pi.single ⟨n - 2, by omega⟩ 1 + Pi.single ⟨n - 1, by omega⟩ 1 :=
@@ -905,6 +909,76 @@ theorem typeDSimpleRootCoordinates_nonneg_or_nonpos (hn : 4 ≤ n) (x : TypeDRoo
       rw [hyv, hxv, typeDRawVector, if_neg hs]
     rw [typeDSimpleRootCoordinates_of_eq_neg hn hneg k, neg_nonpos]
     exact typeDSimpleRootCoordinates_nonneg_of_pairVector hn _ p hyv k
+
+/-! ## The doubled fundamental coweights
+
+The coefficients of a root in the Bourbaki simple-root basis are read off the classical vector by
+pairing it against an explicit integral family, twice the fundamental coweights. Halving is
+unavoidable — the last two fundamental coweights of type `Dₙ` are not integral vectors — and
+doubling is harmless, since `ℤ` is torsion free. That one family does two jobs: it is a dual family
+for the simple roots up to the factor two, which gives their linear independence, and it exhibits
+the coefficient map as the restriction of a linear map, which gives the action of a reflection on
+the coordinates. -/
+
+/-- Twice the `k`-th fundamental coweight of type `Dₙ`, in classical orthogonal coordinates. The
+last two fundamental coweights of type `Dₙ` are half-integral, so the doubling is what keeps this
+family inside `ℤ ^ n`; over `ℤ` it is still enough to separate the simple roots. -/
+private def typeDDoubleCoweight (n : ℕ) (k : Fin n) : Fin n → ℤ := fun j =>
+  if (k : ℕ) + 2 < n then (if (j : ℕ) ≤ (k : ℕ) then 2 else 0)
+  else if (k : ℕ) + 1 < n then (if (j : ℕ) + 1 = n then -1 else 1)
+  else 1
+
+/-- The doubled fundamental coweights are dual to the simple roots, up to the factor two. -/
+private lemma typeDDoubleCoweight_dotProduct_typeDSimpleRoot (hn : 4 ≤ n) (k i : Fin n) :
+    typeDDoubleCoweight n k ⬝ᵥ typeDSimpleRoot n hn i = if (k : ℕ) = (i : ℕ) then 2 else 0 := by
+  have hk := k.isLt
+  have hi' := i.isLt
+  by_cases hi : (i : ℕ) + 1 < n
+  · rw [typeDSimpleRoot_of_add_one_lt hn hi, dotProduct_sub, dotProduct_single, dotProduct_single]
+    simp only [typeDDoubleCoweight, mul_one]
+    split_ifs <;> omega
+  · rw [typeDSimpleRoot_of_not_add_one_lt hn hi, dotProduct_add, dotProduct_single,
+      dotProduct_single]
+    simp only [typeDDoubleCoweight, mul_one]
+    split_ifs <;> omega
+
+/-- Pairing an integral combination of the simple roots against a doubled fundamental coweight
+isolates twice the corresponding coefficient. -/
+private lemma typeDDoubleCoweight_dotProduct_sum_smul (hn : 4 ≤ n) (c : Fin n → ℤ) (k : Fin n) :
+    typeDDoubleCoweight n k ⬝ᵥ ∑ i : Fin n, c i • typeDSimpleRoot n hn i = 2 * c k := by
+  rw [dotProduct_sum]
+  simp only [dotProduct_smul, smul_eq_mul, typeDDoubleCoweight_dotProduct_typeDSimpleRoot,
+    Fin.val_inj, mul_ite, mul_zero, Finset.sum_ite_eq, Finset.mem_univ, if_true]
+  ring
+
+/-- **The Bourbaki simple roots of type `Dₙ` are linearly independent.** Pairing a relation with a
+doubled fundamental coweight isolates twice one coefficient, and `ℤ` is torsion free. -/
+theorem linearIndependent_typeDSimpleRoot (hn : 4 ≤ n) :
+    LinearIndependent ℤ (typeDSimpleRoot n hn) := by
+  rw [Fintype.linearIndependent_iff]
+  intro g hg k
+  have h := typeDDoubleCoweight_dotProduct_sum_smul hn g k
+  rw [hg, dotProduct_zero] at h
+  omega
+
+/-- Twice the coefficients of a root in the Bourbaki simple-root basis are the dot products with
+the doubled fundamental coweights. -/
+private lemma two_mul_typeDSimpleRootCoordinates (hn : 4 ≤ n) (x : TypeDRoot n) (k : Fin n) :
+    2 * typeDSimpleRootCoordinates n hn x k = typeDDoubleCoweight n k ⬝ᵥ x.1 := by
+  conv_rhs => rw [← sum_smul_typeDSimpleRootCoordinates hn x]
+  rw [typeDDoubleCoweight_dotProduct_sum_smul]
+
+/-- **Reflection acts on the simple-root coordinates by the classical formula.** Doubling the
+coordinates turns them into dot products, which are linear, and `ℤ` is torsion free. -/
+theorem typeDSimpleRootCoordinates_typeDRootReflection (hn : 4 ≤ n) (u v : TypeDRoot n) :
+    typeDSimpleRootCoordinates n hn (typeDRootReflection u v) =
+      typeDSimpleRootCoordinates n hn v - (v.1 ⬝ᵥ u.1) • typeDSimpleRootCoordinates n hn u := by
+  funext k
+  have h := two_mul_typeDSimpleRootCoordinates hn (typeDRootReflection u v) k
+  rw [typeDRootReflection_val, dotProduct_sub, dotProduct_smul, smul_eq_mul,
+    ← two_mul_typeDSimpleRootCoordinates hn v k, ← two_mul_typeDSimpleRootCoordinates hn u k] at h
+  simp only [Pi.sub_apply, Pi.smul_apply, smul_eq_mul]
+  linarith
 
 end DynkinType
 

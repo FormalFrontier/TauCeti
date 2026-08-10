@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.LinearAlgebra.RootSystem.ClassicalTypeD
-public import TauCeti.LinearAlgebra.RootSystem.NumberOfRoots
+public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.Basic
 public import Mathlib.LinearAlgebra.Matrix.Dual
 public import Mathlib.LinearAlgebra.RootSystem.Base
 
@@ -22,13 +22,17 @@ simple root is the `i`-th row of the Bourbaki-numbered Cartan matrix `CartanMatr
 
 ## The coordinates
 
+Simple roots and coordinates alike are indexed from zero throughout: the simple root `αᵢ` is
+Bourbaki node `i + 1`, and `e_j` is the zero-based coordinate `j`, so what is called `α_{n-1}` here
+is Bourbaki's fork root `α_n`.
+
 The classical model is `ℤ ^ n` with the dot product: the `2 * n * (n - 1)` roots are the vectors
 `±e_a ± e_b` with `a ≠ b`, which are exactly the integral vectors of squared length two, and the
 Bourbaki simple roots are `αᵢ = eᵢ - eᵢ₊₁` for `i + 1 < n` together with the fork root
 `α_{n-1} = e_{n-2} + e_{n-1}`. That model, its enumeration by `Fin (2 * n * (n - 1))` with the
-simple roots first, the expansion of every root in the simple roots, and reflection in a root are
-all supplied by `TauCeti.LinearAlgebra.RootSystem.ClassicalTypeD` and are consumed here rather than
-rebuilt.
+simple roots first, the expansion of every root in the simple roots, their linear independence and
+reflection in a root are all supplied by `TauCeti.LinearAlgebra.RootSystem.ClassicalTypeD` and are
+consumed here rather than rebuilt.
 
 Type `Dₙ` is simply laced, so `α^∨ = α` under the dot product and both pinned lattices are images
 of the one classical model:
@@ -41,14 +45,6 @@ The first records a vector by its pairings against the simple coroots, the secon
 coordinates in the simple coroots. Because the second family reconstructs the classical vector,
 the pinned pairing is the classical dot product, `typeDWeight_dotProduct_coordinates`, and every
 axiom of the datum reduces to a statement about `⬝ᵥ` on `ℤ ^ n`.
-
-The coefficients themselves are recovered from the classical vector by
-`two_mul_typeDSimpleRootCoordinates`: twice the `k`-th coefficient is the dot product with an
-explicit integral vector `typeDDoubleCoweight n k`, twice the `k`-th fundamental coweight. Halving
-is unavoidable — the last two fundamental coweights of type `Dₙ` are not integral vectors — and
-doubling is harmless, since `ℤ` is torsion free. That one family does two jobs: it is a dual family
-for the simple roots up to the factor two, which gives their linear independence, and it makes the
-coefficient map visibly linear, which gives the reflection axiom for the coroots.
 
 The roots are indexed by `Fin (2 * n * (n - 1))` through `TauCeti.DynkinType.typeDRootEquiv`, whose
 first `n` values are the simple roots in Bourbaki order. That index type is the one Layer 6 pins
@@ -70,8 +66,10 @@ here.
 * `TauCeti.DynkinType.root_typeDSimpleIndex` and `TauCeti.DynkinType.coroot_typeDSimpleIndex`: the
   `i`-th simple root is the `i`-th row of `CartanMatrix.D n` and the `i`-th simple coroot is
   `Pi.single i 1`, which is what pins the two lattices as the weight and coroot lattices.
-* `TauCeti.DynkinType.linearIndependent_typeDSimpleRoot`: the classical simple roots are linearly
-  independent.
+* `TauCeti.DynkinType.toLinearMap_typeDSimplyConnectedRootDatum` and
+  `TauCeti.DynkinType.toLinearMap_typeDSimplyConnectedRootDatum_single_single`: the pinned pairing
+  is the classical dot product, and the standard basis of the character lattice is the family of
+  fundamental weights.
 * `TauCeti.DynkinType.hasCartanType_typeDSimplyConnectedRootDatum`: the pinned base has Cartan type
   `D n`.
 * `TauCeti.DynkinType.corootSpan_typeDSimplyConnectedRootDatum_eq_top`: the coroots span the
@@ -81,7 +79,11 @@ here.
 
 The coordinates and the node numbering follow Bourbaki, *Lie Groups and Lie Algebras, Chapters
 4--6*, Plate IV, and Humphreys, *Introduction to Lie Algebras and Representation Theory*, section
-12.1. This is the `Dₙ` branch of the target "a named datum per valid type" in Layer 6 of
+12.1. The layout of the file follows its sibling
+`TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.A` (#2594), whose type-agnostic
+scaffolding — the perfect pairing, the pinned support, the Cartan-type criterion and the coroot
+span — now lives in `TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.Basic` and is shared
+with this file. This is the `Dₙ` branch of the target "a named datum per valid type" in Layer 6 of
 `TauCetiRoadmap/RepresentationTheory/RootSystems/README.md`.
 -/
 
@@ -95,34 +97,25 @@ variable {n : ℕ}
 
 /-! ## The Gram matrix of the Bourbaki simple roots -/
 
-private lemma typeDSimpleRoot_apply (hn : 4 ≤ n) (i k : Fin n) :
-    typeDSimpleRoot n hn i k =
-      if (i : ℕ) + 1 < n then
-        (if (k : ℕ) = (i : ℕ) then 1 else 0) - (if (k : ℕ) = (i : ℕ) + 1 then 1 else 0)
-      else (if (k : ℕ) = n - 2 then 1 else 0) + (if (k : ℕ) = n - 1 then 1 else 0) := by
-  by_cases hi : (i : ℕ) + 1 < n
-  · rw [typeDSimpleRoot_of_add_one_lt hn hi, if_pos hi]
-    simp [Pi.single_apply, Fin.ext_iff]
-  · rw [typeDSimpleRoot_of_not_add_one_lt hn hi, if_neg hi]
-    simp [Pi.single_apply, Fin.ext_iff]
-
 private lemma typeDSimpleRoot_apply_of_add_one_lt (hn : 4 ≤ n) {i : Fin n}
     (hi : (i : ℕ) + 1 < n) (k : Fin n) :
     typeDSimpleRoot n hn i k =
       (if (k : ℕ) = (i : ℕ) then 1 else 0) - (if (k : ℕ) = (i : ℕ) + 1 then 1 else 0) := by
-  rw [typeDSimpleRoot_apply, if_pos hi]
+  rw [typeDSimpleRoot_of_add_one_lt hn hi]
+  simp [Pi.single_apply, Fin.ext_iff]
 
 private lemma typeDSimpleRoot_apply_of_not_add_one_lt (hn : 4 ≤ n) {i : Fin n}
     (hi : ¬(i : ℕ) + 1 < n) (k : Fin n) :
     typeDSimpleRoot n hn i k =
       (if (k : ℕ) = n - 2 then 1 else 0) + (if (k : ℕ) = n - 1 then 1 else 0) := by
-  rw [typeDSimpleRoot_apply, if_neg hi]
+  rw [typeDSimpleRoot_of_not_add_one_lt hn hi]
+  simp [Pi.single_apply, Fin.ext_iff]
 
 /-- The Bourbaki `Dₙ` diagram read off `CartanMatrix.D`: two distinct nodes are joined when they
 are consecutive among the first `n - 1` nodes, or are the branch node `n - 3` and the last node
 `n - 1`. Separating this from the six-way definition keeps the Gram-matrix case analysis below
 small. -/
-private lemma cartanMatrix_D_apply (i j : Fin n) :
+private lemma cartanMatrixD_apply (i j : Fin n) :
     CartanMatrix.D n i j =
       (if (i : ℕ) = (j : ℕ) then 2 else 0) -
         (if ((i : ℕ) + 1 = (j : ℕ) ∧ (j : ℕ) + 2 ≤ n) ∨
@@ -141,7 +134,7 @@ private lemma typeDSimpleRoot_dotProduct_of_add_one_lt (hn : 4 ≤ n) {i : Fin n
   have hi' := i.isLt
   have hj' := j.isLt
   rw [typeDSimpleRoot_of_add_one_lt hn hi, sub_dotProduct, single_dotProduct, single_dotProduct,
-    cartanMatrix_D_apply]
+    cartanMatrixD_apply]
   by_cases hj : (j : ℕ) + 1 < n
   · simp only [typeDSimpleRoot_apply_of_add_one_lt hn hj, one_mul]
     split_ifs <;> omega
@@ -155,7 +148,7 @@ private lemma typeDSimpleRoot_dotProduct_of_not_add_one_lt (hn : 4 ≤ n) {i : F
   have hi' := i.isLt
   have hj' := j.isLt
   rw [typeDSimpleRoot_of_not_add_one_lt hn hi, add_dotProduct, single_dotProduct,
-    single_dotProduct, cartanMatrix_D_apply]
+    single_dotProduct, cartanMatrixD_apply]
   by_cases hj : (j : ℕ) + 1 < n
   · simp only [typeDSimpleRoot_apply_of_add_one_lt hn hj, one_mul]
     split_ifs <;> omega
@@ -171,102 +164,58 @@ private lemma typeDSimpleRoot_dotProduct (hn : 4 ≤ n) (i j : Fin n) :
   · exact typeDSimpleRoot_dotProduct_of_add_one_lt hn hi j
   · exact typeDSimpleRoot_dotProduct_of_not_add_one_lt hn hi j
 
-/-! ## The doubled fundamental coweights -/
-
-/-- Twice the `k`-th fundamental coweight of type `Dₙ`, in classical orthogonal coordinates. The
-last two fundamental coweights of type `Dₙ` are half-integral, so the doubling is what keeps this
-family inside `ℤ ^ n`; over `ℤ` it is still enough to separate the simple roots. -/
-private def typeDDoubleCoweight (n : ℕ) (k : Fin n) : Fin n → ℤ := fun j =>
-  if (k : ℕ) + 2 < n then (if (j : ℕ) ≤ (k : ℕ) then 2 else 0)
-  else if (k : ℕ) + 1 < n then (if (j : ℕ) + 1 = n then -1 else 1)
-  else 1
-
-/-- The doubled fundamental coweights are dual to the simple roots, up to the factor two. -/
-private lemma typeDDoubleCoweight_dotProduct_typeDSimpleRoot (hn : 4 ≤ n) (k i : Fin n) :
-    typeDDoubleCoweight n k ⬝ᵥ typeDSimpleRoot n hn i = if (k : ℕ) = (i : ℕ) then 2 else 0 := by
-  have hk := k.isLt
-  have hi' := i.isLt
-  by_cases hi : (i : ℕ) + 1 < n
-  · rw [typeDSimpleRoot_of_add_one_lt hn hi, dotProduct_sub, dotProduct_single, dotProduct_single]
-    simp only [typeDDoubleCoweight, mul_one]
-    split_ifs <;> omega
-  · rw [typeDSimpleRoot_of_not_add_one_lt hn hi, dotProduct_add, dotProduct_single,
-      dotProduct_single]
-    simp only [typeDDoubleCoweight, mul_one]
-    split_ifs <;> omega
-
-/-- **The Bourbaki simple roots of type `Dₙ` are linearly independent.** Pairing a relation with a
-doubled fundamental coweight isolates twice one coefficient, and `ℤ` is torsion free. -/
-theorem linearIndependent_typeDSimpleRoot (hn : 4 ≤ n) :
-    LinearIndependent ℤ (typeDSimpleRoot n hn) := by
-  rw [Fintype.linearIndependent_iff]
-  intro g hg k
-  have h : typeDDoubleCoweight n k ⬝ᵥ ∑ i : Fin n, g i • typeDSimpleRoot n hn i = 0 := by
-    rw [hg, dotProduct_zero]
-  rw [dotProduct_sum] at h
-  simp only [dotProduct_smul, smul_eq_mul, typeDDoubleCoweight_dotProduct_typeDSimpleRoot,
-    Fin.val_inj, mul_ite, mul_zero, Finset.sum_ite_eq, Finset.mem_univ, if_true] at h
-  omega
-
-/-- Twice the coefficients of a root in the Bourbaki simple-root basis are the dot products with
-the doubled fundamental coweights. This exhibits the coefficient map as the restriction of a linear
-map, which is what the reflection axiom for the coroots needs. -/
-private lemma two_mul_typeDSimpleRootCoordinates (hn : 4 ≤ n) (x : TypeDRoot n) (k : Fin n) :
-    2 * typeDSimpleRootCoordinates n hn x k = typeDDoubleCoweight n k ⬝ᵥ x.1 := by
-  conv_rhs => rw [← sum_smul_typeDSimpleRootCoordinates hn x]
+/-- A combination of the simple roots orthogonal to every simple root is orthogonal to itself,
+hence zero. This is the nondegeneracy behind both injectivity of the roots and linear independence
+of the simple ones. -/
+private lemma sum_smul_typeDSimpleRoot_eq_zero (hn : 4 ≤ n) {c : Fin n → ℤ}
+    (h : ∀ j, (∑ i : Fin n, c i • typeDSimpleRoot n hn i) ⬝ᵥ typeDSimpleRoot n hn j = 0) :
+    ∑ i : Fin n, c i • typeDSimpleRoot n hn i = 0 := by
+  refine dotProduct_self_eq_zero.mp ?_
   rw [dotProduct_sum]
-  simp only [dotProduct_smul, smul_eq_mul, typeDDoubleCoweight_dotProduct_typeDSimpleRoot,
-    Fin.val_inj, mul_ite, mul_zero, Finset.sum_ite_eq, Finset.mem_univ, if_true]
-  ring
+  exact Finset.sum_eq_zero fun i _ => by rw [dotProduct_smul, h i, smul_zero]
 
 /-! ## The two pinned coordinate families -/
 
 /-- The character-lattice coordinates of a classical vector of type `Dₙ`: its pairings against the
-Bourbaki-numbered simple coroots, which for a simply laced type are the simple roots. -/
-private def typeDWeight (n : ℕ) (hn : 4 ≤ n) (x : Fin n → ℤ) : Fin n → ℤ :=
-  fun j => x ⬝ᵥ typeDSimpleRoot n hn j
+Bourbaki-numbered simple coroots, which for a simply laced type are the simple roots. Reading the
+simple roots as the rows of a matrix exhibits this as a linear map. -/
+private def typeDWeight (n : ℕ) (hn : 4 ≤ n) : (Fin n → ℤ) →ₗ[ℤ] Fin n → ℤ :=
+  (Matrix.of (typeDSimpleRoot n hn)).mulVecLin
 
-private lemma typeDWeight_sub (hn : 4 ≤ n) (x y : Fin n → ℤ) :
-    typeDWeight n hn (x - y) = typeDWeight n hn x - typeDWeight n hn y := by
-  funext j
-  simp only [typeDWeight, Pi.sub_apply, sub_dotProduct]
-
-private lemma typeDWeight_sub_smul (hn : 4 ≤ n) (x y : Fin n → ℤ) (t : ℤ) :
-    typeDWeight n hn (x - t • y) = typeDWeight n hn x - t • typeDWeight n hn y := by
-  funext j
-  simp only [typeDWeight, Pi.sub_apply, Pi.smul_apply, sub_dotProduct, smul_dotProduct]
-
-private lemma typeDWeight_sum_smul (hn : 4 ≤ n) (g : Fin n → ℤ) (v : Fin n → (Fin n → ℤ)) :
-    typeDWeight n hn (∑ i : Fin n, g i • v i) = ∑ i : Fin n, g i • typeDWeight n hn (v i) := by
-  funext j
-  simp only [typeDWeight, Finset.sum_apply, Pi.smul_apply, sum_dotProduct, smul_dotProduct]
+private lemma typeDWeight_apply (hn : 4 ≤ n) (x : Fin n → ℤ) (j : Fin n) :
+    typeDWeight n hn x j = x ⬝ᵥ typeDSimpleRoot n hn j := by
+  rw [typeDWeight, Matrix.mulVecLin_apply]
+  exact dotProduct_comm _ _
 
 /-- **The pinned pairing is the classical dot product.** Pairing the weight coordinates of a vector
 against the coefficients of a root evaluates the vector on that root, because the coefficients
 reconstruct the root. -/
 private lemma typeDWeight_dotProduct_coordinates (hn : 4 ≤ n) (x : Fin n → ℤ) (y : TypeDRoot n) :
     typeDWeight n hn x ⬝ᵥ typeDSimpleRootCoordinates n hn y = x ⬝ᵥ y.1 := by
-  calc typeDWeight n hn x ⬝ᵥ typeDSimpleRootCoordinates n hn y
-      = ∑ j : Fin n, x ⬝ᵥ (typeDSimpleRootCoordinates n hn y j • typeDSimpleRoot n hn j) := by
-        refine Finset.sum_congr rfl fun j _ => ?_
-        rw [dotProduct_smul, smul_eq_mul, mul_comm]
-        rfl
-    _ = x ⬝ᵥ ∑ j : Fin n, typeDSimpleRootCoordinates n hn y j • typeDSimpleRoot n hn j :=
-        (dotProduct_sum _ _ _).symm
-    _ = x ⬝ᵥ y.1 := by rw [sum_smul_typeDSimpleRootCoordinates hn y]
+  have hleft : typeDWeight n hn x ⬝ᵥ typeDSimpleRootCoordinates n hn y =
+      ∑ j : Fin n, typeDSimpleRootCoordinates n hn y j • (x ⬝ᵥ typeDSimpleRoot n hn j) := by
+    simp only [dotProduct, typeDWeight_apply, smul_eq_mul]
+    exact Finset.sum_congr rfl fun j _ => mul_comm _ _
+  rw [hleft]
+  conv_rhs => rw [← sum_smul_typeDSimpleRootCoordinates hn y]
+  rw [dotProduct_sum]
+  exact Finset.sum_congr rfl fun j _ => (dotProduct_smul _ _ _).symm
 
 private lemma typeDWeight_injective (hn : 4 ≤ n) :
     Injective fun x : TypeDRoot n => typeDWeight n hn x.1 := by
   intro x y hxy
   have hxy' : typeDWeight n hn x.1 = typeDWeight n hn y.1 := hxy
-  have hzero : typeDWeight n hn (x.1 - y.1) = 0 := by
-    rw [typeDWeight_sub, hxy']
-    exact sub_self _
-  have hd : ∀ z : TypeDRoot n, (x.1 - y.1) ⬝ᵥ z.1 = 0 := fun z => by
-    rw [← typeDWeight_dotProduct_coordinates hn (x.1 - y.1) z, hzero, zero_dotProduct]
-  have hself : (x.1 - y.1) ⬝ᵥ (x.1 - y.1) = 0 := by
-    rw [dotProduct_sub, hd x, hd y, sub_zero]
-  exact Subtype.ext (sub_eq_zero.mp (dotProduct_self_eq_zero.mp hself))
+  -- The difference of two roots is the combination of the simple roots with the difference of
+  -- their coordinates, and the hypothesis makes it orthogonal to every simple root.
+  have hexp : x.1 - y.1 = ∑ i : Fin n,
+      (typeDSimpleRootCoordinates n hn x - typeDSimpleRootCoordinates n hn y) i •
+        typeDSimpleRoot n hn i := by
+    simp only [Pi.sub_apply, sub_smul, Finset.sum_sub_distrib,
+      sum_smul_typeDSimpleRootCoordinates]
+  refine Subtype.ext (sub_eq_zero.mp ?_)
+  rw [hexp]
+  refine sum_smul_typeDSimpleRoot_eq_zero hn fun j => ?_
+  rw [← hexp, ← typeDWeight_apply hn, map_sub, hxy', sub_self, Pi.zero_apply]
 
 private lemma typeDSimpleRootCoordinates_injective (hn : 4 ≤ n) :
     Injective (typeDSimpleRootCoordinates n hn) := by
@@ -279,17 +228,7 @@ private lemma typeDSimpleRootCoordinates_injective (hn : 4 ≤ n) :
 private lemma typeDWeight_typeDRootReflection (hn : 4 ≤ n) (u v : TypeDRoot n) :
     typeDWeight n hn (typeDRootReflection u v).1 =
       typeDWeight n hn v.1 - (v.1 ⬝ᵥ u.1) • typeDWeight n hn u.1 := by
-  rw [typeDRootReflection_val, typeDWeight_sub_smul]
-
-private lemma typeDSimpleRootCoordinates_typeDRootReflection (hn : 4 ≤ n) (u v : TypeDRoot n) :
-    typeDSimpleRootCoordinates n hn (typeDRootReflection u v) =
-      typeDSimpleRootCoordinates n hn v - (v.1 ⬝ᵥ u.1) • typeDSimpleRootCoordinates n hn u := by
-  funext k
-  have h := two_mul_typeDSimpleRootCoordinates hn (typeDRootReflection u v) k
-  rw [typeDRootReflection_val, dotProduct_sub, dotProduct_smul, smul_eq_mul,
-    ← two_mul_typeDSimpleRootCoordinates hn v k, ← two_mul_typeDSimpleRootCoordinates hn u k] at h
-  simp only [Pi.sub_apply, Pi.smul_apply, smul_eq_mul]
-  linarith
+  rw [typeDRootReflection_val, map_sub, map_smul]
 
 /-- Reflection in the root indexed by `k`, transported to the enumeration of the roots. -/
 private noncomputable def typeDReflectionPerm (n : ℕ) (hn : 4 ≤ n)
@@ -321,12 +260,6 @@ private lemma typeDReflectionPerm_coroot (hn : 4 ≤ n) (k l : Fin (2 * n * (n -
     typeDWeight_dotProduct_coordinates,
     dotProduct_comm (typeDRootEquiv n hn k).1 (typeDRootEquiv n hn l).1]
 
-private instance : (dotProductBilin ℤ ℤ :
-    (Fin n → ℤ) →ₗ[ℤ] (Fin n → ℤ) →ₗ[ℤ] ℤ).IsPerfPair := by
-  -- `dotProductEquiv` has `dotProductBilin` as its underlying linear map by definition.
-  change (dotProductEquiv ℤ (Fin n)).toLinearMap.IsPerfPair
-  infer_instance
-
 /-! ## The pinned root datum -/
 
 /-- The pinned simply connected root datum of type `Dₙ`, for `n ≥ 4`.
@@ -349,17 +282,50 @@ noncomputable def typeDSimplyConnectedRootDatum (n : ℕ) (hn : 4 ≤ n) :
   reflectionPerm_root := typeDReflectionPerm_root hn
   reflectionPerm_coroot := typeDReflectionPerm_coroot hn
 
-/-- The root index type used above is the one the Dynkin type pins. -/
-example (n : ℕ) : (DynkinType.D n).numRoots = 2 * n * (n - 1) := numRoots_D n
+-- The body of `typeDSimplyConnectedRootDatum` is not `@[expose]`d, so these three unfolding
+-- lemmas are the only proofs that open it up; everything public below goes through them.
+private lemma toLinearMap_eq_dotProductBilin (hn : 4 ≤ n) :
+    (typeDSimplyConnectedRootDatum n hn).toLinearMap = dotProductBilin ℤ ℤ :=
+  rfl
 
-private lemma root_typeDSimplyConnectedRootDatum (hn : 4 ≤ n) (k : Fin (2 * n * (n - 1))) :
+private lemma root_eq_typeDWeight (hn : 4 ≤ n) (k : Fin (2 * n * (n - 1))) :
     (typeDSimplyConnectedRootDatum n hn).root k = typeDWeight n hn (typeDRootEquiv n hn k).1 :=
   rfl
 
-private lemma coroot_typeDSimplyConnectedRootDatum (hn : 4 ≤ n) (k : Fin (2 * n * (n - 1))) :
+private lemma coroot_eq_typeDSimpleRootCoordinates (hn : 4 ≤ n) (k : Fin (2 * n * (n - 1))) :
     (typeDSimplyConnectedRootDatum n hn).coroot k =
       typeDSimpleRootCoordinates n hn (typeDRootEquiv n hn k) :=
   rfl
+
+/-- **The pinned pairing is the classical dot product**, in both the fundamental-weight and the
+simple-coroot coordinates. -/
+theorem toLinearMap_typeDSimplyConnectedRootDatum (hn : 4 ≤ n) (x y : Fin n → ℤ) :
+    (typeDSimplyConnectedRootDatum n hn).toLinearMap x y = x ⬝ᵥ y := by
+  rw [toLinearMap_eq_dotProductBilin]
+  rfl
+
+/-- **The standard basis of the character lattice is the family of fundamental weights.** By
+`TauCeti.DynkinType.coroot_typeDSimpleIndex` the `j`-th simple coroot is `Pi.single j 1`, so this
+says `⟨ωᵢ, αⱼ^∨⟩ = δᵢⱼ`. -/
+@[simp] theorem toLinearMap_typeDSimplyConnectedRootDatum_single_single (hn : 4 ≤ n)
+    (i j : Fin n) :
+    (typeDSimplyConnectedRootDatum n hn).toLinearMap (Pi.single i 1) (Pi.single j 1) =
+      if i = j then 1 else 0 := by
+  rw [toLinearMap_typeDSimplyConnectedRootDatum, single_dotProduct, one_mul, Pi.single_apply]
+
+/-- The `k`-th root of the pinned datum, in the fundamental-weight basis: its `j`-th coordinate is
+the pairing of the `k`-th classical root with the `j`-th simple root. -/
+theorem root_typeDSimplyConnectedRootDatum (hn : 4 ≤ n) (k : Fin (2 * n * (n - 1))) (j : Fin n) :
+    (typeDSimplyConnectedRootDatum n hn).root k j =
+      (typeDRootEquiv n hn k).1 ⬝ᵥ typeDSimpleRoot n hn j := by
+  rw [root_eq_typeDWeight, typeDWeight_apply]
+
+/-- The `k`-th coroot of the pinned datum, in the simple-coroot basis: type `Dₙ` is simply laced,
+so it is the family of coefficients of the `k`-th classical root in the simple roots. -/
+theorem coroot_typeDSimplyConnectedRootDatum (hn : 4 ≤ n) (k : Fin (2 * n * (n - 1))) :
+    (typeDSimplyConnectedRootDatum n hn).coroot k =
+      typeDSimpleRootCoordinates n hn (typeDRootEquiv n hn k) :=
+  coroot_eq_typeDSimpleRootCoordinates hn k
 
 private lemma pairing_typeDSimplyConnectedRootDatum (hn : 4 ≤ n)
     (k l : Fin (2 * n * (n - 1))) :
@@ -385,42 +351,27 @@ coroot lattice, so that the datum is the simply connected one. -/
   rw [coroot_typeDSimplyConnectedRootDatum,
     typeDSimpleRootCoordinates_typeDRootEquiv_apply_typeDSimpleIndex]
 
+/-- The pairing of two simple roots of the pinned datum is the corresponding entry of the
+Bourbaki-numbered Cartan matrix. -/
+theorem pairing_typeDSimpleIndex (hn : 4 ≤ n) (i j : Fin n) :
+    (typeDSimplyConnectedRootDatum n hn).pairing (typeDSimpleIndex n hn i)
+        (typeDSimpleIndex n hn j) = CartanMatrix.D n i j := by
+  rw [pairing_typeDSimplyConnectedRootDatum, root_typeDSimpleIndex, coroot_typeDSimpleIndex,
+    dotProduct_single, mul_one]
+
 /-! ## The pinned base -/
 
-private lemma sum_smul_mem_closure {M : Type*} [AddCommGroup M] (v : Fin n → M) (c : Fin n → ℤ)
-    (hc : ∀ i, 0 ≤ c i) : (∑ i : Fin n, c i • v i) ∈ AddSubmonoid.closure (range v) := by
-  refine AddSubmonoid.sum_mem _ fun i _ => ?_
-  obtain ⟨m, hm⟩ := Int.eq_ofNat_of_zero_le (hc i)
-  rw [hm, natCast_zsmul]
-  exact AddSubmonoid.nsmul_mem _ (AddSubmonoid.subset_closure (mem_range_self i)) m
-
-private lemma sum_smul_mem_or_neg_mem_closure {M : Type*} [AddCommGroup M] (v : Fin n → M)
-    (c : Fin n → ℤ) (hc : (∀ i, 0 ≤ c i) ∨ (∀ i, c i ≤ 0)) :
-    (∑ i : Fin n, c i • v i) ∈ AddSubmonoid.closure (range v) ∨
-      -(∑ i : Fin n, c i • v i) ∈ AddSubmonoid.closure (range v) := by
-  rcases hc with h | h
-  · exact Or.inl (sum_smul_mem_closure v c h)
-  · refine Or.inr ?_
-    rw [← Finset.sum_neg_distrib]
-    simp only [← neg_smul]
-    exact sum_smul_mem_closure v (fun i => -c i) fun i => neg_nonneg.mpr (h i)
-
 /-- The support of the pinned base of type `Dₙ`: the first `n` root indices. -/
-private def typeDSimpleSupport (n : ℕ) (hn : 4 ≤ n) : Finset (Fin (2 * n * (n - 1))) :=
-  Finset.univ.map ⟨typeDSimpleIndex n hn, typeDSimpleIndex_injective hn⟩
+private abbrev typeDSimpleSupport (n : ℕ) (hn : 4 ≤ n) : Finset (Fin (2 * n * (n - 1))) :=
+  simpleSupport (typeDSimpleIndex_injective hn)
 
 private lemma mem_typeDSimpleSupport (hn : 4 ≤ n) {k : Fin (2 * n * (n - 1))} :
     k ∈ typeDSimpleSupport n hn ↔ (k : ℕ) < n := by
+  rw [typeDSimpleSupport, mem_simpleSupport]
   constructor
-  · rintro hk
-    obtain ⟨i, -, rfl⟩ := Finset.mem_map.mp hk
-    simpa only [Function.Embedding.coeFn_mk, typeDSimpleIndex_val] using i.isLt
-  · intro hk
-    exact Finset.mem_map.mpr ⟨⟨k, hk⟩, Finset.mem_univ _, Fin.ext (by simp)⟩
-
-private lemma coe_typeDSimpleSupport (hn : 4 ≤ n) :
-    (typeDSimpleSupport n hn : Set (Fin (2 * n * (n - 1)))) = range (typeDSimpleIndex n hn) := by
-  simp [typeDSimpleSupport]
+  · rintro ⟨i, rfl⟩
+    simpa only [typeDSimpleIndex_val] using i.isLt
+  · exact fun hk => ⟨⟨k, hk⟩, Fin.ext (by simp)⟩
 
 /-- In the character lattice a root is the combination of the simple roots recorded by its
 classical coefficients; the coroot counterpart below uses the same coefficients. -/
@@ -428,8 +379,8 @@ private lemma sum_smul_root_typeDSimpleIndex (hn : 4 ≤ n) (k : Fin (2 * n * (n
     ∑ i : Fin n, typeDSimpleRootCoordinates n hn (typeDRootEquiv n hn k) i •
         (typeDSimplyConnectedRootDatum n hn).root (typeDSimpleIndex n hn i) =
       (typeDSimplyConnectedRootDatum n hn).root k := by
-  simp only [root_typeDSimplyConnectedRootDatum, typeDRootEquiv_apply_typeDSimpleIndex]
-  rw [← typeDWeight_sum_smul, sum_smul_typeDSimpleRootCoordinates]
+  simp only [root_eq_typeDWeight, typeDRootEquiv_apply_typeDSimpleIndex, ← map_smul]
+  rw [← map_sum, sum_smul_typeDSimpleRootCoordinates]
 
 private lemma sum_smul_coroot_typeDSimpleIndex (hn : 4 ≤ n) (k : Fin (2 * n * (n - 1))) :
     ∑ i : Fin n, typeDSimpleRootCoordinates n hn (typeDRootEquiv n hn k) i •
@@ -444,17 +395,15 @@ private lemma image_root_typeDSimpleSupport (hn : 4 ≤ n) :
     (typeDSimplyConnectedRootDatum n hn).root ''
         (typeDSimpleSupport n hn : Set (Fin (2 * n * (n - 1)))) =
       range fun i : Fin n =>
-        (typeDSimplyConnectedRootDatum n hn).root (typeDSimpleIndex n hn i) := by
-  rw [coe_typeDSimpleSupport, ← range_comp]
-  rfl
+        (typeDSimplyConnectedRootDatum n hn).root (typeDSimpleIndex n hn i) :=
+  image_simpleSupport _ _
 
 private lemma image_coroot_typeDSimpleSupport (hn : 4 ≤ n) :
     (typeDSimplyConnectedRootDatum n hn).coroot ''
         (typeDSimpleSupport n hn : Set (Fin (2 * n * (n - 1)))) =
       range fun i : Fin n =>
-        (typeDSimplyConnectedRootDatum n hn).coroot (typeDSimpleIndex n hn i) := by
-  rw [coe_typeDSimpleSupport, ← range_comp]
-  rfl
+        (typeDSimplyConnectedRootDatum n hn).coroot (typeDSimpleIndex n hn i) :=
+  image_simpleSupport _ _
 
 private lemma linearIndependent_root_typeDSimpleIndex (hn : 4 ≤ n) :
     LinearIndependent ℤ fun i : Fin n =>
@@ -463,53 +412,31 @@ private lemma linearIndependent_root_typeDSimpleIndex (hn : 4 ≤ n) :
       (typeDSimplyConnectedRootDatum n hn).root (typeDSimpleIndex n hn i)) =
       fun i : Fin n => typeDWeight n hn (typeDSimpleRoot n hn i) := by
     funext i
-    rw [root_typeDSimplyConnectedRootDatum, typeDRootEquiv_apply_typeDSimpleIndex]
+    rw [root_eq_typeDWeight, typeDRootEquiv_apply_typeDSimpleIndex]
   rw [hroot, Fintype.linearIndependent_iff]
   intro g hg
-  -- The relation says that `w = ∑ gᵢ αᵢ` is orthogonal to every simple root, hence to itself.
+  -- The relation says that `w = ∑ gᵢ αᵢ` is orthogonal to every simple root, hence zero.
   have hzero : typeDWeight n hn (∑ i : Fin n, g i • typeDSimpleRoot n hn i) = 0 := by
-    rw [typeDWeight_sum_smul]
-    exact hg
-  have horth : ∀ j : Fin n,
-      (∑ i : Fin n, g i • typeDSimpleRoot n hn i) ⬝ᵥ typeDSimpleRoot n hn j = 0 :=
-    fun j => congrFun hzero j
-  have hself : (∑ i : Fin n, g i • typeDSimpleRoot n hn i) ⬝ᵥ
-      ∑ i : Fin n, g i • typeDSimpleRoot n hn i = 0 := by
-    rw [dotProduct_sum]
-    refine Finset.sum_eq_zero fun i _ => ?_
-    rw [dotProduct_smul, horth i, smul_zero]
+    rw [map_sum]
+    simpa only [map_smul] using hg
   exact Fintype.linearIndependent_iff.mp (linearIndependent_typeDSimpleRoot hn) g
-    (dotProduct_self_eq_zero.mp hself)
+    (sum_smul_typeDSimpleRoot_eq_zero hn fun j => by
+      rw [← typeDWeight_apply hn, hzero, Pi.zero_apply])
 
 private lemma linearIndependent_coroot_typeDSimpleIndex (hn : 4 ≤ n) :
     LinearIndependent ℤ fun i : Fin n =>
       (typeDSimplyConnectedRootDatum n hn).coroot (typeDSimpleIndex n hn i) := by
-  have hcoroot : (fun i : Fin n =>
-      (typeDSimplyConnectedRootDatum n hn).coroot (typeDSimpleIndex n hn i)) =
-      fun i : Fin n => (Pi.basisFun ℤ (Fin n)) i := by
-    funext i
-    rw [coroot_typeDSimpleIndex]
-    simp
-  rw [hcoroot]
-  exact (Pi.basisFun ℤ (Fin n)).linearIndependent
+  simpa only [coroot_typeDSimpleIndex] using Pi.linearIndependent_single_one (Fin n) ℤ
 
 /-- The Bourbaki-numbered base of the pinned simply connected root datum of type `Dₙ`. Its support
 is the set of the first `n` root indices, carrying the simple roots in Bourbaki order. -/
 noncomputable def typeDSimplyConnectedBase (n : ℕ) (hn : 4 ≤ n) :
     (typeDSimplyConnectedRootDatum n hn).Base where
   support := typeDSimpleSupport n hn
-  linearIndepOn_root := by
-    have h : LinearIndepOn ℤ (typeDSimplyConnectedRootDatum n hn).root
-        (range (typeDSimpleIndex n hn)) := by
-      rw [linearIndepOn_range_iff (typeDSimpleIndex_injective hn)]
-      exact linearIndependent_root_typeDSimpleIndex hn
-    rwa [← coe_typeDSimpleSupport] at h
-  linearIndepOn_coroot := by
-    have h : LinearIndepOn ℤ (typeDSimplyConnectedRootDatum n hn).coroot
-        (range (typeDSimpleIndex n hn)) := by
-      rw [linearIndepOn_range_iff (typeDSimpleIndex_injective hn)]
-      exact linearIndependent_coroot_typeDSimpleIndex hn
-    rwa [← coe_typeDSimpleSupport] at h
+  linearIndepOn_root :=
+    linearIndepOn_simpleSupport _ _ (linearIndependent_root_typeDSimpleIndex hn)
+  linearIndepOn_coroot :=
+    linearIndepOn_simpleSupport _ _ (linearIndependent_coroot_typeDSimpleIndex hn)
   root_mem_or_neg_mem k := by
     rw [image_root_typeDSimpleSupport, ← sum_smul_root_typeDSimpleIndex hn k]
     exact sum_smul_mem_or_neg_mem_closure _ _
@@ -526,51 +453,20 @@ indices. -/
     k ∈ (typeDSimplyConnectedBase n hn).support ↔ (k : ℕ) < n :=
   mem_typeDSimpleSupport hn
 
-/-- The support of the pinned base is the Bourbaki numbering of the simple roots. -/
-private def typeDBaseEquiv (n : ℕ) (hn : 4 ≤ n) :
-    (typeDSimplyConnectedBase n hn).support ≃ Fin n where
-  toFun x := ⟨(x : Fin (2 * n * (n - 1))), (mem_typeDSimpleSupport hn).mp x.2⟩
-  invFun i := ⟨typeDSimpleIndex n hn i, (mem_typeDSimpleSupport hn).mpr (by simp)⟩
-  left_inv x := by
-    apply Subtype.ext
-    apply Fin.ext
-    simp
-  right_inv i := by
-    apply Fin.ext
-    simp
-
-private lemma pairing_typeDSimpleIndex (hn : 4 ≤ n) (i j : Fin n) :
-    (typeDSimplyConnectedRootDatum n hn).pairing (typeDSimpleIndex n hn i)
-        (typeDSimpleIndex n hn j) = CartanMatrix.D n i j := by
-  rw [pairing_typeDSimplyConnectedRootDatum, root_typeDSimpleIndex, coroot_typeDSimpleIndex,
-    dotProduct_single, mul_one]
-
 /-- **The pinned datum of type `Dₙ` has Cartan type `D n`.** Its Bourbaki-numbered base realizes
 the standard Cartan matrix `CartanMatrix.D n`, with the node numbering of `TauCeti.DynkinType`. -/
 theorem hasCartanType_typeDSimplyConnectedRootDatum (n : ℕ) (hn : 4 ≤ n) :
-    HasCartanType (typeDSimplyConnectedRootDatum n hn) (typeDSimplyConnectedBase n hn) (.D n) := by
-  rw [hasCartanType_iff]
-  refine ⟨typeDBaseEquiv n hn, fun i j => ?_⟩
-  have hi : (i : Fin (2 * n * (n - 1))) = typeDSimpleIndex n hn (typeDBaseEquiv n hn i) :=
-    Fin.ext (by simp [typeDBaseEquiv])
-  have hj : (j : Fin (2 * n * (n - 1))) = typeDSimpleIndex n hn (typeDBaseEquiv n hn j) :=
-    Fin.ext (by simp [typeDBaseEquiv])
-  rw [← (FaithfulSMul.algebraMap_injective ℤ ℤ).eq_iff,
-    RootPairing.Base.algebraMap_cartanMatrixIn_apply, hi, hj, pairing_typeDSimpleIndex,
-    cartanMatrix_D]
-  rfl
+    HasCartanType (typeDSimplyConnectedRootDatum n hn) (typeDSimplyConnectedBase n hn) (.D n) :=
+  hasCartanType_of_pairing_eq (typeDSimpleIndex_injective (n := n) hn) rfl fun i j =>
+    (pairing_typeDSimpleIndex hn i j).trans (by simp)
 
 /-- **The coroots of the pinned type `Dₙ` datum span the cocharacter lattice.** This is the simply
 connected lattice condition required by the pinned Chevalley--Demazure construction. Its
 counterpart for the roots is deliberately absent: they span the root lattice, which sits inside the
 weight lattice with index four (Bourbaki, Plate IV). -/
 theorem corootSpan_typeDSimplyConnectedRootDatum_eq_top (n : ℕ) (hn : 4 ≤ n) :
-    (typeDSimplyConnectedRootDatum n hn).corootSpan ℤ = ⊤ := by
-  refine top_unique ?_
-  rw [← (Pi.basisFun ℤ (Fin n)).span_eq]
-  refine Submodule.span_mono ?_
-  rintro _ ⟨i, rfl⟩
-  exact ⟨typeDSimpleIndex n hn i, by rw [coroot_typeDSimpleIndex]; simp⟩
+    (typeDSimplyConnectedRootDatum n hn).corootSpan ℤ = ⊤ :=
+  corootSpan_eq_top_of_coroot_eq_single (coroot_typeDSimpleIndex hn)
 
 end DynkinType
 
