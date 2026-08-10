@@ -19,6 +19,7 @@ commutator quotient, followed by left multiplication by `exp x`.
 * `TauCeti.Lie.expFDeriv_apply_eq_exp_mul_banachDexpFactor`: the pointwise formula.
 * `TauCeti.Lie.expFDeriv_eq_exp_mul_banachDexpFactor`: the bundled operator formula.
 * `TauCeti.Lie.fderiv_exp_eq_exp_mul_banachDexpFactor`: the corresponding `fderiv` formula.
+* `TauCeti.Lie.fderiv_exp_apply_eq_exp_mul_integral`: the pointwise integral formula.
 
 ## References
 
@@ -73,5 +74,13 @@ theorem fderiv_exp_eq_exp_mul_banachDexpFactor (x : R) :
     fderiv ℝ exp x =
       (ContinuousLinearMap.mul ℝ R (exp x)).comp (banachDexpFactor x) := by
   rw [TauCeti.fderiv_exp, expFDeriv_eq_exp_mul_banachDexpFactor]
+
+/-- The Fréchet derivative of the Banach-algebra exponential, applied to `y`, is left
+multiplication by `exp x` applied to the integral of conjugations along the exponential line. -/
+theorem fderiv_exp_apply_eq_exp_mul_integral (x y : R) :
+    fderiv ℝ exp x y =
+      exp x * (∫ t in (0 : ℝ)..1, exp (-(t • x)) * y * exp (t • x)) := by
+  rw [fderiv_exp_eq_exp_mul_banachDexpFactor, ContinuousLinearMap.comp_apply,
+    ContinuousLinearMap.mul_apply', banachDexpFactor_apply_eq_integral]
 
 end TauCeti.Lie
