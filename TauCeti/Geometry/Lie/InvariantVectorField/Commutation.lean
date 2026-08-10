@@ -9,6 +9,7 @@ public import TauCeti.Geometry.Lie.Exponential.Smoothness
 public import TauCeti.Geometry.Lie.RightInvariantVectorField
 public import TauCeti.Geometry.Lie.Tangent.LieEquiv
 import TauCeti.Geometry.Lie.Interior
+import TauCeti.Geometry.Manifold.VectorField.Regularity
 
 /-!
 # Commutation of left- and right-invariant vector fields
@@ -241,7 +242,8 @@ theorem mvfderiv_mulInvariant_mulRightInvariant_commute
       contMDiff_mvfderiv_mulInvariantVectorField Y f⟩
   let RXf : C^∞⟮I, G; ℝ⟯ :=
     ⟨fun g => mvfderiv I f g (mulRightInvariantVectorField X g),
-      contMDiff_mvfderiv_mulRightInvariantVectorField X f⟩
+      ContMDiff.contMDiff_mvfderiv_apply f.contMDiff
+        (contMDiff_mulRightInvariantVectorField_infty X) (by simp)⟩
   have hLYmf := LYf.contMDiff.mdifferentiable (by simp) 1 |>.hasMFDerivAt
   have hLY := HasMFDerivAt.hasDerivAt_comp_mulInvariantExp_smul hLYmf X
   have hRXmf := RXf.contMDiff.mdifferentiable (by simp) 1 |>.hasMFDerivAt
