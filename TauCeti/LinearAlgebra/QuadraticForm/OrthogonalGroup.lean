@@ -446,15 +446,6 @@ section FixedSubspace
 variable {K : Type u} {V : Type v} [Field K] [AddCommGroup V] [Module K V]
 variable (Q : QuadraticForm K V) [Invertible (2 : K)]
 
-private theorem reflection_fixes_of_mem_orthogonal
-    (W : Submodule K V) (u : V) [Invertible (Q u)]
-    (hu : u ∈ LinearMap.BilinForm.orthogonal (QuadraticMap.associated Q) W)
-    {w : V} (hw : w ∈ W) :
-    QuadraticMap.reflection Q u w = w := by
-  apply QuadraticMap.reflection_apply_of_isOrtho
-  apply QuadraticMap.associated_isOrtho.mp
-  simpa only [QuadraticMap.associated_isSymm] using hu w hw
-
 omit [Invertible (2 : K)] in
 private theorem linearEquiv_eqOn_sup_span_singleton
     (f : V ≃ₗ[K] V) (W : Submodule K V) (x : V)
@@ -516,7 +507,9 @@ theorem exists_mem_subgroup_mul_eqOn_sup_span_singleton_of_reflection_mem
       change QuadraticMap.reflection Q ((g : V ≃ₗ[K] V) x - x)
         ((g : V ≃ₗ[K] V) w) = w
       rw [hfix w hw]
-      exact reflection_fixes_of_mem_orthogonal Q W _ hsub hw
+      apply QuadraticMap.reflection_apply_of_isOrtho
+      apply QuadraticMap.associated_isOrtho.mp
+      simpa only [QuadraticMap.associated_isSymm] using hsub w hw
     · -- Expose the reflection underlying the subgroup product at the new generator.
       change QuadraticMap.reflection Q ((g : V ≃ₗ[K] V) x - x)
         ((g : V ≃ₗ[K] V) x) = x
@@ -536,8 +529,17 @@ theorem exists_mem_subgroup_mul_eqOn_sup_span_singleton_of_reflection_mem
       change QuadraticMap.reflection Q x
         (QuadraticMap.reflection Q ((g : V ≃ₗ[K] V) x - -x)
           ((g : V ≃ₗ[K] V) w)) = w
-      rw [hfix w hw, reflection_fixes_of_mem_orthogonal Q W _ hadd' hw,
-        reflection_fixes_of_mem_orthogonal Q W _ hx hw]
+      rw [hfix w hw]
+      have hfixr₂ :
+          QuadraticMap.reflection Q ((g : V ≃ₗ[K] V) x - -x) w = w := by
+        apply QuadraticMap.reflection_apply_of_isOrtho
+        apply QuadraticMap.associated_isOrtho.mp
+        simpa only [QuadraticMap.associated_isSymm] using hadd' w hw
+      have hfixr₁ : QuadraticMap.reflection Q x w = w := by
+        apply QuadraticMap.reflection_apply_of_isOrtho
+        apply QuadraticMap.associated_isOrtho.mp
+        simpa only [QuadraticMap.associated_isSymm] using hx w hw
+      rw [hfixr₂, hfixr₁]
     · -- Expose the two reflections underlying the subgroup product at the new generator.
       change QuadraticMap.reflection Q x
         (QuadraticMap.reflection Q ((g : V ≃ₗ[K] V) x - -x)
