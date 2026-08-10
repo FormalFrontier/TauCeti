@@ -27,7 +27,7 @@ packages the comparison as a Lie equivalence.
 
 ## References
 
-* J. S. Milne, *Algebraic Groups* (2017), §§14.1–14.3.
+* J. S. Milne, *Algebraic Groups* (2017), §10.a and item 10.20.
 
 This identifies the fixed module used by the adjoint representation with `Lie(G)` in Layer 2 of
 the ReductiveGroups roadmap.
@@ -50,16 +50,6 @@ section Bialgebra
 variable [Bialgebra R H]
 
 section Base
-
-/-- The explicit derivation Lie ring used to transport the base cotangent-dual bracket. -/
-noncomputable local instance :
-    LieRing (Derivation R H (Bialgebra.CounitAlgebra R H R)) :=
-  Derivation.instLieRing (R := R) (A := H) (B := R)
-
-/-- The explicit derivation Lie algebra used to transport the base cotangent-dual bracket. -/
-noncomputable local instance :
-    LieAlgebra R (Derivation R H (Bialgebra.CounitAlgebra R H R)) :=
-  Derivation.instLieAlgebra (R := R) (A := H) (B := R)
 
 /-- The Lie ring structure on the dual augmentation cotangent space, transported from
 counit-valued derivations through `cotangentLinearEquiv`. -/
@@ -143,7 +133,9 @@ private theorem tangentScalarExtensionEquiv_tmul_eq
           ((b • mapValue (A := H) (Algebra.ofId R B)
             (cotangentLinearEquiv (R := R) (A := H) (B := R) f)) h) :=
       by
-        rw [Derivation.smul_apply, algEquivSelf_coeff_smul, smul_eq_mul]
+        rw [Derivation.smul_apply, Bialgebra.CounitAlgebra.algEquivSelf_apply,
+          Bialgebra.CounitAlgebra.algEquivSelf_apply]
+        rfl
 
 private theorem tangentScalarExtensionEquiv_bracket_tmul
     (b c : B) (f g : Module.Dual R (Bialgebra.CotangentSpace R H)) :

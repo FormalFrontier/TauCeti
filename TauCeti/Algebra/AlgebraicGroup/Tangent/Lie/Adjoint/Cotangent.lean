@@ -22,7 +22,7 @@ convolution conjugation, so it preserves the Lie bracket.
 
 ## References
 
-* J. S. Milne, *Algebraic Groups* (2017), §§14.1–14.3.
+* J. S. Milne, *Algebraic Groups* (2017), §10.a and item 10.20.
 -/
 
 public section
@@ -38,12 +38,12 @@ variable [Module.Finite R (Bialgebra.CotangentSpace R H)]
 variable [Module.Projective R (Bialgebra.CotangentSpace R H)]
 
 /-- The adjoint point action preserves the bracket on the scalar-extended tangent space. -/
-private theorem adjointAction_bracket_aux
-    (A : CommAlgCat.{max u v} R) (g : HopfAlgebra.points (H := H) A) :
-    ∀ x y : A ⊗[R] Module.Dual R (Bialgebra.CotangentSpace R H),
-      (adjointAction A g).val ⁅x, y⁆ =
-        ⁅(adjointAction A g).val x, (adjointAction A g).val y⁆ := by
-  intro x y
+@[simp]
+theorem adjointAction_bracket
+    (A : CommAlgCat.{max u v} R) (g : HopfAlgebra.points (H := H) A)
+    (x y : A ⊗[R] Module.Dual R (Bialgebra.CotangentSpace R H)) :
+    (adjointAction A g).val ⁅x, y⁆ =
+      ⁅(adjointAction A g).val x, (adjointAction A g).val y⁆ := by
   apply (tangentScalarExtensionEquiv (R := R) (A := H) (B := A)).injective
   rw [tangentScalarExtensionEquiv_bracket,
     tangentScalarExtensionEquiv_adjointAction,
@@ -60,7 +60,7 @@ noncomputable def adjointLieEquiv
       (A ⊗[R] Module.Dual R (Bialgebra.CotangentSpace R H)) :=
   let e := (adjointAction A g).toLinearEquiv
   { e with
-    map_lie' := fun {x y} => adjointAction_bracket_aux A g x y }
+    map_lie' := fun {x y} => adjointAction_bracket A g x y }
 
 /-- The adjoint Lie automorphism acts by the existing adjoint point representation. -/
 @[simp]
@@ -86,6 +86,7 @@ theorem adjointLieEquiv_one
 
 /-- The adjoint Lie automorphism of a product is the composite of the two adjoint Lie
 automorphisms. -/
+@[simp]
 theorem adjointLieEquiv_mul
     (A : CommAlgCat.{max u v} R) (g h : HopfAlgebra.points (H := H) A) :
     adjointLieEquiv (R := R) (H := H) A (g * h) =
@@ -95,13 +96,19 @@ theorem adjointLieEquiv_mul
   simp only [adjointLieEquiv_apply, LieEquiv.trans_apply]
   rw [map_mul (adjointAction A).hom, Units.val_mul, Module.End.mul_apply]
 
-/-- The adjoint point action preserves the bracket on the scalar-extended tangent space. -/
+/-- The inverse adjoint Lie automorphism is the automorphism of the inverse point. -/
 @[simp]
-theorem adjointAction_bracket
-    (A : CommAlgCat.{max u v} R) (g : HopfAlgebra.points (H := H) A)
-    (x y : A ⊗[R] Module.Dual R (Bialgebra.CotangentSpace R H)) :
-    (adjointAction A g).val ⁅x, y⁆ =
-      ⁅(adjointAction A g).val x, (adjointAction A g).val y⁆ :=
-  adjointAction_bracket_aux A g x y
+theorem adjointLieEquiv_symm
+    (A : CommAlgCat.{max u v} R) (g : HopfAlgebra.points (H := H) A) :
+    (adjointLieEquiv (R := R) (H := H) A g).symm =
+      adjointLieEquiv (R := R) (H := H) A g⁻¹ := by
+  ext x
+  apply (adjointLieEquiv (R := R) (H := H) A g).symm_apply_eq.mpr
+  have h := congrArg
+    (fun e : LieEquiv A (A ⊗[R] Module.Dual R (Bialgebra.CotangentSpace R H))
+        (A ⊗[R] Module.Dual R (Bialgebra.CotangentSpace R H)) => e x)
+    (adjointLieEquiv_mul (R := R) (H := H) A g g⁻¹)
+  simpa only [mul_inv_cancel, adjointLieEquiv_one, LieEquiv.one_apply,
+    LieEquiv.trans_apply] using h
 
 end TauCeti.Derivation
