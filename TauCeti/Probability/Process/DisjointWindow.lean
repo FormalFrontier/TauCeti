@@ -29,6 +29,18 @@ tuple, whose entries are indices in `Fin N`, always carry distinct indices
 over a *single* window would produce, and it is why the factorization can apply a
 contractability argument to every term of the average without exception.
 
+## The moving selection
+
+The same windows also appear as a *moving* selection, in the shape the `L²` convergence theorems
+quantify over: `disjointWindow c` is the family `n ↦ (j ↦ window (n + 1) c j)`, so at each length
+factor `c` reads `[(c + 1)(n + 1), (c + 2)(n + 1))`. Two facts make it usable there —
+`disjointWindow_injective` at each length, with `disjointWindow_eventually_injective` the eventual
+form those theorems take, and `disjointWindow_ne` for disjointness across factors.
+
+That combination is what fixed starts cannot supply: windows from two distinct fixed starts overlap
+once the common length exceeds the gap between the starts, whereas these move outward as the length
+grows. The generic fixed-start selection is `fixedStart` in `Process/BlockAverage.lean`.
+
 ## References
 
 Nothing here involves a measure or the `L²` theory: the module is index arithmetic plus
