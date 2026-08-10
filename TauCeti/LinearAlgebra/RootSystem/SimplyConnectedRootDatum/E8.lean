@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.LinearAlgebra.RootSystem.DynkinType
+public import Mathlib.Data.Fin.Tuple.Embedding
 public import Mathlib.LinearAlgebra.Matrix.Dual
 
 public section
@@ -221,29 +222,20 @@ private lemma e8PositiveCoroot_ne_neg (i j : Fin 120) :
   have hi : 0 < ∑ k, e8PositiveCoroot i k := e8PositiveCoroot_sum_pos i
   omega
 
+/-- The negatives of the 120 positive `E8` coroots. -/
+private def e8NegativeCoroot : Fin 120 ↪ (Fin 8 → ℤ) :=
+  e8PositiveCoroot.trans (Equiv.neg (Fin 8 → ℤ)).toEmbedding
+
+private lemma e8PositiveCoroot_range_disjoint :
+    Disjoint (Set.range e8PositiveCoroot) (Set.range e8NegativeCoroot) := by
+  rw [Set.disjoint_left]
+  rintro _ ⟨i, rfl⟩ ⟨j, hj⟩
+  exact e8PositiveCoroot_ne_neg i j hj.symm
+
 /-- The 240 `E8` coroots in the simple-coroot basis, with the positive coroots followed by their
 negatives. -/
-def e8Coroot : Fin 240 ↪ (Fin 8 → ℤ) where
-  toFun := Fin.append e8PositiveCoroot fun i ↦ -e8PositiveCoroot i
-  inj' := by
-    intro i j hij
-    cases i using Fin.addCases (m := 120) (n := 120) with
-    | left a =>
-      cases j using Fin.addCases (m := 120) (n := 120) with
-      | left b =>
-        simp only [Fin.append_left, e8PositiveCoroot.injective.eq_iff] at hij
-        rw [hij]
-      | right b =>
-        simp only [Fin.append_left, Fin.append_right] at hij
-        exact absurd hij (e8PositiveCoroot_ne_neg _ _)
-    | right a =>
-      cases j using Fin.addCases (m := 120) (n := 120) with
-      | left b =>
-        simp only [Fin.append_left, Fin.append_right] at hij
-        exact absurd hij.symm (e8PositiveCoroot_ne_neg _ _)
-      | right b =>
-        simp only [Fin.append_right, neg_inj, e8PositiveCoroot.injective.eq_iff] at hij
-        rw [hij]
+def e8Coroot : Fin 240 ↪ (Fin 8 → ℤ) :=
+  Fin.Embedding.append e8PositiveCoroot_range_disjoint
 
 /-- The 240 `E8` roots in the fundamental-weight basis. -/
 def e8Root : Fin 240 ↪ (Fin 8 → ℤ) where
@@ -260,9 +252,10 @@ def e8Root : Fin 240 ↪ (Fin 8 → ℤ) where
 theorem e8Root_apply (i : Fin 240) :
     e8Root i = e8Coroot i ᵥ* CartanMatrix.E₈ := (rfl)
 
--- The coercion of the embedding is its underlying tuple, by definition.
+/-- The coroot table is the concatenation of the positive coroots with their negatives. -/
 private theorem e8Coroot_coe :
-    ⇑e8Coroot = Fin.append (⇑e8PositiveCoroot) fun i ↦ -e8PositiveCoroot i := rfl
+    ⇑e8Coroot = Fin.append (⇑e8PositiveCoroot) fun i ↦ -e8PositiveCoroot i :=
+  Fin.Embedding.coe_append _
 
 /-- The first half of the coroot table is the positive coroot enumeration. -/
 @[simp] theorem e8Coroot_castAdd (i : Fin 120) :
