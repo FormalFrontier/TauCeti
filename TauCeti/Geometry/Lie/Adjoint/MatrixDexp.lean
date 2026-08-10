@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.Analysis.Normed.Algebra.MatrixExponential
-public import TauCeti.Geometry.Lie.Adjoint.BanachDexpDerivative
+public import TauCeti.Geometry.Lie.Adjoint.BanachDexp.Derivative
 
 /-!
 # The matrix dexp factor
