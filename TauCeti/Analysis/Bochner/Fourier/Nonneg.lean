@@ -592,12 +592,16 @@ theorem fourier_re_nonneg_of_isPositiveDefiniteKernel (F : V → ℂ)
   -- Step 4: apply the Fejér average bound.
   exact pd_integral_re_nonneg _ hψ_pd hψ_int hψ_cont
 
-/-- The Fourier transform of a positive-definite function on a finite-dimensional real
-inner-product space has vanishing imaginary part, by Hermitian symmetry and the negation
-invariance of Haar measure. -/
+/-- The Fourier transform of a continuous integrable positive-definite function on a
+finite-dimensional real inner-product space has vanishing imaginary part, by Hermitian symmetry
+and the negation invariance of Haar measure.
+
+Integrability is not needed by the argument, but it is what makes `𝓕 F` the Fourier transform:
+without it `𝓕 F` is the default value of a divergent Bochner integral, and the conclusion holds
+only vacuously. -/
 @[simp]
 theorem fourier_im_eq_zero_of_isPositiveDefiniteKernel (F : V → ℂ)
-    (hpd : IsPositiveDefiniteKernel fun a b : V => F (a - b)) (ξ : V) :
+    (hpd : IsPositiveDefiniteKernel fun a b : V => F (a - b)) (_hint : Integrable F) (ξ : V) :
     (𝓕 F ξ).im = 0 := by
   rw [fourier_eq_integral_fourierAtom_mul F ξ]
   have hconj : conj (∫ v, fourierAtom ξ v * F v) = ∫ v, fourierAtom ξ v * F v := by
@@ -616,13 +620,15 @@ theorem fourier_im_eq_zero_of_isPositiveDefiniteKernel (F : V → ℂ)
   simp only [Complex.conj_im] at him
   linarith
 
-/-- The Fourier transform of a positive-definite function on a finite-dimensional real
-inner-product space is real: it equals the coercion of its own real part. -/
+/-- The Fourier transform of a continuous integrable positive-definite function on a
+finite-dimensional real inner-product space is real: it equals the coercion of its own real
+part. As for `fourier_im_eq_zero_of_isPositiveDefiniteKernel`, integrability is what makes
+`𝓕 F` the Fourier transform rather than the default value of a divergent integral. -/
 theorem fourier_eq_re_of_isPositiveDefiniteKernel (F : V → ℂ)
-    (hpd : IsPositiveDefiniteKernel fun a b : V => F (a - b)) (ξ : V) :
+    (hpd : IsPositiveDefiniteKernel fun a b : V => F (a - b)) (hint : Integrable F) (ξ : V) :
     𝓕 F ξ = ((𝓕 F ξ).re : ℂ) := by
   refine Complex.ext (by simp) ?_
-  simp [fourier_im_eq_zero_of_isPositiveDefiniteKernel F hpd ξ]
+  simp [fourier_im_eq_zero_of_isPositiveDefiniteKernel F hpd hint ξ]
 
 /-! ### Integrability of the Fourier transform of a positive-definite function -/
 
@@ -674,7 +680,7 @@ private theorem integral_norm_fourierIntegral_gaussian_eq_one {t : ℝ} (ht : 0 
       (𝓕 (fun x : V => Complex.exp (-(t * ‖x‖ ^ 2 : ℝ))) ξ).re := by
     intro ξ
     have hre := fourier_re_nonneg_of_isPositiveDefiniteKernel _ hg_pd hg_int hg_cont ξ
-    rw [fourier_eq_re_of_isPositiveDefiniteKernel _ hg_pd ξ, Complex.norm_real,
+    rw [fourier_eq_re_of_isPositiveDefiniteKernel _ hg_pd hg_int ξ, Complex.norm_real,
       Complex.ofReal_re, Real.norm_of_nonneg hre]
   calc ∫ ξ : V, ‖𝓕 (fun x : V => Complex.exp (-(t * ‖x‖ ^ 2 : ℝ))) ξ‖
       = ∫ ξ : V, (𝓕 (fun x : V => Complex.exp (-(t * ‖x‖ ^ 2 : ℝ))) ξ).re :=
@@ -742,7 +748,7 @@ private theorem lintegral_enorm_fourierIntegral_mul_gaussian_le (F : V → ℂ)
   have hnorm_eq : ∀ ξ : V, ‖𝓕 F ξ * Complex.exp (-(t * ‖ξ‖ ^ 2 : ℝ))‖ =
       (𝓕 F ξ * Complex.exp (-(t * ‖ξ‖ ^ 2 : ℝ))).re := by
     intro ξ
-    rw [fourier_eq_re_of_isPositiveDefiniteKernel F hpd ξ, ← Complex.ofReal_neg,
+    rw [fourier_eq_re_of_isPositiveDefiniteKernel F hpd hint ξ, ← Complex.ofReal_neg,
       ← Complex.ofReal_exp, ← Complex.ofReal_mul, Complex.norm_real, Complex.ofReal_re,
       Real.norm_of_nonneg (mul_nonneg
         (fourier_re_nonneg_of_isPositiveDefiniteKernel F hpd hint hcont ξ)
@@ -809,13 +815,13 @@ theorem fourierInv_re_nonneg_of_isPositiveDefiniteKernel (F : V → ℂ)
   rw [Real.fourierInv_eq_fourier_neg]
   exact fourier_re_nonneg_of_isPositiveDefiniteKernel F hpd hint hcont (-ξ)
 
-/-- The inverse Fourier transform of a positive-definite function is real: it equals the
-coercion of its own real part. -/
+/-- The inverse Fourier transform of a continuous integrable positive-definite function is real:
+it equals the coercion of its own real part. -/
 theorem fourierInv_eq_re_of_isPositiveDefiniteKernel (F : V → ℂ)
-    (hpd : IsPositiveDefiniteKernel fun a b : V => F (a - b)) (ξ : V) :
+    (hpd : IsPositiveDefiniteKernel fun a b : V => F (a - b)) (hint : Integrable F) (ξ : V) :
     𝓕⁻ F ξ = ((𝓕⁻ F ξ).re : ℂ) := by
   rw [Real.fourierInv_eq_fourier_neg]
-  exact fourier_eq_re_of_isPositiveDefiniteKernel F hpd (-ξ)
+  exact fourier_eq_re_of_isPositiveDefiniteKernel F hpd hint (-ξ)
 
 /-- The inverse Fourier transform of a continuous integrable positive-definite function is
 integrable. -/

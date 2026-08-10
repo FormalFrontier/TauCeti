@@ -113,7 +113,7 @@ theorem integral_fourierAtom_withDensity_re_fourierInv (F : V → ℂ)
   have hre : ∀ ξ, 0 ≤ (𝓕⁻ F ξ).re :=
     fourierInv_re_nonneg_of_isPositiveDefiniteKernel F hpd hint hcont
   have hreal : ∀ ξ, 𝓕⁻ F ξ = ((𝓕⁻ F ξ).re : ℂ) :=
-    fourierInv_eq_re_of_isPositiveDefiniteKernel F hpd
+    fourierInv_eq_re_of_isPositiveDefiniteKernel F hpd hint
   rw [integral_withDensity_eq_integral_toReal_smul₀
     (measurable_ofReal_re_fourierInv hint).aemeasurable
     (ae_of_all _ fun ξ => ENNReal.ofReal_lt_top) _]
