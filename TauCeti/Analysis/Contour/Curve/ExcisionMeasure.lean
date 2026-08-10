@@ -28,6 +28,9 @@ null set of times.
 
 ## Main results
 
+* `TauCeti.Contour.nullMeasurableSet_excision`: the excised parameter set is null-measurable
+  against any measure for which the curve is a.e. measurable.
+* `TauCeti.Contour.measurableSet_excision`: its measurable specialization.
 * `TauCeti.Contour.measure_setOf_mem_eq_zero_of_injOn`: an injective curve meets a finite set at
   a null set of times.
 * `TauCeti.Contour.tendsto_intervalIntegral_excisionIndicator`: the excision indicator's integral
@@ -48,6 +51,26 @@ public section
 open Filter MeasureTheory Set Topology
 
 namespace TauCeti.Contour
+
+/-- **The excised parameter set is null-measurable.** The finite union, over the centres, of the
+sublevel sets of `t ↦ ‖γ t - s‖`, each null-measurable because `γ` is a.e. measurable. Stated for
+an arbitrary measure so that it serves both the ambient statement and the restricted-measure one
+that interval integrability needs. -/
+theorem nullMeasurableSet_excision {γ : ℝ → ℂ} {μ : MeasureTheory.Measure ℝ}
+    (hγ : AEMeasurable γ μ) (S : Finset ℂ) (ε : ℝ) :
+    MeasureTheory.NullMeasurableSet {t | ∃ s ∈ S, ‖γ t - s‖ ≤ ε} μ := by
+  have h : {t | ∃ s ∈ S, ‖γ t - s‖ ≤ ε} = ⋃ s ∈ S, {t | ‖γ t - s‖ ≤ ε} := by ext; simp
+  exact h ▸ Finset.nullMeasurableSet_biUnion S fun s _ =>
+    nullMeasurableSet_le ((hγ.sub_const s).norm) aemeasurable_const
+
+/-- **The excised parameter set is measurable.** It is the finite union, over the centres, of the
+preimages of the ray `(-∞, ε]` under `t ↦ ‖γ t - s‖`, each measurable because `γ` is. -/
+theorem measurableSet_excision {γ : ℝ → ℂ} (hγm : Measurable γ) (S : Finset ℂ) (ε : ℝ) :
+    MeasurableSet {t | ∃ s ∈ S, ‖γ t - s‖ ≤ ε} := by
+  have h : {t | ∃ s ∈ S, ‖γ t - s‖ ≤ ε} = ⋃ s ∈ S, {t | ‖γ t - s‖ ≤ ε} := by ext; simp
+  rw [h]
+  exact Finset.measurableSet_biUnion _ fun s _ =>
+    measurableSet_le ((hγm.sub_const s).norm) measurable_const
 
 /-- A point lying off a finite set stays off it by a fixed positive margin. -/
 private theorem exists_pos_le_norm_sub_of_notMem {S : Finset ℂ} {z : ℂ} (hz : z ∉ S) :
@@ -78,13 +101,9 @@ theorem tendsto_intervalIntegral_excisionIndicator {γ : ℝ → ℂ} (hγm : Me
     (hab : a ≤ b) (S : Finset ℂ) (hnull : volume {t ∈ Icc a b | γ t ∈ S} = 0) :
     Tendsto (fun ε => ∫ t in a..b, if ∃ s ∈ S, ‖γ t - s‖ ≤ ε then (0 : ℝ) else 1)
       (𝓝[>] 0) (𝓝 (b - a)) := by
-  have hmS : ∀ ε : ℝ, MeasurableSet {t | ∃ s ∈ S, ‖γ t - s‖ ≤ ε} := fun ε => by
-    have h : {t | ∃ s ∈ S, ‖γ t - s‖ ≤ ε} = ⋃ s ∈ S, {t | ‖γ t - s‖ ≤ ε} := by ext; simp
-    rw [h]
-    exact Finset.measurableSet_biUnion _ fun s _ =>
-      measurableSet_le ((hγm.sub_const s).norm) measurable_const
   set As : ℝ → Set ℝ := fun ε => Ioc a b \ {t | ∃ s ∈ S, ‖γ t - s‖ ≤ ε} with hAs_def
-  have hAs : ∀ ε, MeasurableSet (As ε) := fun ε => measurableSet_Ioc.diff (hmS ε)
+  have hAs : ∀ ε, MeasurableSet (As ε) := fun ε =>
+    measurableSet_Ioc.diff (measurableSet_excision hγm S ε)
   -- The integral is exactly the surviving set's length.
   have hint : ∀ ε : ℝ, (∫ t in a..b, if ∃ s ∈ S, ‖γ t - s‖ ≤ ε then (0 : ℝ) else 1)
       = volume.real (As ε) := fun ε => by

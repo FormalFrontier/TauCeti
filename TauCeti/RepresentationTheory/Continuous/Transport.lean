@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.RepresentationTheory.Continuous.MatrixCoefficient
+public import TauCeti.RepresentationTheory.Irreducible
 
 /-!
 # Transporting a continuous representation along a continuous linear equivalence
@@ -28,8 +29,13 @@ so nothing is lost by pinning a model.
 
 ## Main statements
 
-* `TauCeti.ContRepresentation.continuous_congr` and
-  `TauCeti.ContRepresentation.IsUnitary.congr`: the transport preserves continuity and unitarity.
+* `TauCeti.ContRepresentation.continuous_congr`,
+  `TauCeti.ContRepresentation.isIrreducible_congr` and
+  `TauCeti.ContRepresentation.IsUnitary.congr`: the transport preserves continuity,
+  irreducibility, and unitarity.
+* `TauCeti.ContRepresentation.congr_refl` and `TauCeti.ContRepresentation.congr_congr`: the
+  transport is functorial, so "transportable onto" is an equivalence relation on representations
+  (symmetry is `simp` from these two).
 * `TauCeti.ContRepresentation.matrixCoeff_congr`: the matrix coefficients of the transport at the
   transported vectors are those of the original representation.
 * `TauCeti.ContRepresentation.matrixCoeff_congr_adjoint`: the same for an equivalence that is not
@@ -79,6 +85,29 @@ continuous algebra equivalence `ContinuousLinearEquiv.conjContinuousAlgEquiv`. -
 theorem continuous_congr (e : V ≃L[𝕜] W) {π : ContRepresentation 𝕜 G V} (hπ : Continuous π) :
     Continuous (congr e π) :=
   (map_continuous e.conjContinuousAlgEquiv).comp hπ
+
+omit [TopologicalSpace G] in
+/-- Transport preserves irreducibility: `e` is an equivariant linear equivalence from `π` to its
+transport, and irreducibility is invariant under such an equivalence. -/
+theorem isIrreducible_congr (e : V ≃L[𝕜] W) {π : ContRepresentation 𝕜 G V}
+    (hπ : π.toRepresentation.IsIrreducible) : (congr e π).toRepresentation.IsIrreducible :=
+  Representation.isIrreducible_of_linearEquiv (e : V ≃ₗ[𝕜] W)
+    (fun g v ↦ by simp [_root_.ContRepresentation.toMonoidHom_apply]) hπ
+
+omit [TopologicalSpace G] in
+/-- Transport along the identity changes nothing. -/
+@[simp]
+theorem congr_refl (π : ContRepresentation 𝕜 G V) :
+    congr (ContinuousLinearEquiv.refl 𝕜 V) π = π :=
+  DFunLike.ext _ _ fun _ ↦ ContinuousLinearMap.ext fun _ ↦ by simp
+
+omit [TopologicalSpace G] in
+/-- Transporting twice is transporting along the composite. -/
+@[simp]
+theorem congr_congr {X : Type*} [NormedAddCommGroup X] [NormedSpace 𝕜 X] (e : V ≃L[𝕜] W)
+    (f : W ≃L[𝕜] X) (π : ContRepresentation 𝕜 G V) :
+    congr f (congr e π) = congr (e.trans f) π :=
+  DFunLike.ext _ _ fun _ ↦ ContinuousLinearMap.ext fun _ ↦ by simp
 
 end Congr
 

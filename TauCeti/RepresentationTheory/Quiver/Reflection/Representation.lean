@@ -37,7 +37,8 @@ representation concentrated at `i` whose space at `i` is nontrivial, of which th
 ## Main definitions
 
 * `TauCeti.incomingSum`: the map `⨁_{a : b ⟶ i} M_b → Mᵢ` summing the arrows into a vertex,
-  defined at every vertex of every representation.
+  defined at every vertex of every representation, whose range contains the image of every arrow
+  into that vertex (`TauCeti.map_toPath_mem_range_incomingSum`).
 * `TauCeti.reflectRep`: the reflection `C⁺ᵢ M` of a representation at a sink `i`, a
   representation of `TauCeti.Quiver.Reflect Q i`.
 * `TauCeti.reflectionFunctor`: the BGP reflection functor at a sink.
@@ -138,6 +139,17 @@ theorem incomingSum_apply (M : QuiverRep.{u, v, w, max v w x} k Q) (i : Q)
     (f : (e : Σ b : Q, (b ⟶ i)) → M.obj e.1) :
     incomingSum M i f = ∑ e : Σ b : Q, (b ⟶ i), (M.map e.2.toPath).hom (f e) := by
   simp [incomingSum]
+
+/-- **The image of an arrow into `i` lies in the range of `TauCeti.incomingSum`.** -/
+theorem map_toPath_mem_range_incomingSum (M : QuiverRep.{u, v, w, max v w x} k Q) {b i : Q}
+    (e : b ⟶ i) (y : M.obj b) :
+    (M.map e.toPath).hom y ∈ LinearMap.range (incomingSum M i) := by
+  classical
+  refine ⟨Pi.single ⟨b, e⟩ y, ?_⟩
+  rw [incomingSum_apply, Finset.sum_eq_single_of_mem ⟨b, e⟩ (Finset.mem_univ _)]
+  · simp
+  · intro c _ hc
+    simp [Pi.single_eq_of_ne hc]
 
 /-- The source of `TauCeti.incomingSum` has dimension `∑_b #(b ⟶ i) · dim M_b`. Only the vertex
 spaces at the sources of arrows into `i` need be finite-dimensional; they are the only ones the
