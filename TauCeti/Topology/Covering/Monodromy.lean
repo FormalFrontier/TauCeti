@@ -25,7 +25,7 @@ content of the classification of covering spaces by fundamental-groupoid actions
   from the fundamental groupoid of `X` to types.
 * `TauCeti.CoveringSpace.monodromyFunctor_map_app`: the natural transformation induced by a map of
   covering spaces, evaluated at a base point.
-* `TauCeti.CoveringSpace.faithfulMonodromyFunctor`: monodromy is faithful on maps of covers.
+* `TauCeti.CoveringSpace.monodromyFunctor_faithful`: monodromy is faithful on maps of covers.
 
 ## References
 
@@ -45,30 +45,24 @@ namespace TauCeti.CoveringSpace
 
 variable {X : TopCat.{u}}
 
-/-- The commuting triangle of a map of covering spaces, as the function equality used by the
-monodromy API. -/
-theorem comp_hom_left_eq {p q : CoveringSpace X} (f : p ⟶ q) :
-    q.proj.hom ∘ f.hom.left.hom = p.proj.hom := by
-  funext e
-  exact DFunLike.congr_fun (congrArg TopCat.Hom.hom (w f)) e
-
 /-- Monodromy as a functor from covering spaces over `X` to functors from the fundamental
 groupoid of `X` to types.
 
-The definition is exposed because its object values are themselves types: later classification
-constructions need them to reduce to the corresponding fibres. The map computation is provided by
-`monodromyFunctor_map_app`. -/
+The definition is exposed because its object values are themselves types: without exposure the
+characteristic lemmas `monodromyFunctor_obj` and `monodromyFunctor_map_app` are unprovable and
+unstatable respectively, since both need `(monodromyFunctor X).obj p` to reduce to the fibre
+functor of `p`. Consumers should use those two lemmas rather than the record fields. -/
 @[expose] noncomputable def monodromyFunctor (X : TopCat.{u}) :
     CoveringSpace X ⥤ (FundamentalGroupoid X ⥤ Type u) where
   obj p := p.isCoveringMap_proj.monodromyFunctor
   map {p q} f := IsCoveringMap.monodromyNatTrans p.isCoveringMap_proj q.isCoveringMap_proj
-    f.hom.left.hom (comp_hom_left_eq f)
+    f.hom.left.hom (proj_hom_comp_hom_left_hom f)
   map_id p := by
     simp
   map_comp {p q r} f g := by
     simpa using IsCoveringMap.monodromyNatTrans_comp p.isCoveringMap_proj
       q.isCoveringMap_proj r.isCoveringMap_proj f.hom.left.hom g.hom.left.hom
-      (comp_hom_left_eq f) (comp_hom_left_eq g)
+      (proj_hom_comp_hom_left_hom f) (proj_hom_comp_hom_left_hom g)
 
 @[simp]
 theorem monodromyFunctor_obj (p : CoveringSpace X) :
@@ -80,13 +74,13 @@ underlying map of total spaces to the corresponding fibre. -/
 @[simp]
 theorem monodromyFunctor_map_app {p q : CoveringSpace X} (f : p ⟶ q) (x : X) :
     ((monodromyFunctor X).map f).app (FundamentalGroupoid.mk x) =
-      ↾(IsCoveringMap.fiberMap f.hom.left.hom (comp_hom_left_eq f) x) := by
+      ↾(IsCoveringMap.fiberMap f.hom.left.hom (proj_hom_comp_hom_left_hom f) x) := by
   exact IsCoveringMap.monodromyNatTrans_app p.isCoveringMap_proj q.isCoveringMap_proj
-    f.hom.left.hom (comp_hom_left_eq f) x
+    f.hom.left.hom (proj_hom_comp_hom_left_hom f) x
 
 /-- The monodromy functor is faithful: a map of covering spaces is determined by its restrictions
 to all fibres. -/
-instance faithfulMonodromyFunctor (X : TopCat.{u}) : (monodromyFunctor X).Faithful where
+instance monodromyFunctor_faithful (X : TopCat.{u}) : (monodromyFunctor X).Faithful where
   map_injective {p q} f g h := by
     apply ObjectProperty.hom_ext
     ext e
@@ -96,13 +90,14 @@ instance faithfulMonodromyFunctor (X : TopCat.{u}) : (monodromyFunctor X).Faithf
     have happ := ConcreteCategory.congr_hom happ e'
     calc
       f.hom.left e =
-          (IsCoveringMap.fiberMap f.hom.left.hom (comp_hom_left_eq f) (p.proj e) e' :
+          (IsCoveringMap.fiberMap f.hom.left.hom (proj_hom_comp_hom_left_hom f) (p.proj e) e' :
             (q : TopCat)) :=
-        (IsCoveringMap.fiberMap_apply_coe f.hom.left.hom (comp_hom_left_eq f)
+        (IsCoveringMap.fiberMap_apply_coe f.hom.left.hom (proj_hom_comp_hom_left_hom f)
           (p.proj e) e').symm
-      _ = IsCoveringMap.fiberMap g.hom.left.hom (comp_hom_left_eq g) (p.proj e) e' := by
+      _ = IsCoveringMap.fiberMap g.hom.left.hom (proj_hom_comp_hom_left_hom g) (p.proj e) e' := by
         exact Subtype.ext_iff.mp happ
       _ = g.hom.left e :=
-        IsCoveringMap.fiberMap_apply_coe g.hom.left.hom (comp_hom_left_eq g) (p.proj e) e'
+        IsCoveringMap.fiberMap_apply_coe g.hom.left.hom (proj_hom_comp_hom_left_hom g)
+          (p.proj e) e'
 
 end TauCeti.CoveringSpace
