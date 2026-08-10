@@ -5,7 +5,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Probability.Exchangeability.L2.BlockAverages
-public import TauCeti.Probability.Process.DisjointWindow
 import TauCeti.MeasureTheory.Function.L2ToL1Convergence
 import TauCeti.Probability.Exchangeability.Map
 import TauCeti.MeasureTheory.Function.BoundedMemLp

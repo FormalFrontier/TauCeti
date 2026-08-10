@@ -97,26 +97,11 @@ theorem prod_blockAverage_window_eq_expect {m N : ℕ} (Y : Fin m → ℕ → Ω
       = 𝔼 js : Fin m → Fin N, ∏ i : Fin m, Y i (window N (i : ℕ) (js i : ℕ)) ω :=
   prod_blockAverage_eq_expect Y (fun i j => window N (i : ℕ) (j : ℕ)) ω
 
-/-! ### Selections for moving-window convergence
+/-! ### The disjoint-window selection
 
-The two selection families that the `L²` convergence theorems instantiate: a window with a fixed
-start, and the disjoint windows that a block factorization needs. Both are index constructions with
-no measure and no `L²` content. -/
-
-/-- The **fixed-start selection**: the window of length `n + 1` beginning at `r`. -/
-def fixedStart (r : ℕ) : ∀ n : ℕ, Fin (n + 1) → ℕ := fun _ j => r + (j : ℕ)
-
-@[simp]
-theorem fixedStart_apply (r n : ℕ) (j : Fin (n + 1)) : fixedStart r n j = r + (j : ℕ) := (rfl)
-
-/-- The fixed-start selection is injective at each length. -/
-theorem fixedStart_injective (r n : ℕ) : Function.Injective (fixedStart r n) :=
-  (add_right_injective r).comp Fin.val_injective
-
-/-- The eventual form, as the moving-selection theorems take it. -/
-theorem fixedStart_eventually_injective (r : ℕ) :
-    ∀ᶠ n in atTop, Function.Injective (fixedStart r n) :=
-  Eventually.of_forall (fixedStart_injective r)
+The moving selection a block factorization needs: at each length, distinct factors read disjoint
+windows. The generic fixed-start selection lives with `blockAverage` in
+`Probability/Process/BlockAverage.lean`. -/
 
 /-- The **disjoint-window selection**: at length `n + 1`, factor `c` reads the window
 `window (n + 1) c`, occupying `[(c + 1)(n + 1), (c + 2)(n + 1))`. -/

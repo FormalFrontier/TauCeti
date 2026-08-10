@@ -27,7 +27,8 @@ This file identifies it:
   selection, fixed starts (`fixedStart`) and disjoint windows (`disjointWindow`) alike, with
   `Contractable.tendsto_integral_abs_blockAverage_sub_condExp` the bounded-observable form;
 * `Contractable.ae_eq_condExp_tailProcess_of_tendsto_integral_abs` — consequently *any* `L¹` limit
-  of those windows is a.e. that conditional expectation.
+  of those block averages, along any eventually injective selection, is a.e. that conditional
+  expectation.
 
 Both ingredients are already in place, and the argument is short. Contractability makes all
 coordinates share a conditional law given the tail (`Contractable.condExp_comp_tailProcess_ae_eq`),
@@ -145,26 +146,27 @@ theorem Contractable.tendsto_integral_abs_blockAverage_sub_condExp {μ : Measure
     (memLp_comp_of_bound hf (hX_meas 0).aemeasurable C
       (Eventually.of_forall fun ω => hC (X 0 ω)) 2) k hk
 
-/-- **Any `L¹` limit of the Cesàro windows is the conditional expectation.** The identification
-form: one fixed start `r` suffices, since an `L¹` limit is a.e. unique. -/
+/-- **Any `L¹` limit of the block averages is the conditional expectation.** The identification
+form: along any eventually injective selection, an `L¹` limit is a.e. unique, so it must be the
+conditional expectation the windows already converge to. -/
 theorem Contractable.ae_eq_condExp_tailProcess_of_tendsto_integral_abs {μ : Measure Ω}
     [IsFiniteMeasure μ] {X : ℕ → Ω → α} (hX : Contractable μ X) (hX_meas : ∀ i, Measurable (X i))
-    {f : α → ℝ} (hf : Measurable f) (hf_L2 : MemLp (fun ω => f (X 0 ω)) 2 μ) {r : ℕ} {a : Ω → ℝ}
+    {f : α → ℝ} (hf : Measurable f) (hf_L2 : MemLp (fun ω => f (X 0 ω)) 2 μ)
+    {k : ∀ n : ℕ, Fin (n + 1) → ℕ} (hk : ∀ᶠ n in atTop, Function.Injective (k n)) {a : Ω → ℝ}
     (ha_int : Integrable a μ)
     (ha_lim : Tendsto
-      (fun m => ∫ ω, |blockAverage (fun i ω => f (X i ω)) (fun j : Fin (m + 1) => r + j) ω
-        - a ω| ∂μ)
+      (fun m => ∫ ω, |blockAverage (fun i ω => f (X i ω)) (k m) ω - a ω| ∂μ)
       atTop (𝓝 0)) :
     a =ᵐ[μ] μ[fun ω => f (X 0 ω) | tailProcess X] := by
   have hX_ae : ∀ i, AEMeasurable (X i) μ := fun i => (hX_meas i).aemeasurable
   have hY_L2 : ∀ i : ℕ, MemLp (fun ω => f (X i ω)) 2 μ := hX.memLp_comp hX_ae hf hf_L2
   have hA_int : ∀ m : ℕ,
-      Integrable (blockAverage (fun i ω => f (X i ω)) fun j : Fin (m + 1) => r + (j : ℕ)) μ :=
-    fun m => (memLp_blockAverage _ fun j => hY_L2 (r + (j : ℕ))).integrable one_le_two
+      Integrable (blockAverage (fun i ω => f (X i ω)) (k m)) μ :=
+    fun m => (memLp_blockAverage _ fun j => hY_L2 (k m j)).integrable one_le_two
   -- Both `a` and the conditional expectation are `L¹` limits of the same windows, hence limits in
   -- measure, and a limit in measure is a.e. unique.
   exact tendstoInMeasure_ae_unique (f := fun m =>
-      blockAverage (fun i ω => f (X i ω)) fun j : Fin (m + 1) => r + (j : ℕ))
+      blockAverage (fun i ω => f (X i ω)) (k m))
     (tendstoInMeasure_of_tendsto_eLpNorm one_ne_zero
       (fun m => (hA_int m).aestronglyMeasurable) ha_int.aestronglyMeasurable
       (TauCeti.MeasureTheory.tendsto_eLpNorm_one_of_tendsto_integral_norm_sub hA_int ha_int
@@ -173,9 +175,8 @@ theorem Contractable.ae_eq_condExp_tailProcess_of_tendsto_integral_abs {μ : Mea
       (fun m => (hA_int m).aestronglyMeasurable) integrable_condExp.aestronglyMeasurable
       (TauCeti.MeasureTheory.tendsto_eLpNorm_one_of_tendsto_integral_norm_sub hA_int
         integrable_condExp (by
-          simpa [Real.norm_eq_abs, funext (fixedStart_apply r _)] using
-            hX.tendsto_integral_abs_blockAverage_sub_condExp_of_memLp hX_meas hf hf_L2
-              (fixedStart r) (fixedStart_eventually_injective r))))
+          simpa [Real.norm_eq_abs] using
+            hX.tendsto_integral_abs_blockAverage_sub_condExp_of_memLp hX_meas hf hf_L2 k hk)))
 
 end Probability
 

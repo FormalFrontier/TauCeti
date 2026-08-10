@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.Algebra.BigOperators.Expect
+public import Mathlib.Order.Filter.AtTopBot.Basic
 public import Mathlib.Algebra.BigOperators.Ring.Finset
 public import Mathlib.Data.Real.Basic
 
@@ -32,7 +33,7 @@ public section
 
 noncomputable section
 
-open Finset
+open Filter Finset
 open scoped BigOperators
 
 namespace TauCeti
@@ -111,6 +112,21 @@ theorem prod_blockAverage_eq_expect {m N : ℕ} (Y : Fin m → ℕ → Ω → �
   simp only [Fintype.card_pi, Fintype.card_fin, Finset.prod_const, card_univ, div_eq_inv_mul]
   push_cast
   simp [inv_pow]
+
+/-- The **fixed-start selection**: the window of length `n + 1` beginning at `r`. -/
+def fixedStart (r : ℕ) : ∀ n : ℕ, Fin (n + 1) → ℕ := fun _ j => r + (j : ℕ)
+
+@[simp]
+theorem fixedStart_apply (r n : ℕ) (j : Fin (n + 1)) : fixedStart r n j = r + (j : ℕ) := (rfl)
+
+/-- The fixed-start selection is injective at each length. -/
+theorem fixedStart_injective (r n : ℕ) : Function.Injective (fixedStart r n) :=
+  (add_right_injective r).comp Fin.val_injective
+
+/-- The eventual form, as the moving-selection theorems take it. -/
+theorem fixedStart_eventually_injective (r : ℕ) :
+    ∀ᶠ n in atTop, Function.Injective (fixedStart r n) :=
+  Eventually.of_forall (fixedStart_injective r)
 
 end Probability
 
