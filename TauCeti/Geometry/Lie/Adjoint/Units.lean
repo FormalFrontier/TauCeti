@@ -59,6 +59,7 @@ theorem unitsLieAlgebraEquiv_Ad (g : Rˣ)
       fun t : ℝ => (TauCeti.expUnitHom y (Multiplicative.ofAdd t) : R) := by
     funext t
     have h := conj_lieExp (I := 𝓘(ℝ, R)) g (t • X)
+    dsimp only at h
     rw [lieExp_eq_expUnit, lieExp_eq_expUnit] at h
     simpa only [Units.val_mul, Units.val_inv_eq_inv_val, TauCeti.expUnitHom_apply,
       x, y, map_smul] using congrArg Units.val h
