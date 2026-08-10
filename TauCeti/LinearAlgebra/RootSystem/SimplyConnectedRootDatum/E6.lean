@@ -44,7 +44,8 @@ means here.
 
 ## Main definitions
 
-* `TauCeti.DynkinType.e6Coroot` and `TauCeti.DynkinType.e6Root`: the two coordinate tables.
+* `TauCeti.DynkinType.e6Coroot` and `TauCeti.DynkinType.e6Root`: the coroot coordinate embedding and
+  the root embedding derived from it by the Cartan-matrix map.
 * `TauCeti.DynkinType.e6SimplyConnectedRootDatum`: the pinned root datum of type `E₆`.
 * `TauCeti.DynkinType.e6SimpleIndex`: the first six root indices, the Bourbaki-numbered simple
   roots.
@@ -76,13 +77,10 @@ open _root_.Matrix Module Set Submodule
 
 namespace DynkinType
 
-/-! ## The coordinate tables -/
+/-! ## The coordinate data -/
 
-/-- The coroots of type `E₆` in the simple-coroot basis. The first six are the standard basis
-vectors, the first thirty-six are the positive coroots, and the last thirty-six are their
-negatives. -/
-def e6Coroot : Fin 72 ↪ (Fin 6 → ℤ) where
-  toFun := ![
+/-- The positive coroots of type `E₆` in the simple-coroot basis. -/
+private def e6PositiveCoroot : Fin 36 → (Fin 6 → ℤ) := ![
     ![1, 0, 0, 0, 0, 0], ![0, 1, 0, 0, 0, 0], ![0, 0, 1, 0, 0, 0],
     ![0, 0, 0, 1, 0, 0], ![0, 0, 0, 0, 1, 0], ![0, 0, 0, 0, 0, 1],
     ![0, 0, 0, 0, 1, 1], ![0, 0, 0, 1, 1, 0], ![0, 0, 1, 1, 0, 0],
@@ -94,50 +92,24 @@ def e6Coroot : Fin 72 ↪ (Fin 6 → ℤ) where
     ![1, 1, 1, 1, 1, 0], ![0, 1, 1, 2, 1, 1], ![1, 1, 1, 1, 1, 1],
     ![1, 1, 1, 2, 1, 0], ![0, 1, 1, 2, 2, 1], ![1, 1, 1, 2, 1, 1],
     ![1, 1, 2, 2, 1, 0], ![1, 1, 1, 2, 2, 1], ![1, 1, 2, 2, 1, 1],
-    ![1, 1, 2, 2, 2, 1], ![1, 1, 2, 3, 2, 1], ![1, 2, 2, 3, 2, 1],
-    ![-1, 0, 0, 0, 0, 0], ![0, -1, 0, 0, 0, 0], ![0, 0, -1, 0, 0, 0],
-    ![0, 0, 0, -1, 0, 0], ![0, 0, 0, 0, -1, 0], ![0, 0, 0, 0, 0, -1],
-    ![0, 0, 0, 0, -1, -1], ![0, 0, 0, -1, -1, 0], ![0, 0, -1, -1, 0, 0],
-    ![0, -1, 0, -1, 0, 0], ![-1, 0, -1, 0, 0, 0], ![0, 0, 0, -1, -1, -1],
-    ![0, 0, -1, -1, -1, 0], ![0, -1, 0, -1, -1, 0], ![0, -1, -1, -1, 0, 0],
-    ![-1, 0, -1, -1, 0, 0], ![0, 0, -1, -1, -1, -1], ![0, -1, 0, -1, -1, -1],
-    ![0, -1, -1, -1, -1, 0], ![-1, 0, -1, -1, -1, 0], ![-1, -1, -1, -1, 0, 0],
-    ![0, -1, -1, -1, -1, -1], ![0, -1, -1, -2, -1, 0], ![-1, 0, -1, -1, -1, -1],
-    ![-1, -1, -1, -1, -1, 0], ![0, -1, -1, -2, -1, -1], ![-1, -1, -1, -1, -1, -1],
-    ![-1, -1, -1, -2, -1, 0], ![0, -1, -1, -2, -2, -1], ![-1, -1, -1, -2, -1, -1],
-    ![-1, -1, -2, -2, -1, 0], ![-1, -1, -1, -2, -2, -1], ![-1, -1, -2, -2, -1, -1],
-    ![-1, -1, -2, -2, -2, -1], ![-1, -1, -2, -3, -2, -1], ![-1, -2, -2, -3, -2, -1]]
+    ![1, 1, 2, 2, 2, 1], ![1, 1, 2, 3, 2, 1], ![1, 2, 2, 3, 2, 1]]
+
+/-- The coroots of type `E₆` in the simple-coroot basis. The first six are the standard basis
+vectors, the first thirty-six are the positive coroots, and the last thirty-six are their
+negatives. -/
+def e6Coroot : Fin 72 ↪ (Fin 6 → ℤ) where
+  toFun i := if h : (i : ℕ) < 36 then e6PositiveCoroot ⟨i, h⟩
+    else -e6PositiveCoroot ⟨(i : ℕ) - 36, by omega⟩
   inj' := by decide +kernel
 
 /-- The roots of type `E₆` in the fundamental-weight basis, ordered compatibly with
-`TauCeti.DynkinType.e6Coroot`. The first six are the rows of `CartanMatrix.E₆`. -/
+`TauCeti.DynkinType.e6Coroot`. They are derived from the coroot coordinates by the Cartan-matrix
+map, and the first six are the rows of `CartanMatrix.E₆`. -/
 def e6Root : Fin 72 ↪ (Fin 6 → ℤ) where
-  toFun := ![
-    ![2, 0, -1, 0, 0, 0], ![0, 2, 0, -1, 0, 0], ![-1, 0, 2, -1, 0, 0],
-    ![0, -1, -1, 2, -1, 0], ![0, 0, 0, -1, 2, -1], ![0, 0, 0, 0, -1, 2],
-    ![0, 0, 0, -1, 1, 1], ![0, -1, -1, 1, 1, -1], ![-1, -1, 1, 1, -1, 0],
-    ![0, 1, -1, 1, -1, 0], ![1, 0, 1, -1, 0, 0], ![0, -1, -1, 1, 0, 1],
-    ![-1, -1, 1, 0, 1, -1], ![0, 1, -1, 0, 1, -1], ![-1, 1, 1, 0, -1, 0],
-    ![1, -1, 0, 1, -1, 0], ![-1, -1, 1, 0, 0, 1], ![0, 1, -1, 0, 0, 1],
-    ![-1, 1, 1, -1, 1, -1], ![1, -1, 0, 0, 1, -1], ![1, 1, 0, 0, -1, 0],
-    ![-1, 1, 1, -1, 0, 1], ![-1, 0, 0, 1, 0, -1], ![1, -1, 0, 0, 0, 1],
-    ![1, 1, 0, -1, 1, -1], ![-1, 0, 0, 1, -1, 1], ![1, 1, 0, -1, 0, 1],
-    ![1, 0, -1, 1, 0, -1], ![-1, 0, 0, 0, 1, 0], ![1, 0, -1, 1, -1, 1],
-    ![0, 0, 1, 0, 0, -1], ![1, 0, -1, 0, 1, 0], ![0, 0, 1, 0, -1, 1],
-    ![0, 0, 1, -1, 1, 0], ![0, -1, 0, 1, 0, 0], ![0, 1, 0, 0, 0, 0],
-    ![-2, 0, 1, 0, 0, 0], ![0, -2, 0, 1, 0, 0], ![1, 0, -2, 1, 0, 0],
-    ![0, 1, 1, -2, 1, 0], ![0, 0, 0, 1, -2, 1], ![0, 0, 0, 0, 1, -2],
-    ![0, 0, 0, 1, -1, -1], ![0, 1, 1, -1, -1, 1], ![1, 1, -1, -1, 1, 0],
-    ![0, -1, 1, -1, 1, 0], ![-1, 0, -1, 1, 0, 0], ![0, 1, 1, -1, 0, -1],
-    ![1, 1, -1, 0, -1, 1], ![0, -1, 1, 0, -1, 1], ![1, -1, -1, 0, 1, 0],
-    ![-1, 1, 0, -1, 1, 0], ![1, 1, -1, 0, 0, -1], ![0, -1, 1, 0, 0, -1],
-    ![1, -1, -1, 1, -1, 1], ![-1, 1, 0, 0, -1, 1], ![-1, -1, 0, 0, 1, 0],
-    ![1, -1, -1, 1, 0, -1], ![1, 0, 0, -1, 0, 1], ![-1, 1, 0, 0, 0, -1],
-    ![-1, -1, 0, 1, -1, 1], ![1, 0, 0, -1, 1, -1], ![-1, -1, 0, 1, 0, -1],
-    ![-1, 0, 1, -1, 0, 1], ![1, 0, 0, 0, -1, 0], ![-1, 0, 1, -1, 1, -1],
-    ![0, 0, -1, 0, 0, 1], ![-1, 0, 1, 0, -1, 0], ![0, 0, -1, 0, 1, -1],
-    ![0, 0, -1, 1, -1, 0], ![0, 1, 0, -1, 0, 0], ![0, -1, 0, 0, 0, 0]]
-  inj' := by decide +kernel
+  toFun i := CartanMatrix.E₆ *ᵥ e6Coroot i
+  inj' := (Matrix.mulVec_injective_of_det_ne_zero (by
+    rw [CartanMatrix.E₆_det]
+    norm_num)).comp e6Coroot.injective
 
 /-! ## The three blocks of root indices -/
 
@@ -159,14 +131,14 @@ def e6NegativeIndex (i : Fin 36) : Fin 72 := ⟨i + 36, by omega⟩
 lemma e6SimpleIndex_injective : Function.Injective e6SimpleIndex :=
   fun _ _ h => Fin.ext (by simpa using congrArg Fin.val h)
 
-/-! ## The Cartan matrix as the bridge between the two tables -/
+/-! ## The Cartan matrix as the bridge between the two embeddings -/
 
-/-- **The stored root coordinates are the Cartan-matrix image of the stored coroot coordinates.**
+/-- **The root coordinates are the Cartan-matrix image of the coroot coordinates.**
 Writing a coroot as `β^∨ = ∑ i, cᵢ αᵢ^∨` in the simple coroots, the pairings of `β` against the
 simple coroots are `⟨β, αⱼ^∨⟩ = ∑ i, cᵢ ⟨αᵢ, αⱼ^∨⟩`, which is the `j`-th entry of the
 Cartan-matrix image of `c` because `CartanMatrix.E₆` is symmetric. -/
 theorem e6Root_eq_mulVec (j : Fin 72) : e6Root j = CartanMatrix.E₆ *ᵥ e6Coroot j := by
-  decide +kernel +revert
+  simp only [e6Root, Function.Embedding.coeFn_mk]
 
 /-- **The simple coroots are the standard basis.** This is what pins the cocharacter lattice as the
 coroot lattice, so that the datum is the simply connected one. -/
@@ -177,7 +149,8 @@ coroot lattice, so that the datum is the simply connected one. -/
 `i`-th simple root of the pinned type `E₆` datum is the `i`-th row of `CartanMatrix.E₆`, which is
 what pins the character lattice as the weight lattice. -/
 @[simp] theorem root_e6SimpleIndex (i : Fin 6) : e6Root (e6SimpleIndex i) = CartanMatrix.E₆ i := by
-  fin_cases i <;> rfl
+  rw [e6Root_eq_mulVec, coroot_e6SimpleIndex]
+  fin_cases i <;> decide
 
 /-- The pairing of the pinned tables is symmetric. This is the simply-laced feature of `E₆`: the
 pairing is the symmetric bilinear form attached to `CartanMatrix.E₆`, read on the shared
