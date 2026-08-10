@@ -43,11 +43,12 @@ rather than typographical.
 
 The source writes an equation `w₁ = w₂` for the relator `w₁ w₂⁻¹`, which is
 `TauCeti.Relator.div`; it writes `w₁ ^ w₂` for `w₂⁻¹ w₁ w₂`, which is `TauCeti.Relator.conj`; and
-it writes `[w₁, w₂]` for `w₁⁻¹ w₂⁻¹ w₁ w₂`, which is `TauCeti.Sporadic.Thompson.bracket`, that is,
-Mathlib's commutator applied to the two inverses. The three conventions are pinned by
-`TauCeti.Relator.toFreeGroup_div_eq_one_iff`, `TauCeti.Relator.toFreeGroup_conj` and
-`TauCeti.Relator.toFreeGroup_comm_inv_inv`, so no step between the printed source and the free-group
-element used as a relation is left unstated.
+it writes `[w₁, w₂]` for `w₁⁻¹ w₂⁻¹ w₁ w₂`, which is
+`TauCeti.Sporadic.Thompson.sourceCommutator`, that is, Mathlib's commutator applied to the two
+inverses. The three conventions are pinned by `TauCeti.Relator.toFreeGroup_div` (with Mathlib's
+`div_eq_one`, which turns the relator `w₁ w₂⁻¹` back into the source's equation),
+`TauCeti.Relator.toFreeGroup_conj` and `TauCeti.Relator.toFreeGroup_comm_inv_inv`, so no step
+between the printed source and the free-group element used as a relation is left unstated.
 
 ## What is and is not claimed
 
@@ -61,9 +62,10 @@ has eight generators and thirty-nine relators, split as `14 + 6 + 7 + 7 + 1 + 4`
 six displayed groups. Beyond those counts, the source states a figure that the transcribed data
 reproduces independently: it observes that its presentation gives a coset table with eleven columns,
 which is the number of involutory generators plus twice the number of the others.
-`TauCeti.Sporadic.Thompson.cosetTableColumns` recomputes that figure from the relator list, and
-`TauCeti.Sporadic.Thompson.involutoryGenerators_eq` identifies the five involutory generators as
-`a, b, c, d, e`. A transposed or dropped power relator would show up in one of these.
+`TauCeti.Sporadic.Thompson.cosetTableColumns` recomputes that figure from the relator list, reading
+the involutory generators off it as those carrying an explicit square relator, and
+`TauCeti.Sporadic.Thompson.generatorsWithSquareRelator_eq` identifies those five as `a, b, c, d, e`.
+A transposed or dropped power relator would show up in one of these.
 
 Correctness of the transcription beyond that is a review obligation, exactly as the roadmap
 describes: a reviewer reads the six lists below against Theorem 3.1 of the source. Note that the
@@ -74,11 +76,12 @@ so the list is deliberately not minimal.
 
 * `TauCeti.Sporadic.Thompson.genA` to `TauCeti.Sporadic.Thompson.genU`: the source's eight letters
   as relator expressions.
-* `TauCeti.Sporadic.Thompson.bracket`: the source's commutator convention.
+* `TauCeti.Sporadic.Thompson.sourceCommutator`: the source's commutator convention.
 * `TauCeti.Sporadic.Thompson.relatorsOne` to `TauCeti.Sporadic.Thompson.relatorsSix`: the six
   displayed relator groups, and `TauCeti.Sporadic.Thompson.relatorList`, their concatenation.
 * `TauCeti.Sporadic.Thompson.presentation`: the transcribed row.
-* `TauCeti.Sporadic.Thompson.involutoryGenerators`: the generators whose squares the data imposes.
+* `TauCeti.Sporadic.Thompson.generatorsWithSquareRelator`: the generators carrying an explicit
+  square relator in the transcribed data.
 
 ## References
 
@@ -132,7 +135,7 @@ abbrev genU : Relator (Fin 8) := .gen 7
 Mathlib's bracket, carried by `TauCeti.Relator.comm`, is `⁅r, s⁆ = r s r⁻¹ s⁻¹`, so the source's
 convention is Mathlib's applied to the two inverses; `TauCeti.Relator.toFreeGroup_comm_inv_inv`
 proves that this denotes `r⁻¹ s⁻¹ r s` in the free group. -/
-abbrev bracket (r s : Relator (Fin 8)) : Relator (Fin 8) := .comm (.inv r) (.inv s)
+abbrev sourceCommutator (r s : Relator (Fin 8)) : Relator (Fin 8) := .comm (.inv r) (.inv s)
 
 @[inherit_doc Relator.mul]
 local infixl:70 " ⬝ " => Relator.mul
@@ -167,11 +170,11 @@ Together with relators (1), on the generators `a, b, c, d, e, s`, these present 
 @[expose]
 def relatorsTwo : List (Relator (Fin 8)) :=
   [genS.pow 7,
-    bracket genS genA,
-    bracket genS genB,
-    bracket genS genC,
+    sourceCommutator genS genA,
+    sourceCommutator genS genB,
+    sourceCommutator genS genC,
     (genS ⬝ genD).pow 2,
-    (bracket genE genS).div (genE.conj (genS.pow 3))]
+    (sourceCommutator genE genS).div (genE.conj (genS.pow 3))]
 
 /-- Relators (3) of the source: `t³, [t, a], [t, b], [t, c], [t, d], [t, e], s ^ t = s²`.
 
@@ -180,11 +183,11 @@ which the final coset enumeration is run. -/
 @[expose]
 def relatorsThree : List (Relator (Fin 8)) :=
   [genT.pow 3,
-    bracket genT genA,
-    bracket genT genB,
-    bracket genT genC,
-    bracket genT genD,
-    bracket genT genE,
+    sourceCommutator genT genA,
+    sourceCommutator genT genB,
+    sourceCommutator genT genC,
+    sourceCommutator genT genD,
+    sourceCommutator genT genE,
     (genS.conj genT).div (genS.pow 2)]
 
 /-- Relators (4) of the source: `u² = ac, [u, a], [u, c], [u, e], (d e d ^ u)²,
@@ -196,12 +199,12 @@ relator is the one the source singles out as the crucial one, found with GAP's
 @[expose]
 def relatorsFour : List (Relator (Fin 8)) :=
   [(genU.pow 2).div (genA ⬝ genC),
-    bracket genU genA,
-    bracket genU genC,
-    bracket genU genE,
+    sourceCommutator genU genA,
+    sourceCommutator genU genC,
+    sourceCommutator genU genE,
     (genD ⬝ genE ⬝ genD.conj genU).pow 2,
-    (bracket genU ((genA ⬝ genC).conj genB)).div genE,
-    (bracket (genU.conj genD) ((genA ⬝ genC).conj genB)).div
+    (sourceCommutator genU ((genA ⬝ genC).conj genB)).div genE,
+    (sourceCommutator (genU.conj genD) ((genA ⬝ genC).conj genB)).div
       (genU ⬝ genE ⬝ (genA ⬝ genC).conj genB ⬝ genU.conj genD ⬝ genE ⬝ genC)]
 
 /-- Relator (5) of the source: `t ^ u = t⁻¹`.
@@ -219,9 +222,9 @@ The source obtained these last relators from explicit `248`-dimensional matrices
 generating `Th` and satisfying relators (1) to (5). -/
 @[expose]
 def relatorsSix : List (Relator (Fin 8)) :=
-  [bracket genE (genU.conj (genS.pow 2)),
+  [sourceCommutator genE (genU.conj (genS.pow 2)),
     (genA ⬝ genC).div ((genU ⬝ genS).pow 3),
-    ((genU ⬝ genS).pow 3).div ((bracket genU genS).pow 4),
+    ((genU ⬝ genS).pow 3).div ((sourceCommutator genU genS).pow 4),
     ((genD ⬝ genU.conj (genS.pow 2)).pow 4).div
       (genA ⬝ genC ⬝ genC.conj genD ⬝ genC.conj (genD ⬝ genE ⬝ Relator.inv genS) ⬝
         genC.conj (genD ⬝ genE ⬝ genS.pow 2))]
@@ -290,25 +293,32 @@ theorem length_relatorList : relatorList.length = 39 := rfl
 theorem presentation_matchesMetadata : presentation.matchesMetadata :=
   (GroupPresentation.matchesMetadata_iff presentation).mpr ⟨rfl, rfl⟩
 
-/-- The generators declared to be involutions by the transcribed data, read off it: the indices `i`
-for which the relator `gᵢ²` occurs in the list. -/
+/-- The indices `i` for which the relator `gᵢ²` occurs literally in the transcribed list.
+
+This is a syntactic test on the data as written, not a statement about element orders in the
+presented group: it neither proves that such a generator has order exactly two rather than one, nor
+detects a generator whose square is forced by the other relators. What it is for is the column count
+below, which the source computes from exactly this syntactic reading of its own displayed
+relators. -/
 @[expose]
-def involutoryGenerators : List (Fin 8) :=
+def generatorsWithSquareRelator : List (Fin 8) :=
   relatorList.filterMap fun r =>
     match r with
     | .pow (.gen i) 2 => some i
     | _ => none
 
-/-- **The involutory generators are exactly `a`, `b`, `c`, `d` and `e`**, the first five of the
-eight. A power relator dropped from, or transposed within, relators (1) would change this list. -/
-theorem involutoryGenerators_eq : involutoryGenerators = [0, 1, 2, 3, 4] := rfl
+/-- **The generators carrying a square relator are exactly `a`, `b`, `c`, `d` and `e`**, the first
+five of the eight, which are the source's involutory generators. A power relator dropped from, or
+transposed within, relators (1) would change this list. -/
+theorem generatorsWithSquareRelator_eq : generatorsWithSquareRelator = [0, 1, 2, 3, 4] := rfl
 
 /-- **The coset table of the transcribed presentation has eleven columns**, the figure the source
-records for its enumeration: one column for each involutory generator and two for each of the
-others. Recomputing it from the transcribed relators checks the data against a published number
+records for its enumeration: one column for each generator carrying a square relator, its involutory
+generators, and two for each of the others. Recomputing it from the transcribed relators checks the
+data against a published number
 that the counts of `TauCeti.Sporadic.Thompson.presentation_matchesMetadata` do not see. -/
 theorem cosetTableColumns :
-    involutoryGenerators.length +
-      2 * (presentation.generatorCount - involutoryGenerators.length) = 11 := rfl
+    generatorsWithSquareRelator.length +
+      2 * (presentation.generatorCount - generatorsWithSquareRelator.length) = 11 := rfl
 
 end TauCeti.Sporadic.Thompson

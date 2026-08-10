@@ -117,8 +117,8 @@ def conj {α : Type*} (r s : Relator α) : Relator α := .mul (.inv s) (.mul r s
 /-- The relator `r * s⁻¹`, by which a source states the equation `r = s`.
 
 A published presentation freely mixes relators with relations, writing for instance `a = (cd)⁴`
-alongside `a²`; `Relator.toFreeGroup_div_eq_one_iff` is the statement that the two forms say the
-same thing.
+alongside `a²`; `Relator.toFreeGroup_div` computes what this denotes, so Mathlib's `div_eq_one`
+says that imposing `r s⁻¹` as a relator is imposing the source's equation `r = s`.
 
 The body is exposed for the same reason as that of `TauCeti.Relator.conj`. -/
 @[expose]
@@ -136,11 +136,17 @@ theorem toFreeGroup_div {α : Type*} (r s : Relator α) :
     (r.div s).toFreeGroup = r.toFreeGroup / s.toFreeGroup := by
   rw [div, toFreeGroup, toFreeGroup, div_eq_mul_inv]
 
-/-- **Imposing `TauCeti.Relator.div` as a relator is imposing the source's equation.** This is what
-licenses transcribing a published relation `r = s` as the single relator `r s⁻¹`. -/
-theorem toFreeGroup_div_eq_one_iff {α : Type*} (r s : Relator α) :
-    (r.div s).toFreeGroup = 1 ↔ r.toFreeGroup = s.toFreeGroup := by
-  rw [toFreeGroup_div, div_eq_one]
+/-- The compiled word of a conjugate expression. -/
+@[simp]
+theorem toWord_conj {α : Type*} (r s : Relator α) :
+    (r.conj s).toWord = FreeGroup.invRev s.toWord ++ (r.toWord ++ s.toWord) := by
+  rw [conj, toWord, toWord, toWord]
+
+/-- The compiled word of an equation expression. -/
+@[simp]
+theorem toWord_div {α : Type*} (r s : Relator α) :
+    (r.div s).toWord = r.toWord ++ FreeGroup.invRev s.toWord := by
+  rw [div, toWord, toWord]
 
 /-- **The commutator convention of the presentation literature.** Sources that write
 `[r, s] = r⁻¹ s⁻¹ r s`, rather than Mathlib's `⁅r, s⁆ = r s r⁻¹ s⁻¹` carried by `Relator.comm`, are
