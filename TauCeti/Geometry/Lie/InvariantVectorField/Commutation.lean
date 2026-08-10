@@ -8,7 +8,6 @@ import TauCeti.Analysis.Calculus.ParametricFDeriv
 import TauCeti.Geometry.Lie.Exponential.Derivative.Basic
 public import TauCeti.Geometry.Lie.RightInvariantVectorField
 public import TauCeti.Geometry.Manifold.VectorField.LieBracket
-import TauCeti.Geometry.Manifold.VectorField.Regularity
 import TauCeti.Geometry.Lie.Interior
 
 /-!
