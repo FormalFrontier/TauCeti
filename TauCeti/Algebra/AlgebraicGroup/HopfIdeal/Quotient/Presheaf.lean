@@ -200,6 +200,9 @@ noncomputable def pointwiseQuotientProjection (H : _root_.CommHopfAlgCat.{v} R)
     let _ : (quotientPointsSubgroup H I B).Normal :=
       quotientPointsSubgroup_normal H I hI B
     rw [pointwiseQuotientFunctor_map]
+    -- The functor-object theorem inserts `eqToHom` transports around the concrete quotient map.
+    -- Since this natural transformation is still being constructed, its component theorem cannot
+    -- yet rewrite the structure-field goal; `change` removes exactly those definitional transports.
     change pointwiseQuotientMk H I hI A ≫ mapPointwiseQuotient H I hI χ =
       HopfAlgebra.mapPoints (H := H) χ ≫ pointwiseQuotientMk H I hI B
     apply GrpCat.hom_ext
