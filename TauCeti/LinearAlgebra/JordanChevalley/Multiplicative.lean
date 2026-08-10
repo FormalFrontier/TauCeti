@@ -60,9 +60,21 @@ variable {K : Type u} {V : Type v} [CommRing K] [AddCommGroup V] [Module K V]
 def IsSemisimple (g : GeneralLinearGroup K V) : Prop :=
   Module.End.IsSemisimple (g : End K V)
 
+/-- Semisimplicity of a linear automorphism means semisimplicity of its underlying
+endomorphism. -/
+theorem isSemisimple_def (g : GeneralLinearGroup K V) :
+    IsSemisimple g ↔ Module.End.IsSemisimple (g : End K V) :=
+  Iff.rfl
+
 /-- A linear automorphism is unipotent if its difference from the identity is nilpotent. -/
 def IsUnipotent (g : GeneralLinearGroup K V) : Prop :=
   _root_.IsNilpotent ((g : End K V) - 1)
+
+/-- Unipotence of a linear automorphism means that its underlying endomorphism minus the
+identity is nilpotent. -/
+theorem isUnipotent_def (g : GeneralLinearGroup K V) :
+    IsUnipotent g ↔ _root_.IsNilpotent ((g : End K V) - 1) :=
+  Iff.rfl
 
 /-- The identity automorphism is semisimple. -/
 @[simp]
@@ -211,9 +223,19 @@ theorem eq_jordanDecomposition_iff (g s u : GeneralLinearGroup K V) :
 noncomputable def semisimplePart (g : GeneralLinearGroup K V) : GeneralLinearGroup K V :=
   (jordanDecomposition g).1
 
+/-- The semisimple part is the first factor of the canonical Jordan decomposition. -/
+theorem semisimplePart_def (g : GeneralLinearGroup K V) :
+    semisimplePart g = (jordanDecomposition g).1 :=
+  (rfl)
+
 /-- The unipotent factor of the multiplicative Jordan–Chevalley decomposition. -/
 noncomputable def unipotentPart (g : GeneralLinearGroup K V) : GeneralLinearGroup K V :=
   (jordanDecomposition g).2
+
+/-- The unipotent part is the second factor of the canonical Jordan decomposition. -/
+theorem unipotentPart_def (g : GeneralLinearGroup K V) :
+    unipotentPart g = (jordanDecomposition g).2 :=
+  (rfl)
 
 /-- The semisimple factor is semisimple. -/
 theorem isSemisimple_semisimplePart (g : GeneralLinearGroup K V) :
