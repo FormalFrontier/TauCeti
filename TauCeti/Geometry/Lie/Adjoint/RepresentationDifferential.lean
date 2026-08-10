@@ -6,6 +6,7 @@ module
 
 public import TauCeti.Geometry.Lie.Adjoint.Infinitesimal
 public import TauCeti.Geometry.Lie.Adjoint.Representation
+import TauCeti.Geometry.Lie.Exponential.Derivative.Basic
 
 /-!
 # The differential of the adjoint representation
