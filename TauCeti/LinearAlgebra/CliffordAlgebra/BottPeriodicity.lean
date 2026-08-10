@@ -535,6 +535,7 @@ theorem realBottSplitIsometry_fst_pos (p q : ℕ)
     (v : Fin ((p + 1) + (q + 1)) → ℝ) (i : Fin p) :
     (realBottSplitIsometry p q v).1 (Fin.castAdd q i) =
       v (Fin.castAdd (q + 1) i.castSucc) := by
+  -- Expose the linear equivalence underlying the bundled quadratic isometry.
   change (realBottSplitLinearEquiv p q v).1 _ = _
   simp [realBottSplitLinearEquiv, realBottIndexEquiv, splitLastEquiv]
 
@@ -544,6 +545,7 @@ theorem realBottSplitIsometry_fst_neg (p q : ℕ)
     (v : Fin ((p + 1) + (q + 1)) → ℝ) (i : Fin q) :
     (realBottSplitIsometry p q v).1 (Fin.natAdd p i) =
       v (Fin.natAdd (p + 1) i.castSucc) := by
+  -- Expose the linear equivalence underlying the bundled quadratic isometry.
   change (realBottSplitLinearEquiv p q v).1 _ = _
   simp [realBottSplitLinearEquiv, realBottIndexEquiv, splitLastEquiv]
 
@@ -679,9 +681,11 @@ theorem realCliffordBottIterEquiv_zero_apply (p q : ℕ)
           Matrix (Fin 1) (Fin 1) ℝ := realCliffordBottIterEquiv p q 0
     e x = x ⊗ₜ[ℝ] (1 : Matrix (Fin 1) (Fin 1) ℝ) := by
   unfold realCliffordBottIterEquiv
+  -- Expose the zero branch of the private recursive implementation.
   change tensorMatrixOneEquiv ℝ (_root_.CliffordAlgebra (realCliffordForm p q)) x = _
   rw [tensorMatrixOneEquiv, AlgEquiv.trans_apply, matrixEquivTensor_apply,
     Fintype.sum_prod_type, Fin.sum_univ_one, Fin.sum_univ_one]
+  -- The unfolded tensor equivalence leaves the unique matrix unit to identify with `1`.
   change x ⊗ₜ[ℝ] Matrix.single 0 0 1 = x ⊗ₜ[ℝ] 1
   congr 1
   ext i j
