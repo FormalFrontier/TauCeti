@@ -14,8 +14,10 @@ public section
 
 This file enumerates the 240 roots of type `E8` in the lattices used by the future pinned simply
 connected root datum. Coroots are expressed in the simple-coroot basis and roots in the
-fundamental-weight basis. The first eight entries are the Bourbaki simple roots; the remaining
-positive roots are ordered by height, followed by their negatives.
+fundamental-weight basis. Both tables are indexed by the same `Fin 240`: the first eight entries
+of the root table are the Bourbaki simple roots and the first eight entries of the coroot table
+are the corresponding simple coroots. The remaining positive entries are ordered by height, and
+the last 120 entries are the negatives of the first 120.
 
 The enumeration is the root-data input for Layer 6 of the root-systems roadmap. It follows
 Bourbaki, *Lie Groups and Lie Algebras, Chapters 4--6*, Plate VII.
@@ -183,29 +185,26 @@ private def e8PositiveCorootChunk11 : Fin 10 → (Fin 8 → ℤ) := ![
   ![2, 3, 4, 6, 5, 4, 3, 2]
 ]
 
-private def e8PositiveCoroot (i : Fin 120) : Fin 8 → ℤ :=
-  if h : (i : ℕ) < 10 then e8PositiveCorootChunk0 ⟨i, h⟩
-  else if h : (i : ℕ) < 20 then e8PositiveCorootChunk1 ⟨(i : ℕ) - 10, by omega⟩
-  else if h : (i : ℕ) < 30 then e8PositiveCorootChunk2 ⟨(i : ℕ) - 20, by omega⟩
-  else if h : (i : ℕ) < 40 then e8PositiveCorootChunk3 ⟨(i : ℕ) - 30, by omega⟩
-  else if h : (i : ℕ) < 50 then e8PositiveCorootChunk4 ⟨(i : ℕ) - 40, by omega⟩
-  else if h : (i : ℕ) < 60 then e8PositiveCorootChunk5 ⟨(i : ℕ) - 50, by omega⟩
-  else if h : (i : ℕ) < 70 then e8PositiveCorootChunk6 ⟨(i : ℕ) - 60, by omega⟩
-  else if h : (i : ℕ) < 80 then e8PositiveCorootChunk7 ⟨(i : ℕ) - 70, by omega⟩
-  else if h : (i : ℕ) < 90 then e8PositiveCorootChunk8 ⟨(i : ℕ) - 80, by omega⟩
-  else if h : (i : ℕ) < 100 then e8PositiveCorootChunk9 ⟨(i : ℕ) - 90, by omega⟩
-  else if h : (i : ℕ) < 110 then e8PositiveCorootChunk10 ⟨(i : ℕ) - 100, by omega⟩
-  else e8PositiveCorootChunk11 ⟨(i : ℕ) - 110, by omega⟩
-
 private def e8CorootCode (x : Fin 8 → ℤ) : ℤ :=
   x 0 + 7 * x 1 + 49 * x 2 + 343 * x 3 + 2401 * x 4 + 16807 * x 5 +
     117649 * x 6 + 823543 * x 7
 
-private lemma e8PositiveCoroot_injective : Function.Injective e8PositiveCoroot := by
-  apply Function.Injective.of_comp (f := e8CorootCode)
-  decide
+/-- The 120 positive `E8` coroots in the simple-coroot basis. The first eight entries are the
+Bourbaki simple coroots and the rest are ordered by height. -/
+def e8PositiveCoroot : Fin 120 ↪ (Fin 8 → ℤ) where
+  toFun := Fin.append e8PositiveCorootChunk0 (Fin.append e8PositiveCorootChunk1
+    (Fin.append e8PositiveCorootChunk2 (Fin.append e8PositiveCorootChunk3
+    (Fin.append e8PositiveCorootChunk4 (Fin.append e8PositiveCorootChunk5
+    (Fin.append e8PositiveCorootChunk6 (Fin.append e8PositiveCorootChunk7
+    (Fin.append e8PositiveCorootChunk8 (Fin.append e8PositiveCorootChunk9
+    (Fin.append e8PositiveCorootChunk10 e8PositiveCorootChunk11))))))))))
+  inj' := by
+    apply Function.Injective.of_comp (f := e8CorootCode)
+    -- The 120 × 120 case check runs in the kernel, whose evaluation has no recursion limit.
+    decide +kernel
 
-private lemma e8PositiveCoroot_nonneg (i : Fin 120) (j : Fin 8) :
+/-- Every positive `E8` coroot has nonnegative simple-coroot coordinates. -/
+theorem e8PositiveCoroot_nonneg (i : Fin 120) (j : Fin 8) :
     0 ≤ e8PositiveCoroot i j := by
   fin_cases i <;> fin_cases j <;> decide
 
@@ -222,25 +221,29 @@ private lemma e8PositiveCoroot_ne_neg (i j : Fin 120) :
   have hi : 0 < ∑ k, e8PositiveCoroot i k := e8PositiveCoroot_sum_pos i
   omega
 
-/-- The 240 `E8` coroots in the simple-coroot basis, with positive roots followed by negatives. -/
+/-- The 240 `E8` coroots in the simple-coroot basis, with the positive coroots followed by their
+negatives. -/
 def e8Coroot : Fin 240 ↪ (Fin 8 → ℤ) where
-  toFun i := if hi : (i : ℕ) < 120 then e8PositiveCoroot ⟨i, hi⟩ else
-    -e8PositiveCoroot ⟨(i : ℕ) - 120, by omega⟩
+  toFun := Fin.append e8PositiveCoroot fun i ↦ -e8PositiveCoroot i
   inj' := by
     intro i j hij
-    by_cases hi : (i : ℕ) < 120 <;> by_cases hj : (j : ℕ) < 120
-    · simp only [hi, hj, dite_true] at hij
-      apply Fin.ext
-      simpa using congrArg Fin.val (e8PositiveCoroot_injective hij)
-    · simp only [hi, hj, dite_true, dite_false] at hij
-      exact absurd hij (e8PositiveCoroot_ne_neg _ _)
-    · simp only [hi, hj, dite_true, dite_false] at hij
-      exact absurd hij.symm (e8PositiveCoroot_ne_neg _ _)
-    · simp only [hi, hj, dite_false, neg_inj] at hij
-      have h := congrArg Fin.val (e8PositiveCoroot_injective hij)
-      apply Fin.ext
-      simp only at h ⊢
-      omega
+    cases i using Fin.addCases (m := 120) (n := 120) with
+    | left a =>
+      cases j using Fin.addCases (m := 120) (n := 120) with
+      | left b =>
+        simp only [Fin.append_left, e8PositiveCoroot.injective.eq_iff] at hij
+        rw [hij]
+      | right b =>
+        simp only [Fin.append_left, Fin.append_right] at hij
+        exact absurd hij (e8PositiveCoroot_ne_neg _ _)
+    | right a =>
+      cases j using Fin.addCases (m := 120) (n := 120) with
+      | left b =>
+        simp only [Fin.append_left, Fin.append_right] at hij
+        exact absurd hij.symm (e8PositiveCoroot_ne_neg _ _)
+      | right b =>
+        simp only [Fin.append_right, neg_inj, e8PositiveCoroot.injective.eq_iff] at hij
+        rw [hij]
 
 /-- The 240 `E8` roots in the fundamental-weight basis. -/
 def e8Root : Fin 240 ↪ (Fin 8 → ℤ) where
@@ -257,26 +260,24 @@ def e8Root : Fin 240 ↪ (Fin 8 → ℤ) where
 theorem e8Root_apply (i : Fin 240) :
     e8Root i = e8Coroot i ᵥ* CartanMatrix.E₈ := (rfl)
 
-private lemma e8Coroot_castAdd (i : Fin 120) :
+-- The coercion of the embedding is its underlying tuple, by definition.
+private theorem e8Coroot_coe :
+    ⇑e8Coroot = Fin.append (⇑e8PositiveCoroot) fun i ↦ -e8PositiveCoroot i := rfl
+
+/-- The first half of the coroot table is the positive coroot enumeration. -/
+@[simp] theorem e8Coroot_castAdd (i : Fin 120) :
     e8Coroot (Fin.castAdd 120 i) = e8PositiveCoroot i := by
-  -- Expose the dependent `if` in the embedding's coercion so that its positive branch reduces.
-  change (if h : (i : ℕ) < 120 then e8PositiveCoroot ⟨i, h⟩ else
-    -e8PositiveCoroot ⟨(i : ℕ) - 120, by omega⟩) = e8PositiveCoroot i
-  rw [dif_pos i.isLt]
+  rw [e8Coroot_coe, Fin.append_left]
 
 /-- The negative half of the coroot table is the negation of the positive half. -/
 @[simp] theorem e8Coroot_addNat (i : Fin 120) :
-    e8Coroot (Fin.addNat i 120) = -e8Coroot (Fin.castAdd 120 i) := by
-  rw [e8Coroot_castAdd]
-  change (if h : (i : ℕ) + 120 < 120 then e8PositiveCoroot ⟨(i : ℕ) + 120, h⟩ else
-    -e8PositiveCoroot ⟨(i : ℕ) + 120 - 120, by omega⟩) = -e8PositiveCoroot i
-  rw [dif_neg (by omega)]
-  congr
+    e8Coroot (Fin.addNat i 120) = -e8PositiveCoroot i := by
+  rw [← Fin.natAdd_eq_addNat, e8Coroot_coe, Fin.append_right]
 
 /-- The negative half of the root table is the negation of the positive half. -/
 @[simp] theorem e8Root_addNat (i : Fin 120) :
     e8Root (Fin.addNat i 120) = -e8Root (Fin.castAdd 120 i) := by
-  rw [e8Root_apply, e8Coroot_addNat, Matrix.neg_vecMul, e8Root_apply]
+  rw [e8Root_apply, e8Root_apply, e8Coroot_addNat, e8Coroot_castAdd, Matrix.neg_vecMul]
 
 /-- Every listed `E8` root pairs to two with its corresponding coroot. -/
 @[simp] theorem e8Root_dotProduct_coroot (i : Fin 240) : e8Root i ⬝ᵥ e8Coroot i = 2 := by
@@ -291,12 +292,6 @@ private lemma e8Coroot_castAdd (i : Fin 120) :
 @[simp] theorem e8Coroot_simple (i : Fin 8) :
     e8Coroot (Fin.castAdd 232 i) = Pi.single i 1 := by
   fin_cases i <;> decide
-
-/-- Every positive `E8` coroot has nonnegative simple-coroot coordinates. -/
-theorem e8Coroot_nonneg (i : Fin 120) (j : Fin 8) :
-    0 ≤ e8Coroot (Fin.castAdd 120 i) j := by
-  rw [e8Coroot_castAdd]
-  exact e8PositiveCoroot_nonneg i j
 
 /-- The last positive `E8` coroot has Bourbaki marks `(2, 3, 4, 6, 5, 4, 3, 2)`. -/
 theorem e8Coroot_apply_last_positive :
