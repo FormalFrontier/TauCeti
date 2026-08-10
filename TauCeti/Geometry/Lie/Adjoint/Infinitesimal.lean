@@ -48,14 +48,8 @@ variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
   {G : Type*} [TopologicalSpace G] [ChartedSpace H G] [Group G]
   [FiniteDimensional ℝ E] [LieGroup I ∞ G]
 
-local instance lieGroupMinSmoothnessThreeInfinitesimalAdjoint :
-    LieGroup I (minSmoothness ℝ 3) G :=
-  LieGroup.of_le (I := I) (G := G) (m := minSmoothness ℝ 3) (n := ∞)
-    (by simpa using (inferInstance : ENat.LEInfty (3 : ℕ∞ω)).out)
-
-local instance lieGroupBoundarylessManifoldInfinitesimalAdjoint : BoundarylessManifold I G where
-  isInteriorPoint' g :=
-    ContMDiffMul.isInteriorPoint (I := I) (n := ∞) (by simp) g
+attribute [local instance] LieGroup.minSmoothnessThree
+attribute [local instance] ContMDiffMul.boundarylessManifold
 
 /-- A smooth scalar function on a conjugation orbit is smooth in the two exponential
 parameters. -/
