@@ -28,7 +28,7 @@ The construction follows the formal pattern of
 `TauCeti.Algebra.AlgebraicGroup.AdditiveGroup.Tangent`.
 Laurent-polynomial induction and the formulas for the counit and comultiplication of `T` come from
 Mathlib's `Mathlib.Algebra.Polynomial.Laurent` and
-`Mathlib.RingTheory.HopfAlgebra.MonoidAlgebra`.
+`Mathlib.RingTheory.Bialgebra.MonoidAlgebra`.
 
 This realizes the `𝔾ₘ` item in the ReductiveGroups roadmap's "Worked examples" section using
 its Layer 2 tangent/Lie algebra infrastructure.
@@ -108,9 +108,10 @@ private lemma tangentCoordinate_apply (d : Derivation R H C) :
   rfl
 
 private noncomputable def infinitesimalUnit (c : C) : (DualNumber C)ˣ :=
-  (show IsUnit (inl 1 + inr c : DualNumber C) by
+  have h : IsUnit (inl 1 + inr c : DualNumber C) := by
     rw [TrivSqZeroExt.isUnit_iff_isUnit_fst]
-    simp).unit
+    simp
+  h.unit
 
 private lemma infinitesimalUnit_map_fst (c : C) :
     Units.map (fstHom R C C).toMonoidHom (infinitesimalUnit c) = 1 := by
