@@ -230,14 +230,13 @@ point action on that finite subcomodule. -/
 theorem finiteRegularComponent_fgPointTensorIso
     (g : WithConv (H →ₐ[k] A))
     (N : Subcomodule.finiteSubcomodules (R := k) (C := H) (M := H)) :
-    finiteRegularComponent k H A (fgPointTensorIsoHom k H A g) N =
+    finiteRegularComponent k H A (fgPointTensorIso k H A g) N =
       (Comodule.pointsAction N.1 g).toLinearMap := by
   let _ : Module.Finite k N.1 := Subcomodule.mem_finiteSubcomodules.mp N.2
   apply LinearMap.ext
   intro x
   unfold finiteRegularComponent
-  rw [fgPointTensorIsoHom_apply, fgPointTensorIso_hom_hom,
-    fgPointNatIsoHom_hom_app]
+  rw [fgPointTensorIso_hom_hom, fgPointNatIsoHom_hom_app]
   let hN := FGComoduleCat.scalarExtensionFunctor_obj k H A
     (finiteRegularObject k H N)
   -- After rewriting the point-induced component, the only remaining wrappers are the
@@ -254,8 +253,10 @@ the restriction of `g` to the chosen finite subcomodule of the regular comodule.
 theorem localFunctional_fgPointTensorIso
     (g : WithConv (H →ₐ[k] A))
     (N : Subcomodule.finiteSubcomodules (R := k) (C := H) (M := H)) (n : N.1) :
-    localFunctional k H A (fgPointTensorIsoHom k H A g) N n = g.ofConv n := by
-  rw [localFunctional_apply, finiteRegularComponent_fgPointTensorIso]
+    localFunctional k H A (fgPointTensorIso k H A g) N n = g.ofConv n := by
+  change localFunctional k H A (fgPointTensorIsoHom k H A g) N n = g.ofConv n
+  rw [localFunctional_apply, fgPointTensorIsoHom_apply,
+    finiteRegularComponent_fgPointTensorIso]
   rw [Comodule.pointsAction_toLinearMap]
   let φ : Module.Dual k N.1 :=
     (Coalgebra.counit (R := k) (A := H)).comp (SMulMemClass.subtype N.1)
