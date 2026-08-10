@@ -24,7 +24,8 @@ namespace TauCeti
 open _root_.Matrix
 namespace DynkinType
 
-private def e7PositiveCorootChunk0 : Fin 9 → (Fin 7 → ℤ) := ![
+/-- Entries 0 through 8 of the positive `E7` coroot table. -/
+@[expose] def e7PositiveCorootChunk0 : Fin 9 → (Fin 7 → ℤ) := ![
   ![1, 0, 0, 0, 0, 0, 0],
   ![0, 1, 0, 0, 0, 0, 0],
   ![0, 0, 1, 0, 0, 0, 0],
@@ -36,7 +37,8 @@ private def e7PositiveCorootChunk0 : Fin 9 → (Fin 7 → ℤ) := ![
   ![0, 0, 0, 0, 1, 1, 0]
 ]
 
-private def e7PositiveCorootChunk1 : Fin 9 → (Fin 7 → ℤ) := ![
+/-- Entries 9 through 17 of the positive `E7` coroot table. -/
+@[expose] def e7PositiveCorootChunk1 : Fin 9 → (Fin 7 → ℤ) := ![
   ![0, 0, 0, 1, 1, 0, 0],
   ![0, 0, 1, 1, 0, 0, 0],
   ![0, 1, 0, 1, 0, 0, 0],
@@ -48,7 +50,8 @@ private def e7PositiveCorootChunk1 : Fin 9 → (Fin 7 → ℤ) := ![
   ![0, 1, 1, 1, 0, 0, 0]
 ]
 
-private def e7PositiveCorootChunk2 : Fin 9 → (Fin 7 → ℤ) := ![
+/-- Entries 18 through 26 of the positive `E7` coroot table. -/
+@[expose] def e7PositiveCorootChunk2 : Fin 9 → (Fin 7 → ℤ) := ![
   ![1, 0, 1, 1, 0, 0, 0],
   ![0, 0, 0, 1, 1, 1, 1],
   ![0, 0, 1, 1, 1, 1, 0],
@@ -60,7 +63,8 @@ private def e7PositiveCorootChunk2 : Fin 9 → (Fin 7 → ℤ) := ![
   ![0, 1, 0, 1, 1, 1, 1]
 ]
 
-private def e7PositiveCorootChunk3 : Fin 9 → (Fin 7 → ℤ) := ![
+/-- Entries 27 through 35 of the positive `E7` coroot table. -/
+@[expose] def e7PositiveCorootChunk3 : Fin 9 → (Fin 7 → ℤ) := ![
   ![0, 1, 1, 1, 1, 1, 0],
   ![0, 1, 1, 2, 1, 0, 0],
   ![1, 0, 1, 1, 1, 1, 0],
@@ -72,7 +76,8 @@ private def e7PositiveCorootChunk3 : Fin 9 → (Fin 7 → ℤ) := ![
   ![1, 1, 1, 2, 1, 0, 0]
 ]
 
-private def e7PositiveCorootChunk4 : Fin 9 → (Fin 7 → ℤ) := ![
+/-- Entries 36 through 44 of the positive `E7` coroot table. -/
+@[expose] def e7PositiveCorootChunk4 : Fin 9 → (Fin 7 → ℤ) := ![
   ![0, 1, 1, 2, 1, 1, 1],
   ![0, 1, 1, 2, 2, 1, 0],
   ![1, 1, 1, 1, 1, 1, 1],
@@ -84,7 +89,8 @@ private def e7PositiveCorootChunk4 : Fin 9 → (Fin 7 → ℤ) := ![
   ![1, 1, 2, 2, 1, 1, 0]
 ]
 
-private def e7PositiveCorootChunk5 : Fin 9 → (Fin 7 → ℤ) := ![
+/-- Entries 45 through 53 of the positive `E7` coroot table. -/
+@[expose] def e7PositiveCorootChunk5 : Fin 9 → (Fin 7 → ℤ) := ![
   ![0, 1, 1, 2, 2, 2, 1],
   ![1, 1, 1, 2, 2, 1, 1],
   ![1, 1, 2, 2, 1, 1, 1],
@@ -96,7 +102,8 @@ private def e7PositiveCorootChunk5 : Fin 9 → (Fin 7 → ℤ) := ![
   ![1, 1, 2, 3, 2, 1, 1]
 ]
 
-private def e7PositiveCorootChunk6 : Fin 9 → (Fin 7 → ℤ) := ![
+/-- Entries 54 through 62 of the positive `E7` coroot table. -/
+@[expose] def e7PositiveCorootChunk6 : Fin 9 → (Fin 7 → ℤ) := ![
   ![1, 2, 2, 3, 2, 1, 0],
   ![1, 1, 2, 3, 2, 2, 1],
   ![1, 2, 2, 3, 2, 1, 1],
@@ -108,7 +115,8 @@ private def e7PositiveCorootChunk6 : Fin 9 → (Fin 7 → ℤ) := ![
   ![2, 2, 3, 4, 3, 2, 1]
 ]
 
-private def e7PositiveCoroot (i : Fin 63) : Fin 7 → ℤ :=
+/-- The 63 positive `E7` coroots in the simple-coroot basis, ordered by height. -/
+@[expose] def e7PositiveCoroot (i : Fin 63) : Fin 7 → ℤ :=
   if h : (i : ℕ) < 9 then e7PositiveCorootChunk0 ⟨i, h⟩
   else if h : (i : ℕ) < 18 then e7PositiveCorootChunk1 ⟨(i : ℕ) - 9, by omega⟩
   else if h : (i : ℕ) < 27 then e7PositiveCorootChunk2 ⟨(i : ℕ) - 18, by omega⟩
@@ -141,6 +149,11 @@ def e7Coroot : Fin 126 ↪ (Fin 7 → ℤ) where
       apply Fin.ext
       simp only at h ⊢
       omega
+
+/-- Evaluate an `E7` coroot through the exposed table of positive coroots. -/
+@[grind =] theorem e7Coroot_apply (i : Fin 126) :
+    e7Coroot i = if hi : (i : ℕ) < 63 then e7PositiveCoroot ⟨i, hi⟩ else
+      -e7PositiveCoroot ⟨(i : ℕ) - 63, by omega⟩ := (rfl)
 
 /-- The 126 `E7` roots in the fundamental-weight basis. -/
 def e7Root : Fin 126 ↪ (Fin 7 → ℤ) where
