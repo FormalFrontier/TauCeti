@@ -27,11 +27,11 @@ This file supplies that subgroup, together with its determinant-one subgroup and
 the hyperplanes of vectors of invertible norm. The orthogonal group is the target of the
 twisted-conjugation homomorphism out of the Pin group, so it is the object the Pin/Spin double
 covers are stated against, and the reflections are the generators an eventual Cartan-Dieudonné
-theorem factors an orthogonal automorphism into. Nothing here assumes the hypotheses that theorem
-needs (a field of characteristic not two, a nondegenerate form, finite dimension); the declarations
-below hold over an arbitrary commutative ring. The characteristic restriction is not incidental: in
-characteristic two `polar Q v v = 2 • Q v` vanishes, so `reflection Q v` fixes `v` instead of
-negating it and is a transvection rather than a reflection in `v ^ ⊥`.
+theorem factors an orthogonal automorphism into. The structural and reflection declarations below
+hold over an arbitrary commutative ring; only the final equal-norm dichotomy assumes a field in
+which `2` is nonzero. The characteristic restriction is not incidental: in characteristic two
+`polar Q v v = 2 • Q v` vanishes, so `reflection Q v` fixes `v` instead of negating it and is a
+transvection rather than a reflection in `v ^ ⊥`.
 
 ## Main definitions
 
@@ -40,6 +40,10 @@ negating it and is a transvection rather than a reflection in `v ^ ⊥`.
 * `TauCeti.QuadraticMap.specialOrthogonalGroup Q`: its determinant-one subgroup.
 * `TauCeti.QuadraticMap.reflection Q v`: the reflection in the hyperplane orthogonal to a vector `v`
   with `Q v` invertible, built from Mathlib's `Module.reflection`.
+* `TauCeti.QuadraticMap.reflectionOrthogonal Q v`: the same reflection bundled as an element of
+  `orthogonalGroup Q`, so that statements about products of reflections and about the ranges of the
+  Pin and Spin actions can name it. `TauCeti.QuadraticMap.reflectionOrthogonal_mul_self` and
+  `TauCeti.QuadraticMap.reflectionOrthogonal_inv` are its group-level involution facts.
 
 ## Main results
 
@@ -76,7 +80,8 @@ subtraction in `M` and `N`, since `QuadraticMap.polar` is stated for `[AddCommGr
 [AddCommGroup N]`, but still no more than a `CommSemiring`; the determinant needs `M` to be an
 additive group over a `CommRing`, and the
 reflections need to divide by `Q v` and so are stated for a `QuadraticForm R M`, that is, for
-`N = R`.
+`N = R`. The closing Cartan--Dieudonne dichotomy additionally assumes a field, a nonzero common
+quadratic value, and `2 ≠ 0`.
 
 ## References
 
@@ -121,8 +126,12 @@ variable {Q : QuadraticMap R M N}
 theorem mem_orthogonalGroup_iff {f : M ≃ₗ[R] M} :
     f ∈ orthogonalGroup Q ↔ ∀ m, Q (f m) = Q m := Iff.rfl
 
-/-- The defining property of an orthogonal automorphism, in the form in which it rewrites. -/
-@[simp]
+/-- The defining property of an orthogonal automorphism, in the form in which it rewrites.
+
+This is deliberately not a `simp` lemma: its left-hand side `Q (f m)` matches every application
+of every quadratic map to every linear equivalence, and discharging the side goal
+`f ∈ orthogonalGroup Q` unfolds through `mem_orthogonalGroup_iff` to `∀ m, Q (f m) = Q m`, which
+this lemma applies to again. Name it explicitly in the `simp` calls that want it. -/
 theorem map_app_of_mem_orthogonalGroup {f : M ≃ₗ[R] M} (hf : f ∈ orthogonalGroup Q) (m : M) :
     Q (f m) = Q m := hf m
 
@@ -349,7 +358,86 @@ theorem reflection_mem_orthogonalGroup : reflection Q v ∈ orthogonalGroup Q :=
     ring
   rw [hexp, hcv, add_sub_cancel_right]
 
+/-- The reflection in a vector of invertible norm, as an element of the orthogonal group.
+
+`reflection_mem_orthogonalGroup` gives the membership; this bundles it, so that statements about
+reflections inside `orthogonalGroup Q` — products of reflections, membership in the range of the
+Pin and Spin actions, generation results — can name the group element instead of repeating the
+anonymous constructor. -/
+noncomputable def reflectionOrthogonal : orthogonalGroup Q :=
+  ⟨reflection Q v, reflection_mem_orthogonalGroup Q v⟩
+
+@[simp]
+theorem coe_reflectionOrthogonal :
+    (reflectionOrthogonal Q v : M ≃ₗ[R] M) = reflection Q v := by
+  simp only [reflectionOrthogonal]
+
+/-- The bundled reflection is an involution, so it has order dividing two in the orthogonal
+group. -/
+@[simp]
+theorem reflectionOrthogonal_mul_self :
+    reflectionOrthogonal Q v * reflectionOrthogonal Q v = 1 :=
+  Subtype.ext <| by
+    simp only [Subgroup.coe_mul, coe_reflectionOrthogonal, Subgroup.coe_one, reflection_mul_self]
+
+/-- The bundled reflection is its own inverse in the orthogonal group. -/
+@[simp]
+theorem reflectionOrthogonal_inv :
+    (reflectionOrthogonal Q v)⁻¹ = reflectionOrthogonal Q v :=
+  inv_eq_of_mul_eq_one_left (reflectionOrthogonal_mul_self Q v)
+
 end Reflection
+
+section CartanDieudonneStep
+
+variable {R : Type u} {M : Type v} [CommRing R] [AddCommGroup M] [Module R M]
+variable (Q : QuadraticForm R M)
+
+/-- If `x` and `y` have the same quadratic value, reflecting `x` in `x - y` carries it to `y`
+whenever `x - y` has invertible norm. -/
+theorem reflection_sub_apply_eq_of_map_eq (x y : M) (hxy : Q x = Q y)
+    [Invertible (Q (x - y))] :
+    reflection Q (x - y) x = y := by
+  rw [reflection_apply]
+  have hpolar : polar Q (x - y) x = Q (x - y) := by
+    calc
+      _ = (2 : R) * Q x - polar Q y x := by
+        rw [polar_sub_left, polar_self]
+        ring
+      _ = Q (x - y) := by
+        conv_rhs =>
+          rw [sub_eq_add_neg, QuadraticMap.map_add ⇑Q, QuadraticMap.map_neg, polar_neg_right]
+        rw [hxy, QuadraticMap.polar_comm ⇑Q y x]
+        ring
+  rw [hpolar, invOf_mul_self, one_smul, sub_sub_cancel]
+
+section Field
+
+variable {K : Type u} {V : Type v} [Field K] [AddCommGroup V] [Module K V]
+variable (Q : QuadraticForm K V) [NeZero (2 : K)]
+
+/-- If `x` and `y` have the same nonzero quadratic value, at least one of `x - y` and `x + y`
+has nonzero, hence invertible, norm. -/
+theorem isUnit_sub_or_add_of_map_eq (x y : V) (hxy : Q x = Q y) (hy : Q y ≠ 0) :
+    IsUnit (Q (x - y)) ∨ IsUnit (Q (x + y)) := by
+  rw [isUnit_iff_ne_zero, isUnit_iff_ne_zero]
+  by_cases hsub : Q (x - y) = 0
+  · right
+    intro hadd
+    have hsum : Q (x - y) + Q (x + y) = 4 * Q y := by
+      rw [sub_eq_add_neg, QuadraticMap.map_add ⇑Q, QuadraticMap.map_neg, polar_neg_right,
+        QuadraticMap.map_add ⇑Q, hxy]
+      ring
+    have hzero : (4 : K) * Q y = 0 := by simpa [hsub, hadd] using hsum.symm
+    have h4 : (4 : K) ≠ 0 := by
+      simpa only [show (4 : K) = 2 * 2 by norm_num] using
+        mul_ne_zero (NeZero.ne (2 : K)) (NeZero.ne (2 : K))
+    exact hy ((mul_eq_zero.mp hzero).resolve_left h4)
+  · exact Or.inl hsub
+
+end Field
+
+end CartanDieudonneStep
 
 end QuadraticMap
 

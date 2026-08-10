@@ -630,7 +630,9 @@ lemma derivationLinearEquivTangentKer_symm_apply
   rw [derivationLinearEquivTangentKer_symm_apply_toAdd]
   exact derivationMulEquivTangentKer_symm_apply ψ.toMul a
 
-private lemma algEquivSelf_derivation_smul_apply
+/-- Scalar multiplication of counit-valued derivations agrees with multiplication after
+identifying the coefficient type synonym with the original coefficient algebra. -/
+lemma algEquivSelf_derivation_smul_apply
     (b : B) (d : Derivation R A (Bialgebra.CounitAlgebra R A B)) (a : A) :
     Bialgebra.CounitAlgebra.algEquivSelf R A B ((b • d) a) =
       b * Bialgebra.CounitAlgebra.algEquivSelf R A B (d a) := by

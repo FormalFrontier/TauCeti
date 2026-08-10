@@ -21,6 +21,11 @@ component of the contour's complement, where the winding number vanishes. Togeth
 five determinations package as null-homology of the boundary contour in the truncated
 fundamental domain, the exterior input to the valence-formula residue count.
 
+The file also carries the arc-excision geometry shared by the corner winding computations
+at `i`, at `ρ` and at `ρ + 1`. Each excises a parameter window around its corner and needs
+that window's chord to be exactly the excision radius `ε`. The half-width realising this for
+a radius below the corner chord `2·sin(π/12)` is stated once here rather than three times.
+
 ## Main declarations
 
 * `TauCeti.ModularForm.sqrt_three_div_two_le_im_fdBoundary`: the image height bound.
@@ -29,12 +34,20 @@ fundamental domain, the exterior input to the valence-formula residue count.
   (`_of_half_lt_re`, `_of_re_lt_neg_half`, `_of_lt_im`) and in the unit disc
   (`_of_norm_lt_one`).
 * `TauCeti.ModularForm.isNullHomologous_fdBoundary`: the packaged null-homology.
+* `TauCeti.ModularForm.fdBoundaryArcExcisionHalfWidth`: the parameter half-width whose
+  chord along the arc is a prescribed `ε` below the corner chord, characterised under that
+  bound by `TauCeti.ModularForm.fdBoundaryArcExcisionHalfWidth_spec`.
 
 ## References
 
 The truncated-contour strategy follows the fundamental-domain boundary development of
 AINTLIB's `LeanModularForms` (`ForMathlib/FDBoundary.lean`, `FDBoundaryH.lean`,
 `FDBoundaryPath.lean`); the winding transport is Tau Ceti's Hungerbühler–Wasem machinery.
+
+The arc-excision geometry is not from those files: it is extracted from the same project's
+winding-value development (`ForMathlib/ValenceFormula/WindingWeights/I.lean`, `Rho.lean` and
+`RhoPlusOne.lean`), where each corner computation built its own chord-matched half-width.
+It is stated once here so the three share it.
 -/
 
 public noncomputable section
@@ -57,59 +70,6 @@ private lemma sqrt_three_div_two_le_one : Real.sqrt 3 / 2 ≤ 1 := by
 -- `simpNF` rejects `simp` annotations on the affine coordinate rewrites below: the
 -- `@[simp]` branch selectors already rewrite `fdBoundary` applications to the segment
 -- functions, so these left-hand sides are not in simp normal form.
-
-/-- The right vertical has constant real part `1/2`. -/
-lemma re_fdBoundary_of_le_one (h1 : t ≤ 1) : (fdBoundary H t).re = 1 / 2 := by
-  rw [fdBoundary_of_le_one h1, fdBoundary_segment1_apply, AffineMap.lineMap_apply_module']
-  have hchord : ((ρ : ℂ) + 1 - (1 / 2 + H * Complex.I)).re = 0 := by
-    simp [ρ]
-    norm_num
-  rw [Complex.add_re, Complex.smul_re, hchord, smul_eq_mul, mul_zero, zero_add]
-  simp
-
-/-- The right vertical descends affinely from the ceiling to the corner row. -/
-lemma im_fdBoundary_of_le_one (h1 : t ≤ 1) :
-    (fdBoundary H t).im = H + t * (Real.sqrt 3 / 2 - H) := by
-  rw [fdBoundary_of_le_one h1, fdBoundary_segment1_apply, AffineMap.lineMap_apply_module']
-  have hchord : ((ρ : ℂ) + 1 - (1 / 2 + H * Complex.I)).im = Real.sqrt 3 / 2 - H := by
-    simp [ρ]
-  have him : (1 / 2 + H * Complex.I : ℂ).im = H := by simp
-  rw [Complex.add_im, Complex.smul_im, hchord, him, smul_eq_mul, add_comm]
-
-/-- The left vertical has constant real part `-1/2`. -/
-lemma re_fdBoundary_of_le_four (h3 : 3 < t) (h4 : t ≤ 4) :
-    (fdBoundary H t).re = -(1 / 2) := by
-  rw [fdBoundary_of_le_four h3 h4, fdBoundary_segment4_apply, AffineMap.lineMap_apply_module']
-  have hchord : ((-1 / 2 + H * Complex.I : ℂ) - (ρ : ℂ)).re = 0 := by
-    simp [ρ]
-  rw [Complex.add_re, Complex.smul_re, hchord, smul_eq_mul, mul_zero, zero_add]
-  simp [ρ]
-  norm_num
-
-/-- The truncation ceiling runs affinely from the left corner to the right. -/
-lemma re_fdBoundary_of_gt_four (h4 : 4 < t) :
-    (fdBoundary H t).re = -(1 / 2) + (t - 4) := by
-  rw [fdBoundary_of_gt_four h4, fdBoundary_segment5_apply, AffineMap.lineMap_apply_module']
-  have hchord : ((1 / 2 + H * Complex.I : ℂ) - (-1 / 2 + H * Complex.I)).re = 1 := by
-    simp
-    norm_num
-  have hre : (-1 / 2 + H * Complex.I : ℂ).re = -(1 / 2) := by
-    simp
-    norm_num
-  rw [Complex.add_re, Complex.smul_re, hchord, hre, smul_eq_mul, mul_one, add_comm]
-
-/-- The truncation ceiling has constant height `H`. -/
-lemma im_fdBoundary_of_gt_four (h4 : 4 < t) : (fdBoundary H t).im = H := by
-  rw [fdBoundary_of_gt_four h4, fdBoundary_segment5_apply, AffineMap.lineMap_apply_module']
-  have h5 : ((1 / 2 + H * Complex.I : ℂ) - (-1 / 2 + H * Complex.I)).im = 0 := by
-    simp
-  rw [Complex.add_im, Complex.smul_im, h5, smul_eq_mul, mul_zero, zero_add]
-  simp
-
-/-- The arc lies on the unit circle. -/
-@[simp]
-lemma norm_fdBoundary_arc (h1 : 1 ≤ t) (h3 : t ≤ 3) : ‖fdBoundary H t‖ = 1 := by
-  rw [eqOn_fdBoundary_arc H ⟨h1, h3⟩, norm_circleMap_zero, abs_one]
 
 /-- Every point of the boundary contour has imaginary part at least `√3/2`, provided the
 height parameter clears the corner row. -/
@@ -360,8 +320,48 @@ lemma fdBoundary_mem_coe_truncatedFundamentalDomain (hH : 1 ≤ H) {t : ℝ}
   have := sqrt_three_div_two_le_im_fdBoundary (h32.trans hH) ht
   nlinarith [Real.sqrt_nonneg 3]
 
-end ModularForm
 
+/-- **The chord-matched excision half-width.** The parameter half-width whose chord along
+the unit-circle arc is the excision radius `ε`.
+
+The chord identity `2·sin(δ·π/12) = ε` holds throughout `|ε| ≤ 2`, the range on which
+`Real.arcsin` inverts the sine, and fails beyond it because `Real.arcsin` saturates.
+`fdBoundaryArcExcisionHalfWidth_spec` nonetheless assumes the narrower
+`0 < ε < 2·sin(π/12)`: that is the range the excision arguments need, because it also places
+the half-width strictly between `0` and `1`, inside the corner's own arc window. -/
+noncomputable def fdBoundaryArcExcisionHalfWidth (ε : ℝ) : ℝ := 12 / Real.pi * Real.arcsin (ε / 2)
+
+/-- The chord-matched excision half-width, unfolded. -/
+@[simp] lemma fdBoundaryArcExcisionHalfWidth_def (ε : ℝ) :
+    fdBoundaryArcExcisionHalfWidth ε = 12 / Real.pi * Real.arcsin (ε / 2) := (rfl)
+
+/-- **The chord-matched excision half-width does what it is for.** For an excision radius `ε`
+below the corner chord `2·sin(π/12)`, the half-width lies strictly between `0` and `1` and
+reproduces `ε` as its own chord: `2·sin(δ·π/12) = ε`.
+
+This is the trigonometric content shared by the excision constructions at `i`, at `ρ` and at
+`ρ + 1`; it needs no upper bound on `ε` beyond the chord bound. -/
+lemma fdBoundaryArcExcisionHalfWidth_spec {ε : ℝ} (hε : 0 < ε)
+    (hε₃ : ε < 2 * Real.sin (Real.pi / 12)) :
+    0 < fdBoundaryArcExcisionHalfWidth ε ∧ fdBoundaryArcExcisionHalfWidth ε < 1 ∧
+      2 * Real.sin (fdBoundaryArcExcisionHalfWidth ε * (Real.pi / 12)) = ε := by
+  rw [fdBoundaryArcExcisionHalfWidth_def]
+  have hπ := Real.pi_pos
+  have hsin1 : Real.sin (Real.pi / 12) ≤ 1 := Real.sin_le_one _
+  have harc_pos : 0 < Real.arcsin (ε / 2) := Real.arcsin_pos.mpr (by linarith)
+  have harc_lt : Real.arcsin (ε / 2) < Real.pi / 12 := by
+    have h1 : Real.arcsin (ε / 2) < Real.arcsin (Real.sin (Real.pi / 12)) :=
+      Real.arcsin_lt_arcsin (by linarith) (by linarith) hsin1
+    rwa [Real.arcsin_sin (by linarith) (by linarith)] at h1
+  refine ⟨by positivity, ?_, ?_⟩
+  · rw [div_mul_eq_mul_div, div_lt_one hπ]
+    linarith
+  · have hδπ : 12 / Real.pi * Real.arcsin (ε / 2) * (Real.pi / 12) = Real.arcsin (ε / 2) := by
+      field_simp
+    rw [hδπ, Real.sin_arcsin (by linarith) (by linarith)]
+    ring
+
+end ModularForm
 end TauCeti
 
 end
