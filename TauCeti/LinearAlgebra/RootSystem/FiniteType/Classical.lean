@@ -45,7 +45,7 @@ The sum-zero hyperplane of `ℚ^{n+1}` instead gives one uniform model for every
 
 Independence of the rows is where the families part company, and it is why type `D` is handled
 last. For `A` and `B` the matrix is triangular against an increasing choice of coordinates -
-`TauCeti.vecMul_injective_of_isUpperTriangular_comp` - with a nonzero diagonal. No such choice
+`TauCeti.vecMul_injective_of_submatrix_isUpperTriangular` - with a nonzero diagonal. No such choice
 exists for `D`, whose two fork coordinates `e_{n-2}`, `e_{n-1}` support three rows between them, so
 that family is treated in two steps: the sum of all coordinates annihilates every row but the fork
 one, which pins the last coefficient to zero, and the rows that remain are the triangular chain
@@ -175,7 +175,7 @@ private lemma simpleCorootsA_mul_conjTranspose (n : ℕ) :
 matrix upper triangular with unit diagonal. -/
 private lemma simpleCorootsA_vecMul_injective (n : ℕ) :
     Function.Injective (simpleCorootsA n).vecMul := by
-  refine vecMul_injective_of_isUpperTriangular_comp Fin.castSucc (fun i j hji ↦ ?_) fun i ↦ ?_
+  refine vecMul_injective_of_submatrix_isUpperTriangular Fin.castSucc (fun i j hji ↦ ?_) fun i ↦ ?_
   · have hji' : j.val < i.val := hji
     simp only [simpleCorootsA, twoTermRows_apply, Fin.ext_iff, Fin.val_castSucc, Fin.val_succ]
     rw [if_neg (by omega), if_neg (by omega), add_zero]
@@ -222,7 +222,7 @@ private lemma simpleCorootsB_mul_conjTranspose (n : ℕ) :
 diagonal `(1, …, 1, 2)`. -/
 private lemma simpleCorootsB_vecMul_injective (n : ℕ) :
     Function.Injective (simpleCorootsB n).vecMul := by
-  refine vecMul_injective_of_isUpperTriangular_comp id (fun i j hji ↦ ?_) fun i ↦ ?_
+  refine vecMul_injective_of_submatrix_isUpperTriangular id (fun i j hji ↦ ?_) fun i ↦ ?_
   · have hji' : j.val < i.val := hji
     have hle := Order.le_succ i
     simp only [simpleCorootsB, twoTermRows_apply, id_eq, Fin.ext_iff]
@@ -315,7 +315,7 @@ private lemma simpleCorootsD_vecMul_injective (k : ℕ) :
     linarith
   -- The chain rows are triangular on the first `k + 1` coordinates.
   have hblock : Function.Injective (M.submatrix Fin.castSucc Fin.castSucc).vecMul := by
-    refine vecMul_injective_of_isUpperTriangular_comp id (fun i j hji ↦ ?_) fun i ↦ ?_
+    refine vecMul_injective_of_submatrix_isUpperTriangular id (fun i j hji ↦ ?_) fun i ↦ ?_
     · have hji' : j.val < i.val := hji
       have hci : ((i.castSucc : Fin (k + 2)) : ℕ) = (i : ℕ) := rfl
       have hcj : ((j.castSucc : Fin (k + 2)) : ℕ) = (j : ℕ) := rfl

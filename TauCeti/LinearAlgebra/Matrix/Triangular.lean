@@ -24,8 +24,8 @@ which have no business importing Lie-algebra theory use it.
 
 * `Matrix.mul_apply_diag_of_isUpperTriangular` — the diagonal of a product of upper-triangular
   matrices is the pointwise product of the diagonals.
-* `TauCeti.vecMul_injective_of_isUpperTriangular_comp` — a rectangular matrix has injective row
-  multiplication when a square column selection is upper triangular with nonzero diagonal.
+* `TauCeti.vecMul_injective_of_submatrix_isUpperTriangular` — a rectangular matrix has injective
+  row multiplication when a square column selection is upper triangular with nonzero diagonal.
 -/
 
 public section
@@ -53,15 +53,13 @@ open scoped Matrix
 
 namespace TauCeti
 
-variable {r c : ℕ}
-
 /-- **A triangular selection of coordinates makes the rows independent.** If some choice `e` of a
 coordinate for each row makes the matrix upper triangular - `M i (e j) = 0` for `j < i` - with a
 nonzero diagonal, then the rows are independent: the selected columns form a square submatrix whose
 determinant is the product of that diagonal. -/
-theorem vecMul_injective_of_isUpperTriangular_comp {K : Type*} [Field K]
-    {M : Matrix (Fin r) (Fin c) K}
-    (e : Fin r → Fin c) (hlt : ∀ i j, j < i → M i (e j) = 0) (hdiag : ∀ i, M i (e i) ≠ 0) :
+theorem vecMul_injective_of_submatrix_isUpperTriangular {K ι κ : Type*} [Field K]
+    [Fintype ι] [LinearOrder ι] {M : Matrix ι κ K}
+    (e : ι → κ) (hlt : ∀ i j, j < i → M i (e j) = 0) (hdiag : ∀ i, M i (e i) ≠ 0) :
     Function.Injective M.vecMul := by
   have hsub : Function.Injective (M.submatrix id e).vecMul := by
     refine Matrix.vecMul_injective_of_isUnit ?_
@@ -69,7 +67,7 @@ theorem vecMul_injective_of_isUpperTriangular_comp {K : Type*} [Field K]
       Matrix.det_of_isUpperTriangular (M := M.submatrix id e) fun i j hji ↦ hlt i j hji]
     exact Finset.prod_ne_zero_iff.2 fun i _ ↦ hdiag i
   refine fun x y hxy ↦ hsub (funext fun j ↦ ?_)
-  have hcol : ∀ z : Fin r → K,
+  have hcol : ∀ z : ι → K,
       (fun v ↦ v ᵥ* M.submatrix id e) z j = (fun v ↦ v ᵥ* M) z (e j) := by
     intro z
     simp [Matrix.vecMul, dotProduct]
