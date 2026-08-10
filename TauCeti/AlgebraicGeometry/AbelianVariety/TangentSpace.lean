@@ -79,9 +79,9 @@ the underlying scheme at `zeroPoint`, carrying the `K`-vector-space structure tr
 This is a type synonym rather than an abbreviation, so that the residue-field action, the
 ground-field action and their scalar tower are declared together on one type — the arrangement
 Mathlib recommends, and the reason `Module.compHom` is registered here rather than on the
-underlying `Module.Dual`. It is `@[expose]`d because a type synonym cannot carry transported
-instances unless its body is visible. -/
-@[expose] def TangentSpace (A : AbelianVariety K) : Type u :=
+underlying `Module.Dual`. The equivalence `tangentSpaceLinearEquiv` is the public interface to
+the underlying Zariski tangent space. -/
+def TangentSpace (A : AbelianVariety K) : Type u :=
   ZariskiTangentSpace A.toScheme A.zeroPoint
 
 instance tangentSpaceAddCommGroup (A : AbelianVariety K) : AddCommGroup A.TangentSpace :=
@@ -89,7 +89,27 @@ instance tangentSpaceAddCommGroup (A : AbelianVariety K) : AddCommGroup A.Tangen
 
 instance tangentSpaceModuleResidueField (A : AbelianVariety K) :
     Module (IsLocalRing.ResidueField (A.toScheme.presheaf.stalk A.zeroPoint)) A.TangentSpace :=
-  inferInstanceAs (Module _ (ZariskiTangentSpace A.toScheme A.zeroPoint))
+  inferInstanceAs (Module (IsLocalRing.ResidueField (A.toScheme.presheaf.stalk A.zeroPoint))
+    (ZariskiTangentSpace A.toScheme A.zeroPoint))
+
+/-- The canonical residue-field-linear identification of `T₀A` with the underlying Zariski
+tangent space. -/
+noncomputable def tangentSpaceLinearEquiv (A : AbelianVariety K) :
+    A.TangentSpace ≃ₗ[IsLocalRing.ResidueField (A.toScheme.presheaf.stalk A.zeroPoint)]
+      ZariskiTangentSpace A.toScheme A.zeroPoint where
+  toFun := fun v ↦ v
+  invFun := fun v ↦ v
+  left_inv := fun _ ↦ rfl
+  right_inv := fun _ ↦ rfl
+  map_add' := fun _ _ ↦ rfl
+  map_smul' := fun _ _ ↦ rfl
+
+/-- Evaluate a tangent vector in `T₀A` on a Zariski cotangent vector through the canonical
+identification `tangentSpaceLinearEquiv`. -/
+noncomputable def tangentSpaceEval (A : AbelianVariety K) (v : A.TangentSpace)
+    (m : ZariskiCotangentSpace A.toScheme A.zeroPoint) :
+    IsLocalRing.ResidueField (A.toScheme.presheaf.stalk A.zeroPoint) :=
+  A.tangentSpaceLinearEquiv v m
 
 /-- Restrict scalars on `T₀A` from `κ(0)` to `K` along the canonical residue-field
 equivalence. -/
@@ -116,7 +136,7 @@ tangent space is. -/
 instance finiteDimensional_tangentSpace_residueField (A : AbelianVariety K) :
     FiniteDimensional (IsLocalRing.ResidueField (A.toScheme.presheaf.stalk A.zeroPoint))
       A.TangentSpace :=
-  inferInstanceAs (FiniteDimensional _ (ZariskiTangentSpace A.toScheme A.zeroPoint))
+  Module.Finite.equiv A.tangentSpaceLinearEquiv.symm
 
 /-- The tangent space of an abelian variety is finite-dimensional over the ground field. -/
 instance finiteDimensional_tangentSpace (A : AbelianVariety K) :
@@ -131,7 +151,7 @@ lemma finrank_residueField_tangentSpace (A : AbelianVariety K) :
         A.TangentSpace =
       Module.finrank (IsLocalRing.ResidueField (A.toScheme.presheaf.stalk A.zeroPoint))
         (ZariskiTangentSpace A.toScheme A.zeroPoint) :=
-  (rfl)
+  A.tangentSpaceLinearEquiv.finrank_eq
 
 /-- Computing the dimension of `T₀A` over `K` is the same as computing it over the canonically
 identified residue field `κ(0)`. -/
