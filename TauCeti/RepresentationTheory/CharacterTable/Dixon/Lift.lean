@@ -19,10 +19,13 @@ supplies both of the things that needs: the primitive `e`-th root of unity `d.ro
 `2⌊√|G|⌋ < d.p`, which turns the abstract window into the concrete one the algorithm works in,
 `|c| ≤ ⌊√|G|⌋`.
 
-That is the bound the Burnside--Dixon--Schneider algorithm has for the coordinates it reconstructs,
-so these two statements are the form in which the lift is used: the modular phase of the algorithm
-produces the residues of a central character value at the conjugate roots, and this file says that
-the exact value is determined by them, and is returned by the lift.
+The results here are therefore *conditional arithmetic specializations*: they take the coordinate
+bound `|c| ≤ ⌊√|G|⌋` as a hypothesis and convert it into the abstract window, and they say nothing
+about which elements satisfy it.  That the coordinates the Burnside--Dixon--Schneider algorithm
+reconstructs are that small is classical, but it is not proved here or anywhere else in this
+repository; supplying it is the caller's job.  What this file does establish is that once it is
+supplied, the modular phase is lossless: the exact value is determined by its residues at the
+conjugate roots of a Dixon prime, and is returned by the lift.
 
 ## Main results
 
@@ -58,6 +61,7 @@ theorem two_mul_natAbs_lt_of_natAbs_le_sqrt {z : ℤ} (hz : z.natAbs ≤ Nat.sqr
 /-- **The lift at a Dixon prime is correct.**  An exact cyclotomic integer whose coordinates are
 bounded by `⌊√|G|⌋` is returned by `TauCeti.Cyclotomic.lift` from its own residues at the conjugate
 roots. -/
+@[simp]
 theorem lift_conjugateResidues (hx : ∀ j, (x.coeff j).natAbs ≤ Nat.sqrt (Nat.card G)) :
     Cyclotomic.lift (Monoid.exponent G) d.root (Cyclotomic.conjugateResidues d.root x) = x :=
   Cyclotomic.lift_conjugateResidues d.isPrimitiveRoot_root fun j =>
@@ -84,13 +88,6 @@ theorem lift_eq_of_conjugateResidues_eq {r : Fin (Monoid.exponent G).totient →
     Cyclotomic.lift (Monoid.exponent G) d.root r = x :=
   Cyclotomic.lift_eq_of_conjugateResidues_eq d.isPrimitiveRoot_root
     (fun j => d.two_mul_natAbs_lt_of_natAbs_le_sqrt (hx j)) hr
-
-/-- The lift at a Dixon prime is a section of the residue tuple: whatever tuple it is given, the
-exact cyclotomic integer it returns has exactly those residues.  Only the size of the coordinates
-is at stake in the correctness statements above. -/
-theorem conjugateResidues_lift (r : Fin (Monoid.exponent G).totient → ZMod d.p) :
-    Cyclotomic.conjugateResidues d.root (Cyclotomic.lift (Monoid.exponent G) d.root r) = r :=
-  Cyclotomic.conjugateResidues_lift d.isPrimitiveRoot_root r
 
 end DixonPrimeData
 

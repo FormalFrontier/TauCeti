@@ -55,8 +55,8 @@ variable {e : ℕ}
 @[simp]
 theorem length_coeffs (x : Cyclotomic e) : x.coeffs.length = e.totient := x.2
 
-@[ext]
-theorem ext {x y : Cyclotomic e} (h : x.coeffs = y.coeffs) : x = y := Subtype.ext h
+/-- An exact cyclotomic integer is determined by its coefficient list. -/
+theorem ext_coeffs {x y : Cyclotomic e} (h : x.coeffs = y.coeffs) : x = y := Subtype.ext h
 
 /-- The coordinate of `ζ ^ j` on the power basis `ζ ^ (φ e - 1), …, ζ, 1`.  Since
 `TauCeti.Cyclotomic.coeffs` is in descending order this reads it backwards, and it is `0` beyond
@@ -70,8 +70,9 @@ theorem coeff_eq_zero_of_totient_le (x : Cyclotomic e) {j : ℕ} (h : e.totient 
     Option.getD_none]
 
 /-- An exact cyclotomic integer is determined by its coordinates on the power basis. -/
-theorem ext_coeff {x y : Cyclotomic e} (h : ∀ j, x.coeff j = y.coeff j) : x = y := by
-  refine ext (List.reverse_injective (List.ext_getElem (by simp) fun j hj hj' => ?_))
+@[ext]
+theorem ext {x y : Cyclotomic e} (h : ∀ j, x.coeff j = y.coeff j) : x = y := by
+  refine ext_coeffs (List.reverse_injective (List.ext_getElem (by simp) fun j hj hj' => ?_))
   have hj₁ := h j
   rwa [coeff, coeff, List.getD_eq_getElem _ _ hj, List.getD_eq_getElem _ _ hj'] at hj₁
 
@@ -169,7 +170,8 @@ theorem toAdjoinRoot_injective : Function.Injective (toAdjoinRoot : Cyclotomic e
   intro x y h
   have h' := congrArg (AdjoinRoot.modByMonicHom (cyclotomic.monic e ℤ)) h
   simp only [toAdjoinRoot, AdjoinRoot.modByMonicHom_mk, modByMonic_toPolynomial] at h'
-  exact ext (eq_of_length_eq_of_ofCoeffList_eq (x.length_coeffs.trans y.length_coeffs.symm) h')
+  exact ext_coeffs
+    (eq_of_length_eq_of_ofCoeffList_eq (x.length_coeffs.trans y.length_coeffs.symm) h')
 
 /-- The comparison map sends the exact cyclotomic integer built from a coefficient list to the
 class of the polynomial with those coefficients: reduction modulo `Φ_e` is invisible in the
