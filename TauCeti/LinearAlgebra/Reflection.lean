@@ -34,6 +34,7 @@ theorem det_reflection [Module.Free R M] [Module.Finite R M] :
   -- Unfold the reflection into its rank-one perturbation before applying the determinant lemma.
   change Matrix.det (LinearMap.toMatrix b b (LinearMap.id - f.smulRight x)) = -1
   rw [map_sub, LinearMap.toMatrix_id, LinearMap.toMatrix_smulRight]
+  -- The rank-one determinant lemma is stated for a column matrix times a row matrix.
   rw [show Matrix.vecMulVec (b.repr x) (f ∘ b) =
       Matrix.replicateCol Unit (b.repr x) * Matrix.replicateRow Unit (f ∘ b) by
       ext i j
