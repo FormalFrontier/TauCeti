@@ -42,8 +42,8 @@ In the namespace `TauCeti.NumberField.NarrowClassGroup`:
 
 * `ElementaryTwoQuotient`, `elementaryTwoQuotientMk`, and `twoRank`: the quotient
   `Cl⁺(K)/Cl⁺(K)²`, its constructor, and its `𝔽₂`-dimension.
-* `ElementaryTwoQuotient.toClassGroup` and `mem_ker_toClassGroup_iff`: the induced map to the
-  ordinary quotient and its kernel of principal classes.
+* `ElementaryTwoQuotient.toClassGroup` and `ElementaryTwoQuotient.toClassGroup_eq_zero_iff`: the
+  induced map to the ordinary quotient and its kernel of principal classes.
 * `twoRank_classGroup_le_twoRank`: `twoRank Cl(K) ≤ twoRank Cl⁺(K)`.
 * `twoRank_le_twoRank_classGroup_add_twoRank_ker`: `twoRank Cl⁺(K) ≤ twoRank Cl(K) + twoRank ker`.
 * `card_ker_toClassGroup_eq_two_pow_twoRank`: the kernel has order `2 ^ twoRank`, being elementary
@@ -155,13 +155,13 @@ quotient. -/
 square class dies in `Cl(K)/Cl(K)²` exactly when it is the class of `mkPrincipal u` for some
 `u : Kˣ` — that is, exactly when it comes from a principal ideal, whose narrow class is nontrivial
 only because its generator need not be totally positive. -/
-@[simp] theorem mem_ker_toClassGroup_iff (x : ElementaryTwoQuotient K) :
-    x ∈ LinearMap.ker ElementaryTwoQuotient.toClassGroup ↔
+@[simp] theorem ElementaryTwoQuotient.toClassGroup_eq_zero_iff (x : ElementaryTwoQuotient K) :
+    ElementaryTwoQuotient.toClassGroup x = 0 ↔
       ∃ u : Kˣ, elementaryTwoQuotientMk (mkPrincipal u) = x := by
   have hmap : ElementaryTwoQuotient.toClassGroup (K := K) =
       TauCeti.elementaryTwoQuotientMap (NarrowClassGroup.toClassGroup (K := K)) := rfl
-  rw [hmap, LinearMap.mem_ker,
-    TauCeti.mem_ker_elementaryTwoQuotientMap_iff toClassGroup_surjective]
+  rw [hmap,
+    TauCeti.mem_ker_elementaryTwoQuotientMap_iff NarrowClassGroup.toClassGroup_surjective]
   constructor
   · rintro ⟨C, hC, rfl⟩
     rw [toClassGroup_ker] at hC
