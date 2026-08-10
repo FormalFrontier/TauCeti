@@ -23,7 +23,8 @@ the `CFSGStatement` roadmap's conventions for Steinberg endomorphisms.
 ## Main definitions
 
 * `TauCeti.graphPermA`: reversal of the `Aₙ` chain.
-* `TauCeti.graphPermD`: exchange of the two fork nodes of `Dₙ`.
+* `TauCeti.graphPermD`: exchange of the final two indices, giving the fork symmetry of `Dₙ` for
+  `4 ≤ n`.
 * `TauCeti.graphPermE6`: the order-two symmetry of `E₆`.
 * `TauCeti.trialityPermD4`: the order-three triality symmetry of `D₄`.
 * `TauCeti.lengthPermRankTwo`: the length-exchanging permutation for `B₂` and `G₂`.
@@ -38,7 +39,8 @@ namespace TauCeti
 def graphPermA (n : ℕ) : Equiv.Perm (Fin n) :=
   Fin.revPerm
 
-/-- The `Dₙ` diagram automorphism, exchanging its two fork nodes and fixing the chain. -/
+/-- The permutation exchanging the final two indices of `Fin n`. For `4 ≤ n`, this is the `Dₙ`
+diagram automorphism exchanging its two fork nodes and fixing the chain. -/
 def graphPermD (n : ℕ) (hn : 2 ≤ n) : Equiv.Perm (Fin n) :=
   Equiv.swap ⟨n - 2, by omega⟩ ⟨n - 1, by omega⟩
 
@@ -58,38 +60,35 @@ def lengthPermRankTwo : Equiv.Perm (Fin 2) :=
 def lengthPermF4 : Equiv.Perm (Fin 4) :=
   graphPermA 4
 
-/-- The type-`A` graph permutation is Mathlib's `Fin.revPerm`, so its node action and its inverse
-are `Fin.revPerm_apply` and `Fin.revPerm_symm`, and the rest of the reversal API is the `Fin.rev`
-lemmas. -/
-@[simp] lemma graphPermA_eq_revPerm (n : ℕ) : graphPermA n = Fin.revPerm := (rfl)
-
-/-- Reversing the `Aₙ` chain twice is the identity. This is not a `simp` lemma because
-`TauCeti.graphPermA_eq_revPerm` already rewrites its left-hand side. -/
+/-- Reversing the `Aₙ` chain twice is the identity. -/
 theorem graphPermA_sq (n : ℕ) : graphPermA n ^ 2 = 1 := by
   ext i
-  simp [pow_two, Equiv.Perm.mul_apply]
+  simp [graphPermA, pow_two, Equiv.Perm.mul_apply]
 
-/-- The type-`D` graph permutation sends the first fork node to the second. -/
+/-- The final-index swap sends index `n - 2` to index `n - 1`; for `4 ≤ n`, these are the two
+`Dₙ` fork nodes. -/
 @[simp] lemma graphPermD_apply_left (n : ℕ) (hn : 2 ≤ n) :
     graphPermD n hn ⟨n - 2, by omega⟩ = ⟨n - 1, by omega⟩ := by
   simp [graphPermD]
 
-/-- The type-`D` graph permutation sends the second fork node to the first. -/
+/-- The final-index swap sends index `n - 1` to index `n - 2`; for `4 ≤ n`, these are the two
+`Dₙ` fork nodes. -/
 @[simp] lemma graphPermD_apply_right (n : ℕ) (hn : 2 ≤ n) :
     graphPermD n hn ⟨n - 1, by omega⟩ = ⟨n - 2, by omega⟩ := by
   simp [graphPermD]
 
-/-- The `Dₙ` graph permutation fixes every node except the two fork nodes. -/
-@[simp] lemma graphPermD_apply_of_ne (n : ℕ) (hn : 2 ≤ n) (i : Fin n)
+/-- The final-index swap fixes every index except `n - 2` and `n - 1`; for `4 ≤ n`, these are the
+two `Dₙ` fork nodes. -/
+@[simp] lemma graphPermD_apply_of_ne_of_ne (n : ℕ) (hn : 2 ≤ n) (i : Fin n)
     (hi : (i : ℕ) ≠ n - 2) (hi' : (i : ℕ) ≠ n - 1) : graphPermD n hn i = i := by
   apply Equiv.swap_apply_of_ne_of_ne <;> simpa [Fin.ext_iff]
 
-/-- The type-`D` graph permutation is its own inverse. -/
+/-- The final-index swap is its own inverse. -/
 @[simp] lemma graphPermD_symm (n : ℕ) (hn : 2 ≤ n) :
     (graphPermD n hn).symm = graphPermD n hn := by
   simp [graphPermD]
 
-/-- Exchanging the two `Dₙ` fork nodes twice is the identity. -/
+/-- Swapping the final two indices twice is the identity. -/
 @[simp] theorem graphPermD_sq (n : ℕ) (hn : 2 ≤ n) : graphPermD n hn ^ 2 = 1 := by
   simp [graphPermD, pow_two]
 
@@ -129,16 +128,11 @@ theorem graphPermA_sq (n : ℕ) : graphPermA n ^ 2 = 1 := by
 /-- Exchanging the two rank-two nodes twice is the identity. -/
 @[simp] theorem lengthPermRankTwo_sq : lengthPermRankTwo ^ 2 = 1 := by decide
 
-/-- The `F₄` length permutation is the reversal of the four-node chain, so its node action and its
-order are those of `TauCeti.graphPermA`. -/
-@[simp] lemma lengthPermF4_eq_graphPermA : lengthPermF4 = graphPermA 4 := (rfl)
-
-/-- Reversal is an automorphism of the type-`A` Cartan matrix. This is not a `simp` lemma because
-`TauCeti.graphPermA_eq_revPerm` already rewrites its left-hand side. -/
+/-- Reversal is an automorphism of the type-`A` Cartan matrix. -/
 theorem cartanMatrix_A_graphPermA (n : ℕ) (i j : Fin n) :
     (DynkinType.A n).cartanMatrix (graphPermA n i) (graphPermA n j) =
       (DynkinType.A n).cartanMatrix i j := by
-  simp only [DynkinType.cartanMatrix_A, CartanMatrix.A, Matrix.of_apply, graphPermA_eq_revPerm,
+  simp only [DynkinType.cartanMatrix_A, CartanMatrix.A, Matrix.of_apply, graphPermA,
     Fin.revPerm_apply, Fin.ext_iff, Fin.val_rev]
   split_ifs <;> omega
 
@@ -210,11 +204,10 @@ private lemma cartanMatrix_D_swap_fork (n : ℕ) (hn : 4 ≤ n) (a b : Fin n) (h
       ¬ DynkinType.G2.IsLongSimpleRoot i := by
   fin_cases i <;> simp [DynkinType.isLongSimpleRoot_G2, lengthPermRankTwo]
 
-/-- Diagram reversal exchanges the long and short nodes of `F₄`. This is not a `simp` lemma
-because `TauCeti.lengthPermF4_eq_graphPermA` already rewrites its left-hand side. -/
+/-- Diagram reversal exchanges the long and short nodes of `F₄`. -/
 theorem isLongSimpleRoot_lengthPermF4_iff_not_isLongSimpleRoot_F4 (i : Fin 4) :
     DynkinType.F4.IsLongSimpleRoot (lengthPermF4 i) ↔
       ¬ DynkinType.F4.IsLongSimpleRoot i := by
-  fin_cases i <;> simp [DynkinType.isLongSimpleRoot_F4]
+  fin_cases i <;> simp [DynkinType.isLongSimpleRoot_F4, lengthPermF4, graphPermA]
 
 end TauCeti
