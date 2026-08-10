@@ -526,12 +526,11 @@ coroot lattice, so that the datum is the simply connected one. -/
 the sum of the consecutive differences between them. -/
 private lemma sub_mem_of_forall {M : Type*} [AddCommGroup M] (S : AddSubmonoid M) (f : ℕ → M)
     {a b : ℕ} (hab : a ≤ b) (h : ∀ k, a ≤ k → k < b → f k - f (k + 1) ∈ S) : f a - f b ∈ S := by
-  induction b, hab using Nat.le_induction with
-  | base => simp
-  | succ b hb ih =>
-    have hsplit : f a - f (b + 1) = (f a - f b) + (f b - f (b + 1)) := by abel
-    rw [hsplit]
-    exact S.add_mem (ih fun k hk hkb => h k hk (by omega)) (h b hb (by omega))
+  -- `Finset.sum_Ico_sub` at `-f` is the telescoping identity in the direction needed here.
+  have key := Finset.sum_Ico_sub (fun k => -f k) hab
+  simp only [neg_sub_neg] at key
+  rw [← key]
+  exact sum_mem fun k hk => h k (Finset.mem_Ico.mp hk).1 (Finset.mem_Ico.mp hk).2
 
 private lemma weight_sub_mem {a b : ℕ} (hab : a ≤ b) (hb : b + 1 ≤ n) :
     weight n a - weight n b ∈

@@ -118,11 +118,9 @@ lemma coweight_eq_zero_of_le {a : ℕ} (ha : n ≤ a) : coweight n a = 0 := by
 private lemma sum_ite_val (f : Fin n → ℤ) (b : ℕ) :
     ∑ k : Fin n, (if b = (k : ℕ) then f k else 0) = if h : b < n then f ⟨b, h⟩ else 0 := by
   by_cases h : b < n
-  · rw [dif_pos h, Finset.sum_eq_single (⟨b, h⟩ : Fin n)]
-    · simp
-    · intro c _ hc
-      exact if_neg fun hb => hc (Fin.ext hb.symm)
-    · simp
+  · have hb : ∀ k : Fin n, (b = (k : ℕ)) = (k = (⟨b, h⟩ : Fin n)) := by
+      intro k; simp [Fin.ext_iff, eq_comm]
+    simp only [hb, dif_pos h, Finset.sum_ite_eq', Finset.mem_univ, if_true]
   · rw [dif_neg h, Finset.sum_eq_zero]
     intro k _
     have := k.isLt
@@ -132,13 +130,12 @@ private lemma sum_ite_val_succ (f : Fin n → ℤ) (b : ℕ) :
     ∑ k : Fin n, (if b = (k : ℕ) + 1 then f k else 0)
       = if h : b - 1 < n ∧ 1 ≤ b then f ⟨b - 1, h.1⟩ else 0 := by
   by_cases h : b - 1 < n ∧ 1 ≤ b
-  · rw [dif_pos h, Finset.sum_eq_single (⟨b - 1, h.1⟩ : Fin n)]
-    · exact if_pos (by simp only; omega)
-    · intro c _ hc
-      refine if_neg fun hb => hc (Fin.ext ?_)
-      simp only
+  · have hb : ∀ k : Fin n, (b = (k : ℕ) + 1) = (k = (⟨b - 1, h.1⟩ : Fin n)) := by
+      intro k
+      have := h.2
+      simp only [Fin.ext_iff, eq_iff_iff]
       omega
-    · simp
+    simp only [hb, dif_pos h, Finset.sum_ite_eq', Finset.mem_univ, if_true]
   · rw [dif_neg h, Finset.sum_eq_zero]
     intro k _
     have := k.isLt
