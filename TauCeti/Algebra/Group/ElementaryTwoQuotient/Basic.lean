@@ -57,9 +57,13 @@ names around it. The cardinality identity is still expressed through the squarin
 * `TauCeti.card_elementaryTwoQuotient_eq_index_square`: the quotient cardinality as the index of
   the subgroup of squares.
 * `TauCeti.card_elementaryTwoQuotient_eq_card_twoTorsion`: `|G/G²| = |{g | g² = 1}|`.
+* `TauCeti.elementaryTwoQuotientAddEquivOfForallSqEqOne`: an elementary abelian `2`-group is
+  additively equivalent to its elementary-2 quotient.
 * `TauCeti.twoRank` and `TauCeti.card_elementaryTwoQuotient_eq_two_pow_twoRank`: the 2-rank, with
   `|G/G²| = 2 ^ twoRank`, and `TauCeti.twoRank_eq_of_card_elementaryTwoQuotient_eq_two_pow` its
   inversion (`|G/G²| = 2 ^ n → twoRank G = n`).
+* `TauCeti.card_eq_two_pow_twoRank_of_forall_sq_eq_one`: an elementary abelian `2`-group has order
+  `2 ^ twoRank` when its quotient is finite-dimensional.
 * `TauCeti.card_elementaryTwoQuotient_of_odd_card` and `TauCeti.twoRank_of_odd_card`: a group of
   odd order has a single square class.
 * `TauCeti.card_elementaryTwoQuotient_dvd_card` and
@@ -358,6 +362,44 @@ theorem twoRank_eq_of_card_elementaryTwoQuotient_eq_two_pow
   have : Finite (ElementaryTwoQuotient G) := Nat.finite_of_card_ne_zero (by simp [h])
   rw [card_elementaryTwoQuotient_eq_two_pow_twoRank] at h
   exact Nat.pow_right_injective le_rfl h
+
+/-- **An elementary abelian `2`-group is its own elementary-2 quotient.** If every element of `G`
+squares to `1`, the canonical quotient map is an additive equivalence. -/
+noncomputable def elementaryTwoQuotientAddEquivOfForallSqEqOne (h : ∀ g : G, g ^ 2 = 1) :
+    Additive G ≃+ ElementaryTwoQuotient G := by
+  apply AddEquiv.ofBijective (elementaryTwoQuotientMkAdd (G := G))
+  constructor
+  · intro a b hab
+    apply Additive.toMul.injective
+    apply div_eq_one.mp
+    change elementaryTwoQuotientMk (Additive.toMul a) =
+      elementaryTwoQuotientMk (Additive.toMul b) at hab
+    obtain ⟨c, hc⟩ :=
+      (elementaryTwoQuotientMk_eq_iff (Additive.toMul a) (Additive.toMul b)).1 hab
+    rw [hc, ← pow_two, h]
+  · intro x
+    obtain ⟨g, rfl⟩ := elementaryTwoQuotientMk_surjective (G := G) x
+    exact ⟨Additive.ofMul g, rfl⟩
+
+/-- The canonical equivalence for an elementary abelian `2`-group sends each element to its class
+in the elementary-2 quotient. -/
+@[simp] theorem elementaryTwoQuotientAddEquivOfForallSqEqOne_apply
+    (h : ∀ g : G, g ^ 2 = 1) (g : Additive G) :
+    elementaryTwoQuotientAddEquivOfForallSqEqOne G h g = elementaryTwoQuotientMkAdd g := by
+  rfl
+
+/-- **An elementary abelian `2`-group has the same cardinality as its elementary-2 quotient.** -/
+theorem card_elementaryTwoQuotient_of_forall_sq_eq_one (h : ∀ g : G, g ^ 2 = 1) :
+    Nat.card (ElementaryTwoQuotient G) = Nat.card G :=
+  Nat.card_congr (elementaryTwoQuotientAddEquivOfForallSqEqOne G h).toEquiv.symm
+
+/-- **The order of an elementary abelian `2`-group is `2 ^ twoRank`** when its elementary-2
+quotient is finite-dimensional. -/
+theorem card_eq_two_pow_twoRank_of_forall_sq_eq_one
+    [Module.Finite (ZMod 2) (ElementaryTwoQuotient G)] (h : ∀ g : G, g ^ 2 = 1) :
+    Nat.card G = 2 ^ twoRank G := by
+  rw [← card_elementaryTwoQuotient_of_forall_sq_eq_one G h,
+    card_elementaryTwoQuotient_eq_two_pow_twoRank]
 
 /-- **A group of odd order has a single square class.** For a finite commutative group of odd
 order, squaring is bijective (the exponent `2` is coprime to `|G|`), so `G/G²` is trivial. This
