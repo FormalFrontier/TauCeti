@@ -48,10 +48,10 @@ variable {X : TopCat.{u}}
 /-- Monodromy as a functor from covering spaces over `X` to functors from the fundamental
 groupoid of `X` to types.
 
-The definition is exposed because its object values are themselves types: without exposure the
-characteristic lemmas `monodromyFunctor_obj` and `monodromyFunctor_map_app` are unprovable and
-unstatable respectively, since both need `(monodromyFunctor X).obj p` to reduce to the fibre
-functor of `p`. Consumers should use those two lemmas rather than the record fields. -/
+A covering space is sent to its own monodromy functor, and a map of covering spaces to the natural
+transformation restricting that map to every fibre. The definition is exposed, so downstream files
+may unfold its object and morphism values; the intended interface for doing so is
+`monodromyFunctor_obj` and `monodromyFunctor_map_app` rather than the record fields. -/
 @[expose] noncomputable def monodromyFunctor (X : TopCat.{u}) :
     CoveringSpace X ⥤ (FundamentalGroupoid X ⥤ Type u) where
   obj p := p.isCoveringMap_proj.monodromyFunctor
