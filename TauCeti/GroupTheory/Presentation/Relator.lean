@@ -30,6 +30,8 @@ from Mathlib.
 * `TauCeti.Relator`: expressions built from generators, inverse, product, power, and commutator.
 * `TauCeti.Relator.toWord`: compilation of an expression to a signed word.
 * `TauCeti.Relator.toFreeGroup`: direct structural interpretation of an expression.
+* `TauCeti.Relator.conj` and `TauCeti.Relator.div`: the conjugate `s⁻¹ r s` and the relator `r s⁻¹`
+  by which a source states an equation between two words.
 
 ## Main result
 
@@ -99,6 +101,55 @@ def toFreeGroup {α : Type*} : Relator α → FreeGroup α
   | .mul r s => r.toFreeGroup * s.toFreeGroup
   | .pow r n => r.toFreeGroup ^ n
   | .comm r s => ⁅r.toFreeGroup, s.toFreeGroup⁆
+
+/-- The conjugate `s⁻¹ * r * s`, written `r ^ s` by most of the presentation literature.
+
+Published presentations of the larger sporadic groups state many of their relators as conjugates,
+so this is the shape a transcription of such a source needs. It is a derived form rather than a
+sixth constructor: `Relator.toWord` and `Relator.toFreeGroup` therefore stay total on the five
+constructors, and `Relator.toWord_toFreeGroup` covers it with no extra case.
+
+The body is exposed because a module carrying transcribed relators checks properties of its list by
+kernel reduction, which needs the transcription combinators to reduce. -/
+@[expose]
+def conj {α : Type*} (r s : Relator α) : Relator α := .mul (.inv s) (.mul r s)
+
+/-- The relator `r * s⁻¹`, by which a source states the equation `r = s`.
+
+A published presentation freely mixes relators with relations, writing for instance `a = (cd)⁴`
+alongside `a²`; `Relator.toFreeGroup_div_eq_one_iff` is the statement that the two forms say the
+same thing.
+
+The body is exposed for the same reason as that of `TauCeti.Relator.conj`. -/
+@[expose]
+def div {α : Type*} (r s : Relator α) : Relator α := .mul r (.inv s)
+
+/-- The conjugate expression denotes the conjugate free-group element. -/
+@[simp]
+theorem toFreeGroup_conj {α : Type*} (r s : Relator α) :
+    (r.conj s).toFreeGroup = s.toFreeGroup⁻¹ * r.toFreeGroup * s.toFreeGroup := by
+  rw [conj, toFreeGroup, toFreeGroup, toFreeGroup, mul_assoc]
+
+/-- The equation expression denotes the quotient of the two free-group elements. -/
+@[simp]
+theorem toFreeGroup_div {α : Type*} (r s : Relator α) :
+    (r.div s).toFreeGroup = r.toFreeGroup / s.toFreeGroup := by
+  rw [div, toFreeGroup, toFreeGroup, div_eq_mul_inv]
+
+/-- **Imposing `TauCeti.Relator.div` as a relator is imposing the source's equation.** This is what
+licenses transcribing a published relation `r = s` as the single relator `r s⁻¹`. -/
+theorem toFreeGroup_div_eq_one_iff {α : Type*} (r s : Relator α) :
+    (r.div s).toFreeGroup = 1 ↔ r.toFreeGroup = s.toFreeGroup := by
+  rw [toFreeGroup_div, div_eq_one]
+
+/-- **The commutator convention of the presentation literature.** Sources that write
+`[r, s] = r⁻¹ s⁻¹ r s`, rather than Mathlib's `⁅r, s⁆ = r s r⁻¹ s⁻¹` carried by `Relator.comm`, are
+transcribed by applying `Relator.comm` to the two inverses; this computes what that denotes. -/
+@[simp]
+theorem toFreeGroup_comm_inv_inv {α : Type*} (r s : Relator α) :
+    (Relator.comm (.inv r) (.inv s)).toFreeGroup =
+      r.toFreeGroup⁻¹ * s.toFreeGroup⁻¹ * r.toFreeGroup * s.toFreeGroup := by
+  rw [toFreeGroup, toFreeGroup, toFreeGroup, commutatorElement_def, inv_inv, inv_inv]
 
 /-- **The compiled word denotes the direct interpretation of the relator expression.**
 
