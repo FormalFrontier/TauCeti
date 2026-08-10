@@ -31,8 +31,8 @@ map the symmetric and the exterior power **into** the tensor power, with image e
 of the symmetrization, respectively antisymmetrization, operator, and are injective because
 composing back is multiplication by `d!`, invertible over a `ℚ`-algebra. On the symmetric-group
 side, the extreme-shape lemmas of `TauCeti/RepresentationTheory/Symmetric/Symmetrizer.lean`
-collapse `c_t` to a single factor, which is evaluated here as an element of the group algebra and
-then as an operator on the tensor power. Both maps are equivariant for `GL n k`, because
+collapse `c_t` to a single factor and evaluate it in the group algebra, which is read here as an
+operator on the tensor power. Both maps are equivariant for `GL n k`, because
 `GL n k` acts diagonally and the two operators only permute tensor factors; so the identification
 of subspaces is an isomorphism of representations, by
 `Representation.IntertwiningMap.equivOfRange`.
@@ -52,12 +52,9 @@ are zero, the exterior power because it is above the rank and the Weyl module by
 * `TauCeti.YoungTableau.weylRepEquivExtPowerRep`: **`𝕊^{(1ᵈ)}(kⁿ) ≅ ⋀ᵈ(kⁿ)`**, the Weyl module of
   a shape with at most one column is the exterior power, with
   `TauCeti.weylRepOfShapeEquivExtPowerRep` its shape-indexed form.
-* `TauCeti.YoungTableau.youngSymmetrizerOver_eq_sum_of_rowSubgroup_eq_top` and
-  `TauCeti.YoungTableau.youngSymmetrizerOver_eq_sum_of_colSubgroup_eq_top`: the value of `c_t` at
-  the two extreme shapes, in the group algebra, with
-  `TauCeti.YoungTableau.permTensorActionAlgHom_youngSymmetrizerOver_of_rowSubgroup_eq_top` and
-  `TauCeti.YoungTableau.permTensorActionAlgHom_youngSymmetrizerOver_of_colSubgroup_eq_top` the
-  corresponding operators on the tensor power.
+* `TauCeti.YoungTableau.permTensorActionAlgHom_youngSymmetrizerOver_of_rowSubgroup_eq_top` and
+  `TauCeti.YoungTableau.permTensorActionAlgHom_youngSymmetrizerOver_of_colSubgroup_eq_top`: the
+  operators on the tensor power that `c_t` becomes at the two extreme shapes.
 
 ## Implementation notes
 
@@ -94,43 +91,7 @@ namespace TauCeti
 
 namespace YoungTableau
 
-variable (k : Type u) [CommRing k] [Algebra ℚ k] {μ : YoungDiagram}
-
-/-- **The Young symmetrizer of a shape with at most one row is the full symmetrization**
-`∑_σ σ`: the row group is everything and the column group is trivial. -/
-theorem youngSymmetrizerOver_eq_sum_of_rowSubgroup_eq_top (t : YoungTableau μ)
-    (h : rowSubgroup t = ⊤) :
-    youngSymmetrizerOver k t =
-      ∑ σ : Equiv.Perm (Fin μ.card), MonoidAlgebra.of k (Equiv.Perm (Fin μ.card)) σ := by
-  rw [youngSymmetrizerOver_def,
-    youngSymmetrizer_eq_rowSymmetrizer t (colSubgroup_eq_bot_of_rowSubgroup_eq_top t h),
-    rowSymmetrizer_def, map_sum]
-  refine Finset.sum_bij (fun p _ => (p : Equiv.Perm (Fin μ.card)))
-    (fun _ _ => Finset.mem_univ _) (fun _ _ _ _ hab => Subtype.ext hab)
-    (fun σ _ => ?_) fun p _ => ?_
-  · refine ⟨⟨σ, by rw [h]; exact Subgroup.mem_top σ⟩, ?_, rfl⟩
-    simp
-  · rw [MonoidAlgebra.of_apply, MonoidAlgebra.mapAlgHom_single, map_one, MonoidAlgebra.of_apply]
-
-/-- **The Young symmetrizer of a shape with at most one column is the full antisymmetrization**
-`∑_σ sgn(σ) σ`: the column group is everything and the row group is trivial. -/
-theorem youngSymmetrizerOver_eq_sum_of_colSubgroup_eq_top (t : YoungTableau μ)
-    (h : colSubgroup t = ⊤) :
-    youngSymmetrizerOver k t =
-      ∑ σ : Equiv.Perm (Fin μ.card),
-        (Equiv.Perm.sign σ : ℤ) • MonoidAlgebra.of k (Equiv.Perm (Fin μ.card)) σ := by
-  rw [youngSymmetrizerOver_def,
-    youngSymmetrizer_eq_columnAntisymmetrizer t (rowSubgroup_eq_bot_of_colSubgroup_eq_top t h),
-    columnAntisymmetrizer_def, map_sum]
-  refine Finset.sum_bij (fun q _ => (q : Equiv.Perm (Fin μ.card)))
-    (fun _ _ => Finset.mem_univ _) (fun _ _ _ _ hab => Subtype.ext hab)
-    (fun σ _ => ?_) fun q _ => ?_
-  · refine ⟨⟨σ, by rw [h]; exact Subgroup.mem_top σ⟩, ?_, rfl⟩
-    simp
-  · rw [Int.cast_smul_eq_zsmul ℚ, map_zsmul, MonoidAlgebra.of_apply,
-      MonoidAlgebra.mapAlgHom_single, map_one, MonoidAlgebra.of_apply]
-
-variable (n : ℕ)
+variable (k : Type u) [CommRing k] [Algebra ℚ k] {μ : YoungDiagram} (n : ℕ)
 
 /-- On a shape with at most one row the Young symmetrizer acts on the tensor power by the
 symmetrization operator `∑_σ σ`. -/
@@ -207,12 +168,36 @@ noncomputable def YoungTableau.weylRepEquivSymPowerRep (t : YoungTableau μ) (h 
     (YoungTableau.weylRep k n t).Equiv (symPowerRep k n μ.card) :=
   (symPowerRepEquivWeylRep k n t h).symm
 
+/-- The isomorphism `TauCeti.YoungTableau.weylRepEquivSymPowerRep` is inverse to the
+symmetrization: symmetrizing its value returns the element of the tensor power it was applied
+to. -/
+@[simp]
+theorem YoungTableau.toTensorPower_weylRepEquivSymPowerRep (t : YoungTableau μ)
+    (h : μ.colLen 0 ≤ 1) (x : (YoungTableau.weylModule k n t).toSubmodule) :
+    SymmetricPower.toTensorPower k (Fin μ.card) (Fin n → k)
+        (YoungTableau.weylRepEquivSymPowerRep k n t h x) =
+      (x : ⨂[k]^μ.card (Fin n → k)) := by
+  rw [YoungTableau.weylRepEquivSymPowerRep, ← symPowerRepEquivWeylRep_apply_coe k n t h,
+    Representation.Equiv.apply_symm_apply]
+
 /-- The shape-indexed form of `TauCeti.YoungTableau.weylRepEquivSymPowerRep`. -/
 noncomputable def weylRepOfShapeEquivSymPowerRep (μ : YoungDiagram) (h : μ.colLen 0 ≤ 1) :
     (weylRepOfShape k n μ).Equiv (symPowerRep k n μ.card) :=
   (YoungTableau.weylRepEquivOfShape k n
       (StandardYoungTableau.rowSuperstandard μ).toEquiv).symm.trans
     (YoungTableau.weylRepEquivSymPowerRep k n _ h)
+
+/-- The shape-indexed isomorphism is the tableau-indexed one at the row-superstandard tableau,
+after moving the argument along `TauCeti.YoungTableau.weylRepEquivOfShape`. -/
+@[simp]
+theorem weylRepOfShapeEquivSymPowerRep_apply (μ : YoungDiagram) (h : μ.colLen 0 ≤ 1)
+    (x : (weylModuleOfShape k n μ).toSubmodule) :
+    weylRepOfShapeEquivSymPowerRep k n μ h x =
+      YoungTableau.weylRepEquivSymPowerRep k n
+        (StandardYoungTableau.rowSuperstandard μ).toEquiv h
+        ((YoungTableau.weylRepEquivOfShape k n
+          (StandardYoungTableau.rowSuperstandard μ).toEquiv).symm x) :=
+  Representation.Equiv.trans_apply _ _ x
 
 end OneRow
 
@@ -264,12 +249,36 @@ noncomputable def YoungTableau.weylRepEquivExtPowerRep (t : YoungTableau μ) (h 
     (YoungTableau.weylRep k n t).Equiv (extPowerRep k n μ.card) :=
   (extPowerRepEquivWeylRep k n t h).symm
 
+/-- The isomorphism `TauCeti.YoungTableau.weylRepEquivExtPowerRep` is inverse to the
+antisymmetrization: antisymmetrizing its value returns the element of the tensor power it was
+applied to. -/
+@[simp]
+theorem YoungTableau.toTensorPower_weylRepEquivExtPowerRep (t : YoungTableau μ)
+    (h : μ.rowLen 0 ≤ 1) (x : (YoungTableau.weylModule k n t).toSubmodule) :
+    exteriorPower.toTensorPower k (Fin n → k) μ.card
+        (YoungTableau.weylRepEquivExtPowerRep k n t h x) =
+      (x : ⨂[k]^μ.card (Fin n → k)) := by
+  rw [YoungTableau.weylRepEquivExtPowerRep, ← extPowerRepEquivWeylRep_apply_coe k n t h,
+    Representation.Equiv.apply_symm_apply]
+
 /-- The shape-indexed form of `TauCeti.YoungTableau.weylRepEquivExtPowerRep`. -/
 noncomputable def weylRepOfShapeEquivExtPowerRep (μ : YoungDiagram) (h : μ.rowLen 0 ≤ 1) :
     (weylRepOfShape k n μ).Equiv (extPowerRep k n μ.card) :=
   (YoungTableau.weylRepEquivOfShape k n
       (StandardYoungTableau.rowSuperstandard μ).toEquiv).symm.trans
     (YoungTableau.weylRepEquivExtPowerRep k n _ h)
+
+/-- The shape-indexed isomorphism is the tableau-indexed one at the row-superstandard tableau,
+after moving the argument along `TauCeti.YoungTableau.weylRepEquivOfShape`. -/
+@[simp]
+theorem weylRepOfShapeEquivExtPowerRep_apply (μ : YoungDiagram) (h : μ.rowLen 0 ≤ 1)
+    (x : (weylModuleOfShape k n μ).toSubmodule) :
+    weylRepOfShapeEquivExtPowerRep k n μ h x =
+      YoungTableau.weylRepEquivExtPowerRep k n
+        (StandardYoungTableau.rowSuperstandard μ).toEquiv h
+        ((YoungTableau.weylRepEquivOfShape k n
+          (StandardYoungTableau.rowSuperstandard μ).toEquiv).symm x) :=
+  Representation.Equiv.trans_apply _ _ x
 
 end OneColumn
 

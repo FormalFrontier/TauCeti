@@ -18,10 +18,12 @@ vanishes as soon as `d` exceeds the rank of the module, and computes the trace o
 endomorphism from a basis of eigenvectors.
 
 It then builds the surjection `exteriorPower.fromTensorPower : ⨂[R]^n M →ₗ[R] ⋀[R]^n M` that is
-right inverse, up to the factor `n!`, to Mathlib's antisymmetrization
-`exteriorPower.toTensorPower`. Consequently the antisymmetrization is injective once `n!` is a unit
-in the base ring, and its image is the image of the antisymmetrization operator `∑_σ sgn(σ) σ` on
-the tensor power. That is the statement a Young symmetrizer of a one-column shape consumes.
+left inverse, up to the factor `n!`, to Mathlib's antisymmetrization
+`exteriorPower.toTensorPower`: composing the antisymmetrization with it is `n! • id` on the exterior
+power, while composing the two the other way round is the antisymmetrization operator
+`∑_σ sgn(σ) σ` on the tensor power. Consequently the antisymmetrization is injective once `n!` is a
+unit in the base ring, and its image is the image of that operator. That is the statement a Young
+symmetrizer of a one-column shape consumes.
 
 It then describes the exterior power in the top degree, that is, in the degree equal to the rank of
 the module. There an exterior product of `n` vectors is the determinant of those vectors against a
@@ -50,7 +52,8 @@ one, spanned by the exterior product of a basis, and an endomorphism acts on it 
   multiplication by `n!`, whence `exteriorPower.toTensorPower_injective`.
 * `exteriorPower.range_toTensorPower`: the image of the antisymmetrization is the image of the
   antisymmetrization operator on the tensor power.
-* `exteriorPower.toTensorPower_comp_map`: the antisymmetrization is natural in the module.
+* `exteriorPower.toTensorPower_comp_map` and `exteriorPower.map_comp_fromTensorPower`: the
+  antisymmetrization and the canonical surjection are natural in the module.
 
 ## References
 
@@ -146,8 +149,9 @@ variable (R M) in
 /-- **The canonical surjection of the tensor power onto the exterior power**, sending a pure
 tensor to the corresponding exterior product.
 
-Mathlib's `exteriorPower.toTensorPower` runs the other way, by antisymmetrization; the two
-composites are `n!`. -/
+Mathlib's `exteriorPower.toTensorPower` runs the other way, by antisymmetrization; antisymmetrizing
+and then projecting back is `n!` on the exterior power, while projecting and then antisymmetrizing
+is the antisymmetrization operator `∑_σ sgn(σ) σ` on the tensor power. -/
 noncomputable def fromTensorPower : (⨂[R]^n M) →ₗ[R] ⋀[R]^n M :=
   PiTensorProduct.lift (ιMulti R n).toMultilinearMap
 
@@ -173,8 +177,7 @@ theorem fromTensorPower_comp_toTensorPower :
     rw [← Units.val_mul, Int.units_mul_self, Units.val_one]
   have h : ∀ σ : Equiv.Perm (Fin n),
       ((Equiv.Perm.sign σ : ℤ)) • ιMulti R n (fun i => v (σ i)) = ιMulti R n v := fun σ => by
-    rw [show (fun i => v (σ i)) = v ∘ σ from rfl, (ιMulti R n).map_perm, Units.smul_def,
-      smul_smul, hsq, one_smul]
+    rw [← Function.comp_def v σ, (ιMulti R n).map_perm, Units.smul_def, smul_smul, hsq, one_smul]
   rw [LinearMap.coe_comp, Function.comp_apply, toTensorPower_apply_ιMulti, map_sum]
   simp only [Units.smul_def, map_zsmul, fromTensorPower_tprod, h]
   rw [Finset.sum_const, Finset.card_univ, Fintype.card_perm, Fintype.card_fin,
@@ -185,14 +188,10 @@ over a `ℚ`-algebra. -/
 theorem toTensorPower_injective (h : IsUnit (n.factorial : R)) :
     Function.Injective (toTensorPower R M n) := by
   obtain ⟨u, hu⟩ := h
-  have key : ∀ z : ⋀[R]^n M, fromTensorPower R M n (toTensorPower R M n z) = (u : R) • z :=
-    fun z => by
-      have := congrArg (fun f : (⋀[R]^n M) →ₗ[R] ⋀[R]^n M => f z)
-        (fromTensorPower_comp_toTensorPower (R := R) (M := M) n)
-      simpa [hu, Nat.cast_smul_eq_nsmul] using this
-  intro x y hxy
-  have hx : (u : R) • x = (u : R) • y := by rw [← key, ← key, hxy]
-  simpa [smul_smul] using congrArg (fun z => ((u⁻¹ : Rˣ) : R) • z) hx
+  -- Rescaling the canonical surjection by `u⁻¹` makes it a left inverse of the antisymmetrization.
+  refine LinearMap.injective_of_comp_eq_id _ (((u⁻¹ : Rˣ) : R) • fromTensorPower R M n) ?_
+  rw [LinearMap.smul_comp, fromTensorPower_comp_toTensorPower, ← Nat.cast_smul_eq_nsmul R,
+    smul_smul, ← hu, u.inv_mul, one_smul]
 
 /-- Projecting a tensor to the exterior power and antisymmetrizing it back is the
 antisymmetrization operator `∑_σ sgn(σ) σ` of the tensor power. -/
@@ -214,6 +213,13 @@ theorem toTensorPower_comp_map {N : Type*} [AddCommGroup N] [Module R N] (f : M 
   refine LinearMap.ext_on (ιMulti_span R n M) ?_
   rintro _ ⟨v, rfl⟩
   simp [Units.smul_def, Function.comp_def]
+
+/-- The canonical surjection is natural in the module. -/
+theorem map_comp_fromTensorPower {N : Type*} [AddCommGroup N] [Module R N] (f : M →ₗ[R] N) :
+    (map n f) ∘ₗ (fromTensorPower R M n) =
+      (fromTensorPower R N n) ∘ₗ (PiTensorProduct.map fun _ : Fin n => f) := by
+  refine PiTensorProduct.ext (MultilinearMap.ext fun m => ?_)
+  simp [Function.comp_def]
 
 /-- The image of the antisymmetrization is the image of the antisymmetrization operator
 `∑_σ sgn(σ) σ` on the tensor power. -/

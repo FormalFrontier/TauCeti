@@ -186,8 +186,11 @@ theorem toTensorPower_tprod (m : ι → M) :
   exact symmetrizer_tprod m
 
 private theorem toTensorPower_comp_mk :
-    (toTensorPower R ι M) ∘ₗ mk R ι M = symmetrizer R ι M :=
-  LinearMap.ext fun x => (toTensorPower_mk' x)
+    (toTensorPower R ι M) ∘ₗ mk R ι M =
+      ∑ σ : Equiv.Perm ι, (PiTensorProduct.reindex R (fun _ : ι => M) σ).toLinearMap :=
+  LinearMap.ext fun x => by
+    rw [LinearMap.comp_apply, toTensorPower_mk, LinearMap.sum_apply]
+    simp only [LinearEquiv.coe_coe]
 
 /-- The image of the symmetrization is the image of the symmetrization operator `∑_σ σ` on the
 tensor power. -/
@@ -195,9 +198,7 @@ theorem range_toTensorPower :
     LinearMap.range (toTensorPower R ι M) =
       LinearMap.range (∑ σ : Equiv.Perm ι,
         ((PiTensorProduct.reindex R (fun _ : ι => M) σ).toLinearMap)) := by
-  rw [show (∑ σ : Equiv.Perm ι, ((PiTensorProduct.reindex R (fun _ : ι => M) σ).toLinearMap)) =
-      (toTensorPower R ι M) ∘ₗ mk R ι M from toTensorPower_comp_mk.symm,
-    LinearMap.range_comp, range_mk, Submodule.map_top]
+  rw [← toTensorPower_comp_mk, LinearMap.range_comp, range_mk, Submodule.map_top]
 
 /-- Symmetrizing and then projecting back to the symmetric power multiplies by `(card ι)!`: the
 `(card ι)!` reorderings of a pure tensor all become the same symmetric tensor. -/
@@ -217,12 +218,10 @@ instance over a `ℚ`-algebra. -/
 theorem toTensorPower_injective (h : IsUnit ((Fintype.card ι).factorial : R)) :
     Function.Injective (toTensorPower R ι M) := by
   obtain ⟨u, hu⟩ := h
-  have key : ∀ z : Sym[R] ι M, mk R ι M (toTensorPower R ι M z) = (u : R) • z := fun z => by
-    have := congrArg (fun f : Sym[R] ι M →ₗ[R] Sym[R] ι M => f z) mk_comp_toTensorPower
-    simpa [hu, Nat.cast_smul_eq_nsmul] using this
-  intro x y hxy
-  have hx : (u : R) • x = (u : R) • y := by rw [← key, ← key, hxy]
-  simpa [smul_smul] using congrArg (fun z => ((u⁻¹ : Rˣ) : R) • z) hx
+  -- Rescaling the quotient map by `u⁻¹` makes it a left inverse of the symmetrization.
+  refine LinearMap.injective_of_comp_eq_id _ (((u⁻¹ : Rˣ) : R) • mk R ι M) ?_
+  rw [LinearMap.smul_comp, mk_comp_toTensorPower, ← Nat.cast_smul_eq_nsmul R, smul_smul, ← hu,
+    u.inv_mul, one_smul]
 
 /-- The symmetrization is natural in the module. -/
 theorem toTensorPower_comp_map {N : Type v} [AddCommMonoid N] [Module R N] (f : M →ₗ[R] N) :
