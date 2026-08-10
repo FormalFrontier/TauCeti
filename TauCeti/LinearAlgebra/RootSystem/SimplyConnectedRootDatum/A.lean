@@ -25,16 +25,18 @@ Write `e₀, …, e_n` for the standard basis of the classical model `ℤ ^ (n +
 of type `Aₙ` are the `n * (n + 1)` vectors `e_a - e_b` with `a ≠ b` and the simple roots are
 `αᵢ = eᵢ - eᵢ₊₁`. Everything below is the image of that model in the two pinned lattices: a vector
 of the character lattice is recorded by its pairings against the simple coroots, and a vector of the
-cocharacter lattice by its coordinates in the simple coroots. Thus `e_a` contributes
+cocharacter lattice by its coordinates in the simple coroots. Although `e_a` itself does not lie in
+the coroot lattice, choose a coordinate potential for it so that differences represent coroots:
 
 ```text
 typeAWeight n a   = (⟨e_a, αₖ^∨⟩)ₖ           = ([a = k] - [a = k + 1])ₖ,
-typeACoweight n a = (coefficient of αₖ^∨)ₖ   = ([a ≤ k])ₖ,
+typeACoweight n a = (chosen potential at αₖ^∨)ₖ   = ([a ≤ k])ₖ.
 ```
 
-the second because `e_a - e_b = ∑ a ≤ k < b, αₖ^∨` for `a ≤ b`. The root `e_a - e_b` and its coroot
-are the corresponding differences, and the whole construction is a finite calculation with these
-two families; `typeAWeight_dotProduct_typeACoweight` is the one identity it rests on.
+For `a ≤ b`, the difference of the chosen potentials has the simple-coroot coordinates of
+`e_a - e_b = ∑ a ≤ k < b, αₖ^∨`. The root `e_a - e_b` and its coroot are the corresponding
+differences, and the whole construction is a finite calculation with these two families;
+`typeAWeight_dotProduct_typeACoweight` is the one identity it rests on.
 
 The roots are indexed by `Fin (n * (n + 1))`, the ordered pairs `(a, b)` of distinct elements of
 `Fin (n + 1)` being enumerated by the difference `b - a ≠ 0` first and the source `a` second. The
@@ -88,8 +90,9 @@ pairings `⟨e_a, αₖ^∨⟩ = [a = k] - [a = k + 1]` against the simple coroo
 private def typeAWeight (n a : ℕ) : Fin n → ℤ :=
   fun k => (if a = (k : ℕ) then 1 else 0) - (if a = (k : ℕ) + 1 then 1 else 0)
 
-/-- The cocharacter-lattice coordinates of the classical basis vector `e_a` of type `Aₙ`, read off
-`e_a - e_b = ∑ a ≤ k < b, αₖ^∨`: the `k`-th coordinate is `[a ≤ k]`. -/
+/-- A chosen simple-coroot-coordinate potential for the classical basis vector `e_a` of type `Aₙ`.
+Although `e_a` itself does not lie in the coroot lattice, the differences of these potentials give
+the coordinates of `e_a - e_b`; the `k`-th potential is `[a ≤ k]`. -/
 private def typeACoweight (n a : ℕ) : Fin n → ℤ :=
   fun k => if a ≤ (k : ℕ) then 1 else 0
 
