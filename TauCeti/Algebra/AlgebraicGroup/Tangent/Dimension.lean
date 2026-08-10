@@ -13,8 +13,10 @@ public import TauCeti.Algebra.AlgebraicGroup.Tangent.Cotangent
 # Dimensions of tangent Lie algebras
 
 For an affine monoid over a field, the tangent Lie algebra is the linear dual of the
-augmentation cotangent space. This file records the resulting equality of dimensions and shows
-that the tangent Lie algebra of a finite-type affine monoid is finite-dimensional.
+augmentation cotangent space. This file records the resulting equality of their `Module.finrank`
+values and shows that the tangent Lie algebra of a finite-type affine monoid is finite-dimensional.
+Without a finiteness hypothesis, this equality uses Mathlib's convention that the `finrank` of an
+infinite-dimensional space is zero.
 
 When the cotangent space is finite-dimensional, tangent vectors with values in an extension field
 `K` are the scalar extension of base-field tangent vectors; projectivity is automatic over a
@@ -30,7 +32,8 @@ in Layer 2 of the ReductiveGroups roadmap.
 
 ## Main declarations
 
-* `TauCeti.Derivation.finrank_eq_finrank_cotangentSpace`: tangent and cotangent dimensions agree.
+* `TauCeti.Derivation.finrank_eq_finrank_cotangentSpace`: tangent and cotangent `finrank` values
+  agree.
 * `TauCeti.Derivation.instFiniteDimensionalDerivationCounitAlgebra`: tangent spaces with
   coefficient-field values are finite-dimensional when the augmentation cotangent space is.
 * `TauCeti.Derivation.finrank_tangent_baseChange`: tangent dimension is invariant under extension
@@ -55,7 +58,8 @@ variable {k : Type u} [Field k]
 variable {H : Type v} [CommRing H] [Bialgebra k H]
 
 /-- The augmentation cotangent space and tangent Lie algebra at the identity have the same
-dimension over the base field. -/
+`Module.finrank` over the base field. Without a finiteness hypothesis, this is an equality in
+Mathlib's finite-rank convention, where infinite-dimensional spaces have `finrank` zero. -/
 @[simp]
 theorem finrank_eq_finrank_cotangentSpace :
     Module.finrank k
