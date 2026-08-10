@@ -453,7 +453,7 @@ def f4SimplyConnectedRootDatum : RootDatum (Fin 48) (Fin 4 → ℤ) (Fin 4 → �
     f4SimplyConnectedRootDatum.coroot = f4Coroot := (rfl)
 
 /-- The perfect pairing of the pinned `F4` datum is the standard dot product. -/
-@[simp] lemma f4SimplyConnectedRootDatum_toLinearMap (x y : Fin 4 → ℤ) :
+@[simp] lemma f4SimplyConnectedRootDatum_toLinearMap_apply (x y : Fin 4 → ℤ) :
     f4SimplyConnectedRootDatum.toLinearMap x y = x ⬝ᵥ y := (rfl)
 
 /-- Pairing a pinned `F4` root with a coroot computes as their coordinate dot product. -/
@@ -510,14 +510,11 @@ private def f4RootCoefficients : Fin 24 → Fin 4 → ℕ := ![
   ![1, 2, 2, 0], ![1, 2, 2, 1], ![1, 2, 2, 2], ![1, 2, 3, 1],
   ![1, 2, 3, 2], ![1, 2, 4, 2], ![1, 3, 4, 2], ![2, 3, 4, 2]]
 
-/-- The coefficients of the positive `F4` coroots in the ordered simple-coroot basis. -/
-private def f4CorootCoefficients : Fin 24 → Fin 4 → ℕ := ![
-  ![1, 0, 0, 0], ![0, 1, 0, 0], ![0, 0, 1, 0], ![0, 0, 0, 1],
-  ![0, 0, 1, 1], ![0, 2, 1, 0], ![0, 2, 1, 1], ![0, 1, 1, 0],
-  ![0, 2, 2, 1], ![0, 1, 1, 1], ![1, 1, 0, 0], ![2, 2, 1, 0],
-  ![2, 2, 1, 1], ![1, 1, 1, 0], ![2, 2, 2, 1], ![1, 1, 1, 1],
-  ![1, 2, 1, 0], ![2, 4, 2, 1], ![1, 2, 1, 1], ![2, 4, 3, 1],
-  ![2, 4, 3, 2], ![1, 2, 2, 1], ![1, 3, 2, 1], ![2, 3, 2, 1]]
+/-- The coefficients of the positive `F4` coroots in the ordered simple-coroot basis. The
+cocharacter lattice is written in that very basis, so these are the nonnegative coordinates of
+`f4Coroot` itself. -/
+private def f4CorootCoefficients (i : Fin 24) (k : Fin 4) : ℕ :=
+  (f4Coroot (Fin.castAdd 24 i) k).toNat
 
 private lemma f4Root_eq_sum (i : Fin 24) :
     ∑ k, f4RootCoefficients i k • f4Root (Fin.castAdd 44 k) =
