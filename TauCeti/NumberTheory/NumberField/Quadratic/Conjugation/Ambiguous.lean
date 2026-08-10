@@ -30,6 +30,8 @@ classical genus theory these results underlie.
 
 ## Main results
 
+* `TauCeti.NumberField.map_eq_self_of_mem_ramifiedPrimes`: any ring automorphism of `𝓞 K` fixes
+  the prime `𝔭` above a ramified `p`, in a degree-two field.
 * `TauCeti.NumberField.map_ringOfIntegersQuadraticConj_eq_self_of_mem_ramifiedPrimes`: `σ 𝔭 = 𝔭`
   for the prime `𝔭` above a ramified `p`.
 * `TauCeti.NumberField.classGroupMk0_sq_eq_one_of_mem_ramifiedPrimes`: the class of a ramified
@@ -45,24 +47,30 @@ namespace TauCeti.NumberField
 
 variable {K : Type*} [Field K] [NumberField K] {θ : 𝓞 K} {d : ℤ}
 
-/-- **Quadratic conjugation fixes a ramified prime.** For the unique prime `𝔭` of `𝓞 K` above a
-ramified rational prime `p`, quadratic conjugation `σ` satisfies `σ 𝔭 = 𝔭`: the pushforward
-`𝔭.map σ` is again a prime of `𝓞 K` lying over `p`, and a ramified prime of a quadratic field has
-only one prime above it. In other words, `𝔭` is an *ambiguous* ideal. -/
+/-- **A ring automorphism fixes a ramified prime.** In a degree-two number field, any ring
+automorphism `σ` of `𝓞 K` fixes the unique prime `𝔭` above a ramified rational prime `p`: `σ 𝔭` is
+again a prime of `𝓞 K` lying over `p` (its `ℤ`-algebra form `toIntAlgEquiv` has the same underlying
+map, `RingEquiv.coe_toIntAlgEquiv`), and a ramified prime has only one prime above it. -/
+theorem map_eq_self_of_mem_ramifiedPrimes (hK : finrank ℚ K = 2) (σ : 𝓞 K ≃+* 𝓞 K)
+    {p : ℕ} (hmem : p ∈ ramifiedPrimes K) (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime]
+    [𝔭.LiesOver (span {(p : ℤ)})] :
+    Ideal.map σ 𝔭 = 𝔭 := by
+  have hlo : (Ideal.map σ 𝔭).LiesOver (span {(p : ℤ)}) :=
+    Ideal.LiesOver.of_eq_map_equiv (span {(p : ℤ)}) σ.toIntAlgEquiv rfl
+  have hmemset : Ideal.map σ 𝔭 ∈ (span {(p : ℤ)} : Ideal ℤ).primesOver (𝓞 K) :=
+    ⟨inferInstance, hlo⟩
+  rwa [primesOver_eq_singleton_of_mem_ramifiedPrimes hK hmem 𝔭, Set.mem_singleton_iff] at hmemset
+
+/-- **Quadratic conjugation fixes a ramified prime.** The prime `𝔭` above a ramified rational prime
+`p` is fixed by quadratic conjugation `σ = ringOfIntegersQuadraticConj`, so `𝔭` is an *ambiguous*
+ideal. A special case of `map_eq_self_of_mem_ramifiedPrimes`. -/
 theorem map_ringOfIntegersQuadraticConj_eq_self_of_mem_ramifiedPrimes
     (hmin : minpoly ℤ θ = X ^ 2 - C d) (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤)
     {p : ℕ} (hmem : p ∈ ramifiedPrimes K) (𝔭 : Ideal (𝓞 K)) [𝔭.IsPrime]
     [𝔭.LiesOver (span {(p : ℤ)})] :
-    Ideal.map (ringOfIntegersQuadraticConj hmin hgen) 𝔭 = 𝔭 := by
-  have hK : finrank ℚ K = 2 := finrank_rat_eq_two hmin hgen
-  -- `𝔭.map σ` lies over `(p)`: `σ`'s `ℤ`-algebra form `toIntAlgEquiv` has the same underlying map
-  -- (`RingEquiv.coe_toIntAlgEquiv`) and carries `𝔭` to a prime over `(p)`.
-  have hlo : (Ideal.map (ringOfIntegersQuadraticConj hmin hgen) 𝔭).LiesOver (span {(p : ℤ)}) :=
-    Ideal.LiesOver.of_eq_map_equiv (span {(p : ℤ)})
-      (ringOfIntegersQuadraticConj hmin hgen).toIntAlgEquiv rfl
-  have hmemset : Ideal.map (ringOfIntegersQuadraticConj hmin hgen) 𝔭 ∈
-      (span {(p : ℤ)} : Ideal ℤ).primesOver (𝓞 K) := ⟨inferInstance, hlo⟩
-  rwa [primesOver_eq_singleton_of_mem_ramifiedPrimes hK hmem 𝔭, Set.mem_singleton_iff] at hmemset
+    Ideal.map (ringOfIntegersQuadraticConj hmin hgen) 𝔭 = 𝔭 :=
+  map_eq_self_of_mem_ramifiedPrimes (finrank_rat_eq_two hmin hgen)
+    (ringOfIntegersQuadraticConj hmin hgen) hmem 𝔭
 
 /-- **The class of a ramified prime is 2-torsion.** In a degree-two number field, the prime `𝔭`
 above a ramified rational prime `p` satisfies `𝔭² = p 𝓞 K`, the extension of the principal ideal
