@@ -281,6 +281,14 @@ theorem canonicalSection_mul (g h : G) :
       = inl α (α (g, h)) * α.canonicalSection (g * h) := by
   ext <;> simp
 
+/-- **Every element of the twisted product factors through the canonical section**, as its
+`M`-component times the section at its `G`-component. Together with
+`TauCeti.FactorSet.canonicalSection_mul` this reduces any statement about a homomorphism out of the
+extension to its values on the copy of `M` and on the section. -/
+theorem inl_mul_canonicalSection (x : α.Extension) :
+    inl α x.left * α.canonicalSection x.right = x := by
+  ext <;> simp
+
 /-- Conjugation in the twisted product moves the copy of `M` by the action of the image in `G`.
 The copy of `M` is normal for a second reason: it is a kernel,
 by `TauCeti.FactorSet.range_inl_eq_ker_rightHom`. -/

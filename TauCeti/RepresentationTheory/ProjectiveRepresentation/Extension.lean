@@ -1,0 +1,293 @@
+/-
+Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+-/
+module
+
+public import Mathlib.RepresentationTheory.Basic
+public import TauCeti.GroupTheory.GroupExtension.OfFactorSet
+public import TauCeti.RepresentationTheory.ProjectiveRepresentation.Basic
+
+/-!
+# A projective representation is a linear representation of the central extension of its factor set
+
+A projective representation `ρ : G → (V ≃ₗ[k] V)` with factor set `α` is multiplicative only up to
+the scalars `α`, so it is not a homomorphism. Enlarging `G` by those scalars repairs this: the
+central extension `1 → kˣ → E_α → G → 1` built from `α` in
+`TauCeti/GroupTheory/GroupExtension/OfFactorSet.lean` carries a genuine homomorphism
+
+`E_α → (V ≃ₗ[k] V)`, `⟨a, g⟩ ↦ a • ρ g`,
+
+the **linearization** of `ρ`. This file builds it, and shows that nothing is lost: the projective
+representation is recovered by restricting the linearization along the canonical section
+`g ↦ ⟨1, g⟩`, and the two constructions are mutually inverse. The linear representations of `E_α`
+that arise this way are exactly those under which the central copy of `kˣ` acts by its own scalars,
+so `TauCeti.isProjectiveRepEquivExtensionHom` is a bijection between the projective representations
+of `G` with factor set `α` and the linear representations of `E_α` with that property.
+
+Two bookkeeping bridges are needed first, because the two halves of the theory spell a factor set
+differently. `TauCeti.FactorSet` is the uncurried, bundled `G × G → M` of a general `G`-module `M`,
+which is what the group extension is built from, while `TauCeti.IsFactorSet` is a curried
+`Prop`-valued class on `G → G → kˣ`, which is what a projective representation carries. The two
+agree when `G` acts **trivially** on `kˣ`, the case in which the extension is central
+(`TauCeti.FactorSet.inl_range_le_center`), and `TauCeti.FactorSet.isFactorSet_curry` and
+`TauCeti.IsFactorSet.toFactorSet` translate in the two directions. Triviality of the action is
+carried as an explicit hypothesis `∀ (g : G) (a : kˣ), g • a = a` rather than as a chosen instance,
+matching `TauCeti.FactorSet.inl_range_le_center`: the *type* `TauCeti.FactorSet G kˣ` already
+depends on an ambient `MulDistribMulAction G kˣ`, so leaving that action free lets a factor set for
+any action be fed to the statements, and only the results that genuinely need centrality pay for
+it.
+
+## Main definitions
+
+* `TauCeti.IsFactorSet.toFactorSet`: a normalized curried factor set, bundled as a
+  `TauCeti.FactorSet` for a trivial action, so that its central extension is available.
+* `TauCeti.IsProjectiveRep.linearization`: the homomorphism `E_α → (V ≃ₗ[k] V)` attached to a
+  projective representation with factor set `α`, with
+  `TauCeti.IsProjectiveRep.representation` its packaging as a `Representation k E_α V`.
+* `TauCeti.isProjectiveRepEquivExtensionHom`: the resulting bijection.
+
+## Main results
+
+* `TauCeti.FactorSet.isFactorSet_curry`: for a trivial action a `TauCeti.FactorSet` valued in `kˣ`
+  is a normalized factor set in the curried sense of `TauCeti.IsFactorSet`.
+* `TauCeti.IsProjectiveRep.linearization_canonicalSection`: restricting the linearization along the
+  canonical section returns the projective representation, and
+  `TauCeti.IsProjectiveRep.linearization_inl`: the central `kˣ` acts by its own scalars.
+* `TauCeti.isProjectiveRep_comp_canonicalSection`: conversely, restricting along the canonical
+  section any linear representation of `E_α` under which `kˣ` acts by scalars gives a projective
+  representation with factor set `α`.
+* `TauCeti.IsProjectiveRep.exists_factorSet_linearization`: **every projective representation of
+  `G` is a linear representation of a central extension of `G` by `kˣ`**, for the extension built
+  from the factor set the projective representation carries.
+
+## References
+
+This is the linearization step of Layer 7 of the
+[induction and restriction roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/RepresentationTheory/InductionRestriction/README.md),
+"projective representations, factor sets, and the Schur multiplier": it is the mechanism behind the
+representation group, through which every projective representation of `G` lifts to an ordinary
+linear representation of a central extension.
+
+* G. Karpilovsky, *Projective Representations of Finite Groups*, Marcel Dekker (1985), Ch. 3.
+* I. M. Isaacs, *Character Theory of Finite Groups*, AMS Chelsea (1976), Ch. 11.
+-/
+
+public section
+
+namespace TauCeti
+
+universe u v w
+
+variable {k : Type u} {G : Type v} {V : Type w}
+  [CommSemiring k] [Group G] [AddCommMonoid V] [Module k V] [MulDistribMulAction G kˣ]
+
+/-!
+## Factor sets, curried and uncurried
+
+The extension is built from a bundled, uncurried factor set while a projective representation
+carries a curried one; for the trivial action the two notions agree.
+-/
+
+/-- **A factor set valued in `kˣ` for the trivial action is a normalized factor set in the curried
+sense of `TauCeti.IsFactorSet`.** The cocycle identity of `TauCeti.FactorSet` carries an action on
+one of its four terms, which the hypothesis removes; the two normalizations agree. -/
+theorem FactorSet.isFactorSet_curry (α : FactorSet G kˣ)
+    (htriv : ∀ (g : G) (a : kˣ), g • a = a) : IsFactorSet (Function.curry ⇑α) where
+  cocycle g h j := by simpa [Function.curry, htriv] using α.isMulCocycle₂ g h j
+  one_left g := α.map_one_fst g
+  one_right g := α.map_one_snd g
+
+/-- **A normalized factor set in the curried sense of `TauCeti.IsFactorSet`, bundled as a
+`TauCeti.FactorSet`** for a trivial action of `G` on `kˣ`. This is what makes the central extension
+`TauCeti.FactorSet.Extension` of the factor set of a projective representation available. -/
+def IsFactorSet.toFactorSet (α : G → G → kˣ) [IsFactorSet α]
+    (htriv : ∀ (g : G) (a : kˣ), g • a = a) : FactorSet G kˣ where
+  toFun p := α p.1 p.2
+  isMulCocycle₂' g h j := by simpa [htriv] using IsFactorSet.cocycle (α := α) g h j
+  map_one_one' := IsFactorSet.one_left (α := α) 1
+
+/-- The bundled factor set of a curried one takes the same values. -/
+@[simp]
+theorem IsFactorSet.toFactorSet_apply (α : G → G → kˣ) [IsFactorSet α]
+    (htriv : ∀ (g : G) (a : kˣ), g • a = a) (p : G × G) :
+    IsFactorSet.toFactorSet α htriv p = α p.1 p.2 :=
+  (rfl)
+
+/-- Bundling a curried factor set and currying it back returns it unchanged, so a projective
+representation with factor set `α` is one with the factor set of
+`TauCeti.IsFactorSet.toFactorSet`. -/
+@[simp]
+theorem IsFactorSet.curry_coe_toFactorSet (α : G → G → kˣ) [IsFactorSet α]
+    (htriv : ∀ (g : G) (a : kˣ), g • a = a) :
+    Function.curry ⇑(IsFactorSet.toFactorSet α htriv) = α :=
+  (rfl)
+
+/-!
+## The linearization of a projective representation
+
+Multiplying by the scalar recorded in the `kˣ`-component of the extension repairs the failure of
+`ρ` to be multiplicative, because that failure is exactly the factor set the extension is twisted
+by.
+-/
+
+section Linearization
+
+variable {α : FactorSet G kˣ} {ρ : G → V ≃ₗ[k] V}
+
+/-- Multiplication by a unit of `k`, evaluated. The lemma is the only place where the definition of
+`LinearEquiv.smulOfUnit` is unfolded. -/
+private theorem smulOfUnit_apply (a : kˣ) (x : V) :
+    (LinearEquiv.smulOfUnit a : V ≃ₗ[k] V) x = (a : k) • x :=
+  (rfl)
+
+namespace IsProjectiveRep
+
+/-- **The linearization of a projective representation with factor set `α`**: the homomorphism from
+the central extension `E_α` of `G` by `kˣ` to the linear automorphisms of `V`, sending `⟨a, g⟩` to
+`a • ρ g`. It is multiplicative precisely because the extension is twisted by the same factor set
+that measures the failure of `ρ` to be multiplicative. -/
+def linearization (hρ : IsProjectiveRep ρ (Function.curry ⇑α))
+    (htriv : ∀ (g : G) (a : kˣ), g • a = a) : α.Extension →* (V ≃ₗ[k] V) where
+  toFun x := LinearEquiv.smulOfUnit x.left * ρ x.right
+  map_one' := LinearEquiv.ext fun v ↦ by
+    simp [smulOfUnit_apply, hρ.map_one]
+  map_mul' x y := LinearEquiv.ext fun v ↦ by
+    have hmul : ρ x.right (ρ y.right v)
+        = (α (x.right, y.right) : k) • ρ (x.right * y.right) v :=
+      hρ.mul_apply x.right y.right v
+    simp only [LinearEquiv.mul_apply, smulOfUnit_apply, FactorSet.Extension.mul_left,
+      FactorSet.Extension.mul_right, htriv, Units.val_mul, map_smul, hmul, smul_smul, mul_assoc,
+      mul_comm]
+
+variable (hρ : IsProjectiveRep ρ (Function.curry ⇑α)) (htriv : ∀ (g : G) (a : kˣ), g • a = a)
+
+/-- The linearization acts by the scalar recorded in the `kˣ`-component of the extension, followed
+by the projective representation at its `G`-component. -/
+@[simp]
+theorem linearization_apply (x : α.Extension) (v : V) :
+    hρ.linearization htriv x v = (x.left : k) • ρ x.right v :=
+  (rfl)
+
+/-- **The central copy of `kˣ` acts through the linearization by its own scalars.** This is the
+condition that singles out the linearizations among all linear representations of `E_α`; see
+`TauCeti.isProjectiveRepEquivExtensionHom`. -/
+@[simp]
+theorem linearization_inl (a : kˣ) :
+    hρ.linearization htriv (FactorSet.inl α a) = LinearEquiv.smulOfUnit a :=
+  LinearEquiv.ext fun v ↦ by
+    simp [smulOfUnit_apply, hρ.map_one]
+
+/-- **The projective representation is recovered from its linearization** by restricting along the
+canonical section `g ↦ ⟨1, g⟩` of the extension. Not `@[simp]`:
+`TauCeti.FactorSet.canonicalSection_apply` already rewrites the argument, after which
+`TauCeti.IsProjectiveRep.linearization_apply` finishes the job. -/
+theorem linearization_canonicalSection (g : G) :
+    hρ.linearization htriv (α.canonicalSection g) = ρ g :=
+  LinearEquiv.ext fun v ↦ by simp
+
+/-- **The linearization has the same invariant submodules as the projective representation.** The
+`kˣ`-component of the extension acts by a scalar, which no submodule can escape, so invariance
+under `E_α` is invariance under the automorphisms `ρ g` alone. This is what makes irreducibility of
+a projective representation and of its linearization the same condition. -/
+theorem forall_linearization_mem_iff {W : Submodule k V} :
+    (∀ x : α.Extension, ∀ w ∈ W, hρ.linearization htriv x w ∈ W)
+      ↔ ∀ g : G, ∀ w ∈ W, ρ g w ∈ W := by
+  refine ⟨fun h g w hw ↦ ?_, fun h x w hw ↦ ?_⟩
+  · simpa using h (α.canonicalSection g) w hw
+  · rw [linearization_apply]
+    exact W.smul_mem _ (h x.right w hw)
+
+/-- The linearization, packaged as a `Representation` of the central extension `E_α` on `V`, so
+that the machinery written against `Representation` applies to it. -/
+def representation : Representation k α.Extension V :=
+  LinearEquiv.automorphismGroup.toLinearMapMonoidHom.comp (hρ.linearization htriv)
+
+/-- The packaged representation acts by the same formula as the linearization it is built from. -/
+@[simp]
+theorem representation_apply (x : α.Extension) (v : V) :
+    hρ.representation htriv x v = (x.left : k) • ρ x.right v :=
+  (rfl)
+
+end IsProjectiveRep
+
+/-- **Restricting a linear representation of `E_α` along the canonical section gives a projective
+representation with factor set `α`**, as soon as the central copy of `kˣ` acts by its own scalars.
+The canonical section fails to be a homomorphism by exactly `α`, and that failure becomes the
+factor set. -/
+theorem isProjectiveRep_comp_canonicalSection (htriv : ∀ (g : G) (a : kˣ), g • a = a)
+    (π : α.Extension →* (V ≃ₗ[k] V))
+    (hπ : ∀ a : kˣ, π (FactorSet.inl α a) = LinearEquiv.smulOfUnit a) :
+    IsProjectiveRep (fun g ↦ π (α.canonicalSection g)) (Function.curry ⇑α) where
+  isFactorSet := α.isFactorSet_curry htriv
+  map_one := by simpa only [α.canonicalSection_one] using map_one π
+  mul_apply g₁ g₂ v := by
+    have key : π (α.canonicalSection g₁) * π (α.canonicalSection g₂)
+        = LinearEquiv.smulOfUnit (α (g₁, g₂)) * π (α.canonicalSection (g₁ * g₂)) := by
+      rw [← map_mul, α.canonicalSection_mul, map_mul, hπ]
+    simpa only [LinearEquiv.mul_apply, smulOfUnit_apply, Function.curry]
+      using DFunLike.congr_fun key v
+
+variable (k V)
+
+/-- **Projective representations of `G` with factor set `α` are exactly the linear representations
+of the central extension `E_α` under which the central copy of `kˣ` acts by its own scalars.** The
+bijection sends a projective representation to its linearization, and a linear representation to
+its restriction along the canonical section. -/
+def isProjectiveRepEquivExtensionHom (α : FactorSet G kˣ)
+    (htriv : ∀ (g : G) (a : kˣ), g • a = a) :
+    {ρ : G → V ≃ₗ[k] V // IsProjectiveRep ρ (Function.curry ⇑α)} ≃
+      {π : α.Extension →* (V ≃ₗ[k] V) //
+        ∀ a : kˣ, π (FactorSet.inl α a) = LinearEquiv.smulOfUnit a} where
+  toFun ρ := ⟨ρ.2.linearization htriv, fun a ↦ ρ.2.linearization_inl htriv a⟩
+  invFun π := ⟨fun g ↦ π.1 (α.canonicalSection g),
+    isProjectiveRep_comp_canonicalSection htriv π.1 π.2⟩
+  left_inv ρ := Subtype.ext (funext fun g ↦ ρ.2.linearization_canonicalSection htriv g)
+  right_inv π := Subtype.ext (MonoidHom.ext fun x ↦ LinearEquiv.ext fun v ↦ by
+    have h : π.1 (FactorSet.inl α x.left * α.canonicalSection x.right) v = π.1 x v := by
+      rw [FactorSet.inl_mul_canonicalSection]
+    rw [map_mul, π.2 x.left] at h
+    simpa only [IsProjectiveRep.linearization_apply, LinearEquiv.mul_apply, smulOfUnit_apply]
+      using h)
+
+/-- The bijection sends a projective representation to its linearization. -/
+@[simp]
+theorem isProjectiveRepEquivExtensionHom_apply (α : FactorSet G kˣ)
+    (htriv : ∀ (g : G) (a : kˣ), g • a = a)
+    (ρ : {ρ : G → V ≃ₗ[k] V // IsProjectiveRep ρ (Function.curry ⇑α)}) :
+    (isProjectiveRepEquivExtensionHom k V α htriv ρ : α.Extension →* (V ≃ₗ[k] V))
+      = ρ.2.linearization htriv :=
+  (rfl)
+
+/-- The inverse bijection restricts a linear representation along the canonical section. -/
+@[simp]
+theorem isProjectiveRepEquivExtensionHom_symm_apply (α : FactorSet G kˣ)
+    (htriv : ∀ (g : G) (a : kˣ), g • a = a)
+    (π : {π : α.Extension →* (V ≃ₗ[k] V) //
+      ∀ a : kˣ, π (FactorSet.inl α a) = LinearEquiv.smulOfUnit a}) :
+    ((isProjectiveRepEquivExtensionHom k V α htriv).symm π : G → V ≃ₗ[k] V)
+      = fun g ↦ π.1 (α.canonicalSection g) :=
+  (rfl)
+
+variable {k V}
+
+/-- **Every projective representation of `G` linearizes over a central extension of `G` by `kˣ`.**
+The extension is the one built from the factor set the projective representation carries: its copy
+of `kˣ` is central, it acts by its own scalars, and restricting along the canonical section returns
+the projective representation. -/
+theorem IsProjectiveRep.exists_factorSet_linearization {α : G → G → kˣ}
+    (hρ : IsProjectiveRep ρ α) (htriv : ∀ (g : G) (a : kˣ), g • a = a) :
+    ∃ β : FactorSet G kˣ, ∃ π : β.Extension →* (V ≃ₗ[k] V),
+      (FactorSet.inl β).range ≤ Subgroup.center β.Extension ∧
+        (∀ a : kˣ, π (FactorSet.inl β a) = LinearEquiv.smulOfUnit a) ∧
+          ∀ g : G, π (β.canonicalSection g) = ρ g := by
+  have hα : IsFactorSet α := hρ.isFactorSet
+  have hρ' : IsProjectiveRep ρ (Function.curry ⇑(IsFactorSet.toFactorSet α htriv)) := by
+    rwa [IsFactorSet.curry_coe_toFactorSet]
+  exact ⟨IsFactorSet.toFactorSet α htriv, hρ'.linearization htriv,
+    FactorSet.inl_range_le_center _ htriv, fun a ↦ hρ'.linearization_inl htriv a,
+    fun g ↦ hρ'.linearization_canonicalSection htriv g⟩
+
+end Linearization
+
+end TauCeti
