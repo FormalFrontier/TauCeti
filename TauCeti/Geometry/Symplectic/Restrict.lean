@@ -21,9 +21,9 @@ splitting. A pair of vectors with nonzero symplectic pairing spans such a subspa
 
 * `TauCeti.SymplecticForm.restrict`: the restriction of `ω` to a subspace on which it stays
   nondegenerate, again a symplectic form.
-* `TauCeti.SymplecticForm.nondegenerate_restrict_of_isCompl` and
-  `TauCeti.SymplecticForm.nondegenerate_restrict_orthogonal_of_isCompl`: the splitting
-  `V = L ⊕ L^ω` already forces `ω` to restrict nondegenerately to both summands.
+* `TauCeti.SymplecticForm.nondegenerate_restrict_orthogonal_of_isCompl`: the splitting
+  `V = L ⊕ L^ω` already forces `ω` to restrict nondegenerately to `L^ω` (for `L` itself this is
+  Mathlib's `LinearMap.BilinForm.nondegenerate_restrict_of_disjoint_orthogonal`).
 * `TauCeti.SymplecticForm.disjoint_span_pair_orthogonal`: a pair with nonzero symplectic pairing
   spans a subspace disjoint from its symplectic complement.
 * `TauCeti.SymplecticForm.isSymplectomorphism_prodEquivOfIsCompl`: the equivalence associated to
@@ -58,12 +58,6 @@ lemma restrict_apply (ω : SymplecticForm V) (L : Submodule ℝ V)
     ω.restrict L h v w = ω (v : V) (w : V) :=
   rfl
 
-/-- A subspace complementary to its own symplectic complement carries a nondegenerate restriction
-of `ω`: complementarity in particular makes the two disjoint. -/
-lemma nondegenerate_restrict_of_isCompl (ω : SymplecticForm V) {L : Submodule ℝ V}
-    (hcompl : IsCompl L (ω.orthogonal L)) : (ω.toBilinForm.restrict L).Nondegenerate :=
-  ω.toBilinForm.nondegenerate_restrict_of_disjoint_orthogonal ω.isRefl hcompl.disjoint
-
 /-- The symplectic complement of a subspace complementary to it also carries a nondegenerate
 restriction of `ω`: a vector of `L^ω` orthogonal to `L^ω` is orthogonal to `L` as well, hence to
 `L ⊔ L^ω = V`, and nondegeneracy of `ω` makes it zero. Unlike
@@ -86,7 +80,8 @@ the two summands: the cross terms vanish by the very definition of the symplecti
 lemma isSymplectomorphism_prodEquivOfIsCompl (ω : SymplecticForm V) {L : Submodule ℝ V}
     (hcompl : IsCompl L (ω.orthogonal L)) :
     IsSymplectomorphism
-      ((ω.restrict L (ω.nondegenerate_restrict_of_isCompl hcompl)).prod
+      ((ω.restrict L (ω.toBilinForm.nondegenerate_restrict_of_disjoint_orthogonal ω.isRefl
+          hcompl.disjoint)).prod
         (ω.restrict (ω.orthogonal L) (ω.nondegenerate_restrict_orthogonal_of_isCompl hcompl))) ω
       (Submodule.prodEquivOfIsCompl L (ω.orthogonal L) hcompl) := by
   rw [isSymplectomorphism_iff]

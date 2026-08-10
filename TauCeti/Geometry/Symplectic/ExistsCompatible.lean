@@ -65,7 +65,8 @@ a compatible structure on `V`. -/
 lemma compatible_prod_transport_of_splitting (ω : SymplecticForm V) {L : Submodule ℝ V}
     (hcompl : IsCompl L (ω.orthogonal L))
     (JL : AlmostComplexStructure L) (JL' : AlmostComplexStructure (ω.orthogonal L))
-    (hJL : (ω.restrict L (ω.nondegenerate_restrict_of_isCompl hcompl)).Compatible JL)
+    (hJL : (ω.restrict L (ω.toBilinForm.nondegenerate_restrict_of_disjoint_orthogonal ω.isRefl
+      hcompl.disjoint)).Compatible JL)
     (hJL' : (ω.restrict (ω.orthogonal L)
       (ω.nondegenerate_restrict_orthogonal_of_isCompl hcompl)).Compatible JL') :
     ω.Compatible
@@ -168,7 +169,8 @@ private theorem exists_compatible_aux (n : ℕ) :
         (ω.orthogonal (Submodule.span ℝ ({x, y} : Set U))) :=
       (LinearMap.BilinForm.isCompl_orthogonal_iff_disjoint ω.isRefl).2 hdisj
     obtain ⟨JL, hJL⟩ :=
-      ω.exists_compatible_restrict_span_pair hxy (ω.nondegenerate_restrict_of_isCompl hcompl)
+      ω.exists_compatible_restrict_span_pair hxy
+        (ω.toBilinForm.nondegenerate_restrict_of_disjoint_orthogonal ω.isRefl hcompl.disjoint)
     have hxmem : x ∈ Submodule.span ℝ ({x, y} : Set U) := Submodule.subset_span (by simp)
     have hUpos : 0 < finrank ℝ U := Module.finrank_pos_iff_exists_ne_zero.2 ⟨x, hx⟩
     have hLpos : 0 < finrank ℝ (Submodule.span ℝ ({x, y} : Set U)) :=
