@@ -16,8 +16,7 @@ satisfies `𝔭² = p 𝓞 K`, the extension of the principal ideal `(p)`, so it
 measured by `card_elementaryTwoQuotient_eq_card_twoTorsion`.
 
 Any ring automorphism of `𝓞 K` fixes `𝔭` (`map_eq_self_of_mem_ramifiedPrimes`); applied to quadratic
-conjugation `σ` this says `𝔭` is an *ambiguous* ideal, and with the fixed-class characterization
-`mulEquiv_ringOfIntegersQuadraticConj_apply_eq_self_iff` the ramified primes furnish *individual*
+conjugation this says `𝔭` is an *ambiguous* ideal, so the ramified primes furnish *individual*
 explicit ambiguous 2-torsion classes. Determining all of `Cl(𝓞 K)[2]` (the ambiguous-class-number /
 2-rank theorem of genus theory, which for real fields carries a unit-index correction relating these
 strongly ambiguous classes to the ambiguous ones) is left to later work.
