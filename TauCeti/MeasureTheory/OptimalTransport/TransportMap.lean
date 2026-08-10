@@ -17,8 +17,9 @@ optimal-transport interface around it: the *graph plan*
 
 `graphPlan T μ = μ.map fun x ↦ (x, T x)`,
 
-the measure on `X × Y` carried by the graph of `T`. It is the Kantorovich plan induced by the
-Monge map `T`.
+the measure on `X × Y` carried by the graph of `T`. Its second marginal is always `μ.map T`, and
+its first marginal is `μ` as soon as `T` is `μ`-a.e. measurable; for such a `T` it is the
+Kantorovich plan induced by the Monge map `T`.
 
 ## Main definitions
 
@@ -26,8 +27,9 @@ Monge map `T`.
 
 ## Main results
 
-* `TauCeti.Measure.fst_graphPlan` and `TauCeti.Measure.snd_graphPlan` — the marginals of a graph
-  plan are `μ` and `μ.map T`; when `ProbabilityTheory.HasLaw T ν μ` holds the second one is `ν`
+* `TauCeti.Measure.fst_graphPlan` and `TauCeti.Measure.snd_graphPlan` — the second marginal of a
+  graph plan is `μ.map T`, and its first marginal is `μ` whenever `T` is `μ`-a.e. measurable;
+  when `ProbabilityTheory.HasLaw T ν μ` holds the second one is `ν`
   (`TauCeti.Measure.snd_graphPlan_of_hasLaw`), so every Monge map induces a Kantorovich plan;
 * `TauCeti.Measure.lintegral_graphPlan` — integrating against a graph plan is integrating
   `x ↦ f (x, T x)`, the identity turning a Kantorovich cost into a Monge cost;
@@ -37,7 +39,7 @@ Monge map `T`.
   agree `μ`-a.e., so a transport map is pinned down by its plan only up to a null set;
 * `TauCeti.Measure.hasLaw_dirac_iff` and `TauCeti.Measure.not_hasLaw_dirac_of_forall_ne` — a
   Dirac source can only be transported onto a Dirac target, so for some data the Monge problem
-  has no solution at all even though plans always exist.
+  has no solution at all.
 
 ## Conventions
 
@@ -78,16 +80,17 @@ variable [MeasurableSpace X] [MeasurableSpace Y] [MeasurableSpace Z]
 /-- The **graph plan** of a map `T : X → Y` over a measure `μ` on `X`: the pushforward of `μ`
 along `x ↦ (x, T x)`, that is, the measure on `X × Y` carried by the graph of `T`.
 
-This is the Kantorovich plan induced by the Monge map `T`; its marginals are `μ` and `μ.map T`
-(`TauCeti.Measure.fst_graphPlan`, `TauCeti.Measure.snd_graphPlan`). -/
-@[expose]
+Its second marginal is `μ.map T` (`TauCeti.Measure.snd_graphPlan`), and its first marginal is `μ`
+as soon as `T` is `μ`-a.e. measurable (`TauCeti.Measure.fst_graphPlan`); for such a `T` this is
+the Kantorovich plan induced by the Monge map `T`. -/
 def graphPlan (T : X → Y) (μ : Measure X) : Measure (X × Y) :=
   μ.map fun x ↦ (x, T x)
 
 variable {T S : X → Y} {μ : Measure X} {ν : Measure Y}
 
+/-- The defining equation of `TauCeti.Measure.graphPlan`. -/
 theorem graphPlan_def (T : X → Y) (μ : Measure X) : graphPlan T μ = μ.map fun x ↦ (x, T x) :=
-  rfl
+  (rfl)
 
 /-- The graph map `x ↦ (x, T x)` is a.e. measurable as soon as `T` is. -/
 theorem aemeasurable_graphMap (hT : AEMeasurable T μ) : AEMeasurable (fun x ↦ (x, T x)) μ :=
@@ -171,9 +174,9 @@ theorem graphPlan_congr (h : T =ᵐ[μ] S) : graphPlan T μ = graphPlan S μ :=
   Measure.map_congr <| by filter_upwards [h] with x hx; rw [hx]
 
 @[simp]
-theorem graphPlan_add (hT : Measurable T) (μ₁ μ₂ : Measure X) :
+theorem graphPlan_add {μ₁ μ₂ : Measure X} (hT₁ : AEMeasurable T μ₁) (hT₂ : AEMeasurable T μ₂) :
     graphPlan T (μ₁ + μ₂) = graphPlan T μ₁ + graphPlan T μ₂ :=
-  Measure.map_add _ _ (measurable_graphMap hT)
+  AEMeasurable.map_add₀ (aemeasurable_graphMap hT₁) (aemeasurable_graphMap hT₂)
 
 @[simp]
 theorem graphPlan_smul (T : X → Y) (c : ℝ≥0∞) (μ : Measure X) :
@@ -187,7 +190,7 @@ theorem graphPlan_dirac (hT : Measurable T) (x : X) :
   Measure.map_dirac' (measurable_graphMap hT) x
 
 /-- The graph plan of the identity is the diagonal plan. -/
-theorem graphPlan_id (μ : Measure X) : graphPlan id μ = μ.map fun x ↦ (x, x) := rfl
+theorem graphPlan_id (μ : Measure X) : graphPlan id μ = μ.map fun x ↦ (x, x) := (rfl)
 
 /-- The graph plan of the identity is the composition-product with the identity kernel. -/
 theorem graphPlan_id_eq_compProd (μ : Measure X) [SFinite μ] : graphPlan id μ = μ ⊗ₘ Kernel.id :=
@@ -281,8 +284,7 @@ theorem hasLaw_dirac_iff (hT : Measurable T) (x : X) :
   · rw [Measure.map_dirac' hT, h]
 
 /-- **The Monge problem can be infeasible.** No measurable map transports a Dirac measure onto a
-target that is not itself a Dirac measure, although plans for such data still exist: the graph
-plans are a proper subfamily of all plans. -/
+target that is not itself a Dirac measure. -/
 theorem not_hasLaw_dirac_of_forall_ne (hν : ∀ y : Y, ν ≠ Measure.dirac y) (hT : Measurable T)
     (x : X) : ¬HasLaw T ν (Measure.dirac x) :=
   fun h ↦ hν (T x) ((hasLaw_dirac_iff hT x).1 h)
