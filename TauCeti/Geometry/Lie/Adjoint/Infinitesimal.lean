@@ -169,29 +169,29 @@ private theorem ContMDiffMap.hasDerivAt_comp_conj_mulInvariantExp_smul
 
 /-- Differentiating the scalar conjugation generator along a left-invariant direction gives the
 Lie bracket. -/
-private theorem mfderiv_conjugationGenerator_eq_bracket
+private theorem mvfderiv_conjugationGenerator_eq_bracket
     (f : C^∞⟮I, G; ℝ⟯) (X Y : GroupLieAlgebra I G) :
     mvfderiv I
-        (fun g => mfderiv I 𝓘(ℝ, ℝ) f g
+        (fun g => mvfderiv I f g
           (mulRightInvariantVectorField X g - mulInvariantVectorField X g)) 1 Y =
       mvfderiv I f 1 ⁅X, Y⁆ := by
   let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
   let RXf : C^∞⟮I, G; ℝ⟯ :=
-    ⟨fun g => mfderiv I 𝓘(ℝ, ℝ) f g (mulRightInvariantVectorField X g),
+    ⟨fun g => mvfderiv I f g (mulRightInvariantVectorField X g),
       ContMDiff.contMDiff_mvfderiv_apply f.contMDiff
         (contMDiff_mulRightInvariantVectorField_infty X) (by simp)⟩
   let LXf : C^∞⟮I, G; ℝ⟯ :=
-    ⟨fun g => mfderiv I 𝓘(ℝ, ℝ) f g (mulInvariantVectorField X g),
+    ⟨fun g => mvfderiv I f g (mulInvariantVectorField X g),
       contMDiff_mvfderiv_mulInvariantVectorField X f⟩
   let LYf : C^∞⟮I, G; ℝ⟯ :=
-    ⟨fun g => mfderiv I 𝓘(ℝ, ℝ) f g (mulInvariantVectorField Y g),
+    ⟨fun g => mvfderiv I f g (mulInvariantVectorField Y g),
       contMDiff_mvfderiv_mulInvariantVectorField Y f⟩
   have hgenerator :
-      (fun g => mfderiv I 𝓘(ℝ, ℝ) f g
+      (fun g => mvfderiv I f g
         (mulRightInvariantVectorField X g - mulInvariantVectorField X g)) =
         (RXf : G → ℝ) - (LXf : G → ℝ) := by
     funext g
-    change mfderiv I 𝓘(ℝ, ℝ) f g (_ - _) = _ - _
+    change mvfderiv I f g (_ - _) = _ - _
     rw [map_sub]
     rfl
   rw [hgenerator]
@@ -406,10 +406,10 @@ theorem hasDerivAt_tangentAd_mulInvariantExp_smul_apply
           mulInvariantVectorField X (γY s))) = fun s => H (γY s) by rfl]
     rw [hHcurve.deriv]
     change mvfderiv I
-        (fun g => mfderiv I 𝓘(ℝ, ℝ) f g
+        (fun g => mvfderiv I f g
           (mulRightInvariantVectorField X g - mulInvariantVectorField X g)) 1 Y = _
     -- The left side is now exactly the scalar conjugation generator differentiated along `Y`.
-    have hbracket := mfderiv_conjugationGenerator_eq_bracket f X Y
+    have hbracket := mvfderiv_conjugationGenerator_eq_bracket f X Y
     have hqBracket : q bracketModel = mvfderiv I f 1 bracketTangent := by
       with_unfolding_all rfl
     rw [hqBracket]
