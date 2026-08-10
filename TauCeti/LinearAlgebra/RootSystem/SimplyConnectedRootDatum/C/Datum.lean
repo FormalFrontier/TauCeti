@@ -233,11 +233,6 @@ private lemma typeCCoroot_typeCMk {x y : Signed n} (h : y ≠ signedNeg x) :
 
 /-! ## Injectivity of the roots and of the coroots -/
 
-private lemma pair_eq_of_mem_iff {α : Type*} {p q p' q' : α}
-    (h : ∀ z, (z = p ∨ z = q) ↔ (z = p' ∨ z = q')) :
-    (p = p' ∧ q = q') ∨ (p = q' ∧ q = p') :=
-  Set.pair_eq_pair_iff.mp (Set.ext fun z => by simpa using h z)
-
 private lemma typeCRoot_injective : Injective (typeCRoot (n := n)) := by
   intro i j hij
   have hi := typeCSnd_ne_signedNeg_typeCFst i
@@ -246,7 +241,8 @@ private lemma typeCRoot_injective : Injective (typeCRoot (n := n)) := by
     intro z
     rw [← one_le_pairRoot_dotProduct_iff hi z, ← one_le_pairRoot_dotProduct_iff hj z]
     exact Iff.of_eq (congrArg _ (congrArg (· ⬝ᵥ signedCoweight z) hij))
-  rcases pair_eq_of_mem_iff hmem with ⟨h1, h2⟩ | ⟨h1, h2⟩
+  rcases Set.pair_eq_pair_iff.mp (Set.ext fun z => by simpa using hmem z) with
+    ⟨h1, h2⟩ | ⟨h1, h2⟩
   · exact typeCPair_injective (Prod.ext h1 h2)
   · exact typeCPair_swap_eq h1 h2
 
@@ -258,7 +254,8 @@ private lemma typeCCoroot_injective : Injective (typeCCoroot (n := n)) := by
     intro z
     rw [← one_le_dotProduct_pairCoroot_iff hi z, ← one_le_dotProduct_pairCoroot_iff hj z]
     exact Iff.of_eq (congrArg _ (congrArg (signedWeight z ⬝ᵥ ·) hij))
-  rcases pair_eq_of_mem_iff hmem with ⟨h1, h2⟩ | ⟨h1, h2⟩
+  rcases Set.pair_eq_pair_iff.mp (Set.ext fun z => by simpa using hmem z) with
+    ⟨h1, h2⟩ | ⟨h1, h2⟩
   · exact typeCPair_injective (Prod.ext h1 h2)
   · exact typeCPair_swap_eq h1 h2
 

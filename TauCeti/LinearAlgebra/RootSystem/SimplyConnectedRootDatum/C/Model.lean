@@ -267,9 +267,6 @@ lemma signedWeight_injective : Injective (signedWeight (n := n)) := by
   rw [h]
   exact signedWeight_dotProduct_self y
 
-lemma signedNeg_injective : Injective (signedNeg (n := n)) := fun x y h => by
-  simpa [signedNeg, Prod.ext_iff] using h
-
 /-! ## Roots and coroots of a pair of signed basis vectors -/
 
 /-- The root `p + q` attached to a pair of signed basis vectors, in fundamental-weight coordinates.
@@ -399,7 +396,8 @@ def signedReflection (p q z : Signed n) : Signed n :=
     signedReflection p q (signedNeg p) = q := by
   rcases eq_or_ne p q with rfl | hne
   · rw [signedReflection, if_neg (signedNeg_ne p), if_pos rfl]
-  · rw [signedReflection, if_neg (signedNeg_ne p), if_neg fun hc => hne (signedNeg_injective hc),
+  · rw [signedReflection, if_neg (signedNeg_ne p),
+      if_neg fun hc => hne (by simpa only [signedNeg_signedNeg] using congrArg signedNeg hc),
       if_pos rfl]
 
 @[simp] lemma signedReflection_right {p q : Signed n} (h : q ≠ signedNeg p) :
