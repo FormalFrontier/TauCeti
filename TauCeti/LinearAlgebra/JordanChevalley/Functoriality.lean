@@ -48,15 +48,18 @@ open Module
 universe u v w
 
 variable {K : Type u} {V : Type v} {W : Type w}
-variable [Field K] [AddCommGroup V] [Module K V] [AddCommGroup W] [Module K W]
 
 section Predicates
 
+variable [CommRing K] [AddCommGroup V] [Module K V] [AddCommGroup W] [Module K W]
+
 /-- Semisimplicity of a linear automorphism is invariant under transport by a linear
 equivalence. -/
+@[simp]
 theorem isSemisimple_congrLinearEquiv_iff
     (e : V ≃ₗ[K] W) (g : GeneralLinearGroup K V) :
-    IsSemisimple (LinearMap.GeneralLinearGroup.congrLinearEquiv e g) ↔ IsSemisimple g := by
+    IsSemisimple (LinearMap.GeneralLinearGroup.ofLinearEquiv
+      (e.symm.trans (g.toLinearEquiv.trans e))) ↔ IsSemisimple g := by
   rw [isSemisimple_def, isSemisimple_def]
   symm
   apply LinearEquiv.isSemisimple_iff (e := e)
@@ -64,10 +67,13 @@ theorem isSemisimple_congrLinearEquiv_iff
   simp
 
 /-- Unipotence of a linear automorphism is invariant under transport by a linear equivalence. -/
+@[simp]
 theorem isUnipotent_congrLinearEquiv_iff
     (e : V ≃ₗ[K] W) (g : GeneralLinearGroup K V) :
-    IsUnipotent (LinearMap.GeneralLinearGroup.congrLinearEquiv e g) ↔ IsUnipotent g := by
+    IsUnipotent (LinearMap.GeneralLinearGroup.ofLinearEquiv
+      (e.symm.trans (g.toLinearEquiv.trans e))) ↔ IsUnipotent g := by
   rw [isUnipotent_def, isUnipotent_def]
+  rw [← LinearMap.GeneralLinearGroup.congrLinearEquiv_apply e g]
   have hmap :
       LinearEquiv.conjRingEquiv e ((g : End K V) - 1) =
         ((LinearMap.GeneralLinearGroup.congrLinearEquiv e g :
@@ -81,6 +87,7 @@ end Predicates
 
 section PerfectField
 
+variable [Field K] [AddCommGroup V] [Module K V] [AddCommGroup W] [Module K W]
 variable [PerfectField K] [FiniteDimensional K V] [FiniteDimensional K W]
 
 /-- The multiplicative Jordan--Chevalley decomposition commutes with transport by a linear
@@ -101,19 +108,25 @@ theorem jordanDecomposition_congrLinearEquiv
 
 /-- The semisimple factor of the multiplicative Jordan decomposition commutes with transport by
 a linear equivalence. -/
+@[simp]
 theorem semisimplePart_congrLinearEquiv
     (e : V ≃ₗ[K] W) (g : GeneralLinearGroup K V) :
-    semisimplePart (LinearMap.GeneralLinearGroup.congrLinearEquiv e g) =
+    semisimplePart (LinearMap.GeneralLinearGroup.ofLinearEquiv
+      (e.symm.trans (g.toLinearEquiv.trans e))) =
       LinearMap.GeneralLinearGroup.congrLinearEquiv e (semisimplePart g) := by
+  rw [← LinearMap.GeneralLinearGroup.congrLinearEquiv_apply e g]
   rw [semisimplePart_def (LinearMap.GeneralLinearGroup.congrLinearEquiv e g)]
   exact congrArg Prod.fst (jordanDecomposition_congrLinearEquiv e g)
 
 /-- The unipotent factor of the multiplicative Jordan decomposition commutes with transport by a
 linear equivalence. -/
+@[simp]
 theorem unipotentPart_congrLinearEquiv
     (e : V ≃ₗ[K] W) (g : GeneralLinearGroup K V) :
-    unipotentPart (LinearMap.GeneralLinearGroup.congrLinearEquiv e g) =
+    unipotentPart (LinearMap.GeneralLinearGroup.ofLinearEquiv
+      (e.symm.trans (g.toLinearEquiv.trans e))) =
       LinearMap.GeneralLinearGroup.congrLinearEquiv e (unipotentPart g) := by
+  rw [← LinearMap.GeneralLinearGroup.congrLinearEquiv_apply e g]
   rw [unipotentPart_def (LinearMap.GeneralLinearGroup.congrLinearEquiv e g)]
   exact congrArg Prod.snd (jordanDecomposition_congrLinearEquiv e g)
 
