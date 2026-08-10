@@ -254,7 +254,7 @@ def e8Root : Fin 240 ↪ (Fin 8 → ℤ) where
     exact sub_eq_zero.mpr hij
 
 /-- The `E8` roots are obtained from the coroot coordinates using the Cartan matrix. -/
-@[simp] theorem e8Root_apply (i : Fin 240) :
+theorem e8Root_apply (i : Fin 240) :
     e8Root i = e8Coroot i ᵥ* CartanMatrix.E₈ := (rfl)
 
 private lemma e8Coroot_castAdd (i : Fin 120) :
