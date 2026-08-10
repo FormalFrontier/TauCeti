@@ -546,10 +546,6 @@ private lemma sum_single_one (i : Fin n) : ∑ j : Fin n, Pi.single i (1 : ℤ) 
         have hkv : (k : ℕ) = n - 1 := by omega
         simp [Pi.single_apply, Fin.ext_iff, hiv, hkv]
 
-/-- Reconstruct a classical vector from its simple-root coordinates. -/
-private def typeDSimpleCombination (n : ℕ) (hn : 4 ≤ n) (c : Fin n → ℤ) : Fin n → ℤ :=
-  ∑ i : Fin n, c i • typeDSimpleRoot n hn i
-
 private lemma typeDChainHeadSum (c : Fin n → ℤ) (j : Fin n) :
     (∑ i : Fin n, if _h : (i : ℕ) + 1 < n then
       c i * (if j = i then 1 else 0) else 0) =
@@ -610,14 +606,16 @@ private lemma typeDForkSum (hn : 1 ≤ n) (c : Fin n → ℤ) :
       simp only
       omega
 
-private lemma typeDSimpleCombination_apply (hn : 4 ≤ n) (c : Fin n → ℤ) (j : Fin n) :
-    typeDSimpleCombination n hn c j =
+/-- The coordinate `j` of an integral combination of the Bourbaki simple roots: the chain roots
+contribute a telescoping pair, and the fork root contributes at the two nodes `n - 2` and
+`n - 1`. -/
+private lemma sum_smul_typeDSimpleRoot_apply (hn : 4 ≤ n) (c : Fin n → ℤ) (j : Fin n) :
+    (∑ i : Fin n, c i • typeDSimpleRoot n hn i) j =
       (if (j : ℕ) + 1 < n then c j else 0) -
         (if hj : (j : ℕ) = 0 then 0 else c ⟨(j : ℕ) - 1, by omega⟩) +
         c ⟨n - 1, by omega⟩ * (if j = ⟨n - 2, by omega⟩ then 1 else 0) +
         c ⟨n - 1, by omega⟩ * (if j = ⟨n - 1, by omega⟩ then 1 else 0) := by
-  simp only [typeDSimpleCombination, typeDSimpleRoot, Finset.sum_apply, Pi.smul_apply,
-    smul_eq_mul]
+  simp only [typeDSimpleRoot, Finset.sum_apply, Pi.smul_apply, smul_eq_mul]
   calc
     _ = ∑ i : Fin n,
         ((if h : (i : ℕ) + 1 < n then
@@ -676,14 +674,12 @@ lemma typeDRootReflection_involutive (u : TypeDRoot n) :
 
 /-- Reflection in a type `Dₙ` root, as an involutive permutation of all roots. -/
 def typeDRootReflectionEquiv (u : TypeDRoot n) : TypeDRoot n ≃ TypeDRoot n :=
-  ⟨typeDRootReflection u, typeDRootReflection u, typeDRootReflection_involutive u,
-    typeDRootReflection_involutive u⟩
+  (typeDRootReflection_involutive u).toPerm _
 
 /-- The reflection equivalence acts by `typeDRootReflection`. -/
 @[simp] lemma typeDRootReflectionEquiv_apply (u v : TypeDRoot n) :
     typeDRootReflectionEquiv u v = typeDRootReflection u v := by
-  change (typeDRootReflectionEquiv u).toFun v = typeDRootReflection u v
-  rw [typeDRootReflectionEquiv]
+  rw [typeDRootReflectionEquiv, Function.Involutive.coe_toPerm]
 
 private lemma sum_Iic_eq_sum_Iic_pred_add (x : Fin n → ℤ) (j : Fin n)
     (hj : (j : ℕ) ≠ 0) :
@@ -707,10 +703,10 @@ in the four cases distinguished by the shape of the Bourbaki diagram at `j`: the
 interior node of the chain, the fork node `n - 2`, and the final node `n - 1`. -/
 
 /-- At the first node only the head of the first chain root contributes. -/
-private lemma typeDSimpleCombination_coordinates_zero (hn : 4 ≤ n) (x : TypeDRoot n) (j : Fin n)
-    (hj₀ : (j : ℕ) = 0) :
-    typeDSimpleCombination n hn (typeDSimpleRootCoordinates n hn x) j = x.1 j := by
-  rw [typeDSimpleCombination_apply]
+private lemma sum_smul_typeDSimpleRootCoordinates_apply_zero (hn : 4 ≤ n) (x : TypeDRoot n)
+    (j : Fin n) (hj₀ : (j : ℕ) = 0) :
+    (∑ i : Fin n, typeDSimpleRootCoordinates n hn x i • typeDSimpleRoot n hn i) j = x.1 j := by
+  rw [sum_smul_typeDSimpleRoot_apply]
   have hj : j = ⟨0, by omega⟩ := Fin.ext hj₀
   have h₁ : 1 < n := by omega
   have h₂ : 2 < n := by omega
@@ -726,10 +722,10 @@ private lemma typeDSimpleCombination_coordinates_zero (hn : 4 ≤ n) (x : TypeDR
     Fin.ext_iff]
 
 /-- At an interior node of the chain the two neighbouring partial sums telescope. -/
-private lemma typeDSimpleCombination_coordinates_chain (hn : 4 ≤ n) (x : TypeDRoot n) (j : Fin n)
-    (hj₀ : (j : ℕ) ≠ 0) (hj : (j : ℕ) + 2 < n) :
-    typeDSimpleCombination n hn (typeDSimpleRootCoordinates n hn x) j = x.1 j := by
-  rw [typeDSimpleCombination_apply]
+private lemma sum_smul_typeDSimpleRootCoordinates_apply_chain (hn : 4 ≤ n) (x : TypeDRoot n)
+    (j : Fin n) (hj₀ : (j : ℕ) ≠ 0) (hj : (j : ℕ) + 2 < n) :
+    (∑ i : Fin n, typeDSimpleRootCoordinates n hn x i • typeDSimpleRoot n hn i) j = x.1 j := by
+  rw [sum_smul_typeDSimpleRoot_apply]
   have hj₁ : (j : ℕ) + 1 < n := by omega
   have hpred : (j : ℕ) - 1 + 2 < n := by omega
   rw [if_pos hj₁, dif_neg hj₀]
@@ -749,10 +745,10 @@ private lemma typeDSimpleCombination_coordinates_chain (hn : 4 ≤ n) (x : TypeD
   simp [hjfork₁, hjfork₂]
 
 /-- At the fork node `n - 2` the chain prefix and the fork root combine into half the total. -/
-private lemma typeDSimpleCombination_coordinates_fork (hn : 4 ≤ n) (x : TypeDRoot n) (j : Fin n)
-    (hj : ¬((j : ℕ) + 2 < n)) (hj₁ : (j : ℕ) + 1 < n) :
-    typeDSimpleCombination n hn (typeDSimpleRootCoordinates n hn x) j = x.1 j := by
-  rw [typeDSimpleCombination_apply]
+private lemma sum_smul_typeDSimpleRootCoordinates_apply_fork (hn : 4 ≤ n) (x : TypeDRoot n)
+    (j : Fin n) (hj : ¬((j : ℕ) + 2 < n)) (hj₁ : (j : ℕ) + 1 < n) :
+    (∑ i : Fin n, typeDSimpleRootCoordinates n hn x i • typeDSimpleRoot n hn i) j = x.1 j := by
+  rw [sum_smul_typeDSimpleRoot_apply]
   have hj₀ : ¬((j : ℕ) = 0) := by omega
   have hjval : (j : ℕ) = n - 2 := by omega
   have hjEq : j = (⟨n - 2, by omega⟩ : Fin n) := Fin.ext hjval
@@ -790,10 +786,10 @@ private lemma typeDSimpleCombination_coordinates_fork (hn : 4 ≤ n) (x : TypeDR
   (simp (disch := omega) [hjEq, hlast₂, Fin.ext_iff]; omega)
 
 /-- At the final node `n - 1` only the fork root contributes, with half the total as coefficient. -/
-private lemma typeDSimpleCombination_coordinates_last (hn : 4 ≤ n) (x : TypeDRoot n) (j : Fin n)
-    (hj₁ : ¬((j : ℕ) + 1 < n)) :
-    typeDSimpleCombination n hn (typeDSimpleRootCoordinates n hn x) j = x.1 j := by
-  rw [typeDSimpleCombination_apply]
+private lemma sum_smul_typeDSimpleRootCoordinates_apply_last (hn : 4 ≤ n) (x : TypeDRoot n)
+    (j : Fin n) (hj₁ : ¬((j : ℕ) + 1 < n)) :
+    (∑ i : Fin n, typeDSimpleRootCoordinates n hn x i • typeDSimpleRoot n hn i) j = x.1 j := by
+  rw [sum_smul_typeDSimpleRoot_apply]
   have hjlt := j.isLt
   have hj₀ : ¬((j : ℕ) = 0) := by omega
   have hjval : (j : ℕ) = n - 1 := by omega
@@ -812,15 +808,14 @@ private lemma typeDSimpleCombination_coordinates_last (hn : 4 ≤ n) (x : TypeDR
 /-- Every type `Dₙ` root is the indicated integral combination of the Bourbaki simple roots. -/
 theorem sum_smul_typeDSimpleRootCoordinates (hn : 4 ≤ n) (x : TypeDRoot n) :
     ∑ i : Fin n, typeDSimpleRootCoordinates n hn x i • typeDSimpleRoot n hn i = x.1 := by
-  change typeDSimpleCombination n hn (typeDSimpleRootCoordinates n hn x) = x.1
   funext j
   by_cases hj₀ : (j : ℕ) = 0
-  · exact typeDSimpleCombination_coordinates_zero hn x j hj₀
+  · exact sum_smul_typeDSimpleRootCoordinates_apply_zero hn x j hj₀
   by_cases hj : (j : ℕ) + 2 < n
-  · exact typeDSimpleCombination_coordinates_chain hn x j hj₀ hj
+  · exact sum_smul_typeDSimpleRootCoordinates_apply_chain hn x j hj₀ hj
   by_cases hj₁ : (j : ℕ) + 1 < n
-  · exact typeDSimpleCombination_coordinates_fork hn x j hj hj₁
-  · exact typeDSimpleCombination_coordinates_last hn x j hj₁
+  · exact sum_smul_typeDSimpleRootCoordinates_apply_fork hn x j hj hj₁
+  · exact sum_smul_typeDSimpleRootCoordinates_apply_last hn x j hj₁
 
 end DynkinType
 
