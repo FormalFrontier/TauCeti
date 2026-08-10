@@ -55,7 +55,9 @@ determine the element is the tuple of residues at all the conjugate roots, which
   Galois group `(ZMod e)ˣ` of `ℚ(ζ_e)` by the power maps `σ_k : ζ ↦ ζ ^ k`.
 * `TauCeti.Cyclotomic.conjugateRoot`: the primitive `e`-th root `α ^ k` modulo `p`, at which the
   `k`-th Galois conjugate is read.
-* `TauCeti.Cyclotomic.conjugateResidues`: the residue tuple of an exact cyclotomic integer.
+* `TauCeti.Cyclotomic.conjugateResidues`: the residue tuple of an exact cyclotomic integer,
+  a ring homomorphism into `Fin e.totient → ZMod p` by
+  `TauCeti.Cyclotomic.conjugateResiduesRingHom`.
 * `TauCeti.Cyclotomic.lift`: the exact cyclotomic integer reconstructed from a residue tuple.
 
 ## Main results
@@ -81,8 +83,15 @@ Inversion is by Cramer's rule, `det⁻¹ • Matrix.cramer`, rather than by `Mat
 `Ring.inverse` is noncomputable.  `TauCeti.Cyclotomic.lift` is therefore a genuine `def` that the
 compiler runs; it is not reducible by the *kernel*, because `ZMod.inv` is `Nat.gcdA`, whose
 well-founded recursion does not unfold there.  That is a property of the inverse of `ZMod p`, not
-of the lift, and it is why the examples at the end of this file exercise the residue tuple rather
-than the lift.
+of the lift, and it is why the examples at the end of this file reach a concrete value of the lift
+through `TauCeti.Cyclotomic.lift_conjugateResidues` rather than by `decide`.
+
+`TauCeti.Cyclotomic.conjugateVandermonde` and `TauCeti.Cyclotomic.liftResidues` are the linear
+algebra `TauCeti.Cyclotomic.lift` runs on.  Their bodies are deliberately not `@[expose]`:
+downstream code is meant to use `TauCeti.Cyclotomic.lift` with the correctness, uniqueness and
+section theorems, together with `TauCeti.Cyclotomic.coeff_lift`.  That last one states the
+coordinates of the lift in terms of `TauCeti.Cyclotomic.liftResidues`, which is why the definition
+itself, unlike its body, stays public.
 
 ## References
 
@@ -190,11 +199,61 @@ theorem conjugateRoot_injective {α : ZMod p} (hα : IsPrimitiveRoot α e) :
 theorem conjugateResidues_apply {α : ZMod p} (x : Cyclotomic e) (j : Fin e.totient) :
     conjugateResidues α x j = reduce p (conjugateRoot e α j) x := rfl
 
+/-- **The residue tuple is a ring homomorphism.**  Each component is reduction at a conjugate
+root, which is again a primitive `e`-th root of unity, so the tuple is a ring homomorphism into
+the product ring `Fin e.totient → ZMod p`.  The `map_*` lemmas below are the componentwise form
+of this. -/
+noncomputable def conjugateResiduesRingHom [Fact p.Prime] [NeZero e] {α : ZMod p}
+    (hα : IsPrimitiveRoot α e) : Cyclotomic e →+* (Fin e.totient → ZMod p) :=
+  RingHom.pi fun j => reduceRingHom p (conjugateRoot e α j) (isPrimitiveRoot_conjugateRoot hα j)
+
+/-- The bundled residue tuple is the residue tuple. -/
+@[simp]
+theorem conjugateResiduesRingHom_apply [Fact p.Prime] [NeZero e] {α : ZMod p}
+    (hα : IsPrimitiveRoot α e) (x : Cyclotomic e) :
+    conjugateResiduesRingHom hα x = conjugateResidues α x :=
+  funext fun _ => reduceRingHom_apply _ _ _ _
+
+/-- The residue tuple of `0` is `0`. -/
+@[simp]
+theorem conjugateResidues_zero [Fact p.Prime] [NeZero e] {α : ZMod p}
+    (hα : IsPrimitiveRoot α e) : conjugateResidues α (0 : Cyclotomic e) = 0 := by
+  rw [← conjugateResiduesRingHom_apply hα, map_zero]
+
+/-- The residue tuple of `1` is `1`. -/
+@[simp]
+theorem conjugateResidues_one [Fact p.Prime] [NeZero e] {α : ZMod p}
+    (hα : IsPrimitiveRoot α e) : conjugateResidues α (1 : Cyclotomic e) = 1 := by
+  rw [← conjugateResiduesRingHom_apply hα, map_one]
+
+/-- Residue tuples add. -/
+@[simp]
+theorem conjugateResidues_add [Fact p.Prime] [NeZero e] {α : ZMod p}
+    (hα : IsPrimitiveRoot α e) (x y : Cyclotomic e) :
+    conjugateResidues α (x + y) = conjugateResidues α x + conjugateResidues α y := by
+  rw [← conjugateResiduesRingHom_apply hα, map_add, conjugateResiduesRingHom_apply,
+    conjugateResiduesRingHom_apply]
+
+/-- Residue tuples negate. -/
+@[simp]
+theorem conjugateResidues_neg [Fact p.Prime] [NeZero e] {α : ZMod p}
+    (hα : IsPrimitiveRoot α e) (x : Cyclotomic e) :
+    conjugateResidues α (-x) = -conjugateResidues α x := by
+  rw [← conjugateResiduesRingHom_apply hα, map_neg, conjugateResiduesRingHom_apply]
+
+/-- Residue tuples multiply. -/
+@[simp]
+theorem conjugateResidues_mul [Fact p.Prime] [NeZero e] {α : ZMod p}
+    (hα : IsPrimitiveRoot α e) (x y : Cyclotomic e) :
+    conjugateResidues α (x * y) = conjugateResidues α x * conjugateResidues α y := by
+  rw [← conjugateResiduesRingHom_apply hα, map_mul, conjugateResiduesRingHom_apply,
+    conjugateResiduesRingHom_apply]
+
 /-! ## Evaluation as a Vandermonde system -/
 
 /-- The Vandermonde matrix of the conjugate roots: the matrix of the map taking the coordinate
 vector of an exact cyclotomic integer to its residue tuple. -/
-@[expose] def conjugateVandermonde (e : ℕ) {p : ℕ} (α : ZMod p) :
+def conjugateVandermonde (e : ℕ) {p : ℕ} (α : ZMod p) :
     Matrix (Fin e.totient) (Fin e.totient) (ZMod p) :=
   Matrix.vandermonde (conjugateRoot e α)
 
@@ -216,7 +275,7 @@ theorem conjugateVandermonde_mulVec (α : ZMod p) (x : Cyclotomic e) :
 
 /-- The reduced coordinate vector recovered from a residue tuple, by **Cramer's rule** for the
 Vandermonde matrix of the conjugate roots. -/
-@[expose] def liftResidues (e : ℕ) {p : ℕ} (α : ZMod p) (r : Fin e.totient → ZMod p) :
+def liftResidues (e : ℕ) {p : ℕ} (α : ZMod p) (r : Fin e.totient → ZMod p) :
     Fin e.totient → ZMod p :=
   ((conjugateVandermonde e α).det)⁻¹ • Matrix.cramer (conjugateVandermonde e α) r
 
@@ -251,7 +310,7 @@ theorem liftResidues_conjugateResidues [Fact p.Prime] {α : ZMod p} (hα : IsPri
 window is returned by the lift from its own residue tuple. -/
 @[simp]
 theorem lift_conjugateResidues [Fact p.Prime] {α : ZMod p} (hα : IsPrimitiveRoot α e)
-    {x : Cyclotomic e} (hx : ∀ j, 2 * (x.coeff j).natAbs < p) :
+    {x : Cyclotomic e} (hx : ∀ j : Fin e.totient, 2 * (x.coeff j).natAbs < p) :
     lift e α (conjugateResidues α x) = x := by
   refine ext fun j => ?_
   by_cases hj : j < e.totient
@@ -265,7 +324,8 @@ integer whose coordinates lie in the residue window, the lift returns that integ
 `TauCeti.Cyclotomic.eq_of_conjugateResidues_eq` there is at most one such integer, so this
 determines the answer. -/
 theorem lift_eq_of_conjugateResidues_eq [Fact p.Prime] {α : ZMod p} (hα : IsPrimitiveRoot α e)
-    {r : Fin e.totient → ZMod p} {x : Cyclotomic e} (hx : ∀ j, 2 * (x.coeff j).natAbs < p)
+    {r : Fin e.totient → ZMod p} {x : Cyclotomic e}
+    (hx : ∀ j : Fin e.totient, 2 * (x.coeff j).natAbs < p)
     (hr : conjugateResidues α x = r) : lift e α r = x := by
   subst hr
   exact lift_conjugateResidues hα hx
@@ -275,8 +335,8 @@ residue tuple.**  Both elements are returned by the lift from the tuple they sha
 uniqueness read off the correctness of the lift; the mathematical content is the invertibility of
 the Vandermonde matrix of the conjugate roots together with the residue window. -/
 theorem eq_of_conjugateResidues_eq [Fact p.Prime] {α : ZMod p} (hα : IsPrimitiveRoot α e)
-    {x y : Cyclotomic e} (hx : ∀ j, 2 * (x.coeff j).natAbs < p)
-    (hy : ∀ j, 2 * (y.coeff j).natAbs < p)
+    {x y : Cyclotomic e} (hx : ∀ j : Fin e.totient, 2 * (x.coeff j).natAbs < p)
+    (hy : ∀ j : Fin e.totient, 2 * (y.coeff j).natAbs < p)
     (h : conjugateResidues α x = conjugateResidues α y) : x = y := by
   rw [← lift_conjugateResidues hα hx, h, lift_conjugateResidues hα hy]
 
@@ -295,12 +355,32 @@ theorem conjugateResidues_lift [Fact p.Prime] {α : ZMod p} (hα : IsPrimitiveRo
   rw [← conjugateVandermonde_mulVec, hc, liftResidues, Matrix.mulVec_smul, Matrix.mulVec_cramer,
     inv_smul_smul₀ (det_conjugateVandermonde_ne_zero hα)]
 
-/-! In `Cyclotomic 4` the exponents coprime to `4` are `1` and `3`, so the two conjugate roots
-modulo `5` are `2 ^ 1 = 2` and `2 ^ 3 = 3`, at which `ζ + 1` has residues `3` and `4`. -/
+/-! ## Worked examples
+
+In `Cyclotomic 4` the exponents coprime to `4` are `1` and `3`, so the two conjugate roots modulo
+`5` are `2 ^ 1 = 2` and `2 ^ 3 = 3`, at which `ζ + 1` has residues `3` and `4`. -/
 
 example : primitiveExponents 4 = [1, 3] := by decide
 
 example : List.ofFn (conjugateResidues (2 : ZMod 5) (zeta 4 + 1)) = [3, 4] := by decide
+
+/-! The lift itself is not reducible by the kernel, but it can still be run against a concrete
+element through its correctness theorem, which is where the hypotheses become concrete: for the
+two small conductors the roadmap stages before the general one, `e = 4` (the Gaussian integers)
+and `e = 3` (the Eisenstein integers), both the primitivity of the root and the coordinate bound
+are settled by `decide`. -/
+
+example : lift 4 (2 : ZMod 5) (conjugateResidues (2 : ZMod 5) (zeta 4 + 1)) = zeta 4 + 1 := by
+  have : Fact (Nat.Prime 5) := ⟨by decide⟩
+  exact lift_conjugateResidues
+    (.mk_of_lt 2 (by decide) (by decide) fun l hl0 hl4 => by interval_cases l <;> decide)
+    (by decide)
+
+example : lift 3 (2 : ZMod 7) (conjugateResidues (2 : ZMod 7) (zeta 3 + 2)) = zeta 3 + 2 := by
+  have : Fact (Nat.Prime 7) := ⟨by decide⟩
+  exact lift_conjugateResidues
+    (.mk_of_lt 2 (by decide) (by decide) fun l hl0 hl3 => by interval_cases l <;> decide)
+    (by decide)
 
 end Cyclotomic
 

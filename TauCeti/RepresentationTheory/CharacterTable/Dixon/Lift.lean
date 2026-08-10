@@ -62,7 +62,9 @@ theorem two_mul_natAbs_lt_of_natAbs_le_sqrt {z : ℤ} (hz : z.natAbs ≤ Nat.sqr
 bounded by `⌊√|G|⌋` is returned by `TauCeti.Cyclotomic.lift` from its own residues at the conjugate
 roots. -/
 @[simp]
-theorem lift_conjugateResidues (hx : ∀ j, (x.coeff j).natAbs ≤ Nat.sqrt (Nat.card G)) :
+theorem lift_conjugateResidues
+    (hx : ∀ j : Fin (Monoid.exponent G).totient,
+      (x.coeff j).natAbs ≤ Nat.sqrt (Nat.card G)) :
     Cyclotomic.lift (Monoid.exponent G) d.root (Cyclotomic.conjugateResidues d.root x) = x :=
   Cyclotomic.lift_conjugateResidues d.isPrimitiveRoot_root fun j =>
     d.two_mul_natAbs_lt_of_natAbs_le_sqrt (hx j)
@@ -71,8 +73,10 @@ theorem lift_conjugateResidues (hx : ∀ j, (x.coeff j).natAbs ≤ Nat.sqrt (Nat
 residues at the conjugate roots of a Dixon prime.**  This is what makes the modular phase of the
 Burnside--Dixon--Schneider algorithm lossless. -/
 theorem eq_of_conjugateResidues_eq
-    (hx : ∀ j, (x.coeff j).natAbs ≤ Nat.sqrt (Nat.card G))
-    (hy : ∀ j, (y.coeff j).natAbs ≤ Nat.sqrt (Nat.card G))
+    (hx : ∀ j : Fin (Monoid.exponent G).totient,
+      (x.coeff j).natAbs ≤ Nat.sqrt (Nat.card G))
+    (hy : ∀ j : Fin (Monoid.exponent G).totient,
+      (y.coeff j).natAbs ≤ Nat.sqrt (Nat.card G))
     (h : Cyclotomic.conjugateResidues d.root x = Cyclotomic.conjugateResidues d.root y) :
     x = y :=
   Cyclotomic.eq_of_conjugateResidues_eq d.isPrimitiveRoot_root
@@ -83,7 +87,8 @@ theorem eq_of_conjugateResidues_eq
 cyclotomic integer with coordinates bounded by `⌊√|G|⌋` is lifted back to that integer, which by
 `TauCeti.DixonPrimeData.eq_of_conjugateResidues_eq` is the only one it could be lifted to. -/
 theorem lift_eq_of_conjugateResidues_eq {r : Fin (Monoid.exponent G).totient → ZMod d.p}
-    (hx : ∀ j, (x.coeff j).natAbs ≤ Nat.sqrt (Nat.card G))
+    (hx : ∀ j : Fin (Monoid.exponent G).totient,
+      (x.coeff j).natAbs ≤ Nat.sqrt (Nat.card G))
     (hr : Cyclotomic.conjugateResidues d.root x = r) :
     Cyclotomic.lift (Monoid.exponent G) d.root r = x :=
   Cyclotomic.lift_eq_of_conjugateResidues_eq d.isPrimitiveRoot_root
