@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.GroupTheory.Index
+public import Mathlib.GroupTheory.Coset.Card
 public import Mathlib.GroupTheory.IsPerfect
 public import Mathlib.GroupTheory.QuotientGroup.Basic
 public import Mathlib.GroupTheory.Subgroup.Simple
@@ -101,8 +101,8 @@ theorem map_commutator_of_surjective (f : G →* G') (hf : Function.Surjective f
 
 /-- The isomorphism of derived subgroups induced by an isomorphism of groups.
 
-This is exposed because the coercion of `commutatorCongr e x` back to `G'` is the value of `e`, by
-definitional unfolding. -/
+This is exposed because `commutatorCongr_coe`, its value on elements, holds by definitional
+unfolding, and a theorem exported from this module may only unfold exposed definitions. -/
 @[expose]
 def commutatorCongr (e : G ≃* G') : ↥(commutator G) ≃* ↥(commutator G') :=
   (e.subgroupMap (commutator G)).trans
@@ -112,6 +112,21 @@ def commutatorCongr (e : G ≃* G') : ↥(commutator G) ≃* ↥(commutator G') 
 theorem commutatorCongr_coe (e : G ≃* G') (x : ↥(commutator G)) :
     ((commutatorCongr e x : ↥(commutator G')) : G') = e (x : G) :=
   rfl
+
+/-! ## Surjections onto a centreless group -/
+
+/-- The centre of a group lies in the kernel of every surjection onto a group with trivial
+centre. -/
+theorem center_le_ker (f : G →* G') (hf : Function.Surjective f) (hG' : center G' = ⊥) :
+    center G ≤ f.ker := by
+  intro x hx
+  have hcentral : f x ∈ center G' := by
+    rw [mem_center_iff]
+    intro g
+    obtain ⟨y, rfl⟩ := hf g
+    rw [← map_mul, ← map_mul, mem_center_iff.mp hx y]
+  rw [hG', mem_bot] at hcentral
+  exact hcentral
 
 /-! ## The derived subgroup modulo its centre -/
 
@@ -138,12 +153,8 @@ theorem subsingleton_iff :
     Subsingleton (DerivedCentralQuotient G) ↔ IsMulCommutative ↥(commutator G) := by
   rw [QuotientGroup.subsingleton_iff, center_eq_top_iff]
 
-instance [IsMulCommutative G] : Subsingleton (DerivedCentralQuotient G) := by
-  rw [subsingleton_iff]
-  have : commutator G = ⊥ :=
-    commutator_top_right_eq_bot_iff_le_center.mpr (center_eq_top (G := G)).ge
-  rw [this]
-  infer_instance
+instance [IsMulCommutative ↥(commutator G)] : Subsingleton (DerivedCentralQuotient G) :=
+  subsingleton_iff.mpr ‹_›
 
 /-- The order of the derived central quotient divides the order of the group. -/
 theorem card_dvd_card : Nat.card (DerivedCentralQuotient G) ∣ Nat.card G :=
@@ -153,8 +164,8 @@ theorem card_dvd_card : Nat.card (DerivedCentralQuotient G) ∣ Nat.card G :=
 
 /-- The derived central quotient transported along an isomorphism of groups.
 
-This is exposed because `congr_mk`, its value on a representative, holds by definitional
-unfolding. -/
+This is exposed because `congr_mk`, its value on a representative, holds by definitional unfolding,
+and a theorem exported from this module may only unfold exposed definitions. -/
 @[expose]
 def congr (e : G ≃* G') : DerivedCentralQuotient G ≃* DerivedCentralQuotient G' :=
   QuotientGroup.congr _ _ (commutatorCongr e) (map_center _)
@@ -172,24 +183,12 @@ theorem congr_refl : congr (MulEquiv.refl G) = MulEquiv.refl (DerivedCentralQuot
 
 /-! ### The universal property -/
 
-/-- The centre of the derived subgroup lies in the kernel of every surjection onto a group with
-trivial centre. -/
-theorem center_le_ker {K : Type*} [Group K] (f : ↥(commutator G) →* K)
-    (hf : Function.Surjective f) (hK : center K = ⊥) : center ↥(commutator G) ≤ f.ker := by
-  intro x hx
-  have hcentral : f x ∈ center K := by
-    rw [mem_center_iff]
-    intro g
-    obtain ⟨y, rfl⟩ := hf g
-    rw [← map_mul, ← map_mul, mem_center_iff.mp hx y]
-  rw [hK, mem_bot] at hcentral
-  exact hcentral
-
 /-- **The derived central quotient is the largest centreless quotient of the derived subgroup**: a
 surjection of `[G, G]` onto a group with trivial centre factors through it.
 
 This is exposed because `lift_mk`, the equation defining it on representatives, holds by
-definitional unfolding. -/
+definitional unfolding, and a theorem exported from this module may only unfold exposed
+definitions. -/
 @[expose]
 def lift {K : Type*} [Group K] (f : ↥(commutator G) →* K) (hf : Function.Surjective f)
     (hK : center K = ⊥) : DerivedCentralQuotient G →* K :=
@@ -281,6 +280,12 @@ Frobenius. -/
 theorem fixedSubgroup_le_fixedSubgroup_pow (F : Monoid.End G) (n : ℕ) :
     fixedSubgroup (F : G →* G) ≤ fixedSubgroup ((F ^ n : Monoid.End G) : G →* G) := by
   intro x hx
+  -- `fixedSubgroup` takes a bundled `G →* G`, so the hypothesis and the goal apply their
+  -- endomorphism through `MonoidHom.instFunLike`, whereas `Monoid.End.coe_pow` — the lemma turning
+  -- a power of an endomorphism into an iterate — is stated through `Monoid.End.instFunLike`. The
+  -- two instances are definitionally but not syntactically equal, so neither `rw` nor `simp` can
+  -- bridge them; the `change` and the `show` restate the goal and the hypothesis on the
+  -- `Monoid.End` side, where `simp` can apply `Monoid.End.coe_pow`.
   change (F ^ n) x = x
   simpa using Function.iterate_fixed (show F x = x from hx) n
 
@@ -296,10 +301,20 @@ theorem map_fixedSubgroup (e : G ≃* G') {F : G →* G} {F' : G' →* G'}
   · refine fun hy => ⟨e.symm y, e.injective ?_, e.apply_symm_apply y⟩
     rw [← h (e.symm y), e.apply_symm_apply, hy]
 
-/-- The isomorphism of fixed subgroups induced by an intertwining isomorphism. -/
+/-- The isomorphism of fixed subgroups induced by an intertwining isomorphism.
+
+This is exposed because `fixedSubgroupCongr_coe`, its value on elements, holds by definitional
+unfolding, and a theorem exported from this module may only unfold exposed definitions. -/
+@[expose]
 def fixedSubgroupCongr (e : G ≃* G') {F : G →* G} {F' : G' →* G'} (h : ∀ x, F' (e x) = e (F x)) :
     ↥(fixedSubgroup F) ≃* ↥(fixedSubgroup F') :=
   (e.subgroupMap (fixedSubgroup F)).trans (MulEquiv.subgroupCongr (map_fixedSubgroup e h))
+
+@[simp]
+theorem fixedSubgroupCongr_coe (e : G ≃* G') {F : G →* G} {F' : G' →* G'}
+    (h : ∀ x, F' (e x) = e (F x)) (x : ↥(fixedSubgroup F)) :
+    ((fixedSubgroupCongr e h x : ↥(fixedSubgroup F')) : G') = e (x : G) :=
+  rfl
 
 /-- The candidate simple group attached to an endomorphism `F` of a group: the derived subgroup of
 the fixed points of `F`, modulo the centre of that derived subgroup.
