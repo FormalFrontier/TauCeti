@@ -58,16 +58,14 @@ def lengthPermRankTwo : Equiv.Perm (Fin 2) :=
 def lengthPermF4 : Equiv.Perm (Fin 4) :=
   graphPermA 4
 
-/-- The type-`A` graph permutation sends a node to its reversal. -/
-@[simp] lemma graphPermA_apply (n : ℕ) (i : Fin n) : graphPermA n i = i.rev := by
-  simp [graphPermA]
+/-- The type-`A` graph permutation is Mathlib's `Fin.revPerm`, so its node action and its inverse
+are `Fin.revPerm_apply` and `Fin.revPerm_symm`, and the rest of the reversal API is the `Fin.rev`
+lemmas. -/
+@[simp] lemma graphPermA_eq_revPerm (n : ℕ) : graphPermA n = Fin.revPerm := (rfl)
 
-/-- Reversal of the type-`A` diagram is its own inverse. -/
-@[simp] lemma graphPermA_symm (n : ℕ) : (graphPermA n).symm = graphPermA n := by
-  simp [graphPermA]
-
-/-- Reversing the `Aₙ` chain twice is the identity. -/
-@[simp] theorem graphPermA_sq (n : ℕ) : graphPermA n ^ 2 = 1 := by
+/-- Reversing the `Aₙ` chain twice is the identity. This is not a `simp` lemma because
+`TauCeti.graphPermA_eq_revPerm` already rewrites its left-hand side. -/
+theorem graphPermA_sq (n : ℕ) : graphPermA n ^ 2 = 1 := by
   ext i
   simp [pow_two, Equiv.Perm.mul_apply]
 
@@ -131,24 +129,16 @@ lemma graphPermD_apply_of_ne (n : ℕ) (hn : 2 ≤ n) (i : Fin n)
 /-- Exchanging the two rank-two nodes twice is the identity. -/
 @[simp] theorem lengthPermRankTwo_sq : lengthPermRankTwo ^ 2 = 1 := by decide
 
-/-- The `F₄` length permutation sends node `0` to node `3`. -/
-@[simp] lemma lengthPermF4_apply_zero : lengthPermF4 0 = 3 := by decide
-/-- The `F₄` length permutation sends node `1` to node `2`. -/
-@[simp] lemma lengthPermF4_apply_one : lengthPermF4 1 = 2 := by decide
-/-- The `F₄` length permutation sends node `2` to node `1`. -/
-@[simp] lemma lengthPermF4_apply_two : lengthPermF4 2 = 1 := by decide
-/-- The `F₄` length permutation sends node `3` to node `0`. -/
-@[simp] lemma lengthPermF4_apply_three : lengthPermF4 3 = 0 := by decide
-
-/-- Reversing the `F₄` diagram twice is the identity. -/
-@[simp] theorem lengthPermF4_sq : lengthPermF4 ^ 2 = 1 := by decide
+/-- The `F₄` length permutation is the reversal of the four-node chain, so its node action and its
+order are those of `TauCeti.graphPermA`. -/
+@[simp] lemma lengthPermF4_eq_graphPermA : lengthPermF4 = graphPermA 4 := (rfl)
 
 /-- Reversal is an automorphism of the type-`A` Cartan matrix. -/
 theorem cartanMatrix_A_graphPermA (n : ℕ) (i j : Fin n) :
     (DynkinType.A n).cartanMatrix (graphPermA n i) (graphPermA n j) =
       (DynkinType.A n).cartanMatrix i j := by
-  simp only [DynkinType.cartanMatrix_A, CartanMatrix.A, Matrix.of_apply, graphPermA_apply,
-    Fin.ext_iff, Fin.val_rev]
+  simp only [DynkinType.cartanMatrix_A, CartanMatrix.A, Matrix.of_apply, graphPermA_eq_revPerm,
+    Fin.revPerm_apply, Fin.ext_iff, Fin.val_rev]
   split_ifs <;> omega
 
 private lemma cartanMatrix_D_fork_rows {n : ℕ} (hn : 4 ≤ n) (j : Fin n)
@@ -238,6 +228,6 @@ theorem isLongSimpleRoot_lengthPermRankTwo_iff_not_isLongSimpleRoot_G2 (i : Fin 
 theorem isLongSimpleRoot_lengthPermF4_iff_not_isLongSimpleRoot_F4 (i : Fin 4) :
     DynkinType.F4.IsLongSimpleRoot (lengthPermF4 i) ↔
       ¬ DynkinType.F4.IsLongSimpleRoot i := by
-  fin_cases i <;> simp [DynkinType.isLongSimpleRoot_F4, lengthPermF4, graphPermA]
+  fin_cases i <;> simp [DynkinType.isLongSimpleRoot_F4]
 
 end TauCeti
