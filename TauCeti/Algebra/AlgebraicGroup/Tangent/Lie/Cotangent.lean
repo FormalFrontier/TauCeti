@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.Tangent.Lie.Naturality
-public import TauCeti.Algebra.AlgebraicGroup.Tangent.Representation
+public import TauCeti.Algebra.AlgebraicGroup.Tangent.Cotangent
 public import Mathlib.Algebra.Lie.BaseChange
 public import Mathlib.Algebra.Lie.TransferInstance
 

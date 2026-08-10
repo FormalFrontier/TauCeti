@@ -6,6 +6,7 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.Tangent.Lie.Adjoint.Basic
 public import TauCeti.Algebra.AlgebraicGroup.Tangent.Lie.Cotangent
+public import TauCeti.Algebra.AlgebraicGroup.Tangent.Representation
 
 /-!
 # The adjoint action on the cotangent-dual Lie algebra
