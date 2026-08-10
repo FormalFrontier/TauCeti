@@ -105,7 +105,7 @@ private theorem spatialFDeriv_mulInvariantExp_mul_mulInvariantExp
   rw [← fderiv_apply_one_eq_deriv, fderiv_timeSlice hFdiff] at hpartial
   have hfAt := f.contMDiff.mdifferentiable (by simp)
     (mulInvariantExp (I := I) (G := G) (s • X) * g) |>.hasMFDerivAt
-  have hdirection := HasMFDerivAt.hasDerivAt_comp_mul_mulInvariantExp_smul hfAt Y
+  have hdirection := HasMFDerivAt.hasDerivAt_comp_mul_mulInvariantExp_smul_zero hfAt Y
   have hdirection' : HasDerivAt (fun t => F (s, t))
       ((mfderiv I 𝓘(ℝ, ℝ) f (mulInvariantExp (I := I) (G := G) (s • X) * g))
         (mulInvariantVectorField Y
@@ -135,7 +135,7 @@ private theorem timeFDeriv_mulInvariantExp_mul_mulInvariantExp
   have hpartial := hasDerivAt_parameterCurve hFdiff
   have hfAt := f.contMDiff.mdifferentiable (by simp)
     (g * mulInvariantExp (I := I) (G := G) (t • Y)) |>.hasMFDerivAt
-  have hdirection := HasMFDerivAt.hasDerivAt_comp_mulInvariantExp_smul_mul hfAt X
+  have hdirection := HasMFDerivAt.hasDerivAt_comp_mulInvariantExp_smul_mul_zero hfAt X
   have hdirection' : HasDerivAt (fun s => F (s, t))
       ((mfderiv I 𝓘(ℝ, ℝ) f (g * mulInvariantExp (I := I) (G := G) (t • Y)))
         (mulRightInvariantVectorField X
@@ -187,9 +187,9 @@ theorem mvfderiv_mulRightInvariantVectorField_mulInvariantVectorField_commute
   have hmixed := deriv_spatialFDeriv_apply (F := F) (x := (0 : ℝ)) (w := (1 : ℝ)) hFmin
   rw [hspaceFun, htimeFun, fderiv_apply_one_eq_deriv] at hmixed
   -- Transport the two one-variable derivatives back to manifold derivatives at `g`.
-  have hLY := HasMFDerivAt.hasDerivAt_comp_mulInvariantExp_smul_mul
+  have hLY := HasMFDerivAt.hasDerivAt_comp_mulInvariantExp_smul_mul_zero
     (LYf.contMDiff.mdifferentiable (by simp) g |>.hasMFDerivAt) X
-  have hRX := HasMFDerivAt.hasDerivAt_comp_mul_mulInvariantExp_smul
+  have hRX := HasMFDerivAt.hasDerivAt_comp_mul_mulInvariantExp_smul_zero
     (RXf.contMDiff.mdifferentiable (by simp) g |>.hasMFDerivAt) Y
   rw [hLY.deriv, hRX.deriv] at hmixed
   rw [mvfderiv_apply_eq_mfderiv_apply, mvfderiv_apply_eq_mfderiv_apply]
