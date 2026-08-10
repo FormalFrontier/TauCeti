@@ -7,7 +7,6 @@ module
 public import Mathlib.Geometry.Manifold.GroupLieAlgebra
 public import TauCeti.Geometry.Lie.Basic
 public import TauCeti.Geometry.Manifold.VectorField.Regularity
-import Mathlib.Geometry.Manifold.ContMDiffMFDeriv
 import Mathlib.Geometry.Manifold.VectorBundle.Tangent
 
 /-!
@@ -143,10 +142,12 @@ theorem contMDiff_mulInvariantVectorField_modelSpace {m n : ℕ∞ω}
   let _ : IsManifold I 1 G := IsManifold.of_le (le_add_self.trans hmn)
   let fg : E × G → TangentBundle I G := fun p => TotalSpace.mk' E p.2 0
   have sfg : ContMDiff (𝓘(𝕜, E).prod I) I.tangent m fg := by
-    simpa only [fg] using contMDiff_tangentBundle_zero_snd (I := I) (M := G) m
+    simpa only [fg] using
+      contMDiff_tangentBundle_zero (I := I) (M := G) (n := m) contMDiff_snd
   let fv : E × G → TangentBundle I G := fun p => TotalSpace.mk' E 1 p.1
   have sfv : ContMDiff (𝓘(𝕜, E).prod I) I.tangent m fv := by
-    simpa only [fv] using contMDiff_tangentBundle_const_fst (I := I) (M := G) m (1 : G)
+    simpa only [fv] using
+      contMDiff_tangentBundle_const (I := I) (M := G) (n := m) contMDiff_fst (1 : G)
   let S := contMDiff_tangentMap_mul_prod_comp (I := I) (G := G) hmn fg fv sfg sfv
   apply S.congr
   intro p
