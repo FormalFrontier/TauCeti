@@ -58,6 +58,8 @@ lattices are trivial and the index is `1`), so the datum is a `RootDatum` carryi
 * `TauCeti.DynkinType.root_typeCSimpleIndex` and `TauCeti.DynkinType.coroot_typeCSimpleIndex`: the
   `i`-th simple root is the `i`-th row of `CartanMatrix.C n` and the `i`-th simple coroot is
   `Pi.single i 1`, which is what pins the two lattices as the weight and coroot lattices.
+* `TauCeti.DynkinType.mem_support_typeCSimplyConnectedBase`: the support of the pinned base is the
+  set of the first `n` root indices.
 * `TauCeti.DynkinType.hasCartanType_typeCSimplyConnectedRootDatum`: the pinned base has Cartan type
   `C n`.
 * `TauCeti.DynkinType.typeCSimplyConnectedRootDatum_corootSpan_eq_top`: the coroots span the
@@ -233,13 +235,8 @@ private lemma typeCCoroot_typeCMk {x y : Signed n} (h : y ≠ signedNeg x) :
 
 private lemma pair_eq_of_mem_iff {α : Type*} {p q p' q' : α}
     (h : ∀ z, (z = p ∨ z = q) ↔ (z = p' ∨ z = q')) :
-    (p = p' ∧ q = q') ∨ (p = q' ∧ q = p') := by
-  have h1 := (h p).mp (Or.inl rfl)
-  have h2 := (h q).mp (Or.inr rfl)
-  have h3 := (h p').mpr (Or.inl rfl)
-  have h4 := (h q').mpr (Or.inr rfl)
-  rcases h1 with rfl | rfl <;> rcases h2 with h2 | h2 <;> subst h2 <;>
-    simp_all
+    (p = p' ∧ q = q') ∨ (p = q' ∧ q = p') :=
+  Set.pair_eq_pair_iff.mp (Set.ext fun z => by simpa using h z)
 
 private lemma typeCRoot_injective : Injective (typeCRoot (n := n)) := by
   intro i j hij
@@ -705,16 +702,6 @@ private lemma linearIndependent_typeCSimpleCoroot (n : ℕ) :
 private def typeCSimpleSupport (n : ℕ) : Finset (Fin (2 * n ^ 2)) :=
   Finset.univ.map ⟨typeCSimpleIndex n, typeCSimpleIndex_injective⟩
 
-private lemma mem_typeCSimpleSupport {k : Fin (2 * n ^ 2)} :
-    k ∈ typeCSimpleSupport n ↔ (k : ℕ) < n := by
-  constructor
-  · rintro hk
-    obtain ⟨i, -, rfl⟩ := Finset.mem_map.mp hk
-    simp only [Function.Embedding.coeFn_mk, typeCSimpleIndex_val]
-    exact i.isLt
-  · intro hk
-    exact Finset.mem_map.mpr ⟨⟨k, hk⟩, Finset.mem_univ _, Fin.ext rfl⟩
-
 private lemma coe_typeCSimpleSupport :
     (typeCSimpleSupport n : Set (Fin (2 * n ^ 2))) = range (typeCSimpleIndex n) := by
   simp [typeCSimpleSupport]
@@ -768,10 +755,24 @@ def typeCSimplyConnectedBase (n : ℕ) : (typeCSimplyConnectedRootDatum n).Base 
     · exact Or.inl (typeCCoroot_false_mem a b)
     · exact Or.inr (by rw [typeCCoroot_true, neg_neg]; exact typeCCoroot_false_mem a b)
 
+/-- **The support of the pinned base of type `Cₙ` is the set of the first `n` root indices**, which
+by `TauCeti.DynkinType.root_typeCSimpleIndex` carry the simple roots in Bourbaki order. -/
+@[simp] theorem mem_support_typeCSimplyConnectedBase {k : Fin (2 * n ^ 2)} :
+    k ∈ (typeCSimplyConnectedBase n).support ↔ (k : ℕ) < n := by
+  -- The support of the base is `typeCSimpleSupport n` by definition.
+  change k ∈ typeCSimpleSupport n ↔ (k : ℕ) < n
+  constructor
+  · rintro hk
+    obtain ⟨i, -, rfl⟩ := Finset.mem_map.mp hk
+    simp only [Function.Embedding.coeFn_mk, typeCSimpleIndex_val]
+    exact i.isLt
+  · intro hk
+    exact Finset.mem_map.mpr ⟨⟨k, hk⟩, Finset.mem_univ _, Fin.ext rfl⟩
+
 /-- The support of the pinned base is the Bourbaki numbering of the simple roots. -/
 private def typeCBaseEquiv (n : ℕ) : (typeCSimplyConnectedBase n).support ≃ Fin n where
-  toFun x := ⟨(x : Fin (2 * n ^ 2)), mem_typeCSimpleSupport.mp x.2⟩
-  invFun i := ⟨typeCSimpleIndex n i, mem_typeCSimpleSupport.mpr (by simp)⟩
+  toFun x := ⟨(x : Fin (2 * n ^ 2)), mem_support_typeCSimplyConnectedBase.mp x.2⟩
+  invFun i := ⟨typeCSimpleIndex n i, mem_support_typeCSimplyConnectedBase.mpr (by simp)⟩
   left_inv x := by
     apply Subtype.ext
     apply Fin.ext
