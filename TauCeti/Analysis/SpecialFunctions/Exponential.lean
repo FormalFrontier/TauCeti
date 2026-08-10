@@ -325,13 +325,9 @@ private theorem continuous_expDerivativeIntegral (x y : A) :
   have hH : Continuous H := by
     dsimp only [H]
     fun_prop
-  have hcontinuous :
-      Continuous (fun s : ℝ ↦ ∫ t in Set.Icc (0 : ℝ) 1, H (s, t)) :=
-    continuous_parametric_integral_of_continuous
-      (f := fun s t ↦ H (s, t)) hH isCompact_Icc
   unfold expDerivativeIntegral
-  simpa only [intervalIntegral.integral_of_le zero_le_one,
-    ← integral_Icc_eq_integral_Ioc, H] using hcontinuous
+  exact intervalIntegral.continuous_parametric_intervalIntegral_of_continuous'
+    (f := fun s t ↦ H (s, t)) hH 0 1
 
 private theorem hasDerivAt_exp_add_smul_integral (x y : A) :
     HasDerivAt (fun s : ℝ ↦ exp (x + s • y)) (expDerivativeIntegral x y 0) 0 := by
@@ -342,7 +338,7 @@ private theorem hasDerivAt_exp_add_smul_integral (x y : A) :
     (continuous_expDerivativeIntegral x y).continuousAt.tendsto.mono_left inf_le_left
   apply hG.congr'
   filter_upwards [self_mem_nhdsWithin] with s hs
-  have hs0 : s ≠ 0 := hs
+  have hs0 : s ≠ 0 := Set.mem_compl_singleton_iff.mp hs
   have hduhamel := exp_add_sub_exp_eq_integral x (s • y)
   have hintegral :
       (∫ t in (0 : ℝ)..1, exp ((1 - t) • (x + s • y)) * (s • y) * exp (t • x)) =
@@ -351,7 +347,7 @@ private theorem hasDerivAt_exp_add_smul_integral (x y : A) :
     apply intervalIntegral.integral_congr
     intro t _ht
     simp only [Algebra.mul_smul_comm, Algebra.smul_mul_assoc]
-  rw [slope, sub_zero, zero_smul, add_zero, vsub_eq_sub, hduhamel, hintegral,
+  rw [slope_def_module, sub_zero, zero_smul, add_zero, hduhamel, hintegral,
     inv_smul_smul₀ hs0]
 
 private theorem expFDeriv_real_apply_eq_integral (x y : A) :
