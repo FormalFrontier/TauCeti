@@ -27,7 +27,8 @@ derivation. No presentation of Kähler differentials is needed.
 * `TauCeti.MultiplicativeGroup.tangent_bracket_eq_zero`: the tangent Lie bracket of `𝔾ₘ`
   vanishes.
 
-This completes the `Lie(𝔾ₘ)` standard example in Layer 2 of the ReductiveGroups roadmap.
+This realizes the `𝔾ₘ` item in the ReductiveGroups roadmap's "Worked examples" section using
+its Layer 2 tangent/Lie algebra infrastructure.
 -/
 
 public section
@@ -108,13 +109,10 @@ theorem tangentCoordinate_apply (d : Derivation R H C) :
       CounitAlgebra.algEquivSelf R H B (d (LaurentPolynomial.T 1)) :=
   rfl
 
-private noncomputable def infinitesimalUnit (c : C) : (DualNumber C)ˣ where
-  val := inl 1 + inr c
-  inv := inl 1 + inr (-c)
-  val_inv := by
-    apply TrivSqZeroExt.ext <;> simp
-  inv_val := by
-    apply TrivSqZeroExt.ext <;> simp
+private noncomputable def infinitesimalUnit (c : C) : (DualNumber C)ˣ :=
+  (show IsUnit (inl 1 + inr c : DualNumber C) by
+    rw [TrivSqZeroExt.isUnit_iff_isUnit_fst]
+    simp).unit
 
 private lemma infinitesimalUnit_map_fst (c : C) :
     Units.map (fstHom R C C).toMonoidHom (infinitesimalUnit c) = 1 := by
@@ -147,7 +145,7 @@ private theorem tangentCoordinate_surjective :
     exact congrArg Units.val
       ((pointsMulEquiv (R := R) (A := DualNumber C)).apply_symm_apply g)
   rw [hval]
-  simp only [g, infinitesimalUnit, snd_add, snd_inl, snd_inr, zero_add, c]
+  simp only [g, infinitesimalUnit, IsUnit.unit_spec, snd_add, snd_inl, snd_inr, zero_add, c]
   exact (CounitAlgebra.algEquivSelf R H B).apply_symm_apply b
 
 /-- **The tangent space at the identity of `𝔾ₘ` is one-dimensional.** The equivalence sends
