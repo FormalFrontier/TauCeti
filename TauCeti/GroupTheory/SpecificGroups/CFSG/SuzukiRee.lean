@@ -107,39 +107,35 @@ def lengthPerm (e : SuzukiReeIndex) : Equiv.Perm (Fin e.1.rank) :=
           LieTypeIndex.dynkinType_tits, DynkinType.rank_F4])).symm.permCongr lengthPermF4
 
 /-- A Suzuki index selects the rank-two node swap, transported along the `B₂` numbering. -/
-@[simp] theorem lengthPerm_suzuki (m : ℕ) (hvalid : (LieTypeIndex.suzuki m).Valid)
-    (hhalf : (LieTypeIndex.suzuki m).UsesHalfFrobenius) :
-    lengthPerm ⟨⟨.suzuki m, hvalid⟩, hhalf⟩ =
-      (finCongr (show ValidLieTypeIndex.rank ⟨.suzuki m, hvalid⟩ = 2 by
+@[simp] theorem lengthPerm_suzuki (m : ℕ) (hvalid : (LieTypeIndex.suzuki m).Valid) :
+    lengthPerm ⟨⟨.suzuki m, hvalid⟩, by simp⟩ =
+      (finCongr (by
         simp only [ValidLieTypeIndex.rank, ValidLieTypeIndex.dynkinType,
           LieTypeIndex.dynkinType_suzuki, DynkinType.rank_B])).symm.permCongr
         lengthPermRankTwo := by
   simp only [lengthPerm]
 
 /-- A Ree `G₂` index selects the rank-two node swap, transported along the `G₂` numbering. -/
-@[simp] theorem lengthPerm_reeG2 (m : ℕ) (hvalid : (LieTypeIndex.reeG2 m).Valid)
-    (hhalf : (LieTypeIndex.reeG2 m).UsesHalfFrobenius) :
-    lengthPerm ⟨⟨.reeG2 m, hvalid⟩, hhalf⟩ =
-      (finCongr (show ValidLieTypeIndex.rank ⟨.reeG2 m, hvalid⟩ = 2 by
+@[simp] theorem lengthPerm_reeG2 (m : ℕ) (hvalid : (LieTypeIndex.reeG2 m).Valid) :
+    lengthPerm ⟨⟨.reeG2 m, hvalid⟩, by simp⟩ =
+      (finCongr (by
         simp only [ValidLieTypeIndex.rank, ValidLieTypeIndex.dynkinType,
           LieTypeIndex.dynkinType_reeG2, DynkinType.rank_G2])).symm.permCongr
         lengthPermRankTwo := by
   simp only [lengthPerm]
 
 /-- A Ree `F₄` index selects the `F₄` diagram reversal. -/
-@[simp] theorem lengthPerm_reeF4 (m : ℕ) (hvalid : (LieTypeIndex.reeF4 m).Valid)
-    (hhalf : (LieTypeIndex.reeF4 m).UsesHalfFrobenius) :
-    lengthPerm ⟨⟨.reeF4 m, hvalid⟩, hhalf⟩ =
-      (finCongr (show ValidLieTypeIndex.rank ⟨.reeF4 m, hvalid⟩ = 4 by
+@[simp] theorem lengthPerm_reeF4 (m : ℕ) (hvalid : (LieTypeIndex.reeF4 m).Valid) :
+    lengthPerm ⟨⟨.reeF4 m, hvalid⟩, by simp⟩ =
+      (finCongr (by
         simp only [ValidLieTypeIndex.rank, ValidLieTypeIndex.dynkinType,
           LieTypeIndex.dynkinType_reeF4, DynkinType.rank_F4])).symm.permCongr lengthPermF4 := by
   simp only [lengthPerm]
 
 /-- The Tits index selects the `F₄` diagram reversal. -/
-@[simp] theorem lengthPerm_tits (hvalid : LieTypeIndex.tits.Valid)
-    (hhalf : LieTypeIndex.tits.UsesHalfFrobenius) :
-    lengthPerm ⟨⟨.tits, hvalid⟩, hhalf⟩ =
-      (finCongr (show ValidLieTypeIndex.rank ⟨.tits, hvalid⟩ = 4 by
+@[simp] theorem lengthPerm_tits :
+    lengthPerm ⟨⟨.tits, by simp⟩, by simp⟩ =
+      (finCongr (by
         simp only [ValidLieTypeIndex.rank, ValidLieTypeIndex.dynkinType,
           LieTypeIndex.dynkinType_tits, DynkinType.rank_F4])).symm.permCongr lengthPermF4 := by
   simp only [lengthPerm]
