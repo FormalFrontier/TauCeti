@@ -4,8 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.RingTheory.ClassGroup.Basic
 public import TauCeti.NumberTheory.NumberField.TotallyPositive
+public import TauCeti.RingTheory.ClassGroup.Basic
 
 /-!
 # The narrow class group of a number field
@@ -133,8 +133,7 @@ ring: they map to `1` in the ordinary class group. -/
 private theorem narrowPrincipalSubgroup_le_ker :
     narrowPrincipalSubgroup K ≤ MonoidHom.ker (ClassGroup.mk (R := 𝓞 K) K) := by
   rintro _ ⟨x, -, rfl⟩
-  rw [MonoidHom.mem_ker, ClassGroup.mk_eq_one_iff, coe_toPrincipalIdeal]
-  exact ⟨⟨(x : K), coe_spanSingleton _ _⟩⟩
+  exact ClassGroup.mk_toPrincipalIdeal x
 
 /-- The **surjection `Cl⁺(K) → Cl(K)`** onto the ordinary class group, forgetting the positivity
 condition on generators. -/
@@ -164,9 +163,8 @@ class of a principal ideal. This is the "composition is one" half of exactness a
 @[simp] theorem toClassGroup_comp_mkPrincipal :
     (toClassGroup (K := K)).comp mkPrincipal = 1 := by
   ext x
-  rw [MonoidHom.comp_apply, MonoidHom.one_apply, mkPrincipal_apply, toClassGroup_mk,
-    ClassGroup.mk_eq_one_iff, coe_toPrincipalIdeal, coe_spanSingleton]
-  exact ⟨⟨(x : K), rfl⟩⟩
+  rw [MonoidHom.comp_apply, MonoidHom.one_apply, mkPrincipal_apply, toClassGroup_mk]
+  exact ClassGroup.mk_toPrincipalIdeal x
 
 @[simp] theorem toClassGroup_mkPrincipal (x : Kˣ) : toClassGroup (mkPrincipal (K := K) x) = 1 := by
   rw [← MonoidHom.comp_apply, toClassGroup_comp_mkPrincipal, MonoidHom.one_apply]

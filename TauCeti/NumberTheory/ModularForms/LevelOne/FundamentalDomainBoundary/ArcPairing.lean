@@ -230,6 +230,71 @@ theorem excised_logDeriv_comp_ofComplex_fdBoundary_arc_add_four_sub_eq_neg
   · simp only [if_neg hc, if_neg fun h => hc (hsymm.mp h)]
     exact logDeriv_comp_ofComplex_fdBoundary_arc_add_four_sub_eq_neg f hS ht (hd hc) (hne hc)
 
+/-- **The excision set is measurable.** It is a finite union of preimages of closed balls
+under the continuous contour. -/
+theorem measurableSet_exists_norm_fdBoundary_sub_le {H ε : ℝ} {S : Finset ℂ} :
+    MeasurableSet {t : ℝ | ∃ s ∈ S, ‖fdBoundary H t - s‖ ≤ ε} := by
+  have hset : {t : ℝ | ∃ s ∈ S, ‖fdBoundary H t - s‖ ≤ ε}
+      = ⋃ s ∈ (S : Set ℂ), {t : ℝ | ‖fdBoundary H t - s‖ ≤ ε} := by
+    ext t; simp
+  rw [hset]
+  refine S.finite_toSet.measurableSet_biUnion fun s _ => ?_
+  exact measurableSet_le
+    (((continuous_fdBoundary H).sub continuous_const).norm).measurable measurable_const
+
+/-- **An excised constant is interval-integrable.** It is measurable, because the excision set
+is, and bounded by the constant's norm. -/
+theorem intervalIntegrable_excised_const {H ε : ℝ} {S : Finset ℂ} (c : ℂ) (a b : ℝ) :
+    IntervalIntegrable
+      (fun t => if ∃ s ∈ S, ‖fdBoundary H t - s‖ ≤ ε then (0 : ℂ) else c) volume a b := by
+  have hmeas : Measurable
+      (fun t => if ∃ s ∈ S, ‖fdBoundary H t - s‖ ≤ ε then (0 : ℂ) else c) :=
+    measurable_const.ite measurableSet_exists_norm_fdBoundary_sub_le measurable_const
+  have hbdd : ∀ t : ℝ,
+      ‖(if ∃ s ∈ S, ‖fdBoundary H t - s‖ ≤ ε then (0 : ℂ) else c)‖ ≤ ‖c‖ := by
+    intro t
+    by_cases h : ∃ s ∈ S, ‖fdBoundary H t - s‖ ≤ ε <;> simp [h]
+  exact ⟨(integrable_const ‖c‖).mono' hmeas.aestronglyMeasurable
+      (Filter.Eventually.of_forall fun t => hbdd t),
+    (integrable_const ‖c‖).mono' hmeas.aestronglyMeasurable
+      (Filter.Eventually.of_forall fun t => hbdd t)⟩
+
+/-- **Integrability on the second arc half, excised.** The reflection `t ↦ 4 - t` exchanges
+the two halves of the arc, and the excised pointwise pairing identity rewrites the integrand
+on `[2, 3]` as the excised weight minus the reflected integrand on `[1, 2]` — both integrable.
+This is the excised counterpart of
+`intervalIntegrable_deriv_smul_logDeriv_comp_ofComplex_fdBoundary_segment3`. -/
+theorem intervalIntegrable_excised_deriv_smul_logDeriv_comp_ofComplex_fdBoundary_segment3
+    [SlashInvariantFormClass F Γ k] (f : F) (hS : ModularGroup.S ∈ Γ) {H : ℝ} {S : Finset ℂ}
+    {ε : ℝ} (hnorm : ∀ s ∈ S, ‖s‖ = 1) (hinv : ∀ s ∈ S, -1 / s ∈ S)
+    (hd : ∀ t ∈ Ioo (1 : ℝ) 2, ¬(∃ s ∈ S, ‖fdBoundary H t - s‖ ≤ ε) →
+      DifferentiableAt ℂ (⇑f ∘ ofComplex) (fdBoundary H t))
+    (hne : ∀ t ∈ Ioo (1 : ℝ) 2, ¬(∃ s ∈ S, ‖fdBoundary H t - s‖ ≤ ε) →
+      (⇑f ∘ ofComplex) (fdBoundary H t) ≠ 0)
+    (hint : IntervalIntegrable (fun t => if ∃ s ∈ S, ‖fdBoundary H t - s‖ ≤ ε then 0
+      else deriv (fdBoundary H) t • logDeriv (⇑f ∘ ofComplex) (fdBoundary H t)) volume 1 2) :
+    IntervalIntegrable (fun t => if ∃ s ∈ S, ‖fdBoundary H t - s‖ ≤ ε then 0
+      else deriv (fdBoundary H) t • logDeriv (⇑f ∘ ofComplex) (fdBoundary H t)) volume 2 3 := by
+  have hconst : IntervalIntegrable (fun u : ℝ =>
+      if ∃ s ∈ S, ‖fdBoundary H u - s‖ ≤ ε then 0
+        else -((k : ℂ) * logDeriv (fdBoundary H) u)) volume 1 2 := by
+    refine (intervalIntegrable_excised_const (H := H) (S := S) (ε := ε)
+      (-((k : ℂ) * ((Real.pi / 6 : ℝ) * Complex.I))) 1 2).congr_uIoo fun u hu => ?_
+    rw [Set.uIoo_of_le (by norm_num : (1 : ℝ) ≤ 2)] at hu
+    by_cases hc : ∃ s ∈ S, ‖fdBoundary H u - s‖ ≤ ε
+    · simp only [if_pos hc]
+    · simp only [if_neg hc, logDeriv_fdBoundary_arc ⟨hu.1, by linarith [hu.2]⟩]
+  have hI := ((hconst.sub hint).comp_sub_left 4).symm
+  norm_num at hI
+  refine hI.congr_uIoo ?_
+  rw [Set.uIoo_of_le (by norm_num : (2 : ℝ) ≤ 3)]
+  intro x hx
+  have hu : 4 - x ∈ Ioo (1 : ℝ) 2 := ⟨by linarith [hx.2], by linarith [hx.1]⟩
+  have hp := excised_logDeriv_comp_ofComplex_fdBoundary_arc_add_four_sub_eq_neg f hS
+    ⟨hu.1, by linarith [hu.2]⟩ hnorm hinv (hd _ hu) (hne _ hu)
+  rw [sub_sub_self] at hp
+  linear_combination -hp
+
 /-- **The excised arc integral collapses to the weight term.** Integrating the pointwise pairing
 over `[1, 3]`, where the reflection `t ↦ 4 - t` maps the interval to itself, the excised arc
 integral is `-k/2` times the excised integral of the contour's own logarithmic derivative.
@@ -268,29 +333,10 @@ theorem two_mul_intervalIntegral_excised_deriv_smul_logDeriv_comp_ofComplex_fdBo
     rwa [h43, h41] at h
   -- The excision test cuts out a measurable set: a finite union of preimages of closed balls
   -- under the continuous contour.
-  have hexc : MeasurableSet {t : ℝ | ∃ s ∈ S, ‖fdBoundary H t - s‖ ≤ ε} := by
-    have hset : {t : ℝ | ∃ s ∈ S, ‖fdBoundary H t - s‖ ≤ ε}
-        = ⋃ s ∈ (S : Set ℂ), {t : ℝ | ‖fdBoundary H t - s‖ ≤ ε} := by
-      ext t; simp
-    rw [hset]
-    refine S.finite_toSet.measurableSet_biUnion fun s _ => ?_
-    exact measurableSet_le
-      (((continuous_fdBoundary H).sub continuous_const).norm).measurable measurable_const
   -- The excised weight is bounded, hence integrable on the first half.
   have hWc : ∀ c : ℂ, IntervalIntegrable
-      (fun t => if ∃ s ∈ S, ‖fdBoundary H t - s‖ ≤ ε then (0 : ℂ) else c) volume 1 2 := by
-    intro c
-    have hmeas : Measurable
-        (fun t => if ∃ s ∈ S, ‖fdBoundary H t - s‖ ≤ ε then (0 : ℂ) else c) :=
-      measurable_const.ite hexc measurable_const
-    have hbdd : ∀ t : ℝ,
-        ‖(if ∃ s ∈ S, ‖fdBoundary H t - s‖ ≤ ε then (0 : ℂ) else c)‖ ≤ ‖c‖ := by
-      intro t
-      by_cases h : ∃ s ∈ S, ‖fdBoundary H t - s‖ ≤ ε <;> simp [h]
-    exact ⟨(integrable_const ‖c‖).mono' hmeas.aestronglyMeasurable
-        (Filter.Eventually.of_forall fun t => hbdd t),
-      (integrable_const ‖c‖).mono' hmeas.aestronglyMeasurable
-        (Filter.Eventually.of_forall fun t => hbdd t)⟩
+      (fun t => if ∃ s ∈ S, ‖fdBoundary H t - s‖ ≤ ε then (0 : ℂ) else c) volume 1 2 :=
+    fun c => intervalIntegrable_excised_const c 1 2
   -- On the arc the contour's logarithmic derivative is constant, so the excised weight is one
   -- of those bounded models.
   have hWint : IntervalIntegrable
