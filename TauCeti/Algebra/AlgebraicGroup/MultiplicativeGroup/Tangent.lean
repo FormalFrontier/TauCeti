@@ -15,17 +15,20 @@ derivation of the Laurent polynomial Hopf algebra `R[T;T⁻¹]` is determined by
 and every value occurs. The resulting linear equivalence with the coefficient algebra `B`
 identifies the tangent Lie bracket with the zero bracket.
 
-For surjectivity, we use the functor-of-points description of `𝔾ₘ`. The unit `1 + εb` over the
-dual numbers reduces to the identity, hence defines a tangent-kernel point; the general
-equivalence between tangent-kernel points and counit-valued derivations supplies the desired
-derivation. No presentation of Kähler differentials is needed.
-
 ## Main declarations
 
 * `TauCeti.MultiplicativeGroup.tangentLinearEquiv`: the tangent space of `𝔾ₘ` is linearly
   equivalent to `B`.
 * `TauCeti.MultiplicativeGroup.tangent_bracket_eq_zero`: the tangent Lie bracket of `𝔾ₘ`
   vanishes.
+
+## References
+
+The construction follows the formal pattern of
+`TauCeti.Algebra.AlgebraicGroup.AdditiveGroup.Tangent`.
+Laurent-polynomial induction and the formulas for the counit and comultiplication of `T` come from
+Mathlib's `Mathlib.Algebra.Polynomial.Laurent` and
+`Mathlib.RingTheory.HopfAlgebra.MonoidAlgebra`.
 
 This realizes the `𝔾ₘ` item in the ReductiveGroups roadmap's "Worked examples" section using
 its Layer 2 tangent/Lie algebra infrastructure.
@@ -45,7 +48,7 @@ universe u w
 
 noncomputable section
 
-variable {R : Type u} [CommRing R]
+variable {R : Type u} [CommSemiring R]
 variable {B : Type w} [CommRing B] [Algebra R B]
 
 local notation "H" => R[T;T⁻¹]
@@ -57,15 +60,14 @@ private lemma derivation_T_add (d : Derivation R H C) (m n : ℤ) :
   rw [LaurentPolynomial.T_add, Derivation.leibniz]
   simp only [Algebra.smul_def, CounitAlgebra.algebraMap_apply,
     LaurentPolynomial.counit_T, map_one]
+  -- Simplification leaves `1 : B` multiplying a value in the coefficient synonym `C`, so the
+  -- target is not type-correct at implicit transparency and no propositional rewrite applies.
   change (1 : C) * d (LaurentPolynomial.T n) +
       (1 : C) * d (LaurentPolynomial.T m) =
     d (LaurentPolynomial.T m) + d (LaurentPolynomial.T n)
   simp only [one_mul, add_comm]
 
-/-- Two tangent derivations of the Laurent polynomial algebra are equal if they agree on `T`.
-
-The values on all `T n` follow by integer induction from `T (m + n) = T m * T n`; Laurent
-polynomial induction then reduces the general case to monomials. -/
+/-- Two tangent derivations of the Laurent polynomial algebra are equal if they agree on `T`. -/
 @[ext]
 theorem derivation_ext {d e : Derivation R H C}
     (h : d (LaurentPolynomial.T 1) = e (LaurentPolynomial.T 1)) : d = e := by
@@ -95,16 +97,12 @@ theorem derivation_ext {d e : Derivation R H C}
       rw [LaurentPolynomial.C_eq_algebraMap, Derivation.map_algebraMap,
         Derivation.map_algebraMap]
 
-/-- Evaluation on `T` gives the distinguished coordinate of a tangent vector to `𝔾ₘ`. -/
-@[expose] noncomputable def tangentCoordinate : Derivation R H C →ₗ[B] B where
+private noncomputable def tangentCoordinate : Derivation R H C →ₗ[B] B where
   toFun d := CounitAlgebra.algEquivSelf R H B (d (LaurentPolynomial.T 1))
   map_add' _d _e := (CounitAlgebra.algEquivSelf R H B).map_add _ _
   map_smul' b d := algEquivSelf_derivation_smul_apply b d _
 
-/-- The tangent coordinate of a derivation is its value on `T`, transported back from the
-counit coefficient synonym. -/
-@[simp]
-theorem tangentCoordinate_apply (d : Derivation R H C) :
+private lemma tangentCoordinate_apply (d : Derivation R H C) :
     tangentCoordinate d =
       CounitAlgebra.algEquivSelf R H B (d (LaurentPolynomial.T 1)) :=
   rfl
@@ -135,11 +133,10 @@ private theorem tangentCoordinate_surjective :
   let d : Derivation R H C :=
     ((derivationMulEquivTangentKer R H B).symm ⟨q, hq⟩).toAdd
   refine ⟨d, ?_⟩
-  rw [tangentCoordinate_apply]
-  dsimp only [d]
-  rw [derivationMulEquivTangentKer_symm_apply]
-  change CounitAlgebra.algEquivSelf R H B
-      (snd (q.ofConv (LaurentPolynomial.T 1))) = b
+  have hd : d (LaurentPolynomial.T 1) = snd (q.ofConv (LaurentPolynomial.T 1)) := by
+    dsimp only [d]
+    rw [derivationMulEquivTangentKer_symm_apply]
+  rw [tangentCoordinate_apply, hd]
   have hval : q.ofConv (LaurentPolynomial.T 1) = (g : DualNumber C) := by
     rw [← unitOfPoint_val (R := R) (A := DualNumber C)]
     exact congrArg Units.val
@@ -173,9 +170,7 @@ theorem tangentLinearEquiv_symm_apply_T (b : B) :
   have h' := congrArg (CounitAlgebra.algEquivSelf R H B).symm h
   simpa only [AlgEquiv.symm_apply_apply, CounitAlgebra.algEquivSelf_symm_apply] using h'
 
-/-- **The tangent Lie algebra of `𝔾ₘ` is abelian.** Since `T` is group-like, the two
-convolution products in the bracket have the same value on `T`; `derivation_ext` then gives the
-result on every Laurent polynomial. -/
+/-- **The tangent Lie algebra of `𝔾ₘ` is abelian.** -/
 @[simp]
 theorem tangent_bracket_eq_zero (d e : Derivation R H C) : ⁅d, e⁆ = 0 := by
   apply derivation_ext
