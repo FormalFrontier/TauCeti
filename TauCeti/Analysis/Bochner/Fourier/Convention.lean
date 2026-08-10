@@ -27,7 +27,7 @@ function API item asking for "a stated Fourier-convention conversion lemma betwe
 
 * `TauCeti.integral_fourierAtom_eq_charFun_neg_two_pi_smul`: the Fourier-convention integral is
   `charFun μ ((-2π) • a)`.
-* `TauCeti.fourierIntegral_eq_integral_fourierAtom_mul`: the Fourier transform `𝓕 F` is the
+* `TauCeti.fourier_eq_integral_fourierAtom_mul`: the Fourier transform `𝓕 F` is the
   integral of `F` against the Fourier atom.
 * `TauCeti.fourierConventionCharFun_isPositiveDefiniteKernel`: the Fourier-convention
   translation-invariant kernel of a finite measure is positive definite.
@@ -78,7 +78,7 @@ variable {U : Type*} [NormedAddCommGroup U] [InnerProductSpace ℝ U] [FiniteDim
   [MeasurableSpace U] [BorelSpace U]
 
 /-- The Fourier transform written as the integral against the Fourier atom. -/
-theorem fourierIntegral_eq_integral_fourierAtom_mul (F : U → ℂ) (ξ : U) :
+theorem fourier_eq_integral_fourierAtom_mul (F : U → ℂ) (ξ : U) :
     𝓕 F ξ = ∫ v, fourierAtom ξ v * F v := by
   rw [Real.fourier_eq]
   refine integral_congr_ae (ae_of_all _ fun v => ?_)

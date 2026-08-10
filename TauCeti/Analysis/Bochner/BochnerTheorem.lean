@@ -145,7 +145,7 @@ theorem integral_fourierAtom_withDensity_re_fourierInv (F : V → ℂ)
     (hint : Integrable F) (hcont : Continuous F) (v : V) :
     ∫ q, fourierAtom v q ∂(volume.withDensity fun ξ => ENNReal.ofReal (𝓕⁻ F ξ).re) = F v := by
   have hft_int : Integrable (𝓕 F) :=
-    integrable_fourierIntegral_of_isPositiveDefiniteKernel F hpd hint hcont
+    integrable_fourier_of_isPositiveDefiniteKernel F hpd hint hcont
   have h𝓕inv : 𝓕⁻ F = fun ξ : V => 𝓕 F (-ξ) :=
     funext fun ξ => Real.fourierInv_eq_fourier_neg F ξ
   have hinv_cont : Continuous (𝓕⁻ F) := by
@@ -154,10 +154,10 @@ theorem integral_fourierAtom_withDensity_re_fourierInv (F : V → ℂ)
     (by simpa only [innerₗ_apply_apply] using continuous_inner) hint).comp continuous_neg
   have hre : ∀ ξ, 0 ≤ (𝓕⁻ F ξ).re := fun ξ => by
     rw [Real.fourierInv_eq_fourier_neg]
-    exact fourierIntegral_re_nonneg_of_isPositiveDefiniteKernel F hpd hint hcont (-ξ)
+    exact fourier_re_nonneg_of_isPositiveDefiniteKernel F hpd hint hcont (-ξ)
   have hreal : ∀ ξ, 𝓕⁻ F ξ = ((𝓕⁻ F ξ).re : ℂ) := fun ξ => by
     rw [Real.fourierInv_eq_fourier_neg]
-    exact fourierIntegral_eq_re_of_isPositiveDefiniteKernel F hpd (-ξ)
+    exact fourier_eq_re_of_isPositiveDefiniteKernel F hpd (-ξ)
   have hmeas : Measurable fun ξ : V => ENNReal.ofReal (𝓕⁻ F ξ).re :=
     ENNReal.measurable_ofReal.comp (Complex.measurable_re.comp hinv_cont.measurable)
   rw [integral_withDensity_eq_integral_toReal_smul₀ hmeas.aemeasurable
@@ -167,7 +167,7 @@ theorem integral_fourierAtom_withDensity_re_fourierInv (F : V → ℂ)
         refine integral_congr_ae (ae_of_all _ fun q => ?_)
         simp only [ENNReal.toReal_ofReal (hre q), Complex.real_smul]
         rw [← hreal q, mul_comm]
-    _ = 𝓕 (𝓕⁻ F) v := (fourierIntegral_eq_integral_fourierAtom_mul (𝓕⁻ F) v).symm
+    _ = 𝓕 (𝓕⁻ F) v := (fourier_eq_integral_fourierAtom_mul (𝓕⁻ F) v).symm
     _ = F v := by rw [hcont.fourier_fourierInv_eq hint hft_int]
 
 /-! ### The normalized existence argument -/
@@ -197,7 +197,7 @@ private theorem exists_probabilityMeasure_integral_fourierAtom_eq {G : V → ℂ
   have hν_prob : ∀ n, IsProbabilityMeasure (ν n) := by
     intro n
     have : IsFiniteMeasure (ν n) := isFiniteMeasure_withDensity_re_fourierInv _
-      (integrable_fourierIntegral_gaussianRegularize hpd hcont (hε_pos n))
+      (integrable_fourier_gaussianRegularize hpd hcont (hε_pos n))
     have h0 := hν_rep n 0
     simp only [gaussianRegularize_apply, hG0, one_mul, norm_zero, ne_eq, OfNat.ofNat_ne_zero,
       not_false_eq_true, zero_pow, mul_zero, neg_zero, Complex.ofReal_zero,

@@ -51,11 +51,11 @@ restated through `IsPositiveDefiniteKernel`.
 
 ## Main declarations
 
-* `TauCeti.fourierIntegral_re_nonneg_of_isPositiveDefiniteKernel`: the Fourier transform of a
+* `TauCeti.fourier_re_nonneg_of_isPositiveDefiniteKernel`: the Fourier transform of a
   continuous integrable positive-definite function has nonnegative real part.
-* `TauCeti.fourierIntegral_im_eq_zero_of_isPositiveDefiniteKernel`: its imaginary part vanishes.
-* `TauCeti.fourierIntegral_eq_re_of_isPositiveDefiniteKernel`: it equals its own real part.
-* `TauCeti.integrable_fourierIntegral_of_isPositiveDefiniteKernel`: the Fourier transform of a
+* `TauCeti.fourier_im_eq_zero_of_isPositiveDefiniteKernel`: its imaginary part vanishes.
+* `TauCeti.fourier_eq_re_of_isPositiveDefiniteKernel`: it equals its own real part.
+* `TauCeti.integrable_fourier_of_isPositiveDefiniteKernel`: the Fourier transform of a
   continuous integrable positive-definite function is integrable.
 
 ## References
@@ -578,12 +578,12 @@ finite-dimensional real inner-product space has nonnegative real part.
 
 Rudin, *Fourier Analysis on Groups*, Theorem 1.4.3; Folland, *A Course in Abstract Harmonic
 Analysis*, §4.2, Lemma 4.8. -/
-theorem fourierIntegral_re_nonneg_of_isPositiveDefiniteKernel (F : V → ℂ)
+theorem fourier_re_nonneg_of_isPositiveDefiniteKernel (F : V → ℂ)
     (hpd : IsPositiveDefiniteKernel fun a b : V => F (a - b))
     (hint : Integrable F) (hcont : Continuous F) (ξ : V) :
     0 ≤ (𝓕 F ξ).re := by
   -- Step 1: `𝓕 F ξ = ∫ v, fourierAtom ξ v * F v`.
-  rw [fourierIntegral_eq_integral_fourierAtom_mul F ξ]
+  rw [fourier_eq_integral_fourierAtom_mul F ξ]
   -- Step 2: the twisted function is positive definite (Schur product with the Fourier atom).
   have hψ_pd : IsPositiveDefiniteKernel
       fun a b : V => (fun v => fourierAtom ξ v * F v) (a - b) :=
@@ -602,10 +602,10 @@ theorem fourierIntegral_re_nonneg_of_isPositiveDefiniteKernel (F : V → ℂ)
 inner-product space has vanishing imaginary part, by Hermitian symmetry and the negation
 invariance of Haar measure. -/
 @[simp]
-theorem fourierIntegral_im_eq_zero_of_isPositiveDefiniteKernel (F : V → ℂ)
+theorem fourier_im_eq_zero_of_isPositiveDefiniteKernel (F : V → ℂ)
     (hpd : IsPositiveDefiniteKernel fun a b : V => F (a - b)) (ξ : V) :
     (𝓕 F ξ).im = 0 := by
-  rw [fourierIntegral_eq_integral_fourierAtom_mul F ξ]
+  rw [fourier_eq_integral_fourierAtom_mul F ξ]
   have hconj : conj (∫ v, fourierAtom ξ v * F v) = ∫ v, fourierAtom ξ v * F v := by
     rw [← integral_conj]
     have hpt : ∀ v : V, conj (fourierAtom ξ v * F v) = fourierAtom ξ (-v) * F (-v) := by
@@ -624,11 +624,11 @@ theorem fourierIntegral_im_eq_zero_of_isPositiveDefiniteKernel (F : V → ℂ)
 
 /-- The Fourier transform of a positive-definite function on a finite-dimensional real
 inner-product space is real: it equals the coercion of its own real part. -/
-theorem fourierIntegral_eq_re_of_isPositiveDefiniteKernel (F : V → ℂ)
+theorem fourier_eq_re_of_isPositiveDefiniteKernel (F : V → ℂ)
     (hpd : IsPositiveDefiniteKernel fun a b : V => F (a - b)) (ξ : V) :
     𝓕 F ξ = ((𝓕 F ξ).re : ℂ) := by
   refine Complex.ext (by simp) ?_
-  simp [fourierIntegral_im_eq_zero_of_isPositiveDefiniteKernel F hpd ξ]
+  simp [fourier_im_eq_zero_of_isPositiveDefiniteKernel F hpd ξ]
 
 /-! ### Integrability of the Fourier transform of a positive-definite function -/
 
@@ -679,8 +679,8 @@ private theorem integral_norm_fourierIntegral_gaussian_eq_one {t : ℝ} (ht : 0 
   have hnorm : ∀ ξ : V, ‖𝓕 (fun x : V => Complex.exp (-(t * ‖x‖ ^ 2 : ℝ))) ξ‖ =
       (𝓕 (fun x : V => Complex.exp (-(t * ‖x‖ ^ 2 : ℝ))) ξ).re := by
     intro ξ
-    have hre := fourierIntegral_re_nonneg_of_isPositiveDefiniteKernel _ hg_pd hg_int hg_cont ξ
-    rw [fourierIntegral_eq_re_of_isPositiveDefiniteKernel _ hg_pd ξ, Complex.norm_real,
+    have hre := fourier_re_nonneg_of_isPositiveDefiniteKernel _ hg_pd hg_int hg_cont ξ
+    rw [fourier_eq_re_of_isPositiveDefiniteKernel _ hg_pd ξ, Complex.norm_real,
       Complex.ofReal_re, Real.norm_of_nonneg hre]
   calc ∫ ξ : V, ‖𝓕 (fun x : V => Complex.exp (-(t * ‖x‖ ^ 2 : ℝ))) ξ‖
       = ∫ ξ : V, (𝓕 (fun x : V => Complex.exp (-(t * ‖x‖ ^ 2 : ℝ))) ξ).re :=
@@ -750,10 +750,10 @@ private theorem lintegral_enorm_fourierIntegral_mul_gaussian_le (F : V → ℂ)
   have hnorm_eq : ∀ ξ : V, ‖𝓕 F ξ * Complex.exp (-(t * ‖ξ‖ ^ 2 : ℝ))‖ =
       (𝓕 F ξ * Complex.exp (-(t * ‖ξ‖ ^ 2 : ℝ))).re := by
     intro ξ
-    rw [fourierIntegral_eq_re_of_isPositiveDefiniteKernel F hpd ξ, ← Complex.ofReal_neg,
+    rw [fourier_eq_re_of_isPositiveDefiniteKernel F hpd ξ, ← Complex.ofReal_neg,
       ← Complex.ofReal_exp, ← Complex.ofReal_mul, Complex.norm_real, Complex.ofReal_re,
       Real.norm_of_nonneg (mul_nonneg
-        (fourierIntegral_re_nonneg_of_isPositiveDefiniteKernel F hpd hint hcont ξ)
+        (fourier_re_nonneg_of_isPositiveDefiniteKernel F hpd hint hcont ξ)
         (Real.exp_nonneg _))]
   calc ∫ ξ, ‖𝓕 F ξ * Complex.exp (-(t * ‖ξ‖ ^ 2 : ℝ))‖
       = ∫ ξ, (𝓕 F ξ * Complex.exp (-(t * ‖ξ‖ ^ 2 : ℝ))).re :=
@@ -767,7 +767,7 @@ private theorem lintegral_enorm_fourierIntegral_mul_gaussian_le (F : V → ℂ)
 Testing `𝓕 F` against the Gaussians `exp (-‖·‖²/(n+1))` gives integrals uniformly bounded by
 `(F 0).re`, and Fatou's lemma passes the bound to `∫⁻ ‖𝓕 F‖ₑ`. Folland, *A Course in Abstract
 Harmonic Analysis*, §4.2. -/
-theorem integrable_fourierIntegral_of_isPositiveDefiniteKernel (F : V → ℂ)
+theorem integrable_fourier_of_isPositiveDefiniteKernel (F : V → ℂ)
     (hpd : IsPositiveDefiniteKernel fun a b : V => F (a - b))
     (hint : Integrable F) (hcont : Continuous F) :
     Integrable (𝓕 F) := by

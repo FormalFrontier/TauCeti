@@ -24,7 +24,7 @@ has a positive-definite subtraction kernel and is continuous. This is the approx
 of the second step of Bochner's theorem: it replaces a bounded positive-definite function by an
 integrable one to which Fourier inversion applies. For continuous positive-definite `φ` and
 `ε > 0` its Fourier transform is integrable, by
-`integrable_fourierIntegral_of_isPositiveDefiniteKernel`.
+`integrable_fourier_of_isPositiveDefiniteKernel`.
 
 Adapted from the Bochner–Minlos formalization by Michael R. Douglas
 (https://github.com/mrdouglasny/bochner, revision `08eb302`), source file `Bochner/Main.lean`;
@@ -37,7 +37,7 @@ the positive-definiteness hypotheses are restated through `TauCeti.IsPositiveDef
   subtraction kernel whenever `φ` does.
 * `TauCeti.continuous_gaussianRegularize`, `TauCeti.integrable_gaussianRegularize`,
   `TauCeti.tendsto_gaussianRegularize`: the basic analytic facts about `φ_ε`.
-* `TauCeti.integrable_fourierIntegral_gaussianRegularize`: the Fourier transform of `φ_ε` is
+* `TauCeti.integrable_fourier_gaussianRegularize`: the Fourier transform of `φ_ε` is
   integrable.
 
 ## References
@@ -117,11 +117,11 @@ theorem integrable_gaussianRegularize {φ : V → ℂ} {C : ℝ} (hb : ∀ x, �
 
 /-- The Fourier transform of a Gaussian regularization of a continuous positive-definite
 function is integrable, for every `ε > 0`. -/
-theorem integrable_fourierIntegral_gaussianRegularize {φ : V → ℂ}
+theorem integrable_fourier_gaussianRegularize {φ : V → ℂ}
     (hpd : IsPositiveDefiniteKernel fun a b : V => φ (a - b))
     (hcont : Continuous φ) {ε : ℝ} (hε : 0 < ε) :
     Integrable (𝓕 (gaussianRegularize φ ε)) :=
-  integrable_fourierIntegral_of_isPositiveDefiniteKernel _
+  integrable_fourier_of_isPositiveDefiniteKernel _
     (isPositiveDefiniteKernel_gaussianRegularize hpd hε.le)
     (integrable_gaussianRegularize (norm_apply_le_map_zero_re_of_isPositiveDefiniteKernel hpd)
       hcont.aestronglyMeasurable hε)
