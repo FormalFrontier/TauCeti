@@ -131,6 +131,8 @@ noncomputable def incomingSum (M : QuiverRep.{u, v, w, max v w x} k Q) (i : Q) :
     ((e : Σ b : Q, (b ⟶ i)) → M.obj e.1) →ₗ[k] M.obj i :=
   LinearMap.lsum k (fun e : Σ b : Q, (b ⟶ i) ↦ M.obj e.1) k fun e ↦ (M.map e.2.toPath).hom
 
+/-- `TauCeti.incomingSum` sends a family of vectors indexed by the arrows into `i` to the sum,
+over those arrows, of the images of its coordinates under the corresponding arrow actions. -/
 @[simp]
 theorem incomingSum_apply (M : QuiverRep.{u, v, w, max v w x} k Q) (i : Q)
     (f : (e : Σ b : Q, (b ⟶ i)) → M.obj e.1) :
