@@ -55,8 +55,8 @@ step and are not proved here.
 * `TauCeti.boundaryChartedSpace_chartAt_source` and its companions characterize the preferred
   boundary charts induced by the ambient preferred charts.
 * `TauCeti.isManifold_boundary`: the boundary is a `C^k` manifold over `EuclideanSpace ℝ (Fin n)`.
-* `TauCeti.isImmersion_boundary_val`, `TauCeti.isSmoothEmbedding_boundary_val`: the inclusion of
-  the boundary is a closed `C^k` smooth embedding.
+* `TauCeti.isImmersion_subtypeVal_boundary`, `TauCeti.isSmoothEmbedding_subtypeVal_boundary`: the
+  inclusion of the boundary is a closed `C^k` smooth embedding.
 
 ## References
 
@@ -357,7 +357,7 @@ theorem isManifold_boundary (hk : k ≠ 0) :
 
 /-- Identify `EuclideanSpace ℝ (Fin n) × ℝ` with `EuclideanSpace ℝ (Fin (n + 1))` by placing the
 `ℝ` factor in the zeroth coordinate. This is the complement used by
-`isImmersion_boundary_val`. -/
+`isImmersion_subtypeVal_boundary`. -/
 private noncomputable def boundaryValComplementEquiv (n : ℕ) :
     (EuclideanSpace ℝ (Fin n) × ℝ) ≃L[ℝ] EuclideanSpace ℝ (Fin (n + 1)) :=
   (ContinuousLinearEquiv.prodComm ℝ (EuclideanSpace ℝ (Fin n)) ℝ).trans <|
@@ -378,7 +378,7 @@ private theorem boundaryValComplementEquiv_apply_succ (x : EuclideanSpace ℝ (F
 variable (M) in
 /-- The inclusion of the boundary into the manifold is a `C^k` immersion. In the preferred
 boundary and ambient charts it is the coordinate inclusion with one-dimensional complement. -/
-theorem isImmersion_boundary_val (hk : k ≠ 0) :
+theorem isImmersion_subtypeVal_boundary (hk : k ≠ 0) :
     let _ : IsManifold (𝓡∂ (n + 1)) 1 M :=
       IsManifold.of_le (ENat.one_le_iff_ne_zero_withTop.2 hk)
     Manifold.IsImmersion 𝓘(ℝ, EuclideanSpace ℝ (Fin n)) (𝓡∂ (n + 1)) k
@@ -414,16 +414,15 @@ theorem isImmersion_boundary_val (hk : k ≠ 0) :
 
 variable (M) in
 /-- The inclusion of the boundary into the manifold is a `C^k` smooth embedding. -/
-theorem isSmoothEmbedding_boundary_val (hk : k ≠ 0) :
+theorem isSmoothEmbedding_subtypeVal_boundary (hk : k ≠ 0) :
     let _ : IsManifold (𝓡∂ (n + 1)) 1 M :=
       IsManifold.of_le (ENat.one_le_iff_ne_zero_withTop.2 hk)
     Manifold.IsSmoothEmbedding 𝓘(ℝ, EuclideanSpace ℝ (Fin n)) (𝓡∂ (n + 1)) k
       (Subtype.val : ↥((𝓡∂ (n + 1)).boundary M) → M) := by
   let _ : IsManifold (𝓡∂ (n + 1)) 1 M :=
     IsManifold.of_le (ENat.one_le_iff_ne_zero_withTop.2 hk)
-  exact ⟨isImmersion_boundary_val (n := n) (k := k) M hk,
-    (TauCeti.ModelWithCorners.isClosedEmbedding_boundary_val
-      (I := 𝓡∂ (n + 1)) hk).isEmbedding⟩
+  exact ⟨isImmersion_subtypeVal_boundary (n := n) (k := k) M hk,
+    ((𝓡∂ (n + 1)).isClosed_boundary hk).isClosedEmbedding_subtypeVal.isEmbedding⟩
 
 end Boundary
 

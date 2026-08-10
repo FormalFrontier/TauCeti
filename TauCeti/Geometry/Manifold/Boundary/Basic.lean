@@ -43,10 +43,4 @@ theorem isBoundaryPoint_iff_mem_frontier_range (hk : k ≠ 0) (he : e ∈ atlas 
     isInteriorPoint_iff_mem_interior_range hk he hx, I.isClosed_range.frontier_eq]
   simp
 
-/-- The inclusion of the boundary of a `C^k` manifold with corners is a closed topological
-embedding. -/
-theorem isClosedEmbedding_boundary_val (hk : k ≠ 0) :
-    IsClosedEmbedding (Subtype.val : ↥(I.boundary M) → M) :=
-  (I.isClosed_boundary hk).isClosedEmbedding_subtypeVal
-
 end TauCeti.ModelWithCorners
