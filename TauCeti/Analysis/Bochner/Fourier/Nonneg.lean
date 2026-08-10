@@ -56,6 +56,11 @@ restated through `IsPositiveDefiniteKernel`.
 * `TauCeti.fourier_eq_re_of_isPositiveDefiniteKernel`: it equals its own real part.
 * `TauCeti.integrable_fourier_of_isPositiveDefiniteKernel`: the Fourier transform of a
   continuous integrable positive-definite function is integrable.
+* `TauCeti.fourierInv_re_nonneg_of_isPositiveDefiniteKernel`,
+  `TauCeti.fourierInv_eq_re_of_isPositiveDefiniteKernel`,
+  `TauCeti.integrable_fourierInv_of_isPositiveDefiniteKernel` and
+  `TauCeti.measurable_ofReal_re_fourierInv`: the same facts for the inverse transform `𝓕⁻ F`,
+  which is the density of the representing measure of Bochner's theorem.
 
 ## References
 
@@ -313,15 +318,9 @@ omit [InnerProductSpace ℝ V] [FiniteDimensional ℝ V] [MeasurableSpace V] [Bo
 /-- Ball containment: `closedBall 0 (R - ‖v‖) ⊆ closedBall 0 R ∩ closedBall v R`. -/
 private theorem closedBall_sub_norm_subset (v : V) (R : ℝ) :
     Metric.closedBall (0 : V) (R - ‖v‖) ⊆
-    Metric.closedBall (0 : V) R ∩ Metric.closedBall v R := by
-  intro x hx
-  simp only [Metric.mem_closedBall, dist_zero_right] at hx
-  constructor
-  · exact Metric.mem_closedBall.mpr (by rw [dist_zero_right]; linarith [norm_nonneg v])
-  · refine Metric.mem_closedBall.mpr ?_
-    have h1 : dist x v ≤ dist x 0 + dist 0 v := dist_triangle x 0 v
-    simp only [dist_zero_right, dist_zero_left] at h1
-    linarith
+    Metric.closedBall (0 : V) R ∩ Metric.closedBall v R := fun x hx =>
+  ⟨Metric.closedBall_subset_closedBall (by linarith [norm_nonneg v]) hx,
+    Metric.closedBall_subset_closedBall' (by simp [dist_zero_left]) hx⟩
 
 /-- The overlap ratio tends to one along integer radii, for a fixed translation.
 
@@ -402,12 +401,8 @@ private theorem inner_integral_sub (ψ : V → ℂ) (x : V) (R : ℝ) :
     simp only [Set.indicator, Metric.mem_closedBall]
     have : dist (x - y) x = dist y 0 := by simp [dist_eq_norm]
     rw [this]
-  simp_rw [hind, sub_eq_add_neg]
-  have h1 : ∫ y : V, (Metric.closedBall x R).indicator ψ (x + -y) =
-      ∫ y : V, (Metric.closedBall x R).indicator ψ (x + y) :=
-    integral_neg_eq_self (fun y : V => (Metric.closedBall x R).indicator ψ (x + y)) volume
-  rw [h1]
-  exact integral_add_left_eq_self ((Metric.closedBall x R).indicator ψ) x
+  simp_rw [hind]
+  exact integral_sub_left_eq_self ((Metric.closedBall x R).indicator ψ) volume x
 
 omit [InnerProductSpace ℝ V] [FiniteDimensional ℝ V] [MeasurableSpace V] [BorelSpace V] in
 /-- Indicator equivalence: for the nested ball indicators, membership `v ∈ closedBall x R` can be
@@ -738,9 +733,7 @@ private theorem lintegral_enorm_fourierIntegral_mul_gaussian_le (F : V → ℂ)
     ∫⁻ ξ, ‖𝓕 F ξ * Complex.exp (-(t * ‖ξ‖ ^ 2 : ℝ))‖ₑ ≤ ENNReal.ofReal (F 0).re := by
   have hbound : ∀ ξ : V, ‖𝓕 F ξ‖ ≤ ∫ x, ‖F x‖ := fun ξ =>
     VectorFourier.norm_fourierIntegral_le_integral_norm 𝐞 volume (innerₗ V) F ξ
-  have hft_cont : Continuous (𝓕 F) :=
-    VectorFourier.fourierIntegral_continuous Real.continuous_fourierChar
-    (by simpa only [innerₗ_apply_apply] using continuous_inner) hint
+  have hft_cont : Continuous (𝓕 F) := continuous_fourier_of_integrable hint
   have hprod_int : Integrable fun ξ : V => 𝓕 F ξ * Complex.exp (-(t * ‖ξ‖ ^ 2 : ℝ)) :=
     (integrable_cexp_neg_mul_sq_norm ht).bdd_mul hft_cont.aestronglyMeasurable
       (ae_of_all _ fun ξ => hbound ξ)
@@ -770,9 +763,7 @@ theorem integrable_fourier_of_isPositiveDefiniteKernel (F : V → ℂ)
     (hpd : IsPositiveDefiniteKernel fun a b : V => F (a - b))
     (hint : Integrable F) (hcont : Continuous F) :
     Integrable (𝓕 F) := by
-  have hft_cont : Continuous (𝓕 F) :=
-    VectorFourier.fourierIntegral_continuous Real.continuous_fourierChar
-    (by simpa only [innerₗ_apply_apply] using continuous_inner) hint
+  have hft_cont : Continuous (𝓕 F) := continuous_fourier_of_integrable hint
   set tn : ℕ → ℝ := fun n => 1 / ((n : ℝ) + 1) with htn_def
   have htn_pos : ∀ n, 0 < tn n := fun n => by positivity
   have htn_lim : Tendsto tn atTop (𝓝 0) := tendsto_one_div_add_atTop_nhds_zero_nat
@@ -783,11 +774,8 @@ theorem integrable_fourier_of_isPositiveDefiniteKernel (F : V → ℂ)
       (fun n : ℕ => ‖𝓕 F ξ * Complex.exp (-(tn n * ‖ξ‖ ^ 2 : ℝ))‖ₑ)
       atTop (𝓝 ‖𝓕 F ξ‖ₑ) := by
     intro ξ
-    have hc : Continuous fun s : ℝ => Complex.exp (-(s * ‖ξ‖ ^ 2 : ℝ)) := by fun_prop
-    have h1 : Tendsto (fun s : ℝ => Complex.exp (-(s * ‖ξ‖ ^ 2 : ℝ))) (𝓝 0) (𝓝 1) := by
-      simpa using hc.tendsto 0
     have h2 : Tendsto (fun n : ℕ => Complex.exp (-(tn n * ‖ξ‖ ^ 2 : ℝ))) atTop (𝓝 1) :=
-      h1.comp htn_lim
+      (tendsto_cexp_neg_mul_sq_norm ξ).comp htn_lim
     have h3 : Tendsto (fun n : ℕ => 𝓕 F ξ * Complex.exp (-(tn n * ‖ξ‖ ^ 2 : ℝ)))
         atTop (𝓝 (𝓕 F ξ)) := by
       simpa using tendsto_const_nhds.mul h2
@@ -806,5 +794,43 @@ theorem integrable_fourier_of_isPositiveDefiniteKernel (F : V → ℂ)
           exact hn.trans
             (lintegral_enorm_fourierIntegral_mul_gaussian_le F hpd hint hcont (htn_pos n))
   exact ⟨hft_cont.aestronglyMeasurable, hbound.trans_lt ENNReal.ofReal_lt_top⟩
+
+/-! ### The inverse transform
+
+The inverse Fourier transform `𝓕⁻ F = 𝓕 F ∘ (-·)` is the density of the representing measure of
+Bochner's theorem, so nonnegativity, realness and integrability are recorded for it too. -/
+
+/-- The inverse Fourier transform of a continuous integrable positive-definite function has
+nonnegative real part. -/
+theorem fourierInv_re_nonneg_of_isPositiveDefiniteKernel (F : V → ℂ)
+    (hpd : IsPositiveDefiniteKernel fun a b : V => F (a - b))
+    (hint : Integrable F) (hcont : Continuous F) (ξ : V) :
+    0 ≤ (𝓕⁻ F ξ).re := by
+  rw [Real.fourierInv_eq_fourier_neg]
+  exact fourier_re_nonneg_of_isPositiveDefiniteKernel F hpd hint hcont (-ξ)
+
+/-- The inverse Fourier transform of a positive-definite function is real: it equals the
+coercion of its own real part. -/
+theorem fourierInv_eq_re_of_isPositiveDefiniteKernel (F : V → ℂ)
+    (hpd : IsPositiveDefiniteKernel fun a b : V => F (a - b)) (ξ : V) :
+    𝓕⁻ F ξ = ((𝓕⁻ F ξ).re : ℂ) := by
+  rw [Real.fourierInv_eq_fourier_neg]
+  exact fourier_eq_re_of_isPositiveDefiniteKernel F hpd (-ξ)
+
+/-- The inverse Fourier transform of a continuous integrable positive-definite function is
+integrable. -/
+theorem integrable_fourierInv_of_isPositiveDefiniteKernel (F : V → ℂ)
+    (hpd : IsPositiveDefiniteKernel fun a b : V => F (a - b))
+    (hint : Integrable F) (hcont : Continuous F) :
+    Integrable (𝓕⁻ F) := by
+  rw [funext fun ξ => Real.fourierInv_eq_fourier_neg F ξ]
+  exact (integrable_fourier_of_isPositiveDefiniteKernel F hpd hint hcont).comp_neg
+
+/-- The `ℝ≥0∞`-valued density `(𝓕⁻ F).re` of the Bochner representing measure is measurable
+whenever `F` is integrable. -/
+theorem measurable_ofReal_re_fourierInv {F : V → ℂ} (hint : Integrable F) :
+    Measurable fun ξ : V => ENNReal.ofReal (𝓕⁻ F ξ).re :=
+  ENNReal.measurable_ofReal.comp
+    (Complex.measurable_re.comp (continuous_fourierInv_of_integrable hint).measurable)
 
 end TauCeti

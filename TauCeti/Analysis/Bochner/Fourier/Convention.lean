@@ -29,8 +29,13 @@ function API item asking for "a stated Fourier-convention conversion lemma betwe
   `charFun μ ((-2π) • a)`.
 * `TauCeti.fourier_eq_integral_fourierAtom_mul`: the Fourier transform `𝓕 F` is the
   integral of `F` against the Fourier atom.
+* `TauCeti.continuous_fourier_of_integrable` and
+  `TauCeti.continuous_fourierInv_of_integrable`: the Fourier transform of an integrable function
+  and its inverse are continuous.
 * `TauCeti.fourierConventionCharFun_isPositiveDefiniteKernel`: the Fourier-convention
   translation-invariant kernel of a finite measure is positive definite.
+* `TauCeti.Measure.ext_of_forall_integral_fourierAtom_eq`: a finite measure is determined by its
+  Fourier-convention transform — the uniqueness half of Bochner's theorem.
 
 ## References
 
@@ -72,6 +77,10 @@ theorem integral_fourierAtom_eq_charFun_neg_two_pi_smul (a : V) :
   simpa only [fourierAtom_apply, neg_mul] using
     integral_exp_neg_two_pi_inner_eq_charFun_neg_two_pi_smul (μ := μ) a
 
+/-- The scaling constant `-2π` of the Fourier convention is nonzero. -/
+theorem neg_two_pi_ne_zero : (-2 * Real.pi) ≠ 0 :=
+  mul_ne_zero (by norm_num) Real.pi_ne_zero
+
 section FourierIntegral
 
 variable {U : Type*} [NormedAddCommGroup U] [InnerProductSpace ℝ U] [FiniteDimensional ℝ U]
@@ -83,6 +92,19 @@ theorem fourier_eq_integral_fourierAtom_mul (F : U → ℂ) (ξ : U) :
   rw [Real.fourier_eq]
   refine integral_congr_ae (ae_of_all _ fun v => ?_)
   simp only [Circle.smul_def, smul_eq_mul, fourierAtom_eq_fourierChar]
+
+/-- The Fourier transform of an integrable function is continuous. This is Mathlib's
+`VectorFourier.fourierIntegral_continuous` specialized to the inner-product pairing. -/
+theorem continuous_fourier_of_integrable {F : U → ℂ} (hint : Integrable F) : Continuous (𝓕 F) :=
+  VectorFourier.fourierIntegral_continuous Real.continuous_fourierChar
+    (by simpa only [innerₗ_apply_apply] using continuous_inner) hint
+
+/-- The inverse Fourier transform of an integrable function is continuous: it is the Fourier
+transform precomposed with negation. -/
+theorem continuous_fourierInv_of_integrable {F : U → ℂ} (hint : Integrable F) :
+    Continuous (𝓕⁻ F) := by
+  rw [funext fun ξ => Real.fourierInv_eq_fourier_neg F ξ]
+  exact (continuous_fourier_of_integrable hint).comp continuous_neg
 
 end FourierIntegral
 
@@ -136,5 +158,25 @@ theorem continuous_fourierConventionCharFun [SecondCountableTopology W] :
   exact integral_fourierAtom_eq_charFun_neg_two_pi_smul (μ := ν) a
 
 end Topology
+
+section Uniqueness
+
+variable {W : Type*} [NormedAddCommGroup W] [InnerProductSpace ℝ W] [MeasurableSpace W]
+  [BorelSpace W] [SecondCountableTopology W] [CompleteSpace W]
+
+/-- **Uniqueness half of Bochner's theorem.** Two finite Borel measures with the same
+Fourier-convention transform coincide; this is Mathlib's characteristic-function uniqueness
+theorem, transported through the `-2π` rescaling. Stated on any complete second-countable real
+inner-product space; no finite-dimensionality is needed. -/
+theorem Measure.ext_of_forall_integral_fourierAtom_eq {μ ν : Measure W}
+    [IsFiniteMeasure μ] [IsFiniteMeasure ν]
+    (h : ∀ v, ∫ q, fourierAtom v q ∂μ = ∫ q, fourierAtom v q ∂ν) : μ = ν := by
+  refine MeasureTheory.Measure.ext_of_charFun (funext fun t => ?_)
+  have h' := h ((-2 * Real.pi)⁻¹ • t)
+  rwa [integral_fourierAtom_eq_charFun_neg_two_pi_smul,
+    integral_fourierAtom_eq_charFun_neg_two_pi_smul, smul_smul,
+    mul_inv_cancel₀ neg_two_pi_ne_zero, one_smul] at h'
+
+end Uniqueness
 
 end TauCeti

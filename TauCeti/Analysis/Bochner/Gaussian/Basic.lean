@@ -14,11 +14,12 @@ import Mathlib.Analysis.SpecialFunctions.Gaussian.FourierTransform
 /-!
 # The Gaussian is a positive-definite function
 
-The Gaussian `a ↦ exp (-c‖a‖²)` on a finite-dimensional real inner-product space `V` is
-continuous and positive definite for every `c ≥ 0`. This supplies the positive-definiteness
-half of the Gaussian acceptance example requested in Part C of the `OneParameterSemigroups`
-roadmap in TauCetiRoadmap ("positive-definite functions and Bochner's theorem"); the
-representing-measure half is a later Bochner-representation milestone.
+The Gaussian `a ↦ exp (-c‖a‖²)` on a real inner-product space `V` is continuous, and its
+subtraction kernel `(a, b) ↦ exp (-c‖a - b‖²)` is positive definite, for every `c ≥ 0`. This
+supplies the positive-definiteness half of the Gaussian acceptance example requested in Part C of
+the `OneParameterSemigroups` roadmap in TauCetiRoadmap ("positive-definite functions and
+Bochner's theorem"); the representing-measure half is supplied by `TauCeti.bochner` in
+`TauCeti/Analysis/Bochner/BochnerTheorem.lean`.
 
 The positive-definiteness is not proved from scratch: Mathlib's
 `ProbabilityTheory.charFun_stdGaussian` computes the characteristic function of the standard
@@ -26,16 +27,20 @@ Gaussian measure on `V` to be `t ↦ exp (-‖t‖²/2)`, and
 `TauCeti.charFun_isPositiveDefinite_of_star_eq_neg` (the finite-measure Fourier-transform
 correspondence) already records that a characteristic function is positive definite for the
 negation involution `a⋆ = -a`. Rescaling the argument by `√(2c)` turns `exp (-‖·‖²/2)` into
-`exp (-c‖·‖²)`.
+`exp (-c‖·‖²)`. The standard Gaussian measure needs a finite-dimensional space, but the kernel
+form transfers to an arbitrary real inner-product space: positive definiteness constrains only
+finite families of points, and those span a finite-dimensional subspace on which the norm — hence
+the kernel — restricts.
 
 ## Main declarations
 
 * `TauCeti.charFun_stdGaussian_sqrt_smul`: `charFun (stdGaussian V) (√(2c) • a) = exp (-c‖a‖²)`.
-* `TauCeti.isPositiveDefinite_cexp_neg_mul_sq_norm`: `a ↦ exp (-c‖a‖²)` is positive definite for
-  `c ≥ 0` under the negation involution.
+* `TauCeti.isPositiveDefinite_cexp_neg_mul_sq_norm`: on a finite-dimensional space,
+  `a ↦ exp (-c‖a‖²)` is positive definite for `c ≥ 0` under the negation involution.
 * `TauCeti.isPositiveDefiniteKernel_cexp_neg_mul_sq_norm`: the involution-free kernel form,
-  `(a, b) ↦ exp (-c‖a - b‖²)` is a positive-definite kernel.
+  `(a, b) ↦ exp (-c‖a - b‖²)` is a positive-definite kernel on any real inner-product space.
 * `TauCeti.continuous_cexp_neg_mul_sq_norm`: `a ↦ exp (-c‖a‖²)` is continuous.
+* `TauCeti.tendsto_cexp_neg_mul_sq_norm`: `exp (-c‖a‖²) → 1` as `c → 0`.
 * `TauCeti.integrable_cexp_neg_mul_sq_norm`: `a ↦ exp (-c‖a‖²)` is integrable for `c > 0`.
 * `TauCeti.isPositiveDefinite_cexp_neg_sq_norm`: the positive-definiteness half of the Gaussian
   acceptance example (`c = 1`), `a ↦ exp (-‖a‖²)`.
@@ -53,18 +58,36 @@ negation involution `a⋆ = -a`. Rescaling the argument by `√(2c)` turns `exp 
 public section
 
 open MeasureTheory ProbabilityTheory Complex
-open scoped ComplexOrder
+open scoped ComplexOrder Topology
 
 namespace TauCeti
 
-variable {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V] [FiniteDimensional ℝ V]
-  [MeasurableSpace V] [BorelSpace V]
+/-! ### The Gaussian factor -/
 
-omit [InnerProductSpace ℝ V] [FiniteDimensional ℝ V] [MeasurableSpace V] [BorelSpace V] in
+section Elementary
+
+variable {V : Type*} [NormedAddCommGroup V]
+
 /-- The Gaussian `a ↦ exp (-c‖a‖²)` is continuous on `V` for every real `c`. -/
 theorem continuous_cexp_neg_mul_sq_norm (c : ℝ) :
     Continuous fun a : V => Complex.exp (-(c * ‖a‖ ^ 2 : ℝ)) := by
   fun_prop
+
+/-- The Gaussian factor `exp (-c‖a‖²)` tends to `1` as the width parameter `c` tends to `0`.
+This is the pointwise convergence underlying Gaussian regularization. -/
+theorem tendsto_cexp_neg_mul_sq_norm (a : V) :
+    Filter.Tendsto (fun c : ℝ => Complex.exp (-(c * ‖a‖ ^ 2 : ℝ))) (𝓝 0) (𝓝 1) := by
+  have hc : Continuous fun c : ℝ => Complex.exp (-(c * ‖a‖ ^ 2 : ℝ)) := by fun_prop
+  simpa using hc.tendsto 0
+
+end Elementary
+
+/-! ### The finite-dimensional case -/
+
+section FiniteDimensional
+
+variable {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V] [FiniteDimensional ℝ V]
+  [MeasurableSpace V] [BorelSpace V]
 
 /-- The Gaussian `a ↦ exp (-c‖a‖²)` is integrable on `V` for every `c > 0`. -/
 theorem integrable_cexp_neg_mul_sq_norm {c : ℝ} (hc : 0 < c) :
@@ -105,11 +128,12 @@ theorem isPositiveDefinite_cexp_neg_mul_sq_norm [StarAddMonoid V]
   rw [heq]
   exact hpull
 
-/-- The translation-invariant kernel attached to the Gaussian, `(a, b) ↦ exp (-c‖a - b‖²)`, is
-positive definite for every `c ≥ 0`. This is the kernel form of
-`isPositiveDefinite_cexp_neg_mul_sq_norm`, avoiding any explicit choice of involution on the
-domain. -/
-theorem isPositiveDefiniteKernel_cexp_neg_mul_sq_norm {c : ℝ} (hc : 0 ≤ c) :
+/-- The Gaussian kernel `(a, b) ↦ exp (-c‖a - b‖²)` is positive definite on a finite-dimensional
+space: it is the pullback of the characteristic function of the standard Gaussian measure along
+the rescaling `√(2c) • ·`. The general case, `isPositiveDefiniteKernel_cexp_neg_mul_sq_norm`,
+reduces to this one on the span of a finite family of points. -/
+private theorem isPositiveDefiniteKernel_cexp_neg_mul_sq_norm_of_finiteDimensional {c : ℝ}
+    (hc : 0 ≤ c) :
     IsPositiveDefiniteKernel fun a b : V => Complex.exp (-(c * ‖a - b‖ ^ 2 : ℝ)) := by
   have hscaled := isPositiveDefiniteKernel_comp
     (charFun_isPositiveDefiniteKernel (μ := stdGaussian V))
@@ -129,6 +153,39 @@ theorem isPositiveDefinite_cexp_neg_sq_norm [StarAddMonoid V] (hstar : ∀ x : V
   simpa only [one_mul] using
     isPositiveDefinite_cexp_neg_mul_sq_norm hstar (V := V) (c := 1) zero_le_one
 
+end FiniteDimensional
+
+/-! ### Positive definiteness on an arbitrary inner-product space -/
+
+section General
+
+variable {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V]
+
+/-- The translation-invariant kernel attached to the Gaussian, `(a, b) ↦ exp (-c‖a - b‖²)`, is
+positive definite for every `c ≥ 0`, on any real inner-product space. This is the kernel form of
+`isPositiveDefinite_cexp_neg_mul_sq_norm`, avoiding any explicit choice of involution on the
+domain.
+
+Positive definiteness constrains only finite families of points, and any finite family spans a
+finite-dimensional subspace on which the kernel restricts to the Gaussian kernel of that
+subspace; so the statement follows from the finite-dimensional case, where the Gaussian is the
+characteristic function of the standard Gaussian measure. -/
+theorem isPositiveDefiniteKernel_cexp_neg_mul_sq_norm {c : ℝ} (hc : 0 ≤ c) :
+    IsPositiveDefiniteKernel fun a b : V => Complex.exp (-(c * ‖a - b‖ ^ 2 : ℝ)) := by
+  refine isPositiveDefiniteKernel_iff.mpr ⟨fun a b => ?_, fun {ι : Type} _ v x => ?_⟩
+  · rw [← Complex.exp_conj, map_neg, Complex.conj_ofReal, norm_sub_rev]
+  · -- Restrict to the span of the finite family, a finite-dimensional inner-product space.
+    let W := Submodule.span ℝ (Set.range v)
+    have : FiniteDimensional ℝ W := .span_of_finite ℝ (Set.finite_range v)
+    let _mW : MeasurableSpace W := borel W
+    have : BorelSpace W := ⟨rfl⟩
+    let w : ι → W := fun i => ⟨v i, Submodule.subset_span (Set.mem_range_self i)⟩
+    -- the subspace norm is the restriction of the norm of `V`
+    have hnorm : ∀ i j, ‖w i - w j‖ = ‖v i - v j‖ := fun i j => rfl
+    have h := (isPositiveDefiniteKernel_iff.mp
+      (isPositiveDefiniteKernel_cexp_neg_mul_sq_norm_of_finiteDimensional (V := W) hc)).2 w x
+    simpa only [hnorm] using h
+
 /-- The involution-free kernel form of the Gaussian acceptance example (`c = 1`):
 `(a, b) ↦ exp (-‖a - b‖²)` is a positive-definite kernel. Unlike
 `isPositiveDefinite_cexp_neg_sq_norm`, this requires no choice of involution on `V`. -/
@@ -136,5 +193,7 @@ theorem isPositiveDefiniteKernel_cexp_neg_sq_norm :
     IsPositiveDefiniteKernel fun a b : V => Complex.exp (-(‖a - b‖ ^ 2 : ℝ)) := by
   simpa only [one_mul] using
     isPositiveDefiniteKernel_cexp_neg_mul_sq_norm (V := V) (c := 1) zero_le_one
+
+end General
 
 end TauCeti

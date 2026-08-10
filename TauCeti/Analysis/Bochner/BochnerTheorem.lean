@@ -10,16 +10,13 @@ public import Mathlib.MeasureTheory.Measure.Haar.OfBasis
 public import Mathlib.MeasureTheory.Measure.WithDensity
 public import TauCeti.Analysis.PositiveDefinite.FourierAtom
 public import TauCeti.Analysis.PositiveDefinite.Function.Kernel
--- The remaining imports are proof-only: Fourier inversion, the negation invariance of Haar
--- measure, the `withDensity` Bochner-integral formula, the characteristic-function API and its
--- uniqueness theorem, the Lévy continuity theorem, Prokhorov's theorem with the Lévy–Prokhorov
--- metrizability of the space of probability measures, sequential compactness, the
--- Fourier-convention bridge, the nonnegativity and integrability of the Fourier transform of a
+-- The remaining imports are proof-only: Fourier inversion, the characteristic-function API, the
+-- Lévy continuity theorem, Prokhorov's theorem with the Lévy–Prokhorov metrizability of the
+-- space of probability measures, sequential compactness, the Fourier-convention bridge with its
+-- uniqueness theorem, the nonnegativity and integrability of the Fourier transform of a
 -- positive-definite function, the Gaussian regularization, and the kernel Cauchy–Schwarz
 -- bounds.
 import Mathlib.Analysis.Fourier.Inversion
-import Mathlib.MeasureTheory.Group.Integral
-import Mathlib.MeasureTheory.Integral.Bochner.ContinuousLinearMap
 import Mathlib.MeasureTheory.Measure.CharacteristicFunction.Basic
 import Mathlib.MeasureTheory.Measure.LevyConvergence
 import Mathlib.MeasureTheory.Measure.LevyProkhorovMetric
@@ -52,8 +49,8 @@ The characteristic functions of the `ν_n` converge pointwise to a rescaling of 
 continuous at `0`, so the family is tight by the Lévy continuity theorem; Prokhorov's theorem
 and the metrizability of the space of probability measures extract a weakly convergent
 subsequence, whose limit represents `G` by passing to the limit in the characteristic
-functions. Uniqueness reduces to Mathlib's `MeasureTheory.Measure.ext_of_charFun` through the
-`-2π` rescaling of `integral_fourierAtom_eq_charFun_neg_two_pi_smul`.
+functions. Uniqueness is `Measure.ext_of_forall_integral_fourierAtom_eq` from
+`Fourier/Convention.lean`.
 
 Adapted from the Bochner–Minlos formalization by Michael R. Douglas
 (https://github.com/mrdouglasny/bochner, revision `08eb302`), source file `Bochner/Main.lean`;
@@ -69,8 +66,6 @@ and the representation is stated in the `fourierAtom` convention rather than thr
   Fourier atom — the `L¹` case of Bochner's theorem.
 * `TauCeti.exists_isFiniteMeasure_integral_fourierAtom_eq_of_isPositiveDefiniteKernel`:
   existence of a finite representing measure for a continuous positive-definite function.
-* `TauCeti.Measure.ext_of_forall_integral_fourierAtom_eq`: uniqueness of the representing
-  measure.
 * `TauCeti.bochner`, with the Euclidean specialization
   `TauCeti.bochner_euclideanSpace`:
   **Bochner's theorem**, the equivalence between continuity together with
@@ -92,48 +87,17 @@ open scoped ComplexOrder FourierTransform Topology
 
 namespace TauCeti
 
-/-- The scaling constant `-2π` of the Fourier convention is nonzero. -/
-private theorem neg_two_pi_ne_zero : (-2 * Real.pi) ≠ 0 :=
-  mul_ne_zero (by norm_num) Real.pi_ne_zero
-
-/-! ### Uniqueness of the representing measure -/
-
-section Uniqueness
-
-variable {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V] [MeasurableSpace V]
-  [BorelSpace V] [SecondCountableTopology V] [CompleteSpace V]
-
-/-- **Uniqueness half of Bochner's theorem.** Two finite Borel measures with the same
-Fourier-convention transform coincide; this is Mathlib's characteristic-function uniqueness
-theorem, transported through the `-2π` rescaling. Stated on any complete second-countable real
-inner-product space; no finite-dimensionality is needed. -/
-theorem Measure.ext_of_forall_integral_fourierAtom_eq {μ ν : Measure V}
-    [IsFiniteMeasure μ] [IsFiniteMeasure ν]
-    (h : ∀ v, ∫ q, fourierAtom v q ∂μ = ∫ q, fourierAtom v q ∂ν) : μ = ν := by
-  refine MeasureTheory.Measure.ext_of_charFun (funext fun t => ?_)
-  have h' := h ((-2 * Real.pi)⁻¹ • t)
-  rwa [integral_fourierAtom_eq_charFun_neg_two_pi_smul,
-    integral_fourierAtom_eq_charFun_neg_two_pi_smul, smul_smul,
-    mul_inv_cancel₀ neg_two_pi_ne_zero, one_smul] at h'
-
-end Uniqueness
-
 variable {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V]
   [FiniteDimensional ℝ V] [MeasurableSpace V] [BorelSpace V]
 
 /-! ### The L¹ representing measure -/
 
-/-- The measure with density `(𝓕⁻ F).re` against Lebesgue measure is finite whenever `𝓕 F` is
+/-- The measure with density `(𝓕⁻ F).re` against Lebesgue measure is finite whenever `𝓕⁻ F` is
 integrable. This is the total-mass half of the `L¹` case of Bochner's theorem. -/
 theorem isFiniteMeasure_withDensity_re_fourierInv (F : V → ℂ)
-    (hint_ft : Integrable (𝓕 F)) :
-    IsFiniteMeasure (volume.withDensity fun ξ => ENNReal.ofReal (𝓕⁻ F ξ).re) := by
-  have h𝓕inv : 𝓕⁻ F = fun ξ : V => 𝓕 F (-ξ) :=
-    funext fun ξ => Real.fourierInv_eq_fourier_neg F ξ
-  have hinv_int : Integrable (𝓕⁻ F) := by
-    rw [h𝓕inv]
-    exact hint_ft.comp_neg
-  exact isFiniteMeasure_withDensity_ofReal hinv_int.re.2
+    (hint_ft : Integrable (𝓕⁻ F)) :
+    IsFiniteMeasure (volume.withDensity fun ξ => ENNReal.ofReal (𝓕⁻ F ξ).re) :=
+  isFiniteMeasure_withDensity_ofReal hint_ft.re.2
 
 /-- **Bochner recovery for `L¹` positive-definite functions.** A continuous integrable function
 `F` with positive-definite subtraction kernel is the Fourier-convention transform
@@ -146,21 +110,12 @@ theorem integral_fourierAtom_withDensity_re_fourierInv (F : V → ℂ)
     ∫ q, fourierAtom v q ∂(volume.withDensity fun ξ => ENNReal.ofReal (𝓕⁻ F ξ).re) = F v := by
   have hft_int : Integrable (𝓕 F) :=
     integrable_fourier_of_isPositiveDefiniteKernel F hpd hint hcont
-  have h𝓕inv : 𝓕⁻ F = fun ξ : V => 𝓕 F (-ξ) :=
-    funext fun ξ => Real.fourierInv_eq_fourier_neg F ξ
-  have hinv_cont : Continuous (𝓕⁻ F) := by
-    rw [h𝓕inv]
-    exact (VectorFourier.fourierIntegral_continuous Real.continuous_fourierChar
-    (by simpa only [innerₗ_apply_apply] using continuous_inner) hint).comp continuous_neg
-  have hre : ∀ ξ, 0 ≤ (𝓕⁻ F ξ).re := fun ξ => by
-    rw [Real.fourierInv_eq_fourier_neg]
-    exact fourier_re_nonneg_of_isPositiveDefiniteKernel F hpd hint hcont (-ξ)
-  have hreal : ∀ ξ, 𝓕⁻ F ξ = ((𝓕⁻ F ξ).re : ℂ) := fun ξ => by
-    rw [Real.fourierInv_eq_fourier_neg]
-    exact fourier_eq_re_of_isPositiveDefiniteKernel F hpd (-ξ)
-  have hmeas : Measurable fun ξ : V => ENNReal.ofReal (𝓕⁻ F ξ).re :=
-    ENNReal.measurable_ofReal.comp (Complex.measurable_re.comp hinv_cont.measurable)
-  rw [integral_withDensity_eq_integral_toReal_smul₀ hmeas.aemeasurable
+  have hre : ∀ ξ, 0 ≤ (𝓕⁻ F ξ).re :=
+    fourierInv_re_nonneg_of_isPositiveDefiniteKernel F hpd hint hcont
+  have hreal : ∀ ξ, 𝓕⁻ F ξ = ((𝓕⁻ F ξ).re : ℂ) :=
+    fourierInv_eq_re_of_isPositiveDefiniteKernel F hpd
+  rw [integral_withDensity_eq_integral_toReal_smul₀
+    (measurable_ofReal_re_fourierInv hint).aemeasurable
     (ae_of_all _ fun ξ => ENNReal.ofReal_lt_top) _]
   calc ∫ q, (ENNReal.ofReal (𝓕⁻ F q).re).toReal • fourierAtom v q
       = ∫ q, fourierAtom v q * 𝓕⁻ F q := by
@@ -189,15 +144,17 @@ private theorem exists_probabilityMeasure_integral_fourierAtom_eq {G : V → ℂ
   have hGn_pd : ∀ n, IsPositiveDefiniteKernel
       fun a b : V => gaussianRegularize G (ε n) (a - b) := fun n =>
     isPositiveDefiniteKernel_gaussianRegularize hpd (hε_pos n).le
+  have hGn_int : ∀ n, Integrable (gaussianRegularize G (ε n)) := fun n =>
+    integrable_gaussianRegularize (norm_apply_le_map_zero_re_of_isPositiveDefiniteKernel hpd)
+      hcont.aestronglyMeasurable (hε_pos n)
+  have hGn_cont : ∀ n, Continuous (gaussianRegularize G (ε n)) := fun n =>
+    continuous_gaussianRegularize hcont (ε n)
   have hν_rep : ∀ n v, ∫ q, fourierAtom v q ∂(ν n) = gaussianRegularize G (ε n) v := fun n v =>
-    integral_fourierAtom_withDensity_re_fourierInv _ (hGn_pd n)
-      (integrable_gaussianRegularize (norm_apply_le_map_zero_re_of_isPositiveDefiniteKernel hpd)
-        hcont.aestronglyMeasurable (hε_pos n))
-      (continuous_gaussianRegularize hcont (ε n)) v
+    integral_fourierAtom_withDensity_re_fourierInv _ (hGn_pd n) (hGn_int n) (hGn_cont n) v
   have hν_prob : ∀ n, IsProbabilityMeasure (ν n) := by
     intro n
     have : IsFiniteMeasure (ν n) := isFiniteMeasure_withDensity_re_fourierInv _
-      (integrable_fourier_gaussianRegularize hpd hcont (hε_pos n))
+      (integrable_fourierInv_of_isPositiveDefiniteKernel _ (hGn_pd n) (hGn_int n) (hGn_cont n))
     have h0 := hν_rep n 0
     simp only [gaussianRegularize_apply, hG0, one_mul, norm_zero, ne_eq, OfNat.ofNat_ne_zero,
       not_false_eq_true, zero_pow, mul_zero, neg_zero, Complex.ofReal_zero,
@@ -254,8 +211,8 @@ theorem exists_isFiniteMeasure_integral_fourierAtom_eq_of_isPositiveDefiniteKern
     (F : V → ℂ) (hcont : Continuous F)
     (hpd : IsPositiveDefiniteKernel fun a b : V => F (a - b)) :
     ∃ μ : Measure V, IsFiniteMeasure μ ∧ ∀ v, F v = ∫ q, fourierAtom v q ∂μ := by
-  have h0re : 0 ≤ (F 0).re :=
-    (Complex.nonneg_iff.mp (by simpa using isPositiveDefiniteKernel_apply_self_nonneg hpd 0)).1
+  have h0re : 0 ≤ (F 0).re := by
+    simpa using map_zero_re_nonneg_of_isPositiveDefiniteKernel hpd
   have h0eq : F 0 = ((F 0).re : ℂ) := by
     have h0 : (0 : ℂ) ≤ F 0 := by
       simpa using isPositiveDefiniteKernel_apply_self_nonneg hpd 0

@@ -4,27 +4,23 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.Analysis.Fourier.FourierTransform
+public import Mathlib.MeasureTheory.Function.L1Space.Integrable
 public import Mathlib.MeasureTheory.Measure.Haar.OfBasis
 public import TauCeti.Analysis.PositiveDefinite.Kernel.Basic
--- The remaining imports are proof-only: the integrability of the Fourier transform of a
--- positive-definite function, the Gaussian kernel, and the kernel Cauchy–Schwarz bounds.
-import TauCeti.Analysis.Bochner.Fourier.Nonneg
+-- The remaining import is proof-only: the analytic and positive-definiteness facts about the
+-- Gaussian factor.
 import TauCeti.Analysis.Bochner.Gaussian.Basic
-import TauCeti.Analysis.PositiveDefinite.Kernel.Bounds
 
 /-!
 # Gaussian regularization of positive-definite functions
 
 The Gaussian regularization `φ_ε = φ · exp (-ε‖·‖²)` of a positive-definite function `φ` on a
-finite-dimensional real inner-product space is again positive definite (a Schur product with the
-Gaussian kernel) and converges to `φ` pointwise as `ε → 0`. For `ε > 0` it is integrable
-whenever `φ` is bounded and almost-everywhere strongly measurable — in particular whenever `φ`
-has a positive-definite subtraction kernel and is continuous. This is the approximation device
-of the second step of Bochner's theorem: it replaces a bounded positive-definite function by an
-integrable one to which Fourier inversion applies. For continuous positive-definite `φ` and
-`ε > 0` its Fourier transform is integrable, by
-`integrable_fourier_of_isPositiveDefiniteKernel`.
+real inner-product space is again positive definite (a Schur product with the Gaussian kernel)
+and converges to `φ` pointwise as `ε → 0`. On a finite-dimensional space and for `ε > 0` it is
+integrable whenever `φ` is bounded and almost-everywhere strongly measurable — in particular
+whenever `φ` has a positive-definite subtraction kernel and is continuous. This is the
+approximation device of the second step of Bochner's theorem: it replaces a bounded
+positive-definite function by an integrable one to which Fourier inversion applies.
 
 Adapted from the Bochner–Minlos formalization by Michael R. Douglas
 (https://github.com/mrdouglasny/bochner, revision `08eb302`), source file `Bochner/Main.lean`;
@@ -37,8 +33,6 @@ the positive-definiteness hypotheses are restated through `TauCeti.IsPositiveDef
   subtraction kernel whenever `φ` does.
 * `TauCeti.continuous_gaussianRegularize`, `TauCeti.integrable_gaussianRegularize`,
   `TauCeti.tendsto_gaussianRegularize`: the basic analytic facts about `φ_ε`.
-* `TauCeti.integrable_fourier_gaussianRegularize`: the Fourier transform of `φ_ε` is
-  integrable.
 
 ## References
 
@@ -50,7 +44,7 @@ the positive-definiteness hypotheses are restated through `TauCeti.IsPositiveDef
 public section
 
 open Filter MeasureTheory
-open scoped FourierTransform Topology
+open scoped Topology
 
 namespace TauCeti
 
@@ -80,17 +74,15 @@ theorem continuous_gaussianRegularize {φ : V → ℂ} (hcont : Continuous φ) (
 /-- The Gaussian regularization converges to `φ` pointwise as `ε → 0`. -/
 theorem tendsto_gaussianRegularize (φ : V → ℂ) (x : V) :
     Tendsto (fun ε : ℝ => gaussianRegularize φ ε x) (𝓝 0) (𝓝 (φ x)) := by
-  have hc : Continuous fun ε : ℝ => Complex.exp (-(ε * ‖x‖ ^ 2 : ℝ)) := by fun_prop
-  have h1 : Tendsto (fun ε : ℝ => Complex.exp (-(ε * ‖x‖ ^ 2 : ℝ))) (𝓝 0) (𝓝 1) := by
-    simpa using hc.tendsto 0
-  simpa using tendsto_const_nhds.mul h1
+  simpa using tendsto_const_nhds.mul (tendsto_cexp_neg_mul_sq_norm x)
 
 end Regularize
 
-variable {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V]
-  [FiniteDimensional ℝ V] [MeasurableSpace V] [BorelSpace V]
+/-! ### Positive definiteness of the regularization -/
 
-/-! ### Positive definiteness and integrability of the regularization -/
+section PositiveDefinite
+
+variable {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V]
 
 /-- The Gaussian regularization of a function with positive-definite subtraction kernel again
 has a positive-definite subtraction kernel: it is the Schur product of the original kernel with
@@ -99,6 +91,13 @@ theorem isPositiveDefiniteKernel_gaussianRegularize {φ : V → ℂ}
     (hpd : IsPositiveDefiniteKernel fun a b : V => φ (a - b)) {ε : ℝ} (hε : 0 ≤ ε) :
     IsPositiveDefiniteKernel fun a b : V => gaussianRegularize φ ε (a - b) :=
   isPositiveDefiniteKernel_mul hpd (isPositiveDefiniteKernel_cexp_neg_mul_sq_norm hε)
+
+end PositiveDefinite
+
+/-! ### Integrability of the regularization -/
+
+variable {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V]
+  [FiniteDimensional ℝ V] [MeasurableSpace V] [BorelSpace V]
 
 /-- The Gaussian regularization of a bounded a.e. strongly measurable function is integrable
 for every `ε > 0`: the Gaussian factor is integrable and dominates. In particular this applies
@@ -114,17 +113,5 @@ theorem integrable_gaussianRegularize {φ : V → ℂ} {C : ℝ} (hb : ∀ x, �
     (ae_of_all _ fun x => ?_)
   simp only [gaussianRegularize_apply, norm_mul, Real.norm_eq_abs, abs_norm]
   exact mul_le_mul_of_nonneg_right ((hb x).trans (le_abs_self C)) (norm_nonneg _)
-
-/-- The Fourier transform of a Gaussian regularization of a continuous positive-definite
-function is integrable, for every `ε > 0`. -/
-theorem integrable_fourier_gaussianRegularize {φ : V → ℂ}
-    (hpd : IsPositiveDefiniteKernel fun a b : V => φ (a - b))
-    (hcont : Continuous φ) {ε : ℝ} (hε : 0 < ε) :
-    Integrable (𝓕 (gaussianRegularize φ ε)) :=
-  integrable_fourier_of_isPositiveDefiniteKernel _
-    (isPositiveDefiniteKernel_gaussianRegularize hpd hε.le)
-    (integrable_gaussianRegularize (norm_apply_le_map_zero_re_of_isPositiveDefiniteKernel hpd)
-      hcont.aestronglyMeasurable hε)
-    (continuous_gaussianRegularize hcont ε)
 
 end TauCeti
