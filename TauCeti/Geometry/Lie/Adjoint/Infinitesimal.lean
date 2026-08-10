@@ -20,6 +20,13 @@ Mathlib's Lie-algebra adjoint map.
 This advances Deliverable A, Layer 1 of
 `TauCetiRoadmap/RepresentationTheory/LieGroups/README.md`.
 
+## Main results
+
+* `TauCeti.Lie.hasDerivAt_tangentAd_mulInvariantExp_smul_apply`: along an exponential line,
+  the derivative of the tangent adjoint action is the Lie bracket.
+* `TauCeti.Lie.mvfderiv_tangentAd_apply`: the differential of the tangent adjoint action at the
+  identity is the Lie-algebra adjoint action.
+
 ## References
 
 * [Lie groups and the Lie algebra correspondence roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/LieGroups/README.md),
@@ -51,7 +58,7 @@ local instance lieGroupBoundarylessManifoldInfinitesimalAdjoint : BoundarylessMa
 
 /-- A smooth scalar function on a conjugation orbit is smooth in the two exponential
 parameters. -/
-theorem ContMDiffMap.contDiff_comp_mulInvariantExp_conjParameters
+private theorem ContMDiffMap.contDiff_comp_mulInvariantExp_conjParameters
     (f : C^∞⟮I, G; ℝ⟯) (X : GroupLieAlgebra I G) (g : G) :
     ContDiff ℝ ∞ (fun p : ℝ × ℝ =>
       f (mulInvariantExp (I := I) (G := G) (p.1 • X) * g *
@@ -79,7 +86,7 @@ theorem ContMDiffMap.contDiff_comp_mulInvariantExp_conjParameters
 
 /-- The infinitesimal generator of conjugation acts on scalar functions by the difference of
 right- and left-invariant differentiation. -/
-theorem ContMDiffMap.hasDerivAt_comp_conj_mulInvariantExp_smul
+private theorem ContMDiffMap.hasDerivAt_comp_conj_mulInvariantExp_smul
     (f : C^∞⟮I, G; ℝ⟯) (X : GroupLieAlgebra I G) (g : G) :
     HasDerivAt
       (fun t : ℝ => f (mulInvariantExp (I := I) (G := G) (t • X) * g *
@@ -156,7 +163,7 @@ theorem ContMDiffMap.hasDerivAt_comp_conj_mulInvariantExp_smul
 omit [T2Space G] in
 /-- Differentiating the scalar conjugation generator along a left-invariant direction gives the
 Lie bracket. -/
-theorem mfderiv_conjugationGenerator_eq_bracket
+private theorem mfderiv_conjugationGenerator_eq_bracket
     (f : C^∞⟮I, G; ℝ⟯) (X Y : GroupLieAlgebra I G) :
     mvfderiv I
         (fun g => mfderiv I 𝓘(ℝ, ℝ) f g
@@ -211,7 +218,7 @@ theorem mfderiv_conjugationGenerator_eq_bracket
 
 /-- A smooth scalar function evaluated on a conjugated exponential line is jointly smooth in the
 conjugating and conjugated parameters. -/
-theorem ContMDiffMap.contDiff_comp_conj_mulInvariantExp_mulInvariantExp
+private theorem ContMDiffMap.contDiff_comp_conj_mulInvariantExp_mulInvariantExp
     (f : C^∞⟮I, G; ℝ⟯) (X Y : GroupLieAlgebra I G) :
     ContDiff ℝ ∞ (fun p : ℝ × ℝ =>
       f (mulInvariantExp (I := I) (G := G) (p.1 • X) *
