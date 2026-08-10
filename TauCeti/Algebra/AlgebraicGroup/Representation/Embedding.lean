@@ -6,6 +6,9 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.Representation.Coordinate
 public import TauCeti.Algebra.Coalgebra.Comodule.MatrixCoefficient.FiniteType
+public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Scheme
+public import TauCeti.AlgebraicGeometry.AffineGroupScheme.ClosedImmersion
+import TauCeti.AlgebraicGeometry.AffineGroupScheme.Equivalence
 
 /-!
 # Embedding a finite-type affine group in a general linear group
@@ -23,13 +26,22 @@ O(GLₙ) ⟶ H
 is surjective. Contravariantly, its spectrum is a closed immersion of the affine group scheme
 represented by `H` into `GLₙ`.
 
-## Main declaration
+The coordinate-algebra statement permits independent universes for `k` and `H`. The final
+group-scheme statement uses the same universe for them, as required by Mathlib's current
+`hopfSpec` construction.
+
+## Main declarations
 
 * `TauCeti.Comodule.matrixCoefficientSubalgebra_le_coordinateBialgHom_range`: the matrix
   coefficient subalgebra is contained in the range of the coordinate morphism.
 * `TauCeti.Comodule.exists_coordinateBialgHom_surjective`: a finite-type commutative Hopf
   algebra over a field admits a finite-dimensional regular subcomodule whose coordinate
   morphism from `O(GLₙ)` is surjective.
+* `TauCeti.Comodule.exists_isClosedImmersion_coordinateGroupSchemeHom`: the group scheme
+  represented by a finite-type commutative Hopf algebra embeds as a closed subgroup of some
+  `GLₙ`.
+* `TauCeti.AffineGroupSchemeCat.exists_isClosedImmersion_generalLinear`: every finite-type
+  affine group scheme over a field embeds as a closed subgroup of some `GLₙ`.
 
 ## References
 
@@ -123,3 +135,117 @@ theorem exists_coordinateBialgHom_surjective [Algebra.FiniteType k H] :
 end
 
 end TauCeti.Comodule
+
+namespace TauCeti.Comodule
+
+section GroupScheme
+
+open CategoryTheory AlgebraicGeometry
+
+variable {k H M : Type u} {n : ℕ}
+variable [CommRing k] [CommRing H] [HopfAlgebra k H]
+variable [AddCommMonoid M] [Module k M] [Comodule k H M]
+
+/-- The morphism from the affine group scheme represented by `H` to `GLₙ` associated to a
+comodule with a basis indexed by `Fin n`.
+
+This is relative spectrum applied contravariantly to the comodule's coordinate Hopf-algebra
+morphism `O(GLₙ) ⟶ H`. -/
+noncomputable def coordinateGroupSchemeHom (b : Basis (Fin n) k M) :
+    (hopfSpec (CommRingCat.of k)).obj (Opposite.op (CommHopfAlgCat.of k H)) ⟶
+      GeneralLinear.groupScheme k n :=
+  (hopfSpec (CommRingCat.of k)).map
+      (CommHopfAlgCat.ofHom (coordinateBialgHom (H := H) b)).op ≫
+    eqToHom (GeneralLinear.groupScheme_def k n).symm
+
+/-- The group-scheme morphism associated to a comodule is the relative spectrum of its
+coordinate Hopf-algebra morphism, followed by the defining identification of `GLₙ`. -/
+theorem coordinateGroupSchemeHom_def (b : Basis (Fin n) k M) :
+    coordinateGroupSchemeHom (H := H) b =
+      (hopfSpec (CommRingCat.of k)).map
+          (CommHopfAlgCat.ofHom (coordinateBialgHom (H := H) b)).op ≫
+        eqToHom (GeneralLinear.groupScheme_def k n).symm := (rfl)
+
+/-- The group-scheme morphism associated to a finite free comodule is a closed immersion if
+and only if its coordinate Hopf-algebra morphism is surjective. -/
+@[simp]
+theorem isClosedImmersion_coordinateGroupSchemeHom_iff (b : Basis (Fin n) k M) :
+    IsClosedImmersion (coordinateGroupSchemeHom (H := H) b).hom.hom.left ↔
+      Function.Surjective (coordinateBialgHom (H := H) b) := by
+  let _ : IsIso
+      (eqToHom (GeneralLinear.groupScheme_def k n).symm).hom.hom.left :=
+    ((Over.forget (Spec (CommRingCat.of k))).mapIso
+      ((Grp.forget (Over (Spec (CommRingCat.of k)))).mapIso
+        (eqToIso (GeneralLinear.groupScheme_def k n).symm))).isIso_hom
+  rw [coordinateGroupSchemeHom_def]
+  simp only [Grp.comp', Mon.comp_hom', Over.comp_left]
+  rw [MorphismProperty.cancel_right_of_respectsIso (P := @IsClosedImmersion)]
+  exact CommHopfAlgCat.isClosedImmersion_hopfSpec_map_iff _
+
+end GroupScheme
+
+section FiniteType
+
+open AlgebraicGeometry
+
+variable {k H : Type u}
+variable [Field k] [CommRing H] [HopfAlgebra k H]
+
+/-- The affine group scheme represented by a finite-type commutative Hopf algebra over a field
+embeds as a closed subgroup of some general linear group. More precisely, a finite-dimensional
+subcomodule of the regular comodule and a basis determine a closed immersion into `GLₙ`. -/
+theorem exists_isClosedImmersion_coordinateGroupSchemeHom [Algebra.FiniteType k H] :
+    ∃ (M : Subcomodule k H H) (n : ℕ) (b : Basis (Fin n) k M),
+      IsClosedImmersion (coordinateGroupSchemeHom (H := H) b).hom.hom.left := by
+  obtain ⟨M, n, b, hb⟩ := exists_coordinateBialgHom_surjective (k := k) (H := H)
+  exact ⟨M, n, b, (isClosedImmersion_coordinateGroupSchemeHom_iff b).2 hb⟩
+
+end FiniteType
+
+end TauCeti.Comodule
+
+namespace TauCeti.AffineGroupSchemeCat
+
+open CategoryTheory AlgebraicGeometry
+
+universe u
+
+variable {k : Type u} [Field k]
+
+/-- **Every finite-type affine group scheme over a field embeds as a closed subgroup of some
+general linear group.** -/
+theorem exists_isClosedImmersion_generalLinear
+    (G : AffineGroupSchemeCat (CommRingCat.of k)) [LocallyOfFiniteType G.obj.X.hom] :
+    ∃ (n : ℕ) (f : G.obj ⟶ GeneralLinear.groupScheme k n),
+      IsClosedImmersion f.hom.hom.left := by
+  let E := commHopfAlgCatOpEquivAffineGroupSchemeCat (CommRingCat.of k)
+  let A := (E.inverse.obj G).unop
+  let e : G.obj ≅ (hopfSpec (CommRingCat.of k)).obj (Opposite.op A) :=
+    ((affineGroupSchemeProperty (CommRingCat.of k)).ι.mapIso (E.counitIso.app G)).symm ≪≫
+      (commHopfAlgCatOpEquivAffineGroupSchemeCat.functorCompιIso
+        (CommRingCat.of k)).app (E.inverse.obj G)
+  have hAfinite : Algebra.FiniteType k A := by
+    let : MorphismProperty.RespectsIso
+        (@LocallyOfFiniteType : MorphismProperty Scheme.{u}) :=
+      MorphismProperty.IsStableUnderBaseChange.respectsIso
+    have hA : LocallyOfFiniteType
+        ((hopfSpec (CommRingCat.of k)).obj (Opposite.op A)).X.hom :=
+      (MorphismProperty.over_iso_iff
+        (@LocallyOfFiniteType : MorphismProperty Scheme.{u})
+          ((Grp.forget _).mapIso e)).mp
+        (inferInstance : LocallyOfFiniteType G.obj.X.hom)
+    rw [hopfSpec_obj_X_hom] at hA
+    apply RingHom.finiteType_algebraMap.mp
+    exact (HasRingHomProperty.Spec_iff (P := @LocallyOfFiniteType)).mp hA
+  let : Algebra.FiniteType k A := hAfinite
+  obtain ⟨M, n, b, hb⟩ :=
+    Comodule.exists_isClosedImmersion_coordinateGroupSchemeHom (k := k) (H := A)
+  refine ⟨n, e.hom ≫ Comodule.coordinateGroupSchemeHom (H := A) b, ?_⟩
+  let _ : IsIso e.hom.hom.hom.left :=
+    ((Over.forget (Spec (CommRingCat.of k))).mapIso
+      ((Grp.forget (Over (Spec (CommRingCat.of k)))).mapIso e)).isIso_hom
+  simp only [Grp.comp', Mon.comp_hom', Over.comp_left]
+  rw [MorphismProperty.cancel_left_of_respectsIso (P := @IsClosedImmersion)]
+  exact hb
+
+end TauCeti.AffineGroupSchemeCat

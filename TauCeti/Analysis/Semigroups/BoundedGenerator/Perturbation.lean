@@ -59,7 +59,7 @@ theorem norm_exp_smul_sub_exp_smul_apply_le_of_commute (A B : X →L[ℝ] X)
   let +nondep : NormedAlgebra ℚ (X →L[ℝ] X) := .restrictScalars ℚ ℝ _
   have hsum : t • A + t • (B - A) = t • B := by module
   have hint := TauCeti.intervalIntegrable_exp_smul_mul_mul_exp_smul
-    (t • A) (t • (B - A))
+    (t • A + t • (B - A)) (t • (B - A)) (t • A)
   have hduhamel := TauCeti.exp_add_sub_exp_eq_integral (t • A) (t • (B - A))
   rw [hsum] at hint hduhamel
   have happly := congrArg (fun C : X →L[ℝ] X => C x) hduhamel
