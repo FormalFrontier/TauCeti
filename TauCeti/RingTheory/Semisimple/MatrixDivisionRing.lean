@@ -8,12 +8,11 @@ module
 -- and the length of the regular module appears in the exported statements.
 public import Mathlib.LinearAlgebra.Matrix.Action
 public import Mathlib.RingTheory.Length
--- Non-public: used only inside proofs.  Reindexing a matrix ring, simplicity and semisimplicity of
--- a matrix ring over a division ring, and the comparison of simple modules over a simple Artinian
--- ring are the engines of the arguments below; none is mentioned by an exported statement.
+-- Non-public: used only inside proofs.  Reindexing a matrix ring, and the comparison of simple
+-- modules over a simple Artinian ring (which brings with it simplicity and semisimplicity of a
+-- matrix ring over a division ring) are the engines of the arguments below; neither is mentioned
+-- by an exported statement.
 import Mathlib.LinearAlgebra.Matrix.Reindex
-import Mathlib.RingTheory.SimpleModule.WedderburnArtin
-import Mathlib.RingTheory.SimpleRing.Matrix
 import TauCeti.RingTheory.Semisimple.SimpleArtinian
 
 /-!
@@ -89,9 +88,13 @@ open Matrix
 
 section Block
 
-variable {ι : Type*} [Fintype ι] {D : Type*} [DivisionRing D]
+variable {ι : Type*} [Fintype ι] {D : Type*}
 
-/-- **A nonzero column vector generates the column module.**  Over a division ring one can solve
+section DivisionSemiring
+
+variable [DivisionSemiring D]
+
+/-- **A nonzero column vector generates the column module.**  Over a division semiring one can solve
 `A *ᵥ v = w` for `A` as soon as `v ≠ 0`: put `w` in the column of `A` indexed by a coordinate where
 `v` does not vanish, scaled by the inverse of that coordinate. -/
 theorem Matrix.exists_mulVec_eq {v : ι → D} (hv : v ≠ 0) (w : ι → D) :
@@ -106,7 +109,56 @@ theorem Matrix.exists_mulVec_eq {v : ι → D} (hv : v ≠ 0) (w : ι → D) :
     simp [hk]
   · simp
 
-variable [DecidableEq ι]
+end DivisionSemiring
+
+section Semiring
+
+variable [DecidableEq ι] [Semiring D]
+
+/-- Right multiplication by an element of `D` on column vectors.  It commutes with left
+multiplication by a matrix, so it is an endomorphism of the column module, and these are all of
+them (`TauCeti.Matrix.mulOppositeRingEquivEnd`). -/
+def Matrix.rightMul (d : D) : Module.End (Matrix ι ι D) (ι → D) where
+  toFun v i := v i * d
+  map_add' u v := funext fun i ↦ add_mul ..
+  map_smul' A v := funext fun i ↦ by
+    simp [Matrix.mulVec, dotProduct, Finset.sum_mul, mul_assoc]
+
+-- The definitions in this file are deliberately not `@[expose]`d: the `simp` lemmas below are the
+-- interface, and they are proved through the equation lemmas rather than by `rfl`.
+@[simp]
+theorem Matrix.rightMul_apply (d : D) (v : ι → D) (i : ι) : Matrix.rightMul d v i = v i * d := by
+  simp [Matrix.rightMul]
+
+variable (ι D) in
+/-- **The regular module of a matrix ring is the direct sum of its columns.**  Left multiplication
+acts on each column separately, so `Matᵢ(D)` is `Fintype.card ι` copies of the column module. -/
+def Matrix.linearEquivPi : Matrix ι ι D ≃ₗ[Matrix ι ι D] (ι → (ι → D)) where
+  toFun A j i := A i j
+  invFun f := Matrix.of fun i j ↦ f j i
+  map_add' _ _ := rfl
+  map_smul' B A := funext fun j ↦ funext fun i ↦ by
+    simp [Matrix.mul_apply, Matrix.mulVec, dotProduct]
+  left_inv _ := rfl
+  right_inv _ := rfl
+
+@[simp]
+theorem Matrix.linearEquivPi_apply (A : Matrix ι ι D) (j i : ι) :
+    Matrix.linearEquivPi ι D A j i = A i j := by
+  simp only [Matrix.linearEquivPi]
+  rfl
+
+@[simp]
+theorem Matrix.linearEquivPi_symm_apply (f : ι → ι → D) (i j : ι) :
+    (Matrix.linearEquivPi ι D).symm f i j = f j i := by
+  simp only [Matrix.linearEquivPi]
+  rfl
+
+end Semiring
+
+section DivisionRing
+
+variable [DecidableEq ι] [DivisionRing D]
 
 /-- **The column module of a matrix ring over a division ring is simple.**  This is the simple
 module of the Wedderburn block `Matᵢ(D)`; since a matrix ring over a division ring is simple
@@ -120,18 +172,6 @@ instance Matrix.isSimpleModule_pi [Nonempty ι] :
     obtain ⟨A, hA⟩ := Matrix.exists_mulVec_eq hv w
     exact hA ▸ N.smul_mem A hvN
   exact ⟨⟩
-
-/-- Right multiplication by an element of `D` on column vectors.  It commutes with left
-multiplication by a matrix, so it is an endomorphism of the column module, and these are all of
-them (`TauCeti.Matrix.mulOppositeRingEquivEnd`). -/
-@[expose] def Matrix.rightMul (d : D) : Module.End (Matrix ι ι D) (ι → D) where
-  toFun v i := v i * d
-  map_add' u v := funext fun i ↦ add_mul ..
-  map_smul' A v := funext fun i ↦ by
-    simp [Matrix.mulVec, dotProduct, Finset.sum_mul, mul_assoc]
-
-@[simp]
-theorem Matrix.rightMul_apply (d : D) (v : ι → D) (i : ι) : Matrix.rightMul d v i = v i * d := rfl
 
 variable (ι D) in
 /-- **The endomorphism ring of the column module of `Matᵢ(D)` is `Dᵐᵒᵖ`.**  An endomorphism commutes
@@ -168,17 +208,10 @@ noncomputable def Matrix.mulOppositeRingEquivEnd [Nonempty ι] :
       rw [hf]
       simp [Matrix.mulVec, dotProduct]
 
-variable (ι D) in
-/-- **The regular module of a matrix ring is the direct sum of its columns.**  Left multiplication
-acts on each column separately, so `Matᵢ(D)` is `Fintype.card ι` copies of the column module. -/
-def Matrix.linearEquivPi : Matrix ι ι D ≃ₗ[Matrix ι ι D] (ι → (ι → D)) where
-  toFun A j i := A i j
-  invFun f := Matrix.of fun i j ↦ f j i
-  map_add' _ _ := rfl
-  map_smul' B A := funext fun j ↦ funext fun i ↦ by
-    simp [Matrix.mul_apply, Matrix.mulVec, dotProduct]
-  left_inv _ := rfl
-  right_inv _ := rfl
+@[simp]
+theorem Matrix.mulOppositeRingEquivEnd_apply [Nonempty ι] (d : Dᵐᵒᵖ) :
+    Matrix.mulOppositeRingEquivEnd ι D d = Matrix.rightMul d.unop := by
+  simp [Matrix.mulOppositeRingEquivEnd]
 
 variable (ι D) in
 /-- **The regular module of `Matᵢ(D)` has length `Fintype.card ι`**: it is the direct sum of its
@@ -187,6 +220,8 @@ theorem Matrix.length_self_eq_card [Nonempty ι] :
     Module.length (Matrix ι ι D) (Matrix ι ι D) = Fintype.card ι := by
   rw [(Matrix.linearEquivPi ι D).length_eq, Module.length_pi_of_fintype]
   simp
+
+end DivisionRing
 
 end Block
 
