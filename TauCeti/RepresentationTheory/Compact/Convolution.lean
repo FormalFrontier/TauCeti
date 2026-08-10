@@ -43,6 +43,8 @@ presupposing that any exist.
 
 * `TauCeti.convolutionCLM_apply_apply`: the pointwise formula
   `(k * f) x = ∫ y, k (x * y⁻¹) * f y`.
+* `TauCeti.convolutionCLM_toLp_apply`: the translated formula
+  `(k * f) x = ∫ z, k z * f (z⁻¹ * x)` when `f` is continuous.
 * `TauCeti.norm_convolutionCLM_apply_le`: `‖k * f‖_∞ ≤ ‖k‖_∞ * ‖f‖₂`, so convolution against a
   continuous kernel is bounded from `L²(G)` into the uniform norm of `C(G)`.
 * `TauCeti.isSelfAdjoint_convolutionOperator`: a symmetric kernel gives a self-adjoint operator.
@@ -54,6 +56,8 @@ presupposing that any exist.
   `convolutionOperator k` at a nonzero eigenvalue is finite-dimensional.
 * `TauCeti.ae_eq_smul_convolutionCLM_of_mem_eigenspace`: an eigenvector at a nonzero eigenvalue is
   almost everywhere equal to the continuous function `μ⁻¹ • (k * f)`.
+* `TauCeti.convolutionCLM_eq_zero_of_mem_eigenspace_zero`: an eigenvector at the eigenvalue `0`
+  convolves to the zero function.
 * `TauCeti.compMeasurePreserving_mul_right_mem_eigenspace_convolutionOperator`: the eigenspaces are
   invariant under right translation.
 * `TauCeti.exists_hasEigenvalue_ne_zero_convolutionOperator`: a nonzero symmetric convolution
@@ -96,8 +100,8 @@ predicate-prefix convention), its compactness (`convolutionOperator_isCompact`) 
 dimensionality of its nonzero eigenspaces (`convolutionOperator_eigenspace_finiteDimensional`) as
 milestones on the non-circular route to the Peter-Weyl theorem.
 
-* G. B. Folland, *A Course in Abstract Harmonic Analysis*, 2nd ed., CRC (2016), Chapter 5.
-* D. Bump, *Lie Groups*, 2nd ed., Springer GTM 225 (2013), Chapter 2.
+* G. B. Folland, *A Course in Abstract Harmonic Analysis*, 2nd ed., CRC (2016), §5.2.
+* D. Bump, *Lie Groups*, 2nd ed., Springer GTM 225 (2013), Chapters 3-4.
 -/
 
 public section
@@ -206,6 +210,52 @@ theorem convolutionCLM_apply_apply (k : C(G, 𝕜)) (f : Lp 𝕜 2 (haarProb G))
   rw [convolutionCLM_apply_apply', convSection_apply, inner_toLp_left]
   refine integral_congr_ae (Filter.Eventually.of_forall fun y => ?_)
   simp only [convSectionCM_apply, RCLike.conj_conj]
+
+/-- **Convolution written by translating the function rather than the kernel**:
+`(k * f) x = ∫ z, k z * f (z⁻¹ * x)`.
+
+This form follows from `TauCeti.convolutionCLM_apply_apply` by the substitution `y = z⁻¹ * x`,
+which preserves normalized Haar measure because it is inversion followed by right translation. -/
+theorem convolutionCLM_toLp_apply (k f : C(G, 𝕜)) (x : G) :
+    convolutionCLM k (ContinuousMap.toLp 2 (haarProb G) 𝕜 f) x
+      = ∫ z, k z * f (z⁻¹ * x) ∂(haarProb G) := by
+  set F : G → 𝕜 := fun y => k (x * y⁻¹) * f y with hFdef
+  have hcoe : convolutionCLM k (ContinuousMap.toLp 2 (haarProb G) 𝕜 f) x
+      = ∫ y, F y ∂(haarProb G) := by
+    rw [convolutionCLM_apply_apply]
+    refine integral_congr_ae ?_
+    filter_upwards [ContinuousMap.coeFn_toLp (E := 𝕜) (p := 2) (haarProb G) (𝕜 := 𝕜) f] with y hy
+    rw [hy]
+  rw [hcoe]
+  calc ∫ y, F y ∂(haarProb G)
+      = ∫ z, F (z * x) ∂(haarProb G) := (integral_mul_right_eq_self F x).symm
+    _ = ∫ z, F (z⁻¹ * x) ∂(haarProb G) :=
+        (integral_inv_eq_self (fun w => F (w * x)) (haarProb G)).symm
+    _ = ∫ z, k z * f (z⁻¹ * x) ∂(haarProb G) := by
+        refine integral_congr_ae (Filter.Eventually.of_forall fun z => ?_)
+        have hz : x * (z⁻¹ * x)⁻¹ = z := by group
+        rw [hFdef]
+        simp only [hz]
+
+/-- The error of an approximation of `f` by `k * f`, when the kernel `k` has unit mass: the average
+against `k` of the increments of `f`. -/
+theorem convolutionCLM_toLp_sub_apply (k f : C(G, 𝕜))
+    (hk : ∫ g, k g ∂(haarProb G) = 1) (x : G) :
+    convolutionCLM k (ContinuousMap.toLp 2 (haarProb G) 𝕜 f) x - f x
+      = ∫ z, k z * (f (z⁻¹ * x) - f x) ∂(haarProb G) := by
+  have h₁ : Integrable (fun z : G => k z * f (z⁻¹ * x)) (haarProb G) :=
+    integrable_continuousMap G
+      (⟨fun z => k z * f (z⁻¹ * x),
+        k.continuous.mul (f.continuous.comp (continuous_id.inv.mul continuous_const))⟩ :
+        C(G, 𝕜))
+  have h₂ : Integrable (fun z : G => k z * f x) (haarProb G) :=
+    (integrable_continuousMap G k).mul_const _
+  rw [convolutionCLM_toLp_apply]
+  have hsplit : ∫ z, k z * (f (z⁻¹ * x) - f x) ∂(haarProb G)
+      = (∫ z, k z * f (z⁻¹ * x) ∂(haarProb G)) - ∫ z, k z * f x ∂(haarProb G) := by
+    simp_rw [mul_sub]
+    exact integral_sub h₁ h₂
+  rw [hsplit, integral_mul_const, hk, one_mul]
 
 private theorem integrable_convolution_integrand (k : C(G, 𝕜))
     (f : Lp 𝕜 2 (haarProb G)) (x : G) :
@@ -514,12 +564,13 @@ theorem isCompactOperator_convolutionOperator (k : C(G, 𝕜)) :
     IsCompactOperator (convolutionOperator (G := G) k) :=
   (isCompactOperator_convolutionCLM k).clm_comp (ContinuousMap.toLp 2 (haarProb G) 𝕜)
 
-/-! ### The eigenspaces at a nonzero eigenvalue
+/-! ### The eigenspaces of a convolution operator
 
 Compactness bounds the dimension of each nonzero eigenspace; the pointwise formula shows every
-eigenvector is a continuous function; and equivariance makes the eigenspaces right-translation
-invariant. Together these are the three properties that turn a symmetric convolution operator into
-a source of finite-dimensional representations of `G`. -/
+eigenvector at a nonzero eigenvalue is a continuous function; and equivariance makes the
+eigenspaces right-translation invariant. Together these are the three properties that turn a
+symmetric convolution operator into a source of finite-dimensional representations of `G`. The
+eigenspace at `0` is the complementary case: it convolves to nothing at all. -/
 
 /-- **A nonzero eigenspace of a convolution operator is finite-dimensional**, because the operator
 is compact. -/
@@ -544,6 +595,19 @@ theorem ae_eq_smul_convolutionCLM_of_mem_eigenspace (k : C(G, 𝕜)) {μ : 𝕜}
     coeFn_convolutionOperator k f] with x hsmul hcoe
   rw [hsmul, Pi.smul_apply, hcoe]
   rfl
+
+/-- **Convolving a `0`-eigenvector gives the zero function.** The convolution operator factors as
+`ContinuousMap.toLp` after `convolutionCLM`, and `ContinuousMap.toLp` is injective because
+normalized Haar measure is positive on nonempty open sets. This is the complement of
+`ae_eq_smul_convolutionCLM_of_mem_eigenspace`, which describes the eigenvectors at a nonzero
+eigenvalue. -/
+theorem convolutionCLM_eq_zero_of_mem_eigenspace_zero (k : C(G, 𝕜))
+    {f : Lp 𝕜 2 (haarProb G)}
+    (hf : f ∈ Module.End.eigenspace (convolutionOperator (G := G) k).toLinearMap 0) :
+    convolutionCLM k f = 0 := by
+  rw [Module.End.mem_eigenspace_iff, ContinuousLinearMap.coe_coe, zero_smul] at hf
+  refine ContinuousMap.toLp_injective (E := 𝕜) (𝕜 := 𝕜) (p := 2) (haarProb G) ?_
+  rw [← convolutionOperator_apply, hf, map_zero]
 
 /-- **The eigenspaces of a convolution operator are invariant under right translation**, because
 the operator commutes with right translation. -/

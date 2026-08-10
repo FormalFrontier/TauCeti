@@ -7,7 +7,6 @@ module
 public import Mathlib.Geometry.Manifold.Algebra.LeftInvariantDerivation
 public import TauCeti.Geometry.Manifold.DerivationBundle
 public import TauCeti.Geometry.Lie.InvariantVectorField
-import TauCeti.Geometry.Manifold.VectorField.Regularity
 
 /-!
 # Evaluation of left-invariant derivations

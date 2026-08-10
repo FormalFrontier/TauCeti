@@ -32,7 +32,9 @@ angle `π/3`, which is exactly the gap between the one-sided argument limits `π
 ## Main declarations
 
 * `TauCeti.ModularForm.fdBoundary_sub_rho_add_one_of_mem_Icc_zero_one` (the linear form).
-* `TauCeti.ModularForm.norm_fdBoundary_sub_rho_add_one_arc` (the chord distance).
+* `TauCeti.ModularForm.norm_fdBoundary_sub_rho_add_one_arc` (the chord distance) and
+  `TauCeti.ModularForm.norm_fdBoundary_sub_rho_add_one_arc_le` (its monotonicity in the
+  angular gap).
 * `TauCeti.ModularForm.log_fdBoundary_one_sub_sub_rho_add_one`,
   `TauCeti.ModularForm.log_fdBoundary_one_add_sub_rho_add_one` (the endpoint logarithms).
 
@@ -62,6 +64,12 @@ private lemma rho_add_one_eq_exp :
   · rw [Complex.exp_ofReal_mul_I_im, Real.sin_pi_div_three]
     norm_num [UpperHalfPlane.ρ]
 
+/-- The corner `ρ + 1` as a point of the unit circle traced by `circleMap`. -/
+private lemma rho_add_one_eq_circleMap :
+    (UpperHalfPlane.ρ : ℂ) + 1 = circleMap 0 1 (Real.pi / 3) := by
+  rw [circleMap_zero, Complex.ofReal_one, one_mul]
+  exact rho_add_one_eq_exp
+
 /-- On the right vertical the shifted contour is the purely imaginary linear form
 `(1 - t)·(H - √3/2)·i`. -/
 theorem fdBoundary_sub_rho_add_one_of_mem_Icc_zero_one (H : ℝ) (ht : t ∈ Icc (0 : ℝ) 1) :
@@ -81,12 +89,38 @@ theorem norm_fdBoundary_sub_rho_add_one_arc (H : ℝ) (ht : t ∈ Icc (1 : ℝ) 
       2 * |Real.sin ((t - 1) * (Real.pi / 12))| := by
   have hcurve : fdBoundary H t = circleMap 0 1 ((t + 1) * (Real.pi / 6)) :=
     eqOn_fdBoundary_arc H ht
-  have hρ1 : (UpperHalfPlane.ρ : ℂ) + 1 = circleMap 0 1 (Real.pi / 3) := by
-    rw [circleMap_zero, Complex.ofReal_one, one_mul]
-    exact rho_add_one_eq_exp
-  rw [← Complex.dist_eq, hcurve, hρ1, dist_circleMap_eq_two_mul_abs_sin,
+  rw [← Complex.dist_eq, hcurve, rho_add_one_eq_circleMap, dist_circleMap_eq_two_mul_abs_sin,
     (by ring : ((t + 1) * (Real.pi / 6) - Real.pi / 3) / 2 = (t - 1) * (Real.pi / 12))]
   norm_num
+
+/-- **Along the arc the chord to `ρ + 1` grows with the parameter.** A point of the arc at
+parameter `t` is no further from the corner than the point at parameter `1 + δ` is, whose
+chord is `2·sin(δ·π/12)`.
+
+This is the generic monotonicity of a chord in the angular gap,
+`TauCeti.dist_circleMap_le_dist_circleMap_of_abs_sub_le`, read along the arc, whose
+parameter runs at `π/6` per unit; `δ ≤ 6` keeps the comparison point within half a turn of
+the corner, where the chord is still increasing. -/
+theorem norm_fdBoundary_sub_rho_add_one_arc_le (H : ℝ) (ht : t ∈ Icc (1 : ℝ) 3) (hδ : δ ≤ 6)
+    (hle : t - 1 ≤ δ) :
+    ‖fdBoundary H t - ((UpperHalfPlane.ρ : ℂ) + 1)‖ ≤ 2 * Real.sin (δ * (Real.pi / 12)) := by
+  have hδ0 : 0 ≤ δ := le_trans (by linarith [ht.1]) hle
+  have hgap : Real.pi / 3 + δ * (Real.pi / 6) - Real.pi / 3 = δ * (Real.pi / 6) := by ring
+  have hchord : dist (circleMap 0 1 (Real.pi / 3 + δ * (Real.pi / 6)))
+      (circleMap 0 1 (Real.pi / 3)) = 2 * Real.sin (δ * (Real.pi / 12)) := by
+    rw [dist_circleMap_eq_two_mul_abs_sin,
+      (by ring : (Real.pi / 3 + δ * (Real.pi / 6) - Real.pi / 3) / 2 = δ * (Real.pi / 12)),
+      abs_of_nonneg (Real.sin_nonneg_of_nonneg_of_le_pi (mul_nonneg hδ0 (by positivity))
+        (by nlinarith [Real.pi_pos]))]
+    norm_num
+  rw [← Complex.dist_eq, eqOn_fdBoundary_arc H ht, rho_add_one_eq_circleMap, ← hchord]
+  refine dist_circleMap_le_dist_circleMap_of_abs_sub_le 0 1 ?_ ?_
+  · rw [(by ring : (t + 1) * (Real.pi / 6) - Real.pi / 3 = (t - 1) * (Real.pi / 6)), hgap,
+      abs_of_nonneg (mul_nonneg (by linarith [ht.1]) (by positivity)),
+      abs_of_nonneg (mul_nonneg hδ0 (by positivity))]
+    nlinarith [Real.pi_pos]
+  · rw [hgap, abs_of_nonneg (mul_nonneg hδ0 (by positivity))]
+    nlinarith [Real.pi_pos]
 
 /-- On the left vertical the shifted contour is `-1` plus the imaginary linear form of the
 `ρ`-shift, so its real part is constantly `-1` and it runs alongside the branch cut. Where the

@@ -68,6 +68,9 @@ argument principle above all — into a statement about how often an image curve
   reached inline from `integral_deriv_div_eq_log_sub_log` plus `IntervalIntegrable.congr_uIoo` and
   `intervalIntegral.integral_congr_uIoo`, but that transport is performed at nine call sites
   across the winding developments, so it is factored here.
+* the `_of_le` forms of the slit-plane and upper comparisons — the ordered-interval versions
+  callers usually have: `a ≤ b`, hypotheses read on `Set.Icc a b` and `Set.Ioo a b` rather than
+  through `min` and `max`, and integrability derived from a continuous derivative.
 * `TauCeti.Contour.integral_deriv_div_eq_log_sub_log` — the slit-plane logarithmic-derivative FTC in
   general `f' / f` form.
 * `TauCeti.Contour.integral_deriv_div_sub_eq_log` — its contour specialization to
@@ -411,6 +414,37 @@ theorem intervalIntegrable_deriv_div_and_integral_deriv_div_eq_log_sub_log_of_me
     countable_empty (hu ▸ hh_cont) (fun t ht ↦ hh_diff t (ho ▸ ht.1))
     ((hh_deriv_cont.div hh_cont hne).mono (hu ▸ Set.Subset.rfl)).intervalIntegrable
     (fun t ht ↦ hh_slit t (hu ▸ ht)) (fun t ht ↦ heq (ho ▸ ht)) heq_a heq_b
+
+/-- **The boundary-tolerant logarithmic FTC on an ordered interval, upper form.** The form
+callers usually have: an oriented interval `a ≤ b`, a comparison function `h` continuous with
+continuous derivative and nonvanishing on `Icc a b`, confined to the closed upper half-plane
+there and slit-plane-valued strictly inside, and a `g` agreeing with `h` on `Ioo a b` and at
+both endpoints.
+
+Integrability of `deriv h / h` is derived from the continuous derivative and the
+nonvanishing rather than assumed, and the interval hypotheses read on `Set.Icc a b` and
+`Set.Ioo a b` instead of through `min` and `max`. Everything else is
+`intervalIntegrable_deriv_div_and_integral_deriv_div_eq_log_sub_log_of_im_nonneg`, which
+stays the statement to reach for on an unoriented interval or a nonempty exceptional set. -/
+theorem intervalIntegrable_deriv_div_and_integral_deriv_div_eq_log_sub_log_of_im_nonneg_of_le
+    (hab : a ≤ b) (hh_cont : ContinuousOn h (Set.Icc a b))
+    (hh_diff : ∀ t ∈ Set.Ioo a b, DifferentiableAt ℝ h t)
+    (hh_deriv_cont : ContinuousOn (deriv h) (Set.Icc a b))
+    (hh_ne : ∀ t ∈ Set.Icc a b, h t ≠ 0)
+    (hh_im_nn : ∀ t ∈ Set.Icc a b, 0 ≤ (h t).im)
+    (hh_slit : ∀ t ∈ Set.Ioo a b, h t ∈ Complex.slitPlane)
+    (heq : Set.EqOn g h (Set.Ioo a b)) (heq_a : g a = h a) (heq_b : g b = h b) :
+    IntervalIntegrable (fun t ↦ deriv g t / g t) volume a b ∧
+    ∫ t in a..b, deriv g t / g t = Complex.log (g b) - Complex.log (g a) := by
+  have hu : Set.uIcc a b = Set.Icc a b := uIcc_of_le hab
+  have ho : Set.Ioo (min a b) (max a b) = Set.Ioo a b := by
+    rw [min_eq_left hab, max_eq_right hab]
+  exact intervalIntegrable_deriv_div_and_integral_deriv_div_eq_log_sub_log_of_im_nonneg
+    countable_empty (hu ▸ hh_cont) (fun t ht ↦ hh_diff t (ho ▸ ht.1))
+    ((hh_deriv_cont.div hh_cont hh_ne).mono (hu ▸ Set.Subset.rfl)).intervalIntegrable
+    (fun t ht ↦ hh_im_nn t (hu ▸ ht))
+    (hh_ne a (left_mem_Icc.mpr hab)) (hh_ne b (right_mem_Icc.mpr hab))
+    (fun t ht ↦ hh_slit t (ho ▸ ht)) (fun t ht ↦ heq (ho ▸ ht)) heq_a heq_b
 
 end BoundaryTolerant
 
