@@ -11,7 +11,7 @@ public import TauCeti.Algebra.Coalgebra.Comodule.Finite.ScalarExtension.Monoidal
 /-!
 # Tensor automorphisms from algebraic-group points
 
-Let `H` be a Hopf algebra over a commutative ring `R`, and let `A` be a commutative
+Let `H` be a Hopf algebra over a commutative semiring `R`, and let `A` be a commutative
 `R`-algebra. Scalar extension of finite `H`-comodules is a strong monoidal functor
 
 ```text
@@ -29,7 +29,7 @@ separate theorem.
 
 ## Main declarations
 
-* `TauCeti.Tannaka.fgPointNatIso_isMonoidal`: point actions on finite comodules preserve the
+* `TauCeti.Tannaka.isMonoidal_fgPointNatIsoHom_hom`: point actions on finite comodules preserve the
   tensor unit and tensor product.
 * `TauCeti.Tannaka.fgPointTensorIsoHom`: points act on finite-comodule scalar extension by
   tensor automorphisms.
@@ -39,6 +39,8 @@ separate theorem.
 ## References
 
 * J. S. Milne, *Algebraic Groups* (2017), §§4.5 and 9.4.
+* `Mathlib/RepresentationTheory/Tannaka.lean`: the bundled monoidal forgetful functor `forget`
+  and point homomorphism `equivHom` provide the formal pattern adapted here to comodules.
 -/
 
 public section
@@ -48,21 +50,18 @@ open scoped TensorProduct
 
 namespace TauCeti.Tannaka
 
-universe u
+universe u v
 
-variable (R : Type u) [CommRing R]
-variable (H : Type u) [CommRing H] [HopfAlgebra R H]
-variable (A : Type u) [CommRing A] [Algebra R A]
+section Generic
+
+variable (R : Type u) [CommSemiring R]
+variable (H : Type v) [Semiring H] [HopfAlgebra R H]
+variable (A : Type u) [CommSemiring A] [Algebra R A]
 
 open Functor.LaxMonoidal
 
-/-- The scalar-extension functor on finite comodules, bundled as a lax monoidal functor. -/
-@[expose] noncomputable def fgScalarExtensionMonoidalFunctor :
-    LaxMonoidalFunctor (FGComoduleCat.{u, u, u} R H) (SemimoduleCat.{u} A) :=
-  LaxMonoidalFunctor.of (FGComoduleCat.scalarExtensionFunctor R H A)
-
 /-- The natural automorphism induced by an algebra-valued point is monoidal. -/
-theorem fgPointNatIso_isMonoidal (g : WithConv (H →ₐ[R] A)) :
+theorem isMonoidal_fgPointNatIsoHom_hom (g : WithConv (H →ₐ[R] A)) :
     NatTrans.IsMonoidal (fgPointNatIsoHom R H A g).hom := by
   constructor
   · rw [FGComoduleCat.scalarExtensionFunctor_ε, fgPointNatIsoHom_hom_app]
@@ -86,67 +85,25 @@ theorem fgPointNatIso_isMonoidal (g : WithConv (H →ₐ[R] A)) :
       exact (Comodule.endOfPoint_tensor_of_coact_eq (R := R) (H := H) (A := A)
         (V := M) (W := N) (FGComoduleCat.tensor_coact (R := R) (C := H) M N)
           g.ofConv).symm
-    have hcancel :
-        eqToHom (FGComoduleCat.scalarExtensionFunctor_obj R H A (M ⊗ N)).symm ≫
-            eqToHom (FGComoduleCat.scalarExtensionFunctor_obj R H A (M ⊗ N)) =
-          𝟙 _ := by
-      simp
-    have hcancel_assoc {X : SemimoduleCat.{u} A}
-        (f : SemimoduleCat.of A (A ⊗[R] (M ⊗ N)) ⟶ X) :
-        eqToHom (FGComoduleCat.scalarExtensionFunctor_obj R H A (M ⊗ N)).symm ≫
-            eqToHom (FGComoduleCat.scalarExtensionFunctor_obj R H A (M ⊗ N)) ≫ f = f := by
-      rw [← Category.assoc, hcancel, Category.id_comp]
-    have hcancel_nested {X Y Z : SemimoduleCat.{u} A}
-        (f : X ⟶ Y) (q : Y ⟶ SemimoduleCat.of A (A ⊗[R] (M ⊗ N)))
-        (r : SemimoduleCat.of A (A ⊗[R] (M ⊗ N)) ⟶ Z) :
-        (f ≫ (q ≫
-            eqToHom (FGComoduleCat.scalarExtensionFunctor_obj R H A (M ⊗ N)).symm)) ≫
-            eqToHom (FGComoduleCat.scalarExtensionFunctor_obj R H A (M ⊗ N)) ≫ r =
-          f ≫ q ≫ r := by
-      simp only [Category.assoc, hcancel_assoc]
-    have hcancelTensor :
-        (eqToHom (FGComoduleCat.scalarExtensionFunctor_obj R H A M).symm ⊗ₘ
-            eqToHom (FGComoduleCat.scalarExtensionFunctor_obj R H A N).symm) ≫
-          (eqToHom (FGComoduleCat.scalarExtensionFunctor_obj R H A M) ⊗ₘ
-            eqToHom (FGComoduleCat.scalarExtensionFunctor_obj R H A N)) = 𝟙 _ := by
-      simp
-    have hcancelTensor_assoc {X : SemimoduleCat.{u} A}
-        (f : ((SemimoduleCat.of A (A ⊗[R] M) ⊗
-          SemimoduleCat.of A (A ⊗[R] N)) : SemimoduleCat A) ⟶ X) :
-        (eqToHom (FGComoduleCat.scalarExtensionFunctor_obj R H A M).symm ⊗ₘ
-            eqToHom (FGComoduleCat.scalarExtensionFunctor_obj R H A N).symm) ≫
-          (eqToHom (FGComoduleCat.scalarExtensionFunctor_obj R H A M) ⊗ₘ
-            eqToHom (FGComoduleCat.scalarExtensionFunctor_obj R H A N)) ≫ f = f := by
-      rw [← Category.assoc, hcancelTensor, Category.id_comp]
-    have hcancelTensor_nested {X Y Z : SemimoduleCat.{u} A}
-        (f : X ⟶ Y)
-        (q : Y ⟶
-          ((SemimoduleCat.of A (A ⊗[R] M) ⊗
-            SemimoduleCat.of A (A ⊗[R] N)) : SemimoduleCat A))
-        (r : ((SemimoduleCat.of A (A ⊗[R] M) ⊗
-          SemimoduleCat.of A (A ⊗[R] N)) : SemimoduleCat A) ⟶ Z) :
-        (f ≫ q ≫
-            (eqToHom (FGComoduleCat.scalarExtensionFunctor_obj R H A M).symm ⊗ₘ
-              eqToHom (FGComoduleCat.scalarExtensionFunctor_obj R H A N).symm)) ≫
-          (eqToHom (FGComoduleCat.scalarExtensionFunctor_obj R H A M) ⊗ₘ
-              eqToHom (FGComoduleCat.scalarExtensionFunctor_obj R H A N)) ≫ r =
-            f ≫ q ≫ r := by
-      simp only [Category.assoc, hcancelTensor_assoc]
     erw [FGComoduleCat.scalarExtensionFunctor_μ,
       fgPointNatIsoHom_hom_app, fgPointNatIsoHom_hom_app,
       fgPointNatIsoHom_hom_app]
     rw [← MonoidalCategory.tensorHom_comp_tensorHom,
       ← MonoidalCategory.tensorHom_comp_tensorHom]
-    erw [hcancel_nested, hcancelTensor_nested]
-    simp only [LinearEquiv.toModuleIsoₛ_hom, Comodule.pointsAction_toLinearMap]
-    slice_lhs 2 3 => erw [← Category.assoc, htensor]
-    erw [Category.assoc]
+    simp only [Category.assoc]
+    rw [cancel_epi]
+    erw [Category.assoc, eqToHom_trans_assoc]
+    simp only [MonoidalCategory.tensorHom_comp_tensorHom_assoc, eqToHom_trans,
+      eqToHom_refl, Category.id_comp, Category.comp_id, LinearEquiv.toModuleIsoₛ_hom,
+      Comodule.pointsAction_toLinearMap]
+    erw [← Category.assoc, htensor, Category.assoc]
 
 /-- An algebra-valued point as a tensor automorphism of finite-comodule scalar extension. -/
 @[expose] noncomputable def fgPointTensorIso (g : WithConv (H →ₐ[R] A)) :
-    fgScalarExtensionMonoidalFunctor R H A ≅ fgScalarExtensionMonoidalFunctor R H A := by
+    FGComoduleCat.scalarExtensionMonoidalFunctor R H A ≅
+      FGComoduleCat.scalarExtensionMonoidalFunctor R H A := by
   exact @LaxMonoidalFunctor.isoMk _ _ _ _ _ _ _ _
-    (fgPointNatIsoHom R H A g) (fgPointNatIso_isMonoidal R H A g)
+    (fgPointNatIsoHom R H A g) (isMonoidal_fgPointNatIsoHom_hom R H A g)
 
 /-- Forgetting tensor compatibility from the point automorphism recovers its underlying natural
 automorphism. -/
@@ -155,31 +112,35 @@ theorem fgPointTensorIso_hom_hom (g : WithConv (H →ₐ[R] A)) :
     (fgPointTensorIso R H A g).hom.hom = (fgPointNatIsoHom R H A g).hom :=
   (rfl)
 
+/-- Forgetting tensor compatibility from the inverse point automorphism recovers the inverse
+underlying natural automorphism. -/
+@[simp]
+theorem fgPointTensorIso_inv_hom (g : WithConv (H →ₐ[R] A)) :
+    (fgPointTensorIso R H A g).inv.hom = (fgPointNatIsoHom R H A g).inv :=
+  rfl
+
 /-- Algebra-valued points act on finite-comodule scalar extension by tensor automorphisms. -/
 @[expose] noncomputable def fgPointTensorIsoHom :
     WithConv (H →ₐ[R] A) →*
-      Aut (fgScalarExtensionMonoidalFunctor R H A) where
+      Aut (FGComoduleCat.scalarExtensionMonoidalFunctor R H A) where
   toFun := fgPointTensorIso R H A
   map_one' := by
     apply Aut.ext
     apply LaxMonoidalFunctor.hom_ext
-    dsimp only [fgPointTensorIso, LaxMonoidalFunctor.isoMk,
-      LaxMonoidalFunctor.homMk]
-    change (fgPointNatIsoHom R H A 1).hom = 𝟙 _
-    have hone := congrArg Iso.hom (map_one (fgPointNatIsoHom R H A))
-    change (fgPointNatIsoHom R H A 1).hom = 𝟙 _ at hone
-    exact hone
+    refine (fgPointTensorIso_hom_hom R H A 1).trans ?_
+    exact (congrArg Iso.hom (map_one (fgPointNatIsoHom R H A))).trans (by rfl)
   map_mul' g h := by
     apply Aut.ext
     apply LaxMonoidalFunctor.hom_ext
-    dsimp only [fgPointTensorIso, LaxMonoidalFunctor.isoMk,
-      LaxMonoidalFunctor.homMk]
-    change (fgPointNatIsoHom R H A (g * h)).hom =
-      (fgPointNatIsoHom R H A h).hom ≫ (fgPointNatIsoHom R H A g).hom
-    have hmul := congrArg Iso.hom (map_mul (fgPointNatIsoHom R H A) g h)
-    change (fgPointNatIsoHom R H A (g * h)).hom =
-      (fgPointNatIsoHom R H A h).hom ≫ (fgPointNatIsoHom R H A g).hom at hmul
-    exact hmul
+    refine (fgPointTensorIso_hom_hom R H A (g * h)).trans ?_
+    exact (congrArg Iso.hom (map_mul (fgPointNatIsoHom R H A) g h)).trans (by rfl)
+
+/-- Evaluating the point tensor-action homomorphism gives the corresponding tensor
+automorphism. -/
+@[simp]
+theorem fgPointTensorIsoHom_apply (g : WithConv (H →ₐ[R] A)) :
+    fgPointTensorIsoHom R H A g = fgPointTensorIso R H A g :=
+  rfl
 
 /-- Forgetting the tensor compatibility of a point tensor automorphism recovers the original
 natural automorphism. -/
@@ -188,10 +149,17 @@ theorem fgPointTensorIsoHom_hom_hom (g : WithConv (H →ₐ[R] A)) :
     (fgPointTensorIsoHom R H A g).hom.hom = (fgPointNatIsoHom R H A g).hom :=
   fgPointTensorIso_hom_hom R H A g
 
+end Generic
+
+section
+
+variable (R : Type u) [CommRing R] [IsDomain R] [IsPrincipalIdealRing R]
+variable (H : Type u) [Semiring H] [HopfAlgebra R H] [Module.Free R H]
+variable (A : Type u) [CommSemiring A] [Algebra R A]
+
 /-- The tensor-automorphism action of points is faithful over a principal ideal domain when the
 Hopf algebra is free as a module. -/
-theorem fgPointTensorIsoHom_injective [IsDomain R] [IsPrincipalIdealRing R]
-    [Module.Free R H] :
+theorem fgPointTensorIsoHom_injective :
     Function.Injective (fgPointTensorIsoHom R H A) := by
   intro g h hgh
   apply fgPointNatIsoHom_injective R H A
@@ -201,5 +169,7 @@ theorem fgPointTensorIsoHom_injective [IsDomain R] [IsPrincipalIdealRing R]
   have hhom := congrArg LaxMonoidalFunctor.Hom.hom (congrArg Iso.hom hgh)
   rw [fgPointTensorIsoHom_hom_hom, fgPointTensorIsoHom_hom_hom] at hhom
   exact congrArg (fun η ↦ η.app M) hhom
+
+end
 
 end TauCeti.Tannaka
