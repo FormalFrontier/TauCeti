@@ -186,7 +186,7 @@ noncomputable def tangentToLeftInvariantDerivation
     change mvfderiv I f 1 (mulInvariantVectorField (v + w) 1) =
       mvfderiv I f 1 (mulInvariantVectorField v 1) +
         mvfderiv I f 1 (mulInvariantVectorField w 1)
-    simp
+    simp only [mulInvariantVectorField_add, Pi.add_apply, map_add]
   map_smul' c v := by
     apply LeftInvariantDerivation.evalAt_one_injective
     ext f

@@ -78,7 +78,7 @@ end TangentBundleInputs
 omit [IsManifold I 1 M] in
 /-- For a normed vector-space target, the tangent-space identification in `mvfderiv` is the
 canonical one, so evaluating it agrees with evaluating `mfderiv`. -/
-theorem mvfderiv_apply_eq_mfderiv_apply (f : M → F) (x : M) (v : TangentSpace I x) :
+@[simp] theorem mvfderiv_apply_eq_mfderiv_apply (f : M → F) (x : M) (v : TangentSpace I x) :
     mvfderiv I f x v = mfderiv I 𝓘(𝕜, F) f x v := by
   rw [mvfderiv, ContinuousLinearMap.comp_apply]
   -- `fromTangentSpace` is Mathlib's explicit interface for this canonical identification.
