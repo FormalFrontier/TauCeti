@@ -104,9 +104,10 @@ private theorem symm_boundaryParam_mem_boundary (hk : k ≠ 0)
 private theorem boundaryParam_boundaryProj_chart_apply (hk : k ≠ 0)
     (he : e ∈ atlas (EuclideanHalfSpace (n + 1)) M)
     {q : ↥((𝓡∂ (n + 1)).boundary M)} (hq : (q : M) ∈ e.source) :
-    EuclideanHalfSpace.boundaryParam n (EuclideanHalfSpace.boundaryProj n (e q.1)) = e q.1 :=
-  EuclideanHalfSpace.boundaryParam_boundaryProj
-    ((ModelWithCorners.mem_boundary_euclideanHalfSpace_iff_of_mem_atlas hk he hq).1 q.2)
+    EuclideanHalfSpace.boundaryParam n (EuclideanHalfSpace.boundaryProj n (e q.1)) = e q.1 := by
+  simpa only [EuclideanHalfSpace.boundaryProj_coe] using
+    EuclideanHalfSpace.boundaryParam_boundaryProj
+      ((ModelWithCorners.mem_boundary_euclideanHalfSpace_iff_of_mem_atlas hk he hq).1 q.2)
 
 open scoped Classical in
 /-- The boundary chart attached to an ambient chart `e` of `M`: read a boundary point through `e`

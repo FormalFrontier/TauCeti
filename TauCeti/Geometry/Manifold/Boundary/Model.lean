@@ -240,13 +240,11 @@ theorem boundaryProj_coe (y : EuclideanHalfSpace (n + 1)) :
     boundaryProj n y = euclideanHalfSpaceBoundaryProj n y.1 := (rfl)
 
 /-- The coordinates of the boundary projection are the positive-index coordinates. -/
-@[simp]
 theorem boundaryProj_apply (y : EuclideanHalfSpace (n + 1)) (i : Fin n) :
     boundaryProj n y i = y.1 i.succ := by
   rw [boundaryProj_coe, euclideanHalfSpaceBoundaryProj_apply]
 
 /-- Deleting the zeroth coordinate undoes the boundary parametrization. -/
-@[simp]
 theorem boundaryProj_boundaryParam (x : EuclideanSpace ℝ (Fin n)) :
     boundaryProj n (boundaryParam n x) = x := by
   rw [boundaryProj_coe, boundaryParam_coe, euclideanHalfSpaceBoundaryProj_param]
@@ -255,7 +253,7 @@ theorem boundaryProj_boundaryParam (x : EuclideanSpace ℝ (Fin n)) :
 identity. -/
 @[simp]
 theorem boundaryParam_boundaryProj {y : EuclideanHalfSpace (n + 1)} (hy : y.1 0 = 0) :
-    boundaryParam n (boundaryProj n y) = y :=
+    boundaryParam n (euclideanHalfSpaceBoundaryProj n y.1) = y :=
   Subtype.ext (euclideanHalfSpaceBoundaryParam_proj (mem_euclideanHalfSpaceBoundary.2 hy))
 
 /-- The boundary parametrization is continuous. -/
