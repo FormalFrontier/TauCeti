@@ -7,7 +7,6 @@ module
 public import TauCeti.RepresentationTheory.Compact.ApproximateIdentity
 public import TauCeti.RepresentationTheory.Compact.EigenspaceRepresentation
 public import TauCeti.RepresentationTheory.Compact.MatrixCoefficient
-public import Mathlib.Topology.Algebra.StarSubalgebra
 
 /-!
 # The representative ring of a compact group is dense
@@ -36,7 +35,7 @@ finite-dimensional continuous representations of a compact group separate its po
 one of them (`TauCeti.exists_contRepresentation_apply_ne_one`).
 
 Uniform density also gives `L²` density: continuous functions are dense in `L²(G)`, so the image of
-`𝓡(G)` in `L²(G)` is dense (`TauCeti.dense_representativeLpSubmodule`) and its orthogonal
+`𝓡(G)` in `L²(G)` is dense (`TauCeti.representativeLpSubmodule_dense`) and its orthogonal
 complement vanishes (`TauCeti.orthogonal_representativeLpSubmodule_eq_bot`). That is the statement
 the Peter-Weyl Hilbert basis is assembled from, once the orthonormality of the normalized matrix
 coefficients is combined with it.
@@ -47,7 +46,7 @@ coefficients is combined with it.
 
 ## Main statements
 
-* `TauCeti.dense_representativeSubmodule` and `TauCeti.representativeStarSubalgebra_dense`:
+* `TauCeti.representativeSubmodule_dense` and `TauCeti.representativeStarSubalgebra_dense`:
   **the representative ring is uniformly dense in `C(G, 𝕜)`.**
 * `TauCeti.exists_mem_representativeSubmodule_norm_sub_lt`: the same, quantitatively.
 * `TauCeti.exists_isRepresentative_apply_ne` and
@@ -56,7 +55,7 @@ coefficients is combined with it.
 * `TauCeti.exists_contRepresentation_apply_ne`, `TauCeti.exists_contRepresentation_apply_ne_one`:
   the finite-dimensional continuous representations separate the points of `G`, and every
   nonidentity element acts nontrivially in one of them.
-* `TauCeti.dense_representativeLpSubmodule` and
+* `TauCeti.representativeLpSubmodule_dense` and
   `TauCeti.orthogonal_representativeLpSubmodule_eq_bot`: the representative ring is dense in
   `L²(G)`, equivalently its orthogonal complement is trivial.
 * `TauCeti.eq_zero_of_inner_matrixCoeffLp_eq_zero`: **the matrix coefficients are complete in
@@ -107,7 +106,7 @@ A continuous `f` is uniformly within `ε` of a convolution `k * f` against a mol
 symmetric, so that convolution lies in the uniform closure of `𝓡(G)`
 (`TauCeti.convolutionCLM_mem_closure_representativeSubmodule`). Hence `f` lies in the closure of
 the closure, which is the closure. -/
-theorem dense_representativeSubmodule :
+theorem representativeSubmodule_dense :
     Dense (representativeSubmodule 𝕜 G : Set C(G, 𝕜)) := by
   intro f
   rw [← closure_closure]
@@ -124,31 +123,18 @@ variable (𝕜 G) in
 /-- **The representative ring is uniformly dense**, in the `*`-subalgebra packaging. -/
 theorem representativeStarSubalgebra_dense :
     Dense (representativeStarSubalgebra 𝕜 G : Set C(G, 𝕜)) := by
-  rw [show (representativeStarSubalgebra 𝕜 G : Set C(G, 𝕜))
-      = (representativeSubmodule 𝕜 G : Set C(G, 𝕜)) from
-    Set.ext fun _ => mem_representativeStarSubalgebra_iff]
-  exact dense_representativeSubmodule 𝕜 G
-
-variable (𝕜 G) in
-/-- The uniform closure of the representative ring is everything, as a submodule. -/
-theorem representativeSubmodule_topologicalClosure_eq_top :
-    (representativeSubmodule 𝕜 G).topologicalClosure = ⊤ :=
-  Submodule.dense_iff_topologicalClosure_eq_top.1 (dense_representativeSubmodule 𝕜 G)
-
-variable (𝕜 G) in
-/-- The uniform closure of the representative ring is everything, as a `*`-subalgebra. -/
-theorem representativeStarSubalgebra_topologicalClosure_eq_top :
-    (representativeStarSubalgebra 𝕜 G).topologicalClosure = ⊤ :=
-  SetLike.ext' <| by
-    rw [StarSubalgebra.topologicalClosure_coe,
-      (representativeStarSubalgebra_dense 𝕜 G).closure_eq, StarSubalgebra.coe_top]
+  have hcoe : (representativeStarSubalgebra 𝕜 G : Set C(G, 𝕜))
+      = (representativeSubmodule 𝕜 G : Set C(G, 𝕜)) :=
+    Set.ext fun _ => mem_representativeStarSubalgebra_iff
+  rw [hcoe]
+  exact representativeSubmodule_dense 𝕜 G
 
 /-- **Uniform approximation by matrix coefficients, quantitatively.** Every continuous function on
 a compact group is uniformly approximated, to any prescribed accuracy, by a finite linear
 combination of matrix coefficients of finite-dimensional continuous representations. -/
 theorem exists_mem_representativeSubmodule_norm_sub_lt (f : C(G, 𝕜)) {ε : ℝ} (hε : 0 < ε) :
     ∃ h ∈ representativeSubmodule 𝕜 G, ‖h - f‖ < ε := by
-  obtain ⟨h, hh, hdist⟩ := Metric.mem_closure_iff.1 (dense_representativeSubmodule 𝕜 G f) ε hε
+  obtain ⟨h, hh, hdist⟩ := Metric.mem_closure_iff.1 (representativeSubmodule_dense 𝕜 G f) ε hε
   exact ⟨h, hh, by rwa [dist_comm, dist_eq_norm] at hdist⟩
 
 /-! ### Separation of points -/
@@ -179,15 +165,17 @@ theorem exists_isRepresentative_apply_ne {x y : G} (hxy : x ≠ y) :
     have hclosed : IsClosed ((LinearMap.ker L : Submodule 𝕜 C(G, 𝕜)) : Set C(G, 𝕜)) :=
       isClosed_eq hLcont continuous_const
     intro f
-    exact sub_eq_zero.1 (closure_minimal hle hclosed (dense_representativeSubmodule 𝕜 G f))
+    exact sub_eq_zero.1 (closure_minimal hle hclosed (representativeSubmodule_dense 𝕜 G f))
   -- Urysohn's lemma produces a continuous function that does separate `x` from `y`.
   obtain ⟨u, hux, huy, -⟩ :=
     exists_continuous_zero_one_of_isClosed (isClosed_singleton (x := x))
       (isClosed_singleton (x := y)) (by simpa using hxy)
+  have hux' : u x = 0 := hux rfl
+  have huy' : u y = 1 := huy rfl
   have hone : ((0 : ℝ) : 𝕜) = ((1 : ℝ) : 𝕜) := by
     have h := hker ⟨fun z => ((u z : ℝ) : 𝕜), RCLike.continuous_ofReal.comp u.continuous⟩
     simp only [ContinuousMap.coe_mk] at h
-    rwa [show u x = 0 from hux rfl, show u y = 1 from huy rfl] at h
+    rwa [hux', huy'] at h
   simp at hone
 
 /-- **The representative `*`-subalgebra separates points.** The Stone-Weierstrass hypothesis, here
@@ -248,14 +236,14 @@ variable (𝕜 G) in
 /-- **The representative ring is dense in `L²(G)`.** Continuous functions are dense in `L²` of a
 compact group, and the representative ring is uniformly dense in them, so its `L²` classes are
 dense. -/
-theorem dense_representativeLpSubmodule :
+theorem representativeLpSubmodule_dense :
     Dense (representativeLpSubmodule 𝕜 G : Set (Lp 𝕜 2 (haarProb G))) := by
   rw [coe_representativeLpSubmodule]
   set T := (ContinuousMap.toLp 2 (haarProb G) 𝕜 : C(G, 𝕜) →L[𝕜] Lp 𝕜 2 (haarProb G))
   have hrange : Dense (range T) :=
     ContinuousMap.toLp_denseRange (E := 𝕜) (p := 2) (haarProb G) 𝕜 (by simp)
   refine dense_closure.1 (hrange.mono ?_)
-  rw [← image_univ, ← (dense_representativeSubmodule 𝕜 G).closure_eq]
+  rw [← image_univ, ← (representativeSubmodule_dense 𝕜 G).closure_eq]
   exact image_closure_subset_closure_image T.continuous
 
 variable (𝕜 G) in
@@ -266,7 +254,7 @@ orthonormality of the normalized matrix coefficients it says that they form a Hi
 theorem orthogonal_representativeLpSubmodule_eq_bot :
     (representativeLpSubmodule 𝕜 G)ᗮ = ⊥ :=
   Submodule.topologicalClosure_eq_top_iff.1
-    (Submodule.dense_iff_topologicalClosure_eq_top.1 (dense_representativeLpSubmodule 𝕜 G))
+    (Submodule.dense_iff_topologicalClosure_eq_top.1 (representativeLpSubmodule_dense 𝕜 G))
 
 /-- **Completeness of the matrix coefficients in `L²(G)`.** An `L²` class orthogonal to every
 matrix coefficient of every finite-dimensional continuous representation vanishes. Combined with
