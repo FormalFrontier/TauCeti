@@ -235,6 +235,7 @@ theorem boundaryParam_coe (x : EuclideanSpace ℝ (Fin n)) :
     (boundaryParam n x).1 = euclideanHalfSpaceBoundaryParam n x := (rfl)
 
 /-- The boundary projection agrees with the ambient linear projection. -/
+@[simp]
 theorem boundaryProj_coe (y : EuclideanHalfSpace (n + 1)) :
     boundaryProj n y = euclideanHalfSpaceBoundaryProj n y.1 := (rfl)
 
@@ -286,6 +287,7 @@ end EuclideanHalfSpace
 
 /-- The boundary of the Euclidean half-space, viewed as a manifold over itself, is the coordinate
 hyperplane where the zeroth coordinate vanishes. -/
+@[simp]
 theorem boundary_euclideanHalfSpace (n : ℕ) :
     (𝓡∂ (n + 1)).boundary (EuclideanHalfSpace (n + 1)) = {y | y.1 0 = 0} := by
   ext y
