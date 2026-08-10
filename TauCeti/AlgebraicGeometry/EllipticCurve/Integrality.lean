@@ -120,15 +120,9 @@ The rational root theorem gives `den x ∣ f.leadingCoeff`; powerfulness of the 
 which squarefreeness forbids. -/
 theorem isInteger_x_of_equation_of_is_root_of_squarefree_leadingCoeff
     (h : (W.baseChange K).toAffine.Equation x y) {f : R[X]} (hroot : aeval x f = 0)
-    (hsf : Squarefree f.leadingCoeff) : IsLocalization.IsInteger R x := by
-  refine isInteger_of_isUnit_den ?_
-  by_contra hnu
-  obtain ⟨q, hq_irr, hq_dvd⟩ := WfDvdMonoid.exists_irreducible_factor hnu
-    (mem_nonZeroDivisors_iff_ne_zero.mp (den R x).2)
-  have hq : Prime q := UniqueFactorizationMonoid.irreducible_iff_prime.mp hq_irr
-  have hden : q * q ∣ (den R x : R) := by
-    rw [← pow_two]; exact sq_dvd_den_of_prime_of_dvd W h hq hq_dvd
-  exact hq.not_isUnit (hsf q (hden.trans (den_dvd_of_is_root hroot)))
+    (hsf : Squarefree f.leadingCoeff) : IsLocalization.IsInteger R x :=
+  isInteger_of_isUnit_den <|
+    isUnit_den_of_dvd_squarefree W h hsf (den_dvd_of_is_root hroot)
 
 end UniqueFactorization
 

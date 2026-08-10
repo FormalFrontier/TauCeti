@@ -211,20 +211,21 @@ private theorem rowIndex_lt_of_colLen_le (t : YoungTableau μ) (hn : μ.colLen 0
   rw [rowIndex_def]
   exact lt_of_lt_of_le (lt_of_lt_of_le h1 (μ.colLen_anti 0 _ (Nat.zero_le _))) hn
 
-/-- **The symmetrizer does not annihilate the monomial basis vector of a tableau.** Write `r ℓ` for
-the row of the label `ℓ`. Reading the `r`-coordinate of `c_t • e_r` in the monomial basis leaves
-exactly the terms indexed by the row group of `t`, each with coefficient `1`; the value is the order
-of the row group, which is nonzero because the base ring has characteristic zero. -/
-private theorem repr_symmetrizer_tensorPowerBasis_ne_zero [Nontrivial k] (t : YoungTableau μ)
+/-- **The symmetrizer's diagonal coefficient is the order of the row group.** Write `r ℓ` for the
+row of the label `ℓ`. The `r`-coordinate of `c_t • e_r` in the monomial basis is the number of
+permutations lying in the row group of `t`. -/
+private theorem repr_symmetrizer_tensorPowerBasis_eq_card_rowSubgroup (t : YoungTableau μ)
     (hn : μ.colLen 0 ≤ n) :
     (tensorPowerBasis k n μ.card).repr
         (permTensorActionAlgHom k n μ.card (youngSymmetrizerOver k t)
           (tensorPowerBasis k n μ.card fun ℓ =>
             (⟨rowIndex t ℓ, rowIndex_lt_of_colLen_le t hn ℓ⟩ : Fin n)))
-        (fun ℓ => (⟨rowIndex t ℓ, rowIndex_lt_of_colLen_le t hn ℓ⟩ : Fin n)) ≠ 0 := by
+        (fun ℓ => (⟨rowIndex t ℓ, rowIndex_lt_of_colLen_le t hn ℓ⟩ : Fin n)) =
+      (Nat.card (rowSubgroup t) : k) := by
   classical
-  have : CharZero k := charZero_of_injective_algebraMap (algebraMap ℚ k).injective
-  set r : Fin μ.card → Fin n := fun ℓ => ⟨rowIndex t ℓ, rowIndex_lt_of_colLen_le t hn ℓ⟩ with hrdef
+  rcases subsingleton_or_nontrivial k with hk | hk
+  · exact Subsingleton.elim _ _
+  set r : Fin μ.card → Fin n := fun ℓ => ⟨rowIndex t ℓ, rowIndex_lt_of_colLen_le t hn ℓ⟩
   -- the row group is exactly the set of permutations surviving the evaluation
   set S : Finset (Equiv.Perm (Fin μ.card)) := {σ | σ ∈ rowSubgroup t} with hSdef
   have hmemS : ∀ σ : Equiv.Perm (Fin μ.card), σ ∈ S ↔ σ ∈ rowSubgroup t := by
@@ -234,38 +235,49 @@ private theorem repr_symmetrizer_tensorPowerBasis_ne_zero [Nontrivial k] (t : Yo
     intro σ
     rw [← inv_mem_iff (G := Equiv.Perm (Fin μ.card)), mem_rowSubgroup]
     exact ⟨fun h ℓ => congrArg Fin.val (congrFun h ℓ), fun h => funext fun ℓ => Fin.ext (h ℓ)⟩
-  have key : (tensorPowerBasis k n μ.card).repr
-      (permTensorActionAlgHom k n μ.card (youngSymmetrizerOver k t)
-        (tensorPowerBasis k n μ.card r)) r = (S.card : k) := by
-    rw [permTensorActionAlgHom_apply_tensorPowerBasis, map_sum, Finset.sum_apply']
-    have hterm : ∀ σ ∈ (youngSymmetrizerOver k t).coeff.support,
-        ((tensorPowerBasis k n μ.card).repr
-            ((youngSymmetrizerOver k t).coeff σ •
-              tensorPowerBasis k n μ.card fun i => r (σ.symm i))) r =
-          if σ ∈ rowSubgroup t then (youngSymmetrizerOver k t).coeff σ else 0 := by
-      intro σ _
-      rw [map_smul, Module.Basis.repr_self, Finsupp.smul_single, smul_eq_mul, mul_one,
-        Finsupp.single_apply]
-      exact if_congr (hcond σ) rfl rfl
-    rw [Finset.sum_congr rfl hterm]
-    have hcoeff : ∀ σ ∈ rowSubgroup t, (youngSymmetrizerOver k t).coeff σ = 1 := by
-      intro σ hσ
-      rw [youngSymmetrizerOver_coeff, youngSymmetrizer_coeff_eq_one_of_mem_rowSubgroup t hσ,
-        map_one]
-    have hsub : S ⊆ (youngSymmetrizerOver k t).coeff.support := by
-      intro σ hσ
-      rw [Finsupp.mem_support_iff, hcoeff σ ((hmemS σ).mp hσ)]
-      exact one_ne_zero
-    rw [Finset.sum_ite, Finset.sum_const_zero, add_zero]
-    have hfilter : (youngSymmetrizerOver k t).coeff.support.filter (· ∈ rowSubgroup t) = S := by
-      ext σ
-      simp only [Finset.mem_filter, hmemS]
-      exact ⟨fun h => h.2, fun h => ⟨hsub ((hmemS σ).mpr h), h⟩⟩
-    rw [hfilter, Finset.sum_congr rfl fun σ hσ => hcoeff σ ((hmemS σ).mp hσ), Finset.sum_const,
-      nsmul_eq_mul, mul_one]
-  rw [key]
-  refine Nat.cast_ne_zero.mpr (Finset.card_ne_zero_of_mem (a := 1) ?_)
-  exact (hmemS 1).mpr (one_mem _)
+  have hSNat : Nat.card (rowSubgroup t) = S.card := by
+    rw [Nat.card_eq_fintype_card, Fintype.card_subtype]
+  rw [hSNat, permTensorActionAlgHom_apply_tensorPowerBasis, map_sum, Finset.sum_apply']
+  have hterm : ∀ σ ∈ (youngSymmetrizerOver k t).coeff.support,
+      ((tensorPowerBasis k n μ.card).repr
+          ((youngSymmetrizerOver k t).coeff σ •
+            tensorPowerBasis k n μ.card fun i => r (σ.symm i))) r =
+        if σ ∈ rowSubgroup t then (youngSymmetrizerOver k t).coeff σ else 0 := by
+    intro σ _
+    rw [map_smul, Module.Basis.repr_self, Finsupp.smul_single, smul_eq_mul, mul_one,
+      Finsupp.single_apply]
+    exact if_congr (hcond σ) rfl rfl
+  rw [Finset.sum_congr rfl hterm]
+  have hcoeff : ∀ σ ∈ rowSubgroup t, (youngSymmetrizerOver k t).coeff σ = 1 := by
+    intro σ hσ
+    rw [youngSymmetrizerOver_coeff, youngSymmetrizer_coeff_eq_one_of_mem_rowSubgroup t hσ,
+      map_one]
+  have hsub : S ⊆ (youngSymmetrizerOver k t).coeff.support := by
+    intro σ hσ
+    rw [Finsupp.mem_support_iff, hcoeff σ ((hmemS σ).mp hσ)]
+    exact one_ne_zero
+  rw [Finset.sum_ite, Finset.sum_const_zero, add_zero]
+  have hfilter : (youngSymmetrizerOver k t).coeff.support.filter (· ∈ rowSubgroup t) = S := by
+    ext σ
+    simp only [Finset.mem_filter, hmemS]
+    exact ⟨fun h => h.2, fun h => ⟨hsub ((hmemS σ).mpr h), h⟩⟩
+  rw [hfilter, Finset.sum_congr rfl fun σ hσ => hcoeff σ ((hmemS σ).mp hσ), Finset.sum_const,
+    nsmul_eq_mul, mul_one]
+
+/-- **The symmetrizer does not annihilate the monomial basis vector of a tableau.** Write `r ℓ` for
+the row of the label `ℓ`; the `r`-coordinate of `c_t • e_r` in the monomial basis is nonzero. -/
+private theorem repr_symmetrizer_tensorPowerBasis_ne_zero [Nontrivial k] (t : YoungTableau μ)
+    (hn : μ.colLen 0 ≤ n) :
+    (tensorPowerBasis k n μ.card).repr
+        (permTensorActionAlgHom k n μ.card (youngSymmetrizerOver k t)
+          (tensorPowerBasis k n μ.card fun ℓ =>
+            (⟨rowIndex t ℓ, rowIndex_lt_of_colLen_le t hn ℓ⟩ : Fin n)))
+        (fun ℓ => (⟨rowIndex t ℓ, rowIndex_lt_of_colLen_le t hn ℓ⟩ : Fin n)) ≠ 0 := by
+  classical
+  -- the coefficient is the order of the row group, and characteristic zero keeps it nonzero
+  have : CharZero k := charZero_of_injective_algebraMap (algebraMap ℚ k).injective
+  rw [repr_symmetrizer_tensorPowerBasis_eq_card_rowSubgroup t hn]
+  exact Nat.cast_ne_zero.mpr (Nat.card_ne_zero.mpr ⟨inferInstance, inferInstance⟩)
 
 /-- The Weyl module of a `μ`-tableau is nonzero as soon as `μ` has at most `n` rows.
 
