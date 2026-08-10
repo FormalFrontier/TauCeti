@@ -52,9 +52,10 @@ namespace Derivation
 variable {k : Type u} [Field k]
 variable {H : Type v} [CommRing H] [Bialgebra k H]
 
-/-- The tangent Lie algebra at the identity and the augmentation cotangent space have the same
-dimension over the base field. -/
-theorem finrank_eq_finrank_cotangentSpace :
+/-- When the augmentation cotangent space is finite-dimensional, it and the tangent Lie algebra
+at the identity have the same dimension over the base field. -/
+theorem finrank_eq_finrank_cotangentSpace
+    [Module.Finite k (Bialgebra.CotangentSpace k H)] :
     Module.finrank k
         (Derivation k H (Bialgebra.CounitAlgebra k H k)) =
       Module.finrank k (Bialgebra.CotangentSpace k H) :=
