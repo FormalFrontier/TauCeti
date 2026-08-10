@@ -40,6 +40,10 @@ transvection rather than a reflection in `v ^ ⊥`.
 * `TauCeti.QuadraticMap.specialOrthogonalGroup Q`: its determinant-one subgroup.
 * `TauCeti.QuadraticMap.reflection Q v`: the reflection in the hyperplane orthogonal to a vector `v`
   with `Q v` invertible, built from Mathlib's `Module.reflection`.
+* `TauCeti.QuadraticMap.reflectionOrthogonal Q v`: the same reflection bundled as an element of
+  `orthogonalGroup Q`, so that statements about products of reflections and about the ranges of the
+  Pin and Spin actions can name it. `TauCeti.QuadraticMap.reflectionOrthogonal_mul_self` and
+  `TauCeti.QuadraticMap.reflectionOrthogonal_inv` are its group-level involution facts.
 
 ## Main results
 
@@ -122,8 +126,12 @@ variable {Q : QuadraticMap R M N}
 theorem mem_orthogonalGroup_iff {f : M ≃ₗ[R] M} :
     f ∈ orthogonalGroup Q ↔ ∀ m, Q (f m) = Q m := Iff.rfl
 
-/-- The defining property of an orthogonal automorphism, in the form in which it rewrites. -/
-@[simp]
+/-- The defining property of an orthogonal automorphism, in the form in which it rewrites.
+
+This is deliberately not a `simp` lemma: its left-hand side `Q (f m)` matches every application
+of every quadratic map to every linear equivalence, and discharging the side goal
+`f ∈ orthogonalGroup Q` unfolds through `mem_orthogonalGroup_iff` to `∀ m, Q (f m) = Q m`, which
+this lemma applies to again. Name it explicitly in the `simp` calls that want it. -/
 theorem map_app_of_mem_orthogonalGroup {f : M ≃ₗ[R] M} (hf : f ∈ orthogonalGroup Q) (m : M) :
     Q (f m) = Q m := hf m
 
@@ -349,6 +357,34 @@ theorem reflection_mem_orthogonalGroup : reflection Q v ∈ orthogonalGroup Q :=
       polar_neg_right, polar_smul_right, QuadraticMap.polar_comm ⇑Q y v, smul_eq_mul, smul_eq_mul]
     ring
   rw [hexp, hcv, add_sub_cancel_right]
+
+/-- The reflection in a vector of invertible norm, as an element of the orthogonal group.
+
+`reflection_mem_orthogonalGroup` gives the membership; this bundles it, so that statements about
+reflections inside `orthogonalGroup Q` — products of reflections, membership in the range of the
+Pin and Spin actions, generation results — can name the group element instead of repeating the
+anonymous constructor. -/
+noncomputable def reflectionOrthogonal : orthogonalGroup Q :=
+  ⟨reflection Q v, reflection_mem_orthogonalGroup Q v⟩
+
+@[simp]
+theorem coe_reflectionOrthogonal :
+    (reflectionOrthogonal Q v : M ≃ₗ[R] M) = reflection Q v := by
+  simp only [reflectionOrthogonal]
+
+/-- The bundled reflection is an involution, so it has order dividing two in the orthogonal
+group. -/
+@[simp]
+theorem reflectionOrthogonal_mul_self :
+    reflectionOrthogonal Q v * reflectionOrthogonal Q v = 1 :=
+  Subtype.ext <| by
+    simp only [Subgroup.coe_mul, coe_reflectionOrthogonal, Subgroup.coe_one, reflection_mul_self]
+
+/-- The bundled reflection is its own inverse in the orthogonal group. -/
+@[simp]
+theorem reflectionOrthogonal_inv :
+    (reflectionOrthogonal Q v)⁻¹ = reflectionOrthogonal Q v :=
+  inv_eq_of_mul_eq_one_left (reflectionOrthogonal_mul_self Q v)
 
 end Reflection
 

@@ -43,6 +43,8 @@ presupposing that any exist.
 
 * `TauCeti.convolutionCLM_apply_apply`: the pointwise formula
   `(k * f) x = ∫ y, k (x * y⁻¹) * f y`.
+* `TauCeti.convolutionCLM_toLp_apply`: the translated formula
+  `(k * f) x = ∫ z, k z * f (z⁻¹ * x)` when `f` is continuous.
 * `TauCeti.norm_convolutionCLM_apply_le`: `‖k * f‖_∞ ≤ ‖k‖_∞ * ‖f‖₂`, so convolution against a
   continuous kernel is bounded from `L²(G)` into the uniform norm of `C(G)`.
 * `TauCeti.isSelfAdjoint_convolutionOperator`: a symmetric kernel gives a self-adjoint operator.
@@ -206,6 +208,52 @@ theorem convolutionCLM_apply_apply (k : C(G, 𝕜)) (f : Lp 𝕜 2 (haarProb G))
   rw [convolutionCLM_apply_apply', convSection_apply, inner_toLp_left]
   refine integral_congr_ae (Filter.Eventually.of_forall fun y => ?_)
   simp only [convSectionCM_apply, RCLike.conj_conj]
+
+/-- **Convolution written by translating the function rather than the kernel**:
+`(k * f) x = ∫ z, k z * f (z⁻¹ * x)`.
+
+This form follows from `TauCeti.convolutionCLM_apply_apply` by the substitution `y = z⁻¹ * x`,
+which preserves normalized Haar measure because it is inversion followed by right translation. -/
+theorem convolutionCLM_toLp_apply (k f : C(G, 𝕜)) (x : G) :
+    convolutionCLM k (ContinuousMap.toLp 2 (haarProb G) 𝕜 f) x
+      = ∫ z, k z * f (z⁻¹ * x) ∂(haarProb G) := by
+  set F : G → 𝕜 := fun y => k (x * y⁻¹) * f y with hFdef
+  have hcoe : convolutionCLM k (ContinuousMap.toLp 2 (haarProb G) 𝕜 f) x
+      = ∫ y, F y ∂(haarProb G) := by
+    rw [convolutionCLM_apply_apply]
+    refine integral_congr_ae ?_
+    filter_upwards [ContinuousMap.coeFn_toLp (E := 𝕜) (p := 2) (haarProb G) (𝕜 := 𝕜) f] with y hy
+    rw [hy]
+  rw [hcoe]
+  calc ∫ y, F y ∂(haarProb G)
+      = ∫ z, F (z * x) ∂(haarProb G) := (integral_mul_right_eq_self F x).symm
+    _ = ∫ z, F (z⁻¹ * x) ∂(haarProb G) :=
+        (integral_inv_eq_self (fun w => F (w * x)) (haarProb G)).symm
+    _ = ∫ z, k z * f (z⁻¹ * x) ∂(haarProb G) := by
+        refine integral_congr_ae (Filter.Eventually.of_forall fun z => ?_)
+        have hz : x * (z⁻¹ * x)⁻¹ = z := by group
+        rw [hFdef]
+        simp only [hz]
+
+/-- The error of an approximation of `f` by `k * f`, when the kernel `k` has unit mass: the average
+against `k` of the increments of `f`. -/
+theorem convolutionCLM_toLp_sub_apply (k f : C(G, 𝕜))
+    (hk : ∫ g, k g ∂(haarProb G) = 1) (x : G) :
+    convolutionCLM k (ContinuousMap.toLp 2 (haarProb G) 𝕜 f) x - f x
+      = ∫ z, k z * (f (z⁻¹ * x) - f x) ∂(haarProb G) := by
+  have h₁ : Integrable (fun z : G => k z * f (z⁻¹ * x)) (haarProb G) :=
+    integrable_continuousMap G
+      (⟨fun z => k z * f (z⁻¹ * x),
+        k.continuous.mul (f.continuous.comp (continuous_id.inv.mul continuous_const))⟩ :
+        C(G, 𝕜))
+  have h₂ : Integrable (fun z : G => k z * f x) (haarProb G) :=
+    (integrable_continuousMap G k).mul_const _
+  rw [convolutionCLM_toLp_apply]
+  have hsplit : ∫ z, k z * (f (z⁻¹ * x) - f x) ∂(haarProb G)
+      = (∫ z, k z * f (z⁻¹ * x) ∂(haarProb G)) - ∫ z, k z * f x ∂(haarProb G) := by
+    simp_rw [mul_sub]
+    exact integral_sub h₁ h₂
+  rw [hsplit, integral_mul_const, hk, one_mul]
 
 private theorem integrable_convolution_integrand (k : C(G, 𝕜))
     (f : Lp 𝕜 2 (haarProb G)) (x : G) :
