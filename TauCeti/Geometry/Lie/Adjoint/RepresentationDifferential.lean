@@ -139,7 +139,7 @@ theorem mvfderiv_Ad_apply (X Y : LeftInvariantDerivation I G) :
         (fun g : G => (g, Y)) := contMDiff_id.prodMk contMDiff_const
     exact (contMDiff_Ad_apply (I := I) (G := G)).comp hpair
   have hAmf := hA.mdifferentiable (by simp) (1 : G) |>.hasMFDerivAt
-  have hchainRaw := HasMFDerivAt.hasDerivAt_comp_mulInvariantExp_smul hAmf (eLie X)
+  have hchainRaw := HasMFDerivAt.hasDerivAt_comp_mulInvariantExp_smul_zero hAmf (eLie X)
   have hchain : HasDerivAt
       (fun t : ℝ => A (mulInvariantExp (I := I) (G := G) (t • eLie X)))
       (mvfderiv I A 1 (eLie X)) 0 := by
