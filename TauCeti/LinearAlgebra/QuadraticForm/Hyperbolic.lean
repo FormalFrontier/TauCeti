@@ -82,6 +82,23 @@ private theorem equivalentSumSquares [IsSepClosed K]
     ((QuadraticMap.nondegenerate_associated_iff (Q := Q)).2 hQ).1
   exact ⟨e.trans (isometryEquivSumSquaresUnits w)⟩
 
+private theorem hyperbolicModelForm_associated_apply (n : ℕ)
+    (x y : hyperbolicModel K n) :
+    QuadraticMap.associated (hyperbolicModelForm K n) x y =
+      ⅟(2 : K) • (x.1.1 y.1.2 + y.1.1 x.1.2) + ∑ i, x.2 i * y.2 i := by
+  rw [QuadraticMap.associated_apply]
+  simp only [hyperbolicModelForm_apply, Prod.fst_add, Prod.snd_add, LinearMap.add_apply,
+    Pi.add_apply, map_add, Module.End.smul_def,
+    QuadraticMap.half_moduleEnd_apply_eq_half_smul, smul_eq_mul]
+  simp_rw [add_mul, mul_add, Finset.sum_add_distrib]
+  have hxy : (∑ i, y.2 i * x.2 i) = ∑ i, x.2 i * y.2 i := by
+    apply Finset.sum_congr rfl
+    intro i _
+    ac_rfl
+  rw [hxy]
+  ring_nf
+  rw [mul_comm (⅟(2 : K)) (∑ i, x.2 i * y.2 i), invOf_mul_cancel_right]
+
 private theorem hyperbolicModelForm_associated_separatingLeft (n : ℕ) :
     (QuadraticMap.associated (hyperbolicModelForm K n)).SeparatingLeft := by
   classical
@@ -93,12 +110,14 @@ private theorem hyperbolicModelForm_associated_separatingLeft (n : ℕ) :
     · apply LinearMap.ext
       intro v
       have h := hx (((0 : Module.Dual K (hyperbolicHalf K n)), v), 0)
-      simpa [hyperbolicModelForm, QuadraticMap.associated_apply, QuadraticMap.polar, htwo] using h
+      rw [hyperbolicModelForm_associated_apply] at h
+      simpa [htwo] using h
     · have hu : u = 0 := by
         apply (Module.forall_dual_apply_eq_zero_iff K u).1
         intro g
         have h := hx (((g : Module.Dual K (hyperbolicHalf K n)), 0), 0)
-        simpa [hyperbolicModelForm, QuadraticMap.associated_apply, QuadraticMap.polar, htwo] using h
+        rw [hyperbolicModelForm_associated_apply] at h
+        simpa [htwo] using h
       exact hu
   · funext i
     have h := hx (((0 : Module.Dual K (hyperbolicHalf K n)), 0), Pi.single i 1)
@@ -113,19 +132,23 @@ private theorem hyperbolicModelForm_associated_separatingLeft (n : ℕ) :
         have hm := Nat.mod_lt n (by decide : 0 < 2)
         omega
       · simp
-    simp only [hyperbolicModelForm, QuadraticMap.associated_apply, QuadraticMap.prod_apply,
-      QuadraticForm.dualProd_apply, add_zero, QuadraticMap.weightedSumSquares_apply,
-      Prod.fst_add, Prod.snd_add, map_zero, hsum] at h
-    simp only [Pi.one_apply, Pi.add_apply, Pi.single_apply, if_pos, zero_add,
-      smul_eq_mul] at h
-    ring_nf at h
-    simpa [smul_eq_mul, mul_comm (z i) (2 : K), ← mul_assoc] using h
+    rw [hyperbolicModelForm_associated_apply] at h
+    simpa [hsum] using h
 
 omit [Invertible (2 : K)] in
-private theorem finrank_hyperbolicModel (n : ℕ) :
+/-- The hyperbolic model has its advertised dimension. -/
+theorem finrank_hyperbolicModel (n : ℕ) :
     Module.finrank K (hyperbolicModel K n) = n := by
   simp [hyperbolicModel, hyperbolicHalf, hyperbolicRemainder, Subspace.dual_finrank_eq]
   omega
+
+/-- The uniform hyperbolic model is nondegenerate. -/
+theorem hyperbolicModelForm_nondegenerate (n : ℕ) :
+    (hyperbolicModelForm K n).Nondegenerate :=
+  (QuadraticMap.nondegenerate_associated_iff (Q := hyperbolicModelForm K n)).1 <|
+    (LinearMap.IsRefl.nondegenerate_iff_separatingLeft
+      (QuadraticForm.associated_isSymm K (hyperbolicModelForm K n)).isRefl).2
+        (hyperbolicModelForm_associated_separatingLeft n)
 
 /-- Every finite-dimensional nondegenerate quadratic form over a separably closed field of
 characteristic different from two is a sum of hyperbolic planes and at most one square. -/
@@ -134,16 +157,10 @@ noncomputable def hyperbolicDecomposition [IsSepClosed K]
     Q.IsometryEquiv (hyperbolicModelForm K (Module.finrank K V)) := by
   let n := Module.finrank K V
   let hQ' := equivalentSumSquares Q hQ
-  have hAssociated :
-      (QuadraticMap.associated (hyperbolicModelForm K n)).Nondegenerate :=
-    (LinearMap.IsRefl.nondegenerate_iff_separatingLeft
-      (QuadraticForm.associated_isSymm K (hyperbolicModelForm K n)).isRefl).2
-        (hyperbolicModelForm_associated_separatingLeft n)
-  have hModel : (hyperbolicModelForm K n).Nondegenerate :=
-    (QuadraticMap.nondegenerate_associated_iff (Q := hyperbolicModelForm K n)).1 hAssociated
   have hModel' : (hyperbolicModelForm K n).Equivalent
       (QuadraticMap.weightedSumSquares K (1 : Fin n → K)) := by
-    have h := equivalentSumSquares (hyperbolicModelForm K n) hModel
+    have h := equivalentSumSquares (hyperbolicModelForm K n)
+      (hyperbolicModelForm_nondegenerate n)
     rw [finrank_hyperbolicModel] at h
     exact h
   exact hQ'.some.trans hModel'.some.symm
