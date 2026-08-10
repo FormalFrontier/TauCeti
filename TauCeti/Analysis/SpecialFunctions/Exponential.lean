@@ -7,8 +7,6 @@ module
 public import Mathlib.Analysis.SpecialFunctions.Exponential
 import Mathlib.Analysis.Calculus.Deriv.Mul
 import Mathlib.Analysis.Calculus.Deriv.Shift
-import Mathlib.Analysis.Calculus.Deriv.Slope
-import Mathlib.MeasureTheory.Integral.DominatedConvergence
 public import Mathlib.MeasureTheory.Integral.IntervalIntegral.FundThmCalculus
 import TauCeti.Analysis.Normed.Algebra.Basic
 
@@ -63,10 +61,10 @@ private theorem hasDerivAt_exp_smul_mul_exp_smul (x h : A) (t : ℝ) :
     hasDerivAt_exp_smul_const' x t
   exact (hleft.fun_mul hright).congr_deriv (by noncomm_ring)
 
-/-- The integrand in Duhamel's finite-increment formula is interval integrable. -/
-theorem intervalIntegrable_exp_smul_mul_mul_exp_smul (x h : A) :
+/-- The three-factor exponential integrand underlying Duhamel's formulas is interval integrable. -/
+theorem intervalIntegrable_exp_smul_mul_mul_exp_smul (x y z : A) :
     IntervalIntegrable
-      (fun t : ℝ ↦ exp ((1 - t) • (x + h)) * h * exp (t • x)) volume 0 1 :=
+      (fun t : ℝ ↦ exp ((1 - t) • y) * z * exp (t • x)) volume 0 1 :=
   Continuous.intervalIntegrable (μ := volume) (by fun_prop) 0 1
 
 /-- Duhamel's exact finite-increment formula for the exponential in a possibly noncommutative real
@@ -80,7 +78,7 @@ theorem exp_add_sub_exp_eq_integral (x h : A) :
     intro t _ht
     exact hasDerivAt_exp_smul_mul_exp_smul x h t
   have hint : IntervalIntegrable F' volume (0 : ℝ) 1 := by
-    exact (intervalIntegrable_exp_smul_mul_mul_exp_smul x h).neg
+    exact (intervalIntegrable_exp_smul_mul_mul_exp_smul x (x + h) h).neg
   have hFTC := intervalIntegral.integral_eq_sub_of_hasDerivAt hderiv hint
   dsimp only [F, F'] at hFTC
   simp only [one_smul, sub_self, sub_zero, zero_smul, exp_zero, mul_one, one_mul,
@@ -315,15 +313,13 @@ section IntegralFormula
 
 variable {A : Type*} [NormedRing A] [NormedAlgebra ℝ A] [CompleteSpace A]
 
-/-- A real normed algebra regarded as a rational normed algebra within this section. -/
-noncomputable local instance normedAlgebraRatOfRealDerivativeIntegral : NormedAlgebra ℚ A :=
-  .restrictScalars ℚ ℝ A
+attribute [local instance] TauCeti.normedAlgebraRatOfReal
 
 private noncomputable def expDerivativeIntegral (x y : A) (s : ℝ) : A :=
   ∫ t in (0 : ℝ)..1, exp ((1 - t) • (x + s • y)) * y * exp (t • x)
 
-private theorem continuousAt_expDerivativeIntegral (x y : A) :
-    ContinuousAt (expDerivativeIntegral x y) 0 := by
+private theorem continuous_expDerivativeIntegral (x y : A) :
+    Continuous (expDerivativeIntegral x y) := by
   let H : ℝ × ℝ → A := fun p ↦
     exp ((1 - p.2) • (x + p.1 • y)) * y * exp (p.2 • x)
   have hH : Continuous H := by
@@ -335,7 +331,7 @@ private theorem continuousAt_expDerivativeIntegral (x y : A) :
       (f := fun s t ↦ H (s, t)) hH isCompact_Icc
   unfold expDerivativeIntegral
   simpa only [intervalIntegral.integral_of_le zero_le_one,
-    ← integral_Icc_eq_integral_Ioc, H] using hcontinuous.continuousAt
+    ← integral_Icc_eq_integral_Ioc, H] using hcontinuous
 
 private theorem hasDerivAt_exp_add_smul_integral (x y : A) :
     HasDerivAt (fun s : ℝ ↦ exp (x + s • y)) (expDerivativeIntegral x y 0) 0 := by
@@ -343,7 +339,7 @@ private theorem hasDerivAt_exp_add_smul_integral (x y : A) :
   have hG : Filter.Tendsto (expDerivativeIntegral x y)
       (nhdsWithin (0 : ℝ) ({0} : Set ℝ)ᶜ)
       (nhds (expDerivativeIntegral x y 0)) :=
-    (continuousAt_expDerivativeIntegral x y).tendsto.mono_left inf_le_left
+    (continuous_expDerivativeIntegral x y).continuousAt.tendsto.mono_left inf_le_left
   apply hG.congr'
   filter_upwards [self_mem_nhdsWithin] with s hs
   have hs0 : s ≠ 0 := hs
@@ -354,16 +350,11 @@ private theorem hasDerivAt_exp_add_smul_integral (x y : A) :
     rw [expDerivativeIntegral, ← intervalIntegral.integral_smul]
     apply intervalIntegral.integral_congr
     intro t _ht
-    -- Expose the integral's integrand so the scalar can be moved through both multiplications.
-    change exp ((1 - t) • (x + s • y)) * (s • y) * exp (t • x) =
-      s • (exp ((1 - t) • (x + s • y)) * y * exp (t • x))
-    rw [Algebra.mul_smul_comm, Algebra.smul_mul_assoc]
+    simp only [Algebra.mul_smul_comm, Algebra.smul_mul_assoc]
   rw [slope, sub_zero, zero_smul, add_zero, vsub_eq_sub, hduhamel, hintegral,
     inv_smul_smul₀ hs0]
 
-/-- The Fréchet derivative of the noncommutative exponential, applied to `y`, is its Duhamel
-integral. -/
-theorem expFDeriv_apply_eq_integral (x y : A) :
+private theorem expFDeriv_real_apply_eq_integral (x y : A) :
     expFDeriv ℝ x y =
       ∫ t in (0 : ℝ)..1, exp ((1 - t) • x) * y * exp (t • x) := by
   have hline : HasDerivAt (fun s : ℝ ↦ x + s • y) y 0 := by
@@ -373,6 +364,23 @@ theorem expFDeriv_apply_eq_integral (x y : A) :
       (hasFDerivAt_exp (𝕂 := ℝ) x).comp_hasDerivAt_of_eq 0 hline (by simp)
   simpa only [expDerivativeIntegral, zero_smul, add_zero] using
     hseries.unique (hasDerivAt_exp_add_smul_integral x y)
+
+/-- The Fréchet derivative of the noncommutative exponential, applied to `y`, is its Duhamel
+integral. -/
+theorem expFDeriv_apply_eq_integral {𝕂 : Type*} [NontriviallyNormedField 𝕂] [CharZero 𝕂]
+    [ContinuousSMul ℚ 𝕂] [NormedAlgebra ℝ 𝕂] [NormedAlgebra 𝕂 A]
+    [IsScalarTower ℝ 𝕂 A] (x y : A) :
+    expFDeriv 𝕂 x y =
+      ∫ t in (0 : ℝ)..1, exp ((1 - t) • x) * y * exp (t • x) := by
+  have hscalar :
+      (expFDeriv 𝕂 x).restrictScalars ℝ = expFDeriv ℝ x :=
+    ((hasFDerivAt_exp (𝕂 := 𝕂) x).restrictScalars ℝ).unique
+      (hasFDerivAt_exp (𝕂 := ℝ) x)
+  calc
+    expFDeriv 𝕂 x y = expFDeriv ℝ x y := by
+      simpa using congrArg (fun f : A →L[ℝ] A ↦ f y) hscalar
+    _ = ∫ t in (0 : ℝ)..1, exp ((1 - t) • x) * y * exp (t • x) :=
+      expFDeriv_real_apply_eq_integral x y
 
 end IntegralFormula
 
