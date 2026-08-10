@@ -180,16 +180,12 @@ private theorem snd_det_eq_trace_of_fst_eq_one {C : Type*} [CommRing C] {n : ℕ
   have hmatrix : M = 1 + (inr (1 : C) : DualNumber C) • X' := by
     apply Matrix.ext
     intro i j
-    apply TrivSqZeroExt.ext
-    · have hMij := congr_fun (congr_fun hM i) j
-      simpa only [Matrix.add_apply, Matrix.smul_apply, Matrix.map_apply, smul_eq_mul, X', X,
-        Matrix.one_apply, fst_add, fst_mul, fst_inr, fst_inl, fst_one, fst_zero, zero_mul,
-        add_zero, apply_ite]
-        using hMij
-    · simp only [Matrix.add_apply, Matrix.smul_apply, Matrix.map_apply, smul_eq_mul, X', X,
-        Matrix.one_apply, snd_add, snd_mul, snd_inr, snd_inl, fst_inr, fst_inl, zero_mul,
-        zero_add]
-      split_ifs <;> simp
+    rw [← TrivSqZeroExt.inl_fst_add_inr_snd_eq (M i j)]
+    have hMij := congr_fun (congr_fun hM i) j
+    rw [Matrix.map_apply] at hMij
+    rw [hMij]
+    simp only [Matrix.add_apply, Matrix.smul_apply, Matrix.map_apply, smul_eq_mul, X', X,
+      Matrix.one_apply, apply_ite, inl_one, inl_zero, inr_mul_inl, op_smul_eq_smul, mul_one]
   calc
     snd (Matrix.det M) =
         snd (Matrix.det (1 + (inr (1 : C) : DualNumber C) • X')) := by rw [hmatrix]
