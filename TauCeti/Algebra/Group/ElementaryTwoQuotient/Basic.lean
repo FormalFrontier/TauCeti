@@ -94,6 +94,11 @@ def elementaryTwoQuotientMkAdd : Additive G →+ ElementaryTwoQuotient G :=
 def elementaryTwoQuotientMk (g : G) : ElementaryTwoQuotient G :=
   elementaryTwoQuotientMkAdd (Additive.ofMul g)
 
+/-- The additive quotient map agrees with the multiplicative class constructor. -/
+@[simp] theorem elementaryTwoQuotientMkAdd_apply (a : Additive G) :
+    elementaryTwoQuotientMkAdd a = elementaryTwoQuotientMk (Additive.toMul a) := by
+  rfl
+
 /-- The class map `G → G/G²` is the quotient map of the `ModN` model: the class of `g` is the image
 of `Additive.ofMul g` under the quotient by the doubling submodule. This exposes the `ModN`
 representative so downstream files can match `G/G²` against Mathlib's quotient-by-range API. -/
@@ -372,8 +377,7 @@ noncomputable def elementaryTwoQuotientAddEquivOfForallSqEqOne (h : ∀ g : G, g
   · intro a b hab
     apply Additive.toMul.injective
     apply div_eq_one.mp
-    change elementaryTwoQuotientMk (Additive.toMul a) =
-      elementaryTwoQuotientMk (Additive.toMul b) at hab
+    rw [elementaryTwoQuotientMkAdd_apply, elementaryTwoQuotientMkAdd_apply] at hab
     obtain ⟨c, hc⟩ :=
       (elementaryTwoQuotientMk_eq_iff (Additive.toMul a) (Additive.toMul b)).1 hab
     rw [hc, ← pow_two, h]

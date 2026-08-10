@@ -67,7 +67,7 @@ abbrev ElementaryTwoQuotient (K : Type*) [Field K] [NumberField K] : Type _ :=
   TauCeti.ElementaryTwoQuotient (NarrowClassGroup K)
 
 /-- The class of a narrow ideal class in the maximal elementary-2 quotient `Cl⁺(K)/Cl⁺(K)²`. -/
-@[expose] noncomputable def elementaryTwoQuotientMk
+noncomputable def elementaryTwoQuotientMk
     (C : NarrowClassGroup K) : ElementaryTwoQuotient K :=
   TauCeti.elementaryTwoQuotientMk C
 
@@ -76,12 +76,63 @@ abbrev ElementaryTwoQuotient (K : Type*) [Field K] [NumberField K] : Type _ :=
     elementaryTwoQuotientMk C = 0 ↔ IsSquare C :=
   TauCeti.elementaryTwoQuotientMk_eq_zero_iff C
 
+/-- The class map to `Cl⁺(K)/Cl⁺(K)²` sends a product of narrow ideal classes to the sum of their
+classes. -/
+@[simp] theorem elementaryTwoQuotientMk_mul (C D : NarrowClassGroup K) :
+    elementaryTwoQuotientMk (C * D) = elementaryTwoQuotientMk C + elementaryTwoQuotientMk D :=
+  TauCeti.elementaryTwoQuotientMk_mul C D
+
+/-- The class map to `Cl⁺(K)/Cl⁺(K)²` sends the trivial narrow ideal class to `0`. -/
+@[simp] theorem elementaryTwoQuotientMk_one :
+    elementaryTwoQuotientMk (1 : NarrowClassGroup K) = 0 :=
+  TauCeti.elementaryTwoQuotientMk_one
+
+/-- The class map to `Cl⁺(K)/Cl⁺(K)²` sends inverses to negatives. -/
+@[simp] theorem elementaryTwoQuotientMk_inv (C : NarrowClassGroup K) :
+    elementaryTwoQuotientMk C⁻¹ = -elementaryTwoQuotientMk C :=
+  TauCeti.elementaryTwoQuotientMk_inv C
+
+/-- The class map to `Cl⁺(K)/Cl⁺(K)²` sends quotients to differences. -/
+@[simp] theorem elementaryTwoQuotientMk_div (C D : NarrowClassGroup K) :
+    elementaryTwoQuotientMk (C / D) = elementaryTwoQuotientMk C - elementaryTwoQuotientMk D :=
+  TauCeti.elementaryTwoQuotientMk_div C D
+
+/-- The class map to `Cl⁺(K)/Cl⁺(K)²` sends powers to scalar multiples. -/
+@[simp] theorem elementaryTwoQuotientMk_pow (C : NarrowClassGroup K) (n : ℕ) :
+    elementaryTwoQuotientMk (C ^ n) = n • elementaryTwoQuotientMk C :=
+  TauCeti.elementaryTwoQuotientMk_pow C n
+
+/-- The class map to `Cl⁺(K)/Cl⁺(K)²` sends a finite product of narrow ideal classes to the sum of
+their classes. -/
+theorem elementaryTwoQuotientMk_prod {ι : Type*} (S : Finset ι) (C : ι → NarrowClassGroup K) :
+    elementaryTwoQuotientMk (∏ i ∈ S, C i) = ∑ i ∈ S, elementaryTwoQuotientMk (C i) :=
+  TauCeti.elementaryTwoQuotientMk_prod S C
+
+/-- Every element of `Cl⁺(K)/Cl⁺(K)²` is the class of some narrow ideal class. -/
+theorem elementaryTwoQuotientMk_surjective :
+    Function.Surjective (elementaryTwoQuotientMk (K := K)) :=
+  TauCeti.elementaryTwoQuotientMk_surjective
+
+/-- Two narrow ideal classes have the same class in `Cl⁺(K)/Cl⁺(K)²` iff they differ by a
+square. -/
+theorem elementaryTwoQuotientMk_eq_iff (C D : NarrowClassGroup K) :
+    elementaryTwoQuotientMk C = elementaryTwoQuotientMk D ↔ IsSquare (C / D) :=
+  TauCeti.elementaryTwoQuotientMk_eq_iff C D
+
 namespace ElementaryTwoQuotient
 
 /-- The map `Cl⁺(K)/Cl⁺(K)² → Cl(K)/Cl(K)²` induced by forgetting positivity. -/
-@[expose] noncomputable def toClassGroup :
+noncomputable def toClassGroup :
     ElementaryTwoQuotient K →ₗ[ZMod 2] TauCeti.ClassGroup.ElementaryTwoQuotient (𝓞 K) :=
   TauCeti.elementaryTwoQuotientMap (NarrowClassGroup.toClassGroup (K := K))
+
+/-- The induced map to `Cl(K)/Cl(K)²` sends a narrow ideal class to its ordinary ideal class. -/
+@[simp] theorem toClassGroup_mk (C : NarrowClassGroup K) :
+    toClassGroup (elementaryTwoQuotientMk C) =
+      TauCeti.elementaryTwoQuotientMk C.toClassGroup := by
+  change TauCeti.elementaryTwoQuotientMap NarrowClassGroup.toClassGroup
+    (TauCeti.elementaryTwoQuotientMk C) = TauCeti.elementaryTwoQuotientMk C.toClassGroup
+  exact TauCeti.elementaryTwoQuotientMap_mk NarrowClassGroup.toClassGroup C
 
 /-- The induced map `Cl⁺(K)/Cl⁺(K)² → Cl(K)/Cl(K)²` is surjective. -/
 theorem toClassGroup_surjective : Function.Surjective (toClassGroup (K := K)) :=
@@ -104,7 +155,7 @@ quotient. -/
 square class dies in `Cl(K)/Cl(K)²` exactly when it is the class of `mkPrincipal u` for some
 `u : Kˣ` — that is, exactly when it comes from a principal ideal, whose narrow class is nontrivial
 only because its generator need not be totally positive. -/
-theorem mem_ker_toClassGroup_iff (x : ElementaryTwoQuotient K) :
+@[simp] theorem mem_ker_toClassGroup_iff (x : ElementaryTwoQuotient K) :
     x ∈ LinearMap.ker ElementaryTwoQuotient.toClassGroup ↔
       ∃ u : Kˣ, elementaryTwoQuotientMk (mkPrincipal u) = x := by
   have hmap : ElementaryTwoQuotient.toClassGroup (K := K) =
