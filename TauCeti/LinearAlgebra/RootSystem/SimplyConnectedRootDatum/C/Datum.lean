@@ -50,7 +50,7 @@ weight lattice with index `2` (Bourbaki, Plate III), so the datum is a `RootDatu
 
 * `TauCeti.DynkinType.root_typeCSimpleIndex` and `TauCeti.DynkinType.coroot_typeCSimpleIndex`: the
   `i`-th simple root is the `i`-th row of `CartanMatrix.C n` and the `i`-th simple coroot is
-  `Pi.single i 1`, which is what pins the two lattices as the weight and coweight lattices.
+  `Pi.single i 1`, which is what pins the two lattices as the weight and coroot lattices.
 * `TauCeti.DynkinType.hasCartanType_typeCSimplyConnectedRootDatum`: the pinned base has Cartan type
   `C n`.
 * `TauCeti.DynkinType.span_coroot_typeCSimplyConnectedRootDatum`: the coroots span the cocharacter
@@ -100,7 +100,7 @@ private lemma typeCSnd_ne_signedNeg_typeCFst (i : TypeCIndex n) :
     typeCSnd i ≠ signedNeg (typeCFst i) := by
   obtain ⟨a, b, s⟩ := i
   intro hc
-  simp only [typeCSnd, typeCFst, signedNeg, Prod.mk.injEq] at hc
+  simp only [typeCSnd, typeCFst, signedNeg_mk, Prod.mk.injEq] at hc
   obtain ⟨hba, hs⟩ := hc
   subst hba
   simp at hs
@@ -140,7 +140,7 @@ private lemma typeCFst_mk (a b : Fin n) (s : Bool) :
 
 private lemma typeCSnd_mk_of_lt {a b : Fin n} (h : a < b) (s : Bool) :
     typeCSnd ((a, b, s) : TypeCIndex n) = signedNeg (b, s) := by
-  simp [typeCSnd, signedNeg, h]
+  simp [typeCSnd, h]
 
 private lemma typeCSnd_mk_of_not_lt {a b : Fin n} (h : ¬ a < b) (s : Bool) :
     typeCSnd ((a, b, s) : TypeCIndex n) = (b, s) := by
@@ -148,17 +148,17 @@ private lemma typeCSnd_mk_of_not_lt {a b : Fin n} (h : ¬ a < b) (s : Bool) :
 
 private lemma typeCRoot_mk_of_lt {a b : Fin n} (h : a < b) (s : Bool) :
     typeCRoot ((a, b, s) : TypeCIndex n) = signedWeight (a, s) - signedWeight (b, s) := by
-  rw [typeCRoot, typeCFst_mk, typeCSnd_mk_of_lt h, pairRoot, signedWeight_signedNeg]
+  rw [typeCRoot, typeCFst_mk, typeCSnd_mk_of_lt h, pairRoot_eq, signedWeight_signedNeg]
   exact (sub_eq_add_neg _ _).symm
 
 private lemma typeCRoot_mk_of_not_lt {a b : Fin n} (h : ¬ a < b) (s : Bool) :
     typeCRoot ((a, b, s) : TypeCIndex n) = signedWeight (a, s) + signedWeight (b, s) := by
-  rw [typeCRoot, typeCFst_mk, typeCSnd_mk_of_not_lt h, pairRoot]
+  rw [typeCRoot, typeCFst_mk, typeCSnd_mk_of_not_lt h, pairRoot_eq]
 
 private lemma typeCCoroot_mk_of_lt {a b : Fin n} (h : a < b) (s : Bool) :
     typeCCoroot ((a, b, s) : TypeCIndex n) = signedCoweight (a, s) - signedCoweight (b, s) := by
   have hne : ((a, s) : Signed n) ≠ signedNeg (b, s) := by
-    simp [signedNeg, Prod.ext_iff]
+    simp [Prod.ext_iff]
   rw [typeCCoroot, typeCFst_mk, typeCSnd_mk_of_lt h, pairCoroot_of_ne hne,
     signedCoweight_signedNeg]
   exact (sub_eq_add_neg _ _).symm
@@ -206,7 +206,7 @@ private lemma typeCMk_pair {x y : Signed n} (h : y ≠ signedNeg x) :
       refine Or.inl ⟨by rw [hmk]; rfl, ?_⟩
       rw [hmk, typeCSnd, if_pos hab]
     · refine absurd ?_ h
-      simp [signedNeg, hab]
+      simp [hab]
     · have hmk : typeCMk (a, s) (b, !s) = (b, a, !s) := by
         rw [typeCMk, if_neg hst, if_neg (not_lt.mpr hab.le)]
       refine Or.inr ⟨by rw [hmk]; rfl, ?_⟩
@@ -223,6 +223,16 @@ private lemma typeCCoroot_typeCMk {x y : Signed n} (h : y ≠ signedNeg x) :
   exact pairCoroot_comm y x
 
 /-! ## Injectivity of the roots and of the coroots -/
+
+private lemma pair_eq_of_mem_iff {α : Type*} {p q p' q' : α}
+    (h : ∀ z, (z = p ∨ z = q) ↔ (z = p' ∨ z = q')) :
+    (p = p' ∧ q = q') ∨ (p = q' ∧ q = p') := by
+  have h1 := (h p).mp (Or.inl rfl)
+  have h2 := (h q).mp (Or.inr rfl)
+  have h3 := (h p').mpr (Or.inl rfl)
+  have h4 := (h q').mpr (Or.inr rfl)
+  rcases h1 with rfl | rfl <;> rcases h2 with h2 | h2 <;> subst h2 <;>
+    simp_all
 
 private lemma typeCRoot_injective : Injective (typeCRoot (n := n)) := by
   intro i j hij
@@ -312,6 +322,7 @@ private def typeCIndexEquiv (n : ℕ) : TypeCIndex n ≃ Fin (2 * n ^ 2) :=
 
 private instance : (dotProductBilin ℤ ℤ :
     (Fin n → ℤ) →ₗ[ℤ] (Fin n → ℤ) →ₗ[ℤ] ℤ).IsPerfPair := by
+  -- These maps have definitionally identical linear-map fields; Mathlib provides no named bridge.
   change (dotProductEquiv ℤ (Fin n)).toLinearMap.IsPerfPair
   infer_instance
 
@@ -398,7 +409,7 @@ private lemma typeCSnd_simple_of_lt {i : Fin n} (h : (i : ℕ) + 1 < n) :
     typeCSnd ((i, typeCSucc i, false) : TypeCIndex n) = (typeCSucc i, true) := by
   have hlt : i < typeCSucc i := by rw [Fin.lt_def, typeCSucc_of_lt h]; omega
   rw [typeCSnd_mk_of_lt hlt]
-  rfl
+  simp
 
 private lemma typeCSnd_simple_of_last {i : Fin n} (h : (i : ℕ) + 1 = n) :
     typeCSnd ((i, typeCSucc i, false) : TypeCIndex n) = (i, false) := by
@@ -406,20 +417,20 @@ private lemma typeCSnd_simple_of_last {i : Fin n} (h : (i : ℕ) + 1 = n) :
 
 private lemma typeCSimpleRoot_of_lt {i : Fin n} (h : (i : ℕ) + 1 < n) :
     typeCSimpleRoot i = weight n (i : ℕ) - weight n ((i : ℕ) + 1) := by
-  rw [typeCSimpleRoot, typeCRoot, typeCFst_simple, typeCSnd_simple_of_lt h, pairRoot,
+  rw [typeCSimpleRoot, typeCRoot, typeCFst_simple, typeCSnd_simple_of_lt h, pairRoot_eq,
     signedWeight_false, signedWeight_true, typeCSucc_of_lt h]
   exact (sub_eq_add_neg _ _).symm
 
 private lemma typeCSimpleRoot_of_last {i : Fin n} (h : (i : ℕ) + 1 = n) :
     typeCSimpleRoot i = weight n (i : ℕ) + weight n (i : ℕ) := by
-  rw [typeCSimpleRoot, typeCRoot, typeCFst_simple, typeCSnd_simple_of_last h, pairRoot,
+  rw [typeCSimpleRoot, typeCRoot, typeCFst_simple, typeCSnd_simple_of_last h, pairRoot_eq,
     signedWeight_false]
 
 private lemma typeCSimpleCoroot_eq (i : Fin n) :
     typeCSimpleCoroot i = coweight n (i : ℕ) - coweight n ((i : ℕ) + 1) := by
   rcases eq_or_lt_of_le (Nat.succ_le_of_lt i.isLt) with h | h
   · rw [typeCSimpleCoroot, typeCCoroot, typeCFst_simple, typeCSnd_simple_of_last h,
-      pairCoroot_self, signedCoweight_false, coweight_of_le (a := (i : ℕ) + 1) (by omega),
+      pairCoroot_self, signedCoweight_false, coweight_eq_zero_of_le (a := (i : ℕ) + 1) (by omega),
       sub_zero]
   · have hne : ((i : Fin n), false) ≠ ((typeCSucc i : Fin n), true) := by simp
     rw [typeCSimpleCoroot, typeCCoroot, typeCFst_simple, typeCSnd_simple_of_lt h,
@@ -429,13 +440,13 @@ private lemma typeCSimpleCoroot_eq (i : Fin n) :
 private lemma typeCSimpleCoroot_eq_single (i : Fin n) : typeCSimpleCoroot i = Pi.single i 1 := by
   rw [typeCSimpleCoroot_eq]
   funext k
-  simp only [coweight, Pi.sub_apply, Pi.single_apply, Fin.ext_iff]
+  simp only [coweight_apply, Pi.sub_apply, Pi.single_apply, Fin.ext_iff]
   split_ifs <;> omega
 
 /-- **The simple roots are the rows of the Cartan matrix.** In the fundamental-weight basis the
 `i`-th simple root of the pinned type `Cₙ` datum is the `i`-th row of `CartanMatrix.C n`, which is
 what pins the character lattice as the weight lattice. -/
-theorem root_typeCSimpleIndex (i : Fin n) :
+@[simp] theorem root_typeCSimpleIndex (i : Fin n) :
     (typeCSimplyConnectedRootDatum n).root (typeCSimpleIndex n i) =
       fun k => CartanMatrix.C n i k := by
   rw [root_typeCSimpleIndex_eq]
@@ -443,15 +454,15 @@ theorem root_typeCSimpleIndex (i : Fin n) :
   have hk := k.isLt
   rcases eq_or_lt_of_le (Nat.succ_le_of_lt i.isLt) with h | h
   · rw [typeCSimpleRoot_of_last h]
-    simp only [weight, Pi.add_apply, CartanMatrix.C, Matrix.of_apply, Fin.ext_iff]
+    simp only [weight_apply, Pi.add_apply, CartanMatrix.C, Matrix.of_apply, Fin.ext_iff]
     split_ifs <;> omega
   · rw [typeCSimpleRoot_of_lt h]
-    simp only [weight, Pi.sub_apply, CartanMatrix.C, Matrix.of_apply, Fin.ext_iff]
+    simp only [weight_apply, Pi.sub_apply, CartanMatrix.C, Matrix.of_apply, Fin.ext_iff]
     split_ifs <;> omega
 
 /-- **The simple coroots are the standard basis.** This is what pins the cocharacter lattice as the
-coweight lattice, so that the datum is the simply connected one. -/
-theorem coroot_typeCSimpleIndex (i : Fin n) :
+coroot lattice, so that the datum is the simply connected one. -/
+@[simp] theorem coroot_typeCSimpleIndex (i : Fin n) :
     (typeCSimplyConnectedRootDatum n).coroot (typeCSimpleIndex n i) = Pi.single i 1 := by
   rw [coroot_typeCSimpleIndex_eq, typeCSimpleCoroot_eq_single]
 
@@ -513,10 +524,10 @@ private lemma typeCCoroot_false_mem (a b : Fin n) :
     exact coweight_sub_mem (by exact_mod_cast hab.le) (by have := b.isLt; omega)
   · subst hab
     rw [typeCCoroot_mk_diag, signedCoweight_false, ← sub_zero (coweight n (a : ℕ)),
-      ← coweight_of_le (a := n) le_rfl]
+      ← coweight_eq_zero_of_le (a := n) le_rfl]
     exact coweight_sub_mem (by have := a.isLt; omega) le_rfl
   · have hba : (b : ℕ) ≤ (a : ℕ) := by exact_mod_cast hab.le
-    have hzero : coweight n n = 0 := coweight_of_le le_rfl
+    have hzero : coweight n n = 0 := coweight_eq_zero_of_le le_rfl
     have hdecomp : coweight n (a : ℕ) + coweight n (b : ℕ) =
         (coweight n (b : ℕ) - coweight n (a : ℕ)) +
           ((coweight n (a : ℕ) - coweight n n) +
@@ -565,6 +576,8 @@ private lemma linearIndependent_typeCSimpleRoot (n : ℕ) :
     LinearIndependent ℤ (typeCSimpleRoot (n := n)) := by
   rw [Fintype.linearIndependent_iff]
   intro g hg
+  -- First extract the recurrence for the coefficients by pairing the relation with each
+  -- classical coweight.
   have hrel : ∀ c : Fin n,
       (if (c : ℕ) + 1 = n then (2 : ℤ) else 1) * g c
         = ∑ i : Fin n, (if (c : ℕ) = (i : ℕ) + 1 then g i else 0) := by
@@ -589,6 +602,7 @@ private lemma linearIndependent_typeCSimpleRoot (n : ℕ) :
       · simp
     rw [hfirst] at h0
     linarith [h0]
+  -- Then solve that recurrence from left to right, starting with the coefficient at zero.
   have hzero : ∀ m : ℕ, ∀ hm : m < n, g ⟨m, hm⟩ = 0 := by
     intro m
     induction m with
