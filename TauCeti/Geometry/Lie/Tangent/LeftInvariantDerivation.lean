@@ -5,8 +5,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.Geometry.Manifold.Algebra.LeftInvariantDerivation
-import Mathlib.Geometry.Manifold.ContMDiffMFDeriv
-import Mathlib.Geometry.Manifold.VectorBundle.Tangent
 public import TauCeti.Geometry.Manifold.DerivationBundle
 public import TauCeti.Geometry.Lie.InvariantVectorField
 
@@ -95,20 +93,9 @@ theorem contMDiff_mvfderiv_mulInvariantVectorField
     [ContMDiffMul I ∞ G] (v : GroupLieAlgebra I G)
     (f : C^∞⟮I, G; 𝕜⟯) :
     ContMDiff I (modelWithCornersSelf 𝕜 𝕜) ∞
-      (fun g ↦ mvfderiv I f g (mulInvariantVectorField v g)) := by
-  let df : TangentBundle I G → TangentBundle (modelWithCornersSelf 𝕜 𝕜) 𝕜 :=
-    tangentMap% (f : G → 𝕜)
-  have hdf : ContMDiff I.tangent (modelWithCornersSelf 𝕜 𝕜).tangent ∞ df :=
-    f.contMDiff.contMDiff_tangentMap (by simp)
-  have hsnd : ContMDiff (modelWithCornersSelf 𝕜 𝕜).tangent
-      (modelWithCornersSelf 𝕜 𝕜) ∞
-      (fun p : TangentBundle (modelWithCornersSelf 𝕜 𝕜) 𝕜 ↦ p.2) :=
-    contMDiff_snd_tangentBundle_modelSpace 𝕜 (modelWithCornersSelf 𝕜 𝕜)
-  -- `mvfderiv` is the second component of the tangent map, hidden by bundle coercions.
-  change ContMDiff I (modelWithCornersSelf 𝕜 𝕜) ∞
-    (fun g ↦ mfderiv I (modelWithCornersSelf 𝕜 𝕜) f g (mulInvariantVectorField v g))
-  have h := hsnd.comp (hdf.comp (contMDiff_mulInvariantVectorField_infty v))
-  exact h.congr fun g ↦ rfl
+      (fun g ↦ mvfderiv I f g (mulInvariantVectorField v g)) :=
+  f.contMDiff.contMDiff_mvfderiv_apply
+    (contMDiff_mulInvariantVectorField_infty v) (by simp)
 
 /-- The derivation of smooth functions that differentiates along the left-invariant vector
 field of a tangent vector `v` at the identity. -/

@@ -66,18 +66,14 @@ private theorem continuous_of_continuousAt_zero (S : StronglyContinuousSemigroup
   intro t₀
   rw [Metric.continuousAt_iff]
   intro ε hε
-  let C := max ‖S t₀‖ (M * Real.exp (|ω| * t₀)) + 1
+  let C := max ‖S t₀‖ (M * Real.exp (max ω 0 * t₀)) + 1
   have hC : 0 < C := by
     dsimp [C]
     positivity
   obtain ⟨δ, hδ, hsmall⟩ := Metric.continuousAt_iff.mp hS (ε / C) (div_pos hε hC)
   refine ⟨δ, hδ, fun t ht ↦ ?_⟩
   rcases le_total t₀ t with ht₀t | htt₀
-  · have hdiff : S t - S t₀ = (S t₀).comp (S (t - t₀) - 1) := by
-      have hmap := S.map_add t₀ (t - t₀)
-      rw [add_tsub_cancel_of_le ht₀t] at hmap
-      rw [hmap, ContinuousLinearMap.comp_sub]
-      congr 1
+  · have hdiff := S.sub_eq_comp_sub_one_of_le ht₀t
     have hsmall' : ‖S (t - t₀) - 1‖ < ε / C := by
       simpa only [S.map_zero, ContinuousLinearMap.one_def, dist_eq_norm] using
         hsmall (by simpa [NNReal.dist_eq, NNReal.coe_sub ht₀t] using ht)
@@ -88,28 +84,21 @@ private theorem continuous_of_continuousAt_zero (S : StronglyContinuousSemigroup
       _ < C * (ε / C) := by
         gcongr
         dsimp [C]
-        linarith [le_max_left ‖S t₀‖ (M * Real.exp (|ω| * t₀))]
+        linarith [le_max_left ‖S t₀‖ (M * Real.exp (max ω 0 * t₀))]
       _ = ε := by field_simp
   · have hdiff : S t - S t₀ = (S t).comp (1 - S (t₀ - t)) := by
-      have hmap := S.map_add t (t₀ - t)
-      rw [add_tsub_cancel_of_le htt₀] at hmap
-      rw [hmap, ContinuousLinearMap.comp_sub]
-      congr 1
+      rw [← neg_sub (S t₀) (S t), S.sub_eq_comp_sub_one_of_le htt₀, ← ContinuousLinearMap.comp_neg,
+        neg_sub]
     have hsmall' : ‖1 - S (t₀ - t)‖ < ε / C := by
       rw [← norm_neg, neg_sub]
       simpa only [S.map_zero, ContinuousLinearMap.one_def, dist_eq_norm] using
         hsmall (by simpa [NNReal.dist_eq, NNReal.coe_sub htt₀, abs_sub_comm] using ht)
     have hSt : ‖S t‖ < C := by
-      have hω : ω * (t : ℝ) ≤ |ω| * (t₀ : ℝ) := calc
-        ω * (t : ℝ) ≤ |ω| * (t : ℝ) :=
-          mul_le_mul_of_nonneg_right (le_abs_self ω) t.2
-        _ ≤ |ω| * (t₀ : ℝ) := mul_le_mul_of_nonneg_left (by exact_mod_cast htt₀) (abs_nonneg ω)
-      have hbound : ‖S t‖ ≤ M * Real.exp (|ω| * t₀) := by
-        rw [← S.realOperator_coe]
-        exact (hb.bound t t.2).trans (mul_le_mul_of_nonneg_left
-          (Real.exp_le_exp.mpr hω) (zero_le_one.trans hb.one_le))
       dsimp [C]
-      linarith [hbound, le_max_right ‖S t₀‖ (M * Real.exp (|ω| * t₀))]
+      have hbt : ‖S t‖ ≤ M * Real.exp (max ω 0 * t₀) := by
+        rw [← S.realOperator_coe]
+        exact hb.norm_le_mul_exp_max_zero_mul_of_le t.2 (by exact_mod_cast htt₀)
+      linarith [hbt, le_max_right ‖S t₀‖ (M * Real.exp (max ω 0 * t₀))]
     rw [dist_eq_norm, hdiff]
     calc
       ‖(S t).comp (1 - S (t₀ - t))‖

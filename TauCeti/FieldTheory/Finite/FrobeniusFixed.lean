@@ -17,6 +17,8 @@ the `q`-power map exactly when it comes from `K`:
 ## Main results
 
 * `TauCeti.FiniteField.pow_card_eq_self_iff_mem_range_algebraMap`: the criterion above.
+* `TauCeti.algebraMap_bijective_of_pow_card_eq_self`: its immediate global consequence, that an
+  extension *all* of whose elements are fixed by the `q`-power map is `K` itself.
 
 Mathlib has the easy direction (`FiniteField.pow_card`) but not the equivalence.
 `IsGalois.mem_range_algebraMap_iff_fixed` characterises the base field of a Galois extension by
@@ -80,5 +82,14 @@ theorem pow_card_eq_self_iff_mem_range_algebraMap {K L : Type*} [Field K] [Finty
   exact this.symm
 
 end FiniteField
+
+/-- **A field extension in which `x ^ |K| = x` is `K` itself.** Every element of the extension is
+then in the range of the algebra map by
+`TauCeti.FiniteField.pow_card_eq_self_iff_mem_range_algebraMap`. -/
+theorem algebraMap_bijective_of_pow_card_eq_self {K L : Type*} [Field K] [Fintype K] [CommRing L]
+    [IsDomain L] [Algebra K L] (h : ∀ x : L, x ^ Fintype.card K = x) :
+    Function.Bijective (algebraMap K L) :=
+  ⟨(algebraMap K L).injective,
+    fun x => (FiniteField.pow_card_eq_self_iff_mem_range_algebraMap x).mp (h x)⟩
 
 end TauCeti
