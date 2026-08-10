@@ -60,14 +60,15 @@ reflection identity for coroots is proved.
   named by a pair of signed basis vectors.
 * `TauCeti.DynkinType.TypeB.reflMap`: the signed permutation realising the reflection in a root.
 
-Only the coordinate definitions are `@[expose]`d, since the enumeration file computes with their
-bodies; the derived constructions are reached through the lemmas below.
+The coordinate definitions are used through their defining and case-characterization lemmas below;
+their bodies are not exposed to importing modules.
 
 ## Main results
 
 * `TauCeti.DynkinType.TypeB.wt_reflMap` and `TauCeti.DynkinType.TypeB.cwt_reflMap`: the reflection
   formulas on a single signed basis vector, from which the root-datum axioms follow additively.
-* `TauCeti.DynkinType.TypeB.eq_of_forall_mem_iff`: a root determines its index.
+* `TauCeti.DynkinType.TypeB.eq_of_forall_mem_iff`: an index is recovered from its unordered
+  signed-vector pair.
 
 ## References
 
@@ -87,17 +88,22 @@ variable {n : ℕ}
 pairings `⟨e_a, αₖ^∨⟩` against the simple coroots. The last simple coroot is `2 e_{n-1}`, which is
 why the diagonal entry doubles there. The value is `0` for `n ≤ a`, where there is no basis
 vector. -/
-@[expose] def weight (n a : ℕ) : Fin n → ℤ := fun k =>
+def weight (n a : ℕ) : Fin n → ℤ := fun k =>
   (if a = (k : ℕ) then (if (k : ℕ) + 1 = n then 2 else 1) else 0) -
     (if a = (k : ℕ) + 1 ∧ (k : ℕ) + 1 < n then 1 else 0)
+lemma weight_apply (n a : ℕ) (k : Fin n) : weight n a k =
+    (if a = (k : ℕ) then (if (k : ℕ) + 1 = n then 2 else 1) else 0) -
+      (if a = (k : ℕ) + 1 ∧ (k : ℕ) + 1 < n then 1 else 0) := (rfl)
 
 /-- The cocharacter-lattice coordinates of `2 e_b`, that is, its coordinates in the simple coroots
 `αₖ^∨ = e_k - e_{k+1}` and `α_{n-1}^∨ = 2 e_{n-1}`. The vector `e_b` alone is half-integral in that
 basis, so it is its double that is recorded. -/
-@[expose] def coweight (n b : ℕ) : Fin n → ℤ := fun k =>
+def coweight (n b : ℕ) : Fin n → ℤ := fun k =>
   (if (k : ℕ) + 1 = n then 1 else 2) * (if b ≤ (k : ℕ) then 1 else 0)
+lemma coweight_apply (n b : ℕ) (k : Fin n) : coweight n b k =
+    (if (k : ℕ) + 1 = n then 1 else 2) * (if b ≤ (k : ℕ) then 1 else 0) := (rfl)
 
-lemma weight_of_le {a : ℕ} (ha : n ≤ a) : weight n a = 0 := by
+lemma weight_eq_zero_of_le {a : ℕ} (ha : n ≤ a) : weight n a = 0 := by
   funext k
   have := k.isLt
   simp only [weight, Pi.zero_apply]
@@ -146,10 +152,12 @@ lemma weight_dotProduct_coweight {a b : ℕ} (ha : a < n) :
 
 /-- The axis of the signed basis vector indexed by `u`, which stands for `e_u` when `u < n` and for
 `-e_{u-n}` otherwise. -/
-@[expose] def axis (u : Fin (2 * n)) : ℕ := if (u : ℕ) < n then (u : ℕ) else (u : ℕ) - n
+def axis (u : Fin (2 * n)) : ℕ := if (u : ℕ) < n then (u : ℕ) else (u : ℕ) - n
+lemma axis_def (u : Fin (2 * n)) : axis u = if (u : ℕ) < n then (u : ℕ) else (u : ℕ) - n := (rfl)
 
 /-- The sign of the signed basis vector indexed by `u`. -/
-@[expose] def sgn (u : Fin (2 * n)) : ℤ := if (u : ℕ) < n then 1 else -1
+def sgn (u : Fin (2 * n)) : ℤ := if (u : ℕ) < n then 1 else -1
+lemma sgn_def (u : Fin (2 * n)) : sgn u = if (u : ℕ) < n then 1 else -1 := (rfl)
 
 /-- The index of the opposite signed basis vector. -/
 def opp (u : Fin (2 * n)) : Fin (2 * n) :=
@@ -202,10 +210,12 @@ lemma eq_or_eq_opp_of_axis_eq {u v : Fin (2 * n)} (h : axis u = axis v) : u = v 
 lemma ne_of_axis_ne {u v : Fin (2 * n)} (h : axis u ≠ axis v) : u ≠ v := fun hc => h (by rw [hc])
 
 /-- The character coordinates of the signed basis vector indexed by `u`. -/
-@[expose] def wt (u : Fin (2 * n)) : Fin n → ℤ := sgn u • weight n (axis u)
+def wt (u : Fin (2 * n)) : Fin n → ℤ := sgn u • weight n (axis u)
+lemma wt_def (u : Fin (2 * n)) : wt u = sgn u • weight n (axis u) := (rfl)
 
 /-- The cocharacter coordinates of twice the signed basis vector indexed by `u`. -/
-@[expose] def cwt (u : Fin (2 * n)) : Fin n → ℤ := sgn u • coweight n (axis u)
+def cwt (u : Fin (2 * n)) : Fin n → ℤ := sgn u • coweight n (axis u)
+lemma cwt_def (u : Fin (2 * n)) : cwt u = sgn u • coweight n (axis u) := (rfl)
 
 @[simp] lemma wt_opp (u : Fin (2 * n)) : wt (opp u) = -wt u := by
   simp only [wt, sgn_opp, axis_opp, neg_smul]
@@ -245,9 +255,13 @@ lemma wt_dotProduct_cwt_of_axis_ne {u v : Fin (2 * n)} (h : axis u ≠ axis v) :
 /-- The simple-coroot coordinates of the coroot named by the pair `{u, v}`: the half of
 `cwt u + cwt v`, which is integral. When `u = v` this is the short coroot `cwt u`, and otherwise it
 is the long coroot `± e_a ± e_b` itself. -/
-@[expose] def half (u v : Fin (2 * n)) : Fin n → ℤ := fun k =>
+def half (u v : Fin (2 * n)) : Fin n → ℤ := fun k =>
   if (k : ℕ) + 1 = n then (if sgn u = sgn v then sgn u else 0)
   else sgn u * (if axis u ≤ (k : ℕ) then 1 else 0) + sgn v * (if axis v ≤ (k : ℕ) then 1 else 0)
+lemma half_apply (u v : Fin (2 * n)) (k : Fin n) : half u v k =
+    if (k : ℕ) + 1 = n then (if sgn u = sgn v then sgn u else 0)
+    else sgn u * (if axis u ≤ (k : ℕ) then 1 else 0) + sgn v *
+      (if axis v ≤ (k : ℕ) then 1 else 0) := (rfl)
 
 lemma half_comm (u v : Fin (2 * n)) : half u v = half v u := by
   funext k
@@ -291,7 +305,7 @@ lemma two_smul_half (u v : Fin (2 * n)) : (2 : ℤ) • half u v = cwt u + cwt v
 /-! ## Cyclic offsets and the index of a pair -/
 
 /-- The signed basis vector `d` steps after `u` in the cyclic order on `Fin (2 * n)`. -/
-@[expose] def shift (u : Fin (2 * n)) (d : Fin n) : Fin (2 * n) :=
+def shift (u : Fin (2 * n)) (d : Fin n) : Fin (2 * n) :=
   ⟨if (u : ℕ) + (d : ℕ) < 2 * n then (u : ℕ) + (d : ℕ) else (u : ℕ) + (d : ℕ) - 2 * n,
     by have := u.isLt; have := d.isLt; split <;> omega⟩
 
@@ -405,7 +419,7 @@ lemma shift_index {u v : Fin (2 * n)} (h : IsPair u v) :
 /-! ## Roots and coroots -/
 
 /-- The character coordinates of the root named by a pair of signed basis vectors. -/
-@[expose] def rootOfPair (u v : Fin (2 * n)) : Fin n → ℤ := if u = v then wt u else wt u + wt v
+def rootOfPair (u v : Fin (2 * n)) : Fin n → ℤ := if u = v then wt u else wt u + wt v
 
 lemma rootOfPair_comm (u v : Fin (2 * n)) : rootOfPair u v = rootOfPair v u := by
   rcases eq_or_ne u v with rfl | huv
@@ -419,10 +433,12 @@ lemma rootOfPair_of_ne {u v : Fin (2 * n)} (h : u ≠ v) : rootOfPair u v = wt u
   rw [rootOfPair, if_neg h]
 
 /-- The root indexed by an element of `Fin (2 * n) × Fin n`. -/
-@[expose] def rootIdx (z : Fin (2 * n) × Fin n) : Fin n → ℤ := rootOfPair z.1 (shift z.1 z.2)
+def rootIdx (z : Fin (2 * n) × Fin n) : Fin n → ℤ := rootOfPair z.1 (shift z.1 z.2)
+lemma rootIdx_def (z : Fin (2 * n) × Fin n) : rootIdx z = rootOfPair z.1 (shift z.1 z.2) := (rfl)
 
 /-- The coroot indexed by an element of `Fin (2 * n) × Fin n`. -/
-@[expose] def corootIdx (z : Fin (2 * n) × Fin n) : Fin n → ℤ := half z.1 (shift z.1 z.2)
+def corootIdx (z : Fin (2 * n) × Fin n) : Fin n → ℤ := half z.1 (shift z.1 z.2)
+lemma corootIdx_def (z : Fin (2 * n) × Fin n) : corootIdx z = half z.1 (shift z.1 z.2) := (rfl)
 
 lemma rootIdx_index {u v : Fin (2 * n)} (h : IsPair u v) :
     rootIdx (index u v) = rootOfPair u v := by
