@@ -44,6 +44,7 @@ denominators. The symmetrization itself is not redone here: Mathlib packages it 
   such a computation meets.
 * `TauCeti.IsFiniteType.submatrix`: principal submatrices of a finite-type matrix are of finite
   type. This is what lets a forbidden subdiagram rule out a diagram containing it.
+* `TauCeti.IsFiniteType.transpose`: finite type is invariant under matrix transposition.
 * `TauCeti.IsFiniteType.sum_apply_mul_apply_lt_four`: the star bound. The Cartan products joining
   an index to pairwise non-adjacent neighbours sum to less than `4`. This is the first of the two
   positive-definiteness estimates behind the local shape of a finite-type diagram.
@@ -208,6 +209,30 @@ theorem submatrix {C : Type*} [Fintype C] (h : IsFiniteType A) {e : C → B}
   refine ⟨fun i ↦ h.apply_self _, fun i j hij ↦ h.apply_le_zero_of_ne fun hc ↦ hij (he hc),
     fun i j hij ↦ h.apply_eq_zero_symm hij, d ∘ e, fun i ↦ hd _, ?_⟩
   exact hpd.submatrix he
+
+/-- **Finite type is invariant under transposition.** The reciprocal vector is a symmetrizer for
+the transpose. Its symmetrization is obtained from the original one by conjugating with the
+invertible diagonal matrix whose entries are those reciprocals. -/
+theorem transpose (h : IsFiniteType A) : IsFiniteType A.transpose := by
+  classical
+  obtain ⟨d, hd, hpd⟩ := h.exists_symmetrizer
+  refine isFiniteType_of (fun i ↦ h.apply_self i)
+    (fun i j hij ↦ h.apply_le_zero_of_ne hij.symm) (d := fun i ↦ (d i)⁻¹)
+    (fun i ↦ inv_pos.mpr (hd i)) ?_
+  have hdiag : Function.Injective (Matrix.diagonal fun i ↦ (d i)⁻¹).mulVec := by
+    intro x y hxy
+    funext i
+    apply mul_left_cancel₀ (inv_ne_zero (hd i).ne')
+    simpa only [Matrix.mulVec_diagonal] using congrFun hxy i
+  have hconj := hpd.conjTranspose_mul_mul_same hdiag
+  convert hconj using 1
+  ext i j
+  have hsymm := hpd.isHermitian.apply i j
+  simp only [Matrix.of_apply, Matrix.transpose_apply, Matrix.diagonal_conjTranspose, star_trivial,
+    Matrix.diagonal_mul, Matrix.mul_diagonal]
+  simp only [Matrix.of_apply, star_trivial] at hsymm
+  field_simp [(hd i).ne', (hd j).ne']
+  linarith
 
 /-- **A nonzero entry has Cartan product at least `1`.** Off the diagonal both entries of such a
 transposed pair are at most `-1`: they are nonpositive, and neither vanishes, because the vanishing

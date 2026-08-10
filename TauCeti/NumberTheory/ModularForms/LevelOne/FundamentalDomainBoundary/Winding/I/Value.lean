@@ -506,33 +506,19 @@ private lemma truncated_integral_spec (hH : 1 < H) (hε : 0 < ε) (hε₁ : ε <
   have hae_right := Contour.ae_logDeriv_sub_eq_truncated (γ := fdBoundary H)
     (z₀ := Complex.I) (a := (2 + δ : ℝ)) (b := 5) (by linarith)
     fun s hs ↦ lt_norm_of_far_right hε₁ hε₂ hδ_pos hδ_lt h2sin ⟨hs.1, hs.2.le⟩
-  have hmid : EqOn (fun s ↦ if ε < ‖fdBoundary H s - Complex.I‖
-      then (fdBoundary H s - Complex.I)⁻¹ * deriv (fdBoundary H) s else 0)
-      (fun _ ↦ (0 : ℂ)) (uIcc (2 - δ : ℝ) (2 + δ)) := by
-    intro s hs
-    rw [uIcc_of_le (by linarith)] at hs
-    exact if_neg (not_lt.mpr (norm_le_of_near hδ_lt h2sin hs))
+  obtain ⟨himid, hmid0⟩ :=
+    Contour.intervalIntegrable_truncated_and_integral_truncated_eq_zero_of_norm_le
+    (γ := fdBoundary H) (z₀ := Complex.I)
+    (Filter.Eventually.of_forall fun s hs ↦ norm_le_of_near hδ_lt h2sin
+      (Set.Ioc_subset_Icc_self
+        (by rwa [Set.uIoc_of_le (by linarith : (2 - δ : ℝ) ≤ 2 + δ)] at hs)))
   have hi02 := hi_left.congr_ae ((ae_restrict_iff' measurableSet_uIoc).mpr hae_left)
   have hi25 := hi_right.congr_ae ((ae_restrict_iff' measurableSet_uIoc).mpr hae_right)
-  have himid : IntervalIntegrable (fun s ↦ if ε < ‖fdBoundary H s - Complex.I‖
-      then (fdBoundary H s - Complex.I)⁻¹ * deriv (fdBoundary H) s else 0)
-      volume (2 - δ) (2 + δ) := by
-    refine (intervalIntegrable_const (c := (0 : ℂ))).congr_ae
-      ((ae_restrict_iff' measurableSet_uIoc).mpr (Eventually.of_forall fun s hs ↦ ?_))
-    rw [uIoc_of_le (by linarith)] at hs
-    have hsub : s ∈ uIcc (2 - δ : ℝ) (2 + δ) := by
-      rw [uIcc_of_le (by linarith : (2 - δ : ℝ) ≤ 2 + δ)]
-      exact Ioc_subset_Icc_self hs
-    exact (hmid hsub).symm
   refine ⟨(hi02.trans himid).trans hi25, ?_⟩
   have hδ6 : δ * (Real.pi / 6) = 2 * Real.arcsin (ε / 2) := by
     simp only [hδ_def, fdBoundaryArcExcisionHalfWidth_def]
     field_simp
     ring
-  have hmid0 : ∫ s in (2 - δ : ℝ)..(2 + δ), (if ε < ‖fdBoundary H s - Complex.I‖
-      then (fdBoundary H s - Complex.I)⁻¹ * deriv (fdBoundary H) s else 0) = 0 := by
-    rw [intervalIntegral.integral_congr hmid]
-    simp
   rw [← intervalIntegral.integral_add_adjacent_intervals (hi02.trans himid) hi25,
     ← intervalIntegral.integral_add_adjacent_intervals hi02 himid,
     hmid0, add_zero,

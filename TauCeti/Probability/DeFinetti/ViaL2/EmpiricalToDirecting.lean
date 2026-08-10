@@ -51,7 +51,15 @@ theorem Contractable.tendsto_integral_abs_blockAverage_indicator_sub_directingMe
     (measurable_const.indicator hB)
   have hf_bdd : ∃ C, ∀ x, ‖Set.indicator B (fun _ => (1 : ℝ)) x‖ ≤ C :=
     ⟨1, fun x => by simpa only [norm_one] using norm_indicator_le_norm_self (fun _ => (1 : ℝ)) x⟩
-  have hlim := hX.tendsto_integral_abs_blockAverage_sub_condExp hX_meas hf hf_bdd r
+  -- This route reads a fixed start, instantiating the upstream moving-selection theorem at `r`.
+  have hlim : Tendsto (fun m => ∫ ω,
+      |blockAverage (fun i ω => Set.indicator B (fun _ => (1 : ℝ)) (X i ω))
+          (fun j : Fin (m + 1) => r + (j : ℕ)) ω
+        - (μ[fun ω => Set.indicator B (fun _ => (1 : ℝ)) (X 0 ω) | tailProcess X]) ω| ∂μ)
+      atTop (𝓝 0) := by
+    simpa only [funext (fixedStart_apply r _)] using
+      hX.tendsto_integral_abs_blockAverage_sub_condExp hX_meas hf hf_bdd
+        (fixedStart r) (fixedStart_eventually_injective r)
   -- Normalise the composition wrapper so the rewrite matches without relying on defeq.
   have hdir : (fun ω => (directingMeasure μ X ω).real B)
       =ᵐ[μ] μ[fun ω => Set.indicator B (fun _ => (1 : ℝ)) (X 0 ω) | tailProcess X] := by

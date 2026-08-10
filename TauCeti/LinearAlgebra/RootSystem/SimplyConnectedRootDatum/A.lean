@@ -445,6 +445,31 @@ private lemma sub_mem_closure_of_le {M : Type*} [AddCommGroup M] (f : ℕ → M)
   have : i < n := lt_of_lt_of_le (Finset.mem_Ico.mp hi).2 hb
   exact ⟨⟨i, this⟩, rfl⟩
 
+/-- **A sequence with vanishing second difference is linear.** In an additive cancellative
+commutative monoid, if `S 0 = 0` and `S (k + 1) + S (k + 1) = S k + S (k + 2)` for every `k < n`,
+then `S j = j • S 1` for every `j ≤ n + 1`. -/
+private lemma eq_nsmul_of_second_difference_zero {M : Type*} [AddCancelCommMonoid M] {S : ℕ → M}
+    {n : ℕ} (hS0 : S 0 = 0) (hrec : ∀ k < n, S (k + 1) + S (k + 1) = S k + S (k + 2)) :
+    ∀ j ≤ n + 1, S j = j • S 1 := by
+  intro j
+  induction j using Nat.strong_induction_on with
+  | _ j ih =>
+    match j with
+    | 0 => intro _; simpa using hS0
+    | 1 => intro _; simp
+    | (m + 2) =>
+      intro hm
+      have h0 := ih m (by omega) (by omega)
+      have h1 := ih (m + 1) (by omega) (by omega)
+      have h2 := hrec m (by omega)
+      -- the recurrence reads `(m + 1) • S 1 + (m + 1) • S 1 = m • S 1 + S (m + 2)`, and both
+      -- sides carry the summand `m • S 1`
+      rw [h0, h1] at h2
+      refine add_left_cancel (a := m • S 1) ?_
+      rw [← h2, ← add_smul, ← add_smul]
+      congr 1
+      omega
+
 /-- The simple roots of type `Aₙ` are linearly independent. A relation among the rows of
 `CartanMatrix.A n` forces its coefficients to grow linearly, and the missing row past the last node
 then makes the common ratio `(n + 1)`-torsion, hence zero. -/
@@ -475,21 +500,9 @@ private lemma linearIndependent_typeASimpleRoot (n : ℕ) :
     have e2 : ∑ j : Fin n, (if (j : ℕ) + 1 = (k : ℕ) + 1 then g j else 0) = S ((k : ℕ) + 1) := rfl
     rw [e1, e2] at h
     linarith [h]
-  have key : ∀ j : ℕ, j ≤ n + 1 → S j = j * S 1 := by
-    intro j
-    induction j using Nat.strong_induction_on with
-    | _ j ih =>
-      match j with
-      | 0 => intro _; simpa using hS0
-      | 1 => intro _; simp
-      | (m + 2) =>
-        intro hm
-        have hmn : m < n := by omega
-        have h0 := ih m (by omega) (by omega)
-        have h1 := ih (m + 1) (by omega) (by omega)
-        have h2 : S (m + 1) + S (m + 1) = S m + S (m + 2) := hrec ⟨m, hmn⟩
-        push_cast at h0 h1 ⊢
-        linarith
+  have key : ∀ j : ℕ, j ≤ n + 1 → S j = j * S 1 := fun j hj => by
+    simpa [nsmul_eq_mul] using
+      eq_nsmul_of_second_difference_zero hS0 (fun k hk => hrec ⟨k, hk⟩) j hj
   have hS1 : S 1 = 0 := by
     have h := key (n + 1) le_rfl
     rw [hSzero (n + 1) (by omega)] at h
