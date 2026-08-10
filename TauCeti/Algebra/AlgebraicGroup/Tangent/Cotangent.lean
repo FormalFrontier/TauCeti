@@ -144,7 +144,9 @@ private lemma algEquivSelf_smul (a : A)
     (algebraMap R B (counit a) : Bialgebra.CounitAlgebra R A B)
 
 omit [CommRing A] [Bialgebra R A] in
-private lemma algEquivSelf_coeff_smul (b : B)
+/-- The canonical equivalence from the counit coefficient algebra to its underlying
+coefficient ring preserves coefficient scalar multiplication. -/
+lemma algEquivSelf_coeff_smul (b : B)
     (z : Bialgebra.CounitAlgebra R A B) :
     Bialgebra.CounitAlgebra.algEquivSelf R A B (b • z) =
       b • Bialgebra.CounitAlgebra.algEquivSelf R A B z := by

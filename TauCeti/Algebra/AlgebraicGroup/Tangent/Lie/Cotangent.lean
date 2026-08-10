@@ -133,8 +133,7 @@ private theorem tangentScalarExtensionEquiv_tmul_eq
           ((b • mapValue (A := H) (Algebra.ofId R B)
             (cotangentLinearEquiv (R := R) (A := H) (B := R) f)) h) :=
       by
-        rw [Derivation.smul_apply, Bialgebra.CounitAlgebra.algEquivSelf_apply,
-          Bialgebra.CounitAlgebra.algEquivSelf_apply]
+        rw [Derivation.smul_apply, algEquivSelf_coeff_smul]
         rfl
 
 private theorem tangentScalarExtensionEquiv_bracket_tmul
