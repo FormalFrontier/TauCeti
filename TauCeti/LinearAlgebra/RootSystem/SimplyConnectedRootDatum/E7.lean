@@ -189,7 +189,7 @@ theorem e7Coroot_nonneg (i : Fin 63) (j : Fin 7) : 0 ≤ e7Coroot (Fin.castAdd 6
   fin_cases i <;> fin_cases j <;> decide
 
 /-- The last positive entry of the coroot table has the Bourbaki marks `(2, 2, 3, 4, 3, 2, 1)`. -/
-theorem e7Coroot_apply_62 : e7Coroot 62 = ![2, 2, 3, 4, 3, 2, 1] := by decide
+@[simp] theorem e7Coroot_apply_62 : e7Coroot 62 = ![2, 2, 3, 4, 3, 2, 1] := by decide
 
 /-- The last positive entry is the highest `E7` coroot: it dominates every entry of the table
 in each simple-coroot coordinate. -/
