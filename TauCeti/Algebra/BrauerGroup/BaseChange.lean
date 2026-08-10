@@ -129,14 +129,9 @@ It is well defined by `TauCeti.isBrauerEquivalent_baseChange_congr`, multiplicat
 `TauCeti.Algebra.TensorProduct.baseChangeTensorAlgEquiv`, and unital by
 `Algebra.TensorProduct.rid`.
 
-`@[expose]` so that `TauCeti.BrauerGroup.baseChange_mk`, the defining property that everything
-below is stated through, can be proved at all: it is an exported theorem whose only possible proof
-unfolds the `Quotient.liftOn` here, and the module system requires every definition unfolded by an
-exported theorem to be exposed. The corresponding lemmas for the group structure,
-`TauCeti.BrauerGroup.mk_tensorProduct` and `TauCeti.BrauerGroup.mk_op`, are the same `rfl` against
-the same `Quotient.liftOn`, and go without the attribute only because `instance` declarations are
-exposed automatically. Nothing below unfolds `baseChange` again. -/
-@[expose]
+The `Quotient.liftOn` is an implementation detail, kept unexposed: the interface is
+`TauCeti.BrauerGroup.baseChange_mk`, and every statement below is phrased and proved through
+that. -/
 def baseChange : BrauerGroup.{u, u} K →* BrauerGroup.{u, u} L where
   toFun x := Quotient.liftOn x (fun A ↦ mk (CSA.baseChange L A))
     fun _ _ h ↦ Quotient.sound (isBrauerEquivalent_baseChange_congr L h)
@@ -145,10 +140,16 @@ def baseChange : BrauerGroup.{u, u} K →* BrauerGroup.{u, u} L where
     mk_eq_mk_of_algEquiv (Algebra.TensorProduct.baseChangeTensorAlgEquiv K L A B)
 
 /-- **The class of the scalar extension is the base change of the class**: the defining property of
-`TauCeti.BrauerGroup.baseChange`. -/
+`TauCeti.BrauerGroup.baseChange`, and the only place the `Quotient.liftOn` above is unfolded.
+
+The parentheses around `rfl` are load-bearing: the bare `theorem ... := rfl` form is elaborated by
+the dedicated `rfl` elaborator, which refuses to unfold a definition of the current module that is
+not exposed. Wrapping it defers to ordinary term elaboration, which sees the body, so
+`TauCeti.BrauerGroup.baseChange` needs no `@[expose]` and downstream code is coupled to this
+lemma rather than to the quotient implementation. -/
 @[simp]
 theorem baseChange_mk (A : CSA.{u, u} K) : baseChange K L (mk A) = mk (CSA.baseChange L A) :=
-  rfl
+  (rfl)
 
 /-! ### Functoriality -/
 
