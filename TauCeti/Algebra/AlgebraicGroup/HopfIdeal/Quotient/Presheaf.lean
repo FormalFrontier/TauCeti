@@ -62,12 +62,23 @@ noncomputable abbrev pointwiseQuotientGroup (H : _root_.CommHopfAlgCat.{v} R)
     (HopfAlgebra.points (R := R) (H := H) A ⧸ quotientPointsSubgroup H I A)
 
 /-- The quotient projection from ambient points to the pointwise quotient. -/
-@[expose] noncomputable def pointwiseQuotientMk (H : _root_.CommHopfAlgCat.{v} R)
+noncomputable def pointwiseQuotientMk (H : _root_.CommHopfAlgCat.{v} R)
     (I : HopfIdeal R H) (hI : I.IsNormal) (A : CommAlgCat.{w} R) :
     HopfAlgebra.points (R := R) (H := H) A ⟶ pointwiseQuotientGroup H I hI A := by
   let _ : (quotientPointsSubgroup H I A).Normal :=
     quotientPointsSubgroup_normal H I hI A
   exact GrpCat.ofHom (QuotientGroup.mk' (quotientPointsSubgroup H I A))
+
+/-- The pointwise quotient projection sends a point to its ordinary quotient class. -/
+@[simp]
+theorem pointwiseQuotientMk_apply (H : _root_.CommHopfAlgCat.{v} R)
+    (I : HopfIdeal R H) (hI : I.IsNormal) (A : CommAlgCat.{w} R)
+    (g : HopfAlgebra.points (R := R) (H := H) A) :
+    let _ : (quotientPointsSubgroup H I A).Normal :=
+      quotientPointsSubgroup_normal H I hI A
+    pointwiseQuotientMk H I hI A g =
+      QuotientGroup.mk' (quotientPointsSubgroup H I A) g := by
+  rfl
 
 /-- The kernel of the pointwise quotient projection is exactly the subgroup cut out by `I`. -/
 theorem pointwiseQuotientMk_ker (H : _root_.CommHopfAlgCat.{v} R)
@@ -78,9 +89,8 @@ theorem pointwiseQuotientMk_ker (H : _root_.CommHopfAlgCat.{v} R)
   dsimp only
   let _ : (quotientPointsSubgroup H I A).Normal :=
     quotientPointsSubgroup_normal H I hI A
-  change (QuotientGroup.mk' (quotientPointsSubgroup H I A)).ker =
-    quotientPointsSubgroup H I A
-  exact QuotientGroup.ker_mk' (quotientPointsSubgroup H I A)
+  simpa only [pointwiseQuotientMk, GrpCat.hom_ofHom] using
+    QuotientGroup.ker_mk' (quotientPointsSubgroup H I A)
 
 /-- An ambient point maps to the identity exactly when it belongs to the subgroup cut out by `I`. -/
 @[simp]
@@ -93,8 +103,7 @@ theorem pointwiseQuotientMk_eq_one_iff (H : _root_.CommHopfAlgCat.{v} R)
   dsimp only
   let _ : (quotientPointsSubgroup H I A).Normal :=
     quotientPointsSubgroup_normal H I hI A
-  change (g : HopfAlgebra.points (R := R) (H := H) A ⧸ quotientPointsSubgroup H I A) = 1 ↔
-    g ∈ quotientPointsSubgroup H I A
+  rw [pointwiseQuotientMk_apply]
   exact QuotientGroup.eq_one_iff g
 
 /-- The pointwise quotient projection is surjective. -/
@@ -106,7 +115,7 @@ theorem pointwiseQuotientMk_surjective (H : _root_.CommHopfAlgCat.{v} R)
   exact QuotientGroup.mk'_surjective (quotientPointsSubgroup H I A)
 
 /-- The map on pointwise quotients induced by a morphism of value algebras. -/
-@[expose] noncomputable def mapPointwiseQuotient (H : _root_.CommHopfAlgCat.{v} R)
+noncomputable def mapPointwiseQuotient (H : _root_.CommHopfAlgCat.{v} R)
     (I : HopfIdeal R H) (hI : I.IsNormal) {A B : CommAlgCat.{w} R} (χ : A ⟶ B) :
     pointwiseQuotientGroup H I hI A ⟶ pointwiseQuotientGroup H I hI B := by
   let _ : (quotientPointsSubgroup H I A).Normal :=
@@ -142,15 +151,9 @@ theorem mapPointwiseQuotient_mk (H : _root_.CommHopfAlgCat.{v} R)
   map_id A := by
     let _ : (quotientPointsSubgroup H I A).Normal :=
       quotientPointsSubgroup_normal H I hI A
-    apply GrpCat.hom_ext
-    apply QuotientGroup.monoidHom_ext (quotientPointsSubgroup H I A)
-    apply MonoidHom.ext
-    intro g
-    have hid : HopfAlgebra.mapPoints (H := H) (𝟙 A) g = g :=
-      DFunLike.congr_fun
-        (congrArg GrpCat.Hom.hom (HopfAlgebra.mapPoints_id (H := H) A)) g
-    exact (mapPointwiseQuotient_mk H I hI (𝟙 A) g).trans
-      (congrArg (pointwiseQuotientMk H I hI A) hid)
+    simpa only [mapPointwiseQuotient, HopfAlgebra.mapPoints_id, GrpCat.hom_id,
+      GrpCat.hom_ofHom, GrpCat.ofHom_id] using congrArg GrpCat.ofHom
+      (QuotientGroup.map_id (quotientPointsSubgroup H I A))
   map_comp {A B C} χ ψ := by
     let _ : (quotientPointsSubgroup H I A).Normal :=
       quotientPointsSubgroup_normal H I hI A
@@ -158,32 +161,14 @@ theorem mapPointwiseQuotient_mk (H : _root_.CommHopfAlgCat.{v} R)
       quotientPointsSubgroup_normal H I hI B
     let _ : (quotientPointsSubgroup H I C).Normal :=
       quotientPointsSubgroup_normal H I hI C
-    apply GrpCat.hom_ext
-    apply QuotientGroup.monoidHom_ext (quotientPointsSubgroup H I A)
-    apply MonoidHom.ext
-    intro g
-    have hcomp :
-        HopfAlgebra.mapPoints (H := H) (χ ≫ ψ) g =
-          HopfAlgebra.mapPoints (H := H) ψ (HopfAlgebra.mapPoints (H := H) χ g) :=
-      DFunLike.congr_fun
-        (congrArg GrpCat.Hom.hom (HopfAlgebra.mapPoints_comp (H := H) χ ψ)) g
-    calc
-      (mapPointwiseQuotient H I hI (χ ≫ ψ)).hom
-          (QuotientGroup.mk' (quotientPointsSubgroup H I A) g) =
-          pointwiseQuotientMk H I hI C (HopfAlgebra.mapPoints (H := H) (χ ≫ ψ) g) :=
-        mapPointwiseQuotient_mk H I hI (χ ≫ ψ) g
-      _ = pointwiseQuotientMk H I hI C
-          (HopfAlgebra.mapPoints (H := H) ψ (HopfAlgebra.mapPoints (H := H) χ g)) :=
-        congrArg (pointwiseQuotientMk H I hI C) hcomp
-      _ = mapPointwiseQuotient H I hI ψ
-          (pointwiseQuotientMk H I hI B (HopfAlgebra.mapPoints (H := H) χ g)) :=
-        (mapPointwiseQuotient_mk H I hI ψ _).symm
-      _ = mapPointwiseQuotient H I hI ψ
-          (mapPointwiseQuotient H I hI χ (pointwiseQuotientMk H I hI A g)) :=
-        congrArg (mapPointwiseQuotient H I hI ψ)
-          (mapPointwiseQuotient_mk H I hI χ g).symm
-      _ = (mapPointwiseQuotient H I hI χ ≫ mapPointwiseQuotient H I hI ψ).hom
-          (QuotientGroup.mk' (quotientPointsSubgroup H I A) g) := rfl
+    simpa only [mapPointwiseQuotient, HopfAlgebra.mapPoints_comp, GrpCat.hom_comp,
+      GrpCat.hom_ofHom, GrpCat.ofHom_comp] using congrArg GrpCat.ofHom
+      (QuotientGroup.map_comp_map (quotientPointsSubgroup H I A)
+        (quotientPointsSubgroup H I B) (quotientPointsSubgroup H I C)
+        (HopfAlgebra.mapPoints (H := H) χ).hom
+        (HopfAlgebra.mapPoints (H := H) ψ).hom
+        (fun _ hg => mapPoints_mem_quotientPointsSubgroup H I χ hg)
+        (fun _ hg => mapPoints_mem_quotientPointsSubgroup H I ψ hg)).symm
 
 /-- The object part of the pointwise quotient functor is the quotient group of ambient points by
 the subgroup cut out by `I`. -/
@@ -243,18 +228,6 @@ theorem pointwiseQuotientLift_mk (H : _root_.CommHopfAlgCat.{v} R)
   simpa only [pointwiseQuotientLift, pointwiseQuotientMk, GrpCat.hom_ofHom,
     QuotientGroup.mk'_apply] using
     QuotientGroup.lift_mk' (quotientPointsSubgroup H I A) hf g
-
-/-- The quotient lift composed with the quotient projection is the original homomorphism. -/
-@[simp]
-theorem pointwiseQuotientMk_comp_lift (H : _root_.CommHopfAlgCat.{v} R)
-    (I : HopfIdeal R H) (hI : I.IsNormal) (A : CommAlgCat.{w} R) (K : GrpCat.{max v w})
-    (f : HopfAlgebra.points (R := R) (H := H) A ⟶ K)
-    (hf : quotientPointsSubgroup H I A ≤ f.hom.ker) :
-    pointwiseQuotientMk H I hI A ≫ pointwiseQuotientLift H I hI A K f hf = f := by
-  apply GrpCat.hom_ext
-  apply MonoidHom.ext
-  intro g
-  exact pointwiseQuotientLift_mk H I hI A K f hf g
 
 /-- A homomorphism out of the pointwise quotient is uniquely determined by its composite with the
 quotient projection. -/
