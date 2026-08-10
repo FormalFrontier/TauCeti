@@ -92,18 +92,15 @@ theorem exists_isUnitary_congr (π : ContRepresentation 𝕜 G V) (hπ : Continu
     ∃ e : V ≃L[𝕜] V, IsUnitary (congr e π) := by
   obtain ⟨A, hA⟩ := exists_continuousLinearEquiv_inner_map_map (gramOperator π hπ)
     (isSymmetric_gramOperator π hπ) fun _ hv ↦ re_inner_gramOperator_self_pos π hπ hv
-  -- `isSymmetric_gramOperator` with the continuous-linear-map coercion, so that it rewrites.
-  have hsymm : ∀ v w : V, ⟪gramOperator π hπ v, w⟫_𝕜 = ⟪v, gramOperator π hπ w⟫_𝕜 :=
-    isSymmetric_gramOperator π hπ
-  -- The averaged form is invariant, written with the Gram operator on the left.
-  have hinv : ∀ (g : G) (v w : V), ⟪gramOperator π hπ (π g v), π g w⟫_𝕜
-      = ⟪gramOperator π hπ v, w⟫_𝕜 := fun g v w ↦ by
-    rw [hsymm, inner_gramOperator_map_map, ← hsymm]
+  -- The same standardization with the Gram operator on the second argument, which is the side
+  -- `inner_gramOperator_map_map` states invariance of the averaged form on.
+  have hA' : ∀ x y : V, ⟪A x, gramOperator π hπ (A y)⟫_𝕜 = ⟪x, y⟫_𝕜 := fun x y ↦ by
+    rw [← inner_conj_symm, hA, inner_conj_symm]
   have hunitary : ∀ (g : G) (x y : V), ⟪congr A.symm π g x, congr A.symm π g y⟫_𝕜 = ⟪x, y⟫_𝕜 := by
     intro g x y
     rw [congr_apply, congr_apply, ContinuousLinearEquiv.symm_symm,
-      ← hA (A.symm (π g (A x))) (A.symm (π g (A y))), ContinuousLinearEquiv.apply_symm_apply,
-      ContinuousLinearEquiv.apply_symm_apply, hinv, hA]
+      ← hA' (A.symm (π g (A x))) (A.symm (π g (A y))), ContinuousLinearEquiv.apply_symm_apply,
+      ContinuousLinearEquiv.apply_symm_apply, inner_gramOperator_map_map, hA']
   exact ⟨A.symm, (isUnitary_iff_norm_map _).mpr fun g ↦
     (LinearMap.norm_map_iff_inner_map_map _).mpr (hunitary g)⟩
 
