@@ -11,11 +11,11 @@ public section
 /-!
 # The classical integral roots of type `Dₙ`
 
-This file constructs the classical integral root set of type `Dₙ`, uniformly for `n ≥ 4`, and
-gives the concrete infrastructure needed to build its pinned integral root datum. Every public
-declaration carries the hypothesis `4 ≤ n`, the rank range on which `TauCeti.DynkinType.Valid`
-admits `D n`: the smaller ranks name no type of the classification, `D 2` being reducible and
-`D 3` being `A 3`, so no type `D` interface is offered there.
+This file constructs the classical integral root set of type `Dₙ` and gives the concrete
+infrastructure needed to build its pinned integral root datum. The squared-length-two root type and
+its reflection API are rank-polymorphic. The enumeration and Bourbaki simple-root APIs require
+`4 ≤ n`, the rank range on which `TauCeti.DynkinType.Valid` admits `D n`: the smaller ranks name no
+type of the classification, `D 2` being reducible and `D 3` being `A 3`.
 
 The classical roots are the `2 * n * (n - 1)` vectors `±e_a ±e_b`, `a < b`. They are first
 enumerated by a sign and an ordered pair of distinct coordinates: increasing pairs represent
@@ -365,7 +365,8 @@ private lemma typeDPairFinEquiv_fork (hn : 2 ≤ n) :
   -- both sides are `Fin.val` of explicit numerals, so this only strips the wrappers
   change n - 1 + n * (n - 2) = n * (n - 1) - 1
   have hmul : n * (n - 1) = n + n * (n - 2) := by
-    conv_lhs => rw [show n - 1 = (n - 2) + 1 by omega]
+    have hpred : n - 1 = (n - 2) + 1 := by omega
+    conv_lhs => rw [hpred]
     ring
   rw [hmul]
   omega
@@ -463,12 +464,91 @@ def typeDSimpleRootCoordinates (n : ℕ) (hn : 4 ≤ n) (x : TypeDRoot n) : Fin 
   else if (k : ℕ) + 1 < n then typeDHalfTotal x - x.1 ⟨n - 1, by omega⟩
   else typeDHalfTotal x
 
+private lemma sum_Iic_single_one (i k : Fin n) :
+    ∑ j ∈ Finset.Iic k, Pi.single i (1 : ℤ) j = if i ≤ k then 1 else 0 := by
+  by_cases hik : i ≤ k
+  · rw [if_pos hik, Finset.sum_eq_single i]
+    · simp
+    · intro j _ hji
+      simp [hji]
+    · simp [hik]
+  · rw [if_neg hik, Finset.sum_eq_zero]
+    intro j hj
+    have hji : j ≠ i := by
+      intro h
+      exact hik (h ▸ (Finset.mem_Iic.mp hj))
+    simp [hji]
+
+private lemma sum_single_one (i : Fin n) : ∑ j : Fin n, Pi.single i (1 : ℤ) j = 1 := by
+  rw [Fintype.sum_eq_single i]
+  · simp
+  · intro j hji
+    simp [hji]
+
+/-- The coordinates of the `i`-th simple root are the `i`-th standard basis vector. -/
+@[simp] theorem typeDSimpleRootCoordinates_typeDRootEquiv_apply_typeDSimpleIndex
+    (hn : 4 ≤ n) (i : Fin n) :
+    typeDSimpleRootCoordinates n hn (typeDRootEquiv n hn (typeDSimpleIndex n hn i)) =
+      Pi.single i 1 := by
+  funext k
+  rw [typeDSimpleRootCoordinates]
+  simp only [typeDRootEquiv_apply_typeDSimpleIndex]
+  by_cases hi : (i : ℕ) + 1 < n
+  · have htotal : ∑ j : Fin n, typeDSimpleRoot n hn i j = 0 := by
+      rw [typeDSimpleRoot, dif_pos hi]
+      simp_rw [Pi.sub_apply]
+      rw [Finset.sum_sub_distrib, sum_single_one, sum_single_one]
+      omega
+    have hhalf : typeDHalfTotal
+        (typeDRootEquiv n hn (typeDSimpleIndex n hn i)) = 0 := by
+      simp only [typeDHalfTotal, typeDRootEquiv_apply_typeDSimpleIndex, htotal]
+      norm_num
+    by_cases hk₂ : (k : ℕ) + 2 < n
+    · rw [if_pos hk₂]
+      rw [typeDSimpleRoot, dif_pos hi]
+      simp_rw [Pi.sub_apply]
+      rw [Finset.sum_sub_distrib, sum_Iic_single_one, sum_Iic_single_one]
+      simp only [Fin.le_def, Pi.single_apply]
+      split_ifs <;> omega
+    · by_cases hk₁ : (k : ℕ) + 1 < n
+      · rw [if_neg hk₂, if_pos hk₁]
+        rw [hhalf]
+        simp (disch := omega) [typeDSimpleRoot, hi, Pi.sub_apply, Pi.single_apply, Fin.ext_iff]
+        split_ifs <;> omega
+      · rw [if_neg hk₂, if_neg hk₁]
+        rw [hhalf]
+        simp only [Pi.single_apply]
+        omega
+  · have hiv : (i : ℕ) = n - 1 := by omega
+    have htotal : ∑ j : Fin n, typeDSimpleRoot n hn i j = 2 := by
+      rw [typeDSimpleRoot, dif_neg hi]
+      simp_rw [Pi.add_apply]
+      rw [Finset.sum_add_distrib, sum_single_one, sum_single_one]
+      norm_num
+    have hhalf : typeDHalfTotal
+        (typeDRootEquiv n hn (typeDSimpleIndex n hn i)) = 1 := by
+      simp only [typeDHalfTotal, typeDRootEquiv_apply_typeDSimpleIndex, htotal]
+      norm_num
+    by_cases hk₂ : (k : ℕ) + 2 < n
+    · rw [if_pos hk₂]
+      rw [typeDSimpleRoot, dif_neg hi]
+      simp_rw [Pi.add_apply]
+      rw [Finset.sum_add_distrib, sum_Iic_single_one, sum_Iic_single_one]
+      simp only [Fin.le_def, Pi.single_apply]
+      split_ifs <;> omega
+    · by_cases hk₁ : (k : ℕ) + 1 < n
+      · rw [if_neg hk₂, if_pos hk₁]
+        rw [hhalf]
+        simp (disch := omega) [typeDSimpleRoot, Pi.add_apply, Pi.single_apply, Fin.ext_iff, hiv]
+        omega
+      · rw [if_neg hk₂, if_neg hk₁]
+        rw [hhalf]
+        have hkv : (k : ℕ) = n - 1 := by omega
+        simp [Pi.single_apply, Fin.ext_iff, hiv, hkv]
+
 /-- Reconstruct a classical vector from its simple-root coordinates. -/
 private def typeDSimpleCombination (n : ℕ) (hn : 4 ≤ n) (c : Fin n → ℤ) : Fin n → ℤ :=
   ∑ i : Fin n, c i • typeDSimpleRoot n hn i
-
-private lemma typeDSimpleCombination_eq (hn : 4 ≤ n) (c : Fin n → ℤ) :
-    typeDSimpleCombination n hn c = ∑ i : Fin n, c i • typeDSimpleRoot n hn i := rfl
 
 private lemma typeDChainHeadSum (c : Fin n → ℤ) (j : Fin n) :
     (∑ i : Fin n, if _h : (i : ℕ) + 1 < n then
@@ -599,6 +679,12 @@ def typeDRootReflectionEquiv (u : TypeDRoot n) : TypeDRoot n ≃ TypeDRoot n :=
   ⟨typeDRootReflection u, typeDRootReflection u, typeDRootReflection_involutive u,
     typeDRootReflection_involutive u⟩
 
+/-- The reflection equivalence acts by `typeDRootReflection`. -/
+@[simp] lemma typeDRootReflectionEquiv_apply (u v : TypeDRoot n) :
+    typeDRootReflectionEquiv u v = typeDRootReflection u v := by
+  change (typeDRootReflectionEquiv u).toFun v = typeDRootReflection u v
+  rw [typeDRootReflectionEquiv]
+
 private lemma sum_Iic_eq_sum_Iic_pred_add (x : Fin n → ℤ) (j : Fin n)
     (hj : (j : ℕ) ≠ 0) :
     ∑ i ∈ Finset.Iic j, x i =
@@ -723,14 +809,10 @@ private lemma typeDSimpleCombination_coordinates_last (hn : 4 ≤ n) (x : TypeDR
   simp (disch := omega) [typeDSimpleRootCoordinates, hlast₂, hliteral, hnpos,
     hforkne, Fin.ext_iff]
 
-/-- Every type `Dₙ` root is the indicated integral combination of the Bourbaki simple roots.
-
-This is deliberately not a `simp` lemma: its left-hand side is not in `simp` normal form, since
-`simp` rewrites the module action `•` on `Fin n → ℤ` to the ring multiplication of
-`zsmul_eq_mul`, and the `simpNF` linter rejects the tag. -/
+/-- Every type `Dₙ` root is the indicated integral combination of the Bourbaki simple roots. -/
 theorem sum_smul_typeDSimpleRootCoordinates (hn : 4 ≤ n) (x : TypeDRoot n) :
     ∑ i : Fin n, typeDSimpleRootCoordinates n hn x i • typeDSimpleRoot n hn i = x.1 := by
-  rw [← typeDSimpleCombination_eq]
+  change typeDSimpleCombination n hn (typeDSimpleRootCoordinates n hn x) = x.1
   funext j
   by_cases hj₀ : (j : ℕ) = 0
   · exact typeDSimpleCombination_coordinates_zero hn x j hj₀
