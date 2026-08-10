@@ -555,7 +555,12 @@ theorem realBottSplitIsometry_snd_zero (p q : ℕ)
     (v : Fin ((p + 1) + (q + 1)) → ℝ) :
     (realBottSplitIsometry p q v).2 0 =
       v (Fin.castAdd (q + 1) (Fin.last p)) := by
-  rfl
+  -- Expose the linear equivalence and its stable coordinate maps.
+  change (realBottSplitLinearEquiv p q v).2 0 = _
+  simp only [realBottSplitLinearEquiv, LinearEquiv.trans_apply,
+    LinearEquiv.sumArrowLequivProdArrow_apply_snd, LinearEquiv.piCongrLeft'_apply]
+  rw [realBottIndexEquiv_symm_inr_zero]
+  congr 1
 
 /-- The last negative coordinate extracted by `realBottSplitIsometry`. -/
 @[simp]
@@ -563,7 +568,12 @@ theorem realBottSplitIsometry_snd_one (p q : ℕ)
     (v : Fin ((p + 1) + (q + 1)) → ℝ) :
     (realBottSplitIsometry p q v).2 1 =
       v (Fin.natAdd (p + 1) (Fin.last q)) := by
-  rfl
+  -- Expose the linear equivalence and its stable coordinate maps.
+  change (realBottSplitLinearEquiv p q v).2 1 = _
+  simp only [realBottSplitLinearEquiv, LinearEquiv.trans_apply,
+    LinearEquiv.sumArrowLequivProdArrow_apply_snd, LinearEquiv.piCongrLeft'_apply]
+  rw [realBottIndexEquiv_symm_inr_one]
+  congr 1
 
 /-- The hyperbolic Bott step for the standard real signature forms:
 `Cliff(p + 1, q + 1) ≅ Cliff(p, q) ⊗ M₂(ℝ)`. -/
@@ -696,6 +706,7 @@ theorem realCliffordBottIterEquiv_zero_apply (p q : ℕ)
 /-- The successor iteration first applies one hyperbolic Bott step, transports the previous
 iteration through the left tensor factor, and absorbs the two matrix factors by the Kronecker
 equivalence. -/
+@[simp]
 theorem realCliffordBottIterEquiv_succ (p q n : ℕ) :
     realCliffordBottIterEquiv p q (n + 1) =
       (realCliffordBottEquiv (p + n) (q + n)).trans
