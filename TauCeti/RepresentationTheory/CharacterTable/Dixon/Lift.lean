@@ -50,14 +50,6 @@ namespace DixonPrimeData
 variable {G : Type*} [Group G] (d : DixonPrimeData G)
 variable {x y : Cyclotomic (Monoid.exponent G)}
 
-/-- Dixon's size bound, in the form the residue window of `TauCeti.RingTheory.Cyclotomic.Lift`
-asks for: a coordinate bounded by `⌊√|G|⌋` lies strictly inside the window of half-width
-`d.p / 2`. -/
-theorem two_mul_natAbs_lt_of_natAbs_le_sqrt {z : ℤ} (hz : z.natAbs ≤ Nat.sqrt (Nat.card G)) :
-    2 * z.natAbs < d.p := by
-  have := d.isGoodDixonPrime.two_mul_sqrt_lt
-  omega
-
 /-- **The lift at a Dixon prime is correct.**  An exact cyclotomic integer whose coordinates are
 bounded by `⌊√|G|⌋` is returned by `TauCeti.Cyclotomic.lift` from its own residues at the conjugate
 roots. -/
@@ -67,7 +59,7 @@ theorem lift_conjugateResidues
       (x.coeff j).natAbs ≤ Nat.sqrt (Nat.card G)) :
     Cyclotomic.lift (Monoid.exponent G) d.root (Cyclotomic.conjugateResidues d.root x) = x :=
   Cyclotomic.lift_conjugateResidues d.isPrimitiveRoot_root fun j =>
-    d.two_mul_natAbs_lt_of_natAbs_le_sqrt (hx j)
+    d.isGoodDixonPrime.two_mul_natAbs_lt_of_natAbs_le_sqrt (hx j)
 
 /-- **An exact cyclotomic integer whose coordinates are bounded by `⌊√|G|⌋` is determined by its
 residues at the conjugate roots of a Dixon prime.**  This is what makes the modular phase of the
@@ -80,8 +72,8 @@ theorem eq_of_conjugateResidues_eq
     (h : Cyclotomic.conjugateResidues d.root x = Cyclotomic.conjugateResidues d.root y) :
     x = y :=
   Cyclotomic.eq_of_conjugateResidues_eq d.isPrimitiveRoot_root
-    (fun j => d.two_mul_natAbs_lt_of_natAbs_le_sqrt (hx j))
-    (fun j => d.two_mul_natAbs_lt_of_natAbs_le_sqrt (hy j)) h
+    (fun j => d.isGoodDixonPrime.two_mul_natAbs_lt_of_natAbs_le_sqrt (hx j))
+    (fun j => d.isGoodDixonPrime.two_mul_natAbs_lt_of_natAbs_le_sqrt (hy j)) h
 
 /-- **The specification of the lift at a Dixon prime.**  A residue tuple coming from an exact
 cyclotomic integer with coordinates bounded by `⌊√|G|⌋` is lifted back to that integer, which by
@@ -92,7 +84,7 @@ theorem lift_eq_of_conjugateResidues_eq {r : Fin (Monoid.exponent G).totient →
     (hr : Cyclotomic.conjugateResidues d.root x = r) :
     Cyclotomic.lift (Monoid.exponent G) d.root r = x :=
   Cyclotomic.lift_eq_of_conjugateResidues_eq d.isPrimitiveRoot_root
-    (fun j => d.two_mul_natAbs_lt_of_natAbs_le_sqrt (hx j)) hr
+    (fun j => d.isGoodDixonPrime.two_mul_natAbs_lt_of_natAbs_le_sqrt (hx j)) hr
 
 end DixonPrimeData
 

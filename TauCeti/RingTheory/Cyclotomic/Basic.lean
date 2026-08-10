@@ -69,11 +69,13 @@ theorem coeff_eq_zero_of_totient_le (x : Cyclotomic e) {j : ℕ} (h : e.totient 
   rw [coeff, List.getD_eq_getElem?_getD, List.getElem?_eq_none (by simpa using h),
     Option.getD_none]
 
-/-- An exact cyclotomic integer is determined by its coordinates on the power basis. -/
+/-- An exact cyclotomic integer is determined by its coordinates on the power basis.  Only the
+`e.totient` coordinates the basis has are needed: the rest vanish by
+`TauCeti.Cyclotomic.coeff_eq_zero_of_totient_le`. -/
 @[ext]
-theorem ext {x y : Cyclotomic e} (h : ∀ j, x.coeff j = y.coeff j) : x = y := by
+theorem ext {x y : Cyclotomic e} (h : ∀ j : Fin e.totient, x.coeff j = y.coeff j) : x = y := by
   refine ext_coeffs (List.reverse_injective (List.ext_getElem (by simp) fun j hj hj' => ?_))
-  have hj₁ := h j
+  have hj₁ := h ⟨j, by simpa using hj⟩
   rwa [coeff, coeff, List.getD_eq_getElem _ _ hj, List.getD_eq_getElem _ _ hj'] at hj₁
 
 /-- Reduce a descending coefficient list modulo `Φ_e` and regard the result as an exact

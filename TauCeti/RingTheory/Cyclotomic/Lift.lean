@@ -86,12 +86,16 @@ well-founded recursion does not unfold there.  That is a property of the inverse
 of the lift, and it is why the examples at the end of this file reach a concrete value of the lift
 through `TauCeti.Cyclotomic.lift_conjugateResidues` rather than by `decide`.
 
-`TauCeti.Cyclotomic.conjugateVandermonde` and `TauCeti.Cyclotomic.liftResidues` are the linear
-algebra `TauCeti.Cyclotomic.lift` runs on.  Their bodies are deliberately not `@[expose]`:
-downstream code is meant to use `TauCeti.Cyclotomic.lift` with the correctness, uniqueness and
-section theorems, together with `TauCeti.Cyclotomic.coeff_lift`.  That last one states the
-coordinates of the lift in terms of `TauCeti.Cyclotomic.liftResidues`, which is why the definition
-itself, unlike its body, stays public.
+No definition in this file is `@[expose]`: downstream code is meant to use the lemmas rather than
+the representations, that is `TauCeti.Cyclotomic.mem_primitiveExponents_iff` and
+`TauCeti.Cyclotomic.primitiveExponent_eq_getElem` for the exponents,
+`TauCeti.Cyclotomic.conjugateRoot_def` for the conjugate roots,
+`TauCeti.Cyclotomic.conjugateResidues_apply` and `TauCeti.Cyclotomic.conjugateResiduesRingHom` for
+the residue tuple, and `TauCeti.Cyclotomic.coeff_lift` with the correctness, uniqueness and section
+theorems for the lift.  `TauCeti.Cyclotomic.conjugateVandermonde` and
+`TauCeti.Cyclotomic.liftResidues`, the linear algebra the lift runs on, stay public declarations
+none the less, because `TauCeti.Cyclotomic.coeff_lift` — the coordinate formula, which is public
+interface — is stated in terms of `TauCeti.Cyclotomic.liftResidues`.
 
 ## References
 
@@ -116,7 +120,7 @@ variable {e p : ℕ}
 
 /-- The exponents `k < e` coprime to `e`, in increasing order.  These index the Galois group of
 `ℚ(ζ_e)` over `ℚ` by the power maps `σ_k : ζ ↦ ζ ^ k`, and there are `e.totient` of them. -/
-@[expose] def primitiveExponents (e : ℕ) : List ℕ :=
+def primitiveExponents (e : ℕ) : List ℕ :=
   (List.range e).filter fun k => e.Coprime k
 
 /-- The enumerated exponents are exactly the residues below `e` coprime to it. -/
@@ -132,10 +136,12 @@ theorem nodup_primitiveExponents (e : ℕ) : (primitiveExponents e).Nodup :=
 /-- There are `e.totient` exponents coprime to `e`: filtering `List.range e` for coprimality is
 literally the definition of `Nat.totient`. -/
 @[simp]
-theorem length_primitiveExponents (e : ℕ) : (primitiveExponents e).length = e.totient := rfl
+theorem length_primitiveExponents (e : ℕ) : (primitiveExponents e).length = e.totient := by
+  rw [primitiveExponents]
+  rfl
 
 /-- The `j`-th exponent coprime to `e`. -/
-@[expose] def primitiveExponent (e : ℕ) (j : Fin e.totient) : ℕ :=
+def primitiveExponent (e : ℕ) (j : Fin e.totient) : ℕ :=
   (primitiveExponents e).getD j 0
 
 /-- The `j`-th exponent coprime to `e`, read as a list index rather than through the default
@@ -172,8 +178,13 @@ theorem primitiveExponent_injective (e : ℕ) : Function.Injective (primitiveExp
 
 /-- The `j`-th conjugate root modulo `p`: the power `α ^ k` of `α` by the `j`-th exponent coprime
 to `e`.  Evaluating at it reads off the residue of the `j`-th Galois conjugate. -/
-@[expose] def conjugateRoot (e : ℕ) {p : ℕ} (α : ZMod p) (j : Fin e.totient) : ZMod p :=
+def conjugateRoot (e : ℕ) {p : ℕ} (α : ZMod p) (j : Fin e.totient) : ZMod p :=
   α ^ primitiveExponent e j
+
+/-- The `j`-th conjugate root is the power of `α` by the `j`-th exponent coprime to `e`. -/
+theorem conjugateRoot_def (e : ℕ) (α : ZMod p) (j : Fin e.totient) :
+    conjugateRoot e α j = α ^ primitiveExponent e j := by
+  rw [conjugateRoot]
 
 /-- Every conjugate root is itself a primitive `e`-th root of unity, which is why evaluating at it
 is a ring homomorphism out of the exact cyclotomic integers. -/
@@ -190,14 +201,15 @@ theorem conjugateRoot_injective {α : ZMod p} (hα : IsPrimitiveRoot α e) :
 
 /-- The residues of `x` at the `e.totient` conjugate roots: the images of the Galois conjugates
 `σ_k x` in `ZMod p`, the data the modular phase of a character-table computation produces. -/
-@[expose] def conjugateResidues {e p : ℕ} (α : ZMod p) (x : Cyclotomic e) :
+def conjugateResidues {e p : ℕ} (α : ZMod p) (x : Cyclotomic e) :
     Fin e.totient → ZMod p :=
   fun j => reduce p (conjugateRoot e α j) x
 
 /-- A single coordinate of the residue tuple is the reduction at the matching conjugate root. -/
 @[simp]
 theorem conjugateResidues_apply {α : ZMod p} (x : Cyclotomic e) (j : Fin e.totient) :
-    conjugateResidues α x j = reduce p (conjugateRoot e α j) x := rfl
+    conjugateResidues α x j = reduce p (conjugateRoot e α j) x := by
+  rw [conjugateResidues]
 
 /-- **The residue tuple is a ring homomorphism.**  Each component is reduction at a conjugate
 root, which is again a primitive `e`-th root of unity, so the tuple is a ring homomorphism into
@@ -282,12 +294,14 @@ def liftResidues (e : ℕ) {p : ℕ} (α : ZMod p) (r : Fin e.totient → ZMod p
 /-- **The lift.**  The exact cyclotomic integer whose coordinates are the balanced representatives
 of the coordinate residues recovered from `r`.  This is a computation on the coefficient vector:
 the determinants Cramer's rule takes, the inverse in `ZMod p` and `ZMod.valMinAbs` all are. -/
-@[expose] def lift (e : ℕ) {p : ℕ} (α : ZMod p) (r : Fin e.totient → ZMod p) : Cyclotomic e :=
+def lift (e : ℕ) {p : ℕ} (α : ZMod p) (r : Fin e.totient → ZMod p) : Cyclotomic e :=
   ⟨(List.ofFn fun j => (liftResidues e α r j).valMinAbs).reverse, by simp⟩
 
 /-- The coefficient list of the lift, in the descending order `TauCeti.Cyclotomic.coeffs` uses. -/
 theorem coeffs_lift (e : ℕ) (α : ZMod p) (r : Fin e.totient → ZMod p) :
-    (lift e α r).coeffs = (List.ofFn fun j => (liftResidues e α r j).valMinAbs).reverse := rfl
+    (lift e α r).coeffs = (List.ofFn fun j => (liftResidues e α r j).valMinAbs).reverse := by
+  rw [lift]
+  rfl
 
 /-- The coordinates of the lift are the balanced representatives of the recovered residues. -/
 @[simp]
@@ -313,11 +327,8 @@ theorem lift_conjugateResidues [Fact p.Prime] {α : ZMod p} (hα : IsPrimitiveRo
     {x : Cyclotomic e} (hx : ∀ j : Fin e.totient, 2 * (x.coeff j).natAbs < p) :
     lift e α (conjugateResidues α x) = x := by
   refine ext fun j => ?_
-  by_cases hj : j < e.totient
-  · have hcast : ((⟨j, hj⟩ : Fin e.totient) : ℕ) = j := rfl
-    rw [← hcast, coeff_lift, liftResidues_conjugateResidues hα,
-      TauCeti.ZMod.valMinAbs_intCast_of_two_mul_natAbs_lt (hx _)]
-  · rw [coeff_eq_zero_of_totient_le _ (by omega), coeff_eq_zero_of_totient_le _ (by omega)]
+  rw [coeff_lift, liftResidues_conjugateResidues hα,
+    TauCeti.ZMod.valMinAbs_intCast_of_two_mul_natAbs_lt (hx j)]
 
 /-- **The specification of the lift.**  Whenever a residue tuple comes from an exact cyclotomic
 integer whose coordinates lie in the residue window, the lift returns that integer; by
