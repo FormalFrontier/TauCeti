@@ -97,8 +97,11 @@ the integral Hopf algebra `H`. -/
   rfl
 
 /-- Pointwise, the `n`-fold Frobenius sends an `A`-valued point `f` to
-`h ↦ f(h) ^ (p ^ n)`. -/
-@[simp] theorem frobeniusPoints_apply_apply (f : WithConv (H →ₐ[ℤ] A)) (h : H) :
+`h ↦ f(h) ^ (p ^ n)`.
+
+This is not a `simp` lemma: `frobeniusPoints_apply` and `frobeniusValueAlgHom_apply` already
+rewrite the left-hand side to the right-hand side, so the statement is not in simp-normal form. -/
+theorem frobeniusPoints_apply_apply (f : WithConv (H →ₐ[ℤ] A)) (h : H) :
     (frobeniusPoints p n f).ofConv h = f.ofConv h ^ (p ^ n) := by
   rw [frobeniusPoints_apply, ofConv_toConv, AlgHom.comp_apply, frobeniusValueAlgHom_apply]
 
