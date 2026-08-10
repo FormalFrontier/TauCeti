@@ -138,24 +138,13 @@ theorem mvfderiv_Ad_apply (X Y : LeftInvariantDerivation I G) :
         (I.prod 𝓘(ℝ, LeftInvariantDerivation I G)) ∞
         (fun g : G => (g, Y)) := contMDiff_id.prodMk contMDiff_const
     exact (contMDiff_Ad_apply (I := I) (G := G)).comp hpair
-  have hcurve := hasMFDerivAt_mulInvariantExp_smul
-    (I := I) (G := G) (eLie X)
-  have hzero : mulInvariantExp (I := I) (G := G) ((0 : ℝ) • eLie X) = 1 := by
-    rw [zero_smul, mulInvariantExp_zero]
   have hAmf := hA.mdifferentiable (by simp) (1 : G) |>.hasMFDerivAt
-  rw [← hzero] at hAmf
-  have hcomp := hAmf.comp 0 hcurve
-  rw [hzero] at hcomp
-  have hcompF : HasFDerivAt
-      (A ∘ fun t : ℝ => mulInvariantExp (I := I) (G := G) (t • eLie X))
-      ((mvfderiv I A 1).comp ((1 : ℝ →L[ℝ] ℝ).smulRight (eLie X))) 0 := by
-    with_unfolding_all exact hcomp.hasFDerivAt
+  have hchainRaw := HasMFDerivAt.hasDerivAt_comp_mulInvariantExp_smul hAmf (eLie X)
   have hchain : HasDerivAt
       (fun t : ℝ => A (mulInvariantExp (I := I) (G := G) (t • eLie X)))
       (mvfderiv I A 1 (eLie X)) 0 := by
-    apply hcompF.hasDerivAt.congr_deriv
-    simp only [ContinuousLinearMap.comp_apply, ContinuousLinearMap.smulRight_apply,
-      one_apply_eq_self, one_smul]
+    apply hchainRaw.congr_deriv
+    with_unfolding_all rfl
   have hpath := hasDerivAt_Ad_mulInvariantExp_smul_apply (I := I) (G := G) X Y
   simpa only [A, eLie] using hchain.unique hpath
 
