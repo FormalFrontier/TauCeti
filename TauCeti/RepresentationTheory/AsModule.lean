@@ -39,22 +39,17 @@ open scoped MonoidAlgebra
 
 namespace Representation
 
-variable {k G V W : Type*} [CommRing k] [Monoid G]
-variable [AddCommGroup V] [Module k V] [AddCommGroup W] [Module k W]
+variable {k G V W : Type*} [CommSemiring k] [Monoid G]
+variable [AddCommMonoid V] [Module k V] [AddCommMonoid W] [Module k W]
 variable {ρ : _root_.Representation k G V} {σ : _root_.Representation k G W}
 
 /-- **A `k[G]`-linear isomorphism of the attached modules is an equivalence of representations.**
-The underlying `k`-linear equivalence is the given one read through
-`Representation.asModuleEquiv`; equivariance is the fact that `g` acts on `asModule` through the
-basis element `MonoidAlgebra.of`. -/
+This reads `Representation.IntertwiningMap.equivLinearMapAsModule` backwards: the `k[G]`-linear map
+underlying `f` is an intertwining map, and it is bijective. -/
 noncomputable def equivOfAsModuleLinearEquiv (f : ρ.asModule ≃ₗ[k[G]] σ.asModule) : ρ.Equiv σ :=
-  _root_.Representation.Equiv.mk
-    ((ρ.asModuleEquiv.symm.trans (f.restrictScalars k)).trans σ.asModuleEquiv) fun g ↦ by
-      ext v
-      simp only [LinearMap.comp_apply, LinearEquiv.coe_coe, LinearEquiv.trans_apply,
-        LinearEquiv.restrictScalars_apply, _root_.Representation.asModuleEquiv_symm_map_rho,
-        MonoidAlgebra.of_apply, f.map_smul, _root_.Representation.asModuleEquiv_map_smul,
-        _root_.Representation.asAlgebraHom_single, one_smul]
+  _root_.Representation.IntertwiningMap.ofBijective
+    ((_root_.Representation.IntertwiningMap.equivLinearMapAsModule ρ σ).symm f.toLinearMap)
+    f.bijective
 
 @[simp]
 theorem equivOfAsModuleLinearEquiv_apply (f : ρ.asModule ≃ₗ[k[G]] σ.asModule) (v : V) :
@@ -68,6 +63,24 @@ noncomputable def asModuleLinearEquivOfEquiv (φ : ρ.Equiv σ) : ρ.asModule �
   LinearEquiv.ofBijective
     (_root_.Representation.IntertwiningMap.equivLinearMapAsModule ρ σ φ.toIntertwiningMap)
     φ.bijective
+
+@[simp]
+theorem asModuleLinearEquivOfEquiv_apply (φ : ρ.Equiv σ) (x : ρ.asModule) :
+    asModuleLinearEquivOfEquiv φ x = σ.asModuleEquiv.symm (φ (ρ.asModuleEquiv x)) :=
+  (rfl)
+
+@[simp]
+theorem equivOfAsModuleLinearEquiv_asModuleLinearEquivOfEquiv (φ : ρ.Equiv σ) :
+    equivOfAsModuleLinearEquiv (asModuleLinearEquivOfEquiv φ) = φ := by
+  ext v
+  simp
+
+@[simp]
+theorem asModuleLinearEquivOfEquiv_equivOfAsModuleLinearEquiv
+    (f : ρ.asModule ≃ₗ[k[G]] σ.asModule) :
+    asModuleLinearEquivOfEquiv (equivOfAsModuleLinearEquiv f) = f := by
+  ext x
+  simp
 
 /-- **The two notions of isomorphism agree.** Two representations are equivalent exactly when the
 `k[G]`-modules they carry are isomorphic. -/
