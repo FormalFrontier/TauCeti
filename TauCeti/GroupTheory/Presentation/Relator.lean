@@ -82,7 +82,11 @@ namespace Relator
 /-- Compile a relator expression to a flat signed word.
 
 Inversion uses Mathlib's `FreeGroup.invRev`, which reverses the word and flips every sign. Powers
-are compiled by repeating the whole word, rather than by expanding the expression recursively. -/
+are compiled by repeating the whole word, rather than by expanding the expression recursively.
+
+The body is exposed: a transcription is audited by reading the compiled letters of a concrete
+relator expression, so a consumer has to be able to reduce this. -/
+@[expose]
 def toWord {α : Type*} : Relator α → PresentationWord α
   | .gen x => [(x, true)]
   | .inv r => FreeGroup.invRev r.toWord
@@ -92,7 +96,11 @@ def toWord {α : Type*} : Relator α → PresentationWord α
       FreeGroup.invRev s.toWord
 
 /-- Interpret a relator expression directly in the free group. This is deliberately independent of
-`Relator.toWord`: the comparison theorem below checks that compilation preserves meaning. -/
+`Relator.toWord`: the comparison theorem below checks that compilation preserves meaning.
+
+The body is exposed for the same reason as `TauCeti.Relator.toWord`: a consumer identifying the
+relations of a concrete relator list has to be able to reduce it. -/
+@[expose]
 def toFreeGroup {α : Type*} : Relator α → FreeGroup α
   | .gen x => FreeGroup.of x
   | .inv r => r.toFreeGroup⁻¹
