@@ -11,8 +11,8 @@ import TauCeti.Analysis.Normed.Algebra.Basic
 /-!
 # The closed form of the Banach-algebra exponential derivative
 
-This file identifies the Fréchet derivative of the noncommutative exponential with left
-multiplication by `exp x`, followed by the regularized commutator quotient.
+This file identifies the Fréchet derivative of the noncommutative exponential with the regularized
+commutator quotient, followed by left multiplication by `exp x`.
 
 ## Main results
 
@@ -40,21 +40,20 @@ attribute [local instance] TauCeti.normedAlgebraRatOfReal
 
 /-- The exponential derivative in direction `y` is left multiplication by `exp x` applied to
 the regularized commutator factor. -/
-theorem expFDeriv_apply_eq_exp_mul_banachDexpFactor (x y : R) :
-    expFDeriv ℝ x y = exp x * banachDexpFactor x y := by
+theorem expFDeriv_apply_eq_exp_mul_banachDexpFactor {𝕂 : Type*}
+    [NontriviallyNormedField 𝕂] [NormedAlgebra ℝ 𝕂] [NormedAlgebra 𝕂 R]
+    [IsScalarTower ℝ 𝕂 R] (x y : R) :
+    expFDeriv 𝕂 x y = exp x * banachDexpFactor x y := by
   rw [TauCeti.expFDeriv_apply_eq_integral,
     banachDexpFactor_apply_eq_integral]
   have hint : IntervalIntegrable
       (fun t : ℝ ↦ exp (-(t • x)) * y * exp (t • x)) volume 0 1 := by
     exact Continuous.intervalIntegrable (μ := volume) (by fun_prop) 0 1
-  change (∫ t in (0 : ℝ)..1, exp ((1 - t) • x) * y * exp (t • x)) =
-    (ContinuousLinearMap.mul ℝ R (exp x))
-      (∫ t in (0 : ℝ)..1, exp (-(t • x)) * y * exp (t • x))
+  rw [← ContinuousLinearMap.mul_apply' ℝ]
   rw [← (ContinuousLinearMap.mul ℝ R (exp x)).intervalIntegral_comp_comm hint]
   apply intervalIntegral.integral_congr
   intro t _ht
-  change exp ((1 - t) • x) * y * exp (t • x) =
-    exp x * (exp (-(t • x)) * y * exp (t • x))
+  simp only [ContinuousLinearMap.mul_apply']
   have hcomm : Commute x (-(t • x)) := (Commute.refl x).smul_right t |>.neg_right
   rw [← mul_assoc, ← mul_assoc, ← exp_add_of_commute hcomm]
   congr 3
