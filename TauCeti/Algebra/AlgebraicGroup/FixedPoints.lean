@@ -21,12 +21,14 @@ subalgebra where `φ` and `ψ` agree, and the resulting bijection is an isomorph
 In other words, the functor of points carries an equalizer of value algebras to an equalizer of
 groups.
 
-The case `ψ = AlgHom.id R A` is the one a construction of a finite group of Lie type asks for.
-There `φ` is a Steinberg endomorphism of the value algebra — for the untwisted families the
-`q`-power Frobenius of an algebraically closed field `k` of characteristic `p` — the equalizer
-subalgebra is the subfield `𝔽_q` fixed by it, and the theorem below says that the fixed subgroup
-`(mapValue φ).eqLocus (MonoidHom.id _)` of the induced endomorphism of `G(k)` is `G(𝔽_q)`. Nothing
-here assumes that the value algebra is a field, that it is algebraically closed, or that `φ` is a
+The case `ψ = AlgHom.id R A` is the one an untwisted finite group of Lie type asks for. There `φ`
+is an endomorphism of the value algebra — the `q`-power Frobenius of an algebraically closed field
+`k` of characteristic `p` — the equalizer subalgebra is the subfield `𝔽_q` fixed by it, and the
+theorem below says that the fixed subgroup `(mapValue φ).eqLocus (MonoidHom.id _)` of the induced
+endomorphism of `G(k)` is `G(𝔽_q)`. Only endomorphisms of points of that shape, post-composition
+with an endomorphism of the value algebra, are covered here: a graph-twisted or Suzuki--Ree
+Steinberg map is an endomorphism of the ambient group that does not arise this way. Nothing here
+assumes that the value algebra is a field, that it is algebraically closed, or that `φ` is a
 Frobenius: the statement is about an arbitrary pair of homomorphisms of the value algebra.
 
 ## Main definitions and results
@@ -105,11 +107,17 @@ variable [Semiring H] [_root_.HopfAlgebra R H] [CommSemiring A] [Algebra R A] [C
 /-- A point of `H` valued in `A` is equalized by the two group homomorphisms induced by
 `φ ψ : A →ₐ[R] B` exactly when every one of its values lies in the equalizer subalgebra of `φ`
 and `ψ`. -/
+@[simp]
 theorem mem_eqLocus_mapValue_iff (φ ψ : A →ₐ[R] B) (f : WithConv (H →ₐ[R] A)) :
     f ∈ MonoidHom.eqLocus (mapValue (H := H) φ) (mapValue (H := H) ψ) ↔
       ∀ h : H, f.ofConv h ∈ _root_.AlgHom.equalizer φ ψ := by
-  change mapValue (H := H) φ f = mapValue (H := H) ψ f ↔ _
-  rw [mapValue_apply, mapValue_apply, WithConv.toConv_injective.eq_iff, _root_.AlgHom.ext_iff]
+  -- Mathlib has `MonoidHom.mem_eqLocusM` for the submonoid `MonoidHom.eqLocusM`, but no
+  -- membership lemma for the subgroup `MonoidHom.eqLocus`, whose membership is the same
+  -- equation by definition.
+  have hmem : f ∈ MonoidHom.eqLocus (mapValue (H := H) φ) (mapValue (H := H) ψ) ↔
+      mapValue (H := H) φ f = mapValue (H := H) ψ f := Iff.rfl
+  rw [hmem, mapValue_apply, mapValue_apply, WithConv.toConv_injective.eq_iff,
+    _root_.AlgHom.ext_iff]
   simp [_root_.AlgHom.mem_equalizer]
 
 /-- The points that factor through the equalizer subalgebra of `φ` and `ψ` are exactly the points
@@ -127,47 +135,22 @@ private theorem val_injective (φ ψ : A →ₐ[R] B) :
     Function.Injective ⇑(_root_.AlgHom.equalizer φ ψ).val :=
   fun _ _ h => Subtype.ext h
 
-/-- Post-composition with the inclusion of the equalizer subalgebra, as a group homomorphism onto
-the equalizer of the two induced group homomorphisms. It is exposed because its action on a point
-is post-composition, which the computation lemmas below read off. -/
-@[expose] noncomputable def equalizerPointsHom (φ ψ : A →ₐ[R] B) :
-    WithConv (H →ₐ[R] _root_.AlgHom.equalizer φ ψ) →*
-      MonoidHom.eqLocus (mapValue (H := H) φ) (mapValue (H := H) ψ) :=
-  MonoidHom.codRestrict (mapValue (H := H) (_root_.AlgHom.equalizer φ ψ).val) _ fun g =>
-    (mem_eqLocus_mapValue_iff φ ψ _).2 fun h => (g.ofConv h).2
-
-@[simp]
-theorem coe_equalizerPointsHom (φ ψ : A →ₐ[R] B)
-    (g : WithConv (H →ₐ[R] _root_.AlgHom.equalizer φ ψ)) :
-    (equalizerPointsHom (H := H) φ ψ g : WithConv (H →ₐ[R] A)) =
-      mapValue (H := H) (_root_.AlgHom.equalizer φ ψ).val g :=
-  rfl
-
-theorem equalizerPointsHom_bijective (φ ψ : A →ₐ[R] B) :
-    Function.Bijective (equalizerPointsHom (H := H) φ ψ) := by
-  constructor
-  · intro g g' hgg'
-    exact mapValue_injective (H := H) (val_injective φ ψ) (congrArg Subtype.val hgg')
-  · rintro ⟨f, hf⟩
-    obtain ⟨g, hg⟩ :=
-      (exists_mapValue_val_eq_iff (H := H) _ f).2 ((mem_eqLocus_mapValue_iff φ ψ f).1 hf)
-    exact ⟨g, Subtype.ext hg⟩
-
 /-- **The functor of points carries an equalizer of value algebras to an equalizer of groups.**
 The group of points valued in the equalizer subalgebra of `φ ψ : A →ₐ[R] B` is the equalizer of
-the two group homomorphisms `φ` and `ψ` induce on points. It is exposed for the same reason as
-`TauCeti.AlgHom.equalizerPointsHom`, whose bijection it packages. -/
-@[expose] noncomputable def equalizerPointsEquiv (φ ψ : A →ₐ[R] B) :
+the two group homomorphisms `φ` and `ψ` induce on points. -/
+noncomputable def equalizerPointsEquiv (φ ψ : A →ₐ[R] B) :
     WithConv (H →ₐ[R] _root_.AlgHom.equalizer φ ψ) ≃*
       MonoidHom.eqLocus (mapValue (H := H) φ) (mapValue (H := H) ψ) :=
-  MulEquiv.ofBijective (equalizerPointsHom φ ψ) (equalizerPointsHom_bijective φ ψ)
+  (MonoidHom.ofInjective (mapValue_injective (H := H) (val_injective φ ψ))).trans
+    (MulEquiv.subgroupCongr (range_mapValue_val φ ψ))
 
 @[simp]
 theorem coe_equalizerPointsEquiv_apply (φ ψ : A →ₐ[R] B)
     (g : WithConv (H →ₐ[R] _root_.AlgHom.equalizer φ ψ)) :
     (equalizerPointsEquiv (H := H) φ ψ g : WithConv (H →ₐ[R] A)) =
-      mapValue (H := H) (_root_.AlgHom.equalizer φ ψ).val g :=
-  rfl
+      mapValue (H := H) (_root_.AlgHom.equalizer φ ψ).val g := by
+  simp only [equalizerPointsEquiv, MulEquiv.trans_apply, MulEquiv.subgroupCongr_apply,
+    MonoidHom.ofInjective_apply]
 
 /-- The isomorphism does not move the values of a point: the value at `h` of the point over the
 equalizer subalgebra is the value at `h` of its image in `A`. -/
@@ -184,8 +167,8 @@ variable {G : Type*} [Group G]
 
 /-- The universal property of the equalizer, on points: a group homomorphism into the `A`-points
 whose composites with `mapValue φ` and `mapValue ψ` agree factors through the points valued in the
-equalizer subalgebra. It is exposed so that the factorization below reduces on a point. -/
-@[expose] noncomputable def liftEqualizerPoints (φ ψ : A →ₐ[R] B) (u : G →* WithConv (H →ₐ[R] A))
+equalizer subalgebra. -/
+noncomputable def liftEqualizerPoints (φ ψ : A →ₐ[R] B) (u : G →* WithConv (H →ₐ[R] A))
     (hu : (mapValue (H := H) φ).comp u = (mapValue (H := H) ψ).comp u) :
     G →* WithConv (H →ₐ[R] _root_.AlgHom.equalizer φ ψ) :=
   (equalizerPointsEquiv (H := H) φ ψ).symm.toMonoidHom.comp
@@ -214,18 +197,18 @@ theorem liftEqualizerPoints_unique (φ ψ : A →ₐ[R] B)
 
 /-- A point is fixed by the endomorphism of points induced by `φ : A →ₐ[R] A` exactly when `φ`
 fixes every value of the point. -/
+@[simp]
 theorem mem_eqLocus_mapValue_id_iff (φ : A →ₐ[R] A) (f : WithConv (H →ₐ[R] A)) :
     f ∈ MonoidHom.eqLocus (mapValue (H := H) φ) (MonoidHom.id _) ↔
       ∀ h : H, φ (f.ofConv h) = f.ofConv h := by
   rw [← mapValue_id (H := H) (A := A), mem_eqLocus_mapValue_iff]
   simp [_root_.AlgHom.mem_equalizer]
 
-/-- **The fixed points of a Steinberg-type endomorphism.** The subgroup of points fixed by the
-endomorphism that `φ : A →ₐ[R] A` induces on points is the group of points valued in the
+/-- **The fixed points of an endomorphism of the value algebra.** The subgroup of points fixed by
+the endomorphism that `φ : A →ₐ[R] A` induces on points is the group of points valued in the
 subalgebra of `A` fixed by `φ`. For `A` an algebraic closure of `𝔽_p` and `φ` the `q`-power
-Frobenius this reads `G(k)^{Frob_q} ≃* G(𝔽_q)`. It is exposed for the same reason as
-`TauCeti.AlgHom.equalizerPointsEquiv`, of which it is the case `ψ = AlgHom.id R A`. -/
-@[expose] noncomputable def fixedPointsEquiv (φ : A →ₐ[R] A) :
+Frobenius this reads `G(k)^{Frob_q} ≃* G(𝔽_q)`. -/
+noncomputable def fixedPointsEquiv (φ : A →ₐ[R] A) :
     WithConv (H →ₐ[R] _root_.AlgHom.equalizer φ (_root_.AlgHom.id R A)) ≃*
       MonoidHom.eqLocus (mapValue (H := H) φ) (MonoidHom.id _) :=
   (equalizerPointsEquiv (H := H) φ (_root_.AlgHom.id R A)).trans
@@ -235,16 +218,9 @@ Frobenius this reads `G(k)^{Frob_q} ≃* G(𝔽_q)`. It is exposed for the same 
 theorem coe_fixedPointsEquiv_apply (φ : A →ₐ[R] A)
     (g : WithConv (H →ₐ[R] _root_.AlgHom.equalizer φ (_root_.AlgHom.id R A))) :
     (fixedPointsEquiv (H := H) φ g : WithConv (H →ₐ[R] A)) =
-      mapValue (H := H) (_root_.AlgHom.equalizer φ (_root_.AlgHom.id R A)).val g :=
-  rfl
-
-/-- The identity endomorphism of the value algebra fixes every point. This is not `@[simp]`:
-`mapValue_id` already rewrites the left-hand side, after which `MonoidHom.eqLocus_same` closes
-the goal, so the statement below is never in simp-normal form. -/
-theorem eqLocus_mapValue_id_id :
-    MonoidHom.eqLocus (mapValue (H := H) (_root_.AlgHom.id R A)) (MonoidHom.id _) = ⊤ := by
-  rw [mapValue_id]
-  exact MonoidHom.eqLocus_same _
+      mapValue (H := H) (_root_.AlgHom.equalizer φ (_root_.AlgHom.id R A)).val g := by
+  simp only [fixedPointsEquiv, MulEquiv.trans_apply, MulEquiv.subgroupCongr_apply,
+    coe_equalizerPointsEquiv_apply]
 
 /-- A point fixed by two endomorphisms of the value algebra is fixed by their composite. -/
 theorem inf_eqLocus_mapValue_id_le_comp (φ ψ : A →ₐ[R] A) :
@@ -257,9 +233,10 @@ theorem inf_eqLocus_mapValue_id_le_comp (φ ψ : A →ₐ[R] A) :
   intro h
   rw [_root_.AlgHom.comp_apply, hψ h, hφ h]
 
-/-- A point fixed by an endomorphism of the value algebra is fixed by its square. This is the form
-in which a Suzuki--Ree Steinberg map, whose square is a Frobenius, meets the fixed subgroup of that
-Frobenius. -/
+/-- A point fixed by an endomorphism of the value algebra is fixed by its square. This records, for
+the induced endomorphisms of points that this file covers, the containment of fixed subgroups that
+a "the square is a Frobenius" relation gives; a Suzuki--Ree Steinberg map itself is an endomorphism
+of the ambient group, not post-composition by an endomorphism of the value algebra. -/
 theorem eqLocus_mapValue_id_le_comp_self (φ : A →ₐ[R] A) :
     MonoidHom.eqLocus (mapValue (H := H) φ) (MonoidHom.id _) ≤
       MonoidHom.eqLocus (mapValue (H := H) (φ.comp φ)) (MonoidHom.id _) :=
