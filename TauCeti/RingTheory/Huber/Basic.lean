@@ -35,6 +35,9 @@ Huber ring is nonarchimedean, which is exactly the hypothesis under which
   `TauCeti.Huber.PairOfDefinition.coe_idealImage`: membership in the image of `Iⁿ`.
 * `TauCeti.Huber.PairOfDefinition.hasBasis_nhds_zero`: the images of `Iⁿ` are a neighbourhood
   basis of zero.
+* `TauCeti.Huber.IsAdic.comap`: an adic topology transports along a ring equivalence that is an
+  inducing map. This is what lets a ring of definition carry an ideal of definition that natively
+  lives in a merely equivalent ring, which is what `TauCeti.Huber.PairOfDefinition` needs.
 * `TauCeti.Huber.IsHuberRing.toNonarchimedeanRing`: a Huber ring is nonarchimedean.
 * `TauCeti.Huber.PairOfDefinition.isBounded_ringOfDefinition`: a ring of definition is bounded,
   hence `A₀ ≤ A°` (`TauCeti.Huber.PairOfDefinition.le_powerBoundedSubring`). This is the
@@ -125,6 +128,42 @@ class IsTateRing (A : Type*) [CommRing A] [TopologicalSpace A] [IsTopologicalRin
     extends IsHuberRing A where
   /-- A Tate ring contains a topologically nilpotent unit. -/
   exists_isPseudoUniformizer : ∃ a : A, IsPseudoUniformizer a
+
+section Transport
+
+variable {A B : Type*} [CommRing A] [TopologicalSpace A] [IsTopologicalRing A]
+  [CommRing B] [TopologicalSpace B] [IsTopologicalRing B]
+
+omit [TopologicalSpace A] [IsTopologicalRing A] [TopologicalSpace B] [IsTopologicalRing B] in
+/-- The powers of a comapped ideal are the comapped powers, along a ring equivalence. -/
+private theorem comap_pow_of_equiv (e : B ≃+* A) (I : Ideal A) (n : ℕ) :
+    (I ^ n).comap e = I.comap e ^ n := by
+  rw [← Ideal.map_symm, ← Ideal.map_symm, Ideal.map_pow]
+
+/-- An adic topology transports along a ring equivalence that is also an inducing map.
+
+This is what lets a ring of definition carry an ideal of definition: `PairOfDefinition` asks for
+an `Ideal A₀` whose adic topology is the subspace topology, while the ideal at hand usually lives
+in a ring that is only equivalent to `A₀`. -/
+theorem IsAdic.comap (e : B ≃+* A) (he : IsInducing e) {I : Ideal A} (h : IsAdic I) :
+    IsAdic (I.comap e) := by
+  rw [isAdic_iff] at h ⊢
+  obtain ⟨hopen, hnhds⟩ := h
+  have hset : ∀ n : ℕ,
+      ((I.comap e ^ n : Ideal B) : Set B) = e ⁻¹' ((I ^ n : Ideal A) : Set A) := by
+    intro n
+    ext b
+    rw [← comap_pow_of_equiv e I n, SetLike.mem_coe, Ideal.mem_comap, Set.mem_preimage,
+      SetLike.mem_coe]
+  refine ⟨fun n ↦ ?_, fun s hs ↦ ?_⟩
+  · rw [hset n, he.isOpen_iff]
+    exact ⟨_, hopen n, rfl⟩
+  · rw [he.nhds_eq_comap (0 : B), map_zero, Filter.mem_comap] at hs
+    obtain ⟨t, ht, hts⟩ := hs
+    obtain ⟨n, hn⟩ := hnhds t ht
+    exact ⟨n, by rw [hset n]; exact fun b hb ↦ hts (hn hb)⟩
+
+end Transport
 
 namespace PairOfDefinition
 

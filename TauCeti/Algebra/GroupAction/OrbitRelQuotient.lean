@@ -90,7 +90,7 @@ lemma orbitRelQuotientBotEquiv_mk (x : X) :
 lemma orbitRelQuotientBotEquiv_symm_apply (x : X) :
     (orbitRelQuotientBotEquiv (G := G) (X := X)).symm x =
       (Quotient.mk'' x : _root_.MulAction.orbitRel.Quotient (⊥ : Subgroup G) X) :=
-  ((orbitRelQuotientBotEquiv (G := G) (X := X)).apply_eq_iff_eq_symm_apply).mp
+  ((orbitRelQuotientBotEquiv (G := G) (X := X)).eq_symm_apply).mpr
     (orbitRelQuotientBotEquiv_mk (G := G) (X := X) x)
 
 /-- Equality of bottom-subgroup orbit classes is equality of representatives. -/
@@ -436,7 +436,7 @@ lemma orbitRelQuotientEquivNormalizerQuotientOfNormal_apply_smul
         (Quotient.mk'' (g • x) : _root_.MulAction.orbitRel.Quotient H X) =
       Subgroup.normalizerQuotientMk H
         ⟨g⁻¹, by simp [_root_.Subgroup.normalizer_eq_top (H := H)]⟩ := by
-  rw [(orbitRelQuotientEquivNormalizerQuotientOfNormal H x).apply_eq_iff_eq_symm_apply]
+  rw [← (orbitRelQuotientEquivNormalizerQuotientOfNormal H x).eq_symm_apply]
   rw [Subgroup.normalizerQuotientMk_apply]
   rw [orbitRelQuotientEquivNormalizerQuotientOfNormal_symm_mk]
   simp
