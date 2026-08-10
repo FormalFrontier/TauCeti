@@ -97,10 +97,9 @@ theorem indecomposable_of_idempotent_eq_zero_or_id [HasBinaryBiproducts C] {X : 
     have := congrArg (fun f : X ⟶ X ↦ biprod.inr ≫ i.inv ≫ f ≫ i.hom ≫ biprod.snd) h1
     simpa using this.symm
 
-/-- **Two retracts whose idempotents sum to the identity split an object as a biproduct.** The
-comparison map is `biprod.lift r₁ r₂`, with inverse `biprod.desc i₁ i₂`; one composite is the
-hypothesis `r₁ ≫ i₁ + r₂ ≫ i₂ = 𝟙 X`, and the other is the identity because the two retracts are
-orthogonal, `i₁ ≫ r₂ = 0` and `i₂ ≫ r₁ = 0`. -/
+/-- **Two retracts whose idempotents sum to the identity split an object as a biproduct.** Its
+comparison map and inverse are read off by `TauCeti.isoBiprodOfRetracts_hom` and
+`TauCeti.isoBiprodOfRetracts_inv`. -/
 noncomputable def isoBiprodOfRetracts [HasBinaryBiproducts C] {X Y Z : C} (i₁ : Y ⟶ X) (r₁ : X ⟶ Y)
     (i₂ : Z ⟶ X) (r₂ : X ⟶ Z) (h₁ : i₁ ≫ r₁ = 𝟙 Y) (h₂ : i₂ ≫ r₂ = 𝟙 Z)
     (h : r₁ ≫ i₁ + r₂ ≫ i₂ = 𝟙 X) : X ≅ Y ⊞ Z := by
@@ -126,10 +125,26 @@ noncomputable def isoBiprodOfRetracts [HasBinaryBiproducts C] {X Y Z : C} (i₁ 
         refine biprod.hom_ext' _ _ (biprod.hom_ext _ _ ?_ ?_) (biprod.hom_ext _ _ ?_ ?_) <;>
           simp [h₁, h₂, horth₁, horth₂] }
 
+/-- The comparison map of `TauCeti.isoBiprodOfRetracts` is the pair of the two retractions. -/
+@[simp]
+theorem isoBiprodOfRetracts_hom [HasBinaryBiproducts C] {X Y Z : C} {i₁ : Y ⟶ X} {r₁ : X ⟶ Y}
+    {i₂ : Z ⟶ X} {r₂ : X ⟶ Z} {h₁ : i₁ ≫ r₁ = 𝟙 Y} {h₂ : i₂ ≫ r₂ = 𝟙 Z}
+    {h : r₁ ≫ i₁ + r₂ ≫ i₂ = 𝟙 X} :
+    (isoBiprodOfRetracts i₁ r₁ i₂ r₂ h₁ h₂ h).hom = biprod.lift r₁ r₂ :=
+  -- The parentheses are load-bearing: `isoBiprodOfRetracts` does not expose its body, and the
+  -- bare-`rfl` elaborator refuses to unfold a sealed definition, even in the defining module.
+  (rfl)
+
+/-- The inverse of `TauCeti.isoBiprodOfRetracts` is the pair of the two sections. -/
+@[simp]
+theorem isoBiprodOfRetracts_inv [HasBinaryBiproducts C] {X Y Z : C} {i₁ : Y ⟶ X} {r₁ : X ⟶ Y}
+    {i₂ : Z ⟶ X} {r₂ : X ⟶ Z} {h₁ : i₁ ≫ r₁ = 𝟙 Y} {h₂ : i₂ ≫ r₂ = 𝟙 Z}
+    {h : r₁ ≫ i₁ + r₂ ≫ i₂ = 𝟙 X} :
+    (isoBiprodOfRetracts i₁ r₁ i₂ r₂ h₁ h₂ h).inv = biprod.desc i₁ i₂ :=
+  (rfl)
+
 /-- **An indecomposable object has no nontrivial idempotent endomorphism**, as soon as idempotents
-split. Splitting `e` and `𝟙 X - e` writes `X` as a biproduct of the two retracts, and
-indecomposability makes one of them zero: the first vanishing forces `e = 0`, the second `e = 𝟙 X`.
-This is the converse of `TauCeti.indecomposable_of_idempotent_eq_zero_or_id`. -/
+split. This is the converse of `TauCeti.indecomposable_of_idempotent_eq_zero_or_id`. -/
 theorem idempotent_eq_zero_or_id_of_indecomposable [HasBinaryBiproducts C] [IsIdempotentComplete C]
     {X : C} (hX : Indecomposable X) {e : X ⟶ X} (he : e ≫ e = e) : e = 0 ∨ e = 𝟙 X := by
   obtain ⟨Y, i₁, r₁, h₁, hr₁⟩ := IsIdempotentComplete.idempotents_split X e he

@@ -152,11 +152,7 @@ private theorem sinkEndApp_naturality (hi : IsSink i)
 variable (M) in
 /-- **The endomorphism of `M` given by an endomorphism at a sink.** For a sink `i` of `Q` and a
 linear endomorphism `π` of `Mᵢ` fixing the image of every arrow into `i`, this is the endomorphism
-of `M` acting by `π` at `i` and by the identity at every other vertex.
-
-Naturality is exactly the two hypotheses: a path into `i` from another vertex ends with an arrow
-into `i`, so `π` fixes its image, and no path of positive length leaves a sink, so nothing is left
-to check in the other direction. -/
+of `M` acting by `π` at `i` and by the identity at every other vertex. -/
 noncomputable def sinkEnd (hi : IsSink i) (π : M.obj i →ₗ[k] M.obj i)
     (hπ : ∀ (b : Q) (e : b ⟶ i) (z : M.obj b), π ((M.map e.toPath).hom z) =
       (M.map e.toPath).hom z) : M ⟶ M where
@@ -207,6 +203,7 @@ theorem sinkEnd_comp_self (hidem : IsIdempotentElem π) :
   NatTrans.ext (funext fun a ↦ sinkEndApp_comp_self hidem a)
 
 /-- `TauCeti.sinkEnd` is the identity exactly when the endomorphism it is built from is. -/
+@[simp]
 theorem sinkEnd_eq_id_iff : sinkEnd M hi π hπ = 𝟙 M ↔ π = LinearMap.id := by
   refine ⟨fun h ↦ ?_, fun h ↦ NatTrans.ext (funext fun a ↦ sinkEndApp_eq_id h a)⟩
   have happ : (sinkEnd M hi π hπ).app i = 𝟙 (M.obj i) := by rw [h]; rfl
@@ -216,6 +213,7 @@ theorem sinkEnd_eq_id_iff : sinkEnd M hi π hπ = 𝟙 M ↔ π = LinearMap.id :
 /-- `TauCeti.sinkEnd` vanishes exactly when the endomorphism it is built from vanishes and the
 representation is concentrated at the sink: away from the sink it acts by the identity, which is
 zero only on a vanishing vertex space. -/
+@[simp]
 theorem sinkEnd_eq_zero_iff :
     sinkEnd M hi π hπ = 0 ↔ π = 0 ∧ ∀ a : Q, a ≠ i → Subsingleton (M.obj a) := by
   refine ⟨fun h ↦ ⟨?_, fun a ha ↦ ?_⟩,
@@ -240,11 +238,7 @@ private theorem isZero_of_forall_subsingleton (hall : ∀ a : Q, Subsingleton (M
 /-- **An idempotent at a sink of an indecomposable representation is trivial.** Let `i` be a sink
 of `Q` and `M` an indecomposable representation. An idempotent endomorphism of `Mᵢ` fixing the
 image of every arrow into `i` is either the identity, or zero — and in the second case `M` vanishes
-away from `i`.
-
-Indecomposability enters through `TauCeti.idempotent_eq_zero_or_id_of_indecomposable`: the category
-of representations is abelian, so idempotents split, and an idempotent endomorphism of an
-indecomposable object is trivial. -/
+away from `i`. -/
 theorem sinkIdempotent_eq_id_or_eq_zero_of_indecomposable (hi : IsSink i)
     (hM : Indecomposable M) (π : M.obj i →ₗ[k] M.obj i)
     (hπ : ∀ (b : Q) (e : b ⟶ i) (z : M.obj b), π ((M.map e.toPath).hom z) =
@@ -256,10 +250,8 @@ theorem sinkIdempotent_eq_id_or_eq_zero_of_indecomposable (hi : IsSink i)
   · exact Or.inr ((sinkEnd_eq_zero_iff (hi := hi) (hπ := hπ)).mp h)
   · exact Or.inl ((sinkEnd_eq_id_iff (hi := hi) (hπ := hπ)).mp h)
 
-/-- **An indecomposable representation concentrated at a sink is a line there.** Every subspace of
-the vertex space at a sink is a direct summand of it and, the representation vanishing elsewhere,
-splits off as a subrepresentation; so an indecomposable representation concentrated at a sink is
-spanned there by a single nonzero vector. -/
+/-- **An indecomposable representation concentrated at a sink is a line there**: its vertex space
+at the sink is spanned by a single nonzero vector. -/
 theorem exists_ne_zero_span_eq_top_of_forall_subsingleton (hi : IsSink i)
     (hM : Indecomposable M) (h : ∀ a : Q, a ≠ i → Subsingleton (M.obj a)) :
     ∃ y : M.obj i, y ≠ 0 ∧ Submodule.span k {y} = ⊤ := by
@@ -378,10 +370,7 @@ private theorem isIso_simpleRepHom_app (hi : IsSink i) {y : M.obj ((Paths.of Q).
       @ModuleCat.isZero_of_subsingleton k _ (M.obj a) (hsub a ha)
     exact ⟨0, hzs.eq_of_src _ _, hzm.eq_of_src _ _⟩
 
-/-- **An indecomposable representation concentrated at a sink is the vertex simple there.** It is a
-line at the sink by `TauCeti.exists_ne_zero_span_eq_top_of_forall_subsingleton`, and the morphism
-`TauCeti.simpleRepHom` attached to a spanning vector of that line is an isomorphism: at the sink it
-carries the generator to a spanning vector, and away from it both vertex spaces vanish. -/
+/-- **An indecomposable representation concentrated at a sink is the vertex simple there.** -/
 theorem nonempty_iso_simpleRep_of_forall_subsingleton (hi : IsSink i) (hM : Indecomposable M)
     (h : ∀ a : Q, a ≠ i → Subsingleton (M.obj a)) : Nonempty (M ≅ simpleRep k Q i) := by
   obtain ⟨y, hy, hspan⟩ := exists_ne_zero_span_eq_top_of_forall_subsingleton hi hM h
