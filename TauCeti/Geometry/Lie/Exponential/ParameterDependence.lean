@@ -173,7 +173,7 @@ theorem contDiffAt_mulInvariantCoordinateVectorField (v : E) {n : ℕ∞ω}
   let V : E × G → TangentBundle I G := fun p =>
     ⟨p.2, mulInvariantVectorField (I := I) (G := G) p.1 p.2⟩
   have hV : ContMDiff (𝓘(ℝ, E).prod I) I.tangent n V :=
-    contMDiff_mulInvariantVectorField_modelSpace (n := n)
+    contMDiff_mulInvariantVectorField_modelSpace (m := n) (n := n + 1) le_rfl
   have hV₀ := hV.contMDiffAt (x := (v, (1 : G)))
   rw [contMDiffAt_iff] at hV₀
   have hv1 : (𝓘(ℝ, E).prod I).IsInteriorPoint (v, (1 : G)) := by

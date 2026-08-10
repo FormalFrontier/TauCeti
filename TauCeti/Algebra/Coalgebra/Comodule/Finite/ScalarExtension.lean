@@ -1,0 +1,74 @@
+/-
+Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+-/
+module
+
+public import TauCeti.Algebra.Coalgebra.Comodule.Finite.Basic
+public import TauCeti.Algebra.Coalgebra.Comodule.ScalarExtension
+
+/-!
+# Scalar extension of comodules
+
+Let `C` be a coalgebra over a commutative semiring `R`, and let `A` be an
+`R`-algebra. This file restricts scalar extension of the underlying-module functor to finitely
+generated comodules:
+
+```text
+FGComoduleCat R C ⥤ SemimoduleCat A,    M ↦ A ⊗[R] M.
+```
+
+No finiteness or bialgebra structure is needed for the construction.
+
+## Main declarations
+
+* `TauCeti.FGComoduleCat.scalarExtensionFunctor`: its restriction to finitely generated
+  comodules.
+-/
+
+public section
+
+open CategoryTheory
+open scoped TensorProduct
+
+namespace TauCeti
+
+universe u v w x
+
+variable (R : Type u) [CommSemiring R]
+variable (C : Type v) [AddCommMonoid C] [Module R C] [Coalgebra R C]
+variable (A : Type x) [Semiring A] [Algebra R A]
+
+namespace FGComoduleCat
+
+/-- Scalar extension of the underlying-module functor on finitely generated comodules. -/
+noncomputable def scalarExtensionFunctor :
+    FGComoduleCat.{u, v, w} R C ⥤ SemimoduleCat.{max x w} A :=
+  incl ⋙ ComoduleCat.scalarExtensionFunctor R C A
+
+/-- Finite-comodule scalar extension is obtained by precomposing scalar extension on all
+comodules with the inclusion functor. -/
+theorem scalarExtensionFunctor_def :
+    scalarExtensionFunctor R C A =
+      incl ⋙ ComoduleCat.scalarExtensionFunctor R C A :=
+  (rfl)
+
+/-- Finite-comodule scalar extension sends `M` to the semimodule `A ⊗[R] M`. -/
+@[simp]
+theorem scalarExtensionFunctor_obj (M : FGComoduleCat.{u, v, w} R C) :
+    (scalarExtensionFunctor R C A).obj M = SemimoduleCat.of A (A ⊗[R] M) :=
+  ComoduleCat.scalarExtensionFunctor_obj R C A M.obj
+
+/-- Scalar extension maps a finite-comodule morphism to base change of its underlying linear
+map. -/
+@[simp]
+theorem scalarExtensionFunctor_map {M N : FGComoduleCat.{u, v, w} R C} (f : M ⟶ N) :
+    (scalarExtensionFunctor R C A).map f =
+      eqToHom (scalarExtensionFunctor_obj R C A M) ≫
+        SemimoduleCat.ofHom (f.hom.toLinearMap.baseChange A) ≫
+          eqToHom (scalarExtensionFunctor_obj R C A N).symm :=
+  ComoduleCat.scalarExtensionFunctor_map R C A f.hom
+
+end FGComoduleCat
+
+end TauCeti
