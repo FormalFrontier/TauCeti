@@ -4,9 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.FieldTheory.IsSepClosed
 public import Mathlib.LinearAlgebra.QuadraticForm.Dual
-public import Mathlib.LinearAlgebra.QuadraticForm.Radical
+public import TauCeti.LinearAlgebra.QuadraticForm.SepClosed
 
 /-!
 # Split models for quadratic forms
@@ -22,9 +21,11 @@ coordinates together with an at-most-one-dimensional standard remainder.
 
 ## Main results
 
-* `TauCeti.QuadraticForm.splitModelForm_polar_apply`: the polar form of the split model.
+* `TauCeti.QuadraticForm.splitModelForm_def` and
+  `TauCeti.QuadraticForm.splitModelForm_apply`: descriptions of the model form.
+* `TauCeti.QuadraticForm.polar_splitModelForm`: the polar form of the split model.
 * `TauCeti.QuadraticForm.finrank_splitModel` and
-  `TauCeti.QuadraticForm.splitModelForm_nondegenerate`: its structural facts.
+  `TauCeti.QuadraticForm.splitModelForm_nondegenerate`: its dimension and nondegeneracy.
 * `TauCeti.QuadraticForm.isometryEquivSplitModelForm`: the isometry from any finite-dimensional
   nondegenerate form over a separably closed field to its split model.
 
@@ -36,8 +37,7 @@ representation-theory consumer.
 
 * [Tau Ceti Roadmap](https://github.com/TauCetiProject/TauCetiRoadmap), Representation Theory /
   Spin Representations, Layer 4, "The spin module".
-* `Mathlib.LinearAlgebra.QuadraticForm.AlgClosed`, whose square-root normalization argument is
-  adapted below from algebraically closed to separably closed fields.
+* `TauCeti.LinearAlgebra.QuadraticForm.SepClosed`, which supplies the classification used below.
 -/
 
 public section
@@ -48,22 +48,29 @@ namespace TauCeti.QuadraticForm
 
 noncomputable section
 
-/-- The paired-coordinate space in the split model of an `n`-dimensional form. -/
-abbrev SplitHalf (K : Type*) (n : ℕ) := Fin (n / 2) → K
+/-- The `n / 2`-dimensional coordinate space whose dual pairing forms the hyperbolic part of the
+split model. -/
+abbrev SplitHalf (R : Type*) (n : ℕ) := Fin (n / 2) → R
 
 /-- The at-most-one-dimensional remainder in the split model of an `n`-dimensional form. -/
-abbrev SplitRemainder (K : Type*) (n : ℕ) := Fin (n % 2) → K
+abbrev SplitRemainder (R : Type*) (n : ℕ) := Fin (n % 2) → R
 
 /-- The underlying module of the uniform split model in dimension `n`. -/
-abbrev SplitModel (K : Type*) [CommSemiring K] (n : ℕ) :=
-  (Module.Dual K (SplitHalf K n) × SplitHalf K n) × SplitRemainder K n
+abbrev SplitModel (R : Type*) [CommSemiring R] (n : ℕ) :=
+  (Module.Dual R (SplitHalf R n) × SplitHalf R n) × SplitRemainder R n
 
 /-- The `QuadraticForm.dualProd` pairing on the paired coordinates, together with the standard
 sum-of-squares form on the remainder. -/
-def splitModelForm (K : Type*) [CommSemiring K] (n : ℕ) :
-    QuadraticForm K (SplitModel K n) :=
-  (QuadraticForm.dualProd K (SplitHalf K n)).prod
-    (QuadraticMap.weightedSumSquares K (1 : Fin (n % 2) → K))
+def splitModelForm (R : Type*) [CommSemiring R] (n : ℕ) :
+    QuadraticForm R (SplitModel R n) :=
+  (QuadraticForm.dualProd R (SplitHalf R n)).prod
+    (QuadraticMap.weightedSumSquares R (1 : Fin (n % 2) → R))
+
+/-- The split model form is the product of its dual-pairing and standard remainder forms. -/
+theorem splitModelForm_def (R : Type*) [CommSemiring R] (n : ℕ) :
+    splitModelForm R n =
+      (QuadraticForm.dualProd R (SplitHalf R n)).prod
+        (QuadraticMap.weightedSumSquares R (1 : Fin (n % 2) → R)) := (rfl)
 
 /-- The split model form is the evaluation pairing plus the standard remainder square. -/
 @[simp]
@@ -75,7 +82,7 @@ theorem splitModelForm_apply {R : Type*} [CommSemiring R]
 /-- The polar form of the split model is the symmetric evaluation pairing plus twice the standard
 remainder pairing. -/
 @[simp]
-theorem splitModelForm_polar_apply {R : Type*} [CommRing R]
+theorem polar_splitModelForm {R : Type*} [CommRing R]
     (n : ℕ) (x y : SplitModel R n) :
     QuadraticMap.polar (splitModelForm R n) x y =
       x.1.1 y.1.2 + y.1.1 x.1.2 + 2 * ∑ i, x.2 i * y.2 i := by
@@ -92,52 +99,21 @@ theorem splitModelForm_polar_apply {R : Type*} [CommRing R]
 variable {K V : Type*} [Field K] [Invertible (2 : K)]
   [AddCommGroup V] [Module K V] [FiniteDimensional K V]
 
-private def isometryEquivSumSquaresUnits [IsSepClosed K] {I : Type*} [Fintype I]
-    (w : I → Kˣ) :
-    (QuadraticMap.weightedSumSquares K fun i ↦ (w i : K)).IsometryEquiv
-      (QuadraticMap.weightedSumSquares K (1 : I → K)) := by
-  classical
-  refine QuadraticForm.isometryEquivWeightedSumSquaresWeightedSumSquares
-    (fun i ↦ Units.mk0 (IsSepClosed.exists_eq_mul_self (w i : K)).choose ?_) ?_
-  · rw [← mul_self_eq_zero.ne, ← (IsSepClosed.exists_eq_mul_self (w i : K)).choose_spec]
-    exact (w i).ne_zero
-  · intro i
-    simp [pow_two, ← (IsSepClosed.exists_eq_mul_self (w i : K)).choose_spec]
-
-/-- A nondegenerate quadratic form over a separably closed field of characteristic different from
-two is equivalent to the standard sum-of-squares form. -/
-theorem equivalent_weightedSumSquares_of_isSepClosed [IsSepClosed K]
-    (Q : QuadraticForm K V) (hQ : Q.Nondegenerate) :
-    Q.Equivalent
-      (QuadraticMap.weightedSumSquares K (1 : Fin (Module.finrank K V) → K)) := by
-  classical
-  let ⟨w, ⟨e⟩⟩ := Q.equivalent_weightedSumSquares_units_of_nondegenerate'
-    ((QuadraticMap.nondegenerate_associated_iff (Q := Q)).2 hQ).1
-  exact ⟨e.trans (isometryEquivSumSquaresUnits w)⟩
-
-/-- Two nondegenerate quadratic forms on the same finite-dimensional vector space over a
-separably closed field of characteristic different from two are equivalent. -/
-theorem equivalent_of_isSepClosed [IsSepClosed K]
-    (Q₁ Q₂ : QuadraticForm K V) (hQ₁ : Q₁.Nondegenerate) (hQ₂ : Q₂.Nondegenerate) :
-    Q₁.Equivalent Q₂ :=
-  (equivalent_weightedSumSquares_of_isSepClosed Q₁ hQ₁).trans
-    (equivalent_weightedSumSquares_of_isSepClosed Q₂ hQ₂).symm
-
-private theorem splitModelForm_associated_apply {R : Type*} [CommRing R] [Invertible (2 : R)]
+private theorem associated_splitModelForm {R : Type*} [CommRing R] [Invertible (2 : R)]
     (n : ℕ) (x y : SplitModel R n) :
     QuadraticMap.associated (splitModelForm R n) x y =
       ⅟(2 : R) • (x.1.1 y.1.2 + y.1.1 x.1.2) + ∑ i, x.2 i * y.2 i := by
-  rw [QuadraticMap.associated_apply]
-  -- `associated_apply` expands definitionally to this polar expression.
-  change ⅟(2 : R) • QuadraticMap.polar (splitModelForm R n) x y = _
-  rw [splitModelForm_polar_apply]
+  rw [QuadraticMap.associated_apply, Module.End.smul_def, half_moduleEnd_apply_eq_half_smul,
+    ← QuadraticMap.polar, polar_splitModelForm]
   simp only [smul_eq_mul]
   rw [mul_add, mul_add, invOf_mul_cancel_left]
 
-private theorem splitModelForm_associated_separatingLeft {R : Type*} [CommRing R]
+private theorem associated_splitModelForm_separatingLeft {R : Type*} [CommRing R]
     [Invertible (2 : R)] (n : ℕ) :
     (QuadraticMap.associated (splitModelForm R n)).SeparatingLeft := by
   classical
+  have invOf_smul_eq_zero (a : R) (ha : ⅟(2 : R) • a = 0) : a = 0 :=
+    by simpa using invOf_smul_eq_iff.mp ha
   intro x hx
   rcases x with ⟨⟨f, u⟩, z⟩
   apply Prod.ext
@@ -145,28 +121,30 @@ private theorem splitModelForm_associated_separatingLeft {R : Type*} [CommRing R
     · apply LinearMap.ext
       intro v
       have h := hx (((0 : Module.Dual R (SplitHalf R n)), v), 0)
-      rw [splitModelForm_associated_apply] at h
-      have h' : ⅟(2 : R) • f v = 0 := by
-        simpa using h
-      simpa using (invOf_smul_eq_iff.mp h')
+      rw [associated_splitModelForm] at h
+      exact invOf_smul_eq_zero _ (by simpa using h)
     · apply (Module.forall_dual_apply_eq_zero_iff R u).1
       intro g
       have h := hx (((g : Module.Dual R (SplitHalf R n)), 0), 0)
-      rw [splitModelForm_associated_apply] at h
-      have h' : ⅟(2 : R) • g u = 0 := by
-        simpa using h
-      simpa using (invOf_smul_eq_iff.mp h')
+      rw [associated_splitModelForm] at h
+      exact invOf_smul_eq_zero _ (by simpa using h)
   · funext i
     have h := hx (((0 : Module.Dual R (SplitHalf R n)), 0), Pi.single i 1)
-    rw [splitModelForm_associated_apply] at h
+    rw [associated_splitModelForm] at h
     simpa [Pi.single_apply] using h
 
-omit [Invertible (2 : K)] in
 /-- The split model has its advertised dimension. -/
-theorem finrank_splitModel (n : ℕ) :
-    Module.finrank K (SplitModel K n) = n := by
-  simp only [SplitModel, SplitHalf, SplitRemainder, Module.finrank_prod,
-    Subspace.dual_finrank_eq, Module.finrank_fintype_fun_eq_card, Fintype.card_fin]
+@[simp high]
+theorem finrank_splitModel {R : Type*} [CommRing R] [Nontrivial R] (n : ℕ) :
+    Module.finrank R (SplitModel R n) = n := by
+  simp only [Module.finrank, rank_prod, Module.rank_linearMap_self, rank_pi, Module.rank_self,
+    Cardinal.sum_const, Cardinal.mk_fintype, Fintype.card_fin, Cardinal.lift_natCast,
+    Cardinal.lift_uzero, mul_one, Cardinal.lift_id]
+  rw [Cardinal.toNat_add
+      (Cardinal.add_lt_aleph0 Cardinal.natCast_lt_aleph0 Cardinal.natCast_lt_aleph0)
+      Cardinal.natCast_lt_aleph0,
+    Cardinal.toNat_add Cardinal.natCast_lt_aleph0 Cardinal.natCast_lt_aleph0]
+  simp only [Cardinal.toNat_natCast]
   omega
 
 /-- The split model form is nondegenerate. -/
@@ -175,19 +153,21 @@ theorem splitModelForm_nondegenerate {R : Type*} [CommRing R] [Invertible (2 : R
   (QuadraticMap.nondegenerate_associated_iff (Q := splitModelForm R n)).1 <|
     (LinearMap.IsRefl.nondegenerate_iff_separatingLeft
       (QuadraticForm.associated_isSymm R (splitModelForm R n)).isRefl).2
-        (splitModelForm_associated_separatingLeft n)
+        (associated_splitModelForm_separatingLeft n)
 
 /-- Every finite-dimensional nondegenerate quadratic form over a separably closed field of
 characteristic different from two is isometric to its split model form. -/
 noncomputable def isometryEquivSplitModelForm [IsSepClosed K]
     (Q : QuadraticForm K V) (hQ : Q.Nondegenerate) :
     Q.IsometryEquiv (splitModelForm K (Module.finrank K V)) := by
-  let n := Module.finrank K V
-  let hQ' := equivalent_weightedSumSquares_of_isSepClosed Q hQ
-  have hModel' : (splitModelForm K n).Equivalent
-      (QuadraticMap.weightedSumSquares K (1 : Fin n → K)) := by
-    have h := equivalent_weightedSumSquares_of_isSepClosed (splitModelForm K n)
-      (splitModelForm_nondegenerate n)
+  have hQ' := equivalent_weightedSumSquares_of_isSepClosed Q
+    ((QuadraticMap.nondegenerate_associated_iff (Q := Q)).2 hQ).1
+  have hModel' :
+      (splitModelForm K (Module.finrank K V)).Equivalent
+        (QuadraticMap.weightedSumSquares K (1 : Fin (Module.finrank K V) → K)) := by
+    have h := equivalent_weightedSumSquares_of_isSepClosed
+      (splitModelForm K (Module.finrank K V))
+      (associated_splitModelForm_separatingLeft (R := K) (Module.finrank K V))
     rw [finrank_splitModel] at h
     exact h
   exact hQ'.some.trans hModel'.some.symm
