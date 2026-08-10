@@ -9,6 +9,8 @@ public import TauCeti.LinearAlgebra.CliffordAlgebra.RealForm
 public import Mathlib.LinearAlgebra.CliffordAlgebra.Prod
 public import Mathlib.RingTheory.MatrixAlgebra
 
+import Mathlib.LinearAlgebra.Matrix.Unique
+
 /-!
 # Hyperbolic Bott periodicity for real Clifford algebras
 
@@ -18,7 +20,10 @@ negative generator is equivalent to tensoring with two-by-two real matrices.
 ## Main results
 
 * `TauCeti.CliffordAlgebra.hyperbolicEquivTensor`: adjoining a hyperbolic plane to an arbitrary
-  real quadratic module tensors its Clifford algebra with `M₂(ℝ)`.
+  real quadratic module tensors its Clifford algebra with `M₂(ℝ)`;
+* `TauCeti.realCliffordBottEquiv`: the corresponding equivalence for the standard signature forms;
+* `TauCeti.realCliffordBottIterEquiv`: the iterated standard-signature equivalence, with matrix
+  size `2 ^ n` after adjoining `n` hyperbolic planes.
 
 ## References
 
@@ -411,3 +416,253 @@ theorem hyperbolicEquivTensor_symm_apply_ι_hyperbolic
   simp
 
 end TauCeti.CliffordAlgebra
+
+namespace TauCeti
+
+private def splitLastEquiv (n : ℕ) : Fin (n + 1) ≃ Fin n ⊕ Fin 1 :=
+  (finSuccEquivLast).trans <|
+    (Equiv.optionEquivSumPUnit.{0, 0} _).trans <|
+      Equiv.sumCongr (Equiv.refl _) (Equiv.equivPUnit.{1, 1} (Fin 1)).symm
+
+private def realBottIndexEquiv (p q : ℕ) :
+    Fin ((p + 1) + (q + 1)) ≃ Fin (p + q) ⊕ Fin 2 :=
+  finSumFinEquiv.symm |>.trans
+    (Equiv.sumCongr (splitLastEquiv p) (splitLastEquiv q)) |>.trans
+    (Equiv.sumSumSumComm (Fin p) (Fin 1) (Fin q) (Fin 1)) |>.trans
+    (Equiv.sumCongr finSumFinEquiv finSumFinEquiv)
+
+private def realBottSplitLinearEquiv (p q : ℕ) :
+    (Fin ((p + 1) + (q + 1)) → ℝ) ≃ₗ[ℝ]
+      (Fin (p + q) → ℝ) × (Fin 2 → ℝ) :=
+  (LinearEquiv.piCongrLeft' ℝ (fun _ : Fin ((p + 1) + (q + 1)) ↦ ℝ)
+      (realBottIndexEquiv p q)).trans
+    (LinearEquiv.sumArrowLequivProdArrow _ _ ℝ ℝ)
+
+private theorem realBottIndexEquiv_symm_inl_pos (p q : ℕ) (i : Fin p) :
+    (realBottIndexEquiv p q).symm (Sum.inl (finSumFinEquiv (Sum.inl i))) =
+      finSumFinEquiv (Sum.inl i.castSucc) := by
+  simp [realBottIndexEquiv, splitLastEquiv]
+
+private theorem realBottIndexEquiv_symm_inl_neg (p q : ℕ) (i : Fin q) :
+    (realBottIndexEquiv p q).symm (Sum.inl (finSumFinEquiv (Sum.inr i))) =
+      finSumFinEquiv (Sum.inr i.castSucc) := by
+  simp [realBottIndexEquiv, splitLastEquiv]
+
+private theorem realBottIndexEquiv_symm_inr_zero (p q : ℕ) :
+    (realBottIndexEquiv p q).symm (Sum.inr (0 : Fin 2)) =
+      finSumFinEquiv (Sum.inl (Fin.last p)) := by
+  apply Fin.ext
+  -- After forgetting the dependent `Fin` bounds, both index constructions have value `p`.
+  change p = p
+  rfl
+
+private theorem realBottIndexEquiv_symm_inr_one (p q : ℕ) :
+    (realBottIndexEquiv p q).symm (Sum.inr (1 : Fin 2)) =
+      finSumFinEquiv (Sum.inr (Fin.last q)) := by
+  apply Fin.ext
+  -- After forgetting the dependent `Fin` bounds, both index constructions have value `p + 1 + q`.
+  change p + 1 + q = p + 1 + q
+  rfl
+
+private theorem realBottWeight_inl (p q : ℕ) (i : Fin (p + q)) :
+    realCliffordWeight (p + 1) (q + 1)
+        ((realBottIndexEquiv p q).symm (Sum.inl i)) =
+      realCliffordWeight p q i := by
+  rw [← finSumFinEquiv.apply_symm_apply i]
+  rcases finSumFinEquiv.symm i with i | i
+  · rw [realBottIndexEquiv_symm_inl_pos]
+    have hs :
+        (finSumFinEquiv (Sum.inl i.castSucc : Fin (p + 1) ⊕ Fin (q + 1)) : ℕ) < p + 1 := by
+      simp
+    have ht : (finSumFinEquiv (Sum.inl i : Fin p ⊕ Fin q) : ℕ) < p := by simp
+    rw [realCliffordWeight_of_lt hs, realCliffordWeight_of_lt ht]
+  · rw [realBottIndexEquiv_symm_inl_neg]
+    have hs : p + 1 ≤
+        (finSumFinEquiv (Sum.inr i.castSucc : Fin (p + 1) ⊕ Fin (q + 1)) : ℕ) := by
+      simp
+    have ht : p ≤ (finSumFinEquiv (Sum.inr i : Fin p ⊕ Fin q) : ℕ) := by simp
+    rw [realCliffordWeight_of_le hs, realCliffordWeight_of_le ht]
+
+private theorem realBottWeight_inr (p q : ℕ) (i : Fin 2) :
+    realCliffordWeight (p + 1) (q + 1)
+        ((realBottIndexEquiv p q).symm (Sum.inr i)) =
+      realCliffordWeight 1 1 i := by
+  fin_cases i
+  · -- Expose the `Fin 2` coordinate so the corresponding index-conversion lemma rewrites.
+    change realCliffordWeight (p + 1) (q + 1)
+        ((realBottIndexEquiv p q).symm (Sum.inr (0 : Fin 2))) =
+      realCliffordWeight 1 1 (0 : Fin 2)
+    rw [realBottIndexEquiv_symm_inr_zero]
+    rw [realCliffordWeight_of_lt (by simp), realCliffordWeight_of_lt (by norm_num)]
+  · -- Expose the `Fin 2` coordinate so the corresponding index-conversion lemma rewrites.
+    change realCliffordWeight (p + 1) (q + 1)
+        ((realBottIndexEquiv p q).symm (Sum.inr (1 : Fin 2))) =
+      realCliffordWeight 1 1 (1 : Fin 2)
+    rw [realBottIndexEquiv_symm_inr_one]
+    rw [realCliffordWeight_of_le (by simp), realCliffordWeight_of_le (by norm_num)]
+
+/-- The coordinate isometry which separates the last positive and negative coordinates of the
+signature form as a hyperbolic plane. -/
+def realBottSplitIsometry (p q : ℕ) :
+    (realCliffordForm (p + 1) (q + 1)).IsometryEquiv
+      ((realCliffordForm p q).prod (realCliffordForm 1 1)) :=
+  { realBottSplitLinearEquiv p q with
+    map_app' := by
+      intro x
+      rw [QuadraticMap.prod_apply, realCliffordForm_apply, realCliffordForm_apply,
+        realCliffordForm_apply]
+      let y := realBottSplitLinearEquiv p q x
+      calc
+        (∑ i, realCliffordWeight p q i * (y.1 i * y.1 i)) +
+            ∑ i, realCliffordWeight 1 1 i * (y.2 i * y.2 i) =
+          ∑ s : Fin (p + q) ⊕ Fin 2, Sum.elim
+            (fun i => realCliffordWeight p q i * (y.1 i * y.1 i))
+            (fun i => realCliffordWeight 1 1 i * (y.2 i * y.2 i)) s :=
+              (Fintype.sum_sum_type (Sum.elim
+                (fun i => realCliffordWeight p q i * (y.1 i * y.1 i))
+                (fun i => realCliffordWeight 1 1 i * (y.2 i * y.2 i)))).symm
+        _ = ∑ i, realCliffordWeight (p + 1) (q + 1) i * (x i * x i) := by
+          refine Fintype.sum_equiv (realBottIndexEquiv p q).symm _ _ ?_
+          rintro (i | i)
+          · simp [y, realBottSplitLinearEquiv, realBottWeight_inl]
+          · simp [y, realBottSplitLinearEquiv, realBottWeight_inr] }
+
+/-- The positive coordinates retained by `realBottSplitIsometry`. -/
+@[simp]
+theorem realBottSplitIsometry_fst_pos (p q : ℕ)
+    (v : Fin ((p + 1) + (q + 1)) → ℝ) (i : Fin p) :
+    (realBottSplitIsometry p q v).1 (Fin.castAdd q i) =
+      v (Fin.castAdd (q + 1) i.castSucc) := by
+  change (realBottSplitLinearEquiv p q v).1 _ = _
+  simp [realBottSplitLinearEquiv, realBottIndexEquiv, splitLastEquiv]
+
+/-- The negative coordinates retained by `realBottSplitIsometry`. -/
+@[simp]
+theorem realBottSplitIsometry_fst_neg (p q : ℕ)
+    (v : Fin ((p + 1) + (q + 1)) → ℝ) (i : Fin q) :
+    (realBottSplitIsometry p q v).1 (Fin.natAdd p i) =
+      v (Fin.natAdd (p + 1) i.castSucc) := by
+  change (realBottSplitLinearEquiv p q v).1 _ = _
+  simp [realBottSplitLinearEquiv, realBottIndexEquiv, splitLastEquiv]
+
+/-- The last positive coordinate extracted by `realBottSplitIsometry`. -/
+@[simp]
+theorem realBottSplitIsometry_snd_zero (p q : ℕ)
+    (v : Fin ((p + 1) + (q + 1)) → ℝ) :
+    (realBottSplitIsometry p q v).2 0 =
+      v (Fin.castAdd (q + 1) (Fin.last p)) := by
+  rfl
+
+/-- The last negative coordinate extracted by `realBottSplitIsometry`. -/
+@[simp]
+theorem realBottSplitIsometry_snd_one (p q : ℕ)
+    (v : Fin ((p + 1) + (q + 1)) → ℝ) :
+    (realBottSplitIsometry p q v).2 1 =
+      v (Fin.natAdd (p + 1) (Fin.last q)) := by
+  rfl
+
+/-- The hyperbolic Bott step for the standard real signature forms:
+`Cliff(p + 1, q + 1) ≅ Cliff(p, q) ⊗ M₂(ℝ)`. -/
+noncomputable def realCliffordBottEquiv (p q : ℕ) :
+    _root_.CliffordAlgebra (realCliffordForm (p + 1) (q + 1)) ≃ₐ[ℝ]
+      (_root_.CliffordAlgebra (realCliffordForm p q) ⊗[ℝ] Matrix (Fin 2) (Fin 2) ℝ) :=
+  (_root_.CliffordAlgebra.equivOfIsometry (realBottSplitIsometry p q)).trans
+    (CliffordAlgebra.hyperbolicEquivTensor (realCliffordForm p q))
+
+/-- `realCliffordBottEquiv` first separates the last positive and negative coordinates, then
+applies the hyperbolic-plane equivalence. -/
+@[simp]
+theorem realCliffordBottEquiv_ι (p q : ℕ)
+    (v : Fin ((p + 1) + (q + 1)) → ℝ) :
+    realCliffordBottEquiv p q (_root_.CliffordAlgebra.ι _ v) =
+      _root_.CliffordAlgebra.ι (realCliffordForm p q)
+          (realBottSplitIsometry p q v).1 ⊗ₜ[ℝ] !![0, 1; 1, 0] +
+        1 ⊗ₜ[ℝ]
+          !![(realBottSplitIsometry p q v).2 0, (realBottSplitIsometry p q v).2 1;
+             -(realBottSplitIsometry p q v).2 1, -(realBottSplitIsometry p q v).2 0] := by
+  rw [realCliffordBottEquiv, AlgEquiv.trans_apply,
+    _root_.CliffordAlgebra.equivOfIsometry_apply,
+    _root_.CliffordAlgebra.map_apply_ι,
+    CliffordAlgebra.hyperbolicEquivTensor_ι]
+  rfl
+
+/-! ### Iterated hyperbolic reduction -/
+
+private def tensorMatrixMulEquiv (R A : Type*) [CommSemiring R] [Semiring A] [Algebra R A]
+    (m n : ℕ) :
+    (A ⊗[R] Matrix (Fin m) (Fin m) R) ⊗[R] Matrix (Fin n) (Fin n) R ≃ₐ[R]
+      A ⊗[R] Matrix (Fin (m * n)) (Fin (m * n)) R :=
+  (Algebra.TensorProduct.assoc R R R A
+      (Matrix (Fin m) (Fin m) R) (Matrix (Fin n) (Fin n) R)).trans
+    (Algebra.TensorProduct.congr (AlgEquiv.refl : A ≃ₐ[R] A)
+      ((Matrix.kroneckerAlgEquiv (Fin m) (Fin n) R).trans
+        (Matrix.reindexAlgEquiv R R finProdFinEquiv)))
+
+private def tensorMatrixOneEquiv (R A : Type*) [CommSemiring R] [Semiring A] [Algebra R A] :
+    A ≃ₐ[R] A ⊗[R] Matrix (Fin 1) (Fin 1) R :=
+  ((Matrix.uniqueAlgEquiv (R := R) (A := A) (m := Unit)).symm.trans
+      (Matrix.reindexAlgEquiv R A (Equiv.ofUnique Unit (Fin 1)))).trans
+    (matrixEquivTensor (Fin 1) R A)
+
+private noncomputable def realCliffordBottIterEquivImpl (p q : ℕ) : (n : ℕ) →
+    _root_.CliffordAlgebra (realCliffordForm (p + n) (q + n)) ≃ₐ[ℝ]
+      _root_.CliffordAlgebra (realCliffordForm p q) ⊗[ℝ]
+        Matrix (Fin (2 ^ n)) (Fin (2 ^ n)) ℝ
+  | 0 => by
+      simpa using tensorMatrixOneEquiv ℝ (_root_.CliffordAlgebra (realCliffordForm p q))
+  | n + 1 =>
+      (realCliffordBottEquiv (p + n) (q + n)).trans
+        ((Algebra.TensorProduct.congr (realCliffordBottIterEquivImpl p q n)
+          (AlgEquiv.refl : Matrix (Fin 2) (Fin 2) ℝ ≃ₐ[ℝ] _)).trans
+            (tensorMatrixMulEquiv ℝ (_root_.CliffordAlgebra (realCliffordForm p q)) (2 ^ n) 2))
+
+/-- Iterating the hyperbolic Bott step `n` times identifies
+`Cliff(p + n, q + n)` with `Cliff(p, q) ⊗ M_(2 ^ n)(ℝ)`. -/
+@[irreducible]
+noncomputable def realCliffordBottIterEquiv (p q n : ℕ) :
+    _root_.CliffordAlgebra (realCliffordForm (p + n) (q + n)) ≃ₐ[ℝ]
+      _root_.CliffordAlgebra (realCliffordForm p q) ⊗[ℝ]
+        Matrix (Fin (2 ^ n)) (Fin (2 ^ n)) ℝ :=
+  realCliffordBottIterEquivImpl p q n
+
+/-- At zero iterations, `realCliffordBottIterEquiv` is the canonical identification with a
+one-by-one matrix tensor factor. -/
+@[simp]
+theorem realCliffordBottIterEquiv_zero_apply (p q : ℕ)
+    (x : _root_.CliffordAlgebra (realCliffordForm p q)) :
+    let e : _root_.CliffordAlgebra (realCliffordForm p q) ≃ₐ[ℝ]
+        _root_.CliffordAlgebra (realCliffordForm p q) ⊗[ℝ]
+          Matrix (Fin 1) (Fin 1) ℝ := realCliffordBottIterEquiv p q 0
+    e x = x ⊗ₜ[ℝ] (1 : Matrix (Fin 1) (Fin 1) ℝ) := by
+  unfold realCliffordBottIterEquiv
+  change tensorMatrixOneEquiv ℝ (_root_.CliffordAlgebra (realCliffordForm p q)) x = _
+  rw [tensorMatrixOneEquiv, AlgEquiv.trans_apply, matrixEquivTensor_apply,
+    Fintype.sum_prod_type, Fin.sum_univ_one, Fin.sum_univ_one]
+  change x ⊗ₜ[ℝ] Matrix.single 0 0 1 = x ⊗ₜ[ℝ] 1
+  congr 1
+  ext i j
+  fin_cases i
+  fin_cases j
+  simp
+
+/-- The successor iteration first applies one hyperbolic Bott step, transports the previous
+iteration through the left tensor factor, and absorbs the two matrix factors by the Kronecker
+equivalence. -/
+theorem realCliffordBottIterEquiv_succ (p q n : ℕ) :
+    realCliffordBottIterEquiv p q (n + 1) =
+      (realCliffordBottEquiv (p + n) (q + n)).trans
+        ((Algebra.TensorProduct.congr (realCliffordBottIterEquiv p q n)
+          (AlgEquiv.refl : Matrix (Fin 2) (Fin 2) ℝ ≃ₐ[ℝ] _)).trans
+          ((Algebra.TensorProduct.assoc ℝ ℝ ℝ
+              (_root_.CliffordAlgebra (realCliffordForm p q))
+              (Matrix (Fin (2 ^ n)) (Fin (2 ^ n)) ℝ)
+              (Matrix (Fin 2) (Fin 2) ℝ)).trans
+            (Algebra.TensorProduct.congr
+              (AlgEquiv.refl : _root_.CliffordAlgebra (realCliffordForm p q) ≃ₐ[ℝ] _)
+              ((Matrix.kroneckerAlgEquiv (Fin (2 ^ n)) (Fin 2) ℝ).trans
+                (Matrix.reindexAlgEquiv ℝ ℝ finProdFinEquiv))))) := by
+  unfold realCliffordBottIterEquiv
+  rw [realCliffordBottIterEquivImpl]
+  rfl
+
+end TauCeti
