@@ -381,18 +381,6 @@ lemma apply_smul_add_smul (ω : SymplecticForm V) (x y : V) (a b c d : ℝ) :
     self_eq_zero, hyx]
   ring
 
-/-- Pairing a vector in the plane spanned by `x` and `y` against `y` reads its first coordinate,
-scaled by `ω x y`. -/
-lemma apply_smul_add_smul_left (ω : SymplecticForm V) (x y : V) (a b : ℝ) :
-    ω (a • x + b • y) y = a * ω x y := by
-  simp
-
-/-- Pairing `x` against a vector in the plane spanned by `x` and `y` reads its second coordinate,
-scaled by `ω x y`. -/
-lemma apply_smul_add_smul_right (ω : SymplecticForm V) (x y : V) (a b : ℝ) :
-    ω x (a • x + b • y) = b * ω x y := by
-  simp
-
 /-- The ordered area density `ω (F v) (F (J₀ v))` is unchanged when both arguments are
 precomposed by a source almost complex structure `J₀`: rotating the source by `J₀` sends the
 pair `(v, J₀ v)` to `(J₀ v, -v)`, which has the same symplectic area. This is the

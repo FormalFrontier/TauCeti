@@ -107,12 +107,8 @@ lemma disjoint_span_pair_orthogonal (ω : SymplecticForm V) {x y : V} (h : ω x 
   obtain ⟨a, b, rfl⟩ := Submodule.mem_span_pair.1 hv
   have hxmem : x ∈ Submodule.span ℝ ({x, y} : Set V) := Submodule.subset_span (by simp)
   have hymem : y ∈ Submodule.span ℝ ({x, y} : Set V) := Submodule.subset_span (by simp)
-  have haω : a * ω x y = 0 :=
-    (ω.apply_smul_add_smul_left x y a b).symm.trans (mem_orthogonal_iff'.1 hv' y hymem)
-  have hbω : b * ω x y = 0 :=
-    (ω.apply_smul_add_smul_right x y a b).symm.trans (mem_orthogonal_iff.1 hv' x hxmem)
-  have ha : a = 0 := (mul_eq_zero.1 haω).resolve_right h
-  have hb : b = 0 := (mul_eq_zero.1 hbω).resolve_right h
+  have ha : a = 0 := by simpa [h] using mem_orthogonal_iff'.1 hv' y hymem
+  have hb : b = 0 := by simpa [h] using mem_orthogonal_iff.1 hv' x hxmem
   simp [ha, hb]
 
 end SymplecticForm

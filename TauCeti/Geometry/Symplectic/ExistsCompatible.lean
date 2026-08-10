@@ -92,10 +92,10 @@ private lemma pairMap_injective (h : ω x y = 1) : Function.Injective (pairMap x
   intro p hp
   rw [pairMap_apply] at hp
   have ha : p.1 = 0 := by
-    have := (ω.apply_smul_add_smul_left x y p.1 p.2).symm.trans (by rw [hp])
+    have : ω (p.1 • x + p.2 • y) y = 0 := by rw [hp]; simp
     simpa [h] using this
   have hb : p.2 = 0 := by
-    have := (ω.apply_smul_add_smul_right x y p.1 p.2).symm.trans (by rw [hp])
+    have : ω x (p.1 • x + p.2 • y) = 0 := by rw [hp]; simp
     simpa [h] using this
   exact Prod.ext_iff.2 ⟨ha, hb⟩
 
