@@ -24,106 +24,74 @@ namespace TauCeti
 open _root_.Matrix
 namespace DynkinType
 
-/-- Entries 0 through 8 of the positive `E7` coroot table. -/
-@[expose] def e7PositiveCorootChunk0 : Fin 9 → (Fin 7 → ℤ) := ![
-  ![1, 0, 0, 0, 0, 0, 0],
-  ![0, 1, 0, 0, 0, 0, 0],
-  ![0, 0, 1, 0, 0, 0, 0],
-  ![0, 0, 0, 1, 0, 0, 0],
-  ![0, 0, 0, 0, 1, 0, 0],
-  ![0, 0, 0, 0, 0, 1, 0],
-  ![0, 0, 0, 0, 0, 0, 1],
-  ![0, 0, 0, 0, 0, 1, 1],
-  ![0, 0, 0, 0, 1, 1, 0]
-]
-
-/-- Entries 9 through 17 of the positive `E7` coroot table. -/
-@[expose] def e7PositiveCorootChunk1 : Fin 9 → (Fin 7 → ℤ) := ![
-  ![0, 0, 0, 1, 1, 0, 0],
-  ![0, 0, 1, 1, 0, 0, 0],
-  ![0, 1, 0, 1, 0, 0, 0],
-  ![1, 0, 1, 0, 0, 0, 0],
-  ![0, 0, 0, 0, 1, 1, 1],
-  ![0, 0, 0, 1, 1, 1, 0],
-  ![0, 0, 1, 1, 1, 0, 0],
-  ![0, 1, 0, 1, 1, 0, 0],
-  ![0, 1, 1, 1, 0, 0, 0]
-]
-
-/-- Entries 18 through 26 of the positive `E7` coroot table. -/
-@[expose] def e7PositiveCorootChunk2 : Fin 9 → (Fin 7 → ℤ) := ![
-  ![1, 0, 1, 1, 0, 0, 0],
-  ![0, 0, 0, 1, 1, 1, 1],
-  ![0, 0, 1, 1, 1, 1, 0],
-  ![0, 1, 0, 1, 1, 1, 0],
-  ![0, 1, 1, 1, 1, 0, 0],
-  ![1, 0, 1, 1, 1, 0, 0],
-  ![1, 1, 1, 1, 0, 0, 0],
-  ![0, 0, 1, 1, 1, 1, 1],
-  ![0, 1, 0, 1, 1, 1, 1]
-]
-
-/-- Entries 27 through 35 of the positive `E7` coroot table. -/
-@[expose] def e7PositiveCorootChunk3 : Fin 9 → (Fin 7 → ℤ) := ![
-  ![0, 1, 1, 1, 1, 1, 0],
-  ![0, 1, 1, 2, 1, 0, 0],
-  ![1, 0, 1, 1, 1, 1, 0],
-  ![1, 1, 1, 1, 1, 0, 0],
-  ![0, 1, 1, 1, 1, 1, 1],
-  ![0, 1, 1, 2, 1, 1, 0],
-  ![1, 0, 1, 1, 1, 1, 1],
-  ![1, 1, 1, 1, 1, 1, 0],
-  ![1, 1, 1, 2, 1, 0, 0]
-]
-
-/-- Entries 36 through 44 of the positive `E7` coroot table. -/
-@[expose] def e7PositiveCorootChunk4 : Fin 9 → (Fin 7 → ℤ) := ![
-  ![0, 1, 1, 2, 1, 1, 1],
-  ![0, 1, 1, 2, 2, 1, 0],
-  ![1, 1, 1, 1, 1, 1, 1],
-  ![1, 1, 1, 2, 1, 1, 0],
-  ![1, 1, 2, 2, 1, 0, 0],
-  ![0, 1, 1, 2, 2, 1, 1],
-  ![1, 1, 1, 2, 1, 1, 1],
-  ![1, 1, 1, 2, 2, 1, 0],
-  ![1, 1, 2, 2, 1, 1, 0]
-]
-
-/-- Entries 45 through 53 of the positive `E7` coroot table. -/
-@[expose] def e7PositiveCorootChunk5 : Fin 9 → (Fin 7 → ℤ) := ![
-  ![0, 1, 1, 2, 2, 2, 1],
-  ![1, 1, 1, 2, 2, 1, 1],
-  ![1, 1, 2, 2, 1, 1, 1],
-  ![1, 1, 2, 2, 2, 1, 0],
-  ![1, 1, 1, 2, 2, 2, 1],
-  ![1, 1, 2, 2, 2, 1, 1],
-  ![1, 1, 2, 3, 2, 1, 0],
-  ![1, 1, 2, 2, 2, 2, 1],
-  ![1, 1, 2, 3, 2, 1, 1]
-]
-
-/-- Entries 54 through 62 of the positive `E7` coroot table. -/
-@[expose] def e7PositiveCorootChunk6 : Fin 9 → (Fin 7 → ℤ) := ![
-  ![1, 2, 2, 3, 2, 1, 0],
-  ![1, 1, 2, 3, 2, 2, 1],
-  ![1, 2, 2, 3, 2, 1, 1],
-  ![1, 1, 2, 3, 3, 2, 1],
-  ![1, 2, 2, 3, 2, 2, 1],
-  ![1, 2, 2, 3, 3, 2, 1],
-  ![1, 2, 2, 4, 3, 2, 1],
-  ![1, 2, 3, 4, 3, 2, 1],
-  ![2, 2, 3, 4, 3, 2, 1]
-]
-
 /-- The 63 positive `E7` coroots in the simple-coroot basis, ordered by height. -/
+-- The literals below are laid out as seven rows of nine so that a table lookup unfolds through at
+-- most sixteen entries; the grouping has no mathematical content.
 @[expose] def e7PositiveCoroot (i : Fin 63) : Fin 7 → ℤ :=
-  if h : (i : ℕ) < 9 then e7PositiveCorootChunk0 ⟨i, h⟩
-  else if h : (i : ℕ) < 18 then e7PositiveCorootChunk1 ⟨(i : ℕ) - 9, by omega⟩
-  else if h : (i : ℕ) < 27 then e7PositiveCorootChunk2 ⟨(i : ℕ) - 18, by omega⟩
-  else if h : (i : ℕ) < 36 then e7PositiveCorootChunk3 ⟨(i : ℕ) - 27, by omega⟩
-  else if h : (i : ℕ) < 45 then e7PositiveCorootChunk4 ⟨(i : ℕ) - 36, by omega⟩
-  else if h : (i : ℕ) < 54 then e7PositiveCorootChunk5 ⟨(i : ℕ) - 45, by omega⟩
-  else e7PositiveCorootChunk6 ⟨(i : ℕ) - 54, by omega⟩
+  ![![![1, 0, 0, 0, 0, 0, 0],
+      ![0, 1, 0, 0, 0, 0, 0],
+      ![0, 0, 1, 0, 0, 0, 0],
+      ![0, 0, 0, 1, 0, 0, 0],
+      ![0, 0, 0, 0, 1, 0, 0],
+      ![0, 0, 0, 0, 0, 1, 0],
+      ![0, 0, 0, 0, 0, 0, 1],
+      ![0, 0, 0, 0, 0, 1, 1],
+      ![0, 0, 0, 0, 1, 1, 0]],
+    ![![0, 0, 0, 1, 1, 0, 0],
+      ![0, 0, 1, 1, 0, 0, 0],
+      ![0, 1, 0, 1, 0, 0, 0],
+      ![1, 0, 1, 0, 0, 0, 0],
+      ![0, 0, 0, 0, 1, 1, 1],
+      ![0, 0, 0, 1, 1, 1, 0],
+      ![0, 0, 1, 1, 1, 0, 0],
+      ![0, 1, 0, 1, 1, 0, 0],
+      ![0, 1, 1, 1, 0, 0, 0]],
+    ![![1, 0, 1, 1, 0, 0, 0],
+      ![0, 0, 0, 1, 1, 1, 1],
+      ![0, 0, 1, 1, 1, 1, 0],
+      ![0, 1, 0, 1, 1, 1, 0],
+      ![0, 1, 1, 1, 1, 0, 0],
+      ![1, 0, 1, 1, 1, 0, 0],
+      ![1, 1, 1, 1, 0, 0, 0],
+      ![0, 0, 1, 1, 1, 1, 1],
+      ![0, 1, 0, 1, 1, 1, 1]],
+    ![![0, 1, 1, 1, 1, 1, 0],
+      ![0, 1, 1, 2, 1, 0, 0],
+      ![1, 0, 1, 1, 1, 1, 0],
+      ![1, 1, 1, 1, 1, 0, 0],
+      ![0, 1, 1, 1, 1, 1, 1],
+      ![0, 1, 1, 2, 1, 1, 0],
+      ![1, 0, 1, 1, 1, 1, 1],
+      ![1, 1, 1, 1, 1, 1, 0],
+      ![1, 1, 1, 2, 1, 0, 0]],
+    ![![0, 1, 1, 2, 1, 1, 1],
+      ![0, 1, 1, 2, 2, 1, 0],
+      ![1, 1, 1, 1, 1, 1, 1],
+      ![1, 1, 1, 2, 1, 1, 0],
+      ![1, 1, 2, 2, 1, 0, 0],
+      ![0, 1, 1, 2, 2, 1, 1],
+      ![1, 1, 1, 2, 1, 1, 1],
+      ![1, 1, 1, 2, 2, 1, 0],
+      ![1, 1, 2, 2, 1, 1, 0]],
+    ![![0, 1, 1, 2, 2, 2, 1],
+      ![1, 1, 1, 2, 2, 1, 1],
+      ![1, 1, 2, 2, 1, 1, 1],
+      ![1, 1, 2, 2, 2, 1, 0],
+      ![1, 1, 1, 2, 2, 2, 1],
+      ![1, 1, 2, 2, 2, 1, 1],
+      ![1, 1, 2, 3, 2, 1, 0],
+      ![1, 1, 2, 2, 2, 2, 1],
+      ![1, 1, 2, 3, 2, 1, 1]],
+    ![![1, 2, 2, 3, 2, 1, 0],
+      ![1, 1, 2, 3, 2, 2, 1],
+      ![1, 2, 2, 3, 2, 1, 1],
+      ![1, 1, 2, 3, 3, 2, 1],
+      ![1, 2, 2, 3, 2, 2, 1],
+      ![1, 2, 2, 3, 3, 2, 1],
+      ![1, 2, 2, 4, 3, 2, 1],
+      ![1, 2, 3, 4, 3, 2, 1],
+      ![2, 2, 3, 4, 3, 2, 1]]]
+    ⟨(i : ℕ) / 9, by omega⟩ ⟨(i : ℕ) % 9, by omega⟩
 
 private lemma e7PositiveCoroot_injective : Function.Injective e7PositiveCoroot := by decide
 private lemma e7PositiveCoroot_ne_neg (i j : Fin 63) :
@@ -208,8 +176,8 @@ theorem e7Coroot_nonneg (i : Fin 63) (j : Fin 7) : 0 ≤ e7Coroot (Fin.castAdd 6
 /-- The last positive entry is the highest `E7` coroot: it dominates every entry of the table
 in each simple-coroot coordinate. -/
 theorem e7Coroot_le_apply_62 (i : Fin 126) (j : Fin 7) : e7Coroot i j ≤ e7Coroot 62 j := by
-  revert i j
-  decide
+  revert j
+  fin_cases i <;> decide
 
 end DynkinType
 end TauCeti
