@@ -7,6 +7,8 @@ module
 public import TauCeti.Geometry.Lie.Adjoint.Smooth
 public import TauCeti.Geometry.Lie.Adjoint.Exponential
 public import TauCeti.Geometry.Lie.InvariantVectorField.Commutation
+import TauCeti.Analysis.Calculus.ParametricFDeriv
+import TauCeti.Geometry.Lie.Exponential.Derivative.Basic
 import TauCeti.Geometry.Manifold.VectorField.Regularity
 
 /-!
@@ -183,7 +185,8 @@ theorem mfderiv_conjugationGenerator_eq_bracket
     (RXf.contMDiff.mdifferentiable (by simp)).mdifferentiableAt
     (LXf.contMDiff.mdifferentiable (by simp)).mdifferentiableAt]
   simp only [sub_apply]
-  have hcomm := mvfderiv_mulInvariant_mulRightInvariant_commute f X Y
+  have hcomm := mvfderiv_mulInvariant_mulRightInvariant_commute f (1 : G) X Y
+  rw [mulRightInvariantVectorField_one, mulInvariantVectorField_one] at hcomm
   change mvfderiv I LYf 1 X = mvfderiv I RXf 1 Y at hcomm
   rw [← hcomm]
   have hbridge := mvfderiv_mlieBracket
