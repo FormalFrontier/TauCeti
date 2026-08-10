@@ -99,6 +99,21 @@ noncomputable def commHopfAlgCatOpEquivAffineGroupSchemeCat.restrict
   (ObjectProperty.opEquivalence P).symm.trans <|
     (commHopfAlgCatOpEquivAffineGroupSchemeCat S).congrFullSubcategory h
 
+/-- The forward restricted equivalence followed by the target inclusion is definitionally the
+unrestricted equivalence applied after the source inclusion. This private isomorphism isolates the
+representation boundary of `opEquivalence`, `trans`, and `congrFullSubcategory` from the public
+compatibility isomorphism below. -/
+private noncomputable def
+    commHopfAlgCatOpEquivAffineGroupSchemeCat.restrictFunctorCompιIsoAux
+    (S : CommRingCat.{u})
+    (P : ObjectProperty (CommHopfAlgCat S))
+    (Q : ObjectProperty (AffineGroupSchemeCat S))
+    [Q.IsClosedUnderIsomorphisms]
+    (h : Q.inverseImage (commHopfAlgCatOpEquivAffineGroupSchemeCat S).functor = P.op) :
+    (commHopfAlgCatOpEquivAffineGroupSchemeCat.restrict S P Q h).functor ⋙ Q.ι ≅
+      P.ι.op ⋙ (commHopfAlgCatOpEquivAffineGroupSchemeCat S).functor :=
+  Iso.refl _
+
 /-- After the inclusions, the forward functor of `restrict` is `hopfSpec` applied after
 forgetting the object-property proof. -/
 noncomputable def commHopfAlgCatOpEquivAffineGroupSchemeCat.restrictFunctorCompιIso
@@ -111,8 +126,7 @@ noncomputable def commHopfAlgCatOpEquivAffineGroupSchemeCat.restrictFunctorComp�
         (affineGroupSchemeProperty S).ι ≅
       P.ι.op ⋙ hopfSpec S :=
   Functor.isoWhiskerRight
-      (show (commHopfAlgCatOpEquivAffineGroupSchemeCat.restrict S P Q h).functor ⋙ Q.ι ≅
-        P.ι.op ⋙ (commHopfAlgCatOpEquivAffineGroupSchemeCat S).functor from Iso.refl _)
+      (commHopfAlgCatOpEquivAffineGroupSchemeCat.restrictFunctorCompιIsoAux S P Q h)
       (affineGroupSchemeProperty S).ι ≪≫
     Functor.associator _ _ _ ≪≫
     Functor.isoWhiskerLeft P.ι.op

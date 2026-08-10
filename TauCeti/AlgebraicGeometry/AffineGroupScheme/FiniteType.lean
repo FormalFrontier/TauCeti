@@ -129,6 +129,8 @@ theorem finiteTypeAffineGroupSchemeProperty_inverseImage
   let _ : Q.IsClosedUnderIsomorphisms := by
     unfold Q
     infer_instance
+  -- Unfold the scheme-side predicate to the ambient group-scheme property `Q`: this is the form
+  -- expected by the generic inverse-image comparison theorem.
   change (Q.inverseImage (affineGroupSchemeProperty (CommRingCat.of R)).ι).inverseImage
       (commHopfAlgCatOpEquivAffineGroupSchemeCat (CommRingCat.of R)).functor =
     (finiteTypeCommHopfAlgProperty R).op
