@@ -8,15 +8,15 @@ public import Mathlib.Geometry.Manifold.ContMDiffMFDeriv
 import Mathlib.Geometry.Manifold.VectorBundle.Tangent
 
 /-!
-# Regularity of tangent-bundle sections and directional derivatives
+# Regularity of tangent-bundle-valued maps and directional derivatives
 
-This file records reusable regularity facts for tangent-bundle sections and for applying the
-manifold differential of a function to such a section.
+This file records reusable regularity facts for maps into a tangent bundle and for applying the
+manifold differential of a function to a smooth section.
 
 ## Main results
 
-* `contMDiff_tangentBundle_zero`: smoothness of the zero tangent vector over a varying point.
-* `contMDiff_tangentBundle_const`: smoothness of a varying model vector over a fixed point.
+* `contMDiff_tangentBundle_mk_zero`: smoothness of the zero tangent vector over a varying point.
+* `contMDiff_tangentBundle_mk_constBase`: smoothness of a varying model vector over a fixed point.
 * `ContMDiff.contMDiff_mvfderiv_apply`: applying the differential of a `C^n` function to a `C^m`
   tangent-bundle section is `C^m` when `m + 1 ≤ n`.
 
@@ -45,13 +45,13 @@ variable {E' : Type*} [NormedAddCommGroup E'] [NormedSpace 𝕜 E']
   {N : Type*} [TopologicalSpace N] [ChartedSpace H' N]
 
 /-- The zero tangent vector over a smoothly varying manifold point varies smoothly. -/
-theorem contMDiff_tangentBundle_zero {f : N → M} (hf : ContMDiff J I n f) :
+theorem contMDiff_tangentBundle_mk_zero {f : N → M} (hf : ContMDiff J I n f) :
     ContMDiff J I.tangent n
       (fun p => TotalSpace.mk' E (f p) 0 : N → TangentBundle I M) :=
   (contMDiff_zeroSection 𝕜 (TangentSpace I : M → Type _)).comp hf
 
 /-- A model-space vector placed in the tangent fiber over a fixed point varies smoothly. -/
-theorem contMDiff_tangentBundle_const {v : N → E}
+theorem contMDiff_tangentBundle_mk_constBase {v : N → E}
     (hv : ContMDiff J 𝓘(𝕜, E) n v) (x : M) :
     ContMDiff J I.tangent n
       (fun p => TotalSpace.mk' E x (v p) : N → TangentBundle I M) := by

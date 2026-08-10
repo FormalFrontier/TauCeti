@@ -143,11 +143,11 @@ theorem contMDiff_mulInvariantVectorField_modelSpace {m n : ℕ∞ω}
   let fg : E × G → TangentBundle I G := fun p => TotalSpace.mk' E p.2 0
   have sfg : ContMDiff (𝓘(𝕜, E).prod I) I.tangent m fg := by
     simpa only [fg] using
-      contMDiff_tangentBundle_zero (I := I) (M := G) (n := m) contMDiff_snd
+      contMDiff_tangentBundle_mk_zero (I := I) (M := G) (n := m) contMDiff_snd
   let fv : E × G → TangentBundle I G := fun p => TotalSpace.mk' E 1 p.1
   have sfv : ContMDiff (𝓘(𝕜, E).prod I) I.tangent m fv := by
     simpa only [fv] using
-      contMDiff_tangentBundle_const (I := I) (M := G) (n := m) contMDiff_fst (1 : G)
+      contMDiff_tangentBundle_mk_constBase (I := I) (M := G) (n := m) contMDiff_fst (1 : G)
   let S := contMDiff_tangentMap_mul_prod_comp (I := I) (G := G) hmn fg fv sfg sfv
   apply S.congr
   intro p
