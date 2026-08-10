@@ -27,6 +27,13 @@ it the scheme-level interface needed by the Jacobian roadmap:
 The last statement combines Mathlib's cotangent-space criterion for regular local rings with its
 identification of the Krull dimension of `𝒪_{X,x}` and the coheight of `x`.
 
+This is the tangent space of a scheme at a point, over the residue field there. For an affine
+group scheme the library also carries a Hopf-algebra description of the tangent space at the
+identity: `TauCeti.Bialgebra.CotangentSpace` in
+`TauCeti.Algebra.AlgebraicGroup.Tangent.Cotangent` is the augmentation ideal modulo its square,
+and `TauCeti.Algebra.AlgebraicGroup.Tangent.Basic` describes that tangent space by counit-valued
+derivations. The two interfaces are independent here; no comparison between them is made.
+
 This supplies the scheme-level foundation for the tangent-space infrastructure explicitly listed
 in `TauCetiRoadmap/JacobianChallenge/README.md` under "Inventory: what is missing (build here)"
 and Layer E. It does not construct `Pic⁰` or prove the later comparison
