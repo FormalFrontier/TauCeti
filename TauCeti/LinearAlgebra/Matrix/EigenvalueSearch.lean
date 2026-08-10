@@ -133,6 +133,8 @@ theorem scalar_sub_mulVec_eq_zero_iff {R : Type*} [NonUnitalNonAssocRing R]
     (A : Matrix n n R) (a : R) (v : n → R) :
     (Matrix.diagonal (fun _ => a) - A) *ᵥ v = 0 ↔ A *ᵥ v = a • v := by
   rw [Matrix.sub_mulVec, sub_eq_zero, eq_comm]
+  -- Mathlib's `Matrix.diagonal_const_mulVec` requires `NonAssocSemiring`, whereas this result does
+  -- not need a multiplicative identity.
   have hdiag : (Matrix.diagonal (fun _ => a)) *ᵥ v = a • v := by
     funext i
     rw [Matrix.mulVec_diagonal]
