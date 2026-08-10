@@ -9,7 +9,7 @@ public import TauCeti.LinearAlgebra.RootSystem.NumberOfRoots
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.B.Model
 public import Mathlib.LinearAlgebra.RootSystem.Base
 
-@[expose] public section
+public section
 
 /-!
 # The simply connected root datum of type `Bₙ`
@@ -34,9 +34,9 @@ transposition then brings that one to index `n - 1`.
 
 Only the coroots are asked to span their lattice, and only that half is recorded, in
 `TauCeti.DynkinType.corootSpan_typeBSimplyConnectedRootDatum_eq_top`. The roots span the root
-lattice, which sits inside the weight lattice with index `2` (Bourbaki, Plate II), so the datum is
-a `RootDatum` carrying no `RootPairing.IsRootSystem` instance. That asymmetry is what "simply
-connected" means here.
+lattice, which for `0 < n` sits inside the weight lattice with index `2` (Bourbaki, Plate II); at
+`n = 0` both lattices are trivial and the two coincide. So the datum is a `RootDatum` carrying no
+`RootPairing.IsRootSystem` instance. That asymmetry is what "simply connected" means here.
 
 ## Main definitions
 
@@ -44,6 +44,9 @@ connected" means here.
 * `TauCeti.DynkinType.typeBSimpleIndex`: the first `n` root indices, the Bourbaki-numbered simple
   roots.
 * `TauCeti.DynkinType.typeBSimplyConnectedBase`: the base they form.
+
+Nothing here is `@[expose]`d: the datum, its enumeration and its base are used through the lemmas
+below, not by unfolding.
 
 ## Main results
 
@@ -154,16 +157,18 @@ lemma corootIdx_typeBReflIdx (z w : Fin (2 * n) × Fin n) :
     ring
   calc (2 : ℤ) • (corootOfPair u v - (rootOfPair p q ⬝ᵥ corootOfPair u v) • corootOfPair p q)
       = (2 : ℤ) • half u v - ((2 : ℤ) * (rootOfPair p q ⬝ᵥ half u v)) • half p q := by
-        simp only [corootOfPair, smul_sub, smul_smul]
+        simp only [corootOfPair_eq_half, smul_sub, smul_smul]
     _ = cwt u + cwt v - (rootOfPair p q ⬝ᵥ cwt u + rootOfPair p q ⬝ᵥ cwt v) • half p q := by
         rw [two_smul_half, hc]
     _ = (cwt u - (rootOfPair p q ⬝ᵥ cwt u) • corootOfPair p q) +
           (cwt v - (rootOfPair p q ⬝ᵥ cwt v) • corootOfPair p q) := by
-        simp only [corootOfPair, add_smul]
+        simp only [corootOfPair_eq_half, add_smul]
         abel
     _ = cwt (reflMap p q u) + cwt (reflMap p q v) := by
         rw [cwt_reflMap hpq, cwt_reflMap hpq]
-    _ = (2 : ℤ) • corootOfPair (reflMap p q u) (reflMap p q v) := (two_smul_half _ _).symm
+    _ = (2 : ℤ) • corootOfPair (reflMap p q u) (reflMap p q v) := by
+        rw [corootOfPair_eq_half]
+        exact (two_smul_half _ _).symm
 
 lemma rootIdx_injective : Injective (rootIdx : Fin (2 * n) × Fin n → Fin n → ℤ) := by
   intro z z' h
@@ -210,7 +215,7 @@ def typeBEnum₀ (n : ℕ) : Fin (2 * n) × Fin n ≃ Fin (2 * n ^ 2) :=
 lemma coe_typeBEnum₀ {a b : ℕ} (ha : a < 2 * n) (hb : b < n) :
     ((typeBEnum₀ n (⟨a, ha⟩, ⟨b, hb⟩) : Fin (2 * n ^ 2)) : ℕ) =
       (if a + (n - 1) < 2 * n then a + (n - 1) else a + (n - 1) - 2 * n) +
-        2 * n * (n - (b + 1)) := rfl
+        2 * n * (n - (b + 1)) := (rfl)
 
 /-- The raw index of the short simple root `α_{n-1} = e_{n-1}`. -/
 def typeBShortPair (n : ℕ) (h : 0 < n) : Fin (2 * n) × Fin n :=
@@ -337,15 +342,15 @@ def typeBSimplyConnectedRootDatum (n : ℕ) :
 example (n : ℕ) : (DynkinType.B n).numRoots = 2 * n ^ 2 := numRoots_B n
 
 lemma root_typeBSimplyConnectedRootDatum (k : Fin (2 * n ^ 2)) :
-    (typeBSimplyConnectedRootDatum n).root k = rootIdx ((typeBEnum n).symm k) := rfl
+    (typeBSimplyConnectedRootDatum n).root k = rootIdx ((typeBEnum n).symm k) := (rfl)
 
 lemma coroot_typeBSimplyConnectedRootDatum (k : Fin (2 * n ^ 2)) :
-    (typeBSimplyConnectedRootDatum n).coroot k = corootIdx ((typeBEnum n).symm k) := rfl
+    (typeBSimplyConnectedRootDatum n).coroot k = corootIdx ((typeBEnum n).symm k) := (rfl)
 
 lemma pairing_typeBSimplyConnectedRootDatum (k l : Fin (2 * n ^ 2)) :
     (typeBSimplyConnectedRootDatum n).pairing k l =
       (typeBSimplyConnectedRootDatum n).root k ⬝ᵥ (typeBSimplyConnectedRootDatum n).coroot l :=
-  rfl
+  (rfl)
 
 /-! ## The simple roots and coroots -/
 
@@ -408,7 +413,7 @@ coroot lattice, so that the datum is the simply connected one. -/
     have hv : shift (⟨n + (i : ℕ) + 1, by omega⟩ : Fin (2 * n)) (⟨n - 1, by omega⟩ : Fin n) =
         ⟨(i : ℕ), by omega⟩ :=
       shift_mk _ _ _ (by split_ifs <;> omega)
-    rw [typeBSimplePair, dif_neg hlast, hv, corootOfPair]
+    rw [typeBSimplePair, dif_neg hlast, hv, corootOfPair_eq_half]
     funext k
     have hk := k.isLt
     simp only [half, Pi.single_apply, Fin.ext_iff,
@@ -501,13 +506,8 @@ lemma typeB_sub_mem_closure {M : Type*} [AddCommGroup M] (f : ℕ → M) {a b : 
     (hb : b ≤ n) (hab : a ≤ b) :
     f a - f b ∈ AddSubmonoid.closure (range fun i : Fin n => f (i : ℕ) - f ((i : ℕ) + 1)) := by
   have htel : f a - f b = ∑ i ∈ Finset.Ico a b, (f i - f (i + 1)) := by
-    induction b with
-    | zero => simp only [Nat.le_zero.mp hab, Finset.Ico_self, Finset.sum_empty, sub_self]
-    | succ m ih =>
-      rcases Nat.lt_or_ge a (m + 1) with hlt | hge
-      · rw [Finset.sum_Ico_succ_top (by omega), ← ih (by omega) (by omega)]
-        abel
-      · rw [Finset.Ico_eq_empty (by omega), Finset.sum_empty, show a = m + 1 by omega, sub_self]
+    rw [Finset.sum_Ico_eq_sub _ hab, Finset.sum_range_sub' f, Finset.sum_range_sub' f]
+    abel
   rw [htel]
   refine AddSubmonoid.sum_mem _ fun i hi => AddSubmonoid.subset_closure ?_
   exact ⟨⟨i, lt_of_lt_of_le (Finset.mem_Ico.mp hi).2 hb⟩, rfl⟩
@@ -645,7 +645,7 @@ def typeBSimplyConnectedBase (n : ℕ) : (typeBSimplyConnectedRootDatum n).Base 
     rw [image_coroot_typeBSimpleSupport]
     obtain ⟨u, v, hcor⟩ : ∃ u v : Fin (2 * n),
         (typeBSimplyConnectedRootDatum n).coroot k = half u v :=
-      ⟨_, _, rfl⟩
+      ⟨_, _, (coroot_typeBSimplyConnectedRootDatum k).trans (corootOfPair_eq_half _ _)⟩
     rw [hcor]
     rcases sgn_eq_one_or_neg_one u with hsu | hsu <;>
       rcases sgn_eq_one_or_neg_one v with hsv | hsv
@@ -704,8 +704,9 @@ theorem hasCartanType_typeBSimplyConnectedRootDatum (n : ℕ) :
 
 /-- **The coroots of the pinned type `Bₙ` datum span the cocharacter lattice.** This is the simply
 connected lattice condition required by the pinned Chevalley--Demazure construction. Its
-counterpart for the roots is deliberately absent: they span the root lattice, which sits inside the
-weight lattice with index `2` (Bourbaki, Plate II). -/
+counterpart for the roots is deliberately absent: they span the root lattice, which for `0 < n`
+sits inside the weight lattice with index `2` (Bourbaki, Plate II), the degenerate rank `n = 0`
+being the only case where the two lattices agree. -/
 theorem corootSpan_typeBSimplyConnectedRootDatum_eq_top (n : ℕ) :
     (typeBSimplyConnectedRootDatum n).corootSpan ℤ = ⊤ := by
   refine top_unique ?_
