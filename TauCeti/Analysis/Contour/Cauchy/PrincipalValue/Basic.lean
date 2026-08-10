@@ -169,6 +169,23 @@ theorem intervalIntegrable_truncated_mul_deriv {γ : ℝ → ℂ} {f : ℂ → �
   · rw [if_neg h_far, norm_zero]
     positivity
 
+/-- **Off the truncation the integrand is a logarithmic derivative.** Where the curve stays
+further than `ε` from the centre `z₀`, the `ε`-truncated winding integrand agrees with the
+logarithmic derivative of `t ↦ γ t - z₀`. The equality is almost-everywhere because the
+far-ness hypothesis is stated on the open interval, so the right endpoint — a null set — is
+excluded. -/
+theorem ae_logDeriv_sub_eq_truncated {γ : ℝ → ℂ} {z₀ : ℂ} {a b ε : ℝ} (hab : a ≤ b)
+    (hfar : ∀ s ∈ Set.Ioo a b, ε < ‖γ s - z₀‖) :
+    ∀ᵐ s ∂MeasureTheory.volume, s ∈ Set.uIoc a b →
+      deriv (fun r ↦ γ r - z₀) s / (γ s - z₀) =
+        (if ε < ‖γ s - z₀‖ then (γ s - z₀)⁻¹ * deriv γ s else 0) := by
+  have hb_ae : ({b} : Set ℝ)ᶜ ∈ MeasureTheory.ae MeasureTheory.volume := by
+    simp [MeasureTheory.mem_ae_iff]
+  filter_upwards [hb_ae] with s hs_ne hmem
+  rw [Set.uIoc_of_le hab] at hmem
+  rw [if_pos (hfar s ⟨hmem.1, lt_of_le_of_ne hmem.2 fun h ↦ hs_ne (Set.mem_singleton_iff.mpr h)⟩),
+    deriv_sub_const, inv_mul_eq_div]
+
 /-- Constructor for `HasCauchyPVAt` from its two clauses — eventual integrability of the excised
 integrand and convergence of the excised integrals — without unfolding the definition. -/
 theorem HasCauchyPVAt.intro {γ : ℝ → ℂ} {a b : ℝ} {f : ℂ → ℂ} {z₀ : ℂ} {L : ℂ}

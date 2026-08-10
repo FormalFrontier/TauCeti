@@ -496,30 +496,16 @@ private lemma truncated_integral_spec (hH : 1 < H) (hε : 0 < ε) (hε₁ : ε <
     ∫ t in (0 : ℝ)..5, (if ε < ‖fdBoundary H t - Complex.I‖
         then (fdBoundary H t - Complex.I)⁻¹ * deriv (fdBoundary H) t else 0) =
       -(Real.pi : ℂ) * Complex.I - ((2 * Real.arcsin (ε / 2) : ℝ) : ℂ) * Complex.I := by
-  obtain ⟨hδ_pos, hδ_lt, h2sin⟩ := fdBoundaryArcExcisionHalfWidth_spec hε hε₃
+  obtain ⟨hδ_pos, hδ_lt, h2sin⟩ :=
+    fdBoundaryArcExcisionHalfWidth_pos_and_lt_one_and_two_mul_sin_eq hε hε₃
   set δ := fdBoundaryArcExcisionHalfWidth ε with hδ_def
   obtain ⟨hi_left, hi_right, hval⟩ := ftc_logDeriv_telescope_I H hH hδ_pos hδ_lt
-  have hconv : ∀ s : ℝ, (fdBoundary H s - Complex.I)⁻¹ * deriv (fdBoundary H) s =
-      deriv (fun r ↦ fdBoundary H r - Complex.I) s / (fdBoundary H s - Complex.I) :=
-    fun s ↦ by rw [deriv_sub_const, inv_mul_eq_div]
-  have hae_left : ∀ᵐ s ∂volume, s ∈ uIoc (0 : ℝ) (2 - δ) →
-      deriv (fun r ↦ fdBoundary H r - Complex.I) s / (fdBoundary H s - Complex.I) =
-        (if ε < ‖fdBoundary H s - Complex.I‖
-          then (fdBoundary H s - Complex.I)⁻¹ * deriv (fdBoundary H) s else 0) := by
-    have hb_ae : ({2 - δ} : Set ℝ)ᶜ ∈ ae volume := by
-      simp [MeasureTheory.mem_ae_iff]
-    filter_upwards [hb_ae] with s hs_ne hmem
-    rw [uIoc_of_le (by linarith)] at hmem
-    have hsIco : s ∈ Ico (0 : ℝ) (2 - δ) := ⟨hmem.1.le,
-      lt_of_le_of_ne hmem.2 fun h ↦ hs_ne (mem_singleton_iff.mpr h)⟩
-    rw [if_pos (lt_norm_of_far_left hε₁ hδ_pos hδ_lt h2sin hsIco), hconv s]
-  have hae_right : ∀ᵐ s ∂volume, s ∈ uIoc (2 + δ : ℝ) 5 →
-      deriv (fun r ↦ fdBoundary H r - Complex.I) s / (fdBoundary H s - Complex.I) =
-        (if ε < ‖fdBoundary H s - Complex.I‖
-          then (fdBoundary H s - Complex.I)⁻¹ * deriv (fdBoundary H) s else 0) := by
-    refine Eventually.of_forall fun s hmem ↦ ?_
-    rw [uIoc_of_le (by linarith)] at hmem
-    rw [if_pos (lt_norm_of_far_right hε₁ hε₂ hδ_pos hδ_lt h2sin hmem), hconv s]
+  have hae_left := Contour.ae_logDeriv_sub_eq_truncated (γ := fdBoundary H)
+    (z₀ := Complex.I) (a := (0 : ℝ)) (b := 2 - δ) (by linarith)
+    fun s hs ↦ lt_norm_of_far_left hε₁ hδ_pos hδ_lt h2sin ⟨hs.1.le, hs.2⟩
+  have hae_right := Contour.ae_logDeriv_sub_eq_truncated (γ := fdBoundary H)
+    (z₀ := Complex.I) (a := (2 + δ : ℝ)) (b := 5) (by linarith)
+    fun s hs ↦ lt_norm_of_far_right hε₁ hε₂ hδ_pos hδ_lt h2sin ⟨hs.1, hs.2.le⟩
   have hmid : EqOn (fun s ↦ if ε < ‖fdBoundary H s - Complex.I‖
       then (fdBoundary H s - Complex.I)⁻¹ * deriv (fdBoundary H) s else 0)
       (fun _ ↦ (0 : ℂ)) (uIcc (2 - δ : ℝ) (2 + δ)) := by

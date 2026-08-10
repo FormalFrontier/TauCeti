@@ -54,56 +54,21 @@ variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
 namespace IsMIntegralCurveOn
 
 /-- Left translation preserves integral curves of a left-invariant vector field. -/
-theorem const_mul_mulInvariantVectorField [LieGroup I (minSmoothness ℝ 3) G]
+theorem const_mul_mulInvariantVectorField [ContMDiffMul I 1 G]
     {v : GroupLieAlgebra I G} {γ : ℝ → G} {s : Set ℝ}
     (hγ : IsMIntegralCurveOn γ (mulInvariantVectorField v) s) (g : G) :
     IsMIntegralCurveOn (fun t ↦ g * γ t) (mulInvariantVectorField v) s := by
-  intro t ht
-  have hg : MDiffAt (fun x : G ↦ g * x) (γ t) :=
-    (contMDiffAt_mul_left (n := minSmoothness ℝ 3)).mdifferentiableAt (by simp)
-  have hder :
-      (mfderiv% (fun x : G ↦ g * x) (γ t)).comp
-          ((1 : ℝ →L[ℝ] ℝ).smulRight (mulInvariantVectorField v (γ t))) =
-        (1 : ℝ →L[ℝ] ℝ).smulRight (mulInvariantVectorField v (g * γ t)) := by
-    have hvec : mfderiv% (fun x : G ↦ g * x) (γ t)
-        (mulInvariantVectorField v (γ t)) = mulInvariantVectorField v (g * γ t) := by
-      have hpull := congrFun (mpullback_mulInvariantVectorField g v) (γ t)
-      have hcancel :
-          mfderiv% (fun x : G ↦ g * x) (γ t)
-              (mfderiv% (fun x : G ↦ g⁻¹ * x) (g * γ t)
-                (mulInvariantVectorField v (g * γ t))) =
-            mulInvariantVectorField v (g * γ t) := by
-        rw [← mfderiv_comp_apply_of_eq (I' := I) (f := fun x : G ↦ g⁻¹ * x)
-          (g := fun x : G ↦ g * x) (y := γ t) (g * γ t)
-          ((contMDiffAt_mul_left (n := minSmoothness ℝ 3)).mdifferentiableAt (by simp))
-          ((contMDiffAt_mul_left (n := minSmoothness ℝ 3)).mdifferentiableAt (by simp))
-          (by simp)]
-        have D : (fun x : G ↦ g * x) ∘ (fun x : G ↦ g⁻¹ * x) = id := by
-          funext z
-          simp
-        rw [D, mfderiv_id, ContinuousLinearMap.id_apply]
-      rw [← hpull, mpullback, inverse_mfderiv_mul_left]
-      exact hcancel
-    calc
-      _ = (1 : ℝ →L[ℝ] ℝ).smulRight
-          (mfderiv% (fun x : G ↦ g * x) (γ t) (mulInvariantVectorField v (γ t))) := by
-        apply ContinuousLinearMap.ext
-        intro c
-        rw [ContinuousLinearMap.comp_apply, ContinuousLinearMap.smulRight_apply,
-          ContinuousLinearMap.smulRight_apply, map_smul]
-      _ = _ := by rw [hvec]
-  -- Write the translated curve as a composition so the manifold chain rule applies directly.
-  change HasMFDerivAt[s] ((fun x : G ↦ g * x) ∘ γ) t
-    ((1 : ℝ →L[ℝ] ℝ).smulRight (mulInvariantVectorField v (g * γ t)))
-  rw [← hder]
-  exact hg.hasMFDerivAt.comp_hasMFDerivWithinAt t (hγ t ht)
+  have hpush := hγ.map_of_mfderiv_eq (f := fun x : G ↦ g * x)
+    (fun _ _ ↦ mdifferentiableAt_mul_left)
+    (fun t _ ↦ mfderiv_mul_left_mulInvariantVectorField g (γ t) v)
+  exact hpush
 
 end IsMIntegralCurveOn
 
 namespace IsMIntegralCurve
 
 /-- Left translation preserves global integral curves of a left-invariant vector field. -/
-theorem const_mul_mulInvariantVectorField [LieGroup I (minSmoothness ℝ 3) G]
+theorem const_mul_mulInvariantVectorField [ContMDiffMul I 1 G]
     {v : GroupLieAlgebra I G} {γ : ℝ → G}
     (hγ : IsMIntegralCurve γ (mulInvariantVectorField v)) (g : G) :
     IsMIntegralCurve (fun t ↦ g * γ t) (mulInvariantVectorField v) := by
@@ -130,6 +95,8 @@ theorem exists_isMIntegralCurve_mulInvariantVectorField [CompleteSpace E]
   apply exists_isMIntegralCurve_of_isMIntegralCurveOn hV hε
   intro y
   refine ⟨fun t ↦ y * γ t, by simp [hγ0], ?_⟩
+  let _ : ContMDiffMul I 1 G :=
+    ContMDiffMul.of_le (m := 1) (n := minSmoothness ℝ 3) (by norm_num)
   exact hγ.const_mul_mulInvariantVectorField y
 
 /-- Every left-invariant vector field on a real Lie group modeled on a complete space has a unique
@@ -223,7 +190,9 @@ theorem mulInvariantIntegralCurve_eq_const_mul [CompleteSpace E]
   symm
   apply eq_mulInvariantIntegralCurve v x
   · simp
-  · exact (isMIntegralCurve_mulInvariantIntegralCurve v 1).const_mul_mulInvariantVectorField x
+  · let _ : ContMDiffMul I 1 G :=
+      ContMDiffMul.of_le (m := 1) (n := minSmoothness ℝ 3) (by norm_num)
+    exact (isMIntegralCurve_mulInvariantIntegralCurve v 1).const_mul_mulInvariantVectorField x
 
 /-- The canonical invariant curve through the identity satisfies the one-parameter subgroup law. -/
 @[simp]
