@@ -18,10 +18,13 @@ import TauCeti.Analysis.PositiveDefinite.Kernel.Bounds
 
 The Gaussian regularization `φ_ε = φ · exp (-ε‖·‖²)` of a positive-definite function `φ` on a
 finite-dimensional real inner-product space is again positive definite (a Schur product with the
-Gaussian kernel), integrable, and converges to `φ` pointwise as `ε → 0`. This is the
-approximation device of the second step of Bochner's theorem: it replaces a merely bounded
-positive-definite function by an integrable one to which Fourier inversion applies. Its Fourier
-transform is integrable by `integrable_fourierIntegral_of_isPositiveDefiniteKernel`.
+Gaussian kernel) and converges to `φ` pointwise as `ε → 0`. For `ε > 0` it is integrable
+whenever `φ` is bounded and almost-everywhere strongly measurable — in particular whenever `φ`
+has a positive-definite subtraction kernel and is continuous. This is the approximation device
+of the second step of Bochner's theorem: it replaces a bounded positive-definite function by an
+integrable one to which Fourier inversion applies. For continuous positive-definite `φ` and
+`ε > 0` its Fourier transform is integrable, by
+`integrable_fourierIntegral_of_isPositiveDefiniteKernel`.
 
 Adapted from the Bochner–Minlos formalization by Michael R. Douglas
 (https://github.com/mrdouglasny/bochner, revision `08eb302`), source file `Bochner/Main.lean`;
