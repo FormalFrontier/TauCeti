@@ -130,18 +130,15 @@ theorem range_mapValue_val (φ ψ : A →ₐ[R] B) :
   rw [MonoidHom.mem_range, mem_eqLocus_mapValue_iff]
   exact exists_mapValue_val_eq_iff (H := H) _ f
 
-/-- The inclusion of the equalizer subalgebra is injective, so it is injective on points. -/
-private theorem val_injective (φ ψ : A →ₐ[R] B) :
-    Function.Injective ⇑(_root_.AlgHom.equalizer φ ψ).val :=
-  fun _ _ h => Subtype.ext h
-
 /-- **The functor of points carries an equalizer of value algebras to an equalizer of groups.**
 The group of points valued in the equalizer subalgebra of `φ ψ : A →ₐ[R] B` is the equalizer of
 the two group homomorphisms `φ` and `ψ` induce on points. -/
 noncomputable def equalizerPointsEquiv (φ ψ : A →ₐ[R] B) :
     WithConv (H →ₐ[R] _root_.AlgHom.equalizer φ ψ) ≃*
       MonoidHom.eqLocus (mapValue (H := H) φ) (mapValue (H := H) ψ) :=
-  (MonoidHom.ofInjective (mapValue_injective (H := H) (val_injective φ ψ))).trans
+  (MonoidHom.ofInjective
+      (mapValue_injective (H := H) (φ := (_root_.AlgHom.equalizer φ ψ).val)
+        Subtype.val_injective)).trans
     (MulEquiv.subgroupCongr (range_mapValue_val φ ψ))
 
 @[simp]
@@ -191,7 +188,8 @@ theorem liftEqualizerPoints_unique (φ ψ : A →ₐ[R] B)
     (huv : (mapValue (H := H) (_root_.AlgHom.equalizer φ ψ).val).comp u =
       (mapValue (H := H) (_root_.AlgHom.equalizer φ ψ).val).comp v) : u = v :=
   MonoidHom.ext fun g =>
-    mapValue_injective (H := H) (val_injective φ ψ) (DFunLike.congr_fun huv g)
+    mapValue_injective (H := H) (φ := (_root_.AlgHom.equalizer φ ψ).val) Subtype.val_injective
+      (DFunLike.congr_fun huv g)
 
 /-! ### Fixed points of an endomorphism of the value algebra -/
 
