@@ -143,8 +143,9 @@ def e7Coroot : Fin 126 ↪ (Fin 7 → ℤ) where
       simp only at h ⊢
       omega
 
-/-- The 126 `E7` roots in the fundamental-weight basis. -/
-def e7Root : Fin 126 ↪ (Fin 7 → ℤ) where
+/-- The 126 `E7` roots in the fundamental-weight basis. It is `@[expose]`d so that its defining
+equation `e7Root_apply` holds by `rfl`. -/
+@[expose] def e7Root : Fin 126 ↪ (Fin 7 → ℤ) where
   toFun i := e7Coroot i ᵥ* CartanMatrix.E₇
   inj' := by
     intro i j hij
@@ -154,6 +155,11 @@ def e7Root : Fin 126 ↪ (Fin 7 → ℤ) where
     rw [sub_vecMul]
     exact sub_eq_zero.mpr hij
 
+/-- Each `E7` root is the `E7` Cartan matrix applied to the corresponding coroot. This is the
+defining equation of `e7Root`; it is deliberately not `@[simp]`, since it would rewrite the
+left-hand sides of the root-table lemmas below. -/
+theorem e7Root_apply (i : Fin 126) : e7Root i = e7Coroot i ᵥ* CartanMatrix.E₇ := rfl
+
 /-- The negative half of the coroot table is the negation of the positive half. -/
 @[simp] theorem e7Coroot_natAdd (i : Fin 63) :
     e7Coroot (Fin.addNat i 63) = -e7Coroot (Fin.castAdd 63 i) := by
@@ -162,15 +168,10 @@ def e7Root : Fin 126 ↪ (Fin 7 → ℤ) where
 /-- The negative half of the root table is the negation of the positive half. -/
 @[simp] theorem e7Root_natAdd (i : Fin 63) :
     e7Root (Fin.addNat i 63) = -e7Root (Fin.castAdd 63 i) := by
-  fin_cases i <;> decide
+  rw [e7Root_apply, e7Root_apply, e7Coroot_natAdd, Matrix.neg_vecMul]
 
 /-- Every listed `E7` root pairs to two with its corresponding coroot. -/
 @[simp] theorem e7Root_dotProduct_coroot (i : Fin 126) : e7Root i ⬝ᵥ e7Coroot i = 2 := by
-  fin_cases i <;> decide
-
-/-- The first seven roots are the rows of the Bourbaki `E7` Cartan matrix. -/
-@[simp] theorem e7Root_simple (i : Fin 7) :
-    e7Root (Fin.castAdd 119 i) = CartanMatrix.E₇.row i := by
   fin_cases i <;> decide
 
 /-- The first seven coroots are the standard basis of the simple-coroot lattice. -/
@@ -178,13 +179,23 @@ def e7Root : Fin 126 ↪ (Fin 7 → ℤ) where
     e7Coroot (Fin.castAdd 119 i) = Pi.single i 1 := by
   fin_cases i <;> decide
 
+/-- The first seven roots are the rows of the Bourbaki `E7` Cartan matrix. -/
+@[simp] theorem e7Root_simple (i : Fin 7) :
+    e7Root (Fin.castAdd 119 i) = CartanMatrix.E₇.row i := by
+  rw [e7Root_apply, e7Coroot_simple, Matrix.single_one_vecMul]
+
 /-- Every positive `E7` coroot has nonnegative simple-coroot coordinates. -/
 theorem e7Coroot_nonneg (i : Fin 63) (j : Fin 7) : 0 ≤ e7Coroot (Fin.castAdd 63 i) j := by
   fin_cases i <;> fin_cases j <;> decide
 
-/-- The last positive entry is the highest `E7` coroot, with Bourbaki marks
-`(2, 2, 3, 4, 3, 2, 1)`. -/
-theorem e7Coroot_highest : e7Coroot 62 = ![2, 2, 3, 4, 3, 2, 1] := by decide
+/-- The last positive entry of the coroot table has the Bourbaki marks `(2, 2, 3, 4, 3, 2, 1)`. -/
+theorem e7Coroot_apply_62 : e7Coroot 62 = ![2, 2, 3, 4, 3, 2, 1] := by decide
+
+/-- The last positive entry is the highest `E7` coroot: it dominates every entry of the table
+in each simple-coroot coordinate. -/
+theorem e7Coroot_le_apply_62 (i : Fin 126) (j : Fin 7) : e7Coroot i j ≤ e7Coroot 62 j := by
+  revert i j
+  decide
 
 end DynkinType
 end TauCeti
