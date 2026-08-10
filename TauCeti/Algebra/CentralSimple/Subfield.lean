@@ -274,12 +274,6 @@ variable [FiniteDimensional K A]
 instance : Module.Finite L (BaseChangeModule f) :=
   Module.Finite.of_restrictScalars_finite K L (BaseChangeModule f)
 
-/-- The endomorphism algebra of an `L`-vector space has the square of its dimension. -/
-theorem finrank_end :
-    Module.finrank L (Module.End L (BaseChangeModule f))
-      = Module.finrank L (BaseChangeModule f) * Module.finrank L (BaseChangeModule f) :=
-  Module.finrank_linearMap ..
-
 variable [Algebra.IsCentral K A] [IsSimpleRing A]
 
 /-- Faithfulness, read as a dimension inequality: `L ⊗[K] A` embeds in the `L`-endomorphisms of
@@ -289,7 +283,7 @@ theorem finrank_le_finrank_mul_finrank :
     Module.finrank K A
       ≤ Module.finrank L (BaseChangeModule f) * Module.finrank L (BaseChangeModule f) := by
   have h := (toEndL f).toLinearMap.finrank_le_finrank_of_injective (toEndL_injective f)
-  rwa [Module.finrank_baseChange, finrank_end] at h
+  rwa [Module.finrank_baseChange, Module.finrank_linearMap] at h
 
 /-- For a subfield of degree `deg K A`, the tower law forces `A` to have dimension `deg K A` over
 it: the two factors of `Module.finrank K A = (deg K A) ^ 2` are equal. -/
@@ -309,7 +303,8 @@ noncomputable def algEquivEnd (h : Module.finrank K L = Algebra.deg K A) :
   AlgEquiv.ofBijective (toEndL f) <| by
     have hdim : Module.finrank L (L ⊗[K] A)
         = Module.finrank L (Module.End L (BaseChangeModule f)) := by
-      rw [Module.finrank_baseChange, finrank_end, finrank_eq_deg f h, ← sq, Algebra.deg_sq]
+      rw [Module.finrank_baseChange, Module.finrank_linearMap, finrank_eq_deg f h, ← sq,
+        Algebra.deg_sq]
     exact ⟨toEndL_injective f,
       (LinearMap.injective_iff_surjective_of_finrank_eq_finrank (f := (toEndL f).toLinearMap)
         hdim).1 (toEndL_injective f)⟩
