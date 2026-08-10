@@ -85,12 +85,10 @@ theorem relators_def (P : GroupPresentation) : P.relators = P.transcribed.map Re
   rw [relators]
 
 /-- Compilation preserves the number of relators. -/
-@[simp]
 theorem length_relators (P : GroupPresentation) : P.relators.length = P.transcribed.length := by
   simp [relators]
 
 /-- The compiled words are exactly the compilations of the transcribed expressions. -/
-@[simp]
 theorem mem_relators_iff (P : GroupPresentation) (w : PresentationWord (Fin P.generatorCount)) :
     w ∈ P.relators ↔ ∃ t ∈ P.transcribed, t.toWord = w := by
   simp [relators]
