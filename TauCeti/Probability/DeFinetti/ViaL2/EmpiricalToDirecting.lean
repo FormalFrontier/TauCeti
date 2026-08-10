@@ -8,14 +8,21 @@ public import TauCeti.Probability.Exchangeability.L2.Cesaro.ToCondExp
 public import TauCeti.Probability.DeFinetti.DirectingMeasure.Basic
 
 /-!
-# Cesàro averages of an indicator converge to the directing measure
+# Block averages of an indicator converge to the directing measure
 
-`Contractable.tendsto_integral_abs_blockAverage_sub_condExp` identifies the `L¹` limit of the
-fixed-start Cesàro windows of an observable with `μ[f ∘ X 0 | tailProcess X]`, and
+`Contractable.tendsto_integral_abs_blockAverage_sub_condExp` identifies the `L¹` limit of the block
+averages of an observable with `μ[f ∘ X 0 | tailProcess X]`, along **any** selection that is
+injective for all sufficiently large lengths — the selection may move with the length.
 `directingMeasure_ae_eq_condExp` identifies `ω ↦ (directingMeasure μ X ω).real B` with the same
 conditional expectation when the observable is the indicator `𝟙_B`. Composing the two gives the
 statement in the form the `L²` route consumes: the empirical averages of `𝟙_B ∘ X` converge in
 `L¹` to the directing measure's evaluation at `B`.
+
+Fixed-start windows (`fixedStart r`) and disjoint windows (`disjointWindow c`) are both instances.
+The disjoint ones are what a finite-block factorization needs, and fixed starts cannot supply them:
+windows from two distinct fixed starts overlap once the common length exceeds the gap between the
+starts. The limit does not depend on the selection, so every one of them converges to the same
+directing-measure evaluation.
 
 The point is that no directing measure is *constructed* here. `directingMeasure` is Mathlib's
 `condDistrib` conditioned on `tailProcess X`, which the martingale route also uses but does not
