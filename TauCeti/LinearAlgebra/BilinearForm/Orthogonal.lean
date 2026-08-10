@@ -9,14 +9,14 @@ public import Mathlib.LinearAlgebra.BilinearForm.Orthogonal
 /-!
 # Extending nondegenerate subspaces by an orthogonal vector
 
-This file records that adjoining an anisotropic orthogonal vector to a nondegenerate subspace of a
-reflexive bilinear space preserves nondegeneracy. It is the structural step used when a
-Cartan--Dieudonne argument enlarges a fixed subspace.
+This file records that adjoining an orthogonal vector whose self-pairing is a right non-zero-divisor
+to a nondegenerate subspace of a reflexive bilinear space preserves nondegeneracy. It is the
+structural step used when a Cartan--Dieudonne argument enlarges a fixed subspace.
 
 ## Main result
 
 * `TauCeti.BilinForm.restrict_nondegenerate_sup_span_singleton`: adjoining an orthogonal vector
-  with nonzero self-pairing preserves nondegeneracy.
+  whose self-pairing is a right non-zero-divisor preserves nondegeneracy.
 -/
 
 public section
@@ -27,13 +27,13 @@ open LinearMap (BilinForm)
 
 namespace BilinForm
 
-variable {K V : Type*} [CommSemiring K] [NoZeroDivisors K] [AddCommMonoid V] [Module K V]
+variable {K V : Type*} [CommSemiring K] [AddCommMonoid V] [Module K V]
 
-/-- Adjoining a vector with nonzero self-pairing from the orthogonal complement of a nondegenerate
-subspace preserves nondegeneracy. -/
+/-- Adjoining a vector whose self-pairing is a right non-zero-divisor from the orthogonal complement
+of a nondegenerate subspace preserves nondegeneracy. -/
 theorem restrict_nondegenerate_sup_span_singleton
     (B : BilinForm K V) (hB : B.IsRefl) (W : Submodule K V)
-    (hW : (B.restrict W).Nondegenerate) (x : V) (hxx : B x x ≠ 0)
+    (hW : (B.restrict W).Nondegenerate) (x : V) (hxx : B x x ∈ nonZeroDivisorsRight K)
     (hx : x ∈ B.orthogonal W) :
     (B.restrict (W ⊔ Submodule.span K {x})).Nondegenerate := by
   let S : Submodule K V := W ⊔ Submodule.span K {x}
@@ -57,7 +57,7 @@ theorem restrict_nondegenerate_sup_span_singleton
     rw [← hsum, hw0, zero_add] at hyx
     have ha : a = 0 := by
       rw [map_smul, LinearMap.smul_apply, smul_eq_mul] at hyx
-      exact (mul_eq_zero.mp hyx).resolve_right hxx
+      exact hxx a (by simpa using hyx)
     apply Subtype.ext
     simp [← hsum, hw0, ha]
   refine ⟨hleft, fun y hy ↦ hleft y fun z ↦ ?_⟩
