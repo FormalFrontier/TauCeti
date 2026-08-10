@@ -7,16 +7,16 @@ module
 public import Mathlib.LinearAlgebra.BilinearForm.Orthogonal
 
 /-!
-# Extending nondegenerate subspaces by an orthogonal vector
+# Extending left-separating subspaces by an orthogonal vector
 
 This file records that adjoining an orthogonal vector whose self-pairing is a right non-zero-divisor
-to a nondegenerate subspace of a reflexive bilinear space preserves nondegeneracy. It is the
-structural step used when a Cartan--Dieudonne argument enlarges a fixed subspace.
+to a left-separating subspace of a reflexive bilinear space produces a nondegenerate restriction.
+It is the structural step used when a Cartan--Dieudonne argument enlarges a fixed subspace.
 
 ## Main result
 
 * `TauCeti.BilinForm.restrict_nondegenerate_sup_span_singleton`: adjoining an orthogonal vector
-  whose self-pairing is a right non-zero-divisor preserves nondegeneracy.
+  to a left-separating subspace produces a nondegenerate restriction.
 -/
 
 public section
@@ -30,10 +30,10 @@ namespace BilinForm
 variable {K V : Type*} [CommSemiring K] [AddCommMonoid V] [Module K V]
 
 /-- Adjoining a vector whose self-pairing is a right non-zero-divisor from the orthogonal complement
-of a nondegenerate subspace preserves nondegeneracy. -/
+of a left-separating subspace preserves nondegeneracy. -/
 theorem restrict_nondegenerate_sup_span_singleton
     (B : BilinForm K V) (hB : B.IsRefl) (W : Submodule K V)
-    (hW : (B.restrict W).Nondegenerate) (x : V) (hxx : B x x ∈ nonZeroDivisorsRight K)
+    (hW : (B.restrict W).SeparatingLeft) (x : V) (hxx : B x x ∈ nonZeroDivisorsRight K)
     (hx : x ∈ B.orthogonal W) :
     (B.restrict (W ⊔ Submodule.span K {x})).Nondegenerate := by
   let S : Submodule K V := W ⊔ Submodule.span K {x}
@@ -49,7 +49,7 @@ theorem restrict_nondegenerate_sup_span_singleton
       change B y w' = 0 at hyw
       rw [← hsum] at hyw
       simpa [hBxw'] using hyw
-    have hw0 : w = 0 := congrArg Subtype.val (hW.1 ⟨w, hw⟩ hwzero)
+    have hw0 : w = 0 := congrArg Subtype.val (hW ⟨w, hw⟩ hwzero)
     have hxS : x ∈ S := Submodule.mem_sup_right (Submodule.mem_span_singleton_self x)
     have hyx := hy ⟨x, hxS⟩
     -- Expose the ambient bilinear form under its restriction to `S`.
