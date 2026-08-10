@@ -40,8 +40,10 @@ statement below is *conditional* on the coordinate bound: the bound is a hypothe
 conclusion.  What a good Dixon prime contributes is the other two ingredients: the condition
 `Monoid.exponent G ∣ p - 1` provides the primitive root `α`, and Dixon's size bound `2⌊√|G|⌋ < p`
 converts a coordinate bound of `⌊√|G|⌋` into the residue window.  That the values the algorithm
-reconstructs do have coordinates that small is classical, and is proved nowhere in this repository;
-a caller has to supply it.  Nothing about groups appears here, only the arithmetic.
+reconstructs do have coordinates that small is *not* claimed anywhere here: it is unverified, it is
+proved nowhere in this repository, and the roadmap records the precise constant in Dixon's `2√|G|`
+as low-confidence pending a re-check against Dixon 1967.  A caller has to supply that bound as a
+hypothesis.  Nothing about groups appears here, only the arithmetic.
 
 The lift is *not* a bare map `ZMod p → ℤ[ζ_e]`: a single residue underdetermines an algebraic
 integer, and because a good Dixon prime satisfies `p ≡ 1 (mod e)` the Frobenius acts trivially on

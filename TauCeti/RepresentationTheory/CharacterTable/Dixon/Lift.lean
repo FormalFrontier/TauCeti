@@ -21,11 +21,14 @@ supplies both of the things that needs: the primitive `e`-th root of unity `d.ro
 
 The results here are therefore *conditional arithmetic specializations*: they take the coordinate
 bound `|c| ≤ ⌊√|G|⌋` as a hypothesis and convert it into the abstract window, and they say nothing
-about which elements satisfy it.  That the coordinates the Burnside--Dixon--Schneider algorithm
-reconstructs are that small is classical, but it is not proved here or anywhere else in this
-repository; supplying it is the caller's job.  What this file does establish is that once it is
-supplied, the modular phase is lossless: the exact value is determined by its residues at the
-conjugate roots of a Dixon prime, and is returned by the lift.
+about which elements satisfy it.  Nothing here asserts that the coordinates the
+Burnside--Dixon--Schneider algorithm reconstructs really are that small: that claim is unverified,
+it is proved nowhere in this repository, and the roadmap records the `2√|G|` constant as the
+standard citation with low confidence as to the precise constant, to be re-checked against
+Dixon 1967 before it is relied on.  Supplying the bound, as a hypothesis, is the caller's job.
+What this file does establish is that once it is supplied, the modular phase is lossless: the exact
+value is determined by its residues at the conjugate roots of a Dixon prime, and is returned by the
+lift.
 
 ## Main results
 
