@@ -7,6 +7,7 @@ module
 public import TauCeti.Geometry.Lie.Adjoint.Smooth
 public import TauCeti.Geometry.Lie.Adjoint.Exponential
 public import TauCeti.Geometry.Lie.InvariantVectorField.Commutation
+import TauCeti.Geometry.Manifold.VectorField.Regularity
 
 /-!
 # The infinitesimal adjoint action
@@ -161,7 +162,8 @@ theorem mfderiv_conjugationGenerator_eq_bracket
       mvfderiv I f 1 ⁅X, Y⁆ := by
   let RXf : C^∞⟮I, G; ℝ⟯ :=
     ⟨fun g => mfderiv I 𝓘(ℝ, ℝ) f g (mulRightInvariantVectorField X g),
-      contMDiff_mvfderiv_mulRightInvariantVectorField X f⟩
+      ContMDiff.contMDiff_mvfderiv_apply f.contMDiff
+        (contMDiff_mulRightInvariantVectorField_infty X) (by simp)⟩
   let LXf : C^∞⟮I, G; ℝ⟯ :=
     ⟨fun g => mfderiv I 𝓘(ℝ, ℝ) f g (mulInvariantVectorField X g),
       contMDiff_mvfderiv_mulInvariantVectorField X f⟩
@@ -341,7 +343,8 @@ theorem hasDerivAt_tangentAd_mulInvariantExp_smul_apply
     simpa only [q] using hq.deriv
   let RXf : C^∞⟮I, G; ℝ⟯ :=
     ⟨fun g => mvfderiv I f g (mulRightInvariantVectorField X g),
-      contMDiff_mvfderiv_mulRightInvariantVectorField X f⟩
+      ContMDiff.contMDiff_mvfderiv_apply f.contMDiff
+        (contMDiff_mulRightInvariantVectorField_infty X) (by simp)⟩
   let LXf : C^∞⟮I, G; ℝ⟯ :=
     ⟨fun g => mvfderiv I f g (mulInvariantVectorField X g),
       contMDiff_mvfderiv_mulInvariantVectorField X f⟩
