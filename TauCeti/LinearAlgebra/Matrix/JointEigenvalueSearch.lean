@@ -130,20 +130,6 @@ theorem mulVec_eq_smul_of_mem_jointEigenspaceBasis
   exact mulVec_eq_zero_of_mem_kernelBasis _ hv
 
 omit [Fintype F] in
-/-- The computed common-eigenspace basis is linearly independent. -/
-theorem linearIndepOn_jointEigenspaceBasis
-    (A : Fin m → Matrix (Fin n) (Fin n) F) (a : Fin m → F) :
-    LinearIndepOn F id {v : Fin n → F | v ∈ jointEigenspaceBasis A a} :=
-  linearIndepOn_kernelBasis _
-
-omit [Fintype F] in
-/-- The computed common-eigenspace basis lists no vector twice. -/
-theorem nodup_jointEigenspaceBasis
-    (A : Fin m → Matrix (Fin n) (Fin n) F) (a : Fin m → F) :
-    (jointEigenspaceBasis A a).Nodup :=
-  nodup_kernelBasis _
-
-omit [Fintype F] in
 /-- The computed basis spans the common eigenspace: a vector lies in its span exactly when it
 satisfies every eigenvector equation. -/
 theorem mem_span_jointEigenspaceBasis
@@ -171,7 +157,7 @@ theorem jointEigenspaceBasis_ne_nil_iff
   constructor
   · intro h
     obtain ⟨v, hv⟩ := List.exists_mem_of_ne_nil _ h
-    exact ⟨v, (linearIndepOn_jointEigenspaceBasis A a).ne_zero hv,
+    exact ⟨v, (linearIndepOn_kernelBasis (jointEigenspaceMatrix A a)).ne_zero hv,
       mulVec_eq_smul_of_mem_jointEigenspaceBasis hv⟩
   · rintro ⟨v, hv, heig⟩ hnil
     have hmem := (mem_span_jointEigenspaceBasis A a v).mpr heig
