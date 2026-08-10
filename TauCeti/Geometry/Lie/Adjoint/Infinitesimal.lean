@@ -6,9 +6,9 @@ module
 
 public import TauCeti.Geometry.Lie.Adjoint.Smooth
 public import TauCeti.Geometry.Lie.Adjoint.Exponential
-public import TauCeti.Geometry.Lie.InvariantVectorField.Commutation
 import TauCeti.Analysis.Calculus.ParametricFDeriv
 import TauCeti.Geometry.Lie.Exponential.Derivative.Basic
+import TauCeti.Geometry.Lie.InvariantVectorField.Commutation
 import TauCeti.Geometry.Manifold.VectorField.Regularity
 
 /-!
