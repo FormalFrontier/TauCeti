@@ -23,7 +23,9 @@ negative generator is equivalent to tensoring with two-by-two real matrices.
   real quadratic module tensors its Clifford algebra with `M₂(ℝ)`;
 * `TauCeti.realCliffordBottEquiv`: the corresponding equivalence for the standard signature forms;
 * `TauCeti.realCliffordBottIterEquiv`: the iterated standard-signature equivalence, with matrix
-  size `2 ^ n` after adjoining `n` hyperbolic planes.
+  size `2 ^ n` after adjoining `n` hyperbolic planes;
+* `TauCeti.realCliffordSignatureReductionEquiv`: the reduction of a standard signature by its
+  common positive and negative part.
 
 ## References
 
@@ -624,6 +626,48 @@ noncomputable def realCliffordBottIterEquiv (p q n : ℕ) :
       _root_.CliffordAlgebra (realCliffordForm p q) ⊗[ℝ]
         Matrix (Fin (2 ^ n)) (Fin (2 ^ n)) ℝ :=
   realCliffordBottIterEquivImpl p q n
+
+private noncomputable def castRealCliffordMatrixEquiv
+    {p q p' q' r s r' s' n n' : ℕ}
+    (hp : p = p') (hq : q = q') (hr : r = r') (hs : s = s') (hn : n = n')
+    (e : _root_.CliffordAlgebra (realCliffordForm p q) ≃ₐ[ℝ]
+      _root_.CliffordAlgebra (realCliffordForm r s) ⊗[ℝ]
+        Matrix (Fin (2 ^ n)) (Fin (2 ^ n)) ℝ) :
+    _root_.CliffordAlgebra (realCliffordForm p' q') ≃ₐ[ℝ]
+      _root_.CliffordAlgebra (realCliffordForm r' s') ⊗[ℝ]
+        Matrix (Fin (2 ^ n')) (Fin (2 ^ n')) ℝ :=
+  hp ▸ hq ▸ hr ▸ hs ▸ hn ▸ e
+
+/-- Removing the common positive and negative part of a real Clifford signature leaves a
+one-sided signature and a matrix factor of size `2 ^ min p q`. -/
+noncomputable def realCliffordSignatureReductionEquiv (p q : ℕ) :
+    _root_.CliffordAlgebra (realCliffordForm p q) ≃ₐ[ℝ]
+      _root_.CliffordAlgebra (realCliffordForm (p - min p q) (q - min p q)) ⊗[ℝ]
+        Matrix (Fin (2 ^ min p q)) (Fin (2 ^ min p q)) ℝ :=
+  castRealCliffordMatrixEquiv
+    (Nat.sub_add_cancel (Nat.min_le_left p q))
+    (Nat.sub_add_cancel (Nat.min_le_right p q)) rfl rfl rfl
+    (realCliffordBottIterEquiv (p - min p q) (q - min p q) (min p q))
+
+/-- If `p ≤ q`, reducing the common part of a real Clifford signature leaves only negative
+generators. -/
+noncomputable def realCliffordNegativeAxisReductionEquiv (p q : ℕ) (h : p ≤ q) :
+    _root_.CliffordAlgebra (realCliffordForm p q) ≃ₐ[ℝ]
+      _root_.CliffordAlgebra (realCliffordForm 0 (q - p)) ⊗[ℝ]
+        Matrix (Fin (2 ^ p)) (Fin (2 ^ p)) ℝ :=
+  castRealCliffordMatrixEquiv rfl rfl (by simp [Nat.min_eq_left h])
+    (by simp [Nat.min_eq_left h]) (Nat.min_eq_left h)
+    (realCliffordSignatureReductionEquiv p q)
+
+/-- If `q ≤ p`, reducing the common part of a real Clifford signature leaves only positive
+generators. -/
+noncomputable def realCliffordPositiveAxisReductionEquiv (p q : ℕ) (h : q ≤ p) :
+    _root_.CliffordAlgebra (realCliffordForm p q) ≃ₐ[ℝ]
+      _root_.CliffordAlgebra (realCliffordForm (p - q) 0) ⊗[ℝ]
+        Matrix (Fin (2 ^ q)) (Fin (2 ^ q)) ℝ :=
+  castRealCliffordMatrixEquiv rfl rfl (by simp [Nat.min_eq_right h])
+    (by simp [Nat.min_eq_right h]) (Nat.min_eq_right h)
+    (realCliffordSignatureReductionEquiv p q)
 
 /-- At zero iterations, `realCliffordBottIterEquiv` is the canonical identification with a
 one-by-one matrix tensor factor. -/
