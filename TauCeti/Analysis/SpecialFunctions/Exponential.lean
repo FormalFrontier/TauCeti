@@ -19,7 +19,8 @@ every increment. It also derives the corresponding integral formula for the Fré
 
 ## Main results
 
-* `intervalIntegrable_exp_smul_mul_mul_exp_smul`: the Duhamel integrand is interval integrable.
+* `intervalIntegrable_exp_smul_mul_mul_exp_smul`: a three-factor exponential integrand is interval
+  integrable.
 * `exp_add_sub_exp_eq_integral`: `exp (x + h) - exp x` is the integral of
   `exp ((1 - t) (x + h)) * h * exp (t x)` over the unit interval.
 * `TauCeti.expFDeriv_apply_eq_integral`: the Fréchet derivative is the corresponding Duhamel
@@ -64,7 +65,7 @@ private theorem hasDerivAt_exp_smul_mul_exp_smul (x h : A) (t : ℝ) :
 /-- The three-factor exponential integrand underlying Duhamel's formulas is interval integrable. -/
 theorem intervalIntegrable_exp_smul_mul_mul_exp_smul (x y z : A) :
     IntervalIntegrable
-      (fun t : ℝ ↦ exp ((1 - t) • y) * z * exp (t • x)) volume 0 1 :=
+      (fun t : ℝ ↦ exp ((1 - t) • x) * y * exp (t • z)) volume 0 1 :=
   Continuous.intervalIntegrable (μ := volume) (by fun_prop) 0 1
 
 /-- Duhamel's exact finite-increment formula for the exponential in a possibly noncommutative real
@@ -78,7 +79,7 @@ theorem exp_add_sub_exp_eq_integral (x h : A) :
     intro t _ht
     exact hasDerivAt_exp_smul_mul_exp_smul x h t
   have hint : IntervalIntegrable F' volume (0 : ℝ) 1 := by
-    exact (intervalIntegrable_exp_smul_mul_mul_exp_smul x (x + h) h).neg
+    exact (intervalIntegrable_exp_smul_mul_mul_exp_smul (x + h) h x).neg
   have hFTC := intervalIntegral.integral_eq_sub_of_hasDerivAt hderiv hint
   dsimp only [F, F'] at hFTC
   simp only [one_smul, sub_self, sub_zero, zero_smul, exp_zero, mul_one, one_mul,
