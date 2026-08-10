@@ -47,8 +47,6 @@ abstract simple module by a left ideal, turns the block count into a count of si
 
 ## Main results
 
-* `TauCeti.isSimpleRing_moduleEnd_of_mem_isotypicComponents`: the endomorphism ring of an isotypic
-  component of the regular module is a simple ring.
 * `TauCeti.card_isotypicComponents_eq_of_ringEquiv_pi`: a presentation of `R` as a finite product
   of simple rings has as many factors as `R` has isotypic components.
 * `TauCeti.card_simpleSubmoduleClasses_eq_of_ringEquiv_pi` and
@@ -96,15 +94,6 @@ universe u v
 
 variable {R : Type u} [Ring R] [IsSemisimpleRing R]
 
-/-- **The endomorphism ring of an isotypic component of the regular module is simple.** An isotypic
-component is a nonzero finite module all of whose simple submodules are isomorphic, so
-`TauCeti.isSimpleRing_moduleEnd_of_isIsotypic` applies. -/
-theorem isSimpleRing_moduleEnd_of_mem_isotypicComponents {c : Submodule R R}
-    (hc : c ∈ isotypicComponents R R) : IsSimpleRing (Module.End R c) :=
-  have : Nontrivial c := Submodule.nontrivial_iff_ne_bot.mpr (bot_lt_isotypicComponents hc).ne'
-  have : IsSemisimpleModule R c := by obtain ⟨S, _, rfl⟩ := hc; infer_instance
-  isSimpleRing_moduleEnd_of_isIsotypic (IsIsotypic.isotypicComponents hc)
-
 section Presentation
 
 variable {ι : Type*} [Finite ι] {A : ι → Type v} [∀ i, Ring (A i)] [∀ i, IsSimpleRing (A i)]
@@ -115,12 +104,16 @@ each isotypic component of the regular module.**
 Both counts are counts of factors in a decomposition of `Rᵐᵒᵖ` as a product of simple rings: the
 opposite of the given presentation on one side, and the splitting of `End_R R ≃+* Rᵐᵒᵖ` along the
 isotypic components on the other, whose factors are simple by
-`TauCeti.isSimpleRing_moduleEnd_of_mem_isotypicComponents`. -/
+`TauCeti.isSimpleRing_moduleEnd_of_isIsotypic`: an isotypic component is a nonzero finite module
+all of whose simple submodules are isomorphic. -/
 theorem card_isotypicComponents_eq_of_ringEquiv_pi (e : R ≃+* ∀ i, A i) :
     Nat.card (isotypicComponents R R) = Nat.card ι := by
   classical
-  have : ∀ c : isotypicComponents R R, IsSimpleRing (Module.End R (c : Submodule R R)) :=
-    fun c ↦ isSimpleRing_moduleEnd_of_mem_isotypicComponents c.2
+  have : ∀ c : isotypicComponents R R, IsSimpleRing (Module.End R (c : Submodule R R)) := by
+    rintro ⟨c, hc⟩
+    have : Nontrivial c := Submodule.nontrivial_iff_ne_bot.mpr (bot_lt_isotypicComponents hc).ne'
+    have : IsSemisimpleModule R c := by obtain ⟨S, _, rfl⟩ := hc; infer_instance
+    exact isSimpleRing_moduleEnd_of_isIsotypic (IsIsotypic.isotypicComponents hc)
   exact card_eq_of_ringEquiv_pi_of_isSimpleRing
     ((RingEquiv.moduleEndSelf R).trans (IsSemisimpleModule.endRingEquiv R R))
     ((RingEquiv.op e).trans (RingEquiv.piMulOpposite A))

@@ -13,12 +13,11 @@ public import Mathlib.RingTheory.Artinian.Defs
 public import Mathlib.RingTheory.SimpleModule.Basic
 public import Mathlib.RingTheory.SimpleRing.Defs
 -- Non-public: used only inside proofs. The matrix presentation of the endomorphism algebra of a
--- power, the dimension of a matrix algebra, simplicity of a matrix ring over a simple ring, and the
--- isotypic decomposition over a simple Artinian algebra are all internal to the arguments below,
--- and no exported statement mentions a matrix algebra.
+-- power, the dimension of a matrix algebra, the simplicity of the endomorphism ring of an isotypic
+-- module, and the isotypic decomposition over a simple Artinian algebra are all internal to the
+-- arguments below, and no exported statement mentions a matrix algebra.
 import Mathlib.LinearAlgebra.Dimension.Constructions
 import Mathlib.LinearAlgebra.Matrix.ToLin
-import Mathlib.RingTheory.SimpleRing.Matrix
 import TauCeti.RingTheory.Semisimple.IsotypicEnd
 import TauCeti.RingTheory.Semisimple.SimpleArtinian
 
