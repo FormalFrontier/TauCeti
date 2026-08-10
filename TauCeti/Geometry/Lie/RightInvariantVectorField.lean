@@ -95,6 +95,7 @@ theorem mulRightInvariantVectorField_add (v w : GroupLieAlgebra I G) :
       mulRightInvariantVectorField v + mulRightInvariantVectorField w := by
   ext g
   simp only [Pi.add_apply, mulRightInvariantVectorField_apply, map_add]
+  -- `TangentSpace I g` inherits addition from the model space `E`; there is no lemma-based rewrite.
   exact Eq.refl _
 
 /-- The right-invariant vector field construction preserves scalar multiplication. -/
@@ -102,6 +103,7 @@ theorem mulRightInvariantVectorField_smul (c : 𝕜) (v : GroupLieAlgebra I G) :
     mulRightInvariantVectorField (c • v) = c • mulRightInvariantVectorField v := by
   ext g
   simp only [Pi.smul_apply, mulRightInvariantVectorField_apply, map_smul]
+  -- `TangentSpace I g` inherits scalar multiplication from `E`; there is no lemma-based rewrite.
   exact Eq.refl _
 
 section Pullback
