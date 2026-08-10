@@ -5,7 +5,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.RepresentationTheory.Intertwining
-public import Mathlib.RepresentationTheory.Subrepresentation
 
 /-!
 # An injective intertwining map is an isomorphism onto its image

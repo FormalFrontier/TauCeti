@@ -202,6 +202,7 @@ theorem range_toTensorPower :
 
 /-- Symmetrizing and then projecting back to the symmetric power multiplies by `(card ι)!`: the
 `(card ι)!` reorderings of a pure tensor all become the same symmetric tensor. -/
+@[simp]
 theorem mk_comp_toTensorPower :
     (mk R ι M) ∘ₗ (toTensorPower R ι M) =
       (Fintype.card ι).factorial • LinearMap.id (R := R) (M := Sym[R] ι M) := by

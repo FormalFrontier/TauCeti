@@ -7,7 +7,6 @@ module
 public import Mathlib.Data.Fintype.Perm
 public import Mathlib.LinearAlgebra.Determinant
 public import Mathlib.LinearAlgebra.ExteriorPower.Basis
-public import Mathlib.LinearAlgebra.ExteriorPower.Pairing
 public import Mathlib.LinearAlgebra.Trace
 
 /-!
@@ -167,6 +166,7 @@ theorem fromTensorPower_surjective : Function.Surjective (fromTensorPower R M n)
 
 /-- Antisymmetrizing an exterior product and projecting it back multiplies by `n!`: each of the
 `n!` signed reorderings returns the same exterior product. -/
+@[simp]
 theorem fromTensorPower_comp_toTensorPower :
     (fromTensorPower R M n) ∘ₗ (toTensorPower R M n) =
       n.factorial • LinearMap.id (R := R) (M := ⋀[R]^n M) := by

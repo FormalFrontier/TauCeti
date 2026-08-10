@@ -5,8 +5,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.Data.Nat.Factorial.NatCast
-public import TauCeti.LinearAlgebra.ExteriorPower
-public import TauCeti.LinearAlgebra.SymmetricPower
 public import TauCeti.RepresentationTheory.ClassicalGroups.ExteriorPower
 public import TauCeti.RepresentationTheory.ClassicalGroups.SymmetricPower
 public import TauCeti.RepresentationTheory.ClassicalGroups.WeylModule
@@ -140,8 +138,11 @@ theorem symPowerToTensorPower_toLinearMap (d : ℕ) :
   (rfl)
 
 /-- **The symmetric power is the Weyl module of a shape with at most one row**, by the
-symmetrization `SymmetricPower.toTensorPower`. -/
-noncomputable def symPowerRepEquivWeylRep (t : YoungTableau μ) (h : μ.colLen 0 ≤ 1) :
+symmetrization `SymmetricPower.toTensorPower`.
+
+This runs the direction the construction produces; the public form of the statement is its inverse
+`TauCeti.YoungTableau.weylRepEquivSymPowerRep`. -/
+private noncomputable def symPowerRepEquivWeylRep (t : YoungTableau μ) (h : μ.colLen 0 ≤ 1) :
     (symPowerRep k n μ.card).Equiv (YoungTableau.weylRep k n t) :=
   (symPowerToTensorPower k n μ.card).equivOfRange
     (SymmetricPower.toTensorPower_injective
@@ -154,8 +155,7 @@ noncomputable def symPowerRepEquivWeylRep (t : YoungTableau μ) (h : μ.colLen 0
 
 /-- The isomorphism `TauCeti.symPowerRepEquivWeylRep` is the symmetrization, read inside the
 tensor power. -/
-@[simp]
-theorem symPowerRepEquivWeylRep_apply_coe (t : YoungTableau μ) (h : μ.colLen 0 ≤ 1)
+private theorem symPowerRepEquivWeylRep_apply_coe (t : YoungTableau μ) (h : μ.colLen 0 ≤ 1)
     (x : SymmetricPower k (Fin μ.card) (Fin n → k)) :
     ((symPowerRepEquivWeylRep k n t h x : (YoungTableau.weylModule k n t).toSubmodule) :
         ⨂[k]^μ.card (Fin n → k)) =
@@ -223,8 +223,11 @@ theorem extPowerToTensorPower_toLinearMap (d : ℕ) :
   (rfl)
 
 /-- **The exterior power is the Weyl module of a shape with at most one column**, by the
-antisymmetrization `exteriorPower.toTensorPower`. -/
-noncomputable def extPowerRepEquivWeylRep (t : YoungTableau μ) (h : μ.rowLen 0 ≤ 1) :
+antisymmetrization `exteriorPower.toTensorPower`.
+
+This runs the direction the construction produces; the public form of the statement is its inverse
+`TauCeti.YoungTableau.weylRepEquivExtPowerRep`. -/
+private noncomputable def extPowerRepEquivWeylRep (t : YoungTableau μ) (h : μ.rowLen 0 ≤ 1) :
     (extPowerRep k n μ.card).Equiv (YoungTableau.weylRep k n t) :=
   (extPowerToTensorPower k n μ.card).equivOfRange
     (exteriorPower.toTensorPower_injective μ.card (IsUnit.natCast_factorial_of_algebra ℚ μ.card))
@@ -236,8 +239,7 @@ noncomputable def extPowerRepEquivWeylRep (t : YoungTableau μ) (h : μ.rowLen 0
 
 /-- The isomorphism `TauCeti.extPowerRepEquivWeylRep` is the antisymmetrization, read inside the
 tensor power. -/
-@[simp]
-theorem extPowerRepEquivWeylRep_apply_coe (t : YoungTableau μ) (h : μ.rowLen 0 ≤ 1)
+private theorem extPowerRepEquivWeylRep_apply_coe (t : YoungTableau μ) (h : μ.rowLen 0 ≤ 1)
     (x : ⋀[k]^μ.card (Fin n → k)) :
     ((extPowerRepEquivWeylRep k n t h x : (YoungTableau.weylModule k n t).toSubmodule) :
         ⨂[k]^μ.card (Fin n → k)) = exteriorPower.toTensorPower k (Fin n → k) μ.card x :=
