@@ -35,8 +35,8 @@ four branch equations are simp lemmas rather than the selector body being expose
 * `TauCeti.SuzukiReeIndex.lengthPerm_suzuki`, `TauCeti.SuzukiReeIndex.lengthPerm_reeG2`,
   `TauCeti.SuzukiReeIndex.lengthPerm_reeF4`, and `TauCeti.SuzukiReeIndex.lengthPerm_tits` are the
   branch equations naming the selected permutation on each half-Frobenius family.
-* `TauCeti.SuzukiReeIndex.isLongSimpleRoot_lengthPerm_iff_not_isLongSimpleRoot` proves that this
-  permutation exchanges long and short simple roots.
+* `TauCeti.SuzukiReeIndex.isLongSimpleRoot_lengthPerm` proves that this permutation exchanges long
+  and short simple roots.
 * `TauCeti.SuzukiReeIndex.exponent` is `1` on long simple roots and the characteristic on short
   simple roots.
 * `TauCeti.SuzukiReeIndex.exponent_of_isLongSimpleRoot` and
@@ -143,8 +143,7 @@ def lengthPerm (e : SuzukiReeIndex) : Equiv.Perm (Fin e.1.rank) :=
 /-- The length permutation selected by a Suzuki--Ree index exchanges long and short simple roots
 in the Bourbaki numbering of its underlying untwisted Dynkin diagram. -/
 @[simp]
-theorem isLongSimpleRoot_lengthPerm_iff_not_isLongSimpleRoot (e : SuzukiReeIndex)
-    (i : Fin e.1.rank) :
+theorem isLongSimpleRoot_lengthPerm (e : SuzukiReeIndex) (i : Fin e.1.rank) :
     e.1.dynkinType.IsLongSimpleRoot (e.lengthPerm i) ↔
       ¬e.1.dynkinType.IsLongSimpleRoot i := by
   simp only [ValidLieTypeIndex.dynkinType, ValidLieTypeIndex.rank] at i ⊢
