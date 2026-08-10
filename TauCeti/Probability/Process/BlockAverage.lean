@@ -14,7 +14,8 @@ public import Mathlib.Data.Real.Basic
 The empirical mean of a process over a finite selection of coordinates, with its elementary
 algebra. Nothing here involves a measure: `blockAverage X k` is a function of `ω`, and the three
 lemmas below are the pointwise formula, the scaled-sum normal form, and the value on a constant
-block.
+block. `average_sub_sq_eq_sum_sum` records the one further piece of average algebra used
+downstream: the square of a deviation from an average, expanded as a double sum.
 
 It also carries the two standard selections — `prefixAverage X n` over the first `n` coordinates
 and `followingAverage X n` over the `n` coordinates after them — with their pointwise formulas.
@@ -111,6 +112,20 @@ theorem prod_blockAverage_eq_expect {m N : ℕ} (Y : Fin m → ℕ → Ω → �
   simp only [Fintype.card_pi, Fintype.card_fin, Finset.prod_const, card_univ, div_eq_inv_mul]
   push_cast
   simp [inv_pow]
+
+/-- **The squared deviation of an average, as a double sum.** For a nonempty finite index set `s`,
+the square of `(#s)⁻¹ * ∑ i ∈ s, a i - b` is `(#s)⁻¹ ^ 2` times the double sum of
+`(a i - b) * (a j - b)` over `s × s`. -/
+theorem average_sub_sq_eq_sum_sum {ι R : Type*} [Field R] [CharZero R] {s : Finset ι}
+    (hs : s.Nonempty) (a : ι → R) (b : R) :
+    ((s.card : R)⁻¹ * (∑ i ∈ s, a i) - b) ^ 2
+      = (s.card : R)⁻¹ ^ 2 * ∑ i ∈ s, ∑ j ∈ s, (a i - b) * (a j - b) := by
+  -- both normalised sums are expectations, where subtracting a constant is `expect_const`
+  have hexp : ∀ f : ι → R, (s.card : R)⁻¹ * (∑ i ∈ s, f i) = 𝔼 i ∈ s, f i := fun f => by
+    rw [Finset.expect_eq_sum_div_card, div_eq_inv_mul]
+  have h1 : (s.card : R)⁻¹ * (∑ i ∈ s, a i) - b = (s.card : R)⁻¹ * ∑ i ∈ s, (a i - b) := by
+    rw [hexp, hexp, Finset.expect_sub_distrib, Finset.expect_const hs]
+  rw [h1, mul_pow, sq (∑ i ∈ s, (a i - b)), Finset.sum_mul_sum]
 
 end Probability
 

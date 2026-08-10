@@ -21,6 +21,11 @@ component of the contour's complement, where the winding number vanishes. Togeth
 five determinations package as null-homology of the boundary contour in the truncated
 fundamental domain, the exterior input to the valence-formula residue count.
 
+The file also carries the arc-excision geometry shared by the corner winding computations
+at `i`, at `ρ` and at `ρ + 1`. Each excises a parameter window around its corner and needs
+that window's chord to be exactly the excision radius `ε`. The half-width realising this for
+a radius below the corner chord `2·sin(π/12)` is stated once here rather than three times.
+
 ## Main declarations
 
 * `TauCeti.ModularForm.sqrt_three_div_two_le_im_fdBoundary`: the image height bound.
@@ -29,12 +34,20 @@ fundamental domain, the exterior input to the valence-formula residue count.
   (`_of_half_lt_re`, `_of_re_lt_neg_half`, `_of_lt_im`) and in the unit disc
   (`_of_norm_lt_one`).
 * `TauCeti.ModularForm.isNullHomologous_fdBoundary`: the packaged null-homology.
+* `TauCeti.ModularForm.fdBoundaryArcExcisionHalfWidth`: the parameter half-width whose
+  chord along the arc is a prescribed `ε` below the corner chord, characterised under that
+  bound by `TauCeti.ModularForm.fdBoundaryArcExcisionHalfWidth_pos_and_lt_one_and_two_mul_sin_eq`.
 
 ## References
 
 The truncated-contour strategy follows the fundamental-domain boundary development of
 AINTLIB's `LeanModularForms` (`ForMathlib/FDBoundary.lean`, `FDBoundaryH.lean`,
 `FDBoundaryPath.lean`); the winding transport is Tau Ceti's Hungerbühler–Wasem machinery.
+
+The arc-excision geometry is not from those files: it is extracted from the same project's
+winding-value development (`ForMathlib/ValenceFormula/WindingWeights/I.lean`, `Rho.lean` and
+`RhoPlusOne.lean`), where each corner computation built its own chord-matched half-width.
+It is stated once here so the three share it.
 -/
 
 public noncomputable section
@@ -307,8 +320,49 @@ lemma fdBoundary_mem_coe_truncatedFundamentalDomain (hH : 1 ≤ H) {t : ℝ}
   have := sqrt_three_div_two_le_im_fdBoundary (h32.trans hH) ht
   nlinarith [Real.sqrt_nonneg 3]
 
-end ModularForm
 
+/-- **The chord-matched excision half-width.** The parameter half-width whose chord along
+the unit-circle arc is the excision radius `ε`.
+
+The chord identity `2·sin(δ·π/12) = ε` holds throughout `|ε| ≤ 2`, the range on which
+`Real.arcsin` inverts the sine, and fails beyond it because `Real.arcsin` saturates.
+`fdBoundaryArcExcisionHalfWidth_pos_and_lt_one_and_two_mul_sin_eq` nonetheless assumes the narrower
+`0 < ε < 2·sin(π/12)`: that is the range the excision arguments need, because it also places
+the half-width strictly between `0` and `1`, inside the corner's own arc window. -/
+noncomputable def fdBoundaryArcExcisionHalfWidth (ε : ℝ) : ℝ := 12 / Real.pi * Real.arcsin (ε / 2)
+
+/-- The chord-matched excision half-width, unfolded. -/
+@[simp] lemma fdBoundaryArcExcisionHalfWidth_def (ε : ℝ) :
+    fdBoundaryArcExcisionHalfWidth ε = 12 / Real.pi * Real.arcsin (ε / 2) := (rfl)
+
+/-- **The chord-matched excision half-width does what it is for.** For an excision radius `ε`
+below the corner chord `2·sin(π/12)`, the half-width lies strictly between `0` and `1` and
+reproduces `ε` as its own chord: `2·sin(δ·π/12) = ε`.
+
+This is the trigonometric content shared by the excision constructions at `i`, at `ρ` and at
+`ρ + 1`; it needs no upper bound on `ε` beyond the chord bound. -/
+lemma fdBoundaryArcExcisionHalfWidth_pos_and_lt_one_and_two_mul_sin_eq {ε : ℝ} (hε : 0 < ε)
+    (hε₃ : ε < 2 * Real.sin (Real.pi / 12)) :
+    0 < fdBoundaryArcExcisionHalfWidth ε ∧ fdBoundaryArcExcisionHalfWidth ε < 1 ∧
+      2 * Real.sin (fdBoundaryArcExcisionHalfWidth ε * (Real.pi / 12)) = ε := by
+  rw [fdBoundaryArcExcisionHalfWidth_def]
+  have hπ := Real.pi_pos
+  have hsin1 : Real.sin (Real.pi / 12) ≤ 1 := Real.sin_le_one _
+  have harc_pos : 0 < Real.arcsin (ε / 2) := Real.arcsin_pos.mpr (by linarith)
+  have harc_lt : Real.arcsin (ε / 2) < Real.pi / 12 := by
+    have h1 : Real.arcsin (ε / 2) < Real.arcsin (Real.sin (Real.pi / 12)) :=
+      Real.arcsin_lt_arcsin (by linarith) (by linarith) hsin1
+    rwa [Real.arcsin_sin (by linarith) (by linarith)] at h1
+  refine ⟨by positivity, ?_, ?_⟩
+  · rw [div_mul_eq_mul_div, div_lt_one hπ]
+    linarith
+  · have hδπ : 12 / Real.pi * Real.arcsin (ε / 2) * (Real.pi / 12) = Real.arcsin (ε / 2) := by
+      field_simp
+    rw [hδπ, Real.sin_arcsin (by linarith) (by linarith)]
+    ring
+
+
+end ModularForm
 end TauCeti
 
 end

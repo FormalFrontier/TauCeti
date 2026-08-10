@@ -12,6 +12,7 @@ import TauCeti.NumberTheory.ModularForms.LevelOne.FundamentalDomainBoundary.Wind
 import Mathlib.Analysis.SpecialFunctions.Trigonometric.Inverse
 import Mathlib.MeasureTheory.Integral.CircleIntegral
 import TauCeti.Analysis.Complex.LogBranch
+import TauCeti.NumberTheory.ModularForms.LevelOne.FundamentalDomainBoundary.Winding.Basic
 import TauCeti.Analysis.Contour.LogDerivFTC
 import TauCeti.NumberTheory.ModularForms.LevelOne.FundamentalDomainBoundary.Deriv
 
@@ -47,6 +48,8 @@ open Complex Filter MeasureTheory Set Topology
 
 namespace TauCeti
 
+open Contour
+
 namespace ModularForm
 
 
@@ -55,37 +58,6 @@ variable {H δ : ℝ}
 /-- The corner row lies strictly below `1`. -/
 private lemma sqrt_three_div_two_lt_one : Real.sqrt 3 / 2 < 1 := by
   nlinarith [Real.sq_sqrt (by positivity : (3 : ℝ) ≥ 0), Real.sqrt_nonneg 3]
-
-/-- The ordered slit-plane comparison step of the telescope: the canonical logarithmic FTC
-`TauCeti.Contour.integral_deriv_div_eq_log_sub_log` applied to the comparison function, its
-integrability from the continuous derivative, both transported to the contour across the
-interior agreement. -/
-private lemma slit_comparison {g h : ℝ → ℂ} {a b : ℝ} (hab : a ≤ b)
-    (hh_cont : ContinuousOn h (Icc a b))
-    (hh_diff : ∀ t ∈ Ioo a b, DifferentiableAt ℝ h t)
-    (hh_deriv_cont : ContinuousOn (deriv h) (Icc a b))
-    (hh_slit : ∀ t ∈ Icc a b, h t ∈ Complex.slitPlane)
-    (heq : Set.EqOn g h (Ioo a b)) (heq_a : g a = h a) (heq_b : g b = h b) :
-    IntervalIntegrable (fun t ↦ deriv g t / g t) volume a b ∧
-    ∫ t in a..b, deriv g t / g t = Complex.log (g b) - Complex.log (g a) := by
-  have hu : uIcc a b = Icc a b := uIcc_of_le hab
-  have hne : ∀ t ∈ Icc a b, h t ≠ 0 := fun t ht ↦ Complex.slitPlane_ne_zero (hh_slit t ht)
-  have heq' : Set.EqOn (fun t ↦ deriv g t / g t) (fun t ↦ deriv h t / h t) (uIoo a b) := by
-    intro t ht
-    rw [uIoo_of_le hab] at ht
-    simp only [heq ht, heq.deriv isOpen_Ioo ht]
-  have hint : IntervalIntegrable (fun t ↦ deriv h t / h t) volume a b :=
-    ((hh_deriv_cont.div hh_cont hne).mono (hu ▸ Set.Subset.rfl)).intervalIntegrable
-  refine ⟨hint.congr_uIoo fun t ht ↦ (heq' ht).symm, ?_⟩
-  calc ∫ t in a..b, deriv g t / g t
-      = ∫ t in a..b, deriv h t / h t := intervalIntegral.integral_congr_uIoo heq'
-    _ = Complex.log (h b) - Complex.log (h a) :=
-        Contour.integral_deriv_div_eq_log_sub_log countable_empty (hu ▸ hh_cont)
-          (fun t ht ↦ (hh_diff t (by
-            rw [min_eq_left hab, max_eq_right hab] at ht
-            exact ht.1)).hasDerivAt)
-          (fun t ht ↦ hh_slit t (hu ▸ ht)) hint
-    _ = Complex.log (g b) - Complex.log (g a) := by rw [heq_a, heq_b]
 
 /-- The right-vertical piece `[0, 1]` of the telescope: the shifted contour stays in the
 right half-plane, so the logarithmic integral is a difference of principal logarithms. -/
@@ -101,7 +73,7 @@ private lemma telescope_piece_right_vertical (H : ℝ) :
   have hd : deriv (fun s ↦ fdBoundary_segment1 H s - Complex.I) =
       fun _ ↦ (UpperHalfPlane.ρ : ℂ) + 1 - (1 / 2 + H * Complex.I) :=
     funext fun s ↦ by rw [deriv_sub_const, deriv_fdBoundary_segment1]
-  exact slit_comparison
+  exact intervalIntegrable_deriv_div_and_integral_deriv_div_eq_log_sub_log_of_mem_slitPlane_of_le
     (g := fun s ↦ fdBoundary H s - Complex.I)
     (h := fun s ↦ fdBoundary_segment1 H s - Complex.I) (by norm_num)
     (Continuous.continuousOn (Differentiable.continuous fun s ↦
@@ -136,7 +108,7 @@ private lemma telescope_piece_arc_left (H : ℝ) (hδ : 0 < δ) (hδ1 : δ < 1) 
     funext fun s ↦ by rw [deriv_sub_const, deriv_fdBoundary_segment2]
   have hθc : Continuous fun s : ℝ ↦ Real.pi / 3 + (s - 1) * (Real.pi / 2 - Real.pi / 3) := by
     fun_prop
-  exact slit_comparison
+  exact intervalIntegrable_deriv_div_and_integral_deriv_div_eq_log_sub_log_of_mem_slitPlane_of_le
     (g := fun s ↦ fdBoundary H s - Complex.I)
     (h := fun s ↦ fdBoundary_segment2 s - Complex.I) hab
     (Continuous.continuousOn (Differentiable.continuous fun s ↦
@@ -174,7 +146,7 @@ private lemma telescope_piece_arc_right (H : ℝ) (hδ : 0 < δ) (hδ1 : δ < 1)
   have hθc : Continuous fun s : ℝ ↦
       Real.pi / 2 + (s - 2) * (2 * Real.pi / 3 - Real.pi / 2) := by
     fun_prop
-  exact slit_comparison
+  exact intervalIntegrable_deriv_div_and_integral_deriv_div_eq_log_sub_log_of_mem_slitPlane_of_le
     (g := fun s ↦ fdBoundary H s - Complex.I)
     (h := fun s ↦ fdBoundary_segment3 s - Complex.I) hab
     (Continuous.continuousOn (Differentiable.continuous fun s ↦
@@ -366,7 +338,7 @@ private lemma telescope_piece_ceiling (hH : 1 < H) :
     refine Complex.mem_slitPlane_iff.mpr (Or.inr ?_)
     rw [Complex.sub_im, Complex.I_im, im_fdBoundary_segment5 H ht]
     linarith
-  exact slit_comparison
+  exact intervalIntegrable_deriv_div_and_integral_deriv_div_eq_log_sub_log_of_mem_slitPlane_of_le
     (g := fun s ↦ fdBoundary H s - Complex.I)
     (h := fun s ↦ fdBoundary_segment5 H s - Complex.I) (by norm_num)
     (Continuous.continuousOn (Differentiable.continuous fun s ↦
@@ -439,20 +411,16 @@ private theorem ftc_logDeriv_telescope_I (H : ℝ) (hH : 1 < H) {δ : ℝ} (hδ 
 
 variable {H ε δ t : ℝ}
 
-/-- The sine of a sub-half-turn multiple of `π/12` factors through the absolute value. -/
-private lemma abs_sin_mul_pi_div_twelve {u : ℝ} (hu : |u| ≤ 1) :
-    |Real.sin (u * (Real.pi / 12))| = Real.sin (|u| * (Real.pi / 12)) := by
-  rw [Real.abs_sin_eq_sin_abs_of_abs_le_pi (by
-      rw [abs_mul, abs_of_pos (by positivity : (0 : ℝ) < Real.pi / 12)]
-      nlinarith [Real.pi_pos, abs_nonneg u]),
-    abs_mul, abs_of_pos (by positivity : (0 : ℝ) < Real.pi / 12)]
-
 /-- Far from the arc top, the chord distance strictly exceeds the excision chord. -/
 private lemma lt_norm_fdBoundary_sub_I_arc_of_far (harc : t ∈ Icc (1 : ℝ) 3) (hd : 0 < δ)
     (hd1 : δ < 1) (hfar : δ < |t - 2|) :
     2 * Real.sin (δ * (Real.pi / 12)) < ‖fdBoundary H t - Complex.I‖ := by
   have habs1 : |t - 2| ≤ 1 := abs_le.mpr ⟨by linarith [harc.1], by linarith [harc.2]⟩
-  rw [norm_fdBoundary_sub_I_arc H harc, abs_sin_mul_pi_div_twelve habs1]
+  rw [norm_fdBoundary_sub_I_arc H harc,
+    Real.abs_sin_eq_sin_abs_of_abs_le_pi (by
+      rw [abs_mul, abs_of_pos (by positivity : (0 : ℝ) < Real.pi / 12)]
+      nlinarith [Real.pi_pos, habs1]),
+    abs_mul, abs_of_pos (by positivity : (0 : ℝ) < Real.pi / 12)]
   have hmono : Real.sin (δ * (Real.pi / 12)) < Real.sin (|t - 2| * (Real.pi / 12)) := by
     refine Real.strictMonoOn_sin ⟨by nlinarith [Real.pi_pos], by nlinarith [Real.pi_pos]⟩
       ⟨by nlinarith [Real.pi_pos, abs_nonneg (t - 2)], by nlinarith [Real.pi_pos]⟩ ?_
@@ -465,7 +433,11 @@ private lemma norm_fdBoundary_sub_I_arc_le_of_near (harc : t ∈ Icc (1 : ℝ) 3
     ‖fdBoundary H t - Complex.I‖ ≤ 2 * Real.sin (δ * (Real.pi / 12)) := by
   have habs1 : |t - 2| ≤ 1 := hnear.trans hd1.le
   have hd0 : 0 ≤ δ := (abs_nonneg _).trans hnear
-  rw [norm_fdBoundary_sub_I_arc H harc, abs_sin_mul_pi_div_twelve habs1]
+  rw [norm_fdBoundary_sub_I_arc H harc,
+    Real.abs_sin_eq_sin_abs_of_abs_le_pi (by
+      rw [abs_mul, abs_of_pos (by positivity : (0 : ℝ) < Real.pi / 12)]
+      nlinarith [Real.pi_pos, habs1]),
+    abs_mul, abs_of_pos (by positivity : (0 : ℝ) < Real.pi / 12)]
   have hmono : Real.sin (|t - 2| * (Real.pi / 12)) ≤ Real.sin (δ * (Real.pi / 12)) := by
     refine Real.strictMonoOn_sin.monotoneOn
       ⟨by nlinarith [Real.pi_pos, abs_nonneg (t - 2)], by nlinarith [Real.pi_pos]⟩
@@ -513,26 +485,6 @@ private lemma norm_le_of_near (hd1 : δ < 1)
   · linarith [ht.1]
   · linarith [ht.2]
 
-/-- The excision half-width `δ(ε) = 12/π · arcsin(ε/2)` is positive, below `1`, and
-turns the chord identity into the exact excision radius `ε`. -/
-private lemma delta_spec (hε : 0 < ε) (hε₁ : ε < 1 / 2)
-    (hε₃ : ε < 2 * Real.sin (Real.pi / 12)) :
-    0 < 12 / Real.pi * Real.arcsin (ε / 2) ∧ 12 / Real.pi * Real.arcsin (ε / 2) < 1 ∧
-      2 * Real.sin (12 / Real.pi * Real.arcsin (ε / 2) * (Real.pi / 12)) = ε := by
-  have hπ := Real.pi_pos
-  have harc_pos : 0 < Real.arcsin (ε / 2) := Real.arcsin_pos.mpr (by linarith)
-  have harc_lt : Real.arcsin (ε / 2) < Real.pi / 12 := by
-    have h1 : Real.arcsin (ε / 2) < Real.arcsin (Real.sin (Real.pi / 12)) :=
-      Real.arcsin_lt_arcsin (by linarith) (by linarith) (Real.sin_le_one _)
-    rwa [Real.arcsin_sin (by linarith) (by linarith)] at h1
-  refine ⟨by positivity, ?_, ?_⟩
-  · rw [div_mul_eq_mul_div, div_lt_one hπ]
-    linarith
-  · have hδπ : 12 / Real.pi * Real.arcsin (ε / 2) * (Real.pi / 12) = Real.arcsin (ε / 2) := by
-      field_simp
-    rw [hδπ, Real.sin_arcsin (by linarith) (by linarith)]
-    ring
-
 /-- **The excision collapse**: for small `ε`, the `ε`-excised index integrand of the
 boundary contour about `i` is interval integrable, and its integral is exactly
 `-πi - 2·arcsin(ε/2)·i` — the telescope value at the matched half-width `δ(ε)`. -/
@@ -544,30 +496,16 @@ private lemma truncated_integral_spec (hH : 1 < H) (hε : 0 < ε) (hε₁ : ε <
     ∫ t in (0 : ℝ)..5, (if ε < ‖fdBoundary H t - Complex.I‖
         then (fdBoundary H t - Complex.I)⁻¹ * deriv (fdBoundary H) t else 0) =
       -(Real.pi : ℂ) * Complex.I - ((2 * Real.arcsin (ε / 2) : ℝ) : ℂ) * Complex.I := by
-  obtain ⟨hδ_pos, hδ_lt, h2sin⟩ := delta_spec hε hε₁ hε₃
-  set δ := 12 / Real.pi * Real.arcsin (ε / 2) with hδ_def
+  obtain ⟨hδ_pos, hδ_lt, h2sin⟩ :=
+    fdBoundaryArcExcisionHalfWidth_pos_and_lt_one_and_two_mul_sin_eq hε hε₃
+  set δ := fdBoundaryArcExcisionHalfWidth ε with hδ_def
   obtain ⟨hi_left, hi_right, hval⟩ := ftc_logDeriv_telescope_I H hH hδ_pos hδ_lt
-  have hconv : ∀ s : ℝ, (fdBoundary H s - Complex.I)⁻¹ * deriv (fdBoundary H) s =
-      deriv (fun r ↦ fdBoundary H r - Complex.I) s / (fdBoundary H s - Complex.I) :=
-    fun s ↦ by rw [deriv_sub_const, inv_mul_eq_div]
-  have hae_left : ∀ᵐ s ∂volume, s ∈ uIoc (0 : ℝ) (2 - δ) →
-      deriv (fun r ↦ fdBoundary H r - Complex.I) s / (fdBoundary H s - Complex.I) =
-        (if ε < ‖fdBoundary H s - Complex.I‖
-          then (fdBoundary H s - Complex.I)⁻¹ * deriv (fdBoundary H) s else 0) := by
-    have hb_ae : ({2 - δ} : Set ℝ)ᶜ ∈ ae volume := by
-      simp [MeasureTheory.mem_ae_iff]
-    filter_upwards [hb_ae] with s hs_ne hmem
-    rw [uIoc_of_le (by linarith)] at hmem
-    have hsIco : s ∈ Ico (0 : ℝ) (2 - δ) := ⟨hmem.1.le,
-      lt_of_le_of_ne hmem.2 fun h ↦ hs_ne (mem_singleton_iff.mpr h)⟩
-    rw [if_pos (lt_norm_of_far_left hε₁ hδ_pos hδ_lt h2sin hsIco), hconv s]
-  have hae_right : ∀ᵐ s ∂volume, s ∈ uIoc (2 + δ : ℝ) 5 →
-      deriv (fun r ↦ fdBoundary H r - Complex.I) s / (fdBoundary H s - Complex.I) =
-        (if ε < ‖fdBoundary H s - Complex.I‖
-          then (fdBoundary H s - Complex.I)⁻¹ * deriv (fdBoundary H) s else 0) := by
-    refine Eventually.of_forall fun s hmem ↦ ?_
-    rw [uIoc_of_le (by linarith)] at hmem
-    rw [if_pos (lt_norm_of_far_right hε₁ hε₂ hδ_pos hδ_lt h2sin hmem), hconv s]
+  have hae_left := Contour.ae_logDeriv_sub_eq_truncated (γ := fdBoundary H)
+    (z₀ := Complex.I) (a := (0 : ℝ)) (b := 2 - δ) (by linarith)
+    fun s hs ↦ lt_norm_of_far_left hε₁ hδ_pos hδ_lt h2sin ⟨hs.1.le, hs.2⟩
+  have hae_right := Contour.ae_logDeriv_sub_eq_truncated (γ := fdBoundary H)
+    (z₀ := Complex.I) (a := (2 + δ : ℝ)) (b := 5) (by linarith)
+    fun s hs ↦ lt_norm_of_far_right hε₁ hε₂ hδ_pos hδ_lt h2sin ⟨hs.1, hs.2.le⟩
   have hmid : EqOn (fun s ↦ if ε < ‖fdBoundary H s - Complex.I‖
       then (fdBoundary H s - Complex.I)⁻¹ * deriv (fdBoundary H) s else 0)
       (fun _ ↦ (0 : ℂ)) (uIcc (2 - δ : ℝ) (2 + δ)) := by
@@ -588,7 +526,7 @@ private lemma truncated_integral_spec (hH : 1 < H) (hε : 0 < ε) (hε₁ : ε <
     exact (hmid hsub).symm
   refine ⟨(hi02.trans himid).trans hi25, ?_⟩
   have hδ6 : δ * (Real.pi / 6) = 2 * Real.arcsin (ε / 2) := by
-    rw [hδ_def]
+    simp only [hδ_def, fdBoundaryArcExcisionHalfWidth_def]
     field_simp
     ring
   have hmid0 : ∫ s in (2 - δ : ℝ)..(2 + δ), (if ε < ‖fdBoundary H s - Complex.I‖

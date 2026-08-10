@@ -69,8 +69,8 @@ it is a Layer 5 corollary of the analytic density theorem, not an input to it.
 * `TauCeti.matrixCoeff_mem_representativeSubmodule`: every matrix coefficient of a
   finite-dimensional continuous representation lies in `𝓡(G)`.
 * `TauCeti.IsRepresentative.mul`, `TauCeti.IsRepresentative.star`,
-  `TauCeti.isRepresentative_one`: the representative functions themselves are closed under
-  multiplication and conjugation and contain the constants.
+  `TauCeti.isRepresentative_one`, `TauCeti.isRepresentative_zero`: the representative functions
+  themselves are closed under multiplication and conjugation and contain the constants and `0`.
 * `TauCeti.mul_mem_representativeSubmodule`, `TauCeti.star_mem_representativeSubmodule`: the same
   closure properties for their span.
 * `TauCeti.ContRepresentation.character_mem_representativeSubmodule`: characters lie in `𝓡(G)`.
@@ -154,6 +154,14 @@ theorem isRepresentative_one : IsRepresentative (1 : C(G, 𝕜)) := by
     simp
   rw [h]
   exact isRepresentative_matrixCoeff _ _ _ _
+
+variable (𝕜 G) in
+/-- **The zero function is representative.** It is the matrix coefficient of the trivial
+one-dimensional representation at the zero vector. -/
+theorem isRepresentative_zero : IsRepresentative (0 : C(G, 𝕜)) := by
+  simpa only [matrixCoeff_zero_left (ContRepresentation.trivial 𝕜 G 𝕜) continuous_const] using
+    isRepresentative_matrixCoeff (ContRepresentation.trivial 𝕜 G 𝕜) continuous_const
+      (0 : 𝕜) (0 : 𝕜)
 
 variable (𝕜 G) in
 /-- The constant function `1` lies in `𝓡(G)`. -/

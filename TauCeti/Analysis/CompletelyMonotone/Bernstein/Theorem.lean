@@ -95,19 +95,16 @@ private theorem sub_eq_integral_exp_neg_mul_of_weak_limit {L : ℝ} {C : ℝ≥0
       (C := (C : ℝ)) (chafaiRescaled f)
       (hmass'.mono fun n hn => hn.trans
         (by simp [ENNReal.ofReal_coe_nnreal])) t ht).mono_left hU
-  -- Split the error integral, using that both kernels are bounded continuous.
+  -- the mass bound makes the Chafaï measures eventually finite along `U`
+  have hfin : ∀ᶠ n in (U : Filter ℕ), IsFiniteMeasure (chafaiRescaled f n) :=
+    Filter.Eventually.mono (hU hmass') fun n hn => ⟨hn.trans_lt ENNReal.coe_lt_top⟩
   have hsplit : ∀ᶠ n in (U : Filter ℕ), ∫ p : ℝ≥0,
       (bernsteinKernel n t (p : ℝ) - Real.exp (-(t * (p : ℝ)))) ∂(chafaiRescaled f n)
         = (∫ p, bernsteinKernel n t (p : ℝ) ∂(chafaiRescaled f n))
           - ∫ p, Real.exp (-(t * (p : ℝ))) ∂(chafaiRescaled f n) := by
-    filter_upwards [hU hmass'] with n hn
-    -- Finiteness on the tail comes from the mass bound itself.
-    have : IsFiniteMeasure (chafaiRescaled f n) := ⟨hn.trans_lt ENNReal.coe_lt_top⟩
-    have hb : Integrable (fun p : ℝ≥0 => bernsteinKernel n t (p : ℝ))
-        (chafaiRescaled f n) := by
-      have h := (bernsteinKernelBoundedContinuous n ht).integrable (chafaiRescaled f n)
-      rwa [funext (bernsteinKernelBoundedContinuous_apply n ht)] at h
-    exact integral_sub hb (integrable_exp_neg_mul (chafaiRescaled f n) ht)
+    filter_upwards [hfin] with n hn
+    exact integral_sub (integrable_bernsteinKernel (chafaiRescaled f n) n ht)
+      (integrable_exp_neg_mul (chafaiRescaled f n) ht)
   -- The Bernstein integral is constantly `f t - L` once `n ≥ 2`.
   have hconst : ∀ᶠ n in (U : Filter ℕ),
       ∫ p, bernsteinKernel n t (p : ℝ) ∂(chafaiRescaled f n) = f t - L := by

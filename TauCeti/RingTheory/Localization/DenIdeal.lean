@@ -15,7 +15,8 @@ For `x` in an `R`-algebra `K`, the denominator ideal `Algebra.denIdeal K x` is t
 localization of `R` at its non-zero-divisors it is nonzero (`Algebra.denIdeal_ne_bot`), because
 any expression of `x` as a fraction exhibits a denominator in it.
 
-This is general commutative algebra, used in `TauCeti/RingTheory/DedekindDomain/SInteger.lean`
+This is general commutative algebra, used in
+`TauCeti/RingTheory/DedekindDomain/SInteger/Basic.lean`
 to show that every ideal of a ring of `S`-integers is extended from the base.
 
 Split out of material adapted from Michael Stoll's elliptic-curves formalisation
