@@ -29,6 +29,10 @@ the last two are short.
 
 * `TauCeti.DynkinType.f4SimplyConnectedRootDatum` is the pinned forty-eight-root datum.
 * `TauCeti.DynkinType.f4ReflectionIndex` is its explicit action on root indices.
+* The `RootPairing.IsRootSystem` instance for `TauCeti.DynkinType.f4SimplyConnectedRootDatum` says
+  that its roots span the character lattice and its coroots span the cocharacter lattice. The
+  latter, `span_coroot_eq_top`, is the simply connected condition the file is named for: the datum
+  has the largest cocharacter lattice compatible with its coroots, so no isogeny quotient is taken.
 * `TauCeti.DynkinType.f4SimplyConnectedBase` is its Bourbaki-numbered base.
 * `TauCeti.DynkinType.f4SimplyConnectedRootDatum_pairing_eq_cartanMatrix_F₄` pins the numbering.
 * `TauCeti.DynkinType.hasCartanType_f4SimplyConnectedRootDatum` identifies its Cartan type.
@@ -105,6 +109,15 @@ the cocharacter lattice. -/
 /-- The first-half index underlying a root, identifying a negative root with its positive
 opposite. -/
 @[expose] def f4PositiveIndex (i : Fin 48) : Fin 24 := ⟨i % 24, Nat.mod_lt _ (by omega)⟩
+
+/-- The first twenty-four indices are their own first-half index. -/
+@[simp] lemma f4PositiveIndex_castAdd (i : Fin 24) : f4PositiveIndex (Fin.castAdd 24 i) = i :=
+  Fin.ext (by simp only [f4PositiveIndex, Fin.val_castAdd, Nat.mod_eq_of_lt i.isLt])
+
+/-- Adding twenty-four to a first-half index leaves the first-half index unchanged. -/
+@[simp] lemma f4PositiveIndex_addNat (i : Fin 24) : f4PositiveIndex (Fin.addNat i 24) = i :=
+  Fin.ext (by
+    simp only [f4PositiveIndex, Fin.val_addNat, Nat.add_mod_right, Nat.mod_eq_of_lt i.isLt])
 
 /-- The permutation table for reflection in each of the twenty-four positive `F4` roots. Reflection
 in the corresponding negative root is the same permutation. -/
@@ -186,6 +199,12 @@ in the corresponding negative root is the same permutation. -/
 index `j` to `f4ReflectionIndex i j`. -/
 @[expose] def f4ReflectionIndex (i j : Fin 48) : Fin 48 := f4ReflectionTable (f4PositiveIndex i) j
 
+/-- Reflection in one of the first twenty-four roots permutes root indices by the corresponding row
+of `f4ReflectionTable`. -/
+lemma f4ReflectionIndex_castAdd (i : Fin 24) (j : Fin 48) :
+    f4ReflectionIndex (Fin.castAdd 24 i) j = f4ReflectionTable i j := by
+  simp only [f4ReflectionIndex, f4PositiveIndex_castAdd]
+
 private lemma f4ReflectionIndex_root_castAdd (i : Fin 24) (j : Fin 48) :
     f4Root j - (f4Root j ⬝ᵥ f4Coroot (Fin.castAdd 24 i)) • f4Root (Fin.castAdd 24 i) =
       f4Root (f4ReflectionIndex (Fin.castAdd 24 i) j) := by
@@ -200,7 +219,7 @@ private lemma f4ReflectionIndex_coroot_castAdd (i : Fin 24) (j : Fin 48) :
 positive opposite. -/
 lemma f4ReflectionIndex_addNat (i : Fin 24) (j : Fin 48) :
     f4ReflectionIndex (Fin.addNat i 24) j = f4ReflectionIndex (Fin.castAdd 24 i) j := by
-  fin_cases i <;> rfl
+  simp only [f4ReflectionIndex, f4PositiveIndex_addNat, f4PositiveIndex_castAdd]
 
 /-- Every root index is either one of the first twenty-four or the index of the negative of one. -/
 private lemma f4Index_cases (i : Fin 48) :
@@ -239,8 +258,15 @@ private lemma f4ReflectionIndex_coroot (i j : Fin 48) :
     (fun k j => by rw [f4Root_addNat, neg_dotProduct]) f4ReflectionIndex_addNat
     f4ReflectionIndex_coroot_castAdd i j
 
+private lemma f4Root_coroot_two_castAdd (i : Fin 24) :
+    f4Root (Fin.castAdd 24 i) ⬝ᵥ f4Coroot (Fin.castAdd 24 i) = 2 := by
+  decide +revert
+
 private lemma f4Root_coroot_two (i : Fin 48) : f4Root i ⬝ᵥ f4Coroot i = 2 := by
-  fin_cases i <;> decide
+  obtain ⟨k, rfl⟩ | ⟨k, rfl⟩ := f4Index_cases i
+  · exact f4Root_coroot_two_castAdd k
+  · rw [f4Root_addNat, f4Coroot_addNat, neg_dotProduct_neg]
+    exact f4Root_coroot_two_castAdd k
 
 /-- The pinned simply connected root datum of type `F4`.
 
@@ -279,8 +305,8 @@ noncomputable def f4SimplyConnectedRootDatum :
   rw [← RootPairing.root_coroot_eq_pairing]
   simp
 
-/-- The Weyl action of the pinned `F4` datum on root indices is the explicit table
-`f4ReflectionIndex`. -/
+/-- Reflection in the root of index `i` permutes the root indices of the pinned `F4` datum by the
+explicit table `f4ReflectionIndex i`. -/
 @[simp] lemma f4SimplyConnectedRootDatum_reflectionPerm (i j : Fin 48) :
     f4SimplyConnectedRootDatum.reflectionPerm i j = f4ReflectionIndex i j := by
   refine f4Root.injective ?_
@@ -349,10 +375,20 @@ private lemma f4Root_eq_sum (i : Fin 24) :
       ∑ k, f4RootCoefficients i k • f4Root (Fin.castAdd 44 k) := by
   fin_cases i <;> decide
 
+private lemma f4Coroot_castAdd_nonneg (i : Fin 24) (k : Fin 4) :
+    0 ≤ f4Coroot (Fin.castAdd 24 i) k := by decide +revert
+
 private lemma f4Coroot_eq_sum (i : Fin 24) :
     f4Coroot (Fin.castAdd 24 i) =
       ∑ k, f4CorootCoefficients i k • f4Coroot (Fin.castAdd 44 k) := by
-  fin_cases i <;> decide
+  have hk (k : Fin 4) : f4CorootCoefficients i k • f4Coroot (Fin.castAdd 44 k) =
+      Pi.single k (f4Coroot (Fin.castAdd 24 i) k) := by
+    rw [f4Coroot_castAdd, ← Pi.single_smul', nsmul_eq_mul, mul_one]
+    simp only [f4CorootCoefficients, Int.toNat_of_nonneg (f4Coroot_castAdd_nonneg i k)]
+  funext k
+  rw [Finset.sum_apply]
+  simp only [hk]
+  exact (Fintype.sum_pi_single k _).symm
 
 private lemma mem_or_neg_mem_of_coefficients (f : Fin 48 → (Fin 4 → ℤ))
     (c : Fin 24 → Fin 4 → ℕ)
@@ -427,12 +463,11 @@ relabelling in `HasCartanType`. -/
 theorem f4SimplyConnectedRootDatum_pairing_eq_cartanMatrix_F₄ (i j : Fin 4) :
     f4SimplyConnectedRootDatum.pairing (Fin.castAdd 44 i) (Fin.castAdd 44 j) =
       CartanMatrix.F₄ i j := by
-  rw [f4SimplyConnectedRootDatum_pairing]
-  fin_cases i <;> fin_cases j <;> decide
+  rw [f4SimplyConnectedRootDatum_pairing, f4Root_castAdd, f4Coroot_castAdd, dotProduct_single_one]
 
 /-- The Bourbaki numbering of the support of `f4SimplyConnectedBase`: the simple root at support
 element `i` is Bourbaki node `i + 1`. -/
-def f4SimplyConnectedBaseEquiv : f4SimplyConnectedBase.support ≃ Fin 4 where
+@[expose] def f4SimplyConnectedBaseEquiv : f4SimplyConnectedBase.support ≃ Fin 4 where
   toFun i := ⟨i, by
     have hi := i.property
     simp only [f4SimplyConnectedBase_support, mem_f4Support] at hi
@@ -441,17 +476,28 @@ def f4SimplyConnectedBaseEquiv : f4SimplyConnectedBase.support ≃ Fin 4 where
   left_inv i := by apply Subtype.ext; apply Fin.ext; simp
   right_inv i := by apply Fin.ext; simp
 
+/-- The support element numbered `i` by `f4SimplyConnectedBaseEquiv` is the root index
+`Fin.castAdd 44 i`, the `i`-th of the first four root indices. -/
+@[simp] lemma f4SimplyConnectedBaseEquiv_symm_apply (i : Fin 4) :
+    (f4SimplyConnectedBaseEquiv.symm i : Fin 48) = Fin.castAdd 44 i := rfl
+
+/-- The Bourbaki number `f4SimplyConnectedBaseEquiv` assigns to a support element is its root
+index. -/
+@[simp] lemma val_f4SimplyConnectedBaseEquiv (i : f4SimplyConnectedBase.support) :
+    ((f4SimplyConnectedBaseEquiv i : Fin 4) : ℕ) = ((i : Fin 48) : ℕ) := rfl
+
 /-- The pinned simply connected `F4` datum has Cartan type `F4`. -/
 theorem hasCartanType_f4SimplyConnectedRootDatum :
     HasCartanType f4SimplyConnectedRootDatum f4SimplyConnectedBase F4 := by
   rw [hasCartanType_iff]
   refine ⟨f4SimplyConnectedBaseEquiv, fun i j => ?_⟩
-  have hi : (i : Fin 48) = Fin.castAdd 44 (f4SimplyConnectedBaseEquiv i) := rfl
-  have hj : (j : Fin 48) = Fin.castAdd 44 (f4SimplyConnectedBaseEquiv j) := rfl
+  have key (k : f4SimplyConnectedBase.support) :
+      (k : Fin 48) = Fin.castAdd 44 (f4SimplyConnectedBaseEquiv k) := by
+    rw [← f4SimplyConnectedBaseEquiv_symm_apply, Equiv.symm_apply_apply]
   rw [← (FaithfulSMul.algebraMap_injective ℤ ℤ).eq_iff,
-    RootPairing.Base.algebraMap_cartanMatrixIn_apply, cartanMatrix_F4, hi, hj,
+    RootPairing.Base.algebraMap_cartanMatrixIn_apply, cartanMatrix_F4, key i, key j,
     f4SimplyConnectedRootDatum_pairing_eq_cartanMatrix_F₄]
-  exact rfl
+  exact (Algebra.algebraMap_self_apply _).symm
 
 end DynkinType
 
