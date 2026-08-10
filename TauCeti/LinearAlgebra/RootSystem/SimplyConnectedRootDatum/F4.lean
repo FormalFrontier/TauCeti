@@ -614,7 +614,7 @@ def f4SimplyConnectedBase : f4SimplyConnectedRootDatum.Base where
 /-- The Cartan integers at the first four root indices are Mathlib's Bourbaki-numbered `F4`
 matrix. This pins the node order independently of the existential relabelling in `HasCartanType`. -/
 @[simp] theorem f4SimplyConnectedRootDatum_pairing_eq_cartanMatrix_F4 (i j : Fin 4) :
-    f4SimplyConnectedRootDatum.pairing (Fin.castAdd 44 i) (Fin.castAdd 44 j) =
+    f4Root (Fin.castAdd 44 i) ⬝ᵥ f4Coroot (Fin.castAdd 44 j) =
       CartanMatrix.F₄ i j := by
   fin_cases i <;> fin_cases j <;> decide
 
