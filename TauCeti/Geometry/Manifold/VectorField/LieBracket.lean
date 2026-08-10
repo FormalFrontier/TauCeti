@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.Geometry.Manifold.VectorField.LieBracket
+public import TauCeti.Geometry.Manifold.VectorField.Regularity
 
 /-!
 # Directional derivatives and the manifold Lie bracket
@@ -19,8 +20,6 @@ prerequisite for Deliverable A, Layer 1 of the Lie-groups roadmap.
 
 ## Main result
 
-* `mvfderiv_apply_eq_mfderiv_apply`: identifies `mvfderiv` with `mfderiv` when the target is a
-  normed vector space.
 * `mvfderiv_mlieBracket`: a differential sends the manifold bracket to the commutator of
   directional derivatives.
 
@@ -45,15 +44,6 @@ variable {𝕜 : Type*} [NontriviallyNormedField 𝕜] {n : ℕ∞ω}
   {H : Type*} [TopologicalSpace H] {I : ModelWithCorners 𝕜 E H}
   {M : Type*} [TopologicalSpace M] [ChartedSpace H M]
   [IsManifold I (minSmoothness 𝕜 2) M]
-
-omit [CompleteSpace E] [IsManifold I (minSmoothness 𝕜 2) M] in
-/-- For a normed vector-space target, the tangent-space identification in `mvfderiv` is the
-canonical one, so evaluating it agrees with evaluating `mfderiv`. -/
-theorem mvfderiv_apply_eq_mfderiv_apply (f : M → F) (x : M) (v : TangentSpace I x) :
-    mvfderiv I f x v = mfderiv I 𝓘(𝕜, F) f x v := by
-  rw [mvfderiv, ContinuousLinearMap.comp_apply]
-  -- `fromTangentSpace` is Mathlib's explicit interface for this canonical identification.
-  rfl
 
 omit [CompleteSpace E] in
 private theorem fderivWithin_chart_apply_mpullbackWithin
