@@ -89,7 +89,9 @@ namespace TauCeti
 
 namespace YoungTableau
 
-variable (k : Type u) [CommRing k] [Algebra ℚ k] {μ : YoungDiagram} (n : ℕ)
+section Semiring
+
+variable (k : Type u) [CommSemiring k] [Algebra ℚ k] {μ : YoungDiagram} (n : ℕ)
 
 /-- On a shape with at most one row the Young symmetrizer acts on the tensor power by the
 symmetrization operator `∑_σ σ`. -/
@@ -102,6 +104,17 @@ theorem permTensorActionAlgHom_youngSymmetrizerOver_of_rowSubgroup_eq_top (t : Y
   exact Finset.sum_congr rfl fun σ _ => by
     rw [permTensorActionAlgHom_of, permTensorAction_apply]
 
+end Semiring
+
+section Ring
+
+-- The signed sum below is a `ℤ`-linear combination, so it asks the base ring for negation; that is
+-- the only difference from the `CommSemiring` hypothesis of the section above, and it is the same
+-- split as between `TauCeti.YoungTableau.youngSymmetrizerOver_eq_sum_of_rowSubgroup_eq_top` and
+-- `TauCeti.YoungTableau.youngSymmetrizerOver_eq_sum_of_colSubgroup_eq_top`, which the two theorems
+-- respectively rewrite with.
+variable (k : Type u) [CommRing k] [Algebra ℚ k] {μ : YoungDiagram} (n : ℕ)
+
 /-- On a shape with at most one column the Young symmetrizer acts on the tensor power by the
 antisymmetrization operator `∑_σ sgn(σ) σ`. -/
 theorem permTensorActionAlgHom_youngSymmetrizerOver_of_colSubgroup_eq_top (t : YoungTableau μ)
@@ -112,6 +125,8 @@ theorem permTensorActionAlgHom_youngSymmetrizerOver_of_colSubgroup_eq_top (t : Y
   rw [youngSymmetrizerOver_eq_sum_of_colSubgroup_eq_top k t h, map_sum]
   exact Finset.sum_congr rfl fun σ _ => by
     rw [map_zsmul, permTensorActionAlgHom_of, permTensorAction_apply]
+
+end Ring
 
 end YoungTableau
 
