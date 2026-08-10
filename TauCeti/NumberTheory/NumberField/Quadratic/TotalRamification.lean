@@ -6,6 +6,7 @@ module
 
 public import Mathlib.RingTheory.RamificationInertia.Basic
 public import TauCeti.NumberTheory.NumberField.RamifiedPrimes
+public import Mathlib.Algebra.Algebra.Equiv
 
 /-!
 # A ramified prime of a quadratic field is totally ramified
@@ -165,6 +166,18 @@ theorem map_span_eq_sq_of_mem_ramifiedPrimes :
   rw [Ideal.map_algebraMap_eq_finsetProd_pow (by simp [hprime.ne_zero]),
     Set.toFinset_congr (primesOver_eq_singleton_of_mem_ramifiedPrimes hK hmem 𝔭)]
   simp [ramificationIdx_eq_two_of_mem_ramifiedPrimes hK hmem 𝔭]
+
+/-- **A ring automorphism fixes a ramified prime.** In a degree-two number field, any ring
+automorphism `σ` of `𝓞 K` fixes the unique prime `𝔭` above a ramified rational prime `p`: `σ 𝔭` is
+again a prime of `𝓞 K` lying over `p` (its `ℤ`-algebra form `toIntAlgEquiv` has the same underlying
+map, `RingEquiv.coe_toIntAlgEquiv`), and a ramified prime has only one prime above it. -/
+theorem map_eq_self_of_mem_ramifiedPrimes (σ : 𝓞 K ≃+* 𝓞 K) :
+    Ideal.map σ 𝔭 = 𝔭 := by
+  have hlo : (Ideal.map σ 𝔭).LiesOver (span {(p : ℤ)}) :=
+    Ideal.LiesOver.of_eq_map_equiv (span {(p : ℤ)}) σ.toIntAlgEquiv rfl
+  have hmemset : Ideal.map σ 𝔭 ∈ (span {(p : ℤ)} : Ideal ℤ).primesOver (𝓞 K) :=
+    ⟨inferInstance, hlo⟩
+  rwa [primesOver_eq_singleton_of_mem_ramifiedPrimes hK hmem 𝔭, Set.mem_singleton_iff] at hmemset
 
 omit hmem
 include hp
