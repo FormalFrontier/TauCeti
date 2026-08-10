@@ -211,15 +211,7 @@ theorem mvfderiv_mulInvariant_mulRightInvariant_commute
   have hRX := HasMFDerivAt.hasDerivAt_comp_mul_mulInvariantExp_smul
     (RXf.contMDiff.mdifferentiable (by simp) g |>.hasMFDerivAt) Y
   rw [hLY.deriv, hRX.deriv] at hmixed
-  -- `mvfderiv` makes the canonical model-space identification explicit on both sides.
-  change NormedSpace.fromTangentSpace _
-      (mfderiv I 𝓘(ℝ, ℝ)
-        (fun h => mvfderiv I f h (mulInvariantVectorField Y h)) g
-        (mulRightInvariantVectorField X g)) =
-    NormedSpace.fromTangentSpace _
-      (mfderiv I 𝓘(ℝ, ℝ)
-        (fun h => mvfderiv I f h (mulRightInvariantVectorField X h)) g
-        (mulInvariantVectorField Y g))
+  rw [mvfderiv_apply_eq_mfderiv_apply, mvfderiv_apply_eq_mfderiv_apply]
   exact hmixed
 
 end Complete
@@ -236,9 +228,7 @@ theorem mlieBracket_mulRightInvariant_mulInvariant
   apply tangentToPointDerivation_injective (I := I) g
   rw [Pi.zero_apply, map_zero]
   ext f
-  -- Extensionality exposes evaluation of the point derivation represented by the bracket.
-  change tangentToPointDerivation g
-      (mlieBracket I (mulRightInvariantVectorField X) (mulInvariantVectorField Y) g) f = 0
+  rw [Derivation.zero_apply]
   -- The pointed smooth-map argument is a different bundle from `ContMDiffMap`, so the public
   -- `tangentToPointDerivation_apply` lemma does not rewrite this coercion directly.
   change mvfderiv I f g
