@@ -69,6 +69,8 @@ theorem tangentAd_units (g : Rˣ) (x : R) :
     rw [← mulInvariantOneParameterSubgroup_apply
       (I := 𝓘(ℝ, R)) (G := Rˣ)
         (tangentAd (I := 𝓘(ℝ, R)) g (x : GroupLieAlgebra 𝓘(ℝ, R) Rˣ)) t] at h
+    -- The unit group's Lie algebra is definitionally its model space `R`; expose that
+    -- identification so the bundled subgroup equalities can rewrite both sides.
     change g * mulInvariantOneParameterSubgroup
       (I := 𝓘(ℝ, R)) (G := Rˣ) (x : GroupLieAlgebra 𝓘(ℝ, R) Rˣ)
         (Multiplicative.ofAdd t) * g⁻¹ =
@@ -106,6 +108,8 @@ theorem unitsLieAlgebraEquiv_Ad (g : Rˣ)
       (g : R) * unitsLieAlgebraEquiv X * (g⁻¹ : Rˣ) := by
   have h := leftInvariantDerivationLieEquivGroupLieAlgebra_Ad
     (I := 𝓘(ℝ, R)) g X
+  -- Expose the same definitional identification with `R` to compare the general tangent-space
+  -- transport theorem with the units-specific equivalence.
   have hR := congrArg
     (fun x : GroupLieAlgebra 𝓘(ℝ, R) Rˣ ↦ show R from x) h
   have ht := tangentAd_units (R := R) g
