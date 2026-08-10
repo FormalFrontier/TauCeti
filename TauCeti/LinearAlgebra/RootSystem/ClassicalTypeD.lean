@@ -464,27 +464,6 @@ def typeDSimpleRootCoordinates (n : ℕ) (hn : 4 ≤ n) (x : TypeDRoot n) : Fin 
   else if (k : ℕ) + 1 < n then typeDHalfTotal x - x.1 ⟨n - 1, by omega⟩
   else typeDHalfTotal x
 
-private lemma sum_Iic_single_one (i k : Fin n) :
-    ∑ j ∈ Finset.Iic k, Pi.single i (1 : ℤ) j = if i ≤ k then 1 else 0 := by
-  by_cases hik : i ≤ k
-  · rw [if_pos hik, Finset.sum_eq_single i]
-    · simp
-    · intro j _ hji
-      simp [hji]
-    · simp [hik]
-  · rw [if_neg hik, Finset.sum_eq_zero]
-    intro j hj
-    have hji : j ≠ i := by
-      intro h
-      exact hik (h ▸ (Finset.mem_Iic.mp hj))
-    simp [hji]
-
-private lemma sum_single_one (i : Fin n) : ∑ j : Fin n, Pi.single i (1 : ℤ) j = 1 := by
-  rw [Fintype.sum_eq_single i]
-  · simp
-  · intro j hji
-    simp [hji]
-
 /-- The coordinates of the `i`-th simple root are the `i`-th standard basis vector. -/
 @[simp] theorem typeDSimpleRootCoordinates_typeDRootEquiv_apply_typeDSimpleIndex
     (hn : 4 ≤ n) (i : Fin n) :
@@ -497,7 +476,7 @@ private lemma sum_single_one (i : Fin n) : ∑ j : Fin n, Pi.single i (1 : ℤ) 
   · have htotal : ∑ j : Fin n, typeDSimpleRoot n hn i j = 0 := by
       rw [typeDSimpleRoot, dif_pos hi]
       simp_rw [Pi.sub_apply]
-      rw [Finset.sum_sub_distrib, sum_single_one, sum_single_one]
+      rw [Finset.sum_sub_distrib, Fintype.sum_pi_single', Fintype.sum_pi_single']
       omega
     have hhalf : typeDHalfTotal
         (typeDRootEquiv n hn (typeDSimpleIndex n hn i)) = 0 := by
@@ -507,8 +486,8 @@ private lemma sum_single_one (i : Fin n) : ∑ j : Fin n, Pi.single i (1 : ℤ) 
     · rw [if_pos hk₂]
       rw [typeDSimpleRoot, dif_pos hi]
       simp_rw [Pi.sub_apply]
-      rw [Finset.sum_sub_distrib, sum_Iic_single_one, sum_Iic_single_one]
-      simp only [Fin.le_def, Pi.single_apply]
+      rw [Finset.sum_sub_distrib, Finset.sum_pi_single', Finset.sum_pi_single']
+      simp only [Finset.mem_Iic, Fin.le_def, Pi.single_apply]
       split_ifs <;> omega
     · by_cases hk₁ : (k : ℕ) + 1 < n
       · rw [if_neg hk₂, if_pos hk₁]
@@ -523,7 +502,7 @@ private lemma sum_single_one (i : Fin n) : ∑ j : Fin n, Pi.single i (1 : ℤ) 
     have htotal : ∑ j : Fin n, typeDSimpleRoot n hn i j = 2 := by
       rw [typeDSimpleRoot, dif_neg hi]
       simp_rw [Pi.add_apply]
-      rw [Finset.sum_add_distrib, sum_single_one, sum_single_one]
+      rw [Finset.sum_add_distrib, Fintype.sum_pi_single', Fintype.sum_pi_single']
       norm_num
     have hhalf : typeDHalfTotal
         (typeDRootEquiv n hn (typeDSimpleIndex n hn i)) = 1 := by
@@ -533,8 +512,8 @@ private lemma sum_single_one (i : Fin n) : ∑ j : Fin n, Pi.single i (1 : ℤ) 
     · rw [if_pos hk₂]
       rw [typeDSimpleRoot, dif_neg hi]
       simp_rw [Pi.add_apply]
-      rw [Finset.sum_add_distrib, sum_Iic_single_one, sum_Iic_single_one]
-      simp only [Fin.le_def, Pi.single_apply]
+      rw [Finset.sum_add_distrib, Finset.sum_pi_single', Finset.sum_pi_single']
+      simp only [Finset.mem_Iic, Fin.le_def, Pi.single_apply]
       split_ifs <;> omega
     · by_cases hk₁ : (k : ℕ) + 1 < n
       · rw [if_neg hk₂, if_pos hk₁]
@@ -668,6 +647,7 @@ def typeDRootReflection (u v : TypeDRoot n) : TypeDRoot n :=
     (typeDRootReflection u v).1 = v.1 - (v.1 ⬝ᵥ u.1) • u.1 :=
   typeDAmbientReflection_apply u v.1
 
+/-- Reflection in a type `Dₙ` root is involutive. -/
 lemma typeDRootReflection_involutive (u : TypeDRoot n) :
     Function.Involutive (typeDRootReflection u) := fun v =>
   Subtype.ext (Module.involutive_reflection (typeDDot_apply_self u) v.1)
