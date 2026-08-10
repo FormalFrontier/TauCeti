@@ -13,9 +13,8 @@ module
 public import TauCeti.Algebra.BrauerGroup.Group
 -- `TauCeti.Algebra.CentralSimple.BaseChange` is imported publicly: it is what makes `L ⊗[K] A`
 -- visible to instance search as a central simple `L`-algebra, so that `TauCeti.CSA.baseChange`
--- below typechecks, and it re-exports the three compatibilities of scalar extension used in the
--- proofs, `TauCeti.Algebra.TensorProduct.baseChangeTensorAlgEquiv`, `baseChangeOpAlgEquiv` and
--- `baseChangeTowerAlgEquiv`.
+-- below typechecks, and it re-exports the two compatibilities of scalar extension used in the
+-- proofs, `TauCeti.Algebra.TensorProduct.baseChangeTensorAlgEquiv` and `baseChangeTowerAlgEquiv`.
 public import TauCeti.Algebra.CentralSimple.BaseChange
 -- Non-public: none of these appears in the type of an exported declaration.
 -- `TauCeti.Algebra.matrixCoeffBaseChangeAlgEquiv` is used only inside the proof that base change
@@ -124,7 +123,9 @@ It is well defined by `TauCeti.isBrauerEquivalent_baseChange_congr`, multiplicat
 `Algebra.TensorProduct.rid`.
 
 `@[expose]` so that `TauCeti.BrauerGroup.baseChange_mk`, the defining property that everything
-below is stated through, holds by `rfl`. -/
+below is stated through, can be proved at all: it is an exported theorem whose only possible proof
+unfolds the `Quotient.liftOn` here, and the module system requires every definition unfolded by an
+exported theorem to be exposed. Nothing below unfolds `baseChange` again. -/
 @[expose]
 def baseChange : BrauerGroup.{u, u} K →* BrauerGroup.{u, u} L where
   toFun x := Quotient.liftOn x (fun A ↦ mk (CSA.baseChange L A))
@@ -138,15 +139,6 @@ def baseChange : BrauerGroup.{u, u} K →* BrauerGroup.{u, u} L where
 @[simp]
 theorem baseChange_mk (A : CSA.{u, u} K) : baseChange K L (mk A) = mk (CSA.baseChange L A) :=
   rfl
-
-/-- **Base change commutes with passing to the opposite algebra.**
-
-The two classes are also equal because both are `(baseChange K L (mk A))⁻¹`, by `map_inv` and
-`TauCeti.BrauerGroup.mk_op`; the reason recorded here is the sharper one, that the two algebras are
-already isomorphic (`TauCeti.Algebra.TensorProduct.baseChangeOpAlgEquiv`). -/
-theorem baseChange_mk_op (A : CSA.{u, u} K) :
-    baseChange K L (mk (CSA.op A)) = mk (CSA.op (CSA.baseChange L A)) :=
-  mk_eq_mk_of_algEquiv (Algebra.TensorProduct.baseChangeOpAlgEquiv K L A)
 
 /-! ### Functoriality -/
 
@@ -167,11 +159,6 @@ theorem baseChange_comp : (baseChange L M).comp (baseChange K L) = baseChange K 
   ext x
   induction x using BrauerGroup.inductionOn with
   | h A => exact mk_eq_mk_of_algEquiv (Algebra.TensorProduct.baseChangeTowerAlgEquiv K L A M)
-
-/-- **Base change composes along a tower**, applied to a class. -/
-theorem baseChange_baseChange (x : BrauerGroup.{u, u} K) :
-    baseChange L M (baseChange K L x) = baseChange K M x :=
-  DFunLike.congr_fun (baseChange_comp K L M) x
 
 /-! ### The kernel -/
 
