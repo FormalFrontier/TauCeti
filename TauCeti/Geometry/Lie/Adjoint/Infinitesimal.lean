@@ -196,7 +196,8 @@ private theorem mvfderiv_conjugationGenerator_eq_bracket
     (RXf.contMDiff.mdifferentiable (by simp)).mdifferentiableAt
     (LXf.contMDiff.mdifferentiable (by simp)).mdifferentiableAt]
   simp only [sub_apply]
-  have hcomm := mvfderiv_mulInvariant_mulRightInvariant_commute f (1 : G) X Y
+  have hcomm :=
+    mvfderiv_mulRightInvariantVectorField_mulInvariantVectorField_commute f (1 : G) X Y
   rw [mulRightInvariantVectorField_one, mulInvariantVectorField_one] at hcomm
   change mvfderiv I LYf 1 X = mvfderiv I RXf 1 Y at hcomm
   rw [← hcomm]
