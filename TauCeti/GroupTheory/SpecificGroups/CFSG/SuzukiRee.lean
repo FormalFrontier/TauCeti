@@ -5,15 +5,16 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.GroupTheory.SpecificGroups.CFSG.Index
-public import TauCeti.LinearAlgebra.RootSystem.RootLength
+public import TauCeti.LinearAlgebra.RootSystem.DiagramPermutations
 
 /-!
-# Root-subgroup exponents for the Suzuki--Ree isogenies
+# Numbered data for the Suzuki--Ree isogenies
 
 The exceptional isogenies used to construct the Suzuki and Ree groups exchange long and short
 simple roots. Their action on a simple root subgroup also raises its parameter to an exponent:
 the exponent is `1` on a long simple root and the defining characteristic on a short simple root.
-This file records that convention for `TauCeti.SuzukiReeIndex`.
+This file attaches both the length-exchanging permutation and the exponent convention to
+`TauCeti.SuzukiReeIndex`.
 
 The assignment is a genuine choice. Reversing the two exponents would still make the square of the
 exceptional isogeny a prime-field Frobenius, so the square relation alone does not determine which
@@ -22,8 +23,17 @@ isogeny the later construction uses. Defining the exponent through
 already fixed by the root-systems development, without introducing a second table for `B₂`, `G₂`,
 and `F₄`.
 
+The permutation selector has only the four half-Frobenius branches: Suzuki and Ree `G₂` use the
+rank-two node swap, while Ree `F₄` and Tits use diagram reversal. Its body is exposed because
+milestone L2 must reduce every branch to the corresponding pinned permutation when selecting the
+upstream special isogeny.
+
 ## Main definitions and results
 
+* `TauCeti.SuzukiReeIndex.lengthPerm` selects the length-exchanging permutation used by the
+  exceptional isogeny.
+* `TauCeti.SuzukiReeIndex.isLongSimpleRoot_lengthPerm` proves that this permutation exchanges long
+  and short simple roots.
 * `TauCeti.SuzukiReeIndex.exponent` is `1` on long simple roots and the characteristic on short
   simple roots.
 * `TauCeti.SuzukiReeIndex.exponent_of_isLongSimpleRoot` and
@@ -33,9 +43,10 @@ and `F₄`.
   `TauCeti.SuzukiReeIndex.exponent_eq_characteristic_iff` characterize the two values without
   unfolding the definition.
 
-This is the exponent-convention part of milestone I0 in
-`TauCetiRoadmap/CFSGStatement/README.md`. The convention follows Carter, *Simple Groups of Lie
-Type*, and the Bourbaki numbering fixed by the CFSG and root-systems roadmaps.
+This is the Suzuki--Ree numbered-data part of milestone I0 in
+`TauCetiRoadmap/CFSGStatement/README.md`. The exponent convention follows Carter, *Simple Groups of
+Lie Type*. The permutations and numbering follow Bourbaki, *Lie Groups and Lie Algebras, Chapters
+4--6*, plates II, VIII, and IX, as fixed by the CFSG and root-systems roadmaps.
 -/
 
 public section
@@ -43,6 +54,85 @@ public section
 namespace TauCeti
 
 namespace SuzukiReeIndex
+
+-- Transporting the root-length predicate together with its index type avoids dependent rewriting
+-- through `DynkinType.rank`, which is precisely the dependency that `finCongr` packages.
+private theorem isLongSimpleRoot_reindexPerm {t u : DynkinType} (h : t = u)
+    (p : Equiv.Perm (Fin u.rank))
+    (hp : ∀ j, u.IsLongSimpleRoot (p j) ↔ ¬u.IsLongSimpleRoot j) (i : Fin t.rank) :
+    t.IsLongSimpleRoot
+        ((finCongr (congrArg DynkinType.rank h)).symm.permCongr p i) ↔
+      ¬t.IsLongSimpleRoot i := by
+  subst u
+  simpa [finCongr_refl, Equiv.permCongr_def] using hp i
+
+private theorem isLongSimpleRoot_congr {t : DynkinType} {i j : Fin t.rank}
+    (h : (i : ℕ) = j) : t.IsLongSimpleRoot i ↔ t.IsLongSimpleRoot j := by
+  rw [Fin.ext h]
+
+/-- The length-exchanging permutation used by the exceptional isogeny attached to a Suzuki--Ree
+index: the node swap for `B₂` and `G₂`, and reversal for `F₄`. -/
+@[expose] def lengthPerm (e : SuzukiReeIndex) : Equiv.Perm (Fin e.1.rank) :=
+  match e with
+  | ⟨⟨.A _ _, _⟩, h⟩ => by simp at h
+  | ⟨⟨.twistedA _ _, _⟩, h⟩ => by simp at h
+  | ⟨⟨.B _ _, _⟩, h⟩ => by simp at h
+  | ⟨⟨.C _ _, _⟩, h⟩ => by simp at h
+  | ⟨⟨.D _ _, _⟩, h⟩ => by simp at h
+  | ⟨⟨.twistedD _ _, _⟩, h⟩ => by simp at h
+  | ⟨⟨.E6 _, _⟩, h⟩ => by simp at h
+  | ⟨⟨.E7 _, _⟩, h⟩ => by simp at h
+  | ⟨⟨.E8 _, _⟩, h⟩ => by simp at h
+  | ⟨⟨.F4 _, _⟩, h⟩ => by simp at h
+  | ⟨⟨.G2 _, _⟩, h⟩ => by simp at h
+  | ⟨⟨.twistedE6 _, _⟩, h⟩ => by simp at h
+  | ⟨⟨.trialityD4 _, _⟩, h⟩ => by simp at h
+  | ⟨⟨.suzuki m, hvalid⟩, _⟩ =>
+      (finCongr (by
+        simp only [ValidLieTypeIndex.rank, ValidLieTypeIndex.dynkinType,
+          LieTypeIndex.dynkinType_suzuki, DynkinType.rank_B])).symm.permCongr lengthPermRankTwo
+  | ⟨⟨.reeG2 m, hvalid⟩, _⟩ =>
+      (finCongr (by
+        simp only [ValidLieTypeIndex.rank, ValidLieTypeIndex.dynkinType,
+          LieTypeIndex.dynkinType_reeG2, DynkinType.rank_G2])).symm.permCongr lengthPermRankTwo
+  | ⟨⟨.reeF4 m, hvalid⟩, _⟩ =>
+      (finCongr (by
+        simp only [ValidLieTypeIndex.rank, ValidLieTypeIndex.dynkinType,
+          LieTypeIndex.dynkinType_reeF4, DynkinType.rank_F4])).symm.permCongr lengthPermF4
+  | ⟨⟨.tits, hvalid⟩, _⟩ =>
+      (finCongr (by
+        simp only [ValidLieTypeIndex.rank, ValidLieTypeIndex.dynkinType,
+          LieTypeIndex.dynkinType_tits, DynkinType.rank_F4])).symm.permCongr lengthPermF4
+
+/-- The length permutation selected by a Suzuki--Ree index exchanges long and short simple roots
+in the Bourbaki numbering of its underlying untwisted Dynkin diagram. -/
+@[simp]
+theorem isLongSimpleRoot_lengthPerm (e : SuzukiReeIndex) (i : Fin e.1.rank) :
+    e.1.dynkinType.IsLongSimpleRoot (e.lengthPerm i) ↔
+      ¬e.1.dynkinType.IsLongSimpleRoot i := by
+  simp only [ValidLieTypeIndex.dynkinType, ValidLieTypeIndex.rank] at i ⊢
+  obtain ⟨⟨d, hvalid⟩, hhalf⟩ := e
+  cases d <;> try simp at hhalf
+  case suzuki =>
+    convert isLongSimpleRoot_reindexPerm (LieTypeIndex.dynkinType_suzuki _)
+      lengthPermRankTwo isLongSimpleRoot_lengthPermRankTwo_iff_not_isLongSimpleRoot_B2 i using 1
+    all_goals simp only [lengthPerm]
+    exact isLongSimpleRoot_congr rfl
+  case reeG2 =>
+    convert isLongSimpleRoot_reindexPerm (LieTypeIndex.dynkinType_reeG2 _)
+      lengthPermRankTwo isLongSimpleRoot_lengthPermRankTwo_iff_not_isLongSimpleRoot_G2 i using 1
+    all_goals simp only [lengthPerm]
+    exact isLongSimpleRoot_congr rfl
+  case reeF4 =>
+    convert isLongSimpleRoot_reindexPerm (LieTypeIndex.dynkinType_reeF4 _)
+      lengthPermF4 isLongSimpleRoot_lengthPermF4_iff_not_isLongSimpleRoot_F4 i using 1
+    all_goals simp only [lengthPerm]
+    exact isLongSimpleRoot_congr rfl
+  case tits =>
+    convert isLongSimpleRoot_reindexPerm LieTypeIndex.dynkinType_tits lengthPermF4
+      isLongSimpleRoot_lengthPermF4_iff_not_isLongSimpleRoot_F4 i using 1
+    all_goals simp only [lengthPerm]
+    exact isLongSimpleRoot_congr rfl
 
 /-- The exponent attached to a numbered simple root subgroup by the exceptional isogeny: `1` on a
 long simple root and the defining characteristic on a short simple root.
