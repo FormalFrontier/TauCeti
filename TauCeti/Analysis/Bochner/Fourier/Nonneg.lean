@@ -22,7 +22,6 @@ import Mathlib.MeasureTheory.Measure.Haar.Unique
 import Mathlib.MeasureTheory.Measure.Lebesgue.EqHaar
 import TauCeti.Analysis.Bochner.Fourier.Convention
 import TauCeti.Analysis.Bochner.Gaussian.Basic
-import TauCeti.Analysis.PositiveDefinite.FourierAtom
 import TauCeti.Analysis.PositiveDefinite.Kernel.Bounds
 
 /-!
