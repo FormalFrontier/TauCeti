@@ -164,12 +164,9 @@ lemma zeroSection_comp_toOver_hom (A : AbelianVariety K) :
   simpa only [Over.tensorUnit_hom] using η[A.toOver].w
 
 /-- The identity point `0` of an abelian variety, obtained by evaluating the zero section at the
-unique point of `Spec K`.
-
-It is `@[expose]`d because the residue field, the stalk and the tangent space at `0` are compared
-with the ones at `A.zeroSection (IsLocalRing.closedPoint K)`, and those types agree only through
-the body of this definition. -/
-@[expose] noncomputable def zeroPoint (A : AbelianVariety K) : A.toScheme :=
+unique point of `Spec K`. Its implementation is kept opaque; use `zeroPoint_def` to rewrite it
+explicitly. -/
+noncomputable def zeroPoint (A : AbelianVariety K) : A.toScheme :=
   A.zeroSection (IsLocalRing.closedPoint K)
 
 /-- The identity point is the value of the zero section. Not a simp lemma: the simp normal form
@@ -192,13 +189,16 @@ noncomputable def zeroResidueFieldRingEquiv (A : AbelianVariety K) :
     IsLocalRing.ResidueField (A.toScheme.presheaf.stalk A.zeroPoint) ≃+* K :=
   residueFieldRingEquivOfSection (zeroSection_comp_toOver_hom A)
 
-/-- `zeroResidueFieldRingEquiv` is the evaluation map of the identity point. -/
+/-- `zeroResidueFieldRingEquiv` is the evaluation map of the identity point. The argument is
+transported explicitly from `zeroPoint` to the value of the zero section. -/
 @[simp]
 lemma zeroResidueFieldRingEquiv_apply (A : AbelianVariety K)
     (z : IsLocalRing.ResidueField (A.toScheme.presheaf.stalk A.zeroPoint)) :
     A.zeroResidueFieldRingEquiv z =
-      A.toScheme.descResidueField (Scheme.stalkClosedPointTo A.zeroSection) z :=
-  residueFieldRingEquivOfSection_apply (zeroSection_comp_toOver_hom A) z
+      A.toScheme.descResidueField (Scheme.stalkClosedPointTo A.zeroSection)
+        (A.zeroPoint_def ▸ z) := by
+  exact residueFieldRingEquivOfSection_apply (zeroSection_comp_toOver_hom A)
+    (A.zeroPoint_def ▸ z)
 
 /-- The residue field at the identity is a `K`-algebra through `zeroResidueFieldRingEquiv`. -/
 noncomputable instance algebraZeroResidueField (A : AbelianVariety K) :
