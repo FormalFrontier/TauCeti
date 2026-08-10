@@ -548,21 +548,18 @@ theorem ae_eq_smul_convolutionCLM_of_mem_eigenspace (k : C(G, 𝕜)) {μ : 𝕜}
   rw [hsmul, Pi.smul_apply, hcoe]
   rfl
 
-/-- **Convolving a `0`-eigenvector gives the zero function.** The convolution is a continuous
-function which is almost everywhere zero, and normalized Haar measure is positive on nonempty open
-sets. This is the complement of `ae_eq_smul_convolutionCLM_of_mem_eigenspace`, which describes the
-eigenvectors at a nonzero eigenvalue. -/
+/-- **Convolving a `0`-eigenvector gives the zero function.** The convolution operator factors as
+`ContinuousMap.toLp` after `convolutionCLM`, and `ContinuousMap.toLp` is injective because
+normalized Haar measure is positive on nonempty open sets. This is the complement of
+`ae_eq_smul_convolutionCLM_of_mem_eigenspace`, which describes the eigenvectors at a nonzero
+eigenvalue. -/
 theorem convolutionCLM_eq_zero_of_mem_eigenspace_zero (k : C(G, 𝕜))
     {f : Lp 𝕜 2 (haarProb G)}
     (hf : f ∈ Module.End.eigenspace (convolutionOperator (G := G) k).toLinearMap 0) :
     convolutionCLM k f = 0 := by
   rw [Module.End.mem_eigenspace_iff, ContinuousLinearMap.coe_coe, zero_smul] at hf
-  have h0 : ⇑(convolutionCLM k f) =ᵐ[haarProb G] (0 : G → 𝕜) := by
-    refine (coeFn_convolutionOperator k f).symm.trans ?_
-    rw [hf]
-    exact Lp.coeFn_zero 𝕜 2 (haarProb G)
-  exact ContinuousMap.ext (congrFun
-    (((convolutionCLM k f).continuous.ae_eq_iff_eq (haarProb G) continuous_const).1 h0))
+  refine ContinuousMap.toLp_injective (E := 𝕜) (𝕜 := 𝕜) (p := 2) (haarProb G) ?_
+  rw [← convolutionOperator_apply, hf, map_zero]
 
 /-- **The eigenspaces of a convolution operator are invariant under right translation**, because
 the operator commutes with right translation. -/

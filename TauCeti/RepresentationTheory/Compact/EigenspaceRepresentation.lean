@@ -159,14 +159,18 @@ theorem continuous_convolutionEigenspaceRepresentation (k : C(G, 𝕜)) {μ : �
 /-- **The continuous representative of an eigenvector is a representative function.** For a nonzero
 eigenvalue `μ`, the continuous function `μ⁻¹ • (k * f)` representing an eigenvector `f` is the
 conjugate of a matrix coefficient of `TauCeti.convolutionEigenspaceRepresentation`, at the Riesz
-vector of the functional "evaluate the continuous representative at the identity".
+vector of the functional "evaluate the continuous representative at the identity". At `μ = 0` the
+function is `0`, which is representative for trivial reasons.
 
 This is the point of the whole construction: the eigenspaces do not merely consist of continuous
 functions, they consist of matrix coefficients of finite-dimensional continuous representations. -/
-theorem isRepresentative_smul_convolutionCLM_of_mem_eigenspace (k : C(G, 𝕜)) {μ : 𝕜} (hμ : μ ≠ 0)
+theorem isRepresentative_smul_convolutionCLM_of_mem_eigenspace (k : C(G, 𝕜)) {μ : 𝕜}
     {f : Lp 𝕜 2 (haarProb G)}
     (hf : f ∈ Module.End.eigenspace (convolutionOperator (G := G) k).toLinearMap μ) :
     IsRepresentative (μ⁻¹ • convolutionCLM k f) := by
+  rcases eq_or_ne μ 0 with rfl | hμ
+  · rw [inv_zero, zero_smul]
+    exact isRepresentative_zero 𝕜 G
   have := finiteDimensional_eigenspace_convolutionOperator k hμ
   have hπ := continuous_convolutionEigenspaceRepresentation k hμ
   obtain ⟨y, hy⟩ :
@@ -211,7 +215,7 @@ theorem convolutionCLM_mem_representativeSubmodule_of_mem_iSup_eigenspace (k : C
         rw [smul_smul, mul_inv_cancel₀ hμ, one_smul]
       rw [hsmul]
       exact Submodule.smul_mem _ _ (mem_representativeSubmodule_of_isRepresentative
-        (isRepresentative_smul_convolutionCLM_of_mem_eigenspace k hμ hx))
+        (isRepresentative_smul_convolutionCLM_of_mem_eigenspace k hx))
   · rw [map_add]
     exact add_mem hx hy
 

@@ -87,6 +87,7 @@ theorem coeFn_rightRegularLp (g : G) (f : Lp 𝕜 2 (haarProb G)) :
 /-- **On a continuous function, the right regular representation is right translation.** The class
 of `F` is sent to the class of `x ↦ F (x * g)`, with no almost-everywhere qualification on the
 representatives. -/
+@[simp]
 theorem rightRegularLp_toLp (F : C(G, 𝕜)) (g : G) :
     rightRegularLp 𝕜 G g (ContinuousMap.toLp 2 (haarProb G) 𝕜 F)
       = ContinuousMap.toLp 2 (haarProb G) 𝕜 (F.comp (.mulRight g)) := by
