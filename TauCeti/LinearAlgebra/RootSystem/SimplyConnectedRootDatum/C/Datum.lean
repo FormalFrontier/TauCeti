@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+public import TauCeti.LinearAlgebra.RootSystem.DynkinType
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.C.Model
 public import Mathlib.LinearAlgebra.RootSystem.Base
 
@@ -27,6 +28,8 @@ A root index `(a, b, s) : Fin n × Fin n × Bool` denotes the pair of signed bas
 root is `(-1) ^ s * (e_a + e_b)` when `b ≤ a`, including the long root when `b = a`, and
 `(-1) ^ s * (e_a - e_b)` when `a < b`. Every root arises from exactly one index, and `typeCMk` names
 the index belonging to a given pair, which is how the reflected pair is turned back into an index.
+`typeCIndexEquiv` encodes a root index as an index of the datum, and `root_typeCIndexEquiv_of_lt`
+and its companions read off the root and the coroot there.
 
 The roots are enumerated by `Fin (2 * n ^ 2)` by the first index `a` fastest, so that the first `n`
 indices are the simple roots `α₀, …, α_{n-1}` in Bourbaki order, as `root_typeCSimpleIndex`
@@ -42,12 +45,16 @@ weight lattice with index `2` (Bourbaki, Plate III), so the datum is a `RootDatu
 ## Main definitions
 
 * `TauCeti.DynkinType.typeCSimplyConnectedRootDatum`: the pinned root datum of type `Cₙ`.
+* `TauCeti.DynkinType.TypeCIndex` and `TauCeti.DynkinType.typeCIndexEquiv`: the root index
+  `(a, b, s)` and its pinned encoding as an index of the datum.
 * `TauCeti.DynkinType.typeCSimpleIndex`: the first `n` root indices, the Bourbaki-numbered simple
   roots.
 * `TauCeti.DynkinType.typeCSimplyConnectedBase`: the base they form.
 
 ## Main results
 
+* `TauCeti.DynkinType.root_typeCIndexEquiv_of_lt` and its four companions: which classical vector
+  the root and the coroot of the datum at an encoded index are.
 * `TauCeti.DynkinType.root_typeCSimpleIndex` and `TauCeti.DynkinType.coroot_typeCSimpleIndex`: the
   `i`-th simple root is the `i`-th row of `CartanMatrix.C n` and the `i`-th simple coroot is
   `Pi.single i 1`, which is what pins the two lattices as the weight and coroot lattices.
@@ -80,7 +87,7 @@ variable {n : ℕ}
 `(b, s)`, the sign of the second being flipped exactly when `a < b`. Thus the root is
 `(-1) ^ s * (e_a + e_b)` when `b ≤ a`, including the long root `(-1) ^ s * 2 e_a` when `b = a`, and
 `(-1) ^ s * (e_a - e_b)` when `a < b`. -/
-private abbrev TypeCIndex (n : ℕ) := Fin n × Fin n × Bool
+abbrev TypeCIndex (n : ℕ) := Fin n × Fin n × Bool
 
 /-- The first signed basis vector of a root index. -/
 private def typeCFst (i : TypeCIndex n) : Signed n := (i.1, i.2.2)
@@ -261,41 +268,47 @@ private lemma typeCCoroot_injective : Injective (typeCCoroot (n := n)) := by
 /-! ## The reflection on root indices -/
 
 /-- Reflection in the root indexed by `i`, acting on root indices. -/
-private def typeCReflIdx (i j : TypeCIndex n) : TypeCIndex n :=
-  typeCMk (reflSigned (typeCFst i) (typeCSnd i) (typeCFst j))
-    (reflSigned (typeCFst i) (typeCSnd i) (typeCSnd j))
+private def typeCReflectionIdx (i j : TypeCIndex n) : TypeCIndex n :=
+  typeCMk (signedReflection (typeCFst i) (typeCSnd i) (typeCFst j))
+    (signedReflection (typeCFst i) (typeCSnd i) (typeCSnd j))
 
-private lemma typeCReflIdx_pair_ne (i j : TypeCIndex n) :
-    reflSigned (typeCFst i) (typeCSnd i) (typeCSnd j) ≠
-      signedNeg (reflSigned (typeCFst i) (typeCSnd i) (typeCFst j)) := by
+private lemma typeCReflectionIdx_pair_ne (i j : TypeCIndex n) :
+    signedReflection (typeCFst i) (typeCSnd i) (typeCSnd j) ≠
+      signedNeg (signedReflection (typeCFst i) (typeCSnd i) (typeCFst j)) := by
   intro hc
-  rw [← reflSigned_signedNeg (typeCSnd_ne_signedNeg_typeCFst i)] at hc
+  rw [← signedReflection_signedNeg (typeCSnd_ne_signedNeg_typeCFst i)] at hc
   exact typeCSnd_ne_signedNeg_typeCFst j
-    (reflSigned_injective (typeCSnd_ne_signedNeg_typeCFst i) hc)
+    (signedReflection_injective (typeCSnd_ne_signedNeg_typeCFst i) hc)
 
-private lemma typeCRoot_typeCReflIdx (i j : TypeCIndex n) :
-    typeCRoot j - (typeCRoot j ⬝ᵥ typeCCoroot i) • typeCRoot i = typeCRoot (typeCReflIdx i j) := by
-  rw [typeCReflIdx, typeCRoot_typeCMk (typeCReflIdx_pair_ne i j)]
-  exact pairRoot_refl (typeCSnd_ne_signedNeg_typeCFst i) (typeCFst j) (typeCSnd j)
+private lemma typeCRoot_typeCReflectionIdx (i j : TypeCIndex n) :
+    typeCRoot j - (typeCRoot j ⬝ᵥ typeCCoroot i) • typeCRoot i
+      = typeCRoot (typeCReflectionIdx i j) := by
+  rw [typeCReflectionIdx, typeCRoot_typeCMk (typeCReflectionIdx_pair_ne i j)]
+  exact pairRoot_reflection (typeCSnd_ne_signedNeg_typeCFst i) (typeCFst j) (typeCSnd j)
 
-private lemma typeCCoroot_typeCReflIdx (i j : TypeCIndex n) :
+private lemma typeCCoroot_typeCReflectionIdx (i j : TypeCIndex n) :
     typeCCoroot j - (typeCRoot i ⬝ᵥ typeCCoroot j) • typeCCoroot i
-      = typeCCoroot (typeCReflIdx i j) := by
-  rw [typeCReflIdx, typeCCoroot_typeCMk (typeCReflIdx_pair_ne i j)]
-  exact pairCoroot_refl (typeCSnd_ne_signedNeg_typeCFst i) (typeCFst j) (typeCSnd j)
+      = typeCCoroot (typeCReflectionIdx i j) := by
+  rw [typeCReflectionIdx, typeCCoroot_typeCMk (typeCReflectionIdx_pair_ne i j)]
+  exact pairCoroot_reflection (typeCSnd_ne_signedNeg_typeCFst i) (typeCFst j) (typeCSnd j)
 
-private lemma typeCReflIdx_involutive (i : TypeCIndex n) : Involutive (typeCReflIdx i) := by
+private lemma typeCReflectionIdx_involutive (i : TypeCIndex n) :
+    Involutive (typeCReflectionIdx i) := by
   intro j
   refine typeCRoot_injective ?_
-  rw [← typeCRoot_typeCReflIdx, ← typeCRoot_typeCReflIdx]
-  exact reflVec_involutive (typeCSnd_ne_signedNeg_typeCFst i) (typeCRoot j)
+  rw [← typeCRoot_typeCReflectionIdx, ← typeCRoot_typeCReflectionIdx]
+  -- In these coordinates `Module.preReflection` in the `i`-th root is definitionally the map
+  -- `v ↦ v - (v ⬝ᵥ typeCCoroot i) • typeCRoot i`, which is the goal left by the two rewrites.
+  exact Module.involutive_preReflection (x := typeCRoot i)
+    (f := (dotProductBilin ℤ ℤ).flip (typeCCoroot i))
+    (typeCRoot_dotProduct_typeCCoroot_self i) (typeCRoot j)
 
 /-- Reflection in the root indexed by `i`, as a permutation of the root indices. -/
-private def typeCReflPerm (i : TypeCIndex n) : TypeCIndex n ≃ TypeCIndex n :=
-  (typeCReflIdx_involutive i).toPerm _
+private def typeCReflectionPerm (i : TypeCIndex n) : TypeCIndex n ≃ TypeCIndex n :=
+  (typeCReflectionIdx_involutive i).toPerm _
 
-@[simp] private lemma typeCReflPerm_apply (i j : TypeCIndex n) :
-    typeCReflPerm i j = typeCReflIdx i j := rfl
+@[simp] private lemma typeCReflectionPerm_apply (i j : TypeCIndex n) :
+    typeCReflectionPerm i j = typeCReflectionIdx i j := rfl
 
 /-! ## The Bourbaki enumeration of the roots -/
 
@@ -315,7 +328,7 @@ private def typeCShapeEquiv (n : ℕ) : TypeCIndex n ≃ (Bool × Fin n) × Fin 
   right_inv p := by simp
 
 /-- The pinned enumeration of the roots of type `Cₙ` by `Fin (2 * n ^ 2)`. -/
-private def typeCIndexEquiv (n : ℕ) : TypeCIndex n ≃ Fin (2 * n ^ 2) :=
+def typeCIndexEquiv (n : ℕ) : TypeCIndex n ≃ Fin (2 * n ^ 2) :=
   ((typeCShapeEquiv n).trans
       (((finTwoEquiv.symm.prodCongr (Equiv.refl (Fin n))).trans finProdFinEquiv).prodCongr
         (Equiv.refl (Fin n)))).trans (finProdFinEquiv.trans (finCongr (by ring)))
@@ -341,11 +354,13 @@ def typeCSimplyConnectedRootDatum (n : ℕ) :
     typeCCoroot_injective.comp (typeCIndexEquiv n).symm.injective⟩
   root_coroot_two k := typeCRoot_dotProduct_typeCCoroot_self _
   reflectionPerm k := ((typeCIndexEquiv n).symm.trans
-    (typeCReflPerm ((typeCIndexEquiv n).symm k))).trans (typeCIndexEquiv n)
+    (typeCReflectionPerm ((typeCIndexEquiv n).symm k))).trans (typeCIndexEquiv n)
   reflectionPerm_root k l := by
-    simpa using typeCRoot_typeCReflIdx ((typeCIndexEquiv n).symm k) ((typeCIndexEquiv n).symm l)
+    simpa using
+      typeCRoot_typeCReflectionIdx ((typeCIndexEquiv n).symm k) ((typeCIndexEquiv n).symm l)
   reflectionPerm_coroot k l := by
-    simpa using typeCCoroot_typeCReflIdx ((typeCIndexEquiv n).symm k) ((typeCIndexEquiv n).symm l)
+    simpa using
+      typeCCoroot_typeCReflectionIdx ((typeCIndexEquiv n).symm k) ((typeCIndexEquiv n).symm l)
 
 private lemma root_typeCSimplyConnectedRootDatum (k : Fin (2 * n ^ 2)) :
     (typeCSimplyConnectedRootDatum n).root k = typeCRoot ((typeCIndexEquiv n).symm k) :=
@@ -359,6 +374,46 @@ private lemma pairing_typeCSimplyConnectedRootDatum (k l : Fin (2 * n ^ 2)) :
     (typeCSimplyConnectedRootDatum n).pairing k l =
       (typeCSimplyConnectedRootDatum n).root k ⬝ᵥ (typeCSimplyConnectedRootDatum n).coroot l :=
   rfl
+
+/-! ## The root and the coroot at an arbitrary index
+
+Away from the simple indices, a root of the datum is named by encoding a root index with
+`typeCIndexEquiv`, and the five lemmas below say which vector the encoded index denotes. Together
+they cover every index, since `typeCIndexEquiv` is a bijection. -/
+
+/-- The root at the encoded index `(a, b, s)` with `a < b`: the short root `± (e_a - e_b)`. -/
+theorem root_typeCIndexEquiv_of_lt {a b : Fin n} (h : a < b) (s : Bool) :
+    (typeCSimplyConnectedRootDatum n).root (typeCIndexEquiv n (a, b, s))
+      = signedWeight (a, s) - signedWeight (b, s) := by
+  rw [root_typeCSimplyConnectedRootDatum, Equiv.symm_apply_apply, typeCRoot_mk_of_lt h]
+
+/-- The root at the encoded index `(a, b, s)` with `b ≤ a`: the short root `± (e_a + e_b)`, and the
+long root `± 2 e_a` on the diagonal `b = a`. -/
+theorem root_typeCIndexEquiv_of_not_lt {a b : Fin n} (h : ¬ a < b) (s : Bool) :
+    (typeCSimplyConnectedRootDatum n).root (typeCIndexEquiv n (a, b, s))
+      = signedWeight (a, s) + signedWeight (b, s) := by
+  rw [root_typeCSimplyConnectedRootDatum, Equiv.symm_apply_apply, typeCRoot_mk_of_not_lt h]
+
+/-- The coroot at the encoded index `(a, b, s)` with `a < b`, that of a short root: the root
+itself, in the cocharacter coordinates. -/
+theorem coroot_typeCIndexEquiv_of_lt {a b : Fin n} (h : a < b) (s : Bool) :
+    (typeCSimplyConnectedRootDatum n).coroot (typeCIndexEquiv n (a, b, s))
+      = signedCoweight (a, s) - signedCoweight (b, s) := by
+  rw [coroot_typeCSimplyConnectedRootDatum, Equiv.symm_apply_apply, typeCCoroot_mk_of_lt h]
+
+/-- The coroot at the encoded index `(a, b, s)` with `b < a`, that of a short root: the root
+itself, in the cocharacter coordinates. -/
+theorem coroot_typeCIndexEquiv_of_gt {a b : Fin n} (h : b < a) (s : Bool) :
+    (typeCSimplyConnectedRootDatum n).coroot (typeCIndexEquiv n (a, b, s))
+      = signedCoweight (a, s) + signedCoweight (b, s) := by
+  rw [coroot_typeCSimplyConnectedRootDatum, Equiv.symm_apply_apply, typeCCoroot_mk_of_gt h]
+
+/-- The coroot at the encoded diagonal index `(a, a, s)`, that of the long root `± 2 e_a`: the
+halved `± e_a`. -/
+theorem coroot_typeCIndexEquiv_diag (a : Fin n) (s : Bool) :
+    (typeCSimplyConnectedRootDatum n).coroot (typeCIndexEquiv n (a, a, s))
+      = signedCoweight (a, s) := by
+  rw [coroot_typeCSimplyConnectedRootDatum, Equiv.symm_apply_apply, typeCCoroot_mk_diag]
 
 /-! ## The simple roots and coroots -/
 
