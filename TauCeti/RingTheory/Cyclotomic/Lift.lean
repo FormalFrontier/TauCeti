@@ -188,6 +188,7 @@ def conjugateRoot (e : ℕ) {p : ℕ} (α : ZMod p) (j : Fin e.totient) : ZMod p
   α ^ primitiveExponent e j
 
 /-- The `j`-th conjugate root is the power of `α` by the `j`-th exponent coprime to `e`. -/
+@[simp]
 theorem conjugateRoot_def (e : ℕ) (α : ZMod p) (j : Fin e.totient) :
     conjugateRoot e α j = α ^ primitiveExponent e j := by
   rw [conjugateRoot]
@@ -279,6 +280,7 @@ def conjugateVandermonde (e : ℕ) {p : ℕ} (α : ZMod p) :
 
 /-- The entries of the Vandermonde matrix are the powers of the conjugate roots: its `i`-th row
 reads the coordinate vector against the powers of the `i`-th conjugate root. -/
+@[simp]
 theorem conjugateVandermonde_apply (e : ℕ) (α : ZMod p) (i j : Fin e.totient) :
     conjugateVandermonde e α i j = conjugateRoot e α i ^ (j : ℕ) := by
   rw [conjugateVandermonde, Matrix.vandermonde_apply]
