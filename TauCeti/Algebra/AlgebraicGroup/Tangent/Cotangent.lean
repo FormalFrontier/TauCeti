@@ -128,6 +128,22 @@ end Bialgebra
 
 namespace Derivation
 
+section
+
+variable {R A B : Type*} [CommSemiring R] [Semiring B] [Algebra R B]
+
+/-- The canonical equivalence from the counit coefficient algebra to its underlying
+coefficient ring preserves coefficient scalar multiplication. -/
+lemma algEquivSelf_coeff_smul (b : B)
+    (z : Bialgebra.CounitAlgebra R A B) :
+    Bialgebra.CounitAlgebra.algEquivSelf R A B (b • z) =
+      b • Bialgebra.CounitAlgebra.algEquivSelf R A B z := by
+  rw [Bialgebra.CounitAlgebra.algEquivSelf_apply,
+    Bialgebra.CounitAlgebra.algEquivSelf_apply]
+  rfl
+
+end
+
 variable {R A B : Type*} [CommRing R] [CommRing A] [Bialgebra R A]
   [CommRing B] [Algebra R B]
 
@@ -142,17 +158,6 @@ private lemma algEquivSelf_smul (a : A)
   exact Bialgebra.CounitAlgebra.algEquivSelf_apply
     (R := R) (A := A) (B := B)
     (algebraMap R B (counit a) : Bialgebra.CounitAlgebra R A B)
-
-omit [CommRing A] [Bialgebra R A] in
-/-- The canonical equivalence from the counit coefficient algebra to its underlying
-coefficient ring preserves coefficient scalar multiplication. -/
-lemma algEquivSelf_coeff_smul (b : B)
-    (z : Bialgebra.CounitAlgebra R A B) :
-    Bialgebra.CounitAlgebra.algEquivSelf R A B (b • z) =
-      b • Bialgebra.CounitAlgebra.algEquivSelf R A B z := by
-  rw [Bialgebra.CounitAlgebra.algEquivSelf_apply,
-    Bialgebra.CounitAlgebra.algEquivSelf_apply]
-  rfl
 
 private noncomputable def ofCotangentLinearMap
     (f : Bialgebra.CotangentSpace R A →ₗ[R] B) :

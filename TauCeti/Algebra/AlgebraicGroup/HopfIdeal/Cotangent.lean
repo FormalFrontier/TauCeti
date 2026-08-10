@@ -236,8 +236,20 @@ theorem finrank_quotientLie_add_finrank_conormal (I : HopfIdeal k H)
         Module.finrank k (conormalSubspace I) =
       Module.finrank k
         (Derivation k H (Bialgebra.CounitAlgebra k H k)) := by
-  simpa only [Derivation.finrank_eq_finrank_cotangentSpace] using
-    finrank_quotientCotangent_add_finrank_conormal I
+  have hquotient :
+      Module.finrank k
+          (Derivation k (H ⧸ I.toIdeal)
+            (Bialgebra.CounitAlgebra k (H ⧸ I.toIdeal) k)) =
+        Module.finrank k (Bialgebra.CotangentSpace k (H ⧸ I.toIdeal)) :=
+    Derivation.finrank_eq_finrank_cotangentSpace
+      (k := k) (H := H ⧸ I.toIdeal)
+  have hambient :
+      Module.finrank k
+          (Derivation k H (Bialgebra.CounitAlgebra k H k)) =
+        Module.finrank k (Bialgebra.CotangentSpace k H) :=
+    Derivation.finrank_eq_finrank_cotangentSpace (k := k) (H := H)
+  rw [hquotient, hambient]
+  exact finrank_quotientCotangent_add_finrank_conormal I
 
 end Field
 
