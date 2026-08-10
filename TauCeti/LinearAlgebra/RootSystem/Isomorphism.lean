@@ -5,9 +5,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 -- `TauCeti.LinearAlgebra.RootSystem.DynkinType` is imported publicly: `TauCeti.HasCartanType`
--- occurs in every statement below, and `TauCeti.HasCartanType.exists_supportEquiv` supplies the
--- relabelling each proof feeds to Mathlib's `RootPairing.Base.equivOfCartanMatrixEq`. It re-exports
--- `Mathlib.LinearAlgebra.RootSystem.CartanMatrix`, hence that theorem.
+-- occurs in the statement below, and `TauCeti.HasCartanType.exists_supportEquiv_cartanMatrix_eq`
+-- supplies the relabelling the proof feeds to Mathlib's `RootPairing.Base.equivOfCartanMatrixEq`.
+-- It re-exports `Mathlib.LinearAlgebra.RootSystem.CartanMatrix`, hence that theorem.
 public import TauCeti.LinearAlgebra.RootSystem.DynkinType
 
 public section
@@ -23,19 +23,14 @@ of the same Dynkin type are isomorphic as root pairings.
 
 Nothing here re-proves rigidity. Mathlib's `RootPairing.Base.equivOfCartanMatrixEq` already builds
 an isomorphism from a relabelling matching the two Cartan matrices, and
-`TauCeti.HasCartanType.exists_supportEquiv` is what supplies such a relabelling: two bases of type
-`t` are each labelled by the nodes of `t`, and composing the two labellings identifies their
-supports compatibly with the Cartan matrices.
-
-The consequence recorded here is that the root index sets match, so the *number of roots* is an
-invariant of the Cartan type, not of the presentation.
+`TauCeti.HasCartanType.exists_supportEquiv_cartanMatrix_eq` is what supplies such a relabelling: two
+bases of type `t` are each labelled by the nodes of `t`, and composing the two labellings identifies
+their supports compatibly with the Cartan matrices.
 
 ## Main results
 
 * `TauCeti.nonempty_equiv_of_hasCartanType`: **two root systems carrying bases of the same Cartan
   type are isomorphic.**
-* `TauCeti.nonempty_indexEquiv_of_hasCartanType` and `TauCeti.natCard_eq_of_hasCartanType`: their
-  root index sets are in bijection, so the number of roots depends only on the Cartan type.
 
 ## References
 
@@ -67,23 +62,7 @@ existentially, so there is no canonical choice to name; a caller that needs one 
 theorem nonempty_equiv_of_hasCartanType (b : P.Base) (b₂ : P₂.Base) (t : DynkinType)
     (h : HasCartanType P b t) (h₂ : HasCartanType P₂ b₂ t) :
     Nonempty (P.Equiv P₂) :=
-  let ⟨e, he⟩ := h.exists_supportEquiv h₂
+  let ⟨e, he⟩ := h.exists_supportEquiv_cartanMatrix_eq h₂
   ⟨_root_.RootPairing.Base.equivOfCartanMatrixEq b b₂ e he⟩
-
-/-- **The root index sets of two root systems of the same Cartan type are in bijection.** An
-isomorphism of root pairings carries a bijection of root indices (`RootPairing.Hom.indexEquiv`), so
-this is read off `TauCeti.nonempty_equiv_of_hasCartanType`. -/
-theorem nonempty_indexEquiv_of_hasCartanType (b : P.Base) (b₂ : P₂.Base) (t : DynkinType)
-    (h : HasCartanType P b t) (h₂ : HasCartanType P₂ b₂ t) :
-    Nonempty (ι ≃ ι₂) :=
-  (nonempty_equiv_of_hasCartanType b b₂ t h h₂).elim fun e ↦ ⟨e.toHom.indexEquiv⟩
-
-/-- **The number of roots depends only on the Cartan type.** Together with
-`TauCeti.HasCartanType.card_support`, which does the same for the number of simple roots, this says
-that the coarse numerical invariants of a root system are already determined by its diagram. -/
-theorem natCard_eq_of_hasCartanType (b : P.Base) (b₂ : P₂.Base) (t : DynkinType)
-    (h : HasCartanType P b t) (h₂ : HasCartanType P₂ b₂ t) :
-    Nat.card ι = Nat.card ι₂ :=
-  (nonempty_indexEquiv_of_hasCartanType b b₂ t h h₂).elim Nat.card_congr
 
 end TauCeti

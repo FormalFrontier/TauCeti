@@ -69,8 +69,8 @@ same root system; `Valid` keeps only `B 2` of those two names.
 * `TauCeti.HasCartanType.isSimplyLaced_iff` and
   `TauCeti.HasCartanType.isSimplyLaced_iff_of_valid`: both statements transferred to a base of
   Cartan type `t`.
-* `TauCeti.HasCartanType.exists_supportEquiv`: two bases of the same Cartan type are related by a
-  relabelling of their supports that matches their Cartan matrices.
+* `TauCeti.HasCartanType.exists_supportEquiv_cartanMatrix_eq`: two bases of the same Cartan type
+  are related by a relabelling of their supports that matches their Cartan matrices.
 
 ## References
 
@@ -420,8 +420,9 @@ agree because each agrees with the standard matrix of `t`.
 This is the hypothesis of Mathlib's `RootPairing.Base.equivOfCartanMatrixEq`, and is pure
 bookkeeping about the labellings: it needs neither finiteness nor reducedness of the two root
 pairings, with the root-system content left to that theorem. -/
-theorem HasCartanType.exists_supportEquiv {ι₂ M₂ N₂ : Type*} [AddCommGroup M₂] [Module R M₂]
-    [AddCommGroup N₂] [Module R N₂] {P₂ : RootPairing ι₂ R M₂ N₂} [P₂.IsCrystallographic]
+theorem HasCartanType.exists_supportEquiv_cartanMatrix_eq {ι₂ M₂ N₂ : Type*} [AddCommGroup M₂]
+    [Module R M₂] [AddCommGroup N₂] [Module R N₂] {P₂ : RootPairing ι₂ R M₂ N₂}
+    [P₂.IsCrystallographic]
     {b : P.Base} {b₂ : P₂.Base} {t : DynkinType}
     (h : HasCartanType P b t) (h₂ : HasCartanType P₂ b₂ t) :
     ∃ e : b.support ≃ b₂.support, ∀ i j, b₂.cartanMatrix (e i) (e j) = b.cartanMatrix i j := by
