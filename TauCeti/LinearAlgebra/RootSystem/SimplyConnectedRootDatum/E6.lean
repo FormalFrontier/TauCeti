@@ -410,6 +410,11 @@ def e6SimplyConnectedRootDatum : RootDatum (Fin 72) (Fin 6 → ℤ) (Fin 6 → �
 @[simp] lemma e6SimplyConnectedRootDatum_coroot :
     e6SimplyConnectedRootDatum.coroot = e6Coroot := (rfl)
 
+/-- The perfect pairing of the pinned `E₆` datum is the dot product of coordinate vectors, the
+fundamental-weight and simple-coroot bases being dual to one another. -/
+@[simp] lemma e6SimplyConnectedRootDatum_toLinearMap (x y : Fin 6 → ℤ) :
+    e6SimplyConnectedRootDatum.toLinearMap x y = x ⬝ᵥ y := (rfl)
+
 /-- Pairing a pinned `E₆` root with a coroot computes as their coordinate dot product. -/
 @[simp] lemma e6SimplyConnectedRootDatum_pairing (i j : Fin 72) :
     e6SimplyConnectedRootDatum.pairing i j = e6Root i ⬝ᵥ e6Coroot j := (rfl)
