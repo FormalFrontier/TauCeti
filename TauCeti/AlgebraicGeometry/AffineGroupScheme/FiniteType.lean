@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+public import Mathlib.CategoryTheory.ObjectProperty.Opposite
 public import TauCeti.Algebra.AlgebraicGroup.FiniteType.CommHopfAlgCat
 public import TauCeti.AlgebraicGeometry.AffineGroupScheme.Equivalence
 public import TauCeti.AlgebraicGeometry.AffineGroupScheme.HopfSpec
@@ -120,22 +121,28 @@ theorem finiteTypeAffineGroupSchemeProperty_inverseImage
     (finiteTypeAffineGroupSchemeProperty (CommRingCat.of R)).inverseImage
         (commHopfAlgCatOpEquivAffineGroupSchemeCat (CommRingCat.of R)).functor =
       (finiteTypeCommHopfAlgProperty R).op := by
-  let Q : ObjectProperty (Grp (Over (Spec (CommRingCat.of R)))) :=
-    (MorphismProperty.overObj (@LocallyOfFiniteType)).inverseImage (Grp.forget _)
-  let _ : (MorphismProperty.overObj (@LocallyOfFiniteType)
-      (X := Spec (CommRingCat.of R))).IsClosedUnderIsomorphisms :=
-    MorphismProperty.instIsClosedUnderIsomorphismsOverOverObjOfRespectsIso
-  let _ : Q.IsClosedUnderIsomorphisms := by
-    unfold Q
-    infer_instance
-  -- Unfold the scheme-side predicate to the ambient group-scheme property `Q`: this is the form
-  -- expected by the generic inverse-image comparison theorem.
-  change (Q.inverseImage (affineGroupSchemeProperty (CommRingCat.of R)).ι).inverseImage
-      (commHopfAlgCatOpEquivAffineGroupSchemeCat (CommRingCat.of R)).functor =
-    (finiteTypeCommHopfAlgProperty R).op
-  apply commHopfAlgCatOpEquivAffineGroupSchemeCat.inverseImage_eq_op
-  intro H
-  exact algebraFiniteType_iff_locallyOfFiniteType_hopfSpec R H
+  ext H
+  let G : AffineGroupSchemeCat (CommRingCat.of R) :=
+    ⟨(hopfSpec (CommRingCat.of R)).obj H, by
+      apply (affineGroupSchemeProperty_iff _).mpr
+      rw [← essImage_hopfSpec]
+      exact ⟨H, ⟨Iso.refl _⟩⟩⟩
+  let e : (commHopfAlgCatOpEquivAffineGroupSchemeCat
+      (CommRingCat.of R)).functor.obj H ≅ G :=
+    (affineGroupSchemeProperty (CommRingCat.of R)).ι.preimageIso
+      ((commHopfAlgCatOpEquivAffineGroupSchemeCat.functorCompιIso
+        (CommRingCat.of R)).app H)
+  rw [ObjectProperty.prop_inverseImage_iff,
+    finiteTypeAffineGroupSchemeProperty_iff, ObjectProperty.op_iff,
+    finiteTypeCommHopfAlgProperty_iff]
+  constructor
+  · intro h
+    have hG : finiteTypeAffineGroupSchemeProperty (CommRingCat.of R) G :=
+      (finiteTypeAffineGroupSchemeProperty (CommRingCat.of R)).prop_of_iso e h
+    exact (algebraFiniteType_iff_locallyOfFiniteType_hopfSpec R H.unop).mpr hG
+  · intro h
+    apply (finiteTypeAffineGroupSchemeProperty (CommRingCat.of R)).prop_of_iso e.symm
+    exact (algebraFiniteType_iff_locallyOfFiniteType_hopfSpec R H.unop).mp h
 
 /-- `Spec` as an anti-equivalence from finite-type commutative `R`-Hopf algebras to affine
 group schemes of finite type over `Spec R`.
@@ -146,10 +153,24 @@ noncomputable def finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat
     (R : Type u) [CommRing R] :
     (FiniteTypeCommHopfAlgCat.{u, u} R)ᵒᵖ ≌
       FiniteTypeAffineGroupSchemeCat (CommRingCat.of R) :=
-  commHopfAlgCatOpEquivAffineGroupSchemeCat.restrict (CommRingCat.of R)
-    (finiteTypeCommHopfAlgProperty R)
-    (finiteTypeAffineGroupSchemeProperty (CommRingCat.of R))
-    (finiteTypeAffineGroupSchemeProperty_inverseImage R)
+  (ObjectProperty.opEquivalence (finiteTypeCommHopfAlgProperty R)).symm.trans <|
+    (commHopfAlgCatOpEquivAffineGroupSchemeCat
+      (CommRingCat.of R)).congrFullSubcategory
+        (finiteTypeAffineGroupSchemeProperty_inverseImage R)
+
+/-- The forward restricted equivalence followed by the finite-type inclusion is definitionally
+the unrestricted equivalence applied after forgetting the finite-type proof. This private
+isomorphism isolates the representation boundary of `opEquivalence`, `trans`, and
+`congrFullSubcategory` from the public compatibility isomorphism below. -/
+private noncomputable def
+    finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCatFunctorCompιIso
+    (R : Type u) [CommRing R] :
+    (finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat R).functor ⋙
+        (finiteTypeAffineGroupSchemeProperty (CommRingCat.of R)).ι ≅
+      (forget₂ (FiniteTypeCommHopfAlgCat.{u, u} R)
+          (CommHopfAlgCat.{u} R)).op ⋙
+        (commHopfAlgCatOpEquivAffineGroupSchemeCat (CommRingCat.of R)).functor :=
+  Iso.refl _
 
 /-- The forward finite-type anti-equivalence, followed by the inclusions into affine group
 schemes and then all group schemes, is Mathlib's `hopfSpec` applied after forgetting the
@@ -162,9 +183,14 @@ noncomputable def
         (affineGroupSchemeProperty (CommRingCat.of R)).ι ≅
       (forget₂ (FiniteTypeCommHopfAlgCat.{u, u} R)
           (CommHopfAlgCat.{u} R)).op ⋙ hopfSpec (CommRingCat.of R) :=
-  commHopfAlgCatOpEquivAffineGroupSchemeCat.restrictFunctorCompιIso
-    (CommRingCat.of R) (finiteTypeCommHopfAlgProperty R)
-    (finiteTypeAffineGroupSchemeProperty (CommRingCat.of R))
-    (finiteTypeAffineGroupSchemeProperty_inverseImage R)
+  Functor.isoWhiskerRight
+      (finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCatFunctorCompιIso R)
+      (affineGroupSchemeProperty (CommRingCat.of R)).ι ≪≫
+    Functor.associator _ _ _ ≪≫
+    Functor.isoWhiskerLeft
+      (forget₂ (FiniteTypeCommHopfAlgCat.{u, u} R)
+        (CommHopfAlgCat.{u} R)).op
+      (commHopfAlgCatOpEquivAffineGroupSchemeCat.functorCompιIso
+        (CommRingCat.of R))
 
 end TauCeti
