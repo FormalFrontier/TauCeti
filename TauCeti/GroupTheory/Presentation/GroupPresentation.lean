@@ -107,12 +107,10 @@ def matchesMetadata (P : GroupPresentation) : Prop :=
   P.generatorCount = P.expectedGeneratorCount ∧
     P.transcribed.length = P.expectedRelatorCount
 
-/-- The metadata check is exactly the pair of generator- and relator-count equalities. -/
-@[simp]
-theorem matchesMetadata_iff (P : GroupPresentation) : P.matchesMetadata ↔
-    P.generatorCount = P.expectedGeneratorCount ∧
-      P.transcribed.length = P.expectedRelatorCount :=
-  Iff.rfl
+/-- Matching metadata ensures that the compiled relator list has the recorded length. -/
+theorem length_relators_eq_expected (P : GroupPresentation) (h : P.matchesMetadata) :
+    P.relators.length = P.expectedRelatorCount :=
+  P.length_relators.trans h.2
 
 end GroupPresentation
 
