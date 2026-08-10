@@ -27,10 +27,8 @@ in terms of `Sheaf.H'`, so the comparison is what lets a covering of the whole s
   constant presheaf on a point;
 * `TauCeti.CategoryTheory.freeYonedaObjIsoConst`: consequently the free abelian presheaf on it is
   the constant presheaf `ℤ`, and `freeYonedaSheafIsoConstantSheaf` sheafifies this;
-* `TauCeti.CategoryTheory.cohomologyPresheafObjIsoH` and
-  `TauCeti.CategoryTheory.cohomologyPresheafObjAddEquivH`: the resulting comparison
-  `Hⁿ(T, F) ≅ Hⁿ(F)` at a terminal object `T`, as an isomorphism of abelian groups and as an
-  additive equivalence;
+* `TauCeti.CategoryTheory.cohomologyPresheafObjIsoH`: the resulting comparison
+  `Hⁿ(T, F) ≅ Hⁿ(F)` at a terminal object `T`, as an isomorphism of abelian groups;
 * `TauCeti.CategoryTheory.cohomologyPresheafEvaluationIsoFunctorH`: the same comparison as a
   natural isomorphism in the coefficient sheaf.
 
@@ -87,6 +85,10 @@ def freeYonedaSheafIsoConstantSheaf {T : C} (hT : IsTerminal T) :
       (constantSheaf J AddCommGrpCat.{v}).obj (AddCommGrpCat.of (ULift.{v} ℤ)) :=
   (presheafToSheaf J _).mapIso (freeYonedaObjIsoConst hT)
 
+end
+
+noncomputable section
+
 variable [HasSheafify J AddCommGrpCat.{v}] [HasExt.{w} (Sheaf J AddCommGrpCat.{v})]
 
 variable (J) in
@@ -104,11 +106,6 @@ variable (n : ℕ) {T : C} (hT : IsTerminal T)
 def cohomologyPresheafObjIsoH (F : Sheaf J AddCommGrpCat.{v}) :
     Sheaf.H' F n T ≅ AddCommGrpCat.of (Sheaf.H F n) :=
   (cohomologyPresheafEvaluationIsoFunctorH J n hT).app F
-
-/-- At a terminal object, the cohomology of the object is the cohomology of the site. -/
-def cohomologyPresheafObjAddEquivH (F : Sheaf J AddCommGrpCat.{v}) :
-    Sheaf.H' F n T ≃+ Sheaf.H F n :=
-  (cohomologyPresheafObjIsoH n hT F).addCommGroupIsoToAddEquiv
 
 end
 

@@ -5,7 +5,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.AlgebraicGeometry.Cohomology.Basic
-public import TauCeti.CategoryTheory.Sites.SheafCohomology.Terminal
 public import Mathlib.CategoryTheory.Sites.SheafCohomology.MayerVietoris
 public import Mathlib.Topology.Sheaves.MayerVietoris
 
@@ -13,16 +12,13 @@ public import Mathlib.Topology.Sheaves.MayerVietoris
 # Mayer-Vietoris for the cohomology of a sheaf of modules on a scheme
 
 `TauCeti/AlgebraicGeometry/Cohomology/Basic.lean` defines the cohomology `Hⁿ(X, M)` of a sheaf of
-modules on a scheme. This file adds the cohomology `Hⁿ(U, M)` of an open subset, and the long
+modules on a scheme, and the cohomology `Hⁿ(U, M)` of an open subset. This file adds the long
 exact Mayer-Vietoris sequence of a covering of `X` by two open subsets `U` and `V`:
 
 `⋯ ⟶ Hⁿ(X, M) ⟶ Hⁿ(U, M) ⊞ Hⁿ(V, M) ⟶ Hⁿ(U ⊓ V, M) ⟶ Hⁿ⁺¹(X, M) ⟶ ⋯`
 
 ## Main declarations
 
-* `Scheme.Modules.cohomologyOn M n U` is `Hⁿ(U, M)`, and `Scheme.Modules.cohomologyOnRes` is
-  restriction along an inclusion of open subsets;
-* `Scheme.Modules.cohomologyOnTopIso` identifies `Hⁿ(⊤, M)` with `Hⁿ(X, M)`;
 * `Scheme.Modules.coverSquare` is the Mayer-Vietoris square of a covering of `X` by two opens,
   `Scheme.Modules.mayerVietorisSequence` is the six-term piece of the resulting long exact
   sequence and `Scheme.Modules.mayerVietorisSequence_exact` is its exactness;
@@ -41,8 +37,9 @@ cohomology `Hⁱ(X, ℱ)`: … vanishing above dimension (`H² = 0` on a curve)"
 vendored: the long exact sequence is Mathlib's
 `CategoryTheory.GrothendieckTopology.MayerVietorisSquare.sequence_exact`, the square attached to
 two open subsets is Mathlib's `TopologicalSpace.Opens.mayerVietorisSquare'`, and the comparison
-between the cohomology of the terminal open subset and the cohomology of the site is
-`TauCeti/CategoryTheory/Sites/SheafCohomology/Terminal.lean`.
+between the cohomology of the terminal open subset and the cohomology of the site comes from
+`TauCeti/CategoryTheory/Sites/SheafCohomology/Terminal.lean` through
+`Scheme.Modules.cohomologyOnTopIso`.
 -/
 
 public section
@@ -61,53 +58,16 @@ namespace Scheme.Modules
 
 variable {X : Scheme.{u}} (M : X.Modules)
 
-/-- The cohomology `Hⁿ(U, M)` of an open subset `U` of a scheme `X` with coefficients in a sheaf
-of modules `M`, as an abelian group.
-
-This is `CategoryTheory.Sheaf.H'` applied to the underlying abelian sheaf of `M`. At `U = ⊤` it
-agrees with `Scheme.Modules.Cohomology`, by `Scheme.Modules.cohomologyOnTopIso`. -/
-abbrev cohomologyOn (n : ℕ) (U : Opens X) : AddCommGrpCat.{u} :=
-  CategoryTheory.Sheaf.H'.{u} ((_root_.SheafOfModules.toSheaf X.ringCatSheaf).obj M) n U
-
-/-- Restriction in cohomology along an inclusion of open subsets. -/
-abbrev cohomologyOnRes (n : ℕ) {U V : Opens X} (h : U ≤ V) :
-    cohomologyOn M n V ⟶ cohomologyOn M n U :=
-  (CategoryTheory.Sheaf.cohomologyPresheaf.{u}
-    ((_root_.SheafOfModules.toSheaf X.ringCatSheaf).obj M) n).map (homOfLE h).op
-
-@[simp]
-lemma cohomologyOnRes_refl (n : ℕ) (U : Opens X) :
-    cohomologyOnRes M n (le_refl U) = 𝟙 _ := by
-  change (CategoryTheory.Sheaf.cohomologyPresheaf.{u}
-    ((_root_.SheafOfModules.toSheaf X.ringCatSheaf).obj M) n).map (homOfLE (le_refl U)).op = 𝟙 _
-  rw [Subsingleton.elim (homOfLE (le_refl U)) (𝟙 U), op_id, CategoryTheory.Functor.map_id]
-
-@[reassoc]
-lemma cohomologyOnRes_comp (n : ℕ) {U V W : Opens X} (hUV : U ≤ V) (hVW : V ≤ W) :
-    cohomologyOnRes M n hVW ≫ cohomologyOnRes M n hUV =
-      cohomologyOnRes M n (hUV.trans hVW) := by
-  change (CategoryTheory.Sheaf.cohomologyPresheaf.{u}
-      ((_root_.SheafOfModules.toSheaf X.ringCatSheaf).obj M) n).map (homOfLE hVW).op ≫
-    (CategoryTheory.Sheaf.cohomologyPresheaf.{u}
-      ((_root_.SheafOfModules.toSheaf X.ringCatSheaf).obj M) n).map (homOfLE hUV).op = _
-  rw [← CategoryTheory.Functor.map_comp, ← op_comp,
-    Subsingleton.elim (homOfLE hUV ≫ homOfLE hVW) (homOfLE (hUV.trans hVW))]
-
-/-- The cohomology of the whole space is the cohomology of the scheme. -/
-def cohomologyOnTopIso (n : ℕ) :
-    cohomologyOn M n ⊤ ≅ AddCommGrpCat.of (Cohomology M n) :=
-  TauCeti.CategoryTheory.cohomologyPresheafObjIsoH n isTerminalTop _
-
-/-- The cohomology of the whole space is the cohomology of the scheme. -/
-def cohomologyOnTopAddEquiv (n : ℕ) : cohomologyOn M n ⊤ ≃+ Cohomology M n :=
-  TauCeti.CategoryTheory.cohomologyPresheafObjAddEquivH n isTerminalTop _
-
 section Cover
 
 variable {U V : Opens X} (hUV : U ⊔ V = ⊤)
 
 /-- The Mayer-Vietoris square of a covering of a scheme by two open subsets. Its corners are
-`U ⊓ V`, `U`, `V` and the whole space. -/
+`U ⊓ V`, `U`, `V` and the whole space.
+
+The body is `@[expose]`d because the characteristic lemmas below (`coverSquare_X₁` and friends,
+`coverSquare_toBiprod`, `coverSquare_fromBiprod`) hold by definition, and the module system
+requires the definitions unfolded by an exported theorem to be exposed. -/
 @[expose]
 def coverSquare : (Opens.grothendieckTopology X).MayerVietorisSquare :=
   Opens.mayerVietorisSquare'
@@ -129,6 +89,7 @@ def coverSquare : (Opens.grothendieckTopology X).MayerVietorisSquare :=
 
 /-- The map `Hⁿ(X, M) ⟶ Hⁿ(U, M) ⊞ Hⁿ(V, M)` of the Mayer-Vietoris sequence is the pair of
 restriction maps. -/
+@[simp]
 lemma coverSquare_toBiprod (n : ℕ) :
     (coverSquare hUV).toBiprod ((_root_.SheafOfModules.toSheaf X.ringCatSheaf).obj M) n =
       biprod.lift (cohomologyOnRes M n (le_top : U ≤ ⊤))
@@ -137,6 +98,7 @@ lemma coverSquare_toBiprod (n : ℕ) :
 
 /-- The map `Hⁿ(U, M) ⊞ Hⁿ(V, M) ⟶ Hⁿ(U ⊓ V, M)` of the Mayer-Vietoris sequence is the difference
 of the two restriction maps. -/
+@[simp]
 lemma coverSquare_fromBiprod (n : ℕ) :
     (coverSquare hUV).fromBiprod ((_root_.SheafOfModules.toSheaf X.ringCatSheaf).obj M) n =
       biprod.desc (cohomologyOnRes M n (inf_le_left : U ⊓ V ≤ U))
