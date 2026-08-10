@@ -144,7 +144,6 @@ theorem levelSetChart_apply (hf : HasStrictFDerivAt f f' a) (hf' : f'.range = �
   change (hf.implicitToOpenPartialHomeomorphOfComplemented f f' hf' hker z.1).2 = _
   rw [hf.implicitToOpenPartialHomeomorphOfComplemented_apply hf' hker]
 
-@[simp]
 theorem levelSetChart_apply_self (hf : HasStrictFDerivAt f f' a) (hf' : f'.range = ⊤)
     (hker : f'.ker.ClosedComplemented) (ha : f a = c) :
     levelSetChart hf hf' hker ha ⟨a, ha⟩ = 0 := by
