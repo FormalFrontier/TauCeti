@@ -136,15 +136,7 @@ theorem mk_eq_one_iff (x : ↥(commutator G)) :
 particular it is trivial for every commutative `G`, whose derived subgroup is itself trivial. -/
 theorem subsingleton_iff :
     Subsingleton (DerivedCentralQuotient G) ↔ IsMulCommutative ↥(commutator G) := by
-  rw [← center_eq_top_iff]
-  constructor
-  · refine fun h => top_le_iff.mp fun x _ => ?_
-    exact (mk_eq_one_iff x).mp (Subsingleton.elim _ _)
-  · refine fun h => ⟨fun a b => ?_⟩
-    obtain ⟨x, rfl⟩ := QuotientGroup.mk_surjective a
-    obtain ⟨y, rfl⟩ := QuotientGroup.mk_surjective b
-    rw [QuotientGroup.eq, h]
-    exact mem_top _
+  rw [QuotientGroup.subsingleton_iff, center_eq_top_iff]
 
 instance [IsMulCommutative G] : Subsingleton (DerivedCentralQuotient G) := by
   rw [subsingleton_iff]
@@ -153,15 +145,9 @@ instance [IsMulCommutative G] : Subsingleton (DerivedCentralQuotient G) := by
   rw [this]
   infer_instance
 
-/-- Lagrange's theorem for the two steps of the construction. -/
-theorem card_mul_card_center :
-    Nat.card (DerivedCentralQuotient G) * Nat.card ↥(center ↥(commutator G)) =
-      Nat.card ↥(commutator G) :=
-  (Subgroup.card_eq_card_quotient_mul_card_subgroup _).symm
-
-/-- The order of the derived central quotient of a finite group divides the order of the group. -/
-theorem card_dvd_card [Finite G] : Nat.card (DerivedCentralQuotient G) ∣ Nat.card G :=
-  (Dvd.intro _ card_mul_card_center).trans (Subgroup.card_subgroup_dvd_card _)
+/-- The order of the derived central quotient divides the order of the group. -/
+theorem card_dvd_card : Nat.card (DerivedCentralQuotient G) ∣ Nat.card G :=
+  ((center ↥(commutator G)).card_quotient_dvd_card).trans (commutator G).card_subgroup_dvd_card
 
 /-! ### Transport along an isomorphism -/
 
