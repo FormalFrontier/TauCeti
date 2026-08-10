@@ -98,7 +98,6 @@ its Hopf spectrum is smooth.
 
 This is the predicate-level compatibility needed to restrict the affine Hopf/group-scheme
 anti-equivalence to smooth objects. -/
-@[simp]
 theorem algebraSmooth_iff_smooth_hopfSpec
     (R : Type u) [CommRing R] (H : CommHopfAlgCat.{u} R) :
     Algebra.Smooth R H ↔
@@ -116,28 +115,21 @@ theorem smoothAffineGroupSchemeProperty_inverseImage
     (smoothAffineGroupSchemeProperty (CommRingCat.of R)).inverseImage
         (commHopfAlgCatOpEquivAffineGroupSchemeCat (CommRingCat.of R)).functor =
       (smoothCommHopfAlgProperty R).op := by
-  ext H
-  let G : AffineGroupSchemeCat (CommRingCat.of R) :=
-    ⟨(hopfSpec (CommRingCat.of R)).obj H, by
-      apply (affineGroupSchemeProperty_iff _).mpr
-      rw [← essImage_hopfSpec]
-      exact ⟨H, ⟨Iso.refl _⟩⟩⟩
-  let e : (commHopfAlgCatOpEquivAffineGroupSchemeCat
-      (CommRingCat.of R)).functor.obj H ≅ G :=
-    (affineGroupSchemeProperty (CommRingCat.of R)).ι.preimageIso
-      ((commHopfAlgCatOpEquivAffineGroupSchemeCat.functorCompιIso
-        (CommRingCat.of R)).app H)
-  rw [ObjectProperty.prop_inverseImage_iff,
-    smoothAffineGroupSchemeProperty_iff, ObjectProperty.op_iff,
-    smoothCommHopfAlgProperty_iff]
-  constructor
-  · intro h
-    have hG : smoothAffineGroupSchemeProperty (CommRingCat.of R) G :=
-      (smoothAffineGroupSchemeProperty (CommRingCat.of R)).prop_of_iso e h
-    exact (algebraSmooth_iff_smooth_hopfSpec R H.unop).mpr hG
-  · intro h
-    apply (smoothAffineGroupSchemeProperty (CommRingCat.of R)).prop_of_iso e.symm
-    exact (algebraSmooth_iff_smooth_hopfSpec R H.unop).mp h
+  let Q : ObjectProperty (Grp (Over (Spec (CommRingCat.of R)))) :=
+    (MorphismProperty.overObj (@Smooth)).inverseImage (Grp.forget _)
+  let _ : (MorphismProperty.overObj (@Smooth)
+      (X := Spec (CommRingCat.of R))).IsClosedUnderIsomorphisms :=
+    MorphismProperty.instIsClosedUnderIsomorphismsOverOverObjOfRespectsIso
+  let _ : Q.IsClosedUnderIsomorphisms := by
+    unfold Q
+    infer_instance
+  change (Q.inverseImage (affineGroupSchemeProperty (CommRingCat.of R)).ι).inverseImage
+      (commHopfAlgCatOpEquivAffineGroupSchemeCat (CommRingCat.of R)).functor =
+    (smoothCommHopfAlgProperty R).op
+  apply commHopfAlgCatOpEquivAffineGroupSchemeCat.inverseImage_eq_op
+  intro H
+  rw [smoothCommHopfAlgProperty_iff]
+  exact algebraSmooth_iff_smooth_hopfSpec R H
 
 /-- `Spec` as an anti-equivalence from smooth commutative `R`-Hopf algebras to smooth affine
 group schemes over `Spec R`.
@@ -146,24 +138,11 @@ This is the restriction of `commHopfAlgCatOpEquivAffineGroupSchemeCat` along
 `smoothAffineGroupSchemeProperty_inverseImage`. -/
 noncomputable def smoothCommHopfAlgCatOpEquivSmoothAffineGroupSchemeCat
     (R : Type u) [CommRing R] :
-    (SmoothCommHopfAlgCat R)ᵒᵖ ≌ SmoothAffineGroupSchemeCat (CommRingCat.of R) :=
-  (ObjectProperty.opEquivalence (smoothCommHopfAlgProperty R)).symm.trans <|
-    (commHopfAlgCatOpEquivAffineGroupSchemeCat
-      (CommRingCat.of R)).congrFullSubcategory
-        (smoothAffineGroupSchemeProperty_inverseImage R)
-
-/-- The forward restricted equivalence followed by the smooth inclusion is definitionally the
-unrestricted equivalence applied after forgetting the smoothness proof. This private isomorphism
-isolates the representation boundary of `opEquivalence`, `trans`, and `congrFullSubcategory` from
-the public compatibility isomorphism below. -/
-private noncomputable def
-    smoothCommHopfAlgCatOpEquivSmoothAffineGroupSchemeCatFunctorCompιIso
-    (R : Type u) [CommRing R] :
-    (smoothCommHopfAlgCatOpEquivSmoothAffineGroupSchemeCat R).functor ⋙
-        (smoothAffineGroupSchemeProperty (CommRingCat.of R)).ι ≅
-      (smoothCommHopfAlgProperty R).ι.op ⋙
-        (commHopfAlgCatOpEquivAffineGroupSchemeCat (CommRingCat.of R)).functor :=
-  Iso.refl _
+    (SmoothCommHopfAlgCat.{u, u} R)ᵒᵖ ≌ SmoothAffineGroupSchemeCat (CommRingCat.of R) :=
+  commHopfAlgCatOpEquivAffineGroupSchemeCat.restrict (CommRingCat.of R)
+    (smoothCommHopfAlgProperty R)
+    (smoothAffineGroupSchemeProperty (CommRingCat.of R))
+    (smoothAffineGroupSchemeProperty_inverseImage R)
 
 /-- The forward smooth anti-equivalence, followed by the inclusions into affine group schemes
 and then all group schemes, is Mathlib's `hopfSpec` applied after forgetting the smoothness proof.
@@ -174,13 +153,9 @@ noncomputable def smoothCommHopfAlgCatOpEquivSmoothAffineGroupSchemeCat.functorC
           (smoothAffineGroupSchemeProperty (CommRingCat.of R)).ι ⋙
         (affineGroupSchemeProperty (CommRingCat.of R)).ι ≅
       (smoothCommHopfAlgProperty R).ι.op ⋙ hopfSpec (CommRingCat.of R) :=
-  Functor.isoWhiskerRight
-      (smoothCommHopfAlgCatOpEquivSmoothAffineGroupSchemeCatFunctorCompιIso R)
-      (affineGroupSchemeProperty (CommRingCat.of R)).ι ≪≫
-    Functor.associator _ _ _ ≪≫
-    Functor.isoWhiskerLeft
-      (smoothCommHopfAlgProperty R).ι.op
-      (commHopfAlgCatOpEquivAffineGroupSchemeCat.functorCompιIso
-        (CommRingCat.of R))
+  commHopfAlgCatOpEquivAffineGroupSchemeCat.restrictFunctorCompιIso
+    (CommRingCat.of R) (smoothCommHopfAlgProperty R)
+    (smoothAffineGroupSchemeProperty (CommRingCat.of R))
+    (smoothAffineGroupSchemeProperty_inverseImage R)
 
 end TauCeti

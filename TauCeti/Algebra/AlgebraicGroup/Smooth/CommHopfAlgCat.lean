@@ -37,18 +37,18 @@ namespace TauCeti
 
 open CategoryTheory
 
-universe u
+universe u v
 
 /-- The object property on commutative Hopf algebras selecting coordinate algebras smooth over
 the base ring. -/
 def smoothCommHopfAlgProperty (R : Type u) [CommRing R] :
-    ObjectProperty (CommHopfAlgCat.{u} R) :=
+    ObjectProperty (CommHopfAlgCat.{v} R) :=
   fun H => Algebra.Smooth R H
 
 /-- Membership in the smooth commutative-Hopf-algebra object property. -/
 @[simp]
 lemma smoothCommHopfAlgProperty_iff {R : Type u} [CommRing R]
-    (H : CommHopfAlgCat.{u} R) :
+    (H : CommHopfAlgCat.{v} R) :
     smoothCommHopfAlgProperty R H ↔ Algebra.Smooth R H :=
   Iff.rfl
 
@@ -62,33 +62,33 @@ namespace SmoothCommHopfAlgCat
 
 variable {R : Type u} [CommRing R]
 
-instance : CoeSort (SmoothCommHopfAlgCat R) (Type u) :=
+instance : CoeSort (SmoothCommHopfAlgCat.{u, v} R) (Type v) :=
   ⟨fun H => H.obj⟩
 
-instance commRing (H : SmoothCommHopfAlgCat R) : CommRing H :=
+instance commRing (H : SmoothCommHopfAlgCat.{u, v} R) : CommRing H :=
   inferInstanceAs (CommRing H.obj)
 
-instance hopfAlgebra (H : SmoothCommHopfAlgCat R) : HopfAlgebra R H :=
+instance hopfAlgebra (H : SmoothCommHopfAlgCat.{u, v} R) : HopfAlgebra R H :=
   inferInstanceAs (HopfAlgebra R H.obj)
 
-instance smooth (H : SmoothCommHopfAlgCat R) : Algebra.Smooth R H :=
+instance smooth (H : SmoothCommHopfAlgCat.{u, v} R) : Algebra.Smooth R H :=
   (smoothCommHopfAlgProperty_iff H.obj).mp H.property
 
 variable (R) in
 /-- Construct a bundled smooth commutative Hopf algebra from the usual unbundled typeclasses. -/
-abbrev of (H : Type u) [CommRing H] [HopfAlgebra R H] [Algebra.Smooth R H] :
-    SmoothCommHopfAlgCat R :=
+abbrev of (H : Type v) [CommRing H] [HopfAlgebra R H] [Algebra.Smooth R H] :
+    SmoothCommHopfAlgCat.{u, v} R :=
   ⟨CommHopfAlgCat.of R H,
     (smoothCommHopfAlgProperty_iff _).mpr (inferInstanceAs (Algebra.Smooth R H))⟩
 
 /-- Turn a morphism in `SmoothCommHopfAlgCat` back into a bialgebra morphism. -/
-abbrev toBialgHom {H K : SmoothCommHopfAlgCat R} (φ : H ⟶ K) :
+abbrev toBialgHom {H K : SmoothCommHopfAlgCat.{u, v} R} (φ : H ⟶ K) :
     H →ₐc[R] K :=
   φ.hom.hom
 
 /-- Typecheck a bialgebra morphism between smooth commutative Hopf algebras as a morphism in
 `SmoothCommHopfAlgCat`. -/
-abbrev ofHom {H K : Type u} [CommRing H] [CommRing K]
+abbrev ofHom {H K : Type v} [CommRing H] [CommRing K]
     [HopfAlgebra R H] [HopfAlgebra R K]
     [Algebra.Smooth R H] [Algebra.Smooth R K] (φ : H →ₐc[R] K) :
     of R H ⟶ of R K :=
@@ -97,29 +97,29 @@ abbrev ofHom {H K : Type u} [CommRing H] [CommRing K]
 /-- Two morphisms of smooth commutative Hopf algebras are equal when their underlying bialgebra
 morphisms are equal. -/
 @[ext]
-lemma hom_ext {H K : SmoothCommHopfAlgCat R} {φ ψ : H ⟶ K}
+lemma hom_ext {H K : SmoothCommHopfAlgCat.{u, v} R} {φ ψ : H ⟶ K}
     (h : toBialgHom φ = toBialgHom ψ) : φ = ψ :=
   ObjectProperty.hom_ext (P := smoothCommHopfAlgProperty R)
     (CommHopfAlgCat.hom_ext h)
 
 @[simp]
-lemma toBialgHom_id {H : SmoothCommHopfAlgCat R} :
+lemma toBialgHom_id {H : SmoothCommHopfAlgCat.{u, v} R} :
     toBialgHom (𝟙 H : H ⟶ H) = BialgHom.id R H :=
   rfl
 
 @[simp]
-lemma toBialgHom_comp {H K L : SmoothCommHopfAlgCat R}
+lemma toBialgHom_comp {H K L : SmoothCommHopfAlgCat.{u, v} R}
     (φ : H ⟶ K) (ψ : K ⟶ L) :
     toBialgHom (φ ≫ ψ) = (toBialgHom ψ).comp (toBialgHom φ) :=
   rfl
 
 @[simp]
-lemma ofHom_toBialgHom {H K : SmoothCommHopfAlgCat R} (φ : H ⟶ K) :
+lemma ofHom_toBialgHom {H K : SmoothCommHopfAlgCat.{u, v} R} (φ : H ⟶ K) :
     ofHom (toBialgHom φ) = φ :=
   rfl
 
 @[simp]
-lemma toBialgHom_ofHom {H K : Type u} [CommRing H] [CommRing K]
+lemma toBialgHom_ofHom {H K : Type v} [CommRing H] [CommRing K]
     [HopfAlgebra R H] [HopfAlgebra R K]
     [Algebra.Smooth R H] [Algebra.Smooth R K] (φ : H →ₐc[R] K) :
     toBialgHom (ofHom (R := R) φ) = φ :=

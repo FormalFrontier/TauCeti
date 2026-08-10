@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+public import Mathlib.CategoryTheory.ObjectProperty.Opposite
 public import TauCeti.AlgebraicGeometry.AffineGroupScheme.Basic
 
 /-!
@@ -58,5 +59,63 @@ noncomputable def commHopfAlgCatOpEquivAffineGroupSchemeCat.functorCompιIso (S 
   exact Functor.associator _ _ _ ≪≫
     Functor.isoWhiskerLeft (hopfSpec S).toEssImage (ObjectProperty.ιOfLECompιIso _) ≪≫
     (hopfSpec S).toEssImageCompι
+
+/-- Transport an object property across the comparison between the affine Hopf equivalence and
+`hopfSpec`. If a property of commutative Hopf algebras agrees with an isomorphism-invariant
+property of their Hopf spectra, the corresponding inverse-image properties agree. -/
+theorem commHopfAlgCatOpEquivAffineGroupSchemeCat.inverseImage_eq_op
+    (R : Type u) [CommRing R]
+    (P : ObjectProperty (CommHopfAlgCat.{u} R))
+    (Q : ObjectProperty (Grp (Over (Spec (CommRingCat.of R)))))
+    [Q.IsClosedUnderIsomorphisms]
+    (h : ∀ H : CommHopfAlgCat.{u} R,
+      P H ↔ Q ((hopfSpec (CommRingCat.of R)).obj (op H))) :
+    (Q.inverseImage (affineGroupSchemeProperty (CommRingCat.of R)).ι).inverseImage
+        (commHopfAlgCatOpEquivAffineGroupSchemeCat (CommRingCat.of R)).functor =
+      P.op := by
+  ext H
+  rw [ObjectProperty.prop_inverseImage_iff, ObjectProperty.prop_inverseImage_iff,
+    ObjectProperty.op_iff]
+  constructor
+  · intro hH
+    apply (h H.unop).mpr
+    exact Q.prop_of_iso
+      ((commHopfAlgCatOpEquivAffineGroupSchemeCat.functorCompιIso
+        (CommRingCat.of R)).app H) hH
+  · intro hH
+    apply Q.prop_of_iso
+      ((commHopfAlgCatOpEquivAffineGroupSchemeCat.functorCompιIso
+        (CommRingCat.of R)).app H).symm
+    exact (h H.unop).mp hH
+
+/-- Restrict the affine Hopf/group-scheme anti-equivalence to matching object properties. -/
+noncomputable def commHopfAlgCatOpEquivAffineGroupSchemeCat.restrict
+    (S : CommRingCat.{u})
+    (P : ObjectProperty (CommHopfAlgCat S))
+    (Q : ObjectProperty (AffineGroupSchemeCat S))
+    [Q.IsClosedUnderIsomorphisms]
+    (h : Q.inverseImage (commHopfAlgCatOpEquivAffineGroupSchemeCat S).functor = P.op) :
+    P.FullSubcategoryᵒᵖ ≌ Q.FullSubcategory :=
+  (ObjectProperty.opEquivalence P).symm.trans <|
+    (commHopfAlgCatOpEquivAffineGroupSchemeCat S).congrFullSubcategory h
+
+/-- After the inclusions, the forward functor of `restrict` is `hopfSpec` applied after
+forgetting the object-property proof. -/
+noncomputable def commHopfAlgCatOpEquivAffineGroupSchemeCat.restrictFunctorCompιIso
+    (S : CommRingCat.{u})
+    (P : ObjectProperty (CommHopfAlgCat S))
+    (Q : ObjectProperty (AffineGroupSchemeCat S))
+    [Q.IsClosedUnderIsomorphisms]
+    (h : Q.inverseImage (commHopfAlgCatOpEquivAffineGroupSchemeCat S).functor = P.op) :
+    (commHopfAlgCatOpEquivAffineGroupSchemeCat.restrict S P Q h).functor ⋙ Q.ι ⋙
+        (affineGroupSchemeProperty S).ι ≅
+      P.ι.op ⋙ hopfSpec S :=
+  Functor.isoWhiskerRight
+      (show (commHopfAlgCatOpEquivAffineGroupSchemeCat.restrict S P Q h).functor ⋙ Q.ι ≅
+        P.ι.op ⋙ (commHopfAlgCatOpEquivAffineGroupSchemeCat S).functor from Iso.refl _)
+      (affineGroupSchemeProperty S).ι ≪≫
+    Functor.associator _ _ _ ≪≫
+    Functor.isoWhiskerLeft P.ι.op
+      (commHopfAlgCatOpEquivAffineGroupSchemeCat.functorCompιIso S)
 
 end TauCeti
