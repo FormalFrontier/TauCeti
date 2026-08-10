@@ -75,13 +75,14 @@ namespace GroupPresentation
 /-- The number of generators in a presentation, determined by its generator-name list. -/
 abbrev generatorCount (P : GroupPresentation) : ℕ := P.generatorNames.length
 
-/-- The relator expressions compiled to left-to-right signed words.
-
-The body is exposed so that the compiled words of a transcribed presentation reduce in the module
-that carries it, where they are checked letter by letter against the published source. -/
-@[expose]
+/-- The relator expressions compiled to left-to-right signed words. -/
 def relators (P : GroupPresentation) : List (PresentationWord (Fin P.generatorCount)) :=
   P.transcribed.map Relator.toWord
+
+/-- The compiled relators are obtained by compiling each transcribed expression. -/
+@[simp]
+theorem relators_def (P : GroupPresentation) : P.relators = P.transcribed.map Relator.toWord := by
+  rw [relators]
 
 /-- Compilation preserves the number of relators. -/
 @[simp]
@@ -100,9 +101,15 @@ A transcription is audited by comparing the compiled letters with the published 
 form of them is the one to state such a comparison against: the index type of a word depends on the
 generator-name list, whereas the letters here do not, so the comparison needs no arithmetic on that
 dependency. -/
-@[expose]
 def relatorLetters (P : GroupPresentation) : List (List (ℕ × Bool)) :=
   P.relators.map (List.map fun letter => (letter.1.val, letter.2))
+
+/-- The displayed letters are obtained by forgetting the bounds on the compiled generator
+indices. -/
+@[simp]
+theorem relatorLetters_def (P : GroupPresentation) :
+    P.relatorLetters = P.relators.map (List.map fun letter => (letter.1.val, letter.2)) := by
+  rw [relatorLetters]
 
 /-- The total number of letters in the compiled relator words.
 
@@ -111,8 +118,13 @@ the presentation, so comparing it with the transcribed data is a third decidable
 transcription alongside the two counts of `TauCeti.GroupPresentation.matchesMetadata`. A published
 length is normally measured after free and cyclic reduction of each relator, so a row using it as a
 check should also record that its compiled words are reduced. -/
-@[expose]
 def totalLength (P : GroupPresentation) : ℕ := (P.relators.map List.length).sum
+
+/-- The total length is the sum of the lengths of the compiled relator words. -/
+@[simp]
+theorem totalLength_def (P : GroupPresentation) :
+    P.totalLength = (P.relators.map List.length).sum := by
+  rw [totalLength]
 
 /-- The compiled relations, interpreted as elements of the free group. -/
 def relatorSet (P : GroupPresentation) : Set (FreeGroup (Fin P.generatorCount)) :=

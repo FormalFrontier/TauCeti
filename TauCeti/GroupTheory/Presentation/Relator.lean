@@ -82,12 +82,7 @@ namespace Relator
 /-- Compile a relator expression to a flat signed word.
 
 Inversion uses Mathlib's `FreeGroup.invRev`, which reverses the word and flips every sign. Powers
-are compiled by repeating the whole word, rather than by expanding the expression recursively.
-
-The body is exposed because compilation is an audit computation: a module carrying transcribed
-relators checks the letters and the length of the compiled words against its published source, and
-those checks need this definition to reduce. -/
-@[expose]
+are compiled by repeating the whole word, rather than by expanding the expression recursively. -/
 def toWord {α : Type*} : Relator α → PresentationWord α
   | .gen x => [(x, true)]
   | .inv r => FreeGroup.invRev r.toWord
@@ -95,6 +90,36 @@ def toWord {α : Type*} : Relator α → PresentationWord α
   | .pow r n => (List.replicate n r.toWord).flatten
   | .comm r s => ((r.toWord ++ s.toWord) ++ FreeGroup.invRev r.toWord) ++
       FreeGroup.invRev s.toWord
+
+/-- Compilation of a generator. -/
+@[simp]
+theorem toWord_gen {α : Type*} (x : α) : (Relator.gen x).toWord = [(x, true)] := by
+  rw [toWord]
+
+/-- Compilation of an inverse. -/
+@[simp]
+theorem toWord_inv {α : Type*} (r : Relator α) :
+    (Relator.inv r).toWord = FreeGroup.invRev r.toWord := by
+  rw [toWord]
+
+/-- Compilation of a product. -/
+@[simp]
+theorem toWord_mul {α : Type*} (r s : Relator α) :
+    (Relator.mul r s).toWord = r.toWord ++ s.toWord := by
+  rw [toWord]
+
+/-- Compilation of a natural power. -/
+@[simp]
+theorem toWord_pow {α : Type*} (r : Relator α) (n : ℕ) :
+    (Relator.pow r n).toWord = (List.replicate n r.toWord).flatten := by
+  rw [toWord]
+
+/-- Compilation of a commutator. -/
+@[simp]
+theorem toWord_comm {α : Type*} (r s : Relator α) :
+    (Relator.comm r s).toWord =
+      ((r.toWord ++ s.toWord) ++ FreeGroup.invRev r.toWord) ++ FreeGroup.invRev s.toWord := by
+  rw [toWord]
 
 /-- Interpret a relator expression directly in the free group. This is deliberately independent of
 `Relator.toWord`: the comparison theorem below checks that compilation preserves meaning. -/

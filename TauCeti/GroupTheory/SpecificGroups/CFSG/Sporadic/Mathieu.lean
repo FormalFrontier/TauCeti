@@ -59,8 +59,6 @@ recorded here as provenance for a reviewer; no part of it is a Lean proof.
 
 * `TauCeti.Sporadic.m11Presentation`, `TauCeti.Sporadic.m12Presentation` and
   `TauCeti.Sporadic.m22Presentation`: the three transcribed rows.
-* `TauCeti.Sporadic.genA`, `TauCeti.Sporadic.invA`, `TauCeti.Sporadic.genB`,
-  `TauCeti.Sporadic.invB`: the two-letter alphabet the sources use, as relator expressions.
 
 ## References
 
@@ -91,17 +89,13 @@ denoting an inverse, so that `A` is `a⁻¹`. The four expressions below are tho
 `⬝` below is `TauCeti.Relator.mul`, so a transcribed relator reads left to right exactly as the
 source prints it. -/
 
-/-- The first generator of a two-generator presentation, printed `a` by the sources. -/
-abbrev genA : Relator (Fin 2) := .gen 0
+private abbrev genA : Relator (Fin 2) := .gen 0
 
-/-- The inverse of the first generator, printed `A` by the sources. -/
-abbrev invA : Relator (Fin 2) := .inv genA
+private abbrev invA : Relator (Fin 2) := .inv genA
 
-/-- The second generator of a two-generator presentation, printed `b` by the sources. -/
-abbrev genB : Relator (Fin 2) := .gen 1
+private abbrev genB : Relator (Fin 2) := .gen 1
 
-/-- The inverse of the second generator, printed `B` by the sources. -/
-abbrev invB : Relator (Fin 2) := .inv genB
+private abbrev invB : Relator (Fin 2) := .inv genB
 
 @[inherit_doc Relator.mul]
 local infixl:70 " ⬝ " => Relator.mul
@@ -139,7 +133,8 @@ def m11Presentation : GroupPresentation where
 theorem m11Presentation_matchesMetadata : m11Presentation.matchesMetadata := by decide
 
 /-- The compiled relator words for `M₁₁` have the total length `19` published by the source. -/
-theorem m11Presentation_totalLength : m11Presentation.totalLength = 19 := by decide
+theorem m11Presentation_totalLength : m11Presentation.totalLength = 19 := by
+  simp [GroupPresentation.totalLength_def, m11Presentation]
 
 /-- The compiled relator words for `M₁₁`, spelled out. A letter `(i, true)` is the generator with
 index `i` and `(i, false)` is its inverse, so the two words read `b A A A b A b b b` and
@@ -150,17 +145,27 @@ theorem m11Presentation_relatorLetters :
           (1, true), (1, true)],
         [(1, true), (0, true), (1, false), (0, false), (1, false), (0, false), (1, true),
           (0, true), (1, false), (0, true)]] := by
-  decide
+  simp [GroupPresentation.relatorLetters_def, GroupPresentation.generatorCount,
+    FreeGroup.invRev, m11Presentation]
 
 /-- Every compiled relator word for `M₁₁` is cyclically reduced. This is what makes the letter count
 in `TauCeti.Sporadic.m11Presentation_totalLength` comparable with the length published for the
 presentation, which is measured after free and cyclic reduction of each relator. -/
 theorem m11Presentation_isCyclicallyReduced :
     ∀ w ∈ m11Presentation.relators, FreeGroup.IsCyclicallyReduced w := by
-  have hreduce : ∀ w ∈ m11Presentation.relators, FreeGroup.reduce w = w := by decide
-  have hcyclic : ∀ w ∈ m11Presentation.relators, ∀ a ∈ w.getLast?, ∀ c ∈ w.head?,
-      a.1 = c.1 → a.2 = c.2 := by decide
-  exact fun w hw => ⟨.of_reduce_eq (hreduce w hw), hcyclic w hw⟩
+  rw [← List.forall_iff_forall_mem]
+  simp only [m11Presentation, List.length_cons, List.length_nil, Nat.reduceAdd,
+    GroupPresentation.generatorCount, GroupPresentation.relators_def, List.map_cons,
+    Relator.toWord_mul, Relator.toWord_gen, Fin.isValue, Relator.toWord_pow, Relator.toWord_inv,
+    FreeGroup.invRev, Bool.not_true, List.map_nil, List.reverse_cons, List.reverse_nil,
+    List.nil_append, List.reduceReplicate, List.flatten_cons, List.flatten_nil, List.append_nil,
+    List.cons_append]
+  constructor
+  · rw [FreeGroup.isCyclicallyReduced_iff, FreeGroup.isReduced_iff_reduce_eq]
+    decide
+  rw [List.forall_iff_forall_mem, List.forall_mem_singleton]
+  rw [FreeGroup.isCyclicallyReduced_iff, FreeGroup.isReduced_iff_reduce_eq]
+  decide
 
 /-! ### `M₁₂` -/
 
@@ -197,7 +202,8 @@ def m12Presentation : GroupPresentation where
 theorem m12Presentation_matchesMetadata : m12Presentation.matchesMetadata := by decide
 
 /-- The compiled relator words for `M₁₂` have the total length `29` published by the source. -/
-theorem m12Presentation_totalLength : m12Presentation.totalLength = 29 := by decide
+theorem m12Presentation_totalLength : m12Presentation.totalLength = 29 := by
+  simp [GroupPresentation.totalLength_def, m12Presentation]
 
 /-- The compiled relator words for `M₁₂`, spelled out. A letter `(i, true)` is the generator with
 index `i` and `(i, false)` is its inverse, so the three words read `B a B a B a`, then five copies
@@ -209,16 +215,29 @@ theorem m12Presentation_relatorLetters :
           (1, true), (1, true), (1, true)],
         [(0, true), (1, true), (1, true), (0, true), (1, false), (0, true), (0, true), (1, true),
           (0, true), (0, true), (1, true), (1, true)]] := by
-  decide
+  simp [GroupPresentation.relatorLetters_def, GroupPresentation.generatorCount,
+    FreeGroup.invRev, m12Presentation]
 
 /-- Every compiled relator word for `M₁₂` is cyclically reduced; see
 `TauCeti.Sporadic.m11Presentation_isCyclicallyReduced`. -/
 theorem m12Presentation_isCyclicallyReduced :
     ∀ w ∈ m12Presentation.relators, FreeGroup.IsCyclicallyReduced w := by
-  have hreduce : ∀ w ∈ m12Presentation.relators, FreeGroup.reduce w = w := by decide
-  have hcyclic : ∀ w ∈ m12Presentation.relators, ∀ a ∈ w.getLast?, ∀ c ∈ w.head?,
-      a.1 = c.1 → a.2 = c.2 := by decide
-  exact fun w hw => ⟨.of_reduce_eq (hreduce w hw), hcyclic w hw⟩
+  rw [← List.forall_iff_forall_mem]
+  simp only [m12Presentation, List.length_cons, List.length_nil, Nat.reduceAdd,
+    GroupPresentation.generatorCount, GroupPresentation.relators_def, List.map_cons,
+    Relator.toWord_pow, Relator.toWord_mul, Relator.toWord_inv, FreeGroup.invRev,
+    Relator.toWord_gen, Fin.isValue, Bool.not_true, List.map_nil, List.reverse_cons,
+    List.reverse_nil, List.nil_append, List.cons_append, List.reduceReplicate, List.flatten_cons,
+    List.flatten_nil, List.append_nil]
+  constructor
+  · rw [FreeGroup.isCyclicallyReduced_iff, FreeGroup.isReduced_iff_reduce_eq]
+    decide
+  constructor
+  · rw [FreeGroup.isCyclicallyReduced_iff, FreeGroup.isReduced_iff_reduce_eq]
+    decide
+  rw [List.forall_iff_forall_mem, List.forall_mem_singleton]
+  rw [FreeGroup.isCyclicallyReduced_iff, FreeGroup.isReduced_iff_reduce_eq]
+  decide
 
 /-! ### `M₂₂` -/
 
@@ -257,7 +276,8 @@ def m22Presentation : GroupPresentation where
 theorem m22Presentation_matchesMetadata : m22Presentation.matchesMetadata := by decide
 
 /-- The compiled relator words for `M₂₂` have the total length `30` published by the source. -/
-theorem m22Presentation_totalLength : m22Presentation.totalLength = 30 := by decide
+theorem m22Presentation_totalLength : m22Presentation.totalLength = 30 := by
+  simp [GroupPresentation.totalLength_def, m22Presentation]
 
 /-- The compiled relator words for `M₂₂`, spelled out. A letter `(i, true)` is the generator with
 index `i` and `(i, false)` is its inverse, so the three words read `a a a a b A b A b`,
@@ -270,15 +290,28 @@ theorem m22Presentation_relatorLetters :
           (0, false), (1, false)],
         [(1, true), (1, true), (1, true), (1, true), (1, true), (1, true), (1, true), (1, true),
           (1, true), (1, true), (1, true)]] := by
-  decide
+  simp [GroupPresentation.relatorLetters_def, GroupPresentation.generatorCount,
+    FreeGroup.invRev, m22Presentation]
 
 /-- Every compiled relator word for `M₂₂` is cyclically reduced; see
 `TauCeti.Sporadic.m11Presentation_isCyclicallyReduced`. -/
 theorem m22Presentation_isCyclicallyReduced :
     ∀ w ∈ m22Presentation.relators, FreeGroup.IsCyclicallyReduced w := by
-  have hreduce : ∀ w ∈ m22Presentation.relators, FreeGroup.reduce w = w := by decide
-  have hcyclic : ∀ w ∈ m22Presentation.relators, ∀ a ∈ w.getLast?, ∀ c ∈ w.head?,
-      a.1 = c.1 → a.2 = c.2 := by decide
-  exact fun w hw => ⟨.of_reduce_eq (hreduce w hw), hcyclic w hw⟩
+  rw [← List.forall_iff_forall_mem]
+  simp only [m22Presentation, List.length_cons, List.length_nil, Nat.reduceAdd,
+    GroupPresentation.generatorCount, GroupPresentation.relators_def, List.map_cons,
+    Relator.toWord_mul, Relator.toWord_pow, Relator.toWord_gen, Fin.isValue, List.reduceReplicate,
+    List.flatten_cons, List.flatten_nil, List.append_nil, List.cons_append, List.nil_append,
+    Relator.toWord_inv, FreeGroup.invRev, Bool.not_true, List.map_nil, List.reverse_cons,
+    List.reverse_nil]
+  constructor
+  · rw [FreeGroup.isCyclicallyReduced_iff, FreeGroup.isReduced_iff_reduce_eq]
+    decide
+  constructor
+  · rw [FreeGroup.isCyclicallyReduced_iff, FreeGroup.isReduced_iff_reduce_eq]
+    decide
+  rw [List.forall_iff_forall_mem, List.forall_mem_singleton]
+  rw [FreeGroup.isCyclicallyReduced_iff, FreeGroup.isReduced_iff_reduce_eq]
+  decide
 
 end TauCeti.Sporadic
