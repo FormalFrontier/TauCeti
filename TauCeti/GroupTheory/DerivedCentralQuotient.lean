@@ -99,11 +99,7 @@ theorem map_commutator_of_surjective (f : G →* G') (hf : Function.Surjective f
     (commutator G).map f = commutator G' := by
   rw [commutator_def, commutator_def, Subgroup.map_commutator, Subgroup.map_top_of_surjective f hf]
 
-/-- The isomorphism of derived subgroups induced by an isomorphism of groups.
-
-This is exposed because `commutatorCongr_coe`, its value on elements, holds by definitional
-unfolding, and a theorem exported from this module may only unfold exposed definitions. -/
-@[expose]
+/-- The isomorphism of derived subgroups induced by an isomorphism of groups. -/
 def commutatorCongr (e : G ≃* G') : ↥(commutator G) ≃* ↥(commutator G') :=
   (e.subgroupMap (commutator G)).trans
     (MulEquiv.subgroupCongr (map_commutator_of_surjective _ (by simpa using e.surjective)))
@@ -111,7 +107,7 @@ def commutatorCongr (e : G ≃* G') : ↥(commutator G) ≃* ↥(commutator G') 
 @[simp]
 theorem commutatorCongr_coe (e : G ≃* G') (x : ↥(commutator G)) :
     ((commutatorCongr e x : ↥(commutator G')) : G') = e (x : G) :=
-  rfl
+  (rfl)
 
 /-! ## Surjections onto a centreless group -/
 
@@ -162,18 +158,14 @@ theorem card_dvd_card : Nat.card (DerivedCentralQuotient G) ∣ Nat.card G :=
 
 /-! ### Transport along an isomorphism -/
 
-/-- The derived central quotient transported along an isomorphism of groups.
-
-This is exposed because `congr_mk`, its value on a representative, holds by definitional unfolding,
-and a theorem exported from this module may only unfold exposed definitions. -/
-@[expose]
+/-- The derived central quotient transported along an isomorphism of groups. -/
 def congr (e : G ≃* G') : DerivedCentralQuotient G ≃* DerivedCentralQuotient G' :=
   QuotientGroup.congr _ _ (commutatorCongr e) (map_center _)
 
 @[simp]
 theorem congr_mk (e : G ≃* G') (x : ↥(commutator G)) :
     congr e (x : DerivedCentralQuotient G) = (commutatorCongr e x : DerivedCentralQuotient G') :=
-  rfl
+  (rfl)
 
 @[simp]
 theorem congr_refl : congr (MulEquiv.refl G) = MulEquiv.refl (DerivedCentralQuotient G) := by
@@ -183,13 +175,8 @@ theorem congr_refl : congr (MulEquiv.refl G) = MulEquiv.refl (DerivedCentralQuot
 
 /-! ### The universal property -/
 
-/-- **The derived central quotient is the largest centreless quotient of the derived subgroup**: a
-surjection of `[G, G]` onto a group with trivial centre factors through it.
-
-This is exposed because `lift_mk`, the equation defining it on representatives, holds by
-definitional unfolding, and a theorem exported from this module may only unfold exposed
-definitions. -/
-@[expose]
+/-- A surjection from `[G, G]` onto a group with trivial centre factors through the derived central
+quotient. -/
 def lift {K : Type*} [Group K] (f : ↥(commutator G) →* K) (hf : Function.Surjective f)
     (hK : center K = ⊥) : DerivedCentralQuotient G →* K :=
   QuotientGroup.lift _ f (center_le_ker f hf hK)
@@ -198,7 +185,16 @@ def lift {K : Type*} [Group K] (f : ↥(commutator G) →* K) (hf : Function.Sur
 theorem lift_mk {K : Type*} [Group K] (f : ↥(commutator G) →* K) (hf : Function.Surjective f)
     (hK : center K = ⊥) (x : ↥(commutator G)) :
     lift f hf hK (x : DerivedCentralQuotient G) = f x :=
-  rfl
+  (rfl)
+
+/-- The factorisation through the derived central quotient is unique. -/
+theorem lift_unique {K : Type*} [Group K] (f : ↥(commutator G) →* K)
+    (hf : Function.Surjective f) (hK : center K = ⊥) (g : DerivedCentralQuotient G →* K)
+    (hg : ∀ x : ↥(commutator G), g (x : DerivedCentralQuotient G) = f x) :
+    g = lift f hf hK := by
+  ext x
+  change g (x : DerivedCentralQuotient G) = lift f hf hK (x : DerivedCentralQuotient G)
+  rw [hg, lift_mk]
 
 theorem lift_surjective {K : Type*} [Group K] (f : ↥(commutator G) →* K)
     (hf : Function.Surjective f) (hK : center K = ⊥) : Function.Surjective (lift f hf hK) :=
@@ -301,11 +297,7 @@ theorem map_fixedSubgroup (e : G ≃* G') {F : G →* G} {F' : G' →* G'}
   · refine fun hy => ⟨e.symm y, e.injective ?_, e.apply_symm_apply y⟩
     rw [← h (e.symm y), e.apply_symm_apply, hy]
 
-/-- The isomorphism of fixed subgroups induced by an intertwining isomorphism.
-
-This is exposed because `fixedSubgroupCongr_coe`, its value on elements, holds by definitional
-unfolding, and a theorem exported from this module may only unfold exposed definitions. -/
-@[expose]
+/-- The isomorphism of fixed subgroups induced by an intertwining isomorphism. -/
 def fixedSubgroupCongr (e : G ≃* G') {F : G →* G} {F' : G' →* G'} (h : ∀ x, F' (e x) = e (F x)) :
     ↥(fixedSubgroup F) ≃* ↥(fixedSubgroup F') :=
   (e.subgroupMap (fixedSubgroup F)).trans (MulEquiv.subgroupCongr (map_fixedSubgroup e h))
@@ -314,7 +306,7 @@ def fixedSubgroupCongr (e : G ≃* G') {F : G →* G} {F' : G' →* G'} (h : ∀
 theorem fixedSubgroupCongr_coe (e : G ≃* G') {F : G →* G} {F' : G' →* G'}
     (h : ∀ x, F' (e x) = e (F x)) (x : ↥(fixedSubgroup F)) :
     ((fixedSubgroupCongr e h x : ↥(fixedSubgroup F')) : G') = e (x : G) :=
-  rfl
+  (rfl)
 
 /-- The candidate simple group attached to an endomorphism `F` of a group: the derived subgroup of
 the fixed points of `F`, modulo the centre of that derived subgroup.
@@ -331,8 +323,15 @@ def fixedPointCandidateCongr (e : G ≃* G') {F : G →* G} {F' : G' →* G'}
     (h : ∀ x, F' (e x) = e (F x)) : FixedPointCandidate F ≃* FixedPointCandidate F' :=
   DerivedCentralQuotient.congr (fixedSubgroupCongr e h)
 
+@[simp]
+theorem fixedPointCandidateCongr_mk (e : G ≃* G') {F : G →* G} {F' : G' →* G'}
+    (h : ∀ x, F' (e x) = e (F x)) (x : ↥(commutator ↥(fixedSubgroup F))) :
+    fixedPointCandidateCongr e h (x : FixedPointCandidate F) =
+      (commutatorCongr (fixedSubgroupCongr e h) x : FixedPointCandidate F') :=
+  (rfl)
+
 /-- If the fixed points of `F` already form a nonabelian simple group, the recipe returns them. -/
-def fixedPointCandidateMulEquiv (F : G →* G) [IsSimpleGroup ↥(fixedSubgroup F)]
+def fixedPointCandidateMulEquivOfIsSimpleGroup (F : G →* G) [IsSimpleGroup ↥(fixedSubgroup F)]
     (h : ¬ IsMulCommutative ↥(fixedSubgroup F)) :
     FixedPointCandidate F ≃* ↥(fixedSubgroup F) :=
   DerivedCentralQuotient.mulEquivOfIsSimpleGroup h
