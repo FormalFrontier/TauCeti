@@ -129,10 +129,10 @@ theorem mem_eigenvalueSearch_iff_hasEigenvalue :
     Module.End.hasEigenvalue_iff_mem_spectrum]
 
 /-- The scalar-minus-matrix system is the corresponding eigenvector equation. -/
-theorem scalar_sub_mulVec_eq_zero_iff {R : Type*} [Ring R]
+theorem scalar_sub_mulVec_eq_zero_iff {R : Type*} [NonAssocRing R]
     (A : Matrix n n R) (a : R) (v : n → R) :
-    (Matrix.scalar n a - A) *ᵥ v = 0 ↔ A *ᵥ v = a • v := by
-  rw [Matrix.sub_mulVec, sub_eq_zero, Matrix.scalar_apply, Matrix.diagonal_const_mulVec, eq_comm]
+    (Matrix.diagonal (fun _ => a) - A) *ᵥ v = 0 ↔ A *ᵥ v = a • v := by
+  rw [Matrix.sub_mulVec, sub_eq_zero, Matrix.diagonal_const_mulVec, eq_comm]
 
 /-- A scalar is found by the search exactly when it has a nonzero eigenvector. -/
 theorem mem_eigenvalueSearch_iff_exists_mulVec :

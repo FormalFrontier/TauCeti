@@ -76,29 +76,29 @@ variable {m n : ℕ}
 
 The product row index is flattened to `Fin (m * n)` because `TauCeti.kernelBasis` operates on
 matrices with `Fin` row and column types. -/
-@[expose] def jointEigenspaceMatrix {R : Type u} [Ring R]
+@[expose] def jointEigenspaceMatrix {R : Type u} [NonAssocRing R]
     (A : Fin m → Matrix (Fin n) (Fin n) R)
     (a : Fin m → R) : Matrix (Fin (m * n)) (Fin n) R := fun k j =>
   let ij := finProdFinEquiv.symm k
-  (Matrix.scalar (Fin n) (a ij.1) - A ij.1) ij.2 j
+  (Matrix.diagonal (n := Fin n) (fun _ => a ij.1) - A ij.1) ij.2 j
 
 /-- An entry in the `i`-th block of `TauCeti.jointEigenspaceMatrix`. -/
 @[simp]
-theorem jointEigenspaceMatrix_apply {R : Type u} [Ring R]
+theorem jointEigenspaceMatrix_apply {R : Type u} [NonAssocRing R]
     (A : Fin m → Matrix (Fin n) (Fin n) R)
     (a : Fin m → R) (i : Fin m) (j k : Fin n) :
     jointEigenspaceMatrix A a (finProdFinEquiv (i, j)) k =
-      (Matrix.scalar (Fin n) (a i) - A i) j k := by
+      (Matrix.diagonal (n := Fin n) (fun _ => a i) - A i) j k := by
   simp [jointEigenspaceMatrix]
 
 /-- The stacked matrix annihilates `v` exactly when `v` is an eigenvector (possibly zero) of
 every `A i`, with eigenvalue `a i`. -/
-theorem jointEigenspaceMatrix_mulVec_eq_zero_iff {R : Type u} [Ring R]
+theorem jointEigenspaceMatrix_mulVec_eq_zero_iff {R : Type u} [NonAssocRing R]
     (A : Fin m → Matrix (Fin n) (Fin n) R) (a : Fin m → R) (v : Fin n → R) :
     jointEigenspaceMatrix A a *ᵥ v = 0 ↔ ∀ i, A i *ᵥ v = a i • v := by
   constructor
   · intro h i
-    have hi : (Matrix.scalar (Fin n) (a i) - A i) *ᵥ v = 0 := by
+    have hi : (Matrix.diagonal (n := Fin n) (fun _ => a i) - A i) *ᵥ v = 0 := by
       funext j
       simpa only [Matrix.mulVec, jointEigenspaceMatrix_apply, Pi.zero_apply] using
         congrFun h (finProdFinEquiv (i, j))
@@ -107,7 +107,7 @@ theorem jointEigenspaceMatrix_mulVec_eq_zero_iff {R : Type u} [Ring R]
   · intro h
     funext k
     rcases hidx : finProdFinEquiv.symm k with ⟨i, j⟩
-    have hi : (Matrix.scalar (Fin n) (a i) - A i) *ᵥ v = 0 := by
+    have hi : (Matrix.diagonal (n := Fin n) (fun _ => a i) - A i) *ᵥ v = 0 := by
       rw [scalar_sub_mulVec_eq_zero_iff]
       exact h i
     rw [← finProdFinEquiv.apply_symm_apply k]
