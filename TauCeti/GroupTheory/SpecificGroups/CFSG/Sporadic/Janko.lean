@@ -93,6 +93,7 @@ def j2Presentation : GroupPresentation where
       .pow j2Word 3 ⬝ .pow a 7 ]
 
 /-- The generator and relator counts recorded for `J₂` agree with the transcribed data. -/
+@[simp]
 theorem j2Presentation_matchesMetadata : j2Presentation.matchesMetadata := by decide
 
 end TauCeti.Sporadic
