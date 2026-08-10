@@ -5,9 +5,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.Representation.Tannaka.Monoidal
-public import TauCeti.Algebra.Coalgebra.Comodule.Evaluation
-public import TauCeti.Algebra.Coalgebra.Subcomodule.Finite
-public import TauCeti.Algebra.Coalgebra.Subcomodule.Induced
 
 /-!
 # Local functionals from tensor automorphisms
@@ -29,7 +26,7 @@ glue them; tensor and unit compatibility will supply the algebra-map laws.
 ## Main declarations
 
 * `TauCeti.Tannaka.localFunctional`: the functional extracted from one finite subcomodule.
-* `TauCeti.Tannaka.localFunctional_mono`: compatibility under inclusion.
+* `TauCeti.Tannaka.localFunctional_eq_comp_inclusion`: compatibility under inclusion.
 * `TauCeti.Tannaka.localFunctional_fgPointTensorIso`: a point recovers its restriction to every
   finite subcomodule.
 
@@ -140,11 +137,11 @@ theorem finiteRegularComponent_natural
       (finiteRegularObject k H Q) ⟶
         (FGComoduleCat.scalarExtensionFunctor k H A).obj (finiteRegularObject k H Q) :=
     η.hom.hom.app (finiteRegularObject k H Q)
-  have hnat := η.hom.hom.naturality (regularInclusion k H hNQ)
-  change (FGComoduleCat.scalarExtensionFunctor k H A).map (regularInclusion k H hNQ) ≫
-      aQ =
-    aN ≫
-      (FGComoduleCat.scalarExtensionFunctor k H A).map (regularInclusion k H hNQ) at hnat
+  have hnat :
+      (FGComoduleCat.scalarExtensionFunctor k H A).map (regularInclusion k H hNQ) ≫ aQ =
+        aN ≫
+          (FGComoduleCat.scalarExtensionFunctor k H A).map (regularInclusion k H hNQ) :=
+    η.hom.hom.naturality (regularInclusion k H hNQ)
   let hN := FGComoduleCat.scalarExtensionFunctor_obj k H A
     (finiteRegularObject k H N)
   let hQ := FGComoduleCat.scalarExtensionFunctor_obj k H A
@@ -167,6 +164,9 @@ theorem finiteRegularComponent_natural
     slice_lhs 1 2 => rw [iN.hom_inv_id]
     slice_rhs 4 6 => rw [iQ.hom_inv_id, Category.comp_id]
     simpa only [Category.id_comp, Category.comp_id, Category.assoc] using hnat.symm
+  -- `finiteRegularComponent` is defined by transporting along `hN` and `hQ`.  The scalar
+  -- extension functor does not expose a carrier-level rewriting lemma for these object
+  -- equalities, so expose the transported linear maps before applying `hom_comp`.
   change bmap.hom ∘ₗ
       (iN.inv ≫ aN ≫ iN.hom).hom =
     (iQ.inv ≫ aQ ≫ iQ.hom).hom ∘ₗ bmap.hom
@@ -201,7 +201,7 @@ theorem localFunctional_apply
 
 /-- The local functionals extracted from a tensor automorphism agree under inclusion of finite
 subcomodules. -/
-theorem localFunctional_mono
+theorem localFunctional_eq_comp_inclusion
     (η : Aut (FGComoduleCat.scalarExtensionMonoidalFunctor k H A))
     (N Q : Subcomodule.finiteSubcomodules (R := k) (C := H) (M := H))
     (hNQ : N.1 ≤ Q.1) :
@@ -226,6 +226,7 @@ theorem localFunctional_mono
 
 /-- The finite regular component of the tensor automorphism induced by a point is the usual
 point action on that finite subcomodule. -/
+@[simp]
 theorem finiteRegularComponent_fgPointTensorIso
     (g : WithConv (H →ₐ[k] A))
     (N : Subcomodule.finiteSubcomodules (R := k) (C := H) (M := H)) :
@@ -239,6 +240,9 @@ theorem finiteRegularComponent_fgPointTensorIso
     fgPointNatIsoHom_hom_app]
   let hN := FGComoduleCat.scalarExtensionFunctor_obj k H A
     (finiteRegularObject k H N)
+  -- After rewriting the point-induced component, the only remaining wrappers are the
+  -- transports along `hN`.  There is no carrier-level rewrite theorem for this object
+  -- equality; displaying the four `eqToHom`s lets the category simp lemmas cancel them.
   change (eqToHom hN.symm ≫
       (eqToHom hN ≫ (Comodule.pointsAction N.1 g).toModuleIsoₛ.hom ≫
         eqToHom hN.symm) ≫ eqToHom hN) x = _
@@ -246,6 +250,7 @@ theorem finiteRegularComponent_fgPointTensorIso
 
 /-- For a tensor automorphism induced by an algebra-valued point `g`, the local functional is
 the restriction of `g` to the chosen finite subcomodule of the regular comodule. -/
+@[simp]
 theorem localFunctional_fgPointTensorIso
     (g : WithConv (H →ₐ[k] A))
     (N : Subcomodule.finiteSubcomodules (R := k) (C := H) (M := H)) (n : N.1) :
