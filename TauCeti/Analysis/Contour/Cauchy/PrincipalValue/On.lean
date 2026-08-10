@@ -6,6 +6,7 @@ Authors: Chris Birkbeck
 module
 
 public import TauCeti.Analysis.Contour.Cauchy.PrincipalValue.Basic
+import TauCeti.Analysis.Contour.Curve.Distance
 import Mathlib.MeasureTheory.Integral.DominatedConvergence
 import Mathlib.Analysis.Calculus.Deriv.Inverse
 import Mathlib.Topology.Order.LeftRightNhds
@@ -711,52 +712,51 @@ theorem cauchyPV_symm {γ : ℝ → ℂ} {a b : ℝ} {f : ℂ → ℂ} (h : Cauc
     cauchyPV γ b a f = -cauchyPV γ a b f :=
   h.hasCauchyPV_cauchyPV.symm.cauchyPV_eq
 
-/-- Enlarging the excision set preserves interval-integrability of the truncated integrand: the
-extra excision at `S'` only zeroes the integrand within the `[[a, b]]`-closed set where some
-`s ∈ S'` comes within `ε` of the curve, so integrability transfers from `S` to `S ∪ S'`. Needs
-the curve continuous on `[[a, b]]`. -/
+/-- The set of parameters in `[[a, b]]` at which the curve comes within `ε` of some point of a
+finite set `S'` is closed. -/
+private theorem isClosed_setOfPred_mem_uIcc_exists_norm_sub_le {γ : ℝ → ℂ} {a b : ℝ}
+    (hγ_cont : ContinuousOn γ (Set.uIcc a b)) (S' : Finset ℂ) (ε : ℝ) :
+    IsClosed {t ∈ Set.uIcc a b | ∃ s ∈ S', ‖γ t - s‖ ≤ ε} := by
+  have he : {t ∈ Set.uIcc a b | ∃ s ∈ S', ‖γ t - s‖ ≤ ε}
+      = ⋃ s ∈ S', {t ∈ Set.uIcc a b | ‖γ t - s‖ ≤ ε} := by
+    ext t
+    simp only [Set.mem_ofPred_eq, Set.mem_iUnion, exists_prop]
+    tauto
+  rw [he]
+  exact isClosed_biUnion_finset fun s _ =>
+    isClosed_setOfPred_mem_uIcc_norm_sub_le hγ_cont s ε
+
+/-- Adjoining the excision points `S'` multiplies the truncated integrand by the indicator of the
+set of parameters at which the curve stays further than `ε` from every point of `S'`. -/
+private theorem truncatedIntegrand_union_eq_indicator {γ : ℝ → ℂ} {f : ℂ → ℂ} (S S' : Finset ℂ)
+    (ε : ℝ) :
+    truncatedIntegrand γ f (S ∪ S') ε
+      = Set.indicator {t : ℝ | ¬ ∃ s ∈ S', ‖γ t - s‖ ≤ ε} (truncatedIntegrand γ f S ε) := by
+  funext t
+  simp only [truncatedIntegrand, Finset.mem_union, or_and_right, exists_or,
+    Set.indicator_apply, Set.mem_ofPred_eq]
+  by_cases h1 : ∃ s ∈ S, ‖γ t - s‖ ≤ ε <;> by_cases h2 : ∃ s ∈ S', ‖γ t - s‖ ≤ ε <;>
+    simp [h1, h2]
+
+/-- Enlarging the excision set preserves interval-integrability of the truncated integrand:
+integrability transfers from `S` to `S ∪ S'` for a curve continuous on `[[a, b]]`. -/
 private theorem truncatedIntegrand_union_integrable {γ : ℝ → ℂ} {a b : ℝ} {f : ℂ → ℂ}
     (hγ_cont : ContinuousOn γ (Set.uIcc a b)) {S : Finset ℂ} {ε : ℝ} (S' : Finset ℂ)
     (h : IntervalIntegrable (truncatedIntegrand γ f S ε) MeasureTheory.volume a b) :
     IntervalIntegrable (truncatedIntegrand γ f (S ∪ S') ε) MeasureTheory.volume a b := by
-  have hK_closed : IsClosed {t ∈ Set.uIcc a b | ∃ s ∈ S', ‖γ t - s‖ ≤ ε} := by
-    have he : {t ∈ Set.uIcc a b | ∃ s ∈ S', ‖γ t - s‖ ≤ ε}
-        = ⋃ s ∈ S', {t ∈ Set.uIcc a b | ‖γ t - s‖ ≤ ε} := by
-      ext t
-      simp only [Set.mem_ofPred_eq, Set.mem_iUnion, exists_prop]
-      tauto
-    rw [he]
-    refine Set.Finite.isClosed_biUnion S'.finite_toSet fun s _ => ?_
-    exact ((hγ_cont.sub continuousOn_const).norm).preimage_isClosed_of_isClosed
-      (by rw [← Set.Icc_min_max]; exact isClosed_Icc) isClosed_Iic
-  have hid : truncatedIntegrand γ f (S ∪ S') ε
-      = Set.indicator {t : ℝ | ¬ ∃ s ∈ S', ‖γ t - s‖ ≤ ε} (truncatedIntegrand γ f S ε) := by
-    funext t
-    have hunion : (∃ s ∈ S ∪ S', ‖γ t - s‖ ≤ ε)
-        ↔ (∃ s ∈ S, ‖γ t - s‖ ≤ ε) ∨ ∃ s ∈ S', ‖γ t - s‖ ≤ ε := by
-      constructor
-      · rintro ⟨s, hs, hle⟩
-        rcases Finset.mem_union.mp hs with h' | h'
-        exacts [Or.inl ⟨s, h', hle⟩, Or.inr ⟨s, h', hle⟩]
-      · rintro (⟨s, hs, hle⟩ | ⟨s, hs, hle⟩)
-        exacts [⟨s, Finset.mem_union_left _ hs, hle⟩, ⟨s, Finset.mem_union_right _ hs, hle⟩]
-    simp only [truncatedIntegrand, hunion, Set.indicator_apply, Set.mem_ofPred_eq]
-    by_cases h1 : ∃ s ∈ S, ‖γ t - s‖ ≤ ε <;> by_cases h2 : ∃ s ∈ S', ‖γ t - s‖ ≤ ε <;>
-      simp [h1, h2]
   rw [intervalIntegrable_iff] at h ⊢
-  rw [hid]
-  refine (h.indicator hK_closed.measurableSet.compl).congr_fun (fun t ht => ?_)
-    measurableSet_uIoc
+  rw [truncatedIntegrand_union_eq_indicator]
+  refine (h.indicator (isClosed_setOfPred_mem_uIcc_exists_norm_sub_le hγ_cont S'
+    ε).measurableSet.compl).congr_fun (fun t ht => ?_) measurableSet_uIoc
   have htIcc : t ∈ Set.uIcc a b := Set.uIoc_subset_uIcc ht
   by_cases h2 : ∃ s ∈ S', ‖γ t - s‖ ≤ ε
-  · rw [Set.indicator_of_notMem
-      (show t ∉ {t ∈ Set.uIcc a b | ∃ s ∈ S', ‖γ t - s‖ ≤ ε}ᶜ from
-        fun hKc => hKc ⟨htIcc, h2⟩),
-      Set.indicator_of_notMem
-        (by simp only [Set.mem_ofPred_eq, not_not]; exact h2)]
-  · rw [Set.indicator_of_mem
-      (show t ∈ {t ∈ Set.uIcc a b | ∃ s ∈ S', ‖γ t - s‖ ≤ ε}ᶜ from
-        fun hK => absurd hK.2 h2),
+  · have hnot : t ∉ {t ∈ Set.uIcc a b | ∃ s ∈ S', ‖γ t - s‖ ≤ ε}ᶜ :=
+      fun hKc => hKc ⟨htIcc, h2⟩
+    rw [Set.indicator_of_notMem hnot,
+      Set.indicator_of_notMem (by simp only [Set.mem_ofPred_eq, not_not]; exact h2)]
+  · have hmem : t ∈ {t ∈ Set.uIcc a b | ∃ s ∈ S', ‖γ t - s‖ ≤ ε}ᶜ :=
+      fun hK => absurd hK.2 h2
+    rw [Set.indicator_of_mem hmem,
       Set.indicator_of_mem (by simp only [Set.mem_ofPred_eq]; exact h2)]
 
 /-- **Additivity.** The set-level principal value is additive: if `f₁` and `f₂` each have a

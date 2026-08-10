@@ -8,6 +8,7 @@ public import Mathlib.Analysis.SpecialFunctions.Trigonometric.Chebyshev.Orthogon
 public import Mathlib.MeasureTheory.Function.L2Space
 public import Mathlib.MeasureTheory.Measure.Real
 import TauCeti.MeasureTheory.Function.BoundedSupportExponential
+import Mathlib.MeasureTheory.Measure.HasOuterApproxClosed
 import Mathlib.Topology.Algebra.Polynomial
 
 /-!
@@ -19,11 +20,12 @@ single normalization constant used by the roadmap's Chebyshev Hilbert-basis
 target.
 
 The main facts are that `measureT` has total mass `π`, hence is finite and
-nonzero, and that the existing Mathlib orthogonality lemmas combine into one
-Kronecker-delta statement with squared norms `π` in degree zero and `π / 2` in
-positive degree.  The file also records `L²` membership of the normalized `T`
-modes and the finite exponential moments used by the later Chebyshev
-Hilbert-basis construction.
+nonzero, that it is Lebesgue measure on `(-1, 1]` weighted by the Chebyshev
+weight `w x = (1-x²)^{-1/2}`, and that the existing Mathlib orthogonality
+lemmas combine into one Kronecker-delta statement with squared norms `π` in
+degree zero and `π / 2` in positive degree.  The file also records `L²`
+membership of the normalized `T` modes and the finite exponential moments used
+by the later Chebyshev Hilbert-basis construction.
 
 For finite-coordinate arguments, use `orthonormal_normalizedChebyshevTLp`
 together with Mathlib's generic `Orthonormal` coordinate and finite linear
@@ -68,6 +70,68 @@ lemma chebyshevMeasureT_univ_pos : 0 < Polynomial.Chebyshev.measureT Set.univ :=
 /-- Mathlib's Chebyshev `T` orthogonality measure is nonzero. -/
 lemma chebyshevMeasureT_ne_zero : Polynomial.Chebyshev.measureT ≠ 0 :=
   Measure.measure_univ_pos.mp chebyshevMeasureT_univ_pos
+
+/-! ### The Chebyshev weight and the weighted Lebesgue measure -/
+
+/-- The Chebyshev weight `(1-x²)^{-1/2}` is measurable. -/
+theorem measurable_chebyshevWeight : Measurable fun x : ℝ => √(1 - x ^ 2)⁻¹ := by
+  fun_prop
+
+/-- The Chebyshev weight is almost everywhere positive on `(-1, 1]`: the endpoint `1`, where
+`1 - x²` vanishes, is a Lebesgue null set, so the interior bound `x² < 1` holds almost
+everywhere. -/
+theorem ae_zero_lt_chebyshevWeight :
+    ∀ᵐ x ∂(volume.restrict (Set.Ioc (-1 : ℝ) 1)), 0 < √(1 - x ^ 2)⁻¹ := by
+  rw [← Measure.restrict_congr_set (Ioo_ae_eq_Ioc (a := (-1 : ℝ)) (b := 1))]
+  filter_upwards [ae_restrict_mem measurableSet_Ioo] with x hx
+  refine Real.sqrt_pos.mpr (inv_pos.mpr ?_)
+  nlinarith [hx.1, hx.2]
+
+/-- The weighted Lebesgue measure `w · (volume|_{(-1,1]})` is finite: its total mass is the integral
+of the weight over a bounded interval, which Mathlib's
+`Polynomial.Chebyshev.intervalIntegrable_sqrt_one_sub_sq_inv` supplies. -/
+instance chebyshevWeightedVolume.instIsFiniteMeasure :
+    IsFiniteMeasure ((volume.restrict (Set.Ioc (-1 : ℝ) 1)).withDensity
+      fun x => ENNReal.ofReal (√(1 - x ^ 2)⁻¹)) where
+  measure_univ_lt_top := by
+    rw [withDensity_apply _ MeasurableSet.univ, Measure.restrict_univ,
+      ← ofReal_integral_eq_lintegral_ofReal intervalIntegrable_sqrt_one_sub_sq_inv.1
+        (Filter.Eventually.of_forall fun x => Real.sqrt_nonneg _)]
+    exact ENNReal.ofReal_lt_top
+
+/-- **The Chebyshev measure is Lebesgue measure on `(-1, 1]` weighted by `(1-x²)^{-1/2}`.**
+
+Mathlib defines `Polynomial.Chebyshev.measureT` this way but does not expose the definition, so the
+identity has to be recovered from the public integral formula
+`Polynomial.Chebyshev.integral_measureT`. Both measures are finite, and a finite Borel measure on
+`ℝ` is determined by the integrals of bounded continuous functions
+(`MeasureTheory.ext_of_forall_integral_eq_of_IsFiniteMeasure`).
+
+This is what lets `TauCeti.weightL2Isometry` — whose domain is spelled `L²(μ.withDensity …)` — be
+applied to `L²(measureT)`. -/
+theorem chebyshevMeasureT_eq_withDensity :
+    (Polynomial.Chebyshev.measureT : Measure ℝ)
+      = (volume.restrict (Set.Ioc (-1 : ℝ) 1)).withDensity
+          fun x => ENNReal.ofReal (√(1 - x ^ 2)⁻¹) := by
+  refine ext_of_forall_integral_eq_of_IsFiniteMeasure fun f => ?_
+  rw [integral_measureT fun x => f x,
+    integral_withDensity_eq_integral_toReal_smul measurable_chebyshevWeight.ennreal_ofReal
+      (Filter.Eventually.of_forall fun _ => ENNReal.ofReal_lt_top),
+    intervalIntegral.integral_of_le (by norm_num : (-1 : ℝ) ≤ 1)]
+  refine integral_congr_ae (Filter.Eventually.of_forall fun x => ?_)
+  simp only [smul_eq_mul, ENNReal.toReal_ofReal (Real.sqrt_nonneg ((1 - x ^ 2)⁻¹))]
+  exact mul_comm _ _
+
+/-- Lebesgue measure on `(-1, 1]` is absolutely continuous with respect to the Chebyshev measure:
+the weight is almost everywhere positive there, so weighting by it destroys no null sets. This is
+what moves an almost-everywhere identity between representatives from `measureT` to `dx`. -/
+theorem volume_restrict_absolutelyContinuous_measureT :
+    (volume.restrict (Set.Ioc (-1 : ℝ) 1)) ≪ (Polynomial.Chebyshev.measureT : Measure ℝ) := by
+  rw [chebyshevMeasureT_eq_withDensity]
+  refine withDensity_absolutelyContinuous' measurable_chebyshevWeight.ennreal_ofReal.aemeasurable ?_
+  filter_upwards [ae_zero_lt_chebyshevWeight] with x hx
+  simp only [ne_eq, ENNReal.ofReal_eq_zero, not_le]
+  exact hx
 
 /-- The squared `L²(measureT)` norm of the `n`th Chebyshev `T` polynomial. -/
 noncomputable def chebyshevTNormSq (n : ℕ) : ℝ :=

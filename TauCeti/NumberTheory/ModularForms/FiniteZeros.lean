@@ -5,8 +5,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.NumberTheory.Modular
-public import Mathlib.NumberTheory.ModularForms.QExpansion
+public import TauCeti.NumberTheory.ModularForms.Order.AtCusp
 public import TauCeti.NumberTheory.ModularForms.Order.OfVanishing
+
 
 /-!
 # Finite zeros of a level-one modular form in the fundamental domain
@@ -40,30 +41,6 @@ namespace TauCeti
 namespace ModularForm
 
 variable {Γ : Subgroup (GL (Fin 2) ℝ)} {k : ℤ} {F : Type*} [FunLike F ℍ ℂ] {f : F} {h : ℝ}
-
-private lemma cuspFunction_not_eventually_zero [ModularFormClass F Γ k] (hh : 0 < h)
-    (hΓ : h ∈ Γ.strictPeriods) (hf : (⇑f : ℍ → ℂ) ≠ 0) :
-    ¬∀ᶠ q in 𝓝 (0 : ℂ), cuspFunction h f q = 0 := by
-  intro h_ev
-  have h_diff : DifferentiableOn ℂ (cuspFunction h f) (ball 0 1) :=
-    have : Fact (IsCusp OnePoint.infty Γ) := ⟨Γ.isCusp_of_mem_strictPeriods hh hΓ⟩
-    differentiableOn_cuspFunction_ball hh (SlashInvariantFormClass.periodic_comp_ofComplex f hΓ)
-      (ModularFormClass.holo f) (ModularFormClass.bdd_at_infty f)
-  have h_eqOn : EqOn (cuspFunction h f) 0 (ball 0 1) :=
-    (h_diff.analyticOnNhd isOpen_ball).eqOn_zero_of_preconnected_of_eventuallyEq_zero
-      (convex_ball 0 1).isPreconnected (mem_ball_self one_pos) h_ev
-  refine hf (funext fun τ ↦ ?_)
-  rw [Pi.zero_apply, ← SlashInvariantFormClass.eq_cuspFunction f τ hΓ hh.ne']
-  exact h_eqOn (by
-    rw [mem_ball, dist_zero_right]
-    exact_mod_cast Function.Periodic.norm_qParam_lt_one hh τ.im_pos)
-
-private lemma cuspFunction_eventually_ne_zero [ModularFormClass F Γ k] (hh : 0 < h)
-    (hΓ : h ∈ Γ.strictPeriods) (hf : (⇑f : ℍ → ℂ) ≠ 0) :
-    ∀ᶠ q in 𝓝[≠] (0 : ℂ), cuspFunction h f q ≠ 0 :=
-  (ModularFormClass.analyticAt_cuspFunction_zero f hh
-    hΓ).eventually_eq_zero_or_eventually_ne_zero.resolve_left
-    (cuspFunction_not_eventually_zero hh hΓ hf)
 
 /-- A nonzero modular form with a positive strict period does not vanish at points of
 sufficiently large imaginary part. -/

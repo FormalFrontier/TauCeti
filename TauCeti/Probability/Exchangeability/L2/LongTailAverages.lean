@@ -28,6 +28,9 @@ The proof uses the preceding Tau Ceti two-window identity
 `tendsto_one_div_add_atTop_nhds_zero_nat`.  The mathematical formulation follows Kallenberg,
 *Probabilistic Symmetries and Invariance Principles* (Springer, 2005), Chapter 1, around
 Theorem 1.1.  No material from `cameronfreer/exchangeability` is reused.
+
+`prefixAverage` and `followingAverage` themselves involve no measure and are defined, with their
+pointwise formulas, in `TauCeti.Probability.Process.BlockAverage`; this file adds the `L²` theory.
 -/
 
 public section
@@ -42,26 +45,6 @@ namespace TauCeti
 namespace Probability
 
 variable {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω} {X : ℕ → Ω → ℝ}
-
-/-- The average of the first `n` coordinates of a real-valued process. -/
-def prefixAverage (X : ℕ → Ω → ℝ) (n : ℕ) : Ω → ℝ :=
-  blockAverage X fun i : Fin n => i
-
-/-- The average of the `n` coordinates immediately following the first `n` coordinates. -/
-def followingAverage (X : ℕ → Ω → ℝ) (n : ℕ) : Ω → ℝ :=
-  blockAverage X fun i : Fin n => n + i
-
-omit [MeasurableSpace Ω] in
-@[simp]
-theorem prefixAverage_apply (n : ℕ) (ω : Ω) :
-    prefixAverage X n ω = (n : ℝ)⁻¹ * ∑ i : Fin n, X i ω := by
-  simp [prefixAverage, blockAverage_apply]
-
-omit [MeasurableSpace Ω] in
-@[simp]
-theorem followingAverage_apply (n : ℕ) (ω : Ω) :
-    followingAverage X n ω = (n : ℝ)⁻¹ * ∑ i : Fin n, X (n + i) ω := by
-  simp [followingAverage, blockAverage_apply]
 
 /-- The prefix selection is injective. -/
 private theorem prefixSelection_injective (n : ℕ) :
@@ -81,13 +64,15 @@ private theorem prefix_ne_following (n : ℕ) (i j : Fin n) :
 
 /-- A prefix average of `L²` coordinates is itself `L²`. -/
 theorem memLp_prefixAverage (n : ℕ) (hX_L2 : ∀ i : Fin n, MemLp (X i) 2 μ) :
-    MemLp (prefixAverage X n) 2 μ :=
-  memLp_blockAverage (fun i : Fin n => (i : ℕ)) hX_L2
+    MemLp (prefixAverage X n) 2 μ := by
+  rw [prefixAverage_def]
+  exact memLp_blockAverage (fun i : Fin n => (i : ℕ)) hX_L2
 
 /-- A following tail average of `L²` coordinates is itself `L²`. -/
 theorem memLp_followingAverage (n : ℕ) (hX_L2 : ∀ i : Fin n, MemLp (X (n + i)) 2 μ) :
-    MemLp (followingAverage X n) 2 μ :=
-  memLp_blockAverage (fun i : Fin n => n + (i : ℕ)) hX_L2
+    MemLp (followingAverage X n) 2 μ := by
+  rw [followingAverage_def]
+  exact memLp_blockAverage (fun i : Fin n => n + (i : ℕ)) hX_L2
 
 /-- **The exact long-average versus tail-average `L²` bound.** For a contractable process,
 the squared `L²` distance between the average of the first `n` coordinates and the average of
@@ -96,7 +81,7 @@ theorem Contractable.integral_sq_prefixAverage_sub_followingAverage [IsFiniteMea
     (hX : Contractable μ X) (hX_L2 : ∀ i, MemLp (X i) 2 μ) {n : ℕ} (hn : 0 < n) :
     ∫ ω, (prefixAverage X n ω - followingAverage X n ω) ^ 2 ∂μ =
       2 * (Var[X 0; μ] - cov[X 0, X 1; μ]) / n := by
-  rw [prefixAverage, followingAverage,
+  rw [prefixAverage_def, followingAverage_def,
     hX.integral_sq_blockAverage_sub_of_disjoint hX_L2 hn hn
       (prefixSelection_injective n) (followingSelection_injective n) (prefix_ne_following n)]
   ring

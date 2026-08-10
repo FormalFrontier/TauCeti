@@ -6,7 +6,7 @@ Authors: Claude
 module
 
 public import Mathlib.RepresentationTheory.Character
-public import Mathlib.RepresentationTheory.Induced
+public import TauCeti.RepresentationTheory.Induction.Projection
 
 /-!
 # The permutation representation as an induced representation
@@ -15,10 +15,16 @@ For a subgroup `H` of a group `G`, inducing the trivial `H`-representation along
 gives the permutation representation of `G` on the left cosets `G ⧸ H`, and its character is the
 number of fixed cosets, cast into the coefficient field.
 
+Feeding that identification into the projection formula of
+`TauCeti/RepresentationTheory/Induction/Projection.lean` gives the classical description of
+inducing a restricted representation, `Ind_H^G (Res_H^G Y) ≅ k[G ⧸ H] ⊗ Y`.
+
 ## Main definitions
 
 * `TauCeti.indTrivialEquiv`: the equivalence of representations `Ind_H^G (trivial) ≃ k[G ⧸ H]`.
 * `TauCeti.indTrivialIso`: the same statement in `Rep k G`.
+* `TauCeti.indResProjection`: the corollary `Ind_H^G (Res_H^G Y) ≅ k[G ⧸ H] ⊗ Y` of the projection
+  formula `TauCeti.indProjection`.
 
 ## Main statements
 
@@ -48,7 +54,7 @@ records the isomorphism as `indTrivialIso`.
 
 public section
 
-open Representation TensorProduct
+open CategoryTheory MonoidalCategory Representation TensorProduct
 open scoped MonoidAlgebra
 
 namespace TauCeti
@@ -145,7 +151,7 @@ along `H.subtype` gives the permutation representation of `G` on the left cosets
 noncomputable def indTrivialEquiv : ((Representation.trivial k H k).ind H.subtype).Equiv
       (Representation.ofMulAction k G (G ⧸ H)) := by
   refine Representation.Equiv.mk
-    (LinearEquiv.ofLinear (indTrivialToQuotient k H) (quotientToIndTrivial k H) ?_ ?_) ?_
+    (LinearEquiv.ofLinearMap (indTrivialToQuotient k H) (quotientToIndTrivial k H) ?_ ?_) ?_
   · refine MonoidAlgebra.lhom_ext' fun q ↦ LinearMap.ext_ring ?_
     induction q using QuotientGroup.induction_on with
     | H x =>
@@ -186,6 +192,37 @@ instance instFiniteIndTrivial [Finite (G ⧸ H)] :
   Module.Finite.equiv (indTrivialEquiv k H).toLinearEquiv.symm
 
 end Induced
+
+section Projection
+
+variable {k : Type u} {G : Type u} [CommRing k] [Group G] {H : Subgroup G} (Y : Rep k G)
+
+/-- **Induction of a restriction.** For a subgroup `H ≤ G`, restricting a `G`-representation to `H`
+and inducing back up tensors it with the permutation representation on the cosets,
+`Ind_H^G (Res_H^G Y) ≅ k[G ⧸ H] ⊗ Y`. This is `TauCeti.indProjection` applied to the trivial
+`H`-representation, followed by `TauCeti.indTrivialIso`. -/
+noncomputable def indResProjection :
+    Rep.ind H.subtype (Rep.res H.subtype Y) ≅ Rep.ofMulAction k G (G ⧸ H) ⊗ Y :=
+  (Rep.indFunctor k H.subtype).mapIso (λ_ (Rep.res H.subtype Y)).symm ≪≫
+    indProjection H.subtype (𝟙_ (Rep k H)) Y ≪≫
+    (indTrivialIso k H ⊗ᵢ Iso.refl Y)
+
+/-- `TauCeti.indResProjection` on generators: the coset orientation is the one inherited from
+`TauCeti.indTrivialIso`, which sends `⟦x ⊗ₜ a⟧` to `single ⟦x⁻¹⟧ a`. -/
+theorem indResProjection_hom_hom_apply (x : G) (y : Y) :
+    (indResProjection Y).hom.hom (IndV.mk H.subtype (Rep.res H.subtype Y).ρ x y)
+      = MonoidAlgebra.single (QuotientGroup.mk x⁻¹ : G ⧸ H) (1 : k) ⊗ₜ[k] Y.ρ x⁻¹ y := by
+  have hmk : (indTrivialIso k H).hom.hom
+      (IndV.mk H.subtype (Representation.trivial k H k) x (1 : k)) =
+        MonoidAlgebra.single (QuotientGroup.mk x⁻¹ : G ⧸ H) (1 : k) := by
+    rw [indTrivialIso, Rep.mkIso_hom_hom_apply]
+    exact indTrivialEquiv_apply_mk k H x 1
+  refine Eq.trans ?_ (congrArg (· ⊗ₜ[k] Y.ρ x⁻¹ y) hmk)
+  refine Eq.trans ?_ (congrArg (Rep.Hom.hom (indTrivialIso k H ⊗ᵢ Iso.refl Y).hom)
+    (indProjection_hom_hom_apply H.subtype (𝟙_ (Rep k H)) Y x 1 y))
+  simp [indResProjection, Rep.indMap]
+
+end Projection
 
 section PermutationCharacter
 

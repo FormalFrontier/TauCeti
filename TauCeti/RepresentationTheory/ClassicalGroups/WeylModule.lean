@@ -211,20 +211,21 @@ private theorem rowIndex_lt_of_colLen_le (t : YoungTableau μ) (hn : μ.colLen 0
   rw [rowIndex_def]
   exact lt_of_lt_of_le (lt_of_lt_of_le h1 (μ.colLen_anti 0 _ (Nat.zero_le _))) hn
 
-/-- **The symmetrizer does not annihilate the monomial basis vector of a tableau.** Write `r ℓ` for
-the row of the label `ℓ`. Reading the `r`-coordinate of `c_t • e_r` in the monomial basis leaves
-exactly the terms indexed by the row group of `t`, each with coefficient `1`; the value is the order
-of the row group, which is nonzero because the base ring has characteristic zero. -/
-private theorem repr_symmetrizer_tensorPowerBasis_ne_zero [Nontrivial k] (t : YoungTableau μ)
+/-- **The symmetrizer's diagonal coefficient is the order of the row group.** Write `r ℓ` for the
+row of the label `ℓ`. The `r`-coordinate of `c_t • e_r` in the monomial basis is the number of
+permutations lying in the row group of `t`. -/
+private theorem repr_symmetrizer_tensorPowerBasis_eq_card_rowSubgroup (t : YoungTableau μ)
     (hn : μ.colLen 0 ≤ n) :
     (tensorPowerBasis k n μ.card).repr
         (permTensorActionAlgHom k n μ.card (youngSymmetrizerOver k t)
           (tensorPowerBasis k n μ.card fun ℓ =>
             (⟨rowIndex t ℓ, rowIndex_lt_of_colLen_le t hn ℓ⟩ : Fin n)))
-        (fun ℓ => (⟨rowIndex t ℓ, rowIndex_lt_of_colLen_le t hn ℓ⟩ : Fin n)) ≠ 0 := by
+        (fun ℓ => (⟨rowIndex t ℓ, rowIndex_lt_of_colLen_le t hn ℓ⟩ : Fin n)) =
+      (Nat.card (rowSubgroup t) : k) := by
   classical
-  have : CharZero k := charZero_of_injective_algebraMap (algebraMap ℚ k).injective
-  set r : Fin μ.card → Fin n := fun ℓ => ⟨rowIndex t ℓ, rowIndex_lt_of_colLen_le t hn ℓ⟩ with hrdef
+  rcases subsingleton_or_nontrivial k with hk | hk
+  · exact Subsingleton.elim _ _
+  set r : Fin μ.card → Fin n := fun ℓ => ⟨rowIndex t ℓ, rowIndex_lt_of_colLen_le t hn ℓ⟩
   -- the row group is exactly the set of permutations surviving the evaluation
   set S : Finset (Equiv.Perm (Fin μ.card)) := {σ | σ ∈ rowSubgroup t} with hSdef
   have hmemS : ∀ σ : Equiv.Perm (Fin μ.card), σ ∈ S ↔ σ ∈ rowSubgroup t := by
@@ -234,38 +235,49 @@ private theorem repr_symmetrizer_tensorPowerBasis_ne_zero [Nontrivial k] (t : Yo
     intro σ
     rw [← inv_mem_iff (G := Equiv.Perm (Fin μ.card)), mem_rowSubgroup]
     exact ⟨fun h ℓ => congrArg Fin.val (congrFun h ℓ), fun h => funext fun ℓ => Fin.ext (h ℓ)⟩
-  have key : (tensorPowerBasis k n μ.card).repr
-      (permTensorActionAlgHom k n μ.card (youngSymmetrizerOver k t)
-        (tensorPowerBasis k n μ.card r)) r = (S.card : k) := by
-    rw [permTensorActionAlgHom_apply_tensorPowerBasis, map_sum, Finset.sum_apply']
-    have hterm : ∀ σ ∈ (youngSymmetrizerOver k t).coeff.support,
-        ((tensorPowerBasis k n μ.card).repr
-            ((youngSymmetrizerOver k t).coeff σ •
-              tensorPowerBasis k n μ.card fun i => r (σ.symm i))) r =
-          if σ ∈ rowSubgroup t then (youngSymmetrizerOver k t).coeff σ else 0 := by
-      intro σ _
-      rw [map_smul, Module.Basis.repr_self, Finsupp.smul_single, smul_eq_mul, mul_one,
-        Finsupp.single_apply]
-      exact if_congr (hcond σ) rfl rfl
-    rw [Finset.sum_congr rfl hterm]
-    have hcoeff : ∀ σ ∈ rowSubgroup t, (youngSymmetrizerOver k t).coeff σ = 1 := by
-      intro σ hσ
-      rw [youngSymmetrizerOver_coeff, youngSymmetrizer_coeff_eq_one_of_mem_rowSubgroup t hσ,
-        map_one]
-    have hsub : S ⊆ (youngSymmetrizerOver k t).coeff.support := by
-      intro σ hσ
-      rw [Finsupp.mem_support_iff, hcoeff σ ((hmemS σ).mp hσ)]
-      exact one_ne_zero
-    rw [Finset.sum_ite, Finset.sum_const_zero, add_zero]
-    have hfilter : (youngSymmetrizerOver k t).coeff.support.filter (· ∈ rowSubgroup t) = S := by
-      ext σ
-      simp only [Finset.mem_filter, hmemS]
-      exact ⟨fun h => h.2, fun h => ⟨hsub ((hmemS σ).mpr h), h⟩⟩
-    rw [hfilter, Finset.sum_congr rfl fun σ hσ => hcoeff σ ((hmemS σ).mp hσ), Finset.sum_const,
-      nsmul_eq_mul, mul_one]
-  rw [key]
-  refine Nat.cast_ne_zero.mpr (Finset.card_ne_zero_of_mem (a := 1) ?_)
-  exact (hmemS 1).mpr (one_mem _)
+  have hSNat : Nat.card (rowSubgroup t) = S.card := by
+    rw [Nat.card_eq_fintype_card, Fintype.card_subtype]
+  rw [hSNat, permTensorActionAlgHom_apply_tensorPowerBasis, map_sum, Finset.sum_apply']
+  have hterm : ∀ σ ∈ (youngSymmetrizerOver k t).coeff.support,
+      ((tensorPowerBasis k n μ.card).repr
+          ((youngSymmetrizerOver k t).coeff σ •
+            tensorPowerBasis k n μ.card fun i => r (σ.symm i))) r =
+        if σ ∈ rowSubgroup t then (youngSymmetrizerOver k t).coeff σ else 0 := by
+    intro σ _
+    rw [map_smul, Module.Basis.repr_self, Finsupp.smul_single, smul_eq_mul, mul_one,
+      Finsupp.single_apply]
+    exact if_congr (hcond σ) rfl rfl
+  rw [Finset.sum_congr rfl hterm]
+  have hcoeff : ∀ σ ∈ rowSubgroup t, (youngSymmetrizerOver k t).coeff σ = 1 := by
+    intro σ hσ
+    rw [youngSymmetrizerOver_coeff, youngSymmetrizer_coeff_eq_one_of_mem_rowSubgroup t hσ,
+      map_one]
+  have hsub : S ⊆ (youngSymmetrizerOver k t).coeff.support := by
+    intro σ hσ
+    rw [Finsupp.mem_support_iff, hcoeff σ ((hmemS σ).mp hσ)]
+    exact one_ne_zero
+  rw [Finset.sum_ite, Finset.sum_const_zero, add_zero]
+  have hfilter : (youngSymmetrizerOver k t).coeff.support.filter (· ∈ rowSubgroup t) = S := by
+    ext σ
+    simp only [Finset.mem_filter, hmemS]
+    exact ⟨fun h => h.2, fun h => ⟨hsub ((hmemS σ).mpr h), h⟩⟩
+  rw [hfilter, Finset.sum_congr rfl fun σ hσ => hcoeff σ ((hmemS σ).mp hσ), Finset.sum_const,
+    nsmul_eq_mul, mul_one]
+
+/-- **The symmetrizer does not annihilate the monomial basis vector of a tableau.** Write `r ℓ` for
+the row of the label `ℓ`; the `r`-coordinate of `c_t • e_r` in the monomial basis is nonzero. -/
+private theorem repr_symmetrizer_tensorPowerBasis_ne_zero [Nontrivial k] (t : YoungTableau μ)
+    (hn : μ.colLen 0 ≤ n) :
+    (tensorPowerBasis k n μ.card).repr
+        (permTensorActionAlgHom k n μ.card (youngSymmetrizerOver k t)
+          (tensorPowerBasis k n μ.card fun ℓ =>
+            (⟨rowIndex t ℓ, rowIndex_lt_of_colLen_le t hn ℓ⟩ : Fin n)))
+        (fun ℓ => (⟨rowIndex t ℓ, rowIndex_lt_of_colLen_le t hn ℓ⟩ : Fin n)) ≠ 0 := by
+  classical
+  -- the coefficient is the order of the row group, and characteristic zero keeps it nonzero
+  have : CharZero k := charZero_of_injective_algebraMap (algebraMap ℚ k).injective
+  rw [repr_symmetrizer_tensorPowerBasis_eq_card_rowSubgroup t hn]
+  exact Nat.cast_ne_zero.mpr (Nat.card_ne_zero.mpr ⟨inferInstance, inferInstance⟩)
 
 /-- The Weyl module of a `μ`-tableau is nonzero as soon as `μ` has at most `n` rows.
 
@@ -286,58 +298,70 @@ theorem weylModule_ne_bot [Nontrivial k] (t : YoungTableau μ) (hn : μ.colLen 0
   rw [hbot', Submodule.mem_bot k] at hmem
   exact repr_symmetrizer_tensorPowerBasis_ne_zero t hn (by rw [hmem, map_zero]; rfl)
 
+/-- When `μ` has more than `n` rows, any index function `p : Fin μ.card → Fin n` repeats a value on
+the first column of `t`: two distinct labels of that column carry the same basis index. -/
+private theorem exists_ne_and_apply_eq_of_lt_colLen (t : YoungTableau μ) (hn : n < μ.colLen 0)
+    (p : Fin μ.card → Fin n) :
+    ∃ a b : Fin μ.card, colIndex t a = 0 ∧ colIndex t b = 0 ∧ a ≠ b ∧ p a = p b := by
+  classical
+  have hcard : Fintype.card {ℓ : Fin μ.card // colIndex t ℓ = 0} = μ.colLen 0 := by
+    rw [μ.colLen_eq_card, ← Fintype.card_coe]
+    exact Fintype.card_congr (colFiberEquiv t 0)
+  obtain ⟨a, b, hab, hpab⟩ :=
+    Fintype.exists_ne_map_eq_of_card_lt (fun ℓ : {ℓ : Fin μ.card // colIndex t ℓ = 0} => p ℓ)
+      (by rw [hcard, Fintype.card_fin]; exact hn)
+  exact ⟨a, b, a.2, b.2, fun h => hab (Subtype.ext h), hpab⟩
+
+/-- Transposing two labels of the same column that `p` sends to the same basis index fixes the
+monomial basis vector at `p` while negating `c_t`, so the symmetrizer's value there is its own
+negative. -/
+private theorem permTensorActionAlgHom_youngSymmetrizerOver_tensorPowerBasis_eq_neg
+    (t : YoungTableau μ) {p : Fin μ.card → Fin n} {a b : Fin μ.card}
+    (hcol : colIndex t a = colIndex t b) (hab : a ≠ b) (hpab : p a = p b) :
+    permTensorActionAlgHom k n μ.card (youngSymmetrizerOver k t)
+        (tensorPowerBasis k n μ.card p) =
+      -permTensorActionAlgHom k n μ.card (youngSymmetrizerOver k t)
+        (tensorPowerBasis k n μ.card p) := by
+  have hτ : Equiv.swap a b ∈ colSubgroup t := swap_mem_colSubgroup hcol
+  -- the transposition permutes the index function back to itself
+  have hswap : (fun i => p ((Equiv.swap a b).symm i)) = p :=
+    funext fun i => by rw [Equiv.symm_swap]; exact Equiv.apply_swap_eq_self hpab i
+  have h : permTensorActionAlgHom k n μ.card
+        (youngSymmetrizerOver k t * MonoidAlgebra.single (Equiv.swap a b) 1)
+        (tensorPowerBasis k n μ.card p) =
+      permTensorActionAlgHom k n μ.card (youngSymmetrizerOver k t)
+        (tensorPowerBasis k n μ.card p) := by
+    rw [map_mul, Module.End.mul_apply, permTensorActionAlgHom_single_tensorPowerBasis, one_smul,
+      hswap]
+  -- a transposition of the column group has sign `-1`, and `c_t` is alternating under it
+  have hneg : youngSymmetrizerOver k t * MonoidAlgebra.single (Equiv.swap a b) 1 =
+      -youngSymmetrizerOver k t := by
+    simpa [Equiv.Perm.sign_swap hab] using mul_youngSymmetrizerOver_right k t ⟨_, hτ⟩
+  conv_lhs => rw [← h]
+  rw [hneg, map_neg, LinearMap.neg_apply]
+
 /-- **The symmetrizer annihilates the whole tensor power when `μ` has more than `n` rows.** On each
 monomial basis vector two labels of the first column share a basis index, so their transposition
 fixes it while negating `c_t`; the value is its own negative, hence zero since `2` is invertible. -/
 private theorem permTensorActionAlgHom_youngSymmetrizerOver_eq_zero (t : YoungTableau μ)
     (hn : n < μ.colLen 0) :
     permTensorActionAlgHom k n μ.card (youngSymmetrizerOver k t) = 0 := by
-  classical
   have : Invertible (2 : ℚ) := invertibleOfNonzero (by norm_num)
   have : Invertible (2 : k) := by
     have h := Invertible.map (algebraMap ℚ k) (2 : ℚ)
     rwa [map_ofNat] at h
-  -- the labels of the first column outnumber the basis indices
-  have hcard : Fintype.card {ℓ : Fin μ.card // colIndex t ℓ = 0} = μ.colLen 0 := by
-    rw [μ.colLen_eq_card, ← Fintype.card_coe]
-    exact Fintype.card_congr (colFiberEquiv t 0)
   refine (tensorPowerBasis k n μ.card).ext fun p => ?_
   rw [LinearMap.zero_apply]
-  -- two labels of the first column carry the same basis index
-  obtain ⟨a, b, hab, hpab⟩ :=
-    Fintype.exists_ne_map_eq_of_card_lt (fun ℓ : {ℓ : Fin μ.card // colIndex t ℓ = 0} => p ℓ)
-      (by rw [hcard, Fintype.card_fin]; exact hn)
-  have hxy : (a : Fin μ.card) ≠ (b : Fin μ.card) := fun h => hab (Subtype.ext h)
-  have hτ : Equiv.swap (a : Fin μ.card) (b : Fin μ.card) ∈ colSubgroup t :=
-    swap_mem_colSubgroup (by rw [a.2, b.2])
-  -- the transposition permutes the index function back to itself
-  have hswap : (fun i => p ((Equiv.swap (a : Fin μ.card) (b : Fin μ.card)).symm i)) = p :=
-    funext fun i => by rw [Equiv.symm_swap]; exact Equiv.apply_swap_eq_self hpab i
-  have h : permTensorActionAlgHom k n μ.card (youngSymmetrizerOver k t *
-        MonoidAlgebra.single (Equiv.swap (a : Fin μ.card) (b : Fin μ.card)) 1)
-        (tensorPowerBasis k n μ.card p) =
-      permTensorActionAlgHom k n μ.card (youngSymmetrizerOver k t)
-        (tensorPowerBasis k n μ.card p) := by
-    rw [map_mul, Module.End.mul_apply, permTensorActionAlgHom_single_tensorPowerBasis, one_smul,
-      hswap]
-  have hneg : permTensorActionAlgHom k n μ.card (youngSymmetrizerOver k t)
-        (tensorPowerBasis k n μ.card p) =
-      -permTensorActionAlgHom k n μ.card (youngSymmetrizerOver k t)
-        (tensorPowerBasis k n μ.card p) := by
-    -- a transposition of the column group has sign `-1`, and `c_t` is alternating under it
-    have hneg' : youngSymmetrizerOver k t *
-        MonoidAlgebra.single (Equiv.swap (a : Fin μ.card) (b : Fin μ.card)) 1 =
-        -youngSymmetrizerOver k t := by
-      simpa [Equiv.Perm.sign_swap hxy] using mul_youngSymmetrizerOver_right k t ⟨_, hτ⟩
-    conv_lhs => rw [← h]
-    rw [hneg', map_neg, LinearMap.neg_apply]
+  obtain ⟨a, b, ha, hb, hab, hpab⟩ := exists_ne_and_apply_eq_of_lt_colLen t hn p
+  have hneg :=
+    permTensorActionAlgHom_youngSymmetrizerOver_tensorPowerBasis_eq_neg (k := k) t
+      (ha.trans hb.symm) hab hpab
   have htwo : (2 : k) • permTensorActionAlgHom k n μ.card (youngSymmetrizerOver k t)
       (tensorPowerBasis k n μ.card p) = 0 := by
     rw [two_smul]
     nth_rewrite 2 [hneg]
     rw [add_neg_cancel]
-  have := congrArg (fun w => (⅟(2 : k)) • w) htwo
-  simpa [smul_smul] using this
+  simpa [smul_smul] using congrArg (fun w => (⅟(2 : k)) • w) htwo
 
 /-- The Weyl module of a `μ`-tableau vanishes as soon as `μ` has more than `n` rows.
 

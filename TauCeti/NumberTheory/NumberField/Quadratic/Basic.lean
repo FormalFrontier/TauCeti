@@ -24,6 +24,7 @@ the ring-of-integers/discriminant computation (`Quadratic/RingOfIntegers.lean`).
 * `TauCeti.NumberField.finrank_rat_eq_two`: `K` has degree `2` over `ℚ`.
 * `TauCeti.NumberField.coe_gen_sq`: the generator squares to the radicand, `θ² = d` in `K`.
 * `TauCeti.NumberField.gen_notMem_range`: the generator is not rational, `θ ∉ ℚ`.
+* `TauCeti.NumberField.not_isSquare_radicand`: the radicand is not a rational square.
 * `TauCeti.NumberField.trace_gen_eq_zero`: the trace of the generator is `0`.
 * `TauCeti.NumberField.discr_one_gen`: the discriminant of `{1, θ}` over `ℚ` is `4d`.
 * `TauCeti.NumberField.discr_one_halfGen`: the discriminant of `{1, (1+θ)/2}` over `ℚ` is `d`.
@@ -82,6 +83,21 @@ theorem gen_notMem_range (hmin : minpoly ℤ θ = X ^ 2 - C d) :
     simpa [natDegree_X_sub_C] using Polynomial.natDegree_le_of_dvd hdvd (X_sub_C_ne_zero q)
   rw [hq, minpoly_rat_quadratic hmin, natDegree_X_pow_sub_C] at h1
   norm_num at h1
+
+/-- **The radicand of a quadratic presentation is not a rational square.** Were `d = q²`, the
+factorization `(θ - q)(θ + q) = θ² - d = 0` would force `θ = ±q ∈ ℚ`. -/
+theorem not_isSquare_radicand (hmin : minpoly ℤ θ = X ^ 2 - C d) :
+    ¬ IsSquare (((d : ℤ) : ℚ)) := by
+  rintro ⟨q, hq⟩
+  have hθ : (θ : K) ^ 2 = algebraMap ℚ K ((d : ℤ) : ℚ) := by
+    rw [coe_gen_sq hmin, IsScalarTower.algebraMap_apply ℤ ℚ K]; norm_num
+  have hq' : algebraMap ℚ K ((d : ℤ) : ℚ) = algebraMap ℚ K q * algebraMap ℚ K q := by
+    rw [← map_mul, ← hq]
+  have hfac : ((θ : K) - algebraMap ℚ K q) * ((θ : K) + algebraMap ℚ K q) = 0 := by
+    linear_combination hθ + hq'
+  rcases mul_eq_zero.mp hfac with h | h
+  · exact gen_notMem_range hmin ⟨q, by linear_combination -h⟩
+  · exact gen_notMem_range hmin ⟨-q, by rw [map_neg]; linear_combination -h⟩
 
 /-- The trace of the generator vanishes: `Tr(θ) = 0`. -/
 theorem trace_gen_eq_zero (hmin : minpoly ℤ θ = X ^ 2 - C d) :

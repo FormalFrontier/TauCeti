@@ -104,7 +104,7 @@ theorem harnack_inequality_center_of_nonneg_on_sphere (hf : HarmonicOnNhd f (clo
       ContinuousOn (re ∘ herglotzRieszKernel c w) (sphere c |R|) := by
     simpa [abs_of_pos hR] using continuousOn_re_herglotzRieszKernel hw
   have hkernelint : CircleIntegrable ((re ∘ herglotzRieszKernel c w) • f) c R :=
-    hfint.smul_of_continuousOn hkernelcont
+    hfint.continuousOn_smul hkernelcont
   have hnonneg' : ∀ z ∈ sphere c |R|, 0 ≤ f z := fun z hz =>
     hnonneg z (by simpa [abs_of_pos hR] using hz)
   have hmean : circleAverage f c R = f c := by
@@ -245,6 +245,18 @@ theorem eq_zero_on_ball_of_harmonicOnNhd_of_nonneg_on_sphere_of_eq_zero
   · simpa [hfc_zero] using hz_bounds.2
   · simpa using hnonneg_ball z hz
 
+/-- **The centered Harnack bounds at an intermediate radius.** If `f` is harmonic and nonnegative
+throughout the open disk of radius `R` about `c`, then for every `ρ` with `‖w - c‖ < ρ < R` the
+two-sided comparison with `f c` holds with `ρ` in place of `R`. -/
+private theorem harnack_inequality_center_of_norm_sub_lt_of_lt
+    (hf : HarmonicOnNhd f (ball c R)) (hnonneg : ∀ z ∈ ball c R, 0 ≤ f z) {ρ : ℝ}
+    (hρd : ‖w - c‖ < ρ) (hρR : ρ < R) :
+    (ρ - ‖w - c‖) / (ρ + ‖w - c‖) * f c ≤ f w ∧
+      f w ≤ (ρ + ‖w - c‖) / (ρ - ‖w - c‖) * f c :=
+  harnack_inequality_center_of_nonneg_on_sphere (hf.mono (closedBall_subset_ball hρR))
+    (fun z hz ↦ hnonneg z (sphere_subset_ball hρR hz))
+    (by simpa [mem_ball, dist_eq_norm] using hρd)
+
 /-- **The centered Harnack inequality on an open planar disk.**
 
 If `f` is harmonic and nonnegative throughout the open disk of radius `R` about `c`, then
@@ -278,21 +290,11 @@ theorem harnack_inequality_center (hf : HarmonicOnNhd f (ball c R))
   · apply le_of_tendsto hlowerTendsto
     filter_upwards [mem_nhdsWithin_of_mem_nhds (Ioi_mem_nhds hdR),
       self_mem_nhdsWithin] with ρ (hρd : ‖w - c‖ < ρ) (hρR : ρ < R)
-    have hwρ : w ∈ ball c ρ := by
-      simpa [mem_ball, dist_eq_norm] using hρd
-    exact
-      (harnack_inequality_center_of_nonneg_on_sphere
-        (hf.mono (closedBall_subset_ball hρR))
-        (fun z hz ↦ hnonneg z (sphere_subset_ball hρR hz)) hwρ).1
+    exact (harnack_inequality_center_of_norm_sub_lt_of_lt hf hnonneg hρd hρR).1
   · apply ge_of_tendsto hupperTendsto
     filter_upwards [mem_nhdsWithin_of_mem_nhds (Ioi_mem_nhds hdR),
       self_mem_nhdsWithin] with ρ (hρd : ‖w - c‖ < ρ) (hρR : ρ < R)
-    have hwρ : w ∈ ball c ρ := by
-      simpa [mem_ball, dist_eq_norm] using hρd
-    exact
-      (harnack_inequality_center_of_nonneg_on_sphere
-        (hf.mono (closedBall_subset_ball hρR))
-        (fun z hz ↦ hnonneg z (sphere_subset_ball hρR hz)) hwρ).2
+    exact (harnack_inequality_center_of_norm_sub_lt_of_lt hf hnonneg hρd hρR).2
 
 /-- **Harnack's inequality on a smaller closed disk.**
 

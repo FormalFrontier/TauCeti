@@ -17,7 +17,8 @@ The Cartan-Killing classification says that an irreducible reduced crystallograp
 system is described by one of a short list of combinatorial types. This file introduces those types
 as a plain enumeration `TauCeti.DynkinType`, equips it with a rank, a validity predicate carving out
 the rank ranges in which the types are pairwise distinct and irreducible, and attaches to each type
-its standard integer Cartan matrix, taken from Mathlib's `CartanMatrix` family. The predicate
+its standard integer Cartan matrix, taken from Mathlib's `CartanMatrix` family and numbered by
+Bourbaki's node labels, with node `i` at index `i - 1`. The predicate
 `TauCeti.HasCartanType` then says that the Cartan matrix of a base agrees with the standard matrix
 of a given type under a single simultaneous relabelling of rows and columns.
 
@@ -68,6 +69,8 @@ same root system; `Valid` keeps only `B 2` of those two names.
 * `TauCeti.HasCartanType.isSimplyLaced_iff` and
   `TauCeti.HasCartanType.isSimplyLaced_iff_of_valid`: both statements transferred to a base of
   Cartan type `t`.
+* `TauCeti.HasCartanType.exists_supportEquiv_cartanMatrix_eq`: two bases of the same Cartan type
+  are related by a relabelling of their supports that matches their Cartan matrices.
 
 ## References
 
@@ -203,9 +206,16 @@ instance : DecidablePred IsSimplyLaced := fun t ↦
 @[simp] lemma not_isSimplyLaced_F4 : ¬ F4.IsSimplyLaced := not_false
 @[simp] lemma not_isSimplyLaced_G2 : ¬ G2.IsSimplyLaced := not_false
 
-/-- The standard integer Cartan matrix of a Dynkin type, indexed by `Fin t.rank`. The classical
-families and the exceptional matrices are Mathlib's `CartanMatrix.A`, `.B`, `.C`, `.D`, `.E₆`,
-`.E₇`, `.E₈`, `.F₄` and `.G₂`, whose conventions this enumeration adopts. -/
+/-- The standard integer Cartan matrix of a Dynkin type, indexed by `Fin t.rank` in the Bourbaki
+node numbering, so that `cartanMatrix t i j = ⟨αᵢ, αⱼ^∨⟩` for Bourbaki node `i + 1` at index `i`.
+The classical families and the exceptional matrices are Mathlib's `CartanMatrix.A`, `.B`, `.C`,
+`.D`, `.E₆`, `.E₇`, `.E₈` and `.F₄`, whose conventions agree with Bourbaki's plates.
+
+Type `G₂` is the one place where they do not. Mathlib's `CartanMatrix.G₂` is documented as the
+transpose of Bourbaki's plate IX matrix, so the Bourbaki numbering — node `1` short, node `2` long,
+giving `!![2, -1; -3, 2]` — is `CartanMatrix.G₂ᵀ`. The transpose of a Cartan matrix is again one,
+of the same diagram with the arrow reversed, and here it is the Bourbaki-numbered representative
+that this enumeration pins. -/
 def cartanMatrix : (t : DynkinType) → Matrix (Fin t.rank) (Fin t.rank) ℤ
   | .A n => CartanMatrix.A n
   | .B n => CartanMatrix.B n
@@ -215,7 +225,7 @@ def cartanMatrix : (t : DynkinType) → Matrix (Fin t.rank) (Fin t.rank) ℤ
   | .E7 => CartanMatrix.E₇
   | .E8 => CartanMatrix.E₈
   | .F4 => CartanMatrix.F₄
-  | .G2 => CartanMatrix.G₂
+  | .G2 => CartanMatrix.G₂ᵀ
 
 -- The parenthesized `(rfl)` proofs keep these out of the implicit `@[defeq]` set, which would
 -- otherwise demand that `cartanMatrix` be `@[expose]`d; as `@[simp]` lemmas they are the intended
@@ -228,7 +238,7 @@ def cartanMatrix : (t : DynkinType) → Matrix (Fin t.rank) (Fin t.rank) ℤ
 @[simp] lemma cartanMatrix_E7 : E7.cartanMatrix = CartanMatrix.E₇ := (rfl)
 @[simp] lemma cartanMatrix_E8 : E8.cartanMatrix = CartanMatrix.E₈ := (rfl)
 @[simp] lemma cartanMatrix_F4 : F4.cartanMatrix = CartanMatrix.F₄ := (rfl)
-@[simp] lemma cartanMatrix_G2 : G2.cartanMatrix = CartanMatrix.G₂ := (rfl)
+@[simp] lemma cartanMatrix_G2 : G2.cartanMatrix = CartanMatrix.G₂ᵀ := (rfl)
 
 /-- Every diagonal entry of a standard Cartan matrix is `2`. -/
 @[simp] lemma cartanMatrix_apply_same (t : DynkinType) (i : Fin t.rank) :
@@ -254,7 +264,7 @@ def cartanMatrix : (t : DynkinType) → Matrix (Fin t.rank) (Fin t.rank) ℤ
   | E7 => exact CartanMatrix.E₇_diag i
   | E8 => exact CartanMatrix.E₈_diag i
   | F4 => exact CartanMatrix.F₄_diag i
-  | G2 => exact CartanMatrix.G₂_diag i
+  | G2 => exact CartanMatrix.G₂_diag i  -- `G₂ᵀ i i` is `G₂ i i` definitionally
 
 /-- Every off-diagonal entry of a standard Cartan matrix is nonpositive. -/
 lemma cartanMatrix_apply_le_zero_of_ne (t : DynkinType) {i j : Fin t.rank} (h : i ≠ j) :
@@ -268,7 +278,8 @@ lemma cartanMatrix_apply_le_zero_of_ne (t : DynkinType) {i j : Fin t.rank} (h : 
   case E7 => exact CartanMatrix.E₇_off_diag_nonpos i j h
   case E8 => exact CartanMatrix.E₈_off_diag_nonpos i j h
   case F4 => exact CartanMatrix.F₄_off_diag_nonpos i j h
-  case G2 => exact CartanMatrix.G₂_off_diag_nonpos i j h
+  -- `G₂ᵀ i j` is `G₂ j i` definitionally, so the transposed pair of indices is the one to feed in.
+  case G2 => exact CartanMatrix.G₂_off_diag_nonpos j i h.symm
 
 /-- The zero pattern of a standard Cartan matrix is symmetric: two simple roots are orthogonal in
 one order exactly when they are in the other. With `cartanMatrix_apply_same` and
@@ -338,7 +349,12 @@ theorem isSimplyLaced_cartanMatrix_iff (t : DynkinType) :
   case E7 => exact iff_of_true CartanMatrix.isSimplyLaced_E₇ (Or.inl trivial)
   case E8 => exact iff_of_true CartanMatrix.isSimplyLaced_E₈ (Or.inl trivial)
   case F4 => exact iff_of_false CartanMatrix.not_isSimplyLaced_F₄ (by simp)
-  case G2 => exact iff_of_false CartanMatrix.not_isSimplyLaced_G₂ (by simp)
+  -- The standard matrix of `G₂` is Bourbaki's, the transpose of Mathlib's `CartanMatrix.G₂`, and
+  -- transposition does not change simple-lacedness.
+  case G2 =>
+    exact iff_of_false
+      (mt (Matrix.isSimplyLaced_transpose CartanMatrix.G₂).mp CartanMatrix.not_isSimplyLaced_G₂)
+      (by simp)
   case B n =>
     rcases le_or_gt n 1 with hn | hn
     · exact iff_of_true (subsingleton_case hn _) (Or.inr (by simpa using hn))
@@ -387,6 +403,33 @@ def HasCartanType (b : P.Base) (t : DynkinType) : Prop :=
   ∃ e : b.support ≃ Fin t.rank, ∀ i j, b.cartanMatrix i j = t.cartanMatrix (e i) (e j)
 
 variable {P}
+
+/-- Having Cartan type `t`, unfolded to the relabelling it asserts to exist. The body of
+`TauCeti.HasCartanType` is deliberately not exposed, so this is the interface through which
+consumers in other modules build and destructure it. -/
+lemma hasCartanType_iff (b : P.Base) (t : DynkinType) :
+    HasCartanType P b t ↔
+      ∃ e : b.support ≃ Fin t.rank, ∀ i j, b.cartanMatrix i j = t.cartanMatrix (e i) (e j) :=
+  (Iff.rfl)
+
+/-- **Two bases of the same Cartan type are related by a relabelling matching their Cartan
+matrices.** Each of the two bases comes with a labelling of its support by the nodes of `t`, and
+composing one with the inverse of the other identifies the supports; the two Cartan matrices then
+agree because each agrees with the standard matrix of `t`.
+
+This is the hypothesis of Mathlib's `RootPairing.Base.equivOfCartanMatrixEq`, and is pure
+bookkeeping about the labellings: it needs neither finiteness nor reducedness of the two root
+pairings, with the root-system content left to that theorem. -/
+theorem HasCartanType.exists_supportEquiv_cartanMatrix_eq {ι₂ M₂ N₂ : Type*} [AddCommGroup M₂]
+    [Module R M₂] [AddCommGroup N₂] [Module R N₂] {P₂ : RootPairing ι₂ R M₂ N₂}
+    [P₂.IsCrystallographic]
+    {b : P.Base} {b₂ : P₂.Base} {t : DynkinType}
+    (h : HasCartanType P b t) (h₂ : HasCartanType P₂ b₂ t) :
+    ∃ e : b.support ≃ b₂.support, ∀ i j, b₂.cartanMatrix (e i) (e j) = b.cartanMatrix i j := by
+  obtain ⟨e, he⟩ := (hasCartanType_iff b t).mp h
+  obtain ⟨e₂, he₂⟩ := (hasCartanType_iff b₂ t).mp h₂
+  exact ⟨e.trans e₂.symm, fun i j ↦ by
+    simp only [Equiv.trans_apply, he₂, he, Equiv.apply_symm_apply]⟩
 
 /-- Having Cartan type `t`, expressed as a reindexing of matrices rather than entrywise. -/
 lemma hasCartanType_iff_reindex (b : P.Base) (t : DynkinType) :

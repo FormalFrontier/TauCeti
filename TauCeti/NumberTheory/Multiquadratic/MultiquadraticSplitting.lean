@@ -5,8 +5,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.NumberTheory.LegendreSymbol.Basic
-public import Mathlib.LinearAlgebra.Dimension.FreeAndStrongRankCondition
-public import Mathlib.LinearAlgebra.Dimension.DivisionRing
 public import TauCeti.NumberTheory.Multiquadratic.Galois.Basic
 public import TauCeti.NumberTheory.NumberField.SplitsCompletely
 import TauCeti.RingTheory.Ideal.LiesOver
@@ -36,36 +34,18 @@ public section
 
 variable {K : Type*} [Field K] [NumberField K]
 
-/-- Forward direction (pointwise): for `K` Galois over `ℚ`, if `p` splits completely
-(`#{primes over p} = [K : ℚ]`) and `p ∤ d i`, then `d i` is a quadratic residue mod `p`. -/
+/-- Forward direction (pointwise): if `p` splits completely (`#{primes over p} = [K : ℚ]`) and
+`p ∤ d i`, then `d i` is a quadratic residue mod `p`. -/
 private theorem legendreSym_eq_one_of_ncard_primesOver_eq_finrank {ι : Type*} (d : ι → ℤ)
-    (r : ι → K) (hr : ∀ i, r i ^ 2 = algebraMap ℤ K (d i)) [IsGalois ℚ K]
+    (r : ι → K) (hr : ∀ i, r i ^ 2 = algebraMap ℤ K (d i))
     {p : ℕ} [Fact p.Prime] {i : ι} (hcop_i : ¬ (p : ℤ) ∣ d i)
     (Q : Ideal (𝓞 K)) [Q.IsPrime] [Q.LiesOver (span {(p : ℤ)})]
     (hsplit : (primesOver (span {(p : ℤ)}) (𝓞 K)).ncard = finrank ℚ K) :
     legendreSym p (d i) = 1 := by
-  -- Complete splitting forces residue degree `1`, so `𝓞 K ⧸ Q` is the prime field `ℤ ⧸ (p)`;
-  -- lifting the residue of `r i` to an integer `a` gives `a² ≡ d i (mod p)`.
-  have hpne : (p : ℤ) ≠ 0 := by exact_mod_cast (Fact.out : p.Prime).ne_zero
-  have : (span {(p : ℤ)} : Ideal ℤ).IsMaximal :=
-    Ideal.IsPrime.isMaximal
-      ((Ideal.span_singleton_prime hpne).mpr (Nat.prime_iff_prime_int.mp Fact.out))
-      (by simpa [Ideal.span_singleton_eq_bot] using hpne)
-  have : Q.IsMaximal := Ideal.IsMaximal.of_liesOver_isMaximal Q (span {(p : ℤ)})
-  let R : 𝓞 K := integralSqrt (hr i)
-  rw [ncard_primesOver_eq_finrank_iff K p] at hsplit
-  have hfQ : finrank (ℤ ⧸ span {(p : ℤ)}) (𝓞 K ⧸ Q) = 1 := by
-    rw [← Ideal.inertiaDeg'_algebraMap (p := span {(p : ℤ)}) (P := Q),
-      Ideal.inertiaDeg'_eq_inertiaDeg,
-      ← Ideal.inertiaDegIn_eq_inertiaDeg (span {(p : ℤ)}) Q (K ≃ₐ[ℚ] K)]
-    exact hsplit.2
-  let fld : Field (ℤ ⧸ span {(p : ℤ)}) := Ideal.Quotient.field _
-  -- A one-dimensional algebra over a field is free, so `finrank = 1 ⟹ algebraMap` is bijective.
-  have : Module.Free (ℤ ⧸ span {(p : ℤ)}) (𝓞 K ⧸ Q) :=
-    @Module.Free.of_divisionRing _ _ fld.toDivisionRing _ _
-  have hbij := (Algebra.finrank_eq_one_iff_bijective_algebraMap
-    (F := ℤ ⧸ span {(p : ℤ)}) (E := 𝓞 K ⧸ Q)).mp hfQ
   -- Lift the residue of `R` to an integer `a`, so `R ≡ a (mod Q)`.
+  let R : 𝓞 K := integralSqrt (hr i)
+  have hbij :=
+    TauCeti.NumberField.bijective_algebraMap_quotient_of_ncard_primesOver_eq_finrank Q hsplit
   obtain ⟨c, hc⟩ := hbij.surjective (Ideal.Quotient.mk Q R)
   obtain ⟨a, rfl⟩ := Ideal.Quotient.mk_surjective c
   -- The algebra map `ℤ ⧸ (p) → 𝓞 K ⧸ Q` is `Ideal.quotientMap`, which sends `mk a` to

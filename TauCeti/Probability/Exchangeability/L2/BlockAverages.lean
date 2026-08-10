@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+public import TauCeti.Probability.Process.BlockAverage
 public import TauCeti.Probability.Exchangeability.L2.Covariance
 
 /-!
@@ -17,7 +18,9 @@ contractable L² sequence (`contractable_covariance_structure`).
 
 For a real-valued process `X : ℕ → Ω → ℝ` and a finite selection `k : Fin n → ℕ`, the
 *block average* `blockAverage X k = n⁻¹ • ∑ i, X (k i)` is the empirical mean of the block
-`(X (k i))ᵢ`. When `X` is contractable with `L²` coordinates, its second-moment structure is
+`(X (k i))ᵢ`; it is defined, with its measure-free algebra, in
+`TauCeti.Probability.Process.BlockAverage`.
+When `X` is contractable with `L²` coordinates, its second-moment structure is
 uniform: all coordinate variances agree and all off-diagonal covariances agree
 (`contractable_covariance_structure`). Writing `v = Var[X 0]` and `c = cov[X 0, X 1]`, this
 uniformity forces the block average to have the explicit variance
@@ -65,34 +68,6 @@ namespace TauCeti
 namespace Probability
 
 variable {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω} {X : ℕ → Ω → ℝ}
-
-/-- The **block average** of a real-valued process `X` over a finite selection `k : Fin n → ℕ`:
-the empirical mean `n⁻¹ • ∑ i, X (k i)` of the block `(X (k i))ᵢ`. -/
-def blockAverage (X : ℕ → Ω → ℝ) {n : ℕ} (k : Fin n → ℕ) : Ω → ℝ :=
-  𝔼 i, X (k i)
-
-omit [MeasurableSpace Ω] in
-@[simp]
-theorem blockAverage_apply {n : ℕ} (k : Fin n → ℕ) (ω : Ω) :
-    blockAverage X k ω = (n : ℝ)⁻¹ * ∑ i, X (k i) ω := by
-  rw [blockAverage, Finset.expect_apply, Fintype.expect_eq_sum_div_card]
-  simp [div_eq_inv_mul]
-
-omit [MeasurableSpace Ω] in
-/-- A block average as a real-scaled finite sum. -/
-theorem blockAverage_eq_sum {n : ℕ} (k : Fin n → ℕ) :
-    blockAverage X k = (n : ℝ)⁻¹ • ∑ i, X (k i) := by
-  ext ω
-  simp
-
-omit [MeasurableSpace Ω] in
-/-- **A block average of a constant block.** If every coordinate of a nonempty block takes the
-value `c` at `ω`, then so does the block average: the normalisation `n⁻¹` cancels the `n` terms. -/
-theorem blockAverage_apply_of_forall_eq {n : ℕ} (hn : 0 < n) {k : Fin n → ℕ} {ω : Ω} {c : ℝ}
-    (h : ∀ i, X (k i) ω = c) : blockAverage X k ω = c := by
-  have : Nonempty (Fin n) := Fin.pos_iff_nonempty.mp hn
-  rw [blockAverage, Finset.expect_apply, Finset.expect_congr rfl fun i _ => h i,
-    Fintype.expect_const]
 
 /-- A block average of `L²` coordinates is itself `L²`. -/
 theorem memLp_blockAverage {n : ℕ} (k : Fin n → ℕ) (hX_L2 : ∀ i, MemLp (X (k i)) 2 μ) :
