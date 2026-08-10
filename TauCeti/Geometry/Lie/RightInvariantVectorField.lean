@@ -70,6 +70,7 @@ theorem mulRightInvariantVectorField_one (v : GroupLieAlgebra I G) :
   rw [show (fun x : G => x * 1) = id by funext x; simp, mfderiv_id]
   rfl
 
+/-- The right-invariant vector field construction preserves addition of its generators. -/
 theorem mulRightInvariantVectorField_add (v w : GroupLieAlgebra I G) :
     mulRightInvariantVectorField (v + w) =
       mulRightInvariantVectorField v + mulRightInvariantVectorField w := by
@@ -78,6 +79,7 @@ theorem mulRightInvariantVectorField_add (v w : GroupLieAlgebra I G) :
     mfderiv I I (fun x : G => x * g) 1 v + mfderiv I I (fun x : G => x * g) 1 w
   exact map_add _ _ _
 
+/-- The right-invariant vector field construction preserves scalar multiplication. -/
 theorem mulRightInvariantVectorField_smul (c : 𝕜) (v : GroupLieAlgebra I G) :
     mulRightInvariantVectorField (c • v) = c • mulRightInvariantVectorField v := by
   funext g
