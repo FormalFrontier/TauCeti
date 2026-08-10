@@ -93,8 +93,7 @@ followed by the canonical maps identifying the residue field of `Spec K` with `K
 lemma zeroResidueFieldIso_hom (A : AbelianVariety K) :
     A.zeroResidueFieldIso.hom =
       (A.toScheme.residueFieldCongr
-          (show A.zeroPoint = A.zeroSection (IsLocalRing.closedPoint K) from by
-            rw [zeroPoint])).hom ≫
+          (by rfl : A.zeroPoint = A.zeroSection (IsLocalRing.closedPoint K))).hom ≫
         A.zeroSection.residueFieldMap (IsLocalRing.closedPoint K) ≫
           (Scheme.Spec.residueFieldIso (.of K) (IsLocalRing.closedPoint K)).hom ≫
             (Ideal.algEquivResidueFieldOfField
@@ -118,8 +117,7 @@ lemma zeroResidueFieldIso_inv (A : AbelianVariety K) :
             A.toOver.hom.residueFieldMap
               (A.zeroSection (IsLocalRing.closedPoint K)) ≫
               (A.toScheme.residueFieldCongr
-                (show A.zeroPoint = A.zeroSection (IsLocalRing.closedPoint K) from by
-                  rw [zeroPoint])).inv := by
+                (by rfl : A.zeroPoint = A.zeroSection (IsLocalRing.closedPoint K))).inv := by
   simp only [zeroResidueFieldIso, zeroPoint, baseResidueFieldIso, Iso.trans_inv, Iso.symm_inv,
     Scheme.residueFieldCongr_refl, Iso.refl_inv, Category.comp_id]
   rw [residueFieldIsoOfSection_hom (s := A.zeroSection) (f := A.toOver.hom)
@@ -132,20 +130,36 @@ def zeroResidueFieldRingEquiv (A : AbelianVariety K) :
     IsLocalRing.ResidueField (A.toScheme.presheaf.stalk A.zeroPoint) ≃+* K :=
   A.zeroResidueFieldIso.commRingCatIsoToRingEquiv
 
+/-- The forward map of `zeroResidueFieldRingEquiv` is the forward map of
+`zeroResidueFieldIso`. -/
+lemma zeroResidueFieldRingEquiv_apply_eq_iso_hom (A : AbelianVariety K)
+    (z : IsLocalRing.ResidueField (A.toScheme.presheaf.stalk A.zeroPoint)) :
+    A.zeroResidueFieldRingEquiv z = A.zeroResidueFieldIso.hom z := by
+  -- `commRingCatIsoToRingEquiv` preserves the underlying forward function definitionally.
+  change A.zeroResidueFieldIso.hom z = A.zeroResidueFieldIso.hom z
+  rfl
+
+/-- The inverse map of `zeroResidueFieldRingEquiv` is the inverse map of
+`zeroResidueFieldIso`. -/
+lemma zeroResidueFieldRingEquiv_symm_apply_eq_iso_inv (A : AbelianVariety K) (k : K) :
+    A.zeroResidueFieldRingEquiv.symm k = A.zeroResidueFieldIso.inv k := by
+  -- `commRingCatIsoToRingEquiv` preserves the underlying inverse function definitionally.
+  change A.zeroResidueFieldIso.inv k = A.zeroResidueFieldIso.inv k
+  rfl
+
 /-- Applying `zeroResidueFieldRingEquiv` is applying the residue-field map of the identity section
 and the canonical residue-field equivalence for `Spec K`. -/
+@[simp]
 lemma zeroResidueFieldRingEquiv_apply (A : AbelianVariety K)
     (z : IsLocalRing.ResidueField (A.toScheme.presheaf.stalk A.zeroPoint)) :
     A.zeroResidueFieldRingEquiv z =
       ((A.toScheme.residueFieldCongr
-          (show A.zeroPoint = A.zeroSection (IsLocalRing.closedPoint K) from by
-            rw [zeroPoint])).hom ≫
+          (by rfl : A.zeroPoint = A.zeroSection (IsLocalRing.closedPoint K))).hom ≫
         A.zeroSection.residueFieldMap (IsLocalRing.closedPoint K) ≫
           (Scheme.Spec.residueFieldIso (.of K) (IsLocalRing.closedPoint K)).hom ≫
             (Ideal.algEquivResidueFieldOfField
               (IsLocalRing.closedPoint K).asIdeal).symm.toRingEquiv.toCommRingCatIso.hom) z := by
-  change A.zeroResidueFieldIso.hom z = _
-  rw [zeroResidueFieldIso_hom]
+  rw [zeroResidueFieldRingEquiv_apply_eq_iso_hom, zeroResidueFieldIso_hom]
 
 /-- Applying the inverse of `zeroResidueFieldRingEquiv` is applying the canonical map from `K` to
 the residue field of `Spec K` and the residue-field map of the structure morphism. -/
@@ -161,10 +175,8 @@ lemma zeroResidueFieldRingEquiv_symm_apply (A : AbelianVariety K) (k : K) :
             A.toOver.hom.residueFieldMap
               (A.zeroSection (IsLocalRing.closedPoint K)) ≫
               (A.toScheme.residueFieldCongr
-                (show A.zeroPoint = A.zeroSection (IsLocalRing.closedPoint K) from by
-                  rw [zeroPoint])).inv) k := by
-  change A.zeroResidueFieldIso.inv k = _
-  rw [zeroResidueFieldIso_inv]
+                (by rfl : A.zeroPoint = A.zeroSection (IsLocalRing.closedPoint K))).inv) k := by
+  rw [zeroResidueFieldRingEquiv_symm_apply_eq_iso_inv, zeroResidueFieldIso_inv]
 
 /-- The residue field at the identity is a `K`-algebra via the inverse of
 `zeroResidueFieldRingEquiv`. -/
@@ -193,7 +205,7 @@ instance tangentSpaceModule (A : AbelianVariety K) : Module K A.tangentSpace :=
 
 /-- Ground-field scalar multiplication on `T₀A` is restriction of the residue-field action. -/
 @[simp]
-lemma smul_tangentSpace (A : AbelianVariety K) (k : K) (v : A.tangentSpace) :
+lemma smul_tangentSpace_def (A : AbelianVariety K) (k : K) (v : A.tangentSpace) :
     k • v = A.zeroResidueFieldRingEquiv.symm k • v := rfl
 
 /-- The ground-field action, the residue-field action, and the tangent-space action form the
@@ -218,7 +230,7 @@ lemma finrank_zeroResidueField (A : AbelianVariety K) :
 
 /-- Computing the dimension of `T₀A` over `K` is the same as computing it over the canonically
 identified residue field `κ(0)`. -/
-lemma finrank_tangentSpace_eq_finrank_residueField (A : AbelianVariety K) :
+lemma finrank_tangentSpace_eq_finrank_over_residueField (A : AbelianVariety K) :
     Module.finrank K A.tangentSpace =
       Module.finrank (IsLocalRing.ResidueField (A.toScheme.presheaf.stalk A.zeroPoint))
         A.tangentSpace := by
@@ -232,7 +244,7 @@ lemma finrank_tangentSpace_eq_finrank_cotangentSpace (A : AbelianVariety K) :
     Module.finrank K A.tangentSpace =
       Module.finrank (IsLocalRing.ResidueField (A.toScheme.presheaf.stalk A.zeroPoint))
         (ZariskiCotangentSpace A.toScheme A.zeroPoint) := by
-  rw [finrank_tangentSpace_eq_finrank_residueField, Subspace.dual_finrank_eq]
+  rw [finrank_tangentSpace_eq_finrank_over_residueField, Subspace.dual_finrank_eq]
 
 end
 
