@@ -200,11 +200,13 @@ theorem coe_lieSubmoduleOrderIsoUEA_symm (P : Submodule (UniversalEnvelopingAlge
   (rfl)
 
 /-- Membership in the `U(L)`-submodule attached to a Lie submodule. -/
+@[simp]
 theorem mem_lieSubmoduleOrderIsoUEA {N : LieSubmodule R L M} {m : M} :
     m ∈ lieSubmoduleOrderIsoUEA hcompat N ↔ m ∈ N :=
   Iff.rfl
 
 /-- Membership in the Lie submodule attached to a `U(L)`-submodule. -/
+@[simp]
 theorem mem_lieSubmoduleOrderIsoUEA_symm
     {P : Submodule (UniversalEnvelopingAlgebra R L) M} {m : M} :
     m ∈ (lieSubmoduleOrderIsoUEA hcompat).symm P ↔ m ∈ P :=
@@ -298,7 +300,7 @@ variable (R : Type u) (L : Type v) {M : Type w} [CommRing R] [LieRing L] [LieAlg
 
 This is a `def`, not an instance: as an instance it would fire on every Lie module, competing with
 the `U(L)`-module structures that arise by other routes (a Verma module is a `U(L)`-module first
-and a Lie module second), and at `M = L` it would clash with the action of `U(L)` on itself.
+and a Lie module second), and at `M = U(L)` it would clash with the action of `U(L)` on itself.
 Bring it into scope with `letI := TauCeti.ueaModule R L`. -/
 @[reducible]
 noncomputable def ueaModule : Module (UniversalEnvelopingAlgebra R L) M :=
@@ -320,10 +322,9 @@ theorem ueaModule_ι_smul (x : L) (m : M) :
 
 /-- The scalars of the base ring act the same way through `R` and through `U(L)`. -/
 theorem ueaModule_isScalarTower :
-    IsScalarTower R (UniversalEnvelopingAlgebra R L) M where
-  smul_assoc r u m := by
-    rw [ueaModule_smul_def, ueaModule_smul_def, map_smul]
-    rfl
+    IsScalarTower R (UniversalEnvelopingAlgebra R L) M :=
+  IsScalarTower.of_algebraMap_smul fun r m => by
+    rw [ueaModule_smul_def, AlgHom.commutes, Module.algebraMap_end_apply]
 
 attribute [local instance] ueaModule_isScalarTower
 
