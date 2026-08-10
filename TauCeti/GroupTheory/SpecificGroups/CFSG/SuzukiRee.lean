@@ -69,10 +69,6 @@ private theorem isLongSimpleRoot_reindexPerm {t u : DynkinType} (h : t = u)
   subst u
   simpa [finCongr_refl, Equiv.permCongr_def] using hp i
 
-private theorem isLongSimpleRoot_congr {t : DynkinType} {i j : Fin t.rank}
-    (h : (i : ℕ) = j) : t.IsLongSimpleRoot i ↔ t.IsLongSimpleRoot j := by
-  rw [Fin.ext h]
-
 /-- The length-exchanging permutation used by the exceptional isogeny attached to a Suzuki--Ree
 index: the node swap for `B₂` and `G₂`, and reversal for `F₄`.
 
@@ -161,22 +157,22 @@ theorem isLongSimpleRoot_lengthPerm (e : SuzukiReeIndex) (i : Fin e.1.rank) :
     convert isLongSimpleRoot_reindexPerm (LieTypeIndex.dynkinType_suzuki _)
       lengthPermRankTwo isLongSimpleRoot_lengthPermRankTwo_iff_not_isLongSimpleRoot_B2 i using 1
     all_goals simp only [lengthPerm_suzuki]
-    exact isLongSimpleRoot_congr rfl
+    rfl
   case reeG2 =>
     convert isLongSimpleRoot_reindexPerm (LieTypeIndex.dynkinType_reeG2 _)
       lengthPermRankTwo isLongSimpleRoot_lengthPermRankTwo_iff_not_isLongSimpleRoot_G2 i using 1
     all_goals simp only [lengthPerm_reeG2]
-    exact isLongSimpleRoot_congr rfl
+    rfl
   case reeF4 =>
     convert isLongSimpleRoot_reindexPerm (LieTypeIndex.dynkinType_reeF4 _)
       lengthPermF4 isLongSimpleRoot_lengthPermF4_iff_not_isLongSimpleRoot_F4 i using 1
     all_goals simp only [lengthPerm_reeF4]
-    exact isLongSimpleRoot_congr rfl
+    rfl
   case tits =>
     convert isLongSimpleRoot_reindexPerm LieTypeIndex.dynkinType_tits lengthPermF4
       isLongSimpleRoot_lengthPermF4_iff_not_isLongSimpleRoot_F4 i using 1
     all_goals simp only [lengthPerm_tits]
-    exact isLongSimpleRoot_congr rfl
+    rfl
 
 /-- The exponent attached to a numbered simple root subgroup by the exceptional isogeny: `1` on a
 long simple root and the defining characteristic on a short simple root.
