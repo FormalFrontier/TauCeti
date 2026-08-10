@@ -18,16 +18,14 @@ Let `G` be a group. This file studies the group
 [G, G] / Z([G, G]),
 ```
 
-the derived subgroup of `G` modulo the centre *of that derived subgroup*, and the group obtained
-by feeding it the fixed points of an endomorphism.
+the derived subgroup of `G` modulo the centre *of that derived subgroup*.
 
 The construction is the last step of the standard recipe producing a finite group of Lie type: one
 takes the fixed points `H` of a Steinberg endomorphism of a pinned algebraic group, passes to
 `[H, H]`, and quotients by the centre of `[H, H]`. Taking the derived subgroup handles the
 parameters at which `H` fails to be perfect, and the central quotient is what turns a quasisimple
-group into a simple one. Everything in this file is carrier-independent: it needs only a group and,
-for the second half, an endomorphism of it, so it is available before any particular ambient group
-has been constructed.
+group into a simple one. Everything in this file is carrier-independent: it needs only a group, so
+it is available before any particular ambient group has been constructed.
 
 Nothing here proves that the resulting group is finite or simple. What is proved is that the recipe
 does nothing once it has succeeded: on a perfect group with trivial centre — in particular on any
@@ -40,8 +38,6 @@ isomorphisms is recorded as well, so the output does not depend on the model of 
 * `TauCeti.DerivedCentralQuotient`: the group `[G, G] / Z([G, G])`.
 * `TauCeti.DerivedCentralQuotient.congr`: transport along an isomorphism of groups.
 * `TauCeti.DerivedCentralQuotient.lift`: the factorisation of a surjection onto a centreless group.
-* `TauCeti.fixedSubgroup`: the subgroup of points fixed by an endomorphism, `F.eqLocus (.id G)`.
-* `TauCeti.FixedPointCandidate`: the derived central quotient of a fixed subgroup.
 
 ## Main results
 
@@ -52,18 +48,18 @@ isomorphisms is recorded as well, so the output does not depend on the model of 
   and `TauCeti.DerivedCentralQuotient.mulEquivSelf` then makes the construction idempotent.
 * `TauCeti.DerivedCentralQuotient.subsingleton_iff`: the output is trivial exactly when `[G, G]` is
   commutative.
-* `TauCeti.fixedSubgroup_le_fixedSubgroup_pow`: fixed points of an endomorphism are fixed by all of
-  its powers.
-* `TauCeti.fixedPointCandidateCongr`: transport of the whole recipe along an isomorphism
-  intertwining two endomorphisms.
+* `TauCeti.DerivedCentralQuotient.congr_refl`, `TauCeti.DerivedCentralQuotient.congr_symm` and
+  `TauCeti.DerivedCentralQuotient.congr_trans` are the coherence laws of the transport, as are
+  `TauCeti.commutatorCongr_refl`, `TauCeti.commutatorCongr_symm` and
+  `TauCeti.commutatorCongr_trans` for the derived subgroup it is built from.
 
 ## References
 
-This is the carrier-independent half of milestone L3 of `TauCetiRoadmap/CFSGStatement/README.md`,
-which fixes the recipe `H = fixedSubgroup F` and `Group = [H, H] / Z([H, H])` and the reading of the
-centre as the centre of the derived subgroup rather than of `H`. The construction is standard; see
-R. W. Carter, *Simple Groups of Lie Type*, and D. Gorenstein, R. Lyons and R. Solomon,
-*The Classification of the Finite Simple Groups*.
+This is the derived-subgroup-modulo-centre half of milestone L3 of
+`TauCetiRoadmap/CFSGStatement/README.md`, which fixes the recipe `H = fixedSubgroup F` and
+`Group = [H, H] / Z([H, H])` and the reading of the centre as the centre of the derived subgroup
+rather than of `H`. The construction is standard; see R. W. Carter, *Simple Groups of Lie Type*,
+and D. Gorenstein, R. Lyons and R. Solomon, *The Classification of the Finite Simple Groups*.
 -/
 
 public section
@@ -72,7 +68,7 @@ namespace TauCeti
 
 open Subgroup
 
-variable {G G' : Type*} [Group G] [Group G']
+variable {G G' G'' : Type*} [Group G] [Group G'] [Group G'']
 
 /-! ## Centres and derived subgroups under an isomorphism -/
 
@@ -106,8 +102,26 @@ def commutatorCongr (e : G ≃* G') : ↥(commutator G) ≃* ↥(commutator G') 
 
 @[simp]
 theorem commutatorCongr_coe (e : G ≃* G') (x : ↥(commutator G)) :
-    ((commutatorCongr e x : ↥(commutator G')) : G') = e (x : G) :=
-  (rfl)
+    ((commutatorCongr e x : ↥(commutator G')) : G') = e (x : G) := by
+  simp only [commutatorCongr, MulEquiv.trans_apply, MulEquiv.subgroupCongr_apply,
+    MulEquiv.coe_subgroupMap_apply]
+
+@[simp]
+theorem commutatorCongr_refl :
+    commutatorCongr (MulEquiv.refl G) = MulEquiv.refl ↥(commutator G) :=
+  MulEquiv.ext fun x => Subtype.ext (by simp only [commutatorCongr_coe, MulEquiv.refl_apply])
+
+@[simp]
+theorem commutatorCongr_symm (e : G ≃* G') :
+    (commutatorCongr e).symm = commutatorCongr e.symm :=
+  MulEquiv.ext fun y =>
+    (commutatorCongr e).symm_apply_eq.mpr
+      (Subtype.ext (by simp only [commutatorCongr_coe, MulEquiv.apply_symm_apply]))
+
+@[simp]
+theorem commutatorCongr_trans (e : G ≃* G') (e' : G' ≃* G'') :
+    (commutatorCongr e).trans (commutatorCongr e') = commutatorCongr (e.trans e') :=
+  MulEquiv.ext fun x => Subtype.ext (by simp only [MulEquiv.trans_apply, commutatorCongr_coe])
 
 /-! ## Surjections onto a centreless group -/
 
@@ -164,14 +178,32 @@ def congr (e : G ≃* G') : DerivedCentralQuotient G ≃* DerivedCentralQuotient
 
 @[simp]
 theorem congr_mk (e : G ≃* G') (x : ↥(commutator G)) :
-    congr e (x : DerivedCentralQuotient G) = (commutatorCongr e x : DerivedCentralQuotient G') :=
-  (rfl)
+    congr e (x : DerivedCentralQuotient G) = (commutatorCongr e x : DerivedCentralQuotient G') := by
+  simp only [congr, QuotientGroup.congr_mk]
 
 @[simp]
 theorem congr_refl : congr (MulEquiv.refl G) = MulEquiv.refl (DerivedCentralQuotient G) := by
-  ext x
+  refine MulEquiv.ext fun x => ?_
   obtain ⟨y, rfl⟩ := QuotientGroup.mk_surjective x
-  rfl
+  simp only [congr_mk, commutatorCongr_refl, MulEquiv.refl_apply]
+
+@[simp]
+theorem congr_symm (e : G ≃* G') : (congr e).symm = congr e.symm := by
+  refine MulEquiv.ext fun y => ?_
+  obtain ⟨z, rfl⟩ := QuotientGroup.mk_surjective y
+  refine (congr e).symm_apply_eq.mpr ?_
+  simp only [congr_mk]
+  rw [show commutatorCongr e (commutatorCongr e.symm z) = z from
+    Subtype.ext (by simp only [commutatorCongr_coe, MulEquiv.apply_symm_apply])]
+
+@[simp]
+theorem congr_trans (e : G ≃* G') (e' : G' ≃* G'') :
+    (congr e).trans (congr e') = congr (e.trans e') := by
+  refine MulEquiv.ext fun x => ?_
+  obtain ⟨y, rfl⟩ := QuotientGroup.mk_surjective x
+  simp only [MulEquiv.trans_apply, congr_mk]
+  rw [show commutatorCongr e' (commutatorCongr e y) = commutatorCongr (e.trans e') y from
+    Subtype.ext (by simp only [commutatorCongr_coe, MulEquiv.trans_apply])]
 
 /-! ### The universal property -/
 
@@ -184,21 +216,22 @@ def lift {K : Type*} [Group K] (f : ↥(commutator G) →* K) (hf : Function.Sur
 @[simp]
 theorem lift_mk {K : Type*} [Group K] (f : ↥(commutator G) →* K) (hf : Function.Surjective f)
     (hK : center K = ⊥) (x : ↥(commutator G)) :
-    lift f hf hK (x : DerivedCentralQuotient G) = f x :=
-  (rfl)
+    lift f hf hK (x : DerivedCentralQuotient G) = f x := by
+  simp only [lift, QuotientGroup.lift_mk]
 
 /-- The factorisation through the derived central quotient is unique. -/
 theorem lift_unique {K : Type*} [Group K] (f : ↥(commutator G) →* K)
     (hf : Function.Surjective f) (hK : center K = ⊥) (g : DerivedCentralQuotient G →* K)
     (hg : ∀ x : ↥(commutator G), g (x : DerivedCentralQuotient G) = f x) :
-    g = lift f hf hK := by
-  ext x
-  change g (x : DerivedCentralQuotient G) = lift f hf hK (x : DerivedCentralQuotient G)
-  rw [hg, lift_mk]
+    g = lift f hf hK :=
+  QuotientGroup.monoidHom_ext _ <| MonoidHom.ext fun x => by
+    simp only [MonoidHom.comp_apply, QuotientGroup.mk'_apply, hg, lift_mk]
 
+/-- The factorisation of a surjection through the derived central quotient is again surjective, so
+the quotient sits between `[G, G]` and the centreless group it was mapped onto. -/
 theorem lift_surjective {K : Type*} [Group K] (f : ↥(commutator G) →* K)
     (hf : Function.Surjective f) (hK : center K = ⊥) : Function.Surjective (lift f hf hK) :=
-  fun k => (hf k).elim fun x hx => ⟨(x : DerivedCentralQuotient G), hx⟩
+  fun k => (hf k).elim fun x hx => ⟨(x : DerivedCentralQuotient G), by rw [lift_mk, hx]⟩
 
 /-! ### The recipe on groups it has already succeeded on -/
 
@@ -248,92 +281,5 @@ def mulEquivSelf [Group.IsPerfect ↥(commutator G)] :
   mulEquivOfCenterEqBot center_eq_bot
 
 end DerivedCentralQuotient
-
-/-! ## Fixed points of an endomorphism -/
-
-/-- The subgroup of points fixed by an endomorphism of a group, `F.eqLocus (MonoidHom.id G)`. -/
-abbrev fixedSubgroup (F : G →* G) : Subgroup G := F.eqLocus (MonoidHom.id G)
-
-@[simp]
-theorem mem_fixedSubgroup {F : G →* G} {x : G} : x ∈ fixedSubgroup F ↔ F x = x := Iff.rfl
-
-theorem fixedSubgroup_id : fixedSubgroup (MonoidHom.id G) = ⊤ :=
-  MonoidHom.eqLocus_same _
-
-/-- Only the identity fixes every point. -/
-theorem fixedSubgroup_eq_top_iff {F : G →* G} : fixedSubgroup F = ⊤ ↔ F = MonoidHom.id G := by
-  constructor
-  · refine fun h => MonoidHom.ext fun x => ?_
-    exact mem_fixedSubgroup.mp (h ▸ mem_top x)
-  · rintro rfl
-    exact fixedSubgroup_id
-
-/-- A point fixed by an endomorphism is fixed by each of its powers.
-
-The Suzuki--Ree Steinberg maps are odd powers of a half-Frobenius whose square is a Frobenius, so
-this is what places their fixed groups inside the fixed group of the corresponding untwisted
-Frobenius. -/
-theorem fixedSubgroup_le_fixedSubgroup_pow (F : Monoid.End G) (n : ℕ) :
-    fixedSubgroup (F : G →* G) ≤ fixedSubgroup ((F ^ n : Monoid.End G) : G →* G) := by
-  intro x hx
-  -- `fixedSubgroup` takes a bundled `G →* G`, so the hypothesis and the goal apply their
-  -- endomorphism through `MonoidHom.instFunLike`, whereas `Monoid.End.coe_pow` — the lemma turning
-  -- a power of an endomorphism into an iterate — is stated through `Monoid.End.instFunLike`. The
-  -- two instances are definitionally but not syntactically equal, so neither `rw` nor `simp` can
-  -- bridge them; the `change` and the `show` restate the goal and the hypothesis on the
-  -- `Monoid.End` side, where `simp` can apply `Monoid.End.coe_pow`.
-  change (F ^ n) x = x
-  simpa using Function.iterate_fixed (show F x = x from hx) n
-
-/-- An isomorphism intertwining two endomorphisms carries fixed points onto fixed points. -/
-theorem map_fixedSubgroup (e : G ≃* G') {F : G →* G} {F' : G' →* G'}
-    (h : ∀ x, F' (e x) = e (F x)) :
-    (fixedSubgroup F).map (e : G →* G') = fixedSubgroup F' := by
-  ext y
-  simp only [mem_map, mem_fixedSubgroup, MonoidHom.coe_coe]
-  constructor
-  · rintro ⟨x, hx, rfl⟩
-    rw [h x, hx]
-  · refine fun hy => ⟨e.symm y, e.injective ?_, e.apply_symm_apply y⟩
-    rw [← h (e.symm y), e.apply_symm_apply, hy]
-
-/-- The isomorphism of fixed subgroups induced by an intertwining isomorphism. -/
-def fixedSubgroupCongr (e : G ≃* G') {F : G →* G} {F' : G' →* G'} (h : ∀ x, F' (e x) = e (F x)) :
-    ↥(fixedSubgroup F) ≃* ↥(fixedSubgroup F') :=
-  (e.subgroupMap (fixedSubgroup F)).trans (MulEquiv.subgroupCongr (map_fixedSubgroup e h))
-
-@[simp]
-theorem fixedSubgroupCongr_coe (e : G ≃* G') {F : G →* G} {F' : G' →* G'}
-    (h : ∀ x, F' (e x) = e (F x)) (x : ↥(fixedSubgroup F)) :
-    ((fixedSubgroupCongr e h x : ↥(fixedSubgroup F')) : G') = e (x : G) :=
-  (rfl)
-
-/-- The candidate simple group attached to an endomorphism `F` of a group: the derived subgroup of
-the fixed points of `F`, modulo the centre of that derived subgroup.
-
-For a Steinberg endomorphism of a pinned algebraic group over an algebraically closed field of
-positive characteristic this is the corresponding finite group of Lie type; nothing of the sort is
-asserted here. -/
-abbrev FixedPointCandidate (F : G →* G) : Type _ :=
-  DerivedCentralQuotient ↥(fixedSubgroup F)
-
-/-- **The candidate attached to an endomorphism only depends on the endomorphism up to intertwining
-isomorphism.** -/
-def fixedPointCandidateCongr (e : G ≃* G') {F : G →* G} {F' : G' →* G'}
-    (h : ∀ x, F' (e x) = e (F x)) : FixedPointCandidate F ≃* FixedPointCandidate F' :=
-  DerivedCentralQuotient.congr (fixedSubgroupCongr e h)
-
-@[simp]
-theorem fixedPointCandidateCongr_mk (e : G ≃* G') {F : G →* G} {F' : G' →* G'}
-    (h : ∀ x, F' (e x) = e (F x)) (x : ↥(commutator ↥(fixedSubgroup F))) :
-    fixedPointCandidateCongr e h (x : FixedPointCandidate F) =
-      (commutatorCongr (fixedSubgroupCongr e h) x : FixedPointCandidate F') :=
-  (rfl)
-
-/-- If the fixed points of `F` already form a nonabelian simple group, the recipe returns them. -/
-def fixedPointCandidateMulEquivOfIsSimpleGroup (F : G →* G) [IsSimpleGroup ↥(fixedSubgroup F)]
-    (h : ¬ IsMulCommutative ↥(fixedSubgroup F)) :
-    FixedPointCandidate F ≃* ↥(fixedSubgroup F) :=
-  DerivedCentralQuotient.mulEquivOfIsSimpleGroup h
 
 end TauCeti
