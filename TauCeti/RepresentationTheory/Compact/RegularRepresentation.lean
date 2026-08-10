@@ -14,10 +14,9 @@ public import Mathlib.MeasureTheory.Function.LpSpace.DomAct.Continuous
 
 A compact group `G` acts on `L²(G)` by right translation, `(π g f) x = f (x * g)`. Right
 translation preserves normalized Haar measure, so the action is unitary, and it is *strongly*
-continuous: for each fixed `f` the orbit map `g ↦ π g f` is continuous. It is not continuous for
-the operator norm unless `G` is finite, so `L²(G)` itself is not a continuous representation in the
-sense of a `ContRepresentation` together with a continuity hypothesis; that only happens after
-restricting to a finite-dimensional invariant subspace.
+continuous: for each fixed `f` the orbit map `g ↦ π g f` is continuous. Continuity of `g ↦ π g`
+for the operator norm is neither proved nor needed here; the uses of `L²(G)` that do need it obtain
+it only after restricting to a finite-dimensional invariant subspace.
 
 ## Main definitions
 
@@ -56,9 +55,9 @@ variable (𝕜 G) in
 /-- **The right regular representation** of a compact group on `L²(G)`: the element `g` acts by
 `f ↦ (x ↦ f (x * g))`, which preserves normalized Haar measure and hence the `L²` norm.
 
-Mathlib's `ContRepresentation` does not require `g ↦ π g` to be continuous, and here it is not,
-except when `G` is finite: continuity for the operator norm is an extra hypothesis, which holds
-after restricting to a convolution eigenspace. What does hold in general is the strong continuity
+Mathlib's `ContRepresentation` does not require `g ↦ π g` to be continuous for the operator norm,
+and no such continuity is proved here; it is an extra hypothesis, established downstream after
+restricting to a convolution eigenspace. What is proved in general is the strong continuity
 `TauCeti.continuous_rightRegularLp_apply`. -/
 noncomputable def rightRegularLp : ContRepresentation 𝕜 G (Lp 𝕜 2 (haarProb G)) :=
   .ofMonoidHom
@@ -80,8 +79,9 @@ theorem rightRegularLp_apply (g : G) (f : Lp 𝕜 2 (haarProb G)) :
 
 /-- Right translation on `L²(G)` is represented by right translation of functions. -/
 theorem coeFn_rightRegularLp (g : G) (f : Lp 𝕜 2 (haarProb G)) :
-    rightRegularLp 𝕜 G g f =ᵐ[haarProb G] fun x => f (x * g) :=
-  Lp.coeFn_compMeasurePreserving f _
+    rightRegularLp 𝕜 G g f =ᵐ[haarProb G] fun x => f (x * g) := by
+  rw [rightRegularLp_apply]
+  exact Lp.coeFn_compMeasurePreserving f _
 
 /-- **On a continuous function, the right regular representation is right translation.** The class
 of `F` is sent to the class of `x ↦ F (x * g)`, with no almost-everywhere qualification on the
@@ -102,6 +102,7 @@ normalized Haar measure. -/
 theorem isUnitary_rightRegularLp : ContRepresentation.IsUnitary (rightRegularLp 𝕜 G) := by
   rw [ContRepresentation.isUnitary_iff_norm_map]
   intro g f
+  rw [rightRegularLp_apply]
   exact Lp.norm_compMeasurePreserving f _
 
 /-- **The right regular representation is strongly continuous:** each orbit map `g ↦ π g f` is

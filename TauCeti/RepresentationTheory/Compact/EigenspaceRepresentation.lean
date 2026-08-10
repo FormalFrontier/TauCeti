@@ -13,10 +13,10 @@ public import Mathlib.Analysis.Normed.Module.FiniteDimension
 # The finite-dimensional representations carried by convolution eigenspaces
 
 A compact group `G` acts on `L²(G)` by right translation, `(π g f) x = f (x * g)`
-(`TauCeti.rightRegularLp`). This action is isometric and strongly continuous, but the map `g ↦ π g`
-is *not* continuous for the operator norm, so `L²(G)` itself is not a continuous representation in
-the sense of Mathlib's `ContRepresentation` together with a continuity hypothesis. Restricted to an
-eigenspace of a convolution operator at a nonzero eigenvalue, it is: that eigenspace is
+(`TauCeti.rightRegularLp`). This action is isometric and strongly continuous, but nothing makes
+`g ↦ π g` continuous for the operator norm, so `L²(G)` itself does not come with the continuity
+hypothesis that Mathlib's `ContRepresentation` is usually paired with. Restricted to an
+eigenspace of a convolution operator at a nonzero eigenvalue it does: that eigenspace is
 finite-dimensional, right-translation invariant, and made of continuous functions, all of which
 `TauCeti.RepresentationTheory.Compact.Convolution` supplies.
 
@@ -162,8 +162,10 @@ conjugate of a matrix coefficient of `TauCeti.convolutionEigenspaceRepresentatio
 vector of the functional "evaluate the continuous representative at the identity". At `μ = 0` the
 function is `0`, which is representative for trivial reasons.
 
-This is the point of the whole construction: the eigenspaces do not merely consist of continuous
-functions, they consist of matrix coefficients of finite-dimensional continuous representations. -/
+This is the point of the whole construction: at a nonzero eigenvalue the continuous representative
+of an eigenvector is not merely continuous, it is a matrix coefficient of a finite-dimensional
+continuous representation. At `μ = 0` the statement carries no information about `f` beyond
+`TauCeti.convolutionCLM_eq_zero_of_mem_eigenspace_zero`, which is what makes it `0`. -/
 theorem isRepresentative_smul_convolutionCLM_of_mem_eigenspace (k : C(G, 𝕜)) {μ : 𝕜}
     {f : Lp 𝕜 2 (haarProb G)}
     (hf : f ∈ Module.End.eigenspace (convolutionOperator (G := G) k).toLinearMap μ) :
