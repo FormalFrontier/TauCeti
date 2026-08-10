@@ -596,9 +596,13 @@ theorem fourier_re_nonneg_of_isPositiveDefiniteKernel (F : V → ℂ)
 finite-dimensional real inner-product space has vanishing imaginary part, by Hermitian symmetry
 and the negation invariance of Haar measure.
 
-Integrability is not needed by the argument, but it is what makes `𝓕 F` the Fourier transform:
-without it `𝓕 F` is the default value of a divergent Bochner integral, and the conclusion holds
-only vacuously. -/
+The argument never uses `_hint`, and the statement is provable without it: each step —
+`Real.fourier_eq`, `integral_conj`, `integral_neg_eq_self` — is an equality that survives a
+divergent integral, both sides then being the default value `0`. So requiring integrability is a
+deliberate design choice, not a proof obligation. Without it `𝓕 F` is that default value rather
+than the Fourier transform, so on a non-integrable positive-definite function such as `F = 1` the
+conclusion degenerates to `(0 : ℂ).im = 0`; keeping those vacuous instances out of the public API
+is worth the strength given up. Hence the hypothesis is bound as `_hint`. -/
 @[simp]
 theorem fourier_im_eq_zero_of_isPositiveDefiniteKernel (F : V → ℂ)
     (hpd : IsPositiveDefiniteKernel fun a b : V => F (a - b)) (_hint : Integrable F) (ξ : V) :
@@ -622,8 +626,12 @@ theorem fourier_im_eq_zero_of_isPositiveDefiniteKernel (F : V → ℂ)
 
 /-- The Fourier transform of a continuous integrable positive-definite function on a
 finite-dimensional real inner-product space is real: it equals the coercion of its own real
-part. As for `fourier_im_eq_zero_of_isPositiveDefiniteKernel`, integrability is what makes
-`𝓕 F` the Fourier transform rather than the default value of a divergent integral. -/
+part.
+
+As in `fourier_im_eq_zero_of_isPositiveDefiniteKernel`, `hint` is a design choice rather than a
+proof obligation — it is used only to discharge that lemma, which is itself provable without it.
+It is required here so that the conclusion cannot be read off a divergent integral's default
+value. -/
 theorem fourier_eq_re_of_isPositiveDefiniteKernel (F : V → ℂ)
     (hpd : IsPositiveDefiniteKernel fun a b : V => F (a - b)) (hint : Integrable F) (ξ : V) :
     𝓕 F ξ = ((𝓕 F ξ).re : ℂ) := by
@@ -816,7 +824,10 @@ theorem fourierInv_re_nonneg_of_isPositiveDefiniteKernel (F : V → ℂ)
   exact fourier_re_nonneg_of_isPositiveDefiniteKernel F hpd hint hcont (-ξ)
 
 /-- The inverse Fourier transform of a continuous integrable positive-definite function is real:
-it equals the coercion of its own real part. -/
+it equals the coercion of its own real part. As in
+`fourier_im_eq_zero_of_isPositiveDefiniteKernel`, `hint` is a design choice rather than a proof
+obligation: it keeps the statement from being read off the default value of a divergent
+integral. -/
 theorem fourierInv_eq_re_of_isPositiveDefiniteKernel (F : V → ℂ)
     (hpd : IsPositiveDefiniteKernel fun a b : V => F (a - b)) (hint : Integrable F) (ξ : V) :
     𝓕⁻ F ξ = ((𝓕⁻ F ξ).re : ℂ) := by
