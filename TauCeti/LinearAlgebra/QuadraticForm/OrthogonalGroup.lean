@@ -478,8 +478,7 @@ invertible norm. If `g` fixes a subspace `W` pointwise and `x` is anisotropic an
 theorem exists_mem_subgroup_mul_eqOn_sup_span_singleton_of_reflection_mem
     (H : Subgroup (QuadraticMap.orthogonalGroup Q))
     (hreflection : ∀ (v : V) [Invertible (Q v)],
-      (⟨QuadraticMap.reflection Q v, QuadraticMap.reflection_mem_orthogonalGroup Q v⟩ :
-        QuadraticMap.orthogonalGroup Q) ∈ H)
+      QuadraticMap.reflectionOrthogonal Q v ∈ H)
     (g : QuadraticMap.orthogonalGroup Q) (W : Submodule K V)
     (hfix : ∀ w ∈ W, ((g : V ≃ₗ[K] V) w) = w)
     (x : V) [Invertible (Q x)]
@@ -509,8 +508,7 @@ theorem exists_mem_subgroup_mul_eqOn_sup_span_singleton_of_reflection_mem
       (isUnit_of_invertible (Q x)).ne_zero with hsubUnit | haddUnit
   · let : Invertible (Q ((g : V ≃ₗ[K] V) x - x)) := hsubUnit.invertible
     let r : QuadraticMap.orthogonalGroup Q :=
-      ⟨QuadraticMap.reflection Q ((g : V ≃ₗ[K] V) x - x),
-        QuadraticMap.reflection_mem_orthogonalGroup Q _⟩
+      QuadraticMap.reflectionOrthogonal Q ((g : V ≃ₗ[K] V) x - x)
     refine ⟨r, hreflection _, ?_⟩
     apply linearEquiv_eqOn_sup_span_singleton _ W x
     · intro w hw
@@ -528,10 +526,9 @@ theorem exists_mem_subgroup_mul_eqOn_sup_span_singleton_of_reflection_mem
     have hadd' : (g : V ≃ₗ[K] V) x - -x ∈ B.orthogonal W := by
       simpa only [sub_neg_eq_add] using hadd
     let r₁ : QuadraticMap.orthogonalGroup Q :=
-      ⟨QuadraticMap.reflection Q x, QuadraticMap.reflection_mem_orthogonalGroup Q _⟩
+      QuadraticMap.reflectionOrthogonal Q x
     let r₂ : QuadraticMap.orthogonalGroup Q :=
-      ⟨QuadraticMap.reflection Q ((g : V ≃ₗ[K] V) x - -x),
-        QuadraticMap.reflection_mem_orthogonalGroup Q _⟩
+      QuadraticMap.reflectionOrthogonal Q ((g : V ≃ₗ[K] V) x - -x)
     refine ⟨r₁ * r₂, H.mul_mem (hreflection x) (hreflection _), ?_⟩
     apply linearEquiv_eqOn_sup_span_singleton _ W x
     · intro w hw
