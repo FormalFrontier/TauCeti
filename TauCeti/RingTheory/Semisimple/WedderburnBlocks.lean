@@ -4,9 +4,18 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.RingTheory.Semisimple.BlockCount
-public import TauCeti.RingTheory.Semisimple.IsotypicEnd
+-- Public: the types occurring in the exported statements. The isotypic components of the regular
+-- module and their isomorphism classes come from `RegularIsotypicComponent`, `IsSimpleRing` is a
+-- hypothesis on the factors and a conclusion about endomorphism rings, and the matrix ring is the
+-- shape of a Wedderburn presentation.
+public import Mathlib.Data.Matrix.Mul
+public import Mathlib.RingTheory.SimpleRing.Defs
 public import TauCeti.RingTheory.Semisimple.RegularIsotypicComponent
+-- Non-public: used only inside proofs. The block count of a product of simple rings and the
+-- simplicity of the endomorphism ring of an isotypic module are the two engines of the arguments
+-- below, and neither is mentioned by an exported statement.
+import TauCeti.RingTheory.Semisimple.BlockCount
+import TauCeti.RingTheory.Semisimple.IsotypicEnd
 
 /-!
 # The blocks of a Wedderburn presentation enumerate the simple modules
@@ -183,14 +192,6 @@ theorem blocks_equiv_simpleModules {n : ℕ} {D : Fin n → Type v} [∀ i, Divi
       ∀ I : Submodule R R, IsSimpleModule R I → ∃ i, Nonempty (I ≃ₗ[R] S i) := by
   have : ∀ i, Nonempty (Fin (d i)) := fun i ↦ ⟨⟨0, Nat.pos_of_ne_zero (NeZero.ne (d i))⟩⟩
   exact exists_simpleSubmodule_of_ringEquiv_pi e
-
-/-- **A Wedderburn presentation has one block for each isomorphism class of simple modules.** -/
-theorem card_simpleSubmoduleClasses_eq_of_ringEquiv_pi_matrix {n : ℕ} {D : Fin n → Type v}
-    [∀ i, DivisionRing (D i)] {d : Fin n → ℕ} [∀ i, NeZero (d i)]
-    (e : R ≃+* ∀ i, Matrix (Fin (d i)) (Fin (d i)) (D i)) :
-    Nat.card (SimpleSubmoduleClasses R R) = n := by
-  have : ∀ i, Nonempty (Fin (d i)) := fun i ↦ ⟨⟨0, Nat.pos_of_ne_zero (NeZero.ne (d i))⟩⟩
-  simpa using card_simpleSubmoduleClasses_eq_of_ringEquiv_pi e
 
 end Presentation
 

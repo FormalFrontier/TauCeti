@@ -4,13 +4,17 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
--- Public: `IsIsotypic` is the hypothesis, `Module.End` the object under study and `IsSimpleRing`
--- the conclusion; `Module.Finite` is the finiteness hypothesis, and the matrix ring appears in the
--- proof through `endVecRingEquivMatrixEnd`.
-public import Mathlib.LinearAlgebra.Matrix.ToLin
+-- Public: the classes occurring in the exported statement. `IsIsotypic` is the hypothesis, along
+-- with the semisimplicity and finiteness of the module, and `IsSimpleRing (Module.End R M)` is the
+-- conclusion.
 public import Mathlib.RingTheory.SimpleModule.Isotypic
-public import Mathlib.RingTheory.SimpleRing.Congr
-public import Mathlib.RingTheory.SimpleRing.Matrix
+public import Mathlib.RingTheory.SimpleRing.Defs
+-- Non-public: used only inside the proof. The matrix presentation of the endomorphism ring of a
+-- power, transport of simplicity along a ring isomorphism, and simplicity of a matrix ring over a
+-- division ring are all internal to the argument below; no exported statement mentions a matrix.
+import Mathlib.LinearAlgebra.Matrix.ToLin
+import Mathlib.RingTheory.SimpleRing.Congr
+import Mathlib.RingTheory.SimpleRing.Matrix
 
 /-!
 # The endomorphism ring of an isotypic module is simple
