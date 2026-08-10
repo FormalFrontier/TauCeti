@@ -68,6 +68,9 @@ it is a Layer 5 corollary of the analytic density theorem, not an input to it.
 
 * `TauCeti.matrixCoeff_mem_representativeSubmodule`: every matrix coefficient of a
   finite-dimensional continuous representation lies in `𝓡(G)`.
+* `TauCeti.IsRepresentative.exists_eq_matrixCoeff` and `TauCeti.representativeSubmodule_le`: the
+  two directions in which the definitions are consumed downstream, namely that a representative
+  function *is* a matrix coefficient and that `𝓡(G)` is the *smallest* submodule containing them.
 * `TauCeti.IsRepresentative.mul`, `TauCeti.IsRepresentative.star`,
   `TauCeti.isRepresentative_one`, `TauCeti.isRepresentative_zero`: the representative functions
   themselves are closed under multiplication and conjugation and contain the constants and `0`.
@@ -107,10 +110,24 @@ coefficients of the finite-dimensional continuous representations of `G`. -/
 def representativeSubmodule : Submodule 𝕜 C(G, 𝕜) :=
   Submodule.span 𝕜 {f : C(G, 𝕜) | IsRepresentative f}
 
+/-- A representative function is a matrix coefficient of a continuous representation on a standard
+model. This is the defining property of `TauCeti.IsRepresentative`, restated as a lemma because the
+definition is not `@[expose]`d. -/
+theorem IsRepresentative.exists_eq_matrixCoeff {f : C(G, 𝕜)} (hf : IsRepresentative f) :
+    ∃ (n : ℕ) (π : ContRepresentation 𝕜 G (EuclideanSpace 𝕜 (Fin n))) (hπ : Continuous π)
+      (v w : EuclideanSpace 𝕜 (Fin n)), f = matrixCoeff π hπ v w :=
+  hf
+
 /-- A representative function lies in the representative ring. -/
 theorem mem_representativeSubmodule_of_isRepresentative {f : C(G, 𝕜)} (hf : IsRepresentative f) :
     f ∈ representativeSubmodule 𝕜 G :=
   Submodule.subset_span hf
+
+/-- **The representative functions generate `𝓡(G)`**: any submodule of `C(G, 𝕜)` containing every
+representative function contains the whole representative ring. -/
+theorem representativeSubmodule_le {p : Submodule 𝕜 C(G, 𝕜)}
+    (h : ∀ f : C(G, 𝕜), IsRepresentative f → f ∈ p) : representativeSubmodule 𝕜 G ≤ p :=
+  Submodule.span_le.2 h
 
 end Defs
 
