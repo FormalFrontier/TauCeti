@@ -67,7 +67,8 @@ theorem mem_lieSubalgebra_definingHopfIdeal_iff
     (definingHopfIdeal_toIdeal R n) d]
   simp only [Set.mem_singleton_iff, forall_eq, map_sub, d.map_one_eq_zero, sub_zero]
   rw [GeneralLinear.trace_tangentMatrix]
-  rfl
+  exact (Bialgebra.CounitAlgebra.algEquivSelf R
+    (GeneralLinear.coordinateHopfAlgebra R n) B).map_eq_zero_iff.symm
 
 /-- The trace-zero matrix of a tangent vector to `SLₙ`. It is obtained by including the
 derivation into the tangent Lie algebra of `GLₙ` and evaluating on the generic matrix entries. -/
@@ -76,12 +77,14 @@ noncomputable def tangentMatrix :
         (Bialgebra.CounitAlgebra R (coordinateHopfAlgebra R n) B) →ₗ[B]
       LieAlgebra.SpecialLinear.sl (Fin n) B :=
   let ambient := (GeneralLinear.tangentMatrix (R := R) (B := B) n).comp
-    (HopfIdeal.quotientLinearMap (B := B) (definingHopfIdeal R n))
+    (HopfIdeal.quotientLieHom (B := B) (definingHopfIdeal R n)).toLinearMap
   ambient.codRestrict (LieAlgebra.SpecialLinear.sl (Fin n) B) fun d => by
     apply (mem_lieSubalgebra_definingHopfIdeal_iff n _).mp
-    rw [← HopfIdeal.quotientLieHom_apply]
-    rw [← HopfIdeal.quotientLieEquiv_apply_coe]
-    exact (HopfIdeal.quotientLieEquiv (B := B) (definingHopfIdeal R n) d).property
+    -- Expose application of the Lie morphism's underlying linear map.
+    change HopfIdeal.quotientLieHom (B := B) (definingHopfIdeal R n) d ∈
+      HopfIdeal.lieSubalgebra (B := B) (definingHopfIdeal R n)
+    simpa only [HopfIdeal.quotientLieEquiv_apply_coe] using
+      (HopfIdeal.quotientLieEquiv (B := B) (definingHopfIdeal R n) d).property
 
 /-- The underlying matrix of `SpecialLinear.tangentMatrix` is the ambient `GLₙ` tangent matrix
 after precomposition with the determinant-one quotient. -/
@@ -97,8 +100,8 @@ theorem tangentMatrix_apply_coe
   -- that restriction and the composed map once because their stored `toFun` fields have no
   -- equation lemma that rewrites this goal.
   change GeneralLinear.tangentMatrix n
-    (HopfIdeal.quotientLinearMap (B := B) (definingHopfIdeal R n) d) = _
-  rw [HopfIdeal.quotientLieHom_apply]
+    (HopfIdeal.quotientLieHom (B := B) (definingHopfIdeal R n) d) = _
+  rfl
 
 private theorem tangentMatrix_injective :
     Function.Injective (tangentMatrix (R := R) (B := B) n) := by

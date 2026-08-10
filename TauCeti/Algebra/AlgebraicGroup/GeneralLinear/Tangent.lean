@@ -172,27 +172,24 @@ private theorem tangentPoint_matrix_fst (d : Derivation R (H (R := R) n)
 part equal to the trace of its infinitesimal part. -/
 private theorem snd_det_eq_trace_of_fst_eq_one {C : Type*} [CommRing C] {n : ℕ}
     (M : Matrix (Fin n) (Fin n) (DualNumber C))
-    (hM : ∀ i j, fst (M i j) = (1 : Matrix (Fin n) (Fin n) C) i j) :
-    snd (Matrix.det M) = Matrix.trace (fun i j ↦ snd (M i j)) := by
+    (hM : M.map fst = 1) :
+    snd (Matrix.det M) = Matrix.trace (M.map snd) := by
   classical
-  let X : Matrix (Fin n) (Fin n) C := fun i j ↦ snd (M i j)
-  let X' : Matrix (Fin n) (Fin n) (DualNumber C) := fun i j ↦ inl (X i j)
+  let X : Matrix (Fin n) (Fin n) C := M.map snd
+  let X' : Matrix (Fin n) (Fin n) (DualNumber C) := X.map inl
   have hmatrix : M = 1 + (inr (1 : C) : DualNumber C) • X' := by
     apply Matrix.ext
     intro i j
     apply TrivSqZeroExt.ext
-    · -- `Matrix.ext` and `TrivSqZeroExt.ext` leave the matrix operations bundled; there is no
-      -- equation lemma for the private local lift `X'`, so expose this component definitionally.
-      change fst (M i j) = fst ((1 : Matrix (Fin n) (Fin n) (DualNumber C)) i j +
-          (inr (1 : C) : DualNumber C) * X' i j)
-      rw [hM]
-      simp only [Matrix.one_apply]
-      split_ifs <;> simp [X']
-    · -- As above, the local lift `X'` has no equation lemma outside this proof.
-      change snd (M i j) = snd ((1 : Matrix (Fin n) (Fin n) (DualNumber C)) i j +
-          (inr (1 : C) : DualNumber C) * X' i j)
-      simp only [Matrix.one_apply]
-      split_ifs <;> simp [X, X']
+    · have hMij := congr_fun (congr_fun hM i) j
+      simpa only [Matrix.add_apply, Matrix.smul_apply, Matrix.map_apply, smul_eq_mul, X', X,
+        Matrix.one_apply, fst_add, fst_mul, fst_inr, fst_inl, fst_one, fst_zero, zero_mul,
+        add_zero, apply_ite]
+        using hMij
+    · simp only [Matrix.add_apply, Matrix.smul_apply, Matrix.map_apply, smul_eq_mul, X', X,
+        Matrix.one_apply, snd_add, snd_mul, snd_inr, snd_inl, fst_inr, fst_inl, zero_mul,
+        zero_add]
+      split_ifs <;> simp
   calc
     snd (Matrix.det M) =
         snd (Matrix.det (1 + (inr (1 : C) : DualNumber C) • X')) := by rw [hmatrix]
@@ -201,16 +198,12 @@ private theorem snd_det_eq_trace_of_fst_eq_one {C : Type*} [CommRing C] {n : ℕ
       simp only [DualNumber.inr_eq_smul_eps, one_smul, DualNumber.eps_pow_two, mul_zero,
         add_zero, snd_add, snd_one, snd_mul, DualNumber.snd_eps, smul_eq_mul, mul_one,
         DualNumber.fst_eps, MulOpposite.op_zero, zero_smul, zero_add]
-      -- `Matrix.trace` and the private local lift `X'` have no applicable equation lemmas here,
-      -- so expose their diagonal sums definitionally.
-      change fst (∑ i, X' i i) = ∑ i, X i i
+      simp only [Matrix.trace, Matrix.diag_apply]
       rw [fst_sum]
       apply Finset.sum_congr rfl
       intro i _
-      -- The private local lift `X'` has no equation lemma; unfold its diagonal entry once.
-      change fst (inl (X i i) : DualNumber C) = X i i
-      rfl
-    _ = Matrix.trace (fun i j ↦ snd (M i j)) := rfl
+      simp only [X', Matrix.map_apply, fst_inl]
+    _ = Matrix.trace (M.map snd) := by simp only [X]
 
 /-- **The differential of the determinant on `GLₙ` is matrix trace.** Evaluating a tangent
 derivation on the generic determinant, then identifying its counit-valued coefficient with `B`,
@@ -219,33 +212,35 @@ equals the trace of its tangent matrix. -/
 theorem trace_tangentMatrix (d : Derivation R (H (R := R) n)
     (Bialgebra.CounitAlgebra R (H (R := R) n) B)) :
     Matrix.trace (tangentMatrix n d) =
-      d (determinantGroupLike R n : H (R := R) n) := by
+      Bialgebra.CounitAlgebra.algEquivSelf R (H (R := R) n) B
+        (d (determinantGroupLike R n : H (R := R) n)) := by
   let q := derivationMulEquivTangentKer R (H (R := R) n) B (.ofAdd d)
   let M : Matrix (Fin n) (Fin n) (DualNumber (Bialgebra.CounitAlgebra R
       (H (R := R) n) B)) := (pointsMulEquiv (R := R) n q.val).val
   -- Compute the determinant of the dual-number point in the tangent kernel.
   have hdet : d (determinantGroupLike R n : H (R := R) n) =
-      Matrix.trace (fun i j ↦ d (coordinateHopfAlgebraAlgEquiv R n
-        (coordinateRingMap R n (MvPolynomial.X (i, j))))) := by
+      Matrix.trace (M.map snd) := by
     calc
       d (determinantGroupLike R n : H (R := R) n) =
           snd (q.val.ofConv (determinantGroupLike R n : H (R := R) n)) := by
-        rw [derivationMulEquivTangentKer_apply_snd]
-        rfl
+        -- Unfold the local tangent point `q` before applying its public second-component rule.
+        rw [show q = derivationMulEquivTangentKer R (H (R := R) n) B (.ofAdd d) from rfl]
+        exact (derivationMulEquivTangentKer_apply_snd (.ofAdd d) _).symm
       _ = snd (Matrix.det M) := by
         rw [point_apply_determinantGroupLike, ← pointsMulEquiv_apply]
-      _ = Matrix.trace (fun i j ↦ snd (M i j)) :=
-        snd_det_eq_trace_of_fst_eq_one M (tangentPoint_matrix_fst n d)
-      _ = _ := by simp only [M, q, tangentPoint_matrix_snd]
+      _ = Matrix.trace (M.map snd) :=
+        snd_det_eq_trace_of_fst_eq_one M (by
+          apply Matrix.ext
+          intro i j
+          simp only [Matrix.map_apply, Matrix.one_apply, M, q]
+          exact tangentPoint_matrix_fst n d i j)
   -- Transport the entrywise identity through the coefficient equivalence.
   rw [hdet]
+  simp only [Matrix.trace, Matrix.diag_apply, map_sum]
   apply Finset.sum_congr rfl
   intro i _
-  -- Unfold the diagonal projections in the two traces before applying the entrywise API.
-  change tangentMatrix n d i i = d
-    (coordinateHopfAlgebraAlgEquiv R n (coordinateRingMap R n (MvPolynomial.X (i, i))))
   rw [tangentMatrix_apply]
-  exact Bialgebra.CounitAlgebra.algEquivSelf_apply R (H (R := R) n) B _
+  simp only [Matrix.map_apply, M, q, tangentPoint_matrix_snd]
 
 private theorem tangentMatrix_injective :
     Function.Injective (tangentMatrix (R := R) (B := B) n) := by

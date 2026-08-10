@@ -92,8 +92,8 @@ private theorem derivationComp_apply_eq_counitCoefficientEquiv (f : H ⟶ K)
 the kernel Hopf ideal.
 
 The forward implication is the nontrivial one: zero precomposition says that the derivation
-vanishes on the image of the augmentation ideal. Those images lie in `derivationVanishingIdeal`,
-so the ideal they generate lies there as well. The reverse implication tests on
+vanishes on the image of the augmentation ideal, hence on the ideal it generates by
+`Derivation.apply_eq_zero_of_mem_span`. The reverse implication tests on
 `x - ε(x)`, whose image belongs to the kernel Hopf ideal and differs from the image of `x` by a
 scalar, on which every derivation vanishes. -/
 theorem derivationComp_eq_zero_iff_vanishes_kernelHopfIdeal (f : H ⟶ K)
@@ -103,7 +103,7 @@ theorem derivationComp_eq_zero_iff_vanishes_kernelHopfIdeal (f : H ⟶ K)
   constructor
   · intro hcomp x hx
     rw [kernelHopfIdeal_toIdeal, Ideal.map] at hx
-    apply HopfIdeal.derivation_apply_eq_zero_of_mem_span d (x := x) (S := f.hom ''
+    apply TauCeti.Derivation.apply_eq_zero_of_mem_span d (x := x) (S := f.hom ''
       ((HopfIdeal.augmentation R H).toIdeal : Set H)) _ _ hx
     · rintro _ ⟨y, hy, rfl⟩
       have hyε : Coalgebra.counit (R := R) y = 0 :=
@@ -130,7 +130,7 @@ theorem derivationComp_eq_zero_iff_vanishes_kernelHopfIdeal (f : H ⟶ K)
 the differential `Lie(Spec K) → Lie(Spec H)`. -/
 theorem lieSubalgebra_kernelHopfIdeal (f : H ⟶ K) :
     HopfIdeal.lieSubalgebra (B := B) (kernelHopfIdeal f) =
-      LieIdeal.toLieSubalgebra R
+      LieIdeal.toLieSubalgebra B
         (Derivation R K (Bialgebra.CounitAlgebra R K B))
         (LieHom.ker (derivationCompLieHom (B := B) f.hom)) := by
   apply LieSubalgebra.ext _ _
@@ -142,8 +142,8 @@ theorem lieSubalgebra_kernelHopfIdeal (f : H ⟶ K) :
 /-- The subtype of a Lie ideal and the subtype of its underlying Lie subalgebra are canonically
 Lie-equivalent. -/
 private def lieIdealSubtypeEquiv
-    {L : Type x} [LieRing L] [LieAlgebra R L] (I : LieIdeal R L) :
-    LieIdeal.toLieSubalgebra R L I ≃ₗ⁅R⁆ I where
+    {L : Type x} [LieRing L] [LieAlgebra B L] (I : LieIdeal B L) :
+    LieIdeal.toLieSubalgebra B L I ≃ₗ⁅B⁆ I where
   toFun x := ⟨x, x.property⟩
   invFun x := ⟨x, x.property⟩
   left_inv _ := rfl
@@ -158,8 +158,8 @@ private def lieIdealSubtypeEquiv
 /-- The subtype equivalence is the identity on ambient values. -/
 @[simp]
 private theorem lieIdealSubtypeEquiv_apply_coe
-    {L : Type x} [LieRing L] [LieAlgebra R L] (I : LieIdeal R L)
-    (z : LieIdeal.toLieSubalgebra R L I) :
+    {L : Type x} [LieRing L] [LieAlgebra B L] (I : LieIdeal B L)
+    (z : LieIdeal.toLieSubalgebra B L I) :
     ((lieIdealSubtypeEquiv I z : I) : L) = z :=
   by
     unfold lieIdealSubtypeEquiv
@@ -173,7 +173,7 @@ The source is the derivation presentation of the Lie algebra of
 range is identified with the differential kernel by `lieSubalgebra_kernelHopfIdeal`. -/
 noncomputable def kernelLieEquiv (f : H ⟶ K) :
     Derivation R (K ⧸ (kernelHopfIdeal f).toIdeal)
-        (Bialgebra.CounitAlgebra R (K ⧸ (kernelHopfIdeal f).toIdeal) B) ≃ₗ⁅R⁆
+        (Bialgebra.CounitAlgebra R (K ⧸ (kernelHopfIdeal f).toIdeal) B) ≃ₗ⁅B⁆
       LieHom.ker (derivationCompLieHom (B := B) f.hom) :=
   (HopfIdeal.quotientLieEquiv (B := B) (kernelHopfIdeal f)).trans
     ((LieEquiv.ofEq _ _
