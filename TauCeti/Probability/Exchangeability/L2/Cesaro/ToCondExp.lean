@@ -22,8 +22,9 @@ This file identifies it:
 
 * `Contractable.condExp_blockAverage_tailProcess_ae_eq` — every block average of `f ∘ X` has the
   same conditional expectation given `tailProcess X` as the single coordinate `f ∘ X 0`;
-* `Contractable.tendsto_integral_abs_blockAverage_sub_condExp_of_memLp` — the fixed-start Cesàro
-  windows converge in `L¹` to `μ[f ∘ X 0 | tailProcess X]`, with
+* `Contractable.tendsto_integral_abs_blockAverage_sub_condExp_of_memLp` — the block averages
+  converge in `L¹` to `μ[f ∘ X 0 | tailProcess X]` along *every* eventually injective moving
+  selection, fixed starts (`fixedStart`) and disjoint windows (`disjointWindow`) alike, with
   `Contractable.tendsto_integral_abs_blockAverage_sub_condExp` the bounded-observable form;
 * `Contractable.ae_eq_condExp_tailProcess_of_tendsto_integral_abs` — consequently *any* `L¹` limit
   of those windows is a.e. that conditional expectation.
@@ -77,9 +78,10 @@ theorem Contractable.condExp_blockAverage_tailProcess_ae_eq {μ : Measure Ω} [I
   filter_upwards [hterm] with ω hω
   exact blockAverage_apply_of_forall_eq n.succ_pos hω
 
-/-- **The Cesàro windows converge to a conditional expectation.** For a measurable observable `f`
-whose composite with a single coordinate is square-integrable, the fixed-start Cesàro windows of
-`f ∘ X` along a contractable process converge in `L¹` to `μ[f ∘ X 0 | tailProcess X]`.
+/-- **The block averages converge to a conditional expectation.** For a measurable observable `f`
+whose composite with a single coordinate is square-integrable, the block averages of `f ∘ X` along
+a contractable process converge in `L¹` to `μ[f ∘ X 0 | tailProcess X]`, for every selection `k`
+that is injective for all sufficiently large lengths — the selection may move with the length.
 
 This is the identification the Layer 3 route needs: the limit supplied by
 `weighted_sums_converge_L1_of_memLp` is not merely tail-measurable, it is the conditional

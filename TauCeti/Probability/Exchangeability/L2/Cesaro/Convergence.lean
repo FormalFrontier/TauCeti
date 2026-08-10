@@ -331,43 +331,6 @@ theorem weighted_sums_converge_L1_of_memLp {μ : Measure Ω} [IsFiniteMeasure μ
     TauCeti.MeasureTheory.tendsto_integral_norm_of_tendsto_eLpNorm_two
       (fun m => ((hW_L2 m).sub ha_L2).aestronglyMeasurable) hL2
 
-/-- The **fixed-start selection**: the window of length `n + 1` beginning at `r`. -/
-def fixedStart (r : ℕ) : ∀ n : ℕ, Fin (n + 1) → ℕ := fun _ j => r + (j : ℕ)
-
-@[simp]
-theorem fixedStart_apply (r n : ℕ) (j : Fin (n + 1)) : fixedStart r n j = r + (j : ℕ) := (rfl)
-
-/-- The fixed-start selection is injective at every length, hence for all sufficiently large
-lengths — the form the moving-selection theorems take. -/
-theorem fixedStart_eventually_injective (r : ℕ) :
-    ∀ᶠ n in atTop, Function.Injective (fixedStart r n) :=
-  Eventually.of_forall fun _ => (add_right_injective r).comp Fin.val_injective
-
-/-- The **disjoint-window selection**: at length `n + 1`, factor `c` reads the window
-`window (n + 1) c`, occupying `[(c + 1)(n + 1), (c + 2)(n + 1))`. -/
-def disjointWindow (c : ℕ) : ∀ n : ℕ, Fin (n + 1) → ℕ :=
-  fun n j => window (n + 1) c (j : ℕ)
-
-@[simp]
-theorem disjointWindow_apply (c n : ℕ) (j : Fin (n + 1)) :
-    disjointWindow c n j = window (n + 1) c (j : ℕ) := (rfl)
-
-/-- Each disjoint window is an injective selection at every length. -/
-theorem disjointWindow_eventually_injective (c : ℕ) :
-    ∀ᶠ n in atTop, Function.Injective (disjointWindow c n) := by
-  refine Eventually.of_forall fun n a b hab => ?_
-  simp only [disjointWindow_apply, window_def] at hab
-  exact Fin.ext (Nat.add_left_cancel hab)
-
-/-- **Distinct factors never collide.** The windows of two different factors are disjoint at every
-length, which is exactly what fixed starts cannot provide. -/
-theorem disjointWindow_ne {c c' : ℕ} (h : c ≠ c') (n : ℕ) (j j' : Fin (n + 1)) :
-    disjointWindow c n j ≠ disjointWindow c' n j' := by
-  simp only [disjointWindow_apply]
-  rcases lt_or_gt_of_ne h with hlt | hlt
-  · exact (window_lt_window j.isLt hlt).ne
-  · exact (window_lt_window j'.isLt hlt).ne'
-
 /-- **Bounded-observable form**, the shape the Layer 3 roadmap names. A uniform bound on `f` gives
 square-integrability of the composite on a finite measure space, so this is the direct entry point
 for bounded observables. -/
