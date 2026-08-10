@@ -18,11 +18,12 @@ its generator with `A`, which is what makes the construction a *generation* theo
 The identification runs through the integrated form of the Cauchy problem. Each bounded
 approximation satisfies the exact Duhamel identity
 
-`exp (t A_lambda) x - x = ∫₀ᵗ exp (u A_lambda) (A_lambda x) du`,
+`exp (t A_lambda) x - x = ∫₀ᵗ exp (u A_lambda) (A_lambda x) du`
 
-and for `x ∈ D(A)` both sides converge: the left-hand side by the defining convergence of the
-limit, the right-hand side because `A_lambda x -> A x` and because `exp (u A_lambda) -> S(u)`
-uniformly on `[0, t]`. That gives `S(t) x - x = ∫₀ᵗ S(u) (A x) du`, whose difference quotient at
+(`TauCeti.Semigroups.exp_smul_apply_sub_eq_intervalIntegral`), and for `x ∈ D(A)` both sides
+converge: the left-hand side by the defining convergence of the limit, the right-hand side
+because `A_lambda x -> A x` and because `exp (u A_lambda) -> S(u)` uniformly on `[0, t]`.
+That gives `S(t) x - x = ∫₀ᵗ S(u) (A x) du`, whose difference quotient at
 `t = 0` is the orbit average of `A x`, hence tends to `A x`. So `A` is a restriction of the
 generator; since `1` lies in the resolvent set of both — `A` is m-dissipative by hypothesis, and
 the generator of a contraction semigroup is m-dissipative — the restriction is an equality
@@ -56,23 +57,6 @@ open Filter NormedSpace
 namespace TauCeti.Semigroups
 
 variable {X : Type*} [NormedAddCommGroup X] [NormedSpace ℝ X] [CompleteSpace X]
-
-/-- **The Duhamel identity for a bounded generator.** For `B : X →L[ℝ] X`,
-`exp (t B) x - x = ∫₀ᵗ exp (u B) (B x) du`.
-
-This is the fundamental theorem of calculus applied to the differentiable orbit
-`u ↦ exp (u B) x`, whose derivative is the continuous function `u ↦ exp (u B) (B x)`. -/
-theorem exp_smul_apply_sub_eq_intervalIntegral (B : X →L[ℝ] X) (t : ℝ) (x : X) :
-    exp (t • B) x - x = ∫ u in (0 : ℝ)..t, exp (u • B) (B x) := by
-  have hderiv : ∀ u : ℝ, HasDerivAt (fun v : ℝ => exp (v • B) x) (exp (u • B) (B x)) u := by
-    intro u
-    simpa [mul_apply_eq_comp] using
-      (hasDerivAt_exp_smul_const B u).clm_apply (hasDerivAt_const u x)
-  have hcont : Continuous fun u : ℝ => exp (u • B) (B x) :=
-    (differentiable_exp_smul_const ℝ B).continuous.clm_apply continuous_const
-  rw [intervalIntegral.integral_eq_sub_of_hasDerivAt (fun u _ => hderiv u)
-    (hcont.intervalIntegrable 0 t)]
-  simp
 
 namespace IsMDissipative
 
@@ -148,45 +132,17 @@ approximations converge, the integral because its integrand converges uniformly 
 theorem yosidaLimit_sub_eq_intervalIntegral (hA : IsMDissipative A)
     (hdense : Dense (A.domain : Set X)) (x : A.domain) {t : ℝ} (ht : 0 ≤ t) :
     yosidaLimit A t (x : X) - (x : X) = ∫ u in (0 : ℝ)..t, yosidaLimit A u (A x) := by
-  have hlimcont : ContinuousOn (fun u : ℝ => yosidaLimit A u (A x)) (Set.uIcc 0 t) := by
-    rw [Set.uIcc_of_le ht]
-    exact hA.continuousOn_yosidaLimit_Icc hdense (A x) ht
-  have hlimint : IntervalIntegrable (fun u : ℝ => yosidaLimit A u (A x)) MeasureTheory.volume 0 t :=
-    hlimcont.intervalIntegrable
-  -- The Duhamel integrals converge to the integral of the limit orbit.
+  -- The Duhamel integrals converge to the integral of the limit orbit, because their integrands
+  -- converge uniformly on `[0, t]` and are continuous there.
   have hint : Tendsto (fun lambda : ℝ =>
       ∫ u in (0 : ℝ)..t, exp (u • yosidaApproximation A lambda)
         (yosidaApproximation A lambda (x : X))) atTop
-      (𝓝 (∫ u in (0 : ℝ)..t, yosidaLimit A u (A x))) := by
-    rw [Metric.tendsto_atTop]
-    intro epsilon hepsilon
-    have hpos : 0 < epsilon / (2 * (t + 1)) := by positivity
-    have huniform := hA.tendstoUniformlyOn_duhamel_integrand hdense x ht
-    rw [Metric.tendstoUniformlyOn_iff] at huniform
-    obtain ⟨N, hN⟩ := (huniform _ hpos).exists_forall_of_atTop
-    refine ⟨N, fun lambda hlambda => ?_⟩
-    have hcont : Continuous fun u : ℝ => exp (u • yosidaApproximation A lambda)
-        (yosidaApproximation A lambda (x : X)) :=
-      (differentiable_exp_smul_const ℝ
-        (yosidaApproximation A lambda)).continuous.clm_apply continuous_const
-    have hbound : ∀ u ∈ Set.uIoc (0 : ℝ) t,
-        ‖exp (u • yosidaApproximation A lambda) (yosidaApproximation A lambda (x : X)) -
-          yosidaLimit A u (A x)‖ ≤ epsilon / (2 * (t + 1)) := by
-      intro u hu
-      rw [Set.uIoc_of_le ht] at hu
-      have hmem : u ∈ Set.Icc (0 : ℝ) t := ⟨hu.1.le, hu.2⟩
-      have := hN lambda hlambda u hmem
-      rw [dist_eq_norm, norm_sub_rev] at this
-      exact this.le
-    rw [dist_eq_norm, ← intervalIntegral.integral_sub (hcont.intervalIntegrable 0 t) hlimint]
-    calc ‖∫ u in (0 : ℝ)..t, (exp (u • yosidaApproximation A lambda)
-            (yosidaApproximation A lambda (x : X)) - yosidaLimit A u (A x))‖
-        ≤ epsilon / (2 * (t + 1)) * |t - 0| :=
-          intervalIntegral.norm_integral_le_of_norm_le_const hbound
-      _ < epsilon := by
-          rw [sub_zero, abs_of_nonneg ht]
-          rw [div_mul_eq_mul_div, div_lt_iff₀ (by positivity : (0 : ℝ) < 2 * (t + 1))]
-          nlinarith [hepsilon, ht]
+      (𝓝 (∫ u in (0 : ℝ)..t, yosidaLimit A u (A x))) :=
+    TendstoUniformlyOn.tendsto_intervalIntegral_of_continuousOn
+      (.of_forall fun lambda =>
+        ((differentiable_exp_smul_const ℝ
+          (yosidaApproximation A lambda)).continuous.clm_apply continuous_const).continuousOn)
+      (by rw [Set.uIcc_of_le ht]; exact hA.tendstoUniformlyOn_duhamel_integrand hdense x ht)
   refine tendsto_nhds_unique ?_ hint
   have heq : ∀ lambda : ℝ,
       (∫ u in (0 : ℝ)..t, exp (u • yosidaApproximation A lambda)
@@ -233,6 +189,7 @@ theorem le_generator_yosidaLimitSemigroup (hA : IsMDissipative A)
 
 /-- **The generator of the Yosida limit semigroup is the operator it was built from.** For a
 densely defined m-dissipative `A`, the semigroup `yosidaLimitSemigroup` has generator `A`. -/
+@[simp]
 theorem generator_yosidaLimitSemigroup (hA : IsMDissipative A)
     (hdense : Dense (A.domain : Set X)) :
     (hA.yosidaLimitSemigroup hdense).toStronglyContinuousSemigroup.generator = A :=
