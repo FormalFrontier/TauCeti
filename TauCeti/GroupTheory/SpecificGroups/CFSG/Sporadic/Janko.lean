@@ -94,6 +94,9 @@ def j2Presentation : GroupPresentation where
 
 /-- The generator and relator counts recorded for `J₂` agree with the transcribed data. -/
 @[simp]
-theorem j2Presentation_matchesMetadata : j2Presentation.matchesMetadata := by decide
+theorem j2Presentation_matchesMetadata :
+    j2Presentation.generatorCount = j2Presentation.expectedGeneratorCount ∧
+      j2Presentation.transcribed.length = j2Presentation.expectedRelatorCount := by
+  decide
 
 end TauCeti.Sporadic
