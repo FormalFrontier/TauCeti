@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.AlgebraicGeometry.Morphisms.Smooth
+public import Mathlib.CategoryTheory.MorphismProperty.Comma
 public import Mathlib.CategoryTheory.ObjectProperty.Opposite
 public import TauCeti.AlgebraicGeometry.AffineGroupScheme.Equivalence
 public import TauCeti.AlgebraicGeometry.AffineGroupScheme.HopfSpec
@@ -23,8 +24,8 @@ restricts the existing affine anti-equivalence to
 `(SmoothCommHopfAlgCat R)ᵒᵖ ≌ SmoothAffineGroupSchemeCat (CommRingCat.of R)`.
 
 Smoothness remains a separate object property in both models. In particular it is not built into
-the definition of an affine group scheme, so non-smooth finite-type group schemes such as `μₚ`
-and `αₚ` remain in the ambient category.
+the definition of an affine group scheme, so finite-type group schemes that are non-smooth over a
+characteristic-`p` base, such as `μₚ` and `αₚ`, remain in the ambient category.
 
 ## Main declarations
 
@@ -100,13 +101,58 @@ abbrev of (H : Type u) [CommRing H] [HopfAlgebra R H] [Algebra.Smooth R H] :
   ⟨CommHopfAlgCat.of R H,
     (smoothCommHopfAlgProperty_iff _).mpr (inferInstanceAs (Algebra.Smooth R H))⟩
 
+/-- Turn a morphism in `SmoothCommHopfAlgCat` back into a bialgebra morphism. -/
+abbrev toBialgHom {H K : SmoothCommHopfAlgCat R} (φ : H ⟶ K) :
+    H →ₐc[R] K :=
+  φ.hom.hom
+
+/-- Typecheck a bialgebra morphism between smooth commutative Hopf algebras as a morphism in
+`SmoothCommHopfAlgCat`. -/
+abbrev ofHom {H K : Type u} [CommRing H] [CommRing K]
+    [HopfAlgebra R H] [HopfAlgebra R K]
+    [Algebra.Smooth R H] [Algebra.Smooth R K] (φ : H →ₐc[R] K) :
+    of R H ⟶ of R K :=
+  ObjectProperty.homMk (CommHopfAlgCat.ofHom φ)
+
+/-- Two morphisms of smooth commutative Hopf algebras are equal when their underlying bialgebra
+morphisms are equal. -/
+@[ext]
+lemma hom_ext {H K : SmoothCommHopfAlgCat R} {φ ψ : H ⟶ K}
+    (h : toBialgHom φ = toBialgHom ψ) : φ = ψ :=
+  ObjectProperty.hom_ext (P := smoothCommHopfAlgProperty R)
+    (CommHopfAlgCat.hom_ext h)
+
+@[simp]
+lemma toBialgHom_id {H : SmoothCommHopfAlgCat R} :
+    toBialgHom (𝟙 H : H ⟶ H) = BialgHom.id R H :=
+  rfl
+
+@[simp]
+lemma toBialgHom_comp {H K L : SmoothCommHopfAlgCat R}
+    (φ : H ⟶ K) (ψ : K ⟶ L) :
+    toBialgHom (φ ≫ ψ) = (toBialgHom ψ).comp (toBialgHom φ) :=
+  rfl
+
+@[simp]
+lemma ofHom_toBialgHom {H K : SmoothCommHopfAlgCat R} (φ : H ⟶ K) :
+    ofHom (toBialgHom φ) = φ :=
+  rfl
+
+@[simp]
+lemma toBialgHom_ofHom {H K : Type u} [CommRing H] [CommRing K]
+    [HopfAlgebra R H] [HopfAlgebra R K]
+    [Algebra.Smooth R H] [Algebra.Smooth R K] (φ : H →ₐc[R] K) :
+    toBialgHom (ofHom (R := R) φ) = φ :=
+  rfl
+
 end SmoothCommHopfAlgCat
 
 /-- The object property on affine group schemes over `Spec S` selecting those whose structural
 morphism is smooth. -/
 def smoothAffineGroupSchemeProperty (S : CommRingCat.{u}) :
     ObjectProperty (AffineGroupSchemeCat S) :=
-  fun G => Smooth G.obj.X.hom
+  (MorphismProperty.overObj (@Smooth)).inverseImage
+    ((affineGroupSchemeProperty S).ι ⋙ Grp.forget _)
 
 /-- Membership in the smooth affine-group-scheme object property. -/
 @[simp]
@@ -115,13 +161,13 @@ lemma smoothAffineGroupSchemeProperty_iff (S : CommRingCat.{u})
     smoothAffineGroupSchemeProperty S G ↔ Smooth G.obj.X.hom :=
   Iff.rfl
 
-/-- Smoothness of the structural morphism is invariant under isomorphism of affine group
-schemes. This lets the predicate restrict equivalences to full subcategories. -/
 instance (S : CommRingCat.{u}) :
-    (smoothAffineGroupSchemeProperty S).IsClosedUnderIsomorphisms where
-  of_iso e hG :=
-    (MorphismProperty.over_iso_iff (@Smooth)
-      ((Grp.forget _).mapIso ((affineGroupSchemeProperty S).ι.mapIso e))).mp hG
+    (smoothAffineGroupSchemeProperty S).IsClosedUnderIsomorphisms := by
+  unfold smoothAffineGroupSchemeProperty
+  let _ : (MorphismProperty.overObj (@Smooth)
+      (X := Spec S)).IsClosedUnderIsomorphisms :=
+    MorphismProperty.instIsClosedUnderIsomorphismsOverOverObjOfRespectsIso
+  infer_instance
 
 /-- The category of smooth affine group schemes over the affine base `Spec S`.
 
@@ -140,6 +186,7 @@ its Hopf spectrum is smooth.
 
 This is the predicate-level compatibility needed to restrict the affine Hopf/group-scheme
 anti-equivalence to smooth objects. -/
+@[simp]
 theorem algebraSmooth_iff_smooth_hopfSpec
     (R : Type u) [CommRing R] (H : CommHopfAlgCat.{u} R) :
     Algebra.Smooth R H ↔
