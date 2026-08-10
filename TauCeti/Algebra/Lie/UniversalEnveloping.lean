@@ -164,18 +164,6 @@ def Submodule.toLieSubmodule (P : Submodule (UniversalEnvelopingAlgebra R L) M) 
     rw [← hcompat x m]
     exact P.smul_mem _ hm
 
-/-- Reading a Lie submodule as a `U(L)`-submodule does not change its underlying set. -/
-@[simp]
-theorem LieSubmodule.coe_toUEASubmodule (N : LieSubmodule R L M) :
-    (LieSubmodule.toUEASubmodule hcompat N : Set M) = N :=
-  (rfl)
-
-/-- Reading a `U(L)`-submodule as a Lie submodule does not change its underlying set. -/
-@[simp]
-theorem Submodule.coe_toLieSubmodule (P : Submodule (UniversalEnvelopingAlgebra R L) M) :
-    (Submodule.toLieSubmodule hcompat P : Set M) = P :=
-  (rfl)
-
 /-- **The enveloping-algebra dictionary.** For a `U(L)`-module structure on `M` compatible with
 the `R`-action and with the bracket, the Lie submodules of `M` are exactly the `U(L)`-submodules,
 and the correspondence is the identity on underlying sets. -/
@@ -271,8 +259,8 @@ def lieModuleHomEquivUEA :
         rw [RingHom.id_apply, ← algebraMap_smul (UniversalEnvelopingAlgebra R L) r m,
           ← algebraMap_smul (UniversalEnvelopingAlgebra R L) r (g m), g.map_smul]
       map_lie' {x m} := by rw [← hcompat, ← hcompatN, g.map_smul] }
-  left_inv _ := rfl
-  right_inv _ := rfl
+  left_inv _ := by ext m; rfl
+  right_inv _ := by ext m; rfl
 
 /-- The morphism dictionary does not change the underlying function. -/
 @[simp]
@@ -317,8 +305,16 @@ theorem ueaModule_smul_def (u : UniversalEnvelopingAlgebra R L) (m : M) :
 `TauCeti.lieSubmoduleOrderIsoUEA` asks for. -/
 theorem ueaModule_ι_smul (x : L) (m : M) :
     UniversalEnvelopingAlgebra.ι R x • m = ⁅x, m⁆ := by
-  rw [ueaModule_smul_def, UniversalEnvelopingAlgebra.lift_ι_apply]
-  rfl
+  rw [ueaModule_smul_def, UniversalEnvelopingAlgebra.lift_ι_apply,
+    LieModule.toEnd_apply_apply]
+
+/-- The `simp`-normal form of `TauCeti.ueaModule_ι_smul`: `UniversalEnvelopingAlgebra.ι_apply`
+rewrites the image of `L` in `U(L)` through the tensor algebra, so it is this shape that `simp`
+sees. Compare `UniversalEnvelopingAlgebra.lift_ι_apply` and its primed companion. -/
+@[simp]
+theorem ueaModule_mkAlgHom_smul (x : L) (m : M) :
+    UniversalEnvelopingAlgebra.mkAlgHom R L (TensorAlgebra.ι R x) • m = ⁅x, m⁆ := by
+  simpa using ueaModule_ι_smul R L x m
 
 /-- The scalars of the base ring act the same way through `R` and through `U(L)`. -/
 theorem ueaModule_isScalarTower :
@@ -339,6 +335,28 @@ noncomputable def lieSubmoduleOrderIsoUeaModule :
 theorem coe_lieSubmoduleOrderIsoUeaModule (N : LieSubmodule R L M) :
     (lieSubmoduleOrderIsoUeaModule R L N : Set M) = N :=
   (rfl)
+
+/-- The inverse dictionary for the canonical structure is the identity on underlying sets. -/
+@[simp]
+theorem coe_lieSubmoduleOrderIsoUeaModule_symm
+    (P : Submodule (UniversalEnvelopingAlgebra R L) M) :
+    ((lieSubmoduleOrderIsoUeaModule R L).symm P : Set M) = P :=
+  (rfl)
+
+/-- Membership in the `U(L)`-submodule attached to a Lie submodule, for the canonical
+structure. -/
+@[simp]
+theorem mem_lieSubmoduleOrderIsoUeaModule {N : LieSubmodule R L M} {m : M} :
+    m ∈ lieSubmoduleOrderIsoUeaModule R L N ↔ m ∈ N :=
+  (Iff.rfl)
+
+/-- Membership in the Lie submodule attached to a `U(L)`-submodule, for the canonical
+structure. -/
+@[simp]
+theorem mem_lieSubmoduleOrderIsoUeaModule_symm
+    {P : Submodule (UniversalEnvelopingAlgebra R L) M} {m : M} :
+    m ∈ (lieSubmoduleOrderIsoUeaModule R L).symm P ↔ m ∈ P :=
+  (Iff.rfl)
 
 /-- A Lie module is irreducible exactly when it is simple over `U(L)` with the canonical
 structure. -/
