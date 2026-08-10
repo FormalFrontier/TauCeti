@@ -98,7 +98,6 @@ def hePresentation : GroupPresentation where
       finalWord ]
 
 /-- The generator and relator counts recorded for `He` agree with the transcribed data. -/
-@[simp]
 theorem hePresentation_matchesMetadata : hePresentation.matchesMetadata := by decide
 
 end TauCeti.Sporadic
