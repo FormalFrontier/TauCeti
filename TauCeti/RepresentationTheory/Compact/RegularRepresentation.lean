@@ -6,7 +6,6 @@ module
 
 public import TauCeti.RepresentationTheory.Compact.Haar
 public import TauCeti.RepresentationTheory.Continuous.Unitary
-public import Mathlib.MeasureTheory.Function.ContinuousMapDense
 public import Mathlib.MeasureTheory.Function.L2Space
 public import Mathlib.MeasureTheory.Function.LpSpace.DomAct.Continuous
 
