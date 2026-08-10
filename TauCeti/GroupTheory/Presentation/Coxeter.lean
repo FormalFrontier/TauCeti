@@ -7,7 +7,8 @@ module
 public import TauCeti.GroupTheory.Presentation.GroupPresentation
 public import Mathlib.GroupTheory.Coxeter.Basic
 public import Mathlib.GroupTheory.QuotientGroup.Basic
-public import Mathlib.Data.List.FinRange
+public import Mathlib.Data.List.Sym
+public import Mathlib.Data.Sym.Sym2.Order
 public import Mathlib.Data.Nat.Choose.Basic
 
 /-!
@@ -18,28 +19,29 @@ a braid relation on each edge and a commuting relation on each non-edge. Mathlib
 `CoxeterMatrix` into a group through `CoxeterMatrix.relationsSet`, the *range* of
 `CoxeterMatrix.relation`, which is a set indexed by ordered pairs rather than an explicit list whose
 entries and length a reviewer can audit. This file produces that finite relator list, one relator
-per unordered pair of nodes, and identifies the group it presents with Mathlib's Coxeter group.
+per unordered pair of nodes, the diagonal included, so that the `n` involution relators `sᵢ ^ 2` are
+among them.
 
 The count is the point. `TauCeti.length_coxeterRelators` says that a diagram on `n` nodes has
-`(n + 1).choose 2 = n * (n + 1) / 2` relators, which is exactly the relator count that published
-Y-diagram presentations of sporadic groups record: `79 = 78 + 1` for `Y₄₄₃` and `92 = 91 + 1` for
-`Y₄₄₄`, the extra relator in each case being the spider relator.
+`(n + 1).choose 2 = n * (n + 1) / 2` relators — the number of unordered pairs with repetition
+allowed, not `n.choose 2` — which is exactly the relator count that published Y-diagram
+presentations of sporadic groups record.
 
 The ordered-pair set and the unordered-pair list do not agree: `(sᵢ sⱼ) ^ mᵢⱼ` and
-`(sⱼ sᵢ) ^ mᵢⱼ` are distinct elements of the free group. They are conjugate, so the two sets have
+`(sⱼ sᵢ) ^ mᵢⱼ` are distinct elements of the free group, so the list has to pick one of the two
+orders — here the one increasing in the node numbering. They are conjugate, so the two sets have
 the same normal closure, which is what `TauCeti.normalClosure_relatorSet_coxeterRelators` proves
-and what makes the presented groups the same. That is also why the relator list cannot be obtained
-by mapping over Mathlib's `List.sym2`: the relator is not a function of the unordered pair.
+and what makes the presented groups the same.
 
 ## Main definitions
 
-* `TauCeti.Relator.relatorSet`: the relations denoted by a list of relator expressions.
 * `TauCeti.coxeterRelator`: the relator expression `(sᵢ sⱼ) ^ M i j`.
 * `TauCeti.coxeterRelatorsOfList` and `TauCeti.coxeterRelators`: one Coxeter relator per unordered
-  pair of nodes.
+  pair of nodes, the diagonal included.
+* `TauCeti.yParent`: the neighbour of a node towards the centre of a `Y_{p,q,r}` diagram.
+* `TauCeti.YAdjacent`: adjacency in a `Y_{p,q,r}` diagram.
 * `TauCeti.yCoxeterMatrix`: the Coxeter matrix of the `Y_{p,q,r}` diagram, three arms of `p`, `q`,
   and `r` nodes attached to a central node.
-* `TauCeti.ySpiderRelator`: the spider relator `(a b₁ c₁ a b₂ c₂ a b₃ c₃) ^ k` of a `Y`-diagram.
 
 ## Main results
 
@@ -48,24 +50,28 @@ by mapping over Mathlib's `List.sym2`: the relator is not a function of the unor
   set have the same normal closure.
 * `TauCeti.mulEquivCoxeterGroup` and `TauCeti.GroupPresentation.mulEquivCoxeterGroup`: a
   transcription whose relators are the Coxeter relators of `M` presents `M.Group`.
+* `TauCeti.mulEquivPresentedGroupCoxeterAppend` and
+  `TauCeti.GroupPresentation.mulEquivPresentedGroupCoxeterAppend`: a transcription that appends
+  further relators to the Coxeter relators of `M` presents the group defined by Mathlib's Coxeter
+  relations together with those extra relations. This is the shape a published Y-diagram
+  presentation has, its extra relator being the spider relator.
 * `TauCeti.yCoxeterMatrix_of_adjacent` and `TauCeti.yCoxeterMatrix_of_not_adjacent`: the `Y`-diagram
   entries, together with the shape lemmas `TauCeti.YAdjacent_pred` and
   `TauCeti.YAdjacent_secondArmHead_zero` pinning the arms and the centre.
 
 ## References
 
-This file supplies the Coxeter-diagram half of milestone S1 of
-`TauCetiRoadmap/CFSGStatement/README.md`, which asks for the `Y₄₄₃` presentation of the Monster
-("the 12 nodes of that diagram, the Coxeter relations, the spider relation, and `Z = 1`"), the
-`Y₄₃₃` presentation of the Baby Monster, and the smaller `Y`-diagrams of the Fischer groups. The
-node numbering, the arm labels `a, bᵢ, cᵢ, dᵢ, eᵢ`, the spider word, and the relator counts `79`
-and `92` follow J. N. Bray's
-[presentation pages](https://webspace.maths.qmul.ac.uk/j.n.bray/web/Pres/Mnst.html); the theorems
-that these diagrams present the groups in question are Norton's (1990) and Ivanov's (1999) and are
-not formalized here. No presentation of a named group is asserted in this file.
+This file supplies the generic Coxeter-diagram half of milestone S1 of
+`TauCetiRoadmap/CFSGStatement/README.md`, which asks for the `Y₄₄₃` presentation of the Monster,
+the `Y₄₃₃` presentation of the Baby Monster, and the smaller `Y`-diagrams of the Fischer groups.
+The pinned diagrams themselves, their spider relators, and their published relator counts live in
+`TauCeti.GroupTheory.SpecificGroups.CFSG.YDiagram`. No presentation of a named group is asserted
+here.
 
-The recursive shape of `TauCeti.coxeterRelatorsOfList` and its count proof are adapted from
-Mathlib's `List.sym2` and `List.length_sym2` in `Mathlib.Data.List.Sym`.
+`TauCeti.coxeterRelatorsOfList` is built from Mathlib's `List.sym2` in `Mathlib.Data.List.Sym`,
+whose `List.length_sym2` supplies the relator count, and from `Sym2.inf`/`Sym2.sup` in
+`Mathlib.Data.Sym.Sym2.Order`, which pick the canonical ordered representative of an unordered
+pair.
 -/
 
 public section
@@ -88,101 +94,77 @@ def coxeterRelator (M : CoxeterMatrix B) (i j : B) : Relator B :=
 @[simp]
 theorem toFreeGroup_coxeterRelator (M : CoxeterMatrix B) (i j : B) :
     (coxeterRelator M i j).toFreeGroup = M.relation i j := by
-  simp only [coxeterRelator, Relator.toFreeGroup, CoxeterMatrix.relation]
+  simp only [coxeterRelator, Relator.toFreeGroup_pow, Relator.toFreeGroup_mul,
+    Relator.toFreeGroup_gen, CoxeterMatrix.relation]
 
-/-- On the diagonal the Coxeter relator denotes the involution relation `sᵢ ^ 2`. -/
-theorem toFreeGroup_coxeterRelator_self (M : CoxeterMatrix B) (i : B) :
-    (coxeterRelator M i i).toFreeGroup = FreeGroup.of i ^ 2 := by
-  rw [toFreeGroup_coxeterRelator]
-  simp only [CoxeterMatrix.relation, M.diagonal, pow_one, ← sq]
+/-- The Coxeter relators drawn from a list of nodes: one relator `(sᵢ sⱼ) ^ M i j` for each
+unordered pair `{i, j}` of nodes of the list, the diagonal pairs `{i, i}` included, so that the
+involution relators are among them. The pair is written in increasing order.
 
-/-- The Coxeter relators drawn from a list of nodes: for each node `i` of the list, one relator
-`(sᵢ sⱼ) ^ M i j` for `j` running over `i` itself and the nodes after it. On a duplicate-free list
-this is one relator per unordered pair of nodes. -/
-def coxeterRelatorsOfList (M : CoxeterMatrix B) : List B → List (Relator B)
-  | [] => []
-  | i :: l => ((i :: l).map fun j => coxeterRelator M i j) ++ coxeterRelatorsOfList M l
+The unordered pairs are Mathlib's `List.sym2`; `Sym2.inf` and `Sym2.sup` name the smaller and the
+larger node, which is the choice of order the free group forces on the transcription. -/
+def coxeterRelatorsOfList [LinearOrder B] (M : CoxeterMatrix B) (l : List B) : List (Relator B) :=
+  l.sym2.map fun z => coxeterRelator M z.inf z.sup
 
-@[simp]
-theorem coxeterRelatorsOfList_nil (M : CoxeterMatrix B) :
-    coxeterRelatorsOfList M [] = [] := by
-  rw [coxeterRelatorsOfList]
-
-theorem coxeterRelatorsOfList_cons (M : CoxeterMatrix B) (i : B) (l : List B) :
-    coxeterRelatorsOfList M (i :: l) =
-      ((i :: l).map fun j => coxeterRelator M i j) ++ coxeterRelatorsOfList M l := by
+/-- The Coxeter relator list spelled out as a map over the unordered pairs of the node list. -/
+theorem coxeterRelatorsOfList_eq [LinearOrder B] (M : CoxeterMatrix B) (l : List B) :
+    coxeterRelatorsOfList M l = l.sym2.map fun z => coxeterRelator M z.inf z.sup := by
   rw [coxeterRelatorsOfList]
 
 /-- A list of `n` nodes yields `(n + 1).choose 2` Coxeter relators, the number of unordered pairs
 of nodes with repetition allowed. -/
-theorem length_coxeterRelatorsOfList (M : CoxeterMatrix B) (l : List B) :
+theorem length_coxeterRelatorsOfList [LinearOrder B] (M : CoxeterMatrix B) (l : List B) :
     (coxeterRelatorsOfList M l).length = (l.length + 1).choose 2 := by
-  induction l with
-  | nil => rfl
-  | cons i l ih =>
-    rw [coxeterRelatorsOfList_cons, List.length_append, List.length_map, List.length_cons,
-      Nat.choose_succ_succ, ← ih, Nat.choose_one_right]
+  rw [coxeterRelatorsOfList, List.length_map, List.length_sym2]
 
-/-- Every Coxeter relator in the list is the relator of a pair of nodes of the list. -/
-theorem exists_eq_coxeterRelator_of_mem {M : CoxeterMatrix B} {l : List B} {t : Relator B}
-    (ht : t ∈ coxeterRelatorsOfList M l) : ∃ i j, t = coxeterRelator M i j := by
-  induction l with
-  | nil => simp at ht
-  | cons i l ih =>
-    rw [coxeterRelatorsOfList_cons, List.mem_append] at ht
-    rcases ht with ht | ht
-    · obtain ⟨j, -, rfl⟩ := List.mem_map.mp ht
-      exact ⟨i, j, rfl⟩
-    · exact ih ht
+/-- Every Coxeter relator in the list is the relator of a pair of nodes. -/
+theorem exists_eq_coxeterRelator_of_mem [LinearOrder B] {M : CoxeterMatrix B} {l : List B}
+    {t : Relator B} (ht : t ∈ coxeterRelatorsOfList M l) : ∃ i j, t = coxeterRelator M i j := by
+  rw [coxeterRelatorsOfList, List.mem_map] at ht
+  obtain ⟨z, -, rfl⟩ := ht
+  exact ⟨z.inf, z.sup, rfl⟩
 
 /-- For any two nodes of the list, the list carries the Coxeter relator of the pair in one of its
-two orders. Which one it is depends on the order of the list, and the two differ, so this is the
-sharpest statement available. -/
-theorem coxeterRelator_mem_or_swap_mem (M : CoxeterMatrix B) {l : List B} {i j : B}
+two orders. Which one it is is fixed by the linear order on the nodes, and the two differ, so this
+is the sharpest statement available. -/
+theorem coxeterRelator_mem_or_swap_mem [LinearOrder B] (M : CoxeterMatrix B) {l : List B} {i j : B}
     (hi : i ∈ l) (hj : j ∈ l) :
     coxeterRelator M i j ∈ coxeterRelatorsOfList M l ∨
       coxeterRelator M j i ∈ coxeterRelatorsOfList M l := by
-  induction l with
-  | nil => simp at hi
-  | cons c l ih =>
-    rcases List.mem_cons.mp hi with rfl | hi'
-    · exact Or.inl (List.mem_append_left _ (List.mem_map_of_mem hj))
-    · rcases List.mem_cons.mp hj with rfl | hj'
-      · exact Or.inr (List.mem_append_left _ (List.mem_map_of_mem hi))
-      · exact (ih hi' hj').imp (List.mem_append_right _) (List.mem_append_right _)
+  have hmem : (fun z : Sym2 B => coxeterRelator M z.inf z.sup) s(i, j) ∈
+      coxeterRelatorsOfList M l :=
+    List.mem_map_of_mem (List.mk_mem_sym2 hi hj)
+  rcases le_total i j with h | h
+  · exact Or.inl (by simpa [inf_of_le_left h, sup_of_le_right h] using hmem)
+  · exact Or.inr (by simpa [inf_of_le_right h, sup_of_le_left h] using hmem)
 
 /-- The Coxeter relators of a matrix indexed by `Fin n`, in the order of the Bourbaki-style node
 numbering `0, 1, …, n - 1`. -/
 def coxeterRelators {n : ℕ} (M : CoxeterMatrix (Fin n)) : List (Relator (Fin n)) :=
   coxeterRelatorsOfList M (List.finRange n)
 
+/-- The Coxeter relator list of a `Fin n`-indexed matrix is the one drawn from `List.finRange n`. -/
+theorem coxeterRelators_eq {n : ℕ} (M : CoxeterMatrix (Fin n)) :
+    coxeterRelators M = coxeterRelatorsOfList M (List.finRange n) := by
+  rw [coxeterRelators]
+
 /-- A Coxeter diagram on `n` nodes has `(n + 1).choose 2` relators. -/
 theorem length_coxeterRelators {n : ℕ} (M : CoxeterMatrix (Fin n)) :
     (coxeterRelators M).length = (n + 1).choose 2 := by
   rw [coxeterRelators, length_coxeterRelatorsOfList, List.length_finRange]
 
-/-- The relator count of a Coxeter diagram on `n` nodes in closed form. -/
-theorem length_coxeterRelators_eq_div {n : ℕ} (M : CoxeterMatrix (Fin n)) :
-    (coxeterRelators M).length = (n + 1) * n / 2 := by
-  rw [length_coxeterRelators, Nat.choose_two_right, Nat.add_sub_cancel]
-
-/-- Conjugating a group element past a normal subgroup swaps the two factors of a power of a
-product. -/
-private theorem pow_mul_mem_of_pow_mul_mem {G : Type*} [Group G] {N : Subgroup G} (hN : N.Normal)
-    (a b : G) (m : ℕ) (h : (b * a) ^ m ∈ N) : (a * b) ^ m ∈ N := by
-  have hsc : SemiconjBy a (b * a) (a * b) := by
-    simp only [SemiconjBy, mul_assoc]
-  have key : a * (b * a) ^ m * a⁻¹ = (a * b) ^ m := by
-    calc
-      a * (b * a) ^ m * a⁻¹ = ((a * b) ^ m * a) * a⁻¹ := by rw [hsc.pow_right m]
-      _ = (a * b) ^ m := mul_inv_cancel_right _ _
+/-- If `(b * a) ^ m` lies in a normal subgroup `N`, then so does `(a * b) ^ m`, the two being
+conjugate by `a`. -/
+private theorem pow_mul_mem_of_pow_mul_swap_mem {G : Type*} [Group G] {N : Subgroup G}
+    (hN : N.Normal) (a b : G) (m : ℕ) (h : (b * a) ^ m ∈ N) : (a * b) ^ m ∈ N := by
+  have key : a * (b * a) ^ m * a⁻¹ = (a * b) ^ m := by rw [← mul_pow_mul, mul_inv_cancel_right]
   exact key ▸ hN.conj_mem _ h a
 
 /-- **The finite Coxeter relator list presents the same group as Mathlib's relation set.** The two
 sets of relations differ, since only one of `(sᵢ sⱼ) ^ mᵢⱼ` and `(sⱼ sᵢ) ^ mᵢⱼ` is transcribed, but
 they are conjugate and so have the same normal closure. -/
-theorem normalClosure_relatorSet_coxeterRelatorsOfList (M : CoxeterMatrix B) {l : List B}
-    (hl : ∀ i : B, i ∈ l) :
+theorem normalClosure_relatorSet_coxeterRelatorsOfList [LinearOrder B] (M : CoxeterMatrix B)
+    {l : List B} (hl : ∀ i : B, i ∈ l) :
     Subgroup.normalClosure (Relator.relatorSet (coxeterRelatorsOfList M l)) =
       Subgroup.normalClosure M.relationsSet := by
   refine le_antisymm (Subgroup.normalClosure_le_normal ?_) (Subgroup.normalClosure_le_normal ?_)
@@ -198,15 +180,13 @@ theorem normalClosure_relatorSet_coxeterRelatorsOfList (M : CoxeterMatrix B) {l 
           Subgroup.normalClosure (Relator.relatorSet (coxeterRelatorsOfList M l)) :=
       fun a b hab => Subgroup.subset_normalClosure <|
         Relator.mem_relatorSet.mpr ⟨_, hab, toFreeGroup_coxeterRelator M a b⟩
-    -- `relationsSet` is `range (uncurry M.relation)`, so unpacking its range witness leaves the
-    -- definitionally equal `uncurry` application that this line presents as the intended relation.
-    change M.relation i j ∈ _
+    rw [Function.uncurry_apply_pair]
     rcases coxeterRelator_mem_or_swap_mem M (hl i) (hl j) with h | h
     · exact key i j h
     · have hji := key j i h
       simp only [CoxeterMatrix.relation] at hji ⊢
       rw [M.symmetric j i] at hji
-      exact pow_mul_mem_of_pow_mul_mem Subgroup.normalClosure_normal _ _ _ hji
+      exact pow_mul_mem_of_pow_mul_swap_mem Subgroup.normalClosure_normal _ _ _ hji
 
 /-- The `Fin n`-indexed form of `TauCeti.normalClosure_relatorSet_coxeterRelatorsOfList`. -/
 theorem normalClosure_relatorSet_coxeterRelators {n : ℕ} (M : CoxeterMatrix (Fin n)) :
@@ -214,24 +194,78 @@ theorem normalClosure_relatorSet_coxeterRelators {n : ℕ} (M : CoxeterMatrix (F
       Subgroup.normalClosure M.relationsSet :=
   normalClosure_relatorSet_coxeterRelatorsOfList M fun _ => List.mem_finRange _
 
+/-- Appending further relators to the Coxeter relator list imposes Mathlib's Coxeter relations
+together with the extra relations. A published Y-diagram presentation has this shape, its extra
+relator being the spider relator. -/
+theorem normalClosure_relatorSet_coxeterRelators_append {n : ℕ} (M : CoxeterMatrix (Fin n))
+    (extra : List (Relator (Fin n))) :
+    Subgroup.normalClosure (Relator.relatorSet (coxeterRelators M ++ extra)) =
+      Subgroup.normalClosure (M.relationsSet ∪ Relator.relatorSet extra) := by
+  rw [Relator.relatorSet_append, Subgroup.normalClosure_union, Subgroup.normalClosure_union,
+    normalClosure_relatorSet_coxeterRelators]
+
 /-- The group presented by the finite Coxeter relator list is Mathlib's Coxeter group. -/
 def mulEquivCoxeterGroup {n : ℕ} (M : CoxeterMatrix (Fin n)) :
     PresentedGroup (Relator.relatorSet (coxeterRelators M)) ≃* M.Group :=
   QuotientGroup.quotientMulEquivOfEq (normalClosure_relatorSet_coxeterRelators M)
 
 @[simp]
-theorem mulEquivCoxeterGroup_apply {n : ℕ} (M : CoxeterMatrix (Fin n)) (i : Fin n) :
+theorem mulEquivCoxeterGroup_of {n : ℕ} (M : CoxeterMatrix (Fin n)) (i : Fin n) :
     mulEquivCoxeterGroup M (PresentedGroup.of i) = M.simple i :=
   QuotientGroup.quotientMulEquivOfEq_mk _ _
 
-/-- **A transcription whose relators are the Coxeter relators of `M` presents `M.Group`.** This is
-the form an audited presentation row uses: the record supplies the generator names, the source, and
-the count checks, and this identifies the group it defines. -/
+/-- **The Coxeter relator list followed by further relators presents Mathlib's Coxeter relations
+together with those extra relations.** Taking `extra = []` recovers
+`TauCeti.mulEquivCoxeterGroup`. -/
+def mulEquivPresentedGroupCoxeterAppend {n : ℕ} (M : CoxeterMatrix (Fin n))
+    (extra : List (Relator (Fin n))) :
+    PresentedGroup (Relator.relatorSet (coxeterRelators M ++ extra)) ≃*
+      PresentedGroup (M.relationsSet ∪ Relator.relatorSet extra) :=
+  QuotientGroup.quotientMulEquivOfEq (normalClosure_relatorSet_coxeterRelators_append M extra)
+
+@[simp]
+theorem mulEquivPresentedGroupCoxeterAppend_of {n : ℕ} (M : CoxeterMatrix (Fin n))
+    (extra : List (Relator (Fin n))) (i : Fin n) :
+    mulEquivPresentedGroupCoxeterAppend M extra (PresentedGroup.of i) = PresentedGroup.of i :=
+  QuotientGroup.quotientMulEquivOfEq_mk _ _
+
+/-- **A transcription whose relators are exactly the Coxeter relators of `M` presents `M.Group`.**
+A presentation row that adds relators to the diagram — every published Y-diagram row does, its
+spider relator being the addition — is served by
+`TauCeti.GroupPresentation.mulEquivPresentedGroupCoxeterAppend` instead. -/
 def GroupPresentation.mulEquivCoxeterGroup (P : GroupPresentation)
     (M : CoxeterMatrix (Fin P.generatorCount)) (h : P.transcribed = coxeterRelators M) :
     P.Group ≃* M.Group :=
   QuotientGroup.quotientMulEquivOfEq (by
-    rw [P.relatorSet_eq_relatorSet, h, normalClosure_relatorSet_coxeterRelators])
+    rw [show P.relatorSet = Relator.relatorSet (coxeterRelators M) from congrArg _ h,
+      normalClosure_relatorSet_coxeterRelators])
+
+@[simp]
+theorem GroupPresentation.mulEquivCoxeterGroup_of (P : GroupPresentation)
+    (M : CoxeterMatrix (Fin P.generatorCount)) (h : P.transcribed = coxeterRelators M)
+    (i : Fin P.generatorCount) :
+    P.mulEquivCoxeterGroup M h (PresentedGroup.of i) = M.simple i :=
+  QuotientGroup.quotientMulEquivOfEq_mk _ _
+
+/-- **A transcription that appends further relators to the Coxeter relators of `M` presents the
+Coxeter relations together with those extra relations.** This is the form an audited Y-diagram
+presentation row uses: the record supplies the generator names, the source, and the count checks,
+the diagram supplies the Coxeter relators, and the row's own relators — the spider relator, and for
+the Monster the relator `Z` as well — are the extras. -/
+def GroupPresentation.mulEquivPresentedGroupCoxeterAppend (P : GroupPresentation)
+    (M : CoxeterMatrix (Fin P.generatorCount)) (extra : List (Relator (Fin P.generatorCount)))
+    (h : P.transcribed = coxeterRelators M ++ extra) :
+    P.Group ≃* PresentedGroup (M.relationsSet ∪ Relator.relatorSet extra) :=
+  QuotientGroup.quotientMulEquivOfEq (by
+    rw [show P.relatorSet = Relator.relatorSet (coxeterRelators M ++ extra) from congrArg _ h,
+      normalClosure_relatorSet_coxeterRelators_append])
+
+@[simp]
+theorem GroupPresentation.mulEquivPresentedGroupCoxeterAppend_of (P : GroupPresentation)
+    (M : CoxeterMatrix (Fin P.generatorCount)) (extra : List (Relator (Fin P.generatorCount)))
+    (h : P.transcribed = coxeterRelators M ++ extra) (i : Fin P.generatorCount) :
+    P.mulEquivPresentedGroupCoxeterAppend M extra h (PresentedGroup.of i) = PresentedGroup.of i :=
+  QuotientGroup.quotientMulEquivOfEq_mk _ _
 
 end Coxeter
 
@@ -244,13 +278,33 @@ later node has its predecessor. -/
 def yParent (p q i : ℕ) : ℕ :=
   if i = p + 1 ∨ i = p + q + 1 then 0 else i - 1
 
+/-- The neighbour towards the centre spelled out, so that a consumer outside this file can compute
+with it. -/
+theorem yParent_eq (p q i : ℕ) :
+    yParent p q i = if i = p + 1 ∨ i = p + q + 1 then 0 else i - 1 := by
+  rw [yParent]
+
 /-- Adjacency in a `Y_{p,q,r}` diagram: two distinct nodes are joined exactly when one is the
 neighbour of the other towards the centre. -/
 def YAdjacent (p q i j : ℕ) : Prop :=
   (i ≠ 0 ∧ yParent p q i = j) ∨ (j ≠ 0 ∧ yParent p q j = i)
 
+/-- Adjacency spelled out, so that a consumer outside this file can both establish and refute
+it. -/
+theorem YAdjacent_iff (p q i j : ℕ) :
+    YAdjacent p q i j ↔ (i ≠ 0 ∧ yParent p q i = j) ∨ (j ≠ 0 ∧ yParent p q j = i) :=
+  Iff.rfl
+
 instance (p q i j : ℕ) : Decidable (YAdjacent p q i j) :=
   inferInstanceAs (Decidable ((i ≠ 0 ∧ yParent p q i = j) ∨ (j ≠ 0 ∧ yParent p q j = i)))
+
+/-- Non-adjacency in terms of the arm arithmetic: neither node is a non-central node whose
+neighbour towards the centre is the other. -/
+theorem not_YAdjacent_iff (p q i j : ℕ) :
+    ¬YAdjacent p q i j ↔
+      (i = 0 ∨ yParent p q i ≠ j) ∧ (j = 0 ∨ yParent p q j ≠ i) := by
+  rw [YAdjacent_iff]
+  tauto
 
 /-- Adjacency in a `Y`-diagram is symmetric. -/
 theorem YAdjacent_comm {p q i j : ℕ} : YAdjacent p q i j ↔ YAdjacent p q j i :=
@@ -283,8 +337,8 @@ theorem yParent_of_ne_head (p q i : ℕ) (h₂ : i ≠ p + 1) (h₃ : i ≠ p + 
     yParent p q i = i - 1 := by
   rw [yParent, if_neg (by tauto)]
 
-/-- The head of the first arm is joined to the centre. When `p = 0` the first arm is empty and node
-`1` heads the second arm instead, which is joined to the centre as well. -/
+/-- The head of the first arm is joined to the centre. When the first arm is empty, node `1` heads
+the first nonempty arm instead, and is joined to the centre as well. -/
 theorem YAdjacent_one_zero (p q : ℕ) : YAdjacent p q 1 0 :=
   Or.inl ⟨one_ne_zero, yParent_one p q⟩
 
@@ -344,103 +398,5 @@ theorem yCoxeterMatrix_of_adjacent (p q r : ℕ) {i j : Fin (p + q + r + 1)}
 theorem yCoxeterMatrix_of_not_adjacent (p q r : ℕ) {i j : Fin (p + q + r + 1)} (hne : i ≠ j)
     (h : ¬YAdjacent p q i j) : yCoxeterMatrix p q r i j = 2 := by
   rw [yCoxeterMatrix_apply, if_neg hne, if_neg h]
-
-/-- A `Y_{p,q,r}` diagram carries `(p + q + r + 2).choose 2` Coxeter relators. -/
-theorem length_coxeterRelators_yCoxeterMatrix (p q r : ℕ) :
-    (coxeterRelators (yCoxeterMatrix p q r)).length = (p + q + r + 2).choose 2 :=
-  length_coxeterRelators _
-
-/-- The spider relator `(a b₁ c₁ a b₂ c₂ a b₃ c₃) ^ k` of a `Y_{p,q,r}` diagram, where `a` is the
-central node and `bᵢ, cᵢ` are the first two nodes of the `i`-th arm. Each arm needs two nodes for
-these to be arm nodes, which is what the hypotheses record. -/
-def ySpiderRelator (p q r : ℕ) (hp : 2 ≤ p) (hq : 2 ≤ q) (hr : 2 ≤ r) (k : ℕ) :
-    Relator (Fin (p + q + r + 1)) :=
-  have harm : 2 ≤ p ∧ 2 ≤ q ∧ 2 ≤ r := ⟨hp, hq, hr⟩
-  .pow (Relator.ofGenerators ⟨0, by omega⟩
-    [⟨1, by omega⟩, ⟨2, by omega⟩, ⟨0, by omega⟩,
-      ⟨p + 1, by omega⟩, ⟨p + 2, by omega⟩, ⟨0, by omega⟩,
-      ⟨p + q + 1, by omega⟩, ⟨p + q + 2, by omega⟩]) k
-
-/-! ### The `Y₄₄₃` diagram
-
-The twelve nodes are numbered `a = 0`, `b₁ c₁ d₁ e₁ = 1 2 3 4`, `b₂ c₂ d₂ e₂ = 5 6 7 8`, and
-`b₃ c₃ d₃ = 9 10 11`, so that Bray's diagram
-
-```text
-e₁ -- d₁ -- c₁ -- b₁ -- a -- b₂ -- c₂ -- d₂ -- e₂
-                        |
-                        b₃ -- c₃ -- d₃
-```
-
-is `4 -- 3 -- 2 -- 1 -- 0 -- 5 -- 6 -- 7 -- 8` with the arm `0 -- 9 -- 10 -- 11`. -/
-
-/-- The Coxeter matrix of the `Y₄₄₃` diagram, on twelve nodes. -/
-abbrev y443CoxeterMatrix : CoxeterMatrix (Fin 12) := yCoxeterMatrix 4 4 3
-
-/-- The spider relator of the `Y₄₄₃` diagram, `(a b₁ c₁ a b₂ c₂ a b₃ c₃) ^ 10`. -/
-def y443SpiderRelator : Relator (Fin 12) :=
-  ySpiderRelator 4 4 3 (by omega) (by omega) (by omega) 10
-
-/-- The spider relator of `Y₄₄₃` spelled out against the node numbering above. -/
-theorem y443SpiderRelator_eq :
-    y443SpiderRelator = .pow (Relator.ofGenerators 0 [1, 2, 0, 5, 6, 0, 9, 10]) 10 := by
-  rw [y443SpiderRelator, ySpiderRelator]
-  rfl
-
-/-- The relators of the `Y₄₄₃` presentation: the Coxeter relators of the diagram followed by the
-spider relator. -/
-def y443Relators : List (Relator (Fin 12)) :=
-  coxeterRelators y443CoxeterMatrix ++ [y443SpiderRelator]
-
-/-- The `Y₄₄₃` diagram has `78` Coxeter relators, so the presentation has `79`. This is the count
-Bray records for the group `M × 2` that `Y₄₄₃` presents; a presentation of the Monster itself adds
-one further relator, `Z = 1` for the central involution, for `80`. -/
-theorem length_y443Relators : y443Relators.length = 79 := by
-  rw [y443Relators, List.length_append, length_coxeterRelators]
-  rfl
-
-/-- The `Y₄₄₄` diagram, on thirteen nodes, has `91` Coxeter relators, so its presentation of
-`(M × M) : 2` has the `92` relators Bray records. -/
-theorem length_coxeterRelators_y444 :
-    (coxeterRelators (yCoxeterMatrix 4 4 4)).length + 1 = 92 := by
-  rw [length_coxeterRelators]
-  rfl
-
-/-- The `Y₄₃₃` diagram, on eleven nodes, has `66` Coxeter relators. -/
-theorem length_coxeterRelators_y433 :
-    (coxeterRelators (yCoxeterMatrix 4 3 3)).length = 66 := by
-  rw [length_coxeterRelators]
-  rfl
-
-/-! ### Executable checks on the pinned `Y₄₄₃` numbering
-
-Each entry of the Coxeter matrix is `3` on an edge of the diagram and `2` off it, so these examples
-read the diagram back out of the definition. -/
-
-/-- The centre is joined to the first node of each of the three arms. -/
-example : y443CoxeterMatrix 0 1 = 3 ∧ y443CoxeterMatrix 0 5 = 3 ∧ y443CoxeterMatrix 0 9 = 3 := by
-  decide
-
-/-- The first arm is the chain `0 -- 1 -- 2 -- 3 -- 4`. -/
-example : y443CoxeterMatrix 1 2 = 3 ∧ y443CoxeterMatrix 2 3 = 3 ∧ y443CoxeterMatrix 3 4 = 3 := by
-  decide
-
-/-- The second arm is the chain `0 -- 5 -- 6 -- 7 -- 8`. -/
-example : y443CoxeterMatrix 5 6 = 3 ∧ y443CoxeterMatrix 6 7 = 3 ∧ y443CoxeterMatrix 7 8 = 3 := by
-  decide
-
-/-- The third arm is the chain `0 -- 9 -- 10 -- 11`, of length three rather than four. -/
-example : y443CoxeterMatrix 9 10 = 3 ∧ y443CoxeterMatrix 10 11 = 3 := by
-  decide
-
-/-- Distinct arms meet only at the centre, and no arm doubles back to it. -/
-example : y443CoxeterMatrix 1 5 = 2 ∧ y443CoxeterMatrix 1 9 = 2 ∧ y443CoxeterMatrix 5 9 = 2 ∧
-    y443CoxeterMatrix 0 2 = 2 ∧ y443CoxeterMatrix 0 4 = 2 ∧ y443CoxeterMatrix 4 8 = 2 := by
-  decide
-
-/-- The last node of the second arm is `8`, so `Y₄₄₃` has no node `12`: the arm ends rather than
-continuing into the third arm. -/
-example : y443CoxeterMatrix 8 9 = 2 := by
-  decide
 
 end TauCeti

@@ -31,6 +31,8 @@ from Mathlib.
 * `TauCeti.Relator.toWord`: compilation of an expression to a signed word.
 * `TauCeti.Relator.toFreeGroup`: direct structural interpretation of an expression.
 * `TauCeti.Relator.relatorSet`: the free-group elements denoted by a list of expressions.
+* `TauCeti.Relator.ofGenerators`: the expression spelling out a word of generators with no
+  inverses.
 
 ## Main result
 
@@ -83,11 +85,8 @@ namespace Relator
 /-- Compile a relator expression to a flat signed word.
 
 Inversion uses Mathlib's `FreeGroup.invRev`, which reverses the word and flips every sign. Powers
-are compiled by repeating the whole word, rather than by expanding the expression recursively.
-
-The body is exposed: a transcription is audited by reading the compiled letters of a concrete
-relator expression, so a consumer has to be able to reduce this. -/
-@[expose]
+are compiled by repeating the whole word, rather than by expanding the expression recursively. The
+five equation lemmas below are the public interface: the body itself stays private. -/
 def toWord {α : Type*} : Relator α → PresentationWord α
   | .gen x => [(x, true)]
   | .inv r => FreeGroup.invRev r.toWord
@@ -96,12 +95,33 @@ def toWord {α : Type*} : Relator α → PresentationWord α
   | .comm r s => ((r.toWord ++ s.toWord) ++ FreeGroup.invRev r.toWord) ++
       FreeGroup.invRev s.toWord
 
-/-- Interpret a relator expression directly in the free group. This is deliberately independent of
-`Relator.toWord`: the comparison theorem below checks that compilation preserves meaning.
+@[simp]
+theorem toWord_gen {α : Type*} (x : α) : (gen x).toWord = [(x, true)] := by rw [toWord]
 
-The body is exposed for the same reason as `TauCeti.Relator.toWord`: a consumer identifying the
-relations of a concrete relator list has to be able to reduce it. -/
-@[expose]
+@[simp]
+theorem toWord_inv {α : Type*} (r : Relator α) :
+    (inv r).toWord = FreeGroup.invRev r.toWord := by
+  rw [toWord]
+
+@[simp]
+theorem toWord_mul {α : Type*} (r s : Relator α) :
+    (mul r s).toWord = r.toWord ++ s.toWord := by
+  rw [toWord]
+
+@[simp]
+theorem toWord_pow {α : Type*} (r : Relator α) (n : ℕ) :
+    (pow r n).toWord = (List.replicate n r.toWord).flatten := by
+  rw [toWord]
+
+@[simp]
+theorem toWord_comm {α : Type*} (r s : Relator α) :
+    (comm r s).toWord =
+      ((r.toWord ++ s.toWord) ++ FreeGroup.invRev r.toWord) ++ FreeGroup.invRev s.toWord := by
+  rw [toWord]
+
+/-- Interpret a relator expression directly in the free group. This is deliberately independent of
+`Relator.toWord`: the comparison theorem below checks that compilation preserves meaning. As for
+`Relator.toWord`, the five equation lemmas below are the public interface. -/
 def toFreeGroup {α : Type*} : Relator α → FreeGroup α
   | .gen x => FreeGroup.of x
   | .inv r => r.toFreeGroup⁻¹
@@ -109,9 +129,32 @@ def toFreeGroup {α : Type*} : Relator α → FreeGroup α
   | .pow r n => r.toFreeGroup ^ n
   | .comm r s => ⁅r.toFreeGroup, s.toFreeGroup⁆
 
+@[simp]
+theorem toFreeGroup_gen {α : Type*} (x : α) : (gen x).toFreeGroup = FreeGroup.of x := by
+  rw [toFreeGroup]
+
+@[simp]
+theorem toFreeGroup_inv {α : Type*} (r : Relator α) : (inv r).toFreeGroup = r.toFreeGroup⁻¹ := by
+  rw [toFreeGroup]
+
+@[simp]
+theorem toFreeGroup_mul {α : Type*} (r s : Relator α) :
+    (mul r s).toFreeGroup = r.toFreeGroup * s.toFreeGroup := by
+  rw [toFreeGroup]
+
+@[simp]
+theorem toFreeGroup_pow {α : Type*} (r : Relator α) (n : ℕ) :
+    (pow r n).toFreeGroup = r.toFreeGroup ^ n := by
+  rw [toFreeGroup]
+
+@[simp]
+theorem toFreeGroup_comm {α : Type*} (r s : Relator α) :
+    (comm r s).toFreeGroup = ⁅r.toFreeGroup, s.toFreeGroup⁆ := by
+  rw [toFreeGroup]
+
 /-- The free-group elements denoted by a list of relator expressions. -/
 def relatorSet {α : Type*} (l : List (Relator α)) : Set (FreeGroup α) :=
-  {r | ∃ t ∈ l, t.toFreeGroup = r}
+  toFreeGroup '' {x | x ∈ l}
 
 @[simp]
 theorem mem_relatorSet {α : Type*} {l : List (Relator α)} {r : FreeGroup α} :
@@ -121,13 +164,7 @@ theorem mem_relatorSet {α : Type*} {l : List (Relator α)} {r : FreeGroup α} :
 /-- Appending relator lists unions their relator sets. -/
 theorem relatorSet_append {α : Type*} (l l' : List (Relator α)) :
     relatorSet (l ++ l') = relatorSet l ∪ relatorSet l' := by
-  ext r
-  simp only [mem_relatorSet, List.mem_append, Set.mem_union]
-  constructor
-  · rintro ⟨t, ht | ht, rfl⟩
-    exacts [Or.inl ⟨t, ht, rfl⟩, Or.inr ⟨t, ht, rfl⟩]
-  · rintro (⟨t, ht, rfl⟩ | ⟨t, ht, rfl⟩)
-    exacts [⟨t, Or.inl ht, rfl⟩, ⟨t, Or.inr ht, rfl⟩]
+  simp only [relatorSet, List.mem_append, Set.ofPred_or, Set.image_union]
 
 /-- The relator expression spelling out a nonempty word of generators, with no inverses. -/
 def ofGenerators {α : Type*} : α → List α → Relator α
@@ -140,7 +177,15 @@ theorem toWord_ofGenerators {α : Type*} (x : α) (l : List α) :
     (ofGenerators x l).toWord = (x, true) :: l.map (fun y => (y, true)) := by
   induction l generalizing x with
   | nil => rfl
-  | cons y l ih => simp [ofGenerators, toWord, ih]
+  | cons y l ih => simp [ofGenerators, ih]
+
+/-- A spelled-out generator word denotes the product of its letters in the free group. -/
+@[simp]
+theorem toFreeGroup_ofGenerators {α : Type*} (x : α) (l : List α) :
+    (ofGenerators x l).toFreeGroup = FreeGroup.of x * (l.map FreeGroup.of).prod := by
+  induction l generalizing x with
+  | nil => simp [ofGenerators]
+  | cons y l ih => simp [ofGenerators, ih]
 
 /-- **The compiled word denotes the direct interpretation of the relator expression.**
 
@@ -151,12 +196,12 @@ theorem toWord_toFreeGroup {α : Type*} (r : Relator α) :
     FreeGroup.mk r.toWord = r.toFreeGroup := by
   induction r with
   | gen => rfl
-  | inv r ih => rw [toWord, toFreeGroup, ← FreeGroup.inv_mk, ih]
-  | mul r s ihr ihs => rw [toWord, toFreeGroup, ← FreeGroup.mul_mk, ihr, ihs]
-  | pow r n ih => rw [toWord, toFreeGroup, ← FreeGroup.pow_mk, ih]
+  | inv r ih => rw [toWord_inv, toFreeGroup_inv, ← FreeGroup.inv_mk, ih]
+  | mul r s ihr ihs => rw [toWord_mul, toFreeGroup_mul, ← FreeGroup.mul_mk, ihr, ihs]
+  | pow r n ih => rw [toWord_pow, toFreeGroup_pow, ← FreeGroup.pow_mk, ih]
   | comm r s ihr ihs =>
-    rw [toWord, toFreeGroup, commutatorElement_def, ← FreeGroup.mul_mk, ← FreeGroup.mul_mk,
-      ← FreeGroup.mul_mk, ← FreeGroup.inv_mk, ← FreeGroup.inv_mk, ihr, ihs]
+    rw [toWord_comm, toFreeGroup_comm, commutatorElement_def, ← FreeGroup.mul_mk,
+      ← FreeGroup.mul_mk, ← FreeGroup.mul_mk, ← FreeGroup.inv_mk, ← FreeGroup.inv_mk, ihr, ihs]
 
 end Relator
 

@@ -17,10 +17,10 @@ to `Fin generatorNames.length`, so the relator arity cannot disagree with the ge
 generator and relator counts stated by the source are separate metadata, checked against the
 transcribed data by `TauCeti.GroupPresentation.matchesMetadata`.
 
-The stored relators are human-readable `TauCeti.Relator` expressions. They are compiled to
-Mathlib's signed words and then interpreted by `FreeGroup.mk`; the resulting finite list of
-relations, regarded as a set, defines `TauCeti.GroupPresentation.Group` using Mathlib's
-`PresentedGroup`.
+The stored relators are human-readable `TauCeti.Relator` expressions. Their relator set defines
+`TauCeti.GroupPresentation.Group` using Mathlib's `PresentedGroup`. They are also compiled to
+Mathlib's signed words, which `TauCeti.Relator.toWord_toFreeGroup` shows denote the same relations,
+so an auditor may read the flat words off `TauCeti.GroupPresentation.relators`.
 
 ## Main definitions
 
@@ -88,25 +88,14 @@ theorem mem_relators_iff (P : GroupPresentation) (w : PresentationWord (Fin P.ge
     w ∈ P.relators ↔ ∃ t ∈ P.transcribed, t.toWord = w := by
   simp [relators]
 
-/-- The compiled relations, interpreted as elements of the free group. -/
-def relatorSet (P : GroupPresentation) : Set (FreeGroup (Fin P.generatorCount)) :=
-  {r | r ∈ P.relators.map FreeGroup.mk}
+/-- The relations of a presentation, as elements of the free group.
 
-/-- The relations are exactly the free-group elements denoted by the transcribed expressions.
-
-This is stated against `Relator.toFreeGroup` rather than against the compiled words, so a consumer
-discharging the relations of `PresentedGroup` never has to unfold the compiler. -/
-@[simp]
-theorem mem_relatorSet_iff (P : GroupPresentation) (r : FreeGroup (Fin P.generatorCount)) :
-    r ∈ P.relatorSet ↔ ∃ t ∈ P.transcribed, t.toFreeGroup = r := by
-  simp [relatorSet]
-
-/-- The relations of a presentation record are the relator set denoted by its transcribed
-expressions. -/
-theorem relatorSet_eq_relatorSet (P : GroupPresentation) :
-    P.relatorSet = Relator.relatorSet P.transcribed := by
-  ext r
-  simp
+This is the relator set of the transcribed expressions rather than of the compiled words, so a
+consumer discharging the relations of `PresentedGroup` never has to unfold the compiler;
+`TauCeti.Relator.toWord_toFreeGroup` says the compiled words denote the same relations. Membership
+is `TauCeti.Relator.mem_relatorSet`. -/
+abbrev relatorSet (P : GroupPresentation) : Set (FreeGroup (Fin P.generatorCount)) :=
+  Relator.relatorSet P.transcribed
 
 /-- The group defined by the generators and compiled relations of a presentation. -/
 abbrev Group (P : GroupPresentation) : Type :=
