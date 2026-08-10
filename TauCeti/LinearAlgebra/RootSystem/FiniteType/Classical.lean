@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+public import Mathlib.Data.Fin.SuccPredOrder
 public import Mathlib.Data.Rat.Star
 public import Mathlib.LinearAlgebra.Matrix.Block
 public import Mathlib.LinearAlgebra.Matrix.NonsingularInverse
@@ -37,10 +38,10 @@ Mathlib's matrices, so that the last node is the one the `Bₙ`/`Cₙ` double ed
 | `Cₙ` | `eᵢ - eᵢ₊₁`, and `e_{n-1}` | `ℚ^n` |
 | `Dₙ` | `eᵢ - eᵢ₊₁`, and `e_{n-2} + e_{n-1}` | `ℚ^n` |
 
-Type `A` is the one family whose ambient space is larger than its rank, and that is not a
-convenience: a square rational `M` with `M Mᵀ = CartanMatrix.A n` would make the determinant of
-that matrix, which is `n + 1`, a rational square, so no `n`-dimensional coordinate model exists,
-while the sum-zero hyperplane of `ℚ^{n+1}` carries the family for every `n`.
+Type `A` is the one family whose ambient space is larger than its rank. A square rational `M` with
+`M Mᵀ = CartanMatrix.A n` would make the determinant of that matrix, which is `n + 1`, a rational
+square, so no `n`-dimensional rational coordinate model exists whenever `n + 1` is not a square.
+The sum-zero hyperplane of `ℚ^{n+1}` instead gives one uniform model for every `n`.
 
 Independence of the rows is where the families part company, and it is why type `D` is handled
 last. For `A`, `B` and `C` the matrix is triangular against an increasing choice of coordinates -
@@ -68,10 +69,9 @@ it through `TauCeti.DynkinType.cartanMatrix_A` and its siblings together with
 Every simple system above has each row supported on at most two coordinates, so all four are
 instances of `TauCeti.twoTermRows`, and the Gram matrix of such a system is computed once and for
 all in `TauCeti.twoTermRows_mul_conjTranspose_apply`. A row supported on a single coordinate is
-written with a zero second coefficient rather than with a separate constructor, which is why
-`TauCeti.nextIndex` clamps at the top index instead of being partial. `TauCeti.forkIndex` is the
-matching device for the first coordinate of the type `D` fork row, and both are named so that the
-case analyses below run against their value lemmas rather than against `Fin` constructors.
+written with a zero second coefficient rather than with a separate constructor, using the clamped
+successor `Order.succ` for its second coordinate. `TauCeti.forkIndex` is the matching device for the
+first coordinate of the type `D` fork row.
 
 ## References
 
@@ -131,17 +131,6 @@ lemma sum_twoTermRows_apply (f g : Fin r → Fin c) (a b : Fin r → ℚ) (i : F
 
 /-! ### Independence of the rows -/
 
-/-- **Rows with trivial left kernel are independent**, in the form
-`Matrix.PosDef.mul_conjTranspose_self` consumes. -/
-lemma vecMul_injective_of_forall_eq_zero {M : Matrix (Fin r) (Fin c) ℚ}
-    (h : ∀ x : Fin r → ℚ, x ᵥ* M = 0 → x = 0) : Function.Injective M.vecMul := by
-  intro x y hxy
-  have hsub : (x - y) ᵥ* M = 0 := by
-    rw [Matrix.sub_vecMul]
-    exact sub_eq_zero_of_eq hxy
-  have hzero := h _ hsub
-  rwa [sub_eq_zero] at hzero
-
 /-- **A triangular selection of coordinates makes the rows independent.** If some choice `e` of a
 coordinate for each row makes the matrix upper triangular - `M i (e j) = 0` for `j < i` - with a
 nonzero diagonal, then the rows are independent: the selected columns form a square submatrix whose
@@ -155,25 +144,11 @@ theorem vecMul_injective_of_isUpperTriangular_comp {M : Matrix (Fin r) (Fin c) �
       Matrix.det_of_isUpperTriangular (M := M.submatrix id e) fun i j hji ↦ hlt i j hji]
     exact Finset.prod_ne_zero_iff.2 fun i _ ↦ hdiag i
   refine fun x y hxy ↦ hsub (funext fun j ↦ ?_)
-  have hcol : ∀ z : Fin r → ℚ, (z ᵥ* M.submatrix id e) j = (z ᵥ* M) (e j) := by
+  have hcol : ∀ z : Fin r → ℚ,
+      (fun v ↦ v ᵥ* M.submatrix id e) z j = (fun v ↦ v ᵥ* M) z (e j) := by
     intro z; simp [Matrix.vecMul, dotProduct]
-  change (x ᵥ* M.submatrix id e) j = (y ᵥ* M.submatrix id e) j
-  rw [hcol, hcol]
+  rw [hcol x, hcol y]
   exact congrFun hxy (e j)
-
-/-- The index after `i`, clamped to stay in range. The last simple coroot of a classical system is
-supported either on a single coordinate or on the two coordinates below the top, so the clamped
-value is always paired with a coefficient that makes the clamping invisible. -/
-def nextIndex (i : Fin r) : Fin r := if h : i.val + 1 < r then ⟨i.val + 1, h⟩ else i
-
-/-- The coordinate `TauCeti.nextIndex` selects, as a natural number. -/
-lemma nextIndex_val (i : Fin r) :
-    (nextIndex i).val = if i.val + 1 < r then i.val + 1 else i.val := by
-  by_cases h : i.val + 1 < r <;> simp [nextIndex, h]
-
-/-- Clamping never moves an index down, which is what makes the `B` and `C` systems triangular. -/
-lemma le_nextIndex_val (i : Fin r) : i.val ≤ (nextIndex i).val := by
-  rw [nextIndex_val]; split_ifs <;> omega
 
 /-- The coordinate that the first term of a row of the type `Dₙ` system points at: `i` itself,
 except at the last node, whose row is the fork one and starts two coordinates below the top. -/
@@ -224,7 +199,7 @@ theorem isFiniteType_cartanMatrix_A (n : ℕ) : IsFiniteType (CartanMatrix.A n) 
 /-- **The simple coroots of type `Bₙ`**: the `i`-th row is `eᵢ - eᵢ₊₁` in `ℚ^n`, except for the last
 one, which is `2 e_{n-1}`, the coroot of the short simple root of the family. -/
 def simpleCorootsB (n : ℕ) : Matrix (Fin n) (Fin n) ℚ :=
-  twoTermRows id nextIndex (fun i ↦ if i.val + 1 < n then 1 else 2)
+  twoTermRows id Order.succ (fun i ↦ if i.val + 1 < n then 1 else 2)
     (fun i ↦ if i.val + 1 < n then -1 else 0)
 
 /-- The Gram matrix of the simple coroots of type `Bₙ` is the symmetrisation of the Cartan matrix
@@ -236,8 +211,14 @@ lemma simpleCorootsB_mul_conjTranspose (n : ℕ) :
   ext i j
   have hi := i.isLt
   have hj := j.isLt
+  have hsucc (a : Fin n) :
+      (Order.succ a).val = if a.val + 1 < n then a.val + 1 else a.val := by
+    cases n with
+    | zero => exact Fin.elim0 a
+    | succ n =>
+      refine Fin.lastCases ?_ (fun j ↦ ?_) a <;> simp [Fin.orderSucc_apply]
   rw [simpleCorootsB, twoTermRows_mul_conjTranspose_apply]
-  simp only [Matrix.of_apply, CartanMatrix.B, id_eq, Fin.ext_iff, nextIndex_val]
+  simp only [Matrix.of_apply, CartanMatrix.B, id_eq, Fin.ext_iff, hsucc]
   split_ifs <;> first | (exfalso; omega) | norm_num
 
 /-- The simple coroots of type `Bₙ` are independent: the matrix is upper triangular, with
@@ -245,10 +226,16 @@ diagonal `(1, …, 1, 2)`. -/
 lemma vecMul_injective_simpleCorootsB (n : ℕ) : Function.Injective (simpleCorootsB n).vecMul := by
   refine vecMul_injective_of_isUpperTriangular_comp id (fun i j hji ↦ ?_) fun i ↦ ?_
   · have hji' : j.val < i.val := hji
-    have hle := le_nextIndex_val i
+    have hle := Order.le_succ i
     simp only [simpleCorootsB, twoTermRows_apply, id_eq, Fin.ext_iff]
     rw [if_neg (by omega), if_neg (by omega), add_zero]
-  · simp only [simpleCorootsB, twoTermRows_apply, id_eq, Fin.ext_iff, nextIndex_val]
+  · have hsucc :
+        (Order.succ i).val = if i.val + 1 < n then i.val + 1 else i.val := by
+      cases n with
+      | zero => exact Fin.elim0 i
+      | succ n =>
+        refine Fin.lastCases ?_ (fun j ↦ ?_) i <;> simp [Fin.orderSucc_apply]
+    simp only [simpleCorootsB, twoTermRows_apply, id_eq, Fin.ext_iff, hsucc]
     split_ifs <;> first | (exfalso; omega) | norm_num
 
 /-- **The Cartan matrix of type `Bₙ` is of finite type**, at every rank. -/
@@ -266,7 +253,7 @@ theorem isFiniteType_cartanMatrix_B (n : ℕ) : IsFiniteType (CartanMatrix.B n) 
 /-- **The simple coroots of type `Cₙ`**: the `i`-th row is `eᵢ - eᵢ₊₁` in `ℚ^n`, except for the last
 one, which is `e_{n-1}`, the coroot of the long simple root of the family. -/
 def simpleCorootsC (n : ℕ) : Matrix (Fin n) (Fin n) ℚ :=
-  twoTermRows id nextIndex (fun _ ↦ 1) (fun i ↦ if i.val + 1 < n then -1 else 0)
+  twoTermRows id Order.succ (fun _ ↦ 1) (fun i ↦ if i.val + 1 < n then -1 else 0)
 
 /-- The Gram matrix of the simple coroots of type `Cₙ` is the symmetrisation of the Cartan matrix
 by `(1, …, 1, 1/2)`, the reciprocal squared root lengths of the family up to scale. Here a
@@ -278,8 +265,14 @@ lemma simpleCorootsC_mul_conjTranspose (n : ℕ) :
   ext i j
   have hi := i.isLt
   have hj := j.isLt
+  have hsucc (a : Fin n) :
+      (Order.succ a).val = if a.val + 1 < n then a.val + 1 else a.val := by
+    cases n with
+    | zero => exact Fin.elim0 a
+    | succ n =>
+      refine Fin.lastCases ?_ (fun j ↦ ?_) a <;> simp [Fin.orderSucc_apply]
   rw [simpleCorootsC, twoTermRows_mul_conjTranspose_apply]
-  simp only [Matrix.of_apply, CartanMatrix.C, id_eq, Fin.ext_iff, nextIndex_val]
+  simp only [Matrix.of_apply, CartanMatrix.C, id_eq, Fin.ext_iff, hsucc]
   split_ifs <;> first | (exfalso; omega) | norm_num
 
 /-- The simple coroots of type `Cₙ` are independent: the matrix is upper triangular, with unit
@@ -287,10 +280,16 @@ diagonal. -/
 lemma vecMul_injective_simpleCorootsC (n : ℕ) : Function.Injective (simpleCorootsC n).vecMul := by
   refine vecMul_injective_of_isUpperTriangular_comp id (fun i j hji ↦ ?_) fun i ↦ ?_
   · have hji' : j.val < i.val := hji
-    have hle := le_nextIndex_val i
+    have hle := Order.le_succ i
     simp only [simpleCorootsC, twoTermRows_apply, id_eq, Fin.ext_iff]
     rw [if_neg (by omega), if_neg (by omega), add_zero]
-  · simp only [simpleCorootsC, twoTermRows_apply, id_eq, Fin.ext_iff, nextIndex_val]
+  · have hsucc :
+        (Order.succ i).val = if i.val + 1 < n then i.val + 1 else i.val := by
+      cases n with
+      | zero => exact Fin.elim0 i
+      | succ n =>
+        refine Fin.lastCases ?_ (fun j ↦ ?_) i <;> simp [Fin.orderSucc_apply]
+    simp only [simpleCorootsC, twoTermRows_apply, id_eq, Fin.ext_iff, hsucc]
     split_ifs <;> first | (exfalso; omega) | norm_num
 
 /-- **The Cartan matrix of type `Cₙ` is of finite type**, at every rank. -/
@@ -310,7 +309,7 @@ except for the last one, which is `e_{n-2} + e_{n-1}`. The rank restriction `n �
 is not imposed: the model is still the right one at `D 3 = A 3`, and at `D 2`, whose two orthogonal
 rows realize its two `A 1` components. -/
 def simpleCorootsD (k : ℕ) : Matrix (Fin (k + 2)) (Fin (k + 2)) ℚ :=
-  twoTermRows forkIndex nextIndex (fun _ ↦ 1) (fun i ↦ if i.val + 1 < k + 2 then -1 else 1)
+  twoTermRows forkIndex Order.succ (fun _ ↦ 1) (fun i ↦ if i.val + 1 < k + 2 then -1 else 1)
 
 /-- The Gram matrix of the simple coroots of type `Dₙ` is the Cartan matrix itself: the family is
 simply laced, so it is its own symmetrisation. -/
@@ -320,14 +319,17 @@ lemma simpleCorootsD_mul_conjTranspose (k : ℕ) :
   ext i j
   have hi := i.isLt
   have hj := j.isLt
+  have hsucc (a : Fin (k + 2)) :
+      (Order.succ a).val = if a.val + 1 < k + 2 then a.val + 1 else a.val := by
+    refine Fin.lastCases ?_ (fun j ↦ ?_) a <;> simp [Fin.orderSucc_apply]; omega
   rw [simpleCorootsD, twoTermRows_mul_conjTranspose_apply]
   rcases Nat.eq_zero_or_pos k with rfl | hk
-  · simp only [Matrix.of_apply, CartanMatrix.D, Fin.ext_iff, forkIndex_val, nextIndex_val,
+  · simp only [Matrix.of_apply, CartanMatrix.D, Fin.ext_iff, forkIndex_val, hsucc,
       if_pos (show 0 + 2 ≤ 2 by omega)]
     split_ifs <;> first | (exfalso; omega) | norm_num
   · by_cases hin : i.val + 1 < k + 2 <;> by_cases hjn : j.val + 1 < k + 2 <;>
       simp only [Matrix.of_apply, CartanMatrix.D, hin, hjn, if_true, if_false, Fin.ext_iff,
-        forkIndex_val, nextIndex_val, if_neg (show ¬(k + 2 ≤ 2) by omega)] <;>
+        forkIndex_val, hsucc, if_neg (show ¬(k + 2 ≤ 2) by omega)] <;>
       split_ifs <;> first | (exfalso; omega) | norm_num
 
 /-- **The simple coroots of type `Dₙ` are independent.** No coordinate makes the matrix
@@ -335,8 +337,12 @@ triangular, since the fork row shares both of its coordinates with earlier rows,
 runs in two steps: the coordinate sum kills every chain row, so a relation has no fork term, and
 the chain rows are then triangular on the coordinates below the top. -/
 lemma vecMul_injective_simpleCorootsD (k : ℕ) : Function.Injective (simpleCorootsD k).vecMul := by
-  refine vecMul_injective_of_forall_eq_zero fun x hx ↦ ?_
+  refine (injective_iff_map_eq_zero (simpleCorootsD k).vecMulLinear.toAddMonoidHom).2 fun x hx ↦ ?_
   set M := simpleCorootsD k with hM
+  have hx' : x ᵥ* M = 0 := by
+    calc
+      x ᵥ* M = M.vecMulLinear x := (Matrix.vecMulLinear_apply M x).symm
+      _ = 0 := hx
   -- The coordinate sum annihilates every chain row and doubles the fork row.
   have hrow : ∀ i : Fin (k + 2), ∑ j, M i j = if i.val + 1 < k + 2 then 0 else 2 := by
     intro i
@@ -347,7 +353,7 @@ lemma vecMul_injective_simpleCorootsD (k : ℕ) : Function.Injective (simpleCoro
       calc ∑ i, x i * ∑ j, M i j = ∑ i, ∑ j, x i * M i j := by simp [Finset.mul_sum]
         _ = ∑ j, ∑ i, x i * M i j := Finset.sum_comm
         _ = ∑ j, (x ᵥ* M) j := by simp [Matrix.vecMul, dotProduct]
-        _ = 0 := by rw [hx]; simp
+        _ = 0 := by rw [hx']; simp
     rw [Fin.sum_univ_castSucc] at h0
     have hchain : ∀ i : Fin (k + 1), x i.castSucc * ∑ j, M i.castSucc j = 0 := by
       intro i
@@ -367,12 +373,12 @@ lemma vecMul_injective_simpleCorootsD (k : ℕ) : Function.Injective (simpleCoro
       have hik := i.isLt
       have hjk := j.isLt
       simp only [Matrix.submatrix_apply, id_eq, hM, simpleCorootsD, twoTermRows_apply,
-        Fin.ext_iff, forkIndex_val, nextIndex_val]
+        Fin.ext_iff, forkIndex_val, Fin.orderSucc_castSucc, Fin.val_castSucc, Fin.val_succ]
       split_ifs <;> first | (exfalso; omega) | norm_num
     · have hci : ((i.castSucc : Fin (k + 2)) : ℕ) = (i : ℕ) := rfl
       have hik := i.isLt
       simp only [Matrix.submatrix_apply, id_eq, hM, simpleCorootsD, twoTermRows_apply,
-        Fin.ext_iff, forkIndex_val, nextIndex_val]
+        Fin.ext_iff, forkIndex_val, Fin.orderSucc_castSucc, Fin.val_castSucc, Fin.val_succ]
       split_ifs <;> first | (exfalso; omega) | norm_num
   have hrestrict : (fun i : Fin (k + 1) ↦ x i.castSucc) ᵥ*
       M.submatrix Fin.castSucc Fin.castSucc = 0 := by
@@ -387,15 +393,16 @@ lemma vecMul_injective_simpleCorootsD (k : ℕ) : Function.Injective (simpleCoro
       rw [show (x ᵥ* M) j.castSucc = ∑ i, x i * M i j.castSucc by
         simp [Matrix.vecMul, dotProduct]]
       exact Fin.sum_univ_castSucc _
-    have e3 : (x ᵥ* M) j.castSucc = 0 := by rw [hx]; simp
+    have e3 : (x ᵥ* M) j.castSucc = 0 := by rw [hx']; simp
     rw [e3, hlast, zero_mul, add_zero] at e2
     rw [e1, ← e2]
     simp
   have hzero : (fun i : Fin (k + 1) ↦ x i.castSucc) = 0 := by
     refine hblock ?_
-    change (fun i : Fin (k + 1) ↦ x i.castSucc) ᵥ* M.submatrix Fin.castSucc Fin.castSucc =
-      (0 : Fin (k + 1) → ℚ) ᵥ* M.submatrix Fin.castSucc Fin.castSucc
-    rw [hrestrict, Matrix.zero_vecMul]
+    have hzeroVecMul :
+        (fun v ↦ v ᵥ* M.submatrix Fin.castSucc Fin.castSucc) (0 : Fin (k + 1) → ℚ) = 0 := by
+      exact Matrix.zero_vecMul _
+    exact hrestrict.trans hzeroVecMul.symm
   funext i
   refine Fin.lastCases ?_ (fun j ↦ ?_) i
   · exact hlast
