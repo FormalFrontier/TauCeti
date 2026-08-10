@@ -235,22 +235,24 @@ theorem boundaryParam_coe (x : EuclideanSpace ℝ (Fin n)) :
     (boundaryParam n x).1 = euclideanHalfSpaceBoundaryParam n x := (rfl)
 
 /-- The boundary projection agrees with the ambient linear projection. -/
-@[simp]
 theorem boundaryProj_coe (y : EuclideanHalfSpace (n + 1)) :
     boundaryProj n y = euclideanHalfSpaceBoundaryProj n y.1 := (rfl)
 
 /-- The coordinates of the boundary projection are the positive-index coordinates. -/
+@[simp]
 theorem boundaryProj_apply (y : EuclideanHalfSpace (n + 1)) (i : Fin n) :
     boundaryProj n y i = y.1 i.succ := by
   rw [boundaryProj_coe, euclideanHalfSpaceBoundaryProj_apply]
 
 /-- Deleting the zeroth coordinate undoes the boundary parametrization. -/
+@[simp]
 theorem boundaryProj_boundaryParam (x : EuclideanSpace ℝ (Fin n)) :
     boundaryProj n (boundaryParam n x) = x := by
   rw [boundaryProj_coe, boundaryParam_coe, euclideanHalfSpaceBoundaryProj_param]
 
 /-- On the boundary of the half-space, deleting and reinserting the zeroth coordinate is the
 identity. -/
+@[simp]
 theorem boundaryParam_boundaryProj {y : EuclideanHalfSpace (n + 1)} (hy : y.1 0 = 0) :
     boundaryParam n (boundaryProj n y) = y :=
   Subtype.ext (euclideanHalfSpaceBoundaryParam_proj (mem_euclideanHalfSpaceBoundary.2 hy))
