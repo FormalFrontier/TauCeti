@@ -26,13 +26,14 @@ the statements below,
 
 `twoRank H ≤ twoRank G ≤ twoRank H + twoRank (ker f)`,
 
-so a quotient can only lose 2-rank, and can lose no more than the kernel carries. These are the
-exactness properties of the maximal elementary-2 quotient developed in Layer 2 of the
-Multiquadratic roadmap (`TauCetiRoadmap/Multiquadratic/README.md`). The functoriality that layer
-already has produces the induced map, and inverts it when `f` is an isomorphism, but says nothing
-about its kernel or about 2-ranks; its remaining target, the ambiguous-class-number formula,
-compares the square classes of a class group with those of a quotient of it, and so needs the
-kernel and the rank of the induced map along a *surjection* — the results below.
+so a quotient can only lose 2-rank, and can lose no more than the kernel carries. The functoriality
+already available for `G ↦ G/G²` produces the induced map, and inverts it when `f` is an
+isomorphism, but says nothing about its kernel or about 2-ranks. The consumer is
+`TauCeti.NumberTheory.NumberField.NarrowClassGroup.ElementaryTwoQuotient`, which applies these
+results to the forgetful surjection `Cl⁺(K) ↠ Cl(K)` to compare the narrow and the ordinary
+`2`-rank of a number field — the comparison the genus-theory `2`-rank formula `t - 1` needs for a
+real quadratic field (`TauCetiRoadmap/Multiquadratic/README.md`, "Layer 3: the genus field and the
+2-rank theorem").
 
 ## Main results
 
