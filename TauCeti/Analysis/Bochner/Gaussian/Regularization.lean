@@ -22,7 +22,7 @@ whenever `φ` has a positive-definite subtraction kernel and is continuous. This
 approximation device of the second step of Bochner's theorem: it replaces a bounded
 positive-definite function by an integrable one to which Fourier inversion applies.
 
-Adapted from the Bochner–Minlos formalization by Michael R. Douglas
+Adapted (Apache 2.0) from the Bochner–Minlos formalization by Michael R. Douglas
 (https://github.com/mrdouglasny/bochner, revision `08eb302`), source file `Bochner/Main.lean`;
 the positive-definiteness hypotheses are restated through `TauCeti.IsPositiveDefiniteKernel`.
 
@@ -31,6 +31,7 @@ the positive-definiteness hypotheses are restated through `TauCeti.IsPositiveDef
 * `TauCeti.gaussianRegularize`: the Gaussian regularization `φ_ε = φ · exp (-ε‖·‖²)`.
 * `TauCeti.isPositiveDefiniteKernel_gaussianRegularize`: `φ_ε` has a positive-definite
   subtraction kernel whenever `φ` does.
+* `TauCeti.gaussianRegularize_apply_zero`: regularization preserves the value at the origin.
 * `TauCeti.continuous_gaussianRegularize`, `TauCeti.integrable_gaussianRegularize`,
   `TauCeti.tendsto_gaussianRegularize`: the basic analytic facts about `φ_ε`.
 
@@ -64,6 +65,15 @@ noncomputable def gaussianRegularize (φ : V → ℂ) (ε : ℝ) : V → ℂ :=
 @[simp]
 theorem gaussianRegularize_apply (φ : V → ℂ) (ε : ℝ) (x : V) :
     gaussianRegularize φ ε x = φ x * Complex.exp (-(ε * ‖x‖ ^ 2 : ℝ)) := by
+  simp [gaussianRegularize]
+
+/-- The Gaussian regularization preserves the value at the origin: the Gaussian factor is `1`
+there. This is what makes the regularized representing measures probability measures.
+
+Not a `@[simp]` lemma: `simp` already proves it through `gaussianRegularize_apply`, and the
+simpNF linter reports the tagged form as a duplicate. -/
+theorem gaussianRegularize_apply_zero (φ : V → ℂ) (ε : ℝ) :
+    gaussianRegularize φ ε 0 = φ 0 := by
   simp [gaussianRegularize]
 
 /-- The Gaussian regularization is continuous when `φ` is. -/

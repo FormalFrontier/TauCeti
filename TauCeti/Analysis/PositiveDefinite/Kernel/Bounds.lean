@@ -32,10 +32,13 @@ for positive semidefinite matrices.
   force the corresponding row or column to vanish.
 * `TauCeti.isPositiveDefiniteKernel_norm_le_one_of_apply_self_eq_one`: normalized diagonal
   entries bound off-diagonal entries by `1`.
-* `TauCeti.map_zero_re_nonneg_of_isPositiveDefiniteKernel` and
+* `TauCeti.map_zero_re_nonneg_of_isPositiveDefiniteKernel`,
+  `TauCeti.map_zero_eq_ofReal_re_of_isPositiveDefiniteKernel` and
   `TauCeti.norm_apply_le_map_zero_re_of_isPositiveDefiniteKernel`: for an `RCLike`-valued function
-  with positive-definite subtraction kernel, the value at `0` has nonnegative real part and
-  bounds the function uniformly in norm.
+  with positive-definite subtraction kernel, the value at `0` is real with nonnegative real part
+  and bounds the function uniformly in norm.
+* `TauCeti.map_neg_eq_conj_of_isPositiveDefiniteKernel`: such a function is conjugate-symmetric
+  under negation, `conj (ψ v) = ψ (-v)`.
 
 ## References
 
@@ -125,6 +128,22 @@ theorem map_zero_re_nonneg_of_isPositiveDefiniteKernel
   have h : (0 : 𝕜) ≤ ψ 0 := by
     simpa using isPositiveDefiniteKernel_apply_self_nonneg hpd 0
   exact (RCLike.nonneg_iff.mp h).1
+
+/-- The value at `0` of a function with positive-definite subtraction kernel is real. -/
+theorem map_zero_eq_ofReal_re_of_isPositiveDefiniteKernel
+    (hpd : IsPositiveDefiniteKernel fun a b : V => ψ (a - b)) :
+    ψ 0 = ((RCLike.re (ψ 0) : ℝ) : 𝕜) := by
+  have h : (0 : 𝕜) ≤ ψ 0 := by
+    simpa using isPositiveDefiniteKernel_apply_self_nonneg hpd 0
+  simpa [(RCLike.nonneg_iff.mp h).2] using (RCLike.re_add_im (ψ 0)).symm
+
+/-- A function with positive-definite subtraction kernel is conjugate-symmetric under negation:
+`conj (ψ v) = ψ (-v)`. This is the Hermitian symmetry of the kernel, read along the diagonal
+translate `(v, 0)`. -/
+theorem map_neg_eq_conj_of_isPositiveDefiniteKernel
+    (hpd : IsPositiveDefiniteKernel fun a b : V => ψ (a - b)) (v : V) :
+    conj (ψ v) = ψ (-v) := by
+  simpa using isPositiveDefiniteKernel_conj_symm hpd v 0
 
 /-- A function with positive-definite subtraction kernel is uniformly bounded by the real part
 of its value at `0`. -/

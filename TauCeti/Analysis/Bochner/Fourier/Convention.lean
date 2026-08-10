@@ -19,6 +19,10 @@ Mathlib's characteristic function of a finite measure is
 normalizations and then reuses the existing characteristic-function API to show that the
 Fourier-convention transform of a finite measure is continuous and positive definite.
 
+The file also bridges Mathlib's Fourier transform `𝓕` to the Fourier atom and records the
+continuity of `𝓕` and `𝓕⁻` on integrable functions, and it carries the measure-uniqueness
+theorem — the uniqueness half of Bochner's theorem — consumed by `BochnerTheorem.lean`.
+
 This advances `TauCetiRoadmap/OneParameterSemigroups/README.md`, Part C, the positive-definite
 function API item asking for "a stated Fourier-convention conversion lemma between Mathlib's
 `2π` form and the characteristic-function form" before Bochner's theorem.

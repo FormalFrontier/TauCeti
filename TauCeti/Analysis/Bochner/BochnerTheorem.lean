@@ -52,7 +52,7 @@ subsequence, whose limit represents `G` by passing to the limit in the character
 functions. Uniqueness is `Measure.ext_of_forall_integral_fourierAtom_eq` from
 `Fourier/Convention.lean`.
 
-Adapted from the Bochner–Minlos formalization by Michael R. Douglas
+Adapted (Apache 2.0) from the Bochner–Minlos formalization by Michael R. Douglas
 (https://github.com/mrdouglasny/bochner, revision `08eb302`), source file `Bochner/Main.lean`;
 the positive-definiteness hypotheses are restated through `TauCeti.IsPositiveDefiniteKernel`,
 and the representation is stated in the `fourierAtom` convention rather than through
@@ -60,10 +60,9 @@ and the representation is stated in the `fourierAtom` convention rather than thr
 
 ## Main declarations
 
-* `TauCeti.isFiniteMeasure_withDensity_re_fourierInv` and
-  `TauCeti.integral_fourierAtom_withDensity_re_fourierInv`: the measure
-  `volume.withDensity (ENNReal.ofReal (𝓕⁻ F ·).re)` is finite and recovers `F` through the
-  Fourier atom — the `L¹` case of Bochner's theorem.
+* `TauCeti.integral_fourierAtom_withDensity_re_fourierInv`: the measure
+  `volume.withDensity (ENNReal.ofReal (𝓕⁻ F ·).re)` recovers `F` through the Fourier atom — the
+  `L¹` case of Bochner's theorem.
 * `TauCeti.exists_isFiniteMeasure_integral_fourierAtom_eq_of_isPositiveDefiniteKernel`:
   existence of a finite representing measure for a continuous positive-definite function.
 * `TauCeti.bochner`, with the Euclidean specialization
@@ -91,13 +90,6 @@ variable {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V]
   [FiniteDimensional ℝ V] [MeasurableSpace V] [BorelSpace V]
 
 /-! ### The L¹ representing measure -/
-
-/-- The measure with density `(𝓕⁻ F).re` against Lebesgue measure is finite whenever `𝓕⁻ F` is
-integrable. This is the total-mass half of the `L¹` case of Bochner's theorem. -/
-theorem isFiniteMeasure_withDensity_re_fourierInv (F : V → ℂ)
-    (hint_ft : Integrable (𝓕⁻ F)) :
-    IsFiniteMeasure (volume.withDensity fun ξ => ENNReal.ofReal (𝓕⁻ F ξ).re) :=
-  isFiniteMeasure_withDensity_ofReal hint_ft.re.2
 
 /-- **Bochner recovery for `L¹` positive-definite functions.** A continuous integrable function
 `F` with positive-definite subtraction kernel is the Fourier-convention transform
@@ -153,15 +145,14 @@ private theorem exists_probabilityMeasure_integral_fourierAtom_eq {G : V → ℂ
     integral_fourierAtom_withDensity_re_fourierInv _ (hGn_pd n) (hGn_int n) (hGn_cont n) v
   have hν_prob : ∀ n, IsProbabilityMeasure (ν n) := by
     intro n
-    have : IsFiniteMeasure (ν n) := isFiniteMeasure_withDensity_re_fourierInv _
-      (integrable_fourierInv_of_isPositiveDefiniteKernel _ (hGn_pd n) (hGn_int n) (hGn_cont n))
+    have : IsFiniteMeasure (ν n) := isFiniteMeasure_withDensity_ofReal
+      (integrable_fourierInv_of_isPositiveDefiniteKernel _ (hGn_pd n) (hGn_int n)
+        (hGn_cont n)).re.2
+    -- at `v = 0` the Fourier atom is `1` and the regularization keeps `G 0 = 1`, so the
+    -- representation reads `μ.real univ = 1`
     have h0 := hν_rep n 0
-    simp only [gaussianRegularize_apply, hG0, one_mul, norm_zero, ne_eq, OfNat.ofNat_ne_zero,
-      not_false_eq_true, zero_pow, mul_zero, neg_zero, Complex.ofReal_zero,
-      Complex.exp_zero] at h0
-    simp only [fourierAtom_apply, inner_zero_right, Complex.ofReal_zero, mul_zero,
-      Complex.exp_zero, integral_const, Complex.real_smul, mul_one,
-      Complex.ofReal_eq_one] at h0
+    simp only [fourierAtom_zero_left, gaussianRegularize_apply_zero, hG0, integral_const,
+      Complex.real_smul, mul_one, Complex.ofReal_eq_one] at h0
     exact isProbabilityMeasure_iff_real.mpr h0
   -- the pointwise limit of the characteristic functions
   set f : V → ℂ := fun t => G ((-2 * Real.pi)⁻¹ • t) with hf_def
@@ -214,9 +205,7 @@ theorem exists_isFiniteMeasure_integral_fourierAtom_eq_of_isPositiveDefiniteKern
   have h0re : 0 ≤ (F 0).re := by
     simpa using map_zero_re_nonneg_of_isPositiveDefiniteKernel hpd
   have h0eq : F 0 = ((F 0).re : ℂ) := by
-    have h0 : (0 : ℂ) ≤ F 0 := by
-      simpa using isPositiveDefiniteKernel_apply_self_nonneg hpd 0
-    exact Complex.ext (by simp) (by simp [← (Complex.nonneg_iff.mp h0).2])
+    simpa using map_zero_eq_ofReal_re_of_isPositiveDefiniteKernel hpd
   rcases h0re.eq_or_lt with hzero | hpos
   · -- degenerate case: `F 0 = 0` forces `F = 0`, represented by the zero measure
     have hF0 : F 0 = 0 := by rw [h0eq, ← hzero, Complex.ofReal_zero]

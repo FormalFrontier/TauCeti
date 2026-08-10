@@ -43,7 +43,7 @@ Building on this, the Fourier transform of such a function is itself *integrable
 against a shrinking family of Gaussians and using the Parseval/Fubini identity bounds
 `∫ (𝓕 F) · exp (-t‖·‖²)` by `(F 0).re` uniformly in `t`, and Fatou's lemma passes to the limit.
 
-Adapted from the Bochner–Minlos formalization by Michael R. Douglas
+Adapted (Apache 2.0) from the Bochner–Minlos formalization by Michael R. Douglas
 (https://github.com/mrdouglasny/bochner, revision `08eb302`), source files `Bochner/FejerPD.lean`
 and `Bochner/Main.lean`; the arguments are ported with the positive-definiteness hypotheses
 restated through `IsPositiveDefiniteKernel`.
@@ -52,8 +52,9 @@ restated through `IsPositiveDefiniteKernel`.
 
 * `TauCeti.fourier_re_nonneg_of_isPositiveDefiniteKernel`: the Fourier transform of a
   continuous integrable positive-definite function has nonnegative real part.
-* `TauCeti.fourier_im_eq_zero_of_isPositiveDefiniteKernel`: its imaginary part vanishes.
-* `TauCeti.fourier_eq_re_of_isPositiveDefiniteKernel`: it equals its own real part.
+* `TauCeti.fourier_im_eq_zero_of_isPositiveDefiniteKernel` and
+  `TauCeti.fourier_eq_re_of_isPositiveDefiniteKernel`: for an integrable such `F` (continuity is
+  not needed), the imaginary part of `𝓕 F` vanishes and `𝓕 F` equals its own real part.
 * `TauCeti.integrable_fourier_of_isPositiveDefiniteKernel`: the Fourier transform of a
   continuous integrable positive-definite function is integrable.
 * `TauCeti.fourierInv_re_nonneg_of_isPositiveDefiniteKernel`,
@@ -101,6 +102,15 @@ private theorem integral_simpleFunc_comp (sn : SimpleFunc α α) (g : α → ℂ
         rw [ENNReal.toReal_sum fun u _ => measure_ne_top μ _, Finset.sum_smul]
         exact Finset.sum_congr rfl fun u hu => by rw [(Finset.mem_filter.mp hu).2]
 
+/-- Precomposing any function with a simple function is a.e. strongly measurable: the composite
+is itself (the coercion of) a simple function. -/
+private theorem aestronglyMeasurable_comp_simpleFunc {β : Type*} [TopologicalSpace β]
+    (sn : SimpleFunc α α) (g : α → β) (μ : Measure α) :
+    AEStronglyMeasurable (fun x => g (sn x)) μ := by
+  rw [show (fun x => g (sn x)) = ⇑(sn.map g) from
+    funext fun x => (SimpleFunc.map_apply g sn x).symm]
+  exact (SimpleFunc.map _ _).aestronglyMeasurable
+
 end SimpleFuncExpansion
 
 variable {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V]
@@ -116,8 +126,8 @@ omit [InnerProductSpace ℝ V] [FiniteDimensional ℝ V] [MeasurableSpace V] [Bo
 /-- The positive-definite double sum attached to a subtraction kernel has nonnegative real
 part. -/
 private theorem re_sum_nonneg_of_kernel
-    (hpd : IsPositiveDefiniteKernel fun a b : V => ψ (a - b)) {n : ℕ}
-    (x : Fin n → V) (c : Fin n → ℂ) :
+    (hpd : IsPositiveDefiniteKernel fun a b : V => ψ (a - b)) {ι : Type*} [Fintype ι]
+    (x : ι → V) (c : ι → ℂ) :
     0 ≤ (∑ i, ∑ j, conj (c i) * c j * ψ (x i - x j)).re := by
   have h := (isPositiveDefiniteKernel_iff.mp hpd).2 x c
   exact (Complex.nonneg_iff.mp h).1
@@ -126,150 +136,128 @@ end KernelConsequences
 
 /-! ### Step A: the positive-definite double integral has nonnegative real part -/
 
+/-- Simple-function approximation of the Fejér double integral: for a finite measure, the double
+integrals along `StronglyMeasurable.approx id` converge to `∬ ψ (x - y)`.
+
+Dominated convergence twice, with the uniform bound `‖ψ z‖ ≤ (ψ 0).re` supplied by positive
+definiteness. -/
+private theorem exists_simpleFunc_tendsto_double_integral (ψ : V → ℂ)
+    (hpd : IsPositiveDefiniteKernel fun a b : V => ψ (a - b)) (hcont : Continuous ψ)
+    (μ : Measure V) [IsFiniteMeasure μ] :
+    ∃ s : ℕ → SimpleFunc V V,
+      Tendsto (fun n => ∫ x, ∫ y, ψ (s n x - s n y) ∂μ ∂μ) atTop
+        (nhds (∫ x, ∫ y, ψ (x - y) ∂μ ∂μ)) := by
+  have hid : StronglyMeasurable (id : V → V) := stronglyMeasurable_id
+  refine ⟨hid.approx, ?_⟩
+  have h_ptwise : ∀ x, Tendsto (fun n => hid.approx n x) atTop (nhds x) :=
+    fun x => by simpa using hid.tendsto_approx x
+  have hbound : ∀ z, ‖ψ z‖ ≤ (ψ 0).re := norm_apply_le_map_zero_re_of_isPositiveDefiniteKernel hpd
+  -- The inner integral converges for each `x` by dominated convergence.
+  have h_inner_conv : ∀ x, Tendsto
+      (fun n => ∫ y, ψ (hid.approx n x - hid.approx n y) ∂μ)
+      atTop (nhds (∫ y, ψ (x - y) ∂μ)) := by
+    intro x
+    have hmeas : ∀ n, AEStronglyMeasurable
+        (fun y => ψ (hid.approx n x - hid.approx n y)) μ := fun n =>
+      aestronglyMeasurable_comp_simpleFunc (hid.approx n)
+        (fun v => ψ (hid.approx n x - v)) μ
+    have hbd : ∀ n, ∀ᵐ y ∂μ, ‖ψ (hid.approx n x - hid.approx n y)‖ ≤ (ψ 0).re :=
+      fun n => ae_of_all _ (fun y => hbound _)
+    have hlim : ∀ᵐ y ∂μ, Tendsto
+        (fun n => ψ (hid.approx n x - hid.approx n y))
+        atTop (nhds (ψ (x - y))) :=
+      ae_of_all _ (fun y =>
+        (hcont.continuousAt.tendsto.comp ((h_ptwise x).sub (h_ptwise y))))
+    exact tendsto_integral_of_dominated_convergence
+      (fun _ => (ψ 0).re) hmeas (integrable_const _) hbd hlim
+  -- The outer integral converges by dominated convergence.
+  have hmeas2 : ∀ n, AEStronglyMeasurable
+      (fun x => ∫ y, ψ (hid.approx n x - hid.approx n y) ∂μ) μ := fun n =>
+    aestronglyMeasurable_comp_simpleFunc (hid.approx n)
+      (fun u => ∫ y, ψ (u - hid.approx n y) ∂μ) μ
+  have hbd2 : ∀ n, ∀ᵐ x ∂μ,
+      ‖∫ y, ψ (hid.approx n x - hid.approx n y) ∂μ‖ ≤
+        (ψ 0).re * (μ Set.univ).toReal := by
+    intro n
+    refine ae_of_all _ (fun x => ?_)
+    calc ‖∫ y, ψ (hid.approx n x - hid.approx n y) ∂μ‖
+        ≤ ∫ y, ‖ψ (hid.approx n x - hid.approx n y)‖ ∂μ :=
+          norm_integral_le_integral_norm _
+      _ ≤ ∫ _, (ψ 0).re ∂μ :=
+          integral_mono_of_nonneg (ae_of_all _ (fun _ => norm_nonneg _))
+            (integrable_const _) (ae_of_all _ (fun _ => hbound _))
+      _ = (ψ 0).re * (μ Set.univ).toReal := by
+          rw [integral_const, smul_eq_mul, mul_comm, measureReal_def]
+  exact tendsto_integral_of_dominated_convergence
+    (fun _ => (ψ 0).re * (μ Set.univ).toReal)
+    hmeas2 (integrable_const _) hbd2 (ae_of_all _ h_inner_conv)
+
+omit [InnerProductSpace ℝ V] [FiniteDimensional ℝ V] [BorelSpace V] in
+/-- For a simple function `sn`, the double integral `∬ ψ (sn x - sn y)` expands as the
+positive-definite double sum `∑ᵤᵥ μ(sn⁻¹{u}) μ(sn⁻¹{v}) ψ (u - v)` over the range of `sn`, whose
+coefficients are real; so its real part is nonnegative. -/
+private theorem re_double_integral_simpleFunc_nonneg (ψ : V → ℂ)
+    (hpd : IsPositiveDefiniteKernel fun a b : V => ψ (a - b))
+    (μ : Measure V) [IsFiniteMeasure μ] (sn : SimpleFunc V V) :
+    0 ≤ (∫ x, ∫ y, ψ (sn x - sn y) ∂μ ∂μ).re := by
+  classical
+  set R := sn.range with hR
+  have h_double_integral : (∫ x, ∫ y, ψ (sn x - sn y) ∂μ ∂μ) =
+      ∑ u ∈ R, ∑ v ∈ R,
+        ((μ (sn ⁻¹' {u})).toReal : ℂ) *
+        ((μ (sn ⁻¹' {v})).toReal : ℂ) * ψ (u - v) := by
+    have h_inner : ∀ x, ∫ y, ψ (sn x - sn y) ∂μ =
+        ∑ v ∈ R, (μ (⇑sn ⁻¹' {v})).toReal • ψ (sn x - v) :=
+      fun x => integral_simpleFunc_comp sn (fun v => ψ (sn x - v)) μ
+    simp_rw [h_inner, Complex.real_smul]
+    rw [integral_finsetSum _ (fun v _ => ?_)]
+    · -- Expand the outer integral via `integral_simpleFunc_comp`.
+      have h_expand : ∀ v, ∫ a, (↑(μ (⇑sn ⁻¹' {v})).toReal : ℂ) * ψ (sn a - v) ∂μ =
+          ∑ u ∈ R, (μ (⇑sn ⁻¹' {u})).toReal •
+            ((↑(μ (⇑sn ⁻¹' {v})).toReal : ℂ) * ψ (u - v)) := fun v =>
+        integral_simpleFunc_comp sn
+          (fun w => (↑(μ (⇑sn ⁻¹' {v})).toReal : ℂ) * ψ (w - v)) μ
+      simp_rw [h_expand]
+      rw [Finset.sum_comm]
+      congr 1
+      ext u
+      congr 1
+      ext v
+      rw [Complex.real_smul]
+      ring
+    · -- `c * ψ (sn · - v)` is integrable for the finite measure `μ`.
+      refine Integrable.const_mul ?_ _
+      rw [show (fun x => ψ (sn x - v)) = ⇑(sn.map fun u => ψ (u - v)) from
+        funext fun x => (SimpleFunc.map_apply (fun u => ψ (u - v)) sn x).symm]
+      exact SimpleFunc.integrable_of_isFiniteMeasure _
+  -- Reindex both sums over the coercion of `R` to a type, then apply positive definiteness.
+  rw [h_double_integral]
+  simp_rw [← Finset.sum_coe_sort R]
+  set c : R → ℂ := fun i => ((μ (sn ⁻¹' {(i : V)})).toReal : ℂ) with hc
+  have hpd_eval := re_sum_nonneg_of_kernel hpd (fun i : R => (i : V)) c
+  -- The coefficients are real, so the conjugation is the identity.
+  have hpd_match : (∑ i : R, ∑ j : R, conj (c i) * c j * ψ ((i : V) - (j : V))) =
+      ∑ i : R, ∑ j : R, c i * c j * ψ ((i : V) - (j : V)) :=
+    Finset.sum_congr rfl fun i _ => Finset.sum_congr rfl fun j _ => by
+      simp only [hc, Complex.conj_ofReal]
+  rwa [hpd_match] at hpd_eval
+
 /-- The double integral of a positive-definite function over `S × S` has nonnegative real part.
 
-Approximate `id : V → V` by simple functions `sₙ`. For each `sₙ`, the double integral
-`∬ ψ (sₙ x - sₙ y) ∂μ ∂μ` expands as `∑ᵢⱼ μ(Aᵢ) μ(Aⱼ) ψ (uᵢ - uⱼ)`, a positive-definite double
-sum with real coefficients, so its real part is nonnegative. The sums converge to
-`∬ ψ (x - y) ∂μ ∂μ` by dominated convergence, so nonnegativity passes to the limit.
+Approximate `id : V → V` by simple functions `sₙ`. Each `∬ ψ (sₙ x - sₙ y)` is a positive-definite
+double sum with real coefficients, so has nonnegative real part
+(`re_double_integral_simpleFunc_nonneg`); the sums converge to `∬ ψ (x - y)`
+(`exists_simpleFunc_tendsto_double_integral`), so nonnegativity passes to the limit.
 See Rudin, *Fourier Analysis on Groups*, proof of Theorem 1.4.3, step 1. -/
 private theorem pd_double_integral_re_nonneg (ψ : V → ℂ)
     (hpd : IsPositiveDefiniteKernel fun a b : V => ψ (a - b))
     (hcont : Continuous ψ) (S : Set V) (hSbdd : Bornology.IsBounded S) :
     0 ≤ (∫ x in S, ∫ y in S, ψ (x - y)).re := by
-  classical
   let μ := (volume : Measure V).restrict S
-  -- 1. Approximate `id` by simple functions; show the double integral converges.
-  have h_approx : ∃ (s : ℕ → SimpleFunc V V),
-      Tendsto (fun n => ∫ x, ∫ y, ψ (s n x - s n y) ∂μ ∂μ)
-        atTop (nhds (∫ x, ∫ y, ψ (x - y) ∂μ ∂μ)) := by
-    have hid : StronglyMeasurable (id : V → V) := stronglyMeasurable_id
-    refine ⟨hid.approx, ?_⟩
-    have h_ptwise : ∀ x, Tendsto (fun n => hid.approx n x) atTop (nhds x) :=
-      fun x => by simpa using hid.tendsto_approx x
-    -- Uniform bound from positive definiteness: `‖ψ z‖ ≤ (ψ 0).re` for all `z`.
-    have hbound : ∀ z, ‖ψ z‖ ≤ (ψ 0).re := norm_apply_le_map_zero_re_of_isPositiveDefiniteKernel hpd
-    have hfm : IsFiniteMeasure μ :=
-      ⟨by simpa [μ] using hSbdd.measure_lt_top⟩
-    -- The inner integral converges for each `x` by dominated convergence.
-    have h_inner_conv : ∀ x, Tendsto
-        (fun n => ∫ y, ψ (hid.approx n x - hid.approx n y) ∂μ)
-        atTop (nhds (∫ y, ψ (x - y) ∂μ)) := by
-      intro x
-      have hmeas : ∀ n, AEStronglyMeasurable
-          (fun y => ψ (hid.approx n x - hid.approx n y)) μ := by
-        intro n
-        have hsf : (fun y => ψ (hid.approx n x - hid.approx n y)) =
-            ⇑((hid.approx n).map (fun v => ψ (hid.approx n x - v))) := by
-          ext y
-          simp [SimpleFunc.map_apply]
-        rw [hsf]
-        exact (SimpleFunc.map _ _).aestronglyMeasurable
-      have hbd : ∀ n, ∀ᵐ y ∂μ, ‖ψ (hid.approx n x - hid.approx n y)‖ ≤ (ψ 0).re :=
-        fun n => ae_of_all _ (fun y => hbound _)
-      have hlim : ∀ᵐ y ∂μ, Tendsto
-          (fun n => ψ (hid.approx n x - hid.approx n y))
-          atTop (nhds (ψ (x - y))) :=
-        ae_of_all _ (fun y =>
-          (hcont.continuousAt.tendsto.comp ((h_ptwise x).sub (h_ptwise y))))
-      exact tendsto_integral_of_dominated_convergence
-        (fun _ => (ψ 0).re) hmeas (integrable_const _) hbd hlim
-    -- The outer integral converges by dominated convergence.
-    have hmeas2 : ∀ n, AEStronglyMeasurable
-        (fun x => ∫ y, ψ (hid.approx n x - hid.approx n y) ∂μ) μ := by
-      intro n
-      have hsf : (fun x => ∫ y, ψ (hid.approx n x - hid.approx n y) ∂μ) =
-          ⇑((hid.approx n).map
-            (fun u => ∫ y, ψ (u - hid.approx n y) ∂μ)) := by
-        ext x
-        simp [SimpleFunc.map_apply]
-      rw [hsf]
-      exact (SimpleFunc.map _ _).aestronglyMeasurable
-    have hbd2 : ∀ n, ∀ᵐ x ∂μ,
-        ‖∫ y, ψ (hid.approx n x - hid.approx n y) ∂μ‖ ≤
-          (ψ 0).re * (μ Set.univ).toReal := by
-      intro n
-      refine ae_of_all _ (fun x => ?_)
-      calc ‖∫ y, ψ (hid.approx n x - hid.approx n y) ∂μ‖
-          ≤ ∫ y, ‖ψ (hid.approx n x - hid.approx n y)‖ ∂μ :=
-            norm_integral_le_integral_norm _
-        _ ≤ ∫ _, (ψ 0).re ∂μ :=
-            integral_mono_of_nonneg (ae_of_all _ (fun _ => norm_nonneg _))
-              (integrable_const _) (ae_of_all _ (fun _ => hbound _))
-        _ = (ψ 0).re * (μ Set.univ).toReal := by
-            rw [integral_const, smul_eq_mul, mul_comm, measureReal_def]
-    exact tendsto_integral_of_dominated_convergence
-      (fun _ => (ψ 0).re * (μ Set.univ).toReal)
-      hmeas2 (integrable_const _) hbd2 (ae_of_all _ h_inner_conv)
-  rcases h_approx with ⟨s, hs_tendsto⟩
-  -- 2. For a simple function, the double integral expands to a positive-definite sum.
-  have h_sum : ∀ n, 0 ≤ (∫ x, ∫ y, ψ (s n x - s n y) ∂μ ∂μ).re := by
-    intro n
-    let sn := s n
-    let R := sn.range
-    have hfm : IsFiniteMeasure μ :=
-      ⟨by simpa [μ] using hSbdd.measure_lt_top⟩
-    have h_double_integral : (∫ x, ∫ y, ψ (sn x - sn y) ∂μ ∂μ) =
-        ∑ u ∈ R, ∑ v ∈ R,
-          ((μ (sn ⁻¹' {u})).toReal : ℂ) *
-          ((μ (sn ⁻¹' {v})).toReal : ℂ) * ψ (u - v) := by
-      have h_inner : ∀ x, ∫ y, ψ (sn x - sn y) ∂μ =
-          ∑ v ∈ R, (μ (⇑sn ⁻¹' {v})).toReal • ψ (sn x - v) :=
-        fun x => integral_simpleFunc_comp sn (fun v => ψ (sn x - v)) μ
-      simp_rw [h_inner, Complex.real_smul]
-      rw [integral_finsetSum _ (fun v _ => ?_)]
-      · -- Expand the outer integral via `integral_simpleFunc_comp`.
-        have h_expand : ∀ v, ∫ a, (↑(μ (⇑sn ⁻¹' {v})).toReal : ℂ) * ψ (sn a - v) ∂μ =
-            ∑ u ∈ R, (μ (⇑sn ⁻¹' {u})).toReal •
-              ((↑(μ (⇑sn ⁻¹' {v})).toReal : ℂ) * ψ (u - v)) := fun v =>
-          integral_simpleFunc_comp sn
-            (fun w => (↑(μ (⇑sn ⁻¹' {v})).toReal : ℂ) * ψ (w - v)) μ
-        simp_rw [h_expand]
-        rw [Finset.sum_comm]
-        congr 1
-        ext u
-        congr 1
-        ext v
-        rw [Complex.real_smul]
-        ring
-      · -- `c * ψ (sn · - v)` is integrable for the finite measure `μ`.
-        refine Integrable.const_mul ?_ _
-        have hsf : (fun x => ψ (sn x - v)) = ⇑(sn.map (fun u => ψ (u - v))) := by
-          ext x
-          simp [SimpleFunc.map_apply]
-        rw [hsf]
-        exact SimpleFunc.integrable_of_isFiniteMeasure _
-    rw [h_double_integral]
-    -- Reindex the `Finset` sum to `Fin m` and apply positive definiteness.
-    let m := R.card
-    have ⟨e, _⟩ : ∃ e : Fin m ≃ R, True := ⟨R.equivFin.symm, trivial⟩
-    have h_reindex : (∑ u ∈ R, ∑ v ∈ R,
-        ((μ (sn ⁻¹' {u})).toReal : ℂ) *
-        ((μ (sn ⁻¹' {v})).toReal : ℂ) * ψ (u - v)) =
-      ∑ i : Fin m, ∑ j : Fin m,
-        ((μ (sn ⁻¹' {(e i : V)})).toReal : ℂ) *
-        ((μ (sn ⁻¹' {(e j : V)})).toReal : ℂ) * ψ ((e i : V) - (e j : V)) := by
-      rw [← Finset.sum_coe_sort R]
-      exact Fintype.sum_equiv e.symm _ _ (fun i => by
-        rw [← Finset.sum_coe_sort R]
-        exact Fintype.sum_equiv e.symm _ _ (fun j => by simp))
-    rw [h_reindex]
-    let c : Fin m → ℂ := fun i => ((μ (sn ⁻¹' {(e i : V)})).toReal : ℂ)
-    let x_pts : Fin m → V := fun i => (e i : V)
-    have hpd_eval := re_sum_nonneg_of_kernel hpd x_pts c
-    -- The coefficients are real, so the conjugation is the identity.
-    have hpd_match : (∑ i : Fin m, ∑ j : Fin m,
-        conj (c i) * c j * ψ (x_pts i - x_pts j)) =
-      ∑ i : Fin m, ∑ j : Fin m, c i * c j * ψ (x_pts i - x_pts j) := by
-      refine Finset.sum_congr rfl (fun i _ => Finset.sum_congr rfl (fun j _ => ?_))
-      simp only [c, Complex.conj_ofReal]
-    rwa [hpd_match] at hpd_eval
-  -- 3. Pass to the limit.
-  have h_re_tendsto : Tendsto
-      (fun n => (∫ x, ∫ y, ψ (s n x - s n y) ∂μ ∂μ).re)
-      atTop (nhds (∫ x, ∫ y, ψ (x - y) ∂μ ∂μ).re) :=
-    (Complex.continuous_re.tendsto _).comp hs_tendsto
-  exact ge_of_tendsto' h_re_tendsto h_sum
+  have hfm : IsFiniteMeasure μ := ⟨by simpa [μ] using hSbdd.measure_lt_top⟩
+  obtain ⟨s, hs_tendsto⟩ := exists_simpleFunc_tendsto_double_integral ψ hpd hcont μ
+  exact ge_of_tendsto' ((Complex.continuous_re.tendsto _).comp hs_tendsto)
+    fun n => re_double_integral_simpleFunc_nonneg ψ hpd μ (s n)
 
 /-! ### The Fejér overlap ratio -/
 
@@ -340,51 +328,50 @@ private theorem overlapRatio_tendsto_one (v : V) :
       exact Tendsto.congr' (EventuallyEq.symm h1)
         (by simpa using Tendsto.sub tendsto_const_nhds hc)
     simpa using h.pow (n := d)
-  apply Filter.Tendsto.squeeze' hlower
-    -- Upper bound: the constant `1`.
-    tendsto_const_nhds
-    -- The ratio dominates the lower bound eventually.
-    (by filter_upwards [Filter.eventually_gt_atTop (⌈‖v‖⌉₊)] with n hn
-        have hn_gt : ‖v‖ < (n : ℝ) :=
-          lt_of_le_of_lt (Nat.le_ceil _) (Nat.cast_lt.mpr hn)
-        have hn_pos : (0 : ℝ) < n := by linarith [norm_nonneg v]
-        have hsub_nn : (0 : ℝ) ≤ ↑n - ‖v‖ := by linarith
-        have hvol_pos := Metric.measure_closedBall_pos (volume : Measure V) 0 hn_pos
-        have hvol_ne_top : volume (Metric.closedBall (0 : V) (↑n)) ≠ ⊤ :=
-          ne_of_lt measure_closedBall_lt_top
-        have hvol_toReal_pos : 0 < (volume (Metric.closedBall (0 : V) (↑n))).toReal :=
-          ENNReal.toReal_pos (ne_of_gt hvol_pos) hvol_ne_top
-        unfold overlapRatio
-        rw [if_neg (ne_of_gt hvol_toReal_pos)]
-        have hball_pos : 0 < (volume (Metric.ball (0 : V) 1)).toReal :=
-          ENNReal.toReal_pos (ne_of_gt (Metric.measure_ball_pos volume 0 one_pos))
-            (ne_of_lt measure_ball_lt_top)
-        have hvol_sub : (volume (Metric.closedBall (0 : V) (↑n - ‖v‖))).toReal =
-            (↑n - ‖v‖) ^ d * (volume (Metric.ball (0 : V) 1)).toReal := by
-          rw [Measure.addHaar_closedBall volume (0 : V) hsub_nn, ENNReal.toReal_mul,
-              ENNReal.toReal_ofReal (by positivity)]
-        have hvol_n : (volume (Metric.closedBall (0 : V) (↑n))).toReal =
-            (↑n) ^ d * (volume (Metric.ball (0 : V) 1)).toReal := by
-          rw [Measure.addHaar_closedBall volume (0 : V) hn_pos.le, ENNReal.toReal_mul,
-              ENNReal.toReal_ofReal (by positivity)]
-        calc ((↑n - ‖v‖) / ↑n) ^ d
-            = (↑n - ‖v‖) ^ d / (↑n) ^ d := by rw [div_pow]
-          _ = ((↑n - ‖v‖) ^ d * (volume (Metric.ball (0 : V) 1)).toReal) /
-              ((↑n) ^ d * (volume (Metric.ball (0 : V) 1)).toReal) := by
-              rw [mul_div_mul_right _ _ (ne_of_gt hball_pos)]
-          _ = (volume (Metric.closedBall (0 : V) (↑n - ‖v‖))).toReal /
-              (volume (Metric.closedBall (0 : V) (↑n))).toReal := by
-              rw [hvol_sub, hvol_n]
-          _ ≤ (volume (Metric.closedBall (0 : V) (↑n) ∩ Metric.closedBall v (↑n))).toReal /
-              (volume (Metric.closedBall (0 : V) (↑n))).toReal :=
-              div_le_div_of_nonneg_right
-                (ENNReal.toReal_mono
-                  (ne_of_lt (lt_of_le_of_lt (measure_mono Set.inter_subset_left)
-                    measure_closedBall_lt_top))
-                  (measure_mono (closedBall_sub_norm_subset v ↑n)))
-                hvol_toReal_pos.le)
-    -- The ratio is at most `1`.
-    (Filter.Eventually.of_forall (fun n => overlapRatio_le_one (n : ℝ) v))
+  -- The ratio dominates the lower bound once `n > ‖v‖`, by the Haar ball formula.
+  have hdom : ∀ᶠ n : ℕ in atTop, ((↑n - ‖v‖) / ↑n) ^ d ≤ overlapRatio (n : ℝ) v := by
+    filter_upwards [Filter.eventually_gt_atTop (⌈‖v‖⌉₊)] with n hn
+    have hn_gt : ‖v‖ < (n : ℝ) :=
+      lt_of_le_of_lt (Nat.le_ceil _) (Nat.cast_lt.mpr hn)
+    have hn_pos : (0 : ℝ) < n := by linarith [norm_nonneg v]
+    have hsub_nn : (0 : ℝ) ≤ ↑n - ‖v‖ := by linarith
+    have hvol_pos := Metric.measure_closedBall_pos (volume : Measure V) 0 hn_pos
+    have hvol_ne_top : volume (Metric.closedBall (0 : V) (↑n)) ≠ ⊤ :=
+      ne_of_lt measure_closedBall_lt_top
+    have hvol_toReal_pos : 0 < (volume (Metric.closedBall (0 : V) (↑n))).toReal :=
+      ENNReal.toReal_pos (ne_of_gt hvol_pos) hvol_ne_top
+    unfold overlapRatio
+    rw [if_neg (ne_of_gt hvol_toReal_pos)]
+    have hball_pos : 0 < (volume (Metric.ball (0 : V) 1)).toReal :=
+      ENNReal.toReal_pos (ne_of_gt (Metric.measure_ball_pos volume 0 one_pos))
+        (ne_of_lt measure_ball_lt_top)
+    have hvol_sub : (volume (Metric.closedBall (0 : V) (↑n - ‖v‖))).toReal =
+        (↑n - ‖v‖) ^ d * (volume (Metric.ball (0 : V) 1)).toReal := by
+      rw [Measure.addHaar_closedBall volume (0 : V) hsub_nn, ENNReal.toReal_mul,
+          ENNReal.toReal_ofReal (by positivity)]
+    have hvol_n : (volume (Metric.closedBall (0 : V) (↑n))).toReal =
+        (↑n) ^ d * (volume (Metric.ball (0 : V) 1)).toReal := by
+      rw [Measure.addHaar_closedBall volume (0 : V) hn_pos.le, ENNReal.toReal_mul,
+          ENNReal.toReal_ofReal (by positivity)]
+    calc ((↑n - ‖v‖) / ↑n) ^ d
+        = (↑n - ‖v‖) ^ d / (↑n) ^ d := by rw [div_pow]
+      _ = ((↑n - ‖v‖) ^ d * (volume (Metric.ball (0 : V) 1)).toReal) /
+          ((↑n) ^ d * (volume (Metric.ball (0 : V) 1)).toReal) := by
+          rw [mul_div_mul_right _ _ (ne_of_gt hball_pos)]
+      _ = (volume (Metric.closedBall (0 : V) (↑n - ‖v‖))).toReal /
+          (volume (Metric.closedBall (0 : V) (↑n))).toReal := by
+          rw [hvol_sub, hvol_n]
+      _ ≤ (volume (Metric.closedBall (0 : V) (↑n) ∩ Metric.closedBall v (↑n))).toReal /
+          (volume (Metric.closedBall (0 : V) (↑n))).toReal :=
+          div_le_div_of_nonneg_right
+            (ENNReal.toReal_mono
+              (ne_of_lt (lt_of_le_of_lt (measure_mono Set.inter_subset_left)
+                measure_closedBall_lt_top))
+              (measure_mono (closedBall_sub_norm_subset v ↑n)))
+            hvol_toReal_pos.le
+  -- Squeeze between that lower bound and the constant `1`.
+  exact Filter.Tendsto.squeeze' hlower tendsto_const_nhds hdom
+    (Filter.Eventually.of_forall fun n => overlapRatio_le_one (n : ℝ) v)
 
 /-! ### Step B: the Fubini identity for the Fejér average -/
 
@@ -592,9 +579,9 @@ theorem fourier_re_nonneg_of_isPositiveDefiniteKernel (F : V → ℂ)
   -- Step 4: apply the Fejér average bound.
   exact pd_integral_re_nonneg _ hψ_pd hψ_int hψ_cont
 
-/-- The Fourier transform of a continuous integrable positive-definite function on a
-finite-dimensional real inner-product space has vanishing imaginary part, by Hermitian symmetry
-and the negation invariance of Haar measure.
+/-- The Fourier transform of an integrable function whose subtraction kernel is positive definite,
+on a finite-dimensional real inner-product space, has vanishing imaginary part — by Hermitian
+symmetry and the negation invariance of Haar measure.
 
 The argument never uses `_hint`, and the statement is provable without it: each step —
 `Real.fourier_eq`, `integral_conj`, `integral_neg_eq_self` — is an equality that survives a
@@ -602,8 +589,10 @@ divergent integral, both sides then being the default value `0`. So requiring in
 deliberate design choice, not a proof obligation. Without it `𝓕 F` is that default value rather
 than the Fourier transform, so on a non-integrable positive-definite function such as `F = 1` the
 conclusion degenerates to `(0 : ℂ).im = 0`; keeping those vacuous instances out of the public API
-is worth the strength given up. Hence the hypothesis is bound as `_hint`. -/
-@[simp]
+is worth the strength given up. Hence the hypothesis is bound as `_hint`.
+
+Not a `@[simp]` lemma: neither side condition is dischargeable by `simp`'s discharger, so the
+rule would be tried against every `(𝓕 _ _).im` and never fire. -/
 theorem fourier_im_eq_zero_of_isPositiveDefiniteKernel (F : V → ℂ)
     (hpd : IsPositiveDefiniteKernel fun a b : V => F (a - b)) (_hint : Integrable F) (ξ : V) :
     (𝓕 F ξ).im = 0 := by
@@ -612,8 +601,7 @@ theorem fourier_im_eq_zero_of_isPositiveDefiniteKernel (F : V → ℂ)
     rw [← integral_conj]
     have hpt : ∀ v : V, conj (fourierAtom ξ v * F v) = fourierAtom ξ (-v) * F (-v) := by
       intro v
-      rw [map_mul, (fun v => by simpa using isPositiveDefiniteKernel_conj_symm hpd v 0 :
-    ∀ v, conj (F v) = F (-v)) v]
+      rw [map_mul, map_neg_eq_conj_of_isPositiveDefiniteKernel hpd v]
       congr 1
       rw [fourierAtom_eq_fourierChar, fourierAtom_eq_fourierChar,
         Circle.starRingEnd_addChar]
@@ -624,8 +612,8 @@ theorem fourier_im_eq_zero_of_isPositiveDefiniteKernel (F : V → ℂ)
   simp only [Complex.conj_im] at him
   linarith
 
-/-- The Fourier transform of a continuous integrable positive-definite function on a
-finite-dimensional real inner-product space is real: it equals the coercion of its own real
+/-- The Fourier transform of an integrable function whose subtraction kernel is positive definite,
+on a finite-dimensional real inner-product space, is real: it equals the coercion of its own real
 part.
 
 As in `fourier_im_eq_zero_of_isPositiveDefiniteKernel`, `hint` is a design choice rather than a
@@ -823,8 +811,8 @@ theorem fourierInv_re_nonneg_of_isPositiveDefiniteKernel (F : V → ℂ)
   rw [Real.fourierInv_eq_fourier_neg]
   exact fourier_re_nonneg_of_isPositiveDefiniteKernel F hpd hint hcont (-ξ)
 
-/-- The inverse Fourier transform of a continuous integrable positive-definite function is real:
-it equals the coercion of its own real part. As in
+/-- The inverse Fourier transform of an integrable function whose subtraction kernel is positive
+definite is real: it equals the coercion of its own real part. As in
 `fourier_im_eq_zero_of_isPositiveDefiniteKernel`, `hint` is a design choice rather than a proof
 obligation: it keeps the statement from being read off the default value of a divergent
 integral. -/
