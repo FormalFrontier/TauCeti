@@ -431,14 +431,14 @@ def typeDSimpleRoot (n : ℕ) (hn : 4 ≤ n) (i : Fin n) : Fin n → ℤ :=
 /-- The chain simple roots of type `Dₙ`, the `Fin`-indices `0` to `n - 2`: the `i`-th one is
 `e_i - e_{i+1}`. Here and below both the simple roots and the coordinates `e_j` are indexed from
 zero, so `Fin`-index `i` is Bourbaki node `i + 1`. -/
-theorem typeDSimpleRoot_of_add_one_lt (hn : 4 ≤ n) {i : Fin n} (hi : (i : ℕ) + 1 < n) :
+@[simp] theorem typeDSimpleRoot_of_add_one_lt (hn : 4 ≤ n) {i : Fin n} (hi : (i : ℕ) + 1 < n) :
     typeDSimpleRoot n hn i = Pi.single i 1 - Pi.single ⟨(i : ℕ) + 1, hi⟩ 1 :=
   dif_pos hi
 
 /-- The fork simple root of type `Dₙ`, the `Fin`-index `n - 1` and so Bourbaki node `n`: in the
 zero-based coordinates it is `e_{n-2} + e_{n-1}`, the only simple root that is not a difference of
 two coordinates. -/
-theorem typeDSimpleRoot_of_not_add_one_lt (hn : 4 ≤ n) {i : Fin n} (hi : ¬(i : ℕ) + 1 < n) :
+@[simp] theorem typeDSimpleRoot_of_not_add_one_lt (hn : 4 ≤ n) {i : Fin n} (hi : ¬(i : ℕ) + 1 < n) :
     typeDSimpleRoot n hn i =
       Pi.single ⟨n - 2, by omega⟩ 1 + Pi.single ⟨n - 1, by omega⟩ 1 :=
   dif_neg hi

@@ -6,8 +6,6 @@ module
 
 public import TauCeti.LinearAlgebra.RootSystem.ClassicalTypeD
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.Basic
-public import Mathlib.LinearAlgebra.Matrix.Dual
-public import Mathlib.LinearAlgebra.RootSystem.Base
 
 public section
 
@@ -353,7 +351,7 @@ coroot lattice, so that the datum is the simply connected one. -/
 
 /-- The pairing of two simple roots of the pinned datum is the corresponding entry of the
 Bourbaki-numbered Cartan matrix. -/
-theorem pairing_typeDSimpleIndex (hn : 4 ≤ n) (i j : Fin n) :
+@[simp] theorem pairing_typeDSimpleIndex (hn : 4 ≤ n) (i j : Fin n) :
     (typeDSimplyConnectedRootDatum n hn).pairing (typeDSimpleIndex n hn i)
         (typeDSimpleIndex n hn j) = CartanMatrix.D n i j := by
   rw [pairing_typeDSimplyConnectedRootDatum, root_typeDSimpleIndex, coroot_typeDSimpleIndex,

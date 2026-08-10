@@ -4,8 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+public import TauCeti.LinearAlgebra.Matrix.Dual
 public import TauCeti.LinearAlgebra.RootSystem.DynkinType
-public import Mathlib.LinearAlgebra.Matrix.Dual
 public import Mathlib.LinearAlgebra.RootSystem.Base
 
 public section
@@ -33,27 +33,14 @@ files, such as `TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.A` and
 * `TauCeti.sum_smul_mem_or_neg_mem_closure`: a combination of a family with coefficients of one
   sign lies in the additive closure of the family, or its negative does. This is the shape in which
   the two membership axioms of `RootPairing.Base` are met.
-* The instance that the dot product on `ι → R` is a perfect pairing of that lattice with itself.
+
+Every pinned datum of Layer 6 pairs its two lattices by the dot product, which is a perfect pairing
+by `TauCeti.dotProductBilin_isPerfPair` in `TauCeti/LinearAlgebra/Matrix/Dual.lean`.
 -/
 
 namespace TauCeti
 
 open Function Set
-
-/-! ## The dot product as the pinned pairing -/
-
-/-- The dot product on `ι → R` is a perfect pairing of that lattice with itself: it is Mathlib's
-`dotProductEquiv` read as a bilinear map. Every pinned datum of Layer 6 pairs its two lattices this
-way. -/
-instance dotProductBilin_isPerfPair (R ι : Type*) [CommRing R] [Fintype ι] :
-    (dotProductBilin R R : (ι → R) →ₗ[R] (ι → R) →ₗ[R] R).IsPerfPair := by
-  classical
-  have h : (dotProductBilin R R : (ι → R) →ₗ[R] (ι → R) →ₗ[R] R) =
-      (dotProductEquiv R ι).toLinearMap := by
-    ext x y
-    simp
-  rw [h]
-  infer_instance
 
 /-! ## The support of a pinned base -/
 
@@ -80,7 +67,7 @@ theorem image_simpleSupport {M : Type*} (f : ι → M) :
 
 /-- Linear independence of the simple members of a family is linear independence on the pinned
 support, the form in which `RootPairing.Base` asks for it. -/
-theorem linearIndepOn_simpleSupport {R M : Type*} [Ring R] [AddCommGroup M] [Module R M]
+theorem linearIndepOn_simpleSupport {R M : Type*} [Semiring R] [AddCommMonoid M] [Module R M]
     (f : ι → M) (h : LinearIndependent R (f ∘ e)) : LinearIndepOn R f (simpleSupport he) := by
   rw [coe_simpleSupport]
   exact (linearIndepOn_range_iff he f).mpr h
