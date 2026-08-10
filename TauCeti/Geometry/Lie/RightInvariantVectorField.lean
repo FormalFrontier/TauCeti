@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Geometry.Lie.InvariantVectorField
+public import TauCeti.Geometry.Lie.InvariantVectorField.Basic
 
 /-!
 # Right-invariant vector fields on Lie groups
@@ -42,7 +42,7 @@ This supplies a prerequisite for Deliverable A, Layer 1 of
 * The definition mirrors Sébastien Gouëzel's Mathlib `mulInvariantVectorField`.
 * The smoothness proofs adapt `contMDiff_mulInvariantVectorField_modelSpace` and
   `contMDiff_mulInvariantVectorField_infty` from
-  `TauCeti.Geometry.Lie.InvariantVectorField`; those results in turn adapt Gouëzel's proof of
+  `TauCeti.Geometry.Lie.InvariantVectorField.Basic`; those results in turn adapt Gouëzel's proof of
   Mathlib's `contMDiff_mulInvariantVectorField`.
 * The pullback results `inverse_mfderiv_mul_right`, `mpullback_mulRightInvariantVectorField`, and
   `mulRightInvariantVectorField_eq_mpullback`, together with the addition and scalar-multiplication
