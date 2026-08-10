@@ -233,9 +233,8 @@ theorem exists_isClosedImmersion_generalLinear
       (MorphismProperty.over_iso_iff
         (@LocallyOfFiniteType : MorphismProperty Scheme.{u})
           ((Grp.forget _).mapIso e)).mp
-        (show LocallyOfFiniteType G.obj.X.hom from inferInstance)
-    change LocallyOfFiniteType
-      (Spec.map (CommRingCat.ofHom (algebraMap k A))) at hA
+        (inferInstance : LocallyOfFiniteType G.obj.X.hom)
+    rw [hopfSpec_obj_X_hom] at hA
     apply RingHom.finiteType_algebraMap.mp
     exact (HasRingHomProperty.Spec_iff (P := @LocallyOfFiniteType)).mp hA
   let : Algebra.FiniteType k A := hAfinite
