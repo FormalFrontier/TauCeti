@@ -91,8 +91,22 @@ def diagramPerm : (d : GraphTwistedIndex) → Equiv.Perm (Fin d.1.rank)
 /-- The order of the diagram permutation of a graph-twisted index: the superscript in the printed
 family name. It is `1` on the untwisted families, `2` on `²Aₙ`, `²Dₙ` and `²E₆`, and `3` on
 `³D₄`. -/
-noncomputable def twistOrder (d : GraphTwistedIndex) : ℕ :=
-  orderOf d.diagramPerm
+def twistOrder : GraphTwistedIndex → ℕ
+  | ⟨⟨.A _ _, _⟩, _⟩ => 1
+  | ⟨⟨.B _ _, _⟩, _⟩ => 1
+  | ⟨⟨.C _ _, _⟩, _⟩ => 1
+  | ⟨⟨.D _ _, _⟩, _⟩ => 1
+  | ⟨⟨.E6 _, _⟩, _⟩ => 1
+  | ⟨⟨.E7 _, _⟩, _⟩ => 1
+  | ⟨⟨.E8 _, _⟩, _⟩ => 1
+  | ⟨⟨.F4 _, _⟩, _⟩ => 1
+  | ⟨⟨.G2 _, _⟩, _⟩ => 1
+  | ⟨⟨.twistedA _ _, _⟩, _⟩ => 2
+  | ⟨⟨.twistedD _ _, _⟩, _⟩ => 2
+  | ⟨⟨.twistedE6 _, _⟩, _⟩ => 2
+  | ⟨⟨.trialityD4 _, _⟩, _⟩ => 3
+  | ⟨⟨.suzuki _, _⟩, hh⟩ | ⟨⟨.reeG2 _, _⟩, hh⟩ | ⟨⟨.reeF4 _, _⟩, hh⟩ | ⟨⟨.tits, _⟩, hh⟩ =>
+      absurd ((usesHalfFrobenius_iff _).mpr trivial) hh
 
 /-! ### The pinned table
 
@@ -111,7 +125,7 @@ variable {n : ℕ} {q : PrimePower}
 
 @[simp] theorem twistOrder_A (hv : (LieTypeIndex.A n q).Valid) :
     twistOrder ⟨⟨_, hv⟩, by simp [usesHalfFrobenius_iff]⟩ = 1 := by
-  simp only [twistOrder, diagramPerm, orderOf_one]
+  simp only [twistOrder]
 
 /-- The untwisted family `Bₙ(q)` is not graph-twisted. -/
 @[simp] theorem diagramPerm_B (hv : (LieTypeIndex.B n q).Valid) :
@@ -120,7 +134,7 @@ variable {n : ℕ} {q : PrimePower}
 
 @[simp] theorem twistOrder_B (hv : (LieTypeIndex.B n q).Valid) :
     twistOrder ⟨⟨_, hv⟩, by simp [usesHalfFrobenius_iff]⟩ = 1 := by
-  simp only [twistOrder, diagramPerm, orderOf_one]
+  simp only [twistOrder]
 
 /-- The untwisted family `Cₙ(q)` is not graph-twisted. -/
 @[simp] theorem diagramPerm_C (hv : (LieTypeIndex.C n q).Valid) :
@@ -129,7 +143,7 @@ variable {n : ℕ} {q : PrimePower}
 
 @[simp] theorem twistOrder_C (hv : (LieTypeIndex.C n q).Valid) :
     twistOrder ⟨⟨_, hv⟩, by simp [usesHalfFrobenius_iff]⟩ = 1 := by
-  simp only [twistOrder, diagramPerm, orderOf_one]
+  simp only [twistOrder]
 
 /-- The untwisted family `Dₙ(q)` is not graph-twisted; its fork exchange is `²Dₙ(q)`. -/
 @[simp] theorem diagramPerm_D (hv : (LieTypeIndex.D n q).Valid) :
@@ -138,7 +152,7 @@ variable {n : ℕ} {q : PrimePower}
 
 @[simp] theorem twistOrder_D (hv : (LieTypeIndex.D n q).Valid) :
     twistOrder ⟨⟨_, hv⟩, by simp [usesHalfFrobenius_iff]⟩ = 1 := by
-  simp only [twistOrder, diagramPerm, orderOf_one]
+  simp only [twistOrder]
 
 /-- The untwisted family `E₆(q)` is not graph-twisted; its diagram symmetry is `²E₆(q)`. -/
 @[simp] theorem diagramPerm_E6 (hv : (LieTypeIndex.E6 q).Valid) :
@@ -147,7 +161,7 @@ variable {n : ℕ} {q : PrimePower}
 
 @[simp] theorem twistOrder_E6 (hv : (LieTypeIndex.E6 q).Valid) :
     twistOrder ⟨⟨_, hv⟩, by simp [usesHalfFrobenius_iff]⟩ = 1 := by
-  simp only [twistOrder, diagramPerm, orderOf_one]
+  simp only [twistOrder]
 
 /-- The family `E₇(q)` is not graph-twisted; the `E₇` diagram has no nontrivial symmetry. -/
 @[simp] theorem diagramPerm_E7 (hv : (LieTypeIndex.E7 q).Valid) :
@@ -156,7 +170,7 @@ variable {n : ℕ} {q : PrimePower}
 
 @[simp] theorem twistOrder_E7 (hv : (LieTypeIndex.E7 q).Valid) :
     twistOrder ⟨⟨_, hv⟩, by simp [usesHalfFrobenius_iff]⟩ = 1 := by
-  simp only [twistOrder, diagramPerm, orderOf_one]
+  simp only [twistOrder]
 
 /-- The family `E₈(q)` is not graph-twisted; the `E₈` diagram has no nontrivial symmetry. -/
 @[simp] theorem diagramPerm_E8 (hv : (LieTypeIndex.E8 q).Valid) :
@@ -165,7 +179,7 @@ variable {n : ℕ} {q : PrimePower}
 
 @[simp] theorem twistOrder_E8 (hv : (LieTypeIndex.E8 q).Valid) :
     twistOrder ⟨⟨_, hv⟩, by simp [usesHalfFrobenius_iff]⟩ = 1 := by
-  simp only [twistOrder, diagramPerm, orderOf_one]
+  simp only [twistOrder]
 
 /-- The family `F₄(q)` is not graph-twisted; the length-exchanging symmetry of the `F₄` diagram is
 not an automorphism of its Cartan matrix, and enters only through the half-Frobenius of `²F₄`. -/
@@ -175,7 +189,7 @@ not an automorphism of its Cartan matrix, and enters only through the half-Frobe
 
 @[simp] theorem twistOrder_F4 (hv : (LieTypeIndex.F4 q).Valid) :
     twistOrder ⟨⟨_, hv⟩, by simp [usesHalfFrobenius_iff]⟩ = 1 := by
-  simp only [twistOrder, diagramPerm, orderOf_one]
+  simp only [twistOrder]
 
 /-- The family `G₂(q)` is not graph-twisted; the length-exchanging symmetry of the `G₂` diagram is
 not an automorphism of its Cartan matrix, and enters only through the half-Frobenius of `²G₂`. -/
@@ -185,7 +199,7 @@ not an automorphism of its Cartan matrix, and enters only through the half-Frobe
 
 @[simp] theorem twistOrder_G2 (hv : (LieTypeIndex.G2 q).Valid) :
     twistOrder ⟨⟨_, hv⟩, by simp [usesHalfFrobenius_iff]⟩ = 1 := by
-  simp only [twistOrder, diagramPerm, orderOf_one]
+  simp only [twistOrder]
 
 end Untwisted
 
@@ -201,8 +215,7 @@ variable {n : ℕ} {q : PrimePower}
 
 @[simp] theorem twistOrder_twistedA (hv : (LieTypeIndex.twistedA n q).Valid) :
     twistOrder ⟨⟨_, hv⟩, by simp [usesHalfFrobenius_iff]⟩ = 2 := by
-  simp only [twistOrder, diagramPerm]
-  exact orderOf_graphPermA (two_le_of_twistedA_valid hv)
+  simp only [twistOrder]
 
 /-- The family `²Dₙ(q)` twists by the exchange of the two fork nodes of the `Dₙ` diagram. -/
 @[simp] theorem diagramPerm_twistedD (hv : (LieTypeIndex.twistedD n q).Valid) :
@@ -213,8 +226,7 @@ variable {n : ℕ} {q : PrimePower}
 
 @[simp] theorem twistOrder_twistedD (hv : (LieTypeIndex.twistedD n q).Valid) :
     twistOrder ⟨⟨_, hv⟩, by simp [usesHalfFrobenius_iff]⟩ = 2 := by
-  simp only [twistOrder, diagramPerm]
-  exact orderOf_graphPermD n _
+  simp only [twistOrder]
 
 /-- The family `²E₆(q)` twists by the order-two symmetry of the `E₆` diagram. -/
 @[simp] theorem diagramPerm_twistedE6 (hv : (LieTypeIndex.twistedE6 q).Valid) :
@@ -224,8 +236,7 @@ variable {n : ℕ} {q : PrimePower}
 
 @[simp] theorem twistOrder_twistedE6 (hv : (LieTypeIndex.twistedE6 q).Valid) :
     twistOrder ⟨⟨_, hv⟩, by simp [usesHalfFrobenius_iff]⟩ = 2 := by
-  simp only [twistOrder, diagramPerm]
-  exact orderOf_graphPermE6
+  simp only [twistOrder]
 
 /-- The family `³D₄(q)` twists by triality, the order-three symmetry of the `D₄` diagram. -/
 @[simp] theorem diagramPerm_trialityD4 (hv : (LieTypeIndex.trialityD4 q).Valid) :
@@ -235,8 +246,7 @@ variable {n : ℕ} {q : PrimePower}
 
 @[simp] theorem twistOrder_trialityD4 (hv : (LieTypeIndex.trialityD4 q).Valid) :
     twistOrder ⟨⟨_, hv⟩, by simp [usesHalfFrobenius_iff]⟩ = 3 := by
-  simp only [twistOrder, diagramPerm]
-  exact orderOf_trialityPermD4
+  simp only [twistOrder]
 
 end Twisted
 
@@ -267,9 +277,19 @@ of that diagram, by an automorphism permuting the simple root subgroups accordin
 
 /-- The twist order of an index is exactly the order of its diagram permutation, so the superscript
 in the family name is not an independent convention. -/
-@[simp] theorem orderOf_diagramPerm (d : GraphTwistedIndex) :
-    orderOf d.diagramPerm = d.twistOrder := by
-  rw [twistOrder]
+@[simp] theorem orderOf_diagramPerm : ∀ d : GraphTwistedIndex, orderOf d.diagramPerm = d.twistOrder
+  | ⟨⟨.A _ _, _⟩, _⟩ | ⟨⟨.B _ _, _⟩, _⟩ | ⟨⟨.C _ _, _⟩, _⟩ | ⟨⟨.D _ _, _⟩, _⟩ | ⟨⟨.E6 _, _⟩, _⟩
+  | ⟨⟨.E7 _, _⟩, _⟩ | ⟨⟨.E8 _, _⟩, _⟩ | ⟨⟨.F4 _, _⟩, _⟩ | ⟨⟨.G2 _, _⟩, _⟩ => by
+      simp only [diagramPerm, twistOrder, orderOf_one]
+  | ⟨⟨.twistedA _ _, hv⟩, _⟩ => by
+      simp only [diagramPerm, twistOrder]; exact orderOf_graphPermA (two_le_of_twistedA_valid hv)
+  | ⟨⟨.twistedD n _, _⟩, _⟩ => by
+      simp only [diagramPerm, twistOrder]; exact orderOf_graphPermD n _
+  | ⟨⟨.twistedE6 _, _⟩, _⟩ => by simp only [diagramPerm, twistOrder]; exact orderOf_graphPermE6
+  | ⟨⟨.trialityD4 _, _⟩, _⟩ => by
+      simp only [diagramPerm, twistOrder]; exact orderOf_trialityPermD4
+  | ⟨⟨.suzuki _, _⟩, hh⟩ | ⟨⟨.reeG2 _, _⟩, hh⟩ | ⟨⟨.reeF4 _, _⟩, hh⟩ | ⟨⟨.tits, _⟩, hh⟩ =>
+      absurd ((usesHalfFrobenius_iff _).mpr trivial) hh
 
 /-- The twist order annihilates the diagram permutation. On the twisted families this is the
 relation `γ ^ 2 = 1` for `²Aₙ`, `²Dₙ` and `²E₆` and `γ ^ 3 = 1` for `³D₄` required of a Steinberg
