@@ -125,7 +125,7 @@ variable (S : Type*) {M N P R : Type*} [Semiring S] [Semiring R]
   [LinearMap.CompatibleSMul M N S R]
 
 /-- **The pieces are natural in the module**: an `R`-linear map carries `e • M` into `e • N`. -/
-theorem smul_top_le_comap (e : R) (f : M →ₗ[R] N) :
+theorem smul_top_le_comap_smul_top (e : R) (f : M →ₗ[R] N) :
     e • (⊤ : Submodule S M) ≤ (e • (⊤ : Submodule S N)).comap (f.restrictScalars S) := by
   intro x hx
   obtain ⟨y, -, rfl⟩ := (Submodule.mem_smul_pointwise_iff_exists _ _ _).1 hx
@@ -133,10 +133,10 @@ theorem smul_top_le_comap (e : R) (f : M →ₗ[R] N) :
   exact Submodule.smul_mem_pointwise_smul _ _ _ trivial
 
 /-- The restriction of an `R`-linear map `M → N` to the pieces cut out by `e`, an `S`-linear map
-`e • M → e • N`. This is `TauCeti.smul_top_le_comap` promoted to the map it describes. -/
+`e • M → e • N`. This is `TauCeti.smul_top_le_comap_smul_top` promoted to the map it describes. -/
 def smulTopMap (e : R) (f : M →ₗ[R] N) :
     ↥(e • (⊤ : Submodule S M)) →ₗ[S] ↥(e • (⊤ : Submodule S N)) :=
-  (f.restrictScalars S).restrict (smul_top_le_comap S e f)
+  (f.restrictScalars S).restrict (smul_top_le_comap_smul_top S e f)
 
 variable {S}
 

@@ -115,6 +115,7 @@ theorem mem_vertexComponent_iff_smul_eq_self {v : Q} {x : M} :
   exact mem_smul_top_iff_smul_eq_self (vertexIdempotent_mul_self v)
 
 /-- The vertex idempotent fixes its own component. -/
+@[simp]
 theorem vertexIdempotent_smul_eq_self_of_mem_vertexComponent {v : Q} {x : M}
     (hx : x ∈ vertexComponent k M v) : (vertexIdempotent k v : pathAlgebra k Q) • x = x :=
   mem_vertexComponent_iff_smul_eq_self.1 hx
