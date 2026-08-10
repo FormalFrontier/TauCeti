@@ -141,14 +141,14 @@ def baseChange : BrauerGroup.{u, u} K →* BrauerGroup.{u, u} L where
 
 /-- **The class of the scalar extension is the base change of the class**: the defining property of
 `TauCeti.BrauerGroup.baseChange`, and the only place the `Quotient.liftOn` above is unfolded.
-
-The parentheses around `rfl` are load-bearing: the bare `theorem ... := rfl` form is elaborated by
-the dedicated `rfl` elaborator, which refuses to unfold a definition of the current module that is
-not exposed. Wrapping it defers to ordinary term elaboration, which sees the body, so
-`TauCeti.BrauerGroup.baseChange` needs no `@[expose]` and downstream code is coupled to this
-lemma rather than to the quotient implementation. -/
+Everything below is stated and proved through this lemma, so downstream code is coupled to it
+rather than to the quotient implementation. -/
 @[simp]
 theorem baseChange_mk (A : CSA.{u, u} K) : baseChange K L (mk A) = mk (CSA.baseChange L A) :=
+  -- The parentheses around `rfl` are load-bearing: the bare `theorem ... := rfl` form is elaborated
+  -- by the dedicated `rfl` elaborator, which refuses to unfold a definition of the current module
+  -- that is not exposed. Wrapping it defers to ordinary term elaboration, which sees the body, so
+  -- `baseChange` needs no `@[expose]`.
   (rfl)
 
 /-! ### Functoriality -/
