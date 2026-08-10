@@ -276,10 +276,8 @@ abbrev fixedSubgroup (F : G →* G) : Subgroup G := F.eqLocus (MonoidHom.id G)
 @[simp]
 theorem mem_fixedSubgroup {F : G →* G} {x : G} : x ∈ fixedSubgroup F ↔ F x = x := Iff.rfl
 
-@[simp]
-theorem fixedSubgroup_id : fixedSubgroup (MonoidHom.id G) = ⊤ := by
-  ext x
-  simp
+theorem fixedSubgroup_id : fixedSubgroup (MonoidHom.id G) = ⊤ :=
+  MonoidHom.eqLocus_same _
 
 /-- Only the identity fixes every point. -/
 theorem fixedSubgroup_eq_top_iff {F : G →* G} : fixedSubgroup F = ⊤ ↔ F = MonoidHom.id G := by
