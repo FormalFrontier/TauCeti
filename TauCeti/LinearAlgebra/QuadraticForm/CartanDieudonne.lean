@@ -59,8 +59,7 @@ private theorem exists_mem_subgroup_mul_eqOn_of_codim
     [FiniteDimensional K V] (Q : QuadraticForm K V) (hQ : Q.Nondegenerate) (n : ℕ)
     (H : Subgroup (QuadraticMap.orthogonalGroup Q))
     (hreflection : ∀ (v : V) [Invertible (Q v)],
-      (⟨QuadraticMap.reflection Q v, QuadraticMap.reflection_mem_orthogonalGroup Q v⟩ :
-        QuadraticMap.orthogonalGroup Q) ∈ H)
+      QuadraticMap.reflectionOrthogonal Q v ∈ H)
     (g : QuadraticMap.orthogonalGroup Q) (W : Submodule K V)
     (hW : (LinearMap.BilinForm.restrict (QuadraticMap.associated Q) W).Nondegenerate)
     (hfix : ∀ w ∈ W, ((g : V ≃ₗ[K] V) w) = w)
@@ -83,12 +82,19 @@ private theorem exists_mem_subgroup_mul_eqOn_of_codim
           rwa [QuadraticMap.associated_eq_self_apply] at hxx
         let _ : Invertible (Q x) := (isUnit_iff_ne_zero.mpr hxQ).invertible
         let S : Submodule K V := W ⊔ Submodule.span K {x}
+        have hxx' : B x x ∈ nonZeroDivisorsRight K := by
+          simpa only [nonZeroDivisorsRight_eq_nonZeroDivisors] using
+            mem_nonZeroDivisors_of_ne_zero hxx
         have hS : (B.restrict S).Nondegenerate :=
           TauCeti.BilinForm.restrict_nondegenerate_sup_span_singleton
-            B hBsymm.isRefl W hW x hxx hxorth
+            B hBsymm.isRefl W hW.1 x hxx' hxorth
+        have hxQorth : ∀ w ∈ W, Q.IsOrtho x w := by
+          intro w hw
+          rw [← QuadraticMap.associated_isOrtho]
+          exact hBsymm.eq_iff.mpr (hxorth w hw)
         obtain ⟨r₁, hr₁, hfix₁⟩ :=
           exists_mem_subgroup_mul_eqOn_sup_span_singleton_of_reflection_mem Q H hreflection
-            g W hfix x hxorth
+            g W hfix x hxQorth
         have hlt : Module.finrank K V - Module.finrank K S < n := by
           have hxW : x ∉ W := fun hxW => hxx (hxorth x hxW)
           have hSfinrank : Module.finrank K S = Module.finrank K W + 1 :=
@@ -107,8 +113,7 @@ theorem orthogonalGroup_subgroup_eq_top_of_reflection_mem
     [FiniteDimensional K V] (Q : QuadraticForm K V) (hQ : Q.Nondegenerate)
     (H : Subgroup (QuadraticMap.orthogonalGroup Q))
     (hreflection : ∀ (v : V) [Invertible (Q v)],
-      (⟨QuadraticMap.reflection Q v, QuadraticMap.reflection_mem_orthogonalGroup Q v⟩ :
-        QuadraticMap.orthogonalGroup Q) ∈ H) :
+      QuadraticMap.reflectionOrthogonal Q v ∈ H) :
     H = ⊤ := by
   rw [Subgroup.eq_top_iff']
   intro g
