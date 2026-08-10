@@ -19,10 +19,11 @@ operator**. This file shows that the level set is, near `a`, homeomorphic to an 
 local model, when the index is a fixed `n` along the whole level set, as a `ChartedSpace`
 structure on `{x | f x = c}` modelled on `Fin n → 𝕜`.
 
-This is the "a moduli space is the zero set of a Fredholm section, and at a regular point it is a
-manifold of dimension the index" package that Lane F0 of the analytic Heegaard Floer roadmap asks
-for (McDuff--Salamon, *J-holomorphic Curves and Symplectic Topology*, Appendix A.3). The linear
-half of that lane is already available: `ContinuousLinearMap.IsFredholm` provides the
+This is the local half of the "a moduli space is the zero set of a Fredholm section, and at a
+regular point it is a manifold of dimension the index" package that Lane F0 of the analytic
+Heegaard Floer roadmap asks for (McDuff--Salamon, *J-holomorphic Curves and Symplectic Topology*,
+Appendix A.3). The linear half of that lane is already available:
+`ContinuousLinearMap.IsFredholm` provides the
 finite-dimensional, topologically complemented kernel, and
 `TauCeti.ContinuousLinearMap.index_of_surjective` identifies its dimension with the index. What is
 added here is the nonlinear half, which is Mathlib's implicit function theorem for a map with
@@ -37,9 +38,13 @@ the level set is **isolated** in it, so a compact piece of a regular index-`0` l
 well defined. In nonzero index a regular point is, on the contrary, never isolated, so a level set
 is locally the single point `a` precisely when the index vanishes.
 
-The charts here are only claimed to be homeomorphisms: their transition maps are smooth exactly
-when `f` is, which needs the `ContDiff` form of the implicit function theorem and is left to a
-later step, so no `IsManifold` instance is asserted.
+What is proved is exactly a `ChartedSpace` structure, that is, a covering family of local models;
+nothing more is claimed. In particular this is *not* the assertion that the level set is a
+topological manifold in the usual sense, which would additionally need global hypotheses such as
+second countability, and none are assumed here. Nor are the charts claimed to be smoothly
+compatible: their transition maps are smooth exactly when `f` is, which needs the `ContDiff` form
+of the implicit function theorem and is left to a later step, so no `IsManifold` instance is
+asserted either.
 
 ## Main declarations
 
@@ -198,10 +203,13 @@ noncomputable def levelSetChartAt
       exact_mod_cast h.symm)
     z.2
 
-/-- **A regular level set of a Fredholm map is a topological manifold of dimension its index.**
+/-- **A regular level set of a Fredholm map is locally modelled on `Fin n → 𝕜`, `n` its index.**
 If `f` is strictly differentiable at every point of the level set `{x | f x = c}` with surjective
 Fredholm derivative of index `n` there, then the level set is a charted space modelled on
-`Fin n → 𝕜`, the charts being the implicit-function charts `TauCeti.levelSetChartAt`. -/
+`Fin n → 𝕜`, the charts being the implicit-function charts `TauCeti.levelSetChartAt`.
+
+This is a `ChartedSpace` structure only: no global hypothesis such as second countability is
+assumed, so this does not by itself say that the level set is a topological manifold. -/
 @[instance_reducible]
 noncomputable def levelSetChartedSpace
     (hf : ∀ x ∈ {x | f x = c}, HasStrictFDerivAt f (D x) x)
