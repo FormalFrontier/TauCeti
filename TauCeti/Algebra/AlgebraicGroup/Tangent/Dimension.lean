@@ -6,8 +6,8 @@ module
 
 public import Mathlib.LinearAlgebra.Dimension.Constructions
 import Mathlib.RingTheory.SimpleModule.InjectiveProjective
-public import Mathlib.RingTheory.TensorProduct.Finite
-public import TauCeti.Algebra.AlgebraicGroup.Tangent.FiniteType
+import Mathlib.RingTheory.TensorProduct.Finite
+public import TauCeti.Algebra.AlgebraicGroup.Tangent.Cotangent
 
 /-!
 # Dimensions of tangent Lie algebras
@@ -54,10 +54,10 @@ namespace Derivation
 variable {k : Type u} [Field k]
 variable {H : Type v} [CommRing H] [Bialgebra k H]
 
-/-- When the augmentation cotangent space is finite-dimensional, it and the tangent Lie algebra
-at the identity have the same dimension over the base field. -/
-theorem finrank_eq_finrank_cotangentSpace
-    [Module.Finite k (Bialgebra.CotangentSpace k H)] :
+/-- The augmentation cotangent space and tangent Lie algebra at the identity have the same
+dimension over the base field. -/
+@[simp]
+theorem finrank_eq_finrank_cotangentSpace :
     Module.finrank k
         (Derivation k H (Bialgebra.CounitAlgebra k H k)) =
       Module.finrank k (Bialgebra.CotangentSpace k H) :=
@@ -82,6 +82,7 @@ noncomputable instance instFiniteDimensionalDerivationCounitAlgebra
 Here `Derivation k H (CounitAlgebra k H K)` is the `K`-valued tangent space of the affine
 monoid represented by `H`. Finite-dimensionality gives its canonical scalar-extension
 description, since modules over a field are projective. -/
+@[simp]
 theorem finrank_tangent_baseChange
     [Module.Finite k (Bialgebra.CotangentSpace k H)] :
     Module.finrank K
