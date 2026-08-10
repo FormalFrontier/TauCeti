@@ -57,10 +57,9 @@ theorem map_of_mfderiv_eq {f : M → M'} {V : (x : M) → TangentSpace I x}
   have hder :
       (mfderiv I I' f (γ t)).comp ((1 : ℝ →L[ℝ] ℝ).smulRight (V (γ t))) =
         (1 : ℝ →L[ℝ] ℝ).smulRight (W (f (γ t))) := by
-    apply ContinuousLinearMap.ext
-    intro c
-    simp only [ContinuousLinearMap.comp_apply, ContinuousLinearMap.smulRight_apply, map_smul]
-    rw [hVW t ht]
+    rw [ContinuousLinearMap.smulRight_one_eq_toSpanSingleton,
+      ContinuousLinearMap.smulRight_one_eq_toSpanSingleton,
+      ContinuousLinearMap.comp_toSpanSingleton, hVW t ht]
   -- Unfold composition at the base point so the dependent target tangent spaces are definitionally
   -- identical; no rewrite lemma expresses this type-level conversion.
   change HasMFDerivAt[s] (f ∘ γ) t
