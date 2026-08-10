@@ -290,7 +290,7 @@ theorem length_relatorsSix : relatorsSix.length = 4 := rfl
 theorem length_relatorList : relatorList.length = 39 := rfl
 
 /-- **The recorded generator and relator counts agree with the transcribed data.** -/
-theorem presentation_matchesMetadata : presentation.matchesMetadata :=
+theorem matchesMetadata_presentation : presentation.matchesMetadata :=
   (GroupPresentation.matchesMetadata_iff presentation).mpr ⟨rfl, rfl⟩
 
 /-- The indices `i` for which the relator `gᵢ²` occurs literally in the transcribed list.
@@ -316,7 +316,7 @@ theorem generatorsWithSquareRelator_eq : generatorsWithSquareRelator = [0, 1, 2,
 records for its enumeration: one column for each generator carrying a square relator, its involutory
 generators, and two for each of the others. Recomputing it from the transcribed relators checks the
 data against a published number
-that the counts of `TauCeti.Sporadic.Thompson.presentation_matchesMetadata` do not see. -/
+that the counts of `TauCeti.Sporadic.Thompson.matchesMetadata_presentation` do not see. -/
 theorem cosetTableColumns :
     generatorsWithSquareRelator.length +
       2 * (presentation.generatorCount - generatorsWithSquareRelator.length) = 11 := rfl
