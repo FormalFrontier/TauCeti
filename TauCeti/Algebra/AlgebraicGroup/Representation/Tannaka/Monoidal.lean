@@ -142,13 +142,6 @@ theorem fgPointTensorIsoHom_apply (g : WithConv (H →ₐ[R] A)) :
     fgPointTensorIsoHom R H A g = fgPointTensorIso R H A g :=
   rfl
 
-/-- Forgetting the tensor compatibility of a point tensor automorphism recovers the original
-natural automorphism. -/
-@[simp]
-theorem fgPointTensorIsoHom_hom_hom (g : WithConv (H →ₐ[R] A)) :
-    (fgPointTensorIsoHom R H A g).hom.hom = (fgPointNatIsoHom R H A g).hom :=
-  fgPointTensorIso_hom_hom R H A g
-
 end Generic
 
 section
@@ -167,7 +160,7 @@ theorem fgPointTensorIsoHom_injective :
   apply NatTrans.ext
   funext (M : FGComoduleCat.{u, u, u} R H)
   have hhom := congrArg LaxMonoidalFunctor.Hom.hom (congrArg Iso.hom hgh)
-  rw [fgPointTensorIsoHom_hom_hom, fgPointTensorIsoHom_hom_hom] at hhom
+  simp only [fgPointTensorIsoHom_apply, fgPointTensorIso_hom_hom] at hhom
   exact congrArg (fun η ↦ η.app M) hhom
 
 end
