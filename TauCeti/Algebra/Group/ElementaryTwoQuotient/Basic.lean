@@ -41,7 +41,8 @@ names around it. The cardinality identity is still expressed through the squarin
   trivial iff the element is a square; `elementaryTwoQuotientMk_mul`,
   `elementaryTwoQuotientMk_one`, `elementaryTwoQuotientMk_inv`,
   `elementaryTwoQuotientMk_div`, `elementaryTwoQuotientMk_pow`, and
-  `elementaryTwoQuotientMk_prod` record its additivity.
+  `elementaryTwoQuotientMk_prod` record its additivity, and
+  `elementaryTwoQuotientMk_pow_two_eq_zero` that a square has trivial class.
 * `TauCeti.elementaryTwoQuotientMk_surjective` and `TauCeti.elementaryTwoQuotientMk_eq_iff`: the
   class map is surjective, and two elements have the same class iff they differ by a square.
 * `TauCeti.elementaryTwoQuotientLiftEquiv` and `TauCeti.elementaryTwoQuotientLinearLiftEquiv`: the
@@ -57,8 +58,8 @@ names around it. The cardinality identity is still expressed through the squarin
 * `TauCeti.card_elementaryTwoQuotient_eq_index_square`: the quotient cardinality as the index of
   the subgroup of squares.
 * `TauCeti.card_elementaryTwoQuotient_eq_card_twoTorsion`: `|G/G²| = |{g | g² = 1}|`.
-* `TauCeti.elementaryTwoQuotientAddEquivOfForallSqEqOne`: an elementary abelian `2`-group is
-  additively equivalent to its elementary-2 quotient.
+* `TauCeti.card_elementaryTwoQuotient_eq_card_of_forall_sq_eq_one`: an elementary abelian
+  `2`-group has the same cardinality as its elementary-2 quotient.
 * `TauCeti.twoRank` and `TauCeti.card_elementaryTwoQuotient_eq_two_pow_twoRank`: the 2-rank, with
   `|G/G²| = 2 ^ twoRank`, and `TauCeti.twoRank_eq_of_card_elementaryTwoQuotient_eq_two_pow` its
   inversion (`|G/G²| = 2 ^ n → twoRank G = n`).
@@ -93,11 +94,6 @@ def elementaryTwoQuotientMkAdd : Additive G →+ ElementaryTwoQuotient G :=
 /-- The class of an element of `G` in the maximal elementary-2 quotient `G / G²`. -/
 def elementaryTwoQuotientMk (g : G) : ElementaryTwoQuotient G :=
   elementaryTwoQuotientMkAdd (Additive.ofMul g)
-
-/-- The additive quotient map agrees with the multiplicative class constructor. -/
-@[simp] theorem elementaryTwoQuotientMkAdd_apply (a : Additive G) :
-    elementaryTwoQuotientMkAdd a = elementaryTwoQuotientMk (Additive.toMul a) := by
-  rfl
 
 /-- The class map `G → G/G²` is the quotient map of the `ModN` model: the class of `g` is the image
 of `Additive.ofMul g` under the quotient by the doubling submodule. This exposes the `ModN`
@@ -134,6 +130,11 @@ private theorem mem_range_lsmul_two_iff (a : Additive G) :
   simp only [AddMonoidHom.coe_coe, Submodule.mkQ_apply]
   rw [Submodule.Quotient.mk_eq_zero]
   exact mem_range_lsmul_two_iff (Additive.ofMul g)
+
+/-- The class of a square is trivial in `G/G²`. -/
+theorem elementaryTwoQuotientMk_pow_two_eq_zero (g : G) :
+    elementaryTwoQuotientMk (g ^ 2) = 0 :=
+  (elementaryTwoQuotientMk_eq_zero_iff _).2 ⟨g, pow_two g⟩
 
 /-- The universal property of `G/G²` for additive homomorphisms: maps out of the quotient are
 additive homomorphisms from `Additive G` whose values are killed by `2`. -/
@@ -212,8 +213,7 @@ noncomputable def elementaryTwoQuotientMap (f : G →* H) :
         -- `G/G²` is killed by `2` because the square of any representative maps to zero.
         change 2 • elementaryTwoQuotientMk (f (Additive.toMul g)) = 0
         rw [← elementaryTwoQuotientMk_pow]
-        exact (elementaryTwoQuotientMk_eq_zero_iff _).2
-          ⟨f (Additive.toMul g), by rw [pow_two]⟩⟩
+        exact elementaryTwoQuotientMk_pow_two_eq_zero _⟩
 
 /-- The induced map on `G/G²` sends the class of `g` to the class of `f g`. -/
 @[simp] theorem elementaryTwoQuotientMap_mk (f : G →* H) (g : G) :
@@ -369,40 +369,20 @@ theorem twoRank_eq_of_card_elementaryTwoQuotient_eq_two_pow
   exact Nat.pow_right_injective le_rfl h
 
 /-- **An elementary abelian `2`-group is its own elementary-2 quotient.** If every element of `G`
-squares to `1`, the canonical quotient map is an additive equivalence. -/
-noncomputable def elementaryTwoQuotientAddEquivOfForallSqEqOne (h : ∀ g : G, g ^ 2 = 1) :
-    Additive G ≃+ ElementaryTwoQuotient G := by
-  apply AddEquiv.ofBijective (elementaryTwoQuotientMkAdd (G := G))
-  constructor
-  · intro a b hab
-    apply Additive.toMul.injective
-    apply div_eq_one.mp
-    rw [elementaryTwoQuotientMkAdd_apply, elementaryTwoQuotientMkAdd_apply] at hab
-    obtain ⟨c, hc⟩ :=
-      (elementaryTwoQuotientMk_eq_iff (Additive.toMul a) (Additive.toMul b)).1 hab
-    rw [hc, ← pow_two, h]
-  · intro x
-    obtain ⟨g, rfl⟩ := elementaryTwoQuotientMk_surjective (G := G) x
-    exact ⟨Additive.ofMul g, rfl⟩
-
-/-- The canonical equivalence for an elementary abelian `2`-group sends each element to its class
-in the elementary-2 quotient. -/
-@[simp] theorem elementaryTwoQuotientAddEquivOfForallSqEqOne_apply
-    (h : ∀ g : G, g ^ 2 = 1) (g : Additive G) :
-    elementaryTwoQuotientAddEquivOfForallSqEqOne G h g = elementaryTwoQuotientMkAdd g := by
-  rfl
-
-/-- **An elementary abelian `2`-group has the same cardinality as its elementary-2 quotient.** -/
-theorem card_elementaryTwoQuotient_of_forall_sq_eq_one (h : ∀ g : G, g ^ 2 = 1) :
-    Nat.card (ElementaryTwoQuotient G) = Nat.card G :=
-  Nat.card_congr (elementaryTwoQuotientAddEquivOfForallSqEqOne G h).toEquiv.symm
+squares to `1`, then `G²` is trivial, so `|G/G²| = |G|`. -/
+theorem card_elementaryTwoQuotient_eq_card_of_forall_sq_eq_one (h : ∀ g : G, g ^ 2 = 1) :
+    Nat.card (ElementaryTwoQuotient G) = Nat.card G := by
+  have hbot : Subgroup.square G = ⊥ := (Subgroup.eq_bot_iff_forall _).2 fun g hg => by
+    obtain ⟨a, rfl⟩ := Subgroup.mem_square.1 hg
+    rw [← pow_two, h]
+  rw [card_elementaryTwoQuotient_eq_index_square, hbot, Subgroup.index_bot]
 
 /-- **The order of an elementary abelian `2`-group is `2 ^ twoRank`** when its elementary-2
 quotient is finite-dimensional. -/
 theorem card_eq_two_pow_twoRank_of_forall_sq_eq_one
     [Module.Finite (ZMod 2) (ElementaryTwoQuotient G)] (h : ∀ g : G, g ^ 2 = 1) :
     Nat.card G = 2 ^ twoRank G := by
-  rw [← card_elementaryTwoQuotient_of_forall_sq_eq_one G h,
+  rw [← card_elementaryTwoQuotient_eq_card_of_forall_sq_eq_one G h,
     card_elementaryTwoQuotient_eq_two_pow_twoRank]
 
 /-- **A group of odd order has a single square class.** For a finite commutative group of odd
