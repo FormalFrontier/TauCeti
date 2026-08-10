@@ -35,31 +35,25 @@ namespace Probability
 
 variable {Ω α : Type*} [MeasurableSpace Ω] [MeasurableSpace α]
 
-/-- **The Cesàro averages of an indicator converge to the directing measure.** For a contractable
-process on a standard Borel state space and a measurable set `B`, the fixed-start Cesàro windows of
-`𝟙_B ∘ X` converge in `L¹` to `ω ↦ (directingMeasure μ X ω).real B`. -/
+/-- **The block averages of an indicator converge to the directing measure.** For a contractable
+process on a standard Borel state space and a measurable set `B`, the block averages of `𝟙_B ∘ X`
+along any eventually-injective selection converge in `L¹` to `ω ↦ (directingMeasure μ X ω).real B`.
+
+The selection may move with the length, so this covers the disjoint windows a block factorization
+needs as well as fixed-start ones; the limit is the same for every selection. -/
 theorem Contractable.tendsto_integral_abs_blockAverage_indicator_sub_directingMeasure
     [StandardBorelSpace α] [Nonempty α] {μ : Measure Ω} [IsFiniteMeasure μ] {X : ℕ → Ω → α}
     (hX : Contractable μ X) (hX_meas : ∀ i, Measurable (X i)) {B : Set α} (hB : MeasurableSet B)
-    (r : ℕ) :
+    (k : ∀ n : ℕ, Fin (n + 1) → ℕ) (hk : ∀ᶠ n in atTop, Function.Injective (k n)) :
     Tendsto
-      (fun m => ∫ ω, |blockAverage (fun i ω => Set.indicator B (fun _ => (1 : ℝ)) (X i ω))
-          (fun j : Fin (m + 1) => r + j) ω
+      (fun m => ∫ ω, |blockAverage (fun i ω => Set.indicator B (fun _ => (1 : ℝ)) (X i ω)) (k m) ω
         - (directingMeasure μ X ω).real B| ∂μ)
       atTop (𝓝 0) := by
   have hf : Measurable (Set.indicator B (fun _ => (1 : ℝ))) :=
     (measurable_const.indicator hB)
   have hf_bdd : ∃ C, ∀ x, ‖Set.indicator B (fun _ => (1 : ℝ)) x‖ ≤ C :=
     ⟨1, fun x => by simpa only [norm_one] using norm_indicator_le_norm_self (fun _ => (1 : ℝ)) x⟩
-  -- This route reads a fixed start, instantiating the upstream moving-selection theorem at `r`.
-  have hlim : Tendsto (fun m => ∫ ω,
-      |blockAverage (fun i ω => Set.indicator B (fun _ => (1 : ℝ)) (X i ω))
-          (fun j : Fin (m + 1) => r + (j : ℕ)) ω
-        - (μ[fun ω => Set.indicator B (fun _ => (1 : ℝ)) (X 0 ω) | tailProcess X]) ω| ∂μ)
-      atTop (𝓝 0) := by
-    simpa only [funext (fixedStart_apply r _)] using
-      hX.tendsto_integral_abs_blockAverage_sub_condExp hX_meas hf hf_bdd
-        (fixedStart r) (fixedStart_eventually_injective r)
+  have hlim := hX.tendsto_integral_abs_blockAverage_sub_condExp hX_meas hf hf_bdd k hk
   -- Normalise the composition wrapper so the rewrite matches without relying on defeq.
   have hdir : (fun ω => (directingMeasure μ X ω).real B)
       =ᵐ[μ] μ[fun ω => Set.indicator B (fun _ => (1 : ℝ)) (X 0 ω) | tailProcess X] := by
