@@ -273,7 +273,7 @@ private theorem sum_starIndex (f : StarIndex ℓ → ℚ) :
 /-- **The rows of a star at an arm vertex annihilate the marks.** The marks are linear along each
 arm, and the centre supplies exactly the value the linear function takes at position `0`, so the
 three-term recurrence of a chain closes at both ends. -/
-@[simp] theorem sum_starCartanMatrix_mul_starMark_some (v : (i : α) × Fin (ℓ i)) :
+theorem sum_starCartanMatrix_mul_starMark_some (v : (i : α) × Fin (ℓ i)) :
     ∑ w, (starCartanMatrix ℓ (some v) w : ℚ) * starMark ℓ w = 0 := by
   set Q : ℚ := ∏ j ∈ ({v.1}ᶜ : Finset α), ((ℓ j : ℚ) + 1) with hQ
   set g : ℕ → ℚ := fun u ↦ ((ℓ v.1 : ℚ) + 1 - u) * Q with hg
