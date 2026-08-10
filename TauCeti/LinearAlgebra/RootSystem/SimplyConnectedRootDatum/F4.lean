@@ -406,44 +406,24 @@ private lemma f4ReflectionIndex_coroot (i j : Fin 48) :
 private lemma f4Root_coroot_two (i : Fin 48) : f4Root i ⬝ᵥ f4Coroot i = 2 := by
   fin_cases i <;> decide
 
-private lemma f4ReflectionIndex_involutive (i : Fin 48) :
-    Function.Involutive (f4ReflectionIndex i) := by
-  intro j
-  apply f4Root.injective
-  rw [← f4ReflectionIndex_root i (f4ReflectionIndex i j), ← f4ReflectionIndex_root i j]
-  have hpair :
-      (f4Root j - (f4Root j ⬝ᵥ f4Coroot i) • f4Root i) ⬝ᵥ f4Coroot i =
-        -(f4Root j ⬝ᵥ f4Coroot i) := by
-    rw [sub_dotProduct, smul_dotProduct, f4Root_coroot_two]
-    ring
-  rw [hpair]
-  simp
-
-/-- Reflection in an `F4` root as a permutation of the pinned root indices. -/
-private def f4ReflectionPerm (i : Fin 48) : Fin 48 ≃ Fin 48 :=
-  Function.Involutive.toPerm (f4ReflectionIndex i) (f4ReflectionIndex_involutive i)
-
-@[simp] private lemma f4ReflectionPerm_apply (i j : Fin 48) :
-    f4ReflectionPerm i j = f4ReflectionIndex i j := rfl
-
 /-- The pinned simply connected root datum of type `F4`.
 
 Both lattices use `Fin 4 → ℤ`: fundamental weights on the root side and simple coroots on the
 coroot side. Root indices `0` through `3` are the Bourbaki simple roots. -/
-def f4SimplyConnectedRootDatum : RootDatum (Fin 48) (Fin 4 → ℤ) (Fin 4 → ℤ) where
-  toLinearMap := (dotProductEquiv ℤ (Fin 4)).toLinearMap
-  root := f4Root
-  coroot := f4Coroot
-  root_coroot_two := by
-    intro i
-    decide +revert
-  reflectionPerm := f4ReflectionPerm
-  reflectionPerm_root := by
-    intro i j
-    simpa [dotProductEquiv_apply_apply, f4ReflectionPerm_apply] using f4ReflectionIndex_root i j
-  reflectionPerm_coroot := by
-    intro i j
-    simpa [dotProductEquiv_apply_apply, f4ReflectionPerm_apply] using f4ReflectionIndex_coroot i j
+noncomputable def f4SimplyConnectedRootDatum :
+    RootDatum (Fin 48) (Fin 4 → ℤ) (Fin 4 → ℤ) :=
+  RootPairing.mk' (dotProductEquiv ℤ (Fin 4)).toLinearMap f4Root f4Coroot
+    f4Root_coroot_two
+    (by
+      rintro i x ⟨j, rfl⟩
+      refine ⟨f4ReflectionIndex i j, ?_⟩
+      simpa [preReflection_apply, dotProductEquiv_apply_apply] using
+        (f4ReflectionIndex_root i j).symm)
+    (by
+      rintro i x ⟨j, rfl⟩
+      refine ⟨f4ReflectionIndex i j, ?_⟩
+      simpa [preReflection_apply, dotProductEquiv_apply_apply] using
+        (f4ReflectionIndex_coroot i j).symm)
 
 /-- The root embedding of the pinned `F4` datum is the explicit table `f4Root`. -/
 @[simp] lemma f4SimplyConnectedRootDatum_root : f4SimplyConnectedRootDatum.root = f4Root := (rfl)
