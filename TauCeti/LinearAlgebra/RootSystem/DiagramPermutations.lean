@@ -61,7 +61,7 @@ def lengthPermF4 : Equiv.Perm (Fin 4) :=
   graphPermA 4
 
 /-- Reversing the `Aₙ` chain twice is the identity. -/
-theorem graphPermA_sq (n : ℕ) : graphPermA n ^ 2 = 1 := by
+@[simp] theorem graphPermA_sq (n : ℕ) : graphPermA n ^ 2 = 1 := by
   ext i
   simp [graphPermA, pow_two, Equiv.Perm.mul_apply]
 
@@ -129,7 +129,7 @@ two `Dₙ` fork nodes. -/
 @[simp] theorem lengthPermRankTwo_sq : lengthPermRankTwo ^ 2 = 1 := by decide
 
 /-- Reversal is an automorphism of the type-`A` Cartan matrix. -/
-theorem cartanMatrix_A_graphPermA (n : ℕ) (i j : Fin n) :
+@[simp] theorem cartanMatrix_A_graphPermA (n : ℕ) (i j : Fin n) :
     (DynkinType.A n).cartanMatrix (graphPermA n i) (graphPermA n j) =
       (DynkinType.A n).cartanMatrix i j := by
   simp only [DynkinType.cartanMatrix_A, CartanMatrix.A, Matrix.of_apply, graphPermA,
@@ -205,7 +205,7 @@ private lemma cartanMatrix_D_swap_fork (n : ℕ) (hn : 4 ≤ n) (a b : Fin n) (h
   fin_cases i <;> simp [DynkinType.isLongSimpleRoot_G2, lengthPermRankTwo]
 
 /-- Diagram reversal exchanges the long and short nodes of `F₄`. -/
-theorem isLongSimpleRoot_lengthPermF4_iff_not_isLongSimpleRoot_F4 (i : Fin 4) :
+@[simp] theorem isLongSimpleRoot_lengthPermF4_iff_not_isLongSimpleRoot_F4 (i : Fin 4) :
     DynkinType.F4.IsLongSimpleRoot (lengthPermF4 i) ↔
       ¬ DynkinType.F4.IsLongSimpleRoot i := by
   fin_cases i <;> simp [DynkinType.isLongSimpleRoot_F4, lengthPermF4, graphPermA]
