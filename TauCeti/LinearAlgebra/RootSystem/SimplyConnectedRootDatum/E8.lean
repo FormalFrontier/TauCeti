@@ -253,6 +253,10 @@ def e8Root : Fin 240 ↪ (Fin 8 → ℤ) where
     rw [sub_vecMul]
     exact sub_eq_zero.mpr hij
 
+/-- The `E8` roots are obtained from the coroot coordinates using the Cartan matrix. -/
+@[simp] theorem e8Root_apply (i : Fin 240) :
+    e8Root i = e8Coroot i ᵥ* CartanMatrix.E₈ := (rfl)
+
 private lemma e8Coroot_castAdd (i : Fin 120) :
     e8Coroot (Fin.castAdd 120 i) = e8PositiveCoroot i := by
   -- Expose the dependent `if` in the embedding's coercion so that its positive branch reduces.
@@ -261,14 +265,18 @@ private lemma e8Coroot_castAdd (i : Fin 120) :
   rw [dif_pos i.isLt]
 
 /-- The negative half of the coroot table is the negation of the positive half. -/
-@[simp] theorem e8Coroot_natAdd (i : Fin 120) :
+@[simp] theorem e8Coroot_addNat (i : Fin 120) :
     e8Coroot (Fin.addNat i 120) = -e8Coroot (Fin.castAdd 120 i) := by
-  fin_cases i <;> decide
+  rw [e8Coroot_castAdd]
+  change (if h : (i : ℕ) + 120 < 120 then e8PositiveCoroot ⟨(i : ℕ) + 120, h⟩ else
+    -e8PositiveCoroot ⟨(i : ℕ) + 120 - 120, by omega⟩) = -e8PositiveCoroot i
+  rw [dif_neg (by omega)]
+  congr
 
 /-- The negative half of the root table is the negation of the positive half. -/
-@[simp] theorem e8Root_natAdd (i : Fin 120) :
+@[simp] theorem e8Root_addNat (i : Fin 120) :
     e8Root (Fin.addNat i 120) = -e8Root (Fin.castAdd 120 i) := by
-  fin_cases i <;> decide
+  rw [e8Root_apply, e8Coroot_addNat, Matrix.neg_vecMul, e8Root_apply]
 
 /-- Every listed `E8` root pairs to two with its corresponding coroot. -/
 @[simp] theorem e8Root_dotProduct_coroot (i : Fin 240) : e8Root i ⬝ᵥ e8Coroot i = 2 := by
@@ -290,9 +298,9 @@ theorem e8Coroot_nonneg (i : Fin 120) (j : Fin 8) :
   rw [e8Coroot_castAdd]
   exact e8PositiveCoroot_nonneg i j
 
-/-- The last positive entry is the highest `E8` coroot, with Bourbaki marks
-`(2, 3, 4, 6, 5, 4, 3, 2)`. -/
-theorem e8Coroot_highest : e8Coroot 119 = ![2, 3, 4, 6, 5, 4, 3, 2] := by decide
+/-- The last positive `E8` coroot has Bourbaki marks `(2, 3, 4, 6, 5, 4, 3, 2)`. -/
+theorem e8Coroot_apply_last_positive :
+    e8Coroot 119 = ![2, 3, 4, 6, 5, 4, 3, 2] := by decide
 
 end DynkinType
 
