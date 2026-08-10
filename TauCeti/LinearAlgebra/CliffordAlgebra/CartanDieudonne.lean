@@ -58,7 +58,8 @@ theorem exists_mem_range_pinToOrthogonal_mul_eqOn_sup_span_singleton
     (pinToOrthogonal Q).range (reflection_mem_range_pinToOrthogonal Q) g W hfix x hx
 
 /-- The twisted-conjugation homomorphism from the Pin group is surjective for a
-finite-dimensional nondegenerate quadratic space over a separably closed field. -/
+finite-dimensional nondegenerate quadratic space over a separably closed field of characteristic
+other than two. -/
 theorem pinToOrthogonal_surjective
     [FiniteDimensional K V] (Q : QuadraticForm K V) (hQ : Q.Nondegenerate) :
     Function.Surjective (pinToOrthogonal Q) :=
