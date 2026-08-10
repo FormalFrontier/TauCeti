@@ -6,7 +6,6 @@ module
 
 public import TauCeti.Probability.Process.BlockAverage
 import Mathlib.Tactic.Ring
-public import Mathlib.Order.Filter.AtTopBot.Basic
 
 /-!
 # Expanding a product of averages over disjoint windows

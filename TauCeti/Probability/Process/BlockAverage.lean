@@ -17,9 +17,15 @@ algebra. Nothing here involves a measure: `blockAverage X k` is a function of `�
 lemmas below are the pointwise formula, the scaled-sum normal form, and the value on a constant
 block.
 
-It also carries the two standard selections — `prefixAverage X n` over the first `n` coordinates
-and `followingAverage X n` over the `n` coordinates after them — with their pointwise formulas.
-These are likewise measure-free.
+It also carries the standard selections, all measure-free. `prefixAverage X n` averages the first
+`n` coordinates and `followingAverage X n` the `n` after them, with their pointwise formulas.
+
+`fixedStart r` is the same fixed-start window in *moving-selection* form — a family
+`∀ n, Fin (n + 1) → ℕ` rather than a single block — which is the shape the `L²` convergence
+theorems quantify over. It belongs here because it is a generic block selection with no disjointness
+content; the disjoint windows those theorems also accept are `disjointWindow` in
+`Process/DisjointWindow.lean`. `fixedStart_injective` gives injectivity at each length and
+`fixedStart_eventually_injective` the eventual form the limit theorems take.
 
 Measure-theoretic facts about all three — square-integrability, conditional expectations, variances
 and covariances under contractability — live with the `L²` averaging library in
