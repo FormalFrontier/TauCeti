@@ -63,7 +63,7 @@ open CategoryTheory
 namespace Over
 
 /-- The property of an object of `TopCat / X` that its structure morphism is a covering map. -/
-@[expose] def isCoveringMap (X : TopCat.{u}) : ObjectProperty (CategoryTheory.Over X) :=
+def isCoveringMap (X : TopCat.{u}) : ObjectProperty (CategoryTheory.Over X) :=
   fun p ↦ _root_.IsCoveringMap p.hom
 
 /-- An isomorphism in `TopCat / X` induces an isomorphism on left objects. -/
@@ -102,14 +102,14 @@ instance : CoeOut (CoveringSpace X) TopCat where
   coe p := p.obj.left
 
 /-- Construct a covering space over `X` from a covering map `p`. -/
-@[expose] def mk {E : TopCat.{u}} (p : E ⟶ X) (hp : _root_.IsCoveringMap p) : CoveringSpace X where
+def mk {E : TopCat.{u}} (p : E ⟶ X) (hp : _root_.IsCoveringMap p) : CoveringSpace X where
   obj := CategoryTheory.Over.mk p
   property := hp
 
 @[simp]
 theorem mk_coe {E : TopCat.{u}} (p : E ⟶ X) (hp : _root_.IsCoveringMap p) :
     (mk p hp : TopCat) = E :=
-  rfl
+  (rfl)
 
 /-- The projection of a covering space to its base. -/
 abbrev proj (p : CoveringSpace X) : (p : TopCat) ⟶ X :=
@@ -124,8 +124,8 @@ theorem forget_obj_hom (p : CoveringSpace X) : ((forget X).obj p).hom = p.proj :
 
 @[simp]
 theorem mk_proj {E : TopCat.{u}} (p : E ⟶ X) (hp : _root_.IsCoveringMap p) :
-    (mk p hp).proj = p :=
-  rfl
+    (mk p hp).proj = eqToHom (mk_coe p hp) ≫ p :=
+  (rfl)
 
 /-- The projection from an object of `CoveringSpace X` is a covering map. -/
 theorem isCoveringMap_proj (p : CoveringSpace X) : _root_.IsCoveringMap p.proj :=
@@ -144,45 +144,50 @@ theorem totalSpace_map {p q : CoveringSpace X} (f : p ⟶ q) :
     (totalSpace X).map f = f.hom.left :=
   rfl
 
+/-- A morphism of covering spaces commutes with the projections to the base. -/
+@[reassoc]
+theorem w {p q : CoveringSpace X} (f : p ⟶ q) : f.hom.left ≫ q.proj = p.proj :=
+  CategoryTheory.Over.w _
+
 /-- Construct a morphism of covering spaces from a continuous map over the base. -/
-@[expose] def homMk {p q : CoveringSpace X} (f : (p : TopCat) ⟶ (q : TopCat))
+def homMk {p q : CoveringSpace X} (f : (p : TopCat) ⟶ (q : TopCat))
     (w : f ≫ q.proj = p.proj := by cat_disch) : p ⟶ q :=
   ObjectProperty.homMk (CategoryTheory.Over.homMk f w)
 
 @[simp]
 theorem homMk_hom_left {p q : CoveringSpace X} (f : (p : TopCat) ⟶ (q : TopCat))
     (w : f ≫ q.proj = p.proj) : (homMk f w).hom.left = f :=
-  rfl
+  (rfl)
 
 /-- Construct an isomorphism of covering spaces from an isomorphism of their total spaces over
 the base. -/
-@[expose] def isoMk {p q : CoveringSpace X} (e : (p : TopCat) ≅ (q : TopCat))
+def isoMk {p q : CoveringSpace X} (e : (p : TopCat) ≅ (q : TopCat))
     (w : e.hom ≫ q.proj = p.proj := by cat_disch) : p ≅ q :=
   ObjectProperty.isoMk _ (CategoryTheory.Over.isoMk e w)
 
 @[simp]
 theorem isoMk_hom_hom_left {p q : CoveringSpace X} (e : (p : TopCat) ≅ (q : TopCat))
     (w : e.hom ≫ q.proj = p.proj) : (isoMk e w).hom.hom.left = e.hom :=
-  rfl
+  (rfl)
 
 @[simp]
 theorem isoMk_inv_hom_left {p q : CoveringSpace X} (e : (p : TopCat) ≅ (q : TopCat))
     (w : e.hom ≫ q.proj = p.proj) : (isoMk e w).inv.hom.left = e.inv :=
-  rfl
+  (rfl)
 
 /-- Reconstructing a covering space from its projection gives an isomorphic object. -/
-@[expose] def mkProjIso (p : CoveringSpace X) : mk p.proj p.isCoveringMap_proj ≅ p :=
+def mkProjIso (p : CoveringSpace X) : mk p.proj p.isCoveringMap_proj ≅ p :=
   isoMk (Iso.refl _)
 
 @[simp]
 theorem mkProjIso_hom_hom_left (p : CoveringSpace X) :
-    (mkProjIso p).hom.hom.left = 𝟙 (p : TopCat) :=
-  rfl
+    (mkProjIso p).hom.hom.left = eqToHom (mk_coe p.proj p.isCoveringMap_proj) :=
+  (rfl)
 
 @[simp]
 theorem mkProjIso_inv_hom_left (p : CoveringSpace X) :
-    (mkProjIso p).inv.hom.left = 𝟙 (p : TopCat) :=
-  rfl
+    (mkProjIso p).inv.hom.left = eqToHom (mk_coe p.proj p.isCoveringMap_proj).symm :=
+  (rfl)
 
 /-- A map of covering spaces is an isomorphism exactly when its map of total spaces is a
 homeomorphism. -/
@@ -213,7 +218,7 @@ instance : CoeOut (ConnectedCoveringSpace X) TopCat where
   coe p := p.obj.left
 
 /-- Construct a connected covering space from a covering map with connected total space. -/
-@[expose] def mk {E : TopCat.{u}} (p : E ⟶ X) (hp : _root_.IsCoveringMap p)
+def mk {E : TopCat.{u}} (p : E ⟶ X) (hp : _root_.IsCoveringMap p)
     [ConnectedSpace E] :
     ConnectedCoveringSpace X where
   obj := CategoryTheory.Over.mk p
@@ -224,7 +229,7 @@ instance : CoeOut (ConnectedCoveringSpace X) TopCat where
 @[simp]
 theorem mk_coe {E : TopCat.{u}} (p : E ⟶ X) (hp : _root_.IsCoveringMap p)
     [ConnectedSpace E] : (mk p hp : TopCat) = E :=
-  rfl
+  (rfl)
 
 /-- The projection of a connected covering space to its base. -/
 abbrev proj (p : ConnectedCoveringSpace X) : (p : TopCat) ⟶ X :=
@@ -248,12 +253,12 @@ theorem forget_map_hom_left {p q : ConnectedCoveringSpace X} (f : p ⟶ q) :
 @[simp]
 theorem forget_obj_mk {E : TopCat.{u}} (p : E ⟶ X) (hp : _root_.IsCoveringMap p)
     [ConnectedSpace E] : (forget X).obj (mk p hp) = CoveringSpace.mk p hp :=
-  rfl
+  (rfl)
 
 @[simp]
 theorem mk_proj {E : TopCat.{u}} (p : E ⟶ X) (hp : _root_.IsCoveringMap p)
-    [ConnectedSpace E] : (mk p hp).proj = p :=
-  rfl
+    [ConnectedSpace E] : (mk p hp).proj = eqToHom (mk_coe p hp) ≫ p :=
+  (rfl)
 
 /-- The total space of a connected covering space is connected. -/
 instance connectedSpace (p : ConnectedCoveringSpace X) : ConnectedSpace (p : TopCat) :=
@@ -277,8 +282,14 @@ theorem totalSpace_map {p q : ConnectedCoveringSpace X} (f : p ⟶ q) :
     (totalSpace X).map f = f.hom.left :=
   rfl
 
+/-- A morphism of connected covering spaces commutes with the projections to the base. -/
+@[reassoc]
+theorem w {p q : ConnectedCoveringSpace X} (f : p ⟶ q) :
+    f.hom.left ≫ q.proj = p.proj :=
+  CategoryTheory.Over.w _
+
 /-- Construct a morphism of connected covering spaces from a continuous map over the base. -/
-@[expose] def homMk {p q : ConnectedCoveringSpace X} (f : (p : TopCat) ⟶ (q : TopCat))
+def homMk {p q : ConnectedCoveringSpace X} (f : (p : TopCat) ⟶ (q : TopCat))
     (w : f ≫ q.proj = p.proj := by cat_disch) : p ⟶ q :=
   ObjectProperty.homMk (CategoryTheory.Over.homMk f w)
 
@@ -286,11 +297,11 @@ theorem totalSpace_map {p q : ConnectedCoveringSpace X} (f : p ⟶ q) :
 theorem homMk_hom_left {p q : ConnectedCoveringSpace X}
     (f : (p : TopCat) ⟶ (q : TopCat)) (w : f ≫ q.proj = p.proj) :
     (homMk f w).hom.left = f :=
-  rfl
+  (rfl)
 
 /-- Construct an isomorphism of connected covering spaces from an isomorphism of their total
 spaces over the base. -/
-@[expose] def isoMk {p q : ConnectedCoveringSpace X} (e : (p : TopCat) ≅ (q : TopCat))
+def isoMk {p q : ConnectedCoveringSpace X} (e : (p : TopCat) ≅ (q : TopCat))
     (w : e.hom ≫ q.proj = p.proj := by cat_disch) : p ≅ q :=
   ObjectProperty.isoMk _ (CategoryTheory.Over.isoMk e w)
 
@@ -298,27 +309,27 @@ spaces over the base. -/
 theorem isoMk_hom_hom_left {p q : ConnectedCoveringSpace X}
     (e : (p : TopCat) ≅ (q : TopCat)) (w : e.hom ≫ q.proj = p.proj) :
     (isoMk e w).hom.hom.left = e.hom :=
-  rfl
+  (rfl)
 
 @[simp]
 theorem isoMk_inv_hom_left {p q : ConnectedCoveringSpace X}
     (e : (p : TopCat) ≅ (q : TopCat)) (w : e.hom ≫ q.proj = p.proj) :
     (isoMk e w).inv.hom.left = e.inv :=
-  rfl
+  (rfl)
 
 /-- Reconstructing a connected covering space from its projection gives an isomorphic object. -/
-@[expose] def mkProjIso (p : ConnectedCoveringSpace X) : mk p.proj p.isCoveringMap_proj ≅ p :=
+def mkProjIso (p : ConnectedCoveringSpace X) : mk p.proj p.isCoveringMap_proj ≅ p :=
   isoMk (Iso.refl _)
 
 @[simp]
 theorem mkProjIso_hom_hom_left (p : ConnectedCoveringSpace X) :
-    (mkProjIso p).hom.hom.left = 𝟙 (p : TopCat) :=
-  rfl
+    (mkProjIso p).hom.hom.left = eqToHom (mk_coe p.proj p.isCoveringMap_proj) :=
+  (rfl)
 
 @[simp]
 theorem mkProjIso_inv_hom_left (p : ConnectedCoveringSpace X) :
-    (mkProjIso p).inv.hom.left = 𝟙 (p : TopCat) :=
-  rfl
+    (mkProjIso p).inv.hom.left = eqToHom (mk_coe p.proj p.isCoveringMap_proj).symm :=
+  (rfl)
 
 /-- A map of connected covering spaces is an isomorphism exactly when its map of total spaces is
 a homeomorphism. -/
