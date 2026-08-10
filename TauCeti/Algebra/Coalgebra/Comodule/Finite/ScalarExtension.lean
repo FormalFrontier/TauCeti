@@ -69,17 +69,6 @@ theorem scalarExtensionFunctor_map {M N : FGComoduleCat.{u, v, w} R C} (f : M �
           eqToHom (scalarExtensionFunctor_obj R C A N).symm :=
   ComoduleCat.scalarExtensionFunctor_map R C A f.hom
 
-/-- After the canonical identifications of its source and target, scalar extension of a
-finite-comodule morphism is base change of the underlying linear map. -/
-theorem scalarExtensionFunctor_map_eq {M N : FGComoduleCat.{u, v, w} R C}
-    (f : M ⟶ N) :
-    eqToHom (scalarExtensionFunctor_obj R C A M).symm ≫
-        (scalarExtensionFunctor R C A).map f ≫
-          eqToHom (scalarExtensionFunctor_obj R C A N) =
-      SemimoduleCat.ofHom (f.hom.toLinearMap.baseChange A) := by
-  rw [scalarExtensionFunctor_map]
-  simp
-
 end FGComoduleCat
 
 end TauCeti
