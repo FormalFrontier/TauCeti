@@ -6,7 +6,6 @@ module
 
 public import TauCeti.LinearAlgebra.RootSystem.DynkinType
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.C.Model
-public import Mathlib.LinearAlgebra.RootSystem.Base
 
 public section
 
@@ -38,8 +37,9 @@ records. The `b` of the `a`-th simple root is the Bourbaki successor `min (a + 1
 moves that successor to the first slot of the enumeration.
 
 Only the coroots are asked to span their lattice, and only that half is recorded, in
-`span_coroot_typeCSimplyConnectedRootDatum`. The roots span the root lattice, which sits inside the
-weight lattice with index `2` (Bourbaki, Plate III), so the datum is a `RootDatum` carrying no
+`typeCSimplyConnectedRootDatum_corootSpan_eq_top`. The roots span the root lattice, which sits
+inside the weight lattice with index `2` whenever `0 < n` (Bourbaki, Plate III; at `n = 0` both
+lattices are trivial and the index is `1`), so the datum is a `RootDatum` carrying no
 `RootPairing.IsRootSystem` instance. That asymmetry is what "simply connected" means here.
 
 ## Main definitions
@@ -60,8 +60,8 @@ weight lattice with index `2` (Bourbaki, Plate III), so the datum is a `RootDatu
   `Pi.single i 1`, which is what pins the two lattices as the weight and coroot lattices.
 * `TauCeti.DynkinType.hasCartanType_typeCSimplyConnectedRootDatum`: the pinned base has Cartan type
   `C n`.
-* `TauCeti.DynkinType.span_coroot_typeCSimplyConnectedRootDatum`: the coroots span the cocharacter
-  lattice, the simply connected condition.
+* `TauCeti.DynkinType.typeCSimplyConnectedRootDatum_corootSpan_eq_top`: the coroots span the
+  cocharacter lattice, the simply connected condition.
 
 ## References
 
@@ -382,6 +382,7 @@ Away from the simple indices, a root of the datum is named by encoding a root in
 they cover every index, since `typeCIndexEquiv` is a bijection. -/
 
 /-- The root at the encoded index `(a, b, s)` with `a < b`: the short root `± (e_a - e_b)`. -/
+@[simp]
 theorem root_typeCIndexEquiv_of_lt {a b : Fin n} (h : a < b) (s : Bool) :
     (typeCSimplyConnectedRootDatum n).root (typeCIndexEquiv n (a, b, s))
       = signedWeight (a, s) - signedWeight (b, s) := by
@@ -389,6 +390,7 @@ theorem root_typeCIndexEquiv_of_lt {a b : Fin n} (h : a < b) (s : Bool) :
 
 /-- The root at the encoded index `(a, b, s)` with `b ≤ a`: the short root `± (e_a + e_b)`, and the
 long root `± 2 e_a` on the diagonal `b = a`. -/
+@[simp]
 theorem root_typeCIndexEquiv_of_not_lt {a b : Fin n} (h : ¬ a < b) (s : Bool) :
     (typeCSimplyConnectedRootDatum n).root (typeCIndexEquiv n (a, b, s))
       = signedWeight (a, s) + signedWeight (b, s) := by
@@ -396,6 +398,7 @@ theorem root_typeCIndexEquiv_of_not_lt {a b : Fin n} (h : ¬ a < b) (s : Bool) :
 
 /-- The coroot at the encoded index `(a, b, s)` with `a < b`, that of a short root: the root
 itself, in the cocharacter coordinates. -/
+@[simp]
 theorem coroot_typeCIndexEquiv_of_lt {a b : Fin n} (h : a < b) (s : Bool) :
     (typeCSimplyConnectedRootDatum n).coroot (typeCIndexEquiv n (a, b, s))
       = signedCoweight (a, s) - signedCoweight (b, s) := by
@@ -403,6 +406,7 @@ theorem coroot_typeCIndexEquiv_of_lt {a b : Fin n} (h : a < b) (s : Bool) :
 
 /-- The coroot at the encoded index `(a, b, s)` with `b < a`, that of a short root: the root
 itself, in the cocharacter coordinates. -/
+@[simp]
 theorem coroot_typeCIndexEquiv_of_gt {a b : Fin n} (h : b < a) (s : Bool) :
     (typeCSimplyConnectedRootDatum n).coroot (typeCIndexEquiv n (a, b, s))
       = signedCoweight (a, s) + signedCoweight (b, s) := by
@@ -410,6 +414,7 @@ theorem coroot_typeCIndexEquiv_of_gt {a b : Fin n} (h : b < a) (s : Bool) :
 
 /-- The coroot at the encoded diagonal index `(a, a, s)`, that of the long root `± 2 e_a`: the
 halved `± e_a`. -/
+@[simp]
 theorem coroot_typeCIndexEquiv_diag (a : Fin n) (s : Bool) :
     (typeCSimplyConnectedRootDatum n).coroot (typeCIndexEquiv n (a, a, s))
       = signedCoweight (a, s) := by
@@ -799,8 +804,9 @@ theorem hasCartanType_typeCSimplyConnectedRootDatum (n : ℕ) :
 /-- **The coroots of the pinned type `Cₙ` datum span the cocharacter lattice.** This is the simply
 connected lattice condition required by the pinned Chevalley--Demazure construction. Its
 counterpart for the roots is deliberately absent: they span the root lattice, which sits inside the
-weight lattice with index `2` (Bourbaki, Plate III). -/
-theorem span_coroot_typeCSimplyConnectedRootDatum (n : ℕ) :
+weight lattice with index `2` whenever `0 < n` (Bourbaki, Plate III; at `n = 0` both lattices are
+trivial). -/
+theorem typeCSimplyConnectedRootDatum_corootSpan_eq_top (n : ℕ) :
     (typeCSimplyConnectedRootDatum n).corootSpan ℤ = ⊤ := by
   refine top_unique ?_
   rw [← (Pi.basisFun ℤ (Fin n)).span_eq]
