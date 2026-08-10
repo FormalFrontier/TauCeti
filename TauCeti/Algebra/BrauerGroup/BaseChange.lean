@@ -16,12 +16,8 @@ public import TauCeti.Algebra.BrauerGroup.Group
 -- below typechecks, and it re-exports the two compatibilities of scalar extension used in the
 -- proofs, `TauCeti.Algebra.TensorProduct.baseChangeTensorAlgEquiv` and `baseChangeTowerAlgEquiv`.
 public import TauCeti.Algebra.CentralSimple.BaseChange
--- Non-public: none of these appears in the type of an exported declaration.
--- `TauCeti.Algebra.matrixCoeffBaseChangeAlgEquiv` is used only inside the proof that base change
--- respects Brauer equivalence, and the fundamental theorem of algebra and the real quaternions
--- only by the worked examples at the end of the file.
-import Mathlib.Analysis.Complex.Polynomial.Basic
-import TauCeti.Algebra.CentralSimple.Quaternion
+-- Non-public: `TauCeti.Algebra.matrixCoeffBaseChangeAlgEquiv` does not occur in the type of any
+-- exported declaration, only inside the proof that base change respects Brauer equivalence.
 import TauCeti.Algebra.Matrix.BaseChange
 
 /-!
@@ -42,11 +38,13 @@ Multiplicativity is `TauCeti.Algebra.TensorProduct.baseChangeTensorAlgEquiv`, di
 scalar extension over `⊗`. That the identity goes to the identity is
 `Algebra.TensorProduct.rid`, `L ⊗[K] K ≃ₐ[L] L`.
 
-The two functor laws come with it: base change along `K = K` is the identity homomorphism
-(`TauCeti.BrauerGroup.baseChange_self`) and base change composes along a tower `K → L → M`
+Two compatibilities come with it, and both are equalities of homomorphisms rather than merely
+isomorphisms: base change along `K = K` is the identity homomorphism
+(`TauCeti.BrauerGroup.baseChange_self`), and base change composes along a tower `K → L → M`
 (`TauCeti.BrauerGroup.baseChange_comp`), the latter by
-`TauCeti.Algebra.TensorProduct.baseChangeTowerAlgEquiv`. Both are equalities of homomorphisms, not
-merely isomorphisms, so `K ↦ BrauerGroup K` is functorial on the nose.
+`TauCeti.Algebra.TensorProduct.baseChangeTowerAlgEquiv`. They are the identity and composition laws
+for scalar extension along the `Algebra` instances in scope; no bundled functor on a category of
+fields, and no homomorphism induced by an arbitrary map of fields, is constructed here.
 
 ## The kernel
 
@@ -76,15 +74,17 @@ See P. Gille, T. Szamuely, *Central Simple Algebras and Galois Cohomology*, CUP 
 
 public section
 
-universe u
+universe u v w
 
 namespace TauCeti
 
 open scoped TensorProduct
 
-variable {K : Type u} [Field K] (L : Type u) [Field L] [Algebra K L]
-
 /-! ### The scalar extension of a central simple algebra -/
+
+section ScalarExtension
+
+variable {K : Type u} [Field K] (L : Type w) [Field L] [Algebra K L]
 
 /-- **The scalar extension of a central simple algebra**, bundled as a term of `CSA L`.
 
@@ -92,8 +92,13 @@ That `L ⊗[K] A` really is a finite-dimensional central simple `L`-algebra is
 `TauCeti/Algebra/CentralSimple/BaseChange.lean`: centrality is
 `TauCeti.Algebra.IsCentral.baseChange` and simplicity is
 `TauCeti.IsSimpleRing.tensorProduct_of_isCentral_right` with `L` as the simple factor, both
-instances, so there is no glue here. -/
-abbrev CSA.baseChange (A : CSA.{u, u} K) : CSA.{u, u} L := CSA.of L (L ⊗[K] A)
+instances, so there is no glue here.
+
+The three universes are independent: the base field, the algebra and the extension field are
+unrelated, and the scalar extension lands in `Type (max w v)` because that is where `L ⊗[K] A`
+lives. It is `TauCeti.BrauerGroup.baseChange` that has to pin them together, because the identity
+of `BrauerGroup K` is the class of `K` itself. -/
+abbrev CSA.baseChange (A : CSA.{u, v} K) : CSA.{w, max w v} L := CSA.of L (L ⊗[K] A)
 
 /-- **Base change respects Brauer equivalence**, so it descends to a map of Brauer classes.
 
@@ -101,17 +106,19 @@ The witness is the one of the hypothesis, in the same two sizes: base change com
 a matrix algebra (`TauCeti.Algebra.matrixCoeffBaseChangeAlgEquiv`), so extending
 `Mₙ(A) ≃ₐ[K] Mₘ(B)` to `L` and moving the matrices outside gives
 `Mₙ(L ⊗[K] A) ≃ₐ[L] Mₘ(L ⊗[K] B)`. -/
-theorem isBrauerEquivalent_baseChange_congr {A B : CSA.{u, u} K} (h : IsBrauerEquivalent A B) :
+theorem isBrauerEquivalent_baseChange_congr {A B : CSA.{u, v} K} (h : IsBrauerEquivalent A B) :
     IsBrauerEquivalent (CSA.baseChange L A) (CSA.baseChange L B) := by
   obtain ⟨n, m, hn, hm, ⟨e⟩⟩ := h
   refine ⟨n, m, hn, hm, ⟨?_⟩⟩
-  exact (Algebra.matrixCoeffBaseChangeAlgEquiv K L (Fin n) (A : Type u)).symm.trans
+  exact (Algebra.matrixCoeffBaseChangeAlgEquiv K L (Fin n) (A : Type v)).symm.trans
     ((Algebra.TensorProduct.congr (AlgEquiv.refl (R := L) (A₁ := L)) e).trans
-      (Algebra.matrixCoeffBaseChangeAlgEquiv K L (Fin m) (B : Type u)))
+      (Algebra.matrixCoeffBaseChangeAlgEquiv K L (Fin m) (B : Type v)))
+
+end ScalarExtension
 
 namespace BrauerGroup
 
-variable (K)
+variable (K : Type u) [Field K] (L : Type u) [Field L] [Algebra K L]
 
 /-! ### The homomorphism -/
 
@@ -125,7 +132,10 @@ It is well defined by `TauCeti.isBrauerEquivalent_baseChange_congr`, multiplicat
 `@[expose]` so that `TauCeti.BrauerGroup.baseChange_mk`, the defining property that everything
 below is stated through, can be proved at all: it is an exported theorem whose only possible proof
 unfolds the `Quotient.liftOn` here, and the module system requires every definition unfolded by an
-exported theorem to be exposed. Nothing below unfolds `baseChange` again. -/
+exported theorem to be exposed. The corresponding lemmas for the group structure,
+`TauCeti.BrauerGroup.mk_tensorProduct` and `TauCeti.BrauerGroup.mk_op`, are the same `rfl` against
+the same `Quotient.liftOn`, and go without the attribute only because `instance` declarations are
+exposed automatically. Nothing below unfolds `baseChange` again. -/
 @[expose]
 def baseChange : BrauerGroup.{u, u} K →* BrauerGroup.{u, u} L where
   toFun x := Quotient.liftOn x (fun A ↦ mk (CSA.baseChange L A))
@@ -152,9 +162,11 @@ theorem baseChange_self : baseChange K K = MonoidHom.id (BrauerGroup.{u, u} K) :
 variable (M : Type u) [Field M] [Algebra K M] [Algebra L M] [IsScalarTower K L M]
 
 /-- **Base change composes along a tower** `K → L → M`, by
-`TauCeti.Algebra.TensorProduct.baseChangeTowerAlgEquiv`. With
-`TauCeti.BrauerGroup.baseChange_self` this makes `K ↦ BrauerGroup K` a functor from fields to
-abelian groups. -/
+`TauCeti.Algebra.TensorProduct.baseChangeTowerAlgEquiv`: extending to `L` and then to `M` is
+extending to `M` in one step. With `TauCeti.BrauerGroup.baseChange_self` this is the composition
+law a functor from fields to abelian groups would need; the functor itself, with its action on an
+arbitrary map of fields, is not constructed here. -/
+@[simp]
 theorem baseChange_comp : (baseChange L M).comp (baseChange K L) = baseChange K M := by
   ext x
   induction x using BrauerGroup.inductionOn with
@@ -196,32 +208,5 @@ theorem baseChange_eq_one_of_isAlgClosed [IsAlgClosed L] : baseChange K L = 1 :=
   exact Subsingleton.elim _ _
 
 end BrauerGroup
-
-/-! ### Worked examples -/
-
-section Examples
-
--- `_root_.` is needed because `TauCeti.Quaternion` is also a namespace, so a bare
--- `open scoped Quaternion` would open that one and leave the `ℍ[·]` notation out of scope.
-open scoped _root_.Quaternion
-
-/-- Complexification kills the Brauer class of the real quaternions, because `ℂ` is algebraically
-closed and so has trivial Brauer group.
-
-That this is a *nontrivial* class being killed -- that `ℍ[ℝ]` is not already split over `ℝ`, so
-that the kernel of `TauCeti.BrauerGroup.baseChange ℝ ℂ` is bigger than `1` -- is a separate matter,
-and one this file does not settle: it needs the uniqueness half of Artin-Wedderburn, as does the
-expectation `BrauerGroup ℝ ≃ ℤ/2`. -/
-example : BrauerGroup.baseChange ℝ ℂ (BrauerGroup.mk (CSA.of ℝ ℍ[ℝ])) = 1 := by
-  rw [BrauerGroup.baseChange_eq_one_of_isAlgClosed, MonoidHom.one_apply]
-
-/-- The same class, killed through the splitting field rather than through the triviality of
-`BrauerGroup ℂ`: `TauCeti.Algebra.isSplittingField_of_isAlgClosed` says `ℂ` splits every
-finite-dimensional central simple `ℝ`-algebra, and a split algebra lies in the kernel. -/
-example : BrauerGroup.mk (CSA.of ℝ ℍ[ℝ]) ∈ (BrauerGroup.baseChange ℝ ℂ).ker :=
-  BrauerGroup.mk_mem_ker_baseChange_of_isSplittingField ℝ ℂ
-    (Algebra.isSplittingField_of_isAlgClosed ℝ ℍ[ℝ] ℂ)
-
-end Examples
 
 end TauCeti

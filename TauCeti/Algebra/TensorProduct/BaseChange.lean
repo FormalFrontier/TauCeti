@@ -12,8 +12,9 @@ module
 public import Mathlib.LinearAlgebra.TensorProduct.Opposite
 public import Mathlib.RingTheory.TensorProduct.Basic
 -- Non-public: neither appears in the type of an exported declaration. Mathlib's
--- `distribBaseChange`, `cancelBaseChange`, `algEquivOfLinearEquivTensorProduct` and `congr` are
--- used only inside definition bodies and proofs, and no definition below is `@[expose]`d.
+-- `distribBaseChange`, `cancelBaseChange`, `algEquivOfLinearEquivTensorProduct`,
+-- `LinearMap.map_mul_of_map_mul_tmul` and `congr` are used only inside definition bodies and
+-- proofs, and no definition below is `@[expose]`d.
 import Mathlib.LinearAlgebra.TensorProduct.Tower
 import Mathlib.RingTheory.TensorProduct.Maps
 
@@ -136,31 +137,22 @@ then to `M` is extending it to `M` in one step, `M ⊗[L] (L ⊗[K] A) ≃ₐ[M]
 
 The underlying map is Mathlib's linear equivalence
 `TensorProduct.AlgebraTensorModule.cancelBaseChange`, which absorbs `L` into `M`; the content added
-here is that it is multiplicative, checked on pure tensors, where it comes down to
-`(l₁ • m₁) * (l₂ • m₂) = (l₁ * l₂) • (m₁ * m₂)` in the commutative `L`-algebra `M`.
+here is that it is multiplicative. That is checked in the easy direction, on the inverse
+`M ⊗[K] A → M ⊗[L] (L ⊗[K] A)`, whose pure tensors are the `m ⊗ₜ[K] a` with `a` in `A` itself, so
+that `LinearMap.map_mul_of_map_mul_tmul` reduces it to `simp`; this is how Mathlib's
+`Algebra.TensorProduct.cancelBaseChange` is built.
 
-Mathlib's `Algebra.TensorProduct.cancelBaseChange` is this equivalence under the extra hypothesis
-that `A` is commutative, which the central simple algebras this serves are not. -/
+That equivalence of Mathlib's is this one under the extra hypothesis that `A` is commutative, which
+the central simple algebras this serves are not. -/
 def baseChangeTowerAlgEquiv : M ⊗[L] (L ⊗[K] A) ≃ₐ[M] M ⊗[K] A :=
-  Algebra.TensorProduct.algEquivOfLinearEquivTensorProduct
-    (_root_.TensorProduct.AlgebraTensorModule.cancelBaseChange K L M M A)
-    (fun m₁ m₂ z₁ z₂ => by
-      induction z₁ using TensorProduct.induction_on with
-      | zero => simp
-      | add x y hx hy => simp [add_mul, TensorProduct.tmul_add, hx, hy]
-      | tmul l₁ a₁ =>
-        induction z₂ using TensorProduct.induction_on with
-        | zero => simp
-        | add x y hx hy => simp [mul_add, TensorProduct.tmul_add, hx, hy]
-        | tmul l₂ a₂ =>
-          simp [Algebra.TensorProduct.tmul_mul_tmul, smul_smul, mul_comm l₁ l₂])
+  (AlgEquiv.ofLinearEquiv (_root_.TensorProduct.AlgebraTensorModule.cancelBaseChange K L M M A).symm
     (by simp [Algebra.TensorProduct.one_def])
+    (LinearMap.map_mul_of_map_mul_tmul fun _ _ _ _ ↦ by simp)).symm
 
 @[simp]
 theorem baseChangeTowerAlgEquiv_tmul (m : M) (l : L) (a : A) :
     baseChangeTowerAlgEquiv K L A M (m ⊗ₜ[L] (l ⊗ₜ[K] a)) = (l • m) ⊗ₜ[K] a :=
-  (Algebra.TensorProduct.algEquivOfLinearEquivTensorProduct_apply _ _ _ _).trans
-    (_root_.TensorProduct.AlgebraTensorModule.cancelBaseChange_tmul ..)
+  _root_.TensorProduct.AlgebraTensorModule.cancelBaseChange_tmul K L M m a l
 
 @[simp]
 theorem baseChangeTowerAlgEquiv_symm_tmul (m : M) (a : A) :
