@@ -131,12 +131,9 @@ theorem HasMFDerivAt.hasDerivAt_comp_mul_mulInvariantExp_smul {f : G → F} {g :
   have hcomp := hfg.comp 1 hmul
   have h := HasMFDerivAt.hasDerivAt_comp_mulInvariantExp_smul hcomp Y
   simp only [Function.comp_apply] at h
-  -- The dependent source fiber of `hcomp` is `TangentSpace I (g * 1)`, so the composition
-  -- cannot be rewritten before transporting along `g * 1 = g`. After exposing the invariant
-  -- field, the `rfl` goals below are exactly that fiber collapse and composition application.
   simp only [mulInvariantVectorField]
   convert h using 1
-  all_goals rfl
+  exact ContinuousLinearMap.comp_apply _ _ _
 
 /-- Differentiating a function after right multiplication along an exponential line gives
 its right-invariant directional derivative. -/
@@ -158,11 +155,8 @@ theorem HasMFDerivAt.hasDerivAt_comp_mulInvariantExp_smul_mul {f : G → F} {g :
   have h := HasMFDerivAt.hasDerivAt_comp_mulInvariantExp_smul hcomp X
   rw [mulRightInvariantVectorField_apply]
   simp only [Function.comp_apply] at h
-  -- The dependent source fiber of `hcomp` is `TangentSpace I (1 * g)`, so the composition
-  -- cannot be rewritten before transporting along `1 * g = g`. The `rfl` goals below are
-  -- exactly that fiber collapse and composition application.
   convert h using 1
-  all_goals rfl
+  exact ContinuousLinearMap.comp_apply _ _ _
 
 end ExponentialLine
 

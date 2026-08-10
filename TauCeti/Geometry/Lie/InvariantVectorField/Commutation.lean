@@ -22,10 +22,10 @@ This supplies a prerequisite for Deliverable A, Layer 1 of
 
 ## Main results
 
-* `mvfderiv_mulInvariant_mulRightInvariant_commute`: left- and right-invariant scalar
-  differentiation commute at every group point.
-* `mlieBracket_mulRightInvariant_mulInvariant`: the corresponding vector-field bracket
-  vanishes everywhere.
+* `mvfderiv_mulRightInvariantVectorField_mulInvariantVectorField_commute`: left- and
+  right-invariant scalar differentiation commute at every group point.
+* `mlieBracket_mulRightInvariantVectorField_mulInvariantVectorField`: the corresponding
+  vector-field bracket vanishes everywhere.
 
 ## References
 
@@ -152,7 +152,7 @@ private theorem timeFDeriv_mulInvariantExp_mul_mulInvariantExp
 
 /-- Left- and right-invariant scalar differentiation commute at every group point. This is
 Clairaut symmetry for `(s, t) ↦ f (exp(sX) * g * exp(tY))`. -/
-theorem mvfderiv_mulInvariant_mulRightInvariant_commute
+theorem mvfderiv_mulRightInvariantVectorField_mulInvariantVectorField_commute
     (f : C^∞⟮I, G; ℝ⟯) (g : G) (X Y : GroupLieAlgebra I G) :
     mvfderiv I (fun h => mvfderiv I f h (mulInvariantVectorField Y h)) g
         (mulRightInvariantVectorField X g) =
@@ -201,7 +201,7 @@ variable [FiniteDimensional ℝ E]
 
 /-- Right- and left-invariant vector fields commute everywhere. -/
 @[simp]
-theorem mlieBracket_mulRightInvariant_mulInvariant
+theorem mlieBracket_mulRightInvariantVectorField_mulInvariantVectorField
     (X Y : GroupLieAlgebra I G) :
     mlieBracket I (mulRightInvariantVectorField X) (mulInvariantVectorField Y) = 0 := by
   let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
@@ -225,6 +225,7 @@ theorem mlieBracket_mulRightInvariant_mulInvariant
       (by simp)).mdifferentiableAt
     ((contMDiff_mulInvariantVectorField_infty Y).mdifferentiable
       (by simp)).mdifferentiableAt]
-  exact sub_eq_zero.mpr (mvfderiv_mulInvariant_mulRightInvariant_commute f g X Y)
+  exact sub_eq_zero.mpr
+    (mvfderiv_mulRightInvariantVectorField_mulInvariantVectorField_commute f g X Y)
 
 end TauCeti.Lie
