@@ -159,13 +159,9 @@ variable (𝕜 G) in
 /-- **The zero function is representative.** It is the matrix coefficient of the trivial
 one-dimensional representation at the zero vector. -/
 theorem isRepresentative_zero : IsRepresentative (0 : C(G, 𝕜)) := by
-  have h : (0 : C(G, 𝕜)) =
-      matrixCoeff (ContRepresentation.trivial 𝕜 G 𝕜) continuous_const (0 : 𝕜) (0 : 𝕜) := by
-    rw [matrixCoeff_trivial]
-    ext g
-    simp
-  rw [h]
-  exact isRepresentative_matrixCoeff _ _ _ _
+  simpa only [matrixCoeff_zero_left (ContRepresentation.trivial 𝕜 G 𝕜) continuous_const] using
+    isRepresentative_matrixCoeff (ContRepresentation.trivial 𝕜 G 𝕜) continuous_const
+      (0 : 𝕜) (0 : 𝕜)
 
 variable (𝕜 G) in
 /-- The constant function `1` lies in `𝓡(G)`. -/
