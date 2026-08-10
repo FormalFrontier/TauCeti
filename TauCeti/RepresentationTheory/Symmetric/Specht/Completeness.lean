@@ -64,10 +64,21 @@ private instance : NeZero ((Nat.card (Equiv.Perm (Fin n)) : ℚ)) :=
   ⟨Nat.cast_ne_zero.mpr Nat.card_pos.ne'⟩
 
 /-- **The isomorphism class of the Specht module `S^μ`**, as a simple module over the rational
-group algebra of `Sₙ`. -/
-noncomputable abbrev spechtModuleClass (μ : n.Partition) :
+group algebra of `Sₙ`.
+
+That this is built as `TauCeti.simpleModuleClass` of the module `S^μ` carries is an
+implementation detail; use `TauCeti.spechtModuleClass_eq_simpleModuleClass` to see it. -/
+noncomputable def spechtModuleClass (μ : n.Partition) :
     SimpleSubmoduleClasses ℚ[Equiv.Perm (Fin n)] ℚ[Equiv.Perm (Fin n)] :=
   simpleModuleClass _ (_root_.Representation.asModule (spechtModule μ).ρ)
+
+/-- The defining equation of `TauCeti.spechtModuleClass`: it is the class of the `ℚ[Sₙ]`-module
+carried by the Specht module `S^μ`. -/
+@[simp]
+theorem spechtModuleClass_eq_simpleModuleClass (μ : n.Partition) :
+    spechtModuleClass μ =
+      simpleModuleClass _ (_root_.Representation.asModule (spechtModule μ).ρ) :=
+  (rfl)
 
 /-- **Specht modules with distinct shapes carry non-isomorphic modules.** This is
 `TauCeti.spechtModule_iso_iff` read through the dictionary between isomorphism of representations
@@ -81,8 +92,11 @@ theorem nonempty_linearEquiv_spechtModule_asModule_iff (μ ν : n.Partition) :
 
 /-- Distinct partitions give distinct isomorphism classes: the irredundancy half of the
 classification. -/
-theorem spechtModuleClass_injective : Function.Injective (spechtModuleClass (n := n)) := fun μ ν h ↦
-  (nonempty_linearEquiv_spechtModule_asModule_iff μ ν).mp (simpleModuleClass_eq_iff.mp h)
+theorem spechtModuleClass_injective : Function.Injective (spechtModuleClass (n := n)) := by
+  intro μ ν h
+  rw [spechtModuleClass_eq_simpleModuleClass, spechtModuleClass_eq_simpleModuleClass,
+    simpleModuleClass_eq_iff] at h
+  exact (nonempty_linearEquiv_spechtModule_asModule_iff μ ν).mp h
 
 /-- **The Specht modules exhaust the simple `ℚ[Sₙ]`-modules.** They are as many as the conjugacy
 classes of `Sₙ` and pairwise non-isomorphic, and no field admits more isomorphism classes of simple
@@ -117,6 +131,7 @@ theorem exists_nonempty_linearEquiv_spechtModule (M : Type*) [AddCommGroup M]
       _root_.Representation.asModule (spechtModule μ).ρ) := by
   obtain ⟨μ, hμ⟩ := (spechtModuleClass_bijective (n := n)).surjective
     (simpleModuleClass ℚ[Equiv.Perm (Fin n)] M)
+  rw [spechtModuleClass_eq_simpleModuleClass] at hμ
   exact ⟨μ, simpleModuleClass_eq_iff.mp hμ.symm⟩
 
 /-- **Every irreducible rational representation of `Sₙ` is a Specht module.** -/
