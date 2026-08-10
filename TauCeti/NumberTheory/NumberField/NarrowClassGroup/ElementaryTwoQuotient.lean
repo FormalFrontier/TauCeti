@@ -42,6 +42,8 @@ In the namespace `TauCeti.NumberField.NarrowClassGroup`:
 
 * `ElementaryTwoQuotient`, `elementaryTwoQuotientMk`, and `twoRank`: the quotient
   `Cl⁺(K)/Cl⁺(K)²`, its constructor, and its `𝔽₂`-dimension.
+* `card_elementaryTwoQuotient_eq_two_pow_twoRank`: `|Cl⁺(K)/Cl⁺(K)²| = 2 ^ twoRank`, with
+  `twoRank_eq_of_card_elementaryTwoQuotient_eq_two_pow` its inversion.
 * `ElementaryTwoQuotient.toClassGroup` and `ElementaryTwoQuotient.toClassGroup_eq_zero_iff`: the
   induced map to the ordinary quotient and its kernel of principal classes.
 * `twoRank_classGroup_le_twoRank`: `twoRank Cl(K) ≤ twoRank Cl⁺(K)`.
@@ -130,9 +132,8 @@ noncomputable def toClassGroup :
 @[simp] theorem toClassGroup_mk (C : NarrowClassGroup K) :
     toClassGroup (elementaryTwoQuotientMk C) =
       TauCeti.elementaryTwoQuotientMk C.toClassGroup := by
-  change TauCeti.elementaryTwoQuotientMap NarrowClassGroup.toClassGroup
-    (TauCeti.elementaryTwoQuotientMk C) = TauCeti.elementaryTwoQuotientMk C.toClassGroup
-  exact TauCeti.elementaryTwoQuotientMap_mk NarrowClassGroup.toClassGroup C
+  simpa only [toClassGroup, elementaryTwoQuotientMk] using
+    TauCeti.elementaryTwoQuotientMap_mk NarrowClassGroup.toClassGroup C
 
 /-- The induced map `Cl⁺(K)/Cl⁺(K)² → Cl(K)/Cl(K)²` is surjective. -/
 theorem toClassGroup_surjective : Function.Surjective (toClassGroup (K := K)) :=
@@ -150,6 +151,18 @@ quotient. -/
 @[simp] theorem twoRank_def :
     twoRank K = Module.finrank (ZMod 2) (ElementaryTwoQuotient K) :=
   TauCeti.twoRank_def (NarrowClassGroup K)
+
+/-- The maximal elementary-2 quotient `Cl⁺(K)/Cl⁺(K)²` has cardinality `2 ^ twoRank`: it is a
+finite `𝔽₂`-vector space of dimension the narrow `2`-rank. -/
+theorem card_elementaryTwoQuotient_eq_two_pow_twoRank :
+    Nat.card (ElementaryTwoQuotient K) = 2 ^ twoRank K :=
+  TauCeti.card_elementaryTwoQuotient_eq_two_pow_twoRank (NarrowClassGroup K)
+
+/-- Reading the narrow `2`-rank off a cardinality computation: if `Cl⁺(K)/Cl⁺(K)²` has `2 ^ n`
+elements, the narrow `2`-rank of `K` is `n`. -/
+theorem twoRank_eq_of_card_elementaryTwoQuotient_eq_two_pow {n : ℕ}
+    (h : Nat.card (ElementaryTwoQuotient K) = 2 ^ n) : twoRank K = n :=
+  TauCeti.twoRank_eq_of_card_elementaryTwoQuotient_eq_two_pow (NarrowClassGroup K) h
 
 /-- **The kernel of `Cl⁺(K)/Cl⁺(K)² → Cl(K)/Cl(K)²` is spanned by the principal classes.** A narrow
 square class dies in `Cl(K)/Cl(K)²` exactly when it is the class of `mkPrincipal u` for some
