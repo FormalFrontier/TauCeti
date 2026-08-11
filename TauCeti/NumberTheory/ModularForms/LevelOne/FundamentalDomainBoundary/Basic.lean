@@ -245,35 +245,35 @@ variable {H t : ℝ}
 @[simp]
 lemma fdBoundary_of_le_one (ht : t ≤ 1) : fdBoundary H t = fdBoundary_segment1 H t := by
   unfold fdBoundary
-  rw [if_pos ht]
+  rw [ite_eq_left ht]
 
 /-- On `1 < t ≤ 2` the path follows segment 2. -/
 @[simp]
 lemma fdBoundary_of_le_two (h1 : 1 < t) (h2 : t ≤ 2) : fdBoundary H t = fdBoundary_segment2 t := by
   unfold fdBoundary
-  rw [if_neg (not_le.mpr h1), if_pos h2]
+  rw [ite_eq_right (not_le.mpr h1), ite_eq_left h2]
 
 /-- On `2 < t ≤ 3` the path follows segment 3. -/
 @[simp]
 lemma fdBoundary_of_le_three (h2 : 2 < t) (h3 : t ≤ 3) :
     fdBoundary H t = fdBoundary_segment3 t := by
   unfold fdBoundary
-  rw [if_neg (by linarith : ¬t ≤ 1), if_neg (not_le.mpr h2), if_pos h3]
+  rw [ite_eq_right (by linarith : ¬t ≤ 1), ite_eq_right (not_le.mpr h2), ite_eq_left h3]
 
 /-- On `3 < t ≤ 4` the path follows segment 4. -/
 @[simp]
 lemma fdBoundary_of_le_four (h3 : 3 < t) (h4 : t ≤ 4) :
     fdBoundary H t = fdBoundary_segment4 H t := by
   unfold fdBoundary
-  rw [if_neg (by linarith : ¬t ≤ 1), if_neg (by linarith : ¬t ≤ 2),
-    if_neg (not_le.mpr h3), if_pos h4]
+  rw [ite_eq_right (by linarith : ¬t ≤ 1), ite_eq_right (by linarith : ¬t ≤ 2),
+    ite_eq_right (not_le.mpr h3), ite_eq_left h4]
 
 /-- On `4 < t` the path follows segment 5. -/
 @[simp]
 lemma fdBoundary_of_gt_four (h4 : 4 < t) : fdBoundary H t = fdBoundary_segment5 H t := by
   unfold fdBoundary
-  rw [if_neg (by linarith : ¬t ≤ 1), if_neg (by linarith : ¬t ≤ 2),
-    if_neg (by linarith : ¬t ≤ 3), if_neg (not_le.mpr h4)]
+  rw [ite_eq_right (by linarith : ¬t ≤ 1), ite_eq_right (by linarith : ¬t ≤ 2),
+    ite_eq_right (by linarith : ¬t ≤ 3), ite_eq_right (not_le.mpr h4)]
 
 end Branches
 

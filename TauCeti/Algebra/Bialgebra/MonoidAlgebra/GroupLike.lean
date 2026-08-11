@@ -125,7 +125,7 @@ theorem isGroupLikeElem_iff_eq_single [CommRing R]
         simp [hh_one]
       · have hk_zero : x.coeff k = 0 := by
           have horth := hcoeff k h
-          rw [if_neg hk, hh_one, mul_one] at horth
+          rw [ite_eq_right hk, hh_one, mul_one] at horth
           exact horth.symm
         simp [hk, hk_zero]
     refine ⟨h, hx_single, ?_⟩

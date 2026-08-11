@@ -204,7 +204,7 @@ theorem expFDerivTerm_eq_derivSeries (x : R) (n : ℕ) :
     List.take_replicate, List.prod_replicate, List.length_replicate, mul_ite, mul_one,
     List.drop_replicate, ite_mul, smul_ite, e]
   have hi (i : Fin (n + 1)) : (i : ℕ) < 1 + n := by omega
-  simp_rw [if_pos (hi _), Nat.min_eq_left (hi _).le]
+  simp_rw [ite_eq_left (hi _), Nat.min_eq_left (hi _).le]
   have hsub (i : Fin (n + 1)) : 1 + n - ((i : ℕ) + 1) = n - i := by omega
   simp_rw [hsub]
   rw [Nat.add_comm 1 n]
