@@ -8,6 +8,8 @@ public import Mathlib.Algebra.BigOperators.Expect
 public import Mathlib.Order.Filter.AtTopBot.Basic
 public import Mathlib.Algebra.BigOperators.Ring.Finset
 public import Mathlib.Data.Real.Basic
+public import Mathlib.Dynamics.BirkhoffSum.Average
+import Mathlib.Algebra.BigOperators.Fin
 
 /-!
 # Block averages of a real-valued process
@@ -148,6 +150,19 @@ theorem average_sub_sq_eq_sum_sum {ι R : Type*} [Field R] [CharZero R] {s : Fin
   have h1 : (s.card : R)⁻¹ * (∑ i ∈ s, a i) - b = (s.card : R)⁻¹ * ∑ i ∈ s, (a i - b) := by
     rw [hexp, hexp, Finset.expect_sub_distrib, Finset.expect_const hs]
   rw [h1, mul_pow, sq (∑ i ∈ s, (a i - b)), Finset.sum_mul_sum]
+
+/-- **A Birkhoff average is a prefix average of the iterated observable.** For any self-map `T` and
+any real observable `F`, `birkhoffAverage ℝ T F n` is the prefix average of `i ↦ F ∘ T^[i]`.
+
+Nothing about any particular dynamical system enters: both sides are the same normalised sum. This
+is the bridge from Mathlib's mean-ergodic theory, which speaks of Birkhoff averages, to the
+block-average API, which speaks of averages of a process over a selection of coordinates. -/
+theorem birkhoffAverage_eq_prefixAverage {β : Type*} (T : β → β) (F : β → ℝ) (n : ℕ) :
+    birkhoffAverage ℝ T F n = prefixAverage (fun i (x : β) => F (T^[i] x)) n := by
+  funext x
+  rw [birkhoffAverage, birkhoffSum, prefixAverage_apply, smul_eq_mul]
+  congr 1
+  exact Finset.sum_range fun i => F (T^[i] x)
 
 end Probability
 
