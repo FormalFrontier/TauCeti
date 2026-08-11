@@ -9,7 +9,7 @@ public import TauCeti.LinearAlgebra.RootSystem.FiniteType.Basic
 public section
 
 /-!
-# Affine type D is not of finite type
+# Affine type D̃ₘ for m ≥ 5 is not of finite type
 
 The diagram of an indecomposable finite-type Cartan matrix is a tree of maximum degree three. To
 finish the simply-laced part of the Cartan--Killing classification one must also show that such a
@@ -17,22 +17,23 @@ tree cannot have two branch vertices.  The path between two branch vertices, tog
 branches at either end, contains an affine diagram of type `D`.  This file supplies the uniform
 matrix obstruction for that argument.
 
-The matrix `affineDCartanMatrix n` has two fork vertices joined by a chain with `n` internal
-vertices. Each fork vertex has two leaves. Thus `n = 0` is the six-vertex diagram `D̃₅`, and
-increasing `n` lengthens the middle chain.  The vector which is `1` on the four leaves and `2` on
-the middle chain is a nonzero null vector.  Since a finite-type matrix has positive-definite
-symmetrization, it cannot admit this vector.
+The matrix `doubleForkCartanMatrix n` has two fork vertices joined by a chain with `n` internal
+vertices. Each fork vertex has two leaves. Thus it is the affine diagram `D̃ₘ` for
+`m = n + 5`, so this construction covers exactly the family `D̃ₘ` for `m ≥ 5`. The vector which
+is `1` on the four leaves and `2` on the middle chain is a nonzero null vector. Since a finite-type
+matrix has positive-definite symmetrization, it cannot admit this vector.
 
 ## Main definitions
 
-* `TauCeti.AffineDIndex`: the four leaves and the vertices of the middle chain.
-* `TauCeti.affineDCartanMatrix`: the simply-laced affine Cartan matrix of type `D`.
-* `TauCeti.affineDMark`: the standard affine marks, equal to `1` on leaves and `2` on the chain.
+* `TauCeti.DoubleForkIndex`: the four leaves and the vertices of the middle chain.
+* `TauCeti.doubleForkCartanMatrix`: the simply-laced double-fork Cartan matrix.
+* `TauCeti.doubleForkMark`: the affine marks, equal to `1` on leaves and `2` on the chain.
 
 ## Main results
 
-* `TauCeti.affineDCartanMatrix_mulVec_affineDMark`: the affine marks form a null vector.
-* `TauCeti.not_isFiniteType_affineD`: no member of the affine `D` family is of finite type.
+* `TauCeti.doubleForkCartanMatrix_mulVec_doubleForkMark`: the affine marks form a null vector.
+* `TauCeti.not_isFiniteType_doubleForkCartanMatrix`: no affine `D̃ₘ` matrix for `m ≥ 5` is of
+  finite type.
 
 ## References
 
@@ -44,15 +45,16 @@ Lie Algebras, Chapters 4--6*, Ch. VI, §4.
 
 namespace TauCeti
 
-/-- The indices of an affine `D` diagram with `n` internal vertices between its two forks.
+/-- The indices of the affine `D̃ₘ` diagram for `m = n + 5`, parameterized by its `n` internal
+vertices between the two forks.
 
 The outer `Fin 2` types are the two leaves at the left and right forks. The middle
 `Fin (n + 2)` consists of the two fork vertices and the `n` vertices between them. -/
-abbrev AffineDIndex (n : ℕ) := Fin 2 ⊕ (Fin (n + 2) ⊕ Fin 2)
+abbrev DoubleForkIndex (n : ℕ) := Fin 2 ⊕ (Fin (n + 2) ⊕ Fin 2)
 
-/-- The Cartan matrix of the affine `D` diagram whose two fork vertices have `n` internal chain
-vertices between them. -/
-def affineDCartanMatrix (n : ℕ) : Matrix (AffineDIndex n) (AffineDIndex n) ℤ
+/-- The Cartan matrix of the affine `D̃ₘ` diagram for `m = n + 5`, parameterized by the `n`
+internal chain vertices between its two forks. -/
+def doubleForkCartanMatrix (n : ℕ) : Matrix (DoubleForkIndex n) (DoubleForkIndex n) ℤ
   | .inl i, .inl j => if i = j then 2 else 0
   | .inl _, .inr (.inl j) => if j.val = 0 then -1 else 0
   | .inl _, .inr (.inr _) => 0
@@ -63,65 +65,194 @@ def affineDCartanMatrix (n : ℕ) : Matrix (AffineDIndex n) (AffineDIndex n) ℤ
   | .inr (.inr _), .inr (.inl j) => if j.val + 1 = n + 2 then -1 else 0
   | .inr (.inr i), .inr (.inr j) => if i = j then 2 else 0
 
-/-- The affine marks for type `D`: `1` on each of the four leaves and `2` on every vertex of the
-middle chain. -/
-def affineDMark (n : ℕ) : AffineDIndex n → ℚ
+/-- The affine marks for `D̃ₘ`, where `m = n + 5`: `1` on each of the four leaves and `2` on
+every vertex of the middle chain. -/
+def doubleForkMark (n : ℕ) : DoubleForkIndex n → ℚ
   | .inl _ => 1
   | .inr (.inl _) => 2
   | .inr (.inr _) => 1
 
+private lemma doubleForkCartanMatrix_inl_inl_aux (n : ℕ) (i j : Fin 2) :
+    doubleForkCartanMatrix n (.inl i) (.inl j) = if i = j then 2 else 0 := rfl
+
+/-- The entries between two left leaves. -/
+@[simp]
+theorem doubleForkCartanMatrix_inl_inl (n : ℕ) (i j : Fin 2) :
+    doubleForkCartanMatrix n (.inl i) (.inl j) = if i = j then 2 else 0 :=
+  doubleForkCartanMatrix_inl_inl_aux n i j
+
+private lemma doubleForkCartanMatrix_inl_inr_inl_aux (n : ℕ) (i : Fin 2)
+    (j : Fin (n + 2)) :
+    doubleForkCartanMatrix n (.inl i) (.inr (.inl j)) =
+      if j.val = 0 then -1 else 0 := rfl
+
+/-- The entries from a left leaf to the middle chain. -/
+@[simp]
+theorem doubleForkCartanMatrix_inl_inr_inl (n : ℕ) (i : Fin 2) (j : Fin (n + 2)) :
+    doubleForkCartanMatrix n (.inl i) (.inr (.inl j)) =
+      if j.val = 0 then -1 else 0 :=
+  doubleForkCartanMatrix_inl_inr_inl_aux n i j
+
+private lemma doubleForkCartanMatrix_inl_inr_inr_aux (n : ℕ) (i j : Fin 2) :
+    doubleForkCartanMatrix n (.inl i) (.inr (.inr j)) = 0 := rfl
+
+/-- The entries from a left leaf to a right leaf. -/
+@[simp]
+theorem doubleForkCartanMatrix_inl_inr_inr (n : ℕ) (i j : Fin 2) :
+    doubleForkCartanMatrix n (.inl i) (.inr (.inr j)) = 0 :=
+  doubleForkCartanMatrix_inl_inr_inr_aux n i j
+
+private lemma doubleForkCartanMatrix_inr_inl_inl_aux (n : ℕ) (i : Fin (n + 2))
+    (j : Fin 2) :
+    doubleForkCartanMatrix n (.inr (.inl i)) (.inl j) =
+      if i.val = 0 then -1 else 0 := rfl
+
+/-- The entries from the middle chain to a left leaf. -/
+@[simp]
+theorem doubleForkCartanMatrix_inr_inl_inl (n : ℕ) (i : Fin (n + 2)) (j : Fin 2) :
+    doubleForkCartanMatrix n (.inr (.inl i)) (.inl j) =
+      if i.val = 0 then -1 else 0 :=
+  doubleForkCartanMatrix_inr_inl_inl_aux n i j
+
+private lemma doubleForkCartanMatrix_inr_inl_inr_inl_aux (n : ℕ) (i j : Fin (n + 2)) :
+    doubleForkCartanMatrix n (.inr (.inl i)) (.inr (.inl j)) =
+      CartanMatrix.A (n + 2) i j := rfl
+
+/-- The entries within the middle chain. -/
+@[simp]
+theorem doubleForkCartanMatrix_inr_inl_inr_inl (n : ℕ) (i j : Fin (n + 2)) :
+    doubleForkCartanMatrix n (.inr (.inl i)) (.inr (.inl j)) =
+      CartanMatrix.A (n + 2) i j :=
+  doubleForkCartanMatrix_inr_inl_inr_inl_aux n i j
+
+private lemma doubleForkCartanMatrix_inr_inl_inr_inr_aux (n : ℕ) (i : Fin (n + 2))
+    (j : Fin 2) :
+    doubleForkCartanMatrix n (.inr (.inl i)) (.inr (.inr j)) =
+      if i.val + 1 = n + 2 then -1 else 0 := rfl
+
+/-- The entries from the middle chain to a right leaf. -/
+@[simp]
+theorem doubleForkCartanMatrix_inr_inl_inr_inr (n : ℕ) (i : Fin (n + 2)) (j : Fin 2) :
+    doubleForkCartanMatrix n (.inr (.inl i)) (.inr (.inr j)) =
+      if i.val + 1 = n + 2 then -1 else 0 :=
+  doubleForkCartanMatrix_inr_inl_inr_inr_aux n i j
+
+private lemma doubleForkCartanMatrix_inr_inr_inl_aux (n : ℕ) (i j : Fin 2) :
+    doubleForkCartanMatrix n (.inr (.inr i)) (.inl j) = 0 := rfl
+
+/-- The entries from a right leaf to a left leaf. -/
+@[simp]
+theorem doubleForkCartanMatrix_inr_inr_inl (n : ℕ) (i j : Fin 2) :
+    doubleForkCartanMatrix n (.inr (.inr i)) (.inl j) = 0 :=
+  doubleForkCartanMatrix_inr_inr_inl_aux n i j
+
+private lemma doubleForkCartanMatrix_inr_inr_inr_inl_aux (n : ℕ) (i : Fin 2)
+    (j : Fin (n + 2)) :
+    doubleForkCartanMatrix n (.inr (.inr i)) (.inr (.inl j)) =
+      if j.val + 1 = n + 2 then -1 else 0 := rfl
+
+/-- The entries from a right leaf to the middle chain. -/
+@[simp]
+theorem doubleForkCartanMatrix_inr_inr_inr_inl (n : ℕ) (i : Fin 2) (j : Fin (n + 2)) :
+    doubleForkCartanMatrix n (.inr (.inr i)) (.inr (.inl j)) =
+      if j.val + 1 = n + 2 then -1 else 0 :=
+  doubleForkCartanMatrix_inr_inr_inr_inl_aux n i j
+
+private lemma doubleForkCartanMatrix_inr_inr_inr_inr_aux (n : ℕ) (i j : Fin 2) :
+    doubleForkCartanMatrix n (.inr (.inr i)) (.inr (.inr j)) =
+      if i = j then 2 else 0 := rfl
+
+/-- The entries between two right leaves. -/
+@[simp]
+theorem doubleForkCartanMatrix_inr_inr_inr_inr (n : ℕ) (i j : Fin 2) :
+    doubleForkCartanMatrix n (.inr (.inr i)) (.inr (.inr j)) =
+      if i = j then 2 else 0 :=
+  doubleForkCartanMatrix_inr_inr_inr_inr_aux n i j
+
+private lemma doubleForkMark_inl_aux (n : ℕ) (i : Fin 2) :
+    doubleForkMark n (.inl i) = 1 := rfl
+
+/-- Every left leaf has affine mark one. -/
+@[simp]
+theorem doubleForkMark_inl (n : ℕ) (i : Fin 2) : doubleForkMark n (.inl i) = 1 :=
+  doubleForkMark_inl_aux n i
+
+private lemma doubleForkMark_inr_inl_aux (n : ℕ) (i : Fin (n + 2)) :
+    doubleForkMark n (.inr (.inl i)) = 2 := rfl
+
+/-- Every vertex of the middle chain has affine mark two. -/
+@[simp]
+theorem doubleForkMark_inr_inl (n : ℕ) (i : Fin (n + 2)) :
+    doubleForkMark n (.inr (.inl i)) = 2 :=
+  doubleForkMark_inr_inl_aux n i
+
+private lemma doubleForkMark_inr_inr_aux (n : ℕ) (i : Fin 2) :
+    doubleForkMark n (.inr (.inr i)) = 1 := rfl
+
+/-- Every right leaf has affine mark one. -/
+@[simp]
+theorem doubleForkMark_inr_inr (n : ℕ) (i : Fin 2) :
+    doubleForkMark n (.inr (.inr i)) = 1 :=
+  doubleForkMark_inr_inr_aux n i
+
 /-- The affine mark vector is nonzero: every leaf has mark `1`. -/
-theorem affineDMark_ne_zero (n : ℕ) : affineDMark n ≠ 0 := by
+theorem doubleForkMark_ne_zero (n : ℕ) : doubleForkMark n ≠ 0 := by
   intro h
   have := congrFun h (Sum.inl (0 : Fin 2))
-  norm_num [affineDMark] at this
+  norm_num [doubleForkMark] at this
 
 @[simp]
-theorem affineDCartanMatrix_apply_self (n : ℕ) (i : AffineDIndex n) :
-    affineDCartanMatrix n i i = 2 := by
+theorem doubleForkCartanMatrix_apply_self (n : ℕ) (i : DoubleForkIndex n) :
+    doubleForkCartanMatrix n i i = 2 := by
   rcases i with i | i
-  · simp [affineDCartanMatrix]
+  · simp [doubleForkCartanMatrix]
   · rcases i with i | i
-    · simpa [affineDCartanMatrix] using congrFun (CartanMatrix.A_diag (n + 2)) i
-    · simp [affineDCartanMatrix]
+    · simpa [doubleForkCartanMatrix] using congrFun (CartanMatrix.A_diag (n + 2)) i
+    · simp [doubleForkCartanMatrix]
 
-/-- Every off-diagonal entry of the affine `D` matrix is nonpositive. -/
-theorem affineDCartanMatrix_apply_nonpos_of_ne (n : ℕ) {i j : AffineDIndex n} (hij : i ≠ j) :
-    affineDCartanMatrix n i j ≤ 0 := by
+/-- Every off-diagonal entry of a double-fork Cartan matrix is nonpositive. -/
+theorem doubleForkCartanMatrix_apply_nonpos_of_ne (n : ℕ) {i j : DoubleForkIndex n} (hij : i ≠ j) :
+    doubleForkCartanMatrix n i j ≤ 0 := by
   rcases i with i | i <;> rcases j with j | j
   · have hne : i ≠ j := fun h => hij (by rw [h])
-    simp only [affineDCartanMatrix]
+    simp only [doubleForkCartanMatrix]
     split_ifs <;> omega
   · rcases j with j | j
-    · simp only [affineDCartanMatrix]
+    · simp only [doubleForkCartanMatrix]
       split_ifs <;> omega
-    · simp [affineDCartanMatrix]
+    · simp [doubleForkCartanMatrix]
   · rcases i with i | i
-    · simp only [affineDCartanMatrix]
+    · simp only [doubleForkCartanMatrix]
       split_ifs <;> omega
-    · simp [affineDCartanMatrix]
+    · simp [doubleForkCartanMatrix]
   · rcases i with i | i <;> rcases j with j | j
     · exact CartanMatrix.A_apply_le_zero_of_ne (n + 2) i j fun h => hij (by simp [h])
-    · simp only [affineDCartanMatrix]
+    · simp only [doubleForkCartanMatrix]
       split_ifs <;> omega
-    · simp only [affineDCartanMatrix]
+    · simp only [doubleForkCartanMatrix]
       split_ifs <;> omega
     · have hne : i ≠ j := fun h => hij (by rw [h])
-      simp only [affineDCartanMatrix]
+      simp only [doubleForkCartanMatrix]
       split_ifs <;> omega
 
-/-- The affine Cartan matrix of type `D` is symmetric. -/
-theorem affineDCartanMatrix_isSymm (n : ℕ) : (affineDCartanMatrix n).IsSymm := by
+/-- Every double-fork Cartan matrix is symmetric. -/
+theorem doubleForkCartanMatrix_isSymm (n : ℕ) : (doubleForkCartanMatrix n).IsSymm := by
   refine Matrix.IsSymm.ext fun i j => ?_
   rcases i with i | i <;> rcases j with j | j
-  · simp [affineDCartanMatrix, eq_comm]
-  · rcases j with j | j <;> simp [affineDCartanMatrix]
-  · rcases i with i | i <;> simp [affineDCartanMatrix]
+  · simp [doubleForkCartanMatrix, eq_comm]
+  · rcases j with j | j <;> simp [doubleForkCartanMatrix]
+  · rcases i with i | i <;> simp [doubleForkCartanMatrix]
   · rcases i with i | i <;> rcases j with j | j
     · exact Matrix.IsSymm.ext_iff.mp (CartanMatrix.A_isSymm (n + 2)) i j
-    · simp [affineDCartanMatrix]
-    · simp [affineDCartanMatrix]
-    · simp [affineDCartanMatrix, eq_comm]
+    · simp [doubleForkCartanMatrix]
+    · simp [doubleForkCartanMatrix]
+    · simp [doubleForkCartanMatrix, eq_comm]
+
+/-- Transposing a double-fork Cartan matrix leaves it unchanged. -/
+@[simp]
+theorem doubleForkCartanMatrix_transpose (n : ℕ) :
+    (doubleForkCartanMatrix n).transpose = doubleForkCartanMatrix n :=
+  (doubleForkCartanMatrix_isSymm n).eq
 
 private lemma sum_cartanMatrix_A_row_general : ∀ (m : ℕ) (i : Fin m),
     ∑ j, (CartanMatrix.A m i j : ℚ) =
@@ -163,16 +294,16 @@ private lemma sum_cartanMatrix_A_row (n : ℕ) (i : Fin (n + 2)) :
       (if i.val = 0 then 1 else 0) + if i.val + 1 = n + 2 then 1 else 0 :=
   sum_cartanMatrix_A_row_general (n + 2) i
 
-/-- The standard affine marks form a null vector for the affine Cartan matrix of type `D`. -/
-theorem affineDCartanMatrix_mulVec_affineDMark (n : ℕ) :
-    (Matrix.map (affineDCartanMatrix n) Int.cast).mulVec (affineDMark n) = 0 := by
+/-- The standard affine marks form a null vector for the double-fork Cartan matrix. -/
+theorem doubleForkCartanMatrix_mulVec_doubleForkMark (n : ℕ) :
+    (Matrix.map (doubleForkCartanMatrix n) Int.cast).mulVec (doubleForkMark n) = 0 := by
   funext i
-  change (∑ j, (affineDCartanMatrix n i j : ℚ) * affineDMark n j) = 0
+  simp only [Matrix.mulVec_apply_eq_sum, Matrix.map_apply, Pi.zero_apply]
   rcases i with i | i
-  · simp [Fintype.sum_sum_type, affineDCartanMatrix, affineDMark]
+  · simp [Fintype.sum_sum_type, doubleForkCartanMatrix, doubleForkMark]
   · rcases i with i | i
     · rw [Fintype.sum_sum_type, Fintype.sum_sum_type]
-      simp only [affineDCartanMatrix, affineDMark]
+      simp only [doubleForkCartanMatrix, doubleForkMark]
       simp only [Fin.sum_univ_two]
       have hmiddle : (∑ j, (CartanMatrix.A (n + 2) i j : ℚ) * 2) =
           ((if i.val = 0 then 1 else 0) + if i.val + 1 = n + 2 then 1 else 0) * 2 := by
@@ -184,19 +315,20 @@ theorem affineDCartanMatrix_mulVec_affineDMark (n : ℕ) :
         rw [Fin.ext_iff]
         simp only [Fin.val_last]
         omega
-      simp only [Fintype.sum_sum_type, affineDCartanMatrix, affineDMark, Fin.sum_univ_two,
+      simp only [Fintype.sum_sum_type, doubleForkCartanMatrix, doubleForkMark, Fin.sum_univ_two,
         hlast]
       fin_cases i <;> norm_num
 
-/-- **Affine Cartan matrices of type `D` are not of finite type.** The affine marks are a nonzero
-null vector, contradicting positive definiteness of any finite-type symmetrization. -/
-theorem not_isFiniteType_affineD (n : ℕ) : ¬ IsFiniteType (affineDCartanMatrix n) := by
+/-- **Affine Cartan matrices `D̃ₘ` for `m ≥ 5` are not of finite type.** The affine marks are a
+nonzero null vector, contradicting positive definiteness of any finite-type symmetrization. -/
+theorem not_isFiniteType_doubleForkCartanMatrix (n : ℕ) :
+    ¬ IsFiniteType (doubleForkCartanMatrix n) := by
   intro h
-  have hz : affineDMark n = 0 := h.eq_zero_of_forall_mul_sum_apply_mul_nonpos fun i => by
-    have hrow := congrFun (affineDCartanMatrix_mulVec_affineDMark n) i
-    change (∑ j, (affineDCartanMatrix n i j : ℚ) * affineDMark n j) = 0 at hrow
+  have hz : doubleForkMark n = 0 := h.eq_zero_of_forall_mul_sum_apply_mul_nonpos fun i => by
+    have hrow := congrFun (doubleForkCartanMatrix_mulVec_doubleForkMark n) i
+    simp only [Matrix.mulVec_apply_eq_sum, Matrix.map_apply, Pi.zero_apply] at hrow
     rw [hrow]
     simp
-  exact affineDMark_ne_zero n hz
+  exact doubleForkMark_ne_zero n hz
 
 end TauCeti
