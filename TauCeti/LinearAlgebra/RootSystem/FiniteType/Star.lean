@@ -318,7 +318,15 @@ private theorem sum_starIndex (f : StarIndex ℓ → ℚ) :
 
 /-- **The rows of a star at an arm vertex annihilate the marks.** The marks are linear along each
 arm, and the centre supplies exactly the value the linear function takes at position `0`, so the
-three-term recurrence of a chain closes at both ends. -/
+three-term recurrence of a chain closes at both ends.
+
+This is not a `simp` lemma, and neither is the companion
+`TauCeti.sum_starCartanMatrix_mul_starMark_none`: the left-hand side is not in simp-normal form.
+`Fintype.sum_option` splits the sum over `TauCeti.StarIndex` into the centre and the arms, and the
+entry lemmas above then rewrite the summands, so `simp` has dismantled the left-hand side before
+this equation could fire; the attribute reports only as a `simpNF` violation. Both rows are stated
+in the shape `TauCeti.IsFiniteType.eq_zero_of_forall_mul_sum_apply_mul_nonpos` consumes, and their
+call sites reach them by `rw`. -/
 theorem sum_starCartanMatrix_mul_starMark_some_eq_zero (v : (i : α) × Fin (ℓ i)) :
     ∑ w, (starCartanMatrix ℓ (some v) w : ℚ) * starMark ℓ w = 0 := by
   set Q : ℚ := ∏ j ∈ ({v.1}ᶜ : Finset α), ((ℓ j : ℚ) + 1) with hQ
@@ -364,7 +372,10 @@ theorem sum_starCartanMatrix_mul_starMark_some_eq_zero (v : (i : α) × Fin (ℓ
 
 /-- **The row of a star at the centre, evaluated at the marks.** With `n` arms and `pᵢ = ℓ i + 1`
 vertices on the arm `i` counting the centre, the value is `∑ᵢ ∏_{j ≠ i} pⱼ - (n - 2) ∏ᵢ pᵢ`, that
-is, `(∑ᵢ 1 / pᵢ - (n - 2)) ∏ᵢ pᵢ`. This is the only place the shape of the star is felt. -/
+is, `(∑ᵢ 1 / pᵢ - (n - 2)) ∏ᵢ pᵢ`. This is the only place the shape of the star is felt.
+
+Not a `simp` lemma, for the reason given at
+`TauCeti.sum_starCartanMatrix_mul_starMark_some_eq_zero`. -/
 theorem sum_starCartanMatrix_mul_starMark_none :
     ∑ w, (starCartanMatrix ℓ none w : ℚ) * starMark ℓ w
       = ∑ i, (∏ j ∈ ({i}ᶜ : Finset α), ((ℓ j : ℚ) + 1))
