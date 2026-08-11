@@ -312,11 +312,14 @@ five of the eight, which are the source's involutory generators. A power relator
 transposed within, relators (1) would change this list. -/
 theorem generatorsWithSquareRelator_eq : generatorsWithSquareRelator = [0, 1, 2, 3, 4] := rfl
 
-/-- **The coset table of the transcribed presentation has eleven columns**, the figure the source
-records for its enumeration: one column for each generator carrying a square relator, its involutory
-generators, and two for each of the others. Recomputing it from the transcribed relators checks the
-data against a published number
-that the counts of `TauCeti.Sporadic.Thompson.matchesMetadata_presentation` do not see. -/
+/-- **The source's column-count formula evaluates to eleven on the transcribed relators**, the
+figure the source records for its enumeration: one column for each generator carrying a square
+relator, its involutory generators, and two for each of the others.
+
+Like `TauCeti.Sporadic.Thompson.generatorsWithSquareRelator`, this is arithmetic on the data as
+written; it asserts nothing about an actual coset table, nor that enumerating this presentation
+terminates. Its value is that it checks the transcription against a published number that the counts
+of `TauCeti.Sporadic.Thompson.matchesMetadata_presentation` do not see. -/
 theorem cosetTableColumns :
     generatorsWithSquareRelator.length +
       2 * (presentation.generatorCount - generatorsWithSquareRelator.length) = 11 := rfl
