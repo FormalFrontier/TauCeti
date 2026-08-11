@@ -6,6 +6,7 @@ module
 
 public import TauCeti.RepresentationTheory.Spin.Polarization.Basic
 public import Mathlib.FieldTheory.IsSepClosed
+public import Mathlib.LinearAlgebra.QuadraticForm.Dual
 public import Mathlib.LinearAlgebra.QuadraticForm.Radical
 import Mathlib.RingTheory.Finiteness.Prod
 
