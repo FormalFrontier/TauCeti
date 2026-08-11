@@ -56,6 +56,8 @@ private noncomputable def cotangentLocalizationIdealEquiv :
     rw [Submodule.mem_map_equiv]
     obtain ⟨x, hx⟩ := Ideal.Quotient.mk_surjective (e.symm z)
     rw [← e.apply_symm_apply z, e.symm_apply_apply, ← hx]
+    -- `mem_map_equiv` leaves membership through `e`; expose its underlying quotient
+    -- equivalence so that the public representative lemma can rewrite it.
     change (Ideal.Quotient.mk (p ^ 2) x ∈ p.cotangentIdeal) ↔
       (IsLocalization.AtPrime.equivQuotMaximalIdealPow p Rₚ 2
         (Ideal.Quotient.mk (p ^ 2) x) ∈ (maximalIdeal Rₚ).cotangentIdeal)
@@ -83,15 +85,21 @@ theorem cotangentLocalizationEquiv_toCotangent (x : p) :
           rw [← Ideal.mem_under, IsLocalization.AtPrime.under_maximalIdeal Rₚ p]
           exact x.2⟩ := by
   let _ := IsLocalization.AtPrime.isLocalRing Rₚ p
+  -- Unfold the composed equivalence and its final restricted-scalar wrapper; there is no
+  -- application lemma for this composite.
   change ((maximalIdeal Rₚ).cotangentEquivIdeal.symm.restrictScalars R)
       (cotangentLocalizationIdealEquiv p (p.cotangentEquivIdeal (p.toCotangent x))) = _
   apply (maximalIdeal Rₚ).cotangentEquivIdeal.injective
+  -- `restrictScalars` has no application lemma, so expose the underlying inverse before
+  -- cancelling it with `apply_symm_apply`.
   change (maximalIdeal Rₚ).cotangentEquivIdeal
       ((maximalIdeal Rₚ).cotangentEquivIdeal.symm
         (cotangentLocalizationIdealEquiv p (p.cotangentEquivIdeal (p.toCotangent x)))) = _
   rw [LinearEquiv.apply_symm_apply]
   apply Subtype.ext
   simp only [cotangentLocalizationIdealEquiv]
+  -- The restricted `ofSubmodules` equivalence and `cotangentEquivIdeal` compute on their
+  -- underlying quotient classes; expose those classes for the public representative lemma.
   change (IsLocalization.AtPrime.equivQuotMaximalIdealPow p Rₚ 2)
       (Ideal.Quotient.mk _ x) = Ideal.Quotient.mk _ (algebraMap R Rₚ x)
   exact IsLocalization.AtPrime.equivQuotMaximalIdealPow_apply_mk p Rₚ 2 x
