@@ -19,7 +19,7 @@ public import Mathlib.RingTheory.Trace.Defs
 /-!
 # The unit group of an algebra inside a general linear group
 
-Let `S` be an algebra over a commutative ring `R`, free with basis `b : Module.Basis ι R S`.
+Let `S` be an algebra over a commutative semiring `R`, free with basis `b : Module.Basis ι R S`.
 Multiplication by `x : S` is an `R`-linear endomorphism of `S`, and its matrix in the basis `b` is
 Mathlib's `Algebra.leftMulMatrix b x`. When `x` is a **unit** that matrix is invertible, so the
 regular representation restricts to a group homomorphism
@@ -28,7 +28,9 @@ regular representation restricts to a group homomorphism
 
 It is injective, it sends a unit of the base ring to the corresponding scalar matrix, and it
 converts the two standard invariants of an element of `S` into the two standard invariants of a
-matrix: its determinant is the algebra norm and its trace is the algebra trace.
+matrix: its determinant is the algebra norm and its trace is the algebra trace. Only these last
+two ask for a ring, the level `Algebra.norm` and `Algebra.trace` are stated at; the embedding
+itself lives over a semiring.
 
 The motivating instance is a degree-`2` field extension `E/F`, where this embeds `Eˣ` in
 `GL (Fin 2) F` as the **non-split torus**; see
@@ -59,11 +61,11 @@ open Matrix
 
 namespace TauCeti
 
-variable {R S ι : Type*} [CommRing R] [Fintype ι] [DecidableEq ι]
+variable {R S ι : Type*} [Fintype ι] [DecidableEq ι]
 
 section Semiring
 
-variable [Semiring S] [Algebra R S] (b : Module.Basis ι R S)
+variable [CommSemiring R] [Semiring S] [Algebra R S] (b : Module.Basis ι R S)
 
 /-- The units of `S`, embedded in `GL ι R` by left multiplication read in the basis `b`. -/
 noncomputable def unitsLeftMulMatrix : Sˣ →* GL ι R :=
@@ -100,6 +102,10 @@ theorem unitsLeftMulMatrix_map_algebraMap (r : Rˣ) :
 
 end Semiring
 
+section CommRing
+
+variable [CommRing R]
+
 -- Not a `simp` lemma, for the same reason `Algebra.norm_eq_matrix_det` is not: the left-hand side
 -- mentions a choice of basis, which `simp` normalizes away through `coe_unitsLeftMulMatrix`.
 /-- The determinant of the matrix of left multiplication by `x` is the algebra norm of `x`. -/
@@ -112,5 +118,7 @@ theorem val_det_unitsLeftMulMatrix [Ring S] [Algebra R S] (b : Module.Basis ι R
 theorem trace_unitsLeftMulMatrix [CommRing S] [Algebra R S] (b : Module.Basis ι R S) (x : Sˣ) :
     Matrix.trace (unitsLeftMulMatrix b x : Matrix ι ι R) = Algebra.trace R S (x : S) := by
   rw [coe_unitsLeftMulMatrix, Algebra.trace_eq_matrix_trace b]
+
+end CommRing
 
 end TauCeti

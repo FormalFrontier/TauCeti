@@ -11,8 +11,10 @@ public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.LeftMulMatrix
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Borel
 -- `Module.finBasisOfFinrankEq` is the body of `TauCeti.nonSplitTorusBasis`.
 public import Mathlib.LinearAlgebra.Dimension.Free
--- Non-public: `Algebra.norm_ne_zero_iff`, `Module.natCard_eq_pow_finrank` and `Nat.card_units` are
--- used only inside proofs, so downstream importers do not pay for them.
+-- Non-public: `Algebra.IsQuadraticExtension.exists_notMem_range_algebraMap`,
+-- `Algebra.norm_ne_zero_iff`, `Module.natCard_eq_pow_finrank` and `Nat.card_units` are used only
+-- inside proofs, so downstream importers do not pay for them.
+import TauCeti.LinearAlgebra.Dimension.IsQuadraticExtension
 import Mathlib.RingTheory.Norm.Basic
 import Mathlib.FieldTheory.Finiteness
 import Mathlib.Algebra.GroupWithZero.Units.Fintype
@@ -75,17 +77,6 @@ open Matrix
 namespace TauCeti
 
 variable {F : Type*} [Field F] {E : Type*} [Field E] [Algebra F E]
-
-/-- An extension of degree other than `1` has a unit outside the base field: were every element of
-`E` a scalar, `algebraMap F E` would be bijective and the degree would be `1`. -/
-private theorem exists_units_notMem_range_algebraMap (h : Module.finrank F E ≠ 1) :
-    ∃ x : Eˣ, (x : E) ∉ Set.range (algebraMap F E) := by
-  by_contra hcon
-  refine h (Algebra.finrank_eq_one_iff_bijective_algebraMap.mpr
-    ⟨(algebraMap F E).injective, fun y => ?_⟩)
-  rcases eq_or_ne y 0 with rfl | hy
-  · exact ⟨0, map_zero _⟩
-  · exact not_not.mp (not_exists.mp hcon (Units.mk0 y hy))
 
 variable (F E) in
 /-- A chosen `F`-basis of a degree-`2` extension `E/F`, indexed by `Fin 2`. The non-split torus is
@@ -187,8 +178,11 @@ of diagonal matrices, which lies in the Borel subgroup outright, and it is why t
 representations attached to it are absent from every principal series. -/
 theorem exists_forall_conj_notMem_GL2Borel :
     ∃ u ∈ GL2NonSplitTorus F E hE, ∀ g : GL (Fin 2) F, g * u * g⁻¹ ∉ GL2Borel F := by
-  obtain ⟨x, hx⟩ := exists_units_notMem_range_algebraMap (F := F) (E := E) (by rw [hE]; norm_num)
-  exact ⟨GL2NonSplitTorusHom F E hE x, apply_mem hE x, conj_notMem_GL2Borel hE hx⟩
+  have : Algebra.IsQuadraticExtension F E := ⟨hE⟩
+  obtain ⟨x, hx⟩ := Algebra.IsQuadraticExtension.exists_notMem_range_algebraMap F E
+  have hx0 : x ≠ 0 := fun h => hx ⟨0, by rw [map_zero, h]⟩
+  exact ⟨GL2NonSplitTorusHom F E hE (Units.mk0 x hx0), apply_mem hE _,
+    conj_notMem_GL2Borel hE hx⟩
 
 end GL2NonSplitTorus
 
