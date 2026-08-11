@@ -90,7 +90,7 @@ theorem iSupLift_mk {K : ι → Submodule R M} {dir : Directed (· ≤ ·) K}
     {T : Submodule R M} {hT : T ≤ iSup K} {i : ι} (m : K i) (hm : (m : M) ∈ T) :
     iSupLift K dir f hf T hT ⟨m, hm⟩ = f i m := by
   let _ : Nonempty ι := ⟨i⟩
-  rw [iSupLift, dif_pos (show Nonempty ι from ⟨i⟩)]
+  rw [iSupLift, dif_pos ⟨i⟩]
   unfold iSupLiftNonempty
   dsimp
   rw [Submodule.inclusion_apply]
