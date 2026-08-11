@@ -5,7 +5,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.MeasureTheory.Function.LpSpace.ContinuousFunctions
-public import Mathlib.MeasureTheory.Group.Measure
 public import TauCeti.MeasureTheory.Group.Conjugation
 
 /-!
@@ -34,8 +33,9 @@ into the corresponding statement about its inverse-translate.
 * `TauCeti.coeFn_invLpₗᵢ`: it is represented by `g ↦ f g⁻¹`.
 * `TauCeti.invLpₗᵢ_invLpₗᵢ`: it is an involution, hence
   (`TauCeti.invLpₗᵢ_eq_zero_iff`) injective.
-* `TauCeti.invLpₗᵢ_mem_classFunctionLp`: it preserves the class functions, because inversion
-  commutes with conjugation.
+* `TauCeti.invLpₗᵢ_mem_classFunctionLp` and `TauCeti.invLpₗᵢ_mem_classFunctionLp_iff`: it preserves
+  the class functions, because inversion commutes with conjugation, and being an involution it
+  reflects them too.
 * `TauCeti.invLpₗᵢ_toLp`: on a continuous function it is precomposition with inversion.
 -/
 
@@ -72,14 +72,12 @@ theorem invLpₗᵢ_invLpₗᵢ (f : Lp E p μ) : invLpₗᵢ 𝕜 (invLpₗᵢ 
     simpa using hg
   exact ((coeFn_invLpₗᵢ (𝕜 := 𝕜) (invLpₗᵢ 𝕜 f)).trans h)
 
-theorem invLpₗᵢ_injective : Function.Injective (invLpₗᵢ (E := E) (p := p) (μ := μ) 𝕜) :=
-  fun f₁ f₂ h ↦ by
-    simpa only [invLpₗᵢ_invLpₗᵢ] using congrArg (invLpₗᵢ (E := E) (p := p) (μ := μ) 𝕜) h
-
+/-- **The inverse-translate of `f` vanishes exactly when `f` does.**  Injectivity of a linear
+isometry, in the form in which the argument on the inverse-translate of a function returns a
+statement about the function itself. -/
 @[simp]
-theorem invLpₗᵢ_eq_zero_iff {f : Lp E p μ} : invLpₗᵢ 𝕜 f = 0 ↔ f = 0 := by
-  refine ⟨fun h ↦ invLpₗᵢ_injective (𝕜 := 𝕜) ?_, fun h ↦ by simp [h]⟩
-  simpa using h
+theorem invLpₗᵢ_eq_zero_iff {f : Lp E p μ} : invLpₗᵢ 𝕜 f = 0 ↔ f = 0 :=
+  map_eq_zero_iff _ (invLpₗᵢ (E := E) (p := p) (μ := μ) 𝕜).injective
 
 section ClassFunction
 
@@ -100,6 +98,16 @@ theorem invLpₗᵢ_mem_classFunctionLp {f : Lp E p μ} (hf : f ∈ classFunctio
   have hcl : (fun g ↦ f (h * g⁻¹ * h⁻¹)) =ᵐ[μ] fun g ↦ f g⁻¹ :=
     (Measure.measurePreserving_inv μ).quasiMeasurePreserving.ae_eq (hf h)
   exact (hconj.trans hcl).trans (coeFn_invLpₗᵢ (𝕜 := 𝕜) f).symm
+
+/-- **Inversion reflects the class functions.**  Preservation both ways, since inversion is an
+involution: the inverse-translate of `f` is a class function exactly when `f` is one.
+
+Not a `simp` lemma: `TauCeti.mem_classFunctionLp_iff` already rewrites the left-hand side to the
+invariance condition, so `simp` never reaches this one (the `simpNF` linter rejects it). -/
+theorem invLpₗᵢ_mem_classFunctionLp_iff {f : Lp E p μ} :
+    invLpₗᵢ 𝕜 f ∈ classFunctionLp 𝕜 E p μ ↔ f ∈ classFunctionLp 𝕜 E p μ :=
+  ⟨fun hf ↦ by simpa only [invLpₗᵢ_invLpₗᵢ] using invLpₗᵢ_mem_classFunctionLp (𝕜 := 𝕜) hf,
+    invLpₗᵢ_mem_classFunctionLp⟩
 
 end ClassFunction
 

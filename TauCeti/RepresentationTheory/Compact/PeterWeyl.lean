@@ -354,6 +354,7 @@ noncomputable def peterWeylFamily (models : ι → IrrepModel 𝕜 G)
 
 omit [T2Space G] in
 /-- The elements of the Peter-Weyl family, on the nose. -/
+@[simp]
 theorem peterWeylFamily_apply (models : ι → IrrepModel 𝕜 G)
     (x : Σ i, Fin (models i).dim × Fin (models i).dim) :
     peterWeylFamily models x =

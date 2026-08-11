@@ -6,7 +6,6 @@ Authors: Claude
 module
 
 public import Mathlib.GroupTheory.GroupAction.ConjAct
-public import Mathlib.MeasureTheory.Function.LpSpace.Basic
 public import Mathlib.MeasureTheory.Function.LpSpace.Complete
 public import Mathlib.MeasureTheory.Function.LpSpace.DomAct.Basic
 public import Mathlib.MeasureTheory.Group.Measure
@@ -49,6 +48,7 @@ stable under changing it on a null set, so it does not descend to `Lp` at all.  
 * `TauCeti.measurePreserving_conj`: conjugation preserves a conjugation-invariant measure, stated
   through the group operation.
 * `TauCeti.conjAct_smul_Lp_ae_eq`: the induced action on `Lp` is precomposition with conjugation.
+* `TauCeti.conjLpₗᵢ_eq_smul`: the bundled isometry is that action.
 * `TauCeti.mem_classFunctionLp_iff_ae`: membership read on representatives, as invariance almost
   everywhere.
 * `TauCeti.isClosed_classFunctionLp`: the class functions are a closed subspace, hence
@@ -199,6 +199,14 @@ variable {𝕜}
 /-- The conjugation isometry is represented by `g ↦ f (h * g * h⁻¹)`. -/
 theorem coeFn_conjLpₗᵢ (h : G) (f : Lp E p μ) : conjLpₗᵢ 𝕜 h f =ᵐ[μ] fun g ↦ f (h * g * h⁻¹) :=
   Lp.coeFn_compMeasurePreserving f (measurePreserving_conj μ h)
+
+/-- **The conjugation isometry is the `(ConjAct G)ᵈᵐᵃ`-action.**  The two are the same operation,
+so a statement proved for either transfers to the other; `classFunctionLp` is phrased with the
+action, and the isometry is the form that records the preservation of the norm. -/
+@[simp]
+theorem conjLpₗᵢ_eq_smul (h : G) (f : Lp E p μ) :
+    conjLpₗᵢ 𝕜 h f = DomMulAct.mk (ConjAct.toConjAct h) • f :=
+  Lp.ext ((coeFn_conjLpₗᵢ h f).trans (conjAct_smul_Lp_ae_eq h f).symm)
 
 /-- **A class function is fixed by every conjugation isometry.**  This is the definition of
 `TauCeti.classFunctionLp`, read on the bundled operation. -/

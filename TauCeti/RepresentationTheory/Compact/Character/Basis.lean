@@ -6,7 +6,6 @@ module
 
 public import TauCeti.MeasureTheory.Group.Inversion
 public import TauCeti.RepresentationTheory.Compact.ClassFunctionLp
-public import TauCeti.RepresentationTheory.Compact.Orthonormal
 public import TauCeti.RepresentationTheory.Compact.PeterWeyl
 
 /-!
@@ -288,15 +287,18 @@ theorem coe_characterFamily (models : ι → IrrepModel 𝕜 G) (i : ι) :
 variable {models : ι → IrrepModel 𝕜 G}
 
 omit [T2Space G] in
-/-- **The characters of a skeleton are orthonormal in the class functions.**  This is the
-character orthogonality of `TauCeti.ContRepresentation.orthonormal_characterLp`, read inside the
-subspace, where the inner product is the restriction of the one on `L²(G)`. -/
-theorem orthonormal_characterFamily (h : IsIrrepSkeleton models) :
+/-- **The characters of a pairwise inequivalent family are orthonormal in the class functions.**
+This is the character orthogonality of `TauCeti.ContRepresentation.orthonormal_characterLp`, read
+inside the subspace, where the inner product is the restriction of the one on `L²(G)`.  Only
+inequivalence is used; exhaustivity of a skeleton is what the completeness below needs. -/
+theorem orthonormal_characterFamily
+    (hne : Pairwise fun i j ↦
+      IsEmpty (_root_.ContRepresentation.Equiv (models i).rep (models j).rep)) :
     Orthonormal 𝕜 (characterFamily models) := by
   classical
   have hL2 := ContRepresentation.orthonormal_characterLp (fun i ↦ (models i).rep)
     (fun i ↦ (models i).continuous_rep) (fun i ↦ (models i).isUnitary)
-    (fun i ↦ (models i).isIrreducible) h.pairwise_isEmpty_equiv
+    (fun i ↦ (models i).isIrreducible) hne
   rw [orthonormal_iff_ite] at hL2 ⊢
   intro i j
   rw [Submodule.coe_inner]
@@ -325,7 +327,7 @@ each block of the Peter-Weyl basis, and that direction is spanned by the charact
 group it is the statement that the irreducible characters are a basis of the class functions. -/
 noncomputable def characterBasis (h : IsIrrepSkeleton models) :
     HilbertBasis ι 𝕜 (classFunctionLp 𝕜 𝕜 2 (haarProb G)) :=
-  HilbertBasis.mkOfOrthogonalEqBot (orthonormal_characterFamily h)
+  HilbertBasis.mkOfOrthogonalEqBot (orthonormal_characterFamily h.pairwise_isEmpty_equiv)
     (orthogonal_span_characterFamily_eq_bot h)
 
 /-- **The class-function basis is the characters.**  As for `TauCeti.coe_peterWeylBasis`, the
