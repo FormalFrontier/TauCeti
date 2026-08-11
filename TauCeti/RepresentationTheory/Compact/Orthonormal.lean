@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.RepresentationTheory.Compact.Character
+public import TauCeti.RepresentationTheory.Compact.Character.Basic
 
 /-!
 # The orthonormal systems cut out by Schur orthogonality
@@ -12,7 +12,7 @@ public import TauCeti.RepresentationTheory.Compact.Character
 Fix a family `π i` of pairwise inequivalent finite-dimensional irreducible unitary representations
 of a compact group `G`, one for each index `i`. This file assembles the two orthogonality relations
 of `TauCeti/RepresentationTheory/Compact/SchurOrthogonality.lean` and
-`TauCeti/RepresentationTheory/Compact/Character.lean` into `Orthonormal` families in `L²(G)`:
+`TauCeti/RepresentationTheory/Compact/Character/Basic.lean` into `Orthonormal` families in `L²(G)`:
 
 * the **normalized matrix coefficients** `√(dim V_i) • (π i)_{ab}`, indexed by
   `Σ i, Fin (dim V_i) × Fin (dim V_i)`;
