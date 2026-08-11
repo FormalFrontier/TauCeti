@@ -188,9 +188,13 @@ theorem kernelCotangentLinearEquivZariski_smul (r : k)
     Ideal.cotangentLocalizationEquiv_smul,
     IsLocalization.AtPrime.equivQuotMaximalIdeal_apply_mk,
     kernelResidueFieldRingEquiv_apply]
-  -- `CotangentSpace` names the same quotient action through a dedicated module instance.
-  unfold IsLocalRing.instModuleResidueFieldCotangentSpace
-  rfl
+  rw [← Ideal.Quotient.algebraMap_eq]
+  exact (IsScalarTower.algebraMap_smul
+    (IsLocalRing.ResidueField
+      ((Spec (CommRingCat.of H)).presheaf.stalk (kernelPoint f)))
+    (algebraMap H ((Spec (CommRingCat.of H)).presheaf.stalk (kernelPoint f))
+      (algebraMap k H r))
+    (kernelCotangentLinearEquivZariski f x)).symm
 
 /-- The cotangent space of an augmentation kernel and the Zariski cotangent space at its point
 have the same dimension over the ground field. -/
