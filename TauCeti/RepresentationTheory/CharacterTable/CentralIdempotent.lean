@@ -78,7 +78,6 @@ See J.-P. Serre, *Linear Representations of Finite Groups*, Section 2.6, or I. M
 
 public section
 
-open Module (finrank)
 open scoped MonoidAlgebra
 
 namespace TauCeti
@@ -271,12 +270,6 @@ theorem isUnit_char_one : IsUnit (ρ.character 1) := by
   rw [ite_eq_left ⟨_root_.Representation.Equiv.refl ρ⟩, mul_one] at h
   exact isUnit_of_mul_isUnit_right (h ▸ isUnit_of_invertible (Nat.card G : k))
 
-include ρ in
-/-- The dimension of an irreducible representation is a unit in the base field. -/
-theorem isUnit_finrank : IsUnit (finrank k V : k) := by
-  have h := isUnit_char_one ρ
-  rwa [_root_.Representation.char_one] at h
-
 end Degree
 
 /-! ### The primitive central idempotents -/
@@ -402,13 +395,6 @@ theorem isIdempotentElem_primitiveCentralIdempotent :
   classical
   rw [IsIdempotentElem, primitiveCentralIdempotent_mul_primitiveCentralIdempotent ρ ρ,
     ite_eq_left ⟨_root_.Representation.Equiv.refl ρ⟩]
-
-/-- Non-isomorphic irreducible representations give orthogonal primitive central idempotents. -/
-theorem primitiveCentralIdempotent_mul_eq_zero (h : IsEmpty (ρ.Equiv σ)) :
-    primitiveCentralIdempotent ρ * primitiveCentralIdempotent σ = 0 := by
-  classical
-  rw [primitiveCentralIdempotent_mul_primitiveCentralIdempotent ρ σ,
-    ite_eq_right (not_nonempty_iff.2 h)]
 
 /-- **A primitive central idempotent is nonzero**: its coefficient at `1` is `χ(1)² / |G|`, and the
 degree of an irreducible representation is a unit. -/
