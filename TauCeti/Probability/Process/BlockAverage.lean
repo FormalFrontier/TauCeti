@@ -19,6 +19,10 @@ algebra. Nothing here involves a measure: `blockAverage X k` is a function of `Ï
 lemmas below are the pointwise formula, the scaled-sum normal form, and the value on a constant
 block. `average_sub_sq_eq_sum_sum` records the one further piece of average algebra used
 downstream: the square of a deviation from an average, expanded as a double sum.
+`birkhoffAverage_eq_prefixAverage` identifies a Birkhoff average of an arbitrary self-map with a
+prefix average of the iterated observable, which is how Mathlib's mean-ergodic theory reaches this
+API; it is stated for an arbitrary self-map because no dynamical content enters â€” both sides are
+the same normalised sum.
 
 It also carries the standard selections, all measure-free. `prefixAverage X n` averages the first
 `n` coordinates and `followingAverage X n` the `n` after them, with their pointwise formulas.
