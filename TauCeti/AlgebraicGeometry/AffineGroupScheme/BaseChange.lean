@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.AlgebraicGeometry.AffineGroupScheme.Basic
+public import TauCeti.AlgebraicGeometry.PullbackSpecMap
 public import Mathlib.AlgebraicGeometry.Morphisms.Affine
 
 /-!
@@ -12,7 +13,10 @@ public import Mathlib.AlgebraicGeometry.Morphisms.Affine
 
 Pullback along `Spec S ⟶ Spec R` carries an affine group scheme over `Spec R` to an affine
 group scheme over `Spec S`. This file bundles that construction on objects and morphisms as
-`TauCeti.AffineGroupSchemeCat.baseChangeFunctor`, and records its coherence in the base ring.
+`TauCeti.AffineGroupSchemeCat.baseChangeFunctor`, and records comparison isomorphisms for base
+change along the identity ring map and along a composite ring map. The mutual coherence
+conditions of those two comparisons — the unit and associativity constraints that would make
+`R ↦ AffineGroupSchemeCat R` a pseudofunctor — are not proved here.
 
 The group structure is transported by Mathlib's left-exact pullback functor on `Over` categories.
 Affineness is preserved because the base `Spec R` is itself affine: the structure morphism of an
@@ -31,8 +35,16 @@ hypothesis is needed.
   `TauCeti.AffineGroupSchemeCat.baseChangeFunctorCompIso`: base change along the identity ring
   map is the identity, and base change along a composite is the composite of base changes. Their
   components are computed by simp lemmas in terms of the underlying comparisons
-  `TauCeti.AffineGroupSchemeCat.pullbackSpecMapIdIso` and
-  `TauCeti.AffineGroupSchemeCat.pullbackSpecMapCompIso` of pullback functors.
+  `TauCeti.AlgebraicGeometry.Over.pullbackSpecMapId` and
+  `TauCeti.AlgebraicGeometry.Over.pullbackSpecMapComp` of pullback functors.
+
+## References
+
+The coordinate-algebra counterpart of this construction, base change of commutative Hopf
+algebras, is `TauCeti.CommHopfAlgCat.baseChangeFunctor`; the two sides are related by the
+anti-equivalence `TauCeti.commHopfAlgCatOpEquivAffineGroupSchemeCat`. Transporting either base
+change to the other along that anti-equivalence is not established here, so the two functors are
+for now independent constructions.
 
 ## Roadmap
 
@@ -44,7 +56,7 @@ prime field.
 
 public section
 
-open CategoryTheory AlgebraicGeometry
+open CategoryTheory AlgebraicGeometry TauCeti.AlgebraicGeometry.Over
 
 namespace TauCeti
 
@@ -77,14 +89,14 @@ lemma baseChange_obj (f : R ⟶ S) (G : AffineGroupSchemeCat R) :
 /-- The underlying object over `Spec S` of a base-changed affine group scheme is the pullback of
 the original object over `Spec R`. -/
 lemma baseChange_obj_X (f : R ⟶ S) (G : AffineGroupSchemeCat R) :
-    (baseChange f G).obj.X = (Over.pullback (Spec.map f)).obj G.obj.X :=
-  (rfl)
+    (baseChange f G).obj.X = (Over.pullback (Spec.map f)).obj G.obj.X := by
+  simp only [Functor.mapGrp_obj_X]
 
 /-- The underlying scheme of a base-changed affine group scheme is the corresponding fibre
 product. -/
 lemma baseChange_obj_X_left (f : R ⟶ S) (G : AffineGroupSchemeCat R) :
-    (baseChange f G).obj.X.left = Limits.pullback G.obj.X.hom (Spec.map f) :=
-  (rfl)
+    (baseChange f G).obj.X.left = Limits.pullback G.obj.X.hom (Spec.map f) := by
+  simp only [Functor.mapGrp_obj_X, Over.pullback_obj_left]
 
 /-- Base change of a morphism of affine group schemes. -/
 noncomputable abbrev baseChangeMap (f : R ⟶ S) {G H : AffineGroupSchemeCat R} (g : G ⟶ H) :
@@ -100,7 +112,7 @@ lemma baseChangeMap_hom (f : R ⟶ S) {G H : AffineGroupSchemeCat R} (g : G ⟶ 
 /-- Pullback along `Spec S ⟶ Spec R` defines a functor from affine group schemes over
 `Spec R` to affine group schemes over `Spec S`. It is the lift through the affineness property
 of the pullback functor on group objects, so its functor laws are the pullback functor's.
-Exposed so that the component lemmas for the coherence isomorphisms below can be stated: their
+Exposed so that the component lemmas for the comparison isomorphisms below can be stated: their
 sources and targets are the functor's values, which have to be recognised as base changes. -/
 @[expose] noncomputable def baseChangeFunctor (f : R ⟶ S) :
     AffineGroupSchemeCat R ⥤ AffineGroupSchemeCat S :=
@@ -114,32 +126,11 @@ lemma baseChangeFunctor_obj (f : R ⟶ S) (G : AffineGroupSchemeCat R) :
     (baseChangeFunctor f).obj G = baseChange f G :=
   (rfl)
 
-/-- The morphism part of `baseChangeFunctor` is base change of affine-group-scheme morphisms,
-transported along `baseChangeFunctor_obj` at the source and target. -/
+/-- The morphism part of `baseChangeFunctor` is base change of affine-group-scheme morphisms. -/
 @[simp]
 lemma baseChangeFunctor_map (f : R ⟶ S) {G H : AffineGroupSchemeCat R} (g : G ⟶ H) :
-    (baseChangeFunctor f).map g =
-      eqToHom (baseChangeFunctor_obj f G) ≫ baseChangeMap f g ≫
-        eqToHom (baseChangeFunctor_obj f H).symm :=
-  by
-    unfold baseChangeFunctor baseChangeMap baseChange
-    rfl
-
-/-- Pullback along `Spec.map (𝟙 R)` is the identity functor on schemes over `Spec R`: Mathlib's
-`Over.pullbackId`, read through `Spec.map (𝟙 R) = 𝟙 (Spec R)`. This is the comparison of
-underlying objects over `Spec R` carried by `baseChangeFunctorIdIso`. -/
-noncomputable def pullbackSpecMapIdIso :
-    Over.pullback (Spec.map (𝟙 R)) ≅ 𝟭 (Over (Spec R)) :=
-  eqToIso (by simp only [Spec.map_id]) ≪≫ Over.pullbackId
-
-/-- Pullback along `Spec.map (f ≫ g)` is pullback along `Spec.map f` followed by pullback along
-`Spec.map g`: Mathlib's `Over.pullbackComp`, read through
-`Spec.map (f ≫ g) = Spec.map g ≫ Spec.map f`. This is the comparison of underlying objects over
-`Spec T` carried by `baseChangeFunctorCompIso`. -/
-noncomputable def pullbackSpecMapCompIso (f : R ⟶ S) (g : S ⟶ T) :
-    Over.pullback (Spec.map (f ≫ g)) ≅
-      Over.pullback (Spec.map f) ⋙ Over.pullback (Spec.map g) :=
-  eqToIso (by simp only [Spec.map_comp]) ≪≫ Over.pullbackComp (Spec.map g) (Spec.map f)
+    (baseChangeFunctor f).map g = baseChangeMap f g :=
+  (rfl)
 
 /-- Base change along the identity of `R` is the identity functor on affine group schemes over
 `Spec R`. -/
@@ -147,14 +138,14 @@ noncomputable def baseChangeFunctorIdIso :
     baseChangeFunctor (𝟙 R) ≅ 𝟭 (AffineGroupSchemeCat R) :=
   NatIso.ofComponents
     (fun G => (affineGroupSchemeProperty R).isoMk
-      ((Functor.mapGrpNatIso pullbackSpecMapIdIso ≪≫ Functor.mapGrpIdIso).app G.obj))
+      ((Functor.mapGrpNatIso pullbackSpecMapId ≪≫ Functor.mapGrpIdIso).app G.obj))
     fun g => (affineGroupSchemeProperty R).ι.map_injective
-      ((Functor.mapGrpNatIso pullbackSpecMapIdIso ≪≫ Functor.mapGrpIdIso).hom.naturality g.hom)
+      ((Functor.mapGrpNatIso pullbackSpecMapId ≪≫ Functor.mapGrpIdIso).hom.naturality g.hom)
 
 /-- The morphism of objects over `Spec R` underlying `baseChangeFunctorIdIso.hom`. -/
 @[simp]
 lemma baseChangeFunctorIdIso_hom_app_hom_hom_hom (G : AffineGroupSchemeCat R) :
-    (baseChangeFunctorIdIso.hom.app G).hom.hom.hom = pullbackSpecMapIdIso.hom.app G.obj.X := by
+    (baseChangeFunctorIdIso.hom.app G).hom.hom.hom = pullbackSpecMapId.hom.app G.obj.X := by
   simp only [Functor.id_obj, baseChangeFunctorIdIso, ObjectProperty.isoMk, ObjectProperty.homMk,
     NatIso.trans_app, Iso.trans_hom, Iso.app_hom, NatIso.ofComponents_hom_app, Grp.comp',
     Mon.comp_hom', Functor.mapGrpNatIso_hom_app_hom_hom, Functor.mapGrpIdIso_hom_app_hom_hom]
@@ -163,7 +154,7 @@ lemma baseChangeFunctorIdIso_hom_app_hom_hom_hom (G : AffineGroupSchemeCat R) :
 /-- The morphism of objects over `Spec R` underlying `baseChangeFunctorIdIso.inv`. -/
 @[simp]
 lemma baseChangeFunctorIdIso_inv_app_hom_hom_hom (G : AffineGroupSchemeCat R) :
-    (baseChangeFunctorIdIso.inv.app G).hom.hom.hom = pullbackSpecMapIdIso.inv.app G.obj.X := by
+    (baseChangeFunctorIdIso.inv.app G).hom.hom.hom = pullbackSpecMapId.inv.app G.obj.X := by
   simp only [Functor.id_obj, baseChangeFunctorIdIso, ObjectProperty.isoMk, ObjectProperty.homMk,
     NatIso.trans_app, Iso.trans_inv, Iso.app_inv, NatIso.ofComponents_inv_app, Grp.comp',
     Mon.comp_hom', Functor.mapGrpIdIso_inv_app_hom_hom, Functor.mapGrpNatIso_inv_app_hom_hom]
@@ -175,9 +166,9 @@ noncomputable def baseChangeFunctorCompIso (f : R ⟶ S) (g : S ⟶ T) :
     baseChangeFunctor (f ≫ g) ≅ baseChangeFunctor f ⋙ baseChangeFunctor g :=
   NatIso.ofComponents
     (fun G => (affineGroupSchemeProperty T).isoMk
-      ((Functor.mapGrpNatIso (pullbackSpecMapCompIso f g) ≪≫ Functor.mapGrpCompIso).app G.obj))
+      ((Functor.mapGrpNatIso (pullbackSpecMapComp f g) ≪≫ Functor.mapGrpCompIso).app G.obj))
     fun h => (affineGroupSchemeProperty T).ι.map_injective
-      ((Functor.mapGrpNatIso (pullbackSpecMapCompIso f g) ≪≫
+      ((Functor.mapGrpNatIso (pullbackSpecMapComp f g) ≪≫
         Functor.mapGrpCompIso).hom.naturality h.hom)
 
 /-- The morphism of objects over `Spec T` underlying `(baseChangeFunctorCompIso f g).hom`. -/
@@ -185,7 +176,7 @@ noncomputable def baseChangeFunctorCompIso (f : R ⟶ S) (g : S ⟶ T) :
 lemma baseChangeFunctorCompIso_hom_app_hom_hom_hom (f : R ⟶ S) (g : S ⟶ T)
     (G : AffineGroupSchemeCat R) :
     ((baseChangeFunctorCompIso f g).hom.app G).hom.hom.hom =
-      (pullbackSpecMapCompIso f g).hom.app G.obj.X := by
+      (pullbackSpecMapComp f g).hom.app G.obj.X := by
   simp only [Functor.comp_obj, baseChangeFunctorCompIso, ObjectProperty.isoMk,
     ObjectProperty.homMk, NatIso.trans_app, Iso.trans_hom, Iso.app_hom,
     NatIso.ofComponents_hom_app, Grp.comp', Mon.comp_hom',
@@ -197,7 +188,7 @@ lemma baseChangeFunctorCompIso_hom_app_hom_hom_hom (f : R ⟶ S) (g : S ⟶ T)
 lemma baseChangeFunctorCompIso_inv_app_hom_hom_hom (f : R ⟶ S) (g : S ⟶ T)
     (G : AffineGroupSchemeCat R) :
     ((baseChangeFunctorCompIso f g).inv.app G).hom.hom.hom =
-      (pullbackSpecMapCompIso f g).inv.app G.obj.X := by
+      (pullbackSpecMapComp f g).inv.app G.obj.X := by
   simp only [Functor.comp_obj, baseChangeFunctorCompIso, ObjectProperty.isoMk,
     ObjectProperty.homMk, NatIso.trans_app, Iso.trans_inv, Iso.app_inv,
     NatIso.ofComponents_inv_app, Grp.comp', Mon.comp_hom',
