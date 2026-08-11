@@ -18,15 +18,17 @@ import Mathlib.MeasureTheory.Measure.Prod
 /-!
 # Uniqueness of the Berg--Christensen--Ressel representing measure
 
-The Berg--Christensen--Ressel representation writes a bounded continuous positive-definite
-function on the involutive semigroup `ℝ≥0 × V` as the Laplace--Fourier transform
+For a *finite-dimensional* real inner product space `V`, the Berg--Christensen--Ressel
+representation writes a bounded continuous positive-definite function on the involutive
+semigroup `ℝ≥0 × V` as the Laplace--Fourier transform
 
 `F (t, a) = ∫ (p, q), exp (-t p) * exp (-2πi⟪a, q⟫) ∂μ`
 
 of a finite measure `μ` on `ℝ≥0 × V`. This file supplies the **uniqueness half**: a finite
-measure on `ℝ≥0 × V` is determined by its Laplace--Fourier transform. It is independent of the
-existence half, which consumes Bochner's theorem on `V`; the transform itself and the
-representation predicate live in
+measure on `ℝ≥0 × V` is determined by its Laplace--Fourier transform. Uniqueness needs no
+finite-dimensionality — a complete, second-countable `V` with its Borel σ-algebra suffices —
+and it is independent of the existence half, which consumes Bochner's theorem on the
+finite-dimensional `V`; the transform itself and the representation predicate live in
 `TauCeti.Analysis.PositiveDefinite.SemigroupGroup.FourierLaplace.Transform`, which both halves
 share.
 

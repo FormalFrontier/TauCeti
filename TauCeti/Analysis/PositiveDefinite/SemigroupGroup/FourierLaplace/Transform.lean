@@ -10,12 +10,14 @@ public import Mathlib.MeasureTheory.Integral.Bochner.Basic
 /-!
 # The Laplace--Fourier transform of a measure on `ℝ≥0 × V`
 
-The Berg--Christensen--Ressel representation writes a bounded continuous positive-definite
-function on the involutive semigroup `ℝ≥0 × V` as the Laplace--Fourier transform
+For a *finite-dimensional* real inner product space `V`, the Berg--Christensen--Ressel
+representation writes a bounded continuous positive-definite function on the involutive
+semigroup `ℝ≥0 × V` as the Laplace--Fourier transform
 
 `F (t, a) = ∫ (p, q), exp (-t p) * exp (-2πi⟪a, q⟫) ∂μ`
 
-of a finite measure `μ` on `ℝ≥0 × V`. This file defines that transform, through the atoms of
+of a finite measure `μ` on `ℝ≥0 × V`. This file defines that transform for an arbitrary `V`
+— no finite-dimensionality is needed to write it down — through the atoms of
 `TauCeti.Analysis.PositiveDefinite.SemigroupGroup.FourierLaplace.Basic`, and packages the
 predicate that a finite measure represents a given function this way. It is the material both
 halves of the representation theorem share: the uniqueness half
@@ -79,9 +81,9 @@ The integrand is the separated Laplace--Fourier atom of
 `TauCeti.isSemigroupGroupPD_laplaceFourierAtom`. Nothing here relates the measurable structure
 on `V` to its topology, so the integral need not converge; integrability of the atoms against a
 finite measure is `TauCeti.integrable_laplaceAtom_mul_fourierAtom`, which additionally assumes
-`OpensMeasurableSpace V`. The Berg--Christensen--Ressel theorem asserts that every bounded
-continuous semigroup-group positive-definite function on `ℝ≥0 × V` is the transform of a finite
-measure. -/
+`OpensMeasurableSpace V`. For a finite-dimensional `V`, the Berg--Christensen--Ressel theorem
+asserts that every bounded continuous semigroup-group positive-definite function on `ℝ≥0 × V`
+is the transform of a finite measure. -/
 noncomputable def laplaceFourierTransform (μ : Measure (ℝ≥0 × V)) (x : ℝ≥0 × V) : ℂ :=
   ∫ y, laplaceAtom x.1 y.1 * fourierAtom x.2 y.2 ∂μ
 
@@ -187,7 +189,38 @@ representing measure. (Not `@[simp]`: the left-hand side has a variable head sym
 theorem apply_zero (h : RepresentsLaplaceFourier μ F) : F 0 = (μ.real univ : ℂ) := by
   rw [h.eq_laplaceFourierTransform 0, laplaceFourierTransform_zero]
 
+/-- The sum of two representing measures represents the sum of the functions. -/
+protected theorem add [OpensMeasurableSpace V] {G : ℝ≥0 × V → ℂ} {ν : Measure (ℝ≥0 × V)}
+    (hF : RepresentsLaplaceFourier μ F) (hG : RepresentsLaplaceFourier ν G) :
+    RepresentsLaplaceFourier (μ + ν) (F + G) := by
+  have := hF.isFiniteMeasure
+  have := hG.isFiniteMeasure
+  refine ⟨inferInstance, fun x => ?_⟩
+  rw [Pi.add_apply, hF.eq_laplaceFourierTransform x, hG.eq_laplaceFourierTransform x,
+    laplaceFourierTransform_add_measure]
+
+/-- Scaling a representing measure by `c : ℝ≥0` represents the scaled function. -/
+protected theorem smul (c : ℝ≥0) (hF : RepresentsLaplaceFourier μ F) :
+    RepresentsLaplaceFourier ((c : ℝ≥0∞) • μ) (fun x => (c : ℝ) • F x) := by
+  have := hF.isFiniteMeasure
+  have : IsFiniteMeasure ((c : ℝ≥0∞) • μ) := μ.smul_finite ENNReal.coe_ne_top
+  refine ⟨inferInstance, fun x => ?_⟩
+  -- beta-reduce the scaled function at `x`
+  dsimp only
+  rw [laplaceFourierTransform_smul_measure, ENNReal.coe_toReal, hF.eq_laplaceFourierTransform x]
+
 end RepresentsLaplaceFourier
+
+/-- The zero measure represents the zero function. -/
+theorem representsLaplaceFourier_zero :
+    RepresentsLaplaceFourier (0 : Measure (ℝ≥0 × V)) 0 :=
+  ⟨inferInstance, fun x => by simp⟩
+
+/-- The Dirac mass at `y` represents the Laplace--Fourier atom of `y`. -/
+theorem representsLaplaceFourier_dirac [OpensMeasurableSpace V] (y : ℝ≥0 × V) :
+    RepresentsLaplaceFourier (Measure.dirac y)
+      (fun x => laplaceAtom x.1 y.1 * fourierAtom x.2 y.2) :=
+  ⟨inferInstance, fun x => by rw [laplaceFourierTransform_dirac]⟩
 
 end Defs
 
