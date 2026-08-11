@@ -60,6 +60,8 @@ Two bridges keep this from being a parallel universe.
 * `TauCeti.LinearPMap.mem_resolventSet_of_norm_mul_lt_one` and
   `TauCeti.LinearPMap.isOpen_resolventSet`: the Neumann-series perturbation of a
   resolvent point, and the openness of the resolvent set it gives.
+* `TauCeti.LinearPMap.eq_of_le_of_mem_resolventSet`: an operator has no proper extension
+  sharing a resolvent point.
 * `TauCeti.LinearPMap.mem_resolventSet_toPMap_top_iff` and
   `TauCeti.LinearPMap.resolvent_toPMap_top`: the bounded bridge.
 
@@ -204,6 +206,27 @@ theorem smul_sub_bijective (h : lambda ∈ resolventSet A) :
     Function.Bijective fun x : A.domain => lambda • (x : X) - A x :=
   (isResolventAt_resolvent h).smul_sub_bijective
 
+/-- **An operator has no proper extension sharing a resolvent point.** If `A ≤ B` and some
+`lambda` lies in the resolvent set of both, then `A = B`.
+
+A vector `y ∈ D(B)` has `lambda • y - B y = lambda • x - A x` for a unique `x ∈ D(A)`, by
+surjectivity for `A`; injectivity for `B` then forces `y = x`, so `D(B) ⊆ D(A)`.
+
+This is the step that upgrades "`A` is a restriction of the generator" to "`A` *is* the
+generator" in the generation theorems. -/
+theorem eq_of_le_of_mem_resolventSet {A B : X →ₗ.[ℝ] X} (hAB : A ≤ B)
+    (hA : lambda ∈ resolventSet A) (hB : lambda ∈ resolventSet B) : A = B := by
+  refine LinearPMap.eq_of_le_of_domain_eq hAB (le_antisymm hAB.1 fun y hy => ?_)
+  obtain ⟨x, hx⟩ := (smul_sub_bijective hA).surjective (lambda • y - B ⟨y, hy⟩)
+  obtain ⟨x', hx'coe, hx'val⟩ := LinearPMap.exists_of_le hAB x
+  have hxy : x' = (⟨y, hy⟩ : B.domain) := by
+    refine (smul_sub_bijective hB).injective ?_
+    simp only [← hx'coe, ← hx'val]
+    exact hx
+  have hcoe : (x : X) = y := by rw [hx'coe, hxy]
+  rw [← hcoe]
+  exact x.property
+
 /-- The resolvent commutes with `A` on `D(A)`: `R(lambda) (A x) = A (R(lambda) x)`. -/
 theorem resolvent_apply_comm (h : lambda ∈ resolventSet A) (x : A.domain) :
     resolvent A lambda (A x) =
@@ -270,6 +293,38 @@ section CompleteSpace
 
 variable [CompleteSpace X]
 
+/-- The Neumann inverse. When `|mu - lambda| * ‖R(lambda)‖ < 1`, the operator
+`1 - (lambda - mu) • R(lambda)` is invertible, and its inverse `U` is two-sided and commutes with
+`R(lambda)` — the latter because `1 - (lambda - mu) • R(lambda)` is a polynomial in `R(lambda)`.
+
+Nothing here needs `lambda` to be in the resolvent set: the statement is about the bounded operator
+`resolvent A lambda` alone. -/
+private theorem exists_inverse_one_sub_smul_resolvent
+    (hmu : |mu - lambda| * ‖resolvent A lambda‖ < 1) :
+    ∃ U : X →L[ℝ] X,
+      (∀ y : X, U y - (lambda - mu) • resolvent A lambda (U y) = y) ∧
+      (∀ y : X, U (y - (lambda - mu) • resolvent A lambda y) = y) ∧
+      ∀ y : X, resolvent A lambda (U y) = U (resolvent A lambda y) := by
+  have hnorm : ‖(lambda - mu) • resolvent A lambda‖ < 1 := by
+    rw [norm_smul, Real.norm_eq_abs, abs_sub_comm]
+    exact hmu
+  obtain ⟨u, hu⟩ := isUnit_one_sub_of_norm_lt_one hnorm
+  set B : X →L[ℝ] X := (lambda - mu) • resolvent A lambda with hB
+  refine ⟨((u⁻¹ : (X →L[ℝ] X)ˣ) : X →L[ℝ] X), fun y => ?_, fun y => ?_, fun y => ?_⟩
+  · have h1 : ((u : X →L[ℝ] X) * (u⁻¹ : (X →L[ℝ] X)ˣ)) = 1 := u.mul_inv
+    rw [hu] at h1
+    simpa [hB] using congrArg (fun S : X →L[ℝ] X => S y) h1
+  · have h1 : (((u⁻¹ : (X →L[ℝ] X)ˣ) : X →L[ℝ] X) * (u : X →L[ℝ] X)) = 1 := u.inv_mul
+    rw [hu] at h1
+    simpa [hB] using congrArg (fun S : X →L[ℝ] X => S y) h1
+  · -- `1 - (lambda - mu) • R(lambda)` is a polynomial in `R(lambda)`, hence commutes with it.
+    have hcomm : Commute ((u : X →L[ℝ] X)) (resolvent A lambda) := by
+      rw [hu, hB]
+      exact (Commute.one_left _).sub_left
+        ((Commute.refl (resolvent A lambda)).smul_left (lambda - mu))
+    simpa [mul_apply_eq_comp] using
+      congrArg (fun S : X →L[ℝ] X => S y) hcomm.units_inv_left.symm
+
 /-- **The Neumann perturbation of a resolvent point.** If `lambda` lies in the resolvent set and
 `|mu - lambda| * ‖R(lambda)‖ < 1`, then `mu` lies in it too.
 
@@ -278,50 +333,23 @@ factor is invertible by the geometric series, so `R(lambda) (I - (lambda - mu) R
 inverts `mu • I - A`. -/
 theorem mem_resolventSet_of_norm_mul_lt_one (h : lambda ∈ resolventSet A)
     (hmu : |mu - lambda| * ‖resolvent A lambda‖ < 1) : mu ∈ resolventSet A := by
-  have hnorm : ‖(lambda - mu) • resolvent A lambda‖ < 1 := by
-    rw [norm_smul, Real.norm_eq_abs, abs_sub_comm]
-    exact hmu
-  obtain ⟨u, hu⟩ := isUnit_one_sub_of_norm_lt_one hnorm
-  set B : X →L[ℝ] X := (lambda - mu) • resolvent A lambda with hB
-  set U : X →L[ℝ] X := ((u⁻¹ : (X →L[ℝ] X)ˣ) : X →L[ℝ] X) with hU
-  -- `U` is a two-sided inverse of `1 - B`
-  have hUright : ∀ y : X, U y - B (U y) = y := by
-    intro y
-    have h1 : ((u : X →L[ℝ] X) * U) = 1 := u.mul_inv
-    rw [hu] at h1
-    simpa using congrArg (fun S : X →L[ℝ] X => S y) h1
-  have hUleft : ∀ y : X, U (y - B y) = y := by
-    intro y
-    have h1 : (U * (u : X →L[ℝ] X)) = 1 := u.inv_mul
-    rw [hu] at h1
-    simpa using congrArg (fun S : X →L[ℝ] X => S y) h1
-  -- `B` is a multiple of `R(lambda)`, so `U` commutes with `R(lambda)`
-  have hcomm : Commute ((u : X →L[ℝ] X)) (resolvent A lambda) := by
-    rw [hu, Commute, SemiconjBy, hB, sub_mul, mul_sub, smul_mul_assoc, mul_smul_comm,
-      one_mul, mul_one]
-  have hcomm' : ∀ y : X, resolvent A lambda (U y) = U (resolvent A lambda y) := fun y => by
-    simpa [mul_apply_eq_comp] using
-      congrArg (fun S : X →L[ℝ] X => S y) hcomm.units_inv_left.symm
-  refine ⟨resolvent A lambda ∘L U, ?_, ?_, ?_⟩
-  · exact fun y => resolvent_mem_domain h (U y)
-  · intro y
-    have h1 := smul_sub_apply_resolvent h (U y)
-    have h2 : mu • resolvent A lambda (U y) -
-          A ⟨resolvent A lambda (U y), resolvent_mem_domain h (U y)⟩
-        = (lambda • resolvent A lambda (U y) -
-            A ⟨resolvent A lambda (U y), resolvent_mem_domain h (U y)⟩) -
-          (lambda - mu) • resolvent A lambda (U y) := by module
+  obtain ⟨U, hUright, hUleft, hcomm⟩ := exists_inverse_one_sub_smul_resolvent hmu
+  refine ⟨resolvent A lambda ∘L U, fun y => resolvent_mem_domain h (U y), fun y => ?_, fun x => ?_⟩
+  · have h2 : mu • resolvent A lambda (U y) -
+        A ⟨resolvent A lambda (U y), resolvent_mem_domain h (U y)⟩
+      = (lambda • resolvent A lambda (U y) -
+          A ⟨resolvent A lambda (U y), resolvent_mem_domain h (U y)⟩) -
+        (lambda - mu) • resolvent A lambda (U y) := by module
     simp only [ContinuousLinearMap.comp_apply]
-    rw [h2, h1]
-    simpa [hB] using hUright y
-  · intro x
-    have hsplit : mu • (x : X) - A x
-        = (lambda • (x : X) - A x) - (lambda - mu) • (x : X) := by module
-    have h1 : resolvent A lambda (mu • (x : X) - A x) = (x : X) - B (x : X) := by
-      rw [hsplit, map_sub, map_smul, resolvent_smul_sub_apply h x, hB]
-      rfl
+    rw [h2, smul_sub_apply_resolvent h (U y)]
+    exact hUright y
+  · have hsplit : mu • (x : X) - A x
+      = (lambda • (x : X) - A x) - (lambda - mu) • (x : X) := by module
+    have h1 : resolvent A lambda (mu • (x : X) - A x)
+        = (x : X) - (lambda - mu) • resolvent A lambda (x : X) := by
+      rw [hsplit, map_sub, map_smul, resolvent_smul_sub_apply h x]
     simp only [ContinuousLinearMap.comp_apply]
-    rw [hcomm' (mu • (x : X) - A x), h1, hUleft]
+    rw [hcomm (mu • (x : X) - A x), h1, hUleft]
 
 /-- **The resolvent set is open.** -/
 theorem isOpen_resolventSet (A : X →ₗ.[ℝ] X) : IsOpen (resolventSet A) := by

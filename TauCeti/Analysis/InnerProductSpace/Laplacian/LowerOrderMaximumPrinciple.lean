@@ -5,6 +5,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Analysis.InnerProductSpace.Laplacian.DriftMaximumPrinciple
+-- Support only: the shared maximizer step is proof machinery, not part of this file's API.
+import TauCeti.Analysis.InnerProductSpace.Laplacian.BarrierMaximizer
 
 /-!
 # Maximum principles with drift and a nonnegative zeroth-order term
@@ -59,44 +61,22 @@ theorem le_of_mul_le_laplacian_add_fderiv_le_frontier {K : Set E} (hK : IsCompac
   obtain ⟨v, hv⟩ := exists_ne (0 : E)
   let u : E := ‖v‖⁻¹ • v
   have hu : ‖u‖ = 1 := norm_smul_inv_norm hv
-  let α : ℝ := β + 1
-  let w : E → ℝ := fun y => Real.exp (α * ⟪u, y⟫)
+  let w : E → ℝ := fun y => Real.exp ((β + 1) * ⟪u, y⟫)
   have hwpos (y : E) : 0 < w y := Real.exp_pos _
-  have hwcd : ContDiff ℝ 2 w := by
-    have hi : ContDiff ℝ 2 (fun y : E => (⟪u, y⟫ : ℝ)) := by
-      simpa only [coe_innerSL_apply] using (innerSL ℝ u).contDiff
-    exact (by simpa only [smul_eq_mul] using hi.const_smul α : ContDiff ℝ 2 _).exp
+  have hwcd : ContDiff ℝ 2 w := (contDiff_exp_inner _ u).of_le (by norm_cast)
   obtain ⟨C, hC⟩ := hK.bddAbove_image hwcd.continuous.continuousOn
   have hC0 : 0 ≤ C := (hwpos x).le.trans (hC (Set.mem_image_of_mem w hxK))
   apply le_of_forall_pos_mul_le hC0
   intro ε hε
-  let g : E → ℝ := fun y => f y + ε • w y
-  have hgcont : ContinuousOn g K := hcont.add (hwcd.continuous.continuousOn.const_smul ε)
-  obtain ⟨z, hzK, hzmax⟩ := hK.exists_isMaxOn ⟨x, hxK⟩ hgcont
-  have hfz : f z ≤ m := by
-    by_cases hzint : z ∈ interior K
-    · by_contra hn
-      have hfz0 : 0 ≤ f z := hm.trans (not_le.mp hn).le
-      have hgcd : ContDiffAt ℝ 2 g z := (hcd hzint).add (hwcd.contDiffAt.const_smul ε)
-      have hloc : IsLocalMax g z := hzmax.isLocalMax (mem_interior_iff_mem_nhds.mp hzint)
-      have hLgnonpos : Δ g z + fderiv ℝ g z (b z) ≤ 0 := by
-        rw [hloc.fderiv_eq_zero]
-        simpa using laplacian_nonpos_of_isLocalMax hgcd hloc
-      have hLwpos : 0 < Δ w z + fderiv ℝ w z (b z) := by
-        simpa only [w, α] using
-          laplacian_add_fderiv_exp_inner_pos_of_norm_le hu (hb hzint) z
-      have hLg : Δ g z + fderiv ℝ g z (b z) =
-          (Δ f z + fderiv ℝ f z (b z)) +
-            ε * (Δ w z + fderiv ℝ w z (b z)) := by
-        simpa only [g] using laplacian_add_fderiv_add_const_smul f w (b z) ε z
-          (hcd hzint) hwcd.contDiffAt
-      have hLf0 : 0 ≤ Δ f z + fderiv ℝ f z (b z) :=
-        (mul_nonneg (hc hzint) hfz0).trans (hsub hzint)
-      rw [hLg] at hLgnonpos
-      nlinarith [mul_pos hε hLwpos]
-    · exact hbdry ⟨subset_closure hzK, hzint⟩
+  obtain ⟨z, hzK, hzmax⟩ := hK.exists_isMaxOn ⟨x, hxK⟩
+    (hcont.add (hwcd.continuous.continuousOn.const_smul ε))
+  have hfz : f z ≤ m :=
+    le_of_isMaxOn_add_smul (v := b z) hε (fun h => hcd h)
+      (fun h hlt => (mul_nonneg (hc h) (hm.trans hlt.le)).trans (hsub h)) (fun hz => hbdry hz) hzK
+      (fun _ => hwcd.contDiffAt)
+      (fun hz => laplacian_add_fderiv_exp_inner_pos_of_norm_le hu (hb hz) z) hzmax
   have hxle : f x + ε * w x ≤ f z + ε * w z := by
-    simpa [g, smul_eq_mul] using hzmax hxK
+    simpa [smul_eq_mul] using hzmax hxK
   have hwzC : ε * w z ≤ ε * C :=
     mul_le_mul_of_nonneg_left (hC (Set.mem_image_of_mem w hzK)) hε.le
   nlinarith [mul_nonneg hε.le (hwpos x).le]

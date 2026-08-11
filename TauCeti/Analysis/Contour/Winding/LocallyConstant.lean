@@ -50,6 +50,34 @@ open scoped Topology
 
 namespace TauCeti.Contour
 
+/-- **Two integers whose complex images are closer than `1` are equal.** -/
+private theorem eq_of_dist_intCast_lt_one {m n : ℤ} (h : dist (m : ℂ) (n : ℂ) < 1) : m = n := by
+  by_contra hne
+  have : (1 : ℝ) ≤ dist (m : ℂ) (n : ℂ) := by
+    rw [Complex.isometry_intCast.dist_eq]; exact Int.pairwise_one_le_dist hne
+  linarith
+
+/-- **Near a point off a closed curve the winding number is an integer.** If `ρ` bounds the
+distance from `w₀` to the curve below, then every `w` within `ρ / 2` of `w₀` is itself off the
+curve, so the winding number of the closed curve about it is an integer. -/
+private theorem exists_int_windingNumber_of_closed_of_dist_lt {γ : ℝ → ℂ} {a b : ℝ} {P : Set ℝ}
+    {w₀ w : ℂ} {ρ : ℝ} (hclosed : γ a = γ b) (hP : P.Countable)
+    (hγ_cont : ContinuousOn γ (uIcc a b))
+    (hγ_diff : ∀ t ∈ Ioo (min a b) (max a b) \ P, DifferentiableAt ℝ γ t)
+    (hderiv_int : IntervalIntegrable (fun t ↦ deriv γ t) volume a b)
+    (h_dist : ∀ t ∈ uIcc a b, ρ ≤ ‖γ t - w₀‖) (hw : dist w w₀ < ρ / 2) :
+    ∃ n : ℤ, windingNumber γ a b w = n := by
+  rw [Complex.dist_eq] at hw
+  have h_avoid : ∀ t ∈ uIcc a b, γ t ≠ w := by
+    intro t ht heq
+    have hle := h_dist t ht
+    rw [heq] at hle
+    -- `‖w - w₀‖ = dist w w₀ ≥ 0`, which is what rules out a negative `ρ`.
+    have := norm_nonneg (w - w₀)
+    linarith
+  exact exists_int_windingNumber_of_closed hclosed hP hγ_cont hγ_diff h_avoid
+    (intervalIntegrable_inv_sub_mul_deriv hγ_cont h_avoid hderiv_int)
+
 /-- **The winding number is locally constant off a closed curve.** Let `γ` be a closed curve
 (`γ a = γ b`), differentiable off a countable set `P`, continuous on `Set.uIcc a b`, with
 interval-integrable derivative. Then, as a function of the point ranging over the complement of the
@@ -60,45 +88,27 @@ theorem isLocallyConstant_windingNumber_of_closed {γ : ℝ → ℂ} {a b : ℝ}
     (hderiv_int : IntervalIntegrable (fun t ↦ deriv γ t) volume a b) :
     IsLocallyConstant
       (fun w : {w : ℂ // ∀ t ∈ uIcc a b, γ t ≠ w} ↦ windingNumber γ a b w.1) := by
-  -- The index integrand about any off-curve point is interval-integrable: a continuous factor
-  -- `(γ · - w)⁻¹` times the integrable derivative.
-  have hII : ∀ w : ℂ, (∀ t ∈ uIcc a b, γ t ≠ w) →
-      IntervalIntegrable (fun t ↦ (γ t - w)⁻¹ * deriv γ t) volume a b := fun w hw ↦
-    intervalIntegrable_inv_sub_mul_deriv hγ_cont hw hderiv_int
   rw [IsLocallyConstant.iff_eventually_eq]
   rintro ⟨w₀, hw₀⟩
-  -- A uniform lower bound `ρ ≤ ‖γ t - w₀‖`; on `ball w₀ (ρ / 2)` every point stays off `γ`, so the
-  -- winding number about it is an integer (closed curve).
+  -- A uniform lower bound `ρ ≤ ‖γ t - w₀‖`, so the winding number is an integer on `ball w₀ (ρ/2)`.
   obtain ⟨ρ, hρ_pos, h_dist⟩ := exists_curve_dist_lower_bound hγ_cont hw₀
-  have key : ∀ w'' : ℂ, dist w'' w₀ < ρ / 2 → ∃ n : ℤ, windingNumber γ a b w'' = n := by
-    intro w'' hw''
-    rw [Complex.dist_eq] at hw''
-    have h_avoid'' : ∀ t ∈ uIcc a b, γ t ≠ w'' := by
-      intro t ht heq
-      have hle := h_dist t ht
-      rw [heq] at hle
-      linarith
-    exact exists_int_windingNumber_of_closed hclosed hP hγ_cont hγ_diff h_avoid''
-      (hII w'' h_avoid'')
+  have key : ∀ w'' : ℂ, dist w'' w₀ < ρ / 2 → ∃ n : ℤ, windingNumber γ a b w'' = n :=
+    fun _ hw'' ↦ exists_int_windingNumber_of_closed_of_dist_lt hclosed hP hγ_cont hγ_diff
+      hderiv_int h_dist hw''
   obtain ⟨n₀, hn₀⟩ := key w₀ (by rw [dist_self]; exact half_pos hρ_pos)
   -- Continuity of the winding number at `w₀` gives a tolerance-`1 / 2` ball.
-  have h_cont := continuousAt_windingNumber_of_avoidance hγ_cont hw₀ (hII w₀ hw₀)
+  have h_cont := continuousAt_windingNumber_of_avoidance hγ_cont hw₀
+    (intervalIntegrable_inv_sub_mul_deriv hγ_cont hw₀ hderiv_int)
   rw [Metric.continuousAt_iff] at h_cont
   obtain ⟨ε, hε_pos, h_close⟩ := h_cont (1 / 2) (by norm_num)
-  -- On the smaller ball both winding numbers are integers within `1 / 2`, hence equal; so the
-  -- winding number is eventually constant near `w₀`.
+  -- On the smaller ball both winding numbers are integers within `1 / 2`, hence equal.
   have hball : ∀ᶠ w in 𝓝 w₀, windingNumber γ a b w = windingNumber γ a b w₀ := by
     filter_upwards [Metric.ball_mem_nhds w₀ (lt_min hε_pos (half_pos hρ_pos))] with w' hw'
     rw [Metric.mem_ball] at hw'
     obtain ⟨n', hn'⟩ := key w' (hw'.trans_le (min_le_right _ _))
     have h_dist_int : dist (n' : ℂ) (n₀ : ℂ) < 1 / 2 := by
       rw [← hn', ← hn₀]; exact h_close (hw'.trans_le (min_le_left _ _))
-    have h_int_eq : n' = n₀ := by
-      by_contra hne
-      have h1 : (1 : ℝ) ≤ dist (n' : ℂ) (n₀ : ℂ) := by
-        rw [Complex.isometry_intCast.dist_eq]; exact Int.pairwise_one_le_dist hne
-      linarith
-    rw [hn', hn₀, h_int_eq]
+    rw [hn', hn₀, eq_of_dist_intCast_lt_one (h_dist_int.trans (by norm_num))]
   -- Transport the neighbourhood statement to the subtype of off-curve points.
   have hval : Filter.Tendsto (Subtype.val : {w : ℂ // ∀ t ∈ uIcc a b, γ t ≠ w} → ℂ)
       (𝓝 ⟨w₀, hw₀⟩) (𝓝 w₀) := continuous_subtype_val.continuousAt
