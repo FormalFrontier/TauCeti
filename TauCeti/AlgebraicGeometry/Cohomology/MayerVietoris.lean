@@ -27,8 +27,8 @@ exact Mayer-Vietoris sequence of a covering of `X` by two open subsets `U` and `
 * `Scheme.Modules.epi_mayerVietorisδ`: if `Hⁿ⁺¹(U, M)` and `Hⁿ⁺¹(V, M)` vanish, then the
   connecting map `Hⁿ(U ⊓ V, M) ⟶ Hⁿ⁺¹(X, M)` is an epimorphism;
 * `Scheme.Modules.subsingleton_cohomology_succ`: if moreover `Hⁿ(U ⊓ V, M)` vanishes, then
-  `Hⁿ⁺¹(X, M)` vanishes, and `Scheme.Modules.subsingleton_cohomology_of_two_le` iterates this
-  over an open cover which is acyclic in positive degrees.
+  `Hⁿ⁺¹(X, M)` vanishes, and `Scheme.Modules.subsingleton_cohomology_of_two_le` applies this at
+  degree `n - 1` under uniform positive-degree acyclicity hypotheses.
 
 The last two statements are the shape in which Mayer-Vietoris is used on a curve: a separated
 scheme covered by two affine opens has no cohomology above degree one, once the acyclicity of
