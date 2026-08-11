@@ -41,6 +41,7 @@ positive root is a nonnegative integer combination of the simple coroots.
   over those roots.
 * `TauCeti.RootPairing.Base.isPos_flip_iff` says a root is positive for a base exactly when its
   coroot is positive for that base, and `TauCeti.posRoots_flip` restates it for the sets.
+* `TauCeti.sum_root_ne_zero_of_mem_posRoots` says a nonempty sum of positive roots is nonzero.
 * `TauCeti.exists_coroot_eq_sum_nat_of_mem_posRoots` says the coroot of a positive root is a
   nonnegative integer combination of the simple coroots.
 
@@ -205,6 +206,38 @@ lemma exists_root_eq_sum_nat_of_mem_posRoots {i : ι} (hi : i ∈ posRoots P b) 
     have hnonpos : ∑ j ∈ b.support, g j ≤ 0 :=
       Finset.sum_nonpos fun j _ ↦ by simp [g]
     exact (not_lt_of_ge hnonpos hi).elim
+
+/-- **A nonempty sum of positive roots is nonzero.** Expanding each summand in the simple roots and
+collecting terms, the total coefficient is the sum of the heights, which is positive; the simple
+roots are linearly independent, so a combination with a nonzero coefficient sum cannot vanish.
+
+This is the integral form of the statement that the positive roots lie in an open half space. It is
+what rules out a cycle of weights each obtained from the previous one by adding a positive root, and
+so is the reason a maximal weight exists. -/
+theorem sum_root_ne_zero_of_mem_posRoots {κ : Type*} {s : Finset κ} (hs : s.Nonempty) {f : κ → ι}
+    (hf : ∀ x ∈ s, f x ∈ posRoots P b) :
+    ∑ x ∈ s, P.root (f x) ≠ 0 := by
+  classical
+  intro hsum
+  choose g _hsupp _hsign hg using fun x : κ ↦ b.exists_root_eq_sum_int (f x)
+  set c : ι → ℤ := fun j ↦ ∑ x ∈ s, g x j with hc
+  have hcomb : ∑ j ∈ b.support, c j • P.root j = 0 := by
+    rw [← hsum]
+    simp_rw [hg, hc, Finset.sum_smul]
+    exact Finset.sum_comm
+  have hli : LinearIndepOn ℤ P.root (b.support : Set ι) :=
+    b.linearIndepOn_root.restrict_scalars' ℤ
+  have hczero : ∀ j ∈ b.support, c j = 0 :=
+    linearIndepOn_iff'.mp hli b.support c subset_rfl hcomb
+  have hheight : ∑ x ∈ s, b.height (f x) = 0 := by
+    have hswap : ∑ x ∈ s, b.height (f x) = ∑ j ∈ b.support, c j := by
+      simp_rw [b.height_eq_sum (hg _), hc]
+      exact Finset.sum_comm
+    rw [hswap]
+    exact Finset.sum_eq_zero hczero
+  have hpos : 0 < ∑ x ∈ s, b.height (f x) :=
+    Finset.sum_pos (fun x hx ↦ hf x hx) hs
+  exact hpos.ne' hheight
 
 /-- Root negation exchanges positive and negative roots. -/
 theorem image_reflectionPerm_self_posRoots :

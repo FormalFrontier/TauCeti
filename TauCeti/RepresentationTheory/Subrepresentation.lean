@@ -7,13 +7,14 @@ module
 public import Mathlib.RepresentationTheory.Subrepresentation
 
 /-!
-# `toSubmodule` against the order on subrepresentations
+# The underlying module of a subrepresentation
 
 Mathlib's `Subrepresentation` API records how `toSubmodule` interacts with the lattice
 operations — `Subrepresentation.toSubmodule_sup` and `Subrepresentation.toSubmodule_inf`, both
 `@[simp]` and both true by `rfl` — but not how it interacts with the bounded-lattice structure,
 nor how it interacts with the order relations themselves. This file adds the four missing
-counterparts, in the same shape.
+counterparts, in the same shape. It also records that the group-algebra action on a
+subrepresentation coerces to the original action.
 
 They are stated at the typeclasses `Subrepresentation` itself asks for, so they apply wherever
 the abstraction does. The `⊥` and `⊤` lemmas let proofs about extreme subrepresentations avoid
@@ -28,6 +29,7 @@ subrepresentations.
 * `Subrepresentation.toSubmodule_top`
 * `Subrepresentation.toSubmodule_le_toSubmodule`
 * `Subrepresentation.toSubmodule_lt_toSubmodule`
+* `Subrepresentation.coe_toRepresentation_asAlgebraHom_apply`
 -/
 
 public section
@@ -56,5 +58,22 @@ is. -/
 lemma toSubmodule_lt_toSubmodule {ρ₁ ρ₂ : Subrepresentation ρ} :
     ρ₁.toSubmodule < ρ₂.toSubmodule ↔ ρ₁ < ρ₂ := by
   simp only [lt_iff_le_not_ge, toSubmodule_le_toSubmodule]
+
+/-- The group-algebra action on a subrepresentation, coerced to the ambient module, is the
+original group-algebra action. -/
+@[simp]
+theorem coe_toRepresentation_asAlgebraHom_apply {k H V : Type*} [CommSemiring k] [Monoid H]
+    [AddCommMonoid V] [Module k V] {σ : Representation k H V} (S : Subrepresentation σ)
+    (a : MonoidAlgebra k H) (x : S.toSubmodule) :
+    ((S.toRepresentation.asAlgebraHom a x : S.toSubmodule) : V) =
+      σ.asAlgebraHom a (x : V) := by
+  induction a using MonoidAlgebra.induction_linear with
+  | zero => simp
+  | add a b ha hb =>
+      simpa only [map_add, LinearMap.add_apply, Submodule.coe_add] using
+        congrArg₂ (fun u v => u + v) ha hb
+  | single g r =>
+      simp only [Representation.asAlgebraHom_single]
+      congr 1
 
 end Subrepresentation

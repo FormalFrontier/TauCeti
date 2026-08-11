@@ -56,6 +56,8 @@ presupposing that any exist.
   `convolutionOperator k` at a nonzero eigenvalue is finite-dimensional.
 * `TauCeti.ae_eq_smul_convolutionCLM_of_mem_eigenspace`: an eigenvector at a nonzero eigenvalue is
   almost everywhere equal to the continuous function `μ⁻¹ • (k * f)`.
+* `TauCeti.convolutionCLM_eq_zero_of_mem_eigenspace_zero`: an eigenvector at the eigenvalue `0`
+  convolves to the zero function.
 * `TauCeti.compMeasurePreserving_mul_right_mem_eigenspace_convolutionOperator`: the eigenspaces are
   invariant under right translation.
 * `TauCeti.exists_hasEigenvalue_ne_zero_convolutionOperator`: a nonzero symmetric convolution
@@ -98,8 +100,8 @@ predicate-prefix convention), its compactness (`convolutionOperator_isCompact`) 
 dimensionality of its nonzero eigenspaces (`convolutionOperator_eigenspace_finiteDimensional`) as
 milestones on the non-circular route to the Peter-Weyl theorem.
 
-* G. B. Folland, *A Course in Abstract Harmonic Analysis*, 2nd ed., CRC (2016), Chapter 5.
-* D. Bump, *Lie Groups*, 2nd ed., Springer GTM 225 (2013), Chapter 2.
+* G. B. Folland, *A Course in Abstract Harmonic Analysis*, 2nd ed., CRC (2016), §5.2.
+* D. Bump, *Lie Groups*, 2nd ed., Springer GTM 225 (2013), Chapters 3-4.
 -/
 
 public section
@@ -562,12 +564,13 @@ theorem isCompactOperator_convolutionOperator (k : C(G, 𝕜)) :
     IsCompactOperator (convolutionOperator (G := G) k) :=
   (isCompactOperator_convolutionCLM k).clm_comp (ContinuousMap.toLp 2 (haarProb G) 𝕜)
 
-/-! ### The eigenspaces at a nonzero eigenvalue
+/-! ### The eigenspaces of a convolution operator
 
 Compactness bounds the dimension of each nonzero eigenspace; the pointwise formula shows every
-eigenvector is a continuous function; and equivariance makes the eigenspaces right-translation
-invariant. Together these are the three properties that turn a symmetric convolution operator into
-a source of finite-dimensional representations of `G`. -/
+eigenvector at a nonzero eigenvalue is a continuous function; and equivariance makes the
+eigenspaces right-translation invariant. Together these are the three properties that turn a
+symmetric convolution operator into a source of finite-dimensional representations of `G`. The
+eigenspace at `0` is the complementary case: it convolves to nothing at all. -/
 
 /-- **A nonzero eigenspace of a convolution operator is finite-dimensional**, because the operator
 is compact. -/
@@ -592,6 +595,19 @@ theorem ae_eq_smul_convolutionCLM_of_mem_eigenspace (k : C(G, 𝕜)) {μ : 𝕜}
     coeFn_convolutionOperator k f] with x hsmul hcoe
   rw [hsmul, Pi.smul_apply, hcoe]
   rfl
+
+/-- **Convolving a `0`-eigenvector gives the zero function.** The convolution operator factors as
+`ContinuousMap.toLp` after `convolutionCLM`, and `ContinuousMap.toLp` is injective because
+normalized Haar measure is positive on nonempty open sets. This is the complement of
+`ae_eq_smul_convolutionCLM_of_mem_eigenspace`, which describes the eigenvectors at a nonzero
+eigenvalue. -/
+theorem convolutionCLM_eq_zero_of_mem_eigenspace_zero (k : C(G, 𝕜))
+    {f : Lp 𝕜 2 (haarProb G)}
+    (hf : f ∈ Module.End.eigenspace (convolutionOperator (G := G) k).toLinearMap 0) :
+    convolutionCLM k f = 0 := by
+  rw [Module.End.mem_eigenspace_iff, ContinuousLinearMap.coe_coe, zero_smul] at hf
+  refine ContinuousMap.toLp_injective (E := 𝕜) (𝕜 := 𝕜) (p := 2) (haarProb G) ?_
+  rw [← convolutionOperator_apply, hf, map_zero]
 
 /-- **The eigenspaces of a convolution operator are invariant under right translation**, because
 the operator commutes with right translation. -/
