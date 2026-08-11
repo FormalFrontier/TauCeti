@@ -6,6 +6,7 @@ module
 
 public import TauCeti.Combinatorics.Young.StandardTableau.Basic
 public import TauCeti.Combinatorics.Young.Tableau
+import Mathlib.Order.Preorder.Finite
 
 /-!
 # The labels of a standard Young tableau, ordered by their cells
@@ -20,8 +21,8 @@ The consequence this file is written for is that **a standard Young tableau is d
 row of each of its labels** (`TauCeti.StandardYoungTableau.rowIndex_injective`): the labels of a row
 are placed there in increasing order, so nothing is left to choose once the rows are known.  Two
 standard tableaux with the same rows differ by a permutation preserving every row of the first,
-which is increasing on each row and therefore the identity; the increasing-permutation step is
-`TauCeti.perm_apply_eq_self_of_lt_iff_lt`, stated for a permutation of any linear order.
+which restricts to a strictly monotone self-map of that row and is therefore the identity there by
+Mathlib's `StrictMono.apply_eq`.
 
 In the language of the Specht modules, the injectivity says that distinct standard tableaux have
 distinct tabloids, and that is how
@@ -29,9 +30,6 @@ distinct tabloids, and that is how
 
 ## Main results
 
-* `TauCeti.YoungTableau.rowIndex_lt_card`: the row of a label is below the number of cells.
-* `TauCeti.perm_apply_eq_self_of_lt_iff_lt`: an increasing permutation of a finite set fixes it
-  pointwise.
 * `TauCeti.StandardYoungTableau.lt_iff_rowIndex_lt`: labels in one column are ordered by row.
 * `TauCeti.StandardYoungTableau.lt_iff_colIndex_lt`: labels in one row are ordered by column.
 * `TauCeti.StandardYoungTableau.rowIndex_injective`: a standard Young tableau is determined by the
@@ -50,19 +48,6 @@ public section
 namespace TauCeti
 
 open YoungTableau
-
-namespace YoungTableau
-
-variable {μ : YoungDiagram}
-
-/-- **The row of a label is below the number of cells.** The cells of `μ` above a label in its own
-column are already that many. -/
-theorem rowIndex_lt_card (t : YoungTableau μ) (x : Fin μ.card) : rowIndex t x < μ.card := by
-  refine lt_of_lt_of_le (YoungDiagram.mem_iff_lt_colLen.mp (rowIndex_colIndex_mem t x)) ?_
-  rw [YoungDiagram.colLen_eq_card]
-  exact Finset.card_le_card (Finset.filter_subset _ _)
-
-end YoungTableau
 
 namespace StandardYoungTableau
 
@@ -117,34 +102,6 @@ end StandardYoungTableau
 
 /-! ### A standard Young tableau is determined by the rows of its labels -/
 
-/-- **An increasing permutation of a finite set is the identity on it.** If `σ` preserves a finite
-set `s` and is increasing on it, then it fixes every element of `s`: it preserves the number of
-elements of `s` lying below a given one, and that number determines the element. -/
-theorem perm_apply_eq_self_of_lt_iff_lt {α : Type*} [LinearOrder α] {s : Finset α}
-    {σ : Equiv.Perm α} (hs : ∀ y, y ∈ s ↔ σ y ∈ s)
-    (hmono : ∀ y ∈ s, ∀ y' ∈ s, (σ y < σ y' ↔ y < y')) {x : α} (hx : x ∈ s) : σ x = x := by
-  classical
-  -- the number of elements of `s` below an element is strictly increasing on `s`
-  have hrank : ∀ a ∈ s, ∀ b ∈ s, a < b →
-      (s.filter (· < a)).card < (s.filter (· < b)).card := by
-    intro a ha b hb hab
-    refine Finset.card_lt_card ⟨fun y hy => ?_, fun hsub => ?_⟩
-    · exact Finset.mem_filter.mpr ⟨(Finset.mem_filter.mp hy).1,
-        (Finset.mem_filter.mp hy).2.trans hab⟩
-    · exact absurd (Finset.mem_filter.mp (hsub (Finset.mem_filter.mpr ⟨ha, hab⟩))).2
-        (lt_irrefl a)
-  -- and `σ` preserves it
-  have hcard : (s.filter (· < x)).card = (s.filter (· < σ x)).card := by
-    refine Finset.card_equiv σ fun y => ?_
-    simp only [Finset.mem_filter]
-    constructor
-    · exact fun hy => ⟨(hs y).mp hy.1, (hmono y hy.1 x hx).mpr hy.2⟩
-    · exact fun hy => ⟨(hs y).mpr hy.1, (hmono y ((hs y).mpr hy.1) x hx).mp hy.2⟩
-  rcases lt_trichotomy (σ x) x with h | h | h
-  · exact absurd hcard (hrank _ ((hs x).mp hx) _ hx h).ne'
-  · exact h
-  · exact absurd hcard (hrank _ hx _ ((hs x).mp hx) h).ne
-
 /-- **A standard Young tableau is determined by the rows of its labels.** -/
 theorem StandardYoungTableau.rowIndex_injective (μ : YoungDiagram) :
     Function.Injective fun T : StandardYoungTableau μ => rowIndex T.toEquiv := by
@@ -167,13 +124,18 @@ theorem StandardYoungTableau.rowIndex_injective (μ : YoungDiagram) :
   -- on each row of `T` the permutation `σ` is increasing, so it is the identity there
   have hσ : σ = 1 := by
     refine Equiv.ext fun x => ?_
-    have hfix : σ x = x := by
-      refine perm_apply_eq_self_of_lt_iff_lt
-        (s := Finset.univ.filter fun y => rowIndex T.toEquiv y = rowIndex T.toEquiv x)
-        (fun y => by simp [hrow y]) (fun y hy y' hy' => ?_) (by simp)
-      simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hy hy'
-      rw [StandardYoungTableau.lt_iff_colIndex_lt U (by rw [hrowU y, hrowU y', hy, hy']),
+    -- `σ` preserves the row of `x`, so it restricts to a permutation of that row
+    have hs : ∀ y, rowIndex T.toEquiv (σ y) = rowIndex T.toEquiv x ↔
+        rowIndex T.toEquiv y = rowIndex T.toEquiv x := fun y => by rw [hrow y]
+    have hmono : StrictMono (σ.subtypePerm hs :
+        Equiv.Perm {y // rowIndex T.toEquiv y = rowIndex T.toEquiv x}) := by
+      rintro ⟨y, hy⟩ ⟨y', hy'⟩ hlt
+      rw [Equiv.Perm.subtypePerm_apply, Equiv.Perm.subtypePerm_apply, Subtype.mk_lt_mk,
+        StandardYoungTableau.lt_iff_colIndex_lt U (by rw [hrowU y, hrowU y', hy, hy']),
         hcolU y, hcolU y', ← StandardYoungTableau.lt_iff_colIndex_lt T (hy.trans hy'.symm)]
+      exact hlt
+    have hfix : σ x = x := by
+      simpa using congrArg Subtype.val (StrictMono.apply_eq (x := ⟨x, rfl⟩) hmono)
     simpa using hfix
   have htu : T.toEquiv = U.toEquiv := by rw [← hrel, hσ, relabel_one]
   exact StandardYoungTableau.ext fun c => by

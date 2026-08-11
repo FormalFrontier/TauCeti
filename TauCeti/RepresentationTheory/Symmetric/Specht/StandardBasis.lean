@@ -39,25 +39,24 @@ that order do the work.
   (`TauCeti.StandardYoungTableau.rowIndex_injective`), since a standard tableau writes the labels
   of each row in increasing order.
 
-Dominance is only a partial order, so the maximum is taken along the numerical weight
-`TauCeti.YoungTableau.rowWeight`, the sum of all the counts in the range where they can differ:
-dominance makes it larger, and it is unchanged only when every count agrees, which pins the rows
-down.  Taking the standard tableau of largest weight among those with a nonzero coefficient, its
-tabloid can occur in no other standard polytabloid of the combination, and its coefficient is the
-coefficient of that tabloid in the combination, hence zero.
+Dominance is only a partial order (antisymmetric up to equality of tabloids,
+`TauCeti.YoungTableau.TabloidDominates.antisymm`), so the maximum is taken along a numerical
+weight private to this file, the sum of all the counts in the range where they can differ:
+dominance makes it larger, and a dominating tableau of no greater weight has every count equal,
+which pins the rows down.  Taking the standard tableau of largest weight among those with a nonzero
+coefficient, its tabloid can occur in no other standard polytabloid of the combination, and its
+coefficient is the coefficient of that tabloid in the combination, hence zero.
 
 ## Main definitions
 
 * `TauCeti.YoungTableau.rowCount`: how many of the first `m` labels lie in the first `i + 1` rows.
 * `TauCeti.YoungTableau.TabloidDominates`: the dominance order on tabloids.
-* `TauCeti.YoungTableau.rowWeight`: a numerical refinement of dominance.
 
 ## Main results
 
+* `TauCeti.YoungTableau.TabloidDominates.antisymm`: dominance both ways is equality of tabloids.
 * `TauCeti.YoungTableau.tabloidDominates_relabel_of_mem_colSubgroup`: a column permutation of a
   standard tableau lowers its tabloid.
-* `TauCeti.YoungTableau.tabloid_eq_iff_rowIndex_eq`: two tableaux have the same tabloid exactly
-  when they put every label in the same row.
 * `TauCeti.linearIndependent_polytabloid`: the standard polytabloids are linearly independent.
 * `TauCeti.standardCount_le_finrank_spechtModule`: hence `f^μ ≤ dim S^μ`.
 
@@ -146,21 +145,35 @@ theorem tabloidDominates_refl (t : YoungTableau μ) : TabloidDominates t t := fu
 theorem TabloidDominates.trans {t u v : YoungTableau μ} (h : TabloidDominates t u)
     (h' : TabloidDominates u v) : TabloidDominates t v := fun m i => (h' m i).trans (h m i)
 
+/-- **Dominance depends on the tableaux only through their tabloids.** -/
+theorem tabloidDominates_congr {t t' u u' : YoungTableau μ} (ht : tabloid t = tabloid t')
+    (hu : tabloid u = tabloid u') : TabloidDominates t u ↔ TabloidDominates t' u' := by
+  rw [tabloid_eq_iff_rowIndex_eq] at ht hu
+  exact forall_congr' fun m => forall_congr' fun i => by
+    rw [rowCount_congr ht m i, rowCount_congr hu m i]
+
+/-- **Dominance is antisymmetric up to equality of tabloids.** -/
+theorem TabloidDominates.antisymm {t u : YoungTableau μ} (h : TabloidDominates t u)
+    (h' : TabloidDominates u t) : tabloid t = tabloid u :=
+  tabloid_eq_iff_rowIndex_eq.mpr
+    (rowIndex_eq_of_rowCount_eq fun m _ i _ => le_antisymm (h' m i) (h m i))
+
 /-- A numerical refinement of dominance: the total of all the counts that can differ.  Dominance
-increases it, and only tableaux with the same rows share its value. -/
-def rowWeight (t : YoungTableau μ) : ℕ :=
+increases it, and a dominating tableau of no greater weight has the same rows
+(`rowIndex_eq_of_tabloidDominates`). -/
+private def rowWeight (t : YoungTableau μ) : ℕ :=
   ∑ m ∈ Finset.range (μ.card + 1), ∑ i ∈ Finset.range (μ.card + 1), rowCount t m i
 
-theorem rowWeight_congr {t u : YoungTableau μ} (h : rowIndex t = rowIndex u) :
+private theorem rowWeight_congr {t u : YoungTableau μ} (h : rowIndex t = rowIndex u) :
     rowWeight t = rowWeight u := by
   refine Finset.sum_congr rfl fun m _ => Finset.sum_congr rfl fun i _ => rowCount_congr h m i
 
-theorem rowWeight_le_of_tabloidDominates {t u : YoungTableau μ} (h : TabloidDominates t u) :
+private theorem rowWeight_le_of_tabloidDominates {t u : YoungTableau μ} (h : TabloidDominates t u) :
     rowWeight u ≤ rowWeight t :=
   Finset.sum_le_sum fun m _ => Finset.sum_le_sum fun i _ => h m i
 
 /-- **Dominance with no gain of weight is equality of tabloids.** -/
-theorem rowIndex_eq_of_tabloidDominates {t u : YoungTableau μ} (h : TabloidDominates t u)
+private theorem rowIndex_eq_of_tabloidDominates {t u : YoungTableau μ} (h : TabloidDominates t u)
     (hw : rowWeight t ≤ rowWeight u) : rowIndex u = rowIndex t := by
   have hinner := (Finset.sum_eq_sum_iff_of_le
     fun m (_ : m ∈ Finset.range (μ.card + 1)) => Finset.sum_le_sum fun i _ => h m i).mp
@@ -169,22 +182,6 @@ theorem rowIndex_eq_of_tabloidDominates {t u : YoungTableau μ} (h : TabloidDomi
   exact (Finset.sum_eq_sum_iff_of_le fun i _ => h m i).mp
     (hinner m (Finset.mem_range.mpr (Nat.lt_succ_of_le hm))) i
     (Finset.mem_range.mpr (Nat.lt_succ_of_le hi))
-
-/-! ### Tabloids and rows -/
-
-/-- **Two tableaux have the same tabloid exactly when they put every label in the same row.** -/
-theorem tabloid_eq_iff_rowIndex_eq {t u : YoungTableau μ} :
-    tabloid t = tabloid u ↔ rowIndex t = rowIndex u := by
-  obtain ⟨σ, rfl⟩ := exists_relabel_eq t u
-  rw [tabloid_relabel, eq_comm, smul_tabloid_eq_self_iff, mem_rowSubgroup]
-  constructor
-  · intro hσ
-    funext k
-    simpa using hσ (σ⁻¹ k)
-  · intro hσ k
-    have hk := congrFun hσ (σ k)
-    rw [rowIndex_relabel] at hk
-    simpa using hk
 
 /-! ### A column permutation lowers the tabloid of a standard tableau -/
 
@@ -267,19 +264,6 @@ theorem tabloidDominates_relabel_of_mem_colSubgroup (T : StandardYoungTableau μ
   · simp only [hA, Finset.mem_filter, Finset.mem_univ, true_and] at hx hy ⊢
     refine ⟨hy, le_of_lt (lt_of_lt_of_le ?_ hx.2)⟩
     exact (T.lt_iff_rowIndex_lt (hy.trans hx.1.symm)).mp hlt
-
-/-! ### The coefficient of a tabloid in a polytabloid -/
-
-/-- Only the tabloids reachable from `{t}` by a column permutation occur in the polytabloid
-`e_t`. -/
-theorem polytabloid_coeff_eq_zero_of_forall_ne (t : YoungTableau μ)
-    {X : Equiv.Perm (Fin μ.card) ⧸ youngSubgroup (shapePartition μ)}
-    (h : ∀ q ∈ colSubgroup t, q • tabloid t ≠ X) : (polytabloid t).coeff X = 0 := by
-  classical
-  rw [polytabloid_eq_sum, MonoidAlgebra.coeff_sum, Finsupp.finsetSum_apply]
-  refine Finset.sum_eq_zero fun q _ => ?_
-  have hne := h (q : Equiv.Perm (Fin μ.card)) q.2
-  simp [MonoidAlgebra.coeff_single, hne]
 
 end YoungTableau
 
