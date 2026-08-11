@@ -130,8 +130,9 @@ private theorem forall_eq_of_apply_offDiag {C : Matrix (Fin 2) (Fin 2) ℤ} (h :
 omit [Fintype B] in
 /-- **The Cartan product is the invariant of a two-node diagram.** A relabelling matching `A` with
 `C` carries the product of the two off-diagonal entries of `A` to that of `C`, whichever way round
-it sends the two indices, because the product is symmetric. -/
-private theorem mul_eq_of_forall_eq {C : Matrix (Fin 2) (Fin 2) ℤ} (e : B ≃ Fin 2)
+it sends the two indices, because the product is symmetric. Finite-typeness is not used: the
+statement is about a relabelling of an arbitrary matrix on two indices. -/
+theorem mul_eq_of_forall_eq {C : Matrix (Fin 2) (Fin 2) ℤ} (e : B ≃ Fin 2)
     (he : ∀ i j, A i j = C (e i) (e j)) {x y : B} (hxy : x ≠ y) :
     A x y * A y x = C 0 1 * C 1 0 := by
   have hne : e x ≠ e y := fun hc ↦ hxy (e.injective hc)

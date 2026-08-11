@@ -6,8 +6,8 @@ module
 
 public import TauCeti.GroupTheory.SpecificGroups.Dihedral
 public import TauCeti.LinearAlgebra.RootSystem.BraidRelation
-public import TauCeti.LinearAlgebra.RootSystem.Inversions.Deletion
-public import TauCeti.LinearAlgebra.RootSystem.RankTwo
+public import TauCeti.LinearAlgebra.RootSystem.DynkinType
+public import TauCeti.LinearAlgebra.RootSystem.Inversions.Basic
 
 public section
 
@@ -22,19 +22,16 @@ the input of `TauCeti.nonempty_dihedralGroup_mulEquiv`, so the Weyl group *is* t
 of order twice that entry — and, unlike the presentation of the Weyl group in general, this needs
 no completeness statement for the braid relations, since in rank two there is only one of them.
 
-Reading the entry off the Cartan type turns this into the three rank-two cases. The Weyl groups of
-the types `A₂`, `B₂` and `G₂` are the dihedral groups of orders `6`, `8` and `12`, the last of
-these being the Weyl-group clause of the `G₂` worked example of the root-systems roadmap.
+Reading the entry off the Cartan type — `TauCeti.coxeterMatrixOfBase_of_hasCartanType_G2` and its
+two companions — turns this into the three rank-two cases. The Weyl groups of the types `A₂`, `B₂`
+and `G₂` are the dihedral groups of orders `6`, `8` and `12`, the last of these being the
+Weyl-group clause of the `G₂` worked example of the root-systems roadmap.
 
 ## Main results
 
 * `TauCeti.nonempty_dihedralGroup_mulEquiv_weylGroup`: **the Weyl group of a base with two simple
   roots is the dihedral group of order twice the Coxeter entry of its two simple roots**, and
   `TauCeti.card_weylGroup_of_card_support_eq_two` is its order.
-* `TauCeti.coxeterMatrixOfBase_of_hasCartanType_A_two`,
-  `TauCeti.coxeterMatrixOfBase_of_hasCartanType_B_two` and
-  `TauCeti.coxeterMatrixOfBase_of_hasCartanType_G2`: that entry is `3`, `4` and `6` for the three
-  rank-two Cartan types.
 * `TauCeti.nonempty_dihedralGroup_mulEquiv_weylGroup_of_hasCartanType_G2`: **a root system of type
   `G₂` has Weyl group the dihedral group of order `12`**, with
   `TauCeti.card_weylGroup_of_hasCartanType_G2` its order; the same for types `A₂` and `B₂`.
@@ -48,8 +45,6 @@ computation is the one in N. Bourbaki, *Lie Groups and Lie Algebras, Chapters 4-
 and J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, GTM 9, §9.
 -/
 
-open scoped Matrix
-
 namespace TauCeti
 
 universe u v w x
@@ -60,18 +55,6 @@ variable {ι : Type u} {R : Type v} {M : Type w} {N : Type x}
   [P.IsCrystallographic] [P.IsReduced] (b : P.Base)
 
 /-! ## Two simple reflections generating the Weyl group -/
-
-namespace RootPairing.weylGroup
-
-/-- **A simple reflection is not the identity**: its own simple root is an inversion of it, and the
-identity has no inversion. -/
-theorem ofIdx_ne_one {i : ι} (hi : i ∈ b.support) :
-    _root_.RootPairing.weylGroup.ofIdx P i ≠ 1 := by
-  intro h
-  refine Set.singleton_ne_empty i ?_
-  rw [← inversions_ofIdx P b hi, h, inversions_one]
-
-end RootPairing.weylGroup
 
 omit [Finite ι] [CharZero R] [IsDomain R] [P.IsCrystallographic] [P.IsReduced] in
 /-- With two simple roots there are no others: every simple root is one of a chosen distinct pair.
@@ -116,9 +99,8 @@ they *present* the Weyl group is the Coxeter-presentation theorem, which is not 
 rank two the single braid relation is the whole presentation. -/
 theorem nonempty_dihedralGroup_mulEquiv_weylGroup (hb : b.support.card = 2) {i j : b.support}
     (hij : i ≠ j) :
-    Nonempty (DihedralGroup (coxeterMatrixOfBase P b i j) ≃* P.weylGroup) := by
-  have : NeZero (coxeterMatrixOfBase P b i j) := ⟨coxeterMatrixOfBase_ne_zero P b i j⟩
-  exact nonempty_dihedralGroup_mulEquiv (RootPairing.weylGroup.ofIdx_mul_self P i)
+    Nonempty (DihedralGroup (coxeterMatrixOfBase P b i j) ≃* P.weylGroup) :=
+  nonempty_dihedralGroup_mulEquiv (RootPairing.weylGroup.ofIdx_mul_self P i)
     (RootPairing.weylGroup.ofIdx_mul_self P j) (RootPairing.weylGroup.ofIdx_ne_one P b i.2)
     (RootPairing.weylGroup.ofIdx_ne_one P b j.2)
     (RootPairing.weylGroup.orderOf_ofIdx_mul_ofIdx_eq_coxeterMatrixOfBase P b i j)
@@ -135,58 +117,6 @@ theorem card_weylGroup_of_card_support_eq_two (hb : b.support.card = 2) {i j : b
 /-! ## The three rank-two Cartan types -/
 
 section CartanType
-
-/-- The Cartan product of the two nodes of a rank-two standard Cartan matrix is symmetric in them,
-so it may be read off either ordering. Here it is `1` for type `A₂`. -/
-private lemma mul_apply_A_two {a c : Fin 2} (h : a ≠ c) :
-    (!![2, -1; -1, 2] : Matrix (Fin 2) (Fin 2) ℤ) a c *
-      (!![2, -1; -1, 2] : Matrix (Fin 2) (Fin 2) ℤ) c a = 1 := by
-  fin_cases a <;> fin_cases c <;> simp_all
-
-private lemma mul_apply_B_two {a c : Fin 2} (h : a ≠ c) :
-    (!![2, -2; -1, 2] : Matrix (Fin 2) (Fin 2) ℤ) a c *
-      (!![2, -2; -1, 2] : Matrix (Fin 2) (Fin 2) ℤ) c a = 2 := by
-  fin_cases a <;> fin_cases c <;> simp_all
-
-private lemma mul_apply_G2 {a c : Fin 2} (h : a ≠ c) :
-    (!![2, -1; -3, 2] : Matrix (Fin 2) (Fin 2) ℤ) a c *
-      (!![2, -1; -3, 2] : Matrix (Fin 2) (Fin 2) ℤ) c a = 3 := by
-  fin_cases a <;> fin_cases c <;> simp_all
-
-omit [P.IsReduced] in
-/-- A base of type `A₂` has Coxeter entry `3`: the two simple reflections have a product of
-order `3`. -/
-theorem coxeterMatrixOfBase_of_hasCartanType_A_two (h : HasCartanType P b (.A 2))
-    {i j : b.support} (hij : i ≠ j) : coxeterMatrixOfBase P b i j = 3 := by
-  obtain ⟨e, he⟩ : ∃ e : b.support ≃ Fin 2, ∀ i j,
-      b.cartanMatrix i j = (!![2, -1; -1, 2] : Matrix (Fin 2) (Fin 2) ℤ) (e i) (e j) := by
-    obtain ⟨e, he⟩ := (hasCartanType_iff b (.A 2)).mp h
-    exact ⟨e, fun i j ↦ by rw [he i j, DynkinType.cartanMatrix_A_two_eq]; rfl⟩
-  rw [coxeterMatrixOfBase_apply, he i j, he j i,
-    mul_apply_A_two fun hEq => hij (e.injective hEq), coxeterOrder_one]
-
-omit [P.IsReduced] in
-/-- A base of type `B₂` has Coxeter entry `4`. -/
-theorem coxeterMatrixOfBase_of_hasCartanType_B_two (h : HasCartanType P b (.B 2))
-    {i j : b.support} (hij : i ≠ j) : coxeterMatrixOfBase P b i j = 4 := by
-  obtain ⟨e, he⟩ : ∃ e : b.support ≃ Fin 2, ∀ i j,
-      b.cartanMatrix i j = (!![2, -2; -1, 2] : Matrix (Fin 2) (Fin 2) ℤ) (e i) (e j) := by
-    obtain ⟨e, he⟩ := (hasCartanType_iff b (.B 2)).mp h
-    exact ⟨e, fun i j ↦ by rw [he i j, DynkinType.cartanMatrix_B_two_eq]; rfl⟩
-  rw [coxeterMatrixOfBase_apply, he i j, he j i,
-    mul_apply_B_two fun hEq => hij (e.injective hEq), coxeterOrder_two]
-
-omit [P.IsReduced] in
-/-- A base of type `G₂` has Coxeter entry `6`: the two simple reflections have a product of
-order `6`, the rotation by a sixth of a turn of the `G₂` hexagon. -/
-theorem coxeterMatrixOfBase_of_hasCartanType_G2 (h : HasCartanType P b .G2)
-    {i j : b.support} (hij : i ≠ j) : coxeterMatrixOfBase P b i j = 6 := by
-  obtain ⟨e, he⟩ : ∃ e : b.support ≃ Fin 2, ∀ i j,
-      b.cartanMatrix i j = (!![2, -1; -3, 2] : Matrix (Fin 2) (Fin 2) ℤ) (e i) (e j) := by
-    obtain ⟨e, he⟩ := (hasCartanType_iff b .G2).mp h
-    exact ⟨e, fun i j ↦ by rw [he i j, DynkinType.cartanMatrix_G2_eq]; rfl⟩
-  rw [coxeterMatrixOfBase_apply, he i j, he j i,
-    mul_apply_G2 fun hEq => hij (e.injective hEq), coxeterOrder_three]
 
 omit [Finite ι] [CharZero R] [IsDomain R] [P.IsCrystallographic] [P.IsReduced] in
 /-- A base of a rank-two Cartan type comes with a distinct pair of simple roots. -/

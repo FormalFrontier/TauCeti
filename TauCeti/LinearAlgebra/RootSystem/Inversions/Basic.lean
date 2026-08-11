@@ -25,6 +25,7 @@ of Coxeter length with the number of inversions.
 * `TauCeti.inversions` is the set of positive roots sent to negative roots.
 * `TauCeti.inversions_one` computes the inversion set of the identity.
 * `TauCeti.inversions_ofIdx` computes the inversion set of a simple reflection.
+* `TauCeti.RootPairing.weylGroup.ofIdx_ne_one`: a simple reflection is not the identity.
 * `TauCeti.image_root_inversions` identifies index-level inversions with vector roots.
 * `TauCeti.ncard_inversions_eq_ncard_vector_inversions` identifies their cardinalities.
 
@@ -146,6 +147,18 @@ theorem inversions_ofIdx {i : ι} (hi : i ∈ b.support) :
 theorem ncard_inversions_ofIdx {i : ι} (hi : i ∈ b.support) :
     (inversions P b (RootPairing.weylGroup.ofIdx P i)).ncard = 1 := by
   rw [inversions_ofIdx P b hi, Set.ncard_singleton]
+
+namespace RootPairing.weylGroup
+
+/-- **A simple reflection is not the identity**: its own simple root is an inversion of it, and the
+identity has no inversion. -/
+theorem ofIdx_ne_one {i : ι} (hi : i ∈ b.support) :
+    _root_.RootPairing.weylGroup.ofIdx P i ≠ 1 := by
+  intro h
+  refine Set.singleton_ne_empty i ?_
+  rw [← inversions_ofIdx P b hi, h, inversions_one]
+
+end RootPairing.weylGroup
 
 omit [Finite ι] [IsDomain R] [P.IsCrystallographic] [P.IsReduced] in
 /-- Index-level inversions identify with the positive vector roots sent to negative vector roots. -/
