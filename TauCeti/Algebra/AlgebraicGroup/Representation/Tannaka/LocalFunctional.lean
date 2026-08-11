@@ -61,6 +61,27 @@ noncomputable abbrev finiteRegularObject
 
 end FiniteRegularObject
 
+section CounitEvaluation
+
+variable (k : Type u) [CommSemiring k]
+variable (H : Type u) [Semiring H] [Bialgebra k H]
+variable (A : Type u) [CommSemiring A] [Algebra k A]
+
+/-- Evaluation after scalar extension by applying the counit on a regular subcomodule. -/
+noncomputable def counitEvaluation (N : Subcomodule k H H) : A ⊗[k] N →ₗ[A] A :=
+  TauCeti.Module.Dual.baseChangeEvaluation (R := k) (M := N) (A := A)
+    (1 ⊗ₜ[k] ((Coalgebra.counit (R := k) (A := H)).comp
+      (SMulMemClass.subtype N)))
+
+/-- Counit evaluation on a pure scalar-extension tensor. -/
+@[simp]
+theorem counitEvaluation_tmul (N : Subcomodule k H H) (a : A) (n : N) :
+    counitEvaluation k H A N (a ⊗ₜ[k] n) =
+      a * algebraMap k A (Coalgebra.counit (R := k) (A := H) (n : H)) := by
+  simp [counitEvaluation]
+
+end CounitEvaluation
+
 section LocalFunctional
 
 variable (k H A : Type u) [Field k] [CommRing H] [HopfAlgebra k H]
@@ -118,19 +139,6 @@ theorem regularInclusion_toLinearMap
     (regularInclusion k H hNQ).hom.toLinearMap = Submodule.inclusion hNQ := by
   unfold regularInclusion
   rfl
-
-/-- Evaluation after scalar extension by applying the counit on a regular subcomodule. -/
-noncomputable def counitEvaluation (N : Subcomodule k H H) : A ⊗[k] N →ₗ[A] A :=
-  TauCeti.Module.Dual.baseChangeEvaluation (R := k) (M := N) (A := A)
-    (1 ⊗ₜ[k] ((Coalgebra.counit (R := k) (A := H)).comp
-      (SMulMemClass.subtype N)))
-
-/-- Counit evaluation on a pure scalar-extension tensor. -/
-@[simp]
-theorem counitEvaluation_tmul (N : Subcomodule k H H) (a : A) (n : N) :
-    counitEvaluation k H A N (a ⊗ₜ[k] n) =
-      a * algebraMap k A (Coalgebra.counit (R := k) (A := H) (n : H)) := by
-  simp [counitEvaluation]
 
 /-- The linear functional on a finite subcomodule of the regular comodule extracted from a
 tensor automorphism. It applies the automorphism to `1 ⊗ n` and then evaluates the regular

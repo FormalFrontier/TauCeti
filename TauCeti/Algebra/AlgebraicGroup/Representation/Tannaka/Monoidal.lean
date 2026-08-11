@@ -83,8 +83,7 @@ theorem scalarExtensionComponent_apply
           (eqToHom (FGComoduleCat.scalarExtensionFunctor_obj R H A M).symm x)) := by
   rfl
 
-/-- The categorical morphism underlying a transported tensor-automorphism component. -/
-theorem ofHom_scalarExtensionComponent
+private theorem ofHom_scalarExtensionComponent
     (η : Aut (FGComoduleCat.scalarExtensionMonoidalFunctor R H A))
     (M : FGComoduleCat.{u, v, u} R H)
     (h : (FGComoduleCat.scalarExtensionFunctor R H A).obj M =

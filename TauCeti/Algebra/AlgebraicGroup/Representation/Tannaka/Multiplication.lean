@@ -111,10 +111,10 @@ private theorem counitEvaluation_mul
             congrFun (Comodule.Hom.coe_toLinearMap (Subcomodule.mulHom N P Q h)) _
           rw [hcoe]
           rw [counitEvaluation_tmul, counitEvaluation_tmul, counitEvaluation_tmul]
-          rw [show Coalgebra.counit (R := k) (A := H)
-              ((Subcomodule.mulHom N P Q h (n ⊗ₜ[k] p) : Q) : H) =
-                Coalgebra.counit (R := k) (A := H) ((n : H) * (p : H)) by
-            rw [Subcomodule.mulHom_tmul]]
+          have hmul : ((Subcomodule.mulHom N P Q h (n ⊗ₜ[k] p) : Q) : H) =
+              (n : H) * (p : H) := by
+            exact Subcomodule.mulHom_tmul N P Q h n p
+          rw [hmul]
           rw [Bialgebra.counit_mul, map_mul]
           ring
 
