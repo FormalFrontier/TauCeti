@@ -24,16 +24,16 @@ well posed up to the ambiguity that `b + aθ` describes.
 generator — is `b + aθ` for a fixed generator `θ`, the coordinate presentation over the basis
 `1, θ` used by the quadratic field-norm computation.
 
-Two of the four ask for no field structure on `L`, and each is stated at the weakest level its
+Three of the four ask for no field structure on `L`, and each is stated at the weakest level its
 proof supports. `Algebra.IsQuadraticExtension.exists_notMem_range_algebraMap` needs only a
 *semiring*, the level Mathlib states `Algebra.IsQuadraticExtension` itself at, because it sees
 `L` only as a free `K`-module of rank two and derives nontriviality from that rank rather than
 assuming it. `linearIndependent_one_of_notMem_range_algebraMap` carries no rank hypothesis at
 all — its argument is just that `θ` is not a `K`-multiple of `1`, so it does ask for `L`
 nontrivial — but it stops at a *ring*, because the `LinearIndependent.pair_iff'` it applies is
-stated over an `AddCommGroup`. So both cover the split and non-reduced quadratic algebras
-`K × K` and `K[X]/(X²)`. Both `exists_eq_algebraMap_add_algebraMap_mul` and its all-elements form
-`exists_eq_algebraMap_add_algebraMap_mul'` ask for a field.
+stated over an `AddCommGroup`. `exists_eq_algebraMap_add_algebraMap_mul'` also stops at a *ring*,
+its spanning being `K`-linear algebra. So the three cover the split and non-reduced quadratic
+algebras `K × K` and `K[X]/(X²)`. Only `exists_eq_algebraMap_add_algebraMap_mul` asks for a field.
 
 These are consumed by the extension quadratic twist in
 `TauCeti/AlgebraicGeometry/EllipticCurve/QuadraticTwist.lean`, which advances
@@ -76,6 +76,23 @@ theorem Algebra.IsQuadraticExtension.exists_notMem_range_algebraMap [Semiring L]
     Module.finrank_of_bijective_algebraMap ⟨FaithfulSMul.algebraMap_injective K L, h⟩
   omega
 
+/-- **Every element of a quadratic extension is `b + aθ`** for a fixed generator `θ`: the basis
+`1, θ` spans `L` over `K`. Unlike `exists_eq_algebraMap_add_algebraMap_mul`, the element need not
+itself be a generator, so the `θ`-coefficient may vanish when the element is in the base field. The
+spanning is `K`-linear algebra, so this stops at a *ring*. -/
+theorem Algebra.IsQuadraticExtension.exists_eq_algebraMap_add_algebraMap_mul' [Ring L] [Algebra K L]
+    [Algebra.IsQuadraticExtension K L] {θ : L} (hθ : θ ∉ Set.range (algebraMap K L)) (x : L) :
+    ∃ a b : K, x = algebraMap K L b + algebraMap K L a * θ := by
+  have h2 := Algebra.IsQuadraticExtension.finrank_eq_two K L
+  have : Nontrivial L := Module.nontrivial_of_finrank_pos (R := K) (by rw [h2]; norm_num)
+  have hli := linearIndependent_one_of_notMem_range_algebraMap K L hθ
+  have hmem : x ∈ Submodule.span K (Set.range ![(1 : L), θ]) := by
+    rw [hli.span_eq_top_of_card_eq_finrank (by rw [Fintype.card_fin]; exact h2.symm)]
+    trivial
+  rw [Matrix.range_cons_cons_empty, Submodule.mem_span_pair] at hmem
+  obtain ⟨c, d, hcd⟩ := hmem
+  exact ⟨d, c, by rw [← hcd, Algebra.smul_def, Algebra.smul_def, mul_one]⟩
+
 variable [Field L] [Algebra K L] [Algebra.IsQuadraticExtension K L]
 
 namespace Algebra.IsQuadraticExtension
@@ -96,18 +113,6 @@ theorem exists_eq_algebraMap_add_algebraMap_mul {θ θ' : L}
   refine ⟨d, c, fun hd ↦ hθ' ⟨c, ?_⟩, ?_⟩
   · rw [← hcd, hd, zero_smul, add_zero, Algebra.algebraMap_eq_smul_one]
   · rw [← hcd, Algebra.smul_def, Algebra.smul_def, mul_one]
-
-/-- **Every element of a quadratic extension is `b + aθ`** for a fixed generator `θ`: the basis
-`1, θ` spans `L` over `K`. Unlike `exists_eq_algebraMap_add_algebraMap_mul`, the element need not
-itself be a generator, so the `θ`-coefficient may vanish when the element is in the base field. -/
-theorem exists_eq_algebraMap_add_algebraMap_mul' {θ : L}
-    (hθ : θ ∉ Set.range (algebraMap K L)) (x : L) :
-    ∃ a b : K, x = algebraMap K L b + algebraMap K L a * θ := by
-  by_cases hx : x ∈ Set.range (algebraMap K L)
-  · obtain ⟨b, hb⟩ := hx
-    exact ⟨0, b, by rw [← hb]; simp⟩
-  · obtain ⟨a, b, _, hab⟩ := exists_eq_algebraMap_add_algebraMap_mul K L hθ hx
-    exact ⟨a, b, hab⟩
 
 end Algebra.IsQuadraticExtension
 
