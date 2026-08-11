@@ -33,15 +33,10 @@ namespace TauCeti.NumberField
 
 variable {K : Type*} [Field K] [NumberField K] {θ : 𝓞 K} {d : ℤ}
 
-/-- The generator `θ` of the quadratic field is nonzero (its minimal polynomial has degree `2`,
-not `1`). -/
-private theorem coe_gen_ne_zero (hmin : minpoly ℤ θ = X ^ 2 - C d) : (θ : K) ≠ 0 := by
-  intro h0
-  have hh : minpoly ℚ (θ : K) = X ^ 2 - C ((d : ℤ) : ℚ) := minpoly_rat_quadratic hmin
-  rw [h0, minpoly.zero] at hh
-  have := congrArg natDegree hh
-  rw [natDegree_X, natDegree_X_pow_sub_C] at this
-  exact absurd this (by norm_num)
+/-- The generator `θ` of the quadratic field is nonzero: it is irrational (`gen_notMem_range`),
+whereas `0` is rational. -/
+private theorem coe_gen_ne_zero (hmin : minpoly ℤ θ = X ^ 2 - C d) : (θ : K) ≠ 0 := fun h0 =>
+  gen_notMem_range hmin ⟨0, by rw [map_zero, h0]⟩
 
 /-- Quadratic conjugation is a nontrivial automorphism: it does not equal the identity, since it
 sends the nonzero generator `θ` to its negative `-θ`. -/
