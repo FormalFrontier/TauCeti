@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Algebra.AlgebraicGroup.Representation.Tannaka.LocalFunctional
+public import TauCeti.Algebra.AlgebraicGroup.Representation.Tannaka.Unit
 public import TauCeti.Algebra.Coalgebra.Subcomodule.DirectedUnion
 
 /-!
@@ -19,9 +19,10 @@ cover `H`, the local functionals glue uniquely to a linear map
 g_η : H → A.
 ```
 
-This file performs that gluing and proves that a tensor automorphism arising from an
-`A`-valued point recovers the underlying linear map of that point. Tensor compatibility will
-next show that `g_η` preserves multiplication and one, upgrading it to an algebra-valued point.
+This file performs that gluing, proves that `g_η` preserves one, and proves that a tensor
+automorphism arising from an `A`-valued point recovers the underlying linear map of that point.
+Tensor compatibility will next show that `g_η` preserves multiplication, upgrading it to an
+algebra-valued point.
 
 ## Main declarations
 
@@ -30,6 +31,7 @@ next show that `g_η` preserves multiplication and one, upgrading it to an algeb
   subcomodule is the prescribed local functional.
 * `TauCeti.Tannaka.globalFunctional_unique`: the restriction property uniquely characterizes
   the global functional.
+* `TauCeti.Tannaka.globalFunctional_one`: the global functional preserves the unit.
 * `TauCeti.Tannaka.globalFunctional_fgPointTensorIso`: a point-induced tensor automorphism
   recovers the point's underlying linear map.
 
@@ -91,6 +93,24 @@ theorem globalFunctional_unique
   Subcomodule.finiteSubcomoduleLift_unique
     (fun N ↦ localFunctional k H A η N)
     (localFunctional_eq_comp_inclusion k H A η) g hg
+
+/-- The global functional extracted from a tensor automorphism sends the unit of the coordinate
+Hopf algebra to the unit of the value algebra. -/
+@[simp high]
+theorem globalFunctional_one
+    (η : Aut (FGComoduleCat.scalarExtensionMonoidalFunctor k H A)) :
+    globalFunctional k H A η 1 = 1 := by
+  obtain ⟨N, hNfinite, hOne⟩ :=
+    Subcomodule.exists_finite_subcomodule_mem (R := k) (C := H) (M := H) (1 : H)
+  let N' : Subcomodule.finiteSubcomodules (R := k) (C := H) (M := H) :=
+    ⟨N, Subcomodule.mem_finiteSubcomodules.mpr hNfinite⟩
+  calc
+    globalFunctional k H A η 1 =
+        globalFunctional k H A η (⟨1, hOne⟩ : N'.1) :=
+      congrArg (globalFunctional k H A η) (Subtype.coe_mk 1 hOne).symm
+    _ = localFunctional k H A η N' ⟨1, hOne⟩ :=
+      globalFunctional_apply k H A η N' ⟨1, hOne⟩
+    _ = 1 := localFunctional_one k H A η N' hOne
 
 /-- The global functional associated to the tensor automorphism induced by an algebra-valued
 point is the underlying linear map of that point. -/
