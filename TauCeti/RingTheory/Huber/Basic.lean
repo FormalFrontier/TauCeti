@@ -258,12 +258,8 @@ theorem isBounded_ringOfDefinition [IsTopologicalRing A] (P : PairOfDefinition A
 /-- A ring of definition consists of power-bounded elements: `A₀ ≤ A°`. The nonarchimedean
 hypothesis is only needed to state it, since `P` itself supplies one. -/
 theorem le_powerBoundedSubring [NonarchimedeanRing A] (P : PairOfDefinition A) :
-    P.ringOfDefinition ≤ powerBoundedSubring A := by
-  intro a ha
-  rw [mem_powerBoundedSubring, isPowerBounded_iff]
-  exact P.isBounded_ringOfDefinition.subset (by
-    rintro _ ⟨n, rfl⟩
-    exact P.ringOfDefinition.pow_mem ha n)
+    P.ringOfDefinition ≤ powerBoundedSubring A := fun _ ha ↦
+  mem_powerBoundedSubring.mpr (P.isBounded_ringOfDefinition.isPowerBounded_of_mem ha)
 
 end PairOfDefinition
 

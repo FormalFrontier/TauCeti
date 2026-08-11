@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.Algebra.BigOperators.Expect
+public import Mathlib.Order.Filter.AtTopBot.Basic
 public import Mathlib.Algebra.BigOperators.Ring.Finset
 public import Mathlib.Data.Real.Basic
 
@@ -17,9 +18,15 @@ lemmas below are the pointwise formula, the scaled-sum normal form, and the valu
 block. `average_sub_sq_eq_sum_sum` records the one further piece of average algebra used
 downstream: the square of a deviation from an average, expanded as a double sum.
 
-It also carries the two standard selections — `prefixAverage X n` over the first `n` coordinates
-and `followingAverage X n` over the `n` coordinates after them — with their pointwise formulas.
-These are likewise measure-free.
+It also carries the standard selections, all measure-free. `prefixAverage X n` averages the first
+`n` coordinates and `followingAverage X n` the `n` after them, with their pointwise formulas.
+
+`fixedStart r` is the same fixed-start window in *moving-selection* form — a family
+`∀ n, Fin (n + 1) → ℕ` rather than a single block — which is the shape the `L²` convergence
+theorems quantify over. It belongs here because it is a generic block selection with no disjointness
+content; the disjoint windows those theorems also accept are `disjointWindow` in
+`Process/DisjointWindow.lean`. `fixedStart_injective` gives injectivity at each length and
+`fixedStart_eventually_injective` the eventual form the limit theorems take.
 
 Measure-theoretic facts about all three — square-integrability, conditional expectations, variances
 and covariances under contractability — live with the `L²` averaging library in
@@ -33,7 +40,7 @@ public section
 
 noncomputable section
 
-open Finset
+open Filter Finset
 open scoped BigOperators
 
 namespace TauCeti
@@ -112,6 +119,21 @@ theorem prod_blockAverage_eq_expect {m N : ℕ} (Y : Fin m → ℕ → Ω → �
   simp only [Fintype.card_pi, Fintype.card_fin, Finset.prod_const, card_univ, div_eq_inv_mul]
   push_cast
   simp [inv_pow]
+
+/-- The **fixed-start selection**: the window of length `n + 1` beginning at `r`. -/
+def fixedStart (r : ℕ) : ∀ n : ℕ, Fin (n + 1) → ℕ := fun _ j => r + (j : ℕ)
+
+@[simp]
+theorem fixedStart_apply (r n : ℕ) (j : Fin (n + 1)) : fixedStart r n j = r + (j : ℕ) := (rfl)
+
+/-- The fixed-start selection is injective at each length. -/
+theorem fixedStart_injective (r n : ℕ) : Function.Injective (fixedStart r n) :=
+  (add_right_injective r).comp Fin.val_injective
+
+/-- The eventual form, as the moving-selection theorems take it. -/
+theorem fixedStart_eventually_injective (r : ℕ) :
+    ∀ᶠ n in atTop, Function.Injective (fixedStart r n) :=
+  Eventually.of_forall (fixedStart_injective r)
 
 /-- **The squared deviation of an average, as a double sum.** For a nonempty finite index set `s`,
 the square of `(#s)⁻¹ * ∑ i ∈ s, a i - b` is `(#s)⁻¹ ^ 2` times the double sum of

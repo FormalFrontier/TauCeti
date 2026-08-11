@@ -149,6 +149,13 @@ theorem totalSpace_map {p q : CoveringSpace X} (f : p ⟶ q) :
 theorem w {p q : CoveringSpace X} (f : p ⟶ q) : f.hom.left ≫ q.proj = p.proj :=
   CategoryTheory.Over.w _
 
+/-- The commuting triangle of a morphism of covering spaces, as an equality of the underlying
+functions. -/
+theorem proj_hom_comp_hom_left_hom {p q : CoveringSpace X} (f : p ⟶ q) :
+    q.proj.hom ∘ f.hom.left.hom = p.proj.hom := by
+  funext e
+  exact DFunLike.congr_fun (congrArg TopCat.Hom.hom (w f)) e
+
 /-- Construct a morphism of covering spaces from a continuous map over the base. -/
 def homMk {p q : CoveringSpace X} (f : (p : TopCat) ⟶ (q : TopCat))
     (w : f ≫ q.proj = p.proj := by cat_disch) : p ⟶ q :=

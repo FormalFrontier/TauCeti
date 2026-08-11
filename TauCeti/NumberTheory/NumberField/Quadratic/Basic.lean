@@ -23,6 +23,7 @@ the ring-of-integers/discriminant computation (`Quadratic/RingOfIntegers.lean`).
 * `TauCeti.NumberField.minpoly_rat_quadratic`: the minimal polynomial of `θ` over `ℚ` is `X² - d`.
 * `TauCeti.NumberField.finrank_rat_eq_two`: `K` has degree `2` over `ℚ`.
 * `TauCeti.NumberField.coe_gen_sq`: the generator squares to the radicand, `θ² = d` in `K`.
+* `TauCeti.NumberField.coe_gen_sq_ratCast`: the same over `ℚ`, `θ² = (d : ℚ)` in `K`.
 * `TauCeti.NumberField.gen_notMem_range`: the generator is not rational, `θ ∉ ℚ`.
 * `TauCeti.NumberField.not_isSquare_radicand`: the radicand is not a rational square.
 * `TauCeti.NumberField.trace_gen_eq_zero`: the trace of the generator is `0`.
@@ -72,6 +73,13 @@ omit [NumberField K] in
   have := congrArg (algebraMap (𝓞 K) K) h
   rwa [map_pow, ← IsScalarTower.algebraMap_apply ℤ (𝓞 K) K] at this
 
+omit [NumberField K] in
+/-- The generator squares to the radicand viewed over `ℚ`: `θ² = (d : ℚ)` in `K`. This is
+`coe_gen_sq` transported along `ℤ → ℚ → K`, the form fed to the generic square-root-basis API. -/
+theorem coe_gen_sq_ratCast [CharZero K] (hmin : minpoly ℤ θ = X ^ 2 - C d) :
+    (θ : K) ^ 2 = algebraMap ℚ K ((d : ℤ) : ℚ) := by
+  rw [coe_gen_sq hmin, IsScalarTower.algebraMap_apply ℤ ℚ K]; norm_num
+
 /-- The generator is irrational: `θ ∉ ℚ`. -/
 theorem gen_notMem_range (hmin : minpoly ℤ θ = X ^ 2 - C d) :
     (θ : K) ∉ (algebraMap ℚ K).range := by
@@ -89,8 +97,7 @@ factorization `(θ - q)(θ + q) = θ² - d = 0` would force `θ = ±q ∈ ℚ`. 
 theorem not_isSquare_radicand (hmin : minpoly ℤ θ = X ^ 2 - C d) :
     ¬ IsSquare (((d : ℤ) : ℚ)) := by
   rintro ⟨q, hq⟩
-  have hθ : (θ : K) ^ 2 = algebraMap ℚ K ((d : ℤ) : ℚ) := by
-    rw [coe_gen_sq hmin, IsScalarTower.algebraMap_apply ℤ ℚ K]; norm_num
+  have hθ : (θ : K) ^ 2 = algebraMap ℚ K ((d : ℤ) : ℚ) := coe_gen_sq_ratCast hmin
   have hq' : algebraMap ℚ K ((d : ℤ) : ℚ) = algebraMap ℚ K q * algebraMap ℚ K q := by
     rw [← map_mul, ← hq]
   have hfac : ((θ : K) - algebraMap ℚ K q) * ((θ : K) + algebraMap ℚ K q) = 0 := by
@@ -103,8 +110,7 @@ theorem not_isSquare_radicand (hmin : minpoly ℤ θ = X ^ 2 - C d) :
 theorem trace_gen_eq_zero (hmin : minpoly ℤ θ = X ^ 2 - C d) :
     Algebra.trace ℚ K (θ : K) = 0 := by
   -- Specialise the generic `trace_eq_zero_of_sq_ratCast` to `θ² = d` and the irrationality of `θ`.
-  have hd' : (θ : K) ^ 2 = algebraMap ℚ K ((d : ℤ) : ℚ) := by
-    rw [coe_gen_sq hmin, IsScalarTower.algebraMap_apply ℤ ℚ K]; norm_num
+  have hd' : (θ : K) ^ 2 = algebraMap ℚ K ((d : ℤ) : ℚ) := coe_gen_sq_ratCast hmin
   exact trace_eq_zero_of_sq_ratCast hd' (gen_notMem_range hmin)
 
 /-- The discriminant of the `ℚ`-family `{1, θ}` is `4d`. -/
@@ -112,8 +118,7 @@ theorem discr_one_gen (hmin : minpoly ℤ θ = X ^ 2 - C d)
     (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) :
     Algebra.discr ℚ ![(1 : K), (θ : K)] = ((4 * d : ℤ) : ℚ) := by
   -- Specialise the generic square-root-basis discriminant `discr_one_elem_eq_of_sq_algebraMap`.
-  have hd' : (θ : K) ^ 2 = algebraMap ℚ K ((d : ℤ) : ℚ) := by
-    rw [coe_gen_sq hmin, IsScalarTower.algebraMap_apply ℤ ℚ K]; norm_num
+  have hd' : (θ : K) ^ 2 = algebraMap ℚ K ((d : ℤ) : ℚ) := coe_gen_sq_ratCast hmin
   rw [TauCeti.Algebra.discr_one_elem_eq_of_sq_algebraMap (finrank_rat_eq_two hmin hgen) hd'
     (gen_notMem_range hmin)]
   push_cast; ring

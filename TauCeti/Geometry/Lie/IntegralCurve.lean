@@ -6,7 +6,7 @@ module
 
 public import Mathlib.Geometry.Manifold.IntegralCurve.UniformTime
 public import TauCeti.Geometry.Manifold.IntegralCurve
-public import TauCeti.Geometry.Lie.InvariantVectorField
+public import TauCeti.Geometry.Lie.InvariantVectorField.Basic
 
 /-!
 # Integral curves of invariant vector fields

@@ -7,6 +7,7 @@ module
 public import Mathlib.LinearAlgebra.Dual.Lemmas
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Tangent
 public import TauCeti.Algebra.AlgebraicGroup.Tangent.Cotangent
+import TauCeti.Algebra.AlgebraicGroup.Tangent.Dimension
 
 /-!
 # The conormal sequence of a closed affine subgroup
@@ -240,16 +241,13 @@ theorem finrank_quotientLie_add_finrank_conormal (I : HopfIdeal k H)
           (Derivation k (H ⧸ I.toIdeal)
             (Bialgebra.CounitAlgebra k (H ⧸ I.toIdeal) k)) =
         Module.finrank k (Bialgebra.CotangentSpace k (H ⧸ I.toIdeal)) :=
-    (Derivation.cotangentLinearEquiv
-      (R := k) (A := H ⧸ I.toIdeal) (B := k)).finrank_eq.symm.trans
-        Subspace.dual_finrank_eq
+    Derivation.finrank_eq_finrank_cotangentSpace
+      (k := k) (H := H ⧸ I.toIdeal)
   have hambient :
       Module.finrank k
           (Derivation k H (Bialgebra.CounitAlgebra k H k)) =
         Module.finrank k (Bialgebra.CotangentSpace k H) :=
-    (Derivation.cotangentLinearEquiv
-      (R := k) (A := H) (B := k)).finrank_eq.symm.trans
-        Subspace.dual_finrank_eq
+    Derivation.finrank_eq_finrank_cotangentSpace (k := k) (H := H)
   rw [hquotient, hambient]
   exact finrank_quotientCotangent_add_finrank_conormal I
 
