@@ -112,11 +112,7 @@ private theorem map_block_future_eq_pathLaw_map {μ : Measure Ω} [IsFiniteMeasu
 
 /-- **Future-conditioned selection invariance for finite blocks.** Two strictly monotone selections
 of the same length, both lying below a cutoff `c`, have the same conditional law given the future
-`tailFamily X c`.
-
-Both blocks are appended to the *same* future, and a strictly monotone block below `c` followed by
-the future from `c` is a strictly increasing reindexing of `ℕ`; contractability therefore makes the
-two joint laws equal, which transfers to conditional expectations. -/
+`tailFamily X c`. -/
 theorem Contractable.condExp_block_comp_future_ae_eq {μ : Measure Ω} [IsFiniteMeasure μ]
     {X : ℕ → Ω → α} (hX : Contractable μ X) (hX_meas : ∀ n, Measurable (X n))
     {r c : ℕ} {k l : Fin r → ℕ} (hk : StrictMono k) (hl : StrictMono l)
