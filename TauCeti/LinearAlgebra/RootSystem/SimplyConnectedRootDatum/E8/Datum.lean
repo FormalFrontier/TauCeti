@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.Basic
-public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.E8.Basic
+public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.E8
 
 public section
 
@@ -14,7 +14,7 @@ public section
 
 This file builds the pinned integral root datum of type `E₈` on the character and cocharacter
 lattices `Fin 8 → ℤ`, out of the enumeration of the two hundred and forty roots in
-`TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.E8.Basic`. The character lattice is
+`TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.E8`. The character lattice is
 written in the fundamental-weight basis and the cocharacter lattice in the simple-coroot basis, so
 that the `i`-th simple root is the `i`-th row of the Bourbaki-numbered Cartan matrix
 `CartanMatrix.E₈` and the `i`-th simple coroot is the `i`-th standard basis vector.
