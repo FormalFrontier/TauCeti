@@ -127,7 +127,13 @@ function on `s` in the textbook sense, which also demands regularity at the regu
 def HasNondegenerateCriticalPointsOn (f : E → ℝ) (s : Set E) : Prop :=
   ∀ ⦃x⦄, x ∈ s → fderiv ℝ f x = 0 → IsNondegenerateCriticalPoint f x
 
-/-- The introduction and elimination rule for `HasNondegenerateCriticalPointsOn`. -/
+/-- The introduction and elimination rule for `HasNondegenerateCriticalPointsOn`. It is
+deliberately not a `simp` lemma: taking the unfolded form as the normal one would move the
+predicate out of the shape `HasNondegenerateCriticalPointsOn.mono`,
+`HasNondegenerateCriticalPointsOn.isDiscrete_setOf_fderiv_eq_zero` and
+`HasNondegenerateCriticalPointsOn.finite_setOf_fderiv_eq_zero` are stated in, so a `simp` at a
+hypothesis would strip its API off it. Mathlib leaves the analogous `mapsTo_iff_subset_preimage`
+unannotated for the same reason. -/
 theorem hasNondegenerateCriticalPointsOn_iff {s : Set E} :
     HasNondegenerateCriticalPointsOn f s ↔
       ∀ ⦃x⦄, x ∈ s → fderiv ℝ f x = 0 → IsNondegenerateCriticalPoint f x :=
