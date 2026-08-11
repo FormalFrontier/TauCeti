@@ -122,7 +122,6 @@ noncomputable def finiteRegularComponent
 
 /-- Evaluation formula for the transported component of a tensor automorphism on a finite
 regular subcomodule. -/
-@[simp]
 theorem finiteRegularComponent_apply
     (η : Aut (FGComoduleCat.scalarExtensionMonoidalFunctor k H A))
     (N : Subcomodule.finiteSubcomodules (R := k) (C := H) (M := H))

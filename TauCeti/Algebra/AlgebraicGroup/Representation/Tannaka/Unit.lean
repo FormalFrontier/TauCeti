@@ -51,27 +51,9 @@ private noncomputable def regularUnitHom
     𝟙_ (FGComoduleCat.{u, u, u} k H) ⟶ finiteRegularObject k H N := by
   letI : Module.Finite k N.1 := Subcomodule.mem_finiteSubcomodules.mp N.2
   letI : Comodule k H k := Comodule.trivial (R := k) (C := H) (M := k)
-  let f : k →ₗ[k] N.1 :=
-    { toFun := fun r ↦ ⟨r • (1 : H), N.1.toSubmodule.smul_mem r hOne⟩
-      map_add' := fun r s ↦ by ext; simp [add_smul]
-      map_smul' := fun r s ↦ by ext; simp [mul_smul] }
-  refine FGComoduleCat.ofHom (R := k) (C := H)
-    { toLinearMap := f
-      map_coact := ?_ }
-  apply LinearMap.ext
-  intro r
-  apply Module.Flat.rTensor_preserves_injective_linearMap
-    (SMulMemClass.subtype N.1) Subtype.val_injective
-  simp only [LinearMap.comp_apply]
-  rw [Subcomodule.subtype_rTensor_coact]
-  simp only [Comodule.trivial_coact_apply, TensorProduct.map_tmul,
-    LinearMap.id_apply, LinearMap.rTensor_tmul, SMulMemClass.subtype_apply]
-  -- After including the induced coaction into `H ⊗ H`, both sides are the standard
-  -- group-like identity for `1`; display the ambient comultiplication explicitly.
-  change (r • (1 : H)) ⊗ₜ[k] (1 : H) =
-    Coalgebra.comul (R := k) (A := H) (r • (1 : H))
-  rw [map_smul, Bialgebra.comul_one, Algebra.TensorProduct.one_def]
-  rfl
+  exact FGComoduleCat.ofHom (R := k) (C := H)
+    ((Comodule.Hom.trivialToRegular (R := k) (C := H)).codRestrict N.1 fun r ↦ by
+      simpa [Algebra.smul_def] using N.1.toSubmodule.smul_mem r hOne)
 
 @[simp]
 private theorem regularUnitHom_apply
@@ -80,8 +62,13 @@ private theorem regularUnitHom_apply
     regularUnitHom k H N hOne r =
       ⟨r • (1 : H), N.1.toSubmodule.smul_mem r hOne⟩ :=
   by
+    let _ : Comodule k H k := Comodule.trivial (R := k) (C := H) (M := k)
+    change (regularUnitHom k H N hOne).hom.toLinearMap r = _
     unfold regularUnitHom
-    rfl
+    change ((Comodule.Hom.trivialToRegular (R := k) (C := H)).codRestrict N.1 _ r) = _
+    apply Subtype.ext
+    rw [Comodule.Hom.codRestrict_apply, Comodule.Hom.trivialToRegular_apply]
+    simp [Algebra.smul_def]
 
 private theorem map_regularUnitHom_ε_one
     (N : Subcomodule.finiteSubcomodules (R := k) (C := H) (M := H))
@@ -132,6 +119,7 @@ private theorem map_regularUnitHom_ε_one
 
 /-- The transported component of a tensor automorphism fixes `1 ⊗ 1` in every finite
 regular subcomodule containing the unit. -/
+@[simp]
 theorem finiteRegularComponent_one_tmul
     (η : Aut (FGComoduleCat.scalarExtensionMonoidalFunctor k H A))
     (N : Subcomodule.finiteSubcomodules (R := k) (C := H) (M := H))
