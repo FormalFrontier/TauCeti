@@ -239,6 +239,12 @@ length `λᵢ - λₙ`.  Together with `TauCeti.DominantWeight.detShift` it pres
 determinant twist of a polynomial weight. -/
 def detShiftShape (l : DominantWeight n) : YoungDiagram := (l.shift (-l.detShift)).shape
 
+/-- The determinant-normalized shape of a dominant weight for `GL n` has at most `n` rows. -/
+@[simp]
+theorem colLen_detShiftShape_le (l : DominantWeight n) : l.detShiftShape.colLen 0 ≤ n := by
+  rw [detShiftShape]
+  exact colLen_zero_shape_le _
+
 @[simp]
 theorem rowLen_detShiftShape (l : DominantWeight n) (i : Fin n) :
     l.detShiftShape.rowLen i = (l.1 i - l.detShift).toNat := by
