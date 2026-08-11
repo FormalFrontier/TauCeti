@@ -22,6 +22,8 @@ local maps agree on overlaps.
 ## Main declarations
 
 * `TauCeti.Submodule.iSupLift`: glue compatible linear maps on a directed family of submodules.
+* `TauCeti.Submodule.iSupLift_inclusion` and `TauCeti.Submodule.iSupLift_of_mem`: pointwise
+  evaluation rules for the glued map.
 * `TauCeti.Submodule.iSupLift_mk`: the glued map agrees with each prescribed map.
 * `TauCeti.Submodule.iSupLift_comp_inclusion`: restricting the glued map recovers each prescribed
   map.
@@ -39,9 +41,8 @@ namespace Submodule
 variable {R : Type u} {M : Type v} {P : Type w} {ι : Type x}
 variable [Semiring R] [AddCommMonoid M] [Module R M] [AddCommMonoid P] [Module R P]
 
-/-- Define a linear map on a submodule of a directed supremum by defining it compatibly on each
-member of the directed family. -/
-noncomputable def iSupLift [Nonempty ι] (K : ι → Submodule R M) (dir : Directed (· ≤ ·) K)
+private noncomputable def iSupLiftNonempty [Nonempty ι] (K : ι → Submodule R M)
+    (dir : Directed (· ≤ ·) K)
     (f : ∀ i, K i →ₗ[R] P)
     (hf : ∀ (i j : ι) (h : K i ≤ K j), f i = (f j).comp (Submodule.inclusion h))
     (T : Submodule R M) (hT : T ≤ iSup K) : T →ₗ[R] P := by
@@ -68,23 +69,56 @@ noncomputable def iSupLift [Nonempty ι] (K : ι → Submodule R M) (dir : Direc
         all_goals simp }
   exact liftSup.comp (Submodule.inclusion hT)
 
+/-- Define a linear map on a submodule of a directed supremum by defining it compatibly on each
+member of the directed family. -/
+noncomputable def iSupLift (K : ι → Submodule R M) (dir : Directed (· ≤ ·) K)
+    (f : ∀ i, K i →ₗ[R] P)
+    (hf : ∀ (i j : ι) (h : K i ≤ K j), f i = (f j).comp (Submodule.inclusion h))
+    (T : Submodule R M) (hT : T ≤ iSup K) : T →ₗ[R] P := by
+  classical
+  exact if hι : Nonempty ι then
+      let _ := hι
+      iSupLiftNonempty K dir f hf T hT
+    else 0
+
 /-- The map glued on a directed supremum agrees with a prescribed map on each member of the
 family. -/
 @[simp]
-theorem iSupLift_mk [Nonempty ι] {K : ι → Submodule R M} {dir : Directed (· ≤ ·) K}
+theorem iSupLift_mk {K : ι → Submodule R M} {dir : Directed (· ≤ ·) K}
     {f : ∀ i, K i →ₗ[R] P}
     {hf : ∀ (i j : ι) (h : K i ≤ K j), f i = (f j).comp (Submodule.inclusion h)}
     {T : Submodule R M} {hT : T ≤ iSup K} {i : ι} (m : K i) (hm : (m : M) ∈ T) :
     iSupLift K dir f hf T hT ⟨m, hm⟩ = f i m := by
-  unfold iSupLift
+  let _ : Nonempty ι := ⟨i⟩
+  rw [iSupLift, dif_pos (show Nonempty ι from ⟨i⟩)]
+  unfold iSupLiftNonempty
   dsimp
   rw [Submodule.inclusion_apply]
   rw [Set.iUnionLift_mk]
 
+/-- The map glued on a directed supremum agrees with a prescribed map after inclusion into its
+domain. -/
+@[simp]
+theorem iSupLift_inclusion {K : ι → Submodule R M} {dir : Directed (· ≤ ·) K}
+    {f : ∀ i, K i →ₗ[R] P}
+    {hf : ∀ (i j : ι) (h : K i ≤ K j), f i = (f j).comp (Submodule.inclusion h)}
+    {T : Submodule R M} {hT : T ≤ iSup K} {i : ι} (m : K i) (h : K i ≤ T) :
+    iSupLift K dir f hf T hT (Submodule.inclusion h m) = f i m := by
+  apply iSupLift_mk
+
+/-- Evaluate the map glued on a directed supremum at an element known to lie in one member of the
+family. -/
+theorem iSupLift_of_mem {K : ι → Submodule R M} {dir : Directed (· ≤ ·) K}
+    {f : ∀ i, K i →ₗ[R] P}
+    {hf : ∀ (i j : ι) (h : K i ≤ K j), f i = (f j).comp (Submodule.inclusion h)}
+    {T : Submodule R M} {hT : T ≤ iSup K} {i : ι} (m : T) (hm : (m : M) ∈ K i) :
+    iSupLift K dir f hf T hT m = f i ⟨m, hm⟩ := by
+  exact iSupLift_mk (dir := dir) (hf := hf) (⟨(m : M), hm⟩ : K i) m.2
+
 /-- Restricting the map glued on a directed supremum to a member of the family recovers the
 prescribed map. -/
 @[simp]
-theorem iSupLift_comp_inclusion [Nonempty ι] {K : ι → Submodule R M}
+theorem iSupLift_comp_inclusion {K : ι → Submodule R M}
     {dir : Directed (· ≤ ·) K} {f : ∀ i, K i →ₗ[R] P}
     {hf : ∀ (i j : ι) (h : K i ≤ K j), f i = (f j).comp (Submodule.inclusion h)}
     {T : Submodule R M} {hT : T ≤ iSup K} {i : ι} (h : K i ≤ T) :
@@ -94,12 +128,23 @@ theorem iSupLift_comp_inclusion [Nonempty ι] {K : ι → Submodule R M}
 
 /-- A linear map on a submodule of a directed supremum is determined by its values on the members
 of the directed family. -/
-theorem iSupLift_unique [Nonempty ι] {K : ι → Submodule R M} {dir : Directed (· ≤ ·) K}
+theorem iSupLift_unique {K : ι → Submodule R M} {dir : Directed (· ≤ ·) K}
     {f : ∀ i, K i →ₗ[R] P}
     {hf : ∀ (i j : ι) (h : K i ≤ K j), f i = (f j).comp (Submodule.inclusion h)}
     {T : Submodule R M} {hT : T ≤ iSup K} (g : T →ₗ[R] P)
     (hg : ∀ (i : ι) (m : K i) (hm : (m : M) ∈ T), g ⟨m, hm⟩ = f i m) :
     g = iSupLift K dir f hf T hT := by
+  classical
+  rcases isEmpty_or_nonempty ι with hι | hι
+  · let _ : IsEmpty ι := hι
+    rw [iSup_of_empty] at hT
+    have hT_eq : T = ⊥ := le_antisymm hT bot_le
+    subst T
+    ext m
+    have hm : m = 0 := Subsingleton.elim _ _
+    subst m
+    simp
+  let _ : Nonempty ι := hι
   ext m
   obtain ⟨i, hi⟩ := (Submodule.mem_iSup_of_directed K dir).1 (hT m.2)
   rw [hg i ⟨m, hi⟩ m.2]
