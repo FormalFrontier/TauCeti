@@ -204,32 +204,40 @@ theorem graphPlan_eq_compProd_deterministic (hT : Measurable T) (μ : Measure X)
   (Measure.compProd_deterministic hT).symm
 
 /-- Postcomposing a transport map pushes the graph plan through the second coordinate. -/
-theorem graphPlan_comp {R : Y → Z} (hT : AEMeasurable T μ) (hR : Measurable R) :
+theorem graphPlan_comp {R : Y → Z} (hT : AEMeasurable T μ) (hR : AEMeasurable R (μ.map T)) :
     graphPlan (R ∘ T) μ = (graphPlan T μ).map (Prod.map id R) := by
+  have hR' : AEMeasurable R (graphPlan T μ).snd := by rwa [snd_graphPlan]
+  have hmap : AEMeasurable (Prod.map (id : X → X) R) (μ.map fun x ↦ (x, T x)) :=
+    measurable_fst.aemeasurable.prodMk (hR'.comp_aemeasurable' measurable_snd.aemeasurable)
   simp only [graphPlan]
-  rw [AEMeasurable.map_map_of_aemeasurable (measurable_id.prodMap hR).aemeasurable
-    (aemeasurable_graphMap hT)]
+  rw [AEMeasurable.map_map_of_aemeasurable hmap (aemeasurable_graphMap hT)]
   rfl
 
 /-- Reparametrizing the source measure pushes the graph plan through the first coordinate. -/
-theorem graphPlan_map {f : Z → X} (hf : Measurable f) (hT : Measurable T) (μ : Measure Z) :
+theorem graphPlan_map {f : Z → X} {μ : Measure Z} (hf : AEMeasurable f μ)
+    (hT : AEMeasurable T (μ.map f)) :
     graphPlan T (μ.map f) = (graphPlan (T ∘ f) μ).map (Prod.map f id) := by
+  have hTf : AEMeasurable (T ∘ f) μ := hT.comp_aemeasurable hf
+  have hf' : AEMeasurable f (graphPlan (T ∘ f) μ).fst := by rwa [fst_graphPlan hTf]
+  have hmap : AEMeasurable (Prod.map f (id : Y → Y)) (μ.map fun z ↦ (z, (T ∘ f) z)) :=
+    (hf'.comp_aemeasurable' measurable_fst.aemeasurable).prodMk measurable_snd.aemeasurable
   simp only [graphPlan]
-  rw [Measure.map_map (measurable_graphMap hT) hf,
-    Measure.map_map (hf.prodMap measurable_id) (measurable_graphMap (hT.comp hf))]
+  rw [AEMeasurable.map_map_of_aemeasurable (aemeasurable_graphMap hT) hf,
+    AEMeasurable.map_map_of_aemeasurable hmap (aemeasurable_graphMap hTf)]
   rfl
 
 /-- Swapping the coordinates of a graph plan gives the cograph plan. -/
-theorem map_swap_graphPlan (hT : Measurable T) (μ : Measure X) :
+theorem map_swap_graphPlan (hT : AEMeasurable T μ) :
     (graphPlan T μ).map Prod.swap = μ.map fun x ↦ (T x, x) := by
-  rw [graphPlan, Measure.map_map measurable_swap (measurable_graphMap hT)]
+  rw [graphPlan, AEMeasurable.map_map_of_aemeasurable measurable_swap.aemeasurable
+    (aemeasurable_graphMap hT)]
   rfl
 
 /-- A measurable equivalence and its inverse have graph plans exchanged by the coordinate
 swap. -/
 theorem map_swap_graphPlan_measurableEquiv (e : X ≃ᵐ Y) (μ : Measure X) :
     (graphPlan e μ).map Prod.swap = graphPlan e.symm (μ.map e) := by
-  rw [map_swap_graphPlan e.measurable, graphPlan,
+  rw [map_swap_graphPlan e.measurable.aemeasurable, graphPlan,
     Measure.map_map (measurable_graphMap e.symm.measurable) e.measurable]
   simp [Function.comp_def]
 
