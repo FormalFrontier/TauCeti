@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+import TauCeti.NumberTheory.ModularForms.LevelOne.FundamentalDomainBoundary.Containment
 public import TauCeti.NumberTheory.ModularForms.LevelOne.FundamentalDomainBoundary.Basic
 
 import TauCeti.Topology.Circle.Metric
@@ -130,12 +131,6 @@ height `1`, the value can leave the parameter interval `[3, 4]`, and at `H = √
 denominator vanishes. -/
 noncomputable def leftVerticalCrossingI (H : ℝ) : ℝ :=
   3 + (1 - Real.sqrt 3 / 2) / (H - Real.sqrt 3 / 2)
-
-/-- The corner row lies strictly below `1`. -/
-private lemma sqrt_three_div_two_lt_one : Real.sqrt 3 / 2 < 1 := by
-  have h : Real.sqrt 3 < 2 := by
-    nlinarith [Real.sq_sqrt (by positivity : (3 : ℝ) ≥ 0), Real.sqrt_nonneg 3]
-  linarith
 
 /-- The crossing parameter lies right of the corner. -/
 theorem three_lt_leftVerticalCrossingI (hH : Real.sqrt 3 / 2 < H) :

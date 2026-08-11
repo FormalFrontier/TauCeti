@@ -59,6 +59,23 @@ private theorem normalizedIntegral_sub_one_eq (S : StronglyContinuousSemigroup X
     intervalIntegral.integral_const, smul_sub, smul_smul, sub_zero,
     inv_mul_cancel₀ ht.ne', one_smul]
 
+omit [CompleteSpace X] in
+/-- **A step of a semigroup is short when the semigroup is near the identity at the step's
+length.** For `a ≤ b`, if the operator norm at `a` is at most `C` and `S (b - a)` is within `ε / C`
+of the identity, then `S b` and `S a` are within `ε`. -/
+private theorem dist_lt_of_le_of_norm_sub_one_lt (S : StronglyContinuousSemigroup X) {a b : NNReal}
+    (hab : a ≤ b) {C ε : ℝ} (hSa : ‖S a‖ ≤ C)
+    (hgap : ‖S (b - a) - 1‖ < ε / C) : dist (S b) (S a) < ε := by
+  -- `C` is positive: it dominates a norm, and it cannot vanish or `ε / C` would too
+  have hpos : 0 < ε / C := (norm_nonneg _).trans_lt hgap
+  have hC : 0 < C := ((norm_nonneg (S a)).trans hSa).lt_of_ne' (by rintro rfl; simp at hpos)
+  rw [dist_eq_norm, S.sub_eq_comp_sub_one_of_le hab]
+  calc
+    ‖(S a).comp (S (b - a) - 1)‖
+        ≤ ‖S a‖ * ‖S (b - a) - 1‖ := ContinuousLinearMap.opNorm_comp_le _ _
+    _ < C * (ε / C) := mul_lt_mul' hSa hgap (norm_nonneg _) hC
+    _ = ε := by field_simp
+
 private theorem continuous_of_continuousAt_zero (S : StronglyContinuousSemigroup X)
     (hS : ContinuousAt (fun t : NNReal ↦ S t) 0) : Continuous fun t : NNReal ↦ S t := by
   obtain ⟨ω, M, hb⟩ := S.existsGrowthBound
@@ -72,39 +89,23 @@ private theorem continuous_of_continuousAt_zero (S : StronglyContinuousSemigroup
     positivity
   obtain ⟨δ, hδ, hsmall⟩ := Metric.continuousAt_iff.mp hS (ε / C) (div_pos hε hC)
   refine ⟨δ, hδ, fun t ht ↦ ?_⟩
+  -- continuity at zero bounds the gap to the identity over the elapsed time, in either order
+  have hgap : ∀ a b : NNReal, a ≤ b → dist b a < δ → ‖S (b - a) - 1‖ < ε / C := fun a b hab hd => by
+    simpa only [S.map_zero, ContinuousLinearMap.one_def, dist_eq_norm] using
+      hsmall (by simpa [NNReal.dist_eq, NNReal.coe_sub hab] using hd)
   rcases le_total t₀ t with ht₀t | htt₀
-  · have hdiff := S.sub_eq_comp_sub_one_of_le ht₀t
-    have hsmall' : ‖S (t - t₀) - 1‖ < ε / C := by
-      simpa only [S.map_zero, ContinuousLinearMap.one_def, dist_eq_norm] using
-        hsmall (by simpa [NNReal.dist_eq, NNReal.coe_sub ht₀t] using ht)
-    rw [dist_eq_norm, hdiff]
-    calc
-      ‖(S t₀).comp (S (t - t₀) - 1)‖
-          ≤ ‖S t₀‖ * ‖S (t - t₀) - 1‖ := ContinuousLinearMap.opNorm_comp_le _ _
-      _ < C * (ε / C) := by
-        gcongr
-        dsimp [C]
-        linarith [le_max_left ‖S t₀‖ (M * Real.exp (max ω 0 * t₀))]
-      _ = ε := by field_simp
-  · have hdiff : S t - S t₀ = (S t).comp (1 - S (t₀ - t)) := by
-      rw [← neg_sub (S t₀) (S t), S.sub_eq_comp_sub_one_of_le htt₀, ← ContinuousLinearMap.comp_neg,
-        neg_sub]
-    have hsmall' : ‖1 - S (t₀ - t)‖ < ε / C := by
-      rw [← norm_neg, neg_sub]
-      simpa only [S.map_zero, ContinuousLinearMap.one_def, dist_eq_norm] using
-        hsmall (by simpa [NNReal.dist_eq, NNReal.coe_sub htt₀, abs_sub_comm] using ht)
-    have hSt : ‖S t‖ < C := by
-      dsimp [C]
+  · exact S.dist_lt_of_le_of_norm_sub_one_lt ht₀t
+      (by dsimp [C]; linarith [le_max_left ‖S t₀‖ (M * Real.exp (max ω 0 * t₀))])
+      (hgap t₀ t ht₀t ht)
+  · have hSt : ‖S t‖ ≤ C := by
       have hbt : ‖S t‖ ≤ M * Real.exp (max ω 0 * t₀) := by
         rw [← S.realOperator_coe]
         exact hb.norm_le_mul_exp_max_zero_mul_of_le t.2 (by exact_mod_cast htt₀)
-      linarith [hbt, le_max_right ‖S t₀‖ (M * Real.exp (max ω 0 * t₀))]
-    rw [dist_eq_norm, hdiff]
-    calc
-      ‖(S t).comp (1 - S (t₀ - t))‖
-          ≤ ‖S t‖ * ‖1 - S (t₀ - t)‖ := ContinuousLinearMap.opNorm_comp_le _ _
-      _ < C * (ε / C) := by gcongr
-      _ = ε := by field_simp
+      dsimp [C]
+      linarith [le_max_right ‖S t₀‖ (M * Real.exp (max ω 0 * t₀))]
+    rw [dist_comm]
+    exact S.dist_lt_of_le_of_norm_sub_one_lt htt₀ hSt
+      (hgap t t₀ htt₀ (by rwa [dist_comm]))
 
 omit [CompleteSpace X] in
 /-- **A norm-continuous semigroup stays within any prescribed distance of the identity on a short

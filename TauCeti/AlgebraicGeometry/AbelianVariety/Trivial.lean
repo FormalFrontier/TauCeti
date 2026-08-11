@@ -244,12 +244,12 @@ lemma toOverHom_fromTrivial (A : AbelianVariety K) :
   congr 1
   exact (isTerminalTrivialToOver K).hom_ext _ _
 
-/-- The scheme morphism underlying `fromTrivial A` is the unit section of `A`, after transporting
+/-- The scheme morphism underlying `fromTrivial A` is the zero section of `A`, after transporting
 its domain from `Spec K`. -/
 @[simp]
 lemma toSchemeHom_fromTrivial (A : AbelianVariety K) :
     eqToHom (trivial_toScheme K).symm ≫ Hom.toSchemeHom (fromTrivial A) =
-      η[A.toOver].left := by
+      A.zeroSection := by
   -- As in `toSchemeHom_toTrivial`, `Over.eqToHom_left` puts the transport in simp normal form.
   rw [show eqToHom (trivial_toScheme K).symm = (eqToHom (trivial_toOver K).symm).left from
     (Over.eqToHom_left (trivial_toOver K).symm).symm]

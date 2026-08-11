@@ -69,6 +69,8 @@ same root system; `Valid` keeps only `B 2` of those two names.
 * `TauCeti.HasCartanType.isSimplyLaced_iff` and
   `TauCeti.HasCartanType.isSimplyLaced_iff_of_valid`: both statements transferred to a base of
   Cartan type `t`.
+* `TauCeti.HasCartanType.exists_supportEquiv_cartanMatrix_eq`: two bases of the same Cartan type
+  are related by a relabelling of their supports that matches their Cartan matrices.
 
 ## References
 
@@ -409,6 +411,25 @@ lemma hasCartanType_iff (b : P.Base) (t : DynkinType) :
     HasCartanType P b t ↔
       ∃ e : b.support ≃ Fin t.rank, ∀ i j, b.cartanMatrix i j = t.cartanMatrix (e i) (e j) :=
   (Iff.rfl)
+
+/-- **Two bases of the same Cartan type are related by a relabelling matching their Cartan
+matrices.** Each of the two bases comes with a labelling of its support by the nodes of `t`, and
+composing one with the inverse of the other identifies the supports; the two Cartan matrices then
+agree because each agrees with the standard matrix of `t`.
+
+This is the hypothesis of Mathlib's `RootPairing.Base.equivOfCartanMatrixEq`, and is pure
+bookkeeping about the labellings: it needs neither finiteness nor reducedness of the two root
+pairings, with the root-system content left to that theorem. -/
+theorem HasCartanType.exists_supportEquiv_cartanMatrix_eq {ι₂ M₂ N₂ : Type*} [AddCommGroup M₂]
+    [Module R M₂] [AddCommGroup N₂] [Module R N₂] {P₂ : RootPairing ι₂ R M₂ N₂}
+    [P₂.IsCrystallographic]
+    {b : P.Base} {b₂ : P₂.Base} {t : DynkinType}
+    (h : HasCartanType P b t) (h₂ : HasCartanType P₂ b₂ t) :
+    ∃ e : b.support ≃ b₂.support, ∀ i j, b₂.cartanMatrix (e i) (e j) = b.cartanMatrix i j := by
+  obtain ⟨e, he⟩ := (hasCartanType_iff b t).mp h
+  obtain ⟨e₂, he₂⟩ := (hasCartanType_iff b₂ t).mp h₂
+  exact ⟨e.trans e₂.symm, fun i j ↦ by
+    simp only [Equiv.trans_apply, he₂, he, Equiv.apply_symm_apply]⟩
 
 /-- Having Cartan type `t`, expressed as a reindexing of matrices rather than entrywise. -/
 lemma hasCartanType_iff_reindex (b : P.Base) (t : DynkinType) :

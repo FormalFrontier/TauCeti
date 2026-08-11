@@ -186,6 +186,18 @@ instance : DecidablePred Valid := fun d => by
   rw [valid_iff]
   infer_instance
 
+/-- An in-range `²Aₙ(q)` index has rank at least two: the reversal of a one-node diagram is trivial,
+and `²A₁(q)` is not a name on the classification list. -/
+theorem two_le_of_twistedA_inStandardRange {n : ℕ} {q : PrimePower}
+    (h : (twistedA n q).InStandardRange) : 2 ≤ n :=
+  ((inStandardRange_iff _).mp h).1
+
+/-- An in-range `²Dₙ(q)` index has rank at least four, the range in which the `Dₙ` diagram has its
+fork. -/
+theorem four_le_of_twistedD_inStandardRange {n : ℕ} {q : PrimePower}
+    (h : (twistedD n q).InStandardRange) : 4 ≤ n :=
+  (inStandardRange_iff _).mp h
+
 /-- Whether the Steinberg map for an index is an odd power of a half-Frobenius. This selects the
 three Suzuki--Ree families and the Tits group, not the exceptional Dynkin types in general. -/
 def UsesHalfFrobenius : LieTypeIndex → Prop
@@ -203,8 +215,12 @@ instance : DecidablePred UsesHalfFrobenius := fun d => by
   cases d <;> rw [usesHalfFrobenius_iff] <;> infer_instance
 
 /-- The underlying untwisted Dynkin diagram. Twisted types map to the diagram from which they are
-constructed, so all later root indices use the root-systems roadmap's Bourbaki numbering. -/
-def dynkinType : LieTypeIndex → DynkinType
+constructed, so all later root indices use the root-systems roadmap's Bourbaki numbering.
+
+This is exposed because it appears in the *types* of the numbered data attached to an index: for
+`TauCeti.GraphTwistedIndex.diagramPerm` on the `²Aₙ` branch to be `TauCeti.graphPermA n`, the type
+`Fin (twistedA n q).dynkinType.rank` has to reduce to `Fin n`. -/
+@[expose] def dynkinType : LieTypeIndex → DynkinType
   | .A n _ | .twistedA n _ => .A n
   | .B n _ => .B n
   | .C n _ => .C n

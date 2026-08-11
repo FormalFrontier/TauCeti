@@ -9,6 +9,7 @@ public import Mathlib.Analysis.Calculus.Deriv.Basic
 public import Mathlib.Analysis.Complex.Basic
 public import Mathlib.MeasureTheory.Integral.IntervalIntegral.Basic
 import TauCeti.Analysis.Calculus.OneSidedDerivLimit
+import TauCeti.Analysis.Contour.Curve.Distance
 import TauCeti.Analysis.Contour.Chord.QuotientAsymptotics
 import TauCeti.Analysis.Contour.LogDerivFTC
 import TauCeti.Analysis.Contour.Winding.Number.Basic
@@ -69,8 +70,7 @@ theorem intervalIntegrable_inv_sub_truncated {γ : ℝ → ℂ} {s : ℂ} {a b :
     IntervalIntegrable (fun t => if ‖γ t - s‖ > ε then (γ t - s)⁻¹ * deriv γ t else 0)
       MeasureTheory.volume a b := by
   have hK_closed : IsClosed {t ∈ uIcc a b | ‖γ t - s‖ ≤ ε} :=
-    ((hγ_cont.sub continuousOn_const).norm).preimage_isClosed_of_isClosed
-      (by rw [← Icc_min_max]; exact isClosed_Icc) isClosed_Iic
+    isClosed_setOfPred_mem_uIcc_norm_sub_le hγ_cont s ε
   have h_inv_aesm : AEStronglyMeasurable (fun t => (γ t - s)⁻¹ * deriv γ t)
       (MeasureTheory.volume.restrict (Set.uIoc a b)) := by
     have hγ_aem : AEMeasurable γ (MeasureTheory.volume.restrict (Set.uIoc a b)) :=
