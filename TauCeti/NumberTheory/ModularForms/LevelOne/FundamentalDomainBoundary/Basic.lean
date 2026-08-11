@@ -33,6 +33,8 @@ anchors of the valence-formula contour.
 * `TauCeti.ModularForm.continuous_fdBoundary`: the contour is (globally) continuous.
 * `TauCeti.ModularForm.isPiecewiseC1On_fdBoundary`: the contour is piecewise `C¹`
   (`contDiffOn_fdBoundary` certifies `fdBoundaryCorners` as a breakpoint witness).
+* `TauCeti.ModularForm.injOn_fdBoundary_arc`: the arc is traversed injectively — it covers less
+  than a full turn of the unit circle.
 * `TauCeti.ModularForm.fdBoundary_four_sub_vertical`, `…_four_sub_arc`: the reflection
   `t ↦ 4 - t` identifies the verticals through `z ↦ z - 1` and the arc with its own
   reversal through `z ↦ -1/z` — the boundary identifications driving the cancellations
@@ -387,6 +389,21 @@ private lemma fdBoundary_piece4 (H : ℝ) : ContDiffOn ℝ n (fdBoundary H) (Icc
 private lemma fdBoundary_piece5 (H : ℝ) : ContDiffOn ℝ n (fdBoundary H) (Icc 4 5) :=
   (contDiff_fdBoundary_segment5 H).contDiffOn.congr (eqOn_fdBoundary_segment5 H)
 
+
+/-- **The arc is traversed injectively.** On `[1, 3]` the boundary runs through the angles
+`[π/3, 2π/3]` of the unit circle — less than one full turn — so `circleMap` is injective there
+and distinct parameters give distinct points. -/
+theorem injOn_fdBoundary_arc (H : ℝ) : InjOn (fdBoundary H) (Icc 1 3) := by
+  have hpi := Real.pi_pos
+  have hcm : InjOn (circleMap 0 1) (Ioc 0 (2 * Real.pi)) := by
+    rw [← uIoc_of_le (by positivity : (0 : ℝ) ≤ 2 * Real.pi)]
+    exact injOn_circleMap_of_abs_sub_le one_ne_zero
+      (by rw [zero_sub, abs_neg, abs_of_pos (by positivity)])
+  have hmem : ∀ {t : ℝ}, t ∈ Icc (1 : ℝ) 3 → (t + 1) * (Real.pi / 6) ∈ Ioc 0 (2 * Real.pi) :=
+    fun ht => ⟨by nlinarith [ht.1], by nlinarith [ht.2]⟩
+  intro t₁ h₁ t₂ h₂ heq
+  rw [eqOn_fdBoundary_arc H h₁, eqOn_fdBoundary_arc H h₂] at heq
+  nlinarith [hcm (hmem h₁) (hmem h₂) heq]
 
 /-- The genuinely nonsmooth junctions of the boundary contour: the two arcs continue one
 smooth circle parameterization through `t = 2`, so only `1`, `3`, and `4` are corners. -/
