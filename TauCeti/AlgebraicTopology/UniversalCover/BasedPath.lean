@@ -159,7 +159,7 @@ private noncomputable def deformTerminal {u v : X} (γ : BasedPath x₀) (hu : e
   change (if _ : (0 : ℝ) ≤ a then γ.toPath.extend 0 else
     if _ : (0 : ℝ) ≤ b then tail.extend ((0 - a) / (b - a))
     else δ.extend ((0 - b) / (1 - b))) = x₀
-  rw [dif_pos ha, Path.extend_zero]
+  rw [dite_eq_left ha, Path.extend_zero]
 
 /-- Application lemma for `deformTerminal`: the spliced path is the three-branch `dite` selected
 by `t ≤ a` and `t ≤ b`. -/
@@ -177,18 +177,19 @@ private theorem deformTerminal_apply {u v : X} (γ : BasedPath x₀) (hu : endpo
 private theorem deformTerminal_apply_of_le {u v : X} (γ : BasedPath x₀) (hu : endpoint γ = u)
     (δ : Path u v) {a b : ℝ} (ha : 0 ≤ a) (hab : a < b) (hb : b < 1) (t : I) (ht : (t : ℝ) ≤ a) :
     (deformTerminal γ hu δ ha hab hb).1 t = γ.toPath.extend t := by
-  rw [deformTerminal_apply, dif_pos ht]
+  rw [deformTerminal_apply, dite_eq_left ht]
 
 private theorem deformTerminal_apply_of_lt_of_le {u v : X} (γ : BasedPath x₀)
     (hu : endpoint γ = u) (δ : Path u v) {a b : ℝ} (ha : 0 ≤ a) (hab : a < b) (hb : b < 1)
     (t : I) (hta : a < (t : ℝ)) (htb : (t : ℝ) ≤ b) : (deformTerminal γ hu δ ha hab hb).1 t =
       (terminalTail γ hu a (by linarith)).extend (((t : ℝ) - a) / (b - a)) := by
-  rw [deformTerminal_apply, dif_neg (not_le_of_gt hta), dif_pos htb]
+  rw [deformTerminal_apply, dite_eq_right (not_le_of_gt hta), dite_eq_left htb]
 
 private theorem deformTerminal_apply_of_lt {u v : X} (γ : BasedPath x₀) (hu : endpoint γ = u)
     (δ : Path u v) {a b : ℝ} (ha : 0 ≤ a) (hab : a < b) (hb : b < 1) (t : I) (ht : b < (t : ℝ)) :
     (deformTerminal γ hu δ ha hab hb).1 t = δ.extend (((t : ℝ) - b) / (1 - b)) := by
-  rw [deformTerminal_apply, dif_neg (not_le_of_gt (lt_trans hab ht)), dif_neg (not_le_of_gt ht)]
+  rw [deformTerminal_apply, dite_eq_right (not_le_of_gt (lt_trans hab ht)),
+    dite_eq_right (not_le_of_gt ht)]
 
 /-- The endpoint of `deformTerminal γ hu δ ha hab hb` is the endpoint of `δ`. -/
 private theorem endpoint_deformTerminal {u v : X} (γ : BasedPath x₀) (hu : endpoint γ = u)
@@ -828,16 +829,16 @@ public theorem toPath_homotopic_of_joinedIn_pathHomotopyTrivial
   have hK_zero : ∀ s : I, K_fn (0, s) = (α'.trans L) s := fun s ↦ by
     rw [K_fn_apply, Path.trans_apply]
     by_cases hs : (s : ℝ) ≤ 1 / 2
-    · rw [dif_pos hs, joinedInSLSC_uFn_zero_left_eq_zero_of_le_half hs,
+    · rw [dite_eq_left hs, joinedInSLSC_uFn_zero_left_eq_zero_of_le_half hs,
         joinedInSLSC_vFn_eq_two_mul_of_le_half hs, hF0_eq]; rfl
-    · rw [dif_neg hs,
+    · rw [dite_eq_right hs,
         joinedInSLSC_uFn_zero_left_eq_two_mul_sub_one_of_half_le (not_le.mp hs).le,
         joinedInSLSC_vFn_eq_one_of_half_le (not_le.mp hs).le]; rfl
   have hK_one : ∀ s : I, K_fn (1, s) = (β.toPath.trans (Path.refl v)) s := fun s ↦ by
     rw [K_fn_apply, Path.trans_apply, joinedInSLSC_uFn_one_left]
     by_cases hs : (s : ℝ) ≤ 1 / 2
-    · rw [dif_pos hs, joinedInSLSC_vFn_eq_two_mul_of_le_half hs, hF1_eq]; rfl
-    · rw [dif_neg hs, joinedInSLSC_vFn_eq_one_of_half_le (not_le.mp hs).le, hF1_eq]; rfl
+    · rw [dite_eq_left hs, joinedInSLSC_vFn_eq_two_mul_of_le_half hs, hF1_eq]; rfl
+    · rw [dite_eq_right hs, joinedInSLSC_vFn_eq_one_of_half_le (not_le.mp hs).le, hF1_eq]; rfl
   have hK_at_zero : ∀ t : I, K_fn (t, 0) = x₀ := fun t ↦ by
     rw [K_fn_apply, joinedInSLSC_vFn_zero_right]
     exact (F (joinedInSLSC_uFn (t, 0))).2

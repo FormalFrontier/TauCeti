@@ -17,7 +17,11 @@ shrink, and this file builds it.
 
 Nothing here converges anything: the sequence exists in any topological additive group, with no
 completeness and no first countability. Summing it — which is what finally removes the closure
-from `f '' U` — is a separate step and needs both.
+from `f '' U` — is a separate step, and the two hypotheses enter there separately:
+completeness sums the resulting null sequence, while countable generation of `𝓝 0` is what
+produces the sequence of subgroups to sum along. `TauCeti.mem_image_of_mem_closure_image` takes
+that sequence as an explicit `HasAntitoneBasis` hypothesis rather than synthesising it, so it
+assumes completeness but no first-countability instance.
 
 ## Main results
 

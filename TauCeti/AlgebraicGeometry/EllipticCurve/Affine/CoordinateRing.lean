@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.AlgebraicGeometry.EllipticCurve.Affine.Point
-import TauCeti.AlgebraicGeometry.EllipticCurve.Affine.FunctionFieldFinrank
+import TauCeti.AlgebraicGeometry.EllipticCurve.Affine.FunctionField.Finrank
 
 /-!
 # The coordinate ring of an elliptic curve is a Dedekind domain

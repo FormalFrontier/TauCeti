@@ -105,19 +105,19 @@ private lemma typeAWeight_dotProduct_typeACoweight {a c : ℕ} (ha : a ≤ n) (h
     intro b
     simp only [ite_mul, one_mul, zero_mul]
     by_cases h : b < n
-    · rw [dif_pos h]
+    · rw [dite_eq_left h]
       convert Fintype.sum_ite_eq (⟨b, h⟩ : Fin n)
         (fun k => if c ≤ (k : ℕ) then (1 : ℤ) else 0) using 1 with k
       simp [Fin.ext_iff]
-    · rw [dif_neg h]
-      exact Finset.sum_eq_zero fun k _ => if_neg (by omega)
+    · rw [dite_eq_right h]
+      exact Finset.sum_eq_zero fun k _ => ite_eq_right (by omega)
   have key' : ∀ b : ℕ, ∑ k : Fin n, (if b = (k : ℕ) + 1 then (1 : ℤ) else 0) *
       (if c ≤ (k : ℕ) then 1 else 0)
         = if h : b - 1 < n ∧ 1 ≤ b then (if c ≤ b - 1 then (1 : ℤ) else 0) else 0 := by
     intro b
     simp only [ite_mul, one_mul, zero_mul]
     by_cases h : b - 1 < n ∧ 1 ≤ b
-    · rw [dif_pos h]
+    · rw [dite_eq_left h]
       calc
         _ = ∑ k : Fin n, if (⟨b - 1, h.1⟩ : Fin n) = k then
             (if c ≤ (k : ℕ) then (1 : ℤ) else 0) else 0 := by
@@ -135,8 +135,8 @@ private lemma typeAWeight_dotProduct_typeACoweight {a c : ℕ} (ha : a ≤ n) (h
             simp only at hkval
             omega
         _ = _ := Fintype.sum_ite_eq _ _
-    · rw [dif_neg h]
-      exact Finset.sum_eq_zero fun k _ => if_neg (by omega)
+    · rw [dite_eq_right h]
+      exact Finset.sum_eq_zero fun k _ => ite_eq_right (by omega)
   simp only [dotProduct, typeAWeight, typeACoweight, sub_mul, Finset.sum_sub_distrib,
     key a, key' a]
   split_ifs <;> omega
@@ -475,10 +475,10 @@ private lemma linearIndependent_typeASimpleRoot (n : ℕ) :
     simpa only [S, Nat.add_right_cancel_iff, Fin.val_inj] using Fintype.sum_ite_eq' j g
   have hSzero : ∀ c : ℕ, n < c → S c = 0 := by
     intro c hc
-    refine Finset.sum_eq_zero fun j _ => if_neg ?_
+    refine Finset.sum_eq_zero fun j _ => ite_eq_right ?_
     have := j.isLt
     omega
-  have hS0 : S 0 = 0 := Finset.sum_eq_zero fun j _ => if_neg (by omega)
+  have hS0 : S 0 = 0 := Finset.sum_eq_zero fun j _ => ite_eq_right (by omega)
   have hshift : ∀ c : ℕ, ∑ j : Fin n, (if (j : ℕ) = c then g j else 0) = S (c + 1) :=
     fun c => Finset.sum_congr rfl fun j _ => by by_cases h : (j : ℕ) = c <;> simp [h]
   have hrec : ∀ k : Fin n, S ((k : ℕ) + 1) + S ((k : ℕ) + 1) = S (k : ℕ) + S ((k : ℕ) + 2) := by

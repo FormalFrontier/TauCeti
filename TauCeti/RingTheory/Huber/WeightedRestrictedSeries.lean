@@ -324,7 +324,7 @@ theorem isWeightedRestricted_one (T : Fin k → Set A) :
   classical
   intro U
   filter_upwards [(Set.finite_singleton (0 : Fin k →₀ ℕ)).compl_mem_cofinite] with ν hν
-  rw [MvPowerSeries.coeff_one, if_neg (by simpa using hν)]
+  rw [MvPowerSeries.coeff_one, ite_eq_right (by simpa using hν)]
   exact (weightMul T ν U.toAddSubgroup).zero_mem
 
 omit [TopologicalSpace A] in
@@ -514,7 +514,7 @@ theorem isWeightedRestricted_monomial (T : Fin k → Set A) (μ : Fin k →₀ �
   simp only [Set.mem_ofPred_eq, MvPowerSeries.coeff_monomial] at hν
   by_contra hne
   simp only [Set.mem_singleton_iff] at hne
-  exact hν (if_neg hne)
+  exact hν (ite_eq_right hne)
 
 /-- A constant series is `T`-restricted. -/
 @[simp]

@@ -412,11 +412,11 @@ lemma trivialSection_vle_iff (p : PrimeSpectrum A) (f s : A) :
     by_cases hf : f ∈ p.asIdeal
     · exact Or.inl hf
     · refine Or.inr fun hs ↦ ?_
-      rw [if_neg hf, if_pos hs] at h
+      rw [ite_eq_right hf, ite_eq_left hs] at h
       simp at h
   · rintro (hf | hs)
     · simp [hf]
-    · rw [if_neg hs]
+    · rw [ite_eq_right hs]
       split <;> simp
 
 /-- `trivialSection` is a section of the support map. -/
