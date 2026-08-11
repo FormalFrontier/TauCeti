@@ -51,7 +51,10 @@ group cohomology: `groupCohomology.cocyclesOfIsMulCocycle₂ α.isMulCocycle₂`
 ## Main results
 
 * `TauCeti.FactorSet.canonicalSection_mul`: `σ g * σ h = inl (α (g, h)) * σ (g * h)`, so `α`
-  measures the failure of the canonical section to be a homomorphism.
+  measures the failure of the canonical section to be a homomorphism, and
+  `TauCeti.FactorSet.inl_mul_canonicalSection`: every element of the extension is its `M`-component
+  times the section at its `G`-component, so the two together determine a homomorphism out of the
+  extension.
 * `TauCeti.FactorSet.mul_inl`: conjugation moves the copy of `M` by the action of the image in `G`.
 * `TauCeti.FactorSet.inl_range_le_center`: when `G` acts trivially the extension is central.
 * `TauCeti.FactorSet.nonempty_groupExtensionEquiv`: cohomologous factor sets build equivalent

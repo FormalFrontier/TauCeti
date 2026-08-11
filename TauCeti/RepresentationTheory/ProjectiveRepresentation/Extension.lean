@@ -69,6 +69,9 @@ supplies the trivial one, `TauCeti.trivialMulDistribMulAction`, and asks for not
   presented as an ordinary `Representation k E_α V`, whose scalar condition is read off the
   linearization by `TauCeti.IsProjectiveRep.linearizationRepresentation_inl`, with
   `TauCeti.isProjectiveRep_restrictCanonicalSection` its instance at the canonical restriction.
+* `TauCeti.IsProjectiveRep.forall_linearization_mem_iff`: the linearization and the projective
+  representation have the same invariant submodules, which is why irreducibility transfers between
+  them.
 * `TauCeti.IsProjectiveRep.exists_factorSet_linearization`: **every projective representation of
   `G` is a linear representation of a central extension of `G` by `kˣ`**, for the extension built
   from the factor set the projective representation carries.

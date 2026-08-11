@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+public import TauCeti.Algebra.Module.Equiv.Basic
 public import TauCeti.Algebra.MonoidAlgebra.Twisted
 
 /-!
@@ -93,12 +94,6 @@ structure IsProjectiveRep (ρ : G → V ≃ₗ[k] V) (α : G → G → kˣ) : Pr
   map_one : ρ 1 = 1
   /-- The lift is multiplicative up to the factor set. -/
   mul_apply (g₁ g₂ : G) (x : V) : ρ g₁ (ρ g₂ x) = (α g₁ g₂ : k) • ρ (g₁ * g₂) x
-
-/-- Multiplication by a unit of `k`, evaluated. This is the only place where the definition of
-`LinearEquiv.smulOfUnit` is unfolded; everything about it downstream goes through this lemma. -/
-theorem LinearEquiv.smulOfUnit_apply (u : kˣ) (x : V) :
-    (LinearEquiv.smulOfUnit u : V ≃ₗ[k] V) x = (u : k) • x :=
-  (rfl)
 
 variable {ρ : G → V ≃ₗ[k] V} {α : G → G → kˣ}
 
