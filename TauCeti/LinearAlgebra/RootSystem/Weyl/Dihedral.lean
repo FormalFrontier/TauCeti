@@ -1,0 +1,244 @@
+/-
+Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+-/
+module
+
+public import TauCeti.GroupTheory.SpecificGroups.Dihedral
+public import TauCeti.LinearAlgebra.RootSystem.BraidRelation
+public import TauCeti.LinearAlgebra.RootSystem.Inversions.Deletion
+public import TauCeti.LinearAlgebra.RootSystem.RankTwo
+
+public section
+
+/-!
+# The Weyl group of a rank-two root system is dihedral
+
+A base with two simple roots presents its Weyl group by two generators: the two simple reflections
+generate it (`TauCeti.weylGroup_eq_closure_simple`), they are involutions, and the order of their
+product is the corresponding entry of the Coxeter matrix of the base
+(`TauCeti.RootPairing.weylGroup.orderOf_ofIdx_mul_ofIdx_eq_coxeterMatrixOfBase`). That is exactly
+the input of `TauCeti.nonempty_dihedralGroup_mulEquiv`, so the Weyl group *is* the dihedral group
+of order twice that entry — and, unlike the presentation of the Weyl group in general, this needs
+no completeness statement for the braid relations, since in rank two there is only one of them.
+
+Reading the entry off the Cartan type turns this into the three rank-two cases. The Weyl groups of
+the types `A₂`, `B₂` and `G₂` are the dihedral groups of orders `6`, `8` and `12`, the last of
+these being the Weyl-group clause of the `G₂` worked example of the root-systems roadmap.
+
+## Main results
+
+* `TauCeti.nonempty_dihedralGroup_mulEquiv_weylGroup`: **the Weyl group of a base with two simple
+  roots is the dihedral group of order twice the Coxeter entry of its two simple roots**, and
+  `TauCeti.card_weylGroup_of_card_support_eq_two` is its order.
+* `TauCeti.coxeterMatrixOfBase_of_hasCartanType_A_two`,
+  `TauCeti.coxeterMatrixOfBase_of_hasCartanType_B_two` and
+  `TauCeti.coxeterMatrixOfBase_of_hasCartanType_G2`: that entry is `3`, `4` and `6` for the three
+  rank-two Cartan types.
+* `TauCeti.nonempty_dihedralGroup_mulEquiv_weylGroup_of_hasCartanType_G2`: **a root system of type
+  `G₂` has Weyl group the dihedral group of order `12`**, with
+  `TauCeti.card_weylGroup_of_hasCartanType_G2` its order; the same for types `A₂` and `B₂`.
+
+## References
+
+This file proves the Weyl-group clause of the `G₂` worked example of
+`TauCetiRoadmap/RepresentationTheory/RootSystems/README.md` ("its Weyl group is the dihedral group
+of order 12, `P.weylGroup ≃* DihedralGroup 6`"), together with the two other rank-two types. The
+computation is the one in N. Bourbaki, *Lie Groups and Lie Algebras, Chapters 4--6*, Ch. VI §1.3,
+and J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, GTM 9, §9.
+-/
+
+open scoped Matrix
+
+namespace TauCeti
+
+universe u v w x
+
+variable {ι : Type u} {R : Type v} {M : Type w} {N : Type x}
+  [CommRing R] [AddCommGroup M] [Module R M] [AddCommGroup N] [Module R N]
+  (P : RootPairing ι R M N) [Finite ι] [CharZero R] [IsDomain R]
+  [P.IsCrystallographic] [P.IsReduced] (b : P.Base)
+
+/-! ## Two simple reflections generating the Weyl group -/
+
+namespace RootPairing.weylGroup
+
+/-- **A simple reflection is not the identity**: its own simple root is an inversion of it, and the
+identity has no inversion. -/
+theorem ofIdx_ne_one {i : ι} (hi : i ∈ b.support) :
+    _root_.RootPairing.weylGroup.ofIdx P i ≠ 1 := by
+  intro h
+  refine Set.singleton_ne_empty i ?_
+  rw [← inversions_ofIdx P b hi, h, inversions_one]
+
+end RootPairing.weylGroup
+
+omit [Finite ι] [CharZero R] [IsDomain R] [P.IsCrystallographic] [P.IsReduced] in
+/-- With two simple roots there are no others: every simple root is one of a chosen distinct pair.
+-/
+theorem eq_or_eq_of_card_support_eq_two (hb : b.support.card = 2) {i j : b.support} (hij : i ≠ j)
+    (k : b.support) : k = i ∨ k = j := by
+  classical
+  by_contra hk
+  push Not at hk
+  have h3 : ({k, i, j} : Finset b.support).card = 3 := by
+    rw [Finset.card_insert_of_notMem (by simp [hk.1, hk.2]),
+      Finset.card_insert_of_notMem (by simpa using hij), Finset.card_singleton]
+  have hle := Finset.card_le_univ ({k, i, j} : Finset b.support)
+  rw [h3, Fintype.card_coe, hb] at hle
+  omega
+
+/-- With two simple roots the two corresponding simple reflections generate the Weyl group. -/
+theorem closure_pair_ofIdx_eq_top (hb : b.support.card = 2) {i j : b.support} (hij : i ≠ j) :
+    Subgroup.closure ({RootPairing.weylGroup.ofIdx P (i : ι),
+      RootPairing.weylGroup.ofIdx P (j : ι)} : Set P.weylGroup) = ⊤ := by
+  have hrange : (Set.range fun k : b.support => RootPairing.weylGroup.ofIdx P (k : ι)) =
+      ({RootPairing.weylGroup.ofIdx P (i : ι),
+        RootPairing.weylGroup.ofIdx P (j : ι)} : Set P.weylGroup) := by
+    ext x
+    simp only [Set.mem_range, Set.mem_insert_iff, Set.mem_singleton_iff]
+    constructor
+    · rintro ⟨k, rfl⟩
+      rcases eq_or_eq_of_card_support_eq_two P b hb hij k with rfl | rfl
+      exacts [Or.inl rfl, Or.inr rfl]
+    · rintro (rfl | rfl)
+      exacts [⟨i, rfl⟩, ⟨j, rfl⟩]
+  rw [← hrange, ← weylGroup_eq_closure_simple P b]
+
+/-! ## The dihedral structure -/
+
+/-- **The Weyl group of a base with two simple roots is dihedral.** Its order is twice the entry of
+the Coxeter matrix of the base at the two simple roots, which is the order of the product of the two
+simple reflections.
+
+Only rank two is available this cheaply. In higher rank the braid relations still hold, but that
+they *present* the Weyl group is the Coxeter-presentation theorem, which is not proved here; in
+rank two the single braid relation is the whole presentation. -/
+theorem nonempty_dihedralGroup_mulEquiv_weylGroup (hb : b.support.card = 2) {i j : b.support}
+    (hij : i ≠ j) :
+    Nonempty (DihedralGroup (coxeterMatrixOfBase P b i j) ≃* P.weylGroup) := by
+  have : NeZero (coxeterMatrixOfBase P b i j) := ⟨coxeterMatrixOfBase_ne_zero P b i j⟩
+  exact nonempty_dihedralGroup_mulEquiv (RootPairing.weylGroup.ofIdx_mul_self P i)
+    (RootPairing.weylGroup.ofIdx_mul_self P j) (RootPairing.weylGroup.ofIdx_ne_one P b i.2)
+    (RootPairing.weylGroup.ofIdx_ne_one P b j.2)
+    (RootPairing.weylGroup.orderOf_ofIdx_mul_ofIdx_eq_coxeterMatrixOfBase P b i j)
+    (closure_pair_ofIdx_eq_top P b hb hij)
+
+/-- The Weyl group of a base with two simple roots has order twice the Coxeter entry of those two
+roots, read through `DihedralGroup.nat_card`. -/
+theorem card_weylGroup_of_card_support_eq_two (hb : b.support.card = 2) {i j : b.support}
+    (hij : i ≠ j) :
+    Nat.card P.weylGroup = 2 * coxeterMatrixOfBase P b i j := by
+  obtain ⟨e⟩ := nonempty_dihedralGroup_mulEquiv_weylGroup P b hb hij
+  rw [← Nat.card_congr e.toEquiv, DihedralGroup.nat_card]
+
+/-! ## The three rank-two Cartan types -/
+
+section CartanType
+
+/-- The Cartan product of the two nodes of a rank-two standard Cartan matrix is symmetric in them,
+so it may be read off either ordering. Here it is `1` for type `A₂`. -/
+private lemma mul_apply_A_two {a c : Fin 2} (h : a ≠ c) :
+    (!![2, -1; -1, 2] : Matrix (Fin 2) (Fin 2) ℤ) a c *
+      (!![2, -1; -1, 2] : Matrix (Fin 2) (Fin 2) ℤ) c a = 1 := by
+  fin_cases a <;> fin_cases c <;> simp_all
+
+private lemma mul_apply_B_two {a c : Fin 2} (h : a ≠ c) :
+    (!![2, -2; -1, 2] : Matrix (Fin 2) (Fin 2) ℤ) a c *
+      (!![2, -2; -1, 2] : Matrix (Fin 2) (Fin 2) ℤ) c a = 2 := by
+  fin_cases a <;> fin_cases c <;> simp_all
+
+private lemma mul_apply_G2 {a c : Fin 2} (h : a ≠ c) :
+    (!![2, -1; -3, 2] : Matrix (Fin 2) (Fin 2) ℤ) a c *
+      (!![2, -1; -3, 2] : Matrix (Fin 2) (Fin 2) ℤ) c a = 3 := by
+  fin_cases a <;> fin_cases c <;> simp_all
+
+omit [P.IsReduced] in
+/-- A base of type `A₂` has Coxeter entry `3`: the two simple reflections have a product of
+order `3`. -/
+theorem coxeterMatrixOfBase_of_hasCartanType_A_two (h : HasCartanType P b (.A 2))
+    {i j : b.support} (hij : i ≠ j) : coxeterMatrixOfBase P b i j = 3 := by
+  obtain ⟨e, he⟩ : ∃ e : b.support ≃ Fin 2, ∀ i j,
+      b.cartanMatrix i j = (!![2, -1; -1, 2] : Matrix (Fin 2) (Fin 2) ℤ) (e i) (e j) := by
+    obtain ⟨e, he⟩ := (hasCartanType_iff b (.A 2)).mp h
+    exact ⟨e, fun i j ↦ by rw [he i j, DynkinType.cartanMatrix_A_two_eq]; rfl⟩
+  rw [coxeterMatrixOfBase_apply, he i j, he j i,
+    mul_apply_A_two fun hEq => hij (e.injective hEq), coxeterOrder_one]
+
+omit [P.IsReduced] in
+/-- A base of type `B₂` has Coxeter entry `4`. -/
+theorem coxeterMatrixOfBase_of_hasCartanType_B_two (h : HasCartanType P b (.B 2))
+    {i j : b.support} (hij : i ≠ j) : coxeterMatrixOfBase P b i j = 4 := by
+  obtain ⟨e, he⟩ : ∃ e : b.support ≃ Fin 2, ∀ i j,
+      b.cartanMatrix i j = (!![2, -2; -1, 2] : Matrix (Fin 2) (Fin 2) ℤ) (e i) (e j) := by
+    obtain ⟨e, he⟩ := (hasCartanType_iff b (.B 2)).mp h
+    exact ⟨e, fun i j ↦ by rw [he i j, DynkinType.cartanMatrix_B_two_eq]; rfl⟩
+  rw [coxeterMatrixOfBase_apply, he i j, he j i,
+    mul_apply_B_two fun hEq => hij (e.injective hEq), coxeterOrder_two]
+
+omit [P.IsReduced] in
+/-- A base of type `G₂` has Coxeter entry `6`: the two simple reflections have a product of
+order `6`, the rotation by a sixth of a turn of the `G₂` hexagon. -/
+theorem coxeterMatrixOfBase_of_hasCartanType_G2 (h : HasCartanType P b .G2)
+    {i j : b.support} (hij : i ≠ j) : coxeterMatrixOfBase P b i j = 6 := by
+  obtain ⟨e, he⟩ : ∃ e : b.support ≃ Fin 2, ∀ i j,
+      b.cartanMatrix i j = (!![2, -1; -3, 2] : Matrix (Fin 2) (Fin 2) ℤ) (e i) (e j) := by
+    obtain ⟨e, he⟩ := (hasCartanType_iff b .G2).mp h
+    exact ⟨e, fun i j ↦ by rw [he i j, DynkinType.cartanMatrix_G2_eq]; rfl⟩
+  rw [coxeterMatrixOfBase_apply, he i j, he j i,
+    mul_apply_G2 fun hEq => hij (e.injective hEq), coxeterOrder_three]
+
+omit [Finite ι] [CharZero R] [IsDomain R] [P.IsCrystallographic] [P.IsReduced] in
+/-- A base of a rank-two Cartan type comes with a distinct pair of simple roots. -/
+private lemma exists_ne_support (hb : b.support.card = 2) : ∃ i j : b.support, i ≠ j := by
+  classical
+  obtain ⟨x, y, hxy, hsupp⟩ := Finset.card_eq_two.mp hb
+  exact ⟨⟨x, by simp [hsupp]⟩, ⟨y, by simp [hsupp]⟩, by simpa using hxy⟩
+
+/-- **A root system of type `A₂` has Weyl group the symmetric group on three letters**, in the
+guise of the dihedral group of order `6`. -/
+theorem nonempty_dihedralGroup_mulEquiv_weylGroup_of_hasCartanType_A_two
+    (h : HasCartanType P b (.A 2)) : Nonempty (DihedralGroup 3 ≃* P.weylGroup) := by
+  have hb : b.support.card = 2 := by simpa using h.card_support
+  obtain ⟨i, j, hij⟩ := exists_ne_support P b hb
+  exact coxeterMatrixOfBase_of_hasCartanType_A_two P b h hij ▸
+    nonempty_dihedralGroup_mulEquiv_weylGroup P b hb hij
+
+/-- **A root system of type `B₂` has Weyl group the dihedral group of order `8`.** -/
+theorem nonempty_dihedralGroup_mulEquiv_weylGroup_of_hasCartanType_B_two
+    (h : HasCartanType P b (.B 2)) : Nonempty (DihedralGroup 4 ≃* P.weylGroup) := by
+  have hb : b.support.card = 2 := by simpa using h.card_support
+  obtain ⟨i, j, hij⟩ := exists_ne_support P b hb
+  exact coxeterMatrixOfBase_of_hasCartanType_B_two P b h hij ▸
+    nonempty_dihedralGroup_mulEquiv_weylGroup P b hb hij
+
+/-- **A root system of type `G₂` has Weyl group the dihedral group of order `12`.** This is the
+Weyl-group clause of the `G₂` worked example of the root-systems roadmap. -/
+theorem nonempty_dihedralGroup_mulEquiv_weylGroup_of_hasCartanType_G2
+    (h : HasCartanType P b .G2) : Nonempty (DihedralGroup 6 ≃* P.weylGroup) := by
+  have hb : b.support.card = 2 := by simpa using h.card_support
+  obtain ⟨i, j, hij⟩ := exists_ne_support P b hb
+  exact coxeterMatrixOfBase_of_hasCartanType_G2 P b h hij ▸
+    nonempty_dihedralGroup_mulEquiv_weylGroup P b hb hij
+
+/-- The Weyl group of a root system of type `A₂` has order `6`. -/
+theorem card_weylGroup_of_hasCartanType_A_two (h : HasCartanType P b (.A 2)) :
+    Nat.card P.weylGroup = 6 := by
+  obtain ⟨e⟩ := nonempty_dihedralGroup_mulEquiv_weylGroup_of_hasCartanType_A_two P b h
+  rw [← Nat.card_congr e.toEquiv, DihedralGroup.nat_card]
+
+/-- The Weyl group of a root system of type `B₂` has order `8`. -/
+theorem card_weylGroup_of_hasCartanType_B_two (h : HasCartanType P b (.B 2)) :
+    Nat.card P.weylGroup = 8 := by
+  obtain ⟨e⟩ := nonempty_dihedralGroup_mulEquiv_weylGroup_of_hasCartanType_B_two P b h
+  rw [← Nat.card_congr e.toEquiv, DihedralGroup.nat_card]
+
+/-- The Weyl group of a root system of type `G₂` has order `12`. -/
+theorem card_weylGroup_of_hasCartanType_G2 (h : HasCartanType P b .G2) :
+    Nat.card P.weylGroup = 12 := by
+  obtain ⟨e⟩ := nonempty_dihedralGroup_mulEquiv_weylGroup_of_hasCartanType_G2 P b h
+  rw [← Nat.card_congr e.toEquiv, DihedralGroup.nat_card]
+
+end CartanType
+
+end TauCeti
