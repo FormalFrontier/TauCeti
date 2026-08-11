@@ -24,6 +24,8 @@ This supplies a prerequisite for Deliverable A, Layer 1 of
 
 ## Main results
 
+* `contDiff_comp_mulInvariantExp_mul_mulInvariantExp`: evaluating a smooth scalar function on two
+  multiplied exponential lines gives a smooth two-parameter function.
 * `mvfderiv_mulRightInvariantVectorField_mulInvariantVectorField_commute`: left- and
   right-invariant scalar differentiation commute at every group point.
 * `mlieBracket_mulRightInvariantVectorField_mulInvariantVectorField`: the corresponding
@@ -53,10 +55,6 @@ variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
 
 attribute [local instance] LieGroup.minSmoothnessThree
 attribute [local instance] ContMDiffMul.boundarylessManifold
-
-private theorem two_le_infinite_smoothness :
-    ((2 : ℕ∞) : ℕ∞ω) ≤ ((⊤ : ℕ∞) : ℕ∞ω) :=
-  WithTop.coe_le_coe.mpr le_top
 
 section Complete
 
@@ -96,7 +94,7 @@ private theorem spatialFDeriv_mulInvariantExp_mul_mulInvariantExp
       mulInvariantExp (I := I) (G := G) (p.2 • Y))
   have hF : ContDiff ℝ 2 F :=
     (contDiff_comp_mulInvariantExp_mul_mulInvariantExp f.contMDiff g X Y).of_le
-      two_le_infinite_smoothness
+      (ENat.natCast_le_of_coe_top_le_withTop le_rfl 2)
   have hFdiff : DifferentiableAt ℝ F (s, 0) := hF.differentiable (by norm_num) (s, 0)
   have hslice : DifferentiableAt ℝ (fun t => F (s, t)) 0 :=
     hFdiff.comp 0 ((differentiableAt_const s).prodMk differentiableAt_id)
@@ -130,7 +128,7 @@ private theorem timeFDeriv_mulInvariantExp_mul_mulInvariantExp
       mulInvariantExp (I := I) (G := G) (p.2 • Y))
   have hF : ContDiff ℝ 2 F :=
     (contDiff_comp_mulInvariantExp_mul_mulInvariantExp f.contMDiff g X Y).of_le
-      two_le_infinite_smoothness
+      (ENat.natCast_le_of_coe_top_le_withTop le_rfl 2)
   have hFdiff : DifferentiableAt ℝ F (0, t) := hF.differentiable (by norm_num) (0, t)
   have hpartial := hasDerivAt_parameterCurve hFdiff
   have hfAt := f.contMDiff.mdifferentiable (by simp)
@@ -170,7 +168,7 @@ theorem mvfderiv_mulRightInvariantVectorField_mulInvariantVectorField_commute
       contMDiff_mvfderiv_mulRightInvariantVectorField X f⟩
   have hF : ContDiff ℝ 2 F :=
     (contDiff_comp_mulInvariantExp_mul_mulInvariantExp f.contMDiff g X Y).of_le
-      two_le_infinite_smoothness
+      (ENat.natCast_le_of_coe_top_le_withTop le_rfl 2)
   -- Identify the two partial derivatives with the invariant directional derivatives.
   have hspaceFun : (fun s => spatialFDeriv F 0 s 1) =
       fun s => LYf (γX s * g) := by
@@ -220,7 +218,7 @@ theorem mlieBracket_mulRightInvariantVectorField_mulInvariantVectorField
     (V := mulRightInvariantVectorField X)
     (W := mulInvariantVectorField Y)
     (x := g)
-    (f.contMDiff.contMDiffAt.of_le two_le_infinite_smoothness)
+    (f.contMDiff.contMDiffAt.of_le (ENat.natCast_le_of_coe_top_le_withTop le_rfl 2))
     (by simp)
     ((contMDiff_mulRightInvariantVectorField_infty X).mdifferentiable
       (by simp)).mdifferentiableAt
