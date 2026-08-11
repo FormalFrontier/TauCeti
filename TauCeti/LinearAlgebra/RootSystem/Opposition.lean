@@ -30,21 +30,19 @@ positive roots, so it preserves that description.
 * `TauCeti.root_opposition`, `TauCeti.coroot'_opposition` and `TauCeti.opposition_involutive`: the
   opposition map is an involution of the root indices realising `α ↦ -w₀ α` on roots, and negating
   the longest-element translate on the coroot functionals.
-* `TauCeti.opposition_mem_support` and `TauCeti.bijOn_opposition_support`: **the opposition
-  involution permutes the simple roots.**
+* `TauCeti.opposition_mem_support`: **the opposition involution permutes the simple roots.**
 
 ## Implementation notes
 
 `TauCeti.opposition` is defined on all of `ι`, not on the subtype `↥b.support`, so that it composes
 with the permutation action of the Weyl group without coercions; `TauCeti.oppositionPerm` is its
-restriction to the base, and `TauCeti.bijOn_opposition_support` the unbundled form of that
-restriction. The definition spells root negation as `P.reflectionPerm i i` rather than through
-Mathlib's `RootPairing.indexNeg`, since the latter is not a global instance and would have to be
-introduced by a `let` at every use site. `TauCeti.oppositionPerm` is the `Equiv.Perm.subtypePerm`
-of the ambient `Function.Involutive.toPerm`; its membership hypothesis is rewritten along
-`Function.Involutive.coe_toPerm` instead of being supplied directly, because `TauCeti.opposition`
-is not `@[expose]` and the term is then not type-correct at reducible transparency, which blocks
-`rw` and `simp` on `TauCeti.coe_oppositionPerm`.
+restriction to the base. The definition spells root negation as `P.reflectionPerm i i` rather than
+through Mathlib's `RootPairing.indexNeg`, since the latter is not a global instance and would have
+to be introduced by a `let` at every use site. `TauCeti.oppositionPerm` is the
+`Equiv.Perm.subtypePerm` of the ambient `Function.Involutive.toPerm`; its membership hypothesis is
+rewritten along `Function.Involutive.coe_toPerm` instead of being supplied directly, because
+`TauCeti.opposition` is not `@[expose]` and the term is then not type-correct at reducible
+transparency, which blocks `rw` and `simp` on `TauCeti.coe_oppositionPerm`.
 
 ## References
 
@@ -77,7 +75,7 @@ et algèbres de Lie*, Ch. VI, §1.6.
 
 namespace TauCeti
 
-open Function Set
+open Function
 
 universe u v w x
 
@@ -162,14 +160,8 @@ theorem opposition_mem_support_iff {i : ι} : opposition P b i ∈ b.support ↔
   refine ⟨fun h ↦ ?_, opposition_mem_support P b⟩
   simpa only [opposition_opposition] using opposition_mem_support P b h
 
-/-- **The opposition involution restricts to a bijection of the simple roots.** -/
-theorem bijOn_opposition_support :
-    BijOn (opposition P b) (b.support : Set ι) (b.support : Set ι) :=
-  ⟨fun _ hi ↦ opposition_mem_support P b hi, (opposition_involutive P b).injective.injOn,
-    fun i hi ↦ ⟨opposition P b i, opposition_mem_support P b hi, opposition_involutive P b i⟩⟩
-
-/-- **The permutation of the base induced by the opposition involution**, the bundled form of
-`TauCeti.bijOn_opposition_support`. -/
+/-- **The permutation of the base induced by the opposition involution**: the restriction of
+`TauCeti.opposition` to the simple roots, which it permutes by `TauCeti.opposition_mem_support`. -/
 noncomputable def oppositionPerm : Equiv.Perm b.support :=
   -- The membership hypothesis is rewritten along `Involutive.coe_toPerm` rather than supplied
   -- directly, so that the resulting term stays type-correct at reducible transparency and
