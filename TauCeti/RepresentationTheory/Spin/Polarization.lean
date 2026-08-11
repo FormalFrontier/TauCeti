@@ -41,6 +41,7 @@ namespace TauCeti
 universe u v
 
 /-- The decomposition data used by the exterior model of a spin representation. -/
+@[ext]
 structure SpinPolarizationData {K : Type u} [CommRing K] {V : Type v}
     [AddCommGroup V] [Module K V] (Q : QuadraticForm K V) where
   /-- The isotropic subspace used for exterior multiplication. -/
@@ -79,7 +80,7 @@ structure SpinPolarizationData {K : Type u} [CommRing K] {V : Type v}
   line_orthogonal' :
     ∀ z : line, ∀ y : W', QuadraticMap.polar Q z y = 0
 
-attribute [simp] SpinPolarizationData.decompositionEquiv_apply
+attribute [simp, grind =] SpinPolarizationData.decompositionEquiv_apply
   SpinPolarizationData.isotropic_W SpinPolarizationData.isotropic_W'
   SpinPolarizationData.pairingEquiv_apply SpinPolarizationData.lineCoordinate_sq
   SpinPolarizationData.line_orthogonal SpinPolarizationData.line_orthogonal'
@@ -87,6 +88,15 @@ attribute [simp] SpinPolarizationData.decompositionEquiv_apply
 namespace SpinPolarizationData
 
 noncomputable section
+
+/-- Recover the three components of a vector assembled from polarization coordinates. -/
+@[simp, grind =]
+theorem decompositionEquiv_symm_apply {K : Type u} [CommRing K] {V : Type v}
+    [AddCommGroup V] [Module K V] {Q : QuadraticForm K V} (P : SpinPolarizationData Q)
+    (x : P.W) (y : P.W') (z : P.line) :
+    P.decompositionEquiv.symm ((x : V) + (y : V) + (z : V)) = ((x, y), z) := by
+  apply P.decompositionEquiv.injective
+  rw [P.decompositionEquiv.apply_symm_apply, P.decompositionEquiv_apply]
 
 private abbrev SplitHalf (R : Type*) (n : ℕ) := Fin (n / 2) → R
 
@@ -447,7 +457,7 @@ private noncomputable def pullback {V V' : Type*} [AddCommGroup V] [Module K V]
     rw [hpolar]
     exact P.line_orthogonal' (eLine z) (eW' y)
 
-private def isometryEquivSumSquaresUnits {F : Type*} [Field F] [Invertible (2 : F)]
+private def isometryEquivSumSquaresUnits {F : Type*} [Field F] [NeZero (2 : F)]
     [IsSepClosed F]
     {I : Type*} [Fintype I] (w : I → Fˣ) :
     (QuadraticMap.weightedSumSquares F fun i ↦ (w i : F)).IsometryEquiv
