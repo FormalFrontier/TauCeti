@@ -5,7 +5,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.Probability.HasLaw
-public import Mathlib.Probability.Kernel.Composition.MeasureComp
 public import TauCeti.MeasureTheory.Measure.Dirac
 
 /-!
@@ -194,17 +193,6 @@ theorem graphPlan_smul (T : X → Y) (c : ℝ≥0∞) (μ : Measure X) :
 theorem graphPlan_dirac {x : X} (hT : AEMeasurable T (Measure.dirac x)) :
     graphPlan T (Measure.dirac x) = Measure.dirac (x, T x) :=
   map_dirac_of_aemeasurable (aemeasurable_graphMap hT)
-
-/-- The graph plan of the identity is the composition-product with the identity kernel. -/
-theorem graphPlan_id_eq_compProd (μ : Measure X) [SFinite μ] : graphPlan id μ = μ ⊗ₘ Kernel.id :=
-  Measure.compProd_id.symm
-
-/-- A graph plan is the composition-product of its source measure with the deterministic kernel
-of the map. This is what singles out the graph plans among all plans disintegrated over their
-first marginal. -/
-theorem graphPlan_eq_compProd_deterministic (hT : Measurable T) (μ : Measure X) [SFinite μ] :
-    graphPlan T μ = μ ⊗ₘ Kernel.deterministic T hT :=
-  (Measure.compProd_deterministic hT).symm
 
 /-- Postcomposing a transport map pushes the graph plan through the second coordinate. -/
 theorem graphPlan_comp {R : Y → Z} (hT : AEMeasurable T μ) (hR : AEMeasurable R (μ.map T)) :
