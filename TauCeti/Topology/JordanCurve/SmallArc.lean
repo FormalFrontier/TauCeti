@@ -91,16 +91,36 @@ of two points being close, so `X` carries a `PseudoMetricSpace` instance. Nothin
 in particular the curve is not required to lie in `ℂ`, so `∂Ω` may be met at whatever generality a
 consumer has it.
 
+## Joining the two points by an injective path
+
+A consumer that *joins* the small arc to another one — gluing two arcs along their two common
+endpoints into a closed curve — needs it as a path rather than as a set, and needs that path
+injective, since a path-connected set carries paths with arbitrary repetitions. The last two
+statements below supply exactly that, and nothing more: an injective path with the two prescribed
+endpoints, running inside the curve, whose range is of small diameter. They relate its range to
+neither of the two arcs of the cut above.
+
+Their witness on the circle is Mathlib's arc `Circle.path`, injective by
+`Circle.path_injective_of_ne` and reversed by `Path.symm` when the counterclockwise direction is the
+long way round; transporting it along the parametrization, which is injective and continuous, gives
+an injective path along the curve. Its diameter is bounded by the same two uniform continuities,
+which are recorded here once and spent by both transports.
+
 ## Main results
 
 * `TauCeti.exists_isPreconnected_union_eq_compl_pair_circle_diam_le` — two distinct points cut the
   circle into two preconnected arcs, the first of which is of diameter at most `π / 2` times their
-  distance even after the two points are put back.
+  distance even after the two points are put back, and
+  `TauCeti.exists_path_injective_diam_range_le_circle` — two distinct points of the circle are the
+  endpoints of an injective path whose range has diameter at most `π / 2` times their distance.
 * `TauCeti.IsJordanCurve.exists_pos_forall_diam_le` — **the main statement**: for every `ε > 0`
   there is a `δ > 0` such that two distinct points `p`, `q` of a Jordan curve at distance less than
   `δ` cut it into two arcs one of which has diameter at most `ε` together with `p` and `q`.
 * `TauCeti.IsJordanCurve.exists_pos_forall_exists_diam_le` — the same packaged with the cutting
   itself, producing the two arcs with the small one named first.
+* `TauCeti.IsJordanCurve.exists_pos_forall_exists_path_injective_diam_le` — two nearby points of a
+  Jordan curve are the endpoints of an injective path along it whose range is of diameter at
+  most `ε`.
 
 ## References
 
@@ -134,18 +154,15 @@ theorem exists_isPreconnected_union_eq_compl_pair_circle_diam_le {z w : Circle} 
   have hpre : ∀ x y : Circle, IsPreconnected (Circle.path x y '' Ioo 0 1) := fun x y =>
     isPreconnected_Ioo.image _ (Circle.path x y).continuous.continuousOn
   -- Putting the endpoints back — they are the values of the path at `0` and `1` — lands inside the
-  -- closed arc `Circle.range_path`, an image of an interval of angles of length `Circle.angleDiff`.
+  -- closed arc `Circle.range_path`, whose diameter is at most its angle.
   have hdiam : ∀ x y : Circle,
       Metric.diam (Circle.path x y '' Ioo 0 1 ∪ {x, y}) ≤ Circle.angleDiff x y := fun x y => by
     have hsub : Circle.path x y '' Ioo 0 1 ∪ {x, y} ⊆ range (Circle.path x y) :=
       union_subset (image_subset_range _ _)
         (insert_subset ⟨0, (Circle.path x y).source⟩
           (singleton_subset_iff.2 ⟨1, (Circle.path x y).target⟩))
-    refine (Metric.diam_mono hsub
-      (isCompact_range (Circle.path x y).continuous).isBounded).trans ?_
-    rw [Circle.range_path]
-    simpa using diam_circleExp_image_Icc_le (a := Complex.arg (x : ℂ))
-      (b := Circle.angleDiff x y + Complex.arg (x : ℂ)) (by simp [Circle.angleDiff_nonneg])
+    exact (Metric.diam_mono hsub
+      (isCompact_range (Circle.path x y).continuous).isBounded).trans (diam_range_circlePath_le x y)
   have hmin := min_angleDiff_le_pi_div_two_mul_dist z w
   -- Name first whichever of the two arcs is the shorter; its length is bounded by the chord.
   rcases le_total (Circle.angleDiff z w) (Circle.angleDiff w z) with hle | hle
@@ -154,6 +171,40 @@ theorem exists_isPreconnected_union_eq_compl_pair_circle_diam_le {z w : Circle} 
   · refine ⟨_, _, hpre w z, hpre z w, by rw [union_comm]; exact hunion, ?_⟩
     rw [pair_comm z w]
     exact (hdiam w z).trans ((le_min_iff.mpr ⟨hle, le_rfl⟩).trans hmin)
+
+/-- **Two points of the circle are joined by a short injective path.** Two distinct points of the
+circle are the endpoints of an injective path whose range has diameter at most `π / 2` times their
+distance.
+
+The witness is Mathlib's arc `Circle.path z w`, injective by `Circle.path_injective_of_ne`, taken in
+the direction in which `Circle.angleDiff` is smaller, and its reverse otherwise; reversing changes
+neither the range (`Path.symm_range`) nor injectivity. Only the endpoints, the injectivity and the
+diameter bound are recorded: nothing is stated relating the range to either piece of the cut of
+`TauCeti.exists_isPreconnected_union_eq_compl_pair_circle_diam_le`.
+
+The diameter bound is `TauCeti.diam_range_circlePath_le` — the arc bounds the chords across it —
+fed the comparison `TauCeti.min_angleDiff_le_pi_div_two_mul_dist` of the shorter arc with the chord,
+which is the comparison that bounds the short arc there too. -/
+theorem exists_path_injective_diam_range_le_circle {z w : Circle} (hzw : z ≠ w) :
+    ∃ γ : Path z w, Function.Injective γ ∧ Metric.diam (range γ) ≤ π / 2 * dist z w := by
+  have hmin := min_angleDiff_le_pi_div_two_mul_dist z w
+  rcases le_total (Circle.angleDiff z w) (Circle.angleDiff w z) with hle | hle
+  · exact ⟨Circle.path z w, Circle.path_injective_of_ne hzw,
+      (diam_range_circlePath_le z w).trans ((le_min_iff.mpr ⟨le_rfl, hle⟩).trans hmin)⟩
+  · refine ⟨(Circle.path w z).symm, ?_, ?_⟩
+    · intro a b hab
+      simp only [Path.symm_apply, Function.comp_apply] at hab
+      exact unitInterval.symm_bijective.injective (Circle.path_injective_of_ne hzw.symm hab)
+    · rw [Path.symm_range]
+      exact (diam_range_circlePath_le w z).trans ((le_min_iff.mpr ⟨hle, le_rfl⟩).trans hmin)
+
+/-- The scaling shared by the two `δ`-`η` forms below: a distance smaller than `2 / π * η` has
+`π / 2` times it smaller than `η`, which is how a bound stated as a multiple of the chord becomes a
+bound below a prescribed tolerance. -/
+private lemma pi_div_two_mul_lt {η d : ℝ} (hη : 0 < η) (hd : d < 2 / π * η) : π / 2 * d < η := by
+  have hπ : 0 < π := Real.pi_pos
+  calc π / 2 * d < π / 2 * (2 / π * η) := mul_lt_mul_of_pos_left hd (by positivity)
+    _ = η := by field_simp
 
 /-- **Two nearby points cut a short arc off the circle**: the `δ`-`η` form of
 `TauCeti.exists_isPreconnected_union_eq_compl_pair_circle_diam_le`, in which the bound on the
@@ -169,14 +220,50 @@ private theorem exists_pos_forall_isPreconnected_union_eq_compl_pair_circle_diam
   refine ⟨2 / π * η, by positivity, fun z w hzw hd => ?_⟩
   obtain ⟨P, Q, hPc, hQc, hunion, hPd⟩ :=
     exists_isPreconnected_union_eq_compl_pair_circle_diam_le hzw
-  refine ⟨P, Q, hPc, hQc, hunion, hPd.trans_lt ?_⟩
-  calc π / 2 * dist z w < π / 2 * (2 / π * η) := by
-        exact mul_lt_mul_of_pos_left hd (by positivity)
-    _ = η := by field_simp
+  exact ⟨P, Q, hPc, hQc, hunion, hPd.trans_lt (pi_div_two_mul_lt hη hd)⟩
+
+/-- **Two nearby points of the circle are joined by a short injective path**: the `δ`-`η` form of
+`TauCeti.exists_path_injective_diam_range_le_circle`, in the shape the transport to a Jordan curve
+consumes. -/
+private theorem exists_pos_forall_exists_path_injective_diam_range_lt_circle {η : ℝ} (hη : 0 < η) :
+    ∃ δ > 0, ∀ ⦃z w : Circle⦄, z ≠ w → dist z w < δ →
+      ∃ γ : Path z w, Function.Injective γ ∧ Metric.diam (range γ) < η := by
+  have hπ : 0 < π := Real.pi_pos
+  refine ⟨2 / π * η, by positivity, fun z w hzw hd => ?_⟩
+  obtain ⟨γ, hinj, hdiam⟩ := exists_path_injective_diam_range_le_circle hzw
+  exact ⟨γ, hinj, hdiam.trans_lt (pi_div_two_mul_lt hη hd)⟩
 
 /-! ## Cutting a Jordan curve -/
 
 variable {X : Type*} [PseudoMetricSpace X] {C : Set X} {ε : ℝ}
+
+/-- **Uniform continuity of the parametrization**, in the form the two transports below spend it:
+for every `ε > 0` there is an `η > 0` such that a set of parameters of diameter less than `η` is
+carried by `TauCeti.jordanParam e` to a set of diameter at most `ε`.
+
+The circle is compact, so the parametrization is uniformly continuous, and
+`Metric.dist_le_diam_of_mem` — the circle being bounded — reads the hypothesis on the diameter as a
+bound on the distance between any two of the parameters. -/
+private theorem exists_pos_forall_diam_image_jordanParam_le (e : C ≃ₜ Circle) (hε : 0 < ε) :
+    ∃ η > 0, ∀ s : Set Circle, Metric.diam s < η → Metric.diam (jordanParam e '' s) ≤ ε := by
+  obtain ⟨η, hη₀, hη⟩ := Metric.uniformContinuous_iff.mp
+    (CompactSpace.uniformContinuous_of_continuous (continuous_jordanParam e)) ε hε
+  refine ⟨η, hη₀, fun s hs => Metric.diam_le_of_forall_dist_le hε.le ?_⟩
+  rintro _ ⟨u, hu, rfl⟩ _ ⟨v, hv, rfl⟩
+  exact (hη ((Metric.dist_le_diam_of_mem
+    ((isCompact_univ (X := Circle)).isBounded.subset (subset_univ _)) hu hv).trans_lt hs)).le
+
+/-- **Uniform continuity of the inverse of the parametrization**, in the form the two transports
+below spend it: for every `δ₀ > 0` there is a `δ > 0` such that two points of the curve at distance
+less than `δ` are named by parameters at distance less than `δ₀`. The curve is compact, being
+homeomorphic to the circle. -/
+private theorem exists_pos_forall_dist_apply_lt (e : C ≃ₜ Circle) {δ₀ : ℝ} (hδ₀ : 0 < δ₀) :
+    ∃ δ > 0, ∀ p (hp : p ∈ C), ∀ q (hq : q ∈ C), dist p q < δ →
+      dist (e ⟨p, hp⟩) (e ⟨q, hq⟩) < δ₀ := by
+  have : CompactSpace C := e.symm.compactSpace
+  obtain ⟨δ, hδpos, hδ⟩ := Metric.uniformContinuous_iff.mp
+    (CompactSpace.uniformContinuous_of_continuous e.continuous) δ₀ hδ₀
+  exact ⟨δ, hδpos, fun p hp q hq hpq => hδ (by simpa [Subtype.dist_eq] using hpq)⟩
 
 /-- The set-theoretic content of locating the two transported arcs, applied symmetrically to the
 two sides of the cut in `TauCeti.IsJordanCurve.exists_pos_forall_diam_le`: if the disjoint sets `A`
@@ -210,40 +297,31 @@ private theorem IsJordanCurve.exists_pos_forall_exists_isPreconnected_diam_union
       ∃ P Q : Set X, IsPreconnected P ∧ IsPreconnected Q ∧ P ∪ Q = C \ {p, q} ∧
         Metric.diam (P ∪ {p, q}) ≤ ε := by
   obtain ⟨e⟩ := isJordanCurve_iff.mp h
-  have : CompactSpace C := isCompact_iff_compactSpace.mp h.isCompact
   set g := jordanParam e
   have hgc : Continuous g := continuous_jordanParam e
   have hginj : Function.Injective g := jordanParam_injective e
   have hgrange : range g = C := range_jordanParam e
   -- Uniform continuity of the parametrization turns short arcs into sets of small diameter.
-  obtain ⟨η, hη₀, hη⟩ := Metric.uniformContinuous_iff.mp
-    (CompactSpace.uniformContinuous_of_continuous hgc) ε hε
+  obtain ⟨η, hη₀, hη⟩ := exists_pos_forall_diam_image_jordanParam_le e hε
   obtain ⟨δ₀, hδ₀, hcut⟩ :=
     exists_pos_forall_isPreconnected_union_eq_compl_pair_circle_diam_lt hη₀
   -- Uniform continuity of its inverse turns nearby points into nearby parameters.
-  obtain ⟨δ, hδpos, hδ⟩ := Metric.uniformContinuous_iff.mp
-    (CompactSpace.uniformContinuous_of_continuous e.continuous) δ₀ hδ₀
+  obtain ⟨δ, hδpos, hδ⟩ := exists_pos_forall_dist_apply_lt e hδ₀
   refine ⟨δ, hδpos, fun p hp q hq hpq hpqδ => ?_⟩
   set z := e ⟨p, hp⟩
   set w := e ⟨q, hq⟩
   have hgz : g z = p := jordanParam_apply_apply e hp
   have hgw : g w = q := jordanParam_apply_apply e hq
   have hzw : z ≠ w := fun hh => hpq (congrArg Subtype.val (e.injective hh))
-  have hzwδ : dist z w < δ₀ := hδ (by simpa [Subtype.dist_eq] using hpqδ)
-  obtain ⟨P, Q, hPc, hQc, hunion, hPd⟩ := hcut hzw hzwδ
+  obtain ⟨P, Q, hPc, hQc, hunion, hPd⟩ := hcut hzw (hδ p hp q hq hpqδ)
   -- The closed short arc downstairs is the image of the closed short arc of parameters.
   have hclosed : g '' (P ∪ {z, w}) = g '' P ∪ {p, q} := by
     rw [image_union, image_insert_eq, image_singleton, hgz, hgw]
   have himg : g '' P ∪ g '' Q = C \ {p, q} := by
     rw [← image_union, hunion, Set.image_compl_eq_range_sdiff_image hginj, hgrange,
       image_insert_eq, image_singleton, hgz, hgw]
-  refine ⟨g '' P, g '' Q, hPc.image _ hgc.continuousOn, hQc.image _ hgc.continuousOn,
-    himg, ?_⟩
-  rw [← hclosed]
-  refine Metric.diam_le_of_forall_dist_le hε.le ?_
-  rintro _ ⟨u, hu, rfl⟩ _ ⟨v, hv, rfl⟩
-  exact (hη ((Metric.dist_le_diam_of_mem
-    ((isCompact_univ (X := Circle)).isBounded.subset (subset_univ _)) hu hv).trans_lt hPd)).le
+  exact ⟨g '' P, g '' Q, hPc.image _ hgc.continuousOn, hQc.image _ hgc.continuousOn,
+    himg, hclosed ▸ hη _ hPd⟩
 
 /-- **Two nearby points cut a small arc off a Jordan curve.** For every `ε > 0` there is a `δ > 0`
 with the following property: if `p` and `q` are two distinct points of a Jordan curve `C` at
@@ -317,5 +395,48 @@ theorem IsJordanCurve.exists_pos_forall_exists_diam_le (h : IsJordanCurve C) (h�
   · exact ⟨A, B, hAc, hBc, hdisj, hunion, hsep, hA⟩
   · exact ⟨B, A, hBc, hAc, hdisj.symm, by rw [union_comm]; exact hunion,
       fun S hS hSc => (hsep hS hSc).symm, hB⟩
+
+/-! ## Joining the two points by an injective path -/
+
+/-- **Two nearby points of a Jordan curve are joined by a small injective path along it.** For every
+`ε > 0` there is a `δ > 0` such that two distinct points `p`, `q` of a Jordan curve `C` at distance
+less than `δ` are the endpoints of an injective path whose range lies on `C` and has diameter at
+most `ε`.
+
+Injectivity is what a consumer joining this path to a second one needs — gluing two arcs along their
+common endpoints into a closed curve is a statement about paths — and it is not available from the
+path-connectedness of the arcs of `TauCeti.IsJordanCurve.exists_pos_forall_exists_diam_le`, which
+yields a path but no control of its repetitions.
+
+The transport is that of
+`TauCeti.IsJordanCurve.exists_pos_forall_exists_isPreconnected_diam_union_pair_le`, run on the
+circle statement `TauCeti.exists_path_injective_diam_range_le_circle` instead of on the cut into two
+arcs: the parametrization `TauCeti.jordanParam e` is injective and continuous, so it carries the
+injective path of parameters to an injective path along `C`, and both uniform continuities are spent
+exactly as before.
+
+Nothing is claimed here about the two arcs of `C \ {p, q}`: neither which of them the path
+traverses, nor that its range is one of them together with the endpoints. What the conclusion offers
+is a subset of `C` containing `p` and `q`, of diameter at most `ε`, traversed injectively. -/
+theorem IsJordanCurve.exists_pos_forall_exists_path_injective_diam_le (h : IsJordanCurve C)
+    (hε : 0 < ε) :
+    ∃ δ > 0, ∀ ⦃p : X⦄, p ∈ C → ∀ ⦃q : X⦄, q ∈ C → p ≠ q → dist p q < δ →
+      ∃ γ : Path p q, Function.Injective γ ∧ range γ ⊆ C ∧ Metric.diam (range γ) ≤ ε := by
+  obtain ⟨e⟩ := isJordanCurve_iff.mp h
+  obtain ⟨η, hη₀, hη⟩ := exists_pos_forall_diam_image_jordanParam_le e hε
+  obtain ⟨δ₀, hδ₀, hcut⟩ := exists_pos_forall_exists_path_injective_diam_range_lt_circle hη₀
+  obtain ⟨δ, hδpos, hδ⟩ := exists_pos_forall_dist_apply_lt e hδ₀
+  refine ⟨δ, hδpos, fun p hp q hq hpq hpqδ => ?_⟩
+  have hzw : e ⟨p, hp⟩ ≠ e ⟨q, hq⟩ := fun hh => hpq (congrArg Subtype.val (e.injective hh))
+  obtain ⟨γ, hinj, hdiam⟩ := hcut hzw (hδ p hp q hq hpqδ)
+  -- The path downstairs is the parametrization composed with the path of parameters.
+  refine ⟨(γ.map (continuous_jordanParam e)).cast (jordanParam_apply_apply e hp).symm
+    (jordanParam_apply_apply e hq).symm, ?_, ?_, ?_⟩ <;>
+    rw [Path.cast_coe, Path.map_coe]
+  · exact (jordanParam_injective e).comp hinj
+  · rw [range_comp]
+    exact (image_subset_range _ _).trans (range_jordanParam e).subset
+  · rw [range_comp]
+    exact hη _ hdiam
 
 end TauCeti

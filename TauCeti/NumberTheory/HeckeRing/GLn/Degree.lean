@@ -43,27 +43,6 @@ namespace HeckeRing.GLn
 
 variable (n : ℕ)
 
-private lemma natDiagGL_const_eq_scalar {c : ℕ} (hc : 0 < c) :
-    natDiagGL n (fun _ ↦ c) =
-      Matrix.GeneralLinearGroup.scalar (Fin n)
-        (Units.mk0 (c : ℚ) (by exact_mod_cast hc.ne')) := by
-  apply Units.ext
-  ext i j
-  simp only [natDiagGL_coe n _ fun _ ↦ hc, Matrix.GeneralLinearGroup.coe_scalar,
-    Matrix.scalar_apply, Matrix.diagonal_apply, Units.val_mk0]
-
-/-- A constant diagonal matrix is a scalar, hence commutes with everything — unconditionally
-in the constant, since `c = 0` sends `natDiagGL` to its junk value `1`. -/
-private lemma natDiagGL_const_comm (c : ℕ) (g : GL (Fin n) ℚ) :
-    natDiagGL n (fun _ ↦ c) * g = g * natDiagGL n (fun _ ↦ c) := by
-  rcases Nat.eq_zero_or_pos n with rfl | hn
-  -- at rank zero `GL (Fin 0) ℚ` is trivial
-  · exact Subsingleton.elim _ _
-  rcases Nat.eq_zero_or_pos c with rfl | hc
-  · rw [natDiagGL_of_not_pos n (not_forall.mpr ⟨⟨0, hn⟩, by simp⟩), one_mul, mul_one]
-  · rw [natDiagGL_const_eq_scalar n hc]
-    exact Matrix.GeneralLinearGroup.scalar_commute _ _
-
 /-- **The constant degree**: a constant diagonal matrix is scalar, hence central, so its
 double coset is a single coset and `deg T(c, ..., c) = 1`.
 

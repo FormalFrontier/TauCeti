@@ -73,12 +73,12 @@ private theorem hasCauchyPVAt_polarPart_term (decomp : PolarPartDecomposition f 
       (if k.val = 0 then
         decomp.coeff s k * cauchyPVAt γ a b (fun z => (z - (s : ℂ))⁻¹) (s : ℂ) else 0) := by
   rcases Nat.eq_zero_or_pos k.val with hk0 | hk_pos
-  · rw [if_pos hk0]
+  · rw [ite_eq_left hk0]
     refine (((h_imm.cauchyPVExistsAt_inv_sub hab
       h_interior).hasCauchyPVAt_cauchyPVAt).const_mul
         (decomp.coeff s k)).congr_along_curve fun t _ => ?_
     rw [hk0, zero_add, pow_one, div_eq_mul_inv]
-  · rw [if_neg (Nat.pos_iff_ne_zero.mp hk_pos)]
+  · rw [ite_eq_right (Nat.pos_iff_ne_zero.mp hk_pos)]
     by_cases hc : decomp.coeff s k = 0
     · exact HasCauchyPVAt.zero.congr_along_curve fun t _ => by rw [hc, zero_div]
     · have h_vanish := h_imm.hasCauchyPVAt_pow_inv hab h_interior

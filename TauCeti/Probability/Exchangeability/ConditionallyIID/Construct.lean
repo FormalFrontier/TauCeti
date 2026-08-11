@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Probability.Exchangeability.ConditionallyIID.Basic
+public import TauCeti.Probability.Exchangeability.FiniteMarginals
 public import TauCeti.MeasureTheory.Measure.ProductKernel
 -- Public: `iIndepFun` appears in the hypothesis of the degeneracy theorem.
 public import Mathlib.Probability.Independence.Basic
@@ -152,7 +153,7 @@ theorem conditionallyIIDWith_iidMixtureLaw (hP : Measurable P) :
         (fun ω : T × (ℕ → α) => (P ω.1, fun i : Fin m => ω.2 (k i))) = g (P t) := by
     intro t
     rw [Measure.dirac_prod, Measure.map_map hsel measurable_prodMk_left]
-    exact TauCeti.MeasureTheory.map_infinitePi_pair_block (P t) hk
+    exact TauCeti.MeasureTheory.map_infinitePi_pair_block (P t) (P t) hk
   -- the left-hand side: naturality of `bind` pushes the selection through the mixture, fibre by
   -- fibre
   have hleft : (iidMixtureLaw π P).map (fun ω => (P ω.1, fun i : Fin m => ω.2 (k i)))
@@ -229,6 +230,32 @@ theorem exists_map_eq_dirac_of_iIndepFun_iidMixtureLaw [IsProbabilityMeasure π]
       (MixedIIDWith.of_iIndepFun_identDistrib h hident)]
   change Measure.map (fun _ : T × (ℕ → α) => Q) (iidMixtureLaw π P) = Measure.dirac Q
   rw [Measure.map_const, measure_univ, one_smul]
+
+/-- **The prefix pushforward of the canonical mixture law.** Projecting `δ_t ⊗ (P t)^{⊗ℕ}` onto the
+first `n` path coordinates leaves `δ_t ⊗ (P t)^{⊗ Fin n}`, fibre by fibre over the mixing law. -/
+theorem map_prefixProjPair_iidMixtureLaw {T : Type*} [MeasurableSpace T] {π : Measure T}
+    {P : T → ProbabilityMeasure α} (hP : Measurable P) (n : ℕ) :
+    (iidMixtureLaw π P).map (prefixProjPair T α n)
+      = π.bind fun t =>
+          (Measure.dirac t).prod (ProbabilityMeasure.pi fun _ : Fin n => P t).toMeasure := by
+  have hker : Measurable fun t : T =>
+      (Measure.dirac t).prod (Measure.infinitePi fun _ : ℕ => (P t : Measure α)) :=
+    TauCeti.MeasureTheory.measurable_dirac_prod_infinitePi_const P hP
+  -- Fibre by fibre, the prefix projection turns the infinite power into the finite one.
+  have hstep : ∀ t : T,
+      ((Measure.dirac t).prod (Measure.infinitePi fun _ : ℕ => (P t : Measure α))).map
+          (prefixProjPair T α n)
+        = (Measure.dirac t).prod (ProbabilityMeasure.pi fun _ : Fin n => P t).toMeasure := by
+    intro t
+    have hcomp : (prefixProjPair T α n) ∘ (Prod.mk t)
+        = fun x : ℕ → α => (t, fun i : Fin n => x (i : ℕ)) := by
+      funext x; simp [prefixProjPair_apply]
+    rw [Measure.dirac_prod,
+      Measure.map_map (measurable_prefixProjPair T α n) measurable_prodMk_left, hcomp]
+    exact TauCeti.MeasureTheory.map_infinitePi_pair_block t (P t) Fin.val_injective
+  rw [iidMixtureLaw_def,
+    TauCeti.MeasureTheory.map_bind hker.aemeasurable (measurable_prefixProjPair T α n)]
+  simp_rw [hstep]
 
 end Probability
 

@@ -8,9 +8,9 @@ module
 public import Mathlib.Topology.Connected.Basic
 
 /-!
-# Two frontier lemmas: straddling, and splitting a domain in two
+# Three frontier lemmas: straddling, splitting a domain in two, and clinging to it from inside
 
-Two elementary facts about `frontier`, each the topological core of a step that a boundary
+Three elementary facts about `frontier`, each the topological core of a step that a boundary
 argument would otherwise carry out inside a concrete space.
 
 ## A connected set that straddles a set meets its frontier
@@ -51,15 +51,32 @@ sides themselves is purely set-theoretic: `s ⊆ U` and the covering `U ⊆ s �
 map is open and injective on two disjoint open sides supplies both image hypotheses, as the
 conformal one below does through the open mapping theorem and `Disjoint.image`.
 
+## What a set's frontier sees of a subset
+
+A subset `A` of a set `V` cannot reach `frontier V` except through its own frontier:
+
+> `frontier V ∩ closure A = frontier V ∩ frontier A`
+
+(`TauCeti.frontier_inter_closure_eq_frontier_inter_frontier`). The reason is that `closure A` is
+`A ∪ frontier A`, and a point of `A` on `frontier V` is already on `frontier A`: it is adherent to
+`A` and, since `interior A ⊆ interior V`, it is not interior to `A`. So the part of `frontier V`
+that `A` clings to has two interchangeable descriptions — as the reach of `closure A`, and as the
+meeting of two frontiers. The first is the one an argument about limits of points of `A` produces;
+the second is the one a diameter estimate consumes, `frontier` being where the estimates of a
+domain-splitting argument live.
+
 ## Consumers
 
-Both lemmas serve layer **L5** of `TauCetiRoadmap/ConformalMapping/README.md`, Carathéodory's
+All three lemmas serve layer **L5** of `TauCetiRoadmap/ConformalMapping/README.md`, Carathéodory's
 boundary correspondence. The first does so through
 `TauCeti/Analysis/Normed/Module/DiamFrontier.lean`: a ray leaving a bounded set crosses its
 frontier, which is what makes the frontier of such a set as wide as the set itself. The second is
 the splitting step of `TauCeti/Analysis/Complex/Conformal/CutDiameter.lean`, where `s` and `t` are
-the two sides of a circular crosscut of a domain and `u` is the crosscut arc. Nothing here is
-specific to those uses; neither lemma mentions a metric, let alone a holomorphic map.
+the two sides of a circular crosscut of a domain and `u` is the crosscut arc. The third is what
+lets `TauCeti/Analysis/Complex/Conformal/ClusterSet.lean` identify the boundary piece that one
+side of such a crosscut cuts off, whose description as a union of cluster sets is naturally a
+statement about a closure. Nothing here is specific to those uses; no lemma mentions a metric, let
+alone a holomorphic map.
 
 ## Main results
 
@@ -68,6 +85,8 @@ specific to those uses; neither lemma mentions a metric, let alone a holomorphic
 * `TauCeti.frontier_image_subset_image_union_frontier_image` — for a set split into two sides with
   disjoint open images plus a remainder, the frontier of the image of the side lying in that set
   lies on the image of the remainder and on the frontier of the image of the whole.
+* `TauCeti.frontier_inter_closure_eq_frontier_inter_frontier` — the frontier of a set meets the
+  closure of a subset exactly where it meets that subset's frontier.
 -/
 
 public section
@@ -145,5 +164,31 @@ theorem frontier_image_subset_image_union_frontier_image (hfs : IsOpen (f '' s))
   · exact Or.inr hpfr
 
 end ImageSplit
+
+section Inside
+
+variable {X : Type*} [TopologicalSpace X] {A V : Set X}
+
+/-- **The frontier of a set meets the closure of a subset exactly where it meets that subset's
+frontier.** For any `A ⊆ V`,
+
+> `frontier V ∩ closure A = frontier V ∩ frontier A`.
+
+Writing `closure A` as `A ∪ frontier A`, the first piece brings nothing new: a point of `A` on
+`frontier V` is adherent to `A` and is kept out of `interior A` by `interior A ⊆ interior V`, so it
+already lies on `frontier A`. Only the inclusion `A ⊆ V` is used — `V` need be neither open nor
+closed, and `A` is arbitrary.
+
+So the part of `frontier V` that `A` clings to may be described either as its meeting with
+`closure A` or as its meeting with `frontier A`. An argument about limits of points of `A` produces
+the first; a diameter estimate obtained by splitting `V` into pieces consumes the second. -/
+theorem frontier_inter_closure_eq_frontier_inter_frontier (hAV : A ⊆ V) :
+    frontier V ∩ closure A = frontier V ∩ frontier A := by
+  rw [closure_eq_self_union_frontier, inter_union_distrib_left]
+  refine union_eq_right.mpr fun x hx =>
+    ⟨hx.1, (mem_frontier_iff_notMem_interior hx.2).mpr fun hint => ?_⟩
+  exact (mem_frontier_iff_notMem_interior (hAV hx.2)).mp hx.1 (interior_mono hAV hint)
+
+end Inside
 
 end TauCeti

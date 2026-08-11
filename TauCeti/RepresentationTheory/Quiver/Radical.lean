@@ -49,9 +49,6 @@ nothing about the opposite inclusion, which it satisfies vacuously.
 * `TauCeti.pathSpan_eq_bot_of_isAcyclic`: for a finite acyclic quiver the filtration reaches `⊥`
   at the number of vertices, and `TauCeti.isNilpotent_of_mem_arrowIdeal`: every element of the
   arrow ideal is then nilpotent.
-* `TauCeti.vertexIdempotent_mul_mul_vertexIdempotent`: over an acyclic quiver `eᵥ f eᵥ` is the
-  coefficient of `f` on the trivial path at `v`, times `eᵥ`. This is what makes the trivial paths
-  visible to a two-sided ideal.
 * `TauCeti.jacobson_pathAlgebra_eq_arrowIdeal`: **the Jacobson radical of the path algebra of a
   finite acyclic quiver is the arrow ideal.**
 
@@ -113,13 +110,6 @@ noncomputable def pathSpan (n : ℕ) : Submodule k (pathAlgebra k Q) :=
   Submodule.span k (pathAlgebraBasis k Q '' {x : Quiver.TotalPath Q | n ≤ x.2.2.length})
 
 variable {k Q}
-
-/-- The coordinates of a basis path for the path basis. -/
-theorem pathAlgebraBasis_repr_single (x : Quiver.TotalPath Q) (c : k) :
-    (pathAlgebraBasis k Q).repr (single x c) = Finsupp.single x c := by
-  have hx : (single x c : pathAlgebra k Q) = c • pathAlgebraBasis k Q x := by
-    simp [coe_pathAlgebraBasis, ofPath_eq_single]
-  rw [hx, map_smul, Module.Basis.repr_self, Finsupp.smul_single, smul_eq_mul, mul_one]
 
 /-- An element lies in the `n`-th step of the length filtration exactly when every path carrying a
 nonzero coordinate has length at least `n`. -/
@@ -428,55 +418,13 @@ theorem arrowIdeal_le_jacobson (h : Quiver.IsAcyclic Q) :
   obtain ⟨u, rfl⟩ := hunit
   simpa using m.smul_mem (↑u⁻¹ : pathAlgebra k Q) hy
 
-/-- **Conjugating by a vertex idempotent reads off a coordinate.** Over an acyclic quiver the only
-path from `v` to `v` is the trivial one, so `eᵥ f eᵥ` is the coordinate of `f` on that path, times
-`eᵥ`. -/
-theorem vertexIdempotent_mul_mul_vertexIdempotent (h : Quiver.IsAcyclic Q) (v : Q)
-    (f : pathAlgebra k Q) :
-    vertexIdempotent k v * f * vertexIdempotent k v
-      = (pathAlgebraBasis k Q).repr f ⟨v, v, Quiver.Path.nil⟩ • vertexIdempotent k v := by
-  induction f using PathAlgebra.induction_linear with
-  | zero => simp
-  | add f g hf hg =>
-    rw [mul_add, add_mul, hf, hg, map_add, Finsupp.add_apply, add_smul]
-  | single x c =>
-    obtain ⟨a, b, p⟩ := x
-    rw [pathAlgebraBasis_repr_single, vertexIdempotent_eq_single, smul_single, mul_one]
-    by_cases hb : v = b
-    · subst hb
-      rw [single_mul_single_of_comp (p := Quiver.Path.nil) (q := p) 1 c, one_mul,
-        Quiver.Path.comp_nil]
-      by_cases ha : v = a
-      · subst ha
-        obtain rfl := h.eq_nil p
-        rw [single_mul_single_of_comp (p := Quiver.Path.nil) (q := Quiver.Path.nil) c 1, mul_one,
-          Quiver.Path.comp_nil, Finsupp.single_eq_same]
-      · have hne : (⟨a, v, p⟩ : Quiver.TotalPath Q) ≠ ⟨v, v, Quiver.Path.nil⟩ := by
-          intro heq
-          have hav : a = v := congrArg (fun z : Quiver.TotalPath Q => z.1) heq
-          exact ha hav.symm
-        rw [single_mul_single_of_not_composable
-          (x := ⟨a, v, p⟩) (y := ⟨v, v, Quiver.Path.nil⟩) ha c 1,
-          Finsupp.single_eq_of_ne' hne, single_zero]
-    · have hne : (⟨a, b, p⟩ : Quiver.TotalPath Q) ≠ ⟨v, v, Quiver.Path.nil⟩ := by
-        intro heq
-        have hbv : b = v := congrArg (fun z : Quiver.TotalPath Q => z.2.1) heq
-        exact hb hbv.symm
-      rw [single_mul_single_of_not_composable
-        (x := ⟨v, v, Quiver.Path.nil⟩) (y := ⟨a, b, p⟩) (fun hbv => hb hbv.symm) 1 c, zero_mul,
-        Finsupp.single_eq_of_ne' hne, single_zero]
-
 /-- No vertex idempotent lies in the Jacobson radical: it is a nonzero idempotent, so `1 - eᵥ` is
 not a unit, and the left ideal it generates is contained in a maximal one that would then contain
 `1`. -/
 theorem vertexIdempotent_notMem_jacobson (v : Q) :
     (vertexIdempotent k v : pathAlgebra k Q) ∉ Ring.jacobson (pathAlgebra k Q) := by
   intro hv
-  have hne : (vertexIdempotent k v : pathAlgebra k Q) ≠ 0 := by
-    have hb := (pathAlgebraBasis k Q).ne_zero (⟨v, v, Quiver.Path.nil⟩ : Quiver.TotalPath Q)
-    simp only [coe_pathAlgebraBasis] at hb
-    rw [vertexIdempotent_eq_single, ← ofPath_eq_single]
-    exact hb
+  have hne : (vertexIdempotent k v : pathAlgebra k Q) ≠ 0 := vertexIdempotent_ne_zero v
   have hproper : Ideal.span {1 - vertexIdempotent k v} ≠ (⊤ : Ideal (pathAlgebra k Q)) := by
     intro htop
     have hone : (1 : pathAlgebra k Q) ∈ Ideal.span {1 - vertexIdempotent k v} := by
@@ -511,7 +459,7 @@ theorem jacobson_pathAlgebra_eq_arrowIdeal (k : Type w) (Q : Type u) [Field k] [
   refine vertexIdempotent_notMem_jacobson (k := k) a ?_
   have hmem : (pathAlgebraBasis k Q).repr f ⟨a, a, Quiver.Path.nil⟩ • vertexIdempotent k a
       ∈ Ring.jacobson (pathAlgebra k Q) := by
-    rw [← vertexIdempotent_mul_mul_vertexIdempotent h a f]
+    rw [← vertexIdempotent_mul_mul_vertexIdempotent a h.eq_nil f]
     exact Ideal.mul_mem_right _ _ (Ideal.mul_mem_left _ _ hf)
   have hscale := Ideal.mul_mem_left (Ring.jacobson (pathAlgebra k Q))
     (algebraMap k (pathAlgebra k Q) ((pathAlgebraBasis k Q).repr f ⟨a, a, Quiver.Path.nil⟩)⁻¹) hmem

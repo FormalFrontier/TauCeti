@@ -368,9 +368,9 @@ private lemma block_form_transvec_lift {m : ℕ} (M : SpecialLinearGroup (Fin (m
     by_cases ha : a = 0
     · subst ha; by_cases hb : b = 0
       · subst hb; exact H00
-      · rw [H0j b hb, if_neg (Ne.symm hb)]
+      · rw [H0j b hb, ite_eq_right (Ne.symm hb)]
     · by_cases hb : b = 0
-      · subst hb; rw [Hi0 a ha, if_neg ha]
+      · subst hb; rw [Hi0 a ha, ite_eq_right ha]
       · obtain ⟨a', rfl⟩ := Fin.exists_succ_eq.mpr ha
         obtain ⟨b', rfl⟩ := Fin.exists_succ_eq.mpr hb
         have h := congr_fun (congr_fun (congr_arg Subtype.val hT_eq) a') b'
