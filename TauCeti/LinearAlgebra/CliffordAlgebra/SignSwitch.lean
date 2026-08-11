@@ -57,6 +57,25 @@ private theorem signSwitchGenerator_apply (x : N × R) :
           (P'.prod (QuadraticMap.sq (R := R) (A := R))) (0, 1) :=
   rfl
 
+private theorem square_generator_sum {A : Type*} [Ring A] (e v r : A)
+    (he : e * e = 1) (hve : v * e = -(e * v))
+    (hre : r * e = e * r) (hrv : r * v = v * r) :
+    (e * v + r * e) * (e * v + r * e) = -(v * v) + r * r := by
+  have hfactor₁ : e * v + r * e = e * (v + r) := by
+    rw [mul_add, hre]
+  have hfactor₂ : (v + r) * e = e * (r - v) := by
+    rw [add_mul, hve, hre, mul_sub]
+    abel
+  rw [hfactor₁]
+  calc
+    (e * (v + r)) * (e * (v + r)) = e * ((v + r) * e) * (v + r) := by
+      simp only [mul_assoc]
+    _ = e * (e * (r - v)) * (v + r) := by rw [hfactor₂]
+    _ = (r - v) * (v + r) := by rw [← mul_assoc e e, he, one_mul]
+    _ = -(v * v) + r * r := by
+      rw [sub_mul, mul_add, mul_add, hrv]
+      abel
+
 private theorem signSwitchGenerator_sq (h : P' = -P) (x : N × R) :
     signSwitchGenerator P' x * signSwitchGenerator P' x =
       algebraMap R _ ((P.prod (QuadraticMap.sq (R := R) (A := R))) x) := by
@@ -85,33 +104,9 @@ private theorem signSwitchGenerator_sq (h : P' = -P) (x : N × R) :
   have hve : v * e = -(e * v) := eq_neg_of_add_eq_zero_right hev
   have hre : r * e = e * r := Algebra.commutes x.2 e
   have hrv : r * v = v * r := Algebra.commutes x.2 v
-  have hterm1 : (e * v) * (e * v) = -(v * v) := by
-    calc
-      (e * v) * (e * v) = e * ((v * e) * v) := by simp only [mul_assoc]
-      _ = e * (-(e * v) * v) := by rw [hve]
-      _ = -(v * v) := by rw [neg_mul, mul_neg, ← mul_assoc, ← mul_assoc, he, one_mul]
-  have hterm2 : (e * v) * (r * e) = -(r * v) := by
-    calc
-      (e * v) * (r * e) = e * (v * r) * e := by simp only [mul_assoc]
-      _ = e * (r * v) * e := by rw [hrv]
-      _ = (e * r) * v * e := by simp only [mul_assoc]
-      _ = (r * e) * v * e := by rw [← hre]
-      _ = r * (e * v) * e := by rw [mul_assoc r e v]
-      _ = r * (e * (v * e)) := by simp only [mul_assoc]
-      _ = r * (e * (-(e * v))) := by rw [hve]
-      _ = -(r * v) := by rw [mul_neg, mul_neg, ← mul_assoc e e, he, one_mul]
-  have hterm3 : (r * e) * (e * v) = r * v := by
-    rw [mul_assoc r e, ← mul_assoc e e, he, one_mul]
-  have hterm4 : (r * e) * (r * e) = r * r := by
-    calc
-      (r * e) * (r * e) = r * (e * r) * e := by simp only [mul_assoc]
-      _ = r * (r * e) * e := by rw [← hre]
-      _ = r * r * (e * e) := by simp only [mul_assoc]
-      _ = r * r := by rw [he, mul_one]
   calc
-    (e * v + r * e) * (e * v + r * e) = -(v * v) + r * r := by
-      rw [mul_add, add_mul, add_mul, hterm1, hterm2, hterm3, hterm4]
-      abel
+    (e * v + r * e) * (e * v + r * e) = -(v * v) + r * r :=
+      square_generator_sum e v r he hve hre hrv
     _ = algebraMap R _ (P x.1 + x.2 * x.2) := by
       rw [hv, map_neg, neg_neg, ← map_mul, ← map_add]
     _ = algebraMap R _ ((P.prod (QuadraticMap.sq (R := R) (A := R))) x) := by
@@ -152,7 +147,7 @@ def signSwitchEquiv :
     (signSwitchTo_comp_signSwitchTo P (-P) rfl (neg_neg P).symm)
 
 /-- The sign-switch equivalence sends a generating pair to the product with the new positive
-generator plus its scalar component. -/
+generator plus its scalar component times the new positive generator. -/
 @[simp]
 theorem signSwitchEquiv_ι (x : N × R) :
     signSwitchEquiv P (_root_.CliffordAlgebra.ι _ x) =
@@ -167,9 +162,8 @@ theorem signSwitchEquiv_symm_apply_ι (x : N × R) :
     (signSwitchEquiv P).symm (_root_.CliffordAlgebra.ι _ x) =
       _root_.CliffordAlgebra.ι _ (0, 1) * _root_.CliffordAlgebra.ι _ (x.1, 0) +
         x.2 • _root_.CliffordAlgebra.ι _ (0, 1) := by
-  -- Expose the reverse lift stored in `AlgEquiv.ofAlgHom` so its generator equation applies.
-  change signSwitchTo (-P) P (neg_neg P).symm (_root_.CliffordAlgebra.ι _ x) = _
-  rw [signSwitchTo_ι, signSwitchGenerator_apply]
+  rw [signSwitchEquiv, AlgEquiv.ofAlgHom_symm, AlgEquiv.ofAlgHom_apply,
+    signSwitchTo_ι, signSwitchGenerator_apply]
 
 end SignSwitch
 

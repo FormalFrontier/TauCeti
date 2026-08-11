@@ -15,8 +15,10 @@ import Mathlib.LinearAlgebra.Matrix.Unique
 /-!
 # Hyperbolic Bott periodicity for real Clifford algebras
 
-This file proves the `(1, 1)` periodicity step for Clifford algebras. Adding one positive and one
-negative generator is equivalent to tensoring with two-by-two real matrices.
+This file proves the `(1, 1)` periodicity step for Clifford algebras: adding one positive and one
+negative generator is equivalent to tensoring with two-by-two real matrices. It also derives the
+signature-switch recurrence `Cliff(p + 2, q) ≅ Cliff(q, p) ⊗ M₂(ℝ)` from
+`TauCeti.CliffordAlgebra.signSwitchEquiv`.
 
 ## Main results
 
@@ -731,24 +733,24 @@ theorem realCliffordBottIterEquiv_succ (p q n : ℕ) :
 /-! ### Signature-switch recurrence -/
 
 private def signatureSwitchSplitIndexEquiv (p q : ℕ) :
-    Fin ((p + 1 + 1) + q) ≃ Fin ((p + 1) + q) ⊕ Fin 1 :=
+    Fin ((p + 1) + q) ≃ Fin (p + q) ⊕ Fin 1 :=
   finSumFinEquiv.symm |>.trans
-    (Equiv.sumCongr (splitLastEquiv (p + 1)) (Equiv.refl _)) |>.trans
-    (Equiv.sumAssoc (Fin (p + 1)) (Fin 1) (Fin q)) |>.trans
+    (Equiv.sumCongr (splitLastEquiv p) (Equiv.refl _)) |>.trans
+    (Equiv.sumAssoc (Fin p) (Fin 1) (Fin q)) |>.trans
     (Equiv.sumCongr (Equiv.refl _) (Equiv.sumComm (Fin 1) (Fin q))) |>.trans
-    (Equiv.sumAssoc (Fin (p + 1)) (Fin q) (Fin 1)).symm |>.trans
+    (Equiv.sumAssoc (Fin p) (Fin q) (Fin 1)).symm |>.trans
     (Equiv.sumCongr finSumFinEquiv (Equiv.refl _))
 
 private def signatureSwitchSplitLinearEquiv (p q : ℕ) :
-    (Fin ((p + 1 + 1) + q) → ℝ) ≃ₗ[ℝ]
-      (Fin ((p + 1) + q) → ℝ) × ℝ :=
-  (LinearEquiv.piCongrLeft' ℝ (fun _ : Fin ((p + 1 + 1) + q) ↦ ℝ)
+    (Fin ((p + 1) + q) → ℝ) ≃ₗ[ℝ]
+      (Fin (p + q) → ℝ) × ℝ :=
+  (LinearEquiv.piCongrLeft' ℝ (fun _ : Fin ((p + 1) + q) ↦ ℝ)
       (signatureSwitchSplitIndexEquiv p q)).trans
     ((LinearEquiv.sumArrowLequivProdArrow _ _ ℝ ℝ).trans
-      ((LinearEquiv.refl ℝ (Fin ((p + 1) + q) → ℝ)).prodCongr
+      ((LinearEquiv.refl ℝ (Fin (p + q) → ℝ)).prodCongr
         (LinearEquiv.piUnique ℝ fun _ : Fin 1 ↦ ℝ)))
 
-private theorem signatureSwitchSplitIndexEquiv_symm_inl_pos (p q : ℕ) (i : Fin (p + 1)) :
+private theorem signatureSwitchSplitIndexEquiv_symm_inl_pos (p q : ℕ) (i : Fin p) :
     (signatureSwitchSplitIndexEquiv p q).symm
         (Sum.inl (finSumFinEquiv (Sum.inl i))) =
       finSumFinEquiv (Sum.inl i.castSucc) := by
@@ -762,56 +764,56 @@ private theorem signatureSwitchSplitIndexEquiv_symm_inl_neg (p q : ℕ) (i : Fin
 
 private theorem signatureSwitchSplitIndexEquiv_symm_inr (p q : ℕ) :
     (signatureSwitchSplitIndexEquiv p q).symm (Sum.inr (0 : Fin 1)) =
-      finSumFinEquiv (Sum.inl (Fin.last (p + 1))) := by
+      finSumFinEquiv (Sum.inl (Fin.last p)) := by
   simp [signatureSwitchSplitIndexEquiv, splitLastEquiv]
 
-private theorem signatureSwitchSplitWeight_inl (p q : ℕ) (i : Fin ((p + 1) + q)) :
-    realCliffordWeight (p + 1 + 1) q
+private theorem signatureSwitchSplitWeight_inl (p q : ℕ) (i : Fin (p + q)) :
+    realCliffordWeight (p + 1) q
         ((signatureSwitchSplitIndexEquiv p q).symm (Sum.inl i)) =
-      realCliffordWeight (p + 1) q i := by
+      realCliffordWeight p q i := by
   rw [← finSumFinEquiv.apply_symm_apply i]
   rcases finSumFinEquiv.symm i with i | i
   · rw [signatureSwitchSplitIndexEquiv_symm_inl_pos]
     have hs :
-        (finSumFinEquiv (Sum.inl i.castSucc : Fin (p + 1 + 1) ⊕ Fin q) : ℕ) < p + 1 + 1 := by
-      exact i.castSucc.isLt
-    have ht : (finSumFinEquiv (Sum.inl i : Fin (p + 1) ⊕ Fin q) : ℕ) < p + 1 := by
-      simpa using i.isLt
+        (finSumFinEquiv (Sum.inl i.castSucc : Fin (p + 1) ⊕ Fin q) : ℕ) < p + 1 := by
+      simp
+    have ht : (finSumFinEquiv (Sum.inl i : Fin p ⊕ Fin q) : ℕ) < p := by
+      simp
     rw [realCliffordWeight_of_lt hs, realCliffordWeight_of_lt ht]
   · rw [signatureSwitchSplitIndexEquiv_symm_inl_neg]
-    have hs : p + 1 + 1 ≤
-        (finSumFinEquiv (Sum.inr i : Fin (p + 1 + 1) ⊕ Fin q) : ℕ) := by
+    have hs : p + 1 ≤
+        (finSumFinEquiv (Sum.inr i : Fin (p + 1) ⊕ Fin q) : ℕ) := by
       simp
-    have ht : p + 1 ≤ (finSumFinEquiv (Sum.inr i : Fin (p + 1) ⊕ Fin q) : ℕ) := by
+    have ht : p ≤ (finSumFinEquiv (Sum.inr i : Fin p ⊕ Fin q) : ℕ) := by
       simp
     rw [realCliffordWeight_of_le hs, realCliffordWeight_of_le ht]
 
 private theorem signatureSwitchSplitWeight_inr (p q : ℕ) (i : Fin 1) :
-    realCliffordWeight (p + 1 + 1) q
+    realCliffordWeight (p + 1) q
         ((signatureSwitchSplitIndexEquiv p q).symm (Sum.inr i)) = 1 := by
   fin_cases i
   -- Normalize the unique coordinate before using the named index lemma.
-  change realCliffordWeight (p + 1 + 1) q
+  change realCliffordWeight (p + 1) q
       ((signatureSwitchSplitIndexEquiv p q).symm (Sum.inr (0 : Fin 1))) = 1
   rw [signatureSwitchSplitIndexEquiv_symm_inr]
   exact realCliffordWeight_of_lt (by simp)
 
 private theorem signatureSwitchSplitLinearEquiv_fst (p q : ℕ)
-    (x : Fin ((p + 1 + 1) + q) → ℝ) (i : Fin ((p + 1) + q)) :
+    (x : Fin ((p + 1) + q) → ℝ) (i : Fin (p + q)) :
     (signatureSwitchSplitLinearEquiv p q x).1 i =
       x ((signatureSwitchSplitIndexEquiv p q).symm (Sum.inl i)) := by
   simp [signatureSwitchSplitLinearEquiv]
 
 private theorem signatureSwitchSplitLinearEquiv_snd (p q : ℕ)
-    (x : Fin ((p + 1 + 1) + q) → ℝ) :
+    (x : Fin ((p + 1) + q) → ℝ) :
     (signatureSwitchSplitLinearEquiv p q x).2 =
       x ((signatureSwitchSplitIndexEquiv p q).symm (Sum.inr 0)) := by
   simp [signatureSwitchSplitLinearEquiv]
 
 /-- The coordinate isometry which splits the last positive coordinate from a real signature. -/
 def realCliffordPositiveSplitIsometry (p q : ℕ) :
-    (realCliffordForm (p + 1 + 1) q).IsometryEquiv
-      ((realCliffordForm (p + 1) q).prod (QuadraticMap.sq (R := ℝ) (A := ℝ))) :=
+    (realCliffordForm (p + 1) q).IsometryEquiv
+      ((realCliffordForm p q).prod (QuadraticMap.sq (R := ℝ) (A := ℝ))) :=
   { signatureSwitchSplitLinearEquiv p q with
     map_app' := by
       intro x
@@ -819,18 +821,18 @@ def realCliffordPositiveSplitIsometry (p q : ℕ) :
         QuadraticMap.sq_apply]
       let y := signatureSwitchSplitLinearEquiv p q x
       calc
-        (∑ i, realCliffordWeight (p + 1) q i * (y.1 i * y.1 i)) + y.2 * y.2 =
-            (∑ i, realCliffordWeight (p + 1) q i * (y.1 i * y.1 i)) +
+        (∑ i, realCliffordWeight p q i * (y.1 i * y.1 i)) + y.2 * y.2 =
+            (∑ i, realCliffordWeight p q i * (y.1 i * y.1 i)) +
               ∑ _ : Fin 1, y.2 * y.2 := by
           rw [Fin.sum_univ_one]
         _ =
-            ∑ s : Fin ((p + 1) + q) ⊕ Fin 1, Sum.elim
-              (fun i => realCliffordWeight (p + 1) q i * (y.1 i * y.1 i))
+            ∑ s : Fin (p + q) ⊕ Fin 1, Sum.elim
+              (fun i => realCliffordWeight p q i * (y.1 i * y.1 i))
               (fun _ : Fin 1 => y.2 * y.2) s := by
           exact (Fintype.sum_sum_type (Sum.elim
-            (fun i => realCliffordWeight (p + 1) q i * (y.1 i * y.1 i))
+            (fun i => realCliffordWeight p q i * (y.1 i * y.1 i))
             (fun _ : Fin 1 => y.2 * y.2))).symm
-        _ = ∑ i, realCliffordWeight (p + 1 + 1) q i * (x i * x i) := by
+        _ = ∑ i, realCliffordWeight (p + 1) q i * (x i * x i) := by
           refine Fintype.sum_equiv (signatureSwitchSplitIndexEquiv p q).symm _ _ ?_
           rintro (i | i)
           · simp [y, signatureSwitchSplitLinearEquiv_fst, signatureSwitchSplitWeight_inl]
@@ -840,224 +842,196 @@ def realCliffordPositiveSplitIsometry (p q : ℕ) :
 /-- The positive coordinates retained by `realCliffordPositiveSplitIsometry`. -/
 @[simp]
 theorem realCliffordPositiveSplitIsometry_fst_pos (p q : ℕ)
-    (v : Fin ((p + 1 + 1) + q) → ℝ) (i : Fin (p + 1)) :
+    (v : Fin ((p + 1) + q) → ℝ) (i : Fin p) :
     (realCliffordPositiveSplitIsometry p q v).1 (Fin.castAdd q i) =
       v (Fin.castAdd q i.castSucc) := by
   -- Expose the bundled map; the local `Fin` equality only aligns dependent bounds.
   change (signatureSwitchSplitLinearEquiv p q v).1 _ = _
-  rw [signatureSwitchSplitLinearEquiv_fst]
-  rw [show Fin.castAdd q i = finSumFinEquiv (Sum.inl i) by ext; rfl,
-    signatureSwitchSplitIndexEquiv_symm_inl_pos]
-  congr 1
+  rw [signatureSwitchSplitLinearEquiv_fst, ← finSumFinEquiv_apply_left,
+    signatureSwitchSplitIndexEquiv_symm_inl_pos, finSumFinEquiv_apply_left]
 
 /-- The negative coordinates retained by `realCliffordPositiveSplitIsometry`. -/
 @[simp]
 theorem realCliffordPositiveSplitIsometry_fst_neg (p q : ℕ)
-    (v : Fin ((p + 1 + 1) + q) → ℝ) (i : Fin q) :
-    (realCliffordPositiveSplitIsometry p q v).1 (Fin.natAdd (p + 1) i) =
-      v (Fin.natAdd (p + 1 + 1) i) := by
+    (v : Fin ((p + 1) + q) → ℝ) (i : Fin q) :
+    (realCliffordPositiveSplitIsometry p q v).1 (Fin.natAdd p i) =
+      v (Fin.natAdd (p + 1) i) := by
   -- Expose the bundled map; the local `Fin` equality only aligns dependent bounds.
   change (signatureSwitchSplitLinearEquiv p q v).1 _ = _
-  rw [signatureSwitchSplitLinearEquiv_fst]
-  rw [show Fin.natAdd (p + 1) i = finSumFinEquiv (Sum.inr i) by ext; rfl,
-    signatureSwitchSplitIndexEquiv_symm_inl_neg]
-  congr 1
+  rw [signatureSwitchSplitLinearEquiv_fst, ← finSumFinEquiv_apply_right,
+    signatureSwitchSplitIndexEquiv_symm_inl_neg, finSumFinEquiv_apply_right]
 
 /-- The last positive coordinate extracted by `realCliffordPositiveSplitIsometry`. -/
 @[simp]
 theorem realCliffordPositiveSplitIsometry_snd (p q : ℕ)
-    (v : Fin ((p + 1 + 1) + q) → ℝ) :
+    (v : Fin ((p + 1) + q) → ℝ) :
     (realCliffordPositiveSplitIsometry p q v).2 =
-      v (Fin.castAdd q (Fin.last (p + 1))) := by
+      v (Fin.castAdd q (Fin.last p)) := by
   -- Expose the bundled map before applying its named second-coordinate equation.
   change (signatureSwitchSplitLinearEquiv p q v).2 = _
-  rw [signatureSwitchSplitLinearEquiv_snd, signatureSwitchSplitIndexEquiv_symm_inr]
-  congr 1
+  rw [signatureSwitchSplitLinearEquiv_snd, signatureSwitchSplitIndexEquiv_symm_inr,
+    finSumFinEquiv_apply_left]
 
-private def signatureSwitchStandardIndexEquiv (p q : ℕ) :
-    Fin ((q + 1) + (p + 1)) ≃ Fin ((p + 1) + q) ⊕ Fin 1 :=
+private def signatureSwitchNegIndexEquiv (p q : ℕ) : Fin (p + q) ≃ Fin (q + p) :=
   finSumFinEquiv.symm |>.trans
-    (Equiv.sumCongr (splitLastEquiv q) (Equiv.refl _)) |>.trans
-    (Equiv.sumAssoc (Fin q) (Fin 1) (Fin (p + 1))) |>.trans
-    (Equiv.sumCongr (Equiv.refl _) (Equiv.sumComm (Fin 1) (Fin (p + 1)))) |>.trans
-    (Equiv.sumAssoc (Fin q) (Fin (p + 1)) (Fin 1)).symm |>.trans
-    (Equiv.sumCongr (Equiv.sumComm (Fin q) (Fin (p + 1))) (Equiv.refl _)) |>.trans
-    (Equiv.sumCongr finSumFinEquiv (Equiv.refl _))
+    (Equiv.sumComm (Fin p) (Fin q)) |>.trans
+    finSumFinEquiv
 
-private def signatureSwitchStandardLinearEquiv (p q : ℕ) :
-    ((Fin ((p + 1) + q) → ℝ) × ℝ) ≃ₗ[ℝ]
-      (Fin ((q + 1) + (p + 1)) → ℝ) :=
-  ((LinearEquiv.refl ℝ (Fin ((p + 1) + q) → ℝ)).prodCongr
-      (LinearEquiv.piUnique ℝ fun _ : Fin 1 ↦ ℝ).symm).trans
-    ((LinearEquiv.sumArrowLequivProdArrow _ _ ℝ ℝ).symm.trans
-      (LinearEquiv.piCongrLeft ℝ (fun _ ↦ ℝ)
-        (signatureSwitchStandardIndexEquiv p q).symm))
-
-private theorem signatureSwitchStandardIndexEquiv_symm_inl_pos (p q : ℕ) (i : Fin (p + 1)) :
-    (signatureSwitchStandardIndexEquiv p q).symm
-        (Sum.inl (finSumFinEquiv (Sum.inl i))) =
+private theorem signatureSwitchNegIndexEquiv_inl (p q : ℕ) (i : Fin p) :
+    signatureSwitchNegIndexEquiv p q (finSumFinEquiv (Sum.inl i)) =
       finSumFinEquiv (Sum.inr i) := by
-  simp [signatureSwitchStandardIndexEquiv, splitLastEquiv]
+  simp [signatureSwitchNegIndexEquiv]
 
-private theorem signatureSwitchStandardIndexEquiv_symm_inl_neg (p q : ℕ) (i : Fin q) :
-    (signatureSwitchStandardIndexEquiv p q).symm
-        (Sum.inl (finSumFinEquiv (Sum.inr i))) =
-      finSumFinEquiv (Sum.inl i.castSucc) := by
-  simp [signatureSwitchStandardIndexEquiv, splitLastEquiv]
+private theorem signatureSwitchNegIndexEquiv_inr (p q : ℕ) (i : Fin q) :
+    signatureSwitchNegIndexEquiv p q (finSumFinEquiv (Sum.inr i)) =
+      finSumFinEquiv (Sum.inl i) := by
+  simp [signatureSwitchNegIndexEquiv]
 
-private theorem signatureSwitchStandardIndexEquiv_symm_inr (p q : ℕ) :
-    (signatureSwitchStandardIndexEquiv p q).symm (Sum.inr (0 : Fin 1)) =
-      finSumFinEquiv (Sum.inl (Fin.last q)) := by
-  simp [signatureSwitchStandardIndexEquiv, splitLastEquiv]
+private def signatureSwitchNegLinearEquiv (p q : ℕ) :
+    (Fin (p + q) → ℝ) ≃ₗ[ℝ] (Fin (q + p) → ℝ) :=
+  LinearEquiv.piCongrLeft' ℝ (fun _ : Fin (p + q) ↦ ℝ) (signatureSwitchNegIndexEquiv p q)
 
-private theorem signatureSwitchStandardWeight_inl (p q : ℕ) (i : Fin ((p + 1) + q)) :
-    realCliffordWeight (q + 1) (p + 1)
-        ((signatureSwitchStandardIndexEquiv p q).symm (Sum.inl i)) =
-      -realCliffordWeight (p + 1) q i := by
+private theorem signatureSwitchNegWeight (p q : ℕ) (i : Fin (p + q)) :
+    realCliffordWeight q p (signatureSwitchNegIndexEquiv p q i) =
+      -realCliffordWeight p q i := by
   rw [← finSumFinEquiv.apply_symm_apply i]
   rcases finSumFinEquiv.symm i with i | i
-  · rw [signatureSwitchStandardIndexEquiv_symm_inl_pos]
-    have hs : q + 1 ≤ (finSumFinEquiv (Sum.inr i : Fin (q + 1) ⊕ Fin (p + 1)) : ℕ) := by
-      simp
-    have ht : (finSumFinEquiv (Sum.inl i : Fin (p + 1) ⊕ Fin q) : ℕ) < p + 1 := by
-      exact i.isLt
-    rw [realCliffordWeight_of_le hs, realCliffordWeight_of_lt ht]
-  · rw [signatureSwitchStandardIndexEquiv_symm_inl_neg]
-    have hs : (finSumFinEquiv (Sum.inl i.castSucc : Fin (q + 1) ⊕ Fin (p + 1)) : ℕ) < q + 1 := by
-      exact i.castSucc.isLt
-    have ht : p + 1 ≤ (finSumFinEquiv (Sum.inr i : Fin (p + 1) ⊕ Fin q) : ℕ) := by
-      simp
-    rw [realCliffordWeight_of_lt hs, realCliffordWeight_of_le ht]
+  · simp only [signatureSwitchNegIndexEquiv, Equiv.trans_apply, Equiv.sumComm_apply,
+      finSumFinEquiv_apply_left]
+    rw [realCliffordWeight_of_le (by simp), realCliffordWeight_of_lt (by simp)]
+  · simp only [signatureSwitchNegIndexEquiv, Equiv.trans_apply, Equiv.sumComm_apply,
+      finSumFinEquiv_apply_right]
+    rw [realCliffordWeight_of_lt (by simp), realCliffordWeight_of_le (by simp)]
     norm_num
 
-private theorem signatureSwitchStandardWeight_inr (p q : ℕ) (i : Fin 1) :
-    realCliffordWeight (q + 1) (p + 1)
-        ((signatureSwitchStandardIndexEquiv p q).symm (Sum.inr i)) = 1 := by
-  fin_cases i
-  -- Normalize the unique coordinate before using the named index lemma.
-  change realCliffordWeight (q + 1) (p + 1)
-      ((signatureSwitchStandardIndexEquiv p q).symm (Sum.inr (0 : Fin 1))) = 1
-  rw [signatureSwitchStandardIndexEquiv_symm_inr]
-  exact realCliffordWeight_of_lt (by simp)
+private theorem signatureSwitchNegLinearEquiv_apply (p q : ℕ) (x : Fin (p + q) → ℝ)
+    (i : Fin (p + q)) :
+    signatureSwitchNegLinearEquiv p q x (signatureSwitchNegIndexEquiv p q i) = x i := by
+  rw [signatureSwitchNegLinearEquiv, LinearEquiv.piCongrLeft'_apply, Equiv.symm_apply_apply]
 
-private theorem signatureSwitchStandardLinearEquiv_inl (p q : ℕ)
-    (x : Fin ((p + 1) + q) → ℝ) (r : ℝ) (i : Fin ((p + 1) + q)) :
-    signatureSwitchStandardLinearEquiv p q (x, r)
-        ((signatureSwitchStandardIndexEquiv p q).symm (Sum.inl i)) = x i := by
-  simp [signatureSwitchStandardLinearEquiv, LinearEquiv.piCongrLeft,
-    LinearEquiv.piCongrLeft', Equiv.piCongrLeft']
+/-- Negating a real signature form swaps its positive and negative coordinates. -/
+def realCliffordFormNegIsometry (p q : ℕ) :
+    (-(realCliffordForm p q)).IsometryEquiv (realCliffordForm q p) :=
+  { signatureSwitchNegLinearEquiv p q with
+    map_app' := by
+      intro x
+      rw [realCliffordForm_apply, neg_apply, realCliffordForm_apply]
+      let y := signatureSwitchNegLinearEquiv p q x
+      calc
+        (∑ i, realCliffordWeight q p i * (y i * y i)) =
+            ∑ i, realCliffordWeight q p (signatureSwitchNegIndexEquiv p q i) *
+              (y (signatureSwitchNegIndexEquiv p q i) *
+                y (signatureSwitchNegIndexEquiv p q i)) := by
+          exact (Fintype.sum_equiv (signatureSwitchNegIndexEquiv p q)
+            (fun i ↦ realCliffordWeight q p (signatureSwitchNegIndexEquiv p q i) *
+              (y (signatureSwitchNegIndexEquiv p q i) *
+                y (signatureSwitchNegIndexEquiv p q i)))
+            (fun i ↦ realCliffordWeight q p i * (y i * y i))
+            (fun _ ↦ rfl)).symm
+        _ = -(∑ i, realCliffordWeight p q i * (x i * x i)) := by
+          dsimp only [y]
+          simp only [signatureSwitchNegWeight, signatureSwitchNegLinearEquiv_apply, neg_mul,
+            ← Finset.sum_neg_distrib] }
 
-private theorem signatureSwitchStandardLinearEquiv_inr (p q : ℕ)
-    (x : Fin ((p + 1) + q) → ℝ) (r : ℝ) (i : Fin 1) :
-    signatureSwitchStandardLinearEquiv p q (x, r)
-        ((signatureSwitchStandardIndexEquiv p q).symm (Sum.inr i)) = r := by
-  fin_cases i
-  -- Normalize the unique coordinate before using the linear-equivalence equation.
-  change signatureSwitchStandardLinearEquiv p q (x, r)
-      ((signatureSwitchStandardIndexEquiv p q).symm (Sum.inr (0 : Fin 1))) = r
-  simp [signatureSwitchStandardLinearEquiv, LinearEquiv.piCongrLeft,
-    LinearEquiv.piCongrLeft', Equiv.piCongrLeft']
+/-- Negated negative coordinates become positive coordinates under
+`realCliffordFormNegIsometry`. -/
+@[simp]
+theorem realCliffordFormNegIsometry_pos_of_neg (p q : ℕ)
+    (x : Fin (p + q) → ℝ) (i : Fin q) :
+    realCliffordFormNegIsometry p q x (Fin.castAdd p i) = x (Fin.natAdd p i) := by
+  change signatureSwitchNegLinearEquiv p q x _ = _
+  rw [← finSumFinEquiv_apply_left, ← signatureSwitchNegIndexEquiv_inr,
+    signatureSwitchNegLinearEquiv_apply, finSumFinEquiv_apply_right]
+
+/-- Negated positive coordinates become negative coordinates under
+`realCliffordFormNegIsometry`. -/
+@[simp]
+theorem realCliffordFormNegIsometry_neg_of_pos (p q : ℕ)
+    (x : Fin (p + q) → ℝ) (i : Fin p) :
+    realCliffordFormNegIsometry p q x (Fin.natAdd q i) = x (Fin.castAdd q i) := by
+  change signatureSwitchNegLinearEquiv p q x _ = _
+  rw [← finSumFinEquiv_apply_right, ← signatureSwitchNegIndexEquiv_inl,
+    signatureSwitchNegLinearEquiv_apply, finSumFinEquiv_apply_left]
 
 /-- The coordinate isometry which turns the sign-switched form into the standard signature. -/
 def realCliffordSignSwitchStandardIsometry (p q : ℕ) :
-    ((-(realCliffordForm (p + 1) q)).prod (QuadraticMap.sq (R := ℝ) (A := ℝ))).IsometryEquiv
-      (realCliffordForm (q + 1) (p + 1)) :=
-  { signatureSwitchStandardLinearEquiv p q with
-    map_app' := by
-      rintro ⟨x, r⟩
-      rw [realCliffordForm_apply, QuadraticMap.prod_apply, neg_apply,
-        realCliffordForm_apply, QuadraticMap.sq_apply]
-      let y := signatureSwitchStandardLinearEquiv p q (x, r)
-      calc
-        (∑ i, realCliffordWeight (q + 1) (p + 1) i * (y i * y i)) =
-            ∑ s : Fin ((p + 1) + q) ⊕ Fin 1,
-              realCliffordWeight (q + 1) (p + 1)
-                ((signatureSwitchStandardIndexEquiv p q).symm s) *
-                (y ((signatureSwitchStandardIndexEquiv p q).symm s) *
-                  y ((signatureSwitchStandardIndexEquiv p q).symm s)) := by
-          exact Fintype.sum_equiv (signatureSwitchStandardIndexEquiv p q) _ _
-            (fun i ↦ by rw [Equiv.symm_apply_apply])
-        _ = -(∑ i, realCliffordWeight (p + 1) q i * (x i * x i)) + r * r := by
-          dsimp only [y]
-          simp only [Fintype.sum_sum_type, signatureSwitchStandardWeight_inl,
-            signatureSwitchStandardWeight_inr, signatureSwitchStandardLinearEquiv_inl,
-            signatureSwitchStandardLinearEquiv_inr, Fin.sum_univ_one, neg_mul,
-            one_mul, ← Finset.sum_neg_distrib] }
+    ((-(realCliffordForm p q)).prod (QuadraticMap.sq (R := ℝ) (A := ℝ))).IsometryEquiv
+      (realCliffordForm (q + 1) p) :=
+  ((realCliffordFormNegIsometry p q).prod
+    (QuadraticMap.IsometryEquiv.refl (QuadraticMap.sq (R := ℝ) (A := ℝ)))).trans
+      (realCliffordPositiveSplitIsometry q p).symm
+
+private theorem signatureSwitchStandardIsometry_split (p q : ℕ)
+    (x : Fin (p + q) → ℝ) (r : ℝ) :
+    realCliffordPositiveSplitIsometry q p
+        (realCliffordSignSwitchStandardIsometry p q (x, r)) =
+      (realCliffordFormNegIsometry p q x, r) := by
+  change realCliffordPositiveSplitIsometry q p
+    ((realCliffordPositiveSplitIsometry q p).symm
+      (realCliffordFormNegIsometry p q x, r)) = _
+  exact (realCliffordPositiveSplitIsometry q p).apply_symm_apply _
 
 /-- Negated negative coordinates become positive coordinates under
 `realCliffordSignSwitchStandardIsometry`. -/
 @[simp]
-theorem realCliffordSignSwitchStandardIsometry_pos (p q : ℕ)
-    (x : Fin ((p + 1) + q) → ℝ) (r : ℝ) (i : Fin q) :
+theorem realCliffordSignSwitchStandardIsometry_pos_of_neg (p q : ℕ)
+    (x : Fin (p + q) → ℝ) (r : ℝ) (i : Fin q) :
     realCliffordSignSwitchStandardIsometry p q (x, r)
-        (Fin.castAdd (p + 1) (Fin.castSucc i)) = x (Fin.natAdd (p + 1) i) := by
-  -- Expose the bundled reindexing map; the local `Fin` equality aligns its sum blocks.
-  change signatureSwitchStandardLinearEquiv p q (x, r) _ = _
-  rw [show Fin.castAdd (p + 1) (Fin.castSucc i) =
-      (signatureSwitchStandardIndexEquiv p q).symm
-        (Sum.inl (finSumFinEquiv (Sum.inr i))) by
-        rw [signatureSwitchStandardIndexEquiv_symm_inl_neg]
-        congr 1,
-    signatureSwitchStandardLinearEquiv_inl]
-  congr 1
+        (Fin.castAdd p (Fin.castSucc i)) = x (Fin.natAdd p i) := by
+  have h := congrFun (congrArg Prod.fst (signatureSwitchStandardIsometry_split p q x r))
+    (Fin.castAdd p i)
+  simpa only [realCliffordPositiveSplitIsometry_fst_pos,
+    realCliffordFormNegIsometry_pos_of_neg] using h
 
 /-- The new positive line is the last positive coordinate under
 `realCliffordSignSwitchStandardIsometry`. -/
 @[simp]
-theorem realCliffordSignSwitchStandardIsometry_last_positive (p q : ℕ)
-    (x : Fin ((p + 1) + q) → ℝ) (r : ℝ) :
+theorem realCliffordSignSwitchStandardIsometry_last_pos (p q : ℕ)
+    (x : Fin (p + q) → ℝ) (r : ℝ) :
     realCliffordSignSwitchStandardIsometry p q (x, r)
-        (Fin.castAdd (p + 1) (Fin.last q)) = r := by
-  -- Expose the bundled reindexing map; the local `Fin` equality aligns its final block.
-  change signatureSwitchStandardLinearEquiv p q (x, r) _ = _
-  rw [show Fin.castAdd (p + 1) (Fin.last q) =
-      (signatureSwitchStandardIndexEquiv p q).symm (Sum.inr 0) by
-        rw [signatureSwitchStandardIndexEquiv_symm_inr]
-        congr 1,
-    signatureSwitchStandardLinearEquiv_inr]
+        (Fin.castAdd p (Fin.last q)) = r := by
+  have h := congrArg Prod.snd (signatureSwitchStandardIsometry_split p q x r)
+  simpa only [realCliffordPositiveSplitIsometry_snd] using h
 
 /-- Negated positive coordinates become negative coordinates under
 `realCliffordSignSwitchStandardIsometry`. -/
 @[simp]
-theorem realCliffordSignSwitchStandardIsometry_neg (p q : ℕ)
-    (x : Fin ((p + 1) + q) → ℝ) (r : ℝ) (i : Fin (p + 1)) :
+theorem realCliffordSignSwitchStandardIsometry_neg_of_pos (p q : ℕ)
+    (x : Fin (p + q) → ℝ) (r : ℝ) (i : Fin p) :
     realCliffordSignSwitchStandardIsometry p q (x, r)
         (Fin.natAdd (q + 1) i) = x (Fin.castAdd q i) := by
-  -- Expose the bundled reindexing map; the local `Fin` equality aligns its sum blocks.
-  change signatureSwitchStandardLinearEquiv p q (x, r) _ = _
-  rw [show Fin.natAdd (q + 1) i =
-      (signatureSwitchStandardIndexEquiv p q).symm
-        (Sum.inl (finSumFinEquiv (Sum.inl i))) by
-        rw [signatureSwitchStandardIndexEquiv_symm_inl_pos]
-        congr 1,
-    signatureSwitchStandardLinearEquiv_inl]
-  congr 1
+  have h := congrFun (congrArg Prod.fst (signatureSwitchStandardIsometry_split p q x r))
+    (Fin.natAdd q i)
+  simpa only [realCliffordPositiveSplitIsometry_fst_neg,
+    realCliffordFormNegIsometry_neg_of_pos] using h
 
 /-- One sign switch followed by the hyperbolic Bott step gives the signature-switch recurrence
 `Cliff(p + 2, q) ≅ Cliff(q, p) ⊗ M₂(ℝ)`. -/
 noncomputable def realCliffordSignatureSwitchRecurrenceEquiv (p q : ℕ) :
     _root_.CliffordAlgebra (realCliffordForm (p + 1 + 1) q) ≃ₐ[ℝ]
       _root_.CliffordAlgebra (realCliffordForm q p) ⊗[ℝ] Matrix (Fin 2) (Fin 2) ℝ :=
-  (_root_.CliffordAlgebra.equivOfIsometry (realCliffordPositiveSplitIsometry p q)).trans
+  (_root_.CliffordAlgebra.equivOfIsometry
+    (realCliffordPositiveSplitIsometry (p + 1) q)).trans
     ((CliffordAlgebra.signSwitchEquiv (realCliffordForm (p + 1) q)).trans
       ((_root_.CliffordAlgebra.equivOfIsometry
-        (realCliffordSignSwitchStandardIsometry p q)).trans
+        (realCliffordSignSwitchStandardIsometry (p + 1) q)).trans
           (realCliffordBottEquiv q p)))
 
 /-- The signature-switch recurrence sends a Clifford generator through its two coordinate
-isometries and the sign-switch generator formula. -/
+isometries and the sign-switch generator formula, then transports the result through
+`realCliffordBottEquiv q p`. -/
 @[simp]
 theorem realCliffordSignatureSwitchRecurrenceEquiv_ι (p q : ℕ)
     (v : Fin ((p + 1 + 1) + q) → ℝ) :
     realCliffordSignatureSwitchRecurrenceEquiv p q (_root_.CliffordAlgebra.ι _ v) =
       realCliffordBottEquiv q p (_root_.CliffordAlgebra.ι _
-        (realCliffordSignSwitchStandardIsometry p q (0, 1))) *
+        (realCliffordSignSwitchStandardIsometry (p + 1) q (0, 1))) *
         realCliffordBottEquiv q p (_root_.CliffordAlgebra.ι _
-          (realCliffordSignSwitchStandardIsometry p q
-            ((realCliffordPositiveSplitIsometry p q v).1, 0))) +
-          (realCliffordPositiveSplitIsometry p q v).2 •
+          (realCliffordSignSwitchStandardIsometry (p + 1) q
+            ((realCliffordPositiveSplitIsometry (p + 1) q v).1, 0))) +
+          (realCliffordPositiveSplitIsometry (p + 1) q v).2 •
             realCliffordBottEquiv q p (_root_.CliffordAlgebra.ι _
-              (realCliffordSignSwitchStandardIsometry p q (0, 1))) := by
+              (realCliffordSignSwitchStandardIsometry (p + 1) q (0, 1))) := by
   rw [realCliffordSignatureSwitchRecurrenceEquiv, AlgEquiv.trans_apply,
     _root_.CliffordAlgebra.equivOfIsometry_apply,
     _root_.CliffordAlgebra.map_apply_ι, AlgEquiv.trans_apply,
@@ -1065,7 +1039,6 @@ theorem realCliffordSignatureSwitchRecurrenceEquiv_ι (p q : ℕ)
     AlgEquiv.trans_apply, _root_.CliffordAlgebra.equivOfIsometry_apply,
     _root_.CliffordAlgebra.map_apply_ι]
   simp only [AlgEquiv.trans_apply, _root_.CliffordAlgebra.equivOfIsometry_apply,
-    _root_.CliffordAlgebra.map_apply_ι, QuadraticMap.IsometryEquiv.toIsometry]
-  rfl
+    _root_.CliffordAlgebra.map_apply_ι, QuadraticMap.IsometryEquiv.toIsometry_apply]
 
 end TauCeti
