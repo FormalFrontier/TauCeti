@@ -6,6 +6,8 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.BaseChange.Basic
 public import TauCeti.Algebra.AlgebraicGroup.DiagonalizableGroup.Functoriality
+public import TauCeti.Algebra.AlgebraicGroup.DiagonalizableGroup.FiniteType
+public import TauCeti.Algebra.AlgebraicGroup.FiniteType.BaseChange
 public import TauCeti.Algebra.Bialgebra.MonoidAlgebra.BaseChange
 
 /-!
@@ -32,6 +34,12 @@ algebra over `K`") and Layer 4 ("Diagonalizable groups and groups of multiplicat
 
 * `TauCeti.DiagonalizableGroup.baseChangePointsMulEquiv`: the multiplicative equivalence
   from base-changed points of `D(G)` to the character group `G →* Aˣ`.
+* `TauCeti.DiagonalizableGroup.baseChangeCoordinateRingIso`: base change of the finite-type
+  coordinate Hopf algebra of `D(G)` is the corresponding coordinate Hopf algebra over the new
+  base.
+* `TauCeti.DiagonalizableGroup.baseChangeCoordinateRingIso_hom_tmul` and
+  `TauCeti.DiagonalizableGroup.baseChangeCoordinateRingIso_inv_single`: its formulas on pure
+  tensors and monomials.
 * `TauCeti.DiagonalizableGroup.baseChangePointsMulEquiv_apply_coe`: the equivalence reads a
   point by evaluating it on `1 ⊗ single g 1`.
 * `TauCeti.DiagonalizableGroup.baseChangePointsMulEquiv_mapDomain_scalarTensorBialgEquiv`:
@@ -51,7 +59,7 @@ diagonalizable-group points calculation are Tau Ceti's
 
 public section
 
-open WithConv
+open CategoryTheory WithConv
 open scoped TensorProduct
 
 namespace TauCeti
@@ -64,6 +72,44 @@ variable {k : Type u} {K : Type v} {A : Type w} {G : Type w'}
 variable [CommSemiring k] [CommSemiring K] [CommSemiring A]
 variable [Algebra k K] [Algebra K A] [Algebra k A] [IsScalarTower k K A]
 variable [CommGroup G]
+
+/-- **The coordinate Hopf algebra of a finite-type diagonalizable group commutes with base
+change.** This is the bundled form of `MonoidAlgebra.scalarTensorBialgEquiv` for a finitely
+generated commutative group `G`:
+
+```text
+K ⊗[k] k[G] ≅ K[G].
+```
+-/
+noncomputable def baseChangeCoordinateRingIso
+    (k : Type u) (K : Type u) [CommRing k] [CommRing K] [Algebra k K]
+    (G : FGCommGrpCat.{u}) :
+    FiniteTypeCommHopfAlgCat.baseChange (K := K) (coordinateRing k G) ≅
+      coordinateRing K G :=
+  ObjectProperty.isoMk _ <|
+    _root_.CommHopfAlgCat.isoMk (TauCeti.MonoidAlgebra.scalarTensorBialgEquiv k K (G := G))
+
+/-- The forward map of the coordinate-ring base-change isomorphism sends `s ⊗ p` to `s` times
+the polynomial obtained by mapping the coefficients of `p` into the new base. -/
+@[simp]
+theorem baseChangeCoordinateRingIso_hom_tmul
+    (k : Type u) (K : Type u) [CommRing k] [CommRing K] [Algebra k K]
+    (G : FGCommGrpCat.{u}) (s : K) (p : MonoidAlgebra k G) :
+    FiniteTypeCommHopfAlgCat.toBialgHom
+        ((baseChangeCoordinateRingIso k K G).hom) (s ⊗ₜ[k] p) =
+      s • MonoidAlgebra.mapAlgHom G (Algebra.ofId k K) p := by
+  exact TauCeti.MonoidAlgebra.scalarTensorBialgEquiv_tmul k K s p
+
+/-- The inverse coordinate-ring base-change isomorphism sends a monomial over the new base to
+the corresponding pure tensor. -/
+@[simp]
+theorem baseChangeCoordinateRingIso_inv_single
+    (k : Type u) (K : Type u) [CommRing k] [CommRing K] [Algebra k K]
+    (G : FGCommGrpCat.{u}) (g : G) (s : K) :
+    FiniteTypeCommHopfAlgCat.toBialgHom
+        ((baseChangeCoordinateRingIso k K G).inv) (MonoidAlgebra.single g s) =
+      s ⊗ₜ[k] MonoidAlgebra.single g (1 : k) := by
+  exact TauCeti.MonoidAlgebra.scalarTensorBialgEquiv_symm_single k K g s
 
 /-- The `A`-points of the base change `K ⊗[k] k[G]` of the diagonalizable group `D(G)` are
 the character group `G →* Aˣ`.
