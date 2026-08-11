@@ -110,7 +110,7 @@ private theorem map_relNorm_le_mul_map_ringOfIntegersQuadraticConj
 
 /-- **The norm-ideal identity.** For quadratic conjugation `σ = ringOfIntegersQuadraticConj`, the
 product `I · σI` is the extension to `𝓞 K` of the relative norm ideal `relNorm ℤ I`. -/
-theorem mul_map_ringOfIntegersQuadraticConj_eq_map_relNorm
+@[simp] theorem mul_map_ringOfIntegersQuadraticConj_eq_map_relNorm
     (hmin : minpoly ℤ θ = X ^ 2 - C d) (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) (I : Ideal (𝓞 K)) :
     I * Ideal.map (ringOfIntegersQuadraticConj hmin hgen) I
       = Ideal.map (algebraMap ℤ (𝓞 K)) (Ideal.relNorm ℤ I) := by
