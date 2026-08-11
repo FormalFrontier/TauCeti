@@ -125,9 +125,9 @@ theorem matrixCoefficientHomLinear_apply (φ : Module.Dual R M) :
 
 /-- Matrix-coefficient morphisms jointly separate vectors whenever the linear dual does. -/
 theorem eq_of_matrixCoefficientHom_eq_of_dual_eval_injective
-    (hdual : Function.Injective (Module.Dual.eval R M)) {m n : M}
-    (h : ∀ φ : Module.Dual R M,
-      matrixCoefficientHom (C := C) φ m = matrixCoefficientHom (C := C) φ n) :
+    {m n : M} (h : ∀ φ : Module.Dual R M,
+      matrixCoefficientHom (C := C) φ m = matrixCoefficientHom (C := C) φ n)
+    (hdual : Function.Injective (Module.Dual.eval R M)) :
     m = n := by
   apply hdual
   apply LinearMap.ext
@@ -141,7 +141,7 @@ theorem eq_of_matrixCoefficientHom_eq [Module.Free R M] {m n : M}
       matrixCoefficientHom (C := C) φ m = matrixCoefficientHom (C := C) φ n) :
     m = n := by
   exact eq_of_matrixCoefficientHom_eq_of_dual_eval_injective
-    (Module.Free.chooseBasis R M).eval_injective h
+    h (Module.Free.chooseBasis R M).eval_injective
 
 section BaseChange
 
