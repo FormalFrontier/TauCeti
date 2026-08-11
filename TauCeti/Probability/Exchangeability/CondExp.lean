@@ -165,10 +165,9 @@ theorem Contractable.condExp_comp_future_ae_eq {μ : Measure Ω} [IsFiniteMeasur
     {X : ℕ → Ω → α} (hX : Contractable μ X) (hX_meas : ∀ n, Measurable (X n)) {r j k : ℕ}
     (hj : j < r) (hk : k < r) {f : α → ℝ} (hf : Measurable f) :
     μ[fun ω => f (X j ω) | tailFamily X r] =ᵐ[μ] μ[fun ω => f (X k ω) | tailFamily X r] := by
-  have hmono : ∀ m : ℕ, StrictMono (fun _ : Fin 1 => m) := fun m a b hab => absurd
-    (Subsingleton.elim a b) (ne_of_lt hab)
   simpa using hX.condExp_block_comp_future_ae_eq hX_meas (k := fun _ : Fin 1 => j)
-    (l := fun _ : Fin 1 => k) (hmono j) (hmono k) (fun _ => hj) (fun _ => hk)
+    (l := fun _ : Fin 1 => k) (Subsingleton.strictMono _) (Subsingleton.strictMono _)
+    (fun _ => hj) (fun _ => hk)
     (f := fun x : Fin 1 → α => f (x 0)) (hf.comp (measurable_pi_apply 0))
 
 /-- **Extreme members agree on the tail.** For a contractable process and arbitrary coordinates
@@ -181,10 +180,8 @@ theorem Contractable.condExp_comp_tailProcess_ae_eq {μ : Measure Ω} [IsFiniteM
     {X : ℕ → Ω → α} (hX : Contractable μ X) (hX_meas : ∀ n, Measurable (X n)) {j k : ℕ}
     {f : α → ℝ} (hf : Measurable f) :
     μ[fun ω => f (X j ω) | tailProcess X] =ᵐ[μ] μ[fun ω => f (X k ω) | tailProcess X] := by
-  have hmono : ∀ m : ℕ, StrictMono (fun _ : Fin 1 => m) := fun m a b hab => absurd
-    (Subsingleton.elim a b) (ne_of_lt hab)
   simpa using hX.condExp_block_comp_tailProcess_ae_eq hX_meas (k := fun _ : Fin 1 => j)
-    (l := fun _ : Fin 1 => k) (hmono j) (hmono k)
+    (l := fun _ : Fin 1 => k) (Subsingleton.strictMono _) (Subsingleton.strictMono _)
     (f := fun x : Fin 1 → α => f (x 0)) (hf.comp (measurable_pi_apply 0))
 
 end Probability
