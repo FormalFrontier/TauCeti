@@ -6,7 +6,7 @@ module
 
 public import Mathlib.RingTheory.FiniteType
 public import TauCeti.Algebra.AlgebraicGroup.Tangent.Cotangent
-public import TauCeti.RingTheory.Ideal.Cotangent
+public import TauCeti.RingTheory.Ideal.Cotangent.Basic
 
 /-!
 # Finiteness of the tangent space of a finite-type affine monoid
