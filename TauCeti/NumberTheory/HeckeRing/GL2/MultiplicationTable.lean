@@ -67,10 +67,10 @@ lemma heckeTScalar_mul_heckeTDiag (c a d : ℕ) :
   · simp [heckeTScalar_def, heckeTDiag_def]
   by_cases hcond : 0 < a ∧ 0 < d ∧ a ∣ d
   · exact heckeTScalar_mul_heckeTDiag_of_pos hc hcond.1 hcond.2.1 hcond.2.2
-  · have hzero : heckeTDiag a d = 0 := by rw [heckeTDiag_def]; exact if_neg hcond
+  · have hzero : heckeTDiag a d = 0 := by rw [heckeTDiag_def]; exact ite_eq_right hcond
     have hzero' : heckeTDiag (c * a) (c * d) = 0 := by
       rw [heckeTDiag_def]
-      refine if_neg fun h ↦ hcond ⟨?_, ?_, ?_⟩
+      refine ite_eq_right fun h ↦ hcond ⟨?_, ?_, ?_⟩
       · rcases Nat.eq_zero_or_pos a with rfl | ha
         · simp at h
         · exact ha
@@ -302,11 +302,11 @@ private lemma multiplicity_degree_sum_eq (D₁ D₂ Dout₁ Dout₂ : HeckeCoset
     rw [HeckeCosetModule.structureConstants_apply, HeckeCosetModule.add_apply,
       HeckeCosetModule.single_apply, HeckeCosetModule.single_apply]
     by_cases h1 : Dout₁ = A
-    · rw [if_pos h1, if_neg (h1 ▸ fun h ↦ hne h.symm), add_zero, ← h1]
-    · rw [if_neg h1]
+    · rw [ite_eq_left h1, ite_eq_right (h1 ▸ fun h ↦ hne h.symm), add_zero, ← h1]
+    · rw [ite_eq_right h1]
       by_cases h2 : Dout₂ = A
-      · rw [if_pos h2, zero_add, ← h2]
-      · rw [if_neg h2, add_zero,
+      · rw [ite_eq_left h2, zero_add, ← h2]
+      · rw [ite_eq_right h2, add_zero,
           hzero A (fun h ↦ h1 h.symm) (fun h ↦ h2 h.symm), Nat.cast_zero]
   have h1 : LeftCosetModule.deg Δ H ℤ
       (HeckeCosetModule.single ℤ D₁ 1 * HeckeCosetModule.single ℤ D₂ 1) =
@@ -622,12 +622,12 @@ theorem heckeT_prime_mul_heckeTDiag_one_prime_pow (k : ℕ) :
   rw [hsmul, HeckeCosetModule.single_apply, HeckeCosetModule.single_apply]
   by_cases h1 : diagCoset (![1, p ^ (k + 1)] : Fin 2 → ℕ) = A
   · have h12 : diagCoset (![p, p ^ k] : Fin 2 → ℕ) ≠ A := fun h ↦ hne (h1.trans h.symm)
-    rw [if_pos h1, if_neg h12, mul_zero, add_zero, ← h1, hm1, Nat.cast_one]
-  · rw [if_neg h1]
+    rw [ite_eq_left h1, ite_eq_right h12, mul_zero, add_zero, ← h1, hm1, Nat.cast_one]
+  · rw [ite_eq_right h1]
     by_cases h2 : diagCoset (![p, p ^ k] : Fin 2 → ℕ) = A
-    · rw [if_pos h2, mul_one, zero_add, ← h2, hm2]
+    · rw [ite_eq_left h2, mul_one, zero_add, ← h2, hm2]
       split_ifs <;> push_cast <;> ring
-    · rw [if_neg h2, mul_zero, add_zero,
+    · rw [ite_eq_right h2, mul_zero, add_zero,
         hzero A (fun h ↦ h1 h.symm) (fun h ↦ h2 h.symm), Nat.cast_zero]
 
 end SupportSubset

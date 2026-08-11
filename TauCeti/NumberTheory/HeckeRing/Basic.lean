@@ -117,12 +117,9 @@ variable {Δ' : Submonoid G} {H₁' H₂' : Subgroup G}
 double cosets, never split them. -/
 noncomputable def map (hΔ : Δ ≤ Δ') (h₁ : H₁ ≤ H₁') (h₂ : H₂ ≤ H₂') :
     HeckeCoset Δ H₁ H₂ → HeckeCoset Δ' H₁' H₂' :=
-  Quotient.lift (fun g ↦ mk H₁' H₂' (Submonoid.inclusion hΔ g)) fun a b hab ↦ by
-    have hab' : doubleCoset (a : G) H₁ H₂ = doubleCoset (b : G) H₁ H₂ := hab
-    obtain ⟨γ₁, hγ₁, γ₂, hγ₂, hb⟩ :=
-      mem_doubleCoset.mp (hab' ▸ mem_doubleCoset_self H₁ H₂ (a : G))
-    exact mk_eq_mk_of_mem (g₁ := Submonoid.inclusion hΔ a) (g₂ := Submonoid.inclusion hΔ b)
-      (mem_doubleCoset.mpr ⟨γ₁, h₁ hγ₁, γ₂, h₂ hγ₂, hb⟩)
+  Quotient.map (Submonoid.inclusion hΔ) fun a b hab ↦ by
+    obtain ⟨γ₁, hγ₁, γ₂, hγ₂, hb⟩ := DoubleCoset.rel_iff.mp hab
+    exact DoubleCoset.rel_iff.mpr ⟨γ₁, h₁ hγ₁, γ₂, h₂ hγ₂, hb⟩
 
 @[simp] lemma map_mk (hΔ : Δ ≤ Δ') (h₁ : H₁ ≤ H₁') (h₂ : H₂ ≤ H₂') (g : Δ) :
     map hΔ h₁ h₂ (mk H₁ H₂ g) = mk H₁' H₂' (Submonoid.inclusion hΔ g) := (rfl)

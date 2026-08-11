@@ -138,7 +138,7 @@ theorem orthonormal_L2piMul {κ : ι → Type*} {b : ∀ i, κ i → Lp 𝕜 2 (
   · subst hkl
     simp
   · obtain ⟨i, hi⟩ := Function.ne_iff.1 hkl
-    rw [Finset.prod_eq_zero (Finset.mem_univ i) (by simp [hi]), if_neg hkl]
+    rw [Finset.prod_eq_zero (Finset.mem_univ i) (by simp [hi]), ite_eq_right hkl]
 
 /-- The tensor construction is norm-multiplicative. -/
 @[simp]

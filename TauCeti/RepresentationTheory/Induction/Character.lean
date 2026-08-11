@@ -114,7 +114,7 @@ private theorem trace_ind_eq_sum_terms [S.FiniteIndex] [Fintype (RightCosets S)]
         simpa [mul_assoc] using
           (QuotientGroup.rightRel_apply.mp (Quotient.exact' hq'))
       simpa [mul_assoc] using S.inv_mem hinv
-    rw [if_pos hq, indTerm_apply, dif_pos (by simpa [mul_assoc] using hmem)]
+    rw [ite_eq_left hq, indTerm_apply, dite_eq_left (by simpa [mul_assoc] using hmem)]
     have hfactor :
         rightCosetFactor (S := S) (q.out * g) =
           ⟨q.out * g * q.out⁻¹, hmem⟩ := by
@@ -137,7 +137,7 @@ private theorem trace_ind_eq_sum_terms [S.FiniteIndex] [Fintype (RightCosets S)]
       refine (Quotient.sound' ?_).trans (Quotient.out_eq' q)
       rw [QuotientGroup.rightRel_apply]
       simpa [mul_assoc] using S.inv_mem h
-    rw [if_neg hq, indTerm_apply, dif_neg (by simpa [mul_assoc] using hmem)]
+    rw [ite_eq_right hq, indTerm_apply, dite_eq_right (by simpa [mul_assoc] using hmem)]
 
 end Rep
 
@@ -206,8 +206,8 @@ theorem character_indFDRep_sum_quotient {k G : Type u} [Field k] [Group G]
       intro t _
       rw [indTerm_apply]
       by_cases hmem : t.out⁻¹ * g * t.out ∈ S
-      · rw [dif_pos hmem, dif_pos hmem, hforgetCharacter]
-      · rw [dif_neg hmem, dif_neg hmem]
+      · rw [dite_eq_left hmem, dite_eq_left hmem, hforgetCharacter]
+      · rw [dite_eq_right hmem, dite_eq_right hmem]
 
 section ClassFun
 
