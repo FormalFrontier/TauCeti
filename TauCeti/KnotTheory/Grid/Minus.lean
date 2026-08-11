@@ -210,7 +210,6 @@ theorem minusDifferential_single (x : GridState n) :
 
 /-- The matrix coefficient of the minus differential on a basis generator is the weighted
 minus rectangle coefficient. -/
-@[simp]
 theorem minusDifferential_single_apply (x y : GridState n) :
     G.minusDifferential (Finsupp.single x 1) y = G.minusRectangleCoefficient x y := by
   simp
