@@ -74,19 +74,19 @@ variable {n : ℕ}
 
 private lemma typeB_sgn_mk_lt {a : ℕ} (h2 : a < 2 * n) (h : a < n) :
     sgn (⟨a, h2⟩ : Fin (2 * n)) = 1 := by
-  rw [sgn_def, if_pos h]
+  rw [sgn_def, ite_eq_left h]
 
 private lemma typeB_sgn_mk_ge {a : ℕ} (h2 : a < 2 * n) (h : n ≤ a) :
     sgn (⟨a, h2⟩ : Fin (2 * n)) = -1 := by
-  rw [sgn_def, if_neg (show ¬(a < n) by omega)]
+  rw [sgn_def, ite_eq_right (show ¬(a < n) by omega)]
 
 private lemma typeB_axis_mk_lt {a : ℕ} (h2 : a < 2 * n) (h : a < n) :
     axis (⟨a, h2⟩ : Fin (2 * n)) = a := by
-  rw [axis_def, if_pos h]
+  rw [axis_def, ite_eq_left h]
 
 private lemma typeB_axis_mk_ge {a : ℕ} (h2 : a < 2 * n) (h : n ≤ a) :
     axis (⟨a, h2⟩ : Fin (2 * n)) = a - n :=
-  by rw [axis_def, if_neg (show ¬(a < n) by omega)]
+  by rw [axis_def, ite_eq_right (show ¬(a < n) by omega)]
 
 private lemma typeB_wt_mk_lt {a : ℕ} (h2 : a < 2 * n) (h : a < n) :
     wt (⟨a, h2⟩ : Fin (2 * n)) = weight n a := by
@@ -260,14 +260,14 @@ private lemma typeBEnum_typeBSimplePair (i : Fin n) :
   have hswap : typeBSwapLast n =
       Equiv.swap (⟨n - 1, typeB_lt_two_mul_sq (show n - 1 < n by omega)⟩ : Fin (2 * n ^ 2))
         (typeBEnum₀ n (typeBShortPair n hpos)) := by
-    rw [typeBSwapLast, dif_pos hpos]
+    rw [typeBSwapLast, dite_eq_left hpos]
   by_cases hlast : (i : ℕ) + 1 = n
   · have hsp : typeBSimplePair i = typeBShortPair n hpos := by
-      rw [typeBSimplePair, dif_pos hlast]
+      rw [typeBSimplePair, dite_eq_left hlast]
     rw [typeBEnum, Equiv.trans_apply, hsp, hswap, Equiv.swap_apply_right]
     exact Fin.ext (show n - 1 = (i : ℕ) from by omega)
   · have hval : ((typeBEnum₀ n (typeBSimplePair i) : Fin (2 * n ^ 2)) : ℕ) = (i : ℕ) := by
-      rw [typeBSimplePair, dif_neg hlast, coe_typeBEnum₀,
+      rw [typeBSimplePair, dite_eq_right hlast, coe_typeBEnum₀,
         show n - (n - 1 + 1) = 0 by omega, Nat.mul_zero, Nat.add_zero]
       split_ifs <;> omega
     have hne1 : typeBEnum₀ n (typeBSimplePair i) ≠
@@ -278,7 +278,7 @@ private lemma typeBEnum_typeBSimplePair (i : Fin n) :
     have hne2 : typeBEnum₀ n (typeBSimplePair i) ≠ typeBEnum₀ n (typeBShortPair n hpos) := by
       intro hc
       have heq := (typeBEnum₀ n).injective hc
-      rw [typeBSimplePair, dif_neg hlast, typeBShortPair] at heq
+      rw [typeBSimplePair, dite_eq_right hlast, typeBShortPair] at heq
       have h3 := congrArg Prod.fst heq
       have h4 : n + (i : ℕ) + 1 = n - 1 := congrArg Fin.val h3
       omega
@@ -400,7 +400,7 @@ private lemma rootIdx_typeBSimplePair (i : Fin n) :
   by_cases hlast : (i : ℕ) + 1 = n
   · have hshort : shift (⟨n - 1, by omega⟩ : Fin (2 * n)) (⟨0, by omega⟩ : Fin n) =
         ⟨n - 1, by omega⟩ := shift_eq_self rfl
-    rw [rootIdx_def, typeBSimplePair, dif_pos hlast, typeBShortPair]
+    rw [rootIdx_def, typeBSimplePair, dite_eq_left hlast, typeBShortPair]
     rw [hshort, rootOfPair_self, typeB_wt_mk_lt _ (show n - 1 < n by omega),
       weight_eq_zero_of_le (le_of_eq hlast.symm), sub_zero]
     congr 1
@@ -412,7 +412,7 @@ private lemma rootIdx_typeBSimplePair (i : Fin n) :
     have hne : (⟨n + (i : ℕ) + 1, by omega⟩ : Fin (2 * n)) ≠ ⟨(i : ℕ), by omega⟩ := by
       simp only [ne_eq, Fin.mk.injEq]
       omega
-    rw [rootIdx_def, typeBSimplePair, dif_neg hlast]
+    rw [rootIdx_def, typeBSimplePair, dite_eq_right hlast]
     rw [hv, rootOfPair_of_ne hne, typeB_wt_mk_ge _ (show n ≤ n + (i : ℕ) + 1 by omega),
       typeB_wt_mk_lt _ (show (i : ℕ) < n by omega),
       show n + (i : ℕ) + 1 - n = (i : ℕ) + 1 by omega]
@@ -441,7 +441,7 @@ coroot lattice, so that the datum is the simply connected one. -/
   by_cases hlast : (i : ℕ) + 1 = n
   · have hshort : shift (⟨n - 1, by omega⟩ : Fin (2 * n)) (⟨0, by omega⟩ : Fin n) =
         ⟨n - 1, by omega⟩ := shift_eq_self rfl
-    rw [typeBSimplePair, dif_pos hlast, typeBShortPair, hshort, corootOfPair_self,
+    rw [typeBSimplePair, dite_eq_left hlast, typeBShortPair, hshort, corootOfPair_self,
       typeB_cwt_mk_lt _ (show n - 1 < n by omega)]
     funext k
     have hk := k.isLt
@@ -451,7 +451,7 @@ coroot lattice, so that the datum is the simply connected one. -/
     have hv : shift (⟨n + (i : ℕ) + 1, by omega⟩ : Fin (2 * n)) (⟨n - 1, by omega⟩ : Fin n) =
         ⟨(i : ℕ), by omega⟩ :=
       shift_mk _ _ _ (by split_ifs <;> omega)
-    rw [typeBSimplePair, dif_neg hlast, hv]
+    rw [typeBSimplePair, dite_eq_right hlast, hv]
     funext k
     have hk := k.isLt
     simp only [corootOfPair_apply, Pi.single_apply, Fin.ext_iff,
@@ -461,7 +461,7 @@ coroot lattice, so that the datum is the simply connected one. -/
       typeB_axis_mk_ge (n := n) (a := n + (i : ℕ) + 1) (by omega)
         (show n ≤ n + (i : ℕ) + 1 by omega),
       typeB_axis_mk_lt (n := n) (a := (i : ℕ)) (by omega) (show (i : ℕ) < n by omega)]
-    rw [if_neg (show ¬((-1 : ℤ) = 1) by norm_num)]
+    rw [ite_eq_right (show ¬((-1 : ℤ) = 1) by norm_num)]
     split_ifs <;> omega
 
 /-! ## The pinned base -/
@@ -500,7 +500,7 @@ private lemma linearIndependent_typeBSimpleRoot (n : ℕ) :
   simp only [sum_dotProduct, smul_dotProduct, smul_eq_mul, zero_dotProduct,
     typeBSimpleRoot_dotProduct_typeBDualVec, mul_ite, mul_zero] at h
   rw [Finset.sum_ite_eq' Finset.univ j fun i => g i * 2] at h
-  simp only [Finset.mem_univ, if_true] at h
+  simp only [Finset.mem_univ, ite_true] at h
   omega
 
 /-- The support of the pinned base of type `Bₙ`: the first `n` root indices. -/
@@ -589,18 +589,18 @@ private lemma typeB_mem_closure_single {w : Fin n → ℤ} (hw : ∀ j, 0 ≤ w 
 private lemma corootOfPair_apply_last {u v : Fin (2 * n)} {j : Fin n}
     (hj : (j : ℕ) + 1 = n) :
     corootOfPair u v j = if sgn u = sgn v then sgn u else 0 := by
-  rw [corootOfPair_apply, if_pos hj]
+  rw [corootOfPair_apply, ite_eq_left hj]
 
 private lemma corootOfPair_apply_of_ne {u v : Fin (2 * n)} {j : Fin n}
     (hj : (j : ℕ) + 1 ≠ n) :
     corootOfPair u v j = sgn u * (if axis u ≤ (j : ℕ) then 1 else 0) +
       sgn v * (if axis v ≤ (j : ℕ) then 1 else 0) := by
-  rw [corootOfPair_apply, if_neg hj]
+  rw [corootOfPair_apply, ite_eq_right hj]
 
 private lemma typeB_corootOfPair_nonneg_of_sgn_eq_one {u v : Fin (2 * n)} (hsu : sgn u = 1)
     (hsv : sgn v = 1) (j : Fin n) : 0 ≤ corootOfPair u v j := by
   by_cases hj : (j : ℕ) + 1 = n
-  · rw [corootOfPair_apply_last hj, hsu, hsv, if_pos rfl]
+  · rw [corootOfPair_apply_last hj, hsu, hsv, ite_eq_left rfl]
     omega
   · rw [corootOfPair_apply_of_ne hj, hsu, hsv]
     split_ifs <;> omega
@@ -608,7 +608,7 @@ private lemma typeB_corootOfPair_nonneg_of_sgn_eq_one {u v : Fin (2 * n)} (hsu :
 private lemma typeB_corootOfPair_nonpos_of_sgn_eq_neg_one {u v : Fin (2 * n)}
     (hsu : sgn u = -1) (hsv : sgn v = -1) (j : Fin n) : corootOfPair u v j ≤ 0 := by
   by_cases hj : (j : ℕ) + 1 = n
-  · rw [corootOfPair_apply_last hj, hsu, hsv, if_pos rfl]
+  · rw [corootOfPair_apply_last hj, hsu, hsv, ite_eq_left rfl]
     omega
   · rw [corootOfPair_apply_of_ne hj, hsu, hsv]
     split_ifs <;> omega
@@ -617,7 +617,7 @@ private lemma typeB_corootOfPair_nonneg_of_sgn_eq_one_of_sgn_eq_neg_one_of_axis_
     {u v : Fin (2 * n)} (hsu : sgn u = 1) (hsv : sgn v = -1)
     (hle : axis u ≤ axis v) (j : Fin n) : 0 ≤ corootOfPair u v j := by
   by_cases hj : (j : ℕ) + 1 = n
-  · rw [corootOfPair_apply_last hj, hsu, hsv, if_neg (show ¬((1 : ℤ) = -1) by norm_num)]
+  · rw [corootOfPair_apply_last hj, hsu, hsv, ite_eq_right (show ¬((1 : ℤ) = -1) by norm_num)]
   · rw [corootOfPair_apply_of_ne hj, hsu, hsv]
     split_ifs <;> omega
 
@@ -625,7 +625,7 @@ private lemma typeB_corootOfPair_nonpos_of_sgn_eq_one_of_sgn_eq_neg_one_of_axis_
     {u v : Fin (2 * n)} (hsu : sgn u = 1) (hsv : sgn v = -1)
     (hle : axis v ≤ axis u) (j : Fin n) : corootOfPair u v j ≤ 0 := by
   by_cases hj : (j : ℕ) + 1 = n
-  · rw [corootOfPair_apply_last hj, hsu, hsv, if_neg (show ¬((1 : ℤ) = -1) by norm_num)]
+  · rw [corootOfPair_apply_last hj, hsu, hsv, ite_eq_right (show ¬((1 : ℤ) = -1) by norm_num)]
   · rw [corootOfPair_apply_of_ne hj, hsu, hsv]
     split_ifs <;> omega
 

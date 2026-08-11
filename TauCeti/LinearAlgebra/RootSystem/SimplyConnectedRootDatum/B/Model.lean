@@ -109,7 +109,7 @@ lemma weight_eq_zero_of_le {a : ℕ} (ha : n ≤ a) : weight n a = 0 := by
   funext k
   have := k.isLt
   simp only [weight, Pi.zero_apply]
-  rw [if_neg (by omega), if_neg (by omega)]
+  rw [ite_eq_right (by omega), ite_eq_right (by omega)]
   ring
 
 /-- **The fundamental pairing identity of type `Bₙ`.** In the classical model `⟨e_a, 2 e_b⟩` is
@@ -134,19 +134,20 @@ lemma weight_dotProduct_coweight {a b : ℕ} (ha : a < n) :
       (if a = m then (if m + 1 = n then (2 : ℤ) else 1) *
         ((if m + 1 = n then 1 else 2) * (if b ≤ m then 1 else 0)) else 0)
       = 2 * (if b ≤ a then 1 else 0) := by
-    rw [Finset.sum_eq_single a (fun m _ hm => if_neg (Ne.symm hm))
-      (fun hm => absurd (Finset.mem_range.mpr ha) hm), if_pos rfl]
+    rw [Finset.sum_eq_single a (fun m _ hm => ite_eq_right (Ne.symm hm))
+      (fun hm => absurd (Finset.mem_range.mpr ha) hm), ite_eq_left rfl]
     split_ifs <;> ring
   have h2 : ∑ m ∈ Finset.range n,
       (if a = m + 1 ∧ m + 1 < n then
         (if m + 1 = n then (1 : ℤ) else 2) * (if b ≤ m then 1 else 0) else 0)
       = if a = 0 then 0 else 2 * (if b ≤ a - 1 then 1 else 0) := by
     rcases Nat.eq_zero_or_pos a with rfl | hpos
-    · rw [if_pos rfl]
-      exact Finset.sum_eq_zero fun m _ => if_neg (by omega)
-    · rw [if_neg (by omega), Finset.sum_eq_single (a - 1) (fun m _ hm => if_neg (by omega))
-        (fun hm => absurd (Finset.mem_range.mpr (by omega)) hm),
-        if_pos ⟨by omega, by omega⟩, if_neg (show ¬(a - 1 + 1 = n) by omega)]
+    · rw [ite_eq_left rfl]
+      exact Finset.sum_eq_zero fun m _ => ite_eq_right (by omega)
+    · rw [ite_eq_right (by omega),
+        Finset.sum_eq_single (a - 1) (fun m _ hm => ite_eq_right (by omega))
+          (fun hm => absurd (Finset.mem_range.mpr (by omega)) hm),
+        ite_eq_left ⟨by omega, by omega⟩, ite_eq_right (show ¬(a - 1 + 1 = n) by omega)]
   rw [step, Finset.sum_sub_distrib, h1, h2]
   split_ifs <;> omega
 
@@ -205,8 +206,8 @@ lemma eq_or_eq_opp_of_axis_eq {u v : Fin (2 * n)} (h : axis u = axis v) : u = v 
   simp only [axis] at h
   split_ifs at h with h1 h2 h2
   · exact Or.inl (Fin.ext (by omega))
-  · exact Or.inr (Fin.ext (by rw [coe_opp, if_neg h2]; omega))
-  · exact Or.inr (Fin.ext (by rw [coe_opp, if_pos h2]; omega))
+  · exact Or.inr (Fin.ext (by rw [coe_opp, ite_eq_right h2]; omega))
+  · exact Or.inr (Fin.ext (by rw [coe_opp, ite_eq_left h2]; omega))
   · exact Or.inl (Fin.ext (by omega))
 
 lemma ne_of_axis_ne {u v : Fin (2 * n)} (h : axis u ≠ axis v) : u ≠ v := fun hc => h (by rw [hc])
@@ -232,21 +233,22 @@ lemma wt_dotProduct_cwt (u v : Fin (2 * n)) :
   have h := weight_dotProduct_coweight (n := n) (a := axis u) (b := axis v) (axis_lt u)
   simp only [wt, cwt, smul_dotProduct, dotProduct_smul, smul_eq_mul, h]
   by_cases hax : axis u = axis v
-  · rw [if_pos hax]
+  · rw [ite_eq_left hax]
     rcases eq_or_eq_opp_of_axis_eq hax with rfl | rfl
-    · rw [if_pos rfl]
+    · rw [ite_eq_left rfl]
       rcases sgn_eq_one_or_neg_one u with hs | hs <;> rw [hs] <;> norm_num
-    · rw [if_neg (opp_ne_self v), if_pos rfl, sgn_opp]
+    · rw [ite_eq_right (opp_ne_self v), ite_eq_left rfl, sgn_opp]
       rcases sgn_eq_one_or_neg_one v with hs | hs <;> rw [hs] <;> norm_num
-  · rw [if_neg hax, if_neg (ne_of_axis_ne hax), if_neg (ne_of_axis_ne (by rwa [axis_opp]))]
+  · rw [ite_eq_right hax, ite_eq_right (ne_of_axis_ne hax),
+      ite_eq_right (ne_of_axis_ne (by rwa [axis_opp]))]
     ring
 
 @[simp] lemma wt_dotProduct_cwt_self (u : Fin (2 * n)) : wt u ⬝ᵥ cwt u = 2 := by
-  rw [wt_dotProduct_cwt, if_pos rfl]
+  rw [wt_dotProduct_cwt, ite_eq_left rfl]
 
 lemma wt_dotProduct_cwt_eq_zero {u v : Fin (2 * n)} (h1 : u ≠ v) (h2 : u ≠ opp v) :
     wt u ⬝ᵥ cwt v = 0 := by
-  rw [wt_dotProduct_cwt, if_neg h1, if_neg h2]
+  rw [wt_dotProduct_cwt, ite_eq_right h1, ite_eq_right h2]
 
 lemma wt_dotProduct_cwt_of_axis_ne {u v : Fin (2 * n)} (h : axis u ≠ axis v) :
     wt u ⬝ᵥ cwt v = 0 :=
@@ -269,11 +271,11 @@ lemma corootOfPair_comm (u v : Fin (2 * n)) : corootOfPair u v = corootOfPair v 
   funext k
   simp only [corootOfPair]
   by_cases hk : (k : ℕ) + 1 = n
-  · rw [if_pos hk, if_pos hk]
+  · rw [ite_eq_left hk, ite_eq_left hk]
     by_cases hs : sgn u = sgn v
-    · rw [if_pos hs, if_pos hs.symm, hs]
-    · rw [if_neg hs, if_neg fun hc => hs hc.symm]
-  · rw [if_neg hk, if_neg hk]
+    · rw [ite_eq_left hs, ite_eq_left hs.symm, hs]
+    · rw [ite_eq_right hs, ite_eq_right fun hc => hs hc.symm]
+  · rw [ite_eq_right hk, ite_eq_right hk]
     ring
 
 @[simp] lemma corootOfPair_self (u : Fin (2 * n)) : corootOfPair u u = cwt u := by
@@ -281,9 +283,9 @@ lemma corootOfPair_comm (u v : Fin (2 * n)) : corootOfPair u v = corootOfPair v 
   have hlt := axis_lt u
   simp only [corootOfPair, cwt, coweight, Pi.smul_apply, smul_eq_mul]
   by_cases hk : (k : ℕ) + 1 = n
-  · rw [if_pos hk, if_pos hk, if_pos (show axis u ≤ (k : ℕ) by omega)]
+  · rw [ite_eq_left hk, ite_eq_left hk, ite_eq_left (show axis u ≤ (k : ℕ) by omega)]
     simp
-  · rw [if_neg hk, if_neg hk]
+  · rw [ite_eq_right hk, ite_eq_right hk]
     ring
 
 /-- **The integral form of the halving.** -/
@@ -294,11 +296,11 @@ lemma corootOfPair_add_self (u v : Fin (2 * n)) :
   have hlt' := axis_lt v
   simp only [corootOfPair, cwt, coweight, Pi.add_apply, Pi.smul_apply, smul_eq_mul]
   by_cases hk : (k : ℕ) + 1 = n
-  · rw [if_pos hk, if_pos hk, if_pos (show axis u ≤ (k : ℕ) by omega),
-      if_pos (show axis v ≤ (k : ℕ) by omega)]
+  · rw [ite_eq_left hk, ite_eq_left hk, ite_eq_left (show axis u ≤ (k : ℕ) by omega),
+      ite_eq_left (show axis v ≤ (k : ℕ) by omega)]
     rcases sgn_eq_one_or_neg_one u with h | h <;> rcases sgn_eq_one_or_neg_one v with h' | h' <;>
       rw [h, h'] <;> norm_num
-  · rw [if_neg hk, if_neg hk]
+  · rw [ite_eq_right hk, ite_eq_right hk]
     ring
 
 lemma two_smul_corootOfPair (u v : Fin (2 * n)) :
@@ -393,7 +395,7 @@ def index (u v : Fin (2 * n)) : Fin (2 * n) × Fin n :=
 
 @[simp] lemma index_shift (z : Fin (2 * n) × Fin n) : index z.1 (shift z.1 z.2) = z := by
   have h := cdiff_shift z.1 z.2
-  rw [index, dif_pos (by rw [h]; exact z.2.isLt)]
+  rw [index, dite_eq_left (by rw [h]; exact z.2.isLt)]
   exact Prod.ext rfl (Fin.ext h)
 
 lemma index_comm {u v : Fin (2 * n)} (h : IsPair u v) : index u v = index v u := by
@@ -403,23 +405,25 @@ lemma index_comm {u v : Fin (2 * n)} (h : IsPair u v) : index u v = index v u :=
   have hsum := cdiff_add_cdiff huv
   have hlt := cdiff_lt u v
   by_cases h1 : cdiff u v < n
-  · rw [index, dif_pos h1, index, dif_neg (by omega), dif_pos h1]
-  · rw [index, dif_neg h1, dif_pos (by omega), index, dif_pos (by omega)]
+  · rw [index, dite_eq_left h1, index, dite_eq_right (by omega), dite_eq_left h1]
+  · rw [index, dite_eq_right h1, dite_eq_left (by omega), index, dite_eq_left (by omega)]
 
 lemma shift_index {u v : Fin (2 * n)} (h : IsPair u v) :
     ((index u v).1 = u ∧ shift (index u v).1 (index u v).2 = v) ∨
       ((index u v).1 = v ∧ shift (index u v).1 (index u v).2 = u) := by
   rcases eq_or_ne u v with rfl | huv
   · have hlt : cdiff u u < n := by rw [cdiff_eq_zero_iff.mpr rfl]; exact rank_pos u
-    exact Or.inl ⟨by rw [index, dif_pos hlt], by rw [index, dif_pos hlt]; exact shift_cdiff hlt⟩
+    exact Or.inl ⟨by rw [index, dite_eq_left hlt],
+      by rw [index, dite_eq_left hlt]; exact shift_cdiff hlt⟩
   obtain ⟨h0, hn⟩ := h.cdiff_ne huv
   have hsum := cdiff_add_cdiff huv
   have hlt := cdiff_lt u v
   by_cases h1 : cdiff u v < n
-  · exact Or.inl ⟨by rw [index, dif_pos h1], by rw [index, dif_pos h1]; exact shift_cdiff h1⟩
+  · exact Or.inl ⟨by rw [index, dite_eq_left h1],
+      by rw [index, dite_eq_left h1]; exact shift_cdiff h1⟩
   · have h2 : cdiff v u < n := by omega
-    exact Or.inr ⟨by rw [index, dif_neg h1, dif_pos h2],
-      by rw [index, dif_neg h1, dif_pos h2]; exact shift_cdiff h2⟩
+    exact Or.inr ⟨by rw [index, dite_eq_right h1, dite_eq_left h2],
+      by rw [index, dite_eq_right h1, dite_eq_left h2]; exact shift_cdiff h2⟩
 
 /-! ## Roots and coroots -/
 
@@ -429,13 +433,13 @@ def rootOfPair (u v : Fin (2 * n)) : Fin n → ℤ := if u = v then wt u else wt
 lemma rootOfPair_comm (u v : Fin (2 * n)) : rootOfPair u v = rootOfPair v u := by
   rcases eq_or_ne u v with rfl | huv
   · rfl
-  · rw [rootOfPair, rootOfPair, if_neg huv, if_neg (Ne.symm huv), add_comm]
+  · rw [rootOfPair, rootOfPair, ite_eq_right huv, ite_eq_right (Ne.symm huv), add_comm]
 
 @[simp] lemma rootOfPair_self (u : Fin (2 * n)) : rootOfPair u u = wt u := by
-  rw [rootOfPair, if_pos rfl]
+  rw [rootOfPair, ite_eq_left rfl]
 
 @[simp] lemma rootOfPair_of_ne {u v : Fin (2 * n)} (h : u ≠ v) : rootOfPair u v = wt u + wt v := by
-  rw [rootOfPair, if_neg h]
+  rw [rootOfPair, ite_eq_right h]
 
 /-- The root indexed by an element of `Fin (2 * n) × Fin n`. -/
 def rootIdx (z : Fin (2 * n) × Fin n) : Fin n → ℤ := rootOfPair z.1 (shift z.1 z.2)
@@ -493,20 +497,20 @@ section Refl
 variable {p q : Fin (2 * n)}
 
 lemma reflMap_fst (p q : Fin (2 * n)) : reflMap p q p = if p = q then opp p else opp q := by
-  rw [reflMap, if_pos rfl]
+  rw [reflMap, ite_eq_left rfl]
 
 lemma reflMap_snd (h : q ≠ p) : reflMap p q q = opp p := by
-  rw [reflMap, if_neg h, if_pos rfl]
+  rw [reflMap, ite_eq_right h, ite_eq_left rfl]
 
 lemma reflMap_opp_fst (h : opp p ≠ q) : reflMap p q (opp p) = if p = q then p else q := by
-  rw [reflMap, if_neg (opp_ne_self p), if_neg h, if_pos rfl]
+  rw [reflMap, ite_eq_right (opp_ne_self p), ite_eq_right h, ite_eq_left rfl]
 
 lemma reflMap_opp_snd (h1 : opp q ≠ p) (h2 : opp q ≠ opp p) : reflMap p q (opp q) = p := by
-  rw [reflMap, if_neg h1, if_neg (opp_ne_self q), if_neg h2, if_pos rfl]
+  rw [reflMap, ite_eq_right h1, ite_eq_right (opp_ne_self q), ite_eq_right h2, ite_eq_left rfl]
 
 lemma reflMap_of_ne {u : Fin (2 * n)} (h1 : u ≠ p) (h2 : u ≠ q) (h3 : u ≠ opp p) (h4 : u ≠ opp q) :
     reflMap p q u = u := by
-  rw [reflMap, if_neg h1, if_neg h2, if_neg h3, if_neg h4]
+  rw [reflMap, ite_eq_right h1, ite_eq_right h2, ite_eq_right h3, ite_eq_right h4]
 
 /-- The eight inequalities between `p`, `q` and their opposites available on a long root. -/
 private lemma long_ne (hax : axis p ≠ axis q) :
@@ -524,25 +528,25 @@ lemma reflMap_involutive (h : IsPair p q) : Function.Involutive (reflMap p q) :=
   · have hop := opp_ne_self p
     by_cases h1 : u = p
     · subst h1
-      rw [reflMap_fst, if_pos rfl, reflMap_opp_fst hop, if_pos rfl]
+      rw [reflMap_fst, ite_eq_left rfl, reflMap_opp_fst hop, ite_eq_left rfl]
     · by_cases h2 : u = opp p
       · subst h2
-        rw [reflMap_opp_fst hop, if_pos rfl, reflMap_fst, if_pos rfl]
+        rw [reflMap_opp_fst hop, ite_eq_left rfl, reflMap_fst, ite_eq_left rfl]
       · rw [reflMap_of_ne h1 h1 h2 h2, reflMap_of_ne h1 h1 h2 h2]
   · have hax : axis p ≠ axis q := h.resolve_left hpq
     obtain ⟨h1, h2, h3, h4, h5, h6, h7, h8⟩ := long_ne hax
     by_cases c1 : u = p
     · subst c1
-      rw [reflMap_fst, if_neg h1, reflMap_opp_snd h7 h8]
+      rw [reflMap_fst, ite_eq_right h1, reflMap_opp_snd h7 h8]
     by_cases c2 : u = q
     · subst c2
-      rw [reflMap_snd h3, reflMap_opp_fst h5, if_neg h1]
+      rw [reflMap_snd h3, reflMap_opp_fst h5, ite_eq_right h1]
     by_cases c3 : u = opp p
     · subst c3
-      rw [reflMap_opp_fst h5, if_neg h1, reflMap_snd h3]
+      rw [reflMap_opp_fst h5, ite_eq_right h1, reflMap_snd h3]
     by_cases c4 : u = opp q
     · subst c4
-      rw [reflMap_opp_snd h7 h8, reflMap_fst, if_neg h1]
+      rw [reflMap_opp_snd h7 h8, reflMap_fst, ite_eq_right h1]
     · rw [reflMap_of_ne c1 c2 c3 c4, reflMap_of_ne c1 c2 c3 c4]
 
 lemma reflMap_opp (h : IsPair p q) (u : Fin (2 * n)) :
@@ -556,10 +560,10 @@ lemma reflMap_opp (h : IsPair p q) (u : Fin (2 * n)) :
   · have hop := opp_ne_self p
     by_cases h1 : u = p
     · subst h1
-      rw [reflMap_opp_fst hop, if_pos rfl, reflMap_fst, if_pos rfl, opp_opp]
+      rw [reflMap_opp_fst hop, ite_eq_left rfl, reflMap_fst, ite_eq_left rfl, opp_opp]
     · by_cases h2 : u = opp p
       · subst h2
-        rw [opp_opp, reflMap_fst, if_pos rfl, reflMap_opp_fst hop, if_pos rfl]
+        rw [opp_opp, reflMap_fst, ite_eq_left rfl, reflMap_opp_fst hop, ite_eq_left rfl]
       · have h1' : opp u ≠ p := fun hc => h2 ((key u p).mp hc)
         have h2' : opp u ≠ opp p := fun hc => h1 (by simpa using congrArg opp hc)
         rw [reflMap_of_ne h1' h1' h2' h2', reflMap_of_ne h1 h1 h2 h2]
@@ -567,13 +571,13 @@ lemma reflMap_opp (h : IsPair p q) (u : Fin (2 * n)) :
     obtain ⟨h1, h2, h3, h4, h5, h6, h7, h8⟩ := long_ne hax
     by_cases c1 : u = p
     · subst c1
-      rw [reflMap_opp_fst h5, if_neg h1, reflMap_fst, if_neg h1, opp_opp]
+      rw [reflMap_opp_fst h5, ite_eq_right h1, reflMap_fst, ite_eq_right h1, opp_opp]
     by_cases c2 : u = q
     · subst c2
       rw [reflMap_opp_snd h7 h8, reflMap_snd h3, opp_opp]
     by_cases c3 : u = opp p
     · subst c3
-      rw [opp_opp, reflMap_fst, if_neg h1, reflMap_opp_fst h5, if_neg h1]
+      rw [opp_opp, reflMap_fst, ite_eq_right h1, reflMap_opp_fst h5, ite_eq_right h1]
     by_cases c4 : u = opp q
     · subst c4
       rw [opp_opp, reflMap_snd h3, reflMap_opp_snd h7 h8]
@@ -603,10 +607,10 @@ lemma wt_reflMap (h : IsPair p q) (u : Fin (2 * n)) :
   · have hop := opp_ne_self p
     rw [corootOfPair_self, rootOfPair_self]
     by_cases c1 : u = p
-    · rw [c1, reflMap_fst, if_pos rfl, wt_dotProduct_cwt_self, wt_opp]
+    · rw [c1, reflMap_fst, ite_eq_left rfl, wt_dotProduct_cwt_self, wt_opp]
       module
     · by_cases c2 : u = opp p
-      · rw [c2, reflMap_opp_fst hop, if_pos rfl, wt_opp, neg_dotProduct,
+      · rw [c2, reflMap_opp_fst hop, ite_eq_left rfl, wt_opp, neg_dotProduct,
           wt_dotProduct_cwt_self]
         module
       · rw [reflMap_of_ne c1 c1 c2 c2, wt_dotProduct_cwt_eq_zero c1 c2]
@@ -621,7 +625,7 @@ lemma wt_reflMap (h : IsPair p q) (u : Fin (2 * n)) :
     by_cases c1 : u = p
     · have hval := two_mul_dotProduct_corootOfPair p p q
       rw [wt_dotProduct_cwt_self, hpq'] at hval
-      rw [c1, show wt p ⬝ᵥ corootOfPair p q = 1 by omega, reflMap_fst, if_neg h1,
+      rw [c1, show wt p ⬝ᵥ corootOfPair p q = 1 by omega, reflMap_fst, ite_eq_right h1,
         wt_opp]
       module
     by_cases c2 : u = q
@@ -636,7 +640,7 @@ lemma wt_reflMap (h : IsPair p q) (u : Fin (2 * n)) :
       have hval := two_mul_dotProduct_corootOfPair (opp p) p q
       rw [e1, e2] at hval
       rw [c3, show wt (opp p) ⬝ᵥ corootOfPair p q = -1 by omega,
-        reflMap_opp_fst h5, if_neg h1, wt_opp]
+        reflMap_opp_fst h5, ite_eq_right h1, wt_opp]
       module
     by_cases c4 : u = opp q
     · have e1 : wt (opp q) ⬝ᵥ cwt p = 0 := by rw [wt_opp, neg_dotProduct, hqp, neg_zero]
@@ -661,10 +665,10 @@ lemma cwt_reflMap (h : IsPair p q) (u : Fin (2 * n)) :
   · have hop := opp_ne_self p
     rw [corootOfPair_self, rootOfPair_self]
     by_cases c1 : u = p
-    · rw [c1, reflMap_fst, if_pos rfl, wt_dotProduct_cwt_self, cwt_opp]
+    · rw [c1, reflMap_fst, ite_eq_left rfl, wt_dotProduct_cwt_self, cwt_opp]
       module
     · by_cases c2 : u = opp p
-      · rw [c2, reflMap_opp_fst hop, if_pos rfl, cwt_opp, dotProduct_neg,
+      · rw [c2, reflMap_opp_fst hop, ite_eq_left rfl, cwt_opp, dotProduct_neg,
           wt_dotProduct_cwt_self]
         module
       · rw [reflMap_of_ne c1 c1 c2 c2, wt_dotProduct_cwt_eq_zero (Ne.symm c1)
@@ -682,7 +686,7 @@ lemma cwt_reflMap (h : IsPair p q) (u : Fin (2 * n)) :
     -- As above, the long-root reflection has four exceptional signed basis vectors. Their
     -- root-pairing values are `2`, `2`, `-2`, and `-2`; the complement pairs to zero.
     by_cases c1 : u = p
-    · rw [c1, add_dotProduct, wt_dotProduct_cwt_self, hqp, reflMap_fst, if_neg h1, cwt_opp,
+    · rw [c1, add_dotProduct, wt_dotProduct_cwt_self, hqp, reflMap_fst, ite_eq_right h1, cwt_opp,
         show (2 : ℤ) + 0 = 2 by ring, hsum]
       module
     by_cases c2 : u = q
@@ -693,7 +697,7 @@ lemma cwt_reflMap (h : IsPair p q) (u : Fin (2 * n)) :
     · have e1 : wt p ⬝ᵥ cwt (opp p) = -2 := by
         rw [cwt_opp, dotProduct_neg, wt_dotProduct_cwt_self]
       have e2 : wt q ⬝ᵥ cwt (opp p) = 0 := by rw [cwt_opp, dotProduct_neg, hqp, neg_zero]
-      rw [c3, add_dotProduct, e1, e2, reflMap_opp_fst h5, if_neg h1,
+      rw [c3, add_dotProduct, e1, e2, reflMap_opp_fst h5, ite_eq_right h1,
         show -(2 : ℤ) + 0 = -2 by ring, hneg, cwt_opp]
       module
     by_cases c4 : u = opp q
@@ -723,12 +727,12 @@ lemma rootIdx_dotProduct_cwt_eq_two_iff (z : Fin (2 * n) × Fin n) (m : Fin (2 *
     · intro hc
       by_cases hc1 : z.1 = m
       · exact Or.inl hc1.symm
-      · rw [if_neg hc1] at hc
+      · rw [ite_eq_right hc1] at hc
         split_ifs at hc
         omega
     · rintro (rfl | rfl)
-      · rw [if_pos rfl]
-      · rw [if_pos rfl]
+      · rw [ite_eq_left rfl]
+      · rw [ite_eq_left rfl]
   · have hax : axis z.1 ≠ axis (shift z.1 z.2) := hpair.resolve_left hne
     obtain ⟨h1, h2, h3, h4, h5, h6, h7, h8⟩ := long_ne hax
     rw [rootIdx, rootOfPair_of_ne hne, add_dotProduct, wt_dotProduct_cwt, wt_dotProduct_cwt]
@@ -738,12 +742,12 @@ lemma rootIdx_dotProduct_cwt_eq_two_iff (z : Fin (2 * n) × Fin n) (m : Fin (2 *
       · exact Or.inl hm1.symm
       by_cases hm2 : shift z.1 z.2 = m
       · exact Or.inr hm2.symm
-      rw [if_neg hm1, if_neg hm2] at hc
+      rw [ite_eq_right hm1, ite_eq_right hm2] at hc
       split_ifs at hc <;> omega
     · rintro (rfl | hm)
-      · rw [if_pos rfl, if_neg h3, if_neg h4]
+      · rw [ite_eq_left rfl, ite_eq_right h3, ite_eq_right h4]
         ring
-      · rw [hm, if_pos rfl, if_neg h1, if_neg h2]
+      · rw [hm, ite_eq_left rfl, ite_eq_right h1, ite_eq_right h2]
         ring
 
 /-- The signed basis vectors occurring in a coroot, detected by a doubled pairing so that both the
@@ -761,12 +765,12 @@ lemma two_mul_wt_dotProduct_corootIdx_iff (z : Fin (2 * n) × Fin n) (m : Fin (2
     · intro hc
       by_cases hm : m = z.1
       · exact Or.inl hm
-      rw [if_neg hm] at hc
+      rw [ite_eq_right hm] at hc
       split_ifs at hc <;> omega
     · rintro (rfl | rfl)
-      · rw [if_pos rfl]
+      · rw [ite_eq_left rfl]
         omega
-      · rw [if_pos rfl]
+      · rw [ite_eq_left rfl]
         omega
   · have hax : axis z.1 ≠ axis (shift z.1 z.2) := hpair.resolve_left hne
     obtain ⟨h1, h2, h3, h4, h5, h6, h7, h8⟩ := long_ne hax
@@ -776,12 +780,12 @@ lemma two_mul_wt_dotProduct_corootIdx_iff (z : Fin (2 * n) × Fin n) (m : Fin (2
       · exact Or.inl hm1
       by_cases hm2 : m = shift z.1 z.2
       · exact Or.inr hm2
-      rw [if_neg hm1, if_neg hm2] at hc
+      rw [ite_eq_right hm1, ite_eq_right hm2] at hc
       split_ifs at hc <;> omega
     · rintro (rfl | rfl)
-      · rw [if_pos rfl, if_neg hne, if_neg h2]
+      · rw [ite_eq_left rfl, ite_eq_right hne, ite_eq_right h2]
         omega
-      · rw [if_pos rfl, if_neg h3, if_neg h4]
+      · rw [ite_eq_left rfl, ite_eq_right h3, ite_eq_right h4]
         omega
 
 /-- Two indices naming the same pair of signed basis vectors are equal. -/
