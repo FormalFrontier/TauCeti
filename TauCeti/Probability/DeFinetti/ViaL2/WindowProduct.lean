@@ -96,20 +96,20 @@ theorem Contractable.tendsto_integral_abs_prod_blockAverage_indicator_sub_prod_d
     rw [hrw]
     exact measurable_const.mul (Finset.measurable_sum _ fun j _ => hind i _)
   have hF_le : ∀ i n ω, ‖F i n ω‖ ≤ 1 := fun i n ω => by
-    rw [Real.norm_of_nonneg (blockAverage_nonneg (fun c ω => hind0 i c ω) _ ω)]
+    rw [hF, Real.norm_of_nonneg (blockAverage_nonneg (fun c ω => hind0 i c ω) _ ω)]
     exact blockAverage_le_one (fun c ω => hind1 i c ω) _ ω
   have hg_meas : ∀ i, Measurable (g i) := fun i =>
     (measurable_directingMeasure_coe (tailProcess_le_ambient 0 fun c _ => hX_meas c)
       (hB i)).ennreal_toReal
   have hg_le : ∀ i ω, ‖g i ω‖ ≤ 1 := fun i ω => by
-    rw [Real.norm_of_nonneg measureReal_nonneg]; exact measureReal_le_one
+    rw [hg, Real.norm_of_nonneg measureReal_nonneg]; exact measureReal_le_one
   have hconv : ∀ i ∈ Finset.univ,
       Tendsto (fun n => ∫ ω, ‖F i n ω - g i ω‖ ∂μ) atTop (𝓝 0) := by
     intro i _
     simpa only [Real.norm_eq_abs, hF, hg] using
       hX.tendsto_integral_abs_blockAverage_indicator_sub_directingMeasure hX_meas (hB i)
         (k i) (hk i)
-  simpa only [Real.norm_eq_abs] using
+  simpa only [Real.norm_eq_abs, hF, hg] using
     TauCeti.MeasureTheory.tendsto_integral_norm_prod_sub_prod
       (s := (Finset.univ : Finset (Fin m))) (F := F) (g := g)
       (fun i _ n => (hF_meas i n).aestronglyMeasurable)
@@ -117,10 +117,10 @@ theorem Contractable.tendsto_integral_abs_prod_blockAverage_indicator_sub_prod_d
       (fun i _ n => ae_of_all _ fun ω => hF_le i n ω)
       (fun i _ => ae_of_all _ fun ω => hg_le i ω) hconv
 
-/-- **The disjoint-window instance.** Reading factor `i` along `disjointWindow i` keeps distinct
-factors in disjoint blocks at every length, which is the configuration a finite-block
-factorization consumes. -/
-theorem Contractable.tendsto_integral_abs_prod_blockAverage_disjointWindow_sub_prod_directingMeasure
+/-- **The disjoint-window instance.** The block averages are of indicators, as in the general
+theorem above; reading factor `i` along `disjointWindow i` keeps distinct factors in disjoint
+blocks at every length, which is the configuration a finite-block factorization consumes. -/
+theorem Contractable.tendsto_integral_abs_prod_indicator_disjointWindow_sub_prod_directingMeasure
     [StandardBorelSpace α] [Nonempty α] {μ : Measure Ω} [IsFiniteMeasure μ] {X : ℕ → Ω → α}
     (hX : Contractable μ X) (hX_meas : ∀ i, Measurable (X i))
     {m : ℕ} (B : Fin m → Set α) (hB : ∀ i, MeasurableSet (B i)) :
