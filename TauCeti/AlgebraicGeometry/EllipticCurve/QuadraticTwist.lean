@@ -5,7 +5,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.AlgebraicGeometry.EllipticCurve.VariableChange
-public import TauCeti.LinearAlgebra.Dimension.IsQuadraticExtension
 public import TauCeti.RingTheory.Norm.Quadratic
 
 /-!
@@ -40,11 +39,23 @@ change of variables, again over any commutative ring in which the relevant param
   of a generator `θ` of a *separable* quadratic extension `L/K` is elliptic when `E` is, and
   changing the generator moves it by a change of variables — which is what makes the twist by the
   extension well posed.
+* `WeierstrassCurve.quadraticTwist`: **the** quadratic twist of `E` by a *separable* quadratic
+  extension `L/K`, the twist by the trace and norm of a generator chosen by
+  `Algebra.IsQuadraticExtension.exists_discrim_ne_zero`. Separability is required: without it the
+  extension could be purely inseparable, where the trace form vanishes and the model is singular
+  for every `E`.
+* `WeierstrassCurve.exists_quadraticTwist_eq`: elimination — the twist *equals* the twist by the
+  trace and norm of some generator, so everything above about `quadraticTwistOf` transfers.
+  `WeierstrassCurve.exists_smul_quadraticTwist_eq` adds that any other generator gives the same
+  curve up to a change of variables.
+* `WeierstrassCurve.isElliptic_quadraticTwist` (an `instance`) and
+  `WeierstrassCurve.j_quadraticTwist`: the twist of an elliptic curve is elliptic, with the same
+  `j`-invariant.
 
 These are the `quadraticTwistOf` seeds of `TauCetiRoadmap/EllipticCurves/README.md` §Layer 5
-(twists), pinned in that roadmap's `Suggested.lean`; the extension twist `quadraticTwist E L`
-by a separable quadratic extension, the point isomorphism, and the split-multiplicative-
-reduction theorem are later milestones of the same layer and build on this file.
+(twists), pinned in that roadmap's `Suggested.lean`, together with the extension twist they make
+well posed; the point isomorphism and the split-multiplicative-reduction theorem are later
+milestones of the same layer and build on this file.
 
 The twist by a generator is deliberately **not** given its own constructor here. Such a
 definition would accept any field extension, and outside the finite-dimensional case Mathlib's
@@ -300,6 +311,75 @@ theorem isElliptic_quadraticTwistOf_trace_norm [E.IsElliptic] {θ : L}
     (hθ : θ ∉ Set.range (algebraMap K L)) :
     (E.quadraticTwistOf (Algebra.trace K L θ) (Algebra.norm K θ)).IsElliptic :=
   E.isElliptic_quadraticTwistOf _ _ (discrim_ne_zero K L hθ)
+
+variable (K L) in
+/-- The generator `quadraticTwist` picks does generate: nonzero discriminant characterises the
+generators (`discrim_eq_zero_iff_mem_range_algebraMap`), and the chosen element has nonzero
+discriminant. -/
+private theorem choose_exists_discrim_notMem_range_algebraMap :
+    (exists_discrim_ne_zero K L).choose ∉ Set.range (algebraMap K L) :=
+  fun h => (exists_discrim_ne_zero K L).choose_spec
+    ((discrim_eq_zero_iff_mem_range_algebraMap K L).mpr h)
+
+/-- **The quadratic twist of `E` by the separable quadratic extension `L/K`**: the twist by the
+trace and norm of a generator of `L/K`. The choice of generator is harmless —
+`exists_quadraticTwist_eq` names one, and `exists_smul_quadraticTwist_eq` says every other gives
+the same curve up to a change of variables over `K`.
+
+Separability is not decoration. On a purely inseparable quadratic extension the trace form
+vanishes, so `t = 0` and — in characteristic `2`, the only characteristic where such an extension
+exists — the discriminant `D = t² - 4n` is `0`, and the model is singular for every `E` and
+barely depends on `E`. This is a different failure from the one the module docstring gives for
+refusing a twist-by-a-generator constructor, which is `(t, n) = (0, 1)` and so `D = -4`: there
+the parameters cease to reflect the extension but the twist stays generically nonsingular. The
+two coincide only in characteristic `2`. Choosing the generator by
+`Algebra.IsQuadraticExtension.exists_discrim_ne_zero` rules this case out, so the *twist
+parameters* never degenerate. That is all it can rule out: `E` is arbitrary here, so a singular
+`E` still gives a singular twist. Nonsingularity of the result needs `E` elliptic too, which is
+`isElliptic_quadraticTwist`. -/
+noncomputable def quadraticTwist (E : WeierstrassCurve K) (L : Type*) [Field L] [Algebra K L]
+    [Algebra.IsQuadraticExtension K L] [Algebra.IsSeparable K L] : WeierstrassCurve K :=
+  E.quadraticTwistOf (Algebra.trace K L (exists_discrim_ne_zero K L).choose)
+    (Algebra.norm K (exists_discrim_ne_zero K L).choose)
+
+variable (L) in
+/-- **Elimination for `quadraticTwist`.** The twist *is* the twist by the trace and norm of some
+generator of `L/K` — an equation, not merely an isomorphism, so everything proved about
+`quadraticTwistOf` (the coefficients, `Δ`, `c₄`, `c₆`) transfers to `quadraticTwist`. Use it to
+discharge a `quadraticTwist` goal. `L` is explicit because it occurs only inside the
+existential. -/
+theorem exists_quadraticTwist_eq :
+    ∃ θ : L, θ ∉ Set.range (algebraMap K L) ∧
+      E.quadraticTwist L = E.quadraticTwistOf (Algebra.trace K L θ) (Algebra.norm K θ) :=
+  ⟨_, choose_exists_discrim_notMem_range_algebraMap K L, by simp only [quadraticTwist]⟩
+
+/-- The twist of an elliptic curve by a separable quadratic extension is elliptic. Registered as
+an instance so that downstream statements needing `[(E.quadraticTwist L).IsElliptic]` discharge it
+by typeclass inference. -/
+instance isElliptic_quadraticTwist [E.IsElliptic] : (E.quadraticTwist L).IsElliptic := by
+  obtain ⟨θ, hθ, h⟩ := E.exists_quadraticTwist_eq L
+  rw [h]
+  exact E.isElliptic_quadraticTwistOf_trace_norm hθ
+
+variable (L) in
+/-- Twisting does not change the `j`-invariant. -/
+@[simp]
+theorem j_quadraticTwist [E.IsElliptic] : (E.quadraticTwist L).j = E.j := by
+  obtain ⟨θ, hθ, h⟩ := E.exists_quadraticTwist_eq L
+  -- `j` takes the `IsElliptic` instance of its argument, so `rw [h]` is a dependent rewrite and
+  -- fails; `simp_rw` transfers the instance, as Mathlib's `WeierstrassCurve.j` docstring
+  -- prescribes.
+  simp_rw [h]
+  exact E.j_quadraticTwistOf _ _ (E.isElliptic_quadraticTwistOf_trace_norm hθ)
+
+/-- The twist by the extension agrees, up to a change of variables over `K`, with the twist by
+*any* generator `θ`: the arbitrary choice in `quadraticTwist` is harmless. -/
+theorem exists_smul_quadraticTwist_eq {θ : L} (hθ : θ ∉ Set.range (algebraMap K L)) :
+    ∃ C : VariableChange K, C • E.quadraticTwist L
+      = E.quadraticTwistOf (Algebra.trace K L θ) (Algebra.norm K θ) := by
+  obtain ⟨θ', hθ', h⟩ := E.exists_quadraticTwist_eq L
+  rw [h]
+  exact E.exists_smul_quadraticTwistOf_trace_norm_eq hθ' hθ
 
 end QuadraticTwistBy
 

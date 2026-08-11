@@ -7,6 +7,7 @@ module
 public import TauCeti.AlgebraicGeometry.EllipticCurve.Isogeny.Basic
 import Mathlib.RingTheory.Norm.Basic
 import Mathlib.RingTheory.Polynomial.IsIntegral
+import TauCeti.AlgebraicGeometry.EllipticCurve.Affine.FunctionFieldFinrank
 
 /-!
 # Function-field pullbacks of isogenies
@@ -71,8 +72,6 @@ private theorem isIntegral_of_isIntegral_map {A K : Type*} [CommRing A] [CommRin
 private theorem isIntegral_pullback_of_isIntegral_X (φ : Isogeny W₁ W₂)
     (hX : IsIntegral F (φ.pullback (algebraMap F[X] W₂.CoordinateRing X)))
     (a : W₂.CoordinateRing) : IsIntegral F (φ.pullback a) := by
-  let _ : Module.Finite F[X] W₂.CoordinateRing :=
-    Module.Finite.of_basis (CoordinateRing.basis W₂)
   obtain ⟨P, hPmonic, hPa⟩ :=
     (Algebra.IsIntegral.isIntegral (R := F[X]) a : IsIntegral F[X] a)
   let e : F[X] →ₐ[F] W₁.FunctionField :=

@@ -264,6 +264,12 @@ lemma ofValuation_valuation (v : Spv A) : ofValuation v.valuation = v := by
   let := v.toValuativeRel
   exact ext' fun x y ↦ (ValuativeRel.valuation A).vle_iff_le.symm
 
+/-- The canonical valuation of the point determined by `w` is equivalent to `w`. -/
+lemma isEquiv_valuation_ofValuation {Γ₀ : Type*} [LinearOrderedCommGroupWithZero Γ₀]
+    (w : Valuation A Γ₀) : Valuation.IsEquiv (ofValuation w).valuation w := by
+  intro x y
+  rw [valuation_le_iff, vle_ofValuation]
+
 section Quotient
 
 variable (𝔞 : Ideal A)

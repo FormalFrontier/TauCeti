@@ -7,6 +7,7 @@ module
 
 public import Mathlib.Analysis.Calculus.Deriv.Basic
 public import Mathlib.MeasureTheory.Integral.IntervalIntegral.Basic
+import TauCeti.Analysis.Contour.Cauchy.PrincipalValue.Basic
 import TauCeti.Analysis.Contour.Crossing.Monotonicity
 import TauCeti.Analysis.Contour.Crossing.Windows
 import TauCeti.Analysis.Contour.ExitTime
@@ -52,18 +53,6 @@ noncomputable section
 namespace TauCeti.Contour
 
 open Filter MeasureTheory Set Topology
-
-/-- The truncated integral vanishes on an interval where the curve stays within radius `ε`. -/
-private theorem integral_truncated_eq_zero {γ : ℝ → ℂ} {g : ℂ → ℂ} {s : ℂ} {l u ε : ℝ}
-    (hlu : l ≤ u) (h_le : ∀ t ∈ Ioc l u, ‖γ t - s‖ ≤ ε) :
-    ∫ t in l..u, (if ‖γ t - s‖ > ε then g (γ t) * deriv γ t else 0) = 0 := by
-  calc ∫ t in l..u, (if ‖γ t - s‖ > ε then g (γ t) * deriv γ t else 0)
-      = ∫ _ in l..u, (0 : ℂ) := by
-        refine intervalIntegral.integral_congr_ae ?_
-        rw [uIoc_of_le hlu]
-        filter_upwards with t ht
-        rw [if_neg (not_lt.mpr (h_le t ht))]
-    _ = 0 := by simp
 
 /-- The truncated integral is the plain integral on an interval where the curve stays at
 distance `> ε` almost everywhere. -/
@@ -126,7 +115,9 @@ private theorem integral_truncated_eq_zero_between_exits {γ : ℝ → ℂ} {g :
     (hcₗ : cₗ ∈ Ioo (t₀ - ρ) t₀) (hcᵣ : cᵣ ∈ Ioo t₀ (t₀ + ρ))
     (hεₗ : ‖γ cₗ - s‖ = ε) (hεᵣ : ‖γ cᵣ - s‖ = ε) :
     ∫ u in cₗ..cᵣ, (if ‖γ u - s‖ > ε then g (γ u) * deriv γ u else 0) = 0 := by
-  refine integral_truncated_eq_zero (le_of_lt (hcₗ.2.trans hcᵣ.1)) fun t ht => ?_
+  refine (intervalIntegrable_truncated_and_integral_truncated_eq_zero_of_norm_le
+    (g := fun t => g (γ t) * deriv γ t) (Filter.Eventually.of_forall fun t ht => ?_)).2
+  rw [uIoc_of_le (le_of_lt (hcₗ.2.trans hcᵣ.1))] at ht
   rcases lt_trichotomy t t₀ with h_lt | h_eq | h_ge
   · have h_bd : ‖γ t - s‖ ≤ ‖γ cₗ - s‖ :=
       hanti ⟨hcₗ.1.le, hcₗ.2.le⟩ ⟨le_trans hcₗ.1.le ht.1.le, h_lt.le⟩ ht.1.le

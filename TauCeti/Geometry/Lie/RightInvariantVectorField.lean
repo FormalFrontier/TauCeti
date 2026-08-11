@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Geometry.Lie.InvariantVectorField
+public import TauCeti.Geometry.Lie.InvariantVectorField.Basic
 
 /-!
 # Right-invariant vector fields on Lie groups
@@ -34,6 +34,8 @@ This supplies a prerequisite for Deliverable A, Layer 1 of
 * `contMDiff_mulRightInvariantVectorField_modelSpace`: jointly `C^m` in the generator and group
   point when multiplication is `C^n` and `m + 1 ≤ n`.
 * `contMDiff_mulRightInvariantVectorField_infty`: a right-invariant field is smooth.
+* `contMDiff_mvfderiv_mulRightInvariantVectorField`: differentiating a smooth scalar function
+  along a right-invariant field gives a smooth function.
 
 ## References
 
@@ -42,7 +44,7 @@ This supplies a prerequisite for Deliverable A, Layer 1 of
 * The definition mirrors Sébastien Gouëzel's Mathlib `mulInvariantVectorField`.
 * The smoothness proofs adapt `contMDiff_mulInvariantVectorField_modelSpace` and
   `contMDiff_mulInvariantVectorField_infty` from
-  `TauCeti.Geometry.Lie.InvariantVectorField`; those results in turn adapt Gouëzel's proof of
+  `TauCeti.Geometry.Lie.InvariantVectorField.Basic`; those results in turn adapt Gouëzel's proof of
   Mathlib's `contMDiff_mulInvariantVectorField`.
 * The pullback results `inverse_mfderiv_mul_right`, `mpullback_mulRightInvariantVectorField`, and
   `mulRightInvariantVectorField_eq_mpullback`, together with the addition and scalar-multiplication
@@ -54,7 +56,7 @@ public section
 
 noncomputable section
 
-open Bundle Manifold
+open Bundle Manifold VectorField
 open scoped ContDiff Manifold
 
 variable {𝕜 : Type*} [NontriviallyNormedField 𝕜]
@@ -187,3 +189,13 @@ theorem contMDiff_mulRightInvariantVectorField_infty
   have h := contMDiff_mulRightInvariantVectorField_modelSpace
     (I := I) (G := G) (m := ∞) (n := ∞) (by simp)
   exact h.comp (contMDiff_const.prodMk contMDiff_id)
+
+/-- Differentiating a smooth scalar function along a right-invariant vector field gives a smooth
+scalar function. -/
+theorem contMDiff_mvfderiv_mulRightInvariantVectorField
+    [ContMDiffMul I ∞ G] (v : GroupLieAlgebra I G)
+    (f : C^∞⟮I, G; 𝕜⟯) :
+    ContMDiff I (modelWithCornersSelf 𝕜 𝕜) ∞
+      (fun g ↦ mvfderiv I f g (mulRightInvariantVectorField v g)) :=
+  f.contMDiff.contMDiff_mvfderiv_apply
+    (contMDiff_mulRightInvariantVectorField_infty v) (by simp)

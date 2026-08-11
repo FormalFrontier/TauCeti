@@ -38,8 +38,9 @@ in William Coram's mathlib4#40013 (there `PowerBounded.subring`, and the last tw
 names), so that the two can be identified once that pull request lands. New here are
 `IsPowerBounded.pow`, the nonarchimedean `IsPowerBounded.add` and `isTopologicallyNilpotent_add`,
 `topologicallyNilpotentIdeal` and `coe_topologicallyNilpotentIdeal` — #40013 carries `A°°` as a
-`Set.range` of an inclusion rather than as an ideal of `A°` — and the transport lemmas. The
-selection and ordering of results follows AINTLIB's `Bounded.lean`, the roadmap's designated prior
+`Set.range` of an inclusion rather than as an ideal of `A°` — `IsBounded.isPowerBounded_of_mem`,
+and the transport lemmas. The selection and ordering of results follows AINTLIB's `Bounded.lean`,
+the roadmap's designated prior
 formalisation of this layer; its proofs were not used.
 
 ## Main definitions
@@ -109,6 +110,13 @@ def IsPowerBounded (a : M) : Prop := IsBounded (Set.range (a ^ · : ℕ → M))
 /-- Unfolding lemma for `TauCeti.Huber.IsPowerBounded`. -/
 theorem isPowerBounded_iff {a : M} :
     IsPowerBounded a ↔ IsBounded (Set.range (a ^ · : ℕ → M)) := (Iff.rfl)
+
+/-- **Every element of a bounded submonoid is power-bounded**: its powers never leave the
+submonoid, and the submonoid is absorbed by every neighbourhood of zero. This is the reason a
+ring of definition, and any other bounded subring, consists of power-bounded elements. -/
+theorem IsBounded.isPowerBounded_of_mem {S : Type*} [SetLike S M] [SubmonoidClass S M] {T : S}
+    (hT : IsBounded (T : Set M)) {a : M} (ha : a ∈ T) : IsPowerBounded a :=
+  isPowerBounded_iff.mpr <| hT.subset <| by rintro _ ⟨n, rfl⟩; exact pow_mem ha n
 
 /-- `0` is power-bounded. -/
 @[simp]

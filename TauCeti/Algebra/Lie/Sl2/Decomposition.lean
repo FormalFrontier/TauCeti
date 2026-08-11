@@ -6,9 +6,10 @@ module
 
 public import TauCeti.Algebra.Lie.Sl2.Classification
 public import TauCeti.Algebra.Lie.Sl2.CompleteReducibility
--- Non-public: `TauCeti.isIrreducible_iff_isAtom` appears only inside a proof, never in the type of
--- an exported declaration.
+-- Non-public: `TauCeti.isIrreducible_iff_isAtom` and `TauCeti.finrank_eq_sum_finrank_of_isInternal`
+-- appear only inside proofs, never in the type of an exported declaration.
 import TauCeti.Algebra.Lie.Submodule.Atom
+import TauCeti.LinearAlgebra.Dimension.DirectSum
 
 /-!
 # Every finite-dimensional `sl₂`-module is a direct sum of the `V(n)`
@@ -128,9 +129,7 @@ theorem finrank_eq_sum {k : ℕ} {N : Fin k → LieSubmodule K (SpecialLinear.sl
     finrank K M = ∑ i, (n i + 1) := by
   have hfin (i : Fin k) : Module.Finite K (N i).toSubmodule :=
     Module.Finite.equiv (hn i).some.toLinearEquiv.symm
-  have hequiv :=
-    LinearEquiv.ofBijective (DirectSum.coeLinearMap fun i ↦ (N i).toSubmodule) hint
-  rw [← hequiv.finrank_eq, Module.finrank_directSum]
+  rw [finrank_eq_sum_finrank_of_isInternal hint]
   exact Finset.sum_congr rfl fun i _ ↦
     ((hn i).some.toLinearEquiv.finrank_eq).trans finrank_eq
 
