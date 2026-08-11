@@ -83,7 +83,6 @@ variable [HasSheafify J AddCommGrpCat.{v}] [HasExt.{w} (Sheaf J AddCommGrpCat.{v
 
 -- Mathlib's `functorH` and `extFunctorObj` use definitionally equal object and map data.
 -- Naming that identification here isolates the definitional coincidence used below.
-set_option backward.isDefEq.respectTransparency false in
 private noncomputable def functorHIso (n : ℕ) :
     _root_.CategoryTheory.Sheaf.functorH J n ≅
       (_root_.CategoryTheory.Abelian.extFunctor n).obj
