@@ -34,10 +34,11 @@ namespace TauCeti.QuadraticMap
 universe u v
 
 variable {K : Type u} {V : Type v} [Field K] [AddCommGroup V] [Module K V]
-  (Q : QuadraticForm K V) [Invertible (2 : K)]
+  (Q : QuadraticForm K V)
 
 private theorem exists_mem_orthogonal_self_ne_zero
-    [FiniteDimensional K V] (B : LinearMap.BilinForm K V) (hB : B.Nondegenerate)
+    [FiniteDimensional K V] [Invertible (2 : K)]
+    (B : LinearMap.BilinForm K V) (hB : B.Nondegenerate)
     (hBsymm : B.IsSymm) (W : Submodule K V) (hW : (B.restrict W).Nondegenerate)
     (hne : W ≠ ⊤) :
     ∃ x : V, x ∈ B.orthogonal W ∧ B x x ≠ 0 := by
@@ -56,7 +57,8 @@ private theorem exists_mem_orthogonal_self_ne_zero
   exact ⟨x, x.2, hxx⟩
 
 private theorem exists_mem_subgroup_mul_eqOn_of_codim
-    [FiniteDimensional K V] (Q : QuadraticForm K V) (hQ : Q.Nondegenerate) (n : ℕ)
+    [FiniteDimensional K V] [Invertible (2 : K)]
+    (Q : QuadraticForm K V) (hQ : Q.Nondegenerate) (n : ℕ)
     (H : Subgroup (QuadraticMap.orthogonalGroup Q))
     (hreflection : ∀ (v : V) [Invertible (Q v)],
       QuadraticMap.reflectionOrthogonal Q v ∈ H)
@@ -110,11 +112,13 @@ private theorem exists_mem_subgroup_mul_eqOn_of_codim
 /-- **Cartan--Dieudonné generation.** Any subgroup of the orthogonal group that contains every
 reflection in a vector of invertible norm is the whole orthogonal group. -/
 theorem subgroup_eq_top_of_reflection_mem
-    [FiniteDimensional K V] (Q : QuadraticForm K V) (hQ : Q.Nondegenerate)
+    [FiniteDimensional K V] [NeZero (2 : K)]
+    (Q : QuadraticForm K V) (hQ : Q.Nondegenerate)
     (H : Subgroup (QuadraticMap.orthogonalGroup Q))
     (hreflection : ∀ (v : V) [Invertible (Q v)],
       QuadraticMap.reflectionOrthogonal Q v ∈ H) :
     H = ⊤ := by
+  let _ : Invertible (2 : K) := invertibleOfNonzero (NeZero.ne (2 : K))
   rw [Subgroup.eq_top_iff']
   intro g
   obtain ⟨r, hr, hrg⟩ :=
