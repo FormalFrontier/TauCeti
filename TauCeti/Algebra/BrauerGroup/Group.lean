@@ -71,13 +71,12 @@ stated in the universe-polymorphic form.
 ## What is not proved here
 
 The converse of `TauCeti.BrauerGroup.mk_eq_one_of_isSplittingField` -- that an algebra whose class
-is the identity is split by `K` -- needs the uniqueness of the division algebra in a Brauer class,
-which is not available yet. That is exactly what stands between the worked example
-`orderOf (mk (CSA.of ℝ ℍ[ℝ])) ∣ 2` in `TauCeti/Algebra/BrauerGroup/Quaternion.lean` and the sharper
-`= 2`: the class of the real quaternions is its own inverse, but showing it is *not* the identity
-would need the nonsplitting of `ℍ[ℝ]` (`TauCeti.Quaternion.isEmpty_algEquiv_matrix`) to be converted
-into Brauer nontriviality. The functoriality of `BrauerGroup` under base change, and splitting
-fields as the kernel of that homomorphism, are the next steps and are not taken here either.
+is the identity is split by `K` -- needs the uniqueness of the Wedderburn data, which sits above
+this file in the import order; it is `TauCeti.BrauerGroup.mk_eq_one_iff_isSplittingField`, in
+`TauCeti/Algebra/BrauerGroup/Splitting.lean`, and it is what sharpens the divisibility
+`orderOf (mk (CSA.of ℝ ℍ[ℝ])) ∣ 2` proved here to the equality `= 2`. The functoriality of
+`BrauerGroup` under base change, and splitting fields as the kernel of that homomorphism, are the
+next steps and are not taken here either.
 
 ## References
 
