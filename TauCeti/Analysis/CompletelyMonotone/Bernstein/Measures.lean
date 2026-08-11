@@ -92,14 +92,14 @@ noncomputable def chafaiDensity (f : ℝ → ℝ) (n : ℕ) (t : ℝ) : ℝ :=
 
 /-- `chafaiDensity f 0 = 0`. -/
 @[simp] lemma chafaiDensity_zero (f : ℝ → ℝ) (t : ℝ) : chafaiDensity f 0 t = 0 := by
-  rw [chafaiDensity, if_pos rfl]
+  rw [chafaiDensity, ite_eq_left rfl]
 
 /-- The defining formula for `chafaiDensity` at a nonzero order. -/
 @[simp]
 lemma chafaiDensity_of_ne_zero {n : ℕ} (hn : n ≠ 0) (f : ℝ → ℝ) (t : ℝ) :
     chafaiDensity f n t = (-1 : ℝ) ^ n / (Nat.factorial (n - 1) : ℝ) *
       t ^ (n - 1) * iteratedDerivWithin n f (Ici 0) t := by
-  rw [chafaiDensity, if_neg hn]
+  rw [chafaiDensity, ite_eq_right hn]
 
 /-- `chafaiDensity f n` is continuous on `[0, ∞)` when `f` has `n` continuous derivatives
 there. -/
@@ -208,14 +208,14 @@ noncomputable def bernsteinKernel (n : ℕ) (x p : ℝ) : ℝ :=
 /-- The Bernstein kernel vanishes for `n ≤ 1`. -/
 @[simp] lemma bernsteinKernel_of_le_one {n : ℕ} (hn : n ≤ 1) (x p : ℝ) :
     bernsteinKernel n x p = 0 := by
-  rw [bernsteinKernel, if_pos hn]
+  rw [bernsteinKernel, ite_eq_left hn]
 
 /-- The defining formula for the Bernstein kernel at `2 ≤ n`. -/
 @[simp]
 lemma bernsteinKernel_of_two_le {n : ℕ} (hn : 2 ≤ n) (x p : ℝ) :
     bernsteinKernel n x p = (max (1 - x * p / (↑(n - 1) : ℝ)) 0) ^ (n - 1) := by
   have hnle : ¬ n ≤ 1 := by omega
-  rw [bernsteinKernel, if_neg hnle]
+  rw [bernsteinKernel, ite_eq_right hnle]
 
 /-- The Bernstein kernel is continuous in `p` for fixed `n` and `x`. -/
 lemma continuous_bernsteinKernel (n : ℕ) (x : ℝ) : Continuous (bernsteinKernel n x) := by

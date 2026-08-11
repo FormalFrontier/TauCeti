@@ -162,7 +162,7 @@ theorem intervalIntegral_excised_logDeriv_fdBoundary_segment5_eq_two_pi_I_mul_qE
     (intervalIntegral_fdBoundary_segment5_eq_circleIntegral_logDeriv_cuspFunction hper).trans
       (circleIntegral_logDeriv_cuspFunction hga hgz)]
   rw [uIcc_of_le (by norm_num : (4 : ℝ) ≤ 5)] at ht
-  exact if_neg (not_exists_norm_fdBoundary_sub_le_of_mem_Icc_four_five hlt ht)
+  exact ite_eq_right (not_exists_norm_fdBoundary_sub_le_of_mem_Icc_four_five hlt ht)
 
 end ModularForm
 

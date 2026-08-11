@@ -66,8 +66,8 @@ private theorem tendsto_integral_truncated_realWindingIntegrand
   · exact h_meas
   · exact Filter.Eventually.of_forall fun ε => MeasureTheory.ae_of_all _ fun t _ => by
       by_cases hfar : ‖γ t - w‖ > ε
-      · rw [if_pos hfar]
-      · rw [if_neg hfar, norm_zero]
+      · rw [ite_eq_left hfar]
+      · rw [ite_eq_right hfar, norm_zero]
         exact norm_nonneg _
   · exact h_int.norm
   · exact MeasureTheory.ae_of_all _ fun t _ => by
@@ -96,7 +96,7 @@ theorem HasCauchyPVAt.im_eq_integral_realWindingIntegrand
     refine him.congr (MeasureTheory.ae_of_all _ fun t => ?_)
     by_cases hfar : ‖γ t - w‖ > ε
     · rw [RCLike.im_eq_complex_im]
-      simpa only [if_pos hfar] using
+      simpa only [ite_eq_left hfar] using
         (realWindingIntegrand_def (γ t - w) (deriv γ t)).symm
     · simp [hfar]
   have h_real := tendsto_integral_truncated_realWindingIntegrand h_int h_meas
@@ -116,7 +116,7 @@ theorem HasCauchyPVAt.im_eq_integral_realWindingIntegrand
             (γ t - w)⁻¹ * deriv γ t else 0 : ℂ).im) := by
         exact intervalIntegral.integral_congr fun t _ => by
           by_cases hfar : ‖γ t - w‖ > ε
-          · simpa only [if_pos hfar] using
+          · simpa only [ite_eq_left hfar] using
               realWindingIntegrand_def (γ t - w) (deriv γ t)
           · simp [hfar]
       _ = (∫ t in a..b,
