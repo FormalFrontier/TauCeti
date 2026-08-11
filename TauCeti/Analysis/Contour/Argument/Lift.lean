@@ -204,7 +204,7 @@ private lemma prod_range_div_complex (a : ℕ → ℂ) (k : ℕ) (ha : ∀ j ≤
   classical
   set u : ℕ → ℂˣ := fun j ↦ if h : a j = 0 then 1 else Units.mk0 (a j) h with hu_def
   have hu : ∀ j ≤ k, (u j : ℂ) = a j := by
-    intro j hj; simp only [hu_def, dif_neg (ha j hj), Units.val_mk0]
+    intro j hj; simp only [hu_def, dite_eq_right (ha j hj), Units.val_mk0]
   have hstep : ∏ j ∈ Finset.range k, (a (j + 1) / a j)
       = ((∏ j ∈ Finset.range k, u (j + 1) / u j : ℂˣ) : ℂ) := by
     rw [Units.coe_prod]

@@ -5,12 +5,16 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.Analysis.SpecialFunctions.Exponential
+public import Mathlib.MeasureTheory.Integral.IntervalIntegral.FundThmCalculus
+import Mathlib.Analysis.Calculus.Deriv.Mul
 
 /-!
 # Exponentials in normed algebras
 
 This file records basic facts about the exponential in normed algebras, including the
-specialization to continuous linear endomorphisms of a real normed space.
+specialization to continuous linear endomorphisms of a real normed space: the norm bound
+`‖exp x‖ ≤ Real.exp ‖x‖`, the exponential of a scalar multiple of the identity, and the Duhamel
+identity `exp (t • B) x - x = ∫₀ᵗ exp (u • B) (B x) du` for the orbits of a bounded operator.
 -/
 
 public section
@@ -60,6 +64,23 @@ theorem norm_exp_smul_one_le (c : ℝ) :
   rw [exp_smul_one, norm_smul, Real.norm_eq_abs, abs_of_nonneg (Real.exp_nonneg _)]
   simpa only [ContinuousLinearMap.one_def, mul_one] using
     mul_le_mul_of_nonneg_left ContinuousLinearMap.norm_id_le (Real.exp_nonneg c)
+
+/-- **The Duhamel identity for the exponential of a bounded operator.** For `B : X →L[ℝ] X`,
+`exp (t B) x - x = ∫₀ᵗ exp (u B) (B x) du`.
+
+This is the fundamental theorem of calculus applied to the differentiable orbit
+`u ↦ exp (u B) x`, whose derivative is the continuous function `u ↦ exp (u B) (B x)`. -/
+theorem exp_smul_apply_sub_eq_intervalIntegral [CompleteSpace X] (B : X →L[ℝ] X) (t : ℝ) (x : X) :
+    exp (t • B) x - x = ∫ u in (0 : ℝ)..t, exp (u • B) (B x) := by
+  have hderiv : ∀ u : ℝ, HasDerivAt (fun v : ℝ => exp (v • B) x) (exp (u • B) (B x)) u := by
+    intro u
+    simpa [mul_apply_eq_comp] using
+      (hasDerivAt_exp_smul_const B u).clm_apply (hasDerivAt_const u x)
+  have hcont : Continuous fun u : ℝ => exp (u • B) (B x) :=
+    (differentiable_exp_smul_const ℝ B).continuous.clm_apply continuous_const
+  rw [intervalIntegral.integral_eq_sub_of_hasDerivAt (fun u _ => hderiv u)
+    (hcont.intervalIntegrable 0 t)]
+  simp
 
 end ContinuousLinearMap
 

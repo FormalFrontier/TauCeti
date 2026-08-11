@@ -52,9 +52,9 @@ theorem legendreSym_eq_legendreSym_primeDiscriminantRadicand (D : ℤ) (hq : q �
     legendreSym q D = legendreSym q (primeDiscriminantRadicand D) := by
   rw [primeDiscriminantRadicand_def]
   by_cases hD : D = -4 ∨ D = 8 ∨ D = -8
-  · rw [if_pos hD]
+  · rw [ite_eq_left hD]
     exact legendreSym_evenPrimeDiscriminant_eq_legendreSym_radicand hD hq
-  · rw [if_neg hD]
+  · rw [ite_eq_right hD]
 
 /-- Family form of
 `legendreSym_eq_legendreSym_primeDiscriminantRadicand`: the condition that all integers in a

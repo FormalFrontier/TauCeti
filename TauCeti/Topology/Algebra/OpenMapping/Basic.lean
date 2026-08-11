@@ -10,14 +10,17 @@ public import Mathlib.Topology.Baire.Lemmas
 public import Mathlib.GroupTheory.GroupAction.Pointwise
 
 /-!
-# The Baire steps of Henkel's open mapping theorem
+# Steps toward Henkel's open mapping theorem
 
 Henkel's open mapping theorem says that a continuous surjective linear map between complete
 Hausdorff first-countable modules over a ring with a zero sequence of units is open. Its first
-half is a Baire-category argument, and that half is what this file isolates. It needs none of
-the hypotheses the rest of the proof needs — no completeness, no first countability, not even
-continuity of the map. What it does need is that the target is a Baire space and that the map is
-equivariant, the latter being what lets a dilate pass through it.
+half is a Baire-category argument, and this file collects the steps up to and including the one
+that consumes it. None of them needs the hypotheses the *end* of the proof needs — no
+completeness, no first countability, not even continuity of the map.
+
+The Baire results below need a Baire target and an equivariant map, the latter being what lets a
+dilate pass through it. The approximation step at the end needs neither: it asks nothing of the
+map beyond being a function.
 
 The argument is the classical one, with the zero sequence of units supplying the countability
 Baire needs. Any neighbourhood `U` of zero in the domain has its dilates `uₙ⁻¹ • U` cover the
@@ -49,6 +52,9 @@ countability enter; it is not proved here.
 * `TauCeti.HasZeroSequenceOfUnits.nonempty_interior_closure_image` and
   `TauCeti.HasZeroSequenceOfUnits.closure_image_mem_nhds_zero`: the same two, taking the sequence
   from the class rather than from the caller.
+* `TauCeti.exists_mem_and_sub_mem_closure_image`: one step of the approximation that consumes that
+  neighbourhood — a point in the closure of `f '' U` is brought inside `closure (f '' V)` by
+  subtracting the image of some `x ∈ U`.
 
 ## References
 
@@ -177,6 +183,33 @@ theorem HasZeroSequenceOfUnits.closure_image_mem_nhds_zero [HasZeroSequenceOfUni
   closure_image_mem_nhds_zero_of_tendsto_zero f hf hu hc hU
 
 end Nhds
+
+section Approximation
+
+variable {M N : Type*} [AddGroup N] [TopologicalSpace N] [ContinuousSub N]
+
+/-- **One step of Henkel's approximation.** If `y` lies in the closure of `f '' U`, and the closure
+of `f '' V` is a neighbourhood of zero, then some `x ∈ U` brings `y` within that closure: the
+residual `y - f x` lies in `closure (f '' V)`.
+
+This is what turns the neighbourhood statement above into a *construction*. Iterating it down a
+decreasing sequence of `V`s produces a sequence of approximants whose residuals shrink, and it is
+the convergence of the resulting series — where completeness and first countability enter — that
+finally removes the closure from `f '' U`. Neither of those hypotheses is needed here.
+
+Nothing is asked of `f` beyond being a function, and nothing of `M` at all: the step is about
+closures and images, and it is the *iteration* that needs `f` additive and `M` complete. -/
+theorem exists_mem_and_sub_mem_closure_image {F : Type*} [FunLike F M N] (f : F) {U V : Set M}
+    {y : N} (hy : y ∈ closure (f '' U))
+    (hV : closure (f '' V) ∈ 𝓝 (0 : N)) : ∃ x ∈ U, y - f x ∈ closure (f '' V) := by
+  -- `z ↦ y - z` is continuous and sends `y` to `0`, so it pulls `closure (f '' V)` back to a
+  -- neighbourhood of `y`, which `y ∈ closure (f '' U)` forces to meet `f '' U`.
+  have hnhd : (fun z ↦ y - z) ⁻¹' closure (f '' V) ∈ 𝓝 y :=
+    (continuous_const.sub continuous_id).continuousAt.preimage_mem_nhds (by simpa using hV)
+  obtain ⟨_, hres, x, hx, rfl⟩ := mem_closure_iff_nhds.mp hy _ hnhd
+  exact ⟨x, hx, hres⟩
+
+end Approximation
 
 end TauCeti
 

@@ -30,7 +30,8 @@ as that entire fibre.
 
 Ported from the AINTLIB `LeanModularForms` project
 ([`LeanModularForms/HeckeRIngs/GL2/Gamma1Pair.lean`](https://github.com/CBirkbeck/AINTLIB),
-Chris Birkbeck).
+Chris Birkbeck), with `CoprimeDet` and `coprimeDet_iff` from the `CoprimeDet` section of
+`LeanModularForms/HeckeRIngs/GLn/CongruenceHecke/Props.lean` (Chris Birkbeck).
 
 ## Main definitions
 
@@ -39,6 +40,8 @@ Chris Birkbeck).
 ## Main results
 
 * `HeckeRing.GL2.mem_Delta0_iff`: membership, unfolded.
+* `HeckeRing.GL2.CoprimeDet`, `HeckeRing.GL2.coprimeDet_iff`: the elements whose integral
+  representative has determinant coprime to `N`, and the fact that one witness decides it.
 * `HeckeRing.GL2.Delta0_le_posDetInt`: `Δ₀(N)` consists of integral matrices of positive
   determinant, which is what puts it in the commensurator of `SL₂(ℤ)`.
 
@@ -88,6 +91,26 @@ noncomputable def Delta0 : Submonoid (GL (Fin 2) ℚ) where
         0 < (↑g : Matrix (Fin 2) (Fin 2) ℚ).det ∧ (N : ℤ) ∣ A 1 0 ∧
           IsUnit (A 0 0 : ZMod N) :=
   Iff.rfl
+
+/-- An element of `Δ₀(N)` has **coprime determinant** when every integral matrix representing
+it has determinant coprime to `N`.
+
+Quantifying over all representatives rather than choosing one keeps the predicate free of a
+choice; the representative is unique anyway, since `ℤ → ℚ` is injective. -/
+def CoprimeDet (g : Delta0 N) : Prop :=
+  ∀ A : Matrix (Fin 2) (Fin 2) ℤ,
+    (↑(g : GL (Fin 2) ℚ) : Matrix (Fin 2) (Fin 2) ℚ) = A.map (Int.cast : ℤ → ℚ) →
+      Int.gcd A.det N = 1
+
+/-- `CoprimeDet` is decided by any single integral witness: the witness is unique, because the
+entrywise cast `ℤ → ℚ` is injective. This is the introduction rule for the definition, whose
+universal quantifier only eliminates. -/
+lemma coprimeDet_iff {g : Delta0 N} {A : Matrix (Fin 2) (Fin 2) ℤ}
+    (hA : (↑(g : GL (Fin 2) ℚ) : Matrix (Fin 2) (Fin 2) ℚ) = A.map (Int.cast : ℤ → ℚ)) :
+    CoprimeDet N g ↔ Int.gcd A.det N = 1 := by
+  refine ⟨fun h ↦ h A hA, fun h A' hA' ↦ ?_⟩
+  have : A' = A := Matrix.map_injective Int.cast_injective (hA'.symm.trans hA)
+  exact this ▸ h
 
 /-- `Δ₀(N)` consists of integral matrices with positive determinant. -/
 lemma Delta0_le_posDetInt : Delta0 N ≤ posDetInt 2 := by

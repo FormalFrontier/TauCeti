@@ -117,7 +117,7 @@ theorem _root_.SlashInvariantForm.slash_action_eqn_of_det_pos {F : Type*} [FunLi
   have h := congr_fun (SlashInvariantForm.slash_action_eqn f γ hγ) τ
   have hdet' : (0 : ℝ) < ↑(Matrix.GeneralLinearGroup.det γ) := by
     rwa [Matrix.GeneralLinearGroup.val_det_apply]
-  rw [ModularForm.slash_def, σ, if_pos hdet'] at h
+  rw [ModularForm.slash_def, σ, ite_eq_left hdet'] at h
   simp only [ContinuousAlgEquiv.refl_apply] at h
   -- clear the two inverse factors of the slash action in turn, then read off the exponents
   have hden : denom γ (τ : ℂ) ^ (-k) ≠ 0 := zpow_ne_zero _ (denom_ne_zero γ τ)
