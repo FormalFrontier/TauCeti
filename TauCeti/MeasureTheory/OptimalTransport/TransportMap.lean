@@ -159,13 +159,14 @@ theorem snd_graphPlan_comp {R : Y → Z} {ρ : Measure Z} (hR : HasLaw R ρ ν) 
     (graphPlan (R ∘ T) μ).snd = ρ :=
   snd_graphPlan_of_hasLaw (hR.comp hT)
 
-/-- A measure-preserving map is in particular a transport map, so its graph plan has the
-prescribed marginals. This covers measurable equivalences between measure spaces. -/
+/-- A measure-preserving map is in particular a transport map, so the second marginal of its
+graph plan is the prescribed target. This covers measurable equivalences between measure
+spaces. -/
 theorem snd_graphPlan_of_measurePreserving (hT : MeasurePreserving T μ ν) :
     (graphPlan T μ).snd = ν :=
   snd_graphPlan_of_hasLaw hT.hasLaw
 
-/-- The identity transports `μ` to itself, and its graph plan is the diagonal plan. -/
+/-- The identity transports `μ` to itself, so the second marginal of its graph plan is `μ`. -/
 theorem snd_graphPlan_id (μ : Measure X) : (graphPlan (id : X → X) μ).snd = μ :=
   snd_graphPlan_of_hasLaw HasLaw.id
 
