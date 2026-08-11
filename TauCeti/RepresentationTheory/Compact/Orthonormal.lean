@@ -50,9 +50,11 @@ whatever indexing the representation came with.
 This is the orthonormal-system item of Layer 4, together with the system half of the
 character-orthonormality item of Layer 6, of the
 [compact-groups roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/CompactGroups/README.md).
-The completeness of the first system (Peter-Weyl) and of the second (class-function completeness)
-are Layer 5 and Layer 6 targets and are not proved here. The mathematical development follows
-Daniel Bump, *Lie Groups*, second edition, Chapter 2.
+The completeness of the first system is the Layer 5 summit, proved in
+`TauCeti/RepresentationTheory/Compact/PeterWeyl.lean` for a family that also exhausts the
+irreducibles; the completeness of the second (class-function completeness) is a Layer 6 target and
+is not proved here. The mathematical development follows Daniel Bump, *Lie Groups*, second
+edition, Chapter 2.
 -/
 
 public section

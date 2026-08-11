@@ -29,6 +29,18 @@ tuple, whose entries are indices in `Fin N`, always carry distinct indices
 over a *single* window would produce, and it is why the factorization can apply a
 contractability argument to every term of the average without exception.
 
+## The moving selection
+
+The same windows also appear as a *moving* selection, in the shape the `L²` convergence theorems
+quantify over: `disjointWindow c` is the family `n ↦ (j ↦ window (n + 1) c j)`, so at each length
+factor `c` reads `[(c + 1)(n + 1), (c + 2)(n + 1))`. Two facts make it usable there —
+`disjointWindow_injective` at each length, with `disjointWindow_eventually_injective` the eventual
+form those theorems take, and `disjointWindow_ne` for disjointness across factors.
+
+That combination is what fixed starts cannot supply: windows from two distinct fixed starts overlap
+once the common length exceeds the gap between the starts, whereas these move outward as the length
+grows. The generic fixed-start selection is `fixedStart` in `Process/BlockAverage.lean`.
+
 ## References
 
 Nothing here involves a measure or the `L²` theory: the module is index arithmetic plus
@@ -43,7 +55,7 @@ block-average algebra, which is why it sits with the process API rather than und
 
 public section
 
-open Finset
+open Filter Finset
 
 open scoped BigOperators
 
@@ -95,6 +107,41 @@ theorem prod_blockAverage_window_eq_expect {m N : ℕ} (Y : Fin m → ℕ → Ω
     (∏ i : Fin m, blockAverage (Y i) (fun j : Fin N => window N (i : ℕ) (j : ℕ)) ω)
       = 𝔼 js : Fin m → Fin N, ∏ i : Fin m, Y i (window N (i : ℕ) (js i : ℕ)) ω :=
   prod_blockAverage_eq_expect Y (fun i j => window N (i : ℕ) (j : ℕ)) ω
+
+/-! ### The disjoint-window selection
+
+The moving selection a block factorization needs: at each length, distinct factors read disjoint
+windows. The generic fixed-start selection lives with `blockAverage` in
+`Probability/Process/BlockAverage.lean`. -/
+
+/-- The **disjoint-window selection**: at length `n + 1`, factor `c` reads the window
+`window (n + 1) c`, occupying `[(c + 1)(n + 1), (c + 2)(n + 1))`. -/
+def disjointWindow (c : ℕ) : ∀ n : ℕ, Fin (n + 1) → ℕ :=
+  fun n j => window (n + 1) c (j : ℕ)
+
+@[simp]
+theorem disjointWindow_apply (c n : ℕ) (j : Fin (n + 1)) :
+    disjointWindow c n j = window (n + 1) c (j : ℕ) := (rfl)
+
+/-- Each disjoint window is an injective selection at each length. -/
+theorem disjointWindow_injective (c n : ℕ) : Function.Injective (disjointWindow c n) := by
+  intro a b hab
+  simp only [disjointWindow_apply, window_def] at hab
+  exact Fin.ext (Nat.add_left_cancel hab)
+
+/-- The eventual form, as the moving-selection theorems take it. -/
+theorem disjointWindow_eventually_injective (c : ℕ) :
+    ∀ᶠ n in atTop, Function.Injective (disjointWindow c n) :=
+  Eventually.of_forall (disjointWindow_injective c)
+
+/-- **Distinct factors never collide.** The windows of two different factors are disjoint at every
+length, which is exactly what fixed starts cannot provide. -/
+theorem disjointWindow_ne {c c' : ℕ} (h : c ≠ c') (n : ℕ) (j j' : Fin (n + 1)) :
+    disjointWindow c n j ≠ disjointWindow c' n j' := by
+  simp only [disjointWindow_apply]
+  rcases lt_or_gt_of_ne h with hlt | hlt
+  · exact (window_lt_window j.isLt hlt).ne
+  · exact (window_lt_window j'.isLt hlt).ne'
 
 end Probability
 

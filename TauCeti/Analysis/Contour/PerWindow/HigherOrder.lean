@@ -11,6 +11,7 @@ public import Mathlib.MeasureTheory.Integral.IntervalIntegral.Basic
 public import TauCeti.Analysis.Contour.PiecewiseC1On
 public import TauCeti.Analysis.Contour.RegularityConditions
 import TauCeti.Analysis.Contour.Cauchy.PrincipalValue.Basic
+import TauCeti.Analysis.Contour.Curve.Distance
 import TauCeti.Analysis.Calculus.OneSidedDerivLimit
 import TauCeti.Analysis.Contour.HigherOrder.Asymptotics
 import TauCeti.Analysis.Contour.SectorCancellation
@@ -90,8 +91,7 @@ theorem intervalIntegrable_pow_inv_mul_deriv_truncated {γ : ℝ → ℂ} {s : �
       (fun t => if ‖γ t - s‖ > ε then c / (γ t - s) ^ k * deriv γ t else 0)
       MeasureTheory.volume a b := by
   have hK_closed : IsClosed {t ∈ uIcc a b | ‖γ t - s‖ ≤ ε} :=
-    ((hγ_cont.sub continuousOn_const).norm).preimage_isClosed_of_isClosed
-      (by rw [← Icc_min_max]; exact isClosed_Icc) isClosed_Iic
+    isClosed_setOfPred_mem_uIcc_norm_sub_le hγ_cont s ε
   have h_fn_aesm : AEStronglyMeasurable (fun t => c / (γ t - s) ^ k * deriv γ t)
       (MeasureTheory.volume.restrict (Set.uIoc a b)) := by
     have hγ_aem : AEMeasurable γ (MeasureTheory.volume.restrict (Set.uIoc a b)) :=
