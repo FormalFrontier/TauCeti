@@ -296,6 +296,13 @@ noncomputable def algEquivEnd (h : Module.finrank K L = Algebra.deg K A) :
       (LinearMap.injective_iff_surjective_of_finrank_eq_finrank (f := (toEndL f).toLinearMap)
         hdim).1 (toEndL_injective f)⟩
 
+/-- The equivalence `algEquivEnd f h` sends a scalar-extension element to its action on
+`BaseChangeModule f`. -/
+@[simp]
+theorem algEquivEnd_apply (h : Module.finrank K L = Algebra.deg K A) (r : L ⊗[K] A)
+    (x : BaseChangeModule f) : algEquivEnd f h r x = r • x :=
+  toEndL_apply f r x
+
 end BaseChangeModule
 
 /-! ### Subfields, their degrees, and the splitting theorem -/
