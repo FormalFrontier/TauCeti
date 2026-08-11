@@ -42,13 +42,33 @@ Each special value comes in two forms: one stated about the curve's coordinate f
 ultrametric inequality is `private`, and the norm-degree theory it rests on lives in
 `FunctionField/Norm.lean`.
 
+* `WeierstrassCurve.Affine.infinityPlace.X_div_mk_Y` and
+  `WeierstrassCurve.Affine.infinityPlace.isUniformizer_X_div_mk_Y`: **`x / y` is a uniformiser at
+  infinity.** Its value is `exp (-1)`, and it is a uniformiser in Mathlib's
+  `Valuation.IsUniformizer` sense. That the place is discrete of rank one needs no proof here — its
+  value group is a nontrivial subgroup of the cyclic `ℤᵐ⁰ˣ`, so Mathlib's `IsRankOneDiscrete`
+  instance fires by itself — but the *generator* does: discreteness alone permits `exp (-n)` with
+  `n ≥ 1`, and the proper subgroup `2ℤ` genuinely occurs, being the value group of the restriction
+  of `v_∞` to `F(x)`. One element of value `exp (-1)` settles it, which is what the value above is.
+
+* `WeierstrassCurve.Affine.infinityPlace_ne_heightOneSpectrum_valuation`: the place at infinity is
+  distinct from the valuation of every height-one prime of the coordinate ring — the affine places.
+  With `CoordinateRing.pointPlace_eq_iff` that makes the whole point-to-place assignment injective,
+  the point at infinity included.
+
+The quotient value gets no `@[simp]` restatement of its own: `map_div₀` is a simp lemma, so simp
+decomposes the quotient through the two atomic restatements rather than matching a quotient-shaped
+left-hand side, and the `AdjoinRoot` spelling of `x / y` is definitionally the one written here.
+
 ## Roadmap
 
 `TauCetiRoadmap/EllipticCurves/README.md`, **Layer 0** (the function field, places, and divisors),
 whose §Places asks for the one further place `W.infinityPlace` beyond the affine ones, sitting
 "where `x` and `y` have their poles", with `ord_∞ x = -2`, `ord_∞ y = -3`. This file supplies the
-valuation and those two degrees; `Suggested.lean` seeds no declaration it competes with, recording
-that the function-field layer's "types are new API and are built there, not pinned here".
+valuation, those two degrees, and the **uniformiser** `x / y` — §Places lists "`ord_v`,
+uniformisers, residue fields, the degree `deg v`" as the API the later layers consume.
+`Suggested.lean` seeds no declaration it competes with, recording that the function-field layer's
+"types are new API and are built there, not pinned here".
 
 ## Provenance
 
@@ -69,6 +89,16 @@ and the target is Mathlib's `ℤᵐ⁰`, so the result is a genuine `Valuation` 
 `RatFunc.inftyValuation` and `IsDedekindDomain.HeightOneSpectrum.valuation`; multiplicativity and
 vanishing are `map_mul` and `Algebra.norm_eq_zero_iff`, and only the ultrametric inequality is
 reproved.
+
+The uniformiser corresponds to that project's
+`projects/HasseWeil/HasseWeil/Foundation/LocalExpansion.lean` at `main` `1c1c7466`, `localParam` —
+the local parameter `t = -x/y` at `O` (Silverman IV.1) — whose uniformising property is recorded
+there through a Laurent-series embedding (`localExpand_localParam`), over a `SmoothPlaneCurve` and
+that development's own `WithTop ℤ`-valued `ordAtInfty`. None of that apparatus is needed here: the
+value of `x / y` is two rewrites from the two pole orders, and Mathlib's
+`Valuation.IsRankOneDiscrete.generator_eq_exp_neg_one_of_mem_range` turns that single value into the
+generator, so the conclusion is Mathlib's `Valuation.IsUniformizer` directly. The sign is dropped,
+`x / y` and `-x / y` having the same valuation.
 -/
 
 public section
@@ -354,6 +384,55 @@ theorem infinityPlace.adjoinRoot_root :
       (AdjoinRoot.root W.polynomial)) = WithZero.exp 3 :=
   infinityPlace.mk_Y W
 
+
+open scoped Classical in
+/-- **`x / y` is a uniformiser at infinity**: `v_∞ (x / y) = exp (-1)`, that is
+`ord_∞ (x / y) = 1`, a simple zero at the point at infinity. The double pole of `x` and the triple
+pole of `y` differ by one, which is what makes the quotient a uniformiser. -/
+theorem infinityPlace.X_div_mk_Y :
+    infinityPlace W (algebraMap W.CoordinateRing W.FunctionField
+        (algebraMap F[X] W.CoordinateRing Polynomial.X) /
+      algebraMap W.CoordinateRing W.FunctionField (CoordinateRing.mk W Y))
+      = WithZero.exp (-1) := by
+  rw [map_div₀, infinityPlace.X, infinityPlace.mk_Y, ← WithZero.exp_sub]
+  norm_num
+
+open scoped Classical in
+-- The place is discrete of rank one for free — its value group is a subgroup of the cyclic group
+-- `ℤᵐ⁰ˣ`, nontrivial by `instIsNontrivial` — but discreteness alone leaves the generator as
+-- `exp (-n)` for an unspecified `n ≥ 1`, and the proper subgroup genuinely occurs: the restriction
+-- of `v_∞` to `F(x)` has value group `2ℤ` by `infinityPlace.algebraMap_eq_sq`. What pins the
+-- generator to `exp (-1)` is a single element of that value, so `X_div_mk_Y` is exactly the witness
+-- Mathlib's `generator_eq_exp_neg_one_of_mem_range` asks for.
+/-- **`x / y` is a uniformiser at the place at infinity**, in Mathlib's sense: its value generates
+the value group and is `< 1`. -/
+theorem infinityPlace.isUniformizer_X_div_mk_Y :
+    (infinityPlace W).IsUniformizer (algebraMap W.CoordinateRing W.FunctionField
+        (algebraMap F[X] W.CoordinateRing Polynomial.X) /
+      algebraMap W.CoordinateRing W.FunctionField (CoordinateRing.mk W Y)) := by
+  rw [Valuation.IsUniformizer.iff,
+    Valuation.IsRankOneDiscrete.generator_eq_exp_neg_one_of_mem_range
+      ⟨_, infinityPlace.X_div_mk_Y W⟩,
+    Units.val_mk0]
+  exact infinityPlace.X_div_mk_Y W
+
+
+open scoped Classical in
+/-- **The place at infinity is distinct from every affine place.** Together with
+`CoordinateRing.pointPlace_eq_iff` this gives the injectivity of the whole point-to-place
+assignment, the point at infinity included. -/
+@[simp]
+theorem infinityPlace_ne_heightOneSpectrum_valuation [IsDedekindDomain W.CoordinateRing]
+    (P : IsDedekindDomain.HeightOneSpectrum W.CoordinateRing) :
+    infinityPlace W ≠ P.valuation W.FunctionField := by
+  intro heq
+  -- `x` lies in the coordinate ring, so an affine place values it at most `1`, while it has a
+  -- double pole at infinity
+  have hx := IsDedekindDomain.HeightOneSpectrum.valuation_le_one P
+    (K := W.FunctionField) (algebraMap F[X] W.CoordinateRing Polynomial.X)
+  rw [← heq, infinityPlace.X] at hx
+  rw [← WithZero.exp_zero, WithZero.exp_le_exp] at hx
+  omega
 
 end WeierstrassCurve.Affine
 
