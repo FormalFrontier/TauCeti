@@ -450,14 +450,16 @@ theorem hasCartanType_G2_of_isG2 [Finite ι] [CharZero R] [IsDomain R]
         decide
       · subst i; subst j
         -- Expose the Cartan entry as `pairingIn`, the form in which `hpq'` is stated.
-        change P.pairingIn ℤ p q = _
-        rw [hpq', hep, heq]
-        decide
+        calc
+          b.cartanMatrix p' q' = P.pairingIn ℤ p q :=
+            RootPairing.Base.cartanMatrixIn_def _ _ _ _
+          _ = _ := by rw [hpq', hep, heq]; decide
       · subst i; subst j
         -- Expose the Cartan entry as `pairingIn`, the form in which `hqp` is stated.
-        change P.pairingIn ℤ q p = _
-        rw [hqp, hep, heq]
-        decide
+        calc
+          b.cartanMatrix q' p' = P.pairingIn ℤ q p :=
+            RootPairing.Base.cartanMatrixIn_def _ _ _ _
+          _ = _ := by rw [hqp, hep, heq]; decide
       · subst i; subst j
         rw [b.cartanMatrix_apply_same, heq]
         decide
@@ -487,7 +489,7 @@ side does not mention the base, so an irreducible reduced crystallographic finit
 one base of type `G₂` has every base of type `G₂`. The `IsG2` hypothesis of
 `TauCeti.hasCartanType_G2_of_isG2` is taken as an argument rather than as an instance, so that it
 can be supplied by the right-hand side here. -/
-theorem hasCartanType_G2_iff_isG2 [Finite ι] [CharZero R] [IsDomain R]
+@[simp] theorem hasCartanType_G2_iff_isG2 [Finite ι] [CharZero R] [IsDomain R]
     [P.IsReduced] [P.IsIrreducible] (b : P.Base) :
     HasCartanType P b .G2 ↔ P.IsG2 :=
   ⟨isG2_of_hasCartanType_G2, fun h ↦ hasCartanType_G2_of_isG2 h b⟩

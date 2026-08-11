@@ -5,23 +5,21 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.LinearAlgebra.RootSystem.Base
-public import Mathlib.LinearAlgebra.RootSystem.Reduced
-public import Mathlib.LinearAlgebra.RootSystem.RootPositive
 public import TauCeti.LinearAlgebra.RootSystem.Weyl.Group
 
 /-!
 # The Weyl orbit of the simple roots
 
 A base of a root pairing carries only finitely much data — the Cartan matrix of its simple roots —
-yet it controls every root, because the Weyl group moves the simple roots onto all of them. This
-file proves that transitivity statement, at the level of root indices, and draws the consequence
-that concerns lengths: a root-positive form takes on the roots exactly the values it takes on the
-simple roots.
+yet it controls every root, because the Weyl-group orbits of the simple roots cover all roots. This
+file proves that covering statement, at the level of root indices, and draws the consequence that
+concerns lengths: a root-positive form takes on the roots exactly the values it takes on the simple
+roots.
 
 The proof is the lowering argument of Layer 1, packaged by Mathlib as
 `RootPairing.Base.induction_reflect`: reflecting a positive root in a suitable simple root
-decreases its height, and negation is itself a reflection, so induction on height reaches a simple
-root from anywhere.
+decreases its height, and reflection in a root sends that root to its negative, so induction on
+height reaches a simple root from anywhere.
 
 ## Main results
 
@@ -36,7 +34,7 @@ root from anywhere.
 
 ## References
 
-This file supplies the transitivity half of "the Weyl group acts on the roots" in Layer 1 of
+This file shows that the simple-root Weyl orbits cover all roots, as part of Layer 1 of
 `TauCetiRoadmap/RepresentationTheory/RootSystems/README.md`. See Bourbaki, *Lie Groups and Lie
 Algebras, Chapters 4-6*, Ch. VI §1.5, and Humphreys, *Introduction to Lie Algebras and
 Representation Theory*, §10.3, where the same statement is proved by the same induction.
