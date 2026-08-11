@@ -171,7 +171,11 @@ noncomputable def levelSetChart (hf : HasStrictFDerivAt f f' a) (hf' : f'.range 
 below read its `source`, `target`, `toFun` and `invFun` fields off that literal by unfolding the
 definition and projecting — stable reductions, since the fields are written out in this file. They
 are the only declarations that rely on it: every other proof, here and downstream, rewrites with
-them instead. -/
+them instead. The unfolding is spelled out with `unfold` rather than left to `rfl`: `levelSetChart`
+is not `@[expose]`d, so under the module system a bare `rfl` in an exported theorem is rejected
+with "Not a definitional equality … all definitions that need to be unfolded to prove this theorem
+must be exposed". Only the private `levelSetChart_symm_eq`, which is not exported, closes by
+`rfl`. -/
 
 /-- The source of the chart of a level set is the source of Mathlib's implicit-function
 homeomorphism, seen inside the level set. -/
@@ -179,8 +183,7 @@ theorem levelSetChart_source (hf : HasStrictFDerivAt f f' a) (hf' : f'.range = �
     (hker : f'.ker.ClosedComplemented) (ha : f a = c) :
     (levelSetChart hf hf' hker ha).source =
       Subtype.val ⁻¹' (hf.implicitToOpenPartialHomeomorphOfComplemented f f' hf' hker).source := by
-  change Subtype.val ⁻¹'
-    (hf.implicitToOpenPartialHomeomorphOfComplemented f f' hf' hker).source = _
+  unfold levelSetChart
   rfl
 
 /-- The target of the chart of a level set is the slice `{c} × ker f'` of the target of Mathlib's
@@ -190,8 +193,7 @@ theorem levelSetChart_target (hf : HasStrictFDerivAt f f' a) (hf' : f'.range = �
     (levelSetChart hf hf' hker ha).target =
       (fun k => (c, k)) ⁻¹'
         (hf.implicitToOpenPartialHomeomorphOfComplemented f f' hf' hker).target := by
-  change (fun k => (c, k)) ⁻¹'
-    (hf.implicitToOpenPartialHomeomorphOfComplemented f f' hf' hker).target = _
+  unfold levelSetChart
   rfl
 
 /-- The chart of a level set is computed by the projection onto `ker f'` chosen by `hker`, applied
@@ -199,8 +201,8 @@ to `x - a`. -/
 theorem levelSetChart_apply (hf : HasStrictFDerivAt f f' a) (hf' : f'.range = ⊤)
     (hker : f'.ker.ClosedComplemented) (ha : f a = c) (z : ↥{x | f x = c}) :
     levelSetChart hf hf' hker ha z = Classical.choose hker (z.1 - a) := by
-  change (hf.implicitToOpenPartialHomeomorphOfComplemented f f' hf' hker z.1).2 = _
-  rw [hf.implicitToOpenPartialHomeomorphOfComplemented_apply hf' hker]
+  unfold levelSetChart
+  exact congrArg Prod.snd (hf.implicitToOpenPartialHomeomorphOfComplemented_apply hf' hker z.1)
 
 /-- The inverse of the chart of a level set is `TauCeti.levelSetChartSymm`. -/
 private theorem levelSetChart_symm_eq (hf : HasStrictFDerivAt f f' a) (hf' : f'.range = ⊤)
@@ -290,6 +292,7 @@ theorem levelSetChartModel_symm_apply {n : ℕ} (hf : HasStrictFDerivAt f f' a)
     ContinuousLinearEquiv.coe_symm_toHomeomorph, Function.comp_apply]
 
 /-- The model chart has the same source as the chart of the level set it is read from. -/
+@[simp]
 theorem levelSetChartModel_source {n : ℕ} (hf : HasStrictFDerivAt f f' a)
     (hf' : f'.range = ⊤) (hker : f'.ker.ClosedComplemented)
     (hfin : FiniteDimensional 𝕜 ↥f'.ker) (hn : finrank 𝕜 ↥f'.ker = n) (ha : f a = c) :
@@ -298,6 +301,7 @@ theorem levelSetChartModel_source {n : ℕ} (hf : HasStrictFDerivAt f f' a)
 
 /-- The target of the model chart is the target of the chart of the level set it is read from,
 pulled back along `ContinuousLinearMap.kerModelEquiv`. -/
+@[simp]
 theorem levelSetChartModel_target {n : ℕ} (hf : HasStrictFDerivAt f f' a)
     (hf' : f'.range = ⊤) (hker : f'.ker.ClosedComplemented)
     (hfin : FiniteDimensional 𝕜 ↥f'.ker) (hn : finrank 𝕜 ↥f'.ker = n) (ha : f a = c) :
@@ -428,6 +432,12 @@ theorem levelSetChartAt_apply_self
     (z : ↥{x | f x = c}) : levelSetChartAt hf hFred hsurj hindex z z = 0 :=
   levelSetChartModel_apply_self _ _ _ _ _ _
 
+/- `mem_levelSetChartAt_source` and `mem_levelSetChartAt_target` are deliberately not `@[simp]`:
+the `@[simp]` lemmas `levelSetChartAt_source` and `levelSetChartAt_target` rewrite the set inside
+their statements first, so their left-hand sides are not in simp normal form and `simpNF` rejects
+the annotation. Membership in the source and target of the preferred chart is discharged by these
+lemmas applied directly, or by `simp` through the `levelSetChart` layer. -/
+
 /-- A point of a regular level set lies in the source of its preferred chart. -/
 theorem mem_levelSetChartAt_source
     (hf : ∀ x ∈ {x | f x = c}, HasStrictFDerivAt f (D x) x)
@@ -436,6 +446,16 @@ theorem mem_levelSetChartAt_source
     (hindex : ∀ x ∈ {x | f x = c}, ContinuousLinearMap.index (D x) = n)
     (z : ↥{x | f x = c}) : z ∈ (levelSetChartAt hf hFred hsurj hindex z).source :=
   mem_levelSetChartModel_source _ _ _ _ _ z.2
+
+/-- The origin of `Fin n → 𝕜`, the value of the preferred chart at its base point, lies in its
+target. -/
+theorem mem_levelSetChartAt_target
+    (hf : ∀ x ∈ {x | f x = c}, HasStrictFDerivAt f (D x) x)
+    (hFred : ∀ x ∈ {x | f x = c}, ContinuousLinearMap.IsFredholm (D x))
+    (hsurj : ∀ x ∈ {x | f x = c}, Function.Surjective (D x))
+    (hindex : ∀ x ∈ {x | f x = c}, ContinuousLinearMap.index (D x) = n)
+    (z : ↥{x | f x = c}) : (0 : Fin n → 𝕜) ∈ (levelSetChartAt hf hFred hsurj hindex z).target :=
+  mem_levelSetChartModel_target _ _ _ _ _ z.2
 
 /-- **A regular level set of a Fredholm map is locally modelled on `Fin n → 𝕜`, `n` its index.**
 If `f` is strictly differentiable at every point of the level set `{x | f x = c}` with surjective
@@ -500,14 +520,18 @@ theorem not_accPt_levelSet_of_injective_of_isClosed_range (hf : HasFDerivAt f f'
   rw [accPt_iff_frequently_nhdsNE, not_frequently]
   exact hf.eventually_ne (f'.antilipschitz_of_injective_of_isClosed_range hinj hclosed)
 
-/-- A point at which the derivative is surjective Fredholm **of index zero** is isolated in the
-level set through it: the local model `ker f'` is then the zero space. -/
+/-- A point at which the derivative is surjective **of index zero**, with finite-dimensional
+kernel, is isolated in the level set through it: the local model `ker f'` is then the zero space.
+Finite-dimensionality of the kernel is what rules out the reading of `index f' = 0` in which both
+`finrank` values are the junk value `0`; the full Fredholm property is not needed, and for a
+surjective operator is anyway equivalent to it by
+`TauCeti.isFredholm_iff_finite_ker_of_surjective`. -/
 theorem not_accPt_levelSet_of_index_eq_zero (hf : HasFDerivAt f f' a) (hf' : f'.range = ⊤)
-    (hFred : ContinuousLinearMap.IsFredholm f') (hindex : ContinuousLinearMap.index f' = 0) :
+    (hfin : FiniteDimensional 𝕜 ↥f'.ker) (hindex : ContinuousLinearMap.index f' = 0) :
     ¬ AccPt a (𝓟 {x | f x = c}) :=
   have hsurj : Function.Surjective f' := LinearMap.range_eq_top.1 hf'
   not_accPt_levelSet_of_injective_of_isClosed_range hf
-    (ContinuousLinearMap.bijective_of_surjective_of_index_eq_zero f' hFred hsurj hindex).injective
+    (ContinuousLinearMap.bijective_of_surjective_of_index_eq_zero f' hfin hsurj hindex).injective
     (by rw [hsurj.range_eq]; exact isClosed_univ)
 
 /-- A piece `{x | f x = c} ∩ K` of a level set along which the derivative is injective with closed
@@ -533,8 +557,9 @@ theorem finite_levelSet_inter_of_injective_of_isClosed_range {D : E → E →L[�
   hK.finite (isDiscrete_levelSet_inter_of_injective_of_isClosed_range hf hinj hclosed)
 
 /-- A **compact** piece `{x | f x = c} ∩ K` of a level set along which the derivative is surjective
-Fredholm of index zero is **finite**. When `f` is continuous the level set is closed, so for a
-compact `K` the compactness hypothesis is `hK.inter_left (isClosed_eq hcont continuous_const)`.
+of index zero with finite-dimensional kernel is **finite**. When `f` is continuous the level set is
+closed, so for a compact `K` the compactness hypothesis is
+`hK.inter_left (isClosed_eq hcont continuous_const)`.
 
 This is one ingredient in the well-definedness of a count of index-zero solutions, such as a Floer
 differential: it makes the counted set finite once a separate compactness result has placed the
@@ -542,12 +567,12 @@ solutions to be counted inside such a piece. -/
 theorem finite_levelSet_inter_of_index_eq_zero {D : E → E →L[𝕜] F} {K : Set E}
     (hK : IsCompact ({x | f x = c} ∩ K))
     (hf : ∀ x ∈ {x | f x = c} ∩ K, HasFDerivAt f (D x) x)
-    (hFred : ∀ x ∈ {x | f x = c} ∩ K, ContinuousLinearMap.IsFredholm (D x))
+    (hfin : ∀ x ∈ {x | f x = c} ∩ K, FiniteDimensional 𝕜 ↥(D x).ker)
     (hsurj : ∀ x ∈ {x | f x = c} ∩ K, Function.Surjective (D x))
     (hindex : ∀ x ∈ {x | f x = c} ∩ K, ContinuousLinearMap.index (D x) = 0) :
     ({x | f x = c} ∩ K).Finite :=
   finite_levelSet_inter_of_injective_of_isClosed_range hK hf
-    (fun x hx => (ContinuousLinearMap.bijective_of_surjective_of_index_eq_zero (D x) (hFred x hx)
+    (fun x hx => (ContinuousLinearMap.bijective_of_surjective_of_index_eq_zero (D x) (hfin x hx)
       (hsurj x hx) (hindex x hx)).injective)
     fun x hx => by rw [(hsurj x hx).range_eq]; exact isClosed_univ
 
@@ -579,12 +604,14 @@ theorem accPt_levelSet_of_nontrivial_ker (hf : HasStrictFDerivAt f f' a) (hf' : 
   have hsub : Ψ.symm k = (⟨a, ha⟩ : ↥{x | f x = c}) := Subtype.ext hEq
   exact hk0 (Set.mem_singleton_iff.2 (by rw [← Ψ.right_inv hkT, hsub, hΨ0]))
 
-/-- At a point of a level set where the derivative is surjective Fredholm of **nonzero** index the
-level set accumulates. With `TauCeti.not_accPt_levelSet_of_index_eq_zero` this says that the level
-set reduces to the point `a` near `a` — equivalently, that the local model `ker f'` is trivial —
-exactly when the index vanishes. -/
+/-- At a point of a level set where the derivative is surjective with complemented kernel and of
+**nonzero** index the level set accumulates. With
+`TauCeti.not_accPt_levelSet_of_index_eq_zero` this says that the level set reduces to the point `a`
+near `a` — equivalently, that the local model `ker f'` is trivial — exactly when the index
+vanishes. No finiteness of the kernel is assumed: a nonzero index already forces a nonzero, hence
+positive, `finrank` of the kernel. -/
 theorem accPt_levelSet_of_index_ne_zero (hf : HasStrictFDerivAt f f' a) (hf' : f'.range = ⊤)
-    (hFred : ContinuousLinearMap.IsFredholm f') (hindex : ContinuousLinearMap.index f' ≠ 0)
+    (hker : f'.ker.ClosedComplemented) (hindex : ContinuousLinearMap.index f' ≠ 0)
     (ha : f a = c) : AccPt a (𝓟 {x | f x = c}) := by
   have hpos : 0 < finrank 𝕜 ↥f'.ker := by
     refine Nat.pos_of_ne_zero fun h0 => hindex ?_
@@ -592,6 +619,6 @@ theorem accPt_levelSet_of_index_ne_zero (hf : HasStrictFDerivAt f f' a) (hf' : f
       (LinearMap.range_eq_top.1 hf')).1 h0
     exact_mod_cast h
   have : Nontrivial ↥f'.ker := Module.nontrivial_of_finrank_pos hpos
-  exact accPt_levelSet_of_nontrivial_ker hf hf' hFred.closedComplemented_ker ha
+  exact accPt_levelSet_of_nontrivial_ker hf hf' hker ha
 
 end TauCeti
