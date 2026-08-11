@@ -13,11 +13,10 @@ public import TauCeti.RingTheory.Norm.Quadratic
 
 For a quadratic number field `K = ℚ(√d)` presented by an algebraic integer `θ : 𝓞 K` generating
 `K` over `ℚ` with `minpoly ℤ θ = X² - d`, this file computes the field norm `Algebra.norm ℚ` on
-`K` in terms of the coordinates in the power basis `1, θ`:
+`K` in terms of the coordinates in the basis `1, θ`:
 
-* `norm_gen`: the norm of the generator is the radicand, `N(θ) = -d`;
-* `exists_eq_add_mul_gen`: every element of `K` is `b + aθ` for rationals `a, b`;
-* `norm_add_mul_gen`: in those coordinates the norm is `N(b + aθ) = b² - d·a²`;
+* `norm_gen`: the norm of the generator is the negative of the radicand, `N(θ) = -d`;
+* `norm_add_mul_gen`: in the coordinates `x = b + aθ` the norm is `N(b + aθ) = b² - d·a²`;
 * `norm_pos_of_radicand_neg`: when `d < 0` — the imaginary quadratic case, where `K` is totally
   complex — the norm is strictly positive on every nonzero element.
 
@@ -36,44 +35,24 @@ namespace TauCeti.NumberField
 
 variable {K : Type*} [Field K] [NumberField K] {θ : 𝓞 K} {d : ℤ}
 
-/-- The `ℚ`-power basis `1, θ` of the quadratic field `K = ℚ(θ)`. -/
-private noncomputable def genPowerBasis (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) : PowerBasis ℚ K :=
-  PowerBasis.ofAdjoinEqTop' θ.isIntegral_coe.tower_top hgen
-
-private theorem genPowerBasis_gen (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) :
-    (genPowerBasis hgen).gen = (θ : K) :=
-  PowerBasis.ofAdjoinEqTop'_gen _ hgen
-
-private theorem genPowerBasis_dim (hmin : minpoly ℤ θ = X ^ 2 - C d)
-    (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) : (genPowerBasis hgen).dim = 2 := by
-  rw [← (genPowerBasis hgen).natDegree_minpoly, genPowerBasis_gen, minpoly_rat_quadratic hmin,
-    natDegree_X_pow_sub_C]
-
-/-- **The norm of the generator is the radicand:** `N(θ) = -d`. This is the constant coefficient of
-the minimal polynomial `X² - d` (up to the sign `(-1)^{[K:ℚ]}`, here `+1`). -/
-theorem norm_gen (hmin : minpoly ℤ θ = X ^ 2 - C d) (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) :
+/-- **The norm of the generator is the negative of the radicand:** `N(θ) = -d`. It is the constant
+coefficient of the minimal polynomial `X² - d`, times the sign `(-1)^{[K:ℚ]} = +1`. -/
+@[simp] theorem norm_gen (hmin : minpoly ℤ θ = X ^ 2 - C d)
+    (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) :
     Algebra.norm ℚ (θ : K) = -(d : ℚ) := by
-  rw [← genPowerBasis_gen hgen,
-    Algebra.PowerBasis.norm_gen_eq_coeff_zero_minpoly (genPowerBasis hgen),
-    genPowerBasis_dim hmin hgen, genPowerBasis_gen, minpoly_rat_quadratic hmin]
+  have hint : IsIntegral ℚ (θ : K) := θ.isIntegral_coe.tower_top
+  have hgen' : (PowerBasis.ofAdjoinEqTop' hint hgen).gen = (θ : K) :=
+    PowerBasis.ofAdjoinEqTop'_gen hint hgen
+  have hdim : (PowerBasis.ofAdjoinEqTop' hint hgen).dim = 2 := by
+    rw [← (PowerBasis.ofAdjoinEqTop' hint hgen).natDegree_minpoly, hgen',
+      minpoly_rat_quadratic hmin, natDegree_X_pow_sub_C]
+  rw [← hgen', Algebra.PowerBasis.norm_gen_eq_coeff_zero_minpoly, hdim, hgen',
+    minpoly_rat_quadratic hmin]
   simp [coeff_sub, coeff_X_pow]
 
-/-- **Every element of a quadratic field is `b + aθ`** for rationals `a, b`: the power basis `1, θ`
-spans `K` over `ℚ`, and any polynomial in `θ` reduces modulo the degree-two minimal polynomial. -/
-theorem exists_eq_add_mul_gen (hmin : minpoly ℤ θ = X ^ 2 - C d)
-    (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) (x : K) :
-    ∃ a b : ℚ, x = algebraMap ℚ K b + algebraMap ℚ K a * (θ : K) := by
-  obtain ⟨f, hf, rfl⟩ := (genPowerBasis hgen).exists_eq_aeval x
-  rw [genPowerBasis_dim hmin hgen] at hf
-  obtain ⟨a, b, rfl⟩ := exists_eq_X_add_C_of_natDegree_le_one (by omega : f.natDegree ≤ 1)
-  refine ⟨a, b, ?_⟩
-  rw [genPowerBasis_gen]
-  simp only [map_add, map_mul, aeval_C, aeval_X]
-  ring
-
-/-- **The norm in power-basis coordinates:** `N(b + aθ) = b² - d·a²`. Specialises the generic
-quadratic norm formula `b² + ab·Tr(θ) + a²·N(θ)` to `Tr(θ) = 0` and `N(θ) = -d`. -/
-theorem norm_add_mul_gen (hmin : minpoly ℤ θ = X ^ 2 - C d)
+/-- **The norm in the basis `1, θ`:** `N(b + aθ) = b² - d·a²`. This is the generic quadratic norm
+formula with `Tr(θ) = 0` and `N(θ) = -d`. -/
+@[simp] theorem norm_add_mul_gen (hmin : minpoly ℤ θ = X ^ 2 - C d)
     (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) (a b : ℚ) :
     Algebra.norm ℚ (algebraMap ℚ K b + algebraMap ℚ K a * (θ : K)) = b ^ 2 - (d : ℚ) * a ^ 2 := by
   have : Algebra.IsQuadraticExtension ℚ K := ⟨finrank_rat_eq_two hmin hgen⟩
