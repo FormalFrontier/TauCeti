@@ -35,7 +35,8 @@ base, such as `μₚ` and `αₚ`, remain in the ambient category.
 The comparison uses Mathlib's `AlgebraicGeometry.hopfSpec`,
 `AlgebraicGeometry.HasRingHomProperty.Spec_iff`, and `RingHom.smooth_algebraMap`. This is the
 explicit smoothness predicate requested in the standing hypotheses of the ReductiveGroups
-roadmap.
+roadmap. Its organization follows `AffineGroupScheme/FiniteType.lean`, especially
+`TauCeti.algebraFiniteType_iff_locallyOfFiniteType_hopfSpec`.
 -/
 
 public section
