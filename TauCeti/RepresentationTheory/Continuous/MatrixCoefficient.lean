@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.RepresentationTheory.Continuous.Unitary
+public import TauCeti.RepresentationTheory.Continuous.Unitary.Basic
 public import Mathlib.Analysis.InnerProductSpace.PiL2
 public import Mathlib.Topology.ContinuousMap.Compact
 import Mathlib.Analysis.InnerProductSpace.Continuous

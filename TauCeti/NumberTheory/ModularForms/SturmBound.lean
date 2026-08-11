@@ -149,7 +149,7 @@ instance finiteDimensional_modularForm_finiteIndex
   have hval : PowerSeries.trunc N (qExpansion 𝒢.strictWidthInfty f) = 0 := by
     simpa using congrArg Subtype.val hf
   have hcoeff := congrArg (fun p ↦ Polynomial.coeff p i) hval
-  rwa [PowerSeries.coeff_trunc, if_pos hi, Polynomial.coeff_zero] at hcoeff
+  rwa [PowerSeries.coeff_trunc, ite_eq_left hi, Polynomial.coeff_zero] at hcoeff
 
 end ModularForm
 

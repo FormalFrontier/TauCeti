@@ -73,11 +73,11 @@ private lemma phi0_strictMono (r m : ℕ) : StrictMono (phi0 r m) := by
   by_cases hi : i < r
   · by_cases hj : j < r
     · simp [hi, hj, hij]
-    · simp only [hi, if_true, hj, if_false]
+    · simp only [hi, ite_true, hj, ite_false]
       omega
-  · simp only [hi, if_false]
+  · simp only [hi, ite_false]
     have hj : ¬j < r := fun h => hi (Nat.lt_of_lt_of_le hij (Nat.le_of_lt h))
-    simp only [hj, if_false]
+    simp only [hj, ite_false]
     omega
 
 private lemma phi1_strictMono (r m : ℕ) : StrictMono (phi1 r m) := by
@@ -86,11 +86,11 @@ private lemma phi1_strictMono (r m : ℕ) : StrictMono (phi1 r m) := by
   by_cases hi : i ≤ r
   · by_cases hj : j ≤ r
     · simp [hi, hj, hij]
-    · simp only [hi, if_true, hj, if_false]
+    · simp only [hi, ite_true, hj, ite_false]
       omega
-  · simp only [hi, if_false]
+  · simp only [hi, ite_false]
     have hj : ¬j ≤ r := fun h => hi (Nat.le_trans (Nat.le_of_lt hij) h)
-    simp only [hj, if_false]
+    simp only [hj, ite_false]
     omega
 
 /-! ### Prefix-tail split as a measurable equivalence -/
@@ -116,9 +116,9 @@ private lemma prefixSplitEquiv_symm_apply (r : ℕ) (p : (Fin r → α) × (ℕ 
     change p = (fun i : Fin r => (if h : (i : ℕ) < r then p.1 ⟨i, h⟩ else p.2 ((i : ℕ) - r)),
         fun j : ℕ => if h : r + j < r then p.1 ⟨r + j, h⟩ else p.2 (r + j - r))
     refine Prod.ext (funext fun i => ?_) (funext fun j => ?_)
-    · simp only [dif_pos i.isLt, Fin.eta]
+    · simp only [dite_eq_left i.isLt, Fin.eta]
     · have h : ¬ (r + j < r) := Nat.not_lt.mpr (Nat.le_add_right r j)
-      simp only [dif_neg h, Nat.add_sub_cancel_left]
+      simp only [dite_eq_right h, Nat.add_sub_cancel_left]
   rw [key]
 
 omit [MeasurableSpace Ω] in

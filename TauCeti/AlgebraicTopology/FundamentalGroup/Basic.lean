@@ -1,19 +1,31 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
 -/
 module
 
 public import Mathlib.AlgebraicTopology.FundamentalGroupoid.SimplyConnected
 
 /-!
-# Fundamental groups with trivial source
+# Triviality of induced maps on fundamental groups
 
-This file records basic consequences of triviality of a source fundamental group for induced
-maps on fundamental groups.
+This file records when a map induced on fundamental groups is trivial: a characterization of
+trivial range loop by loop, and the basic consequences of triviality of the *source* fundamental
+group.
+
+`TauCeti.FundamentalGroup.map_range_eq_bot_iff` was extracted from the proof of
+`TauCeti.semilocallySimplyConnectedAt_iff` in
+`TauCeti/AlgebraicTopology/SemilocallySimplyConnected/On.lean`, which is adapted from the Mathlib
+drafts [#31449](https://github.com/leanprover-community/mathlib4/pull/31449),
+[#31576](https://github.com/leanprover-community/mathlib4/pull/31576), and
+[#38292](https://github.com/leanprover-community/mathlib4/pull/38292) by Kim Morrison, for
+Stage 0.1 of the `TauCetiRoadmap/UniversalCovers` roadmap.
 
 ## Main declarations
 
+* `TauCeti.FundamentalGroup.map_range_eq_bot_iff`: the induced map has trivial range exactly
+  when every loop at the basepoint becomes nullhomotopic in the target.
 * `TauCeti.FundamentalGroup.map_range_eq_bot_of_subsingleton`: if the source fundamental group
   is subsingleton, the range of any induced map from it is trivial.
 * `TauCeti.FundamentalGroup.map_range_le_of_subsingleton`: if the source fundamental group is
@@ -37,6 +49,31 @@ theorem FundamentalGroup.map_fromPath {Y : Type*} [TopologicalSpace Y] (f : C(X,
     _root_.FundamentalGroup.map f base (_root_.FundamentalGroup.fromPath ⟦q⟧) =
       _root_.FundamentalGroup.fromPath ⟦q.map f.continuous⟧ := by
   rfl
+
+/-- **The induced map is trivial exactly loop by loop.** The map on fundamental groups induced by
+`f` has trivial range if and only if every loop at the basepoint becomes nullhomotopic after
+applying `f`. -/
+theorem FundamentalGroup.map_range_eq_bot_iff {Y : Type*} [TopologicalSpace Y] (f : C(X, Y))
+    (base : X) :
+    (_root_.FundamentalGroup.map f base).range = ⊥ ↔
+      ∀ γ : Path base base, (γ.map f.continuous).Homotopic (Path.refl (f base)) := by
+  rw [MonoidHom.range_eq_bot_iff]
+  constructor
+  · intro h γ
+    have h_map : _root_.FundamentalGroup.fromPath ⟦γ.map f.continuous⟧ =
+        _root_.FundamentalGroup.fromPath ⟦Path.refl (f base)⟧ := by
+      rw [← FundamentalGroup.map_fromPath f base γ, h]
+      -- the identity of the fundamental groupoid is the class of the constant path
+      exact FundamentalGroupoid.id_eq_path_refl (FundamentalGroupoid.mk (f base))
+    exact (FundamentalGroupoid.fromPath_eq_iff_homotopic _ _).mp h_map
+  · intro h
+    ext p
+    obtain ⟨γ, rfl⟩ := Quotient.exists_rep (_root_.FundamentalGroup.toPath p)
+    have hnull : _root_.FundamentalGroup.fromPath ⟦γ.map f.continuous⟧ =
+        _root_.FundamentalGroup.fromPath ⟦Path.refl (f base)⟧ :=
+      (FundamentalGroupoid.fromPath_eq_iff_homotopic _ _).mpr (h γ)
+    rw [FundamentalGroup.map_fromPath f base γ, hnull]
+    exact (FundamentalGroupoid.id_eq_path_refl (FundamentalGroupoid.mk (f base))).symm
 
 /-- If the source fundamental group is subsingleton, the range of any induced map from it is
 trivial. -/

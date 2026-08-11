@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Algebra.Lie.GeneralLinear.RootSpace
-public import Mathlib.LinearAlgebra.Matrix.Block
+public import TauCeti.LinearAlgebra.Matrix.Triangular
 
 /-!
 # The standard Borel subalgebra of `gl n R` and its positive nilpotent ideal
@@ -43,8 +43,6 @@ triangular matrices are a Lie ideal of the Borel subalgebra,
 
 ## Main results
 
-* `TauCeti.mul_apply_diag_of_mem_upperTriangular`: the diagonal of a product of upper triangular
-  matrices is the pointwise product of the diagonals.
 * `TauCeti.lie_mem_strictUpperTriangular`: the bracket of two upper triangular matrices is strictly
   upper triangular.
 * `TauCeti.upperTriangular_toSubmodule_eq_sup` and
@@ -158,18 +156,6 @@ theorem mul_mem_upperTriangular {A B : Matrix n n R} (hA : A ∈ upperTriangular
     ((mem_upperTriangular_iff_blockTriangular.mp hA).mul
       (mem_upperTriangular_iff_blockTriangular.mp hB))
 
-/-- The diagonal of a product of upper triangular matrices is the pointwise product of the
-diagonals. -/
-theorem mul_apply_diag_of_mem_upperTriangular {A B : Matrix n n R} (hA : A ∈ upperTriangular R n)
-    (hB : B ∈ upperTriangular R n) (i : n) : (A * B) i i = A i i * B i i := by
-  -- the only surviving term of `∑ k, A i k * B k i` is the one with `k = i`
-  rw [Matrix.mul_apply, Finset.sum_eq_single i]
-  · intro k _ hk
-    rcases lt_or_gt_of_ne hk with h | h
-    · rw [hA h, zero_mul]
-    · rw [hB h, mul_zero]
-  · exact fun h => absurd (Finset.mem_univ i) h
-
 /-- The bracket of two upper triangular matrices vanishes on and below the diagonal. -/
 theorem lie_apply_eq_zero_of_mem_upperTriangular {A B : Matrix n n R}
     (hA : A ∈ upperTriangular R n) (hB : B ∈ upperTriangular R n) {i j : n} (hij : j ≤ i) :
@@ -180,8 +166,10 @@ theorem lie_apply_eq_zero_of_mem_upperTriangular {A B : Matrix n n R}
     rw [mem_upperTriangular_iff.mp (mul_mem_upperTriangular hA hB) _ _ h,
       mem_upperTriangular_iff.mp (mul_mem_upperTriangular hB hA) _ _ h, sub_zero]
   · -- on the diagonal the two products agree, by commutativity of `R`
-    rw [mul_apply_diag_of_mem_upperTriangular hA hB,
-      mul_apply_diag_of_mem_upperTriangular hB hA, mul_comm, sub_self]
+    have hA' := mem_upperTriangular_iff_blockTriangular.mp hA
+    have hB' := mem_upperTriangular_iff_blockTriangular.mp hB
+    rw [Matrix.mul_apply_diag_of_isUpperTriangular hA' hB',
+      Matrix.mul_apply_diag_of_isUpperTriangular hB' hA', mul_comm, sub_self]
 
 variable (R n)
 
@@ -229,7 +217,9 @@ theorem mul_mem_strictUpperTriangular {A B : Matrix n n R}
   intro i j hij
   rcases hij.lt_or_eq with h | rfl
   · exact mem_upperTriangular_iff.mp (mul_mem_upperTriangular hA' hB') _ _ h
-  · rw [mul_apply_diag_of_mem_upperTriangular hA' hB',
+  · rw [Matrix.mul_apply_diag_of_isUpperTriangular
+        (mem_upperTriangular_iff_blockTriangular.mp hA')
+        (mem_upperTriangular_iff_blockTriangular.mp hB'),
       apply_diag_eq_zero_of_mem_strictUpperTriangular hA, zero_mul]
 
 /-- **The bracket of two upper triangular matrices is strictly upper triangular.** So the derived

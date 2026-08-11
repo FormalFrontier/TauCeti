@@ -22,6 +22,8 @@ This supplies a prerequisite for Deliverable A, Layer 1 of
 
 * `ContMDiffMul.isInteriorPoint`: every point of a group manifold with `C^n` multiplication, for
   `n ≠ 0`, is an interior point.
+* `ContMDiffMul.boundarylessManifold`: a group manifold with `C^1` multiplication is boundaryless
+  (opt-in, not an instance).
 
 ## References
 
@@ -55,3 +57,10 @@ theorem ContMDiffMul.isInteriorPoint {n : WithTop ℕ∞} [ContMDiffMul I n G] (
   have htranslate :=
     ((Diffeomorph.smul I I n (g * x⁻¹)).isLocalDiffeomorph x).isInteriorPoint_iff hn |>.mp hx
   simpa [x] using htranslate
+
+/-- A group manifold with `C^1` multiplication is boundaryless.
+
+This theorem is deliberately not an instance: consumers can opt in with
+`attribute [local instance] ContMDiffMul.boundarylessManifold`. -/
+theorem ContMDiffMul.boundarylessManifold [ContMDiffMul I 1 G] : BoundarylessManifold I G :=
+  ⟨ContMDiffMul.isInteriorPoint (n := 1) (by norm_num)⟩
