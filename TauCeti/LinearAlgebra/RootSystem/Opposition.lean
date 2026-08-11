@@ -27,8 +27,9 @@ positive roots, so it preserves that description.
 
 ## Main results
 
-* `TauCeti.root_opposition` and `TauCeti.opposition_involutive`: the opposition map is an
-  involution of the root indices realising `α ↦ -w₀ α` on roots.
+* `TauCeti.root_opposition`, `TauCeti.coroot'_opposition` and `TauCeti.opposition_involutive`: the
+  opposition map is an involution of the root indices realising `α ↦ -w₀ α` on roots, and negating
+  the longest-element translate on the coroot functionals.
 * `TauCeti.opposition_mem_support` and `TauCeti.bijOn_opposition_support`: **the opposition
   involution permutes the simple roots.**
 
@@ -39,10 +40,11 @@ with the permutation action of the Weyl group without coercions; `TauCeti.opposi
 restriction to the base, and `TauCeti.bijOn_opposition_support` the unbundled form of that
 restriction. The definition spells root negation as `P.reflectionPerm i i` rather than through
 Mathlib's `RootPairing.indexNeg`, since the latter is not a global instance and would have to be
-introduced by a `let` at every use site. `TauCeti.oppositionPerm` is built directly as an
-equivalence of `↥b.support` rather than as the `Equiv.Perm.subtypePerm` of an ambient permutation,
-so that `TauCeti.coe_oppositionPerm` is a `simp` consequence of the construction rather than a
-definitional unfolding of two stacked wrappers.
+introduced by a `let` at every use site. `TauCeti.oppositionPerm` is the `Equiv.Perm.subtypePerm`
+of the ambient `Function.Involutive.toPerm`; its membership hypothesis is rewritten along
+`Function.Involutive.coe_toPerm` instead of being supplied directly, because `TauCeti.opposition`
+is not `@[expose]` and the term is then not type-correct at reducible transparency, which blocks
+`rw` and `simp` on `TauCeti.coe_oppositionPerm`.
 
 ## References
 
@@ -51,12 +53,14 @@ The longest element `w₀` is the last item of Layer 4 in
 `w₀ • posRoots b = negRoots b` and `w₀ ^ 2 = 1` — which say exactly that `-w₀` permutes the
 positive roots. That this permutation restricts to the base is the prerequisite consumed by
 `exists_invariantForm_iff_neg_longest_smul_eq` in
-`TauCetiRoadmap/RepresentationTheory/LieHighestWeight/Suggested.lean`, whose statement asks for a
-Weyl element carrying the dominant cone to its negative: dominance is a condition at the simple
-coroot indices, so transporting it along `-w₀` is exactly
-`TauCeti.opposition_mem_support`. The argument is the one in J. E. Humphreys, *Introduction to Lie
-Algebras and Representation Theory*, GTM 9, Ch. III, §10.3 and §13.1, and in N. Bourbaki, *Groupes
-et algèbres de Lie*, Ch. VI, §1.6.
+`TauCetiRoadmap/RepresentationTheory/LieHighestWeight/Suggested.lean`. The conjunct of that
+statement which this file supplies,
+`∀ mu, IsDominantIntegral base mu → IsDominantIntegral base (-(weightEquiv w mu))`, mentions no
+Lie algebra: dominance is a condition at the simple coroot indices, so transporting it along `-w₀`
+needs exactly `TauCeti.opposition_mem_support` and `TauCeti.coroot'_opposition`, and nothing from
+the enveloping-algebra layers that the rest of that target rests on. The argument is the one in
+J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, GTM 9, Ch. III, §10.3
+and §13.1, and in N. Bourbaki, *Groupes et algèbres de Lie*, Ch. VI, §1.6.
 -/
 
 namespace TauCeti
@@ -89,6 +93,19 @@ theorem root_opposition (i : ι) :
     P.root (opposition P b i) = -(longestElement P b • P.root i) := by
   rw [opposition, RootPairing.root_reflectionPerm,
     RootPairing.reflection_apply_self, RootPairing.weylGroup_apply_root]
+
+/-- **The opposition involution negates the coroot functional along the longest element.** This is
+the coroot-side companion of `TauCeti.root_opposition`: dominance is a condition on the values of
+the simple coroot functionals, so this is the form in which the involution is applied to weights.
+Like its siblings `TauCeti.RootPairing.coroot'_smul` and
+`TauCeti.RootPairing.coroot'_weylGroupToPerm_smul` it is stated pointwise and tagged `@[grind =]`
+rather than `@[simp]`, since `P.coroot' j x` is not in simp-normal form: `simp` rewrites it to
+`P.toLinearMap x (P.coroot j)` by `LinearMap.flip_apply`. -/
+@[grind =]
+theorem coroot'_opposition (i : ι) (x : M) :
+    P.coroot' (opposition P b i) x = -P.coroot' i (longestElement P b • x) := by
+  rw [opposition, RootPairing.coroot'_reflectionPerm_self, coroot'_smul_longestElement,
+    LinearMap.neg_apply]
 
 variable {P b} in
 /-- **The opposition involution preserves positivity.** -/
@@ -141,11 +158,12 @@ theorem bijOn_opposition_support :
 
 /-- **The permutation of the base induced by the opposition involution**, the bundled form of
 `TauCeti.bijOn_opposition_support`. -/
-noncomputable def oppositionPerm : Equiv.Perm b.support where
-  toFun i := ⟨opposition P b i, opposition_mem_support P b i.2⟩
-  invFun i := ⟨opposition P b i, opposition_mem_support P b i.2⟩
-  left_inv i := Subtype.ext (opposition_opposition P b i)
-  right_inv i := Subtype.ext (opposition_opposition P b i)
+noncomputable def oppositionPerm : Equiv.Perm b.support :=
+  -- The membership hypothesis is rewritten along `Involutive.coe_toPerm` rather than supplied
+  -- directly, so that the resulting term stays type-correct at reducible transparency and
+  -- `TauCeti.coe_oppositionPerm` is a `simp` consequence of the two constructors.
+  ((opposition_involutive P b).toPerm _).subtypePerm fun _ ↦ by
+    rw [Involutive.coe_toPerm]; exact opposition_mem_support_iff
 
 @[simp]
 theorem coe_oppositionPerm (i : b.support) :
