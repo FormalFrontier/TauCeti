@@ -9,19 +9,27 @@ public import TauCeti.Probability.Exchangeability.Contractability
 public import TauCeti.Probability.Process.Tail.Basic
 
 /-!
-# Conditional law of a contractable coordinate given the tail
+# Conditional law of a contractable selection given the tail
 
-For a contractable process `X`, the conditional law of a coordinate `X j` given the future is the
-same as that of any other coordinate `X k`. Two results, stated for an arbitrary measurable real
-observable `f` of the state space:
+For a contractable process `X`, the conditional law of a selection of coordinates given the future,
+or given the tail, does not depend on *which* coordinates were selected. Four results, stated for
+an arbitrary measurable real observable `f`:
 
 * `Contractable.condExp_comp_future_ae_eq` — for heads `j, k` below a cutoff `r`, the conditional
   expectations of `f ∘ X j` and `f ∘ X k` given the future σ-algebra `tailFamily X r` agree a.e.
-* `Contractable.condExp_comp_tailProcess_ae_eq` — for arbitrary coordinates `j, k`, the same
-  equality conditioning on the process tail σ-algebra `tailProcess X`. The "extreme members agree on
-  the tail" step.
+* `Contractable.condExp_block_comp_future_ae_eq` — the same for two strictly monotone *blocks* of
+  the same length lying below the cutoff.
+* `Contractable.condExp_block_comp_tailProcess_ae_eq` — the block form conditioning on the process
+  tail `tailProcess X`.
+* `Contractable.condExp_comp_tailProcess_ae_eq` — its single-coordinate case, the "extreme members
+  agree on the tail" step.
 
-Both are facts about contractable processes alone, so they live in the shared exchangeability
+The block forms are what a route needs in order to replace one selection by another *underneath* a
+tail conditioning. The mechanism is distributional: both selections are appended to the same
+future, and contractability equates the joint laws. Nothing here makes a tail event invariant under
+reindexing.
+
+All are facts about contractable processes alone, so they live in the shared exchangeability
 layer: the `L²` route's Cesàro bridge consumes the general form, while the indicator
 specializations the de Finetti directing-measure construction consumes are in
 `TauCeti.Probability.DeFinetti.CondExpConvergence`.
@@ -119,21 +127,38 @@ theorem Contractable.condExp_comp_future_ae_eq {μ : Measure Ω} [IsFiniteMeasur
       (fun n => (hX_meas n).aemeasurable) (fun a b hab => by dsimp only; omega)
       (by omega) (by omega)) hf
 
+/-- **Future-conditioned selection invariance for finite blocks.** Two strictly monotone selections
+of the same length, both lying below a cutoff `c`, have the same conditional law given the future
+`tailFamily X c`.
+
+Both blocks are appended to the *same* future, and a strictly monotone block below `c` followed by
+the future from `c` is a strictly increasing reindexing of `ℕ`; contractability therefore makes the
+two joint laws equal, which transfers to conditional expectations. -/
+theorem Contractable.condExp_block_comp_future_ae_eq {μ : Measure Ω} [IsFiniteMeasure μ]
+    {X : ℕ → Ω → α} (hX : Contractable μ X) (hX_meas : ∀ n, Measurable (X n))
+    {r c : ℕ} {k l : Fin r → ℕ} (hk : StrictMono k) (hl : StrictMono l)
+    (hkc : ∀ i, k i < c) (hlc : ∀ i, l i < c)
+    {f : (Fin r → α) → ℝ} (hf : Measurable f) :
+    μ[fun ω => f (fun i => X (k i) ω) | tailFamily X c]
+      =ᵐ[μ] μ[fun ω => f (fun i => X (l i) ω) | tailFamily X c] := by
+  have hX_ae : ∀ n, AEMeasurable (X n) μ := fun n => (hX_meas n).aemeasurable
+  have hpair : μ.map (fun ω => ((fun i : Fin r => X (k i) ω), fun n => X (c + n) ω))
+      = μ.map (fun ω => ((fun i : Fin r => X (l i) ω), fun n => X (c + n) ω)) := by
+    rw [map_block_future_eq_pathLaw_map hX hX_ae hk hkc,
+      map_block_future_eq_pathLaw_map hX hX_ae hl hlc]
+  rw [tailFamily_eq_comap_shift X c]
+  exact TauCeti.MeasureTheory.condExp_comp_ae_eq_of_pair_law_eq
+    (fun ω i => X (k i) ω) (fun ω i => X (l i) ω) (fun ω n => X (c + n) ω)
+    (measurable_pi_lambda _ fun i => hX_meas (k i))
+    (measurable_pi_lambda _ fun i => hX_meas (l i))
+    (measurable_pi_lambda _ fun n => hX_meas (c + n)) hpair hf
+
 /-- **Tail-conditioned selection invariance for finite blocks.** For a contractable process, any
 two *strictly monotone* selections of the same length have the same conditional law given the
-process tail: for every measurable `f` on blocks,
-```
-μ[f ∘ (X ∘ k) | 𝒯_X] =ᵐ[μ] μ[f ∘ (X ∘ l) | 𝒯_X].
-```
+process tail.
 
-This is the finite-block strengthening of `Contractable.condExp_comp_tailProcess_ae_eq`, and it is
-what a route needs in order to replace one block by another *underneath a tail conditioning*.
-
-The mechanism is distributional, not pointwise. Both blocks are appended to the **same** future
-`(X c, X (c+1), …)` for a cutoff `c` beyond both; contractability makes the two joint laws equal
-(`map_block_future_eq_pathLaw_map`), which transfers to conditional expectations given that future,
-and the tower over `tailProcess X ≤ tailFamily X c` brings it back to the tail. Nothing here asserts
-that a tail event is invariant under reindexing — it is not. -/
+The mechanism is distributional, not pointwise: nothing here asserts that a tail event is invariant
+under reindexing — it is not. -/
 theorem Contractable.condExp_block_comp_tailProcess_ae_eq {μ : Measure Ω} [IsFiniteMeasure μ]
     {X : ℕ → Ω → α} (hX : Contractable μ X) (hX_meas : ∀ n, Measurable (X n))
     {r : ℕ} {k l : Fin r → ℕ} (hk : StrictMono k) (hl : StrictMono l)
@@ -141,8 +166,6 @@ theorem Contractable.condExp_block_comp_tailProcess_ae_eq {μ : Measure Ω} [IsF
     μ[fun ω => f (fun i => X (k i) ω) | tailProcess X]
       =ᵐ[μ] μ[fun ω => f (fun i => X (l i) ω) | tailProcess X] := by
   classical
-  have hX_ae : ∀ n, AEMeasurable (X n) μ := fun n => (hX_meas n).aemeasurable
-  -- A cutoff strictly beyond both selections.
   set c := max (Finset.univ.sup fun i => k i) (Finset.univ.sup fun i => l i) + 1 with hc
   have hkc : ∀ i, k i < c := fun i => by
     have := Finset.le_sup (f := fun i => k i) (Finset.mem_univ i)
@@ -152,20 +175,7 @@ theorem Contractable.condExp_block_comp_tailProcess_ae_eq {μ : Measure Ω} [IsF
     have := Finset.le_sup (f := fun i => l i) (Finset.mem_univ i)
     have := le_max_right (Finset.univ.sup fun i => k i) (Finset.univ.sup fun i => l i)
     omega
-  -- Equal joint laws with the shared future.
-  have hpair : μ.map (fun ω => ((fun i : Fin r => X (k i) ω), fun n => X (c + n) ω))
-      = μ.map (fun ω => ((fun i : Fin r => X (l i) ω), fun n => X (c + n) ω)) := by
-    rw [map_block_future_eq_pathLaw_map hX hX_ae hk hkc,
-      map_block_future_eq_pathLaw_map hX hX_ae hl hlc]
-  -- Transfer to conditional expectations given that future, then tower down to the tail.
-  have hfut : μ[fun ω => f (fun i => X (k i) ω) | tailFamily X c]
-      =ᵐ[μ] μ[fun ω => f (fun i => X (l i) ω) | tailFamily X c] := by
-    rw [tailFamily_eq_comap_shift X c]
-    exact TauCeti.MeasureTheory.condExp_comp_ae_eq_of_pair_law_eq
-      (fun ω i => X (k i) ω) (fun ω i => X (l i) ω) (fun ω n => X (c + n) ω)
-      (measurable_pi_lambda _ fun i => hX_meas (k i))
-      (measurable_pi_lambda _ fun i => hX_meas (l i))
-      (measurable_pi_lambda _ fun n => hX_meas (c + n)) hpair hf
+  have hfut := hX.condExp_block_comp_future_ae_eq hX_meas hk hl hkc hlc hf
   have htail_le : tailProcess X ≤ tailFamily X c := tailProcess_le_tailFamily X _
   have hfam_le : tailFamily X c ≤ (inferInstance : MeasurableSpace Ω) :=
     tailFamily_le_ambient c fun i _ => hX_meas i
