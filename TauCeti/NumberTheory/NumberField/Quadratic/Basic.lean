@@ -73,9 +73,10 @@ omit [NumberField K] in
   have := congrArg (algebraMap (𝓞 K) K) h
   rwa [map_pow, ← IsScalarTower.algebraMap_apply ℤ (𝓞 K) K] at this
 
+omit [NumberField K] in
 /-- The generator squares to the radicand viewed over `ℚ`: `θ² = (d : ℚ)` in `K`. This is
 `coe_gen_sq` transported along `ℤ → ℚ → K`, the form fed to the generic square-root-basis API. -/
-theorem coe_gen_sq_ratCast (hmin : minpoly ℤ θ = X ^ 2 - C d) :
+theorem coe_gen_sq_ratCast [CharZero K] (hmin : minpoly ℤ θ = X ^ 2 - C d) :
     (θ : K) ^ 2 = algebraMap ℚ K ((d : ℤ) : ℚ) := by
   rw [coe_gen_sq hmin, IsScalarTower.algebraMap_apply ℤ ℚ K]; norm_num
 
