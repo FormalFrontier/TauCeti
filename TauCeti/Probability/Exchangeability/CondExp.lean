@@ -62,12 +62,12 @@ private theorem strictMono_blockThenFuture {r c : ℕ} {k : Fin r → ℕ} (hk :
   simp only [blockThenFuture]
   by_cases ha : a < r
   · by_cases hb : b < r
-    · rw [dif_pos ha, dif_pos hb]
+    · rw [dite_eq_left ha, dite_eq_left hb]
       exact hk (by exact_mod_cast hab)
-    · rw [dif_pos ha, dif_neg hb]
+    · rw [dite_eq_left ha, dite_eq_right hb]
       exact lt_of_lt_of_le (hkc ⟨a, ha⟩) (Nat.le_add_right c _)
   · have hb : ¬ b < r := by omega
-    rw [dif_neg ha, dif_neg hb]
+    rw [dite_eq_right ha, dite_eq_right hb]
     omega
 
 /-- **A strictly monotone block joins a common future exactly as the path law does.** For a
@@ -101,10 +101,10 @@ private theorem map_block_future_eq_pathLaw_map {μ : Measure Ω} [IsFiniteMeasu
     funext ω
     refine Prod.ext ?_ ?_
     · funext i
-      simp only [Function.comp_apply, hφdef, blockThenFuture, dif_pos i.isLt, Fin.eta]
+      simp only [Function.comp_apply, hφdef, blockThenFuture, dite_eq_left i.isLt, Fin.eta]
     · funext n
       have hnr : ¬ (r + n < r) := by omega
-      simp only [Function.comp_apply, hφdef, blockThenFuture, dif_neg hnr]
+      simp only [Function.comp_apply, hφdef, blockThenFuture, dite_eq_right hnr]
       congr 1
       omega
   rw [← hcomp, ← AEMeasurable.map_map_of_aemeasurable hsplit.aemeasurable
