@@ -333,6 +333,7 @@ theorem ind_apply [S.FiniteIndex] (f : ClassFunction k S) (g : G) :
 
 /-- The projection formula `TauCeti.indClassFun_comp_subtype_mul` with the restriction written as
 `TauCeti.ClassFunction.comap` along the inclusion of the subgroup. -/
+@[simp]
 theorem indClassFun_comap_subtype_mul [S.FiniteIndex] (f : ClassFunction k G) (ψ : S → k) :
     indClassFun S ((comap S.subtype f).1 * ψ) = f.1 * indClassFun S ψ := by
   have h : ((comap S.subtype f).1 : S → k) = fun s : S => f.1 s :=
