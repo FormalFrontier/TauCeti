@@ -16,8 +16,10 @@ therefore induces a natural transformation of monodromy functors. This file asse
 and morphism-level constructions into a functor on `TauCeti.CoveringSpace X`.
 
 The resulting functor is faithful: a map over `X` is determined by all of its restrictions to the
-fibres. Fullness and the characterization of its essential image are the remaining topological
-content of the classification of covering spaces by fundamental-groupoid actions.
+fibres. Over a locally path-connected base, its fullness is proved in
+`TauCeti.Topology.Covering.Monodromy.Full`; reconstruction and the characterization of the
+essential image are the remaining topological content of the classification of covering spaces by
+fundamental-groupoid actions.
 
 ## Main declarations
 
