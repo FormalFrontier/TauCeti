@@ -32,7 +32,7 @@ a = (cf)²,  e = (bg)²,  b = (ef)³,  d = (bh)²,  d = (eah)³,
 ```
 
 An equality `x = y` in the source is the relator `x⁻¹y`. The complete presentation therefore has
-45 relators, whose compiled words have 613 signed letters. The theorems below check both figures
+45 relators, whose compiled words have 611 signed letters. The theorems below check both figures
 from the transcribed expressions.
 
 The library identifies this record as a presentation of `Co₁` originating in Praeger--Soicher,
@@ -114,9 +114,9 @@ private def co1NodeAndEdgeRelators : List (Relator (Fin 8)) :=
     .pow (b ⬝ g) 4,
     .pow (b ⬝ h) 4,
     .pow (c ⬝ d) 3,
-    .pow (c ⬝ e) 4,
-    .pow (c ⬝ f) 3,
-    .pow (d ⬝ f) 4,
+    .pow (c ⬝ e) 3,
+    .pow (c ⬝ f) 4,
+    .pow (d ⬝ f) 3,
     .pow (e ⬝ f) 6,
     .pow (f ⬝ g) 4,
     .pow (f ⬝ h) 6 ]
@@ -186,8 +186,8 @@ def co1Presentation : GroupPresentation where
 theorem co1Presentation_matchesMetadata : co1Presentation.matchesMetadata := by
   decide
 
-/-- The compiled relators of the `Co₁` presentation contain `613` signed letters in total. -/
-theorem co1Presentation_totalLength : co1Presentation.totalLength = 613 := by
+/-- The compiled relators of the `Co₁` presentation contain `611` signed letters in total. -/
+theorem co1Presentation_totalLength : co1Presentation.totalLength = 611 := by
   rw [GroupPresentation.totalLength_def, GroupPresentation.relators_def]
   simp only [co1Presentation, co1NodeAndEdgeRelators, co1NonedgeRelators,
     co1AdditionalRelators, List.map_append, List.sum_append, length_toWord, relatorLength,
