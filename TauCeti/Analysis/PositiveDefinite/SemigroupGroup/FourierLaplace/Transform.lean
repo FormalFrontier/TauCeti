@@ -83,9 +83,12 @@ variable {V : Type*} [SeminormedAddCommGroup V] [InnerProductSpace ℝ V] [Measu
 `(t, a) ↦ ∫ (p, q), exp (-t p) * exp (-2πi⟪a, q⟫) ∂μ`.
 
 The integrand is the separated Laplace--Fourier atom of
-`TauCeti.isSemigroupGroupPD_laplaceFourierAtom`, so a finite measure produces a bounded
-semigroup-group positive-definite function; the Berg--Christensen--Ressel theorem asserts that
-every bounded continuous one arises this way. -/
+`TauCeti.isSemigroupGroupPD_laplaceFourierAtom`. Nothing here relates the measurable structure
+on `V` to its topology, so the integral need not converge; integrability of the atoms against a
+finite measure is `TauCeti.integrable_laplaceAtom_mul_fourierAtom`, which additionally assumes
+`OpensMeasurableSpace V`. The Berg--Christensen--Ressel theorem asserts that every bounded
+continuous semigroup-group positive-definite function on `ℝ≥0 × V` is the transform of a finite
+measure. -/
 noncomputable def laplaceFourierTransform (μ : Measure (ℝ≥0 × V)) (x : ℝ≥0 × V) : ℂ :=
   ∫ y, laplaceAtom x.1 y.1 * fourierAtom x.2 y.2 ∂μ
 
@@ -114,6 +117,47 @@ theorem integrable_laplaceAtom_mul_fourierAtom [OpensMeasurableSpace V]
   (integrable_const (1 : ℝ)).mono'
     (continuous_laplaceAtom_mul_fourierAtom t a).aestronglyMeasurable
     (.of_forall fun y => norm_laplaceAtom_mul_fourierAtom_le_one t y.1 a y.2)
+
+/-! ## Values and elementary measure operations -/
+
+/-- The Laplace--Fourier transform at the identity `0` of `ℝ≥0 × V` is the total mass: both
+atoms are `1` there. -/
+@[simp]
+theorem laplaceFourierTransform_zero (μ : Measure (ℝ≥0 × V)) :
+    laplaceFourierTransform μ 0 = (μ.real univ : ℂ) := by
+  rw [laplaceFourierTransform_apply]
+  simp [laplaceAtom_def, fourierAtom_apply, Complex.real_smul]
+
+/-- The zero measure has zero Laplace--Fourier transform. -/
+@[simp]
+theorem laplaceFourierTransform_zero_measure (x : ℝ≥0 × V) :
+    laplaceFourierTransform (0 : Measure (ℝ≥0 × V)) x = 0 := by
+  rw [laplaceFourierTransform_apply, integral_zero_measure]
+
+/-- The Laplace--Fourier transform of a Dirac mass is the atom at its point. -/
+@[simp]
+theorem laplaceFourierTransform_dirac [OpensMeasurableSpace V] (y x : ℝ≥0 × V) :
+    laplaceFourierTransform (Measure.dirac y) x = laplaceAtom x.1 y.1 * fourierAtom x.2 y.2 := by
+  rw [laplaceFourierTransform_apply,
+    integral_dirac' _ y (continuous_laplaceAtom_mul_fourierAtom x.1 x.2).stronglyMeasurable]
+
+/-- The Laplace--Fourier transform is additive in the measure. -/
+@[simp]
+theorem laplaceFourierTransform_add_measure [OpensMeasurableSpace V] (μ ν : Measure (ℝ≥0 × V))
+    [IsFiniteMeasure μ] [IsFiniteMeasure ν] (x : ℝ≥0 × V) :
+    laplaceFourierTransform (μ + ν) x =
+      laplaceFourierTransform μ x + laplaceFourierTransform ν x := by
+  simp only [laplaceFourierTransform_apply]
+  exact integral_add_measure (integrable_laplaceAtom_mul_fourierAtom μ x.1 x.2)
+    (integrable_laplaceAtom_mul_fourierAtom ν x.1 x.2)
+
+/-- Scaling the measure scales its Laplace--Fourier transform. -/
+@[simp]
+theorem laplaceFourierTransform_smul_measure (μ : Measure (ℝ≥0 × V)) (c : ℝ≥0∞)
+    (x : ℝ≥0 × V) :
+    laplaceFourierTransform (c • μ) x = c.toReal • laplaceFourierTransform μ x := by
+  simp only [laplaceFourierTransform_apply]
+  exact integral_smul_measure _ c
 
 /-! ## The representation predicate -/
 
@@ -146,9 +190,7 @@ theorem eq_laplaceFourierTransform (h : RepresentsLaplaceFourier μ F) (x : ℝ�
 /-- The value of a represented function at the identity of `ℝ≥0 × V` is the total mass of the
 representing measure. (Not `@[simp]`: the left-hand side has a variable head symbol.) -/
 theorem apply_zero (h : RepresentsLaplaceFourier μ F) : F 0 = (μ.real univ : ℂ) := by
-  have := h.isFiniteMeasure
-  rw [h.eq_laplaceFourierTransform 0, laplaceFourierTransform_apply]
-  simp [laplaceAtom_def, fourierAtom_apply, Measure.real]
+  rw [h.eq_laplaceFourierTransform 0, laplaceFourierTransform_zero]
 
 end RepresentsLaplaceFourier
 

@@ -6,11 +6,14 @@ module
 
 public import TauCeti.Analysis.PositiveDefinite.SemigroupGroup.FourierLaplace.Transform
 -- Non-public: the two determinacy inputs (Fourier on `V` through the convention conversion,
--- Laplace on `ℝ≥0`) and the product-`σ`-algebra plumbing, all consumed inside proofs only.
+-- Laplace on `ℝ≥0`), the bound on the Laplace kernel, and the product-`σ`-algebra plumbing, all
+-- consumed inside proofs only.
 import TauCeti.Analysis.Bochner.FourierConvention
+import TauCeti.Analysis.CompletelyMonotone.Laplace.Kernel
 import TauCeti.Probability.Moments.LaplaceDeterminacy
 import Mathlib.MeasureTheory.MeasurableSpace.Prod
 import Mathlib.MeasureTheory.Measure.CharacteristicFunction.Basic
+import Mathlib.MeasureTheory.Measure.Prod
 
 /-!
 # Uniqueness of the Berg--Christensen--Ressel representing measure
@@ -70,35 +73,29 @@ variable {V : Type*} [MeasurableSpace V]
 `exp (-t p)`, then forget the time coordinate. Its characteristic function is the
 Laplace--Fourier transform at time `t`, up to the `-2π` Fourier rescaling. -/
 private noncomputable def spatialSlice (μ : Measure (ℝ≥0 × V)) (t : ℝ≥0) : Measure V :=
-  (μ.withDensity fun y => ((Real.toNNReal (Real.exp (-(t : ℝ) * (y.1 : ℝ))) : ℝ≥0) : ℝ≥0∞)).map
-    Prod.snd
+  (μ.withDensity fun y =>
+    ((Real.toNNReal (Real.exp (-(t : ℝ) * (y.1 : ℝ))) : ℝ≥0) : ℝ≥0∞)).snd
 
 private theorem measurable_laplaceWeight (t : ℝ≥0) :
     Measurable fun y : ℝ≥0 × V => Real.toNNReal (Real.exp (-(t : ℝ) * (y.1 : ℝ))) := by
   fun_prop
 
-private theorem exp_neg_mul_le_one (t : ℝ≥0) (p : ℝ≥0) :
-    Real.exp (-(t : ℝ) * (p : ℝ)) ≤ 1 := by
-  rw [Real.exp_le_one_iff]
-  exact mul_nonpos_of_nonpos_of_nonneg (neg_nonpos.2 t.coe_nonneg) p.coe_nonneg
-
 private theorem isFiniteMeasure_laplaceWithDensity (μ : Measure (ℝ≥0 × V)) [IsFiniteMeasure μ]
     (t : ℝ≥0) :
     IsFiniteMeasure (μ.withDensity fun y =>
-      ((Real.toNNReal (Real.exp (-(t : ℝ) * (y.1 : ℝ))) : ℝ≥0) : ℝ≥0∞)) := by
-  refine ⟨?_⟩
-  rw [withDensity_apply _ MeasurableSet.univ, Measure.restrict_univ]
-  calc ∫⁻ y, ((Real.toNNReal (Real.exp (-(t : ℝ) * (y.1 : ℝ))) : ℝ≥0) : ℝ≥0∞) ∂μ
-      ≤ ∫⁻ _, 1 ∂μ := by
-        refine lintegral_mono fun y => ?_
-        rw [← ENNReal.coe_one, ENNReal.coe_le_coe, ← Real.toNNReal_one]
-        exact Real.toNNReal_le_toNNReal (exp_neg_mul_le_one t y.1)
-    _ < ⊤ := by simp
+      ((Real.toNNReal (Real.exp (-(t : ℝ) * (y.1 : ℝ))) : ℝ≥0) : ℝ≥0∞)) :=
+  isFiniteMeasure_withDensity <| ne_of_lt <|
+    calc ∫⁻ y, ((Real.toNNReal (Real.exp (-(t : ℝ) * (y.1 : ℝ))) : ℝ≥0) : ℝ≥0∞) ∂μ
+        ≤ ∫⁻ _, 1 ∂μ := by
+          refine lintegral_mono fun y => ?_
+          rw [← ENNReal.coe_one, ENNReal.coe_le_coe, ← Real.toNNReal_one, neg_mul]
+          exact Real.toNNReal_le_toNNReal (exp_neg_mul_le_one t.coe_nonneg y.1)
+      _ < ⊤ := by simp
 
 private instance isFiniteMeasure_spatialSlice (μ : Measure (ℝ≥0 × V)) [IsFiniteMeasure μ]
     (t : ℝ≥0) : IsFiniteMeasure (spatialSlice μ t) :=
   have := isFiniteMeasure_laplaceWithDensity μ t
-  Measure.isFiniteMeasure_map _ _
+  Measure.snd.instIsFiniteMeasure
 
 /-- The measure a spatial slice assigns to a measurable set is the Laplace-weighted mass of the
 corresponding slab. -/
@@ -107,7 +104,7 @@ private theorem spatialSlice_apply (μ : Measure (ℝ≥0 × V)) (t : ℝ≥0) {
     spatialSlice μ t B =
       ∫⁻ y in Prod.snd ⁻¹' B,
         ((Real.toNNReal (Real.exp (-(t : ℝ) * (y.1 : ℝ))) : ℝ≥0) : ℝ≥0∞) ∂μ := by
-  rw [spatialSlice, Measure.map_apply measurable_snd hB, withDensity_apply _ (measurable_snd hB)]
+  rw [spatialSlice, Measure.snd_apply hB, withDensity_apply _ (measurable_snd hB)]
 
 /-- The Laplace-weighted mass of a slab, as a Bochner integral. -/
 private theorem ofReal_integral_slab (μ : Measure (ℝ≥0 × V)) [IsFiniteMeasure μ] (t : ℝ≥0)
@@ -117,29 +114,29 @@ private theorem ofReal_integral_slab (μ : Measure (ℝ≥0 × V)) [IsFiniteMeas
   have hint : Integrable (fun y : ℝ≥0 × V => Real.exp (-(t : ℝ) * (y.1 : ℝ)))
       (μ.restrict (Prod.snd ⁻¹' B)) := by
     refine (integrable_const (1 : ℝ)).mono' (by fun_prop) (.of_forall fun y => ?_)
-    rw [Real.norm_eq_abs, abs_of_pos (Real.exp_pos _)]
-    exact exp_neg_mul_le_one t y.1
+    rw [Real.norm_eq_abs, abs_of_pos (Real.exp_pos _), neg_mul]
+    exact exp_neg_mul_le_one t.coe_nonneg y.1
   rw [spatialSlice_apply μ t hB,
     ofReal_integral_eq_lintegral_ofReal hint (.of_forall fun y => (Real.exp_pos _).le)]
   simp_rw [ENNReal.ofNNReal_toNNReal]
 
 /-- The **time-marginal** of the slab `ℝ≥0 × B`, as a measure on `ℝ≥0`. -/
 private noncomputable def timeMarginal (μ : Measure (ℝ≥0 × V)) (B : Set V) : Measure ℝ≥0 :=
-  (μ.restrict (Prod.snd ⁻¹' B)).map Prod.fst
+  (μ.restrict (Prod.snd ⁻¹' B)).fst
 
 private instance isFiniteMeasure_timeMarginal (μ : Measure (ℝ≥0 × V)) [IsFiniteMeasure μ]
     (B : Set V) : IsFiniteMeasure (timeMarginal μ B) :=
-  Measure.isFiniteMeasure_map _ _
+  Measure.fst.instIsFiniteMeasure
 
 private theorem integral_exp_timeMarginal (μ : Measure (ℝ≥0 × V)) (B : Set V) (t : ℝ) :
     ∫ p, Real.exp (-t * (p : ℝ)) ∂(timeMarginal μ B) =
       ∫ y in Prod.snd ⁻¹' B, Real.exp (-t * (y.1 : ℝ)) ∂μ := by
-  rw [timeMarginal, integral_map measurable_fst.aemeasurable (by fun_prop)]
+  rw [timeMarginal, Measure.fst, integral_map measurable_fst.aemeasurable (by fun_prop)]
 
 private theorem timeMarginal_apply (μ : Measure (ℝ≥0 × V)) {A : Set ℝ≥0} (hA : MeasurableSet A)
     (B : Set V) : timeMarginal μ B A = μ (A ×ˢ B) := by
-  rw [timeMarginal, Measure.map_apply measurable_fst hA,
-    Measure.restrict_apply (measurable_fst hA), Set.prod_eq]
+  rw [timeMarginal, Measure.fst_apply hA, Measure.restrict_apply (measurable_fst hA),
+    Set.prod_eq]
 
 end Slices
 
@@ -155,7 +152,7 @@ omit [InnerProductSpace ℝ V] [SecondCountableTopology V] [CompleteSpace V] in
 private theorem integral_spatialSlice (μ : Measure (ℝ≥0 × V)) (t : ℝ≥0) {f : V → ℂ}
     (hf : Continuous f) :
     ∫ q, f q ∂(spatialSlice μ t) = ∫ y, (Real.exp (-(t : ℝ) * (y.1 : ℝ)) : ℂ) * f y.2 ∂μ := by
-  rw [spatialSlice, integral_map measurable_snd.aemeasurable hf.aestronglyMeasurable,
+  rw [spatialSlice, Measure.snd, integral_map measurable_snd.aemeasurable hf.aestronglyMeasurable,
     integral_withDensity_eq_integral_smul (measurable_laplaceWeight t)]
   refine integral_congr_ae (.of_forall fun y => ?_)
   -- beta-reduce the two integrands left by `integral_congr_ae`
