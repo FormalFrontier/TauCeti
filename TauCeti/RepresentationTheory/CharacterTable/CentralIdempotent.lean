@@ -296,8 +296,10 @@ normalization, and it is what makes the element idempotent
 hypotheses that the idempotence theorem uses, rather than being stated for a bare formula that need
 not be idempotent. Use `TauCeti.Representation.characterSum` for the unnormalized element
 `∑_g χ(g⁻¹) g`, which is defined for every representation. -/
-noncomputable def primitiveCentralIdempotent [FiniteDimensional k V] [IsAlgClosed k]
-    [Invertible (Nat.card G : k)] [ρ.IsIrreducible] : k[G] :=
+-- The formula itself mentions none of these four hypotheses, so they are named with a leading
+-- underscore, the convention for an argument that is deliberately unused in the body.
+noncomputable def primitiveCentralIdempotent [_fd : FiniteDimensional k V] [_ac : IsAlgClosed k]
+    [_inv : Invertible (Nat.card G : k)] [_irr : ρ.IsIrreducible] : k[G] :=
   ((Nat.card G : k)⁻¹ * ρ.character 1) • characterSum ρ
 
 variable [FiniteDimensional k V] [FiniteDimensional k W] [IsAlgClosed k]
