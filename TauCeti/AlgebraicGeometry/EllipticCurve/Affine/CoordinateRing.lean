@@ -129,7 +129,6 @@ noncomputable def conj : W.CoordinateRing ≃ₐ[R[X]] W.CoordinateRing :=
   AlgEquiv.ofAlgHom (conjHom W) (conjHom W) (by ext; exact conjHom_conjHom W _)
     (by ext; exact conjHom_conjHom W _)
 
-@[simp]
 private lemma conj_apply (x : W.CoordinateRing) : conj W x = conjHom W x := by
   simp [conj]
 
