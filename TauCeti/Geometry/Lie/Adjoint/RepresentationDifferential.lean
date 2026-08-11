@@ -18,10 +18,10 @@ canonical Lie algebra of left-invariant derivations.
 This advances Deliverable A, Layer 1 of
 `TauCetiRoadmap/RepresentationTheory/LieGroups/README.md`.
 
-## Main result
+## Main results
 
-* `TauCeti.Lie.mvfderiv_Ad_apply`: the identity `d(Ad)_1(X)(Y) = ad X Y`.
-* `TauCeti.Lie.mvfderiv_continuousAdjointRepresentation`: the operator identity
+* `TauCeti.Lie.mvfderiv_Ad_apply_one`: the identity `d(Ad)_1(X)(Y) = ad X Y`.
+* `TauCeti.Lie.mvfderiv_continuousAdjointRepresentation_one`: the operator identity
   `d(Ad)_1(X) = ad X`.
 
 ## References
@@ -115,7 +115,8 @@ theorem hasDerivAt_Ad_mulInvariantExp_smul_apply_zero
 
 /-- The differential at the identity of the group adjoint action, evaluated on `X` and `Y`, is
 the Lie-algebra adjoint `ad X Y`. -/
-theorem mvfderiv_Ad_apply (X Y : LeftInvariantDerivation I G) :
+@[simp]
+theorem mvfderiv_Ad_apply_one (X Y : LeftInvariantDerivation I G) :
     let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
     mvfderiv I (fun g : G => Ad (I := I) g Y) 1
         (leftInvariantDerivationLieEquivGroupLieAlgebra
@@ -143,7 +144,8 @@ theorem mvfderiv_Ad_apply (X Y : LeftInvariantDerivation I G) :
 
 /-- The differential at the identity of the bounded-operator-valued adjoint representation is
 Mathlib's Lie-algebra adjoint map. -/
-theorem mvfderiv_continuousAdjointRepresentation (X : LeftInvariantDerivation I G) :
+@[simp]
+theorem mvfderiv_continuousAdjointRepresentation_one (X : LeftInvariantDerivation I G) :
     let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
     mvfderiv I
       (continuousAdjointRepresentation (I := I) (G := G)) 1
@@ -205,7 +207,7 @@ theorem mvfderiv_continuousAdjointRepresentation (X : LeftInvariantDerivation I 
     dOp Y = mvfderiv I AY 1 (eLie X) := by
       exact hLeft.symm.trans (hApply'.trans hRight)
     _ = LieAlgebra.ad ℝ (LeftInvariantDerivation I G) X Y := by
-      simpa only [AY, eLie] using mvfderiv_Ad_apply (I := I) (G := G) X Y
+      simpa only [AY, eLie] using mvfderiv_Ad_apply_one (I := I) (G := G) X Y
     _ = adContinuousLinearMap (I := I) X Y :=
       (adContinuousLinearMap_apply (I := I) X Y).symm
 
