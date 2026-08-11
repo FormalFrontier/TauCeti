@@ -47,7 +47,7 @@ variable (R : Type u)
 
 /-- The group-like elements of a monoid algebra span the whole algebra: every standard basis
 element is group-like, and the standard basis spans. -/
-theorem groupLikeSetSpan_eq_top [CommSemiring R] (G : Type v) [Monoid G] :
+theorem groupLikeSetSpan_eq_top [CommSemiring R] (G : Type v) :
     Subcoalgebra.groupLikeSetSpan (R := R) (C := _root_.MonoidAlgebra R G) Set.univ = ⊤ := by
   rw [Subcoalgebra.groupLikeSetSpan_eq_top_iff_span_eq_top]
   have hrange : Set.range (_root_.GroupLike.val (R := R) (A := _root_.MonoidAlgebra R G)) =
