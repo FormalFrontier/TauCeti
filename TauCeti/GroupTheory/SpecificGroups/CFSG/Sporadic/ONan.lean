@@ -81,10 +81,6 @@ private abbrev g : Relator (Fin 7) := .gen 6
 @[inherit_doc Relator.mul]
 local infixl:70 " ⬝ " => Relator.mul
 
-/-- The source conjugate `r^s = s^-1 r s`. -/
-private abbrev sourceConj (r s : Relator (Fin 7)) : Relator (Fin 7) :=
-  .inv s ⬝ r ⬝ s
-
 /-- The six square relations and the fifteen pair-power relations decoded from the Coxeter path
 `a3b3c8d3e3f` in `GPLTable.ON.1`.
 
@@ -122,11 +118,11 @@ private def onanAdditionalRelators : List (Relator (Fin 7)) :=
   [ .pow g 4,
     .inv (a ⬝ f) ⬝ .pow g 2,
     .inv (a ⬝ f) ⬝ .pow (c ⬝ d) 4,
-    c ⬝ sourceConj c (d ⬝ g ⬝ d ⬝ g),
-    d ⬝ sourceConj d (c ⬝ g ⬝ c ⬝ g),
+    c ⬝ Relator.conj c (d ⬝ g ⬝ d ⬝ g),
+    d ⬝ Relator.conj d (c ⬝ g ⬝ c ⬝ g),
     .pow (b ⬝ c ⬝ d ⬝ g) 5,
-    g ⬝ b ⬝ sourceConj g c ⬝ sourceConj g b ⬝ sourceConj g c,
-    g ⬝ e ⬝ sourceConj g d ⬝ sourceConj g e ⬝ sourceConj g d ]
+    g ⬝ b ⬝ Relator.conj g c ⬝ Relator.conj g b ⬝ Relator.conj g c,
+    g ⬝ e ⬝ Relator.conj g d ⬝ Relator.conj g e ⬝ Relator.conj g d ]
 
 /-- The Group Presentations Library finite presentation `GPLTable.ON.1` of the O'Nan sporadic
 group on generators `a`, `b`, `c`, `d`, `e`, `f`, and `g`.
@@ -252,37 +248,25 @@ theorem onanPresentation_transcribed :
         .inv (.gen ⟨0, by decide⟩ ⬝ .gen ⟨5, by decide⟩) ⬝ .pow (.gen ⟨2, by decide⟩ ⬝
           .gen ⟨3, by decide⟩) 4,
         .gen ⟨2, by decide⟩ ⬝
-          (.inv
-              (.gen ⟨3, by decide⟩ ⬝ .gen ⟨6, by decide⟩ ⬝
-                .gen ⟨3, by decide⟩ ⬝ .gen ⟨6, by decide⟩) ⬝
-            .gen ⟨2, by decide⟩ ⬝
-              (.gen ⟨3, by decide⟩ ⬝ .gen ⟨6, by decide⟩ ⬝
-                .gen ⟨3, by decide⟩ ⬝ .gen ⟨6, by decide⟩)),
+          Relator.conj (.gen ⟨2, by decide⟩)
+            (.gen ⟨3, by decide⟩ ⬝ .gen ⟨6, by decide⟩ ⬝
+              .gen ⟨3, by decide⟩ ⬝ .gen ⟨6, by decide⟩),
         .gen ⟨3, by decide⟩ ⬝
-          (.inv
-              (.gen ⟨2, by decide⟩ ⬝ .gen ⟨6, by decide⟩ ⬝
-                .gen ⟨2, by decide⟩ ⬝ .gen ⟨6, by decide⟩) ⬝
-            .gen ⟨3, by decide⟩ ⬝
-              (.gen ⟨2, by decide⟩ ⬝ .gen ⟨6, by decide⟩ ⬝
-                .gen ⟨2, by decide⟩ ⬝ .gen ⟨6, by decide⟩)),
+          Relator.conj (.gen ⟨3, by decide⟩)
+            (.gen ⟨2, by decide⟩ ⬝ .gen ⟨6, by decide⟩ ⬝
+              .gen ⟨2, by decide⟩ ⬝ .gen ⟨6, by decide⟩),
         .pow
           (.gen ⟨1, by decide⟩ ⬝ .gen ⟨2, by decide⟩ ⬝
             .gen ⟨3, by decide⟩ ⬝ .gen ⟨6, by decide⟩) 5,
         .gen ⟨6, by decide⟩ ⬝ .gen ⟨1, by decide⟩ ⬝
-          (.inv (.gen ⟨2, by decide⟩) ⬝ .gen ⟨6, by decide⟩ ⬝
-            .gen ⟨2, by decide⟩) ⬝
-          (.inv (.gen ⟨1, by decide⟩) ⬝ .gen ⟨6, by decide⟩ ⬝
-            .gen ⟨1, by decide⟩) ⬝
-          (.inv (.gen ⟨2, by decide⟩) ⬝ .gen ⟨6, by decide⟩ ⬝
-            .gen ⟨2, by decide⟩),
+          Relator.conj (.gen ⟨6, by decide⟩) (.gen ⟨2, by decide⟩) ⬝
+          Relator.conj (.gen ⟨6, by decide⟩) (.gen ⟨1, by decide⟩) ⬝
+          Relator.conj (.gen ⟨6, by decide⟩) (.gen ⟨2, by decide⟩),
         .gen ⟨6, by decide⟩ ⬝ .gen ⟨4, by decide⟩ ⬝
-          (.inv (.gen ⟨3, by decide⟩) ⬝ .gen ⟨6, by decide⟩ ⬝
-            .gen ⟨3, by decide⟩) ⬝
-          (.inv (.gen ⟨4, by decide⟩) ⬝ .gen ⟨6, by decide⟩ ⬝
-            .gen ⟨4, by decide⟩) ⬝
-          (.inv (.gen ⟨3, by decide⟩) ⬝ .gen ⟨6, by decide⟩ ⬝
-            .gen ⟨3, by decide⟩) ] := by
-  simp [onanPresentation, onanCoxeterRelators, onanAdditionalRelators, sourceConj]
+          Relator.conj (.gen ⟨6, by decide⟩) (.gen ⟨3, by decide⟩) ⬝
+          Relator.conj (.gen ⟨6, by decide⟩) (.gen ⟨4, by decide⟩) ⬝
+          Relator.conj (.gen ⟨6, by decide⟩) (.gen ⟨3, by decide⟩) ] := by
+  simp [onanPresentation, onanCoxeterRelators, onanAdditionalRelators, Relator.conj]
 
 /-- The generator and relator counts recorded for `ONan` agree with the transcribed data. -/
 theorem onanPresentation_matchesMetadata : onanPresentation.matchesMetadata := by
@@ -335,7 +319,8 @@ theorem onanPresentation_relatorLetters :
           (3, false), (6, true), (3, true)]] := by
   simp only [GroupPresentation.relatorLetters_def, GroupPresentation.relators_def,
     onanPresentation_transcribed, List.map_cons, List.map_nil, Relator.toWord_mul,
-    Relator.toWord_pow, Relator.toWord_inv, Relator.toWord_gen, FreeGroup.invRev]
+    Relator.toWord_pow, Relator.toWord_inv, Relator.toWord_gen, Relator.toWord_conj,
+    FreeGroup.invRev]
   decide
 
 /-- The compiled relators of the `ONan` presentation contain `172` signed letters in total. This is
@@ -354,7 +339,7 @@ theorem onanPresentation_relatorsCyclicallyReduced :
     onanPresentation.relatorsCyclicallyReduced := by
   simp only [GroupPresentation.relatorsCyclicallyReduced_iff, GroupPresentation.relators_def,
     onanPresentation_transcribed, List.map_cons, List.map_nil, Relator.toWord_mul,
-    Relator.toWord_pow, Relator.toWord_inv, Relator.toWord_gen]
+    Relator.toWord_pow, Relator.toWord_inv, Relator.toWord_gen, Relator.toWord_conj]
   decide
 
 end TauCeti.Sporadic
