@@ -68,26 +68,18 @@ theorem tensorProduct_mul (g₁ g₂ : GeneralLinearGroup K V)
 @[simp]
 theorem tensorProduct_one :
     tensorProduct (1 : GeneralLinearGroup K V) (1 : GeneralLinearGroup K W) = 1 := by
-  -- Expose the identity units as reflexive linear equivalences so the tensor congruence lemma
-  -- can rewrite them.
-  change LinearMap.GeneralLinearGroup.ofLinearEquiv
-      (TensorProduct.congr (LinearEquiv.refl K V) (LinearEquiv.refl K W)) = 1
-  rw [TensorProduct.congr_refl_refl]
-  rfl
+  symm
+  apply mul_left_cancel (a := tensorProduct (1 : GeneralLinearGroup K V)
+    (1 : GeneralLinearGroup K W))
+  simpa only [one_mul, mul_one] using
+    (tensorProduct_mul (1 : GeneralLinearGroup K V) 1 (1 : GeneralLinearGroup K W) 1)
 
 /-- Tensor products preserve inverses. -/
 @[simp]
 theorem tensorProduct_inv (g : GeneralLinearGroup K V) (h : GeneralLinearGroup K W) :
     tensorProduct g⁻¹ h⁻¹ = (tensorProduct g h)⁻¹ := by
-  unfold tensorProduct
-  rw [LinearMap.GeneralLinearGroup.toLinearEquiv_inv,
-    LinearMap.GeneralLinearGroup.toLinearEquiv_inv]
-  -- The tensor congruence lemma is stated with `LinearEquiv.symm`; expose that notation before
-  -- transporting the inverse through `ofLinearEquiv`.
-  change LinearMap.GeneralLinearGroup.ofLinearEquiv
-      (TensorProduct.congr g.toLinearEquiv.symm h.toLinearEquiv.symm) = _
-  rw [← TensorProduct.congr_symm]
-  exact LinearMap.GeneralLinearGroup.ofLinearEquiv_inv _
+  exact eq_inv_of_mul_eq_one_left <| by
+    rw [← tensorProduct_mul, inv_mul_cancel, inv_mul_cancel, tensorProduct_one]
 
 end GeneralLinearGroup
 

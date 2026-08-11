@@ -71,21 +71,13 @@ theorem IsSemisimple.rTensor {f : _root_.Module.End K V} (hf : f.IsSemisimple) :
   let E₀' : (V ⊗[K] W) ≃ₗ[K]
       (Module.Free.ChooseBasisIndex K W →₀ Module.AEval' f) :=
     E₀.trans (Finsupp.mapRange.linearEquiv (Module.AEval'.of f))
-  let _ : IsScalarTower K K[X]
-      (Module.Free.ChooseBasisIndex K W →₀ Module.AEval' f) := {
-    smul_assoc := fun r p x ↦ by
-        ext i
-        exact smul_assoc r p (x i) }
   let E : Module.AEval' (f.rTensor W) ≃ₗ[K[X]]
       (Module.Free.ChooseBasisIndex K W →₀ Module.AEval' f) :=
     LinearEquiv.ofAEval _ E₀' fun x ↦ by
       ext i
       simp only [E₀', LinearEquiv.trans_apply, Finsupp.mapRange.linearEquiv_apply,
-        Finsupp.mapRange_apply, Finsupp.smul_apply, Module.AEval'.X_smul_of]
-      apply (Module.AEval'.of f).injective
-      -- The basis equivalence computes right tensor actions coordinatewise by definition;
-      -- expose that form so tensor induction applies.
-      change E₀ (f.rTensor W x) i = f (E₀ x i)
+        Finsupp.mapRange_apply, Finsupp.smul_apply, Module.AEval'.X_smul_of,
+        _root_.Module.End.smul_def]
       induction x using TensorProduct.induction_on with
       | zero => simp
       | tmul v w => simp [E₀]
@@ -123,14 +115,16 @@ theorem _root_.IsNilpotent.tensorProduct_map_sub_one {f : _root_.Module.End K V}
   have hn : IsNilpotent n := by
     have hn' := hf.map (_root_.Module.End.rTensorAlgHom K V W)
     rw [map_sub, map_one] at hn'
-    -- Expose the algebra homomorphism's action as right tensoring after applying the map laws.
-    change IsNilpotent (f.rTensor W - 1) at hn'
+    rw [show (_root_.Module.End.rTensorAlgHom K V W) f = f.rTensor W by
+      apply LinearMap.ext
+      exact _root_.Module.End.rTensorAlgHom_apply_apply K V W f] at hn'
     exact hn'
   have hm : IsNilpotent m := by
     have hm' := hg.map (_root_.Module.End.lTensorAlgHom K W V)
     rw [map_sub, map_one] at hm'
-    -- Expose the algebra homomorphism's action as left tensoring after applying the map laws.
-    change IsNilpotent (g.lTensor V - 1) at hm'
+    rw [show (_root_.Module.End.lTensorAlgHom K W V) g = g.lTensor V by
+      apply LinearMap.ext
+      exact _root_.Module.End.lTensorAlgHom_apply_apply K W V g] at hm'
     exact hm'
   have hab := commute_rTensor_lTensor f g
   have hnm : Commute n m := by

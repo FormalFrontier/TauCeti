@@ -88,17 +88,9 @@ theorem jordanDecomposition_tensorProduct
     (g : GeneralLinearGroup K V) (h : GeneralLinearGroup K W) :
     jordanDecomposition (tensorProduct g h) =
       (tensorProduct (semisimplePart g) (semisimplePart h),
-        tensorProduct (unipotentPart g) (unipotentPart h)) := by
-  symm
-  apply (eq_jordanDecomposition_iff (tensorProduct g h) _ _).2
-  refine ⟨(isSemisimple_semisimplePart g).tensorProduct
-      (isSemisimple_semisimplePart h),
-    (isUnipotent_unipotentPart g).tensorProduct (isUnipotent_unipotentPart h), ?_, ?_⟩
-  · rw [commute_iff_eq, ← tensorProduct_mul, ← tensorProduct_mul]
-    rw [(commute_semisimplePart_unipotentPart g).eq,
-      (commute_semisimplePart_unipotentPart h).eq]
-  · rw [← tensorProduct_mul, semisimplePart_mul_unipotentPart,
-      semisimplePart_mul_unipotentPart]
+        tensorProduct (unipotentPart g) (unipotentPart h)) :=
+  jordanDecomposition_map₂ tensorProduct tensorProduct_mul IsSemisimple.tensorProduct
+    IsUnipotent.tensorProduct g h
 
 /-- The semisimple factor of a tensor product is the tensor product of the semisimple factors. -/
 @[simp]
