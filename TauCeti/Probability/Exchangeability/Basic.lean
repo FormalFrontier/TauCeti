@@ -23,7 +23,13 @@ hypotheses enter only in lemmas that compose `Measure.map`s.
 definitions here are about the order structure of `ℕ` (prefixes, shifts, strictly increasing
 selections) and stay sequence-level.
 
-These declarations follow the roadmap signatures in
+The prefix/tail measurable equivalence `prefixSplitEquiv` is an exception on both counts: it is
+neither a roadmap signature nor adapted from the pinned sources, but general infrastructure that
+several exchangeability arguments need in order to reindex a sequence as a length-`r` prefix paired
+with the tail from index `r`. It lives here because it is stated purely in terms of the order
+structure of `ℕ`, with no measure and no process.
+
+The remaining declarations follow the roadmap signatures in
 `TauCetiRoadmap/Exchangeability/README.md` and
 `TauCetiRoadmap/Exchangeability/Suggested.lean`, Layer 0. They are adapted from the
 `cameronfreer/exchangeability` Layer 0 sources pinned at
@@ -180,18 +186,24 @@ def prefixSplitEquiv (r : ℕ) : (ℕ → α) ≃ᵐ (Fin r → α) × (ℕ → 
   (MeasurableEquiv.arrowCongr' (finSumNatEquiv r).symm (.refl α)).trans
     (MeasurableEquiv.sumPiEquivProdPi fun _ => α)
 
+/-- **Applying `prefixSplitEquiv`**: it reads off the length-`r` prefix and the tail from index `r`.
+
+This is the one place that depends on the definitional form of `MeasurableEquiv.arrowCongr'` and
+`sumPiEquivProdPi`, neither of which exposes an apply lemma. Everything else about the equivalence
+is derived from here, so the fragile step is isolated rather than repeated. -/
+@[simp]
+theorem prefixSplitEquiv_apply (r : ℕ) (f : ℕ → α) :
+    prefixSplitEquiv r f = (fun i : Fin r => f (i : ℕ), fun j : ℕ => f (r + j)) := (rfl)
+
 /-- The inverse of `prefixSplitEquiv` glues a prefix/tail pair into a sequence: coordinates below
 `r` come from the prefix `p.1`, the rest (reindexed by `· - r`) from the tail `p.2`. -/
+@[simp]
 theorem prefixSplitEquiv_symm_apply (r : ℕ) (p : (Fin r → α) × (ℕ → α)) (n : ℕ) :
     (prefixSplitEquiv r).symm p n = if h : n < r then p.1 ⟨n, h⟩ else p.2 (n - r) := by
   have key : (prefixSplitEquiv r).symm p
       = fun n => if h : n < r then p.1 ⟨n, h⟩ else p.2 (n - r) := by
     apply (prefixSplitEquiv r).injective
-    rw [MeasurableEquiv.apply_symm_apply]
-    -- BRITTLE: uses the defeq `prefixSplitEquiv r f = (fun i => f i.val, fun j => f (r + j))`;
-    -- `MeasurableEquiv.arrowCongr'` exposes no coe/apply lemma, so this cannot be a `simp` rewrite.
-    change p = (fun i : Fin r => (if h : (i : ℕ) < r then p.1 ⟨i, h⟩ else p.2 ((i : ℕ) - r)),
-        fun j : ℕ => if h : r + j < r then p.1 ⟨r + j, h⟩ else p.2 (r + j - r))
+    rw [MeasurableEquiv.apply_symm_apply, prefixSplitEquiv_apply]
     refine Prod.ext (funext fun i => ?_) (funext fun j => ?_)
     · simp only [dite_eq_left i.isLt, Fin.eta]
     · have h : ¬ (r + j < r) := Nat.not_lt.mpr (Nat.le_add_right r j)
