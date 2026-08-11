@@ -246,6 +246,6 @@ theorem eval_diagramSchurPoly_of_apply_last_eq_one (n : ℕ) (μ : _root_.YoungD
       = ∑ ν ∈ YoungDiagram.interlacingShapes n μ,
           eval (fun i : Fin n => x i.castSucc) (diagramSchurPoly n R ν) := by
   conv_lhs => rw [← Fin.snoc_init_self x, hx]
-  exact eval_snoc_one_diagramSchurPoly n μ _
+  rw [eval_snoc_one_diagramSchurPoly, Fin.init_def]
 
 end TauCeti
