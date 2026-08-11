@@ -10,16 +10,13 @@ module
 -- structure on `L ⊗[K] A`) and, through `TauCeti.Algebra.CentralSimple.Degree`, the simplicity of
 -- `L ⊗[K] A` as an instance -- which is what makes the action below faithful.
 public import TauCeti.Algebra.CentralSimple.Splitting
--- `AlgHom.mulLeftRight` builds the action, and `Algebra.TensorProduct.map`/`.comm` transport it;
--- both occur in the body of the exposed `TauCeti.BaseChangeModule` instances.
-public import Mathlib.Algebra.Azumaya.Defs
-public import Mathlib.RingTheory.TensorProduct.Maps
+-- `TauCeti.Bimodule` supplies the left-right action transported to the orientation used here.
+public import TauCeti.Algebra.CentralSimple.Bimodule
 -- Non-public: none of these appears in the type of an exported declaration. The tower law and the
 -- dimension of an endomorphism algebra, the injective-implies-surjective criterion, the matrix
 -- form of an endomorphism algebra and the faithfulness of a module over a simple ring are used
 -- only inside proofs, and the complex numbers and the real quaternions only by the worked examples.
 import Mathlib.LinearAlgebra.Complex.FiniteDimensional
-import Mathlib.LinearAlgebra.Complex.Module
 import Mathlib.LinearAlgebra.Dimension.Free
 import Mathlib.LinearAlgebra.FiniteDimensional.Lemmas
 import Mathlib.LinearAlgebra.FreeModule.Finite.Matrix
@@ -84,14 +81,12 @@ two dimensions agree, so the injection is onto and `L ⊗[K] A` *is* the endomor
 
 ## Implementation notes
 
-`TauCeti.BaseChangeModule f` is a type synonym for `A`, indexed by `f`, exactly as
-`TauCeti.Bimodule` in `TauCeti/Algebra/CentralSimple/Bimodule.lean` is: `A` must not itself acquire
-an `L ⊗[K] A`-action, and different subfields must be able to act at the same time. The two
-constructions are genuinely different modules -- for the same `f`, `TauCeti.Bimodule f` is a module
-over `L ⊗[K] Aᵐᵒᵖ` with `f` acting on the *left* -- and it is the orientation here, with the base
-field
-of `TauCeti.Algebra.IsSplittingField` on the left of the tensor product, that makes the conclusion
-land on `L ⊗[K] A` rather than on its opposite.
+`TauCeti.BaseChangeModule f` reuses `TauCeti.Bimodule` from
+`TauCeti/Algebra/CentralSimple/Bimodule.lean` with codomain `Aᵐᵒᵖ` and the opposite of `f`. Its
+scalar action is transported along `A ≃ₐ[K] Aᵐᵒᵖᵐᵒᵖ`, giving the required orientation over
+`L ⊗[K] A`:
+`l ⊗ₜ a` acts by `x ↦ a * x * f l`. This orientation makes the conclusion land on the tensor
+product occurring in `TauCeti.Algebra.IsSplittingField`, rather than on its opposite.
 
 The `L`-module structure on `TauCeti.BaseChangeModule f` is defined by restricting scalars along
 `algebraMap L (L ⊗[K] A)` rather than as a separate right-multiplication action, which is what
@@ -126,6 +121,12 @@ section Defs
 variable {K L A : Type*} [CommSemiring K] [CommSemiring L] [Algebra K L]
   [Semiring A] [Algebra K A]
 
+local macro "rightAlgHom% " f:term : term =>
+  `(($f).toOpposite fun x y ↦ by simp [commute_iff_eq, ← map_mul, mul_comm])
+
+local macro "opOpMap%" : term =>
+  `(Algebra.TensorProduct.map (AlgHom.id K L) (AlgEquiv.opOp K A).toAlgHom)
+
 /-- `A` regarded as a module over the scalar extension `L ⊗[K] A`, along a `K`-algebra homomorphism
 `f : L →ₐ[K] A` out of a **commutative** algebra: the pure tensor `l ⊗ₜ a` acts by
 `x ↦ a * x * f l`.
@@ -134,60 +135,60 @@ Equivalently this is the `A`-`L`-bimodule `A`, with `A` acting on the left by mu
 `L` on the right through `f`; commutativity of `L` is what lets the right action be packaged as a
 left action of `L ⊗[K] A` with no opposite algebra. It is a type synonym for `A` so that `A` itself
 is left without an `L ⊗[K] A`-action, and so that different subfields can act at the same time. -/
-@[expose] def BaseChangeModule (_f : L →ₐ[K] A) : Type _ := A
+@[expose] def BaseChangeModule (f : L →ₐ[K] A) : Type _ := Bimodule (rightAlgHom% f)
 
 namespace BaseChangeModule
 
 variable (f : L →ₐ[K] A)
 
-instance : AddCommMonoid (BaseChangeModule f) := inferInstanceAs (AddCommMonoid A)
+instance : AddCommMonoid (BaseChangeModule f) :=
+  inferInstanceAs (AddCommMonoid (Bimodule (rightAlgHom% f)))
 
 -- Conditional, so that the endomorphism ring of `BaseChangeModule f` is a ring and not merely a
 -- semiring when `A` is one; nothing in the construction itself needs the negation.
 instance {A : Type*} [Ring A] [Algebra K A] (f : L →ₐ[K] A) : AddCommGroup (BaseChangeModule f) :=
-  inferInstanceAs (AddCommGroup A)
+  inferInstanceAs (AddCommGroup (Bimodule (rightAlgHom% f)))
 
-instance : Module K (BaseChangeModule f) := inferInstanceAs (Module K A)
+instance : Module K (BaseChangeModule f) :=
+  inferInstanceAs (Module K (Bimodule (rightAlgHom% f)))
 
-instance [Nontrivial A] : Nontrivial (BaseChangeModule f) := inferInstanceAs (Nontrivial A)
+instance [Nontrivial A] : Nontrivial (BaseChangeModule f) :=
+  inferInstanceAs (Nontrivial (Bimodule (rightAlgHom% f)))
 
 instance [Module.Finite K A] : Module.Finite K (BaseChangeModule f) :=
-  inferInstanceAs (Module.Finite K A)
+  Module.Finite.equiv ((MulOpposite.opLinearEquiv K).trans (Bimodule.of (rightAlgHom% f)))
 
 /-- `BaseChangeModule f` is `A` again as a `K`-module: only the `L ⊗[K] A`-action is new. -/
-def of : A ≃ₗ[K] BaseChangeModule f := LinearEquiv.refl K A
+def of : A ≃ₗ[K] BaseChangeModule f :=
+  (MulOpposite.opLinearEquiv K).trans (Bimodule.of (rightAlgHom% f))
 
-/-- `f` with its values read in the opposite algebra, `l ↦ MulOpposite.op (f l)`. It is again a
-`K`-algebra homomorphism because `L` is commutative, and it is what turns the right action of `L`
-on `A` into a left action. -/
-def toOpposite : L →ₐ[K] Aᵐᵒᵖ :=
-  f.toOpposite fun x y ↦ by simp [commute_iff_eq, ← map_mul, mul_comm]
+noncomputable instance : Module (L ⊗[K] A) (BaseChangeModule f) :=
+  Module.compHom (M := Bimodule (rightAlgHom% f)) opOpMap%.toRingHom
 
 /-- The action of `L ⊗[K] A` on `A` defining `BaseChangeModule f`, as a `K`-algebra homomorphism
-into `Module.End K A`. It is Mathlib's `AlgHom.mulLeftRight` precomposed with
-`l ⊗ₜ a ↦ a ⊗ₜ MulOpposite.op (f l)`. -/
+into `Module.End K A`, transported from `TauCeti.Bimodule.toEnd`. -/
 noncomputable def toEnd : L ⊗[K] A →ₐ[K] Module.End K A :=
-  (AlgHom.mulLeftRight K A).comp
-    ((Algebra.TensorProduct.map (AlgHom.id K A) (toOpposite f)).comp
-      (Algebra.TensorProduct.comm K L A).toAlgHom)
+  ((MulOpposite.opLinearEquiv K).conjAlgEquiv K).symm.toAlgHom.comp
+    ((Bimodule.toEnd (rightAlgHom% f)).comp opOpMap%)
 
 /-- A pure tensor `l ⊗ₜ a` acts on `x : A` through `toEnd f` by `x ↦ a * x * f l`. -/
 @[simp]
 theorem toEnd_tmul_apply (l : L) (a x : A) : toEnd f (l ⊗ₜ a) x = a * x * f l := by
-  simp [toEnd, toOpposite]
-
-noncomputable instance : Module (L ⊗[K] A) (BaseChangeModule f) :=
-  Module.compHom (M := A) (toEnd f).toRingHom
+  simp [toEnd, mul_assoc]
 
 /-- A scalar `r : L ⊗[K] A` acts on `BaseChangeModule f` through `toEnd f`. This is the defining
 equation of the module structure, and the single place it is unfolded: everything else rewrites
 with it instead of reasoning up to definitional equality. -/
-theorem smul_def (r : L ⊗[K] A) (x : A) : r • of f x = of f (toEnd f r x) := (rfl)
+theorem smul_def (r : L ⊗[K] A) (x : A) : r • of f x = of f (toEnd f r x) := by
+  change opOpMap% r • Bimodule.of (rightAlgHom% f) (MulOpposite.op x) =
+    Bimodule.of (rightAlgHom% f) (MulOpposite.op (toEnd f r x))
+  rw [Bimodule.smul_def]
+  rfl
 
 /-- A pure tensor `l ⊗ₜ a` acts on `BaseChangeModule f` by `x ↦ a * x * f l`. -/
 @[simp]
-theorem smul_of (l : L) (a x : A) : (l ⊗ₜ a : L ⊗[K] A) • of f x = of f (a * x * f l) :=
-  toEnd_tmul_apply f l a x
+theorem smul_of (l : L) (a x : A) : (l ⊗ₜ a : L ⊗[K] A) • of f x = of f (a * x * f l) := by
+  rw [smul_def, toEnd_tmul_apply]
 
 instance : IsScalarTower K (L ⊗[K] A) (BaseChangeModule f) where
   smul_assoc c r x := by
@@ -241,17 +242,12 @@ variable {K : Type*} [Field K] {L : Type*} [Field L] [Algebra K L]
 
 namespace BaseChangeModule
 
-/-- **The tower law for a subfield**: the dimension of `A` over `K` is the degree of `L` times the
-dimension of `A` as an `L`-vector space through `f`. This is what turns the dimension count below
-into a statement about `Module.finrank K L`. -/
+/-- The tower law for `A`, with its `L`-module structure induced by `f`. -/
 theorem finrank_mul_finrank :
     Module.finrank K L * Module.finrank L (BaseChangeModule f) = Module.finrank K A := by
   rw [Module.finrank_mul_finrank K L (BaseChangeModule f), finrank_eq]
 
-/-- The action of `L ⊗[K] A` on `BaseChangeModule f`, as an `L`-algebra homomorphism into the
-`L`-linear endomorphisms. It is `Algebra.lsmul` for the module structure built above; the
-`L`-scalars act through the centre of `L ⊗[K] A`, so they are themselves `L ⊗[K] A`-linear and the
-target is an `L`-algebra. -/
+/-- The action of `L ⊗[K] A` on `BaseChangeModule f` as an `L`-algebra homomorphism. -/
 noncomputable def toEndL : L ⊗[K] A →ₐ[L] Module.End L (BaseChangeModule f) :=
   _root_.Algebra.lsmul L L (BaseChangeModule f)
 
@@ -259,10 +255,7 @@ noncomputable def toEndL : L ⊗[K] A →ₐ[L] Module.End L (BaseChangeModule f
 theorem toEndL_apply (r : L ⊗[K] A) (x : BaseChangeModule f) : toEndL f r x = r • x := by
   simp [toEndL]
 
-/-- **The action of the scalar extension on `A` is faithful.** `L ⊗[K] A` is a simple ring, being
-the base change of a central simple algebra, and a nontrivial module over a simple ring is faithful
-(`TauCeti.faithfulSMul_of_isSimpleRing`): the elements acting as zero form a two-sided ideal
-missing `1`. -/
+/-- The action of the scalar extension on `BaseChangeModule f` is faithful. -/
 theorem toEndL_injective [Algebra.IsCentral K A] [IsSimpleRing A] [FiniteDimensional K A] :
     Function.Injective (toEndL f) := by
   have : FaithfulSMul (L ⊗[K] A) (BaseChangeModule f) := faithfulSMul_of_isSimpleRing
@@ -276,28 +269,22 @@ instance : Module.Finite L (BaseChangeModule f) :=
 
 variable [Algebra.IsCentral K A] [IsSimpleRing A]
 
-/-- Faithfulness, read as a dimension inequality: `L ⊗[K] A` embeds in the `L`-endomorphisms of
-`BaseChangeModule f`, so its dimension `Module.finrank K A` is at most the square of the dimension
-of `BaseChangeModule f`. -/
-theorem finrank_le_finrank_mul_finrank :
+-- The dimension inequality obtained from the faithful scalar-extension action.
+private theorem finrank_le_finrank_mul_finrank :
     Module.finrank K A
       ≤ Module.finrank L (BaseChangeModule f) * Module.finrank L (BaseChangeModule f) := by
   have h := (toEndL f).toLinearMap.finrank_le_finrank_of_injective (toEndL_injective f)
   rwa [Module.finrank_baseChange, Module.finrank_linearMap] at h
 
-/-- For a subfield of degree `deg K A`, the tower law forces `A` to have dimension `deg K A` over
-it: the two factors of `Module.finrank K A = (deg K A) ^ 2` are equal. -/
+/-- If `L` has degree `deg K A`, then `BaseChangeModule f` has dimension `deg K A` over `L`. -/
 theorem finrank_eq_deg (h : Module.finrank K L = Algebra.deg K A) :
     Module.finrank L (BaseChangeModule f) = Algebra.deg K A := by
   have hmul := finrank_mul_finrank f
   rw [h, ← Algebra.deg_sq K A, sq] at hmul
   exact Nat.eq_of_mul_eq_mul_left (Algebra.deg_pos K A) hmul
 
-/-- **The splitting isomorphism of a subfield of degree `deg K A`**: the scalar extension is
-exactly the algebra of `L`-linear endomorphisms of `A`.
-
-The map is the faithful action `TauCeti.BaseChangeModule.toEndL`; what the degree hypothesis buys
-is that both sides have dimension `(deg K A) ^ 2` over `L`, so the injection is onto. -/
+/-- The scalar extension by a subfield of degree `deg K A` is isomorphic to the algebra of
+`L`-linear endomorphisms of `BaseChangeModule f`. -/
 noncomputable def algEquivEnd (h : Module.finrank K L = Algebra.deg K A) :
     L ⊗[K] A ≃ₐ[L] Module.End L (BaseChangeModule f) :=
   AlgEquiv.ofBijective (toEndL f) <| by
@@ -317,11 +304,7 @@ namespace Algebra
 
 variable [Algebra.IsCentral K A] [IsSimpleRing A] [FiniteDimensional K A]
 
-/-- **A subfield of a central simple algebra has degree at most the degree of the algebra.**
-
-Write `n = deg K A`, `d = Module.finrank K L` and `m` for the dimension of `A` as an `L`-vector
-space through `f`. Faithfulness of the action gives `n ^ 2 = Module.finrank K A ≤ m ^ 2`, hence
-`n ≤ m`, and the tower law gives `d * m = n ^ 2`; so `d * n ≤ d * m = n * n` and `d ≤ n`. -/
+/-- A subfield of a central simple algebra has degree at most the degree of the algebra. -/
 theorem finrank_le_deg (f : L →ₐ[K] A) : Module.finrank K L ≤ deg K A := by
   have hmul := BaseChangeModule.finrank_mul_finrank f
   have hle := BaseChangeModule.finrank_le_finrank_mul_finrank f
@@ -334,24 +317,15 @@ theorem finrank_le_deg (f : L →ₐ[K] A) : Module.finrank K L ≤ deg K A := b
         Nat.mul_le_mul_left _ hdm
     _ = deg K A * deg K A := hmul
 
-/-- **A subfield of degree `deg K A` splits `A`**: the scalar extension `L ⊗[K] A` is the full
-matrix algebra of size `deg K A` over `L`.
-
-By `TauCeti.Algebra.finrank_le_deg` this is the largest degree a subfield can have, so the
-hypothesis says exactly that `L` is a maximal subfield of the expected degree. Unlike
-`TauCeti.Algebra.isSplittingField_of_isAlgClosed`, the splitting field here sits inside `A`. -/
+/-- A subfield of degree `deg K A` is a splitting field of `A`. -/
 theorem isSplittingField_of_finrank_eq_deg (f : L →ₐ[K] A)
     (h : Module.finrank K L = deg K A) : IsSplittingField K A L :=
   (isSplittingField_iff_deg K A L).2
     ⟨(BaseChangeModule.algEquivEnd f h).trans
       (endAlgEquivMatrix L (BaseChangeModule f) (BaseChangeModule.finrank_eq_deg f h))⟩
 
-/-- **A subfield of degree `deg K A` is a maximal subfield.** If a subfield `L'` of `A` receives
-`L` by a `K`-algebra map `i`, then `i` is an isomorphism: `L'` is no bigger than `L`.
-
-No compatibility between `i` and the two embeddings into `A` is needed. `L'` is a subfield of `A`,
-so `TauCeti.Algebra.finrank_le_deg` bounds its degree by `deg K A = Module.finrank K L`, while `i`
-is injective and so bounds it below; the two bounds meet. -/
+/-- If subfields `L` and `L'` of `A` satisfy `Module.finrank K L = deg K A`, then every
+`K`-algebra homomorphism `L →ₐ[K] L'` is bijective. -/
 theorem bijective_of_finrank_eq_deg {L' : Type*} [Field L'] [Algebra K L']
     (g : L' →ₐ[K] A) (i : L →ₐ[K] L') (h : Module.finrank K L = deg K A) :
     Function.Bijective i := by
