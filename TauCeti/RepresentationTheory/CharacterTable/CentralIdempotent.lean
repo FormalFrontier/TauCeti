@@ -268,7 +268,7 @@ theorem isUnit_char_one : IsUnit (ρ.character 1) := by
   classical
   have : Fintype G := Fintype.ofFinite G
   have h := centralCharacter_characterSumCenter_mul_character_one ρ ρ
-  rw [if_pos ⟨_root_.Representation.Equiv.refl ρ⟩, mul_one] at h
+  rw [ite_eq_left ⟨_root_.Representation.Equiv.refl ρ⟩, mul_one] at h
   exact isUnit_of_mul_isUnit_right (h ▸ isUnit_of_invertible (Nat.card G : k))
 
 include ρ in
@@ -363,9 +363,9 @@ theorem centralCharacter_primitiveCentralIdempotentCenter :
   rw [primitiveCentralIdempotentCenter_eq_smul, map_smul, smul_eq_mul, mul_assoc,
     centralCharacter_characterSumCenter_mul_character_one ρ σ]
   rcases isEmpty_or_nonempty (ρ.Equiv σ) with hE | hN
-  · rw [if_neg (not_nonempty_iff.2 hE)]
+  · rw [ite_eq_right (not_nonempty_iff.2 hE)]
     ring
-  · rw [if_pos hN, mul_one, one_mul, _root_.Representation.char_iso hN.some, mul_assoc,
+  · rw [ite_eq_left hN, mul_one, one_mul, _root_.Representation.char_iso hN.some, mul_assoc,
       mul_comm (σ.character 1), ← mul_assoc, inv_mul_cancel₀ hne, one_mul]
 
 open scoped Classical in
@@ -399,14 +399,14 @@ theorem isIdempotentElem_primitiveCentralIdempotent :
     IsIdempotentElem (primitiveCentralIdempotent ρ) := by
   classical
   rw [IsIdempotentElem, primitiveCentralIdempotent_mul_primitiveCentralIdempotent ρ ρ,
-    if_pos ⟨_root_.Representation.Equiv.refl ρ⟩]
+    ite_eq_left ⟨_root_.Representation.Equiv.refl ρ⟩]
 
 /-- Non-isomorphic irreducible representations give orthogonal primitive central idempotents. -/
 theorem primitiveCentralIdempotent_mul_eq_zero (h : IsEmpty (ρ.Equiv σ)) :
     primitiveCentralIdempotent ρ * primitiveCentralIdempotent σ = 0 := by
   classical
   rw [primitiveCentralIdempotent_mul_primitiveCentralIdempotent ρ σ,
-    if_neg (not_nonempty_iff.2 h)]
+    ite_eq_right (not_nonempty_iff.2 h)]
 
 /-- **A primitive central idempotent is nonzero**: its coefficient at `1` is `χ(1)² / |G|`, and the
 degree of an irreducible representation is a unit. -/
