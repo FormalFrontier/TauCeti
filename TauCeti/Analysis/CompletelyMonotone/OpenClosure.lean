@@ -8,11 +8,13 @@ public import TauCeti.Analysis.CompletelyMonotone.Basic
 public import Mathlib.Analysis.Calculus.IteratedDeriv.Lemmas
 
 /-!
-# Open-half-line closure for completely monotone functions
+# Half-line closure for completely monotone functions
 
 This file extends the API for `TauCeti.IsCompletelyMonotoneOnIoi`, the ordinary-derivative
 version of complete monotonicity on `(0, ∞)`, with the multiplicative and differential closure
-properties needed by the Bernstein-function part of the one-parameter-semigroups roadmap.
+properties needed by the Bernstein-function part of the one-parameter-semigroups roadmap, and
+derives the corresponding multiplicative closure for the closed-half-line predicate
+`TauCeti.IsCompletelyMonotoneOnIci`.
 
 The closed-half-line predicate `TauCeti.IsCompletelyMonotone` already has product and
 negated-derivative closure in `TauCeti.Analysis.CompletelyMonotone.Closure`. The open version is
@@ -29,6 +31,9 @@ derivative at `0`, so their derivative is naturally completely monotone only on 
   there.
 * `TauCeti.IsCompletelyMonotoneOnIoi.neg_deriv`: the negated ordinary derivative of a completely
   monotone function on `(0, ∞)` is completely monotone there.
+* `TauCeti.IsCompletelyMonotoneOnIci.mul`, `TauCeti.IsCompletelyMonotoneOnIci.prod`,
+  `TauCeti.IsCompletelyMonotoneOnIci.pow`: the closed-half-line predicate is closed under
+  pointwise multiplication, finite products, and natural powers.
 
 ## References
 
@@ -123,5 +128,33 @@ theorem neg_deriv (hf : IsCompletelyMonotoneOnIoi f) :
   simpa [pow_one, iteratedDeriv_one] using hf.neg_one_pow_mul_iteratedDeriv 1
 
 end IsCompletelyMonotoneOnIoi
+
+namespace IsCompletelyMonotoneOnIci
+
+variable {f g : ℝ → ℝ}
+
+/-- Closed-half-line complete monotonicity is closed under pointwise multiplication. -/
+protected lemma mul (hf : IsCompletelyMonotoneOnIci f) (hg : IsCompletelyMonotoneOnIci g) :
+    IsCompletelyMonotoneOnIci (f * g) :=
+  isCompletelyMonotoneOnIci_iff.mpr ⟨hf.continuousOn.mul hg.continuousOn,
+    hf.isCompletelyMonotoneOnIoi.mul hg.isCompletelyMonotoneOnIoi⟩
+
+/-- Closed-half-line complete monotonicity is closed under finite products. -/
+protected lemma prod {ι : Type*} {s : Finset ι} {F : ι → ℝ → ℝ}
+    (hF : ∀ i ∈ s, IsCompletelyMonotoneOnIci (F i)) :
+    IsCompletelyMonotoneOnIci (fun t => ∏ i ∈ s, F i t) := by
+  have h := Finset.prod_induction F IsCompletelyMonotoneOnIci
+    (fun _ _ => IsCompletelyMonotoneOnIci.mul)
+    (of_isCompletelyMonotone (isCompletelyMonotone_const zero_le_one)) hF
+  have heq : (∏ i ∈ s, F i) = fun t => ∏ i ∈ s, F i t := funext fun t => Finset.prod_apply t s F
+  rwa [heq] at h
+
+/-- Closed-half-line complete monotonicity is closed under natural powers. -/
+protected lemma pow (hf : IsCompletelyMonotoneOnIci f) (k : ℕ) :
+    IsCompletelyMonotoneOnIci (f ^ k) :=
+  isCompletelyMonotoneOnIci_iff.mpr
+    ⟨hf.continuousOn.pow k, hf.isCompletelyMonotoneOnIoi.pow k⟩
+
+end IsCompletelyMonotoneOnIci
 
 end TauCeti

@@ -53,8 +53,7 @@ roots of a finite family of rational primes `p i`. If `q` is an odd rational pri
 every `p i`, then `q` splits completely in `K` exactly when every `p i` is a quadratic residue
 modulo `q`. -/
 theorem ncard_primesOver_sqrt_primes_iff {ι : Type*} [Finite ι] (p : ι → ℕ)
-    (hp : ∀ i, (p i).Prime) (r : ι → K)
-    (hr : ∀ i, r i ^ 2 = algebraMap ℤ K (p i : ℤ))
+    (hp : ∀ i, (p i).Prime) (r : ι → K) (hr : ∀ i, r i ^ 2 = algebraMap ℤ K (p i : ℤ))
     (htop : IntermediateField.adjoin ℚ (Set.range r) = ⊤)
     {q : ℕ} [Fact q.Prime] (hodd : q ≠ 2) (hne : ∀ i, q ≠ p i) :
     (primesOver (span {(q : ℤ)}) (𝓞 K)).ncard = finrank ℚ K ↔
@@ -65,8 +64,7 @@ theorem ncard_primesOver_sqrt_primes_iff {ι : Type*} [Finite ι] (p : ι → �
 /-- The character condition for the radicands `2` and `3`, with the `√2` condition expanded
 using the supplementary law for `2`. -/
 private theorem forall_legendreSym_two_three_eq_one_iff_mod_eight {q : ℕ} [Fact q.Prime]
-    (htwo : q ≠ 2) :
-    (∀ i : Fin 2, legendreSym q ((![2, 3] : Fin 2 → ℕ) i : ℤ) = 1) ↔
+    (htwo : q ≠ 2) : (∀ i : Fin 2, legendreSym q ((![2, 3] : Fin 2 → ℕ) i : ℤ) = 1) ↔
       (q % 8 = 1 ∨ q % 8 = 7) ∧ legendreSym q (3 : ℤ) = 1 := by
   simp only [Fin.forall_fin_two]
   simpa [Multiquadratic.evenPrimeDiscriminantRadicand_eight] using

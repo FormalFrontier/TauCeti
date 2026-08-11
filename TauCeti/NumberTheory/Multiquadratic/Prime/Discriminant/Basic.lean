@@ -70,8 +70,7 @@ theorem oddPrimeDiscriminant_of_mod_four_eq_three {p : ℕ} (hp : p % 4 = 3) :
   oddPrimeDiscriminant_of_mod_four_ne_one (by omega)
 
 /-- The absolute value of the odd prime discriminant is the underlying natural number. -/
-@[simp] theorem oddPrimeDiscriminant_natAbs (p : ℕ) :
-    (oddPrimeDiscriminant p).natAbs = p := by
+@[simp] theorem oddPrimeDiscriminant_natAbs (p : ℕ) : (oddPrimeDiscriminant p).natAbs = p := by
   by_cases hp : p % 4 = 1 <;> simp [oddPrimeDiscriminant, hp]
 
 /-- The odd prime discriminant is nonzero exactly when `p` is nonzero. -/

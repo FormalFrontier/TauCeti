@@ -37,6 +37,16 @@ Detectors (each names the infra failure it implies):
   7. stale-fkb       An open first-known-bad issue (label `dependency-incompatibility`)
                      has been open past a grace window. A regression against TauCeti
                      nobody has landed the fix for.
+  8. eviction-loop   The merge queue has accepted and evicted the same green PR
+                     repeatedly. One eviction looks like nothing (merge-sweep just
+                     re-enqueues), so only the count reveals a broken merge-group
+                     build, e.g. a flaky cache.
+  9. missing-status  A concluded pr-build left an open PR's head with no `build`
+                     status. The PR is BLOCKED forever and its label is pinned at
+                     `awaiting-CI`; nothing re-runs pr-build without a push.
+ 10. diverged-head   A PR's recorded head is not its branch tip, so GitHub never
+                     recomputes mergeability and it sits at `mergeable: null`,
+                     invisible to every mergeability-gated path.
 
 Deliberately NOT alerted (normal backlog, not stuck automation -- alerting on
 these would cheapen the topic and train people to ignore it):
@@ -120,6 +130,12 @@ MARKER_RE = re.compile(r"<!--stuck:v1 (" + KEY_RE.pattern + r")-->\s*\Z")
 BUMP_STUCK_HOURS = 24
 PIN_STALE_DAYS = 4
 STRANDED_HOURS = 6
+# Evictions since the current readiness, within the window, before a bounce counts as a loop.
+EVICTION_LOOP_MIN = 2
+EVICTION_WINDOW_HOURS = 24
+# How long a concluded pr-build may leave its head without a `build` status before that is
+# a wedge rather than a race between the run finishing and the status landing.
+MISSING_STATUS_HOURS = 0.5
 FKB_STALE_DAYS = 3
 SCHEDULERS = {
     # workflow file            (human name,               max age hours)
@@ -259,14 +275,165 @@ def detect_stale_pin():
     }]
 
 
-def is_automerge_scope(files, author):
-    """Mirror the author-aware path exception enforced by pr-build and TauCetiReview."""
+def is_automerge_scope(files):
+    """Mirror the path allowlist enforced by pr-build and TauCetiReview."""
     if not files:
         return False
     allowed_roots = {"TauCeti.lean", "lake-manifest.json", "lean-toolchain"}
-    if author == "tauceti-review-bot[bot]":
-        allowed_roots.add("lakefile.toml")
     return all(path.startswith("TauCeti/") or path in allowed_roots for path in files)
+
+
+def open_prs():
+    """Every open PR against main, with the fields the PR-shaped detectors below need."""
+    return gh_stream(
+        f"/repos/{REPO}/pulls?state=open&base=main&per_page=100",
+        jq='.[] | {number, head: .head.sha, draft, updated_at, '
+           'head_ref: .head.ref, head_repo: (.head.repo.full_name // ""), '
+           'author: .user.login, labels: [.labels[].name]}')
+
+
+def ready_label_applied_at(number):
+    """When the CURRENT `ready-to-merge` label was applied, or None if it is not applied now.
+
+    Reads the label events in order and keeps the last transition, so a label removed and
+    re-added reports the latest application. Merge-queue enqueue/eviction events do not touch
+    the label, which is what makes this a stable readiness anchor (see detect_stranded_prs).
+    """
+    events = gh_stream(
+        f"/repos/{REPO}/issues/{number}/timeline?per_page=100",
+        jq='.[] | select(.event == "labeled" or .event == "unlabeled")'
+           ' | select(.label.name == "ready-to-merge")'
+           ' | {event, at: (.created_at // "")}')
+    applied = None
+    for e in events:
+        applied = e.get("at") if e.get("event") == "labeled" else None
+    return applied or None
+
+
+def detect_eviction_loops():
+    """A PR the merge queue keeps accepting and then throwing back out.
+
+    A single eviction is invisible: the PR stays green, simply is not merged, and merge-sweep
+    re-enqueues it an hour or two later. Nothing about any one cycle looks wrong, so a PR can
+    bounce for days while every other detector reports healthy. Counting the evictions is the
+    only way to see it, and a repeated eviction always means something upstream is broken (a
+    flaky cache, a genuinely red merge-group build) rather than one PR needing a nudge.
+
+    Only PRs the pipeline currently calls ready can be in the queue, so that label bounds the
+    per-PR timeline reads to a handful.
+    """
+    out = []
+    for pr in open_prs():
+        if pr.get("draft") or "ready-to-merge" not in pr.get("labels", []):
+            continue
+        # Count only the CURRENT readiness cycle. Evictions from an earlier cycle -- before the
+        # author pushed a fix, or before the label came back -- say nothing about whether this
+        # PR is bouncing now, and counting them would alert on a PR that has since settled.
+        # The label survives enqueue/eviction (see ready_label_applied_at), so a genuine loop
+        # accumulates its removals after this timestamp.
+        applied = ready_label_applied_at(pr["number"])
+        if not applied:
+            continue
+        # An OPEN PR that left the queue never merged, so every removal here is an eviction.
+        removals = gh_stream(
+            f"/repos/{REPO}/issues/{pr['number']}/timeline?per_page=100",
+            jq='.[] | select(.event == "removed_from_merge_queue") | {at: (.created_at // "")}')
+        recent = [r for r in removals
+                  if r.get("at") and hours_since(r["at"]) < EVICTION_WINDOW_HOURS
+                  and parse_ts(r["at"]) > parse_ts(applied)]
+        if len(recent) < EVICTION_LOOP_MIN:
+            continue
+        out.append({
+            "key": f"eviction-loop/{pr['number']}",
+            "title": "Merge queue keeps evicting a green PR",
+            "body": (
+                f"https://github.com/{REPO}/pull/{pr['number']} has been evicted from the merge "
+                f"queue {len(recent)} times in the last {EVICTION_WINDOW_HOURS}h without merging.\n\n"
+                f"**Fix:** the PR is not the problem — find why the merge-group build fails. "
+                f"Check the `merge_group` runs for its `gh-readonly-queue/main/pr-{pr['number']}-*` "
+                f"branches. A failure mode shared across several PRs (cache, toolchain, a red "
+                f"main) is infrastructure and must be fixed there, not by re-queuing."),
+        })
+    return out
+
+
+def detect_missing_required_status():
+    """An open PR whose head never received a `build` status although pr-build finished.
+
+    A MISSING required status is worse than a red one and cannot self-heal. GitHub holds the PR
+    at BLOCKED because the required check never arrives; core.derive sees no `build` status, so
+    labels.py takes its ci=None branch and pins the PR at `awaiting-CI` instead of moving it to
+    `awaiting-author`; and nothing re-runs pr-build without a push, so no event ever corrects
+    it. PR #1358 sat wedged this way for seven days, invisible to the author and review paths
+    alike, after a transient API error killed the status-reporting step mid-way.
+    """
+    out = []
+    for pr in open_prs():
+        if pr.get("draft"):
+            continue
+        head = pr["head"]
+        if newest_status(head, "build")[0] is not None:
+            continue
+        # Only a run that RAN TO A VERDICT proves a status should already be there. A build
+        # still queued or in progress is the ordinary `awaiting-CI` state, and a cancelled run
+        # (a concurrency cancellation when the head is re-dispatched, or a manual cancel) never
+        # reaches its reporting step by design -- neither is a wedge, and alerting on either
+        # would make this detector fire on routine CI churn.
+        runs = gh_stream(
+            f"/repos/{REPO}/actions/workflows/pr-build.yml/runs?head_sha={head}&per_page=20",
+            jq='.workflow_runs[] | {status: (.status // ""), conclusion: (.conclusion // ""), '
+               'updated_at: (.updated_at // "")}', paginate=False)
+        if any(r.get("status") != "completed" for r in runs):
+            continue
+        # Newest run first, so this is the latest run that actually reported a verdict.
+        finished = next((r["updated_at"] for r in runs
+                         if r.get("conclusion") not in ("", "cancelled", "skipped")), "")
+        if not finished or hours_since(finished) < MISSING_STATUS_HOURS:
+            continue
+        out.append({
+            "key": f"missing-status/{pr['number']}",
+            "title": "Required `build` status was never posted",
+            "body": (
+                f"https://github.com/{REPO}/pull/{pr['number']} has a completed pr-build run for "
+                f"its head commit but no `build` commit status, so it is BLOCKED forever and its "
+                f"label is pinned at `awaiting-CI`.\n\n"
+                f"**Fix:** re-dispatch pr-build for the PR to post the missing status "
+                f"(`gh workflow run pr-build.yml -f pr={pr['number']}`), then fix whatever "
+                f"dropped it — the report step must post all three statuses even when one POST "
+                f"fails."),
+        })
+    return out
+
+
+def detect_diverged_head():
+    """A PR whose recorded head no longer matches the tip of the branch it was opened from.
+
+    GitHub cannot compute mergeability for a head ref that has moved on without the PR record
+    following, so `.mergeable` stays null forever and the PR is invisible to every
+    mergeability-gated path, including detect_stranded_prs. It also means review and CI are
+    judging a commit that is not the author's latest work. #1475 sat at `UNKNOWN` this way, one
+    commit behind its own branch.
+    """
+    out = []
+    for pr in open_prs():
+        repo, ref = pr.get("head_repo"), pr.get("head_ref")
+        if not repo or not ref:
+            continue  # head repo deleted; a different problem, and not one a retry fixes
+        tip = gh_scalar(f"/repos/{repo}/branches/{ref}", jq='.commit.sha // ""')
+        if not tip or tip == pr["head"]:
+            continue
+        out.append({
+            "key": f"diverged-head/{pr['number']}",
+            "title": "PR head has diverged from its branch tip",
+            "body": (
+                f"https://github.com/{REPO}/pull/{pr['number']} records head `{pr['head'][:8]}` "
+                f"but `{repo}@{ref}` is at `{tip[:8]}`. GitHub will not recompute mergeability "
+                f"for a stale head, so the PR can sit at `mergeable: null` indefinitely.\n\n"
+                f"**Fix:** push the branch again (merging main onto it is usually right, and "
+                f"also clears the staleness) so the PR head follows. Then find the worker that "
+                f"moved the branch without the PR following — that is the actual bug."),
+        })
+    return out
 
 
 def detect_stranded_prs():
@@ -284,11 +451,23 @@ def detect_stranded_prs():
         state, updated = newest_status(head, "build")
         if state != "success" or not updated:
             continue
-        # Readiness clock: the LATER of the build going green and the PR's last
-        # activity. Starting only from the build time would fire instantly when a
-        # review approves a PR whose build passed yesterday (the merge path has had
-        # no chance yet); updated_at bumps on that approval/commit/label.
-        ready_since = min(hours_since(updated), hours_since(pr["updated_at"]))
+        # Readiness clock: the LATER of the build going green and the pipeline declaring the
+        # PR ready. Starting only from the build time would fire instantly when a review
+        # approves a PR whose build passed yesterday (the merge path has had no chance yet).
+        #
+        # This used to take `updated_at` as the second anchor, which made the detector
+        # structurally blind to the exact failure it exists to catch. Every enqueue and
+        # eviction bumps `updated_at`, so a PR the merge queue accepted and threw back out
+        # every couple of hours could never accumulate STRANDED_HOURS of readiness. Four green
+        # PRs (#1986, #1964, #2002, #1886) sat unmerged in an eviction loop while this
+        # reported nothing. The `ready-to-merge` label is the pipeline's own "ready" moment
+        # and, unlike `updated_at`, queue churn does not move it.
+        applied = ready_label_applied_at(pr["number"])
+        if not applied:
+            # Not (yet) declared ready by the label sink. Skip this run rather than guessing:
+            # a real strand persists and will be caught next hour.
+            continue
+        ready_since = min(hours_since(updated), hours_since(applied))
         if ready_since < STRANDED_HOURS:
             continue
         # NOTE: scoreboard_meta is the trusted scoreboard comment auto-merge reads
@@ -305,7 +484,7 @@ def detect_stranded_prs():
             continue
         touches_pin = any(
             f in ("lake-manifest.json", "lean-toolchain", "lakefile.toml") for f in files)
-        if not is_automerge_scope(files, pr.get("author")):
+        if not is_automerge_scope(files):
             continue  # a human-owned path legitimately does not auto-merge
         if touches_pin and newest_status(head, "bump-guard")[0] != "success":
             continue
@@ -468,7 +647,7 @@ def detect_stale_fkb():
                 f"A first-known-bad tracking issue (`{FKB_LABEL}`) has been open for "
                 f"over {FKB_STALE_DAYS} days: https://github.com/{REPO}/issues/{i['number']}. "
                 f"The pin is frozen at the last-known-good commit until it is fixed.\n\n"
-                f"**Fix:** land the fix PR pinned at the first-known-bad commit so the "
+                f"**Fix:** land the fix PR whose manifest is pinned at the first-known-bad commit so the "
                 f"freeze lifts and the daily bump resumes toward master."),
         })
     return out
@@ -480,6 +659,9 @@ DETECTORS = [
     ("stuck-bump", detect_stuck_bump),
     ("stale-pin", detect_stale_pin),
     ("stranded-pr", detect_stranded_prs),
+    ("eviction-loop", detect_eviction_loops),
+    ("missing-status", detect_missing_required_status),
+    ("diverged-head", detect_diverged_head),
     ("review-stuck", detect_review_stuck),
     ("dead-scheduler", detect_dead_schedulers),
     ("main-red", detect_main_red),

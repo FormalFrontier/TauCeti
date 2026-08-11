@@ -32,21 +32,7 @@ import re
 import subprocess
 import sys
 
-# Palette mirrors style.css so the panel matches the site.
-BG    = "#101936"
-PANEL = "#1b2547"
-GRID  = "rgba(255,255,255,0.08)"
-AXIS  = "rgba(255,255,255,0.18)"
-TEXT  = "#eef2fb"
-MUTED = "#9aa6c9"
-
-# A categorical palette chosen to stay distinct on the navy background. Assigned to
-# roadmaps in stack order (largest band first), so the mapping is stable across runs.
-PALETTE = [
-    "#5eead4", "#ff9d4d", "#60a5fa", "#fb7185", "#c084fc", "#4ade80", "#fde047",
-    "#22d3ee", "#f472b6", "#a3e635", "#818cf8", "#fb923c", "#38bdf8", "#f87171",
-    "#2dd4bf", "#e879f9",
-]
+from chart_style import MUTED, PALETTE, TEXT, base_css, card_rect, css_px
 
 AREA_PREFIX = "roadmap/"
 EXCLUDE = {"roadmap/none", "roadmap/Unknown"}
@@ -152,7 +138,7 @@ def render(dates, order, series, totals, title, out):
         v = ymax * i // 5
         y = Y(v)
         yticks.append(f'<line class="grid" x1="{L}" y1="{y:.1f}" x2="{L+pw}" y2="{y:.1f}"/>')
-        yticks.append(f'<text class="ytick" x="{L-12}" y="{y+4:.1f}">{v:,}</text>')
+        yticks.append(f'<text class="tick ytick" x="{L-12}" y="{y+4:.1f}">{v:,}</text>')
 
     xticks, last_x = [], -1e9
     for i, d in enumerate(dates):
@@ -162,7 +148,7 @@ def render(dates, order, series, totals, title, out):
             if i == len(dates) - 1 and xticks and x - last_x < 90:
                 xticks.pop()
             dd = dt.date.fromisoformat(d)
-            xticks.append(f'<text class="xtick" x="{x:.1f}" y="{T+ph+24}">{dd:%b} {dd.day}</text>')
+            xticks.append(f'<text class="tick xtick" x="{x:.1f}" y="{T+ph+24}">{dd:%b} {dd.day}</text>')
             last_x = x
 
     # Legend: swatch + roadmap + final cumulative, biggest first (stack order).
@@ -177,23 +163,19 @@ def render(dates, order, series, totals, title, out):
         ly += 22
 
     grand = sum(totals.values())
-    svg = f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}"
-     font-family="ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif" role="img"
+    svg = f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" role="img"
      aria-label="{html.escape(title)}: {grand:,} net lines across {len(order)} roadmaps as of {dates[-1]}">
   <style>
-    .grid{{stroke:{GRID};stroke-width:1}}
-    .axis{{stroke:{AXIS};stroke-width:1}}
-    .ytick{{fill:{MUTED};font-size:13px;text-anchor:end}}
-    .xtick{{fill:{MUTED};font-size:13px;text-anchor:middle}}
-    .title{{fill:{TEXT};font-size:19px;font-weight:600}}
-    .sub{{fill:{MUTED};font-size:13px}}
-    .legendhead{{fill:{MUTED};font-size:12px;font-weight:600}}
-    .legend{{fill:{TEXT};font-size:12.5px}}
-    .legendval{{fill:{MUTED};font-size:12.5px;text-anchor:end;font-variant-numeric:tabular-nums}}
+    {base_css(W)}
+    .ytick{{text-anchor:end}}
+    .xtick{{text-anchor:middle}}
+    .legendhead{{fill:{MUTED};font-size:{css_px(W, 12)};font-weight:600}}
+    .legend{{fill:{TEXT};font-size:{css_px(W, 12.5)}}}
+    .legendval{{fill:{MUTED};font-size:{css_px(W, 12.5)};text-anchor:end;font-variant-numeric:tabular-nums}}
   </style>
-  <rect x="0.5" y="0.5" width="{W-1}" height="{H-1}" rx="12" fill="{BG}" stroke="{PANEL}"/>
+  {card_rect(W, H)}
   <text class="title" x="{L}" y="30">{html.escape(title)}</text>
-  <text class="sub" x="{L}" y="48">{grand:,} net lines across {len(order)} roadmaps as of {dates[-1]}</text>
+  <text class="subtitle" x="{L}" y="48">{grand:,} net lines across {len(order)} roadmaps as of {dates[-1]}</text>
   {''.join(yticks)}
   {''.join(bands)}
   <line class="axis" x1="{L}" y1="{T}" x2="{L}" y2="{T+ph}"/>

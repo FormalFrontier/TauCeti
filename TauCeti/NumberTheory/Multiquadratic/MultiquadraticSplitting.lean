@@ -5,8 +5,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.NumberTheory.LegendreSymbol.Basic
-public import Mathlib.LinearAlgebra.Dimension.FreeAndStrongRankCondition
-public import Mathlib.LinearAlgebra.Dimension.DivisionRing
 public import TauCeti.NumberTheory.Multiquadratic.Galois.Basic
 public import TauCeti.NumberTheory.NumberField.SplitsCompletely
 import TauCeti.RingTheory.Ideal.LiesOver
@@ -36,36 +34,18 @@ public section
 
 variable {K : Type*} [Field K] [NumberField K]
 
-/-- Forward direction (pointwise): for `K` Galois over `ℚ`, if `p` splits completely
-(`#{primes over p} = [K : ℚ]`) and `p ∤ d i`, then `d i` is a quadratic residue mod `p`. -/
+/-- Forward direction (pointwise): if `p` splits completely (`#{primes over p} = [K : ℚ]`) and
+`p ∤ d i`, then `d i` is a quadratic residue mod `p`. -/
 private theorem legendreSym_eq_one_of_ncard_primesOver_eq_finrank {ι : Type*} (d : ι → ℤ)
-    (r : ι → K) (hr : ∀ i, r i ^ 2 = algebraMap ℤ K (d i)) [IsGalois ℚ K]
+    (r : ι → K) (hr : ∀ i, r i ^ 2 = algebraMap ℤ K (d i))
     {p : ℕ} [Fact p.Prime] {i : ι} (hcop_i : ¬ (p : ℤ) ∣ d i)
     (Q : Ideal (𝓞 K)) [Q.IsPrime] [Q.LiesOver (span {(p : ℤ)})]
     (hsplit : (primesOver (span {(p : ℤ)}) (𝓞 K)).ncard = finrank ℚ K) :
     legendreSym p (d i) = 1 := by
-  -- Complete splitting forces residue degree `1`, so `𝓞 K ⧸ Q` is the prime field `ℤ ⧸ (p)`;
-  -- lifting the residue of `r i` to an integer `a` gives `a² ≡ d i (mod p)`.
-  have hpne : (p : ℤ) ≠ 0 := by exact_mod_cast (Fact.out : p.Prime).ne_zero
-  haveI : (span {(p : ℤ)} : Ideal ℤ).IsMaximal :=
-    Ideal.IsPrime.isMaximal
-      ((Ideal.span_singleton_prime hpne).mpr (Nat.prime_iff_prime_int.mp Fact.out))
-      (by simpa [Ideal.span_singleton_eq_bot] using hpne)
-  haveI : Q.IsMaximal := Ideal.IsMaximal.of_liesOver_isMaximal Q (span {(p : ℤ)})
-  let R : 𝓞 K := integralSqrt (hr i)
-  rw [ncard_primesOver_eq_finrank_iff K p] at hsplit
-  have hfQ : finrank (ℤ ⧸ span {(p : ℤ)}) (𝓞 K ⧸ Q) = 1 := by
-    rw [← Ideal.inertiaDeg'_algebraMap (p := span {(p : ℤ)}) (P := Q),
-      Ideal.inertiaDeg'_eq_inertiaDeg,
-      ← Ideal.inertiaDegIn_eq_inertiaDeg (span {(p : ℤ)}) Q (K ≃ₐ[ℚ] K)]
-    exact hsplit.2
-  letI fld : Field (ℤ ⧸ span {(p : ℤ)}) := Ideal.Quotient.field _
-  -- A one-dimensional algebra over a field is free, so `finrank = 1 ⟹ algebraMap` is bijective.
-  haveI : Module.Free (ℤ ⧸ span {(p : ℤ)}) (𝓞 K ⧸ Q) :=
-    @Module.Free.of_divisionRing _ _ fld.toDivisionRing _ _
-  have hbij := (Algebra.finrank_eq_one_iff_bijective_algebraMap
-    (F := ℤ ⧸ span {(p : ℤ)}) (E := 𝓞 K ⧸ Q)).mp hfQ
   -- Lift the residue of `R` to an integer `a`, so `R ≡ a (mod Q)`.
+  let R : 𝓞 K := integralSqrt (hr i)
+  have hbij :=
+    TauCeti.NumberField.bijective_algebraMap_quotient_of_ncard_primesOver_eq_finrank Q hsplit
   obtain ⟨c, hc⟩ := hbij.surjective (Ideal.Quotient.mk Q R)
   obtain ⟨a, rfl⟩ := Ideal.Quotient.mk_surjective c
   -- The algebra map `ℤ ⧸ (p) → 𝓞 K ⧸ Q` is `Ideal.quotientMap`, which sends `mk a` to
@@ -128,10 +108,8 @@ private theorem two_mul_mem_of_mul_mem_of_map_eq_neg {S : Type*} [Ring S] {Q : I
 
 /-- If `d` is a quadratic residue mod the odd prime `p` (with `p ∤ d`), no element `σ` of the
 decomposition group of a prime `Q` above `p` sends the generator `r` to its negation. -/
-private theorem map_ne_neg_of_legendreSym_eq_one (d : ℤ) (r : K)
-    (hr : r ^ 2 = algebraMap ℤ K d)
-    {p : ℕ} [Fact p.Prime] (hodd : p ≠ 2)
-    (hqr : legendreSym p d = 1)
+private theorem map_ne_neg_of_legendreSym_eq_one (d : ℤ) (r : K) (hr : r ^ 2 = algebraMap ℤ K d)
+    {p : ℕ} [Fact p.Prime] (hodd : p ≠ 2) (hqr : legendreSym p d = 1)
     (Q : Ideal (𝓞 K)) [Q.IsPrime] [Q.LiesOver (span {(p : ℤ)})]
     {σ : K ≃ₐ[ℚ] K} (hσ : σ ∈ stabilizer (K ≃ₐ[ℚ] K) Q) : σ r ≠ - r := by
   intro hflip
@@ -175,10 +153,8 @@ private theorem map_ne_neg_of_legendreSym_eq_one (d : ℤ) (r : K)
 
 /-- Backward core (pointwise): if `p` is odd and `d` is a quadratic residue mod `p`, then every
 `σ` in the decomposition group of `Q` fixes the generator `r`. -/
-private theorem decompositionGroup_fixes_gen (d : ℤ) (r : K)
-    (hr : r ^ 2 = algebraMap ℤ K d)
-    {p : ℕ} [Fact p.Prime] (hodd : p ≠ 2)
-    (hqr : legendreSym p d = 1)
+private theorem decompositionGroup_fixes_gen (d : ℤ) (r : K) (hr : r ^ 2 = algebraMap ℤ K d)
+    {p : ℕ} [Fact p.Prime] (hodd : p ≠ 2) (hqr : legendreSym p d = 1)
     (Q : Ideal (𝓞 K)) [Q.IsPrime] [Q.LiesOver (span {(p : ℤ)})]
     {σ : K ≃ₐ[ℚ] K} (hσ : σ ∈ stabilizer (K ≃ₐ[ℚ] K) Q) : σ r = r := by
   -- From `σ r² = r²`, `σ r = ± r`; the `+` case is immediate and the `-` case is
@@ -192,10 +168,8 @@ private theorem decompositionGroup_fixes_gen (d : ℤ) (r : K)
 /-- Backward wrapper: for `K` generated over `ℚ` by the `r i` (`ℚ(rᵢ) = K`), if `p` is odd and
 every `d i` is a quadratic residue mod `p`, then the decomposition group of `Q` is trivial. -/
 private theorem stabilizer_eq_bot_of_forall_legendreSym_eq_one {ι : Type*} (d : ι → ℤ) (r : ι → K)
-    (hr : ∀ i, r i ^ 2 = algebraMap ℤ K (d i))
-    (htop : IntermediateField.adjoin ℚ (Set.range r) = ⊤)
-    {p : ℕ} [Fact p.Prime] (hodd : p ≠ 2)
-    (hqr : ∀ i, legendreSym p (d i) = 1)
+    (hr : ∀ i, r i ^ 2 = algebraMap ℤ K (d i)) (htop : IntermediateField.adjoin ℚ (Set.range r) = ⊤)
+    {p : ℕ} [Fact p.Prime] (hodd : p ≠ 2) (hqr : ∀ i, legendreSym p (d i) = 1)
     (Q : Ideal (𝓞 K)) [Q.IsPrime] [Q.LiesOver (span {(p : ℤ)})] :
     stabilizer (K ≃ₐ[ℚ] K) Q = ⊥ := by
   rw [eq_bot_iff]
@@ -220,29 +194,28 @@ private theorem stabilizer_eq_bot_of_forall_legendreSym_eq_one {ι : Type*} (d :
 roots `r i` of integers `d i`, and an odd prime `p` dividing none of the `d i`, `p` splits
 completely in `K` iff every `d i` is a quadratic residue mod `p`. -/
 theorem ncard_primesOver_multiquadratic_iff {ι : Type*} [Finite ι] (d : ι → ℤ) (r : ι → K)
-    (hr : ∀ i, r i ^ 2 = algebraMap ℤ K (d i))
-    (htop : IntermediateField.adjoin ℚ (Set.range r) = ⊤)
+    (hr : ∀ i, r i ^ 2 = algebraMap ℤ K (d i)) (htop : IntermediateField.adjoin ℚ (Set.range r) = ⊤)
     {p : ℕ} [Fact p.Prime] (hodd : p ≠ 2) (hcop : ∀ i, ¬ (p : ℤ) ∣ d i) :
     (primesOver (span {(p : ℤ)}) (𝓞 K)).ncard = finrank ℚ K ↔
       ∀ i, legendreSym p (d i) = 1 := by
   -- `K` is Galois over `ℚ`: transport the multiquadratic `isGalois` along `htop`.
   have hr' : ∀ i, r i ^ 2 = algebraMap ℚ K ((d i : ℚ)) := by
     intro i; rw [hr i]; simp
-  haveI : IsGalois ℚ K := by
+  have : IsGalois ℚ K := by
     have hg := TauCeti.Multiquadratic.isGalois (K := ℚ) (L := K) (d := fun i => (d i : ℚ)) hr'
     rw [htop] at hg
     exact isGalois_iff_isGalois_top.mp hg
   -- Fix a prime `Q` of `𝓞 K` above `p`.
   have hpne : (p : ℤ) ≠ 0 := by exact_mod_cast (Fact.out : p.Prime).ne_zero
-  haveI : (span {(p : ℤ)} : Ideal ℤ).IsMaximal :=
+  have : (span {(p : ℤ)} : Ideal ℤ).IsMaximal :=
     Ideal.IsPrime.isMaximal
       ((Ideal.span_singleton_prime hpne).mpr (Nat.prime_iff_prime_int.mp Fact.out))
       (by simpa [Ideal.span_singleton_eq_bot] using hpne)
   obtain ⟨Q, hQp, hQo⟩ : ∃ Q : Ideal (𝓞 K), Q.IsPrime ∧ Q.LiesOver (span {(p : ℤ)}) := by
     obtain ⟨⟨Q, hQ⟩⟩ := (inferInstance : Nonempty (primesOver (span {(p : ℤ)}) (𝓞 K)))
     exact ⟨Q, hQ⟩
-  haveI := hQp
-  haveI := hQo
+  have := hQp
+  have := hQo
   refine ⟨fun hsplit i =>
     legendreSym_eq_one_of_ncard_primesOver_eq_finrank d r hr (hcop i) Q hsplit, fun hqr => ?_⟩
   rw [ncard_primesOver_eq_finrank_iff_stabilizer_eq_bot K Q]

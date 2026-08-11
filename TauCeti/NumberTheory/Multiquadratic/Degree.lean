@@ -75,7 +75,7 @@ theorem finrank_adjoin_range {ι : Type*} [Finite ι] {d : ι → K} {root : ι 
     (hindep : ∀ S : Finset ι, S.Nonempty → ¬ IsSquare (∏ i ∈ S, d i)) :
     Module.finrank K (IntermediateField.adjoin K (Set.range root)) = 2 ^ Nat.card ι := by
   classical
-  letI := Fintype.ofFinite ι
+  let := Fintype.ofFinite ι
   let e : ι ≃ Fin (Fintype.card ι) := Fintype.equivFin ι
   -- Pad the data to `ℕ`, with `1` (a harmless square) beyond the index range.
   let toι : ∀ {j : ℕ}, j < Fintype.card ι → ι := fun {j} h => e.symm ⟨j, h⟩

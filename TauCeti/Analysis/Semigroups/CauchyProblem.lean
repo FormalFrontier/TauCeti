@@ -111,15 +111,12 @@ theorem isMildSolution_iff [CompleteSpace X] {A : X →ₗ.[ℝ] X} {x : X} {u :
   Iff.rfl
 
 /-- The time integral of a mild solution belongs to the operator domain. -/
-theorem IsMildSolution.integral_mem_domain [CompleteSpace X]
-    {A : X →ₗ.[ℝ] X} {x : X} {u : ℝ → X}
-    (hu : IsMildSolution A x u) {t : ℝ} (ht : 0 ≤ t) :
-    (∫ s in Set.Ioc 0 t, u s) ∈ A.domain :=
+theorem IsMildSolution.integral_mem_domain [CompleteSpace X] {A : X →ₗ.[ℝ] X} {x : X} {u : ℝ → X}
+    (hu : IsMildSolution A x u) {t : ℝ} (ht : 0 ≤ t) : (∫ s in Set.Ioc 0 t, u s) ∈ A.domain :=
   (hu.2.2 t ht).choose
 
 /-- The integrated Cauchy equation satisfied by a mild solution. -/
-theorem IsMildSolution.map_integral_eq_sub [CompleteSpace X]
-    {A : X →ₗ.[ℝ] X} {x : X} {u : ℝ → X}
+theorem IsMildSolution.map_integral_eq_sub [CompleteSpace X] {A : X →ₗ.[ℝ] X} {x : X} {u : ℝ → X}
     (hu : IsMildSolution A x u) {t : ℝ} (ht : 0 ≤ t) :
     A ⟨∫ s in Set.Ioc 0 t, u s, hu.integral_mem_domain ht⟩ = u t - x := by
   obtain ⟨hut, hmap⟩ := hu.2.2 t ht

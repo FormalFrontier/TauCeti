@@ -42,13 +42,13 @@ variable {X Y Z : Scheme.{u}}
 @[simp]
 theorem residueDegree_comp (f : X ⟶ Y) (g : Y ⟶ Z) (x : X) :
     (f ≫ g).residueDegree x = g.residueDegree (f x) * f.residueDegree x := by
-  letI : Algebra (Z.residueField (g (f x))) (Y.residueField (f x)) :=
+  let : Algebra (Z.residueField (g (f x))) (Y.residueField (f x)) :=
     (g.residueFieldMap (f x)).hom.toAlgebra
-  letI : Algebra (Y.residueField (f x)) (X.residueField x) :=
+  let : Algebra (Y.residueField (f x)) (X.residueField x) :=
     (f.residueFieldMap x).hom.toAlgebra
-  letI : Algebra (Z.residueField (g (f x))) (X.residueField x) :=
+  let : Algebra (Z.residueField (g (f x))) (X.residueField x) :=
     ((f ≫ g).residueFieldMap x).hom.toAlgebra
-  letI : IsScalarTower (Z.residueField (g (f x))) (Y.residueField (f x))
+  let : IsScalarTower (Z.residueField (g (f x))) (Y.residueField (f x))
       (X.residueField x) :=
     IsScalarTower.of_algebraMap_eq' <| by
       rw [RingHom.algebraMap_toAlgebra]
@@ -61,13 +61,13 @@ theorem residueDegree_comp (f : X ⟶ Y) (g : Y ⟶ Z) (x : X) :
 theorem residueDegree_pos_iff (f : X ⟶ Y) (x : X) :
     0 < f.residueDegree x ↔
       (f.residueFieldMap x).hom.Finite := by
-  letI : Algebra (Y.residueField (f x)) (X.residueField x) :=
+  let : Algebra (Y.residueField (f x)) (X.residueField x) :=
     (f.residueFieldMap x).hom.toAlgebra
   rw [Scheme.Hom.residueDegree, RingHom.Finite]
   constructor
   · exact Module.finite_of_finrank_pos
   · intro h
-    letI : Module.Finite (Y.residueField (f x)) (X.residueField x) := h
+    let : Module.Finite (Y.residueField (f x)) (X.residueField x) := h
     exact Module.finrank_pos
 
 /-- A residue degree is nonzero exactly when the associated residue-field extension is finite. -/
@@ -79,7 +79,7 @@ theorem residueDegree_ne_zero_iff (f : X ⟶ Y) (x : X) :
 /-- A residue-field map is bijective exactly when its residue degree is one. -/
 theorem residueDegree_eq_one_iff (f : X ⟶ Y) (x : X) :
     f.residueDegree x = 1 ↔ Function.Bijective (f.residueFieldMap x) := by
-  letI : Algebra (Y.residueField (f x)) (X.residueField x) :=
+  let : Algebra (Y.residueField (f x)) (X.residueField x) :=
     (f.residueFieldMap x).hom.toAlgebra
   rw [Scheme.Hom.residueDegree, Algebra.finrank_eq_one_iff_bijective_algebraMap,
     RingHom.algebraMap_toAlgebra]

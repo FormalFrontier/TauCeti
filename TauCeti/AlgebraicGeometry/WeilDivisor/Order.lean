@@ -106,8 +106,7 @@ lemma isEffective_inf_iff {D E : WeilDivisor X} :
     exact le_inf hD hE
 
 /-- Removing the infimum from each of two Weil divisors leaves disjoint residual divisors. -/
-lemma sub_inf_inf_sub_inf_eq_zero (D E : WeilDivisor X) :
-    ((D - D ⊓ E) ⊓ (E - D ⊓ E)) = 0 := by
+lemma sub_inf_inf_sub_inf_eq_zero (D E : WeilDivisor X) : ((D - D ⊓ E) ⊓ (E - D ⊓ E)) = 0 := by
   rw [← inf_sub, sub_self]
 
 /-! ### Positive and negative parts -/
@@ -169,24 +168,22 @@ lemma degree_posPart_sub_degree_negPart (D : WeilDivisor X) :
 /-! ### The decomposition of a point difference -/
 
 /-- For distinct points the positive part of `[x] - [y]` is the point divisor `[x]`. -/
-lemma posPart_pointDifference {x y : X} (h : x ≠ y) :
-    (pointDifference x y)⁺ = ofPoint x := by
+lemma posPart_pointDifference {x y : X} (h : x ≠ y) : (pointDifference x y)⁺ = ofPoint x := by
   classical
   ext z
   rw [coeff_posPart, coeff_pointDifference]
   rcases eq_or_ne z x with rfl | hzx
-  · rw [if_pos rfl, if_neg h, coeff_ofPoint_self, sub_zero]
+  · rw [ite_eq_left rfl, ite_eq_right h, coeff_ofPoint_self, sub_zero]
     exact sup_eq_left.mpr zero_le_one
-  · rw [if_neg hzx, coeff_ofPoint_of_ne hzx]
+  · rw [ite_eq_right hzx, coeff_ofPoint_of_ne hzx]
     rcases eq_or_ne z y with rfl | hzy
-    · rw [if_pos rfl, zero_sub]
+    · rw [ite_eq_left rfl, zero_sub]
       exact sup_eq_right.mpr (neg_nonpos.mpr zero_le_one)
-    · rw [if_neg hzy, sub_zero]
+    · rw [ite_eq_right hzy, sub_zero]
       exact sup_idem 0
 
 /-- For distinct points the negative part of `[x] - [y]` is the point divisor `[y]`. -/
-lemma negPart_pointDifference {x y : X} (h : x ≠ y) :
-    (pointDifference x y)⁻ = ofPoint y := by
+lemma negPart_pointDifference {x y : X} (h : x ≠ y) : (pointDifference x y)⁻ = ofPoint y := by
   have hneg : -pointDifference x y = pointDifference y x := by
     rw [pointDifference, pointDifference, neg_sub]
   rw [← posPart_neg, hneg, posPart_pointDifference h.symm]

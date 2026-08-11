@@ -108,13 +108,11 @@ private theorem zero_point [AddCommGroup V] : (0 : BCRPoint V).point = 0 :=
   rfl
 
 @[simp]
-private theorem add_time [AddCommGroup V] (p q : BCRPoint V) :
-    (p + q).time = p.time + q.time :=
+private theorem add_time [AddCommGroup V] (p q : BCRPoint V) : (p + q).time = p.time + q.time :=
   rfl
 
 @[simp]
-private theorem add_point [AddCommGroup V] (p q : BCRPoint V) :
-    (p + q).point = p.point + q.point :=
+private theorem add_point [AddCommGroup V] (p q : BCRPoint V) : (p + q).point = p.point + q.point :=
   rfl
 
 @[simp]

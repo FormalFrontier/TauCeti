@@ -149,8 +149,7 @@ theorem fullyBlockedDifferential_sq_support_card_le (c : GridChain (ZMod 2) n) :
 column transpositions. This is the finite search space for the later rectangle-pairing proof of
 `∂² = 0` on generators. -/
 theorem fullyBlockedDifferential_sq_single_support_subset (x : GridState n) :
-    (G.fullyBlockedDifferential
-      (G.fullyBlockedDifferential (Finsupp.single x 1))).support ⊆
+    (G.fullyBlockedDifferential (G.fullyBlockedDifferential (Finsupp.single x 1))).support ⊆
         x.twoStepColumnSwapNeighbors := by
   intro z hz
   have hz' := G.fullyBlockedDifferential_sq_support_subset_biUnion (Finsupp.single x 1) hz
@@ -167,8 +166,7 @@ theorem fullyBlockedDifferential_sq_single_apply_eq_zero_of_notMem_twoStep
 
 /-- The support of `∂ (∂ x)` has at most `(n.choose 2) ^ 2` states. -/
 theorem fullyBlockedDifferential_sq_single_support_card_le (x : GridState n) :
-    (G.fullyBlockedDifferential
-      (G.fullyBlockedDifferential (Finsupp.single x 1))).support.card ≤
+    (G.fullyBlockedDifferential (G.fullyBlockedDifferential (Finsupp.single x 1))).support.card ≤
         (n.choose 2) ^ 2 :=
   (Finset.card_le_card (G.fullyBlockedDifferential_sq_single_support_subset x)).trans
     x.card_twoStepColumnSwapNeighbors_le

@@ -79,8 +79,7 @@ lemma fiberOrbitClass_eq_iff (e e' : p ⁻¹' {b}) :
 /-- The induced equivalence on fibre-orbit quotients sends the class of a point to the class
 of its transported point. -/
 @[simp]
-lemma fiberOrbitQuotientEquiv_apply (h : E ≃ₜ F) (hpq : ∀ e, q (h e) = p e)
-    (e : p ⁻¹' {b}) :
+lemma fiberOrbitQuotientEquiv_apply (h : E ≃ₜ F) (hpq : ∀ e, q (h e) = p e) (e : p ⁻¹' {b}) :
     fiberOrbitQuotientEquiv h hpq b (fiberOrbitClass e) =
       fiberOrbitClass (fiberMap h hpq b e) :=
   rfl
@@ -88,8 +87,7 @@ lemma fiberOrbitQuotientEquiv_apply (h : E ≃ₜ F) (hpq : ∀ e, q (h e) = p e
 /-- The inverse induced equivalence on fibre-orbit quotients sends the class of a target
 fibre point to the class of its inverse transport. -/
 @[simp]
-lemma fiberOrbitQuotientEquiv_symm_apply (h : E ≃ₜ F) (hpq : ∀ e, q (h e) = p e)
-    (f : q ⁻¹' {b}) :
+lemma fiberOrbitQuotientEquiv_symm_apply (h : E ≃ₜ F) (hpq : ∀ e, q (h e) = p e) (f : q ⁻¹' {b}) :
     (fiberOrbitQuotientEquiv h hpq b).symm (fiberOrbitClass f) =
       fiberOrbitClass ((fiberMap h hpq b).symm f) := by
   simp only [fiberOrbitQuotientEquiv, fiberOrbitClass_eq_mk]

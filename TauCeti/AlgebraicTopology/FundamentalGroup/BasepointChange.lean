@@ -55,8 +55,7 @@ noncomputable def basepointChangeSubgroup (γ : Path x₀ x₁)
     _root_.FundamentalGroup X x₀ →* _root_.FundamentalGroup X x₁))
 
 /-- Membership in the subgroup transported along a basepoint-change path. -/
-lemma mem_basepointChangeSubgroup (γ : Path x₀ x₁)
-    (H : Subgroup (_root_.FundamentalGroup X x₀))
+lemma mem_basepointChangeSubgroup (γ : Path x₀ x₁) (H : Subgroup (_root_.FundamentalGroup X x₀))
     (g : _root_.FundamentalGroup X x₁) :
     g ∈ basepointChangeSubgroup γ H ↔
       ∃ h ∈ H, _root_.FundamentalGroup.fundamentalGroupMulEquivOfPath γ h = g :=
@@ -65,8 +64,7 @@ lemma mem_basepointChangeSubgroup (γ : Path x₀ x₁)
 /-- Membership in a transported subgroup, expressed by applying the inverse basepoint-change
 isomorphism. -/
 @[simp]
-lemma mem_basepointChangeSubgroup_iff (γ : Path x₀ x₁)
-    (H : Subgroup (_root_.FundamentalGroup X x₀))
+lemma mem_basepointChangeSubgroup_iff (γ : Path x₀ x₁) (H : Subgroup (_root_.FundamentalGroup X x₀))
     (g : _root_.FundamentalGroup X x₁) :
     g ∈ basepointChangeSubgroup γ H ↔
       (_root_.FundamentalGroup.fundamentalGroupMulEquivOfPath γ).symm g ∈ H := by
@@ -76,8 +74,7 @@ lemma mem_basepointChangeSubgroup_iff (γ : Path x₀ x₁)
 
 /-- A subgroup of the target fundamental group is contained in the transported subgroup iff
 its inverse basepoint-change image is contained in the original subgroup. -/
-lemma le_basepointChangeSubgroup_iff (γ : Path x₀ x₁)
-    (K : Subgroup (_root_.FundamentalGroup X x₁))
+lemma le_basepointChangeSubgroup_iff (γ : Path x₀ x₁) (K : Subgroup (_root_.FundamentalGroup X x₁))
     (H : Subgroup (_root_.FundamentalGroup X x₀)) :
     K ≤ basepointChangeSubgroup γ H ↔
       K.map (((_root_.FundamentalGroup.fundamentalGroupMulEquivOfPath γ).symm) :
@@ -96,8 +93,7 @@ lemma le_basepointChangeSubgroup_iff (γ : Path x₀ x₁)
 
 /-- The transported subgroup is contained in a target subgroup iff the original subgroup is
 contained in the target subgroup's inverse image under basepoint change. -/
-lemma basepointChangeSubgroup_le_iff (γ : Path x₀ x₁)
-    (H : Subgroup (_root_.FundamentalGroup X x₀))
+lemma basepointChangeSubgroup_le_iff (γ : Path x₀ x₁) (H : Subgroup (_root_.FundamentalGroup X x₀))
     (K : Subgroup (_root_.FundamentalGroup X x₁)) :
     basepointChangeSubgroup γ H ≤ K ↔
       H ≤ K.comap (((_root_.FundamentalGroup.fundamentalGroupMulEquivOfPath γ) :
@@ -155,8 +151,7 @@ lemma basepointChangeNormalizerQuotientEquiv_mk (γ : Path x₀ x₁)
 path-conjugation representative. -/
 @[simp]
 lemma basepointChangeNormalizerQuotientEquiv_symm_mk (γ : Path x₀ x₁)
-    (H : Subgroup (_root_.FundamentalGroup X x₀))
-    (g : _root_.Subgroup.normalizer
+    (H : Subgroup (_root_.FundamentalGroup X x₀)) (g : _root_.Subgroup.normalizer
       ((basepointChangeSubgroup γ H) : Set (_root_.FundamentalGroup X x₁))) :
     (basepointChangeNormalizerQuotientEquiv γ H).symm
         (g : Subgroup.normalizerQuotient (basepointChangeSubgroup γ H)) =

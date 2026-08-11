@@ -39,7 +39,7 @@ symbols of the prime-discriminant list `[-4, 5]` are all `1` exactly when
 theorem forall_legendreSym_neg_four_five_eq_one_iff {p : ℕ} [Fact p.Prime] (hodd : p ≠ 2) :
     (∀ i, legendreSym p (negFourFivePrimeDiscriminants i) = 1) ↔
       p % 4 = 1 ∧ @legendreSym 5 ⟨by decide⟩ (p : ℤ) = 1 := by
-  haveI : Fact (Nat.Prime 5) := ⟨by decide⟩
+  have : Fact (Nat.Prime 5) := ⟨by decide⟩
   constructor
   · intro h
     constructor
@@ -67,8 +67,8 @@ theorem forall_legendreSym_neg_four_neg_three_neg_seven_eq_one_iff {p : ℕ}
     (∀ i, legendreSym p (negFourNegThreeNegSevenPrimeDiscriminants i) = 1) ↔
       p % 4 = 1 ∧ @legendreSym 3 ⟨by decide⟩ (p : ℤ) = 1 ∧
         @legendreSym 7 ⟨by decide⟩ (p : ℤ) = 1 := by
-  haveI : Fact (Nat.Prime 3) := ⟨by decide⟩
-  haveI : Fact (Nat.Prime 7) := ⟨by decide⟩
+  have : Fact (Nat.Prime 3) := ⟨by decide⟩
+  have : Fact (Nat.Prime 7) := ⟨by decide⟩
   constructor
   · intro h
     constructor

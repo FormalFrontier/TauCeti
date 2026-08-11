@@ -31,6 +31,8 @@ makes the coefficient submodule of a finite free comodule stable under comultipl
 
 * `TauCeti.Comodule.comul_matrixCoefficient`: the basis-free comultiplication formula.
 * `TauCeti.Comodule.comul_matrixCoefficient_eq_sum`: its expansion in a finite basis.
+* `TauCeti.Comodule.coact_eq_sum_basis_matrixCoefficient`: the expansion of the coaction itself
+  in a finite basis.
 
 ## References
 
@@ -101,8 +103,7 @@ theorem comul_matrixCoefficient (φ : Module.Dual R M) (m : M) :
       simp only [coassoc_simps]
 
 omit [Coalgebra R C] [Comodule R C M] in
-private theorem tensor_eq_sum_basis_tmul {ι : Type x} [Fintype ι]
-    (b : Basis ι R M) (x : M ⊗[R] C) :
+private theorem tensor_eq_sum_basis_tmul {ι : Type x} [Fintype ι] (b : Basis ι R M) (x : M ⊗[R] C) :
     x =
       ∑ i, b i ⊗ₜ[R]
         TensorProduct.lid R C
@@ -122,8 +123,9 @@ private theorem tensor_eq_sum_basis_tmul {ι : Type x} [Fintype ι]
       rw [TensorProduct.equivFinsuppOfBasisLeft_apply]
       simp only [LinearMap.rTensor]
 
-private theorem coact_eq_sum_basis_matrixCoefficient {ι : Type x} [Fintype ι]
-    (b : Basis ι R M) (m : M) :
+/-- The coaction of a comodule with a finite basis `(eᵢ)` expands as
+`ρ(m) = ∑ i, eᵢ ⊗ c(eⁱ, m)` in matrix coefficients. -/
+theorem coact_eq_sum_basis_matrixCoefficient {ι : Type x} [Fintype ι] (b : Basis ι R M) (m : M) :
     coact (R := R) (C := C) (M := M) m =
       ∑ i, b i ⊗ₜ[R]
         matrixCoefficient (R := R) (C := C) (b.coord i) m := by

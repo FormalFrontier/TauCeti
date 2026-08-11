@@ -65,7 +65,17 @@ attribute [simp] Comodule.lTensor_counit_comp_coact
 variable {R : Type u} {C : Type v} {M : Type w} {N : Type x}
 variable [CommSemiring R]
 variable [AddCommMonoid C] [Module R C] [Coalgebra R C]
-variable [AddCommMonoid M] [Module R M] [Comodule R C M]
+variable [AddCommMonoid M] [Module R M]
+
+/-- Two right-comodule structures are equal when their coactions are equal. -/
+@[ext]
+theorem ext {rho sigma : Comodule R C M} (h : rho.coact = sigma.coact) : rho = sigma := by
+  cases rho
+  cases sigma
+  cases h
+  rfl
+
+variable [Comodule R C M]
 variable [AddCommMonoid N] [Module R N] [Comodule R C N]
 
 /-- Coassociativity of the coaction, as an equality of linear maps. -/

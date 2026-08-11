@@ -69,15 +69,13 @@ theorem zero_toLinearMap : (0 : Hom R C M N).toLinearMap = 0 :=
 
 /-- Addition of comodule morphisms is addition of the underlying linear maps. -/
 @[simp]
-theorem add_toLinearMap (f g : Hom R C M N) :
-    (f + g).toLinearMap = f.toLinearMap + g.toLinearMap :=
+theorem add_toLinearMap (f g : Hom R C M N) : (f + g).toLinearMap = f.toLinearMap + g.toLinearMap :=
   rfl
 
 /-- Scalar multiplication of comodule morphisms is scalar multiplication of the underlying
 linear maps. -/
 @[simp]
-theorem smul_toLinearMap (r : R) (f : Hom R C M N) :
-    (r • f).toLinearMap = r • f.toLinearMap :=
+theorem smul_toLinearMap (r : R) (f : Hom R C M N) : (r • f).toLinearMap = r • f.toLinearMap :=
   rfl
 
 /-- The zero comodule morphism evaluates to zero. -/
@@ -130,8 +128,7 @@ instance instModule : Module R (Hom R C M N) :=
 
 /-- Natural-number scalar multiplication of comodule morphisms is pointwise. -/
 @[simp]
-theorem nsmul_apply (n : ℕ) (f : Hom R C M N) (m : M) :
-    (n • f) m = n • f m := by
+theorem nsmul_apply (n : ℕ) (f : Hom R C M N) (m : M) : (n • f) m = n • f m := by
   induction n with
   | zero =>
       rw [zero_nsmul, zero_nsmul]
@@ -142,8 +139,7 @@ theorem nsmul_apply (n : ℕ) (f : Hom R C M N) (m : M) :
 /-- Natural-number scalar multiplication of comodule morphisms is natural-number scalar
 multiplication of the underlying linear maps. -/
 @[simp]
-theorem nsmul_toLinearMap (n : ℕ) (f : Hom R C M N) :
-    (n • f).toLinearMap = n • f.toLinearMap := by
+theorem nsmul_toLinearMap (n : ℕ) (f : Hom R C M N) : (n • f).toLinearMap = n • f.toLinearMap := by
   ext m
   simp
 

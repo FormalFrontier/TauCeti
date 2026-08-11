@@ -213,6 +213,30 @@ end HopfIdeal
 
 end TensorIdeals
 
+section TensorIdealQuotient
+
+variable {R : Type u} {H : Type v}
+variable [CommRing R] [CommRing H] [Algebra R H]
+
+namespace HopfIdeal
+
+/-- The kernel of tensoring the quotient map on the right is the right tensor ideal. -/
+theorem ker_tensorProduct_map_id_quotient (I : Ideal H) :
+    RingHom.ker (Algebra.TensorProduct.map (AlgHom.id R H) (Ideal.Quotient.mkₐ R I)) =
+      rightTensorIdeal (R := R) (H := H) I := by
+  rw [Algebra.TensorProduct.lTensor_ker (A := H) (Ideal.Quotient.mkₐ R I)
+    (Ideal.Quotient.mkₐ_surjective R I)]
+  rw [← RingHom.ker_coe_toRingHom (Ideal.Quotient.mkₐ R I),
+    Ideal.Quotient.mkₐ_ker R I]
+  -- `lTensor_ker` uses the algebra-hom coercion for `includeRight`, while
+  -- `rightTensorIdeal` uses its `toRingHom`; after unfolding they are definitionally equal.
+  rw [rightTensorIdeal_def]
+  rfl
+
+end HopfIdeal
+
+end TensorIdealQuotient
+
 variable (R : Type u) (H : Type v)
 variable [CommSemiring R] [Semiring H] [HopfAlgebra R H]
 

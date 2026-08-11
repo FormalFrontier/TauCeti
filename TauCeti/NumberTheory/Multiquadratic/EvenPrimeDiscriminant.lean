@@ -81,8 +81,7 @@ def evenPrimeDiscriminantRadicand (D : ℤ) : ℤ :=
   norm_num [evenPrimeDiscriminantRadicand]
 
 /-- An even prime discriminant is four times its associated squarefree radicand. -/
-theorem evenPrimeDiscriminant_eq_four_mul_radicand {D : ℤ}
-    (hD : IsEvenPrimeDiscriminant D) :
+theorem evenPrimeDiscriminant_eq_four_mul_radicand {D : ℤ} (hD : IsEvenPrimeDiscriminant D) :
     D = 4 * evenPrimeDiscriminantRadicand D := by
   rcases hD with rfl | rfl | rfl <;> norm_num [evenPrimeDiscriminantRadicand]
 
@@ -97,20 +96,17 @@ theorem evenPrimeDiscriminantRadicand_eq_neg_one_or_eq_two_or_eq_neg_two {D : �
 
 /-- The absolute value of the radicand attached to an even prime discriminant is `1` or `2`. -/
 theorem evenPrimeDiscriminantRadicand_natAbs_eq_one_or_two {D : ℤ}
-    (hD : IsEvenPrimeDiscriminant D) :
-    (evenPrimeDiscriminantRadicand D).natAbs = 1 ∨
+    (hD : IsEvenPrimeDiscriminant D) : (evenPrimeDiscriminantRadicand D).natAbs = 1 ∨
       (evenPrimeDiscriminantRadicand D).natAbs = 2 := by
   rcases hD with rfl | rfl | rfl <;> simp
 
 /-- The radicand attached to an even prime discriminant is nonzero. -/
-theorem evenPrimeDiscriminantRadicand_ne_zero {D : ℤ}
-    (hD : IsEvenPrimeDiscriminant D) :
+theorem evenPrimeDiscriminantRadicand_ne_zero {D : ℤ} (hD : IsEvenPrimeDiscriminant D) :
     evenPrimeDiscriminantRadicand D ≠ 0 := by
   rcases hD with rfl | rfl | rfl <;> simp
 
 /-- The radicand attached to an even prime discriminant is squarefree. -/
-theorem squarefree_evenPrimeDiscriminantRadicand {D : ℤ}
-    (hD : IsEvenPrimeDiscriminant D) :
+theorem squarefree_evenPrimeDiscriminantRadicand {D : ℤ} (hD : IsEvenPrimeDiscriminant D) :
     Squarefree (evenPrimeDiscriminantRadicand D) := by
   rcases hD with rfl | rfl | rfl
   · norm_num
@@ -120,9 +116,7 @@ theorem squarefree_evenPrimeDiscriminantRadicand {D : ℤ}
     exact Nat.prime_two.squarefree
 
 /-- The even prime discriminants themselves are even. -/
-theorem two_dvd_evenPrimeDiscriminant {D : ℤ}
-    (hD : IsEvenPrimeDiscriminant D) :
-    (2 : ℤ) ∣ D := by
+theorem two_dvd_evenPrimeDiscriminant {D : ℤ} (hD : IsEvenPrimeDiscriminant D) : (2 : ℤ) ∣ D := by
   rcases hD with rfl | rfl | rfl <;> norm_num
 
 /-- The radicand attached to an even prime discriminant is congruent to `-1` or `2`
@@ -134,26 +128,22 @@ theorem evenPrimeDiscriminantRadicand_mod_four_eq_three_or_two {D : ℤ}
   rcases hD with rfl | rfl | rfl <;> norm_num
 
 /-- The rational radicand associated to an even prime discriminant is not a square. -/
-theorem not_isSquare_evenPrimeDiscriminantRadicand_rat {D : ℤ}
-    (hD : IsEvenPrimeDiscriminant D) :
+theorem not_isSquare_evenPrimeDiscriminantRadicand_rat {D : ℤ} (hD : IsEvenPrimeDiscriminant D) :
     ¬ IsSquare ((evenPrimeDiscriminantRadicand D : ℤ) : ℚ) := by
   rcases hD with rfl | rfl | rfl <;> norm_num [evenPrimeDiscriminantRadicand]
 
 /-- The discriminant `-4` gives the radicand `-1`. -/
-theorem evenPrimeDiscriminantRadicand_eq_neg_one_iff {D : ℤ}
-    (hD : IsEvenPrimeDiscriminant D) :
+theorem evenPrimeDiscriminantRadicand_eq_neg_one_iff {D : ℤ} (hD : IsEvenPrimeDiscriminant D) :
     evenPrimeDiscriminantRadicand D = -1 ↔ D = -4 := by
   rcases hD with rfl | rfl | rfl <;> norm_num
 
 /-- The discriminant `8` gives the radicand `2`. -/
-theorem evenPrimeDiscriminantRadicand_eq_two_iff {D : ℤ}
-    (hD : IsEvenPrimeDiscriminant D) :
+theorem evenPrimeDiscriminantRadicand_eq_two_iff {D : ℤ} (hD : IsEvenPrimeDiscriminant D) :
     evenPrimeDiscriminantRadicand D = 2 ↔ D = 8 := by
   rcases hD with rfl | rfl | rfl <;> norm_num
 
 /-- The discriminant `-8` gives the radicand `-2`. -/
-theorem evenPrimeDiscriminantRadicand_eq_neg_two_iff {D : ℤ}
-    (hD : IsEvenPrimeDiscriminant D) :
+theorem evenPrimeDiscriminantRadicand_eq_neg_two_iff {D : ℤ} (hD : IsEvenPrimeDiscriminant D) :
     evenPrimeDiscriminantRadicand D = -2 ↔ D = -8 := by
   rcases hD with rfl | rfl | rfl <;> norm_num
 

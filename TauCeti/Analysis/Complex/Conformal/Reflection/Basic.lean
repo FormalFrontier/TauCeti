@@ -75,15 +75,13 @@ lemma schwarzReflection_of_im_zero {z : ℂ} (hz : z.im = 0) :
 
 /-- On any subset of the closed upper half-plane, Schwarz reflection agrees with the original
 function. -/
-lemma eqOn_schwarzReflection_of_subset_im_nonneg
-    (hS : S ⊆ {z : ℂ | 0 ≤ z.im}) :
+lemma eqOn_schwarzReflection_of_subset_im_nonneg (hS : S ⊆ {z : ℂ | 0 ≤ z.im}) :
     Set.EqOn (schwarzReflection f) f S :=
   fun _ hz => schwarzReflection_of_im_nonneg (f := f) (hS hz)
 
 /-- On any subset of the lower half-plane, Schwarz reflection agrees with the reflected
 branch. -/
-lemma eqOn_schwarzReflection_of_subset_im_neg
-    (hS : S ⊆ {z : ℂ | z.im < 0}) :
+lemma eqOn_schwarzReflection_of_subset_im_neg (hS : S ⊆ {z : ℂ | z.im < 0}) :
     Set.EqOn (schwarzReflection f) (fun z => (starRingEnd ℂ) (f ((starRingEnd ℂ) z))) S :=
   fun _ hz => schwarzReflection_of_im_neg (f := f) (hS hz)
 
@@ -118,8 +116,7 @@ private lemma apply_eq_conj_apply_conj_of_im_zero_of_apply_im_zero
 The Schwarz-reflection extension is conjugation-symmetric when the original function has real
 value at the real-axis point under consideration.
 -/
-lemma schwarzReflection_conj
-    (z : ℂ) (hreal : z.im = 0 → ((f z).im = 0)) :
+lemma schwarzReflection_conj (z : ℂ) (hreal : z.im = 0 → ((f z).im = 0)) :
     schwarzReflection f ((starRingEnd ℂ) z) =
       (starRingEnd ℂ) (schwarzReflection f z) := by
   rcases lt_trichotomy z.im 0 with hneg | hzero | hpos
@@ -162,8 +159,7 @@ lemma eqOn_schwarzReflection_conj_of_real_on_axis {Ω : Set ℂ}
 For a domain closed under conjugation, conjugation carries the upper half-plane part of the
 domain to its lower half-plane part.
 -/
-lemma image_conj_inter_im_pos_of_symmetric {Ω : Set ℂ}
-    (hΩ : Set.MapsTo (starRingEnd ℂ) Ω Ω) :
+lemma image_conj_inter_im_pos_of_symmetric {Ω : Set ℂ} (hΩ : Set.MapsTo (starRingEnd ℂ) Ω Ω) :
     (starRingEnd ℂ) '' (Ω ∩ {z | 0 < z.im}) = Ω ∩ {z | z.im < 0} := by
   ext z
   constructor
@@ -183,8 +179,7 @@ lemma image_conj_inter_im_pos_of_symmetric {Ω : Set ℂ}
 For a domain closed under conjugation, conjugation carries the lower half-plane part of the
 domain to its upper half-plane part.
 -/
-lemma image_conj_inter_im_neg_of_symmetric {Ω : Set ℂ}
-    (hΩ : Set.MapsTo (starRingEnd ℂ) Ω Ω) :
+lemma image_conj_inter_im_neg_of_symmetric {Ω : Set ℂ} (hΩ : Set.MapsTo (starRingEnd ℂ) Ω Ω) :
     (starRingEnd ℂ) '' (Ω ∩ {z | z.im < 0}) = Ω ∩ {z | 0 < z.im} := by
   ext z
   constructor
@@ -246,8 +241,7 @@ part, then the reflected branch `z ↦ conj (f (conj z))` is continuous on the l
 half-plane part.
 -/
 lemma continuousOn_conj_conj_inter_im_neg_of_symmetric {Ω : Set ℂ}
-    (hΩ : Set.MapsTo (starRingEnd ℂ) Ω Ω)
-    (hf : ContinuousOn f (Ω ∩ {z | 0 < z.im})) :
+    (hΩ : Set.MapsTo (starRingEnd ℂ) Ω Ω) (hf : ContinuousOn f (Ω ∩ {z | 0 < z.im})) :
     ContinuousOn (fun z => (starRingEnd ℂ) (f ((starRingEnd ℂ) z)))
       (Ω ∩ {z | z.im < 0}) := by
   simpa [image_conj_inter_im_pos_of_symmetric hΩ] using
@@ -259,8 +253,7 @@ reflection extension is continuous whenever the original function is continuous 
 upper half-plane part.
 -/
 lemma continuousOn_schwarzReflection_inter_im_neg_of_symmetric {Ω : Set ℂ}
-    (hΩ : Set.MapsTo (starRingEnd ℂ) Ω Ω)
-    (hf : ContinuousOn f (Ω ∩ {z | 0 < z.im})) :
+    (hΩ : Set.MapsTo (starRingEnd ℂ) Ω Ω) (hf : ContinuousOn f (Ω ∩ {z | 0 < z.im})) :
     ContinuousOn (schwarzReflection f) (Ω ∩ {z | z.im < 0}) := by
   intro z hz
   exact ((continuousOn_conj_conj_inter_im_neg_of_symmetric
@@ -272,8 +265,7 @@ lemma continuousOn_schwarzReflection_inter_im_neg_of_symmetric {Ω : Set ℂ}
 For a domain closed under conjugation, conjugation carries the closed upper half-plane part of
 the domain to its closed lower half-plane part.
 -/
-lemma image_conj_inter_im_nonneg_of_symmetric {Ω : Set ℂ}
-    (hΩ : Set.MapsTo (starRingEnd ℂ) Ω Ω) :
+lemma image_conj_inter_im_nonneg_of_symmetric {Ω : Set ℂ} (hΩ : Set.MapsTo (starRingEnd ℂ) Ω Ω) :
     (starRingEnd ℂ) '' (Ω ∩ {z | 0 ≤ z.im}) = Ω ∩ {z | z.im ≤ 0} := by
   ext w
   simp only [Set.mem_image, Set.mem_inter_iff, Set.mem_ofPred_eq]
@@ -293,10 +285,8 @@ If a domain `Ω` is closed under conjugation, `f` is continuous on its closed up
 part, and `f` takes real values at the real-axis points of `Ω`, then the explicit
 Schwarz-reflection extension is continuous on `Ω`.
 -/
-lemma continuousOn_schwarzReflection_of_symmetric {Ω : Set ℂ}
-    (hΩ : Set.MapsTo (starRingEnd ℂ) Ω Ω)
-    (hf : ContinuousOn f (Ω ∩ {z : ℂ | 0 ≤ z.im}))
-    (hreal : ∀ z ∈ Ω, z.im = 0 → (f z).im = 0) :
+lemma continuousOn_schwarzReflection_of_symmetric {Ω : Set ℂ} (hΩ : Set.MapsTo (starRingEnd ℂ) Ω Ω)
+    (hf : ContinuousOn f (Ω ∩ {z : ℂ | 0 ≤ z.im})) (hreal : ∀ z ∈ Ω, z.im = 0 → (f z).im = 0) :
     ContinuousOn (schwarzReflection f) Ω := by
   have hUclosed : IsClosed {z : ℂ | 0 ≤ z.im} :=
     isClosed_Ici.preimage Complex.continuous_im
@@ -322,8 +312,7 @@ lemma continuousOn_schwarzReflection_of_symmetric {Ω : Set ℂ}
 If `f` is continuous on the closed upper half-plane and takes real values on the real axis,
 then its explicit Schwarz-reflection extension is continuous on the plane.
 -/
-lemma continuous_schwarzReflection
-    (hf : ContinuousOn f {z : ℂ | 0 ≤ z.im})
+lemma continuous_schwarzReflection (hf : ContinuousOn f {z : ℂ | 0 ≤ z.im})
     (hreal : ∀ z : ℂ, z.im = 0 → (f z).im = 0) :
     Continuous (schwarzReflection f) := by
   rw [← continuousOn_univ]
@@ -331,20 +320,15 @@ lemma continuous_schwarzReflection
     (Set.mapsTo_univ _ _) ?_ (fun z _ => hreal z)
   rwa [Set.univ_inter]
 
-private lemma starRingEnd_eq_starL (z : ℂ) :
-    (starRingEnd ℂ) z = (starL ℂ : ℂ ≃L⋆[ℂ] ℂ) z := by
+private lemma starRingEnd_eq_starL (z : ℂ) : (starRingEnd ℂ) z = (starL ℂ : ℂ ≃L⋆[ℂ] ℂ) z := by
   rw [starL_apply, starRingEnd_apply]
 
 private lemma HasFDerivWithinAt.comp_semilinear_preimage
     {𝕜 V V' W W' : Type*} [NontriviallyNormedField 𝕜] {σ σ' : RingHom 𝕜 𝕜}
-    [NormedAddCommGroup V] [NormedSpace 𝕜 V]
-    [NormedAddCommGroup V'] [NormedSpace 𝕜 V']
-    [NormedAddCommGroup W] [NormedSpace 𝕜 W]
-    [NormedAddCommGroup W'] [NormedSpace 𝕜 W']
-    [RingHomIsometric σ] [RingHomInvPair σ σ']
-    (L : W →SL[σ] W') (R : V' →SL[σ'] V)
-    {g : V → W} {g' : V →L[𝕜] W} {T : Set V} {x : V'}
-    (hg : HasFDerivWithinAt g g' T (R x)) :
+    [NormedAddCommGroup V] [NormedSpace 𝕜 V] [NormedAddCommGroup V'] [NormedSpace 𝕜 V']
+    [NormedAddCommGroup W] [NormedSpace 𝕜 W] [NormedAddCommGroup W'] [NormedSpace 𝕜 W']
+    [RingHomIsometric σ] [RingHomInvPair σ σ'] (L : W →SL[σ] W') (R : V' →SL[σ'] V)
+    {g : V → W} {g' : V →L[𝕜] W} {T : Set V} {x : V'} (hg : HasFDerivWithinAt g g' T (R x)) :
     HasFDerivWithinAt (L ∘ g ∘ R) (L.comp (g'.comp R)) (R ⁻¹' T) x := by
   rw [hasFDerivWithinAt_iff_isLittleO] at ⊢ hg
   have : RingHomIsometric σ' := .inv σ
@@ -429,8 +413,7 @@ part, then the reflected branch `z ↦ conj (f (conj z))` is holomorphic on the 
 half-plane part.
 -/
 lemma differentiableOn_conj_conj_inter_im_neg_of_symmetric {Ω : Set ℂ}
-    (hΩ : Set.MapsTo (starRingEnd ℂ) Ω Ω)
-    (hf : DifferentiableOn ℂ f (Ω ∩ {z | 0 < z.im})) :
+    (hΩ : Set.MapsTo (starRingEnd ℂ) Ω Ω) (hf : DifferentiableOn ℂ f (Ω ∩ {z | 0 < z.im})) :
     DifferentiableOn ℂ (fun z => (starRingEnd ℂ) (f ((starRingEnd ℂ) z)))
       (Ω ∩ {z | z.im < 0}) := by
   simpa [image_conj_inter_im_pos_of_symmetric hΩ] using
@@ -442,8 +425,7 @@ reflection extension is holomorphic whenever the original function is holomorphi
 upper half-plane part.
 -/
 lemma differentiableOn_schwarzReflection_inter_im_neg_of_symmetric {Ω : Set ℂ}
-    (hΩ : Set.MapsTo (starRingEnd ℂ) Ω Ω)
-    (hf : DifferentiableOn ℂ f (Ω ∩ {z | 0 < z.im})) :
+    (hΩ : Set.MapsTo (starRingEnd ℂ) Ω Ω) (hf : DifferentiableOn ℂ f (Ω ∩ {z | 0 < z.im})) :
     DifferentiableOn ℂ (schwarzReflection f) (Ω ∩ {z | z.im < 0}) := by
   intro z hz
   exact ((differentiableOn_conj_conj_inter_im_neg_of_symmetric
@@ -455,8 +437,7 @@ lemma differentiableOn_schwarzReflection_inter_im_neg_of_symmetric {Ω : Set ℂ
 conjugation-symmetric domain whenever the original function is holomorphic on its upper
 half-plane part. -/
 lemma differentiableOn_schwarzReflection_inter_im_ne_zero_of_symmetric {Ω : Set ℂ}
-    (hΩ : Set.MapsTo (starRingEnd ℂ) Ω Ω)
-    (hf : DifferentiableOn ℂ f (Ω ∩ {z | 0 < z.im})) :
+    (hΩ : Set.MapsTo (starRingEnd ℂ) Ω Ω) (hf : DifferentiableOn ℂ f (Ω ∩ {z | 0 < z.im})) :
     DifferentiableOn ℂ (schwarzReflection f) (Ω ∩ {z | z.im ≠ 0}) := by
   have hupper : DifferentiableOn ℂ (schwarzReflection f) (Ω ∩ {z | 0 < z.im}) :=
     differentiableOn_schwarzReflection_of_subset_im_nonneg (f := f)
@@ -486,8 +467,7 @@ lemma differentiableOn_schwarzReflection_inter_im_ne_zero_of_symmetric {Ω : Set
 
 /-- At a point in the open upper half-plane, the Schwarz-reflection extension has the same
 derivative as the original function. -/
-lemma hasDerivAt_schwarzReflection_of_im_pos {z f' : ℂ} (hz : 0 < z.im)
-    (hf : HasDerivAt f f' z) :
+lemma hasDerivAt_schwarzReflection_of_im_pos {z f' : ℂ} (hz : 0 < z.im) (hf : HasDerivAt f f' z) :
     HasDerivAt (schwarzReflection f) f' z :=
   hf.congr_of_eventuallyEq
     (mem_of_superset ((isOpen_lt continuous_const Complex.continuous_im).mem_nhds hz)

@@ -53,8 +53,7 @@ noncomputable section
 /-- Changing only the degree index of a fixed-degree divisor does not change its weighted
 Abel-Jacobi class. -/
 lemma weightedAbelJacobiDivisorClass_cast (w : X → ℤ) (h : S.IsWeightedDegreeZero w)
-    {x₀ : X} (hx₀ : w x₀ = 1) {d e : ℕ} (hde : d = e)
-    (D : EffectiveDivisorOfDegree X d) :
+    {x₀ : X} (hx₀ : w x₀ = 1) {d e : ℕ} (hde : d = e) (D : EffectiveDivisorOfDegree X d) :
     S.weightedAbelJacobiDivisorClass w h hx₀
         (WeilDivisor.EffectiveDivisorOfDegree.cast hde D : WeilDivisor X) =
       S.weightedAbelJacobiDivisorClass w h hx₀ (D : WeilDivisor X) := by
@@ -63,8 +62,7 @@ lemma weightedAbelJacobiDivisorClass_cast (w : X → ℤ) (h : S.IsWeightedDegre
 
 /-- The weighted Abel-Jacobi class of the zero effective divisor is zero. -/
 lemma weightedAbelJacobiDivisorClass_effectiveDivisorOfDegree_zero (w : X → ℤ)
-    (h : S.IsWeightedDegreeZero w)
-    {x₀ : X} (hx₀ : w x₀ = 1) :
+    (h : S.IsWeightedDegreeZero w) {x₀ : X} (hx₀ : w x₀ = 1) :
     S.weightedAbelJacobiDivisorClass w h hx₀ (EffectiveDivisorOfDegree.zero X) = 0 := by
   simp
 

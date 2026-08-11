@@ -158,8 +158,7 @@ def fiberSubgroupMulEquivPiPerm (f : α → ι) :
 
 @[simp]
 theorem fiberSubgroupMulEquivPiPerm_apply_coe (f : α → ι) (σ : fiberSubgroup f) (i : ι)
-    (a : {a // f a = i}) :
-    (fiberSubgroupMulEquivPiPerm f σ i a : α) = (σ : Equiv.Perm α) a := by
+    (a : {a // f a = i}) : (fiberSubgroupMulEquivPiPerm f σ i a : α) = (σ : Equiv.Perm α) a := by
   obtain ⟨a, ha⟩ := a
   rw [fiberSubgroupMulEquivPiPerm, MulEquiv.trans_apply,
     DomMulAct.stabilizerMulEquiv_apply _ ha, fiberSubgroupMulEquivStabilizer_apply_unop_coe,

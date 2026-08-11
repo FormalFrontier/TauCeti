@@ -88,8 +88,7 @@ theorem isCone_simplex [DecidableEq ι] {v : ι} (hv : v ∈ V) : IsCone (simple
 
 /-- A singleton is a boundary face exactly when its vertex belongs to a spanning set containing
 at least one other vertex. -/
-theorem singleton_mem_simplexBoundary {v : ι} :
-    {v} ∈ simplexBoundary V ↔ v ∈ V ∧ V ≠ {v} := by
+theorem singleton_mem_simplexBoundary {v : ι} : {v} ∈ simplexBoundary V ↔ v ∈ V ∧ V ≠ {v} := by
   simp only [mem_simplexBoundary, Finset.singleton_nonempty, true_and]
   rw [Finset.ssubset_iff_subset_ne, Finset.singleton_subset_iff]
   constructor

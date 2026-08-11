@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.RingTheory.HopfAlgebra.Convolution
+public import TauCeti.Algebra.Coalgebra.Convolution
 
 /-!
 # The antipode reverses comultiplication
@@ -79,31 +80,6 @@ section AlgebraCoalgebra
 variable {R : Type u} {C : Type v} [CommSemiring R] [Semiring C] [Algebra R C]
   [_root_.CoalgebraStruct R C]
 
-/-- **Comultiplication is the convolution product of the two tensor inclusions.** In the
-convolution monoid of maps `C →ₗ[R] C ⊗[R] C`, the product of `includeLeft` and `includeRight`
-multiplies the two legs of `Δ c` back together in order, which is `Δ` itself.
-
-Only the comultiplication *data* is used, so this needs `CoalgebraStruct` rather than
-`Coalgebra`: no coalgebra law, bialgebra compatibility or antipode axiom enters. -/
-private lemma comul_eq_convMul_includeLeft_includeRight :
-    (toConv (Coalgebra.comul : C →ₗ[R] C ⊗[R] C) : WithConv (C →ₗ[R] C ⊗[R] C)) =
-      toConv (Algebra.TensorProduct.includeLeft (R := R) (A := C) (B := C)).toLinearMap *
-        toConv (Algebra.TensorProduct.includeRight (R := R) (A := C) (B := C)).toLinearMap := by
-  apply WithConv.ofConv_injective
-  have hmul : LinearMap.mul' R (C ⊗[R] C) ∘ₗ
-      TensorProduct.map
-        (Algebra.TensorProduct.includeLeft (R := R) (A := C) (B := C)).toLinearMap
-        (Algebra.TensorProduct.includeRight (R := R) (A := C) (B := C)).toLinearMap =
-      LinearMap.id := by
-    -- Mathlib's `lmul'_comp_map` + `lift_includeLeft_includeRight` state this as an algebra-hom
-    -- identity, but bridging that to linear maps exceeds `maxHeartbeats`; see the PR discussion.
-    apply TensorProduct.ext
-    ext x y
-    simp
-  simp only [LinearMap.convMul_def]
-  rw [← LinearMap.comp_assoc, hmul]
-  simp
-
 /-- **Swapping the legs of `Δ` and applying `S` to each is the reversed convolution product.**
 For any linear endomorphism `S`, precomposing the two inclusions with `S` and multiplying them in
 the opposite order gives `(S ⊗ S) ∘ swap ∘ Δ`.
@@ -146,7 +122,7 @@ private lemma antipode_comul_antidistrib_rhs_mul_comul :
   -- `algHom_comp_antipode_mul_self`, then the outer pair does. `congrArg₂` rather than `rw`:
   -- `WithConv` is a type synonym, so rewriting under `toConv` re-wraps through `ofConv`.
   rw [congrArg₂ (· * ·) (map_comp_comm_comp_comul_eq_convMul (antipode R))
-    comul_eq_convMul_includeLeft_includeRight]
+    Coalgebra.comul_eq_convMul_includeLeft_includeRight]
   set L : WithConv (C →ₗ[R] C ⊗[R] C) :=
     toConv (Algebra.TensorProduct.includeLeft (R := R) (A := C) (B := C)).toLinearMap
   set P : WithConv (C →ₗ[R] C ⊗[R] C) :=

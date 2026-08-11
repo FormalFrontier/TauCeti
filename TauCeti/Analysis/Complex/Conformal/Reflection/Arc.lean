@@ -64,8 +64,7 @@ private theorem mapsTo_symm_inter_im {P : ℝ → Prop} :
 
 /-- If both coordinate domains are conjugation-invariant, the reflected coordinate values stay
 in the target coordinate domain. -/
-private theorem mapsTo_schwarzReflection
-    (he_symm : MapsTo (starRingEnd ℂ) e.target e.target)
+private theorem mapsTo_schwarzReflection (he_symm : MapsTo (starRingEnd ℂ) e.target e.target)
     (hd_symm : MapsTo (starRingEnd ℂ) d.target d.target)
     (hf : MapsTo f (e.source ∩ {z : ℂ | 0 ≤ (e z).im}) d.source) :
     MapsTo (schwarzReflection (fun w => d (f (e.symm w)))) e.target d.target := by
@@ -83,8 +82,7 @@ private theorem mapsTo_schwarzReflection
     exact neg_nonneg.mpr him_neg.le
 
 /-- Charted Schwarz reflection maps the source chart domain into the target chart domain. -/
-theorem mapsTo_chartedSchwarzReflection
-    (he_symm : MapsTo (starRingEnd ℂ) e.target e.target)
+theorem mapsTo_chartedSchwarzReflection (he_symm : MapsTo (starRingEnd ℂ) e.target e.target)
     (hd_symm : MapsTo (starRingEnd ℂ) d.target d.target)
     (hf : MapsTo f (e.source ∩ {z : ℂ | 0 ≤ (e z).im}) d.source) :
     MapsTo (chartedSchwarzReflection e d f) e.source d.source := by
@@ -186,8 +184,7 @@ theorem chartedSchwarzReflection_sourceReflection
     (he_symm : MapsTo (starRingEnd ℂ) e.target e.target)
     (hd_symm : MapsTo (starRingEnd ℂ) d.target d.target)
     (hf_maps : MapsTo f (e.source ∩ {z : ℂ | 0 ≤ (e z).im}) d.source)
-    (hf_real : ∀ z ∈ e.source, (e z).im = 0 → (d (f z)).im = 0)
-    {z : ℂ} (hz : z ∈ e.source) :
+    (hf_real : ∀ z ∈ e.source, (e z).im = 0 → (d (f z)).im = 0) {z : ℂ} (hz : z ∈ e.source) :
     chartedSchwarzReflection e d f
         (e.symm ((starRingEnd ℂ) (e z))) =
       d.symm ((starRingEnd ℂ) (d (chartedSchwarzReflection e d f z))) := by

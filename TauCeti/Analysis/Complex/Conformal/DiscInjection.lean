@@ -200,7 +200,7 @@ example :
     IsSimplyConnected (ball (0 : ℂ) 1) ∧ IsOpen (ball (0 : ℂ) 1)
       ∧ (ball (0 : ℂ) 1) ≠ univ := by
   refine ⟨?_, isOpen_ball, ?_⟩
-  · haveI : ContractibleSpace (ball (0 : ℂ) 1) :=
+  · have : ContractibleSpace (ball (0 : ℂ) 1) :=
       Convex.contractibleSpace (convex_ball (0 : ℂ) 1) (nonempty_ball.2 one_pos)
     exact SimplyConnectedSpace.ofContractible _
   · intro hcon

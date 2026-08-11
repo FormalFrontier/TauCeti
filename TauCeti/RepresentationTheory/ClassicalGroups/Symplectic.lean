@@ -127,18 +127,15 @@ theorem isAlt_stdSymplecticBilinForm : (stdSymplecticBilinForm k n).IsAlt := by
     Matrix.neg_mulVec]
 
 /-- The standard symplectic form is nondegenerate. -/
-theorem stdSymplecticBilinForm_nondegenerate :
-    (stdSymplecticBilinForm k n).Nondegenerate := by
+theorem stdSymplecticBilinForm_nondegenerate : (stdSymplecticBilinForm k n).Nondegenerate := by
   rw [stdSymplecticBilinForm, Matrix.nondegenerate_toBilin'_iff]
   exact Matrix.Nondegenerate.of_det_mem_nonZeroDivisors
     (Matrix.isUnit_det_J (Fin n) k).mem_nonZeroDivisors
 
 /-- The standard symplectic action preserves the standard alternating form. -/
 @[simp]
-theorem stdSymplecticBilinForm_comp_stdSymplecticRep
-    (g : Matrix.symplecticGroup (Fin n) k) :
-    (stdSymplecticBilinForm k n).comp
-        (g : Matrix (Fin n ⊕ Fin n) (Fin n ⊕ Fin n) k).mulVecLin
+theorem stdSymplecticBilinForm_comp_stdSymplecticRep (g : Matrix.symplecticGroup (Fin n) k) :
+    (stdSymplecticBilinForm k n).comp (g : Matrix (Fin n ⊕ Fin n) (Fin n ⊕ Fin n) k).mulVecLin
         (g : Matrix (Fin n ⊕ Fin n) (Fin n ⊕ Fin n) k).mulVecLin =
       stdSymplecticBilinForm k n := by
   rw [stdSymplecticBilinForm, ← Matrix.toLin'_apply', Matrix.toBilin'_comp]
@@ -148,8 +145,7 @@ theorem stdSymplecticBilinForm_comp_stdSymplecticRep
 @[simp]
 theorem stdSymplecticBilinForm_stdSymplecticRep
     (g : Matrix.symplecticGroup (Fin n) k) (v w : (Fin n ⊕ Fin n) → k) :
-    (g : Matrix (Fin n ⊕ Fin n) (Fin n ⊕ Fin n) k).mulVec v ⬝ᵥ
-        (Matrix.J (Fin n) k *
+    (g : Matrix (Fin n ⊕ Fin n) (Fin n ⊕ Fin n) k).mulVec v ⬝ᵥ (Matrix.J (Fin n) k *
           (g : Matrix (Fin n ⊕ Fin n) (Fin n ⊕ Fin n) k)).mulVec w =
       stdSymplecticBilinForm k n v w := by
   simpa only [LinearMap.BilinForm.comp_apply, stdSymplecticBilinForm_apply,
@@ -197,8 +193,7 @@ theorem stdSymplecticDualRep_apply (g : Matrix.symplecticGroup (Fin n) k) :
   rw [stdSymplecticDualRep, Representation.dual_apply, stdSymplecticRep_apply]
 
 /-- The standard-form identification intertwines the standard and dual actions. -/
-theorem stdSymplecticRepToDual_equivariant
-    (g : Matrix.symplecticGroup (Fin n) k) :
+theorem stdSymplecticRepToDual_equivariant (g : Matrix.symplecticGroup (Fin n) k) :
     stdSymplecticRepToDual k n ∘ₗ stdSymplecticRep k n g =
       stdSymplecticDualRep k n g ∘ₗ stdSymplecticRepToDual k n := by
   apply LinearMap.ext

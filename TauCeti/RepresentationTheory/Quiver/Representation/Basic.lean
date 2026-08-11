@@ -50,4 +50,17 @@ theorem QuiverRep.map_nil {k : Type u} {Q : Type v} [Field k] [Quiver.{w} Q] (M 
     (a : Q) : M.map (Quiver.Path.nil : Quiver.Path a a) = 𝟙 (M.obj a) :=
   M.map_id a
 
+-- Not `@[simp]`: `simp` already rewrites through `QuiverRep.map_nil` and `ModuleCat.hom_id`, so
+-- tagging this is a simp-normal-form violation (`simpNF`). It is stated because a *term* naming
+-- the action of the trivial path on a vector is what proofs about `CategoryTheory.Paths` need:
+-- an element of `M.obj a` there usually carries the type `M.obj ((Paths.of Q).obj a)`, which is
+-- not type-correct at the transparency `rw` and `simp` use to build a motive, so they cannot
+-- rewrite it in place.
+/-- The element-level form of `TauCeti.QuiverRep.map_nil`: the trivial path fixes every vector. -/
+theorem QuiverRep.map_nil_apply {k : Type u} {Q : Type v} [Field k] [Quiver.{w} Q]
+    (M : QuiverRep k Q) (a : Q) (x : M.obj a) :
+    M.map (Quiver.Path.nil : Quiver.Path a a) x = x := by
+  rw [QuiverRep.map_nil]
+  rfl
+
 end TauCeti

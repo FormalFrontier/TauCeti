@@ -32,8 +32,10 @@ quantifies over `ℕ`; the real-argument form is a one-line corollary for caller
 
 This is the uniqueness half of the Bernstein milestone in
 `TauCetiRoadmap/OneParameterSemigroups/README.md`, Part B. The existence half is a separate,
-independent development, and the two are combined into the roadmap's `bernstein` biconditional
-afterwards. Nothing here mentions complete monotonicity — the statement is about two arbitrary
+independent development, and the two are combined in the Hausdorff--Bernstein--Widder theorem
+(`TauCeti.hausdorff_bernstein_widder_existsUnique` in
+`Analysis/CompletelyMonotone/Bernstein/HausdorffBernsteinWidder.lean`).
+Nothing here mentions complete monotonicity — the statement is about two arbitrary
 finite measures — which is why it lives beside the other determinacy results rather than under
 `Analysis/CompletelyMonotone/`.
 -/
@@ -89,8 +91,7 @@ private theorem exists_integrable_exp_map_expNeg (μ : Measure ℝ≥0) [IsFinit
 Substituting `y = e^{-x}` turns the value at `n` into the `n`-th moment of the pushforward, which is
 carried by `(0, 1]` and so is moment-determinate. -/
 theorem Measure.ext_of_forall_integral_exp_neg_natCast_mul_eq {μ ν : Measure ℝ≥0}
-    [IsFiniteMeasure μ] [IsFiniteMeasure ν]
-    (h : ∀ n : ℕ, ∫ x, Real.exp (-(n : ℝ) * (x : ℝ)) ∂μ
+    [IsFiniteMeasure μ] [IsFiniteMeasure ν] (h : ∀ n : ℕ, ∫ x, Real.exp (-(n : ℝ) * (x : ℝ)) ∂μ
       = ∫ x, Real.exp (-(n : ℝ) * (x : ℝ)) ∂ν) :
     μ = ν := by
   refine measurableEmbedding_expNeg.map_injective ?_
@@ -112,8 +113,7 @@ theorem Measure.ext_of_forall_integral_exp_neg_natCast_mul_eq {μ ν : Measure �
 taking the hypothesis at every nonnegative real; the proof needs only the natural numbers, so
 `Measure.ext_of_forall_integral_exp_neg_natCast_mul_eq` is the sharper statement. -/
 theorem Measure.ext_of_forall_integral_exp_neg_mul_eq {μ ν : Measure ℝ≥0}
-    [IsFiniteMeasure μ] [IsFiniteMeasure ν]
-    (h : ∀ t : ℝ, 0 ≤ t →
+    [IsFiniteMeasure μ] [IsFiniteMeasure ν] (h : ∀ t : ℝ, 0 ≤ t →
       ∫ x, Real.exp (-t * (x : ℝ)) ∂μ = ∫ x, Real.exp (-t * (x : ℝ)) ∂ν) :
     μ = ν :=
   Measure.ext_of_forall_integral_exp_neg_natCast_mul_eq fun n => h n (Nat.cast_nonneg n)

@@ -74,11 +74,9 @@ theorem prodMap (hff' : ContinuousAmbientIsotopic f f') (hgg' : ContinuousAmbien
         (TauCeti.ambientIsotopic_def.2 hgg')
 
 /-- Product closure for the continuous-ambient-isotopy setoid on bundled smooth embeddings. -/
-theorem prodMap_setoid
-    (hff' : (setoid I₁ J₁ n M₁ N₁).r f f')
+theorem prodMap_setoid (hff' : (setoid I₁ J₁ n M₁ N₁).r f f')
     (hgg' : (setoid I₂ J₂ n M₂ N₂).r g g') :
-    (setoid (I₁.prod I₂) (J₁.prod J₂) n (M₁ × M₂) (N₁ × N₂)).r
-      (f.prodMap g) (f'.prodMap g') :=
+    (setoid (I₁.prod I₂) (J₁.prod J₂) n (M₁ × M₂) (N₁ × N₂)).r (f.prodMap g) (f'.prodMap g') :=
   setoid_r_iff.2 (prodMap (setoid_r_iff.1 hff') (setoid_r_iff.1 hgg'))
 
 end ContinuousAmbientIsotopic

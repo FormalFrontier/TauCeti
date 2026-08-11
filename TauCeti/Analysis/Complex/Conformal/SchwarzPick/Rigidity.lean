@@ -6,6 +6,7 @@ module
 
 public import TauCeti.Analysis.Complex.Conformal.Hyperbolic.Distance
 public import TauCeti.Analysis.Complex.Conformal.UnitDisc.Automorphism.Classification
+import TauCeti.Analysis.Calculus.DSlope.Basic
 
 /-!
 # Rigidity in the Schwarz--Pick theorem
@@ -21,7 +22,8 @@ by the Moebius factors that send `w` to `0` on the source and `f w` to `0` on th
 exactly as the contraction estimate does.  The conjugate `g = schwarzPickConjugate f w` is a
 holomorphic self-map of the disc fixing the origin, and the hypothesis says `‖g ξ‖ = ‖ξ‖` at
 the nonzero point `ξ = (z - w) / (1 - conj w * z)`.  Mathlib's equality case of the Schwarz
-lemma, `Complex.affine_of_mapsTo_ball_of_norm_dslope_eq_div`, then forces `g` to be the
+lemma in its existence form, `Complex.affine_of_mapsTo_ball_of_exists_norm_dslope_eq_div'`,
+consumes exactly that one equality point, supplied as an existential, and forces `g` to be the
 rotation `ζ ↦ C * ζ` for a unimodular constant `C`.  Unwinding the conjugation gives the
 identity `(f ζ - f w) / (1 - conj (f w) * f ζ) = C * ((ζ - w) / (1 - conj w * ζ))` on the whole
 disc, from which the inverse map is read off explicitly as a Moebius factor, an inverse
@@ -67,6 +69,32 @@ open scoped ComplexConjugate
 
 variable {f : ℂ → ℂ} {z w : ℂ}
 
+/-- **Preserving the pseudo-hyperbolic expression makes the Schwarz estimate an equality.** If
+`f` matches the pseudo-hyperbolic expression at two distinct points `z ≠ w` of the disc, then the
+Schwarz--Pick conjugate at `w` has unit difference quotient at some point of the disc. -/
+private theorem
+    exists_mem_ball_norm_dslope_schwarzPickConjugate_eq_one_of_pseudoHyperbolicExpr_map_eq
+    (hz : z ∈ ball (0 : ℂ) 1) (hw_norm : ‖w‖ < 1) (hne : z ≠ w)
+    (heq : pseudoHyperbolicExpr (f z) (f w) = pseudoHyperbolicExpr z w) :
+    ∃ ξ ∈ ball (0 : ℂ) 1, ‖dslope (schwarzPickConjugate f w) 0 ξ‖ = 1 / 1 := by
+  have hz_norm : ‖z‖ < 1 := by simpa [mem_ball_zero_iff] using hz
+  -- the Moebius image of `z` is where the conjugate attains its bound
+  set ξ : ℂ := (z - w) / (1 - (starRingEnd ℂ) w * z) with hξ_def
+  refine ⟨ξ, mapsTo_ball_unitDiscMoebiusFormula_of_norm_lt_one (a := w) hw_norm hz, ?_⟩
+  have hξ_norm : ‖ξ‖ = pseudoHyperbolicExpr z w := (pseudoHyperbolicExpr_def z w).symm
+  have hξ_ne : ξ ≠ 0 := by
+    rw [← norm_ne_zero_iff, hξ_norm]
+    exact fun h => hne ((pseudoHyperbolicExpr_eq_zero_iff_of_mem_ball hz
+      (mem_ball_zero_iff.2 hw_norm)).mp h)
+  have hg_ξ : ‖schwarzPickConjugate f w ξ‖ = ‖ξ‖ := by
+    rw [hξ_def, schwarzPickConjugate_apply_unitDiscMoebiusFormula hw_norm hz_norm,
+      ← pseudoHyperbolicExpr_def, ← hξ_def, hξ_norm]
+    exact heq
+  rw [div_one]
+  refine norm_dslope_eq_one_of_norm_sub_map_eq hξ_ne ?_
+  rw [schwarzPickConjugate_apply_zero f w, sub_zero, sub_zero]
+  exact hg_ξ
+
 /--
 **Rigidity in the Schwarz--Pick theorem.**  If a holomorphic self-map `f` of the open unit disc
 preserves the pseudo-hyperbolic expression at one pair of distinct points `z ≠ w`, then on the
@@ -91,28 +119,12 @@ theorem exists_norm_eq_one_forall_eq_of_pseudoHyperbolicExpr_map_eq
     intro ζ hζ
     rw [hg0]
     exact ball_subset_closedBall (hgm hζ)
-  -- The point at which the Schwarz estimate for the conjugate is an equality.
-  let ξ : ℂ := (z - w) / (1 - (starRingEnd ℂ) w * z)
-  have hξ_mem : ξ ∈ ball (0 : ℂ) 1 := by
-    simpa [ξ] using mapsTo_ball_unitDiscMoebiusFormula_of_norm_lt_one (a := w) hw_norm hz
-  have hz_norm : ‖z‖ < 1 := by simpa [mem_ball_zero_iff] using hz
-  have hξ_norm : ‖ξ‖ = pseudoHyperbolicExpr z w := (pseudoHyperbolicExpr_def z w).symm
-  have hξ_ne : ξ ≠ 0 := by
-    rw [← norm_ne_zero_iff, hξ_norm]
-    exact fun h => hne ((pseudoHyperbolicExpr_eq_zero_iff_of_mem_ball hz hw).mp h)
-  have hg_ξ : ‖schwarzPickConjugate f w ξ‖ = ‖ξ‖ := by
-    have h1 : schwarzPickConjugate f w ξ
-        = (f z - f w) / (1 - (starRingEnd ℂ) (f w) * f z) :=
-      schwarzPickConjugate_apply_unitDiscMoebiusFormula hw_norm hz_norm
-    rw [h1, ← pseudoHyperbolicExpr_def, heq, hξ_norm]
-  -- Mathlib's equality case of the Schwarz lemma: the conjugate is a rotation.
-  have hdslope : ‖dslope (schwarzPickConjugate f w) 0 ξ‖ = 1 / 1 := by
-    rw [dslope_of_ne _ hξ_ne, slope_def_field, hg0, sub_zero, sub_zero, norm_div, hg_ξ,
-      div_self (norm_ne_zero_iff.mpr hξ_ne)]
-    norm_num
-  have haffine :=
-    Complex.affine_of_mapsTo_ball_of_norm_dslope_eq_div hgd hg_maps_closed hξ_mem hdslope
-  refine ⟨dslope (schwarzPickConjugate f w) 0 ξ, by simpa using hdslope, fun ζ hζ => ?_⟩
+  -- Mathlib's equality case of the Schwarz lemma, in its existence form
+  obtain ⟨C, hC_norm, haffine⟩ :=
+    Complex.affine_of_mapsTo_ball_of_exists_norm_dslope_eq_div' hgd hg_maps_closed
+      (exists_mem_ball_norm_dslope_schwarzPickConjugate_eq_one_of_pseudoHyperbolicExpr_map_eq
+        hz hw_norm hne heq)
+  refine ⟨C, by simpa using hC_norm, fun ζ hζ => ?_⟩
   have hζ' : (ζ - w) / (1 - (starRingEnd ℂ) w * ζ) ∈ ball (0 : ℂ) 1 :=
     mapsTo_ball_unitDiscMoebiusFormula_of_norm_lt_one (a := w) hw_norm hζ
   have hgζ : schwarzPickConjugate f w ((ζ - w) / (1 - (starRingEnd ℂ) w * ζ))
@@ -122,6 +134,45 @@ theorem exists_norm_eq_one_forall_eq_of_pseudoHyperbolicExpr_map_eq
   have hval := haffine hζ'
   simp only [hgζ, hg0, zero_add, sub_zero, smul_eq_mul] at hval
   exact hval.trans (mul_comm _ _)
+
+/-- **The explicit inverse undoes `f` from the right.** If the Moebius factor at `a` conjugates
+`f` into the rotation by `C` composed with the Moebius factor at `w`, then the composite
+`M₋w ∘ (C⁻¹ · ) ∘ M_a` is a right inverse of `f` on the disc.
+
+Only the conjugation identity, the two norm bounds and the self-map properties of `f` and of the
+inverse rotation are used; differentiability of `f` and of the factors plays no part in this half.
+The scalar `C` enters only through `C ≠ 0` and through `hR_maps`, so the caller may supply any
+nonzero `C` whose inverse contracts the disc — in particular a unimodular one. -/
+private lemma rightInvOn_moebius_rotate_moebius_of_forall_eq {a C : ℂ} (ha : ‖a‖ < 1)
+    (hw : ‖w‖ < 1) (hC0 : C ≠ 0)
+    (hR_maps : MapsTo (fun η : ℂ => C⁻¹ * η) (ball (0 : ℂ) 1) (ball (0 : ℂ) 1))
+    (hmaps : MapsTo f (ball (0 : ℂ) 1) (ball (0 : ℂ) 1))
+    (hCeq : ∀ ζ ∈ ball (0 : ℂ) 1, (f ζ - a) / (1 - (starRingEnd ℂ) a * f ζ)
+      = C * ((ζ - w) / (1 - (starRingEnd ℂ) w * ζ))) :
+    RightInvOn ((fun ξ : ℂ => (ξ - (-w)) / (1 - (starRingEnd ℂ) (-w) * ξ)) ∘
+        (fun η : ℂ => C⁻¹ * η) ∘
+        (fun η : ℂ => (η - a) / (1 - (starRingEnd ℂ) a * η)))
+      f (ball (0 : ℂ) 1) := by
+  have hnegw : ‖(-w : ℂ)‖ < 1 := by simpa using hw
+  have hT_maps := mapsTo_ball_unitDiscMoebiusFormula_of_norm_lt_one ha
+  have hS_maps := mapsTo_ball_unitDiscMoebiusFormula_of_norm_lt_one (a := -w) hnegw
+  have hTinj : InjOn (fun ζ : ℂ => (ζ - a) / (1 - (starRingEnd ℂ) a * ζ)) (ball (0 : ℂ) 1) :=
+    (leftInvOn_unitDiscMoebiusFormula_of_norm_lt_one ha).injOn
+  intro η hη
+  simp only [Function.comp_apply]
+  set ζ : ℂ := (C⁻¹ * ((η - a) / (1 - (starRingEnd ℂ) a * η)) - -w) /
+      (1 - (starRingEnd ℂ) (-w) * (C⁻¹ * ((η - a) / (1 - (starRingEnd ℂ) a * η)))) with hζdef
+  have hRTη : C⁻¹ * ((η - a) / (1 - (starRingEnd ℂ) a * η)) ∈ ball (0 : ℂ) 1 :=
+    hR_maps (hT_maps hη)
+  have hζ : ζ ∈ ball (0 : ℂ) 1 := hS_maps hRTη
+  -- Undo the outer Moebius factor, then the rotation, and compare through the injective `M_a`.
+  have hmoebius : (ζ - w) / (1 - (starRingEnd ℂ) w * ζ)
+      = C⁻¹ * ((η - a) / (1 - (starRingEnd ℂ) a * η)) := by
+    simpa [hζdef] using
+      leftInvOn_unitDiscMoebiusFormula_of_norm_lt_one (a := -w) hnegw hRTη
+  refine hTinj (hmaps hζ) hη ?_
+  dsimp only
+  rw [hCeq ζ hζ, hmoebius, mul_inv_cancel_left₀ hC0]
 
 /--
 **The inverse map produced by Schwarz--Pick rigidity.**  Under the hypotheses of
@@ -142,10 +193,7 @@ theorem exists_differentiableOn_mapsTo_invOn_of_pseudoHyperbolicExpr_map_eq
   have hw_norm : ‖w‖ < 1 := by simpa [mem_ball_zero_iff] using hw
   have hnegw : ‖(-w : ℂ)‖ < 1 := by simpa using hw_norm
   have hfw_norm : ‖f w‖ < 1 := by simpa [mem_ball_zero_iff] using hmaps hw
-  have hC0 : C ≠ 0 := by
-    intro h
-    rw [h, norm_zero] at hC
-    exact zero_ne_one hC
+  have hC0 : C ≠ 0 := fun h => zero_ne_one (by rw [h, norm_zero] at hC; exact hC)
   have hCinv : ‖C⁻¹‖ = 1 := by rw [norm_inv, hC, inv_one]
   have hT_diff := differentiableOn_unitDiscMoebiusFormula_of_norm_lt_one hfw_norm
   have hT_maps := mapsTo_ball_unitDiscMoebiusFormula_of_norm_lt_one hfw_norm
@@ -153,13 +201,11 @@ theorem exists_differentiableOn_mapsTo_invOn_of_pseudoHyperbolicExpr_map_eq
   have hS_maps := mapsTo_ball_unitDiscMoebiusFormula_of_norm_lt_one (a := -w) hnegw
   have hR_diff : DifferentiableOn ℂ (fun η : ℂ => C⁻¹ * η) (ball (0 : ℂ) 1) :=
     differentiableOn_id.const_mul _
-  have hR_maps : MapsTo (fun η : ℂ => C⁻¹ * η) (ball (0 : ℂ) 1) (ball (0 : ℂ) 1) := by
-    intro η hη
-    rw [mem_ball_zero_iff] at hη ⊢
-    simpa [hCinv] using hη
-  have hTinj : InjOn (fun ζ : ℂ => (ζ - f w) / (1 - (starRingEnd ℂ) (f w) * ζ))
-      (ball (0 : ℂ) 1) :=
-    (leftInvOn_unitDiscMoebiusFormula_of_norm_lt_one hfw_norm).injOn
+  -- The inverse rotation is a disc self-map because a ball at the origin is balanced.
+  have hR_maps : MapsTo (fun η : ℂ => C⁻¹ * η) (ball (0 : ℂ) 1) (ball (0 : ℂ) 1) :=
+    fun η hη => by
+      have h := (balanced_ball_zero (𝕜 := ℂ) (r := 1)).smul_mem hCinv.le hη
+      rwa [smul_eq_mul] at h
   refine ⟨(fun ξ : ℂ => (ξ - (-w)) / (1 - (starRingEnd ℂ) (-w) * ξ)) ∘
       (fun η : ℂ => C⁻¹ * η) ∘
       (fun η : ℂ => (η - f w) / (1 - (starRingEnd ℂ) (f w) * η)), ?_, ?_, ?_, ?_⟩
@@ -169,25 +215,7 @@ theorem exists_differentiableOn_mapsTo_invOn_of_pseudoHyperbolicExpr_map_eq
     intro ζ hζ
     simp only [Function.comp_apply, hCeq ζ hζ, inv_mul_cancel_left₀ hC0]
     exact leftInvOn_unitDiscMoebiusFormula_of_norm_lt_one hw_norm hζ
-  · -- `f (g η) = η`: run the identity at `g η`, then cancel the outer Moebius factor.
-    intro η hη
-    simp only [Function.comp_apply]
-    set ζ : ℂ :=
-      (C⁻¹ * ((η - f w) / (1 - (starRingEnd ℂ) (f w) * η)) - -w) /
-        (1 - (starRingEnd ℂ) (-w) * (C⁻¹ * ((η - f w) / (1 - (starRingEnd ℂ) (f w) * η))))
-      with hζdef
-    have hTη : (η - f w) / (1 - (starRingEnd ℂ) (f w) * η) ∈ ball (0 : ℂ) 1 := hT_maps hη
-    have hRTη : C⁻¹ * ((η - f w) / (1 - (starRingEnd ℂ) (f w) * η)) ∈ ball (0 : ℂ) 1 :=
-      hR_maps hTη
-    have hζ : ζ ∈ ball (0 : ℂ) 1 := hS_maps hRTη
-    have hmoebius : (ζ - w) / (1 - (starRingEnd ℂ) w * ζ)
-        = C⁻¹ * ((η - f w) / (1 - (starRingEnd ℂ) (f w) * η)) := by
-      simpa [hζdef] using
-        leftInvOn_unitDiscMoebiusFormula_of_norm_lt_one (a := -w) hnegw hRTη
-    have hTfζ : (f ζ - f w) / (1 - (starRingEnd ℂ) (f w) * f ζ)
-        = (η - f w) / (1 - (starRingEnd ℂ) (f w) * η) := by
-      rw [hCeq ζ hζ, hmoebius, mul_inv_cancel_left₀ hC0]
-    exact hTinj (hmaps hζ) hη hTfζ
+  · exact rightInvOn_moebius_rotate_moebius_of_forall_eq hfw_norm hw_norm hC0 hR_maps hmaps hCeq
 
 /--
 **Schwarz--Pick rigidity, bijectivity form.**  A holomorphic self-map of the open unit disc

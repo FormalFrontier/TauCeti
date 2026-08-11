@@ -68,8 +68,7 @@ private theorem forall_not_dvd_negFourNegThreeNegSevenPrimeDiscriminants {p : �
 by square roots of the radicands attached to `[-4, 5]`, namely `-1` and `5`. An odd prime
 `p ≠ 5` splits completely in `K` exactly under the two character conditions
 `p ≡ 1 (mod 4)` and `(p / 5) = 1`. -/
-theorem ncard_primesOver_neg_four_five_iff (r : Fin 2 → K)
-    (hr : ∀ i, r i ^ 2 = algebraMap ℤ K
+theorem ncard_primesOver_neg_four_five_iff (r : Fin 2 → K) (hr : ∀ i, r i ^ 2 = algebraMap ℤ K
       (TauCeti.Multiquadratic.primeDiscriminantRadicand
         (TauCeti.Multiquadratic.negFourFivePrimeDiscriminants i)))
     (htop : IntermediateField.adjoin ℚ (Set.range r) = ⊤)
@@ -86,8 +85,7 @@ by square roots of the radicands attached to `[-4, -3, -7]`, namely `-1`, `-3`, 
 An odd prime `p` not among `3` and `7` splits completely in `K` exactly under the three
 character conditions `p ≡ 1 (mod 4)`, `(p / 3) = 1`, and `(p / 7) = 1`. -/
 theorem ncard_primesOver_neg_four_neg_three_neg_seven_iff (r : Fin 3 → K)
-    (hr : ∀ i, r i ^ 2 = algebraMap ℤ K
-      (TauCeti.Multiquadratic.primeDiscriminantRadicand
+    (hr : ∀ i, r i ^ 2 = algebraMap ℤ K (TauCeti.Multiquadratic.primeDiscriminantRadicand
         (TauCeti.Multiquadratic.negFourNegThreeNegSevenPrimeDiscriminants i)))
     (htop : IntermediateField.adjoin ℚ (Set.range r) = ⊤)
     {p : ℕ} [Fact p.Prime] (hodd : p ≠ 2) (hthree : p ≠ 3) (hseven : p ≠ 7) :

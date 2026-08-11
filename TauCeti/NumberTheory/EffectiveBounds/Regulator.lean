@@ -51,7 +51,7 @@ theorem regulator_eq_one_of_rank_eq_zero (h : rank K = 0) : regulator K = 1 := b
   classical
   -- A rank-zero field has no infinite place other than the distinguished `w₀`, so the matrix
   -- whose determinant is the regulator is the empty matrix.
-  haveI : IsEmpty {w : InfinitePlace K // w ≠ w₀} := by
+  have : IsEmpty {w : InfinitePlace K // w ≠ w₀} := by
     rw [← Fintype.card_eq_zero_iff, ← Fintype.card_congr (equivFinRank K), Fintype.card_fin, h]
   rw [regulator_eq_det', Matrix.det_isEmpty, abs_one]
 

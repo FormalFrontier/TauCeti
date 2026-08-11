@@ -47,8 +47,7 @@ variable {Ω : Type*} {m0 : MeasurableSpace Ω} {μ : Measure[m0] Ω} {𝔽 : �
 finite-horizon time reversal of an antitone family `𝔽`. -/
 -- This is a (forward, increasing) filtration because `k ≤ ℓ` gives `N - ℓ ≤ N - k`, so
 -- antitonicity of `𝔽` yields `𝔽 (N - k) ≤ 𝔽 (N - ℓ)`.
-def revFiltration (𝔽 : ℕ → MeasurableSpace Ω) (h_antitone : Antitone 𝔽)
-    (h_le : ∀ n, 𝔽 n ≤ m0)
+def revFiltration (𝔽 : ℕ → MeasurableSpace Ω) (h_antitone : Antitone 𝔽) (h_le : ∀ n, 𝔽 n ≤ m0)
     (N : ℕ) : Filtration ℕ m0 where
   seq := fun n => 𝔽 (N - n)
   mono' := by
@@ -71,8 +70,7 @@ lemma revCEFinite_apply (f : Ω → E) (𝔽 : ℕ → MeasurableSpace Ω) (N n 
 /-- Levels of the reverse filtration: `revFiltration 𝔽 … N` at `n` is `𝔽 (N - n)`. -/
 @[simp]
 lemma revFiltration_apply (𝔽 : ℕ → MeasurableSpace Ω) (h_antitone : Antitone 𝔽)
-    (h_le : ∀ n, 𝔽 n ≤ m0) (N n : ℕ) :
-    (revFiltration 𝔽 h_antitone h_le N) n = 𝔽 (N - n) := by
+    (h_le : ∀ n, 𝔽 n ≤ m0) (N n : ℕ) : (revFiltration 𝔽 h_antitone h_le N) n = 𝔽 (N - n) := by
   simp only [revFiltration]
 
 /-- Finite-horizon reversal adapter for Mathlib's `martingale_condExp`: the reversed

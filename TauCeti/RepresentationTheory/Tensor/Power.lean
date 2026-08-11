@@ -54,10 +54,8 @@ private theorem append_const {α : Type*} {d e : ℕ} (x : α) :
   ext i
   refine Fin.addCases ?_ ?_ i <;> simp
 
-private theorem mulEquiv_map {d e : ℕ} (f : Fin d → M →ₗ[R] M)
-    (g : Fin e → M →ₗ[R] M) :
-    (_root_.TensorPower.mulEquiv :
-      (⨂[R]^d M) ⊗[R] (⨂[R]^e M) ≃ₗ[R] (⨂[R]^(d + e) M)).toLinearMap ∘ₗ
+private theorem mulEquiv_map {d e : ℕ} (f : Fin d → M →ₗ[R] M) (g : Fin e → M →ₗ[R] M) :
+    (_root_.TensorPower.mulEquiv : (⨂[R]^d M) ⊗[R] (⨂[R]^e M) ≃ₗ[R] (⨂[R]^(d + e) M)).toLinearMap ∘ₗ
         TensorProduct.map (PiTensorProduct.map f) (PiTensorProduct.map g) =
       PiTensorProduct.map (Fin.append f g) ∘ₗ
         (_root_.TensorPower.mulEquiv :
@@ -76,8 +74,7 @@ private theorem mulEquiv_map {d e : ℕ} (f : Fin d → M →ₗ[R] M)
 /-- Splitting a tensor power intertwines separate families of maps on the two factors with
 their appended family on the combined tensor power. -/
 theorem mulEquiv_conj_map {d e : ℕ} (f : Fin d → M →ₗ[R] M) (g : Fin e → M →ₗ[R] M) :
-    (_root_.TensorPower.mulEquiv :
-      (⨂[R]^d M) ⊗[R] (⨂[R]^e M) ≃ₗ[R] (⨂[R]^(d + e) M)).conj
+    (_root_.TensorPower.mulEquiv : (⨂[R]^d M) ⊗[R] (⨂[R]^e M) ≃ₗ[R] (⨂[R]^(d + e) M)).conj
         (TensorProduct.map (PiTensorProduct.map f) (PiTensorProduct.map g)) =
       PiTensorProduct.map (Fin.append f g) := by
   apply LinearMap.ext

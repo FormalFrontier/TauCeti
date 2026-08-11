@@ -72,8 +72,7 @@ private theorem isCycle_finRotate_torus : (finRotate (p + 1 + (q + 1))).IsCycle 
   isCycle_finRotate_of_le (by omega)
 
 /-- The cyclic shift of the columns of a torus link grid moves every column. -/
-private theorem support_finRotate_torus :
-    (finRotate (p + 1 + (q + 1))).support = Finset.univ :=
+private theorem support_finRotate_torus : (finRotate (p + 1 + (q + 1))).support = Finset.univ :=
   support_finRotate_of_le (by omega)
 
 /-- The cyclic shift of the columns of a torus link grid is a cycle of length the grid number. -/
@@ -116,8 +115,7 @@ theorem torusLink_O_toPerm : (torusLink p q).O.toPerm = 1 :=
 /-- The `X` markings of a standard torus link grid are the `(q + 1)`-st power of the cyclic shift
 permutation graph. -/
 @[simp]
-theorem torusLink_X_toPerm :
-    (torusLink p q).X.toPerm = finRotate (p + 1 + (q + 1)) ^ (q + 1) :=
+theorem torusLink_X_toPerm : (torusLink p q).X.toPerm = finRotate (p + 1 + (q + 1)) ^ (q + 1) :=
   (rfl)
 
 -- Not `@[simp]`: the `simp` normal form of `(torusLink p q).O c` goes through the marking-state
@@ -169,8 +167,7 @@ private theorem gcd_torus : (p + 1 + (q + 1)).gcd (q + 1) = (p + 1).gcd (q + 1) 
 /-- The components of a standard torus link grid all carry the same number of markings, and there
 are `gcd (p + 1) (q + 1)` of them: exactly the number of components of the `(p + 1, q + 1)` torus
 link. -/
-theorem componentCycleType_torusLink :
-    (torusLink p q).componentCycleType =
+theorem componentCycleType_torusLink : (torusLink p q).componentCycleType =
       Multiset.replicate ((p + 1).gcd (q + 1))
         ((p + 1 + (q + 1)) / (p + 1).gcd (q + 1)) := by
   rw [componentCycleType_def, componentPerm_torusLink, Equiv.Perm.cycleType_inv,
@@ -178,8 +175,7 @@ theorem componentCycleType_torusLink :
     card_support_finRotate_torus, gcd_torus]
 
 /-- A standard torus link grid represents a link with `gcd (p + 1) (q + 1)` components. -/
-theorem componentCount_torusLink :
-    (torusLink p q).componentCount = (p + 1).gcd (q + 1) := by
+theorem componentCount_torusLink : (torusLink p q).componentCount = (p + 1).gcd (q + 1) := by
   rw [componentCount_def, componentCycleType_torusLink, Multiset.card_replicate]
 
 /-- A standard torus link grid represents a knot exactly when its two winding numbers are
@@ -209,8 +205,7 @@ theorem not_isKnot_torusLink_one_one : ¬(torusLink 1 1).IsKnot := by
 
 /-- The `6 × 6` grid diagram `torusLink 2 2` of the `(3, 3)` torus link has three components, each
 carrying two of its six markings. -/
-theorem componentCycleType_torusLink_two_two :
-    (torusLink 2 2).componentCycleType = {2, 2, 2} := by
+theorem componentCycleType_torusLink_two_two : (torusLink 2 2).componentCycleType = {2, 2, 2} := by
   rw [componentCycleType_torusLink]
   decide
 

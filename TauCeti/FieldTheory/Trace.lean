@@ -111,8 +111,7 @@ namespace NumberField
 
 /-- In a number field, an irrational element whose square is rational has trace zero. -/
 theorem trace_eq_zero_of_sq_ratCast {K : Type*} [Field K] [NumberField K]
-    {x : K} {r : ℚ} (hx2 : x ^ 2 = algebraMap ℚ K r)
-    (hx : x ∉ (algebraMap ℚ K).range) :
+    {x : K} {r : ℚ} (hx2 : x ^ 2 = algebraMap ℚ K r) (hx : x ∉ (algebraMap ℚ K).range) :
     Algebra.trace ℚ K x = 0 :=
   TauCeti.Algebra.trace_eq_zero_of_sq_algebraMap_of_not_mem_range hx2 hx
 

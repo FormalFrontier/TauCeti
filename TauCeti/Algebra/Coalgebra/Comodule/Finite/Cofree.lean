@@ -67,8 +67,7 @@ noncomputable abbrev cofree (M : Type w) [AddCommMonoid M] [Module R M]
 /-- Forgetting the finitely generated cofree comodule to all comodules gives the ambient
 cofree comodule. -/
 @[simp]
-theorem cofree_obj :
-    (cofree (R := R) (C := C) M).obj = ComoduleCat.cofree R C M :=
+theorem cofree_obj : (cofree (R := R) (C := C) M).obj = ComoduleCat.cofree R C M :=
   rfl
 
 /-- The underlying type of the finitely generated cofree comodule is `M ⊗[R] C`. -/
@@ -95,8 +94,7 @@ theorem cofree_coact_tmul (m : M) (c : C) :
 /-- The inclusion of finitely generated comodules sends `FGComoduleCat.cofree` to
 `ComoduleCat.cofree`. -/
 @[simp]
-theorem incl_cofree :
-    (incl (R := R) (C := C)).obj (cofree (R := R) (C := C) M) =
+theorem incl_cofree : (incl (R := R) (C := C)).obj (cofree (R := R) (C := C) M) =
       ComoduleCat.cofree R C M :=
   rfl
 
@@ -183,8 +181,7 @@ theorem cofreeEquiv_apply (φ : P ⟶ cofree (R := R) (C := C) M) :
 
 /-- The inverse direction of the finite cofree adjunction is `cofreeLift`. -/
 @[simp]
-theorem cofreeEquiv_symm_apply (g : P →ₗ[R] M) :
-    (cofreeEquiv (R := R) (C := C) (M := M) P).symm g =
+theorem cofreeEquiv_symm_apply (g : P →ₗ[R] M) : (cofreeEquiv (R := R) (C := C) (M := M) P).symm g =
       cofreeLift (R := R) (C := C) P g :=
   rfl
 

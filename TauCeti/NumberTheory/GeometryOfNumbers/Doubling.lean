@@ -162,8 +162,7 @@ omit [Fintype ι] in
 coordinate: two points sharing every cell index would differ by less than the cell diameter
 `ε·rᵢ` in that coordinate, contradicting the separation. -/
 private theorem injOn_cellIndexMap_of_separated (r : ι → ℝ) (hr : ∀ i, 0 < r i) {c ε : ℝ}
-    (hε : 0 < ε) {S : Set (ι → ℂ)}
-    (hsep : ∀ x ∈ S, ∀ y ∈ S, x ≠ y → ∃ i, ε * r i < ‖x i - y i‖) :
+    (hε : 0 < ε) {S : Set (ι → ℂ)} (hsep : ∀ x ∈ S, ∀ y ∈ S, x ≠ y → ∃ i, ε * r i < ‖x i - y i‖) :
     Set.InjOn (cellIndexMap r c ε) S := by
   intro x hx y hy hxy
   by_contra hne
@@ -232,8 +231,7 @@ theorem finite_and_ncard_le_of_subset_box_of_separated (r : ι → ℝ) (hr : �
 `(8/ρ) ^ (2·#ι)`. -/
 theorem addSubgroup_inter_box_finite_and_ncard_le_of_separated (r : ι → ℝ) (hr : ∀ i, 0 < r i)
     (Λ : AddSubgroup (ι → ℂ)) {ρ : ℝ} (hρ0 : 0 < ρ) (hρ2 : ρ ≤ 2)
-    (hsep : ∀ x ∈ Λ, x ≠ 0 → ∃ i, ρ * r i < ‖x i‖) :
-    ((Λ : Set (ι → ℂ)) ∩ box r 2).Finite ∧
+    (hsep : ∀ x ∈ Λ, x ≠ 0 → ∃ i, ρ * r i < ‖x i‖) : ((Λ : Set (ι → ℂ)) ∩ box r 2).Finite ∧
       (((Λ : Set (ι → ℂ)) ∩ box r 2).ncard : ℝ) ≤ (8 / ρ) ^ (2 * Fintype.card ι) := by
   -- Differences of distinct points of `Λ ∩ box r 2` are nonzero elements of `Λ`, so they
   -- satisfy the separation hypothesis of the packing lemma with `c = 2`, `ε = ρ`.
@@ -305,8 +303,7 @@ private theorem sub_mem_box_one_of_coarseCellMap_eq {r : ι → ℝ} (hr : ∀ i
 same-fibre points of `sA` lies in `sB`: translating the fibre to a fixed representative
 injects it into `sB`. -/
 private theorem card_filter_le_of_sub_mem {G : Type*} [AddGroup G] {σ : Type*} [DecidableEq σ]
-    {sA sB : Finset G} {g : G → σ}
-    (h : ∀ y ∈ sA, ∀ x ∈ sA, g y = g x → y - x ∈ sB) (b : σ) :
+    {sA sB : Finset G} {g : G → σ} (h : ∀ y ∈ sA, ∀ x ∈ sA, g y = g x → y - x ∈ sB) (b : σ) :
     (sA.filter (fun a => g a = b)).card ≤ sB.card := by
   rcases (sA.filter (fun a => g a = b)).eq_empty_or_nonempty with he | ⟨x₀, hx₀⟩
   · simp [he]

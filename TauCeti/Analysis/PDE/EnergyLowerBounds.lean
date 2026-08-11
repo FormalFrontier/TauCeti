@@ -21,13 +21,13 @@ the hypothesis of Lax--Milgram: `TauCeti.Analysis.InnerProductSpace.LaxMilgram` 
 coercivity of the *integrated* form on a complete inner-product (H¹-type) space, which is
 later Lane A/D work.  The genuine consumer of these pointwise bounds is the integrated
 inequality `∫ (min (λ/2) (μ − β²/2λ)) · ‖U‖² ≤ energyFormIntegral` in
-`TauCeti.Analysis.PDE.Integrated.EnergyForm`, obtained by integrating them; no
+`TauCeti.Analysis.PDE.EnergyForm.Integrated.Basic`, obtained by integrating them; no
 finite-dimensional jet fibre is fed into Lax--Milgram.
 
 The lower-bound theorems below take a single principal coefficient `A`, drift coefficient
 `b₀`, and mass coefficient `c₀`, together with their pointwise bounds. Callers holding a
 field-level `UniformlyEllipticOn Ω a λ Λ` hypothesis should use the pointwise specializations
-in `TauCeti.Analysis.PDE.Uniform.EllipticEnergy`, which supply the principal lower bound at a
+in `TauCeti.Analysis.PDE.Ellipticity.Energy`, which supply the principal lower bound at a
 chosen point `x ∈ Ω`.
 
 Symmetry of the same zero-drift integrand is recorded in
@@ -126,8 +126,7 @@ lemma min_diagonal_lower_bound_mul_norm_sq_le_energyIntegrand_self (hlam : 0 < l
 /-- Zero-drift diagonal lower bound from a principal quadratic lower bound and nonnegative
 mass coefficient. -/
 lemma min_lam_mass_mul_norm_sq_le_energyIntegrand_zero_drift_self {A : Matrix n n ℝ}
-    {c₀ : ℝ} (hlam : 0 ≤ lam)
-    (hA : ∀ ξ : EuclideanSpace ℝ n, lam * ‖ξ‖ ^ 2 ≤ A.toQuadraticForm' ξ)
+    {c₀ : ℝ} (hlam : 0 ≤ lam) (hA : ∀ ξ : EuclideanSpace ℝ n, lam * ‖ξ‖ ^ 2 ≤ A.toQuadraticForm' ξ)
     (hc : 0 ≤ c₀) (U : ℝ × EuclideanSpace ℝ n) :
     min lam c₀ * ‖U‖ ^ 2 ≤ energyIntegrand A 0 c₀ U U := by
   have hprod := min_mul_prod_norm_sq_le_add hlam hc U

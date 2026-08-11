@@ -61,8 +61,7 @@ open Set
 
 /-- The minimum pairwise distance of a finite set with at least two elements is positive:
 `Set.infsep` positivity for finite sets. -/
-private theorem min_pairwise_distance_pos {crossings : Finset ℝ}
-    (h_card : 2 ≤ crossings.card) :
+private theorem min_pairwise_distance_pos {crossings : Finset ℝ} (h_card : 2 ≤ crossings.card) :
     ∃ d > 0, ∀ t₁ ∈ crossings, ∀ t₂ ∈ crossings, t₁ ≠ t₂ → d ≤ |t₁ - t₂| := by
   have h_nt : (↑crossings : Set ℝ).Nontrivial := by
     obtain ⟨p, hp, q, hq, hpq⟩ := Finset.one_lt_card.mp h_card
@@ -77,8 +76,7 @@ private theorem min_pairwise_distance_pos {crossings : Finset ℝ}
 /-- A finite subset of the open interval `(a, b)` is uniformly separated from both
 endpoints. -/
 private theorem crossings_bounded_from_endpoints {a b : ℝ} {crossings : Finset ℝ}
-    (h_nonempty : crossings.Nonempty)
-    (h_Ioo : ∀ t ∈ crossings, t ∈ Ioo a b) :
+    (h_nonempty : crossings.Nonempty) (h_Ioo : ∀ t ∈ crossings, t ∈ Ioo a b) :
     ∃ c > 0, ∀ t ∈ crossings, a + c ≤ t ∧ t ≤ b - c := by
   obtain ⟨t_min, ht_min_mem, ht_min⟩ :=
     Finset.exists_min_image crossings (fun t => min (t - a) (b - t)) h_nonempty
@@ -91,8 +89,7 @@ private theorem crossings_bounded_from_endpoints {a b : ℝ} {crossings : Finset
 
 /-- A finite set disjoint from a finite exceptional set is uniformly separated from it. -/
 private theorem crossings_bounded_from_exceptional {crossings P : Finset ℝ}
-    (h_nonempty : crossings.Nonempty)
-    (h_off : ∀ t ∈ crossings, t ∉ P) :
+    (h_nonempty : crossings.Nonempty) (h_off : ∀ t ∈ crossings, t ∉ P) :
     ∃ c > 0, ∀ t ∈ crossings, ∀ p ∈ P, c ≤ |t - p| := by
   by_cases hP : P = ∅
   · exact ⟨1, one_pos, fun _ _ p hp => absurd (hP ▸ hp) (Finset.notMem_empty p)⟩
@@ -111,8 +108,7 @@ exceptional set `P`, there is `r > 0` such that every window `[t_i - r, t_i + r]
 `[a, b]`, distinct crossings are more than `2r` apart (so the windows are pairwise disjoint),
 and no exceptional point comes within `r` of a crossing. -/
 theorem exists_common_window_radius {a b : ℝ} {crossings P : Finset ℝ}
-    (h_nonempty : crossings.Nonempty)
-    (h_Ioo : ∀ t ∈ crossings, t ∈ Ioo a b)
+    (h_nonempty : crossings.Nonempty) (h_Ioo : ∀ t ∈ crossings, t ∈ Ioo a b)
     (h_off : ∀ t ∈ crossings, t ∉ P) :
     ∃ r > 0,
       (∀ t ∈ crossings, a + r ≤ t ∧ t ≤ b - r) ∧
@@ -157,8 +153,7 @@ conditions are vacuous and any positive radius serves.
 The endpoint margins come out *strict* here: the radius is chosen strictly below the one that lemma
 supplies, so it clears both endpoints with room to spare. -/
 theorem exists_common_window_radius_le {a b : ℝ} {crossings : Finset ℝ}
-    (h_Ioo : ∀ t ∈ crossings, t ∈ Ioo a b)
-    (R : ℝ → ℝ) (hR_pos : ∀ t ∈ crossings, 0 < R t) :
+    (h_Ioo : ∀ t ∈ crossings, t ∈ Ioo a b) (R : ℝ → ℝ) (hR_pos : ∀ t ∈ crossings, 0 < R t) :
     ∃ r > 0,
       (∀ t ∈ crossings, a + r < t ∧ t < b - r) ∧
       (∀ t ∈ crossings, ∀ t' ∈ crossings, t' ≠ t → 2 * r < |t - t'|) ∧
@@ -194,8 +189,7 @@ This is the pointwise core: nothing is assumed about the other crossings' own wi
 holding margins for every crossing at once. Stated for a bare function; no regularity is
 used. -/
 theorem eq_of_mem_window_of_eq_of_le_of_lt {α : Type*} {γ : ℝ → α} {s : α} {a b : ℝ}
-    {crossings : Finset ℝ} {r t_i : ℝ}
-    (h_endpts : a + r ≤ t_i ∧ t_i ≤ b - r)
+    {crossings : Finset ℝ} {r t_i : ℝ} (h_endpts : a + r ≤ t_i ∧ t_i ≤ b - r)
     (h_pairwise : ∀ t' ∈ crossings, t' ≠ t_i → r < |t_i - t'|)
     (h_complete : ∀ t ∈ Icc a b, γ t = s → t ∈ crossings)
     {t : ℝ} (ht : t ∈ Icc (t_i - r) (t_i + r)) (h_eq : γ t = s) :
@@ -218,11 +212,9 @@ takes the value `s` is `t_i` itself. Stated for a bare function; no regularity i
 The family-wide form, for callers holding margins for every crossing at once; it reads them off
 at `t_i` and defers to `eq_of_mem_window_of_eq_of_le_of_lt`. -/
 theorem eq_of_mem_window_of_eq {α : Type*} {γ : ℝ → α} {s : α} {a b : ℝ}
-    {crossings : Finset ℝ} {r : ℝ}
-    (h_endpts : ∀ t ∈ crossings, a + r ≤ t ∧ t ≤ b - r)
+    {crossings : Finset ℝ} {r : ℝ} (h_endpts : ∀ t ∈ crossings, a + r ≤ t ∧ t ≤ b - r)
     (h_pairwise : ∀ t ∈ crossings, ∀ t' ∈ crossings, t' ≠ t → r < |t - t'|)
-    (h_complete : ∀ t ∈ Icc a b, γ t = s → t ∈ crossings)
-    {t_i : ℝ} (ht_i : t_i ∈ crossings)
+    (h_complete : ∀ t ∈ Icc a b, γ t = s → t ∈ crossings) {t_i : ℝ} (ht_i : t_i ∈ crossings)
     {t : ℝ} (ht : t ∈ Icc (t_i - r) (t_i + r)) (h_eq : γ t = s) :
     t = t_i :=
   eq_of_mem_window_of_eq_of_le_of_lt (h_endpts t_i ht_i) (h_pairwise t_i ht_i) h_complete ht h_eq
@@ -234,8 +226,7 @@ endpoints, and every other crossing more than `2 * r` from it. No sign condition
 required — halving the pairwise margin needs `0 ≤ r`, but a negative radius leaves the window
 `[t_i - r, t_i + r]` empty, so `ht` supplies it. -/
 theorem eq_of_mem_window_of_eq_of_lt_of_two_mul_lt {α : Type*} {γ : ℝ → α} {s : α} {a b : ℝ}
-    {crossings : Finset ℝ} {r t_i : ℝ}
-    (h_endpts : a + r < t_i ∧ t_i < b - r)
+    {crossings : Finset ℝ} {r t_i : ℝ} (h_endpts : a + r < t_i ∧ t_i < b - r)
     (h_pairwise : ∀ t' ∈ crossings, t' ≠ t_i → 2 * r < |t_i - t'|)
     (h_complete : ∀ t ∈ Icc a b, γ t = s → t ∈ crossings)
     {t : ℝ} (ht : t ∈ Icc (t_i - r) (t_i + r)) (h_eq : γ t = s) :

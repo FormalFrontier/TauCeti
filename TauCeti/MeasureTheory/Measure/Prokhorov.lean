@@ -65,10 +65,8 @@ Given tightness of the sequence and a common total-mass bound, the conclusion is
 measure with the same mass bound and weak convergence of all bounded-continuous test-function
 integrals along an ultrafilter `U ≤ atTop`; no first-countability assumption on `FiniteMeasure α`
 is needed. -/
-lemma finite_measure_cluster_limit
-    (σ : ℕ → Measure α) (C : ℝ≥0)
-    (hmass : ∀ n, (σ n) univ ≤ (C : ENNReal))
-    (hTight : IsTightMeasureSet (Set.range σ)) :
+lemma finite_measure_cluster_limit (σ : ℕ → Measure α) (C : ℝ≥0)
+    (hmass : ∀ n, (σ n) univ ≤ (C : ENNReal)) (hTight : IsTightMeasureSet (Set.range σ)) :
     ∃ (μ₀ : Measure α) (U : Ultrafilter ℕ), (U : Filter ℕ) ≤ atTop ∧ IsFiniteMeasure μ₀ ∧
       μ₀ univ ≤ (C : ENNReal) ∧
       ∀ g : BoundedContinuousFunction α ℝ,
@@ -115,10 +113,8 @@ lemma finite_measure_cluster_limit
     simpa [σf] using hweak
 
 /-- Sequential form of `finite_measure_cluster_limit` when `FiniteMeasure α` is first-countable. -/
-lemma finite_measure_subseq_limit
-    [FirstCountableTopology (FiniteMeasure α)]
-    (σ : ℕ → Measure α) (C : ℝ≥0)
-    (hmass : ∀ n, (σ n) univ ≤ (C : ENNReal))
+lemma finite_measure_subseq_limit [FirstCountableTopology (FiniteMeasure α)]
+    (σ : ℕ → Measure α) (C : ℝ≥0) (hmass : ∀ n, (σ n) univ ≤ (C : ENNReal))
     (hTight : IsTightMeasureSet (Set.range σ)) :
     ∃ (μ₀ : Measure α) (φ : ℕ → ℕ), IsFiniteMeasure μ₀ ∧ StrictMono φ ∧
       μ₀ univ ≤ (C : ENNReal) ∧

@@ -84,7 +84,7 @@ lemma complexModule_smul_def (J : AlmostComplexStructure V) (z : ℂ) (v : V) :
     letI := J.complexModule
     z • v = z.re • v + z.im • J v :=
   by
-  letI := J.complexModule
+  let := J.complexModule
   rw [module_compHom_smul_def, Module.End.smul_def]
   exact liftAux_toRingHom_apply J J.toLinearMap_mul_toLinearMap z v
 
@@ -92,14 +92,14 @@ lemma complexModule_smul_def (J : AlmostComplexStructure V) (z : ℂ) (v : V) :
 lemma complexModule_I_smul (J : AlmostComplexStructure V) (v : V) :
     letI := J.complexModule
     (Complex.I) • v = J v := by
-  letI := J.complexModule
+  let := J.complexModule
   rw [complexModule_smul_def, Complex.I_re, Complex.I_im, zero_smul, one_smul, zero_add]
 
 /-- The induced complex action restricts along `ℝ → ℂ` to the original real action. -/
 lemma complexModule_ofReal_smul (J : AlmostComplexStructure V) (r : ℝ) (v : V) :
     letI := J.complexModule
     (r : ℂ) • v = r • v := by
-  letI := J.complexModule
+  let := J.complexModule
   rw [complexModule_smul_def, Complex.ofReal_re, Complex.ofReal_im, zero_smul, add_zero]
 
 /-- `ℝ`, `ℂ`, and `V` form a scalar tower for the induced complex structure: the real scalars act
@@ -107,7 +107,7 @@ the same whether through `ℝ` or through `ℂ`. -/
 lemma complexModule_isScalarTower (J : AlmostComplexStructure V) :
     letI := J.complexModule
     IsScalarTower ℝ ℂ V := by
-  letI := J.complexModule
+  let := J.complexModule
   refine ⟨fun a b v => ?_⟩
   rw [complexModule_smul_def, complexModule_smul_def, Complex.smul_re, Complex.smul_im]
   simp only [smul_eq_mul]
@@ -143,8 +143,8 @@ lemma ofComplexModule_complexModule {V : Type*} [AddCommGroup V] [Module ℝ V]
     letI := J.complexModule
     letI := J.complexModule_isScalarTower
     ofComplexModule V = J := by
-  letI := J.complexModule
-  letI := J.complexModule_isScalarTower
+  let := J.complexModule
+  let := J.complexModule_isScalarTower
   refine AlmostComplexStructure.ext fun v => ?_
   rw [ofComplexModule_apply, complexModule_I_smul]
 
@@ -171,7 +171,7 @@ lemma complexModule_ofComplexModule_smul {V : Type*}
     rw [ofComplexModule_apply]
   have hdecomp : z.re • v + z.im • smul₀ Complex.I v = smul₀ z v := by
     exact re_smul_add_im_smul_I_eq_complex_smul z v
-  letI := (ofComplexModule V).complexModule
+  let := (ofComplexModule V).complexModule
   rw [complexModule_smul_def]
   rw [ofComplexModule_smul]
   exact hdecomp

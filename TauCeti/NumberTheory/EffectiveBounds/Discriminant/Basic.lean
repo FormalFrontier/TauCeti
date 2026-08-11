@@ -101,8 +101,7 @@ theorem abs_discr_le_of_basis_isIntegral {K : Type*} [Field K] [NumberField K]
 discriminant is bounded by the same rational number. -/
 theorem abs_discr_le_of_basis_isIntegral_of_abs_discr_le {K : Type*} [Field K] [NumberField K]
     {ι : Type*} [Fintype ι] [DecidableEq ι] (b : Module.Basis ι ℚ K)
-    (hb : ∀ i, IsIntegral ℤ (b i)) {B : ℚ}
-    (hB : |Algebra.discr ℚ (b : ι → K)| ≤ B) :
+    (hb : ∀ i, IsIntegral ℤ (b i)) {B : ℚ} (hB : |Algebra.discr ℚ (b : ι → K)| ≤ B) :
     |(NumberField.discr K : ℚ)| ≤ B :=
   (abs_discr_le_of_basis_isIntegral b hb).trans hB
 
@@ -110,8 +109,7 @@ theorem abs_discr_le_of_basis_isIntegral_of_abs_discr_le {K : Type*} [Field K] [
 the natural absolute discriminant of the number field is at most `d.natAbs`. -/
 theorem natAbs_discr_le_of_basis_isIntegral_of_discr_eq_int {K : Type*} [Field K] [NumberField K]
     {ι : Type*} [Fintype ι] [DecidableEq ι] (b : Module.Basis ι ℚ K)
-    (hb : ∀ i, IsIntegral ℤ (b i)) {d : ℤ}
-    (hdisc : Algebra.discr ℚ (b : ι → K) = (d : ℚ)) :
+    (hb : ∀ i, IsIntegral ℤ (b i)) {d : ℤ} (hdisc : Algebra.discr ℚ (b : ι → K) = (d : ℚ)) :
     (NumberField.discr K).natAbs ≤ d.natAbs := by
   have hq : |(NumberField.discr K : ℚ)| ≤ |(d : ℚ)| := by
     simpa [hdisc] using abs_discr_le_of_basis_isIntegral b hb
@@ -132,8 +130,7 @@ theorem natAbs_discr_le_of_basis_isIntegral_of_discr_eq_int_of_natAbs_le
 theorem natAbs_discr_le_of_basis_isIntegral_of_discr_eq_nat
     {K : Type*} [Field K] [NumberField K] {ι : Type*} [Fintype ι] [DecidableEq ι]
     (b : Module.Basis ι ℚ K) (hb : ∀ i, IsIntegral ℤ (b i)) {D : ℕ}
-    (hdisc : Algebra.discr ℚ (b : ι → K) = (D : ℚ)) :
-    (NumberField.discr K).natAbs ≤ D := by
+    (hdisc : Algebra.discr ℚ (b : ι → K) = (D : ℚ)) : (NumberField.discr K).natAbs ≤ D := by
   exact natAbs_discr_le_of_basis_isIntegral_of_discr_eq_int_of_natAbs_le
     b hb (d := (D : ℤ)) (by simpa using hdisc) (by simp)
 

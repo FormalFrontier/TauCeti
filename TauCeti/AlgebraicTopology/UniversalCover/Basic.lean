@@ -212,8 +212,7 @@ noncomputable def sheet (U : Set X) (hxU : x ∈ U)
   ofBasedPath x₀ '' basedPathSheet U hxU q
 
 /-- Points of the sheet over `U` project into `U`. -/
-theorem sheet_subset_proj_preimage (U : Set X) (hxU : x ∈ U)
-    (q : Path.Homotopic.Quotient x₀ x) :
+theorem sheet_subset_proj_preimage (U : Set X) (hxU : x ∈ U) (q : Path.Homotopic.Quotient x₀ x) :
     sheet U hxU q ⊆ proj (x₀ := x₀) ⁻¹' U := by
   rintro _ ⟨α, hα, rfl⟩
   rw [Set.mem_preimage, proj_ofBasedPath]
@@ -222,10 +221,8 @@ theorem sheet_subset_proj_preimage (U : Set X) (hxU : x ∈ U)
 /-- Two based paths with equal `ofBasedPath` images lie in the same path component of any
 endpoint preimage of a set containing their common endpoint. This expresses saturation under
 the quotient map `ofBasedPath`. -/
-private theorem pathComponent_preimage_eq_of_ofBasedPath_eq
-    {U : Set X} {α β : BasedPath x₀}
-    (hα_end : BasedPath.endpoint α ∈ U)
-    (hαβ : ofBasedPath x₀ α = ofBasedPath x₀ β) :
+private theorem pathComponent_preimage_eq_of_ofBasedPath_eq {U : Set X} {α β : BasedPath x₀}
+    (hα_end : BasedPath.endpoint α ∈ U) (hαβ : ofBasedPath x₀ α = ofBasedPath x₀ β) :
     pathComponentIn (BasedPath.endpoint (x₀ := x₀) ⁻¹' U) α =
       pathComponentIn (BasedPath.endpoint (x₀ := x₀) ⁻¹' U) β := by
   have hβ_end : BasedPath.endpoint β ∈ U :=
@@ -249,8 +246,7 @@ private theorem mem_basedPathComponent_of_ofBasedPath_eq {U : Set X} {y : X} {p 
 
 /-- The preimage of a sheet under `ofBasedPath` is the corresponding `basedPathSheet`.
 This expresses that the sheet is saturated under the `ofBasedPath` quotient. -/
-theorem ofBasedPath_preimage_sheet (U : Set X) (hxU : x ∈ U)
-    (q : Path.Homotopic.Quotient x₀ x) :
+theorem ofBasedPath_preimage_sheet (U : Set X) (hxU : x ∈ U) (q : Path.Homotopic.Quotient x₀ x) :
     ofBasedPath x₀ ⁻¹' sheet U hxU q = basedPathSheet U hxU q := by
   apply Set.Subset.antisymm
   · intro α hα
@@ -271,8 +267,7 @@ itself lies in the corresponding `basedPathSheet`. -/
 
 /-- A sheet over an open set is open under the local hypotheses for universal covers. -/
 theorem isOpen_sheet [LocallyPathConnectedSpace X] [SemilocallySimplyConnectedSpace X]
-    (U : Set X) (hU_open : IsOpen U) (hxU : x ∈ U)
-    (q : Path.Homotopic.Quotient x₀ x) :
+    (U : Set X) (hU_open : IsOpen U) (hxU : x ∈ U) (q : Path.Homotopic.Quotient x₀ x) :
     IsOpen (sheet U hxU q) := by
   rw [(isQuotientMap_ofBasedPath x₀).isOpen_preimage.symm]
   rw [ofBasedPath_preimage_sheet]
@@ -286,8 +281,7 @@ theorem mem_sheet_self {U : Set X} (hxU : x ∈ U) (p : Path x₀ x) :
     (by simpa using hxU), rfl⟩
 
 /-- Sheet surjection onto `U`: every point of `U` is the projection of a point of the sheet. -/
-theorem proj_surjOn_sheet
-    {U : Set X} (hU_pathConn : IsPathConnected U)
+theorem proj_surjOn_sheet {U : Set X} (hU_pathConn : IsPathConnected U)
     (hxU : x ∈ U) (q : Path.Homotopic.Quotient x₀ x) :
     (sheet U hxU q).SurjOn (proj (x₀ := x₀)) U := by
   intro v hvU
@@ -310,8 +304,7 @@ theorem proj_surjOn_sheet
 
 /-- Sheets over the same good neighborhood, indexed by `Path.Homotopic.Quotient`, are pairwise
 disjoint. -/
-theorem pairwise_disjoint_sheet
-    {U : Set X} (hU_slsc : IsPathHomotopyTrivial U) (hxU : x ∈ U) :
+theorem pairwise_disjoint_sheet {U : Set X} (hU_slsc : IsPathHomotopyTrivial U) (hxU : x ∈ U) :
     Pairwise fun (q₁ q₂ : Path.Homotopic.Quotient x₀ x) ↦
       Disjoint (sheet U hxU q₁) (sheet U hxU q₂) := by
   intro q₁ q₂ hne
@@ -339,9 +332,7 @@ theorem pairwise_disjoint_sheet
       exact eq_of_heq ((UniversalCover.mk.injEq _ _ _ _).mp h_uc_eq).2
 
 /-- Sheets exhaust `proj ⁻¹' U`: every element of the preimage lies in some sheet. -/
-theorem sheet_exhaustive
-    {U : Set X} (hU_pathConn : IsPathConnected U)
-    (hxU : x ∈ U) :
+theorem sheet_exhaustive {U : Set X} (hU_pathConn : IsPathConnected U) (hxU : x ∈ U) :
     (proj (x₀ := x₀) ⁻¹' U) ⊆ ⋃ q : Path.Homotopic.Quotient x₀ x, sheet U hxU q := by
   intro e he
   obtain ⟨α, rfl⟩ := surjective_ofBasedPath x₀ e
@@ -361,10 +352,8 @@ theorem sheet_exhaustive
   exact ⟨α, h_join.symm, rfl⟩
 
 /-- In a good neighborhood `U`, the projection `proj` is injective on each sheet. -/
-theorem proj_injOn_sheet
-    {U : Set X} (hU_slsc : IsPathHomotopyTrivial U)
-    (hxU : x ∈ U) (q : Path.Homotopic.Quotient x₀ x) :
-    (sheet U hxU q).InjOn (proj (x₀ := x₀)) := by
+theorem proj_injOn_sheet {U : Set X} (hU_slsc : IsPathHomotopyTrivial U)
+    (hxU : x ∈ U) (q : Path.Homotopic.Quotient x₀ x) : (sheet U hxU q).InjOn (proj (x₀ := x₀)) := by
   rintro _ ⟨α₁, hα₁, rfl⟩ _ ⟨α₂, hα₂, rfl⟩ h_proj
   rw [proj_ofBasedPath, proj_ofBasedPath] at h_proj
   induction q using Quotient.inductionOn with

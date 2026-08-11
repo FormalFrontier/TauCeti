@@ -88,11 +88,52 @@ theorem map_add (S : StronglyContinuousSemigroup X) (s t : ℝ≥0) :
   S.map_add' s t
 
 omit [CompleteSpace X] in
+/-- **The operator at a natural multiple of a time is a power.** `S (k • t) = (S t) ^ k`.
+
+Not a `simp` lemma: `nsmul_eq_mul` rewrites the left-hand side to `S (↑k * t)`, so tagging this
+would put it out of simp normal form (`simpNF`). -/
+theorem map_nsmul (S : StronglyContinuousSemigroup X) (t : ℝ≥0) (k : ℕ) :
+    S (k • t) = (S t) ^ k := by
+  induction k with
+  | zero => rw [zero_smul, S.map_zero, pow_zero, ContinuousLinearMap.one_def]
+  | succ k ih =>
+    rw [succ_nsmul', S.map_add, ih, pow_succ', ContinuousLinearMap.mul_def]
+
+omit [CompleteSpace X] in
+/-- **The power identity in simp normal form.** `S (↑k * t) = (S t) ^ k`.
+
+This is `map_nsmul` with the left-hand side normalised: `nsmul_eq_mul` rewrites `k • t` to
+`↑k * t`, so this spelling is the one `simp` can reach. -/
+@[simp]
+theorem map_natCast_mul (S : StronglyContinuousSemigroup X) (t : ℝ≥0) (k : ℕ) :
+    S ((k : ℝ≥0) * t) = (S t) ^ k := by
+  simpa [nsmul_eq_mul] using S.map_nsmul t k
+
+omit [CompleteSpace X] in
+/-- **The multi-step operator-norm bound.** If `‖S t‖ ≤ M`, then `‖S (k • t)‖ ≤ M ^ k` at every
+natural multiple of `t`. -/
+theorem norm_map_nsmul_le_pow (S : StronglyContinuousSemigroup X) (t : ℝ≥0) {M : ℝ}
+    (hMt : ‖S t‖ ≤ M) (k : ℕ) : ‖S (k • t)‖ ≤ M ^ k := by
+  rw [S.map_nsmul]
+  rcases Nat.eq_zero_or_pos k with rfl | hk
+  · simpa [ContinuousLinearMap.one_def] using ContinuousLinearMap.norm_id_le
+  · exact (norm_pow_le' _ hk).trans (pow_le_pow_left₀ (norm_nonneg _) hMt k)
+
+omit [CompleteSpace X] in
 /-- Pointwise form of `StronglyContinuousSemigroup.map_add`. -/
 theorem map_add_apply (S : StronglyContinuousSemigroup X) (s t : ℝ≥0) (x : X) :
     S (s + t) x = S s (S t x) := by
   rw [S.map_add]
   rfl
+
+omit [CompleteSpace X] in
+/-- **The increment of a semigroup over `[a, b]` factors through its value at `a`.** -/
+theorem sub_eq_comp_sub_one_of_le (S : StronglyContinuousSemigroup X) {a b : ℝ≥0} (hab : a ≤ b) :
+    S b - S a = (S a).comp (S (b - a) - 1) := by
+  have hmap := S.map_add a (b - a)
+  rw [add_tsub_cancel_of_le hab] at hmap
+  rw [hmap, ContinuousLinearMap.comp_sub, ContinuousLinearMap.one_def,
+    ContinuousLinearMap.comp_id]
 
 omit [CompleteSpace X] in
 /-- Submultiplicativity of the native nonnegative-time operator norm. -/
@@ -117,6 +158,15 @@ omit [CompleteSpace X] in
 /-- The semigroup as a function of real time, extended by `id` for `t < 0`. -/
 noncomputable def realOperator (S : StronglyContinuousSemigroup X) (t : ℝ) : X →L[ℝ] X :=
   S t.toNNReal
+
+omit [CompleteSpace X] in
+/-- The real-time operator is the native semigroup operator at the nonnegative part of `t`.
+
+This is not a `simp` lemma: the simp normal form keeps `realOperator` folded, so that the more
+specific lemmas `realOperator_coe`, `realOperator_zero` and `realOperator_derivWithin_zero` fire. -/
+theorem realOperator_def (S : StronglyContinuousSemigroup X) (t : ℝ) :
+    S.realOperator t = S t.toNNReal := by
+  rw [realOperator]
 
 omit [CompleteSpace X] in
 @[simp]
@@ -303,8 +353,7 @@ private theorem StronglyContinuousSemigroup.pointwiseBoundedOnUnitInterval
 
 One direction of [EN] Prop. I.5.3: strong continuity implies uniform boundedness
 on compact intervals. -/
-theorem StronglyContinuousSemigroup.normBoundedOnUnitInterval
-    (S : StronglyContinuousSemigroup X) :
+theorem StronglyContinuousSemigroup.normBoundedOnUnitInterval (S : StronglyContinuousSemigroup X) :
     ∃ (M : ℝ), 1 ≤ M ∧
       ∀ (t : ℝ), 0 ≤ t → t ≤ 1 → ‖S.realOperator t‖ ≤ M := by
   obtain ⟨C, hC⟩ := banach_steinhaus S.pointwiseBoundedOnUnitInterval
@@ -435,12 +484,9 @@ theorem StronglyContinuousSemigroup.realOperator_continuousWithinAt
   have h_Ici_split : Set.Ici (0 : ℝ) =
       (Set.Ici 0 ∩ Set.Iic t₀) ∪ (Set.Ici 0 ∩ Set.Ici t₀) := by
     rw [← Set.inter_union_distrib_left, Set.Iic_union_Ici, Set.inter_univ]
-  rw [ContinuousWithinAt]
-  rw [h_Ici_split]
-  rw [nhdsWithin_union, Filter.tendsto_sup]
-  have h_right_set : Set.Ici (0 : ℝ) ∩ Set.Ici t₀ = Set.Ici t₀ := by
-    ext y; simp only [Set.mem_inter_iff, Set.mem_Ici]
-    exact ⟨fun ⟨_, h⟩ => h, fun h => ⟨le_trans ht₀ h, h⟩⟩
+  rw [ContinuousWithinAt, h_Ici_split, nhdsWithin_union, Filter.tendsto_sup]
+  have h_right_set : Set.Ici (0 : ℝ) ∩ Set.Ici t₀ = Set.Ici t₀ :=
+    Set.inter_eq_right.mpr (Set.Ici_subset_Ici.mpr ht₀)
   have h_left_set : Set.Ici (0 : ℝ) ∩ Set.Iic t₀ = Set.Icc 0 t₀ :=
     Set.Ici_inter_Iic
   rw [h_left_set, h_right_set]

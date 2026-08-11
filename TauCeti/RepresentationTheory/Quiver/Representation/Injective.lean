@@ -73,9 +73,10 @@ cross it do so by `change`, and each says in a comment which definitional equali
 The vector space `(Iᵢ)_j` lives in the universe of `Quiver.Path j i → k`, which is larger than the
 universe of `k` unless the vertex and arrow types are small. The vertex simple `Sᵢ` of
 `TauCeti.RepresentationTheory.Quiver.Representation.Simple` is built on `k` itself, so the two
-objects sit in a common category only when those universes agree, and the injective envelope
-`Sᵢ ↪ Iᵢ` is therefore not stated here, exactly as the projective cover `Pᵢ ↠ Sᵢ` is not stated in
-`TauCeti.RepresentationTheory.Quiver.Representation.Projective.Basic`.
+objects sit in a common category only when those universes agree, and the embedding
+`Sᵢ ↪ Iᵢ` is therefore not stated here, exactly as the surjection `Pᵢ ↠ Sᵢ` is not stated in
+`TauCeti.RepresentationTheory.Quiver.Representation.Projective.Basic`; both are stated in
+`TauCeti.RepresentationTheory.Quiver.Representation.Comparison`, where those universes are aligned.
 
 ## References
 
@@ -178,8 +179,7 @@ theorem dimVector_indecInjRep_eq_dimVector_indecProjRep (i j : Q) :
 
 /-- The morphism `M ⟶ Iᵢ` determined by a linear functional `φ` on `M` at the vertex `i`: at the
 vertex `j` it sends `x` to the function reading off `φ` of the action of a path `j → i` on `x`. -/
-def indecInjRepHom (i : Q) (M : QuiverRep k Q)
-    (φ : Module.Dual k (M.obj ((Paths.of Q).obj i))) :
+def indecInjRepHom (i : Q) (M : QuiverRep k Q) (φ : Module.Dual k (M.obj ((Paths.of Q).obj i))) :
     M ⟶ indecInjRep k Q i where
   app j := ModuleCat.ofHom (LinearMap.pi fun q : Quiver.Path (V := Q) j i ↦ φ ∘ₗ (M.map q).hom)
   naturality {a b} p := by
@@ -318,7 +318,7 @@ theorem finrank_hom_indecInjRep_indecInjRep (i j : Q) :
 of `(Iᵢ)_i`, since the trivial path is one of them. -/
 theorem not_isZero_indecInjRep (i : Q) : ¬ IsZero (indecInjRep k Q i) := by
   intro h
-  letI : Subsingleton ((indecInjRep k Q i).obj i) := ModuleCat.subsingleton_of_isZero (h.obj i)
+  let : Subsingleton ((indecInjRep k Q i).obj i) := ModuleCat.subsingleton_of_isZero (h.obj i)
   have h1 : (fun _ : Quiver.Path i i ↦ (1 : k)) = (fun _ : Quiver.Path i i ↦ (0 : k)) :=
     Subsingleton.elim (α := ((indecInjRep k Q i).obj i : Type _)) _ _
   exact one_ne_zero (congrFun h1 Quiver.Path.nil)

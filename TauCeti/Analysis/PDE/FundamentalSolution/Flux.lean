@@ -74,8 +74,7 @@ theorem fderiv_planarNewtonianKernel_circle_normal {r θ : ℝ} (hr : 0 < r) :
 
 /-- The arclength-weighted normal derivative of the planar Newtonian kernel is constant on every
 positively oriented circle around its pole. -/
-theorem radius_mul_fderiv_planarNewtonianKernel_sub_circle_normal
-    {a : ℂ} {r θ : ℝ} (hr : 0 < r) :
+theorem radius_mul_fderiv_planarNewtonianKernel_sub_circle_normal {a : ℂ} {r θ : ℝ} (hr : 0 < r) :
     r * fderiv ℝ (fun w ↦ planarNewtonianKernel (w - a)) (circleMap a r θ)
         ((r : ℂ)⁻¹ * circleMap 0 r θ) = -(2 * Real.pi)⁻¹ := by
   rw [fderiv_planarNewtonianKernel_sub_circle_normal hr]
@@ -83,8 +82,7 @@ theorem radius_mul_fderiv_planarNewtonianKernel_sub_circle_normal
 
 /-- The arclength-weighted normal derivative of the planar Newtonian kernel is constant on every
 positively oriented circle centered at the origin. -/
-theorem radius_mul_fderiv_planarNewtonianKernel_circle_normal
-    {r θ : ℝ} (hr : 0 < r) :
+theorem radius_mul_fderiv_planarNewtonianKernel_circle_normal {r θ : ℝ} (hr : 0 < r) :
     r * fderiv ℝ planarNewtonianKernel (circleMap 0 r θ)
         ((r : ℂ)⁻¹ * circleMap 0 r θ) = -(2 * Real.pi)⁻¹ := by
   simpa only [sub_zero] using

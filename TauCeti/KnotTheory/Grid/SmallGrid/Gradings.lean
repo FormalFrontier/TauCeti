@@ -60,8 +60,7 @@ theorem twoByTwo_XSet :
   rcases p with ⟨c, r⟩
   fin_cases c <;> fin_cases r <;> simp [XSet]
 
-private theorem twoByTwoId_pairCard_self :
-    (Finset.univ.filter fun p : Fin 2 × Fin 2 =>
+private theorem twoByTwoId_pairCard_self : (Finset.univ.filter fun p : Fin 2 × Fin 2 =>
       p.1 < p.2 ∧ GridState.twoByTwoId p.1 < GridState.twoByTwoId p.2).card = 1 := by
   have hfilter : (Finset.univ.filter fun p : Fin 2 × Fin 2 =>
       p.1 < p.2 ∧ GridState.twoByTwoId p.1 < GridState.twoByTwoId p.2) = {(0, 1)} := by
@@ -69,8 +68,7 @@ private theorem twoByTwoId_pairCard_self :
   rw [hfilter]
   simp
 
-private theorem twoByTwoSwap_pairCard_self :
-    (Finset.univ.filter fun p : Fin 2 × Fin 2 =>
+private theorem twoByTwoSwap_pairCard_self : (Finset.univ.filter fun p : Fin 2 × Fin 2 =>
       p.1 < p.2 ∧ GridState.twoByTwoSwap p.1 < GridState.twoByTwoSwap p.2).card = 0 := by
   have hfilter : (Finset.univ.filter fun p : Fin 2 × Fin 2 =>
       p.1 < p.2 ∧ GridState.twoByTwoSwap p.1 < GridState.twoByTwoSwap p.2) = ∅ := by
@@ -78,8 +76,7 @@ private theorem twoByTwoSwap_pairCard_self :
   rw [hfilter]
   simp
 
-private theorem twoByTwoId_pairCard_swap :
-    (Finset.univ.filter fun p : Fin 2 × Fin 2 =>
+private theorem twoByTwoId_pairCard_swap : (Finset.univ.filter fun p : Fin 2 × Fin 2 =>
       p.1 < p.2 ∧ GridState.twoByTwoId p.1 < GridState.twoByTwoSwap p.2).card = 0 := by
   have hfilter : (Finset.univ.filter fun p : Fin 2 × Fin 2 =>
       p.1 < p.2 ∧ GridState.twoByTwoId p.1 < GridState.twoByTwoSwap p.2) = ∅ := by
@@ -87,8 +84,7 @@ private theorem twoByTwoId_pairCard_swap :
   rw [hfilter]
   simp
 
-private theorem twoByTwoSwap_pairCard_id :
-    (Finset.univ.filter fun p : Fin 2 × Fin 2 =>
+private theorem twoByTwoSwap_pairCard_id : (Finset.univ.filter fun p : Fin 2 × Fin 2 =>
       p.1 < p.2 ∧ GridState.twoByTwoSwap p.1 < GridState.twoByTwoId p.2).card = 0 := by
   have hfilter : (Finset.univ.filter fun p : Fin 2 × Fin 2 =>
       p.1 < p.2 ∧ GridState.twoByTwoSwap p.1 < GridState.twoByTwoId p.2) = ∅ := by

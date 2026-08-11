@@ -62,8 +62,7 @@ theorem harmonicOnNhd_comp_add_right_ball_zero_iff (x : E) (r : ℝ) {f : E → 
 
 /-- Harmonicity on a neighbourhood of `Metric.ball x r` is equivalent to harmonicity of the
 normalized function `y ↦ f (x + r • y)` on a neighbourhood of the unit ball. -/
-theorem harmonicOnNhd_comp_const_add_smul_ball_iff (x : E) {r : ℝ} (hr : 0 < r)
-    {f : E → F} :
+theorem harmonicOnNhd_comp_const_add_smul_ball_iff (x : E) {r : ℝ} (hr : 0 < r) {f : E → F} :
     HarmonicOnNhd (fun y ↦ f (x + r • y)) (Metric.ball 0 1) ↔
       HarmonicOnNhd f (Metric.ball x r) := by
   simpa [Real.norm_of_nonneg hr.le] using

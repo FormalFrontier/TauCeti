@@ -66,8 +66,7 @@ theorem compMeasurePreservingₗᵢ_apply {α β E : Type*} [MeasurableSpace α]
 precomposing by `g` undoes precomposing by `f`. -/
 theorem compMeasurePreserving_comp_apply_of_ae_id {α β E : Type*} [MeasurableSpace α]
     [MeasurableSpace β] {μ : Measure α} {μb : Measure β} {p : ℝ≥0∞} [NormedAddCommGroup E]
-    {f : α → β} {g : β → α}
-    (hf : MeasurePreserving f μ μb) (hg : MeasurePreserving g μb μ)
+    {f : α → β} {g : β → α} (hf : MeasurePreserving f μ μb) (hg : MeasurePreserving g μb μ)
     (hfg : f ∘ g =ᵐ[μb] id) (x : Lp E p μb) :
     compMeasurePreserving g hg (compMeasurePreserving f hf x) = x := by
   rw [← compMeasurePreserving_comp_apply (E := E) (p := p) x hf hg]
@@ -94,8 +93,7 @@ noncomputable def compMeasurePreservingₗᵢEquiv {α β E : Type*} [Measurable
     [MeasurableSpace β] {μ : Measure α} {μb : Measure β} {p : ℝ≥0∞} [NormedAddCommGroup E]
     {f : α → β} {g : β → α}
     (𝕜 : Type*) [NormedRing 𝕜] [Module 𝕜 E] [IsBoundedSMul 𝕜 E] [Fact (1 ≤ p)]
-    (hf : MeasurePreserving f μ μb) (hg : MeasurePreserving g μb μ)
-    (hfg : f ∘ g =ᵐ[μb] id) :
+    (hf : MeasurePreserving f μ μb) (hg : MeasurePreserving g μb μ) (hfg : f ∘ g =ᵐ[μb] id) :
     Lp E p μb ≃ₗᵢ[𝕜] Lp E p μ :=
   LinearIsometryEquiv.ofLinearIsometry (compMeasurePreservingₗᵢ 𝕜 f hf)
     (compMeasurePreservingₗ 𝕜 g hg)

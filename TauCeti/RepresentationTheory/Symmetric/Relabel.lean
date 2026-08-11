@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.RepresentationTheory.Character
-public import TauCeti.RepresentationTheory.Symmetric.SpechtIdeal
+public import TauCeti.RepresentationTheory.Symmetric.Specht.Ideal.Basic
 
 /-!
 # Relabeling a Young tableau conjugates its Young symmetrizer
@@ -28,7 +28,8 @@ character, depend only on the shape of `t`.
 ## Main results
 
 * `YoungTableau.youngSymmetrizer_relabel`: the Young symmetrizer of a relabeled tableau is the
-  conjugate of the Young symmetrizer.
+  conjugate of the Young symmetrizer, and `YoungTableau.youngSymmetrizerOver_relabel` says the
+  same for its transport to a `ℚ`-algebra.
 * `YoungTableau.spechtIdealRelabelRepEquiv`: right multiplication by `σ` as an isomorphism of
   representations `ℚ[Sₙ] c_{σt} ≅ ℚ[Sₙ] c_t`.
 * `YoungTableau.spechtIdealRepIso`, `YoungTableau.finrank_spechtIdeal_eq` and
@@ -124,8 +125,8 @@ theorem rowSymmetrizer_relabel :
   ext τ
   rw [coeff_conj, rowSymmetrizer_coeff, rowSymmetrizer_coeff]
   by_cases h : σ⁻¹ * τ * σ ∈ rowSubgroup t
-  · rw [if_pos h, if_pos ((mem_rowSubgroup_relabel σ t).mpr h)]
-  · rw [if_neg h, if_neg fun hτ => h ((mem_rowSubgroup_relabel σ t).mp hτ)]
+  · rw [ite_eq_left h, ite_eq_left ((mem_rowSubgroup_relabel σ t).mpr h)]
+  · rw [ite_eq_right h, ite_eq_right fun hτ => h ((mem_rowSubgroup_relabel σ t).mp hτ)]
 
 /-- Relabeling by `σ` conjugates the column antisymmetrizer by `σ`; the signs are unchanged,
 conjugate permutations having equal signs. -/
@@ -138,8 +139,8 @@ theorem columnAntisymmetrizer_relabel :
   have hsign : Equiv.Perm.sign (σ⁻¹ * τ * σ) = Equiv.Perm.sign τ := by
     rw [map_mul, map_mul, Equiv.Perm.sign_inv, mul_right_comm, Int.units_mul_self, one_mul]
   by_cases h : σ⁻¹ * τ * σ ∈ colSubgroup t
-  · rw [if_pos h, if_pos ((mem_colSubgroup_relabel σ t).mpr h), hsign]
-  · rw [if_neg h, if_neg fun hτ => h ((mem_colSubgroup_relabel σ t).mp hτ)]
+  · rw [ite_eq_left h, ite_eq_left ((mem_colSubgroup_relabel σ t).mpr h), hsign]
+  · rw [ite_eq_right h, ite_eq_right fun hτ => h ((mem_colSubgroup_relabel σ t).mp hτ)]
 
 /-- Relabeling by `σ` conjugates the Young symmetrizer by `σ`: `c_{σt} = σ c_t σ⁻¹`. -/
 @[simp]
@@ -152,6 +153,14 @@ theorem youngSymmetrizer_relabel :
     columnAntisymmetrizer_relabel]
   simp only [mul_assoc]
   rw [← mul_assoc (MonoidAlgebra.single σ⁻¹ (1 : ℚ)), hσ, one_mul]
+
+/-- Relabeling by `σ` conjugates the transported Young symmetrizer, as it does the rational
+one. -/
+theorem youngSymmetrizerOver_relabel (k : Type*) [CommSemiring k] [Algebra ℚ k] :
+    youngSymmetrizerOver k (relabel σ t) =
+      MonoidAlgebra.single σ 1 * youngSymmetrizerOver k t * MonoidAlgebra.single σ⁻¹ 1 := by
+  rw [youngSymmetrizerOver_def, youngSymmetrizerOver_def, youngSymmetrizer_relabel, map_mul,
+    map_mul, MonoidAlgebra.mapAlgHom_single, MonoidAlgebra.mapAlgHom_single, map_one]
 
 /-! ## The Young-symmetrizer left ideal of a relabeled tableau -/
 
@@ -234,7 +243,6 @@ theorem spechtIdealRelabelRepIso_hom_hom_apply_coe (x : spechtIdeal (relabel σ 
 end
 
 /-- Relabeling does not change the dimension of the Young-symmetrizer left ideal. -/
-@[simp]
 theorem finrank_spechtIdeal_relabel :
     Module.finrank ℚ (spechtIdeal (relabel σ t)) = Module.finrank ℚ (spechtIdeal t) :=
   ((spechtIdealRelabelEquiv σ t).restrictScalars ℚ).finrank_eq

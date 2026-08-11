@@ -52,8 +52,7 @@ def subOfLe (D : EffectiveDivisorOfDegree X e) (E : EffectiveDivisorOfDegree X d
 underlying Weil divisors. -/
 @[simp]
 lemma coe_subOfLe (D : EffectiveDivisorOfDegree X e) (E : EffectiveDivisorOfDegree X d)
-    (hED : (E : WeilDivisor X) ≤ D) :
-    (subOfLe D E hED : WeilDivisor X) = (D : WeilDivisor X) - E :=
+    (hED : (E : WeilDivisor X) ≤ D) : (subOfLe D E hED : WeilDivisor X) = (D : WeilDivisor X) - E :=
   rfl
 
 /-- The coefficient of a residual fixed-degree divisor is the difference of coefficients. -/

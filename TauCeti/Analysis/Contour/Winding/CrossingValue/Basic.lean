@@ -44,6 +44,25 @@ namespace TauCeti.Contour
 
 open Complex Filter Topology
 
+/-- **The winding integrand of a normalized chord expansion.** For `τ ≠ 0` and `q - L = τ r`, the
+real winding integrand at position `τ q` and velocity `L + τ d` is
+`(r.re * L.im - r.im * L.re + (q.re * d.im - q.im * d.re)) / ‖q‖²`.
+
+At `q = 0` both sides are `0`, by the junk value of division. -/
+private theorem realWindingIntegrand_mul_add_eq_div_of_sub_eq_mul {τ : ℝ} {q r d L : ℂ}
+    (hτ : τ ≠ 0) (hqr : q - L = (τ : ℂ) * r) :
+    realWindingIntegrand ((τ : ℂ) * q) (L + (τ : ℂ) * d)
+      = (r.re * L.im - r.im * L.re + (q.re * d.im - q.im * d.re)) / Complex.normSq q := by
+  rcases eq_or_ne q 0 with rfl | hq
+  · simp
+  obtain rfl : L = q - (τ : ℂ) * r := by linear_combination -hqr
+  rw [realWindingIntegrand_eq_div]
+  simp only [Complex.mul_re, Complex.mul_im, Complex.ofReal_re, Complex.ofReal_im, zero_mul,
+    add_zero, sub_zero, Complex.add_re, Complex.add_im, Complex.sub_re, Complex.sub_im,
+    Complex.normSq_mul, Complex.normSq_ofReal]
+  field_simp [hτ, Complex.normSq_eq_zero.not.mpr hq]
+  ring
+
 /-- Algebraic form of the crossing limit. If `q → L`, `(q - L) / τ → A/2`, and
 `d → A`, then the real winding integrand of position `τq` and velocity `L + τd` tends to
 `(L.re * A.im - L.im * A.re) / (2‖L‖²)`.
@@ -52,10 +71,8 @@ The hypotheses are precisely the normalized second-order position expansion and 
 velocity expansion. -/
 private theorem tendsto_realWindingIntegrand_mul_add {α : Type*} {l : Filter α}
     {τ : α → ℝ} {q r d : α → ℂ} {L A : ℂ} (hL : L ≠ 0)
-    (hq : Tendsto q l (𝓝 L)) (hr : Tendsto r l (𝓝 (A / 2)))
-    (hd : Tendsto d l (𝓝 A))
-    (hqr : ∀ᶠ i in l, q i - L = ((τ i : ℝ) : ℂ) * r i)
-    (hτ : ∀ᶠ i in l, τ i ≠ 0) :
+    (hq : Tendsto q l (𝓝 L)) (hr : Tendsto r l (𝓝 (A / 2))) (hd : Tendsto d l (𝓝 A))
+    (hqr : ∀ᶠ i in l, q i - L = ((τ i : ℝ) : ℂ) * r i) (hτ : ∀ᶠ i in l, τ i ≠ 0) :
     Tendsto (fun i ↦ realWindingIntegrand (((τ i : ℝ) : ℂ) * q i)
       (L + ((τ i : ℝ) : ℂ) * d i)) l
       (𝓝 ((L.re * A.im - L.im * A.re) / (2 * Complex.normSq L))) := by
@@ -75,29 +92,11 @@ private theorem tendsto_realWindingIntegrand_mul_add {α : Type*} {l : Filter α
       ((hq_re.mul hd_im).sub (hq_im.mul hd_re))) using 1
     all_goals simp <;> ring_nf
   have hdiv := hnum.div hnorm ((Complex.normSq_eq_zero.not.mpr hL))
-  have hq_ne : ∀ᶠ i in l, q i ≠ 0 :=
-    hq.eventually (isOpen_compl_singleton.mem_nhds hL)
   convert hdiv.congr' ?_ using 1
   · ring_nf
-  filter_upwards [hqr, hτ, hq_ne] with i hqi hτi hqi_ne
-  rw [realWindingIntegrand_eq_div]
-  simp only [Complex.mul_re, Complex.mul_im, Complex.ofReal_re, Complex.ofReal_im, zero_mul,
-    add_zero, Complex.add_re, Complex.add_im, Complex.normSq_mul, Complex.normSq_ofReal]
-  have hτsq : τ i ^ 2 ≠ 0 := pow_ne_zero _ hτi
-  have hLre : L.re = (q i).re - τ i * (r i).re := by
-    have := congrArg Complex.re hqi
-    simp only [Complex.sub_re, Complex.mul_re, Complex.ofReal_re, Complex.ofReal_im, zero_mul,
-      sub_zero] at this
-    linarith
-  have hLim : L.im = (q i).im - τ i * (r i).im := by
-    have := congrArg Complex.im hqi
-    simp only [Complex.sub_im, Complex.mul_im, Complex.ofReal_re, Complex.ofReal_im, zero_mul,
-      add_zero] at this
-    linarith
-  rw [hLre, hLim]
+  filter_upwards [hqr, hτ] with i hqi hτi
   simp only [Pi.div_apply]
-  field_simp [hτi, Complex.normSq_eq_zero.not.mpr hqi_ne]
-  ring
+  exact (realWindingIntegrand_mul_add_eq_div_of_sub_eq_mul hτi hqi).symm
 
 /-- **Hungerbühler–Wasem Proposition 2.3, crossing value.** At a crossing `γ t₀ = s`,
 a normalized second-order chord expansion with coefficients `L` and `A`, together with the
@@ -108,12 +107,9 @@ matching first-order velocity expansion, implies
 The conclusion refers only to the coefficients in the assumed filter expansions. -/
 theorem tendsto_realWindingIntegrand_at_crossing {α : Type*} {l : Filter α}
     {t : α → ℝ} {t₀ : ℝ} {γ : ℝ → ℂ} {s L A : ℂ} (hL : L ≠ 0)
-    (htend : Tendsto t l (𝓝 t₀)) (hcross : γ t₀ = s)
-    (hpos₂ : Tendsto (fun i ↦
-      (((γ (t i) - s) / (((t i - t₀ : ℝ) : ℂ))) - L) /
-        (((t i - t₀ : ℝ) : ℂ))) l (𝓝 (A / 2)))
-    (hvel : Tendsto (fun i ↦ (deriv γ (t i) - L) /
-      (((t i - t₀ : ℝ) : ℂ))) l (𝓝 A))
+    (htend : Tendsto t l (𝓝 t₀)) (hcross : γ t₀ = s) (hpos₂ : Tendsto (fun i ↦
+      (((γ (t i) - s) / (((t i - t₀ : ℝ) : ℂ))) - L) / (((t i - t₀ : ℝ) : ℂ))) l (𝓝 (A / 2)))
+    (hvel : Tendsto (fun i ↦ (deriv γ (t i) - L) / (((t i - t₀ : ℝ) : ℂ))) l (𝓝 A))
     (ht : ∀ᶠ i in l, t i ≠ t₀) :
     Tendsto (fun i ↦ realWindingIntegrand (γ (t i) - s) (deriv γ (t i))) l
       (𝓝 ((L.re * A.im - L.im * A.re) / (2 * Complex.normSq L))) := by

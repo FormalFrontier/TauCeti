@@ -148,8 +148,7 @@ theorem energyFormLpVariable_zero_drift_flip_eq_of_isSymm_ae {μ : Measure X}
 variable energy form. -/
 theorem energyFormLpVariable_coefficientSymmetricPart_self (μ : Measure X)
     (a : X → Matrix n n ℝ) (b : X → EuclideanSpace ℝ n) (c : X → ℝ)
-    (hcoeff : MemLp (fun x => energyIntegrand (coefficientSymmetricPart (a x))
-      (b x) (c x)) ⊤ μ)
+    (hcoeff : MemLp (fun x => energyIntegrand (coefficientSymmetricPart (a x)) (b x) (c x)) ⊤ μ)
     (hcoeff' : MemLp (fun x => energyIntegrand (a x) (b x) (c x)) ⊤ μ)
     (U : Lp (ℝ × EuclideanSpace ℝ n) 2 μ) :
     energyFormLpVariable μ (fun x => coefficientSymmetricPart (a x)) b c hcoeff U U =
@@ -163,8 +162,7 @@ theorem energyFormLpVariable_coefficientSymmetricPart_self (μ : Measure X)
 its transpose. -/
 theorem energyFormLpVariable_coefficientSymmetricPart_zero_drift_apply (μ : Measure X)
     (a : X → Matrix n n ℝ) (c : X → ℝ)
-    (hsymm : MemLp (fun x => energyIntegrand (coefficientSymmetricPart (a x)) 0
-      (c x)) ⊤ μ)
+    (hsymm : MemLp (fun x => energyIntegrand (coefficientSymmetricPart (a x)) 0 (c x)) ⊤ μ)
     (hcoeff : MemLp (fun x => energyIntegrand (a x) 0 (c x)) ⊤ μ)
     (U V : Lp (ℝ × EuclideanSpace ℝ n) 2 μ) :
     energyFormLpVariable μ (fun x => coefficientSymmetricPart (a x))
@@ -185,8 +183,7 @@ theorem energyFormLpVariable_coefficientSymmetricPart_zero_drift_apply (μ : Mea
 /-- The symmetric-part variable zero-drift energy form is symmetric. -/
 theorem energyFormLpVariable_coefficientSymmetricPart_zero_drift_comm (μ : Measure X)
     (a : X → Matrix n n ℝ) (c : X → ℝ)
-    (hcoeff : MemLp (fun x => energyIntegrand (coefficientSymmetricPart (a x)) 0
-      (c x)) ⊤ μ)
+    (hcoeff : MemLp (fun x => energyIntegrand (coefficientSymmetricPart (a x)) 0 (c x)) ⊤ μ)
     (U V : Lp (ℝ × EuclideanSpace ℝ n) 2 μ) :
     energyFormLpVariable μ (fun x => coefficientSymmetricPart (a x))
         (fun _ => 0) c hcoeff U V =
@@ -199,10 +196,8 @@ theorem energyFormLpVariable_coefficientSymmetricPart_zero_drift_comm (μ : Meas
 @[simp]
 theorem energyFormLpVariable_coefficientSymmetricPart_zero_drift_flip_eq (μ : Measure X)
     (a : X → Matrix n n ℝ) (c : X → ℝ)
-    (hcoeff : MemLp (fun x => energyIntegrand (coefficientSymmetricPart (a x)) 0
-      (c x)) ⊤ μ) :
-    (energyFormLpVariable μ (fun x => coefficientSymmetricPart (a x))
-      (fun _ => 0) c hcoeff).flip =
+    (hcoeff : MemLp (fun x => energyIntegrand (coefficientSymmetricPart (a x)) 0 (c x)) ⊤ μ) :
+    (energyFormLpVariable μ (fun x => coefficientSymmetricPart (a x)) (fun _ => 0) c hcoeff).flip =
       energyFormLpVariable μ (fun x => coefficientSymmetricPart (a x))
         (fun _ => 0) c hcoeff :=
   energyFormLpVariable_zero_drift_flip_eq_of_isSymm_ae

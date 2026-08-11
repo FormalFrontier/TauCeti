@@ -62,6 +62,8 @@ namespace TauCeti
 
 open InnerProductSpace Laplacian Topology RealInnerProductSpace
 
+open scoped ContDiff
+
 variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
 
 /-- The exponential barrier `y ↦ exp (α ⟪u, y⟫)` has derivative `exp (α ⟪u, x⟫) • (α • ⟪u, ·⟫)`.
@@ -74,6 +76,14 @@ private theorem hasFDerivAt_exp_inner (α : ℝ) (u x : E) :
     simpa only [coe_innerSL_apply] using (innerSL ℝ u).hasFDerivAt
   have h2 : HasFDerivAt (fun z : E => α * ⟪u, z⟫) (α • innerSL ℝ u) x := h1.const_mul α
   exact (Real.hasDerivAt_exp (α * ⟪u, x⟫)).comp_hasFDerivAt x h2
+
+/-- The exponential barrier `y ↦ exp (α ⟪u, y⟫)` is smooth, being the exponential of a continuous
+linear form. -/
+theorem contDiff_exp_inner (α : ℝ) (u : E) :
+    ContDiff ℝ ∞ fun y : E => Real.exp (α * ⟪u, y⟫) := by
+  have hi : ContDiff ℝ ∞ (fun y : E => (⟪u, y⟫ : ℝ)) := by
+    simpa only [coe_innerSL_apply] using (innerSL ℝ u).contDiff
+  exact (by simpa only [smul_eq_mul] using hi.const_smul α : ContDiff ℝ ∞ _).exp
 
 /-- The directional derivative of the exponential barrier `y ↦ exp (α ⟪u, y⟫)`. -/
 @[simp] theorem fderiv_exp_inner_apply (α : ℝ) (u x v : E) :
@@ -269,8 +279,7 @@ bounded there (`‖b x‖ ≤ β`), and `0 ≤ Δ f x + fderiv ℝ f x (b x)` (a
 `Δ + b·∇`), then any bound `m` that `f` respects on `frontier K` bounds `f` on all of `K`. -/
 theorem le_of_laplacian_add_fderiv_nonneg_le_frontier {K : Set E} (hK : IsCompact K)
     {f : E → ℝ} {b : E → E} {β m : ℝ} (hcont : ContinuousOn f K)
-    (hcd : ∀ ⦃x⦄, x ∈ interior K → ContDiffAt ℝ 2 f x)
-    (hb : ∀ ⦃x⦄, x ∈ interior K → ‖b x‖ ≤ β)
+    (hcd : ∀ ⦃x⦄, x ∈ interior K → ContDiffAt ℝ 2 f x) (hb : ∀ ⦃x⦄, x ∈ interior K → ‖b x‖ ≤ β)
     (hlap : ∀ ⦃x⦄, x ∈ interior K → 0 ≤ Δ f x + fderiv ℝ f x (b x))
     (hbdry : ∀ ⦃x⦄, x ∈ frontier K → f x ≤ m) :
     ∀ ⦃x⦄, x ∈ K → f x ≤ m := by
@@ -280,11 +289,8 @@ theorem le_of_laplacian_add_fderiv_nonneg_le_frontier {K : Set E} (hK : IsCompac
   set u : E := (‖v₀‖⁻¹ : ℝ) • v₀
   have hunorm : ‖u‖ = 1 := norm_smul_inv_norm hv₀
   set w : E → ℝ := fun y => Real.exp ((β + 1) * ⟪u, y⟫) with hwdef
-  have hwCD : ContDiff ℝ 2 w := by
-    rw [hwdef]
-    have hinner : ContDiff ℝ 2 (fun z : E => (⟪u, z⟫ : ℝ)) := by
-      simpa only [coe_innerSL_apply] using (innerSL ℝ u).contDiff
-    exact (by simpa only [smul_eq_mul] using hinner.const_smul (β + 1) : ContDiff ℝ 2 _).exp
+  have hwCD : ContDiff ℝ 2 w :=
+    (hwdef ▸ contDiff_exp_inner (β + 1) u : ContDiff ℝ ∞ w).of_le (by norm_cast)
   exact le_of_strict_subsolution_barrier hK hcont hcd hlap hbdry hwCD.continuous.continuousOn
     (fun _ _ => hwCD.contDiffAt)
     fun y hy => laplacian_add_fderiv_exp_inner_pos_of_norm_le hunorm (hb hy) y
@@ -294,8 +300,7 @@ theorem le_of_laplacian_add_fderiv_nonneg_le_frontier {K : Set E} (hK : IsCompac
 (`Δ f x + fderiv ℝ f x (b x) ≤ 0`). -/
 theorem ge_of_laplacian_add_fderiv_nonpos_ge_frontier {K : Set E} (hK : IsCompact K)
     {f : E → ℝ} {b : E → E} {β m : ℝ} (hcont : ContinuousOn f K)
-    (hcd : ∀ ⦃x⦄, x ∈ interior K → ContDiffAt ℝ 2 f x)
-    (hb : ∀ ⦃x⦄, x ∈ interior K → ‖b x‖ ≤ β)
+    (hcd : ∀ ⦃x⦄, x ∈ interior K → ContDiffAt ℝ 2 f x) (hb : ∀ ⦃x⦄, x ∈ interior K → ‖b x‖ ≤ β)
     (hlap : ∀ ⦃x⦄, x ∈ interior K → Δ f x + fderiv ℝ f x (b x) ≤ 0)
     (hbdry : ∀ ⦃x⦄, x ∈ frontier K → m ≤ f x) :
     ∀ ⦃x⦄, x ∈ K → m ≤ f x := by
@@ -317,8 +322,7 @@ theorem le_of_laplacian_add_fderiv_le_laplacian_add_fderiv_of_le_frontier {K : S
     (hK : IsCompact K) {f g : E → ℝ} {b : E → E} {β : ℝ}
     (hfcont : ContinuousOn f K) (hgcont : ContinuousOn g K)
     (hfcd : ∀ ⦃x⦄, x ∈ interior K → ContDiffAt ℝ 2 f x)
-    (hgcd : ∀ ⦃x⦄, x ∈ interior K → ContDiffAt ℝ 2 g x)
-    (hb : ∀ ⦃x⦄, x ∈ interior K → ‖b x‖ ≤ β)
+    (hgcd : ∀ ⦃x⦄, x ∈ interior K → ContDiffAt ℝ 2 g x) (hb : ∀ ⦃x⦄, x ∈ interior K → ‖b x‖ ≤ β)
     (hL : ∀ ⦃x⦄, x ∈ interior K →
       Δ g x + fderiv ℝ g x (b x) ≤ Δ f x + fderiv ℝ f x (b x))
     (hbdry : ∀ ⦃x⦄, x ∈ frontier K → f x ≤ g x) :
@@ -338,11 +342,9 @@ theorem le_of_laplacian_add_fderiv_le_laplacian_add_fderiv_of_le_frontier {K : S
 /-- **Uniqueness principle for `Δ + b·∇`.** Functions with equal operator values for the same
 bounded drift and equal frontier data agree throughout the compact set. -/
 theorem eqOn_of_laplacian_add_fderiv_eq_of_eqOn_frontier {K : Set E} (hK : IsCompact K)
-    {f g : E → ℝ} {b : E → E} {β : ℝ} (hfcont : ContinuousOn f K)
-    (hgcont : ContinuousOn g K)
+    {f g : E → ℝ} {b : E → E} {β : ℝ} (hfcont : ContinuousOn f K) (hgcont : ContinuousOn g K)
     (hfcd : ∀ ⦃x⦄, x ∈ interior K → ContDiffAt ℝ 2 f x)
-    (hgcd : ∀ ⦃x⦄, x ∈ interior K → ContDiffAt ℝ 2 g x)
-    (hb : ∀ ⦃x⦄, x ∈ interior K → ‖b x‖ ≤ β)
+    (hgcd : ∀ ⦃x⦄, x ∈ interior K → ContDiffAt ℝ 2 g x) (hb : ∀ ⦃x⦄, x ∈ interior K → ‖b x‖ ≤ β)
     (hL : ∀ ⦃x⦄, x ∈ interior K →
       Δ f x + fderiv ℝ f x (b x) = Δ g x + fderiv ℝ g x (b x))
     (hbdry : Set.EqOn f g (frontier K)) :
@@ -358,8 +360,7 @@ theorem eqOn_of_laplacian_add_fderiv_eq_of_eqOn_frontier {K : Set E} (hK : IsCom
 on a nonempty compact set attains a maximum on the frontier. -/
 theorem exists_mem_frontier_isMaxOn_of_laplacian_add_fderiv_nonneg {K : Set E} (hK : IsCompact K)
     (hne : K.Nonempty) {f : E → ℝ} {b : E → E} {β : ℝ} (hcont : ContinuousOn f K)
-    (hcd : ∀ ⦃x⦄, x ∈ interior K → ContDiffAt ℝ 2 f x)
-    (hb : ∀ ⦃x⦄, x ∈ interior K → ‖b x‖ ≤ β)
+    (hcd : ∀ ⦃x⦄, x ∈ interior K → ContDiffAt ℝ 2 f x) (hb : ∀ ⦃x⦄, x ∈ interior K → ‖b x‖ ≤ β)
     (hlap : ∀ ⦃x⦄, x ∈ interior K → 0 ≤ Δ f x + fderiv ℝ f x (b x)) :
     ∃ x ∈ frontier K, IsMaxOn f K x := by
   exact exists_mem_frontier_isMaxOn_of_le_frontier hK hne hcont fun hbdry =>
@@ -369,8 +370,7 @@ theorem exists_mem_frontier_isMaxOn_of_laplacian_add_fderiv_nonneg {K : Set E} (
 drift on a nonempty compact set attains a minimum on the frontier. -/
 theorem exists_mem_frontier_isMinOn_of_laplacian_add_fderiv_nonpos {K : Set E} (hK : IsCompact K)
     (hne : K.Nonempty) {f : E → ℝ} {b : E → E} {β : ℝ} (hcont : ContinuousOn f K)
-    (hcd : ∀ ⦃x⦄, x ∈ interior K → ContDiffAt ℝ 2 f x)
-    (hb : ∀ ⦃x⦄, x ∈ interior K → ‖b x‖ ≤ β)
+    (hcd : ∀ ⦃x⦄, x ∈ interior K → ContDiffAt ℝ 2 f x) (hb : ∀ ⦃x⦄, x ∈ interior K → ‖b x‖ ≤ β)
     (hlap : ∀ ⦃x⦄, x ∈ interior K → Δ f x + fderiv ℝ f x (b x) ≤ 0) :
     ∃ x ∈ frontier K, IsMinOn f K x := by
   obtain ⟨z, hzfr, hzmax⟩ := exists_mem_frontier_isMaxOn_of_laplacian_add_fderiv_nonneg

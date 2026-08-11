@@ -119,11 +119,11 @@ theorem intervalIntegral_deriv_smul_polarPart (decomp : PolarPartDecomposition f
           else 0 := by
     intro k
     rcases Nat.eq_zero_or_pos k.val with hk0 | hk_pos
-    · rw [if_pos hk0, ← hindex, ← intervalIntegral.integral_const_mul]
+    · rw [ite_eq_left hk0, ← hindex, ← intervalIntegral.integral_const_mul]
       refine intervalIntegral.integral_congr fun t _ => ?_
       rw [hk0]
       ring
-    · rw [if_neg (Nat.pos_iff_ne_zero.mp hk_pos)]
+    · rw [ite_eq_right (Nat.pos_iff_ne_zero.mp hk_pos)]
       exact integral_pow_inv_mul_deriv_eq_zero_of_closed (by omega) _ hγ hclosed h_ne
   rw [hsplit, Finset.sum_congr rfl fun k _ => hval k, decomp.sum_ite_coeff_eq_residue_mul s]
   ring
@@ -202,8 +202,7 @@ genuinely a Layer 3 statement; the round-circle case with the poles inside is
 Hungerbühler–Wasem theorem `Contour.hungerbuhlerWasem_residueTheorem`. -/
 theorem classicalResidueTheorem_nullHomologous {f : ℂ → ℂ} {S : Finset ℂ} {U : Set ℂ}
     (hU : IsOpen U) (hf : DifferentiableOn ℂ f (U \ (↑S : Set ℂ)))
-    (hmero : ∀ s ∈ S, s ∈ U → MeromorphicAt f s) {γ : ℝ → ℂ} {a b : ℝ}
-    (hγ : IsPiecewiseC1On γ a b)
+    (hmero : ∀ s ∈ S, s ∈ U → MeromorphicAt f s) {γ : ℝ → ℂ} {a b : ℝ} (hγ : IsPiecewiseC1On γ a b)
     (hγU : ∀ t ∈ uIcc a b, γ t ∈ U) (hclosed : γ a = γ b)
     (hoff : ∀ t ∈ uIcc a b, γ t ∉ (↑S : Set ℂ)) (hnull : IsNullHomologous γ a b U) :
     ∫ t in a..b, deriv γ t • f (γ t)

@@ -53,7 +53,7 @@ abbrev isInvertible : ObjectProperty X.Modules :=
 
 instance : (isInvertible X).IsClosedUnderIsomorphisms where
   of_iso e hM := by
-    haveI := hM
+    have := hM
     exact TauCeti.SheafOfModules.IsInvertible.of_iso (R := X.ringCatSheaf) e
 
 end SheafOfModules

@@ -59,11 +59,9 @@ off a countable set `P`, and with the normalized segment ratio `(γ t - w) / (γ
 the per-segment `Complex.log` increments. -/
 theorem integral_deriv_div_sub_eq_sum_log {γ γ' : ℝ → ℂ} {w : ℂ} {a b : ℝ} {P : Set ℝ}
     {N : ℕ} {s : ℕ → ℝ} (hP : P.Countable)
-    (hs_zero : s 0 = a) (hs_N : s N = b) (hs_mono : Monotone s)
-    (hγ_cont : ContinuousOn γ (Icc a b))
+    (hs_zero : s 0 = a) (hs_N : s N = b) (hs_mono : Monotone s) (hγ_cont : ContinuousOn γ (Icc a b))
     (hγ_diff : ∀ t ∈ Ioo a b \ P, HasDerivAt γ (γ' t) t)
-    (h_slit : ∀ j, j < N → ∀ t ∈ Icc (s j) (s (j + 1)),
-      (γ t - w) / (γ (s j) - w) ∈ slitPlane)
+    (h_slit : ∀ j, j < N → ∀ t ∈ Icc (s j) (s (j + 1)), (γ t - w) / (γ (s j) - w) ∈ slitPlane)
     (h_int : IntervalIntegrable (fun t ↦ γ' t / (γ t - w)) volume a b) :
     ∫ t in a..b, γ' t / (γ t - w)
       = ∑ j ∈ Finset.range N, Complex.log ((γ (s (j + 1)) - w) / (γ (s j) - w)) := by
@@ -95,11 +93,9 @@ theorem integral_deriv_div_sub_eq_sum_log {γ γ' : ℝ → ℂ} {w : ℂ} {a b 
 consumed by the winding-number computation. -/
 theorem integral_inv_sub_mul_deriv_eq_sum_log {γ : ℝ → ℂ} {w : ℂ} {a b : ℝ} {P : Set ℝ}
     {N : ℕ} {s : ℕ → ℝ} (hP : P.Countable)
-    (hs_zero : s 0 = a) (hs_N : s N = b) (hs_mono : Monotone s)
-    (hγ_cont : ContinuousOn γ (Icc a b))
+    (hs_zero : s 0 = a) (hs_N : s N = b) (hs_mono : Monotone s) (hγ_cont : ContinuousOn γ (Icc a b))
     (hγ_diff : ∀ t ∈ Ioo a b \ P, DifferentiableAt ℝ γ t)
-    (h_slit : ∀ j, j < N → ∀ t ∈ Icc (s j) (s (j + 1)),
-      (γ t - w) / (γ (s j) - w) ∈ slitPlane)
+    (h_slit : ∀ j, j < N → ∀ t ∈ Icc (s j) (s (j + 1)), (γ t - w) / (γ (s j) - w) ∈ slitPlane)
     (h_int : IntervalIntegrable (fun t ↦ (γ t - w)⁻¹ * deriv γ t) volume a b) :
     ∫ t in a..b, (γ t - w)⁻¹ * deriv γ t
       = ∑ j ∈ Finset.range N, Complex.log ((γ (s (j + 1)) - w) / (γ (s j) - w)) := by
@@ -115,11 +111,9 @@ logarithm sum. For a closed curve the real increment vanishes, isolating the tot
 change. -/
 theorem integral_deriv_div_sub_eq_log_norm_add_I_mul_sum_log_im {γ γ' : ℝ → ℂ} {w : ℂ}
     {a b : ℝ} {P : Set ℝ} {N : ℕ} {s : ℕ → ℝ} (hP : P.Countable)
-    (hs_zero : s 0 = a) (hs_N : s N = b) (hs_mono : Monotone s)
-    (hγ_cont : ContinuousOn γ (Icc a b))
+    (hs_zero : s 0 = a) (hs_N : s N = b) (hs_mono : Monotone s) (hγ_cont : ContinuousOn γ (Icc a b))
     (hγ_diff : ∀ t ∈ Ioo a b \ P, HasDerivAt γ (γ' t) t)
-    (h_slit : ∀ j, j < N → ∀ t ∈ Icc (s j) (s (j + 1)),
-      (γ t - w) / (γ (s j) - w) ∈ slitPlane)
+    (h_slit : ∀ j, j < N → ∀ t ∈ Icc (s j) (s (j + 1)), (γ t - w) / (γ (s j) - w) ∈ slitPlane)
     (h_int : IntervalIntegrable (fun t ↦ γ' t / (γ t - w)) volume a b) :
     ∫ t in a..b, γ' t / (γ t - w)
       = ((Real.log ‖γ b - w‖ - Real.log ‖γ a - w‖ : ℝ) : ℂ)
@@ -155,11 +149,9 @@ winding integrand `(γ t - w)⁻¹ * deriv γ t`, as consumed by the closed-curv
 computation. -/
 theorem integral_inv_sub_mul_deriv_eq_log_norm_add_I_mul_sum_log_im {γ : ℝ → ℂ} {w : ℂ}
     {a b : ℝ} {P : Set ℝ} {N : ℕ} {s : ℕ → ℝ} (hP : P.Countable)
-    (hs_zero : s 0 = a) (hs_N : s N = b) (hs_mono : Monotone s)
-    (hγ_cont : ContinuousOn γ (Icc a b))
+    (hs_zero : s 0 = a) (hs_N : s N = b) (hs_mono : Monotone s) (hγ_cont : ContinuousOn γ (Icc a b))
     (hγ_diff : ∀ t ∈ Ioo a b \ P, DifferentiableAt ℝ γ t)
-    (h_slit : ∀ j, j < N → ∀ t ∈ Icc (s j) (s (j + 1)),
-      (γ t - w) / (γ (s j) - w) ∈ slitPlane)
+    (h_slit : ∀ j, j < N → ∀ t ∈ Icc (s j) (s (j + 1)), (γ t - w) / (γ (s j) - w) ∈ slitPlane)
     (h_int : IntervalIntegrable (fun t ↦ (γ t - w)⁻¹ * deriv γ t) volume a b) :
     ∫ t in a..b, (γ t - w)⁻¹ * deriv γ t
       = ((Real.log ‖γ b - w‖ - Real.log ‖γ a - w‖ : ℝ) : ℂ)

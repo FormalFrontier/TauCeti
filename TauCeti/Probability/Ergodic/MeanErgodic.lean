@@ -44,16 +44,14 @@ def metProjection (T : Ω → Ω) (hT : MeasurePreserving T μ μ) :
   (fixedSpace (𝕜 := 𝕜) (E := E) (p := 2) T hT).starProjection
 
 /-- The mean-ergodic projection takes values in the fixed space. -/
-theorem metProjection_mem_fixedSpace (T : Ω → Ω) (hT : MeasurePreserving T μ μ)
-    (g : Lp E 2 μ) :
+theorem metProjection_mem_fixedSpace (T : Ω → Ω) (hT : MeasurePreserving T μ μ) (g : Lp E 2 μ) :
     metProjection (𝕜 := 𝕜) T hT g ∈ fixedSpace (𝕜 := 𝕜) (E := E) (p := 2) T hT := by
   rw [metProjection]
   exact Submodule.starProjection_apply_mem _ _
 
 /-- The mean-ergodic projection fixes exactly the invariant `L²` observables. -/
 @[simp]
-theorem metProjection_eq_self_iff (T : Ω → Ω) (hT : MeasurePreserving T μ μ)
-    (g : Lp E 2 μ) :
+theorem metProjection_eq_self_iff (T : Ω → Ω) (hT : MeasurePreserving T μ μ) (g : Lp E 2 μ) :
     metProjection (𝕜 := 𝕜) T hT g = g ↔
       g ∈ fixedSpace (𝕜 := 𝕜) (E := E) (p := 2) T hT := by
   rw [metProjection]
@@ -69,8 +67,7 @@ theorem range_metProjection (T : Ω → Ω) (hT : MeasurePreserving T μ μ) :
 
 /-- The error after mean-ergodic projection is orthogonal to the fixed space. -/
 @[simp]
-theorem sub_metProjection_mem_orthogonal (T : Ω → Ω) (hT : MeasurePreserving T μ μ)
-    (g : Lp E 2 μ) :
+theorem sub_metProjection_mem_orthogonal (T : Ω → Ω) (hT : MeasurePreserving T μ μ) (g : Lp E 2 μ) :
     g - metProjection (𝕜 := 𝕜) T hT g ∈
       (fixedSpace (𝕜 := 𝕜) (E := E) (p := 2) T hT)ᗮ := by
   rw [metProjection]

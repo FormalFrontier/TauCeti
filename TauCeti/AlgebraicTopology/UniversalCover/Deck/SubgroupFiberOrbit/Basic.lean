@@ -82,8 +82,7 @@ lemma subgroupFiberOrbitClass_eq_iff (H : Subgroup (Deck p)) (e e' : p ⁻¹' {b
 /-- A deck translate of the chosen fibre point has the same subgroup orbit class as the chosen
 point exactly when the translating deck transformation lies in the subgroup. -/
 lemma subgroupFiberOrbitClass_smul_eq_base_iff
-    [IsCancelSMul (Deck p) (p ⁻¹' {b})] (H : Subgroup (Deck p)) (e : p ⁻¹' {b})
-    (φ : Deck p) :
+    [IsCancelSMul (Deck p) (p ⁻¹' {b})] (H : Subgroup (Deck p)) (e : p ⁻¹' {b}) (φ : Deck p) :
     subgroupFiberOrbitClass H (φ • e) = subgroupFiberOrbitClass H e ↔ φ ∈ H := by
   exact TauCeti.MulAction.orbitRelQuotient_smul_eq_base_iff
     (G := Deck p) (X := p ⁻¹' {b}) H φ e
@@ -95,7 +94,7 @@ lemma subgroupFiberOrbitClass_smul_eq_base_iff_of_isCoveringMap
     [TopologicalSpace B] [PreconnectedSpace E] (hp : IsCoveringMap p)
     (H : Subgroup (Deck p)) (e : p ⁻¹' {b}) (φ : Deck p) :
     subgroupFiberOrbitClass H (φ • e) = subgroupFiberOrbitClass H e ↔ φ ∈ H := by
-  letI := fiber_isCancelSMul (b := b) hp
+  let := fiber_isCancelSMul (b := b) hp
   exact subgroupFiberOrbitClass_smul_eq_base_iff H e φ
 
 /-- If `H ≤ K`, the quotient of a fibre by `H` maps naturally to the quotient by `K`. -/
@@ -106,8 +105,7 @@ lemma subgroupFiberOrbitClass_smul_eq_base_iff_of_isCoveringMap
 
 /-- The map induced by `H ≤ K` sends the `H`-class of a point to its `K`-class. -/
 @[simp]
-lemma subgroupFiberOrbitMapOfLE_apply {H K : Subgroup (Deck p)} (hHK : H ≤ K)
-    (e : p ⁻¹' {b}) :
+lemma subgroupFiberOrbitMapOfLE_apply {H K : Subgroup (Deck p)} (hHK : H ≤ K) (e : p ⁻¹' {b}) :
     subgroupFiberOrbitMapOfLE (b := b) hHK (subgroupFiberOrbitClass H e) =
       subgroupFiberOrbitClass K e :=
   rfl
@@ -125,8 +123,7 @@ lemma subgroupFiberOrbitMapOfLE_refl (H : Subgroup (Deck p)) :
 
 /-- The maps induced by subgroup inclusions compose as expected. -/
 @[simp]
-lemma subgroupFiberOrbitMapOfLE_comp {H K L : Subgroup (Deck p)}
-    (hHK : H ≤ K) (hKL : K ≤ L) :
+lemma subgroupFiberOrbitMapOfLE_comp {H K L : Subgroup (Deck p)} (hHK : H ≤ K) (hKL : K ≤ L) :
     (subgroupFiberOrbitMapOfLE (b := b) hKL) ∘
         subgroupFiberOrbitMapOfLE (b := b) hHK =
       subgroupFiberOrbitMapOfLE (b := b) (hHK.trans hKL) := by
@@ -144,8 +141,7 @@ lemma subgroupFiberOrbitQuotient_subsingleton_iff (H : Subgroup (Deck p)) :
 
 /-- If the full deck group acts transitively on a fibre, then the quotient of that fibre by
 the full deck subgroup is a subsingleton. -/
-lemma subsingleton_subgroupFiberOrbitQuotient_top
-    [MulAction.IsPretransitive (Deck p) (p ⁻¹' {b})] :
+lemma subsingleton_subgroupFiberOrbitQuotient_top [MulAction.IsPretransitive (Deck p) (p ⁻¹' {b})] :
     Subsingleton (SubgroupFiberOrbitQuotient (⊤ : Subgroup (Deck p)) b) := by
   rw [subgroupFiberOrbitQuotient_subsingleton_iff]
   refine MulAction.IsPretransitive.mk ?_
@@ -157,7 +153,7 @@ lemma subsingleton_subgroupFiberOrbitQuotient_top
 subsingleton. -/
 lemma subsingleton_regularSubgroupFiberOrbitQuotient_top (hreg : IsRegular p) :
     Subsingleton (SubgroupFiberOrbitQuotient (⊤ : Subgroup (Deck p)) b) := by
-  letI := hreg.fiber_isPretransitive b
+  let := hreg.fiber_isPretransitive b
   exact subsingleton_subgroupFiberOrbitQuotient_top
 
 /-- Transporting a point in an `H`-orbit along an over-base homeomorphism puts the transported
@@ -220,9 +216,7 @@ lemma subgroupFiberOrbitQuotientEquiv_apply (h : E ≃ₜ F) (hpq : ∀ e, q (h 
 transport. -/
 @[simp]
 lemma subgroupFiberOrbitQuotientEquiv_symm_apply (h : E ≃ₜ F) (hpq : ∀ e, q (h e) = p e)
-    (H : Subgroup (Deck p))
-    (f : q ⁻¹' {b}) :
-    (subgroupFiberOrbitQuotientEquiv h hpq H b).symm
+    (H : Subgroup (Deck p)) (f : q ⁻¹' {b}) : (subgroupFiberOrbitQuotientEquiv h hpq H b).symm
         (subgroupFiberOrbitClass
           (H.map ((conjMulEquiv h hpq : Deck p ≃* Deck q) : Deck p →* Deck q)) f) =
       subgroupFiberOrbitClass H ((fiberMap h hpq b).symm f) := by
@@ -305,8 +299,7 @@ lemma subgroupFiberOrbitQuotientEquiv_trans (h : E ≃ₜ F) (k : F ≃ₜ G)
 subgroup inclusions. -/
 @[simp]
 lemma subgroupFiberOrbitQuotientEquiv_mapOfLE (h : E ≃ₜ F) (hpq : ∀ e, q (h e) = p e)
-    {H K : Subgroup (Deck p)} (hHK : H ≤ K) :
-    (subgroupFiberOrbitQuotientEquiv h hpq K b) ∘
+    {H K : Subgroup (Deck p)} (hHK : H ≤ K) : (subgroupFiberOrbitQuotientEquiv h hpq K b) ∘
         subgroupFiberOrbitMapOfLE (b := b) hHK =
       subgroupFiberOrbitMapOfLE (b := b) (Subgroup.map_mono
         (f := ((conjMulEquiv h hpq : Deck p ≃* Deck q) : Deck p →* Deck q)) hHK) ∘
@@ -472,8 +465,7 @@ lemma subgroupFiberOrbitMapOfLE_apply_eq_iff {H K L : Subgroup (Deck p)}
 
 /-- Equality after mapping two subgroup fibre quotients into a common supergroup quotient
 can be checked on representatives from the common supergroup orbit. -/
-lemma subgroupFiberOrbitMapOfLE_eq_iff {H K L : Subgroup (Deck p)}
-    (hHL : H ≤ L) (hKL : K ≤ L)
+lemma subgroupFiberOrbitMapOfLE_eq_iff {H K L : Subgroup (Deck p)} (hHL : H ≤ L) (hKL : K ≤ L)
     (x : SubgroupFiberOrbitQuotient H b) (y : SubgroupFiberOrbitQuotient K b) :
     subgroupFiberOrbitMapOfLE (b := b) hHL x = subgroupFiberOrbitMapOfLE (b := b) hKL y ↔
       ∃ e e' : p ⁻¹' {b}, x = subgroupFiberOrbitClass H e ∧
@@ -492,8 +484,7 @@ lemma subgroupFiberOrbitMapOfLE_eq_iff {H K L : Subgroup (Deck p)}
 
 /-- Equality after forgetting from `H`-orbits to full deck orbits is exactly membership of
 representatives in the same full deck orbit. -/
-lemma subgroupFiberOrbitMapToFiberOrbit_apply_eq_iff (H K : Subgroup (Deck p))
-    (e e' : p ⁻¹' {b}) :
+lemma subgroupFiberOrbitMapToFiberOrbit_apply_eq_iff (H K : Subgroup (Deck p)) (e e' : p ⁻¹' {b}) :
     subgroupFiberOrbitMapToFiberOrbit H (subgroupFiberOrbitClass H e) =
         subgroupFiberOrbitMapToFiberOrbit K (subgroupFiberOrbitClass K e') ↔
       e ∈ MulAction.orbit (Deck p) e' := by
@@ -583,7 +574,7 @@ as any chosen point of the fibre. -/
 lemma subgroupFiberOrbitMapToFiberOrbit_eq (hreg : IsRegular p) (H : Subgroup (Deck p))
     (e : p ⁻¹' {b}) (x : SubgroupFiberOrbitQuotient H b) :
     subgroupFiberOrbitMapToFiberOrbit H x = fiberOrbitClass e := by
-  letI : Subsingleton (FiberOrbitQuotient p b) := hreg.subsingleton_fiberOrbitQuotient b
+  let : Subsingleton (FiberOrbitQuotient p b) := hreg.subsingleton_fiberOrbitQuotient b
   exact Deck.subgroupFiberOrbitMapToFiberOrbit_eq H e x
 
 /-- For a regular deck action, forgetting any two subgroup fibre-orbit classes to full deck
@@ -592,7 +583,7 @@ lemma subgroupFiberOrbitMapToFiberOrbit_eq_subgroupFiberOrbitMapToFiberOrbit
     (hreg : IsRegular p) (H K : Subgroup (Deck p))
     (x : SubgroupFiberOrbitQuotient H b) (y : SubgroupFiberOrbitQuotient K b) :
     subgroupFiberOrbitMapToFiberOrbit H x = subgroupFiberOrbitMapToFiberOrbit K y := by
-  letI : Subsingleton (FiberOrbitQuotient p b) := hreg.subsingleton_fiberOrbitQuotient b
+  let : Subsingleton (FiberOrbitQuotient p b) := hreg.subsingleton_fiberOrbitQuotient b
   exact Deck.subgroupFiberOrbitMapToFiberOrbit_eq_subgroupFiberOrbitMapToFiberOrbit H K x y
 
 end IsRegular

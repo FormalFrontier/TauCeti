@@ -63,7 +63,7 @@ functor of points, the additive companion of `TauCeti.Algebra.AlgebraicGroup.Roo
 
 public section
 
-open Coalgebra HopfAlgebra SymmetricAlgebra WithConv
+open _root_.Coalgebra HopfAlgebra SymmetricAlgebra WithConv
 open scoped TensorProduct
 
 namespace TauCeti

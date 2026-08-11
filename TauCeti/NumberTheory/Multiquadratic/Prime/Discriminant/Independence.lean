@@ -47,8 +47,7 @@ namespace TauCeti.Multiquadratic
 
 /-- Products over odd prime-discriminant radicands, with no `-4` radicand, are not `-1`. -/
 private theorem prod_primeDiscriminantRadicands_ne_neg_one {ι : Type*} {D : ι → ℤ}
-    (hD : ∀ i, IsPrimeDiscriminant (D i)) {S : Finset ι}
-    (hno_neg_four : ∀ i ∈ S, D i ≠ -4) :
+    (hD : ∀ i, IsPrimeDiscriminant (D i)) {S : Finset ι} (hno_neg_four : ∀ i ∈ S, D i ≠ -4) :
     (∏ i ∈ S, primeDiscriminantRadicand (D i)) ≠ -1 := by
   classical
   intro hprod
@@ -93,8 +92,7 @@ private theorem not_isSquare_prod_primeDiscriminantRadicands_of_pairwise_isCopri
 injective and the selected set is nonempty. -/
 private theorem prod_primeDiscriminantRadicands_ne_one_of_nonempty {ι : Type*} {D : ι → ℤ}
     (hD : ∀ i, IsPrimeDiscriminant (D i)) (hinj : Function.Injective D) {S : Finset ι}
-    (hS : S.Nonempty) :
-    (∏ i ∈ S, primeDiscriminantRadicand (D i)) ≠ 1 := by
+    (hS : S.Nonempty) : (∏ i ∈ S, primeDiscriminantRadicand (D i)) ≠ 1 := by
   intro hP
   have hnp := map_prod Int.natAbsHom (fun i => primeDiscriminantRadicand (D i)) S
   simp only [Int.natAbsHom_apply] at hnp
@@ -150,8 +148,7 @@ and `-8` but none for `-4`: the product of the radicands `primeDiscriminantRadic
 is not a rational square. -/
 private theorem not_isSquare_prod_primeDiscriminantRadicands_of_mem_eight_neg_eight {ι : Type*}
     {D : ι → ℤ} (hD : ∀ i, IsPrimeDiscriminant (D i)) (hinj : Function.Injective D)
-    {S : Finset ι} (hno4S : ∀ i ∈ S, D i ≠ -4)
-    (hboth : (∃ i ∈ S, D i = 8) ∧ (∃ i ∈ S, D i = -8)) :
+    {S : Finset ι} (hno4S : ∀ i ∈ S, D i ≠ -4) (hboth : (∃ i ∈ S, D i = 8) ∧ (∃ i ∈ S, D i = -8)) :
     ¬ IsSquare (∏ i ∈ S, ((primeDiscriminantRadicand (D i) : ℤ) : ℚ)) := by
   classical
   obtain ⟨⟨i8, hi8S, hi8D⟩, im8, him8S, him8D⟩ := hboth
@@ -224,8 +221,7 @@ discriminants must carry the same discriminant value. This is the form supplied 
 prime-discriminant factorization of a quadratic discriminant, where there is only one 2-adic
 factor. -/
 theorem not_all_three_evenPrimeDiscriminants_of_forall_isEvenPrimeDiscriminant_eq {ι : Type*}
-    {D : ι → ℤ}
-    (heven_unique : ∀ i j,
+    {D : ι → ℤ} (heven_unique : ∀ i j,
       IsEvenPrimeDiscriminant (D i) → IsEvenPrimeDiscriminant (D j) → D i = D j) :
     ¬ ((∃ i, D i = -4) ∧ (∃ i, D i = 8) ∧ (∃ i, D i = -8)) := by
   rintro ⟨⟨i4, hi4⟩, ⟨i8, hi8⟩, _⟩
@@ -244,8 +240,7 @@ This is the genus-field specialization of
 discriminant have at most one even member, so the exceptional product
 `(-1) * 2 * (-2) = 4` cannot occur. -/
 theorem not_isSquare_prod_primeDiscriminantRadicands_of_forall_isEvenPrimeDiscriminant_eq
-    {ι : Type*} (D : ι → ℤ) (hD : ∀ i, IsPrimeDiscriminant (D i))
-    (hinj : Function.Injective D)
+    {ι : Type*} (D : ι → ℤ) (hD : ∀ i, IsPrimeDiscriminant (D i)) (hinj : Function.Injective D)
     (heven_unique : ∀ i j,
       IsEvenPrimeDiscriminant (D i) → IsEvenPrimeDiscriminant (D j) → D i = D j) :
     ∀ S : Finset ι, S.Nonempty →
@@ -262,8 +257,7 @@ square-class independence `not_isSquare_prod_primeDiscriminantRadicands`. -/
 theorem finrank_adjoin_roots_primeDiscriminantRadicands {ι : Type*} [Finite ι]
     {L : Type*} [Field L] [Algebra ℚ L] (D : ι → ℤ)
     (hD : ∀ i, IsPrimeDiscriminant (D i)) (hinj : Function.Injective D)
-    (heven : ¬ ((∃ i, D i = -4) ∧ (∃ i, D i = 8) ∧ (∃ i, D i = -8)))
-    (root : ι → L)
+    (heven : ¬ ((∃ i, D i = -4) ∧ (∃ i, D i = 8) ∧ (∃ i, D i = -8))) (root : ι → L)
     (hroot : ∀ i, root i ^ 2 = algebraMap ℚ L ((primeDiscriminantRadicand (D i) : ℤ) : ℚ)) :
     Module.finrank ℚ (IntermediateField.adjoin ℚ (Set.range root)) = 2 ^ Nat.card ι :=
   finrank_adjoin_range hroot
@@ -278,8 +272,7 @@ This is the degree theorem in the form needed for genus-field generator lists co
 discriminants of a quadratic discriminant. -/
 theorem finrank_adjoin_roots_primeDiscriminantRadicands_of_forall_isEvenPrimeDiscriminant_eq
     {ι : Type*} [Finite ι] {L : Type*} [Field L] [Algebra ℚ L] (D : ι → ℤ)
-    (hD : ∀ i, IsPrimeDiscriminant (D i)) (hinj : Function.Injective D)
-    (heven_unique : ∀ i j,
+    (hD : ∀ i, IsPrimeDiscriminant (D i)) (hinj : Function.Injective D) (heven_unique : ∀ i j,
       IsEvenPrimeDiscriminant (D i) → IsEvenPrimeDiscriminant (D j) → D i = D j)
     (root : ι → L)
     (hroot : ∀ i, root i ^ 2 = algebraMap ℚ L ((primeDiscriminantRadicand (D i) : ℤ) : ℚ)) :

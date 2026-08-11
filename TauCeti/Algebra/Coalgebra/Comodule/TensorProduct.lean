@@ -86,8 +86,7 @@ variable [AddCommMonoid N] [Module R N]
 the two `C`-components.
 
 On pure tensors it sends `(m ⊗ c) ⊗ (n ⊗ d)` to `(m ⊗ n) ⊗ cd`. -/
-noncomputable def tensorCombine :
-    (M ⊗[R] C) ⊗[R] (N ⊗[R] C) →ₗ[R] (M ⊗[R] N) ⊗[R] C :=
+noncomputable def tensorCombine : (M ⊗[R] C) ⊗[R] (N ⊗[R] C) →ₗ[R] (M ⊗[R] N) ⊗[R] C :=
   TensorProduct.map (LinearMap.id : M ⊗[R] N →ₗ[R] M ⊗[R] N) (LinearMap.mul' R C) ∘ₗ
     (TensorProduct.tensorTensorTensorComm R M C N C).toLinearMap
 
@@ -317,11 +316,9 @@ variable {M' : Type y} {N' : Type z}
 
 /-- The diagonal tensor coaction is natural under tensor products of comodule morphisms. -/
 theorem tensorCoact_natural [Semiring C] [Bialgebra R C]
-    [AddCommMonoid M] [Module R M] [Comodule R C M]
-    [AddCommMonoid N] [Module R N] [Comodule R C N]
+    [AddCommMonoid M] [Module R M] [Comodule R C M] [AddCommMonoid N] [Module R N] [Comodule R C N]
     [AddCommMonoid M'] [Module R M'] [Comodule R C M']
-    [AddCommMonoid N'] [Module R N'] [Comodule R C N']
-    (f : Hom R C M M') (g : Hom R C N N') :
+    [AddCommMonoid N'] [Module R N'] [Comodule R C N'] (f : Hom R C M M') (g : Hom R C N N') :
     TensorProduct.map (TensorProduct.map f.toLinearMap g.toLinearMap)
         (LinearMap.id : C →ₗ[R] C) ∘ₗ
         tensorCoact (R := R) (C := C) (M := M) (N := N) =
@@ -363,6 +360,31 @@ theorem lTensor_comp_tensorCombine (φ : C →ₐ[R] D) :
     | tmul n d => simp
 
 end Slot
+
+section BaseChange
+
+variable {A : Type y} [CommSemiring A] [Algebra R A]
+variable [AddCommMonoid M] [Module R M] [AddCommMonoid N] [Module R N]
+
+/-- Combining two coefficient columns and then commuting the carrier past the coefficients
+agrees with first commuting each column and then applying scalar-extension distributivity. -/
+theorem comm_tensorCombine_eq_distribBaseChange_symm_tmul
+    (p : M ⊗[R] A) (q : N ⊗[R] A) :
+    TensorProduct.comm R (M ⊗[R] N) A
+        (tensorCombine (R := R) (C := A) (M := M) (N := N) (p ⊗ₜ[R] q)) =
+      (TensorProduct.AlgebraTensorModule.distribBaseChange R A M N).symm
+        (TensorProduct.comm R M A p ⊗ₜ[A] TensorProduct.comm R N A q) := by
+  induction p using TensorProduct.induction_on with
+  | zero => simp
+  | add p p' hp hp' => simpa only [add_tmul, map_add] using congrArg₂ (fun a b ↦ a + b) hp hp'
+  | tmul m a =>
+      induction q using TensorProduct.induction_on with
+      | zero => simp
+      | add q q' hq hq' =>
+          simpa only [tmul_add, map_add] using congrArg₂ (fun x y ↦ x + y) hq hq'
+      | tmul n b => simp
+
+end BaseChange
 
 section Reassociate
 

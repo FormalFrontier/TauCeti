@@ -95,13 +95,13 @@ theorem classSum_mul (k : Type*) [Semiring k] (Cᵢ Cⱼ : ConjClasses G) :
     MonoidAlgebra.single_mul_single, mul_one, MonoidAlgebra.coeff_single,
     Finsupp.single_apply]
   rw [Finset.sum_eq_single (ConjClasses.mk g)]
-  · rw [if_pos rfl, mul_one, structureConstant_mk]
+  · rw [ite_eq_left rfl, mul_one, structureConstant_mk]
     simpa only [Finset.sum_product] using
       (Finset.sum_boole (R := k)
         (fun p : Cᵢ.carrier × Cⱼ.carrier => (p.1.1 : G) * p.2.1 = g)
         (Finset.univ ×ˢ Finset.univ))
   · intro Cₖ _ hCₖ
-    rw [if_neg hCₖ.symm, mul_zero]
+    rw [ite_eq_right hCₖ.symm, mul_zero]
   · simp
 
 /-- **The coordinate identity**: multiplication of class sums inside the centre of the group
@@ -117,15 +117,14 @@ theorem classSumCenter_mul (k : Type*) [CommSemiring k] (Cᵢ Cⱼ : ConjClasses
 /-- The coefficient of `g` in a product of two class sums is the structure constant at the
 conjugacy class of `g`. This is the pointwise form of `TauCeti.classSum_mul`. -/
 theorem coeff_classSum_mul (k : Type*) [Semiring k] (Cᵢ Cⱼ : ConjClasses G) (g : G) :
-    (classSum k Cᵢ * classSum k Cⱼ).coeff g =
-      (structureConstant Cᵢ Cⱼ (ConjClasses.mk g) : k) := by
+    (classSum k Cᵢ * classSum k Cⱼ).coeff g = (structureConstant Cᵢ Cⱼ (ConjClasses.mk g) : k) := by
   rw [classSum_mul]
   simp only [MonoidAlgebra.coeff_sum, Finsupp.finsetSum_apply, MonoidAlgebra.coeff_smul_apply,
     smul_eq_mul, classSum_coeff]
   rw [Finset.sum_eq_single (ConjClasses.mk g)]
-  · rw [if_pos rfl, mul_one]
+  · rw [ite_eq_left rfl, mul_one]
   · intro Cₖ _ hCₖ
-    rw [if_neg hCₖ.symm, mul_zero]
+    rw [ite_eq_right hCₖ.symm, mul_zero]
   · simp
 
 /-- **The structure constants are symmetric in their two class arguments**, because the two class

@@ -9,6 +9,7 @@ public import Mathlib.Analysis.Calculus.Deriv.Basic
 public import Mathlib.Analysis.Complex.Basic
 public import Mathlib.MeasureTheory.Integral.IntervalIntegral.Basic
 import TauCeti.Analysis.Calculus.OneSidedDerivLimit
+import TauCeti.Analysis.Contour.Curve.Distance
 import TauCeti.Analysis.Contour.Chord.QuotientAsymptotics
 import TauCeti.Analysis.Contour.LogDerivFTC
 import TauCeti.Analysis.Contour.Winding.Number.Basic
@@ -69,8 +70,7 @@ theorem intervalIntegrable_inv_sub_truncated {γ : ℝ → ℂ} {s : ℂ} {a b :
     IntervalIntegrable (fun t => if ‖γ t - s‖ > ε then (γ t - s)⁻¹ * deriv γ t else 0)
       MeasureTheory.volume a b := by
   have hK_closed : IsClosed {t ∈ uIcc a b | ‖γ t - s‖ ≤ ε} :=
-    ((hγ_cont.sub continuousOn_const).norm).preimage_isClosed_of_isClosed
-      (by rw [← Icc_min_max]; exact isClosed_Icc) isClosed_Iic
+    isClosed_setOfPred_mem_uIcc_norm_sub_le hγ_cont s ε
   have h_inv_aesm : AEStronglyMeasurable (fun t => (γ t - s)⁻¹ * deriv γ t)
       (MeasureTheory.volume.restrict (Set.uIoc a b)) := by
     have hγ_aem : AEMeasurable γ (MeasureTheory.volume.restrict (Set.uIoc a b)) :=
@@ -87,31 +87,30 @@ theorem intervalIntegrable_inv_sub_truncated {γ : ℝ → ℂ} {s : ℂ} {a b :
     by_cases h_far : ‖γ t - s‖ > ε
     · have h_mem : t ∈ {t ∈ uIcc a b | ‖γ t - s‖ ≤ ε}ᶜ :=
         fun hK => absurd hK.2 (not_le.mpr h_far)
-      rw [Set.indicator_of_mem h_mem, if_pos h_far]
+      rw [Set.indicator_of_mem h_mem, ite_eq_left h_far]
     · have h_notMem : t ∉ {t ∈ uIcc a b | ‖γ t - s‖ ≤ ε}ᶜ := fun hKc =>
         hKc ⟨Set.uIoc_subset_uIcc ht, not_lt.mp h_far⟩
-      rw [Set.indicator_of_notMem h_notMem, if_neg h_far]
+      rw [Set.indicator_of_notMem h_notMem, ite_eq_right h_far]
   refine ((hderiv_int.norm.const_mul (1 / ε)).mono_fun h_aesm ?_)
   refine Eventually.of_forall fun t => ?_
   -- β-reduce the two sides of the a.e. bound
   change ‖if ‖γ t - s‖ > ε then (γ t - s)⁻¹ * deriv γ t else 0‖ ≤ ‖1 / ε * ‖deriv γ t‖‖
   by_cases h_far : ‖γ t - s‖ > ε
-  · rw [if_pos h_far, norm_mul, norm_inv]
+  · rw [ite_eq_left h_far, norm_mul, norm_inv]
     calc ‖γ t - s‖⁻¹ * ‖deriv γ t‖
         ≤ (1 / ε) * ‖deriv γ t‖ := by
           rw [inv_eq_one_div]
           exact mul_le_mul_of_nonneg_right
             (one_div_le_one_div_of_le hε h_far.le) (norm_nonneg _)
       _ ≤ ‖1 / ε * ‖deriv γ t‖‖ := le_abs_self _
-  · rw [if_neg h_far, norm_zero]
+  · rw [ite_eq_right h_far, norm_zero]
     positivity
 
 /-- The winding integral is the log of the chord quotient on an ordered pole-free interval
 with the chord quotients anchored at the left endpoint in the slit plane: the `Icc`-hypothesis
 form of `integral_inv_sub_mul_deriv_eq_log`, with the integrability discharged. -/
 private theorem integral_inv_sub_mul_deriv_eq_log_window {γ : ℝ → ℂ} {s : ℂ} {P : Set ℝ}
-    {l u : ℝ} (hlu : l ≤ u) (hP : P.Countable)
-    (hγ_cont : ContinuousOn γ (Icc l u))
+    {l u : ℝ} (hlu : l ≤ u) (hP : P.Countable) (hγ_cont : ContinuousOn γ (Icc l u))
     (hγ_diffP : ∀ t ∈ Ioo l u \ P, DifferentiableAt ℝ γ t)
     (hderiv_int : IntervalIntegrable (fun t => deriv γ t) MeasureTheory.volume l u)
     (h_ne : ∀ t ∈ Icc l u, γ t ≠ s)
@@ -215,20 +214,15 @@ the anchored slit-plane chord quotients on each side, and the window-split ident
 `ε`-truncated simple-pole integrand, the truncated window integral equals the log-norm difference
 of the window endpoints plus the two boundary chord arguments times `I`. -/
 private theorem perWindow_truncated_integral_eq_log_form {γ : ℝ → ℂ} {s : ℂ} {t₀ r ε : ℝ}
-    {P : Set ℝ} {τl τr : ℝ} (hP : P.Countable)
-    (hγ_cont : ContinuousOn γ (Icc (t₀ - r) (t₀ + r)))
+    {P : Set ℝ} {τl τr : ℝ} (hP : P.Countable) (hγ_cont : ContinuousOn γ (Icc (t₀ - r) (t₀ + r)))
     (hγ_diffP : ∀ t ∈ Ioo (t₀ - r) (t₀ + r) \ P, DifferentiableAt ℝ γ t)
-    (hderiv_int : IntervalIntegrable (fun t => deriv γ t) MeasureTheory.volume
-      (t₀ - r) (t₀ + r))
+    (hderiv_int : IntervalIntegrable (fun t => deriv γ t) MeasureTheory.volume (t₀ - r) (t₀ + r))
     (h_unique : ∀ t ∈ Icc (t₀ - r) (t₀ + r), γ t = s → t = t₀)
-    (h_slit_R : ∀ a b, t₀ < a → a ≤ b → b ≤ t₀ + r →
-      (γ b - s) / (γ a - s) ∈ Complex.slitPlane)
-    (h_slit_L : ∀ b, t₀ - r ≤ b → b < t₀ →
-      (γ b - s) / (γ (t₀ - r) - s) ∈ Complex.slitPlane)
+    (h_slit_R : ∀ a b, t₀ < a → a ≤ b → b ≤ t₀ + r → (γ b - s) / (γ a - s) ∈ Complex.slitPlane)
+    (h_slit_L : ∀ b, t₀ - r ≤ b → b < t₀ → (γ b - s) / (γ (t₀ - r) - s) ∈ Complex.slitPlane)
     (hτL : τl ∈ Ioo (t₀ - r) t₀) (hτR : τr ∈ Ioo t₀ (t₀ + r))
     (hradL : ‖γ τl - s‖ = ε) (hradR : ‖γ τr - s‖ = ε) (hε : 0 < ε)
-    (hsplit : ∫ u in (t₀ - r)..(t₀ + r),
-        (if ‖γ u - s‖ > ε then (γ u - s)⁻¹ * deriv γ u else 0) =
+    (hsplit : ∫ u in (t₀ - r)..(t₀ + r), (if ‖γ u - s‖ > ε then (γ u - s)⁻¹ * deriv γ u else 0) =
       (∫ u in (t₀ - r)..τl, (γ u - s)⁻¹ * deriv γ u) +
       (∫ u in τr..(t₀ + r), (γ u - s)⁻¹ * deriv γ u)) :
     ∫ t in (t₀ - r)..(t₀ + r),
@@ -282,16 +276,12 @@ theorem perWindow_truncated_integral_tendsto {γ : ℝ → ℂ} {s : ℂ} {t₀ 
     (h_tendsto_R : Tendsto (deriv γ) (𝓝[>] t₀) (𝓝 L_R))
     (h_tendsto_L : Tendsto (deriv γ) (𝓝[<] t₀) (𝓝 L_L))
     (h_diff_R : ∀ᶠ t in 𝓝[>] t₀, DifferentiableAt ℝ γ t)
-    (h_diff_L : ∀ᶠ t in 𝓝[<] t₀, DifferentiableAt ℝ γ t)
-    (hP : P.Countable)
+    (h_diff_L : ∀ᶠ t in 𝓝[<] t₀, DifferentiableAt ℝ γ t) (hP : P.Countable)
     (hγ_diffP : ∀ t ∈ Ioo (t₀ - r) (t₀ + r) \ P, DifferentiableAt ℝ γ t)
-    (hderiv_int : IntervalIntegrable (fun t => deriv γ t) MeasureTheory.volume
-      (t₀ - r) (t₀ + r))
+    (hderiv_int : IntervalIntegrable (fun t => deriv γ t) MeasureTheory.volume (t₀ - r) (t₀ + r))
     (h_unique : ∀ t ∈ Icc (t₀ - r) (t₀ + r), γ t = s → t = t₀)
-    (h_slit_R : ∀ a b, t₀ < a → a ≤ b → b ≤ t₀ + r →
-      (γ b - s) / (γ a - s) ∈ Complex.slitPlane)
-    (h_slit_L : ∀ b, t₀ - r ≤ b → b < t₀ →
-      (γ b - s) / (γ (t₀ - r) - s) ∈ Complex.slitPlane)
+    (h_slit_R : ∀ a b, t₀ < a → a ≤ b → b ≤ t₀ + r → (γ b - s) / (γ a - s) ∈ Complex.slitPlane)
+    (h_slit_L : ∀ b, t₀ - r ≤ b → b < t₀ → (γ b - s) / (γ (t₀ - r) - s) ∈ Complex.slitPlane)
     (h_slit_plus : (γ (t₀ + r) - s) / L_R ∈ Complex.slitPlane)
     (h_slit_minus : (-L_L) / (γ (t₀ - r) - s) ∈ Complex.slitPlane) :
     Tendsto (fun ε : ℝ => ∫ t in (t₀ - r)..(t₀ + r),

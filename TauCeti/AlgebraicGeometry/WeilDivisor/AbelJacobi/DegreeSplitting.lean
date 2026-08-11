@@ -92,8 +92,7 @@ lemma classGroupAddEquivPicZeroProdInt_divisorClass_weightedPointBaseDifference
 component and its degree `w x`. -/
 lemma classGroupAddEquivPicZeroProdInt_symm_weightedAbelJacobiClass (w : X → ℤ)
     (h : S.IsWeightedDegreeZero w) {x₀ : X} (hx₀ : w x₀ = 1) (x : X) :
-    (S.classGroupAddEquivPicZeroProdInt w h hx₀).symm
-        (S.weightedAbelJacobiClass w h hx₀ x, w x) =
+    (S.classGroupAddEquivPicZeroProdInt w h hx₀).symm (S.weightedAbelJacobiClass w h hx₀ x, w x) =
       S.divisorClass (ofPoint x) := by
   rw [← S.classGroupAddEquivPicZeroProdInt_divisorClass_ofPoint w h hx₀ x]
   simp

@@ -62,8 +62,7 @@ antiderivative, at every window radius whose window lies inside `[a, b]` and con
 crossing. -/
 private theorem perWindow_boundary_tendsto_of_interior {γ : ℝ → ℂ} {a b t₀ : ℝ} {s : ℂ}
     {k n : ℕ} {P : Set ℝ} (h_imm : IsPwC1ImmersionOn γ a b) (hab : a < b)
-    (ht₀ : t₀ ∈ Ioo a b) (h_at : γ t₀ = s) (hk : 2 ≤ k) (hkn : k ≤ n)
-    (h_flat : FlatOfOrder γ t₀ n)
+    (ht₀ : t₀ ∈ Ioo a b) (h_at : γ t₀ = s) (hk : 2 ≤ k) (hkn : k ≤ n) (h_flat : FlatOfOrder γ t₀ n)
     (h_B : ∀ L_R L_L : ℂ, Tendsto (deriv γ) (𝓝[>] t₀) (𝓝 L_R) →
       Tendsto (deriv γ) (𝓝[<] t₀) (𝓝 L_L) →
       (L_R / (‖L_R‖ : ℂ)) ^ (k - 1) = ((-L_L) / (‖L_L‖ : ℂ)) ^ (k - 1))
@@ -104,8 +103,7 @@ piecewise-`C¹` curve is the boundary difference of its antiderivative — the p
 to the telescoping aggregation. -/
 private theorem plain_piece_integral_eq {γ : ℝ → ℂ} {a b : ℝ} {s : ℂ} {k : ℕ}
     (h_imm : IsPwC1ImmersionOn γ a b) (hab : a < b) (hk : 2 ≤ k) (c : ℂ)
-    {l u : ℝ} (hal : a ≤ l) (hlu : l ≤ u) (hub : u ≤ b)
-    (h_ne : ∀ t ∈ Icc l u, γ t ≠ s) :
+    {l u : ℝ} (hal : a ≤ l) (hlu : l ≤ u) (hub : u ≤ b) (h_ne : ∀ t ∈ Icc l u, γ t ≠ s) :
     ∫ t in l..u, c / (γ t - s) ^ k * deriv γ t =
       c * (-(↑(k - 1) : ℂ)⁻¹ * ((γ u - s) ^ (k - 1))⁻¹) -
         c * (-(↑(k - 1) : ℂ)⁻¹ * ((γ l - s) ^ (k - 1))⁻¹) := by
@@ -129,8 +127,7 @@ curve. Endpoint crossings are excluded by `h_interior`; for a closed curve this 
 of a basepoint off `s`. -/
 theorem IsPwC1ImmersionOn.hasCauchyPVAt_pow_inv {γ : ℝ → ℂ} {a b : ℝ} {s : ℂ} {k n : ℕ}
     (h_imm : IsPwC1ImmersionOn γ a b) (hab : a ≤ b)
-    (h_interior : ∀ t ∈ Icc a b, γ t = s → t ∈ Ioo a b)
-    (hk : 2 ≤ k) (hkn : k ≤ n)
+    (h_interior : ∀ t ∈ Icc a b, γ t = s → t ∈ Ioo a b) (hk : 2 ≤ k) (hkn : k ≤ n)
     (h_flat : ∀ t ∈ Icc a b, γ t = s → FlatOfOrder γ t n)
     (h_B : ∀ t ∈ Icc a b, γ t = s → ∀ L_R L_L : ℂ,
       Tendsto (deriv γ) (𝓝[>] t) (𝓝 L_R) → Tendsto (deriv γ) (𝓝[<] t) (𝓝 L_L) →

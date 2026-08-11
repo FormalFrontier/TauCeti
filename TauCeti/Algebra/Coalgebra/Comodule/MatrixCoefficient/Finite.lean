@@ -43,8 +43,7 @@ variable [AddCommMonoid C] [Module R C] [Coalgebra R C]
 variable [AddCommMonoid M] [Module R M] [Comodule R C M]
 
 /-- The matrix-coefficient submodule of a finite projective comodule is finite. -/
-instance matrixCoefficientSubmodule_finite
-    [Module.Finite R M] [Module.Projective R M] :
+instance matrixCoefficientSubmodule_finite [Module.Finite R M] [Module.Projective R M] :
     Module.Finite R
       (matrixCoefficientSubmodule (R := R) (C := C) (M := M)) := by
   rw [← range_matrixCoefficientTensor]

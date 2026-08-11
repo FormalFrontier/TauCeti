@@ -67,6 +67,51 @@ lemma circleSchwarzReflection_of_notMem_closedBall (c : ℂ) (r : ℝ) (d : ℂ)
   classical
   simp [circleSchwarzReflection, hz]
 
+-- Inversion in the source circle carries the closed exterior into the closed source disc: a
+-- point at distance at least `r` inverts to one at distance at most `r`. Only the invariance of
+-- `Ω` and positivity of `r` are used; the target circle plays no part.
+private lemma mapsTo_inversion_exterior {Ω : Set ℂ} {c : ℂ} {r : ℝ} (hr : 0 < r)
+    (hsymm : MapsTo (inversion c r) Ω Ω) :
+    MapsTo (inversion c r) (Ω ∩ {z : ℂ | r ≤ dist z c}) (Ω ∩ closedBall c r) := by
+  intro z hz
+  have hzc : z ≠ c := fun h => (not_le_of_gt hr) (by simpa [h] using hz.2)
+  refine ⟨hsymm hz.1, ?_⟩
+  rw [mem_closedBall]
+  exact not_lt.mp fun h => (not_lt_of_ge hz.2) ((lt_dist_inversion_center_iff hr hzc).mp h)
+
+-- The target-centre avoidance extends from the open source disc to the closed one: on the
+-- boundary sphere `f` lands on the target circle, which has positive radius and so misses the
+-- target centre. Positivity of `r` is not needed.
+private lemma ne_of_mem_closedBall {Ω : Set ℂ} {c d : ℂ} {r s : ℝ} {f : ℂ → ℂ} (hs : 0 < s)
+    (hboundary : MapsTo f (Ω ∩ sphere c r) (sphere d s))
+    (havoid : ∀ z ∈ Ω ∩ ball c r, z ≠ c → f z ≠ d) :
+    ∀ z ∈ Ω ∩ closedBall c r, z ≠ c → f z ≠ d := by
+  intro z hz hzc
+  by_cases hzr : dist z c < r
+  · exact havoid z ⟨hz.1, by simpa [mem_ball] using hzr⟩ hzc
+  · have heq : dist z c = r := le_antisymm (by simpa [mem_closedBall] using hz.2) (not_lt.mp hzr)
+    exact Metric.ne_of_mem_sphere (hboundary ⟨hz.1, Metric.mem_sphere.mpr heq⟩) hs.ne'
+
+-- On the closed exterior the extension is the reflection conjugate, and that is continuous:
+-- inversion in the source circle is continuous there and lands in the closed source disc, where
+-- `f` is continuous and misses the target centre, so inversion in the target circle applies.
+private lemma continuousOn_circleReflectionConjugate_exterior {Ω : Set ℂ} {c d : ℂ} {r s : ℝ}
+    {f : ℂ → ℂ} (hr : 0 < r) (hsymm : MapsTo (inversion c r) Ω Ω)
+    (hcont : ContinuousOn f (Ω ∩ closedBall c r))
+    (havoidClosed : ∀ z ∈ Ω ∩ closedBall c r, z ≠ c → f z ≠ d) :
+    ContinuousOn (circleReflectionConjugate c r d s f) (Ω ∩ {z : ℂ | r ≤ dist z c}) := by
+  have hinvCont : ContinuousOn (inversion c r) (Ω ∩ {z : ℂ | r ≤ dist z c}) :=
+    continuousOn_const.inversion continuousOn_const continuousOn_id fun z hz hzc =>
+      (not_le_of_gt hr) (by simpa [hzc] using hz.2)
+  have hinvMaps := mapsTo_inversion_exterior hr hsymm
+  have hraw : ContinuousOn (fun z => inversion d s (f (inversion c r z)))
+      (Ω ∩ {z : ℂ | r ≤ dist z c}) :=
+    continuousOn_const.inversion continuousOn_const (hcont.comp hinvCont hinvMaps)
+      fun z hz => havoidClosed _ (hinvMaps hz)
+        ((inversion_eq_center hr.ne').not.mpr fun h =>
+          (not_le_of_gt hr) (by simpa [h] using hz.2))
+  exact hraw.congr fun z _ => circleReflectionConjugate_apply c r d s f z
+
 /-- If `Ω` is mapped into itself by inversion in the source circle, the circle-reflection
 extension is continuous when the original map is continuous on the closed inside part, maps the
 source-circle boundary to the target circle, and avoids the target centre in the punctured open
@@ -79,44 +124,15 @@ theorem continuousOn_circleSchwarzReflection_of_symmetric {Ω : Set ℂ} {c d : 
     (havoid : ∀ z ∈ Ω ∩ ball c r, z ≠ c → f z ≠ d) :
     ContinuousOn (circleSchwarzReflection c r d s f) Ω := by
   classical
-  let E := {z : ℂ | r ≤ dist z c}
-  have hE : IsClosed E :=
-    isClosed_le continuous_const (continuous_id.dist continuous_const)
-  have hclosure : closure (closedBall c r)ᶜ ⊆ E := by
+  -- The closed exterior contains the closure of the open exterior, which is the piecewise
+  -- boundary condition `ContinuousOn.piecewise` asks for on the outside branch.
+  have hclosure : closure (closedBall c r)ᶜ ⊆ {z : ℂ | r ≤ dist z c} := by
     apply closure_minimal
     · intro z hz
       exact not_lt.mp fun h => hz (by simpa [mem_closedBall] using h.le)
-    · exact hE
-  have hinvCont : ContinuousOn (inversion c r) (Ω ∩ E) :=
-    continuousOn_const.inversion continuousOn_const continuousOn_id fun z hz hzc => by
-      have hdist : r ≤ dist z c := hz.2
-      exact (not_le_of_gt hr) (by simpa [hzc] using hdist)
-  have hinvMaps : MapsTo (inversion c r) (Ω ∩ E) (Ω ∩ closedBall c r) := by
-    intro z hz
-    have hdist : r ≤ dist z c := hz.2
-    have hzc : z ≠ c := fun h => (not_le_of_gt hr) (by simpa [h] using hdist)
-    refine ⟨hsymm hz.1, ?_⟩
-    rw [mem_closedBall]
-    exact not_lt.mp fun h =>
-      (not_lt_of_ge hz.2) ((lt_dist_inversion_center_iff hr hzc).mp h)
-  have havoidClosed : ∀ z ∈ Ω ∩ closedBall c r, z ≠ c → f z ≠ d := by
-    intro z hz hzc
-    by_cases hzr : dist z c < r
-    · exact havoid z ⟨hz.1, by simpa [mem_ball] using hzr⟩ hzc
-    · have heq : dist z c = r := le_antisymm (by simpa [mem_closedBall] using hz.2) (not_lt.mp hzr)
-      have htarget : dist (f z) d = s :=
-        hboundary ⟨hz.1, Metric.mem_sphere.mpr heq⟩
-      intro hfd
-      rw [hfd, dist_self] at htarget
-      linarith
-  have hreflected : ContinuousOn (circleReflectionConjugate c r d s f) (Ω ∩ E) := by
-    have hraw : ContinuousOn (fun z => inversion d s (f (inversion c r z))) (Ω ∩ E) :=
-      continuousOn_const.inversion continuousOn_const
-        (hcont.comp hinvCont hinvMaps) fun z hz => havoidClosed _ (hinvMaps hz)
-          ((inversion_eq_center hr.ne').not.mpr fun h => by
-            have hdist : r ≤ dist z c := hz.2
-            exact (not_le_of_gt hr) (by simpa [h] using hdist))
-    exact hraw.congr fun z _ => circleReflectionConjugate_apply c r d s f z
+    · exact isClosed_le continuous_const (continuous_id.dist continuous_const)
+  have hreflected := continuousOn_circleReflectionConjugate_exterior (s := s) hr hsymm hcont
+    (ne_of_mem_closedBall hs hboundary havoid)
   rw [circleSchwarzReflection_def]
   apply ContinuousOn.piecewise
   · intro z hz

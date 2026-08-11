@@ -42,6 +42,8 @@ noncomputable section
 
 open MeasureTheory ProbabilityTheory
 
+open scoped ENNReal
+
 namespace TauCeti
 
 namespace Probability
@@ -89,6 +91,24 @@ theorem Contractable.identDistrib_coord {μ : Measure Ω} {X : ℕ → Ω → α
     (Subsingleton.strictMono (fun _ : Fin 1 => j)) (fun _ => hi_meas) (fun _ => hj_meas)
   have hcomp := hblock.comp (measurable_pi_apply (0 : Fin 1))
   convert hcomp using 1 <;> funext ω <;> simp [Function.comp]
+
+/-- **Integrability of an observable is a coordinate-free property.** For a contractable process,
+integrability of `f ∘ X i` for one coordinate `i` gives it for every coordinate `j`. -/
+theorem Contractable.integrable_comp {E : Type*} [MeasurableSpace E] [NormedAddCommGroup E]
+    [BorelSpace E] {μ : Measure Ω} {X : ℕ → Ω → α} (hX : Contractable μ X)
+    (hX_ae : ∀ n, AEMeasurable (X n) μ) {f : α → E} (hf : Measurable f) {i : ℕ}
+    (hf_int : Integrable (fun ω => f (X i ω)) μ) (j : ℕ) :
+    Integrable (fun ω => f (X j ω)) μ :=
+  ((hX.identDistrib_coord (hX_ae i) (hX_ae j)).comp hf).integrable_snd hf_int
+
+/-- **Membership in `L^p` is a coordinate-free property of an observable.** For a contractable
+process, `MemLp (f ∘ X i) p` for one coordinate `i` gives it for every coordinate `j`. -/
+theorem Contractable.memLp_comp {E : Type*} [MeasurableSpace E] [NormedAddCommGroup E]
+    [BorelSpace E] {μ : Measure Ω} {X : ℕ → Ω → α} (hX : Contractable μ X)
+    (hX_ae : ∀ n, AEMeasurable (X n) μ) {f : α → E} (hf : Measurable f) {p : ℝ≥0∞} {i : ℕ}
+    (hf_Lp : MemLp (fun ω => f (X i ω)) p μ) (j : ℕ) :
+    MemLp (fun ω => f (X j ω)) p μ :=
+  ((hX.identDistrib_coord (hX_ae i) (hX_ae j)).comp hf).memLp_snd hf_Lp
 
 /-- **Increasing pairs of a contractable process are identically distributed.** For a
 contractable process `X`, if the four selected coordinates are a.e. measurable and `i < j`,
@@ -167,7 +187,7 @@ theorem Contractable.measurePreserving_reindex {μ : Measure Ω} {X : ℕ → Ω
     (hX : Contractable μ X) (hX_meas : ∀ i, AEMeasurable (X i) μ) {φ : ℕ → ℕ} (hφ : StrictMono φ) :
     MeasurePreserving (fun x : ℕ → α => fun k => x (φ k)) (pathLaw μ X) (pathLaw μ X) := by
   refine ⟨measurable_pi_lambda _ fun k => measurable_pi_apply (φ k), ?_⟩
-  haveI : IsFiniteMeasure (pathLaw μ X) := by rw [pathLaw_def]; infer_instance
+  have : IsFiniteMeasure (pathLaw μ X) := by rw [pathLaw_def]; infer_instance
   refine measure_eq_of_prefixProj_map_eq ?_
   intro n
   rw [map_reindex_prefixProj_pathLaw μ hX_meas φ n,
@@ -215,6 +235,51 @@ theorem Contractable.measurePreserving_shift {μ : Measure Ω} {X : ℕ → Ω �
   Contractable.measurePreserving_reindex hX hX_meas (φ := fun k => k + 1)
     (fun _ _ h => Nat.add_lt_add_right h 1)
 
+/-- **A head below the tail start joins the tail exactly as the path law does.** For a contractable
+process and a strictly increasing tail selection `g`, the joint law of `X h` with the tail
+`(X (g 0), X (g 1), …)`, for any head index `h` below `g 0`, is the path law pushed through the
+head/tail split `f ↦ (f 0, fun n ↦ f (n + 1))`. -/
+private theorem map_prod_tail_eq_pathLaw_map {μ : Measure Ω} [IsFiniteMeasure μ] {X : ℕ → Ω → α}
+    (hX : Contractable μ X) (hX_ae : ∀ n, AEMeasurable (X n) μ) {g : ℕ → ℕ} (hg : StrictMono g)
+    {h : ℕ} (hh : h < g 0) :
+    μ.map (fun ω => (X h ω, fun n => X (g n) ω))
+      = (pathLaw μ X).map (fun f : ℕ → α => (f 0, fun n => f (n + 1))) := by
+  classical
+  let headTail : (ℕ → α) → α × (ℕ → α) := fun f => (f 0, fun n => f (n + 1))
+  have hheadTail_meas : Measurable headTail :=
+    (measurable_pi_apply 0).prodMk (measurable_pi_lambda _ fun n => measurable_pi_apply (n + 1))
+  -- strictly-monotone time-reindexing preserves the path law of a contractable process
+  have hreindex : ∀ φ : ℕ → ℕ, StrictMono φ →
+      μ.map (fun ω (i : ℕ) => X (φ i) ω) = pathLaw μ X := by
+    intro φ hφ
+    calc μ.map (fun ω (i : ℕ) => X (φ i) ω)
+        = (pathLaw μ X).map (fun x : ℕ → α => fun i => x (φ i)) :=
+          (map_reindex_pathLaw μ hX_ae φ).symm
+      _ = pathLaw μ X := (hX.measurePreserving_reindex hX_ae hφ).map_eq
+  -- the selection `(h, g 0, g 1, …)` is strictly monotone, and splitting it recovers the pair
+  set φ : ℕ → ℕ := fun i => if i = 0 then h else g (i - 1) with hφdef
+  have hφmono : StrictMono φ := by
+    intro a b hab
+    simp only [hφdef]
+    rcases Nat.eq_zero_or_pos a with ha | ha
+    · subst ha
+      rw [ite_eq_left rfl, ite_eq_right (by omega : b ≠ 0)]
+      exact hh.trans_le (hg.monotone (Nat.zero_le _))
+    · rw [ite_eq_right (by omega : a ≠ 0), ite_eq_right (by omega : b ≠ 0)]
+      exact hg (by omega : a - 1 < b - 1)
+  have hφ0 : φ 0 = h := by simp [hφdef]
+  -- the tail-index identity, stated explicitly rather than left to definitional reduction
+  have hφsucc : ∀ n, φ (n + 1) = g n := by
+    intro n; simp only [hφdef]; rw [ite_eq_right (by omega : n + 1 ≠ 0), Nat.add_sub_cancel]
+  have hpath_ae : AEMeasurable (fun ω (i : ℕ) => X (φ i) ω) μ :=
+    aemeasurable_pi_lambda _ fun i => hX_ae (φ i)
+  have hfun : (fun ω => (X h ω, fun n => X (g n) ω))
+      = headTail ∘ (fun ω (i : ℕ) => X (φ i) ω) := by
+    funext ω
+    simp only [headTail, Function.comp_apply, hφ0, hφsucc]
+  rw [hfun, ← AEMeasurable.map_map_of_aemeasurable hheadTail_meas.aemeasurable hpath_ae,
+    hreindex φ hφmono]
+
 /-- **Pair-law equality from contractability.** For a contractable process, a strictly increasing
 tail selection `g`, and two head indices `j, k` below the tail start `g 0`, the joint law of the
 head coordinate `X j` with the tail `(X (g 0), X (g 1), …)` equals the joint law of `X k` with
@@ -228,47 +293,7 @@ theorem Contractable.pairLaw_eq {μ : Measure Ω} [IsFiniteMeasure μ] {X : ℕ 
     {j k : ℕ} (hj : j < g 0) (hk : k < g 0) :
     μ.map (fun ω => (X j ω, fun n => X (g n) ω))
       = μ.map (fun ω => (X k ω, fun n => X (g n) ω)) := by
-  classical
-  -- The head/tail split on path space.
-  let headTail : (ℕ → α) → α × (ℕ → α) := fun f => (f 0, fun n => f (n + 1))
-  have hheadTail_meas : Measurable headTail :=
-    (measurable_pi_apply 0).prodMk (measurable_pi_lambda _ fun n => measurable_pi_apply (n + 1))
-  -- Strictly-monotone time-reindexing preserves the path law of a contractable process.
-  have hreindex : ∀ φ : ℕ → ℕ, StrictMono φ →
-      μ.map (fun ω (i : ℕ) => X (φ i) ω) = pathLaw μ X := by
-    intro φ hφ
-    calc μ.map (fun ω (i : ℕ) => X (φ i) ω)
-        = (pathLaw μ X).map (fun x : ℕ → α => fun i => x (φ i)) :=
-          (map_reindex_pathLaw μ hX_ae φ).symm
-      _ = pathLaw μ X := (hX.measurePreserving_reindex hX_ae hφ).map_eq
-  -- For a head `h < g 0`, the selection `(h, g 0, g 1, …)` is strictly monotone and collapses the
-  -- joint law of `(X h, tail)` onto the common measure `(pathLaw μ X).map headTail`.
-  have side : ∀ h : ℕ, h < g 0 →
-      μ.map (fun ω => (X h ω, fun n => X (g n) ω)) = (pathLaw μ X).map headTail := by
-    intro h hhr
-    set φ : ℕ → ℕ := fun i => if i = 0 then h else g (i - 1) with hφdef
-    have hφmono : StrictMono φ := by
-      intro a b hab
-      simp only [hφdef]
-      rcases Nat.eq_zero_or_pos a with ha | ha
-      · subst ha
-        rw [if_pos rfl, if_neg (by omega : b ≠ 0)]
-        exact hhr.trans_le (hg.monotone (Nat.zero_le _))
-      · rw [if_neg (by omega : a ≠ 0), if_neg (by omega : b ≠ 0)]
-        exact hg (by omega : a - 1 < b - 1)
-    have hφ0 : φ 0 = h := by simp [hφdef]
-    -- The tail-index identity, stated explicitly rather than left to definitional reduction.
-    have hφsucc : ∀ n, φ (n + 1) = g n := by
-      intro n; simp only [hφdef]; rw [if_neg (by omega : n + 1 ≠ 0), Nat.add_sub_cancel]
-    have hpath_ae : AEMeasurable (fun ω (i : ℕ) => X (φ i) ω) μ :=
-      aemeasurable_pi_lambda _ fun i => hX_ae (φ i)
-    have hfun : (fun ω => (X h ω, fun n => X (g n) ω))
-        = headTail ∘ (fun ω (i : ℕ) => X (φ i) ω) := by
-      funext ω
-      simp only [headTail, Function.comp_apply, hφ0, hφsucc]
-    rw [hfun, ← AEMeasurable.map_map_of_aemeasurable hheadTail_meas.aemeasurable hpath_ae,
-      hreindex φ hφmono]
-  rw [side j hj, side k hk]
+  rw [map_prod_tail_eq_pathLaw_map hX hX_ae hg hj, map_prod_tail_eq_pathLaw_map hX hX_ae hg hk]
 
 end Probability
 
