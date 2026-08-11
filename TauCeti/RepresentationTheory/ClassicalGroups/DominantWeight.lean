@@ -237,13 +237,8 @@ variable {n : ℕ}
 /-- The Young diagram of the **polynomial part** `λ - λₙ` of a dominant weight: its `i`-th row has
 length `λᵢ - λₙ`.  Together with `TauCeti.DominantWeight.detShift` it presents `λ` as a
 determinant twist of a polynomial weight. -/
+@[expose]
 def detShiftShape (l : DominantWeight n) : YoungDiagram := (l.shift (-l.detShift)).shape
-
-/-- The determinant-normalized shape of a dominant weight for `GL n` has at most `n` rows. -/
-@[simp]
-theorem colLen_detShiftShape_le (l : DominantWeight n) : l.detShiftShape.colLen 0 ≤ n := by
-  rw [detShiftShape]
-  exact colLen_zero_shape_le _
 
 @[simp]
 theorem rowLen_detShiftShape (l : DominantWeight n) (i : Fin n) :

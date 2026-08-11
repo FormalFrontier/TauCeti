@@ -63,9 +63,10 @@ def shift (P : GTPattern n) (m : ℤ) : GTPattern n where
     omega
   interlacing' := by
     intro i j hij hj
-    simp only [if_pos (show i < j ∧ j ≤ n by omega),
-      if_pos (show i < j + 1 ∧ j + 1 ≤ n by omega),
-      if_pos (show i + 1 < j + 1 ∧ j + 1 ≤ n by omega)]
+    have hLower : i < j ∧ j ≤ n := by omega
+    have hUpperLeft : i < j + 1 ∧ j + 1 ≤ n := by omega
+    have hUpperRight : i + 1 < j + 1 ∧ j + 1 ≤ n := by omega
+    simp only [if_pos hLower, if_pos hUpperLeft, if_pos hUpperRight]
     exact ⟨add_le_add_left (P.entry_le_entry_succ_row hij hj) m,
       add_le_add_left (P.entry_succ_succ_le_entry hj) m⟩
 
@@ -184,20 +185,52 @@ theorem card_topWeight_shift (l : DominantWeight n) (m : ℤ) :
       Nat.card {P : GTPattern n // P.topWeight = l} :=
   Nat.card_congr (shiftTopWeightEquiv l m).symm
 
-/-- Rephrasing a prescribed top weight as a pointwise prescription of the top row. -/
-private def topWeightFiberEquivTopRow (l : DominantWeight n) :
-    {P : GTPattern n // P.topWeight = l} ≃
-      {P : GTPattern n // ∀ i : Fin n, P.topRow i = l.1 i} where
-  toFun P := ⟨P.1, fun i => by
-    have h := congrArg Subtype.val P.2
-    rw [topWeight_coe] at h
-    exact congrFun h i⟩
-  invFun P := ⟨P.1, by
-    apply Subtype.ext
-    rw [topWeight_coe]
-    exact funext P.2⟩
-  left_inv P := rfl
-  right_inv P := rfl
+/-- Rephrasing a prescribed shape weight as a pointwise prescription of the top row. -/
+private def topWeightFiberEquivTopRow (μ : YoungDiagram) :
+    {P : GTPattern n // P.topWeight = weightOfShape n μ} ≃
+      {P : GTPattern n // ∀ i : Fin n, P.topRow i = (μ.rowLen i : ℤ)} :=
+  Equiv.subtypeEquivRight fun P => by
+    constructor
+    · intro h i
+      calc
+        P.topRow i = (P.topWeight : Fin n → ℤ) i := congrFun (topWeight_coe P).symm i
+        _ = (weightOfShape n μ : Fin n → ℤ) i := congrFun (congrArg Subtype.val h) i
+        _ = (μ.rowLen i : ℤ) := weightOfShape_apply _ _ _
+    · intro h
+      apply Subtype.ext
+      funext i
+      rw [topWeight_coe, weightOfShape_apply]
+      exact h i
+
+@[simp]
+private theorem topWeightFiberEquivTopRow_apply_coe (μ : YoungDiagram)
+    (P : {P : GTPattern n // P.topWeight = weightOfShape n μ}) :
+    (topWeightFiberEquivTopRow μ P).1 = P.1 := by
+  rw [topWeightFiberEquivTopRow, Equiv.subtypeEquivRight_apply]
+
+@[simp]
+private theorem topWeightFiberEquivTopRow_symm_apply_coe (μ : YoungDiagram)
+    (P : {P : GTPattern n // ∀ i : Fin n, P.topRow i = (μ.rowLen i : ℤ)}) :
+    ((topWeightFiberEquivTopRow μ).symm P).1 = P.1 := by
+  rw [topWeightFiberEquivTopRow, Equiv.subtypeEquivRight_symm_apply]
+
+private def shiftedTopWeightFiberEquivShape (l : DominantWeight n) :
+    {P : GTPattern n // P.topWeight = l.shift (-l.detShift)} ≃
+      {P : GTPattern n // P.topWeight = weightOfShape n l.detShiftShape} :=
+  Equiv.subtypeEquivRight fun _ => by
+    rw [DominantWeight.weightOfShape_detShiftShape]
+
+@[simp]
+private theorem shiftedTopWeightFiberEquivShape_apply_coe (l : DominantWeight n)
+    (P : {P : GTPattern n // P.topWeight = l.shift (-l.detShift)}) :
+    (shiftedTopWeightFiberEquivShape l P).1 = P.1 := by
+  rw [shiftedTopWeightFiberEquivShape, Equiv.subtypeEquivRight_apply]
+
+@[simp]
+private theorem shiftedTopWeightFiberEquivShape_symm_apply_coe (l : DominantWeight n)
+    (P : {P : GTPattern n // P.topWeight = weightOfShape n l.detShiftShape}) :
+    ((shiftedTopWeightFiberEquivShape l).symm P).1 = P.1 := by
+  rw [shiftedTopWeightFiberEquivShape, Equiv.subtypeEquivRight_symm_apply]
 
 /-- **Determinant normalization of Gelfand-Tsetlin patterns.**  Patterns whose top weight is an
 arbitrary dominant weight `l` correspond to bounded semistandard tableaux of the Young diagram of
@@ -205,10 +238,49 @@ arbitrary dominant weight `l` correspond to bounded semistandard tableaux of the
 pattern-tableau equivalence then applies to the resulting polynomial top weight. -/
 noncomputable def detShiftEquivBoundedSSYT (l : DominantWeight n) :
     {P : GTPattern n // P.topWeight = l} ≃ BoundedSSYT n l.detShiftShape := by
-  refine (shiftTopWeightEquiv l (-l.detShift)).trans ?_
-  rw [← DominantWeight.weightOfShape_detShiftShape l]
-  exact (topWeightFiberEquivTopRow (weightOfShape n l.detShiftShape)).trans
-    (gtPatternEquivSSYT n l.detShiftShape (DominantWeight.colLen_detShiftShape_le l))
+  exact (shiftTopWeightEquiv l (-l.detShift)).trans <|
+    (shiftedTopWeightFiberEquivShape l).trans <|
+      (topWeightFiberEquivTopRow l.detShiftShape).trans <|
+        gtPatternEquivSSYT n l.detShiftShape
+          (by
+            simpa only [DominantWeight.detShiftShape] using
+              DominantWeight.colLen_zero_shape_le (l.shift (-l.detShift)))
+
+/-- Determinant normalization sends a pattern to the tableau of the pattern shifted to polynomial
+top weight. -/
+@[simp]
+theorem detShiftEquivBoundedSSYT_apply_coe (l : DominantWeight n)
+    (P : {P : GTPattern n // P.topWeight = l}) :
+    (detShiftEquivBoundedSSYT l P).1 =
+      (P.1.shift (-l.detShift)).toTableau
+        (by
+          simpa only [DominantWeight.detShiftShape] using
+            DominantWeight.colLen_zero_shape_le (l.shift (-l.detShift)))
+        (fun i => by
+          calc
+            (P.1.shift (-l.detShift)).topRow i =
+                ((P.1.shift (-l.detShift)).topWeight : Fin n → ℤ) i :=
+              congrFun (topWeight_coe _).symm i
+            _ = (l.shift (-l.detShift) : Fin n → ℤ) i := by rw [topWeight_shift, P.2]
+            _ = (weightOfShape n l.detShiftShape : Fin n → ℤ) i :=
+              congrFun (congrArg Subtype.val
+                (DominantWeight.weightOfShape_detShiftShape l).symm) i
+            _ = (l.detShiftShape.rowLen i : ℤ) := weightOfShape_apply _ _ _) := by
+  simp only [detShiftEquivBoundedSSYT, Equiv.trans_apply,
+    gtPatternEquivSSYT_apply_coe, topWeightFiberEquivTopRow_apply_coe,
+    shiftedTopWeightFiberEquivShape_apply_coe, shiftTopWeightEquiv_apply_coe]
+
+/-- The inverse determinant-normalization equivalence shifts the tableau's polynomial pattern back
+by the determinant weight. -/
+@[simp]
+theorem detShiftEquivBoundedSSYT_symm_apply_coe (l : DominantWeight n)
+    (T : BoundedSSYT n l.detShiftShape) :
+    ((detShiftEquivBoundedSSYT l).symm T).1 =
+      (SemistandardYoungTableau.toGTPattern T.1 n).shift l.detShift := by
+  simp only [detShiftEquivBoundedSSYT, Equiv.symm_trans_apply,
+    gtPatternEquivSSYT_symm_apply_coe, topWeightFiberEquivTopRow_symm_apply_coe,
+    shiftedTopWeightFiberEquivShape_symm_apply_coe, shiftTopWeightEquiv_symm_apply_coe,
+    neg_neg]
 
 /-- **The rational pattern count reduces to the polynomial tableau count.**  The Gelfand-Tsetlin
 patterns over any dominant weight `l` are as numerous as the bounded semistandard tableaux of the
