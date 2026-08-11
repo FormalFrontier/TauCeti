@@ -62,6 +62,8 @@ theorem IsSemisimple.rTensor {f : _root_.Module.End K V} (hf : f.IsSemisimple) :
         change E₀ (aeval ((_root_.Module.End.rTensorAlgHom K V W) f) p x) = _
         rw [Polynomial.aeval_algHom_apply]
         ext i
+        -- The basis equivalence computes right tensor actions coordinatewise by definition;
+        -- expose that form so tensor induction applies.
         change E₀ ((aeval f p).rTensor W x) i = aeval f p (E₀ x i)
         induction x using TensorProduct.induction_on with
         | zero => simp
@@ -100,6 +102,8 @@ theorem IsSemisimple.lTensor {f : _root_.Module.End K W} (hf : f.IsSemisimple) :
         change E₀ (aeval ((_root_.Module.End.lTensorAlgHom K W V) f) p x) = _
         rw [Polynomial.aeval_algHom_apply]
         ext i
+        -- The basis equivalence computes left tensor actions coordinatewise by definition;
+        -- expose that form so tensor induction applies.
         change E₀ ((aeval f p).lTensor V x) i = aeval f p (E₀ x i)
         induction x using TensorProduct.induction_on with
         | zero => simp
