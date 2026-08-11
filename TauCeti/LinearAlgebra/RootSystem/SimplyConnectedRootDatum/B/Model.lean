@@ -42,9 +42,10 @@ signed basis vectors, `u < n` standing for `e_u` and `u ≥ n` for `-e_{u-n}`, a
 an unordered pair `{u, v}`, with `u = v` for a short root. Two devices make this uniform.
 
 The cyclic offset `TauCeti.DynkinType.TypeB.shift` turns the unordered pair into the ordered datum
-`(u, d) : Fin (2 * n) × Fin n`, exactly one of the two orders having its offset in the range
-`Fin n`; this is the index type the datum is built on, and `TauCeti.DynkinType.TypeB.index` is the
-inverse normalisation.
+`(u, d) : Fin (2 * n) × Fin n`. For a distinct admissible pair, exactly one of the two orders has
+its offset in the range `Fin n`; a short root uses the coincident order with offset zero. This is
+the index type the datum is built on, and `TauCeti.DynkinType.TypeB.index` is the inverse
+normalisation.
 
 The coroot is *uniform* in the pair while the root is not:
 `TauCeti.DynkinType.TypeB.corootOfPair` computes
@@ -383,7 +384,8 @@ lemma isPair_shift (u : Fin (2 * n)) (d : Fin n) : IsPair u (shift u d) := by
   · exact Or.inr fun hc => axis_shift_ne (n := n) (u := u) (d := d) (by omega) hc.symm
 
 /-- The canonical index in `Fin (2 * n) × Fin n` of the root named by a pair of signed basis
-vectors: whichever of the two cyclic offsets lands in `Fin n`. -/
+vectors. For a distinct admissible pair it uses the unique order whose cyclic offset lies in
+`Fin n`; a short pair uses the coincident order with offset zero. -/
 def index (u v : Fin (2 * n)) : Fin (2 * n) × Fin n :=
   if h : cdiff u v < n then (u, ⟨cdiff u v, h⟩)
   else if h' : cdiff v u < n then (v, ⟨cdiff v u, h'⟩)
