@@ -52,7 +52,8 @@ coroot-side condition as its siblings, which is what the per-type dispatcher wil
 The coordinates and the node numbering follow Bourbaki, *Lie Groups and Lie Algebras, Chapters
 4--6*, Plate VII, and Humphreys, *Introduction to Lie Algebras and Representation Theory*, section
 12.1. This is the `E₈` branch of the target "a named datum per valid type" in Layer 6 of
-`TauCetiRoadmap/RepresentationTheory/RootSystems/README.md`.
+`TauCetiRoadmap/RepresentationTheory/RootSystems/README.md`. Its formal construction follows
+`TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.E6`.
 -/
 
 namespace TauCeti
@@ -108,22 +109,27 @@ private abbrev e8SimpleSupport : Finset (Fin 240) := simpleSupport e8SimpleIndex
 the positive half of the table being nonnegative and the negative half its negation. -/
 private lemma e8Coroot_nonneg_or_nonpos (j : Fin 240) :
     (∀ k, 0 ≤ e8Coroot j k) ∨ (∀ k, e8Coroot j k ≤ 0) := by
-  rcases lt_or_ge (j : ℕ) 120 with hj | hj
-  · refine Or.inl fun k => ?_
-    rw [show j = Fin.castAdd 120 ⟨j, hj⟩ from Fin.ext rfl, e8Coroot_castAdd]
+  induction j using Fin.addCases (m := 120) (n := 120) with
+  | left j =>
+    refine Or.inl fun k => ?_
+    rw [e8Coroot_castAdd]
     exact e8PositiveCoroot_nonneg _ k
-  · refine Or.inr fun k => ?_
-    rw [show j = Fin.addNat (⟨(j : ℕ) - 120, by omega⟩ : Fin 120) 120 from
-      Fin.ext (by simp only [Fin.val_addNat]; omega), e8Coroot_addNat, Pi.neg_apply, neg_nonpos]
+  | right j =>
+    refine Or.inr fun k => ?_
+    rw [Fin.natAdd_eq_addNat, e8Coroot_addNat, Pi.neg_apply, neg_nonpos]
     exact e8PositiveCoroot_nonneg _ k
 
 /-- In the cocharacter lattice a coroot is the combination of the simple coroots recorded by its
 own coordinates, the simple coroots being the standard basis. -/
 private lemma sum_smul_coroot_e8SimpleIndex (j : Fin 240) :
     ∑ k : Fin 8, e8Coroot j k • e8Coroot (e8SimpleIndex k) = e8Coroot j := by
-  funext m
-  simp only [coroot_e8SimpleIndex, Finset.sum_apply, Pi.smul_apply, Pi.single_apply,
-    smul_eq_mul, mul_ite, mul_one, mul_zero, Finset.sum_ite_eq, Finset.mem_univ, ite_true]
+  have hk (k : Fin 8) :
+      e8Coroot j k • e8Coroot (e8SimpleIndex k) = Pi.single k (e8Coroot j k) := by
+    rw [coroot_e8SimpleIndex, ← Pi.single_smul', smul_eq_mul, mul_one]
+  funext k
+  rw [Finset.sum_apply]
+  simp only [hk]
+  exact Fintype.sum_pi_single (M := fun _ : Fin 8 => ℤ) k (e8Coroot j)
 
 /-- In the character lattice a root is the combination of the simple roots recorded by the same
 coordinates, the two tables differing by the Cartan-matrix map. -/

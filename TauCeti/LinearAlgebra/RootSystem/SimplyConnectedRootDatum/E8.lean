@@ -1264,36 +1264,31 @@ private def e8ReflectionIndex (i j : Fin 240) : Fin 240 :=
 
 @[simp] private lemma e8Residue_castAdd (i : Fin 120) : e8Residue (Fin.castAdd 120 i) = i := by
   apply Fin.ext
-  change ((Fin.castAdd 120 i : Fin 240) : ℕ) % 120 = (i : ℕ)
-  rw [Fin.val_castAdd, Nat.mod_eq_of_lt i.isLt]
+  simp only [e8Residue, Fin.val_castAdd, Fin.val_mk, Nat.mod_eq_of_lt i.isLt]
 
 @[simp] private lemma e8Residue_addNat (i : Fin 120) : e8Residue (Fin.addNat i 120) = i := by
   apply Fin.ext
-  change ((Fin.addNat i 120 : Fin 240) : ℕ) % 120 = (i : ℕ)
-  rw [Fin.val_addNat, Nat.add_mod_right, Nat.mod_eq_of_lt i.isLt]
+  simp only [e8Residue, Fin.val_addNat, Fin.val_mk, Nat.add_mod_right,
+    Nat.mod_eq_of_lt i.isLt]
 
 private lemma e8NegIndex_castAdd (i : Fin 120) :
     e8NegIndex (Fin.castAdd 120 i) = Fin.addNat i 120 := by
   apply Fin.ext
-  change (((Fin.castAdd 120 i : Fin 240) : ℕ) + 120) % 240 = ((Fin.addNat i 120 : Fin 240) : ℕ)
-  rw [Fin.val_castAdd, Fin.val_addNat]
+  simp only [e8NegIndex, Fin.val_castAdd, Fin.val_addNat, Fin.val_mk]
   omega
 
 private lemma e8NegIndex_addNat (i : Fin 120) :
     e8NegIndex (Fin.addNat i 120) = Fin.castAdd 120 i := by
   apply Fin.ext
-  change (((Fin.addNat i 120 : Fin 240) : ℕ) + 120) % 240 = ((Fin.castAdd 120 i : Fin 240) : ℕ)
-  rw [Fin.val_castAdd, Fin.val_addNat]
+  simp only [e8NegIndex, Fin.val_castAdd, Fin.val_addNat, Fin.val_mk]
   omega
 
 /-- The index involution `e8NegIndex` negates the stored coordinates. -/
 private lemma e8Coroot_negIndex (k : Fin 240) : e8Coroot (e8NegIndex k) = -e8Coroot k := by
-  rcases lt_or_ge (k : ℕ) 120 with hk | hk
-  · rw [show k = Fin.castAdd 120 ⟨k, hk⟩ from Fin.ext rfl, e8NegIndex_castAdd, e8Coroot_addNat,
-      e8Coroot_castAdd]
-  · rw [show k = Fin.addNat (⟨(k : ℕ) - 120, by omega⟩ : Fin 120) 120 from
-      Fin.ext (by simp only [Fin.val_addNat]; omega), e8NegIndex_addNat, e8Coroot_addNat,
-      e8Coroot_castAdd, neg_neg]
+  induction k using Fin.addCases (m := 120) (n := 120) with
+  | left k => rw [e8NegIndex_castAdd, e8Coroot_addNat, e8Coroot_castAdd]
+  | right k =>
+    rw [Fin.natAdd_eq_addNat, e8NegIndex_addNat, e8Coroot_addNat, e8Coroot_castAdd, neg_neg]
 
 private lemma e8ReflectionIndex_castAdd (i : Fin 240) (j : Fin 120) :
     e8ReflectionIndex i (Fin.castAdd 120 j) = e8ReflectionTable (e8Residue i) j := by
@@ -1392,25 +1387,24 @@ private lemma e8ReflectionIndex_coroot_castAdd (i : Fin 240) (j : Fin 120) :
     e8Coroot (Fin.castAdd 120 j) - (e8Root i ⬝ᵥ e8Coroot (Fin.castAdd 120 j)) • e8Coroot i =
       e8Coroot (e8ReflectionIndex i (Fin.castAdd 120 j)) := by
   rw [e8ReflectionIndex_castAdd]
-  rcases lt_or_ge (i : ℕ) 120 with hi | hi
-  · rw [show i = Fin.castAdd 120 ⟨i, hi⟩ from Fin.ext rfl, e8Residue_castAdd]
+  induction i using Fin.addCases (m := 120) (n := 120) with
+  | left i =>
+    rw [e8Residue_castAdd]
     exact e8ReflectionTable_coroot _ j
-  · rw [show i = Fin.addNat (⟨(i : ℕ) - 120, by omega⟩ : Fin 120) 120 from
-      Fin.ext (by simp only [Fin.val_addNat]; omega), e8Residue_addNat, e8Coroot_addNat,
-      e8Root_addNat, ← e8Coroot_castAdd, neg_dotProduct, neg_smul, smul_neg, neg_neg]
+  | right i =>
+    rw [Fin.natAdd_eq_addNat, e8Residue_addNat, e8Coroot_addNat, e8Root_addNat,
+      ← e8Coroot_castAdd, neg_dotProduct, neg_smul, smul_neg, neg_neg]
     exact e8ReflectionTable_coroot _ j
 
 private lemma e8ReflectionIndex_coroot (i j : Fin 240) :
     e8Coroot j - (e8Root i ⬝ᵥ e8Coroot j) • e8Coroot i = e8Coroot (e8ReflectionIndex i j) := by
-  rcases lt_or_ge (j : ℕ) 120 with hj | hj
-  · rw [show j = Fin.castAdd 120 ⟨j, hj⟩ from Fin.ext rfl]
-    exact e8ReflectionIndex_coroot_castAdd i _
-  · set j₀ : Fin 120 := ⟨(j : ℕ) - 120, by omega⟩ with hj₀
-    have h := e8ReflectionIndex_coroot_castAdd i j₀
+  induction j using Fin.addCases (m := 120) (n := 120) with
+  | left j => exact e8ReflectionIndex_coroot_castAdd i j
+  | right j =>
+    have h := e8ReflectionIndex_coroot_castAdd i j
     rw [e8ReflectionIndex_castAdd] at h
-    rw [show j = Fin.addNat j₀ 120 from Fin.ext (by simp only [hj₀, Fin.val_addNat]; omega),
-      e8ReflectionIndex_addNat, e8Coroot_negIndex, ← h, e8Coroot_addNat, ← e8Coroot_castAdd,
-      dotProduct_neg, neg_smul]
+    rw [Fin.natAdd_eq_addNat, e8ReflectionIndex_addNat, e8Coroot_negIndex, ← h,
+      e8Coroot_addNat, ← e8Coroot_castAdd, dotProduct_neg, neg_smul]
     abel
 
 /-- The root reflections are the image of the coroot reflections under the Cartan-matrix map, so
