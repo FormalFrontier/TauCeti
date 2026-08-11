@@ -5,7 +5,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.LinearAlgebra.RootSystem.CoxeterMatrix
-public import TauCeti.LinearAlgebra.RootSystem.RankTwo
 
 public section
 
@@ -64,10 +63,6 @@ product to `{0, 1, 2, 3}` and the case analysis closes.
   reflections.**
 * `TauCeti.RootPairing.weylGroup.pow_coxeterMatrixOfBase_ofIdx_mul_ofIdx_eq_one`: the braid
   relations of that Coxeter matrix hold in the Weyl group.
-* `TauCeti.coxeterMatrixOfBase_of_hasCartanType_A_two`,
-  `TauCeti.coxeterMatrixOfBase_of_hasCartanType_B_two` and
-  `TauCeti.coxeterMatrixOfBase_of_hasCartanType_G2`: the entry at two distinct simple roots is
-  `3`, `4` and `6` for the three rank-two Cartan types.
 
 ## References
 
@@ -77,8 +72,6 @@ braid relations of `weylCoxeterSystem`. The rank-two computation is Bourbaki, *L
 Algebras*, Chapters 4--6, Ch. VI, §1.3, and Humphreys, *Introduction to Lie Algebras and
 Representation Theory*, §9.
 -/
-
-open scoped Matrix
 
 namespace TauCeti
 
@@ -328,51 +321,5 @@ theorem pow_coxeterMatrixOfBase_ofIdx_mul_ofIdx_eq_one (k l : b.support) :
 end Base
 
 end RootPairing.weylGroup
-
-/-! ## The Coxeter entries of the three rank-two Cartan types -/
-
-section CartanType
-
-variable {ι : Type u} {R : Type v} {M : Type w} {N : Type x}
-  [CommRing R] [AddCommGroup M] [Module R M] [AddCommGroup N] [Module R N]
-  (P : RootPairing ι R M N) [Finite ι] [CharZero R] [IsDomain R] [P.IsCrystallographic]
-  (b : P.Base)
-
-/-- A base of type `A₂` has Coxeter entry `3`: the two simple reflections have a product of
-order `3`. -/
-theorem coxeterMatrixOfBase_of_hasCartanType_A_two (h : HasCartanType P b (.A 2))
-    {i j : b.support} (hij : i ≠ j) : coxeterMatrixOfBase P b i j = 3 := by
-  obtain ⟨e, he⟩ : ∃ e : b.support ≃ Fin 2, ∀ i j,
-      b.cartanMatrix i j = (!![2, -1; -1, 2] : Matrix (Fin 2) (Fin 2) ℤ) (e i) (e j) := by
-    obtain ⟨e, he⟩ := (hasCartanType_iff b (.A 2)).mp h
-    exact ⟨e, fun i j ↦ by rw [he i j, DynkinType.cartanMatrix_A_two_eq]; rfl⟩
-  have hval : b.cartanMatrix i j * b.cartanMatrix j i = 1 :=
-    (IsFiniteType.mul_eq_of_forall_eq e he hij).trans (by decide)
-  rw [coxeterMatrixOfBase_apply, hval, coxeterOrder_one]
-
-/-- A base of type `B₂` has Coxeter entry `4`. -/
-theorem coxeterMatrixOfBase_of_hasCartanType_B_two (h : HasCartanType P b (.B 2))
-    {i j : b.support} (hij : i ≠ j) : coxeterMatrixOfBase P b i j = 4 := by
-  obtain ⟨e, he⟩ : ∃ e : b.support ≃ Fin 2, ∀ i j,
-      b.cartanMatrix i j = (!![2, -2; -1, 2] : Matrix (Fin 2) (Fin 2) ℤ) (e i) (e j) := by
-    obtain ⟨e, he⟩ := (hasCartanType_iff b (.B 2)).mp h
-    exact ⟨e, fun i j ↦ by rw [he i j, DynkinType.cartanMatrix_B_two_eq]; rfl⟩
-  have hval : b.cartanMatrix i j * b.cartanMatrix j i = 2 :=
-    (IsFiniteType.mul_eq_of_forall_eq e he hij).trans (by decide)
-  rw [coxeterMatrixOfBase_apply, hval, coxeterOrder_two]
-
-/-- A base of type `G₂` has Coxeter entry `6`: the two simple reflections have a product of
-order `6`, the rotation by a sixth of a turn of the `G₂` hexagon. -/
-theorem coxeterMatrixOfBase_of_hasCartanType_G2 (h : HasCartanType P b .G2)
-    {i j : b.support} (hij : i ≠ j) : coxeterMatrixOfBase P b i j = 6 := by
-  obtain ⟨e, he⟩ : ∃ e : b.support ≃ Fin 2, ∀ i j,
-      b.cartanMatrix i j = (!![2, -1; -3, 2] : Matrix (Fin 2) (Fin 2) ℤ) (e i) (e j) := by
-    obtain ⟨e, he⟩ := (hasCartanType_iff b .G2).mp h
-    exact ⟨e, fun i j ↦ by rw [he i j, DynkinType.cartanMatrix_G2_eq]; rfl⟩
-  have hval : b.cartanMatrix i j * b.cartanMatrix j i = 3 :=
-    (IsFiniteType.mul_eq_of_forall_eq e he hij).trans (by decide)
-  rw [coxeterMatrixOfBase_apply, hval, coxeterOrder_three]
-
-end CartanType
 
 end TauCeti
