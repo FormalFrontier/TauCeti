@@ -68,6 +68,8 @@ theorem tensorProduct_mul (g₁ g₂ : GeneralLinearGroup K V)
 @[simp]
 theorem tensorProduct_one :
     tensorProduct (1 : GeneralLinearGroup K V) (1 : GeneralLinearGroup K W) = 1 := by
+  -- Expose the identity units as reflexive linear equivalences so the tensor congruence lemma
+  -- can rewrite them.
   change LinearMap.GeneralLinearGroup.ofLinearEquiv
       (TensorProduct.congr (LinearEquiv.refl K V) (LinearEquiv.refl K W)) = 1
   rw [TensorProduct.congr_refl_refl]
