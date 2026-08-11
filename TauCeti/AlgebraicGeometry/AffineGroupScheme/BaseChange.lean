@@ -121,11 +121,7 @@ lemma baseChangeFunctor_map (f : R ⟶ S) {G H : AffineGroupSchemeCat R} (g : G 
     rfl
 
 /-- Base change along the identity of `R` is the identity functor on affine group schemes over
-`Spec R`.
-
-The isomorphism is `Over.pullbackId` transported to group objects and then through the fully
-faithful inclusion of the affine full subcategory; the `eqToIso` only records `Spec.map_id`,
-which is not definitional. -/
+`Spec R`. -/
 noncomputable def baseChangeFunctorIdIso :
     baseChangeFunctor (𝟙 R) ≅ 𝟭 (AffineGroupSchemeCat R) :=
   by
@@ -135,11 +131,7 @@ noncomputable def baseChangeFunctorIdIso :
         (eqToIso (by simp only [Spec.map_id]) ≪≫ Over.pullbackId) ≪≫ Functor.mapGrpIdIso))
 
 /-- Base change along a composite `f ≫ g` of ring maps is base change along `f` followed by base
-change along `g`.
-
-The isomorphism is `Over.pullbackComp` transported to group objects and then through the fully
-faithful inclusion of the affine full subcategory; the `eqToIso` only records `Spec.map_comp`,
-which is not definitional. -/
+change along `g`. -/
 noncomputable def baseChangeFunctorCompIso (f : R ⟶ S) (g : S ⟶ T) :
     baseChangeFunctor (f ≫ g) ≅ baseChangeFunctor f ⋙ baseChangeFunctor g :=
   by
