@@ -47,13 +47,17 @@ namespace TauCeti
 namespace PreAbstractSimplicialComplex
 
 variable {α β γ δ : Type*}
-  [LinearOrder α] [LinearOrder β] [LinearOrder γ] [LinearOrder δ]
+
+section OrderedProd
+
+variable [Preorder α] [Preorder β] [DecidableEq α] [DecidableEq β]
 
 /-- The ordered product of two pre-abstract simplicial complexes.
 
 A finite set of pairs is a face exactly when its two coordinate images are faces of the factors
-and it is a chain for the coordinatewise order on the product. The linear orders are data in the
-construction: changing them can change the triangulation, though not its intended PL type. -/
+and it is a chain for the coordinatewise order on the product. The definition uses only preorders;
+when they are linear orders, changing them can change the triangulation, though not its intended
+PL type. -/
 public def orderedProd (K : PreAbstractSimplicialComplex α)
     (L : PreAbstractSimplicialComplex β) : PreAbstractSimplicialComplex (α × β) where
   faces := {σ | σ.image Prod.fst ∈ K ∧ σ.image Prod.snd ∈ L ∧
@@ -88,13 +92,25 @@ theorem image_snd_mem_of_mem_orderedProd {σ : Finset (α × β)}
     (hσ : σ ∈ orderedProd K L) : σ.image Prod.snd ∈ L :=
   (mem_orderedProd_iff.mp hσ).2.1
 
+/-- Every face of an ordered product is a chain for the coordinatewise order. -/
+theorem isChain_of_mem_orderedProd {σ : Finset (α × β)}
+    (hσ : σ ∈ orderedProd K L) : IsChain (· ≤ ·) (σ : Set (α × β)) :=
+  (mem_orderedProd_iff.mp hσ).2.2
+
 /-- Ordered product is monotone in both factors. -/
 theorem orderedProd_mono (hK : K ≤ K') (hL : L ≤ L') :
     orderedProd K L ≤ orderedProd K' L' := by
   rintro σ ⟨hσK, hσL, hchain⟩
   exact ⟨hK hσK, hL hσL, hchain⟩
 
+end OrderedProd
+
 namespace SimplicialMap
+
+section Projections
+
+variable [Preorder α] [Preorder β] [DecidableEq α] [DecidableEq β]
+variable {K : PreAbstractSimplicialComplex α} {L : PreAbstractSimplicialComplex β}
 
 /-- The first coordinate projection from an ordered product is simplicial. -/
 public def orderedProdFst (K : PreAbstractSimplicialComplex α)
@@ -127,6 +143,13 @@ theorem coe_orderedProdSnd (K : PreAbstractSimplicialComplex α)
 theorem orderedProdSnd_apply (K : PreAbstractSimplicialComplex α)
     (L : PreAbstractSimplicialComplex β) (p : α × β) : orderedProdSnd K L p = p.2 :=
   congrFun (coe_orderedProdSnd K L) p
+
+end Projections
+
+section ProdMkLeft
+
+variable [LinearOrder α] [Preorder β] [DecidableEq β]
+variable {K : PreAbstractSimplicialComplex α} {L : PreAbstractSimplicialComplex β}
 
 /-- Fixing a vertex `b` of the second factor gives the simplicial inclusion `a ↦ (a, b)` of the
 first factor into the ordered product. -/
@@ -163,6 +186,13 @@ theorem map_prodMkLeft_le_orderedProd (K : PreAbstractSimplicialComplex α)
     K.map (fun a => (a, b)) ≤ orderedProd K L :=
   (prodMkLeft K L b hb).map_le
 
+end ProdMkLeft
+
+section ProdMkRight
+
+variable [Preorder α] [DecidableEq α] [LinearOrder β]
+variable {K : PreAbstractSimplicialComplex α} {L : PreAbstractSimplicialComplex β}
+
 /-- Fixing a vertex `a` of the first factor gives the simplicial inclusion `b ↦ (a, b)` of the
 second factor into the ordered product. -/
 public def prodMkRight (K : PreAbstractSimplicialComplex α)
@@ -198,6 +228,14 @@ theorem map_prodMkRight_le_orderedProd (K : PreAbstractSimplicialComplex α)
     L.map (fun b => (a, b)) ≤ orderedProd K L :=
   (prodMkRight K L a ha).map_le
 
+end ProdMkRight
+
+section OrderedProdMap
+
+variable [Preorder α] [Preorder β] [Preorder γ] [Preorder δ]
+  [DecidableEq α] [DecidableEq β] [DecidableEq γ] [DecidableEq δ]
+variable {K : PreAbstractSimplicialComplex α} {L : PreAbstractSimplicialComplex β}
+
 /-- Monotone simplicial maps induce a simplicial map between ordered products. Monotonicity is
 needed because the product triangulation depends on the chosen vertex orders. -/
 public def orderedProdMap {Kγ : PreAbstractSimplicialComplex γ}
@@ -230,13 +268,19 @@ theorem orderedProdMap_apply {Kγ : PreAbstractSimplicialComplex γ}
     orderedProdMap f g hf hg p = (f p.1, g p.2) :=
   congrFun (coe_orderedProdMap f g hf hg) p
 
+end OrderedProdMap
+
 end SimplicialMap
 
 end PreAbstractSimplicialComplex
 
 namespace AbstractSimplicialComplex
 
-variable {α β : Type*} [LinearOrder α] [LinearOrder β]
+variable {α β : Type*}
+
+section OrderedProd
+
+variable [Preorder α] [Preorder β] [DecidableEq α] [DecidableEq β]
 
 /-- The ordered product of two abstract simplicial complexes. -/
 public def orderedProd (K : AbstractSimplicialComplex α) (L : AbstractSimplicialComplex β) :
@@ -269,6 +313,23 @@ theorem mem_orderedProd_iff {σ : Finset (α × β)} :
   simp only [← mem_toPreAbstractSimplicialComplex,
     orderedProd_toPreAbstractSimplicialComplex]
   exact PreAbstractSimplicialComplex.mem_orderedProd_iff
+
+/-- The first-coordinate image of a face of an abstract ordered product is a face of the first
+factor. -/
+theorem image_fst_mem_of_mem_orderedProd {σ : Finset (α × β)}
+    (hσ : σ ∈ orderedProd K L) : σ.image Prod.fst ∈ K :=
+  (mem_orderedProd_iff.mp hσ).1
+
+/-- The second-coordinate image of a face of an abstract ordered product is a face of the second
+factor. -/
+theorem image_snd_mem_of_mem_orderedProd {σ : Finset (α × β)}
+    (hσ : σ ∈ orderedProd K L) : σ.image Prod.snd ∈ L :=
+  (mem_orderedProd_iff.mp hσ).2.1
+
+/-- Every face of an abstract ordered product is a chain for the coordinatewise order. -/
+theorem isChain_of_mem_orderedProd {σ : Finset (α × β)}
+    (hσ : σ ∈ orderedProd K L) : IsChain (· ≤ ·) (σ : Set (α × β)) :=
+  (mem_orderedProd_iff.mp hσ).2.2
 
 /-- Ordered product is monotone in both abstract simplicial complexes. -/
 theorem orderedProd_mono (hK : K ≤ K') (hL : L ≤ L') :
@@ -308,6 +369,24 @@ theorem mem_orderedCylinder_iff {σ : Finset (α × Fin 2)} :
       _root_.AbstractSimplicialComplex.top_toPreAbstractSimplicialComplex]
     exact Finset.image_nonempty.mpr (Finset.image_nonempty.mp (K.isRelLowerSet_faces hK).1)
 
+/-- The first-coordinate image of a face of an ordered cylinder is a face of the original
+complex. -/
+theorem image_fst_mem_of_mem_orderedCylinder {σ : Finset (α × Fin 2)}
+    (hσ : σ ∈ orderedCylinder K) : σ.image Prod.fst ∈ K :=
+  (mem_orderedCylinder_iff.mp hσ).1
+
+/-- Every face of an ordered cylinder is a chain for the product order. -/
+theorem isChain_of_mem_orderedCylinder {σ : Finset (α × Fin 2)}
+    (hσ : σ ∈ orderedCylinder K) : IsChain (· ≤ ·) (σ : Set (α × Fin 2)) :=
+  (mem_orderedCylinder_iff.mp hσ).2
+
+end OrderedProd
+
+section EndpointInclusions
+
+variable [LinearOrder α]
+variable {K : AbstractSimplicialComplex α}
+
 /-- The zero-end copy of a complex is a simplicial subcomplex of its ordered cylinder. -/
 theorem map_prodMk_zero_le_orderedCylinder (K : AbstractSimplicialComplex α) :
     K.toPreAbstractSimplicialComplex.map (fun a => (a, (0 : Fin 2))) ≤
@@ -327,6 +406,44 @@ theorem map_prodMk_one_le_orderedCylinder (K : AbstractSimplicialComplex α) :
     K.toPreAbstractSimplicialComplex
     (⊤ : AbstractSimplicialComplex (Fin 2)).toPreAbstractSimplicialComplex 1
     ((⊤ : AbstractSimplicialComplex (Fin 2)).singleton_mem 1)
+
+/-- The bundled simplicial inclusion of the zero endpoint into an ordered cylinder. -/
+def orderedCylinderZero (K : AbstractSimplicialComplex α) :
+    PreAbstractSimplicialComplex.SimplicialMap K.toPreAbstractSimplicialComplex
+      (orderedCylinder K).toPreAbstractSimplicialComplex :=
+  PreAbstractSimplicialComplex.SimplicialMap.ofMapLE (fun a => (a, (0 : Fin 2)))
+    (map_prodMk_zero_le_orderedCylinder K)
+
+@[simp]
+theorem coe_orderedCylinderZero (K : AbstractSimplicialComplex α) :
+    ⇑(orderedCylinderZero K) = fun a => (a, (0 : Fin 2)) := by
+  simp only [orderedCylinderZero,
+    PreAbstractSimplicialComplex.SimplicialMap.coe_ofMapLE]
+
+@[simp]
+theorem orderedCylinderZero_apply (K : AbstractSimplicialComplex α) (a : α) :
+    orderedCylinderZero K a = (a, (0 : Fin 2)) :=
+  congrFun (coe_orderedCylinderZero K) a
+
+/-- The bundled simplicial inclusion of the one endpoint into an ordered cylinder. -/
+def orderedCylinderOne (K : AbstractSimplicialComplex α) :
+    PreAbstractSimplicialComplex.SimplicialMap K.toPreAbstractSimplicialComplex
+      (orderedCylinder K).toPreAbstractSimplicialComplex :=
+  PreAbstractSimplicialComplex.SimplicialMap.ofMapLE (fun a => (a, (1 : Fin 2)))
+    (map_prodMk_one_le_orderedCylinder K)
+
+@[simp]
+theorem coe_orderedCylinderOne (K : AbstractSimplicialComplex α) :
+    ⇑(orderedCylinderOne K) = fun a => (a, (1 : Fin 2)) := by
+  simp only [orderedCylinderOne,
+    PreAbstractSimplicialComplex.SimplicialMap.coe_ofMapLE]
+
+@[simp]
+theorem orderedCylinderOne_apply (K : AbstractSimplicialComplex α) (a : α) :
+    orderedCylinderOne K a = (a, (1 : Fin 2)) :=
+  congrFun (coe_orderedCylinderOne K) a
+
+end EndpointInclusions
 
 /-! The following three computations pin down the staircase convention on the square. The two
 monotone triangles are faces, while the pair of incomparable off-diagonal vertices is not. -/
