@@ -168,9 +168,10 @@ theorem collarHomeomorph_apply_zero_normal (n : ℕ) (x : EuclideanSpace ℝ (Fi
   ext i
   refine Fin.cases ?_ (fun j ↦ ?_) i
   · rw [collarHomeomorph_apply_zero]
-    -- The zeroth coordinate of the zero point is hidden behind the `WithLp` coercion.
-    change (0 : ℝ) = _
-    simp
+    rw [boundaryParam_coe, euclideanHalfSpaceBoundaryParam_apply_zero]
+    have hzero : (0 : EuclideanHalfSpace 1).1 = (0 : EuclideanSpace ℝ (Fin 1)) := rfl
+    rw [hzero]
+    exact PiLp.zero_apply (fun _ : Fin 1 ↦ ℝ) 0
   · rw [collarHomeomorph_apply_succ]
     simp
 
@@ -190,14 +191,13 @@ def collarDiffeomorph (n : ℕ) :
     have hrange : ∀ p, collarAmbientEquiv n (I p) ∈ range J := by
       intro p
       rw [range_modelWithCornersEuclideanHalfSpace]
-      -- Unfold the product model only enough to expose its normal coordinate.
-      change 0 ≤ collarAmbientEquiv n (p.1, p.2.1) 0
+      dsimp [I]
+      rw [collarAmbientEquiv_apply_zero]
       simpa using p.2.2
     refine (J.contMDiffOn_symm.comp_contMDiff hcoord hrange).congr ?_
     intro p
     apply Subtype.ext
-    -- Both sides are points of the half-space; compare their ambient model coordinates.
-    change collarAmbientEquiv n (I p) = J (J.symm (collarAmbientEquiv n (I p)))
+    dsimp [J]
     exact (J.right_inv (hrange p)).symm
   contMDiff_invFun := by
     rw [chartedSpaceSelf_prod]
@@ -211,8 +211,7 @@ def collarDiffeomorph (n : ℕ) :
       intro y
       rw [ModelWithCorners.range_prod, range_modelWithCornersEuclideanHalfSpace]
       refine ⟨mem_range_self _, ?_⟩
-      -- The range condition is precisely nonnegativity of the split normal coordinate.
-      change 0 ≤ ((collarAmbientEquiv n).symm y.1).2 0
+      dsimp [J]
       simpa using y.2
     refine (I.contMDiffOn_symm.comp_contMDiff hcoord hrange).congr ?_
     intro y
@@ -222,8 +221,7 @@ def collarDiffeomorph (n : ℕ) :
       simp [q, I, J]
     have hsnd : q.2.1 = ((collarAmbientEquiv n).symm y.1).2 := by
       simpa [q, I, J, ModelWithCorners.prod_apply] using congrArg Prod.snd hright
-    -- The composite produced by `contMDiffOn_symm` is the inverse homeomorphism by construction.
-    change (collarHomeomorph n).symm y = q
+    dsimp [q, I, J]
     refine Prod.ext ?_ ?_
     · exact hfst.symm
     · apply Subtype.ext
