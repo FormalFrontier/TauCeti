@@ -5,7 +5,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.GroupTheory.Presentation.GroupPresentation
-public import Mathlib.GroupTheory.FreeGroup.CyclicallyReduced
 
 /-!
 # Transcribed presentations of the Mathieu groups `M₁₁`, `M₁₂` and `M₂₂`
@@ -97,8 +96,9 @@ re-enumeration above is an additional independent check rather than a substitute
 ## References
 
 This is part of milestone S1 of `TauCetiRoadmap/CFSGStatement/README.md`, which asks for a complete
-relator word list, with an admissible source, for each of the twenty-six sporadic names. It fills
-three of those rows. The two sources are:
+relator word list, with an admissible source, for each of the twenty-six sporadic names. It
+populates the presentation data for three of those rows; the rows remain open until the required
+comparisons against the FiniteSimpleGroups development are recorded. The two sources are:
 
 * C. M. Campbell, G. Havas, C. Ramsay and E. F. Robertson, *Nice efficient presentations for all
   small simple groups and their covers*, LMS J. Comput. Math. **7** (2004), 266--283,
