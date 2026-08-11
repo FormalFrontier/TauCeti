@@ -348,7 +348,7 @@ private theorem overlapRatio_tendsto_one (v : V) :
     have hvol_toReal_pos : 0 < (volume (Metric.closedBall (0 : V) (↑n))).toReal :=
       ENNReal.toReal_pos (ne_of_gt hvol_pos) hvol_ne_top
     unfold overlapRatio
-    rw [if_neg (ne_of_gt hvol_toReal_pos)]
+    rw [ite_eq_right (ne_of_gt hvol_toReal_pos)]
     have hball_pos : 0 < (volume (Metric.ball (0 : V) 1)).toReal :=
       ENNReal.toReal_pos (ne_of_gt (Metric.measure_ball_pos volume 0 one_pos))
         (ne_of_lt measure_ball_lt_top)
@@ -503,7 +503,7 @@ private theorem fejer_avg_eq_integral (ψ : V → ℂ) (hcont : Continuous ψ)
         rw [smul_comm, ← smul_assoc, Complex.real_smul]
         congr 1
         rw [Complex.ofReal_inj]
-        rw [overlapRatio, if_neg hvol_ne, div_eq_mul_inv, smul_eq_mul]
+        rw [overlapRatio, ite_eq_right hvol_ne, div_eq_mul_inv, smul_eq_mul]
 
 /-! ### Step C: the integral of a positive-definite function has nonnegative real part -/
 
@@ -536,7 +536,7 @@ private theorem pd_integral_re_nonneg (ψ : V → ℂ)
         atTop (nhds (∫ x, ψ x)) by
       apply h.congr'
       filter_upwards [Filter.eventually_ne_atTop 0] with n hn
-      simp only [J, if_neg hn]
+      simp only [J, ite_eq_right hn]
       exact (fejer_avg_eq_integral ψ hcont n (Nat.cast_pos.mpr (Nat.pos_of_ne_zero hn))).symm
     have hone : (∫ x, ψ x) = ∫ x, (1 : ℂ) * ψ x := by simp
     rw [hone]
