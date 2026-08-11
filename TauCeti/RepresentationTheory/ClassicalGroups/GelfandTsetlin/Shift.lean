@@ -59,14 +59,14 @@ remain zero, so the representation of a pattern by an unrestricted function stay
 def shift (P : GTPattern n) (m : ℤ) : GTPattern n where
   entry i j := if i < j ∧ j ≤ n then P i j + m else 0
   zeros' h := by
-    rw [if_neg]
+    rw [ite_eq_right]
     omega
   interlacing' := by
     intro i j hij hj
     have hLower : i < j ∧ j ≤ n := by omega
     have hUpperLeft : i < j + 1 ∧ j + 1 ≤ n := by omega
     have hUpperRight : i + 1 < j + 1 ∧ j + 1 ≤ n := by omega
-    simp only [if_pos hLower, if_pos hUpperLeft, if_pos hUpperRight]
+    simp only [ite_eq_left hLower, ite_eq_left hUpperLeft, ite_eq_left hUpperRight]
     exact ⟨add_le_add_left (P.entry_le_entry_succ_row hij hj) m,
       add_le_add_left (P.entry_succ_succ_le_entry hj) m⟩
 
@@ -79,13 +79,13 @@ theorem shift_apply (P : GTPattern n) (m : ℤ) (i j : ℕ) :
 @[simp]
 theorem shift_apply_of_lt_of_le (P : GTPattern n) (m : ℤ) {i j : ℕ} (hij : i < j)
     (hj : j ≤ n) : P.shift m i j = P i j + m := by
-  rw [shift_apply, if_pos ⟨hij, hj⟩]
+  rw [shift_apply, ite_eq_left ⟨hij, hj⟩]
 
 /-- Outside the triangular array, a shifted pattern still has entry zero. -/
 @[simp]
 theorem shift_apply_of_not_lt_le (P : GTPattern n) (m : ℤ) {i j : ℕ}
     (h : ¬(i < j ∧ j ≤ n)) : P.shift m i j = 0 := by
-  rw [shift_apply, if_neg h]
+  rw [shift_apply, ite_eq_right h]
 
 /-- Shifting by zero does not change a Gelfand-Tsetlin pattern. -/
 @[simp]
