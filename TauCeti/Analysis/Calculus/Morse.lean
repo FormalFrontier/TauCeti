@@ -5,12 +5,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.Analysis.Calculus.ContDiff.Comp
-public import Mathlib.Analysis.Calculus.ContDiff.RCLike
-public import Mathlib.Analysis.Calculus.FDeriv.Bilinear
 public import Mathlib.Analysis.Calculus.FDeriv.Equiv
 public import Mathlib.Analysis.Normed.Module.FiniteDimension
 public import Mathlib.LinearAlgebra.Dual.Lemmas
 public import Mathlib.Topology.DiscreteSubset
+public import TauCeti.Analysis.Calculus.Bilinear
+public import TauCeti.Analysis.Calculus.SecondDerivative
 
 /-!
 # Nondegenerate critical points
@@ -88,25 +88,6 @@ open Filter Function Module Set Topology
 
 namespace TauCeti
 
-/-! ### The second derivative as a derivative
-
-The second derivative `fderiv 𝕜 (fderiv 𝕜 g) x` is the derivative at `x` of the map `fderiv 𝕜 g`.
-Every statement below goes through that identification, so it is recorded once here.
--/
-
-section SecondDerivative
-
-variable {𝕜 E F : Type*} [RCLike 𝕜] [NormedAddCommGroup E] [NormedSpace 𝕜 E]
-  [NormedAddCommGroup F] [NormedSpace 𝕜 F]
-
-/-- At a twice continuously differentiable point, `fderiv 𝕜 g` is strictly differentiable, with
-derivative the second derivative of `g`. -/
-theorem ContDiffAt.hasStrictFDerivAt_fderiv {g : E → F} {x : E} (h : ContDiffAt 𝕜 2 g x) :
-    HasStrictFDerivAt (fderiv 𝕜 g) (fderiv 𝕜 (fderiv 𝕜 g) x) x :=
-  (h.fderiv_right (m := 1) (by norm_num)).hasStrictFDerivAt one_ne_zero
-
-end SecondDerivative
-
 section Morse
 
 variable {E F : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
@@ -132,6 +113,7 @@ def HasNondegenerateCriticalPointsOn (f : E → ℝ) (s : Set E) : Prop :=
   ∀ ⦃x⦄, x ∈ s → fderiv ℝ f x = 0 → IsNondegenerateCriticalPoint f x
 
 /-- The introduction and elimination rule for `HasNondegenerateCriticalPointsOn`. -/
+@[simp]
 theorem hasNondegenerateCriticalPointsOn_iff {s : Set E} :
     HasNondegenerateCriticalPointsOn f s ↔
       ∀ ⦃x⦄, x ∈ s → fderiv ℝ f x = 0 → IsNondegenerateCriticalPoint f x :=
@@ -269,54 +251,10 @@ end Morse
 /-! ### The quadratic model
 
 A nondegenerate critical point looks, to second order, like a nondegenerate quadratic form. The
-computations below record that the model itself has a nondegenerate critical point, so the
-definition above is not vacuous.
+statements below record that the model itself has a nondegenerate critical point, so the
+definition above is not vacuous. The derivatives of `z ↦ B z z` that they rest on are computed in
+`TauCeti.Analysis.Calculus.Bilinear`.
 -/
-
-section Bilinear
-
-variable {𝕜 E F : Type*} [NontriviallyNormedField 𝕜] [NormedAddCommGroup E] [NormedSpace 𝕜 E]
-  [NormedAddCommGroup F] [NormedSpace 𝕜 F]
-
-namespace ContinuousLinearMap
-
-/-- The map `z ↦ B z z` attached to a continuous bilinear map `B` is strictly differentiable, with
-derivative the polarization of `B`. -/
-theorem hasStrictFDerivAt_apply_self (B : E →L[𝕜] E →L[𝕜] F) (y : E) :
-    HasStrictFDerivAt (fun z ↦ B z z) (B.flip y + B y) y := by
-  have h : HasStrictFDerivAt (fun z ↦ B z z)
-      (B.precompR E y (ContinuousLinearMap.id 𝕜 E) +
-        B.precompL E (ContinuousLinearMap.id 𝕜 E) y) y :=
-    B.hasStrictFDerivAt_of_bilinear (hasStrictFDerivAt_id y) (hasStrictFDerivAt_id y)
-  convert h using 1
-  ext v
-  simp [add_comm]
-
-/-- The map `z ↦ B z z` attached to a continuous bilinear map `B` is differentiable, with
-derivative the polarization of `B`. -/
-theorem hasFDerivAt_apply_self (B : E →L[𝕜] E →L[𝕜] F) (y : E) :
-    HasFDerivAt (fun z ↦ B z z) (B.flip y + B y) y :=
-  (hasStrictFDerivAt_apply_self B y).hasFDerivAt
-
-/-- The differential of `z ↦ B z z` is the polarization `B.flip + B`. -/
-@[simp]
-theorem fderiv_apply_self (B : E →L[𝕜] E →L[𝕜] F) (y : E) :
-    fderiv 𝕜 (fun z ↦ B z z) y = B.flip y + B y :=
-  (hasFDerivAt_apply_self B y).fderiv
-
-/-- The second derivative of `z ↦ B z z` is the constant `B.flip + B`. -/
-@[simp]
-theorem fderiv_fderiv_apply_self (B : E →L[𝕜] E →L[𝕜] F) (y : E) :
-    fderiv 𝕜 (fderiv 𝕜 fun z ↦ B z z) y = B.flip + B := by
-  have hEq : (fderiv 𝕜 fun z ↦ B z z) = fun z ↦ (B.flip + B) z := by
-    funext z
-    rw [fderiv_apply_self, add_apply]
-  rw [hEq]
-  exact (B.flip + B).fderiv
-
-end ContinuousLinearMap
-
-end Bilinear
 
 section Model
 
