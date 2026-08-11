@@ -28,7 +28,7 @@ variable {R X : Type*} [CommRing R] [AddCommGroup X] [Module R X]
 
 /-- Subtract the scalar operator `omega I` from an unbounded operator `A`, without changing its
 domain. -/
-@[expose] def subScalar (A : X →ₗ.[R] X) (omega : R) : X →ₗ.[R] X :=
+def subScalar (A : X →ₗ.[R] X) (omega : R) : X →ₗ.[R] X :=
   (-omega • (LinearMap.id : X →ₗ[R] X)) +ᵥ A
 
 /-- A scalar shift does not change the domain of an unbounded operator. -/
@@ -40,7 +40,8 @@ theorem subScalar_domain (A : X →ₗ.[R] X) (omega : R) :
 /-- Pointwise evaluation of the shifted operator `A - omega I`. -/
 @[simp]
 theorem subScalar_apply (A : X →ₗ.[R] X) (omega : R) (x : (subScalar A omega).domain) :
-    subScalar A omega x = A ⟨x, x.2⟩ - omega • (x : X) := by
+    subScalar A omega x =
+      A ⟨x, (subScalar_domain A omega) ▸ x.2⟩ - omega • (x : X) := by
   -- Unfold the domain-preserving `VAdd` so both sides use its definitionally equal subtype.
   change (-omega) • (x : X) + A x = A x - omega • (x : X)
   module
