@@ -22,6 +22,10 @@ coordinates and `-1` in the last `q`, written as a `QuadraticMap.weightedSumSqua
 sign vector `TauCeti.realCliffordWeight p q`. It is nondegenerate
 (`TauCeti.nondegenerate_realCliffordForm`), and its Clifford algebra has dimension `2 ^ (p + q)`
 (`TauCeti.finrank_cliffordAlgebra_realCliffordForm`).
+Negating the form swaps the two signature indices through
+`TauCeti.realCliffordFormNegIsometry`; its coordinate action is given by
+`TauCeti.realCliffordFormNegIsometry_pos_of_neg` and
+`TauCeti.realCliffordFormNegIsometry_neg_of_pos`.
 
 The sign convention — generators of the *first* `p` coordinates square to `+1` — is not universal:
 sources that make the first generators square to `-1` index the periodicity table by
@@ -61,6 +65,8 @@ equivalences and their values, not their bare existence, that the Bott-periodici
 
 * `TauCeti.realCliffordWeight` and `TauCeti.realCliffordForm`: the signature `(p, q)` sign vector
   and the diagonal real quadratic form it weights.
+* `TauCeti.realCliffordFormNegIsometry`: the isometry from the negated `(p, q)` form to the
+  `(q, p)` form, with coordinate equations `..._pos_of_neg` and `..._neg_of_pos`.
 * `TauCeti.realCliffordOneZeroEquivProd`, `TauCeti.realCliffordZeroOneEquivComplex`,
   `TauCeti.realCliffordZeroTwoEquivQuaternion`, `TauCeti.realCliffordOneOneEquivMatrix`: the four
   base entries of the Bott table, each with a `..._ι` lemma computing it on a generator.
