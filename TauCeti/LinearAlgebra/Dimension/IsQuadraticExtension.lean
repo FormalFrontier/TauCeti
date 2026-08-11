@@ -103,16 +103,10 @@ two generators differ by `θ' = b + aθ` with `a ≠ 0`. -/
 theorem exists_eq_algebraMap_add_algebraMap_mul {θ θ' : L}
     (hθ : θ ∉ Set.range (algebraMap K L)) (hθ' : θ' ∉ Set.range (algebraMap K L)) :
     ∃ a b : K, a ≠ 0 ∧ θ' = algebraMap K L b + algebraMap K L a * θ := by
-  have hli := linearIndependent_one_of_notMem_range_algebraMap K L hθ
-  have hmem : θ' ∈ Submodule.span K (Set.range ![(1 : L), θ]) := by
-    rw [hli.span_eq_top_of_card_eq_finrank
-      (by rw [Fintype.card_fin]; exact (finrank_eq_two K L).symm)]
-    trivial
-  rw [Matrix.range_cons_cons_empty, Submodule.mem_span_pair] at hmem
-  obtain ⟨c, d, hcd⟩ := hmem
-  refine ⟨d, c, fun hd ↦ hθ' ⟨c, ?_⟩, ?_⟩
-  · rw [← hcd, hd, zero_smul, add_zero, Algebra.algebraMap_eq_smul_one]
-  · rw [← hcd, Algebra.smul_def, Algebra.smul_def, mul_one]
+  obtain ⟨a, b, hab⟩ := exists_eq_algebraMap_add_algebraMap_mul' K L hθ θ'
+  refine ⟨a, b, ?_, hab⟩
+  rintro rfl
+  exact hθ' ⟨b, by rw [hab, map_zero, zero_mul, add_zero]⟩
 
 end Algebra.IsQuadraticExtension
 
