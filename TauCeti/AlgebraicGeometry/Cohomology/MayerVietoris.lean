@@ -22,7 +22,7 @@ together with the vanishing it gives when `U` and `V` cover `X`.
 ## Main declarations
 
 * `Scheme.Modules.mayerVietorisSequence` is the six-term piece of the long exact sequence,
-  `Scheme.Modules.mayerVietorisSequence_eq` identifies each of its objects and arrows with
+  `Scheme.Modules.mayerVietorisSequence_def` identifies each of its objects and arrows with
   restriction maps and the connecting map `Scheme.Modules.mayerVietorisδ`, and
   `Scheme.Modules.mayerVietorisSequence_exact` is its exactness;
 * `Scheme.Modules.epi_mayerVietorisδ`: if `Hⁿ⁺¹(U, M)` and `Hⁿ⁺¹(V, M)` vanish, then the
@@ -34,8 +34,10 @@ together with the vanishing it gives when `U` and `V` cover `X`.
   uniform positive-degree acyclicity hypotheses.
 
 The last two statements are the shape in which Mayer-Vietoris is used on a curve: a separated
-scheme covered by two affine opens has no cohomology above degree one, once the acyclicity of
-affines is available. That acyclicity is not proved here.
+scheme covered by two affine opens has no cohomology above degree one in coefficients for which
+the affine opens are acyclic. Serre's acyclicity of affines supplies that input for a
+quasi-coherent `M`; the coefficients `M : X.Modules` here are arbitrary, and the acyclicity is
+taken as a hypothesis rather than proved.
 
 This advances `TauCetiRoadmap/JacobianChallenge/README.md`, Layer B, "coherent sheaves and
 cohomology `Hⁱ(X, ℱ)`: … vanishing above dimension (`H² = 0` on a curve)". No formalization is
@@ -84,7 +86,7 @@ def mayerVietorisSequence (n₀ n₁ : ℕ) (h : n₀ + 1 = n₁) : ComposableAr
 the pairs of restriction maps from `U ⊔ V`, the two maps out of a biproduct are the differences of
 the restriction maps to `U ⊓ V`, and the middle map is the connecting map. -/
 @[simp]
-lemma mayerVietorisSequence_eq (n₀ n₁ : ℕ) (h : n₀ + 1 = n₁) :
+lemma mayerVietorisSequence_def (n₀ n₁ : ℕ) (h : n₀ + 1 = n₁) :
     mayerVietorisSequence M U V n₀ n₁ h =
       ComposableArrows.mk₅
         (biprod.lift (cohomologyOnRes M n₀ (le_sup_left : U ≤ U ⊔ V))
@@ -152,7 +154,8 @@ theorem subsingleton_cohomology_succ (hUV : U ⊔ V = ⊤) (n : ℕ)
 positive degrees has no cohomology in degrees at least two.
 
 This is the form Mayer-Vietoris takes on a separated scheme covered by two affine opens: the
-intersection is then affine as well, and Serre's acyclicity of affines supplies the hypotheses. -/
+intersection is then affine as well, so for quasi-coherent `M` Serre's acyclicity of affines
+supplies the hypotheses. For a general `M : X.Modules` they have to come from elsewhere. -/
 theorem subsingleton_cohomology_of_two_le (hUV : U ⊔ V = ⊤) (n : ℕ) (hn : 2 ≤ n)
     (hU : ∀ i, 0 < i → Subsingleton (cohomologyOn M i U))
     (hV : ∀ i, 0 < i → Subsingleton (cohomologyOn M i V))
