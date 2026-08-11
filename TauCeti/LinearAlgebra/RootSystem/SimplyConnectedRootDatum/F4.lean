@@ -391,36 +391,59 @@ private lemma f4Coroot_eq_sum (i : Fin 24) :
   simp only [hk]
   exact (Fintype.sum_pi_single k _).symm
 
-private lemma mem_or_neg_mem_of_coefficients (f : Fin 48 → (Fin 4 → ℤ))
-    (c : Fin 24 → Fin 4 → ℕ)
-    (hc : ∀ i, f (Fin.castAdd 24 i) = ∑ k, c i k • f (Fin.castAdd 44 k))
-    (hneg : ∀ i, f (Fin.addNat i 24) = -f (Fin.castAdd 24 i)) (i : Fin 48) :
-    f i ∈ AddSubmonoid.closure (f '' (↑f4Support : Set (Fin 48))) ∨
-      -f i ∈ AddSubmonoid.closure
-        (f '' (↑f4Support : Set (Fin 48))) := by
-  rw [f4Support, image_simpleSupport]
-  have hsum (k : Fin 24) : f (Fin.castAdd 24 k) ∈
-      AddSubmonoid.closure (range (f ∘ (Fin.castAdd 44 : Fin 4 → Fin 48))) := by
-    rw [hc k]
-    simp only [← natCast_zsmul]
-    exact sum_smul_mem_closure _ (fun j => (c k j : ℤ)) fun _ => Int.natCast_nonneg _
+private def f4SignedCoefficients (c : Fin 24 → Fin 4 → ℕ) (i : Fin 48) : Fin 4 → ℤ :=
+  Fin.addCases (fun i k => c i k) (fun i k => -(c i k : ℤ)) i
+
+private lemma f4SignedCoefficients_nonneg_or_nonpos (c : Fin 24 → Fin 4 → ℕ) (i : Fin 48) :
+    (∀ k, 0 ≤ f4SignedCoefficients c i k) ∨
+      (∀ k, f4SignedCoefficients c i k ≤ 0) := by
   induction i using Fin.addCases (m := 24) (n := 24) with
-  | left k => exact Or.inl (hsum k)
-  | right k => exact Or.inr (by rw [Fin.natAdd_eq_addNat, hneg, neg_neg]; exact hsum k)
+  | left i =>
+    refine Or.inl fun k => ?_
+    simp only [f4SignedCoefficients, Fin.addCases_left]
+    exact Int.natCast_nonneg _
+  | right i =>
+    refine Or.inr fun k => ?_
+    simp only [f4SignedCoefficients, Fin.addCases_right]
+    exact neg_nonpos.mpr (Int.natCast_nonneg _)
+
+private lemma f4Root_eq_signed_sum (i : Fin 48) :
+    f4Root i = ∑ k, f4SignedCoefficients f4RootCoefficients i k •
+      f4Root (Fin.castAdd 44 k) := by
+  induction i using Fin.addCases (m := 24) (n := 24) with
+  | left i => simpa [f4SignedCoefficients, ← natCast_zsmul] using f4Root_eq_sum i
+  | right i =>
+    simp only [f4SignedCoefficients, Fin.addCases_right]
+    rw [Fin.natAdd_eq_addNat, f4Root_addNat, f4Root_eq_sum]
+    simp
+
+private lemma f4Coroot_eq_signed_sum (i : Fin 48) :
+    f4Coroot i = ∑ k, f4SignedCoefficients f4CorootCoefficients i k •
+      f4Coroot (Fin.castAdd 44 k) := by
+  induction i using Fin.addCases (m := 24) (n := 24) with
+  | left i => simpa [f4SignedCoefficients, ← natCast_zsmul] using f4Coroot_eq_sum i
+  | right i =>
+    simp only [f4SignedCoefficients, Fin.addCases_right]
+    rw [Fin.natAdd_eq_addNat, f4Coroot_addNat, f4Coroot_eq_sum]
+    simp
 
 private lemma f4Root_mem_or_neg_mem (i : Fin 48) :
     f4Root i ∈
         AddSubmonoid.closure (f4Root '' (↑f4Support : Set (Fin 48))) ∨
       -f4Root i ∈
-        AddSubmonoid.closure (f4Root '' (↑f4Support : Set (Fin 48))) :=
-  mem_or_neg_mem_of_coefficients f4Root f4RootCoefficients f4Root_eq_sum f4Root_addNat i
+        AddSubmonoid.closure (f4Root '' (↑f4Support : Set (Fin 48))) := by
+  rw [f4Support, image_simpleSupport, f4Root_eq_signed_sum i]
+  exact sum_smul_mem_or_neg_mem_closure _ _
+    (f4SignedCoefficients_nonneg_or_nonpos f4RootCoefficients i)
 
 private lemma f4Coroot_mem_or_neg_mem (i : Fin 48) :
     f4Coroot i ∈
         AddSubmonoid.closure (f4Coroot '' (↑f4Support : Set (Fin 48))) ∨
       -f4Coroot i ∈ AddSubmonoid.closure
-        (f4Coroot '' (↑f4Support : Set (Fin 48))) :=
-  mem_or_neg_mem_of_coefficients f4Coroot f4CorootCoefficients f4Coroot_eq_sum f4Coroot_addNat i
+        (f4Coroot '' (↑f4Support : Set (Fin 48))) := by
+  rw [f4Support, image_simpleSupport, f4Coroot_eq_signed_sum i]
+  exact sum_smul_mem_or_neg_mem_closure _ _
+    (f4SignedCoefficients_nonneg_or_nonpos f4CorootCoefficients i)
 
 private lemma linearIndepOn_f4Root :
     LinearIndepOn ℤ f4Root (↑f4Support : Set (Fin 48)) :=
