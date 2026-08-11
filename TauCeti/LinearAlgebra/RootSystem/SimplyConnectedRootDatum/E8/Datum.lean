@@ -126,10 +126,7 @@ private lemma sum_smul_coroot_e8SimpleIndex (j : Fin 240) :
   have hk (k : Fin 8) :
       e8Coroot j k • e8Coroot (e8SimpleIndex k) = Pi.single k (e8Coroot j k) := by
     rw [coroot_e8SimpleIndex, ← Pi.single_smul', smul_eq_mul, mul_one]
-  funext k
-  rw [Finset.sum_apply]
-  simp only [hk]
-  exact Fintype.sum_pi_single (M := fun _ : Fin 8 => ℤ) k (e8Coroot j)
+  simpa only [hk] using LinearMap.sum_single_apply _ (e8Coroot j)
 
 /-- In the character lattice a root is the combination of the simple roots recorded by the same
 coordinates, the two tables differing by the Cartan-matrix map. -/
@@ -167,12 +164,16 @@ def e8SimplyConnectedBase : e8SimplyConnectedRootDatum.Base where
     rw [image_simpleSupport, ← sum_smul_coroot_e8SimpleIndex k]
     exact sum_smul_mem_or_neg_mem_closure _ _ (e8Coroot_nonneg_or_nonpos k)
 
+/-- The support of the pinned base of type `E₈` is the image of the simple index map, the field
+it is built from. -/
+private lemma e8SimplyConnectedBase_support :
+    e8SimplyConnectedBase.support = simpleSupport e8SimpleIndex_injective := (rfl)
+
 /-- Membership in the pinned base support is exactly membership among the first eight root
 indices. -/
 @[simp] theorem mem_e8SimplyConnectedBase_support {k : Fin 240} :
     k ∈ e8SimplyConnectedBase.support ↔ (k : ℕ) < 8 := by
-  rw [show e8SimplyConnectedBase.support = simpleSupport e8SimpleIndex_injective from rfl,
-    mem_simpleSupport]
+  rw [e8SimplyConnectedBase_support, mem_simpleSupport]
   constructor
   · rintro ⟨i, rfl⟩
     rw [e8SimpleIndex_val]
