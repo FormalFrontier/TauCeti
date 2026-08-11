@@ -47,7 +47,6 @@ exclusion of `D̃₄` that `TauCeti.not_isFiniteType_affineD₄` gets from the d
 
 ## Main definitions
 
-* `TauCeti.chainEntry`: the Cartan-matrix entry of a chain, read off the two positions along it.
 * `TauCeti.StarIndex`: the vertices of a star - a centre `none`, and `ℓ i` further vertices on the
   arm `i`, the vertex `some ⟨i, t⟩` sitting at distance `t + 1` from the centre.
 * `TauCeti.starCartanMatrix`: the Cartan matrix of a star, simply laced by construction.
@@ -61,7 +60,8 @@ exclusion of `D̃₄` that `TauCeti.not_isFiniteType_affineD₄` gets from the d
 * `TauCeti.one_lt_sum_inv_of_isFiniteType_star_three` and
   `TauCeti.not_isFiniteType_starCartanMatrix_three_of_sum_inv_le_one`: the same pair for three arms,
   where the bound reads `1 / p + 1 / q + 1 / r > 1`.
-* `TauCeti.arms_of_isFiniteType_star_three`: **the admissible three-armed shapes**. A finite-type
+* `TauCeti.eq_zero_or_eq_one_one_or_eq_one_two_le_four_of_isFiniteType_star_three`:
+  **the admissible three-armed shapes**. A finite-type
   star with arms of `a ≤ b ≤ c` further vertices has `a = 0` (a chain), or `a = b = 1` (a fork of
   type `D`), or `a = 1`, `b = 2` and `c ≤ 4` (types `E₆`, `E₇`, `E₈`). The solutions are read off
   Mathlib's `ADEInequality.lt_three`, `.lt_four` and `.lt_six`.
@@ -85,25 +85,26 @@ namespace TauCeti
 /-- The Cartan-matrix entry of a **chain** between the positions `s` and `t` along it: `2` on the
 diagonal, `-1` between consecutive positions, and `0` otherwise. Every diagram in this file is
 simply laced, so this single function describes all of its edges. -/
-def chainEntry (s t : ℕ) : ℤ :=
+private def chainEntry (s t : ℕ) : ℤ :=
   if s = t then 2 else if s = t + 1 then -1 else if t = s + 1 then -1 else 0
 
 -- `(rfl)`, not `rfl`: the bodies of the definitions in this file are deliberately left unexposed,
 -- and the parenthesised form keeps these equations out of the exported definitional-equality check.
-lemma chainEntry_def (s t : ℕ) :
+private lemma chainEntry_def (s t : ℕ) :
     chainEntry s t = if s = t then 2 else if s = t + 1 then -1 else if t = s + 1 then -1 else 0 :=
   (rfl)
 
-@[simp] lemma chainEntry_self (s : ℕ) : chainEntry s s = 2 := by simp [chainEntry]
+@[simp] private lemma chainEntry_self (s : ℕ) : chainEntry s s = 2 := by simp [chainEntry]
 
-@[simp] lemma chainEntry_succ_left (s : ℕ) : chainEntry (s + 1) s = -1 := by
+@[simp] private lemma chainEntry_succ_left (s : ℕ) : chainEntry (s + 1) s = -1 := by
   unfold chainEntry; split_ifs <;> omega
 
-@[simp] lemma chainEntry_succ_right (s : ℕ) : chainEntry s (s + 1) = -1 := by
+@[simp] private lemma chainEntry_succ_right (s : ℕ) : chainEntry s (s + 1) = -1 := by
   unfold chainEntry; split_ifs <;> omega
 
 /-- Away from the diagonal and its two neighbours a chain has no entry. -/
-lemma chainEntry_eq_zero {s t : ℕ} (h1 : s ≠ t) (h2 : s ≠ t + 1) (h3 : t ≠ s + 1) :
+private lemma chainEntry_eq_zero {s t : ℕ} (h1 : s ≠ t) (h2 : s ≠ t + 1)
+    (h3 : t ≠ s + 1) :
     chainEntry s t = 0 := by
   unfold chainEntry; split_ifs <;> omega
 
@@ -111,15 +112,16 @@ lemma chainEntry_eq_zero {s t : ℕ} (h1 : s ≠ t) (h2 : s ≠ t + 1) (h3 : t �
 the positions matters. This is not a `simp` lemma: it would rewrite the right-hand sides of the
 entry lemmas for `TauCeti.starCartanMatrix`, whose arm positions are shifted by one against the
 centre, out of the form those lemmas state. -/
-lemma chainEntry_succ_succ (s t : ℕ) : chainEntry (s + 1) (t + 1) = chainEntry s t := by
+private lemma chainEntry_succ_succ (s t : ℕ) :
+    chainEntry (s + 1) (t + 1) = chainEntry s t := by
   unfold chainEntry; split_ifs <;> omega
 
 /-- A chain is symmetric: the entry depends on the unordered pair of positions. -/
-lemma chainEntry_comm (s t : ℕ) : chainEntry s t = chainEntry t s := by
+private lemma chainEntry_comm (s t : ℕ) : chainEntry s t = chainEntry t s := by
   unfold chainEntry; split_ifs <;> omega
 
 /-- A chain is Mathlib's Cartan matrix of type `A`: on `n` positions the two entry rules agree. -/
-lemma chainEntry_eq_cartanMatrix_A {n : ℕ} (i j : Fin n) :
+private lemma chainEntry_eq_cartanMatrix_A {n : ℕ} (i j : Fin n) :
     chainEntry i j = CartanMatrix.A n i j := by
   simp only [chainEntry, CartanMatrix.A, Matrix.of_apply, Fin.ext_iff]
   split_ifs <;> omega
@@ -145,27 +147,52 @@ def starCartanMatrix (ℓ : α → ℕ) : Matrix (StarIndex ℓ) (StarIndex ℓ)
 
 @[simp] lemma starCartanMatrix_none_none : starCartanMatrix ℓ none none = 2 := chainEntry_self 0
 
-@[simp] lemma starCartanMatrix_none_some (w : (i : α) × Fin (ℓ i)) :
+private lemma starCartanMatrix_none_some_chain (w : (i : α) × Fin (ℓ i)) :
     starCartanMatrix ℓ none (some w) = chainEntry 0 ((w.2 : ℕ) + 1) := (rfl)
 
-@[simp] lemma starCartanMatrix_some_none (v : (i : α) × Fin (ℓ i)) :
+private lemma starCartanMatrix_some_none_chain (v : (i : α) × Fin (ℓ i)) :
     starCartanMatrix ℓ (some v) none = chainEntry ((v.2 : ℕ) + 1) 0 := (rfl)
 
-@[simp] lemma starCartanMatrix_some_some (v w : (i : α) × Fin (ℓ i)) :
+private lemma starCartanMatrix_some_some_chain (v w : (i : α) × Fin (ℓ i)) :
     starCartanMatrix ℓ (some v) (some w)
       = if v.1 = w.1 then chainEntry ((v.2 : ℕ) + 1) ((w.2 : ℕ) + 1) else 0 := (rfl)
 
-/-- A star is simply laced, in particular symmetric: it is built out of the symmetric
-`TauCeti.chainEntry`, and being on a common arm is a symmetric relation. -/
+/-- The centre is joined precisely to the first vertex of each nonempty arm. -/
+@[simp] lemma starCartanMatrix_none_some (w : (i : α) × Fin (ℓ i)) :
+    starCartanMatrix ℓ none (some w) = if (w.2 : ℕ) = 0 then -1 else 0 := by
+  rw [starCartanMatrix_none_some_chain]
+  simp [chainEntry]
+
+/-- The centre is joined precisely to the first vertex of each nonempty arm. -/
+@[simp] lemma starCartanMatrix_some_none (v : (i : α) × Fin (ℓ i)) :
+    starCartanMatrix ℓ (some v) none = if (v.2 : ℕ) = 0 then -1 else 0 := by
+  rw [starCartanMatrix_some_none_chain]
+  simp [chainEntry]
+
+/-- Two arm vertices have entry `2` when equal, `-1` when consecutive on the same arm, and `0`
+otherwise. -/
+@[simp] lemma starCartanMatrix_some_some (v w : (i : α) × Fin (ℓ i)) :
+    starCartanMatrix ℓ (some v) (some w) = if v.1 = w.1 then
+        if (v.2 : ℕ) = w.2 then 2
+        else if (v.2 : ℕ) = w.2 + 1 then -1
+        else if (w.2 : ℕ) = v.2 + 1 then -1 else 0
+      else 0 := by
+  rw [starCartanMatrix_some_some_chain]
+  simp only [chainEntry]
+  split_ifs <;> omega
+
+/-- A star is simply laced, in particular symmetric: each arm is a chain, and being on a common arm
+is a symmetric relation. -/
 @[simp] lemma starCartanMatrix_transpose : (starCartanMatrix ℓ)ᵀ = starCartanMatrix ℓ := by
   ext v w
   rcases v with _ | v <;> rcases w with _ | w
   · rfl
-  · rw [Matrix.transpose_apply, starCartanMatrix_some_none, starCartanMatrix_none_some,
+  · rw [Matrix.transpose_apply, starCartanMatrix_some_none_chain, starCartanMatrix_none_some_chain,
       chainEntry_comm]
-  · rw [Matrix.transpose_apply, starCartanMatrix_none_some, starCartanMatrix_some_none,
+  · rw [Matrix.transpose_apply, starCartanMatrix_none_some_chain, starCartanMatrix_some_none_chain,
       chainEntry_comm]
-  · rw [Matrix.transpose_apply, starCartanMatrix_some_some, starCartanMatrix_some_some]
+  · rw [Matrix.transpose_apply, starCartanMatrix_some_some_chain,
+      starCartanMatrix_some_some_chain]
     rcases eq_or_ne v.1 w.1 with h | h
     · rw [if_pos h, if_pos h.symm, chainEntry_comm]
     · rw [if_neg h, if_neg (Ne.symm h)]
@@ -273,7 +300,8 @@ private theorem sum_range_chainEntry_mul {n m : ℕ} (hm : m < n) (g : ℕ → �
         by_cases h : s = k <;> simp [h]
       rw [Finset.sum_congr rfl hcongr,
         Finset.sum_ite_eq' (Finset.range n) k fun _ ↦ -g (k + 1)]
-      rw [if_pos (Finset.mem_range.2 (show k < n by omega)), if_neg (Nat.succ_ne_zero k)]
+      have hk : k < n := by omega
+      rw [if_pos (Finset.mem_range.2 hk), if_neg (Nat.succ_ne_zero k)]
   rw [h1, h2, h3]
   ring
 
@@ -351,11 +379,12 @@ theorem sum_starCartanMatrix_mul_starMark_some_eq_zero (v : (i : α) × Fin (ℓ
     · rw [if_pos rfl, ← Fin.sum_univ_eq_sum_range
         (fun s ↦ (chainEntry ((v.2 : ℕ) + 1) (s + 1) : ℚ) * g (s + 1)) (ℓ v.1)]
       exact Finset.sum_congr rfl fun s _ ↦ by
-        rw [starCartanMatrix_some_some, if_pos rfl, hgarm s]
+        rw [starCartanMatrix_some_some_chain, if_pos rfl, hgarm s]
     · refine (Finset.sum_eq_zero fun s _ ↦ ?_).trans (if_neg hi).symm
-      simp [starCartanMatrix_some_some, Ne.symm hi]
+      rw [starCartanMatrix_some_some_chain, if_neg (Ne.symm hi)]
+      norm_num
   rw [Finset.sum_congr rfl harms, Finset.sum_ite_eq' Finset.univ v.1, if_pos (Finset.mem_univ _),
-    starCartanMatrix_some_none, ← hg0]
+    starCartanMatrix_some_none_chain, ← hg0]
   rw [chainEntry_arm_row v.2.isLt g]
   -- The three-term recurrence of a linear function vanishes, and so does its truncation at the end
   -- of the arm, because the arm ends one step before the value `0`.
@@ -395,7 +424,7 @@ theorem sum_starCartanMatrix_mul_starMark_none :
     have hstep : ∑ s : Fin (ℓ i), (starCartanMatrix ℓ none (some ⟨i, s⟩) : ℚ)
           * starMark ℓ (some ⟨i, s⟩)
         = ∑ s : Fin (ℓ i), (chainEntry 0 ((s : ℕ) + 1) : ℚ) * g ((s : ℕ) + 1) :=
-      Finset.sum_congr rfl fun s _ ↦ by rw [starCartanMatrix_none_some, hgarm s]
+      Finset.sum_congr rfl fun s _ ↦ by rw [starCartanMatrix_none_some_chain, hgarm s]
     rw [hstep, Fin.sum_univ_eq_sum_range (fun s ↦ (chainEntry 0 (s + 1) : ℚ) * g (s + 1)) (ℓ i),
       chainEntry_center_row]
     rcases eq_or_ne (ℓ i) 0 with h0 | h0
@@ -424,7 +453,8 @@ theorem sum_starCartanMatrix_mul_starMark_none :
 ℓ i + 1` vertices counting the centre, satisfies `∑ᵢ 1 / pᵢ > n - 2`.
 
 For three arms this is `1 / p + 1 / q + 1 / r > 1`, the inequality that leaves only the forks of
-types `D` and `E`; see `TauCeti.arms_of_isFiniteType_star_three`. -/
+types `D` and `E`; see
+`TauCeti.eq_zero_or_eq_one_one_or_eq_one_two_le_four_of_isFiniteType_star_three`. -/
 theorem card_sub_two_lt_sum_inv_of_isFiniteType_star (h : IsFiniteType (starCartanMatrix ℓ)) :
     (Fintype.card α : ℚ) - 2 < ∑ i, ((ℓ i : ℚ) + 1)⁻¹ := by
   rw [← not_le]
@@ -477,7 +507,8 @@ and the three exceptional shapes.
 private lemma card_sub_two_lt_sum_inv_three_iff (a b c : ℕ) :
     (Fintype.card (Fin 3) : ℚ) - 2 < ∑ i, (((![a, b, c] : Fin 3 → ℕ) i : ℚ) + 1)⁻¹
       ↔ 1 < ((a : ℚ) + 1)⁻¹ + ((b : ℚ) + 1)⁻¹ + ((c : ℚ) + 1)⁻¹ := by
-  rw [show (Fintype.card (Fin 3) : ℚ) - 2 = 1 from by norm_num, Fin.sum_univ_three]
+  have hcard : (Fintype.card (Fin 3) : ℚ) - 2 = 1 := by norm_num
+  rw [hcard, Fin.sum_univ_three]
   simp
 
 /-- **The fork bound for three arms**, `1 / p + 1 / q + 1 / r > 1`. -/
@@ -502,7 +533,8 @@ one of `E₆`, `E₇`, `E₈` (`a = 1`, `b = 2` and `c ≤ 4`).
 This is the exclusion half of the classification of forks. The converse, that each of these shapes
 is the diagram of an actual root system, is the separate realization target of the same layer and
 is not proved here. -/
-theorem arms_of_isFiniteType_star_three {a b c : ℕ} (hab : a ≤ b) (hbc : b ≤ c)
+theorem eq_zero_or_eq_one_one_or_eq_one_two_le_four_of_isFiniteType_star_three
+    {a b c : ℕ} (hab : a ≤ b) (hbc : b ≤ c)
     (h : IsFiniteType (starCartanMatrix ![a, b, c])) :
     a = 0 ∨ (a = 1 ∧ b = 1) ∨ (a = 1 ∧ b = 2 ∧ c ≤ 4) := by
   -- With `p = a + 1 ≤ q = b + 1 ≤ r = c + 1` the bound is Mathlib's ADE inequality, whose
@@ -517,12 +549,14 @@ theorem arms_of_isFiniteType_star_three {a b c : ℕ} (hab : a ≤ b) (hbc : b �
   rcases Nat.lt_or_ge a 1 with ha0 | ha1
   · exact Or.inl (by omega)
   obtain rfl : a = 1 := by omega
-  rw [show Nat.succPNat 1 = 2 from rfl] at hsum
+  have htwo : Nat.succPNat 1 = 2 := rfl
+  rw [htwo] at hsum
   have hb : b + 1 < 4 := ADEInequality.lt_four hqr hsum
   rcases Nat.lt_or_ge b 2 with hb1 | hb2
   · exact Or.inr (Or.inl ⟨rfl, by omega⟩)
   obtain rfl : b = 2 := by omega
-  rw [show Nat.succPNat 2 = 3 from rfl] at hsum
+  have hthree : Nat.succPNat 2 = 3 := rfl
+  rw [hthree] at hsum
   have hc : c + 1 < 6 := ADEInequality.lt_six hsum
   exact Or.inr (Or.inr ⟨rfl, rfl, by omega⟩)
 
