@@ -163,7 +163,6 @@ noncomputable local instance peterssonInnerProductSpace :
 
 /-- The inner product induced locally from the Petersson core evaluates to the Petersson
 pairing. -/
-@[simp]
 private theorem peterssonInner_apply (f g : CuspForm (Γ.map (mapGL ℝ)) k) :
     inner ℂ f g = peterssonInnerCosets f g :=
   peterssonInnerCosetsCore_inner f g
