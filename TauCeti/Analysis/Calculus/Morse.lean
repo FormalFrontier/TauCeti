@@ -10,6 +10,7 @@ public import Mathlib.LinearAlgebra.Dual.Lemmas
 public import Mathlib.Topology.DiscreteSubset
 public import TauCeti.Analysis.Calculus.Bilinear
 public import TauCeti.Analysis.Calculus.SecondDerivative
+public import TauCeti.Topology.Algebra.Module.BilinearForm
 
 /-!
 # Nondegenerate critical points
@@ -147,12 +148,8 @@ theorem HasNondegenerateCriticalPointsOn.mono {s t : Set E}
 /-- At a nondegenerate critical point the Hessian is left-separating as a bilinear form: no
 nonzero vector is annihilated by it. -/
 theorem IsNondegenerateCriticalPoint.separatingLeft (h : IsNondegenerateCriticalPoint f x) :
-    (fderiv ℝ (fderiv ℝ f) x).toBilinForm.SeparatingLeft := by
-  intro v hv
-  have hv0 : fderiv ℝ (fderiv ℝ f) x v = fderiv ℝ (fderiv ℝ f) x 0 := by
-    ext w
-    simpa using hv w
-  exact h.isInvertible.injective hv0
+    (fderiv ℝ (fderiv ℝ f) x).toBilinForm.SeparatingLeft :=
+  (ContinuousLinearMap.separatingLeft_toBilinForm_iff_injective _).2 h.isInvertible.injective
 
 /-- In finite dimensions, invertibility of the second derivative is the classical nondegeneracy of
 the Hessian: the Hessian bilinear form is left-separating. -/
@@ -163,9 +160,7 @@ theorem isNondegenerateCriticalPoint_iff_separatingLeft [FiniteDimensional ℝ E
   refine ⟨fun h ↦ ⟨h.contDiffAt, h.fderiv_eq_zero, h.separatingLeft⟩,
     fun ⟨hd, h0, hnd⟩ ↦ ⟨hd, h0, ?_⟩⟩
   have hinj : Injective (fderiv ℝ (fderiv ℝ f) x : E →ₗ[ℝ] E →L[ℝ] ℝ) :=
-    (injective_iff_map_eq_zero _).2 fun v hv ↦ hnd v fun w ↦ by
-      simp only [ContinuousLinearMap.coe_coe] at hv
-      simp [hv]
+    (ContinuousLinearMap.separatingLeft_toBilinForm_iff_injective _).1 hnd
   have hrank : finrank ℝ E = finrank ℝ (E →L[ℝ] ℝ) := by
     rw [← LinearEquiv.finrank_eq
       (LinearMap.toContinuousLinearMap : (E →ₗ[ℝ] ℝ) ≃ₗ[ℝ] E →L[ℝ] ℝ)]

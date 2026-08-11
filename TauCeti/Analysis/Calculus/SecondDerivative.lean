@@ -10,10 +10,10 @@ public import Mathlib.Analysis.Calculus.ContDiff.RCLike
 /-!
 # The second derivative as a derivative
 
-The second derivative `fderiv 𝕜 (fderiv 𝕜 g) x` of a map between normed spaces over an `RCLike`
-field is, by definition, the derivative at `x` of the map `fderiv 𝕜 g`. Mathlib supplies the
-differentiability of `fderiv 𝕜 g` at a twice continuously differentiable point through
-`ContDiffAt.fderiv_right`, and upgrades differentiability to strict differentiability through
+The second derivative `fderiv 𝕜 (fderiv 𝕜 g) x` of a map between normed spaces is, by definition,
+the derivative at `x` of the map `fderiv 𝕜 g`. Mathlib supplies the differentiability of
+`fderiv 𝕜 g` at a twice continuously differentiable point through `ContDiffAt.fderiv_right`, and
+upgrades differentiability to strict differentiability, over an `RCLike` field, through
 `ContDiffAt.hasStrictFDerivAt`; this file packages the two into the single statement that
 second-order arguments use, so that the identification is made once rather than at each use.
 
@@ -38,8 +38,10 @@ open Filter Topology
 
 namespace TauCeti
 
-variable {𝕜 E F G : Type*} [RCLike 𝕜] [NormedAddCommGroup E] [NormedSpace 𝕜 E]
-  [NormedAddCommGroup F] [NormedSpace 𝕜 F] [NormedAddCommGroup G] [NormedSpace 𝕜 G]
+section RCLike
+
+variable {𝕜 E F : Type*} [RCLike 𝕜] [NormedAddCommGroup E] [NormedSpace 𝕜 E]
+  [NormedAddCommGroup F] [NormedSpace 𝕜 F]
 
 /-- At a twice continuously differentiable point, `fderiv 𝕜 g` is strictly differentiable, with
 derivative the second derivative of `g`. -/
@@ -48,7 +50,12 @@ theorem ContDiffAt.hasStrictFDerivAt_fderiv {n : WithTop ℕ∞} {g : E → F} {
     HasStrictFDerivAt (fderiv 𝕜 g) (fderiv 𝕜 (fderiv 𝕜 g) x) x :=
   (h.fderiv_right (m := 1) (by exact_mod_cast hn)).hasStrictFDerivAt one_ne_zero
 
-/-- **The second derivative at a critical value is a bilinear form pullback.** If the differential
+end RCLike
+
+variable {𝕜 E F G : Type*} [NontriviallyNormedField 𝕜] [NormedAddCommGroup E] [NormedSpace 𝕜 E]
+  [NormedAddCommGroup F] [NormedSpace 𝕜 F] [NormedAddCommGroup G] [NormedSpace 𝕜 G]
+
+/-- **The second derivative at a critical point is a bilinear form pullback.** If the differential
 of `f` vanishes at `φ b`, then the second derivative of `f ∘ φ` at `b` is the second derivative of
 `f` at `φ b` evaluated on the images of the differential of `φ`. -/
 theorem fderiv_fderiv_comp_apply_of_fderiv_eq_zero {f : E → G} {φ : F → E} {b : F}
@@ -56,9 +63,9 @@ theorem fderiv_fderiv_comp_apply_of_fderiv_eq_zero {f : E → G} {φ : F → E} 
     fderiv 𝕜 (fderiv 𝕜 (f ∘ φ)) b v w =
       fderiv 𝕜 (fderiv 𝕜 f) (φ b) (fderiv 𝕜 φ b v) (fderiv 𝕜 φ b w) := by
   have hf1 : HasFDerivAt (fderiv 𝕜 f) (fderiv 𝕜 (fderiv 𝕜 f) (φ b)) (φ b) :=
-    (ContDiffAt.hasStrictFDerivAt_fderiv hf le_rfl).hasFDerivAt
+    ((hf.fderiv_right (m := 1) le_rfl).differentiableAt one_ne_zero).hasFDerivAt
   have hφ1 : HasFDerivAt (fderiv 𝕜 φ) (fderiv 𝕜 (fderiv 𝕜 φ) b) b :=
-    (ContDiffAt.hasStrictFDerivAt_fderiv hφ le_rfl).hasFDerivAt
+    ((hφ.fderiv_right (m := 1) le_rfl).differentiableAt one_ne_zero).hasFDerivAt
   have hφ0 : HasFDerivAt φ (fderiv 𝕜 φ b) b := (hφ.differentiableAt (by norm_num)).hasFDerivAt
   have hA : HasFDerivAt (fun y ↦ fderiv 𝕜 f (φ y))
       ((fderiv 𝕜 (fderiv 𝕜 f) (φ b)).comp (fderiv 𝕜 φ b)) b := hf1.comp b hφ0
