@@ -347,30 +347,6 @@ private lemma norm_le_of_near_rho {δL δR : ℝ} (hH : Real.sqrt 3 / 2 < H) (h�
       abs_of_nonneg (by nlinarith [h3] : (0 : ℝ) ≤ (t - 3) * (H - Real.sqrt 3 / 2)), ← hlin]
     exact mul_le_mul_of_nonneg_right (by linarith [ht.2]) (by linarith)
 
-/-- Over the excised window the truncated integrand vanishes identically, so it is
-integrable there and contributes nothing to the integral. -/
-private lemma excised_window_rho {δL δR : ℝ} (hH : Real.sqrt 3 / 2 < H) (hδL : 0 ≤ δL)
-    (hδL1 : δL < 1) (h2sin : 2 * Real.sin (δL * (Real.pi / 12)) = ε)
-    (hδR1 : δR ≤ 1) (hlin : δR * (H - Real.sqrt 3 / 2) = ε) (hle : (3 - δL : ℝ) ≤ 3 + δR) :
-    IntervalIntegrable (fun s ↦ if ε < ‖fdBoundary H s - (UpperHalfPlane.ρ : ℂ)‖
-        then (fdBoundary H s - (UpperHalfPlane.ρ : ℂ))⁻¹ * deriv (fdBoundary H) s else 0)
-      volume (3 - δL) (3 + δR) ∧
-      ∫ s in (3 - δL : ℝ)..(3 + δR),
-        (if ε < ‖fdBoundary H s - (UpperHalfPlane.ρ : ℂ)‖
-          then (fdBoundary H s - (UpperHalfPlane.ρ : ℂ))⁻¹ * deriv (fdBoundary H) s
-          else 0) = 0 := by
-  have hmid : EqOn (fun s ↦ if ε < ‖fdBoundary H s - (UpperHalfPlane.ρ : ℂ)‖
-      then (fdBoundary H s - (UpperHalfPlane.ρ : ℂ))⁻¹ * deriv (fdBoundary H) s else 0)
-      (fun _ ↦ (0 : ℂ)) (uIcc (3 - δL : ℝ) (3 + δR)) := fun s hs ↦
-    if_neg (not_lt.mpr (norm_le_of_near_rho hH hδL hδL1 h2sin hδR1 hlin
-      (by rwa [uIcc_of_le hle] at hs)))
-  refine ⟨(intervalIntegrable_const (c := (0 : ℂ))).congr_ae
-    ((ae_restrict_iff' measurableSet_uIoc).mpr (Eventually.of_forall fun s hs ↦ ?_)), ?_⟩
-  · rw [uIoc_of_le hle] at hs
-    exact (hmid (by rw [uIcc_of_le hle]; exact Ioc_subset_Icc_self hs)).symm
-  · rw [intervalIntegral.integral_congr hmid]
-    simp
-
 /-- **The excision collapse at `ρ`**: for small `ε`, the `ε`-excised index integrand of
 the boundary contour about `ρ` is interval integrable, and its integral is exactly
 `-πi/3 - arcsin(ε/2)·i` — the telescope value at the matched asymmetric half-widths. -/
@@ -404,7 +380,11 @@ private lemma truncated_integral_spec_rho (hH : Real.sqrt 3 / 2 < H) (hε : 0 < 
     (z₀ := (UpperHalfPlane.ρ : ℂ)) (a := (3 + δR : ℝ)) (b := 5) (by linarith)
     fun s hs ↦ lt_norm_of_far_right_rho hH hεH hδR_pos hlin ⟨hs.1, hs.2.le⟩
   obtain ⟨himid, hmid0⟩ :=
-    excised_window_rho hH hδL_pos.le hδL_lt h2sin hδR_le hlin (by linarith)
+    Contour.intervalIntegrable_truncated_and_integral_truncated_eq_zero_of_norm_le
+      (Filter.Eventually.of_forall fun s hs =>
+        norm_le_of_near_rho hH hδL_pos.le hδL_lt h2sin hδR_le hlin
+        (Set.Ioc_subset_Icc_self
+          (by rwa [Set.uIoc_of_le (by linarith : (3 - δL : ℝ) ≤ 3 + δR)] at hs)))
   have hi02 := hi_left.congr_ae ((ae_restrict_iff' measurableSet_uIoc).mpr hae_left)
   have hi25 := hi_right.congr_ae ((ae_restrict_iff' measurableSet_uIoc).mpr hae_right)
   refine ⟨(hi02.trans himid).trans hi25, ?_⟩

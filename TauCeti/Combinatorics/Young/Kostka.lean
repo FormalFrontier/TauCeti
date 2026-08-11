@@ -170,8 +170,8 @@ theorem eq_highestWeight_of_content_eq_rowLen {T : _root_.SemistandardYoungTable
     exact le_antisymm (Nat.lt_succ_iff.mp (Finset.mem_filter.mp hmem).2) (le_entry T hij)
   ext i j
   by_cases hij : (i, j) ∈ μ
-  · rw [key i j hij, _root_.SemistandardYoungTableau.highestWeight_apply, if_pos hij]
-  · rw [T.zeros hij, _root_.SemistandardYoungTableau.highestWeight_apply, if_neg hij]
+  · rw [key i j hij, _root_.SemistandardYoungTableau.highestWeight_apply, ite_eq_left hij]
+  · rw [T.zeros hij, _root_.SemistandardYoungTableau.highestWeight_apply, ite_eq_right hij]
 
 /-- The semistandard tableaux of a fixed shape and content are finite. -/
 instance finite_content_eq (μ : YoungDiagram) (w : ℕ → ℕ) :
@@ -223,7 +223,8 @@ theorem isEmpty_of_lt_colLen (h : n < μ.colLen 0) : IsEmpty (BoundedSSYT n μ) 
 instance (n : ℕ) : Unique (BoundedSSYT n (⊥ : YoungDiagram)) where
   default := ⟨_root_.SemistandardYoungTableau.highestWeight ⊥, fun _ _ hic => absurd hic (by simp)⟩
   uniq T := Subtype.ext <| _root_.SemistandardYoungTableau.ext fun _ _ => by
-    rw [T.1.zeros (by simp), _root_.SemistandardYoungTableau.highestWeight_apply, if_neg (by simp)]
+    rw [T.1.zeros (by simp), _root_.SemistandardYoungTableau.highestWeight_apply,
+      ite_eq_right (by simp)]
 
 end BoundedSSYT
 

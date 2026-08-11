@@ -91,13 +91,10 @@ setting the roadmap works in.
   Of that bullet, the `GLₙ`-subrepresentation, the fixed choice of tableau, the canonical
   isomorphism between the images for different tableaux, and the vanishing criterion are built
   here.  The bullet's two remaining deliverables, the extreme cases `S^{(d)} V ≅ Symᵈ V` and
-  `S^{(1ᵈ)} V ≅ ⋀ᵈ V`, are deliberately left to a follow-up, because each first needs
-  infrastructure that exists neither in Mathlib nor here: a linear map `Sym[k]^d M →ₗ[k] ⨂[k]^d M`
-  descending the symmetrizer through `SymmetricPower.mk`, injectivity and naturality for
-  `exteriorPower.toTensorPower`, and the value of `c_t` at a one-row and at a one-column shape.
-  The follow-up can state and prove both against `TauCeti.weylModuleOfShape`,
-  `TauCeti.weylModuleOfShape_toSubmodule` and `TauCeti.weylRepOfShape` without unfolding anything
-  built here.
+  `S^{(1ᵈ)} V ≅ ⋀ᵈ V`, are proved in
+  `TauCeti/RepresentationTheory/ClassicalGroups/ExtremeShape.lean`, against
+  `TauCeti.YoungTableau.weylModule_toSubmodule` and `TauCeti.weylRepOfShape` and without
+  unfolding anything built here.
 -/
 
 public section

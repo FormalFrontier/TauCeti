@@ -171,12 +171,12 @@ private def extendFun (hc : YoungDiagram.IsCorner μ c)
 private theorem extendFun_apply_of_eq (hc : YoungDiagram.IsCorner μ c)
     (T : StandardYoungTableau (YoungDiagram.erase μ c)) (d : ↥μ.cells) (h : d.1 = c) :
     (extendFun hc T d).val = μ.card - 1 := by
-  simp only [extendFun, dif_pos h]
+  simp only [extendFun, dite_eq_left h]
 
 private theorem extendFun_apply_of_ne (hc : YoungDiagram.IsCorner μ c)
     (T : StandardYoungTableau (YoungDiagram.erase μ c)) (d : ↥μ.cells) (h : d.1 ≠ c) :
     (extendFun hc T d).val = (T ⟨d.1, hc.mem_erase_iff.mpr ⟨d.2, h⟩⟩).val := by
-  simp only [extendFun, dif_neg h]
+  simp only [extendFun, dite_eq_right h]
 
 private theorem extendFun_bijective (hc : YoungDiagram.IsCorner μ c)
     (T : StandardYoungTableau (YoungDiagram.erase μ c)) :

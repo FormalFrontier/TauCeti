@@ -7,6 +7,7 @@ module
 public import TauCeti.NumberTheory.ModularForms.LevelOne.FundamentalDomainBoundary.Basic
 public import TauCeti.NumberTheory.ModularForms.STransform
 
+import TauCeti.Analysis.Contour.Curve.ExcisionMeasure
 import TauCeti.NumberTheory.ModularForms.LevelOne.FundamentalDomainBoundary.Deriv
 
 /-!
@@ -226,21 +227,9 @@ theorem excised_logDeriv_comp_ofComplex_fdBoundary_arc_add_four_sub_eq_neg
   have hsymm := excised_fdBoundary_arc_reflection_iff (H := H) (S := S) (ε := ε)
     ⟨ht.1.le, ht.2.le⟩ hnorm hinv
   by_cases hc : ∃ s ∈ S, ‖fdBoundary H t - s‖ ≤ ε
-  · simp only [if_pos hc, if_pos (hsymm.mpr hc), add_zero]
-  · simp only [if_neg hc, if_neg fun h => hc (hsymm.mp h)]
+  · simp only [ite_eq_left hc, ite_eq_left (hsymm.mpr hc), add_zero]
+  · simp only [ite_eq_right hc, ite_eq_right fun h => hc (hsymm.mp h)]
     exact logDeriv_comp_ofComplex_fdBoundary_arc_add_four_sub_eq_neg f hS ht (hd hc) (hne hc)
-
-/-- **The excision set is measurable.** It is a finite union of preimages of closed balls
-under the continuous contour. -/
-theorem measurableSet_exists_norm_fdBoundary_sub_le {H ε : ℝ} {S : Finset ℂ} :
-    MeasurableSet {t : ℝ | ∃ s ∈ S, ‖fdBoundary H t - s‖ ≤ ε} := by
-  have hset : {t : ℝ | ∃ s ∈ S, ‖fdBoundary H t - s‖ ≤ ε}
-      = ⋃ s ∈ (S : Set ℂ), {t : ℝ | ‖fdBoundary H t - s‖ ≤ ε} := by
-    ext t; simp
-  rw [hset]
-  refine S.finite_toSet.measurableSet_biUnion fun s _ => ?_
-  exact measurableSet_le
-    (((continuous_fdBoundary H).sub continuous_const).norm).measurable measurable_const
 
 /-- **An excised constant is interval-integrable.** It is measurable, because the excision set
 is, and bounded by the constant's norm. -/
@@ -249,7 +238,8 @@ theorem intervalIntegrable_excised_const {H ε : ℝ} {S : Finset ℂ} (c : ℂ)
       (fun t => if ∃ s ∈ S, ‖fdBoundary H t - s‖ ≤ ε then (0 : ℂ) else c) volume a b := by
   have hmeas : Measurable
       (fun t => if ∃ s ∈ S, ‖fdBoundary H t - s‖ ≤ ε then (0 : ℂ) else c) :=
-    measurable_const.ite measurableSet_exists_norm_fdBoundary_sub_le measurable_const
+    measurable_const.ite
+      (Contour.measurableSet_excision (continuous_fdBoundary H).measurable S ε) measurable_const
   have hbdd : ∀ t : ℝ,
       ‖(if ∃ s ∈ S, ‖fdBoundary H t - s‖ ≤ ε then (0 : ℂ) else c)‖ ≤ ‖c‖ := by
     intro t
@@ -282,8 +272,8 @@ theorem intervalIntegrable_excised_deriv_smul_logDeriv_comp_ofComplex_fdBoundary
       (-((k : ℂ) * ((Real.pi / 6 : ℝ) * Complex.I))) 1 2).congr_uIoo fun u hu => ?_
     rw [Set.uIoo_of_le (by norm_num : (1 : ℝ) ≤ 2)] at hu
     by_cases hc : ∃ s ∈ S, ‖fdBoundary H u - s‖ ≤ ε
-    · simp only [if_pos hc]
-    · simp only [if_neg hc, logDeriv_fdBoundary_arc ⟨hu.1, by linarith [hu.2]⟩]
+    · simp only [ite_eq_left hc]
+    · simp only [ite_eq_right hc, logDeriv_fdBoundary_arc ⟨hu.1, by linarith [hu.2]⟩]
   have hI := ((hconst.sub hint).comp_sub_left 4).symm
   norm_num at hI
   refine hI.congr_uIoo ?_
@@ -380,8 +370,8 @@ theorem two_mul_intervalIntegral_excised_deriv_smul_logDeriv_comp_ofComplex_fdBo
     have hsymm := excised_fdBoundary_arc_reflection_iff (H := H) (S := S) (ε := ε)
       ⟨ht.1.le, ht.2.le⟩ hnorm hinv
     by_cases hc : ∃ s ∈ S, ‖fdBoundary H t - s‖ ≤ ε
-    · rw [if_pos hc, if_pos (hsymm.mpr hc)]
-    · rw [if_neg hc, if_neg fun h => hc (hsymm.mp h), logDeriv_fdBoundary_arc ht,
+    · rw [ite_eq_left hc, ite_eq_left (hsymm.mpr hc)]
+    · rw [ite_eq_right hc, ite_eq_right fun h => hc (hsymm.mp h), logDeriv_fdBoundary_arc ht,
         logDeriv_fdBoundary_arc h4t]
   -- Add the pointwise pairing over the interval. It is only assumed on the first half: the
   -- identity is symmetric under `t ↦ 4 - t`, so on the second half it follows from the first
