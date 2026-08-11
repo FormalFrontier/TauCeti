@@ -120,7 +120,7 @@ private theorem levelSetChartSymm_apply (hf : HasStrictFDerivAt f f' a) (hf' : f
     (hk : (c, k) ∈ (hf.implicitToOpenPartialHomeomorphOfComplemented f f' hf' hker).target) :
     (levelSetChartSymm hf hf' hker ha k : E) =
       (hf.implicitToOpenPartialHomeomorphOfComplemented f f' hf' hker).symm (c, k) := by
-  rw [levelSetChartSymm, dif_pos (apply_implicit_symm_eq hf hf' hker hk)]
+  rw [levelSetChartSymm, dite_eq_left (apply_implicit_symm_eq hf hf' hker hk)]
 
 /-- The chart of the level set `{x | f x = c}` at a point `a` where `f` is strictly differentiable
 with surjective derivative `f'` of complemented kernel: it sends `x` to the projection of `x - a`
