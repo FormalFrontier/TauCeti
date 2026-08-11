@@ -68,24 +68,24 @@ def twoRayCorner (z₀ u v : ℂ) : ℝ → ℂ :=
 /-- Evaluation of the corner curve on the incoming ray. -/
 @[simp]
 theorem twoRayCorner_of_neg {z₀ u v : ℂ} {t : ℝ} (ht : t < 0) :
-    twoRayCorner z₀ u v t = z₀ - (t : ℂ) * u := if_pos ht
+    twoRayCorner z₀ u v t = z₀ - (t : ℂ) * u := ite_eq_left ht
 
 /-- Evaluation of the corner curve on the outgoing ray, including the corner itself. -/
 @[simp]
 theorem twoRayCorner_of_nonneg {z₀ u v : ℂ} {t : ℝ} (ht : 0 ≤ t) :
-    twoRayCorner z₀ u v t = z₀ + (t : ℂ) * v := if_neg (not_lt.mpr ht)
+    twoRayCorner z₀ u v t = z₀ + (t : ℂ) * v := ite_eq_right (not_lt.mpr ht)
 
 /-- On the negative ray the corner curve is the affine map `t ↦ z₀ - t u`. -/
 private theorem twoRayCorner_eventuallyEq_neg {z₀ u v : ℂ} {t : ℝ} (ht : t < 0) :
     twoRayCorner z₀ u v =ᶠ[𝓝 t] fun s : ℝ => z₀ - (s : ℂ) * u := by
   filter_upwards [Iio_mem_nhds ht] with s hs
-  simp [twoRayCorner, if_pos (mem_Iio.mp hs)]
+  simp [twoRayCorner, ite_eq_left (mem_Iio.mp hs)]
 
 /-- On the positive ray the corner curve is the affine map `t ↦ z₀ + t v`. -/
 private theorem twoRayCorner_eventuallyEq_pos {z₀ u v : ℂ} {t : ℝ} (ht : 0 < t) :
     twoRayCorner z₀ u v =ᶠ[𝓝 t] fun s : ℝ => z₀ + (s : ℂ) * v := by
   filter_upwards [Ioi_mem_nhds ht] with s hs
-  simp [twoRayCorner, if_neg (not_lt.mpr (mem_Ioi.mp hs).le)]
+  simp [twoRayCorner, ite_eq_right (not_lt.mpr (mem_Ioi.mp hs).le)]
 
 /-- The derivative of the corner curve off the corner: `-u` on the negative ray, `v` on the
 positive ray. -/
@@ -94,13 +94,13 @@ theorem deriv_twoRayCorner_of_ne {z₀ u v : ℂ} {t : ℝ} (ht : t ≠ 0) :
   have hofReal : HasDerivAt (fun s : ℝ => (s : ℂ)) 1 t := by
     simpa using (hasDerivAt_id t).ofReal_comp (z := t)
   rcases lt_or_gt_of_ne ht with h | h
-  · rw [Filter.EventuallyEq.deriv_eq (twoRayCorner_eventuallyEq_neg (v := v) h), if_pos h]
+  · rw [Filter.EventuallyEq.deriv_eq (twoRayCorner_eventuallyEq_neg (v := v) h), ite_eq_left h]
     have hd : HasDerivAt (fun s : ℝ => z₀ - (s : ℂ) * u) (-u) t := by
       have h1 := _root_.HasDerivAt.mul_const hofReal u
       simpa using _root_.HasDerivAt.const_sub z₀ h1
     exact hd.deriv
   · rw [Filter.EventuallyEq.deriv_eq (twoRayCorner_eventuallyEq_pos (u := u) h),
-      if_neg (not_lt.mpr h.le)]
+      ite_eq_right (not_lt.mpr h.le)]
     have hd : HasDerivAt (fun s : ℝ => z₀ + (s : ℂ) * v) v t := by
       have h1 := _root_.HasDerivAt.mul_const hofReal v
       simpa using _root_.HasDerivAt.const_add z₀ h1
@@ -113,20 +113,20 @@ private theorem integrand_twoRayCorner {z₀ u v : ℂ} (hu : u ≠ 0) (hv : v �
   have htC : (t : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr ht
   rw [deriv_twoRayCorner_of_ne (z₀ := z₀) (u := u) (v := v) ht]
   rcases lt_or_gt_of_ne ht with h | h
-  · rw [if_pos h]
-    simp only [twoRayCorner, if_pos h, sub_sub_cancel_left]
+  · rw [ite_eq_left h]
+    simp only [twoRayCorner, ite_eq_left h, sub_sub_cancel_left]
     field_simp
-  · rw [if_neg (not_lt.mpr h.le)]
-    simp only [twoRayCorner, if_neg (not_lt.mpr h.le), add_sub_cancel_left]
+  · rw [ite_eq_right (not_lt.mpr h.le)]
+    simp only [twoRayCorner, ite_eq_right (not_lt.mpr h.le), add_sub_cancel_left]
     field_simp
 
 /-- The distance from the corner is `|t|` times the common ray length. -/
 theorem norm_twoRayCorner_sub {z₀ u v : ℂ} (huv : ‖u‖ = ‖v‖) (t : ℝ) :
     ‖twoRayCorner z₀ u v t - z₀‖ = |t| * ‖v‖ := by
   rcases lt_or_ge t 0 with h | h
-  · simp only [twoRayCorner, if_pos h, sub_sub_cancel_left]
+  · simp only [twoRayCorner, ite_eq_left h, sub_sub_cancel_left]
     rw [norm_neg, norm_mul, Complex.norm_real, Real.norm_eq_abs, huv]
-  · simp only [twoRayCorner, if_neg (not_lt.mpr h), add_sub_cancel_left]
+  · simp only [twoRayCorner, ite_eq_right (not_lt.mpr h), add_sub_cancel_left]
     rw [norm_mul, Complex.norm_real, Real.norm_eq_abs]
 
 /-- The `ε`-truncated index integrand of a two-ray corner is odd. -/
@@ -173,9 +173,9 @@ private theorem intervalIntegrable_deriv_twoRayCorner (z₀ u v : ℂ) (R : ℝ)
   refine (intervalIntegrable_const (c := max ‖u‖ ‖v‖)).mono_fun' hmeas.aestronglyMeasurable ?_
   filter_upwards with t
   rcases lt_or_ge t 0 with h | h
-  · rw [if_pos h, norm_neg]
+  · rw [ite_eq_left h, norm_neg]
     exact le_max_left _ _
-  · rw [if_neg (not_lt.mpr h)]
+  · rw [ite_eq_right (not_lt.mpr h)]
     exact le_max_right _ _
 
 /-- **The index principal value along a two-ray corner vanishes.** For nonzero rays of equal

@@ -326,18 +326,18 @@ private lemma exists_mapsTo_ball_and_hyperbolicDist_map_eq_of_isometry
     ?_⟩
   · refine mapsTo_ball_of_forall_unitDisc_coe_eq
       (e := fun z => toUnitDisc (f (Complex.UnitDisc.toPoincare z))) fun z => ?_
-    rw [dif_pos z.norm_lt_one, Complex.UnitDisc.mk_coe]
+    rw [dite_eq_left z.norm_lt_one, Complex.UnitDisc.mk_coe]
   · intro z hz w hw
     have hz' := mem_ball_zero_iff.mp hz
     have hw' := mem_ball_zero_iff.mp hw
     have hdist := hf.dist_eq (Complex.UnitDisc.toPoincare (Complex.UnitDisc.mk z hz'))
       (Complex.UnitDisc.toPoincare (Complex.UnitDisc.mk w hw'))
     dsimp only
-    rw [dif_pos hz', dif_pos hw']
+    rw [dite_eq_left hz', dite_eq_left hw']
     simpa only [dist_eq, toUnitDisc_toPoincare, Complex.UnitDisc.coe_mk] using hdist
   · intro z
     dsimp only
-    rw [dif_pos (toUnitDisc z).norm_lt_one, Complex.UnitDisc.mk_coe, toPoincare_toUnitDisc]
+    rw [dite_eq_left (toUnitDisc z).norm_lt_one, Complex.UnitDisc.mk_coe, toPoincare_toUnitDisc]
 
 /-- **The isometries of the Poincaré disc, bundled form.** Every isometry of the metric space
 `PoincareDisc` is a standard disc automorphism `unitDiscStandardAutomorphismIsometryEquiv u a`,

@@ -226,9 +226,9 @@ public theorem titsPolarForm_single_single (i j : Q) :
         - ((Fintype.card (i ⟶ j) : ℤ) + (Fintype.card (j ⟶ i) : ℤ)) := by
   rw [titsPolarForm_def, eulerForm_single_single, eulerForm_single_single]
   rcases eq_or_ne i j with rfl | hij
-  · rw [if_pos (rfl : i = i)]
+  · rw [ite_eq_left (rfl : i = i)]
     ring
-  · rw [if_neg hij, if_neg hij.symm]
+  · rw [ite_eq_right hij, ite_eq_right hij.symm]
     ring
 
 /-- A loopless vertex has `⟨αᵢ, αᵢ⟩ = 2` for the polarized Tits form: the normalization that
