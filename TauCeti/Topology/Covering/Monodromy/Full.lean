@@ -166,38 +166,41 @@ variable {X : TopCat.{u}}
 induced by a map of covering spaces. -/
 instance monodromyFunctor_full [LocallyPathConnectedSpace X] : (monodromyFunctor X).Full where
   map_surjective {p q} α := by
-    -- `Functor.Full` states `α` using object projections; expose them for the unbundled theorem.
-    change p.isCoveringMap_proj.monodromyFunctor ⟶
-      q.isCoveringMap_proj.monodromyFunctor at α
+    -- Transport across the opaque functor's object equations for the unbundled theorem.
+    let α' : p.isCoveringMap_proj.monodromyFunctor ⟶
+        q.isCoveringMap_proj.monodromyFunctor :=
+      cast (by rw [← monodromyFunctor_obj, ← monodromyFunctor_obj]) α
+    have hα' : HEq α' α := cast_heq _ α
     obtain ⟨f, hf, hα⟩ := IsCoveringMap.exists_map_of_monodromyNatTrans
-      p.isCoveringMap_proj q.isCoveringMap_proj α
+      p.isCoveringMap_proj q.isCoveringMap_proj α'
     let F : p ⟶ q := homMk (TopCat.ofHom f) (by
       ext e
       exact congrFun hf e)
     refine ⟨F, ?_⟩
-    rw [monodromyFunctor_map]
-    -- Expose the induced transformation so the bundled map can be compared with `f` pointwise.
-    change IsCoveringMap.monodromyNatTrans p.isCoveringMap_proj q.isCoveringMap_proj
-      F.hom.left.hom (proj_hom_comp_hom_left_hom F) = α
     have hF : F.hom.left.hom = f := by
       simp only [F, homMk_hom_left, TopCat.hom_ofHom]
-    calc
+    have hmap :
       IsCoveringMap.monodromyNatTrans p.isCoveringMap_proj q.isCoveringMap_proj
           F.hom.left.hom (proj_hom_comp_hom_left_hom F) =
-          IsCoveringMap.monodromyNatTrans p.isCoveringMap_proj q.isCoveringMap_proj f hf := by
-        ext ⟨x⟩ e
-        obtain ⟨e, he⟩ := e
-        rw [IsCoveringMap.monodromyNatTrans_app, IsCoveringMap.monodromyNatTrans_app]
-        apply Subtype.ext
-        calc
-          (IsCoveringMap.fiberMap F.hom.left.hom (proj_hom_comp_hom_left_hom F) x ⟨e, he⟩ :
-              (q : TopCat)) = F.hom.left.hom e :=
-            IsCoveringMap.fiberMap_apply_coe F.hom.left.hom
-              (proj_hom_comp_hom_left_hom F) x ⟨e, he⟩
-          _ = f e := congrArg (fun k : C((p : TopCat), (q : TopCat)) ↦ k e) hF
-          _ = (IsCoveringMap.fiberMap f hf x ⟨e, he⟩ : (q : TopCat)) :=
-            (IsCoveringMap.fiberMap_apply_coe f hf x ⟨e, he⟩).symm
-      _ = α := hα
+          α' := by
+      calc
+        IsCoveringMap.monodromyNatTrans p.isCoveringMap_proj q.isCoveringMap_proj
+            F.hom.left.hom (proj_hom_comp_hom_left_hom F) =
+            IsCoveringMap.monodromyNatTrans p.isCoveringMap_proj q.isCoveringMap_proj f hf := by
+          ext ⟨x⟩ e
+          obtain ⟨e, he⟩ := e
+          rw [IsCoveringMap.monodromyNatTrans_app, IsCoveringMap.monodromyNatTrans_app]
+          apply Subtype.ext
+          calc
+            (IsCoveringMap.fiberMap F.hom.left.hom (proj_hom_comp_hom_left_hom F) x ⟨e, he⟩ :
+                (q : TopCat)) = F.hom.left.hom e :=
+              IsCoveringMap.fiberMap_apply_coe F.hom.left.hom
+                (proj_hom_comp_hom_left_hom F) x ⟨e, he⟩
+            _ = f e := congrArg (fun k : C((p : TopCat), (q : TopCat)) ↦ k e) hF
+            _ = (IsCoveringMap.fiberMap f hf x ⟨e, he⟩ : (q : TopCat)) :=
+              (IsCoveringMap.fiberMap_apply_coe f hf x ⟨e, he⟩).symm
+        _ = α' := hα
+    exact eq_of_heq ((monodromyFunctor_map F).trans ((heq_of_eq hmap).trans hα'))
 
 end CoveringSpace
 

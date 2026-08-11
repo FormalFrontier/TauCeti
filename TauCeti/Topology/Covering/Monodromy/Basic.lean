@@ -51,10 +51,10 @@ variable {X : TopCat.{u}}
 groupoid of `X` to types.
 
 A covering space is sent to its own monodromy functor, and a map of covering spaces to the natural
-transformation restricting that map to every fibre. The definition is exposed so its exported
-equation lemmas can unfold it; downstream code should use `monodromyFunctor_obj`,
-`monodromyFunctor_map`, and `monodromyFunctor_map_app`. -/
-@[expose] noncomputable def monodromyFunctor (X : TopCat.{u}) :
+transformation restricting that map to every fibre. The definition is opaque; its object and map
+values are characterized by `monodromyFunctor_obj`, `monodromyFunctor_map`, and
+`monodromyFunctor_map_app`. -/
+noncomputable def monodromyFunctor (X : TopCat.{u}) :
     CoveringSpace X ⥤ (FundamentalGroupoid X ⥤ Type u) where
   obj p := p.isCoveringMap_proj.monodromyFunctor
   map {p q} f := IsCoveringMap.monodromyNatTrans p.isCoveringMap_proj q.isCoveringMap_proj
@@ -69,22 +69,27 @@ equation lemmas can unfold it; downstream code should use `monodromyFunctor_obj`
 @[simp]
 theorem monodromyFunctor_obj (p : CoveringSpace X) :
     (monodromyFunctor X).obj p = p.isCoveringMap_proj.monodromyFunctor :=
-  rfl
+  (rfl)
 
 /-- The natural transformation assigned to a map of covering spaces is the one induced by its
-underlying map of total spaces. -/
+underlying map of total spaces. This is a heterogeneous equality because the functor's opaque
+object values are identified with the corresponding monodromy functors only propositionally. -/
 theorem monodromyFunctor_map {p q : CoveringSpace X} (f : p ⟶ q) :
-    (monodromyFunctor X).map f =
-      IsCoveringMap.monodromyNatTrans p.isCoveringMap_proj q.isCoveringMap_proj
-        f.hom.left.hom (proj_hom_comp_hom_left_hom f) :=
+    HEq ((monodromyFunctor X).map f)
+      (IsCoveringMap.monodromyNatTrans p.isCoveringMap_proj q.isCoveringMap_proj
+        f.hom.left.hom (proj_hom_comp_hom_left_hom f)) := by
+  unfold monodromyFunctor
   rfl
 
 /-- At a base point, the natural transformation assigned by monodromy is the restriction of the
-underlying map of total spaces to the corresponding fibre. -/
+underlying map of total spaces to the corresponding fibre. As in `monodromyFunctor_map`, the
+equality is heterogeneous because `monodromyFunctor` is opaque. -/
 @[simp]
 theorem monodromyFunctor_map_app {p q : CoveringSpace X} (f : p ⟶ q) (x : X) :
-    ((monodromyFunctor X).map f).app (FundamentalGroupoid.mk x) =
-      ↾(IsCoveringMap.fiberMap f.hom.left.hom (proj_hom_comp_hom_left_hom f) x) := by
+    HEq (((monodromyFunctor X).map f).app (FundamentalGroupoid.mk x))
+      (↾(IsCoveringMap.fiberMap f.hom.left.hom (proj_hom_comp_hom_left_hom f) x)) := by
+  unfold monodromyFunctor
+  apply heq_of_eq
   exact IsCoveringMap.monodromyNatTrans_app p.isCoveringMap_proj q.isCoveringMap_proj
     f.hom.left.hom (proj_hom_comp_hom_left_hom f) x
 
@@ -95,9 +100,13 @@ instance monodromyFunctor_faithful (X : TopCat.{u}) : (monodromyFunctor X).Faith
     apply ObjectProperty.hom_ext
     ext e
     have happ := NatTrans.congr_app h (FundamentalGroupoid.mk (p.proj e))
-    rw [monodromyFunctor_map_app, monodromyFunctor_map_app] at happ
+    have happ' :
+        (↾(IsCoveringMap.fiberMap f.hom.left.hom (proj_hom_comp_hom_left_hom f) (p.proj e))) =
+          ↾(IsCoveringMap.fiberMap g.hom.left.hom (proj_hom_comp_hom_left_hom g) (p.proj e)) :=
+      eq_of_heq ((monodromyFunctor_map_app f (p.proj e)).symm.trans
+        ((heq_of_eq happ).trans (monodromyFunctor_map_app g (p.proj e))))
     let e' : p.proj ⁻¹' {p.proj e} := ⟨e, rfl⟩
-    have happ := ConcreteCategory.congr_hom happ e'
+    have happ := ConcreteCategory.congr_hom happ' e'
     calc
       f.hom.left e =
           (IsCoveringMap.fiberMap f.hom.left.hom (proj_hom_comp_hom_left_hom f) (p.proj e) e' :
