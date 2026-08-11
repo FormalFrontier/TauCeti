@@ -34,8 +34,8 @@ the `CFSGStatement` roadmap's conventions for Steinberg endomorphisms.
 ## Main results
 
 * `TauCeti.orderOf_graphPermA`, `TauCeti.orderOf_graphPermD`, `TauCeti.orderOf_graphPermE6` and
-  `TauCeti.orderOf_trialityPermD4`: the graph permutations have order exactly two, except for
-  triality, which has order three.
+  `TauCeti.orderOf_trialityPermD4`: the graph permutations have order exactly two (for
+  `graphPermA`, on at least two nodes), except for triality, which has order three.
 * `TauCeti.cartanMatrix_A_graphPermA`, `TauCeti.cartanMatrix_D_graphPermD`,
   `TauCeti.cartanMatrix_E6_graphPermE6` and `TauCeti.cartanMatrix_D4_trialityPermD4`: each graph
   permutation is an automorphism of the corresponding Cartan matrix.

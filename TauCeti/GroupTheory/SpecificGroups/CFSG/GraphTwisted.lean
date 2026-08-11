@@ -51,6 +51,8 @@ pinned group; and its order is the superscript in the printed family name, recor
 This is the diagram-permutation half of item L1 of `TauCetiRoadmap/CFSGStatement/README.md`, whose
 table of families and permutations it transcribes; the remaining half, the equations
 `γ (x_α(t)) = x_{γ α}(t)` on the simple root subgroups, waits on the pinned ambient groups of L0.
+`TauCetiRoadmap/CFSGStatement/Suggested.lean` supplies the `diagramPerm` signature and its design on
+the subtype that excludes the Suzuki--Ree and Tits families.
 The conventions follow Carter, *Finite Groups of Lie Type: Conjugacy Classes and Complex
 Characters*, and the Bourbaki numbering fixed by the root-systems roadmap.
 -/
@@ -61,7 +63,8 @@ namespace TauCeti
 
 namespace GraphTwistedIndex
 
-open LieTypeIndex (two_le_of_twistedA_valid four_le_of_twistedD_valid usesHalfFrobenius_iff)
+open LieTypeIndex (two_le_of_twistedA_inStandardRange four_le_of_twistedD_inStandardRange
+  usesHalfFrobenius_iff)
 
 /-- The permutation `γ` of the Bourbaki-numbered simple roots that the Steinberg map of a
 graph-twisted index composes with the field Frobenius.
@@ -82,7 +85,9 @@ def diagramPerm : (d : GraphTwistedIndex) → Equiv.Perm (Fin d.1.rank)
   | ⟨⟨.G2 _, _⟩, _⟩ => 1
   | ⟨⟨.twistedA n _, _⟩, _⟩ => graphPermA n
   | ⟨⟨.twistedD n _, hv⟩, _⟩ =>
-      graphPermD n (by have := four_le_of_twistedD_valid hv; omega)
+      graphPermD n (by
+        have := four_le_of_twistedD_inStandardRange ((LieTypeIndex.valid_iff _).mp hv).1
+        omega)
   | ⟨⟨.twistedE6 _, _⟩, _⟩ => graphPermE6
   | ⟨⟨.trialityD4 _, _⟩, _⟩ => trialityPermD4
   | ⟨⟨.suzuki _, _⟩, hh⟩ | ⟨⟨.reeG2 _, _⟩, hh⟩ | ⟨⟨.reeF4 _, _⟩, hh⟩ | ⟨⟨.tits, _⟩, hh⟩ =>
@@ -207,6 +212,11 @@ section Twisted
 
 variable {n : ℕ} {q : PrimePower}
 
+/- The final `rfl` in each `diagramPerm` lemma below closes the type-level reduction from
+`Fin (twistedA n q).dynkinType.rank` (and the analogous exceptional types) to the displayed `Fin`
+type, using the exposed definitions of `LieTypeIndex.dynkinType` and `DynkinType.rank`. In the
+`twistedD` case, proof irrelevance also identifies the two rank proofs passed to `graphPermD`. -/
+
 /-- The unitary family `²Aₙ(q)` twists by the reversal of the `Aₙ` chain. -/
 @[simp] theorem diagramPerm_twistedA (hv : (LieTypeIndex.twistedA n q).Valid) :
     diagramPerm ⟨⟨_, hv⟩, by simp [usesHalfFrobenius_iff]⟩ = graphPermA n := by
@@ -220,7 +230,9 @@ variable {n : ℕ} {q : PrimePower}
 /-- The family `²Dₙ(q)` twists by the exchange of the two fork nodes of the `Dₙ` diagram. -/
 @[simp] theorem diagramPerm_twistedD (hv : (LieTypeIndex.twistedD n q).Valid) :
     diagramPerm ⟨⟨_, hv⟩, by simp [usesHalfFrobenius_iff]⟩ =
-      graphPermD n (by have := four_le_of_twistedD_valid hv; omega) := by
+      graphPermD n (by
+        have := four_le_of_twistedD_inStandardRange ((LieTypeIndex.valid_iff _).mp hv).1
+        omega) := by
   simp only [diagramPerm]
   rfl
 
@@ -266,7 +278,8 @@ of that diagram, by an automorphism permuting the simple root subgroups accordin
       simp only [diagramPerm]; exact cartanMatrix_A_graphPermA n i j
   | ⟨⟨.twistedD n _, hv⟩, _⟩, i, j => by
       simp only [diagramPerm]
-      exact cartanMatrix_D_graphPermD n (four_le_of_twistedD_valid hv) i j
+      exact cartanMatrix_D_graphPermD n
+        (four_le_of_twistedD_inStandardRange ((LieTypeIndex.valid_iff _).mp hv).1) i j
   | ⟨⟨.twistedE6 _, _⟩, _⟩, i, j => by
       simp only [diagramPerm]; exact cartanMatrix_E6_graphPermE6 i j
   | ⟨⟨.trialityD4 _, _⟩, _⟩, i, j => by
@@ -282,7 +295,9 @@ in the family name is not an independent convention. -/
   | ⟨⟨.E7 _, _⟩, _⟩ | ⟨⟨.E8 _, _⟩, _⟩ | ⟨⟨.F4 _, _⟩, _⟩ | ⟨⟨.G2 _, _⟩, _⟩ => by
       simp only [diagramPerm, twistOrder, orderOf_one]
   | ⟨⟨.twistedA _ _, hv⟩, _⟩ => by
-      simp only [diagramPerm, twistOrder]; exact orderOf_graphPermA (two_le_of_twistedA_valid hv)
+      simp only [diagramPerm, twistOrder]
+      exact orderOf_graphPermA
+        (two_le_of_twistedA_inStandardRange ((LieTypeIndex.valid_iff _).mp hv).1)
   | ⟨⟨.twistedD n _, _⟩, _⟩ => by
       simp only [diagramPerm, twistOrder]; exact orderOf_graphPermD n _
   | ⟨⟨.twistedE6 _, _⟩, _⟩ => by simp only [diagramPerm, twistOrder]; exact orderOf_graphPermE6
