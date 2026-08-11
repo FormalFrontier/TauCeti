@@ -59,8 +59,7 @@ noncomputable def weightedAbelJacobiClass (w : X → ℤ) (hdeg : S.IsWeightedDe
 degree-corrected point divisor. This is the canonical simp form for the subtype coercion. -/
 @[simp]
 lemma coe_weightedAbelJacobiClass (w : X → ℤ) (hdeg : S.IsWeightedDegreeZero w)
-    {x₀ : X} (hx₀ : w x₀ = 1) (x : X) :
-    (S.weightedAbelJacobiClass w hdeg hx₀ x : S.ClassGroup) =
+    {x₀ : X} (hx₀ : w x₀ = 1) (x : X) : (S.weightedAbelJacobiClass w hdeg hx₀ x : S.ClassGroup) =
       S.divisorClass (weightedPointBaseDifference w x₀ x) :=
   rfl
 

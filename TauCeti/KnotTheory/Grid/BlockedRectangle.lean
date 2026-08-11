@@ -98,8 +98,7 @@ theorem fullyBlockedRectangles_subset_all :
 
 /-- There are at most two fully blocked rectangles in each matrix coefficient of the fully
 blocked differential. -/
-theorem card_fullyBlockedRectangles_le_two :
-    (G.fullyBlockedRectangles x y).card ≤ 2 :=
+theorem card_fullyBlockedRectangles_le_two : (G.fullyBlockedRectangles x y).card ≤ 2 :=
   GridRectangleBetween.card_le_two (G.fullyBlockedRectangles x y)
 
 /-- The number of fully blocked empty rectangles from `x` to `y`, reduced modulo `2`. -/

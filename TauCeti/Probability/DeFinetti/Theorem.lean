@@ -128,7 +128,7 @@ theorem conditionallyIID_of_contractable [StandardBorelSpace α] [Nonempty α] {
     [IsFiniteMeasure μ] {X : ℕ → Ω → α} (hX : Contractable μ X)
     (hX_meas : ∀ n, Measurable (X n)) :
     ConditionallyIID μ X := by
-  haveI : IsFiniteMeasure (pathLaw μ X) := by rw [pathLaw_def]; infer_instance
+  have : IsFiniteMeasure (pathLaw μ X) := by rw [pathLaw_def]; infer_instance
   exact ConditionallyIID.of_directing
     ((conditionallyIIDWith_of_contractable_pathSpace
       (Contractable.coordinate_pathLaw hX fun i => (hX_meas i).aemeasurable)).of_pathLaw hX_meas)

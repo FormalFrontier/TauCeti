@@ -185,8 +185,7 @@ def ofSym (s : Sym X d) : EffectiveDivisorOfDegree X d :=
   equivFinsupp.symm (Sym.equivNatSum X d s)
 
 @[simp]
-lemma coe_ofSym (s : Sym X d) :
-    (ofSym s : WeilDivisor X) =
+lemma coe_ofSym (s : Sym X d) : (ofSym s : WeilDivisor X) =
       WeilDivisor.ofFinsupp (letI := Classical.decEq X; (Sym.equivNatSum X d s).1) := by
   classical
   rfl

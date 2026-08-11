@@ -30,8 +30,7 @@ private theorem prime_intCast_of_fact : Prime (p : ℤ) :=
 
 /-- For `u` with `p ∤ u`, the prime `p` divides `a * u ^ 2` exactly when it divides `a`. -/
 @[simp]
-theorem dvd_mul_sq_iff {a u : ℤ} (hu : ¬ (p : ℤ) ∣ u) :
-    (p : ℤ) ∣ a * u ^ 2 ↔ (p : ℤ) ∣ a := by
+theorem dvd_mul_sq_iff {a u : ℤ} (hu : ¬ (p : ℤ) ∣ u) : (p : ℤ) ∣ a * u ^ 2 ↔ (p : ℤ) ∣ a := by
   refine ⟨fun h => ?_, fun ha => dvd_mul_of_dvd_left ha _⟩
   rcases (prime_intCast_of_fact (p := p)).dvd_mul.mp h with ha | hu2
   · exact ha

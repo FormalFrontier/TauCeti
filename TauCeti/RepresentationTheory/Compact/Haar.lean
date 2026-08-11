@@ -42,9 +42,9 @@ theorem haar_univ_ne_zero : (Measure.haar : Measure G) univ ≠ 0 :=
 theorem isMulRightInvariant_of_isHaarMeasure_of_isProbabilityMeasure (μ : Measure G)
     [μ.IsHaarMeasure] [IsProbabilityMeasure μ] : μ.IsMulRightInvariant where
   map_mul_right_eq_self g := by
-    haveI : (Measure.map (· * g) μ).IsHaarMeasure :=
+    have : (Measure.map (· * g) μ).IsHaarMeasure :=
       Measure.isHaarMeasure_map_mul_right μ g
-    haveI : IsProbabilityMeasure (Measure.map (· * g) μ) :=
+    have : IsProbabilityMeasure (Measure.map (· * g) μ) :=
       Measure.isProbabilityMeasure_map
         (continuous_id.mul continuous_const).measurable.aemeasurable
     exact Measure.isHaarMeasure_eq_of_isProbabilityMeasure _ _
@@ -52,14 +52,14 @@ theorem isMulRightInvariant_of_isHaarMeasure_of_isProbabilityMeasure (μ : Measu
 /-- Every probability Haar measure on a locally compact group is invariant under inversion. -/
 theorem isInvInvariant_of_isHaarMeasure_of_isProbabilityMeasure (μ : Measure G)
     [μ.IsHaarMeasure] [IsProbabilityMeasure μ] : μ.IsInvInvariant := by
-  haveI : μ.IsMulRightInvariant :=
+  have : μ.IsMulRightInvariant :=
     isMulRightInvariant_of_isHaarMeasure_of_isProbabilityMeasure (G := G) μ
   constructor
-  letI : μ.inv.IsHaarMeasure := {
+  let : μ.inv.IsHaarMeasure := {
     toIsFiniteMeasureOnCompacts := inferInstance
     toIsMulLeftInvariant := inferInstance
     toIsOpenPosMeasure := inferInstance }
-  letI : IsProbabilityMeasure μ.inv := by
+  let : IsProbabilityMeasure μ.inv := by
     rw [Measure.inv_def]
     exact Measure.isProbabilityMeasure_map measurable_inv.aemeasurable
   exact Measure.isHaarMeasure_eq_of_isProbabilityMeasure _ _

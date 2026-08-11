@@ -46,8 +46,7 @@ private theorem norm_inv_smul_lt_one (A : X →L[ℝ] X) {lambda : ℝ}
   rw [norm_smul, Real.norm_eq_abs, abs_inv]
   exact (inv_mul_lt_one₀ (lt_of_le_of_lt (norm_nonneg A) hlambda)).2 hlambda
 
-private theorem inv_smul_tsum_pow_mul_sub (A : X →L[ℝ] X) {lambda : ℝ}
-    (hlambda : ‖A‖ < |lambda|) :
+private theorem inv_smul_tsum_pow_mul_sub (A : X →L[ℝ] X) {lambda : ℝ} (hlambda : ‖A‖ < |lambda|) :
     lambda⁻¹ • ((∑' n : ℕ, (lambda⁻¹ • A) ^ n) * (lambda • 1 - A)) = 1 := by
   have hlambda_ne : lambda ≠ 0 := abs_pos.mp (lt_of_le_of_lt (norm_nonneg A) hlambda)
   have hfactor : lambda • (1 - lambda⁻¹ • A) = lambda • 1 - A := by
@@ -59,8 +58,7 @@ private theorem inv_smul_tsum_pow_mul_sub (A : X →L[ℝ] X) {lambda : ℝ}
 /-- For `λ > ‖A‖`, the Laplace-transform resolvent of `t ↦ exp (tA)` is the Neumann series
 `λ⁻¹ ∑' n, (λ⁻¹ A)ⁿ`. -/
 @[simp] theorem ofBounded_resolvent_eq_inv_smul_tsum_pow (A : X →L[ℝ] X) {lambda : ℝ}
-    (hlambda : ‖A‖ < lambda) :
-    (ofBounded A).resolvent (ofBounded_hasGrowthBound A) lambda hlambda =
+    (hlambda : ‖A‖ < lambda) : (ofBounded A).resolvent (ofBounded_hasGrowthBound A) lambda hlambda =
       lambda⁻¹ • ∑' n : ℕ, (lambda⁻¹ • A) ^ n := by
   have hlambda_pos : 0 < lambda := lt_of_le_of_lt (norm_nonneg A) hlambda
   have hlambda_abs : ‖A‖ < |lambda| := by simpa [abs_of_pos hlambda_pos] using hlambda
@@ -93,8 +91,7 @@ private theorem inv_smul_tsum_pow_mul_sub (A : X →L[ℝ] X) {lambda : ℝ}
 
 /-- For `λ > ‖A‖`, the Laplace-transform resolvent of `t ↦ exp (tA)` agrees with
 Mathlib's Banach-algebra resolvent of `A`. -/
-theorem ofBounded_resolvent_eq_resolvent (A : X →L[ℝ] X) {lambda : ℝ}
-    (hlambda : ‖A‖ < lambda) :
+theorem ofBounded_resolvent_eq_resolvent (A : X →L[ℝ] X) {lambda : ℝ} (hlambda : ‖A‖ < lambda) :
     (ofBounded A).resolvent (ofBounded_hasGrowthBound A) lambda hlambda =
       _root_.resolvent A lambda := by
   have hlambda_pos : 0 < lambda := lt_of_le_of_lt (norm_nonneg A) hlambda

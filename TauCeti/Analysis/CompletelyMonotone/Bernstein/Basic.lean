@@ -184,8 +184,7 @@ theorem const_add {f : ℝ → ℝ} (hf : IsBernsteinFunction f) {c : ℝ} (hc :
   ((isBernsteinFunction_const hc).add hf).congr fun _ _ => by simp [Pi.add_apply]
 
 /-- Bernstein functions are closed under finite sums. -/
-theorem sum {ι : Type*} {s : Finset ι} {f : ι → ℝ → ℝ}
-    (hf : ∀ i ∈ s, IsBernsteinFunction (f i)) :
+theorem sum {ι : Type*} {s : Finset ι} {f : ι → ℝ → ℝ} (hf : ∀ i ∈ s, IsBernsteinFunction (f i)) :
     IsBernsteinFunction (fun t => ∑ i ∈ s, f i t) := by
   have h := Finset.sum_induction f IsBernsteinFunction (fun _ _ => IsBernsteinFunction.add)
     isBernsteinFunction_zero hf

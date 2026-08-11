@@ -163,10 +163,10 @@ lemma baseChangePointsMulEquiv_mapValue
       HopfAlgebra.mapPoints (H := H)
         ((_root_.TauCeti.CommAlgCat.restrictScalars (algebraMap k K)).map χ)
       (baseChangePointsMulEquiv (K := K) A H f) := by
-  letI : Algebra k A := Algebra.compHom A (algebraMap k K)
-  letI : IsScalarTower k K A := IsScalarTower.of_algebraMap_eq' rfl
-  letI : Algebra k B := Algebra.compHom B (algebraMap k K)
-  letI : IsScalarTower k K B := IsScalarTower.of_algebraMap_eq' rfl
+  let : Algebra k A := Algebra.compHom A (algebraMap k K)
+  let : IsScalarTower k K A := IsScalarTower.of_algebraMap_eq' rfl
+  let : Algebra k B := Algebra.compHom B (algebraMap k K)
+  let : IsScalarTower k K B := IsScalarTower.of_algebraMap_eq' rfl
   rw [_root_.TauCeti.CommAlgCat.restrictScalars_map]
   -- `HopfAlgebra.mapPoints` is definitionally the multiplicative map induced by
   -- `AlgHom.mapValue`; after rewriting the restricted categorical map, `change` exposes
@@ -189,8 +189,8 @@ lemma baseChangePointsMulEquiv_mapDomain {H L : _root_.CommHopfAlgCat.{v} k}
         (A := _root_.TauCeti.CommAlgCat.restrictScalarsObj (algebraMap k K) A)
         φ.hom
         (baseChangePointsMulEquiv (K := K) A L f) := by
-  letI : Algebra k A := Algebra.compHom A (algebraMap k K)
-  letI : IsScalarTower k K A := IsScalarTower.of_algebraMap_eq' rfl
+  let : Algebra k A := Algebra.compHom A (algebraMap k K)
+  let : IsScalarTower k K A := IsScalarTower.of_algebraMap_eq' rfl
   simpa [baseChangePointsMulEquiv, hom_baseChangeMap]
     using AlgHom.baseChangePointsMulEquiv_symm_mapDomain (k := k) (K := K)
       (A := H) (B := L) (R := A) φ.hom f

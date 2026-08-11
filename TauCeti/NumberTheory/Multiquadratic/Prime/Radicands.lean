@@ -46,10 +46,8 @@ namespace TauCeti.Multiquadratic
 /-- **Square-class independence of distinct primes.** If the selected `p i` are prime and pairwise
 distinct, then no nonempty subset product `∏_{i ∈ S} (p i : ℚ)` is a square in `ℚ`. This is the
 hypothesis the multiquadratic degree theorem `finrank_adjoin_range` consumes. -/
-theorem not_isSquare_prod_primes {ι : Type*} (p : ι → ℕ) {S : Finset ι}
-    (hp : ∀ i ∈ S, (p i).Prime)
-    (hdist : Set.Pairwise (S : Set ι) (fun i j => p i ≠ p j))
-    (hS : S.Nonempty) :
+theorem not_isSquare_prod_primes {ι : Type*} (p : ι → ℕ) {S : Finset ι} (hp : ∀ i ∈ S, (p i).Prime)
+    (hdist : Set.Pairwise (S : Set ι) (fun i j => p i ≠ p j)) (hS : S.Nonempty) :
     ¬ IsSquare (∏ i ∈ S, (p i : ℚ)) := by
   rw [← Nat.cast_prod, Rat.isSquare_natCast_iff]
   refine Squarefree.not_isSquare ?_ ?_
@@ -66,8 +64,7 @@ theorem not_isSquare_prod_primes {ι : Type*} (p : ι → ℕ) {S : Finset ι}
 `(√n)² = algebraMap ℚ ℝ n`. This supplies the `hroot` hypothesis that the multiquadratic degree and
 Galois-group theorems consume for the family of square roots of a prime family. It is the `0 ≤ n`
 special case of `sq_sqrt_intCast`. -/
-theorem sq_sqrt_natCast (n : ℕ) :
-    (Real.sqrt n) ^ 2 = algebraMap ℚ ℝ (n : ℚ) := by
+theorem sq_sqrt_natCast (n : ℕ) : (Real.sqrt n) ^ 2 = algebraMap ℚ ℝ (n : ℚ) := by
   have h := sq_sqrt_intCast (n := (n : ℤ)) (Int.natCast_nonneg n)
   rwa [Int.cast_natCast, Int.cast_natCast] at h
 

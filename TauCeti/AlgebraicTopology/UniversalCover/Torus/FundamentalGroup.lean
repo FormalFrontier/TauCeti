@@ -100,8 +100,7 @@ theorem piFundamentalGroupMulEquiv_apply {ι : Type*} {p : ι → ℝ} (hp : ∀
 @[simp]
 theorem piFundamentalGroupMulEquiv_symm_apply {ι : Type*} {p : ι → ℝ} (hp : ∀ i, p i ≠ 0)
     {x : ∀ i, AddCircle (p i)} (e : ∀ i, ((↑) : ℝ → AddCircle (p i)) ⁻¹' {x i})
-    (n : ∀ _ : ι, Multiplicative ℤ) :
-    (piFundamentalGroupMulEquiv hp e).symm n =
+    (n : ∀ _ : ι, Multiplicative ℤ) : (piFundamentalGroupMulEquiv hp e).symm n =
       pi fun i => (fundamentalGroupMulEquiv (p i) (hp i) (e i)).symm (n i) :=
   FundamentalGroup.piMulEquiv_symm_apply x
     ((MulEquiv.piCongrRight fun i => fundamentalGroupMulEquiv (p i) (hp i) (e i)).symm n)
@@ -129,8 +128,7 @@ theorem prodFundamentalGroupMulEquiv_zero_apply {p q : ℝ} (hp : p ≠ 0) (hq :
 
 @[simp]
 theorem prodFundamentalGroupMulEquiv_zero_symm_apply {p q : ℝ} (hp : p ≠ 0) (hq : q ≠ 0)
-    (mn : Multiplicative ℤ × Multiplicative ℤ) :
-    (prodFundamentalGroupMulEquiv_zero hp hq).symm mn =
+    (mn : Multiplicative ℤ × Multiplicative ℤ) : (prodFundamentalGroupMulEquiv_zero hp hq).symm mn =
       prod ((fundamentalGroupMulEquiv_zero p hp).symm mn.1)
         ((fundamentalGroupMulEquiv_zero q hq).symm mn.2) := by
   simp [prodFundamentalGroupMulEquiv_zero]
@@ -143,8 +141,7 @@ def piFundamentalGroupMulEquiv_zero {ι : Type*} {p : ι → ℝ} (hp : ∀ i, p
   piFundamentalGroupMulEquiv hp fun i => ⟨0, by simp⟩
 
 @[simp]
-theorem piFundamentalGroupMulEquiv_zero_apply {ι : Type*} {p : ι → ℝ}
-    (hp : ∀ i, p i ≠ 0)
+theorem piFundamentalGroupMulEquiv_zero_apply {ι : Type*} {p : ι → ℝ} (hp : ∀ i, p i ≠ 0)
     (γ : FundamentalGroup (∀ i, AddCircle (p i)) (fun _ => 0)) (i : ι) :
     piFundamentalGroupMulEquiv_zero hp γ i =
       fundamentalGroupMulEquiv_zero (p i) (hp i)

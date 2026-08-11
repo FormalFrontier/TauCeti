@@ -164,7 +164,7 @@ theorem finrank_adjoin_I_sqrt_primes {ι : Type*} [Finite ι] (p : ι → ℕ)
           (insert Complex.I (Set.range fun i => ((Real.sqrt (p i) : ℝ) : ℂ))))
       = 2 ^ (Nat.card ι + 1) := by
   have hcard : Nat.card (Option ι) = Nat.card ι + 1 := by
-    letI := Fintype.ofFinite ι
+    let := Fintype.ofFinite ι
     simp [Nat.card_eq_fintype_card, Fintype.card_option]
   have hkey := finrank_adjoin_range (d := cmRadicand p) (root := cmRoot p)
     (cmRoot_sq p) (not_isSquare_prod_cmRadicand p hp hinj)

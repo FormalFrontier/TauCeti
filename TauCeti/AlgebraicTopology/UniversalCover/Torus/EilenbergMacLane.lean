@@ -44,8 +44,7 @@ theorem isAspherical_pi (p : ι → ℝ) (x : ∀ i, AddCircle (p i)) :
 
 /-- An indexed product of real additive circles with nonzero periods is an Eilenberg--Mac
 Lane space of type `K(Π i, ℤ, 1)`. No finiteness assumption on the index type is needed. -/
-theorem isEilenbergMacLaneSpaceOne_pi (p : ι → ℝ) (hp : ∀ i, p i ≠ 0)
-    (x : ∀ i, AddCircle (p i)) :
+theorem isEilenbergMacLaneSpaceOne_pi (p : ι → ℝ) (hp : ∀ i, p i ≠ 0) (x : ∀ i, AddCircle (p i)) :
     TauCeti.IsEilenbergMacLaneSpaceOne (∀ _ : ι, Multiplicative ℤ)
       (∀ i, AddCircle (p i)) x :=
   TauCeti.IsEilenbergMacLaneSpaceOne.pi fun i ↦

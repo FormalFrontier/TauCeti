@@ -63,21 +63,11 @@ private theorem algebraMap_four_mul_mem_conductor {θ : 𝓞 K} {d : ℤ}
     rw [hgenθ]; exact minpoly_rat_quadratic hmin
   have hdim : pb.dim = 2 := by
     rw [← pb.natDegree_minpoly, hmin', natDegree_X_pow_sub_C]
-  have hnormθ : Algebra.norm ℚ pb.gen = -((d : ℤ) : ℚ) := by
-    rw [Algebra.PowerBasis.norm_gen_eq_coeff_zero_minpoly, hmin', hdim]
-    simp [coeff_sub, coeff_X_pow]
-  have hfinrank : Module.finrank ℚ K = 2 := pb.finrank.trans hdim
-  have haeval : (aeval pb.gen) ((X : ℚ[X]) ^ 2 - C ((d : ℤ) : ℚ)).derivative
-      = algebraMap ℚ K 2 * pb.gen := by
-    -- `derivative_X_pow` leaves the exponent as `2 - 1`; reduce it to `1` so `pow_one` applies.
-    have hsub : (2 : ℕ) - 1 = 1 := by norm_num
-    rw [derivative_sub, derivative_C, sub_zero, derivative_X_pow, map_mul, aeval_C, map_pow,
-      aeval_X, hsub, pow_one]
-    norm_num
   have hdiscr : Algebra.discr ℚ pb.basis = ((4 * d : ℤ) : ℚ) := by
-    rw [Algebra.discr_powerBasis_eq_norm, hmin', haeval, map_mul,
-      Algebra.norm_algebraMap, hnormθ, hfinrank]
-    norm_num
+    -- `pb.basis` is `{1, θ}` reindexed along `pb.dim = 2`, so its discriminant is `discr_one_gen`.
+    have hb2 : ⇑pb.basis ∘ ⇑(finCongr hdim).symm = ![(1 : K), (θ : K)] := by
+      funext j; fin_cases j <;> simp [hgenθ]
+    rw [← Algebra.discr_reindex ℚ pb.basis (finCongr hdim), hb2, discr_one_gen hmin hgen]
   have hgenint : IsIntegral ℤ pb.gen := hgenθ ▸ hintθℤ
   have key := Algebra.discr_mul_isIntegral_mem_adjoin (R := ℤ) (K := ℚ) (L := K) (B := pb)
     hgenint (z := (b : K)) (b.isIntegral_coe)
@@ -127,8 +117,7 @@ omit [NumberField K] in
 `p ∤ d`) iff `d` is a square mod `p`. -/
 private theorem card_monicFactorsMod_quadratic_iff {θ : 𝓞 K} {d : ℤ}
     (hmin : minpoly ℤ θ = X ^ 2 - C d) {p : ℕ} [Fact p.Prime] (hodd : p ≠ 2)
-    (hcop : ¬ (p : ℤ) ∣ d) :
-    (monicFactorsMod θ p).card = 2 ↔ legendreSym p d = 1 := by
+    (hcop : ¬ (p : ℤ) ∣ d) : (monicFactorsMod θ p).card = 2 ↔ legendreSym p d = 1 := by
   classical
   have hc0 : (d : ZMod p) ≠ 0 := by rw [Ne, ZMod.intCast_zmod_eq_zero_iff_dvd]; exact hcop
   have h2 : (2 : ZMod p) ≠ 0 := by
@@ -172,11 +161,7 @@ theorem ncard_primesOver_quadratic_iff {θ : 𝓞 K} {d : ℤ}
     {p : ℕ} [Fact p.Prime] (hodd : p ≠ 2) (hcop : ¬ (p : ℤ) ∣ d) :
     (primesOver (span {(p : ℤ)}) (𝓞 K)).ncard = finrank ℚ K ↔ legendreSym p d = 1 := by
   have hp := not_dvd_exponent_of_minpoly_quadratic hmin hgen hodd hcop
-  have hintθℚ : IsIntegral ℚ (θ : K) := θ.isIntegral_coe.tower_top
-  have hfr : finrank ℚ K = 2 := by
-    rw [(PowerBasis.ofAdjoinEqTop' hintθℚ hgen).finrank,
-      ← (PowerBasis.ofAdjoinEqTop' hintθℚ hgen).natDegree_minpoly,
-      PowerBasis.ofAdjoinEqTop'_gen, minpoly_rat_quadratic hmin, natDegree_X_pow_sub_C]
+  have hfr : finrank ℚ K = 2 := finrank_rat_eq_two hmin hgen
   have hcard : (primesOver (span {(p : ℤ)}) (𝓞 K)).ncard = (monicFactorsMod θ p).card := by
     rw [← Nat.card_coe_set_eq, Nat.card_congr (primesOverSpanEquivMonicFactorsMod hp)]
     exact Nat.card_eq_finsetCard _

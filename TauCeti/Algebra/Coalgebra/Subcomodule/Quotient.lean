@@ -59,7 +59,7 @@ private theorem le_ker_tensorProduct_mkQ_comp_coact :
   rw [LinearMap.mem_ker, LinearMap.comp_apply]
   rcases N.coact_mem hm with ⟨t, ht⟩
   rw [← ht]
-  letI : AddCommGroup C := Module.addCommMonoidToAddCommGroup R (M := C)
+  let : AddCommGroup C := Module.addCommMonoidToAddCommGroup R (M := C)
   -- The goal is written with `TensorProduct.map`, while Mathlib's quotient-tensor exactness
   -- lemma is stated for `rTensor`; this is only the wrapper conversion between those forms.
   change LinearMap.rTensor C N.carrier.mkQ
@@ -138,55 +138,73 @@ private theorem tensor_assoc_quotient_coact (m : M) :
           rw [LinearMap.lTensor_map]
           simp
 
+/-- **Coassociativity of the quotient coaction.** This is the first comodule axiom for
+`Subcomodule.quotientCoact`, and the coassociativity field of
+`Subcomodule.instComoduleQuotient`. -/
+private theorem quotientCoact_coassoc :
+    TensorProduct.assoc R (M ⧸ N.toSubmodule) C C ∘ₗ N.quotientCoact.rTensor C ∘ₗ
+        N.quotientCoact =
+      Coalgebra.comul.lTensor (M ⧸ N.toSubmodule) ∘ₗ N.quotientCoact := by
+  -- Both sides are linear maps out of a quotient, so it is enough to check them on classes.
+  apply Submodule.linearMap_qext
+  ext m
+  rw [LinearMap.comp_apply, LinearMap.comp_apply, LinearMap.comp_apply, LinearMap.comp_apply,
+    Submodule.mkQ_apply, quotientCoact_mk, LinearMap.rTensor_map]
+  rw [N.quotientCoact_comp_mkQ]
+  calc
+    TensorProduct.assoc R (M ⧸ N.toSubmodule) C C
+        (TensorProduct.map
+          ((TensorProduct.map N.toSubmodule.mkQ (LinearMap.id : C →ₗ[R] C)).comp
+            (Comodule.coact (R := R) (C := C) (M := M)))
+          (LinearMap.id : C →ₗ[R] C)
+          (Comodule.coact (R := R) (C := C) (M := M) m)) =
+        Coalgebra.comul.lTensor (M ⧸ N.toSubmodule)
+          (TensorProduct.map N.toSubmodule.mkQ (LinearMap.id : C →ₗ[R] C)
+            (Comodule.coact (R := R) (C := C) (M := M) m)) := by
+          exact N.tensor_assoc_quotient_coact m
+    _ = (LinearMap.lTensor (M ⧸ N.toSubmodule) Coalgebra.comul ∘ₗ N.quotientCoact)
+          (Submodule.Quotient.mk m) := by
+          rw [LinearMap.comp_apply, quotientCoact_mk]
+
+/-- **The counit law for the quotient coaction.** This is the second comodule axiom for
+`Subcomodule.quotientCoact`, and the counit field of `Subcomodule.instComoduleQuotient`. -/
+private theorem quotientCoact_counit :
+    Coalgebra.counit.lTensor (M ⧸ N.toSubmodule) ∘ₗ N.quotientCoact =
+      (TensorProduct.mk R (M ⧸ N.toSubmodule) R).flip 1 := by
+  -- Again it suffices to check on classes, where the ambient counit law applies.
+  apply Submodule.linearMap_qext
+  ext m
+  rw [LinearMap.comp_apply, LinearMap.comp_apply, Submodule.mkQ_apply, quotientCoact_mk]
+  calc
+    Coalgebra.counit.lTensor (M ⧸ N.toSubmodule)
+        (TensorProduct.map N.toSubmodule.mkQ (LinearMap.id : C →ₗ[R] C)
+          (Comodule.coact (R := R) (C := C) (M := M) m)) =
+      TensorProduct.map N.toSubmodule.mkQ
+        (Coalgebra.counit.comp (LinearMap.id : C →ₗ[R] C))
+        (Comodule.coact (R := R) (C := C) (M := M) m) := by
+        exact
+          LinearMap.lTensor_map (R := R) M Coalgebra.counit N.toSubmodule.mkQ
+            (LinearMap.id : C →ₗ[R] C)
+            (Comodule.coact (R := R) (C := C) (M := M) m)
+    _ =
+      TensorProduct.map N.toSubmodule.mkQ (LinearMap.id : R →ₗ[R] R)
+        (Coalgebra.counit.lTensor M
+          (Comodule.coact (R := R) (C := C) (M := M) m)) := by
+        rw [LinearMap.lTensor_def, TensorProduct.map_map]
+        simp
+    _ = ((TensorProduct.mk R (M ⧸ N.toSubmodule) R).flip 1)
+          (Submodule.Quotient.mk m) := by
+        rw [Comodule.lTensor_counit_coact]
+        simp only [LinearMap.flip_apply, TensorProduct.mk_apply, TensorProduct.map_tmul,
+          LinearMap.id_coe, id_eq, Submodule.mkQ_apply]
+
 /-- The quotient of a right comodule by a subcomodule inherits a right-comodule structure. -/
 instance instComoduleQuotient : Comodule R C (M ⧸ N.toSubmodule) where
   coact := N.quotientCoact
-  coassoc := by
-    apply Submodule.linearMap_qext
-    ext m
-    rw [LinearMap.comp_apply, LinearMap.comp_apply, LinearMap.comp_apply, LinearMap.comp_apply,
-      Submodule.mkQ_apply, quotientCoact_mk, LinearMap.rTensor_map]
-    rw [N.quotientCoact_comp_mkQ]
-    calc
-      TensorProduct.assoc R (M ⧸ N.toSubmodule) C C
-          (TensorProduct.map
-            ((TensorProduct.map N.toSubmodule.mkQ (LinearMap.id : C →ₗ[R] C)).comp
-              (Comodule.coact (R := R) (C := C) (M := M)))
-            (LinearMap.id : C →ₗ[R] C)
-            (Comodule.coact (R := R) (C := C) (M := M) m)) =
-          Coalgebra.comul.lTensor (M ⧸ N.toSubmodule)
-            (TensorProduct.map N.toSubmodule.mkQ (LinearMap.id : C →ₗ[R] C)
-              (Comodule.coact (R := R) (C := C) (M := M) m)) := by
-            exact N.tensor_assoc_quotient_coact m
-      _ = (LinearMap.lTensor (M ⧸ N.toSubmodule) Coalgebra.comul ∘ₗ N.quotientCoact)
-            (Submodule.Quotient.mk m) := by
-            rw [LinearMap.comp_apply, quotientCoact_mk]
-  lTensor_counit_comp_coact := by
-    apply Submodule.linearMap_qext
-    ext m
-    rw [LinearMap.comp_apply, LinearMap.comp_apply, Submodule.mkQ_apply, quotientCoact_mk]
-    calc
-      Coalgebra.counit.lTensor (M ⧸ N.toSubmodule)
-          (TensorProduct.map N.toSubmodule.mkQ (LinearMap.id : C →ₗ[R] C)
-            (Comodule.coact (R := R) (C := C) (M := M) m)) =
-        TensorProduct.map N.toSubmodule.mkQ
-          (Coalgebra.counit.comp (LinearMap.id : C →ₗ[R] C))
-          (Comodule.coact (R := R) (C := C) (M := M) m) := by
-          exact
-            LinearMap.lTensor_map (R := R) M Coalgebra.counit N.toSubmodule.mkQ
-              (LinearMap.id : C →ₗ[R] C)
-              (Comodule.coact (R := R) (C := C) (M := M) m)
-      _ =
-        TensorProduct.map N.toSubmodule.mkQ (LinearMap.id : R →ₗ[R] R)
-          (Coalgebra.counit.lTensor M
-            (Comodule.coact (R := R) (C := C) (M := M) m)) := by
-          rw [LinearMap.lTensor_def, TensorProduct.map_map]
-          simp
-      _ = ((TensorProduct.mk R (M ⧸ N.toSubmodule) R).flip 1)
-            (Submodule.Quotient.mk m) := by
-          rw [Comodule.lTensor_counit_coact]
-          simp only [LinearMap.flip_apply, TensorProduct.mk_apply, TensorProduct.map_tmul,
-            LinearMap.id_coe, id_eq, Submodule.mkQ_apply]
+  -- The two axioms are `by exact` rather than bare terms: this instance is public, so its body may
+  -- not name a private declaration, while a tactic proof of a `Prop` field may.
+  coassoc := by exact quotientCoact_coassoc N
+  lTensor_counit_comp_coact := by exact quotientCoact_counit N
 
 /-- The coaction on the quotient comodule is `Subcomodule.quotientCoact`. -/
 @[simp]
@@ -262,11 +280,10 @@ theorem liftQ_apply (f : Comodule.Hom R C M P)
 /-- The underlying linear map of the descended quotient morphism is the quotient-module lift. -/
 @[simp]
 theorem liftQ_toLinearMap (f : Comodule.Hom R C M P)
-    (hf : N.toSubmodule ≤ LinearMap.ker f.toLinearMap) :
-    (N.liftQ f hf).toLinearMap =
+    (hf : N.toSubmodule ≤ LinearMap.ker f.toLinearMap) : (N.liftQ f hf).toLinearMap =
       letI : AddCommGroup P := Module.addCommMonoidToAddCommGroup R (M := P)
       N.toSubmodule.liftQ f.toLinearMap hf := by
-  letI : AddCommGroup P := Module.addCommMonoidToAddCommGroup R (M := P)
+  let : AddCommGroup P := Module.addCommMonoidToAddCommGroup R (M := P)
   apply Submodule.linearMap_qext
   ext m
   rw [LinearMap.comp_apply, LinearMap.comp_apply, Submodule.mkQ_apply]
@@ -281,8 +298,7 @@ theorem liftQ_toLinearMap (f : Comodule.Hom R C M P)
 /-- Precomposing the descended quotient morphism with the quotient map recovers the original
 morphism. -/
 @[simp]
-theorem liftQ_mkQ (f : Comodule.Hom R C M P)
-    (hf : N.toSubmodule ≤ LinearMap.ker f.toLinearMap) :
+theorem liftQ_mkQ (f : Comodule.Hom R C M P) (hf : N.toSubmodule ≤ LinearMap.ker f.toLinearMap) :
     (N.liftQ f hf).comp N.mkQ = f := by
   ext m
   simp
@@ -296,8 +312,7 @@ theorem hom_ext {f g : Comodule.Hom R C (M ⧸ N.toSubmodule) P}
   exact congr_fun (congrArg DFunLike.coe h) m
 
 /-- Uniqueness of the morphism descended to a quotient. -/
-theorem liftQ_unique (f : Comodule.Hom R C M P)
-    (hf : N.toSubmodule ≤ LinearMap.ker f.toLinearMap)
+theorem liftQ_unique (f : Comodule.Hom R C M P) (hf : N.toSubmodule ≤ LinearMap.ker f.toLinearMap)
     (g : Comodule.Hom R C (M ⧸ N.toSubmodule) P) (hg : g.comp N.mkQ = f) :
     g = N.liftQ f hf := by
   apply N.hom_ext

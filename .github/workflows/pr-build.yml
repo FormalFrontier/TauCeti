@@ -3,11 +3,9 @@ name: pr-build
 # Builds untrusted PR code in a TRUSTED, base-branch-defined workflow. A PR cannot change what
 # runs here (pull_request_target uses the base definition). The build/audit configuration
 # (lakefile, scripts/, manifest, toolchain) is the TRUSTED base's: we overlay only the PR's
-# `TauCeti/` sources and validated Lake pins onto a base checkout. The sole config exception is a
-# PR opened by tauceti-review-bot[bot] that changes exactly Mathlib's lakefile rev to the matching
-# immutable manifest SHA, or restores it to `master`; the trusted bump validator proves and
-# overlays that exact change. Any other PR touching anything outside the allowed paths is routed
-# to a human. PR `TauCeti/` code
+# `TauCeti/` sources and validated Lake pins onto a base checkout. Lakefiles remain entirely
+# base-trusted; dependency repair PRs carry exact first-known-bad commits only in the manifest.
+# Any PR touching anything outside the allowed paths is routed to a human. PR `TauCeti/` code
 # compiles only under landrun (offline; writes confined to base/.lake; no secrets or token in
 # reach). The `build` commit status on the PR head SHA is the required merge check.
 #
@@ -117,11 +115,9 @@ jobs:
           } >> "$GITHUB_OUTPUT"
           echo "Building PR #$NUM @ $SHA from $REPO (author=${AUTHOR:-merge-group}, status -> $STATUS_SHA, bump delta vs merge-base $MB)"
 
-      - name: Scope guard — allow TauCeti sources, validated pins, and the review bot's exact lakefile pin
+      - name: Scope guard — allow TauCeti sources and validated pins
         env:
           GH_TOKEN: "${{ github.token }}"
-          PR_AUTHOR: "${{ steps.pr.outputs.author }}"
-          EVENT_NAME: "${{ github.event_name }}"
         run: |
           if [ "${{ github.event_name }}" = "merge_group" ]; then
             # The whole batch's combined change set vs the trusted base (every batched PR).
@@ -141,12 +137,7 @@ jobs:
           # empty) library root, normally untouched, but a PR may edit it. It is overlaid
           # into the sandbox below and the import-boundary guard covers it. Everything else
           # outside TauCeti/ (scripts/, .github/, arbitrary Lake config) stays trusted-base-only and
-          # routes to a human. lakefile.toml has one narrow exception: the review bot may pin Mathlib
-          # to the exact immutable SHA in the manifest, then restore `master` in the next compatible
-          # bump. The trusted bump validator proves the single-line relationship before that config
-          # is overlaid or built. A merge group has no
-          # single author, but it can contain this path only after the author-aware enqueue gate; the
-          # same strict content validation is repeated here.
+          # routes to a human. The lakefiles are always human-owned and never overlaid automatically.
           # lake-manifest.json and lean-toolchain are also permitted, but ONLY as a
           # machine-validated forward bump: the "Validate the Lake-pin bump" step below
           # runs the trusted base scripts/check-bump.sh and routes to a human if it is
@@ -154,12 +145,6 @@ jobs:
           # transitive pins derived from mathlib, toolchain monotonic).
           if [ -z "$files" ]; then
             echo "INFRA=1" >> "$GITHUB_ENV"; echo "::warning::no files / unable to list — cannot determine the overlay, routing to human"
-          elif echo "$files" | grep -qE '^lakefile\.toml$' \
-            && ! echo "$files" | grep -vqE '^TauCeti/|^TauCeti\.lean$|^lake-manifest\.json$|^lean-toolchain$|^lakefile\.toml$' \
-            && { [ "$PR_AUTHOR" = "tauceti-review-bot[bot]" ] || [ "$EVENT_NAME" = "merge_group" ]; }; then
-            echo "BOT_LAKEFILE=1" >> "$GITHUB_ENV"
-            echo "BUMP=1" >> "$GITHUB_ENV"
-            echo "::notice::trusted review-bot Mathlib lakefile pin detected — validating the exact config and manifest relationship"
           elif echo "$files" | grep -vqE '^TauCeti/|^TauCeti\.lean$|^lake-manifest\.json$|^lean-toolchain$'; then
             if echo "$files" | grep -qE '^lakefile\.toml$'; then
               echo "HUMAN_LAKEFILE=1" >> "$GITHUB_ENV"
@@ -269,22 +254,8 @@ jobs:
         if: ${{ env.INFRA != '1' && env.BUMP == '1' }}
         env: { GH_TOKEN: "${{ github.token }}" }
         run: |
-          args=(base mergebase pr)
-          if [ "${BOT_LAKEFILE:-}" = "1" ]; then
-            args+=(--allow-bot-lakefile)
-          fi
-          if bash base/scripts/check-bump.sh "${args[@]}"; then
+          if bash base/scripts/check-bump.sh base mergebase pr; then
             echo "Lake-pin bump validated — building with the PR's pins."
-          elif [ "${{ github.event_name }}" = "merge_group" ] \
-              && [ "${BOT_LAKEFILE:-}" = "1" ]; then
-            # A human-reviewed arbitrary lakefile change can enter the queue too. It is not eligible
-            # for the bot exception, so preserve the pre-exception behavior: build with trusted base
-            # config, keep scope red, and let the human decision (not automation) authorize landing.
-            echo "BOT_LAKEFILE=" >> "$GITHUB_ENV"
-            echo "BUMP=" >> "$GITHUB_ENV"
-            echo "HUMAN_LAKEFILE=1" >> "$GITHUB_ENV"
-            echo "OUT_OF_SCOPE=1" >> "$GITHUB_ENV"
-            echo "::warning::merge-group lakefile is not the exact bot pin — building trusted base config for the human merge path"
           else
             echo "BUMP_BAD=1" >> "$GITHUB_ENV"
             echo "INFRA=1" >> "$GITHUB_ENV"
@@ -315,14 +286,6 @@ jobs:
               [ -e "pr/$f" ] && cp -a "pr/$f" "base/$f"
             done
           fi
-          # The trusted-bot exception is an exact, validator-proven Mathlib rev replacement.
-          # Overlay that lakefile only after check-bump accepted it; arbitrary Lake config remains
-          # base-trusted and can never reach the build through this path.
-          if [ "${BOT_LAKEFILE:-}" = "1" ]; then
-            test ! -L pr/lakefile.toml || { echo "::error::lakefile.toml must not be a symlink"; exit 1; }
-            cp -a pr/lakefile.toml base/lakefile.toml
-          fi
-
       - name: Import-boundary guard (TauCeti/ and TauCeti.lean ⊬ roadmap/review)
         if: ${{ env.INFRA != '1' }}
         run: |
@@ -379,7 +342,44 @@ jobs:
       # policy; only the PR's TauCeti/ code stays untrusted and runs solely under landrun below.
       - name: Fetch Mathlib with the (bump-validated) config (network, no token; no PR code)
         if: ${{ env.INFRA != '1' }}
-        run: ( cd base && lake exe cache get ) && mkdir -p base/.lake/tmp
+        # `set -o pipefail` is not optional here. A `run:` step with no explicit `shell:`
+        # gets the runner default `bash -e {0}`, which does NOT set pipefail, so piping
+        # into `tee` would report the pipeline's status as tee's and swallow a failing
+        # `cache get` on every PR, not just a bump. Naming the shell also sets pipefail;
+        # both are here so neither the tee nor the guard below depends on runner defaults.
+        shell: bash
+        run: |
+          set -o pipefail
+          ( cd base && lake exe cache get ) 2>&1 | tee "$GITHUB_WORKSPACE/cache-get.log"
+          mkdir -p base/.lake/tmp
+
+      # Backstop to bump-guard's step 2b, measuring the thing itself rather than a proxy.
+      # `lake exe cache get` exits 0 on a PARTIAL hit: it prints one warning and the build
+      # then quietly recompiles every module whose oleans never arrived. That is invisible
+      # in a green build and costs about an hour on every downstream build until the pin
+      # moves again, so catch it here (roughly 90 seconds in) rather than after the build.
+      #
+      # Only a bump is judged. A normal PR builds against the base pin, which it did not
+      # choose and cannot fix; failing those would take every PR in the repo down for as
+      # long as a bad pin sat on main, which is precisely backwards.
+      - name: Require a complete Mathlib cache for a bump
+        if: ${{ env.INFRA != '1' && env.BUMP == '1' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          log="$GITHUB_WORKSPACE/cache-get.log"
+          # Fail closed. An absent or unreadable log is not evidence of a complete cache,
+          # and `grep` on a missing file exits 2, which as an `if` condition would read the
+          # same as "phrase not found" and wave the bump through.
+          if [ ! -r "$log" ]; then
+            echo "::error::$log is missing or unreadable, so cache completeness cannot be established for this bump"
+            exit 1
+          fi
+          if grep -qF 'some files were not found in the cache' "$log"; then
+            echo "::error::the bump target's Mathlib cache is incomplete, so this pin would make every downstream build recompile the missing modules; bump to a commit whose master-push build published its cache"
+            exit 1
+          fi
+          echo "Mathlib cache is complete at the bump target."
 
       # Enable Lake's built-in artifact cache for the build below ONLY when the public read
       # endpoints are configured (repo variables). Until then this is a no-op: LAKE_*
@@ -411,8 +411,26 @@ jobs:
       # base-branch revision — backtracking up to --max-revs ancestors — and unpacks them
       # into the local Lake cache ($LAKE_CACHE_DIR). This is trusted, main-built data: no
       # token is in reach and no PR code runs (lakefile.toml is declarative + base-trusted).
-      # Mathlib's oleans are NOT here; they come from `lake exe cache get` above. A miss is
-      # non-fatal — the landrun build just recompiles from scratch, as when the cache is off.
+      # Mathlib's oleans are NOT here; they come from `lake exe cache get` above.
+      #
+      # A TOTAL miss is non-fatal: the landrun build just recompiles from scratch, as when the
+      # cache is off. A PARTIAL fetch is a different matter. `lake cache get` continues past a
+      # failed download and exits nonzero (see `lake cache help get`), leaving input-to-output
+      # mappings whose artifacts never arrived. The landrun build below is offline and has no
+      # cache service configured, so it cannot fetch them: Lake logs a warning per affected
+      # module and correctly rebuilds it from source, but `lake build --iofail` is
+      # `--fail-level=info`, so those warnings fail a build in which every module compiled.
+      # Partial fetches are routine: they cost about a third of merge-group builds their cache.
+      # Fixed by https://github.com/leanprover/lean4/pull/14651, landing in v4.34.0-rc1;
+      # see https://github.com/TauCetiProject/TauCeti/issues/2062.
+      #
+      # Hence: retry from an EMPTY cache each time, then fall back to no cache at all. Retrying
+      # over the dirty cache a failed attempt left behind does not work: Lake skips any artifact
+      # already on disk, so the retry re-fetches only what is still MISSING and never revisits
+      # what the failed attempt got wrong. It then reports clean and the corruption survives
+      # into the build. Discarding between attempts is what makes a clean verdict mean the
+      # cache is whole; it is affordable because a failing attempt aborts in seconds and a full
+      # refetch is ~30s.
       - name: Fetch TauCeti's own oleans from the Lake cache (network, no token; no PR code)
         if: ${{ env.INFRA != '1' && env.TAUCETI_CACHE_ENABLED == '1' }}
         env:
@@ -433,8 +451,96 @@ jobs:
           artifactEndpoint = "$PUBLIC_ARTIFACT_ENDPOINT"
           revisionEndpoint = "$PUBLIC_REVISION_ENDPOINT"
           TOML
-          ( cd base && LAKE_CONFIG="$CFG" lake cache get --service tauceti-public --repo TauCetiProject/TauCeti ) \
-            || echo "::warning::lake cache get failed or missed; building TauCeti/ from scratch"
+          # `lake cache get` cannot be judged by exit status alone. Lake accumulates transfer
+          # failures into a local `didError` but then tests the stale `s.didError`
+          # (Lake/Config/Cache.lean, `if s.didError then failure`), so it can log
+          # "failed to download some artifacts" and still exit 0. An attempt therefore counts
+          # as clean only if it exits 0 AND logs no failure diagnostic.
+          # SIMPLIFY ON THE BUMP TO v4.34.0: that stale read is fixed by
+          # https://github.com/leanprover/lean4/pull/14651 ("fix: lake: gracefully handle curl
+          # and IO errors during transfer"), which missed v4.33.0-rc2 by hours and was not
+          # backported. From v4.34.0-rc1 on, drop FAIL_RE and trust `rc` alone.
+          # The purge below outlives that bump: it is for
+          # https://github.com/leanprover/lean4/issues/14670, still open.
+          # Discarding the cache must never fail the step. A plain `rm -rf` on a directory that
+          # Lake's stragglers are still writing into exits 1 with "Directory not empty", and under
+          # `set -e` that killed the whole build — worse than the partial cache it was clearing.
+          # Rename first (atomic, and unaffected by concurrent writes under the old path), then
+          # delete the renamed copy best-effort. What matters for correctness is only that the
+          # cache PATH is empty for the next attempt, not that the bytes are reclaimed promptly.
+          discard_cache() {
+            local d=base/.lake/cache
+            [ -e "$d" ] || return 0
+            if mv "$d" "$d.discard.$$" 2>/dev/null; then
+              rm -rf "$d.discard.$$" 2>/dev/null || true
+            else
+              rm -rf "$d" 2>/dev/null || true
+            fi
+            return 0
+          }
+          # `downloaded artifact hash mismatch` must be here. Lake handles a mismatch by deleting
+          # the artifact and setting `didError`, but the stale `didError` read below means the
+          # process can still exit 0, and the deletion leaves an input-to-output mapping whose
+          # artifact is gone. The offline build cannot refetch it, so that entry becomes a build
+          # failure rather than a rebuild. Treat it as unclean so the cache is refetched or dropped.
+          FAIL_RE='failed to download|output lookup failed|curl exited with code|downloaded artifact hash mismatch'
+          # A revision with no cached build at all is deterministic: retrying cannot change it,
+          # and there is nothing partial to discard.
+          MISS_RE='no outputs found'
+          # Six attempts, not three. Losing every attempt discards the whole cache and forces a
+          # ~22 minute full rebuild, which was happening on 4 of 18 sampled builds (the other 14
+          # took 2-3 minutes). The cause is lean4#14698: one unreadable artifact throws out of
+          # `computeFileHash`, which has no try/catch, so a single ENOENT aborts the entire fetch
+          # and discards every artifact already downloaded. Which artifact trips it varies between
+          # attempts, so re-fetching genuinely tends to succeed; at the observed per-attempt
+          # failure rate six attempts take whole-cache loss from roughly 22% to roughly 5%.
+          # Reduce this again once the fix (lean4#14651) reaches a released toolchain: it is on
+          # master only, and v4.33.0-rc2 was branched before it landed.
+          ATTEMPTS=6
+          clean=0
+          for attempt in $(seq 1 $ATTEMPTS); do
+            LOG="$RUNNER_TEMP/cache-get-$attempt.log"
+            rc=0
+            ( cd base && LAKE_CONFIG="$CFG" lake cache get --service tauceti-public \
+                --repo TauCetiProject/TauCeti ) > "$LOG" 2>&1 || rc=$?
+            cat "$LOG"
+            if [ "$rc" = 0 ] && ! grep -qE "$FAIL_RE" "$LOG"; then clean=1; break; fi
+            if grep -qE "$MISS_RE" "$LOG"; then break; fi
+            # `[ ... ] && sleep` would abort the step under `bash -e` on the last attempt,
+            # when the test is false and the whole list returns nonzero. Use a plain `if`.
+            if [ "$attempt" != "$ATTEMPTS" ]; then
+              echo "::notice::lake cache get attempt $attempt of $ATTEMPTS did not complete cleanly; discarding the partial cache and retrying"
+              # Sleep BEFORE discarding. A failed `lake cache get` returns as soon as one transfer
+              # errors, while its sibling curl/leantar processes are still writing into the cache
+              # dir; discarding at that instant races them. This is no longer a throttling backoff:
+              # the read endpoint serves these artifacts byte-identically under 48-way concurrency,
+              # so the failures are the Lake bug above rather than rate limiting, and a short fixed
+              # pause is enough to let the stragglers finish.
+              sleep 10
+              # Must precede the retry: see the step comment above. Without this, attempt N+1
+              # skips every artifact this attempt already wrote, including the broken ones, and
+              # a clean exit from it says nothing about the entries that made this attempt fail.
+              discard_cache
+            fi
+          done
+          if [ "$clean" != 1 ]; then
+            # Purge on ANY unclean outcome, not just a recognised download failure: an earlier
+            # attempt may have written mappings whose artifacts never arrived, and the last
+            # attempt's log alone does not witness that. A cache the offline build cannot fully
+            # resolve is worse than none, because each unresolvable entry becomes a build
+            # failure rather than a rebuild. Discarding it restores the no-cache path exactly.
+            echo "::warning::lake cache get did not complete cleanly; discarding the cache and building TauCeti/ from scratch"
+            discard_cache
+            # Empty is NOT off: Lake parses an empty LAKE_ARTIFACT_CACHE as "unspecified" and
+            # then defaults artifact-cache reads to true, and an empty LAKE_CACHE_DIR falls back
+            # to the workspace's own .lake/cache. Say false explicitly rather than relying on
+            # the directory above having just been deleted.
+            {
+              echo "LAKE_ARTIFACT_CACHE=false"
+              echo "LAKE_RESTORE_ARTIFACTS=false"
+              echo "LAKE_CACHE_DIR="
+            } >> "$GITHUB_ENV"
+          fi
 
       - name: Build (trusted config + overlaid TauCeti/) under landrun, offline
         id: build
@@ -463,23 +569,51 @@ jobs:
         if: always()
         env: { GH_TOKEN: "${{ github.token }}" }
         run: |
+          # Posting the three statuses is deliberately NOT all-or-nothing. These are three
+          # sequential API calls under `set -e`: a single transient error on an early one used to
+          # abort the step and leave the commit with a partial set. A MISSING required status is
+          # worse than a red one. `build` never appears, so GitHub holds the PR at BLOCKED
+          # forever; core.derive reads no `build` status, so labels.py pins the PR at
+          # `awaiting-CI` (its ci=None branch) rather than `awaiting-author`; and nothing re-runs
+          # pr-build without a push, so no event ever corrects it. That wedged PR #1358 for seven
+          # days, invisible to both the author path and the review path.
+          #
+          # So: retry each POST, always attempt all three whatever the others did, and surface a
+          # persistent failure loudly at the end rather than silently dropping a status.
+          post_fail=0
+          post_status() {
+            local ctx="$1" st="$2" dsc="$3" attempt
+            for attempt in 1 2 3; do
+              if gh api -X POST "repos/${{ github.repository }}/statuses/${{ steps.pr.outputs.status_sha }}" \
+                   -f state="$st" -f context="$ctx" -f description="$dsc" \
+                   -f target_url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"; then
+                echo "posted $ctx=$st ($dsc) to ${{ steps.pr.outputs.status_sha }}"
+                return 0
+              fi
+              echo "::warning::posting the $ctx status failed (attempt $attempt/3)"
+              if [ "$attempt" != 3 ]; then sleep $(( attempt * 5 )); fi
+            done
+            # Never propagate the failure as a return code: that would abort this step under
+            # `set -e` and skip the statuses not yet posted, which is the bug being fixed.
+            echo "::error::could not post the $ctx status to ${{ steps.pr.outputs.status_sha }} after 3 attempts"
+            post_fail=1
+            return 0
+          }
+
           # bump-guard: this job already ran the trusted base scripts/check-bump.sh inline
           # (the "Validate the Lake-pin bump" step), so we post the required `bump-guard`
           # status from its result here rather than from a separate workflow. BUMP_BAD is set
-          # only when a manifest/toolchain/config change failed that validator; anything else (no pin
+          # only when a manifest/toolchain change failed that validator; anything else (no pin
           # change, or a validated forward bump) is a pass. Posting it from this job also means
           # both required statuses land together, before the auto-merge workflow_run fires.
           if [ "${{ env.BUMP_BAD }}" = "1" ]; then
-            bg_state=failure; bg_desc="Lake pin/config change is not a validated forward bump — needs human review"
+            bg_state=failure; bg_desc="Lake pin change is not a validated forward bump — needs human review"
           elif [ "${{ env.HUMAN_LAKEFILE }}" = "1" ]; then
             bg_state=success; bg_desc="lakefile not auto-validated; trusted base config built — human merge required"
           else
-            bg_state=success; bg_desc="validated forward Lake pin/config bump (or no pin change)"
+            bg_state=success; bg_desc="validated forward Lake pin bump (or no pin change)"
           fi
-          gh api -X POST "repos/${{ github.repository }}/statuses/${{ steps.pr.outputs.status_sha }}" \
-            -f state="$bg_state" -f context="bump-guard" -f description="$bg_desc" \
-            -f target_url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-          echo "posted bump-guard=$bg_state ($bg_desc) to ${{ steps.pr.outputs.status_sha }}"
+          post_status bump-guard "$bg_state" "$bg_desc"
 
           # build: the real sandboxed-build result ONLY — never a policy verdict. The build now runs even
           # for an out-of-scope PR (its TauCeti/ is overlaid onto the trusted base and built), so a red
@@ -496,10 +630,7 @@ jobs:
           else
             state=failure; desc="sandboxed build, audit, or simp-NF lint failed"
           fi
-          gh api -X POST "repos/${{ github.repository }}/statuses/${{ steps.pr.outputs.status_sha }}" \
-            -f state="$state" -f context="build" -f description="$desc" \
-            -f target_url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-          echo "posted build=$state ($desc) to ${{ steps.pr.outputs.status_sha }}"
+          post_status build "$state" "$desc"
 
           # scope: the merge-policy verdict, posted as its OWN status so a policy issue never hides the
           # build result (the bug this split fixes — an out-of-scope PR used to post its "human review"
@@ -512,7 +643,7 @@ jobs:
           elif [ "${{ env.OUT_OF_SCOPE }}" = "1" ]; then
             sc_state=failure; sc_desc="changes outside TauCeti/ — human review + merge required"
           elif [ "${{ env.BUMP_BAD }}" = "1" ]; then
-            sc_state=failure; sc_desc="Lake pin/config change failed the trusted bump validator"
+            sc_state=failure; sc_desc="Lake pin change failed the trusted bump validator"
           elif [ "${{ env.INFRA }}" = "1" ]; then
             sc_state=failure; sc_desc="could not determine the changed files — human review + merge required"
           elif [ "${{ env.TOO_LARGE }}" = "1" ]; then
@@ -521,13 +652,15 @@ jobs:
             sc_state=failure; sc_desc="could not read PR diff totals from the GitHub API — re-run pr-build"
           elif [ "${{ env.NEWFILE_TOO_LONG }}" = "1" ]; then
             sc_state=failure; sc_desc="a newly added .lean file exceeds 1000 lines — split it (existing files may grow to 1500)"
-          elif [ "${{ env.BOT_LAKEFILE }}" = "1" ]; then
-            sc_state=success; sc_desc="trusted review-bot Mathlib lakefile pin validated and in scope"
           else
             sc_state=success; sc_desc="changes are in scope (TauCeti/ and the allowed root files only)"
           fi
-          gh api -X POST "repos/${{ github.repository }}/statuses/${{ steps.pr.outputs.status_sha }}" \
-            -f state="$sc_state" -f context="scope" -f description="$sc_desc" \
-            -f target_url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-          echo "posted scope=$sc_state ($sc_desc) to ${{ steps.pr.outputs.status_sha }}"
+          post_status scope "$sc_state" "$sc_desc"
+
+          # A status we could not post leaves the commit in the wedged state described above, so
+          # fail the job loudly. This runs only after all three have been attempted.
+          if [ "$post_fail" = 1 ]; then
+            echo "::error::one or more commit statuses are missing; re-run pr-build for this commit"
+            exit 1
+          fi
           [ "$state" = "success" ]

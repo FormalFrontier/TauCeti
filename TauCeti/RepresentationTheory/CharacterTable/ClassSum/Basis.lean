@@ -125,8 +125,7 @@ noncomputable def centerEquivConjClasses :
 
 /-- The forward map of `centerEquivConjClasses` reads the coefficients of a central element. -/
 @[simp]
-theorem centerEquivConjClasses_apply
-    (z : Subalgebra.center k (MonoidAlgebra k G)) :
+theorem centerEquivConjClasses_apply (z : Subalgebra.center k (MonoidAlgebra k G)) :
     centerEquivConjClasses z = centerToConjClasses z :=
   (rfl)
 
@@ -154,8 +153,7 @@ theorem classSumBasis_apply (C : ConjClasses G) :
 /-- The coordinate of a central element in the class-sum basis is its coefficient on that
 conjugacy class. -/
 @[simp]
-theorem classSumBasis_repr_apply
-    (z : Subalgebra.center k (MonoidAlgebra k G)) (C : ConjClasses G) :
+theorem classSumBasis_repr_apply (z : Subalgebra.center k (MonoidAlgebra k G)) (C : ConjClasses G) :
     (classSumBasis (k := k)).repr z C = centerToConjClasses z C :=
   Module.Basis.ofEquivFun_repr_apply centerEquivConjClasses z C
 
@@ -168,8 +166,8 @@ variable (k G : Type*) [CommSemiring k] [Group G] [Finite G]
 /-- The center of a finite group algebra is finite as a module, with its class-sum basis. -/
 noncomputable instance instModuleFiniteCenterMonoidAlgebra :
     Module.Finite k (Subalgebra.center k (MonoidAlgebra k G)) := by
-  letI := Fintype.ofFinite G
-  letI := Classical.decEq G
+  let := Fintype.ofFinite G
+  let := Classical.decEq G
   exact Module.Finite.of_basis classSumBasis
 
 variable [StrongRankCondition k]
@@ -178,8 +176,8 @@ variable [StrongRankCondition k]
 theorem finrank_center_monoidAlgebra :
     Module.finrank k (Subalgebra.center k (MonoidAlgebra k G)) =
       Nat.card (ConjClasses G) := by
-  letI := Fintype.ofFinite G
-  letI := Classical.decEq G
+  let := Fintype.ofFinite G
+  let := Classical.decEq G
   rw [Module.finrank_eq_card_basis (classSumBasis (G := G) (k := k))]
   exact Fintype.card_eq_nat_card
 

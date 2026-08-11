@@ -59,7 +59,7 @@ variable {K : Type*} [Field K] [NumberField K] {p : ℕ} [Fact p.Prime]
 nonzero prime of `𝓞 K` is maximal, with finite residue field). -/
 theorem exists_isArithFrobAt [IsGalois ℚ K] (Q : Ideal (𝓞 K)) [Q.IsPrime] (hQ : Q ≠ ⊥) :
     ∃ σ : K ≃ₐ[ℚ] K, IsArithFrobAt ℤ σ Q := by
-  haveI : Q.IsMaximal := Ring.DimensionLEOne.maximalOfPrime hQ ‹Q.IsPrime›
+  have : Q.IsMaximal := Ring.DimensionLEOne.maximalOfPrime hQ ‹Q.IsPrime›
   exact IsArithFrobAt.exists_of_isInvariant ℤ (K ≃ₐ[ℚ] K) Q
 
 /-- A Frobenius exists at every prime of `𝓞 K` lying over a rational prime — the form used when
@@ -79,8 +79,7 @@ theorem exists_isArithFrobAt_of_liesOver [IsGalois ℚ K] {p : ℕ} [Fact p.Prim
 
 the Frobenius fixes `√d` when `d` is a quadratic residue mod `p` and negates it otherwise. -/
 theorem isArithFrobAt_apply_sqrt (hodd : p ≠ 2) {d : ℤ} (hd : ¬ (p : ℤ) ∣ d)
-    {x : K} (hx : x ^ 2 = algebraMap ℤ K d)
-    (Q : Ideal (𝓞 K)) [Q.LiesOver (span {(p : ℤ)})]
+    {x : K} (hx : x ^ 2 = algebraMap ℤ K d) (Q : Ideal (𝓞 K)) [Q.LiesOver (span {(p : ℤ)})]
     {σ : K ≃ₐ[ℚ] K} (hσ : IsArithFrobAt ℤ σ Q) :
     σ x = legendreSym p d • x := by
   -- Apply the `𝓞 K`-level computation to the packaged square root and push down along `𝓞 K ↪ K`.
@@ -102,8 +101,7 @@ theorem isArithFrobAt_apply_sqrt (hodd : p ≠ 2) {d : ℤ} (hd : ¬ (p : ℤ) �
 (the other case being `σ x = -x`, `legendreSym p d = -1`). This reads the characteristic
 biconditional off the `•` form, using that `x ≠ 0` (as `d ≠ 0`). -/
 theorem isArithFrobAt_apply_sqrt_eq_self_iff (hodd : p ≠ 2) {d : ℤ} (hd : ¬ (p : ℤ) ∣ d)
-    {x : K} (hx : x ^ 2 = algebraMap ℤ K d)
-    (Q : Ideal (𝓞 K)) [Q.LiesOver (span {(p : ℤ)})]
+    {x : K} (hx : x ^ 2 = algebraMap ℤ K d) (Q : Ideal (𝓞 K)) [Q.LiesOver (span {(p : ℤ)})]
     {σ : K ≃ₐ[ℚ] K} (hσ : IsArithFrobAt ℤ σ Q) :
     σ x = x ↔ legendreSym p d = 1 := by
   have happ := isArithFrobAt_apply_sqrt hodd hd hx Q hσ

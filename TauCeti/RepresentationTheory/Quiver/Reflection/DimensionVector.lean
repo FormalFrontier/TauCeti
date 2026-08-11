@@ -111,7 +111,7 @@ theorem vertexPreReflection_single_of_ne (i : Q) {j : Q} (hj : j ≠ i) :
     vertexPreReflection Q i (Pi.single j 1)
       = Pi.single j 1
         + ((Fintype.card (i ⟶ j) : ℤ) + (Fintype.card (j ⟶ i) : ℤ)) • Pi.single i 1 := by
-  rw [vertexPreReflection_apply, titsPolarForm_single_single, if_neg (Ne.symm hj), mul_zero,
+  rw [vertexPreReflection_apply, titsPolarForm_single_single, ite_eq_right (Ne.symm hj), mul_zero,
     zero_sub, neg_smul, sub_neg_eq_add]
 
 /-- The simple reflection fixes every dimension vector orthogonal to `αᵢ` for the polarized Tits
@@ -175,7 +175,7 @@ theorem bijOn_vertexPreReflection {i : Q} (h : IsEmpty (i ⟶ i)) (n : ℤ) :
   have hmaps : Set.MapsTo (vertexReflection Q h) {d : Q → ℤ | titsForm Q d = n}
       {d : Q → ℤ | titsForm Q d = n} := by
     intro d hd
-    simpa only [Set.mem_setOf_eq, coe_vertexReflection, titsForm_vertexPreReflection Q h]
+    simpa only [Set.mem_ofPred_eq, coe_vertexReflection, titsForm_vertexPreReflection Q h]
       using hd
   rw [← coe_vertexReflection Q h]
   exact Module.bijOn_reflection_of_mapsTo (titsPolarForm_single_self_of_isEmpty Q h) hmaps

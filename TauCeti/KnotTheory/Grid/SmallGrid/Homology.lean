@@ -116,8 +116,7 @@ theorem fullyBlockedHomologyBasisOfLeTwo_apply (hn : n ≤ 2) (x : GridState n) 
 Since the differential and the boundary submodule both vanish, passing to homology does not
 change any coefficient. -/
 @[simp]
-theorem fullyBlockedHomologyBasisOfLeTwo_repr_mk (hn : n ≤ 2)
-    (c : G.fullyBlockedCycles) :
+theorem fullyBlockedHomologyBasisOfLeTwo_repr_mk (hn : n ≤ 2) (c : G.fullyBlockedCycles) :
     (G.fullyBlockedHomologyBasisOfLeTwo hn).repr (Submodule.Quotient.mk c) =
       (c : GridChain (ZMod 2) n) := by
   rw [fullyBlockedHomologyBasisOfLeTwo, Module.Basis.map_repr]
@@ -127,8 +126,7 @@ theorem fullyBlockedHomologyBasisOfLeTwo_repr_mk (hn : n ≤ 2)
 `x`. -/
 @[simp]
 theorem fullyBlockedHomologyBasisOfLeTwo_repr_class (hn : n ≤ 2) (x : GridState n) :
-    (G.fullyBlockedHomologyBasisOfLeTwo hn).repr
-        (G.fullyBlockedHomologyClassOfLeTwo hn x) =
+    (G.fullyBlockedHomologyBasisOfLeTwo hn).repr (G.fullyBlockedHomologyClassOfLeTwo hn x) =
       Finsupp.single x 1 := by
   rw [fullyBlockedHomologyClassOfLeTwo,
     G.fullyBlockedHomologyBasisOfLeTwo_repr_mk]

@@ -168,8 +168,7 @@ theorem intervalIntegrable_inv_sub_mul_deriv {γ : ℝ → ℂ} {w : ℂ} {a b :
 interval-integrable, the generalized winding number is the ordinary index integral: the principal
 value collapses to `(2πi)⁻¹ · ∮_γ dz/(z − z₀)`. -/
 theorem windingNumber_eq_integral_of_avoidance {γ : ℝ → ℂ} {a b : ℝ} {z₀ : ℂ}
-    (h_cont : ContinuousOn γ (Set.uIcc a b))
-    (h_avoid : ∀ t ∈ Set.uIcc a b, γ t ≠ z₀)
+    (h_cont : ContinuousOn γ (Set.uIcc a b)) (h_avoid : ∀ t ∈ Set.uIcc a b, γ t ≠ z₀)
     (hf_int : IntervalIntegrable (fun t => (γ t - z₀)⁻¹ * deriv γ t) MeasureTheory.volume a b) :
     windingNumber γ a b z₀
       = (2 * (Real.pi : ℂ) * Complex.I)⁻¹ * ∫ t in a..b, (γ t - z₀)⁻¹ * deriv γ t :=

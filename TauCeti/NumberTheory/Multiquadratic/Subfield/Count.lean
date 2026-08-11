@@ -74,8 +74,8 @@ order isomorphism turns the hyperplanes of `V` into the lines of its dual, which
 private theorem card_hyperplane (n : ℕ) (hn : finrank (ZMod 2) V = n) :
     Nat.card {U : Submodule (ZMod 2) V // finrank (ZMod 2) U + 1 = n} = 2 ^ n - 1 := by
   subst hn
-  haveI : Finite (Module.Dual (ZMod 2) V) := Module.finite_of_finite (ZMod 2)
-  haveI : Fintype (Module.Dual (ZMod 2) V) := Fintype.ofFinite _
+  have : Finite (Module.Dual (ZMod 2) V) := Module.finite_of_finite (ZMod 2)
+  have : Fintype (Module.Dual (ZMod 2) V) := Fintype.ofFinite _
   -- The dual annihilator matches hyperplanes of `V` with lines of the dual.
   have hequiv : {U : Submodule (ZMod 2) V // finrank (ZMod 2) U + 1 = finrank (ZMod 2) V}
       ≃ {W : Submodule (ZMod 2) (Module.Dual (ZMod 2) V) // finrank (ZMod 2) W = 1} :=
@@ -107,7 +107,7 @@ theorem card_quadratic_intermediateField_adjoin_range [Finite ι] [NeZero (2 : K
     Nat.card {F : IntermediateField K (adjoin K (Set.range root)) // Module.finrank K F = 2}
       = 2 ^ Nat.card ι - 1 := by
   classical
-  letI := Fintype.ofFinite ι
+  let := Fintype.ofFinite ι
   -- Transport the quadratic subfields to the hyperplanes of `ι → ℤ/2`.
   have hbij : {F : IntermediateField K (adjoin K (Set.range root)) // Module.finrank K F = 2}
       ≃ {U : Submodule (ZMod 2) (ι → ZMod 2) // finrank (ZMod 2) U + 1 = Nat.card ι} :=

@@ -52,8 +52,7 @@ variable {𝔽 : ℕ → MeasurableSpace Ω}
 /-- The intersection of an antitone filtration that is constant from index `N` on collapses to
 the stabilized σ-algebra `𝔽 N`. This is the order fact behind the Lévy-downward specialization. -/
 theorem iInf_measurableSpace_eq_of_antitone_of_eventually_const {Ω : Type*}
-    {𝔽 : ℕ → MeasurableSpace Ω} (h_anti : Antitone 𝔽) {N : ℕ}
-    (h_const : ∀ n, N ≤ n → 𝔽 n = 𝔽 N) :
+    {𝔽 : ℕ → MeasurableSpace Ω} (h_anti : Antitone 𝔽) {N : ℕ} (h_const : ∀ n, N ≤ n → 𝔽 n = 𝔽 N) :
     ⨅ n, 𝔽 n = 𝔽 N := by
   refine le_antisymm (iInf_le 𝔽 N) (le_iInf fun n => ?_)
   rcases le_total N n with h | h
@@ -94,8 +93,7 @@ value the sequence already reaches by the elementary
 `tendsto_condExp_of_eventually_const`. The general and elementary computations agree. -/
 theorem tendsto_ae_condExp_of_eventually_const [IsFiniteMeasure μ]
     (h_anti : Antitone 𝔽) (h_le0 : 𝔽 0 ≤ (inferInstance : MeasurableSpace Ω))
-    {N : ℕ} (h_const : ∀ n, N ≤ n → 𝔽 n = 𝔽 N)
-    (f : Ω → ℝ) :
+    {N : ℕ} (h_const : ∀ n, N ≤ n → 𝔽 n = 𝔽 N) (f : Ω → ℝ) :
     ∀ᵐ ω ∂μ, Tendsto (fun n => μ[f | 𝔽 n] ω) atTop (𝓝 (μ[f | 𝔽 N] ω)) := by
   have h := tendsto_ae_condExp_iInf (μ := μ) h_anti h_le0 f
   rwa [condExp_iInf_eq_of_eventually_const h_anti h_const f] at h

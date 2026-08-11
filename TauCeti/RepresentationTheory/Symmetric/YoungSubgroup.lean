@@ -7,6 +7,7 @@ module
 
 public import TauCeti.Combinatorics.Enumerative.Partition.Basic
 public import Mathlib.Data.Finite.Perm
+public import Mathlib.Data.List.GetD
 public import Mathlib.GroupTheory.Index
 public import TauCeti.GroupTheory.Perm.FiberSubgroup
 
@@ -16,7 +17,10 @@ public import TauCeti.GroupTheory.Perm.FiberSubgroup
 For a partition `μ` of `n`, this file defines its Young subgroup of `Equiv.Perm (Fin n)`.
 The decreasing parts of `μ` cut `Fin n` into consecutive blocks, and the Young subgroup consists
 exactly of the permutations preserving those blocks.  We identify it with the product of the
-symmetric groups on the individual blocks and compute its cardinality and index.
+symmetric groups on the individual blocks and compute its cardinality and index.  Counting the
+labels lying in the first `k` blocks recovers the partial sums of the decreasing parts
+(`TauCeti.card_filter_youngBlock_lt`), which is the form in which the parts enter the dominance
+order.
 
 The construction uses Mathlib's `finSigmaFinEquiv` to enumerate the consecutive blocks and
 `DomMulAct.stabilizerMulEquiv` to decompose their stabilizer.
@@ -101,6 +105,49 @@ private theorem youngBlockEquiv_val {n : ℕ} (μ : n.Partition)
     (j : Fin ((μ.parts.sort (· ≥ ·))[(i : ℕ)])) :
     (youngBlockEquiv μ i j).1 = youngBlocksEquiv μ ⟨i, j⟩ := by
   simpa only using congrArg Subtype.val (youngBlockEquiv_apply μ i j)
+
+/-- The labels whose `μ`-block is among the first `k` are as many as the first `k` parts of `μ`
+add up to. -/
+theorem card_filter_youngBlock_lt {n : ℕ} (μ : n.Partition) (k : ℕ) :
+    (Finset.univ.filter fun x : Fin n => (youngBlock μ x : ℕ) < k).card =
+      ((μ.parts.sort (· ≥ ·)).take k).sum := by
+  classical
+  -- Each block of `μ` is the fiber of `youngBlock μ` over its label, and has the size of a part.
+  have hfiber : ∀ i : ℕ, (Finset.univ.filter fun x : Fin n => (youngBlock μ x : ℕ) = i).card =
+      (μ.parts.sort (· ≥ ·)).getD i 0 := by
+    intro i
+    by_cases hi : i < (μ.parts.sort (· ≥ ·)).length
+    · rw [List.getD_eq_getElem _ _ hi, ← Fintype.card_subtype]
+      refine (Fintype.card_congr ((youngBlockEquiv μ ⟨i, hi⟩).trans
+        (Equiv.subtypeEquivRight fun x => ?_))).symm.trans (Fintype.card_fin _)
+      exact ⟨fun h => by rw [h], fun h => Fin.ext h⟩
+    · rw [List.getD_eq_default _ _ (Nat.le_of_not_lt hi), Finset.card_eq_zero,
+        Finset.filter_eq_empty_iff]
+      exact fun x _ h => hi (h ▸ (youngBlock μ x).2)
+  -- A partial sum of a list is the sum of its first entries, read off with `List.getD`.
+  have hsum : ∀ m : ℕ, ((μ.parts.sort (· ≥ ·)).take m).sum =
+      ∑ i ∈ Finset.range m, (μ.parts.sort (· ≥ ·)).getD i 0 := by
+    intro m
+    induction m with
+    | zero => simp
+    | succ m ih =>
+      rw [Finset.sum_range_succ, ← ih]
+      rcases lt_or_ge m (μ.parts.sort (· ≥ ·)).length with h | h
+      · rw [List.sum_take_succ _ _ h, List.getD_eq_getElem _ _ h]
+      · rw [List.take_of_length_le h, List.take_of_length_le (h.trans (Nat.le_succ m)),
+          List.getD_eq_default _ _ h, add_zero]
+  -- Split the labels into blocks, and the partial sum into parts.
+  rw [Finset.card_eq_sum_card_fiberwise
+      (f := fun x : Fin n => (youngBlock μ x : ℕ)) (t := Finset.range k) (fun x hx => by
+        simp only [Finset.mem_coe, Finset.mem_filter, Finset.mem_univ, true_and] at hx
+        simpa using hx),
+    hsum k]
+  refine Finset.sum_congr rfl fun i hi => ?_
+  rw [← hfiber i]
+  congr 1
+  ext x
+  simp only [Finset.mem_filter, Finset.mem_univ, true_and, and_iff_right_iff_imp]
+  exact fun h => h ▸ Finset.mem_range.mp hi
 
 /-- The Young subgroup associated to `μ`, acting independently on the consecutive blocks whose
 sizes are the decreasing parts of `μ`. -/
@@ -214,6 +261,23 @@ theorem youngSubgroup_eq_fiberSubgroup {n : ℕ} (μ : n.Partition) :
 theorem youngSubgroup_index_mul {n : ℕ} (μ : n.Partition) :
     (youngSubgroup μ).index * (μ.parts.map Nat.factorial).prod = n.factorial := by
   rw [← card_youngSubgroup, Subgroup.index_mul_card, Nat.card_perm, Nat.card_fin]
+
+/-- The Young subgroup of the coarsest partition `(n)` is the whole symmetric group: its at most
+one block imposes no condition. -/
+@[simp]
+theorem youngSubgroup_indiscrete (n : ℕ) :
+    youngSubgroup (Nat.Partition.indiscrete n) = ⊤ :=
+  Subgroup.eq_top_of_card_eq _ <| by
+    rw [card_youngSubgroup, Nat.Partition.prod_map_factorial_indiscrete, Nat.card_perm,
+      Nat.card_fin]
+
+/-- The Young subgroup of the all-ones partition `(1ⁿ)` is trivial: every block is a singleton,
+so only the identity preserves them all. -/
+@[simp]
+theorem youngSubgroup_ones (n : ℕ) : youngSubgroup (Nat.Partition.ones n) = ⊥ :=
+  Subgroup.eq_bot_of_card_eq _ <| by
+    rw [card_youngSubgroup]
+    simp
 
 /-- The index of a Young subgroup is the multinomial quotient by the factorials of the parts. -/
 theorem youngSubgroup_index {n : ℕ} (μ : n.Partition) :

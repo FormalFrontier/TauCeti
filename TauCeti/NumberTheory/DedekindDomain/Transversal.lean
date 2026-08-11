@@ -49,7 +49,7 @@ prime ideals unless it equals one of the factors. -/
 private theorem isPrime_not_dvd_prod (p : IsDedekindDomain.HeightOneSpectrum R)
     {T : Finset (IsDedekindDomain.HeightOneSpectrum R)} (hpT : p ∉ T) :
     ¬ p.asIdeal ∣ ∏ q ∈ T, q.asIdeal := by
-  haveI := p.isPrime
+  have := p.isPrime
   have hpprime : Prime p.asIdeal := p.prime
   rw [Prime.dvd_finsetProd_iff hpprime]
   rintro ⟨q, hqT, hpq⟩
@@ -83,8 +83,7 @@ private theorem notMem_pair_of_apply_involutive {α : Type*} [DecidableEq α] {f
 omit [IsDedekindDomain R] in
 /-- Transporting a height-one prime along a ring equivalence `σ` maps its ideal to the image
 ideal: `(equivOfRingEquiv σ p).asIdeal = Ideal.map σ p.asIdeal`. -/
-private lemma asIdeal_equivOfRingEquiv (σ : R ≃+* R)
-    (p : IsDedekindDomain.HeightOneSpectrum R) :
+private lemma asIdeal_equivOfRingEquiv (σ : R ≃+* R) (p : IsDedekindDomain.HeightOneSpectrum R) :
     (IsDedekindDomain.HeightOneSpectrum.equivOfRingEquiv σ p).asIdeal =
       Ideal.map σ p.asIdeal := by
   ext x
@@ -126,8 +125,7 @@ given the conjugate-pair relations `Q = Ideal.map σ P` and `Ideal.map σ Q = P`
 homomorphism `σ`, valid over any commutative semiring (no Dedekind structure needed). -/
 private theorem mul_map_eq_prod_of_mem_image_union {R : Type*} [CommSemiring R] {σ : R →+* R}
     {prodS prodS' P Q : Ideal R} {G' : Finset (Ideal R)}
-    (hqIdeal : Q = Ideal.map σ P) (hmapq : Ideal.map σ Q = P)
-    (hprodS : prodS = prodS' * P * Q)
+    (hqIdeal : Q = Ideal.map σ P) (hmapq : Ideal.map σ Q = P) (hprodS : prodS = prodS' * P * Q)
     (hprod' : ∀ a ∈ G', a * Ideal.map σ a = prodS') {A : Ideal R}
     (hA : A ∈ G'.image (· * P) ∪ G'.image (· * Q)) :
     A * Ideal.map σ A = prodS := by
@@ -161,13 +159,11 @@ omit [IsDedekindDomain R] in
 from `S` leaves a set the involution still maps to itself: an element outside the pair cannot be
 sent into it, since applying the involution twice returns it. -/
 private lemma mem_sdiff_pair_of_invariant {σ : R ≃+* R}
-    {S : Finset (IsDedekindDomain.HeightOneSpectrum R)}
-    {p q : IsDedekindDomain.HeightOneSpectrum R}
+    {S : Finset (IsDedekindDomain.HeightOneSpectrum R)} {p q : IsDedekindDomain.HeightOneSpectrum R}
     (hqdef : q = IsDedekindDomain.HeightOneSpectrum.equivOfRingEquiv σ p)
     (hinv : ∀ x ∈ S, IsDedekindDomain.HeightOneSpectrum.equivOfRingEquiv σ x ∈ S)
     (hinvol : ∀ x ∈ S, IsDedekindDomain.HeightOneSpectrum.equivOfRingEquiv σ
-      (IsDedekindDomain.HeightOneSpectrum.equivOfRingEquiv σ x) = x)
-    (hpS : p ∈ S) :
+      (IsDedekindDomain.HeightOneSpectrum.equivOfRingEquiv σ x) = x) (hpS : p ∈ S) :
     ∀ x ∈ S \ {p, q}, IsDedekindDomain.HeightOneSpectrum.equivOfRingEquiv σ x ∈ S \ {p, q} := by
   intro x hx
   have hxS := (Finset.mem_sdiff.mp hx).1
@@ -176,13 +172,53 @@ private lemma mem_sdiff_pair_of_invariant {σ : R ≃+* R}
     (f := IsDedekindDomain.HeightOneSpectrum.equivOfRingEquiv σ) hqdef (hinvol x hxS)
     (hinvol p hpS) (Finset.mem_sdiff.mp hx).2
 
+/-- The inductive step. Given a conjugate pair `p`, `σ p` inside `S` and a transversal family for
+`S` with that pair removed, multiplying the family through by `p` and by `σ p` separately doubles
+it and gives a transversal family for `S`. -/
+private theorem exists_transversal_family_of_sdiff_pair (σ : R ≃+* R)
+    {S : Finset (IsDedekindDomain.HeightOneSpectrum R)}
+    {p : IsDedekindDomain.HeightOneSpectrum R} (hpS : p ∈ S)
+    (hqS : IsDedekindDomain.HeightOneSpectrum.equivOfRingEquiv σ p ∈ S)
+    (hpq : IsDedekindDomain.HeightOneSpectrum.equivOfRingEquiv σ p ≠ p)
+    (hinvol : IsDedekindDomain.HeightOneSpectrum.equivOfRingEquiv σ
+      (IsDedekindDomain.HeightOneSpectrum.equivOfRingEquiv σ p) = p) {G' : Finset (Ideal R)}
+    (hcard' : 2 ^ ((S \ {p, IsDedekindDomain.HeightOneSpectrum.equivOfRingEquiv σ p}).card / 2)
+      ≤ G'.card)
+    (hprod' : ∀ A ∈ G', A * Ideal.map σ A =
+      ∏ x ∈ S \ {p, IsDedekindDomain.HeightOneSpectrum.equivOfRingEquiv σ p}, x.asIdeal) :
+    ∃ G : Finset (Ideal R), 2 ^ (S.card / 2) ≤ G.card ∧
+      ∀ A ∈ G, A * Ideal.map σ A = ∏ x ∈ S, x.asIdeal := by
+  set q := IsDedekindDomain.HeightOneSpectrum.equivOfRingEquiv σ p with hqdef
+  have hpair : ({p, q} : Finset (IsDedekindDomain.HeightOneSpectrum R)) ⊆ S :=
+    Finset.insert_subset_iff.mpr ⟨hpS, Finset.singleton_subset_iff.mpr hqS⟩
+  have hqIdeal : q.asIdeal = Ideal.map σ p.asIdeal := by
+    rw [hqdef]; exact asIdeal_equivOfRingEquiv σ p
+  -- The product over `S` factors through the conjugate pair we removed.
+  have hprodS : ∏ x ∈ S, x.asIdeal
+      = (∏ x ∈ S \ {p, q}, x.asIdeal) * p.asIdeal * q.asIdeal := by
+    rw [← Finset.prod_sdiff hpair, Finset.prod_pair hpq.symm, mul_assoc]
+  have hcardS : (S \ {p, q}).card = S.card - 2 := by
+    have h := Finset.card_sdiff_add_card_eq_card hpair
+    rw [Finset.card_pair hpq.symm] at h
+    omega
+  have hpS' : p ∉ S \ {p, q} := fun h => (Finset.mem_sdiff.mp h).2 (Finset.mem_insert_self _ _)
+  refine ⟨(G'.image (· * p.asIdeal)) ∪ (G'.image (· * q.asIdeal)), ?_, ?_⟩
+  · -- The two images are disjoint, so the union doubles the family.
+    have hdisj : Disjoint (G'.image (· * p.asIdeal)) (G'.image (· * q.asIdeal)) :=
+      disjoint_image_mul_asIdeal hpq (fun A hA hpA =>
+        isPrime_not_dvd_prod p hpS' (hprod' A hA ▸ dvd_mul_of_dvd_left hpA (Ideal.map σ A)))
+    exact two_pow_le_card_union_image_mul hdisj hcard' (by omega)
+  · have hmapq : Ideal.map σ q.asIdeal = p.asIdeal := by
+      rw [← asIdeal_equivOfRingEquiv σ q]
+      exact congr_arg IsDedekindDomain.HeightOneSpectrum.asIdeal hinvol
+    exact fun A hA =>
+      mul_map_eq_prod_of_mem_image_union (σ := (σ : R →+* R)) hqIdeal hmapq hprodS hprod' hA
+
 /-- **Conjugate-transversal ideal family.** For a fixed-point-free involution `σ` of a finite set
 `S` of height-one primes of a Dedekind domain, there are at least `2 ^ (S.card / 2)` ideals `A`
 with `A * σ A = ∏ p ∈ S, p.asIdeal`. -/
-theorem exists_transversal_family (σ : R ≃+* R)
-    (S : Finset (IsDedekindDomain.HeightOneSpectrum R))
-    (hinv : ∀ p ∈ S, IsDedekindDomain.HeightOneSpectrum.equivOfRingEquiv σ p ∈ S)
-    (hinvol : ∀ p ∈ S,
+theorem exists_transversal_family (σ : R ≃+* R) (S : Finset (IsDedekindDomain.HeightOneSpectrum R))
+    (hinv : ∀ p ∈ S, IsDedekindDomain.HeightOneSpectrum.equivOfRingEquiv σ p ∈ S) (hinvol : ∀ p ∈ S,
       IsDedekindDomain.HeightOneSpectrum.equivOfRingEquiv σ
         (IsDedekindDomain.HeightOneSpectrum.equivOfRingEquiv σ p) = p)
     (hfree : ∀ p ∈ S, IsDedekindDomain.HeightOneSpectrum.equivOfRingEquiv σ p ≠ p) :
@@ -196,41 +232,14 @@ theorem exists_transversal_family (σ : R ≃+* R)
   obtain ⟨p, hpS⟩ := hS
   set q := IsDedekindDomain.HeightOneSpectrum.equivOfRingEquiv σ p with hqdef
   have hqS : q ∈ S := hinv p hpS
-  have hpq : q ≠ p := hfree p hpS
-  have hqIdeal : q.asIdeal = Ideal.map σ p.asIdeal := by
-    rw [hqdef]; exact asIdeal_equivOfRingEquiv σ p
-  have hpair : ({p, q} : Finset (IsDedekindDomain.HeightOneSpectrum R)) ⊆ S := by
-    intro x hx; rcases Finset.mem_insert.mp hx with rfl | hx
-    · exact hpS
-    · rw [Finset.mem_singleton.mp hx]; exact hqS
-  set S' := S \ {p, q} with hS'def
-  have hS'sub : S' ⊂ S := by
-    refine Finset.sdiff_ssubset hpair ?_
-    exact ⟨p, Finset.mem_insert_self _ _⟩
-  -- The subset `S'` still satisfies all the hypotheses.
-  have hmem' : ∀ {x}, x ∈ S' → x ∈ S := fun hx => (Finset.mem_sdiff.mp hx).1
-  obtain ⟨G', hcard', hprod'⟩ := ih S' hS'sub
-    (mem_sdiff_pair_of_invariant hqdef hinv hinvol hpS)
+  have hS'sub : S \ {p, q} ⊂ S :=
+    Finset.sdiff_ssubset (Finset.insert_subset_iff.mpr ⟨hpS, Finset.singleton_subset_iff.mpr hqS⟩)
+      ⟨p, Finset.mem_insert_self _ _⟩
+  -- The subset `S \ {p, q}` still satisfies all the hypotheses.
+  have hmem' : ∀ {x}, x ∈ S \ {p, q} → x ∈ S := fun hx => (Finset.mem_sdiff.mp hx).1
+  obtain ⟨G', hcard', hprod'⟩ := ih _ hS'sub (mem_sdiff_pair_of_invariant hqdef hinv hinvol hpS)
     (fun x hx => hinvol x (hmem' hx)) (fun x hx => hfree x (hmem' hx))
-  -- The product over `S` factors through the conjugate pair we removed.
-  have hprodS :
-      ∏ x ∈ S, x.asIdeal = (∏ x ∈ S', x.asIdeal) * p.asIdeal * q.asIdeal := by
-    rw [hS'def, ← Finset.prod_sdiff hpair, Finset.prod_pair hpq.symm, mul_assoc]
-  have hcardS : S'.card = S.card - 2 := by
-    have h := Finset.card_sdiff_add_card_eq_card hpair
-    rw [Finset.card_pair hpq.symm] at h
-    rw [hS'def]; omega
-  have hpS' : p ∉ S' := fun h => (Finset.mem_sdiff.mp h).2 (Finset.mem_insert_self _ _)
-  refine ⟨(G'.image (· * p.asIdeal)) ∪ (G'.image (· * q.asIdeal)), ?_, ?_⟩
-  · -- The two images are disjoint, so the union doubles the family.
-    have hdisj : Disjoint (G'.image (· * p.asIdeal)) (G'.image (· * q.asIdeal)) :=
-      disjoint_image_mul_asIdeal hpq (fun A hA hpA =>
-        isPrime_not_dvd_prod p hpS' (hprod' A hA ▸ dvd_mul_of_dvd_left hpA (Ideal.map σ A)))
-    exact two_pow_le_card_union_image_mul hdisj hcard' (by omega)
-  · have hmapq : Ideal.map σ q.asIdeal = p.asIdeal := by
-      rw [← asIdeal_equivOfRingEquiv σ q]
-      exact congr_arg IsDedekindDomain.HeightOneSpectrum.asIdeal (hinvol p hpS)
-    exact fun A hA =>
-      mul_map_eq_prod_of_mem_image_union (σ := (σ : R →+* R)) hqIdeal hmapq hprodS hprod' hA
+  exact exists_transversal_family_of_sdiff_pair σ hpS hqS (hfree p hpS) (hinvol p hpS)
+    hcard' hprod'
 
 end TauCeti.DedekindDomain

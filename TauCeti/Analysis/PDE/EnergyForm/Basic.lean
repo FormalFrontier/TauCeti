@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Analysis.PDE.Uniform.Ellipticity
+public import TauCeti.Analysis.PDE.Ellipticity.Basic
 public import TauCeti.Analysis.PDE.LowerOrder
 
 /-!
@@ -20,7 +20,7 @@ whose integrand at a point `x` depends only on the *jets* `(u(x), ∇u(x))` and
 three pointwise coefficient forms already available
 
 * the principal matrix form `matrixBilinearForm (a x)` (in
-  `TauCeti.Analysis.PDE.Uniform.Ellipticity`),
+  `TauCeti.Analysis.PDE.Ellipticity.Basic`),
 * the drift form `driftForm (b x)` and the mass form `massForm (c x)` (in
   `TauCeti.Analysis.PDE.LowerOrder`),
 
@@ -125,15 +125,13 @@ lemma energyIntegrand_one_zero_zero_self (U : ℝ × EuclideanSpace ℝ n) :
 
 /-- The shifted Laplacian model `-Δ + c` has jet form
 `(U, V) ↦ ∇u · ∇v + c u v`. -/
-lemma energyIntegrand_one_zero_mass_apply (c : ℝ)
-    (U V : ℝ × EuclideanSpace ℝ n) :
+lemma energyIntegrand_one_zero_mass_apply (c : ℝ) (U V : ℝ × EuclideanSpace ℝ n) :
     energyIntegrand (1 : Matrix n n ℝ) 0 c U V = V.2 ⬝ᵥ U.2 + c * U.1 * V.1 := by
   simp [energyIntegrand_apply, massForm_apply]
 
 /-- The shifted Laplacian model `-Δ + c` has diagonal jet density
 `‖∇u‖² + c u²`. -/
-lemma energyIntegrand_one_zero_mass_self (c : ℝ)
-    (U : ℝ × EuclideanSpace ℝ n) :
+lemma energyIntegrand_one_zero_mass_self (c : ℝ) (U : ℝ × EuclideanSpace ℝ n) :
     energyIntegrand (1 : Matrix n n ℝ) 0 c U U = ‖U.2‖ ^ 2 + c * U.1 ^ 2 := by
   rw [energyIntegrand_self, toQuadraticForm'_one]
   simp
@@ -168,23 +166,18 @@ norms. -/
 lemma norm_energyIntegrand_apply_le_of_bounds (hLam : 0 ≤ Lam)
     {A : Matrix n n ℝ} {b₀ : EuclideanSpace ℝ n} {c₀ : ℝ}
     (ha : ∀ η ξ : EuclideanSpace ℝ n, |η ⬝ᵥ (A *ᵥ ξ)| ≤ Lam * ‖η‖ * ‖ξ‖)
-    (hb : ‖b₀‖ ≤ beta) (hc : ‖c₀‖ ≤ gamma)
-    (U V : ℝ × EuclideanSpace ℝ n) :
+    (hb : ‖b₀‖ ≤ beta) (hc : ‖c₀‖ ≤ gamma) (U V : ℝ × EuclideanSpace ℝ n) :
     ‖energyIntegrand A b₀ c₀ U V‖ ≤ (Lam + beta + gamma) * ‖U‖ * ‖V‖ := by
-  have step : ∀ {K p q : ℝ}, 0 ≤ K → 0 ≤ p → 0 ≤ q → p ≤ ‖U‖ → q ≤ ‖V‖ →
-      K * p * q ≤ K * ‖U‖ * ‖V‖ := by
-    intro K p q hK hp hq hpU hqV
-    calc K * p * q = K * (p * q) := by ring
-      _ ≤ K * (‖U‖ * ‖V‖) :=
-          mul_le_mul_of_nonneg_left (mul_le_mul hpU hqV hq (hp.trans hpU)) hK
-      _ = K * ‖U‖ * ‖V‖ := by ring
+  -- bound `q` first, which needs only `0 ≤ K * p`, then `p`
+  have step : ∀ {K p q : ℝ}, 0 ≤ K → 0 ≤ p → p ≤ ‖U‖ → q ≤ ‖V‖ →
+      K * p * q ≤ K * ‖U‖ * ‖V‖ := fun hK hp hpU hqV =>
+    (mul_le_mul_of_nonneg_left hqV (mul_nonneg hK hp)).trans (by gcongr)
   have hbeta : 0 ≤ beta := (norm_nonneg b₀).trans hb
   have hgamma : 0 ≤ gamma := (norm_nonneg c₀).trans hc
   have hmat : ‖matrixBilinearForm A V.2 U.2‖ ≤ Lam * ‖U‖ * ‖V‖ := by
     have h := norm_matrixBilinearForm_le_of_upper_bound A ha V.2 U.2
     rw [mul_right_comm] at h
-    exact h.trans (step hLam (norm_nonneg _) (norm_nonneg _)
-      (norm_snd_le U) (norm_snd_le V))
+    exact h.trans (step hLam (norm_nonneg _) (norm_snd_le U) (norm_snd_le V))
   have hdrift : ‖driftForm b₀ V.1 U.2‖ ≤ beta * ‖U‖ * ‖V‖ := by
     rw [driftForm_apply, norm_mul]
     calc
@@ -195,14 +188,14 @@ lemma norm_energyIntegrand_apply_le_of_bounds (hLam : 0 ≤ Lam)
         gcongr
       _ = beta * ‖U.2‖ * ‖V.1‖ := by ring
       _ ≤ beta * ‖U‖ * ‖V‖ :=
-        step hbeta (norm_nonneg _) (norm_nonneg _) (norm_snd_le U) (norm_fst_le V)
+        step hbeta (norm_nonneg _) (norm_snd_le U) (norm_fst_le V)
   have hmass : ‖massForm c₀ U.1 V.1‖ ≤ gamma * ‖U‖ * ‖V‖ := by
     rw [massForm_apply, norm_mul, norm_mul]
     calc
       ‖c₀‖ * ‖U.1‖ * ‖V.1‖ ≤ gamma * ‖U.1‖ * ‖V.1‖ := by
         gcongr
       _ ≤ gamma * ‖U‖ * ‖V‖ :=
-        step hgamma (norm_nonneg _) (norm_nonneg _) (norm_fst_le U) (norm_fst_le V)
+        step hgamma (norm_nonneg _) (norm_fst_le U) (norm_fst_le V)
   rw [energyIntegrand_apply]
   calc ‖matrixBilinearForm A V.2 U.2 + driftForm b₀ V.1 U.2 + massForm c₀ U.1 V.1‖
       ≤ ‖matrixBilinearForm A V.2 U.2 + driftForm b₀ V.1 U.2‖
@@ -230,8 +223,7 @@ lemma opNorm_energyIntegrand_le_of_bounds (hLam : 0 ≤ Lam)
   exact norm_energyIntegrand_apply_le_of_bounds hLam ha hb hc U V
 
 /-- Pointwise boundedness of the shifted Laplacian jet form with constant `1 + ‖c‖`. -/
-lemma norm_energyIntegrand_one_zero_mass_apply_le (c : ℝ)
-    (U V : ℝ × EuclideanSpace ℝ n) :
+lemma norm_energyIntegrand_one_zero_mass_apply_le (c : ℝ) (U V : ℝ × EuclideanSpace ℝ n) :
     ‖energyIntegrand (1 : Matrix n n ℝ) 0 c U V‖ ≤
       (1 + ‖c‖) * ‖U‖ * ‖V‖ := by
   simpa using
@@ -255,8 +247,7 @@ mass defect proportional to `β²/λ`. Integrating over `Ω` this is Gårding's 
 lemma garding_energyIntegrand_self_of_bounds (hlam : 0 < lam)
     {A : Matrix n n ℝ} {b₀ : EuclideanSpace ℝ n} {c₀ : ℝ}
     (hQ : ∀ ξ : EuclideanSpace ℝ n, lam * ‖ξ‖ ^ 2 ≤ A.toQuadraticForm' ξ)
-    (hb : ‖b₀‖ ≤ beta) (hc : 0 ≤ c₀)
-    (U : ℝ × EuclideanSpace ℝ n) :
+    (hb : ‖b₀‖ ≤ beta) (hc : 0 ≤ c₀) (U : ℝ × EuclideanSpace ℝ n) :
     lam / 2 * ‖U.2‖ ^ 2 - beta ^ 2 / (2 * lam) * U.1 ^ 2
       ≤ energyIntegrand A b₀ c₀ U U := by
   rw [energyIntegrand_self]

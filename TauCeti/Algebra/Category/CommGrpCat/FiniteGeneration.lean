@@ -15,6 +15,7 @@ This file packages finitely generated commutative groups as a full subcategory o
 
 ## Main declarations
 
+* `TauCeti.instFGULift`: universe lifts preserve finite generation of groups.
 * `TauCeti.CommGrpCat.isFG`: the object property of being finitely generated.
 * `TauCeti.FGCommGrpCat`: the category of finitely generated commutative groups.
 -/
@@ -25,7 +26,14 @@ open CategoryTheory
 
 namespace TauCeti
 
-universe v
+universe u v
+
+/-- Universe lifts of finitely generated groups are finitely generated. -/
+instance instFGULift (G : Type v) [Group G] [Group.FG G] :
+    Group.FG (ULift.{u} G) :=
+  Group.fg_of_surjective
+    (f := (MulEquiv.ulift.symm : G ≃* ULift.{u} G).toMonoidHom)
+    MulEquiv.ulift.symm.surjective
 
 namespace CommGrpCat
 

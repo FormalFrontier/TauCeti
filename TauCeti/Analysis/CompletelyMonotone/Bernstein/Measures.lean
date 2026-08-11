@@ -6,11 +6,10 @@ module
 
 public import Mathlib.Analysis.SpecialFunctions.Complex.LogBounds
 import Mathlib.MeasureTheory.Integral.IntegralEqImproper
--- Non-public: `BoundedContinuousFunction.integrable` supplies integrability of the bounded
--- kernels against a finite measure.
-import Mathlib.MeasureTheory.Integral.BoundedContinuousFunction
 import TauCeti.Analysis.CompletelyMonotone.Closure
 public import TauCeti.Analysis.CompletelyMonotone.Integral
+-- Non-public: the bundled Laplace kernel and its integrability.
+import TauCeti.Analysis.CompletelyMonotone.Laplace.Kernel
 
 /-!
 # Approximating measures for Bernstein's theorem
@@ -36,15 +35,13 @@ These build on the `IsCompletelyMonotone` API in `CompletelyMonotone/Basic.lean`
 * `TauCeti.bernsteinKernel`, `TauCeti.continuous_bernsteinKernel`,
   `TauCeti.bernsteinKernel_nonneg`, `TauCeti.bernsteinKernel_le_one`,
   `TauCeti.bernsteinKernelBoundedContinuous`,
-  `TauCeti.bernsteinKernelBoundedContinuous_apply`,
-  `TauCeti.laplaceKernelBoundedContinuous`,
-  `TauCeti.laplaceKernelBoundedContinuous_apply`,
+  `TauCeti.bernsteinKernelBoundedContinuous_apply`, `TauCeti.integrable_bernsteinKernel`,
   `TauCeti.bernsteinKernel_tendsto`: the rescaled Laplace kernel, its bundled
-  bounded-continuous `p`-dependence on the nonnegative half-line, and its bundled pointwise
-  limit `e^{-xp}`.
-* `TauCeti.integrable_exp_neg_mul`, `TauCeti.integral_exp_neg_mul_add_smul_dirac_zero`: the
-  Laplace kernel is integrable against any finite measure on `ℝ≥0`, and adjoining an atom
-  `c • δ₀` adds exactly `c` to the transform, the kernel being `1` at `0`.
+  bounded-continuous `p`-dependence on the nonnegative half-line, and its pointwise limit
+  `e^{-xp}` (bundled as `TauCeti.laplaceKernelBoundedContinuous` in
+  `CompletelyMonotone/Laplace/Kernel.lean`).
+* `TauCeti.integral_exp_neg_mul_add_smul_dirac_zero`: adjoining an atom `c • δ₀` adds exactly
+  `c` to the transform, the kernel being `1` at `0`.
 * `TauCeti.chafaiRescaled`, `TauCeti.chafaiRescaled_mass_eq`: the `ℝ≥0`-valued pushed-forward
   measures and mass preservation.
 * `TauCeti.chafaiRescaled_integral_bernsteinKernel`,
@@ -95,19 +92,18 @@ noncomputable def chafaiDensity (f : ℝ → ℝ) (n : ℕ) (t : ℝ) : ℝ :=
 
 /-- `chafaiDensity f 0 = 0`. -/
 @[simp] lemma chafaiDensity_zero (f : ℝ → ℝ) (t : ℝ) : chafaiDensity f 0 t = 0 := by
-  rw [chafaiDensity, if_pos rfl]
+  rw [chafaiDensity, ite_eq_left rfl]
 
 /-- The defining formula for `chafaiDensity` at a nonzero order. -/
 @[simp]
 lemma chafaiDensity_of_ne_zero {n : ℕ} (hn : n ≠ 0) (f : ℝ → ℝ) (t : ℝ) :
     chafaiDensity f n t = (-1 : ℝ) ^ n / (Nat.factorial (n - 1) : ℝ) *
       t ^ (n - 1) * iteratedDerivWithin n f (Ici 0) t := by
-  rw [chafaiDensity, if_neg hn]
+  rw [chafaiDensity, ite_eq_right hn]
 
 /-- `chafaiDensity f n` is continuous on `[0, ∞)` when `f` has `n` continuous derivatives
 there. -/
-lemma continuousOn_chafaiDensity {n : ℕ}
-    (hf : ContDiffOn ℝ (n : WithTop ℕ∞) f (Ici 0)) :
+lemma continuousOn_chafaiDensity {n : ℕ} (hf : ContDiffOn ℝ (n : WithTop ℕ∞) f (Ici 0)) :
     ContinuousOn (chafaiDensity f n) (Ici 0) := by
   by_cases hn : n = 0
   · subst n
@@ -212,14 +208,14 @@ noncomputable def bernsteinKernel (n : ℕ) (x p : ℝ) : ℝ :=
 /-- The Bernstein kernel vanishes for `n ≤ 1`. -/
 @[simp] lemma bernsteinKernel_of_le_one {n : ℕ} (hn : n ≤ 1) (x p : ℝ) :
     bernsteinKernel n x p = 0 := by
-  rw [bernsteinKernel, if_pos hn]
+  rw [bernsteinKernel, ite_eq_left hn]
 
 /-- The defining formula for the Bernstein kernel at `2 ≤ n`. -/
 @[simp]
 lemma bernsteinKernel_of_two_le {n : ℕ} (hn : 2 ≤ n) (x p : ℝ) :
     bernsteinKernel n x p = (max (1 - x * p / (↑(n - 1) : ℝ)) 0) ^ (n - 1) := by
   have hnle : ¬ n ≤ 1 := by omega
-  rw [bernsteinKernel, if_neg hnle]
+  rw [bernsteinKernel, ite_eq_right hnle]
 
 /-- The Bernstein kernel is continuous in `p` for fixed `n` and `x`. -/
 lemma continuous_bernsteinKernel (n : ℕ) (x : ℝ) : Continuous (bernsteinKernel n x) := by
@@ -265,36 +261,13 @@ lemma bernsteinKernelBoundedContinuous_apply (n : ℕ) {x : ℝ} (hx : 0 ≤ x) 
     bernsteinKernelBoundedContinuous n hx p = bernsteinKernel n x (p : ℝ) := by
   rw [bernsteinKernelBoundedContinuous]; rfl
 
-/-- The limiting Laplace kernel as a bundled bounded continuous test function of the
-nonnegative variable `p`, for fixed nonnegative `x`. -/
-noncomputable def laplaceKernelBoundedContinuous {x : ℝ} (hx : 0 ≤ x) : ℝ≥0 →ᵇ ℝ where
-  toFun := fun p => Real.exp (-(x * (p : ℝ)))
-  continuous_toFun := Real.continuous_exp.comp ((continuous_const.mul continuous_subtype_val).neg)
-  map_bounded' :=
-    ⟨1, fun p q => by
-      rw [Real.dist_eq]
-      have hp0 : 0 < Real.exp (-(x * (p : ℝ))) := Real.exp_pos _
-      have hp1 : Real.exp (-(x * (p : ℝ))) ≤ 1 := by
-        rw [Real.exp_le_one_iff]
-        exact neg_nonpos.mpr (mul_nonneg hx p.2)
-      have hq0 : 0 < Real.exp (-(x * (q : ℝ))) := Real.exp_pos _
-      have hq1 : Real.exp (-(x * (q : ℝ))) ≤ 1 := by
-        rw [Real.exp_le_one_iff]
-        exact neg_nonpos.mpr (mul_nonneg hx q.2)
-      exact abs_sub_le_iff.mpr ⟨by linarith, by linarith⟩⟩
-
-/-- The bundled limiting Laplace kernel evaluates to the usual exponential kernel on `ℝ≥0`. -/
-@[simp]
-lemma laplaceKernelBoundedContinuous_apply {x : ℝ} (hx : 0 ≤ x) (p : ℝ≥0) :
-    laplaceKernelBoundedContinuous hx p = Real.exp (-(x * (p : ℝ))) := by
-  rw [laplaceKernelBoundedContinuous]; rfl
-
-/-- **The Laplace kernel is integrable against a finite measure.** For `0 ≤ x` the kernel
-`p ↦ e^{-xp}` is bounded and continuous on `ℝ≥0`, hence integrable against any finite measure. -/
-lemma integrable_exp_neg_mul (μ : Measure ℝ≥0) [IsFiniteMeasure μ] {x : ℝ} (hx : 0 ≤ x) :
-    Integrable (fun p : ℝ≥0 => Real.exp (-(x * (p : ℝ)))) μ := by
-  have h := (laplaceKernelBoundedContinuous hx).integrable μ
-  rwa [funext (laplaceKernelBoundedContinuous_apply hx)] at h
+/-- **The Bernstein kernel at a nonnegative point is integrable against a finite measure.** For
+`0 ≤ x`, the map `p ↦ bernsteinKernel n x p` is integrable against any finite measure on `ℝ≥0`.
+The companion of `TauCeti.integrable_exp_neg_mul`, which says the same of the Laplace kernel. -/
+lemma integrable_bernsteinKernel (μ : Measure ℝ≥0) [IsFiniteMeasure μ] (n : ℕ) {x : ℝ}
+    (hx : 0 ≤ x) : Integrable (fun p : ℝ≥0 => bernsteinKernel n x (p : ℝ)) μ := by
+  have h := (bernsteinKernelBoundedContinuous n hx).integrable μ
+  rwa [funext (bernsteinKernelBoundedContinuous_apply n hx)] at h
 
 /-- **An atom at `0` shifts the Laplace transform by its mass.** The kernel takes the value `1` at
 `p = 0`, so adjoining `c • δ₀` to a finite measure adds exactly `c`. -/
@@ -327,7 +300,7 @@ lemma bernsteinKernel_tendsto (x p : ℝ) :
   rw [eventuallyEq_iff_exists_mem]
   refine ⟨{n : ℕ | n ≥ Nat.ceil (x * p) + 2}, mem_atTop _, ?_⟩
   intro n hn
-  simp only [Set.mem_setOf_eq] at hn
+  simp only [Set.mem_ofPred_eq] at hn
   simp only [bernsteinKernel, hg_def]
   have hn1 : ¬(n ≤ 1) := by omega
   simp only [hn1, ite_false]
@@ -384,8 +357,7 @@ lemma chafaiRescaled_integral (f : ℝ → ℝ) (n : ℕ) {g : ℝ≥0 → ℝ}
 
 /-- On positive source points, pulling the Bernstein kernel back along the Chafaï rescaling
 gives the classical finite-order kernel `(max (1 - x / t) 0) ^ (n - 1)`. -/
-lemma bernsteinKernel_chafaiRescaling_of_pos {n : ℕ} (hn : 2 ≤ n) (x : ℝ) {t : ℝ}
-    (ht : 0 < t) :
+lemma bernsteinKernel_chafaiRescaling_of_pos {n : ℕ} (hn : 2 ≤ n) (x : ℝ) {t : ℝ} (ht : 0 < t) :
     bernsteinKernel n x (chafaiRescaling n t : ℝ) = (max (1 - x / t) 0) ^ (n - 1) := by
   rw [bernsteinKernel_of_two_le hn]
   rw [chafaiRescaling_coe_of_pos (by omega : 1 ≤ n) ht]
@@ -434,8 +406,7 @@ lemma chafaiRescaled_integral_bernsteinKernelBoundedContinuous
   simp
 
 /-- `chafaiMeasure f n` lives on `(0, ∞)`: its complement has zero mass. -/
-lemma chafaiMeasure_compl_Ioi (f : ℝ → ℝ) (n : ℕ) :
-    (chafaiMeasure f n) (Ioi 0)ᶜ = 0 := by
+lemma chafaiMeasure_compl_Ioi (f : ℝ → ℝ) (n : ℕ) : (chafaiMeasure f n) (Ioi 0)ᶜ = 0 := by
   unfold chafaiMeasure
   rw [withDensity_apply _ (measurableSet_Ioi.compl)]
   apply setLIntegral_measure_zero
@@ -449,8 +420,7 @@ lemma chafaiRescaled_mass_eq (f : ℝ → ℝ) (n : ℕ) :
   unfold chafaiRescaled
   rw [Measure.map_apply (measurable_chafaiRescaling n) MeasurableSet.univ, Set.preimage_univ]
 
-private lemma aemeasurable_chafaiDensity_ofReal (f : ℝ → ℝ)
-    (hcm : IsCompletelyMonotone f) (n : ℕ) :
+private lemma aemeasurable_chafaiDensity_ofReal (f : ℝ → ℝ) (hcm : IsCompletelyMonotone f) (n : ℕ) :
     AEMeasurable (fun t => ENNReal.ofReal (chafaiDensity f n t))
       (volume.restrict (Ioi 0)) := by
   have hcont : ContinuousOn (chafaiDensity f n) (Ici 0) :=
@@ -588,8 +558,7 @@ private lemma chafaiDensity_ibp_identity (f : ℝ → ℝ) {m : ℕ}
 for `2 ≤ k` and `0 ≤ T`, the integral of the `k`-th density on `[0,T]` is bounded above by the
 integral of the preceding density, assuming the endpoint has the required alternating sign. -/
 lemma integral_chafaiDensity_le_pred (f : ℝ → ℝ) {k : ℕ} (hk : 2 ≤ k)
-    (hf : ContDiffOn ℝ (k : WithTop ℕ∞) f (Ici 0))
-    (T : ℝ) (hT : 0 ≤ T)
+    (hf : ContDiffOn ℝ (k : WithTop ℕ∞) f (Ici 0)) (T : ℝ) (hT : 0 ≤ T)
     (hsign : 0 ≤ (-1 : ℝ) ^ (k - 1) * iteratedDerivWithin (k - 1) f (Ici 0) T) :
     ∫ t in (0 : ℝ)..T, chafaiDensity f k t ≤ ∫ t in (0 : ℝ)..T, chafaiDensity f (k - 1) t := by
   -- The degenerate interval is immediate; otherwise reindex `k` as `m + 2` for the IBP lemma.
@@ -662,11 +631,10 @@ private lemma integral_chafaiDensity_le_tendsto_sub (f : ℝ → ℝ)
     (hL : Tendsto f atTop (nhds L)) (T : ℝ) (hT : 0 < T) :
     ∫ t in (0 : ℝ)..T, chafaiDensity f n t ≤ f 0 - L := by
   linarith [integral_chafaiDensity_le_sub f hcm n hn T hT,
-    hcm.le_of_tendsto_atTop hL hT.le]
+    (IsCompletelyMonotoneOnIci.of_isCompletelyMonotone hcm).le_of_tendsto_atTop hL hT.le]
 
 private lemma chafaiDensity_integrableOn_Ioi_of_tendsto (f : ℝ → ℝ)
-    (hcm : IsCompletelyMonotone f) (n : ℕ) (hn : 1 ≤ n) (L : ℝ)
-    (hL : Tendsto f atTop (nhds L)) :
+    (hcm : IsCompletelyMonotone f) (n : ℕ) (hn : 1 ≤ n) (L : ℝ) (hL : Tendsto f atTop (nhds L)) :
     IntegrableOn (chafaiDensity f n) (Ioi 0) := by
   have hcont : ContinuousOn (chafaiDensity f n) (Ici 0) :=
     continuousOn_chafaiDensity (n := n) ((hcm.contDiffOn).of_le (nat_le_top n))
@@ -695,8 +663,7 @@ private lemma chafaiDensity_integrableOn_Ioi_of_tendsto (f : ℝ → ℝ)
       _ ≤ f 0 - L := integral_chafaiDensity_le_tendsto_sub f hcm n hn L hL T hT
 
 private lemma chafaiMeasure_mass_le_of_tendsto (f : ℝ → ℝ)
-    (hcm : IsCompletelyMonotone f) (n : ℕ) (hn : 1 ≤ n) (L : ℝ)
-    (hL : Tendsto f atTop (nhds L))
+    (hcm : IsCompletelyMonotone f) (n : ℕ) (hn : 1 ≤ n) (L : ℝ) (hL : Tendsto f atTop (nhds L))
     (hint : IntegrableOn (chafaiDensity f n) (Ioi 0)) :
     (chafaiMeasure f n) univ ≤ ENNReal.ofReal (f 0 - L) := by
   rw [chafaiMeasure_eq_withDensity]
@@ -738,7 +705,8 @@ lemma chafaiMeasure_finite_mass (f : ℝ → ℝ) (hcm : IsCompletelyMonotone f)
       ∀ n,
         IsFiniteMeasure (chafaiMeasure f n) ∧
         (chafaiMeasure f n) univ ≤ ENNReal.ofReal (f 0 - L) := by
-  obtain ⟨L, hL, hL_nn⟩ := hcm.exists_nonneg_tendsto_atTop
+  obtain ⟨L, hL, hL_nn⟩ :=
+    (IsCompletelyMonotoneOnIci.of_isCompletelyMonotone hcm).exists_nonneg_tendsto_atTop
   exact ⟨L, hL, hL_nn, fun n => chafaiMeasure_finite_mass_of_tendsto f hcm n L hL⟩
 
 /-- **Natural rescaled total mass bound**: for a completely monotone `f`, the rescaled
@@ -795,7 +763,8 @@ lemma chafaiRescaled_prokhorov_mass_bound (f : ℝ → ℝ) (hcm : IsCompletelyM
         IsFiniteMeasure (chafaiRescaled f n) ∧
         (chafaiRescaled f n) univ ≤ (C : ENNReal) := by
   obtain ⟨L, hL, hL_nn, hfinite⟩ := chafaiRescaled_finite_mass f hcm
-  have hL_le : L ≤ f 0 := hcm.le_of_tendsto_atTop hL le_rfl
+  have hL_le : L ≤ f 0 :=
+    (IsCompletelyMonotoneOnIci.of_isCompletelyMonotone hcm).le_of_tendsto_atTop hL le_rfl
   let C : ℝ≥0 := ⟨f 0 - L, sub_nonneg.mpr hL_le⟩
   refine ⟨L, C, hL, hL_nn, rfl, fun n => ?_⟩
   refine ⟨(hfinite n).1, ?_⟩
@@ -807,44 +776,31 @@ lemma chafaiRescaled_prokhorov_mass_bound (f : ℝ → ℝ) (hcm : IsCompletelyM
 
 /-! ## Chafaï reconstruction and Bernstein-to-Laplace replacement -/
 
-private lemma chafai_kernel_density_eq (f : ℝ → ℝ)
-    (n : ℕ) (hn : 2 ≤ n) (x : ℝ) (hx : 0 ≤ x) :
+private lemma chafai_kernel_density_eq (f : ℝ → ℝ) (n : ℕ) (hn : 2 ≤ n) (x : ℝ) (hx : 0 ≤ x) :
     ∫ t in Ioi 0, bernsteinKernel n x (((n : ℝ) - 1) / t) *
       chafaiDensity f n t =
     ∫ t in Ioi x, (-1 : ℝ) ^ n / ↑(n - 1).factorial *
       (t - x) ^ (n - 1) * iteratedDerivWithin n f (Ici 0) t := by
   have hn0 : n ≠ 0 := by omega
   have hn1 : ¬ n ≤ 1 := by omega
-  have hne : ((n : ℝ) - 1) ≠ 0 := by
-    have : (2 : ℝ) ≤ (n : ℝ) := by exact_mod_cast hn
-    linarith
   have hsubset : Ioi x ⊆ Ioi 0 := Ioi_subset_Ioi hx
   have hvanish : ∀ t ∈ Ioi 0 \ Ioi x,
       bernsteinKernel n x (((n : ℝ) - 1) / t) * chafaiDensity f n t = 0 := by
     intro t ht
     simp only [Set.mem_sdiff, mem_Ioi, not_lt] at ht
-    simp only [bernsteinKernel, hn1, ite_false]
-    have hcast : (↑(n - 1) : ℝ) = ↑n - 1 := by
-      rw [Nat.cast_sub (by omega : 1 ≤ n)]
-      simp
-    have hratio : x * (((n : ℝ) - 1) / t) / ↑(n - 1) = x / t := by
-      rw [hcast]
-      field_simp [hne, ne_of_gt ht.1]
-    rw [hratio, max_eq_right (by rw [sub_nonpos, le_div_iff₀ ht.1]; linarith)]
+    rw [← chafaiRescaling_coe_of_pos (by omega : 1 ≤ n) ht.1,
+      bernsteinKernel_chafaiRescaling_of_pos hn x ht.1,
+      max_eq_right (by rw [sub_nonpos, le_div_iff₀ ht.1]; linarith)]
     rw [zero_pow (by omega : n - 1 ≠ 0), zero_mul]
   rw [setIntegral_eq_of_subset_of_forall_sdiff_eq_zero measurableSet_Ioi hsubset hvanish]
   apply setIntegral_congr_fun measurableSet_Ioi
   intro t ht
   simp only [mem_Ioi] at ht
   have ht_pos : 0 < t := lt_of_le_of_lt hx ht
-  have hcast : (↑(n - 1) : ℝ) = ↑n - 1 := by
-    rw [Nat.cast_sub (by omega : 1 ≤ n)]
-    simp
-  simp only [bernsteinKernel, hn1, ite_false]
-  have hratio : x * (((n : ℝ) - 1) / t) / ↑(n - 1) = x / t := by
-    rw [hcast]
-    field_simp [hne, ne_of_gt ht_pos]
-  rw [hratio, max_eq_left (by rw [sub_nonneg, div_le_one₀ ht_pos]; linarith)]
+  dsimp only
+  rw [← chafaiRescaling_coe_of_pos (by omega : 1 ≤ n) ht_pos,
+    bernsteinKernel_chafaiRescaling_of_pos hn x ht_pos,
+    max_eq_left (by rw [sub_nonneg, div_le_one₀ ht_pos]; linarith)]
   rw [chafaiDensity_of_ne_zero hn0]
   have key : (1 - x / t) ^ (n - 1) * t ^ (n - 1) = (t - x) ^ (n - 1) := by
     rw [← mul_pow]
@@ -980,8 +936,7 @@ private lemma chafaiDensity_ge_const_on_Icc (f : ℝ → ℝ) (k : ℕ) (h : ℝ
 `chafaiDensity_ge_const_on_Icc` over `[T/2, T]` gives
 `(1/(k-1)!)·(T/2)^k·h T ≤ ∫ t in T/2..T, chafaiDensity f k t`. -/
 private lemma const_le_intervalIntegral_chafaiDensity (f : ℝ → ℝ) (k : ℕ) (hk : k ≠ 0)
-    (h : ℝ → ℝ) (h_antitone : AntitoneOn h (Ici 0)) (T : ℝ) (hT_nonneg : 0 ≤ T)
-    (h_density_eq :
+    (h : ℝ → ℝ) (h_antitone : AntitoneOn h (Ici 0)) (T : ℝ) (hT_nonneg : 0 ≤ T) (h_density_eq :
       ∀ t ∈ Icc (T / 2) T,
         chafaiDensity f k t = (1 / ↑((k - 1).factorial)) * t ^ (k - 1) * h t)
     (hdens_int : IntervalIntegrable (chafaiDensity f k) volume (T / 2) T)
@@ -1009,25 +964,27 @@ private lemma const_le_intervalIntegral_chafaiDensity (f : ℝ → ℝ) (k : ℕ
     rw [← hpow]; ring
   rwa [hconst_eq] at hmono_int
 
-/-- Boundary-term tail estimate factored out of `boundary_term_decay`: `(T-x)^k · h T` is
+/-- Boundary-term tail estimate, the engine of
+`tendsto_sub_pow_mul_normalized_iteratedDerivWithin`: `(T-x)^k · h T` is
 eventually squeezed by a multiple of the vanishing density tail `∫_{Ioi (T/2)}`. -/
 private lemma density_tail_lower_bound_eventually (f : ℝ → ℝ)
-    (hcm : IsCompletelyMonotone f) (k : ℕ) (hk : k ≠ 0) (x : ℝ) (hx : 0 ≤ x)
-    (h : ℝ → ℝ) (h_nonneg : ∀ T, 0 ≤ T → 0 ≤ h T)
-    (h_antitone : AntitoneOn h (Ici 0))
-    (h_density_eq : ∀ t, chafaiDensity f k t =
-      (1 / ↑((k - 1).factorial)) * t ^ (k - 1) * h t)
+    (hcm : IsCompletelyMonotone f) (k : ℕ) (hk : k ≠ 0) (x : ℝ)
+    (h : ℝ → ℝ) (h_nonneg : ∀ T, 0 ≤ T → 0 ≤ h T) (h_antitone : AntitoneOn h (Ici 0))
+    (h_density_eq : ∀ t, chafaiDensity f k t = (1 / ↑((k - 1).factorial)) * t ^ (k - 1) * h t)
     (hint_density : IntegrableOn (chafaiDensity f k) (Ioi 0)) :
     ∀ᶠ T in atTop,
       (T - x) ^ k * h T ≤
-        ((2 : ℝ) ^ k * ↑((k - 1).factorial)) *
+        ((4 : ℝ) ^ k * ↑((k - 1).factorial)) *
           ∫ t in Ioi (T / 2), chafaiDensity f k t := by
   have hcont_density : ContinuousOn (chafaiDensity f k) (Ici 0) :=
     continuousOn_chafaiDensity (n := k) (hcm.contDiffOn.of_le (nat_le_top k))
-  filter_upwards [eventually_gt_atTop (max (2 * x) 2)] with T hT
-  have hT2 : (2 : ℝ) < T := lt_of_le_of_lt (le_max_right (2 * x) 2) hT
+  filter_upwards [eventually_gt_atTop (max (2 * |x|) 2)] with T hT
+  have hT2 : (2 : ℝ) < T := lt_of_le_of_lt (le_max_right (2 * |x|) 2) hT
   have hTpos : 0 < T := by linarith
-  have hTx_nonneg : 0 ≤ T - x := by linarith [lt_of_le_of_lt (le_max_left (2 * x) 2) hT]
+  have hTabs : 2 * |x| < T := lt_of_le_of_lt (le_max_left (2 * |x|) 2) hT
+  -- the shift is dominated by `T` in both directions, so `T - x` sits between `0` and `2 * T`
+  have hTx_nonneg : 0 ≤ T - x := by linarith [le_abs_self x, abs_nonneg x]
+  have hTx_le : T - x ≤ 2 * T := by linarith [neg_abs_le x, abs_nonneg x]
   have hhalf_nonneg : 0 ≤ T / 2 := by linarith
   have hhT_nonneg : 0 ≤ h T := h_nonneg T hTpos.le
   have h_interval_le :
@@ -1052,59 +1009,61 @@ private lemma density_tail_lower_bound_eventually (f : ℝ → ℝ)
           (T / 2) ^ k * h T := by field_simp
     rwa [hfact_cancel] at hmul
   calc
-    (T - x) ^ k * h T ≤ T ^ k * h T := by gcongr; linarith
-    _ = (2 : ℝ) ^ k * ((T / 2) ^ k * h T) := by rw [div_pow]; field_simp
-    _ ≤ (2 : ℝ) ^ k * (↑((k - 1).factorial) * ∫ t in Ioi (T / 2), chafaiDensity f k t) := by gcongr
-    _ = ((2 : ℝ) ^ k * ↑((k - 1).factorial)) *
+    (T - x) ^ k * h T ≤ (2 * T) ^ k * h T := by gcongr
+    _ = (4 : ℝ) ^ k * ((T / 2) ^ k * h T) := by
+      -- doubling the bound and halving the argument each cost a factor `2 ^ k`
+      have h4 : (4 : ℝ) ^ k = 2 ^ k * 2 ^ k := by rw [← mul_pow]; norm_num
+      rw [mul_pow, div_pow, h4]
+      field_simp
+    _ ≤ (4 : ℝ) ^ k * (↑((k - 1).factorial) * ∫ t in Ioi (T / 2), chafaiDensity f k t) := by gcongr
+    _ = ((4 : ℝ) ^ k * ↑((k - 1).factorial)) *
           ∫ t in Ioi (T / 2), chafaiDensity f k t := by ring
 
-private lemma boundary_term_decay (f : ℝ → ℝ) (hcm : IsCompletelyMonotone f)
-    (k : ℕ) (hk : k ≠ 0) (x : ℝ) (hx : 0 ≤ x)
-    (L : ℝ) (hL : Tendsto f atTop (nhds L)) :
-    Tendsto (fun T => (-1 : ℝ) ^ (k + 1) / ↑k.factorial * (T - x) ^ k *
-      iteratedDerivWithin k f (Ici 0) T) atTop (nhds 0) := by
+/-- **The weighted normalized derivative vanishes at infinity.** Let `f` be completely monotone,
+let `k` be a nonzero order and let `x` be any real shift. Writing `h T` for the normalized
+derivative
+`(-1) ^ k * iteratedDerivWithin k f (Ici 0) T`, the products `(T - x) ^ k * h T` tend to `0` as
+`T → ∞`. -/
+private lemma tendsto_sub_pow_mul_normalized_iteratedDerivWithin (f : ℝ → ℝ)
+    (hcm : IsCompletelyMonotone f) (k : ℕ) (hk : k ≠ 0) (x : ℝ) :
+    Tendsto (fun T => (T - x) ^ k * ((-1 : ℝ) ^ k * iteratedDerivWithin k f (Ici 0) T))
+      atTop (nhds 0) := by
+  -- complete monotonicity already supplies the limit at infinity that integrability needs
+  obtain ⟨L, hL, -⟩ :=
+    (IsCompletelyMonotoneOnIci.of_isCompletelyMonotone hcm).exists_nonneg_tendsto_atTop
   set h := fun T => (-1 : ℝ) ^ k * iteratedDerivWithin k f (Ici 0) T
   have hk1 : 1 ≤ k := Nat.one_le_iff_ne_zero.mpr hk
-  have hkey : Tendsto (fun T => (T - x) ^ k * h T) atTop (nhds 0) := by
-    obtain ⟨h_nonneg₀, h_antitone₀⟩ :=
-      normalized_iteratedDerivWithin_nonneg_antitone f hcm k
-    have h_nonneg : ∀ T, 0 ≤ T → 0 ≤ h T := by simpa [h] using h_nonneg₀
-    have h_antitone : AntitoneOn h (Ici 0) := by simpa [h] using h_antitone₀
-    have hint_density : IntegrableOn (chafaiDensity f k) (Ioi 0) :=
-      chafaiDensity_integrableOn_Ioi_of_tendsto f hcm k hk1 L hL
-    -- `tendsto_integral_Ioi_zero` takes the cut point along any map to `atTop`, so `T / 2` needs
-    -- no separate composition argument.
-    have htail_half : Tendsto (fun T : ℝ => ∫ t in Ioi (T / 2), chafaiDensity f k t)
-        atTop (nhds 0) :=
-      tendsto_integral_Ioi_zero (b := fun T : ℝ => T / 2)
-        (tendsto_id.atTop_div_const (by norm_num))
-    have hupper := density_tail_lower_bound_eventually f hcm k hk x hx h h_nonneg h_antitone
-      (by
-        intro t
-        rw [chafaiDensity_of_ne_zero hk]
-        simp only [h]
-        field_simp)
-      hint_density
-    have hnonneg_event : ∀ᶠ T in atTop, 0 ≤ (T - x) ^ k * h T := by
-      filter_upwards [eventually_gt_atTop (max x 0)] with T hT
-      have hT0 : 0 < T := lt_of_le_of_lt (le_max_right x 0) hT
-      have hxT : x < T := lt_of_le_of_lt (le_max_left x 0) hT
-      exact mul_nonneg (pow_nonneg (sub_nonneg.mpr hxT.le) _) (h_nonneg T hT0.le)
-    have hupper_tendsto :
-        Tendsto (fun T : ℝ =>
-          ((2 : ℝ) ^ k * ↑((k - 1).factorial)) *
-            ∫ t in Ioi (T / 2), chafaiDensity f k t) atTop (nhds 0) := by
-      simpa [mul_zero] using htail_half.const_mul (((2 : ℝ) ^ k) * ↑((k - 1).factorial))
-    -- Phase: squeeze between nonnegativity and the vanishing tail bound.
-    exact squeeze_zero' hnonneg_event hupper hupper_tendsto
-  have heq : ∀ T, (-1 : ℝ) ^ (k + 1) / ↑k.factorial * (T - x) ^ k *
-      iteratedDerivWithin k f (Ici 0) T =
-      -(1 / ↑k.factorial) * ((T - x) ^ k * h T) := by
-    intro T
-    simp only [h, pow_succ]
-    ring
-  simp_rw [heq]
-  simpa using hkey.const_mul (-(1 / (k.factorial : ℝ)))
+  obtain ⟨h_nonneg₀, h_antitone₀⟩ :=
+    normalized_iteratedDerivWithin_nonneg_antitone f hcm k
+  have h_nonneg : ∀ T, 0 ≤ T → 0 ≤ h T := by simpa [h] using h_nonneg₀
+  have h_antitone : AntitoneOn h (Ici 0) := by simpa [h] using h_antitone₀
+  have hint_density : IntegrableOn (chafaiDensity f k) (Ioi 0) :=
+    chafaiDensity_integrableOn_Ioi_of_tendsto f hcm k hk1 L hL
+  -- `tendsto_integral_Ioi_zero` takes the cut point along any map to `atTop`, so `T / 2` needs
+  -- no separate composition argument.
+  have htail_half : Tendsto (fun T : ℝ => ∫ t in Ioi (T / 2), chafaiDensity f k t)
+      atTop (nhds 0) :=
+    tendsto_integral_Ioi_zero (b := fun T : ℝ => T / 2)
+      (tendsto_id.atTop_div_const (by norm_num))
+  have hupper := density_tail_lower_bound_eventually f hcm k hk x h h_nonneg h_antitone
+    (by
+      intro t
+      rw [chafaiDensity_of_ne_zero hk]
+      simp only [h]
+      field_simp)
+    hint_density
+  have hnonneg_event : ∀ᶠ T in atTop, 0 ≤ (T - x) ^ k * h T := by
+    filter_upwards [eventually_gt_atTop (max x 0)] with T hT
+    have hT0 : 0 < T := lt_of_le_of_lt (le_max_right x 0) hT
+    have hxT : x < T := lt_of_le_of_lt (le_max_left x 0) hT
+    exact mul_nonneg (pow_nonneg (sub_nonneg.mpr hxT.le) _) (h_nonneg T hT0.le)
+  have hupper_tendsto :
+      Tendsto (fun T : ℝ =>
+        ((4 : ℝ) ^ k * ↑((k - 1).factorial)) *
+          ∫ t in Ioi (T / 2), chafaiDensity f k t) atTop (nhds 0) := by
+    simpa [mul_zero] using htail_half.const_mul (((4 : ℝ) ^ k) * ↑((k - 1).factorial))
+  -- squeeze between nonnegativity and the vanishing tail bound
+  exact squeeze_zero' hnonneg_event hupper hupper_tendsto
 
 /-- **The shifted order-`k` kernel is dominated by the Chafaï density.** For `0 ≤ x ≤ t` the
 kernel built from `(t - x) ^ (k - 1)` is nonnegative and bounded by the density built from
@@ -1141,8 +1100,7 @@ private lemma norm_ibp_kernel_le_chafaiDensity (f : ℝ → ℝ)
         iteratedDerivWithin k f (Ici 0) t := by field_simp
 
 private lemma ibp_kernel_integrableOn (f : ℝ → ℝ) (hcm : IsCompletelyMonotone f)
-    (k : ℕ) (hk : 1 ≤ k) (x : ℝ) (hx : 0 ≤ x)
-    (L : ℝ) (hL : Tendsto f atTop (nhds L)) :
+    (k : ℕ) (hk : 1 ≤ k) (x : ℝ) (hx : 0 ≤ x) (L : ℝ) (hL : Tendsto f atTop (nhds L)) :
     IntegrableOn (fun t => (-1 : ℝ) ^ k / ↑(k - 1).factorial * (t - x) ^ (k - 1) *
       iteratedDerivWithin k f (Ici 0) t) (Ioi x) := by
   have hk0 : k ≠ 0 := by omega
@@ -1195,7 +1153,18 @@ private lemma chafai_repeated_ibp_succ (f : ℝ → ℝ) (hcm : IsCompletelyMono
         iteratedDerivWithin k f (Ici 0) T +
       ∫ t in x..T, (-1 : ℝ) ^ k / ↑(k - 1).factorial * (t - x) ^ (k - 1) *
         iteratedDerivWithin k f (Ici 0) t) atTop (nhds (f x - L)) := by
-    simpa [zero_add] using (boundary_term_decay f hcm k hk x hx L hL).add htend_k
+    have hbdry : Tendsto (fun T => (-1 : ℝ) ^ (k + 1) / ↑k.factorial * (T - x) ^ k *
+        iteratedDerivWithin k f (Ici 0) T) atTop (nhds 0) := by
+      have heq : ∀ T, -(1 / (k.factorial : ℝ)) *
+          ((T - x) ^ k * ((-1 : ℝ) ^ k * iteratedDerivWithin k f (Ici 0) T)) =
+          (-1 : ℝ) ^ (k + 1) / ↑k.factorial * (T - x) ^ k *
+            iteratedDerivWithin k f (Ici 0) T := fun T => by
+        simp only [pow_succ]
+        ring
+      simpa using
+        (((tendsto_sub_pow_mul_normalized_iteratedDerivWithin f hcm k hk x).const_mul
+          (-(1 / (k.factorial : ℝ)))).congr heq)
+    simpa [zero_add] using hbdry.add htend_k
   have htend_via_ibp : Tendsto (fun T => ∫ t in x..T,
       (-1 : ℝ) ^ (k + 1) / ↑k.factorial * (t - x) ^ k *
       iteratedDerivWithin (k + 1) f (Ici 0) t) atTop (nhds (f x - L)) :=
@@ -1212,8 +1181,7 @@ and `f` tending to `L` at infinity, integrating the order-`n` kernel
 recovers `f x - L`. This is the analytic identity behind the Chafaï reconstruction of `f` from
 its derivatives. -/
 private lemma chafai_repeated_ibp (f : ℝ → ℝ) (hcm : IsCompletelyMonotone f)
-    (n : ℕ) (hn : 1 ≤ n) (x : ℝ) (hx : 0 ≤ x)
-    (L : ℝ) (hL : Tendsto f atTop (nhds L)) :
+    (n : ℕ) (hn : 1 ≤ n) (x : ℝ) (hx : 0 ≤ x) (L : ℝ) (hL : Tendsto f atTop (nhds L)) :
     ∫ t in Ioi x, (-1 : ℝ) ^ n / ↑(n - 1).factorial *
       (t - x) ^ (n - 1) *
       iteratedDerivWithin n f (Ici 0) t = f x - L := by
@@ -1229,8 +1197,7 @@ private lemma chafai_repeated_ibp (f : ℝ → ℝ) (hcm : IsCompletelyMonotone 
 
 /-- **Chafaï reconstruction identity** for the nonconstant part. -/
 lemma chafaiRescaled_integral_bernsteinKernel_eq_sub_tendsto_atTop
-    (f : ℝ → ℝ) (hcm : IsCompletelyMonotone f)
-    (n : ℕ) (hn : 2 ≤ n) (x : ℝ) (hx : 0 ≤ x)
+    (f : ℝ → ℝ) (hcm : IsCompletelyMonotone f) (n : ℕ) (hn : 2 ≤ n) (x : ℝ) (hx : 0 ≤ x)
     (L : ℝ) (hL : Tendsto f atTop (nhds L)) :
     ∫ p, bernsteinKernel n x (p : ℝ) ∂(chafaiRescaled f n) = f x - L := by
   have h_integral_pullback :
@@ -1264,8 +1231,7 @@ lemma chafaiRescaled_integral_bernsteinKernel_eq_sub_tendsto_atTop
   rw [h_integral_pullback, h_integral_density, hkernel]
   exact hibp
 
-private lemma bernsteinKernel_le_exp {n : ℕ} (hn : 2 ≤ n) {x p : ℝ} (_hx : 0 ≤ x)
-    (_hp : 0 ≤ p) :
+private lemma bernsteinKernel_le_exp {n : ℕ} (hn : 2 ≤ n) {x p : ℝ} (_hx : 0 ≤ x) (_hp : 0 ≤ p) :
     bernsteinKernel n x p ≤ Real.exp (-(x * p)) := by
   rw [bernsteinKernel_of_two_le hn]
   by_cases h : 1 - x * p / ↑(n - 1) ≤ 0
@@ -1340,8 +1306,7 @@ private lemma sq_div_sub_lt_div_two (xp C ε M : ℝ) (hxp_nn : 0 ≤ xp) (hxp_l
     linarith
   linarith
 
-private lemma kernel_uniform_conv_compact (x R ε : ℝ) (hx : 0 < x) (hR : 0 < R)
-    (hε : 0 < ε) :
+private lemma kernel_uniform_conv_compact (x R ε : ℝ) (hx : 0 < x) (hR : 0 < R) (hε : 0 < ε) :
     ∃ N : ℕ, ∀ n, N ≤ n → ∀ p, 0 ≤ p → p ≤ R →
       |bernsteinKernel n x p - Real.exp (-(x * p))| < ε := by
   set C := x * R
@@ -1409,10 +1374,8 @@ private lemma kernel_uniform_conv (x : ℝ) (hx : 0 < x) (ε : ℝ) (hε : 0 < �
     linarith [bernsteinKernel_nonneg n x p]
 
 /-- Bernstein-to-Laplace replacement against a uniformly finite sequence of measures. -/
-lemma integral_bernsteinKernel_sub_laplaceKernel_tendsto_zero_of_mass_bound
-    (σ : ℕ → Measure ℝ≥0)
-    (hmass : ∀ᶠ n in atTop, (σ n) univ ≤ ENNReal.ofReal C)
-    (x : ℝ) (hx : 0 ≤ x) :
+lemma integral_bernsteinKernel_sub_laplaceKernel_tendsto_zero_of_mass_bound (σ : ℕ → Measure ℝ≥0)
+    (hmass : ∀ᶠ n in atTop, (σ n) univ ≤ ENNReal.ofReal C) (x : ℝ) (hx : 0 ≤ x) :
     Tendsto (fun n => ∫ p : ℝ≥0,
         (bernsteinKernel n x (p : ℝ) - Real.exp (-(x * (p : ℝ)))) ∂(σ n))
       atTop (nhds 0) := by
@@ -1438,7 +1401,7 @@ lemma integral_bernsteinKernel_sub_laplaceKernel_tendsto_zero_of_mass_bound
     refine eventually_atTop.1 <| ((eventually_ge_atTop N).and hmass).mono fun n hn => ?_
     rcases hn with ⟨hn, hmass_n⟩
     rw [dist_zero_right]
-    haveI : IsFiniteMeasure (σ n) := ⟨hmass_n.trans_lt ENNReal.ofReal_lt_top⟩
+    have : IsFiniteMeasure (σ n) := ⟨hmass_n.trans_lt ENNReal.ofReal_lt_top⟩
     calc
       ‖∫ p : ℝ≥0, (bernsteinKernel n x (p : ℝ) - Real.exp (-(x * (p : ℝ)))) ∂(σ n)‖
           ≤ ∫ p : ℝ≥0,
@@ -1461,8 +1424,7 @@ lemma integral_bernsteinKernel_sub_laplaceKernel_tendsto_zero_of_mass_bound
 /-- Weak convergence of the rescaled Chafaï measures specializes to the Laplace kernel:
 if all bounded-continuous test integrals for `chafaiRescaled f n` converge to those for `μ₀`,
 then the integrals of `p ↦ exp (-x * p)` converge for every `x ≥ 0`. -/
-lemma chafaiRescaled_tendsto_laplace_integral_of_weak
-    {μ₀ : Measure ℝ≥0} {l : Filter ℕ}
+lemma chafaiRescaled_tendsto_laplace_integral_of_weak {μ₀ : Measure ℝ≥0} {l : Filter ℕ}
     (hweak : ∀ g : BoundedContinuousFunction ℝ≥0 ℝ,
         Tendsto (fun n => ∫ p, g p ∂(chafaiRescaled f n)) l
           (nhds (∫ p, g p ∂μ₀)))

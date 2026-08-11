@@ -229,8 +229,7 @@ theorem transportHom_toLinearMap (eM : M ≃ₗ[R] N) (eN : M' ≃ₗ[R] N') (f 
 
 /-- Pointwise form of `transportHom_toLinearMap`. -/
 @[simp]
-theorem transportHom_apply (eM : M ≃ₗ[R] N) (eN : M' ≃ₗ[R] N') (f : Hom R C M M')
-    (n : N) :
+theorem transportHom_apply (eM : M ≃ₗ[R] N) (eN : M' ≃ₗ[R] N') (f : Hom R C M M') (n : N) :
     letI : Comodule R C N := Transport (R := R) (C := C) (M := M) (N := N) eM
     letI : Comodule R C N' := Transport (R := R) (C := C) (M := M') (N := N') eN
     transportHom (R := R) (C := C) (M := M) (M' := M') (N := N) (N' := N') eM eN f n =
@@ -245,7 +244,7 @@ theorem transportHom_id (e : M ≃ₗ[R] N) :
         (Comodule.Hom.id R C M) =
       Comodule.Hom.id R C N :=
   by
-    letI : Comodule R C N := Transport (R := R) (C := C) (M := M) (N := N) e
+    let : Comodule R C N := Transport (R := R) (C := C) (M := M) (N := N) e
     ext n
     rw [transportHom_apply, Comodule.Hom.id_apply, Comodule.Hom.id_apply]
     exact e.apply_symm_apply n
@@ -269,9 +268,9 @@ theorem transportHom_comp (eM : M ≃ₗ[R] N) (eM' : M' ≃ₗ[R] N') (eP : P �
         (transportHom (R := R) (C := C) (M := M) (M' := M') (N := N) (N' := N')
           eM eM' f) :=
   by
-    letI : Comodule R C N := Transport (R := R) (C := C) (M := M) (N := N) eM
-    letI : Comodule R C N' := Transport (R := R) (C := C) (M := M') (N := N') eM'
-    letI : Comodule R C P' := Transport (R := R) (C := C) (M := P) (N := P') eP
+    let : Comodule R C N := Transport (R := R) (C := C) (M := M) (N := N) eM
+    let : Comodule R C N' := Transport (R := R) (C := C) (M := M') (N := N') eM'
+    let : Comodule R C P' := Transport (R := R) (C := C) (M := P) (N := P') eP
     ext n
     simp [transportHom_apply, Comodule.Hom.comp_apply]
 

@@ -128,7 +128,7 @@ theorem IsPiecewiseC1On.mono (h : IsPiecewiseC1On γ a b) {c d : ℝ}
   obtain ⟨p, _, hC1⟩ := h.exists_breakpoints
   refine ⟨h.continuousOn.mono hsub, p.filter (fun x => x ∈ Ioo (min c d) (max c d)), ?_, ?_⟩
   · intro x hx
-    simp only [Finset.coe_filter, Set.mem_setOf_eq] at hx
+    simp only [Finset.coe_filter, Set.mem_ofPred_eq] at hx
     exact hx.2
   · intro u v huv hdis
     refine hC1 u v (huv.trans hsub) ?_
@@ -137,7 +137,7 @@ theorem IsPiecewiseC1On.mono (h : IsPiecewiseC1On γ a b) {c d : ℝ}
     rw [← Set.Icc_min_max] at huv
     obtain ⟨hlu, hvu⟩ := (Set.Icc_subset_Icc_iff (hxuv.1.trans hxuv.2).le).1 huv
     refine hdis ?_ hxuv
-    simp only [Finset.coe_filter, Set.mem_setOf_eq]
+    simp only [Finset.coe_filter, Set.mem_ofPred_eq]
     exact ⟨hxp, lt_of_le_of_lt hlu hxuv.1, lt_of_lt_of_le hxuv.2 hvu⟩
 
 /-- Piecewise-`C¹` regularity is symmetric in the endpoints, since `[[a, b]] = [[b, a]]`. -/

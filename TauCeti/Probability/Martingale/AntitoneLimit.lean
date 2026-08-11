@@ -39,8 +39,7 @@ variable {𝔽 : ℕ → MeasurableSpace Ω}
 
 /-- Reverse-martingale upcrossing bound: for real `a < b`, the expected number of upcrossings of
 `n ↦ μ[f | 𝔽 n]` on `[a, b]` is finite, so the upcrossings are a.e. finite. -/
-private lemma ae_upcrossings_condExp_lt_top
-    [IsFiniteMeasure μ] {𝔽 : ℕ → MeasurableSpace Ω}
+private lemma ae_upcrossings_condExp_lt_top [IsFiniteMeasure μ] {𝔽 : ℕ → MeasurableSpace Ω}
     (h_antitone : Antitone 𝔽) (h_le : ∀ n, 𝔽 n ≤ (inferInstance : MeasurableSpace Ω))
     (f : Ω → ℝ) (hf : Integrable f μ) {a b : ℝ} (hab : a < b) :
     ∀ᵐ ω ∂μ, upcrossings a b (fun n => μ[f | 𝔽 n]) ω < ⊤ := by

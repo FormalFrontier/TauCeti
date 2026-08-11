@@ -82,8 +82,7 @@ theorem apply_solutionOfInner_eq_inner (hB : IsCoercive B) (F v : V) :
   simp [solutionOfInner]
 
 /-- A vector satisfying the represented variational equation is the Lax--Milgram solution. -/
-theorem eq_solutionOfInner (hB : IsCoercive B) {F u : V}
-    (hu : ∀ v : V, B u v = ⟪F, v⟫_ℝ) :
+theorem eq_solutionOfInner (hB : IsCoercive B) {F u : V} (hu : ∀ v : V, B u v = ⟪F, v⟫_ℝ) :
     u = solutionOfInner hB F := by
   apply hB.continuousLinearEquivOfBilin.injective
   apply ext_inner_right ℝ

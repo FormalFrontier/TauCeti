@@ -98,8 +98,7 @@ identity. This is the gluing core; `differentiable_dixonFunction` discharges the
 for a null-homologous closed curve. -/
 private theorem differentiable_dixonFunction_of_windingNumber_zero_near (hU : IsOpen U)
     (hf : DifferentiableOn ℂ f U) (hγ_cont : ContinuousOn γ (uIcc a b))
-    (hγU : ∀ t ∈ uIcc a b, γ t ∈ U)
-    (hderiv_int : IntervalIntegrable (fun t ↦ deriv γ t) volume a b)
+    (hγU : ∀ t ∈ uIcc a b, γ t ∈ U) (hderiv_int : IntervalIntegrable (fun t ↦ deriv γ t) volume a b)
     (h_local : ∀ w ∉ U, ∃ ε > 0, ∀ w' ∈ Metric.ball w ε,
       (∀ t ∈ uIcc a b, γ t ≠ w') ∧ windingNumber γ a b w' = 0) :
     Differentiable ℂ (dixonFunction f U γ a b) := by

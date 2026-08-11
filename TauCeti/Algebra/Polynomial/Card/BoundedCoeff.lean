@@ -61,7 +61,7 @@ the shared injection behind both the count and the finiteness of the bounded-coe
 private theorem coeff_injOn_natDegree_le (d : ℕ) :
     Set.InjOn (fun (f : R[X]) (i : Fin (d + 1)) => f.coeff i) {f | f.natDegree ≤ d} := by
   intro f hf g hg hfg
-  rw [Set.mem_setOf_eq] at hf hg
+  rw [Set.mem_ofPred_eq] at hf hg
   exact (ext_iff_natDegree_le hf hg).2 fun i hi => congrFun hfg ⟨i, Nat.lt_succ_of_le hi⟩
 
 /-- The polynomials of degree at most `d` whose coefficients all lie in a finite set `U` number
@@ -103,7 +103,7 @@ private theorem setOf_abs_intCoeff_le_eq (d B : ℕ) :
     {f : ℤ[X] | f.natDegree ≤ d ∧ ∀ i, |f.coeff i| ≤ (B : ℤ)} =
       {f : ℤ[X] | f.natDegree ≤ d ∧ ∀ i, f.coeff i ∈ Finset.Icc (-(B : ℤ)) B} := by
   ext f
-  simp only [Set.mem_setOf_eq, Finset.mem_Icc, abs_le]
+  simp only [Set.mem_ofPred_eq, Finset.mem_Icc, abs_le]
 
 /-- The integer polynomials of degree at most `d` all of whose coefficients are bounded by `B` in
 absolute value number at most `(2 * B + 1) ^ (d + 1)`: each of the `d + 1` coefficients

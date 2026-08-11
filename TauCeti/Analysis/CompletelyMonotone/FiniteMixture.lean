@@ -48,8 +48,7 @@ namespace TauCeti
 
 The weights and rates are indexed by a finset. Both take values in `ℝ≥0`, making their
 nonnegativity intrinsic to the data. -/
-noncomputable def finiteExponentialMixture {ι : Type*} (s : Finset ι)
-    (w p : ι → ℝ≥0) (t : ℝ) : ℝ :=
+noncomputable def finiteExponentialMixture {ι : Type*} (s : Finset ι) (w p : ι → ℝ≥0) (t : ℝ) : ℝ :=
   ∑ i ∈ s, (w i : ℝ) * Real.exp (-(p i : ℝ) * t)
 
 /-- The empty exponential mixture is the zero function. -/
@@ -67,8 +66,7 @@ theorem finiteExponentialMixture_singleton {ι : Type*} (i : ι) (w p : ι → �
   simp [finiteExponentialMixture]
 
 /-- Every finite positive mixture of exponential extreme rays is completely monotone. -/
-theorem isCompletelyMonotone_finiteExponentialMixture {ι : Type*} (s : Finset ι)
-    (w p : ι → ℝ≥0) :
+theorem isCompletelyMonotone_finiteExponentialMixture {ι : Type*} (s : Finset ι) (w p : ι → ℝ≥0) :
     IsCompletelyMonotone (finiteExponentialMixture s w p) := by
   apply IsCompletelyMonotone.sum
   intro i hi
@@ -104,15 +102,13 @@ theorem finiteExponentialMixtureMeasure_empty {ι : Type*} (w p : ι → ℝ≥0
 
 /-- A singleton mixture has the corresponding weighted Dirac representing measure. -/
 @[simp]
-theorem finiteExponentialMixtureMeasure_singleton {ι : Type*} (i : ι)
-    (w p : ι → ℝ≥0) :
+theorem finiteExponentialMixtureMeasure_singleton {ι : Type*} (i : ι) (w p : ι → ℝ≥0) :
     finiteExponentialMixtureMeasure {i} w p =
       (w i : ℝ≥0∞) • Measure.dirac (p i) := by
   simp [finiteExponentialMixtureMeasure]
 
 /-- A finite exponential mixture is the Laplace transform of its discrete representing measure. -/
-theorem finiteExponentialMixture_eq_integral {ι : Type*} (s : Finset ι)
-    (w p : ι → ℝ≥0) (t : ℝ) :
+theorem finiteExponentialMixture_eq_integral {ι : Type*} (s : Finset ι) (w p : ι → ℝ≥0) (t : ℝ) :
     finiteExponentialMixture s w p t =
       ∫ q : ℝ≥0, Real.exp (-t * (q : ℝ)) ∂finiteExponentialMixtureMeasure s w p := by
   rw [finiteExponentialMixtureMeasure, integral_finsetSum_measure]

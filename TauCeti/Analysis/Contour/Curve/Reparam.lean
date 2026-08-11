@@ -93,10 +93,8 @@ end Regularity
 consumer of the reparametrized contour integrand needs for integrability. As elsewhere, `φ` has an
 ambient derivative `φ' t` at each `t ∈ [[a, b]]` with `φ'` continuous there, and `γ` is
 ambient-differentiable with continuous derivative on the swept image `φ '' [[a, b]]`. -/
-theorem continuousOn_deriv_comp_reparam
-    (hφ : ∀ t ∈ Set.uIcc a b, HasDerivAt φ (φ' t) t)
-    (hφ' : ContinuousOn φ' (Set.uIcc a b))
-    (hγ : ∀ u ∈ φ '' Set.uIcc a b, DifferentiableAt ℝ γ u)
+theorem continuousOn_deriv_comp_reparam (hφ : ∀ t ∈ Set.uIcc a b, HasDerivAt φ (φ' t) t)
+    (hφ' : ContinuousOn φ' (Set.uIcc a b)) (hγ : ∀ u ∈ φ '' Set.uIcc a b, DifferentiableAt ℝ γ u)
     (hγ' : ContinuousOn (deriv γ) (φ '' Set.uIcc a b)) :
     ContinuousOn (deriv (γ ∘ φ)) (Set.uIcc a b) := by
   have hφcont : ContinuousOn φ (Set.uIcc a b) :=
@@ -108,10 +106,8 @@ theorem continuousOn_deriv_comp_reparam
 continuous derivative on the swept image `φ '' [[a, b]]`, and `f` is continuous on the image of the
 curve, then integrating `f` along the reparametrized curve `γ ∘ φ` over `[[a, b]]` gives the same
 value as integrating along `γ` over `[[φ a, φ b]]`. -/
-theorem integral_deriv_smul_comp_reparam
-    (hφ : ∀ t ∈ Set.uIcc a b, HasDerivAt φ (φ' t) t)
-    (hφ' : ContinuousOn φ' (Set.uIcc a b))
-    (hγ : ∀ u ∈ φ '' Set.uIcc a b, DifferentiableAt ℝ γ u)
+theorem integral_deriv_smul_comp_reparam (hφ : ∀ t ∈ Set.uIcc a b, HasDerivAt φ (φ' t) t)
+    (hφ' : ContinuousOn φ' (Set.uIcc a b)) (hγ : ∀ u ∈ φ '' Set.uIcc a b, DifferentiableAt ℝ γ u)
     (hγ' : ContinuousOn (deriv γ) (φ '' Set.uIcc a b))
     (hf : ContinuousOn f (γ '' (φ '' Set.uIcc a b))) :
     ∫ t in a..b, deriv (γ ∘ φ) t • f ((γ ∘ φ) t) = ∫ u in φ a..φ b, deriv γ u • f (γ u) := by

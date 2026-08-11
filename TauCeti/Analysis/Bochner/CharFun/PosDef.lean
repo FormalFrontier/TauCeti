@@ -70,8 +70,7 @@ private theorem exp_mul_conj_exp_inner (y a b : E) :
 
 omit [MeasurableSpace E] [OpensMeasurableSpace E] in
 private theorem normSq_finset_sum_exp_eq_sum {ι : Type*} (s : Finset ι) (c : ι → ℂ)
-    (t : ι → E) (y : E) :
-    ((normSq (∑ i ∈ s, c i * exp (⟪y, t i⟫ * I)) : ℝ) : ℂ)
+    (t : ι → E) (y : E) : ((normSq (∑ i ∈ s, c i * exp (⟪y, t i⟫ * I)) : ℝ) : ℂ)
       = ∑ i ∈ s, ∑ j ∈ s, c i * conj (c j) * exp (⟪y, t i - t j⟫ * I) := by
   have hconj : conj (∑ i ∈ s, c i * exp (⟪y, t i⟫ * I))
       = ∑ j ∈ s, conj (c j) * conj (exp (⟪y, t j⟫ * I)) := by

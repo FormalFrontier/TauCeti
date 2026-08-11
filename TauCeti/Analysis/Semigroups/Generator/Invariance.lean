@@ -34,8 +34,7 @@ namespace StronglyContinuousSemigroup
 omit [CompleteSpace X] in
 /-- The difference quotient based at `S s x` is `S s` applied to the difference quotient
 based at `x`. -/
-private theorem tendsto_genQuot_apply (S : StronglyContinuousSemigroup X) (s : ℝ≥0)
-    {x y : X}
+private theorem tendsto_genQuot_apply (S : StronglyContinuousSemigroup X) (s : ℝ≥0) {x y : X}
     (h : Filter.Tendsto (fun t => (1 / t) • (S.realOperator t x - x))
       (nhdsWithin 0 (Set.Ioi 0)) (nhds y)) :
     Filter.Tendsto (fun t => (1 / t) • (S.realOperator t (S s x) - S s x))
@@ -50,8 +49,7 @@ private theorem tendsto_genQuot_apply (S : StronglyContinuousSemigroup X) (s : �
 
 omit [CompleteSpace X] in
 /-- Every semigroup operator preserves the domain of the infinitesimal generator. -/
-theorem map_mem_domain (S : StronglyContinuousSemigroup X) (s : ℝ≥0) {x : X}
-    (hx : x ∈ S.domain) :
+theorem map_mem_domain (S : StronglyContinuousSemigroup X) (s : ℝ≥0) {x : X} (hx : x ∈ S.domain) :
     S s x ∈ S.domain := by
   rw [S.mem_domain_iff_tendsto] at hx ⊢
   obtain ⟨y, hy⟩ := hx

@@ -68,8 +68,7 @@ lemma isEffective_ofFinsupp (m : X →₀ ℕ) : IsEffective (ofFinsupp m : Weil
 /-- The support of a divisor from finitely supported natural multiplicities is the support of
 those multiplicities. -/
 @[simp]
-lemma support_ofFinsupp (m : X →₀ ℕ) :
-    (ofFinsupp m : WeilDivisor X).support = m.support :=
+lemma support_ofFinsupp (m : X →₀ ℕ) : (ofFinsupp m : WeilDivisor X).support = m.support :=
   Finsupp.support_mapRange_of_injective (by simp) m Nat.cast_injective
 
 /-- A divisor from finitely supported multiplicities is the corresponding sum of point divisors
@@ -313,8 +312,7 @@ lemma ofFinset_mem_effectiveSubmonoid (s : Finset X) :
 /-- The support of the named coefficient-one finite-set divisor is exactly the chosen finite
 set. -/
 @[simp]
-lemma support_ofFinset (s : Finset X) :
-    (ofFinset s : WeilDivisor X).support = s := by
+lemma support_ofFinset (s : Finset X) : (ofFinset s : WeilDivisor X).support = s := by
   ext x
   simp only [ofFinset, mem_support_ofFinsetWithMultiplicity_iff]
   simp

@@ -9,7 +9,7 @@ public import TauCeti.Analysis.Complex.Conformal.DiscInjection
 public import Mathlib.Analysis.Calculus.Deriv.Basic
 import TauCeti.Analysis.Complex.Conformal.Hurwitz
 import TauCeti.Analysis.Complex.Conformal.LocalDegree
-import TauCeti.Analysis.Complex.Conformal.Montel
+import TauCeti.Analysis.Complex.Conformal.Montel.Basic
 import Mathlib.Analysis.Complex.AbsMax
 import Mathlib.Analysis.Complex.LocallyUniformLimit
 import Mathlib.Topology.Order.IsLUB
@@ -156,6 +156,41 @@ private theorem mapsTo_ball_of_forall_norm_le_one (hΩo : IsOpen Ω) (hconn : Is
     simp only [Function.comp_def, hg₀, norm_zero] at hconst
     exact one_ne_zero (heq.symm.trans hconst.symm)
 
+/-- A locally uniform limit attains the limit of the derivative norms: differentiation preserves
+local uniform convergence, so `‖deriv g z₀‖` is the limit of the sequence `u` the family was
+chosen to approach. -/
+private theorem norm_deriv_eq_of_tendstoLocallyUniformlyOn (hΩo : IsOpen Ω) (hz₀ : z₀ ∈ Ω)
+    {F : ℕ → ℂ → ℂ} (hFd : ∀ᶠ n in atTop, DifferentiableOn ℂ (F n) Ω) {g : ℂ → ℂ} {M : ℝ}
+    {u : ℕ → ℝ} (hconv : TendstoLocallyUniformlyOn F g atTop Ω) (hu : Tendsto u atTop (𝓝 M))
+    (hFu : ∀ᶠ n in atTop, ‖deriv (F n) z₀‖ = u n) :
+    ‖deriv g z₀‖ = M := by
+  have hderiv : TendstoLocallyUniformlyOn (fun n => deriv (F n)) (deriv g) atTop Ω := by
+    have h := _root_.TendstoLocallyUniformlyOn.deriv hconv hFd hΩo
+    simpa [Function.comp_def] using h
+  exact tendsto_nhds_unique (hderiv.tendsto_at hz₀).norm
+    (hu.congr' (hFu.mono fun n hn => hn.symm))
+
+/-- The family of pointed disc injections is closed under locally uniform limits, provided the
+limit's derivative at the base point does not vanish: that is exactly what excludes the constant
+alternative in Hurwitz's theorem. -/
+private theorem isPointedDiscInjectionOn_of_tendstoLocallyUniformlyOn (hΩo : IsOpen Ω)
+    (hconn : IsPreconnected Ω) (hz₀ : z₀ ∈ Ω) {F : ℕ → ℂ → ℂ}
+    (hF : ∀ᶠ n in atTop, IsPointedDiscInjectionOn (F n) Ω z₀) {g : ℂ → ℂ}
+    (hconv : TendstoLocallyUniformlyOn F g atTop Ω) (hderiv : deriv g z₀ ≠ 0) :
+    IsPointedDiscInjectionOn g Ω z₀ := by
+  have hgd : DifferentiableOn ℂ g Ω :=
+    hconv.differentiableOn (hF.mono fun _ hn => hn.differentiableOn) hΩo
+  have hg₀ : g z₀ = 0 :=
+    tendsto_nhds_unique ((hconv.tendsto_at hz₀).congr' (hF.mono fun _ hn => hn.map_base))
+      tendsto_const_nhds
+  have hle : ∀ z ∈ Ω, ‖g z‖ ≤ 1 := fun z hz =>
+    le_of_tendsto (hconv.tendsto_at hz).norm (hF.mono fun _ hn => hn.norm_le_one hz)
+  refine ⟨hgd, mapsTo_ball_of_forall_norm_le_one hΩo hconn hgd hle hz₀ hg₀, ?_, hg₀⟩
+  rcases hurwitz_injOn hΩo hconn (hF.mono fun _ hn => hn.differentiableOn) hconv
+    (hF.mono fun _ hn => hn.injOn) with hinj | ⟨v, hv⟩
+  · exact hinj
+  · exact absurd (deriv_eq_zero_of_forall_eq hΩo hz₀ hv) hderiv
+
 /-- **The extremal problem has a solution.** If the competing family at a base point `z₀` of an
 open preconnected set `Ω` is nonempty, then some member maximizes `‖deriv · z₀‖` over the whole
 family.
@@ -182,40 +217,22 @@ theorem exists_isMaxOn_norm_deriv (hΩo : IsOpen Ω) (hconn : IsPreconnected Ω)
     lt_of_lt_of_le (norm_pos_iff.mpr (hf₀.deriv_ne_zero hΩo hz₀)) (le_csSup hbdd ⟨f₀, hf₀, rfl⟩)
   -- A maximizing sequence, indexed by `ℕ` as Montel's theorem requires.
   obtain ⟨u, -, hu_tendsto, hu_mem⟩ := exists_seq_tendsto_sSup hSne hbdd
-  simp only [Set.mem_image, Set.mem_setOf_eq] at hu_mem
+  simp only [Set.mem_image, Set.mem_ofPred_eq] at hu_mem
   choose F hF hFu using hu_mem
   have hb : IsLocallyBoundedOn F Ω :=
     isLocallyBoundedOn_of_forall_norm_le fun n z hz => (hF n).norm_le_one hz
-  obtain ⟨φ, g, hφ, hgd, hconv⟩ := montel hΩo (fun n => (hF n).differentiableOn) hb
-  -- The limit fixes the base point.
-  have hg₀ : g z₀ = 0 := by
-    have h1 : Tendsto (fun n => F (φ n) z₀) atTop (𝓝 (g z₀)) := hconv.tendsto_at hz₀
-    rw [funext fun n => (hF (φ n)).map_base] at h1
-    exact tendsto_nhds_unique h1 tendsto_const_nhds
-  -- The limit is bounded by `1`, hence lands in the open disc.
-  have hle : ∀ z ∈ Ω, ‖g z‖ ≤ 1 := fun z hz =>
-    le_of_tendsto (hconv.tendsto_at hz).norm
-      (Eventually.of_forall fun n => (hF (φ n)).norm_le_one hz)
-  have hgm : MapsTo g Ω (ball (0 : ℂ) 1) :=
-    mapsTo_ball_of_forall_norm_le_one hΩo hconn hgd hle hz₀ hg₀
+  obtain ⟨φ, g, hφ, -, hconv⟩ := montel hΩo (fun n => (hF n).differentiableOn) hb
   -- The derivatives converge locally uniformly, so the supremum is attained at the limit.
-  have hderiv : TendstoLocallyUniformlyOn (fun n => deriv (F (φ n))) (deriv g) atTop Ω := by
-    have h := _root_.TendstoLocallyUniformlyOn.deriv hconv
-      (Eventually.of_forall fun n => (hF (φ n)).differentiableOn) hΩo
-    simpa [Function.comp_def] using h
   have hMg : ‖deriv g z₀‖ =
-      sSup ((fun f : ℂ → ℂ => ‖deriv f z₀‖) '' {f | IsPointedDiscInjectionOn f Ω z₀}) := by
-    refine tendsto_nhds_unique (hderiv.tendsto_at hz₀).norm ?_
-    simpa [Function.comp_def, hFu] using hu_tendsto.comp hφ.tendsto_atTop
-  -- Injectivity survives by Hurwitz; the constant alternative is excluded by positivity.
-  have hgi : InjOn g Ω := by
-    rcases hurwitz_injOn hΩo hconn (Eventually.of_forall fun n => (hF (φ n)).differentiableOn)
-      hconv (Eventually.of_forall fun n => (hF (φ n)).injOn) with hinj | ⟨v, hv⟩
-    · exact hinj
-    · exfalso
-      rw [deriv_eq_zero_of_forall_eq hΩo hz₀ hv, norm_zero] at hMg
-      exact hM₀.ne hMg
-  exact ⟨g, ⟨hgd, hgm, hgi, hg₀⟩, fun f hf => hMg ▸ le_csSup hbdd ⟨f, hf, rfl⟩⟩
+      sSup ((fun f : ℂ → ℂ => ‖deriv f z₀‖) '' {f | IsPointedDiscInjectionOn f Ω z₀}) :=
+    norm_deriv_eq_of_tendstoLocallyUniformlyOn hΩo hz₀
+      (Eventually.of_forall fun n => (hF (φ n)).differentiableOn) hconv
+      (hu_tendsto.comp hφ.tendsto_atTop) (Eventually.of_forall fun n => hFu (φ n))
+  have hg : IsPointedDiscInjectionOn g Ω z₀ :=
+    isPointedDiscInjectionOn_of_tendstoLocallyUniformlyOn hΩo hconn hz₀
+      (Eventually.of_forall fun n => hF (φ n)) hconv
+      (by rw [← norm_ne_zero_iff, hMg]; exact hM₀.ne')
+  exact ⟨g, hg, fun f hf => hMg ▸ le_csSup hbdd ⟨f, hf, rfl⟩⟩
 
 /-- **The extremal problem has a solution on a simply connected proper subdomain.** This is the
 form the Riemann mapping theorem uses: on a nonempty, simply connected, open, proper subset `Ω` of

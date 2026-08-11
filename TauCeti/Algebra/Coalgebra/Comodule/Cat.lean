@@ -168,14 +168,12 @@ abbrev homLinearMap {M N : ComoduleCat.{u, v, w} R C} (f : M ⟶ N) : M →ₗ[R
 
 /-- Two morphisms of bundled comodules are equal when their underlying functions are equal. -/
 @[ext]
-theorem hom_ext {M N : ComoduleCat.{u, v, w} R C} {f g : M ⟶ N}
-    (h : ∀ m, f m = g m) : f = g :=
+theorem hom_ext {M N : ComoduleCat.{u, v, w} R C} {f g : M ⟶ N} (h : ∀ m, f m = g m) : f = g :=
   Comodule.Hom.ext h
 
 /-- The identity morphism has the identity linear map underneath. -/
 @[simp]
-theorem toLinearMap_id (M : ComoduleCat.{u, v, w} R C) :
-    (𝟙 M : M ⟶ M).toLinearMap = LinearMap.id :=
+theorem toLinearMap_id (M : ComoduleCat.{u, v, w} R C) : (𝟙 M : M ⟶ M).toLinearMap = LinearMap.id :=
   rfl
 
 /-- Composition in `ComoduleCat` is composition of the underlying linear maps. -/
@@ -186,21 +184,18 @@ theorem toLinearMap_comp {M N P : ComoduleCat.{u, v, w} R C} (f : M ⟶ N) (g : 
 
 /-- The identity morphism acts as the identity function. -/
 @[simp]
-theorem id_apply (M : ComoduleCat.{u, v, w} R C) (m : M) :
-    (𝟙 M : M ⟶ M) m = m :=
+theorem id_apply (M : ComoduleCat.{u, v, w} R C) (m : M) : (𝟙 M : M ⟶ M) m = m :=
   rfl
 
 /-- Composition of morphisms acts by ordinary function composition. -/
 @[simp]
-theorem comp_apply {M N P : ComoduleCat.{u, v, w} R C} (f : M ⟶ N) (g : N ⟶ P)
-    (m : M) :
+theorem comp_apply {M N P : ComoduleCat.{u, v, w} R C} (f : M ⟶ N) (g : N ⟶ P) (m : M) :
     (f ≫ g) m = g (f m) :=
   rfl
 
 /-- The zero morphism has the zero linear map underneath. -/
 @[simp]
-theorem toLinearMap_zero (M N : ComoduleCat.{u, v, w} R C) :
-    (0 : M ⟶ N).toLinearMap = 0 :=
+theorem toLinearMap_zero (M N : ComoduleCat.{u, v, w} R C) : (0 : M ⟶ N).toLinearMap = 0 :=
   rfl
 
 /-- Addition of morphisms is addition of the underlying linear maps. -/
@@ -225,20 +220,17 @@ theorem toLinearMap_smul {M N : ComoduleCat.{u, v, w} R C} (r : R) (f : M ⟶ N)
 /-- Finite sums of morphisms are finite sums of the underlying linear maps. -/
 @[simp]
 theorem toLinearMap_sum {ι : Type*} {M N : ComoduleCat.{u, v, w} R C} (s : Finset ι)
-    (f : ι → (M ⟶ N)) :
-    (∑ i ∈ s, f i).toLinearMap = ∑ i ∈ s, (f i).toLinearMap :=
+    (f : ι → (M ⟶ N)) : (∑ i ∈ s, f i).toLinearMap = ∑ i ∈ s, (f i).toLinearMap :=
   Comodule.Hom.sum_toLinearMap s f
 
 /-- The zero morphism acts as the zero function. -/
 @[simp]
-theorem zero_apply {M N : ComoduleCat.{u, v, w} R C} (m : M) :
-    (0 : M ⟶ N) m = 0 :=
+theorem zero_apply {M N : ComoduleCat.{u, v, w} R C} (m : M) : (0 : M ⟶ N) m = 0 :=
   rfl
 
 /-- Addition of morphisms acts by pointwise addition. -/
 @[simp]
-theorem add_apply {M N : ComoduleCat.{u, v, w} R C} (f g : M ⟶ N) (m : M) :
-    (f + g) m = f m + g m :=
+theorem add_apply {M N : ComoduleCat.{u, v, w} R C} (f g : M ⟶ N) (m : M) : (f + g) m = f m + g m :=
   rfl
 
 /-- Natural-number scalar multiplication of morphisms acts by pointwise natural-number scalar
@@ -257,8 +249,7 @@ theorem smul_apply {M N : ComoduleCat.{u, v, w} R C} (r : R) (f : M ⟶ N) (m : 
 /-- Finite sums of morphisms act by pointwise finite sums. -/
 @[simp]
 theorem sum_apply {ι : Type*} {M N : ComoduleCat.{u, v, w} R C} (s : Finset ι)
-    (f : ι → (M ⟶ N)) (m : M) :
-    (∑ i ∈ s, f i) m = ∑ i ∈ s, f i m :=
+    (f : ι → (M ⟶ N)) (m : M) : (∑ i ∈ s, f i) m = ∑ i ∈ s, f i m :=
   Comodule.Hom.sum_apply s f m
 
 /-- Composition in `ComoduleCat` is additive in the left morphism. -/
@@ -292,8 +283,7 @@ theorem comp_smul {M N P : ComoduleCat.{u, v, w} R C} (r : R) (f : M ⟶ N) (g :
   rfl
 
 /-- Composing the zero morphism on the left gives the zero morphism. -/
-theorem zero_comp {M N P : ComoduleCat.{u, v, w} R C} (f : N ⟶ P) :
-    (0 : M ⟶ N) ≫ f = 0 := by
+theorem zero_comp {M N P : ComoduleCat.{u, v, w} R C} (f : N ⟶ P) : (0 : M ⟶ N) ≫ f = 0 := by
   ext m
   exact map_zero f.toLinearMap
 
@@ -358,8 +348,7 @@ theorem isoToLinearEquiv_apply {M N : ComoduleCat.{u, v, w} R C} (i : M ≅ N) (
 /-- The inverse linear equivalence induced by a comodule isomorphism applies as the inverse
 morphism. -/
 @[simp]
-theorem isoToLinearEquiv_symm_apply {M N : ComoduleCat.{u, v, w} R C} (i : M ≅ N)
-    (n : N) :
+theorem isoToLinearEquiv_symm_apply {M N : ComoduleCat.{u, v, w} R C} (i : M ≅ N) (n : N) :
     (isoToLinearEquiv (R := R) (C := C) i).symm n = i.inv n :=
   rfl
 
@@ -382,8 +371,7 @@ theorem isoToLinearEquiv_symm {M N : ComoduleCat.{u, v, w} R C} (i : M ≅ N) :
 /-- The linear equivalence induced by a composite comodule isomorphism is the composite of
 the induced linear equivalences. -/
 @[simp]
-theorem isoToLinearEquiv_trans {M N P : ComoduleCat.{u, v, w} R C} (i : M ≅ N)
-    (j : N ≅ P) :
+theorem isoToLinearEquiv_trans {M N P : ComoduleCat.{u, v, w} R C} (i : M ≅ N) (j : N ≅ P) :
     isoToLinearEquiv (R := R) (C := C) (i ≪≫ j) =
       (isoToLinearEquiv (R := R) (C := C) i).trans
         (isoToLinearEquiv (R := R) (C := C) j) := by
@@ -420,39 +408,34 @@ coactions. -/
 /-- The forward morphism of `isoOfLinearEquiv` has the original linear equivalence
 underneath. -/
 @[simp]
-theorem isoOfLinearEquiv_hom_toLinearMap {M N : ComoduleCat.{u, v, w} R C}
-    (e : M ≃ₗ[R] N) (h) :
+theorem isoOfLinearEquiv_hom_toLinearMap {M N : ComoduleCat.{u, v, w} R C} (e : M ≃ₗ[R] N) (h) :
     ((isoOfLinearEquiv (R := R) (C := C) e h).hom).toLinearMap = e.toLinearMap :=
   rfl
 
 /-- The inverse morphism of `isoOfLinearEquiv` has the inverse linear equivalence
 underneath. -/
 @[simp]
-theorem isoOfLinearEquiv_inv_toLinearMap {M N : ComoduleCat.{u, v, w} R C}
-    (e : M ≃ₗ[R] N) (h) :
+theorem isoOfLinearEquiv_inv_toLinearMap {M N : ComoduleCat.{u, v, w} R C} (e : M ≃ₗ[R] N) (h) :
     ((isoOfLinearEquiv (R := R) (C := C) e h).inv).toLinearMap =
       e.symm.toLinearMap :=
   rfl
 
 /-- The forward morphism of `isoOfLinearEquiv` applies as the original linear equivalence. -/
 @[simp]
-theorem isoOfLinearEquiv_hom_apply {M N : ComoduleCat.{u, v, w} R C}
-    (e : M ≃ₗ[R] N) (h) (m : M) :
+theorem isoOfLinearEquiv_hom_apply {M N : ComoduleCat.{u, v, w} R C} (e : M ≃ₗ[R] N) (h) (m : M) :
     (isoOfLinearEquiv (R := R) (C := C) e h).hom m = e m :=
   rfl
 
 /-- The inverse morphism of `isoOfLinearEquiv` applies as the inverse linear equivalence. -/
 @[simp]
-theorem isoOfLinearEquiv_inv_apply {M N : ComoduleCat.{u, v, w} R C}
-    (e : M ≃ₗ[R] N) (h) (n : N) :
+theorem isoOfLinearEquiv_inv_apply {M N : ComoduleCat.{u, v, w} R C} (e : M ≃ₗ[R] N) (h) (n : N) :
     (isoOfLinearEquiv (R := R) (C := C) e h).inv n = e.symm n :=
   rfl
 
 /-- Converting `isoOfLinearEquiv` back to a linear equivalence recovers the original linear
 equivalence. -/
 @[simp]
-theorem isoToLinearEquiv_isoOfLinearEquiv {M N : ComoduleCat.{u, v, w} R C}
-    (e : M ≃ₗ[R] N) (h) :
+theorem isoToLinearEquiv_isoOfLinearEquiv {M N : ComoduleCat.{u, v, w} R C} (e : M ≃ₗ[R] N) (h) :
     isoToLinearEquiv (R := R) (C := C) (isoOfLinearEquiv (R := R) (C := C) e h) =
       e := by
   ext m

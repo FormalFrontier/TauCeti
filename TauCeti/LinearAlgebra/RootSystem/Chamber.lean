@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.LinearAlgebra.RootSystem.Positive
-public import TauCeti.LinearAlgebra.RootSystem.WeylGroup
+public import TauCeti.LinearAlgebra.RootSystem.Weyl.Group
 
 public section
 
@@ -18,19 +18,34 @@ open, and proves that it meets every Weyl orbit: every weight can be moved into 
 dominant chamber by some element of the Weyl group. Equivalently, the Weyl translates of the
 closed dominant chamber cover the whole weight space.
 
+The two chambers are defined by the signs of the *simple* coroot functionals. Since the coroot of
+a positive root is a nonnegative integer combination of the simple coroots, the same sign
+conditions in fact hold for all of the positive roots at once, and the file ends by recording that
+description of both chambers.
+
 The proof is the classical maximization argument. The Weyl group of a finite root system is
 finite, so the sum of the coroot functionals indexed by the positive roots, evaluated along an
 orbit, attains a maximum. A simple reflection `sᵢ` permutes the positive roots other than `αᵢ`
 and sends `αᵢ` to `-αᵢ`, so applying `sᵢ` changes that sum by `-2⟨αᵢ^∨, x⟩`; maximality
 therefore forces `⟨αᵢ^∨, x⟩ ≥ 0` for every simple root, which is dominance.
 
+The weights lying on none of the walls are the **regular** ones. Regularity is defined here too,
+since it is the condition separating the two chambers: a dominant weight is strictly dominant
+exactly when it is regular. It is stated with no order on the coefficient ring, and is manifestly
+Weyl-invariant.
+
 ## Main definitions
 
+* `TauCeti.IsRegularWeight` is regularity of a weight: no coroot functional vanishes on it.
 * `TauCeti.dominantChamber` is the closed dominant chamber of a base.
 * `TauCeti.openDominantChamber` is its open counterpart.
 
 ## Main results
 
+* `TauCeti.isRegularWeight_smul`: regularity is invariant under the Weyl group.
+* `TauCeti.mem_openDominantChamber_of_isRegularWeight` and
+  `TauCeti.isRegularWeight_of_mem_openDominantChamber`: the strictly dominant weights are exactly
+  the regular dominant ones.
 * `TauCeti.exists_mem_dominantChamber_of_finite_weylGroup` and
   `TauCeti.exists_mem_dominantChamber`: every weight is Weyl-conjugate into the closed dominant
   chamber.
@@ -39,6 +54,9 @@ therefore forces `⟨αᵢ^∨, x⟩ ≥ 0` for every simple root, which is domi
 * `TauCeti.ofIdx_smul_notMem_dominantChamber` and
   `TauCeti.ofIdx_smul_ne_of_mem_openDominantChamber`: a simple reflection moves every point of the
   open dominant chamber, and moves it out of the closed chamber.
+* `TauCeti.mem_dominantChamber_iff_forall_mem_posRoots` and
+  `TauCeti.mem_openDominantChamber_iff_forall_mem_posRoots`: the two chambers are cut out by all of
+  the positive coroot functionals, not just the simple ones.
 
 ## Implementation notes
 
@@ -51,6 +69,15 @@ asks for no root-system assumption: on top of the standing `Finite ι`, `P.IsCry
 `P.IsReduced` hypotheses that the positive-root permutation step needs, it assumes only
 `Finite P.weylGroup`. The roadmap-signature `exists_mem_dominantChamber` is the root-system case,
 where that finiteness comes from `TauCeti.RootPairing.finite_weylGroup`.
+
+Regularity quantifies over *all* root indices, not just the positive ones. The two are equivalent,
+since the coroot functional of a negated root is the negative of the original, and quantifying
+over everything keeps the predicate manifestly Weyl-invariant, which is what the chamber arguments
+downstream use.
+
+The statements that measure a coroot against the base assume `P.flip.IsReduced` alongside
+`P.IsReduced`; Mathlib's `RootPairing.instFlipIsReduced` supplies it whenever `N` is torsion free,
+which is automatic over a field.
 
 ## References
 
@@ -72,6 +99,35 @@ universe u v w x
 variable {ι : Type u} {R : Type v} {M : Type w} {N : Type x}
   [CommRing R] [AddCommGroup M] [Module R M] [AddCommGroup N] [Module R N]
   (P : RootPairing ι R M N)
+
+/-! ### Regular weights -/
+
+/-- A weight is **regular** when no coroot functional vanishes on it, that is, when it lies on none
+of the walls `ker αᵢ^∨`. -/
+def IsRegularWeight (x : M) : Prop := ∀ i, P.coroot' i x ≠ 0
+
+/-- The defining condition of `TauCeti.IsRegularWeight`, as an `Iff`: the predicate is not exposed,
+so this is how it is introduced and eliminated outside this file.
+
+Not a `simp` lemma: unfolding the predicate would take `TauCeti.isRegularWeight_smul` out of
+simp-normal form, and would dissolve `IsRegularWeight` out of the goals its own API is stated
+about. Use it explicitly, as `rw [isRegularWeight_iff]` or `simp [isRegularWeight_iff]`. -/
+lemma isRegularWeight_iff (x : M) : IsRegularWeight P x ↔ ∀ i, P.coroot' i x ≠ 0 := Iff.rfl
+
+/-- **Regularity is a Weyl-invariant condition on weights.** A Weyl-group element matches the
+coroot functional of a root with that of its image, so it can neither create nor destroy a
+zero. -/
+@[simp]
+lemma isRegularWeight_smul (w : P.weylGroup) (x : M) :
+    IsRegularWeight P (w • x) ↔ IsRegularWeight P x := by
+  refine ⟨fun h i ↦ ?_, fun h i ↦ ?_⟩
+  · rw [← RootPairing.coroot'_weylGroupToPerm_smul P w i x]
+    exact h _
+  · have h' := h ((P.weylGroupToPerm w).symm i)
+    rw [← RootPairing.coroot'_weylGroupToPerm_smul P w _ x, Equiv.apply_symm_apply] at h'
+    exact h'
+
+/-! ### The dominant chamber -/
 
 variable [LinearOrder R] (b : P.Base)
 
@@ -96,6 +152,13 @@ lemma mem_openDominantChamber (x : M) :
 lemma openDominantChamber_subset_dominantChamber :
     openDominantChamber P b ⊆ dominantChamber P b :=
   fun _ hx i hi ↦ (hx i hi).le
+
+/-- A dominant weight is strictly dominant as soon as it is regular: nonnegativity that is never
+an equality is positivity. -/
+lemma mem_openDominantChamber_of_isRegularWeight {x : M} (hx : x ∈ dominantChamber P b)
+    (hreg : IsRegularWeight P x) : x ∈ openDominantChamber P b :=
+  (mem_openDominantChamber P b x).mpr fun i hi ↦
+    lt_of_le_of_ne ((mem_dominantChamber P b x).mp hx i hi) (Ne.symm (hreg i))
 
 /-- The origin is dominant. -/
 lemma zero_mem_dominantChamber : (0 : M) ∈ dominantChamber P b := by
@@ -153,7 +216,7 @@ variable [Finite ι]
 factor two this is the pairing of `x` with the Weyl vector on the coroot side; all that is used
 below is how it transforms under a simple reflection. -/
 private noncomputable def posCorootSum (x : M) : R :=
-  ∑ i ∈ (posRoots_finite P b).toFinset, P.coroot' i x
+  ∑ i ∈ posRootsFinset P b, P.coroot' i x
 
 variable [P.IsCrystallographic] [P.IsReduced]
 
@@ -164,27 +227,22 @@ private lemma posCorootSum_reflection {i : ι} (hi : i ∈ b.support) (x : M) :
   classical
   -- Work with the underlying sums rather than leaning on `posCorootSum` unfolding silently.
   unfold posCorootSum
-  set s := (posRoots_finite P b).toFinset with hs
-  have hmem : ∀ j : ι, j ∈ s ↔ j ∈ posRoots P b := by
-    intro j; rw [hs, Set.Finite.mem_toFinset]
-  have his : i ∈ s := (hmem i).mpr (support_subset_posRoots P b hi)
+  have his : i ∈ posRootsFinset P b :=
+    (mem_posRootsFinset P b i).mpr (support_subset_posRoots P b hi)
   -- Reflecting the argument reindexes the summand along `P.reflectionPerm i`.
-  have hreindex : ∑ j ∈ s, P.coroot' j (P.reflection i x) =
-      ∑ j ∈ s, P.coroot' (P.reflectionPerm i j) x :=
+  have hreindex : ∑ j ∈ posRootsFinset P b, P.coroot' j (P.reflection i x) =
+      ∑ j ∈ posRootsFinset P b, P.coroot' (P.reflectionPerm i j) x :=
     Finset.sum_congr rfl fun _ _ ↦ P.coroot'_reflection x
   -- The reflected simple coroot is the negative of the original.
   have hself : P.coroot' (P.reflectionPerm i i) x = -P.coroot' i x := by
     rw [RootPairing.coroot'_reflectionPerm_self]
     simp
   -- Away from `i` the reflection is a bijection of the punctured positive roots.
-  have hpunctured : ∑ j ∈ s.erase i, P.coroot' (P.reflectionPerm i j) x =
-      ∑ j ∈ s.erase i, P.coroot' j x := by
-    refine Finset.sum_equiv (P.reflectionPerm i) (fun j ↦ ?_) (fun _ _ ↦ rfl)
-    have h := reflectionPerm_mem_posRoots_diff_singleton_iff P b hi j
-    simp only [Set.mem_sdiff, Set.mem_singleton_iff] at h
-    simp only [Finset.mem_erase, hmem]
-    tauto
-  have hexpand : ∑ j ∈ s, P.coroot' j x = P.coroot' i x + ∑ j ∈ s.erase i, P.coroot' j x :=
+  have hpunctured : ∑ j ∈ (posRootsFinset P b).erase i, P.coroot' (P.reflectionPerm i j) x =
+      ∑ j ∈ (posRootsFinset P b).erase i, P.coroot' j x :=
+    sum_posRootsFinset_erase_comp_reflectionPerm P b hi fun j ↦ P.coroot' j x
+  have hexpand : ∑ j ∈ posRootsFinset P b, P.coroot' j x =
+      P.coroot' i x + ∑ j ∈ (posRootsFinset P b).erase i, P.coroot' j x :=
     (Finset.add_sum_erase _ _ his).symm
   rw [hreindex, ← Finset.add_sum_erase _ _ his, hpunctured, hself, hexpand]
   ring
@@ -231,5 +289,92 @@ theorem exists_mem_dominantChamber [P.IsRootSystem] (x : M) :
   exists_mem_dominantChamber_of_finite_weylGroup P b x
 
 end Finite
+
+section PosRoots
+
+variable [Finite ι] [P.IsCrystallographic] [P.IsReduced] [P.flip.IsReduced]
+
+/-- A positive coroot functional is a nonnegative integer combination of the simple coroot
+functionals, with at least one simple coroot genuinely occurring. -/
+private lemma exists_coroot'_eq_sum_nat_of_mem_posRoots {i : ι} (hi : i ∈ posRoots P b) :
+    ∃ f : ι → ℕ, (∃ j ∈ b.support, f j ≠ 0) ∧
+      ∀ x : M, P.coroot' i x = ∑ j ∈ b.support, (f j : R) * P.coroot' j x := by
+  obtain ⟨f, -, hsum⟩ := exists_coroot_eq_sum_nat_of_mem_posRoots P b hi
+  refine ⟨f, ?_, fun x ↦ ?_⟩
+  · by_contra hcon
+    push Not at hcon
+    have : NeZero (2 : R) := ⟨by exact_mod_cast (by norm_num : (2 : ℕ) ≠ 0)⟩
+    refine P.ne_zero' i ?_
+    rw [hsum]
+    exact Finset.sum_eq_zero fun j hj ↦ by simp [hcon j hj]
+  · -- `RootPairing.coroot'` is an abbreviation for the transpose of `P.toLinearMap` applied to a
+    -- coroot, so unfolding it is what carries the expansion of `P.coroot i` to the dual side.
+    have hcoroot' : P.coroot' i = ∑ j ∈ b.support, (f j : R) • P.coroot' j := by
+      simp only [_root_.RootPairing.coroot']
+      rw [hsum, map_sum]
+      exact Finset.sum_congr rfl fun j _ ↦ by simp [Nat.cast_smul_eq_nsmul]
+    rw [hcoroot', LinearMap.sum_apply]
+    exact Finset.sum_congr rfl fun j _ ↦ by simp
+
+variable {x : M}
+
+/-- Every positive coroot functional is nonnegative on the closed dominant chamber. -/
+theorem coroot'_nonneg_of_mem_posRoots (hx : x ∈ dominantChamber P b) {i : ι}
+    (hi : i ∈ posRoots P b) : 0 ≤ P.coroot' i x := by
+  obtain ⟨f, -, hsum⟩ := exists_coroot'_eq_sum_nat_of_mem_posRoots P b hi
+  rw [hsum x]
+  exact Finset.sum_nonneg fun j hj ↦
+    mul_nonneg (by positivity) ((mem_dominantChamber P b x).mp hx j hj)
+
+/-- Every negative coroot functional is nonpositive on the closed dominant chamber. -/
+theorem coroot'_nonpos_of_mem_negRoots (hx : x ∈ dominantChamber P b) {i : ι}
+    (hi : i ∈ negRoots P b) : P.coroot' i x ≤ 0 := by
+  have h := coroot'_nonneg_of_mem_posRoots P b hx
+    ((reflectionPerm_self_mem_posRoots_iff_mem_negRoots P b i).mpr hi)
+  rw [RootPairing.coroot'_reflectionPerm_self] at h
+  simpa using h
+
+/-- Every positive coroot functional is positive on the open dominant chamber. -/
+theorem coroot'_pos_of_mem_posRoots (hx : x ∈ openDominantChamber P b) {i : ι}
+    (hi : i ∈ posRoots P b) : 0 < P.coroot' i x := by
+  -- Some simple coroot really occurs in the expansion, because a coroot is never zero.
+  obtain ⟨f, ⟨j, hj, hfj⟩, hsum⟩ := exists_coroot'_eq_sum_nat_of_mem_posRoots P b hi
+  have hx' := (mem_openDominantChamber P b x).mp hx
+  rw [hsum x]
+  refine Finset.sum_pos' (fun k hk ↦ mul_nonneg (by positivity) (hx' k hk).le) ⟨j, hj, ?_⟩
+  exact mul_pos (by exact_mod_cast Nat.pos_of_ne_zero hfj) (hx' j hj)
+
+/-- Every negative coroot functional is negative on the open dominant chamber. -/
+theorem coroot'_neg_of_mem_negRoots (hx : x ∈ openDominantChamber P b) {i : ι}
+    (hi : i ∈ negRoots P b) : P.coroot' i x < 0 := by
+  have h := coroot'_pos_of_mem_posRoots P b hx
+    ((reflectionPerm_self_mem_posRoots_iff_mem_negRoots P b i).mpr hi)
+  rw [RootPairing.coroot'_reflectionPerm_self] at h
+  simpa using h
+
+/-- **A strictly dominant weight is regular.** Every root is positive or negative, and the two
+kinds of coroot functional are respectively positive and negative on the open dominant chamber. -/
+theorem isRegularWeight_of_mem_openDominantChamber (hx : x ∈ openDominantChamber P b) :
+    IsRegularWeight P x := by
+  intro i
+  rcases mem_posRoots_or_mem_negRoots P b i with hi | hi
+  · exact (coroot'_pos_of_mem_posRoots P b hx hi).ne'
+  · exact (coroot'_neg_of_mem_negRoots P b hx hi).ne
+
+/-- **The closed dominant chamber is cut out by the positive coroot functionals**, not just by the
+simple ones. -/
+theorem mem_dominantChamber_iff_forall_mem_posRoots :
+    x ∈ dominantChamber P b ↔ ∀ i ∈ posRoots P b, 0 ≤ P.coroot' i x := by
+  refine ⟨fun hx _ hi ↦ coroot'_nonneg_of_mem_posRoots P b hx hi, fun h ↦ ?_⟩
+  exact (mem_dominantChamber P b x).mpr fun i hi ↦ h i (support_subset_posRoots P b hi)
+
+/-- **The open dominant chamber is cut out by the positive coroot functionals**, not just by the
+simple ones. -/
+theorem mem_openDominantChamber_iff_forall_mem_posRoots :
+    x ∈ openDominantChamber P b ↔ ∀ i ∈ posRoots P b, 0 < P.coroot' i x := by
+  refine ⟨fun hx _ hi ↦ coroot'_pos_of_mem_posRoots P b hx hi, fun h ↦ ?_⟩
+  exact (mem_openDominantChamber P b x).mpr fun i hi ↦ h i (support_subset_posRoots P b hi)
+
+end PosRoots
 
 end TauCeti

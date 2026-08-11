@@ -83,20 +83,17 @@ private lemma iteratedDeriv_complexMGF_id_zero
   simp only [id_eq, hpow]
   exact integral_ofReal
 
-/-- **Moment determinacy at the level of characteristic functions.** If two measures on `ℝ` have
-finite exponential moments near `0` (so their complex moment-generating functions are analytic on a
-strip about the imaginary axis) and agree on every polynomial moment `∫ xⁿ`, then their
-characteristic functions coincide. -/
-theorem charFun_eq_of_forall_integral_pow_eq
+/-- **Equal polynomial moments make the moment-generating functions agree near `0`.** If both
+measures have `0` in the interior of their exponential-moment set and all moments `∫ xⁿ` agree,
+then their complex moment-generating functions coincide on a neighbourhood of `0`. -/
+private theorem complexMGF_eventuallyEq_of_forall_integral_pow_eq
     (hμ : (0 : ℝ) ∈ interior (integrableExpSet id μ))
     (hν : (0 : ℝ) ∈ interior (integrableExpSet id ν))
     (hmom : ∀ n, ∫ x, x ^ n ∂μ = ∫ x, x ^ n ∂ν) :
-    charFun μ = charFun ν := by
-  have hμ0 : (0 : ℂ).re ∈ interior (integrableExpSet id μ) := by simpa using hμ
-  have hν0 : (0 : ℂ).re ∈ interior (integrableExpSet id ν) := by simpa using hν
-  have hAμ : AnalyticAt ℂ (complexMGF id μ) 0 := analyticAt_complexMGF hμ0
-  have hAν : AnalyticAt ℂ (complexMGF id ν) 0 := analyticAt_complexMGF hν0
-  -- The difference of the two moment-generating functions has all derivatives zero at `0`.
+    complexMGF id μ =ᶠ[𝓝 0] complexMGF id ν := by
+  have hAμ : AnalyticAt ℂ (complexMGF id μ) 0 := analyticAt_complexMGF (by simpa using hμ)
+  have hAν : AnalyticAt ℂ (complexMGF id ν) 0 := analyticAt_complexMGF (by simpa using hν)
+  -- the difference has every iterated derivative zero at `0`, so it vanishes near `0`
   have hiter : ∀ i, iteratedDeriv i (fun z => complexMGF id μ z - complexMGF id ν z) 0 = 0 := by
     intro i
     rw [iteratedDeriv_fun_sub hAμ.contDiffAt hAν.contDiffAt,
@@ -106,10 +103,19 @@ theorem charFun_eq_of_forall_integral_pow_eq
   have hord : analyticOrderAt (fun z => complexMGF id μ z - complexMGF id ν z) 0 = ⊤ :=
     ENat.eq_top_iff_forall_ge.mpr fun m =>
       (natCast_le_analyticOrderAt_iff_iteratedDeriv_eq_zero hsub).mpr fun i _ => hiter i
-  have hnear : ∀ᶠ z in 𝓝 (0 : ℂ), complexMGF id μ z - complexMGF id ν z = 0 :=
-    analyticOrderAt_eq_top.mp hord
-  have hEqNear : complexMGF id μ =ᶠ[𝓝 0] complexMGF id ν := by
-    filter_upwards [hnear] with z hz using sub_eq_zero.mp hz
+  filter_upwards [analyticOrderAt_eq_top.mp hord] with z hz using sub_eq_zero.mp hz
+
+/-- **Moment determinacy at the level of characteristic functions.** If two measures on `ℝ` have
+finite exponential moments near `0` (so their complex moment-generating functions are analytic on a
+strip about the imaginary axis) and agree on every polynomial moment `∫ xⁿ`, then their
+characteristic functions coincide. -/
+theorem charFun_eq_of_forall_integral_pow_eq (hμ : (0 : ℝ) ∈ interior (integrableExpSet id μ))
+    (hν : (0 : ℝ) ∈ interior (integrableExpSet id ν)) (hmom : ∀ n, ∫ x, x ^ n ∂μ = ∫ x, x ^ n ∂ν) :
+    charFun μ = charFun ν := by
+  have hμ0 : (0 : ℂ).re ∈ interior (integrableExpSet id μ) := by simpa using hμ
+  have hν0 : (0 : ℂ).re ∈ interior (integrableExpSet id ν) := by simpa using hν
+  have hEqNear : complexMGF id μ =ᶠ[𝓝 0] complexMGF id ν :=
+    complexMGF_eventuallyEq_of_forall_integral_pow_eq hμ hν hmom
   -- Propagate the equality across the common analyticity strip by the identity principle.
   set U : Set ℂ :=
     Complex.reLm ⁻¹' (interior (integrableExpSet id μ) ∩ interior (integrableExpSet id ν))
@@ -138,8 +144,7 @@ exponential moments near `0` is determined by its polynomial moments `∫ xⁿ`.
 `charFun_eq_of_forall_integral_pow_eq` with `MeasureTheory.Measure.ext_of_charFun`. -/
 theorem Measure.ext_of_forall_integral_pow_eq [IsFiniteMeasure μ] [IsFiniteMeasure ν]
     (hμ : (0 : ℝ) ∈ interior (integrableExpSet id μ))
-    (hν : (0 : ℝ) ∈ interior (integrableExpSet id ν))
-    (hmom : ∀ n, ∫ x, x ^ n ∂μ = ∫ x, x ^ n ∂ν) :
+    (hν : (0 : ℝ) ∈ interior (integrableExpSet id ν)) (hmom : ∀ n, ∫ x, x ^ n ∂μ = ∫ x, x ^ n ∂ν) :
     μ = ν :=
   Measure.ext_of_charFun (charFun_eq_of_forall_integral_pow_eq hμ hν hmom)
 
@@ -152,7 +157,7 @@ private lemma zero_mem_interior_integrableExpSet_id_of_exists_integrable_exp
   obtain ⟨a, ha, hint⟩ := h
   refine mem_interior.mpr ⟨Set.Ioo (-a) a, ?_, isOpen_Ioo, Set.mem_Ioo.mpr ⟨neg_lt_zero.mpr ha, ha⟩⟩
   intro t ht
-  simp only [integrableExpSet, Set.mem_setOf_eq, id_eq]
+  simp only [integrableExpSet, Set.mem_ofPred_eq, id_eq]
   refine hint.mono'
     ((Real.continuous_exp.comp (continuous_const.mul continuous_id)).aestronglyMeasurable) ?_
   filter_upwards with x

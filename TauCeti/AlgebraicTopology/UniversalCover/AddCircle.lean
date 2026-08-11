@@ -179,14 +179,12 @@ noncomputable def addCircleMulEquivInt [PreconnectedSpace 𝕜]
 @[simp]
 theorem addCircleMulEquivInt_apply [PreconnectedSpace 𝕜]
     [TotallyDisconnectedSpace (zmultiples p)] (hp : ¬ IsOfFinAddOrder p) (a : Multiplicative ℤ)
-    (e : 𝕜) :
-    (addCircleMulEquivInt hp a).1 e = e + a.toAdd • p := by
+    (e : 𝕜) : (addCircleMulEquivInt hp a).1 e = e + a.toAdd • p := by
   simp [addCircleMulEquivInt]
 
 theorem addCircleMulEquivInt_symm_zsmul_apply_zero [PreconnectedSpace 𝕜]
     [TotallyDisconnectedSpace (zmultiples p)] (hp : ¬ IsOfFinAddOrder p)
-    (φ : Deck ((↑) : 𝕜 → AddCircle p)) :
-    ((addCircleMulEquivInt hp).symm φ).toAdd • p = φ.1 0 := by
+    (φ : Deck ((↑) : 𝕜 → AddCircle p)) : ((addCircleMulEquivInt hp).symm φ).toAdd • p = φ.1 0 := by
   have happly :=
     addCircleMulEquivInt_apply hp ((addCircleMulEquivInt hp).symm φ) (0 : 𝕜)
   have hzero := congrArg (fun ψ : Deck ((↑) : 𝕜 → AddCircle p) => ψ.1 0)

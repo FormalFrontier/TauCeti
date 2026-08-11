@@ -40,8 +40,7 @@ open scoped InnerProductSpace
 variable {X n : Type*} [Fintype n]
 
 /-- The coefficient triple-to-energy-integrand map as a continuous linear map. -/
-noncomputable def energyIntegrandLinear :
-    (Matrix n n ℝ × EuclideanSpace ℝ n × ℝ) →L[ℝ]
+noncomputable def energyIntegrandLinear : (Matrix n n ℝ × EuclideanSpace ℝ n × ℝ) →L[ℝ]
       (ℝ × EuclideanSpace ℝ n) →L[ℝ] (ℝ × EuclideanSpace ℝ n) →L[ℝ] ℝ :=
   LinearMap.toContinuousLinearMap
     { toFun := fun p => energyIntegrand p.1 p.2.1 p.2.2

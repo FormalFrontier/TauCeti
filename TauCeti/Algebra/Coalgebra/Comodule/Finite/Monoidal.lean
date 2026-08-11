@@ -33,6 +33,10 @@ inherited from `SemimoduleCat` along the faithful forgetful functor.
 * `TauCeti.FGComoduleCat.leftUnitor_hom_apply`,
   `TauCeti.FGComoduleCat.rightUnitor_hom_apply`, and
   `TauCeti.FGComoduleCat.associator_hom_apply`: concrete formulas for the coherence maps.
+* `TauCeti.FGComoduleCat.leftUnitor_hom_toLinearMap`,
+  `TauCeti.FGComoduleCat.rightUnitor_hom_toLinearMap`, and
+  `TauCeti.FGComoduleCat.associator_hom_toLinearMap`: the same formulas at the level of
+  underlying linear maps, together with their inverse variants.
 
 ## References
 
@@ -194,8 +198,7 @@ theorem tensorRightUnitor_eq : tensorRightUnitor R C M = ρ_ M :=
 /-- The monoidal tensor product of two finite-comodule morphisms is their ordinary tensor
 product on underlying linear maps. -/
 @[simp]
-theorem tensorHom_toLinearMap (f : M ⟶ M') (g : N ⟶ N') :
-    (f ⊗ₘ g).hom.toLinearMap =
+theorem tensorHom_toLinearMap (f : M ⟶ M') (g : N ⟶ N') : (f ⊗ₘ g).hom.toLinearMap =
       TensorProduct.map f.hom.toLinearMap g.hom.toLinearMap :=
   rfl
 
@@ -208,26 +211,22 @@ theorem tensorHom_tmul (f : M ⟶ M') (g : N ⟶ N') (m : M) (n : N) :
 
 /-- The left unitor acts by scalar multiplication. -/
 @[simp]
-theorem leftUnitor_hom_apply (r : R) (m : M) :
-    (λ_ M).hom (r ⊗ₜ[R] m) = r • m :=
+theorem leftUnitor_hom_apply (r : R) (m : M) : (λ_ M).hom (r ⊗ₜ[R] m) = r • m :=
   TensorProduct.lid_tmul m r
 
 /-- The inverse left unitor sends `m` to `1 ⊗ m`. -/
 @[simp]
-theorem leftUnitor_inv_apply (m : M) :
-    (λ_ M).inv m = 1 ⊗ₜ[R] m :=
+theorem leftUnitor_inv_apply (m : M) : (λ_ M).inv m = 1 ⊗ₜ[R] m :=
   TensorProduct.lid_symm_apply m
 
 /-- The right unitor acts by scalar multiplication. -/
 @[simp]
-theorem rightUnitor_hom_apply (m : M) (r : R) :
-    (ρ_ M).hom (m ⊗ₜ[R] r) = r • m :=
+theorem rightUnitor_hom_apply (m : M) (r : R) : (ρ_ M).hom (m ⊗ₜ[R] r) = r • m :=
   TensorProduct.rid_tmul m r
 
 /-- The inverse right unitor sends `m` to `m ⊗ 1`. -/
 @[simp]
-theorem rightUnitor_inv_apply (m : M) :
-    (ρ_ M).inv m = m ⊗ₜ[R] 1 :=
+theorem rightUnitor_inv_apply (m : M) : (ρ_ M).inv m = m ⊗ₜ[R] 1 :=
   TensorProduct.rid_symm_apply m
 
 /-- The associator sends `(m ⊗ n) ⊗ p` to `m ⊗ (n ⊗ p)`. -/
@@ -243,6 +242,54 @@ theorem associator_inv_apply (m : M) (n : N) (p : P) :
   by
     rw [← associator_hom_apply]
     exact Iso.hom_inv_id_apply (α_ M N P) _
+
+/-- The associator has the associativity equivalence of tensor products underneath. -/
+@[simp]
+theorem associator_hom_toLinearMap :
+    ((α_ M N P).hom).hom.toLinearMap = (TensorProduct.assoc R M N P).toLinearMap := by
+  apply TensorProduct.ext_threefold
+  intro m n p
+  exact associator_hom_apply m n p
+
+/-- The inverse associator has the inverse associativity equivalence underneath. -/
+@[simp]
+theorem associator_inv_toLinearMap :
+    ((α_ M N P).inv).hom.toLinearMap = (TensorProduct.assoc R M N P).symm.toLinearMap := by
+  apply TensorProduct.ext_threefold'
+  intro m n p
+  exact associator_inv_apply m n p
+
+/-- The left unitor has the left tensor identity underneath. -/
+@[simp]
+theorem leftUnitor_hom_toLinearMap :
+    ((λ_ M).hom).hom.toLinearMap = (TensorProduct.lid R M).toLinearMap := by
+  apply TensorProduct.ext'
+  intro r m
+  exact leftUnitor_hom_apply r m
+
+/-- The inverse left unitor has the inverse left tensor identity underneath. -/
+@[simp]
+theorem leftUnitor_inv_toLinearMap :
+    ((λ_ M).inv).hom.toLinearMap = (TensorProduct.lid R M).symm.toLinearMap := by
+  apply LinearMap.ext
+  intro m
+  exact leftUnitor_inv_apply m
+
+/-- The right unitor has the right tensor identity underneath. -/
+@[simp]
+theorem rightUnitor_hom_toLinearMap :
+    ((ρ_ M).hom).hom.toLinearMap = (TensorProduct.rid R M).toLinearMap := by
+  apply TensorProduct.ext'
+  intro m r
+  exact rightUnitor_hom_apply m r
+
+/-- The inverse right unitor has the inverse right tensor identity underneath. -/
+@[simp]
+theorem rightUnitor_inv_toLinearMap :
+    ((ρ_ M).inv).hom.toLinearMap = (TensorProduct.rid R M).symm.toLinearMap := by
+  apply LinearMap.ext
+  intro m
+  exact rightUnitor_inv_apply m
 
 end FGComoduleCat
 

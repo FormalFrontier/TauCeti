@@ -135,15 +135,13 @@ noncomputable def baseChangeFunctor (L : Type u) [Field L] [Algebra K L] :
   map_comp f g := Hom.baseChange_comp f g L
 
 @[simp]
-lemma baseChangeFunctor_obj (L : Type u) [Field L] [Algebra K L]
-    (A : AbelianVariety K) :
+lemma baseChangeFunctor_obj (L : Type u) [Field L] [Algebra K L] (A : AbelianVariety K) :
     (baseChangeFunctor L).obj A = A.baseChange L :=
   (rfl)
 
 @[simp]
 lemma baseChangeFunctor_map {A B : AbelianVariety K} (L : Type u) [Field L] [Algebra K L]
-    (f : A ⟶ B) :
-    (baseChangeFunctor L).map f =
+    (f : A ⟶ B) : (baseChangeFunctor L).map f =
       eqToHom (baseChangeFunctor_obj L A) ≫ Hom.baseChange f L ≫
         eqToHom (baseChangeFunctor_obj L B).symm :=
   (rfl)
@@ -214,8 +212,7 @@ lemma Hom.baseChangeMonoidHom_apply {A B : AbelianVariety K} (f : A ⟶ B)
 
 /-- Base change preserves pointwise inverses of homomorphisms. -/
 @[simp]
-lemma Hom.baseChange_inv {A B : AbelianVariety K} (f : A ⟶ B)
-    (L : Type u) [Field L] [Algebra K L] :
+lemma Hom.baseChange_inv {A B : AbelianVariety K} (f : A ⟶ B) (L : Type u) [Field L] [Algebra K L] :
     Hom.baseChange f⁻¹ L = (Hom.baseChange f L)⁻¹ :=
   map_inv (Hom.baseChangeMonoidHom A B L) f
 

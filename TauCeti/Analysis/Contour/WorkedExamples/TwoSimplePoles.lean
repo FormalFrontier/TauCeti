@@ -55,8 +55,7 @@ theorem twoPrincipalParts_eq (A B s₁ s₂ : ℂ) :
 
 /-- `twoPrincipalParts` is analytic where each nonzero principal part is away from its designated
 point, or where coincident principal parts cancel. -/
-theorem analyticAt_twoPrincipalParts {A B s₁ s₂ z : ℂ}
-    (h : ((A = 0 ∨ z ≠ s₁) ∧ (B = 0 ∨ z ≠ s₂)) ∨
+theorem analyticAt_twoPrincipalParts {A B s₁ s₂ z : ℂ} (h : ((A = 0 ∨ z ≠ s₁) ∧ (B = 0 ∨ z ≠ s₂)) ∨
       (s₁ = s₂ ∧ A + B = 0)) :
     AnalyticAt ℂ (twoPrincipalParts A B s₁ s₂) z := by
   rcases h with ⟨hz₁, hz₂⟩ | ⟨rfl, hAB⟩
@@ -181,8 +180,7 @@ theorem circleIntegral_twoPrincipalParts {A B c s₁ s₂ : ℂ} {R : ℝ}
 point of each nonzero principal part inside the circle, the integral is `2πi` times the sum of the
 two residues. -/
 theorem circleIntegral_twoPrincipalParts_eq_residue_sum {A B c s₁ s₂ : ℂ} {R : ℝ}
-    (hs : s₁ ≠ s₂) (hs₁ : A = 0 ∨ s₁ ∈ ball c R)
-    (hs₂ : B = 0 ∨ s₂ ∈ ball c R) :
+    (hs : s₁ ≠ s₂) (hs₁ : A = 0 ∨ s₁ ∈ ball c R) (hs₂ : B = 0 ∨ s₂ ∈ ball c R) :
     circleIntegral (twoPrincipalParts A B s₁ s₂) c R =
       2 * (Real.pi : ℂ) * Complex.I *
         (residue (twoPrincipalParts A B s₁ s₂) s₁ +

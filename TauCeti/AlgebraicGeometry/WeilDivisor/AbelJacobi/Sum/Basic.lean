@@ -130,8 +130,7 @@ lemma weightedAbelJacobiDivisorClass_eq_sum (w : X → ℤ) (h : S.IsWeightedDeg
 /-- Equality of weighted Abel-Jacobi sums is equality of the corresponding degree-corrected
 divisor classes. -/
 lemma weightedAbelJacobiDivisorClass_eq_iff_divisorClass
-    (w : X → ℤ) (h : S.IsWeightedDegreeZero w) {x₀ : X} (hx₀ : w x₀ = 1)
-    {D E : WeilDivisor X} :
+    (w : X → ℤ) (h : S.IsWeightedDegreeZero w) {x₀ : X} (hx₀ : w x₀ = 1) {D E : WeilDivisor X} :
     S.weightedAbelJacobiDivisorClass w h hx₀ D =
         S.weightedAbelJacobiDivisorClass w h hx₀ E ↔
       S.divisorClass (D - weightedDegree w D • ofPoint x₀) =
@@ -149,8 +148,7 @@ lemma weightedAbelJacobiDivisorClass_eq_iff_divisorClass
 /-- Equality of weighted Abel-Jacobi sums is linear equivalence of the corresponding
 degree-corrected divisors. -/
 lemma weightedAbelJacobiDivisorClass_eq_iff_linearlyEquivalent
-    (w : X → ℤ) (h : S.IsWeightedDegreeZero w) {x₀ : X} (hx₀ : w x₀ = 1)
-    {D E : WeilDivisor X} :
+    (w : X → ℤ) (h : S.IsWeightedDegreeZero w) {x₀ : X} (hx₀ : w x₀ = 1) {D E : WeilDivisor X} :
     S.weightedAbelJacobiDivisorClass w h hx₀ D =
         S.weightedAbelJacobiDivisorClass w h hx₀ E ↔
       S.LinearlyEquivalent (D - weightedDegree w D • ofPoint x₀)
@@ -182,8 +180,7 @@ lemma weightedAbelJacobiDivisorClass_eq_iff_linearlyEquivalent_of_weightedDegree
 /-- In the unweighted theory, equal-degree divisors have the same Abel-Jacobi class exactly when
 they are linearly equivalent. -/
 lemma weightedAbelJacobiDivisorClass_one_eq_iff_linearlyEquivalent_of_degree_eq
-    (h : S.IsUnweightedDegreeZero) (x₀ : X) {D E : WeilDivisor X}
-    (hDE : degree D = degree E) :
+    (h : S.IsUnweightedDegreeZero) (x₀ : X) {D E : WeilDivisor X} (hDE : degree D = degree E) :
     S.weightedAbelJacobiDivisorClass (fun _ : X => (1 : ℤ)) h (x₀ := x₀) rfl D =
         S.weightedAbelJacobiDivisorClass (fun _ : X => (1 : ℤ)) h (x₀ := x₀) rfl E ↔
       S.LinearlyEquivalent D E := by
@@ -225,8 +222,7 @@ lemma classGroupAddEquivPicZeroProdInt_divisorClass (w : X → ℤ)
 /-- The inverse splitting reconstructs the divisor class from its weighted Abel-Jacobi sum and
 weighted degree. -/
 lemma classGroupAddEquivPicZeroProdInt_symm_weightedAbelJacobiDivisorClass
-    (w : X → ℤ) (h : S.IsWeightedDegreeZero w) {x₀ : X} (hx₀ : w x₀ = 1)
-    (D : WeilDivisor X) :
+    (w : X → ℤ) (h : S.IsWeightedDegreeZero w) {x₀ : X} (hx₀ : w x₀ = 1) (D : WeilDivisor X) :
     (S.classGroupAddEquivPicZeroProdInt w h hx₀).symm
         (S.weightedAbelJacobiDivisorClass w h hx₀ D, weightedDegree w D) =
       S.divisorClass D := by

@@ -73,8 +73,8 @@ variable (p : ℕ) [hp : Fact p.Prime] [CharP R p]
 dream to `single (g ^ p) 1 - 1`; when `g ^ p = 1` this is `single 1 1 - 1 = 0`. -/
 theorem single_sub_one_pow_eq_zero {g : G} (hgp : g ^ p = 1) :
     (MonoidAlgebra.single g (1 : R) - 1) ^ p = 0 := by
-  haveI : Nonempty G := ⟨1⟩
-  haveI : CharP (MonoidAlgebra R G) p :=
+  have : Nonempty G := ⟨1⟩
+  have : CharP (MonoidAlgebra R G) p :=
     charP_of_injective_algebraMap
       (FaithfulSMul.algebraMap_injective R (MonoidAlgebra R G)) p
   rw [sub_pow_char, MonoidAlgebra.single_pow, one_pow, hgp, one_pow,
@@ -100,7 +100,7 @@ Hopf algebra `R[G]` of `D(G)` is not reduced: `single g 1 - 1` is a nonzero nilp
 theorem not_isReduced_monoidAlgebra [Nontrivial R] {g : G} (hg : g ≠ 1) (hgp : g ^ p = 1) :
     ¬ IsReduced (MonoidAlgebra R G) := by
   intro h
-  haveI := h
+  have := h
   exact single_sub_one_ne_zero hg
     (isNilpotent_iff_eq_zero.mp (isNilpotent_single_sub_one (R := R) p hgp))
 
@@ -113,7 +113,7 @@ variable {R : Type*} [CommRing R] (p : ℕ) [hp : Fact p.Prime] [CharP R p]
 /-- The standard generator of `μ_p = D(ℤ/p)` is nontrivial: `ofAdd 1 ≠ 1` because `1 ≠ 0` in the
 field `ZMod p`. -/
 theorem generator_ne_one : generator p ≠ 1 := by
-  haveI : Fact (1 < p) := ⟨hp.out.one_lt⟩
+  have : Fact (1 < p) := ⟨hp.out.one_lt⟩
   rw [show generator p = Multiplicative.ofAdd (1 : ZMod p) from rfl, ne_eq, ofAdd_eq_one]
   exact one_ne_zero
 

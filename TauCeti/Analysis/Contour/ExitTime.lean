@@ -83,8 +83,7 @@ theorem firstExitTimeRight_mem_Icc {γ : ℝ → E} {t₀ δ ε : ℝ} {s : E} (
 /-- **Radius lower bound at the right exit time**: the `sInf` of the closed set of
 outside-the-ball times is itself outside the open ball. -/
 theorem le_norm_at_firstExitTimeRight {γ : ℝ → E} {t₀ δ ε : ℝ} {s : E}
-    (hδ : 0 ≤ δ) (hγ_cont : ContinuousOn γ (Icc t₀ (t₀ + δ)))
-    (hε_le : ε ≤ ‖γ (t₀ + δ) - s‖) :
+    (hδ : 0 ≤ δ) (hγ_cont : ContinuousOn γ (Icc t₀ (t₀ + δ))) (hε_le : ε ≤ ‖γ (t₀ + δ) - s‖) :
     ε ≤ ‖γ (firstExitTimeRight γ t₀ δ s ε) - s‖ :=
   (((hγ_cont.sub continuousOn_const).norm.preimage_isClosed_of_isClosed
       isClosed_Icc isClosed_Ici).csInf_mem
@@ -163,8 +162,7 @@ theorem firstExitTimeLeft_mem_Icc {γ : ℝ → E} {t₀ δ ε : ℝ} {s : E} (h
 /-- **Radius lower bound at the left exit time**: the `sSup` of the closed set of
 outside-the-ball times is itself outside the open ball. -/
 theorem le_norm_at_firstExitTimeLeft {γ : ℝ → E} {t₀ δ ε : ℝ} {s : E}
-    (hδ : 0 ≤ δ) (hγ_cont : ContinuousOn γ (Icc (t₀ - δ) t₀))
-    (hε_le : ε ≤ ‖γ (t₀ - δ) - s‖) :
+    (hδ : 0 ≤ δ) (hγ_cont : ContinuousOn γ (Icc (t₀ - δ) t₀)) (hε_le : ε ≤ ‖γ (t₀ - δ) - s‖) :
     ε ≤ ‖γ (firstExitTimeLeft γ t₀ δ s ε) - s‖ :=
   (((hγ_cont.sub continuousOn_const).norm.preimage_isClosed_of_isClosed
       isClosed_Icc isClosed_Ici).csSup_mem

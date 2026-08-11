@@ -35,15 +35,13 @@ def tailReverseFiltration (X : (k : ℕ) → Ω → β k) (hX : ∀ k, Measurabl
 
 /-- Level equation for the finite-horizon reverse filtration of a process tail. -/
 @[simp]
-theorem tailReverseFiltration_apply (X : (k : ℕ) → Ω → β k)
-    (hX : ∀ k, Measurable (X k)) (N n : ℕ) :
+theorem tailReverseFiltration_apply (X : (k : ℕ) → Ω → β k) (hX : ∀ k, Measurable (X k)) (N n : ℕ) :
     (tailReverseFiltration X hX N) n = tailFamily X (N - n) := by
   simp only [tailReverseFiltration, MeasureTheory.revFiltration_apply]
 
 /-- The process tail is the infimum of the time-zero levels of the finite-horizon reverse
 filtrations attached to `tailFamily X`. -/
-theorem tailProcess_eq_iInf_revFiltration (X : (k : ℕ) → Ω → β k)
-    (hX : ∀ k, Measurable (X k)) :
+theorem tailProcess_eq_iInf_revFiltration (X : (k : ℕ) → Ω → β k) (hX : ∀ k, Measurable (X k)) :
     tailProcess X = ⨅ N : ℕ, (tailReverseFiltration X hX N) 0 := by
   rw [tailProcess_eq_iInf_tailFamily]
   simp only [tailReverseFiltration_apply, tsub_zero]

@@ -701,8 +701,7 @@ lemma pushforwardWeightedDegreeZero_id (w : X → ℤ) :
   simp
 
 lemma pushforwardWeightedDegreeZero_comp (wX : X → ℤ) (wY : Y → ℤ) (wZ : Z → ℤ)
-    (f : X → Y) (g : Y → Z) (hf : ∀ x, wY (f x) = wX x)
-    (hg : ∀ y, wZ (g y) = wY y) :
+    (f : X → Y) (g : Y → Z) (hf : ∀ x, wY (f x) = wX x) (hg : ∀ y, wZ (g y) = wY y) :
     pushforwardWeightedDegreeZero wX wZ (g ∘ f) (fun x => by simp [hg (f x), hf x]) =
       (pushforwardWeightedDegreeZero wY wZ g hg).comp
         (pushforwardWeightedDegreeZero wX wY f hf) := by

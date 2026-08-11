@@ -72,15 +72,13 @@ private theorem relabelEquiv_single {R : Type*} [Semiring R] {n : ℕ}
 
 /-- The `y`-coefficient of a relabeled chain is the `e.symm y`-coefficient of the original
 chain. -/
-private theorem relabelEquiv_apply {R : Type*} [Semiring R] {n : ℕ}
-    (e : GridState n ≃ GridState n)
+private theorem relabelEquiv_apply {R : Type*} [Semiring R] {n : ℕ} (e : GridState n ≃ GridState n)
     (f : GridChain R n) (y : GridState n) : relabelEquiv e f y = f (e.symm y) := by
   rw [relabelEquiv, Finsupp.domLCongr_apply]
   exact Finsupp.equivMapDomain_apply _ _ _
 
 /-- The inverse of the relabeling along `e` is the relabeling along `e.symm`. -/
-private theorem relabelEquiv_symm {R : Type*} [Semiring R] {n : ℕ}
-    (e : GridState n ≃ GridState n) :
+private theorem relabelEquiv_symm {R : Type*} [Semiring R] {n : ℕ} (e : GridState n ≃ GridState n) :
     (relabelEquiv (R := R) e).symm = relabelEquiv e.symm := by
   unfold relabelEquiv
   rw [Finsupp.domLCongr_symm]

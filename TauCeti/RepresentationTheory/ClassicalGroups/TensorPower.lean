@@ -6,7 +6,7 @@ Authors: Codex
 module
 
 public import TauCeti.RepresentationTheory.ClassicalGroups.Standard
-public import TauCeti.RepresentationTheory.Symmetric.TensorAction
+public import TauCeti.RepresentationTheory.Symmetric.TensorAction.Basic
 public import TauCeti.RepresentationTheory.Tensor.Power
 
 /-!
@@ -82,15 +82,13 @@ variable [Field k]
 
 This is intentionally not a simp lemma: `Representation.char_tensorPower` and `char_stdRep`
 already normalize its left-hand side, so registering this specialization would violate `simpNF`. -/
-theorem char_tensorPowerRep (g : GL (Fin n) k) :
-    (tensorPowerRep k n d).character g =
+theorem char_tensorPowerRep (g : GL (Fin n) k) : (tensorPowerRep k n d).character g =
       Matrix.trace (g : Matrix (Fin n) (Fin n) k) ^ d := by
   rw [Representation.char_tensorPower, char_stdRep]
 
 /-- The character of the bundled tensor power is the corresponding power of the matrix trace. -/
 @[simp]
-theorem char_tensorPowerFDRep (g : GL (Fin n) k) :
-    (tensorPowerFDRep k n d).character g =
+theorem char_tensorPowerFDRep (g : GL (Fin n) k) : (tensorPowerFDRep k n d).character g =
       Matrix.trace (g : Matrix (Fin n) (Fin n) k) ^ d := by
   simpa only [FDRep.character, FDRep.of_ρ', Representation.character] using
     char_tensorPowerRep k n d g

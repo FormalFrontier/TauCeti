@@ -74,9 +74,7 @@ theorem IsNullHomologous.symm (h : IsNullHomologous γ a b Ω)
 curve lies in `Ω`, every exterior point is avoided, so the required principal values are ordinary
 integrals. -/
 theorem IsNullHomologous.symm_of_avoidance (h : IsNullHomologous γ a b Ω)
-    (hγ : ∀ t ∈ Set.uIcc a b, γ t ∈ Ω)
-    (hcont : ContinuousOn γ (Set.uIcc a b))
-    (hint : ∀ z ∉ Ω,
+    (hγ : ∀ t ∈ Set.uIcc a b, γ t ∈ Ω) (hcont : ContinuousOn γ (Set.uIcc a b)) (hint : ∀ z ∉ Ω,
       IntervalIntegrable (fun t => (γ t - z)⁻¹ * deriv γ t) MeasureTheory.volume a b) :
     IsNullHomologous γ b a Ω := by
   refine h.symm ?_

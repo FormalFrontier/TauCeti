@@ -71,8 +71,7 @@ chosen radicand roots. -/
 
 /-- The inverse prime-discriminant Galois equivalence realizes a sign pattern by sending each
 chosen generator to `(-1)^(ε i)` times that generator. -/
-@[simp] theorem galoisGroupEquivPrimeDiscriminantRadicands_symm_apply_gen
-    (ε : ι → ZMod 2) (i : ι) :
+@[simp] theorem galoisGroupEquivPrimeDiscriminantRadicands_symm_apply_gen (ε : ι → ZMod 2) (i : ι) :
     ((galoisGroupEquivPrimeDiscriminantRadicands D hD hinj heven root hroot).symm
         (Multiplicative.ofAdd ε)) (gen root i)
       = (-1) ^ (ε i).val * gen root i :=

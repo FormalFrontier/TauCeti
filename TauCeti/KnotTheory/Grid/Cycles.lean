@@ -67,8 +67,7 @@ theorem mem_fullyBlockedCycles_of_le_two (hn : n ≤ 2) (c : GridChain (ZMod 2) 
   exact Submodule.mem_top
 
 /-- In grid size at most two, a fully blocked boundary is exactly the zero chain. -/
-theorem mem_fullyBlockedBoundaries_iff_eq_zero_of_le_two
-    (hn : n ≤ 2) (c : GridChain (ZMod 2) n) :
+theorem mem_fullyBlockedBoundaries_iff_eq_zero_of_le_two (hn : n ≤ 2) (c : GridChain (ZMod 2) n) :
     c ∈ G.fullyBlockedBoundaries ↔ c = 0 := by
   rw [G.fullyBlockedBoundaries_eq_bot_of_le_two hn]
   exact Submodule.mem_bot (R := ZMod 2)

@@ -50,7 +50,7 @@ theorem finrank_adjoin_range_of_linearIndependent {ι : Type*} [Finite ι] {d : 
     {root : ι → L} (hroot : ∀ i, root i ^ 2 = algebraMap K L (d i)) [NeZero (2 : K)]
     (hli : LinearIndependent (ZMod 2) (fun i => squareClass (d i))) :
     Module.finrank K (IntermediateField.adjoin K (Set.range root)) = 2 ^ Nat.card ι := by
-  letI := Fintype.ofFinite ι
+  let := Fintype.ofFinite ι
   refine finrank_adjoin_range (d := fun i => (d i : K)) hroot (fun S hS => ?_)
   have hne := (linearIndependent_squareClass_iff d).mp hli S hS
   rw [← Units.coe_prod, isSquare_units_val_iff]

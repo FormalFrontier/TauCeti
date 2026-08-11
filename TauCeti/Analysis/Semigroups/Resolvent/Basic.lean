@@ -6,6 +6,7 @@ module
 
 public import TauCeti.Analysis.Semigroups.Generator.Basic
 public import TauCeti.Analysis.Semigroups.ExponentialShift
+import TauCeti.MeasureTheory.Integral.ExpDecay
 public import Mathlib.Analysis.SpecialFunctions.ExpDeriv
 public import Mathlib.MeasureTheory.Integral.ExpDecay
 public import Mathlib.MeasureTheory.Integral.IntervalIntegral.FundThmCalculus
@@ -16,7 +17,10 @@ public import Mathlib.Analysis.SpecialFunctions.ImproperIntegrals
 
 This file develops the pointwise Bochner-integral resolvent for a C₀-semigroup with a
 growth bound, proves that it maps into the generator domain, and establishes the
-right-inverse identity and norm estimate.
+right-inverse identity and norm estimate. It also packages the resolvent as a function of
+the spectral parameter alone (`resolventFun`, extended by the junk value `0` below the
+growth exponent), the form in which it is differentiated in
+`TauCeti/Analysis/Semigroups/Resolvent/Deriv.lean`.
 
 ## References
 Ported and adapted (Apache 2.0) from `mrdouglasny/hille-yosida`; references include
@@ -39,45 +43,70 @@ variable {X : Type*} [NormedAddCommGroup X] [NormedSpace ℝ X] [CompleteSpace X
 open MeasureTheory
 
 omit [CompleteSpace X] in
-/-- The growth-bound estimate for the Laplace-transform integrand:
-`‖e^{-λt} S(t) x‖ ≤ M ‖x‖ e^{-(λ-ω)t}` for `t > 0`. -/
-private lemma StronglyContinuousSemigroup.norm_resolvent_integrand_le
+/-- The growth-bound estimate for a polynomially weighted Laplace-transform integrand:
+`‖t^n e^{-λt} S(t) x‖ ≤ M ‖x‖ t^n e^{-(λ-ω)t}` for `t ≥ 0`. -/
+lemma StronglyContinuousSemigroup.norm_pow_mul_resolvent_integrand_le
+    (S : StronglyContinuousSemigroup X) {ω M : ℝ} (hb : S.HasGrowthBound ω M)
+    (n : ℕ) (lambda : ℝ) (x : X) {t : ℝ} (ht : 0 ≤ t) :
+    ‖(t ^ n * Real.exp (-(lambda * t))) • S.realOperator t x‖ ≤
+      M * ‖x‖ * (t ^ n * Real.exp (-((lambda - ω) * t))) := by
+  rw [norm_smul, Real.norm_eq_abs,
+    abs_of_nonneg (mul_nonneg (pow_nonneg ht n) (Real.exp_pos _).le)]
+  calc
+    t ^ n * Real.exp (-(lambda * t)) * ‖S.realOperator t x‖
+        ≤ t ^ n * Real.exp (-(lambda * t)) *
+            (M * Real.exp (ω * t) * ‖x‖) := by
+          apply mul_le_mul_of_nonneg_left _
+            (mul_nonneg (pow_nonneg ht _) (Real.exp_pos _).le)
+          exact (ContinuousLinearMap.le_opNorm _ _).trans
+            (mul_le_mul_of_nonneg_right (hb.bound t ht) (norm_nonneg x))
+    _ = M * ‖x‖ * (t ^ n * Real.exp (-((lambda - ω) * t))) := by
+        have h_exp_exponent : -((lambda - ω) * t) = -(lambda * t) + ω * t := by ring
+        rw [h_exp_exponent, Real.exp_add]
+        ring
+
+omit [CompleteSpace X] in
+/-- The growth-bound estimate for the integrand in the defining resolvent integral. -/
+lemma StronglyContinuousSemigroup.norm_resolvent_integrand_le
     (S : StronglyContinuousSemigroup X) {ω M : ℝ} (hb : S.HasGrowthBound ω M)
     (lambda : ℝ) (x : X) {t : ℝ} (ht : 0 < t) :
     ‖Real.exp (-(lambda * t)) • S.realOperator t x‖ ≤
       M * ‖x‖ * Real.exp (-(lambda - ω) * t) := by
-  rw [norm_smul, Real.norm_eq_abs, abs_of_pos (Real.exp_pos _)]
-  calc Real.exp (-(lambda * t)) * ‖(S.realOperator t) x‖
-      ≤ Real.exp (-(lambda * t)) * (M * Real.exp (ω * t) * ‖x‖) := by
-        gcongr
-        exact le_trans (ContinuousLinearMap.le_opNorm _ _)
-          (by gcongr; exact hb.bound t ht.le)
-    _ = M * ‖x‖ * Real.exp (-(lambda - ω) * t) := by
-        have h_exp_exponent : -(lambda - ω) * t = -(lambda * t) + ω * t := by ring
-        rw [h_exp_exponent, Real.exp_add]
-        ring
+  simpa only [pow_zero, one_mul, neg_mul] using
+    S.norm_pow_mul_resolvent_integrand_le hb 0 lambda x ht.le
 
-/-- The Laplace-transform integrand `e^{-λt} S(t) x` is integrable on `(0, ∞)` for
-`ω < λ`. -/
-lemma StronglyContinuousSemigroup.integrable_resolvent_integrand
+private lemma StronglyContinuousSemigroup.aestronglyMeasurable_pow_mul_resolvent_integrand
+    (S : StronglyContinuousSemigroup X) (n : ℕ) (lambda : ℝ) (x : X) :
+    AEStronglyMeasurable
+      (fun t : ℝ => (t ^ n * Real.exp (-(lambda * t))) • S.realOperator t x)
+      (volume.restrict (Set.Ioi 0)) := by
+  apply ContinuousOn.aestronglyMeasurable _ measurableSet_Ioi
+  exact (by fun_prop : Continuous (fun t : ℝ => t ^ n * Real.exp (-(lambda * t)))).continuousOn.smul
+    ((S.realOperator_continuousOn_Ici x).mono Set.Ioi_subset_Ici_self)
+
+/-- The polynomially weighted Laplace-transform integrand `t^n e^{-λt} S(t) x` is integrable
+on `(0, ∞)` for `ω < λ`. -/
+lemma StronglyContinuousSemigroup.integrableOn_pow_mul_resolvent_integrand
     (S : StronglyContinuousSemigroup X) {ω M : ℝ} (hb : S.HasGrowthBound ω M)
-    (lambda : ℝ) (hlam : ω < lambda) (x : X) :
-    IntegrableOn (fun t => Real.exp (-(lambda * t)) • S.realOperator t x) (Set.Ioi 0) := by
+    (n : ℕ) (lambda : ℝ) (hlam : ω < lambda) (x : X) :
+    IntegrableOn
+      (fun t => (t ^ n * Real.exp (-(lambda * t))) • S.realOperator t x) (Set.Ioi 0) := by
   have hpos : 0 < lambda - ω := by linarith
   unfold MeasureTheory.IntegrableOn
   apply MeasureTheory.Integrable.mono'
-    ((exp_neg_integrableOn_Ioi 0 hpos).smul (M * ‖x‖))
-  · apply ContinuousOn.aestronglyMeasurable _ measurableSet_Ioi
-    apply ContinuousOn.smul
-    · exact (Real.continuous_exp.comp
-        ((continuous_const.mul continuous_id).neg)).continuousOn
-    · have h_cont : ContinuousOn (fun t => S.realOperator t x) (Set.Ici 0) :=
-        fun t₀ ht₀ => S.realOperator_continuousWithinAt x t₀ ht₀
-      exact h_cont.mono Set.Ioi_subset_Ici_self
+    ((integrableOn_pow_mul_exp_neg_mul_Ioi n hpos).integrable.const_mul (M * ‖x‖))
+  · exact S.aestronglyMeasurable_pow_mul_resolvent_integrand n lambda x
   · apply (ae_restrict_mem measurableSet_Ioi).mono
     intro t (ht : 0 < t)
-    simpa only [Pi.smul_apply, smul_eq_mul] using
-      S.norm_resolvent_integrand_le hb lambda x ht
+    exact S.norm_pow_mul_resolvent_integrand_le hb n lambda x ht.le
+
+/-- The integrand in the defining resolvent integral is integrable on `(0, ∞)` for `ω < λ`. -/
+lemma StronglyContinuousSemigroup.integrableOn_resolvent_integrand
+    (S : StronglyContinuousSemigroup X) {ω M : ℝ} (hb : S.HasGrowthBound ω M)
+    (lambda : ℝ) (hlam : ω < lambda) (x : X) :
+    IntegrableOn (fun t => Real.exp (-(lambda * t)) • S.realOperator t x) (Set.Ioi 0) := by
+  simpa only [pow_zero, one_mul] using
+    S.integrableOn_pow_mul_resolvent_integrand hb 0 lambda hlam x
 
 /-- The resolvent `R(λ) x = ∫₀^∞ e^{-λt} S(t)x dt` of a C₀-semigroup with growth bound
 `(ω, M)`, for `λ > ω`. A pointwise `X`-valued Bochner integral (so it is well-defined for
@@ -91,8 +120,8 @@ noncomputable def StronglyContinuousSemigroup.resolvent
       map_add' := fun x y => by
         simp only [ContinuousLinearMap.map_add, smul_add]
         exact integral_add
-          (S.integrable_resolvent_integrand hb lambda hlam x)
-          (S.integrable_resolvent_integrand hb lambda hlam y)
+          (S.integrableOn_resolvent_integrand hb lambda hlam x).integrable
+          (S.integrableOn_resolvent_integrand hb lambda hlam y).integrable
       map_smul' := fun c x => by
         simp only [RingHom.id_apply, map_smul]
         have h : ∀ t : ℝ, Real.exp (-(lambda * t)) • c • (S.realOperator t) x =
@@ -116,10 +145,8 @@ noncomputable def StronglyContinuousSemigroup.resolvent
             rw [MeasureTheory.integral_const_mul]
             have h_eval :
                 ∫ t in Set.Ioi 0, Real.exp (-(lambda - ω) * t) = (lambda - ω)⁻¹ := by
-              have h := integral_comp_mul_left_Ioi (fun t => Real.exp (-t)) 0 hpos
-              simp only [mul_zero] at h
-              simp only [neg_mul]
-              rw [h, integral_exp_neg_Ioi_zero, smul_eq_mul, mul_one]
+              simpa only [pow_zero, one_mul, Nat.factorial_zero, Nat.cast_one, pow_one,
+                one_div, neg_mul, zero_add] using integral_pow_mul_exp_neg_mul_Ioi 0 hpos
             rw [h_eval, div_eq_mul_inv]; ring)
 
 /-- The resolvent in integral form (characteristic lemma). -/
@@ -175,7 +202,7 @@ private theorem StronglyContinuousSemigroup.resolvent_shift_identity
   have h_push : S.realOperator h Rlx = Real.exp (lambda * h) • ∫ u in Set.Ioi h, f u := by
     have hRlx : Rlx = ∫ t in Set.Ioi 0, f t := S.resolvent_apply hb lambda hlam x
     rw [hRlx, ← ContinuousLinearMap.integral_comp_comm _
-      (S.integrable_resolvent_integrand hb lambda hlam x)]
+      (S.integrableOn_resolvent_integrand hb lambda hlam x).integrable]
     have h_eq : ∀ t ∈ Set.Ioi (0 : ℝ),
         (S.realOperator h) (f t) = Real.exp (lambda * h) • f (t + h) := by
       intro t ht
@@ -192,7 +219,7 @@ private theorem StronglyContinuousSemigroup.resolvent_shift_identity
   -- Step 2: split `∫_{Ioi h} = Rlx - ∫_{Ioc 0 h} f`
   have h_split : ∫ u in Set.Ioi h, f u = Rlx - ∫ u in Set.Ioc 0 h, f u := by
     have hsplit := integral_Ioi_eq_Ioc_add_Ioi f hh
-      (S.integrable_resolvent_integrand hb lambda hlam x)
+      (S.integrableOn_resolvent_integrand hb lambda hlam x)
     have hRlx : Rlx = ∫ t in Set.Ioi 0, f t := S.resolvent_apply hb lambda hlam x
     rw [hRlx, hsplit]; abel
   -- Step 3: combine into the key identity
@@ -267,8 +294,7 @@ private theorem StronglyContinuousSemigroup.resolvent_generator_tendsto
 ([EN] Thm. II.1.10(i), [Linares] eq. 0.15). -/
 theorem StronglyContinuousSemigroup.resolvent_mem_domain
     (S : StronglyContinuousSemigroup X) {ω M : ℝ} (hb : S.HasGrowthBound ω M)
-    (lambda : ℝ) (hlam : ω < lambda) (x : X) :
-    (S.resolvent hb lambda hlam x) ∈ S.domain :=
+    (lambda : ℝ) (hlam : ω < lambda) (x : X) : (S.resolvent hb lambda hlam x) ∈ S.domain :=
   (S.mem_domain_iff_tendsto _).mpr ⟨_, S.resolvent_generator_tendsto hb lambda hlam x⟩
 
 /-- The fundamental resolvent identity: `(λI - A) R(λ) x = x`. -/
@@ -294,6 +320,48 @@ theorem StronglyContinuousSemigroup.resolvent_norm_le
   LinearMap.mkContinuous_norm_le _
     (div_nonneg (by linarith [hb.one_le]) (by linarith)) _
 
+/-! ## The resolvent as a function of the spectral parameter
+
+`StronglyContinuousSemigroup.resolvent` carries the proof `ω < λ` as an argument, so it is not
+a function of `λ` alone. The variant below drops that argument, extending the resolvent by the
+junk value `0` on `λ ≤ ω`, which is what lets one speak of its limits, derivatives and
+integrals in `λ`. -/
+
+/-- The Laplace-transform resolvent of `S` as a function of the spectral parameter alone,
+extended by the junk value `0` on `λ ≤ ω`. Unlike `StronglyContinuousSemigroup.resolvent` it
+does not carry the proof `ω < λ`, so it can be differentiated in `λ`. -/
+noncomputable def StronglyContinuousSemigroup.resolventFun
+    (S : StronglyContinuousSemigroup X) {ω M : ℝ} (hb : S.HasGrowthBound ω M) (lambda : ℝ) :
+    X →L[ℝ] X :=
+  if h : ω < lambda then S.resolvent hb lambda h else 0
+
+/-- Above the growth exponent, `resolventFun` is the Laplace-transform resolvent. -/
+@[simp] theorem StronglyContinuousSemigroup.resolventFun_of_lt
+    (S : StronglyContinuousSemigroup X) {ω M : ℝ} (hb : S.HasGrowthBound ω M) {lambda : ℝ}
+    (h : ω < lambda) : S.resolventFun hb lambda = S.resolvent hb lambda h :=
+  dite_eq_left h
+
+/-- Below the growth exponent, `resolventFun` takes its junk value `0`. -/
+@[simp] theorem StronglyContinuousSemigroup.resolventFun_of_le
+    (S : StronglyContinuousSemigroup X) {ω M : ℝ} (hb : S.HasGrowthBound ω M) {lambda : ℝ}
+    (h : lambda ≤ ω) : S.resolventFun hb lambda = 0 :=
+  dite_eq_right (not_lt.mpr h)
+
+/-- `resolventFun` in integral form. -/
+theorem StronglyContinuousSemigroup.resolventFun_apply
+    (S : StronglyContinuousSemigroup X) {ω M : ℝ} (hb : S.HasGrowthBound ω M) {lambda : ℝ}
+    (h : ω < lambda) (x : X) :
+    S.resolventFun hb lambda x
+      = ∫ t in Set.Ioi 0, Real.exp (-(lambda * t)) • S.realOperator t x := by
+  rw [S.resolventFun_of_lt hb h, S.resolvent_apply]
+
+/-- The Hille--Yosida bound `‖R λ‖ ≤ M/(λ-ω)` for `resolventFun`. -/
+theorem StronglyContinuousSemigroup.resolventFun_norm_le
+    (S : StronglyContinuousSemigroup X) {ω M : ℝ} (hb : S.HasGrowthBound ω M) {lambda : ℝ}
+    (h : ω < lambda) : ‖S.resolventFun hb lambda‖ ≤ M / (lambda - ω) := by
+  rw [S.resolventFun_of_lt hb h]
+  exact S.resolvent_norm_le hb lambda h
+
 /-! ## Contraction-semigroup specializations (`M = 1`, `ω = 0`) -/
 
 /-- The resolvent of a contraction semigroup, the `(0, 1)` case. -/
@@ -308,6 +376,16 @@ theorem ContractionSemigroup.resolvent_apply (S : ContractionSemigroup X)
     S.resolvent lambda hlam x
       = ∫ t in Set.Ioi 0, Real.exp (-(lambda * t)) • S.realOperator t x := by
   rfl
+
+/-- The contraction resolvent is the `(0, 1)` case of the general semigroup resolvent. -/
+theorem ContractionSemigroup.resolvent_eq_stronglyContinuousSemigroup_resolvent
+    (S : ContractionSemigroup X) (lambda : ℝ) (hlambda : 0 < lambda) :
+    S.resolvent lambda hlambda =
+      S.toStronglyContinuousSemigroup.resolvent S.hasGrowthBound lambda
+        (by simpa using hlambda) := by
+  ext x
+  rw [ContractionSemigroup.resolvent_apply,
+    StronglyContinuousSemigroup.resolvent_apply]
 
 /-- The contraction resolvent maps into the generator domain. -/
 theorem ContractionSemigroup.resolvent_mem_domain (S : ContractionSemigroup X)
@@ -336,6 +414,32 @@ theorem ContractionSemigroup.resolvent_norm_le (S : ContractionSemigroup X)
     (by simpa using hlam)
   rw [sub_zero] at h
   exact h
+
+/-- The resolvent of a contraction semigroup as a function of the spectral parameter alone,
+the `(ω, M) = (0, 1)` case of `StronglyContinuousSemigroup.resolventFun`. -/
+noncomputable def ContractionSemigroup.resolventFun (S : ContractionSemigroup X)
+    (lambda : ℝ) : X →L[ℝ] X :=
+  S.toStronglyContinuousSemigroup.resolventFun S.hasGrowthBound lambda
+
+/-- The contraction resolvent function is the `(ω, M) = (0, 1)` case of
+`StronglyContinuousSemigroup.resolventFun`. -/
+theorem ContractionSemigroup.resolventFun_eq (S : ContractionSemigroup X) :
+    S.resolventFun = S.toStronglyContinuousSemigroup.resolventFun S.hasGrowthBound :=
+  -- the parentheses suppress the automatic `@[defeq]` tag, which an exported theorem may not
+  -- carry when its proof unfolds an unexposed definition
+  (rfl)
+
+/-- For a positive parameter, `resolventFun` is the contraction resolvent. -/
+@[simp] theorem ContractionSemigroup.resolventFun_of_pos (S : ContractionSemigroup X)
+    {lambda : ℝ} (h : 0 < lambda) : S.resolventFun lambda = S.resolvent lambda h := by
+  ext x
+  rw [S.resolventFun_eq, S.toStronglyContinuousSemigroup.resolventFun_of_lt S.hasGrowthBound h,
+    S.toStronglyContinuousSemigroup.resolvent_apply, S.resolvent_apply]
+
+/-- For a nonpositive parameter, `resolventFun` takes its junk value `0`. -/
+@[simp] theorem ContractionSemigroup.resolventFun_of_nonpos (S : ContractionSemigroup X)
+    {lambda : ℝ} (h : lambda ≤ 0) : S.resolventFun lambda = 0 :=
+  S.toStronglyContinuousSemigroup.resolventFun_of_le S.hasGrowthBound h
 
 end TauCeti.Semigroups
 

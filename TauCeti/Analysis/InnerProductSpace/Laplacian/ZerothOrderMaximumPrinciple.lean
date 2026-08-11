@@ -6,6 +6,8 @@ module
 
 public import Mathlib.Analysis.InnerProductSpace.Calculus
 public import TauCeti.Analysis.InnerProductSpace.Laplacian.WeakMaximumPrinciple
+-- Support only: the shared maximizer step is proof machinery, not part of this file's API.
+import TauCeti.Analysis.InnerProductSpace.Laplacian.BarrierMaximizer
 
 /-!
 # The weak maximum principle for `-Δ + c` with a nonnegative zeroth-order term
@@ -24,10 +26,11 @@ needed once `c ≠ 0`; on the set where `f ≤ 0 ≤ m` the estimate is automati
 has to control the set where `f` is positive, where `c · f ≥ 0` makes `f` subharmonic.)
 
 The proof reuses the perturbation `f + ε‖·‖²` of the bare-Laplacian file, but replaces the
-strictly-subharmonic boundary principle by the second-derivative obstruction
-`TauCeti.laplacian_nonpos_of_isLocalMax` applied at an interior maximum of the perturbation: at
-such a point either `f` is already negative (so the bound is free) or `f ≥ 0` forces
-`Δ(f + ε‖·‖²) > 0`, a contradiction. Letting `ε → 0` gives the bound.
+strictly-subharmonic boundary principle by the maximizer step `TauCeti.le_of_isMaxOn_add_smul` of
+`TauCeti.Analysis.InnerProductSpace.Laplacian.BarrierMaximizer`, run here with no drift and the
+quadratic barrier. At a maximizer of the perturbation the bound `f z ≤ m` either holds already, or
+`m < f z` puts `f z` above the nonnegative `m`, which forces `Δ(f + ε‖·‖²) > 0` and so contradicts
+local maximality. Letting `ε → 0` gives the bound.
 
 ## Main declarations
 
@@ -70,36 +73,21 @@ The nonnegativity of `m` cannot be dropped once `c ≠ 0`; it encodes the `sup u
 of the estimate. -/
 theorem le_of_mul_le_laplacian_le_frontier {K : Set E} (hK : IsCompact K) {c f : E → ℝ} {m : ℝ}
     (hm : 0 ≤ m) (hcont : ContinuousOn f K) (hcd : ∀ ⦃x⦄, x ∈ interior K → ContDiffAt ℝ 2 f x)
-    (hc : ∀ ⦃x⦄, x ∈ interior K → 0 ≤ c x)
-    (hsub : ∀ ⦃x⦄, x ∈ interior K → c x * f x ≤ Δ f x)
+    (hc : ∀ ⦃x⦄, x ∈ interior K → 0 ≤ c x) (hsub : ∀ ⦃x⦄, x ∈ interior K → c x * f x ≤ Δ f x)
     (hbdry : ∀ ⦃x⦄, x ∈ frontier K → f x ≤ m) :
     ∀ ⦃x⦄, x ∈ K → f x ≤ m := by
   intro x hxK
   have hfrpos : (0 : ℝ) < Module.finrank ℝ E := by exact_mod_cast Module.finrank_pos
   refine le_of_forall_pos_exists_isMaxOn_perturbation hK.isBounded hxK fun ε hε => ?_
-  have hεsq : ∀ y : E, ContDiffAt ℝ 2 (fun z : E => ε • ‖z‖ ^ 2) y :=
-    fun y => ((contDiff_norm_sq ℝ).contDiffAt).const_smul ε
   have hgcont : ContinuousOn (fun y : E => f y + ε • ‖y‖ ^ 2) K := hcont.add (by fun_prop)
   -- The perturbation attains its maximum over `K` at some point `z`.
   obtain ⟨z, hzK, hzmax⟩ := hK.exists_isMaxOn ⟨x, hxK⟩ hgcont
-  refine ⟨z, hzK, hzmax, ?_⟩
-  -- At the maximizer either `f z ≤ m` (boundary or negative value) or we reach a contradiction.
-  by_cases hzint : z ∈ interior K
-  · -- Interior maximizer: rule out `0 ≤ f z` via the second-derivative obstruction.
-    by_contra hcon
-    rw [not_le] at hcon
-    have hfz0 : 0 ≤ f z := le_trans hm hcon.le
-    have hloc : IsLocalMax (fun y : E => f y + ε • ‖y‖ ^ 2) z :=
-      hzmax.isLocalMax (mem_interior_iff_mem_nhds.mp hzint)
-    have hgcd : ContDiffAt ℝ 2 (fun y : E => f y + ε • ‖y‖ ^ 2) z := (hcd hzint).add (hεsq z)
-    have hΔle : Δ (fun y : E => f y + ε • ‖y‖ ^ 2) z ≤ 0 :=
-      laplacian_nonpos_of_isLocalMax hgcd hloc
-    rw [laplacian_add_const_smul_norm_sq ε (hcd hzint)] at hΔle
-    have hΔf : 0 ≤ Δ f z := le_trans (mul_nonneg (hc hzint) hfz0) (hsub hzint)
-    have hpos : 0 < ε * (2 * (Module.finrank ℝ E : ℝ)) := mul_pos hε (mul_pos two_pos hfrpos)
-    linarith
-  · -- Boundary maximizer: `z ∈ frontier K`.
-    exact hbdry ⟨subset_closure hzK, hzint⟩
+  -- The maximizer step is the shared one, run with no drift and the quadratic barrier `‖·‖²`,
+  -- whose Laplacian `2 · finrank` is the strict positivity it asks for.
+  refine ⟨z, hzK, hzmax, le_of_isMaxOn_add_smul (v := 0) hε (fun h => hcd h) (fun hz hlt => ?_)
+    (fun hz => hbdry hz) hzK (fun _ => (contDiff_norm_sq ℝ).contDiffAt) (fun _ => ?_) hzmax⟩
+  · simpa using (mul_nonneg (hc hz) (hm.trans hlt.le)).trans (hsub hz)
+  · simpa [laplacian_norm_sq] using mul_pos two_pos hfrpos
 
 /-- **Comparison principle for `-Δ + c` with `c ≥ 0`.**
 
@@ -110,8 +98,7 @@ the two-function form of `le_of_mul_le_laplacian_le_frontier`. -/
 theorem le_of_mul_le_laplacian_le_of_le_frontier {K : Set E} (hK : IsCompact K) {c f g : E → ℝ}
     (hfcont : ContinuousOn f K) (hgcont : ContinuousOn g K)
     (hfcd : ∀ ⦃x⦄, x ∈ interior K → ContDiffAt ℝ 2 f x)
-    (hgcd : ∀ ⦃x⦄, x ∈ interior K → ContDiffAt ℝ 2 g x)
-    (hc : ∀ ⦃x⦄, x ∈ interior K → 0 ≤ c x)
+    (hgcd : ∀ ⦃x⦄, x ∈ interior K → ContDiffAt ℝ 2 g x) (hc : ∀ ⦃x⦄, x ∈ interior K → 0 ≤ c x)
     (hsub : ∀ ⦃x⦄, x ∈ interior K → c x * f x ≤ Δ f x)
     (hsuper : ∀ ⦃x⦄, x ∈ interior K → Δ g x ≤ c x * g x)
     (hbdry : ∀ ⦃x⦄, x ∈ frontier K → f x ≤ g x) :
@@ -138,8 +125,7 @@ The dual of `le_of_mul_le_laplacian_le_frontier`: a continuous, `C²`, supersolu
 lower bound it respects on `frontier K`. -/
 theorem ge_of_laplacian_le_mul_ge_frontier {K : Set E} (hK : IsCompact K) {c f : E → ℝ} {m : ℝ}
     (hm : m ≤ 0) (hcont : ContinuousOn f K) (hcd : ∀ ⦃x⦄, x ∈ interior K → ContDiffAt ℝ 2 f x)
-    (hc : ∀ ⦃x⦄, x ∈ interior K → 0 ≤ c x)
-    (hsuper : ∀ ⦃x⦄, x ∈ interior K → Δ f x ≤ c x * f x)
+    (hc : ∀ ⦃x⦄, x ∈ interior K → 0 ≤ c x) (hsuper : ∀ ⦃x⦄, x ∈ interior K → Δ f x ≤ c x * f x)
     (hbdry : ∀ ⦃x⦄, x ∈ frontier K → m ≤ f x) :
     ∀ ⦃x⦄, x ∈ K → m ≤ f x := by
   intro x hxK
@@ -158,10 +144,8 @@ theorem ge_of_laplacian_le_mul_ge_frontier {K : Set E} (hK : IsCompact K) {c f :
 `frontier K`. -/
 theorem abs_le_of_laplacian_eq_mul_abs_le_frontier {K : Set E} (hK : IsCompact K) {c f : E → ℝ}
     {M : ℝ} (hM : 0 ≤ M) (hcont : ContinuousOn f K)
-    (hcd : ∀ ⦃x⦄, x ∈ interior K → ContDiffAt ℝ 2 f x)
-    (hc : ∀ ⦃x⦄, x ∈ interior K → 0 ≤ c x)
-    (hsol : ∀ ⦃x⦄, x ∈ interior K → Δ f x = c x * f x)
-    (hbdry : ∀ ⦃x⦄, x ∈ frontier K → |f x| ≤ M) :
+    (hcd : ∀ ⦃x⦄, x ∈ interior K → ContDiffAt ℝ 2 f x) (hc : ∀ ⦃x⦄, x ∈ interior K → 0 ≤ c x)
+    (hsol : ∀ ⦃x⦄, x ∈ interior K → Δ f x = c x * f x) (hbdry : ∀ ⦃x⦄, x ∈ frontier K → |f x| ≤ M) :
     ∀ ⦃x⦄, x ∈ K → |f x| ≤ M := by
   intro x hxK
   rw [abs_le]
@@ -179,8 +163,7 @@ they agree on all of `K`. -/
 theorem eqOn_of_laplacian_sub_mul_eq_of_eqOn_frontier {K : Set E} (hK : IsCompact K)
     {c f g : E → ℝ} (hfcont : ContinuousOn f K) (hgcont : ContinuousOn g K)
     (hfcd : ∀ ⦃x⦄, x ∈ interior K → ContDiffAt ℝ 2 f x)
-    (hgcd : ∀ ⦃x⦄, x ∈ interior K → ContDiffAt ℝ 2 g x)
-    (hc : ∀ ⦃x⦄, x ∈ interior K → 0 ≤ c x)
+    (hgcd : ∀ ⦃x⦄, x ∈ interior K → ContDiffAt ℝ 2 g x) (hc : ∀ ⦃x⦄, x ∈ interior K → 0 ≤ c x)
     (hlap : ∀ ⦃x⦄, x ∈ interior K → Δ f x - c x * f x = Δ g x - c x * g x)
     (hbdry : ∀ ⦃x⦄, x ∈ frontier K → f x = g x) :
     Set.EqOn f g K := by

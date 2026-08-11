@@ -71,10 +71,8 @@ variable {f g : SmoothEmbedding I J n M N}
 /-- Continuous ambient isotopy of bundled smooth embeddings is insensitive to replacing both
 endpoints by bundled embeddings with the same underlying continuous maps. -/
 theorem of_toContinuousMap_eq (hfg : ContinuousAmbientIsotopic f g)
-    [ChartedSpace K M] [ChartedSpace K' N]
-    {f' g' : SmoothEmbedding I' J' n' M N}
-    (hf' : f'.toContinuousMap = f.toContinuousMap)
-    (hg' : g'.toContinuousMap = g.toContinuousMap) :
+    [ChartedSpace K M] [ChartedSpace K' N] {f' g' : SmoothEmbedding I' J' n' M N}
+    (hf' : f'.toContinuousMap = f.toContinuousMap) (hg' : g'.toContinuousMap = g.toContinuousMap) :
     ContinuousAmbientIsotopic f' g' := by
   rw [continuousAmbientIsotopic_def] at hfg ⊢
   obtain ⟨Φ, hΦ⟩ := hfg
@@ -83,10 +81,8 @@ theorem of_toContinuousMap_eq (hfg : ContinuousAmbientIsotopic f g)
 /-- Continuous ambient isotopy of bundled smooth embeddings can be checked on the underlying
 continuous maps. This is useful when the endpoint maps have been rewritten by a construction
 outside the bundled smooth-embedding API. -/
-theorem iff_of_toContinuousMap_eq
-    [ChartedSpace K M] [ChartedSpace K' N]
-    {f' g' : SmoothEmbedding I' J' n' M N}
-    (hf' : f'.toContinuousMap = f.toContinuousMap)
+theorem iff_of_toContinuousMap_eq [ChartedSpace K M] [ChartedSpace K' N]
+    {f' g' : SmoothEmbedding I' J' n' M N} (hf' : f'.toContinuousMap = f.toContinuousMap)
     (hg' : g'.toContinuousMap = g.toContinuousMap) :
     ContinuousAmbientIsotopic f' g' ↔ ContinuousAmbientIsotopic f g := by
   constructor
@@ -98,8 +94,7 @@ theorem iff_of_toContinuousMap_eq
 /-- Precomposing both endpoints by a continuous source map preserves continuous ambient isotopy,
 provided the precomposed maps have already been bundled as smooth embeddings. -/
 theorem precomp_of_toContinuousMap_eq (hfg : ContinuousAmbientIsotopic f g) (e : C(M', M))
-    [ChartedSpace L' N]
-    {f₁ g₁ : SmoothEmbedding I' J'' n' M' N}
+    [ChartedSpace L' N] {f₁ g₁ : SmoothEmbedding I' J'' n' M' N}
     (hf₁ : f₁.toContinuousMap = f.toContinuousMap.comp e)
     (hg₁ : g₁.toContinuousMap = g.toContinuousMap.comp e) :
     ContinuousAmbientIsotopic f₁ g₁ := by
@@ -112,9 +107,7 @@ theorem precomp_of_toContinuousMap_eq (hfg : ContinuousAmbientIsotopic f g) (e :
 /-- Postcomposing both endpoints by a homeomorphism of ambient spaces preserves continuous
 ambient isotopy, provided the postcomposed maps have already been bundled as smooth embeddings. -/
 theorem postcomp_homeomorph_of_toContinuousMap_eq (hfg : ContinuousAmbientIsotopic f g)
-    (h : N ≃ₜ N')
-    [ChartedSpace L M]
-    {f₂ g₂ : SmoothEmbedding I'' J' n' M N'}
+    (h : N ≃ₜ N') [ChartedSpace L M] {f₂ g₂ : SmoothEmbedding I'' J' n' M N'}
     (hf₂ : f₂.toContinuousMap = (h : C(N, N')).comp f.toContinuousMap)
     (hg₂ : g₂.toContinuousMap = (h : C(N, N')).comp g.toContinuousMap) :
     ContinuousAmbientIsotopic f₂ g₂ := by

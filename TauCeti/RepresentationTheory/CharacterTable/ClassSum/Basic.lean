@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.Algebra.Group.ConjFinite
+public import TauCeti.Algebra.Group.ConjFinite
 public import Mathlib.Algebra.Algebra.Subalgebra.Basic
 public import Mathlib.Algebra.MonoidAlgebra.Basic
 
@@ -42,13 +42,13 @@ theorem classSum_coeff {k : Type*} [Semiring k] (C : ConjClasses G) (g : G) :
   rw [classSum_eq_sum, MonoidAlgebra.coeff_sum, Finsupp.finsetSum_apply]
   simp only [MonoidAlgebra.of_apply, MonoidAlgebra.coeff_single, Finsupp.single_apply]
   by_cases hg : ConjClasses.mk g = C
-  · rw [if_pos hg,
+  · rw [ite_eq_left hg,
       Finset.sum_eq_single (⟨g, ConjClasses.mem_carrier_iff_mk_eq.mpr hg⟩ : C.carrier)]
     · simp
-    · exact fun b _ hb => if_neg fun h => hb (Subtype.ext h)
+    · exact fun b _ hb => ite_eq_right fun h => hb (Subtype.ext h)
     · simp
-  · rw [if_neg hg]
-    refine Finset.sum_eq_zero fun c _ => if_neg fun h => hg ?_
+  · rw [ite_eq_right hg]
+    refine Finset.sum_eq_zero fun c _ => ite_eq_right fun h => hg ?_
     rw [← h]
     exact ConjClasses.mem_carrier_iff_mk_eq.mp c.property
 
@@ -94,7 +94,7 @@ theorem classSum_commutes {k : Type*} [Semiring k] (C : ConjClasses G) (g : G) :
 end
 
 /-- The class sum of the conjugacy class of `1` is the unit of the group algebra: that class is the
-singleton `{1}`. -/
+singleton `{1}` (`TauCeti.ConjClasses.carrier_mk_one`). -/
 @[simp]
 theorem classSum_mk_one (k : Type*) [Semiring k] :
     classSum k (ConjClasses.mk (1 : G)) = 1 := by
@@ -108,10 +108,10 @@ theorem classSum_mem_center (k : Type*) [CommSemiring k] (C : ConjClasses G) :
   rw [Subalgebra.mem_center_iff]
   intro a
   induction a using MonoidAlgebra.induction_on with
-  | hM g => exact (classSum_commutes C g).symm
-  | hadd x y hx hy =>
+  | of g => exact (classSum_commutes C g).symm
+  | add x y hx hy =>
     rw [mul_add, add_mul, hx, hy]
-  | hsmul r x hx =>
+  | smul r x hx =>
     rw [Algebra.mul_smul_comm, Algebra.smul_mul_assoc, hx]
 
 end TauCeti
