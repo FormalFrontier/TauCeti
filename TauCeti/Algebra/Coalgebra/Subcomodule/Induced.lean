@@ -240,7 +240,6 @@ variable {N : Type*}
 variable [AddCommMonoid N] [Module R N] [Comodule R C N]
 
 /-- Corestrict a comodule morphism to a subcomodule containing its image. -/
-@[expose]
 noncomputable def codRestrict (f : Hom R C M N) (P : Subcomodule R C N)
     (h : ∀ m, f m ∈ P) : Hom R C M P :=
   let g : M →ₗ[R] P :=
@@ -270,19 +269,28 @@ noncomputable def codRestrict (f : Hom R C M N) (P : Subcomodule R C N)
             (Comodule.coact (R := R) (C := C) (M := P) ⟨f m, h m⟩) :=
           (Subcomodule.subtype_rTensor_coact P ⟨f m, h m⟩).symm }
 
+private theorem codRestrict_toLinearMap_def (f : Hom R C M N) (P : Subcomodule R C N)
+    (h : ∀ m, f m ∈ P) :
+    (f.codRestrict P h).toLinearMap = f.toLinearMap.codRestrict P.toSubmodule h :=
+  LinearMap.ext fun _ ↦ rfl
+
+private theorem codRestrict_apply_def (f : Hom R C M N) (P : Subcomodule R C N)
+    (h : ∀ m, f m ∈ P) (m : M) : (f.codRestrict P h m : N) = f m :=
+  rfl
+
 /-- The underlying linear map of a corestricted comodule morphism is the ordinary linear
 corestriction. -/
 @[simp]
 theorem codRestrict_toLinearMap (f : Hom R C M N) (P : Subcomodule R C N)
     (h : ∀ m, f m ∈ P) :
     (f.codRestrict P h).toLinearMap = f.toLinearMap.codRestrict P.toSubmodule h :=
-  LinearMap.ext fun _ ↦ rfl
+  by exact codRestrict_toLinearMap_def f P h
 
 /-- Corestricting a comodule morphism changes only its codomain. -/
 @[simp]
 theorem codRestrict_apply (f : Hom R C M N) (P : Subcomodule R C N)
     (h : ∀ m, f m ∈ P) (m : M) : (f.codRestrict P h m : N) = f m :=
-  rfl
+  by exact codRestrict_apply_def f P h m
 
 end Comodule.Hom
 
