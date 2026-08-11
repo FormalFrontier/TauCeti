@@ -19,9 +19,10 @@ cover `H`, the local functionals glue uniquely to a linear map
 g_η : H → A.
 ```
 
-This file performs that gluing and proves that a tensor automorphism arising from an
-`A`-valued point recovers the underlying linear map of that point. Tensor compatibility will
-next show that `g_η` preserves multiplication and one, upgrading it to an algebra-valued point.
+This file performs that gluing, proves that `g_η` preserves one, and proves that a tensor
+automorphism arising from an `A`-valued point recovers the underlying linear map of that point.
+Tensor compatibility will next show that `g_η` preserves multiplication, upgrading it to an
+algebra-valued point.
 
 ## Main declarations
 
@@ -105,7 +106,8 @@ theorem globalFunctional_one
     ⟨N, Subcomodule.mem_finiteSubcomodules.mpr hNfinite⟩
   calc
     globalFunctional k H A η 1 =
-        globalFunctional k H A η (⟨1, hOne⟩ : N'.1) := rfl
+        globalFunctional k H A η (⟨1, hOne⟩ : N'.1) :=
+      congrArg (globalFunctional k H A η) (Subtype.coe_mk 1 hOne).symm
     _ = localFunctional k H A η N' ⟨1, hOne⟩ :=
       globalFunctional_apply k H A η N' ⟨1, hOne⟩
     _ = 1 := localFunctional_one k H A η N' hOne
