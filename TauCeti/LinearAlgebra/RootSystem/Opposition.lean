@@ -48,19 +48,28 @@ is not `@[expose]` and the term is then not type-correct at reducible transparen
 
 ## References
 
-The longest element `w₀` is the last item of Layer 4 in
-`TauCetiRoadmap/RepresentationTheory/RootSystems/README.md`, where it is pinned by
-`w₀ • posRoots b = negRoots b` and `w₀ ^ 2 = 1` — which say exactly that `-w₀` permutes the
-positive roots. That this permutation restricts to the base is the prerequisite consumed by
-`exists_invariantForm_iff_neg_longest_smul_eq` in
-`TauCetiRoadmap/RepresentationTheory/LieHighestWeight/Suggested.lean`. The conjunct of that
-statement which this file supplies,
-`∀ mu, IsDominantIntegral base mu → IsDominantIntegral base (-(weightEquiv w mu))`, mentions no
-Lie algebra: dominance is a condition at the simple coroot indices, so transporting it along `-w₀`
-needs exactly `TauCeti.opposition_mem_support` and `TauCeti.coroot'_opposition`, and nothing from
-the enveloping-algebra layers that the rest of that target rests on. The argument is the one in
-J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, GTM 9, Ch. III, §10.3
-and §13.1, and in N. Bourbaki, *Groupes et algèbres de Lie*, Ch. VI, §1.6.
+This file refines the "longest element" item, last in Layer 4 of
+`TauCetiRoadmap/RepresentationTheory/RootSystems/README.md` — the roadmap stage this material
+belongs to, and the one implemented by its sole import
+`TauCeti/LinearAlgebra/RootSystem/LongestElement.lean`. That item pins `w₀` by
+`w₀ • posRoots b = negRoots b` and `w₀ ^ 2 = 1`, which say exactly that `-w₀` is an involutive
+permutation of the positive roots; proved here is *which* permutation it is, namely one that
+restricts to the base. Every stage the argument stands on is on `main`: the positivity and height
+API of Layer 1 (`TauCeti/LinearAlgebra/RootSystem/Positive.lean`, where the indecomposability
+characterisation it consumes lives), and the chamber, fundamental-domain and longest-element
+results of Layer 4.
+
+Restricting `-w₀` to the base is what lets a condition stated at the *simple* indices be
+transported along it. `TauCeti.IsDominantIntegral` in
+`TauCeti/Algebra/Lie/HighestWeight/Basic.lean` is such a condition —
+`∀ i ∈ b.support, ∃ n : ℕ, lam (coroot i) = (n : K)` — and its transport along `-w₀` needs exactly
+`TauCeti.opposition_mem_support` and `TauCeti.coroot'_opposition`. That transport is one conjunct
+of `exists_invariantForm_iff_neg_longest_smul_eq` in
+`TauCetiRoadmap/RepresentationTheory/LieHighestWeight/Suggested.lean`; the conjunct mentions no Lie
+algebra, and nothing here depends on the enveloping-algebra layers on which the rest of that target
+rests. The argument is the one in J. E. Humphreys, *Introduction to Lie Algebras and Representation
+Theory*, GTM 9, Ch. III, §10.3 and §13.1, and in N. Bourbaki, *Groupes et algèbres de Lie*, Ch. VI,
+§1.6.
 -/
 
 namespace TauCeti
