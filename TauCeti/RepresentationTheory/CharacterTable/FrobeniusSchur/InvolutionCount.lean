@@ -120,9 +120,9 @@ variable {k : Type} {G : Type v} [Field k] [Group G] [Fintype G]
 /-- **The Frobenius-Schur indicator is the coefficient of the character.** Pairing the character of
 `ρ` against the square-root count returns `ν₂(ρ) = |G|⁻¹ ∑_g χ(g²)`.
 
-Both sides are averages of a sum over `G` of character values, and the two sums agree termwise
-after the group elements are grouped by the value of `g ↦ (g²)⁻¹` and the resulting sum
-`∑_g χ(g⁻²)` is reindexed by inversion. -/
+This is the only input to the involution-counting formula below that is about the indicator; the
+rest is the expansion of a class function in the basis of irreducible characters.  No
+irreducibility or finite-dimensionality of `ρ` is needed. -/
 theorem characterPairing_ofCharacter_squareRootCount_eq_frobeniusSchurIndicator
     {V : Type w} [AddCommGroup V] [Module k V]
     (ρ : Representation k G V) :
