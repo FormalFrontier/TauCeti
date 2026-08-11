@@ -54,9 +54,11 @@ restated through `IsPositiveDefiniteKernel`.
 
 * `TauCeti.fourier_re_nonneg_of_isPositiveDefiniteKernel`: the Fourier transform of a
   continuous integrable positive-definite function has nonnegative real part.
-* `TauCeti.fourier_im_eq_zero_of_isPositiveDefiniteKernel` and
-  `TauCeti.fourier_eq_re_of_isPositiveDefiniteKernel`: for an integrable such `F` (continuity is
-  not needed), the imaginary part of `𝓕 F` vanishes and `𝓕 F` equals its own real part.
+* `TauCeti.fourier_im_eq_zero_of_map_neg_eq_conj` and
+  `TauCeti.fourier_eq_re_of_map_neg_eq_conj`: for an integrable *conjugate-symmetric* `F`
+  (continuity is not needed), the imaginary part of `𝓕 F` vanishes and `𝓕 F` equals its own real
+  part; `TauCeti.fourier_im_eq_zero_of_isPositiveDefiniteKernel` and
+  `TauCeti.fourier_eq_re_of_isPositiveDefiniteKernel` are the positive-definite specializations.
 * `TauCeti.integrable_fourier_of_isPositiveDefiniteKernel`: the Fourier transform of a
   continuous integrable positive-definite function is integrable.
 * `TauCeti.fourierInv_re_nonneg_of_isPositiveDefiniteKernel`,
@@ -594,21 +596,21 @@ The argument never uses `_hint`, and the statement is provable without it: each 
 `Real.fourier_eq`, `integral_conj`, `integral_neg_eq_self` — is an equality that survives a
 divergent integral, both sides then being the default value `0`. So requiring integrability is a
 deliberate design choice, not a proof obligation. Without it `𝓕 F` is that default value rather
-than the Fourier transform, so on a non-integrable positive-definite function such as `F = 1` the
-conclusion degenerates to `(0 : ℂ).im = 0`; keeping those vacuous instances out of the public API
-is worth the strength given up. Hence the hypothesis is bound as `_hint`.
+than the Fourier transform, so on a non-integrable conjugate-symmetric function such as `F = 1`
+the conclusion degenerates to `(0 : ℂ).im = 0`; keeping those vacuous instances out of the public
+API is worth the strength given up. Hence the hypothesis is bound as `_hint`.
 
 Not a `@[simp]` lemma: neither side condition is dischargeable by `simp`'s discharger, so the
 rule would be tried against every `(𝓕 _ _).im` and never fire. -/
-theorem fourier_im_eq_zero_of_isPositiveDefiniteKernel (F : V → ℂ)
-    (hpd : IsPositiveDefiniteKernel fun a b : V => F (a - b)) (_hint : Integrable F) (ξ : V) :
+theorem fourier_im_eq_zero_of_map_neg_eq_conj (F : V → ℂ)
+    (hsymm : ∀ v : V, F (-v) = conj (F v)) (_hint : Integrable F) (ξ : V) :
     (𝓕 F ξ).im = 0 := by
   rw [fourier_eq_integral_fourierAtom_mul F ξ]
   have hconj : conj (∫ v, fourierAtom ξ v * F v) = ∫ v, fourierAtom ξ v * F v := by
     rw [← integral_conj]
     have hpt : ∀ v : V, conj (fourierAtom ξ v * F v) = fourierAtom ξ (-v) * F (-v) := by
       intro v
-      rw [map_mul, ← map_neg_eq_conj_of_isPositiveDefiniteKernel hpd v]
+      rw [map_mul, ← hsymm v]
       congr 1
       rw [fourierAtom_eq_fourierChar, fourierAtom_eq_fourierChar,
         Circle.starRingEnd_addChar]
@@ -619,19 +621,30 @@ theorem fourier_im_eq_zero_of_isPositiveDefiniteKernel (F : V → ℂ)
   simp only [Complex.conj_im] at him
   linarith
 
-/-- The Fourier transform of an integrable function whose subtraction kernel is positive definite,
-on a finite-dimensional real inner-product space, is real: it equals the coercion of its own real
-part.
+/-- The Fourier transform of an integrable conjugate-symmetric function on a finite-dimensional
+real inner-product space is real: it equals the coercion of its own real part.
 
-As in `fourier_im_eq_zero_of_isPositiveDefiniteKernel`, `hint` is a design choice rather than a
-proof obligation — it is used only to discharge that lemma, which is itself provable without it.
-It is required here so that the conclusion cannot be read off a divergent integral's default
-value. -/
-theorem fourier_eq_re_of_isPositiveDefiniteKernel (F : V → ℂ)
-    (hpd : IsPositiveDefiniteKernel fun a b : V => F (a - b)) (hint : Integrable F) (ξ : V) :
+As in `fourier_im_eq_zero_of_map_neg_eq_conj`, `hint` is a design choice rather than a proof
+obligation — it is used only to discharge that lemma, which is itself provable without it. It is
+required here so that the conclusion cannot be read off a divergent integral's default value. -/
+theorem fourier_eq_re_of_map_neg_eq_conj (F : V → ℂ)
+    (hsymm : ∀ v : V, F (-v) = conj (F v)) (hint : Integrable F) (ξ : V) :
     𝓕 F ξ = ((𝓕 F ξ).re : ℂ) := by
   refine Complex.ext (by simp) ?_
-  simp [fourier_im_eq_zero_of_isPositiveDefiniteKernel F hpd hint ξ]
+  simp [fourier_im_eq_zero_of_map_neg_eq_conj F hsymm hint ξ]
+
+/-- The positive-definite specialization of `fourier_im_eq_zero_of_map_neg_eq_conj`: a function
+with positive-definite subtraction kernel is conjugate-symmetric. -/
+theorem fourier_im_eq_zero_of_isPositiveDefiniteKernel (F : V → ℂ)
+    (hpd : IsPositiveDefiniteKernel fun a b : V => F (a - b)) (hint : Integrable F) (ξ : V) :
+    (𝓕 F ξ).im = 0 :=
+  fourier_im_eq_zero_of_map_neg_eq_conj F (map_neg_eq_conj_of_isPositiveDefiniteKernel hpd) hint ξ
+
+/-- The positive-definite specialization of `fourier_eq_re_of_map_neg_eq_conj`. -/
+theorem fourier_eq_re_of_isPositiveDefiniteKernel (F : V → ℂ)
+    (hpd : IsPositiveDefiniteKernel fun a b : V => F (a - b)) (hint : Integrable F) (ξ : V) :
+    𝓕 F ξ = ((𝓕 F ξ).re : ℂ) :=
+  fourier_eq_re_of_map_neg_eq_conj F (map_neg_eq_conj_of_isPositiveDefiniteKernel hpd) hint ξ
 
 /-! ### Integrability of the Fourier transform of a positive-definite function -/
 
@@ -818,16 +831,21 @@ theorem fourierInv_re_nonneg_of_isPositiveDefiniteKernel (F : V → ℂ)
   rw [Real.fourierInv_eq_fourier_neg]
   exact fourier_re_nonneg_of_isPositiveDefiniteKernel F hpd hint hcont (-ξ)
 
-/-- The inverse Fourier transform of an integrable function whose subtraction kernel is positive
-definite is real: it equals the coercion of its own real part. As in
-`fourier_im_eq_zero_of_isPositiveDefiniteKernel`, `hint` is a design choice rather than a proof
-obligation: it keeps the statement from being read off the default value of a divergent
-integral. -/
-theorem fourierInv_eq_re_of_isPositiveDefiniteKernel (F : V → ℂ)
-    (hpd : IsPositiveDefiniteKernel fun a b : V => F (a - b)) (hint : Integrable F) (ξ : V) :
+/-- The inverse Fourier transform of an integrable conjugate-symmetric function is real: it
+equals the coercion of its own real part. As in `fourier_im_eq_zero_of_map_neg_eq_conj`, `hint`
+is a design choice rather than a proof obligation: it keeps the statement from being read off the
+default value of a divergent integral. -/
+theorem fourierInv_eq_re_of_map_neg_eq_conj (F : V → ℂ)
+    (hsymm : ∀ v : V, F (-v) = conj (F v)) (hint : Integrable F) (ξ : V) :
     𝓕⁻ F ξ = ((𝓕⁻ F ξ).re : ℂ) := by
   rw [Real.fourierInv_eq_fourier_neg]
-  exact fourier_eq_re_of_isPositiveDefiniteKernel F hpd hint (-ξ)
+  exact fourier_eq_re_of_map_neg_eq_conj F hsymm hint (-ξ)
+
+/-- The positive-definite specialization of `fourierInv_eq_re_of_map_neg_eq_conj`. -/
+theorem fourierInv_eq_re_of_isPositiveDefiniteKernel (F : V → ℂ)
+    (hpd : IsPositiveDefiniteKernel fun a b : V => F (a - b)) (hint : Integrable F) (ξ : V) :
+    𝓕⁻ F ξ = ((𝓕⁻ F ξ).re : ℂ) :=
+  fourierInv_eq_re_of_map_neg_eq_conj F (map_neg_eq_conj_of_isPositiveDefiniteKernel hpd) hint ξ
 
 /-- The inverse Fourier transform of a continuous integrable positive-definite function is
 integrable. -/
