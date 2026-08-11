@@ -51,9 +51,9 @@ variable {X : TopCat.{u}}
 groupoid of `X` to types.
 
 A covering space is sent to its own monodromy functor, and a map of covering spaces to the natural
-transformation restricting that map to every fibre. The definition is exposed, so downstream files
-may unfold its object and morphism values; the intended interface for doing so is
-`monodromyFunctor_obj` and `monodromyFunctor_map_app` rather than the record fields. -/
+transformation restricting that map to every fibre. The definition is exposed so its exported
+equation lemmas can unfold it; downstream code should use `monodromyFunctor_obj`,
+`monodromyFunctor_map`, and `monodromyFunctor_map_app`. -/
 @[expose] noncomputable def monodromyFunctor (X : TopCat.{u}) :
     CoveringSpace X ⥤ (FundamentalGroupoid X ⥤ Type u) where
   obj p := p.isCoveringMap_proj.monodromyFunctor
@@ -69,6 +69,14 @@ may unfold its object and morphism values; the intended interface for doing so i
 @[simp]
 theorem monodromyFunctor_obj (p : CoveringSpace X) :
     (monodromyFunctor X).obj p = p.isCoveringMap_proj.monodromyFunctor :=
+  rfl
+
+/-- The natural transformation assigned to a map of covering spaces is the one induced by its
+underlying map of total spaces. -/
+theorem monodromyFunctor_map {p q : CoveringSpace X} (f : p ⟶ q) :
+    (monodromyFunctor X).map f =
+      IsCoveringMap.monodromyNatTrans p.isCoveringMap_proj q.isCoveringMap_proj
+        f.hom.left.hom (proj_hom_comp_hom_left_hom f) :=
   rfl
 
 /-- At a base point, the natural transformation assigned by monodromy is the restriction of the

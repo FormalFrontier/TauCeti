@@ -14,13 +14,17 @@ functors of two covering spaces comes from a unique map of covering spaces. Fait
 proved when the monodromy functor was assembled; this file supplies fullness.
 
 The map on total spaces is forced pointwise: at `e`, apply the component of the natural
-transformation over `p e` to `e` viewed as an element of that fibre. Its continuity is the
-topological content. Around `e`, choose a path-connected open set contained in local sheets for
-both covers. Naturality along paths in that set shows that the forced map agrees there with the
-inverse of the target sheet followed by the source projection.
+transformation over `p.proj e` to `e` viewed as an element of that fibre. Its continuity is the
+topological content. Around `e`, choose a path-connected open set contained in the images of
+chosen sheets for both covers. Naturality along paths in that set shows that the forced map agrees
+there with the source projection followed by the inverse of the target sheet.
 
 ## Main declaration
 
+* `TauCeti.IsCoveringMap.monodromy_eq_of_path_in_sheet`: monodromy inside one local sheet
+  carries its chosen lift of the source to its chosen lift of the target.
+* `TauCeti.IsCoveringMap.exists_map_of_monodromyNatTrans`: a natural transformation between
+  monodromy functors of covering maps is induced by a continuous map over the base.
 * `TauCeti.CoveringSpace.monodromyFunctor_full`: over a locally path-connected base, the
   monodromy functor on covering spaces is full.
 
@@ -29,7 +33,8 @@ inverse of the target sheet followed by the source projection.
 This is the fullness step in the alternative monodromy-functor classification requested by
 Stage 2, item 8 of `TauCetiRoadmap/UniversalCovers/README.md`. The mathematical argument is the
 standard local-sheet proof of fullness for the monodromy functor; see A. Hatcher, *Algebraic
-Topology*, Section 1.3. It uses Mathlib's covering trivializations and path-lifting monodromy.
+Topology*, Section 1.3. It uses Junyan Xu's path-lifting and monodromy API in
+`Mathlib/Topology/Homotopy/Lifting.lean`.
 -/
 
 public section
@@ -38,157 +43,201 @@ open CategoryTheory
 open Topology
 open unitInterval
 
-universe u
+universe u v
 
-namespace TauCeti.CoveringSpace
+namespace TauCeti
 
-variable {X : TopCat.{u}}
+namespace IsCoveringMap
+
+variable {E F : Type u} {X : Type v}
+  [TopologicalSpace E] [TopologicalSpace F] [TopologicalSpace X]
+  {p : E → X} {q : F → X}
+
+/-- Monodromy along a path contained in the base-side domain of a local inverse carries each
+endpoint in its sheet to the other endpoint. -/
+theorem monodromy_eq_of_path_in_sheet (hp : _root_.IsCoveringMap p)
+    (φ : OpenPartialHomeomorph X E) (hφ : ⇑φ.symm = p) {a b : X} (γ : Path a b)
+    (hγ : ∀ t, γ t ∈ φ.source) (e : p ⁻¹' {a}) (z : p ⁻¹' {b})
+    (he : (e : E) ∈ φ.target) (hz : (z : E) ∈ φ.target) :
+    hp.monodromy (Path.Homotopic.Quotient.mk γ) e = z := by
+  have he_base : p e = a := by
+    simpa only [Set.mem_preimage, Set.mem_singleton_iff] using e.2
+  have hz_base : p z = b := by
+    simpa only [Set.mem_preimage, Set.mem_singleton_iff] using z.2
+  have heq : (e : E) = φ a := by
+    calc
+      (e : E) = φ (p e) := by
+        rw [← congrFun hφ e]
+        exact (φ.right_inv he).symm
+      _ = φ a := congrArg φ he_base
+  have hzq : (z : E) = φ b := by
+    calc
+      (z : E) = φ (p z) := by
+        rw [← congrFun hφ z]
+        exact (φ.right_inv hz).symm
+      _ = φ b := congrArg φ hz_base
+  let Γ : Path (e : E) z :=
+    (γ.map' (φ.continuousOn.mono fun _ hy ↦ by
+      obtain ⟨t, rfl⟩ := hy
+      exact hγ t)).cast heq hzq
+  apply hp.monodromy_eq_of_map_eq (Path.Homotopic.Quotient.mk Γ)
+  change (Path.Homotopic.Quotient.mk Γ).map ⟨p, hp.continuous⟩ =
+    (Path.Homotopic.Quotient.mk γ).cast he_base hz_base
+  rw [← Path.Homotopic.Quotient.mk_map, ← Path.Homotopic.Quotient.mk_cast]
+  apply congrArg Path.Homotopic.Quotient.mk
+  ext t
+  exact (congrFun hφ (φ (γ t))).symm.trans (φ.left_inv (hγ t))
 
 /-- The pointwise map of total spaces forced by a natural transformation of monodromy
 functors. -/
-private noncomputable def mapOfNatTrans {p q : CoveringSpace X}
-    (α : (monodromyFunctor X).obj p ⟶ (monodromyFunctor X).obj q) :
-    ↑(p : TopCat) → ↑(q : TopCat) :=
-  fun e ↦ ((α.app (FundamentalGroupoid.mk (p.proj e))) ⟨e, rfl⟩).1
+private noncomputable def mapOfNatTrans (hp : _root_.IsCoveringMap p)
+    (hq : _root_.IsCoveringMap q) (α : hp.monodromyFunctor ⟶ hq.monodromyFunctor) : E → F :=
+  fun e ↦ ((α.app (FundamentalGroupoid.mk (p e))) ⟨e, rfl⟩).1
+
+/-- Evaluation of the pointwise map forced by a monodromy natural transformation. -/
+private theorem mapOfNatTrans_apply (hp : _root_.IsCoveringMap p)
+    (hq : _root_.IsCoveringMap q) (α : hp.monodromyFunctor ⟶ hq.monodromyFunctor) (e : E) :
+    ((α.app (FundamentalGroupoid.mk (p e))) ⟨e, rfl⟩).1 = mapOfNatTrans hp hq α e :=
+  rfl
 
 /-- The pointwise map defined by a monodromy transformation lies over the base. -/
-private theorem proj_mapOfNatTrans {p q : CoveringSpace X}
-    (α : (monodromyFunctor X).obj p ⟶ (monodromyFunctor X).obj q)
-    (e : ↑(p : TopCat)) :
-    q.proj (mapOfNatTrans α e) = p.proj e :=
-  ((α.app (FundamentalGroupoid.mk (p.proj e))) ⟨e, rfl⟩).2
+private theorem proj_mapOfNatTrans (hp : _root_.IsCoveringMap p)
+    (hq : _root_.IsCoveringMap q) (α : hp.monodromyFunctor ⟶ hq.monodromyFunctor) (e : E) :
+    q (mapOfNatTrans hp hq α e) = p e :=
+  ((α.app (FundamentalGroupoid.mk (p e))) ⟨e, rfl⟩).2
 
 /-- The map forced by a natural transformation of monodromy functors is continuous when the
 base is locally path-connected. -/
 private theorem continuous_mapOfNatTrans [LocallyPathConnectedSpace X]
-    {p q : CoveringSpace X}
-    (α : (monodromyFunctor X).obj p ⟶ (monodromyFunctor X).obj q) :
-    Continuous (mapOfNatTrans α) := by
+    (hp : _root_.IsCoveringMap p) (hq : _root_.IsCoveringMap q)
+    (α : hp.monodromyFunctor ⟶ hq.monodromyFunctor) :
+    Continuous (mapOfNatTrans hp hq α) := by
   rw [continuous_iff_continuousAt]
   intro e
-  let f : ↑(p : TopCat) → ↑(q : TopCat) := mapOfNatTrans α
-  let hp := p.isCoveringMap_proj
-  let hq := q.isCoveringMap_proj
-  obtain ⟨ep, hep, hp_eq⟩ := hp.isLocalHomeomorph e
-  obtain ⟨eq, heq, hq_eq⟩ := hq.isLocalHomeomorph (f e)
-  let x : X := p.proj e
-  have hpe : ep e = x := by
-    simpa only [x] using congrFun hp_eq.symm e
-  have hqfe : eq (f e) = x := by
-    rw [← hq_eq]
-    exact proj_mapOfNatTrans α e
-  have hxept : x ∈ ep.target := hpe ▸ ep.map_source hep
-  have hxeqt : x ∈ eq.target := hqfe ▸ eq.map_source heq
+  let f : E → F := mapOfNatTrans hp hq α
+  let φp := hp.isLocalHomeomorph.localInverseAt e
+  let φq := hq.isLocalHomeomorph.localInverseAt (f e)
+  let x : X := p e
+  have heφp : e ∈ φp.target := by
+    exact hp.isLocalHomeomorph.self_mem_localInverseAt_target
+  have hfeφq : f e ∈ φq.target := by
+    exact hq.isLocalHomeomorph.self_mem_localInverseAt_target
+  have hφp : ⇑φp.symm = p := by
+    exact hp.isLocalHomeomorph.localInverseAt_symm e
+  have hφq : ⇑φq.symm = q := by
+    exact hq.isLocalHomeomorph.localInverseAt_symm (f e)
+  have hqfe : q (f e) = x := proj_mapOfNatTrans hp hq α e
+  have hxφp : x ∈ φp.source := by
+    exact hp.isLocalHomeomorph.apply_self_mem_localInverseAt_source
+  have hxφq : x ∈ φq.source := hqfe ▸
+    hq.isLocalHomeomorph.apply_self_mem_localInverseAt_source
   obtain ⟨U, ⟨hUopen, hxU, hUpath⟩, hUsub⟩ :=
     (isOpen_isPathConnected_basis x).mem_iff.mp
-      ((ep.open_target.inter eq.open_target).mem_nhds ⟨hxept, hxeqt⟩)
-  let V : Set ↑(p : TopCat) := ep.source ∩ p.proj ⁻¹' U
-  have hVopen : IsOpen V := ep.open_source.inter (hUopen.preimage hp.continuous)
-  have heV : e ∈ V := by
-    refine ⟨hep, ?_⟩
-    exact hxU
-  let g : ↑(p : TopCat) → ↑(q : TopCat) := fun z ↦ eq.symm (p.proj z)
+      ((φp.open_source.inter φq.open_source).mem_nhds ⟨hxφp, hxφq⟩)
+  let V : Set E := φp.target ∩ p ⁻¹' U
+  have hVopen : IsOpen V := φp.open_target.inter (hUopen.preimage hp.continuous)
+  have heV : e ∈ V := ⟨heφp, hxU⟩
+  let g : E → F := fun z ↦ φq (p z)
   have hg : ContinuousAt g e := by
-    apply (eq.continuousAt_symm hxeqt).comp
+    apply (φq.continuousAt hxφq).comp
     exact hp.continuous.continuousAt
-  have hfg : mapOfNatTrans α =ᶠ[𝓝 e] g := by
+  have hfg : mapOfNatTrans hp hq α =ᶠ[𝓝 e] g := by
     filter_upwards [hVopen.mem_nhds heV] with z hz
-    have hpz_eq : ep z = p.proj z := congrFun hp_eq.symm z
-    have hpzU : p.proj z ∈ U := hz.2
-    let joined : JoinedIn U x (p.proj z) := hUpath.joinedIn x hxU (p.proj z) hpzU
-    let γ : Path x (p.proj z) := joined.somePath
-    have hγep (t : I) : γ t ∈ ep.target := (hUsub (joined.somePath_mem t)).1
-    have hγeq (t : I) : γ t ∈ eq.target := (hUsub (joined.somePath_mem t)).2
-    let Γp : Path e z :=
-      { toFun := fun t ↦ ep.symm (γ t)
-        continuous_toFun := ep.symm.continuousOn.comp_continuous γ.continuous hγep
-        source' := by
-          dsimp only
-          rw [γ.source, ← hpe]
-          exact ep.left_inv hep
-        target' := by
-          dsimp only
-          rw [γ.target, ← hpz_eq]
-          exact ep.left_inv hz.1 }
-    have hΓp_map : Γp.map hp.continuous = γ := by
-      ext t
-      exact (congrFun hp_eq (ep.symm (γ t))).trans (ep.right_inv (hγep t))
-    let e' : p.proj.hom ⁻¹' {x} := ⟨e, rfl⟩
-    let z' : p.proj.hom ⁻¹' {p.proj z} := ⟨z, rfl⟩
-    have hpmono : hp.monodromy (Path.Homotopic.Quotient.mk γ) e' = z' := by
-      apply hp.monodromy_eq_of_map_eq (Path.Homotopic.Quotient.mk Γp)
-      rw [← Path.Homotopic.Quotient.mk_map, hΓp_map]
-      rfl
-    let Γq : Path (f e) (g z) :=
-      { toFun := fun t ↦ eq.symm (γ t)
-        continuous_toFun := eq.symm.continuousOn.comp_continuous γ.continuous hγeq
-        source' := by
-          dsimp only [g]
-          rw [γ.source, ← hqfe]
-          exact eq.left_inv heq
-        target' := by
-          dsimp only [g]
-          rw [γ.target] }
-    have hfe : q.proj (f e) = x := proj_mapOfNatTrans α e
-    have hgz : q.proj (g z) = p.proj z := by
-      -- Unfold the local comparison map while keeping the chosen sheet inverse opaque.
-      change q.proj (eq.symm (p.proj z)) = p.proj z
-      rw [congrFun hq_eq (eq.symm (p.proj z)), eq.right_inv (hUsub hpzU).2]
-    let fe' : q.proj.hom ⁻¹' {x} := ⟨f e, hfe⟩
-    let gz' : q.proj.hom ⁻¹' {p.proj z} := ⟨g z, hgz⟩
-    have hΓq_map : Γq.map hq.continuous = γ.cast hfe hgz := by
-      ext t
-      exact (congrFun hq_eq (eq.symm (γ t))).trans (eq.right_inv (hγeq t))
-    have hqmono : hq.monodromy (Path.Homotopic.Quotient.mk γ) fe' = gz' := by
-      apply hq.monodromy_eq_of_map_eq (Path.Homotopic.Quotient.mk Γq)
-      rw [← Path.Homotopic.Quotient.mk_map, hΓq_map,
-        Path.Homotopic.Quotient.mk_cast]
+    have hpzU : p z ∈ U := hz.2
+    let joined : JoinedIn U x (p z) := hUpath.joinedIn x hxU (p z) hpzU
+    let γ : Path x (p z) := joined.somePath
+    have hγφp (t : I) : γ t ∈ φp.source := (hUsub (joined.somePath_mem t)).1
+    have hγφq (t : I) : γ t ∈ φq.source := (hUsub (joined.somePath_mem t)).2
+    let e' : p ⁻¹' {x} := ⟨e, rfl⟩
+    let z' : p ⁻¹' {p z} := ⟨z, rfl⟩
+    have hpmono : hp.monodromy (Path.Homotopic.Quotient.mk γ) e' = z' :=
+      monodromy_eq_of_path_in_sheet hp φp hφp γ hγφp e' z' heφp hz.1
+    have hfe : q (f e) = x := proj_mapOfNatTrans hp hq α e
+    have hgz : q (g z) = p z := by
+      dsimp only [g]
+      exact (congrFun hφq (φq (p z))).symm.trans (φq.left_inv (hUsub hpzU).2)
+    let fe' : q ⁻¹' {x} := ⟨f e, hfe⟩
+    let gz' : q ⁻¹' {p z} := ⟨g z, hgz⟩
+    have hgzφq : g z ∈ φq.target := by
+      dsimp only [g]
+      exact φq.map_source (hUsub hpzU).2
+    have hqmono : hq.monodromy (Path.Homotopic.Quotient.mk γ) fe' = gz' :=
+      monodromy_eq_of_path_in_sheet hq φq hφq γ hγφq fe' gz' hfeφq hgzφq
     have hα := ConcreteCategory.congr_hom
       (α.naturality (Path.Homotopic.Quotient.mk γ)) e'
-    -- Naturality is packaged through composition in `Type`; expose its pointwise transport
-    -- equation so the two locally constructed lifted paths can rewrite it.
-    change α.app (FundamentalGroupoid.mk (p.proj z))
+    rw [_root_.IsCoveringMap.monodromyFunctor_map,
+      _root_.IsCoveringMap.monodromyFunctor_map] at hα
+    change α.app (FundamentalGroupoid.mk (p z))
         (hp.monodromy (Path.Homotopic.Quotient.mk γ) e') =
       hq.monodromy (Path.Homotopic.Quotient.mk γ)
         (α.app (FundamentalGroupoid.mk x) e') at hα
     have hαe : α.app (FundamentalGroupoid.mk x) e' = fe' := Subtype.ext rfl
     rw [hpmono, hαe, hqmono] at hα
-    -- Read the resulting equality of fibre elements on their underlying total-space points.
-    change f z = g z
+    rw [← mapOfNatTrans_apply hp hq α]
     exact congrArg Subtype.val hα
   exact (continuousAt_congr hfg).mpr hg
+
+/-- Over a locally path-connected base, every natural transformation between the monodromy
+functors of two covering maps is induced by a continuous map over the base. -/
+theorem exists_map_of_monodromyNatTrans [LocallyPathConnectedSpace X]
+    (hp : _root_.IsCoveringMap p) (hq : _root_.IsCoveringMap q)
+    (α : hp.monodromyFunctor ⟶ hq.monodromyFunctor) :
+    ∃ (f : C(E, F)) (hf : q ∘ f = p), monodromyNatTrans hp hq f hf = α := by
+  let f : C(E, F) := ⟨mapOfNatTrans hp hq α, continuous_mapOfNatTrans hp hq α⟩
+  have hf : q ∘ f = p := by
+    funext e
+    exact proj_mapOfNatTrans hp hq α e
+  refine ⟨f, hf, ?_⟩
+  ext ⟨x⟩ e
+  obtain ⟨e, he⟩ := e
+  simp only [Set.mem_preimage, Set.mem_singleton_iff] at he
+  subst x
+  rw [monodromyNatTrans_app]
+  apply Subtype.ext
+  exact (fiberMap_apply_coe f hf (p e) ⟨e, rfl⟩).trans
+    (mapOfNatTrans_apply hp hq α e).symm
+
+end IsCoveringMap
+
+namespace CoveringSpace
+
+variable {X : TopCat.{u}}
 
 /-- Over a locally path-connected base, every natural transformation of monodromy functors is
 induced by a map of covering spaces. -/
 instance monodromyFunctor_full [LocallyPathConnectedSpace X] : (monodromyFunctor X).Full where
   map_surjective {p q} α := by
-    -- Use the object formula of the assembled monodromy functor in the transformation's type.
     change p.isCoveringMap_proj.monodromyFunctor ⟶
       q.isCoveringMap_proj.monodromyFunctor at α
-    let f : (p : TopCat) ⟶ (q : TopCat) :=
-      TopCat.ofHom ⟨mapOfNatTrans α, continuous_mapOfNatTrans α⟩
-    let F : p ⟶ q := homMk f (by
+    obtain ⟨f, hf, hα⟩ := IsCoveringMap.exists_map_of_monodromyNatTrans
+      p.isCoveringMap_proj q.isCoveringMap_proj α
+    let F : p ⟶ q := homMk (TopCat.ofHom f) (by
       ext e
-      exact proj_mapOfNatTrans α e)
+      exact congrFun hf e)
     refine ⟨F, ?_⟩
-    -- Expose the morphism part of the assembled functor; the remaining equality is exactly the
-    -- component formula for `monodromyNatTrans`.
+    rw [monodromyFunctor_map]
     change IsCoveringMap.monodromyNatTrans p.isCoveringMap_proj q.isCoveringMap_proj
       F.hom.left.hom (proj_hom_comp_hom_left_hom F) = α
-    ext ⟨x⟩ e
-    obtain ⟨e, he⟩ := e
-    simp only [Set.mem_preimage, Set.mem_singleton_iff] at he
-    subst x
-    rw [IsCoveringMap.monodromyNatTrans_app]
-    apply Subtype.ext
-    -- The categorical component above is the restriction of `F.hom.left`; expose its value
-    -- before identifying the constructed morphism with the forced pointwise map.
-    erw [IsCoveringMap.fiberMap_apply_coe]
-    have hF : F.hom.left = f := by
-      dsimp only [F]
-      exact homMk_hom_left _ _
-    rw [hF]
-    dsimp only [f]
-    rfl
+    have hF : F.hom.left.hom = f := by
+      simp only [F, homMk_hom_left, TopCat.hom_ofHom]
+    calc
+      IsCoveringMap.monodromyNatTrans p.isCoveringMap_proj q.isCoveringMap_proj
+          F.hom.left.hom (proj_hom_comp_hom_left_hom F) =
+          IsCoveringMap.monodromyNatTrans p.isCoveringMap_proj q.isCoveringMap_proj f hf := by
+        ext ⟨x⟩ e
+        obtain ⟨e, he⟩ := e
+        rw [IsCoveringMap.monodromyNatTrans_app, IsCoveringMap.monodromyNatTrans_app]
+        apply Subtype.ext
+        calc
+          (IsCoveringMap.fiberMap F.hom.left.hom (proj_hom_comp_hom_left_hom F) x ⟨e, he⟩ :
+              (q : TopCat)) = F.hom.left.hom e :=
+            IsCoveringMap.fiberMap_apply_coe F.hom.left.hom
+              (proj_hom_comp_hom_left_hom F) x ⟨e, he⟩
+          _ = f e := congrArg (fun k : C((p : TopCat), (q : TopCat)) ↦ k e) hF
+          _ = (IsCoveringMap.fiberMap f hf x ⟨e, he⟩ : (q : TopCat)) :=
+            (IsCoveringMap.fiberMap_apply_coe f hf x ⟨e, he⟩).symm
+      _ = α := hα
 
-end TauCeti.CoveringSpace
+end CoveringSpace
+
+end TauCeti
