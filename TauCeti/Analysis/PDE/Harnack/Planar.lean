@@ -108,7 +108,7 @@ theorem harnack_inequality_center_of_nonneg_on_sphere (hf : HarmonicOnNhd f (clo
   have hnonneg' : ∀ z ∈ sphere c |R|, 0 ≤ f z := fun z hz =>
     hnonneg z (by simpa [abs_of_pos hR] using hz)
   have hmean : circleAverage f c R = f c := by
-    apply HarmonicOnNhd.circleAverage_eq
+    apply InnerProductSpace.HarmonicOnNhd.circleAverage_eq
     simpa [abs_of_pos hR] using hf
   constructor
   · calc
@@ -144,7 +144,7 @@ theorem nonneg_of_mem_ball_of_harmonicOnNhd_of_nonneg_on_sphere
     0 ≤ f w := by
   have hR : 0 < R := pos_of_mem_ball hw
   have hmean : circleAverage f c R = f c := by
-    apply HarmonicOnNhd.circleAverage_eq
+    apply InnerProductSpace.HarmonicOnNhd.circleAverage_eq
     simpa [abs_of_pos hR] using hf
   have hfc : 0 ≤ f c := by
     rw [← hmean]

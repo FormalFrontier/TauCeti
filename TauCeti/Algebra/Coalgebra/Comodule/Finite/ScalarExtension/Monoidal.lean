@@ -21,6 +21,8 @@ comodule source category.
 ## Main declarations
 
 * `TauCeti.FGComoduleCat.instMonoidalScalarExtensionFunctor`: scalar extension is monoidal.
+* `TauCeti.FGComoduleCat.scalarExtensionMonoidalFunctor`: scalar extension bundled as a lax
+  monoidal functor.
 * `TauCeti.FGComoduleCat.scalarExtensionFunctor_μ`: the tensorator formula.
 * `TauCeti.FGComoduleCat.scalarExtensionFunctor_ε`: the unit-comparison formula.
 * `TauCeti.FGComoduleCat.scalarExtensionFunctor_δ`: the inverse tensorator formula.
@@ -171,6 +173,17 @@ noncomputable instance instMonoidalScalarExtensionFunctor :
           simp [model]))
 
 open Functor.LaxMonoidal Functor.OplaxMonoidal
+
+/-- The scalar-extension functor on finite comodules, bundled as a lax monoidal functor. -/
+@[expose] noncomputable def scalarExtensionMonoidalFunctor :
+    LaxMonoidalFunctor (FGComoduleCat.{u, v, u} R H) (SemimoduleCat.{u} A) :=
+  LaxMonoidalFunctor.of (scalarExtensionFunctor R H A)
+
+/-- The underlying functor of bundled monoidal scalar extension is scalar extension. -/
+@[simp]
+theorem scalarExtensionMonoidalFunctor_toFunctor :
+    (scalarExtensionMonoidalFunctor R H A).toFunctor = scalarExtensionFunctor R H A := by
+  rfl
 
 /-- Formula for the tensorator of finite-comodule scalar extension. -/
 theorem scalarExtensionFunctor_μ (M N : FGComoduleCat.{u, v, u} R H) :
