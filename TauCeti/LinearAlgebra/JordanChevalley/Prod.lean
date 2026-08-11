@@ -6,6 +6,7 @@ module
 
 public import TauCeti.LinearAlgebra.JordanChevalley.Multiplicative
 public import TauCeti.LinearAlgebra.GeneralLinearGroup.Prod
+import Mathlib.Algebra.Category.ModuleCat.Basic
 
 /-!
 # Products of multiplicative Jordan decompositions
@@ -81,20 +82,25 @@ theorem IsSemisimple.prodMap {f : Module.End K V} {g : Module.End K W}
   rw [Module.End.IsSemisimple] at hf hg ⊢
   let _ : IsSemisimpleModule K[X] (Module.AEval' f) := hf
   let _ : IsSemisimpleModule K[X] (Module.AEval' g) := hg
-  let L := LinearMap.range
-    (LinearMap.inl K[X] (Module.AEval' f) (Module.AEval' g))
-  let R := LinearMap.range
-    (LinearMap.inr K[X] (Module.AEval' f) (Module.AEval' g))
-  let _ : IsSemisimpleModule K[X] L := IsSemisimpleModule.range _
-  let _ : IsSemisimpleModule K[X] R := IsSemisimpleModule.range _
+  let M : Fin 2 → ModuleCat.{max v w} K[X] := fun i ↦
+    if i = 0 then ModuleCat.of K[X] (ULift.{max v w} (Module.AEval' f))
+    else ModuleCat.of K[X] (ULift.{max v w} (Module.AEval' g))
+  let _ (i : Fin 2) : IsSemisimpleModule K[X] (M i) := by
+    by_cases hi : i = 0
+    · subst i
+      simpa [M] using IsSemisimpleModule.congr
+        (ULift.moduleEquiv : ULift.{max v w} (Module.AEval' f) ≃ₗ[K[X]] Module.AEval' f)
+    · rw [show M i = ModuleCat.of K[X] (ULift.{max v w} (Module.AEval' g)) by simp [M, hi]]
+      exact IsSemisimpleModule.congr
+        (ULift.moduleEquiv : ULift.{max v w} (Module.AEval' g) ≃ₗ[K[X]] Module.AEval' g)
   have hprod : IsSemisimpleModule K[X] (Module.AEval' f × Module.AEval' g) := by
-    have hsup : IsSemisimpleModule K[X] ↑(L ⊔ R) :=
-      IsSemisimpleModule.sup inferInstance inferInstance
-    let _ : IsSemisimpleModule K[X] ↑(L ⊔ R) := hsup
-    apply IsSemisimpleModule.of_surjective (L ⊔ R).subtype
-    intro x
-    have htop : L ⊔ R = ⊤ := LinearMap.sup_range_inl_inr
-    exact ⟨⟨x, htop.symm ▸ Submodule.mem_top⟩, rfl⟩
+    let e₀ : (M 0 × M 1) ≃ₗ[K[X]] Module.AEval' f × Module.AEval' g := by
+      simpa [M] using
+        ((ULift.moduleEquiv : ULift.{max v w} (Module.AEval' f) ≃ₗ[K[X]]
+          Module.AEval' f).prodCongr
+          (ULift.moduleEquiv : ULift.{max v w} (Module.AEval' g) ≃ₗ[K[X]] Module.AEval' g))
+    let e := (LinearEquiv.piFinTwo K[X] (fun i ↦ (M i : Type (max v w)))).trans e₀
+    exact e.isSemisimpleModule_iff.mp inferInstance
   let E : Module.AEval' (f.prodMap g) ≃ₗ[K[X]]
       Module.AEval' f × Module.AEval' g := {
     toFun x := (x.1, x.2)
