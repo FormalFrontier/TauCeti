@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.AlgebraicGeometry.EllipticCurve.Affine.Point
-import TauCeti.AlgebraicGeometry.EllipticCurve.Affine.FunctionFieldFinrank
+import TauCeti.AlgebraicGeometry.EllipticCurve.Affine.FunctionField.Finrank
 
 /-!
 # The coordinate ring of an elliptic curve is a Dedekind domain
@@ -129,7 +129,6 @@ noncomputable def conj : W.CoordinateRing ≃ₐ[R[X]] W.CoordinateRing :=
   AlgEquiv.ofAlgHom (conjHom W) (conjHom W) (by ext; exact conjHom_conjHom W _)
     (by ext; exact conjHom_conjHom W _)
 
-@[simp]
 private lemma conj_apply (x : W.CoordinateRing) : conj W x = conjHom W x := by
   simp [conj]
 
