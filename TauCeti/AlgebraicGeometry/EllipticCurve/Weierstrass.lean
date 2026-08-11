@@ -9,24 +9,31 @@ public import Mathlib.AlgebraicGeometry.EllipticCurve.Weierstrass
 /-!
 # Complements on Weierstrass curves
 
-Two facts about the invariants of an elliptic curve, complementing
+Facts about the invariants of an elliptic curve, complementing
 `Mathlib/AlgebraicGeometry/EllipticCurve/Weierstrass.lean`:
 
 * `WeierstrassCurve.a₁_ne_zero_or_a₃_ne_zero_of_two_eq_zero`: where `2 = 0`, an elliptic curve
   has `a₁ ≠ 0` or `a₃ ≠ 0`;
 * `WeierstrassCurve.j_eq_1728_iff`: `j = 1728 ↔ c₆ = 0`, the analogue for `j = 1728` of Mathlib's
   `WeierstrassCurve.j_eq_zero_iff` (`j = 0 ↔ c₄ = 0`), together with its unreduced companion
-  `WeierstrassCurve.j_eq_1728_iff'` mirroring `WeierstrassCurve.j_eq_zero_iff'`.
+  `WeierstrassCurve.j_eq_1728_iff'` mirroring `WeierstrassCurve.j_eq_zero_iff'`;
+* `WeierstrassCurve.baseChange_c₄_ne_zero` and `WeierstrassCurve.baseChange_c₆_ne_zero`: the two
+  corollaries of those criteria that say `j ≠ 0` and `j ≠ 1728` survive base change along an
+  injection, in the `c₄`/`c₆` form the automorphism criterion consumes.
 
-Both are stated over a commutative ring, matching the generality of the Mathlib results they
-complement. Both are consumed by the automorphism-group development in
+All are stated over a commutative ring, matching the generality of the Mathlib results they
+complement. The first two are consumed by the automorphism-group development in
 `TauCeti/AlgebraicGeometry/EllipticCurve/Aut.lean`, the `Aut (E, O)` milestone of
-`TauCetiRoadmap/EllipticCurves/README.md` §Layer 1.
+`TauCetiRoadmap/EllipticCurves/README.md` §Layer 1; the base-change pair is consumed by the
+twist classification in `TauCeti/AlgebraicGeometry/EllipticCurve/QuadraticTwist.lean`, which
+needs `Aut(Eᴸ) = {±1}` after base change to a splitting field.
 
 Adapted from the FLT project (`ImperialCollegeLondon/FLT`,
 `FLT/Mathlib/AlgebraicGeometry/EllipticCurve/Weierstrass.lean` at the roadmap's pin
-`bc2fe8ff7396` (FLT PR #1088), Apache 2.0, by Kevin Buzzard and Claude), with both results
-generalised here from FLT's field-level statements to a commutative ring.
+`bc2fe8ff7396` (FLT PR #1088), Apache 2.0, by Kevin Buzzard and Claude). Every result here is
+adapted from that file, and all are generalised from FLT's field-level statements to a commutative
+ring: the two `j`-criteria, and the base-change pair `baseChange_c₄_ne_zero` /
+`baseChange_c₆_ne_zero`, which FLT states only for a field extension.
 -/
 
 public section
@@ -52,6 +59,30 @@ lemma j_eq_1728_iff' : E.j = 1728 ↔ E.c₆ ^ 2 = 0 := by
 analogue for `j = 1728` of `WeierstrassCurve.j_eq_zero_iff` (`j = 0 ↔ c₄ = 0`). -/
 lemma j_eq_1728_iff [IsReduced R] : E.j = 1728 ↔ E.c₆ = 0 := by
   rw [j_eq_1728_iff', pow_eq_zero_iff two_ne_zero]
+
+section BaseChange
+
+variable {A : Type*} [CommRing A] [Algebra R A] (hRA : Function.Injective (algebraMap R A))
+
+include hRA
+
+omit [E.IsElliptic] in
+/-- **`c₄ ≠ 0` survives base change** along an injection, since `c₄` of the base change is the
+image of `c₄`. Stated on `c₄` rather than on `j`: nothing here needs `[IsReduced R]` or the
+`j`-criterion — nor even that `E` be elliptic — and a caller with `j ≠ 0` gets the hypothesis from
+`j_eq_zero_iff`. -/
+lemma baseChange_c₄_ne_zero (hc₄ : E.c₄ ≠ 0) : (E.baseChange A).c₄ ≠ 0 := by
+  simp only [baseChange, map_c₄]
+  exact (map_ne_zero_iff _ hRA).mpr hc₄
+
+omit [E.IsElliptic] in
+/-- **`c₆ ≠ 0` survives base change** along an injection. The companion of
+`baseChange_c₄_ne_zero`; a caller with `j ≠ 1728` gets the hypothesis from `j_eq_1728_iff`. -/
+lemma baseChange_c₆_ne_zero (hc₆ : E.c₆ ≠ 0) : (E.baseChange A).c₆ ≠ 0 := by
+  simp only [baseChange, map_c₆]
+  exact (map_ne_zero_iff _ hRA).mpr hc₆
+
+end BaseChange
 
 end WeierstrassCurve
 
