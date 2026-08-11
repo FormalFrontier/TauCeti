@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+public import Mathlib.Algebra.BigOperators.Finprod
 public import TauCeti.NumberTheory.ModularForms.Order.OfVanishing
 
 import TauCeti.NumberTheory.Modular.Orbits
@@ -23,6 +24,8 @@ formula. The generic orbit facts it rides live in `TauCeti.NumberTheory.Modular.
   `MulAction.orbitRel.Quotient SL(2, ℤ) ℍ`.
 * `TauCeti.ModularForm.hasFiniteSupport_orderOfVanishingOnOrbit`: finite support on orbits for a
   nonzero form.
+* `TauCeti.ModularForm.sum_orderOfVanishingAt_eq_finsum_orbit`: a divisor sum reindexed over
+  the orbits its points represent, given that the orbit map is injective on them.
 
 ## References
 
@@ -74,6 +77,23 @@ lemma hasFiniteSupport_orderOfVanishingOnOrbit [ModularFormClass F 𝒮ℒ k] {f
   have h_inj : Set.InjOn rep {q | orderOfVanishingOnOrbit f q ≠ 0} := fun q₁ _ q₂ _ h ↦ by
     rw [← hrep_mk q₁, ← hrep_mk q₂, h]
   exact ((finite_zeros_in_fd hf).subset h_image).of_finite_image h_inj
+
+/-- A divisor sum over points, reindexed over the orbits those points represent. The reindexing
+is lossless exactly when the orbit map is injective on the index set, which is all this asks.
+
+A caller whose points lie in the **open** fundamental domain gets the hypothesis from
+`ModularGroup.orbit_mk_injOn_fdo.mono`. It genuinely needs the open domain: on the closed `𝒟`
+the orbit map is not injective — `T` identifies the two vertical edges and `S` the two halves of
+the arc — so a set holding two identified boundary representatives would count their common orbit
+twice. -/
+lemma sum_orderOfVanishingAt_eq_finsum_orbit [SlashInvariantFormClass F 𝒮ℒ k] {X : Finset ℍ}
+    (hX : Set.InjOn (Quotient.mk'' : ℍ → MulAction.orbitRel.Quotient SL(2, ℤ) ℍ) ↑X) :
+    ∑ p ∈ X, orderOfVanishingAt f p =
+      ∑ᶠ q ∈ (Quotient.mk'' : ℍ → MulAction.orbitRel.Quotient SL(2, ℤ) ℍ) '' ↑X,
+        orderOfVanishingOnOrbit f q := by
+  rw [finsum_mem_image hX]
+  simp only [orderOfVanishingOnOrbit_mk]
+  exact (finsum_mem_coe_finset _ X).symm
 
 end ModularForm
 
