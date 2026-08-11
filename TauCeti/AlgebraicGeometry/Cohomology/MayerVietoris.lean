@@ -27,8 +27,9 @@ together with the vanishing it gives when `U` and `V` cover `X`.
   `Scheme.Modules.mayerVietorisSequence_exact` is its exactness;
 * `Scheme.Modules.epi_mayerVietorisδ`: if `Hⁿ⁺¹(U, M)` and `Hⁿ⁺¹(V, M)` vanish, then the
   connecting map `Hⁿ(U ⊓ V, M) ⟶ Hⁿ⁺¹(U ⊔ V, M)` is an epimorphism;
-* `Scheme.Modules.subsingleton_cohomology_succ`: if moreover `Hⁿ(U ⊓ V, M)` vanishes and
-  `U ⊔ V = ⊤`, then `Hⁿ⁺¹(X, M)` vanishes, and
+* `Scheme.Modules.subsingleton_cohomologyOn_sup_succ`: if moreover `Hⁿ(U ⊓ V, M)` vanishes,
+  then `Hⁿ⁺¹(U ⊔ V, M)` vanishes; `Scheme.Modules.subsingleton_cohomology_succ` specializes
+  this to `Hⁿ⁺¹(X, M)` when `U ⊔ V = ⊤`, and
   `Scheme.Modules.subsingleton_cohomology_of_two_le` applies this at degree `n - 1` under
   uniform positive-degree acyclicity hypotheses.
 
@@ -125,6 +126,17 @@ theorem epi_mayerVietorisδ (n : ℕ)
 
 variable {U V}
 
+/-- If the degree `n + 1` cohomology of both of two open subsets vanishes, and their intersection
+has vanishing degree `n` cohomology, then their union has vanishing degree `n + 1` cohomology. -/
+theorem subsingleton_cohomologyOn_sup_succ (n : ℕ)
+    (hInter : Subsingleton (cohomologyOn M n (U ⊓ V)))
+    (hU : Subsingleton (cohomologyOn M (n + 1) U))
+    (hV : Subsingleton (cohomologyOn M (n + 1) V)) :
+    Subsingleton (cohomologyOn M (n + 1) (U ⊔ V)) := by
+  have hsurj : Function.Surjective (mayerVietorisδ M U V n (n + 1) rfl) :=
+    (AddCommGrpCat.epi_iff_surjective _).mp (epi_mayerVietorisδ M U V n hU hV)
+  exact hsurj.subsingleton
+
 /-- A scheme covered by two open subsets whose degree `n + 1` cohomology vanishes, and whose
 intersection has vanishing degree `n` cohomology, has vanishing degree `n + 1` cohomology. -/
 theorem subsingleton_cohomology_succ (hUV : U ⊔ V = ⊤) (n : ℕ)
@@ -132,9 +144,7 @@ theorem subsingleton_cohomology_succ (hUV : U ⊔ V = ⊤) (n : ℕ)
     (hU : Subsingleton (cohomologyOn M (n + 1) U))
     (hV : Subsingleton (cohomologyOn M (n + 1) V)) :
     Subsingleton (Cohomology M (n + 1)) := by
-  have hsurj : Function.Surjective (mayerVietorisδ M U V n (n + 1) rfl) :=
-    (AddCommGrpCat.epi_iff_surjective _).mp (epi_mayerVietorisδ M U V n hU hV)
-  have hTop : Subsingleton (cohomologyOn M (n + 1) (U ⊔ V)) := hsurj.subsingleton
+  have hTop := subsingleton_cohomologyOn_sup_succ M n hInter hU hV
   rw [hUV] at hTop
   exact (cohomologyOnTopIso M (n + 1)).symm.addCommGroupIsoToAddEquiv.toEquiv.subsingleton
 
