@@ -16,7 +16,7 @@ its compatibility with multiplication, inverses, and pure tensors.
 ## Main declarations
 
 * `TauCeti.GeneralLinearGroup.tensorProduct`: the tensor product of two linear automorphisms.
-* `TauCeti.GeneralLinearGroup.tensorProduct_apply_tmul`: its action on a pure tensor.
+* `TauCeti.GeneralLinearGroup.tensorProduct_tmul`: its action on a pure tensor.
 -/
 
 public section
@@ -48,7 +48,7 @@ theorem coe_tensorProduct (g : GeneralLinearGroup K V) (h : GeneralLinearGroup K
 
 /-- A tensor-product automorphism acts factorwise on pure tensors. -/
 @[simp]
-theorem tensorProduct_apply_tmul (g : GeneralLinearGroup K V) (h : GeneralLinearGroup K W)
+theorem tensorProduct_tmul (g : GeneralLinearGroup K V) (h : GeneralLinearGroup K W)
     (v : V) (w : W) :
     (tensorProduct g h : Module.End K (V ⊗[K] W)) (v ⊗ₜ[K] w) =
       (g : Module.End K V) v ⊗ₜ[K] (h : Module.End K W) w :=
