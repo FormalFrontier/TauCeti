@@ -25,7 +25,6 @@ The API and proof structure are adapted from
 
 * `TauCeti.chebyshevTHilbertBasis_repr_apply` identifies each coordinate with its weighted
   integral.
-* `TauCeti.chebyshevTHilbertBasis_repr_self` identifies the coordinates of a normalized mode.
 * `TauCeti.tsum_norm_sq_integral_normalizedChebyshevT_mul_measureT` is the norm-square Parseval
   identity for the explicit integral coefficients.
 * `TauCeti.summable_norm_sq_integral_normalizedChebyshevT_mul_measureT` gives their
@@ -56,14 +55,6 @@ theorem chebyshevTHilbertBasis_repr_apply (f : Lp 𝕜 2 measureT) (n : ℕ) :
   filter_upwards [coeFn_normalizedChebyshevTLp (𝕜 := 𝕜) n] with x hx
   rw [hx]
   simp only [RCLike.inner_apply, RCLike.algebraMap_eq_ofReal, RCLike.conj_ofReal, mul_comm]
-
-/-- The coordinates of the `n`-th normalized Chebyshev mode are a single `1` in position `n`. -/
-@[simp]
-theorem chebyshevTHilbertBasis_repr_self (n : ℕ) :
-    (chebyshevTHilbertBasis 𝕜).repr (normalizedChebyshevTLp 𝕜 n) =
-      lp.single 2 n (1 : 𝕜) := by
-  classical
-  simpa using (chebyshevTHilbertBasis 𝕜).repr_self n
 
 /-- **Parseval's identity for the Chebyshev basis.** The squared norms of the explicit
 Chebyshev integral coefficients of `f` sum to `‖f‖²`. -/
