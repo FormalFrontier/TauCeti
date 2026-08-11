@@ -17,8 +17,9 @@ public section
 Towards **Shimura's Theorem 3.20**, that the `p`-local Hecke ring `pLocalSubring` of `GL_n` is a
 polynomial ring `ℤ[X₁, …, Xₙ]` on the `n` diagonal prime cosets. This file sets up the
 generators and proves the surjectivity half for `n = 1` and `n = 2`. The injectivity half —
-algebraic independence of the generators — and the resulting isomorphism are not part of this
-file; they are planned for a companion `PolynomialRing/Injective.lean`.
+algebraic independence of the generators — and the resulting isomorphisms live in the companion
+file `PolynomialRing/Injective.lean`, which consumes `evalHom_def` and `evalHom_apply` from
+here.
 
 ## Main definitions
 
@@ -151,6 +152,12 @@ variable [NeZero n] (p : ℕ) (hp : p.Prime)
 noncomputable def evalHom : MvPolynomial (Fin n) ℤ →+* IntegralHeckeRing n :=
   MvPolynomial.eval₂Hom (Int.castRingHom (IntegralHeckeRing n)) (fun k ↦ heckeGen n p k)
 
+/-- Defining equation for the sealed definition `evalHom`: evaluation of a polynomial at the
+generators, with integer coefficients cast into the Hecke ring. -/
+lemma evalHom_def : evalHom n p =
+    MvPolynomial.eval₂Hom (Int.castRingHom (IntegralHeckeRing n)) (fun k ↦ heckeGen n p k) :=
+  (rfl)
+
 /-- `evalHom` sends the `k`-th variable to the `k`-th generator. -/
 @[simp] lemma evalHom_X (k : Fin n) : evalHom n p (MvPolynomial.X k) = heckeGen n p k :=
   MvPolynomial.eval₂Hom_X' _ _ _
@@ -162,6 +169,25 @@ Deliberately not `@[simp]`: `simp` already discharges this through `eq_intCast` 
 lemma is kept as the named computation rule for `rw`. -/
 lemma evalHom_C (a : ℤ) : evalHom n p (MvPolynomial.C a) = (a : IntegralHeckeRing n) :=
   MvPolynomial.eval₂Hom_C _ _ _
+
+/-- **Evaluation rule for `evalHom` at a double coset.** The coefficient of `evalHom P` at `D`
+is the sum, over the support of `P`, of `P.coeff d` times the coefficient of the monomial
+`∏ heckeGen i ^ d i` at `D`.
+
+This is the wrapper-level counterpart of `evalHom_def`: it is stated here, where `evalHom` and
+`IntegralHeckeRing` are both transparent, so that consumers can evaluate a polynomial image at
+a coset without depending on either definition reducing at their own use site. -/
+lemma evalHom_apply (P : MvPolynomial (Fin n) ℤ)
+    (D : HeckeCoset (posDetInt n) (SLnZ n) (SLnZ n)) :
+    evalHom n p P D =
+      ∑ d ∈ P.support, P.coeff d • (∏ i, heckeGen n p i ^ d i : IntegralHeckeRing n) D := by
+  rw [evalHom_def, MvPolynomial.coe_eval₂Hom, MvPolynomial.eval₂_eq']
+  refine (Finset.sum_apply' D).trans (Finset.sum_congr rfl fun d _ ↦ ?_)
+  -- beta-reduce the cast left by `eval₂_eq'`, then turn the `ℤ`-multiple into a `ℤ`-scalar so
+  -- that the wrapper's own `smul_apply` closes the goal
+  change (((P.coeff d : ℤ) : IntegralHeckeRing n) * ∏ i, heckeGen n p i ^ d i) D = _
+  rw [← zsmul_one (P.coeff d), smul_mul_assoc, one_mul]
+  exact HeckeCosetModule.smul_apply _ _ _
 
 /-- Each `heckeGen k` lies in the range of `evalHom`. -/
 lemma heckeGen_mem_evalHom_range (k : Fin n) :
