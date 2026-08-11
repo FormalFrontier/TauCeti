@@ -344,54 +344,57 @@ lemma axis_shift_ne {u : Fin (2 * n)} {d : Fin n} (hd : (d : ℕ) ≠ 0) :
   split_ifs <;> omega
 
 /-- The cyclic distance from `u` to `v` in `Fin (2 * n)`. -/
-def cdiff (u v : Fin (2 * n)) : ℕ :=
+def cyclicDistance (u v : Fin (2 * n)) : ℕ :=
   if (u : ℕ) ≤ (v : ℕ) then (v : ℕ) - (u : ℕ) else (v : ℕ) + 2 * n - (u : ℕ)
 
-lemma cdiff_lt (u v : Fin (2 * n)) : cdiff u v < 2 * n := by
+lemma cyclicDistance_lt (u v : Fin (2 * n)) : cyclicDistance u v < 2 * n := by
   have := u.isLt; have := v.isLt
-  simp only [cdiff]; split <;> omega
+  simp only [cyclicDistance]; split <;> omega
 
-@[simp] lemma cdiff_eq_zero_iff {u v : Fin (2 * n)} : cdiff u v = 0 ↔ u = v := by
+@[simp] lemma cyclicDistance_eq_zero_iff {u v : Fin (2 * n)} : cyclicDistance u v = 0 ↔ u = v := by
   have hu := u.isLt
   have hv := v.isLt
-  simp only [cdiff, Fin.ext_iff]
+  simp only [cyclicDistance, Fin.ext_iff]
   split <;> omega
 
-@[simp] lemma cdiff_shift (u : Fin (2 * n)) (d : Fin n) : cdiff u (shift u d) = (d : ℕ) := by
+@[simp] lemma cyclicDistance_shift (u : Fin (2 * n)) (d : Fin n) :
+    cyclicDistance u (shift u d) = (d : ℕ) := by
   have hu := u.isLt
   have hd := d.isLt
-  simp only [cdiff, coe_shift]
+  simp only [cyclicDistance, coe_shift]
   split_ifs <;> omega
 
-lemma shift_cdiff {u v : Fin (2 * n)} (h : cdiff u v < n) : shift u ⟨cdiff u v, h⟩ = v := by
+lemma shift_cyclicDistance {u v : Fin (2 * n)} (h : cyclicDistance u v < n) :
+    shift u ⟨cyclicDistance u v, h⟩ = v := by
   have hu := u.isLt
   have hv := v.isLt
   refine Fin.ext ?_
-  simp only [coe_shift, cdiff]
+  simp only [coe_shift, cyclicDistance]
   split_ifs <;> omega
 
-lemma cdiff_add_cdiff {u v : Fin (2 * n)} (h : u ≠ v) : cdiff u v + cdiff v u = 2 * n := by
+lemma cyclicDistance_add_cyclicDistance {u v : Fin (2 * n)} (h : u ≠ v) :
+    cyclicDistance u v + cyclicDistance v u = 2 * n := by
   have hu := u.isLt
   have hv := v.isLt
   have : (u : ℕ) ≠ (v : ℕ) := fun hc => h (Fin.ext hc)
-  simp only [cdiff]
+  simp only [cyclicDistance]
   split_ifs <;> omega
 
-lemma cdiff_eq_rank_iff {u v : Fin (2 * n)} : cdiff u v = n ↔ u = opp v := by
+lemma cyclicDistance_eq_rank_iff {u v : Fin (2 * n)} : cyclicDistance u v = n ↔ u = opp v := by
   have hu := u.isLt
   have hv := v.isLt
-  simp only [cdiff, Fin.ext_iff, coe_opp]
+  simp only [cyclicDistance, Fin.ext_iff, coe_opp]
   split_ifs <;> omega
 
 /-- A pair of signed basis vectors naming a root: either equal, for a short root, or on distinct
 axes, for a long root. -/
 def IsPair (u v : Fin (2 * n)) : Prop := u = v ∨ axis u ≠ axis v
 
-lemma IsPair.cdiff_ne {u v : Fin (2 * n)} (h : IsPair u v) (huv : u ≠ v) :
-    cdiff u v ≠ 0 ∧ cdiff u v ≠ n := by
+lemma IsPair.cyclicDistance_ne {u v : Fin (2 * n)} (h : IsPair u v) (huv : u ≠ v) :
+    cyclicDistance u v ≠ 0 ∧ cyclicDistance u v ≠ n := by
   have hax : axis u ≠ axis v := h.resolve_left huv
-  refine ⟨fun hc => huv (cdiff_eq_zero_iff.mp hc), fun hc => hax ?_⟩
-  rw [cdiff_eq_rank_iff.mp hc, axis_opp]
+  refine ⟨fun hc => huv (cyclicDistance_eq_zero_iff.mp hc), fun hc => hax ?_⟩
+  rw [cyclicDistance_eq_rank_iff.mp hc, axis_opp]
 
 lemma isPair_shift (u : Fin (2 * n)) (d : Fin n) : IsPair u (shift u d) := by
   rcases Nat.eq_zero_or_pos (d : ℕ) with hd | hd
@@ -402,22 +405,22 @@ lemma isPair_shift (u : Fin (2 * n)) (d : Fin n) : IsPair u (shift u d) := by
 vectors. For a distinct admissible pair it uses the unique order whose cyclic offset lies in
 `Fin n`; a short pair uses the coincident order with offset zero. -/
 def index (u v : Fin (2 * n)) : Fin (2 * n) × Fin n :=
-  if h : cdiff u v < n then (u, ⟨cdiff u v, h⟩)
-  else if h' : cdiff v u < n then (v, ⟨cdiff v u, h'⟩)
+  if h : cyclicDistance u v < n then (u, ⟨cyclicDistance u v, h⟩)
+  else if h' : cyclicDistance v u < n then (v, ⟨cyclicDistance v u, h'⟩)
   else (u, ⟨0, rank_pos u⟩)
 
 @[simp] lemma index_shift (z : Fin (2 * n) × Fin n) : index z.1 (shift z.1 z.2) = z := by
-  have h := cdiff_shift z.1 z.2
+  have h := cyclicDistance_shift z.1 z.2
   rw [index, dite_eq_left (by rw [h]; exact z.2.isLt)]
   exact Prod.ext rfl (Fin.ext h)
 
 lemma index_comm {u v : Fin (2 * n)} (h : IsPair u v) : index u v = index v u := by
   rcases eq_or_ne u v with rfl | huv
   · rfl
-  obtain ⟨h0, hn⟩ := h.cdiff_ne huv
-  have hsum := cdiff_add_cdiff huv
-  have hlt := cdiff_lt u v
-  by_cases h1 : cdiff u v < n
+  obtain ⟨h0, hn⟩ := h.cyclicDistance_ne huv
+  have hsum := cyclicDistance_add_cyclicDistance huv
+  have hlt := cyclicDistance_lt u v
+  by_cases h1 : cyclicDistance u v < n
   · rw [index, dite_eq_left h1, index, dite_eq_right (by omega), dite_eq_left h1]
   · rw [index, dite_eq_right h1, dite_eq_left (by omega), index, dite_eq_left (by omega)]
 
@@ -425,18 +428,19 @@ lemma shift_index {u v : Fin (2 * n)} (h : IsPair u v) :
     ((index u v).1 = u ∧ shift (index u v).1 (index u v).2 = v) ∨
       ((index u v).1 = v ∧ shift (index u v).1 (index u v).2 = u) := by
   rcases eq_or_ne u v with rfl | huv
-  · have hlt : cdiff u u < n := by rw [cdiff_eq_zero_iff.mpr rfl]; exact rank_pos u
+  · have hlt : cyclicDistance u u < n := by
+      rw [cyclicDistance_eq_zero_iff.mpr rfl]; exact rank_pos u
     exact Or.inl ⟨by rw [index, dite_eq_left hlt],
-      by rw [index, dite_eq_left hlt]; exact shift_cdiff hlt⟩
-  obtain ⟨h0, hn⟩ := h.cdiff_ne huv
-  have hsum := cdiff_add_cdiff huv
-  have hlt := cdiff_lt u v
-  by_cases h1 : cdiff u v < n
+      by rw [index, dite_eq_left hlt]; exact shift_cyclicDistance hlt⟩
+  obtain ⟨h0, hn⟩ := h.cyclicDistance_ne huv
+  have hsum := cyclicDistance_add_cyclicDistance huv
+  have hlt := cyclicDistance_lt u v
+  by_cases h1 : cyclicDistance u v < n
   · exact Or.inl ⟨by rw [index, dite_eq_left h1],
-      by rw [index, dite_eq_left h1]; exact shift_cdiff h1⟩
-  · have h2 : cdiff v u < n := by omega
+      by rw [index, dite_eq_left h1]; exact shift_cyclicDistance h1⟩
+  · have h2 : cyclicDistance v u < n := by omega
     exact Or.inr ⟨by rw [index, dite_eq_right h1, dite_eq_left h2],
-      by rw [index, dite_eq_right h1, dite_eq_left h2]; exact shift_cdiff h2⟩
+      by rw [index, dite_eq_right h1, dite_eq_left h2]; exact shift_cyclicDistance h2⟩
 
 /-! ## Roots and coroots -/
 
@@ -821,8 +825,8 @@ lemma two_mul_signedWeight_dotProduct_corootIdx_iff (z : Fin (2 * n) × Fin n) (
 /-- Two indices naming the same pair of signed basis vectors are equal. -/
 lemma eq_of_forall_mem_iff {z z' : Fin (2 * n) × Fin n}
     (h : ∀ m, (m = z.1 ∨ m = shift z.1 z.2) ↔ (m = z'.1 ∨ m = shift z'.1 z'.2)) : z = z' := by
-  have e1 : cdiff z.1 (shift z.1 z.2) = (z.2 : ℕ) := cdiff_shift _ _
-  have e2 : cdiff z'.1 (shift z'.1 z'.2) = (z'.2 : ℕ) := cdiff_shift _ _
+  have e1 : cyclicDistance z.1 (shift z.1 z.2) = (z.2 : ℕ) := cyclicDistance_shift _ _
+  have e2 : cyclicDistance z'.1 (shift z'.1 z'.2) = (z'.2 : ℕ) := cyclicDistance_shift _ _
   have hz := z.2.isLt
   have hz' := z'.2.isLt
   have h1 := (h z.1).mp (Or.inl rfl)
@@ -836,7 +840,7 @@ lemma eq_of_forall_mem_iff {z z' : Fin (2 * n) × Fin n}
     · exact (h2.trans heq.symm).symm
     · exfalso
       have hne' : z.1 ≠ z'.1 := by rw [h2]; exact hne
-      have hsum := cdiff_add_cdiff hne'
+      have hsum := cyclicDistance_add_cyclicDistance hne'
       rw [← h1] at e2
       rw [← h2] at e1
       omega
