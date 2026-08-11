@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+import TauCeti.NumberTheory.ModularForms.LevelOne.FundamentalDomainBoundary.Containment
 public import TauCeti.Analysis.Contour.Cauchy.PrincipalValue.Basic
 public import TauCeti.Analysis.Contour.Winding.Number.Basic
 public import TauCeti.NumberTheory.ModularForms.LevelOne.FundamentalDomainBoundary.Basic
@@ -54,10 +55,6 @@ namespace ModularForm
 
 
 variable {H δ : ℝ}
-
-/-- The corner row lies strictly below `1`. -/
-private lemma sqrt_three_div_two_lt_one : Real.sqrt 3 / 2 < 1 := by
-  nlinarith [Real.sq_sqrt (by positivity : (3 : ℝ) ≥ 0), Real.sqrt_nonneg 3]
 
 /-- The right-vertical piece `[0, 1]` of the telescope: the shifted contour stays in the
 right half-plane, so the logarithmic integral is a difference of principal logarithms. -/
