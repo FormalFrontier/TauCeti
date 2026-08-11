@@ -13,7 +13,7 @@ public import Mathlib.LinearAlgebra.Dual.Lemmas
 public import Mathlib.Topology.DiscreteSubset
 
 /-!
-# Nondegenerate critical points and Morse functions
+# Nondegenerate critical points
 
 A critical point of a real-valued function `f` on a normed space is *nondegenerate* when the
 second derivative `fderiv ℝ (fderiv ℝ f) x`, read as a continuous linear map from `E` to its
@@ -26,16 +26,24 @@ every sequence along which `f` is bounded and `fderiv ℝ f` tends to `0` have a
 subsequence.
 
 Twice continuous differentiability at the point is part of `IsNondegenerateCriticalPoint`, and so
-of `IsMorseOn` at each critical point: Mathlib totalizes `fderiv` by zero where a function is not
-differentiable, so a predicate phrased on `fderiv ℝ f` alone would call a function nondegenerate
-at a point where it is not even continuous. No statement below therefore needs a separate
-regularity hypothesis at a critical point; only the finiteness statement asks for more, namely
-continuity of `fderiv ℝ f` on the compact set, which is what closes the critical locus.
+of `HasNondegenerateCriticalPointsOn` at each critical point: Mathlib totalizes `fderiv` by zero
+where a function is not differentiable, so a predicate phrased on `fderiv ℝ f` alone would call a
+function nondegenerate at a point where it is not even continuous. No statement below therefore
+needs a separate regularity hypothesis at a critical point; only the finiteness statement asks for
+more, namely continuity of `fderiv ℝ f` on the compact set, which is what closes the critical
+locus.
 
-The point of the definition is that nondegenerate critical points are *isolated*, so a Morse
-function has a discrete critical locus, and only finitely many critical points on a compact set.
-That finiteness is what makes the Morse chain complex of a compact manifold finitely generated,
-so it is the first structural input of Morse homology.
+`HasNondegenerateCriticalPointsOn f s` asks nothing at all of `f` away from its critical points in
+`s`, so it is weaker than the textbook notion of a Morse function, which carries global regularity
+on `s` as a standing hypothesis. The name `IsMorseOn` is deliberately left free for that stronger
+notion; it belongs with the manifold-level material, where smoothness is standing anyway. The
+results below are stated for the weak predicate because that is all their proofs use.
+
+The point of the definition is that nondegenerate critical points are *isolated*, so a function
+whose critical points in a set are all nondegenerate has a discrete critical locus there, and only
+finitely many critical points on a compact set. That finiteness is what makes the Morse chain
+complex of a compact manifold finitely generated, so it is the first structural input of Morse
+homology.
 Because the first-order term of the chain rule drops out at a critical point, the second
 derivative there transforms as a bilinear form, and nondegeneracy is unchanged by a change of
 coordinates; this is what will let the notion be read off in any chart.
@@ -45,16 +53,16 @@ coordinates; this is what will let the notion be read off in any chart.
 * `TauCeti.IsNondegenerateCriticalPoint`: `f` is twice continuously differentiable at the point,
   its differential vanishes there, and its second derivative is invertible as a map into the dual
   space.
-* `TauCeti.IsMorseOn`: every critical point in a given set is nondegenerate.
+* `TauCeti.HasNondegenerateCriticalPointsOn`: every critical point in a given set is nondegenerate.
 * `TauCeti.isNondegenerateCriticalPoint_iff`: in finite dimensions, nondegeneracy is twice
   continuous differentiability together with the classical condition that the Hessian bilinear
   form have trivial radical.
 * `TauCeti.IsNondegenerateCriticalPoint.eventually_fderiv_ne_zero`: a nondegenerate critical point
   is isolated among critical points.
-* `TauCeti.IsMorseOn.isDiscrete_setOf_fderiv_eq_zero`: the critical locus of a Morse function is
-  discrete.
-* `TauCeti.IsMorseOn.finite_setOf_fderiv_eq_zero`: a Morse function has finitely many critical
-  points on a compact set.
+* `TauCeti.HasNondegenerateCriticalPointsOn.isDiscrete_setOf_fderiv_eq_zero`: a critical locus all
+  of whose points are nondegenerate is discrete.
+* `TauCeti.HasNondegenerateCriticalPointsOn.finite_setOf_fderiv_eq_zero`: such a critical locus is
+  finite on a compact set.
 * `TauCeti.fderiv_fderiv_comp_apply_of_fderiv_eq_zero`: at a critical point the second derivative
   of a composition is the pullback of the second derivative along the differential.
 * `TauCeti.IsNondegenerateCriticalPoint.comp`: nondegeneracy is invariant under a change of
@@ -116,20 +124,23 @@ structure IsNondegenerateCriticalPoint (f : E → ℝ) (x : E) : Prop where
   /-- The second derivative of `f` at `x` is invertible as a map into the dual space. -/
   isInvertible : (fderiv ℝ (fderiv ℝ f) x).IsInvertible
 
-/-- `f` is a **Morse function on `s`** when every critical point of `f` lying in `s` is
-nondegenerate; in particular `f` is twice continuously differentiable at each of them. No
-regularity is asked for away from the critical points. -/
-def IsMorseOn (f : E → ℝ) (s : Set E) : Prop :=
+/-- `f` **has nondegenerate critical points on `s`** when every critical point of `f` lying in `s`
+is nondegenerate; in particular `f` is twice continuously differentiable at each of them. No
+regularity is asked for away from the critical points, so this is weaker than being a Morse
+function on `s` in the textbook sense, which also demands regularity at the regular points. -/
+def HasNondegenerateCriticalPointsOn (f : E → ℝ) (s : Set E) : Prop :=
   ∀ ⦃x⦄, x ∈ s → fderiv ℝ f x = 0 → IsNondegenerateCriticalPoint f x
 
-/-- The introduction and elimination rule for `IsMorseOn`: `f` is Morse on `s` exactly when every
-critical point of `f` in `s` is nondegenerate. -/
-theorem isMorseOn_iff {s : Set E} :
-    IsMorseOn f s ↔ ∀ ⦃x⦄, x ∈ s → fderiv ℝ f x = 0 → IsNondegenerateCriticalPoint f x :=
+/-- The introduction and elimination rule for `HasNondegenerateCriticalPointsOn`. -/
+theorem hasNondegenerateCriticalPointsOn_iff {s : Set E} :
+    HasNondegenerateCriticalPointsOn f s ↔
+      ∀ ⦃x⦄, x ∈ s → fderiv ℝ f x = 0 → IsNondegenerateCriticalPoint f x :=
   Iff.rfl
 
-/-- A function that is Morse on `t` is Morse on any subset of `t`. -/
-theorem IsMorseOn.mono {s t : Set E} (hM : IsMorseOn f t) (hst : s ⊆ t) : IsMorseOn f s :=
+/-- Having nondegenerate critical points on `t` is inherited by every subset of `t`. -/
+theorem HasNondegenerateCriticalPointsOn.mono {s t : Set E}
+    (hM : HasNondegenerateCriticalPointsOn f t) (hst : s ⊆ t) :
+    HasNondegenerateCriticalPointsOn f s :=
   fun _ hx ↦ hM (hst hx)
 
 /-- At a nondegenerate critical point the Hessian bilinear form has trivial radical. -/
@@ -173,8 +184,9 @@ theorem IsNondegenerateCriticalPoint.eventually_fderiv_ne_zero
     exact (ContDiffAt.hasStrictFDerivAt_fderiv h.contDiffAt).hasFDerivAt
   exact hd.eventually_ne ⟨_, e.antilipschitz⟩
 
-/-- The critical locus of a Morse function is discrete. -/
-theorem IsMorseOn.isDiscrete_setOf_fderiv_eq_zero {s : Set E} (hM : IsMorseOn f s) :
+/-- A critical locus all of whose points are nondegenerate is discrete. -/
+theorem HasNondegenerateCriticalPointsOn.isDiscrete_setOf_fderiv_eq_zero {s : Set E}
+    (hM : HasNondegenerateCriticalPointsOn f s) :
     IsDiscrete {x ∈ s | fderiv ℝ f x = 0} := by
   rw [isDiscrete_iff_nhdsNE]
   rintro y ⟨hys, hy0⟩
@@ -182,10 +194,11 @@ theorem IsMorseOn.isDiscrete_setOf_fderiv_eq_zero {s : Set E} (hM : IsMorseOn f 
   filter_upwards [(hM hys hy0).eventually_fderiv_ne_zero] with z hz
   simpa using fun _ ↦ hz
 
-/-- **A Morse function has finitely many critical points on a compact set.** This is the finiteness
-that makes the Morse complex of a compact manifold finitely generated. -/
-theorem IsMorseOn.finite_setOf_fderiv_eq_zero {K : Set E} (hK : IsCompact K)
-    (hcont : ContinuousOn (fderiv ℝ f) K) (hM : IsMorseOn f K) :
+/-- **A function whose critical points on a compact set are all nondegenerate has only finitely
+many of them there.** This is the finiteness that makes the Morse complex of a compact manifold
+finitely generated. -/
+theorem HasNondegenerateCriticalPointsOn.finite_setOf_fderiv_eq_zero {K : Set E} (hK : IsCompact K)
+    (hcont : ContinuousOn (fderiv ℝ f) K) (hM : HasNondegenerateCriticalPointsOn f K) :
     {x ∈ K | fderiv ℝ f x = 0}.Finite := by
   -- Continuity of `fderiv ℝ f` on `K` makes the critical locus a closed subset of `K`.
   have hclosed : IsClosed {x ∈ K | fderiv ℝ f x = 0} := by
