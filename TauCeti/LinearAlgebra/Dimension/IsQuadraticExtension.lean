@@ -81,7 +81,7 @@ theorem Algebra.IsQuadraticExtension.exists_eq_algebraMap_add_algebraMap_mul [Se
     [Algebra K L] [Algebra.IsQuadraticExtension K L] {θ : L}
     (hθ : θ ∉ Set.range (algebraMap K L)) (x : L) :
     ∃ a b : K, x = algebraMap K L b + algebraMap K L a * θ := by
-  letI : Ring L := Algebra.semiringToRing K
+  let _ : Ring L := Algebra.semiringToRing K
   have h2 := Algebra.IsQuadraticExtension.finrank_eq_two K L
   have : Nontrivial L := Module.nontrivial_of_finrank_pos (R := K) (by rw [h2]; norm_num)
   have hli := linearIndependent_one_of_notMem_range_algebraMap K L hθ
