@@ -21,8 +21,10 @@ This file supplies the bridge. A Lie module `M` becomes a `U(L)`-module through
 notions of submodule then agree: `TauCeti.lieSubmoduleOrderIsoUEA` is an order isomorphism
 `LieSubmodule R L M ≃o Submodule (UniversalEnvelopingAlgebra R L) M` fixing the underlying set.
 Morphisms agree too (`TauCeti.lieModuleHomEquivUEA`): a map of Lie modules is exactly a
-`U(L)`-linear map. Consequently a Lie module is irreducible exactly when it is simple over `U(L)`,
-and the lattice of Lie submodules is complemented exactly when it is semisimple over `U(L)`.
+`U(L)`-linear map, and the two hom spaces are `R`-linearly isomorphic, so dimensions — and hence
+multiplicities — match. Consequently a Lie module is irreducible exactly when it is simple over
+`U(L)`, and the lattice of Lie submodules is complemented exactly when it is semisimple over
+`U(L)`.
 
 The engine is `TauCeti.UniversalEnvelopingAlgebra.adjoin_range_ι`: `U(L)` is generated as an
 `R`-algebra by the image of `L`. That is what turns "stable under `⁅x, -⁆` for every `x`" into
@@ -37,7 +39,8 @@ agree, but not the generation statement itself.
   `U(L)`-module already carries, and `M = U(L)` would be a diamond.
 * `TauCeti.lieSubmoduleOrderIsoUEA`: **the enveloping-algebra dictionary**, the order isomorphism
   between Lie submodules and `U(L)`-submodules.
-* `TauCeti.lieModuleHomEquivUEA`: the same dictionary for morphisms.
+* `TauCeti.lieModuleHomEquivUEA`: the same dictionary for morphisms, as an `R`-linear
+  equivalence of hom spaces.
 
 ## Main results
 
@@ -242,16 +245,24 @@ theorem map_smul_of_map_lie (f : M →ₗ[R] N) (hf : ∀ (x : L) (m : M), f ⁅
     rw [hcompat, hcompatN, hf]
   exact hS Algebra.mem_top m
 
-/-- **The dictionary for morphisms**: a morphism of Lie modules is exactly a `U(L)`-linear map.
-Together with `TauCeti.lieSubmoduleOrderIsoUEA` this is what carries the ring-level module theory
-— Schur's lemma, isotypic components, endomorphism rings — over to Lie modules. -/
+/- `LieModule R L N` is what names the `R`-module structure on `M →ₗ⁅R,L⁆ N`, so it is needed from
+here on; it is not needed for `TauCeti.map_smul_of_map_lie` above. -/
+variable [LieModule R L N]
+
+/-- **The dictionary for morphisms**: a morphism of Lie modules is exactly a `U(L)`-linear map,
+and the correspondence is `R`-linear, so it transports the `R`-module structure — in particular
+`Module.finrank`, which is what a multiplicity is. Together with
+`TauCeti.lieSubmoduleOrderIsoUEA` this is what carries the ring-level module theory — Schur's
+lemma, isotypic components, endomorphism rings — over to Lie modules. -/
 def lieModuleHomEquivUEA :
-    (M →ₗ⁅R,L⁆ N) ≃ (M →ₗ[UniversalEnvelopingAlgebra R L] N) where
+    (M →ₗ⁅R,L⁆ N) ≃ₗ[R] (M →ₗ[UniversalEnvelopingAlgebra R L] N) where
   toFun f :=
     { toFun := f
       map_add' := f.map_add
       map_smul' u m := map_smul_of_map_lie hcompat hcompatN f.toLinearMap
         (fun x m => f.map_lie x m) u m }
+  map_add' _ _ := by ext m; rfl
+  map_smul' _ _ := by ext m; rfl
   invFun g :=
     { toFun := g
       map_add' := g.map_add
