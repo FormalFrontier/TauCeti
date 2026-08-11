@@ -15,6 +15,8 @@ the special orthogonal group.
 
 ## Main definitions and results
 
+* `TauCeti.CliffordAlgebra.spinToSpecialOrthogonal_surjective_of_pinToOrthogonal_surjective`
+  restricts any surjective Pin action to a surjective Spin action on the special orthogonal group.
 * `TauCeti.CliffordAlgebra.spinToSpecialOrthogonal_surjective_of_isSquare` proves its
   surjectivity when every reflection normalization scalar is a square.
 * `TauCeti.CliffordAlgebra.spinToSpecialOrthogonal_surjective` specializes this to a
@@ -37,6 +39,30 @@ universe u v
 
 section Surjectivity
 
+variable {R : Type u} {M : Type v} [CommRing R] [AddCommGroup M] [Module R M]
+  [Module.Free R M] [Module.Finite R M] [Invertible (2 : R)]
+
+/-- A surjective Pin action on a finite free module restricts to a surjective Spin action on the
+special orthogonal group. -/
+theorem spinToSpecialOrthogonal_surjective_of_pinToOrthogonal_surjective
+    (Q : QuadraticForm R M) (hpin : Function.Surjective (pinToOrthogonal Q)) :
+    Function.Surjective (spinToSpecialOrthogonal Q) := by
+  intro g
+  have hg := QuadraticMap.mem_specialOrthogonalGroup_iff.1 g.2
+  obtain ⟨p, hp⟩ := hpin ⟨g, hg.1⟩
+  let s : spinGroup Q :=
+    ⟨p, p.2, mem_even_of_det_pinToOrthogonal_eq_one Q p (by rw [hp]; exact hg.2)⟩
+  refine ⟨s, ?_⟩
+  apply Subtype.ext
+  apply LinearEquiv.ext
+  intro m
+  rw [coe_spinToSpecialOrthogonal_apply, ← coe_spinToOrthogonal_apply,
+    ← pinToOrthogonal_spinToPin]
+  have hspinpin : spinToPin Q s = p := Subtype.ext (by rw [coe_spinToPin_apply])
+  rw [hspinpin, hp]
+
+section Field
+
 variable {K : Type u} {V : Type v} [Field K]
   [AddCommGroup V] [Module K V] [FiniteDimensional K V] [Invertible (2 : K)]
 
@@ -45,27 +71,9 @@ normalization scalar is a square. -/
 theorem spinToSpecialOrthogonal_surjective_of_isSquare
     (Q : QuadraticForm K V) (hQ : Q.Nondegenerate)
     (hsquare : ∀ (v : V) [Invertible (Q v)], IsSquare (-⅟(Q v))) :
-    Function.Surjective (spinToSpecialOrthogonal Q) := by
-  have hpin := pinToOrthogonal_surjective_of_isSquare Q hQ hsquare
-  intro g
-  let og : QuadraticMap.orthogonalGroup Q :=
-    ⟨(g : V ≃ₗ[K] V), (QuadraticMap.mem_specialOrthogonalGroup_iff.1 g.2).1⟩
-  obtain ⟨p, hp⟩ := hpin og
-  have hdet_one :
-      LinearEquiv.det
-        (((pinToOrthogonal Q p : QuadraticMap.orthogonalGroup Q) : V ≃ₗ[K] V)) = 1 := by
-    rw [hp]
-    exact (QuadraticMap.mem_specialOrthogonalGroup_iff.1 g.2).2
-  let s : spinGroup Q := ⟨p, p.2, mem_even_of_det_pinToOrthogonal_eq_one Q p hdet_one⟩
-  refine ⟨s, ?_⟩
-  apply Subtype.ext
-  apply LinearEquiv.ext
-  intro m
-  rw [coe_spinToSpecialOrthogonal_apply, ← coe_spinToOrthogonal_apply]
-  have hspinpin : spinToPin Q s = p := by
-    apply Subtype.ext
-    rw [coe_spinToPin_apply]
-  rw [← pinToOrthogonal_spinToPin, hspinpin, hp]
+    Function.Surjective (spinToSpecialOrthogonal Q) :=
+  spinToSpecialOrthogonal_surjective_of_pinToOrthogonal_surjective Q
+    (pinToOrthogonal_surjective_of_isSquare Q hQ hsquare)
 
 section IsSepClosed
 
@@ -75,10 +83,12 @@ variable [IsSepClosed K]
 nondegenerate quadratic space over a separably closed field. -/
 theorem spinToSpecialOrthogonal_surjective (Q : QuadraticForm K V) (hQ : Q.Nondegenerate) :
     Function.Surjective (spinToSpecialOrthogonal Q) :=
-  spinToSpecialOrthogonal_surjective_of_isSquare Q hQ fun v _ ↦
-    IsSepClosed.exists_eq_mul_self (-⅟(Q v))
+  spinToSpecialOrthogonal_surjective_of_pinToOrthogonal_surjective Q
+    (pinToOrthogonal_surjective Q hQ)
 
 end IsSepClosed
+
+end Field
 
 end Surjectivity
 
