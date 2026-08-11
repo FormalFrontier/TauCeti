@@ -62,8 +62,7 @@ This file implements the “Positive and negative roots” item in Layer 1 of
 end of the file is the prerequisite that the fundamental-domain item of Layer 4 consumes; that
 argument is the one in J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*,
 GTM 9, Ch. III, §10. The decomposition half of `TauCeti.mem_support_iff_isPos_and_forall_ne_add` is
-the step
-that Mathlib currently performs only inside the proof of
+the step that Mathlib currently performs only inside the proof of
 `RootPairing.Base.IsPos.induction_on_add`, isolated here as a statement of its own.
 -/
 
