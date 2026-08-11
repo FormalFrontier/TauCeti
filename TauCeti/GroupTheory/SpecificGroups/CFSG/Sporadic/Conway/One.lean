@@ -171,8 +171,9 @@ theorem co1Presentation_matchesMetadata : co1Presentation.matchesMetadata := by
 theorem co1Presentation_totalLength : co1Presentation.totalLength = 611 := by
   rw [GroupPresentation.totalLength_def, GroupPresentation.relators_def]
   simp only [co1Presentation, co1NodeAndEdgeRelators, co1NonedgeRelators, co1AdditionalRelators,
-    List.map_append, List.sum_append, Relator.length_toWord, Relator.length, List.map_cons,
-    List.map_nil, List.sum_cons, List.sum_nil]
+    List.map_append, List.sum_append, Relator.length_toWord, Relator.length_gen, Relator.length_inv,
+    Relator.length_mul, Relator.length_pow, List.map_cons, List.map_nil, List.sum_cons,
+    List.sum_nil]
   norm_num
 
 end TauCeti.Sporadic
