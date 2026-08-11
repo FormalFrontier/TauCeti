@@ -37,10 +37,13 @@ carried as an explicit hypothesis `∀ (g : G) (a : kˣ), g • a = a` rather th
 matching `TauCeti.FactorSet.inl_range_le_center`: the *type* `TauCeti.FactorSet G kˣ` already
 depends on an ambient `MulDistribMulAction G kˣ`, so leaving that action free lets a factor set for
 any action be fed to the statements, and only the results that genuinely need centrality pay for
-it.
+it. A projective representation itself carries no action, so the closing existence statement
+supplies the trivial one, `TauCeti.trivialMulDistribMulAction`, and asks for nothing of its caller.
 
 ## Main definitions
 
+* `TauCeti.trivialMulDistribMulAction`: the trivial action, the one a projective representation's
+  own factor set is bundled over, since a projective representation carries no action.
 * `TauCeti.IsFactorSet.toFactorSet`: a normalized curried factor set, bundled as a
   `TauCeti.FactorSet` for a trivial action, so that its central extension is available.
 * `TauCeti.IsProjectiveRep.linearization`: the homomorphism `E_α → (V ≃ₗ[k] V)` attached to a
@@ -56,8 +59,8 @@ it.
 
 * `TauCeti.FactorSet.isFactorSet_curry`: for a trivial action a `TauCeti.FactorSet` valued in `kˣ`
   is a normalized factor set in the curried sense of `TauCeti.IsFactorSet`.
-* `TauCeti.IsProjectiveRep.linearization_canonicalSection`: restricting the linearization along the
-  canonical section returns the projective representation, and
+* `TauCeti.IsProjectiveRep.linearization_mk_one`: restricting the linearization along the canonical
+  section returns the projective representation, and
   `TauCeti.IsProjectiveRep.linearization_inl`: the central `kˣ` acts by its own scalars.
 * `TauCeti.isProjectiveRep_comp_canonicalSection`: conversely, restricting along the canonical
   section any linear representation of `E_α` under which `kˣ` acts by scalars gives a projective
@@ -89,14 +92,28 @@ namespace TauCeti
 universe u v w
 
 variable {k : Type u} {G : Type v} {V : Type w}
-  [CommSemiring k] [Group G] [AddCommMonoid V] [Module k V] [MulDistribMulAction G kˣ]
+  [CommSemiring k] [Group G] [AddCommMonoid V] [Module k V]
 
 /-!
 ## Factor sets, curried and uncurried
 
 The extension is built from a bundled, uncurried factor set while a projective representation
-carries a curried one; for the trivial action the two notions agree.
+carries a curried one; for the trivial action, defined first, the two notions agree.
 -/
+
+/-- **The trivial action of a monoid `G` on a monoid `M`**, `g • a = a`, obtained by composing the
+tautological action of `MulAut M` with the trivial homomorphism. It is the action for which the
+extension built from a factor set is central, so it is the one a projective representation's factor
+set is bundled over in `TauCeti.IsProjectiveRep.exists_factorSet_linearization`. It is reducible and
+deliberately not an instance, since the results below are stated for an arbitrary action; it is only
+used to supply one where the ambient theory has none. -/
+abbrev trivialMulDistribMulAction (G M : Type*) [Monoid G] [Monoid M] :
+    MulDistribMulAction G M :=
+  MulDistribMulAction.compHom M (1 : G →* MulAut M)
+
+section GeneralAction
+
+variable [MulDistribMulAction G kˣ]
 
 /-- **A factor set valued in `kˣ` for the trivial action is a normalized factor set in the curried
 sense of `TauCeti.IsFactorSet`.** The cocycle identity of `TauCeti.FactorSet` carries an action on
@@ -182,20 +199,13 @@ theorem linearization_inl (a : kˣ) :
     simp [LinearEquiv.smulOfUnit_apply, hρ.map_one]
 
 /-- **The projective representation is recovered from its linearization**, stated at the element
-`⟨1, g⟩` that `TauCeti.FactorSet.canonicalSection_apply` rewrites the canonical section to. This is
-the simp-normal form of `TauCeti.IsProjectiveRep.linearization_canonicalSection`, and unlike
+`⟨1, g⟩` that `TauCeti.FactorSet.canonicalSection_apply` rewrites the canonical section to, so that
+`simp` also restricts the linearization along the canonical section. Unlike
 `TauCeti.IsProjectiveRep.linearization_apply` it applies to the linearization itself rather than to
 its value at a vector. -/
 @[simp]
 theorem linearization_mk_one (g : G) : hρ.linearization htriv ⟨1, g⟩ = ρ g :=
   LinearEquiv.ext fun v ↦ by simp
-
-/-- **The projective representation is recovered from its linearization** by restricting along the
-canonical section `g ↦ ⟨1, g⟩` of the extension. Not `@[simp]`:
-`TauCeti.FactorSet.canonicalSection_apply` already rewrites the argument, after which
-`TauCeti.IsProjectiveRep.linearization_mk_one` finishes the job. -/
-theorem linearization_canonicalSection (g : G) :
-    hρ.linearization htriv (α.canonicalSection g) = ρ g := by simp
 
 /-- **The linearization has the same invariant submodules as the projective representation.** The
 `kˣ`-component of the extension acts by a scalar, which no submodule can escape, so invariance
@@ -315,7 +325,7 @@ def isProjectiveRepEquivExtensionHom (α : FactorSet G kˣ)
   toFun ρ := ⟨ρ.2.linearization htriv, fun a ↦ ρ.2.linearization_inl htriv a⟩
   invFun π := ⟨fun g ↦ π.1 (α.canonicalSection g),
     isProjectiveRep_comp_canonicalSection htriv π.1 π.2⟩
-  left_inv ρ := Subtype.ext (funext fun g ↦ ρ.2.linearization_canonicalSection htriv g)
+  left_inv ρ := Subtype.ext (funext fun g ↦ by simp)
   right_inv π := Subtype.ext (MonoidHom.ext fun x ↦ LinearEquiv.ext fun v ↦ by
     have h : π.1 (FactorSet.inl α x.left * α.canonicalSection x.right) v = π.1 x v := by
       rw [FactorSet.inl_mul_canonicalSection]
@@ -342,25 +352,42 @@ theorem isProjectiveRepEquivExtensionHom_symm_apply (α : FactorSet G kˣ)
       = fun g ↦ π.1 (α.canonicalSection g) :=
   (rfl)
 
-variable {k V}
+end Linearization
+
+end GeneralAction
+
+/-!
+## Every projective representation linearizes
+
+A projective representation carries no action of `G` on `kˣ`, so the statement below supplies the
+trivial one, the action for which the extension of its factor set is central.
+-/
+
+section TrivialAction
+
+attribute [local instance] trivialMulDistribMulAction
+
+variable {ρ : G → V ≃ₗ[k] V}
 
 /-- **Every projective representation of `G` linearizes over a central extension of `G` by `kˣ`.**
-The extension is the one built from the factor set the projective representation carries: its copy
-of `kˣ` is central, it acts by its own scalars, and restricting along the canonical section returns
-the projective representation. -/
+The extension is the one built from the factor set the projective representation carries, over the
+trivial action `TauCeti.trivialMulDistribMulAction` of `G` on `kˣ`: its copy of `kˣ` is central, it
+acts by its own scalars, and restricting along the canonical section returns the projective
+representation. -/
 theorem IsProjectiveRep.exists_factorSet_linearization {α : G → G → kˣ}
-    (hρ : IsProjectiveRep ρ α) (htriv : ∀ (g : G) (a : kˣ), g • a = a) :
+    (hρ : IsProjectiveRep ρ α) :
     ∃ β : FactorSet G kˣ, ∃ π : β.Extension →* (V ≃ₗ[k] V),
       (FactorSet.inl β).range ≤ Subgroup.center β.Extension ∧
         (∀ a : kˣ, π (FactorSet.inl β a) = LinearEquiv.smulOfUnit a) ∧
           ∀ g : G, π (β.canonicalSection g) = ρ g := by
   have hα : IsFactorSet α := hρ.isFactorSet
+  have htriv (g : G) (a : kˣ) : g • a = a := rfl
   have hρ' : IsProjectiveRep ρ (Function.curry ⇑(IsFactorSet.toFactorSet α htriv)) := by
     rwa [IsFactorSet.curry_coe_toFactorSet]
   exact ⟨IsFactorSet.toFactorSet α htriv, hρ'.linearization htriv,
     FactorSet.inl_range_le_center _ htriv, fun a ↦ hρ'.linearization_inl htriv a,
-    fun g ↦ hρ'.linearization_canonicalSection htriv g⟩
+    fun g ↦ by simp⟩
 
-end Linearization
+end TrivialAction
 
 end TauCeti
