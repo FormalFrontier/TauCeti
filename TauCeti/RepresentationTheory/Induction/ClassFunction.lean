@@ -41,6 +41,9 @@ and to deduce `TauCeti.character_ind` from `TauCeti.indClassFun_eq_natCard_inv_m
   function.
 * `TauCeti.natCard_mul_indClassFun`: the group-sum form, `|S| · (Ind f)(g) = ∑_{x ∈ G} f(x⁻¹gx)`,
   and its averaged corollary `TauCeti.indClassFun_eq_natCard_inv_mul_sum`.
+* `TauCeti.indClassFun_comp_subtype_mul`: the **projection formula**,
+  `Ind_S^G ((Res_S f) · ψ) = f · Ind_S^G ψ` for a class function `f` of `G`, with
+  `TauCeti.ClassFunction.indClassFun_comap_subtype_mul` its `TauCeti.ClassFunction.comap` form.
 
 Frobenius reciprocity for class functions, `⟨Ind f, h⟩_G = ⟨f, Res h⟩_S`, is
 `TauCeti.frobenius_reciprocity_classFunction`; it needs the pairing, so it lives with the other
@@ -255,6 +258,40 @@ theorem natCard_mul_indClassFun [Fintype G] {f : S → k} (hf : f ∈ ClassFunct
     -- the remaining step only unfolds the summand
     _ = _ := rfl
 
+/-! ### The projection formula -/
+
+section Projection
+
+variable {f : G → k}
+
+/-- **The projection formula, on a single summand.**  The summand only ever evaluates a function on
+`S` at a conjugate of `g`, so multiplying by the restriction of a class function `f` of `G`
+multiplies the summand by the constant `f g`. -/
+theorem indTerm_comp_subtype_mul (hf : f ∈ ClassFunction k G) (ψ : S → k) (g x : G) :
+    indTerm ((fun s : S => f s) * ψ) g x = f g * indTerm ψ g x := by
+  classical
+  by_cases h : x⁻¹ * g * x ∈ S
+  · have hconj : f (x⁻¹ * g * x) = f g := by
+      simpa using ClassFunction.mem_iff.mp hf g x⁻¹
+    simp [indTerm, h, hconj]
+  · simp [indTerm, h]
+
+/-- **The projection formula for the induced class function**:
+`Ind_S^G ((Res_S f) · ψ) = f · Ind_S^G ψ` for a class function `f` of `G` and an arbitrary
+function `ψ` on `S`.
+
+This is the class-function shadow of the tensor identity `TauCeti.indProjection`, and it is what
+makes induction a map of modules over the ring of class functions: an induced function may be
+multiplied by `f` either before or after inducing.  Only `f` is required to be a class function;
+the identity is pointwise in `ψ`. -/
+theorem indClassFun_comp_subtype_mul [S.FiniteIndex] (hf : f ∈ ClassFunction k G) (ψ : S → k) :
+    indClassFun S ((fun s : S => f s) * ψ) = f * indClassFun S ψ := by
+  funext g
+  simp only [indClassFun, Pi.mul_apply, Finset.mul_sum]
+  exact Finset.sum_congr rfl fun t _ => indTerm_comp_subtype_mul hf ψ g _
+
+end Projection
+
 /-! ### The induced class function as a linear map -/
 
 namespace ClassFunction
@@ -271,6 +308,15 @@ noncomputable def ind (S : Subgroup G) [S.FiniteIndex] :
 theorem ind_apply [S.FiniteIndex] (f : ClassFunction k S) (g : G) :
     (ind S f).1 g = indClassFun S f.1 g :=
   (rfl)
+
+/-- The projection formula `TauCeti.indClassFun_comp_subtype_mul` with the restriction written as
+`TauCeti.ClassFunction.comap` along the inclusion of the subgroup. -/
+theorem indClassFun_comap_subtype_mul [S.FiniteIndex] (f : ClassFunction k G) (ψ : S → k) :
+    indClassFun S ((comap S.subtype f).1 * ψ) = f.1 * indClassFun S ψ := by
+  have h : ((comap S.subtype f).1 : S → k) = fun s : S => f.1 s :=
+    funext fun s => comap_apply S.subtype f s
+  rw [h]
+  exact indClassFun_comp_subtype_mul f.2 ψ
 
 end ClassFunction
 
