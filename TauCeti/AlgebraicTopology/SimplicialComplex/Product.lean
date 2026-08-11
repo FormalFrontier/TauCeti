@@ -50,14 +50,13 @@ variable {α β γ δ : Type*}
 
 section OrderedProd
 
-variable [Preorder α] [Preorder β] [DecidableEq α] [DecidableEq β]
+variable [LinearOrder α] [LinearOrder β]
 
 /-- The ordered product of two pre-abstract simplicial complexes.
 
 A finite set of pairs is a face exactly when its two coordinate images are faces of the factors
-and it is a chain for the coordinatewise order on the product. The definition uses only preorders;
-when they are linear orders, changing them can change the triangulation, though not its intended
-PL type. -/
+and it is a chain for the coordinatewise order on the product. The linear orders are data in the
+construction: changing them can change the triangulation, though not its intended PL type. -/
 public def orderedProd (K : PreAbstractSimplicialComplex α)
     (L : PreAbstractSimplicialComplex β) : PreAbstractSimplicialComplex (α × β) where
   faces := {σ | σ.image Prod.fst ∈ K ∧ σ.image Prod.snd ∈ L ∧
@@ -109,7 +108,7 @@ namespace SimplicialMap
 
 section Projections
 
-variable [Preorder α] [Preorder β] [DecidableEq α] [DecidableEq β]
+variable [LinearOrder α] [LinearOrder β]
 variable {K : PreAbstractSimplicialComplex α} {L : PreAbstractSimplicialComplex β}
 
 /-- The first coordinate projection from an ordered product is simplicial. -/
@@ -148,7 +147,7 @@ end Projections
 
 section ProdMkLeft
 
-variable [LinearOrder α] [Preorder β] [DecidableEq β]
+variable [LinearOrder α] [LinearOrder β]
 variable {K : PreAbstractSimplicialComplex α} {L : PreAbstractSimplicialComplex β}
 
 /-- Fixing a vertex `b` of the second factor gives the simplicial inclusion `a ↦ (a, b)` of the
@@ -190,7 +189,7 @@ end ProdMkLeft
 
 section ProdMkRight
 
-variable [Preorder α] [DecidableEq α] [LinearOrder β]
+variable [LinearOrder α] [LinearOrder β]
 variable {K : PreAbstractSimplicialComplex α} {L : PreAbstractSimplicialComplex β}
 
 /-- Fixing a vertex `a` of the first factor gives the simplicial inclusion `b ↦ (a, b)` of the
@@ -232,8 +231,7 @@ end ProdMkRight
 
 section OrderedProdMap
 
-variable [Preorder α] [Preorder β] [Preorder γ] [Preorder δ]
-  [DecidableEq α] [DecidableEq β] [DecidableEq γ] [DecidableEq δ]
+variable [LinearOrder α] [LinearOrder β] [LinearOrder γ] [LinearOrder δ]
 variable {K : PreAbstractSimplicialComplex α} {L : PreAbstractSimplicialComplex β}
 
 /-- Monotone simplicial maps induce a simplicial map between ordered products. Monotonicity is
@@ -280,7 +278,7 @@ variable {α β : Type*}
 
 section OrderedProd
 
-variable [Preorder α] [Preorder β] [DecidableEq α] [DecidableEq β]
+variable [LinearOrder α] [LinearOrder β]
 
 /-- The ordered product of two abstract simplicial complexes. -/
 public def orderedProd (K : AbstractSimplicialComplex α) (L : AbstractSimplicialComplex β) :
