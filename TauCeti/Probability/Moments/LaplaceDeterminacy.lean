@@ -32,8 +32,10 @@ quantifies over `ℕ`; the real-argument form is a one-line corollary for caller
 
 This is the uniqueness half of the Bernstein milestone in
 `TauCetiRoadmap/OneParameterSemigroups/README.md`, Part B. The existence half is a separate,
-independent development, and the two are combined into the roadmap's `bernstein` biconditional
-afterwards. Nothing here mentions complete monotonicity — the statement is about two arbitrary
+independent development, and the two are combined in the Hausdorff--Bernstein--Widder theorem
+(`TauCeti.hausdorff_bernstein_widder_existsUnique` in
+`Analysis/CompletelyMonotone/Bernstein/HausdorffBernsteinWidder.lean`).
+Nothing here mentions complete monotonicity — the statement is about two arbitrary
 finite measures — which is why it lives beside the other determinacy results rather than under
 `Analysis/CompletelyMonotone/`.
 -/

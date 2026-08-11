@@ -6,6 +6,7 @@ module
 
 public import Mathlib.LinearAlgebra.CliffordAlgebra.Contraction
 public import Mathlib.LinearAlgebra.FiniteDimensional.Lemmas
+import TauCeti.LinearAlgebra.CliffordAlgebra.Basic
 public import TauCeti.LinearAlgebra.CliffordAlgebra.Filtration
 
 /-!
@@ -54,9 +55,6 @@ the scalars and the vectors, the disjointness of the two pins that step down to 
 
 * `TauCeti.CliffordAlgebra.ι_injective`, `TauCeti.CliffordAlgebra.ι_inj` and
   `TauCeti.CliffordAlgebra.ι_eq_zero_iff`: the generators are a faithful copy of `M`.
-* `TauCeti.CliffordAlgebra.algebraMap_injective` and the instance
-  `TauCeti.CliffordAlgebra.faithfulSMul` it provides: the scalars are a faithful copy of `R`, so
-  Mathlib's `FaithfulSMul` simp lemmas apply.
 * `TauCeti.CliffordAlgebra.ι_eq_algebraMap_iff`, `TauCeti.CliffordAlgebra.ι_ne_one` and
   `TauCeti.CliffordAlgebra.ι_range_disjoint_one`: a vector is a scalar only when both vanish.
 * `TauCeti.CliffordAlgebra.mem_range_ι_iff`: membership of `range (ι Q)` is detected by the vector
@@ -89,20 +87,14 @@ variable {R : Type u} {M : Type v} [CommRing R] [AddCommGroup M] [Module R M]
 
 /-! ### The comparison with the exterior algebra
 
-Mathlib's `CliffordAlgebra.equivExterior` is only a linear equivalence, but the two facts that make
-it useful here — that it fixes generators and fixes scalars — are immediate from its definition as
-a `changeForm`, and are recorded once. -/
+Mathlib's `CliffordAlgebra.equivExterior` is only a linear equivalence. Its scalar equation is
+recorded in the general Clifford-algebra API; here we record the generator equation needed for
+the vector API. Both are immediate from its definition as a `changeForm`. -/
 
 /-- `CliffordAlgebra.equivExterior` sends a generator to the corresponding generator of the
 exterior algebra. -/
 theorem equivExterior_ι (m : M) : equivExterior Q (ι Q m) = ExteriorAlgebra.ι R m :=
   changeForm_ι changeForm.associated_neg_proof m
-
-/-- `CliffordAlgebra.equivExterior` sends a scalar to the corresponding scalar of the exterior
-algebra. -/
-theorem equivExterior_algebraMap (r : R) :
-    equivExterior Q (algebraMap R (CliffordAlgebra Q) r) = algebraMap R (ExteriorAlgebra R M) r :=
-  changeForm_algebraMap changeForm.associated_neg_proof r
 
 /-! ### The vector part -/
 
@@ -146,21 +138,6 @@ theorem ι_inj (m n : M) : ι Q m = ι Q n ↔ m = n := (ι_injective Q).eq_iff
 @[simp]
 theorem ι_eq_zero_iff (m : M) : ι Q m = 0 ↔ m = 0 := by
   rw [← ι_inj Q m 0, map_zero]
-
-/-! ### `algebraMap` is injective -/
-
-/-- **The scalars of a Clifford algebra are a faithful copy of `R`.** -/
-theorem algebraMap_injective : Function.Injective (algebraMap R (CliffordAlgebra Q)) := by
-  intro r s hrs
-  have h := congrArg (equivExterior Q) hrs
-  rwa [equivExterior_algebraMap, equivExterior_algebraMap,
-    ExteriorAlgebra.algebraMap_inj M] at h
-
-/-- With this instance the `iff` forms come from Mathlib: `algebraMap.coe_inj`,
-`FaithfulSMul.algebraMap_eq_zero_iff` and `FaithfulSMul.algebraMap_eq_one_iff` are all `simp`
-lemmas already. -/
-instance faithfulSMul : FaithfulSMul R (CliffordAlgebra Q) :=
-  (faithfulSMul_iff_algebraMap_injective R (CliffordAlgebra Q)).2 (algebraMap_injective Q)
 
 /-! ### Vectors are not scalars -/
 

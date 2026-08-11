@@ -41,7 +41,7 @@ open scoped ContDiff Manifold
 
 variable {R : Type*} [NormedRing R] [NormedAlgebra ℝ R] [CompleteSpace R]
 
-attribute [local instance] normedAlgebraRatOfReal
+attribute [local instance] TauCeti.normedAlgebraRatOfReal
 
 /-- The algebra-valued exponential curve `t ↦ exp (t • x)` is real analytic. -/
 @[fun_prop]

@@ -82,7 +82,7 @@ private theorem abs_im_mul_conj_div_mul_le_of_sub_smul {γ : ℝ → ℂ} {t₀ 
   rw [hstep, hdev]
   refine (norm_sub_le _ _).trans ?_
   gcongr
-  exact norm_tangentDeviation_le hv _
+  exact norm_tangentDeviation_le _ _
 
 /-- The ε-bound at the heart of the forcing argument: under the little-o flatness deviation
 `o(‖γ t - γ t₀‖ ^ n)` and a right derivative `L`, the normalized tangent value

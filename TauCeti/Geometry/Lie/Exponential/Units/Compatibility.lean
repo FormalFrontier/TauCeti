@@ -60,17 +60,8 @@ theorem hasDerivAt_mulInvariantOneParameterSubgroup_val_zero (x : R) :
     funext t
     exact congrArg Units.val
       (mulInvariantOneParameterSubgroup_apply (I := 𝓘(ℝ, R)) (G := Rˣ) v t)
-  have h := (isMIntegralCurve_mulInvariantIntegralCurve (I := 𝓘(ℝ, R)) (G := Rˣ)
-    v (1 : Rˣ)).isMIntegralCurveAt 0
-  have hd := h.eventually_hasDerivAt.self_of_nhds
-  have hzero : mulInvariantIntegralCurve (I := 𝓘(ℝ, R)) (G := Rˣ) v 1 0 = 1 :=
-    mulInvariantIntegralCurve_zero v 1
-  rw [hzero] at hd
-  have hone : (1 : Rˣ) ∈ (extChartAt 𝓘(ℝ, R) (1 : Rˣ)).source :=
-    mem_of_mem_nhds (extChartAt_source_mem_nhds (I := 𝓘(ℝ, R)) (1 : Rˣ))
-  rw [mulInvariantVectorField_one] at hd
-  dsimp only [v] at hd
-  rw [tangentCoordChange_self hone] at hd
+  have hd := hasDerivAt_extChartAt_mulInvariantIntegralCurve_zero
+    (I := 𝓘(ℝ, R)) (G := Rˣ) x
   have hchart :
       (extChartAt 𝓘(ℝ, R) (1 : Rˣ)) ∘
           mulInvariantIntegralCurve (I := 𝓘(ℝ, R)) (G := Rˣ) v 1 =
@@ -80,6 +71,7 @@ theorem hasDerivAt_mulInvariantOneParameterSubgroup_val_zero (x : R) :
     simp only [extChartAt_coe, Function.comp_apply, Units.chartAt_apply,
       modelWithCornersSelf_coe, id]
   rw [hchart] at hd
+  dsimp only [v] at hd
   rw [hfun]
   exact hd
 

@@ -49,7 +49,7 @@ private lemma hitting_congr {Ω β ι : Type*} [Preorder ι] [InfSet ι] {u v : 
       refine ⟨j, hj, ?_⟩
       rw [← h j hj.1 hj.2]
       exact hj_mem
-    simp only [if_pos hex, if_pos hex']
+    simp only [ite_eq_left hex, ite_eq_left hex']
     congr 1
     ext k
     simp only [Set.mem_inter_iff, Set.mem_ofPred_eq]
@@ -68,7 +68,7 @@ private lemma hitting_congr {Ω β ι : Type*} [Preorder ι] [InfSet ι] {u v : 
       refine ⟨j, hj, ?_⟩
       rw [h j hj.1 hj.2]
       exact hj_mem
-    simp only [if_neg hex, if_neg hex']
+    simp only [ite_eq_right hex, ite_eq_right hex']
 
 /-- Helper: `upperCrossingTime` respects pointwise equality on `[0, N]`. -/
 private lemma upperCrossingTime_congr {Ω ι : Type*} [Preorder ι] [OrderBot ι] [InfSet ι]

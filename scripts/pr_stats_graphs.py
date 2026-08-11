@@ -41,11 +41,8 @@ from datetime import date, datetime, time as day_time, timedelta, timezone
 from pathlib import Path
 from typing import Iterable
 
+from chart_style import BAR_BG, MUTED, PALETTE, base_css, card_rect, css_px
 
-BG = "#fbfaf7"
-TEXT = "#25313d"
-MUTED = "#68737e"
-GRID = "#d8dce0"
 SCOREBOARD_MARKER = "<!--tauceti-scoreboard-->"
 # A canonical scoreboard is the review engine's own comment: besides the public marker it
 # carries the machine-readable meta block, declares kind "scoreboard", and names the pull
@@ -53,7 +50,6 @@ SCOREBOARD_MARKER = "<!--tauceti-scoreboard-->"
 # marker or paste another PR's scoreboard.  scripts/pr_status/core.py parses the same block
 # when it derives a single PR's review state.
 SCOREBOARD_META_KIND = "scoreboard"
-TRUSTED_ASSOCIATIONS = {"OWNER", "MEMBER", "COLLABORATOR"}
 STATE_REVIEW = {"awaiting-review", "review-in-progress"}
 STATE_LABELS = {"awaiting-author", *STATE_REVIEW}
 # States in which the PR has left the review queue: the author owns it, or CI is judging a
@@ -70,12 +66,6 @@ ASSET_NAMES = [
     "cumulative-merges-by-contributor.svg",
     "cumulative-reviews-by-contributor.svg",
     "pr-stats.json",
-]
-PALETTE = [
-    "#3979c6", "#d26735", "#2f9364", "#8059bd", "#c0446e", "#168b99",
-    "#9b7124", "#5268c4", "#6f8b2d", "#b64d3f", "#1473a5", "#9d4f9e",
-    "#567b53", "#a85f22", "#4e6d91", "#8a6950", "#4f9089", "#7f5c87",
-    "#767d2c", "#b24f72", "#3f7d9a", "#7365a6",
 ]
 HOUR_EDGES = [0, 1, 2, 4, 8, 12, 24, 48, 72, 120, math.inf]
 HOUR_LABELS = [
@@ -288,13 +278,19 @@ def names_scoreboard_for(metas: Iterable[str], pr_number: int) -> bool:
     return False
 
 
-def fetch_scoreboards(repo: str, pr_numbers: set[int]) -> tuple[list[dict], Counter]:
+def fetch_scoreboards(
+    repo: str,
+    pr_numbers: set[int],
+    trusted_logins: set[str],
+) -> tuple[list[dict], Counter]:
     """Canonical review scoreboards posted on this repository's pull requests.
 
     The repository issue-comments endpoint also serves ordinary issues and accepts comments
     from anyone. A comment counts only when its issue number is one of the fetched pull
-    requests, its author is repository-associated, and its parsed engine metadata declares
-    a scoreboard for that same PR. Parsing runs at gh/jq, so only compact fields reach Python
+    requests, its author has contributed a merged PR, and its parsed engine metadata declares a
+    scoreboard for that same PR. The merged-author set comes from the same PR snapshot, so this
+    works with the read-only Actions token and does not trust requester-dependent
+    ``author_association`` values. Parsing runs at gh/jq, so only compact fields reach Python
     rather than memory growing with review prose. Rejections are published by reason.
     """
     marker = json.dumps(SCOREBOARD_MARKER)
@@ -306,8 +302,9 @@ def fetch_scoreboards(repo: str, pr_numbers: set[int]) -> tuple[list[dict], Coun
                 ' | ([try ($comment.body | capture("<!--tauceti-meta:v1\\\\s+'
                 '(?<json>\\\\{[\\\\s\\\\S]*\\\\})\\\\s*-->").json'
                 ' | fromjson) catch null][0] // null) as $meta'
-                ' | {number: $number, created_at, updated_at, user: .user.login,'
-                '    author_association, canonical: (($meta | type == "object")'
+                ' | {number: $number, created_at: $comment.created_at,'
+                '    updated_at: $comment.updated_at, user: $comment.user.login,'
+                '    canonical: (($meta | type == "object")'
                 '      and $meta.kind == "scoreboard"'
                 '      and (($meta.pr | type) == "number")'
                 '      and (($meta.pr | floor) == $meta.pr)'
@@ -325,7 +322,7 @@ def fetch_scoreboards(repo: str, pr_numbers: set[int]) -> tuple[list[dict], Coun
         if pr_number not in pr_numbers:
             rejected["not_a_pull_request"] += 1
             continue
-        if comment.get("author_association") not in TRUSTED_ASSOCIATIONS:
+        if comment.get("user") not in trusted_logins:
             rejected["untrusted_author"] += 1
             continue
         if not comment.get("canonical"):
@@ -342,7 +339,13 @@ def fetch_scoreboards(repo: str, pr_numbers: set[int]) -> tuple[list[dict], Coun
 
 def fetch_snapshot(repo: str) -> dict:
     prs = fetch_prs(repo)
-    scoreboards, rejected = fetch_scoreboards(repo, {pr["number"] for pr in prs})
+    trusted_logins = {
+        pr["author"] for pr in prs
+        if pr.get("merged_at") and pr.get("author") != "unknown"
+    }
+    scoreboards, rejected = fetch_scoreboards(
+        repo, {pr["number"] for pr in prs}, trusted_logins,
+    )
     return {
         "schema_version": 1,
         "repo": repo,
@@ -553,6 +556,27 @@ def nice_axis_max(value: float) -> int:
     return max(5, math.ceil(value))
 
 
+def chart_frame(
+    *, width: int, height: int, left: int, aria_label: str, title: str,
+    subtitle: str | list[str], css: str,
+) -> list[str]:
+    """Start one chart with the site's shared card, typography, and title placement."""
+    parts = [
+        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" '
+        f'role="img" aria-label="{html.escape(aria_label)}">',
+        f'<style>{base_css(width)}{css}</style>',
+        card_rect(width, height),
+        f'<text x="{left}" y="44" class="title">{html.escape(title)}</text>',
+    ]
+    lines = [subtitle] if isinstance(subtitle, str) else subtitle
+    for index, line in enumerate(lines):
+        parts.append(
+            f'<text x="{left}" y="{72 + index * 22}" class="subtitle">'
+            f'{html.escape(line)}</text>'
+        )
+    return parts
+
+
 def draw_histogram(
     parts: list[str], counts: list[int], x: int, y: int, width: int, height: int,
     color: str, heading: str, total: int,
@@ -576,7 +600,13 @@ def draw_histogram(
         parts.append(f'<rect x="{bx:.1f}" y="{by:.1f}" width="{bar_width:.1f}" height="{bar_height:.1f}" rx="4" fill="{color}"/>')
         if count:
             parts.append(f'<text x="{bx+bar_width/2:.1f}" y="{max(top-10, by-8):.1f}" text-anchor="middle" class="value">{count}</text>')
-        parts.append(f'<text x="{bx+bar_width/2:.1f}" y="{bottom+20}" text-anchor="middle" class="tick">{html.escape(label)}</text>')
+        label_x = bx + bar_width / 2 + 4
+        label_y = bottom + 26
+        parts.append(
+            f'<text x="{label_x:.1f}" y="{label_y}" text-anchor="end" '
+            f'transform="rotate(-32 {label_x:.1f} {label_y})" class="tick bin">'
+            f'{html.escape(label)}</text>'
+        )
 
 
 def render_queue_age(path: Path, metrics: dict, snapshot: datetime) -> None:
@@ -587,17 +617,27 @@ def render_queue_age(path: Path, metrics: dict, snapshot: datetime) -> None:
             f' · {metrics["missing_transition_fallbacks"]:,} state clocks use PR creation '
             "because no matching transition was available"
         )
-    parts = [
-        f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}" role="img" aria-label="Open PR age and current review-state age">',
-        f'<rect width="100%" height="100%" fill="{BG}"/>',
-        f'<style>text{{font-family:Inter,ui-sans-serif,system-ui,sans-serif;fill:{TEXT}}}.title{{font-size:29px;font-weight:700}}.subtitle{{font-size:14px;fill:{MUTED}}}.panel{{font-size:18px;font-weight:680}}.paneltotal{{font-size:15px;font-weight:700;fill:{MUTED}}}.tick{{font-size:11px;fill:{MUTED}}}.value{{font-size:12px;font-weight:750}}.grid{{stroke:{GRID};stroke-width:1}}</style>',
-        '<text x="55" y="44" class="title">Open PR age and current review state</text>',
-        f'<text x="55" y="73" class="subtitle">Snapshot {snapshot:%Y-%m-%d %H:%M} UTC · current-state clocks begin at the label transition · {metrics["other_open_prs"]:,} PRs outside author/review states appear only in total time open{fallback_note}</text>',
+    subtitle = [
+        f'Snapshot {snapshot:%Y-%m-%d %H:%M} UTC · current-state clocks begin at the '
+        'label transition',
+        f'{metrics["other_open_prs"]:,} PRs outside author/review states appear only in '
+        f'total time open{fallback_note}',
     ]
+    parts = chart_frame(
+        width=width, height=height, left=45,
+        aria_label="Open PR age and current review-state age",
+        title="Open PR age and current review state", subtitle=subtitle,
+        css=(
+            f'.panel{{font-size:{css_px(width, 15)};font-weight:600}}'
+            f'.paneltotal{{font-size:{css_px(width, 13)};font-weight:650;fill:{MUTED}}}'
+            f'.value{{font-size:{css_px(width, 12)};font-weight:700}}'
+            f'.bin{{font-size:{css_px(width, 10.5)}}}'
+        ),
+    )
     panels = [
-        (metrics["total_open_hours"], "#2f9364", "Total time open"),
-        (metrics["awaiting_author_hours"], "#d27736", "Awaiting author"),
-        (metrics["in_review_hours"], "#3979c6", "In review"),
+        (metrics["total_open_hours"], PALETTE[0], "Total time open"),
+        (metrics["awaiting_author_hours"], PALETTE[1], "Awaiting author"),
+        (metrics["in_review_hours"], PALETTE[2], "In review"),
     ]
     for index, (values, color, title) in enumerate(panels):
         draw_histogram(
@@ -620,13 +660,16 @@ def render_review_cycles(path: Path, metrics: dict, max_rows: int) -> None:
     width = 1250
     height = 116 + max(1, len(shown)) * 52 + 35
     bar_x, bar_width = 235, 780
-    parts = [
-        f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}" role="img" aria-label="Pull requests reaching each automated review cycle">',
-        f'<rect width="100%" height="100%" fill="{BG}"/>',
-        f'<style>text{{font-family:Inter,ui-sans-serif,system-ui,sans-serif;fill:{TEXT}}}.title{{font-size:27px;font-weight:700}}.subtitle{{font-size:14px;fill:{MUTED}}}.label{{font-size:14px;font-weight:680}}.value{{font-size:13px;font-weight:750}}.track{{fill:#e3e6e8}}</style>',
-        '<text x="45" y="42" class="title">PRs reaching each review cycle</text>',
-        f'<text x="45" y="70" class="subtitle">One cycle = one entry into review from an author or CI state · {metrics["total_cycles"]:,} cycles across {reviewed:,} reviewed PRs{epoch_note}</text>',
-    ]
+    parts = chart_frame(
+        width=width, height=height, left=45,
+        aria_label="Pull requests reaching each automated review cycle",
+        title="PRs reaching each review cycle",
+        subtitle=f'One cycle = one entry into review from an author or CI state · '
+        f'{metrics["total_cycles"]:,} cycles across {reviewed:,} reviewed PRs{epoch_note}',
+        css=f'.label{{font-size:{css_px(width, 14)};font-weight:600}}'
+        f'.value{{font-size:{css_px(width, 13)};font-weight:700}}'
+        f'.track{{fill:{BAR_BG}}}',
+    )
     if not shown:
         parts.append('<text x="45" y="125" class="label">No review cycles observed.</text>')
     for index, item in enumerate(shown):
@@ -646,20 +689,22 @@ def render_review_cycles(path: Path, metrics: dict, max_rows: int) -> None:
 def render_rolling(path: Path, rolling: list[dict]) -> None:
     width, height = 1500, 830
     panels = [
-        ("Merges in trailing 7 days", "merges", "#3979c6", lambda x: f"{int(x)}"),
-        ("Active PR authors in trailing 7 days", "active_authors", "#d27736", lambda x: f"{int(x)}"),
-        ("Median time to merge", "median_merge_hours", "#2f9364", lambda x: f"{x:.1f}h"),
-        ("90th percentile time to merge", "p90_merge_hours", "#8059bd", lambda x: f"{x:.1f}h"),
+        ("Merges in trailing 7 days", "merges", PALETTE[2], lambda x: f"{int(x)}"),
+        ("Active PR authors in trailing 7 days", "active_authors", PALETTE[1], lambda x: f"{int(x)}"),
+        ("Median time to merge", "median_merge_hours", PALETTE[0], lambda x: f"{x:.1f}h"),
+        ("90th percentile time to merge", "p90_merge_hours", PALETTE[4], lambda x: f"{x:.1f}h"),
     ]
     panel_width, panel_height = 680, 285
     origins = [(65, 125), (785, 125), (65, 475), (785, 475)]
-    parts = [
-        f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}" role="img" aria-label="Trailing-seven-day pull request health">',
-        f'<rect width="100%" height="100%" fill="{BG}"/>',
-        f'<style>text{{font-family:Inter,ui-sans-serif,system-ui,sans-serif;fill:{TEXT}}}.title{{font-size:29px;font-weight:700}}.subtitle{{font-size:14px;fill:{MUTED}}}.panel{{font-size:17px;font-weight:650}}.latest{{font-size:28px;font-weight:750}}.tick{{font-size:11px;fill:{MUTED}}}.grid{{stroke:{GRID};stroke-width:1}}</style>',
-        '<text x="55" y="44" class="title">Trailing-seven-day project health</text>',
-        f'<text x="55" y="72" class="subtitle">Daily UTC windows ending {rolling[0]["date"]}–{rolling[-1]["date"]} · complete days only</text>',
-    ]
+    parts = chart_frame(
+        width=width, height=height, left=55,
+        aria_label="Trailing-seven-day pull request health",
+        title="Trailing-seven-day project health",
+        subtitle=f'Daily UTC windows ending {rolling[0]["date"]}–{rolling[-1]["date"]} · '
+        'complete days only',
+        css=f'.panel{{font-size:{css_px(width, 15)};font-weight:600}}'
+        f'.latest{{font-size:{css_px(width, 24)};font-weight:700}}',
+    )
     for (title, key, color, formatter), (ox, oy) in zip(panels, origins):
         values = [row[key] or 0 for row in rolling]
         axis_max = nice_axis_max(max(values, default=0))
@@ -695,7 +740,7 @@ def render_rolling(path: Path, rolling: list[dict]) -> None:
 
 def color_for(name: str, other: bool = False) -> str:
     if other:
-        return "#7b8490"
+        return MUTED
     digest = hashlib.sha256(name.encode("utf-8")).digest()
     return PALETTE[int.from_bytes(digest[:2], "big") % len(PALETTE)]
 
@@ -742,13 +787,13 @@ def render_cumulative_contributors(
     labels = spread_labels([(name, y_for(plotted_totals[name])) for name in names], top, bottom)
     omitted = total_contributors - min(total_contributors, len([name for name in names if not name.startswith("Other (")]))
     coverage = f"top {len(names) - bool(omitted)} + {omitted:,} others" if omitted else "every contributor"
-    parts = [
-        f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}" role="img" aria-label="{html.escape(title)}">',
-        f'<rect width="100%" height="100%" fill="{BG}"/>',
-        f'<style>text{{font-family:Inter,ui-sans-serif,system-ui,sans-serif;fill:{TEXT}}}.title{{font-size:29px;font-weight:700}}.subtitle{{font-size:14px;fill:{MUTED}}}.tick{{font-size:11px;fill:{MUTED}}}.label{{font-size:12px;font-weight:650}}.grid{{stroke:{GRID};stroke-width:1}}.leader{{stroke-width:1;opacity:.55}}</style>',
-        f'<text x="55" y="44" class="title">{html.escape(title)}</text>',
-        f'<text x="55" y="72" class="subtitle">Cumulative {html.escape(noun)} by UTC day, {dates[0]}–{dates[-1]} · logarithmic count axis · {coverage}; exact totals for all {total_contributors:,} in JSON</text>',
-    ]
+    parts = chart_frame(
+        width=width, height=height, left=55, aria_label=title, title=title,
+        subtitle=f'Cumulative {noun} by UTC day, {dates[0]}–{dates[-1]} · logarithmic '
+        f'count axis · {coverage}; exact totals for all {total_contributors:,} in JSON',
+        css=f'.label{{font-size:{css_px(width, 12)};font-weight:600}}'
+        '.leader{stroke-width:1;opacity:.55}',
+    )
     for tick in log_ticks(maximum):
         y = y_for(tick)
         parts.append(f'<line x1="{left}" y1="{y:.1f}" x2="{right}" y2="{y:.1f}" class="grid"/>')
@@ -833,7 +878,7 @@ def generate(
         "last_full_day": last_full_day.isoformat(),
         "definitions": {
             "review_cycle": cycles["definition"],
-            "review": "one canonical <!--tauceti-scoreboard--> comment on a pull request of this repository, identified by the tauceti-meta:v1 block naming that PR, attributed to the posting account",
+            "review": "one canonical <!--tauceti-scoreboard--> comment on a pull request of this repository, identified by the tauceti-meta:v1 block naming that PR, whose posting login also authors a merged PR in the fetched snapshot",
             "active_author": "distinct PR author opening a PR in the trailing seven-day window",
             "merge_latency": "PR creation timestamp to merge timestamp",
         },
@@ -860,13 +905,13 @@ def generate(
         render_rolling(staging / "rolling-seven-day-history.svg", rolling)
         render_cumulative_contributors(
             staging / "cumulative-merges-by-contributor.svg",
-            "Total merged PRs by contributor since project inception", "merged PRs",
+            "Merged PRs by contributor", "merged PRs",
             merge_dates, merge_names, merge_series, merge_totals, len(merge_totals),
         )
         render_cumulative_contributors(
             staging / "cumulative-reviews-by-contributor.svg",
-            "Trusted v1 review scoreboards by contributor",
-            "trusted v1 review scoreboards", review_dates, review_names, review_series,
+            "Reviews by contributor", "reviews",
+            review_dates, review_names, review_series,
             review_totals, len(review_totals),
         )
         atomic_write(

@@ -22,9 +22,9 @@ tangents of the signed radii:
 `hyperbolicDist (u * a) (u * b) = |artanh a - artanh b|`
 (`TauCeti.hyperbolicDist_mul_ofReal_of_norm_eq_one`). Indeed the Moebius denominator
 `1 - conj (u * b) * (u * a)` collapses to the real number `1 - a * b`, so the pseudo-hyperbolic
-expression is `|a - b| / |1 - a * b|`, and the subtraction formula for `Real.artanh` — the
-mirror image of the addition formula `TauCeti.artanh_add` proved for the triangle inequality —
-turns that into `|artanh a - artanh b|`. Reparametrising the diameter by `a = Real.tanh t` makes
+expression is `|a - b| / |1 - a * b|`, and the subtraction formula `Real.artanh_sub` of
+`TauCeti/Analysis/SpecialFunctions/Artanh.lean`, together with `Real.artanh_abs`, turns that
+into `|artanh a - artanh b|`. Reparametrising the diameter by `a = Real.tanh t` makes
 it a unit-speed line: `TauCeti.PoincareDisc.radialGeodesic u` is an isometric embedding of `ℝ`.
 
 Every point of the disc lies on such a line through the origin, and the disc automorphisms act
@@ -32,9 +32,11 @@ transitively by isometries, so transporting a radial line names the geodesic lin
 *arbitrary* point: carrying the radial geodesic in direction `u` back by
 `(unitDiscMoebiusIsometryEquiv (toUnitDisc a)).symm` — the inverse of the Moebius isometry that
 sends `a` to the origin — gives `TauCeti.PoincareDisc.geodesicLine a u`, which starts at `a` and
-repeats the radial API (`geodesicLine_zero`, `isometry_geodesicLine`, `dist_geodesicLine_self`,
-`geodesicLine_injective`) at that base point. No hyperbolic computation is redone: each of those
-statements is its radial counterpart read through an isometry.
+repeats the radial API (`coe_geodesicLine`, `geodesicLine_zero`, `isometry_geodesicLine`,
+`dist_geodesicLine_self`, `geodesicLine_injective`) at that base point. No hyperbolic computation
+is redone: each of those statements is its radial counterpart read through an isometry. Negating
+the direction of either line reverses its time parameter (`radialGeodesic_neg`,
+`geodesicLine_neg`), `Real.tanh` being odd, so the two halves of a line are one construction.
 
 Those lines are what makes the disc a geodesic space: through any two prescribed points there
 passes one of them.
@@ -50,7 +52,10 @@ passes one of them.
   radial geodesic in its own direction, at time its distance to the origin.
 * `TauCeti.PoincareDisc.geodesicLine` — the same line based at an arbitrary point `a` instead of
   the origin, with `TauCeti.PoincareDisc.isometry_geodesicLine`,
-  `TauCeti.PoincareDisc.geodesicLine_zero` and `TauCeti.PoincareDisc.geodesicLine_injective`.
+  `TauCeti.PoincareDisc.geodesicLine_zero`, `TauCeti.PoincareDisc.coe_geodesicLine` (its value in
+  the ambient plane) and `TauCeti.PoincareDisc.geodesicLine_injective`.
+* `TauCeti.PoincareDisc.radialGeodesic_neg`, `TauCeti.PoincareDisc.geodesicLine_neg` — reversing
+  the direction of a geodesic line reverses its time parameter.
 * `TauCeti.PoincareDisc.exists_isometry_apply_zero_apply_dist` — **the Poincaré disc is a
   geodesic space**: through any two points there is a unit-speed geodesic line `γ : ℝ → 𝔻`, with
   `γ 0` the first point and `γ (dist z w)` the second.
@@ -80,41 +85,6 @@ namespace TauCeti
 
 open _root_.Complex Metric Set
 
-/-! ### Inverse hyperbolic tangent helpers -/
-
-/-- `Real.artanh` is odd on `(-1, 1)`.
-
-Mathlib's `Analysis/SpecialFunctions/Artanh.lean` records the monotonicity, sign and inversion
-properties of `Real.artanh` but not this one (the name `Real.artanh_neg` is taken there by the
-sign lemma). This is a local proof helper for the geodesic computation, kept private so that a
-general real-analysis fact is not exported from a file about the Poincaré disc. -/
-private lemma artanh_neg_eq {x : ℝ} (hx : x ∈ Ioo (-1 : ℝ) 1) :
-    Real.artanh (-x) = -Real.artanh x := by
-  have h1 : (0 : ℝ) < 1 + x := by linarith [hx.1]
-  have h2 : (0 : ℝ) < 1 - x := by linarith [hx.2]
-  rw [Real.artanh_eq_half_log ⟨by linarith [hx.2], by linarith [hx.1]⟩,
-    Real.artanh_eq_half_log (Ioo_subset_Icc_self hx), ← sub_eq_add_neg, sub_neg_eq_add,
-    ← inv_div (1 + x) (1 - x), Real.log_inv]
-  ring
-
-/-- The absolute value passes through `Real.artanh` on `(-1, 1)`. -/
-private lemma artanh_abs {x : ℝ} (hx : x ∈ Ioo (-1 : ℝ) 1) :
-    Real.artanh |x| = |Real.artanh x| := by
-  rcases le_or_gt 0 x with hx0 | hx0
-  · rw [abs_of_nonneg hx0, abs_of_nonneg (Real.artanh_nonneg hx0)]
-  · rw [abs_of_neg hx0, artanh_neg_eq hx, abs_of_nonpos (Real.artanh_nonpos hx0.le)]
-
-/-- **Subtraction formula for the inverse hyperbolic tangent.** For `a, b ∈ (-1, 1)`,
-`artanh a - artanh b = artanh ((a - b) / (1 - a * b))`. This is the addition formula
-`TauCeti.artanh_add`, which underlies the hyperbolic triangle inequality, with `b` negated. -/
-private lemma artanh_sub {a b : ℝ} (ha : a ∈ Ioo (-1 : ℝ) 1) (hb : b ∈ Ioo (-1 : ℝ) 1) :
-    Real.artanh a - Real.artanh b = Real.artanh ((a - b) / (1 - a * b)) := by
-  have hb' : -b ∈ Ioo (-1 : ℝ) 1 := ⟨by linarith [hb.2], by linarith [hb.1]⟩
-  have h := artanh_add ha hb'
-  rw [artanh_neg_eq hb] at h
-  rw [sub_eq_add_neg a b, sub_eq_add_neg 1 (a * b), ← mul_neg, ← h]
-  ring
-
 /-! ### The hyperbolic distance along a Euclidean diameter -/
 
 /-- The pseudo-hyperbolic expression of two points `u * a`, `u * b` of the same real line
@@ -143,17 +113,8 @@ theorem hyperbolicDist_mul_ofReal_of_norm_eq_one {u : ℂ} (hu : ‖u‖ = 1) {a
     hyperbolicDist (u * a) (u * b) = |Real.artanh a - Real.artanh b| := by
   have ha' := abs_lt.1 ha
   have hb' := abs_lt.1 hb
-  have hab : (0 : ℝ) < 1 - a * b := by nlinarith [ha'.1, ha'.2, hb'.1, hb'.2]
-  have hquot : (a - b) / (1 - a * b) ∈ Ioo (-1 : ℝ) 1 := by
-    refine mem_Ioo.2 (abs_lt.1 ?_)
-    rw [abs_div, abs_of_pos hab, div_lt_one hab, abs_lt]
-    have h₁ : (0 : ℝ) < (1 + a) * (1 - b) :=
-      mul_pos (by linarith [ha'.1]) (by linarith [hb'.2])
-    have h₂ : (0 : ℝ) < (1 - a) * (1 + b) :=
-      mul_pos (by linarith [ha'.2]) (by linarith [hb'.1])
-    constructor <;> nlinarith [h₁, h₂]
   rw [hyperbolicDist_def, pseudoHyperbolicExpr_mul_ofReal_of_norm_eq_one hu a b,
-    ← abs_div, artanh_abs hquot, ← artanh_sub ⟨ha'.1, ha'.2⟩ ⟨hb'.1, hb'.2⟩]
+    ← abs_div, Real.artanh_abs, ← Real.artanh_sub ⟨ha'.1, ha'.2⟩ ⟨hb'.1, hb'.2⟩]
 
 /-- Reparametrising a Euclidean diameter by `Real.tanh` makes it unit speed: the hyperbolic
 distance between `u * Real.tanh s` and `u * Real.tanh t` is `|s - t|`. -/
@@ -183,6 +144,17 @@ lemma coe_radialGeodesic (u : Circle) (t : ℝ) :
     ((toUnitDisc (radialGeodesic u t) : Complex.UnitDisc) : ℂ) = (u : ℂ) * Real.tanh t := by
   simp only [radialGeodesic, toUnitDisc_toPoincare, Complex.UnitDisc.coe_circle_smul,
     Complex.UnitDisc.coe_mk]
+
+/-- **Reversing a radial geodesic.** Negating the direction of a radial geodesic reverses its time
+parameter, `Real.tanh` being odd. So the backward half of `radialGeodesic u` is the forward half
+of `radialGeodesic (-u)`. -/
+@[simp]
+lemma radialGeodesic_neg (u : Circle) (t : ℝ) :
+    radialGeodesic (-u) t = radialGeodesic u (-t) :=
+  toUnitDisc.injective <| Complex.UnitDisc.coe_injective <| by
+    rw [coe_radialGeodesic, coe_radialGeodesic, Circle.coe_neg, Real.tanh_neg]
+    push_cast
+    ring
 
 /-- Every radial geodesic starts at the origin. -/
 @[simp]
@@ -276,6 +248,28 @@ which the `simpNF` linter rejects. -/
 lemma unitDiscMoebiusIsometryEquiv_geodesicLine (a : PoincareDisc) (u : Circle) (t : ℝ) :
     unitDiscMoebiusIsometryEquiv (toUnitDisc a) (geodesicLine a u t) = radialGeodesic u t := by
   rw [geodesicLine_def, IsometryEquiv.apply_symm_apply]
+
+/-- The geodesic line through `a` in direction `u`, read in the ambient plane: it is the Moebius
+formula centred at `-a` evaluated at the radial point `u * Real.tanh t`. This is the base-point
+version of `TauCeti.PoincareDisc.coe_radialGeodesic`, and it is how `geodesicLine` is computed
+with on the underlying complex numbers. -/
+@[simp]
+lemma coe_geodesicLine (a : PoincareDisc) (u : Circle) (t : ℝ) :
+    ((toUnitDisc (geodesicLine a u t) : Complex.UnitDisc) : ℂ) =
+      ((u : ℂ) * Real.tanh t + (toUnitDisc a : ℂ)) /
+        (1 + (starRingEnd ℂ) (toUnitDisc a : ℂ) * ((u : ℂ) * Real.tanh t)) := by
+  rw [geodesicLine_def]
+  simp only [unitDiscMoebiusIsometryEquiv_symm, unitDiscMoebiusIsometryEquiv_apply,
+    toUnitDisc_toPoincare, coe_unitDiscMoebius, coe_radialGeodesic, Complex.UnitDisc.coe_neg,
+    map_neg, sub_neg_eq_add, neg_mul]
+
+/-- **Reversing a geodesic line.** The base-point version of
+`TauCeti.PoincareDisc.radialGeodesic_neg`: the line through `a` in direction `-u` is the line
+through `a` in direction `u` run backwards. -/
+@[simp]
+lemma geodesicLine_neg (a : PoincareDisc) (u : Circle) (t : ℝ) :
+    geodesicLine a (-u) t = geodesicLine a u (-t) := by
+  rw [geodesicLine_def, geodesicLine_def, radialGeodesic_neg]
 
 /-- Every geodesic line through `a` starts at `a`: the generalisation of
 `TauCeti.PoincareDisc.radialGeodesic_zero` off the origin. -/

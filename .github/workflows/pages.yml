@@ -37,6 +37,7 @@ on:
     paths:
       - 'web/**'
       - 'docbuild/**'
+      - 'scripts/chart_style.py'
       - 'scripts/loc_graph.py'
       - 'scripts/loc_roadmap_graph.py'
       - 'scripts/participant_graph.py'

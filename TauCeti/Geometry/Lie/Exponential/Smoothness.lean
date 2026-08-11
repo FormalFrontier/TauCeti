@@ -37,8 +37,7 @@ variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
   {H : Type*} [TopologicalSpace H] {I : ModelWithCorners ℝ E H}
   {G : Type*} [TopologicalSpace G] [ChartedSpace H G] [Group G]
 
-local instance [LieGroup I ∞ G] : LieGroup I (minSmoothness ℝ 3) G := by
-  simpa using (inferInstance : LieGroup I (3 : ℕ∞ω) G)
+attribute [local instance] LieGroup.minSmoothnessThree
 
 /-- Continuity, the rescaled ODE, and the initial value for the second coordinate of a product
 flow. This packages the chain-rule calculation used to compare a canonical coordinate path with a
@@ -146,7 +145,7 @@ theorem contMDiffAt_mulInvariantExp_modelSpace_zero
       mulInvariantCoordinateVectorField (I := I) (G := G) p
     have hF : ContDiffAt ℝ (n + 1) F ((0 : E), center) := by
       exact contDiffAt_const.smul
-        ((contDiffAt_mulInvariantCoordinateVectorField (I := I) (G := G) (n := ∞)
+        ((contDiffAt_mulInvariantCoordinateVectorField (I := I) (G := G) (v := 0) (n := ∞)
           BoundarylessManifold.isInteriorPoint).of_le
           (by exact_mod_cast le_top))
     have hFzero : ∀ᶠ y in 𝓝 center, F (0, y) = 0 := by

@@ -5,43 +5,44 @@ Authors: Chris Birkbeck
 -/
 module
 
-public import Mathlib.NumberTheory.LSeries.Convergence
-public import Mathlib.NumberTheory.ModularForms.Bounds
+public import Mathlib.NumberTheory.ModularForms.LFunction
+public import TauCeti.NumberTheory.LSeries.EntireExtension
 
 /-!
-# L-functions of modular forms
+# Dirichlet series of modular forms
 
-For a weight-`k` modular form `f` with `q`-expansion `f(τ) = Σ_{n≥0} aₙ qⁿ`, the
-**L-function** is the Dirichlet series `L(s, f) = Σ_{n ≥ 1} aₙ · n^{-s}`, built on
-Mathlib's `LSeries` infrastructure applied to the coefficient sequence of
-`UpperHalfPlane.qExpansion` at the strict width of the level at `∞`.
+Mathlib's `Mathlib/NumberTheory/ModularForms/LFunction.lean` defines the completed
+L-function `ModularForm.Λ` and the L-function `ModularForm.L` of a modular form for an
+arithmetic level, with the Dirichlet-series identities `ModularForm.hasSum_L` and
+`CuspForm.hasSum_L` on their convergence half-planes, and — for cusp forms — entire
+continuation (`CuspForm.differentiable_L`). This file supplies the interface between that
+API and Mathlib's `LSeries` of the `q`-expansion coefficients:
 
-## Main definitions
-
-* `ModularForm.lCoeff f`: the coefficient sequence `n ↦ aₙ(f)`, as `ℕ → ℂ`.
-* `ModularForm.lSeries f`: the L-function `s ↦ LSeries (lCoeff f) s`.
-* `ModularForm.imAxis f`: `f` along the positive imaginary axis (`0` off it). For a
-  *cusp form* `f`, whose decay makes the integral converge, the Mellin transform of this
-  restriction is the completed L-function; for general modular forms that reading needs
-  the constant term subtracted first.
+* Hecke's abscissa-of-absolute-convergence bounds for the coefficient series, and
+* the identification of `LSeries` of the coefficients with `ModularForm.L` on the
+  convergence half-plane, in both the modular and the cuspidal ranges.
 
 ## Main results
 
-Hecke's convergence bounds, from Mathlib's `q`-expansion coefficient growth:
-
-* `ModularForm.abscissaOfAbsConv_lCoeff_le`: for a modular form of weight `k ≥ 0`,
-  the abscissa of absolute convergence is at most `k + 1` (from `aₙ = O(nᵏ)`).
-* `ModularForm.abscissaOfAbsConv_lCoeff_le_cuspForm`: for a cusp form, at most
-  `k/2 + 1` (from Hecke's `aₙ = O(n^{k/2})`).
+* `ModularForm.abscissaOfAbsConv_qExpansion_coeff_le`: for a modular form of weight
+  `k ≥ 0`, the abscissa of absolute convergence of the coefficient series is at most
+  `k + 1` (from `aₙ = O(nᵏ)`).
+* `CuspForm.abscissaOfAbsConv_qExpansion_coeff_le`: for a cusp form, at most `k/2 + 1`
+  (from Hecke's `aₙ = O(n^{k/2})`).
+* `ModularForm.LSeries_qExpansion_coeff_eq`, `CuspForm.LSeries_qExpansion_coeff_eq`:
+  on the respective half-planes, `LSeries` of the coefficients is
+  `(Γ.strictWidthInfty : ℂ) ^ (-s) * L hk f s` for Mathlib's `ModularForm.L`.
+* `CuspForm.hasEntireExtension_qExpansion_coeff`: the coefficient series of a cusp form
+  of positive weight has an entire extension (the Layer-7 continuation milestone).
 
 The non-cuspidal abscissa bound `k + 1` is weaker than Diamond–Shurman Prop. 5.9.1
 (which gives convergence for `Re s > k` via `aₙ = O(n^{k-1})`); tightening it is a
-separate milestone of the roadmap's Layer 7.
+separate milestone of the roadmap's Layer 7. The entire continuation of the cusp-form
+series is `CuspForm.hasEntireExtension_qExpansion_coeff` below.
 
 Ported from the AINTLIB `LeanModularForms` project
-(`LeanModularForms/Modularforms/LFunction.lean`), with the abscissa bounds — advertised
-but not present there — supplied from Mathlib's `ModularFormClass.qExpansion_isBigO` and
-`CuspFormClass.qExpansion_isBigO`.
+(`LeanModularForms/Modularforms/LFunction.lean`), rebuilt to consume Mathlib's
+`ModularForm.L` rather than defining a parallel Dirichlet series.
 
 ## References
 
@@ -58,70 +59,86 @@ noncomputable section
 
 open Filter LSeries UpperHalfPlane
 
+variable {k : ℤ} {Γ : Subgroup (GL (Fin 2) ℝ)} [Γ.IsArithmetic]
+variable {F : Type*} [FunLike F ℍ ℂ] {s : ℂ}
+
+/-- The `HasSum`-to-`LSeries` boundary shared by the identification theorems below:
+plain Dirichlet sums at `s ≠ 0` converging to `v` identify `LSeries a s` with `v`. -/
+private lemma LSeries_eq_of_hasSum {a : ℕ → ℂ} {v : ℂ} (hs0 : s ≠ 0)
+    (h : HasSum (fun n : ℕ ↦ a n / (n : ℂ) ^ s) v) : LSeries a s = v := by
+  rw [← funext (LSeries.term_of_ne_zero' hs0 a)] at h
+  exact LSeriesHasSum.LSeries_eq h
+
 namespace ModularForm
 
-variable {k : ℤ} {Γ : Subgroup (GL (Fin 2) ℝ)}
-variable {F : Type*} [FunLike F ℍ ℂ]
-
-/-- The coefficient sequence `n ↦ aₙ(f)` of the `q`-expansion of `f` at the strict width
-at `∞` of its level, viewed as `ℕ → ℂ` — the natural input to Mathlib's `LSeries`. -/
-def lCoeff [ModularFormClass F Γ k] (f : F) : ℕ → ℂ :=
-  fun n ↦ (qExpansion Γ.strictWidthInfty f).coeff n
-
-@[simp]
-lemma lCoeff_apply [ModularFormClass F Γ k] (f : F) (n : ℕ) :
-    lCoeff f n = (qExpansion Γ.strictWidthInfty f).coeff n := (rfl)
-
-/-- The **L-function** of a modular form: the Dirichlet series
-`L(s, f) = Σ_{n ≥ 1} aₙ(f) · n^{-s}` of its `q`-expansion coefficients. -/
-def lSeries [ModularFormClass F Γ k] (f : F) (s : ℂ) : ℂ :=
-  LSeries (lCoeff f) s
-
-@[simp]
-lemma lSeries_apply [ModularFormClass F Γ k] (f : F) (s : ℂ) :
-    lSeries f s = LSeries (lCoeff f) s := (rfl)
-
-
-/-- **A function on `ℍ` along the positive imaginary axis**: `t > 0` maps to `f(i·t)`,
-and `t ≤ 0` to `0`. For a cusp form `f`, whose decay makes the integral converge, the
-Mellin transform of this restriction is the completed L-function. -/
-def imAxis (f : ℍ → ℂ) (t : ℝ) : ℂ :=
-  if h : 0 < t then
-    f ⟨Complex.I * (t : ℂ), by simpa only [Complex.I_mul_im, Complex.ofReal_re] using h⟩
-  else 0
-
-@[simp]
-lemma imAxis_apply_of_pos (f : ℍ → ℂ) {t : ℝ} (ht : 0 < t) :
-    imAxis f t =
-      f ⟨Complex.I * (t : ℂ), by simpa only [Complex.I_mul_im, Complex.ofReal_re] using ht⟩ := by
-  rw [imAxis, dif_pos ht]
-
-@[simp]
-lemma imAxis_apply_of_nonpos (f : ℍ → ℂ) {t : ℝ} (ht : ¬ 0 < t) :
-    imAxis f t = 0 := by
-  rw [imAxis, dif_neg ht]
-
-variable [Γ.IsArithmetic]
-
-/-- **Hecke's abscissa bound for modular forms**: for weight `k ≥ 0`, the L-series of a
-modular form converges absolutely for `Re s > k + 1` (from `aₙ = O(nᵏ)`). -/
-theorem abscissaOfAbsConv_lCoeff_le (hk : 0 ≤ k) [ModularFormClass F Γ k] (f : F) :
-    abscissaOfAbsConv (lCoeff f) ≤ ((k : ℝ) : EReal) + 1 := by
+/-- **Hecke's abscissa bound for modular forms**: for weight `k ≥ 0`, the Dirichlet series
+of the `q`-expansion coefficients converges absolutely for `Re s > k + 1`
+(from `aₙ = O(nᵏ)`). -/
+theorem abscissaOfAbsConv_qExpansion_coeff_le (hk : 0 ≤ k) [ModularFormClass F Γ k]
+    (f : F) :
+    abscissaOfAbsConv (fun n ↦ (qExpansion Γ.strictWidthInfty f).coeff n) ≤
+      ((k : ℝ) : EReal) + 1 := by
   refine LSeries.abscissaOfAbsConv_le_of_isBigO_rpow ?_
-  have h := ModularFormClass.qExpansion_isBigO hk f
-  have h_lCoeff : lCoeff f = fun n ↦ (qExpansion Γ.strictWidthInfty f).coeff n :=
-    funext (lCoeff_apply f)
-  rw [h_lCoeff]
-  refine h.congr' EventuallyEq.rfl (Eventually.of_forall fun n ↦ ?_)
+  refine (ModularFormClass.qExpansion_isBigO hk f).congr' EventuallyEq.rfl
+    (Eventually.of_forall fun n ↦ ?_)
   simp only [Real.rpow_intCast]
 
-/-- **Hecke's abscissa bound for cusp forms**: the L-series of a cusp form converges
-absolutely for `Re s > k/2 + 1` (from Hecke's `aₙ = O(n^{k/2})`). -/
-theorem abscissaOfAbsConv_lCoeff_le_cuspForm [CuspFormClass F Γ k] (f : F) :
-    abscissaOfAbsConv (lCoeff f) ≤ (((k : ℝ) / 2 : ℝ) : EReal) + 1 := by
-  have h_lCoeff : lCoeff f = fun n ↦ (qExpansion Γ.strictWidthInfty f).coeff n :=
-    funext (lCoeff_apply f)
-  rw [h_lCoeff]
-  exact LSeries.abscissaOfAbsConv_le_of_isBigO_rpow (CuspFormClass.qExpansion_isBigO f)
+/-- On the half-plane `Re s > k + 1`, the Dirichlet series of the `q`-expansion
+coefficients is Mathlib's `ModularForm.L`, up to the width factor. Not `@[simp]`: the
+positivity witness `hk` occurs in the right-hand side `L hk f s`, so the rewrite cannot
+fire from the left-hand side alone (simpNF rejects it). -/
+theorem LSeries_qExpansion_coeff_eq (hk : 0 < k) [ModularFormClass F Γ k] (f : F)
+    (hs : k + 1 < s.re) :
+    LSeries (fun n ↦ (qExpansion Γ.strictWidthInfty f).coeff n) s =
+      (Γ.strictWidthInfty : ℂ) ^ (-s) * L hk f s := by
+  have hs0 : s ≠ 0 := by
+    rintro rfl
+    simp only [Complex.zero_re] at hs
+    have hk' : (0 : ℝ) ≤ (k : ℝ) := mod_cast hk.le
+    linarith
+  exact LSeries_eq_of_hasSum hs0 (hasSum_L hk f hs)
 
 end ModularForm
+
+namespace CuspForm
+
+/-- **Hecke's abscissa bound for cusp forms**: the Dirichlet series of the `q`-expansion
+coefficients converges absolutely for `Re s > k/2 + 1` (from Hecke's
+`aₙ = O(n^{k/2})`). -/
+theorem abscissaOfAbsConv_qExpansion_coeff_le [CuspFormClass F Γ k] (f : F) :
+    abscissaOfAbsConv (fun n ↦ (qExpansion Γ.strictWidthInfty f).coeff n) ≤
+      (((k : ℝ) / 2 : ℝ) : EReal) + 1 :=
+  LSeries.abscissaOfAbsConv_le_of_isBigO_rpow (CuspFormClass.qExpansion_isBigO f)
+
+/-- On the half-plane `Re s > k/2 + 1`, the Dirichlet series of the `q`-expansion
+coefficients of a cusp form is Mathlib's `ModularForm.L`, up to the width factor.
+Not `@[simp]`: as with the modular-form version, `hk` occurs in the right-hand side. -/
+theorem LSeries_qExpansion_coeff_eq (hk : 0 < k) [CuspFormClass F Γ k] (f : F)
+    (hs : k / 2 + 1 < s.re) :
+    LSeries (fun n ↦ (qExpansion Γ.strictWidthInfty f).coeff n) s =
+      (Γ.strictWidthInfty : ℂ) ^ (-s) * ModularForm.L hk f s := by
+  have hs0 : s ≠ 0 := by
+    rintro rfl
+    simp only [Complex.zero_re] at hs
+    have hk' : (0 : ℝ) < (k : ℝ) := mod_cast hk
+    linarith
+  exact LSeries_eq_of_hasSum hs0 (hasSum_L hk f hs)
+
+/-- **Entire continuation of the L-series of a cusp form** — the roadmap's Layer-7
+continuation milestone: the Dirichlet series of the `q`-expansion coefficients of a cusp
+form of positive weight has an entire extension, namely
+`s ↦ (Γ.strictWidthInfty : ℂ) ^ (-s) * L hk f s`. -/
+theorem hasEntireExtension_qExpansion_coeff (hk : 0 < k) [CuspFormClass F Γ k] (f : F) :
+    LSeries.HasEntireExtension (fun n ↦ (qExpansion Γ.strictWidthInfty f).coeff n) := by
+  refine LSeries.HasEntireExtension.of_extension_of_eq_on_lt_re (c := (k : ℝ) / 2 + 1)
+    ?_ ?_ (fun {s} hs ↦ (LSeries_qExpansion_coeff_eq hk f hs).symm)
+  · refine (abscissaOfAbsConv_qExpansion_coeff_le f).trans_lt ?_
+    have hcast : (((k : ℝ) / 2 : ℝ) : EReal) + 1 = (((k : ℝ) / 2 + 1 : ℝ) : EReal) := by
+      norm_cast
+    rw [hcast]
+    exact EReal.coe_lt_top _
+  · exact (Differentiable.const_cpow differentiable_neg
+      (Or.inl (Complex.ofReal_ne_zero.mpr Γ.strictWidthInfty_pos.ne'))).mul
+      (differentiable_L hk f)
+
+end CuspForm

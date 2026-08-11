@@ -160,7 +160,7 @@ theorem exists_frontier_inter_closure_image_ball_inter_sphere_eq_pair_dist_le
   have hfin' : circleImageLength f (ball c r) ζ ρ ≠ ⊤ :=
     (hlen.trans ENNReal.ofReal_lt_top).ne
   have hdiam : diam (f '' (ball c r ∩ sphere ζ ρ)) ≤ ε :=
-    diam_image_ball_inter_sphere_le hζ hρmem.1 hf hε.le hlen.le
+    diam_image_ball_inter_sphere_le hf hε.le hlen.le
   obtain ⟨u, v, hpair⟩ := exists_frontier_inter_closure_image_ball_inter_sphere_eq_pair hζ hρmem.1
     (hρmem.2.trans_le (min_le_right _ _)) hf hinj hfin'
   have hu : u ∈ frontier (f '' ball c r) ∩ closure (f '' (ball c r ∩ sphere ζ ρ)) := by
@@ -168,7 +168,7 @@ theorem exists_frontier_inter_closure_image_ball_inter_sphere_eq_pair_dist_le
   have hv : v ∈ frontier (f '' ball c r) ∩ closure (f '' (ball c r ∩ sphere ζ ρ)) := by
     rw [hpair]; exact mem_insert_of_mem _ rfl
   have hb : IsBounded (f '' (ball c r ∩ sphere ζ ρ)) :=
-    isBounded_image_ball_inter_sphere_of_circleImageLength_ne_top hζ hρmem.1 hf hfin'
+    isBounded_image_ball_inter_sphere_of_circleImageLength_ne_top hf hfin'
   exact ⟨ρ, ⟨hρmem.1, hρmem.2.trans_le (min_le_left _ _)⟩, u, v, hpair,
     (dist_le_diam_of_mem (hb.closure.subset inter_subset_right) hu hv).trans
       ((diam_frontier_inter_closure_image_inter_sphere_le hb).trans hdiam), hdiam⟩

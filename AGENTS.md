@@ -9,8 +9,10 @@ the three repos fit together; this file only adds the contract for agents workin
 [TauCetiRoadmap](https://github.com/TauCetiProject/TauCetiRoadmap) repo. The roadmap gates
 *new* mathematics: only add a new mathematical declaration (definition, theorem, instance,
 notation) or file when it advances a specific roadmap target, or supplies a prerequisite that a
-specific target needs. If a human asks you to build something new that is not on the roadmap,
-say so and ask them to add it to the roadmap first, rather than building it here.
+specific target needs. If something you want to build is not on the roadmap — whether a human
+asked for it or you found the gap yourself — say so and leave it to a human to add, rather than
+building it here. Never open a PR or an issue in TauCetiRoadmap yourself; reviewing a roadmap
+change needs human attention.
 
 Improving code that already exists is **always in scope** and needs no roadmap entry:
 refactoring, simplifying proofs, fixing or modestly generalising an existing lemma (without
@@ -44,10 +46,13 @@ scope do not coincide.
   Mathlib linter set (style, file length, no `maxHeartbeats` overrides). Do not try to disable
   these.
 - One topic per PR. Ship a prerequisite refactor as its own PR.
-- When Mathlib adds mathematics that duplicates Tau Ceti code, migrate all uses to Mathlib and
-  delete the duplicate Tau Ceti declarations. Do not preserve the old API with compatibility
-  aliases, wrapper declarations, deprecated shims, or duplicate theorem names: Tau Ceti defers to
-  Mathlib's names, definitions, and design decisions directly.
+- Tau Ceti does not preserve backwards compatibility. When declarations or modules are moved,
+  renamed, replaced, or deleted — including when Mathlib supersedes them — update every
+  in-repository use and remove the obsolete names and module paths in the same PR. Do not add or
+  retain anything whose only purpose is compatibility: aliases, wrapper declarations, forwarding
+  import modules, deprecated shims (including `deprecated_module`), or duplicate theorem names.
+  External users of an older revision must update to the canonical API on current `main`;
+  breaking their source compatibility is not a reason to keep an obsolete surface.
 - `TauCeti/` is the only place code goes. `scripts/`, `.github/`, and the lakefile
   (`lakefile.toml`/`lakefile.lean`) are human-owned. The two Lake *pins* —
   `lake-manifest.json` and `lean-toolchain` — are an exception: a **forward-only** bump of
