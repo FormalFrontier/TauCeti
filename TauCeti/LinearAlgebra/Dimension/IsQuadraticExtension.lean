@@ -92,6 +92,18 @@ theorem exists_eq_algebraMap_add_algebraMap_mul {θ θ' : L}
   · rw [← hcd, hd, zero_smul, add_zero, Algebra.algebraMap_eq_smul_one]
   · rw [← hcd, Algebra.smul_def, Algebra.smul_def, mul_one]
 
+/-- **Every element of a quadratic extension is `b + aθ`** for a fixed generator `θ`: the basis
+`1, θ` spans `L` over `K`. Unlike `exists_eq_algebraMap_add_algebraMap_mul`, the element need not
+itself be a generator, so the `θ`-coefficient may vanish when the element is in the base field. -/
+theorem exists_eq_algebraMap_add_algebraMap_mul' {θ : L}
+    (hθ : θ ∉ Set.range (algebraMap K L)) (x : L) :
+    ∃ a b : K, x = algebraMap K L b + algebraMap K L a * θ := by
+  by_cases hx : x ∈ Set.range (algebraMap K L)
+  · obtain ⟨b, hb⟩ := hx
+    exact ⟨0, b, by rw [← hb]; simp⟩
+  · obtain ⟨a, b, _, hab⟩ := exists_eq_algebraMap_add_algebraMap_mul K L hθ hx
+    exact ⟨a, b, hab⟩
+
 end Algebra.IsQuadraticExtension
 
 end

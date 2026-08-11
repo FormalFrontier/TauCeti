@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.NumberTheory.NumberField.Quadratic.Basic
-public import TauCeti.RingTheory.Norm.Quadratic
+import TauCeti.RingTheory.Norm.Quadratic
 
 /-!
 # The field norm on a quadratic number field

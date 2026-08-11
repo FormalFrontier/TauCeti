@@ -9,7 +9,7 @@ public import Mathlib.FieldTheory.Minpoly.IsIntegrallyClosed
 public import Mathlib.RingTheory.Discriminant
 public import Mathlib.LinearAlgebra.Matrix.Notation
 public import TauCeti.FieldTheory.Trace
-public import TauCeti.LinearAlgebra.Dimension.IsQuadraticExtension
+import TauCeti.LinearAlgebra.Dimension.IsQuadraticExtension
 
 /-!
 # Basics for quadratic number fields
@@ -100,13 +100,8 @@ theorem exists_eq_add_mul_gen (hmin : minpoly ℤ θ = X ^ 2 - C d)
     (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) (x : K) :
     ∃ a b : ℚ, x = algebraMap ℚ K b + algebraMap ℚ K a * (θ : K) := by
   have : Algebra.IsQuadraticExtension ℚ K := ⟨finrank_rat_eq_two hmin hgen⟩
-  by_cases hx : x ∈ Set.range (algebraMap ℚ K)
-  · obtain ⟨b, hb⟩ := hx
-    exact ⟨0, b, by rw [← hb]; simp⟩
-  · obtain ⟨a, b, _, hab⟩ :=
-      Algebra.IsQuadraticExtension.exists_eq_algebraMap_add_algebraMap_mul ℚ K
-        (gen_notMem_range hmin) hx
-    exact ⟨a, b, hab⟩
+  exact Algebra.IsQuadraticExtension.exists_eq_algebraMap_add_algebraMap_mul' ℚ K
+    (gen_notMem_range hmin) x
 
 /-- **The radicand of a quadratic presentation is not a rational square.** Were `d = q²`, the
 factorization `(θ - q)(θ + q) = θ² - d = 0` would force `θ = ±q ∈ ℚ`. -/
