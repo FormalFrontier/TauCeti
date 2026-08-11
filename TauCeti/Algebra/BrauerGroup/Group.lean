@@ -65,7 +65,8 @@ stated in the universe-polymorphic form.
   Brauer trivial; with `TauCeti.BrauerGroup.mk_eq_one_of_isSplittingField` and
   `TauCeti.BrauerGroup.mk_end` as the two standard sources of identity classes.
 * `TauCeti.BrauerGroup.orderOf_mk_dvd_two`: an algebra Brauer equivalent to its own opposite has a
-  class of order dividing `2`. The real quaternions are the worked example in
+  class of order dividing `2`, with `TauCeti.BrauerGroup.orderOf_mk_eq_two` the sharp form for a
+  class that is not the identity. The real quaternions are the worked example in
   `TauCeti/Algebra/BrauerGroup/Quaternion.lean`.
 
 ## What is not proved here
@@ -73,8 +74,9 @@ stated in the universe-polymorphic form.
 The converse of `TauCeti.BrauerGroup.mk_eq_one_of_isSplittingField` -- that an algebra whose class
 is the identity is split by `K` -- needs the uniqueness of the Wedderburn data, which sits above
 this file in the import order; it is `TauCeti.BrauerGroup.mk_eq_one_iff_isSplittingField`, in
-`TauCeti/Algebra/BrauerGroup/Splitting.lean`, and it is what sharpens the divisibility
-`orderOf (mk (CSA.of ℝ ℍ[ℝ])) ∣ 2` proved here to the equality `= 2`. The functoriality of
+`TauCeti/Algebra/BrauerGroup/Splitting.lean`. It is also what supplies, in an example such as
+`ℍ[ℝ]`, the nonidentity hypothesis that `TauCeti.BrauerGroup.orderOf_mk_eq_two` needs to sharpen
+the divisibility `orderOf (mk (CSA.of ℝ ℍ[ℝ])) ∣ 2` to the equality `= 2`. The functoriality of
 `BrauerGroup` under base change, and splitting fields as the kernel of that homomorphism, are the
 next steps and are not taken here either.
 
@@ -226,7 +228,7 @@ theorem mk_end (V : Type u) [AddCommGroup V] [Module K V] [FiniteDimensional K V
     mk (CSA.of K (Module.End K V)) = 1 :=
   mk_eq_one_iff.2 (isBrauerTrivial_end K V)
 
-/-! ### Classes of order dividing two -/
+/-! ### Classes of order two -/
 
 /-- **An algebra Brauer equivalent to its own opposite has a self-inverse Brauer class.** -/
 theorem inv_mk_eq_mk_of_isBrauerEquivalent_op {A : CSA.{u, u} K}
@@ -244,8 +246,9 @@ theorem inv_mk_eq_mk_of_algEquiv_op {A : CSA.{u, u} K} (e : (A : Type u) ≃ₐ[
 
 /-- **An algebra Brauer equivalent to its own opposite has a class of order dividing `2`.**
 
-The order is exactly `2` unless the class is the identity, that is, unless `A` is Brauer trivial;
-ruling that out is a separate matter, discussed in the module docstring. -/
+The order is exactly `2` unless the class is the identity, that is, unless `A` is Brauer trivial
+(`TauCeti.BrauerGroup.orderOf_mk_eq_two`); ruling that out is a separate matter, discussed in the
+module docstring. -/
 theorem orderOf_mk_dvd_two {A : CSA.{u, u} K} (h : IsBrauerEquivalent A (CSA.op A)) :
     orderOf (mk A) ∣ 2 :=
   orderOf_dvd_of_pow_eq_one <| by
@@ -256,6 +259,20 @@ theorem orderOf_mk_dvd_two {A : CSA.{u, u} K} (h : IsBrauerEquivalent A (CSA.op 
 theorem orderOf_mk_dvd_two_of_algEquiv_op {A : CSA.{u, u} K}
     (e : (A : Type u) ≃ₐ[K] (A : Type u)ᵐᵒᵖ) : orderOf (mk A) ∣ 2 :=
   orderOf_mk_dvd_two (IsBrauerEquivalent.of_algEquiv K e)
+
+/-- **A self-opposite Brauer class other than the identity has order exactly `2`.**
+
+`TauCeti.BrauerGroup.orderOf_mk_dvd_two` bounds the order by `2`, and `2` is prime, so this is
+Mathlib's `orderOf_eq_prime`. -/
+theorem orderOf_mk_eq_two {A : CSA.{u, u} K} (h : IsBrauerEquivalent A (CSA.op A))
+    (h1 : mk A ≠ 1) : orderOf (mk A) = 2 :=
+  orderOf_eq_prime (orderOf_dvd_iff_pow_eq_one.1 (orderOf_mk_dvd_two h)) h1
+
+/-- **An algebra isomorphic to its own opposite, but not split, has a class of order exactly
+`2`.** -/
+theorem orderOf_mk_eq_two_of_algEquiv_op {A : CSA.{u, u} K}
+    (e : (A : Type u) ≃ₐ[K] (A : Type u)ᵐᵒᵖ) (h1 : mk A ≠ 1) : orderOf (mk A) = 2 :=
+  orderOf_mk_eq_two (IsBrauerEquivalent.of_algEquiv K e) h1
 
 end BrauerGroup
 

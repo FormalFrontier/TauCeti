@@ -5,11 +5,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 -- `TauCeti.Algebra.BrauerGroup.Splitting` is imported publicly: `TauCeti.BrauerGroup.mk` and
--- `TauCeti.CSA.of` occur in the statements below, and it supplies the two facts that turn the
--- divisibility `orderOf ∣ 2` into an equality --
--- `TauCeti.BrauerGroup.mk_eq_one_iff_finrank_eq_one`, which makes the class of `ℍ[ℝ]` nonidentity,
--- and `TauCeti.BrauerGroup.orderOf_mk_eq_two_of_algEquiv_op`. It re-exports the whole Brauer-group
--- stack, hence `CSA`, `BrauerGroup` and `TauCeti.Algebra.IsSplittingField`.
+-- `TauCeti.CSA.of` occur in the statements below, and it supplies
+-- `TauCeti.BrauerGroup.mk_eq_one_iff_finrank_eq_one`, which makes the class of `ℍ[ℝ]` nonidentity
+-- and so turns the divisibility `orderOf ∣ 2` into an equality. It re-exports the whole
+-- Brauer-group stack, hence `CSA`, `BrauerGroup`,
+-- `TauCeti.BrauerGroup.orderOf_mk_eq_two_of_algEquiv_op` and `TauCeti.Algebra.IsSplittingField`.
 public import TauCeti.Algebra.BrauerGroup.Splitting
 -- `TauCeti.Algebra.CentralSimple.Quaternion` is imported publicly because `ℍ[ℝ]` occurs in every
 -- statement below; it re-exports `Mathlib.Algebra.Quaternion`, hence the `ℍ[·]` notation and

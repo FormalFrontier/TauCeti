@@ -5,8 +5,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 -- `TauCeti.Algebra.BrauerGroup.Group` is imported publicly: `TauCeti.BrauerGroup.mk` and the group
--- structure occur in the statements below, and `TauCeti.BrauerGroup.mk_eq_one_iff` together with
--- `TauCeti.BrauerGroup.orderOf_mk_dvd_two` are what the corollaries run on. It re-exports
+-- structure occur in the statements below, and `TauCeti.BrauerGroup.mk_eq_one_iff` is what the
+-- corollaries run on. It re-exports
 -- `TauCeti.Algebra.BrauerGroup.Trivial`, hence `TauCeti.IsBrauerTrivial` and the splitting-side
 -- implication `TauCeti.isBrauerTrivial_of_isSplittingField` this file converses, and with it `CSA`,
 -- `IsBrauerEquivalent`, `BrauerGroup`, `TauCeti.CSA.of`, `TauCeti.CSA.base` and
@@ -23,9 +23,6 @@ public import TauCeti.Algebra.CentralSimple.Wedderburn
 -- the invariance of the size of a matrix presentation, are the engine of the proofs and are
 -- mentioned by no exported statement.
 import TauCeti.RingTheory.Semisimple.MatrixDivisionRing
--- Non-public: `orderOf` supports the order results at the end of the file, exactly as in
--- `TauCeti/Algebra/BrauerGroup/Group.lean`.
-import Mathlib.GroupTheory.OrderOfElement
 
 /-!
 # A Brauer-trivial algebra is split
@@ -45,11 +42,11 @@ matrix ring over a division ring in two ways, of sizes `p * r` over `D` and `q` 
 `p² · dim_K A = q² = p² r²`, so `dim_K A = r²`, and the Wedderburn dimension count
 `dim_K A = r² · dim_K D` collapses `D` to `K`. Hence `A ≃ₐ[K] M_r(K)` already.
 
-Two consequences follow. A **central division algebra** has the identity Brauer class only if it
-*is* the base field, since a division ring is a matrix ring only in size one (its regular module has
-length one); this is the base case of the statement that each Brauer class has a unique
-division-algebra representative. And an algebra isomorphic to its own opposite whose class is not
-the identity has a class of order **exactly** `2`, sharpening
+A consequence follows for division algebras: a **central division algebra** has the identity Brauer
+class only if it *is* the base field, since a division ring is a matrix ring only in size one (its
+regular module has length one). This is the base case of the statement that each Brauer class has a
+unique division-algebra representative, and it is the standard source of *nonidentity* classes,
+hence of the hypothesis that `TauCeti.BrauerGroup.orderOf_mk_eq_two` needs to sharpen
 `TauCeti.BrauerGroup.orderOf_mk_dvd_two`; the real quaternions are the worked example, in
 `TauCeti/Algebra/BrauerGroup/Quaternion.lean`.
 
@@ -61,9 +58,8 @@ the identity has a class of order **exactly** `2`, sharpening
   `TauCeti.BrauerGroup.mk_eq_one_iff_isSplittingField`.
 * `TauCeti.isBrauerTrivial_iff_finrank_eq_one`: **a central division algebra is Brauer trivial
   exactly when it is the base field**, with `TauCeti.baseFieldAlgEquivOfIsBrauerTrivial` the
-  isomorphism this produces.
-* `TauCeti.BrauerGroup.orderOf_mk_eq_two`: **a self-opposite class other than the identity has
-  order exactly `2`.**
+  isomorphism this produces and `TauCeti.BrauerGroup.mk_eq_one_iff_finrank_eq_one` the form for
+  classes.
 
 ## Implementation notes
 
@@ -205,29 +201,5 @@ theorem BrauerGroup.mk_eq_one_iff_finrank_eq_one :
   BrauerGroup.mk_eq_one_iff.trans (isBrauerTrivial_iff_finrank_eq_one K D)
 
 end DivisionRing
-
-/-! ### Classes of order two -/
-
-namespace BrauerGroup
-
-variable {K : Type u} [Field K]
-
-/-- **A self-opposite Brauer class other than the identity has order exactly `2`.**
-
-`TauCeti.BrauerGroup.orderOf_mk_dvd_two` bounds the order by `2`; since `2` is prime the only other
-possibility is order `1`, which is the identity class. -/
-theorem orderOf_mk_eq_two {A : CSA.{u, u} K} (h : IsBrauerEquivalent A (CSA.op A))
-    (h1 : mk A ≠ 1) : orderOf (mk A) = 2 := by
-  rcases (Nat.prime_two.eq_one_or_self_of_dvd _ (orderOf_mk_dvd_two h)) with h2 | h2
-  · exact absurd (orderOf_eq_one_iff.1 h2) h1
-  · exact h2
-
-/-- **An algebra isomorphic to its own opposite, but not split, has a class of order exactly
-`2`.** -/
-theorem orderOf_mk_eq_two_of_algEquiv_op {A : CSA.{u, u} K}
-    (e : (A : Type u) ≃ₐ[K] (A : Type u)ᵐᵒᵖ) (h1 : mk A ≠ 1) : orderOf (mk A) = 2 :=
-  orderOf_mk_eq_two (IsBrauerEquivalent.of_algEquiv K e) h1
-
-end BrauerGroup
 
 end TauCeti
