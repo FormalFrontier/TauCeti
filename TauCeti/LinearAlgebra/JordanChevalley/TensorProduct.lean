@@ -8,7 +8,6 @@ public import TauCeti.LinearAlgebra.End.TensorProduct
 public import TauCeti.LinearAlgebra.GeneralLinearGroup.TensorProduct
 public import TauCeti.LinearAlgebra.JordanChevalley.Multiplicative
 public import Mathlib.RingTheory.TensorProduct.Finite
-import Mathlib.Tactic.NoncommRing
 
 /-!
 # Tensor products of multiplicative Jordan decompositions
@@ -58,22 +57,9 @@ variable [PerfectField K] [FiniteDimensional K V] [FiniteDimensional K W]
 theorem IsSemisimple.tensorProduct {g : GeneralLinearGroup K V}
     {h : GeneralLinearGroup K W} (hg : IsSemisimple g) (hh : IsSemisimple h) :
     IsSemisimple (tensorProduct g h) := by
-  rw [isSemisimple_def, coe_tensorProduct]
-  rw [← LinearMap.lTensor_comp_rTensor]
-  have hl : Module.End.IsSemisimple ((h : Module.End K W).lTensor V) :=
-    Module.End.IsSemisimple.lTensor (K := K) (V := V) (W := W)
-      ((isSemisimple_def h).mp hh)
-  have hr : Module.End.IsSemisimple ((g : Module.End K V).rTensor W) :=
-    Module.End.IsSemisimple.rTensor (K := K) (V := V) (W := W)
-      ((isSemisimple_def g).mp hg)
-  have hcomm : Commute ((h : Module.End K W).lTensor V)
-      ((g : Module.End K V).rTensor W) := by
-    rw [Commute]
-    exact (LinearMap.lTensor_comp_rTensor V (g : Module.End K V)
-      (h : Module.End K W)).trans
-        (LinearMap.rTensor_comp_lTensor V (g : Module.End K V)
-          (h : Module.End K W)).symm
-  exact Module.End.IsSemisimple.mul_of_commute hcomm hl hr
+  rw [isSemisimple_def] at hg hh ⊢
+  rw [coe_tensorProduct]
+  exact Module.End.IsSemisimple.tensorProduct hg hh
 
 end Semisimple
 
@@ -85,52 +71,9 @@ variable [CommRing K] [AddCommGroup V] [Module K V] [AddCommGroup W] [Module K W
 theorem IsUnipotent.tensorProduct {g : GeneralLinearGroup K V}
     {h : GeneralLinearGroup K W} (hg : IsUnipotent g) (hh : IsUnipotent h) :
     IsUnipotent (tensorProduct g h) := by
-  rw [isUnipotent_def, coe_tensorProduct]
-  let n : Module.End K (V ⊗[K] W) :=
-    (g : Module.End K V).rTensor W - 1
-  let m : Module.End K (V ⊗[K] W) :=
-    (h : Module.End K W).lTensor V - 1
-  have hn : _root_.IsNilpotent n := by
-    have hn' := ((isUnipotent_def g).mp hg).map (Module.End.rTensorAlgHom K V W)
-    -- Expose the algebra homomorphism as one-sided tensoring before normalizing subtraction.
-    change _root_.IsNilpotent (((g : Module.End K V) - 1).rTensor W) at hn'
-    rw [LinearMap.rTensor_sub] at hn'
-    change _root_.IsNilpotent ((g : Module.End K V).rTensor W -
-      (LinearMap.id : Module.End K V).rTensor W) at hn'
-    rw [LinearMap.rTensor_id] at hn'
-    exact hn'
-  have hm : _root_.IsNilpotent m := by
-    have hm' := ((isUnipotent_def h).mp hh).map (Module.End.lTensorAlgHom K W V)
-    -- Expose the algebra homomorphism as one-sided tensoring before normalizing subtraction.
-    change _root_.IsNilpotent (((h : Module.End K W) - 1).lTensor V) at hm'
-    rw [LinearMap.lTensor_sub] at hm'
-    change _root_.IsNilpotent ((h : Module.End K W).lTensor V -
-      (LinearMap.id : Module.End K W).lTensor V) at hm'
-    rw [LinearMap.lTensor_id] at hm'
-    exact hm'
-  have hab : Commute ((g : Module.End K V).rTensor W)
-      ((h : Module.End K W).lTensor V) := by
-    rw [Commute]
-    exact (LinearMap.rTensor_comp_lTensor V (g : Module.End K V)
-      (h : Module.End K W)).trans
-        (LinearMap.lTensor_comp_rTensor V (g : Module.End K V)
-          (h : Module.End K W)).symm
-  have hnm : Commute n m := by
-    dsimp only [n, m]
-    exact (hab.sub_right (Commute.one_right _)).sub_left (Commute.one_left _)
-  have hmul : _root_.IsNilpotent (n * m) := hnm.isNilpotent_mul_left hm
-  have hn_mul : Commute n (n * m) := (Commute.refl n).mul_right hnm
-  have hm_mul : Commute m (n * m) := hnm.symm.mul_right (Commute.refl m)
-  have hmap : TensorProduct.map (g : Module.End K V) (h : Module.End K W) - 1 =
-      n + m + n * m := by
-    rw [← LinearMap.lTensor_comp_rTensor]
-    -- Ring multiplication of endomorphisms is composition; expose it for `noncomm_ring`.
-    change (h : Module.End K W).lTensor V * (g : Module.End K V).rTensor W - 1 = _
-    dsimp only [n, m]
-    noncomm_ring [hab.eq]
-  rw [hmap]
-  exact Commute.isNilpotent_add (hn_mul.add_left hm_mul)
-    (Commute.isNilpotent_add hnm hn hm) hmul
+  rw [isUnipotent_def] at hg hh ⊢
+  rw [coe_tensorProduct]
+  exact Module.End.isNilpotent_map_sub_one hg hh
 
 end CommRing
 

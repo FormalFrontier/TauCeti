@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.LinearAlgebra.GeneralLinearGroup.Basic
-public import Mathlib.RingTheory.TensorProduct.Maps
+public import Mathlib.LinearAlgebra.TensorProduct.Map
 
 /-!
 # Tensor products in the general linear group
@@ -61,11 +61,7 @@ theorem tensorProduct_mul (g₁ g₂ : GeneralLinearGroup K V)
     tensorProduct (g₁ * g₂) (h₁ * h₂) =
       tensorProduct g₁ h₁ * tensorProduct g₂ h₂ := by
   apply Units.ext
-  -- Reduce equality of units to Mathlib's multiplicativity of `TensorProduct.map`.
-  change TensorProduct.map (↑(g₁ * g₂)) (↑(h₁ * h₂)) =
-    TensorProduct.map (g₁ : Module.End K V) (h₁ : Module.End K W) *
-      TensorProduct.map (g₂ : Module.End K V) (h₂ : Module.End K W)
-  simpa only [Units.val_mul] using TensorProduct.map_mul
+  simpa only [Units.val_mul, coe_tensorProduct] using TensorProduct.map_mul
     (g₁ : Module.End K V) (g₂ : Module.End K V)
     (h₁ : Module.End K W) (h₂ : Module.End K W)
 
@@ -74,9 +70,9 @@ theorem tensorProduct_mul (g₁ g₂ : GeneralLinearGroup K V)
 theorem tensorProduct_one :
     tensorProduct (1 : GeneralLinearGroup K V) (1 : GeneralLinearGroup K W) = 1 := by
   apply Units.ext
-  -- Reduce equality of units to Mathlib's identity law for `TensorProduct.map`.
-  change TensorProduct.map (1 : Module.End K V) (1 : Module.End K W) = 1
-  exact TensorProduct.map_one
+  simpa only [Units.val_one, coe_tensorProduct] using
+    (TensorProduct.map_one : TensorProduct.map (1 : Module.End K V)
+      (1 : Module.End K W) = 1)
 
 /-- Tensor products preserve inverses. -/
 @[simp]
