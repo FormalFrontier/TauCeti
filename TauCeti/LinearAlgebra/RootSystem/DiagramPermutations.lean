@@ -1,0 +1,213 @@
+/-
+Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+-/
+module
+
+public import TauCeti.LinearAlgebra.RootSystem.RootLength
+
+/-!
+# Numbered diagram permutations for the finite groups of Lie type
+
+This file pins the permutations of Bourbaki-numbered simple roots used by the graph automorphisms
+and exceptional isogenies in the construction of finite groups of Lie type.  Bourbaki node `i` is
+represented by `Fin` index `i - 1`, as in `TauCeti.DynkinType.cartanMatrix`.
+
+The ordinary graph automorphisms preserve the relevant Cartan matrix.  The Suzuki--Ree
+permutations instead exchange long and short nodes; the corresponding special isogenies attach
+different field exponents to the two root lengths.
+
+The conventions follow Bourbaki, *Lie Groups and Lie Algebras, Chapters 4--6*, plates I--IX, and
+the `CFSGStatement` roadmap's conventions for Steinberg endomorphisms.
+
+## Main definitions
+
+* `TauCeti.graphPermA`: reversal of the `Aₙ` chain.
+* `TauCeti.graphPermD`: exchange of the final two indices, giving the fork symmetry of `Dₙ` for
+  `4 ≤ n`.
+* `TauCeti.graphPermE6`: the order-two symmetry of `E₆`.
+* `TauCeti.trialityPermD4`: the order-three triality symmetry of `D₄`.
+* `TauCeti.lengthPermRankTwo`: the length-exchanging permutation for `B₂` and `G₂`.
+* `TauCeti.lengthPermF4`: the length-exchanging permutation for `F₄`.
+-/
+
+public section
+
+namespace TauCeti
+
+/-- The `Aₙ` diagram automorphism, reversing its chain of Bourbaki-numbered nodes. -/
+def graphPermA (n : ℕ) : Equiv.Perm (Fin n) :=
+  Fin.revPerm
+
+/-- The permutation exchanging the final two indices of `Fin n`. For `4 ≤ n`, this is the `Dₙ`
+diagram automorphism exchanging its two fork nodes and fixing the chain. -/
+def graphPermD (n : ℕ) (hn : 2 ≤ n) : Equiv.Perm (Fin n) :=
+  Equiv.swap ⟨n - 2, by omega⟩ ⟨n - 1, by omega⟩
+
+/-- The `E₆` diagram automorphism, exchanging Bourbaki nodes `1 ↔ 6` and `3 ↔ 5`. -/
+def graphPermE6 : Equiv.Perm (Fin 6) :=
+  Equiv.swap 0 5 * Equiv.swap 2 4
+
+/-- Triality of `D₄`, cycling its three outer nodes `(0 2 3)` and fixing the central node `1`. -/
+def trialityPermD4 : Equiv.Perm (Fin 4) :=
+  Equiv.swap 0 3 * Equiv.swap 0 2
+
+/-- The length-exchanging permutation of the two nodes of `B₂` and `G₂`. -/
+def lengthPermRankTwo : Equiv.Perm (Fin 2) :=
+  Equiv.swap 0 1
+
+/-- The length-exchanging permutation of `F₄`, reversing its four-node diagram. -/
+def lengthPermF4 : Equiv.Perm (Fin 4) :=
+  graphPermA 4
+
+/-- Reversing the `Aₙ` chain twice is the identity. -/
+@[simp] theorem graphPermA_sq (n : ℕ) : graphPermA n ^ 2 = 1 := by
+  ext i
+  simp [graphPermA, pow_two, Equiv.Perm.mul_apply]
+
+/-- The final-index swap sends index `n - 2` to index `n - 1`; for `4 ≤ n`, these are the two
+`Dₙ` fork nodes. -/
+@[simp] lemma graphPermD_apply_left (n : ℕ) (hn : 2 ≤ n) :
+    graphPermD n hn ⟨n - 2, by omega⟩ = ⟨n - 1, by omega⟩ := by
+  simp [graphPermD]
+
+/-- The final-index swap sends index `n - 1` to index `n - 2`; for `4 ≤ n`, these are the two
+`Dₙ` fork nodes. -/
+@[simp] lemma graphPermD_apply_right (n : ℕ) (hn : 2 ≤ n) :
+    graphPermD n hn ⟨n - 1, by omega⟩ = ⟨n - 2, by omega⟩ := by
+  simp [graphPermD]
+
+/-- The final-index swap fixes every index except `n - 2` and `n - 1`; for `4 ≤ n`, these are the
+two `Dₙ` fork nodes. -/
+@[simp] lemma graphPermD_apply_of_ne_of_ne (n : ℕ) (hn : 2 ≤ n) (i : Fin n)
+    (hi : (i : ℕ) ≠ n - 2) (hi' : (i : ℕ) ≠ n - 1) : graphPermD n hn i = i := by
+  apply Equiv.swap_apply_of_ne_of_ne <;> simpa [Fin.ext_iff]
+
+/-- The final-index swap is its own inverse. -/
+@[simp] lemma graphPermD_symm (n : ℕ) (hn : 2 ≤ n) :
+    (graphPermD n hn).symm = graphPermD n hn := by
+  simp [graphPermD]
+
+/-- Swapping the final two indices twice is the identity. -/
+@[simp] theorem graphPermD_sq (n : ℕ) (hn : 2 ≤ n) : graphPermD n hn ^ 2 = 1 := by
+  simp [graphPermD, pow_two]
+
+/-- The `E₆` graph permutation sends node `0` to node `5`. -/
+@[simp] lemma graphPermE6_apply_zero : graphPermE6 0 = 5 := by decide
+/-- The `E₆` graph permutation fixes node `1`. -/
+@[simp] lemma graphPermE6_apply_one : graphPermE6 1 = 1 := by decide
+/-- The `E₆` graph permutation sends node `2` to node `4`. -/
+@[simp] lemma graphPermE6_apply_two : graphPermE6 2 = 4 := by decide
+/-- The `E₆` graph permutation fixes node `3`. -/
+@[simp] lemma graphPermE6_apply_three : graphPermE6 3 = 3 := by decide
+/-- The `E₆` graph permutation sends node `4` to node `2`. -/
+@[simp] lemma graphPermE6_apply_four : graphPermE6 4 = 2 := by decide
+/-- The `E₆` graph permutation sends node `5` to node `0`. -/
+@[simp] lemma graphPermE6_apply_five : graphPermE6 5 = 0 := by decide
+
+/-- Applying the `E₆` graph permutation twice is the identity. -/
+@[simp] theorem graphPermE6_sq : graphPermE6 ^ 2 = 1 := by decide
+
+/-- Triality sends outer node `0` to outer node `2`. -/
+@[simp] lemma trialityPermD4_apply_zero : trialityPermD4 0 = 2 := by decide
+/-- Triality fixes the central node `1`. -/
+@[simp] lemma trialityPermD4_apply_one : trialityPermD4 1 = 1 := by decide
+/-- Triality sends outer node `2` to outer node `3`. -/
+@[simp] lemma trialityPermD4_apply_two : trialityPermD4 2 = 3 := by decide
+/-- Triality sends outer node `3` to outer node `0`. -/
+@[simp] lemma trialityPermD4_apply_three : trialityPermD4 3 = 0 := by decide
+
+/-- Applying triality three times is the identity. -/
+@[simp] theorem trialityPermD4_pow_three : trialityPermD4 ^ 3 = 1 := by decide
+
+/-- The rank-two length permutation sends node `0` to node `1`. -/
+@[simp] lemma lengthPermRankTwo_apply_zero : lengthPermRankTwo 0 = 1 := by decide
+/-- The rank-two length permutation sends node `1` to node `0`. -/
+@[simp] lemma lengthPermRankTwo_apply_one : lengthPermRankTwo 1 = 0 := by decide
+
+/-- Exchanging the two rank-two nodes twice is the identity. -/
+@[simp] theorem lengthPermRankTwo_sq : lengthPermRankTwo ^ 2 = 1 := by decide
+
+/-- Reversal is an automorphism of the type-`A` Cartan matrix. -/
+@[simp] theorem cartanMatrix_A_graphPermA (n : ℕ) (i j : Fin n) :
+    (DynkinType.A n).cartanMatrix (graphPermA n i) (graphPermA n j) =
+      (DynkinType.A n).cartanMatrix i j := by
+  simp only [DynkinType.cartanMatrix_A, CartanMatrix.A, Matrix.of_apply, graphPermA,
+    Fin.revPerm_apply, Fin.ext_iff, Fin.val_rev]
+  split_ifs <;> omega
+
+-- Every defining condition of `CartanMatrix.D n` is invariant under exchanging the two fork
+-- indices, hence so is the whole `if`-chain; `key` records that exchange on index values.
+private lemma cartanMatrix_D_swap_fork (n : ℕ) (hn : 4 ≤ n) (a b : Fin n) (ha : (a : ℕ) = n - 2)
+    (hb : (b : ℕ) = n - 1) (i j : Fin n) :
+    CartanMatrix.D n (Equiv.swap a b i) (Equiv.swap a b j) = CartanMatrix.D n i j := by
+  have key : ∀ k : Fin n,
+      ((Equiv.swap a b k : Fin n) : ℕ) = n - 1 ∧ (k : ℕ) = n - 2 ∨
+      ((Equiv.swap a b k : Fin n) : ℕ) = n - 2 ∧ (k : ℕ) = n - 1 ∨
+      ((Equiv.swap a b k : Fin n) : ℕ) = (k : ℕ) ∧ (k : ℕ) ≠ n - 2 ∧ (k : ℕ) ≠ n - 1 := by
+    intro k
+    rcases eq_or_ne k a with rfl | hka
+    · exact Or.inl ⟨by rw [Equiv.swap_apply_left, hb], ha⟩
+    · rcases eq_or_ne k b with rfl | hkb
+      · exact Or.inr (Or.inl ⟨by rw [Equiv.swap_apply_right, ha], hb⟩)
+      · exact Or.inr (Or.inr ⟨by rw [Equiv.swap_apply_of_ne_of_ne hka hkb],
+          fun h => hka (Fin.ext (ha ▸ h)), fun h => hkb (Fin.ext (hb ▸ h))⟩)
+  have hx := key i
+  have hy := key j
+  have hi := i.isLt
+  have hj := j.isLt
+  have e1 : ((Equiv.swap a b i : Fin n) : ℕ) = ((Equiv.swap a b j : Fin n) : ℕ) ↔
+      (i : ℕ) = (j : ℕ) := by omega
+  have e2 : ((Equiv.swap a b i : Fin n) : ℕ) + 1 = ((Equiv.swap a b j : Fin n) : ℕ) ∧
+      ((Equiv.swap a b j : Fin n) : ℕ) + 2 < n ↔ (i : ℕ) + 1 = (j : ℕ) ∧ (j : ℕ) + 2 < n := by
+    omega
+  have e3 : ((Equiv.swap a b j : Fin n) : ℕ) + 1 = ((Equiv.swap a b i : Fin n) : ℕ) ∧
+      ((Equiv.swap a b i : Fin n) : ℕ) + 2 < n ↔ (j : ℕ) + 1 = (i : ℕ) ∧ (i : ℕ) + 2 < n := by
+    omega
+  have e4 : ((Equiv.swap a b i : Fin n) : ℕ) + 3 = n ∧
+      (((Equiv.swap a b j : Fin n) : ℕ) + 2 = n ∨ ((Equiv.swap a b j : Fin n) : ℕ) + 1 = n) ↔
+      (i : ℕ) + 3 = n ∧ ((j : ℕ) + 2 = n ∨ (j : ℕ) + 1 = n) := by omega
+  have e5 : ((Equiv.swap a b j : Fin n) : ℕ) + 3 = n ∧
+      (((Equiv.swap a b i : Fin n) : ℕ) + 2 = n ∨ ((Equiv.swap a b i : Fin n) : ℕ) + 1 = n) ↔
+      (j : ℕ) + 3 = n ∧ ((i : ℕ) + 2 = n ∨ (i : ℕ) + 1 = n) := by omega
+  simp only [CartanMatrix.D, Matrix.of_apply, Fin.ext_iff, e1, e2, e3, e4, e5]
+
+/-- Swapping the fork nodes is an automorphism of the type-`D` Cartan matrix. -/
+@[simp] theorem cartanMatrix_D_graphPermD (n : ℕ) (hn : 4 ≤ n) (i j : Fin n) :
+    (DynkinType.D n).cartanMatrix (graphPermD n (by omega) i) (graphPermD n (by omega) j) =
+      (DynkinType.D n).cartanMatrix i j := by
+  simp only [DynkinType.cartanMatrix_D, graphPermD]
+  exact cartanMatrix_D_swap_fork n hn _ _ rfl rfl i j
+
+/-- The pinned order-two permutation is an automorphism of the type-`E₆` Cartan matrix. -/
+@[simp] theorem cartanMatrix_E6_graphPermE6 (i j : Fin 6) :
+    DynkinType.E6.cartanMatrix (graphPermE6 i) (graphPermE6 j) =
+      DynkinType.E6.cartanMatrix i j := by
+  fin_cases i <;> fin_cases j <;> simp [DynkinType.cartanMatrix_E6, CartanMatrix.E₆]
+
+/-- The pinned triality permutation is an automorphism of the type-`D₄` Cartan matrix. -/
+@[simp] theorem cartanMatrix_D4_trialityPermD4 (i j : Fin 4) :
+    (DynkinType.D 4).cartanMatrix (trialityPermD4 i) (trialityPermD4 j) =
+      (DynkinType.D 4).cartanMatrix i j := by
+  fin_cases i <;> fin_cases j <;>
+    simp [DynkinType.cartanMatrix_D, CartanMatrix.D]
+
+/-- The rank-two permutation exchanges the long and short nodes of `B₂`. -/
+@[simp] theorem isLongSimpleRoot_lengthPermRankTwo_iff_not_isLongSimpleRoot_B2 (i : Fin 2) :
+    (DynkinType.B 2).IsLongSimpleRoot (lengthPermRankTwo i) ↔
+      ¬ (DynkinType.B 2).IsLongSimpleRoot i := by
+  fin_cases i <;> simp [DynkinType.isLongSimpleRoot_B, lengthPermRankTwo]
+
+/-- The rank-two permutation exchanges the long and short nodes of `G₂`. -/
+@[simp] theorem isLongSimpleRoot_lengthPermRankTwo_iff_not_isLongSimpleRoot_G2 (i : Fin 2) :
+    DynkinType.G2.IsLongSimpleRoot (lengthPermRankTwo i) ↔
+      ¬ DynkinType.G2.IsLongSimpleRoot i := by
+  fin_cases i <;> simp [DynkinType.isLongSimpleRoot_G2, lengthPermRankTwo]
+
+/-- Diagram reversal exchanges the long and short nodes of `F₄`. -/
+@[simp] theorem isLongSimpleRoot_lengthPermF4_iff_not_isLongSimpleRoot_F4 (i : Fin 4) :
+    DynkinType.F4.IsLongSimpleRoot (lengthPermF4 i) ↔
+      ¬ DynkinType.F4.IsLongSimpleRoot i := by
+  fin_cases i <;> simp [DynkinType.isLongSimpleRoot_F4, lengthPermF4, graphPermA]
+
+end TauCeti

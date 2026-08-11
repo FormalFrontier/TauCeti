@@ -9,6 +9,7 @@ public import TauCeti.Probability.Exchangeability.ConditionallyIID.Basic
 -- Non-public: the `measurable_probabilityMeasure_toMeasure_apply` lemmas evaluate a random measure
 -- at a fixed measurable set, in the `ℝ≥0∞` and `.toReal` forms.
 import TauCeti.MeasureTheory.Measure.ProbabilityMeasureExt
+import TauCeti.Probability.Process.BlockAverage
 
 /-!
 # Conditional moment identities and the empirical-frequency rate
@@ -205,7 +206,6 @@ private theorem integral_sq_average_sub [IsProbabilityMeasure μ] {e : ℕ → �
     (hn : n ≠ 0) :
     ∫ ω, ((n : ℝ)⁻¹ * (∑ i ∈ Finset.range n, e i ω) - q ω) ^ 2 ∂μ = (n : ℝ)⁻¹ * c := by
   classical
-  have hn' : (n : ℝ) ≠ 0 := Nat.cast_ne_zero.mpr hn
   have hdb : ∀ i ∈ Finset.range n, ∀ ω, |e i ω - q ω| ≤ 2 := by
     intro i hi ω
     have h1 := abs_le.mp (heb i hi ω)
@@ -220,15 +220,9 @@ private theorem integral_sq_average_sub [IsProbabilityMeasure μ] {e : ℕ → �
     rw [Real.norm_eq_abs, abs_mul]
     nlinarith [hdb i hi ω, hdb j hj ω, abs_nonneg (e i ω - q ω),
       abs_nonneg (e j ω - q ω)]
-  have hstep : ∀ ω, ((n : ℝ)⁻¹ * (∑ i ∈ Finset.range n, e i ω) - q ω) ^ 2
-      = (n : ℝ)⁻¹ ^ 2 * ∑ i ∈ Finset.range n, ∑ j ∈ Finset.range n,
-          (e i ω - q ω) * (e j ω - q ω) := by
-    intro ω
-    have h1 : (n : ℝ)⁻¹ * (∑ i ∈ Finset.range n, e i ω) - q ω
-        = (n : ℝ)⁻¹ * ∑ i ∈ Finset.range n, (e i ω - q ω) := by
-      rw [Finset.sum_sub_distrib, Finset.sum_const, Finset.card_range, nsmul_eq_mul]
-      field_simp
-    rw [h1, mul_pow, sq (∑ i ∈ Finset.range n, (e i ω - q ω)), Finset.sum_mul_sum]
+  have hne : (Finset.range n).Nonempty := Finset.nonempty_range_iff.mpr hn
+  have hstep := fun ω => by
+    simpa [Finset.card_range] using average_sub_sq_eq_sum_sum hne (fun i => e i ω) (q ω)
   simp_rw [hstep]
   rw [integral_const_mul,
     integral_finsetSum _ fun i hi => integrable_finsetSum _ fun j hj => hInt i hi j hj]

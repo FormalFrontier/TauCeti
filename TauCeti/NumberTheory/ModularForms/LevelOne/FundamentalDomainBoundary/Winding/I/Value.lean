@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+import TauCeti.NumberTheory.ModularForms.LevelOne.FundamentalDomainBoundary.Containment
 public import TauCeti.Analysis.Contour.Cauchy.PrincipalValue.Basic
 public import TauCeti.Analysis.Contour.Winding.Number.Basic
 public import TauCeti.NumberTheory.ModularForms.LevelOne.FundamentalDomainBoundary.Basic
@@ -54,10 +55,6 @@ namespace ModularForm
 
 
 variable {H δ : ℝ}
-
-/-- The corner row lies strictly below `1`. -/
-private lemma sqrt_three_div_two_lt_one : Real.sqrt 3 / 2 < 1 := by
-  nlinarith [Real.sq_sqrt (by positivity : (3 : ℝ) ≥ 0), Real.sqrt_nonneg 3]
 
 /-- The right-vertical piece `[0, 1]` of the telescope: the shifted contour stays in the
 right half-plane, so the logarithmic integral is a difference of principal logarithms. -/
@@ -496,57 +493,29 @@ private lemma truncated_integral_spec (hH : 1 < H) (hε : 0 < ε) (hε₁ : ε <
     ∫ t in (0 : ℝ)..5, (if ε < ‖fdBoundary H t - Complex.I‖
         then (fdBoundary H t - Complex.I)⁻¹ * deriv (fdBoundary H) t else 0) =
       -(Real.pi : ℂ) * Complex.I - ((2 * Real.arcsin (ε / 2) : ℝ) : ℂ) * Complex.I := by
-  obtain ⟨hδ_pos, hδ_lt, h2sin⟩ := fdBoundaryArcExcisionHalfWidth_spec hε hε₃
+  obtain ⟨hδ_pos, hδ_lt, h2sin⟩ :=
+    fdBoundaryArcExcisionHalfWidth_pos_and_lt_one_and_two_mul_sin_eq hε hε₃
   set δ := fdBoundaryArcExcisionHalfWidth ε with hδ_def
   obtain ⟨hi_left, hi_right, hval⟩ := ftc_logDeriv_telescope_I H hH hδ_pos hδ_lt
-  have hconv : ∀ s : ℝ, (fdBoundary H s - Complex.I)⁻¹ * deriv (fdBoundary H) s =
-      deriv (fun r ↦ fdBoundary H r - Complex.I) s / (fdBoundary H s - Complex.I) :=
-    fun s ↦ by rw [deriv_sub_const, inv_mul_eq_div]
-  have hae_left : ∀ᵐ s ∂volume, s ∈ uIoc (0 : ℝ) (2 - δ) →
-      deriv (fun r ↦ fdBoundary H r - Complex.I) s / (fdBoundary H s - Complex.I) =
-        (if ε < ‖fdBoundary H s - Complex.I‖
-          then (fdBoundary H s - Complex.I)⁻¹ * deriv (fdBoundary H) s else 0) := by
-    have hb_ae : ({2 - δ} : Set ℝ)ᶜ ∈ ae volume := by
-      simp [MeasureTheory.mem_ae_iff]
-    filter_upwards [hb_ae] with s hs_ne hmem
-    rw [uIoc_of_le (by linarith)] at hmem
-    have hsIco : s ∈ Ico (0 : ℝ) (2 - δ) := ⟨hmem.1.le,
-      lt_of_le_of_ne hmem.2 fun h ↦ hs_ne (mem_singleton_iff.mpr h)⟩
-    rw [if_pos (lt_norm_of_far_left hε₁ hδ_pos hδ_lt h2sin hsIco), hconv s]
-  have hae_right : ∀ᵐ s ∂volume, s ∈ uIoc (2 + δ : ℝ) 5 →
-      deriv (fun r ↦ fdBoundary H r - Complex.I) s / (fdBoundary H s - Complex.I) =
-        (if ε < ‖fdBoundary H s - Complex.I‖
-          then (fdBoundary H s - Complex.I)⁻¹ * deriv (fdBoundary H) s else 0) := by
-    refine Eventually.of_forall fun s hmem ↦ ?_
-    rw [uIoc_of_le (by linarith)] at hmem
-    rw [if_pos (lt_norm_of_far_right hε₁ hε₂ hδ_pos hδ_lt h2sin hmem), hconv s]
-  have hmid : EqOn (fun s ↦ if ε < ‖fdBoundary H s - Complex.I‖
-      then (fdBoundary H s - Complex.I)⁻¹ * deriv (fdBoundary H) s else 0)
-      (fun _ ↦ (0 : ℂ)) (uIcc (2 - δ : ℝ) (2 + δ)) := by
-    intro s hs
-    rw [uIcc_of_le (by linarith)] at hs
-    exact if_neg (not_lt.mpr (norm_le_of_near hδ_lt h2sin hs))
+  have hae_left := Contour.ae_logDeriv_sub_eq_truncated (γ := fdBoundary H)
+    (z₀ := Complex.I) (a := (0 : ℝ)) (b := 2 - δ) (by linarith)
+    fun s hs ↦ lt_norm_of_far_left hε₁ hδ_pos hδ_lt h2sin ⟨hs.1.le, hs.2⟩
+  have hae_right := Contour.ae_logDeriv_sub_eq_truncated (γ := fdBoundary H)
+    (z₀ := Complex.I) (a := (2 + δ : ℝ)) (b := 5) (by linarith)
+    fun s hs ↦ lt_norm_of_far_right hε₁ hε₂ hδ_pos hδ_lt h2sin ⟨hs.1, hs.2.le⟩
+  obtain ⟨himid, hmid0⟩ :=
+    Contour.intervalIntegrable_truncated_and_integral_truncated_eq_zero_of_norm_le
+    (γ := fdBoundary H) (z₀ := Complex.I)
+    (Filter.Eventually.of_forall fun s hs ↦ norm_le_of_near hδ_lt h2sin
+      (Set.Ioc_subset_Icc_self
+        (by rwa [Set.uIoc_of_le (by linarith : (2 - δ : ℝ) ≤ 2 + δ)] at hs)))
   have hi02 := hi_left.congr_ae ((ae_restrict_iff' measurableSet_uIoc).mpr hae_left)
   have hi25 := hi_right.congr_ae ((ae_restrict_iff' measurableSet_uIoc).mpr hae_right)
-  have himid : IntervalIntegrable (fun s ↦ if ε < ‖fdBoundary H s - Complex.I‖
-      then (fdBoundary H s - Complex.I)⁻¹ * deriv (fdBoundary H) s else 0)
-      volume (2 - δ) (2 + δ) := by
-    refine (intervalIntegrable_const (c := (0 : ℂ))).congr_ae
-      ((ae_restrict_iff' measurableSet_uIoc).mpr (Eventually.of_forall fun s hs ↦ ?_))
-    rw [uIoc_of_le (by linarith)] at hs
-    have hsub : s ∈ uIcc (2 - δ : ℝ) (2 + δ) := by
-      rw [uIcc_of_le (by linarith : (2 - δ : ℝ) ≤ 2 + δ)]
-      exact Ioc_subset_Icc_self hs
-    exact (hmid hsub).symm
   refine ⟨(hi02.trans himid).trans hi25, ?_⟩
   have hδ6 : δ * (Real.pi / 6) = 2 * Real.arcsin (ε / 2) := by
     simp only [hδ_def, fdBoundaryArcExcisionHalfWidth_def]
     field_simp
     ring
-  have hmid0 : ∫ s in (2 - δ : ℝ)..(2 + δ), (if ε < ‖fdBoundary H s - Complex.I‖
-      then (fdBoundary H s - Complex.I)⁻¹ * deriv (fdBoundary H) s else 0) = 0 := by
-    rw [intervalIntegral.integral_congr hmid]
-    simp
   rw [← intervalIntegral.integral_add_adjacent_intervals (hi02.trans himid) hi25,
     ← intervalIntegral.integral_add_adjacent_intervals hi02 himid,
     hmid0, add_zero,

@@ -178,6 +178,29 @@ theorem integral_norm_eq_one (h : IsMollifier U k) : ∫ g, ‖k g‖ ∂(haarPr
 
 end IsMollifier
 
+omit [CompactSpace G] [MeasurableSpace G] [BorelSpace G] in
+/-- **A symmetric open neighbourhood of the identity carries a symmetric bump.** If `W` is open,
+contains `1`, and is closed under inversion, then some continuous real function is nonnegative,
+invariant under inversion, vanishes off `W`, and is positive at `1`. -/
+private theorem exists_symmetric_bump [LocallyCompactSpace G] {W : Set G} (hWopen : IsOpen W)
+    (hW1 : (1 : G) ∈ W) (hWsymm : ∀ g ∈ W, g⁻¹ ∈ W) :
+    ∃ ψ : C(G, ℝ), (∀ g, 0 ≤ ψ g) ∧ (∀ g, ψ g⁻¹ = ψ g) ∧ (∀ g ∉ W, ψ g = 0) ∧ 0 < ψ 1 := by
+  obtain ⟨φ, hφ1, hφ0, -, hφIcc⟩ :=
+    exists_continuous_one_zero_of_isCompact (X := G) isCompact_singleton hWopen.isClosed_compl
+      (disjoint_compl_right_iff_subset.2 (singleton_subset_iff.2 hW1))
+  -- symmetrize the Urysohn bump by adding its composition with inversion
+  refine ⟨φ + φ.comp ⟨Inv.inv, continuous_inv⟩, fun g => ?_, fun g => ?_, fun g hg => ?_, ?_⟩
+  · simpa only [ContinuousMap.add_apply, ContinuousMap.comp_apply, ContinuousMap.coe_mk] using
+      add_nonneg (hφIcc g).1 (hφIcc g⁻¹).1
+  · simp only [ContinuousMap.add_apply, ContinuousMap.comp_apply, ContinuousMap.coe_mk, inv_inv]
+    exact add_comm _ _
+  · have hg' : g⁻¹ ∉ W := fun hc => hg (by simpa using hWsymm _ hc)
+    simp only [ContinuousMap.add_apply, ContinuousMap.comp_apply, ContinuousMap.coe_mk,
+      hφ0 hg, hφ0 hg', Pi.zero_apply, add_zero]
+  · simp only [ContinuousMap.add_apply, ContinuousMap.comp_apply, ContinuousMap.coe_mk, inv_one,
+      hφ1 rfl]
+    norm_num
+
 variable (𝕜) in
 /-- **Mollifying kernels exist, supported in any prescribed neighbourhood of the identity.**
 
@@ -195,28 +218,13 @@ theorem exists_isMollifier [T2Space G] {U : Set G} (hU : U ∈ 𝓝 (1 : G)) :
   have hWsymm : ∀ g : G, g ∈ W → g⁻¹ ∈ W := by
     rintro g ⟨h1, h2⟩
     exact ⟨by simpa using h2, by simpa using h1⟩
-  obtain ⟨φ, hφ1, hφ0, -, hφIcc⟩ :=
-    exists_continuous_one_zero_of_isCompact (X := G) isCompact_singleton hWopen.isClosed_compl
-      (disjoint_compl_right_iff_subset.2 (singleton_subset_iff.2 hW1))
-  -- Symmetrize the bump.
-  set ψ : C(G, ℝ) := φ + φ.comp ⟨Inv.inv, continuous_inv⟩
-  have hψ_apply : ∀ g : G, ψ g = φ g + φ g⁻¹ := fun _ => rfl
-  have hψ_nonneg : ∀ g : G, 0 ≤ ψ g := fun g => by
-    rw [hψ_apply]
-    exact add_nonneg (hφIcc g).1 (hφIcc g⁻¹).1
-  have hψ_inv : ∀ g : G, ψ g⁻¹ = ψ g := fun g => by
-    rw [hψ_apply, hψ_apply, inv_inv, add_comm]
-  have hψ_zero : ∀ g ∉ W, ψ g = 0 := fun g hg => by
-    have hg' : g⁻¹ ∉ W := fun hc => hg (by simpa using hWsymm _ hc)
-    simp only [hψ_apply, hφ0 hg, hφ0 hg', Pi.zero_apply, add_zero]
-  have hψ_one : ψ 1 = 2 := by
-    rw [hψ_apply, inv_one, hφ1 rfl]
-    norm_num
+  obtain ⟨ψ, hψ_nonneg, hψ_inv, hψ_zero, hψ_one⟩ := exists_symmetric_bump hWopen hW1 hWsymm
   -- Its mass is positive, so it can be normalized.
   have hψ_int : Integrable ψ (haarProb G) := integrable_continuousMap G ψ
   have hmass : 0 < ∫ g, ψ g ∂(haarProb G) := by
     refine (integral_pos_iff_support_of_nonneg hψ_nonneg hψ_int).2 ?_
-    exact ψ.continuous.isOpen_support.measure_pos _ ⟨1, by simp [Function.mem_support, hψ_one]⟩
+    exact ψ.continuous.isOpen_support.measure_pos _
+      ⟨1, by simp [Function.mem_support, hψ_one.ne']⟩
   set c : ℝ := ∫ g, ψ g ∂(haarProb G) with hcdef
   refine ⟨⟨fun g => ((c⁻¹ * ψ g : ℝ) : 𝕜),
     RCLike.continuous_ofReal.comp (continuous_const.mul ψ.continuous)⟩, ?_, ?_, ?_, ?_⟩

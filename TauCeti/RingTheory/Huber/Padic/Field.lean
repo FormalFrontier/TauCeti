@@ -15,9 +15,10 @@ pseudouniformiser. Together with `TauCeti.Huber.PadicInt.not_isTateRing` this is
 Layer-0 example separating the two notions: the same ideal of definition makes `ℤ_[p]` Huber but
 not Tate, and `ℚ_[p]` Tate, the difference being that `p` becomes a unit in `ℚ_[p]`.
 
-No transport is needed here, unlike for `ℤ_[p]`: Mathlib defines `ℤ_[p]` as the subring
-`{x : ℚ_[p] | ‖x‖ ≤ 1}`, so `Ideal ℤ_[p]` is already the type
-`TauCeti.Huber.PairOfDefinition` asks for.
+No `Ideal.comap` is needed here. Mathlib's `ℤ_[p]` is the subtype `{x : ℚ_[p] // ‖x‖ ≤ 1}` and
+`PadicInt.subring p` is a separate declaration cutting out the same set, so `ℤ_[p]` and
+`↥(PadicInt.subring p)` are definitionally equal. That is why `idealOfDefinition :=
+maximalIdeal ℤ_[p]` typechecks against the expected `Ideal ↥(PadicInt.subring p)` below.
 
 ## Main definitions
 
@@ -25,6 +26,10 @@ No transport is needed here, unlike for `ℤ_[p]`: Mathlib defines `ℤ_[p]` as 
 
 ## Main results
 
+* `TauCeti.Huber.Padic.pairOfDefinition_ringOfDefinition` and
+  `TauCeti.Huber.Padic.mem_pairOfDefinition_idealOfDefinition`: the two projections of the pair.
+  The ring of definition is pinned down by an equation, the ideal of definition by the
+  membership form `‖x‖ < 1` — see the note on that lemma for why.
 * `TauCeti.Huber.Padic.isPseudoUniformizer_p`: `p` is a pseudouniformiser of `ℚ_[p]`.
 * `TauCeti.Huber.Padic.isHuberRing` and `TauCeti.Huber.Padic.isTateRing`: `ℚ_[p]` is a Huber
   ring, and a Tate ring.
@@ -71,9 +76,9 @@ noncomputable def pairOfDefinition : PairOfDefinition ℚ_[p] where
 
 /-- The ring of definition of `pairOfDefinition` is `ℤ_[p]`.
 
-The ideal of definition is characterised by
-`TauCeti.Huber.Padic.mem_pairOfDefinition_idealOfDefinition`; an equation is avoided because
-`idealOfDefinition`'s type depends on `ringOfDefinition`. -/
+The companion projection, the ideal of definition, is characterised by
+`TauCeti.Huber.Padic.mem_pairOfDefinition_idealOfDefinition` in membership form rather than by an
+equation; that lemma's docstring gives the reason. -/
 @[simp]
 theorem pairOfDefinition_ringOfDefinition :
     (pairOfDefinition (p := p)).ringOfDefinition = _root_.PadicInt.subring p := (rfl)
@@ -81,10 +86,16 @@ theorem pairOfDefinition_ringOfDefinition :
 /-- **The ideal of definition of `pairOfDefinition` is `(p)`**, in membership form: an element
 belongs exactly when its norm is less than one.
 
-The membership form is used because `idealOfDefinition`'s type depends on `ringOfDefinition`, so
-an equation with `maximalIdeal ℤ_[p]` would be between two different `Ideal` types. It also
-leaves the ideal decidable downstream, which a statement transported along an equivalence would
-not. -/
+The membership form is used because the equation
+`pairOfDefinition.idealOfDefinition = maximalIdeal ℤ_[p]` does not elaborate. The two sides *are*
+definitionally equal — marking `pairOfDefinition` `@[expose]` makes that very statement typecheck
+and closes it by `rfl` — but at the transparency the elaborator uses it will not unfold a
+definition whose body is unexposed, so checking `Ideal ℤ_[p]` against
+`Ideal ↥pairOfDefinition.ringOfDefinition` fails with the note that `pairOfDefinition` "was not
+unfolded because their definition is not exposed". This is a limit on elaboration, not a
+statement that the projection cannot reduce. Exposing the body is not worth it here, since it
+would force the proof-only `isOpen_padicIntSubring` public too; membership sidesteps the issue
+entirely, as `x` already inhabits the dependent type. -/
 @[simp]
 theorem mem_pairOfDefinition_idealOfDefinition
     {x : (pairOfDefinition (p := p)).ringOfDefinition} :

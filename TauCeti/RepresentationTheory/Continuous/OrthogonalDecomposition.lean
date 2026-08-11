@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.Analysis.InnerProductSpace.Projection.FiniteDimensional
+public import TauCeti.LinearAlgebra.Dimension.DirectSum
 public import TauCeti.RepresentationTheory.Continuous.InvariantComplement
 public import TauCeti.RepresentationTheory.Irreducible
 
@@ -198,8 +199,7 @@ theorem exists_orthogonal_irreducible_decomposition (hπ : IsUnitary π) :
     hfamily.isInternal_iff.mpr (by rw [htop, Submodule.top_orthogonal_eq_bot])
   refine ⟨n, U, fun i ↦ Representation.isIrreducible_toRepresentation_of_isAtom (hatom i),
     hfamily, hinternal, ?_⟩
-  rw [← (LinearEquiv.ofBijective (DirectSum.coeLinearMap fun i ↦ (U i).toSubmodule)
-    hinternal).finrank_eq, Module.finrank_directSum]
+  exact finrank_eq_sum_finrank_of_isInternal hinternal
 
 end FiniteDimensional
 
