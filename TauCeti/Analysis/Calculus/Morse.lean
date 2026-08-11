@@ -28,10 +28,13 @@ subsequence.
 Twice continuous differentiability at the point is part of `IsNondegenerateCriticalPoint`, and so
 of `HasNondegenerateCriticalPointsOn` at each critical point: Mathlib totalizes `fderiv` by zero
 where a function is not differentiable, so a predicate phrased on `fderiv ℝ f` alone would call a
-function nondegenerate at a point where it is not even continuous. No statement below therefore
-needs a separate regularity hypothesis at a critical point; only the finiteness statement asks for
-more, namely continuity of `fderiv ℝ f` on the compact set, which is what closes the critical
-locus.
+function nondegenerate at a point where it is not even continuous. No statement below that
+hypothesises `IsNondegenerateCriticalPoint` therefore needs a separate regularity hypothesis at
+that point. Two statements do ask for more, because what they assume there is not nondegeneracy:
+the finiteness statement needs continuity of `fderiv ℝ f` on the compact set, which is what closes
+the critical locus, and the change-of-coordinates results need `ContDiffAt ℝ 2` of the chart (and,
+for the two-way `isNondegenerateCriticalPoint_comp_iff`, of `f` as well, since there nondegeneracy
+is assumed downstairs rather than upstairs).
 
 `HasNondegenerateCriticalPointsOn f s` asks nothing at all of `f` away from its critical points in
 `s`, so it is weaker than the textbook notion of a Morse function, which carries global regularity
@@ -45,8 +48,10 @@ finitely many critical points on a compact set. That finiteness is what makes th
 complex of a compact manifold finitely generated, so it is the first structural input of Morse
 homology.
 Because the first-order term of the chain rule drops out at a critical point, the second
-derivative there transforms as a bilinear form, and nondegeneracy is unchanged by a change of
-coordinates; this is what will let the notion be read off in any chart.
+derivative there transforms as a bilinear form (`TauCeti.fderiv_fderiv_comp_apply_of_fderiv_eq_zero`
+in `TauCeti.Analysis.Calculus.SecondDerivative`), and nondegeneracy is unchanged by a change of
+coordinates; together with the fact that it depends only on the germ of `f`, this is what will let
+the notion be read off in any chart.
 
 ## Main declarations
 
@@ -54,22 +59,27 @@ coordinates; this is what will let the notion be read off in any chart.
   its differential vanishes there, and its second derivative is invertible as a map into the dual
   space.
 * `TauCeti.HasNondegenerateCriticalPointsOn`: every critical point in a given set is nondegenerate.
-* `TauCeti.isNondegenerateCriticalPoint_iff`: in finite dimensions, nondegeneracy is twice
-  continuous differentiability together with the classical condition that the Hessian bilinear
-  form have trivial radical.
+* `TauCeti.IsNondegenerateCriticalPoint.separatingLeft`: the Hessian at a nondegenerate critical
+  point is left-separating as a bilinear form.
+* `TauCeti.isNondegenerateCriticalPoint_iff_separatingLeft`: in finite dimensions the converse
+  holds too, so nondegeneracy is twice continuous differentiability together with the classical
+  condition that the Hessian bilinear form have trivial radical.
+* `TauCeti.IsNondegenerateCriticalPoint.congr_of_eventuallyEq`: nondegeneracy at a point depends
+  only on the germ of the function there.
 * `TauCeti.IsNondegenerateCriticalPoint.eventually_fderiv_ne_zero`: a nondegenerate critical point
   is isolated among critical points.
 * `TauCeti.HasNondegenerateCriticalPointsOn.isDiscrete_setOf_fderiv_eq_zero`: a critical locus all
   of whose points are nondegenerate is discrete.
 * `TauCeti.HasNondegenerateCriticalPointsOn.finite_setOf_fderiv_eq_zero`: such a critical locus is
   finite on a compact set.
-* `TauCeti.fderiv_fderiv_comp_apply_of_fderiv_eq_zero`: at a critical point the second derivative
-  of a composition is the pullback of the second derivative along the differential.
-* `TauCeti.IsNondegenerateCriticalPoint.comp`: nondegeneracy is invariant under a change of
-  coordinates with invertible differential.
-* `TauCeti.isNondegenerateCriticalPoint_apply_self`: the local model. A continuous bilinear form
-  `B` whose polarization `B.flip + B` is invertible makes `z ↦ B z z` a function with a
-  nondegenerate critical point at the origin.
+* `TauCeti.isNondegenerateCriticalPoint_comp_iff` and `TauCeti.IsNondegenerateCriticalPoint.comp`:
+  nondegeneracy is invariant under a change of coordinates with invertible differential.
+* `TauCeti.ContinuousLinearMap.isNondegenerateCriticalPoint_apply_self`: the local model. A
+  continuous bilinear form `B` whose polarization `B.flip + B` is invertible makes `z ↦ B z z` a
+  function with a nondegenerate critical point at the origin.
+* `TauCeti.ContinuousLinearMap.isNondegenerateCriticalPoint_apply_self_of_flip_eq_self`: the
+  symmetric case of the model, where the polarization is `2 • B`, so an invertible symmetric `B`
+  suffices.
 
 The second derivative used here is `fderiv ℝ (fderiv ℝ f) x`, which Mathlib also packages as
 `bilinearIteratedFDerivTwo` and evaluates through `iteratedFDeriv_two_apply`; its symmetry at a
@@ -77,8 +87,13 @@ twice differentiable point is `ContDiffAt.isSymmSndFDerivAt`.
 
 ## References
 
-* M. Audin, M. Damian, *Morse Theory and Floer Homology*, Springer Universitext, 2014, Chapter 1.
-* [Heegaard Floer homology roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/HeegaardFloer/README.md),
+* M. Audin, M. Damian, *Morse Theory and Floer Homology*, Springer Universitext, 2014, Chapter 1,
+  for the finite-dimensional theory.
+* R. S. Palais, *Morse theory on Hilbert manifolds*, Topology **2** (1963), 299--340, and
+  M. Schwarz, *Morse Homology*, Birkhäuser, 1993, Chapter 1, for the nondegeneracy condition in
+  Banach and Hilbert generality used here, namely invertibility of the second derivative as a map
+  into the dual space.
+* [Heegaard Floer homology roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/HeegaardFloer/README.md),
   Lane M, "Morse homology".
 -/
 
@@ -113,7 +128,6 @@ def HasNondegenerateCriticalPointsOn (f : E → ℝ) (s : Set E) : Prop :=
   ∀ ⦃x⦄, x ∈ s → fderiv ℝ f x = 0 → IsNondegenerateCriticalPoint f x
 
 /-- The introduction and elimination rule for `HasNondegenerateCriticalPointsOn`. -/
-@[simp]
 theorem hasNondegenerateCriticalPointsOn_iff {s : Set E} :
     HasNondegenerateCriticalPointsOn f s ↔
       ∀ ⦃x⦄, x ∈ s → fderiv ℝ f x = 0 → IsNondegenerateCriticalPoint f x :=
@@ -125,23 +139,23 @@ theorem HasNondegenerateCriticalPointsOn.mono {s t : Set E}
     HasNondegenerateCriticalPointsOn f s :=
   fun _ hx ↦ hM (hst hx)
 
-/-- At a nondegenerate critical point the Hessian bilinear form has trivial radical. -/
-theorem IsNondegenerateCriticalPoint.eq_zero_of_ortho (h : IsNondegenerateCriticalPoint f x)
-    {v : E} (hv : ∀ w, fderiv ℝ (fderiv ℝ f) x v w = 0) : v = 0 := by
-  obtain ⟨e, he⟩ := h.isInvertible
-  have h1 : e v = 0 := by
-    rw [← ContinuousLinearEquiv.coe_coe e, he]
+/-- At a nondegenerate critical point the Hessian is left-separating as a bilinear form: no
+nonzero vector is annihilated by it. -/
+theorem IsNondegenerateCriticalPoint.separatingLeft (h : IsNondegenerateCriticalPoint f x) :
+    (fderiv ℝ (fderiv ℝ f) x).toBilinForm.SeparatingLeft := by
+  intro v hv
+  have hv0 : fderiv ℝ (fderiv ℝ f) x v = fderiv ℝ (fderiv ℝ f) x 0 := by
     ext w
-    exact hv w
-  exact e.injective (h1.trans (map_zero e).symm)
+    simpa using hv w
+  exact h.isInvertible.injective hv0
 
 /-- In finite dimensions, invertibility of the second derivative is the classical nondegeneracy of
-the Hessian: no nonzero vector is annihilated by the Hessian form. -/
-theorem isNondegenerateCriticalPoint_iff [FiniteDimensional ℝ E] :
+the Hessian: the Hessian bilinear form is left-separating. -/
+theorem isNondegenerateCriticalPoint_iff_separatingLeft [FiniteDimensional ℝ E] :
     IsNondegenerateCriticalPoint f x ↔
       ContDiffAt ℝ 2 f x ∧ fderiv ℝ f x = 0 ∧
-        ∀ v : E, (∀ w : E, fderiv ℝ (fderiv ℝ f) x v w = 0) → v = 0 := by
-  refine ⟨fun h ↦ ⟨h.contDiffAt, h.fderiv_eq_zero, fun _ hv ↦ h.eq_zero_of_ortho hv⟩,
+        (fderiv ℝ (fderiv ℝ f) x).toBilinForm.SeparatingLeft := by
+  refine ⟨fun h ↦ ⟨h.contDiffAt, h.fderiv_eq_zero, h.separatingLeft⟩,
     fun ⟨hd, h0, hnd⟩ ↦ ⟨hd, h0, ?_⟩⟩
   have hinj : Injective (fderiv ℝ (fderiv ℝ f) x : E →ₗ[ℝ] E →L[ℝ] ℝ) :=
     (injective_iff_map_eq_zero _).2 fun v hv ↦ hnd v fun w ↦ by
@@ -151,9 +165,15 @@ theorem isNondegenerateCriticalPoint_iff [FiniteDimensional ℝ E] :
     rw [← LinearEquiv.finrank_eq
       (LinearMap.toContinuousLinearMap : (E →ₗ[ℝ] ℝ) ≃ₗ[ℝ] E →L[ℝ] ℝ)]
     exact Subspace.dual_finrank_eq.symm
-  have hbij : Bijective (fderiv ℝ (fderiv ℝ f) x : E →ₗ[ℝ] E →L[ℝ] ℝ) :=
-    ⟨hinj, (LinearMap.injective_iff_surjective_of_finrank_eq_finrank hrank).1 hinj⟩
-  exact ⟨(LinearEquiv.ofBijective _ hbij).toContinuousLinearEquiv, by ext v; simp⟩
+  exact ⟨((fderiv ℝ (fderiv ℝ f) x : E →ₗ[ℝ] E →L[ℝ] ℝ).linearEquivOfInjective hinj
+    hrank).toContinuousLinearEquiv, by ext v; simp⟩
+
+/-- Nondegeneracy at a point depends only on the germ of the function there. -/
+theorem IsNondegenerateCriticalPoint.congr_of_eventuallyEq {g : E → ℝ}
+    (h : IsNondegenerateCriticalPoint f x) (hg : f =ᶠ[𝓝 x] g) :
+    IsNondegenerateCriticalPoint g x :=
+  ⟨h.contDiffAt.congr_of_eventuallyEq hg.symm, by rw [hg.symm.fderiv_eq, h.fderiv_eq_zero],
+    by rw [hg.symm.fderiv.fderiv_eq]; exact h.isInvertible⟩
 
 /-- **A nondegenerate critical point is isolated.** Near such a point the differential of `f`
 vanishes only at the point itself. -/
@@ -163,7 +183,7 @@ theorem IsNondegenerateCriticalPoint.eventually_fderiv_ne_zero
   obtain ⟨e, he⟩ := h.isInvertible
   have hd : HasFDerivAt (fderiv ℝ f) (e : E →L[ℝ] E →L[ℝ] ℝ) x := by
     rw [he]
-    exact (ContDiffAt.hasStrictFDerivAt_fderiv h.contDiffAt).hasFDerivAt
+    exact (ContDiffAt.hasStrictFDerivAt_fderiv h.contDiffAt le_rfl).hasFDerivAt
   exact hd.eventually_ne ⟨_, e.antilipschitz⟩
 
 /-- A critical locus all of whose points are nondegenerate is discrete. -/
@@ -194,57 +214,49 @@ theorem HasNondegenerateCriticalPointsOn.finite_setOf_fderiv_eq_zero {K : Set E}
 /-! ### Change of coordinates
 
 At a critical point the first-order term of the chain rule drops out, so the second derivative
-transforms as a bilinear form. This is why the Hessian at a critical point, and hence
-nondegeneracy, does not depend on the choice of chart.
+transforms as a bilinear form; this is `TauCeti.fderiv_fderiv_comp_apply_of_fderiv_eq_zero`, proved
+in `TauCeti.Analysis.Calculus.SecondDerivative` because it involves no nondegeneracy. It is why the
+Hessian at a critical point, and hence nondegeneracy, does not depend on the choice of chart.
 -/
 
-/-- **The Hessian at a critical point is a bilinear form pullback.** If `φ b` is a critical point
-of `f`, then the second derivative of `f ∘ φ` at `b` is the second derivative of `f` at `φ b`
-evaluated on the images of the differential of `φ`. -/
-theorem fderiv_fderiv_comp_apply_of_fderiv_eq_zero {φ : F → E} {b : F} (hf : ContDiffAt ℝ 2 f (φ b))
-    (hφ : ContDiffAt ℝ 2 φ b) (hc : fderiv ℝ f (φ b) = 0) (v w : F) :
-    fderiv ℝ (fderiv ℝ (f ∘ φ)) b v w =
-      fderiv ℝ (fderiv ℝ f) (φ b) (fderiv ℝ φ b v) (fderiv ℝ φ b w) := by
-  have hf1 : HasFDerivAt (fderiv ℝ f) (fderiv ℝ (fderiv ℝ f) (φ b)) (φ b) :=
-    (ContDiffAt.hasStrictFDerivAt_fderiv hf).hasFDerivAt
-  have hφ1 : HasFDerivAt (fderiv ℝ φ) (fderiv ℝ (fderiv ℝ φ) b) b :=
-    (ContDiffAt.hasStrictFDerivAt_fderiv hφ).hasFDerivAt
-  have hφ0 : HasFDerivAt φ (fderiv ℝ φ b) b := (hφ.differentiableAt (by norm_num)).hasFDerivAt
-  have hA : HasFDerivAt (fun y ↦ fderiv ℝ f (φ y))
-      ((fderiv ℝ (fderiv ℝ f) (φ b)).comp (fderiv ℝ φ b)) b := hf1.comp b hφ0
-  have hev : ∀ᶠ y in 𝓝 b, fderiv ℝ (f ∘ φ) y = (fderiv ℝ f (φ y)).comp (fderiv ℝ φ y) := by
-    have h1 : ∀ᶠ y in 𝓝 b, DifferentiableAt ℝ φ y := by
-      filter_upwards [hφ.eventually (by norm_num)] with y hy
-        using hy.differentiableAt (by norm_num)
-    have h2 : ∀ᶠ y in 𝓝 b, DifferentiableAt ℝ f (φ y) := by
-      filter_upwards [hφ.continuousAt.eventually (hf.eventually (by norm_num))] with y hy
-        using hy.differentiableAt (by norm_num)
-    filter_upwards [h1, h2] with y hy1 hy2 using fderiv_comp (x := y) hy2 hy1
-  rw [((hA.clm_comp hφ1).congr_of_eventuallyEq hev).fderiv]
-  simp [hc]
-
 /-- **Nondegeneracy of a critical point does not depend on the coordinates.** If the differential
-of `φ` at `b` is invertible, a nondegenerate critical point of `f` at `φ b` pulls back to a
-nondegenerate critical point of `f ∘ φ` at `b`. -/
+of `φ` at `b` is invertible, then `f ∘ φ` has a nondegenerate critical point at `b` exactly when
+`f` has one at `φ b`. -/
+theorem isNondegenerateCriticalPoint_comp_iff {φ : F → E} {b : F} (hf : ContDiffAt ℝ 2 f (φ b))
+    (hφ : ContDiffAt ℝ 2 φ b) (hinv : (fderiv ℝ φ b).IsInvertible) :
+    IsNondegenerateCriticalPoint (f ∘ φ) b ↔ IsNondegenerateCriticalPoint f (φ b) := by
+  obtain ⟨e, he⟩ := hinv
+  -- The differential of `f ∘ φ` at `b` is that of `f` at `φ b` precomposed with the equivalence
+  -- `e`, so one vanishes exactly when the other does.
+  have hcrit : fderiv ℝ (f ∘ φ) b = 0 ↔ fderiv ℝ f (φ b) = 0 := by
+    rw [fderiv_comp (x := b) (hf.differentiableAt (by norm_num))
+      (hφ.differentiableAt (by norm_num)), ← he]
+    refine ⟨fun h ↦ ?_, fun h ↦ by rw [h]; ext u; simp⟩
+    ext u
+    simpa using congrArg (fun L : F →L[ℝ] ℝ ↦ L (e.symm u)) h
+  -- The Hessian pulls back as `ψ ↦ ψ ∘ e` composed with the Hessian composed with `e`, and each of
+  -- the three factors is invertible.
+  have hEq : fderiv ℝ f (φ b) = 0 → fderiv ℝ (fderiv ℝ (f ∘ φ)) b =
+      (e.symm.arrowCongr (ContinuousLinearEquiv.refl ℝ ℝ) : (E →L[ℝ] ℝ) →L[ℝ] F →L[ℝ] ℝ) ∘L
+        fderiv ℝ (fderiv ℝ f) (φ b) ∘L (e : F →L[ℝ] E) := fun hc ↦ by
+    ext v w
+    rw [fderiv_fderiv_comp_apply_of_fderiv_eq_zero hf hφ hc, ← he]
+    simp
+  refine ⟨fun h ↦ ⟨hf, hcrit.1 h.fderiv_eq_zero, ?_⟩,
+    fun h ↦ ⟨hf.comp b hφ, hcrit.2 h.fderiv_eq_zero, ?_⟩⟩
+  · have hinv' := h.isInvertible
+    rw [hEq (hcrit.1 h.fderiv_eq_zero)] at hinv'
+    simpa using hinv'
+  · rw [hEq h.fderiv_eq_zero]
+    simpa using h.isInvertible
+
+/-- A nondegenerate critical point of `f` at `φ b` pulls back to a nondegenerate critical point of
+`f ∘ φ` at `b`, provided the differential of `φ` at `b` is invertible. -/
 theorem IsNondegenerateCriticalPoint.comp {φ : F → E} {b : F}
     (h : IsNondegenerateCriticalPoint f (φ b)) (hφ : ContDiffAt ℝ 2 φ b)
     (hinv : (fderiv ℝ φ b).IsInvertible) :
-    IsNondegenerateCriticalPoint (f ∘ φ) b := by
-  obtain ⟨e, he⟩ := hinv
-  refine ⟨h.contDiffAt.comp b hφ, ?_, ?_⟩
-  · rw [fderiv_comp (x := b) (h.contDiffAt.differentiableAt (by norm_num))
-      (hφ.differentiableAt (by norm_num)), h.fderiv_eq_zero]
-    simp
-  · -- The Hessian pulls back as `ψ ↦ ψ ∘ e` composed with the Hessian composed with `e`, and
-    -- each of the three factors is invertible.
-    have hEq : fderiv ℝ (fderiv ℝ (f ∘ φ)) b =
-        (e.symm.arrowCongr (ContinuousLinearEquiv.refl ℝ ℝ) : (E →L[ℝ] ℝ) →L[ℝ] F →L[ℝ] ℝ) ∘L
-          fderiv ℝ (fderiv ℝ f) (φ b) ∘L (e : F →L[ℝ] E) := by
-      ext v w
-      rw [fderiv_fderiv_comp_apply_of_fderiv_eq_zero h.contDiffAt hφ h.fderiv_eq_zero, ← he]
-      simp
-    rw [hEq]
-    simpa using h.isInvertible
+    IsNondegenerateCriticalPoint (f ∘ φ) b :=
+  (isNondegenerateCriticalPoint_comp_iff h.contDiffAt hφ hinv).2 h
 
 end Morse
 
@@ -260,13 +272,15 @@ section Model
 
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
 
+namespace ContinuousLinearMap
+
 /-- **The local model of a nondegenerate critical point.** If the polarization `B.flip + B` of a
 continuous bilinear form `B` on `E` is invertible as a map into the dual space, then the quadratic
 function `z ↦ B z z` has a nondegenerate critical point at the origin. -/
 theorem isNondegenerateCriticalPoint_apply_self (B : E →L[ℝ] E →L[ℝ] ℝ)
     (hB : (B.flip + B).IsInvertible) : IsNondegenerateCriticalPoint (fun z ↦ B z z) 0 :=
-  ⟨B.isBoundedBilinearMap.contDiff.comp₂_contDiffAt contDiffAt_id contDiffAt_id, by simp,
-    by rw [ContinuousLinearMap.fderiv_fderiv_apply_self]; exact hB⟩
+  ⟨(contDiff_apply_self B).contDiffAt, by simp,
+    by rw [fderiv_fderiv_apply_self]; exact hB⟩
 
 /-- A symmetric continuous bilinear form `B` on `E` which is invertible as a map into the dual
 space makes `z ↦ B z z` a function with a nondegenerate critical point at the origin: its
@@ -281,8 +295,10 @@ theorem isNondegenerateCriticalPoint_apply_self_of_flip_eq_self (B : E →L[ℝ]
     rw [hsymm]
     exact (two_smul ℝ _).symm
   rw [hflip]
-  refine ContinuousLinearMap.IsInvertible.of_inverse
+  refine _root_.ContinuousLinearMap.IsInvertible.of_inverse
     (g := (2 : ℝ)⁻¹ • (e.symm : (E →L[ℝ] ℝ) →L[ℝ] E)) ?_ ?_ <;> ext v <;> simp [smul_smul]
+
+end ContinuousLinearMap
 
 end Model
 
