@@ -6,6 +6,8 @@ module
 
 public import Mathlib.Algebra.MvPolynomial.Basic
 public import TauCeti.KnotTheory.Grid.Complex
+import TauCeti.KnotTheory.Grid.Rectangle.Count
+import TauCeti.KnotTheory.Grid.Rectangle.Swap
 
 /-!
 # The minus grid differential
@@ -79,20 +81,14 @@ diagram's `O`-marking set. -/
 theorem interiorOMarkings_eq_empty_iff (G : GridDiagram n) :
     R.interiorOMarkings G = ∅ ↔ Disjoint R.toGridRectangle.interior G.OSet := by
   classical
+  rw [interiorOMarkings, Finset.filter_eq_empty_iff, Finset.disjoint_left]
   constructor
-  · intro hempty
-    rw [Finset.disjoint_left]
-    intro p hpR hpO
+  · intro hfilter p hpR hpO
     have hrow : G.O p.1 = p.2 := (G.mem_OSet p).mp hpO
-    have hi : p.1 ∈ R.interiorOMarkings G := by
-      rw [R.mem_interiorOMarkings G]
-      simpa [hrow] using hpR
-    exact Finset.notMem_empty p.1 (hempty ▸ hi)
-  · intro hdisjoint
-    rw [Finset.eq_empty_iff_forall_notMem]
-    intro i hi
-    rw [Finset.disjoint_left] at hdisjoint
-    exact hdisjoint ((R.mem_interiorOMarkings G i).mp hi) (by simp)
+    exact hfilter (x := p.1) (Finset.mem_univ _) (hrow.symm ▸ hpR)
+  · intro hdisjoint i _ hi
+    apply hdisjoint hi
+    simp
 
 /-- The monomial contributed by a rectangle to the minus differential: one variable for every
 `O` marking in its interior. -/
@@ -142,6 +138,24 @@ theorem mem_minusRectangles (R : GridRectangleBetween x y) :
   classical
   simp [minusRectangles]
 
+/-- Every minus rectangle is an empty rectangle between the same states. -/
+theorem minusRectangles_subset_emptyRectangles :
+    G.minusRectangles x y ⊆ GridRectangleBetween.emptyRectangles x y := by
+  classical
+  intro R hR
+  exact (GridRectangleBetween.mem_emptyRectangles R).mpr
+    ((G.mem_minusRectangles x y R).mp hR).1
+
+/-- There are at most two minus rectangles in each matrix coefficient of the minus differential. -/
+theorem card_minusRectangles_le_two : (G.minusRectangles x y).card ≤ 2 :=
+  GridRectangleBetween.card_le_two (G.minusRectangles x y)
+
+/-- The set of minus rectangles from a grid state to itself is empty. -/
+@[simp]
+theorem minusRectangles_self (x : GridState n) : G.minusRectangles x x = ∅ := by
+  classical
+  simp [minusRectangles]
+
 /-- Fully blocked rectangles are exactly the minus rectangles with no interior `O` marking. -/
 theorem fullyBlockedRectangles_eq_filter_minusRectangles :
     G.fullyBlockedRectangles x y =
@@ -163,6 +177,24 @@ theorem minusRectangleCoefficient_def :
       ∑ R ∈ G.minusRectangles x y, R.minusRectangleWeight G :=
   (rfl)
 
+/-- The minus rectangle coefficient from a grid state to itself is zero. -/
+@[simp]
+theorem minusRectangleCoefficient_self (x : GridState n) :
+    G.minusRectangleCoefficient x x = 0 := by
+  simp [minusRectangleCoefficient]
+
+/-- A nonzero minus rectangle coefficient forces the target state to be a column transposition of
+the source state. -/
+theorem exists_swapColumns_of_minusRectangleCoefficient_ne_zero
+    (h : G.minusRectangleCoefficient x y ≠ 0) :
+    ∃ a b : Fin n, a ≠ b ∧ y = x.swapColumns a b := by
+  have hrect : (G.minusRectangles x y).Nonempty := by
+    by_contra hempty
+    rw [minusRectangleCoefficient_def, Finset.not_nonempty_iff_eq_empty.mp hempty] at h
+    simp at h
+  obtain ⟨R, hR⟩ := hrect
+  exact ⟨R.left, R.right, R.left_ne_right, R.target_eq_swapColumns⟩
+
 /-- Setting every variable to zero in a minus rectangle coefficient recovers the fully blocked
 rectangle coefficient. -/
 @[simp]
@@ -176,9 +208,18 @@ theorem constantCoeff_minusRectangleCoefficient :
     G.fullyBlockedRectangleCount_def x y]
 
 /-- The value of the minus differential on one grid-state generator. -/
+@[expose]
 noncomputable def minusDifferentialOnGenerator (x : GridState n) : GridChain (GridMinusRing n) n :=
   Finset.univ.sum fun y : GridState n =>
     Finsupp.single y (G.minusRectangleCoefficient x y)
+
+/-- The generator row of the minus differential is the finite sum of weighted rectangle
+coefficients. -/
+theorem minusDifferentialOnGenerator_def (x : GridState n) :
+    G.minusDifferentialOnGenerator x =
+      Finset.univ.sum fun y : GridState n =>
+        Finsupp.single y (G.minusRectangleCoefficient x y) :=
+  rfl
 
 /-- The `y`-coefficient of the minus differential on the generator `x`. -/
 @[simp]
@@ -192,26 +233,40 @@ theorem minusDifferentialOnGenerator_apply (x y : GridState n) :
   · intro hy
     exact (hy (Finset.mem_univ y)).elim
 
+/-- There is no self-term in the minus differential of a generator. -/
+theorem minusDifferentialOnGenerator_apply_self (x : GridState n) :
+    G.minusDifferentialOnGenerator x x = 0 := by
+  simp
+
+/-- The minus differential of a generator is supported on its column transpositions. -/
+theorem exists_swapColumns_of_minusDifferentialOnGenerator_ne_zero {x y : GridState n}
+    (h : G.minusDifferentialOnGenerator x y ≠ 0) :
+    ∃ a b : Fin n, a ≠ b ∧ y = x.swapColumns a b := by
+  rw [minusDifferentialOnGenerator_apply] at h
+  exact G.exists_swapColumns_of_minusRectangleCoefficient_ne_zero x y h
+
 /-- The minus grid differential as a polynomial-linear endomorphism of the free module on grid
 states. -/
 noncomputable def minusDifferential :
     GridChain (GridMinusRing n) n →ₗ[GridMinusRing n] GridChain (GridMinusRing n) n :=
-  Finsupp.lsum (GridMinusRing n) fun x : GridState n =>
-    (LinearMap.id : GridMinusRing n →ₗ[GridMinusRing n] GridMinusRing n).smulRight
-      (G.minusDifferentialOnGenerator x)
+  GridChain.mkDifferential G.minusRectangleCoefficient
 
 /-- The minus differential sends a basis generator to its rectangle-coefficient row. -/
 @[simp]
 theorem minusDifferential_single (x : GridState n) :
     G.minusDifferential (Finsupp.single x 1) = G.minusDifferentialOnGenerator x := by
-  classical
-  rw [minusDifferential, Finsupp.lsum_single]
-  simp
+  rw [minusDifferential, GridChain.mkDifferential_single,
+    ← minusDifferentialOnGenerator_def]
 
 /-- The matrix coefficient of the minus differential on a basis generator is the weighted
 minus rectangle coefficient. -/
 theorem minusDifferential_single_apply (x y : GridState n) :
     G.minusDifferential (Finsupp.single x 1) y = G.minusRectangleCoefficient x y := by
+  exact GridChain.mkDifferential_single_apply G.minusRectangleCoefficient x y
+
+/-- The self-coefficient of the minus differential on a single generator is zero. -/
+theorem minusDifferential_single_apply_self (x : GridState n) :
+    G.minusDifferential (Finsupp.single x 1) x = 0 := by
   simp
 
 /-- Taking the constant coefficient of a matrix entry of the minus differential gives the
@@ -225,17 +280,17 @@ theorem constantCoeff_minusDifferential_single_apply (x y : GridState n) :
 theorem minusDifferential_apply (c : GridChain (GridMinusRing n) n) :
     G.minusDifferential c =
       c.sum fun x a => a • G.minusDifferentialOnGenerator x := by
-  rw [minusDifferential, Finsupp.lsum_apply]
-  simp [Finsupp.sum, LinearMap.smulRight_apply]
+  rw [minusDifferential, GridChain.mkDifferential_apply]
+  apply Finsupp.sum_congr
+  intro x _
+  rw [minusDifferentialOnGenerator_def]
 
 /-- The coefficient formula for the minus differential on an arbitrary polynomial grid chain. -/
 @[simp]
 theorem minusDifferential_apply_apply (c : GridChain (GridMinusRing n) n) (y : GridState n) :
     G.minusDifferential c y =
       c.sum fun x a => a * G.minusRectangleCoefficient x y := by
-  classical
-  rw [minusDifferential_apply]
-  simp [Finsupp.sum_apply]
+  exact GridChain.mkDifferential_apply_apply G.minusRectangleCoefficient c y
 
 end GridDiagram
 
