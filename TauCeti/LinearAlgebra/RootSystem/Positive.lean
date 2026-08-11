@@ -27,6 +27,8 @@ positive root is a nonnegative integer combination of the simple coroots.
 * `TauCeti.negRoots` is its complementary set of negative roots.
 * `TauCeti.posRootsFinset` and `TauCeti.negRootsFinset` are the same two sets as finsets, for a
   finite root index type, so that they can be summed over.
+* `TauCeti.posRootCone` is the additive monoid `Q⁺` of nonnegative integer combinations of the
+  simple roots.
 
 ## Main results
 
@@ -42,6 +44,10 @@ positive root is a nonnegative integer combination of the simple coroots.
 * `TauCeti.RootPairing.Base.isPos_flip_iff` says a root is positive for a base exactly when its
   coroot is positive for that base, and `TauCeti.posRoots_flip` restates it for the sets.
 * `TauCeti.sum_root_ne_zero_of_mem_posRoots` says a nonempty sum of positive roots is nonzero.
+* `TauCeti.root_mem_posRootCone` says the positive roots lie in `Q⁺`,
+  `TauCeti.eq_zero_of_add_eq_zero_of_mem_posRootCone` says `Q⁺` is a sharp cone, and
+  `TauCeti.add_ne_zero_of_mem_posRootCone` specializes that to a positive root added to a member
+  of `Q⁺`.
 * `TauCeti.exists_coroot_eq_sum_nat_of_mem_posRoots` says the coroot of a positive root is a
   nonnegative integer combination of the simple coroots.
 
@@ -238,6 +244,57 @@ theorem sum_root_ne_zero_of_mem_posRoots {κ : Type*} {s : Finset κ} (hs : s.No
   have hpos : 0 < ∑ x ∈ s, b.height (f x) :=
     Finset.sum_pos (fun x hx ↦ hf x hx) hs
   exact hpos.ne' hheight
+
+/-! ### The cone of nonnegative combinations of the simple roots -/
+
+omit [CharZero R] in
+/-- The **positive root cone** `Q⁺` of a base: the additive monoid of nonnegative integer
+combinations of the simple roots. -/
+def posRootCone : AddSubmonoid M where
+  carrier := {v | ∃ f : ι → ℕ, v = ∑ j ∈ b.support, f j • P.root j}
+  add_mem' := by
+    rintro _ _ ⟨f, rfl⟩ ⟨g, rfl⟩
+    exact ⟨f + g, by simp [add_smul, Finset.sum_add_distrib]⟩
+  zero_mem' := ⟨0, by simp⟩
+
+omit [CharZero R] in
+theorem mem_posRootCone {v : M} :
+    v ∈ posRootCone P b ↔ ∃ f : ι → ℕ, v = ∑ j ∈ b.support, f j • P.root j :=
+  Iff.rfl
+
+/-- Every positive root lies in the positive root cone. -/
+theorem root_mem_posRootCone {i : ι} (hi : i ∈ posRoots P b) : P.root i ∈ posRootCone P b :=
+  let ⟨f, _, hf⟩ := exists_root_eq_sum_nat_of_mem_posRoots P b hi
+  ⟨f, hf⟩
+
+/-- **The positive root cone is a sharp cone**: two of its members can only sum to zero if each is
+already zero. Expanding both in the simple roots, the total coefficient vector is nonnegative and,
+the simple roots being linearly independent, must vanish, so each coefficient vector does.
+
+This is what makes the cone an order on weights: `μ ≤ λ` defined by `λ - μ ∈ Q⁺` is antisymmetric,
+and a weight cannot be reached from itself through a nonempty chain of positive roots. -/
+theorem eq_zero_of_add_eq_zero_of_mem_posRootCone {u v : M} (hu : u ∈ posRootCone P b)
+    (hv : v ∈ posRootCone P b) (huv : u + v = 0) : u = 0 := by
+  classical
+  obtain ⟨f, rfl⟩ := hu
+  obtain ⟨g, rfl⟩ := hv
+  have hcomb : ∑ j ∈ b.support, ((f j + g j : ℕ) : ℤ) • P.root j = 0 := by
+    rw [← huv, ← Finset.sum_add_distrib]
+    exact Finset.sum_congr rfl fun j _ => by push_cast; rw [add_smul, natCast_zsmul, natCast_zsmul]
+  have hli : LinearIndepOn ℤ P.root (b.support : Set ι) :=
+    b.linearIndepOn_root.restrict_scalars' ℤ
+  have hzero : ∀ j ∈ b.support, ((f j + g j : ℕ) : ℤ) = 0 :=
+    linearIndepOn_iff'.mp hli b.support _ subset_rfl hcomb
+  refine Finset.sum_eq_zero fun j hj => ?_
+  have : f j = 0 := by have := hzero j hj; omega
+  rw [this, zero_smul]
+
+/-- **A positive root is never cancelled inside the positive root cone.** A positive root is a
+nonzero member of the cone, so `TauCeti.eq_zero_of_add_eq_zero_of_mem_posRootCone` forbids it. -/
+theorem add_ne_zero_of_mem_posRootCone {i : ι} (hi : i ∈ posRoots P b) {v : M}
+    (hv : v ∈ posRootCone P b) : P.root i + v ≠ 0 := fun hsum =>
+  P.ne_zero i (eq_zero_of_add_eq_zero_of_mem_posRootCone P b
+    (root_mem_posRootCone P b hi) hv hsum)
 
 /-- Root negation exchanges positive and negative roots. -/
 theorem image_reflectionPerm_self_posRoots :
