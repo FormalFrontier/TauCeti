@@ -91,15 +91,19 @@ noncomputable def reconstructedPoint
   toConv (AlgHom.ofLinearMap (globalFunctional k H A η)
     (globalFunctional_one k H A η) (globalFunctional_mul k H A η))
 
-/-- Forgetting the convolution wrapper from the reconstructed point gives the algebra
-homomorphism built from the global functional. -/
-@[simp]
-theorem reconstructedPoint_ofConv
+private theorem reconstructedPoint_ofConv
     (η : Aut (FGComoduleCat.scalarExtensionMonoidalFunctor k H A)) :
     (reconstructedPoint k H A η).ofConv =
       AlgHom.ofLinearMap (globalFunctional k H A η)
         (globalFunctional_one k H A η) (globalFunctional_mul k H A η) :=
   (rfl)
+
+/-- The reconstructed point evaluates as its defining global functional. -/
+@[simp]
+theorem reconstructedPoint_apply
+    (η : Aut (FGComoduleCat.scalarExtensionMonoidalFunctor k H A)) (x : H) :
+    (reconstructedPoint k H A η).ofConv x = globalFunctional k H A η x := by
+  rw [reconstructedPoint_ofConv, AlgHom.ofLinearMap_apply]
 
 /-- Reconstructing the tensor automorphism induced by an algebra-valued point returns that
 point. Thus reconstruction is a left inverse to the tensor action of points. -/
