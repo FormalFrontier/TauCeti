@@ -98,6 +98,8 @@ private theorem fgPointUnipotentPart_natural [PerfectField K]
     (LinearMap.GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction N g))
     (baseChange_comp_pointsAction k H K f g)
 
+/-- The transported component isomorphism associated to a family of finite-comodule
+automorphisms. -/
 private noncomputable def fgPointFactorIso
     (φ : ∀ M : FGComoduleCat.{u, v, w} k H,
       LinearMap.GeneralLinearGroup K (K ⊗[k] M))
@@ -108,6 +110,8 @@ private noncomputable def fgPointFactorIso
     ((φ M).toLinearEquiv.toModuleIsoₛ.trans
       (eqToIso (FGComoduleCat.scalarExtensionFunctor_obj k H K M).symm))
 
+/-- A natural automorphism of finite-comodule scalar extension assembled from a pointwise family
+of automorphisms and its intertwining property. -/
 private noncomputable def fgPointFactorNatIso
     (φ : ∀ M : FGComoduleCat.{u, v, w} k H,
       LinearMap.GeneralLinearGroup K (K ⊗[k] M))
