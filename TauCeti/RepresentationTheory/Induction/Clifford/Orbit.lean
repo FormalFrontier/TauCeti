@@ -12,8 +12,11 @@ public import TauCeti.RepresentationTheory.Induction.Clifford.Basic
 # The constituents of a restriction to a normal subgroup form one orbit
 
 Let `N` be a normal subgroup of `G` and let `ρ` be an irreducible representation of `G` on `V`.
-Restricting `ρ` to `N` breaks it into irreducible constituents
-(`TauCeti.Representation.isSemisimpleRepresentation_comp_subtype`), and this file identifies which
+Given one minimal `N`-stable subspace to start from, restricting `ρ` to `N` breaks it into
+irreducible constituents
+(`TauCeti.Representation.isSemisimpleRepresentation_comp_subtype_of_isAtom`; for a
+finite-dimensional `V` such a subspace always exists, and then no hypothesis is needed, which is
+`TauCeti.Representation.isSemisimpleRepresentation_comp_subtype`).  This file identifies which
 constituents occur: **they are the translates of any one of them**, up to isomorphism of
 `N`-representations.  Equivalently, `G` permutes the isotypic components of the restriction
 transitively.
@@ -23,23 +26,27 @@ The argument is short because the two halves it needs are already in place.  The
 (`TauCeti.Representation.isAtom_conjSubrep_iff`) and they span
 (`TauCeti.Representation.iSup_conjSubrep_eq_top`); and a simple submodule of a sum of simple
 submodules is isomorphic to one of the summands (Mathlib's `Submodule.linearEquiv_of_le_sSup`).
-The only work is to move the spanning statement from the lattice of `k`-subspaces, where it is
-proved, to the lattice of `k[N]`-submodules of the restriction viewed as a `k[N]`-module, where the
-isotypic machinery lives; that is `TauCeti.Representation.iSup_asSubmodule_conjSubrep_eq_top`, and
-the transport is the order isomorphism
-`Subrepresentation.subrepresentationSubmoduleOrderIso`.
+The spanning statement is needed in the lattice of `k[N]`-submodules of the restriction viewed as a
+`k[N]`-module, where the isotypic machinery lives, rather than in the lattice of `k`-subspaces where
+it is proved; the move between the two lattices is
+`TauCeti.Representation.eq_top_of_forall_asSubmodule_conjSubrep_le` in
+`TauCeti/RepresentationTheory/Induction/Clifford/Basic.lean`, and
+`TauCeti.Representation.iSup_asSubmodule_conjSubrep_eq_top` is the supremum form of it used here.
 
 No finiteness and no invertibility of `Nat.card N` is used: irreducibility of the ambient
 representation replaces Maschke's theorem throughout, exactly as in
 `TauCeti/RepresentationTheory/Induction/Clifford/Basic.lean`.  Finite-dimensionality of `V` is
-needed only to know that a minimal `N`-stable subspace exists at all, and enters only in
+needed only to know that a minimal `N`-stable subspace exists at all: every statement below takes
+such a subspace as a hypothesis, except
 `TauCeti.Representation.exists_isAtom_forall_nonempty_linearEquiv_conjSubrep`, the packaged form of
-the theorem.
+the theorem, which assumes finite-dimensionality and produces one.
 
 ## Main statements
 
 * `TauCeti.Representation.iSup_asSubmodule_conjSubrep_eq_top`: the translates of a nonzero
   `N`-subrepresentation of an irreducible representation span, as `k[N]`-submodules.
+* `TauCeti.Representation.isSimpleModule_asSubmodule_iff`: a minimal `N`-stable subspace is the
+  same thing as a simple `k[N]`-submodule of the restriction.
 * `TauCeti.Representation.exists_nonempty_linearEquiv_conjSubrep`: **Clifford's theorem, single
   orbit form.** Any two minimal `N`-stable subspaces of an irreducible representation are
   translates of one another, up to isomorphism of `N`-representations.
@@ -98,33 +105,17 @@ variable {k G V : Type*} [Field k] [Group G] [AddCommGroup V] [Module k V]
 `Subrepresentation.subrepresentationSubmoduleOrderIso`. -/
 theorem iSup_asSubmodule_conjSubrep_eq_top [ρ.IsIrreducible]
     {σ : Subrepresentation (ρ.comp N.subtype)} (hσ : σ ≠ ⊥) :
-    ⨆ g : G, (conjSubrep ρ g σ).asSubmodule = ⊤ := by
-  -- pull the supremum back to a subrepresentation, where the spanning statement lives
-  set T : Subrepresentation (ρ.comp N.subtype) :=
-    Subrepresentation.subrepresentationSubmoduleOrderIso.symm
-      (⨆ g : G, (conjSubrep ρ g σ).asSubmodule) with hT
-  have hTeq : T.asSubmodule = ⨆ g : G, (conjSubrep ρ g σ).asSubmodule := by
-    rw [hT, ← Subrepresentation.subrepresentationSubmoduleOrderIso_apply,
-      OrderIso.apply_symm_apply]
-  have hle : ∀ g : G, conjSubrep ρ g σ ≤ T := fun g => by
-    rw [← Subrepresentation.subrepresentationSubmoduleOrderIso.le_iff_le,
-      Subrepresentation.subrepresentationSubmoduleOrderIso_apply,
-      Subrepresentation.subrepresentationSubmoduleOrderIso_apply, hTeq]
-    exact le_iSup (fun g : G => (conjSubrep ρ g σ).asSubmodule) g
-  have htop : T = ⊤ := by
-    refine Subrepresentation.toSubmodule_injective (le_antisymm le_top ?_)
-    rw [Subrepresentation.toSubmodule_top, ← iSup_conjSubrep_eq_top ρ hσ]
-    exact iSup_le fun g => hle g
-  rw [← hTeq, htop, ← Subrepresentation.subrepresentationSubmoduleOrderIso_apply,
-    OrderIso.map_top]
+    ⨆ g : G, (conjSubrep ρ g σ).asSubmodule = ⊤ :=
+  eq_top_of_forall_asSubmodule_conjSubrep_le ρ hσ
+    fun g => le_iSup (fun g : G => (conjSubrep ρ g σ).asSubmodule) g
 
 omit [N.Normal] in
-/-- A minimal `N`-stable subspace is a simple `k[N]`-submodule of the restriction.  This is the
-dictionary between the two ways of saying "irreducible constituent" used below. -/
-theorem isSimpleModule_asSubmodule_of_isAtom {σ : Subrepresentation (ρ.comp N.subtype)}
-    (hσ : IsAtom σ) : IsSimpleModule k[N] σ.asSubmodule :=
-  isSimpleModule_iff_isAtom.mpr
-    ((Subrepresentation.subrepresentationSubmoduleOrderIso.isAtom_iff σ).mpr hσ)
+/-- A minimal `N`-stable subspace is the same thing as a simple `k[N]`-submodule of the restriction.
+This is the dictionary between the two ways of saying "irreducible constituent" used below. -/
+theorem isSimpleModule_asSubmodule_iff {σ : Subrepresentation (ρ.comp N.subtype)} :
+    IsSimpleModule k[N] σ.asSubmodule ↔ IsAtom σ :=
+  isSimpleModule_iff_isAtom.trans
+    (Subrepresentation.subrepresentationSubmoduleOrderIso.isAtom_iff σ)
 
 /-- **Every irreducible `N`-constituent is a translate of any fixed one.**  If `σ` is a minimal
 `N`-stable subspace of an irreducible representation `ρ` and `T` is any simple `k[N]`-submodule of
@@ -141,7 +132,7 @@ theorem exists_nonempty_linearEquiv_asSubmodule_conjSubrep [ρ.IsIrreducible]
   have hsimple : ∀ m : (Set.range fun g : G => (conjSubrep ρ g σ).asSubmodule),
       IsSimpleModule k[N] m := by
     rintro ⟨_, g, rfl⟩
-    exact isSimpleModule_asSubmodule_of_isAtom ρ (isAtom_conjSubrep_iff.mpr hσ)
+    exact (isSimpleModule_asSubmodule_iff ρ).mpr (isAtom_conjSubrep_iff.mpr hσ)
   have hsSup : sSup (Set.range fun g : G => (conjSubrep ρ g σ).asSubmodule) = ⊤ := by
     rw [sSup_range]
     exact iSup_asSubmodule_conjSubrep_eq_top ρ hσ.1
@@ -155,7 +146,7 @@ irreducible representation are translates of one another, up to isomorphism of r
 theorem exists_nonempty_linearEquiv_conjSubrep [ρ.IsIrreducible]
     {σ τ : Subrepresentation (ρ.comp N.subtype)} (hσ : IsAtom σ) (hτ : IsAtom τ) :
     ∃ g : G, Nonempty (τ.asSubmodule ≃ₗ[k[N]] (conjSubrep ρ g σ).asSubmodule) :=
-  have := isSimpleModule_asSubmodule_of_isAtom ρ hτ
+  have := (isSimpleModule_asSubmodule_iff ρ).mpr hτ
   exists_nonempty_linearEquiv_asSubmodule_conjSubrep ρ hσ τ.asSubmodule
 
 /-- **Clifford's theorem, single-orbit form, packaged.**  The restriction to `N` of a
@@ -166,7 +157,9 @@ theorem exists_isAtom_forall_nonempty_linearEquiv_conjSubrep [ρ.IsIrreducible]
     ∃ σ : Subrepresentation (ρ.comp N.subtype), IsAtom σ ∧
       ∀ τ : Subrepresentation (ρ.comp N.subtype), IsAtom τ →
         ∃ g : G, Nonempty (τ.asSubmodule ≃ₗ[k[N]] (conjSubrep ρ g σ).asSubmodule) := by
-  obtain ⟨σ, hσ⟩ := exists_isAtom_comp_subtype (N := N) ρ
+  have : Nontrivial ρ.asModule := IsSimpleModule.nontrivial k[G] _
+  have : Nontrivial V := ρ.asModuleEquiv.symm.toEquiv.nontrivial
+  obtain ⟨σ, hσ⟩ := exists_isAtom (ρ.comp N.subtype)
   exact ⟨σ, hσ, fun _ hτ => exists_nonempty_linearEquiv_conjSubrep ρ hσ hτ⟩
 
 /-- **`G` permutes the isotypic components of the restriction transitively.**  The isotypic
@@ -184,7 +177,7 @@ theorem isotypicComponents_eq_range [ρ.IsIrreducible]
     obtain ⟨g, ⟨e⟩⟩ := exists_nonempty_linearEquiv_asSubmodule_conjSubrep ρ hσ S
     exact ⟨g, e.isotypicComponent_eq.symm⟩
   · rintro ⟨g, rfl⟩
-    exact ⟨_, isSimpleModule_asSubmodule_of_isAtom ρ (isAtom_conjSubrep_iff.mpr hσ), rfl⟩
+    exact ⟨_, (isSimpleModule_asSubmodule_iff ρ).mpr (isAtom_conjSubrep_iff.mpr hσ), rfl⟩
 
 /-- **A restriction along a normal subgroup of a finite group has finitely many isotypic
 components.**  There is one component for each translate, so at most one for each element of `G`. -/
@@ -203,7 +196,7 @@ theorem isIsotypicOfType_asSubmodule_iff [ρ.IsIrreducible]
       ∀ g : G, Nonempty ((conjSubrep ρ g σ).asSubmodule ≃ₗ[k[N]] σ.asSubmodule) := by
   constructor
   · intro h g
-    have := isSimpleModule_asSubmodule_of_isAtom (σ := conjSubrep ρ g σ) ρ
+    have := (isSimpleModule_asSubmodule_iff ρ (σ := conjSubrep ρ g σ)).mpr
       (isAtom_conjSubrep_iff.mpr hσ)
     exact h _
   · intro h m _
