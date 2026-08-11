@@ -6,23 +6,24 @@ module
 
 public import Mathlib.FieldTheory.IsSepClosed
 public import TauCeti.LinearAlgebra.CliffordAlgebra.ReflectionLift
+public import TauCeti.LinearAlgebra.QuadraticForm.CartanDieudonne
 
 /-!
-# The one-step Cartan--Dieudonne reduction
+# Pin corrections over fixed subspaces
 
-Let `g` be an orthogonal automorphism and let `v` have invertible norm. At least one of `g v - v`
-and `g v + v` has invertible norm. A reflection in the former carries `g v` to `v`; a reflection
-in the latter followed by the reflection in `v` does the same. Since these reflections lift to the
-Pin group over a separably closed field of characteristic not two, an element in the range of
-`pinToOrthogonal` can be multiplied into `g` to make it fix `v`.
+Let `g` be an orthogonal automorphism fixing a subspace `W`, and let `x` be an anisotropic vector
+orthogonal to `W`. The generic fixed-subspace correction in the quadratic-form layer uses one or
+two reflections to make the product fix `W ⊔ K ∙ x`. Over a separably closed field of
+characteristic other than two, those reflections lift through the Pin group, so the correcting
+element lies in the range of `pinToOrthogonal`.
 
-This is the one-vector reduction used by the finite-dimensional Cartan--Dieudonne induction.
+## Main results
 
-## Main result
-
-* `TauCeti.CliffordAlgebra.exists_mem_range_pinToOrthogonal_mul_apply_eq_self`: an element in the
-  range of the Pin action corrects an orthogonal automorphism to fix a chosen vector of invertible
-  norm.
+* `TauCeti.CliffordAlgebra.exists_mem_range_pinToOrthogonal_mul_eqOn_sup_span_singleton`: a
+  Pin-range correction extends a fixed subspace by one orthogonal anisotropic vector.
+* `TauCeti.CliffordAlgebra.pinToOrthogonal_surjective`: over a separably closed field of
+  characteristic other than two, the Pin action is surjective on a finite-dimensional
+  nondegenerate quadratic space.
 
 ## References
 
@@ -41,52 +42,52 @@ universe u v
 
 namespace CliffordAlgebra
 
-variable {K : Type u} {V : Type v} [Field K] [IsSepClosed K]
+variable {K : Type u} {V : Type v} [Field K]
   [AddCommGroup V] [Module K V] (Q : QuadraticForm K V) [Invertible (2 : K)]
 
-/-- Given an orthogonal automorphism `g` and a vector `v` of invertible norm, an element in the
-range of the Pin action can be multiplied into `g` so that the product fixes `v`. The correcting
-orthogonal element is the image under `pinToOrthogonal` of a lift of either one reflection or two
-reflections. -/
-theorem exists_mem_range_pinToOrthogonal_mul_apply_eq_self
-    (g : QuadraticMap.orthogonalGroup Q) (v : V)
-    [Invertible (Q v)] :
-    ∃ r : QuadraticMap.orthogonalGroup Q, r ∈ (pinToOrthogonal Q).range ∧
-      (((r * g : QuadraticMap.orthogonalGroup Q) : V ≃ₗ[K] V) v = v) := by
-  have reflection_mem_range (w : V) [Invertible (Q w)] :
-      (⟨QuadraticMap.reflection Q w, QuadraticMap.reflection_mem_orthogonalGroup Q w⟩ :
-        QuadraticMap.orthogonalGroup Q) ∈ (pinToOrthogonal Q).range :=
-    reflection_mem_range_pinToOrthogonal_of_isSquare Q w
-      (IsSepClosed.exists_eq_mul_self _)
-  have hmap : Q ((g : V ≃ₗ[K] V) v) = Q v :=
-    QuadraticMap.map_app_of_mem_orthogonalGroup g.2 v
-  rcases QuadraticMap.isUnit_sub_or_add_of_map_eq Q _ v hmap
-      (isUnit_of_invertible (Q v)).ne_zero with hsub | hadd
-  · let : Invertible (Q ((g : V ≃ₗ[K] V) v - v)) := hsub.invertible
-    let r : QuadraticMap.orthogonalGroup Q :=
-      ⟨QuadraticMap.reflection Q ((g : V ≃ₗ[K] V) v - v),
-        QuadraticMap.reflection_mem_orthogonalGroup Q _⟩
-    refine ⟨r, reflection_mem_range _, ?_⟩
-    -- Expose the underlying automorphisms of the subgroup product before applying the reflection
-    -- computation.
-    change QuadraticMap.reflection Q ((g : V ≃ₗ[K] V) v - v)
-      ((g : V ≃ₗ[K] V) v) = v
-    exact QuadraticMap.reflection_sub_apply_eq_of_map_eq Q _ v hmap
-  · have : Invertible (Q ((g : V ≃ₗ[K] V) v - -v)) := by
-      simpa only [sub_neg_eq_add] using hadd.invertible
-    let r₁ : QuadraticMap.orthogonalGroup Q :=
-      ⟨QuadraticMap.reflection Q v, QuadraticMap.reflection_mem_orthogonalGroup Q _⟩
-    let r₂ : QuadraticMap.orthogonalGroup Q :=
-      ⟨QuadraticMap.reflection Q ((g : V ≃ₗ[K] V) v - -v),
-        QuadraticMap.reflection_mem_orthogonalGroup Q _⟩
-    refine ⟨r₁ * r₂,
-      (pinToOrthogonal Q).range.mul_mem (reflection_mem_range v) (reflection_mem_range _), ?_⟩
-    -- Expose the two underlying reflections before applying their public computation equations.
-    change QuadraticMap.reflection Q v
-      (QuadraticMap.reflection Q ((g : V ≃ₗ[K] V) v - -v)
-        ((g : V ≃ₗ[K] V) v)) = v
-    rw [QuadraticMap.reflection_sub_apply_eq_of_map_eq Q _ (-v)
-      (hmap.trans (Q.map_neg v).symm), map_neg, QuadraticMap.reflection_apply_self, neg_neg]
+section IsSepClosed
 
+variable [IsSepClosed K]
+
+/-- Given an orthogonal automorphism that fixes `W` and an anisotropic vector `x` orthogonal to
+`W`, a Pin-range correction makes the product fix `W ⊔ K ∙ x` pointwise. -/
+theorem exists_mem_range_pinToOrthogonal_mul_eqOn_sup_span_singleton
+    (g : QuadraticMap.orthogonalGroup Q) (W : Submodule K V)
+    (hfix : ∀ w ∈ W, ((g : V ≃ₗ[K] V) w) = w)
+    (x : V) [Invertible (Q x)]
+    (hx : ∀ w ∈ W, Q.IsOrtho x w) :
+    ∃ r : QuadraticMap.orthogonalGroup Q, r ∈ (pinToOrthogonal Q).range ∧
+      ∀ y ∈ W ⊔ Submodule.span K {x},
+        (((r * g : QuadraticMap.orthogonalGroup Q) : V ≃ₗ[K] V) y) = y :=
+  QuadraticMap.exists_mem_subgroup_mul_eqOn_sup_span_singleton_of_reflection_mem Q
+    (pinToOrthogonal Q).range (reflection_mem_range_pinToOrthogonal Q) g W hfix x hx
+
+end IsSepClosed
+
+/-- Over a field of characteristic other than two, the twisted-conjugation homomorphism from the
+Pin group is surjective when every reflection normalization scalar is a square. -/
+theorem pinToOrthogonal_surjective_of_isSquare
+    [FiniteDimensional K V] (Q : QuadraticForm K V) (hQ : Q.Nondegenerate)
+    (hsquare : ∀ (v : V) [Invertible (Q v)], IsSquare (-⅟(Q v))) :
+    Function.Surjective (pinToOrthogonal Q) :=
+  MonoidHom.range_eq_top.mp <|
+    QuadraticMap.subgroup_eq_top_of_reflection_mem
+      Q hQ (pinToOrthogonal Q).range
+      fun v _ ↦ reflection_mem_range_pinToOrthogonal_of_isSquare Q v (hsquare v)
+
+section IsSepClosed
+
+variable [IsSepClosed K]
+
+/-- The twisted-conjugation homomorphism from the Pin group is surjective for a
+finite-dimensional nondegenerate quadratic space over a separably closed field of characteristic
+other than two. -/
+theorem pinToOrthogonal_surjective
+    [FiniteDimensional K V] (Q : QuadraticForm K V) (hQ : Q.Nondegenerate) :
+    Function.Surjective (pinToOrthogonal Q) :=
+  pinToOrthogonal_surjective_of_isSquare Q hQ fun v _ ↦
+    IsSepClosed.exists_eq_mul_self (-⅟(Q v))
+
+end IsSepClosed
 end CliffordAlgebra
 end TauCeti

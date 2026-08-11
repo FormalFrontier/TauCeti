@@ -33,6 +33,8 @@ This advances Deliverable A, Layer 1 of
 * `TauCeti.Lie.Ad_one`: the identity acts trivially.
 * `TauCeti.Lie.Ad_mul`: the group adjoint respects multiplication.
 * `TauCeti.Lie.Ad_inv`: inversion corresponds to the inverse automorphism.
+* `TauCeti.Lie.leftInvariantDerivationLinearIsometryEquivModelVectorSpace_Ad`: the canonical
+  derivation–model equivalence intertwines `Ad` and `tangentAd`.
 
 ## References
 
@@ -88,6 +90,23 @@ theorem leftInvariantDerivationLieEquivGroupLieAlgebra_Ad
           (I := I) (G := G)
           (ContMDiffMul.isInteriorPoint (I := I) (n := ∞) (by simp) (1 : G)) D) := by
   rw [Ad_apply, LieEquiv.apply_symm_apply]
+
+/-- The canonical isometric identification with the model space intertwines the derivation and
+tangent adjoint actions. -/
+@[simp high]
+theorem leftInvariantDerivationLinearIsometryEquivModelVectorSpace_Ad
+    [T2Space G] [BoundarylessManifold I G]
+    (g : G) (D : LeftInvariantDerivation I G) :
+    leftInvariantDerivationLinearIsometryEquivModelVectorSpace (I := I) (G := G) (Ad g D) =
+      tangentAd (I := I) g
+        (leftInvariantDerivationLinearIsometryEquivModelVectorSpace (I := I) (G := G) D) := by
+  have h := leftInvariantDerivationLieEquivGroupLieAlgebra_Ad (I := I) g D
+  -- `GroupLieAlgebra I G` is definitionally the model space `E`; expose it to compare the
+  -- Lie-equivalence identity with the isometric model-space identification.
+  have hE := congrArg (fun X : GroupLieAlgebra I G ↦ show E from X) h
+  simpa only [leftInvariantDerivationLieEquivGroupLieAlgebra_apply,
+    leftInvariantDerivationLinearIsometryEquivModelVectorSpace_apply,
+    leftInvariantDerivationEquivGroupLieAlgebra_apply] using hE
 
 /-- The identity element acts trivially on left-invariant derivations. -/
 @[simp]

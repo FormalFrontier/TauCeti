@@ -6,7 +6,7 @@ module
 
 public import Mathlib.NumberTheory.NumberField.Basic
 public import Mathlib.LinearAlgebra.FiniteDimensional.Lemmas
-public import Mathlib.LinearAlgebra.LinearIndependent.Lemmas
+import TauCeti.LinearAlgebra.Dimension.IsQuadraticExtension
 
 /-!
 # The `{1, x}` rational basis of algebraic integers in a quadratic number field
@@ -32,20 +32,9 @@ theorem exists_basis_eq_one_self_of_notMem_range_of_isIntegral {K : Type*} [Fiel
     (hx : x ∉ (algebraMap ℚ K).range) (hxint : IsIntegral ℤ x) :
     ∃ b : Module.Basis (Fin 2) ℚ K, ⇑b = ![1, x] ∧ ∀ i, IsIntegral ℤ (b i) := by
   classical
-  -- `x ≠ 0`, else `x = algebraMap ℚ K 0` would be rational.
-  have hxne : x ≠ 0 := by
-    rintro rfl
-    exact hx ⟨0, by rw [map_zero]⟩
-  -- `{1, x}` is linearly independent over `ℚ`: `x` is nonzero and not a `ℚ`-multiple of `1`.
-  have hli : LinearIndependent ℚ ![1, x] := by
-    rw [linearIndependent_fin2]
-    refine ⟨by simpa using hxne, ?_⟩
-    intro c hc
-    simp only [Matrix.cons_val_one, Matrix.cons_val_zero] at hc
-    rw [Algebra.smul_def] at hc
-    refine hx ⟨c⁻¹, ?_⟩
-    rw [map_inv₀]
-    exact inv_eq_of_mul_eq_one_right hc
+  -- `{1, x}` is linearly independent over `ℚ` because `x` lies outside the base field.
+  have hli : LinearIndependent ℚ ![1, x] :=
+    linearIndependent_one_of_notMem_range_algebraMap ℚ K (by simpa using hx)
   -- A linearly independent family of `finrank` vectors is a basis.
   have hcard : Fintype.card (Fin 2) = finrank ℚ K := by
     rw [Fintype.card_fin]; exact hfin.symm

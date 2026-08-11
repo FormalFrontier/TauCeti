@@ -6,6 +6,9 @@ module
 
 public import Mathlib.Algebra.Lie.Quotient
 public import TauCeti.Algebra.Lie.Sl2.Casimir
+-- Non-public: `TauCeti.isIrreducible_iff_isAtom` appears only inside a proof, never in the type of
+-- an exported declaration.
+import TauCeti.Algebra.Lie.Submodule.Atom
 
 /-!
 # Complete reducibility for `sl₂`
@@ -72,28 +75,6 @@ section Invariant
 variable {K : Type*} [Field K] [CharZero K] [IsAlgClosed K]
 variable {L : Type*} [LieRing L] [LieAlgebra K L]
 variable {h e f : L} {t : IsSl2Triple h e f}
-
-omit [CharZero K] [IsAlgClosed K] in
-/-- **A Lie submodule admitting no proper nonzero Lie submodule of the ambient module is
-irreducible.** The hypothesis quantifies over Lie submodules of `M` lying below `N`, whereas
-irreducibility speaks of Lie submodules of `N` itself; `LieSubmodule.map_incl_lt_iff_lt_top`
-transports between the two. -/
-private theorem isIrreducible_of_forall_not_le_of_ne_bot_of_ne {M : Type v} [AddCommGroup M]
-    [Module K M] [LieRingModule L M] [LieModule K L M] {N : LieSubmodule K L M} (hNbot : N ≠ ⊥)
-    (hred : ∀ W : LieSubmodule K L M, W ≠ ⊥ → W ≠ N → ¬ W ≤ N) :
-    LieModule.IsIrreducible K L N := by
-  have : Nontrivial N := (LieSubmodule.nontrivial_iff_ne_bot K L _).2 hNbot
-  refine LieModule.IsIrreducible.mk fun N' hN' ↦ ?_
-  by_contra hne
-  have hlt : N'.map N.incl < N :=
-    LieSubmodule.map_incl_lt_iff_lt_top.2 (lt_top_iff_ne_top.2 hne)
-  have hbot : N'.map N.incl = ⊥ := by
-    by_contra hb
-    exact hred _ hb (ne_of_lt hlt) (le_of_lt hlt)
-  refine hN' ((LieSubmodule.eq_bot_iff _).2 fun z hz ↦ ?_)
-  have hmem : (z : M) ∈ N'.map N.incl := ⟨z, hz, rfl⟩
-  rw [hbot] at hmem
-  exact Subtype.ext (by simpa using hmem)
 
 /-- **The Casimir operator supplies an invariant vector outside an irreducible submodule.** If `L`
 carries `M` into an irreducible proper `N` and acts nontrivially somewhere on `M`, then `L` acts
@@ -311,10 +292,13 @@ private theorem exists_invariant_notMem_aux (htop : t.toLieSubalgebra K = ⊤) (
     · -- `N` is reducible: pass to `M ⧸ W`, then to the submodule `W + K v₀`.
       obtain ⟨W, hWbot, hWN, hWle⟩ := hred
       exact exists_invariant_notMem_of_ne_bot_of_ne_of_le ih hrank hN htriv hWbot hWN hWle
-    · -- `N` is irreducible: the Casimir operator supplies the invariant vector.
+    · -- `N` is irreducible: it is an atom, and the Casimir operator supplies the invariant vector.
       push Not at hred
+      have hatom : IsAtom N := ⟨hNbot, fun W hW ↦ by
+        by_contra hb
+        exact hred W hb hW.ne hW.le⟩
       exact exists_invariant_notMem_of_isIrreducible htop hN htriv hact
-        (isIrreducible_of_forall_not_le_of_ne_bot_of_ne hNbot hred)
+        ((isIrreducible_iff_isAtom N).2 hatom)
 
 variable {M : Type v} [AddCommGroup M] [Module K M] [LieRingModule L M] [LieModule K L M]
 

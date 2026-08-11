@@ -6,7 +6,7 @@ module
 
 public import Mathlib.NumberTheory.Modular
 public import TauCeti.Analysis.Contour.Winding.Number.Basic
-public import TauCeti.NumberTheory.ModularForms.LevelOne.FundamentalDomainBoundary.Basic
+public import TauCeti.NumberTheory.ModularForms.LevelOne.FundamentalDomainBoundary.Containment
 
 import Mathlib.Analysis.Complex.Convex
 import TauCeti.Analysis.Contour.Winding.UnboundedComponent
@@ -21,20 +21,32 @@ component of the contour's complement, where the winding number vanishes. Togeth
 five determinations package as null-homology of the boundary contour in the truncated
 fundamental domain, the exterior input to the valence-formula residue count.
 
+The file also carries the arc-excision geometry shared by the corner winding computations
+at `i`, at `ρ` and at `ρ + 1`. Each excises a parameter window around its corner and needs
+that window's chord to be exactly the excision radius `ε`. The half-width realising this for
+a radius below the corner chord `2·sin(π/12)` is stated once here rather than three times.
+
 ## Main declarations
 
-* `TauCeti.ModularForm.sqrt_three_div_two_le_im_fdBoundary`: the image height bound.
 * `TauCeti.ModularForm.windingNumber_fdBoundary_eq_zero_of_im_lt`: points below the
   corner height wind zero, with the analogous determinations on the other sides
   (`_of_half_lt_re`, `_of_re_lt_neg_half`, `_of_lt_im`) and in the unit disc
   (`_of_norm_lt_one`).
 * `TauCeti.ModularForm.isNullHomologous_fdBoundary`: the packaged null-homology.
+* `TauCeti.ModularForm.fdBoundaryArcExcisionHalfWidth`: the parameter half-width whose
+  chord along the arc is a prescribed `ε` below the corner chord, characterised under that
+  bound by `TauCeti.ModularForm.fdBoundaryArcExcisionHalfWidth_pos_and_lt_one_and_two_mul_sin_eq`.
 
 ## References
 
 The truncated-contour strategy follows the fundamental-domain boundary development of
 AINTLIB's `LeanModularForms` (`ForMathlib/FDBoundary.lean`, `FDBoundaryH.lean`,
 `FDBoundaryPath.lean`); the winding transport is Tau Ceti's Hungerbühler–Wasem machinery.
+
+The arc-excision geometry is not from those files: it is extracted from the same project's
+winding-value development (`ForMathlib/ValenceFormula/WindingWeights/I.lean`, `Rho.lean` and
+`RhoPlusOne.lean`), where each corner computation built its own chord-matched half-width.
+It is stated once here so the three share it.
 -/
 
 public noncomputable section
@@ -48,115 +60,6 @@ namespace TauCeti
 namespace ModularForm
 
 variable {H t : ℝ}
-
-/-- The corner height `√3/2` lies below `1`, the height of the arc's apex. -/
-private lemma sqrt_three_div_two_le_one : Real.sqrt 3 / 2 ≤ 1 := by
-  rw [div_le_one (by norm_num)]
-  nlinarith [Real.sq_sqrt (by norm_num : (3 : ℝ) ≥ 0), Real.sqrt_nonneg 3]
-
--- `simpNF` rejects `simp` annotations on the affine coordinate rewrites below: the
--- `@[simp]` branch selectors already rewrite `fdBoundary` applications to the segment
--- functions, so these left-hand sides are not in simp normal form.
-
-/-- Every point of the boundary contour has imaginary part at least `√3/2`, provided the
-height parameter clears the corner row. -/
-lemma sqrt_three_div_two_le_im_fdBoundary (hH : Real.sqrt 3 / 2 ≤ H)
-    (ht : t ∈ Icc (0 : ℝ) 5) : Real.sqrt 3 / 2 ≤ (fdBoundary H t).im := by
-  obtain ⟨ht0, ht5⟩ := ht
-  rcases le_or_gt t 1 with h1 | h1
-  · rw [im_fdBoundary_of_le_one h1]
-    nlinarith [mul_nonneg (by linarith : (0 : ℝ) ≤ 1 - t)
-      (by linarith : (0 : ℝ) ≤ H - Real.sqrt 3 / 2)]
-  · rcases le_or_gt t 3 with h3 | h3
-    · rw [eqOn_fdBoundary_arc H ⟨h1.le, h3⟩, circleMap_zero_im, one_mul]
-      have harc : Real.pi / 3 ≤ (t + 1) * (Real.pi / 6) ∧
-          (t + 1) * (Real.pi / 6) ≤ 2 * Real.pi / 3 := by
-        constructor <;> nlinarith [Real.pi_pos, h1, h3]
-      calc Real.sqrt 3 / 2 = Real.sin (Real.pi / 3) := (Real.sin_pi_div_three).symm
-        _ ≤ Real.sin ((t + 1) * (Real.pi / 6)) := by
-            rcases le_or_gt ((t + 1) * (Real.pi / 6)) (Real.pi / 2) with hle | hgt
-            · exact Real.sin_le_sin_of_le_of_le_pi_div_two
-                (by linarith [Real.pi_pos]) hle harc.1
-            · nth_rewrite 2 [← Real.sin_pi_sub]
-              refine Real.sin_le_sin_of_le_of_le_pi_div_two
-                (by linarith [Real.pi_pos]) ?_ ?_ <;> linarith [Real.pi_pos, harc.2, hgt]
-    · rcases le_or_gt t 4 with h4 | h4
-      · rw [im_fdBoundary_of_le_four h3 h4]
-        nlinarith [mul_nonneg (by linarith : (0 : ℝ) ≤ t - 3)
-          (by linarith : (0 : ℝ) ≤ H - Real.sqrt 3 / 2)]
-      · rw [im_fdBoundary_of_gt_four h4]
-        exact hH
-
-/-- The contour's real part stays within the fundamental strip. -/
-lemma abs_re_fdBoundary_le_half (ht : t ≤ 5) : |(fdBoundary H t).re| ≤ 1 / 2 := by
-  rw [abs_le]
-  rcases le_or_gt t 1 with h1 | h1
-  · rw [re_fdBoundary_of_le_one h1]
-    norm_num
-  · rcases le_or_gt t 3 with h3 | h3
-    · rw [eqOn_fdBoundary_arc H ⟨h1.le, h3⟩, circleMap_zero_re, one_mul]
-      have harc : Real.pi / 3 ≤ (t + 1) * (Real.pi / 6) ∧
-          (t + 1) * (Real.pi / 6) ≤ 2 * Real.pi / 3 := by
-        constructor <;> nlinarith [Real.pi_pos]
-      constructor
-      · have h23 : (2 * Real.pi / 3 : ℝ) = Real.pi - Real.pi / 3 := by ring
-        calc (-(1 / 2) : ℝ) = Real.cos (2 * Real.pi / 3) := by
-              rw [h23, Real.cos_pi_sub, Real.cos_pi_div_three]
-          _ ≤ Real.cos ((t + 1) * (Real.pi / 6)) :=
-              Real.cos_le_cos_of_nonneg_of_le_pi (by positivity)
-                (by linarith [Real.pi_pos]) harc.2
-      · calc Real.cos ((t + 1) * (Real.pi / 6)) ≤ Real.cos (Real.pi / 3) :=
-              Real.cos_le_cos_of_nonneg_of_le_pi (by positivity)
-                (by linarith [Real.pi_pos]) harc.1
-          _ = 1 / 2 := Real.cos_pi_div_three
-    · rcases le_or_gt t 4 with h4 | h4
-      · rw [re_fdBoundary_of_le_four h3 h4]
-        norm_num
-      · rw [re_fdBoundary_of_gt_four h4]
-        constructor <;> nlinarith
-
-/-- The contour stays at or below its height parameter. -/
-lemma im_fdBoundary_le (hH : 1 ≤ H) (ht : t ∈ Icc (0 : ℝ) 5) :
-    (fdBoundary H t).im ≤ H := by
-  obtain ⟨ht0, ht5⟩ := ht
-  have h32 : Real.sqrt 3 / 2 ≤ 1 := sqrt_three_div_two_le_one
-  rcases le_or_gt t 1 with h1 | h1
-  · rw [im_fdBoundary_of_le_one h1]
-    nlinarith [mul_nonneg ht0 (by linarith : (0 : ℝ) ≤ H - Real.sqrt 3 / 2)]
-  · rcases le_or_gt t 3 with h3 | h3
-    · rw [eqOn_fdBoundary_arc H ⟨h1.le, h3⟩, circleMap_zero_im, one_mul]
-      exact (Real.sin_le_one _).trans hH
-    · rcases le_or_gt t 4 with h4 | h4
-      · rw [im_fdBoundary_of_le_four h3 h4]
-        nlinarith [mul_nonneg (by linarith : (0 : ℝ) ≤ 4 - t)
-          (by linarith : (0 : ℝ) ≤ H - Real.sqrt 3 / 2)]
-      · rw [im_fdBoundary_of_gt_four h4]
-
-/-- The boundary contour stays outside the open unit disc: the verticals and the ceiling
-clear it by height and offset, and the arc lies on the unit circle. -/
-lemma one_le_norm_fdBoundary (hH : 1 ≤ H) (ht : t ∈ Icc (0 : ℝ) 5) :
-    1 ≤ ‖fdBoundary H t‖ := by
-  obtain ⟨ht0, ht5⟩ := ht
-  have hsq : Real.sqrt 3 ^ 2 = 3 := Real.sq_sqrt (by norm_num)
-  have h32 : Real.sqrt 3 / 2 ≤ 1 := sqrt_three_div_two_le_one
-  have him := sqrt_three_div_two_le_im_fdBoundary (h32.trans hH) ⟨ht0, ht5⟩
-  have hnn := norm_nonneg (fdBoundary H t)
-  rcases le_or_gt t 1 with h1 | h1
-  · have h1' : 1 ≤ ‖fdBoundary H t‖ ^ 2 := by
-      rw [Complex.sq_norm, Complex.normSq_apply, re_fdBoundary_of_le_one h1]
-      nlinarith [Real.sqrt_nonneg 3]
-    nlinarith
-  · rcases le_or_gt t 3 with h3 | h3
-    · exact (norm_fdBoundary_arc h1.le h3).ge
-    · rcases le_or_gt t 4 with h4 | h4
-      · have h1' : 1 ≤ ‖fdBoundary H t‖ ^ 2 := by
-          rw [Complex.sq_norm, Complex.normSq_apply, re_fdBoundary_of_le_four h3 h4]
-          nlinarith [Real.sqrt_nonneg 3]
-        nlinarith
-      · calc (1 : ℝ) ≤ H := hH
-          _ = (fdBoundary H t).im := (im_fdBoundary_of_gt_four h4).symm
-          _ ≤ |(fdBoundary H t).im| := le_abs_self _
-          _ ≤ ‖fdBoundary H t‖ := Complex.abs_im_le_norm _
 
 /-- Winding transport through an unbounded preconnected region avoiding the contour: the
 region lies in one connected component of the complement, which reaches points far away
@@ -259,7 +162,7 @@ theorem windingNumber_fdBoundary_eq_zero_of_norm_lt_one (hH : 1 ≤ H) {w : ℂ}
       (convex_ball 0 1).isPreconnected (convex_halfSpace_im_lt _).isPreconnected
     rw [Set.mem_ofPred_eq, Complex.zero_im]
     positivity
-  have h32 : Real.sqrt 3 / 2 ≤ 1 := sqrt_three_div_two_le_one
+  have h32 : Real.sqrt 3 / 2 ≤ 1 := sqrt_three_div_two_lt_one.le
   refine windingNumber_fdBoundary_eq_zero_of_mem_preconnected hconn ?_
     (fun R ↦ ⟨((-(max R 0 + 1) : ℝ) : ℂ) * Complex.I, Or.inr ?_, ?_⟩)
     (Or.inl (by rwa [Metric.mem_ball, dist_zero_right]))
@@ -280,7 +183,7 @@ winding number vanishes. -/
 theorem isNullHomologous_fdBoundary (hH : 1 ≤ H) :
     IsNullHomologous (fdBoundary H) 0 5
       (UpperHalfPlane.coe '' ModularGroup.truncatedFundamentalDomain H) := by
-  have h32 : Real.sqrt 3 / 2 ≤ 1 := sqrt_three_div_two_le_one
+  have h32 : Real.sqrt 3 / 2 ≤ 1 := sqrt_three_div_two_lt_one.le
   rw [isNullHomologous_iff]
   intro z hz
   rw [ModularGroup.coe_truncatedFundamentalDomain, Set.mem_ofPred_eq, not_and_or, not_and_or,
@@ -296,19 +199,50 @@ theorem isNullHomologous_fdBoundary (hH : 1 ≤ H) :
       linarith
   · exact windingNumber_fdBoundary_eq_zero_of_norm_lt_one hH hnorm
 
-/-- The boundary contour lies in the closed truncated fundamental domain. -/
-lemma fdBoundary_mem_coe_truncatedFundamentalDomain (hH : 1 ≤ H) {t : ℝ}
-    (ht : t ∈ Icc (0 : ℝ) 5) :
-    fdBoundary H t ∈ UpperHalfPlane.coe '' ModularGroup.truncatedFundamentalDomain H := by
-  have h32 : Real.sqrt 3 / 2 ≤ 1 := sqrt_three_div_two_le_one
-  rw [ModularGroup.coe_truncatedFundamentalDomain, Set.mem_ofPred_eq]
-  refine ⟨?_, im_fdBoundary_le hH ht, abs_re_fdBoundary_le_half ht.2,
-    one_le_norm_fdBoundary hH ht⟩
-  have := sqrt_three_div_two_le_im_fdBoundary (h32.trans hH) ht
-  nlinarith [Real.sqrt_nonneg 3]
+
+
+/-- **The chord-matched excision half-width.** The parameter half-width whose chord along
+the unit-circle arc is the excision radius `ε`.
+
+The chord identity `2·sin(δ·π/12) = ε` holds throughout `|ε| ≤ 2`, the range on which
+`Real.arcsin` inverts the sine, and fails beyond it because `Real.arcsin` saturates.
+`fdBoundaryArcExcisionHalfWidth_pos_and_lt_one_and_two_mul_sin_eq` nonetheless assumes the narrower
+`0 < ε < 2·sin(π/12)`: that is the range the excision arguments need, because it also places
+the half-width strictly between `0` and `1`, inside the corner's own arc window. -/
+noncomputable def fdBoundaryArcExcisionHalfWidth (ε : ℝ) : ℝ := 12 / Real.pi * Real.arcsin (ε / 2)
+
+/-- The chord-matched excision half-width, unfolded. -/
+@[simp] lemma fdBoundaryArcExcisionHalfWidth_def (ε : ℝ) :
+    fdBoundaryArcExcisionHalfWidth ε = 12 / Real.pi * Real.arcsin (ε / 2) := (rfl)
+
+/-- **The chord-matched excision half-width does what it is for.** For an excision radius `ε`
+below the corner chord `2·sin(π/12)`, the half-width lies strictly between `0` and `1` and
+reproduces `ε` as its own chord: `2·sin(δ·π/12) = ε`.
+
+This is the trigonometric content shared by the excision constructions at `i`, at `ρ` and at
+`ρ + 1`; it needs no upper bound on `ε` beyond the chord bound. -/
+lemma fdBoundaryArcExcisionHalfWidth_pos_and_lt_one_and_two_mul_sin_eq {ε : ℝ} (hε : 0 < ε)
+    (hε₃ : ε < 2 * Real.sin (Real.pi / 12)) :
+    0 < fdBoundaryArcExcisionHalfWidth ε ∧ fdBoundaryArcExcisionHalfWidth ε < 1 ∧
+      2 * Real.sin (fdBoundaryArcExcisionHalfWidth ε * (Real.pi / 12)) = ε := by
+  rw [fdBoundaryArcExcisionHalfWidth_def]
+  have hπ := Real.pi_pos
+  have hsin1 : Real.sin (Real.pi / 12) ≤ 1 := Real.sin_le_one _
+  have harc_pos : 0 < Real.arcsin (ε / 2) := Real.arcsin_pos.mpr (by linarith)
+  have harc_lt : Real.arcsin (ε / 2) < Real.pi / 12 := by
+    have h1 : Real.arcsin (ε / 2) < Real.arcsin (Real.sin (Real.pi / 12)) :=
+      Real.arcsin_lt_arcsin (by linarith) (by linarith) hsin1
+    rwa [Real.arcsin_sin (by linarith) (by linarith)] at h1
+  refine ⟨by positivity, ?_, ?_⟩
+  · rw [div_mul_eq_mul_div, div_lt_one hπ]
+    linarith
+  · have hδπ : 12 / Real.pi * Real.arcsin (ε / 2) * (Real.pi / 12) = Real.arcsin (ε / 2) := by
+      field_simp
+    rw [hδπ, Real.sin_arcsin (by linarith) (by linarith)]
+    ring
+
 
 end ModularForm
-
 end TauCeti
 
 end

@@ -28,10 +28,10 @@ the hyperplanes of vectors of invertible norm. The orthogonal group is the targe
 twisted-conjugation homomorphism out of the Pin group, so it is the object the Pin/Spin double
 covers are stated against, and the reflections are the generators an eventual Cartan-Dieudonné
 theorem factors an orthogonal automorphism into. The structural and reflection declarations below
-hold over an arbitrary commutative ring; only the final equal-norm dichotomy assumes a field in
-which `2` is nonzero. The characteristic restriction is not incidental: in characteristic two
-`polar Q v v = 2 • Q v` vanishes, so `reflection Q v` fixes `v` instead of negating it and is a
-transvection rather than a reflection in `v ^ ⊥`.
+hold over an arbitrary commutative ring. The equal-norm dichotomy and fixed-subspace correction
+assume a field in which `2` is nonzero. The characteristic restriction is not incidental: in
+characteristic two `polar Q v v = 2 • Q v` vanishes, so `reflection Q v` fixes `v` instead of
+negating it and is a transvection rather than a reflection in `v ^ ⊥`.
 
 ## Main definitions
 
@@ -40,6 +40,10 @@ transvection rather than a reflection in `v ^ ⊥`.
 * `TauCeti.QuadraticMap.specialOrthogonalGroup Q`: its determinant-one subgroup.
 * `TauCeti.QuadraticMap.reflection Q v`: the reflection in the hyperplane orthogonal to a vector `v`
   with `Q v` invertible, built from Mathlib's `Module.reflection`.
+* `TauCeti.QuadraticMap.reflectionOrthogonal Q v`: the same reflection bundled as an element of
+  `orthogonalGroup Q`, so that statements about products of reflections and about the ranges of the
+  Pin and Spin actions can name it. `TauCeti.QuadraticMap.reflectionOrthogonal_mul_self` and
+  `TauCeti.QuadraticMap.reflectionOrthogonal_inv` are its group-level involution facts.
 
 ## Main results
 
@@ -63,6 +67,9 @@ transvection rather than a reflection in `v ^ ⊥`.
   of, under hypotheses (a field of characteristic not two, a nondegenerate form, finite dimension)
   that are not assumed here, and the image of the Pin group's generating vectors under twisted
   conjugation.
+* `TauCeti.QuadraticMap.exists_mem_subgroup_mul_eqOn_sup_span_singleton_of_reflection_mem`: a
+  subgroup containing the invertible-norm reflections supplies the one-step fixed-subspace
+  correction used by Cartan--Dieudonne induction.
 * `TauCeti.QuadraticMap.specialOrthogonalGroup_normal`: `SO(Q)` is normal in `O(Q)`, being the
   kernel of the determinant restricted there.
 
@@ -76,8 +83,8 @@ subtraction in `M` and `N`, since `QuadraticMap.polar` is stated for `[AddCommGr
 [AddCommGroup N]`, but still no more than a `CommSemiring`; the determinant needs `M` to be an
 additive group over a `CommRing`, and the
 reflections need to divide by `Q v` and so are stated for a `QuadraticForm R M`, that is, for
-`N = R`. The closing Cartan--Dieudonne dichotomy additionally assumes a field, a nonzero common
-quadratic value, and `2 ≠ 0`.
+`N = R`. The fixed-subspace correction assumes a field and `2 ≠ 0`; the closing
+Cartan--Dieudonne dichotomy assumes a field, a nonzero common quadratic value, and `2 ≠ 0`.
 
 ## References
 
@@ -122,8 +129,12 @@ variable {Q : QuadraticMap R M N}
 theorem mem_orthogonalGroup_iff {f : M ≃ₗ[R] M} :
     f ∈ orthogonalGroup Q ↔ ∀ m, Q (f m) = Q m := Iff.rfl
 
-/-- The defining property of an orthogonal automorphism, in the form in which it rewrites. -/
-@[simp]
+/-- The defining property of an orthogonal automorphism, in the form in which it rewrites.
+
+This is deliberately not a `simp` lemma: its left-hand side `Q (f m)` matches every application
+of every quadratic map to every linear equivalence, and discharging the side goal
+`f ∈ orthogonalGroup Q` unfolds through `mem_orthogonalGroup_iff` to `∀ m, Q (f m) = Q m`, which
+this lemma applies to again. Name it explicitly in the `simp` calls that want it. -/
 theorem map_app_of_mem_orthogonalGroup {f : M ≃ₗ[R] M} (hf : f ∈ orthogonalGroup Q) (m : M) :
     Q (f m) = Q m := hf m
 
@@ -350,6 +361,34 @@ theorem reflection_mem_orthogonalGroup : reflection Q v ∈ orthogonalGroup Q :=
     ring
   rw [hexp, hcv, add_sub_cancel_right]
 
+/-- The reflection in a vector of invertible norm, as an element of the orthogonal group.
+
+`reflection_mem_orthogonalGroup` gives the membership; this bundles it, so that statements about
+reflections inside `orthogonalGroup Q` — products of reflections, membership in the range of the
+Pin and Spin actions, generation results — can name the group element instead of repeating the
+anonymous constructor. -/
+noncomputable def reflectionOrthogonal : orthogonalGroup Q :=
+  ⟨reflection Q v, reflection_mem_orthogonalGroup Q v⟩
+
+@[simp]
+theorem coe_reflectionOrthogonal :
+    (reflectionOrthogonal Q v : M ≃ₗ[R] M) = reflection Q v := by
+  simp only [reflectionOrthogonal]
+
+/-- The bundled reflection is an involution, so it has order dividing two in the orthogonal
+group. -/
+@[simp]
+theorem reflectionOrthogonal_mul_self :
+    reflectionOrthogonal Q v * reflectionOrthogonal Q v = 1 :=
+  Subtype.ext <| by
+    simp only [Subgroup.coe_mul, coe_reflectionOrthogonal, Subgroup.coe_one, reflection_mul_self]
+
+/-- The bundled reflection is its own inverse in the orthogonal group. -/
+@[simp]
+theorem reflectionOrthogonal_inv :
+    (reflectionOrthogonal Q v)⁻¹ = reflectionOrthogonal Q v :=
+  inv_eq_of_mul_eq_one_left (reflectionOrthogonal_mul_self Q v)
+
 end Reflection
 
 section CartanDieudonneStep
@@ -400,6 +439,107 @@ theorem isUnit_sub_or_add_of_map_eq (x y : V) (hxy : Q x = Q y) (hy : Q y ≠ 0)
   · exact Or.inl hsub
 
 end Field
+
+section FixedSubspace
+
+variable {K : Type u} {V : Type v} [Field K] [AddCommGroup V] [Module K V]
+variable (Q : QuadraticForm K V) [NeZero (2 : K)]
+
+omit [NeZero (2 : K)] in
+private theorem linearEquiv_eqOn_sup_span_singleton
+    (f : V ≃ₗ[K] V) (W : Submodule K V) (x : V)
+    (hW : ∀ w ∈ W, f w = w) (hx : f x = x) :
+    ∀ y ∈ W ⊔ Submodule.span K {x}, f y = y := by
+  apply LinearMap.eqOn_sup (f := f) (g := LinearEquiv.refl K V)
+  · intro w hw
+    simpa only [LinearEquiv.refl_apply] using hW w hw
+  · apply LinearMap.eqOn_span'
+    intro y hy
+    simp only [Set.mem_singleton_iff] at hy
+    subst y
+    -- Remove the identity-equivalence coercion introduced by `eqOn_span'`.
+    change f x = x
+    exact hx
+
+/-- Let `H` be a subgroup of the orthogonal group containing every reflection in a vector of
+invertible norm. If `g` fixes a subspace `W` pointwise and `x` is anisotropic and orthogonal to
+`W`, an element of `H` can be multiplied into `g` so that the product fixes
+`W ⊔ K ∙ x` pointwise. -/
+theorem exists_mem_subgroup_mul_eqOn_sup_span_singleton_of_reflection_mem
+    (H : Subgroup (QuadraticMap.orthogonalGroup Q))
+    (hreflection : ∀ (v : V) [Invertible (Q v)],
+      QuadraticMap.reflectionOrthogonal Q v ∈ H)
+    (g : QuadraticMap.orthogonalGroup Q) (W : Submodule K V)
+    (hfix : ∀ w ∈ W, ((g : V ≃ₗ[K] V) w) = w)
+    (x : V) [Invertible (Q x)]
+    (hx : ∀ w ∈ W, Q.IsOrtho x w) :
+    ∃ r : QuadraticMap.orthogonalGroup Q, r ∈ H ∧
+      ∀ y ∈ W ⊔ Submodule.span K {x},
+        (((r * g : QuadraticMap.orthogonalGroup Q) : V ≃ₗ[K] V) y) = y := by
+  have hmap : Q ((g : V ≃ₗ[K] V) x) = Q x :=
+    QuadraticMap.map_app_of_mem_orthogonalGroup g.2 x
+  have hgx : ∀ w ∈ W, Q.IsOrtho ((g : V ≃ₗ[K] V) x) w := by
+    intro w hw
+    rw [← hfix w hw]
+    exact (QuadraticMap.isOrtho_iff_of_mem_orthogonalGroup g.2 x w).mpr (hx w hw)
+  have hsub : ∀ w ∈ W, Q.IsOrtho ((g : V ≃ₗ[K] V) x - x) w := by
+    intro w hw
+    apply QuadraticMap.isOrtho_polarBilin.mp
+    simp only [QuadraticMap.polarBilin_apply_apply, QuadraticMap.polar_sub_left,
+      (hgx w hw).polar_eq_zero, (hx w hw).polar_eq_zero, sub_self]
+  have hadd : ∀ w ∈ W, Q.IsOrtho ((g : V ≃ₗ[K] V) x + x) w := by
+    intro w hw
+    apply QuadraticMap.isOrtho_polarBilin.mp
+    simp only [QuadraticMap.polarBilin_apply_apply, QuadraticMap.polar_add_left,
+      (hgx w hw).polar_eq_zero, (hx w hw).polar_eq_zero, add_zero]
+  rcases QuadraticMap.isUnit_sub_or_add_of_map_eq Q _ x hmap
+      (isUnit_of_invertible (Q x)).ne_zero with hsubUnit | haddUnit
+  · let : Invertible (Q ((g : V ≃ₗ[K] V) x - x)) := hsubUnit.invertible
+    let r : QuadraticMap.orthogonalGroup Q :=
+      QuadraticMap.reflectionOrthogonal Q ((g : V ≃ₗ[K] V) x - x)
+    refine ⟨r, hreflection _, ?_⟩
+    apply linearEquiv_eqOn_sup_span_singleton _ W x
+    · intro w hw
+      -- Expose the reflection underlying the subgroup product before applying its pointwise API.
+      change QuadraticMap.reflection Q ((g : V ≃ₗ[K] V) x - x)
+        ((g : V ≃ₗ[K] V) w) = w
+      rw [hfix w hw]
+      apply QuadraticMap.reflection_apply_of_isOrtho
+      exact hsub w hw
+    · -- Expose the reflection underlying the subgroup product at the new generator.
+      change QuadraticMap.reflection Q ((g : V ≃ₗ[K] V) x - x)
+        ((g : V ≃ₗ[K] V) x) = x
+      exact QuadraticMap.reflection_sub_apply_eq_of_map_eq Q _ x hmap
+  · have : Invertible (Q ((g : V ≃ₗ[K] V) x - -x)) := by
+      simpa only [sub_neg_eq_add] using haddUnit.invertible
+    have hadd' : ∀ w ∈ W, Q.IsOrtho ((g : V ≃ₗ[K] V) x - -x) w := by
+      simpa only [sub_neg_eq_add] using hadd
+    let r₁ : QuadraticMap.orthogonalGroup Q :=
+      QuadraticMap.reflectionOrthogonal Q x
+    let r₂ : QuadraticMap.orthogonalGroup Q :=
+      QuadraticMap.reflectionOrthogonal Q ((g : V ≃ₗ[K] V) x - -x)
+    refine ⟨r₁ * r₂, H.mul_mem (hreflection x) (hreflection _), ?_⟩
+    apply linearEquiv_eqOn_sup_span_singleton _ W x
+    · intro w hw
+      -- Expose the two reflections underlying the subgroup product.
+      change QuadraticMap.reflection Q x
+        (QuadraticMap.reflection Q ((g : V ≃ₗ[K] V) x - -x)
+          ((g : V ≃ₗ[K] V) w)) = w
+      rw [hfix w hw]
+      have hfix₂ : QuadraticMap.reflection Q ((g : V ≃ₗ[K] V) x - -x) w = w :=
+        QuadraticMap.reflection_apply_of_isOrtho Q _
+        (hadd' w hw)
+      rw [hfix₂]
+      exact QuadraticMap.reflection_apply_of_isOrtho Q _
+        (hx w hw)
+    · -- Expose the two reflections underlying the subgroup product at the new generator.
+      change QuadraticMap.reflection Q x
+        (QuadraticMap.reflection Q ((g : V ≃ₗ[K] V) x - -x)
+          ((g : V ≃ₗ[K] V) x)) = x
+      rw [QuadraticMap.reflection_sub_apply_eq_of_map_eq Q _ (-x)
+        (hmap.trans (Q.map_neg x).symm), map_neg, QuadraticMap.reflection_apply_self, neg_neg]
+
+end FixedSubspace
 
 end CartanDieudonneStep
 
