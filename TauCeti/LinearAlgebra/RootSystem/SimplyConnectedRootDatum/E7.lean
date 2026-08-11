@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.LinearAlgebra.RootSystem.DynkinType
+public import Mathlib.Data.Fin.Tuple.Embedding
 
 public section
 
@@ -93,35 +94,32 @@ namespace DynkinType
       ![2, 2, 3, 4, 3, 2, 1]]]
     ⟨(i : ℕ) / 9, by omega⟩ ⟨(i : ℕ) % 9, by omega⟩
 
-private lemma e7PositiveCoroot_injective : Function.Injective e7PositiveCoroot := by decide
+private def e7PositiveCorootEmbedding : Fin 63 ↪ (Fin 7 → ℤ) where
+  toFun := e7PositiveCoroot
+  inj' := by decide
+
 private lemma e7PositiveCoroot_ne_neg (i j : Fin 63) :
     e7PositiveCoroot i ≠ -e7PositiveCoroot j := by
   fin_cases i <;> fin_cases j <;> decide
 
+private def e7NegativeCorootEmbedding : Fin 63 ↪ (Fin 7 → ℤ) where
+  toFun i := -e7PositiveCoroot i
+  inj' _ _ h := e7PositiveCorootEmbedding.injective (neg_injective h)
+
+private lemma e7Coroot_disjoint :
+    Disjoint (Set.range e7PositiveCorootEmbedding) (Set.range e7NegativeCorootEmbedding) := by
+  rw [Set.disjoint_range_iff]
+  exact e7PositiveCoroot_ne_neg
+
 /-- The 126 `E7` coroots in the simple-coroot basis, with positive roots followed by negatives. -/
-def e7Coroot : Fin 126 ↪ (Fin 7 → ℤ) where
-  toFun i := if hi : (i : ℕ) < 63 then e7PositiveCoroot ⟨i, hi⟩ else
-    -e7PositiveCoroot ⟨(i : ℕ) - 63, by omega⟩
-  inj' := by
-    intro i j hij
-    by_cases hi : (i : ℕ) < 63 <;> by_cases hj : (j : ℕ) < 63
-    · simp only [hi, hj, dite_true] at hij
-      apply Fin.ext
-      simpa using congrArg Fin.val (e7PositiveCoroot_injective hij)
-    · simp only [hi, hj, dite_true, dite_false] at hij
-      exact absurd hij (e7PositiveCoroot_ne_neg _ _)
-    · simp only [hi, hj, dite_true, dite_false] at hij
-      exact absurd hij.symm (e7PositiveCoroot_ne_neg _ _)
-    · simp only [hi, hj, dite_false, neg_inj] at hij
-      have h := congrArg Fin.val (e7PositiveCoroot_injective hij)
-      apply Fin.ext
-      simp only at h ⊢
-      omega
+def e7Coroot : Fin 126 ↪ (Fin 7 → ℤ) :=
+  Fin.Embedding.append e7Coroot_disjoint
 
 /-- Evaluate an `E7` coroot through the exposed table of positive coroots. -/
 @[grind =] theorem e7Coroot_apply (i : Fin 126) :
     e7Coroot i = if hi : (i : ℕ) < 63 then e7PositiveCoroot ⟨i, hi⟩ else
-      -e7PositiveCoroot ⟨(i : ℕ) - 63, by omega⟩ := (rfl)
+      -e7PositiveCoroot ⟨(i : ℕ) - 63, by omega⟩ := by
+  fin_cases i <;> decide
 
 /-- The 126 `E7` roots in the fundamental-weight basis. -/
 def e7Root : Fin 126 ↪ (Fin 7 → ℤ) where
