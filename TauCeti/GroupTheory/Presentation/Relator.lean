@@ -130,6 +130,35 @@ def toFreeGroup {α : Type*} : Relator α → FreeGroup α
   | .pow r n => r.toFreeGroup ^ n
   | .comm r s => ⁅r.toFreeGroup, s.toFreeGroup⁆
 
+/-- Interpretation of a generator. -/
+@[simp]
+theorem toFreeGroup_gen {α : Type*} (x : α) : (Relator.gen x).toFreeGroup = FreeGroup.of x := by
+  rw [toFreeGroup]
+
+/-- Interpretation of an inverse. -/
+@[simp]
+theorem toFreeGroup_inv {α : Type*} (r : Relator α) :
+    (Relator.inv r).toFreeGroup = r.toFreeGroup⁻¹ := by
+  rw [toFreeGroup]
+
+/-- Interpretation of a product. -/
+@[simp]
+theorem toFreeGroup_mul {α : Type*} (r s : Relator α) :
+    (Relator.mul r s).toFreeGroup = r.toFreeGroup * s.toFreeGroup := by
+  rw [toFreeGroup]
+
+/-- Interpretation of a natural power. -/
+@[simp]
+theorem toFreeGroup_pow {α : Type*} (r : Relator α) (n : ℕ) :
+    (Relator.pow r n).toFreeGroup = r.toFreeGroup ^ n := by
+  rw [toFreeGroup]
+
+/-- Interpretation of a commutator. -/
+@[simp]
+theorem toFreeGroup_comm {α : Type*} (r s : Relator α) :
+    (Relator.comm r s).toFreeGroup = ⁅r.toFreeGroup, s.toFreeGroup⁆ := by
+  rw [toFreeGroup]
+
 /-- **The compiled word denotes the direct interpretation of the relator expression.**
 
 Consequently, a reviewer may check the structured `Relator` against a published presentation while

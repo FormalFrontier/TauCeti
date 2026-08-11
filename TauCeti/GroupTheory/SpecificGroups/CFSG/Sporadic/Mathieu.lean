@@ -24,6 +24,13 @@ number of them, against the length published by the source. The fourth is that e
 is cyclically reduced, which is what makes the letter count comparable with a published length: both
 sources measure length after free and cyclic reduction of each relator.
 
+The rows themselves are sealed definitions, so each also carries the equation that characterizes it,
+spelling out its transcribed relator expressions with their generator indices. Together with
+`TauCeti.GroupPresentation.relators_def` and `TauCeti.GroupPresentation.mem_relatorSet_iff`, and
+with the interpretation equations of `TauCeti.Relator.toFreeGroup`, that equation determines the
+compiled words and the relations defining the presented group, so a consumer downstream of this
+file reasons about a row without unfolding it.
+
 ## The manifest rows
 
 | Name | Source | Locator | Generators | Relators | Length |
@@ -163,6 +170,27 @@ consumer see that it is a two-generator presentation. -/
 theorem m11Presentation_generatorNames : m11Presentation.generatorNames = ["a", "b"] := by
   simp [m11Presentation]
 
+/-- The relator expressions transcribed for `M₁₁`, with their generator indices written out.
+
+The row's body is sealed, so this is the equation that characterizes it: with
+`TauCeti.GroupPresentation.relators_def` it determines the compiled words, and with
+`TauCeti.GroupPresentation.mem_relatorSet_iff` it determines the relations defining
+`TauCeti.GroupPresentation.Group`, so a consumer never has to unfold the row. Index `0` is the
+generator `a` and index `1` is `b`, and the bounds come from
+`TauCeti.Sporadic.m11Presentation_generatorNames`. -/
+@[simp]
+theorem m11Presentation_transcribed :
+    m11Presentation.transcribed =
+      [ -- b A A A b A b b b
+        .gen ⟨1, by simp⟩ ⬝ .pow (.inv (.gen ⟨0, by simp⟩)) 3 ⬝ .gen ⟨1, by simp⟩ ⬝
+          .inv (.gen ⟨0, by simp⟩) ⬝ .pow (.gen ⟨1, by simp⟩) 3,
+        -- b a B A B A b a B a
+        .gen ⟨1, by simp⟩ ⬝ .gen ⟨0, by simp⟩ ⬝ .inv (.gen ⟨1, by simp⟩) ⬝
+          .inv (.gen ⟨0, by simp⟩) ⬝ .inv (.gen ⟨1, by simp⟩) ⬝ .inv (.gen ⟨0, by simp⟩) ⬝
+          .gen ⟨1, by simp⟩ ⬝ .gen ⟨0, by simp⟩ ⬝ .inv (.gen ⟨1, by simp⟩) ⬝
+          .gen ⟨0, by simp⟩ ] := by
+  simp [m11Presentation]
+
 /-- The generator and relator counts recorded for `M₁₁` agree with the transcribed data. -/
 theorem m11Presentation_matchesMetadata : m11Presentation.matchesMetadata := by decide
 
@@ -233,6 +261,21 @@ def m12Presentation : GroupPresentation where
 theorem m12Presentation_generatorNames : m12Presentation.generatorNames = ["a", "b"] := by
   simp [m12Presentation]
 
+/-- The relator expressions transcribed for `M₁₂`, with their generator indices written out; see
+`TauCeti.Sporadic.m11Presentation_transcribed` for what this equation is for. -/
+@[simp]
+theorem m12Presentation_transcribed :
+    m12Presentation.transcribed =
+      [ -- (B a)³
+        .pow (.inv (.gen ⟨1, by simp⟩) ⬝ .gen ⟨0, by simp⟩) 3,
+        -- a⁵ b⁶
+        .pow (.gen ⟨0, by simp⟩) 5 ⬝ .pow (.gen ⟨1, by simp⟩) 6,
+        -- a b b a B a a b a a b b
+        .gen ⟨0, by simp⟩ ⬝ .pow (.gen ⟨1, by simp⟩) 2 ⬝ .gen ⟨0, by simp⟩ ⬝
+          .inv (.gen ⟨1, by simp⟩) ⬝ .pow (.gen ⟨0, by simp⟩) 2 ⬝ .gen ⟨1, by simp⟩ ⬝
+          .pow (.gen ⟨0, by simp⟩) 2 ⬝ .pow (.gen ⟨1, by simp⟩) 2 ] := by
+  simp [m12Presentation]
+
 /-- The generator and relator counts recorded for `M₁₂` agree with the transcribed data. -/
 theorem m12Presentation_matchesMetadata : m12Presentation.matchesMetadata := by decide
 
@@ -300,6 +343,22 @@ def m22Presentation : GroupPresentation where
 `TauCeti.Sporadic.m11Presentation_generatorNames`. -/
 @[simp]
 theorem m22Presentation_generatorNames : m22Presentation.generatorNames = ["a", "b"] := by
+  simp [m22Presentation]
+
+/-- The relator expressions transcribed for `M₂₂`, with their generator indices written out; see
+`TauCeti.Sporadic.m11Presentation_transcribed` for what this equation is for. -/
+@[simp]
+theorem m22Presentation_transcribed :
+    m22Presentation.transcribed =
+      [ -- a a a a b A b A b
+        .pow (.gen ⟨0, by simp⟩) 4 ⬝ .gen ⟨1, by simp⟩ ⬝ .inv (.gen ⟨0, by simp⟩) ⬝
+          .gen ⟨1, by simp⟩ ⬝ .inv (.gen ⟨0, by simp⟩) ⬝ .gen ⟨1, by simp⟩,
+        -- a a b A B a b b A B
+        .pow (.gen ⟨0, by simp⟩) 2 ⬝ .gen ⟨1, by simp⟩ ⬝ .inv (.gen ⟨0, by simp⟩) ⬝
+          .inv (.gen ⟨1, by simp⟩) ⬝ .gen ⟨0, by simp⟩ ⬝ .pow (.gen ⟨1, by simp⟩) 2 ⬝
+          .inv (.gen ⟨0, by simp⟩) ⬝ .inv (.gen ⟨1, by simp⟩),
+        -- b¹¹
+        .pow (.gen ⟨1, by simp⟩) 11 ] := by
   simp [m22Presentation]
 
 /-- The generator and relator counts recorded for `M₂₂` agree with the transcribed data. -/
