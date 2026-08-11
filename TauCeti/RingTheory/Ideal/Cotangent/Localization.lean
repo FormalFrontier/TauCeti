@@ -44,79 +44,33 @@ variable {R Rₚ : Type*} [CommRing R]
 variable (p : Ideal R) [p.IsMaximal]
 variable [CommRing Rₚ] [Algebra R Rₚ] [IsLocalization.AtPrime Rₚ p]
 
-/-- The map `p / p² → pRₚ / (pRₚ)²` induced by localization at the maximal ideal `p`.
-
-The target is written using the unique maximal ideal of the local ring `Rₚ`; this ideal is the
-extension of `p` by `IsLocalization.AtPrime.map_eq_maximalIdeal`. -/
-private noncomputable def cotangentLocalizationMap :
+/-- The quotient-ring localization equivalence restricted to the cotangent ideals. -/
+private noncomputable def cotangentLocalizationIdealEquiv :
     letI := IsLocalization.AtPrime.isLocalRing Rₚ p
-    p.Cotangent →ₗ[R] (maximalIdeal Rₚ).Cotangent := by
+    p.cotangentIdeal ≃ₗ[R] (maximalIdeal Rₚ).cotangentIdeal := by
   letI := IsLocalization.AtPrime.isLocalRing Rₚ p
-  exact Ideal.mapCotangent p (maximalIdeal Rₚ) (Algebra.ofId R Rₚ) (by
-    intro x hx
-    rw [Ideal.mem_comap, Algebra.ofId_apply, ← Ideal.mem_under,
-      IsLocalization.AtPrime.under_maximalIdeal Rₚ p]
-    exact hx)
-
-/-- The localization map on cotangent spaces sends the class of `x ∈ p` to the class of its
-image in the maximal ideal of `Rₚ`. -/
-@[simp]
-private theorem cotangentLocalizationMap_toCotangent (x : p) :
-    letI := IsLocalization.AtPrime.isLocalRing Rₚ p
-    cotangentLocalizationMap p (p.toCotangent x) =
-      (maximalIdeal Rₚ).toCotangent
-        ⟨algebraMap R Rₚ x, by
-          rw [← Ideal.mem_under, IsLocalization.AtPrime.under_maximalIdeal Rₚ p]
-          exact x.2⟩ := by
-  let _ := IsLocalization.AtPrime.isLocalRing Rₚ p
-  exact Ideal.mapCotangent_toCotangent p (maximalIdeal Rₚ) (Algebra.ofId R Rₚ) _ x
-
-/-- Localization at a maximal ideal identifies its cotangent space with the cotangent space of
-the resulting local ring. -/
-private theorem cotangentLocalizationMap_bijective :
-    letI := IsLocalization.AtPrime.isLocalRing Rₚ p
-    Function.Bijective (cotangentLocalizationMap p :
-      p.Cotangent → (maximalIdeal Rₚ).Cotangent) := by
-  let _ := IsLocalization.AtPrime.isLocalRing Rₚ p
-  constructor
-  · rw [← LinearMap.ker_eq_bot, LinearMap.ker_eq_bot']
-    intro x hx
-    obtain ⟨x, rfl⟩ := p.toCotangent_surjective x
-    simp only [cotangentLocalizationMap_toCotangent, Ideal.toCotangent_eq_zero] at hx ⊢
-    rw [← Ideal.mem_under, IsLocalization.AtPrime.under_maximalIdeal_pow p Rₚ 2] at hx
-    exact hx
-  · intro y
-    obtain ⟨y, rfl⟩ := (maximalIdeal Rₚ).toCotangent_surjective y
-    obtain ⟨x, s, hxs⟩ := IsLocalization.exists_mk'_eq p.primeCompl y.1
-    have hx : x ∈ p := by
-      rw [← IsLocalization.AtPrime.mk'_mem_maximal_iff Rₚ p x s, hxs]
-      exact y.2
-    obtain ⟨r, hr⟩ := Ideal.Quotient.mk_surjective
-      ((Ideal.Quotient.mk p (s : R))⁻¹)
-    refine ⟨p.toCotangent ⟨r * x, p.mul_mem_left r hx⟩, ?_⟩
-    rw [cotangentLocalizationMap_toCotangent, Ideal.toCotangent_eq]
-    rw [← hxs]
-    apply (Ideal.unit_mul_mem_iff_mem _ (IsLocalization.map_units Rₚ s)).mp
-    rw [mul_sub, ← map_mul, mul_comm (algebraMap R Rₚ (s : R)),
-      IsLocalization.mk'_spec, ← map_sub]
-    rw [← Ideal.mem_under, IsLocalization.AtPrime.under_maximalIdeal_pow p Rₚ 2]
-    have hs0 : Ideal.Quotient.mk p (s : R) ≠ 0 := by
-      intro hs
-      rw [Ideal.Quotient.eq_zero_iff_mem] at hs
-      exact Ideal.mem_primeCompl_iff.mp s.2 hs
-    have hsr : (s : R) * r - 1 ∈ p := by
-      rw [← Ideal.Quotient.eq_zero_iff_mem, map_sub, map_mul, hr,
-        mul_inv_cancel₀ hs0]
-      simp
-    convert Ideal.mul_mem_mul hsr hx using 1 <;> ring
+  let e := (IsLocalization.AtPrime.equivQuotMaximalIdealPow p Rₚ 2).toLinearEquiv
+  exact e.ofSubmodules (p.cotangentIdeal.restrictScalars R)
+    ((maximalIdeal Rₚ).cotangentIdeal.restrictScalars R) (by
+    ext z
+    rw [Submodule.mem_map_equiv]
+    obtain ⟨x, hx⟩ := Ideal.Quotient.mk_surjective (e.symm z)
+    rw [← e.apply_symm_apply z, e.symm_apply_apply, ← hx]
+    change (Ideal.Quotient.mk (p ^ 2) x ∈ p.cotangentIdeal) ↔
+      (IsLocalization.AtPrime.equivQuotMaximalIdealPow p Rₚ 2
+        (Ideal.Quotient.mk (p ^ 2) x) ∈ (maximalIdeal Rₚ).cotangentIdeal)
+    rw [IsLocalization.AtPrime.equivQuotMaximalIdealPow_apply_mk,
+      Ideal.mk_mem_cotangentIdeal, Ideal.mk_mem_cotangentIdeal,
+      ← Ideal.mem_under, IsLocalization.AtPrime.under_maximalIdeal Rₚ p])
 
 /-- The canonical linear equivalence `p / p² ≃ pRₚ / (pRₚ)²` induced by localization. -/
 noncomputable def cotangentLocalizationEquiv :
     letI := IsLocalization.AtPrime.isLocalRing Rₚ p
     p.Cotangent ≃ₗ[R] (maximalIdeal Rₚ).Cotangent := by
   letI := IsLocalization.AtPrime.isLocalRing Rₚ p
-  exact LinearEquiv.ofBijective (cotangentLocalizationMap p)
-    (cotangentLocalizationMap_bijective p)
+  exact p.cotangentEquivIdeal |>.trans <|
+    (cotangentLocalizationIdealEquiv p).trans <|
+      (maximalIdeal Rₚ).cotangentEquivIdeal.symm.restrictScalars R
 
 /-- On a class represented by `x ∈ p`, the cotangent localization equivalence is induced by the
 ring localization map. -/
@@ -129,7 +83,18 @@ theorem cotangentLocalizationEquiv_toCotangent (x : p) :
           rw [← Ideal.mem_under, IsLocalization.AtPrime.under_maximalIdeal Rₚ p]
           exact x.2⟩ := by
   let _ := IsLocalization.AtPrime.isLocalRing Rₚ p
-  exact cotangentLocalizationMap_toCotangent p x
+  change ((maximalIdeal Rₚ).cotangentEquivIdeal.symm.restrictScalars R)
+      (cotangentLocalizationIdealEquiv p (p.cotangentEquivIdeal (p.toCotangent x))) = _
+  apply (maximalIdeal Rₚ).cotangentEquivIdeal.injective
+  change (maximalIdeal Rₚ).cotangentEquivIdeal
+      ((maximalIdeal Rₚ).cotangentEquivIdeal.symm
+        (cotangentLocalizationIdealEquiv p (p.cotangentEquivIdeal (p.toCotangent x)))) = _
+  rw [LinearEquiv.apply_symm_apply]
+  apply Subtype.ext
+  simp only [cotangentLocalizationIdealEquiv]
+  change (IsLocalization.AtPrime.equivQuotMaximalIdealPow p Rₚ 2)
+      (Ideal.Quotient.mk _ x) = Ideal.Quotient.mk _ (algebraMap R Rₚ x)
+  exact IsLocalization.AtPrime.equivQuotMaximalIdealPow_apply_mk p Rₚ 2 x
 
 /-- The cotangent localization equivalence is semilinear for the canonical equivalence between
 the residue field `R / p` and the residue field of `Rₚ`. -/
