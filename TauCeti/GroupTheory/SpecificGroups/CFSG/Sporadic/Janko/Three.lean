@@ -12,8 +12,9 @@ public import TauCeti.GroupTheory.Presentation.GroupPresentation
 
 This file carries the `J₃` row of the sporadic presentation data required by milestone S1 of
 `TauCetiRoadmap/CFSGStatement/README.md`. It records the ATLAS version 3 presentation of the third
-Janko group on its standard generators `a` and `b` as a `TauCeti.GroupPresentation`, together with
-the source, the generator convention, transcription notes, and the expected counts.
+Janko group on its standard generators `a` and `b` as a `TauCeti.GroupPresentation`; the ATLAS page
+records no individual contributor for this presentation. The data includes the source, the
+generator convention, transcription notes, and the expected counts.
 
 Writing `s₁ = ab` and `s₋₁ = ab⁻¹` for the two syllables that occur, the eight transcribed relators
 are
@@ -58,12 +59,13 @@ permutation development is unavailable for `J₃`, which that development does n
 
 ## Main definition
 
-* `TauCeti.Sporadic.j3Presentation`: the ATLAS finite presentation of `J₃`.
+* `TauCeti.Sporadic.j3Presentation`: the ATLAS finite presentation of `J₃`, for which the ATLAS
+  records no individual contributor.
 
 ## References
 
 * R. A. Wilson, R. A. Parker, J. N. Bray et al., *ATLAS of Finite Group Representations*,
-  version 3, presentation `J3G1-P1`,
+  version 3, presentation `J3G1-P1`, with no individual contributor recorded,
   <https://brauer.maths.qmul.ac.uk/Atlas/v3/pres/J3G1-P1>, with the relator list and the
   demonstration of correctness in the Magma source file
   <https://brauer.maths.qmul.ac.uk/Atlas/spor/J3/mag/J3G1-P1.M>.
@@ -79,10 +81,6 @@ private abbrev b : Relator (Fin 2) := .gen 1
 
 @[inherit_doc Relator.mul]
 local infixl:70 " ⬝ " => Relator.mul
-
-/-- The source's commutator `[r, s] = r⁻¹ s⁻¹ r s`, which is `⁅r⁻¹, s⁻¹⁆` in Mathlib's
-convention. -/
-private abbrev sourceComm (r s : Relator (Fin 2)) : Relator (Fin 2) := .comm (.inv r) (.inv s)
 
 /-- The syllable `a * b`. -/
 private abbrev ab1 : Relator (Fin 2) := a ⬝ b
@@ -101,7 +99,7 @@ private abbrev seventhWord : Relator (Fin 2) :=
     abNeg1 ⬝ .pow (ab1 ⬝ abNeg1) 3
 
 /-- The ATLAS version 3 finite presentation of the third Janko group `J₃` on its standard
-generators `a` and `b`.
+generators `a` and `b`; the ATLAS records no individual contributor for this presentation.
 
 The ATLAS lists this as a full presentation of the abstract group, separately from the
 semi-presentation used to recognize standard generators inside a group already constructed. No
@@ -110,7 +108,7 @@ cited generators and relations. -/
 def j3Presentation : GroupPresentation where
   generatorNames := ["a", "b"]
   source := "R. A. Wilson, R. A. Parker, J. N. Bray et al., ATLAS of Finite Group \
-    Representations, version 3"
+    Representations, version 3; individual presentation contributor not recorded"
   sourceLocator := "J3G1-P1, https://brauer.maths.qmul.ac.uk/Atlas/v3/pres/J3G1-P1, with the \
     relator list and the demonstration of correctness in the Magma source file \
     https://brauer.maths.qmul.ac.uk/Atlas/spor/J3/mag/J3G1-P1.M"
@@ -118,9 +116,10 @@ def j3Presentation : GroupPresentation where
     b in class 3A with ab of order 19, in that order, so index 0 is a and index 1 is b. Products \
     are read left to right, negative exponents denote inverses, and [r,s] denotes r^-1 s^-1 r s."
   transcriptionNotes := "The eight words of the source's relator list are stored as eight \
-    relators equal to the identity, in the order of the Magma file; the presentation page \
-    displays the same eight words with (x,y)^9 and (x*y)^19 interchanged. No word is marked \
-    redundant in either rendering. The source demonstrates correctness by the coset enumeration \
+    relators equal to the identity, in the order of the Magma file; the ATLAS page records no \
+    individual contributor for this presentation. The presentation page displays the same eight \
+    words with (x,y)^9 and (x*y)^19 interchanged. No word is marked redundant in either rendering. \
+    The source demonstrates correctness by the coset enumeration \
     19*Index(G,K1) over the cyclic subgroup K1 = <a*b> of order 19, returning the order 50232960 \
     of J3. GAP 4.15.1 reproduces that enumeration from the eight compiled words, obtaining the \
     index 2643840, and checks that the same eight words vanish on the ATLAS 6156-point standard \
@@ -132,7 +131,7 @@ def j3Presentation : GroupPresentation where
   transcribed :=
     [ .pow a 2,
       .pow b 3,
-      .pow (sourceComm a b) 9,
+      .pow (.comm (.inv a) (.inv b)) 9,
       .pow ab1 19,
       .pow (.pow ab1 6 ⬝ .pow abNeg1 5) 2,
       sixthWord,
