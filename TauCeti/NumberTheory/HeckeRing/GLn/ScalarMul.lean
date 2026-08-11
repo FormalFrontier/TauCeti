@@ -29,6 +29,8 @@ Chris Birkbeck), scalar row.
 
 * `HeckeRing.GLn.diagElem_const_mul` and `diagElem_mul_const`: `T(c, …, c) · T(b) = T(c·b)`
   and its mirror.
+* `HeckeRing.GLn.diagElem_const_pow`: `T(c, …, c)^k = T(c^k, …, c^k)`, the iterate of the
+  left-hand case.
 
 ## References
 
@@ -108,40 +110,9 @@ private lemma multiplicity_const_le_one (c : ℕ) (b : Fin n → ℕ)
 `T(c,...,c) · T(b) = T(c·b)`. -/
 @[simp]
 theorem diagElem_const_mul (c : ℕ) (hc : 0 < c) (b : Fin n → ℕ) (hb : ∀ i, 0 < b i) :
-    diagElem (fun _ : Fin n ↦ c) * diagElem b = diagElem ((fun _ ↦ c) * b) := by
-  classical
-  have hSC : HeckeCosetModule.structureConstants ℤ (SLnZ n) (SLnZ n) (SLnZ n)
-      (diagCoset fun _ : Fin n ↦ c).rep (diagCoset b).rep =
-      HeckeCosetModule.single ℤ (diagCoset ((fun _ ↦ c) * b)) 1 := by
-    ext A
-    rw [HeckeCosetModule.structureConstants_apply, HeckeCosetModule.single_apply]
-    split_ifs with h
-    · rw [← h]
-      have hne : multiplicity (SLnZ n) (SLnZ n) (SLnZ n)
-          (((diagCoset fun _ : Fin n ↦ c).rep : GL (Fin n) ℚ))
-          (((diagCoset b).rep : GL (Fin n) ℚ))
-          (((diagCoset ((fun _ ↦ c) * b)).rep : GL (Fin n) ℚ)) ≠ 0 := by
-        rw [← HeckeCoset.mem_image_mulMap_iff]
-        simp only [Finset.mem_image, Finset.mem_univ, true_and]
-        exact ⟨(Classical.arbitrary _, Classical.arbitrary _), mulMap_const_eq n c hc b hb _⟩
-      have hle := multiplicity_const_le_one n c b (diagCoset ((fun _ ↦ c) * b))
-      have : multiplicity (SLnZ n) (SLnZ n) (SLnZ n)
-          (((diagCoset fun _ : Fin n ↦ c).rep : GL (Fin n) ℚ))
-          (((diagCoset b).rep : GL (Fin n) ℚ))
-          (((diagCoset ((fun _ ↦ c) * b)).rep : GL (Fin n) ℚ)) = 1 := by omega
-      rw [this, Nat.cast_one]
-    · have hzero : multiplicity (SLnZ n) (SLnZ n) (SLnZ n)
-          (((diagCoset fun _ : Fin n ↦ c).rep : GL (Fin n) ℚ))
-          (((diagCoset b).rep : GL (Fin n) ℚ)) ((A.rep : GL (Fin n) ℚ)) = 0 := by
-        by_contra h0
-        refine h ?_
-        have hmem := (HeckeCoset.mem_image_mulMap_iff _ _ A).mpr h0
-        simp only [Finset.mem_image, Finset.mem_univ, true_and] at hmem
-        obtain ⟨p, hp⟩ := hmem
-        rw [← hp, mulMap_const_eq n c hc b hb p]
-      rw [hzero, Nat.cast_zero]
-  rw [diagElem_def, diagElem_def, diagElem_def, HeckeCosetModule.single_mul_single, hSC,
-    HeckeCosetModule.smul_single_one, HeckeCosetModule.smul_single_one]
+    diagElem (fun _ : Fin n ↦ c) * diagElem b = diagElem ((fun _ ↦ c) * b) :=
+  diagElem_mul_of_mulMap_eq _ _ _ (mulMap_const_eq n c hc b hb)
+    (multiplicity_const_le_one n c b _)
 
 /-- **The scalar product, on the right**: `T(b) · T(c,...,c) = T(b·c)`. The Hecke ring of
 `GL_n` is commutative (transposition fixes every diagonal double coset), so this is the
@@ -152,6 +123,20 @@ theorem diagElem_mul_const (b : Fin n → ℕ) (hb : ∀ i, 0 < b i) (c : ℕ) (
   rw [HeckeCosetModule.mul_comm_of_antiInvolution ℤ (transposeAntiInvolution n)
       (transposeAntiInvolution_onHeckeCoset_eq_self n),
     diagElem_const_mul n c hc b hb, mul_comm (fun _ : Fin n ↦ c) b]
+
+/-- `T(c, …, c)^k = T(c^k, …, c^k)`: the scalar double cosets are closed under powers, the
+iterate of `diagElem_const_mul`. -/
+@[simp]
+theorem diagElem_const_pow (c : ℕ) (hc : 0 < c) (k : ℕ) :
+    diagElem (fun _ : Fin n ↦ c) ^ k = diagElem (fun _ : Fin n ↦ c ^ k) := by
+  induction k with
+  | zero =>
+    simp only [pow_zero]
+    symm
+    exact (congrArg diagElem (funext fun _ ↦ by simp)).trans diagElem_one
+  | succ k ih =>
+    rw [pow_succ', ih, diagElem_const_mul n c hc (fun _ ↦ c ^ k) (fun _ ↦ pow_pos hc k)]
+    exact congrArg diagElem (funext fun _ ↦ by simp only [Pi.mul_apply]; ring)
 
 end Scalar
 

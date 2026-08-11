@@ -104,7 +104,7 @@ lemma tangentKerMap_id :
 touch the coefficients, and the two indexings share the carrier `B` with the same
 `inferInstanceAs` instances. Recorded once as an explicit transport lemma, analogous to
 `fst_transport`. -/
-private lemma mapDomain_transport {A'' : Type*} [CommSemiring A''] [HopfAlgebra R A'']
+private lemma mapDomain_transport {A'' : Type*} [CommSemiring A'']
     (φ : A' →ₐc[R] A)
     (ψ : WithConv (A →ₐ[R] DualNumber (Bialgebra.CounitAlgebra R A B))) :
     AlgHom.mapDomain (A := DualNumber (Bialgebra.CounitAlgebra R A'' B)) φ ψ =

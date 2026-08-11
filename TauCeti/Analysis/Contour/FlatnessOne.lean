@@ -7,6 +7,7 @@ module
 
 public import TauCeti.Analysis.Contour.PwC1ImmersionOn
 public import TauCeti.Analysis.Contour.RegularityConditions
+import TauCeti.Analysis.Contour.Chord.TangentBound
 
 /-!
 # Immersions are flat of order one
@@ -55,19 +56,8 @@ private theorem perp_isLittleO_of_hasDerivWithinAt {s : Set ℝ} {t₀ : ℝ} {L
   -- the perpendicular part of the linear term vanishes, so perp ≤ ‖error‖
   have hperp_le : ∀ t, |((γ t - γ t₀) * star L).im| / ‖L‖ ≤ ‖γ t - γ t₀ - (t - t₀) • L‖ := by
     intro t
-    have hsplit : (γ t - γ t₀) * star L =
-        (γ t - γ t₀ - (t - t₀) • L) * star L + ((t - t₀) • L) * star L := by ring
-    have him : (((t - t₀) • L) * star L).im = 0 := by
-      rw [smul_mul_assoc, Complex.star_def, Complex.mul_conj]
-      simp [Complex.real_smul]
-    rw [hsplit, Complex.add_im, him, add_zero]
-    calc |((γ t - γ t₀ - (t - t₀) • L) * star L).im| / ‖L‖
-        ≤ ‖(γ t - γ t₀ - (t - t₀) • L) * star L‖ / ‖L‖ := by
-          gcongr
-          exact Complex.abs_im_le_norm _
-      _ = ‖γ t - γ t₀ - (t - t₀) • L‖ := by
-          rw [norm_mul, norm_star, mul_div_assoc,
-            div_self (norm_ne_zero_iff.mpr hL), mul_one]
+    rw [Complex.star_def, ← norm_tangentDeviation hL]
+    exact norm_tangentDeviation_le_norm_sub_smul _ _ _
   -- perp =o (t - t₀)
   have h1 : (fun t => |((γ t - γ t₀) * star L).im| / ‖L‖) =o[l] (fun t => t - t₀) :=
     (isBigO_of_le l fun t => by

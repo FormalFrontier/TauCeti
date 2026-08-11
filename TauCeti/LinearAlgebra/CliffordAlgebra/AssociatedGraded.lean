@@ -21,6 +21,34 @@ It advances the Layer 0 associated-graded-algebra target in the
 
 Its graded-algebra packaging adapts the pattern in Mathlib's
 [`TensorPower` construction](https://github.com/leanprover-community/mathlib4/blob/master/Mathlib/LinearAlgebra/TensorPower/Basic.lean).
+
+## Main definitions
+
+* `TauCeti.CliffordAlgebra.filtrationAssociatedGraded Q`: the direct sum
+  `⨁ k, FiltrationGradedPiece Q k` of the homogeneous pieces.
+* `TauCeti.CliffordAlgebra.filtrationGradedMul`: the product of two homogeneous pieces, induced by
+  Clifford multiplication through `filtration_mul`.
+* `TauCeti.CliffordAlgebra.filtrationGradedOne` and
+  `TauCeti.CliffordAlgebra.filtrationGradedAlgebraMap₀`: the degree-zero unit and the degree-zero
+  image of a scalar.
+
+## Main results
+
+* The graded structure instances assembling those pieces:
+  `TauCeti.CliffordAlgebra.filtrationGradedGOne`, `filtrationGradedGMul`,
+  `filtrationGradedGMonoid`, `filtrationGradedGRing`, `filtrationGradedGSemiring` and
+  `filtrationGradedGAlgebra`, culminating in
+  `TauCeti.CliffordAlgebra.filtrationAssociatedGradedRing`, the ring structure on the direct sum.
+
+## Implementation notes
+
+`filtrationGradedGSemiring` and `filtrationAssociatedGradedRing` are stated explicitly rather than
+left to instance search. `DirectSum.GRing` is declared over `[∀ i, AddCommGroup (A i)]`, so
+`DirectSum.GRing.toGSemiring` supplies the pointwise `AddCommMonoid` through
+`AddCommGroup.toAddCommMonoid`, which does not match the one instance search finds directly for
+`FiltrationGradedPiece`; without these two declarations neither
+`DirectSum.GSemiring (FiltrationGradedPiece Q)` nor `Ring (filtrationAssociatedGraded Q)` is
+synthesizable.
 -/
 
 public section
@@ -51,8 +79,8 @@ private theorem mul_mem_filtrationPrevious_left (Q : QuadraticForm R M) (i j : �
       simp
   | succ i =>
       rw [filtrationPrevious_succ] at hx
-      rw [Nat.succ_add, filtrationPrevious_succ, ← filtration_mul]
-      exact Submodule.mul_mem_mul hx hy
+      rw [Nat.succ_add, filtrationPrevious_succ]
+      exact mul_mem_filtration Q hx hy
 
 private theorem mul_mem_filtrationPrevious_right (Q : QuadraticForm R M) (i j : ℕ)
     {x y : CliffordAlgebra Q} (hx : x ∈ filtration Q i) (hy : y ∈ filtrationPrevious Q j) :
@@ -65,8 +93,8 @@ private theorem mul_mem_filtrationPrevious_right (Q : QuadraticForm R M) (i j : 
       simp
   | succ j =>
       rw [filtrationPrevious_succ] at hy
-      rw [Nat.add_succ, filtrationPrevious_succ, ← filtration_mul]
-      exact Submodule.mul_mem_mul hx hy
+      rw [Nat.add_succ, filtrationPrevious_succ]
+      exact mul_mem_filtration Q hx hy
 
 private noncomputable def filtrationMul (Q : QuadraticForm R M) (i j : ℕ) :
     filtration Q i →ₗ[R] filtration Q j →ₗ[R] filtration Q (i + j) :=
@@ -82,31 +110,34 @@ private theorem filtrationGradedPreMul_apply (Q : QuadraticForm R M) (i j : ℕ)
     (x : filtration Q i) (y : filtration Q j) :
     filtrationGradedPreMul Q i j x y =
       Submodule.Quotient.mk
-        (⟨(x : CliffordAlgebra Q) * y, by
-          rw [← filtration_mul Q i j]
-          exact Submodule.mul_mem_mul x.property y.property⟩ : filtration Q (i + j)) :=
+        (⟨(x : CliffordAlgebra Q) * y, mul_mem_filtration Q x.property y.property⟩ :
+          filtration Q (i + j)) :=
   rfl
 
 private theorem filtrationGradedPreMul_mem_ker_left (Q : QuadraticForm R M) (i j : ℕ) :
-    Submodule.comap (filtration Q i).subtype (filtrationPrevious Q i) ≤
+    filtrationPreviousRestricted Q i ≤
       (filtrationGradedPreMul Q i j).ker := by
   rintro ⟨x, hx⟩ hprevious
+  rw [mem_filtrationPreviousRestricted_iff] at hprevious
   rw [LinearMap.mem_ker]
   ext y
   simp only [filtrationGradedPreMul_apply, LinearMap.zero_apply]
   rw [Submodule.Quotient.mk_eq_zero]
+  rw [mem_filtrationPreviousRestricted_iff]
   -- The filtration product lemma is stated for ambient Clifford-algebra elements.
   change (x : CliffordAlgebra Q) * (y : CliffordAlgebra Q) ∈ filtrationPrevious Q (i + j)
   exact mul_mem_filtrationPrevious_left Q i j hprevious y.property
 
 private theorem filtrationGradedPreMul_mem_ker_right (Q : QuadraticForm R M) (i j : ℕ) :
-    Submodule.comap (filtration Q j).subtype (filtrationPrevious Q j) ≤
+    filtrationPreviousRestricted Q j ≤
       (filtrationGradedPreMul Q i j).flip.ker := by
   rintro ⟨y, hy⟩ hprevious
+  rw [mem_filtrationPreviousRestricted_iff] at hprevious
   rw [LinearMap.mem_ker]
   ext x
   simp only [LinearMap.flip_apply, LinearMap.zero_apply]
   rw [filtrationGradedPreMul_apply, Submodule.Quotient.mk_eq_zero]
+  rw [mem_filtrationPreviousRestricted_iff]
   -- The filtration product lemma is stated for ambient Clifford-algebra elements.
   change (x : CliffordAlgebra Q) * (y : CliffordAlgebra Q) ∈ filtrationPrevious Q (i + j)
   exact mul_mem_filtrationPrevious_right Q i j x.property hprevious
@@ -125,9 +156,8 @@ theorem filtrationGradedMul_apply_mk (Q : QuadraticForm R M) (i j : ℕ) (x : fi
     (y : filtration Q j) :
     filtrationGradedMul Q i j (Submodule.Quotient.mk x) (Submodule.Quotient.mk y) =
       Submodule.Quotient.mk
-        (⟨(x : CliffordAlgebra Q) * y, by
-          rw [← filtration_mul Q i j]
-          exact Submodule.mul_mem_mul x.property y.property⟩ : filtration Q (i + j)) :=
+        (⟨(x : CliffordAlgebra Q) * y, mul_mem_filtration Q x.property y.property⟩ :
+          filtration Q (i + j)) :=
   by
   rw [filtrationGradedMul, LinearMap.liftQ₂_mk]
   exact filtrationGradedPreMul_apply Q i j x y
@@ -139,9 +169,10 @@ private theorem filtrationGradedPiece_cast_mk' (Q : QuadraticForm R M) {i j : �
   subst j
   rfl
 
-private theorem filtration_subtype_cast (Q : QuadraticForm R M) {i j : ℕ}
+private theorem filtration_coe_cast (Q : QuadraticForm R M) {i j : ℕ}
     (h : i = j) (x : filtration Q i) :
-    (filtration Q j).subtype (cast (congrArg (fun k => ↥(filtration Q k)) h) x) = x := by
+    ((cast (congrArg (fun k => ↥(filtration Q k)) h) x : filtration Q j) :
+      CliffordAlgebra Q) = x := by
   subst j
   rfl
 
@@ -161,8 +192,8 @@ theorem filtrationGradedMul_assoc (Q : QuadraticForm R M) (i j k : ℕ)
               simp only [filtrationGradedMul_apply_mk]
               rw [filtrationGradedPiece_cast_mk' Q (Nat.add_assoc i j k)]
               apply (Submodule.Quotient.eq _).mpr
-              rw [Submodule.mem_comap, map_sub,
-                filtration_subtype_cast Q (Nat.add_assoc i j k)]
+              rw [mem_filtrationPreviousRestricted_iff, Submodule.coe_sub,
+                filtration_coe_cast Q (Nat.add_assoc i j k)]
               -- Compare the two representatives in the ambient Clifford algebra.
               change ((x : CliffordAlgebra Q) * y) * z - x * (y * z) ∈
                 filtrationPrevious Q (i + (j + k))
@@ -221,7 +252,7 @@ theorem filtrationGradedAlgebraMap₀_apply (Q : QuadraticForm R M) (r : R) :
       (⟨algebraMap R (CliffordAlgebra Q) 1, algebraMap_mem_filtration Q 1 0⟩ : filtration Q 0) =
     Submodule.Quotient.mk (⟨1, one_mem_filtration Q 0⟩ : filtration Q 0)
   apply (Submodule.Quotient.eq _).mpr
-  rw [Submodule.mem_comap]
+  rw [mem_filtrationPreviousRestricted_iff]
   -- Quotient equality is ambient membership, the form in which `map_one` applies.
   change algebraMap R (CliffordAlgebra Q) 1 - 1 ∈ filtrationPrevious Q 0
   rw [map_one, sub_self]
@@ -241,8 +272,8 @@ theorem filtrationGradedAlgebraMap₀_apply (Q : QuadraticForm R M) (r : R) :
       rw [filtrationGradedMul_apply_mk]
       rw [filtrationGradedPiece_cast_mk' Q (Nat.zero_add k).symm]
       apply (Submodule.Quotient.eq _).mpr
-      rw [Submodule.mem_comap, map_sub,
-        filtration_subtype_cast Q (Nat.zero_add k).symm]
+      rw [mem_filtrationPreviousRestricted_iff, Submodule.coe_sub,
+        filtration_coe_cast Q (Nat.zero_add k).symm]
       -- Quotient equality is now ambient membership, the form of the filtration product API.
       change (1 : CliffordAlgebra Q) * (x : CliffordAlgebra Q) - x ∈
         filtrationPrevious Q (0 + k)
@@ -263,8 +294,8 @@ theorem filtrationGradedAlgebraMap₀_apply (Q : QuadraticForm R M) (r : R) :
       rw [filtrationGradedMul_apply_mk]
       rw [filtrationGradedPiece_cast_mk' Q (Nat.add_zero k).symm]
       apply (Submodule.Quotient.eq _).mpr
-      rw [Submodule.mem_comap, map_sub,
-        filtration_subtype_cast Q (Nat.add_zero k).symm]
+      rw [mem_filtrationPreviousRestricted_iff, Submodule.coe_sub,
+        filtration_coe_cast Q (Nat.add_zero k).symm]
       -- Quotient equality is now ambient membership, the form of the filtration product API.
       change (x : CliffordAlgebra Q) * 1 - x ∈ filtrationPrevious Q (k + 0)
       rw [mul_one, sub_self]
@@ -275,19 +306,10 @@ noncomputable instance filtrationGradedGOne {Q : QuadraticForm R M} :
     GradedMonoid.GOne (FiltrationGradedPiece Q) where
   one := filtrationGradedOne Q
 
-/-- The `GOne` field is the named degree-zero filtration class. -/
-@[simp] theorem filtrationGradedGOne_def (Q : QuadraticForm R M) :
-    (GradedMonoid.GOne.one : FiltrationGradedPiece Q 0) = filtrationGradedOne Q := rfl
-
 /-- Homogeneous filtration multiplication supplies the `GMul` structure on filtration pieces. -/
 noncomputable instance filtrationGradedGMul {Q : QuadraticForm R M} :
     GradedMonoid.GMul (FiltrationGradedPiece Q) where
   mul {i j} := fun x y => filtrationGradedMul Q i j x y
-
-/-- The `GMul` field is the named homogeneous filtration product. -/
-@[simp] theorem filtrationGradedGMul_def (Q : QuadraticForm R M) {i j : ℕ}
-    (x : FiltrationGradedPiece Q i) (y : FiltrationGradedPiece Q j) :
-    GradedMonoid.GMul.mul (A := FiltrationGradedPiece Q) x y = filtrationGradedMul Q i j x y := rfl
 
 /-- The homogeneous unit and multiplication form a graded monoid of filtration pieces. -/
 noncomputable instance filtrationGradedGMonoid {Q : QuadraticForm R M} :
@@ -372,7 +394,8 @@ noncomputable instance filtrationGradedGRing {Q : QuadraticForm R M} :
       -- The cast needs an ambient membership witness; `filtration_mul` supplies that witness.
       rw [filtrationGradedPiece_cast_mk' Q (Nat.zero_add k)]
       apply (Submodule.Quotient.eq _).mpr
-      rw [Submodule.mem_comap, map_sub, filtration_subtype_cast Q (Nat.zero_add k)]
+      rw [mem_filtrationPreviousRestricted_iff, Submodule.coe_sub,
+        filtration_coe_cast Q (Nat.zero_add k), Submodule.coe_smul]
       change algebraMap R (CliffordAlgebra Q) r * (x : CliffordAlgebra Q) - r • x ∈
         filtrationPrevious Q k
       rw [Algebra.smul_def, sub_self]
@@ -388,7 +411,7 @@ noncomputable instance filtrationGradedGRing {Q : QuadraticForm R M} :
     (Submodule.Quotient.mk _) = Submodule.Quotient.mk _
   rw [filtrationGradedMul_apply_mk]
   apply (Submodule.Quotient.eq _).mpr
-  rw [Submodule.mem_comap]
+  rw [mem_filtrationPreviousRestricted_iff]
   -- Quotient equality is ambient membership, the form in which `map_mul` applies.
   change algebraMap R (CliffordAlgebra Q) r * algebraMap R (CliffordAlgebra Q) s -
       algebraMap R (CliffordAlgebra Q) (r * s) ∈ filtrationPrevious Q 0
@@ -414,8 +437,8 @@ theorem filtrationGradedAlgebraMap₀_commutes (Q : QuadraticForm R M) (r : R) (
       rw [filtrationGradedMul_apply_mk, filtrationGradedMul_apply_mk]
       rw [filtrationGradedPiece_cast_mk' Q ((Nat.zero_add k).trans (Nat.add_zero k).symm)]
       apply (Submodule.Quotient.eq _).mpr
-      rw [Submodule.mem_comap, map_sub,
-        filtration_subtype_cast Q ((Nat.zero_add k).trans (Nat.add_zero k).symm)]
+      rw [mem_filtrationPreviousRestricted_iff, Submodule.coe_sub,
+        filtration_coe_cast Q ((Nat.zero_add k).trans (Nat.add_zero k).symm)]
       -- Quotient equality is ambient filtration membership; this exposes the coercions needed
       -- for the Clifford algebra's scalar-commutation theorem.
       change algebraMap R (CliffordAlgebra Q) r * (x : CliffordAlgebra Q) -
@@ -471,11 +494,6 @@ noncomputable instance filtrationGradedGAlgebra {Q : QuadraticForm R M} :
     simpa only [cast_cast, cast_eq] using
       congrArg (cast (congrArg (FiltrationGradedPiece Q) (Nat.zero_add k).symm))
         (filtrationGradedAlgebraMap₀_mul Q r k x)
-
-/-- The `GAlgebra` field is the named degree-zero scalar map. -/
-@[simp] theorem filtrationGradedGAlgebra_toFun_def (Q : QuadraticForm R M) (r : R) :
-    DirectSum.GAlgebra.toFun (A := FiltrationGradedPiece Q)
-      (self := filtrationGradedGAlgebra (Q := Q)) r = filtrationGradedAlgebraMap₀ Q r := rfl
 
 /-- The direct sum of homogeneous filtration pieces inherits its associated-graded
 ring structure. -/

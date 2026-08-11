@@ -134,8 +134,8 @@ theorem I_singleton_singleton (p q : Fin n × Fin n) :
     I {p} {q} = if IsSouthWest p q then 1 else 0 := by
   simp only [I, Finset.singleton_product_singleton, Finset.filter_singleton]
   by_cases h : IsSouthWest p q
-  · simp only [h, if_true, Finset.card_singleton]
-  · simp only [h, if_false, Finset.card_empty]
+  · simp only [h, ite_true, Finset.card_singleton]
+  · simp only [h, ite_false, Finset.card_empty]
 
 /-- No point contributes a southwest pair with itself. -/
 theorem I_singleton_self (p : Fin n × Fin n) : I {p} {p} = 0 := by

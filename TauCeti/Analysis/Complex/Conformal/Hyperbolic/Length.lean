@@ -10,7 +10,6 @@ public import TauCeti.Analysis.Complex.Conformal.Moebius
 public import TauCeti.Analysis.Complex.Conformal.SchwarzPick.AutomorphismIsometry
 public import TauCeti.Analysis.Complex.Conformal.SchwarzPick.Derivative
 public import TauCeti.Analysis.SpecialFunctions.Artanh
-public import Mathlib.MeasureTheory.Integral.IntervalIntegral.DistLEIntegral
 import Mathlib.Analysis.Calculus.Deriv.Star
 import Mathlib.Analysis.Complex.CauchyIntegral
 
@@ -74,11 +73,13 @@ runs from `0` to `‖γ b‖` and satisfies `|ψ| ≤ ‖γ‖` and `|ψ ′| �
 
 `(Real.artanh ∘ ψ) ′ = ψ ′ / (1 - ψ ^ 2) ≤ ‖γ ′‖ / (1 - ‖γ‖ ^ 2)`,
 
-the first inequality being `1 - ‖γ‖ ^ 2 ≤ 1 - ψ ^ 2` in the denominator. So Mathlib's
-displacement bound `norm_sub_le_integral_of_norm_deriv_le_of_le` applies to `Real.artanh ∘ ψ`,
-whose displacement is `Real.artanh ‖γ b‖ = hyperbolicDist (γ a) (γ b)`. Projecting on a *linear*
-functional rather than on the norm is what keeps the comparison function differentiable where the
-path crosses the origin.
+the first inequality being `1 - ‖γ‖ ^ 2 ≤ 1 - ψ ^ 2` in the denominator. That is precisely the
+hypothesis of the displacement bound `TauCeti.norm_sub_le_densityLength` — a function of the
+parameter whose speed is dominated by the density-weighted speed of `γ` moves by at most the
+length of `γ` — read at the Poincaré density and at `Real.artanh ∘ ψ`, whose displacement is
+`Real.artanh ‖γ b‖ = hyperbolicDist (γ a) (γ b)`. Projecting on a *linear* functional rather than
+on the norm is what keeps the comparison function differentiable where the path crosses the
+origin.
 
 *The bound is attained.* By the same invariance it suffices to exhibit a shortest path from the
 origin, and the Euclidean radius `t ↦ u * t` is one: its hyperbolic length over `[0, r]` is
@@ -142,7 +143,8 @@ that API at that point.
   `TauCeti.intervalIntegrable_norm_deriv_div_one_sub_norm_sq` — for a `C¹` path in the disc the
   density-weighted speed is interval integrable, against an explicit derivative and against
   `deriv` respectively. The latter is the integrability hypothesis of
-  `TauCeti.hyperbolicLength_add`, and what the Schwarz--Pick estimate below spends.
+  `TauCeti.hyperbolicLength_add`, and what the Schwarz--Pick estimate and the lower bound below
+  spend.
 * `TauCeti.hyperbolicLength_comp_of_deriv_nonneg` and
   `TauCeti.hyperbolicLength_comp_of_deriv_nonpos` — **hyperbolic length is a reparametrisation
   invariant**: precomposing a path with a differentiable monotone, respectively antitone, map of
@@ -502,58 +504,80 @@ theorem hyperbolicLength_comp_eq_of_leftInvOn {f g : ℂ → ℂ}
 
 /-! ## The distance is a lower bound for the length -/
 
-/-- The lower bound for a path issued from the origin, where the hyperbolic distance to the
-endpoint is `Real.artanh` of its Euclidean norm. Comparing with the real function
-`t ↦ (v * γ t).re` for a suitable unit vector `v` — rather than with `t ↦ ‖γ t‖`, which need not
-be differentiable — turns the estimate into Mathlib's displacement bound
-`norm_sub_le_integral_of_norm_deriv_le_of_le` applied to `Real.artanh ∘ ψ`. -/
-private theorem artanh_norm_le_integral (hab : a ≤ b) (hγ : ContinuousOn γ (Icc a b))
+/-- **A path issued from the origin admits a real comparison function.** For a path `γ` with
+`γ a = 0` there are real functions `ψ` and `ψ'` with `ψ a = 0` and `ψ b = ‖γ b‖`, dominated
+pointwise by `‖γ‖` and `‖γ'‖`, with `ψ` continuous wherever `γ` is and `ψ'` its derivative
+wherever `γ'` is that of `γ`. -/
+private theorem exists_real_comparison_of_eq_zero {s u : Set ℝ} (hγ : ContinuousOn γ s)
+    (hderiv : ∀ x ∈ u, HasDerivAt γ (γ' x) x) (h0 : γ a = 0) :
+    ∃ ψ ψ' : ℝ → ℝ, ψ a = 0 ∧ ψ b = ‖γ b‖ ∧ (∀ x, |ψ x| ≤ ‖γ x‖) ∧
+      (∀ x, |ψ' x| ≤ ‖γ' x‖) ∧ ContinuousOn ψ s ∧
+      ∀ x ∈ u, HasDerivAt ψ (ψ' x) x := by
+  -- Rotate by a unit `v` with `v * γ b = ‖γ b‖`, then take real parts; `γ` itself need not be
+  -- differentiable in norm, but its real part is.
+  obtain ⟨v, hvnorm, hvb⟩ := Complex.exists_norm_eq_mul_self (γ b)
+  refine ⟨fun t => (v * γ t).re, fun t => (v * γ' t).re, by simp [h0],
+    by simp only [← hvb, Complex.ofReal_re],
+    fun t => (Complex.abs_re_le_norm _).trans_eq (by rw [norm_mul, hvnorm, one_mul]),
+    fun t => (Complex.abs_re_le_norm _).trans_eq (by rw [norm_mul, hvnorm, one_mul]),
+    Complex.reCLM.continuous.comp_continuousOn (continuousOn_const.mul hγ), fun t ht => ?_⟩
+  simpa [Function.comp_def] using
+    Complex.reCLM.hasFDerivAt.comp_hasDerivAt t ((hderiv t ht).const_mul v)
+
+/-- **A comparison function has hyperbolic speed at most that of the path.** At a point `t` where
+`γ` lies inside the unit disc, if `|ψ t| ≤ ‖γ t‖` and the derivative of `ψ` at `t` is bounded in
+absolute value by `‖γ' t‖`, then `Real.artanh ∘ ψ` moves at `t` at most at the
+Poincaré-density-weighted speed of `γ`. -/
+private theorem norm_deriv_artanh_le_of_abs_le {ψ : ℝ → ℝ} {d t : ℝ} (hψ : |ψ t| ≤ ‖γ t‖)
+    (hd : |d| ≤ ‖γ' t‖) (hψd : HasDerivAt ψ d t) (hγd : HasDerivAt γ (γ' t) t) (ht : ‖γ t‖ < 1) :
+    ‖deriv (fun s => Real.artanh (ψ s)) t‖ ≤ (1 - ‖γ t‖ ^ 2)⁻¹ * ‖deriv γ t‖ := by
+  have hmem : ψ t ∈ Ioo (-1 : ℝ) 1 := abs_lt.mp (hψ.trans_lt ht)
+  have hPpos : (0 : ℝ) < 1 - ψ t ^ 2 := by nlinarith [hmem.1, hmem.2]
+  have hPQ : 1 - ‖γ t‖ ^ 2 ≤ 1 - ψ t ^ 2 := by
+    nlinarith [hψ, abs_nonneg (ψ t), sq_abs (ψ t), norm_nonneg (γ t)]
+  rw [hγd.deriv, ← div_eq_inv_mul, (hψd.artanh hmem).deriv, Real.norm_eq_abs, abs_mul, abs_inv,
+    abs_of_pos hPpos, inv_mul_eq_div]
+  gcongr
+  nlinarith [norm_nonneg (γ t), ht]
+
+/-- The lower bound for a path issued from the origin: its hyperbolic length is at least
+`Real.artanh` of the Euclidean norm of its endpoint, which is the hyperbolic distance from the
+origin to that endpoint. -/
+private theorem artanh_norm_le_hyperbolicLength (hab : a ≤ b) (hγ : ContinuousOn γ (Icc a b))
     (hderiv : ∀ t ∈ Ioo a b, HasDerivAt γ (γ' t) t) (hγ' : ContinuousOn γ' (Icc a b))
     (hmem : ∀ t ∈ Icc a b, ‖γ t‖ < 1) (h0 : γ a = 0) :
-    Real.artanh ‖γ b‖ ≤ ∫ t in a..b, ‖γ' t‖ / (1 - ‖γ t‖ ^ 2) := by
-  have hpos : ∀ t ∈ Icc a b, (0 : ℝ) < 1 - ‖γ t‖ ^ 2 := fun t ht => by
-    nlinarith [norm_nonneg (γ t), hmem t ht]
+    Real.artanh ‖γ b‖ ≤ hyperbolicLength γ a b := by
   have hγu : ContinuousOn γ (uIcc a b) := by rwa [uIcc_of_le hab]
   have hγ'u : ContinuousOn γ' (uIcc a b) := by rwa [uIcc_of_le hab]
   have hmemu : ∀ t ∈ uIcc a b, ‖γ t‖ < 1 := by rwa [uIcc_of_le hab]
-  have hint2 : IntervalIntegrable (fun t => ‖γ' t‖ / (1 - ‖γ t‖ ^ 2)) MeasureTheory.volume a b :=
-    intervalIntegrable_norm_div_one_sub_norm_sq hγu hγ'u hmemu
-  obtain ⟨v, hvnorm, hvb⟩ := Complex.exists_norm_eq_mul_self (γ b)
-  set ψ : ℝ → ℝ := fun t => (v * γ t).re with hψdef
-  have hψa : ψ a = 0 := by simp [hψdef, h0]
-  have hψb : ψ b = ‖γ b‖ := by simp only [hψdef, ← hvb, Complex.ofReal_re]
-  have hψbound : ∀ t : ℝ, |ψ t| ≤ ‖γ t‖ := fun t =>
-    (Complex.abs_re_le_norm _).trans_eq (by rw [norm_mul, hvnorm, one_mul])
+  have hderivu : ∀ t ∈ uIoo a b, HasDerivAt γ (γ' t) t := by rwa [uIoo_of_le hab]
+  -- the density-weighted speed in the shape `TauCeti.densityLength` integrates it
+  have hint2 : IntervalIntegrable (fun t => (1 - ‖γ t‖ ^ 2)⁻¹ * ‖deriv γ t‖)
+      MeasureTheory.volume a b := by
+    simpa only [div_eq_inv_mul] using
+      intervalIntegrable_norm_deriv_div_one_sub_norm_sq hγu hγ'u hderivu hmemu
+  -- compare with a real function `ψ` rather than with `t ↦ ‖γ t‖`, which need not be differentiable
+  obtain ⟨ψ, ψ', hψa, hψb, hψbound, hψ'bound, hψcont, hψderiv⟩ :=
+    exists_real_comparison_of_eq_zero (b := b) hγ hderiv h0
   have hψmem : ∀ t ∈ Icc a b, ψ t ∈ Ioo (-1 : ℝ) 1 := fun t ht =>
     abs_lt.mp ((hψbound t).trans_lt (hmem t ht))
-  have hψderiv : ∀ t ∈ Ioo a b, HasDerivAt ψ ((v * γ' t).re) t := fun t ht => by
-    simpa [hψdef, Function.comp_def] using
-      Complex.reCLM.hasFDerivAt.comp_hasDerivAt t ((hderiv t ht).const_mul v)
-  have hψcont : ContinuousOn ψ (Icc a b) :=
-    Complex.reCLM.continuous.comp_continuousOn (continuousOn_const.mul hγ)
-  have hPpos : ∀ t ∈ Icc a b, (0 : ℝ) < 1 - ψ t ^ 2 := fun t ht => by
-    have := hψmem t ht
-    nlinarith [this.1, this.2]
   -- `Real.artanh ∘ ψ` runs from `0` to `Real.artanh ‖γ b‖` with speed at most the
-  -- density-weighted speed of `γ`, so Mathlib's displacement bound applies to it.
-  have hcont : ContinuousOn (fun t => Real.artanh (ψ t)) (Icc a b) :=
-    Real.continuousOn_artanh.comp hψcont fun t ht => hψmem t ht
-  have hdiff : DifferentiableOn ℝ (fun t => Real.artanh (ψ t)) (Ioo a b) := fun t ht =>
-    ((hψderiv t ht).artanh
+  -- density-weighted speed of `γ`, so the displacement bound applies to it.
+  have hcont : ContinuousOn (fun t => Real.artanh (ψ t)) (uIcc a b) := by
+    rw [uIcc_of_le hab]
+    exact Real.continuousOn_artanh.comp hψcont fun t ht => hψmem t ht
+  have hdiff : DifferentiableOn ℝ (fun t => Real.artanh (ψ t)) (uIoo a b) := by
+    rw [uIoo_of_le hab]
+    exact fun t ht => ((hψderiv t ht).artanh
       (hψmem t (Ioo_subset_Icc_self ht))).differentiableAt.differentiableWithinAt
-  have hbound : ∀ᵐ t, t ∈ Ioo a b →
-      ‖deriv (fun s => Real.artanh (ψ s)) t‖ ≤ ‖γ' t‖ / (1 - ‖γ t‖ ^ 2) :=
-    .of_forall fun t ht => by
-      have htI : t ∈ Icc a b := Ioo_subset_Icc_self ht
-      have hnum : |(v * γ' t).re| ≤ ‖γ' t‖ :=
-        (Complex.abs_re_le_norm _).trans_eq (by rw [norm_mul, hvnorm, one_mul])
-      have hPQ : 1 - ‖γ t‖ ^ 2 ≤ 1 - ψ t ^ 2 := by
-        nlinarith [hψbound t, abs_nonneg (ψ t), sq_abs (ψ t), norm_nonneg (γ t)]
-      rw [((hψderiv t ht).artanh (hψmem t htI)).deriv, Real.norm_eq_abs, abs_mul, abs_inv,
-        abs_of_pos (hPpos t htI), inv_mul_eq_div]
-      gcongr
-      exact hpos t htI
-  have key := norm_sub_le_integral_of_norm_deriv_le_of_le hab hcont hdiff hbound hint2
+  have hbound : ∀ t ∈ uIoo a b,
+      ‖deriv (fun s => Real.artanh (ψ s)) t‖ ≤ (1 - ‖γ t‖ ^ 2)⁻¹ * ‖deriv γ t‖ := by
+    rw [uIoo_of_le hab]
+    exact fun t ht => norm_deriv_artanh_le_of_abs_le (hψbound t) (hψ'bound t) (hψderiv t ht)
+      (hderiv t ht) (hmem t (Ioo_subset_Icc_self ht))
+  rw [hyperbolicLength]
+  have key := norm_sub_le_densityLength (ρ := fun z : ℂ => (1 - ‖z‖ ^ 2)⁻¹) (γ := γ)
+    hcont hdiff (.of_forall hbound) hint2
   simp only [hψa, hψb, Real.artanh_zero, sub_zero, Real.norm_eq_abs] at key
   exact (le_abs_self _).trans key
 
@@ -590,9 +614,8 @@ private theorem hyperbolicDist_le_hyperbolicLength_of_le (hab : a ≤ b)
   have hmemu : ∀ t ∈ uIoo a b, ‖γ t‖ < 1 := by
     rw [uIoo_of_le hab]
     exact fun t ht => hmem t (Ioo_subset_Icc_self ht)
-  have key := artanh_norm_le_integral hab hσcont hσderiv hσ'cont hσmem hσa
-  rw [← hyperbolicLength_eq_integral hab hσderiv,
-    hyperbolicLength_unitDiscMoebiusFormula_comp hc hderivu hmemu] at key
+  have key := artanh_norm_le_hyperbolicLength hab hσcont hσderiv hσ'cont hσmem hσa
+  rw [hyperbolicLength_unitDiscMoebiusFormula_comp hc hderivu hmemu] at key
   refine le_trans (le_of_eq ?_) key
   rw [hyperbolicDist_comm, hyperbolicDist_def, pseudoHyperbolicExpr_def]
 

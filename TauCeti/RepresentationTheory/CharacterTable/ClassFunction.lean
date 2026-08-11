@@ -223,8 +223,8 @@ theorem classIndicator_apply [DecidableEq (ConjClasses G)] (x y : G) :
       if ConjClasses.mk y = ConjClasses.mk x then 1 else 0 := by
   rw [classIndicator, ofConjClasses_apply]
   by_cases h : ConjClasses.mk y = ConjClasses.mk x
-  · rw [if_pos h, Set.indicator_of_mem (Set.mem_singleton_iff.mpr h)]
-  · rw [if_neg h, Set.indicator_of_notMem (fun hm => h (Set.mem_singleton_iff.mp hm))]
+  · rw [ite_eq_left h, Set.indicator_of_mem (Set.mem_singleton_iff.mpr h)]
+  · rw [ite_eq_right h, Set.indicator_of_notMem (fun hm => h (Set.mem_singleton_iff.mp hm))]
 
 /-- **Summing a class function one conjugacy class at a time.** The conjugacy classes partition
 the group and a class function is constant on each of them, so each class contributes its size

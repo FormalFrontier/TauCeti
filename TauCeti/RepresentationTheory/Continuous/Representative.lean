@@ -53,9 +53,15 @@ unitarity is recorded with each of them
 `TauCeti.ContRepresentation.IsUnitary.congr`); on a *compact* group the distinction is empty
 anyway, since Haar averaging (Layer 1) unitarizes.
 
+Neither `TauCeti.IsRepresentative` nor `TauCeti.representativeSubmodule` exposes its
+implementation. What downstream arguments need of them is supplied by
+`TauCeti.isRepresentative_iff`, which produces a representation from a representative function, and
+`TauCeti.representativeSubmodule_eq_span`, which is what an induction over the span runs on.
+
 **Point separation is deliberately absent.** That `𝓡(G)` separates the points of a compact `G` is
 equivalent to the Peter-Weyl theorem, so it cannot be recorded at this stage without circularity;
-it is a Layer 5 corollary of the analytic density theorem, not an input to it.
+it is a Layer 5 corollary of the analytic density theorem, proved in
+`TauCeti/RepresentationTheory/Compact/RepresentativeDensity.lean`, not an input to it.
 
 ## Main definitions
 
@@ -66,11 +72,13 @@ it is a Layer 5 corollary of the analytic density theorem, not an input to it.
 
 ## Main statements
 
+* `TauCeti.isRepresentative_iff` and `TauCeti.representativeSubmodule_eq_span`: the elimination
+  principles for the two definitions.
 * `TauCeti.matrixCoeff_mem_representativeSubmodule`: every matrix coefficient of a
   finite-dimensional continuous representation lies in `𝓡(G)`.
 * `TauCeti.IsRepresentative.mul`, `TauCeti.IsRepresentative.star`,
-  `TauCeti.isRepresentative_one`: the representative functions themselves are closed under
-  multiplication and conjugation and contain the constants.
+  `TauCeti.isRepresentative_one`, `TauCeti.isRepresentative_zero`: the representative functions
+  themselves are closed under multiplication and conjugation and contain the constants and `0`.
 * `TauCeti.mul_mem_representativeSubmodule`, `TauCeti.star_mem_representativeSubmodule`: the same
   closure properties for their span.
 * `TauCeti.ContRepresentation.character_mem_representativeSubmodule`: characters lie in `𝓡(G)`.
@@ -101,11 +109,24 @@ def IsRepresentative (f : C(G, 𝕜)) : Prop :=
   ∃ (n : ℕ) (π : ContRepresentation 𝕜 G (EuclideanSpace 𝕜 (Fin n))) (hπ : Continuous π)
     (v w : EuclideanSpace 𝕜 (Fin n)), f = matrixCoeff π hπ v w
 
+/-- Being a representative function is exhibiting the function as a matrix coefficient of a
+continuous representation on a standard model. -/
+theorem isRepresentative_iff {f : C(G, 𝕜)} :
+    IsRepresentative f ↔ ∃ (n : ℕ) (π : ContRepresentation 𝕜 G (EuclideanSpace 𝕜 (Fin n)))
+      (hπ : Continuous π) (v w : EuclideanSpace 𝕜 (Fin n)), f = matrixCoeff π hπ v w :=
+  (Iff.rfl)
+
 variable (𝕜 G) in
 /-- **The representative ring `𝓡(G)`**, as a submodule of `C(G, 𝕜)`: the span of the matrix
 coefficients of the finite-dimensional continuous representations of `G`. -/
 def representativeSubmodule : Submodule 𝕜 C(G, 𝕜) :=
   Submodule.span 𝕜 {f : C(G, 𝕜) | IsRepresentative f}
+
+variable (𝕜 G) in
+/-- The representative ring is the span of the representative functions. -/
+theorem representativeSubmodule_eq_span :
+    representativeSubmodule 𝕜 G = Submodule.span 𝕜 {f : C(G, 𝕜) | IsRepresentative f} :=
+  (rfl)
 
 /-- A representative function lies in the representative ring. -/
 theorem mem_representativeSubmodule_of_isRepresentative {f : C(G, 𝕜)} (hf : IsRepresentative f) :
@@ -154,6 +175,14 @@ theorem isRepresentative_one : IsRepresentative (1 : C(G, 𝕜)) := by
     simp
   rw [h]
   exact isRepresentative_matrixCoeff _ _ _ _
+
+variable (𝕜 G) in
+/-- **The zero function is representative.** It is the matrix coefficient of the trivial
+one-dimensional representation at the zero vector. -/
+theorem isRepresentative_zero : IsRepresentative (0 : C(G, 𝕜)) := by
+  simpa only [matrixCoeff_zero_left (ContRepresentation.trivial 𝕜 G 𝕜) continuous_const] using
+    isRepresentative_matrixCoeff (ContRepresentation.trivial 𝕜 G 𝕜) continuous_const
+      (0 : 𝕜) (0 : 𝕜)
 
 variable (𝕜 G) in
 /-- The constant function `1` lies in `𝓡(G)`. -/

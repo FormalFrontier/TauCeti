@@ -34,7 +34,10 @@ variable (G : Type*) [Group G] [TopologicalSpace G] [IsTopologicalGroup G]
   [CompactSpace G] [MeasurableSpace G] [BorelSpace G]
 variable {V : Type*} [NormedAddCommGroup V]
 
-private theorem integrable_continuousMap (f : C(G, V)) :
+/-- A continuous vector-valued function on a compact group is Bochner integrable against
+normalized Haar measure: it is continuous on the compact set `univ`, which carries finite
+measure. -/
+theorem integrable_continuousMap (f : C(G, V)) :
     Integrable f (haarProb G) := by
   simpa only [integrableOn_univ] using
     f.continuous.continuousOn.integrableOn_compact' (μ := haarProb G) isCompact_univ

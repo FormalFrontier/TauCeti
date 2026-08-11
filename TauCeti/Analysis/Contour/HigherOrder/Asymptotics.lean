@@ -165,7 +165,7 @@ theorem chord_to_tangent_isLittleO {γ : ℝ → ℂ} {s : ℂ} {l : Filter ℝ}
         ‖tangentDeviation (γ t - s) T‖ := by
       rw [pow_two, mul_div_assoc]
       have hd_div : ‖tangentDeviation (γ t - s) T‖ / ‖γ t - s‖ ≤ 1 := by
-        rw [div_le_one hw_pos]; exact norm_tangentDeviation_le hT _
+        rw [div_le_one hw_pos]; exact norm_tangentDeviation_le _ _
       nlinarith [norm_nonneg (tangentDeviation (γ t - s) T)]
     linarith [h_chord]
   refine IsBigO.trans_isLittleO ?_ h_dev

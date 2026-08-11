@@ -41,6 +41,10 @@ Chris Birkbeck), on top of the matrix-level Smith normal form
 * `diagCosetEquiv`: that bijection as an equivalence, the canonical index of the double
   cosets.
 * `span_diagElem_eq_top`: the elements `T(a₁,...,aₙ)` span the Hecke ring.
+* `diagElem_mul_of_mulMap_eq`: the product criterion `T(a) · T(b) = T(c)`, given that the
+  coset decomposition multiplies into `T(c)` alone and does so with multiplicity at most one.
+  The `GL_n` reading of `HeckeCosetModule.mul_single_single_of_mulMap_eq`, which carries the
+  argument at the level of arbitrary Hecke cosets and coefficients.
 
 ## References
 
@@ -70,7 +74,7 @@ noncomputable def natDiagGL (a : Fin n → ℕ) : GL (Fin n) ℚ :=
 @[simp] lemma natDiagGL_coe (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) :
     (↑(natDiagGL n a) : Matrix (Fin n) (Fin n) ℚ) =
     Matrix.diagonal (fun i ↦ (a i : ℚ)) := by
-  rw [natDiagGL, dif_pos ha, TauCeti.diagGL_coe]
+  rw [natDiagGL, dite_eq_left ha, TauCeti.diagGL_coe]
   simp
 
 lemma hasIntEntries_natDiagGL (a : Fin n → ℕ) : HasIntEntries n (natDiagGL n a) := by
@@ -105,7 +109,7 @@ lemma natDiagGL_mem_posDetInt (a : Fin n → ℕ) : natDiagGL n a ∈ posDetInt 
   refine (mem_posDetInt_iff n).mpr ⟨hasIntEntries_natDiagGL n a, ?_⟩
   by_cases ha : ∀ i, 0 < a i
   · exact natDiagGL_det_pos n a ha
-  · rw [natDiagGL, dif_neg ha]
+  · rw [natDiagGL, dite_eq_right ha]
     simp
 
 lemma natDiagGL_det (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) :
@@ -115,7 +119,7 @@ lemma natDiagGL_det (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) :
 /-- The junk branch of `natDiagGL`: without positivity the value is the identity. -/
 @[simp] lemma natDiagGL_of_not_pos {a : Fin n → ℕ} (ha : ¬ ∀ i, 0 < a i) :
     natDiagGL n a = 1 :=
-  dif_neg ha
+  dite_eq_right ha
 
 private lemma natDiagGL_const_eq_scalar {c : ℕ} (hc : 0 < c) :
     natDiagGL n (fun _ ↦ c) =
@@ -158,6 +162,13 @@ lemma isDvdChain_iff {n : ℕ} {a : Fin n → ℕ} :
 
 lemma isDvdChain_const (c : ℕ) : IsDvdChain (fun _ : Fin n ↦ c) :=
   fun _ _ _ ↦ dvd_refl _
+
+/-- The pointwise product of two divisibility chains is a divisibility chain. Scaling by a
+constant `c` is the case where `b` is the constant function, with `hb := isDvdChain_const n c`. -/
+lemma isDvdChain_mul {a b : Fin n → ℕ} (ha : IsDvdChain a) (hb : IsDvdChain b) :
+    IsDvdChain (a * b) :=
+  isDvdChain_iff.mpr fun _ _ hij ↦
+    mul_dvd_mul (isDvdChain_iff.mp ha hij) (isDvdChain_iff.mp hb hij)
 
 /-- The positive divisibility chains of length `n`: the parameter space of the diagonal
 double cosets. -/
@@ -373,5 +384,33 @@ theorem span_diagElem_eq_top :
   exact Submodule.finsuppSum_mem _ _ _ _ fun D _ ↦ hmem D (f D)
 
 end SmithNormalForm
+
+section ProductCriterion
+
+variable {n}
+
+-- The multiplication this section is about needs the arithmetic Hecke triple, whose
+-- instance carries `NeZero n`.
+variable [NeZero n]
+
+/-- **The product criterion for diagonal Hecke elements.** If every pair in the coset
+decomposition of `T(a) · T(b)` multiplies into the single double coset `T(c)`, and `T(c)`
+occurs there with multiplicity at most one, then `T(a) · T(b) = T(c)`.
+
+This is the structure-constant computation shared by every "a product of diagonal elements
+is again diagonal" result: the two hypotheses are all that vary between them. Both the
+scalar product `diagElem_const_mul` (Shimura 3.17) and the coprime product
+`diagElem_mul_of_coprime` (Shimura 3.16) are this lemma applied to their own inputs. -/
+theorem diagElem_mul_of_mulMap_eq (a b c : Fin n → ℕ)
+    (hmulMap : ∀ p, HeckeCoset.mulMap (SLnZ n) (SLnZ n) (SLnZ n)
+      (diagCoset a).rep (diagCoset b).rep p = diagCoset c)
+    (hmul : multiplicity (SLnZ n) (SLnZ n) (SLnZ n)
+      (((diagCoset a).rep : GL (Fin n) ℚ)) (((diagCoset b).rep : GL (Fin n) ℚ))
+      (((diagCoset c).rep : GL (Fin n) ℚ)) ≤ 1) :
+    diagElem a * diagElem b = diagElem c := by
+  rw [diagElem_def, diagElem_def, diagElem_def]
+  exact HeckeCosetModule.mul_single_single_of_mulMap_eq ℤ _ _ _ hmulMap hmul
+
+end ProductCriterion
 
 end HeckeRing.GLn
