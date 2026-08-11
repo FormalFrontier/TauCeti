@@ -63,6 +63,8 @@ private theorem regularUnitHom_apply
       ⟨r • (1 : H), N.1.toSubmodule.smul_mem r hOne⟩ :=
   by
     let _ : Comodule k H k := Comodule.trivial (R := k) (C := H) (M := k)
+    -- The application lemmas below do not rewrite through the bundled `FGComoduleCat`
+    -- coercion, so expose first the underlying comodule map and then its `codRestrict`.
     change (regularUnitHom k H N hOne).hom.toLinearMap r = _
     unfold regularUnitHom
     change ((Comodule.Hom.trivialToRegular (R := k) (C := H)).codRestrict N.1 _ r) = _
