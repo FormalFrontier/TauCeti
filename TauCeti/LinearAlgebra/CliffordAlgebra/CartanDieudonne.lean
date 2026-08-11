@@ -13,16 +13,17 @@ public import TauCeti.LinearAlgebra.QuadraticForm.CartanDieudonne
 
 Let `g` be an orthogonal automorphism fixing a subspace `W`, and let `x` be an anisotropic vector
 orthogonal to `W`. The generic fixed-subspace correction in the quadratic-form layer uses one or
-two reflections to make the product fix `W ⊔ K ∙ x`. Over a separably closed field those
-reflections lift through the Pin group, so the correcting element lies in the range of
-`pinToOrthogonal`.
+two reflections to make the product fix `W ⊔ K ∙ x`. Over a separably closed field of
+characteristic other than two, those reflections lift through the Pin group, so the correcting
+element lies in the range of `pinToOrthogonal`.
 
 ## Main results
 
 * `TauCeti.CliffordAlgebra.exists_mem_range_pinToOrthogonal_mul_eqOn_sup_span_singleton`: a
   Pin-range correction extends a fixed subspace by one orthogonal anisotropic vector.
-* `TauCeti.CliffordAlgebra.pinToOrthogonal_surjective`: the Pin action is surjective on a
-  finite-dimensional nondegenerate quadratic space.
+* `TauCeti.CliffordAlgebra.pinToOrthogonal_surjective`: over a separably closed field of
+  characteristic other than two, the Pin action is surjective on a finite-dimensional
+  nondegenerate quadratic space.
 
 ## References
 
@@ -63,8 +64,8 @@ theorem exists_mem_range_pinToOrthogonal_mul_eqOn_sup_span_singleton
 
 end IsSepClosed
 
-/-- The twisted-conjugation homomorphism from the Pin group is surjective when every reflection
-normalization scalar is a square. -/
+/-- Over a field of characteristic other than two, the twisted-conjugation homomorphism from the
+Pin group is surjective when every reflection normalization scalar is a square. -/
 theorem pinToOrthogonal_surjective_of_isSquare
     [FiniteDimensional K V] (Q : QuadraticForm K V) (hQ : Q.Nondegenerate)
     (hsquare : ∀ (v : V) [Invertible (Q v)], IsSquare (-⅟(Q v))) :
