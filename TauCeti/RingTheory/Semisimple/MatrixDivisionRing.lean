@@ -23,7 +23,8 @@ and a semisimple ring as a finite product of such blocks.  Mathlib supplies the 
 says nothing about how much of it is determined by the ring: `TauCeti.card_blocks_eq` shows the
 *number* of blocks is an invariant and `TauCeti.blocks_equiv_simpleModules` matches the blocks with
 the simple modules, but both are silent about the two remaining pieces of data, the size `ι` of a
-block and its division ring `D`.  This file supplies them.
+block and its division ring `D`.  This file determines both, for a *single* block: it does not treat
+a product of blocks, so it does not settle the semisimple case (see the implementation note below).
 
 The content is a description of those two data of `A = Matᵢ(D)` in terms that transport along a
 ring isomorphism.  The **column module** `ι → D`, on which `A` acts by `Matrix.mulVec`, is a simple
@@ -54,9 +55,11 @@ back to `R`.
 
 The index type `ι` is an arbitrary `Fintype`, not `Fin n`; the `Fin n` shape that the
 Artin--Wedderburn theorems produce is the corollary `TauCeti.wedderburn_data_unique`.  `Nonempty ι`
-is essential and not decoration: `Mat_∅(D)` is the trivial ring for every `D`, so an empty block
-determines nothing.  It is the hypothesis that `NeZero n` supplies in
-`IsSemisimpleRing.exists_ringEquiv_pi_matrix_divisionRing` and in `TauCeti.card_blocks_eq`.
+is essential and not decoration wherever the division ring is involved: `Mat_∅(D)` is the trivial
+ring for every `D`, so an empty block determines no `D` at all.  It is the hypothesis `NeZero n`
+supplies in `IsSemisimpleRing.exists_ringEquiv_pi_matrix_divisionRing` and in
+`TauCeti.card_blocks_eq`.  The statements about the size alone hold for every `ι`, the empty case
+saying that the trivial ring has regular module of length `0`, and are stated without it.
 
 Everything is stated for the *left* regular module, matching the convention of `IsSemisimpleRing`,
 so the simple module is the column module -- on which a matrix acts by `Matrix.mulVec` -- and the
@@ -73,9 +76,12 @@ a block to each simple module, on top of the invariants of one block established
 
 ## References
 
-This implements the Layer 2 target "uniqueness / invariance" -- the degrees `nᵢ` and the division
-rings `Dᵢ` of a Wedderburn presentation are determined by the ring -- of the
-[semisimple algebras roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/SemisimpleAlgebras/README.md).
+This is the single-block case of the Layer 2 target "uniqueness / invariance" -- the degrees `nᵢ`
+and the division rings `Dᵢ` of a Wedderburn presentation are determined by the ring -- of the
+[semisimple algebras roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/SemisimpleAlgebras/README.md);
+the target as a whole is about a *product* of blocks and remains open, as the implementation note
+above records.
+
 See T. Y. Lam, *A First Course in Noncommutative Rings*, GTM 131, §3, or C. W. Curtis and
 I. Reiner, *Representation Theory of Finite Groups and Associative Algebras*, §26.
 -/
@@ -215,11 +221,12 @@ theorem Matrix.mulOppositeRingEquivEnd_apply [Nonempty ι] (d : Dᵐᵒᵖ) :
 
 variable (ι D) in
 /-- **The regular module of `Matᵢ(D)` has length `Fintype.card ι`**: it is the direct sum of its
-`Fintype.card ι` columns, and each column is simple. -/
-theorem Matrix.length_self_eq_card [Nonempty ι] :
+`Fintype.card ι` columns, and each column is simple.  For empty `ι` both sides are `0`, the ring
+being trivial. -/
+theorem Matrix.length_self_eq_card :
     Module.length (Matrix ι ι D) (Matrix ι ι D) = Fintype.card ι := by
   rw [(Matrix.linearEquivPi ι D).length_eq, Module.length_pi_of_fintype]
-  simp
+  rcases isEmpty_or_nonempty ι with h | h <;> simp
 
 end DivisionRing
 
@@ -227,8 +234,7 @@ end Block
 
 section Transport
 
-variable {R : Type*} [Ring R] {ι : Type*} [Fintype ι] [Nonempty ι]
-  {D : Type*} [DivisionRing D]
+variable {R : Type*} [Ring R] {ι : Type*} [Fintype ι] {D : Type*} [DivisionRing D]
 
 /-- **The size of a matrix presentation is the length of the regular module**, hence an invariant of
 the ring: a ring isomorphism `f : R ≃+* Matᵢ(D)` is an `f`-semilinear isomorphism of regular
@@ -249,7 +255,7 @@ left ideal**, hence an invariant of the ring.
 The `f`-semilinear isomorphism of regular modules carries `I` to a simple left ideal of `Matᵢ(D)`
 and identifies the two endomorphism rings; over the simple Artinian ring `Matᵢ(D)` that ideal is
 isomorphic to the column module, whose endomorphism ring is `Dᵐᵒᵖ`. -/
-theorem nonempty_end_ringEquiv_of_ringEquiv_matrix (f : R ≃+* Matrix ι ι D)
+theorem nonempty_end_ringEquiv_of_ringEquiv_matrix [Nonempty ι] (f : R ≃+* Matrix ι ι D)
     (I : Submodule R R) [IsSimpleModule R I] :
     Nonempty (Module.End R I ≃+* Dᵐᵒᵖ) := by
   classical
@@ -270,8 +276,8 @@ end Transport
 section Uniqueness
 
 variable {R : Type*} [Ring R]
-  {ι : Type*} [Fintype ι] [Nonempty ι] {D : Type*} [DivisionRing D]
-  {κ : Type*} [Fintype κ] [Nonempty κ] {E : Type*} [DivisionRing E]
+  {ι : Type*} [Fintype ι] {D : Type*} [DivisionRing D]
+  {κ : Type*} [Fintype κ] {E : Type*} [DivisionRing E]
 
 /-- **The size of a matrix presentation is unique**: two presentations of one ring as a matrix ring
 over a division ring have equally many rows. -/
@@ -286,8 +292,8 @@ one ring as a matrix ring over a division ring have isomorphic division rings.
 
 Both division rings are computed from a single minimal left ideal of the ring, so no comparison of
 choices is needed: they are the two readings of one and the same endomorphism ring. -/
-theorem nonempty_ringEquiv_of_ringEquiv_matrix (f : R ≃+* Matrix ι ι D)
-    (g : R ≃+* Matrix κ κ E) : Nonempty (D ≃+* E) := by
+theorem nonempty_ringEquiv_of_ringEquiv_matrix [Nonempty ι] [Nonempty κ]
+    (f : R ≃+* Matrix ι ι D) (g : R ≃+* Matrix κ κ E) : Nonempty (D ≃+* E) := by
   classical
   have : IsSimpleRing R := IsSimpleRing.of_ringEquiv f.symm inferInstance
   have : IsSemisimpleRing R := f.symm.isSemisimpleRing
@@ -305,7 +311,7 @@ The forward direction is the uniqueness above, applied to the two presentations 
 by the identity and by the isomorphism; the converse reindexes along an equivalence of the two
 index types (`Matrix.reindexRingEquiv`) and then transports the entries
 (`RingEquiv.mapMatrix`). -/
-theorem nonempty_ringEquiv_matrix_iff :
+theorem nonempty_ringEquiv_matrix_iff [Nonempty ι] [Nonempty κ] :
     Nonempty (Matrix ι ι D ≃+* Matrix κ κ E) ↔
       Fintype.card ι = Fintype.card κ ∧ Nonempty (D ≃+* E) := by
   classical
