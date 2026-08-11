@@ -102,9 +102,8 @@ private lemma e7PositiveCoroot_ne_neg (i j : Fin 63) :
     e7PositiveCoroot i ≠ -e7PositiveCoroot j := by
   fin_cases i <;> fin_cases j <;> decide
 
-private def e7NegativeCorootEmbedding : Fin 63 ↪ (Fin 7 → ℤ) where
-  toFun i := -e7PositiveCoroot i
-  inj' _ _ h := e7PositiveCorootEmbedding.injective (neg_injective h)
+private def e7NegativeCorootEmbedding : Fin 63 ↪ (Fin 7 → ℤ) :=
+  e7PositiveCorootEmbedding.trans (Equiv.neg (Fin 7 → ℤ)).toEmbedding
 
 private lemma e7Coroot_disjoint :
     Disjoint (Set.range e7PositiveCorootEmbedding) (Set.range e7NegativeCorootEmbedding) := by
@@ -115,11 +114,22 @@ private lemma e7Coroot_disjoint :
 def e7Coroot : Fin 126 ↪ (Fin 7 → ℤ) :=
   Fin.Embedding.append e7Coroot_disjoint
 
+private theorem e7Coroot_coe :
+    ⇑e7Coroot = Fin.append (⇑e7PositiveCorootEmbedding) fun i ↦ -e7PositiveCoroot i :=
+  Fin.Embedding.coe_append _
+
 /-- Evaluate an `E7` coroot through the exposed table of positive coroots. -/
 @[grind =] theorem e7Coroot_apply (i : Fin 126) :
     e7Coroot i = if hi : (i : ℕ) < 63 then e7PositiveCoroot ⟨i, hi⟩ else
       -e7PositiveCoroot ⟨(i : ℕ) - 63, by omega⟩ := by
-  fin_cases i <;> decide
+  refine Fin.addCases (m := 63) (n := 63) ?_ ?_ i
+  · intro j
+    rw [e7Coroot_coe, Fin.append_left]
+    simp
+    rfl
+  · intro j
+    rw [e7Coroot_coe, Fin.append_right]
+    simp
 
 /-- The 126 `E7` roots in the fundamental-weight basis. -/
 def e7Root : Fin 126 ↪ (Fin 7 → ℤ) where
@@ -139,7 +149,8 @@ theorem e7Root_apply (i : Fin 126) : e7Root i = e7Coroot i ᵥ* CartanMatrix.E�
 /-- The negative half of the coroot table is the negation of the positive half. -/
 @[simp, grind =] theorem e7Coroot_addNat (i : Fin 63) :
     e7Coroot (Fin.addNat i 63) = -e7Coroot (Fin.castAdd 63 i) := by
-  fin_cases i <;> decide
+  rw [← Fin.natAdd_eq_addNat, e7Coroot_coe, Fin.append_right, Fin.append_left]
+  rfl
 
 /-- The negative half of the root table is the negation of the positive half. -/
 @[simp, grind =] theorem e7Root_addNat (i : Fin 63) :
