@@ -82,14 +82,10 @@ theorem tendsto_integral_abs_prod_blockAverage_indicator_sub_prod_directingMeasu
   set g : Fin m → Ω → ℝ := fun i ω => (directingMeasure μ X ω).real (B i) with hg
   have hind : ∀ i c, Measurable fun ω => (B i).indicator (fun _ => (1 : ℝ)) (X c ω) := fun i c =>
     (measurable_const.indicator (hB i)).comp (hX_meas c)
-  have hind0 : ∀ i c ω, 0 ≤ (B i).indicator (fun _ => (1 : ℝ)) (X c ω) := by
-    intro i c ω
-    by_cases h : X c ω ∈ B i <;>
-      simp [Set.indicator_of_mem, Set.indicator_of_notMem, h]
-  have hind1 : ∀ i c ω, (B i).indicator (fun _ => (1 : ℝ)) (X c ω) ≤ 1 := by
-    intro i c ω
-    by_cases h : X c ω ∈ B i <;>
-      simp [Set.indicator_of_mem, Set.indicator_of_notMem, h]
+  have hind0 : ∀ i c ω, 0 ≤ (B i).indicator (fun _ => (1 : ℝ)) (X c ω) :=
+    fun _ _ _ => Set.indicator_apply_nonneg fun _ => zero_le_one
+  have hind1 : ∀ i c ω, (B i).indicator (fun _ => (1 : ℝ)) (X c ω) ≤ 1 :=
+    fun _ _ _ => Set.indicator_apply_le' (fun _ => le_rfl) fun _ => zero_le_one
   have hF_meas : ∀ i n, Measurable (F i n) := by
     intro i n
     have hrw : F i n = fun ω => ((n + 1 : ℕ) : ℝ)⁻¹ * ∑ j : Fin (n + 1),
@@ -98,8 +94,8 @@ theorem tendsto_integral_abs_prod_blockAverage_indicator_sub_prod_directingMeasu
     rw [hrw]
     exact measurable_const.mul (Finset.measurable_sum _ fun j _ => hind i _)
   have hF_le : ∀ i n ω, ‖F i n ω‖ ≤ 1 := fun i n ω => by
-    rw [hF, Real.norm_of_nonneg (blockAverage_nonneg (fun c ω => hind0 i c ω) _ ω)]
-    exact blockAverage_le_one (fun c ω => hind1 i c ω) _ ω
+    rw [hF, Real.norm_of_nonneg (blockAverage_nonneg fun j => hind0 i (k i n j) ω)]
+    exact blockAverage_le_one fun j => hind1 i (k i n j) ω
   have hg_meas : ∀ i, Measurable (g i) := fun i =>
     (measurable_directingMeasure_coe (tailProcess_le_ambient 0 fun c _ => hX_meas c)
       (hB i)).ennreal_toReal

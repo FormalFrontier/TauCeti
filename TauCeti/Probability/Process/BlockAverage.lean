@@ -157,19 +157,21 @@ A block average of `[0,1]`-valued coordinates stays in `[0,1]`. This is the boun
 convergence lemmas need, and it is pure order algebra — no measure and no norm is involved, so the
 `‖·‖ ≤ 1` form is left to the consumer that has a normed structure in scope. -/
 
-/-- A block average of nonnegative coordinates is nonnegative. -/
-theorem blockAverage_nonneg {Y : ℕ → Ω → ℝ} (hY : ∀ i ω, 0 ≤ Y i ω) {n : ℕ} (k : Fin n → ℕ)
-    (ω : Ω) : 0 ≤ blockAverage Y k ω := by
+/-- A block average of nonnegative coordinates is nonnegative. Only the sampled coordinates at the
+one point `ω` are constrained. -/
+theorem blockAverage_nonneg {Y : ℕ → Ω → ℝ} {n : ℕ} {k : Fin n → ℕ} {ω : Ω}
+    (hY : ∀ i, 0 ≤ Y (k i) ω) : 0 ≤ blockAverage Y k ω := by
   rw [blockAverage, Finset.expect_apply]
-  exact Finset.expect_nonneg fun i _ => hY (k i) ω
+  exact Finset.expect_nonneg fun i _ => hY i
 
-/-- A block average of coordinates bounded by `1` is bounded by `1`. -/
-theorem blockAverage_le_one {Y : ℕ → Ω → ℝ} (hY : ∀ i ω, Y i ω ≤ 1) {n : ℕ} (k : Fin n → ℕ)
-    (ω : Ω) : blockAverage Y k ω ≤ 1 := by
+/-- A block average of coordinates bounded by `1` is bounded by `1`. Only the sampled coordinates
+at the one point `ω` are constrained. -/
+theorem blockAverage_le_one {Y : ℕ → Ω → ℝ} {n : ℕ} {k : Fin n → ℕ} {ω : Ω}
+    (hY : ∀ i, Y (k i) ω ≤ 1) : blockAverage Y k ω ≤ 1 := by
   rw [blockAverage, Finset.expect_apply]
   rcases Finset.univ.eq_empty_or_nonempty (α := Fin n) with h | h
   · simp [h]
-  · exact Finset.expect_le h fun i _ => hY (k i) ω
+  · exact Finset.expect_le h fun i _ => hY i
 
 end Probability
 
