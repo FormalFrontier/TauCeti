@@ -24,9 +24,12 @@ Let `E/F` be a field extension of degree `2`. Choosing an `F`-basis of `E` prese
 by an element of `E` as a `2 × 2` matrix over `F`, and multiplication by a *nonzero* element as an
 element of `GL (Fin 2) F`. The image of `Eˣ` is the **non-split torus**
 `TauCeti.GL2NonSplitTorus F E hE`, an abelian subgroup of `GL₂(F)` of order `q² - 1` when `F` has
-`q` elements. It is the source of the cuspidal (discrete series) representations of `GL₂(𝔽_q)`,
-obtained by inducing its characters, exactly as the *split* torus of diagonal matrices is the
-source of the principal series.
+`q` elements. It is the torus the cuspidal (discrete series) representations of `GL₂(𝔽_q)` are
+parametrized by: a character of `Eˣ` in general position determines one of them through the
+Deligne–Lusztig construction, which is *not* ordinary induction (the induced representation
+`Ind_{Eˣ}^{GL₂(𝔽_q)}` has dimension `q(q - 1)`, while a cuspidal representation has dimension
+`q - 1`). This is the elliptic counterpart of the *split* torus of diagonal matrices, whose
+characters give the principal series by ordinary induction from the Borel subgroup.
 
 "Non-split" is the assertion that, away from the scalars, the torus is not conjugate into the Borel
 subgroup: `TauCeti.GL2NonSplitTorus.conj_notMem_GL2Borel` says that if `x : Eˣ` does not lie in `F`
@@ -222,7 +225,7 @@ theorem conj_notMem_GL2Borel {x : Eˣ} (hx : (x : E) ∉ Set.range (algebraMap F
 /-- **The non-split torus is not conjugate into the Borel subgroup**: it contains an element no
 conjugate of which is upper triangular. This is exactly what distinguishes it from the split torus
 of diagonal matrices, which lies in the Borel subgroup outright, and it is why the cuspidal
-representations induced from it are absent from every principal series. -/
+representations attached to it are absent from every principal series. -/
 theorem exists_forall_conj_notMem_GL2Borel :
     ∃ u ∈ GL2NonSplitTorus F E hE, ∀ g : GL (Fin 2) F, g * u * g⁻¹ ∉ GL2Borel F := by
   obtain ⟨x, hx⟩ := exists_units_notMem_range_algebraMap (F := F) (E := E) (by rw [hE]; norm_num)
