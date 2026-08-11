@@ -26,10 +26,9 @@ t⁵, t^a t², t^c t⁻², [t,b], (dt)³.
 
 Here `[r,s] = r⁻¹s⁻¹rs` and `r^s = s⁻¹rs`, following the Magma source. Mathlib's
 `commutatorElement` uses the opposite commutator convention, so a source commutator is represented
-by `TauCeti.Relator.commInvInv`, the shared abbreviation for that convention. Conjugates are
-expanded directly in the structured expressions. The proved `TauCeti.Relator.toWord_toFreeGroup`
-theorem is the audit boundary between these expressions and the signed words consumed by
-`PresentedGroup`.
+by `Relator.comm (.inv r) (.inv s)`. Conjugates are expanded directly in the structured
+expressions. The proved `TauCeti.Relator.toWord_toFreeGroup` theorem is the audit boundary between
+these expressions and the signed words consumed by `PresentedGroup`.
 
 Section 4 of Bray--Curtis constructs `HN` as a quotient of a progenitor by coset enumeration over
 the visible subgroup `2·HS:2`. Section 5 derives the five-generator presentation used here. The
@@ -104,23 +103,23 @@ def hnPresentation : GroupPresentation where
   expectedRelatorCount := 19
   transcribed :=
     [ .pow a 4,
-      Relator.commInvInv (.pow a 2) b,
+      Relator.comm (.inv (.pow a 2)) (.inv b),
       .pow b 7,
       .pow (a ⬝ .pow b 2) 4,
       .pow (.inv a) 2 ⬝ .pow (a ⬝ b ⬝ a ⬝ .pow b 3) 3,
       .pow (.pow (a ⬝ b) 3 ⬝ a ⬝ .pow (.inv b) 3) 2,
       .pow c 2 ⬝ .pow a 2,
-      Relator.commInvInv a c,
-      Relator.commInvInv (b ⬝ a ⬝ b) c,
+      Relator.comm (.inv a) (.inv c),
+      Relator.comm (.inv (b ⬝ a ⬝ b)) (.inv c),
       .pow (b ⬝ a ⬝ .pow b 3 ⬝ c) 3,
       .pow d 2,
       .pow (a ⬝ d) 2,
-      Relator.commInvInv b d,
+      Relator.comm (.inv b) (.inv d),
       .inv dConjugator ⬝ d ⬝ dConjugator ⬝ .pow (c ⬝ d) 3,
       .pow t 5,
       .inv a ⬝ t ⬝ a ⬝ .pow t 2,
       .inv c ⬝ t ⬝ c ⬝ .pow (.inv t) 2,
-      Relator.commInvInv t b,
+      Relator.comm (.inv t) (.inv b),
       .pow (d ⬝ t) 3 ]
 
 /-- The generator names recorded for `HN`. The row's body is sealed, so this equation is what shows
@@ -145,7 +144,7 @@ theorem transcribed_hnPresentation :
       [ -- a⁴
         .pow (.gen ⟨0, by simp⟩) 4,
         -- [a², b]
-        Relator.commInvInv (.pow (.gen ⟨0, by simp⟩) 2) (.gen ⟨1, by simp⟩),
+        Relator.comm (.inv (.pow (.gen ⟨0, by simp⟩) 2)) (.inv (.gen ⟨1, by simp⟩)),
         -- b⁷
         .pow (.gen ⟨1, by simp⟩) 7,
         -- (ab²)⁴
@@ -160,10 +159,11 @@ theorem transcribed_hnPresentation :
         -- c²a²
         .pow (.gen ⟨2, by simp⟩) 2 ⬝ .pow (.gen ⟨0, by simp⟩) 2,
         -- [a, c]
-        Relator.commInvInv (.gen ⟨0, by simp⟩) (.gen ⟨2, by simp⟩),
+        Relator.comm (.inv (.gen ⟨0, by simp⟩)) (.inv (.gen ⟨2, by simp⟩)),
         -- [bab, c]
-        Relator.commInvInv (.gen ⟨1, by simp⟩ ⬝ .gen ⟨0, by simp⟩ ⬝ .gen ⟨1, by simp⟩)
-          (.gen ⟨2, by simp⟩),
+        Relator.comm
+          (.inv (.gen ⟨1, by simp⟩ ⬝ .gen ⟨0, by simp⟩ ⬝ .gen ⟨1, by simp⟩))
+          (.inv (.gen ⟨2, by simp⟩)),
         -- (bab³c)³
         .pow (.gen ⟨1, by simp⟩ ⬝ .gen ⟨0, by simp⟩ ⬝ .pow (.gen ⟨1, by simp⟩) 3 ⬝
           .gen ⟨2, by simp⟩) 3,
@@ -172,7 +172,7 @@ theorem transcribed_hnPresentation :
         -- (ad)²
         .pow (.gen ⟨0, by simp⟩ ⬝ .gen ⟨3, by simp⟩) 2,
         -- [b, d]
-        Relator.commInvInv (.gen ⟨1, by simp⟩) (.gen ⟨3, by simp⟩),
+        Relator.comm (.inv (.gen ⟨1, by simp⟩)) (.inv (.gen ⟨3, by simp⟩)),
         -- d^(cbcb⁻¹)(cd)³
         .inv (.gen ⟨2, by simp⟩ ⬝ .gen ⟨1, by simp⟩ ⬝ .gen ⟨2, by simp⟩ ⬝
             .inv (.gen ⟨1, by simp⟩)) ⬝ .gen ⟨3, by simp⟩ ⬝
@@ -187,7 +187,7 @@ theorem transcribed_hnPresentation :
         .inv (.gen ⟨2, by simp⟩) ⬝ .gen ⟨4, by simp⟩ ⬝ .gen ⟨2, by simp⟩ ⬝
           .pow (.inv (.gen ⟨4, by simp⟩)) 2,
         -- [t, b]
-        Relator.commInvInv (.gen ⟨4, by simp⟩) (.gen ⟨1, by simp⟩),
+        Relator.comm (.inv (.gen ⟨4, by simp⟩)) (.inv (.gen ⟨1, by simp⟩)),
         -- (dt)³
         .pow (.gen ⟨3, by simp⟩ ⬝ .gen ⟨4, by simp⟩) 3 ] := by
   simp [hnPresentation]

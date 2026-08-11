@@ -25,10 +25,10 @@ The presentation displayed by the ATLAS is
 
 The ATLAS commutator convention is `[r,s] = r⁻¹s⁻¹rs`, opposite to Mathlib's
 `commutatorElement`. Accordingly each displayed commutator is stored using
-`TauCeti.Relator.commInvInv`, the shared abbreviation for that convention. The structured
-expressions otherwise preserve the displayed products and powers. The proved
-`Relator.toWord_toFreeGroup` theorem is the audit boundary between these expressions and the
-signed words used by `PresentedGroup`.
+`Relator.comm (.inv r) (.inv s)`, as prescribed by `Relator`'s API. The structured expressions
+otherwise preserve the displayed products and powers. The proved `Relator.toWord_toFreeGroup`
+theorem is the audit boundary between these expressions and the signed words used by
+`PresentedGroup`.
 
 GAP 4.15.1 with AtlasRep 2.1.9 independently checks the seven transcribed relations on the
 ATLAS 2058-point standard generators; those generators yield a simple group of order
@@ -92,9 +92,9 @@ def hePresentation : GroupPresentation where
     [ .pow a 2,
       .pow b 7,
       .pow (a ⬝ b) 17,
-      .pow (Relator.commInvInv a b) 6,
-      .pow (Relator.commInvInv a (.pow b 3)) 5,
-      Relator.commInvInv a commutatorWord,
+      .pow (.comm (.inv a) (.inv b)) 6,
+      .pow (.comm (.inv a) (.inv (.pow b 3))) 5,
+      .comm (.inv a) (.inv commutatorWord),
       finalWord ]
 
 /-- The generator and relator counts recorded for `He` agree with the transcribed data. -/

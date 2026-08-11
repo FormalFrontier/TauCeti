@@ -24,9 +24,9 @@ a², b¹³, (ab)¹¹, (ab²)²¹,
 ```
 
 The source's commutator convention is `[r,s] = r⁻¹s⁻¹rs`, opposite to Mathlib's
-`commutatorElement`, so each commutator is stored as `TauCeti.Relator.commInvInv`, the shared
-abbreviation for that convention. The proved `TauCeti.Relator.toWord_toFreeGroup` is the audit
-boundary between these expressions and the signed words consumed by `PresentedGroup`.
+`commutatorElement`, so each commutator is stored as `Relator.comm (.inv r) (.inv s)` as
+`TauCeti.Relator` prescribes. The proved `TauCeti.Relator.toWord_toFreeGroup` is the audit boundary
+between these expressions and the signed words consumed by `PresentedGroup`.
 
 The presentation source is backed by a computation for the double cover `2·Fi₂₂`. Its twelve
 base relators present the double cover, with central involution represented by both `(ab²)²¹` and
@@ -65,6 +65,10 @@ private abbrev b : Relator (Fin 2) := .gen 1
 @[inherit_doc Relator.mul]
 local infixl:70 " ⬝ " => Relator.mul
 
+/-- The source's commutator `[r, s] = r⁻¹ s⁻¹ r s`, represented in Mathlib's convention. -/
+private abbrev sourceComm (r s : Relator (Fin 2)) : Relator (Fin 2) :=
+  .comm (.inv r) (.inv s)
+
 /-- The ATLAS finite presentation of the Fischer group `Fi₂₂` on its standard generators `a`
 and `b`.
 
@@ -98,15 +102,15 @@ def fi22Presentation : GroupPresentation where
       .pow b 13,
       .pow (a ⬝ b) 11,
       .pow (a ⬝ .pow b 2) 21,
-      .pow (Relator.commInvInv a b) 3,
-      .pow (Relator.commInvInv a (.pow b 2)) 3,
-      .pow (Relator.commInvInv a (.pow b 3)) 3,
-      .pow (Relator.commInvInv a (.pow b 4)) 2,
-      .pow (Relator.commInvInv a (.pow b 5)) 3,
-      .pow (Relator.commInvInv a (b ⬝ a ⬝ .pow b 2)) 3,
-      .pow (Relator.commInvInv a (.inv b ⬝ a ⬝ .pow (.inv b) 2)) 2,
-      .pow (Relator.commInvInv a (b ⬝ a ⬝ .pow b 5)) 2,
-      .pow (Relator.commInvInv a (.pow b 2 ⬝ a ⬝ .pow b 5)) 2 ]
+      .pow (sourceComm a b) 3,
+      .pow (sourceComm a (.pow b 2)) 3,
+      .pow (sourceComm a (.pow b 3)) 3,
+      .pow (sourceComm a (.pow b 4)) 2,
+      .pow (sourceComm a (.pow b 5)) 3,
+      .pow (sourceComm a (b ⬝ a ⬝ .pow b 2)) 3,
+      .pow (sourceComm a (.inv b ⬝ a ⬝ .pow (.inv b) 2)) 2,
+      .pow (sourceComm a (b ⬝ a ⬝ .pow b 5)) 2,
+      .pow (sourceComm a (.pow b 2 ⬝ a ⬝ .pow b 5)) 2 ]
 
 /-- The generator and relator counts recorded for `Fi₂₂` agree with the transcribed data. -/
 theorem matchesMetadata_fi22Presentation : fi22Presentation.matchesMetadata := by

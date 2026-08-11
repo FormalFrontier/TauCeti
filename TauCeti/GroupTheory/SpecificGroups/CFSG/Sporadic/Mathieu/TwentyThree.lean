@@ -34,9 +34,9 @@ written, so it is transcribed and the recorded relator count is nine. The source
 correctness covers the list both with and without it.
 
 The source's commutator convention is `[r,s] = r⁻¹s⁻¹rs`, opposite to Mathlib's
-`commutatorElement`, so the commutator is stored as `TauCeti.Relator.commInvInv`, the shared
-abbreviation for that convention. The proved `TauCeti.Relator.toWord_toFreeGroup` is the audit
-boundary between these expressions and the signed words that `PresentedGroup` consumes.
+`commutatorElement`, so the commutator is stored as `Relator.comm (.inv r) (.inv s)` as
+`TauCeti.Relator` prescribes. The proved `TauCeti.Relator.toWord_toFreeGroup` is the audit boundary
+between these expressions and the signed words that `PresentedGroup` consumes.
 
 The source is a presentation rather than a semi-presentation — the ATLAS lists a separate
 semi-presentation for `M₂₃`, which is not what is transcribed here — and it comes with a
@@ -78,6 +78,10 @@ private abbrev b : Relator (Fin 2) := .gen 1
 
 @[inherit_doc Relator.mul]
 local infixl:70 " ⬝ " => Relator.mul
+
+/-- The source's commutator `[r, s] = r⁻¹ s⁻¹ r s`, which is `⁅r⁻¹, s⁻¹⁆` in Mathlib's
+convention. -/
+private abbrev sourceComm (r s : Relator (Fin 2)) : Relator (Fin 2) := .comm (.inv r) (.inv s)
 
 /-- The syllable `a * b`. -/
 private abbrev ab1 : Relator (Fin 2) := a ⬝ b
@@ -122,7 +126,7 @@ def m23Presentation : GroupPresentation where
       .pow b 4,
       .pow ab1 23,
       .pow ab2 6,
-      .pow (Relator.commInvInv a b) 6,
+      .pow (sourceComm a b) 6,
       .pow (ab1 ⬝ abNeg1 ⬝ ab2) 4,
       .pow ab1 3 ⬝ abNeg1 ⬝ ab2 ⬝ .pow (ab1 ⬝ abNeg1) 2 ⬝ .pow ab1 3 ⬝ .pow abNeg1 3,
       .pow (ab1 ⬝ ab2 ⬝ ab2) 6,

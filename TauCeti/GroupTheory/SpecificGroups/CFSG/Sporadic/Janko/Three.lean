@@ -32,10 +32,10 @@ presentation page displays the same eight words with those two interchanged. No 
 is marked redundant, in either of its two renderings.
 
 The source's commutator convention is `[r,s] = r⁻¹s⁻¹rs`, opposite to Mathlib's
-`commutatorElement`, so the commutator is stored as `TauCeti.Relator.commInvInv`, the shared
-abbreviation for that convention. The structured expressions otherwise preserve the displayed
-products and powers. The proved `TauCeti.Relator.toWord_toFreeGroup` is the audit boundary between
-these expressions and the signed words that `PresentedGroup` consumes.
+`commutatorElement`, so the commutator is stored as `Relator.comm (.inv r) (.inv s)` as
+`TauCeti.Relator` prescribes. The structured expressions otherwise preserve the displayed products
+and powers. The proved `TauCeti.Relator.toWord_toFreeGroup` is the audit boundary between these
+expressions and the signed words that `PresentedGroup` consumes.
 
 The source is a presentation of the abstract group rather than a semi-presentation, and it comes
 with a demonstration of correctness: its Magma file exhibits the cyclic subgroup `K₁ = ⟨ab⟩` of
@@ -131,7 +131,7 @@ def j3Presentation : GroupPresentation where
   transcribed :=
     [ .pow a 2,
       .pow b 3,
-      .pow (Relator.commInvInv a b) 9,
+      .pow (.comm (.inv a) (.inv b)) 9,
       .pow ab1 19,
       .pow (.pow ab1 6 ⬝ .pow abNeg1 5) 2,
       sixthWord,

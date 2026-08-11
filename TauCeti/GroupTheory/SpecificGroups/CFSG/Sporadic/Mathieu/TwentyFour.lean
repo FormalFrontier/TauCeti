@@ -30,9 +30,9 @@ transcribed in `TauCeti.GroupTheory.SpecificGroups.CFSG.Sporadic.Mathieu.TwentyT
 inside its relator list as written and is counted.
 
 The source's commutator convention is `[r,s] = r⁻¹s⁻¹rs`, opposite to Mathlib's
-`commutatorElement`, so each commutator is stored as `TauCeti.Relator.commInvInv`, the shared
-abbreviation for that convention. The proved `TauCeti.Relator.toWord_toFreeGroup` is the audit
-boundary between these expressions and the signed words that `PresentedGroup` consumes.
+`commutatorElement`, so each commutator is stored as `Relator.comm (.inv r) (.inv s)` as
+`TauCeti.Relator` prescribes. The proved `TauCeti.Relator.toWord_toFreeGroup` is the audit boundary
+between these expressions and the signed words that `PresentedGroup` consumes.
 
 The source is a presentation rather than a semi-presentation — the ATLAS lists a separate
 semi-presentation for `M₂₄`, which is not what is transcribed here — and it comes with a
@@ -82,6 +82,10 @@ private abbrev b : Relator (Fin 2) := .gen 1
 @[inherit_doc Relator.mul]
 local infixl:70 " ⬝ " => Relator.mul
 
+/-- The source's commutator `[r, s] = r⁻¹ s⁻¹ r s`, which is `⁅r⁻¹, s⁻¹⁆` in Mathlib's
+convention. -/
+private abbrev sourceComm (r s : Relator (Fin 2)) : Relator (Fin 2) := .comm (.inv r) (.inv s)
+
 /-- The syllable `a * b`. -/
 private abbrev ab1 : Relator (Fin 2) := a ⬝ b
 
@@ -122,8 +126,8 @@ def m24Presentation : GroupPresentation where
     [ .pow a 2,
       .pow b 3,
       .pow ab1 23,
-      .pow (Relator.commInvInv a b) 12,
-      .pow (Relator.commInvInv a (b ⬝ a ⬝ b)) 5,
+      .pow (sourceComm a b) 12,
+      .pow (sourceComm a (b ⬝ a ⬝ b)) 5,
       .pow (ab1 ⬝ ab1 ⬝ abNeg1) 3 ⬝ .pow (ab1 ⬝ abNeg1 ⬝ abNeg1) 3,
       .pow (ab1 ⬝ .pow (ab1 ⬝ abNeg1) 3) 4 ]
 
