@@ -21,10 +21,12 @@ The prefix one letter shorter is not wasteful, so the letter just read is an inv
 element that prefix spells, and the strong exchange condition deletes a letter from that prefix.
 Deleting the letter just read as well leaves a word two letters shorter spelling the same element.
 
-The subword form is what makes these statements usable downstream. A homomorphism out of the Weyl
-group carries a subword relation between two words to the same relation between their images,
-whereas the bare existence of some shorter word says nothing about any other group; this is the
-form in which the deletion condition enters the word property behind Tits' theorem.
+The subword form is what makes these statements usable downstream. The deleted positions are named,
+so the same deletions can be replayed verbatim on the corresponding word over any other family of
+generators indexed by `b.support`, in particular over the generators of the presented Coxeter
+group. The bare existence of some shorter word inside the Weyl group names no word over those
+generators to carry the assertion back through the presentation map; this is the form in which the
+deletion condition enters the word property behind Tits' theorem.
 
 ## Main results
 
@@ -118,9 +120,9 @@ theorem exists_wordProd_eraseIdx_eraseIdx_eq (l : List b.support)
     have h₃ := List.length_eraseIdx_add_one h₂
     omega
 
-/-- **The subword property.** Every word in the simple reflections contains a subword of least
-length spelling the same Weyl-group element: repeatedly deleting the two letters supplied by the
-deletion condition ends at a word whose length is the inversion count. -/
+/-- **The subword property.** Every word in the simple reflections has a sublist that spells the
+same Weyl-group element and whose length is the inversion count of that element, hence is of least
+length. -/
 theorem exists_sublist_wordProd_eq_and_length_eq_ncard_inversions (l : List b.support) :
     ∃ l' : List b.support, l'.Sublist l ∧ wordProd P b l' = wordProd P b l ∧
       l'.length = (inversions P b (wordProd P b l)).ncard := by

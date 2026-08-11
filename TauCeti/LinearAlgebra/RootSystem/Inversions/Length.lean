@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.LinearAlgebra.RootSystem.Inversions.Deletion
+public import TauCeti.LinearAlgebra.RootSystem.Inversions.StrongExchange
 
 public section
 
@@ -48,7 +48,8 @@ length-function axioms in their inversion-count spelling.
   `TauCeti.lt_ncard_inversions_mul_ofIdx_iff`: right multiplication by the reflection in a
   positive root lowers the inversion count exactly when that root is an inversion. The reflecting
   root need not be simple, because the strong exchange condition does not require it to be.
-* `TauCeti.ncard_inversions_ofIdx_mul_lt_iff`: the same criterion for left multiplication, read off
+* `TauCeti.ncard_inversions_ofIdx_mul_lt_iff` and
+  `TauCeti.lt_ncard_inversions_ofIdx_mul_iff`: the same criteria for left multiplication, read off
   the inverse element.
 
 ## References
@@ -58,7 +59,7 @@ exchange step" in Layer 1 of `TauCetiRoadmap/RepresentationTheory/RootSystems/RE
 that asks for exactly that iteration: the step "iterated, is the exchange/deletion condition for
 the geometric action and the combinatorial core that Layer 2's generation and presentation
 consume". Nothing beyond that Layer 1 material is consumed, and all of it is on `main`
-(`TauCeti/LinearAlgebra/RootSystem/Inversions/Deletion.lean` and its imports).
+(`TauCeti/LinearAlgebra/RootSystem/Inversions/StrongExchange.lean` and its imports).
 
 What Layer 2's presentation takes from the iteration is that a nonempty word of least length
 spells an element other than the identity, equivalently that its inversion set is nonempty: that
@@ -178,10 +179,9 @@ theorem ncard_inversions_mul_le (v w : P.weylGroup) :
     _ = (inversions P b v).ncard + (inversions P b w).ncard := by
       rw [List.length_append, hlen, hlen']
 
-/-- **Right multiplication by the reflection in an inversion shortens.** Deleting from a shortest
-word the letter supplied by the strong exchange condition spells the product, so the product needs
-strictly fewer letters. The reflecting root is an arbitrary inversion, not necessarily a simple
-root, so this is the length inequality for a general reflection of the Weyl group. -/
+/-- **Right multiplication by the reflection in an inversion shortens.** The reflecting root is an
+arbitrary inversion, not necessarily a simple root, so this is the length inequality for a general
+reflection of the Weyl group. -/
 theorem ncard_inversions_mul_ofIdx_lt_of_mem (w : P.weylGroup) {i : ι}
     (hi : i ∈ inversions P b w) :
     (inversions P b (w * RootPairing.weylGroup.ofIdx P i)).ncard < (inversions P b w).ncard := by
@@ -219,16 +219,30 @@ theorem lt_ncard_inversions_mul_ofIdx_iff (w : P.weylGroup) {i : ι} (hi : b.IsP
       ((mem_inversions_mul_ofIdx_iff_not_mem P w b hi).mpr h)
     rwa [mul_assoc, RootPairing.weylGroup.ofIdx_mul_self, mul_one] at hback
 
+/-- Left multiplication by a reflection has the same inversion count as right multiplication by it
+on the inverse element; this is what turns the left criteria into the right ones. -/
+private theorem ncard_inversions_ofIdx_mul (w : P.weylGroup) (i : ι) :
+    (inversions P b (RootPairing.weylGroup.ofIdx P i * w)).ncard =
+      (inversions P b (w⁻¹ * RootPairing.weylGroup.ofIdx P i)).ncard := by
+  rw [← ncard_inversions_inv P b (w⁻¹ * RootPairing.weylGroup.ofIdx P i), mul_inv_rev,
+    RootPairing.weylGroup.ofIdx_inv_eq, inv_inv]
+
 /-- **Left descent criterion.** Left multiplication by the reflection in a positive root shortens
-an element exactly when that root is an inversion of the inverse element: reversing a shortest
-word turns left multiplication into right multiplication. -/
+an element exactly when that root is an inversion of the inverse element. -/
+@[simp]
 theorem ncard_inversions_ofIdx_mul_lt_iff (w : P.weylGroup) {i : ι} (hi : b.IsPos i) :
     (inversions P b (RootPairing.weylGroup.ofIdx P i * w)).ncard < (inversions P b w).ncard ↔
       i ∈ inversions P b w⁻¹ := by
-  have hmirror : (inversions P b (RootPairing.weylGroup.ofIdx P i * w)).ncard =
-      (inversions P b (w⁻¹ * RootPairing.weylGroup.ofIdx P i)).ncard := by
-    rw [← ncard_inversions_inv P b (w⁻¹ * RootPairing.weylGroup.ofIdx P i), mul_inv_rev,
-      RootPairing.weylGroup.ofIdx_inv_eq, inv_inv]
-  rw [hmirror, ← ncard_inversions_inv P b w, ncard_inversions_mul_ofIdx_lt_iff P b w⁻¹ hi]
+  rw [ncard_inversions_ofIdx_mul, ← ncard_inversions_inv P b w,
+    ncard_inversions_mul_ofIdx_lt_iff P b w⁻¹ hi]
+
+/-- **Left ascent criterion.** Left multiplication by the reflection in a positive root lengthens
+an element exactly when that root is not yet an inversion of the inverse element. -/
+@[simp]
+theorem lt_ncard_inversions_ofIdx_mul_iff (w : P.weylGroup) {i : ι} (hi : b.IsPos i) :
+    (inversions P b w).ncard < (inversions P b (RootPairing.weylGroup.ofIdx P i * w)).ncard ↔
+      i ∉ inversions P b w⁻¹ := by
+  rw [ncard_inversions_ofIdx_mul, ← ncard_inversions_inv P b w,
+    lt_ncard_inversions_mul_ofIdx_iff P b w⁻¹ hi]
 
 end TauCeti

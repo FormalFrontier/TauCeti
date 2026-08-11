@@ -21,9 +21,12 @@ an empty inversion set is spelled by the empty word, so it is the identity.
 Two features of the statement are what make it usable and are not shared by the weaker "some
 shorter word exists" form. The reflecting root ranges over *all* positive roots, not just the
 simple ones, so the condition applies to an arbitrary reflection of the Weyl group; and the
-shorter word is a *subword* of the given one, obtained by deleting a single letter in a named
-position. Only the subword form transports along a group homomorphism, which is why it is the form
-the word property behind Tits' theorem consumes.
+shorter word is `l.eraseIdx j` for a named position `j`, a deletion that can be replayed verbatim
+on the corresponding word over any other family of generators indexed by `b.support`, in particular
+over the generators of the presented Coxeter group. The weaker form asserts only that some shorter
+word exists inside the Weyl group; it names no word over those generators to carry the assertion
+back through the presentation map, which is why the word property behind Tits' theorem consumes the
+deletion form.
 
 The proof is an induction on the word. Peeling off the leading simple reflection `sⱼ`, either the
 shorter word already sends the root to a negative root, and the inductive hypothesis deletes a
