@@ -56,6 +56,8 @@ namespace Probability
 
 variable {Ω α : Type*} [MeasurableSpace Ω] [MeasurableSpace α]
 
+namespace Contractable
+
 /-- **Simultaneous convergence of a product of indicator block averages.** For a contractable
 process on a standard Borel state space and finitely many measurable sets `B i`, each read along
 its own selection `k i`, the product of the block averages converges in `L¹` to the product of the
@@ -64,7 +66,7 @@ directing-measure evaluations.
 Only each selection's own eventual injectivity is used; nothing here needs the selections to be
 disjoint from one another. Disjointness matters for what the *terms* mean downstream, not for the
 convergence. -/
-theorem Contractable.tendsto_integral_abs_prod_blockAverage_indicator_sub_prod_directingMeasure
+theorem tendsto_integral_abs_prod_blockAverage_indicator_sub_prod_directingMeasure
     [StandardBorelSpace α] [Nonempty α] {μ : Measure Ω} [IsFiniteMeasure μ] {X : ℕ → Ω → α}
     (hX : Contractable μ X) (hX_meas : ∀ i, Measurable (X i))
     {m : ℕ} (B : Fin m → Set α) (hB : ∀ i, MeasurableSet (B i))
@@ -120,7 +122,7 @@ theorem Contractable.tendsto_integral_abs_prod_blockAverage_indicator_sub_prod_d
 /-- **The disjoint-window instance.** The block averages are of indicators, as in the general
 theorem above; reading factor `i` along `disjointWindow i` keeps distinct factors in disjoint
 blocks at every length, which is the configuration a finite-block factorization consumes. -/
-theorem Contractable.tendsto_integral_abs_prod_indicator_disjointWindow_sub_prod_directingMeasure
+theorem tendsto_integral_abs_prod_blockAverage_indicator_disjointWindow_sub_prod_directingMeasure
     [StandardBorelSpace α] [Nonempty α] {μ : Measure Ω} [IsFiniteMeasure μ] {X : ℕ → Ω → α}
     (hX : Contractable μ X) (hX_meas : ∀ i, Measurable (X i))
     {m : ℕ} (B : Fin m → Set α) (hB : ∀ i, MeasurableSet (B i)) :
@@ -130,6 +132,8 @@ theorem Contractable.tendsto_integral_abs_prod_indicator_disjointWindow_sub_prod
           - ∏ i : Fin m, (directingMeasure μ X ω).real (B i)| ∂μ) atTop (𝓝 0) :=
   hX.tendsto_integral_abs_prod_blockAverage_indicator_sub_prod_directingMeasure hX_meas B hB
     (fun i => disjointWindow (i : ℕ)) fun i => disjointWindow_eventually_injective (i : ℕ)
+
+end Contractable
 
 end Probability
 
