@@ -286,10 +286,7 @@ theorem sum_doubleEdgeCartanMatrix_mul_doubleEdgeMark_inr (w : Fin q) :
 /-! ## The bound -/
 
 /-- **The double-edge bound.** Two chains of `p` and `q` vertices joined by a double edge form a
-diagram of finite type only if `2 p q < (p + 1) (q + 1)`, that is, only if `(p - 1) (q - 1) < 2`.
-
-The proof is the marks: under the negated bound they are subdominant, hence zero, and they are
-not. -/
+diagram of finite type only if `2 p q < (p + 1) (q + 1)`, that is, only if `(p - 1) (q - 1) < 2`. -/
 theorem two_mul_mul_lt_succ_mul_succ_of_isFiniteType_doubleEdge
     (h : IsFiniteType (doubleEdgeCartanMatrix p q)) : 2 * p * q < (p + 1) * (q + 1) := by
   rw [← not_le]
@@ -365,7 +362,7 @@ theorem eq_one_or_eq_one_or_eq_two_two_of_isFiniteType_doubleEdge (hp : 0 < p) (
   exact hpq (by omega) (by omega)
 
 /-- The extended Dynkin diagram `F̃₄`, two chains of three and of two vertices joined by a double
-edge, is not of finite type: its marks are a null vector. -/
+edge, is not of finite type. -/
 theorem not_isFiniteType_affineF₄ : ¬ IsFiniteType (doubleEdgeCartanMatrix 3 2) :=
   not_isFiniteType_doubleEdgeCartanMatrix_of_succ_mul_succ_le (by norm_num)
 

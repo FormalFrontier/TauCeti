@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.LinearAlgebra.RootSystem.FiniteType.Basic
+public import Mathlib.LinearAlgebra.Matrix.Cartan
 
 public section
 
