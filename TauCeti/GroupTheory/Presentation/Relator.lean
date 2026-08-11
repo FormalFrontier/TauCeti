@@ -160,6 +160,7 @@ theorem mem_relatorSet {α : Type*} {l : List (Relator α)} {r : FreeGroup α} :
   Iff.rfl
 
 /-- Appending relator lists unions their relator sets. -/
+@[simp]
 theorem relatorSet_append {α : Type*} (l l' : List (Relator α)) :
     relatorSet (l ++ l') = relatorSet l ∪ relatorSet l' := by
   simp only [relatorSet, List.mem_append, Set.ofPred_or, Set.image_union]

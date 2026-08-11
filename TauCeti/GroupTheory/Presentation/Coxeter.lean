@@ -103,6 +103,7 @@ def coxeterRelatorsOfList [LinearOrder B] (M : CoxeterMatrix B) (l : List B) : L
 
 /-- A list of `n` nodes yields `(n + 1).choose 2` Coxeter relators, the number of unordered pairs
 of nodes with repetition allowed. -/
+@[simp]
 theorem length_coxeterRelatorsOfList [LinearOrder B] (M : CoxeterMatrix B) (l : List B) :
     (coxeterRelatorsOfList M l).length = (l.length + 1).choose 2 := by
   rw [coxeterRelatorsOfList, List.length_map, List.length_sym2]
@@ -148,7 +149,17 @@ numbering `0, 1, …, n - 1`. -/
 def coxeterRelators {n : ℕ} (M : CoxeterMatrix (Fin n)) : List (Relator (Fin n)) :=
   coxeterRelatorsOfList M (List.finRange n)
 
+/-- Membership in the Coxeter relator list of a `Fin n`-indexed matrix: every pair of nodes
+contributes, so the only condition is that the relator be the one of a pair, written in the
+canonical increasing order. -/
+theorem mem_coxeterRelators_iff {n : ℕ} {M : CoxeterMatrix (Fin n)} {t : Relator (Fin n)} :
+    t ∈ coxeterRelators M ↔ ∃ i j : Fin n, t = coxeterRelator M s(i, j).inf s(i, j).sup := by
+  rw [coxeterRelators, mem_coxeterRelatorsOfList_iff]
+  exact ⟨fun ⟨i, _, j, _, h⟩ => ⟨i, j, h⟩,
+    fun ⟨i, j, h⟩ => ⟨i, List.mem_finRange i, j, List.mem_finRange j, h⟩⟩
+
 /-- A Coxeter diagram on `n` nodes has `(n + 1).choose 2` relators. -/
+@[simp]
 theorem length_coxeterRelators {n : ℕ} (M : CoxeterMatrix (Fin n)) :
     (coxeterRelators M).length = (n + 1).choose 2 := by
   rw [coxeterRelators, length_coxeterRelatorsOfList, List.length_finRange]
@@ -188,21 +199,29 @@ theorem normalClosure_relatorSet_coxeterRelatorsOfList [LinearOrder B] (M : Coxe
       rw [M.symmetric j i] at hji
       exact pow_mul_mem_of_pow_mul_swap_mem Subgroup.normalClosure_normal _ _ _ hji
 
+/-- Appending further relators to the Coxeter relator list imposes Mathlib's Coxeter relations
+together with the extra relations. A published Y-diagram presentation has this shape, its extra
+relator being the spider relator. -/
+theorem normalClosure_relatorSet_coxeterRelatorsOfList_append [LinearOrder B] (M : CoxeterMatrix B)
+    {l : List B} (hl : ∀ i : B, i ∈ l) (extra : List (Relator B)) :
+    Subgroup.normalClosure (Relator.relatorSet (coxeterRelatorsOfList M l ++ extra)) =
+      Subgroup.normalClosure (M.relationsSet ∪ Relator.relatorSet extra) := by
+  rw [Relator.relatorSet_append, Subgroup.normalClosure_union, Subgroup.normalClosure_union,
+    normalClosure_relatorSet_coxeterRelatorsOfList M hl]
+
 /-- The `Fin n`-indexed form of `TauCeti.normalClosure_relatorSet_coxeterRelatorsOfList`. -/
 theorem normalClosure_relatorSet_coxeterRelators {n : ℕ} (M : CoxeterMatrix (Fin n)) :
     Subgroup.normalClosure (Relator.relatorSet (coxeterRelators M)) =
       Subgroup.normalClosure M.relationsSet :=
   normalClosure_relatorSet_coxeterRelatorsOfList M fun _ => List.mem_finRange _
 
-/-- Appending further relators to the Coxeter relator list imposes Mathlib's Coxeter relations
-together with the extra relations. A published Y-diagram presentation has this shape, its extra
-relator being the spider relator. -/
+/-- The `Fin n`-indexed form of
+`TauCeti.normalClosure_relatorSet_coxeterRelatorsOfList_append`. -/
 theorem normalClosure_relatorSet_coxeterRelators_append {n : ℕ} (M : CoxeterMatrix (Fin n))
     (extra : List (Relator (Fin n))) :
     Subgroup.normalClosure (Relator.relatorSet (coxeterRelators M ++ extra)) =
-      Subgroup.normalClosure (M.relationsSet ∪ Relator.relatorSet extra) := by
-  rw [Relator.relatorSet_append, Subgroup.normalClosure_union, Subgroup.normalClosure_union,
-    normalClosure_relatorSet_coxeterRelators]
+      Subgroup.normalClosure (M.relationsSet ∪ Relator.relatorSet extra) :=
+  normalClosure_relatorSet_coxeterRelatorsOfList_append M (fun _ => List.mem_finRange _) extra
 
 /-- The group presented by the finite Coxeter relator list is Mathlib's Coxeter group. -/
 def mulEquivCoxeterGroup {n : ℕ} (M : CoxeterMatrix (Fin n)) :
@@ -236,16 +255,15 @@ spider relator being the addition — is served by
 def GroupPresentation.mulEquivCoxeterGroup (P : GroupPresentation)
     (M : CoxeterMatrix (Fin P.generatorCount)) (h : P.transcribed = coxeterRelators M) :
     P.Group ≃* M.Group :=
-  QuotientGroup.quotientMulEquivOfEq (by
-    simpa only [GroupPresentation.relatorSet, h] using
-      normalClosure_relatorSet_coxeterRelators M)
+  (QuotientGroup.quotientMulEquivOfEq (by
+    rw [GroupPresentation.relatorSet, h])).trans (_root_.TauCeti.mulEquivCoxeterGroup M)
 
 @[simp]
 theorem GroupPresentation.mulEquivCoxeterGroup_apply_of (P : GroupPresentation)
     (M : CoxeterMatrix (Fin P.generatorCount)) (h : P.transcribed = coxeterRelators M)
     (i : Fin P.generatorCount) :
     P.mulEquivCoxeterGroup M h (PresentedGroup.of i) = M.simple i :=
-  QuotientGroup.quotientMulEquivOfEq_mk _ _
+  _root_.TauCeti.mulEquivCoxeterGroup_apply_of M i
 
 /-- **A transcription that appends further relators to the Coxeter relators of `M` presents the
 Coxeter relations together with those extra relations.** This is the form an audited Y-diagram
@@ -256,16 +274,16 @@ def GroupPresentation.mulEquivPresentedGroupCoxeterAppend (P : GroupPresentation
     (M : CoxeterMatrix (Fin P.generatorCount)) (extra : List (Relator (Fin P.generatorCount)))
     (h : P.transcribed = coxeterRelators M ++ extra) :
     P.Group ≃* PresentedGroup (M.relationsSet ∪ Relator.relatorSet extra) :=
-  QuotientGroup.quotientMulEquivOfEq (by
-    simpa only [GroupPresentation.relatorSet, h] using
-      normalClosure_relatorSet_coxeterRelators_append M extra)
+  (QuotientGroup.quotientMulEquivOfEq (by
+    rw [GroupPresentation.relatorSet, h])).trans
+    (_root_.TauCeti.mulEquivPresentedGroupCoxeterAppend M extra)
 
 @[simp]
 theorem GroupPresentation.mulEquivPresentedGroupCoxeterAppend_apply_of (P : GroupPresentation)
     (M : CoxeterMatrix (Fin P.generatorCount)) (extra : List (Relator (Fin P.generatorCount)))
     (h : P.transcribed = coxeterRelators M ++ extra) (i : Fin P.generatorCount) :
     P.mulEquivPresentedGroupCoxeterAppend M extra h (PresentedGroup.of i) = PresentedGroup.of i :=
-  QuotientGroup.quotientMulEquivOfEq_mk _ _
+  _root_.TauCeti.mulEquivPresentedGroupCoxeterAppend_apply_of M extra i
 
 end Coxeter
 
