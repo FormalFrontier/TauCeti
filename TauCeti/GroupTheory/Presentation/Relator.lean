@@ -30,6 +30,8 @@ from Mathlib.
 * `TauCeti.Relator`: expressions built from generators, inverse, product, power, and commutator.
 * `TauCeti.Relator.toWord`: compilation of an expression to a signed word.
 * `TauCeti.Relator.toFreeGroup`: direct structural interpretation of an expression.
+* `TauCeti.Relator.conj` and `TauCeti.Relator.div`: the conjugate `s⁻¹ r s` and the relator `r s⁻¹`
+  by which a source states an equation between two words.
 
 ## Main result
 
@@ -91,6 +93,36 @@ def toWord {α : Type*} : Relator α → PresentationWord α
   | .comm r s => ((r.toWord ++ s.toWord) ++ FreeGroup.invRev r.toWord) ++
       FreeGroup.invRev s.toWord
 
+/-- Compilation of a generator. -/
+@[simp]
+theorem toWord_gen {α : Type*} (x : α) : (Relator.gen x).toWord = [(x, true)] := by
+  rw [toWord]
+
+/-- Compilation of an inverse. -/
+@[simp]
+theorem toWord_inv {α : Type*} (r : Relator α) :
+    (Relator.inv r).toWord = FreeGroup.invRev r.toWord := by
+  rw [toWord]
+
+/-- Compilation of a product. -/
+@[simp]
+theorem toWord_mul {α : Type*} (r s : Relator α) :
+    (Relator.mul r s).toWord = r.toWord ++ s.toWord := by
+  rw [toWord]
+
+/-- Compilation of a natural power. -/
+@[simp]
+theorem toWord_pow {α : Type*} (r : Relator α) (n : ℕ) :
+    (Relator.pow r n).toWord = (List.replicate n r.toWord).flatten := by
+  rw [toWord]
+
+/-- Compilation of a commutator. -/
+@[simp]
+theorem toWord_comm {α : Type*} (r s : Relator α) :
+    (Relator.comm r s).toWord =
+      ((r.toWord ++ s.toWord) ++ FreeGroup.invRev r.toWord) ++ FreeGroup.invRev s.toWord := by
+  rw [toWord]
+
 /-- Interpret a relator expression directly in the free group. This is deliberately independent of
 `Relator.toWord`: the comparison theorem below checks that compilation preserves meaning. -/
 def toFreeGroup {α : Type*} : Relator α → FreeGroup α
@@ -99,6 +131,93 @@ def toFreeGroup {α : Type*} : Relator α → FreeGroup α
   | .mul r s => r.toFreeGroup * s.toFreeGroup
   | .pow r n => r.toFreeGroup ^ n
   | .comm r s => ⁅r.toFreeGroup, s.toFreeGroup⁆
+
+/-- Interpretation of a generator. -/
+@[simp]
+theorem toFreeGroup_gen {α : Type*} (x : α) : (Relator.gen x).toFreeGroup = FreeGroup.of x := by
+  rw [toFreeGroup]
+
+/-- Interpretation of an inverse. -/
+@[simp]
+theorem toFreeGroup_inv {α : Type*} (r : Relator α) :
+    (Relator.inv r).toFreeGroup = r.toFreeGroup⁻¹ := by
+  rw [toFreeGroup]
+
+/-- Interpretation of a product. -/
+@[simp]
+theorem toFreeGroup_mul {α : Type*} (r s : Relator α) :
+    (Relator.mul r s).toFreeGroup = r.toFreeGroup * s.toFreeGroup := by
+  rw [toFreeGroup]
+
+/-- Interpretation of a natural power. -/
+@[simp]
+theorem toFreeGroup_pow {α : Type*} (r : Relator α) (n : ℕ) :
+    (Relator.pow r n).toFreeGroup = r.toFreeGroup ^ n := by
+  rw [toFreeGroup]
+
+/-- Interpretation of a commutator. -/
+@[simp]
+theorem toFreeGroup_comm {α : Type*} (r s : Relator α) :
+    (Relator.comm r s).toFreeGroup = ⁅r.toFreeGroup, s.toFreeGroup⁆ := by
+  rw [toFreeGroup]
+
+/-- The conjugate `s⁻¹ * r * s`, written `r ^ s` by most of the presentation literature.
+
+Published presentations of the larger sporadic groups state many of their relators as conjugates,
+so this is the shape a transcription of such a source needs. It is a derived form rather than a
+sixth constructor: `Relator.toWord` and `Relator.toFreeGroup` therefore stay total on the five
+constructors, and `Relator.toWord_toFreeGroup` covers it with no extra case.
+
+The body is exposed because a module carrying transcribed relators checks properties of its list by
+kernel reduction, which needs the transcription combinators to reduce. -/
+@[expose]
+def conj {α : Type*} (r s : Relator α) : Relator α := .mul (.inv s) (.mul r s)
+
+/-- The relator `r * s⁻¹`, by which a source states the equation `r = s`.
+
+A published presentation freely mixes relators with relations, writing for instance `a = (cd)⁴`
+alongside `a²`; `Relator.toFreeGroup_div` computes what this denotes, so Mathlib's `div_eq_one`
+says that imposing `r s⁻¹` as a relator is imposing the source's equation `r = s`.
+
+The body is exposed for the same reason as that of `TauCeti.Relator.conj`. -/
+@[expose]
+def div {α : Type*} (r s : Relator α) : Relator α := .mul r (.inv s)
+
+/-- The conjugate expression denotes the conjugate free-group element. -/
+@[simp]
+theorem toFreeGroup_conj {α : Type*} (r s : Relator α) :
+    (r.conj s).toFreeGroup = s.toFreeGroup⁻¹ * r.toFreeGroup * s.toFreeGroup := by
+  rw [conj, toFreeGroup_mul, toFreeGroup_inv, toFreeGroup_mul, mul_assoc]
+
+/-- The equation expression denotes the quotient of the two free-group elements. -/
+@[simp]
+theorem toFreeGroup_div {α : Type*} (r s : Relator α) :
+    (r.div s).toFreeGroup = r.toFreeGroup / s.toFreeGroup := by
+  rw [div, toFreeGroup_mul, toFreeGroup_inv, div_eq_mul_inv]
+
+/-- The compiled word of a conjugate expression. -/
+@[simp]
+theorem toWord_conj {α : Type*} (r s : Relator α) :
+    (r.conj s).toWord = FreeGroup.invRev s.toWord ++ (r.toWord ++ s.toWord) := by
+  rw [conj, toWord_mul, toWord_inv, toWord_mul]
+
+/-- The compiled word of an equation expression. -/
+@[simp]
+theorem toWord_div {α : Type*} (r s : Relator α) :
+    (r.div s).toWord = r.toWord ++ FreeGroup.invRev s.toWord := by
+  rw [div, toWord_mul, toWord_inv]
+
+/-- **The commutator convention of the presentation literature.** Sources that write
+`[r, s] = r⁻¹ s⁻¹ r s`, rather than Mathlib's `⁅r, s⁆ = r s r⁻¹ s⁻¹` carried by `Relator.comm`, are
+transcribed by applying `Relator.comm` to the two inverses; this computes what that denotes.
+
+This is not a `simp` lemma: `Relator.toFreeGroup_comm` and `Relator.toFreeGroup_inv` already carry
+its left-hand side to `⁅r.toFreeGroup⁻¹, s.toFreeGroup⁻¹⁆`, so the statement here is the expanded
+word a reviewer compares against the printed source rather than a normal form. -/
+theorem toFreeGroup_comm_inv_inv {α : Type*} (r s : Relator α) :
+    (Relator.comm (.inv r) (.inv s)).toFreeGroup =
+      r.toFreeGroup⁻¹ * s.toFreeGroup⁻¹ * r.toFreeGroup * s.toFreeGroup := by
+  rw [toFreeGroup_comm, toFreeGroup_inv, toFreeGroup_inv, commutatorElement_def, inv_inv, inv_inv]
 
 /-- **The compiled word denotes the direct interpretation of the relator expression.**
 

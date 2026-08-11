@@ -51,6 +51,11 @@ ultrametric inequality is `private`, and the norm-degree theory it rests on live
   `n ≥ 1`, and the proper subgroup `2ℤ` genuinely occurs, being the value group of the restriction
   of `v_∞` to `F(x)`. One element of value `exp (-1)` settles it, which is what the value above is.
 
+* `WeierstrassCurve.Affine.infinityPlace_ne_heightOneSpectrum_valuation`: the place at infinity is
+  distinct from the valuation of every height-one prime of the coordinate ring — the affine places.
+  With `CoordinateRing.pointPlace_eq_iff` that makes the whole point-to-place assignment injective,
+  the point at infinity included.
+
 The quotient value gets no `@[simp]` restatement of its own: `map_div₀` is a simp lemma, so simp
 decomposes the quotient through the two atomic restatements rather than matching a quotient-shaped
 left-hand side, and the `AdjoinRoot` spelling of `x / y` is definitionally the one written here.
@@ -410,6 +415,24 @@ theorem infinityPlace.isUniformizer_X_div_mk_Y :
       ⟨_, infinityPlace.X_div_mk_Y W⟩,
     Units.val_mk0]
   exact infinityPlace.X_div_mk_Y W
+
+
+open scoped Classical in
+/-- **The place at infinity is distinct from every affine place.** Together with
+`CoordinateRing.pointPlace_eq_iff` this gives the injectivity of the whole point-to-place
+assignment, the point at infinity included. -/
+@[simp]
+theorem infinityPlace_ne_heightOneSpectrum_valuation [IsDedekindDomain W.CoordinateRing]
+    (P : IsDedekindDomain.HeightOneSpectrum W.CoordinateRing) :
+    infinityPlace W ≠ P.valuation W.FunctionField := by
+  intro heq
+  -- `x` lies in the coordinate ring, so an affine place values it at most `1`, while it has a
+  -- double pole at infinity
+  have hx := IsDedekindDomain.HeightOneSpectrum.valuation_le_one P
+    (K := W.FunctionField) (algebraMap F[X] W.CoordinateRing Polynomial.X)
+  rw [← heq, infinityPlace.X] at hx
+  rw [← WithZero.exp_zero, WithZero.exp_le_exp] at hx
+  omega
 
 end WeierstrassCurve.Affine
 
