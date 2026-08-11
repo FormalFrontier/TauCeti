@@ -195,6 +195,18 @@ noncomputable def baseFieldAlgEquivOfIsBrauerTrivial (h : IsBrauerTrivial (CSA.o
     (_root_.Algebra.finrank_eq_one_iff_bijective_algebraMap.1
       ((isBrauerTrivial_iff_finrank_eq_one K D).1 h))).symm
 
+/-- The inverse of `TauCeti.baseFieldAlgEquivOfIsBrauerTrivial` is the structure map. -/
+@[simp]
+theorem baseFieldAlgEquivOfIsBrauerTrivial_symm_apply (h : IsBrauerTrivial (CSA.of K D)) (a : K) :
+    (baseFieldAlgEquivOfIsBrauerTrivial K D h).symm a = algebraMap K D a :=
+  (rfl)
+
+/-- `TauCeti.baseFieldAlgEquivOfIsBrauerTrivial` is a section of the structure map. -/
+@[simp]
+theorem algebraMap_baseFieldAlgEquivOfIsBrauerTrivial (h : IsBrauerTrivial (CSA.of K D)) (x : D) :
+    algebraMap K D (baseFieldAlgEquivOfIsBrauerTrivial K D h x) = x := by
+  rw [← baseFieldAlgEquivOfIsBrauerTrivial_symm_apply K D h, AlgEquiv.symm_apply_apply]
+
 /-- **The Brauer class of a central division algebra is the identity exactly when the algebra is
 one-dimensional.** -/
 theorem BrauerGroup.mk_eq_one_iff_finrank_eq_one :
