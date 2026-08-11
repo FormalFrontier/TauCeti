@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+public import TauCeti.Algebra.Module.Equiv.Basic
 public import TauCeti.Algebra.MonoidAlgebra.Twisted
 
 /-!
@@ -96,11 +97,6 @@ structure IsProjectiveRep (ρ : G → V ≃ₗ[k] V) (α : G → G → kˣ) : Pr
 
 variable {ρ : G → V ≃ₗ[k] V} {α : G → G → kˣ}
 
-/-- Rescaling an automorphism by a unit, unfolded. -/
-private theorem trans_smulOfUnit_apply (e : V ≃ₗ[k] V) (u : kˣ) (x : V) :
-    (e.trans (LinearEquiv.smulOfUnit u)) x = (u : k) • e x :=
-  rfl
-
 /-- The rearrangement in a commutative group that turns the cocycle identity for a factor set into
 the cocycle identity for its rescaling by a coboundary: read `a, b, d` as the values of the
 rescaling at `g₁, g₂, g₃`, then `p, q, r` as its values at `g₁ * g₂`, `g₂ * g₃`, `g₁ * g₂ * g₃`, and
@@ -138,14 +134,15 @@ theorem rescale (h : IsProjectiveRep ρ α) (c : G → kˣ) (hc : c 1 = 1) :
       one_right g := by simp [hc, h.isFactorSet.one_right] }
   map_one := by
     refine LinearEquiv.ext fun x ↦ ?_
-    rw [trans_smulOfUnit_apply, h.map_one, hc]
+    rw [LinearEquiv.trans_apply, LinearEquiv.smulOfUnit_apply, h.map_one, hc]
     simp
   mul_apply g₁ g₂ x := by
     have hunit : (c g₁ * c g₂ * (c (g₁ * g₂))⁻¹ * α g₁ g₂) * c (g₁ * g₂)
-        = c g₂ * (c g₁ * α g₁ g₂) := by
+        = c g₂ * (α g₁ g₂ * c g₁) := by
       rw [mul_right_comm, inv_mul_cancel_right]
       simp only [mul_comm, mul_left_comm]
-    simp only [trans_smulOfUnit_apply, map_smul, h.mul_apply, smul_smul, ← Units.val_mul, hunit]
+    simp only [LinearEquiv.trans_apply, LinearEquiv.smulOfUnit_apply, map_smul, h.mul_apply,
+      smul_smul, ← Units.val_mul, hunit]
 
 /-- A linear representation, presented as a homomorphism into the group of linear automorphisms, is
 a projective representation with trivial factor set. -/
