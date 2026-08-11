@@ -6,6 +6,7 @@ Authors: Claude
 module
 
 public import Mathlib.GroupTheory.GroupAction.ConjAct
+public import Mathlib.MeasureTheory.Function.LpSpace.Basic
 public import Mathlib.MeasureTheory.Function.LpSpace.Complete
 public import Mathlib.MeasureTheory.Function.LpSpace.DomAct.Basic
 public import Mathlib.MeasureTheory.Group.Measure
@@ -36,6 +37,9 @@ stable under changing it on a null set, so it does not descend to `Lp` at all.  
 ## Main definitions
 
 * `TauCeti.classFunctionLp`: the class functions in `Lp E p μ`, a submodule.
+* `TauCeti.conjLpₗᵢ`: conjugation by a fixed element, as a linear isometry of `Lp E p μ`. This is
+  the same operation as the `(ConjAct G)ᵈᵐᵃ`-action, in the bundled form whose norm — and hence,
+  for `p = 2`, whose inner product — is transparently preserved.
 
 ## Main statements
 
@@ -51,6 +55,8 @@ stable under changing it on a null set, so it does not descend to `Lp` at all.  
   (`TauCeti.instCompleteSpaceClassFunctionLp`) complete.
 * `TauCeti.mem_classFunctionLp_of_ae_eq_of_conj_invariant`: a pointwise invariant representative
   makes a class function.
+* `TauCeti.conjLpₗᵢ_apply_of_mem_classFunctionLp`: a class function is fixed by every conjugation
+  isometry.
 
 The compact-group specialization -- that the character of a continuous representation is a class
 function in `L²(G)` -- is in `TauCeti/RepresentationTheory/Compact/ClassFunctionLp.lean`.
@@ -177,6 +183,30 @@ theorem mem_classFunctionLp_of_ae_eq_of_conj_invariant {f : Lp E p μ} {F : G �
 theorem const_mem_classFunctionLp [IsFiniteMeasure μ] (a : E) :
     Lp.const p μ a ∈ classFunctionLp 𝕜 E p μ :=
   fun c ↦ DomMulAct.smul_Lp_const c a
+
+section Isometry
+
+variable [Fact (1 ≤ p)]
+
+/-- **Conjugation by a fixed element, as a linear isometry of `Lp E p μ`.**  It agrees with the
+action of `(ConjAct G)ᵈᵐᵃ` (`TauCeti.coeFn_conjLpₗᵢ`), and the point of the bundling is that a
+linear isometry of `L²` preserves the inner product, which the `SMul` packaging does not record. -/
+noncomputable def conjLpₗᵢ (h : G) : Lp E p μ →ₗᵢ[𝕜] Lp E p μ :=
+  Lp.compMeasurePreservingₗᵢ 𝕜 (fun g ↦ h * g * h⁻¹) (measurePreserving_conj μ h)
+
+variable {𝕜}
+
+/-- The conjugation isometry is represented by `g ↦ f (h * g * h⁻¹)`. -/
+theorem coeFn_conjLpₗᵢ (h : G) (f : Lp E p μ) : conjLpₗᵢ 𝕜 h f =ᵐ[μ] fun g ↦ f (h * g * h⁻¹) :=
+  Lp.coeFn_compMeasurePreserving f (measurePreserving_conj μ h)
+
+/-- **A class function is fixed by every conjugation isometry.**  This is the definition of
+`TauCeti.classFunctionLp`, read on the bundled operation. -/
+theorem conjLpₗᵢ_apply_of_mem_classFunctionLp {f : Lp E p μ} (hf : f ∈ classFunctionLp 𝕜 E p μ)
+    (h : G) : conjLpₗᵢ 𝕜 h f = f :=
+  Lp.ext ((coeFn_conjLpₗᵢ h f).trans (mem_classFunctionLp_iff_ae 𝕜 |>.1 hf h))
+
+end Isometry
 
 /-- On a commutative group every element of `Lp` is a class function: conjugation is trivial. -/
 theorem classFunctionLp_eq_top_of_commGroup {G : Type*} [CommGroup G] [MeasurableSpace G]
