@@ -101,12 +101,12 @@ def realCliffordForm (p q : ℕ) : QuadraticForm ℝ (Fin (p + q) → ℝ) :=
 @[simp]
 theorem realCliffordWeight_of_lt {p q : ℕ} {i : Fin (p + q)} (hi : (i : ℕ) < p) :
     realCliffordWeight p q i = 1 :=
-  if_pos hi
+  ite_eq_left hi
 
 @[simp]
 theorem realCliffordWeight_of_le {p q : ℕ} {i : Fin (p + q)} (hi : p ≤ (i : ℕ)) :
     realCliffordWeight p q i = -1 :=
-  if_neg (not_lt.2 hi)
+  ite_eq_right (not_lt.2 hi)
 
 @[simp]
 theorem realCliffordWeight_mul_self (p q : ℕ) (i : Fin (p + q)) :

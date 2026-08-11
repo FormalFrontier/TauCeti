@@ -206,16 +206,16 @@ def toTableau (P : GTPattern n) (hμ : μ.colLen 0 ≤ n)
     (hP : ∀ i : Fin n, P.topRow i = (μ.rowLen i : ℤ)) : SemistandardYoungTableau μ where
   entry i c := if (i, c) ∈ μ then P.tableauEntry i c else 0
   row_weak' {i c₁ c₂} hc hcell := by
-    rw [if_pos (μ.up_left_mem le_rfl hc.le hcell), if_pos hcell]
+    rw [ite_eq_left (μ.up_left_mem le_rfl hc.le hcell), ite_eq_left hcell]
     exact P.tableauEntry_mono i hc.le
   col_strict' {i₁ i₂ c} hi hcell := by
-    rw [if_pos (μ.up_left_mem hi.le le_rfl hcell), if_pos hcell]
+    rw [ite_eq_left (μ.up_left_mem hi.le le_rfl hcell), ite_eq_left hcell]
     refine P.tableauEntry_lt_tableauEntry hi fun i _ hi' => ?_
     have hcell' : (i, c) ∈ μ := μ.up_left_mem hi'.le le_rfl hcell
     refine P.tableauEntry_lt ?_
     rw [P.entry_top_eq hμ hP]
     exact_mod_cast YoungDiagram.mem_iff_lt_rowLen.mp hcell'
-  zeros' h := if_neg h
+  zeros' h := ite_eq_right h
 
 /-- The tableau of a pattern, unfolded: off `μ` the entry vanishes, and on `μ` it is the count
 `TauCeti.GTPattern.tableauEntry`. -/
@@ -229,7 +229,7 @@ theorem toTableau_apply (P : GTPattern n) (hμ : μ.colLen 0 ≤ n)
 theorem toTableau_apply_of_mem (P : GTPattern n) (hμ : μ.colLen 0 ≤ n)
     (hP : ∀ i : Fin n, P.topRow i = (μ.rowLen i : ℤ)) {i c : ℕ} (h : (i, c) ∈ μ) :
     P.toTableau hμ hP i c = P.tableauEntry i c := by
-  rw [toTableau_apply, if_pos h]
+  rw [toTableau_apply, ite_eq_left h]
 
 /-- The tableau of a pattern with `n` rows has entries below `n` on the cells of its shape. -/
 theorem toTableau_lt (P : GTPattern n) (hμ : μ.colLen 0 ≤ n)
@@ -293,10 +293,10 @@ def toGTPattern (T : SemistandardYoungTableau μ) (n : ℕ) : GTPattern n where
   zeros' {i j} h := by
     simp only [patternEntry_def]
     rcases h with h | h
-    · rw [if_pos h]
+    · rw [ite_eq_left h]
     · by_cases hj : n < j
-      · rw [if_pos hj]
-      · rw [if_neg hj]
+      · rw [ite_eq_left hj]
+      · rw [ite_eq_right hj]
         have hempty : {c ∈ range (μ.rowLen i) | T i c < j} = ∅ := by
           rw [Finset.eq_empty_iff_forall_notMem]
           intro c hc
@@ -309,11 +309,11 @@ def toGTPattern (T : SemistandardYoungTableau μ) (n : ℕ) : GTPattern n where
     have hnj' : ¬ n < j + 1 := by omega
     simp only [patternEntry_def]
     refine ⟨?_, ?_⟩
-    · rw [if_neg hnj, if_neg hnj', Nat.cast_le]
+    · rw [ite_eq_right hnj, ite_eq_right hnj', Nat.cast_le]
       refine card_le_card fun c hc => ?_
       simp only [mem_filter, mem_range] at hc ⊢
       omega
-    · rw [if_neg hnj, if_neg hnj', Nat.cast_le]
+    · rw [ite_eq_right hnj, ite_eq_right hnj', Nat.cast_le]
       refine card_le_card fun c hc => ?_
       simp only [mem_filter, mem_range] at hc ⊢
       have hcell : (i + 1, c) ∈ μ := YoungDiagram.mem_iff_lt_rowLen.mpr hc.1
@@ -338,7 +338,7 @@ theorem topRow_toGTPattern (T : SemistandardYoungTableau μ) (n : ℕ)
       hT _ _ (YoungDiagram.mem_iff_lt_rowLen.mpr (mem_range.mp hc))
   rw [GTPattern.topRow_apply, toGTPattern_apply]
   simp only [patternEntry_def]
-  rw [if_neg (lt_irrefl n), hfil, card_range]
+  rw [ite_eq_right (lt_irrefl n), hfil, card_range]
 
 /-- The defining comparison for the pattern of a tableau: the `i`-th entry of row `j + 1` is at
 most `c` exactly when the cell `(i, c)` carries an entry above `j`. -/
@@ -349,7 +349,7 @@ theorem toGTPattern_succ_le_iff (T : SemistandardYoungTableau μ) (n : ℕ) {i c
   have hnj : ¬ n < j + 1 := by omega
   rw [toGTPattern_apply]
   simp only [patternEntry_def]
-  rw [if_neg hnj, Nat.cast_le, ← Nat.not_lt, lt_card_filter_rowLen_iff T]
+  rw [ite_eq_right hnj, Nat.cast_le, ← Nat.not_lt, lt_card_filter_rowLen_iff T]
   omega
 
 end SemistandardYoungTableau
@@ -364,8 +364,8 @@ private theorem toGTPattern_toTableau_apply (n : ℕ) (μ : YoungDiagram) (hμ :
   rw [SemistandardYoungTableau.toGTPattern_apply]
   simp only [SemistandardYoungTableau.patternEntry_def]
   by_cases hjn : n < j
-  · rw [if_pos hjn, P.entry_eq_zero_of_lt hjn]
-  · rw [if_neg hjn]
+  · rw [ite_eq_left hjn, P.entry_eq_zero_of_lt hjn]
+  · rw [ite_eq_right hjn]
     have hj : j ≤ n := by omega
     have hle : P i j ≤ (μ.rowLen i : ℤ) := by
       rw [← P.entry_top_eq hμ hP]
@@ -390,7 +390,7 @@ private theorem toTableau_toGTPattern_apply (n : ℕ) (μ : YoungDiagram) (hμ :
     (SemistandardYoungTableau.toGTPattern T n).toTableau hμ
         (SemistandardYoungTableau.topRow_toGTPattern T n hT) i c = T i c := by
   by_cases hc : (i, c) ∈ μ
-  · rw [GTPattern.toTableau_apply, if_pos hc]
+  · rw [GTPattern.toTableau_apply, ite_eq_left hc]
     simp only [GTPattern.tableauEntry_def]
     have hset : {j ∈ range n | SemistandardYoungTableau.toGTPattern T n i (j + 1) ≤ (c : ℤ)}
         = range (T i c) := by
@@ -403,7 +403,7 @@ private theorem toTableau_toGTPattern_apply (n : ℕ) (μ : YoungDiagram) (hμ :
         have hjn : j < n := hj.trans (hT i c hc)
         exact ⟨hjn, (SemistandardYoungTableau.toGTPattern_succ_le_iff T n hjn hc).mpr hj⟩
     rw [hset, card_range]
-  · rw [GTPattern.toTableau_apply, if_neg hc, T.zeros hc]
+  · rw [GTPattern.toTableau_apply, ite_eq_right hc, T.zeros hc]
 
 /-- **Gelfand-Tsetlin patterns are semistandard Young tableaux.**  For a shape `μ` with at most
 `n` rows, the patterns with `n` rows and top row `μ` correspond to the semistandard Young tableaux

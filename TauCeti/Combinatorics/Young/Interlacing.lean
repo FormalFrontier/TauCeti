@@ -199,13 +199,13 @@ private def restrictTableau (T : BoundedSSYT (n + 1) μ) (ν : _root_.YoungDiagr
   entry := fun i j => if ((i, j) : ℕ × ℕ) ∈ ν then T.1 i j else 0
   row_weak' := fun {i j₁ j₂} hj hc => by
     have hc₁ : ((i, j₁) : ℕ × ℕ) ∈ ν := ν.up_left_mem le_rfl hj.le hc
-    rw [if_pos hc₁, if_pos hc]
+    rw [ite_eq_left hc₁, ite_eq_left hc]
     exact T.1.row_weak hj ((mem_iff_of_restrictShape_eq hν).mp hc).1
   col_strict' := fun {i₁ i₂ j} hi hc => by
     have hc₁ : ((i₁, j) : ℕ × ℕ) ∈ ν := ν.up_left_mem hi.le le_rfl hc
-    rw [if_pos hc₁, if_pos hc]
+    rw [ite_eq_left hc₁, ite_eq_left hc]
     exact T.1.col_strict hi ((mem_iff_of_restrictShape_eq hν).mp hc).1
-  zeros' := fun {_ _} hc => if_neg hc
+  zeros' := fun {_ _} hc => ite_eq_right hc
 
 /-- The entries of the filling underlying `TauCeti.BoundedSSYT.restrict`. -/
 private theorem restrictTableau_apply (T : BoundedSSYT (n + 1) μ) (ν : _root_.YoungDiagram)
@@ -220,7 +220,7 @@ lives in a type that does not depend on `T`. -/
 def restrict (T : BoundedSSYT (n + 1) μ) (ν : _root_.YoungDiagram) (hν : restrictShape T = ν) :
     BoundedSSYT n ν :=
   ⟨restrictTableau T ν hν, fun i j hc => by
-    rw [restrictTableau_apply, if_pos hc]
+    rw [restrictTableau_apply, ite_eq_left hc]
     exact ((mem_iff_of_restrictShape_eq hν).mp hc).2⟩
 
 /-- The entries of a restricted tableau. -/
@@ -245,12 +245,12 @@ theorem content_restrict (T : BoundedSSYT (n + 1) μ) (hν : restrictShape T = �
     simp only [Finset.mem_filter, _root_.YoungDiagram.mem_cells, restrict_apply]
     constructor
     · rintro ⟨hc, hT⟩
-      rw [if_pos hc] at hT
+      rw [ite_eq_left hc] at hT
       exact ⟨((mem_iff_of_restrictShape_eq hν).mp hc).1, hT⟩
     · rintro ⟨hc, hT⟩
       have hmem : ((a, b) : ℕ × ℕ) ∈ ν :=
         (mem_iff_of_restrictShape_eq hν).mpr ⟨hc, by rw [hT]; exact hi⟩
-      exact ⟨hmem, by rw [if_pos hmem]; exact hT⟩
+      exact ⟨hmem, by rw [ite_eq_left hmem]; exact hT⟩
   rw [SemistandardYoungTableau.content_apply, SemistandardYoungTableau.content_apply, hcells]
 
 /-- **Restoring the top letter, as a filling**: keep the entries of `T` on `ν` and write the letter
@@ -264,23 +264,23 @@ private def extendTableau (h : YoungDiagram.Interlaces μ ν) (T : BoundedSSYT n
   row_weak' := fun {i j₁ j₂} hj hc => by
     by_cases hc₂ : ((i, j₂) : ℕ × ℕ) ∈ ν
     · have hc₁ : ((i, j₁) : ℕ × ℕ) ∈ ν := ν.up_left_mem le_rfl hj.le hc₂
-      rw [if_pos hc₁, if_pos hc₂]
+      rw [ite_eq_left hc₁, ite_eq_left hc₂]
       exact T.1.row_weak hj hc₂
-    · rw [if_neg hc₂, if_pos hc]
+    · rw [ite_eq_right hc₂, ite_eq_left hc]
       by_cases hc₁ : ((i, j₁) : ℕ × ℕ) ∈ ν
-      · rw [if_pos hc₁]
+      · rw [ite_eq_left hc₁]
         exact (entry_lt T hc₁).le
-      · rw [if_neg hc₁, if_pos (μ.up_left_mem le_rfl hj.le hc)]
+      · rw [ite_eq_right hc₁, ite_eq_left (μ.up_left_mem le_rfl hj.le hc)]
   col_strict' := fun {i₁ i₂ j} hi hc => by
     have hc₁ : ((i₁, j) : ℕ × ℕ) ∈ ν := h.mem_of_lt hi hc
-    rw [if_pos hc₁]
+    rw [ite_eq_left hc₁]
     by_cases hc₂ : ((i₂, j) : ℕ × ℕ) ∈ ν
-    · rw [if_pos hc₂]
+    · rw [ite_eq_left hc₂]
       exact T.1.col_strict hi hc₂
-    · rw [if_neg hc₂, if_pos hc]
+    · rw [ite_eq_right hc₂, ite_eq_left hc]
       exact entry_lt T hc₁
   zeros' := fun {_ _} hc => by
-    rw [if_neg fun hν => hc (h.le hν), if_neg hc]
+    rw [ite_eq_right fun hν => hc (h.le hν), ite_eq_right hc]
 
 /-- The entries of the filling underlying `TauCeti.BoundedSSYT.extend`. -/
 private theorem extendTableau_apply (h : YoungDiagram.Interlaces μ ν) (T : BoundedSSYT n ν)
@@ -295,9 +295,9 @@ def extend (h : YoungDiagram.Interlaces μ ν) (T : BoundedSSYT n ν) : BoundedS
   ⟨extendTableau h T, fun i j hc => by
     rw [extendTableau_apply]
     by_cases hc₁ : ((i, j) : ℕ × ℕ) ∈ ν
-    · rw [if_pos hc₁]
+    · rw [ite_eq_left hc₁]
       exact Nat.lt_succ_of_lt (entry_lt T hc₁)
-    · rw [if_neg hc₁, if_pos hc]
+    · rw [ite_eq_right hc₁, ite_eq_left hc]
       exact Nat.lt_succ_self n⟩
 
 /-- The entries of an extended tableau. -/
@@ -318,10 +318,10 @@ theorem restrictShape_extend (h : YoungDiagram.Interlaces μ ν) (T : BoundedSSY
   constructor
   · rintro ⟨hμ, hlt⟩
     by_contra hν
-    rw [if_neg hν, if_pos hμ] at hlt
+    rw [ite_eq_right hν, ite_eq_left hμ] at hlt
     exact absurd hlt (lt_irrefl n)
   · intro hν
-    exact ⟨h.le hν, by rw [if_pos hν]; exact entry_lt T hν⟩
+    exact ⟨h.le hν, by rw [ite_eq_left hν]; exact entry_lt T hν⟩
 
 /-- **The branching bijection, fibrewise.**  The tableaux of shape `μ` in the letters `{0, …, n}`
 whose sub-shape of small entries is a given `ν` are exactly the tableaux of shape `ν` in the
@@ -335,23 +335,23 @@ def fiberEquiv (h : YoungDiagram.Interlaces μ ν) :
     refine Subtype.ext (Subtype.ext (_root_.SemistandardYoungTableau.ext fun i j => ?_))
     rw [extend_apply, restrict_apply]
     by_cases hν : ((i, j) : ℕ × ℕ) ∈ ν
-    · rw [if_pos hν, if_pos hν]
-    · rw [if_neg hν]
+    · rw [ite_eq_left hν, ite_eq_left hν]
+    · rw [ite_eq_right hν]
       by_cases hμ : ((i, j) : ℕ × ℕ) ∈ μ
-      · rw [if_pos hμ]
+      · rw [ite_eq_left hμ]
         have hnot : ¬ T.1 i j < n := fun hlt => hν ((mem_iff_of_restrictShape_eq hT).mpr ⟨hμ, hlt⟩)
         have hlt := entry_lt T hμ
         have heq : T.1 i j = n := by omega
         exact heq.symm
-      · rw [if_neg hμ]
+      · rw [ite_eq_right hμ]
         exact (T.1.zeros hμ).symm
   right_inv := by
     intro T
     refine Subtype.ext (_root_.SemistandardYoungTableau.ext fun i j => ?_)
     rw [restrict_apply, extend_apply]
     by_cases hν : ((i, j) : ℕ × ℕ) ∈ ν
-    · rw [if_pos hν, if_pos hν]
-    · rw [if_neg hν]
+    · rw [ite_eq_left hν, ite_eq_left hν]
+    · rw [ite_eq_right hν]
       exact (T.1.zeros hν).symm
 
 /-- The branching bijection erases the top letter. -/
