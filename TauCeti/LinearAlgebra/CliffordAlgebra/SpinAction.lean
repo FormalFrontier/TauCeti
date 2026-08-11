@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+import TauCeti.LinearAlgebra.CliffordAlgebra.Basic
 public import TauCeti.LinearAlgebra.CliffordAlgebra.Vectors
 public import TauCeti.LinearAlgebra.QuadraticForm.OrthogonalGroup
 public import Mathlib.LinearAlgebra.CliffordAlgebra.SpinGroup

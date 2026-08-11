@@ -19,6 +19,7 @@ commutator quotient, followed by left multiplication by `exp x`.
 * `TauCeti.Lie.expFDeriv_apply_eq_exp_mul_banachDexpFactor`: the pointwise formula.
 * `TauCeti.Lie.expFDeriv_eq_exp_mul_banachDexpFactor`: the bundled operator formula.
 * `TauCeti.Lie.fderiv_exp_eq_exp_mul_banachDexpFactor`: the corresponding `fderiv` formula.
+* `TauCeti.Lie.fderiv_exp_apply_eq_exp_mul_integral`: the pointwise integral formula.
 
 ## References
 
@@ -73,5 +74,18 @@ theorem fderiv_exp_eq_exp_mul_banachDexpFactor (x : R) :
     fderiv ℝ exp x =
       (ContinuousLinearMap.mul ℝ R (exp x)).comp (banachDexpFactor x) := by
   rw [TauCeti.fderiv_exp, expFDeriv_eq_exp_mul_banachDexpFactor]
+
+/-- The Fréchet derivative of the Banach-algebra exponential, applied to `y`, is left
+multiplication by `exp x` applied to the integral of conjugations along the exponential line. -/
+theorem fderiv_exp_apply_eq_exp_mul_integral {𝕂 : Type*}
+    [NontriviallyNormedField 𝕂] [NormedAlgebra ℝ 𝕂] [NormedAlgebra 𝕂 R]
+    [IsScalarTower ℝ 𝕂 R] (x y : R) :
+    fderiv 𝕂 exp x y =
+      exp x * (∫ t in (0 : ℝ)..1, exp (-(t • x)) * y * exp (t • x)) := by
+  let _ : CharZero 𝕂 := Algebra.charZero_of_charZero ℝ 𝕂
+  let _ : IsScalarTower ℚ ℝ 𝕂 := IsScalarTower.of_algebraMap_eq fun q ↦ by simp [map_ratCast]
+  let _ : ContinuousSMul ℚ 𝕂 := IsScalarTower.continuousSMul ℝ
+  rw [TauCeti.fderiv_exp, expFDeriv_apply_eq_exp_mul_banachDexpFactor,
+    banachDexpFactor_apply_eq_integral]
 
 end TauCeti.Lie
