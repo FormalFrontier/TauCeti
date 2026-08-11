@@ -8,6 +8,7 @@ public import Mathlib.Algebra.BigOperators.Expect
 public import Mathlib.Order.Filter.AtTopBot.Basic
 public import Mathlib.Algebra.BigOperators.Ring.Finset
 public import Mathlib.Data.Real.Basic
+public import Mathlib.Algebra.Order.BigOperators.Ring.Finset
 
 /-!
 # Block averages of a real-valued process
@@ -148,6 +149,33 @@ theorem average_sub_sq_eq_sum_sum {ι R : Type*} [Field R] [CharZero R] {s : Fin
   have h1 : (s.card : R)⁻¹ * (∑ i ∈ s, a i) - b = (s.card : R)⁻¹ * ∑ i ∈ s, (a i - b) := by
     rw [hexp, hexp, Finset.expect_sub_distrib, Finset.expect_const hs]
   rw [h1, mul_pow, sq (∑ i ∈ s, (a i - b)), Finset.sum_mul_sum]
+
+/-! ### The unit interval
+
+A block average of `[0,1]`-valued coordinates stays in `[0,1]`. This is the bound the product
+convergence lemmas need, and it is pure order algebra — no measure and no norm is involved, so the
+`‖·‖ ≤ 1` form is left to the consumer that has a normed structure in scope. -/
+
+/-- A block average of nonnegative coordinates is nonnegative. -/
+theorem blockAverage_nonneg {Y : ℕ → Ω → ℝ} (hY : ∀ i ω, 0 ≤ Y i ω) {n : ℕ} (k : Fin n → ℕ)
+    (ω : Ω) : 0 ≤ blockAverage Y k ω := by
+  rw [blockAverage_apply]
+  exact mul_nonneg (by positivity) (Finset.sum_nonneg fun i _ => hY (k i) ω)
+
+/-- A block average of coordinates bounded by `1` is bounded by `1`. -/
+theorem blockAverage_le_one {Y : ℕ → Ω → ℝ} (hY : ∀ i ω, Y i ω ≤ 1) {n : ℕ} (k : Fin n → ℕ)
+    (ω : Ω) : blockAverage Y k ω ≤ 1 := by
+  rcases Nat.eq_zero_or_pos n with hn | hn
+  · subst hn; simp [blockAverage_apply]
+  have hpos : (0 : ℝ) < (n : ℝ) := by exact_mod_cast hn
+  rw [blockAverage_apply]
+  calc (n : ℝ)⁻¹ * ∑ i, Y (k i) ω
+      ≤ (n : ℝ)⁻¹ * ∑ _i : Fin n, (1 : ℝ) :=
+        mul_le_mul_of_nonneg_left (Finset.sum_le_sum fun i _ => hY (k i) ω)
+          (inv_nonneg.2 hpos.le)
+    _ = 1 := by
+        rw [Finset.sum_const, Finset.card_univ, Fintype.card_fin, nsmul_eq_mul, mul_one,
+          inv_mul_cancel₀ hpos.ne']
 
 end Probability
 
