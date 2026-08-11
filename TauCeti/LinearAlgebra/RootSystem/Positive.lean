@@ -39,11 +39,20 @@ positive root is a nonnegative integer combination of the simple coroots.
   positive roots other than its own simple root, and
   `TauCeti.sum_posRootsFinset_erase_comp_reflectionPerm` is the resulting reindexing rule for sums
   over those roots.
+* `TauCeti.mem_support_iff_isPos_and_forall_ne_add` says the simple roots are exactly the
+  indecomposable positive roots: those that are not the sum of two positive roots.
 * `TauCeti.RootPairing.Base.isPos_flip_iff` says a root is positive for a base exactly when its
   coroot is positive for that base, and `TauCeti.posRoots_flip` restates it for the sets.
 * `TauCeti.sum_root_ne_zero_of_mem_posRoots` says a nonempty sum of positive roots is nonzero.
 * `TauCeti.exists_coroot_eq_sum_nat_of_mem_posRoots` says the coroot of a positive root is a
   nonnegative integer combination of the simple coroots.
+
+## Implementation notes
+
+The indecomposability characterisation is stated with root vectors rather than with an index-level
+sum, matching Mathlib's `RootPairing.Base.height_add` and `RootPairing.Base.IsPos.add`, whose
+hypothesis is an equation between root vectors: an index-level statement would need a chosen index
+for the sum, which need not be unique for a non-reduced pairing.
 
 ## References
 
@@ -52,7 +61,9 @@ This file implements the “Positive and negative roots” item in Layer 1 of
 `TauCetiRoadmap/RepresentationTheory/RootSystems/Suggested.lean`. The coroot-side positivity at the
 end of the file is the prerequisite that the fundamental-domain item of Layer 4 consumes; that
 argument is the one in J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*,
-GTM 9, Ch. III, §10.
+GTM 9, Ch. III, §10. The decomposition half of `TauCeti.mem_support_iff_isPos_and_forall_ne_add` is
+the step that Mathlib currently performs only inside the proof of
+`RootPairing.Base.IsPos.induction_on_add`, isolated here as a statement of its own.
 -/
 
 namespace TauCeti
@@ -283,6 +294,50 @@ lemma reflectionPerm_ne_of_mem_posRoots {i j : ι} (hi : i ∈ b.support)
     rw [← P.reflectionPerm_self i j, h]
   rw [mem_posRoots, hji, isPos_reflectionPerm_self_iff_mem_negRoots, mem_negRoots] at hj
   exact hj (b.isPos_of_mem_support hi)
+
+/-! ### The simple roots are the indecomposable positive roots -/
+
+section Indecomposable
+
+variable {P b} in
+/-- **A simple root is not the sum of two positive roots.** -/
+theorem root_ne_add_of_mem_support {i : ι} (hi : i ∈ b.support) {j k : ι}
+    (hj : b.IsPos j) (hk : b.IsPos k) : P.root i ≠ P.root j + P.root k := fun h ↦ by
+  -- Heights add, a positive root has height at least `1`, and a simple root has height exactly `1`.
+  have hadd := b.height_add h
+  rw [b.height_one_of_mem_support hi] at hadd
+  rw [RootPairing.Base.isPos_iff] at hj hk
+  omega
+
+variable [Finite ι] [IsDomain R] [P.IsCrystallographic]
+
+variable {P b} in
+/-- **A positive root that is not simple is a positive root plus a simple root.** -/
+theorem exists_isPos_root_eq_add_of_notMem_support {i : ι} (hi : b.IsPos i)
+    (hi' : i ∉ b.support) :
+    ∃ j ∈ b.support, ∃ k, b.IsPos k ∧ P.root i = P.root k + P.root j := by
+  -- Some simple root pairs positively with `i`, so subtracting it leaves a root, and that root is
+  -- still positive because only a height `1` was removed.
+  obtain ⟨j, hj, hj'⟩ := hi.exists_mem_support_pos_pairingIn
+  rw [P.zero_lt_pairingIn_iff'] at hj'
+  have hij : i ≠ j := by rintro rfl; exact hi' hj
+  obtain ⟨k, hk⟩ := P.root_sub_root_mem_of_pairingIn_pos hj' hij
+  exact ⟨j, hj, k, hi.sub hj hk, by rw [hk]; module⟩
+
+variable {P b} in
+/-- **The simple roots are exactly the indecomposable positive roots.** This is the description of
+the base that mentions only the additive structure of the positive roots, so it is the one that
+transports along an additive bijection of the positive roots. -/
+theorem mem_support_iff_isPos_and_forall_ne_add {i : ι} :
+    i ∈ b.support ↔
+      b.IsPos i ∧ ∀ j k, b.IsPos j → b.IsPos k → P.root i ≠ P.root j + P.root k := by
+  refine ⟨fun hi ↦ ⟨RootPairing.Base.isPos_of_mem_support hi,
+    fun _ _ hj hk ↦ root_ne_add_of_mem_support hi hj hk⟩, fun ⟨hi, hne⟩ ↦ ?_⟩
+  by_contra hi'
+  obtain ⟨j, hj, k, hk, hjk⟩ := exists_isPos_root_eq_add_of_notMem_support hi hi'
+  exact hne k j hk (RootPairing.Base.isPos_of_mem_support hj) hjk
+
+end Indecomposable
 
 variable [Finite ι] [IsDomain R] [P.IsCrystallographic] [P.IsReduced]
 
