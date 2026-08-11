@@ -216,6 +216,7 @@ theorem mem_even_of_det_pinToOrthogonal_eq_one [Module.Free R M] [Module.Finite 
     (p : CliffordAlgebra Q) ∈ even Q := by
   let l : lipschitzGroup Q := pinToLipschitz Q p
   have hlcoe : ((l : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) = (p : CliffordAlgebra Q) := by
+    -- Expose the nested Pin and Lipschitz subgroup coercions in the ambient Clifford algebra.
     change (((pinToLipschitz Q p : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q)) = _
     rw [coe_pinToLipschitz_apply]
   have hinv := involute_eq_det_smul_of_mem_lipschitz Q l.2
