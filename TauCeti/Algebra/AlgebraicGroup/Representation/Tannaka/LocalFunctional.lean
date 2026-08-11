@@ -120,6 +120,21 @@ noncomputable def finiteRegularComponent
       eqToHom (FGComoduleCat.scalarExtensionFunctor_obj k H A
         (finiteRegularObject k H N))).hom
 
+/-- Evaluation formula for the transported component of a tensor automorphism on a finite
+regular subcomodule. -/
+theorem finiteRegularComponent_apply
+    (η : Aut (FGComoduleCat.scalarExtensionMonoidalFunctor k H A))
+    (N : Subcomodule.finiteSubcomodules (R := k) (C := H) (M := H))
+    (x : A ⊗[k] N.1) :
+    finiteRegularComponent k H A η N x =
+      eqToHom (FGComoduleCat.scalarExtensionFunctor_obj k H A
+          (finiteRegularObject k H N))
+        (η.hom.hom.app (finiteRegularObject k H N)
+          (eqToHom (FGComoduleCat.scalarExtensionFunctor_obj k H A
+            (finiteRegularObject k H N)).symm x)) := by
+  unfold finiteRegularComponent
+  rfl
+
 /-- Naturality of a tensor automorphism on an inclusion of finite regular subcomodules. -/
 theorem finiteRegularComponent_natural
     (η : Aut (FGComoduleCat.scalarExtensionMonoidalFunctor k H A))
