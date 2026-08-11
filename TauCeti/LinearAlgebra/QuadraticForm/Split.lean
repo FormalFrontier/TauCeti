@@ -22,8 +22,7 @@ coordinates together with an at-most-one-dimensional standard remainder.
 
 ## Main results
 
-* `TauCeti.QuadraticForm.splitModelForm_def` and
-  `TauCeti.QuadraticForm.splitModelForm_apply`: descriptions of the model form.
+* `TauCeti.QuadraticForm.splitModelForm_apply`: evaluation of the model form.
 * `TauCeti.QuadraticForm.polar_splitModelForm`: the polar form of the split model.
 * `TauCeti.QuadraticForm.finrank_splitModel` and
   `TauCeti.QuadraticForm.splitModelForm_nondegenerate`: its dimension and nondegeneracy.
@@ -66,12 +65,6 @@ def splitModelForm (R : Type*) [CommSemiring R] (n : ℕ) :
     QuadraticForm R (SplitModel R n) :=
   (QuadraticForm.dualProd R (SplitHalf R n)).prod
     (QuadraticMap.weightedSumSquares R (1 : Fin (n % 2) → R))
-
-/-- The split model form is the product of its dual-pairing and standard remainder forms. -/
-theorem splitModelForm_def (R : Type*) [CommSemiring R] (n : ℕ) :
-    splitModelForm R n =
-      (QuadraticForm.dualProd R (SplitHalf R n)).prod
-        (QuadraticMap.weightedSumSquares R (1 : Fin (n % 2) → R)) := (rfl)
 
 /-- The split model form is the evaluation pairing plus the standard remainder square. -/
 @[simp]
