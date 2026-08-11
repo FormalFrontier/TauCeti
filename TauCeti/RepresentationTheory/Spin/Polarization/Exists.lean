@@ -4,21 +4,19 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+public import TauCeti.RepresentationTheory.Spin.Polarization.Basic
 public import Mathlib.FieldTheory.IsSepClosed
-public import Mathlib.LinearAlgebra.QuadraticForm.Dual
 public import Mathlib.LinearAlgebra.QuadraticForm.Radical
 import Mathlib.RingTheory.Finiteness.Prod
 
 /-!
-# Polarizations of quadratic spaces
+# Existence of polarization data
 
-This file packages the decomposition used to construct spinor modules: two isotropic subspaces
-in a left- and right-nondegenerate polar pairing and an orthogonal remainder embedded in the
-scalar line.
+This file constructs `TauCeti.SpinPolarizationData` for finite-dimensional nondegenerate
+quadratic spaces over separably closed fields of characteristic different from two.
 
-## Main definitions
+## Main definition
 
-* `TauCeti.SpinPolarizationData` records the decomposition and its consumer-facing coordinates.
 * `TauCeti.SpinPolarizationData.ofNondegenerate` constructs the data for a finite-dimensional
   nondegenerate quadratic space over a separably closed field of characteristic different from
   two.
@@ -40,63 +38,9 @@ namespace TauCeti
 
 universe u v
 
-/-- The decomposition data used by the exterior model of a spin representation. -/
-@[ext]
-structure SpinPolarizationData {K : Type u} [CommRing K] {V : Type v}
-    [AddCommGroup V] [Module K V] (Q : QuadraticForm K V) where
-  /-- The isotropic subspace used for exterior multiplication. -/
-  W : Submodule K V
-  /-- The complementary isotropic subspace used for contraction. -/
-  W' : Submodule K V
-  /-- The orthogonal remainder, embedded in the scalar line by `lineCoordinate`. -/
-  line : Submodule K V
-  /-- The direct-sum coordinates of the quadratic space. -/
-  decompositionEquiv : ((W × W') × line) ≃ₗ[K] V
-  /-- The decomposition equivalence adds the three components in the ambient module. -/
-  decompositionEquiv_apply :
-    ∀ x, decompositionEquiv x = (x.1.1 : V) + x.1.2 + x.2
-  /-- The first summand is isotropic. -/
-  isotropic_W : ∀ x : W, Q x = 0
-  /-- The second summand is isotropic. -/
-  isotropic_W' : ∀ y : W', Q y = 0
-  /-- The polar form identifies the second summand with the dual of the first. -/
-  pairingEquiv : W' ≃ₗ[K] Module.Dual K W
-  /-- The pairing equivalence is evaluation by the polar form. -/
-  pairingEquiv_apply :
-    ∀ (y : W') (x : W), pairingEquiv y x = QuadraticMap.polar Q x y
-  /-- The polar pairing has trivial left radical. -/
-  pairing_nondegenerate_left :
-    ∀ x : W, (∀ y : W', QuadraticMap.polar Q x y = 0) → x = 0
-  /-- The coordinate on the at-most-one-dimensional remainder. -/
-  lineCoordinate : line →ₗ[K] K
-  /-- The remainder embeds in the scalar line through its coordinate. -/
-  lineCoordinate_injective : Function.Injective lineCoordinate
-  /-- The quadratic form on the remainder is the square of its coordinate. -/
-  lineCoordinate_sq : ∀ z : line, lineCoordinate z * lineCoordinate z = Q z
-  /-- The remainder is orthogonal to the first isotropic summand. -/
-  line_orthogonal :
-    ∀ z : line, ∀ x : W, QuadraticMap.polar Q z x = 0
-  /-- The remainder is orthogonal to the second isotropic summand. -/
-  line_orthogonal' :
-    ∀ z : line, ∀ y : W', QuadraticMap.polar Q z y = 0
-
-attribute [simp, grind =] SpinPolarizationData.decompositionEquiv_apply
-  SpinPolarizationData.isotropic_W SpinPolarizationData.isotropic_W'
-  SpinPolarizationData.pairingEquiv_apply SpinPolarizationData.lineCoordinate_sq
-  SpinPolarizationData.line_orthogonal SpinPolarizationData.line_orthogonal'
-
 namespace SpinPolarizationData
 
 noncomputable section
-
-/-- Recover the three components of a vector assembled from polarization coordinates. -/
-@[simp, grind =]
-theorem decompositionEquiv_symm_apply {K : Type u} [CommRing K] {V : Type v}
-    [AddCommGroup V] [Module K V] {Q : QuadraticForm K V} (P : SpinPolarizationData Q)
-    (x : P.W) (y : P.W') (z : P.line) :
-    P.decompositionEquiv.symm ((x : V) + (y : V) + (z : V)) = ((x, y), z) := by
-  apply P.decompositionEquiv.injective
-  rw [P.decompositionEquiv.apply_symm_apply, P.decompositionEquiv_apply]
 
 private abbrev SplitHalf (R : Type*) (n : ℕ) := Fin (n / 2) → R
 
