@@ -89,36 +89,14 @@ private theorem norm_exp_smul_smul_resolvent_le {A : X →ₗ.[ℝ] X} {lambda M
   have hs : 0 ≤ t * lambda := mul_nonneg ht hlambda.le
   have hB (n : ℕ) : ‖B ^ n‖ ≤ M := by
     exact norm_smul_resolvent_pow_le hM hlambda hpow n
-  have hseries : HasSum
-      (fun n : ℕ => ((n.factorial : ℝ)⁻¹) • ((t * lambda) • B) ^ n)
-      (exp ((t * lambda) • B)) :=
-    NormedSpace.exp_series_hasSum_exp' ((t * lambda) • B)
-  have hscalar : HasSum (fun n : ℕ => M * ((t * lambda) ^ n / n.factorial))
-      (M * Real.exp (t * lambda)) := by
-    rw [Real.exp_eq_exp_ℝ]
-    simpa [div_eq_mul_inv, mul_comm] using
-      (NormedSpace.exp_series_hasSum_exp' (𝕂 := ℝ) (𝔸 := ℝ) (t * lambda)).mul_left M
-  have hterm (n : ℕ) :
-      ‖((n.factorial : ℝ)⁻¹) • ((t * lambda) • B) ^ n‖ ≤
-        M * ((t * lambda) ^ n / n.factorial) := by
-    rw [smul_pow, norm_smul, norm_smul, Real.norm_eq_abs, Real.norm_eq_abs,
-      abs_of_nonneg (inv_nonneg.mpr (Nat.cast_nonneg _)), abs_pow, abs_of_nonneg hs]
-    calc
-      (n.factorial : ℝ)⁻¹ * ((t * lambda) ^ n * ‖B ^ n‖)
-          ≤ (n.factorial : ℝ)⁻¹ * ((t * lambda) ^ n * M) := by
-            gcongr
-            exact hB n
-      _ = M * ((t * lambda) ^ n / n.factorial) := by
-        rw [div_eq_mul_inv]
-        ring
-  have hbound := hseries.norm_le_of_bounded hscalar hterm
   have harg : (t * lambda) • B =
       (t * lambda ^ 2) • LinearPMap.resolvent A lambda := by
     dsimp only [B]
     rw [smul_smul]
     congr 1
     ring
-  rwa [harg] at hbound
+  rw [← harg]
+  exact ContinuousLinearMap.norm_exp_smul_le_mul_exp_of_norm_pow_le hs hB
 
 /-- Under the exponent-zero Hille--Yosida power bounds for general `M`, every positive-time
 Yosida approximation has norm at most `M`. -/
