@@ -21,8 +21,10 @@ calculation with Pin surjectivity gives Spin surjectivity.
 
 * `TauCeti.CliffordAlgebra.spinToSpecialOrthogonal` is the Spin action with codomain restricted to
   the special orthogonal group.
-* `TauCeti.CliffordAlgebra.spinToSpecialOrthogonal_surjective` proves its surjectivity for a
-  finite-dimensional nondegenerate quadratic space over a separably closed field.
+* `TauCeti.CliffordAlgebra.spinToSpecialOrthogonal_surjective_of_isSquare` proves its
+  surjectivity when every reflection normalization scalar is a square.
+* `TauCeti.CliffordAlgebra.spinToSpecialOrthogonal_surjective` specializes this to a
+  separably closed field.
 
 ## References
 
@@ -231,17 +233,20 @@ theorem coe_spinToSpecialOrthogonal_apply (Q : QuadraticForm R M) (x : spinGroup
 
 section Surjectivity
 
-variable {K : Type u} {V : Type v} [Field K] [IsSepClosed K]
+variable {K : Type u} {V : Type v} [Field K]
   [AddCommGroup V] [Module K V] [FiniteDimensional K V] [Invertible (2 : K)]
 
-/-- The Spin action surjects onto the special orthogonal group for a finite-dimensional
-nondegenerate quadratic space over a separably closed field. -/
-theorem spinToSpecialOrthogonal_surjective (Q : QuadraticForm K V) (hQ : Q.Nondegenerate) :
+/-- The Spin action surjects onto the special orthogonal group when every reflection
+normalization scalar is a square. -/
+theorem spinToSpecialOrthogonal_surjective_of_isSquare
+    (Q : QuadraticForm K V) (hQ : Q.Nondegenerate)
+    (hsquare : ∀ (v : V) [Invertible (Q v)], IsSquare (-⅟(Q v))) :
     Function.Surjective (spinToSpecialOrthogonal Q) := by
+  have hpin := pinToOrthogonal_surjective_of_isSquare Q hQ hsquare
   intro g
   let og : QuadraticMap.orthogonalGroup Q :=
     ⟨(g : V ≃ₗ[K] V), (QuadraticMap.mem_specialOrthogonalGroup_iff.1 g.2).1⟩
-  obtain ⟨p, hp⟩ := pinToOrthogonal_surjective Q hQ og
+  obtain ⟨p, hp⟩ := hpin og
   let l : lipschitzGroup Q := pinToLipschitz Q p
   have hlcoe : ((l : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) = (p : CliffordAlgebra Q) := by
     -- Expose the ambient unit value before applying the Pin-to-Lipschitz equation.
@@ -267,6 +272,19 @@ theorem spinToSpecialOrthogonal_surjective (Q : QuadraticForm K V) (hQ : Q.Nonde
     apply Subtype.ext
     rw [coe_spinToPin_apply]
   rw [← pinToOrthogonal_spinToPin, hspinpin, hp]
+
+section IsSepClosed
+
+variable [IsSepClosed K]
+
+/-- The Spin action surjects onto the special orthogonal group for a finite-dimensional
+nondegenerate quadratic space over a separably closed field. -/
+theorem spinToSpecialOrthogonal_surjective (Q : QuadraticForm K V) (hQ : Q.Nondegenerate) :
+    Function.Surjective (spinToSpecialOrthogonal Q) :=
+  spinToSpecialOrthogonal_surjective_of_isSquare Q hQ fun v _ ↦
+    IsSepClosed.exists_eq_mul_self (-⅟(Q v))
+
+end IsSepClosed
 
 end Surjectivity
 
