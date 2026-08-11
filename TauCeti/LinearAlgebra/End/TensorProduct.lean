@@ -35,20 +35,6 @@ universe u v w
 variable {K : Type u} {V : Type v} {W : Type w}
 variable [CommRing K] [AddCommGroup V] [Module K V] [AddCommGroup W] [Module K W]
 
-private theorem aeval_rTensor (f : _root_.Module.End K V) (p : K[X]) :
-    aeval (f.rTensor W) p = (aeval f p).rTensor W := by
-  -- Present one-sided tensoring through its algebra homomorphism so `aeval_algHom_apply` applies.
-  change aeval ((_root_.Module.End.rTensorAlgHom K V W) f) p =
-    (_root_.Module.End.rTensorAlgHom K V W) (aeval f p)
-  exact Polynomial.aeval_algHom_apply (_root_.Module.End.rTensorAlgHom K V W) f p
-
-private theorem aeval_lTensor (f : _root_.Module.End K W) (p : K[X]) :
-    aeval (f.lTensor V) p = (aeval f p).lTensor V := by
-  -- Present one-sided tensoring through its algebra homomorphism so `aeval_algHom_apply` applies.
-  change aeval ((_root_.Module.End.lTensorAlgHom K W V) f) p =
-    (_root_.Module.End.lTensorAlgHom K W V) (aeval f p)
-  exact Polynomial.aeval_algHom_apply (_root_.Module.End.lTensorAlgHom K W V) f p
-
 section Right
 
 variable [Module.Free K W]
@@ -73,8 +59,8 @@ theorem IsSemisimple.rTensor {f : _root_.Module.End K V} (hf : f.IsSemisimple) :
       map_add' := E₀.map_add
       map_smul' := fun p x ↦ by
         -- Polynomial scalar multiplication on `AEval'` is evaluation at its endomorphism.
-        change E₀ (aeval (f.rTensor W) p x) = _
-        rw [aeval_rTensor]
+        change E₀ (aeval ((_root_.Module.End.rTensorAlgHom K V W) f) p x) = _
+        rw [Polynomial.aeval_algHom_apply]
         ext i
         change E₀ ((aeval f p).rTensor W x) i = aeval f p (E₀ x i)
         induction x using TensorProduct.induction_on with
@@ -111,8 +97,8 @@ theorem IsSemisimple.lTensor {f : _root_.Module.End K W} (hf : f.IsSemisimple) :
       map_add' := E₀.map_add
       map_smul' := fun p x ↦ by
         -- Polynomial scalar multiplication on `AEval'` is evaluation at its endomorphism.
-        change E₀ (aeval (f.lTensor V) p x) = _
-        rw [aeval_lTensor]
+        change E₀ (aeval ((_root_.Module.End.lTensorAlgHom K W V) f) p x) = _
+        rw [Polynomial.aeval_algHom_apply]
         ext i
         change E₀ ((aeval f p).lTensor V x) i = aeval f p (E₀ x i)
         induction x using TensorProduct.induction_on with

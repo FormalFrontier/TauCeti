@@ -6,7 +6,7 @@ module
 
 public import TauCeti.LinearAlgebra.End.TensorProduct
 public import TauCeti.LinearAlgebra.GeneralLinearGroup.TensorProduct
-public import TauCeti.LinearAlgebra.JordanChevalley.Functoriality
+public import TauCeti.LinearAlgebra.JordanChevalley.Multiplicative
 public import Mathlib.RingTheory.TensorProduct.Finite
 import Mathlib.Tactic.NoncommRing
 
@@ -48,10 +48,10 @@ namespace GeneralLinearGroup
 universe u v w
 
 variable {K : Type u} {V : Type v} {W : Type w}
-variable [Field K] [AddCommGroup V] [Module K V] [AddCommGroup W] [Module K W]
 
 section Semisimple
 
+variable [Field K] [AddCommGroup V] [Module K V] [AddCommGroup W] [Module K W]
 variable [PerfectField K] [FiniteDimensional K V] [FiniteDimensional K W]
 
 /-- The tensor product of semisimple linear automorphisms is semisimple. -/
@@ -76,6 +76,10 @@ theorem IsSemisimple.tensorProduct {g : GeneralLinearGroup K V}
   exact Module.End.IsSemisimple.mul_of_commute hcomm hl hr
 
 end Semisimple
+
+section CommRing
+
+variable [CommRing K] [AddCommGroup V] [Module K V] [AddCommGroup W] [Module K W]
 
 /-- The tensor product of unipotent linear automorphisms is unipotent. -/
 theorem IsUnipotent.tensorProduct {g : GeneralLinearGroup K V}
@@ -117,18 +121,22 @@ theorem IsUnipotent.tensorProduct {g : GeneralLinearGroup K V}
   have hmul : _root_.IsNilpotent (n * m) := hnm.isNilpotent_mul_left hm
   have hn_mul : Commute n (n * m) := (Commute.refl n).mul_right hnm
   have hm_mul : Commute m (n * m) := hnm.symm.mul_right (Commute.refl m)
-  rw [show TensorProduct.map (g : Module.End K V) (h : Module.End K W) - 1 =
-      n + m + n * m by
+  have hmap : TensorProduct.map (g : Module.End K V) (h : Module.End K W) - 1 =
+      n + m + n * m := by
     rw [← LinearMap.lTensor_comp_rTensor]
     -- Ring multiplication of endomorphisms is composition; expose it for `noncomm_ring`.
     change (h : Module.End K W).lTensor V * (g : Module.End K V).rTensor W - 1 = _
     dsimp only [n, m]
-    noncomm_ring [hab.eq]]
+    noncomm_ring [hab.eq]
+  rw [hmap]
   exact Commute.isNilpotent_add (hn_mul.add_left hm_mul)
     (Commute.isNilpotent_add hnm hn hm) hmul
 
+end CommRing
+
 section PerfectField
 
+variable [Field K] [AddCommGroup V] [Module K V] [AddCommGroup W] [Module K W]
 variable [PerfectField K] [FiniteDimensional K V] [FiniteDimensional K W]
 
 /-- The multiplicative Jordan decomposition of a tensor product is the tensor product of the
@@ -143,11 +151,7 @@ theorem jordanDecomposition_tensorProduct
   refine ⟨(isSemisimple_semisimplePart g).tensorProduct
       (isSemisimple_semisimplePart h),
     (isUnipotent_unipotentPart g).tensorProduct (isUnipotent_unipotentPart h), ?_, ?_⟩
-  · change tensorProduct (semisimplePart g) (semisimplePart h) *
-      tensorProduct (unipotentPart g) (unipotentPart h) =
-        tensorProduct (unipotentPart g) (unipotentPart h) *
-          tensorProduct (semisimplePart g) (semisimplePart h)
-    rw [← tensorProduct_mul, ← tensorProduct_mul]
+  · rw [commute_iff_eq, ← tensorProduct_mul, ← tensorProduct_mul]
     rw [(commute_semisimplePart_unipotentPart g).eq,
       (commute_semisimplePart_unipotentPart h).eq]
   · rw [← tensorProduct_mul, semisimplePart_mul_unipotentPart,
