@@ -83,10 +83,10 @@ field means proving the intertwining-number formula in `ℕ` from the Mackey dec
 isomorphism of representations, which is a separate roadmap target (Layer 3a) and is not
 formalized here.
 
-For a normal subgroup the Mackey subgroup is all of `H`.  The equivalence
-`TauCeti.mackeySubgroupNormalEquiv` transports the corresponding intertwining space to
-`Hom_H(A, {}^s A)`, and `TauCeti.simple_indFDRep_iff_of_normal` gives the resulting
-normal-subgroup corollary.  This is the form used by Clifford theory (Layer 5).
+For a normal subgroup the Mackey subgroup is all of `H`.  Restricting along
+`TauCeti.mackeySubgroupNormalEquiv` shows that the corresponding Mackey term and
+`Hom_H(A, {}^s A)` have equal dimensions, and `TauCeti.simple_indFDRep_iff_of_normal` gives the
+resulting normal-subgroup corollary.  This is the form used by Clifford theory (Layer 5).
 
 ## References
 
@@ -186,46 +186,12 @@ section NormalDisjoint
 
 variable {k G : Type u} [Field k] [Group G] {H : Subgroup G} [H.Normal]
 
-/-- For a normal subgroup, a Mackey intertwining space is the ordinary intertwining space from
-`A` to its conjugate `{}^s A`. -/
-theorem finrank_hom_res_mackeyToH_of_normal (A : FDRep k H) (s : G) :
-    Module.finrank k (resFDRep ((mackeySubgroup s H H).subgroupOf H) A ⟶
-        (Action.res (FGModuleCat k) (mackeyToH s H H)).obj A) =
-      Module.finrank k (A ⟶ conjNormalFDRep s A) := by
-  let e := mackeySubgroupNormalEquiv (H := H) s
-  have hsubtype : ((mackeySubgroup s H H).subgroupOf H).subtype = e.toMonoidHom := by
-    ext y
-    simp [e]
-  have hconj : mackeyToH s H H =
-      (MulAut.conjNormal s⁻¹ : MulAut H).toMonoidHom.comp e.toMonoidHom := by
-    ext y
-    simp only [coe_mackeyToH_apply, MonoidHom.coe_comp, MulEquiv.coe_toMonoidHom,
-      Function.comp_apply]
-    change s⁻¹ * (y : G) * s =
-      (((MulAut.conjNormal s⁻¹ : MulAut H) (e y) : H) : G)
-    rw [show e y = (y : H) by simp [e]]
-    simp
-  have hsource : resFDRep ((mackeySubgroup s H H).subgroupOf H) A =
-      (Action.res (FGModuleCat k) e.toMonoidHom).obj A := by
-    change (Action.res (FGModuleCat k) ((mackeySubgroup s H H).subgroupOf H).subtype).obj A = _
-    rw [hsubtype]
-  have htarget : (Action.res (FGModuleCat k) (mackeyToH s H H)).obj A =
-      (Action.res (FGModuleCat k) e.toMonoidHom).obj (conjNormalFDRep s A) := by
-    rw [conjNormalFDRep, conjNormalFDRepFunctor]
-    change (Action.res (FGModuleCat k) (mackeyToH s H H)).obj A =
-      ((Action.res (FGModuleCat k) (MulAut.conjNormal s⁻¹ : MulAut H).toMonoidHom ⋙
-        Action.res (FGModuleCat k) e.toMonoidHom).obj A)
-    rw [← actionRes_comp, hconj]
-  rw [hsource, htarget]
-  exact finrank_hom_res_mulEquiv e A (conjNormalFDRep s A)
-
 /-- For a normal subgroup and an irreducible `A`, Mackey disjointness at `s` says exactly that
 the conjugate `{}^s A` is not isomorphic to `A`. -/
 theorem mackeyDisjoint_iff_isEmpty_iso_of_normal (A : FDRep k H) [Simple A] (s : G) :
     MackeyDisjoint A s ↔ IsEmpty (conjNormalFDRep s A ≅ A) := by
   have hsimple : Simple (conjNormalFDRep s A) := by
-    change Simple ((conjNormalFDRepFunctor s).obj A)
-    rw [← conjNormalFDRepEquiv_functor]
+    rw [conjNormalFDRep, ← conjNormalFDRepEquiv_functor]
     exact CategoryTheory.simple_obj _ A
   let _ := hsimple
   rw [mackeyDisjoint_iff_finrank_eq_zero, finrank_hom_res_mackeyToH_of_normal]
