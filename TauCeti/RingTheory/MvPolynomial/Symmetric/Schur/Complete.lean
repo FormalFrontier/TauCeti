@@ -261,6 +261,8 @@ private theorem ofFn_getD_rowList (s : Multiset (Fin N)) (hs : Multiset.card s =
   refine List.ext_getElem (by simp [hlen]) fun k hk hk' => ?_
   rw [List.getElem_ofFn, List.getD_eq_getElem _ _ hk']
 
+/-- **Listing a multiset of letters along a row uses exactly those letters**: the multiset of
+letters of `TauCeti.BoundedSSYT.ofRowMultiset h s hs` is `s` again. -/
 @[simp]
 theorem rowMultiset_ofRowMultiset (h : μ.colLen 0 ≤ 1) (s : Multiset (Fin N))
     (hs : Multiset.card s = μ.rowLen 0) : rowMultiset (ofRowMultiset h s hs) = s := by
@@ -284,6 +286,8 @@ private theorem rowList_rowMultiset (T : BoundedSSYT N μ) :
   · rw [← Multiset.coe_eq_coe, coe_rowList, rowMultiset, Multiset.map_map, Fin.univ_val_map]
     rfl
 
+/-- **A one-row tableau is determined by the letters it uses**: relisting the multiset of letters
+of the row of `T` in increasing order recovers `T`. -/
 @[simp]
 theorem ofRowMultiset_rowMultiset (h : μ.colLen 0 ≤ 1) (T : BoundedSSYT N μ) :
     ofRowMultiset h (rowMultiset T) (card_rowMultiset T) = T := by
