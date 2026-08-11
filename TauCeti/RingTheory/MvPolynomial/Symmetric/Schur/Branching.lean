@@ -10,25 +10,27 @@ public import TauCeti.RingTheory.MvPolynomial.Symmetric.Schur.Basic
 /-!
 # The branching rule for Schur polynomials
 
-A Schur polynomial in `n + 1` variables is a polynomial in its last variable whose coefficients are
-Schur polynomials in the first `n`, one for each shape that **interlaces** its own:
+A Schur polynomial in `n + 1` variables is a polynomial in its last variable whose terms are
+Schur polynomials in the first `n`, one term for each shape that **interlaces** its own:
 
 `s_μ(x₀, …, x_n) = ∑_{ν ≺ μ} x_n ^ (|μ| - |ν|) · s_ν(x₀, …, x_{n-1})`.
 
 This is `TauCeti.diagramSchurPoly_eq_sum_interlacingShapes`, an identity of *polynomials* over an
 arbitrary commutative semiring.  The exponent of the last variable is forced: the cells of `μ` not
 in `ν` are exactly the cells carrying the top letter, so a shape `ν` contributes in degree
-`|μ| - |ν|` and in no other.  Specializing the last variable recovers the identities of values that
-this grading refines: `TauCeti.eval_snoc_diagramSchurPoly` at an arbitrary value, and at `1`
-the multiplicity-free form
+`|μ| - |ν|` and in no other — the coefficient of `x_n ^ k` is thus the sum of the `s_ν` over the
+interlacing shapes `ν` of cardinality `|μ| - k`, of which there may be several.  Specializing the
+last variable recovers the identities of values that this grading refines:
+`TauCeti.eval_snoc_diagramSchurPoly` at an arbitrary value, and at `1` the multiplicity-free form
 
 `s_μ(x₀, …, x_{n-1}, 1) = ∑_{ν ≺ μ} s_ν(x₀, …, x_{n-1})`,
 
 both as an identity of polynomials (`TauCeti.aeval_snoc_one_diagramSchurPoly`) and, at a family of
-values, as `TauCeti.eval_diagramSchurPoly_of_apply_last_eq_one`.  At `0` instead the sum collapses
-to its single top-degree term and one reads off the **stability** of Schur polynomials
-(`TauCeti.aeval_snoc_zero_diagramSchurPoly`): a shape of at most `n` rows has the same Schur
-polynomial in `n` and in `n + 1` variables, once the extra variable is set to zero.
+values, as `TauCeti.eval_diagramSchurPoly_of_apply_last_eq_one`.  At `0` instead every term of
+positive degree dies, leaving the single degree-zero term, the one for `ν = μ`, and one reads off
+the **stability** of Schur polynomials (`TauCeti.aeval_snoc_zero_diagramSchurPoly`): a shape has
+the same Schur polynomial in `n` and in `n + 1` variables, once the extra variable is set to zero
+— both being zero when the shape has more than `n` rows, so that no term at all survives.
 
 Over `ℂ`, and for a shape `μ` of at most `n + 1` rows — so that `μ` is the highest weight of a
 polynomial irreducible of `GLₙ₊₁` and `s_μ` its character — the specialization at `1` reads as the
@@ -166,15 +168,13 @@ theorem eval_snoc_diagramSchurPoly (n : ℕ) (μ : _root_.YoungDiagram) (x : Fin
           t ^ (μ.card - ν.card) * eval x (diagramSchurPoly n R ν) := by
   rw [diagramSchurPoly_eq_sum_interlacingShapes, map_sum]
   refine Finset.sum_congr rfl fun ν _ => ?_
-  rw [map_mul, map_pow, eval_X, Fin.snoc_last, eval_rename,
-    show (Fin.snoc x t) ∘ Fin.castSucc = x by funext i; simp]
+  rw [map_mul, map_pow, eval_X, Fin.snoc_last, eval_rename, Fin.snoc_comp_castSucc]
 
 /-- Substituting the variables themselves for the first `n` variables, and anything at all for the
 last, undoes the renaming that reads a polynomial in `n` variables as one in `n + 1`. -/
 private theorem aeval_snoc_rename_castSucc {n : ℕ} (t p : MvPolynomial (Fin n) R) :
     aeval (Fin.snoc (X : Fin n → MvPolynomial (Fin n) R) t) (rename Fin.castSucc p) = p := by
-  rw [aeval_rename, show (Fin.snoc (X : Fin n → MvPolynomial (Fin n) R) t) ∘ Fin.castSucc = X from
-    funext fun i => Fin.snoc_castSucc _ _ i]
+  rw [aeval_rename, Fin.snoc_comp_castSucc]
   exact aeval_X_left_apply _
 
 /-- **The branching rule with the last variable set to `1`, as an identity of polynomials.**  This
@@ -189,28 +189,37 @@ theorem aeval_snoc_one_diagramSchurPoly (n : ℕ) (μ : _root_.YoungDiagram) :
   rw [map_mul, map_pow, aeval_X, Fin.snoc_last, one_pow, one_mul,
     aeval_snoc_rename_castSucc]
 
-/-- **Stability of Schur polynomials.**  A shape of at most `n` rows has the same Schur polynomial
-in `n` and in `n + 1` variables, once the extra variable is set to `0`: only the shape itself
-survives the specialization, every other interlacing shape being smaller and so carrying a positive
-power of the vanishing variable. -/
-theorem aeval_snoc_zero_diagramSchurPoly (n : ℕ) {μ : _root_.YoungDiagram}
-    (hμ : μ.colLen 0 ≤ n) :
+/-- **Stability of Schur polynomials.**  A shape has the same Schur polynomial in `n` and in
+`n + 1` variables, once the extra variable is set to `0`: only the shape itself survives the
+specialization, every other interlacing shape being smaller and so carrying a positive power of
+the vanishing variable.  A shape of more than `n` rows interlaces no shape of at most `n` rows
+that is as large, so there both sides vanish. -/
+theorem aeval_snoc_zero_diagramSchurPoly (n : ℕ) (μ : _root_.YoungDiagram) :
     aeval (Fin.snoc (X : Fin n → MvPolynomial (Fin n) R) 0) (diagramSchurPoly (n + 1) R μ)
       = diagramSchurPoly n R μ := by
-  have hself : μ ∈ YoungDiagram.interlacingShapes n μ :=
-    YoungDiagram.mem_interlacingShapes.mpr
-      ⟨YoungDiagram.interlaces_iff.mpr
-        fun i => ⟨μ.rowLen_anti i (i + 1) (Nat.le_succ i), le_rfl⟩, hμ⟩
-  rw [diagramSchurPoly_eq_sum_interlacingShapes, map_sum,
-    Finset.sum_eq_single_of_mem μ hself ?_]
-  · rw [map_mul, map_pow, aeval_X, Fin.snoc_last, Nat.sub_self, pow_zero, one_mul,
-      aeval_snoc_rename_castSucc]
-  · intro ν hν hne
+  have hvanish : ∀ ν ∈ YoungDiagram.interlacingShapes n μ, ν ≠ μ →
+      aeval (Fin.snoc (X : Fin n → MvPolynomial (Fin n) R) 0)
+          (X (Fin.last n) ^ (μ.card - ν.card) * rename Fin.castSucc (diagramSchurPoly n R ν))
+        = 0 := by
+    intro ν hν hne
     have hsub : ν.cells ⊆ μ.cells :=
       YoungDiagram.cells_subset_iff.mpr (YoungDiagram.mem_interlacingShapes.mp hν).1.le
     have hlt : ν.card < μ.card :=
       Finset.card_lt_card (lt_of_le_of_ne hsub fun h => hne (YoungDiagram.ext h))
     rw [map_mul, map_pow, aeval_X, Fin.snoc_last, zero_pow (by omega), zero_mul]
+  rw [diagramSchurPoly_eq_sum_interlacingShapes, map_sum]
+  rcases le_or_gt (μ.colLen 0) n with hμ | hμ
+  · have hself : μ ∈ YoungDiagram.interlacingShapes n μ :=
+      YoungDiagram.mem_interlacingShapes.mpr
+        ⟨YoungDiagram.interlaces_iff.mpr
+          fun i => ⟨μ.rowLen_anti i (i + 1) (Nat.le_succ i), le_rfl⟩, hμ⟩
+    rw [Finset.sum_eq_single_of_mem μ hself hvanish, map_mul, map_pow, aeval_X, Fin.snoc_last,
+      Nat.sub_self, pow_zero, one_mul, aeval_snoc_rename_castSucc]
+  · rw [diagramSchurPoly_eq_zero_of_lt_colLen hμ]
+    refine Finset.sum_eq_zero fun ν hν => hvanish ν hν ?_
+    rintro rfl
+    have := (YoungDiagram.mem_interlacingShapes.mp hν).2
+    omega
 
 /-- **The branching rule for Schur polynomials**, at any evaluation sending the last variable
 to `1`: the value of `s_μ` in `n + 1` variables is the sum of the values of the `s_ν` in the first
@@ -222,8 +231,7 @@ theorem eval_diagramSchurPoly_of_apply_last_eq_one (n : ℕ) (μ : _root_.YoungD
           eval (fun i : Fin n => x i.castSucc) (diagramSchurPoly n R ν) := by
   rw [diagramSchurPoly_eq_sum_interlacingShapes, map_sum]
   refine Finset.sum_congr rfl fun ν _ => ?_
-  rw [map_mul, map_pow, eval_X, hx, one_pow, one_mul, eval_rename]
-  rfl
+  rw [map_mul, map_pow, eval_X, hx, one_pow, one_mul, eval_rename, Function.comp_def]
 
 /-- **The branching rule for Schur polynomials**, evaluated at a family of values with a `1`
 appended. -/
