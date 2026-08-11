@@ -61,9 +61,9 @@ namespace TauCeti
 
 variable {R S ι : Type*} [CommRing R] [Fintype ι] [DecidableEq ι]
 
-section Ring
+section Semiring
 
-variable [Ring S] [Algebra R S] (b : Module.Basis ι R S)
+variable [Semiring S] [Algebra R S] (b : Module.Basis ι R S)
 
 /-- The units of `S`, embedded in `GL ι R` by left multiplication read in the basis `b`. -/
 noncomputable def unitsLeftMulMatrix : Sˣ →* GL ι R :=
@@ -76,6 +76,7 @@ theorem coe_unitsLeftMulMatrix (x : Sˣ) :
   rfl
 
 /-- The entries of `unitsLeftMulMatrix b x` are the coordinates of `x * b j` in the basis `b`. -/
+@[simp]
 theorem unitsLeftMulMatrix_apply (x : Sˣ) (i j : ι) :
     (unitsLeftMulMatrix b x : Matrix ι ι R) i j = b.repr ((x : S) * b j) i :=
   Algebra.leftMulMatrix_eq_repr_mul b (x : S) i j
@@ -97,13 +98,16 @@ theorem unitsLeftMulMatrix_map_algebraMap (r : Rˣ) :
   rw [Matrix.algebraMap_matrix_apply, Matrix.scalar_apply, Matrix.diagonal_apply]
   simp
 
+end Semiring
+
+-- Not a `simp` lemma, for the same reason `Algebra.norm_eq_matrix_det` is not: the left-hand side
+-- mentions a choice of basis, which `simp` normalizes away through `coe_unitsLeftMulMatrix`.
 /-- The determinant of the matrix of left multiplication by `x` is the algebra norm of `x`. -/
-theorem val_det_unitsLeftMulMatrix (x : Sˣ) :
+theorem val_det_unitsLeftMulMatrix [Ring S] [Algebra R S] (b : Module.Basis ι R S) (x : Sˣ) :
     (Matrix.GeneralLinearGroup.det (unitsLeftMulMatrix b x) : R) = Algebra.norm R (x : S) := by
   rw [Matrix.GeneralLinearGroup.val_det_apply, coe_unitsLeftMulMatrix, Algebra.norm_eq_matrix_det b]
 
-end Ring
-
+-- Not a `simp` lemma, for the same reason `Algebra.trace_eq_matrix_trace` is not.
 /-- The trace of the matrix of left multiplication by `x` is the algebra trace of `x`. -/
 theorem trace_unitsLeftMulMatrix [CommRing S] [Algebra R S] (b : Module.Basis ι R S) (x : Sˣ) :
     Matrix.trace (unitsLeftMulMatrix b x : Matrix ι ι R) = Algebra.trace R S (x : S) := by

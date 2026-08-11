@@ -56,9 +56,9 @@ choice, following the convention of
 * `TauCeti.GL2NonSplitTorus.conj_notMem_GL2Borel`: an element of the torus not coming from `F` has
   no conjugate in the Borel subgroup, and
   `TauCeti.GL2NonSplitTorus.exists_forall_conj_notMem_GL2Borel`: such an element exists, so the
-  torus is not conjugate into the Borel subgroup.
-* `TauCeti.GL2Borel.exists_det_sub_algebraMap_eq_zero`: a matrix with an upper-triangular conjugate
-  has an eigenvalue in the base ring; this is what non-splitness contradicts.
+  torus is not conjugate into the Borel subgroup. What these contradict is
+  `TauCeti.GL2Borel.exists_det_sub_algebraMap_eq_zero`, that a matrix with an upper-triangular
+  conjugate has an eigenvalue in the base ring.
 
 ## References
 
@@ -76,24 +76,16 @@ namespace TauCeti
 
 variable {F : Type*} [Field F] {E : Type*} [Field E] [Algebra F E]
 
-/-- A degree-`2` extension is finite-dimensional: the `Module.finrank` of a module that is not
-finite is `0`, not `2`. -/
-theorem module_finite_of_finrank_eq_two (hE : Module.finrank F E = 2) : Module.Finite F E :=
-  Module.finite_of_finrank_pos (by rw [hE]; norm_num)
-
 /-- An extension of degree other than `1` has a unit outside the base field: were every element of
 `E` a scalar, `algebraMap F E` would be bijective and the degree would be `1`. -/
-theorem exists_units_notMem_range_algebraMap (h : Module.finrank F E ≠ 1) :
+private theorem exists_units_notMem_range_algebraMap (h : Module.finrank F E ≠ 1) :
     ∃ x : Eˣ, (x : E) ∉ Set.range (algebraMap F E) := by
   by_contra hcon
-  refine h ?_
-  have hsurj : Function.Surjective (algebraMap F E) := fun y => by
-    rcases eq_or_ne y 0 with rfl | hy
-    · exact ⟨0, map_zero _⟩
-    · exact not_not.mp (not_exists.mp hcon (Units.mk0 y hy))
-  have e : F ≃ₗ[F] E :=
-    LinearEquiv.ofBijective (Algebra.linearMap F E) ⟨(algebraMap F E).injective, hsurj⟩
-  rw [← e.finrank_eq, Module.finrank_self]
+  refine h (Algebra.finrank_eq_one_iff_bijective_algebraMap.mpr
+    ⟨(algebraMap F E).injective, fun y => ?_⟩)
+  rcases eq_or_ne y 0 with rfl | hy
+  · exact ⟨0, map_zero _⟩
+  · exact not_not.mp (not_exists.mp hcon (Units.mk0 y hy))
 
 variable (F E) in
 /-- A chosen `F`-basis of a degree-`2` extension `E/F`, indexed by `Fin 2`. The non-split torus is
@@ -101,7 +93,7 @@ the image of `Eˣ` under the matrix representation in this basis; another choice
 it. -/
 noncomputable def nonSplitTorusBasis (hE : Module.finrank F E = 2) :
     Module.Basis (Fin 2) F E :=
-  have := module_finite_of_finrank_eq_two hE
+  have := Module.finite_of_finrank_eq_succ (n := 1) hE
   Module.finBasisOfFinrankEq F E hE
 
 variable (F E) in
@@ -116,36 +108,6 @@ variable (F E) in
 image of `Eˣ` under multiplication on `E`, read in the basis `TauCeti.nonSplitTorusBasis`. -/
 noncomputable def GL2NonSplitTorus (hE : Module.finrank F E = 2) : Subgroup (GL (Fin 2) F) :=
   (GL2NonSplitTorusHom F E hE).range
-
-namespace GL2Borel
-
-/-- If some conjugate of `u : GL (Fin 2) R` is upper triangular then `u` has an eigenvalue in the
-base ring: writing `a` for the upper-left entry of that conjugate, `det (u - a) = 0`. Conjugation
-leaves the determinant alone and `a` clears the whole first column of the conjugate. This is the
-eigenvalue that a non-split torus element has to be shown not to have. -/
-theorem exists_det_sub_algebraMap_eq_zero {R : Type*} [CommRing R] {u g : GL (Fin 2) R}
-    (h : g * u * g⁻¹ ∈ GL2Borel R) :
-    ∃ a : R,
-      ((u : Matrix (Fin 2) (Fin 2) R) - algebraMap R (Matrix (Fin 2) (Fin 2) R) a).det = 0 := by
-  obtain ⟨N, hN⟩ : ∃ N : Matrix (Fin 2) (Fin 2) R,
-      ((g * u * g⁻¹ : GL (Fin 2) R) : Matrix (Fin 2) (Fin 2) R) = N := ⟨_, rfl⟩
-  refine ⟨N 0 0, ?_⟩
-  -- A scalar matrix is central, so conjugating `u - a` conjugates `u` and leaves `a` alone.
-  have hgc : (g : Matrix (Fin 2) (Fin 2) R) * algebraMap R (Matrix (Fin 2) (Fin 2) R) (N 0 0) *
-      ((g⁻¹ : GL (Fin 2) R) : Matrix (Fin 2) (Fin 2) R) =
-      algebraMap R (Matrix (Fin 2) (Fin 2) R) (N 0 0) := by
-    rw [← Algebra.commutes (N 0 0) (g : Matrix (Fin 2) (Fin 2) R), mul_assoc, ← Units.val_mul,
-      mul_inv_cancel, Units.val_one, mul_one]
-  have key : (g : Matrix (Fin 2) (Fin 2) R) *
-      ((u : Matrix (Fin 2) (Fin 2) R) - algebraMap R (Matrix (Fin 2) (Fin 2) R) (N 0 0)) *
-      ((g⁻¹ : GL (Fin 2) R) : Matrix (Fin 2) (Fin 2) R) =
-      N - algebraMap R (Matrix (Fin 2) (Fin 2) R) (N 0 0) := by
-    rw [Matrix.mul_sub, Matrix.sub_mul, hgc, ← hN, Units.val_mul, Units.val_mul]
-  have h10 : N 1 0 = 0 := by rw [← hN]; exact mem_iff.mp h
-  rw [← Matrix.det_units_conj g, key, Matrix.det_fin_two]
-  simp [Matrix.sub_apply, Matrix.algebraMap_matrix_apply, h10]
-
-end GL2Borel
 
 namespace GL2NonSplitTorus
 
@@ -171,10 +133,7 @@ theorem apply_mem (x : Eˣ) : GL2NonSplitTorusHom F E hE x ∈ GL2NonSplitTorus 
 
 /-- The torus is abelian: it is the image of the commutative group `Eˣ`. -/
 instance : IsMulCommutative (GL2NonSplitTorus F E hE) :=
-  isMulCommutative_iff.mpr fun a b => Subtype.ext <| by
-    obtain ⟨x, hx⟩ := (mem_iff hE).mp a.2
-    obtain ⟨y, hy⟩ := (mem_iff hE).mp b.2
-    rw [Subgroup.coe_mul, Subgroup.coe_mul, ← hx, ← hy, ← map_mul, ← map_mul, mul_comm]
+  Subgroup.range_isMulCommutative (GL2NonSplitTorusHom F E hE)
 
 /-- The determinant of a torus element is the norm of the field element it comes from. -/
 theorem val_det_GL2NonSplitTorusHom (x : Eˣ) :
@@ -196,7 +155,7 @@ theorem scalar_mem (a : Fˣ) :
 over a field with `q` elements it has `q² - 1` of them. (Over an infinite `F` both sides are `0`,
 the `Nat.card` of an infinite type.) -/
 theorem natCard_eq : Nat.card (GL2NonSplitTorus F E hE) = Nat.card F ^ 2 - 1 := by
-  have := module_finite_of_finrank_eq_two hE
+  have := Module.finite_of_finrank_eq_succ (n := 1) hE
   rw [GL2NonSplitTorus,
     ← Nat.card_congr (MonoidHom.ofInjective (GL2NonSplitTorusHom_injective hE)).toEquiv,
     Nat.card_units, Module.natCard_eq_pow_finrank (K := F) (V := E), hE]
@@ -206,7 +165,7 @@ by `x` has no eigenvalue `a : F`, because `det (x - a) = N_{E/F}(x - a) ≠ 0`. 
 theorem det_sub_algebraMap_ne_zero {x : E} (hx : x ∉ Set.range (algebraMap F E)) (a : F) :
     (Algebra.leftMulMatrix (nonSplitTorusBasis F E hE) x -
       algebraMap F (Matrix (Fin 2) (Fin 2) F) a).det ≠ 0 := by
-  have := module_finite_of_finrank_eq_two hE
+  have := Module.finite_of_finrank_eq_succ (n := 1) hE
   have hxa : x - algebraMap F E a ≠ 0 := fun h => hx ⟨a, (sub_eq_zero.mp h).symm⟩
   rw [← (Algebra.leftMulMatrix (nonSplitTorusBasis F E hE)).commutes a, ← map_sub,
     ← Algebra.norm_eq_matrix_det]
