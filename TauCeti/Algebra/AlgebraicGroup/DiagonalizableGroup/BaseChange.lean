@@ -94,10 +94,10 @@ theorem baseChangeCoordinateRingIso_hom_toBialgHom
     FiniteTypeCommHopfAlgCat.toBialgHom ((baseChangeCoordinateRingIso k K G).hom) =
       (TauCeti.MonoidAlgebra.scalarTensorBialgEquiv k K (G := G) :
         K ⊗[k] MonoidAlgebra k G →ₐc[K] MonoidAlgebra K G) := by
-  apply BialgHom.ext
-  intro x
-  change TauCeti.MonoidAlgebra.scalarTensorBialgEquiv k K x = _
-  rfl
+  exact FiniteTypeCommHopfAlgCat.toBialgHom_ofHom (R := K)
+    (H := K ⊗[k] MonoidAlgebra k G) (K := MonoidAlgebra K G)
+    (TauCeti.MonoidAlgebra.scalarTensorBialgEquiv k K (G := G) :
+      K ⊗[k] MonoidAlgebra k G →ₐc[K] MonoidAlgebra K G)
 
 /-- The bialgebra morphism underlying the inverse coordinate-ring base-change isomorphism is the
 inverse of `MonoidAlgebra.scalarTensorBialgEquiv`. -/
@@ -107,10 +107,10 @@ theorem baseChangeCoordinateRingIso_inv_toBialgHom
     FiniteTypeCommHopfAlgCat.toBialgHom ((baseChangeCoordinateRingIso k K G).inv) =
       ((TauCeti.MonoidAlgebra.scalarTensorBialgEquiv k K (G := G)).symm :
         MonoidAlgebra K G →ₐc[K] K ⊗[k] MonoidAlgebra k G) := by
-  apply BialgHom.ext
-  intro x
-  change (TauCeti.MonoidAlgebra.scalarTensorBialgEquiv k K).symm x = _
-  rfl
+  exact FiniteTypeCommHopfAlgCat.toBialgHom_ofHom (R := K)
+    (H := MonoidAlgebra K G) (K := K ⊗[k] MonoidAlgebra k G)
+    ((TauCeti.MonoidAlgebra.scalarTensorBialgEquiv k K (G := G)).symm :
+      MonoidAlgebra K G →ₐc[K] K ⊗[k] MonoidAlgebra k G)
 
 /-- The forward coordinate-ring base-change isomorphism sends a pure tensor to the scalar
 multiple of the coefficientwise base change. -/
