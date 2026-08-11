@@ -765,8 +765,7 @@ private theorem signatureSwitchSplitIndexEquiv_symm_inl_neg (p q : ℕ) (i : Fin
 private theorem signatureSwitchSplitIndexEquiv_symm_inr (p q : ℕ) :
     (signatureSwitchSplitIndexEquiv p q).symm (Sum.inr (0 : Fin 1)) =
       finSumFinEquiv (Sum.inl (Fin.last (p + 1))) := by
-  apply Fin.ext
-  rfl
+  simp [signatureSwitchSplitIndexEquiv, splitLastEquiv]
 
 private theorem signatureSwitchSplitWeight_inl (p q : ℕ) (i : Fin ((p + 1) + q)) :
     realCliffordWeight (p + 1 + 1) q
@@ -911,8 +910,7 @@ private theorem signatureSwitchStandardIndexEquiv_symm_inl_neg (p q : ℕ) (i : 
 private theorem signatureSwitchStandardIndexEquiv_symm_inr (p q : ℕ) :
     (signatureSwitchStandardIndexEquiv p q).symm (Sum.inr (0 : Fin 1)) =
       finSumFinEquiv (Sum.inl (Fin.last q)) := by
-  apply Fin.ext
-  rfl
+  simp [signatureSwitchStandardIndexEquiv, splitLastEquiv]
 
 private theorem signatureSwitchStandardWeight_inl (p q : ℕ) (i : Fin ((p + 1) + q)) :
     realCliffordWeight (q + 1) (p + 1)
