@@ -4,8 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.LinearAlgebra.Matrix.Dual
-public import TauCeti.LinearAlgebra.RootSystem.NumberOfRoots
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.Basic
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.B.Model
 
@@ -355,9 +353,6 @@ simple-coroot coordinates. -/
 @[simp] theorem toLinearMap_typeBSimplyConnectedRootDatum (x y : Fin n → ℤ) :
     (typeBSimplyConnectedRootDatum n).toLinearMap x y = x ⬝ᵥ y := (rfl)
 
-/-- The index type of the pinned datum is the root count that the roadmap attaches to `Bₙ`. -/
-example (n : ℕ) : (DynkinType.B n).numRoots = 2 * n ^ 2 := numRoots_B n
-
 private lemma root_typeBSimplyConnectedRootDatum (k : Fin (2 * n ^ 2)) :
     (typeBSimplyConnectedRootDatum n).root k = rootIdx ((typeBEnum n).symm k) := (rfl)
 
@@ -544,22 +539,10 @@ private lemma image_coroot_typeBSimpleSupport :
   rw [coe_typeBSimpleSupport, ← range_comp]
   exact congrArg range (funext fun i => coroot_typeBSimpleIndex i)
 
-/-- Telescoping: a difference of two members of a family lies in the additive submonoid generated
-by the consecutive differences. -/
-private lemma typeB_sub_mem_closure {M : Type*} [AddCommGroup M] (f : ℕ → M) {a b : ℕ}
-    (hb : b ≤ n) (hab : a ≤ b) :
-    f a - f b ∈ AddSubmonoid.closure (range fun i : Fin n => f (i : ℕ) - f ((i : ℕ) + 1)) := by
-  have htel : f a - f b = ∑ i ∈ Finset.Ico a b, (f i - f (i + 1)) := by
-    rw [Finset.sum_Ico_eq_sub _ hab, Finset.sum_range_sub' f, Finset.sum_range_sub' f]
-    abel
-  rw [htel]
-  refine AddSubmonoid.sum_mem _ fun i hi => AddSubmonoid.subset_closure ?_
-  exact ⟨⟨i, lt_of_lt_of_le (Finset.mem_Ico.mp hi).2 hb⟩, rfl⟩
-
 private lemma typeB_weight_mem_closure {a : ℕ} (ha : a ≤ n) :
     weight n a ∈ AddSubmonoid.closure
       (range fun i : Fin n => weight n (i : ℕ) - weight n ((i : ℕ) + 1)) := by
-  have h := typeB_sub_mem_closure (n := n) (weight n) le_rfl ha
+  have h := sub_mem_closure_of_le (n := n) (weight n) le_rfl ha
   rwa [weight_eq_zero_of_le le_rfl, sub_zero] at h
 
 private lemma typeB_wt_add_wt_mem_closure (u v : Fin (2 * n)) (hu : sgn u = 1)
@@ -576,7 +559,7 @@ private lemma typeB_wt_sub_wt_mem_closure (u v : Fin (2 * n)) (hu : sgn u = 1)
     wt u + wt v ∈ AddSubmonoid.closure
       (range fun i : Fin n => weight n (i : ℕ) - weight n ((i : ℕ) + 1)) := by
   rw [wt_def, wt_def, hu, hv, one_smul, neg_one_smul, ← sub_eq_add_neg]
-  exact typeB_sub_mem_closure (n := n) (weight n) (le_of_lt (axis_lt v)) hle
+  exact sub_mem_closure_of_le (n := n) (weight n) (le_of_lt (axis_lt v)) hle
 
 private lemma typeB_mem_closure_single {w : Fin n → ℤ} (hw : ∀ j, 0 ≤ w j) :
     w ∈ AddSubmonoid.closure (range fun i : Fin n => (Pi.single i 1 : Fin n → ℤ)) := by
