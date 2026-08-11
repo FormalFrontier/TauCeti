@@ -9,6 +9,7 @@ public import TauCeti.Analysis.Semigroups.Generator.OrbitDerivative
 public import TauCeti.Analysis.Semigroups.Generator.Invariance
 public import TauCeti.Analysis.Semigroups.Generator.Closed
 public import TauCeti.Analysis.Semigroups.Generator.Uniqueness
+public import TauCeti.Analysis.Semigroups.Generator.ExponentialShift
 
 /-!
 # Infinitesimal generators of strongly continuous semigroups
