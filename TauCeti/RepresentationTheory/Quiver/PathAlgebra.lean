@@ -13,6 +13,7 @@ public import Mathlib.LinearAlgebra.Finsupp.VectorSpace
 public import Mathlib.LinearAlgebra.FiniteDimensional.Defs
 public import Mathlib.LinearAlgebra.FreeModule.Finite.Basic
 public import Mathlib.RingTheory.Adjoin.Basic
+public import Mathlib.RingTheory.Idempotents
 
 /-!
 # The path algebra of a quiver
@@ -46,7 +47,8 @@ idempotents `e`, so left multiplication by `α` carries the `i`-component of a l
 * `TauCeti.PathAlgebra.one_def`: the vertex idempotents sum to `1`; they are
   orthogonal by `TauCeti.PathAlgebra.vertexIdempotent_mul_vertexIdempotent_of_ne`, idempotent by
   `TauCeti.PathAlgebra.vertexIdempotent_mul_self` and nonzero by
-  `TauCeti.PathAlgebra.vertexIdempotent_ne_zero`.
+  `TauCeti.PathAlgebra.vertexIdempotent_ne_zero`. The first three are bundled as
+  `TauCeti.PathAlgebra.completeOrthogonalIdempotents_vertexIdempotent`.
 * `TauCeti.module_finite_pathAlgebra` and `TauCeti.finrank_pathAlgebra`: `kQ` is a free module of
   rank the number of paths of `Q`, with `TauCeti.pathAlgebraBasis_repr_single` reading off the
   coordinates of a basis path. The specialization to a finite acyclic quiver, whose paths are
@@ -210,12 +212,12 @@ theorem mul?_mk {a b c : Q} (p : _root_.Quiver.Path a b) (q : _root_.Quiver.Path
 
 /-- Indexed paths that do not meet have no concatenation. -/
 theorem mul?_eq_none {x y : TotalPath Q} (h : y.2.1 ≠ x.1) : mul? x y = none := by
-  simp only [mul?, dif_neg h]
+  simp only [mul?, dite_eq_right h]
 
 /-- The concatenation of two indexed paths is undefined exactly when they do not meet. -/
 theorem mul?_eq_none_iff {x y : TotalPath Q} : mul? x y = none ↔ y.2.1 ≠ x.1 := by
   refine ⟨fun h hne => ?_, mul?_eq_none⟩
-  rw [mul?, dif_pos hne] at h
+  rw [mul?, dite_eq_left hne] at h
   exact Option.some_ne_none _ h
 
 /-- The trivial path at the target of `x` is a left unit for `x`. -/
@@ -627,6 +629,16 @@ noncomputable instance : Semiring (pathAlgebra k Q) where
     | zero => exact zero_mul _
     | add f₁ f₂ ih₁ ih₂ => rw [add_mul, ih₁, ih₂]
     | single x r => exact single_mul_one x r
+
+variable (k Q) in
+/-- **The vertex idempotents are a complete orthogonal family of idempotents**: they are
+idempotent, pairwise orthogonal, and sum to `1`. This bundles `TauCeti.PathAlgebra.one_def`
+with the orthogonality and idempotency above. -/
+theorem completeOrthogonalIdempotents_vertexIdempotent [Fintype Q] :
+    CompleteOrthogonalIdempotents fun v : Q => (vertexIdempotent k v : pathAlgebra k Q) where
+  idem v := vertexIdempotent_mul_self v
+  ortho _ _ h := vertexIdempotent_mul_vertexIdempotent_of_ne h
+  complete := one_def.symm
 
 end Unit
 

@@ -13,7 +13,7 @@ A single fact about distinct height-one primes of a Dedekind domain, complementi
 `Mathlib/RingTheory/DedekindDomain/Ideal/Lemmas.lean`: distinct height-one primes are
 incomparable, so each contains an element the other does not. This is what separates the
 valuations at two primes, and it is consumed by
-`TauCeti/RingTheory/DedekindDomain/SInteger.lean`.
+`TauCeti/RingTheory/DedekindDomain/SInteger/Basic.lean`.
 
 Split out of material adapted from Michael Stoll's elliptic-curves formalisation
 (`github.com/MichaelStollBayreuth/EllipticCurves`, `EllipticCurves/Mathlib/SIntegers.lean` at the

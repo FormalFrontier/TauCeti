@@ -32,6 +32,7 @@ prior formalisation of this layer; its proofs were not used.
 ## Main results
 
 * `TauCeti.Huber.isBounded_iff`: unfolding lemma for `IsBounded`.
+* `TauCeti.Huber.isBounded_finsetProd`: a finite pointwise product of bounded sets is bounded.
 * `TauCeti.Huber.isBounded_finite`: finite sets are bounded.
 * `TauCeti.Huber.IsBounded.union`, `TauCeti.Huber.IsBounded.mul`: unions and pointwise products
   of bounded sets are bounded.
@@ -144,6 +145,14 @@ theorem IsBounded.mul {S T : Set M} (hS : IsBounded S) (hT : IsBounded T) : IsBo
   obtain ⟨V, hV, hSV⟩ := hS W hW
   exact ⟨V, hV, by simpa [← mul_assoc] using (Set.mul_subset_mul_right hSV).trans hTW⟩
 
+/-- Every subset of a discrete ring is bounded: `{0}` is already a neighbourhood of zero. -/
+theorem isBounded_of_discreteTopology [DiscreteTopology M] (S : Set M) : IsBounded S := by
+  rw [isBounded_iff]
+  intro U hU
+  refine ⟨{0}, by simp, ?_⟩
+  rintro _ ⟨_, rfl, s, -, rfl⟩
+  simpa using mem_of_mem_nhds hU
+
 section ContinuousMul
 
 variable [ContinuousMul M]
@@ -162,6 +171,21 @@ theorem isBounded_finite {S : Set M} (hS : S.Finite) : IsBounded S := by
 end ContinuousMul
 
 end MonoidWithZero
+
+section CommMonoidWithZero
+
+variable {M : Type*} [CommMonoidWithZero M] [TopologicalSpace M]
+
+/-- **A finite pointwise product of bounded sets is bounded.** Commutativity is
+what makes the `Finset` product of sets available in the first place, and no continuity is
+required. -/
+theorem isBounded_finsetProd {ι : Type*} (s : Finset ι) {S : ι → Set M}
+    (hS : ∀ i ∈ s, IsBounded (S i)) : IsBounded (∏ i ∈ s, S i) :=
+  s.prod_induction S IsBounded (fun _ _ ↦ IsBounded.mul)
+    (isBounded_pair_zero_one.subset
+      (Set.singleton_subset_iff.mpr (Set.mem_insert_iff.mpr (Or.inr rfl)))) hS
+
+end CommMonoidWithZero
 
 section Nonarchimedean
 

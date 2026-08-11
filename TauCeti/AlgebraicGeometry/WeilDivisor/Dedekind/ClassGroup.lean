@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.AlgebraicGeometry.WeilDivisor.FractionalIdealDivisor.Basic
+public import TauCeti.RingTheory.ClassGroup.Basic
 
 /-!
 # The divisor class group of a Dedekind domain is its ideal class group
@@ -35,7 +36,9 @@ This is the affine, scheme-free form of the Jacobian roadmap's `Cl(X) ≅ Pic X`
 (`TauCetiRoadmap/JacobianChallenge/README.md`, Layer A, "the dictionaries `Cartier ≃ line
 bundles` ... `Cl(X) ≅ Pic X`"), realized for the Dedekind model before the global Picard scheme
 exists. It reuses Tau Ceti's `fractionalIdealDivisorAddEquiv` and `OrderSystem.ofDedekindDomain`
-API and Mathlib's `ClassGroup R`, `ClassGroup.equiv` (independence of the fraction field) and
+API, the class `IsDedekindDomain.HeightOneSpectrum.classGroupMk v` of a height one prime from
+`TauCeti.RingTheory.ClassGroup.Basic`, and Mathlib's
+`ClassGroup R`, `ClassGroup.equiv` (independence of the fraction field) and
 `QuotientAddGroup.congr`; no external mathematics is vendored.
 -/
 
@@ -148,14 +151,12 @@ lemma classGroupAddEquiv_divisorClass (D : WeilDivisor (HeightOneSpectrum R)) :
   rw [classGroupAddEquiv_divisorClass_fractionalIdealDivisor]
 
 /-- Non-vacuity: the class group isomorphism sends the class of the point divisor `[v]` of a
-height-one prime `v` to the ideal class of `v`, viewed as an invertible fractional ideal. -/
+height-one prime `v` to the ideal class `v.classGroupMk` of `v`. -/
 lemma classGroupAddEquiv_divisorClass_ofPoint (v : HeightOneSpectrum R) :
     classGroupAddEquiv R K ((OrderSystem.ofDedekindDomain R K).divisorClass (ofPoint v)) =
-      Additive.ofMul (ClassGroup.mk K
-        (Units.mk0 (v.asIdeal : FractionalIdeal R⁰ K)
-          (FractionalIdeal.coeIdeal_ne_zero.mpr v.ne_bot))) := by
+      Additive.ofMul v.classGroupMk := by
   rw [← fractionalIdealDivisor_asIdeal (K := K) v,
-    classGroupAddEquiv_divisorClass_fractionalIdealDivisor]
+    classGroupAddEquiv_divisorClass_fractionalIdealDivisor, v.classGroupMk_eq_mk K]
 
 end WeilDivisor
 

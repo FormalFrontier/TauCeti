@@ -264,6 +264,12 @@ lemma ofValuation_valuation (v : Spv A) : ofValuation v.valuation = v := by
   let := v.toValuativeRel
   exact ext' fun x y ↦ (ValuativeRel.valuation A).vle_iff_le.symm
 
+/-- The canonical valuation of the point determined by `w` is equivalent to `w`. -/
+lemma isEquiv_valuation_ofValuation {Γ₀ : Type*} [LinearOrderedCommGroupWithZero Γ₀]
+    (w : Valuation A Γ₀) : Valuation.IsEquiv (ofValuation w).valuation w := by
+  intro x y
+  rw [valuation_le_iff, vle_ofValuation]
+
 section Quotient
 
 variable (𝔞 : Ideal A)
@@ -406,11 +412,11 @@ lemma trivialSection_vle_iff (p : PrimeSpectrum A) (f s : A) :
     by_cases hf : f ∈ p.asIdeal
     · exact Or.inl hf
     · refine Or.inr fun hs ↦ ?_
-      rw [if_neg hf, if_pos hs] at h
+      rw [ite_eq_right hf, ite_eq_left hs] at h
       simp at h
   · rintro (hf | hs)
     · simp [hf]
-    · rw [if_neg hs]
+    · rw [ite_eq_right hs]
       split <;> simp
 
 /-- `trivialSection` is a section of the support map. -/
