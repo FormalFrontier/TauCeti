@@ -120,6 +120,7 @@ private theorem counitEvaluation_mul
 
 /-- Local functionals extracted from a tensor automorphism preserve products whenever the
 products of the two source subcomodules lie in the chosen target subcomodule. -/
+@[simp high]
 theorem localFunctional_mul
     (η : Aut (FGComoduleCat.scalarExtensionMonoidalFunctor k H A))
     (N P Q : Subcomodule.finiteSubcomodules (R := k) (C := H) (M := H))

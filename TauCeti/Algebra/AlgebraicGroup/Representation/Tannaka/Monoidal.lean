@@ -141,6 +141,7 @@ theorem scalarExtensionComponent_natural
     congrArg SemimoduleCat.Hom.hom hcat'
 
 /-- Tensor compatibility of the explicitly transported components of a tensor automorphism. -/
+@[simp]
 theorem scalarExtensionComponent_tensor
     (η : Aut (FGComoduleCat.scalarExtensionMonoidalFunctor R H A))
     (M N : FGComoduleCat.{u, v, u} R H) (x : A ⊗[R] M) (y : A ⊗[R] N) :
@@ -162,10 +163,11 @@ theorem scalarExtensionComponent_tensor
         (M ⊗ N : FGComoduleCat R H) :=
     η.hom.hom.app (M ⊗ N : FGComoduleCat R H)
   -- First unpack the bundled monoidal axiom into the tensor-component square.
-  have htensor := NatTrans.IsMonoidal.tensor (τ := η.hom.hom) M N
-  change Functor.LaxMonoidal.μ (FGComoduleCat.scalarExtensionFunctor R H A) M N ≫ aMN =
-    (aM ⊗ₘ aN) ≫
-      Functor.LaxMonoidal.μ (FGComoduleCat.scalarExtensionFunctor R H A) M N at htensor
+  have htensor :
+      Functor.LaxMonoidal.μ (FGComoduleCat.scalarExtensionFunctor R H A) M N ≫ aMN =
+        (aM ⊗ₘ aN) ≫
+          Functor.LaxMonoidal.μ (FGComoduleCat.scalarExtensionFunctor R H A) M N :=
+    NatTrans.IsMonoidal.tensor (τ := η.hom.hom) M N
   rw [FGComoduleCat.scalarExtensionFunctor_μ] at htensor
   let hM := FGComoduleCat.scalarExtensionFunctor_obj R H A M
   let hN := FGComoduleCat.scalarExtensionFunctor_obj R H A N
