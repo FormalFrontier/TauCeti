@@ -263,6 +263,58 @@ theorem isEmpty_perfectMatching_of_not_even {α : Type u} [Fintype α]
     (h : ¬Even (Fintype.card α)) : IsEmpty (PerfectMatching α) :=
   ⟨fun D => h (even_card_of_nonempty_perfectMatching α ⟨D⟩)⟩
 
+/-- An empty type has exactly one perfect matching, the empty one. -/
+private theorem card_perfectMatching_of_isEmpty (α : Type u) [Fintype α] [DecidableEq α]
+    [IsEmpty α] :
+    Fintype.card (PerfectMatching α) = 1 := by
+  have : Subsingleton (PerfectMatching α) :=
+    ⟨fun D E => Subtype.ext (Equiv.ext fun x => isEmptyElim x)⟩
+  have : Unique (PerfectMatching α) :=
+    uniqueOfSubsingleton ⟨1, fun a => isEmptyElim a, fun a => isEmptyElim a⟩
+  exact Fintype.card_unique
+
+/-- There are as many perfect matchings pairing a fixed `a` with a fixed `b ≠ a` as there are
+perfect matchings of the complement of `{a, b}`. -/
+private theorem card_filter_val_eq_card_perfectMatching_compl {α : Type u} [Fintype α]
+    [DecidableEq α] {a b : α} (hba : b ≠ a) :
+    (Finset.univ.filter fun D : PerfectMatching α => D.val a = b).card
+      = Fintype.card (PerfectMatching {x : α // x ≠ a ∧ x ≠ b}) :=
+  (Fintype.card_subtype _).symm.trans
+    (Fintype.card_congr (PerfectMatching.fiberEquiv hba.symm))
+
+/-- If every `2 * m`-element type has `(2 * m - 1)‼` perfect matchings, then every
+`2 * (m + 1)`-element type has `(2 * (m + 1) - 1)‼` of them. -/
+private theorem card_perfectMatching_succ {m : ℕ} (α : Type u) [Fintype α] [DecidableEq α]
+    (hcard : Fintype.card α = 2 * (m + 1))
+    (ih : ∀ (β : Type u) [Fintype β] [DecidableEq β], Fintype.card β = 2 * m →
+      Fintype.card (PerfectMatching β) = (2 * m - 1)‼) :
+    Fintype.card (PerfectMatching α) = (2 * (m + 1) - 1)‼ := by
+  obtain ⟨a⟩ := (Fintype.card_pos_iff (α := α)).mp (by omega)
+  have key : ∀ b ∈ Finset.univ.erase a,
+      (Finset.univ.filter fun D : PerfectMatching α => D.val a = b).card = (2 * m - 1)‼ := by
+    intro b hb
+    have hba : b ≠ a := (Finset.mem_erase.mp hb).1
+    rw [card_filter_val_eq_card_perfectMatching_compl hba]
+    refine ih _ ?_
+    rw [card_subtype_ne_ne hba.symm, hcard]
+    omega
+  have hmem : ∀ D ∈ (Finset.univ : Finset (PerfectMatching α)),
+      D.val a ∈ Finset.univ.erase a :=
+    fun D _ => Finset.mem_erase.mpr ⟨D.apply_ne a, Finset.mem_univ _⟩
+  have hodd : 2 * (m + 1) - 1 = 2 * m + 1 := by omega
+  have herase : (Finset.univ.erase a).card = 2 * m + 1 := by
+    rw [Finset.card_erase_of_mem (Finset.mem_univ _), Finset.card_univ, hcard]
+    omega
+  calc Fintype.card (PerfectMatching α)
+      = (Finset.univ : Finset (PerfectMatching α)).card := Finset.card_univ.symm
+    _ = ∑ b ∈ Finset.univ.erase a,
+          (Finset.univ.filter fun D : PerfectMatching α => D.val a = b).card :=
+        Finset.card_eq_sum_card_fiberwise hmem
+    _ = (Finset.univ.erase a).card * (2 * m - 1)‼ := Finset.sum_const_nat key
+    _ = (2 * m + 1) * (2 * m - 1)‼ := by rw [herase]
+    _ = (2 * m + 1)‼ := (Nat.doubleFactorial_add_one (2 * m)).symm
+    _ = (2 * (m + 1) - 1)‼ := by rw [hodd]
+
 private theorem card_perfectMatching_aux :
     ∀ (m : ℕ) {α : Type u} [Fintype α] [DecidableEq α], Fintype.card α = 2 * m →
       Fintype.card (PerfectMatching α) = (2 * m - 1)‼ := by
@@ -271,43 +323,11 @@ private theorem card_perfectMatching_aux :
   | zero =>
     intro α _ _ hcard
     have : IsEmpty α := Fintype.card_eq_zero_iff.mp (by omega)
-    have : Subsingleton (PerfectMatching α) :=
-      ⟨fun D E => Subtype.ext (Equiv.ext fun x => isEmptyElim x)⟩
-    have : Unique (PerfectMatching α) :=
-      uniqueOfSubsingleton ⟨1, fun a => isEmptyElim a, fun a => isEmptyElim a⟩
-    rw [Fintype.card_unique]
+    rw [card_perfectMatching_of_isEmpty α]
     rfl
   | succ m ih =>
     intro α _ _ hcard
-    obtain ⟨a⟩ := (Fintype.card_pos_iff (α := α)).mp (by omega)
-    have key : ∀ b ∈ Finset.univ.erase a,
-        (Finset.univ.filter fun D : PerfectMatching α => D.val a = b).card = (2 * m - 1)‼ := by
-      intro b hb
-      have hba : b ≠ a := (Finset.mem_erase.mp hb).1
-      have hsub : Fintype.card {x : α // x ≠ a ∧ x ≠ b} = 2 * m := by
-        rw [card_subtype_ne_ne hba.symm, hcard]
-        omega
-      calc (Finset.univ.filter fun D : PerfectMatching α => D.val a = b).card
-          = Fintype.card {D : PerfectMatching α // D.val a = b} := (Fintype.card_subtype _).symm
-        _ = Fintype.card (PerfectMatching {x : α // x ≠ a ∧ x ≠ b}) :=
-            Fintype.card_congr (PerfectMatching.fiberEquiv hba.symm)
-        _ = (2 * m - 1)‼ := ih hsub
-    have hmem : ∀ D ∈ (Finset.univ : Finset (PerfectMatching α)),
-        D.val a ∈ Finset.univ.erase a :=
-      fun D _ => Finset.mem_erase.mpr ⟨D.apply_ne a, Finset.mem_univ _⟩
-    have hodd : 2 * (m + 1) - 1 = 2 * m + 1 := by omega
-    have herase : (Finset.univ.erase a).card = 2 * m + 1 := by
-      rw [Finset.card_erase_of_mem (Finset.mem_univ _), Finset.card_univ, hcard]
-      omega
-    calc Fintype.card (PerfectMatching α)
-        = (Finset.univ : Finset (PerfectMatching α)).card := Finset.card_univ.symm
-      _ = ∑ b ∈ Finset.univ.erase a,
-            (Finset.univ.filter fun D : PerfectMatching α => D.val a = b).card :=
-          Finset.card_eq_sum_card_fiberwise hmem
-      _ = (Finset.univ.erase a).card * (2 * m - 1)‼ := Finset.sum_const_nat key
-      _ = (2 * m + 1) * (2 * m - 1)‼ := by rw [herase]
-      _ = (2 * m + 1)‼ := (Nat.doubleFactorial_add_one (2 * m)).symm
-      _ = (2 * (m + 1) - 1)‼ := by rw [hodd]
+    exact card_perfectMatching_succ α hcard fun β _ _ h => ih h
 
 /-- **The number of perfect matchings of a finite type.** A type with `2 * m` elements has
 exactly `(2 * m - 1)‼ = 1 · 3 · 5 ⋯ (2 * m - 1)` perfect matchings. -/

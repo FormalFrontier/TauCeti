@@ -88,6 +88,20 @@ theorem StronglyContinuousSemigroup.HasGrowthBound.mono_omega
   hb.mono hω le_rfl
 
 omit [CompleteSpace X] in
+/-- **A growth bound controls the semigroup on `[0, t₀]` by the envelope
+`M * exp (max ω 0 * t₀)`.** Replacing the signed rate `ω` by `max ω 0` makes the envelope
+nondecreasing in the time, so the bound at `t₀` covers every earlier nonnegative `t`. -/
+theorem StronglyContinuousSemigroup.HasGrowthBound.norm_le_mul_exp_max_zero_mul_of_le
+    {S : StronglyContinuousSemigroup X} {ω M : ℝ} (hb : S.HasGrowthBound ω M) {t t₀ : ℝ}
+    (ht : 0 ≤ t) (htt₀ : t ≤ t₀) :
+    ‖S.realOperator t‖ ≤ M * Real.exp (max ω 0 * t₀) := by
+  refine ((hb.mono_omega (le_max_left ω 0)).bound t ht).trans ?_
+  exact mul_le_mul_of_nonneg_left
+    (Real.exp_le_exp.mpr
+      (mul_le_mul_of_nonneg_left htt₀ (le_max_right ω 0)))
+    (zero_le_one.trans hb.one_le)
+
+omit [CompleteSpace X] in
 /-- A growth bound can be weakened by increasing the multiplicative constant. -/
 theorem StronglyContinuousSemigroup.HasGrowthBound.mono_const
     {S : StronglyContinuousSemigroup X} {ω M M' : ℝ} (hb : S.HasGrowthBound ω M) (hM : M ≤ M') :
@@ -131,33 +145,22 @@ theorem StronglyContinuousSemigroup.existsGrowthBound (S : StronglyContinuousSem
   obtain ⟨M, hM1, hMbound⟩ := S.normBoundedOnUnitInterval
   have hM_pos : 0 < M := by linarith
   refine ⟨Real.log M, M, hM1, fun t ht => ?_⟩
-  -- Integer-time operator norm bound by induction: ‖S(k)‖ ≤ M^k
-  have h_int_bound : ∀ (k : ℕ), ‖S.realOperator (↑k : ℝ)‖ ≤ M ^ k := by
-    intro k; induction k with
-    | zero =>
-      simp only [Nat.cast_zero, S.realOperator_zero]
-      exact ContinuousLinearMap.norm_id_le
-    | succ k ih =>
-      calc ‖S.realOperator (↑(k + 1) : ℝ)‖
-          = ‖S.realOperator (1 + ↑k)‖ := by
-            rw [Nat.cast_add, Nat.cast_one, add_comm]
-        _ ≤ ‖S.realOperator 1‖ * ‖S.realOperator ↑k‖ :=
-            S.norm_realOperator_add_le 1 ↑k (by linarith) (Nat.cast_nonneg k)
-        _ ≤ M * M ^ k :=
-            mul_le_mul (hMbound 1 (by linarith) le_rfl) ih (norm_nonneg _) (by linarith)
-        _ = M ^ (k + 1) := by ring
   set n := ⌊t⌋₊ with hn_def
   have hn_le : (↑n : ℝ) ≤ t := Nat.floor_le ht
   have hfrac_nn : 0 ≤ t - ↑n := sub_nonneg.mpr hn_le
   have hfrac_le1 : t - ↑n ≤ 1 := by
     have := Nat.lt_floor_add_one t; linarith
+  have hone : ‖S (1 : ℝ≥0)‖ ≤ M := by
+    simpa [S.realOperator_def] using hMbound 1 zero_le_one le_rfl
+  have hint : ‖S.realOperator (n : ℝ)‖ ≤ M ^ n := by
+    simpa [S.realOperator_def, nsmul_eq_mul] using S.norm_map_nsmul_le_pow 1 hone n
   calc ‖S.realOperator t‖
       = ‖S.realOperator ((t - ↑n) + ↑n)‖ := by
         rw [sub_add_cancel]
     _ ≤ ‖S.realOperator (t - ↑n)‖ * ‖S.realOperator ↑n‖ :=
         S.norm_realOperator_add_le _ _ hfrac_nn (Nat.cast_nonneg n)
     _ ≤ M * M ^ n :=
-        mul_le_mul (hMbound _ hfrac_nn hfrac_le1) (h_int_bound n) (norm_nonneg _) (by linarith)
+        mul_le_mul (hMbound _ hfrac_nn hfrac_le1) hint (norm_nonneg _) (by linarith)
     _ ≤ M * Real.exp (Real.log M * t) := by
         apply mul_le_mul_of_nonneg_left _ (by linarith)
         calc (M : ℝ) ^ n

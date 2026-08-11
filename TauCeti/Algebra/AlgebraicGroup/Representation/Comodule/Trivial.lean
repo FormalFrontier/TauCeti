@@ -58,11 +58,8 @@ noncomputable def trivial : PointRepresentation (R := R) (H := H) (V := V) :=
 theorem trivial_action (A : CommAlgCat.{max u v w} R) (x : points (H := H) A) :
     (trivial (H := H) (V := V)).action A x = 1 := by
   apply Units.ext
-  refine TensorProduct.AlgebraTensorModule.ext fun a v ↦ ?_
-  rw [trivial, ofComodule_action_tmul, Comodule.trivial_coact_apply]
-  simp only [TensorProduct.map_tmul, LinearMap.id_coe, id_eq, AlgHom.toLinearMap_apply,
-    map_one, TensorProduct.comm_tmul]
-  exact (TensorProduct.tmul_eq_smul_one_tmul (M := V) a v).symm
+  rw [trivial, ofComodule_action_val_eq_endOfPoint]
+  exact Comodule.endOfPoint_trivial x.ofConv
 
 /-- The point representation induced by the trivial comodule is the trivial point
 representation. -/

@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+import TauCeti.NumberTheory.ModularForms.LevelOne.FundamentalDomainBoundary.Containment
 public import TauCeti.Analysis.Contour.Winding.Number.Basic
 public import TauCeti.NumberTheory.ModularForms.LevelOne.FundamentalDomainBoundary.Basic
 
@@ -83,9 +84,7 @@ row: the region `|re w| < 1/2`, `1 < im w < H`. -/
 private theorem windingNumber_fdBoundary_eq_neg_one_of_one_lt_im (hx : |w.re| < 1 / 2)
     (hy1 : 1 < w.im) (hyH : w.im < H) : windingNumber (fdBoundary H) 0 5 w = -1 := by
   obtain ⟨hx₁, hx₂⟩ := abs_lt.mp hx
-  have h32 : Real.sqrt 3 / 2 ≤ 1 := by
-    rw [div_le_one (by norm_num)]
-    nlinarith [Real.sq_sqrt (by norm_num : (3 : ℝ) ≥ 0), Real.sqrt_nonneg 3]
+  have h32 : Real.sqrt 3 / 2 ≤ 1 := sqrt_three_div_two_lt_one.le
   have hnorm : 1 < ‖w‖ :=
     hy1.trans_le ((le_abs_self _).trans (Complex.abs_im_le_norm w))
   have hw := fdBoundary_ne_of_abs_re_lt_half_of_one_lt_norm_of_im_lt hx hnorm hyH

@@ -153,7 +153,7 @@ theorem indProjectionInv_apply_mk (h : H) (a : A) (b : B) :
 above are mutually inverse because `τ h` and `τ h⁻¹` cancel. -/
 noncomputable def indProjectionLEquiv :
     IndV φ (ρ.tprod (τ.comp φ)) ≃ₗ[k] IndV φ ρ ⊗[k] B :=
-  LinearEquiv.ofLinear (indProjectionHom φ ρ τ) (indProjectionInv φ ρ τ)
+  LinearEquiv.ofLinearMap (indProjectionHom φ ρ τ) (indProjectionInv φ ρ τ)
     (by
       ext h a b
       exact (congrArg (indProjectionHom φ ρ τ) (indProjectionInv_apply_mk φ ρ τ h a b)).trans <|

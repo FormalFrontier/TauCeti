@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.NumberTheory.Multiquadratic.CandidateGenusField.Basic
+public import Mathlib.NumberTheory.NumberField.Basic
 import TauCeti.NumberTheory.Multiquadratic.Prime.Discriminant.Independence
 
 /-!
@@ -51,6 +52,11 @@ noncomputable instance finiteDimensional_candidateGenusField {d : ℤ} {hd : Squ
   apply IsIntegral.of_pow (by norm_num : 0 < 2)
   rw [genusFieldRoot_sq]
   exact isIntegral_algebraMap
+
+/-- The candidate genus field is a number field: a finite extension of `ℚ` (inside `ℂ`). -/
+noncomputable instance numberField_candidateGenusField {d : ℤ} {hd : Squarefree d} :
+    NumberField (candidateGenusField hd) :=
+  NumberField.of_module_finite ℚ (candidateGenusField hd)
 
 /-- **Degree of the candidate genus field.** If `d` is squarefree, adjoining the chosen square
 roots of the radicands of the prime discriminants in `genusPrimeDiscriminants hd` gives an

@@ -30,10 +30,10 @@ input is `TauCeti.orthogonal_span_range_bareNormalizedLp_eq_bot`, whose one anal
 finite exponential moment — is free on a bounded interval.
 
 The reference measure is `volume.restrict (Set.Ioc (-1) 1)` rather than Mathlib's `measureT`
-itself. The two are related by `measureT = w · (volume.restrict (Set.Ioc (-1) 1))`, but `measureT`
-does not expose its body outside the module that defines it, so that identity is not available
-here; the orthogonality relation is transported instead through the public integral formula, which
-is all the bridge needs.
+itself. The two are related by `TauCeti.chebyshevMeasureT_eq_withDensity`, which is what identifies
+this basis with `TauCeti.chebyshevTHilbertBasis` through the weight-change isometry; the
+orthogonality relation needed here is read off the public integral formula directly, which is all
+the bridge asks for.
 
 ## Main statements
 
@@ -55,21 +55,7 @@ namespace TauCeti
 
 open MeasureTheory Polynomial Polynomial.Chebyshev
 
-/-! ## The weight and its moments -/
-
-/-- The Chebyshev weight `(1-x²)^{-1/2}` is measurable. -/
-theorem measurable_chebyshevWeight : Measurable fun x : ℝ => √(1 - x ^ 2)⁻¹ := by
-  fun_prop
-
-/-- The Chebyshev weight is almost everywhere positive on `(-1, 1]`: the endpoint `1`, where
-`1 - x²` vanishes, is a Lebesgue null set, so the interior bound `x² < 1` holds almost
-everywhere. -/
-theorem ae_zero_lt_chebyshevWeight :
-    ∀ᵐ x ∂(volume.restrict (Set.Ioc (-1 : ℝ) 1)), 0 < √(1 - x ^ 2)⁻¹ := by
-  rw [← Measure.restrict_congr_set (Ioo_ae_eq_Ioc (a := (-1 : ℝ)) (b := 1))]
-  filter_upwards [ae_restrict_mem measurableSet_Ioo] with x hx
-  refine Real.sqrt_pos.mpr (inv_pos.mpr ?_)
-  nlinarith [hx.1, hx.2]
+/-! ## The moments of the weight -/
 
 /-- **Finite exponential moments of the Chebyshev weight.** For every rate `a` the function
 `e^{a|x|}` is integrable against the weighted measure `w·(volume|_{(-1,1]})`. The measure lives on a
@@ -148,8 +134,8 @@ theorem integral_chebyshevTEnvelope_mul_chebyshevTEnvelope (m n : ℕ) :
   rw [hkey, integral_eval_T_real_mul_eval_T_real_mul_chebyshevWeight]
   by_cases hmn : m = n
   · subst hmn
-    rw [if_pos rfl, if_pos rfl, Real.mul_self_sqrt hm.le, inv_mul_cancel₀ hm.ne']
-  · rw [if_neg hmn, if_neg hmn, mul_zero]
+    rw [ite_eq_left rfl, ite_eq_left rfl, Real.mul_self_sqrt hm.le, inv_mul_cancel₀ hm.ne']
+  · rw [ite_eq_right hmn, ite_eq_right hmn, mul_zero]
 
 /-! ## The Hilbert basis -/
 

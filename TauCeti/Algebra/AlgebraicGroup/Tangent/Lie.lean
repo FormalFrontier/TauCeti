@@ -4,8 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Algebra.AlgebraicGroup.Tangent.Lie.Adjoint
-public import TauCeti.Algebra.AlgebraicGroup.Tangent.Lie.Basic
+public import TauCeti.Algebra.AlgebraicGroup.Tangent.Lie.Adjoint.Cotangent
 public import TauCeti.Algebra.AlgebraicGroup.Tangent.Lie.Map
 
 /-!
@@ -14,5 +13,6 @@ public import TauCeti.Algebra.AlgebraicGroup.Tangent.Lie.Map
 Directory aggregator: importing this module provides the Lie algebra structure
 on counit-valued derivations (`Lie.Basic`), the differential as a Lie algebra
 morphism (`Lie.Map`), and the compatibility of the adjoint action with the bracket
-(`Lie.Adjoint`).
+(`Lie.Adjoint.Basic` and `Lie.Adjoint.Cotangent`), the cotangent-dual model (`Lie.Cotangent`),
+and change of coefficient algebra (`Lie.Naturality`).
 -/
