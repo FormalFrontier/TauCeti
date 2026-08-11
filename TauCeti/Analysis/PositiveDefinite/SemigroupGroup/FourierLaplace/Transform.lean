@@ -62,13 +62,6 @@ theorem norm_laplaceAtom_mul_fourierAtom_le_one (t p : ℝ≥0) (a q : V) :
     Real.exp_le_one_iff]
   exact mul_nonpos_of_nonpos_of_nonneg (neg_nonpos.2 p.coe_nonneg) t.coe_nonneg
 
-/-- The integrand of the Laplace--Fourier transform is continuous in the integration
-variable. -/
-theorem continuous_laplaceAtom_mul_fourierAtom (t : ℝ≥0) (a : V) :
-    Continuous fun y : ℝ≥0 × V => laplaceAtom t y.1 * fourierAtom a y.2 :=
-  ((continuous_laplaceAtom t).comp continuous_fst).mul
-    ((continuous_fourierAtom a).comp continuous_snd)
-
 end Atoms
 
 /-! ## The Laplace--Fourier transform of a measure -/
@@ -115,7 +108,8 @@ theorem integrable_laplaceAtom_mul_fourierAtom [OpensMeasurableSpace V]
     (μ : Measure (ℝ≥0 × V)) [IsFiniteMeasure μ] (t : ℝ≥0) (a : V) :
     Integrable (fun y : ℝ≥0 × V => laplaceAtom t y.1 * fourierAtom a y.2) μ :=
   (integrable_const (1 : ℝ)).mono'
-    (continuous_laplaceAtom_mul_fourierAtom t a).aestronglyMeasurable
+    (continuous_mul_time_spatial (continuous_laplaceAtom t)
+      (continuous_fourierAtom a)).aestronglyMeasurable
     (.of_forall fun y => norm_laplaceAtom_mul_fourierAtom_le_one t y.1 a y.2)
 
 /-! ## Values and elementary measure operations -/
@@ -139,7 +133,8 @@ theorem laplaceFourierTransform_zero_measure (x : ℝ≥0 × V) :
 theorem laplaceFourierTransform_dirac [OpensMeasurableSpace V] (y x : ℝ≥0 × V) :
     laplaceFourierTransform (Measure.dirac y) x = laplaceAtom x.1 y.1 * fourierAtom x.2 y.2 := by
   rw [laplaceFourierTransform_apply,
-    integral_dirac' _ y (continuous_laplaceAtom_mul_fourierAtom x.1 x.2).stronglyMeasurable]
+    integral_dirac' _ y (continuous_mul_time_spatial (continuous_laplaceAtom x.1)
+      (continuous_fourierAtom x.2)).stronglyMeasurable]
 
 /-- The Laplace--Fourier transform is additive in the measure. -/
 @[simp]
