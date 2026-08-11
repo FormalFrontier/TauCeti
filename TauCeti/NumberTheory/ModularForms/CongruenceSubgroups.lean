@@ -100,6 +100,11 @@ theorem Gamma_le_Gamma_of_dvd {M N : ℕ} (h : M ∣ N) : Gamma N ≤ Gamma M :=
     by simpa [map_intCast, map_one, map_zero] using
       congr_arg (ZMod.castHom h (ZMod M)) hA.2.2.2⟩
 
+/-- `Γ(N) ≤ Γ₀(N)`: the principal congruence subgroup sits inside `Γ₀(N)`, since `c ≡ 0` is
+one of the four congruences it imposes. -/
+theorem Gamma_le_Gamma0 (N : ℕ) : Gamma N ≤ Gamma0 N := fun _ hA ↦
+  Gamma0_mem.mpr (Gamma_mem.mp hA).2.2.1
+
 /-- `Γ₀` is antitone in the level: if `M ∣ N` then `Γ₀(N) ≤ Γ₀(M)`. -/
 theorem Gamma0_le_Gamma0_of_dvd {M N : ℕ} (h : M ∣ N) : Gamma0 N ≤ Gamma0 M := by
   intro A hA

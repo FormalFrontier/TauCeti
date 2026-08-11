@@ -99,8 +99,7 @@ private theorem exists_intCast_coords (hmin : minpoly ℤ θ = X ^ 2 - C d)
   -- Norm: `z` satisfies `z² - (2a)·z + (a²-dc²) = 0`, so `a²-dc² = (2a)·z - z² ∈ 𝓞 K ∩ ℚ = ℤ`.
   have hroot : (z : K) ^ 2 - algebraMap ℚ K (2 * a) * (z : K)
       + algebraMap ℚ K (a ^ 2 - (d : ℚ) * c ^ 2) = 0 := by
-    have hθ : (θ : K) ^ 2 = algebraMap ℚ K ((d : ℤ) : ℚ) := by
-      rw [coe_gen_sq hmin, IsScalarTower.algebraMap_apply ℤ ℚ K]; norm_num
+    have hθ : (θ : K) ^ 2 = algebraMap ℚ K ((d : ℤ) : ℚ) := coe_gen_sq_ratCast hmin
     rw [hz]
     simp only [map_mul, map_sub, map_pow, map_ofNat]
     linear_combination (algebraMap ℚ K c) ^ 2 * hθ
