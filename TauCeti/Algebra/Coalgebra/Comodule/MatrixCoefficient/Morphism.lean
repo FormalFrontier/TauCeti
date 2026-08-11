@@ -155,12 +155,15 @@ private theorem counit_baseChange_matrixCoefficientHom (φ : Module.Dual R M)
         ((Coalgebra.counit (R := R) (A := C)).baseChange A
           ((matrixCoefficientHom (C := C) φ).toLinearMap.baseChange A z)) =
       φ.baseChange A z := by
-  induction z using TensorProduct.induction_on with
-  | zero => simp
-  | add z w hz hw =>
-      simp only [map_add]
-      rw [hz, hw]
-  | tmul a m => simp
+  change (TensorProduct.AlgebraTensorModule.rid R A A)
+      (((Coalgebra.counit (R := R) (A := C)).baseChange A ∘ₗ
+        (matrixCoefficientHom (C := C) φ).toLinearMap.baseChange A) z) =
+    (TensorProduct.AlgebraTensorModule.rid R A A) (LinearMap.baseChange A φ z)
+  have hcomp : Coalgebra.counit (R := R) (A := C) ∘ₗ
+      (matrixCoefficientHom (C := C) φ).toLinearMap = φ := by
+    ext m
+    exact counit_matrixCoefficient (R := R) (C := C) φ m
+  rw [← LinearMap.baseChange_comp, hcomp]
 
 /-- After extending scalars to a commutative algebra, the base changes of all
 matrix-coefficient morphisms still jointly separate vectors. -/
