@@ -12,6 +12,7 @@ public import Mathlib.Analysis.Meromorphic.Order
 public import Mathlib.Algebra.Order.ToIntervalMod
 import Mathlib.Analysis.SpecialFunctions.Complex.Log
 import TauCeti.Analysis.Contour.Argument.Lift
+import TauCeti.Analysis.SpecialFunctions.Trigonometric.Angle
 
 /-!
 # The Hungerbühler–Wasem crossing angle and regularity conditions (A′) and (B)
@@ -125,16 +126,10 @@ def basepointAngle (γ : ℝ → ℂ) (a b : ℝ) : ℝ :=
 the smooth-crossing values of `crossingAngle` and `basepointAngle`. -/
 private theorem toIcoMod_arg_neg_sub_arg {L : ℂ} (hL : L ≠ 0) :
     toIcoMod Real.two_pi_pos 0 (Complex.arg (-L) - Complex.arg L) = Real.pi := by
-  -- `arg (-L) = arg L + π` holds in `Real.Angle`; transporting back to `ℝ` leaves `π` up to a
-  -- multiple of `2π`, which the `[0, 2π)` normalization discards.
   have hangle : ((Complex.arg (-L) - Complex.arg L : ℝ) : Real.Angle) = (Real.pi : ℝ) := by
     rw [Real.Angle.coe_sub, Complex.arg_neg_coe_angle hL]
     abel
-  obtain ⟨k, hk⟩ := Real.Angle.angle_eq_iff_two_pi_dvd_sub.mp hangle
-  have hshift : Complex.arg (-L) - Complex.arg L = Real.pi + k • (2 * Real.pi) := by
-    rw [zsmul_eq_mul]
-    linarith
-  rw [hshift, toIcoMod_add_zsmul]
+  rw [Real.Angle.toIcoMod_eq_toIcoMod_iff_coe_eq.mpr hangle]
   exact (toIcoMod_eq_self Real.two_pi_pos).mpr
     (Set.mem_Ico.mpr ⟨Real.pi_nonneg, by rw [zero_add]; linarith [Real.pi_pos]⟩)
 

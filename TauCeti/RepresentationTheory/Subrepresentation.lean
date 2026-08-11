@@ -7,21 +7,29 @@ module
 public import Mathlib.RepresentationTheory.Subrepresentation
 
 /-!
-# The extreme subrepresentations carry the extreme subspaces
+# The underlying module of a subrepresentation
 
 Mathlib's `Subrepresentation` API records how `toSubmodule` interacts with the lattice
 operations — `Subrepresentation.toSubmodule_sup` and `Subrepresentation.toSubmodule_inf`, both
-`@[simp]` and both true by `rfl` — but not how it interacts with the bounded-lattice structure.
-This file adds the two missing counterparts, in the same shape.
+`@[simp]` and both true by `rfl` — but not how it interacts with the bounded-lattice structure,
+nor how it interacts with the order relations themselves. This file adds the four missing
+counterparts, in the same shape. It also records that the group-algebra action on a
+subrepresentation coerces to the original action.
 
 They are stated at the typeclasses `Subrepresentation` itself asks for, so they apply wherever
-the abstraction does, and they let proofs about `⊥` and `⊤` subrepresentations avoid asserting
-the definitional unfolding of the `BoundedOrder` instance by hand.
+the abstraction does. The `⊥` and `⊤` lemmas let proofs about extreme subrepresentations avoid
+asserting the definitional unfolding of the `BoundedOrder` instance by hand; the `≤` and `<`
+lemmas move an order statement between the two lattices, which is what lets a submodule-level
+argument — a dimension count, say, or an orthogonal complement — settle a question about
+subrepresentations.
 
 ## Main results
 
 * `Subrepresentation.toSubmodule_bot`
 * `Subrepresentation.toSubmodule_top`
+* `Subrepresentation.toSubmodule_le_toSubmodule`
+* `Subrepresentation.toSubmodule_lt_toSubmodule`
+* `Subrepresentation.coe_toRepresentation_asAlgebraHom_apply`
 -/
 
 public section
@@ -38,5 +46,34 @@ lemma toSubmodule_bot : (⊥ : Subrepresentation ρ).toSubmodule = ⊥ := rfl
 /-- The top subrepresentation carries the top subspace. -/
 @[simp]
 lemma toSubmodule_top : (⊤ : Subrepresentation ρ).toSubmodule = ⊤ := rfl
+
+/-- One subrepresentation is contained in another exactly when the subspace it carries is. -/
+@[simp]
+lemma toSubmodule_le_toSubmodule {ρ₁ ρ₂ : Subrepresentation ρ} :
+    ρ₁.toSubmodule ≤ ρ₂.toSubmodule ↔ ρ₁ ≤ ρ₂ := Iff.rfl
+
+/-- One subrepresentation is strictly contained in another exactly when the subspace it carries
+is. -/
+@[simp]
+lemma toSubmodule_lt_toSubmodule {ρ₁ ρ₂ : Subrepresentation ρ} :
+    ρ₁.toSubmodule < ρ₂.toSubmodule ↔ ρ₁ < ρ₂ := by
+  simp only [lt_iff_le_not_ge, toSubmodule_le_toSubmodule]
+
+/-- The group-algebra action on a subrepresentation, coerced to the ambient module, is the
+original group-algebra action. -/
+@[simp]
+theorem coe_toRepresentation_asAlgebraHom_apply {k H V : Type*} [CommSemiring k] [Monoid H]
+    [AddCommMonoid V] [Module k V] {σ : Representation k H V} (S : Subrepresentation σ)
+    (a : MonoidAlgebra k H) (x : S.toSubmodule) :
+    ((S.toRepresentation.asAlgebraHom a x : S.toSubmodule) : V) =
+      σ.asAlgebraHom a (x : V) := by
+  induction a using MonoidAlgebra.induction_linear with
+  | zero => simp
+  | add a b ha hb =>
+      simpa only [map_add, LinearMap.add_apply, Submodule.coe_add] using
+        congrArg₂ (fun u v => u + v) ha hb
+  | single g r =>
+      simp only [Representation.asAlgebraHom_single]
+      congr 1
 
 end Subrepresentation

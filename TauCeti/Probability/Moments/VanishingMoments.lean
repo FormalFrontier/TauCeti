@@ -8,6 +8,7 @@ module
 public import TauCeti.MeasureTheory.Function.PolynomialMemLp
 public import TauCeti.Probability.Moments.Determinacy
 public import Mathlib.Analysis.RCLike.Basic
+import Mathlib.MeasureTheory.VectorMeasure.WithDensity
 public import Mathlib.Probability.Moments.IntegrableExpMul
 
 /-!
@@ -171,6 +172,40 @@ private theorem integral_pow_withDensity_ofReal_eq {n : ℕ}
 
 end Densities
 
+/-- The positive and negative parts of `g`, as densities against `ν`, define the same measure once
+all the moments of `g` vanish: both are finite measures with an exponential moment, so determinacy
+identifies them. -/
+private theorem withDensity_ofReal_eq_withDensity_ofReal_neg {g : ℝ → ℝ} {a : ℝ} (ha : 0 < a)
+    (hexpa : Integrable (fun x : ℝ => Real.exp (a * |x|) * g x) ν)
+    (hmom : ∀ n : ℕ, ∫ x : ℝ, x ^ n * g x ∂ν = 0) :
+    (ν.withDensity fun x => ENNReal.ofReal (g x))
+      = ν.withDensity fun x => ENNReal.ofReal (-g x) := by
+  have hg : Integrable g ν := integrable_of_integrable_exp_mul_abs_mul ha.le hexpa
+  have hgm : AEMeasurable g ν := hg.aestronglyMeasurable.aemeasurable
+  have hmeasp : AEMeasurable (fun x => ENNReal.ofReal (g x)) ν :=
+    ENNReal.measurable_ofReal.comp_aemeasurable hgm
+  have hmeasn : AEMeasurable (fun x => ENNReal.ofReal (-g x)) ν :=
+    ENNReal.measurable_ofReal.comp_aemeasurable hgm.neg
+  -- `ENNReal.ofReal` already truncates at zero, so these densities are exactly `g⁺` and `g⁻`.
+  -- `|max t 0| ≤ |t|` is Mathlib's `abs_max_sub_max_le_abs` at `b = c = 0`.
+  have hlep : ∀ x, |max (g x) 0| ≤ |g x| := fun x => by
+    simpa using abs_max_sub_max_le_abs (g x) 0 0
+  have hlen : ∀ x, |max (-g x) 0| ≤ |g x| := fun x => by
+    simpa using abs_max_sub_max_le_abs (-g x) 0 0
+  have : IsFiniteMeasure (ν.withDensity fun x => ENNReal.ofReal (g x)) :=
+    isFiniteMeasure_withDensity_ofReal hg.2
+  have : IsFiniteMeasure (ν.withDensity fun x => ENNReal.ofReal (-g x)) :=
+    isFiniteMeasure_withDensity_ofReal hg.neg.2
+  -- `g⁺ - g⁻ = g` pointwise, so the two moment sequences differ by `∫ xⁿ g = 0`.
+  exact Measure.ext_of_forall_integral_pow_eq_of_exists_integrable_exp
+    ⟨a, ha, integrable_exp_withDensity_ofReal hexpa hmeasp
+      (ae_of_all _ fun _ => ENNReal.ofReal_lt_top) hlep⟩
+    ⟨a, ha, integrable_exp_withDensity_ofReal hexpa hmeasn
+      (ae_of_all _ fun _ => ENNReal.ofReal_lt_top) hlen⟩
+    fun n => integral_pow_withDensity_ofReal_eq hmeasp hmeasn
+      (integrable_toReal_ofReal_smul_pow ha hexpa hmeasp hlep n)
+      (integrable_toReal_ofReal_smul_pow ha hexpa hmeasn hlen n) (hmom n)
+
 /-- **Roadmap B1 (function level).** A real function on `ℝ` whose exponentially-weighted product
 `e^{a|x|} · g` is integrable for some `a > 0`, and all of whose polynomial moments `∫ xⁿ g` vanish,
 is a.e. zero.
@@ -197,47 +232,12 @@ theorem ae_eq_zero_of_forall_moment_eq_zero (g : ℝ → ℝ)
     g =ᵐ[ν] 0 := by
   obtain ⟨a, ha, hexpa⟩ := hexp
   have hg : Integrable g ν := integrable_of_integrable_exp_mul_abs_mul ha.le hexpa
-  have hgm : AEMeasurable g ν := hg.aestronglyMeasurable.aemeasurable
-  have hmeasp : AEMeasurable (fun x => ENNReal.ofReal (g x)) ν :=
-    ENNReal.measurable_ofReal.comp_aemeasurable hgm
-  have hmeasn : AEMeasurable (fun x => ENNReal.ofReal (-g x)) ν :=
-    ENNReal.measurable_ofReal.comp_aemeasurable hgm.neg
-  have hltp : ∀ᵐ x ∂ν, ENNReal.ofReal (g x) < ⊤ := ae_of_all _ fun _ => ENNReal.ofReal_lt_top
-  have hltn : ∀ᵐ x ∂ν, ENNReal.ofReal (-g x) < ⊤ := ae_of_all _ fun _ => ENNReal.ofReal_lt_top
-  -- `ENNReal.ofReal` already truncates at zero, so these densities are exactly `g⁺` and `g⁻`.
-  -- `|max t 0| ≤ |t|` is Mathlib's `abs_max_sub_max_le_abs` at `b = c = 0`.
-  have hlep : ∀ x, |max (g x) 0| ≤ |g x| := fun x => by
-    simpa using abs_max_sub_max_le_abs (g x) 0 0
-  have hlen : ∀ x, |max (-g x) 0| ≤ |g x| := fun x => by
-    simpa using abs_max_sub_max_le_abs (-g x) 0 0
-  have hmpfin : IsFiniteMeasure (ν.withDensity fun x => ENNReal.ofReal (g x)) :=
-    isFiniteMeasure_withDensity_ofReal hg.2
-  have hmnfin : IsFiniteMeasure (ν.withDensity fun x => ENNReal.ofReal (-g x)) :=
-    isFiniteMeasure_withDensity_ofReal hg.neg.2
-  have hintp := fun n => integrable_toReal_ofReal_smul_pow ha hexpa hmeasp hlep n
-  have hintn := fun n => integrable_toReal_ofReal_smul_pow ha hexpa hmeasn hlen n
-  -- `g⁺ - g⁻ = g` pointwise, so the two moment sequences differ by `∫ xⁿ g = 0`.
-  have hmoments := fun n => integral_pow_withDensity_ofReal_eq hmeasp hmeasn (hintp n) (hintn n)
-    (hmom n)
-  -- Determinacy forces the two parts to be the same measure ...
-  have hEq : (ν.withDensity fun x => ENNReal.ofReal (g x))
-      = ν.withDensity fun x => ENNReal.ofReal (-g x) :=
-    Measure.ext_of_forall_integral_pow_eq_of_exists_integrable_exp
-      ⟨a, ha, integrable_exp_withDensity_ofReal hexpa hmeasp hltp hlep⟩
-      ⟨a, ha, integrable_exp_withDensity_ofReal hexpa hmeasn hltn hlen⟩ hmoments
-  -- ... hence the densities agree a.e., hence `g⁺ = g⁻` a.e., hence `g = 0` a.e.
-  -- Integrability of `g` bounds the positive density's lintegral, which is what replaces
-  -- σ-finiteness of `ν` in reading the density equality back off the measure equality.
-  have hfin : ∫⁻ x, ENNReal.ofReal (g x) ∂ν ≠ ⊤ := by
-    refine ne_of_lt (lt_of_le_of_lt (lintegral_mono_ae ?_) hg.hasFiniteIntegral)
-    filter_upwards with x
-    rw [← ofReal_norm, Real.norm_eq_abs]
-    exact ENNReal.ofReal_le_ofReal (le_abs_self _)
-  rw [withDensity_eq_iff hmeasp hmeasn hfin] at hEq
-  filter_upwards [hEq] with x hx
-  have h := congrArg ENNReal.toReal hx
-  rw [ENNReal.toReal_ofReal', ENNReal.toReal_ofReal'] at h
-  exact (max_zero_sub_max_neg_zero_eq_self (g x)).symm.trans (sub_eq_zero.mpr h)
+  -- `g` and `0` have the same vector measure, because the two parts of `g` cancel.
+  refine hg.ae_eq_of_withDensityᵥ_eq (integrable_zero _ _ _) ?_
+  rw [withDensityᵥ_zero, withDensityᵥ_eq_withDensity_pos_part_sub_withDensity_neg_part hg,
+    sub_eq_zero]
+  congr 1
+  exact withDensity_ofReal_eq_withDensity_ofReal_neg ha hexpa hmom
 
 /-! ## Vanishing moments at the level of measures -/
 

@@ -48,6 +48,34 @@ variable {X : Scheme.{u}}
 
 noncomputable section
 
+/-- A maximal point of an irreducible space is its generic point. -/
+private lemma eq_genericPoint_of_isMax [IrreducibleSpace X] {y : X} (hy : IsMax y) :
+    y = genericPoint X :=
+  Inseparable.eq <| inseparable_iff_specializes_and.mpr
+    ⟨hy (genericPoint_specializes y), genericPoint_specializes y⟩
+
+/-- A codimension-one point lying in a set that avoids a nonempty open `U` equals that set's
+generic point. -/
+private lemma eq_of_subset_compl_of_isGenericPoint [IrreducibleSpace X] {U : X.Opens} [Nonempty U]
+    {T : Set X} (hTU : T ⊆ (U : Set X)ᶜ) {y : X} (hyGeneric : IsGenericPoint y T)
+    {x : CodimensionOnePoint X} (hxT : (x : X) ∈ T) : (x : X) = y := by
+  -- A strict specialisation from `x` would have coheight zero, hence be maximal, hence be the
+  -- generic point of `X` — which lies in `U`, contradicting `T ⊆ Uᶜ`.
+  by_contra hne
+  have hxylt : (x : X) < y := by
+    refine ⟨hyGeneric.specializes hxT, ?_⟩
+    intro hyx
+    exact hne (Inseparable.eq <| inseparable_iff_specializes_and.mpr
+      ⟨hyx, hyGeneric.specializes hxT⟩)
+  have hyMax : IsMax y :=
+    Order.coheight_eq_zero.mp <|
+      Order.lt_one_iff.mp <| (Order.coheight_eq_coe_iff.mp x.property).2.2 y hxylt
+  have hηU : genericPoint X ∈ U :=
+    (genericPoint_spec X).mem_open_set_iff U.isOpen |>.mpr <| by
+      obtain ⟨u⟩ := (inferInstance : Nonempty U)
+      exact ⟨u.1, Set.mem_univ _, u.property⟩
+  exact hTU hyGeneric.mem ((eq_genericPoint_of_isMax hyMax).symm ▸ hηU)
+
 /-- A nonempty open subset of an irreducible scheme with Noetherian underlying space contains all
 but finitely many codimension-one points. -/
 lemma finite_setOfPred_not_mem [IrreducibleSpace X] [NoetherianSpace X]
@@ -66,34 +94,10 @@ lemma finite_setOfPred_not_mem [IrreducibleSpace X] [NoetherianSpace X]
       rw [← hSunion]
       exact hxU
     obtain ⟨T, hTS, hxT⟩ := Set.mem_sUnion.mp hxUnion
-    let T' : S := ⟨T, hTS⟩
-    let y : X := g T'
-    have hyGeneric : IsGenericPoint y T := by
-      dsimp only [y, g, T']
-      exact (hSirreducible T hTS).isGenericPoint_genericPoint (hSclosed T hTS)
-    have hxy : (x : X) = y := by
-      by_contra hne
-      have hxylt : (x : X) < y := by
-        refine ⟨hyGeneric.specializes hxT, ?_⟩
-        intro hyx
-        exact hne (Inseparable.eq <| inseparable_iff_specializes_and.mpr
-          ⟨hyx, hyGeneric.specializes hxT⟩)
-      have hyCoheight : coheight y = 0 :=
-        Order.lt_one_iff.mp <| (Order.coheight_eq_coe_iff.mp x.property).2.2 y hxylt
-      have hyMax : IsMax y := Order.coheight_eq_zero.mp hyCoheight
-      have hyη : y ≤ genericPoint X := genericPoint_specializes y
-      have hηy : genericPoint X ≤ y := hyMax hyη
-      have hyEqη : y = genericPoint X :=
-        Inseparable.eq <| inseparable_iff_specializes_and.mpr ⟨hηy, hyη⟩
-      have hηU : genericPoint X ∈ U :=
-        (genericPoint_spec X).mem_open_set_iff U.isOpen |>.mpr <| by
-          obtain ⟨u⟩ := (inferInstance : Nonempty U)
-          exact ⟨u.1, Set.mem_univ _, u.property⟩
-      have hTcompl : T ⊆ (U : Set X)ᶜ := by
-        rw [hSunion]
-        exact Set.subset_sUnion_of_mem hTS
-      exact hTcompl hyGeneric.mem (hyEqη.symm ▸ hηU)
-    exact ⟨T', hxy.symm⟩
+    have hyGeneric : IsGenericPoint (g ⟨T, hTS⟩) T :=
+      (hSirreducible T hTS).isGenericPoint_genericPoint (hSclosed T hTS)
+    have hTcompl : T ⊆ (U : Set X)ᶜ := hSunion ▸ Set.subset_sUnion_of_mem hTS
+    exact ⟨⟨T, hTS⟩, (eq_of_subset_compl_of_isGenericPoint hTcompl hyGeneric hxT).symm⟩
   · exact Set.injOn_of_injective Subtype.val_injective
 
 variable [IsIntegral X] [IsNoetherian X]

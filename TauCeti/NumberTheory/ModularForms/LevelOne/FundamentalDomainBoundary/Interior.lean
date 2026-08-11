@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+import TauCeti.NumberTheory.ModularForms.LevelOne.FundamentalDomainBoundary.Containment
 public import TauCeti.Analysis.Contour.Winding.Number.Basic
 public import TauCeti.NumberTheory.ModularForms.LevelOne.FundamentalDomainBoundary.Basic
 
@@ -50,8 +51,8 @@ variable {H : ℝ} {w : ℂ}
 
 /-- Off-curve avoidance for interior points: each piece is separated from `w` in one
 coordinate, the arc by the norm. -/
-private lemma fdBoundary_ne_of_interior (hre : |w.re| < 1 / 2) (hnorm : 1 < ‖w‖)
-    (him : w.im < H) : ∀ t ∈ Icc (0 : ℝ) 5, fdBoundary H t ≠ w := by
+theorem fdBoundary_ne_of_abs_re_lt_half_of_one_lt_norm_of_im_lt (hre : |w.re| < 1 / 2)
+    (hnorm : 1 < ‖w‖) (him : w.im < H) : ∀ t ∈ Icc (0 : ℝ) 5, fdBoundary H t ≠ w := by
   obtain ⟨hx₁, hx₂⟩ := abs_lt.mp hre
   intro t ht h_eq
   rcases le_or_gt t 1 with h1 | h1
@@ -83,12 +84,10 @@ row: the region `|re w| < 1/2`, `1 < im w < H`. -/
 private theorem windingNumber_fdBoundary_eq_neg_one_of_one_lt_im (hx : |w.re| < 1 / 2)
     (hy1 : 1 < w.im) (hyH : w.im < H) : windingNumber (fdBoundary H) 0 5 w = -1 := by
   obtain ⟨hx₁, hx₂⟩ := abs_lt.mp hx
-  have h32 : Real.sqrt 3 / 2 ≤ 1 := by
-    rw [div_le_one (by norm_num)]
-    nlinarith [Real.sq_sqrt (by norm_num : (3 : ℝ) ≥ 0), Real.sqrt_nonneg 3]
+  have h32 : Real.sqrt 3 / 2 ≤ 1 := sqrt_three_div_two_lt_one.le
   have hnorm : 1 < ‖w‖ :=
     hy1.trans_le ((le_abs_self _).trans (Complex.abs_im_le_norm w))
-  have hw := fdBoundary_ne_of_interior hx hnorm hyH
+  have hw := fdBoundary_ne_of_abs_re_lt_half_of_one_lt_norm_of_im_lt hx hnorm hyH
   -- the four endpoint differences, their coordinates, and their nonvanishing
   have hz₀ : (1 / 2 + H * Complex.I - w).re = 1 / 2 - w.re ∧
       (1 / 2 + H * Complex.I - w).im = H - w.im := by constructor <;> simp
@@ -237,7 +236,7 @@ theorem windingNumber_fdBoundary_eq_neg_one_of_interior (hH : 1 < H) {w : ℂ}
     rintro z hz ⟨t, ht, h_eq⟩
     rw [uIcc_of_le (by norm_num : (0 : ℝ) ≤ 5)] at ht
     obtain ⟨hz_re, hz_norm, hz_im⟩ := interior_avoiding_facts hH hnorm hre him hpos hz
-    exact fdBoundary_ne_of_interior hz_re hz_norm hz_im t ht h_eq
+    exact fdBoundary_ne_of_abs_re_lt_half_of_one_lt_norm_of_im_lt hz_re hz_norm hz_im t ht h_eq
   rw [(isPiecewiseC1On_fdBoundary H).windingNumber_eq_of_mem_connectedComponentIn
       (fdBoundary_closed H).symm
       (hconn.subset_connectedComponentIn (Or.inr htop_mem_box) hdisj

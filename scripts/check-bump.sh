@@ -18,6 +18,8 @@
 #      inputRev's history* — a genuine forward move on the nominated branch (via
 #      the GitHub compare API; the SHA requirement makes the compared revs
 #      immutable, so what we validate is exactly what Lake will resolve and build).
+#      Its new rev is also one whose master-push build completed, so its oleans are in the
+#      cache (see step 2b).
 #   3. The PR manifest's package set, MINUS mathlib, is EXACTLY mathlib's own
 #      lake-manifest at the new rev, field-for-field (type/url/rev/inputRev) — no
 #      package added, removed, renamed, retyped (e.g. a `path` dep), duplicated, or
@@ -136,6 +138,30 @@ else
     *) fail "mathlib new rev $ML_REV_P is not on branch '$NOMINATED_BRANCH' (compare status: ${st_branch:-unknown})" ;;
   esac
   echo "bump-guard: mathlib $ML_REV_B -> $ML_REV_P is a forward move on '$NOMINATED_BRANCH'."
+
+  # --- 2b. the new rev is one whose cache was actually published ---------------
+  # Being on master is not enough. Mathlib lands in batches: bors tests a batch and
+  # fast-forwards master over all of its commits, but only the resulting master tip is
+  # built by the push-triggered CI run, and that run is the only one that publishes to
+  # the `mathlib4-master` cache container (mathlib's build.yml gates `publish_cache` on
+  # `event_name == 'push' && ref == 'refs/heads/master'`). A batch's intermediate commits
+  # are ordinary ancestors whose oleans were never uploaded, so pinning to one costs every
+  # downstream build a full recompile of whatever that commit invalidated: a rename in a
+  # core algebra file is ~1400 modules and about an hour, on every CI run and every
+  # pr-build, until the pin moves again.
+  #
+  # We require that publishing run to have COMPLETED successfully on this exact rev. That
+  # is both narrower and better timed than asking bors: bors reports success on the batch
+  # commit before the master build has uploaded anything, so a very fresh tip can carry a
+  # green bors status while its cache is still hours away. Coupling to upstream's workflow
+  # file name is deliberate. If it is renamed this check fails closed and the bump routes
+  # to a human, which is the safe direction for a trust anchor.
+  pub="$(gh api "repos/$ML_SLUG/actions/workflows/build.yml/runs?head_sha=$ML_REV_P&event=push&per_page=20" \
+    --jq '[.workflow_runs[] | select(.head_branch == "master" and .status == "completed" and .conclusion == "success")] | length' 2>&1)" \
+    || fail "workflow-runs API failed for $ML_SLUG $ML_REV_P: $pub"
+  [ "${pub:-0}" -gt 0 ] 2>/dev/null \
+    || fail "mathlib rev $ML_REV_P has no completed, successful master-push build, so its oleans were never published to the cache; bump to the built tip of that batch, or wait for its build to finish"
+  echo "bump-guard: mathlib $ML_REV_P has a successful master-push build, so its cache is published."
 fi
 
 # --- 3. the rest of the manifest is EXACTLY mathlib's own manifest at the new rev

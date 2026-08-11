@@ -260,12 +260,12 @@ theorem raise_lower_apply (v : Sl2Std K n) (i : Fin (n + 1)) :
     raise K n (lower K n v) i = (((i : ℕ) : K) + 1) * ((n : K) - (i : ℕ)) * v i := by
   by_cases h : (i : ℕ) < n
   · have hidx : (⟨(i : ℕ) + 1 - 1, by omega⟩ : Fin (n + 1)) = i := by ext; simp
-    rw [raise_apply, dif_pos h, lower_apply, dif_pos (Nat.succ_pos _)]
+    rw [raise_apply, dite_eq_left h, lower_apply, dite_eq_left (Nat.succ_pos _)]
     simp only [hidx]
     push_cast
     ring
   · have hi : (i : ℕ) = n := by omega
-    rw [raise_apply, dif_neg h, hi]
+    rw [raise_apply, dite_eq_right h, hi]
     ring
 
 /-- Lowering after raising is diagonal, with eigenvalue `i(n - i + 1)` at index `i`. -/
@@ -274,12 +274,12 @@ theorem lower_raise_apply (v : Sl2Std K n) (i : Fin (n + 1)) :
   by_cases h : 0 < (i : ℕ)
   · have hlt : (i : ℕ) - 1 < n := by omega
     have hidx : (⟨(i : ℕ) - 1 + 1, by omega⟩ : Fin (n + 1)) = i := by ext; simp; omega
-    rw [lower_apply, dif_pos h, raise_apply, dif_pos hlt]
+    rw [lower_apply, dite_eq_left h, raise_apply, dite_eq_left hlt]
     simp only [hidx]
     rw [Nat.cast_sub h, Nat.cast_one]
     ring
   · have hi : (i : ℕ) = 0 := by omega
-    rw [lower_apply, dif_neg h, hi]
+    rw [lower_apply, dite_eq_right h, hi]
     ring
 
 /-- The `sl₂` relation `⁅e, f⁆ = h` for the ladder operators: the two diagonal operators of
@@ -299,10 +299,10 @@ theorem lie_diag_raise : ⁅diag K n, raise K n⁆ = (2 : K) • raise K n := by
     LinearMap.smul_apply, smul_apply, diag_apply (raise K n v), raise_apply (diag K n v),
     raise_apply v]
   by_cases h : (i : ℕ) < n
-  · rw [dif_pos h, dif_pos h, diag_apply]
+  · rw [dite_eq_left h, dite_eq_left h, diag_apply]
     push_cast
     ring
-  · rw [dif_neg h, dif_neg h]
+  · rw [dite_eq_right h, dite_eq_right h]
     ring
 
 /-- The `sl₂` relation `⁅h, f⁆ = -2f` for the ladder operators. -/
@@ -313,10 +313,10 @@ theorem lie_diag_lower : ⁅diag K n, lower K n⁆ = -((2 : K) • lower K n) :=
     LinearMap.neg_apply, neg_apply, LinearMap.smul_apply, smul_apply, diag_apply (lower K n v),
     lower_apply (diag K n v), lower_apply v]
   by_cases h : 0 < (i : ℕ)
-  · rw [dif_pos h, dif_pos h, diag_apply]
+  · rw [dite_eq_left h, dite_eq_left h, diag_apply]
     rw [Nat.cast_sub h, Nat.cast_one]
     ring
-  · rw [dif_neg h, dif_neg h]
+  · rw [dite_eq_right h, dite_eq_right h]
     ring
 
 /-! ### The representation -/
@@ -412,12 +412,12 @@ theorem raise_basis (i : Fin (n + 1)) :
     intro j hj
     rw [raise_apply]
     by_cases hjn : (j : ℕ) < n
-    · rw [dif_pos hjn, basis_apply, if_neg, mul_zero]
+    · rw [dite_eq_left hjn, basis_apply, ite_eq_right, mul_zero]
       intro hc
       have := congrArg Fin.val hc
       simp only at this
       omega
-    · rw [dif_neg hjn]
+    · rw [dite_eq_right hjn]
   funext j
   rw [smul_apply, basis_apply]
   by_cases hj : (j : ℕ) + 1 = (i : ℕ)
@@ -425,14 +425,14 @@ theorem raise_basis (i : Fin (n + 1)) :
     have hjn : (j : ℕ) < n := by omega
     have h1 : (⟨(j : ℕ) + 1, by omega⟩ : Fin (n + 1)) = i := by ext; simp [hj]
     have h2 : j = (⟨(i : ℕ) - 1, by omega⟩ : Fin (n + 1)) := by ext; simp; omega
-    rw [raise_apply, dif_pos hjn, basis_apply, h1, if_pos rfl, if_pos h2, ← hj]
+    rw [raise_apply, dite_eq_left hjn, basis_apply, h1, ite_eq_left rfl, ite_eq_left h2, ← hj]
     push_cast
     ring
   · rw [hjne j hj]
     rcases Nat.eq_zero_or_pos (i : ℕ) with hi0 | hi0
     · have hc0 : ((i : ℕ) : K) = 0 := by rw [hi0]; simp
       rw [hc0, zero_mul]
-    · rw [if_neg, mul_zero]
+    · rw [ite_eq_right, mul_zero]
       intro hc
       have := congrArg Fin.val hc
       simp only at this
@@ -450,7 +450,7 @@ theorem diag_basis (i : Fin (n + 1)) :
   rw [diag_apply, smul_apply, basis_apply]
   by_cases hji : j = i
   · rw [hji]
-  · rw [if_neg hji, mul_zero, mul_zero]
+  · rw [ite_eq_right hji, mul_zero, mul_zero]
 
 /-- The lowering operator on the coordinate basis: `f · vᵢ = (n - i) · vᵢ₊₁`, for `i < n`. -/
 theorem lower_basis (i : Fin (n + 1)) (h : (i : ℕ) < n) :
@@ -461,19 +461,19 @@ theorem lower_basis (i : Fin (n + 1)) (h : (i : ℕ) < n) :
   · have hj0 : 0 < (j : ℕ) := by omega
     have h1 : j = (⟨(i : ℕ) + 1, by omega⟩ : Fin (n + 1)) := by ext; simp [hj]
     have h2 : (⟨(j : ℕ) - 1, by omega⟩ : Fin (n + 1)) = i := by ext; simp [hj]
-    rw [dif_pos hj0, basis_apply, h2, if_pos rfl, if_pos h1, hj]
+    rw [dite_eq_left hj0, basis_apply, h2, ite_eq_left rfl, ite_eq_left h1, hj]
     push_cast
     ring
   · have h1 : ¬ (j = (⟨(i : ℕ) + 1, by omega⟩ : Fin (n + 1))) := fun hc => hj (by rw [hc])
-    rw [if_neg h1, mul_zero]
+    rw [ite_eq_right h1, mul_zero]
     by_cases hj0 : 0 < (j : ℕ)
     · have h2 : ¬ ((⟨(j : ℕ) - 1, by omega⟩ : Fin (n + 1)) = i) := by
         intro hc
         have := congrArg Fin.val hc
         simp only at this
         omega
-      rw [dif_pos hj0, basis_apply, if_neg h2, mul_zero]
-    · rw [dif_neg hj0]
+      rw [dite_eq_left hj0, basis_apply, ite_eq_right h2, mul_zero]
+    · rw [dite_eq_right hj0]
 
 /-- **The lowering operator walks `v₀` along the coordinate basis.** After `i` steps the highest
 weight vector has become `vᵢ`, scaled by the product `n(n - 1)⋯(n - i + 1)` of the coefficients
@@ -517,8 +517,8 @@ theorem raise_pow_apply_eq_zero (k : ℕ) (v : Sl2Std K n) (i : Fin (n + 1))
   | succ k ih =>
     rw [pow_succ', Module.End.mul_apply, raise_apply]
     by_cases hi : (i : ℕ) < n
-    · rw [dif_pos hi, ih ⟨(i : ℕ) + 1, by omega⟩ (by rw [Fin.val_mk]; omega), mul_zero]
-    · rw [dif_neg hi]
+    · rw [dite_eq_left hi, ih ⟨(i : ℕ) + 1, by omega⟩ (by rw [Fin.val_mk]; omega), mul_zero]
+    · rw [dite_eq_right hi]
 
 /-- **The raising operator is nilpotent** on `V(n)`, of exponent at most `n + 1`. -/
 theorem raise_pow_eq_zero : (raise K n) ^ (n + 1) = 0 := by
@@ -549,8 +549,8 @@ theorem eigenspace_diag [CharZero K] (i : Fin (n + 1)) :
     funext j
     rw [smul_apply, basis_apply]
     by_cases hji : j = i
-    · rw [hji, if_pos rfl, mul_one]
-    · rw [if_neg hji, mul_zero]
+    · rw [hji, ite_eq_left rfl, mul_one]
+    · rw [ite_eq_right hji, mul_zero]
       -- The `j`th coordinate satisfies both the eigenvalue at `j` and the eigenvalue at `i`.
       have hcoord : ((n : K) - 2 * (j : ℕ)) * v j = ((n : K) - 2 * (i : ℕ)) * v j := by
         rw [← diag_apply, hv, smul_apply]
@@ -591,8 +591,8 @@ theorem eq_smul_basis_zero_of_raise_eq_zero [CharZero K] {v : Sl2Std K n} (h : r
   funext i
   rw [smul_apply, basis_apply]
   by_cases hi : i = 0
-  · rw [hi, if_pos rfl, mul_one]
-  · rw [if_neg hi, mul_zero]
+  · rw [hi, ite_eq_left rfl, mul_one]
+  · rw [ite_eq_right hi, mul_zero]
     have hbound := i.isLt
     have hi0 : 0 < (i : ℕ) := by
       rcases Nat.eq_zero_or_pos (i : ℕ) with h0 | h0
@@ -601,7 +601,7 @@ theorem eq_smul_basis_zero_of_raise_eq_zero [CharZero K] {v : Sl2Std K n} (h : r
     have hlt : (i : ℕ) - 1 < n := by omega
     have h' : raise K n v ⟨(i : ℕ) - 1, by omega⟩ = 0 := by rw [h, zero_apply]
     have hidx : (⟨(i : ℕ) - 1 + 1, by omega⟩ : Fin (n + 1)) = i := by ext; simp; omega
-    rw [raise_apply, dif_pos hlt, hidx] at h'
+    rw [raise_apply, dite_eq_left hlt, hidx] at h'
     have hne : (((i : ℕ) - 1 : ℕ) : K) + 1 ≠ 0 := by
       have h1 : ((((i : ℕ) - 1 + 1 : ℕ)) : K) ≠ 0 := Nat.cast_ne_zero.2 (by omega)
       rwa [Nat.cast_add, Nat.cast_one] at h1
@@ -623,16 +623,14 @@ theorem finrank_eigenspace_diag (i : Fin (n + 1)) :
 
 /-! ### Irreducibility -/
 
-/-- **The engine of irreducibility.** A nonzero subspace of `V(n)` stable under the raising and
-lowering operators is the whole of `V(n)`: the raising operator is nilpotent, so the subspace
-contains a nonzero vector it kills, hence the highest weight vector `v₀`, and the lowering
-operator then walks `v₀` along the whole coordinate basis because the coefficients `n - i` are
-nonzero for `i < n`. -/
-theorem eq_top_of_raise_mem_of_lower_mem (N : Submodule K (Sl2Std K n)) (hN : N ≠ ⊥)
-    (hraise : ∀ w ∈ N, raise K n w ∈ N) (hlower : ∀ w ∈ N, lower K n w ∈ N) : N = ⊤ := by
+/-- **A nonzero subspace stable under raising contains the highest weight vector.** The raising
+operator is nilpotent, so the sequence `v, e·v, e²·v, …` starting from any nonzero `v` of the
+subspace has a last nonzero term; that term is killed by `e`, hence is a nonzero multiple of
+`basis K n 0`. -/
+private theorem basis_zero_mem_of_ne_bot_of_raise_mem (N : Submodule K (Sl2Std K n)) (hN : N ≠ ⊥)
+    (hraise : ∀ w ∈ N, raise K n w ∈ N) : basis K n 0 ∈ N := by
   classical
   obtain ⟨v, hvN, hv⟩ := Submodule.exists_mem_ne_zero_of_ne_bot hN
-  -- The last nonzero vector of the sequence `v, e·v, e²·v, …` is killed by `e`.
   have hex : ∃ k, ((raise K n) ^ k) v = 0 :=
     ⟨n + 1, by rw [raise_pow_eq_zero, LinearMap.zero_apply]⟩
   have hfind := Nat.find_spec hex
@@ -648,35 +646,41 @@ theorem eq_top_of_raise_mem_of_lower_mem (N : Submodule K (Sl2Std K n)) (hN : N 
   have hcoeff : ((raise K n) ^ k) v 0 ≠ 0 := by
     intro h0
     exact hu (by rw [eq_smul_basis_zero_of_raise_eq_zero hu0, h0, zero_smul])
-  have hbasis0 : basis K n 0 ∈ N := by
-    obtain ⟨c, hc, hcv⟩ : ∃ c : K, c ≠ 0 ∧ ((raise K n) ^ k) v = c • basis K n 0 :=
-      ⟨((raise K n) ^ k) v 0, hcoeff, eq_smul_basis_zero_of_raise_eq_zero hu0⟩
-    have hsmul : basis K n 0 = c⁻¹ • ((raise K n) ^ k) v := by
-      rw [hcv, smul_smul, inv_mul_cancel₀ hc, one_smul]
-    rw [hsmul]
-    exact N.smul_mem _ (Module.End.pow_apply_mem_of_forall_mem k hraise v hvN)
-  have hall : ∀ i : Fin (n + 1), basis K n i ∈ N := by
-    intro i
-    induction i using Fin.induction with
-    | zero => exact hbasis0
-    | succ i ih =>
-      have hlt : ((i.castSucc : Fin (n + 1)) : ℕ) < n := i.isLt
-      have hcne : ((n : K) - ((i.castSucc : Fin (n + 1)) : ℕ)) ≠ 0 := by
-        intro hc
-        have h1 : (n : K) = (((i.castSucc : Fin (n + 1)) : ℕ) : K) := sub_eq_zero.1 hc
-        have h2 : n = ((i.castSucc : Fin (n + 1)) : ℕ) := Nat.cast_injective h1
-        omega
-      have hstep := hlower _ ih
-      rw [lower_basis _ hlt] at hstep
-      have hidx : (⟨((i.castSucc : Fin (n + 1)) : ℕ) + 1, by omega⟩ : Fin (n + 1)) = i.succ := by
-        ext; simp
-      rw [hidx] at hstep
-      have := N.smul_mem ((n : K) - ((i.castSucc : Fin (n + 1)) : ℕ))⁻¹ hstep
-      rwa [smul_smul, inv_mul_cancel₀ hcne, one_smul] at this
+  obtain ⟨c, hc, hcv⟩ : ∃ c : K, c ≠ 0 ∧ ((raise K n) ^ k) v = c • basis K n 0 :=
+    ⟨((raise K n) ^ k) v 0, hcoeff, eq_smul_basis_zero_of_raise_eq_zero hu0⟩
+  have hsmul : basis K n 0 = c⁻¹ • ((raise K n) ^ k) v := by
+    rw [hcv, smul_smul, inv_mul_cancel₀ hc, one_smul]
+  rw [hsmul]
+  exact N.smul_mem _ (Module.End.pow_apply_mem_of_forall_mem k hraise v hvN)
+
+/-- **A subspace stable under lowering and containing the highest weight vector contains the whole
+coordinate basis.** `Sl2Std.lower_pow_basis_zero` identifies `fⁱ · v₀` as `basis K n i` scaled by
+`n(n - 1)⋯(n - i + 1)`, and that product is nonzero because every factor has `j < i ≤ n`. -/
+private theorem basis_mem_of_lower_mem_of_basis_zero_mem (N : Submodule K (Sl2Std K n))
+    (hlower : ∀ w ∈ N, lower K n w ∈ N) (hbasis0 : basis K n 0 ∈ N) (i : Fin (n + 1)) :
+    basis K n i ∈ N := by
+  have hmem : ((lower K n) ^ (i : ℕ)) (basis K n 0) ∈ N :=
+    Module.End.pow_apply_mem_of_forall_mem _ hlower _ hbasis0
+  rw [lower_pow_basis_zero] at hmem
+  have hne : (∏ j ∈ Finset.range (i : ℕ), ((n : K) - j)) ≠ 0 := by
+    refine Finset.prod_ne_zero_iff.2 fun j hj hc ↦ ?_
+    have h2 : n = j := Nat.cast_injective (sub_eq_zero.1 hc)
+    have := Finset.mem_range.1 hj
+    have := i.isLt
+    omega
+  have := N.smul_mem (∏ j ∈ Finset.range (i : ℕ), ((n : K) - j))⁻¹ hmem
+  rwa [smul_smul, inv_mul_cancel₀ hne, one_smul] at this
+
+/-- **The engine of irreducibility.** A nonzero subspace of `V(n)` stable under the raising and
+lowering operators is the whole of `V(n)`: raising produces the highest weight vector, lowering
+walks it along the coordinate basis, and that basis spans. -/
+theorem eq_top_of_raise_mem_of_lower_mem (N : Submodule K (Sl2Std K n)) (hN : N ≠ ⊥)
+    (hraise : ∀ w ∈ N, raise K n w ∈ N) (hlower : ∀ w ∈ N, lower K n w ∈ N) : N = ⊤ := by
   refine eq_top_iff.2 ?_
   rw [← (basis K n).span_eq, Submodule.span_le]
   rintro _ ⟨i, rfl⟩
-  exact hall i
+  exact basis_mem_of_lower_mem_of_basis_zero_mem N hlower
+    (basis_zero_mem_of_ne_bot_of_raise_mem N hN hraise) i
 
 /-- **`V(n)` is an irreducible `sl (Fin 2) K`-module.** -/
 instance isIrreducible :
