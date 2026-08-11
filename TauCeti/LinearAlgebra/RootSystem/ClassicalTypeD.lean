@@ -101,10 +101,10 @@ private lemma support_typeDPairVector (p : TypeDPair n) :
   ext i
   have hp : p.val.1 ≠ p.val.2 := p.property
   by_cases hlt : p.val.1 < p.val.2
-  · simp only [typeDPairVector, if_pos hlt]
+  · simp only [typeDPairVector, ite_eq_left hlt]
     by_cases hi : i = p.val.1 <;> by_cases hj : i = p.val.2 <;>
       simp_all [Function.mem_support]
-  · simp only [typeDPairVector, if_neg hlt]
+  · simp only [typeDPairVector, ite_eq_right hlt]
     by_cases hi : i = p.val.1 <;> by_cases hj : i = p.val.2 <;>
       simp_all [Function.mem_support]
 
@@ -433,7 +433,7 @@ def typeDSimpleRoot (n : ℕ) (hn : 4 ≤ n) (i : Fin n) : Fin n → ℤ :=
 zero, so `Fin`-index `i` is Bourbaki node `i + 1`. -/
 @[simp] theorem typeDSimpleRoot_of_add_one_lt (hn : 4 ≤ n) {i : Fin n} (hi : (i : ℕ) + 1 < n) :
     typeDSimpleRoot n hn i = Pi.single i 1 - Pi.single ⟨(i : ℕ) + 1, hi⟩ 1 :=
-  dif_pos hi
+  dite_eq_left hi
 
 /-- The fork simple root of type `Dₙ`, the `Fin`-index `n - 1` and so Bourbaki node `n`: in the
 zero-based coordinates it is `e_{n-2} + e_{n-1}`, the only simple root that is not a difference of
@@ -441,7 +441,7 @@ two coordinates. -/
 @[simp] theorem typeDSimpleRoot_of_not_add_one_lt (hn : 4 ≤ n) {i : Fin n} (hi : ¬(i : ℕ) + 1 < n) :
     typeDSimpleRoot n hn i =
       Pi.single ⟨n - 2, by omega⟩ 1 + Pi.single ⟨n - 1, by omega⟩ 1 :=
-  dif_neg hi
+  dite_eq_right hi
 
 /-- The first `n` entries of `typeDRootEquiv` are the Bourbaki-numbered simple roots. -/
 @[simp] theorem typeDRootEquiv_apply_typeDSimpleIndex (hn : 4 ≤ n) (i : Fin n) :
@@ -495,7 +495,7 @@ def typeDSimpleRootCoordinates (n : ℕ) (hn : 4 ≤ n) (x : TypeDRoot n) : Fin 
   simp only [typeDRootEquiv_apply_typeDSimpleIndex]
   by_cases hi : (i : ℕ) + 1 < n
   · have htotal : ∑ j : Fin n, typeDSimpleRoot n hn i j = 0 := by
-      rw [typeDSimpleRoot, dif_pos hi]
+      rw [typeDSimpleRoot, dite_eq_left hi]
       simp_rw [Pi.sub_apply]
       rw [Finset.sum_sub_distrib, Fintype.sum_pi_single', Fintype.sum_pi_single']
       omega
@@ -504,24 +504,24 @@ def typeDSimpleRootCoordinates (n : ℕ) (hn : 4 ≤ n) (x : TypeDRoot n) : Fin 
       simp only [typeDHalfTotal, typeDRootEquiv_apply_typeDSimpleIndex, htotal]
       norm_num
     by_cases hk₂ : (k : ℕ) + 2 < n
-    · rw [if_pos hk₂]
-      rw [typeDSimpleRoot, dif_pos hi]
+    · rw [ite_eq_left hk₂]
+      rw [typeDSimpleRoot, dite_eq_left hi]
       simp_rw [Pi.sub_apply]
       rw [Finset.sum_sub_distrib, Finset.sum_pi_single', Finset.sum_pi_single']
       simp only [Finset.mem_Iic, Fin.le_def, Pi.single_apply]
       split_ifs <;> omega
     · by_cases hk₁ : (k : ℕ) + 1 < n
-      · rw [if_neg hk₂, if_pos hk₁]
+      · rw [ite_eq_right hk₂, ite_eq_left hk₁]
         rw [hhalf]
         simp (disch := omega) [typeDSimpleRoot, hi, Pi.sub_apply, Pi.single_apply, Fin.ext_iff]
         split_ifs <;> omega
-      · rw [if_neg hk₂, if_neg hk₁]
+      · rw [ite_eq_right hk₂, ite_eq_right hk₁]
         rw [hhalf]
         simp only [Pi.single_apply]
         omega
   · have hiv : (i : ℕ) = n - 1 := by omega
     have htotal : ∑ j : Fin n, typeDSimpleRoot n hn i j = 2 := by
-      rw [typeDSimpleRoot, dif_neg hi]
+      rw [typeDSimpleRoot, dite_eq_right hi]
       simp_rw [Pi.add_apply]
       rw [Finset.sum_add_distrib, Fintype.sum_pi_single', Fintype.sum_pi_single']
       norm_num
@@ -530,18 +530,18 @@ def typeDSimpleRootCoordinates (n : ℕ) (hn : 4 ≤ n) (x : TypeDRoot n) : Fin 
       simp only [typeDHalfTotal, typeDRootEquiv_apply_typeDSimpleIndex, htotal]
       norm_num
     by_cases hk₂ : (k : ℕ) + 2 < n
-    · rw [if_pos hk₂]
-      rw [typeDSimpleRoot, dif_neg hi]
+    · rw [ite_eq_left hk₂]
+      rw [typeDSimpleRoot, dite_eq_right hi]
       simp_rw [Pi.add_apply]
       rw [Finset.sum_add_distrib, Finset.sum_pi_single', Finset.sum_pi_single']
       simp only [Finset.mem_Iic, Fin.le_def, Pi.single_apply]
       split_ifs <;> omega
     · by_cases hk₁ : (k : ℕ) + 1 < n
-      · rw [if_neg hk₂, if_pos hk₁]
+      · rw [ite_eq_right hk₂, ite_eq_left hk₁]
         rw [hhalf]
         simp (disch := omega) [typeDSimpleRoot, Pi.add_apply, Pi.single_apply, Fin.ext_iff, hiv]
         omega
-      · rw [if_neg hk₂, if_neg hk₁]
+      · rw [ite_eq_right hk₂, ite_eq_right hk₁]
         rw [hhalf]
         have hkv : (k : ℕ) = n - 1 := by omega
         simp [Pi.single_apply, Fin.ext_iff, hiv, hkv]
@@ -551,11 +551,11 @@ private lemma typeDChainHeadSum (c : Fin n → ℤ) (j : Fin n) :
       c i * (if j = i then 1 else 0) else 0) =
       if (j : ℕ) + 1 < n then c j else 0 := by
   by_cases hj : (j : ℕ) + 1 < n
-  · rw [if_pos hj, Fintype.sum_eq_single j]
+  · rw [ite_eq_left hj, Fintype.sum_eq_single j]
     · simp [hj]
     · intro i hi
       simp [Ne.symm hi]
-  · rw [if_neg hj, Finset.sum_eq_zero]
+  · rw [ite_eq_right hj, Finset.sum_eq_zero]
     intro i _
     split_ifs with h hij
     · exact False.elim (hj (by simpa [hij] using h))
@@ -567,7 +567,7 @@ private lemma typeDChainTailSum (c : Fin n → ℤ) (j : Fin n) :
       c i * (if j = (⟨(i : ℕ) + 1, h⟩ : Fin n) then 1 else 0) else 0) =
       if hj : (j : ℕ) = 0 then 0 else c ⟨(j : ℕ) - 1, by omega⟩ := by
   by_cases hj : (j : ℕ) = 0
-  · rw [dif_pos hj, Finset.sum_eq_zero]
+  · rw [dite_eq_left hj, Finset.sum_eq_zero]
     intro i _
     split_ifs with h hi
     · have hv := congrArg Fin.val hi
@@ -575,10 +575,10 @@ private lemma typeDChainTailSum (c : Fin n → ℤ) (j : Fin n) :
       omega
     · simp
     · rfl
-  · rw [dif_neg hj, Fintype.sum_eq_single (⟨(j : ℕ) - 1, by omega⟩ : Fin n)]
+  · rw [dite_eq_right hj, Fintype.sum_eq_single (⟨(j : ℕ) - 1, by omega⟩ : Fin n)]
     · have h : (j : ℕ) - 1 + 1 < n := by omega
-      simp only [dif_pos h, Fin.ext_iff]
-      rw [if_pos (by omega)]
+      simp only [dite_eq_left h, Fin.ext_iff]
+      rw [ite_eq_left (by omega)]
       simp
     · intro i hi
       split_ifs with h hij
@@ -596,7 +596,7 @@ private lemma typeDForkSum (hn : 1 ≤ n) (c : Fin n → ℤ) :
     (∑ i : Fin n, if (i : ℕ) + 1 < n then 0 else c i) =
       c ⟨n - 1, by omega⟩ := by
   rw [Fintype.sum_eq_single (⟨n - 1, by omega⟩ : Fin n)]
-  · rw [if_neg (by simp only; omega)]
+  · rw [ite_eq_right (by simp only; omega)]
   · intro i hi
     split_ifs with h
     · rfl
@@ -729,9 +729,9 @@ private lemma sum_smul_typeDSimpleRootCoordinates_apply_chain (hn : 4 ≤ n) (x 
   rw [sum_smul_typeDSimpleRoot_apply]
   have hj₁ : (j : ℕ) + 1 < n := by omega
   have hpred : (j : ℕ) - 1 + 2 < n := by omega
-  rw [if_pos hj₁, dif_neg hj₀]
+  rw [ite_eq_left hj₁, dite_eq_right hj₀]
   simp only [typeDSimpleRootCoordinates]
-  rw [if_pos hj, if_pos hpred]
+  rw [ite_eq_left hj, ite_eq_left hpred]
   rw [sum_Iic_eq_sum_Iic_pred_add x.1 j hj₀]
   have hjfork₁ : j ≠ (⟨n - 2, by omega⟩ : Fin n) := by
     intro h
@@ -754,9 +754,9 @@ private lemma sum_smul_typeDSimpleRootCoordinates_apply_fork (hn : 4 ≤ n) (x :
   have hjval : (j : ℕ) = n - 2 := by omega
   have hjEq : j = (⟨n - 2, by omega⟩ : Fin n) := Fin.ext hjval
   have hpred : (j : ℕ) - 1 + 2 < n := by omega
-  rw [if_pos hj₁, dif_neg hj₀]
+  rw [ite_eq_left hj₁, dite_eq_right hj₀]
   simp only [typeDSimpleRootCoordinates]
-  rw [if_neg hj, if_pos hj₁, if_pos hpred]
+  rw [ite_eq_right hj, ite_eq_left hj₁, ite_eq_left hpred]
   have hlast : (∑ i : Fin n, x.1 i) =
       (∑ i ∈ Finset.Iic (⟨n - 2, by omega⟩ : Fin n), x.1 i) +
         x.1 ⟨n - 1, by omega⟩ := by
@@ -801,7 +801,7 @@ private lemma sum_smul_typeDSimpleRootCoordinates_apply_last (hn : 4 ≤ n) (x :
   have hliteral : ¬(n - 1 - 1 + 2 < n) := by omega
   have hnpos : 0 < n := by omega
   have hforkne : n - 1 ≠ n - 2 := by omega
-  rw [if_neg hj₁, dif_neg hj₀]
+  rw [ite_eq_right hj₁, dite_eq_right hj₀]
   rw [hjEq]
   simp (disch := omega) [typeDSimpleRootCoordinates, hlast₂, hliteral, hnpos,
     hforkne, Fin.ext_iff]
@@ -853,7 +853,7 @@ private lemma typeDSimpleRootCoordinates_nonneg_of_pairVector (hn : 4 ≤ n) (x 
   by_cases hp : p.val.1 < p.val.2
   · have hplt : (p.val.1 : ℕ) < (p.val.2 : ℕ) := hp
     have hv : x.1 = Pi.single p.val.1 1 - Pi.single p.val.2 1 := by
-      rw [hx, typeDPairVector, if_pos hp]
+      rw [hx, typeDPairVector, ite_eq_left hp]
     have htot : ∑ i : Fin n, x.1 i = 0 := by
       simp [hv, Finset.sum_sub_distrib]
     have hhalf : typeDHalfTotal x = 0 := by
@@ -871,7 +871,7 @@ private lemma typeDSimpleRootCoordinates_nonneg_of_pairVector (hn : 4 ≤ n) (x 
       split_ifs <;> omega
     · exact le_of_eq hhalf.symm
   · have hv : x.1 = Pi.single p.val.2 1 + Pi.single p.val.1 1 := by
-      rw [hx, typeDPairVector, if_neg hp]
+      rw [hx, typeDPairVector, ite_eq_right hp]
     have htot : ∑ i : Fin n, x.1 i = 2 := by
       simp [hv, Finset.sum_add_distrib]
     have hhalf : typeDHalfTotal x = 1 := by
@@ -901,12 +901,12 @@ theorem typeDSimpleRootCoordinates_nonneg_or_nonpos (hn : 4 ≤ n) (x : TypeDRoo
   have hxv : x.1 = typeDRawVector (s, p) := (congrArg Subtype.val hx).symm
   by_cases hs : s = 0
   · exact Or.inl (typeDSimpleRootCoordinates_nonneg_of_pairVector hn x p
-      (by rw [hxv, typeDRawVector, if_pos hs]))
+      (by rw [hxv, typeDRawVector, ite_eq_left hs]))
   · refine Or.inr fun k => ?_
     have hyv : (typeDRawRoot ((0 : Fin 2), p)).1 = typeDPairVector p := by
       simp [typeDRawRoot, typeDRawVector]
     have hneg : x.1 = -(typeDRawRoot ((0 : Fin 2), p)).1 := by
-      rw [hyv, hxv, typeDRawVector, if_neg hs]
+      rw [hyv, hxv, typeDRawVector, ite_eq_right hs]
     rw [typeDSimpleRootCoordinates_of_eq_neg hn hneg k, neg_nonpos]
     exact typeDSimpleRootCoordinates_nonneg_of_pairVector hn _ p hyv k
 
@@ -948,7 +948,7 @@ private lemma typeDDoubleCoweight_dotProduct_sum_smul (hn : 4 ≤ n) (c : Fin n 
     typeDDoubleCoweight n k ⬝ᵥ ∑ i : Fin n, c i • typeDSimpleRoot n hn i = 2 * c k := by
   rw [dotProduct_sum]
   simp only [dotProduct_smul, smul_eq_mul, typeDDoubleCoweight_dotProduct_typeDSimpleRoot,
-    Fin.val_inj, mul_ite, mul_zero, Finset.sum_ite_eq, Finset.mem_univ, if_true]
+    Fin.val_inj, mul_ite, mul_zero, Finset.sum_ite_eq, Finset.mem_univ, ite_true]
   ring
 
 /-- **The Bourbaki simple roots of type `Dₙ` are linearly independent.** Pairing a relation with a

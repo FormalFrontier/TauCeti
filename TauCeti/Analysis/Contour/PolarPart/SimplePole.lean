@@ -58,7 +58,7 @@ theorem polarPart_eq_residue_div_of_order_le_one
     decomp.polarPart s z = residue f s / (z - (s : ℂ)) := by
   rw [decomp.polarPart_eq, decomp.residue_eq]
   by_cases hpos : 0 < decomp.order s
-  · rw [dif_pos hpos]
+  · rw [dite_eq_left hpos]
     have huniv : (Finset.univ : Finset (Fin (decomp.order s))) = {⟨0, hpos⟩} := by
       ext k
       simp only [Finset.mem_univ, Finset.mem_singleton, true_iff]
@@ -66,7 +66,7 @@ theorem polarPart_eq_residue_div_of_order_le_one
       omega
     rw [huniv, Finset.sum_singleton]
     simp
-  · rw [dif_neg hpos, zero_div]
+  · rw [dite_eq_right hpos, zero_div]
     apply Finset.sum_eq_zero
     intro k _
     exact (hpos (Nat.zero_lt_of_lt k.isLt)).elim

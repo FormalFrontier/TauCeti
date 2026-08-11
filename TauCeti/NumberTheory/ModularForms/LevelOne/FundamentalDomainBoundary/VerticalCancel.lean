@@ -151,10 +151,10 @@ theorem intervalIntegrable_excised_deriv_smul_fdBoundary_segment4 {E : Type*}
   have hder := deriv_fdBoundary_four_sub_vertical H hu
   rw [sub_sub_self] at hval hder hiff
   by_cases hc : ∃ s ∈ S, ‖fdBoundary H (4 - x) - s‖ ≤ ε
-  · simp only [if_pos hc, if_pos (hiff.mpr hc), smul_zero, neg_zero]
+  · simp only [ite_eq_left hc, ite_eq_left (hiff.mpr hc), smul_zero, neg_zero]
   · -- Discharge both `if`s first: rewriting values inside a live condition would stop
-    -- `if_neg` from matching it.
-    simp only [if_neg hc, if_neg fun h => hc (hiff.mp h)]
+    -- `ite_eq_right` from matching it.
+    simp only [ite_eq_right hc, ite_eq_right fun h => hc (hiff.mp h)]
     simp only [hval, hφ.sub_eq, hder, neg_smul]
 
 /-- **The vertical cancellation survives excision.** The reflection `t ↦ 4 - t` carries the right
@@ -191,8 +191,8 @@ theorem intervalIntegral_excised_fdBoundary_segment4_eq_neg_segment1 {E : Type*}
   have hval : fdBoundary H (4 - u) = fdBoundary H u - 1 :=
     fdBoundary_four_sub_vertical H ⟨hu.1.le, hu.2.le⟩
   by_cases hc : ∃ s ∈ S, ‖fdBoundary H u - s‖ ≤ ε
-  · rw [if_pos (hiff.mpr hc), if_pos hc, smul_zero, smul_zero, neg_zero]
-  · rw [if_neg fun h => hc (hiff.mp h), if_neg hc, hval,
+  · rw [ite_eq_left (hiff.mpr hc), ite_eq_left hc, smul_zero, smul_zero, neg_zero]
+  · rw [ite_eq_right fun h => hc (hiff.mp h), ite_eq_right hc, hval,
       deriv_fdBoundary_four_sub_vertical H hu, hφ.sub_eq, neg_smul]
 
 end ModularForm

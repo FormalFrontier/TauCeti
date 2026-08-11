@@ -101,7 +101,7 @@ theorem isRestricted_one (k : ℕ) (A : Type*) [Semiring A] [TopologicalSpace A]
   simp only [Set.mem_compl_iff, Set.mem_preimage] at hs
   simp only [Set.mem_singleton_iff]
   by_contra h
-  exact hs (by rw [MvPowerSeries.coeff_one, if_neg h]; exact h0U)
+  exact hs (by rw [MvPowerSeries.coeff_one, ite_eq_right h]; exact h0U)
 
 /-- A sum of restricted series is restricted. -/
 theorem IsRestricted.add {k : ℕ} {A : Type*} [Semiring A] [TopologicalSpace A]
@@ -277,7 +277,8 @@ theorem isRestricted_algebraMap {k : ℕ} {A : Type*} [CommSemiring A]
   simp only [Set.mem_compl_iff, Set.mem_preimage] at hs
   simp only [Set.mem_singleton_iff]
   by_contra h
-  exact hs (by rw [MvPowerSeries.algebraMap_apply, MvPowerSeries.coeff_C, if_neg h]; exact h0U)
+  exact hs (by
+    rw [MvPowerSeries.algebraMap_apply, MvPowerSeries.coeff_C, ite_eq_right h]; exact h0U)
 
 /-- The restricted power series subring inherits an `A`-algebra structure from the
 `MvPowerSeries` algebra instance, since constant power series are restricted. -/
