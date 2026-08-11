@@ -128,14 +128,12 @@ def collarHomeomorph (n : ℕ) :
       Continuous.subtype_mk
         (((collarAmbientEquiv n).symm.continuous.comp continuous_subtype_val).snd) _)
 
-@[simp]
 theorem collarHomeomorph_coe (n : ℕ) :
     ((collarHomeomorph n : _ → _) :
       EuclideanSpace ℝ (Fin n) × EuclideanHalfSpace 1 → EuclideanHalfSpace (n + 1)) =
       fun p ↦ ⟨collarAmbientEquiv n (p.1, p.2.1), by simpa using p.2.2⟩ :=
   by rfl
 
-@[simp]
 theorem collarHomeomorph_apply_coe (n : ℕ)
     (p : EuclideanSpace ℝ (Fin n) × EuclideanHalfSpace 1) :
     (collarHomeomorph n p).1 = collarAmbientEquiv n (p.1, p.2.1) :=
