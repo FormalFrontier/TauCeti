@@ -111,10 +111,10 @@ theorem rowCount_succ (t : YoungTableau μ) (k : Fin μ.card) (i : ℕ) :
 /-- **The counts determine the rows.**  A tableau puts a label in the first row for which the
 count jumps. -/
 theorem rowIndex_eq_of_rowCount_eq {t u : YoungTableau μ}
-    (h : ∀ m ≤ μ.card, ∀ i ≤ μ.card, rowCount t m i = rowCount u m i) :
+    (h : ∀ m ≤ μ.card, ∀ i < μ.colLen 0, rowCount t m i = rowCount u m i) :
     rowIndex t = rowIndex u := by
   funext k
-  have key : ∀ i ≤ μ.card, (rowIndex t k ≤ i ↔ rowIndex u k ≤ i) := by
+  have key : ∀ i < μ.colLen 0, (rowIndex t k ≤ i ↔ rowIndex u k ≤ i) := by
     intro i hi
     have h1 := h ((k : ℕ) + 1) k.isLt i hi
     rw [rowCount_succ, rowCount_succ, h (k : ℕ) k.isLt.le i hi] at h1
@@ -129,8 +129,8 @@ theorem rowIndex_eq_of_rowCount_eq {t u : YoungTableau μ}
       by_contra hp
       rw [if_neg hp, if_pos hq] at h2
       exact absurd h2 zero_ne_one
-  exact le_antisymm ((key (rowIndex u k) (rowIndex_lt_card u k).le).mpr le_rfl)
-    ((key (rowIndex t k) (rowIndex_lt_card t k).le).mp le_rfl)
+  exact le_antisymm ((key (rowIndex u k) (rowIndex_lt_colLen_zero u k)).mpr le_rfl)
+    ((key (rowIndex t k) (rowIndex_lt_colLen_zero t k)).mp le_rfl)
 
 /-! ### The dominance order on tabloids -/
 
@@ -162,7 +162,7 @@ theorem TabloidDominates.antisymm {t u : YoungTableau μ} (h : TabloidDominates 
 increases it, and a dominating tableau of no greater weight has the same rows
 (`rowIndex_eq_of_tabloidDominates`). -/
 private def rowWeight (t : YoungTableau μ) : ℕ :=
-  ∑ m ∈ Finset.range (μ.card + 1), ∑ i ∈ Finset.range (μ.card + 1), rowCount t m i
+  ∑ m ∈ Finset.range (μ.card + 1), ∑ i ∈ Finset.range (μ.colLen 0), rowCount t m i
 
 private theorem rowWeight_congr {t u : YoungTableau μ} (h : rowIndex t = rowIndex u) :
     rowWeight t = rowWeight u := by
@@ -180,8 +180,7 @@ private theorem rowIndex_eq_of_tabloidDominates {t u : YoungTableau μ} (h : Tab
       (le_antisymm (rowWeight_le_of_tabloidDominates h) hw)
   refine rowIndex_eq_of_rowCount_eq fun m hm i hi => ?_
   exact (Finset.sum_eq_sum_iff_of_le fun i _ => h m i).mp
-    (hinner m (Finset.mem_range.mpr (Nat.lt_succ_of_le hm))) i
-    (Finset.mem_range.mpr (Nat.lt_succ_of_le hi))
+    (hinner m (Finset.mem_range.mpr (Nat.lt_succ_of_le hm))) i (Finset.mem_range.mpr hi)
 
 /-! ### A column permutation lowers the tabloid of a standard tableau -/
 
