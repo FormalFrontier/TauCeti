@@ -47,7 +47,8 @@ required: nothing here uses the trichotomy, so the values `ν₂` takes are irre
   square-root count.
 * `TauCeti.ClassFunction.card_squareRoot_eq_sum_frobeniusSchurIndicator`: **the involution-counting
   formula** `#{g : g² = x} = ∑_χ ν₂(χ) χ(x)`, over a complete family of irreducibles.
-* `TauCeti.frobeniusSchurIndicatorRow`: the indicator of the `i`-th row of `TauCeti.characterTable`.
+* `TauCeti.frobeniusSchurIndicatorRow`: the indicator of the `i`-th row of `TauCeti.characterTable`,
+  and `TauCeti.frobeniusSchurIndicatorRow_eq_inv_mul_sum_characterTable` reading it off the table.
 * `TauCeti.card_squareRoot_eq_sum_frobeniusSchurIndicatorRow_mul_characterTable`: the same formula
   read off the rows of `TauCeti.characterTable`, and
   `TauCeti.card_squareRoot_one_eq_sum_frobeniusSchurIndicatorRow_mul_characterDegree` its value at
@@ -57,6 +58,9 @@ required: nothing here uses the trichotomy, so the values `ν₂` takes are irre
 
 `Nat.card` is used for the count, so no `DecidableEq G` is needed to state the results; the
 `Finset.filter`s that the proofs run through are introduced classically and inside the proofs.
+`TauCeti.ClassFunction.squareRootCount` is therefore defined for an arbitrary group, at the price
+of `Nat.card`'s junk value: on a group with an element having infinitely many square roots it
+returns `0` there.  Every theorem about it assumes `Fintype G`, where no such degeneracy arises.
 
 The field is taken in `Type` rather than an arbitrary universe, matching
 `TauCeti.Representation.frobeniusSchurIndicator` in the sibling module
@@ -88,7 +92,11 @@ section Count
 variable (k : Type) (G : Type v) [Semiring k] [Group G]
 
 /-- **The square-root counting class function** `x ↦ #{g ∈ G : g² = x}`, with values in `k`.  It is
-a class function by `TauCeti.card_squareRoot_conj`. -/
+a class function by `TauCeti.card_squareRoot_conj`.
+
+The count is a `Nat.card`, so on a group with an element having infinitely many square roots the
+value there is `Nat.card`'s junk value `0` rather than a count; the theorems below all assume
+`Fintype G`. -/
 noncomputable def squareRootCount : ClassFunction k G :=
   ⟨fun x => (Nat.card {g : G // g * g = x} : k),
     mem_iff.mpr fun x h => by rw [card_squareRoot_conj]⟩
@@ -191,6 +199,18 @@ theorem frobeniusSchurIndicatorRow_def (i : Fin (Nat.card (ConjClasses G))) :
     frobeniusSchurIndicatorRow k i =
       Representation.frobeniusSchurIndicator (irreducibleRepresentation k i) :=
   (rfl)
+
+variable {G} in
+/-- **The row indicator is an average of the row over the squares**: `ν₂ = |G|⁻¹ ∑_g χ(g²)`, read
+off the character table itself.  Together with `TauCeti.characterTable_apply` this determines the
+row indicator from the table alone, without mentioning the representation
+`TauCeti.irreducibleRepresentation` chosen to afford the row. -/
+theorem frobeniusSchurIndicatorRow_eq_inv_mul_sum_characterTable
+    (i : Fin (Nat.card (ConjClasses G))) :
+    frobeniusSchurIndicatorRow k i =
+      (Nat.card G : k)⁻¹ * ∑ g : G, characterTable k G i (ConjClasses.mk (g ^ 2)) := by
+  rw [frobeniusSchurIndicatorRow_def, Representation.frobeniusSchurIndicator_def]
+  simp
 
 variable {G} in
 /-- **The row indicator takes only the values `1`, `0` and `-1`** in characteristic zero, by the
