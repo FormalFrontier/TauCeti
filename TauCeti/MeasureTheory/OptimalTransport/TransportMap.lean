@@ -183,11 +183,22 @@ theorem graphPlan_smul (T : X → Y) (c : ℝ≥0∞) (μ : Measure X) :
     graphPlan T (c • μ) = c • graphPlan T μ :=
   Measure.map_smul _ _ _
 
+/-- A Dirac measure leaves a map no room to be modified on a null set: pushing `Measure.dirac x`
+forward along a `Measure.dirac x`-a.e. measurable map is evaluating that map at `x`. -/
+theorem map_dirac_of_aemeasurable {x : X} (hT : AEMeasurable T (Measure.dirac x)) :
+    (Measure.dirac x).map T = Measure.dirac (T x) := by
+  have hx : T x = hT.mk T x := by
+    by_contra hne
+    have h0 : Measure.dirac x {y | ¬T y = hT.mk T y} = 0 := ae_iff.1 hT.ae_eq_mk
+    rw [Measure.dirac_apply_of_mem hne] at h0
+    exact one_ne_zero h0
+  rw [Measure.map_congr hT.ae_eq_mk, Measure.map_dirac' hT.measurable_mk, ← hx]
+
 /-- The graph plan over a Dirac measure is the Dirac measure at the corresponding graph point. -/
 @[simp]
-theorem graphPlan_dirac (hT : Measurable T) (x : X) :
+theorem graphPlan_dirac {x : X} (hT : AEMeasurable T (Measure.dirac x)) :
     graphPlan T (Measure.dirac x) = Measure.dirac (x, T x) :=
-  Measure.map_dirac' (measurable_graphMap hT) x
+  map_dirac_of_aemeasurable (aemeasurable_graphMap hT)
 
 /-- The graph plan of the identity is the diagonal plan. -/
 theorem graphPlan_id (μ : Measure X) : graphPlan id μ = μ.map fun x ↦ (x, x) := (rfl)
@@ -284,18 +295,19 @@ theorem graphPlan_eq_graphPlan_iff [MeasurableEq Y] (hT : Measurable T) (hS : Me
 
 /-! ### A Dirac source admits no non-Dirac transport map -/
 
-/-- A measurable map transports a Dirac measure exactly onto the Dirac measure at its value. -/
-theorem hasLaw_dirac_iff (hT : Measurable T) (x : X) :
+/-- An a.e. measurable map transports a Dirac measure exactly onto the Dirac measure at its
+value. The a.e. measurability is exactly what `ProbabilityTheory.HasLaw` already asks for. -/
+theorem hasLaw_dirac_iff {x : X} (hT : AEMeasurable T (Measure.dirac x)) :
     HasLaw T ν (Measure.dirac x) ↔ ν = Measure.dirac (T x) := by
-  refine ⟨fun h ↦ ?_, fun h ↦ ⟨hT.aemeasurable, ?_⟩⟩
-  · rw [← h.map_eq, Measure.map_dirac' hT]
-  · rw [Measure.map_dirac' hT, h]
+  refine ⟨fun h ↦ ?_, fun h ↦ ⟨hT, ?_⟩⟩
+  · rw [← h.map_eq, map_dirac_of_aemeasurable hT]
+  · rw [map_dirac_of_aemeasurable hT, h]
 
-/-- **The Monge problem can be infeasible.** No measurable map transports a Dirac measure onto a
-target that is not itself a Dirac measure. -/
-theorem not_hasLaw_dirac_of_forall_ne (hν : ∀ y : Y, ν ≠ Measure.dirac y) (hT : Measurable T)
-    (x : X) : ¬HasLaw T ν (Measure.dirac x) :=
-  fun h ↦ hν (T x) ((hasLaw_dirac_iff hT x).1 h)
+/-- **The Monge problem can be infeasible.** No map at all transports a Dirac measure onto a
+target that is not itself a Dirac measure: a transport map carries its own a.e. measurability. -/
+theorem not_hasLaw_dirac_of_forall_ne (hν : ∀ y : Y, ν ≠ Measure.dirac y) (x : X) :
+    ¬HasLaw T ν (Measure.dirac x) :=
+  fun h ↦ hν (T x) ((hasLaw_dirac_iff h.aemeasurable).1 h)
 
 end Measure
 
