@@ -27,8 +27,6 @@ reducedness nor smoothness is built into the category of commutative Hopf algebr
 
 * `TauCeti.smoothCommHopfAlgProperty_of_geometricallyReduced`: a finite-type geometrically
   reduced commutative Hopf algebra over a field is smooth.
-* `TauCeti.finiteType_inf_geometricallyReduced_le_smooth`: the same implication as an inequality
-  of object properties.
 
 ## References
 
@@ -63,21 +61,13 @@ theorem smoothCommHopfAlgProperty_of_geometricallyReduced
   let _ : GeometricallyReduced
       (((hopfSpec (CommRingCat.of k)).obj (Opposite.op H)).X.hom) :=
     (geometricallyReducedCommHopfAlg_iff_geometricallyReduced_hopfSpec k H).mp hH
+  -- `smooth_of_grpObj` asks for the `Over.mk X.hom` spelling of the Hopf spectrum object `X`.
   let _ : GrpObj
       (Over.mk (((hopfSpec (CommRingCat.of k)).obj (Opposite.op H)).X.hom)) :=
     inferInstanceAs (GrpObj ((hopfSpec (CommRingCat.of k)).obj (Opposite.op H)).X)
   apply (algebraSmooth_iff_smooth_hopfSpec k H).mpr
   rw [smoothAffineGroupSchemeProperty_iff]
   exact smooth_of_grpObj _
-
-/-- Among commutative Hopf algebras over a field, finite type together with geometric
-reducedness implies smoothness. -/
-theorem finiteType_inf_geometricallyReduced_le_smooth (k : Type u) [Field k] :
-    (finiteTypeCommHopfAlgProperty k : ObjectProperty (CommHopfAlgCat.{u} k)) ⊓
-        geometricallyReducedCommHopfAlgProperty k ≤ smoothCommHopfAlgProperty k := by
-  intro H hH
-  let _ : Algebra.FiniteType k H := hH.1
-  exact smoothCommHopfAlgProperty_of_geometricallyReduced k H hH.2
 
 end
 

@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.RingTheory.Nilpotent.GeometricallyReduced
-public import TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.BaseChange
+public import TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.Basic
 import Mathlib.Algebra.Field.ULift
 
 /-!
@@ -23,12 +23,21 @@ as a TODO. The all-extension condition used here implies Mathlib's existing alge
 
 * `TauCeti.geometricallyReducedCommHopfAlgProperty`: geometric reducedness after every field
   extension.
+* `TauCeti.geometricallyReducedCommHopfAlgProperty.isReduced_tensorProduct`: the direct
+  eliminator for a chosen field extension.
 * `TauCeti.geometricallyReducedCommHopfAlgProperty.isGeometricallyReduced`: comparison with
   Mathlib's algebra predicate.
+* `TauCeti.geometricallyReducedCommHopfAlgProperty.isReduced`: reducedness over the base field.
+* The `ObjectProperty.IsClosedUnderIsomorphisms` instance records invariance under Hopf-algebra
+  isomorphisms.
 
 ## References
 
-* J. S. Milne, *Algebraic Groups* (2017), Proposition 1.26 and Corollary 1.27.
+* J. S. Milne, *Algebraic Groups* (2017), for the geometric-reducedness terminology.
+
+The object-property organization follows
+`TauCeti.Algebra.AlgebraicGroup.Connected.CommHopfAlgCat` with reducedness replacing
+connectedness.
 
 This advances Layer 2, "Smoothness and dimension tools via `Lie(G)`", of the ReductiveGroups
 roadmap.
@@ -61,6 +70,25 @@ theorem geometricallyReducedCommHopfAlgProperty_iff
         IsReduced ((H : Type v) ⊗[k] K) :=
   Iff.rfl
 
+/-- The coordinate ring stays reduced after any chosen extension of the base field. -/
+theorem geometricallyReducedCommHopfAlgProperty.isReduced_tensorProduct
+    {k : Type u} [Field k] {H : CommHopfAlgCat.{v} k}
+    (hH : geometricallyReducedCommHopfAlgProperty k H)
+    (K : Type (max u v)) [Field K] [Algebra k K] :
+    IsReduced ((H : Type v) ⊗[k] K) :=
+  hH K
+
+/-- The coordinate ring stays reduced after any chosen extension of the base field, with the
+extension field as the left tensor factor. -/
+theorem geometricallyReducedCommHopfAlgProperty.isReduced_tensorProduct_comm
+    {k : Type u} [Field k] {H : CommHopfAlgCat.{v} k}
+    (hH : geometricallyReducedCommHopfAlgProperty k H)
+    (K : Type (max u v)) [Field K] [Algebra k K] :
+    IsReduced (K ⊗[k] (H : Type v)) := by
+  let _ := hH.isReduced_tensorProduct K
+  exact isReduced_of_injective (Algebra.TensorProduct.comm k H K).symm.toRingHom
+    (Algebra.TensorProduct.comm k H K).symm.injective
+
 /-- The all-extension coordinate condition implies Mathlib's algebraic geometric-reducedness
 predicate, which over a field tests the base change to an algebraic closure. -/
 theorem geometricallyReducedCommHopfAlgProperty.isGeometricallyReduced
@@ -82,24 +110,6 @@ theorem geometricallyReducedCommHopfAlgProperty.isReduced
     IsReduced H := by
   let _ : Algebra.IsGeometricallyReduced k H := hH.isGeometricallyReduced
   exact Algebra.isReduced_of_isGeometricallyReduced k
-
-/-- Geometric reducedness is preserved by extension of the base field. -/
-theorem geometricallyReducedCommHopfAlgProperty.baseChange
-    (k K : Type u) [Field k] [Field K] [Algebra k K]
-    (H : CommHopfAlgCat.{u} k)
-    (hH : geometricallyReducedCommHopfAlgProperty k H) :
-    geometricallyReducedCommHopfAlgProperty K
-      (CommHopfAlgCat.baseChange (K := K) H) := by
-  rw [geometricallyReducedCommHopfAlgProperty_iff]
-  intro L _ _
-  let _ : Algebra k L := Algebra.compHom L (algebraMap k K)
-  let _ : IsScalarTower k K L := IsScalarTower.of_algebraMap_eq' rfl
-  let e := (Algebra.TensorProduct.comm K (K ⊗[k] H) L).toRingEquiv.trans
-    ((Algebra.TensorProduct.cancelBaseChange k K L L H).toRingEquiv.trans
-      (Algebra.TensorProduct.comm k L H).toRingEquiv)
-  rw [geometricallyReducedCommHopfAlgProperty_iff] at hH
-  let _ := hH L
-  exact isReduced_of_injective e.toRingHom e.injective
 
 /-- Geometric reducedness is invariant under isomorphisms of commutative Hopf algebras. -/
 instance (k : Type u) [Field k] :
