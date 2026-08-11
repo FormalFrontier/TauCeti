@@ -36,6 +36,9 @@ modular forms); the AINTLIB `HeckePair` bundle is replaced by Mathlib's `IsHecke
 
 * `SLnZ_le_posDetInt`: `SL_n(ℤ) ≤ Δ`.
 * `posDetInt_le_commensurator`: `Δ ≤ commensurator(SL_n(ℤ))` (Shimura's Lemma 3.10).
+* `commensurable_map_SLnZ`: the image of a finite-index subgroup of `SL_n(ℤ)` is commensurable
+  with `SL_n(ℤ)` — the step by which each congruence subgroup inherits Lemma 3.10 and so sits
+  in a Hecke triple of its own.
 * the `IsHeckeTriple (posDetInt n) (SLnZ n) (SLnZ n)` instance, and the
   Hecke ring `IntegralHeckeRing n` it founds.
 
@@ -75,6 +78,23 @@ downstream cannot unfold it to `MonoidHom.range`; this lemma is how they extract
 @[simp] lemma mem_SLnZ_iff {g : GL (Fin n) ℚ} :
     g ∈ SLnZ n ↔ ∃ σ : SpecialLinearGroup (Fin n) ℤ, (σ : GL (Fin n) ℚ) = g := by
   rw [SLnZ, MonoidHom.mem_range]
+
+/-- The image in `GL_n(ℚ)` of a finite-index subgroup of `SL_n(ℤ)` is commensurable with
+`SL_n(ℤ)`. Since `mapGL ℚ` is injective, both relative indices transport along it: one is the
+index of `H`, finite by hypothesis, and the other is `1`.
+
+This is the commensurability every congruence subgroup needs in order to sit in a Hecke
+triple, so it is stated once here for an arbitrary finite-index subgroup rather than
+re-proved at each of `Γ₀(N)`, `Γ₁(N)`, `Γ(N)`. -/
+lemma commensurable_map_SLnZ (H : Subgroup (SpecialLinearGroup (Fin n) ℤ)) [H.FiniteIndex] :
+    Subgroup.Commensurable (H.map (mapGL ℚ)) (SLnZ n) := by
+  constructor
+  · rw [SLnZ, MonoidHom.range_eq_map,
+      Subgroup.relIndex_map_map_of_injective _ _ mapGL_injective, Subgroup.relIndex_top_right]
+    exact Subgroup.FiniteIndex.index_ne_zero
+  · rw [SLnZ, MonoidHom.range_eq_map,
+      Subgroup.relIndex_map_map_of_injective _ _ mapGL_injective, Subgroup.relIndex_top_left]
+    exact one_ne_zero
 
 end Embedding
 
@@ -243,10 +263,9 @@ private lemma det_ne_zero_of_val_eq (g : GL (Fin n) ℚ) {A : Matrix (Fin n) (Fi
   rw [hdetc, Int.cast_ne_zero] at h
   exact h
 
-/-- Main step: for `g` with integer matrix `A` of nonzero determinant,
-    kernel elements of `SL_n(ℤ) → SL_n(ℤ/dℤ)` conjugated by `g⁻¹` remain in `SL_n(ℤ)`.
-    This is the mathematical heart of Shimura's Lemma 3.10. -/
-private lemma conj_ker_mem_SLnZ (g : GL (Fin n) ℚ) (A : Matrix (Fin n) (Fin n) ℤ)
+/-- If `g` has integer matrix `A` and `γ ∈ SL_n(ℤ)` is congruent to the identity modulo
+`|det A|`, then `g⁻¹ γ g` is again in `SL_n(ℤ)`. -/
+lemma inv_conjugate_mem_SLnZ_of_mem_ker (g : GL (Fin n) ℚ) (A : Matrix (Fin n) (Fin n) ℤ)
     (hA : (↑g : Matrix _ _ ℚ) = A.map (Int.cast : ℤ → ℚ))
     (γ : SpecialLinearGroup (Fin n) ℤ)
     (hγ : γ ∈ (SpecialLinearGroup.map (Int.castRingHom (ZMod A.det.natAbs))).ker) :
@@ -343,9 +362,10 @@ private lemma int_mul_eq_reverse (A gamma : Matrix (Fin n) (Fin n) ℤ) (hAdet :
   rwa [Matrix.transpose_mul, Matrix.transpose_mul, Matrix.transpose_transpose,
     Matrix.transpose_transpose] at h2
 
-/-- Reverse direction of `conj_ker_mem_SLnZ`: kernel elements conjugated by `g`
-    (rather than `g⁻¹`) remain in `SL_n(ℤ)`. -/
-private lemma conj_ker_mem_SLnZ_inv (g : GL (Fin n) ℚ) (A : Matrix (Fin n) (Fin n) ℤ)
+/-- Reverse direction of `inv_conjugate_mem_SLnZ_of_mem_ker`: if `g` has integer matrix `A`
+and `γ ∈ SL_n(ℤ)` is congruent to the identity modulo `|det A|`, then `g γ g⁻¹` is again in
+`SL_n(ℤ)`. -/
+lemma conjugate_mem_SLnZ_of_mem_ker (g : GL (Fin n) ℚ) (A : Matrix (Fin n) (Fin n) ℤ)
     (hA : (↑g : Matrix _ _ ℚ) = A.map (Int.cast : ℤ → ℚ))
     (γ : SpecialLinearGroup (Fin n) ℤ)
     (hγ : γ ∈ (SpecialLinearGroup.map (Int.castRingHom (ZMod A.det.natAbs))).ker) :
@@ -392,7 +412,7 @@ private lemma congruence_ker_image_relIndex_ne_zero (d : ℕ) [NeZero d] :
   exact (Subgroup.finiteIndex_ker phi).index_ne_zero
 
 /-- The image of the congruence kernel lies inside `g • SL_n(ℤ)`: conjugating a kernel
-    element by `g⁻¹` keeps it integral (`conj_ker_mem_SLnZ`). -/
+    element by `g⁻¹` keeps it integral (`inv_conjugate_mem_SLnZ_of_mem_ker`). -/
 private lemma congruence_ker_image_le_conj (g : GL (Fin n) ℚ) (A : Matrix (Fin n) (Fin n) ℤ)
     (hA : (↑g : Matrix _ _ ℚ) = A.map (Int.cast : ℤ → ℚ)) :
     Subgroup.map (mapGL ℚ) (SpecialLinearGroup.map (Int.castRingHom (ZMod A.det.natAbs))).ker ≤
@@ -403,10 +423,10 @@ private lemma congruence_ker_image_le_conj (g : GL (Fin n) ℚ) (A : Matrix (Fin
   -- element; `change` states it so the `ConjAct.smul_def` rewrite applies
   change (ConjAct.toConjAct g)⁻¹ • (γ : GL (Fin n) ℚ) ∈ SLnZ n
   rw [ConjAct.smul_def, ConjAct.ofConjAct_inv, ConjAct.ofConjAct_toConjAct]
-  exact conj_ker_mem_SLnZ n g A hA γ hγ_ker
+  exact inv_conjugate_mem_SLnZ_of_mem_ker n g A hA γ hγ_ker
 
 /-- The image of the congruence kernel lies inside `g⁻¹ • SL_n(ℤ)`: conjugating a kernel
-    element by `g` keeps it integral (`conj_ker_mem_SLnZ_inv`). -/
+    element by `g` keeps it integral (`conjugate_mem_SLnZ_of_mem_ker`). -/
 private lemma congruence_ker_image_le_conj_inv (g : GL (Fin n) ℚ) (A : Matrix (Fin n) (Fin n) ℤ)
     (hA : (↑g : Matrix _ _ ℚ) = A.map (Int.cast : ℤ → ℚ)) :
     Subgroup.map (mapGL ℚ) (SpecialLinearGroup.map (Int.castRingHom (ZMod A.det.natAbs))).ker ≤
@@ -418,7 +438,7 @@ private lemma congruence_ker_image_le_conj_inv (g : GL (Fin n) ℚ) (A : Matrix 
   -- element; `change` states it so the `ConjAct.smul_def` rewrite applies
   change ConjAct.toConjAct g • (γ : GL (Fin n) ℚ) ∈ SLnZ n
   rw [ConjAct.smul_def, ConjAct.ofConjAct_toConjAct]
-  exact conj_ker_mem_SLnZ_inv n g A hA γ hγ_ker
+  exact conjugate_mem_SLnZ_of_mem_ker n g A hA γ hγ_ker
 
 /-- Every integral-entry element of `GL_n(ℚ)` lies in the commensurator of `SL_n(ℤ)`
 (Shimura Lemma 3.10): if `α` has integer entries with `|det(α)| = d` — nonzero, since
