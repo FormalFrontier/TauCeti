@@ -5,7 +5,7 @@ Authors: Chris Birkbeck
 -/
 module
 
-public import TauCeti.NumberTheory.HeckeRing.GL2.Gamma0
+public import TauCeti.NumberTheory.HeckeRing.GL2.Gamma0.Basic
 
 /-!
 # The Hecke triple of `Γ₁(N)`
