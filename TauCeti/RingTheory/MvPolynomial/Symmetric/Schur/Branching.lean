@@ -89,8 +89,11 @@ variable {n : ℕ} {μ ν : _root_.YoungDiagram}
 
 /-- **Erasing the top letter changes no other multiplicity**, read on weights: the combinatorial
 statement is `TauCeti.BoundedSSYT.content_restrict`, and the weight of a bounded tableau is its
-content restricted to the alphabet. -/
-@[simp]
+content restricted to the alphabet.
+
+Not a `simp` lemma: `simp` already reduces the left-hand side by unfolding `weight` and applying
+the `simp` lemma `TauCeti.BoundedSSYT.content_restrict` it transports, so tagging it would only
+duplicate that route. -/
 theorem weight_restrict (T : BoundedSSYT (n + 1) μ) (hν : restrictShape T = ν) (i : Fin n) :
     weight (restrict T ν hν) i = weight T i.castSucc := by
   rw [weight_apply, weight_apply, Fin.val_castSucc, content_restrict T hν i.isLt]
@@ -197,8 +200,10 @@ theorem aeval_snoc_one_diagramSchurPoly (n : ℕ) (μ : _root_.YoungDiagram) :
 `n + 1` variables, once the extra variable is set to `0`: only the shape itself survives the
 specialization, every other interlacing shape being smaller and so carrying a positive power of
 the vanishing variable.  A shape of more than `n` rows interlaces no shape of at most `n` rows
-that is as large, so there both sides vanish. -/
-@[simp]
+that is as large, so there both sides vanish.
+
+Not a `simp` lemma: substituting polynomials for the variables, `simp` rewrites `aeval` to
+`bind₁` by `MvPolynomial.aeval_eq_bind₁`, so this left-hand side is not in `simp`-normal form. -/
 theorem aeval_snoc_zero_diagramSchurPoly (n : ℕ) (μ : _root_.YoungDiagram) :
     aeval (Fin.snoc (X : Fin n → MvPolynomial (Fin n) R) 0) (diagramSchurPoly (n + 1) R μ)
       = diagramSchurPoly n R μ := by
