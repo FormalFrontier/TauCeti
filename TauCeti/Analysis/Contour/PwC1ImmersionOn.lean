@@ -209,6 +209,52 @@ theorem IsPwC1ImmersionOn.exists_Icc_piece_left (h : IsPwC1ImmersionOn γ a b) {
   obtain ⟨c, hlt, hsub, hdisj⟩ := exists_Icc_left_avoiding hp ht₀
   exact ⟨c, hlt, hsub, hpieces c t₀ hlt hsub hdisj⟩
 
+/-- **A crossing's one-sided velocity is non-zero, from the immersion alone.** No need to assume
+this alongside a `C^{1,1}` window at a crossing: `IsPwC1ImmersionOn` already forces a non-zero
+`derivWithin`-derivative at every point of the breakpoint-free piece to the right of `t`
+(`IsPwC1ImmersionOn.exists_Icc_piece_right`), including at `t` itself, and `derivWithin` at `t`
+does not depend on which (`C¹` on `[t, d]`) right-piece it is computed against, since both agree
+with the same `HasDerivWithinAt` witness on their common initial segment. -/
+theorem IsPwC1ImmersionOn.derivWithin_ne_zero_right (h : IsPwC1ImmersionOn γ a b) {t d : ℝ}
+    (ht₀ : t ∈ Ico (min a b) (max a b))
+    (hdiff : DifferentiableOn ℝ γ (Icc t d)) (htd : t < d) :
+    derivWithin γ (Icc t d) t ≠ 0 := by
+  obtain ⟨d', hlt', -, hC1', hne'⟩ := h.exists_Icc_piece_right ht₀
+  have hte : t < min d d' := lt_min htd hlt'
+  have h1 : HasDerivWithinAt γ (derivWithin γ (Icc t d) t) (Icc t (min d d')) t :=
+    (hdiff t (left_mem_Icc.mpr htd.le)).hasDerivWithinAt.mono
+      (Icc_subset_Icc le_rfl (min_le_left d d'))
+  have h2 : HasDerivWithinAt γ (derivWithin γ (Icc t d') t) (Icc t (min d d')) t :=
+    ((hC1'.differentiableOn one_ne_zero) t (left_mem_Icc.mpr hlt'.le)).hasDerivWithinAt.mono
+      (Icc_subset_Icc le_rfl (min_le_right d d'))
+  have hud : UniqueDiffWithinAt ℝ (Icc t (min d d')) t :=
+    (uniqueDiffOn_Icc hte).uniqueDiffWithinAt (left_mem_Icc.mpr hte.le)
+  have heq : derivWithin γ (Icc t d) t = derivWithin γ (Icc t d') t :=
+    (h1.derivWithin hud).symm.trans (h2.derivWithin hud)
+  rw [heq]
+  exact hne' t (left_mem_Icc.mpr hlt'.le)
+
+/-- **A crossing's one-sided velocity is non-zero, from the immersion alone, from the left.** The
+mirror of `IsPwC1ImmersionOn.derivWithin_ne_zero_right` above. -/
+theorem IsPwC1ImmersionOn.derivWithin_ne_zero_left (h : IsPwC1ImmersionOn γ a b) {c t : ℝ}
+    (ht₀ : t ∈ Ioc (min a b) (max a b))
+    (hdiff : DifferentiableOn ℝ γ (Icc c t)) (hct : c < t) :
+    derivWithin γ (Icc c t) t ≠ 0 := by
+  obtain ⟨c', hlt', -, hC1', hne'⟩ := h.exists_Icc_piece_left ht₀
+  have het : max c c' < t := max_lt hct hlt'
+  have h1 : HasDerivWithinAt γ (derivWithin γ (Icc c t) t) (Icc (max c c') t) t :=
+    (hdiff t (right_mem_Icc.mpr hct.le)).hasDerivWithinAt.mono
+      (Icc_subset_Icc (le_max_left c c') le_rfl)
+  have h2 : HasDerivWithinAt γ (derivWithin γ (Icc c' t) t) (Icc (max c c') t) t :=
+    ((hC1'.differentiableOn one_ne_zero) t (right_mem_Icc.mpr hlt'.le)).hasDerivWithinAt.mono
+      (Icc_subset_Icc (le_max_right c c') le_rfl)
+  have hud : UniqueDiffWithinAt ℝ (Icc (max c c') t) t :=
+    (uniqueDiffOn_Icc het).uniqueDiffWithinAt (right_mem_Icc.mpr het.le)
+  have heq : derivWithin γ (Icc c t) t = derivWithin γ (Icc c' t) t :=
+    (h1.derivWithin hud).symm.trans (h2.derivWithin hud)
+  rw [heq]
+  exact hne' t (right_mem_Icc.mpr hlt'.le)
+
 /-- **Non-zero one-sided tangent of an immersion, from the right.** At every parameter
 `t₀ ∈ [min, max)` a piecewise-`C¹` immersion has a non-zero limit of `deriv γ` from the right —
 the within-piece derivative there — and the chord slope `(γ t - γ t₀) / (t - t₀)` converges from

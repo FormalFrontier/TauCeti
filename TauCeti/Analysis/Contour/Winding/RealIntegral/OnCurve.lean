@@ -179,60 +179,6 @@ private theorem intervalIntegrable_realWindingIntegrand_window {γ : ℝ → ℂ
   filter_upwards [MeasureTheory.ae_restrict_mem measurableSet_uIoc] with t ht
   exact hC _ ⟨t, huIoc_sub ht, rfl⟩
 
-/-! ### Boundedness of the derivative of a piecewise-`C¹` curve -/
-
-/-- The derivative of a curve that is `C¹` on `[c, d]` has bounded image on `[c, d]`: the
-within-interval derivative is continuous on the compact piece, hence bounded there by
-compactness, and agrees with `deriv` on the interior; the two endpoints contribute at most two
-further (arbitrary, automatically bounded) values. -/
-private theorem isBounded_image_deriv_of_contDiffOn {γ : ℝ → ℂ} {c d : ℝ} (hcd : c ≤ d)
-    (hC1 : ContDiffOn ℝ 1 γ (Icc c d)) :
-    Bornology.IsBounded (deriv γ '' Icc c d) := by
-  rcases hcd.eq_or_lt with heq | hlt
-  · obtain rfl := heq
-    rw [Set.Icc_self, Set.image_singleton]
-    exact (Set.finite_singleton _).isBounded
-  have hdw : ContinuousOn (derivWithin γ (Icc c d)) (Icc c d) :=
-    hC1.continuousOn_derivWithin (uniqueDiffOn_Icc hlt) le_rfl
-  have hdw_bdd : Bornology.IsBounded (derivWithin γ (Icc c d) '' Icc c d) :=
-    (isCompact_Icc.image_of_continuousOn hdw).isBounded
-  refine (hdw_bdd.union
-    ((Set.finite_singleton (deriv γ d)).insert (deriv γ c)).isBounded).subset ?_
-  rintro y ⟨t, ht, rfl⟩
-  rcases eq_or_ne t c with rfl | htc
-  · exact Or.inr (by simp)
-  rcases eq_or_ne t d with rfl | htd
-  · exact Or.inr (by simp)
-  exact Or.inl ⟨t, ht, derivWithin_of_mem_nhds (Icc_mem_nhds (lt_of_le_of_ne ht.1 (Ne.symm htc))
-    (lt_of_le_of_ne ht.2 htd))⟩
-
-/-- Gluing step for `isBounded_image_deriv_Icc`: boundedness of the derivative's image on any
-subinterval `[c, d] ⊆ [[a, b]]`. An instance of `piecewise_gluing_induction`, shared with
-`IsPiecewiseC1On.intervalIntegrable_deriv`'s identical breakpoint-splitting induction. -/
-private theorem isBounded_image_deriv_aux {γ : ℝ → ℂ} {a b : ℝ} {p : Finset ℝ}
-    (hC1 : ∀ c d : ℝ, Icc c d ⊆ uIcc a b → Disjoint (↑p : Set ℝ) (Ioo c d) →
-      ContDiffOn ℝ 1 γ (Icc c d)) :
-    ∀ n (c d : ℝ), (p.filter (· ∈ Ioo c d)).card ≤ n → c ≤ d → Icc c d ⊆ uIcc a b →
-      Bornology.IsBounded (deriv γ '' Icc c d) :=
-  piecewise_gluing_induction
-    (fun c d hcd hsub hdisj => isBounded_image_deriv_of_contDiffOn hcd (hC1 c d hsub hdisj))
-    (fun c m d hcm hmd h₁ h₂ => by
-      -- Split at the shared breakpoint `m` so the two pieces' boundedness facts `h₁`, `h₂`
-      -- combine via `Set.image_union` into one on the whole `Icc c d`.
-      have hsplit : Icc c d = Icc c m ∪ Icc m d := (Set.Icc_union_Icc_eq_Icc hcm hmd).symm
-      rw [hsplit, Set.image_union]
-      exact h₁.union h₂)
-
-/-- **Boundedness of the derivative of a piecewise-`C¹` curve on its whole parameter interval.**
-Mirrors `IsPiecewiseC1On.intervalIntegrable_deriv`'s gluing-across-breakpoints argument, but for
-boundedness of the image rather than interval-integrability. -/
-private theorem isBounded_image_deriv_Icc {γ : ℝ → ℂ} {a b : ℝ} (h : IsPiecewiseC1On γ a b)
-    (hab : a ≤ b) : Bornology.IsBounded (deriv γ '' Icc a b) := by
-  obtain ⟨p, -, hC1⟩ := h.exists_breakpoints
-  have key := isBounded_image_deriv_aux hC1 (p.filter (· ∈ Ioo (min a b) (max a b))).card
-    (min a b) (max a b) le_rfl min_le_max Icc_min_max.subset
-  simpa [min_eq_left hab, max_eq_right hab] using key
-
 /-- **A crude bound on the real winding integrand away from its singularity.** No quadratic
 remainder estimate is needed once `‖z‖` is bounded below: the numerator is `|Im(v · conj z)| ≤
 ‖v‖ · ‖z‖` and the denominator is `‖z‖ ^ 2`, so the quotient is at most `‖v‖ / ‖z‖ ≤ ‖v‖ / m`. -/
@@ -252,54 +198,6 @@ private theorem abs_realWindingIntegrand_le_div_of_norm_le {z v : ℂ} {m : ℝ}
         mul_le_mul_of_nonneg_right hnum hm.le
     _ ≤ ‖v‖ * ‖z‖ * ‖z‖ := mul_le_mul_of_nonneg_left hz (mul_nonneg (norm_nonneg v) (norm_nonneg z))
     _ = ‖v‖ * ‖z‖ ^ 2 := by ring
-
-/-! ### Non-vanishing one-sided velocity from the immersion, not assumed separately -/
-
-/-- **A crossing's one-sided velocity is non-zero, from the immersion alone.** No need to assume
-this alongside a `C^{1,1}` window at a crossing: `IsPwC1ImmersionOn` already forces a non-zero
-`derivWithin`-derivative at every point of the breakpoint-free piece to the right of `t`
-(`IsPwC1ImmersionOn.exists_Icc_piece_right`), including at `t` itself, and `derivWithin` at `t`
-does not depend on which (`C¹` on `[t, d]`) right-piece it is computed against, since both agree
-with the same `HasDerivWithinAt` witness on their common initial segment. -/
-private theorem derivWithin_ne_zero_of_isPwC1ImmersionOn_right {γ : ℝ → ℂ} {a b t d : ℝ}
-    (h_imm : IsPwC1ImmersionOn γ a b) (ht₀ : t ∈ Ico (min a b) (max a b))
-    (hdiff : DifferentiableOn ℝ γ (Icc t d)) (htd : t < d) :
-    derivWithin γ (Icc t d) t ≠ 0 := by
-  obtain ⟨d', hlt', -, hC1', hne'⟩ := h_imm.exists_Icc_piece_right ht₀
-  have hte : t < min d d' := lt_min htd hlt'
-  have h1 : HasDerivWithinAt γ (derivWithin γ (Icc t d) t) (Icc t (min d d')) t :=
-    (hdiff t (left_mem_Icc.mpr htd.le)).hasDerivWithinAt.mono
-      (Icc_subset_Icc le_rfl (min_le_left d d'))
-  have h2 : HasDerivWithinAt γ (derivWithin γ (Icc t d') t) (Icc t (min d d')) t :=
-    ((hC1'.differentiableOn one_ne_zero) t (left_mem_Icc.mpr hlt'.le)).hasDerivWithinAt.mono
-      (Icc_subset_Icc le_rfl (min_le_right d d'))
-  have hud : UniqueDiffWithinAt ℝ (Icc t (min d d')) t :=
-    (uniqueDiffOn_Icc hte).uniqueDiffWithinAt (left_mem_Icc.mpr hte.le)
-  have heq : derivWithin γ (Icc t d) t = derivWithin γ (Icc t d') t :=
-    (h1.derivWithin hud).symm.trans (h2.derivWithin hud)
-  rw [heq]
-  exact hne' t (left_mem_Icc.mpr hlt'.le)
-
-/-- **A crossing's one-sided velocity is non-zero, from the immersion alone, from the left.** The
-mirror of `derivWithin_ne_zero_of_isPwC1ImmersionOn_right` above. -/
-private theorem derivWithin_ne_zero_of_isPwC1ImmersionOn_left {γ : ℝ → ℂ} {a b c t : ℝ}
-    (h_imm : IsPwC1ImmersionOn γ a b) (ht₀ : t ∈ Ioc (min a b) (max a b))
-    (hdiff : DifferentiableOn ℝ γ (Icc c t)) (hct : c < t) :
-    derivWithin γ (Icc c t) t ≠ 0 := by
-  obtain ⟨c', hlt', -, hC1', hne'⟩ := h_imm.exists_Icc_piece_left ht₀
-  have het : max c c' < t := max_lt hct hlt'
-  have h1 : HasDerivWithinAt γ (derivWithin γ (Icc c t) t) (Icc (max c c') t) t :=
-    (hdiff t (right_mem_Icc.mpr hct.le)).hasDerivWithinAt.mono
-      (Icc_subset_Icc (le_max_left c c') le_rfl)
-  have h2 : HasDerivWithinAt γ (derivWithin γ (Icc c' t) t) (Icc (max c c') t) t :=
-    ((hC1'.differentiableOn one_ne_zero) t (right_mem_Icc.mpr hlt'.le)).hasDerivWithinAt.mono
-      (Icc_subset_Icc (le_max_right c c') le_rfl)
-  have hud : UniqueDiffWithinAt ℝ (Icc (max c c') t) t :=
-    (uniqueDiffOn_Icc het).uniqueDiffWithinAt (right_mem_Icc.mpr het.le)
-  have heq : derivWithin γ (Icc c t) t = derivWithin γ (Icc c' t) t :=
-    (h1.derivWithin hud).symm.trans (h2.derivWithin hud)
-  rw [heq]
-  exact hne' t (right_mem_Icc.mpr hlt'.le)
 
 /-! ### Assembly -/
 
@@ -375,9 +273,9 @@ private theorem isBounded_intervalIntegrable_cauchyPV_of_interior_crossings
       (c := t₀ - εL t₀) (d := t₀ + εR t₀) (by linarith [hεL_pos t₀ ht₀])
       (by linarith [hεR_pos t₀ ht₀])
       (hdiffR t₀ ht₀) (hlipR t₀ ht₀) (hdiffL t₀ ht₀) (hlipL t₀ ht₀) (hT_mem.mp ht₀).2
-      (derivWithin_ne_zero_of_isPwC1ImmersionOn_right h_imm (h_Ico t₀ ht₀) (hdiffR t₀ ht₀)
+      (h_imm.derivWithin_ne_zero_right (h_Ico t₀ ht₀) (hdiffR t₀ ht₀)
         (by linarith [hεR_pos t₀ ht₀]))
-      (derivWithin_ne_zero_of_isPwC1ImmersionOn_left h_imm (h_Ioc t₀ ht₀) (hdiffL t₀ ht₀)
+      (h_imm.derivWithin_ne_zero_left (h_Ioc t₀ ht₀) (hdiffL t₀ ht₀)
         (by linarith [hεL_pos t₀ ht₀]))
   -- The one-sided windows the window-integrability lemma needs are just the two halves of the
   -- symmetric window `_corner` already bounded.
@@ -485,7 +383,7 @@ private theorem isBounded_intervalIntegrable_cauchyPV_of_interior_crossings
   -- the crude `‖v‖ / m` estimate, `m` the lower bound on `‖γ - s‖` there and `Cd` a bound on
   -- `‖deriv γ‖` over all of `[a, b]` (piecewise-`C¹`, hence bounded on finitely many pieces).
   have hm_pos : 0 < h_far.choose := h_far.choose_spec.1
-  obtain ⟨Cd, hCd⟩ := (isBounded_image_deriv_Icc h_imm.isPiecewiseC1On hab.le).exists_norm_le
+  obtain ⟨Cd, hCd⟩ := (h_imm.isPiecewiseC1On.isBounded_image_deriv hab.le).exists_norm_le
   have hwin_union_bdd : Bornology.IsBounded
       (⋃ t₀ ∈ T, (fun t => realWindingIntegrand (γ t - s) (deriv γ t)) ''
         Icc (t₀ - ρ) (t₀ + ρ)) :=

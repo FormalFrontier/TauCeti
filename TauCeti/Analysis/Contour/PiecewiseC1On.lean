@@ -297,4 +297,55 @@ theorem IsPiecewiseC1On.intervalIntegrable_deriv (h : IsPiecewiseC1On γ a b) :
       simpa [min_eq_right hab, max_eq_left hab] using key
     exact key'.symm
 
+/-- The derivative of a curve that is `C¹` on `[c, d]` has bounded image on `[c, d]`: the
+within-interval derivative is continuous on the compact piece, hence bounded there by
+compactness, and agrees with `deriv` on the interior; the two endpoints contribute at most two
+further (arbitrary, automatically bounded) values. -/
+private theorem isBounded_image_deriv_of_contDiffOn {c d : ℝ} (hcd : c ≤ d)
+    (hC1 : ContDiffOn ℝ 1 γ (Icc c d)) :
+    Bornology.IsBounded (deriv γ '' Icc c d) := by
+  rcases hcd.eq_or_lt with heq | hlt
+  · obtain rfl := heq
+    rw [Set.Icc_self, Set.image_singleton]
+    exact (Set.finite_singleton _).isBounded
+  have hdw : ContinuousOn (derivWithin γ (Icc c d)) (Icc c d) :=
+    hC1.continuousOn_derivWithin (uniqueDiffOn_Icc hlt) le_rfl
+  have hdw_bdd : Bornology.IsBounded (derivWithin γ (Icc c d) '' Icc c d) :=
+    (isCompact_Icc.image_of_continuousOn hdw).isBounded
+  refine (hdw_bdd.union
+    ((Set.finite_singleton (deriv γ d)).insert (deriv γ c)).isBounded).subset ?_
+  rintro y ⟨t, ht, rfl⟩
+  rcases eq_or_ne t c with rfl | htc
+  · exact Or.inr (by simp)
+  rcases eq_or_ne t d with rfl | htd
+  · exact Or.inr (by simp)
+  exact Or.inl ⟨t, ht, derivWithin_of_mem_nhds (Icc_mem_nhds (lt_of_le_of_ne ht.1 (Ne.symm htc))
+    (lt_of_le_of_ne ht.2 htd))⟩
+
+/-- Gluing step for `IsPiecewiseC1On.isBounded_image_deriv`: boundedness of the derivative's
+image on any subinterval `[c, d] ⊆ [[a, b]]`. An instance of `piecewise_gluing_induction`. -/
+private theorem isBounded_image_deriv_aux {p : Finset ℝ}
+    (hC1 : ∀ c d : ℝ, Icc c d ⊆ uIcc a b → Disjoint (↑p : Set ℝ) (Ioo c d) →
+      ContDiffOn ℝ 1 γ (Icc c d)) :
+    ∀ n (c d : ℝ), (p.filter (· ∈ Ioo c d)).card ≤ n → c ≤ d → Icc c d ⊆ uIcc a b →
+      Bornology.IsBounded (deriv γ '' Icc c d) :=
+  piecewise_gluing_induction
+    (fun c d hcd hsub hdisj => isBounded_image_deriv_of_contDiffOn hcd (hC1 c d hsub hdisj))
+    (fun c m d hcm hmd h₁ h₂ => by
+      -- Split at the shared breakpoint `m` so the two pieces' boundedness facts `h₁`, `h₂`
+      -- combine via `Set.image_union` into one on the whole `Icc c d`.
+      have hsplit : Icc c d = Icc c m ∪ Icc m d := (Set.Icc_union_Icc_eq_Icc hcm hmd).symm
+      rw [hsplit, Set.image_union]
+      exact h₁.union h₂)
+
+/-- **Boundedness of the derivative of a piecewise-`C¹` curve on its whole parameter interval.**
+Mirrors `IsPiecewiseC1On.intervalIntegrable_deriv`'s gluing-across-breakpoints argument, but for
+boundedness of the image rather than interval-integrability. -/
+theorem IsPiecewiseC1On.isBounded_image_deriv (h : IsPiecewiseC1On γ a b) (hab : a ≤ b) :
+    Bornology.IsBounded (deriv γ '' Icc a b) := by
+  obtain ⟨p, -, hC1⟩ := h.exists_breakpoints
+  have key := isBounded_image_deriv_aux hC1 (p.filter (· ∈ Ioo (min a b) (max a b))).card
+    (min a b) (max a b) le_rfl min_le_max Icc_min_max.subset
+  simpa [min_eq_left hab, max_eq_right hab] using key
+
 end TauCeti.Contour
