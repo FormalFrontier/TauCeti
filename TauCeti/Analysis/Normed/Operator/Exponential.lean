@@ -13,8 +13,9 @@ import Mathlib.Analysis.Calculus.Deriv.Mul
 
 This file records basic facts about the exponential in normed algebras, including the
 specialization to continuous linear endomorphisms of a real normed space: the norm bound
-`‖exp x‖ ≤ Real.exp ‖x‖`, the exponential of a scalar multiple of the identity, and the Duhamel
-identity `exp (t • B) x - x = ∫₀ᵗ exp (u • B) (B x) du` for the orbits of a bounded operator.
+`‖exp x‖ ≤ Real.exp ‖x‖`, exponential bounds for power-bounded operators, the exponential of a
+scalar multiple of the identity, and the Duhamel identity
+`exp (t • B) x - x = ∫₀ᵗ exp (u • B) (B x) du` for the orbits of a bounded operator.
 -/
 
 public section
@@ -44,6 +45,33 @@ theorem norm_exp_le_exp_norm (h_one : ‖(1 : 𝔸)‖ ≤ 1) (x : 𝔸) :
 variable {X : Type*} [NormedAddCommGroup X] [NormedSpace ℝ X]
 
 namespace ContinuousLinearMap
+
+/-- If every power of a bounded operator `B` has norm at most `M`, then
+`‖exp (s B)‖ ≤ M exp s` for every `s ≥ 0`. -/
+theorem norm_exp_smul_le_mul_exp_of_norm_pow_le [CompleteSpace X] {B : X →L[ℝ] X} {M s : ℝ}
+    (hs : 0 ≤ s) (hpow : ∀ n : ℕ, ‖B ^ n‖ ≤ M) :
+    ‖exp (s • B)‖ ≤ M * Real.exp s := by
+  have hseries : HasSum
+      (fun n : ℕ => ((n.factorial : ℝ)⁻¹) • (s • B) ^ n) (exp (s • B)) :=
+    NormedSpace.exp_series_hasSum_exp' (s • B)
+  have hscalar : HasSum (fun n : ℕ => M * (s ^ n / n.factorial))
+      (M * Real.exp s) := by
+    rw [Real.exp_eq_exp_ℝ]
+    simpa [div_eq_mul_inv, mul_comm] using
+      (NormedSpace.exp_series_hasSum_exp' (𝕂 := ℝ) (𝔸 := ℝ) s).mul_left M
+  have hterm (n : ℕ) :
+      ‖((n.factorial : ℝ)⁻¹) • (s • B) ^ n‖ ≤ M * (s ^ n / n.factorial) := by
+    rw [smul_pow, norm_smul, norm_smul, Real.norm_eq_abs, Real.norm_eq_abs,
+      abs_of_nonneg (inv_nonneg.mpr (Nat.cast_nonneg _)), abs_pow, abs_of_nonneg hs]
+    calc
+      (n.factorial : ℝ)⁻¹ * (s ^ n * ‖B ^ n‖)
+          ≤ (n.factorial : ℝ)⁻¹ * (s ^ n * M) := by
+            gcongr
+            exact hpow n
+      _ = M * (s ^ n / n.factorial) := by
+        rw [div_eq_mul_inv]
+        ring
+  exact hseries.norm_le_of_bounded hscalar hterm
 
 /-- The exponential of a real scalar multiple of the identity operator is the corresponding
 scalar exponential times the identity. -/

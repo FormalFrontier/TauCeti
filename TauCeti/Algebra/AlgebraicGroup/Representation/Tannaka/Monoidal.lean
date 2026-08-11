@@ -29,6 +29,10 @@ separate theorem.
 
 ## Main declarations
 
+* `TauCeti.Tannaka.scalarExtensionComponent`: a tensor-automorphism component transported to an
+  explicit scalar-extension tensor product.
+* `TauCeti.Tannaka.scalarExtensionComponent_tensor`: the elementwise tensor law for transported
+  components.
 * `TauCeti.Tannaka.isMonoidal_fgPointNatIsoHom_hom`: point actions on finite comodules preserve the
   tensor unit and tensor product.
 * `TauCeti.Tannaka.fgPointTensorIsoHom`: points act on finite-comodule scalar extension by
@@ -39,8 +43,9 @@ separate theorem.
 ## References
 
 * J. S. Milne, *Algebraic Groups* (2017), §§4.5 and 9.4.
-* `Mathlib/RepresentationTheory/Tannaka.lean`: the bundled monoidal forgetful functor `forget`
-  and point homomorphism `equivHom` provide the formal pattern adapted here to comodules.
+* `Mathlib/RepresentationTheory/Tannaka.lean`: the bundled monoidal forgetful functor `forget`,
+  point homomorphism `equivHom`, and tensor step in `map_mul_toRightFDRepComp` provide the formal
+  pattern adapted here to comodules and scalar extension.
 -/
 
 public section
@@ -51,6 +56,187 @@ open scoped TensorProduct
 namespace TauCeti.Tannaka
 
 universe u v
+
+section Component
+
+variable (R : Type u) [CommSemiring R]
+variable (H : Type v) [Semiring H] [Bialgebra R H]
+variable (A : Type u) [CommSemiring A] [Algebra R A]
+
+/-- The component of a tensor automorphism, transported from the object chosen by the
+scalar-extension functor to the explicit tensor product `A ⊗[R] M`. -/
+noncomputable def scalarExtensionComponent
+    (η : Aut (FGComoduleCat.scalarExtensionMonoidalFunctor R H A))
+    (M : FGComoduleCat.{u, v, u} R H) :
+    A ⊗[R] M →ₗ[A] A ⊗[R] M :=
+  (eqToHom (FGComoduleCat.scalarExtensionFunctor_obj R H A M).symm ≫
+    η.hom.hom.app M ≫
+      eqToHom (FGComoduleCat.scalarExtensionFunctor_obj R H A M)).hom
+
+/-- Evaluation formula for a transported tensor-automorphism component. -/
+theorem scalarExtensionComponent_apply
+    (η : Aut (FGComoduleCat.scalarExtensionMonoidalFunctor R H A))
+    (M : FGComoduleCat.{u, v, u} R H) (x : A ⊗[R] M) :
+    scalarExtensionComponent R H A η M x =
+      eqToHom (FGComoduleCat.scalarExtensionFunctor_obj R H A M)
+        (η.hom.hom.app M
+          (eqToHom (FGComoduleCat.scalarExtensionFunctor_obj R H A M).symm x)) := by
+  rfl
+
+private theorem ofHom_scalarExtensionComponent
+    (η : Aut (FGComoduleCat.scalarExtensionMonoidalFunctor R H A))
+    (M : FGComoduleCat.{u, v, u} R H)
+    (h : (FGComoduleCat.scalarExtensionFunctor R H A).obj M =
+      SemimoduleCat.of A (A ⊗[R] M)) :
+    SemimoduleCat.ofHom (scalarExtensionComponent R H A η M) =
+      eqToHom h.symm ≫
+        η.hom.hom.app M ≫
+          eqToHom h := by
+  cases Subsingleton.elim h (FGComoduleCat.scalarExtensionFunctor_obj R H A M)
+  rfl
+
+/-- Naturality of the explicitly transported components of a tensor automorphism. -/
+theorem scalarExtensionComponent_natural
+    (η : Aut (FGComoduleCat.scalarExtensionMonoidalFunctor R H A))
+    {M N : FGComoduleCat.{u, v, u} R H} (f : M ⟶ N) :
+    f.hom.toLinearMap.baseChange A ∘ₗ scalarExtensionComponent R H A η M =
+      scalarExtensionComponent R H A η N ∘ₗ f.hom.toLinearMap.baseChange A := by
+  let aM : (FGComoduleCat.scalarExtensionFunctor R H A).obj M ⟶
+      (FGComoduleCat.scalarExtensionFunctor R H A).obj M :=
+    η.hom.hom.app M
+  let aN : (FGComoduleCat.scalarExtensionFunctor R H A).obj N ⟶
+      (FGComoduleCat.scalarExtensionFunctor R H A).obj N :=
+    η.hom.hom.app N
+  have hnat :
+      (FGComoduleCat.scalarExtensionFunctor R H A).map f ≫ aN =
+        aM ≫ (FGComoduleCat.scalarExtensionFunctor R H A).map f :=
+    η.hom.hom.naturality f
+  let hM := FGComoduleCat.scalarExtensionFunctor_obj R H A M
+  let hN := FGComoduleCat.scalarExtensionFunctor_obj R H A N
+  let iM := eqToIso hM
+  let iN := eqToIso hN
+  let bmap := SemimoduleCat.ofHom (f.hom.toLinearMap.baseChange A)
+  have hfmap :
+      (FGComoduleCat.scalarExtensionFunctor R H A).map f =
+        iM.hom ≫ bmap ≫ iN.inv := by
+    simpa only [hM, hN, iM, iN, bmap, eqToIso.hom, eqToIso.inv] using
+      FGComoduleCat.scalarExtensionFunctor_map R H A f
+  rw [hfmap] at hnat
+  have hcat :
+      (iM.inv ≫ aM ≫ iM.hom) ≫ bmap =
+        bmap ≫ (iN.inv ≫ aN ≫ iN.hom) := by
+    rw [← cancel_epi iM.hom]
+    rw [← cancel_mono iN.inv]
+    slice_lhs 1 2 => rw [iM.hom_inv_id]
+    slice_rhs 4 6 => rw [iN.hom_inv_id, Category.comp_id]
+    simpa only [Category.id_comp, Category.comp_id, Category.assoc] using hnat.symm
+  have hcat' :
+      SemimoduleCat.ofHom (scalarExtensionComponent R H A η M) ≫ bmap =
+        bmap ≫ SemimoduleCat.ofHom (scalarExtensionComponent R H A η N) := by
+    rw [ofHom_scalarExtensionComponent R H A η M hM,
+      ofHom_scalarExtensionComponent R H A η N hN]
+    convert hcat using 1 <;>
+      simp only [iM, iN, aM, aN, eqToIso.inv, eqToIso.hom] <;> rfl
+  simpa only [bmap, SemimoduleCat.hom_comp, SemimoduleCat.hom_ofHom] using
+    congrArg SemimoduleCat.Hom.hom hcat'
+
+/-- Tensor compatibility of the explicitly transported components of a tensor automorphism. -/
+@[simp]
+theorem scalarExtensionComponent_tensor
+    (η : Aut (FGComoduleCat.scalarExtensionMonoidalFunctor R H A))
+    (M N : FGComoduleCat.{u, v, u} R H) (x : A ⊗[R] M) (y : A ⊗[R] N) :
+    scalarExtensionComponent R H A η (M ⊗ N : FGComoduleCat R H)
+        ((TensorProduct.AlgebraTensorModule.distribBaseChange R A M N).symm
+          (x ⊗ₜ[A] y)) =
+      (TensorProduct.AlgebraTensorModule.distribBaseChange R A M N).symm
+        (scalarExtensionComponent R H A η M x ⊗ₜ[A]
+          scalarExtensionComponent R H A η N y) := by
+  let aM : (FGComoduleCat.scalarExtensionFunctor R H A).obj M ⟶
+      (FGComoduleCat.scalarExtensionFunctor R H A).obj M :=
+    η.hom.hom.app M
+  let aN : (FGComoduleCat.scalarExtensionFunctor R H A).obj N ⟶
+      (FGComoduleCat.scalarExtensionFunctor R H A).obj N :=
+    η.hom.hom.app N
+  let aMN : (FGComoduleCat.scalarExtensionFunctor R H A).obj
+      (M ⊗ N : FGComoduleCat R H) ⟶
+      (FGComoduleCat.scalarExtensionFunctor R H A).obj
+        (M ⊗ N : FGComoduleCat R H) :=
+    η.hom.hom.app (M ⊗ N : FGComoduleCat R H)
+  -- First unpack the bundled monoidal axiom into the tensor-component square.
+  have htensor :
+      Functor.LaxMonoidal.μ (FGComoduleCat.scalarExtensionFunctor R H A) M N ≫ aMN =
+        (aM ⊗ₘ aN) ≫
+          Functor.LaxMonoidal.μ (FGComoduleCat.scalarExtensionFunctor R H A) M N :=
+    NatTrans.IsMonoidal.tensor (τ := η.hom.hom) M N
+  rw [FGComoduleCat.scalarExtensionFunctor_μ] at htensor
+  let hM := FGComoduleCat.scalarExtensionFunctor_obj R H A M
+  let hN := FGComoduleCat.scalarExtensionFunctor_obj R H A N
+  let hMN := FGComoduleCat.scalarExtensionFunctor_obj R H A
+    (M ⊗ N : FGComoduleCat R H)
+  let iM := eqToIso hM
+  let iN := eqToIso hN
+  let iMN := eqToIso hMN
+  let d :
+      (SemimoduleCat.of A (A ⊗[R] M) ⊗ SemimoduleCat.of A (A ⊗[R] N)) ⟶
+        SemimoduleCat.of A (A ⊗[R] (M ⊗[R] N)) :=
+    SemimoduleCat.ofHom
+      (TensorProduct.AlgebraTensorModule.distribBaseChange R A M N).symm.toLinearMap
+  have hmon :
+      (((iM.hom ⊗ₘ iN.hom) ≫ d ≫ iMN.inv) ≫ aMN) =
+        (aM ⊗ₘ aN) ≫ ((iM.hom ⊗ₘ iN.hom) ≫ d ≫ iMN.inv) := by
+    simpa only [iM, iN, iMN, d, eqToIso.hom, eqToIso.inv] using htensor
+  -- Next cancel the object transports, leaving only explicit scalar-extension components.
+  have he :
+      (iM.hom ⊗ₘ iN.hom) ≫
+          ((iM.inv ≫ aM ≫ iM.hom) ⊗ₘ (iN.inv ≫ aN ≫ iN.hom)) =
+        ((aM ≫ iM.hom) ⊗ₘ (aN ≫ iN.hom)) := by
+    rw [MonoidalCategory.tensorHom_comp_tensorHom]
+    simp only [Iso.hom_inv_id_assoc]
+  have he' :
+      (aM ⊗ₘ aN) ≫ (iM.hom ⊗ₘ iN.hom) =
+        ((aM ≫ iM.hom) ⊗ₘ (aN ≫ iN.hom)) :=
+    MonoidalCategory.tensorHom_comp_tensorHom _ _ _ _
+  have hcat :
+      d ≫ (iMN.inv ≫ aMN ≫ iMN.hom) =
+        ((iM.inv ≫ aM ≫ iM.hom) ⊗ₘ (iN.inv ≫ aN ≫ iN.hom)) ≫ d := by
+    rw [← cancel_epi (iM.hom ⊗ₘ iN.hom)]
+    rw [← cancel_mono iMN.inv]
+    simp only [Category.assoc, Iso.hom_inv_id, Category.comp_id]
+    conv_rhs => rw [← Category.assoc]
+    rw [he, ← he']
+    simpa only [Category.assoc] using hmon
+  -- Use the same bridge to replace all three transported maps before passing to linear maps.
+  have hcat' :
+      d ≫ SemimoduleCat.ofHom
+          (scalarExtensionComponent R H A η (M ⊗ N : FGComoduleCat R H)) =
+        (SemimoduleCat.ofHom (scalarExtensionComponent R H A η M) ⊗ₘ
+          SemimoduleCat.ofHom (scalarExtensionComponent R H A η N)) ≫ d := by
+    rw [ofHom_scalarExtensionComponent R H A η (M ⊗ N : FGComoduleCat R H) hMN,
+      ofHom_scalarExtensionComponent R H A η M hM,
+      ofHom_scalarExtensionComponent R H A η N hN]
+    convert hcat using 1 <;>
+      simp only [iM, iN, iMN, aM, aN, aMN, eqToIso.inv, eqToIso.hom] <;> rfl
+  have hlin := congrArg SemimoduleCat.Hom.hom hcat'
+  simp only [SemimoduleCat.hom_comp, SemimoduleCat.hom_ofHom] at hlin
+  rw [SemimoduleCat.hom_tensorHom] at hlin
+  -- Finally evaluate the linear-map equality on a pure tensor.
+  have happ := LinearMap.congr_fun hlin (x ⊗ₜ[A] y)
+  -- No carrier-level rewrite theorem unfolds these two categorical applications, so display
+  -- their underlying linear maps before evaluating `TensorProduct.map`.
+  change scalarExtensionComponent R H A η (M ⊗ N : FGComoduleCat R H)
+      (d.hom (x ⊗ₜ[A] y)) =
+    d.hom (TensorProduct.map (scalarExtensionComponent R H A η M)
+      (scalarExtensionComponent R H A η N) (x ⊗ₜ[A] y)) at happ
+  rw [TensorProduct.map_tmul] at happ
+  change scalarExtensionComponent R H A η (M ⊗ N : FGComoduleCat R H)
+      ((TensorProduct.AlgebraTensorModule.distribBaseChange R A M N).symm
+        (x ⊗ₜ[A] y)) =
+    (TensorProduct.AlgebraTensorModule.distribBaseChange R A M N).symm
+      (scalarExtensionComponent R H A η M x ⊗ₜ[A]
+        scalarExtensionComponent R H A η N y) at happ
+  exact happ
+
+end Component
 
 section Generic
 
@@ -111,6 +297,25 @@ automorphism. -/
 theorem fgPointTensorIso_hom_hom (g : WithConv (H →ₐ[R] A)) :
     (fgPointTensorIso R H A g).hom.hom = (fgPointNatIsoHom R H A g).hom :=
   (rfl)
+
+/-- The transported component of the tensor automorphism induced by a point is the usual point
+action on every finite comodule. -/
+@[simp]
+theorem scalarExtensionComponent_fgPointTensorIso
+    (g : WithConv (H →ₐ[R] A)) (M : FGComoduleCat.{u, v, u} R H) :
+    scalarExtensionComponent R H A (fgPointTensorIso R H A g) M =
+      (Comodule.pointsAction M g).toLinearMap := by
+  apply LinearMap.ext
+  intro x
+  unfold scalarExtensionComponent
+  rw [fgPointTensorIso_hom_hom, fgPointNatIsoHom_hom_app]
+  let hM := FGComoduleCat.scalarExtensionFunctor_obj R H A M
+  -- After rewriting the point-induced component, only transport along `hM` remains; displaying
+  -- the four `eqToHom`s lets the category simp lemmas cancel this object equality.
+  change (eqToHom hM.symm ≫
+      (eqToHom hM ≫ (Comodule.pointsAction M g).toModuleIsoₛ.hom ≫
+        eqToHom hM.symm) ≫ eqToHom hM) x = _
+  simp
 
 /-- Forgetting tensor compatibility from the inverse point automorphism recovers the inverse
 underlying natural automorphism. -/

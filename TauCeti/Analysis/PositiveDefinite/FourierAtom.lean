@@ -20,6 +20,8 @@ It uses Mathlib's `2π` Fourier convention.
 * `TauCeti.isPositiveDefiniteKernel_fourierAtom`: the subtraction kernel attached to a
   Fourier atom is positive definite.
 * `TauCeti.continuous_fourierAtom`: Fourier atoms are continuous in the spatial variable.
+* `TauCeti.fourierAtom_zero_left` and `TauCeti.fourierAtom_zero_right`: a Fourier atom is `1`
+  when either argument is `0`.
 -/
 
 public section
@@ -49,6 +51,18 @@ theorem fourierAtom_apply (q : V) (v : V) :
   congr 1
   norm_num [Complex.ofReal_mul, Complex.ofReal_neg]
   ring
+
+/-- A Fourier atom at the zero frequency is `1`.
+
+Not a `@[simp]` lemma: `simp` already proves it through `fourierAtom_apply`, and the simpNF
+linter reports the tagged form as a duplicate. -/
+theorem fourierAtom_zero_left (v : V) : fourierAtom (0 : V) v = 1 := by
+  simp [fourierAtom]
+
+/-- A Fourier atom evaluated at the zero point is `1`. Not a `@[simp]` lemma, for the same
+reason as `fourierAtom_zero_left`. -/
+theorem fourierAtom_zero_right (q : V) : fourierAtom q (0 : V) = 1 := by
+  simp [fourierAtom]
 
 /-- Fourier atoms turn spatial subtraction into a rank-one positive-definite kernel. -/
 theorem fourierAtom_sub (q v w : V) :
