@@ -165,7 +165,7 @@ omit [SecondCountableTopology V] [CompleteSpace V] in
 /-- The characteristic function of a spatial slice is the Laplace--Fourier transform, after the
 `-2π` rescaling that converts Mathlib's Fourier convention into the characteristic-function
 convention. -/
-private theorem charFun_spatialSlice (μ : Measure (ℝ≥0 × V)) [IsFiniteMeasure μ] (t : ℝ≥0)
+private theorem charFun_spatialSlice (μ : Measure (ℝ≥0 × V)) (t : ℝ≥0)
     (a : V) :
     charFun (spatialSlice μ t) ((-2 * Real.pi) • a) = laplaceFourierTransform μ (t, a) := by
   rw [← integral_fourierAtom_eq_charFun_neg_two_pi_smul,
