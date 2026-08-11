@@ -397,9 +397,9 @@ unfolding the semireducible `CategoryTheory.Paths` and `TauCeti.Quiver.Reflect`,
 the transparency `rw` and `simp` use to build a motive. Conjugation is stripped by `subst` inside
 these lemmas, where no such identification is in play.
 
-The first of them is public: that obstruction, and this remedy for it, recur wherever the
-reflection functor is used, so it is available to `TauCeti.reflectionFunctor`'s consumers rather
-than copied by each of them. -/
+The first and the last of them are public: that obstruction, and this remedy for it, recur wherever
+the reflection functor is used, so they are available to `TauCeti.reflectionFunctor`'s consumers
+rather than copied by each of them. -/
 
 /-- Transporting a morphism along object equalities and then back leaves it unchanged. -/
 theorem eqToHom_conjugate_cancel {C : Type*} [Category* C] {X X' Y Y' : C}
@@ -435,17 +435,20 @@ private theorem eqToHom_conjugate_add {C : Type*} [Category* C] [Preadditive C] 
   subst hY
   simp [hfgh]
 
-/-- Conjugating a commuting square by object equalities leaves it commuting. -/
-private theorem eqToHom_conjugate_square {C : Type*} [Category* C] {X X' Y Y' Z Z' W W' : C}
+/-- **Conjugating a commuting square by object equalities leaves it commuting**, and nothing else
+becomes commuting that way: the square of transported edges commutes exactly when the original
+one does. -/
+theorem eqToHom_conjugate_square {C : Type*} [Category* C] {X X' Y Y' Z Z' W W' : C}
     (hX : X = X') (hY : Y = Y') (hZ : Z = Z') (hW : W = W')
-    (f : X' ⟶ Y') (g : Y' ⟶ Z') (f' : X' ⟶ W') (g' : W' ⟶ Z') (hfg : f ≫ g = f' ≫ g') :
+    (f : X' ⟶ Y') (g : Y' ⟶ Z') (f' : X' ⟶ W') (g' : W' ⟶ Z') :
     (eqToHom hX ≫ f ≫ eqToHom hY.symm) ≫ eqToHom hY ≫ g ≫ eqToHom hZ.symm =
-      (eqToHom hX ≫ f' ≫ eqToHom hW.symm) ≫ eqToHom hW ≫ g' ≫ eqToHom hZ.symm := by
+        (eqToHom hX ≫ f' ≫ eqToHom hW.symm) ≫ eqToHom hW ≫ g' ≫ eqToHom hZ.symm ↔
+      f ≫ g = f' ≫ g' := by
   subst hX
   subst hY
   subst hZ
   subst hW
-  simpa using hfg
+  simp
 
 /-- The components of the reflected morphism are natural for every arrow of the reflected
 quiver. -/
@@ -477,7 +480,7 @@ private theorem reflectRepMapApp_naturality_arrow
     rw [reflectRep_map_reflectArrowOfNeOfNe M hi ha hb e',
       reflectRep_map_reflectArrowOfNeOfNe N hi ha hb e']
     rw [reflectRepMapApp_of_ne η hi ha, reflectRepMapApp_of_ne η hi hb]
-    exact eqToHom_conjugate_square _ _ (reflectRep_obj_of_ne N hi hb) _ _ _ _ _
+    exact (eqToHom_conjugate_square _ _ (reflectRep_obj_of_ne N hi hb) _ _ _ _ _).mpr
       (η.naturality e'.toPath)
 
 /-- The morphism between reflected representations induced by a morphism of representations. -/

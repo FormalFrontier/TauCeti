@@ -36,8 +36,10 @@ reflecting back to `θ`.
 The consequence is the second milestone of the reflection-functor route to Gabriel's theorem:
 **reflection at a sink preserves indecomposability**. The reflection functor is additive, so a
 bijection on endomorphisms matches idempotents with idempotents; an indecomposable `M` other than
-`Sᵢ` therefore reflects to an indecomposable representation of the reflected quiver, whose
-dimension vector is `sᵢ · dim M` by `TauCeti.dimVector_reflectRep_of_indecomposable`.
+`Sᵢ` therefore reflects to an indecomposable representation of the reflected quiver. No
+finite-dimensionality is needed for that. It is needed for the other half of the induction step:
+`TauCeti.dimVector_reflectRep_of_indecomposable` computes the dimension vector of the reflection as
+`sᵢ · dim M` when the vertex spaces at the sources of the arrows into `i` are finite-dimensional.
 
 ## Main results
 
@@ -63,8 +65,9 @@ As in the neighbouring files, a vertex `i : Q` is used both as an object of `Cat
 and as a vertex of `TauCeti.Quiver.Reflect Q i`, identifications that hold only by unfolding
 semireducible definitions. Goals mentioning both are therefore not type-correct at the transparency
 `rw` and `simp` build motives with, so every step that strips a conjugation by `eqToHom` is
-factored through `TauCeti.eqToHom_conjugate_cancel` or one of the two private helpers at the top of
-the file, each of which `subst`s the object equalities away before doing anything.
+factored through `TauCeti.eqToHom_conjugate_cancel` and `TauCeti.eqToHom_conjugate_square`, which
+`subst` the object equalities away before doing anything, or through one of the two rearrangements
+of them at the top of the file.
 
 The linear section of the incoming sum used to build the preimage exists because a vector space is
 projective; the private `sinkSection` is a choice of one. Nothing downstream depends on which
@@ -97,31 +100,33 @@ variable {M N : QuiverRep.{u, v, w, max v w x} k Q} {i : Q}
 
 /-! ### Stripping conjugations by `eqToHom`
 
-Each of the two helpers below, like `TauCeti.eqToHom_conjugate_cancel` from
-`TauCeti.RepresentationTheory.Quiver.Reflection.Representation`, `subst`s its object equalities
-before touching the morphisms, which is what makes them usable on goals that mention a vertex both
-as an object of `CategoryTheory.Paths` and as a vertex of the reflected quiver. -/
+The two helpers below only move conjugations by `eqToHom` from one pair of edges to another; each
+is a rearrangement of `TauCeti.eqToHom_conjugate_cancel`, respectively of
+`TauCeti.eqToHom_conjugate_square`, from
+`TauCeti.RepresentationTheory.Quiver.Reflection.Representation`, and is proved from it rather than
+by unfolding transports again. Like those, they are stated for an abstract category, where a vertex
+is not simultaneously an object of `CategoryTheory.Paths` and a vertex of the reflected quiver;
+that is what makes them usable on goals where it is. -/
 
-/-- Two morphisms conjugated to the same morphism are equal. -/
+/-- Two morphisms conjugated to the same morphism are equal: conjugating back cancels, by
+`TauCeti.eqToHom_conjugate_cancel`, on both sides at once. -/
 private theorem eq_of_eqToHom_conj {C : Type*} [Category* C] {X X' Y Y' : C} (hX : X' = X)
     (hY : Y = Y') {f g : X ⟶ Y}
-    (h : eqToHom hX ≫ f ≫ eqToHom hY = eqToHom hX ≫ g ≫ eqToHom hY) : f = g := by
-  subst hX
-  subst hY
-  simpa using h
+    (h : eqToHom hX ≫ f ≫ eqToHom hY = eqToHom hX ≫ g ≫ eqToHom hY) : f = g :=
+  (eqToHom_conjugate_cancel hX hY.symm f).symm.trans
+    ((congrArg (fun u : X' ⟶ Y' ↦ eqToHom hX.symm ≫ u ≫ eqToHom hY.symm) h).trans
+      (eqToHom_conjugate_cancel hX hY.symm g))
 
 /-- A commuting square whose two horizontal edges are conjugates commutes after the conjugations
-are moved onto the vertical edges. -/
+are moved onto the vertical edges. This is `TauCeti.eqToHom_conjugate_square` for the square whose
+vertical edges are the conjugated ones, whose horizontal edges are then conjugated twice and so, by
+`TauCeti.eqToHom_conjugate_cancel`, are the given ones. -/
 private theorem eqToHom_strip_square {C : Type*} [Category* C]
     {A A' B B' D D' E E' : C} (hA : A = A') (hB : B = B') (hD : D = D') (hE : E = E')
     (p : A' ⟶ B') (q : E' ⟶ D') (f : B ⟶ D) (g : A ⟶ E)
     (h : (eqToHom hA ≫ p ≫ eqToHom hB.symm) ≫ f = g ≫ eqToHom hE ≫ q ≫ eqToHom hD.symm) :
-    p ≫ (eqToHom hB.symm ≫ f ≫ eqToHom hD) = (eqToHom hA.symm ≫ g ≫ eqToHom hE) ≫ q := by
-  subst hA
-  subst hB
-  subst hD
-  subst hE
-  simpa using h
+    p ≫ (eqToHom hB.symm ≫ f ≫ eqToHom hD) = (eqToHom hA.symm ≫ g ≫ eqToHom hE) ≫ q :=
+  (eqToHom_conjugate_square hA hB hD hE p _ _ q).mp (by simpa using h)
 
 /-! ### Faithfulness -/
 
@@ -411,7 +416,9 @@ there to an indecomposable representation of the reflected quiver.** The vertex 
 genuinely excluded: reflection sends it to the zero representation, by
 `TauCeti.subsingleton_reflectRep_obj_self`. Together with
 `TauCeti.dimVector_reflectRep_of_indecomposable`, which computes the dimension vector of the result
-as `sᵢ · dim M`, this is the inductive step of the reflection-functor proof of Gabriel's theorem. -/
+as `sᵢ · dim M` under the additional hypothesis that the vertex spaces at the sources of the arrows
+into `i` are finite-dimensional, this is the inductive step of the reflection-functor proof of
+Gabriel's theorem. -/
 theorem indecomposable_reflectRep_of_not_nonempty_iso_simpleRep (hi : IsSink i)
     (hM : Indecomposable M) (hne : ¬ Nonempty (M ≅ simpleRep k Q i)) :
     Indecomposable (reflectRep M hi) :=
