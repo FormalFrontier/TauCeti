@@ -206,7 +206,7 @@ private def rowTableau (h : μ.colLen 0 ≤ 1) (s : Multiset (Fin N))
     intro i j₁ j₂ hj hcell
     obtain ⟨rfl, hj₂⟩ := (YoungDiagram.mem_iff_of_colLen_le_one h).mp hcell
     have hlen : (rowList s).length = μ.rowLen 0 := (length_rowList s).trans hs
-    rw [if_pos rfl, if_pos rfl, List.getD_eq_getElem _ _ (by omega),
+    rw [ite_eq_left rfl, ite_eq_left rfl, List.getD_eq_getElem _ _ (by omega),
       List.getD_eq_getElem _ _ (by omega)]
     exact List.pairwise_iff_getElem.mp (pairwise_rowList s) _ _ _ _ hj
   col_strict' := by
@@ -220,9 +220,9 @@ private def rowTableau (h : μ.colLen 0 ≤ 1) (s : Multiset (Fin N))
       have hlen : (rowList s).length = μ.rowLen 0 := (length_rowList s).trans hs
       have hj : ¬ j < μ.rowLen 0 := fun hj =>
         hcell ((YoungDiagram.mem_iff_of_colLen_le_one h).mpr ⟨rfl, hj⟩)
-      rw [if_pos rfl]
+      rw [ite_eq_left rfl]
       exact List.getD_eq_default _ _ (by omega)
-    · exact if_neg hi
+    · exact ite_eq_right hi
 
 private theorem rowTableau_apply (h : μ.colLen 0 ≤ 1) (s : Multiset (Fin N))
     (hs : Multiset.card s = μ.rowLen 0) (i j : ℕ) :
@@ -237,7 +237,7 @@ def ofRowMultiset (h : μ.colLen 0 ≤ 1) (s : Multiset (Fin N))
     intro i c hic
     obtain ⟨rfl, hc⟩ := (YoungDiagram.mem_iff_of_colLen_le_one h).mp hic
     have hlen : (rowList s).length = μ.rowLen 0 := (length_rowList s).trans hs
-    rw [rowTableau_apply, if_pos rfl, List.getD_eq_getElem _ _ (by omega)]
+    rw [rowTableau_apply, ite_eq_left rfl, List.getD_eq_getElem _ _ (by omega)]
     exact rowList_lt (List.getElem_mem _)⟩
 
 private theorem ofRowMultiset_apply (h : μ.colLen 0 ≤ 1) (s : Multiset (Fin N))
@@ -249,7 +249,7 @@ private theorem ofRowMultiset_apply (h : μ.colLen 0 ≤ 1) (s : Multiset (Fin N
 private theorem rowEntry_ofRowMultiset (h : μ.colLen 0 ≤ 1) (s : Multiset (Fin N))
     (hs : Multiset.card s = μ.rowLen 0) (j : Fin (μ.rowLen 0)) :
     (rowEntry (ofRowMultiset h s hs) j : ℕ) = (rowList s).getD (j : ℕ) 0 := by
-  rw [rowEntry_val, ofRowMultiset_apply, if_pos rfl]
+  rw [rowEntry_val, ofRowMultiset_apply, ite_eq_left rfl]
 
 /-- Reading a sorted word off column by column recovers it. -/
 private theorem ofFn_getD_rowList (s : Multiset (Fin N)) (hs : Multiset.card s = μ.rowLen 0) :
@@ -292,15 +292,15 @@ theorem ofRowMultiset_rowMultiset (h : μ.colLen 0 ≤ 1) (T : BoundedSSYT N μ)
   rw [ofRowMultiset_apply, rowList_rowMultiset]
   by_cases hij : (i, j) ∈ μ
   · obtain ⟨rfl, hj⟩ := (YoungDiagram.mem_iff_of_colLen_le_one h).mp hij
-    rw [if_pos rfl, List.getD_eq_getElem _ _ (by simpa using hj), List.getElem_ofFn]
+    rw [ite_eq_left rfl, List.getD_eq_getElem _ _ (by simpa using hj), List.getElem_ofFn]
   · rw [T.1.zeros hij]
     by_cases hi : i = 0
     · subst hi
-      rw [if_pos rfl, List.getD_eq_default]
+      rw [ite_eq_left rfl, List.getD_eq_default]
       simp only [List.length_ofFn]
       exact Nat.le_of_not_lt fun hj =>
         hij ((YoungDiagram.mem_iff_of_colLen_le_one h).mpr ⟨rfl, hj⟩)
-    · rw [if_neg hi]
+    · rw [ite_eq_right hi]
 
 /-- **The bounded tableaux of a one-row shape are the multisets of letters of the right size**: a
 tableau is the multiset of the letters of its row, and a multiset of letters is listed along the
