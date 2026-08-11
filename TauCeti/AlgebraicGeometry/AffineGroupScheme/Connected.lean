@@ -16,10 +16,10 @@ scheme-theoretic `GeometricallyConnected` predicate on its Hopf spectrum.
 
 ## Main declarations
 
-* `TauCeti.geometricallyConnected_hopfSpec_iff`: compatibility of the scheme-theoretic and
-  coordinate-ring predicates.
-* `TauCeti.geometricallyConnected_hopfSpec_iff_idempotents`: the idempotent characterization of
-  geometric connectedness for a Hopf spectrum.
+* `TauCeti.geometricallyConnectedCommHopfAlg_iff_geometricallyConnected_hopfSpec`: compatibility
+  of the coordinate-ring and scheme-theoretic predicates.
+* `TauCeti.geometricallyConnected_hopfSpec_iff_idempotent_eq_zero_or_one`: the idempotent
+  characterization of geometric connectedness for a Hopf spectrum.
 
 ## References
 
@@ -43,11 +43,12 @@ universe u
 /-- **Geometric connectedness agrees across the affine-group-scheme and coordinate-ring
 models.** The structural morphism of a Hopf spectrum is geometrically connected if and only if
 its coordinate algebra is geometrically connected after every field extension. -/
-theorem geometricallyConnected_hopfSpec_iff
+theorem geometricallyConnectedCommHopfAlg_iff_geometricallyConnected_hopfSpec
     (k : Type u) [Field k] (H : CommHopfAlgCat.{u} k) :
-    GeometricallyConnected
-        (((hopfSpec (CommRingCat.of k)).obj (Opposite.op H)).X.hom) ↔
-      geometricallyConnectedCommHopfAlgProperty k H := by
+    geometricallyConnectedCommHopfAlgProperty k H ↔
+      GeometricallyConnected
+        (((hopfSpec (CommRingCat.of k)).obj (Opposite.op H)).X.hom) := by
+  -- This witness is not a global instance, but `cancel_left_of_respectsIso` needs it below.
   let : MorphismProperty.RespectsIso @GeometricallyConnected :=
     MorphismProperty.IsStableUnderBaseChange.respectsIso
   rw [geometricallyConnectedCommHopfAlgProperty_iff, hopfSpec_obj_X_hom]
@@ -57,19 +58,19 @@ theorem geometricallyConnected_hopfSpec_iff
     geometrically_iff_of_commRing_of_isClosedUnderIsomorphisms]
   constructor
   · intro h K _ _
-    exact (pullbackSpecIso k H K).hom.homeomorph.connectedSpace_iff.mp (h K)
-  · intro h K _ _
     exact (pullbackSpecIso k H K).hom.homeomorph.connectedSpace_iff.mpr (h K)
+  · intro h K _ _
+    exact (pullbackSpecIso k H K).hom.homeomorph.connectedSpace_iff.mp (h K)
 
-/-- The structural morphism of a Hopf spectrum is geometrically connected exactly when every
-field extension of its coordinate ring has only zero and one as idempotents. -/
-theorem geometricallyConnected_hopfSpec_iff_idempotents
+/-- The structural morphism of a Hopf spectrum is geometrically connected exactly when, after
+every extension `K / k` of the base field, every idempotent of `H ⊗[k] K` is zero or one. -/
+theorem geometricallyConnected_hopfSpec_iff_idempotent_eq_zero_or_one
     (k : Type u) [Field k] (H : CommHopfAlgCat.{u} k) :
     GeometricallyConnected
         (((hopfSpec (CommRingCat.of k)).obj (Opposite.op H)).X.hom) ↔
       ∀ (K : Type u) [Field K] [Algebra k K] (e : (H : Type u) ⊗[k] K),
         IsIdempotentElem e → e = 0 ∨ e = 1 := by
-  rw [geometricallyConnected_hopfSpec_iff,
-    geometricallyConnectedCommHopfAlgProperty_iff_idempotents]
+  rw [← geometricallyConnectedCommHopfAlg_iff_geometricallyConnected_hopfSpec,
+    geometricallyConnectedCommHopfAlgProperty_iff_idempotent_eq_zero_or_one]
 
 end TauCeti

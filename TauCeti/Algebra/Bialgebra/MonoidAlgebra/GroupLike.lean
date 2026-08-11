@@ -91,7 +91,7 @@ theorem isGroupLikeElem_iff_eq_single [CommRing R]
       rw [tensorEquiv_comul_apply] at hcomul
       simpa using hcomul
     have hcoeff_zero_or_one (g : H) : x.coeff g = 0 ∨ x.coeff g = 1 := by
-      apply connectedSpace_primeSpectrum_iff.mp inferInstance
+      apply eq_zero_or_eq_one_of_isIdempotentElem
       exact isIdempotentElem_iff.mpr (by simpa using (hcoeff g g).symm)
     have hx_coeff_ne : x.coeff ≠ 0 := by
       intro hzero
