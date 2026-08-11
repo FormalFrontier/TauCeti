@@ -64,10 +64,10 @@ private theorem strictMono_prefixSplitEquiv_symm_block_future {r c : ℕ} {k : F
     · rw [dite_eq_left ha, dite_eq_left hb]
       exact hk (by exact_mod_cast hab)
     · rw [dite_eq_left ha, dite_eq_right hb]
-      exact lt_of_lt_of_le (hkc ⟨a, ha⟩) (Nat.le_add_right c _)
-  · have hb : ¬ b < r := by omega
+      exact Nat.lt_add_right _ (hkc ⟨a, ha⟩)
+  · have hb : ¬ b < r := fun h => ha (hab.trans h)
     rw [dite_eq_right ha, dite_eq_right hb]
-    omega
+    exact Nat.add_lt_add_left (Nat.sub_lt_sub_right (Nat.not_lt.mp ha) hab) c
 
 /-- **A strictly monotone block joins a common future exactly as the path law does.** For a
 contractable process, a strictly monotone selection `k` lying below a cutoff `c`, the joint law of
