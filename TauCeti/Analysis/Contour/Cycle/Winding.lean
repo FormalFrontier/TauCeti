@@ -103,7 +103,7 @@ theorem exists_int_windingNumber_of_not_mem_trace (C : Cycle) {z : ℂ} (hz : z 
   have hn : ∀ γ ∈ FreeAbelianGroup.support C,
       TauCeti.Contour.windingNumber γ γ.a γ.b z = n γ := by
     intro γ hγ
-    simpa only [n, dif_pos hγ] using Classical.choose_spec (hgen γ hγ)
+    simpa only [n, dite_eq_left hγ] using Classical.choose_spec (hgen γ hγ)
   refine ⟨∑ γ ∈ FreeAbelianGroup.support C, FreeAbelianGroup.coeff γ C * n γ, ?_⟩
   rw [windingNumber_eq_sum_support]
   push_cast
