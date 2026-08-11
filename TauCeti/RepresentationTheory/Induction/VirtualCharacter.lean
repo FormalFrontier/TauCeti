@@ -105,16 +105,20 @@ theorem comp_subtype_mem_virtualCharacters (S : Subgroup G) {f : G → k}
 `TauCeti.indClassFun` bundled, which is what lets a property be propagated through the additive
 generation of an `AddSubgroup` of functions; `TauCeti.ClassFunction.ind` is the finer bundling, as
 a `k`-linear map on class functions. -/
-@[expose] noncomputable def indClassFunAddHom (S : Subgroup G) [S.FiniteIndex] :
+noncomputable def indClassFunAddHom (S : Subgroup G) [S.FiniteIndex] :
     (S → k) →+ (G → k) where
   toFun := indClassFun S
   map_zero' := indClassFun_zero
   map_add' := indClassFun_add
 
+private theorem indClassFunAddHom_apply_aux (S : Subgroup G) [S.FiniteIndex] (ψ : S → k) :
+    indClassFunAddHom S ψ = indClassFun S ψ :=
+  rfl
+
 @[simp]
 theorem indClassFunAddHom_apply (S : Subgroup G) [S.FiniteIndex] (ψ : S → k) :
     indClassFunAddHom S ψ = indClassFun S ψ :=
-  rfl
+  indClassFunAddHom_apply_aux S ψ
 
 /-- **Induction preserves virtual characters.**  A character of the subgroup induces to a character
 (`TauCeti.ClassFunction.ind_ofFDRep_mem_virtualCharacters`), and induction is additive, so the
