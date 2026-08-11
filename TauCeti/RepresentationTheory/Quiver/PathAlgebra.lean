@@ -212,12 +212,12 @@ theorem mul?_mk {a b c : Q} (p : _root_.Quiver.Path a b) (q : _root_.Quiver.Path
 
 /-- Indexed paths that do not meet have no concatenation. -/
 theorem mul?_eq_none {x y : TotalPath Q} (h : y.2.1 ≠ x.1) : mul? x y = none := by
-  simp only [mul?, dif_neg h]
+  simp only [mul?, dite_eq_right h]
 
 /-- The concatenation of two indexed paths is undefined exactly when they do not meet. -/
 theorem mul?_eq_none_iff {x y : TotalPath Q} : mul? x y = none ↔ y.2.1 ≠ x.1 := by
   refine ⟨fun h hne => ?_, mul?_eq_none⟩
-  rw [mul?, dif_pos hne] at h
+  rw [mul?, dite_eq_left hne] at h
   exact Option.some_ne_none _ h
 
 /-- The trivial path at the target of `x` is a left unit for `x`. -/

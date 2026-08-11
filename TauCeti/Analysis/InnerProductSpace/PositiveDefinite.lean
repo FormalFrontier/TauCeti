@@ -91,8 +91,8 @@ theorem exists_continuousLinearEquiv_inner_map_map (S : V →L[𝕜] V)
         have hne : Real.sqrt (lam i) ≠ 0 := (Real.sqrt_pos.mpr (hlam i)).ne'
         field_simp
         exact (Real.sq_sqrt (hlam i).le).symm
-      rw [if_pos rfl, mul_one, hwdef, ← RCLike.ofReal_mul, conj_ofReal, ← RCLike.ofReal_mul, hr,
-        RCLike.ofReal_one]
+      rw [ite_eq_left rfl, mul_one, hwdef, ← RCLike.ofReal_mul, conj_ofReal, ← RCLike.ofReal_mul,
+        hr, RCLike.ofReal_one]
     · simp [hij]
   -- Both sides are sesquilinear, so the basis computation determines them.
   refine ⟨e, fun x y ↦ ?_⟩

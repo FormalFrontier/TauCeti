@@ -57,15 +57,15 @@ theorem exists_strictMono_nat_extending_fin_eventually_add {m : ℕ} {k : Fin m 
     dsimp only [φ]
     by_cases ha : a < m
     · by_cases hb : b < m
-      · rw [dif_pos ha, dif_pos hb]
+      · rw [dite_eq_left ha, dite_eq_left hb]
         exact hk (Fin.lt_def.mpr hab)
-      · rw [dif_pos ha, dif_neg hb]
+      · rw [dite_eq_left ha, dite_eq_right hb]
         have hle_sup : k ⟨a, ha⟩ ≤ Finset.univ.sup k :=
           Finset.le_sup (f := k) (Finset.mem_univ (⟨a, ha⟩ : Fin m))
         exact (Nat.lt_succ_of_le hle_sup).trans_le (Nat.le_add_left C b)
     · by_cases hb : b < m
       · exact (ha (hab.trans hb)).elim
-      · rw [dif_neg ha, dif_neg hb]
+      · rw [dite_eq_right ha, dite_eq_right hb]
         exact Nat.add_lt_add_right hab C
   · intro i
     simp [φ, i.isLt]

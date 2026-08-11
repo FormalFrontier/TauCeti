@@ -118,14 +118,14 @@ theorem rowSymmetrizer_coeff (t : YoungTableau μ) (σ : Equiv.Perm (Fin μ.card
   rw [rowSymmetrizer_def, MonoidAlgebra.coeff_sum, Finsupp.finsetSum_apply]
   simp only [MonoidAlgebra.of_apply, MonoidAlgebra.coeff_single, Finsupp.single_apply]
   by_cases hσ : σ ∈ rowSubgroup t
-  · rw [if_pos hσ,
+  · rw [ite_eq_left hσ,
       Finset.sum_eq_single (⟨σ, hσ⟩ : rowSubgroup t)]
     · simp
-    · exact fun p _ hp => if_neg fun h => hp (Subtype.ext h)
+    · exact fun p _ hp => ite_eq_right fun h => hp (Subtype.ext h)
     · simp
-  · rw [if_neg hσ]
+  · rw [ite_eq_right hσ]
     exact Finset.sum_eq_zero fun p _ =>
-      if_neg fun h : (p : Equiv.Perm (Fin μ.card)) = σ => hσ (h ▸ p.property)
+      ite_eq_right fun h : (p : Equiv.Perm (Fin μ.card)) = σ => hσ (h ▸ p.property)
 
 /-- The coefficient of a permutation in the column antisymmetrizer is its sign on the column
 group and zero off that group. -/
@@ -138,15 +138,15 @@ theorem columnAntisymmetrizer_coeff (t : YoungTableau μ) (σ : Equiv.Perm (Fin 
   simp only [MonoidAlgebra.coeff_smul_apply, MonoidAlgebra.of_apply,
     MonoidAlgebra.coeff_single, Finsupp.single_apply, smul_eq_mul]
   by_cases hσ : σ ∈ colSubgroup t
-  · rw [if_pos hσ,
+  · rw [ite_eq_left hσ,
       Finset.sum_eq_single (⟨σ, hσ⟩ : colSubgroup t)]
     · simp
     · exact fun q _ hq => by
-        rw [if_neg fun h => hq (Subtype.ext h), mul_zero]
+        rw [ite_eq_right fun h => hq (Subtype.ext h), mul_zero]
     · simp
-  · rw [if_neg hσ]
+  · rw [ite_eq_right hσ]
     exact Finset.sum_eq_zero fun q _ => by
-      rw [if_neg fun h : (q : Equiv.Perm (Fin μ.card)) = σ => hσ (h ▸ q.property),
+      rw [ite_eq_right fun h : (q : Equiv.Perm (Fin μ.card)) = σ => hσ (h ▸ q.property),
         mul_zero]
 
 /-- Left multiplication by a member of the row group fixes the row symmetrizer. -/

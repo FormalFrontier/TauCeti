@@ -169,7 +169,7 @@ theorem vecMul_modularClassMatrix_apply_index_one (v : Fin d.numClasses → F)
     vecMul_classMultMatrix_apply]
   simp only [structureConstant_mk_one_right, Nat.cast_ite, Nat.cast_one, Nat.cast_zero,
     ite_mul, one_mul, zero_mul, Finset.sum_ite_eq' Finset.univ (d.classOf i), Finset.mem_univ,
-    if_true, reindexModularRow_classOf]
+    ite_true, reindexModularRow_classOf]
 
 end CommRing
 
