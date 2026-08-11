@@ -24,8 +24,8 @@ freely reduced lengths `80`, `160`, and `309`, giving the published total length
 The source writes `x̄` for `x⁻¹`, `x^y` for `y⁻¹xy`, and `[x,y]` for `x⁻¹y⁻¹xy`. An equation
 `r = s` is stored as the relator `r * s⁻¹`. The structured expressions below preserve the source's
 powers, conjugates, commutators, and equations. Since their direct compilation need not perform
-free cancellation, a private decidable check applies Mathlib's `FreeGroup.reduce` before checking
-the source's length `549`.
+free cancellation, decidable checks apply Mathlib's `FreeGroup.reduce` before checking the three
+block lengths and their total.
 
 The proved `TauCeti.Relator.toWord_toFreeGroup` is the audit boundary between the expressions and
 the signed words consumed by `PresentedGroup`. This file asserts no order, finiteness, simplicity,
@@ -149,14 +149,34 @@ private abbrev lyExtensionRelators : List (Relator (Fin 5)) :=
       d ⬝ cInv ⬝ .pow (a ⬝ cInv) 2 ⬝ b ⬝ aInv ⬝ .pow c 2 ⬝ bInv ⬝ c ⬝ dInv ⬝
       c ⬝ a ⬝ c ⬝ bInv ⬝ a ⬝ dInv ⬝ zInv ⬝ b ⬝ z ⬝ bInv ⬝ z ]
 
-private theorem reducedTotalLength :
-    ((h2Relators ++ h1Relators ++ lyExtensionRelators).map fun r =>
-      (FreeGroup.reduce r.toWord).length).sum = 549 := by
-  simp only [h2Relators, h1Relators, lyExtensionRelators, sourceEq, sourceConj, sourceComm,
-    List.map_append, List.map_cons, List.map_nil,
+private theorem reducedH2Length :
+    (h2Relators.map fun r => (FreeGroup.reduce r.toWord).length).sum = 80 := by
+  simp only [h2Relators, sourceEq, sourceConj, sourceComm,
+    List.map_cons, List.map_nil,
     Relator.toWord_gen, Relator.toWord_inv, Relator.toWord_mul, Relator.toWord_pow,
     Relator.toWord_comm]
   decide
+
+private theorem reducedH1Length :
+    (h1Relators.map fun r => (FreeGroup.reduce r.toWord).length).sum = 160 := by
+  simp only [h1Relators, sourceEq, sourceConj,
+    List.map_cons, List.map_nil,
+    Relator.toWord_gen, Relator.toWord_inv, Relator.toWord_mul, Relator.toWord_pow]
+  decide
+
+private theorem reducedLyExtensionLength :
+    (lyExtensionRelators.map fun r => (FreeGroup.reduce r.toWord).length).sum = 309 := by
+  simp only [lyExtensionRelators, sourceEq, sourceConj, sourceComm,
+    List.map_cons, List.map_nil,
+    Relator.toWord_gen, Relator.toWord_inv, Relator.toWord_mul, Relator.toWord_pow,
+    Relator.toWord_comm]
+  decide
+
+private theorem reducedTotalLength :
+    ((h2Relators ++ h1Relators ++ lyExtensionRelators).map fun r =>
+      (FreeGroup.reduce r.toWord).length).sum = 549 := by
+  simp only [List.map_append, List.sum_append]
+  rw [reducedH2Length, reducedH1Length, reducedLyExtensionLength]
 
 /-- Gebhardt's finite presentation of the Lyons sporadic group `Ly` on five generators.
 
@@ -176,12 +196,139 @@ def lyPresentation : GroupPresentation where
     [x,y] means x^-1*y^-1*x*y, and products are read left to right."
   transcriptionNotes := "The nine R_H2 relators, seven R_H1 relators, and nine R_G relators are \
     stored in the source's order. An equation r=s is compiled as r*s^-1. Free reduction gives \
-    block lengths 80, 160, and 309, agreeing with the source's total 549; a private decidable \
-    check in this module verifies the total. The paper proves the presentation by \
+    block lengths 80, 160, and 309, agreeing with the source's total 549; decidable checks in this \
+    module verify each block separately and derive the total. The paper proves the presentation by \
     double-coset enumeration. The independent FiniteSimpleGroups development does not cover Ly."
   expectedGeneratorCount := 5
   expectedRelatorCount := 25
   transcribed := h2Relators ++ h1Relators ++ lyExtensionRelators
+
+/-- The twenty-five relator expressions transcribed for `Ly`, split into the three blocks used by
+the source. This self-contained equation characterizes the sealed presentation without exposing
+the file's private transcription helpers. -/
+theorem lyPresentation_transcribed :
+    lyPresentation.transcribed =
+      let a : Relator (Fin lyPresentation.generatorNames.length) :=
+        .gen ⟨0, by simp [lyPresentation]⟩
+      let b : Relator (Fin lyPresentation.generatorNames.length) :=
+        .gen ⟨1, by simp [lyPresentation]⟩
+      let c : Relator (Fin lyPresentation.generatorNames.length) :=
+        .gen ⟨2, by simp [lyPresentation]⟩
+      let d : Relator (Fin lyPresentation.generatorNames.length) :=
+        .gen ⟨3, by simp [lyPresentation]⟩
+      let z : Relator (Fin lyPresentation.generatorNames.length) :=
+        .gen ⟨4, by simp [lyPresentation]⟩
+      let aInv := .inv a
+      let bInv := .inv b
+      let cInv := .inv c
+      let dInv := .inv d
+      let zInv := .inv z
+      let sourceConj (r s : Relator (Fin lyPresentation.generatorNames.length)) :=
+        .inv s ⬝ r ⬝ s
+      let sourceComm (r s : Relator (Fin lyPresentation.generatorNames.length)) :=
+        .comm (.inv r) (.inv s)
+      let sourceEq (r s : Relator (Fin lyPresentation.generatorNames.length)) := r ⬝ .inv s
+      [ .pow a 8,
+        .pow b 5,
+        .pow (a ⬝ b) 4,
+        sourceComm (.pow a 2) b,
+        .pow (sourceComm a b) 3,
+        .pow c 5,
+        sourceEq (sourceConj c (.pow a 2)) (.pow c 3),
+        sourceEq (sourceConj c (b ⬝ a))
+          (sourceConj c (.pow a 2 ⬝ b) ⬝ c ⬝ b ⬝ c ⬝ bInv),
+        sourceEq (sourceConj c (.pow b 2))
+          (.pow c 2 ⬝ sourceConj c bInv ⬝ .pow (.inv (sourceConj c b)) 2) ] ++
+      [ sourceEq (sourceConj (a ⬝ bInv ⬝ a) d) (a ⬝ bInv ⬝ .pow a 5),
+        sourceEq (sourceConj (.pow b 2 ⬝ aInv) d) (.pow aInv 2 ⬝ .pow b 2 ⬝ aInv),
+        sourceEq
+          (sourceConj (b ⬝ a ⬝ cInv ⬝ b ⬝ a ⬝ .pow bInv 2 ⬝ a) (d ⬝ c ⬝ d))
+          (aInv ⬝ b ⬝ aInv ⬝ bInv ⬝ a ⬝ .pow bInv 2 ⬝ a ⬝ c ⬝ bInv ⬝ c ⬝ b ⬝
+            a ⬝ cInv),
+        sourceEq
+          (sourceConj (.pow a 2 ⬝ cInv ⬝ b ⬝ a ⬝ cInv ⬝ b ⬝ aInv ⬝ bInv)
+            (d ⬝ c ⬝ d))
+          (.pow aInv 2 ⬝ bInv ⬝ aInv ⬝ .pow (bInv ⬝ c) 2 ⬝ .pow b 2),
+        sourceEq
+          (sourceConj (.pow b 2 ⬝ a ⬝ c ⬝ b ⬝ a) (d ⬝ c ⬝ aInv ⬝ b ⬝ c ⬝ d))
+          (aInv ⬝ b ⬝ aInv ⬝ bInv ⬝ a ⬝ .pow bInv 2 ⬝ c ⬝ aInv ⬝ bInv ⬝ c ⬝
+            b ⬝ a),
+        sourceEq
+          (sourceConj (a ⬝ .pow cInv 2 ⬝ b) (d ⬝ c ⬝ aInv ⬝ b ⬝ c ⬝ d))
+          (.pow aInv 4 ⬝ .pow b 2 ⬝ cInv ⬝ bInv ⬝ a ⬝ bInv ⬝ c ⬝ a ⬝ bInv),
+        c ⬝ aInv ⬝ cInv ⬝ a ⬝ cInv ⬝ aInv ⬝ c ⬝ a ⬝ dInv ⬝ cInv ⬝ aInv ⬝
+          cInv ⬝ a ⬝ c ⬝ aInv ⬝ c ⬝ d ⬝ c ⬝ a ⬝ cInv ⬝ aInv ⬝ cInv ⬝ a ⬝ c ⬝ d ] ++
+      [ sourceEq (sourceConj a z) (.pow aInv 3),
+        sourceEq (sourceConj a (z ⬝ d ⬝ z)) (.pow a 3),
+        sourceEq
+          (sourceConj
+            (cInv ⬝ dInv ⬝ c ⬝ b ⬝ a ⬝ .pow b 2 ⬝ .pow (c ⬝ b) 2 ⬝ cInv ⬝ d)
+            (z ⬝ d ⬝ z))
+          (cInv ⬝ b ⬝ .pow c 2 ⬝ a ⬝ cInv ⬝ b ⬝ dInv ⬝ c ⬝ a ⬝ cInv ⬝ b ⬝ c ⬝
+            .pow bInv 2 ⬝ c ⬝ a ⬝ c ⬝ dInv ⬝ c ⬝ .pow bInv 2 ⬝ c ⬝ d ⬝ a ⬝
+            dInv ⬝ cInv ⬝ dInv ⬝ c ⬝ b ⬝ aInv ⬝ b),
+        sourceEq
+          (sourceComm z
+            (dInv ⬝ cInv ⬝ b ⬝ a ⬝ bInv ⬝ d ⬝ c ⬝ d ⬝ cInv ⬝ d ⬝ cInv ⬝ b ⬝
+              a ⬝ bInv ⬝ c ⬝ d ⬝ c ⬝ d))
+          (b ⬝ c ⬝ bInv ⬝ cInv),
+        sourceEq (sourceConj a (z ⬝ d ⬝ bInv ⬝ z))
+          (aInv ⬝ dInv ⬝ cInv ⬝ b ⬝ .pow cInv 2 ⬝ a ⬝ bInv ⬝ c ⬝ a ⬝
+            .pow bInv 2 ⬝ c ⬝ bInv ⬝ c ⬝ a ⬝ cInv ⬝ d ⬝ bInv ⬝ aInv),
+        sourceEq
+          (sourceConj
+            (cInv ⬝ aInv ⬝ dInv ⬝ cInv ⬝ b ⬝ a ⬝ bInv ⬝ a ⬝ cInv ⬝ b ⬝ c ⬝ a ⬝
+              cInv ⬝ dInv ⬝ c ⬝ d ⬝ a ⬝ c ⬝ bInv ⬝ a ⬝ b ⬝ a ⬝ c)
+            (z ⬝ d ⬝ bInv ⬝ z))
+          (aInv ⬝ c ⬝ .pow aInv 3 ⬝ cInv ⬝ .pow bInv 2 ⬝ cInv ⬝ d ⬝ cInv ⬝ a ⬝
+            cInv ⬝ .pow b 2 ⬝ c ⬝ bInv ⬝ c ⬝ aInv ⬝ cInv ⬝ d ⬝ bInv ⬝ cInv ⬝
+            dInv ⬝ cInv ⬝ b ⬝ a ⬝ b ⬝ d ⬝ c ⬝ aInv),
+        sourceEq
+          (sourceConj
+            (aInv ⬝ b ⬝ d ⬝ c ⬝ aInv ⬝ bInv ⬝ a ⬝ b ⬝ aInv ⬝ cInv ⬝ bInv ⬝ c ⬝ a)
+            (z ⬝ d ⬝ c ⬝ d ⬝ z))
+          (cInv ⬝ .pow a 3 ⬝ b ⬝ cInv ⬝ bInv ⬝ aInv ⬝ c ⬝ dInv ⬝ cInv ⬝ b ⬝
+            aInv ⬝ bInv),
+        sourceEq (sourceConj (dInv ⬝ c ⬝ b ⬝ aInv ⬝ bInv) (z ⬝ d ⬝ c ⬝ d ⬝ z))
+          (a ⬝ c ⬝ aInv ⬝ b ⬝ a ⬝ cInv ⬝ b ⬝ c ⬝ a ⬝ cInv ⬝ bInv ⬝ aInv ⬝
+            bInv ⬝ a ⬝ b ⬝ dInv ⬝ c ⬝ a ⬝ cInv ⬝ bInv ⬝ cInv ⬝ a),
+        a ⬝ dInv ⬝ cInv ⬝ b ⬝ .pow aInv 2 ⬝ dInv ⬝ cInv ⬝ .pow bInv 2 ⬝ cInv ⬝
+          d ⬝ cInv ⬝ .pow (a ⬝ cInv) 2 ⬝ b ⬝ aInv ⬝ .pow c 2 ⬝ bInv ⬝ c ⬝ dInv ⬝
+          c ⬝ a ⬝ c ⬝ bInv ⬝ a ⬝ dInv ⬝ zInv ⬝ b ⬝ z ⬝ bInv ⬝ z ] := by
+  rfl
+
+/-- The freely reduced lengths of the first nine relators sum to `80`, as recorded for the
+`R_H2` block in the source. -/
+theorem lyPresentation_reducedH2Length :
+    ((lyPresentation.transcribed.take 9).map fun r =>
+      (FreeGroup.reduce r.toWord).length).sum = 80 := by
+  change (h2Relators.map fun r => (FreeGroup.reduce r.toWord).length).sum = 80
+  exact reducedH2Length
+
+/-- The freely reduced lengths of relators 10 through 16 sum to `160`, as recorded for the
+`R_H1` block in the source. -/
+theorem lyPresentation_reducedH1Length :
+    (((lyPresentation.transcribed.drop 9).take 7).map fun r =>
+      (FreeGroup.reduce r.toWord).length).sum = 160 := by
+  change (h1Relators.map fun r => (FreeGroup.reduce r.toWord).length).sum = 160
+  exact reducedH1Length
+
+/-- The freely reduced lengths of the final nine relators sum to `309`, as recorded for the
+`R_G` block in the source. -/
+theorem lyPresentation_reducedExtensionLength :
+    ((lyPresentation.transcribed.drop 16).map fun r =>
+      (FreeGroup.reduce r.toWord).length).sum = 309 := by
+  change (lyExtensionRelators.map fun r => (FreeGroup.reduce r.toWord).length).sum = 309
+  exact reducedLyExtensionLength
+
+/-- The freely reduced lengths of all relators sum to the source's total `549`. This follows from
+the three separately checked block lengths. -/
+theorem lyPresentation_reducedTotalLength :
+    (lyPresentation.transcribed.map fun r =>
+      (FreeGroup.reduce r.toWord).length).sum = 549 := by
+  change ((h2Relators ++ h1Relators ++ lyExtensionRelators).map fun r =>
+    (FreeGroup.reduce r.toWord).length).sum = 549
+  exact reducedTotalLength
 
 /-- The generator and relator counts recorded for `Ly` agree with the transcribed data. -/
 theorem matchesMetadata_lyPresentation : lyPresentation.matchesMetadata := by
