@@ -136,23 +136,22 @@ section Lp
 
 variable {G : Type*} [Group G] [TopologicalSpace G] [IsTopologicalGroup G] [Finite G]
   [MeasurableSpace G] [BorelSpace G] [MeasurableSingletonClass G]
-variable {𝕜 : Type*} [RCLike 𝕜]
 
 /-- Almost-everywhere equality for normalized Haar measure on a finite group is equality. -/
 theorem eq_of_ae_eq_haarProb {α : Type*} {F H : G → α} (h : F =ᵐ[haarProb G] H) : F = H := by
   rw [Filter.EventuallyEq, ae_haarProb_eq_top, Filter.eventually_top] at h
   exact funext h
 
+section Equiv
+
+variable {𝕜 : Type*} [NormedField 𝕜]
+
 /-- **The `L²` space of a finite group is the space of all functions on the group.** A class in
 `Lp 𝕜 2 (haarProb G)` is represented by an honest function, since no point is null, and every
-function on a finite group is square integrable.
-
-The definition is exposed so that the two lemmas reading off the values of the equivalence and of
-its inverse hold definitionally. -/
-@[expose]
+function on a finite group is square integrable. -/
 noncomputable def haarProbLpEquivFun (G : Type*) [Group G] [TopologicalSpace G]
     [IsTopologicalGroup G] [Finite G] [MeasurableSpace G] [BorelSpace G]
-    [MeasurableSingletonClass G] (𝕜 : Type*) [RCLike 𝕜] :
+    [MeasurableSingletonClass G] (𝕜 : Type*) [NormedField 𝕜] :
     Lp 𝕜 2 (haarProb G) ≃ₗ[𝕜] (G → 𝕜) where
   toFun F := ⇑F
   map_add' F H := eq_of_ae_eq_haarProb (Lp.coeFn_add F H)
@@ -163,12 +162,16 @@ noncomputable def haarProbLpEquivFun (G : Type*) [Group G] [TopologicalSpace G]
 
 @[simp]
 theorem haarProbLpEquivFun_apply (F : Lp 𝕜 2 (haarProb G)) : haarProbLpEquivFun G 𝕜 F = ⇑F :=
-  rfl
+  (rfl)
 
 @[simp]
 theorem haarProbLpEquivFun_symm_apply (F : G → 𝕜) :
-    ⇑((haarProbLpEquivFun G 𝕜).symm F) = F :=
-  (haarProbLpEquivFun G 𝕜).apply_symm_apply F
+    ⇑((haarProbLpEquivFun G 𝕜).symm F) = F := by
+  rw [← haarProbLpEquivFun_apply, LinearEquiv.apply_symm_apply]
+
+end Equiv
+
+variable {𝕜 : Type*} [RCLike 𝕜]
 
 /-- On a finite group the almost-everywhere class of a continuous function is represented by that
 function at every point, not merely almost everywhere. Together with
