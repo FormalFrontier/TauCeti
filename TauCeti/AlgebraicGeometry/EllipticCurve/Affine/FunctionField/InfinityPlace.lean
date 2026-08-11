@@ -26,13 +26,16 @@ at infinity of the curve: `ord_∞ f = -deg N f`, the place where `x` and `y` ha
 The valuation's `map_add_le_max'` rests on an ultrametric inequality in degree form, proved here;
 the other three axioms are the norm's multiplicativity and Mathlib's place at infinity.
 * `WeierstrassCurve.Affine.infinityPlace.X`,
-  `WeierstrassCurve.Affine.infinityPlace.mk_Y`
+  `WeierstrassCurve.Affine.infinityPlace.mk_Y`: `v_∞ x = exp 2` and `v_∞ y = exp 3` — the double
+  and triple poles at infinity, `ord_∞ x = -2` and `ord_∞ y = -3`, which is what Layer 0 asks for
+  by name. They read the norm degrees of `FunctionField/Norm.lean` through the valuation.
+* `WeierstrassCurve.Affine.infinityPlace.algebraMap_eq_sq`: restricting along
+  `RatFunc F → W.FunctionField` squares `RatFunc.inftyValuation`, so the place at infinity is
+  ramified of index two over the infinite place of `F(x)`.
 * `WeierstrassCurve.Affine.infinityPlace.C`: the valuation is trivial on the base field — a
-  nonzero constant has value `1`. The `Valuation.IsTrivialOn F` and `Valuation.IsNontrivial`
-  instances follow, so the place is usable through Mathlib's standard valuation
-  API: `v_∞ x = exp 2` and `v_∞ y = exp 3` —
-  the double and triple poles at infinity, `ord_∞ x = -2` and `ord_∞ y = -3`, which is what Layer 0
-  asks for by name. They read the norm degrees of `FunctionField/Norm.lean` through the valuation.
+  nonzero constant has value `1`, the constant case of the previous result. The
+  `Valuation.IsTrivialOn F` and `Valuation.IsNontrivial` instances follow, so the place is usable
+  through Mathlib's standard valuation API.
 
 Each special value comes in two forms: one stated about the curve's coordinate functions, and a
 `@[simp]` restatement in the shape simp actually normalises them to. The machinery that builds the
@@ -53,6 +56,11 @@ The route is that of the AINTLIB `HasseWeil` project (`github.com/CBirkbeck/AINT
 `dev/hasse-weil` at `a582951fe96b`), `HasseWeil/Curves/Infinity.lean`: `normAsRatFunc`,
 `ordAtInfty`, `ordAtInfty_mul`, `ordAtInfty_add_ge_min` (tagged T-ORD-ARITH-12) and
 `ordAtInfty_coordX`/`ordAtInfty_coordY`.
+
+The ramification statement corresponds to that project's `Curves/OrdAtInftyRamification.lean` and
+`Curves/RamificationAtInfinity.lean`; there it is an order identity for a `WithTop ℤ`-valued
+`ordAtInfty` over the `SmoothPlaneCurve` wrapper, where here it is an equality of Mathlib
+`Valuation`s and follows from `Algebra.norm_algebraMap` with `finrank_functionField`.
 
 Changes from the source. There `ordAtInfty` is a definition of its own, valued in `WithTop ℤ`, built
 over a `SmoothPlaneCurve` structure wrapping `WeierstrassCurve.Affine`, with multiplicativity,
@@ -298,12 +306,21 @@ theorem infinityPlace.mk_Y :
 
 
 open scoped Classical in
+/-- **The place at infinity lies over the infinite place of `F(x)`, with ramification index two.**
+On a rational function of `x` the value is the square of Mathlib's infinite valuation, the extension
+`F(W) / F(x)` being quadratic. -/
+@[simp]
+theorem infinityPlace.algebraMap_eq_sq (r : RatFunc F) :
+    infinityPlace W (algebraMap (RatFunc F) W.FunctionField r)
+      = RatFunc.inftyValuation F r ^ 2 := by
+  rw [infinityPlace_apply, Algebra.norm_algebraMap, finrank_functionField W (RatFunc F), map_pow]
+
+open scoped Classical in
 /-- **The valuation is trivial on the base field**: a nonzero constant has value `1`, so `v_∞`
 restricted to `F` is trivial. The analogue of `RatFunc.inftyValuation.C`. -/
 theorem infinityPlace.C {c : F} (hc : c ≠ 0) :
     infinityPlace W (algebraMap (RatFunc F) W.FunctionField (RatFunc.C c)) = 1 := by
-  rw [infinityPlace_apply, Algebra.norm_algebraMap, finrank_functionField W (RatFunc F), map_pow,
-    RatFunc.inftyValuation.C (F := F) hc, one_pow]
+  rw [infinityPlace.algebraMap_eq_sq, RatFunc.inftyValuation.C (F := F) hc, one_pow]
 
 
 open scoped Classical in
@@ -336,6 +353,7 @@ theorem infinityPlace.adjoinRoot_root :
     infinityPlace W (algebraMap W.CoordinateRing W.FunctionField
       (AdjoinRoot.root W.polynomial)) = WithZero.exp 3 :=
   infinityPlace.mk_Y W
+
 
 end WeierstrassCurve.Affine
 

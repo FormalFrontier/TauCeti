@@ -39,7 +39,7 @@ namespace Matrix.SpecialLinearGroup
 
 open Matrix (TransvectionStruct)
 
-private lemma transvection_mul_entry {m : ℕ} [NeZero m] (i j : Fin m) (hij : i ≠ j) (c : ℤ)
+private lemma transvection_mul_entry {m : ℕ} (i j : Fin m) (hij : i ≠ j) (c : ℤ)
     (σ : SpecialLinearGroup (Fin m) ℤ) (a b : Fin m) :
     (transvection hij c * σ).1 a b =
     if a = i then σ.1 i b + c * σ.1 j b else σ.1 a b := by
@@ -50,7 +50,7 @@ private lemma transvection_mul_entry {m : ℕ} [NeZero m] (i j : Fin m) (hij : i
   · subst hai; rw [_root_.Matrix.transvection_mul_apply_same]
   · rw [_root_.Matrix.transvection_mul_apply_of_ne (ha := hai)]
 
-private lemma transvection_mul_right_entry {m : ℕ} [NeZero m] (i j : Fin m) (hij : i ≠ j)
+private lemma transvection_mul_right_entry {m : ℕ} (i j : Fin m) (hij : i ≠ j)
     (c : ℤ) (σ : SpecialLinearGroup (Fin m) ℤ) (a b : Fin m) :
     (σ * transvection hij c).1 a b =
     if b = j then σ.1 a j + c * σ.1 a i else σ.1 a b := by
