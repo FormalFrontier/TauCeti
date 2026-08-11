@@ -88,7 +88,6 @@ noncomputable def baseChangeCoordinateRingIso
 
 /-- The bialgebra morphism underlying the forward coordinate-ring base-change isomorphism is
 `MonoidAlgebra.scalarTensorBialgEquiv`. -/
-@[simp]
 theorem baseChangeCoordinateRingIso_hom_toBialgHom
     (k : Type u) (K : Type v) [CommRing k] [CommRing K] [Algebra k K]
     (G : FGCommGrpCat.{u}) :
@@ -102,7 +101,6 @@ theorem baseChangeCoordinateRingIso_hom_toBialgHom
 
 /-- The bialgebra morphism underlying the inverse coordinate-ring base-change isomorphism is the
 inverse of `MonoidAlgebra.scalarTensorBialgEquiv`. -/
-@[simp]
 theorem baseChangeCoordinateRingIso_inv_toBialgHom
     (k : Type u) (K : Type v) [CommRing k] [CommRing K] [Algebra k K]
     (G : FGCommGrpCat.{u}) :
