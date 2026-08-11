@@ -62,6 +62,16 @@ def multiplicativeTypeCommHopfAlgProperty (k : Type u) [Field k] :
   (DiagonalizableGroup.groupLikeSpannedProperty (AlgebraicClosure k)).inverseImage
     (FiniteTypeCommHopfAlgCat.baseChangeFunctor (K := AlgebraicClosure k))
 
+/-- Membership in the multiplicative-type property means that the base-changed Hopf algebra is
+spanned by its group-like elements. -/
+@[simp]
+theorem multiplicativeTypeCommHopfAlgProperty_iff
+    (k : Type u) [Field k] (H : FiniteTypeCommHopfAlgCat.{u, u} k) :
+    multiplicativeTypeCommHopfAlgProperty k H ↔
+      DiagonalizableGroup.groupLikeSpannedProperty (AlgebraicClosure k)
+        (FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H) :=
+  Iff.rfl
+
 /-- Being of multiplicative type is invariant under isomorphisms of finite-type commutative Hopf
 algebras. -/
 instance (k : Type u) [Field k] :
@@ -80,7 +90,7 @@ theorem multiplicativeTypeCommHopfAlgProperty_iff_exists_iso_coordinateRing
           FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H) := by
   rw [multiplicativeTypeCommHopfAlgProperty, ObjectProperty.prop_inverseImage_iff,
     ← DiagonalizableGroup.essImage_coordinateRingFunctor]
-  rfl
+  simp only [Functor.essImage, DiagonalizableGroup.coordinateRingFunctor_obj]
 
 namespace DiagonalizableGroup
 
