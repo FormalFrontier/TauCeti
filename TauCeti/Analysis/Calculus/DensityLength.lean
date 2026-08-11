@@ -6,6 +6,7 @@ module
 
 public import Mathlib.Analysis.Calculus.Deriv.Shift
 public import Mathlib.MeasureTheory.Integral.IntervalIntegral.IntegrationByParts
+import Mathlib.MeasureTheory.Integral.IntervalIntegral.DistLEIntegral
 
 /-!
 # The length of a path measured against a density
@@ -34,8 +35,17 @@ necessarily continuous, let alone differentiable, `deriv` reading its junk value
 not differentiable (`TauCeti.densityLength_eq_integral` is the reformulation for a path with a
 known derivative). The hypotheses appear only where the mathematics needs them: nonnegativity of
 the density for `TauCeti.densityLength_nonneg`, differentiability of the path for the two
-substitution rules, which differentiate the composite. Each is asked at the *interior* parameters
-only, the two endpoints forming a null set.
+substitution rules, which differentiate the composite, and integrability of the two integrands for
+the comparison `TauCeti.densityLength_le_densityLength`, without which two comparable integrands
+need not have comparable integrals. The pointwise hypotheses are asked at the *interior*
+parameters only, the two endpoints forming a null set, and the displacement bound asks its
+comparison there only almost everywhere.
+
+The one estimate that leaves the pair `(ρ, γ)` is `TauCeti.norm_sub_le_densityLength`, and it too
+is a statement about the parameter side: a function of the parameter whose speed is dominated by
+the density-weighted speed of `γ` is displaced, over the parameter interval, by no more than the
+length of `γ` over it. It runs in a second normed space of its own, unrelated to `F`, the
+hypothesis again comparing only real-valued speeds.
 
 The integral is taken over the **unordered** interval `uIcc a b`, as in Mathlib's
 `Manifold.pathELength`. This is what makes the length independent of the orientation of the
@@ -60,7 +70,9 @@ be routed through a Riemannian structure, the statements below are the ones to r
 
 The substitution rules are Mathlib's change of variables for a monotone or antitone substitution
 (`intervalIntegral.integral_deriv_smul_comp_of_deriv_nonneg` and its `nonpos` counterpart) read
-through the chain rule; the affine rule is `intervalIntegral.integral_comp_mul_add`.
+through the chain rule; the affine rule is `intervalIntegral.integral_comp_mul_add`; and the
+displacement bound is Mathlib's `norm_sub_le_integral_of_norm_deriv_le_of_le`, freed from the
+ordering of the parameter interval.
 
 ## Main definitions
 
@@ -73,6 +85,12 @@ through the chain rule; the affine rule is `intervalIntegral.integral_comp_mul_a
 * `TauCeti.densityLength_eq_integral` — the length computed from an explicit derivative, the
   derivative being needed only at the interior parameters.
 * `TauCeti.densityLength_nonneg` — a nonnegative density gives a nonnegative length.
+* `TauCeti.densityLength_congr_of_eqOn` and `TauCeti.densityLength_le_densityLength` — two paths
+  whose density-weighted speeds agree inside the parameter interval have equal lengths, and two
+  whose integrable speeds compare there have comparable lengths.
+* `TauCeti.norm_sub_le_densityLength` — **displacement is at most the length**: a function of the
+  parameter whose speed is dominated by the density-weighted speed of the path moves, across the
+  parameter interval, by no more than the length of the path over it.
 * `TauCeti.densityLength_congr` — the length depends on the path only through its restriction to
   the interior of the parameter interval.
 * `TauCeti.densityLength_add` — additivity along the parameter interval.
@@ -92,7 +110,7 @@ namespace TauCeti
 open MeasureTheory Set
 
 variable {F : Type*} [NormedAddCommGroup F] [NormedSpace ℝ F]
-  {ρ ρ' : F → ℝ} {γ δ : ℝ → F} {γ' : ℝ → F} {a b : ℝ}
+  {ρ : F → ℝ} {γ δ : ℝ → F} {γ' : ℝ → F} {a b : ℝ}
 
 /-- The **length of the path `γ` measured against the density `ρ`**, over the parameter interval
 with endpoints `a` and `b`: the Euclidean speed `‖deriv γ t‖` integrated over the unordered
@@ -142,8 +160,13 @@ private theorem densityLength_eq_setIntegral_uIoo (ρ : F → ℝ) (γ : ℝ →
 
 /-- **Two paths with the same density-weighted speed inside the parameter interval have the same
 length.** This is the shape in which a symmetry of the pair `(ρ, γ)` — an isometry of the ambient
-space preserving the density, say — is fed to the length. -/
-theorem densityLength_congr_of_eqOn
+space preserving the density, say — is fed to the length.
+
+As for its inequality counterpart `TauCeti.densityLength_le_densityLength`, nothing relates the
+two paths, or the two densities, beyond that pointwise agreement — not even the space they run
+in, the hypothesis comparing only their real-valued weighted speeds. -/
+theorem densityLength_congr_of_eqOn {G : Type*} [NormedAddCommGroup G] [NormedSpace ℝ G]
+    {ρ' : G → ℝ} {δ : ℝ → G}
     (h : EqOn (fun t => ρ' (δ t) * ‖deriv δ t‖) (fun t => ρ (γ t) * ‖deriv γ t‖) (uIoo a b)) :
     densityLength ρ' δ a b = densityLength ρ γ a b := by
   rw [densityLength_eq_setIntegral_uIoo, densityLength_eq_setIntegral_uIoo]
@@ -176,6 +199,80 @@ length, whichever way round its endpoints are. -/
 theorem densityLength_nonneg (hρ : ∀ t ∈ uIoo a b, 0 ≤ ρ (γ t)) : 0 ≤ densityLength ρ γ a b := by
   rw [densityLength_eq_setIntegral_uIoo]
   exact setIntegral_nonneg measurableSet_Ioo fun t ht => mul_nonneg (hρ t ht) (norm_nonneg _)
+
+/-- **Comparing density-weighted speeds compares the lengths.** If at every interior parameter the
+density-weighted speed of `δ` is at most that of `γ`, and both speeds are integrable over the
+parameter interval, then `δ` is no longer than `γ` over it, whichever way round its endpoints are.
+
+Nothing relates the two paths, or the two densities, beyond that pointwise comparison — not even
+the space they run in, the hypotheses comparing only their real-valued weighted speeds — which is
+the form in which a contraction property of a map post-composed with a path — a Schwarz--Pick
+estimate, say — arrives: the chain rule turns the density-weighted speed of the composite into a
+factor bounded by the density at the point times the speed of the path. The comparison is the
+inequality counterpart of `TauCeti.densityLength_congr_of_eqOn`, which needs no integrability
+because equal integrands have equal integrals whether or not they are integrable. As there, the
+comparison is between the integrands that define the two lengths, and is asked at the interior
+parameters only, the two endpoints forming a null set; a path with an explicit derivative is read
+through `HasDerivAt.deriv`. Integrability, unlike that comparison, is a genuinely additional
+hypothesis: the density being arbitrary here, regularity of the path alone does not supply it, and
+it is the `C¹` path *together with* a density continuous along it that does — as in the hyperbolic
+application, where the path stays in the open disc on which the Poincaré density is continuous. -/
+theorem densityLength_le_densityLength {G : Type*} [NormedAddCommGroup G] [NormedSpace ℝ G]
+    {ρ' : G → ℝ} {δ : ℝ → G}
+    (hδint : IntervalIntegrable (fun t => ρ' (δ t) * ‖deriv δ t‖) volume a b)
+    (hγint : IntervalIntegrable (fun t => ρ (γ t) * ‖deriv γ t‖) volume a b)
+    (h : ∀ t ∈ uIoo a b, ρ' (δ t) * ‖deriv δ t‖ ≤ ρ (γ t) * ‖deriv γ t‖) :
+    densityLength ρ' δ a b ≤ densityLength ρ γ a b := by
+  have hsub : uIoo a b ⊆ uIoc a b := by
+    rw [uIoo_eq_union, uIoc_eq_union]
+    exact union_subset_union Ioo_subset_Ioc_self Ioo_subset_Ioc_self
+  rw [densityLength_eq_setIntegral_uIoo, densityLength_eq_setIntegral_uIoo]
+  exact setIntegral_mono_on ((intervalIntegrable_iff.mp hδint).mono_set hsub)
+    ((intervalIntegrable_iff.mp hγint).mono_set hsub) measurableSet_Ioo h
+
+/-- The displacement bound over an ordered parameter interval; the general case follows by
+symmetry. -/
+private theorem norm_sub_le_densityLength_of_le {G : Type*} [NormedAddCommGroup G]
+    [NormedSpace ℝ G] {u : ℝ → G} (hab : a ≤ b) (hu : ContinuousOn u (Icc a b))
+    (hdiff : DifferentiableOn ℝ u (Ioo a b))
+    (hbound : ∀ᵐ t, t ∈ Ioo a b → ‖deriv u t‖ ≤ ρ (γ t) * ‖deriv γ t‖)
+    (hint : IntervalIntegrable (fun t => ρ (γ t) * ‖deriv γ t‖) volume a b) :
+    ‖u b - u a‖ ≤ densityLength ρ γ a b := by
+  rw [densityLength_eq_intervalIntegral ρ γ hab]
+  exact norm_sub_le_integral_of_norm_deriv_le_of_le hab hu hdiff hbound hint
+
+/-- **Displacement is at most the length.** If a function `u` of the parameter is continuous on the
+parameter interval, differentiable inside it, and its speed there is almost everywhere at most the
+density-weighted speed of `γ`, then `u` moves across the interval by at most the `ρ`-length of `γ`
+over it, whichever way round the endpoints are.
+
+This is how a length bounds a distance. Taking for `u` a quantity that the length is to dominate —
+for the Poincaré density on the disc, `Real.artanh ∘ (fun t => (v * γ t).re)` for a unit vector
+`v`, a linear functional of `γ` read through `Real.artanh` rather than `Real.artanh ‖γ‖`, which
+is not differentiable where the path crosses the origin — reduces the bound to the comparison
+`hbound` between two speeds, exactly as
+`TauCeti.densityLength_le_densityLength` reduces a comparison of two lengths to one. Nothing
+relates `u` to `γ` beyond that comparison, not even the space it runs in: `u` takes values in a
+normed space of its own, and the density-weighted speed of `γ` enters only as a real-valued upper
+estimate on `‖deriv u‖`. Integrability of that estimate is needed for the same reason as there,
+and both hypotheses are asked at the *interior* parameters only, the two endpoints forming a null
+set — the comparison, as in Mathlib's `norm_sub_le_integral_of_norm_deriv_le_of_le`, only almost
+everywhere there, a bound holding at every interior parameter being read through
+`Filter.Eventually.of_forall`; a `u` with an explicit derivative is read through
+`HasDerivAt.deriv`. -/
+theorem norm_sub_le_densityLength {G : Type*} [NormedAddCommGroup G] [NormedSpace ℝ G]
+    {u : ℝ → G} (hu : ContinuousOn u (uIcc a b)) (hdiff : DifferentiableOn ℝ u (uIoo a b))
+    (hbound : ∀ᵐ t, t ∈ uIoo a b → ‖deriv u t‖ ≤ ρ (γ t) * ‖deriv γ t‖)
+    (hint : IntervalIntegrable (fun t => ρ (γ t) * ‖deriv γ t‖) volume a b) :
+    ‖u b - u a‖ ≤ densityLength ρ γ a b := by
+  rcases le_total a b with hab | hab
+  · rw [uIcc_of_le hab] at hu
+    rw [uIoo_of_le hab] at hdiff hbound
+    exact norm_sub_le_densityLength_of_le hab hu hdiff hbound hint
+  · rw [uIcc_comm, uIcc_of_le hab] at hu
+    rw [uIoo_comm, uIoo_of_le hab] at hdiff hbound
+    rw [← densityLength_symm ρ γ a b, ← norm_neg, neg_sub]
+    exact norm_sub_le_densityLength_of_le hab hu hdiff hbound hint.symm
 
 /-- The congruence over an ordered parameter interval; the general case follows by symmetry. -/
 private theorem densityLength_congr_of_le (hab : a ≤ b) (hδ : EqOn δ γ (Ioo a b)) :

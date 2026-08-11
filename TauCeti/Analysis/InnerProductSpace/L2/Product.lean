@@ -272,6 +272,30 @@ theorem setIntegral_prod_eq_zero_of_forall_inner [SFinite μ] [SFinite ν] {h : 
     _ = inner 𝕜 (L2prodMul F G) h := (L2.inner_def _ _).symm
     _ = 0 := hz F G
 
+/-- **Orthogonality kills the part of a measurable set inside a finite-measure box.** -/
+private theorem setIntegral_inter_prod_eq_zero [SFinite μ] [SFinite ν] {h : Lp 𝕜 2 (μ.prod ν)}
+    (hz : ∀ (F : Lp 𝕜 2 μ) (G : Lp 𝕜 2 ν), inner 𝕜 (L2prodMul F G) h = 0)
+    {u : Set (α × β)} (hu : MeasurableSet u)
+    {A : Set α} (hA : MeasurableSet A) (hμA : μ A ≠ ⊤)
+    {B : Set β} (hB : MeasurableSet B) (hνB : ν B ≠ ⊤) :
+    ∫ p in u ∩ (A ×ˢ B), h p ∂(μ.prod ν) = 0 := by
+  -- Inside a finite box the rectangles on which the integral is known to vanish generate the
+  -- whole product σ-algebra.
+  have hboxfin : (μ.prod ν) (A ×ˢ B) ≠ ⊤ := by
+    rw [Measure.prod_prod]
+    exact (ENNReal.mul_lt_top hμA.lt_top hνB.lt_top).ne
+  have hrect : ∀ s, MeasurableSet s → ∀ t, MeasurableSet t →
+      ∫ p in s ×ˢ t, h p ∂((μ.prod ν).restrict (A ×ˢ B)) = 0 := by
+    intro s hs t ht
+    rw [Measure.restrict_restrict (hs.prod ht), Set.prod_inter_prod]
+    exact setIntegral_prod_eq_zero_of_forall_inner hz (hs.inter hA)
+      (lt_of_le_of_lt (measure_mono Set.inter_subset_right) hμA.lt_top).ne
+      (ht.inter hB)
+      (lt_of_le_of_lt (measure_mono Set.inter_subset_right) hνB.lt_top).ne
+  have hdyn := setIntegral_eq_zero_of_forall_prod
+    (integrableOn_Lp_of_measure_ne_top h one_le_two hboxfin) hrect u hu
+  rwa [Measure.restrict_restrict hu] at hdyn
+
 /-- **Orthogonality kills every finite-measure set integral.** Exhaust the product space by finite
 boxes `spanningSets μ n ×ˢ spanningSets ν n`, run the Dynkin step inside each box, and pass to the
 monotone limit. -/
@@ -279,47 +303,21 @@ theorem setIntegral_eq_zero_of_forall_inner [SigmaFinite μ] [SigmaFinite ν] {h
     (hz : ∀ (F : Lp 𝕜 2 μ) (G : Lp 𝕜 2 ν), inner 𝕜 (L2prodMul F G) h = 0)
     (u : Set (α × β)) (hu : MeasurableSet u) (hfin : (μ.prod ν) u < ⊤) :
     ∫ p in u, h p ∂(μ.prod ν) = 0 := by
-  have hAm : ∀ n, MeasurableSet (spanningSets μ n) := measurableSet_spanningSets μ
-  have hBm : ∀ n, MeasurableSet (spanningSets ν n) := measurableSet_spanningSets ν
-  have hboxfin : ∀ n, (μ.prod ν) (spanningSets μ n ×ˢ spanningSets ν n) < ⊤ := by
-    intro n
-    rw [Measure.prod_prod]
-    exact ENNReal.mul_lt_top (measure_spanningSets_lt_top μ n) (measure_spanningSets_lt_top ν n)
-  have hbox : ∀ n, ∫ p in u ∩ (spanningSets μ n ×ˢ spanningSets ν n), h p ∂(μ.prod ν) = 0 := by
-    intro n
-    have hrect : ∀ s, MeasurableSet s → ∀ t, MeasurableSet t →
-        ∫ p in s ×ˢ t, h p ∂((μ.prod ν).restrict
-          (spanningSets μ n ×ˢ spanningSets ν n)) = 0 := by
-      intro s hs t ht
-      rw [Measure.restrict_restrict (hs.prod ht), Set.prod_inter_prod]
-      exact setIntegral_prod_eq_zero_of_forall_inner hz (hs.inter (hAm n))
-        (lt_of_le_of_lt (measure_mono Set.inter_subset_right)
-          (measure_spanningSets_lt_top μ n)).ne
-        (ht.inter (hBm n))
-        (lt_of_le_of_lt (measure_mono Set.inter_subset_right)
-          (measure_spanningSets_lt_top ν n)).ne
-    have hdyn := setIntegral_eq_zero_of_forall_prod
-      (integrableOn_Lp_of_measure_ne_top h one_le_two (hboxfin n).ne) hrect u hu
-    rwa [Measure.restrict_restrict hu] at hdyn
   have hmono : Monotone fun n => u ∩ (spanningSets μ n ×ˢ spanningSets ν n) := fun m n hmn =>
     Set.inter_subset_inter_right _
       (Set.prod_mono (monotone_spanningSets μ hmn) (monotone_spanningSets ν hmn))
   have hcover : ⋃ n, u ∩ (spanningSets μ n ×ˢ spanningSets ν n) = u := by
-    rw [← Set.inter_iUnion]
-    have huniv : ⋃ n, (spanningSets μ n ×ˢ spanningSets ν n) = Set.univ := by
-      refine Set.eq_univ_of_forall fun p => ?_
-      have h1 : p.1 ∈ ⋃ n, spanningSets μ n := by rw [iUnion_spanningSets]; trivial
-      have h2 : p.2 ∈ ⋃ n, spanningSets ν n := by rw [iUnion_spanningSets]; trivial
-      obtain ⟨i, hi⟩ := Set.mem_iUnion.1 h1
-      obtain ⟨j, hj⟩ := Set.mem_iUnion.1 h2
-      exact Set.mem_iUnion.2 ⟨max i j, monotone_spanningSets μ (le_max_left i j) hi,
-        monotone_spanningSets ν (le_max_right i j) hj⟩
-    rw [huniv, Set.inter_univ]
+    rw [← Set.inter_iUnion,
+      Set.iUnion_prod_of_monotone (monotone_spanningSets μ) (monotone_spanningSets ν),
+      iUnion_spanningSets, iUnion_spanningSets, Set.univ_prod_univ, Set.inter_univ]
   have htend := tendsto_setIntegral_of_monotone
-    (fun n => hu.inter ((hAm n).prod (hBm n))) hmono
+    (fun n => hu.inter ((measurableSet_spanningSets μ n).prod (measurableSet_spanningSets ν n)))
+    hmono
     (by rw [hcover]; exact integrableOn_Lp_of_measure_ne_top h one_le_two hfin.ne)
   rw [hcover] at htend
-  simp only [hbox] at htend
+  simp only [fun n ↦ setIntegral_inter_prod_eq_zero hz hu (measurableSet_spanningSets μ n)
+    (measure_spanningSets_lt_top μ n).ne (measurableSet_spanningSets ν n)
+    (measure_spanningSets_lt_top ν n).ne] at htend
   exact tendsto_nhds_unique htend tendsto_const_nhds
 
 /-- **Completeness of the tensor family.** The elementary tensors built from two Hilbert bases have

@@ -4,7 +4,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Probability.DeFinetti.Representation
+-- Public: the de Finetti barycenter, whose mixing law is what extremality pins down; it
+-- re-exports the mixture representation `deFinetti_mixture` this file consumes.
+public import TauCeti.Probability.DeFinetti.Barycenter
 public import TauCeti.Probability.Exchangeability.PathSpace.Law.Basic
 public import Mathlib.Dynamics.Ergodic.Extreme
 -- Non-public: the zero-one input for the i.i.d. direction and the comparison between invariant
@@ -13,12 +15,10 @@ import TauCeti.Probability.Exchangeability.PathSpace.HewittSavage
 import TauCeti.Probability.Exchangeability.PathSpace.InvariantTail
 -- Non-public: exchangeable path laws are shift-preserving.
 import TauCeti.Probability.Exchangeability.PathSpace.Exchangeable.ToContractable
-import TauCeti.Probability.Exchangeability.ConditionallyIID.Construct
 -- Non-public: a zero-one law on `ProbabilityMeasure α` is Dirac.
 import TauCeti.MeasureTheory.Measure.ProbabilityMeasureExt
--- Non-public: uniqueness of the mixing law from its mixture of infinite powers.
+-- Non-public: mixture injectivity identifies the conditioned mixing law with `π`.
 import TauCeti.MeasureTheory.Measure.MixtureInjective
-import Mathlib.Probability.Independence.InfinitePi
 
 /-!
 # Extreme exchangeable laws
@@ -81,20 +81,6 @@ namespace Probability
 
 variable {α : Type*} [MeasurableSpace α]
 
-private theorem exchangeableLaw_bind_infinitePi
-    {π : Measure (ProbabilityMeasure α)} [IsProbabilityMeasure π] :
-    ExchangeableLaw
-      (π.bind fun P => Measure.infinitePi fun _ : ℕ => (P : Measure α)) := by
-  have := isProbabilityMeasure_iidMixtureLaw (π := π) (P := id) measurable_id
-  have hX := exchangeable_iidMixtureLaw (π := π) (P := id) measurable_id
-  have hcoord : ∀ n, AEMeasurable
-      (fun ω : ProbabilityMeasure α × (ℕ → α) => ω.2 n) (iidMixtureLaw π id) :=
-    fun n => ((measurable_pi_apply n).comp measurable_snd).aemeasurable
-  have hlaw := (exchangeable_iff_exchangeableLaw_pathLaw
-    (X := fun n (ω : ProbabilityMeasure α × (ℕ → α)) => ω.2 n) hcoord).mp hX
-  rw [pathLaw_iidMixtureLaw (π := π) (P := id) measurable_id] at hlaw
-  simpa using hlaw
-
 /-- An i.i.d. infinite product law is ergodic for the one-sided shift.
 
 The shift-invariant σ-algebra is contained in the exchangeable σ-algebra, and the coordinate
@@ -102,19 +88,8 @@ process is independent and identically distributed under the product law, so Hew
 every shift-invariant event null or conull. -/
 theorem ergodic_shift_infinitePi_const (P : ProbabilityMeasure α) :
     Ergodic (shift α) (Measure.infinitePi fun _ : ℕ => (P : Measure α)) := by
-  let ρ := Measure.infinitePi fun _ : ℕ => (P : Measure α)
-  have hindep : iIndepFun (fun n (x : ℕ → α) => x n) ρ :=
-    iIndepFun_infinitePi (P := fun _ : ℕ => (P : Measure α))
-      (X := fun _ x => x) fun _ => measurable_id
-  have hident : ∀ n, IdentDistrib (fun x : ℕ → α => x n) (fun x => x 0) ρ ρ := fun n =>
-    ⟨(measurable_pi_apply n).aemeasurable, (measurable_pi_apply 0).aemeasurable, by
-      simp [ρ, Measure.infinitePi_map_eval]⟩
-  have hexch : Exchangeable ρ (fun n (x : ℕ → α) => x n) :=
-    Exchangeable.of_iIndepFun_identDistrib hindep hident
-  have hpath : pathLaw ρ (fun n (x : ℕ → α) => x n) = ρ := by simp [pathLaw_def]
-  have hexchLaw : ExchangeableLaw ρ :=
-    hpath ▸ (exchangeable_iff_exchangeableLaw_pathLaw
-      (fun n => (measurable_pi_apply n).aemeasurable)).1 hexch
+  have hexchLaw : ExchangeableLaw (Measure.infinitePi fun _ : ℕ => (P : Measure α)) :=
+    exchangeableLaw_infinitePi_const P
   refine { hexchLaw.contractableLaw.measurePreserving_shift with aeconst_set := ?_ }
   intro s hs hs_shift
   have hs_inv : MeasurableSet[MeasurableSpace.invariants (shift α)] s := ⟨hs, hs_shift⟩
@@ -130,54 +105,34 @@ private theorem cond_eq_of_extreme_iidMixture [StandardBorelSpace α]
     {ρ : Measure (ℕ → α)} [IsProbabilityMeasure ρ]
     (hρ : ρ ∈ extremePoints ℝ≥0∞
       {ν : Measure (ℕ → α) | ExchangeableLaw ν ∧ IsProbabilityMeasure ν})
-    (hrepr : ρ = p.bind fun P => Measure.infinitePi fun _ : ℕ => (P : Measure α))
+    (hrepr : ρ = deFinettiBarycenter p)
     {s : Set (ProbabilityMeasure α)} (hs : MeasurableSet s) (hs0 : p s ≠ 0)
     (hsc0 : p sᶜ ≠ 0) : p[|s] = p := by
-  let ps : Measure (ProbabilityMeasure α) := p[|s]
-  let psc : Measure (ProbabilityMeasure α) := p[|sᶜ]
-  have : IsProbabilityMeasure ps := cond_isProbabilityMeasure hs0
-  have : IsProbabilityMeasure psc := cond_isProbabilityMeasure hsc0
-  let μs : Measure (ℕ → α) :=
-    ps.bind fun P => Measure.infinitePi fun _ : ℕ => (P : Measure α)
-  let μsc : Measure (ℕ → α) :=
-    psc.bind fun P => Measure.infinitePi fun _ : ℕ => (P : Measure α)
-  have hpow : Measurable fun P : ProbabilityMeasure α =>
-      Measure.infinitePi fun _ : ℕ => (P : Measure α) :=
-    TauCeti.MeasureTheory.measurable_infinitePi_const
-  have : IsProbabilityMeasure μs := isProbabilityMeasure_bind hpow.aemeasurable
-    (ae_of_all _ fun _ => inferInstance)
-  have : IsProbabilityMeasure μsc := isProbabilityMeasure_bind hpow.aemeasurable
-    (ae_of_all _ fun _ => inferInstance)
-  have hs_mem : μs ∈
+  have : IsProbabilityMeasure (p[|s]) := cond_isProbabilityMeasure hs0
+  have : IsProbabilityMeasure (p[|sᶜ]) := cond_isProbabilityMeasure hsc0
+  have hs_mem : deFinettiBarycenter (p[|s]) ∈
       {ν : Measure (ℕ → α) | ExchangeableLaw ν ∧ IsProbabilityMeasure ν} :=
-    ⟨exchangeableLaw_bind_infinitePi, inferInstance⟩
-  have hsc_mem : μsc ∈
+    ⟨exchangeableLaw_deFinettiBarycenter, inferInstance⟩
+  have hsc_mem : deFinettiBarycenter (p[|sᶜ]) ∈
       {ν : Measure (ℕ → α) | ExchangeableLaw ν ∧ IsProbabilityMeasure ν} :=
-    ⟨exchangeableLaw_bind_infinitePi, inferInstance⟩
-  have hp_split : p = p s • ps + p sᶜ • psc := by
+    ⟨exchangeableLaw_deFinettiBarycenter, inferInstance⟩
+  have hp_split : p = p s • p[|s] + p sᶜ • p[|sᶜ] := by
     ext t ht
     simp only [Measure.add_apply, Measure.smul_apply, smul_eq_mul]
     simpa [mul_comm] using (cond_add_cond_compl_eq (μ := p) (t := t) hs).symm
-  have hmix_split :
-      p.bind (fun P => Measure.infinitePi fun _ : ℕ => (P : Measure α)) =
-        p s • μs + p sᶜ • μsc := by
-    calc
-      p.bind (fun P => Measure.infinitePi fun _ : ℕ => (P : Measure α)) =
-          (p s • ps + p sᶜ • psc).bind
-            (fun P => Measure.infinitePi fun _ : ℕ => (P : Measure α)) :=
-        congrArg
-          (fun q : Measure (ProbabilityMeasure α) =>
-            q.bind fun P => Measure.infinitePi fun _ : ℕ => (P : Measure α)) hp_split
-      _ = p s • μs + p sᶜ • μsc := by
-        have h := Measure.bind_sum
-          (fun b : Bool => if b then p s • ps else p sᶜ • psc)
-          (fun P => Measure.infinitePi fun _ : ℕ => (P : Measure α)) hpow.aemeasurable
-        simpa [Measure.sum_bool, Measure.bind_smul, μs, μsc] using h
-  have hopen : ρ ∈ openSegment ℝ≥0∞ μs μsc :=
+  -- affinity of the barycenter turns the splitting of `p` into a splitting of `ρ`
+  have hmix_split : deFinettiBarycenter p =
+      p s • deFinettiBarycenter (p[|s]) + p sᶜ • deFinettiBarycenter (p[|sᶜ]) := by
+    conv_lhs => rw [hp_split]
+    simp only [deFinettiBarycenter_add, deFinettiBarycenter_smul]
+  have hopen : ρ ∈
+      openSegment ℝ≥0∞ (deFinettiBarycenter (p[|s])) (deFinettiBarycenter (p[|sᶜ])) :=
     ⟨p s, p sᶜ, pos_iff_ne_zero.2 hs0, pos_iff_ne_zero.2 hsc0,
       prob_add_prob_compl hs, hmix_split.symm.trans hrepr.symm⟩
-  have hμs : μs = ρ := hρ.2 hs_mem hsc_mem hopen
-  exact TauCeti.MeasureTheory.Measure.ext_of_bind_infinitePi_eq (hμs.trans hrepr)
+  have hμs : deFinettiBarycenter (p[|s]) = ρ := hρ.2 hs_mem hsc_mem hopen
+  have hbary : deFinettiBarycenter (p[|s]) = deFinettiBarycenter p := hμs.trans hrepr
+  simp only [deFinettiBarycenter_def] at hbary
+  exact TauCeti.MeasureTheory.Measure.ext_of_bind_infinitePi_eq hbary
 
 /-- **An extreme exchangeable law is i.i.d.** De Finetti writes the law as a mixture over
 `ProbabilityMeasure α`; extremality forces the mixing measure to be a zero-one law, hence a Dirac
@@ -188,17 +143,10 @@ private theorem exists_eq_infinitePi_of_mem_extremePoints [StandardBorelSpace α
       {ν : Measure (ℕ → α) | ExchangeableLaw ν ∧ IsProbabilityMeasure ν}) :
     ∃ P : ProbabilityMeasure α,
       ρ = Measure.infinitePi fun _ : ℕ => (P : Measure α) := by
-  let : Nonempty α := (nonempty_of_isProbabilityMeasure ρ).map fun x => x 0
-  have hcoord : ∀ n, Measurable (fun x : ℕ → α => x n) := fun n => measurable_pi_apply n
-  have hX : Exchangeable ρ (fun n x => x n) :=
-    (exchangeable_iff_exchangeableLaw_pathLaw fun n => (hcoord n).aemeasurable).2 (by
-      simpa [pathLaw_def] using hρ.1.1)
-  obtain ⟨π, hrepr, -⟩ := deFinetti_mixture hX hcoord
-  have hrepr' : ρ = (π : Measure (ProbabilityMeasure α)).bind
-      fun P => Measure.infinitePi fun _ : ℕ => (P : Measure α) := by
-    simpa [pathLaw_def] using hrepr
+  obtain ⟨π, hrepr, -⟩ := hρ.1.1.existsUnique_mixingLaw
   let p : Measure (ProbabilityMeasure α) := π
   have : IsProbabilityMeasure p := π.2
+  have hrepr' : ρ = deFinettiBarycenter p := hrepr
   have hp_zeroOne : IsZeroOneMeasure p := {
     zero_one₀ := fun s hs => by
       by_cases hs0 : p s = 0
@@ -207,8 +155,7 @@ private theorem exists_eq_infinitePi_of_mem_extremePoints [StandardBorelSpace α
       · exact Or.inr hs1
       exfalso
       have hsc0 : p sᶜ ≠ 0 := fun h => hs1 ((prob_compl_eq_zero_iff hs).mp h)
-      have hps : p[|s] = p := cond_eq_of_extreme_iidMixture hρ (by simpa [p] using hrepr')
-        hs hs0 hsc0
+      have hps : p[|s] = p := cond_eq_of_extreme_iidMixture hρ hrepr' hs hs0 hsc0
       apply hs1
       rw [← hps]
       exact cond_apply_self hs0 (measure_ne_top p s)
@@ -216,12 +163,7 @@ private theorem exists_eq_infinitePi_of_mem_extremePoints [StandardBorelSpace α
   let : IsZeroOneMeasure p := hp_zeroOne
   obtain ⟨P, hp⟩ :=
     TauCeti.MeasureTheory.IsZeroOneMeasure.exists_eq_dirac_probabilityMeasure (π := p)
-  refine ⟨P, ?_⟩
-  calc
-    ρ = p.bind (fun Q => Measure.infinitePi fun _ : ℕ => (Q : Measure α)) := by
-      simpa [p] using hrepr'
-    _ = Measure.infinitePi fun _ : ℕ => (P : Measure α) := by
-      rw [hp, Measure.dirac_bind TauCeti.MeasureTheory.measurable_infinitePi_const]
+  exact ⟨P, by rw [hrepr', hp, deFinettiBarycenter_dirac]⟩
 
 /-- **An i.i.d. law is an extreme exchangeable law.** The infinite product is ergodic for the
 shift, hence extreme among the shift-invariant laws; exchangeable laws are shift-invariant, so
@@ -242,12 +184,9 @@ theorem infinitePi_mem_extremePoints_exchangeable (P : ProbabilityMeasure α) :
     rintro ν ⟨hν, hνprob⟩
     let : IsProbabilityMeasure ν := hνprob
     exact ⟨hν.contractableLaw.measurePreserving_shift, hνprob⟩
-  have hρPexch : ExchangeableLaw ρP := by
-    have hdirac : ρP = (Measure.dirac P).bind
-        (fun Q => Measure.infinitePi fun _ : ℕ => (Q : Measure α)) := by
-      rw [Measure.dirac_bind TauCeti.MeasureTheory.measurable_infinitePi_const]
-    rw [hdirac]
-    exact exchangeableLaw_bind_infinitePi
+  have hρPexch : ExchangeableLaw (Measure.infinitePi fun _ : ℕ => (P : Measure α)) := by
+    rw [← deFinettiBarycenter_dirac P]
+    exact exchangeableLaw_deFinettiBarycenter
   exact inter_extremePoints_subset_extremePoints_of_subset hsubset
     ⟨⟨hρPexch, inferInstance⟩, hshiftExtreme⟩
 

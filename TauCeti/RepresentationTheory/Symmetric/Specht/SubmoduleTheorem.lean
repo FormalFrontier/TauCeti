@@ -6,6 +6,7 @@ module
 
 public import TauCeti.RepresentationTheory.Induction.Restriction
 public import TauCeti.RepresentationTheory.Irreducible
+public import TauCeti.RepresentationTheory.Symmetric.Dominance
 public import TauCeti.RepresentationTheory.Symmetric.Factorization
 public import TauCeti.RepresentationTheory.Symmetric.Specht.Module
 
@@ -87,6 +88,33 @@ noncomputable local instance (t : YoungTableau μ) : DecidablePred (· ∈ colSu
 
 /-! ### James's lemma: the column antisymmetrizer of a tabloid -/
 
+/-- When no row of `s` meets a column of `t` twice, the column antisymmetrizer of `t` sends the
+tabloid of `s` to a signed multiple of the polytabloid `e_t`, the sign being that of some
+permutation. -/
+private theorem exists_asAlgebraHom_columnAntisymmetrizer_single_eq_sign_smul
+    (s t : YoungTableau μ) (h : ¬ RowMeetsColumnTwice s t) :
+    ∃ q : Equiv.Perm (Fin μ.card),
+      (permutationModule (shapePartition μ)).ρ.asAlgebraHom (columnAntisymmetrizer t)
+        (MonoidAlgebra.single (tabloid s) 1)
+          = ((Equiv.Perm.sign q : ℤ) : ℚ) • polytabloid t := by
+  -- Writing `s = relabel σ t`, the permutation `σ⁻¹` factors as a row permutation times a
+  -- column permutation; the row part fixes `{t}`, and `b_t` absorbs the column part `q⁻¹` by
+  -- its sign.
+  obtain ⟨σ, rfl⟩ := exists_relabel_eq t s
+  rw [rowMeetsColumnTwice_relabel_left_iff] at h
+  obtain ⟨p, hp, q, hq, hpq⟩ := Set.mem_mul.mp (mem_mul_of_not_rowMeetsColumnTwice h)
+  have hσ : σ = q⁻¹ * p⁻¹ := by rw [← mul_inv_rev, hpq, inv_inv]
+  refine ⟨q, ?_⟩
+  have htab : MonoidAlgebra.single (tabloid (relabel σ t)) (1 : ℚ) =
+      (permutationModule (shapePartition μ)).ρ q⁻¹
+        (MonoidAlgebra.single (tabloid t) 1) := by
+    rw [Representation.ofMulAction_single, tabloid_relabel, hσ, mul_smul,
+      smul_tabloid_eq_self_iff.mpr (inv_mem (SetLike.mem_coe.mp hp))]
+  rw [htab, ← Representation.asAlgebraHom_single_one (permutationModule (shapePartition μ)).ρ,
+    ← Module.End.mul_apply, ← map_mul,
+    mul_columnAntisymmetrizer_right t ⟨q⁻¹, inv_mem (SetLike.mem_coe.mp hq)⟩,
+    Equiv.Perm.sign_inv, map_smul, LinearMap.smul_apply, ← polytabloid_def]
+
 /-- **James's Lemma 4.6.**  The column antisymmetrizer of `t` sends a `μ`-tabloid to a rational
 multiple of the polytabloid `e_t`; the multiple is `0` or a sign.
 
@@ -100,52 +128,18 @@ theorem exists_eq_smul_polytabloid_single (t : YoungTableau μ)
       (permutationModule (shapePartition μ)).ρ.asAlgebraHom (columnAntisymmetrizer t)
           (MonoidAlgebra.single T 1) = κ • polytabloid t := by
   obtain ⟨s, rfl⟩ := tabloid_surjective T
-  obtain ⟨σ, rfl⟩ := exists_relabel_eq t s
-  by_cases h : RowMeetsColumnTwice (relabel σ t) t
-  · -- the transposition of the two shared labels fixes the tabloid and negates `b_t`
+  by_cases h : RowMeetsColumnTwice s t
+  · -- The transposition of the two shared labels is an odd element of the column group of `t`
+    -- fixing the tabloid of `s`, which is exactly the hypothesis of the general vanishing lemma.
     obtain ⟨x, y, hxy, hrow, hcol⟩ := (rowMeetsColumnTwice_def _ _).mp h
-    refine ⟨0, Or.inl rfl, ?_⟩
-    rw [zero_smul]
-    have hfix : (permutationModule (shapePartition μ)).ρ (Equiv.swap x y)
-        (MonoidAlgebra.single (tabloid (relabel σ t)) (1 : ℚ)) =
-        MonoidAlgebra.single (tabloid (relabel σ t)) 1 := by
-      rw [Representation.ofMulAction_single,
-        smul_tabloid_eq_self_iff.mpr (swap_mem_rowSubgroup hrow)]
-    have hneg : columnAntisymmetrizer t * MonoidAlgebra.single (Equiv.swap x y) (1 : ℚ) =
-        -columnAntisymmetrizer t := by
-      rw [mul_columnAntisymmetrizer_right t ⟨Equiv.swap x y, swap_mem_colSubgroup hcol⟩,
-        Equiv.Perm.sign_swap hxy]
-      simp
-    have key : (permutationModule (shapePartition μ)).ρ.asAlgebraHom (columnAntisymmetrizer t)
-          (MonoidAlgebra.single (tabloid (relabel σ t)) 1) =
-        -((permutationModule (shapePartition μ)).ρ.asAlgebraHom (columnAntisymmetrizer t)
-          (MonoidAlgebra.single (tabloid (relabel σ t)) 1)) := by
-      conv_lhs => rw [← hfix]
-      rw [← Representation.asAlgebraHom_single_one (permutationModule (shapePartition μ)).ρ,
-        ← Module.End.mul_apply, ← map_mul, hneg, map_neg, LinearMap.neg_apply]
-    have h2 : (2 : ℚ) •
-        (permutationModule (shapePartition μ)).ρ.asAlgebraHom (columnAntisymmetrizer t)
-          (MonoidAlgebra.single (tabloid (relabel σ t)) 1) = 0 := by
-      rw [two_smul]
-      nth_rewrite 2 [key]
-      exact add_neg_cancel _
-    exact (smul_eq_zero.mp h2).resolve_left (by norm_num)
-  · -- `σ⁻¹ = p q`, the row part fixes `{t}`, and `b_t` absorbs the column part by its sign
-    rw [rowMeetsColumnTwice_relabel_left_iff] at h
-    obtain ⟨p, hp, q, hq, hpq⟩ := Set.mem_mul.mp (mem_mul_of_not_rowMeetsColumnTwice h)
-    have hσ : σ = q⁻¹ * p⁻¹ := by rw [← mul_inv_rev, hpq, inv_inv]
-    have hsign : ((Equiv.Perm.sign q : ℤ) : ℚ) = 1 ∨ ((Equiv.Perm.sign q : ℤ) : ℚ) = -1 := by
-      rcases Int.units_eq_one_or (Equiv.Perm.sign q) with hq | hq <;> simp [hq]
-    refine ⟨((Equiv.Perm.sign q : ℤ) : ℚ), Or.inr hsign, ?_⟩
-    have htab : MonoidAlgebra.single (tabloid (relabel σ t)) (1 : ℚ) =
-        (permutationModule (shapePartition μ)).ρ q⁻¹
-          (MonoidAlgebra.single (tabloid t) 1) := by
-      rw [Representation.ofMulAction_single, tabloid_relabel, hσ, mul_smul,
-        smul_tabloid_eq_self_iff.mpr (inv_mem (SetLike.mem_coe.mp hp))]
-    rw [htab, ← Representation.asAlgebraHom_single_one (permutationModule (shapePartition μ)).ρ,
-      ← Module.End.mul_apply, ← map_mul,
-      mul_columnAntisymmetrizer_right t ⟨q⁻¹, inv_mem (SetLike.mem_coe.mp hq)⟩,
-      Equiv.Perm.sign_inv, map_smul, LinearMap.smul_apply, ← polytabloid_def]
+    exact ⟨0, Or.inl rfl, by
+      rw [zero_smul]
+      exact asAlgebraHom_columnAntisymmetrizer_single_eq_zero t (shapePartition μ) (tabloid s)
+        (swap_mem_colSubgroup hcol) (Equiv.Perm.sign_swap hxy)
+        (smul_tabloid_eq_self_iff.mpr (swap_mem_rowSubgroup hrow))⟩
+  · obtain ⟨q, hq⟩ := exists_asAlgebraHom_columnAntisymmetrizer_single_eq_sign_smul s t h
+    exact ⟨_, Or.inr (by rcases Int.units_eq_one_or (Equiv.Perm.sign q) with h | h <;> simp [h]),
+      hq⟩
 
 /-- **The column antisymmetrizer collapses `M^μ` onto the line spanned by the polytabloid.**  This
 is the linear extension of `TauCeti.YoungTableau.exists_eq_smul_polytabloid_single` from the

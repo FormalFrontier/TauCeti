@@ -316,7 +316,7 @@ theorem rootSpace_glWeightSub_eq_span [IsDomain R] (h2 : (2 : R) ≠ 0) {i j : n
     by_cases h : i = a ∧ j = b
     · obtain ⟨rfl, rfl⟩ := h
       simp
-    · rw [if_neg h, mul_zero]
+    · rw [ite_eq_right h, mul_zero]
       refine ((mem_rootSpace_diagonalCartan_iff _ _).mp hB a b fun hcon => h ?_).symm
       obtain ⟨rfl, rfl⟩ := (glWeightSub_eq_glWeightSub_iff h2 hij a b).mp hcon
       exact ⟨rfl, rfl⟩

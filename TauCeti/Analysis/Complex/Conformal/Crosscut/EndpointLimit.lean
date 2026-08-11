@@ -8,6 +8,7 @@ module
 public import TauCeti.Analysis.Complex.Conformal.Crosscut.Image
 public import TauCeti.Analysis.Complex.Conformal.LengthArea
 import TauCeti.Analysis.Complex.Conformal.Crosscut.Endpoints
+import TauCeti.MeasureTheory.Integral.DominatedIncrement
 import TauCeti.Topology.Circle.Metric
 
 /-!
@@ -35,10 +36,17 @@ The engine is the chord bound of `Conformal/LengthArea.lean` in its primitive, s
 `TauCeti.ofReal_dist_le_mul_lintegral_Ioc`: the images of the endpoints of an arc of angles are at
 distance at most `|ρ|` times the angular integral of `‖deriv f‖` over *that* arc. Applied to a
 sub-arc, it says that the oscillation of `f` along a piece of the circle is controlled by the length
-carried by that piece alone. Since the total length is finite, Mathlib's absolute continuity of the
-integral (`MeasureTheory.exists_pos_setLIntegral_lt_of_measure_lt`) makes the length carried by a
-short sub-arc uniformly small: that is `TauCeti.exists_pos_forall_dist_le_of_lintegral_ne_top`, a
-modulus of continuity for `f` along the arc, in the angular parameter.
+carried by that piece alone — in the vocabulary of
+`TauCeti/MeasureTheory/Integral/DominatedIncrement.lean`, that the increments of
+`f ∘ circleMap ζ ρ` are *dominated* by the angular length density
+`θ ↦ |ρ| * ‖deriv f (circleMap ζ ρ θ)‖ₑ`. Neither of the two conclusions drawn from that
+domination sees the circle: a map on an order-connected subset of `ℝ` whose increments are
+dominated by a density of finite total integral has bounded image and is uniformly continuous, the
+latter by absolute continuity of the integral. Both are proved there, at that generality, and the
+two statements below are their instances at the arc —
+`TauCeti.exists_pos_forall_dist_le_of_lintegral_ne_top`, a modulus of continuity for `f` along the
+arc in the angular parameter, and
+`TauCeti.isBounded_image_circleMap_image_Ioo_of_lintegral_ne_top`.
 
 Turning the angular modulus into a statement about the plane needs the chord formula
 `TauCeti.dist_circleMap_eq_two_mul_sin_abs`: on an arc of angular width below a full turn the chord
@@ -148,16 +156,41 @@ private lemma ofReal_dist_le_mul_lintegral_Ioc_of_mem_Ioo (hUo : IsOpen U)
   ofReal_dist_le_mul_lintegral_Ioc hUo hf ζ hle fun _ hθ =>
     hmemU _ ⟨h₁.1.trans_le hθ.1, hθ.2.trans_lt h₂.2⟩
 
+/-- The chord bound in the form the increment estimates of
+`TauCeti/MeasureTheory/Integral/DominatedIncrement.lean` consume: along an arc of angles on which
+`f` is holomorphic, the increments of `f ∘ circleMap ζ ρ` are dominated by the *angular length
+density* `θ ↦ |ρ| * ‖deriv f (circleMap ζ ρ θ)‖ₑ`, whose integral over a sub-arc is the length of
+the image of that sub-arc. Moving the constant `|ρ|` inside the integral is all that separates the
+two forms. -/
+private lemma edist_le_setLIntegral_enorm_deriv_circleMap (hUo : IsOpen U)
+    (hf : DifferentiableOn ℂ f U) (ζ : ℂ) {ρ : ℝ} {a b : ℝ}
+    (hmemU : ∀ θ ∈ Ioo a b, circleMap ζ ρ θ ∈ U) :
+    ∀ θ₁ ∈ Ioo a b, ∀ θ₂ ∈ Ioo a b, θ₁ ≤ θ₂ →
+      edist (f (circleMap ζ ρ θ₁)) (f (circleMap ζ ρ θ₂)) ≤
+        ∫⁻ θ in Ioc θ₁ θ₂, ENNReal.ofReal |ρ| * ‖deriv f (circleMap ζ ρ θ)‖ₑ := by
+  intro θ₁ h₁ θ₂ h₂ hle
+  rw [edist_dist, lintegral_const_mul' _ _ ENNReal.ofReal_ne_top]
+  exact ofReal_dist_le_mul_lintegral_Ioc_of_mem_Ioo hUo hf ζ hmemU h₁ h₂ hle
+
+/-- An arc of finite image length carries a finite integral of the angular length density: the two
+differ by the finite factor `|ρ|`. -/
+private lemma setLIntegral_enorm_deriv_circleMap_ne_top {ρ : ℝ} {a b : ℝ}
+    (hfin : ∫⁻ θ in Ioo a b, ‖deriv f (circleMap ζ ρ θ)‖ₑ ≠ ⊤) :
+    (∫⁻ θ in Ioo a b, ENNReal.ofReal |ρ| * ‖deriv f (circleMap ζ ρ θ)‖ₑ) ≠ ⊤ := by
+  rw [lintegral_const_mul' _ _ ENNReal.ofReal_ne_top]
+  exact ENNReal.mul_ne_top ENNReal.ofReal_ne_top hfin
+
 /-- **A modulus of continuity along an arc of finite image length.** If `f` is holomorphic on an
 open set containing the piece of the circle of radius `ρ` about `ζ` cut out by the angles `Ioo a b`,
 and the angular integral of `‖deriv f‖` over that arc is finite, then for every tolerance `ε > 0`
 there is an angular gap `η > 0` within which the images of two angles of the arc stay `ε` apart.
 
 The gap is uniform over the arc, and in particular does not shrink as an end of the arc is
-approached: that is the whole content, and it comes from the absolute continuity of the integral,
-`MeasureTheory.exists_pos_setLIntegral_lt_of_measure_lt`. A short sub-arc carries little length,
-and by the chord bound `TauCeti.ofReal_dist_le_mul_lintegral_Ioc` the length a sub-arc carries
-bounds the distance between the images of its two ends.
+approached: that is the whole content. A short sub-arc carries little length, and by the chord
+bound `TauCeti.ofReal_dist_le_mul_lintegral_Ioc` the length a sub-arc carries bounds the distance
+between the images of its two ends; that is the domination hypothesis of
+`TauCeti.uniformContinuousOn_of_edist_le_setLIntegral`, which draws the modulus from the absolute
+continuity of the integral and knows nothing of circles.
 
 Uniform continuity in the angle is *not* uniform continuity of `f` on the arc as a subset of the
 plane, but on an arc of angular width below a full turn the two agree, which is what
@@ -171,50 +204,17 @@ theorem exists_pos_forall_dist_le_of_lintegral_ne_top (hUo : IsOpen U)
     (hfin : ∫⁻ θ in Ioo a b, ‖deriv f (circleMap ζ ρ θ)‖ₑ ≠ ⊤) {ε : ℝ} (hε : 0 < ε) :
     ∃ η > 0, ∀ θ₁ ∈ Ioo a b, ∀ θ₂ ∈ Ioo a b, |θ₁ - θ₂| ≤ η →
       dist (f (circleMap ζ ρ θ₁)) (f (circleMap ζ ρ θ₂)) ≤ ε := by
-  -- a circle of radius `0` is the single point `ζ`, where every distance in sight vanishes
-  rcases eq_or_ne ρ 0 with rfl | hρ
-  · exact ⟨1, one_pos, fun _ _ _ _ _ => by simp [hε.le]⟩
-  have hρpos : 0 < |ρ| := abs_pos.mpr hρ
-  have hρ0 : ENNReal.ofReal |ρ| ≠ 0 := (ENNReal.ofReal_pos.mpr hρpos).ne'
-  have hcne : ENNReal.ofReal (ε / |ρ|) ≠ 0 := (ENNReal.ofReal_pos.mpr (div_pos hε hρpos)).ne'
-  obtain ⟨δ, hδ, hδlt⟩ :=
-    exists_pos_setLIntegral_lt_of_measure_lt (μ := volume.restrict (Ioo a b)) hfin hcne
-  obtain ⟨d, hd0, hdδ⟩ := exists_between hδ
-  have hdtop : d ≠ ⊤ := (hdδ.trans_le le_top).ne
-  -- the estimate for a pair of angles in increasing order
-  have key : ∀ θ₁ ∈ Ioo a b, ∀ θ₂ ∈ Ioo a b, θ₁ ≤ θ₂ → θ₂ - θ₁ ≤ d.toReal →
-      dist (f (circleMap ζ ρ θ₁)) (f (circleMap ζ ρ θ₂)) ≤ ε := by
-    intro θ₁ h₁ θ₂ h₂ hle hgap
-    have hsub : Ioc θ₁ θ₂ ⊆ Ioo a b := fun θ hθ => ⟨h₁.1.trans hθ.1, hθ.2.trans_lt h₂.2⟩
-    have hmeas : (volume.restrict (Ioo a b)) (Ioc θ₁ θ₂) < δ := by
-      refine lt_of_le_of_lt ((Measure.restrict_apply_le _ _).trans ?_) hdδ
-      rw [Real.volume_Ioc, ← ENNReal.ofReal_toReal hdtop]
-      exact ENNReal.ofReal_le_ofReal hgap
-    have hres : (volume.restrict (Ioo a b)).restrict (Ioc θ₁ θ₂) = volume.restrict (Ioc θ₁ θ₂) := by
-      rw [Measure.restrict_restrict measurableSet_Ioc, inter_eq_self_of_subset_left hsub]
-    have hlt : ∫⁻ θ in Ioc θ₁ θ₂, ‖deriv f (circleMap ζ ρ θ)‖ₑ < ENNReal.ofReal (ε / |ρ|) := by
-      have hbound := hδlt (Ioc θ₁ θ₂) hmeas
-      rwa [hres] at hbound
-    have hmul : ENNReal.ofReal |ρ| * ∫⁻ θ in Ioc θ₁ θ₂, ‖deriv f (circleMap ζ ρ θ)‖ₑ
-        < ENNReal.ofReal ε := by
-      refine (ENNReal.mul_lt_mul_right hρ0 ENNReal.ofReal_ne_top hlt).trans_eq ?_
-      rw [← ENNReal.ofReal_mul (abs_nonneg ρ)]
-      congr 1
-      field_simp
-    exact ((ENNReal.ofReal_lt_ofReal_iff hε).mp
-      ((ofReal_dist_le_mul_lintegral_Ioc_of_mem_Ioo hUo hf ζ hmemU h₁ h₂ hle).trans_lt
-        hmul)).le
-  refine ⟨d.toReal, ENNReal.toReal_pos hd0.ne' hdtop, fun θ₁ h₁ θ₂ h₂ habs => ?_⟩
-  rcases le_total θ₁ θ₂ with hle | hle
-  · rw [abs_sub_comm, abs_of_nonneg (sub_nonneg.mpr hle)] at habs
-    exact key θ₁ h₁ θ₂ h₂ hle habs
-  · rw [abs_of_nonneg (sub_nonneg.mpr hle)] at habs
-    rw [dist_comm]
-    exact key θ₂ h₂ θ₁ h₁ hle habs
+  have huc : UniformContinuousOn (fun θ => f (circleMap ζ ρ θ)) (Ioo a b) :=
+    uniformContinuousOn_of_edist_le_setLIntegral ordConnected_Ioo
+      (edist_le_setLIntegral_enorm_deriv_circleMap hUo hf ζ hmemU)
+      (setLIntegral_enorm_deriv_circleMap_ne_top hfin)
+  obtain ⟨η, hη, hmod⟩ := Metric.uniformContinuousOn_iff_le.1 huc ε hε
+  exact ⟨η, hη, fun θ₁ h₁ θ₂ h₂ habs => hmod θ₁ h₁ θ₂ h₂ (by rwa [Real.dist_eq])⟩
 
 /-- **An arc of finite image length has bounded image.** The chord bound applied to the whole arc
-rather than to a sub-arc: any two of its points have images at distance at most
-`|ρ| * ∫⁻ θ in Ioo a b, ‖deriv f (circleMap ζ ρ θ)‖ₑ`, a finite number.
+rather than to a sub-arc: by `TauCeti.isBounded_image_of_edist_le_setLIntegral` any two of its
+points have images at distance at most `|ρ| * ∫⁻ θ in Ioo a b, ‖deriv f (circleMap ζ ρ θ)‖ₑ`, a
+finite number.
 
 This is what makes a subsingleton cluster set along the arc an honest limit, the compactness input
 of `TauCeti.exists_tendsto_of_clusterSetOn_subsingleton`. -/
@@ -223,43 +223,12 @@ theorem isBounded_image_circleMap_image_Ioo_of_lintegral_ne_top (hUo : IsOpen U)
     (hmemU : ∀ θ ∈ Ioo a b, circleMap ζ ρ θ ∈ U)
     (hfin : ∫⁻ θ in Ioo a b, ‖deriv f (circleMap ζ ρ θ)‖ₑ ≠ ⊤) :
     IsBounded (f '' (circleMap ζ ρ '' Ioo a b)) := by
-  set L : ℝ≥0∞ := ENNReal.ofReal |ρ| * ∫⁻ θ in Ioo a b, ‖deriv f (circleMap ζ ρ θ)‖ₑ with hL
-  have hLtop : L ≠ ⊤ := by
-    rw [hL]
-    exact ENNReal.mul_ne_top ENNReal.ofReal_ne_top hfin
-  have key : ∀ θ₁ ∈ Ioo a b, ∀ θ₂ ∈ Ioo a b, θ₁ ≤ θ₂ →
-      dist (f (circleMap ζ ρ θ₁)) (f (circleMap ζ ρ θ₂)) ≤ L.toReal := by
-    intro θ₁ h₁ θ₂ h₂ hle
-    refine (ENNReal.ofReal_le_iff_le_toReal hLtop).mp ?_
-    refine (ofReal_dist_le_mul_lintegral_Ioc_of_mem_Ioo hUo hf ζ hmemU h₁ h₂ hle).trans ?_
-    rw [hL]
-    gcongr
-    exact fun θ hθ => ⟨h₁.1.trans hθ.1, hθ.2.trans_lt h₂.2⟩
-  rw [image_image, Metric.isBounded_image_iff]
-  refine ⟨L.toReal, fun θ₁ h₁ θ₂ h₂ => ?_⟩
-  rcases le_total θ₁ θ₂ with hle | hle
-  · exact key θ₁ h₁ θ₂ h₂ hle
-  · rw [dist_comm]
-    exact key θ₂ h₂ θ₁ h₁ hle
+  rw [image_image]
+  exact isBounded_image_of_edist_le_setLIntegral ordConnected_Ioo
+    (edist_le_setLIntegral_enorm_deriv_circleMap hUo hf ζ hmemU)
+    (setLIntegral_enorm_deriv_circleMap_ne_top hfin)
 
 /-! ## The cluster sets of an arc of finite image length -/
-
-/-- **The sine of a half-angle is smallest at an end of the range of angles.** For
-`0 < m ≤ t ≤ w < 2 * π`, `sin (t / 2)` is at least `min (sin (m / 2)) (sin (w / 2))`, a positive
-number: the half-angle stays in `[0, π]`, where the sine rises to `π / 2` and falls back, so it is
-bounded below by its value at whichever end of `[m / 2, w / 2]` the half-angle has not passed.
-
-If `w ≤ π` the first of the two is the binding one and the second is slack; both are needed exactly
-because an arc of angular width beyond `π` is allowed. -/
-private lemma min_sin_div_two_le_sin_div_two {m t w : ℝ} (hm : 0 < m) (hmt : m ≤ t) (htw : t ≤ w)
-    (hw : w < 2 * π) : min (Real.sin (m / 2)) (Real.sin (w / 2)) ≤ Real.sin (t / 2) := by
-  rcases le_total (t / 2) (π / 2) with h | h
-  · exact (min_le_left _ _).trans
-      (Real.sin_le_sin_of_le_of_le_pi_div_two (by linarith [Real.pi_pos]) h (by linarith))
-  · refine (min_le_right _ _).trans ?_
-    rw [← Real.sin_pi_sub (w / 2), ← Real.sin_pi_sub (t / 2)]
-    exact Real.sin_le_sin_of_le_of_le_pi_div_two (by linarith [Real.pi_pos]) (by linarith)
-      (by linarith)
 
 /-- **An arc of finite image length has at most one cluster value at each of its points.** For `f`
 holomorphic on an open set containing the open arc `circleMap ζ ρ '' Ioo a b`, of angular width
@@ -293,7 +262,7 @@ theorem subsingleton_clusterSetOn_circleMap_image_Ioo (hUo : IsOpen U)
   obtain ⟨η, hη, hmod⟩ :=
     exists_pos_forall_dist_le_of_lintegral_ne_top hUo hf ζ hmemU hfin hε
   -- the angular gap actually used: below half the modulus, and below the width of the arc
-  set m : ℝ := min (η / 2) (b - a) with hm
+  set m : ℝ := min (η / 2) (b - a)
   have hm0 : 0 < m := lt_min (by linarith) (by linarith)
   have hmw : m ≤ b - a := min_le_right _ _
   -- the arc not wrapping around the circle puts both half-angles in `(0, π)`
@@ -303,26 +272,11 @@ theorem subsingleton_clusterSetOn_circleMap_image_Ioo (hUo : IsOpen U)
     Real.sin_pos_of_pos_of_lt_pi (by linarith) (by linarith)
   refine ⟨2 * |ρ| * min (Real.sin (m / 2)) (Real.sin ((b - a) / 2)),
     mul_pos (by linarith) (lt_min hsinm hsinw), ?_⟩
-  -- a point of the arc close to `circleMap ζ ρ θ₀` is close to `θ₀` in angle
-  have hangle : ∀ x ∈ circleMap ζ ρ '' Ioo a b ∩
-      ball (circleMap ζ ρ θ₀) (2 * |ρ| * min (Real.sin (m / 2)) (Real.sin ((b - a) / 2))),
-      ∃ θ ∈ Ioo a b, circleMap ζ ρ θ = x ∧ |θ - θ₀| < m := by
-    rintro _ ⟨⟨θ, hθ, rfl⟩, hx⟩
-    refine ⟨θ, hθ, rfl, ?_⟩
-    have hwidth : |θ - θ₀| ≤ b - a := by
-      rw [abs_le]
-      constructor <;> [linarith [hθ.1, hθ₀.2]; linarith [hθ.2, hθ₀.1]]
-    have hπ : |θ - θ₀| ≤ 2 * π := by linarith
-    rw [mem_ball, dist_circleMap_eq_two_mul_sin_abs ζ ρ hπ] at hx
-    rcases lt_or_ge |θ - θ₀| m with hlt | hcon
-    · exact hlt
-    · exfalso
-      have hmono : min (Real.sin (m / 2)) (Real.sin ((b - a) / 2)) ≤ Real.sin (|θ - θ₀| / 2) :=
-        min_sin_div_two_le_sin_div_two hm0 hcon hwidth hab2π
-      nlinarith [hρpos.le]
   rintro x hx y hy
-  obtain ⟨θx, hθx, rfl, hdx⟩ := hangle x hx
-  obtain ⟨θy, hθy, rfl, hdy⟩ := hangle y hy
+  obtain ⟨θx, hθx, rfl, hdx⟩ :=
+    exists_mem_Ioo_circleMap_eq_and_abs_sub_lt_of_mem_ball_circleMap_image_Ioo ζ ρ hab2π hθ₀ hm0 hx
+  obtain ⟨θy, hθy, rfl, hdy⟩ :=
+    exists_mem_Ioo_circleMap_eq_and_abs_sub_lt_of_mem_ball_circleMap_image_Ioo ζ ρ hab2π hθ₀ hm0 hy
   refine hmod θx hθx θy hθy ?_
   have htri : |θx - θy| ≤ |θx - θ₀| + |θ₀ - θy| := abs_sub_le _ _ _
   have hsymm : |θ₀ - θy| = |θy - θ₀| := abs_sub_comm _ _
@@ -372,17 +326,6 @@ theorem exists_clusterSetOn_circleMap_image_Ioo_eq_singleton (hUo : IsOpen U)
 
 /-! ## The two ends of a circular crosscut -/
 
-/-- Half the angular width of a genuine circular crosscut is positive. -/
-private lemma arccos_div_two_mul_pos (hρ : 0 < ρ) (hρr : ρ < 2 * r) :
-    0 < Real.arccos (ρ / (2 * r)) :=
-  Real.arccos_pos.mpr ((div_lt_one (by linarith)).mpr hρr)
-
-/-- Half the angular width of a genuine circular crosscut is below `π / 2`: a crosscut spans less
-than half of its circle. -/
-private lemma arccos_div_two_mul_lt_pi_div_two (hρ : 0 < ρ) (hρr : ρ < 2 * r) :
-    Real.arccos (ρ / (2 * r)) < π / 2 :=
-  Real.arccos_lt_pi_div_two.mpr (div_pos hρ (by linarith))
-
 /-- The open arc of angles of a genuine circular crosscut lies in the disc: by
 `TauCeti.ball_inter_sphere_eq_circleMap_image_Ioo` it parametrises the crosscut itself. -/
 private lemma circleMap_mem_ball_of_mem_Ioo (hζ : dist ζ c = r) (hρ : 0 < ρ) (hρr : ρ < 2 * r)
@@ -402,7 +345,7 @@ private lemma lintegral_enorm_deriv_circleMap_ne_top (hζ : dist ζ c = r) (hρ 
     (hρr : ρ < 2 * r) (hfin : circleImageLength f (ball c r) ζ ρ ≠ ⊤) :
     ∫⁻ θ in Ioo ((c - ζ).arg - Real.arccos (ρ / (2 * r)))
       ((c - ζ).arg + Real.arccos (ρ / (2 * r))), ‖deriv f (circleMap ζ ρ θ)‖ₑ ≠ ⊤ := by
-  have hφπ2 := arccos_div_two_mul_lt_pi_div_two hρ hρr
+  have hφπ2 := arccos_div_two_mul_lt_pi_div_two hρ (show (0 : ℝ) < r by linarith)
   have hmem : ∀ θ ∈ Ioo ((c - ζ).arg - Real.arccos (ρ / (2 * r)))
       ((c - ζ).arg + Real.arccos (ρ / (2 * r))), circleMap ζ ρ θ ∈ ball c r :=
     fun _ hθ => circleMap_mem_ball_of_mem_Ioo hζ hρ hρr hθ
@@ -444,12 +387,10 @@ theorem subsingleton_clusterSetOn_ball_inter_sphere (hζ : dist ζ c = r) (hρ :
     (hfin : circleImageLength f (ball c r) ζ ρ ≠ ⊤) {e : ℂ}
     (he : e ∈ closedBall c r ∩ sphere ζ ρ) :
     (clusterSetOn f (ball c r ∩ sphere ζ ρ) e).Subsingleton := by
-  have hφ0 := arccos_div_two_mul_pos hρ hρr
-  have hφπ2 := arccos_div_two_mul_lt_pi_div_two hρ hρr
-  obtain ⟨θ₀, hθ₀, rfl⟩ : ∃ θ₀ ∈ Icc ((c - ζ).arg - Real.arccos (ρ / (2 * r)))
-      ((c - ζ).arg + Real.arccos (ρ / (2 * r))), circleMap ζ ρ θ₀ = e := by
-    rw [closedBall_inter_sphere_eq_circleMap_image_Icc hζ hρ hρr] at he
-    exact he
+  have hr : 0 < r := by linarith
+  have hφ0 := arccos_div_two_mul_pos hr hρr
+  have hφπ2 := arccos_div_two_mul_lt_pi_div_two hρ hr
+  obtain ⟨θ₀, hθ₀, rfl⟩ := (closedBall_inter_sphere_eq_circleMap_image_Icc hζ hρ hρr).le he
   rw [ball_inter_sphere_eq_circleMap_image_Ioo hζ hρ hρr]
   exact subsingleton_clusterSetOn_circleMap_image_Ioo isOpen_ball hf ζ (by linarith)
     (by linarith [Real.pi_pos]) hθ₀ (fun _ hθ => circleMap_mem_ball_of_mem_Ioo hζ hρ hρr hθ)
@@ -466,12 +407,10 @@ theorem exists_tendsto_nhdsWithin_ball_inter_sphere (hζ : dist ζ c = r) (hρ :
     (hfin : circleImageLength f (ball c r) ζ ρ ≠ ⊤) {e : ℂ}
     (he : e ∈ closedBall c r ∩ sphere ζ ρ) :
     ∃ v, Tendsto f (𝓝[ball c r ∩ sphere ζ ρ] e) (𝓝 v) := by
-  have hφ0 := arccos_div_two_mul_pos hρ hρr
-  have hφπ2 := arccos_div_two_mul_lt_pi_div_two hρ hρr
-  obtain ⟨θ₀, hθ₀, rfl⟩ : ∃ θ₀ ∈ Icc ((c - ζ).arg - Real.arccos (ρ / (2 * r)))
-      ((c - ζ).arg + Real.arccos (ρ / (2 * r))), circleMap ζ ρ θ₀ = e := by
-    rw [closedBall_inter_sphere_eq_circleMap_image_Icc hζ hρ hρr] at he
-    exact he
+  have hr : 0 < r := by linarith
+  have hφ0 := arccos_div_two_mul_pos hr hρr
+  have hφπ2 := arccos_div_two_mul_lt_pi_div_two hρ hr
+  obtain ⟨θ₀, hθ₀, rfl⟩ := (closedBall_inter_sphere_eq_circleMap_image_Icc hζ hρ hρr).le he
   rw [ball_inter_sphere_eq_circleMap_image_Ioo hζ hρ hρr]
   exact exists_tendsto_nhdsWithin_circleMap_image_Ioo isOpen_ball hf ζ (by linarith)
     (by linarith [Real.pi_pos]) hθ₀ (fun _ hθ => circleMap_mem_ball_of_mem_Ioo hζ hρ hρr hθ)
@@ -487,12 +426,10 @@ theorem exists_clusterSetOn_ball_inter_sphere_eq_singleton (hζ : dist ζ c = r)
     (hfin : circleImageLength f (ball c r) ζ ρ ≠ ⊤) {e : ℂ}
     (he : e ∈ closedBall c r ∩ sphere ζ ρ) :
     ∃ v, clusterSetOn f (ball c r ∩ sphere ζ ρ) e = {v} := by
-  have hφ0 := arccos_div_two_mul_pos hρ hρr
-  have hφπ2 := arccos_div_two_mul_lt_pi_div_two hρ hρr
-  obtain ⟨θ₀, hθ₀, rfl⟩ : ∃ θ₀ ∈ Icc ((c - ζ).arg - Real.arccos (ρ / (2 * r)))
-      ((c - ζ).arg + Real.arccos (ρ / (2 * r))), circleMap ζ ρ θ₀ = e := by
-    rw [closedBall_inter_sphere_eq_circleMap_image_Icc hζ hρ hρr] at he
-    exact he
+  have hr : 0 < r := by linarith
+  have hφ0 := arccos_div_two_mul_pos hr hρr
+  have hφπ2 := arccos_div_two_mul_lt_pi_div_two hρ hr
+  obtain ⟨θ₀, hθ₀, rfl⟩ := (closedBall_inter_sphere_eq_circleMap_image_Icc hζ hρ hρr).le he
   rw [ball_inter_sphere_eq_circleMap_image_Ioo hζ hρ hρr]
   exact exists_clusterSetOn_circleMap_image_Ioo_eq_singleton isOpen_ball hf ζ (by linarith)
     (by linarith [Real.pi_pos]) hθ₀ (fun _ hθ => circleMap_mem_ball_of_mem_Ioo hζ hρ hρr hθ)
