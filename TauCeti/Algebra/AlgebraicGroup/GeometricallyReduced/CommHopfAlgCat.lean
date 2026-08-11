@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.RingTheory.Nilpotent.GeometricallyReduced
-public import TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.Basic
+public import TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.BaseChange
 import Mathlib.Algebra.Field.ULift
 
 /-!
@@ -64,7 +64,7 @@ theorem geometricallyReducedCommHopfAlgProperty_iff
 /-- The all-extension coordinate condition implies Mathlib's algebraic geometric-reducedness
 predicate, which over a field tests the base change to an algebraic closure. -/
 theorem geometricallyReducedCommHopfAlgProperty.isGeometricallyReduced
-    (k : Type u) [Field k] (H : CommHopfAlgCat.{v} k)
+    {k : Type u} [Field k] {H : CommHopfAlgCat.{v} k}
     (hH : geometricallyReducedCommHopfAlgProperty k H) :
     Algebra.IsGeometricallyReduced k H := by
   rw [Algebra.isGeometricallyReduced_field_iff]
@@ -77,11 +77,29 @@ theorem geometricallyReducedCommHopfAlgProperty.isGeometricallyReduced
 /-- A geometrically reduced commutative Hopf algebra has reduced coordinate ring over its base
 field. -/
 theorem geometricallyReducedCommHopfAlgProperty.isReduced
-    (k : Type u) [Field k] (H : CommHopfAlgCat.{v} k)
+    {k : Type u} [Field k] {H : CommHopfAlgCat.{v} k}
     (hH : geometricallyReducedCommHopfAlgProperty k H) :
     IsReduced H := by
-  let _ : Algebra.IsGeometricallyReduced k H := hH.isGeometricallyReduced k H
+  let _ : Algebra.IsGeometricallyReduced k H := hH.isGeometricallyReduced
   exact Algebra.isReduced_of_isGeometricallyReduced k
+
+/-- Geometric reducedness is preserved by extension of the base field. -/
+theorem geometricallyReducedCommHopfAlgProperty.baseChange
+    (k K : Type u) [Field k] [Field K] [Algebra k K]
+    (H : CommHopfAlgCat.{u} k)
+    (hH : geometricallyReducedCommHopfAlgProperty k H) :
+    geometricallyReducedCommHopfAlgProperty K
+      (CommHopfAlgCat.baseChange (K := K) H) := by
+  rw [geometricallyReducedCommHopfAlgProperty_iff]
+  intro L _ _
+  let _ : Algebra k L := Algebra.compHom L (algebraMap k K)
+  let _ : IsScalarTower k K L := IsScalarTower.of_algebraMap_eq' rfl
+  let e := (Algebra.TensorProduct.comm K (K ⊗[k] H) L).toRingEquiv.trans
+    ((Algebra.TensorProduct.cancelBaseChange k K L L H).toRingEquiv.trans
+      (Algebra.TensorProduct.comm k L H).toRingEquiv)
+  rw [geometricallyReducedCommHopfAlgProperty_iff] at hH
+  let _ := hH L
+  exact isReduced_of_injective e.toRingHom e.injective
 
 /-- Geometric reducedness is invariant under isomorphisms of commutative Hopf algebras. -/
 instance (k : Type u) [Field k] :

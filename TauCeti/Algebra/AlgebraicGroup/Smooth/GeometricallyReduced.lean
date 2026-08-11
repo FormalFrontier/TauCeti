@@ -51,10 +51,7 @@ universe u
 noncomputable section
 
 /-- **A finite-type geometrically reduced commutative Hopf algebra over a field is smooth.**
-
-This is the coordinate-algebra form of Mathlib's `AlgebraicGeometry.smooth_of_grpObj`. The
-finite-type comparison supplies local finite type for the structural morphism of the Hopf
-spectrum, and the geometric-reducedness comparison supplies its other hypothesis. -/
+-/
 theorem smoothCommHopfAlgProperty_of_geometricallyReduced
     (k : Type u) [Field k] (H : CommHopfAlgCat.{u} k)
     [Algebra.FiniteType k H]
