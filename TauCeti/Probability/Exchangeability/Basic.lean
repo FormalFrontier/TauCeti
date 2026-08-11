@@ -7,6 +7,8 @@ module
 public import Mathlib.MeasureTheory.Measure.Map
 public import Mathlib.MeasureTheory.Measure.AEMeasurable
 public import Mathlib.MeasureTheory.MeasurableSpace.Constructions
+public import Mathlib.MeasureTheory.MeasurableSpace.Embedding
+public import Mathlib.Logic.Equiv.Fin.Basic
 public import Mathlib.Tactic.Measurability
 
 /-!
@@ -169,6 +171,32 @@ theorem measurable_prefixProj (n : ℕ) : Measurable (prefixProj α n) := by
 theorem measurable_shift : Measurable (shift α) := by
   unfold shift
   measurability
+
+/-- Split a sequence into its length-`r` prefix `Fin r → α` and the tail `ℕ → α` from index `r`, as
+a measurable equivalence.  The forward map sends `f` to `(fun i => f i.val, fun j => f (r + j))`;
+its inverse glues a prefix/tail pair back into a sequence, taking coordinates below `r` from the
+prefix and the rest (reindexed by `· - r`) from the tail. -/
+def prefixSplitEquiv (r : ℕ) : (ℕ → α) ≃ᵐ (Fin r → α) × (ℕ → α) :=
+  (MeasurableEquiv.arrowCongr' (finSumNatEquiv r).symm (.refl α)).trans
+    (MeasurableEquiv.sumPiEquivProdPi fun _ => α)
+
+/-- The inverse of `prefixSplitEquiv` glues a prefix/tail pair into a sequence: coordinates below
+`r` come from the prefix `p.1`, the rest (reindexed by `· - r`) from the tail `p.2`. -/
+theorem prefixSplitEquiv_symm_apply (r : ℕ) (p : (Fin r → α) × (ℕ → α)) (n : ℕ) :
+    (prefixSplitEquiv r).symm p n = if h : n < r then p.1 ⟨n, h⟩ else p.2 (n - r) := by
+  have key : (prefixSplitEquiv r).symm p
+      = fun n => if h : n < r then p.1 ⟨n, h⟩ else p.2 (n - r) := by
+    apply (prefixSplitEquiv r).injective
+    rw [MeasurableEquiv.apply_symm_apply]
+    -- BRITTLE: uses the defeq `prefixSplitEquiv r f = (fun i => f i.val, fun j => f (r + j))`;
+    -- `MeasurableEquiv.arrowCongr'` exposes no coe/apply lemma, so this cannot be a `simp` rewrite.
+    change p = (fun i : Fin r => (if h : (i : ℕ) < r then p.1 ⟨i, h⟩ else p.2 ((i : ℕ) - r)),
+        fun j : ℕ => if h : r + j < r then p.1 ⟨r + j, h⟩ else p.2 (r + j - r))
+    refine Prod.ext (funext fun i => ?_) (funext fun j => ?_)
+    · simp only [dite_eq_left i.isLt, Fin.eta]
+    · have h : ¬ (r + j < r) := Nat.not_lt.mpr (Nat.le_add_right r j)
+      simp only [dite_eq_right h, Nat.add_sub_cancel_left]
+  rw [key]
 
 /-- The prefix law is the pushforward of the path law by `prefixProj`. -/
 theorem map_prefixProj_pathLaw (μ : Measure Ω) {X : ℕ → Ω → α}
