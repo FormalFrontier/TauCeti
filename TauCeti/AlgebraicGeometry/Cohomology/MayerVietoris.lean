@@ -115,11 +115,11 @@ theorem epi_mayerVietorisδ (n : ℕ)
     Epi (mayerVietorisδ M U V n (n + 1) rfl) := by
   set F := (_root_.SheafOfModules.toSheaf X.ringCatSheaf).obj M
   set S := Opens.mayerVietorisSquare U V
-  -- both components of the map to the biproduct land in a zero object
-  have hg : S.toBiprod F (n + 1) = 0 := by
-    refine biprod.hom_ext _ _ ?_ ?_
-    · exact (AddCommGrpCat.isZero_of_subsingleton (G := cohomologyOn M (n + 1) U)).eq_of_tgt _ _
-    · exact (AddCommGrpCat.isZero_of_subsingleton (G := cohomologyOn M (n + 1) V)).eq_of_tgt _ _
+  -- the biproduct the map lands in is a zero object
+  have hg : S.toBiprod F (n + 1) = 0 :=
+    ((biprod_isZero_iff _ _).2
+      ⟨AddCommGrpCat.isZero_of_subsingleton (cohomologyOn M (n + 1) U),
+        AddCommGrpCat.isZero_of_subsingleton (cohomologyOn M (n + 1) V)⟩).eq_of_tgt _ _
   -- the piece of the Mayer-Vietoris sequence around `Hⁿ⁺¹(U ⊔ V, M)`
   have hex : (ShortComplex.mk (S.δ F n (n + 1) rfl) (S.toBiprod F (n + 1))
       (S.δ_toBiprod _ _ _ _)).Exact :=
