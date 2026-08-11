@@ -65,6 +65,9 @@ structure, and `TauCeti.isHighestWeightVector_iff` together with the three proje
 `TauCeti.IsHighestWeightVector.ne_zero`, `TauCeti.IsHighestWeightVector.lie_eq_smul` and
 `TauCeti.IsHighestWeightVector.lie_eq_zero_of_mem_positiveNilradical` is its elimination API; no
 consumer needs to take the conjunction apart by hand.
+`TauCeti.IsHighestWeightVector.lie_eq_smul_of_mem` is the variant of the second projection for an
+element of `L` carrying a proof of membership in `H`, which is the form a decomposition of the
+Borel subalgebra produces.
 
 The annihilator of a vector is a Lie subalgebra, by the Leibniz rule, and that is the only reason
 `TauCeti.isHighestWeightVector_of_forall_rootSpace` holds: the universal property
@@ -130,6 +133,12 @@ theorem ne_zero (hv : IsHighestWeightVector b lam v) : v ≠ 0 :=
 /-- The Cartan subalgebra acts on a highest weight vector through its weight. -/
 theorem lie_eq_smul (hv : IsHighestWeightVector b lam v) (x : H) : ⁅(x : L), v⁆ = lam x • v :=
   (isHighestWeightVector_iff.mp hv).2.1 x
+
+/-- The Cartan subalgebra acts on a highest weight vector through its weight, for an element of
+`L` presented together with a proof that it lies in `H` rather than as a member of `H`. -/
+theorem lie_eq_smul_of_mem (hv : IsHighestWeightVector b lam v) {x : L} (hx : x ∈ H) :
+    ⁅x, v⁆ = lam ⟨x, hx⟩ • v :=
+  hv.lie_eq_smul ⟨x, hx⟩
 
 /-- The positive nilradical annihilates a highest weight vector. -/
 theorem lie_eq_zero_of_mem_positiveNilradical (hv : IsHighestWeightVector b lam v) {x : L}

@@ -28,8 +28,10 @@ function.
 
 ## Main definitions
 
+* `TauCeti.genWeightSpaceSpan H M S`: the `H`-submodule of a module `M` spanned by the weight spaces
+  indexed by a set `S` of `K`-valued functions on `H`.
 * `TauCeti.rootSpaceSpan H S`: the `H`-submodule of `L` spanned by the root spaces indexed by a set
-  `S` of roots.
+  `S` of roots, the instance of the previous construction at `M = L`.
 * `TauCeti.IsSpecialClosedRootSet H S`: `S` is stable under those sums of its members that are
   again roots, and contains no root together with its negative.
 * `TauCeti.rootSpaceSubalgebra H S hS`: the span of a special closed set of roots, as a Lie
@@ -40,10 +42,13 @@ function.
 
 ## Main results
 
-* `TauCeti.rootSpaceSpan_le_iff` and `TauCeti.rootSpaceSubalgebra_le_iff` are the universal
-  property of the span: it is contained in a given submodule, resp. Lie subalgebra, exactly when
-  each of the root spaces it is spanned by is. `TauCeti.positiveNilradical_le_iff` and
-  `TauCeti.negativeNilradical_le_iff` are its two specialisations to the nilradicals.
+* `TauCeti.genWeightSpaceSpan_le_iff`, `TauCeti.rootSpaceSpan_le_iff` and
+  `TauCeti.rootSpaceSubalgebra_le_iff` are the universal property of the span: it is contained in a
+  given submodule, resp. Lie subalgebra, exactly when each of the weight spaces it is spanned by is.
+  `TauCeti.positiveNilradical_le_iff` and `TauCeti.negativeNilradical_le_iff` are its two
+  specialisations to the nilradicals.
+* `TauCeti.lie_mem_genWeightSpaceSpan`: a vector in the root space of `α` carries the span of a set
+  `S` of weight spaces into the span of any set containing `α + S`.
 * `TauCeti.mem_positiveNilradical_of_mem_rootSpace` and
   `TauCeti.mem_negativeNilradical_of_mem_rootSpace` say the nilradicals contain the root spaces
   they are built from.
@@ -86,17 +91,64 @@ namespace TauCeti
 
 open LieAlgebra LieModule Module
 
-universe u v
+universe u v w
 
 variable {K : Type u} {L : Type v} [Field K] [CharZero K] [LieRing L] [LieAlgebra K L]
   [IsKilling K L] [FiniteDimensional K L]
   (H : LieSubalgebra K L) [H.IsCartanSubalgebra] [IsTriangularizable K H L]
+  {M : Type w} [AddCommGroup M] [Module K M] [LieRingModule L M] [LieModule K L M]
+
+/-! ### Spans of weight spaces -/
+
+variable (M) in
+/-- The `H`-submodule of a module `M` spanned by the weight spaces indexed by a set `S` of
+`K`-valued functions on the Cartan subalgebra. -/
+def genWeightSpaceSpan (S : Set (H → K)) : LieSubmodule K H M :=
+  ⨆ chi : S, genWeightSpace M (chi : H → K)
+
+variable {H}
+
+omit [CharZero K] [FiniteDimensional K L] [IsKilling K L] [IsTriangularizable K H L] in
+/-- A weight space indexed by a member of `S` lies in the span of `S`. -/
+theorem genWeightSpace_le_genWeightSpaceSpan {S : Set (H → K)} {chi : H → K} (h : chi ∈ S) :
+    genWeightSpace M chi ≤ genWeightSpaceSpan H M S :=
+  le_iSup (fun psi : S => genWeightSpace M (psi : H → K)) ⟨chi, h⟩
+
+omit [CharZero K] [FiniteDimensional K L] [IsKilling K L] [IsTriangularizable K H L] in
+/-- Spans of weight spaces are monotone in the indexing set. -/
+theorem genWeightSpaceSpan_mono {S T : Set (H → K)} (h : S ⊆ T) :
+    genWeightSpaceSpan H M S ≤ genWeightSpaceSpan H M T :=
+  iSup_le fun chi => genWeightSpace_le_genWeightSpaceSpan (h chi.2)
+
+omit [CharZero K] [FiniteDimensional K L] [IsKilling K L] [IsTriangularizable K H L] in
+/-- The span of the weight spaces indexed by `S` is contained in an `H`-submodule exactly when each
+of the weight spaces it is spanned by is. -/
+theorem genWeightSpaceSpan_le_iff {S : Set (H → K)} {N : LieSubmodule K H M} :
+    genWeightSpaceSpan H M S ≤ N ↔ ∀ chi ∈ S, genWeightSpace M chi ≤ N :=
+  ⟨fun h _ hchi => (genWeightSpace_le_genWeightSpaceSpan hchi).trans h,
+    fun h => iSup_le fun chi => h chi chi.2⟩
+
+omit [CharZero K] [FiniteDimensional K L] [IsKilling K L] [IsTriangularizable K H L] in
+/-- **A root vector moves the span of a set of weight spaces to the span of the shifted set**: a
+vector in the root space of `alpha` carries the weight space at `chi` into the weight space at
+`alpha + chi`. -/
+theorem lie_mem_genWeightSpaceSpan {S T : Set (H → K)} {alpha : H → K} {x : L}
+    (hx : x ∈ rootSpace H alpha) (hST : ∀ chi ∈ S, alpha + chi ∈ T)
+    {m : M} (hm : m ∈ genWeightSpaceSpan H M S) : ⁅x, m⁆ ∈ genWeightSpaceSpan H M T := by
+  refine LieSubmodule.iSup_induction (fun chi : S => genWeightSpace M (chi : H → K))
+    (motive := fun m => ⁅x, m⁆ ∈ genWeightSpaceSpan H M T) hm (fun chi y hy => ?_) (by simp)
+    (fun y z hy hz => by rw [lie_add]; exact add_mem hy hz)
+  exact genWeightSpace_le_genWeightSpaceSpan (hST _ chi.2)
+    (lie_mem_genWeightSpace_of_mem_genWeightSpace (M := M) hx hy)
+
+variable (H)
 
 /-! ### Spans of root spaces -/
 
-/-- The `H`-submodule of `L` spanned by the root spaces indexed by a set `S` of roots. -/
+/-- The `H`-submodule of `L` spanned by the root spaces indexed by a set `S` of roots: the weight
+spaces of `L` itself at the weights the members of `S` name. -/
 def rootSpaceSpan (S : Set H.root) : LieSubmodule K H L :=
-  ⨆ α : S, rootSpace H ((α : H.root) : H → K)
+  genWeightSpaceSpan H L ((fun α : H.root => (α : H → K)) '' S)
 
 variable {H}
 
@@ -104,20 +156,30 @@ omit [IsKilling K L] [IsTriangularizable K H L] in
 /-- A root space indexed by a member of `S` lies in the span of `S`. -/
 theorem rootSpace_le_rootSpaceSpan {S : Set H.root} {α : H.root} (hα : α ∈ S) :
     rootSpace H (α : H → K) ≤ rootSpaceSpan H S :=
-  le_iSup (fun β : S => rootSpace H ((β : H.root) : H → K)) ⟨α, hα⟩
+  genWeightSpace_le_genWeightSpaceSpan (Set.mem_image_of_mem _ hα)
+
+omit [IsKilling K L] [IsTriangularizable K H L] in
+/-- The span of the root spaces indexed by `S`, written as the supremum of those root spaces. -/
+theorem rootSpaceSpan_eq_iSup (S : Set H.root) :
+    rootSpaceSpan H S = ⨆ α : S, rootSpace H ((α : H.root) : H → K) := by
+  refine le_antisymm (genWeightSpaceSpan_le_iff.mpr ?_) (iSup_le fun α => ?_)
+  · rintro _ ⟨α, hα, rfl⟩
+    exact le_iSup (fun β : S => rootSpace H ((β : H.root) : H → K)) ⟨α, hα⟩
+  · exact rootSpace_le_rootSpaceSpan α.2
 
 omit [IsKilling K L] [IsTriangularizable K H L] in
 /-- Spans of root spaces are monotone in the indexing set. -/
 theorem rootSpaceSpan_mono {S T : Set H.root} (h : S ⊆ T) :
     rootSpaceSpan H S ≤ rootSpaceSpan H T :=
-  iSup_le fun α => rootSpace_le_rootSpaceSpan (h α.2)
+  genWeightSpaceSpan_mono (Set.image_mono h)
 
 omit [IsKilling K L] [IsTriangularizable K H L] in
 /-- The span of the root spaces indexed by `S` is contained in an `H`-submodule exactly when each
 of the root spaces it is spanned by is. -/
 theorem rootSpaceSpan_le_iff {S : Set H.root} {N : LieSubmodule K H L} :
     rootSpaceSpan H S ≤ N ↔ ∀ α ∈ S, rootSpace H (α : H → K) ≤ N :=
-  ⟨fun h _ hα => (rootSpace_le_rootSpaceSpan hα).trans h, fun h => iSup_le fun α => h α α.2⟩
+  ⟨fun h _ hα => (rootSpace_le_rootSpaceSpan hα).trans h,
+    fun h => genWeightSpaceSpan_le_iff.mpr (by rintro _ ⟨α, hα, rfl⟩; exact h α hα)⟩
 
 omit [IsKilling K L] [IsTriangularizable K H L] in
 /-- The span of the root spaces indexed by `S` is closed under the bracket as soon as the root
@@ -127,6 +189,7 @@ theorem lie_mem_rootSpaceSpan {S : Set H.root}
       rootSpace H ((α : H → K) + (β : H → K)) ≤ rootSpaceSpan H S)
     {x y : L} (hx : x ∈ rootSpaceSpan H S) (hy : y ∈ rootSpaceSpan H S) :
     ⁅x, y⁆ ∈ rootSpaceSpan H S := by
+  rw [rootSpaceSpan_eq_iSup] at hx hy
   refine LieSubmodule.iSup_induction (motive := fun x => ⁅x, y⁆ ∈ rootSpaceSpan H S) _ hx
     (fun α x hx => ?_) (by simp) (fun x z hx hz => by rw [add_lie]; exact add_mem hx hz)
   refine LieSubmodule.iSup_induction (motive := fun y => ⁅x, y⁆ ∈ rootSpaceSpan H S) _ hy
@@ -219,7 +282,7 @@ theorem rootSpaceSubalgebra_le_iff {S : Set H.root} (hS : IsSpecialClosedRootSet
     rootSpaceSubalgebra H S hS ≤ K' ↔ ∀ α ∈ S, ∀ x ∈ rootSpace H (α : H → K), x ∈ K' := by
   refine ⟨fun h α hα _ hx => h (rootSpace_le_rootSpaceSpan hα hx), fun h => ?_⟩
   rw [← LieSubalgebra.toSubmodule_le_toSubmodule, rootSpaceSubalgebra_toSubmodule,
-    rootSpaceSpan, LieSubmodule.iSup_toSubmodule]
+    rootSpaceSpan_eq_iSup, LieSubmodule.iSup_toSubmodule]
   exact iSup_le fun α => h α α.2
 
 /-! ### The nilradicals and the Borel subalgebra -/
