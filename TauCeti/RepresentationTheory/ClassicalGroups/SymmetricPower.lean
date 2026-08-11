@@ -7,7 +7,6 @@ module
 public import Mathlib.RingTheory.MvPolynomial.Symmetric.Defs
 public import TauCeti.LinearAlgebra.SymmetricPower.Basis
 public import TauCeti.RepresentationTheory.ClassicalGroups.Diagonal
-public import TauCeti.RepresentationTheory.ClassicalGroups.Standard
 public import TauCeti.RepresentationTheory.SymmetricPower
 
 /-!

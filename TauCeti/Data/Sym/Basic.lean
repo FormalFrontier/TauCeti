@@ -26,7 +26,6 @@ orbits of the permutation action, by `TauCeti.Sym.ofFn_eq_ofFn_iff`. Nothing her
   `TauCeti.Sym.ofFn_surjective`, that every unordered tuple arises this way.
 * `TauCeti.Sym.ofFn_eq_ofFn_iff`: two ordered tuples have the same underlying unordered tuple
   exactly when one is a reindexing of the other by a permutation.
-* `TauCeti.Sym.toFn`: an arbitrary ordering of an unordered tuple, a section of `ofFn`.
 -/
 
 public section
@@ -79,18 +78,6 @@ theorem ofFn_surjective : Function.Surjective (ofFn : (Fin n → α) → Sym α 
   have hlen : l.length = n := by simpa using hs
   subst hlen
   exact ⟨l.get, Subtype.ext (by simp)⟩
-
-/-- A choice of ordering of an unordered tuple: an arbitrary section of `TauCeti.Sym.ofFn`.
-
-Only `TauCeti.Sym.ofFn_toFn` should be used about it; any two orderings of the same unordered
-tuple differ by a permutation, by `TauCeti.Sym.ofFn_eq_ofFn_iff`. -/
-noncomputable def toFn (s : Sym α n) : Fin n → α :=
-  Function.surjInv ofFn_surjective s
-
-/-- Ordering an unordered tuple and forgetting the order again recovers it. -/
-@[simp]
-theorem ofFn_toFn (s : Sym α n) : ofFn (toFn s) = s :=
-  Function.surjInv_eq ofFn_surjective s
 
 /-- Prepending a point to an ordered tuple adjoins it to the unordered one. -/
 @[simp]

@@ -16,8 +16,9 @@ through the symmetric tensor power. This file builds that factorization,
 its reorderings, and `f` takes the same value on all of them.
 
 Together with `SymmetricPower.hom_ext`, which says that a linear map out of the symmetric power is
-determined by its values on pure symmetric tensors, this is the statement that `Sym[R] ι M`
-corepresents symmetric multilinear maps out of `M`.
+determined by its values on pure symmetric tensors, this says that composing with the pure
+symmetric tensor `⨂ₛ` is a bijection from the linear maps `Sym[R] ι M →ₗ[R] N` onto the
+permutation-invariant multilinear maps `Mⁱ → N`, for every `N`.
 
 ## Main definitions
 
