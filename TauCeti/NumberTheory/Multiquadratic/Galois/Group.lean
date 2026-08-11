@@ -81,10 +81,10 @@ theorem signPattern_eq_ite_of_zsmul_gen [NeZero (2 : K)]
     signPattern root σ i = if ε = 1 then 0 else 1 := by
   rw [signPattern]
   rcases hε with rfl | rfl
-  · rw [one_smul] at hσ; rw [if_pos hσ, if_pos rfl]
+  · rw [one_smul] at hσ; rw [ite_eq_left hσ, ite_eq_left rfl]
   · rw [neg_one_zsmul] at hσ
-    rw [if_neg (fun h => gen_ne_neg hroot i hd (h.symm.trans hσ)),
-      if_neg (by norm_num : (-1 : ℤ) ≠ 1)]
+    rw [ite_eq_right (fun h => gen_ne_neg hroot i hd (h.symm.trans hσ)),
+      ite_eq_right (by norm_num : (-1 : ℤ) ≠ 1)]
 
 /-- Two automorphisms with the same sign pattern are equal. -/
 theorem signPattern_injective (hroot : ∀ i, root i ^ 2 = algebraMap K L (d i)) :

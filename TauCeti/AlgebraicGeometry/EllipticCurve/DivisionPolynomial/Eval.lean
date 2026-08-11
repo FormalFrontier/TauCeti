@@ -84,7 +84,7 @@ point. This one needs no curve hypothesis. -/
 @[simp]
 theorem evalEval_Ψ_odd (n : ℤ) (hodd : ¬Even n) :
     (W.Ψ n).evalEval x y = (W.preΨ n).eval x := by
-  rw [_root_.WeierstrassCurve.Ψ, if_neg hodd, mul_one, evalEval_C]
+  rw [_root_.WeierstrassCurve.Ψ, ite_eq_right hodd, mul_one, evalEval_C]
 
 end WeierstrassCurve
 

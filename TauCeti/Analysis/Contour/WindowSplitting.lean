@@ -63,7 +63,7 @@ private theorem integral_truncated_eq_of_ae_gt {γ : ℝ → ℂ} {g : ℂ → �
   refine intervalIntegral.integral_congr_ae ?_
   rw [uIoc_of_le hlu]
   filter_upwards [h_gt] with t ht htm
-  rw [if_pos (ht htm)]
+  rw [ite_eq_left (ht htm)]
 
 /-- **The monotone exit substrate at a transverse crossing**: a radius `ρ ≤ r` on whose
 one-sided windows the distance profile is strictly monotone and the curve leaves the crossed
