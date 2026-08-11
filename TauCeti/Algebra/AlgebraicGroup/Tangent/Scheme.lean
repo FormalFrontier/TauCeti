@@ -77,10 +77,8 @@ theorem kernelPoint_eq_comap_closedPoint :
     kernelPoint f = PrimeSpectrum.comap (f : H →+* k) (closedPoint k) := by
   apply PrimeSpectrum.ext
   rw [kernelPoint_asIdeal, PrimeSpectrum.comap_asIdeal]
-  -- Mathlib has no public lemma for this bridge: `closedPoint` is definitionally the point
-  -- whose ideal is the local ring's `maximalIdeal`.
-  rw [show (closedPoint k).asIdeal = maximalIdeal k from rfl,
-    IsLocalRing.maximalIdeal_eq_bot]
+  dsimp only [closedPoint]
+  rw [IsLocalRing.maximalIdeal_eq_bot]
   rfl
 
 /-- The kernel of an augmentation to a field is canonically maximal. -/
@@ -125,7 +123,8 @@ theorem kernelResidueFieldRingEquiv_apply (r : k) :
       Ideal.Quotient.mk _
         (algebraMap H ((Spec (CommRingCat.of H)).presheaf.stalk (kernelPoint f))
           (algebraMap k H r)) := by
-  -- Expose the composed ring equivalence so its two public representative lemmas apply.
+  -- `ResidueField` is definitionally the quotient by the maximal ideal, but this bridge is
+  -- opaque to `RingEquiv.trans_apply` at its default transparency.
   change (IsLocalization.AtPrime.equivQuotMaximalIdeal (RingHom.ker (f : H →+* k))
       ((Spec (CommRingCat.of H)).presheaf.stalk (kernelPoint f)))
         ((RingHom.quotientKerEquivOfSurjective (surjective f)).symm r) = _

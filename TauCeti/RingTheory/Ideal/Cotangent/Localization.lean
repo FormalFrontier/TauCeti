@@ -85,12 +85,10 @@ theorem cotangentLocalizationEquiv_toCotangent (x : p) :
           rw [← Ideal.mem_under, IsLocalization.AtPrime.under_maximalIdeal Rₚ p]
           exact x.2⟩ := by
   let _ := IsLocalization.AtPrime.isLocalRing Rₚ p
-  -- Unfold the composed equivalence and its final restricted-scalar wrapper; there is no
-  -- application lemma for this composite.
-  change ((maximalIdeal Rₚ).cotangentEquivIdeal.symm.restrictScalars R)
-      (cotangentLocalizationIdealEquiv p (p.cotangentEquivIdeal (p.toCotangent x))) = _
+  rw [cotangentLocalizationEquiv, LinearEquiv.trans_apply, LinearEquiv.trans_apply,
+    LinearEquiv.restrictScalars_apply]
   apply (maximalIdeal Rₚ).cotangentEquivIdeal.injective
-  rw [LinearEquiv.restrictScalars_apply, LinearEquiv.apply_symm_apply]
+  rw [LinearEquiv.apply_symm_apply]
   apply Subtype.ext
   simp only [cotangentLocalizationIdealEquiv]
   -- The restricted `ofSubmodules` equivalence and `cotangentEquivIdeal` compute on their
