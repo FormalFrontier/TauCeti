@@ -6,6 +6,7 @@ module
 
 public import Mathlib.LinearAlgebra.QuadraticForm.Dual
 public import Mathlib.LinearAlgebra.QuadraticForm.Radical
+public import Mathlib.RingTheory.Finiteness.Prod
 public import TauCeti.LinearAlgebra.QuadraticForm.SepClosed
 
 /-!
@@ -131,14 +132,12 @@ private theorem associated_splitModelForm_separatingLeft {R : Type*} [CommRing R
 @[simp high]
 theorem finrank_splitModel {R : Type*} [CommRing R] [Nontrivial R] (n : ℕ) :
     Module.finrank R (SplitModel R n) = n := by
-  simp only [Module.finrank, rank_prod, Module.rank_linearMap_self, rank_pi, Module.rank_self,
-    Cardinal.sum_const, Cardinal.mk_fintype, Fintype.card_fin, Cardinal.lift_natCast,
-    Cardinal.lift_uzero, mul_one, Cardinal.lift_id]
-  rw [Cardinal.toNat_add
-      (Cardinal.add_lt_aleph0 Cardinal.natCast_lt_aleph0 Cardinal.natCast_lt_aleph0)
-      Cardinal.natCast_lt_aleph0,
-    Cardinal.toNat_add Cardinal.natCast_lt_aleph0 Cardinal.natCast_lt_aleph0]
-  simp only [Cardinal.toNat_natCast]
+  let _ : Module.Free R (SplitHalf R n) := Module.Free.pi R _
+  let _ : Module.Finite R (SplitHalf R n) := Module.Finite.pi
+  let _ : Module.Free R (SplitRemainder R n) := Module.Free.pi R _
+  let _ : Module.Finite R (SplitRemainder R n) := Module.Finite.pi
+  simp only [SplitModel, SplitHalf, SplitRemainder, Module.Dual, Module.finrank_prod,
+    Module.finrank_linearMap_self, Module.finrank_fintype_fun_eq_card, Fintype.card_fin]
   omega
 
 /-- The split model form is nondegenerate. -/
