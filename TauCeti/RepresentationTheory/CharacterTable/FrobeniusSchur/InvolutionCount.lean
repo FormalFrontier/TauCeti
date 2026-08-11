@@ -32,7 +32,8 @@ right side becomes `∑_χ ν₂(χ) χ(1)`, weighted by the **degrees**; it is 
 `∑_χ ν₂(χ)`, which in characteristic zero is the number of orthogonal irreducibles minus the
 number of symplectic ones.
 
-Only one input is genuinely about the indicator, namely that `ν₂` *is* the pairing coefficient
+Only one input is genuinely about the indicator, namely that the pairing of a character against `θ`
+*is* `ν₂`
 (`TauCeti.ClassFunction.characterPairing_ofCharacter_squareRootCount_eq_frobeniusSchurIndicator`);
 everything else is the expansion of a class function in the basis of irreducible characters, which
 `TauCeti/RepresentationTheory/CharacterTable/Completeness.lean` supplies.  The identity holds over
@@ -43,8 +44,9 @@ required: nothing here uses the trichotomy, so the values `ν₂` takes are irre
 
 * `TauCeti.ClassFunction.squareRootCount`: the class function `x ↦ #{g ∈ G : g² = x}`.
 * `TauCeti.ClassFunction.characterPairing_ofCharacter_squareRootCount_eq_frobeniusSchurIndicator`:
-  **the Frobenius-Schur indicator is the coefficient of the character** in the expansion of the
-  square-root count.
+  **pairing a character against the square-root count returns the Frobenius-Schur indicator**, for
+  an arbitrary representation; for an irreducible one the pairing is moreover the coefficient of
+  its character in the expansion of the square-root count.
 * `TauCeti.ClassFunction.card_squareRoot_eq_sum_frobeniusSchurIndicator`: **the involution-counting
   formula** `#{g : g² = x} = ∑_χ ν₂(χ) χ(x)`, over a complete family of irreducibles.
 * `TauCeti.frobeniusSchurIndicatorRow`: the indicator of the `i`-th row of `TauCeti.characterTable`,
@@ -121,12 +123,13 @@ section Pairing
 
 variable {k : Type} {G : Type v} [Field k] [Group G] [Fintype G]
 
-/-- **The Frobenius-Schur indicator is the coefficient of the character.** Pairing the character of
-`ρ` against the square-root count returns `ν₂(ρ) = |G|⁻¹ ∑_g χ(g²)`.
+/-- **Pairing the character of `ρ` against the square-root count returns the Frobenius-Schur
+indicator** `ν₂(ρ) = |G|⁻¹ ∑_g χ(g²)`.
 
 This is the only input to the involution-counting formula below that is about the indicator; the
-rest is the expansion of a class function in the basis of irreducible characters.  No
-irreducibility or finite-dimensionality of `ρ` is needed. -/
+rest is the expansion of a class function in the basis of irreducible characters.  The equality
+needs no irreducibility or finite-dimensionality of `ρ`; it is only for irreducible `ρ` that the
+pairing is in addition the coefficient of `ρ`'s character in that expansion. -/
 theorem characterPairing_ofCharacter_squareRootCount_eq_frobeniusSchurIndicator
     {V : Type w} [AddCommGroup V] [Module k V]
     (ρ : Representation k G V) :
