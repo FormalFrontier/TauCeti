@@ -5,7 +5,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Analysis.Normed.Operator.Resolvent.Shift
-public import TauCeti.Analysis.Semigroups.Generator.ExponentialShift
 
 /-!
 # The shift reduction for the Hille--Yosida theorem

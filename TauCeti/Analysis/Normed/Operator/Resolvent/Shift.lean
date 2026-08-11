@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+public import TauCeti.Analysis.Normed.Operator.LinearPMap.Shift
 public import TauCeti.Analysis.Normed.Operator.Resolvent.Unbounded
 
 /-!
@@ -14,13 +15,12 @@ unchanged and translates its resolvent:
 
 `R(lambda, A - omega I) = R(lambda + omega, A)`.
 
-This file defines that shift directly for `LinearPMap` and develops its characteristic domain,
-evaluation, and resolvent API.  The construction is independent of semigroups; in particular, it
-can be used for an operator not yet known to generate one.
+This file develops the characteristic resolvent API of the generic scalar shift from
+`TauCeti.Analysis.Normed.Operator.LinearPMap.Shift`.  The construction is independent of
+semigroups; in particular, it can be used for an operator not yet known to generate one.
 
 ## Main results
 
-* `TauCeti.LinearPMap.subScalar`: the operator `A - omega I` on the domain of `A`.
 * `TauCeti.LinearPMap.mem_resolventSet_subScalar_iff`: translation of the resolvent set.
 * `TauCeti.LinearPMap.resolvent_subScalar`: translation of the resolvent itself.
 -/
@@ -33,42 +33,9 @@ namespace TauCeti.LinearPMap
 
 variable {X : Type*} [NormedAddCommGroup X] [NormedSpace ℝ X]
 
-/-- Subtract the scalar operator `omega I` from an unbounded operator `A`, without changing its
-domain. -/
-def subScalar (A : X →ₗ.[ℝ] X) (omega : ℝ) : X →ₗ.[ℝ] X :=
-  { domain := A.domain
-    toFun := A.toFun - omega • A.domain.subtype }
-
-/-- A scalar shift does not change the domain of an unbounded operator. -/
-@[simp]
-theorem subScalar_domain (A : X →ₗ.[ℝ] X) (omega : ℝ) :
-    (subScalar A omega).domain = A.domain :=
-  (rfl)
-
-/-- Pointwise evaluation of the shifted operator `A - omega I`. -/
-@[simp]
-theorem subScalar_apply (A : X →ₗ.[ℝ] X) (omega : ℝ) (x : (subScalar A omega).domain) :
-    subScalar A omega x = A ⟨x, by simpa using x.property⟩ - omega • (x : X) :=
-  (rfl)
-
-/-- The zero scalar shift is the original operator. -/
-@[simp]
-theorem subScalar_zero (A : X →ₗ.[ℝ] X) : subScalar A 0 = A := by
-  apply LinearPMap.ext (subScalar_domain A 0)
-  intro x hx hy
-  simp
-
-/-- Successive scalar shifts add their parameters. -/
-@[simp]
-theorem subScalar_subScalar (A : X →ₗ.[ℝ] X) (omega mu : ℝ) :
-    subScalar (subScalar A omega) mu = subScalar A (omega + mu) := by
-  apply LinearPMap.ext (by simp)
-  intro x hx hy
-  simp only [subScalar_apply]
-  module
-
 /-- An inverse for `lambda I - A` is the same as an inverse for
 `(lambda - omega) I - (A - omega I)`. -/
+@[simp]
 theorem isResolventAt_subScalar_iff {A : X →ₗ.[ℝ] X} {omega lambda : ℝ}
     {R : X →L[ℝ] X} :
     IsResolventAt (subScalar A omega) (lambda - omega) R ↔ IsResolventAt A lambda R := by
@@ -113,6 +80,7 @@ theorem isResolventAt_subScalar_iff {A : X →ₗ.[ℝ] X} {omega lambda : ℝ}
         _ = (x : X) := h.apply_smul_sub ⟨x, by simpa using x.property⟩
 
 /-- Translation of the resolvent set under the scalar shift `A ↦ A - omega I`. -/
+@[simp]
 theorem mem_resolventSet_subScalar_iff {A : X →ₗ.[ℝ] X} {omega lambda : ℝ} :
     lambda ∈ resolventSet (subScalar A omega) ↔ lambda + omega ∈ resolventSet A := by
   rw [mem_resolventSet_iff, mem_resolventSet_iff]
@@ -124,6 +92,7 @@ theorem mem_resolventSet_subScalar_iff {A : X →ₗ.[ℝ] X} {omega lambda : �
       (isResolventAt_subScalar_iff (A := A) (omega := omega) (lambda := lambda + omega)).mpr hR
 
 /-- Exact translation of the resolvent under the scalar shift `A ↦ A - omega I`. -/
+@[simp]
 theorem resolvent_subScalar {A : X →ₗ.[ℝ] X} {omega lambda : ℝ}
     (hlambda : lambda + omega ∈ resolventSet A) :
     resolvent (subScalar A omega) lambda = resolvent A (lambda + omega) := by

@@ -4,9 +4,10 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Analysis.Normed.Operator.Resolvent.Shift
+public import TauCeti.Analysis.Calculus.ExponentialSlope
+public import TauCeti.Analysis.Normed.Operator.LinearPMap.Shift
 public import TauCeti.Analysis.Semigroups.ExponentialShift
-public import TauCeti.Analysis.Semigroups.Generator
+public import TauCeti.Analysis.Semigroups.Generator.Basic
 
 /-!
 # Generators of exponentially shifted semigroups
@@ -35,16 +36,6 @@ open Filter
 
 variable {X : Type*} [NormedAddCommGroup X] [NormedSpace ℝ X]
 
-/-- The scalar difference quotient contributed by an exponential shift tends to the shift of the
-generator. -/
-private theorem tendsto_exp_neg_mul_sub_one_div (omega : ℝ) :
-    Tendsto (fun t : ℝ => (Real.exp (-(omega * t)) - 1) / t)
-      (nhdsWithin 0 (Set.Ioi 0)) (nhds (-omega)) := by
-  have hderiv : HasDerivAt (fun t : ℝ => Real.exp (-(omega * t))) (-omega) 0 := by
-    convert ((hasDerivAt_id (x := (0 : ℝ))).const_mul (-omega)).exp using 1 <;> simp
-  simpa only [zero_add, mul_zero, neg_zero, Real.exp_zero, smul_eq_mul, div_eq_mul_inv,
-    mul_comm] using hderiv.tendsto_slope_zero_right
-
 /-- Exponentially shifting a semigroup shifts the limit of a generator difference quotient by
 `-omega I`. -/
 private theorem tendsto_expShift_genQuot (S : StronglyContinuousSemigroup X) (omega : ℝ)
@@ -60,13 +51,13 @@ private theorem tendsto_expShift_genQuot (S : StronglyContinuousSemigroup X) (om
   have hconst : Tendsto (fun _ : ℝ => x) (nhdsWithin 0 (Set.Ioi 0)) (nhds x) :=
     tendsto_const_nhds
   have hshift := (hexp.smul hgen).add
-    ((tendsto_exp_neg_mul_sub_one_div omega).smul hconst)
+    ((tendsto_exp_mul_sub_one_div (-omega)).smul hconst)
   have hshift' : Tendsto
       (fun t : ℝ => Real.exp (-(omega * t)) •
           ((1 / t) • (S.realOperator t x - x)) +
         ((Real.exp (-(omega * t)) - 1) / t) • x)
       (nhdsWithin 0 (Set.Ioi 0)) (nhds (Ax - omega • x)) := by
-    simpa only [one_smul, neg_smul, sub_eq_add_neg] using hshift
+    simpa only [one_smul, neg_smul, sub_eq_add_neg, neg_mul] using hshift
   refine hshift'.congr' ?_
   filter_upwards [self_mem_nhdsWithin] with t ht
   rw [S.expShift_realOperator_apply_of_nonneg omega t ht.le]
@@ -96,6 +87,7 @@ private theorem subScalar_generator_le_generator_expShift
 
 /-- The generator of the exponentially shifted semigroup `exp (-omega t) S(t)` is
 `A - omega I`, where `A` is the generator of `S`. -/
+@[simp]
 theorem generator_expShift (S : StronglyContinuousSemigroup X) (omega : ℝ) :
     (S.expShift omega).generator = LinearPMap.subScalar S.generator omega := by
   have hforward := subScalar_generator_le_generator_expShift S omega
