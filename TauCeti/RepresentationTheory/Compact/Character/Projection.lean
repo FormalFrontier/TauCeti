@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.RepresentationTheory.Compact.Character
+public import TauCeti.RepresentationTheory.Compact.Character.Basic
 
 /-!
 # A class function acts on an irreducible representation by a scalar
@@ -28,8 +28,9 @@ computation fixes that scalar:
 Specializing `f` to `conj χ_π`, whose Haar integral against `χ_ρ` is the `L²` inner product of the
 two characters, turns the orthogonality relations into the **character projections**: the kernel
 `dim V_π · conj χ_π` acts as the identity on `V_π` and as zero on any representation with no nonzero
-intertwiner into `π`. These are the block projections that split a representation into its isotypic
-pieces.
+intertwiner into `π`. These are the two blockwise identities from which the isotypic projectors are
+built; the projector on a reducible representation, and the isotypic decomposition it cuts out, are
+not constructed here.
 
 ## Main definitions
 
@@ -46,8 +47,9 @@ pieces.
 * `TauCeti.ContRepresentation.integratedOperator_comp`: a class function acts by an intertwiner.
 * `TauCeti.ContRepresentation.integratedOperator_eq_smul_id`: **a class function acts on a
   finite-dimensional irreducible representation by the scalar `(dim V)⁻¹ · ∫ g, f g · χ_π g`.**
-* `TauCeti.ContRepresentation.integratedOperator_star_character_self` and
-  `TauCeti.ContRepresentation.finrank_smul_integratedOperator_star_character_self`: the kernel
+* `TauCeti.ContRepresentation.integratedOperator_star_character_self`: `conj χ_π` acts on `V_π` by
+  the scalar `(dim V_π)⁻¹`, so that, by
+  `TauCeti.ContRepresentation.finrank_smul_integratedOperator_star_character_self`, the kernel
   `dim V_π · conj χ_π` acts as the identity on `V_π`.
 * `TauCeti.ContRepresentation.integratedOperator_star_character_eq_zero`: it acts as zero on a
   representation admitting no nonzero intertwiner into `π`.
@@ -153,7 +155,8 @@ theorem integratedOperator_apply (f : C(G, 𝕜)) (v : V) :
     (weightFamily π hπ f)
   simp only [ContinuousLinearMap.apply_apply] at h
   rw [integratedOperator, ← h, haarAverage_apply]
-  rfl
+  simp only [ContinuousMap.comp_apply, ContinuousMap.coe_coe, ContinuousLinearMap.apply_apply,
+    weightFamily_apply, smul_apply]
 
 /-! ### Linearity in the acting function -/
 
@@ -227,10 +230,9 @@ private theorem conjOp_comp_weightFamily (h : G) :
   have hclass : f (h⁻¹ * (g * h)) = f g := by
     have := hf g h⁻¹
     rwa [inv_inv, mul_assoc] at this
-  rw [ContinuousMap.comp_apply, ContinuousMap.comp_apply, ContinuousMap.coe_coe, conjOp_apply,
-    weightFamily_apply, conjMap_apply, weightFamily_apply, hclass, map_mul π, map_mul π,
-    ContinuousLinearMap.comp_apply, ContinuousLinearMap.comp_apply, smul_apply, smul_apply,
-    map_smul, mul_apply_eq_comp, mul_apply_eq_comp]
+  simp only [ContinuousMap.comp_apply, ContinuousMap.coe_coe, conjOp_apply,
+    ContinuousLinearMap.comp_apply, weightFamily_apply, conjMap_apply, hclass, smul_apply,
+    map_smul, map_mul π, mul_apply_eq_comp]
 
 /-- The integrated operator of a class function is fixed by conjugation:
 `π h⁻¹ ∘ π(f) ∘ π h = π(f)`. -/
@@ -246,8 +248,8 @@ theorem integratedOperator_comp (h : G) :
   have hconj := conjOp_integratedOperator π hπ hf h
   rw [conjOp_apply] at hconj
   have hid : (π h).comp (π h⁻¹) = ContinuousLinearMap.id 𝕜 V := by
-    rw [← ContinuousLinearMap.mul_def, ← map_mul, mul_inv_cancel, map_one]
-    rfl
+    rw [← ContinuousLinearMap.mul_def, ← map_mul, mul_inv_cancel, map_one,
+      ContinuousLinearMap.one_def]
   calc (integratedOperator π hπ f).comp (π h)
       = (ContinuousLinearMap.id 𝕜 V).comp ((integratedOperator π hπ f).comp (π h)) := by
         rw [ContinuousLinearMap.id_comp]
@@ -299,10 +301,7 @@ theorem trace_integratedOperator (f : C(G, 𝕜)) :
       = ∫ g, f g * character π hπ g ∂haarProb G := by
   have h := (traceCLM 𝕜 V).haarAverage_comp_comm (G := G) (weightFamily π hπ f)
   rw [← traceCLM_apply, integratedOperator, ← h, haarAverage_apply]
-  refine integral_congr_ae (Filter.Eventually.of_forall fun g ↦ ?_)
-  -- `integral_congr_ae` leaves the two integrands applied but unreduced.
-  beta_reduce
-  rw [ContinuousMap.comp_apply, ContinuousMap.coe_coe, weightFamily_apply, map_smul,
+  simp only [ContinuousMap.comp_apply, ContinuousMap.coe_coe, weightFamily_apply, map_smul,
     traceCLM_apply, smul_eq_mul, character_apply]
 
 variable [IsAlgClosed 𝕜] {f : C(G, 𝕜)} (hf : ∀ g h : G, f (h * g * h⁻¹) = f g)
@@ -315,8 +314,8 @@ an algebraically closed field, Schur's lemma makes the intertwiner
 identifies the multiplier as `(dim V)⁻¹ · ∫ g, f g · χ_π g`.
 
 This is the operator form of the statement that the centre of the group algebra acts on an
-irreducible by central characters; specialized to `f = conj χ_π` it is the block projection of the
-compact-group Peter-Weyl decomposition. -/
+irreducible by central characters; specialized to `f = conj χ_π` it gives the blockwise identities
+of the character projection below. -/
 theorem integratedOperator_eq_smul_id
     (hirr : Representation.IsIrreducible π.toRepresentation) :
     integratedOperator π hπ f
@@ -376,7 +375,7 @@ include hπ
 omit [IsAlgClosed 𝕜] [IsTopologicalGroup G] [CompactSpace G] [MeasurableSpace G] [BorelSpace G]
   [NormedSpace ℝ V] [SMulCommClass ℝ 𝕜 V] in
 /-- **The conjugate of a character is a class function.** -/
-theorem star_character_apply_conj (g h : G) :
+theorem star_character_conj (g h : G) :
     (star (character π hπ)) (h * g * h⁻¹) = (star (character π hπ)) g := by
   rw [ContinuousMap.star_apply, ContinuousMap.star_apply, character_conj π hπ g h]
 
@@ -407,15 +406,15 @@ theorem integratedOperator_star_character_eq_zero (hunitary : IsUnitary π)
     (hirr : Representation.IsIrreducible ρ.toRepresentation)
     (hdistinct : ∀ φ : ContIntertwiningMap ρ π, φ.toContinuousLinearMap = 0) :
     integratedOperator ρ hρ (star (character π hπ)) = 0 :=
-  integratedOperator_eq_zero ρ hρ (star_character_apply_conj π hπ) hirr <| by
+  integratedOperator_eq_zero ρ hρ (star_character_conj π hπ) hirr <| by
     rw [integral_star_character_mul_character π hπ ρ hρ,
       character_orthonormal_distinct π hπ ρ hρ hunitary hdistinct]
 
 omit hρ
 
-/-- **The character projection is the identity on its own block.** For a finite-dimensional
-irreducible unitary representation of dimension `d`, the conjugate character acts on the
-representation itself by the scalar `d⁻¹`.
+/-- **The conjugate character acts on its own representation by the inverse dimension.** For a
+finite-dimensional irreducible unitary representation of dimension `d`, the integrated operator of
+`conj χ_π` on `V_π` is `d⁻¹ • id`.
 
 The scalar is `d⁻¹` rather than `1` exactly because the character has `L²` norm one: the projection
 kernel that acts as the identity is `d · conj χ_π`, which is
@@ -424,14 +423,15 @@ theorem integratedOperator_star_character_self (hunitary : IsUnitary π)
     (hirr : Representation.IsIrreducible π.toRepresentation) :
     integratedOperator π hπ (star (character π hπ))
       = (Module.finrank 𝕜 V : 𝕜)⁻¹ • ContinuousLinearMap.id 𝕜 V := by
-  rw [integratedOperator_eq_smul_id π hπ (star_character_apply_conj π hπ) hirr,
+  rw [integratedOperator_eq_smul_id π hπ (star_character_conj π hπ) hirr,
     integral_star_character_mul_character π hπ π hπ,
     character_orthonormal_self π hπ hunitary hirr, mul_one]
 
 /-- **The block projection, normalized.** The kernel `dim V_π · conj χ_π` acts as the identity on
 `V_π`; together with `TauCeti.ContRepresentation.integratedOperator_star_character_eq_zero`, which
-makes it act as zero on any representation with no nonzero intertwiner into `π`, this is the
-isotypic projector attached to `π`. -/
+makes it act as zero on any representation with no nonzero intertwiner into `π`, these are the two
+blockwise identities that characterize the isotypic projector attached to `π`. Assembling them into
+a projector on a reducible representation is not done here. -/
 theorem finrank_smul_integratedOperator_star_character_self (hunitary : IsUnitary π)
     (hirr : Representation.IsIrreducible π.toRepresentation) :
     (Module.finrank 𝕜 V : 𝕜) • integratedOperator π hπ (star (character π hπ))
