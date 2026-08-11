@@ -201,12 +201,12 @@ private noncomputable def reflectRepObj (M : QuiverRep.{u, v, w, max v w x} k Q)
 /-- At the reflected vertex the vertex space is the kernel of `TauCeti.incomingSum`. -/
 private theorem reflectRepObj_self (M : QuiverRep.{u, v, w, max v w x} k Q) (i : Q) :
     reflectRepObj M i i = ModuleCat.of k (LinearMap.ker (incomingSum M i)) :=
-  if_pos rfl
+  ite_eq_left rfl
 
 /-- Away from the reflected vertex the vertex spaces are those of `M`. -/
 private theorem reflectRepObj_of_ne (M : QuiverRep.{u, v, w, max v w x} k Q) (i : Q) {j : Q}
     (h : j ≠ i) : reflectRepObj M i j = M.obj j :=
-  if_neg h
+  ite_eq_right h
 
 open scoped Classical in
 /-- The prefunctor underlying the reflection at a sink: the vertex spaces of `reflectRepObj`,
@@ -283,8 +283,8 @@ theorem reflectRep_map_reflectArrow {b : Q} (e : b ⟶ i) :
         eqToHom (reflectRep_obj_of_ne M hi (hi.ne_of_hom e)).symm := by
   classical
   refine ((reflectRep_map_toPath M hi (reflectArrow i e)).trans
-    (dif_neg (hi.ne_of_hom e))).trans ?_
-  refine (dif_pos rfl).trans ?_
+    (dite_eq_right (hi.ne_of_hom e))).trans ?_
+  refine (dite_eq_left rfl).trans ?_
   conv_lhs => rw [cast_reflectArrow]
   rfl
 
@@ -296,8 +296,8 @@ theorem reflectRep_map_reflectArrowOfNeOfNe {a b : Q} (ha : a ≠ i) (hb : b ≠
         eqToHom (reflectRep_obj_of_ne M hi hb).symm := by
   classical
   refine ((reflectRep_map_toPath (a := a) (b := b) M hi
-    (reflectArrowOfNeOfNe ha hb e)).trans (dif_neg hb)).trans ?_
-  refine (dif_neg ha).trans ?_
+    (reflectArrowOfNeOfNe ha hb e)).trans (dite_eq_right hb)).trans ?_
+  refine (dite_eq_right ha).trans ?_
   conv_lhs => rw [cast_reflectArrowOfNeOfNe]
   rfl
 

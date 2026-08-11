@@ -98,7 +98,7 @@ private theorem restrictToConvexFun_eq_zero_iff (v : Valuation R Γ₀) (H : Con
     {r : R} (hr : v r ≠ 0) :
     restrictToConvexFun v H r = 0 ↔ Units.mk0 (v r) hr ∉ H := by
   classical
-  rw [restrictToConvexFun_unfold, dif_neg hr]
+  rw [restrictToConvexFun_unfold, dite_eq_right hr]
   by_cases hm : Units.mk0 (v r) hr ∈ H
   · simp [hm]
   · simp [hm]
@@ -108,7 +108,7 @@ private theorem restrictToConvexFun_of_mem (v : Valuation R Γ₀) (H : ConvexSu
     {r : R} (hr : v r ≠ 0) (hm : Units.mk0 (v r) hr ∈ H) :
     restrictToConvexFun v H r = ((⟨Units.mk0 (v r) hr, hm⟩ : H.toSubgroup) : WithZero _) := by
   classical
-  rw [restrictToConvexFun_unfold, dif_neg hr, dif_pos hm]
+  rw [restrictToConvexFun_unfold, dite_eq_right hr, dite_eq_left hm]
 
 /-- Units outside `H` are absorbing for the product, given that `H` takes every attained value
 `≥ 1`. Two units outside a general subgroup can multiply back into it; convexity is what rules
@@ -143,7 +143,7 @@ private theorem mem_of_mem_of_le {v : Valuation R Γ₀} {H : ConvexSubgroup Γ�
 private theorem restrictToConvexFun_map_zero (v : Valuation R Γ₀) (H : ConvexSubgroup Γ₀ˣ) :
     restrictToConvexFun v H 0 = 0 := by
   classical
-  rw [restrictToConvexFun_unfold, dif_pos (by simp)]
+  rw [restrictToConvexFun_unfold, dite_eq_left (by simp)]
 
 private theorem restrictToConvexFun_map_one (v : Valuation R Γ₀) (H : ConvexSubgroup Γ₀ˣ) :
     restrictToConvexFun v H 1 = 1 := by
@@ -162,11 +162,11 @@ private theorem restrictToConvexFun_map_mul (v : Valuation R Γ₀) (H : ConvexS
       = restrictToConvexFun v H x * restrictToConvexFun v H y := by
   classical
   by_cases hx : v x = 0
-  · rw [restrictToConvexFun_unfold v H (x * y), dif_pos (by simp [hx]),
-      restrictToConvexFun_unfold v H x, dif_pos hx, zero_mul]
+  · rw [restrictToConvexFun_unfold v H (x * y), dite_eq_left (by simp [hx]),
+      restrictToConvexFun_unfold v H x, dite_eq_left hx, zero_mul]
   by_cases hy : v y = 0
-  · rw [restrictToConvexFun_unfold v H (x * y), dif_pos (by simp [hy]),
-      restrictToConvexFun_unfold v H y, dif_pos hy, mul_zero]
+  · rw [restrictToConvexFun_unfold v H (x * y), dite_eq_left (by simp [hy]),
+      restrictToConvexFun_unfold v H y, dite_eq_left hy, mul_zero]
   have hxy : v (x * y) ≠ 0 := by simp [hx, hy]
   have hfac : Units.mk0 (v (x * y)) hxy = Units.mk0 (v x) hx * Units.mk0 (v y) hy := by
     ext; simp
@@ -208,7 +208,7 @@ private theorem restrictToConvexFun_map_add_le_max (v : Valuation R Γ₀)
       ≤ max (restrictToConvexFun v H x) (restrictToConvexFun v H y) := by
   classical
   by_cases hxy : v (x + y) = 0
-  · rw [restrictToConvexFun_unfold v H (x + y), dif_pos hxy]
+  · rw [restrictToConvexFun_unfold v H (x + y), dite_eq_left hxy]
     exact zero_le
   by_cases hmxy : Units.mk0 (v (x + y)) hxy ∈ H
   · rcases le_total (v y) (v x) with h | h
@@ -261,7 +261,7 @@ theorem restrictToConvex_apply_of_eq_zero (v : Valuation R Γ₀) (H : ConvexSub
     (hH : ∀ a : R, ∀ ha : v a ≠ 0, 1 ≤ v a → Units.mk0 (v a) ha ∈ H)
     {r : R} (hr : v r = 0) : v.restrictToConvex H hH r = 0 := by
   classical
-  exact (restrictToConvexFun_unfold v H r).trans (dif_pos hr)
+  exact (restrictToConvexFun_unfold v H r).trans (dite_eq_left hr)
 
 /-- On values whose units lie in `H`, the restriction both preserves and reflects the order.
 This is what lets an order fact about `v` be moved to the restricted valuation without

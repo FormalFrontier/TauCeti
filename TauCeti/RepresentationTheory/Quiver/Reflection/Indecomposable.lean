@@ -113,12 +113,12 @@ private noncomputable def sinkEndApp (a : Q) : M.obj a ⟶ M.obj a :=
 @[simp]
 private theorem sinkEndApp_self : sinkEndApp M π i = ModuleCat.ofHom π := by
   classical
-  simp only [sinkEndApp, dif_pos rfl, eqToHom_refl, Category.id_comp, Category.comp_id]
+  simp only [sinkEndApp, dite_eq_left rfl, eqToHom_refl, Category.id_comp, Category.comp_id]
 
 @[simp]
 private theorem sinkEndApp_of_ne {a : Q} (ha : a ≠ i) : sinkEndApp M π a = 𝟙 (M.obj a) := by
   classical
-  simp only [sinkEndApp, dif_neg ha]
+  simp only [sinkEndApp, dite_eq_right ha]
 
 /-- A vector fixed on the image of every arrow into `i` is fixed on the image of every path into
 `i` from another vertex: such a path ends with an arrow into `i`. -/

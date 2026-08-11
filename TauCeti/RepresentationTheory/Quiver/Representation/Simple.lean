@@ -96,12 +96,12 @@ variable {k Q}
 /-- At `i`, the vertex simple `Sᵢ` is the base field `k`. -/
 @[simp]
 theorem simpleRep_obj_self (i : Q) : (simpleRep k Q i).obj i = ModuleCat.of k k :=
-  if_pos rfl
+  ite_eq_left rfl
 
 /-- Away from `i`, the vertex simple `Sᵢ` is the zero module. -/
 @[simp]
 theorem simpleRep_obj_of_ne {i a : Q} (h : a ≠ i) : (simpleRep k Q i).obj a = 0 :=
-  if_neg h
+  ite_eq_right h
 
 /-- Away from `i`, the vertex simple `Sᵢ` vanishes. -/
 theorem isZero_simpleRep_obj {i a : Q} (h : a ≠ i) : IsZero ((simpleRep k Q i).obj a) := by
@@ -240,9 +240,9 @@ theorem dimVector_simpleRep [DecidableEq Q] (i : Q) :
   funext a
   rw [dimVector_apply, Paths.of_obj, Pi.single_apply]
   rcases eq_or_ne a i with rfl | ha
-  · rw [if_pos rfl, simpleRep_obj_self]
+  · rw [ite_eq_left rfl, simpleRep_obj_self]
     exact Module.finrank_self k
-  · rw [if_neg ha]
+  · rw [ite_eq_right ha]
     have : Subsingleton ((simpleRep k Q i).obj a) :=
       ModuleCat.subsingleton_of_isZero (isZero_simpleRep_obj ha)
     exact Module.finrank_zero_of_subsingleton
@@ -290,7 +290,7 @@ noncomputable def simpleRepHom {i : Q} {M : QuiverRep k Q} (x : M.obj ((Paths.of
 theorem simpleRepHom_app_of_ne {i : Q} {M : QuiverRep k Q} (x : M.obj ((Paths.of Q).obj i))
     (hx : ∀ {a : Q} (p : Quiver.Path i a), p.length ≠ 0 → M.map p x = 0) {a : Q} (ha : a ≠ i) :
     (simpleRepHom x hx).app a = 0 :=
-  dif_neg ha
+  dite_eq_right ha
 
 /-- The morphism `Sᵢ ⟶ M` attached to `x : Mᵢ` carries the generator of `(Sᵢ)ᵢ` to `x`. -/
 @[simp]
@@ -300,7 +300,7 @@ theorem simpleRepHom_app_generator {i : Q} {M : QuiverRep k Q} (x : M.obj ((Path
   have happ : (simpleRepHom x hx).app ((Paths.of Q).obj i)
       = eqToHom (simpleRep_obj_self i) ≫
         ModuleCat.ofHom (LinearMap.toSpanSingleton k (M.obj ((Paths.of Q).obj i))
-          (M.map (𝟙 ((Paths.of Q).obj i)) x)) := dif_pos rfl
+          (M.map (𝟙 ((Paths.of Q).obj i)) x)) := dite_eq_left rfl
   rw [happ, M.map_id]
   -- `eqToHom` composed with `ModuleCat.ofHom` is not a rewrite target: `eqToHom` transports along
   -- `simpleRep_obj_self i`, which is what `simpleRepSelfEquiv` is defined from, so the two sides

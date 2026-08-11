@@ -210,7 +210,7 @@ rescaled to `2 * t`. -/
 private theorem trans_toHomotopy_apply_of_le (F : Isotopy f₀ f₁) (G : Isotopy f₁ f₂) {t : I} (x : X)
     (h : (t : ℝ) ≤ 1 / 2) : (F.toHomotopy.trans G.toHomotopy) (t, x)
       = F.toHomotopy (⟨2 * t, (unitInterval.mul_pos_mem_iff zero_lt_two).2 ⟨t.2.1, h⟩⟩, x) := by
-  rw [Homotopy.trans_apply, dif_pos h]
+  rw [Homotopy.trans_apply, dite_eq_left h]
 
 /-- Value of the concatenated homotopy on the second half `[1 / 2, 1]`, with the time parameter
 rescaled to `2 * t - 1`. -/
@@ -218,7 +218,7 @@ private theorem trans_toHomotopy_apply_of_not_le (F : Isotopy f₀ f₁) (G : Is
     (x : X) (h : ¬ (t : ℝ) ≤ 1 / 2) : (F.toHomotopy.trans G.toHomotopy) (t, x)
       = G.toHomotopy
           (⟨2 * t - 1, unitInterval.two_mul_sub_one_mem_iff.2 ⟨(not_le.1 h).le, t.2.2⟩⟩, x) := by
-  rw [Homotopy.trans_apply, dif_neg h]
+  rw [Homotopy.trans_apply, dite_eq_right h]
 
 /-- Halving reparametrisation `s ↦ s / 2 : I → I`, with image the left half `[0, 1 / 2]`. -/
 private noncomputable def half (s : I) : I :=

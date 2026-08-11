@@ -324,7 +324,7 @@ theorem isWeightedRestricted_one (T : Fin k → Set A) :
   classical
   intro U
   filter_upwards [(Set.finite_singleton (0 : Fin k →₀ ℕ)).compl_mem_cofinite] with ν hν
-  rw [MvPowerSeries.coeff_one, if_neg (by simpa using hν)]
+  rw [MvPowerSeries.coeff_one, ite_eq_right (by simpa using hν)]
   exact (weightMul T ν U.toAddSubgroup).zero_mem
 
 omit [TopologicalSpace A] in
@@ -514,7 +514,7 @@ theorem isWeightedRestricted_monomial (T : Fin k → Set A) (μ : Fin k →₀ �
   simp only [Set.mem_ofPred_eq, MvPowerSeries.coeff_monomial] at hν
   by_contra hne
   simp only [Set.mem_singleton_iff] at hne
-  exact hν (if_neg hne)
+  exact hν (ite_eq_right hne)
 
 /-- A constant series is `T`-restricted. -/
 @[simp]
@@ -953,6 +953,34 @@ theorem dense_weightedPolynomials [NonarchimedeanRing A] {T : Fin k → Set A}
     simpa only [neg_sub] using (weightedNhd T hT U.toAddSubgroup).neg_mem hxp
   simpa only [SetLike.mem_coe, sub_eq_add_neg] using hneg
 
+/-- **Agreement on the generators propagates to the polynomials.** Two ring homomorphisms out of
+`A⟨X⟩_T` that agree on every constant series and every variable agree on the whole polynomial
+subring. No topology is involved. -/
+theorem eqOn_weightedPolynomials [NonarchimedeanRing A] {T : Fin k → Set A}
+    {hT : IsWeightFamily T} {B : Type*} [Semiring B]
+    {f g : weightedRestrictedSubring T hT →+* B}
+    (hC : ∀ a, f (weightedC T hT a) = g (weightedC T hT a))
+    (hX : ∀ i, f (weightedX T hT i) = g (weightedX T hT i)) :
+    Set.EqOn f g (weightedPolynomials T hT : Set (weightedRestrictedSubring T hT)) := by
+  have hcomp : f.comp (weightedPolynomialHom T hT) = g.comp (weightedPolynomialHom T hT) :=
+    MvPolynomial.ringHom_ext (by simpa using hC) (by simpa using hX)
+  exact Set.eqOn_range.mpr (congrArg (fun h : MvPolynomial (Fin k) A →+* B ↦ (h : _ → B)) hcomp)
+
+/-- **A continuous homomorphism out of `A⟨X⟩_T` is determined by its values on the generators.**
+Two of them agreeing on every constant series *and* every variable are equal. This is the
+uniqueness half of Wedhorn 5.50: among *continuous* homomorphisms there is at most one extending a
+given map on constants and sending each `Xᵢ` to a prescribed value.
+
+Equality on the polynomial subring is propagated to the whole ring by its density, and that is
+what continuity and the Hausdorff hypothesis are for. Whether uniqueness can fail without them is
+not addressed here. -/
+theorem weightedRestrictedSubring_ringHom_ext_of_continuous [NonarchimedeanRing A]
+    {T : Fin k → Set A} (hT : IsWeightFamily T) {B : Type*} [Semiring B] [TopologicalSpace B]
+    [T2Space B] {f g : weightedRestrictedSubring T hT →+* B} (hf : Continuous f)
+    (hg : Continuous g) (hC : ∀ a, f (weightedC T hT a) = g (weightedC T hT a))
+    (hX : ∀ i, f (weightedX T hT i) = g (weightedX T hT i)) : f = g :=
+  RingHom.coe_inj (hf.ext_on (dense_weightedPolynomials hT) hg (eqOn_weightedPolynomials hC hX))
+
 /-! ### Functoriality -/
 
 section Functoriality
@@ -1079,6 +1107,7 @@ theorem weightedMap_weightedX [NonarchimedeanRing A] [NonarchimedeanRing B] {φ 
     {hS : IsWeightFamily S} (hTS : ∀ i, φ '' T i ⊆ S i) (i : Fin k) :
     weightedMap hφ hT hS hTS (weightedX T hT i) = weightedX S hS i :=
   Subtype.ext (by simp [MvPowerSeries.map_X])
+
 
 end Functoriality
 
