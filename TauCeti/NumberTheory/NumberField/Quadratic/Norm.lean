@@ -56,7 +56,7 @@ theorem norm_gen (hmin : minpoly ℤ θ = X ^ 2 - C d) (hgen : Algebra.adjoin �
   rw [← genPowerBasis_gen hgen,
     Algebra.PowerBasis.norm_gen_eq_coeff_zero_minpoly (genPowerBasis hgen),
     genPowerBasis_dim hmin hgen, genPowerBasis_gen, minpoly_rat_quadratic hmin]
-  simp [coeff_sub, coeff_X_pow, coeff_C]
+  simp [coeff_sub, coeff_X_pow]
 
 /-- **Every element of a quadratic field is `b + aθ`** for rationals `a, b`: the power basis `1, θ`
 spans `K` over `ℚ`, and any polynomial in `θ` reduces modulo the degree-two minimal polynomial. -/
@@ -76,7 +76,7 @@ quadratic norm formula `b² + ab·Tr(θ) + a²·N(θ)` to `Tr(θ) = 0` and `N(θ
 theorem norm_add_mul_gen (hmin : minpoly ℤ θ = X ^ 2 - C d)
     (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) (a b : ℚ) :
     Algebra.norm ℚ (algebraMap ℚ K b + algebraMap ℚ K a * (θ : K)) = b ^ 2 - (d : ℚ) * a ^ 2 := by
-  haveI : Algebra.IsQuadraticExtension ℚ K := ⟨finrank_rat_eq_two hmin hgen⟩
+  have : Algebra.IsQuadraticExtension ℚ K := ⟨finrank_rat_eq_two hmin hgen⟩
   rw [Algebra.IsQuadraticExtension.norm_algebraMap_add_algebraMap_mul, trace_gen_eq_zero hmin,
     norm_gen hmin hgen]
   ring
