@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.MeasureTheory.Function.LpSpace.ContinuousFunctions
+public import TauCeti.MeasureTheory.Function.Lp.CompMeasurePreservingEquiv
 public import TauCeti.MeasureTheory.Group.Conjugation
 
 /-!
@@ -15,9 +16,11 @@ group, for instance — makes `g ↦ g⁻¹` measure preserving, so precompositi
 isometry of `Lp E p μ`.  Inversion is an involution, so this isometry is an involution too, and in
 particular injective: an element of `Lp` vanishes exactly when its inverse-translate does.
 
-The construction is Mathlib's `MeasureTheory.Lp.compMeasurePreservingₗᵢ` at the map `Inv.inv`; what
-this file adds is the involutivity, the interaction with the class functions of
-`TauCeti/MeasureTheory/Group/Conjugation.lean`, and the compatibility with the continuous functions
+The construction is Mathlib's `MeasureTheory.Lp.compMeasurePreservingₗᵢ` at the map `Inv.inv`, and
+the involutivity is `MeasureTheory.Lp.compMeasurePreserving_comp_apply_of_ae_id`
+(`TauCeti/MeasureTheory/Function/Lp/CompMeasurePreservingEquiv.lean`) at the pair `Inv.inv`,
+`Inv.inv`; what this file adds is the interaction with the class functions of
+`TauCeti/MeasureTheory/Group/Conjugation.lean` and the compatibility with the continuous functions
 that supply the elements of `Lp` in practice.
 
 The intended use is the change of variables `∫ f g⁻¹ dg = ∫ f g dg` in inner-product form: for `p`
@@ -64,13 +67,10 @@ theorem coeFn_invLpₗᵢ (f : Lp E p μ) : invLpₗᵢ 𝕜 f =ᵐ[μ] fun g �
 /-- **Inverting twice is the identity.**  The two precompositions compose to precomposition with
 `g ↦ (g⁻¹)⁻¹`, which is the identity on the nose. -/
 @[simp]
-theorem invLpₗᵢ_invLpₗᵢ (f : Lp E p μ) : invLpₗᵢ 𝕜 (invLpₗᵢ 𝕜 f) = f := by
-  refine Lp.ext ?_
-  have h : ∀ᵐ g ∂μ, (invLpₗᵢ 𝕜 f) g⁻¹ = f g := by
-    refine ((Measure.measurePreserving_inv μ).quasiMeasurePreserving.ae_eq
-      (coeFn_invLpₗᵢ (𝕜 := 𝕜) f)).mono fun g hg ↦ ?_
-    simpa using hg
-  exact ((coeFn_invLpₗᵢ (𝕜 := 𝕜) (invLpₗᵢ 𝕜 f)).trans h)
+theorem invLpₗᵢ_invLpₗᵢ (f : Lp E p μ) : invLpₗᵢ 𝕜 (invLpₗᵢ 𝕜 f) = f :=
+  Lp.compMeasurePreserving_comp_apply_of_ae_id (E := E) (p := p)
+    (Measure.measurePreserving_inv μ) (Measure.measurePreserving_inv μ)
+    (.of_eq (funext inv_inv)) f
 
 /-- **The inverse-translate of `f` vanishes exactly when `f` does.**  Injectivity of a linear
 isometry, in the form in which the argument on the inverse-translate of a function returns a
