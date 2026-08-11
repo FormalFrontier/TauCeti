@@ -8,13 +8,17 @@ public import TauCeti.Probability.Exchangeability
 public import TauCeti.Probability.DeFinetti.Representation
 public import TauCeti.Probability.DeFinetti.CountableIndex
 public import TauCeti.Probability.Exchangeability.ConditionallyIID.Unique
+public import TauCeti.Probability.Exchangeability.ConditionallyIID.PathDisintegration
 public import TauCeti.Probability.Exchangeability.PathSpace.Law.Extreme
+public import TauCeti.Probability.Exchangeability.PathSpace.Law.ZeroOne
+public import TauCeti.Probability.DeFinetti.Correspondence
 
 /-!
 # De Finetti's theorem
 
 The completed representation API: the summit theorems, their equivalence forms, the unique mixture
-representation, both uniqueness statements, and the countable-index extension.
+representation, both uniqueness statements, the countable-index extension, and the correspondence
+between mixing laws and exchangeable path laws.
 
 This module declares nothing of its own; it is a curated re-export, and it builds on
 `TauCeti.Probability.Exchangeability` rather than duplicating it.
@@ -28,7 +32,13 @@ This module declares nothing of its own; it is a curated re-export, and it build
 * `mixedIID_mixingLaw_unique` — uniqueness of the mixing *law*;
 * `conditionallyIID_ae_unique` — a.e. uniqueness of the directing *measure*;
 * `conditionallyIID_of_exchangeableFamily` — the countable-index extension;
-* `exchangeable_extreme_iff_iid` — the extreme exchangeable laws are exactly the i.i.d. laws.
+* `exchangeable_extreme_iff_iid` — the extreme exchangeable laws are exactly the i.i.d. laws;
+* `ConditionallyIIDWith.jointPathLaw_eq_iidMixtureLaw` — the full-path joint disintegration;
+* `exchangeableSigma_trivial_iff_iid` — an exchangeable law is a product law exactly when its
+  exchangeable σ-algebra is trivial;
+* `deFinettiBarycenter` and `deFinettiEquiv` — the affine correspondence carrying a mixing law to
+  its exchangeable path law, with `deFinettiBarycenter_mem_extremePoints_iff` identifying the
+  point masses with the extreme laws.
 
 The two uniqueness statements are genuinely different, and the difference is the point of the
 conditional predicate: only the law `μ.map ν` is pinned down by the mixture identity, whereas a

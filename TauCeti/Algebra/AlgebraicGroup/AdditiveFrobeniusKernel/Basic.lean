@@ -73,7 +73,7 @@ is from Mathlib.
 
 public section
 
-open Coalgebra HopfAlgebra SymmetricAlgebra WithConv
+open _root_.Coalgebra HopfAlgebra SymmetricAlgebra WithConv
 open scoped TensorProduct
 
 namespace TauCeti

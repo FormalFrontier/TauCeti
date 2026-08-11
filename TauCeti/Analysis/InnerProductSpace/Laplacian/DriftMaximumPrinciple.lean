@@ -62,6 +62,8 @@ namespace TauCeti
 
 open InnerProductSpace Laplacian Topology RealInnerProductSpace
 
+open scoped ContDiff
+
 variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
 
 /-- The exponential barrier `y ↦ exp (α ⟪u, y⟫)` has derivative `exp (α ⟪u, x⟫) • (α • ⟪u, ·⟫)`.
@@ -74,6 +76,14 @@ private theorem hasFDerivAt_exp_inner (α : ℝ) (u x : E) :
     simpa only [coe_innerSL_apply] using (innerSL ℝ u).hasFDerivAt
   have h2 : HasFDerivAt (fun z : E => α * ⟪u, z⟫) (α • innerSL ℝ u) x := h1.const_mul α
   exact (Real.hasDerivAt_exp (α * ⟪u, x⟫)).comp_hasFDerivAt x h2
+
+/-- The exponential barrier `y ↦ exp (α ⟪u, y⟫)` is smooth, being the exponential of a continuous
+linear form. -/
+theorem contDiff_exp_inner (α : ℝ) (u : E) :
+    ContDiff ℝ ∞ fun y : E => Real.exp (α * ⟪u, y⟫) := by
+  have hi : ContDiff ℝ ∞ (fun y : E => (⟪u, y⟫ : ℝ)) := by
+    simpa only [coe_innerSL_apply] using (innerSL ℝ u).contDiff
+  exact (by simpa only [smul_eq_mul] using hi.const_smul α : ContDiff ℝ ∞ _).exp
 
 /-- The directional derivative of the exponential barrier `y ↦ exp (α ⟪u, y⟫)`. -/
 @[simp] theorem fderiv_exp_inner_apply (α : ℝ) (u x v : E) :
@@ -279,11 +289,8 @@ theorem le_of_laplacian_add_fderiv_nonneg_le_frontier {K : Set E} (hK : IsCompac
   set u : E := (‖v₀‖⁻¹ : ℝ) • v₀
   have hunorm : ‖u‖ = 1 := norm_smul_inv_norm hv₀
   set w : E → ℝ := fun y => Real.exp ((β + 1) * ⟪u, y⟫) with hwdef
-  have hwCD : ContDiff ℝ 2 w := by
-    rw [hwdef]
-    have hinner : ContDiff ℝ 2 (fun z : E => (⟪u, z⟫ : ℝ)) := by
-      simpa only [coe_innerSL_apply] using (innerSL ℝ u).contDiff
-    exact (by simpa only [smul_eq_mul] using hinner.const_smul (β + 1) : ContDiff ℝ 2 _).exp
+  have hwCD : ContDiff ℝ 2 w :=
+    (hwdef ▸ contDiff_exp_inner (β + 1) u : ContDiff ℝ ∞ w).of_le (by norm_cast)
   exact le_of_strict_subsolution_barrier hK hcont hcd hlap hbdry hwCD.continuous.continuousOn
     (fun _ _ => hwCD.contDiffAt)
     fun y hy => laplacian_add_fderiv_exp_inner_pos_of_norm_le hunorm (hb hy) y
