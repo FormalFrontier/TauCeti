@@ -86,42 +86,6 @@ noncomputable def baseChangeCoordinateRingIso
   ObjectProperty.isoMk _ <|
     _root_.CommHopfAlgCat.isoMk (TauCeti.MonoidAlgebra.scalarTensorBialgEquiv k K (G := G))
 
-/-- The forward coordinate-ring base-change isomorphism sends a pure tensor to the scalar
-multiple of the coefficientwise base change. -/
-@[simp]
-theorem baseChangeCoordinateRingIso_hom_tmul
-    (k : Type u) (K : Type v) [CommRing k] [CommRing K] [Algebra k K]
-    (G : FGCommGrpCat.{u}) (s : K) (p : MonoidAlgebra k G) :
-    FiniteTypeCommHopfAlgCat.toBialgHom ((baseChangeCoordinateRingIso k K G).hom)
-        (s ⊗ₜ[k] p) =
-      s • MonoidAlgebra.mapAlgHom G (Algebra.ofId k K) p := by
-  rw [show
-    FiniteTypeCommHopfAlgCat.toBialgHom ((baseChangeCoordinateRingIso k K G).hom) =
-        (TauCeti.MonoidAlgebra.scalarTensorBialgEquiv k K (G := G) :
-          K ⊗[k] MonoidAlgebra k G →ₐc[K] MonoidAlgebra K G) from
-    FiniteTypeCommHopfAlgCat.toBialgHom_ofHom
-      (TauCeti.MonoidAlgebra.scalarTensorBialgEquiv k K (G := G) :
-        K ⊗[k] MonoidAlgebra k G →ₐc[K] MonoidAlgebra K G)]
-  exact TauCeti.MonoidAlgebra.scalarTensorBialgEquiv_tmul k K s p
-
-/-- The inverse coordinate-ring base-change isomorphism sends a monomial to the corresponding
-pure tensor. -/
-@[simp]
-theorem baseChangeCoordinateRingIso_inv_single
-    (k : Type u) (K : Type v) [CommRing k] [CommRing K] [Algebra k K]
-    (G : FGCommGrpCat.{u}) (g : G) (s : K) :
-    FiniteTypeCommHopfAlgCat.toBialgHom ((baseChangeCoordinateRingIso k K G).inv)
-        (MonoidAlgebra.single g s) =
-      s ⊗ₜ[k] MonoidAlgebra.single g (1 : k) := by
-  rw [show
-    FiniteTypeCommHopfAlgCat.toBialgHom ((baseChangeCoordinateRingIso k K G).inv) =
-        ((TauCeti.MonoidAlgebra.scalarTensorBialgEquiv k K (G := G)).symm :
-          MonoidAlgebra K G →ₐc[K] K ⊗[k] MonoidAlgebra k G) from
-    FiniteTypeCommHopfAlgCat.toBialgHom_ofHom
-      ((TauCeti.MonoidAlgebra.scalarTensorBialgEquiv k K (G := G)).symm :
-        MonoidAlgebra K G →ₐc[K] K ⊗[k] MonoidAlgebra k G)]
-  exact TauCeti.MonoidAlgebra.scalarTensorBialgEquiv_symm_single k K g s
-
 /-- The `A`-points of the base change `K ⊗[k] k[G]` of the diagonalizable group `D(G)` are
 the character group `G →* Aˣ`.
 
