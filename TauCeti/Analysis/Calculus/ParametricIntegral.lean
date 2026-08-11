@@ -59,7 +59,7 @@ private theorem exists_eventually_norm_le_on_Icc
 /-- Differentiation under an integral over the compact unit interval for a continuously
 differentiable parameterized function. -/
 theorem hasFDerivAt_integral_Icc_of_contDiff
-    [CompleteSpace F] (h : E → ℝ → F) (hh : ContDiff ℝ 1 h.uncurry) (x₀ : E) :
+     (h : E → ℝ → F) (hh : ContDiff ℝ 1 h.uncurry) (x₀ : E) :
     HasFDerivAt (fun x ↦ ∫ t in Set.Icc (0 : ℝ) 1, h x t)
       (∫ t in Set.Icc (0 : ℝ) 1,
         (fderiv ℝ h.uncurry (x₀, t)).comp (ContinuousLinearMap.inl ℝ E ℝ)) x₀ := by
