@@ -14,7 +14,8 @@ public import Mathlib.GroupTheory.Index
 Inversion of a group is compatible with conjugacy: `x` and `y` are conjugate exactly when `x⁻¹` and
 `y⁻¹` are (`TauCeti.isConj_inv_iff`). So inversion descends to the conjugacy classes, where it is an
 involution, recorded here as an `InvolutiveInv (ConjClasses G)` instance; `C⁻¹` is the class of the
-inverses of the members of `C`, and it has the same size as `C`.
+inverses of the members of `C`, and it has the same size as `C`. A class fixed by this involution is
+a **real** class (`TauCeti.IsRealClass`).
 
 The other fact collected here is that the size of a conjugacy class divides the order of the group,
 a consequence of the orbit-stabilizer theorem for the conjugation action.
@@ -23,6 +24,8 @@ a consequence of the orbit-stabilizer theorem for the conjugation action.
 
 * `TauCeti.isConj_inv_iff`: conjugacy is inherited by inverses in both directions.
 * `TauCeti.ConjClasses.inv_mk`: the inverse of the class of `g` is the class of `g⁻¹`.
+* `TauCeti.IsRealClass`: a class containing an element conjugate to its own inverse, with
+  `TauCeti.isRealClass_iff_inv_eq` identifying it with being fixed by inversion.
 * `TauCeti.ConjClasses.ncard_carrier_inv` and `TauCeti.ConjClasses.card_carrier_inv`: a conjugacy
   class and its inverse have the same size, in `Set.ncard` and in `Nat.card` form.
 * `TauCeti.ConjClasses.card_carrier_dvd_card`: the size of a conjugacy class divides the order of
@@ -122,5 +125,28 @@ theorem card_carrier_cast_ne_zero {R : Type*} [Semiring R] (C : ConjClasses G)
   ne_zero_of_dvd_ne_zero h (Nat.cast_dvd_cast (card_carrier_dvd_card C))
 
 end ConjClasses
+
+/-- **A real conjugacy class**: one containing an element conjugate to its own inverse. -/
+def IsRealClass (C : ConjClasses G) : Prop :=
+  ∃ g : G, ConjClasses.mk g = C ∧ IsConj g g⁻¹
+
+/-- **A class is real exactly when inversion fixes it.** -/
+@[simp]
+theorem isRealClass_iff_inv_eq {C : ConjClasses G} : IsRealClass C ↔ C⁻¹ = C := by
+  constructor
+  · rintro ⟨g, rfl, hg⟩
+    rw [ConjClasses.inv_mk, ConjClasses.mk_eq_mk_iff_isConj]
+    exact hg.symm
+  · intro h
+    obtain ⟨g, rfl⟩ := ConjClasses.exists_rep C
+    rw [ConjClasses.inv_mk, ConjClasses.mk_eq_mk_iff_isConj] at h
+    exact ⟨g, rfl, h.symm⟩
+
+-- Not a `simp` lemma: `isRealClass_iff_inv_eq` and `ConjClasses.inv_mk` already rewrite the
+-- left-hand side to `ConjClasses.mk g⁻¹ = ConjClasses.mk g`, so tagging it makes `simpNF` fail.
+/-- The class of `g` is real exactly when `g` is conjugate to `g⁻¹`. -/
+theorem isRealClass_mk_iff {g : G} : IsRealClass (ConjClasses.mk g) ↔ IsConj g g⁻¹ := by
+  rw [isRealClass_iff_inv_eq, ConjClasses.inv_mk, ConjClasses.mk_eq_mk_iff_isConj]
+  exact ⟨IsConj.symm, IsConj.symm⟩
 
 end TauCeti

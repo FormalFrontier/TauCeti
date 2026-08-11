@@ -54,7 +54,10 @@ roadmap-specific subgroup the induction and restriction of that layer run along.
 * `TauCeti.mackeyToK`, `TauCeti.mackeyToConjH`: the two inclusions of the Mackey subgroup, into
   `K` and into `sHs⁻¹`.
 * `TauCeti.mackeySubgroupCongr`: the isomorphism between the Mackey subgroups of two
-  representatives of one double coset.
+  representatives of one double coset, and `TauCeti.mackeySubgroupOfCongr`, the same isomorphism
+  with both sides read as subgroups of `K`.
+* `TauCeti.mackeySubgroupSelfEquiv`: the identification of the Mackey subgroup of a representative
+  lying in `H` with `H` itself.
 
 ## Main statements
 
@@ -154,6 +157,23 @@ theorem mackeySubgroup_one (H K : Subgroup G) : mackeySubgroup 1 H K = K ⊓ H :
 theorem mackeySubgroup_of_mem (hs : s ∈ H) : mackeySubgroup s H K = K ⊓ H := by
   rw [mackeySubgroup_def, Subgroup.conj_smul_eq_self_of_mem hs]
 
+/-- A representative lying in `H` has all of `H` for its Mackey subgroup, so the Mackey subgroup
+sits inside `H` as the top subgroup. -/
+theorem mackeySubgroup_subgroupOf_self_of_mem (hs : s ∈ H) :
+    (mackeySubgroup s H H).subgroupOf H = ⊤ := by
+  rw [mackeySubgroup_of_mem hs, inf_idem, Subgroup.subgroupOf_self]
+
+/-- The Mackey subgroup of a representative lying in `H`, identified with `H` itself. -/
+noncomputable def mackeySubgroupSelfEquiv (hs : s ∈ H) :
+    ((mackeySubgroup s H H).subgroupOf H) ≃* H :=
+  (MulEquiv.subgroupCongr (mackeySubgroup_subgroupOf_self_of_mem hs)).trans Subgroup.topEquiv
+
+@[simp]
+theorem coe_mackeySubgroupSelfEquiv_apply (hs : s ∈ H)
+    (y : (mackeySubgroup s H H).subgroupOf H) :
+    (mackeySubgroupSelfEquiv hs y : H) = (y : H) :=
+  (rfl)
+
 /-- For a normal `H` the Mackey subgroup does not depend on the representative at all: it is
 `K ⊓ H` for every `s`.  This is why Clifford theory over a normal subgroup only ever sees the one
 intersection. -/
@@ -205,6 +225,31 @@ theorem coe_mackeySubgroupCongr_symm_apply {k h : G} (hk : k ∈ K) (hh : h ∈ 
     ((mackeySubgroupCongr hk hh s).symm y : G) = k⁻¹ * (y : G) * k := by
   have hy : k * ((mackeySubgroupCongr hk hh s).symm y : G) * k⁻¹ = (y : G) := by
     rw [← coe_mackeySubgroupCongr_apply hk hh s, MulEquiv.apply_symm_apply]
+  rw [← hy]
+  simp [mul_assoc]
+
+/-- The same isomorphism as `TauCeti.mackeySubgroupCongr`, with both Mackey subgroups read
+inside `K` along `TauCeti.mackeySubgroup_le_right`.  That is where the Mackey summands live, so
+this is the form in which a change of representative is transported. -/
+def mackeySubgroupOfCongr {k h : G} (hk : k ∈ K) (hh : h ∈ H) (s : G) :
+    (mackeySubgroup s H K).subgroupOf K ≃* (mackeySubgroup (k * s * h) H K).subgroupOf K :=
+  ((Subgroup.subgroupOfEquivOfLe (mackeySubgroup_le_right (s := s) (H := H) (K := K))).trans
+      (mackeySubgroupCongr hk hh s)).trans
+    (Subgroup.subgroupOfEquivOfLe
+      (mackeySubgroup_le_right (s := k * s * h) (H := H) (K := K))).symm
+
+@[simp]
+theorem coe_mackeySubgroupOfCongr_apply {k h : G} (hk : k ∈ K) (hh : h ∈ H) (s : G)
+    (y : (mackeySubgroup s H K).subgroupOf K) :
+    ((mackeySubgroupOfCongr hk hh s y : K) : G) = k * ((y : K) : G) * k⁻¹ := by
+  simp [mackeySubgroupOfCongr]
+
+@[simp]
+theorem coe_mackeySubgroupOfCongr_symm_apply {k h : G} (hk : k ∈ K) (hh : h ∈ H) (s : G)
+    (y : (mackeySubgroup (k * s * h) H K).subgroupOf K) :
+    (((mackeySubgroupOfCongr hk hh s).symm y : K) : G) = k⁻¹ * ((y : K) : G) * k := by
+  have hy : k * ((((mackeySubgroupOfCongr hk hh s).symm y : K)) : G) * k⁻¹ = ((y : K) : G) := by
+    rw [← coe_mackeySubgroupOfCongr_apply hk hh s, MulEquiv.apply_symm_apply]
   rw [← hy]
   simp [mul_assoc]
 

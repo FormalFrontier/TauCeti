@@ -4,8 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.Topology.Homotopy.Lifting
 public import TauCeti.AlgebraicTopology.UniversalCover.Deck.Fiber.Basic
+public import TauCeti.Topology.Homotopy.Monodromy.Functoriality
 
 /-!
 # Deck actions and monodromy transport
@@ -18,10 +18,9 @@ Deck transformations commute with transport between fibres by covering-space mon
 
 ## References
 
-The proof adapts Junyan Xu's proof of Mathlib's
-`IsQuotientCoveringMap.monodromy_toPermFiber`, replacing the quotient-cover group action with the
-deck-transformation action. It supplies the fibre-transport step needed for the regular-cover
-criterion in `TauCetiRoadmap/UniversalCovers/README.md`, Stage 2, item 8.
+The proof specializes `TauCeti.IsCoveringMap.fiberMap_monodromy` to the continuous map underlying
+a deck transformation. It supplies the fibre-transport step needed for the regular-cover criterion
+in `TauCetiRoadmap/UniversalCovers/README.md`, Stage 2, item 8.
 -/
 
 public section
@@ -42,19 +41,13 @@ applies the deck transformation. -/
 theorem monodromy_smul (hp : IsCoveringMap p)
     (γ : Path.Homotopic.Quotient x y) (φ : Deck p) (e : p ⁻¹' {x}) :
     hp.monodromy γ (φ • e) = φ • hp.monodromy γ e := by
-  let Γ := hp.liftPathQuotient γ e
   let g : C(E, E) := ⟨φ.1, φ.1.continuous⟩
-  let p' : C(E, X) := ⟨p, hp.continuous⟩
-  have hgp : p'.comp g = p' := by
-    ext z
-    exact map_proj φ z
-  apply hp.monodromy_eq_of_map_eq (Γ.map g)
-  -- The displayed goal hides the mapped lifted path behind its endpoint transports; expose that
-  -- path-map wrapper before rewriting the composition of maps.
-  change (Γ.map g).map p' = _
-  rw [← Path.Homotopic.Quotient.map_comp]
-  convert hp.map_liftPathQuotient γ e using 2
-  grind
+  have hgp : p ∘ g = p := funext (map_proj φ)
+  have hfiber (z : X) (u : p ⁻¹' {z}) : IsCoveringMap.fiberMap g hgp z u = φ • u := by
+    apply Subtype.ext
+    simp only [IsCoveringMap.fiberMap_apply_coe, fiber_smul_coe]
+    rfl
+  simpa only [hfiber] using (IsCoveringMap.fiberMap_monodromy hp hp g hgp γ e).symm
 
 end Deck
 

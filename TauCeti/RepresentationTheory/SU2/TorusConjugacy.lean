@@ -36,21 +36,25 @@ change the conjugation it induces.
 
 * `TauCeti.SU2.exists_conj_mem_torus`: **torus conjugacy**, every element of `SU(2)` is conjugate
   into the maximal torus.
-* `TauCeti.SU2.exists_isConj_torusExp`: the angle form, every element of `SU(2)` is conjugate to
-  `diag (e^{iθ}, e^{-iθ})`.
+* `TauCeti.SU2.exists_isConj_torusHom` and `TauCeti.SU2.exists_isConj_torusExp`: the same
+  statement read through the parametrisations of `T`, every element of `SU(2)` being conjugate to
+  `diag (z, z⁻¹)` for some `z` on the circle, equivalently to `diag (e^{iθ}, e^{-iθ})` for some
+  angle `θ`.
 * `TauCeti.SU2.isConj_inv_of_mem_torus` and `TauCeti.SU2.isConj_torusExp_neg`: the Weyl reflection,
   every element of the torus is conjugate in `SU(2)` to its inverse. This is the conjugation by
   the quarter turn `TauCeti.SU2.weylElement` of `TauCeti/RepresentationTheory/SU2/Weyl.lean`
   (`TauCeti.SU2.weylElement_conj_torusHom`), read as an existential. With torus conjugacy it says
   every conjugacy class of `SU(2)` meets `T` in a nonempty set closed under inversion. The
   converse, that conjugate elements of `T` are equal or inverse, is
-  `TauCeti.SU2.eq_or_eq_inv_of_conj_torusHom` of `TauCeti/RepresentationTheory/SU2/Basic.lean`, so
-  each conjugacy class of `SU(2)` meets `T` in exactly one orbit `{z, z⁻¹}` of the Weyl group
-  computed in `TauCeti/RepresentationTheory/SU2/Weyl.lean`; that identification is not assembled
-  into a theorem here.
-* `TauCeti.SU2.eq_of_conjInvariant_of_eqOn_torus`: two conjugation-invariant functions on `SU(2)`
-  that agree on the maximal torus are equal; a class function on `SU(2)` is determined by its
-  restriction to `T`.
+  `TauCeti.SU2.eq_or_eq_inv_of_conj_torusHom` of `TauCeti/RepresentationTheory/SU2/Basic.lean`.
+* `TauCeti.SU2.isConj_torusHom_iff`: putting those two together, each conjugacy class of `SU(2)`
+  meets `T` in exactly one orbit `{z, z⁻¹}` of the Weyl group computed in
+  `TauCeti/RepresentationTheory/SU2/Weyl.lean`.
+* `TauCeti.SU2.eq_of_conjInvariant_of_eqOn_torus` and
+  `TauCeti.SU2.exists_conjInvariant_torusHom_eq`: restricting a class function on `SU(2)` to `T`
+  is injective, and its image is exactly the functions on `T` invariant under the Weyl action.
+  This is the identification of the class functions of `SU(2)` with the `W`-invariant functions
+  on `T`.
 -/
 
 public section
@@ -76,6 +80,50 @@ private theorem isDiag_star_left_conjugate_of_eq_smul_one_add_smul {R n : Type*}
   rw [hexpand]
   exact (Matrix.isDiag_one.smul _).add (hdiagH.smul _)
 
+/-- **A special unitary matrix is a scalar plus a multiple of `I • (g - star g)`.** The identity
+`g = (tr g / 2) • 1 + (-I / 2) • (I • (g - star g))` holds because `g + star g` is the scalar
+`tr g`. -/
+private theorem coe_eq_smul_one_add_smul_I_smul_sub_star (g : SU2) :
+    (g : Matrix (Fin 2) (Fin 2) ℂ)
+      = (Matrix.trace (g : Matrix (Fin 2) (Fin 2) ℂ) / 2) • (1 : Matrix (Fin 2) (Fin 2) ℂ)
+        + (-Complex.I / 2) •
+          (Complex.I • ((g : Matrix (Fin 2) (Fin 2) ℂ) - star (g : Matrix (Fin 2) (Fin 2) ℂ))) := by
+  have hscalar : (Matrix.trace (g : Matrix (Fin 2) (Fin 2) ℂ) / 2) •
+      (1 : Matrix (Fin 2) (Fin 2) ℂ)
+      = (2⁻¹ : ℂ) • ((g : Matrix (Fin 2) (Fin 2) ℂ) + star (g : Matrix (Fin 2) (Fin 2) ℂ)) := by
+    rw [coe_add_star g, smul_smul]
+    congr 1
+    ring
+  have hI : (-Complex.I / 2) * Complex.I = 2⁻¹ := by
+    rw [div_mul_eq_mul_div, neg_mul, Complex.I_mul_I]
+    norm_num
+  rw [smul_smul, hI, hscalar]
+  module
+
+/-- **A unitary that diagonalises `g` rescales to a special unitary one.** Multiplying a unitary by
+a unit-modulus scalar leaves the conjugate `star u * g * u` unchanged, and some such multiple is
+special unitary, so `g` is conjugate into the torus inside `SU(2)`. -/
+private theorem exists_conj_mem_torus_of_isDiag_star_left_conjugate (g : SU2)
+    {U : Matrix.unitaryGroup (Fin 2) ℂ}
+    (hdiagG : (star (U : Matrix (Fin 2) (Fin 2) ℂ) * (g : Matrix (Fin 2) (Fin 2) ℂ)
+      * (U : Matrix (Fin 2) (Fin 2) ℂ)).IsDiag) :
+    ∃ u : SU2, u * g * u⁻¹ ∈ torus := by
+  obtain ⟨c, hc⟩ := Matrix.exists_circle_smul_mem_specialUnitaryGroup U
+  obtain ⟨u, hu⟩ : ∃ u : SU2,
+    (u : Matrix (Fin 2) (Fin 2) ℂ) = (c : ℂ) • (U : Matrix (Fin 2) (Fin 2) ℂ) := ⟨⟨_, hc⟩, rfl⟩
+  refine ⟨u⁻¹, mem_torus_iff.mpr ?_⟩
+  -- Inversion in `SU(2)` is `star`, which commutes with the coercion to matrices.
+  have hcoe : ((u⁻¹ * g * (u⁻¹)⁻¹ : SU2) : Matrix (Fin 2) (Fin 2) ℂ)
+      = star (u : Matrix (Fin 2) (Fin 2) ℂ) * (g : Matrix (Fin 2) (Fin 2) ℂ)
+        * (u : Matrix (Fin 2) (Fin 2) ℂ) := by
+    rw [inv_inv, Submonoid.coe_mul, Submonoid.coe_mul, ← Matrix.star_eq_inv,
+      Matrix.specialUnitaryGroup.coe_star]
+  have hcmul : (c : ℂ) * star (c : ℂ) = 1 := by
+    rw [Complex.star_def, Complex.mul_conj, Circle.normSq_coe, Complex.ofReal_one]
+  rw [hcoe, hu]
+  simp only [star_smul, Matrix.smul_mul, Matrix.mul_smul, smul_smul, hcmul, one_smul]
+  exact hdiagG
+
 /-- **Torus conjugacy for `SU(2)`**: every element of `SU(2)` is conjugate into the maximal torus.
 Equivalently, every special unitary `2 × 2` matrix is diagonalised by a special unitary matrix. -/
 theorem exists_conj_mem_torus (g : SU2) : ∃ u : SU2, u * g * u⁻¹ ∈ torus := by
@@ -85,19 +133,6 @@ theorem exists_conj_mem_torus (g : SU2) : ∃ u : SU2, u * g * u⁻¹ ∈ torus 
   have hHerm : H.IsHermitian := by
     rw [Matrix.isHermitian_iff_isSelfAdjoint, isSelfAdjoint_iff, hHdef, star_smul, star_sub,
       star_star, Complex.star_def, Complex.conj_I, neg_smul, ← smul_neg, neg_sub]
-  -- `G` is a scalar matrix plus a multiple of `H`, so anything diagonalising `H` diagonalises `G`.
-  have hdecomp : G = (Matrix.trace G / 2) • (1 : Matrix (Fin 2) (Fin 2) ℂ)
-      + (-Complex.I / 2) • H := by
-    have hscalar : (Matrix.trace G / 2) • (1 : Matrix (Fin 2) (Fin 2) ℂ)
-        = (2⁻¹ : ℂ) • (G + star G) := by
-      rw [coe_add_star g, smul_smul]
-      congr 1
-      ring
-    have hI : (-Complex.I / 2) * Complex.I = 2⁻¹ := by
-      rw [div_mul_eq_mul_div, neg_mul, Complex.I_mul_I]
-      norm_num
-    rw [hHdef, smul_smul, hI, hscalar]
-    module
   -- Mathlib's spectral theorem diagonalises `H` by a unitary matrix.
   obtain ⟨U, hdiagH⟩ : ∃ U : Matrix.unitaryGroup (Fin 2) ℂ,
       (star (U : Matrix (Fin 2) (Fin 2) ℂ) * H * (U : Matrix (Fin 2) (Fin 2) ℂ)).IsDiag := by
@@ -106,34 +141,25 @@ theorem exists_conj_mem_torus (g : SU2) : ∃ u : SU2, u * g * u⁻¹ ∈ torus 
     rw [Unitary.conjStarAlgAut_star_apply] at h
     rw [h]
     exact Matrix.isDiag_diagonal _
-  have hUU : star (U : Matrix (Fin 2) (Fin 2) ℂ) * (U : Matrix (Fin 2) (Fin 2) ℂ) = 1 :=
-    Matrix.UnitaryGroup.star_mul_self U
-  -- Conjugating by any unitary that diagonalises `H` diagonalises `G`.
-  have hdiagG :
-      (star (U : Matrix (Fin 2) (Fin 2) ℂ) * G * (U : Matrix (Fin 2) (Fin 2) ℂ)).IsDiag :=
-    isDiag_star_left_conjugate_of_eq_smul_one_add_smul hdecomp hUU hdiagH
-  -- Rescale `U` into `SU(2)`; the rescaling does not change the conjugation.
-  obtain ⟨c, hc⟩ := Matrix.exists_circle_smul_mem_specialUnitaryGroup U
-  obtain ⟨u, hu⟩ : ∃ u : SU2,
-      (u : Matrix (Fin 2) (Fin 2) ℂ) = (c : ℂ) • (U : Matrix (Fin 2) (Fin 2) ℂ) := ⟨⟨_, hc⟩, rfl⟩
-  refine ⟨u⁻¹, mem_torus_iff.mpr ?_⟩
-  -- Inversion in `SU(2)` is `star`, which commutes with the coercion to matrices.
-  have hcoe : ((u⁻¹ * g * (u⁻¹)⁻¹ : SU2) : Matrix (Fin 2) (Fin 2) ℂ)
-      = star (u : Matrix (Fin 2) (Fin 2) ℂ) * G * (u : Matrix (Fin 2) (Fin 2) ℂ) := by
-    rw [inv_inv, Submonoid.coe_mul, Submonoid.coe_mul, ← Matrix.star_eq_inv,
-      Matrix.specialUnitaryGroup.coe_star]
-  have hcmul : (c : ℂ) * star (c : ℂ) = 1 := by
-    rw [Complex.star_def, Complex.mul_conj, Circle.normSq_coe, Complex.ofReal_one]
-  rw [hcoe, hu]
-  simp only [star_smul, Matrix.smul_mul, Matrix.mul_smul, smul_smul, hcmul, one_smul]
-  exact hdiagG
+  -- `G` is a scalar plus a multiple of `H`, so that unitary diagonalises `G` too.
+  exact exists_conj_mem_torus_of_isDiag_star_left_conjugate g
+    (isDiag_star_left_conjugate_of_eq_smul_one_add_smul
+      (coe_eq_smul_one_add_smul_I_smul_sub_star g) (Matrix.UnitaryGroup.star_mul_self U) hdiagH)
+
+/-- Every element of `SU(2)` is conjugate to the torus element `diag (z, z⁻¹)` for some point `z`
+of the circle: `TauCeti.SU2.exists_conj_mem_torus` read through the parametrisation
+`TauCeti.SU2.torusHom` of the maximal torus. -/
+theorem exists_isConj_torusHom (g : SU2) : ∃ z : Circle, IsConj g (torusHom z) := by
+  obtain ⟨u, hu⟩ := exists_conj_mem_torus g
+  obtain ⟨z, hz⟩ := mem_torus_iff_exists_torusHom.mp hu
+  exact ⟨z, isConj_iff.mpr ⟨u, hz.symm⟩⟩
 
 /-- Every element of `SU(2)` is conjugate to the torus element `diag (e^{iθ}, e^{-iθ})` for some
-angle `θ`. -/
+angle `θ`. This is `TauCeti.SU2.exists_isConj_torusHom` in the angle parametrisation. -/
 theorem exists_isConj_torusExp (g : SU2) : ∃ θ : ℝ, IsConj g (torusExp θ) := by
-  obtain ⟨u, hu⟩ := exists_conj_mem_torus g
-  obtain ⟨θ, hθ⟩ := mem_torus_iff_exists_torusExp.mp hu
-  exact ⟨θ, isConj_iff.mpr ⟨u, hθ⟩⟩
+  obtain ⟨z, hz⟩ := exists_isConj_torusHom g
+  obtain ⟨θ, rfl⟩ := Circle.exp_surjective z
+  exact ⟨θ, by rwa [torusExp_def]⟩
 
 /-! ### The Weyl reflection -/
 
@@ -151,6 +177,22 @@ theorem isConj_torusExp_neg (θ : ℝ) : IsConj (torusExp θ) (torusExp (-θ)) :
   rw [torusExp_neg]
   exact isConj_inv_of_mem_torus (torusExp_mem_torus θ)
 
+/-! ### Conjugacy on the maximal torus -/
+
+/-- **Each conjugacy class of `SU(2)` meets the maximal torus in exactly one Weyl orbit:** two
+torus elements are conjugate in `SU(2)` precisely when they are equal or inverse. The forward
+direction is `TauCeti.SU2.eq_or_eq_inv_of_conj_torusHom` and the backward direction is the Weyl
+reflection `TauCeti.SU2.isConj_inv_of_mem_torus`. -/
+theorem isConj_torusHom_iff {z w : Circle} :
+    IsConj (torusHom z) (torusHom w) ↔ w = z ∨ w = z⁻¹ := by
+  refine ⟨fun h => ?_, ?_⟩
+  · obtain ⟨u, hu⟩ := isConj_iff.mp h
+    exact eq_or_eq_inv_of_conj_torusHom hu
+  · rintro (rfl | rfl)
+    · exact IsConj.refl _
+    · rw [map_inv]
+      exact isConj_inv_of_mem_torus (torusHom_mem_torus z)
+
 /-! ### Class functions -/
 
 /-- A class function on `SU(2)` is determined by its restriction to the maximal torus: two
@@ -162,6 +204,28 @@ theorem eq_of_conjInvariant_of_eqOn_torus {α : Type*} {f₁ f₂ : SU2 → α}
   obtain ⟨u, hu⟩ := exists_conj_mem_torus g
   rw [← h₁ u g, ← h₂ u g]
   exact h hu
+
+/-- **Every Weyl-invariant function on the maximal torus is the restriction of a class function
+on `SU(2)`:** a function on the circle that takes the same value at `z` and at `z⁻¹` extends to a
+conjugation-invariant function on `SU(2)`. The extension sends `g` to the value of the given
+function at any torus element `g` is conjugate to
+(`TauCeti.SU2.exists_isConj_torusHom`), which is well defined because two such torus elements are
+equal or inverse (`TauCeti.SU2.isConj_torusHom_iff`). Together with the uniqueness statement
+`TauCeti.SU2.eq_of_conjInvariant_of_eqOn_torus` this identifies the class functions of `SU(2)`
+with the `W`-invariant functions on `T`. -/
+theorem exists_conjInvariant_torusHom_eq {α : Type*} {φ : Circle → α}
+    (hφ : ∀ z : Circle, φ z⁻¹ = φ z) :
+    ∃ f : SU2 → α, (∀ u g : SU2, f (u * g * u⁻¹) = f g) ∧ ∀ z : Circle, f (torusHom z) = φ z := by
+  -- The chosen torus element is only well defined up to the Weyl action, which `φ` cannot see.
+  have key : ∀ {g : SU2} {z : Circle}, IsConj g (torusHom z) →
+      φ (exists_isConj_torusHom g).choose = φ z := fun {g z} hz => by
+    rcases isConj_torusHom_iff.mp
+      ((exists_isConj_torusHom g).choose_spec.symm.trans hz) with h' | h'
+    · rw [h']
+    · rw [h', hφ]
+  refine ⟨fun g => φ (exists_isConj_torusHom g).choose, fun u g => ?_, fun z => ?_⟩
+  · exact key ((isConj_iff.mpr ⟨u, rfl⟩).symm.trans (exists_isConj_torusHom g).choose_spec)
+  · exact key (IsConj.refl (torusHom z))
 
 end SU2
 

@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.RepresentationTheory.Continuous.Character
-public import TauCeti.RepresentationTheory.SU2.Weyl
+public import TauCeti.RepresentationTheory.SU2.ConjugacyClasses
 
 /-!
 # Characters of `SU(2)` are even on the maximal torus
@@ -18,9 +18,9 @@ inverse. In the angle parametrisation `θ ↦ diag (e^{iθ}, e^{-iθ})` this rea
 `χ (torusExp (-θ)) = χ (torusExp θ)`: the character is an even function of `θ`.
 
 This is the `W`-invariance, on the maximal torus, of the characters of `SU(2)`, and it is what
-makes those characters functions of `cos θ`. It is stated here for characters only; the roadmap's
-identification of the `W`-invariant functions on `T` with *all* class functions of `SU(2)` needs
-the conjugation of an arbitrary element of `SU(2)` into `T`, which is not proved here.
+makes those characters functions of `cos θ`. Off the torus this is subsumed by the classification
+of the conjugacy classes of `SU(2)` by the trace: a character, being a class function, is a
+function of the trace on all of `SU(2)` (`TauCeti.SU2.character_eq_of_trace_eq`).
 
 ## Main results
 
@@ -28,6 +28,7 @@ the conjugation of an arbitrary element of `SU(2)` into `T`, which is not proved
   representation of `SU(2)` agrees at `diag (z, z⁻¹)` and `diag (z⁻¹, z)`.
 * `TauCeti.SU2.character_torusExp_neg`: read in the angle parametrisation of the maximal torus,
   that character is an even function of the angle.
+* `TauCeti.SU2.character_eq_of_trace_eq`: that character is a function of the trace.
 
 ## References
 
@@ -67,6 +68,18 @@ theorem character_torusExp_neg (θ : ℝ) :
   obtain ⟨z, hz⟩ := mem_torus_iff_exists_torusHom.mp (torusExp_mem_torus θ)
   rw [torusExp_neg, ← hz, ← map_inv]
   exact character_torusHom_inv π hπ z
+
+/-- **The character of a continuous finite-dimensional representation of `SU(2)` is a function of
+the trace**, the trace being a complete conjugacy invariant
+(`TauCeti.SU2.isConj_iff_trace_eq`). Combined with
+`TauCeti.SU2.exists_isConj_torusExp_mem_Icc` this is what lets a character of `SU(2)` be computed
+from its values `θ ↦ χ (diag (e^{iθ}, e^{-iθ}))` on the Weyl chamber `[0, π]` alone. -/
+theorem character_eq_of_trace_eq {g h : SU2}
+    (htr : Matrix.trace (g : Matrix (Fin 2) (Fin 2) ℂ)
+      = Matrix.trace (h : Matrix (Fin 2) (Fin 2) ℂ)) :
+    ContRepresentation.character π hπ g = ContRepresentation.character π hπ h :=
+  eq_of_conjInvariant_of_trace_eq
+    (fun u g => ContRepresentation.character_conj π hπ g u) htr
 
 end SU2
 

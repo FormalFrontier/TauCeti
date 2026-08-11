@@ -28,6 +28,7 @@ single projection is that over a finite index type the projections sum to the id
 
 * `TauCeti.isCompl_biSup_ne`: a summand of an internal direct sum decomposition is complementary to
   the supremum of the other summands.
+* `TauCeti.internalProjection_surjective`: the projection onto `Q i` is surjective.
 * `TauCeti.ker_internalProjection`: the kernel of the projection onto `Q i` is the supremum of the
   other summands.
 * `TauCeti.sum_coe_internalProjection`: over a finite index type the projections onto the summands
@@ -86,6 +87,11 @@ This is the form `simp` can use: the summand index `i` is read off the type of `
 theorem internalProjection_apply_of_ne (hQi : iSupIndep Q) (hQt : ⨆ i, Q i = ⊤) {i j : ι}
     (hij : i ≠ j) (x : Q i) : internalProjection hQi hQt j (x : M) = 0 :=
   internalProjection_apply_eq_zero_of_mem_of_ne hQi hQt hij x.2
+
+/-- The projection onto `Q i` is surjective, being the identity on `Q i`. -/
+theorem internalProjection_surjective (hQi : iSupIndep Q) (hQt : ⨆ i, Q i = ⊤) (i : ι) :
+    Function.Surjective (internalProjection hQi hQt i) :=
+  Submodule.projectionOnto_surjective (isCompl_biSup_ne hQi hQt i)
 
 /-- The kernel of the projection onto `Q i` is the supremum of the other summands. -/
 @[simp]

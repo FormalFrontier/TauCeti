@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.Analysis.InnerProductSpace.Projection.FiniteDimensional
+public import TauCeti.LinearAlgebra.Dimension.DirectSum
 public import TauCeti.RepresentationTheory.Continuous.InvariantComplement
 public import TauCeti.RepresentationTheory.Irreducible
 
@@ -80,6 +81,62 @@ section FiniteDimensional
 
 variable [FiniteDimensional 𝕜 V]
 
+omit [FiniteDimensional 𝕜 V] in
+/-- Inside a nonzero subrepresentation `σ` there is an atom `τ` whose orthogonal complement in
+`σ` is a subrepresentation `ω` with `τ ⊔ ω = σ` and strictly smaller dimension. Only `σ` itself
+need be finite-dimensional; the ambient space may not be. -/
+private theorem exists_isAtom_sup_eq_and_lt (hπ : IsUnitary π)
+    {σ : Subrepresentation π.toRepresentation} [FiniteDimensional 𝕜 σ.toSubmodule] (hσ : σ ≠ ⊥) :
+    ∃ τ ω : Subrepresentation π.toRepresentation, IsAtom τ ∧ τ ⊔ ω = σ ∧
+      ω.toSubmodule = τ.toSubmoduleᗮ ⊓ σ.toSubmodule ∧ ω.toSubmodule < σ.toSubmodule := by
+  obtain ⟨τ, hτσ, hτ⟩ := Representation.exists_isAtom_le hσ
+  -- The atom sits inside `σ`, so it inherits finite-dimensionality, hence a projection.
+  have : FiniteDimensional 𝕜 τ.toSubmodule :=
+    Submodule.finiteDimensional_of_le (Subrepresentation.toSubmodule_le_toSubmodule.mpr hτσ)
+  have hτbot : τ.toSubmodule ≠ ⊥ := fun hc ↦ hτ.1 (Subrepresentation.toSubmodule_injective
+    (hc.trans Subrepresentation.toSubmodule_bot.symm))
+  refine ⟨τ, hπ.orthogonalSubrepresentation τ ⊓ σ, hτ,
+    hπ.sup_orthogonalSubrepresentation_inf hτσ, ?_, ?_⟩
+  · rw [Subrepresentation.toSubmodule_inf, toSubmodule_orthogonalSubrepresentation]
+  · have hωsub : (hπ.orthogonalSubrepresentation τ ⊓ σ).toSubmodule
+        = τ.toSubmoduleᗮ ⊓ σ.toSubmodule := by
+      rw [Subrepresentation.toSubmodule_inf, toSubmodule_orthogonalSubrepresentation]
+    refine lt_of_le_of_ne (hωsub ▸ inf_le_right) fun heq ↦ hτbot (le_bot_iff.mp ?_)
+    refine Submodule.orthogonal_disjoint τ.toSubmodule le_rfl ?_
+    calc τ.toSubmodule ≤ σ.toSubmodule := Subrepresentation.toSubmodule_le_toSubmodule.mpr hτσ
+      _ = (hπ.orthogonalSubrepresentation τ ⊓ σ).toSubmodule := heq.symm
+      _ ≤ τ.toSubmoduleᗮ := hωsub ▸ inf_le_left
+
+omit [FiniteDimensional 𝕜 V] in
+/-- An orthogonal family of atoms spanning `ω` extends by an atom `τ` orthogonal to all of it to
+an orthogonal family of atoms spanning `τ ⊔ ω`. -/
+private theorem exists_atom_family_of_sup_eq {τ : Subrepresentation π.toRepresentation}
+    (hτ : IsAtom τ) {n : ℕ} {U : Fin n → Subrepresentation π.toRepresentation}
+    (hatom : ∀ i, IsAtom (U i)) {σ ω : Subrepresentation π.toRepresentation}
+    (hiSup : ⨆ i, (U i).toSubmodule = ω.toSubmodule)
+    (horth : Pairwise fun i j ↦
+      ∀ v ∈ (U i).toSubmodule, ∀ w ∈ (U j).toSubmodule, ⟪v, w⟫_𝕜 = 0)
+    (hmix : ∀ j : Fin n, ∀ v ∈ τ.toSubmodule, ∀ w ∈ (U j).toSubmodule, ⟪v, w⟫_𝕜 = 0)
+    (hsup : τ ⊔ ω = σ) :
+    ∃ (n : ℕ) (U : Fin n → Subrepresentation π.toRepresentation),
+      (∀ i, IsAtom (U i)) ∧ ⨆ i, (U i).toSubmodule = σ.toSubmodule ∧
+        Pairwise fun i j ↦
+          ∀ v ∈ (U i).toSubmodule, ∀ w ∈ (U j).toSubmodule, ⟪v, w⟫_𝕜 = 0 := by
+  refine ⟨n + 1, Fin.cons τ U, ?_, ?_, ?_⟩
+  · intro i
+    rcases Fin.eq_zero_or_eq_succ i with rfl | ⟨j, rfl⟩
+    · simpa using hτ
+    · simpa using hatom j
+  · rw [iSup_fin_succ]
+    simp only [Fin.cons_zero, Fin.cons_succ]
+    rw [hiSup, ← Subrepresentation.toSubmodule_sup, hsup]
+  · rw [pairwise_fin_succ_iff]
+    refine ⟨fun i v hv w hw ↦ ?_, fun j ↦ ?_, ?_⟩
+    · simp only [Fin.cons_succ, Fin.cons_zero] at hv hw
+      exact inner_eq_zero_symm.mp (hmix i w hw v hv)
+    · simpa using hmix j
+    · simpa using horth
+
 /-- The descent behind `exists_orthogonal_irreducible_decomposition`: every subrepresentation of a
 finite-dimensional unitary representation is the supremum of a finite, pairwise orthogonal family
 of atoms. The extra numeral `m` is a bound on the dimension, giving the induction something to
@@ -102,20 +159,7 @@ private theorem exists_atom_family_aux (hπ : IsUnitary π) :
     rcases eq_or_ne σ ⊥ with rfl | hσ
     · exact ⟨0, Fin.elim0, fun i ↦ i.elim0, by rw [iSup_of_empty,
         Subrepresentation.toSubmodule_bot], fun i ↦ i.elim0⟩
-    obtain ⟨τ, hτσ, hτ⟩ := Representation.exists_isAtom_le hσ
-    have hτbot : τ.toSubmodule ≠ ⊥ := fun hc ↦ hτ.1 (Subrepresentation.toSubmodule_injective
-      (hc.trans Subrepresentation.toSubmodule_bot.symm))
-    -- the orthogonal complement of the atom inside `σ`
-    set ω : Subrepresentation π.toRepresentation := hπ.orthogonalSubrepresentation τ ⊓ σ with hω
-    have hωsub : ω.toSubmodule = τ.toSubmoduleᗮ ⊓ σ.toSubmodule := by
-      rw [hω, Subrepresentation.toSubmodule_inf, toSubmodule_orthogonalSubrepresentation]
-    have hsup : τ ⊔ ω = σ := hπ.sup_orthogonalSubrepresentation_inf hτσ
-    have hωlt : ω.toSubmodule < σ.toSubmodule := by
-      refine lt_of_le_of_ne (hωsub ▸ inf_le_right) fun heq ↦ hτbot (le_bot_iff.mp ?_)
-      refine Submodule.orthogonal_disjoint τ.toSubmodule le_rfl ?_
-      calc τ.toSubmodule ≤ σ.toSubmodule := Subrepresentation.toSubmodule_le_toSubmodule.mpr hτσ
-        _ = ω.toSubmodule := heq.symm
-        _ ≤ τ.toSubmoduleᗮ := hωsub ▸ inf_le_left
+    obtain ⟨τ, ω, hτ, hsup, hωsub, hωlt⟩ := exists_isAtom_sup_eq_and_lt hπ hσ
     have hωle : Module.finrank 𝕜 ω.toSubmodule ≤ m := by
       have := Submodule.finrank_lt_finrank_of_lt hωlt
       omega
@@ -123,25 +167,8 @@ private theorem exists_atom_family_aux (hπ : IsUnitary π) :
     -- every block of the recursive decomposition lands in the orthogonal complement of the atom
     have hUorth : ∀ j : Fin n, (U j).toSubmodule ≤ τ.toSubmoduleᗮ := fun j ↦
       le_trans (hiSup ▸ le_iSup (fun i ↦ (U i).toSubmodule) j) (hωsub ▸ inf_le_left)
-    have hmix : ∀ (j : Fin n), ∀ v ∈ τ.toSubmodule, ∀ w ∈ (U j).toSubmodule, ⟪v, w⟫_𝕜 = 0 :=
-      fun j v hv w hw ↦ (Submodule.mem_orthogonal _ w).mp (hUorth j hw) v hv
-    refine ⟨n + 1, Fin.cons τ U, ?_, ?_, ?_⟩
-    · intro i
-      rcases Fin.eq_zero_or_eq_succ i with rfl | ⟨j, rfl⟩
-      · simpa using hτ
-      · simpa using hatom j
-    · rw [iSup_fin_succ]
-      simp only [Fin.cons_zero, Fin.cons_succ]
-      rw [hiSup, ← Subrepresentation.toSubmodule_sup, hsup]
-    · intro i j hij
-      rcases Fin.eq_zero_or_eq_succ i with rfl | ⟨i', rfl⟩ <;>
-        rcases Fin.eq_zero_or_eq_succ j with rfl | ⟨j', rfl⟩
-      · exact absurd rfl hij
-      · simpa using hmix j'
-      · intro v hv w hw
-        simp only [Fin.cons_succ, Fin.cons_zero] at hv hw
-        exact inner_eq_zero_symm.mp (hmix i' w hw v hv)
-      · simpa using horth fun hc ↦ hij (by rw [hc])
+    exact exists_atom_family_of_sup_eq hτ hatom hiSup horth
+      (fun j v hv w hw ↦ (Submodule.mem_orthogonal _ w).mp (hUorth j hw) v hv) hsup
 
 /-- **Complete reducibility, orthogonal internal form.** A finite-dimensional unitary continuous
 representation of a group decomposes as an orthogonal internal direct sum of finitely many
@@ -172,8 +199,7 @@ theorem exists_orthogonal_irreducible_decomposition (hπ : IsUnitary π) :
     hfamily.isInternal_iff.mpr (by rw [htop, Submodule.top_orthogonal_eq_bot])
   refine ⟨n, U, fun i ↦ Representation.isIrreducible_toRepresentation_of_isAtom (hatom i),
     hfamily, hinternal, ?_⟩
-  rw [← (LinearEquiv.ofBijective (DirectSum.coeLinearMap fun i ↦ (U i).toSubmodule)
-    hinternal).finrank_eq, Module.finrank_directSum]
+  exact finrank_eq_sum_finrank_of_isInternal hinternal
 
 end FiniteDimensional
 

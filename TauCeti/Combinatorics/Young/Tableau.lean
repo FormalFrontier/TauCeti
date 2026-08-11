@@ -7,6 +7,7 @@ module
 public import Mathlib.Algebra.Group.End
 public import Mathlib.Algebra.Order.BigOperators.Group.Finset
 public import Mathlib.Combinatorics.Young.YoungDiagram
+public import TauCeti.Combinatorics.Young.Diagram
 
 /-!
 # Young tableaux
@@ -14,7 +15,9 @@ public import Mathlib.Combinatorics.Young.YoungDiagram
 A `μ`-tableau is a bijective filling `t : ↥μ.cells ≃ Fin μ.card` of the cells of a Young diagram
 `μ` by the labels `Fin μ.card`.  This file defines `YoungTableau`, the row and the column of a
 label, and identifies the labels lying in a given row, respectively column, with the cells of that
-row, respectively column, of `μ`.  On top of that it proves the counting lemma
+row, respectively column, of `μ`; counting those labels recovers the row lengths of `μ`
+(`YoungTableau.card_filter_rowIndex_eq`) and their partial sums
+(`YoungTableau.card_filter_rowIndex_lt`).  On top of that it proves the counting lemma
 `YoungTableau.colIndex_lt_rowLen_of_injective`: if the row of a label together with the column of
 its image under a permutation `u` of the labels determine the label, then that pair of indices is
 again a cell of `μ`.  It also defines `YoungTableau.relabel`, the transitive action of
@@ -159,6 +162,13 @@ theorem colIndex_lt_rowLen (t : YoungTableau μ) (x : Fin μ.card) :
     colIndex t x < μ.rowLen (rowIndex t x) :=
   YoungDiagram.mem_iff_lt_rowLen.mp (rowIndex_colIndex_mem t x)
 
+/-- **The row of a label is below the number of rows.** The label lies in its own column, which is
+no longer than the zeroth one. -/
+theorem rowIndex_lt_colLen_zero (t : YoungTableau μ) (x : Fin μ.card) :
+    rowIndex t x < μ.colLen 0 :=
+  (YoungDiagram.mem_iff_lt_colLen.mp (rowIndex_colIndex_mem t x)).trans_le
+    (μ.colLen_anti 0 _ (Nat.zero_le _))
+
 /-- Every cell of `μ` carries a label. -/
 theorem exists_rowIndex_colIndex (t : YoungTableau μ) {i j : ℕ} (h : (i, j) ∈ μ) :
     ∃ x, rowIndex t x = i ∧ colIndex t x = j :=
@@ -169,6 +179,21 @@ theorem card_filter_rowIndex_eq (t : YoungTableau μ) (i : ℕ) :
     (Finset.univ.filter fun y => rowIndex t y = i).card = μ.rowLen i := by
   rw [← Fintype.card_subtype, Fintype.card_congr (rowFiberEquiv t i), Fintype.card_coe]
   exact (YoungDiagram.rowLen_eq_card μ).symm
+
+/-- The labels of a tableau lying in one of its first `k` rows are as many as the cells of the
+shape in its first `k` rows. -/
+theorem card_filter_rowIndex_lt (t : YoungTableau μ) (k : ℕ) :
+    (Finset.univ.filter fun x => rowIndex t x < k).card = (μ.rowLens.take k).sum := by
+  classical
+  rw [TauCeti.YoungDiagram.sum_take_rowLens_eq_card_filter_fst]
+  refine Finset.card_bij (fun x _ => ((t.symm x : ↥μ.cells) : ℕ × ℕ)) (fun x hx => ?_)
+    (fun x _ y _ h => t.symm.injective (Subtype.ext h)) fun c hc => ?_
+  · simp only [Finset.mem_filter, Finset.mem_univ, true_and, rowIndex_def] at hx
+    exact Finset.mem_filter.mpr ⟨(t.symm x).2, hx⟩
+  · rw [Finset.mem_filter] at hc
+    refine ⟨t ⟨c, hc.1⟩, ?_, ?_⟩
+    · simpa only [Finset.mem_filter, Finset.mem_univ, true_and, rowIndex_apply] using hc.2
+    · rw [Equiv.symm_apply_apply]
 
 /-! ## The counting lemma -/
 
