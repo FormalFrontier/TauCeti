@@ -201,6 +201,7 @@ theorem doubleForkMark_ne_zero (n : ℕ) : doubleForkMark n ≠ 0 := by
   have := congrFun h (Sum.inl (0 : Fin 2))
   norm_num [doubleForkMark] at this
 
+/-- Every diagonal entry of a double-fork Cartan matrix is `2`. -/
 @[simp]
 theorem doubleForkCartanMatrix_apply_self (n : ℕ) (i : DoubleForkIndex n) :
     doubleForkCartanMatrix n i i = 2 := by
