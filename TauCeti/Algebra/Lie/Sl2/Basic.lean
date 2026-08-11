@@ -27,7 +27,8 @@ is the whole Lie algebra: `sl (Fin 2) R` is free of rank `3` on `e`, `f`, `h`, s
 That last fact is what makes `sl (Fin 2) R` usable as *the* model `sl₂`: statements about a triple
 `t` which are false for a triple sitting inside a bigger Lie algebra become correct once
 `t.toLieSubalgebra R = ⊤`, and this file provides the model in which that hypothesis holds. For an
-arbitrary triple, `IsSl2Triple.restrict` regards it inside the subalgebra it generates, where
+arbitrary triple, `IsSl2Triple.isSl2Triple_restrict` regards it inside the subalgebra it generates,
+where
 `IsSl2Triple.restrict_toLieSubalgebra_eq_top` supplies that hypothesis.
 
 The second is the presentation of `sl₂` by its relations, for an arbitrary Lie algebra: a triple is
@@ -53,7 +54,8 @@ that composes to zero is already zero.
 * `TauCeti.toLieSubalgebra_isSl2Triple_single_eq_top`: in `sl (Fin 2) R` the subalgebra generated
   by a standard triple is the whole of `sl (Fin 2) R`. The underlying expansion of an arbitrary
   element in the triple is `TauCeti.eq_smul_single_add_smul_single_add_smul_singleSubSingle`.
-* `IsSl2Triple.restrict`: an arbitrary triple regarded inside the subalgebra that it generates.
+* `IsSl2Triple.isSl2Triple_restrict`: an arbitrary triple regarded inside the subalgebra that it
+  generates.
 * `TauCeti.lieHomOfSl2Basis`: from a basis obeying the `sl₂` relations, three elements of another
   Lie algebra obeying the same relations determine a homomorphism, sending the basis to them
   (`TauCeti.lieHomOfSl2Basis_apply`).
@@ -358,7 +360,7 @@ theorem h_mem_toLieSubalgebra (t : IsSl2Triple h e f) : h ∈ t.toLieSubalgebra 
   IsSl2Triple.mem_toLieSubalgebra_iff.2 ⟨0, 0, 1, by simp [t.lie_e_f]⟩
 
 /-- An `sl₂` triple, regarded inside the Lie subalgebra that it generates. -/
-theorem restrict (t : IsSl2Triple h e f) :
+theorem isSl2Triple_restrict (t : IsSl2Triple h e f) :
     IsSl2Triple (⟨h, t.h_mem_toLieSubalgebra⟩ : t.toLieSubalgebra K)
       ⟨e, t.e_mem_toLieSubalgebra⟩ ⟨f, t.f_mem_toLieSubalgebra⟩ where
   h_ne_zero hc := t.h_ne_zero (by simpa using congrArg Subtype.val hc)
@@ -370,7 +372,7 @@ theorem restrict (t : IsSl2Triple h e f) :
 subalgebra. -/
 @[simp]
 theorem restrict_toLieSubalgebra_eq_top (t : IsSl2Triple h e f) :
-    (t.restrict (K := K)).toLieSubalgebra K = ⊤ := by
+    (t.isSl2Triple_restrict (K := K)).toLieSubalgebra K = ⊤ := by
   refine eq_top_iff.2 fun x _ ↦ ?_
   obtain ⟨c₁, c₂, c₃, hx⟩ := IsSl2Triple.mem_toLieSubalgebra_iff.1 x.2
   exact IsSl2Triple.mem_toLieSubalgebra_iff.2
