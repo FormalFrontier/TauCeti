@@ -260,10 +260,8 @@ theorem orderOf_mk_dvd_two_of_algEquiv_op {A : CSA.{u, u} K}
     (e : (A : Type u) ≃ₐ[K] (A : Type u)ᵐᵒᵖ) : orderOf (mk A) ∣ 2 :=
   orderOf_mk_dvd_two (IsBrauerEquivalent.of_algEquiv K e)
 
-/-- **A self-opposite Brauer class other than the identity has order exactly `2`.**
-
-`TauCeti.BrauerGroup.orderOf_mk_dvd_two` bounds the order by `2`, and `2` is prime, so this is
-Mathlib's `orderOf_eq_prime`. -/
+/-- **A self-opposite Brauer class other than the identity has order exactly `2`.** This is the
+sharp form of `TauCeti.BrauerGroup.orderOf_mk_dvd_two`. -/
 theorem orderOf_mk_eq_two {A : CSA.{u, u} K} (h : IsBrauerEquivalent A (CSA.op A))
     (h1 : mk A ≠ 1) : orderOf (mk A) = 2 :=
   orderOf_eq_prime (orderOf_dvd_iff_pow_eq_one.1 (orderOf_mk_dvd_two h)) h1

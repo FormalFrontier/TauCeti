@@ -100,13 +100,7 @@ variable (K : Type u) [Field K] (A : Type u) [Ring A] [Algebra K A] [Algebra.IsC
 positive `p` and `q`, then already `A ≃ₐ[K] M_r(K)`.
 
 This is the converse of `TauCeti.isBrauerTrivial_of_isSplittingField`, and it is not formal: it
-needs the uniqueness of the Wedderburn data. Writing `A ≃ₐ[K] M_r(D)` for a central division
-algebra `D`, the ring `Mₚ(A)` acquires two presentations as a matrix ring over a division ring, of
-sizes `p * r` over `D` and `q` over `K`, so `TauCeti.card_eq_of_ringEquiv_matrix` gives
-`p * r = q`.
-Comparing dimensions then gives `dim_K A = r ^ 2`, which against the Wedderburn count
-`dim_K A = r ^ 2 * dim_K D` leaves `dim_K D = 1`, so `D` is `K` and the presentation of `A` is
-already a matrix algebra over `K`. -/
+needs the uniqueness of the Wedderburn data. -/
 theorem Algebra.isSplittingField_self_of_isBrauerTrivial (h : IsBrauerTrivial (CSA.of K A)) :
     Algebra.IsSplittingField K A K := by
   obtain ⟨p, q, hp, -, ⟨e⟩⟩ := h
@@ -159,12 +153,6 @@ variable (K : Type u) [Field K] (D : Type u) [DivisionRing D] [Algebra K D]
   [Algebra.IsCentral K D] [FiniteDimensional K D]
 
 /-- **A central division algebra is Brauer trivial exactly when it is the base field.**
-
-A division ring is a matrix ring only in size one, because its regular module is simple and the size
-of a matrix presentation is the length of the regular module
-(`TauCeti.length_eq_card_of_ringEquiv_matrix`). So a split central division algebra is
-one-dimensional; conversely a one-dimensional algebra *is* the base field, whose class is the
-identity by definition.
 
 This is the base case of the statement that every Brauer class has a unique division-algebra
 representative, and it is what makes a Brauer group nontrivial in practice: exhibiting a central
