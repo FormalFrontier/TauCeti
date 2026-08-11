@@ -191,7 +191,7 @@ theorem cauchyPVExistsAt_of_perWindow_tendsto_of_interiorDisjoint {γ : ℝ → 
   have h_mem := (Finset.mem_sort (α := ℝ) (· ≤ ·)).mp ht
   refine hasCauchyPVAt_iff.mpr ⟨eventually_intervalIntegrable_truncated_window hab
     (h_lo t h_mem) (h_hi t h_mem) (hr_nonneg ⟨t, h_mem⟩) h_int_tr, ?_⟩
-  rw [dif_pos h_mem]
+  rw [dite_eq_left h_mem]
   exact (h_win t h_mem).choose_spec
 
 -- The two helpers below keep `hF : F.card = k` as an explicit hypothesis even though it is

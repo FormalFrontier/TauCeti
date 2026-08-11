@@ -8,6 +8,7 @@ module
 public import Mathlib.Data.ZMod.Basic
 public import Mathlib.LinearAlgebra.Matrix.GeneralLinearGroup.Defs
 public import Mathlib.NumberTheory.HeckeRing.Defs
+public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.DoubleCoset
 
 /-!
 # The arithmetic Hecke triple for `GL_n`
@@ -89,24 +90,14 @@ lemma det_eq_one_of_mem_SLnZ {g : GL (Fin n) ℚ} (hg : g ∈ SLnZ n) :
   obtain ⟨σ, rfl⟩ := (mem_SLnZ_iff n).mp hg
   exact congrArg Units.val (SpecialLinearGroup.det_mapGL (S := ℚ) σ)
 
-/-- The determinant is constant on a double coset whose coefficients all have determinant
-one — the only property of the coefficient subgroups the argument uses. -/
-lemma det_eq_of_mem_doubleCoset_of_det_eq_one {H₁ H₂ : Subgroup (GL (Fin n) ℚ)}
-    (h₁ : ∀ γ ∈ H₁, (↑γ : Matrix (Fin n) (Fin n) ℚ).det = 1)
-    (h₂ : ∀ γ ∈ H₂, (↑γ : Matrix (Fin n) (Fin n) ℚ).det = 1) {a b : GL (Fin n) ℚ}
-    (hb : b ∈ DoubleCoset.doubleCoset a H₁ H₂) :
-    (↑b : Matrix (Fin n) (Fin n) ℚ).det = (↑a : Matrix (Fin n) (Fin n) ℚ).det := by
-  obtain ⟨γ₁, hγ₁, γ₂, hγ₂, rfl⟩ := DoubleCoset.mem_doubleCoset.mp hb
-  simp only [GeneralLinearGroup.coe_mul, Matrix.det_mul, h₁ γ₁ hγ₁, h₂ γ₂ hγ₂, one_mul, mul_one]
-
 /-- The case of coefficient subgroups inside `SL_n(ℤ)`, which is how the congruence subgroups
 get it. -/
 lemma det_eq_of_mem_doubleCoset_of_le_SLnZ {H₁ H₂ : Subgroup (GL (Fin n) ℚ)}
     (h₁ : H₁ ≤ SLnZ n) (h₂ : H₂ ≤ SLnZ n) {a b : GL (Fin n) ℚ}
     (hb : b ∈ DoubleCoset.doubleCoset a H₁ H₂) :
     (↑b : Matrix (Fin n) (Fin n) ℚ).det = (↑a : Matrix (Fin n) (Fin n) ℚ).det :=
-  det_eq_of_mem_doubleCoset_of_det_eq_one n (fun _ hγ ↦ det_eq_one_of_mem_SLnZ n (h₁ hγ))
-    (fun _ hγ ↦ det_eq_one_of_mem_SLnZ n (h₂ hγ)) hb
+  DoubleCoset.det_eq_of_mem_doubleCoset_of_det_eq_one
+    (fun _ hγ ↦ det_eq_one_of_mem_SLnZ n (h₁ hγ)) (fun _ hγ ↦ det_eq_one_of_mem_SLnZ n (h₂ hγ)) hb
 
 /-- The `SL_n(ℤ)` case of `det_eq_of_mem_doubleCoset_of_le_SLnZ`. -/
 lemma det_eq_of_mem_doubleCoset_SLnZ {a b : GL (Fin n) ℚ}

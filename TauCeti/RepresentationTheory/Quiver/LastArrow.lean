@@ -110,9 +110,9 @@ theorem card_path_eq_ite_add_sum [DecidableEq V] [Fintype V] (i : V)
   have : Finite (PLift (i = b)) := Finite.of_subsingleton
   have hcard : Nat.card (PLift (i = b)) = if i = b then 1 else 0 := by
     by_cases h : i = b
-    · rw [if_pos h]
+    · rw [ite_eq_left h]
       exact Nat.card_eq_one_iff_unique.mpr ⟨hsub, ⟨⟨h⟩⟩⟩
-    · rw [if_neg h]
+    · rw [ite_eq_right h]
       have : IsEmpty (PLift (i = b)) := ⟨fun x ↦ h x.down⟩
       exact Nat.card_of_isEmpty
   rw [Nat.card_congr (pathLastArrowEquiv i b), Nat.card_sum, hcard, Nat.card_sigma]

@@ -126,15 +126,15 @@ private lemma typeCPair_swap_eq {i j : TypeCIndex n} (h1 : typeCFst i = typeCSnd
   subst ha
   subst hb
   rcases lt_trichotomy a b with hab | hab | hab
-  · rw [if_pos hab] at hs'
-    rw [if_neg (not_lt.mpr hab.le)] at hs
+  · rw [ite_eq_left hab] at hs'
+    rw [ite_eq_right (not_lt.mpr hab.le)] at hs
     subst hs
     exact absurd hs' (by simp)
   · subst hab
-    rw [if_neg (lt_irrefl a)] at hs hs'
+    rw [ite_eq_right (lt_irrefl a)] at hs hs'
     rw [hs]
-  · rw [if_neg (not_lt.mpr hab.le)] at hs'
-    rw [if_pos hab] at hs
+  · rw [ite_eq_right (not_lt.mpr hab.le)] at hs'
+    rw [ite_eq_left hab] at hs
     subst hs'
     exact absurd hs (by simp)
 
@@ -200,26 +200,26 @@ private lemma typeCMk_pair {x y : Signed n} (h : y ≠ signedNeg x) :
   · subst hst
     rcases le_or_gt a b with hab | hab
     · have hmk : typeCMk (a, s) (b, s) = (b, a, s) := by
-        rw [typeCMk, if_pos rfl, max_eq_right hab, min_eq_left hab]
+        rw [typeCMk, ite_eq_left rfl, max_eq_right hab, min_eq_left hab]
       refine Or.inr ⟨by rw [hmk]; rfl, ?_⟩
-      rw [hmk, typeCSnd, if_neg (not_lt.mpr hab)]
+      rw [hmk, typeCSnd, ite_eq_right (not_lt.mpr hab)]
     · have hmk : typeCMk (a, s) (b, s) = (a, b, s) := by
-        rw [typeCMk, if_pos rfl, max_eq_left hab.le, min_eq_right hab.le]
+        rw [typeCMk, ite_eq_left rfl, max_eq_left hab.le, min_eq_right hab.le]
       refine Or.inl ⟨by rw [hmk]; rfl, ?_⟩
-      rw [hmk, typeCSnd, if_neg (not_lt.mpr hab.le)]
+      rw [hmk, typeCSnd, ite_eq_right (not_lt.mpr hab.le)]
   · have ht : t = !s := by cases s <;> cases t <;> simp_all
     subst ht
     rcases lt_trichotomy a b with hab | hab | hab
     · have hmk : typeCMk (a, s) (b, !s) = (a, b, s) := by
-        rw [typeCMk, if_neg hst, if_pos hab]
+        rw [typeCMk, ite_eq_right hst, ite_eq_left hab]
       refine Or.inl ⟨by rw [hmk]; rfl, ?_⟩
-      rw [hmk, typeCSnd, if_pos hab]
+      rw [hmk, typeCSnd, ite_eq_left hab]
     · refine absurd ?_ h
       simp [hab]
     · have hmk : typeCMk (a, s) (b, !s) = (b, a, !s) := by
-        rw [typeCMk, if_neg hst, if_neg (not_lt.mpr hab.le)]
+        rw [typeCMk, ite_eq_right hst, ite_eq_right (not_lt.mpr hab.le)]
       refine Or.inr ⟨by rw [hmk]; rfl, ?_⟩
-      rw [hmk, typeCSnd, if_pos hab, Bool.not_not]
+      rw [hmk, typeCSnd, ite_eq_left hab, Bool.not_not]
 
 private lemma typeCRoot_typeCMk {x y : Signed n} (h : y ≠ signedNeg x) :
     typeCRoot (typeCMk x y) = pairRoot x y := by
@@ -651,7 +651,7 @@ private lemma linearIndependent_typeCSimpleRoot (n : ℕ) :
       rw [Finset.sum_eq_single c]
       · simp
       · intro d _ hd
-        exact if_neg fun hb => hd (Fin.ext hb)
+        exact ite_eq_right fun hb => hd (Fin.ext hb)
       · simp
     rw [hfirst] at h0
     linarith [h0]
@@ -663,11 +663,11 @@ private lemma linearIndependent_typeCSimpleRoot (n : ℕ) :
       intro hm
       have h := hrel ⟨0, hm⟩
       have hsum : ∑ i : Fin n, (if (0 : ℕ) = (i : ℕ) + 1 then g i else 0) = 0 :=
-        Finset.sum_eq_zero fun i _ => if_neg (by omega)
+        Finset.sum_eq_zero fun i _ => ite_eq_right (by omega)
       rw [hsum] at h
       by_cases hn : (0 : ℕ) + 1 = n
-      · rw [if_pos hn] at h; linarith
-      · rw [if_neg hn] at h; linarith
+      · rw [ite_eq_left hn] at h; linarith
+      · rw [ite_eq_right hn] at h; linarith
     | succ m ih =>
       intro hm
       have h := hrel ⟨m + 1, hm⟩
@@ -676,12 +676,12 @@ private lemma linearIndependent_typeCSimpleRoot (n : ℕ) :
         rw [Finset.sum_eq_single (⟨m, by omega⟩ : Fin n)]
         · simp
         · intro d _ hd
-          exact if_neg fun hb => hd (Fin.ext (by simpa using by omega))
+          exact ite_eq_right fun hb => hd (Fin.ext (by simpa using by omega))
         · simp
       rw [hsum, ih (by omega)] at h
       by_cases hn : (m + 1 : ℕ) + 1 = n
-      · rw [if_pos hn] at h; simpa using by linarith
-      · rw [if_neg hn] at h; simpa using by linarith
+      · rw [ite_eq_left hn] at h; simpa using by linarith
+      · rw [ite_eq_right hn] at h; simpa using by linarith
   intro i
   simpa using hzero (i : ℕ) i.isLt
 

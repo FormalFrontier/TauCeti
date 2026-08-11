@@ -287,9 +287,9 @@ private theorem indTerm_mackeyClassFun (s : G) (H K : Subgroup G) (f : H → k) 
     exact ⟨fun h => ⟨SetLike.coe_mem _, h⟩, fun h => h.2⟩
   rw [indTerm_apply, indTerm_apply]
   by_cases hmem : ((u : G) * s)⁻¹ * (x : G) * ((u : G) * s) ∈ H
-  · rw [dif_pos hmem, dif_pos (hiff.mp hmem), mackeyClassFun_apply]
+  · rw [dite_eq_left hmem, dite_eq_left (hiff.mp hmem), mackeyClassFun_apply]
     exact congrArg f (Subtype.ext (by rw [coe_mackeyToH_apply]; exact hconj))
-  · rw [dif_neg hmem, dif_neg fun h => hmem (hiff.mpr h)]
+  · rw [dite_eq_right hmem, dite_eq_right fun h => hmem (hiff.mpr h)]
 
 /-- **The Mackey decomposition formula for class functions.**  For a class function `f` on a
 finite-index subgroup `H` and an element `x` of a subgroup `K`, the induced class function
