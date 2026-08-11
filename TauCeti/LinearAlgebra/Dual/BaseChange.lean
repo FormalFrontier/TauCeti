@@ -61,20 +61,19 @@ corresponding element of the dual basis. -/
 theorem baseChange_coord {ι : Type*} (b : Module.Basis ι R M) (i : ι) (z : A ⊗[R] M) :
     ((TensorProduct.isBaseChange R M A).basis b).repr z i =
       Module.Dual.baseChange A (b.coord i) z := by
-  let ibc := TensorProduct.isBaseChange R M A
-  let bA := ibc.basis b
-  change bA.repr z i = Module.Dual.baseChange A (b.coord i) z
   induction z using TensorProduct.induction_on with
   | zero => simp
   | add z w hz hw => simpa only [map_add, Finsupp.add_apply] using congrArg₂ (· + ·) hz hw
   | tmul a m =>
       calc
-        bA.repr (a ⊗ₜ[R] m) i = bA.repr (a • (1 ⊗ₜ[R] m)) i := by
+        ((TensorProduct.isBaseChange R M A).basis b).repr (a ⊗ₜ[R] m) i =
+            ((TensorProduct.isBaseChange R M A).basis b).repr
+              (a • (1 ⊗ₜ[R] m)) i := by
           simp [TensorProduct.smul_tmul']
-        _ = a * bA.repr (1 ⊗ₜ[R] m) i := by simp
+        _ = a * ((TensorProduct.isBaseChange R M A).basis b).repr (1 ⊗ₜ[R] m) i := by simp
         _ = a * algebraMap R A (b.repr m i) := by
-          simpa only [bA, ibc, TensorProduct.mk_apply] using congrArg (a * ·)
-            (IsBaseChange.basis_repr_comp_apply b ibc m i)
+          simpa only [TensorProduct.mk_apply] using congrArg (a * ·)
+            (IsBaseChange.basis_repr_comp_apply b (TensorProduct.isBaseChange R M A) m i)
         _ = Module.Dual.baseChange A (b.coord i) (a ⊗ₜ[R] m) := by
           simp [Module.Basis.coord_apply, Algebra.smul_def, mul_comm]
 

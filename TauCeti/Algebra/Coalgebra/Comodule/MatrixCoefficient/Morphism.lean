@@ -26,9 +26,10 @@ separate vectors after extending scalars to any commutative algebra.
 
 For a finite free comodule, every coefficient morphism lands in the finite coefficient
 subcoalgebra, viewed as a regular subcomodule. Conversely, the ranges of all coefficient
-morphisms generate that regular subcomodule. This is the naturality bridge used in Tannakian
-reconstruction: a natural transformation on finite comodules is determined on an arbitrary
-object by its behavior on finite subcomodules of the regular comodule.
+morphisms generate that regular subcomodule. This supplies an intended downstream naturality
+bridge for Tannakian reconstruction: for each finite comodule, naturality along these corestricted
+maps compares its component with components on finite regular subcomodules, and joint separation
+then recovers the original finite-comodule component.
 
 ## Main declarations
 
