@@ -73,7 +73,7 @@ theorem IsUnipotent.tensorProduct {g : GeneralLinearGroup K V}
     IsUnipotent (tensorProduct g h) := by
   rw [isUnipotent_def] at hg hh ⊢
   rw [coe_tensorProduct]
-  exact Module.End.isNilpotent_map_sub_one hg hh
+  exact hg.tensorProduct_map_sub_one hh
 
 end CommRing
 

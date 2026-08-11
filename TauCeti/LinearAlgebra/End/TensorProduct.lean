@@ -25,7 +25,7 @@ original module, and the corresponding one-sided tensor endomorphism acts compon
   commute.
 * `TauCeti.Module.End.IsSemisimple.tensorProduct`: tensor products of semisimple endomorphisms are
   semisimple.
-* `TauCeti.Module.End.isNilpotent_map_sub_one`: `TensorProduct.map f g - 1` is nilpotent when
+* `IsNilpotent.tensorProduct_map_sub_one`: `TensorProduct.map f g - 1` is nilpotent when
   `f - 1` and `g - 1` are nilpotent.
 -/
 
@@ -41,6 +41,14 @@ namespace Module.End
 universe u v w
 
 variable {K : Type u} {V : Type v} {W : Type w}
+
+/-- One-sided tensor endomorphisms acting on different factors commute. -/
+theorem commute_rTensor_lTensor [CommSemiring K] [AddCommMonoid V] [Module K V]
+    [AddCommMonoid W] [Module K W] (f : _root_.Module.End K V)
+    (g : _root_.Module.End K W) : Commute (f.rTensor W) (g.lTensor V) := by
+  rw [commute_iff_eq, _root_.Module.End.mul_eq_comp, _root_.Module.End.mul_eq_comp]
+  exact (LinearMap.rTensor_comp_lTensor V f g).trans
+    (LinearMap.lTensor_comp_rTensor V f g).symm
 
 section CommRing
 
@@ -100,16 +108,9 @@ theorem IsSemisimple.lTensor {f : _root_.Module.End K W} (hf : f.IsSemisimple) :
 
 end Left
 
-/-- One-sided tensor endomorphisms acting on different factors commute. -/
-theorem commute_rTensor_lTensor (f : _root_.Module.End K V) (g : _root_.Module.End K W) :
-    Commute (f.rTensor W) (g.lTensor V) := by
-  rw [commute_iff_eq, _root_.Module.End.mul_eq_comp, _root_.Module.End.mul_eq_comp]
-  exact (LinearMap.rTensor_comp_lTensor V f g).trans
-    (LinearMap.lTensor_comp_rTensor V f g).symm
-
 /-- If `f - 1` and `g - 1` are nilpotent, then `TensorProduct.map f g - 1` is nilpotent. -/
-theorem isNilpotent_map_sub_one {f : _root_.Module.End K V} {g : _root_.Module.End K W}
-    (hf : IsNilpotent (f - 1)) (hg : IsNilpotent (g - 1)) :
+theorem _root_.IsNilpotent.tensorProduct_map_sub_one {f : _root_.Module.End K V}
+    {g : _root_.Module.End K W} (hf : IsNilpotent (f - 1)) (hg : IsNilpotent (g - 1)) :
     IsNilpotent (TensorProduct.map f g - 1) := by
   let n : _root_.Module.End K (V ⊗[K] W) := f.rTensor W - 1
   let m : _root_.Module.End K (V ⊗[K] W) := g.lTensor V - 1
