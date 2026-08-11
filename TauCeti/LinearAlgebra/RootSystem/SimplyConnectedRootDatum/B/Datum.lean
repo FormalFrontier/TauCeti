@@ -6,6 +6,7 @@ module
 
 public import Mathlib.LinearAlgebra.Matrix.Dual
 public import TauCeti.LinearAlgebra.RootSystem.NumberOfRoots
+public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.Basic
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.B.Model
 
 public section
@@ -786,11 +787,7 @@ counterpart for the roots is deliberately absent: they span the root lattice, wh
 sits inside the weight lattice with index `2` (Bourbaki, Plate II), the degenerate rank `n = 0`
 being the only case where the two lattices agree. -/
 theorem corootSpan_typeBSimplyConnectedRootDatum_eq_top (n : ℕ) :
-    (typeBSimplyConnectedRootDatum n).corootSpan ℤ = ⊤ := by
-  refine top_unique ?_
-  rw [← (Pi.basisFun ℤ (Fin n)).span_eq]
-  refine Submodule.span_mono ?_
-  rintro _ ⟨i, rfl⟩
-  exact ⟨typeBSimpleIndex n i, by rw [coroot_typeBSimpleIndex]; simp⟩
+    (typeBSimplyConnectedRootDatum n).corootSpan ℤ = ⊤ :=
+  corootSpan_eq_top_of_coroot_eq_single (coroot_typeBSimpleIndex (n := n))
 
 end TauCeti.DynkinType

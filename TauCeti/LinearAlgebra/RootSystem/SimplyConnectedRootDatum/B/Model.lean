@@ -105,14 +105,14 @@ def coweight (n b : ℕ) : Fin n → ℤ := fun k =>
 @[simp] lemma coweight_apply (n b : ℕ) (k : Fin n) : coweight n b k =
     (if (k : ℕ) + 1 = n then 1 else 2) * (if b ≤ (k : ℕ) then 1 else 0) := (rfl)
 
-lemma weight_eq_zero_of_le {a : ℕ} (ha : n ≤ a) : weight n a = 0 := by
+@[simp] lemma weight_eq_zero_of_le {a : ℕ} (ha : n ≤ a) : weight n a = 0 := by
   funext k
   have := k.isLt
   simp only [weight, Pi.zero_apply]
   rw [ite_eq_right (by omega), ite_eq_right (by omega)]
   ring
 
-lemma coweight_eq_zero_of_le {b : ℕ} (hb : n ≤ b) : coweight n b = 0 := by
+@[simp] lemma coweight_eq_zero_of_le {b : ℕ} (hb : n ≤ b) : coweight n b = 0 := by
   funext k
   have := k.isLt
   simp only [coweight, Pi.zero_apply]
