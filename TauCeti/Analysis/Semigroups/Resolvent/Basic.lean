@@ -6,8 +6,8 @@ module
 
 public import TauCeti.Analysis.Semigroups.Generator.Basic
 public import TauCeti.Analysis.Semigroups.ExponentialShift
+import TauCeti.Analysis.Calculus.ExponentialSlope
 import TauCeti.MeasureTheory.Integral.ExpDecay
-public import Mathlib.Analysis.SpecialFunctions.ExpDeriv
 public import Mathlib.MeasureTheory.Integral.ExpDecay
 public import Mathlib.MeasureTheory.Integral.IntervalIntegral.FundThmCalculus
 public import Mathlib.Analysis.SpecialFunctions.ImproperIntegrals
@@ -253,12 +253,6 @@ private theorem StronglyContinuousSemigroup.resolvent_generator_tendsto
       S.resolvent hb lambda hlam x))
       (nhdsWithin 0 (Set.Ioi 0))
       (nhds (lambda • S.resolvent hb lambda hlam x - x)) := by
-  -- the slope `(e^{λt}-1)/t → λ` from the derivative of `exp` at `0`
-  have hderiv : HasDerivAt (fun t => Real.exp (lambda * t)) lambda 0 := by
-    have h := (Real.hasDerivAt_exp (lambda * 0)).comp (0 : ℝ)
-      ((hasDerivAt_id (0 : ℝ)).const_mul lambda)
-    simp only [Real.exp_zero, mul_zero, one_mul, mul_one, Function.comp_def] at h
-    exact h
   -- rewrite via the shift identity, then take the limit term by term
   apply Filter.Tendsto.congr'
   · filter_upwards [self_mem_nhdsWithin] with t (ht : 0 < t)
@@ -268,9 +262,8 @@ private theorem StronglyContinuousSemigroup.resolvent_generator_tendsto
     apply Filter.Tendsto.sub
     · -- `(1/t * (e^{λt}-1)) • Rlx → λ • Rlx`
       apply Filter.Tendsto.smul _ tendsto_const_nhds
-      have := hderiv.tendsto_slope_zero_right
-      simp only [zero_add, Real.exp_zero, mul_zero] at this
-      exact this.congr (fun t => by simp only [smul_eq_mul]; ring)
+      exact (tendsto_exp_mul_sub_one_div lambda).congr
+        (fun t => by ring)
     · -- `(1/t * e^{λt}) • ∫_{Ioc 0 t} f → 1 • x = x`
       have h_one_smul_x : x = (1 : ℝ) • x := (one_smul ℝ x).symm
       rw [h_one_smul_x]
@@ -285,8 +278,8 @@ private theorem StronglyContinuousSemigroup.resolvent_generator_tendsto
       apply Filter.Tendsto.smul
       · have hexp_cont : Filter.Tendsto (fun t => Real.exp (lambda * t))
             (nhds 0) (nhds 1) := by
-          have := hderiv.continuousAt.tendsto
-          simpa using this
+          have hcont : ContinuousAt (fun t : ℝ => Real.exp (lambda * t)) 0 := by fun_prop
+          simpa using hcont.tendsto
         exact hexp_cont.mono_left nhdsWithin_le_nhds
       · exact S.tendsto_average_resolvent_integrand lambda x
 

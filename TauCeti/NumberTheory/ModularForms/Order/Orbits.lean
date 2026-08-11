@@ -131,11 +131,11 @@ lemma sum_orderOfVanishingAt_ofComplex_eq_finsum_orbit [SlashInvariantFormClass 
   have ha' : a ∈ X := by simpa using ha
   have hb' : b ∈ X := by simpa using hb
   have hfdo : ∀ z ∈ X, ofComplex z ∈ 𝒟ᵒ := fun z hz => by
-    refine ⟨Complex.one_lt_normSq_iff.mpr ?_, ?_⟩
-    · rw [hcoe z hz]; exact hnorm z hz
-    · -- `𝒟ᵒ`'s real-part bound is stated with `UpperHalfPlane.re`; unfold it to the coercion
-      change |((ofComplex z : ℍ) : ℂ).re| < 1 / 2
-      rw [hcoe z hz]; exact hre z hz
+    obtain ⟨τ, hτ, hτz⟩ : z ∈ UpperHalfPlane.coe '' 𝒟ᵒ := by
+      rw [ModularGroup.coe_fdo]; exact ⟨hpos z hz, hnorm z hz, hre z hz⟩
+    have hof : ofComplex z = τ := UpperHalfPlane.coe_injective ((hcoe z hz).trans hτz.symm)
+    rw [hof]
+    exact hτ
   have h : ofComplex a = ofComplex b :=
     ModularGroup.orbit_mk_injOn_fdo (hfdo a ha') (hfdo b hb') hab
   exact (hcoe a ha').symm.trans ((congrArg (fun w : ℍ ↦ (w : ℂ)) h).trans (hcoe b hb'))
