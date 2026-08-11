@@ -20,11 +20,6 @@ Together they are the two maps `R(S) → R(G)` and `R(G) → R(S)` on virtual-ch
 interplay -- the projection formula `TauCeti.indClassFun_comp_subtype_mul` -- makes induction a map
 of `R(G)`-modules.
 
-## Main definitions
-
-* `TauCeti.indClassFunAddHom`: induction of functions on a finite-index subgroup, bundled as an
-  additive map.
-
 ## Main statements
 
 * `TauCeti.ClassFunction.ind_ofFDRep_mem_virtualCharacters`: induction takes the character of a
@@ -100,25 +95,6 @@ theorem comp_subtype_mem_virtualCharacters (S : Subgroup G) {f : G → k}
     exact character_mem_virtualCharacters _
   have hmem := hle hf
   rwa [AddSubgroup.mem_comap, compSubtypeAddHom_apply] at hmem
-
-/-- **Induction of functions on a finite-index subgroup, as an additive map.**  It is
-`TauCeti.indClassFun` bundled, which is what lets a property be propagated through the additive
-generation of an `AddSubgroup` of functions; `TauCeti.ClassFunction.ind` is the finer bundling, as
-a `k`-linear map on class functions. -/
-noncomputable def indClassFunAddHom (S : Subgroup G) [S.FiniteIndex] :
-    (S → k) →+ (G → k) where
-  toFun := indClassFun S
-  map_zero' := indClassFun_zero
-  map_add' := indClassFun_add
-
-private theorem indClassFunAddHom_apply_aux (S : Subgroup G) [S.FiniteIndex] (ψ : S → k) :
-    indClassFunAddHom S ψ = indClassFun S ψ :=
-  rfl
-
-@[simp]
-theorem indClassFunAddHom_apply (S : Subgroup G) [S.FiniteIndex] (ψ : S → k) :
-    indClassFunAddHom S ψ = indClassFun S ψ :=
-  indClassFunAddHom_apply_aux S ψ
 
 /-- **Induction preserves virtual characters.**  A character of the subgroup induces to a character
 (`TauCeti.ClassFunction.ind_ofFDRep_mem_virtualCharacters`), and induction is additive, so the

@@ -32,6 +32,9 @@ and to deduce `TauCeti.character_ind` from `TauCeti.indClassFun_eq_natCard_inv_m
   those left coset representatives that conjugate `g` into `S`.  There is no division by `|S|`,
   so it needs no invertibility hypothesis and no more than an additive commutative monoid of
   coefficients.
+* `TauCeti.indClassFunAddHom S`: the same construction packaged as an additive map
+  `(S → k) →+ (G → k)`, which is what lets a property be propagated through the additive
+  generation of an `AddSubgroup` of functions.
 * `TauCeti.ClassFunction.ind S`: the same construction packaged as a `k`-linear map
   `ClassFunction k S →ₗ[k] ClassFunction k G`.
 
@@ -161,6 +164,25 @@ theorem indClassFun_add [S.FiniteIndex] (f₁ f₂ : S → k) :
     indClassFun S (f₁ + f₂) = indClassFun S f₁ + indClassFun S f₂ := by
   funext g
   simp [indClassFun, indTerm_add, Finset.sum_add_distrib]
+
+/-- **Induction of functions on a finite-index subgroup, as an additive map.**  It is
+`TauCeti.indClassFun` bundled by the two lemmas above, which is what lets a property be propagated
+through the additive generation of an `AddSubgroup` of functions; `TauCeti.ClassFunction.ind` is
+the finer bundling, as a `k`-linear map on class functions. -/
+noncomputable def indClassFunAddHom (S : Subgroup G) [S.FiniteIndex] :
+    (S → k) →+ (G → k) where
+  toFun := indClassFun S
+  map_zero' := indClassFun_zero
+  map_add' := indClassFun_add
+
+private theorem indClassFunAddHom_apply_aux (S : Subgroup G) [S.FiniteIndex] (ψ : S → k) :
+    indClassFunAddHom S ψ = indClassFun S ψ :=
+  rfl
+
+@[simp]
+theorem indClassFunAddHom_apply (S : Subgroup G) [S.FiniteIndex] (ψ : S → k) :
+    indClassFunAddHom S ψ = indClassFun S ψ :=
+  indClassFunAddHom_apply_aux S ψ
 
 end AddCommMonoid
 
