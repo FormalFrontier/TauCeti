@@ -134,6 +134,12 @@ private theorem finiteSubcomodule_directed_toSubmodule :
   obtain ⟨K, hNK, hQK⟩ := directedOn_finiteSubcomodules.directed_val N Q
   exact ⟨K, toSubmodule_le_toSubmodule.2 hNK, toSubmodule_le_toSubmodule.2 hQK⟩
 
+private theorem topEquiv_symm_apply (m : M) :
+    (Submodule.topEquiv (R := R) (M := M)).symm m =
+      (⟨m, Submodule.mem_top⟩ : (⊤ : Submodule R M)) := by
+  apply (Submodule.topEquiv (R := R) (M := M)).injective
+  simp
+
 private theorem iSup_finiteSubcomodule_toSubmodule_eq_top
     (hM : ∀ m : M, ∃ N : Subcomodule R C M, Module.Finite R N.toSubmodule ∧ m ∈ N) :
     (⨆ N : finiteSubcomodules (R := R) (C := C) (M := M), N.1.toSubmodule) = ⊤ := by
@@ -171,8 +177,7 @@ theorem finiteSubcomoduleLiftOfExistsMem_apply
     finiteSubcomoduleLiftOfExistsMem hM f hf m = f N m := by
   unfold finiteSubcomoduleLiftOfExistsMem
   simp only [LinearMap.coe_comp, LinearEquiv.coe_coe, Function.comp_apply]
-  rw [show (Submodule.topEquiv (R := R) (M := M)).symm (m : M) =
-    (⟨m, Submodule.mem_top⟩ : (⊤ : Submodule R M)) from rfl]
+  rw [topEquiv_symm_apply]
   apply Submodule.iSupLift_mk
 
 /-- Restricting the map glued from finite subcomodules to one finite subcomodule recovers its
