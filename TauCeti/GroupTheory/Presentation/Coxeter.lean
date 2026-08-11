@@ -48,15 +48,12 @@ and what makes the presented groups the same.
 * `TauCeti.mulEquivPresentedGroupCoxeterAppend` and
   `TauCeti.GroupPresentation.mulEquivPresentedGroupCoxeterAppend`: a transcription that appends
   further relators to the Coxeter relators of `M` presents the group defined by Mathlib's Coxeter
-  relations together with those extra relations. This is the shape a published Y-diagram
-  presentation has, its extra relator being the spider relator.
+  relations together with those extra relations.
 
 ## References
 
 This file supplies reusable Coxeter-presentation machinery needed by milestone S1 of
-`TauCetiRoadmap/CFSGStatement/README.md`. Its application to the roadmap's sporadic-group
-presentations lives in `TauCeti.GroupTheory.SpecificGroups.CFSG.YDiagram`. No presentation of a
-named group is asserted here.
+`TauCetiRoadmap/CFSGStatement/README.md`. No presentation of a named group is asserted here.
 
 `TauCeti.coxeterRelatorsOfList` is built from Mathlib's `List.sym2` in `Mathlib.Data.List.Sym`,
 whose `List.length_sym2` supplies the relator count, and from `Sym2.inf`/`Sym2.sup` in
@@ -80,6 +77,13 @@ variable {B : Type*}
 `M i i = 1`, so this is the involution relator `sᵢ ^ 2` written as `(sᵢ sᵢ) ^ 1`. -/
 def coxeterRelator (M : CoxeterMatrix B) (i j : B) : Relator B :=
   .pow (.mul (.gen i) (.gen j)) (M i j)
+
+/-- The compiled signed word of a Coxeter relator. -/
+@[simp]
+theorem toWord_coxeterRelator (M : CoxeterMatrix B) (i j : B) :
+    (coxeterRelator M i j).toWord =
+      (List.replicate (M i j) [(i, true), (j, true)]).flatten := by
+  simp [coxeterRelator]
 
 @[simp]
 theorem toFreeGroup_coxeterRelator (M : CoxeterMatrix B) (i j : B) :
@@ -124,8 +128,8 @@ private theorem exists_eq_coxeterRelator_of_mem [LinearOrder B] {M : CoxeterMatr
   exact ⟨s(i, j).inf, s(i, j).sup, rfl⟩
 
 /-- For any two nodes of the list, the list carries the Coxeter relator of the pair in one of its
-two orders. Which one it is is fixed by the linear order on the nodes, and the two differ, so this
-is the sharpest statement available. -/
+two orders. Which one it is is fixed by the linear order on the nodes, and the two may differ, so
+this is the sharpest statement available. -/
 private theorem coxeterRelator_mem_or_swap_mem [LinearOrder B] (M : CoxeterMatrix B)
     {l : List B} {i j : B}
     (hi : i ∈ l) (hj : j ∈ l) :
@@ -232,8 +236,8 @@ def GroupPresentation.mulEquivCoxeterGroup (P : GroupPresentation)
     (M : CoxeterMatrix (Fin P.generatorCount)) (h : P.transcribed = coxeterRelators M) :
     P.Group ≃* M.Group :=
   QuotientGroup.quotientMulEquivOfEq (by
-    change Subgroup.normalClosure (Relator.relatorSet P.transcribed) = _
-    rw [h, normalClosure_relatorSet_coxeterRelators])
+    simpa only [GroupPresentation.relatorSet, h] using
+      normalClosure_relatorSet_coxeterRelators M)
 
 @[simp]
 theorem GroupPresentation.mulEquivCoxeterGroup_apply_of (P : GroupPresentation)
@@ -252,8 +256,8 @@ def GroupPresentation.mulEquivPresentedGroupCoxeterAppend (P : GroupPresentation
     (h : P.transcribed = coxeterRelators M ++ extra) :
     P.Group ≃* PresentedGroup (M.relationsSet ∪ Relator.relatorSet extra) :=
   QuotientGroup.quotientMulEquivOfEq (by
-    change Subgroup.normalClosure (Relator.relatorSet P.transcribed) = _
-    rw [h, normalClosure_relatorSet_coxeterRelators_append])
+    simpa only [GroupPresentation.relatorSet, h] using
+      normalClosure_relatorSet_coxeterRelators_append M extra)
 
 @[simp]
 theorem GroupPresentation.mulEquivPresentedGroupCoxeterAppend_apply_of (P : GroupPresentation)
