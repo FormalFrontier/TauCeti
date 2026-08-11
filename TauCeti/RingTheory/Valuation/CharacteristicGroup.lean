@@ -90,24 +90,6 @@ theorem cofinalValue_iff {v : Valuation A Γ₀} {a : A} :
     CofinalValue v a ↔ ∀ γ : ValueGroup₀ (.ofClass v), 0 < γ → ∃ n : ℕ, v.restrict a ^ n < γ :=
   Iff.rfl
 
-/-- A cofinal value is at most `1`: otherwise its powers stay above `1`. -/
-theorem CofinalValue.le_one {v : Valuation A Γ₀} {a : A} (h : CofinalValue v a) :
-    v a ≤ 1 := by
-  by_contra h_gt
-  push Not at h_gt
-  have h_res : 1 < v.restrict a := by
-    have := (v.restrict_lt_iff (x := 1) (y := a)).mpr (by simpa using h_gt)
-    simpa using this
-  obtain ⟨n, hn⟩ := h 1 zero_lt_one
-  exact absurd hn (not_lt_of_ge (one_le_pow_of_one_le' h_res.le n))
-
-/-- Cofinality is downward closed in the value: a smaller value is cofinal whenever a
-larger one is (Wedhorn Lemma 7.1). -/
-theorem CofinalValue.of_le {v : Valuation A Γ₀} {a b : A} (h : CofinalValue v a)
-    (hba : v b ≤ v a) : CofinalValue v b := fun γ hγ ↦
-  let ⟨n, hn⟩ := h γ hγ
-  ⟨n, lt_of_le_of_lt (pow_le_pow_left' (v.restrict_le_iff.mpr hba) n) hn⟩
-
 /-- Cofinality transports along an equivalence of valuations, through the ordered
 isomorphism of their value groups. -/
 theorem CofinalValue.of_isEquiv {v : Valuation A Γ₀} {w : Valuation A Γ₀'}
@@ -241,11 +223,23 @@ theorem mem_characteristicSubgroup_of_restrict {v : Valuation A Γ₀} {a : A}
 
 /-- The `valueGroup.mk` restatement of the introduction rule, for consumers already holding
 a representation of the value. -/
-theorem valueGroup_mk_mem_characteristicSubgroup_of_one_le {v : Valuation A Γ₀} {a : A}
+theorem valueGroup_mk_mem_characteristicSubgroup_of_one_le
+    {v : Valuation A Γ₀} {a : A}
     (h : (MonoidWithZeroHom.ofClass v) a ≠ 0)
     (h1 : 1 ≤ valueGroup.mk (.ofClass v) 1 a (by simp) h) :
     valueGroup.mk (.ofClass v) 1 a (by simp) h ∈ characteristicSubgroup v :=
   mem_characteristicSubgroup_of_restrict h1 (v.restrict_eq_mk h)
+
+/-- An attained value at least `1` puts its class in `cΓ_v`. This is the form consumers hold,
+since they meet `1 ≤ v a` rather than a bound in the value group. The nonvanishing hypothesis
+is part of the statement, since the class `valueGroup.mk … h` is indexed by it. -/
+theorem valueGroup_mk_mem_characteristicSubgroup_of_one_le_value {v : Valuation A Γ₀} {a : A}
+    (h : (MonoidWithZeroHom.ofClass v) a ≠ 0) (h1 : 1 ≤ v a) :
+    valueGroup.mk (.ofClass v) 1 a (by simp) h ∈ characteristicSubgroup v := by
+  refine valueGroup_mk_mem_characteristicSubgroup_of_one_le h ?_
+  rw [← WithZero.coe_le_coe, ← v.restrict_eq_mk h]
+  have : v.restrict 1 ≤ v.restrict a := v.restrict_le_iff.mpr (by simpa using h1)
+  simpa using this
 
 /-- Equivalent valuations have corresponding characteristic generators. -/
 theorem characteristicGenerators_map_of_isEquiv {v : Valuation A Γ₀} {w : Valuation A Γ₀'}

@@ -6,8 +6,7 @@ module
 
 public import Mathlib.Geometry.Manifold.Algebra.LeftInvariantDerivation
 public import TauCeti.Geometry.Manifold.DerivationBundle
-public import TauCeti.Geometry.Lie.InvariantVectorField
-import TauCeti.Geometry.Manifold.VectorField.Regularity
+public import TauCeti.Geometry.Lie.InvariantVectorField.Basic
 
 /-!
 # Evaluation of left-invariant derivations
@@ -187,7 +186,7 @@ noncomputable def tangentToLeftInvariantDerivation
     change mvfderiv I f 1 (mulInvariantVectorField (v + w) 1) =
       mvfderiv I f 1 (mulInvariantVectorField v 1) +
         mvfderiv I f 1 (mulInvariantVectorField w 1)
-    simp
+    simp only [mulInvariantVectorField_add, Pi.add_apply, map_add]
   map_smul' c v := by
     apply LeftInvariantDerivation.evalAt_one_injective
     ext f

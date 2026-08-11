@@ -97,6 +97,66 @@ theorem intervalIntegrable_deriv_smul_fdBoundary_segment4 {E : Type*}
     linear_combination hder
   simp only [Pi.neg_apply, hval', hder', hφ (fdBoundary H x), neg_smul, neg_neg]
 
+/-- **The excision test is invariant under the vertical reflection.** On the verticals the
+substitution `t ↦ 4 - t` acts as `z ↦ -conj z`, since there the real part is `±1/2`. That map
+is an isometry of `ℂ`, so it carries the `ε`-ball around a centre to the `ε`-ball around the
+reflected centre; for an excision set closed under the reflection the test therefore reads the
+same at `4 - u` as at `u`.
+
+Reflection invariance, not translation closure, is the right hypothesis: a finite set closed
+under `s ↦ s + 1` would have to be empty, since it has an element of largest real part. -/
+theorem exists_norm_fdBoundary_four_sub_le_iff {H : ℝ} {S : Finset ℂ} {ε : ℝ}
+    (hrefl : ∀ s ∈ S, -(starRingEnd ℂ) s ∈ S) {u : ℝ} (hu : u ∈ Ioo (0 : ℝ) 1) :
+    (∃ s ∈ S, ‖fdBoundary H (4 - u) - s‖ ≤ ε) ↔ ∃ s ∈ S, ‖fdBoundary H u - s‖ ≤ ε := by
+  have hval : fdBoundary H (4 - u) = fdBoundary H u - 1 :=
+    fdBoundary_four_sub_vertical H ⟨hu.1.le, hu.2.le⟩
+  have hconj : fdBoundary H (4 - u) = -(starRingEnd ℂ) (fdBoundary H u) := by
+    rw [hval]
+    refine Complex.ext ?_ ?_ <;> simp [re_fdBoundary_of_le_one hu.2.le]
+    norm_num
+  have hdist : ∀ s : ℂ, ‖fdBoundary H (4 - u) - s‖
+      = ‖fdBoundary H u - -(starRingEnd ℂ) s‖ := by
+    intro s
+    have hneg : -fdBoundary H u - (starRingEnd ℂ) s
+        = -(fdBoundary H u - -(starRingEnd ℂ) s) := by ring
+    rw [hconj, ← Complex.norm_conj (-(starRingEnd ℂ) (fdBoundary H u) - s)]
+    simp only [map_sub, map_neg, Complex.conj_conj]
+    rw [hneg, norm_neg]
+  refine ⟨fun ⟨s, hs, hle⟩ => ⟨-(starRingEnd ℂ) s, hrefl s hs, by rwa [← hdist s]⟩,
+    fun ⟨s, hs, hle⟩ => ⟨-(starRingEnd ℂ) s, hrefl s hs, ?_⟩⟩
+  rw [hdist, map_neg, Complex.conj_conj, neg_neg]
+  exact hle
+
+/-- **Integrability on the left vertical, excised.** The reflection `t ↦ 4 - t` carries the
+right vertical onto the left, and it carries the excised integrand to itself: the excision
+test transports by `exists_norm_fdBoundary_four_sub_le_iff`, and the integrand's value by the
+periodicity already used without the excision. -/
+theorem intervalIntegrable_excised_deriv_smul_fdBoundary_segment4 {E : Type*}
+    [NormedAddCommGroup E] [NormedSpace ℂ E] {H : ℝ} {φ : ℂ → E}
+    (hφ : Function.Periodic φ 1) {S : Finset ℂ} {ε : ℝ}
+    (hrefl : ∀ s ∈ S, -(starRingEnd ℂ) s ∈ S)
+    (hint : IntervalIntegrable (fun t ↦ deriv (fdBoundary H) t •
+      (if ∃ s ∈ S, ‖fdBoundary H t - s‖ ≤ ε then 0 else φ (fdBoundary H t))) volume 0 1) :
+    IntervalIntegrable (fun t ↦ deriv (fdBoundary H) t •
+      (if ∃ s ∈ S, ‖fdBoundary H t - s‖ ≤ ε then 0 else φ (fdBoundary H t))) volume 3 4 := by
+  have hI := (hint.neg.comp_sub_left 4).symm
+  norm_num at hI
+  refine hI.congr_uIoo ?_
+  rw [Set.uIoo_of_le (by norm_num : (3 : ℝ) ≤ 4)]
+  intro x hx
+  have hu : 4 - x ∈ Ioo (0 : ℝ) 1 := ⟨by linarith [hx.2], by linarith [hx.1]⟩
+  have hiff := exists_norm_fdBoundary_four_sub_le_iff (H := H) (ε := ε) hrefl hu
+  have hval : fdBoundary H (4 - (4 - x)) = fdBoundary H (4 - x) - 1 :=
+    fdBoundary_four_sub_vertical H ⟨hu.1.le, hu.2.le⟩
+  have hder := deriv_fdBoundary_four_sub_vertical H hu
+  rw [sub_sub_self] at hval hder hiff
+  by_cases hc : ∃ s ∈ S, ‖fdBoundary H (4 - x) - s‖ ≤ ε
+  · simp only [if_pos hc, if_pos (hiff.mpr hc), smul_zero, neg_zero]
+  · -- Discharge both `if`s first: rewriting values inside a live condition would stop
+    -- `if_neg` from matching it.
+    simp only [if_neg hc, if_neg fun h => hc (hiff.mp h)]
+    simp only [hval, hφ.sub_eq, hder, neg_smul]
+
 /-- **The vertical cancellation survives excision.** The reflection `t ↦ 4 - t` carries the right
 vertical onto the left by `z ↦ -conj z`, an isometry of `ℂ`, so an integrand excised within `ε`
 of a set invariant under that reflection is excised at matching parameters on the two verticals,
@@ -127,28 +187,9 @@ theorem intervalIntegral_excised_fdBoundary_segment4_eq_neg_segment1 {E : Type*}
   simp only [h41, h40] at hcomp
   rw [hcomp, ← intervalIntegral.integral_neg]
   refine intervalIntegral.integral_congr_Ioo_of_le (by norm_num) fun u hu => ?_
+  have hiff := exists_norm_fdBoundary_four_sub_le_iff (H := H) (ε := ε) hrefl hu
   have hval : fdBoundary H (4 - u) = fdBoundary H u - 1 :=
     fdBoundary_four_sub_vertical H ⟨hu.1.le, hu.2.le⟩
-  -- On the right vertical the reflection is `z ↦ -conj z`, since the real part is `1/2`.
-  have hconj : fdBoundary H (4 - u) = -(starRingEnd ℂ) (fdBoundary H u) := by
-    rw [hval]
-    refine Complex.ext ?_ ?_ <;> simp [re_fdBoundary_of_le_one hu.2.le]
-    norm_num
-  -- An isometry moves the excision test to the reflected centre.
-  have hdist : ∀ s : ℂ, ‖fdBoundary H (4 - u) - s‖
-      = ‖fdBoundary H u - -(starRingEnd ℂ) s‖ := by
-    intro s
-    have hneg : -fdBoundary H u - (starRingEnd ℂ) s
-        = -(fdBoundary H u - -(starRingEnd ℂ) s) := by ring
-    rw [hconj, ← Complex.norm_conj (-(starRingEnd ℂ) (fdBoundary H u) - s)]
-    simp only [map_sub, map_neg, Complex.conj_conj]
-    rw [hneg, norm_neg]
-  have hiff : (∃ s ∈ S, ‖fdBoundary H (4 - u) - s‖ ≤ ε) ↔
-      ∃ s ∈ S, ‖fdBoundary H u - s‖ ≤ ε := by
-    refine ⟨fun ⟨s, hs, hle⟩ => ⟨-(starRingEnd ℂ) s, hrefl s hs, by rwa [← hdist s]⟩,
-      fun ⟨s, hs, hle⟩ => ⟨-(starRingEnd ℂ) s, hrefl s hs, ?_⟩⟩
-    rw [hdist, map_neg, Complex.conj_conj, neg_neg]
-    exact hle
   by_cases hc : ∃ s ∈ S, ‖fdBoundary H u - s‖ ≤ ε
   · rw [if_pos (hiff.mpr hc), if_pos hc, smul_zero, smul_zero, neg_zero]
   · rw [if_neg fun h => hc (hiff.mp h), if_neg hc, hval,

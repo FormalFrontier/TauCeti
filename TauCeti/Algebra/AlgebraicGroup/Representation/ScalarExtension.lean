@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.Representation.PointsAction
-public import TauCeti.Algebra.Coalgebra.Comodule.Finite.ScalarExtension
+public import TauCeti.Algebra.Coalgebra.Comodule.Finite.ScalarExtension.Basic
 
 /-!
 # Point automorphisms of scalar extension
@@ -13,7 +13,7 @@ public import TauCeti.Algebra.Coalgebra.Comodule.Finite.ScalarExtension
 Let `H` be a Hopf algebra over a commutative semiring `R`, and let `A` be a commutative
 `R`-algebra. Scalar extension of the underlying-module functor is constructed for all comodules
 in `TauCeti.Algebra.Coalgebra.Comodule.ScalarExtension` and restricted to finitely generated
-comodules in `TauCeti.Algebra.Coalgebra.Comodule.Finite.ScalarExtension`:
+comodules in `TauCeti.Algebra.Coalgebra.Comodule.Finite.ScalarExtension.Basic`:
 
 ```text
 FGComoduleCat R H ⥤ SemimoduleCat A,    M ↦ A ⊗[R] M.

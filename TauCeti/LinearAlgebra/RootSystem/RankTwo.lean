@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.LinearAlgebra.RootSystem.Finite.G2
-public import TauCeti.LinearAlgebra.RootSystem.FiniteType
+public import TauCeti.LinearAlgebra.RootSystem.FiniteType.Basic
 
 public section
 

@@ -108,6 +108,38 @@ lemma mk_eq_mk_of_mem {g₁ g₂ : Δ} (h : (g₁ : G) ∈ doubleCoset (g₂ : G
     mk H₁ H₂ g₁ = mk H₁ H₂ g₂ :=
   eq_iff.mpr (doubleCoset_eq_of_mem h)
 
+section Map
+
+variable {Δ' : Submonoid G} {H₁' H₂' : Subgroup G}
+
+/-- **Functoriality of `HeckeCoset` in its triple.** Inclusions `Δ ≤ Δ'`, `H₁ ≤ H₁'` and
+`H₂ ≤ H₂'` send `H₁ g H₂` to `H₁' g H₂'`: widening the coefficient subgroups can only merge
+double cosets, never split them. -/
+noncomputable def map (hΔ : Δ ≤ Δ') (h₁ : H₁ ≤ H₁') (h₂ : H₂ ≤ H₂') :
+    HeckeCoset Δ H₁ H₂ → HeckeCoset Δ' H₁' H₂' :=
+  Quotient.lift (fun g ↦ mk H₁' H₂' (Submonoid.inclusion hΔ g)) fun a b hab ↦ by
+    have hab' : doubleCoset (a : G) H₁ H₂ = doubleCoset (b : G) H₁ H₂ := hab
+    obtain ⟨γ₁, hγ₁, γ₂, hγ₂, hb⟩ :=
+      mem_doubleCoset.mp (hab' ▸ mem_doubleCoset_self H₁ H₂ (a : G))
+    exact mk_eq_mk_of_mem (g₁ := Submonoid.inclusion hΔ a) (g₂ := Submonoid.inclusion hΔ b)
+      (mem_doubleCoset.mpr ⟨γ₁, h₁ hγ₁, γ₂, h₂ hγ₂, hb⟩)
+
+@[simp] lemma map_mk (hΔ : Δ ≤ Δ') (h₁ : H₁ ≤ H₁') (h₂ : H₂ ≤ H₂') (g : Δ) :
+    map hΔ h₁ h₂ (mk H₁ H₂ g) = mk H₁' H₂' (Submonoid.inclusion hΔ g) := (rfl)
+
+@[simp] lemma map_id (D : HeckeCoset Δ H₁ H₂) :
+    map (le_refl Δ) (le_refl H₁) (le_refl H₂) D = D :=
+  Quotient.inductionOn D fun _ ↦ rfl
+
+variable {Δ'' : Submonoid G} {H₁'' H₂'' : Subgroup G}
+
+@[simp] lemma map_map (hΔ : Δ ≤ Δ') (h₁ : H₁ ≤ H₁') (h₂ : H₂ ≤ H₂') (hΔ' : Δ' ≤ Δ'')
+    (h₁' : H₁' ≤ H₁'') (h₂' : H₂' ≤ H₂'') (D : HeckeCoset Δ H₁ H₂) :
+    map hΔ' h₁' h₂' (map hΔ h₁ h₂ D) = map (hΔ.trans hΔ') (h₁.trans h₁') (h₂.trans h₂') D :=
+  Quotient.inductionOn D fun _ ↦ rfl
+
+end Map
+
 /-- Induction: to prove something for all double cosets, prove it for `mk H₁ H₂ g`. -/
 protected lemma induction {motive : HeckeCoset Δ H₁ H₂ → Prop}
     (h : ∀ g : Δ, motive (mk H₁ H₂ g)) :
