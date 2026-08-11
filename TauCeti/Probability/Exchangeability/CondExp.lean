@@ -15,10 +15,11 @@ For a contractable process `X`, the conditional law of a selection of coordinate
 or given the tail, does not depend on *which* coordinates were selected. Four results, stated for
 an arbitrary measurable real observable `f`:
 
-* `Contractable.condExp_comp_future_ae_eq` — for heads `j, k` below a cutoff `r`, the conditional
-  expectations of `f ∘ X j` and `f ∘ X k` given the future σ-algebra `tailFamily X r` agree a.e.
-* `Contractable.condExp_block_comp_future_ae_eq` — the same for two strictly monotone *blocks* of
-  the same length lying below the cutoff.
+* `Contractable.condExp_block_comp_future_ae_eq` — for two strictly monotone *blocks* of the same
+  length lying below a cutoff `c`, the conditional expectations of `f` along each block, given the
+  future σ-algebra `tailFamily X c`, agree a.e.
+* `Contractable.condExp_comp_future_ae_eq` — its single-coordinate case, for heads `j, k` below the
+  cutoff.
 * `Contractable.condExp_block_comp_tailProcess_ae_eq` — the block form conditioning on the process
   tail `tailProcess X`.
 * `Contractable.condExp_comp_tailProcess_ae_eq` — its single-coordinate case, the "extreme members
@@ -92,11 +93,8 @@ private theorem map_block_future_eq_pathLaw_map {μ : Measure Ω} [IsFiniteMeasu
         fun i => measurable_pi_apply (i : ℕ)).prodMk
       (measurable_pi_lambda (fun (f : ℕ → α) (n : ℕ) => f (r + n))
         fun n => measurable_pi_apply (r + n))
-  have hreindex : μ.map (fun ω (i : ℕ) => X (φ i) ω) = pathLaw μ X := by
-    calc μ.map (fun ω (i : ℕ) => X (φ i) ω)
-        = (pathLaw μ X).map (fun x : ℕ → α => fun i => x (φ i)) :=
-          (map_reindex_pathLaw μ hX_ae φ).symm
-      _ = pathLaw μ X := (hX.measurePreserving_reindex hX_ae hφ).map_eq
+  have hreindex : μ.map (fun ω (i : ℕ) => X (φ i) ω) = pathLaw μ X :=
+    hX.map_reindex_pathLaw_eq hX_ae hφ
   have hcomp : (fun f : ℕ → α => (fun i : Fin r => f (i : ℕ), fun n => f (r + n)))
       ∘ (fun ω (i : ℕ) => X (φ i) ω)
       = fun ω => (fun i : Fin r => X (k i) ω, fun n => X (c + n) ω) := by
@@ -111,21 +109,6 @@ private theorem map_block_future_eq_pathLaw_map {μ : Measure Ω} [IsFiniteMeasu
       omega
   rw [← hcomp, ← AEMeasurable.map_map_of_aemeasurable hsplit.aemeasurable
     (aemeasurable_pi_lambda _ fun i => hX_ae (φ i)), hreindex]
-
-/-- **Conditional law of head coordinates given the future.** For a contractable process and two
-head indices `j, k` below a cutoff `r`, the conditional expectations of `f ∘ X j` and `f ∘ X k`
-given the future σ-algebra `tailFamily X r` agree almost everywhere. -/
-theorem Contractable.condExp_comp_future_ae_eq {μ : Measure Ω} [IsFiniteMeasure μ]
-    {X : ℕ → Ω → α} (hX : Contractable μ X) (hX_meas : ∀ n, Measurable (X n)) {r j k : ℕ}
-    (hj : j < r) (hk : k < r) {f : α → ℝ} (hf : Measurable f) :
-    μ[fun ω => f (X j ω) | tailFamily X r] =ᵐ[μ] μ[fun ω => f (X k ω) | tailFamily X r] := by
-  rw [tailFamily_eq_comap_shift X r]
-  exact TauCeti.MeasureTheory.condExp_comp_ae_eq_of_pair_law_eq (X j) (X k)
-    (fun ω n => X (r + n) ω) (hX_meas j) (hX_meas k)
-    (measurable_pi_lambda _ fun n => hX_meas (r + n))
-    (hX.pairLaw_eq (j := j) (k := k) (g := fun n => r + n)
-      (fun n => (hX_meas n).aemeasurable) (fun a b hab => by dsimp only; omega)
-      (by omega) (by omega)) hf
 
 /-- **Future-conditioned selection invariance for finite blocks.** Two strictly monotone selections
 of the same length, both lying below a cutoff `c`, have the same conditional law given the future
@@ -183,6 +166,21 @@ theorem Contractable.condExp_block_comp_tailProcess_ae_eq {μ : Measure Ω} [IsF
       μ[μ[g | tailFamily X c] | tailProcess X] =ᵐ[μ] μ[g | tailProcess X] :=
     fun g => condExp_condExp_of_le htail_le hfam_le
   exact (htower _).symm.trans ((condExp_congr_ae hfut).trans (htower _))
+
+/-- **Conditional law of head coordinates given the future.** For a contractable process and two
+head indices `j, k` below a cutoff `r`, the conditional expectations of `f ∘ X j` and `f ∘ X k`
+given the future σ-algebra `tailFamily X r` agree almost everywhere.
+
+The single-coordinate case of `Contractable.condExp_block_comp_future_ae_eq`. -/
+theorem Contractable.condExp_comp_future_ae_eq {μ : Measure Ω} [IsFiniteMeasure μ]
+    {X : ℕ → Ω → α} (hX : Contractable μ X) (hX_meas : ∀ n, Measurable (X n)) {r j k : ℕ}
+    (hj : j < r) (hk : k < r) {f : α → ℝ} (hf : Measurable f) :
+    μ[fun ω => f (X j ω) | tailFamily X r] =ᵐ[μ] μ[fun ω => f (X k ω) | tailFamily X r] := by
+  have hmono : ∀ m : ℕ, StrictMono (fun _ : Fin 1 => m) := fun m a b hab => absurd
+    (Subsingleton.elim a b) (ne_of_lt hab)
+  simpa using hX.condExp_block_comp_future_ae_eq hX_meas (k := fun _ : Fin 1 => j)
+    (l := fun _ : Fin 1 => k) (hmono j) (hmono k) (fun _ => hj) (fun _ => hk)
+    (f := fun x : Fin 1 → α => f (x 0)) (hf.comp (measurable_pi_apply 0))
 
 /-- **Extreme members agree on the tail.** For a contractable process and arbitrary coordinates
 `j, k`, the conditional expectations of `f ∘ X j` and `f ∘ X k` given the process tail σ-algebra
