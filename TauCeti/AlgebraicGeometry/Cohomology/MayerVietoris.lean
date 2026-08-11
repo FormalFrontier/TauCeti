@@ -21,7 +21,9 @@ exact Mayer-Vietoris sequence of a covering of `X` by two open subsets `U` and `
 
 * `Scheme.Modules.coverSquare` is the Mayer-Vietoris square of a covering of `X` by two opens,
   `Scheme.Modules.mayerVietorisSequence` is the six-term piece of the resulting long exact
-  sequence and `Scheme.Modules.mayerVietorisSequence_exact` is its exactness;
+  sequence, `Scheme.Modules.mayerVietorisSequence_eq` identifies each of its objects and arrows
+  with restriction maps and the connecting map `Scheme.Modules.mayerVietorisδ`, and
+  `Scheme.Modules.mayerVietorisSequence_exact` is its exactness;
 * `Scheme.Modules.epi_mayerVietorisδ`: if `Hⁿ⁺¹(U, M)` and `Hⁿ⁺¹(V, M)` vanish, then the
   connecting map `Hⁿ(U ⊓ V, M) ⟶ Hⁿ⁺¹(X, M)` is an epimorphism;
 * `Scheme.Modules.subsingleton_cohomology_succ`: if moreover `Hⁿ(U ⊓ V, M)` vanishes, then
@@ -63,12 +65,7 @@ section Cover
 variable {U V : Opens X} (hUV : U ⊔ V = ⊤)
 
 /-- The Mayer-Vietoris square of a covering of a scheme by two open subsets. Its corners are
-`U ⊓ V`, `U`, `V` and the whole space.
-
-The body is `@[expose]`d because the characteristic lemmas below (`coverSquare_X₁` and friends,
-`coverSquare_toBiprod`, `coverSquare_fromBiprod`) hold by definition, and the module system
-requires the definitions unfolded by an exported theorem to be exposed. -/
-@[expose]
+`U ⊓ V`, `U`, `V` and the whole space, as recorded by `coverSquare_X₁` and friends. -/
 def coverSquare : (Opens.grothendieckTopology X).MayerVietorisSquare :=
   Opens.mayerVietorisSquare'
     { X₁ := U ⊓ V, X₂ := U, X₃ := V, X₄ := ⊤
@@ -79,31 +76,16 @@ def coverSquare : (Opens.grothendieckTopology X).MayerVietorisSquare :=
       fac := Subsingleton.elim _ _ }
     hUV.symm rfl
 
-@[simp] lemma coverSquare_X₁ : (coverSquare hUV).X₁ = U ⊓ V := rfl
+-- The four corner lemmas hold by definition. Their proofs are written `(rfl)` rather than `rfl`
+-- so that they are checked as ordinary proofs rather than as exported definitional unfoldings,
+-- which lets `coverSquare` keep its body private.
+@[simp] lemma coverSquare_X₁ : (coverSquare hUV).X₁ = U ⊓ V := (rfl)
 
-@[simp] lemma coverSquare_X₂ : (coverSquare hUV).X₂ = U := rfl
+@[simp] lemma coverSquare_X₂ : (coverSquare hUV).X₂ = U := (rfl)
 
-@[simp] lemma coverSquare_X₃ : (coverSquare hUV).X₃ = V := rfl
+@[simp] lemma coverSquare_X₃ : (coverSquare hUV).X₃ = V := (rfl)
 
-@[simp] lemma coverSquare_X₄ : (coverSquare hUV).X₄ = ⊤ := rfl
-
-/-- The map `Hⁿ(X, M) ⟶ Hⁿ(U, M) ⊞ Hⁿ(V, M)` of the Mayer-Vietoris sequence is the pair of
-restriction maps. -/
-@[simp]
-lemma coverSquare_toBiprod (n : ℕ) :
-    (coverSquare hUV).toBiprod ((_root_.SheafOfModules.toSheaf X.ringCatSheaf).obj M) n =
-      biprod.lift (cohomologyOnRes M n (le_top : U ≤ ⊤))
-        (cohomologyOnRes M n (le_top : V ≤ ⊤)) :=
-  rfl
-
-/-- The map `Hⁿ(U, M) ⊞ Hⁿ(V, M) ⟶ Hⁿ(U ⊓ V, M)` of the Mayer-Vietoris sequence is the difference
-of the two restriction maps. -/
-@[simp]
-lemma coverSquare_fromBiprod (n : ℕ) :
-    (coverSquare hUV).fromBiprod ((_root_.SheafOfModules.toSheaf X.ringCatSheaf).obj M) n =
-      biprod.desc (cohomologyOnRes M n (inf_le_left : U ⊓ V ≤ U))
-        (-cohomologyOnRes M n (inf_le_right : U ⊓ V ≤ V)) :=
-  rfl
+@[simp] lemma coverSquare_X₄ : (coverSquare hUV).X₄ = ⊤ := (rfl)
 
 /-- The connecting map `Hⁿ⁰(U ⊓ V, M) ⟶ Hⁿ¹(X, M)` of the Mayer-Vietoris sequence. -/
 def mayerVietorisδ (n₀ n₁ : ℕ) (h : n₀ + 1 = n₁) :
@@ -114,6 +96,24 @@ def mayerVietorisδ (n₀ n₁ : ℕ) (h : n₀ + 1 = n₁) :
 `Hⁿ¹(U ⊓ V, M)`. -/
 def mayerVietorisSequence (n₀ n₁ : ℕ) (h : n₀ + 1 = n₁) : ComposableArrows AddCommGrpCat.{u} 5 :=
   (coverSquare hUV).sequence ((_root_.SheafOfModules.toSheaf X.ringCatSheaf).obj M) n₀ n₁ h
+
+/-- Every object and every arrow of the Mayer-Vietoris sequence: the two maps to a biproduct are
+the pairs of restriction maps from `X`, the two maps out of a biproduct are the differences of the
+restriction maps to `U ⊓ V`, and the middle map is the connecting map. -/
+@[simp]
+lemma mayerVietorisSequence_eq (n₀ n₁ : ℕ) (h : n₀ + 1 = n₁) :
+    mayerVietorisSequence M hUV n₀ n₁ h =
+      ComposableArrows.mk₅
+        (biprod.lift (cohomologyOnRes M n₀ (le_top : U ≤ ⊤))
+          (cohomologyOnRes M n₀ (le_top : V ≤ ⊤)))
+        (biprod.desc (cohomologyOnRes M n₀ (inf_le_left : U ⊓ V ≤ U))
+          (-cohomologyOnRes M n₀ (inf_le_right : U ⊓ V ≤ V)))
+        (mayerVietorisδ M hUV n₀ n₁ h)
+        (biprod.lift (cohomologyOnRes M n₁ (le_top : U ≤ ⊤))
+          (cohomologyOnRes M n₁ (le_top : V ≤ ⊤)))
+        (biprod.desc (cohomologyOnRes M n₁ (inf_le_left : U ⊓ V ≤ U))
+          (-cohomologyOnRes M n₁ (inf_le_right : U ⊓ V ≤ V))) :=
+  (rfl)
 
 /-- The Mayer-Vietoris sequence of a covering by two open subsets is exact. -/
 theorem mayerVietorisSequence_exact (n₀ n₁ : ℕ) (h : n₀ + 1 = n₁) :

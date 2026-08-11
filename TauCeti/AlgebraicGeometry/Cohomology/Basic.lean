@@ -7,7 +7,6 @@ module
 public import TauCeti.CategoryTheory.Sites.SheafCohomology.Terminal
 public import Mathlib.AlgebraicGeometry.Modules.Sheaf
 public import Mathlib.CategoryTheory.Abelian.GrothendieckCategory.HasExt
-public import Mathlib.CategoryTheory.Sites.SheafCohomology.Basic
 public import Mathlib.Topology.Sheaves.Abelian
 
 /-!
