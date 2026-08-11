@@ -40,6 +40,9 @@ theorem.  That induction statement is
 ## Main results
 
 * `TauCeti.isTISubgroup_iff_inf_conj_smul_eq_bot`: the lattice form of the definition.
+* `TauCeti.IsTISubgroup.inv_mul_mem_and_eq_of_conj_eq_conj`: two nonidentity elements of `H` with a
+  common conjugate have conjugators differing by an element of `H`, which carries the one to the
+  other.
 * `TauCeti.IsTISubgroup.normalizer_eq_self`: a nontrivial trivial-intersection subgroup is
   self-normalizing.
 * `TauCeti.IsTISubgroup.isTISet`: an `H`-invariant subset of `H` avoiding the identity is a
@@ -83,6 +86,28 @@ element outside it. -/
 theorem conj_notMem (hH : IsTISubgroup H) {g x : G} (hg : g ∉ H) (hx : x ∈ H) (hx1 : x ≠ 1) :
     g * x * g⁻¹ ∉ H :=
   fun h => hx1 (hH hg hx h)
+
+/-- **Two elements of a trivial-intersection subgroup with a common conjugate.**  If nonidentity
+`x₀ ∈ H` and `x ∈ H` satisfy `g x g⁻¹ = g₀ x₀ g₀⁻¹`, then the two conjugators differ by an element
+of `H`, and that element carries `x₀` to `x`.  Equivalently: the fibres of `(g, x) ↦ g x g⁻¹` over
+the nonidentity elements of `H` are left cosets of `H`.
+
+This is where the hypothesis is used: were `g₀⁻¹ * g` outside `H`, it would conjugate the
+nonidentity element `x₀` of `H` back into `H`. -/
+theorem inv_mul_mem_and_eq_of_conj_eq_conj (hH : IsTISubgroup H) {g₀ x₀ g x : G} (hx₀ : x₀ ∈ H)
+    (hx₀1 : x₀ ≠ 1) (hx : x ∈ H) (h : g * x * g⁻¹ = g₀ * x₀ * g₀⁻¹) :
+    g₀⁻¹ * g ∈ H ∧ x = (g₀⁻¹ * g)⁻¹ * x₀ * (g₀⁻¹ * g) := by
+  have hxeq : x = (g₀⁻¹ * g)⁻¹ * x₀ * (g₀⁻¹ * g) := by
+    have hx' : x = g⁻¹ * (g₀ * x₀ * g₀⁻¹) * g := by
+      rw [← h]; group
+    rw [hx']; group
+  refine ⟨?_, hxeq⟩
+  by_contra hmem
+  have hinv : (g₀⁻¹ * g)⁻¹ ∉ H := fun hc => hmem (by simpa using H.inv_mem hc)
+  refine hx₀1 (hH.eq_one hinv hx₀ ?_)
+  have hrw : (g₀⁻¹ * g)⁻¹ * x₀ * ((g₀⁻¹ * g)⁻¹)⁻¹ = x := by rw [hxeq]; group
+  rw [hrw]
+  exact hx
 
 /-- **A nontrivial trivial-intersection subgroup is self-normalizing.**  An element of the
 normalizer conjugates a chosen nonidentity element of `H` back into `H`, so it cannot lie outside

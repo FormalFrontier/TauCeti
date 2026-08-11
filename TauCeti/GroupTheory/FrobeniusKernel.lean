@@ -44,12 +44,13 @@ index `|G|`, and `frobeniusKernel ⊤ = {1}` with `⊤` of index `1`.
   `{1} ∪ (⋃ g, g H g⁻¹)ᶜ`, the shape the name refers to.
 * `TauCeti.frobeniusKernel_inter_coe`: the kernel meets `H` only in the identity, so a complement
   is the most it could be.
-* `TauCeti.conj_mem_frobeniusKernel`: the kernel is closed under conjugation, the set-level shadow
-  of the normality that Frobenius's theorem asserts.
+* `TauCeti.conj_mem_frobeniusKernel_iff`: the kernel is closed under conjugation, the set-level
+  shadow of the normality that Frobenius's theorem asserts.
 * `TauCeti.IsTISubgroup.ncard_frobeniusKernel_mul_card` and
   `TauCeti.IsTISubgroup.ncard_frobeniusKernel`: **the kernel has `H.index` elements.**
-* `TauCeti.IsFrobeniusComplement.exists_ne_one_mem_frobeniusKernel`: for a Frobenius complement the
-  kernel is nontrivial, a proper subgroup having index greater than one.
+* `TauCeti.IsTISubgroup.exists_ne_one_mem_frobeniusKernel`: for a proper trivial-intersection
+  subgroup the kernel contains a nonidentity element, its number of elements being the index of
+  `H`, which is greater than one. Whether that set is a subgroup is not settled here.
 
 ## References
 
@@ -103,24 +104,32 @@ theorem notMem_frobeniusKernel {x : G} :
 theorem one_mem_frobeniusKernel : (1 : G) ∈ frobeniusKernel H :=
   mem_frobeniusKernel.mpr fun _ _ => rfl
 
-/-- The Frobenius kernel is closed under inverses: a conjugate of `x⁻¹` lies in `H` exactly when
-the corresponding conjugate of `x` does. -/
-theorem inv_mem_frobeniusKernel {x : G} (hx : x ∈ frobeniusKernel H) :
-    x⁻¹ ∈ frobeniusKernel H := by
-  refine mem_frobeniusKernel.mpr fun g hg => ?_
-  have hmem : g * x * g⁻¹ ∈ H := by
-    simpa [mul_assoc] using H.inv_mem hg
-  simp [mem_frobeniusKernel.mp hx g hmem]
+/-- **The Frobenius kernel is closed under inverses**: a conjugate of `x⁻¹` lies in `H` exactly
+when the corresponding conjugate of `x` does. -/
+@[simp]
+theorem inv_mem_frobeniusKernel_iff {x : G} :
+    x⁻¹ ∈ frobeniusKernel H ↔ x ∈ frobeniusKernel H := by
+  have key : ∀ y : G, y ∈ frobeniusKernel H → y⁻¹ ∈ frobeniusKernel H := by
+    refine fun y hy => mem_frobeniusKernel.mpr fun g hg => ?_
+    have hmem : g * y * g⁻¹ ∈ H := by
+      simpa [mul_assoc] using H.inv_mem hg
+    simp [mem_frobeniusKernel.mp hy g hmem]
+  exact ⟨fun hx => by simpa using key x⁻¹ hx, key x⟩
 
 /-- **The Frobenius kernel is closed under conjugation.** This is the set-level shadow of the
 normality that Frobenius's theorem asserts once the kernel is known to be a subgroup: conjugating
 `x` only reindexes the conjugates of `H` that `x` is tested against. -/
-theorem conj_mem_frobeniusKernel {x : G} (hx : x ∈ frobeniusKernel H) (a : G) :
-    a * x * a⁻¹ ∈ frobeniusKernel H := by
-  refine mem_frobeniusKernel.mpr fun g hg => ?_
-  have hmem : g * a * x * (g * a)⁻¹ ∈ H := by
-    simpa [mul_assoc] using hg
-  simp [mem_frobeniusKernel.mp hx (g * a) (by simpa [mul_assoc] using hmem)]
+@[simp]
+theorem conj_mem_frobeniusKernel_iff {x a : G} :
+    a * x * a⁻¹ ∈ frobeniusKernel H ↔ x ∈ frobeniusKernel H := by
+  have key : ∀ y b : G, y ∈ frobeniusKernel H → b * y * b⁻¹ ∈ frobeniusKernel H := by
+    refine fun y b hy => mem_frobeniusKernel.mpr fun g hg => ?_
+    have hmem : g * b * y * (g * b)⁻¹ ∈ H := by
+      simpa [mul_assoc] using hg
+    simp [mem_frobeniusKernel.mp hy (g * b) (by simpa [mul_assoc] using hmem)]
+  refine ⟨fun hx => ?_, fun hx => key x a hx⟩
+  have h := key _ a⁻¹ hx
+  rwa [show a⁻¹ * (a * x * a⁻¹) * a⁻¹⁻¹ = x by group] at h
 
 /-- **The Frobenius kernel meets `H` only in the identity**, `H` being one of its own conjugates.
 A complement to `H` is therefore the most the kernel could be, which is what Frobenius's theorem
@@ -171,29 +180,9 @@ theorem frobeniusKernel_top : frobeniusKernel (⊤ : Subgroup G) = {1} := by
 
 The complement of the kernel is the image of `(g, x) ↦ g x g⁻¹` on the pairs with `x` a
 nonidentity element of `H`, and the trivial-intersection hypothesis makes each fibre of that map a
-left coset of `H`. The next lemma is that fibre description, stated about group elements before any
+left coset of `H`; that fibre description is
+`TauCeti.IsTISubgroup.inv_mul_mem_and_eq_of_conj_eq_conj`, stated about group elements before any
 counting happens. -/
-
-/-- **The fibre lemma behind the count.** If two nonidentity elements of a trivial-intersection
-subgroup `H` are conjugated to one and the same element of `G`, then the two conjugators differ by
-an element of `H`, and that element carries the first of the two elements to the second.
-
-This is where the hypothesis is used: were `g₀⁻¹ * g` outside `H`, it would conjugate the
-nonidentity element `x₀` of `H` back into `H`. -/
-theorem IsTISubgroup.conj_eq_conj_imp (hH : IsTISubgroup H) {g₀ x₀ g x : G} (hx₀ : x₀ ∈ H)
-    (hx₀1 : x₀ ≠ 1) (hx : x ∈ H) (h : g * x * g⁻¹ = g₀ * x₀ * g₀⁻¹) :
-    g₀⁻¹ * g ∈ H ∧ x = (g₀⁻¹ * g)⁻¹ * x₀ * (g₀⁻¹ * g) := by
-  have hxeq : x = (g₀⁻¹ * g)⁻¹ * x₀ * (g₀⁻¹ * g) := by
-    have hx' : x = g⁻¹ * (g₀ * x₀ * g₀⁻¹) * g := by
-      rw [← h]; group
-    rw [hx']; group
-  refine ⟨?_, hxeq⟩
-  by_contra hmem
-  have hinv : (g₀⁻¹ * g)⁻¹ ∉ H := fun hc => hmem (by simpa using H.inv_mem hc)
-  refine hx₀1 (hH.eq_one hinv hx₀ ?_)
-  have hrw : (g₀⁻¹ * g)⁻¹ * x₀ * ((g₀⁻¹ * g)⁻¹)⁻¹ = x := by rw [hxeq]; group
-  rw [hrw]
-  exact hx
 
 namespace IsTISubgroup
 
@@ -205,7 +194,7 @@ multiplicative form that avoids the division.
 Both sides are counted inside `G`: the elements outside the kernel are exactly the values
 `g x g⁻¹` for `x` a nonidentity element of `H`; there are `|G| * (|H| - 1)` such pairs `(g, x)`;
 and every fibre of `(g, x) ↦ g x g⁻¹` is a left coset of `H`
-(`TauCeti.IsTISubgroup.conj_eq_conj_imp`), so has `|H|` elements. -/
+(`TauCeti.IsTISubgroup.inv_mul_mem_and_eq_of_conj_eq_conj`), so has `|H|` elements. -/
 theorem ncard_frobeniusKernel_mul_card (hH : IsTISubgroup H) :
     (frobeniusKernel H).ncard * Nat.card H = Nat.card G := by
   classical
@@ -268,7 +257,7 @@ theorem ncard_frobeniusKernel_mul_card (hH : IsTISubgroup H) :
     · rintro ⟨g, x⟩ hgx
       obtain ⟨hmem, hconj⟩ := Finset.mem_filter.mp hgx
       obtain ⟨hxH, -⟩ := (hmemP (g, x)).mp hmem
-      obtain ⟨hcos, hxeq⟩ := hH.conj_eq_conj_imp hx₀H hx₀1 hxH hconj
+      obtain ⟨hcos, hxeq⟩ := hH.inv_mul_mem_and_eq_of_conj_eq_conj hx₀H hx₀1 hxH hconj
       refine ⟨g₀⁻¹ * g, by simpa using hcos, ?_⟩
       rw [Prod.ext_iff]
       exact ⟨by group, hxeq.symm⟩
@@ -306,6 +295,20 @@ theorem ncard_frobeniusKernel (hH : IsTISubgroup H) :
   Nat.eq_of_mul_eq_mul_right Nat.card_pos
     (hH.ncard_frobeniusKernel_mul_card.trans H.index_mul_card.symm)
 
+/-- **The Frobenius kernel of a proper trivial-intersection subgroup is nontrivial**: a proper
+subgroup has index greater than one, and that index is the size of the kernel. -/
+theorem one_lt_ncard_frobeniusKernel (hH : IsTISubgroup H) (hne : H ≠ ⊤) :
+    1 < (frobeniusKernel H).ncard := by
+  rw [hH.ncard_frobeniusKernel]
+  refine lt_of_le_of_ne (Nat.one_le_iff_ne_zero.mpr H.index_ne_zero_of_finite) fun hcon => ?_
+  exact hne (Subgroup.index_eq_one.mp hcon.symm)
+
+/-- There is a nonidentity element lying in no conjugate of a proper trivial-intersection
+subgroup. -/
+theorem exists_ne_one_mem_frobeniusKernel (hH : IsTISubgroup H) (hne : H ≠ ⊤) :
+    ∃ x, x ∈ frobeniusKernel H ∧ x ≠ 1 :=
+  Set.exists_ne_of_one_lt_ncard (hH.one_lt_ncard_frobeniusKernel hne) 1
+
 end IsTISubgroup
 
 namespace IsFrobeniusComplement
@@ -320,15 +323,13 @@ theorem ncard_frobeniusKernel (hH : IsFrobeniusComplement H) :
 /-- **The Frobenius kernel of a Frobenius complement is nontrivial**: a Frobenius complement is a
 proper subgroup, so its index is greater than one. -/
 theorem one_lt_ncard_frobeniusKernel (hH : IsFrobeniusComplement H) :
-    1 < (frobeniusKernel H).ncard := by
-  rw [hH.ncard_frobeniusKernel]
-  refine lt_of_le_of_ne (Nat.one_le_iff_ne_zero.mpr H.index_ne_zero_of_finite) fun hcon => ?_
-  exact hH.ne_top (Subgroup.index_eq_one.mp hcon.symm)
+    1 < (frobeniusKernel H).ncard :=
+  hH.isTISubgroup.one_lt_ncard_frobeniusKernel hH.ne_top
 
 /-- There is a nonidentity element lying in no conjugate of a Frobenius complement. -/
 theorem exists_ne_one_mem_frobeniusKernel (hH : IsFrobeniusComplement H) :
     ∃ x, x ∈ frobeniusKernel H ∧ x ≠ 1 :=
-  Set.exists_ne_of_one_lt_ncard hH.one_lt_ncard_frobeniusKernel 1
+  hH.isTISubgroup.exists_ne_one_mem_frobeniusKernel hH.ne_top
 
 end IsFrobeniusComplement
 
