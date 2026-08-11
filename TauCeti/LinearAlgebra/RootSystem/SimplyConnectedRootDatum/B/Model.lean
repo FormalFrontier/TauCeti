@@ -164,7 +164,7 @@ lemma sgn_def (u : Fin (2 * n)) : sgn u = if (u : ℕ) < n then 1 else -1 := (rf
 def opp (u : Fin (2 * n)) : Fin (2 * n) :=
   ⟨if (u : ℕ) < n then (u : ℕ) + n else (u : ℕ) - n, by have := u.isLt; split <;> omega⟩
 
-lemma rank_pos (u : Fin (2 * n)) : 0 < n := by have := u.isLt; omega
+private lemma rank_pos (u : Fin (2 * n)) : 0 < n := by have := u.isLt; omega
 
 lemma axis_lt (u : Fin (2 * n)) : axis u < n := by
   have := u.isLt; simp only [axis]; split <;> omega
@@ -240,7 +240,7 @@ lemma wt_dotProduct_cwt (u v : Fin (2 * n)) :
   · rw [if_neg hax, if_neg (ne_of_axis_ne hax), if_neg (ne_of_axis_ne (by rwa [axis_opp]))]
     ring
 
-lemma wt_dotProduct_cwt_self (u : Fin (2 * n)) : wt u ⬝ᵥ cwt u = 2 := by
+@[simp] lemma wt_dotProduct_cwt_self (u : Fin (2 * n)) : wt u ⬝ᵥ cwt u = 2 := by
   rw [wt_dotProduct_cwt, if_pos rfl]
 
 lemma wt_dotProduct_cwt_eq_zero {u v : Fin (2 * n)} (h1 : u ≠ v) (h2 : u ≠ opp v) :
@@ -429,10 +429,10 @@ lemma rootOfPair_comm (u v : Fin (2 * n)) : rootOfPair u v = rootOfPair v u := b
   · rfl
   · rw [rootOfPair, rootOfPair, if_neg huv, if_neg (Ne.symm huv), add_comm]
 
-lemma rootOfPair_self (u : Fin (2 * n)) : rootOfPair u u = wt u := by
+@[simp] lemma rootOfPair_self (u : Fin (2 * n)) : rootOfPair u u = wt u := by
   rw [rootOfPair, if_pos rfl]
 
-lemma rootOfPair_of_ne {u v : Fin (2 * n)} (h : u ≠ v) : rootOfPair u v = wt u + wt v := by
+@[simp] lemma rootOfPair_of_ne {u v : Fin (2 * n)} (h : u ≠ v) : rootOfPair u v = wt u + wt v := by
   rw [rootOfPair, if_neg h]
 
 /-- The root indexed by an element of `Fin (2 * n) × Fin n`. -/
@@ -445,13 +445,13 @@ def corootIdx (z : Fin (2 * n) × Fin n) : Fin n → ℤ :=
 lemma corootIdx_def (z : Fin (2 * n) × Fin n) :
     corootIdx z = corootOfPair z.1 (shift z.1 z.2) := (rfl)
 
-lemma rootIdx_index {u v : Fin (2 * n)} (h : IsPair u v) :
+@[simp] lemma rootIdx_index {u v : Fin (2 * n)} (h : IsPair u v) :
     rootIdx (index u v) = rootOfPair u v := by
   rcases shift_index h with ⟨h1, h2⟩ | ⟨h1, h2⟩
   · rw [rootIdx, h2, h1]
   · rw [rootIdx, h2, h1, rootOfPair_comm]
 
-lemma corootIdx_index {u v : Fin (2 * n)} (h : IsPair u v) :
+@[simp] lemma corootIdx_index {u v : Fin (2 * n)} (h : IsPair u v) :
     corootIdx (index u v) = corootOfPair u v := by
   rcases shift_index h with ⟨h1, h2⟩ | ⟨h1, h2⟩
   · rw [corootIdx, h2, h1]
@@ -507,7 +507,7 @@ lemma reflMap_of_ne {u : Fin (2 * n)} (h1 : u ≠ p) (h2 : u ≠ q) (h3 : u ≠ 
   rw [reflMap, if_neg h1, if_neg h2, if_neg h3, if_neg h4]
 
 /-- The eight inequalities between `p`, `q` and their opposites available on a long root. -/
-lemma long_ne (hax : axis p ≠ axis q) :
+private lemma long_ne (hax : axis p ≠ axis q) :
     p ≠ q ∧ p ≠ opp q ∧ q ≠ p ∧ q ≠ opp p ∧ opp p ≠ q ∧ opp p ≠ opp q ∧ opp q ≠ p ∧
       opp q ≠ opp p :=
   ⟨ne_of_axis_ne hax, ne_of_axis_ne (by rwa [axis_opp]), ne_of_axis_ne (Ne.symm hax),
