@@ -34,7 +34,6 @@ simpNF TauCeti.ComoduleCat.sum_apply
 simpNF TauCeti.ComoduleCat.transportIso_hom_apply
 simpNF TauCeti.ComoduleCat.transportIso_inv_apply
 simpNF TauCeti.ComoduleCat.zsmul_apply
-simpNF TauCeti.CuspForm.peterssonInner_apply✝
 simpNF TauCeti.Deck.conjMulEquivTrans
 simpNF TauCeti.Deck.fiberOrbitQuotientEquiv_trans
 simpNF TauCeti.Deck.subgroupFiberOrbitQuotientEquiv_trans
@@ -44,7 +43,6 @@ simpNF TauCeti.FGComoduleCat.corestrict_obj_coact_apply
 simpNF TauCeti.FGComoduleCat.incl_cofree
 simpNF TauCeti.FGComoduleCat.ofHom_comp
 simpNF TauCeti.FGComoduleCat.ofHom_id
-simpNF TauCeti.GridChain.natCard
 simpNF TauCeti.HopfAlgebra.PointRepresentation.ofComodule_action_tmul
 simpNF TauCeti.HopfAlgebra.PointRepresentation.ofComodule_action_universal_one_tmul
 simpNF TauCeti.HopfIdeal.coefficientLinearEquiv_apply✝
@@ -64,20 +62,11 @@ simpNF TauCeti.Subgroup.normalizerEquivMap_symm_apply_coe
 simpNF TauCeti.Subgroup.normalizerEquivMap_symm_apply_coe'
 simpNF TauCeti.Subgroup.normalizerEquivMap_trans_apply_coe
 simpNF TauCeti.Subgroup.normalizerQuotientEquivMap_symm_mk'
-simpNF TauCeti.WeierstrassCurve.Affine.CoordinateRing.conj_conj
-simpNF TauCeti.WeierstrassCurve.Affine.CoordinateRing.conj_mk_C
-simpNF TauCeti.WeierstrassCurve.Affine.CoordinateRing.conj_mk_Y
-simpNF TauCeti.WeierstrassCurve.Affine.CoordinateRing.mul_conj
-simpNF TauCeti.boundaryChartedSpace_chartAt_apply
-simpNF TauCeti.boundaryChartedSpace_chartAt_source
-simpNF TauCeti.boundaryChartedSpace_chartAt_symm_apply
-simpNF TauCeti.boundaryChartedSpace_chartAt_target
 simpNF TauCeti.integral_normalizedChebyshevT_mul_normalizedChebyshevT_measureT_eq_ite
 simpNF TauCeti.isComplexLinear_arrowCongr_iff
 simpNF TauCeti.reflectRepMapApp_of_ne✝
 unusedArguments CongruenceSubgroup.Gamma0Map_toHomUnits_surjective
 unusedArguments CongruenceSubgroup.map_apply_of_dvd_lcm✝
-unusedArguments TauCeti.Huber.PairOfDefinition.exists_pow_mul_algebraMap_mem✝
 unusedArguments TauCeti.IsFiniteType
 unusedArguments TauCeti.IsHighestWeightVector
 unusedArguments TauCeti.Measure.instSFiniteGlue
