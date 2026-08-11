@@ -49,6 +49,8 @@ irreducible by.
   algebra map exhausts the endomorphisms is irreducible.
 * `TauCeti.Representation.exists_isAtom_le`: every nonzero finite-dimensional subrepresentation
   contains an atom, so the atom criterion always has something to apply to.
+* `TauCeti.Representation.exists_isAtom`: in particular a nonzero finite-dimensional
+  representation has an atom.
 * `TauCeti.Representation.exists_isIrreducible_subrepresentation`: consequently every nonzero
   finite-dimensional representation contains an irreducible subrepresentation.
 
@@ -212,6 +214,18 @@ theorem exists_isAtom_le {ρ : Representation k G V} {σ : Subrepresentation ρ}
     (Submodule.finrank_lt_finrank_of_lt (Subrepresentation.toSubmodule_lt_toSubmodule.mpr hυ))
     ⟨hυ0, hυ.le.trans hτσ⟩
 
+/-- **A nonzero finite-dimensional representation has a minimal nonzero subrepresentation.**  This
+is `TauCeti.Representation.exists_isAtom_le` applied to the whole space, which is nonzero exactly
+because `V` is; the acting monoid stays arbitrary. -/
+theorem exists_isAtom [FiniteDimensional k V] [Nontrivial V] (ρ : Representation k G V) :
+    ∃ σ : Subrepresentation ρ, IsAtom σ := by
+  have htop : (⊤ : Subrepresentation ρ) ≠ ⊥ := fun hc =>
+    top_ne_bot (α := Submodule k V) (by
+      rw [← Subrepresentation.toSubmodule_top (ρ := ρ), ← Subrepresentation.toSubmodule_bot
+        (ρ := ρ), hc])
+  obtain ⟨σ, -, hσ⟩ := exists_isAtom_le htop
+  exact ⟨σ, hσ⟩
+
 /-- **Every nonzero finite-dimensional representation contains an irreducible subrepresentation.**
 Finite-dimensionality alone suffices; no semisimplicity is assumed.  This produces a single
 irreducible subrepresentation, not a decomposition: a representation that is not semisimple need
@@ -219,11 +233,7 @@ not be the sum of its irreducible subrepresentations. -/
 theorem exists_isIrreducible_subrepresentation [FiniteDimensional k V] [Nontrivial V]
     (ρ : Representation k G V) :
     ∃ σ : Subrepresentation ρ, σ ≠ ⊥ ∧ σ.toRepresentation.IsIrreducible := by
-  have htop : (⊤ : Subrepresentation ρ) ≠ ⊥ := fun hc =>
-    top_ne_bot (α := Submodule k V) (by
-      rw [← Subrepresentation.toSubmodule_top (ρ := ρ), ← Subrepresentation.toSubmodule_bot
-        (ρ := ρ), hc])
-  obtain ⟨σ, -, hσ⟩ := exists_isAtom_le htop
+  obtain ⟨σ, hσ⟩ := exists_isAtom ρ
   exact ⟨σ, hσ.1, isIrreducible_toRepresentation_of_isAtom hσ⟩
 
 end Representation

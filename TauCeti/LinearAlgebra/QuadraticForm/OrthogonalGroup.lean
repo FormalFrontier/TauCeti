@@ -4,10 +4,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.LinearAlgebra.Determinant
 public import Mathlib.LinearAlgebra.GeneralLinearGroup.Basic
 public import Mathlib.LinearAlgebra.QuadraticForm.IsometryEquiv
-public import Mathlib.LinearAlgebra.Reflection
+public import TauCeti.LinearAlgebra.Reflection
 
 /-!
 # The orthogonal group of a quadratic form
@@ -62,9 +61,10 @@ negating it and is a transvection rather than a reflection in `v ^ ⊥`.
   `Q`.
 * `TauCeti.QuadraticMap.reflection_mem_orthogonalGroup`: the reflection in a vector of invertible
   norm is orthogonal; `TauCeti.QuadraticMap.reflection_mul_self` says it is an involution, and
-  `TauCeti.QuadraticMap.reflection_apply_of_isOrtho` that it fixes the orthogonal hyperplane. These
-  are the elements a Cartan-Dieudonné theorem would write an orthogonal automorphism as a product
-  of, under hypotheses (a field of characteristic not two, a nondegenerate form, finite dimension)
+  `TauCeti.QuadraticMap.reflection_apply_of_isOrtho` that it fixes the orthogonal hyperplane, while
+  `TauCeti.QuadraticMap.det_reflection` computes its determinant on a finite free module. These are
+  the elements a Cartan-Dieudonné theorem would write an orthogonal automorphism as a product of,
+  under hypotheses (a field of characteristic not two, a nondegenerate form, finite dimension)
   that are not assumed here, and the image of the Pin group's generating vectors under twisted
   conjugation.
 * `TauCeti.QuadraticMap.exists_mem_subgroup_mul_eqOn_sup_span_singleton_of_reflection_mem`: a
@@ -342,6 +342,12 @@ theorem reflection_inv : (reflection Q v)⁻¹ = reflection Q v :=
 @[simp]
 theorem reflection_symm : (reflection Q v).symm = reflection Q v :=
   Module.reflection_symm _
+
+/-- The determinant of a reflection is `-1` on a finite free module. -/
+@[simp]
+theorem det_reflection [Module.Free R M] [Module.Finite R M] :
+    LinearEquiv.det (reflection Q v) = (-1 : Rˣ) := by
+  exact Module.det_reflection (reflectionDual_apply_self Q v)
 
 /-- **Reflections are orthogonal.** These are the generators a Cartan-Dieudonné theorem writes an
 orthogonal automorphism as a product of, over a field of characteristic not two, for a nondegenerate
