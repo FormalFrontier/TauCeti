@@ -72,7 +72,7 @@ private theorem strictMono_prefixSplitEquiv_symm_block_future {r c : ℕ} {k : F
 /-- **A strictly monotone block joins a common future exactly as the path law does.** For a
 contractable process, a strictly monotone selection `k` lying below a cutoff `c`, the joint law of
 the block `(X (k 0), …, X (k (r-1)))` with the future `(X c, X (c+1), …)` is the path law pushed
-through the split `f ↦ (f ∘ Fin.val, fun n ↦ f (r + n))`.
+through `prefixSplitEquiv r`, which is exactly that split.
 
 Two such blocks therefore have the *same* joint law with the *same* future — which is what makes a
 conditional statement given that future available. Note the equality is distributional: nothing
@@ -81,30 +81,23 @@ private theorem map_block_future_eq_pathLaw_map {μ : Measure Ω} [IsFiniteMeasu
     {X : ℕ → Ω → α} (hX : Contractable μ X) (hX_ae : ∀ n, AEMeasurable (X n) μ)
     {r c : ℕ} {k : Fin r → ℕ} (hk : StrictMono k) (hkc : ∀ i, k i < c) :
     μ.map (fun ω => (fun i : Fin r => X (k i) ω, fun n => X (c + n) ω))
-      = (pathLaw μ X).map
-          (fun f : ℕ → α => (fun i : Fin r => f (i : ℕ), fun n => f (r + n))) := by
+      = (pathLaw μ X).map (prefixSplitEquiv r) := by
   classical
   set φ := (prefixSplitEquiv (α := ℕ) r).symm (k, fun n => c + n) with hφdef
   have hφ : StrictMono φ := strictMono_prefixSplitEquiv_symm_block_future hk hkc
-  have hsplit : Measurable
-      (fun f : ℕ → α => (fun i : Fin r => f (i : ℕ), fun n => f (r + n))) :=
-    (measurable_pi_lambda (fun (f : ℕ → α) (i : Fin r) => f (i : ℕ))
-        fun i => measurable_pi_apply (i : ℕ)).prodMk
-      (measurable_pi_lambda (fun (f : ℕ → α) (n : ℕ) => f (r + n))
-        fun n => measurable_pi_apply (r + n))
+  have hsplit : Measurable (prefixSplitEquiv (α := α) r) := (prefixSplitEquiv r).measurable
   have hreindex : μ.map (fun ω (i : ℕ) => X (φ i) ω) = pathLaw μ X :=
     hX.map_reindex_pathLaw_eq hX_ae hφ
-  have hcomp : (fun f : ℕ → α => (fun i : Fin r => f (i : ℕ), fun n => f (r + n)))
-      ∘ (fun ω (i : ℕ) => X (φ i) ω)
+  have hcomp : ⇑(prefixSplitEquiv (α := α) r) ∘ (fun ω (i : ℕ) => X (φ i) ω)
       = fun ω => (fun i : Fin r => X (k i) ω, fun n => X (c + n) ω) := by
     funext ω
+    rw [Function.comp_apply, prefixSplitEquiv_apply]
     refine Prod.ext ?_ ?_
     · funext i
-      simp only [Function.comp_apply, hφdef, prefixSplitEquiv_symm_apply, dite_eq_left i.isLt,
-        Fin.eta]
+      simp only [hφdef, prefixSplitEquiv_symm_apply, dite_eq_left i.isLt, Fin.eta]
     · funext n
       have hnr : ¬ (r + n < r) := by omega
-      simp only [Function.comp_apply, hφdef, prefixSplitEquiv_symm_apply, dite_eq_right hnr]
+      simp only [hφdef, prefixSplitEquiv_symm_apply, dite_eq_right hnr]
       congr 1
       omega
   rw [← hcomp, ← AEMeasurable.map_map_of_aemeasurable hsplit.aemeasurable
