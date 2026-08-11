@@ -33,7 +33,6 @@ family `exp (t A_lambda)` and its limit.
 
 * `TauCeti.Semigroups.yosidaLimit`: the value chosen from the family `exp (t A_lambda) x` as
   `lambda -> ∞`, which is its limit at nonnegative times.
-* `TauCeti.Semigroups.IsMDissipative.yosidaLimitCLM`: that limit as a bounded operator on `X`.
 * `TauCeti.Semigroups.IsMDissipative.yosidaLimitSemigroup`: the resulting contraction semigroup.
 
 ## Main results
@@ -110,25 +109,17 @@ variable {A : X →ₗ.[ℝ] X}
 
 /-! ## Existence of the limit -/
 
-/-- For a densely defined m-dissipative operator the Yosida exponentials converge at every
-nonnegative time: completeness turns the compact-time Cauchy estimate into a limit vector. -/
-theorem exists_tendsto_exp_yosidaApproximation (hA : IsMDissipative A)
-    (hdense : Dense (A.domain : Set X)) {t : ℝ} (ht : 0 ≤ t) (x : X) :
-    ∃ y, Tendsto (fun lambda : ℝ => exp (t • yosidaApproximation A lambda) x) atTop (𝓝 y) :=
-  cauchySeq_tendsto_of_complete
-    ((hA.exp_yosidaApproximation_uniformCauchySeqOn_compact (T := t) hdense x ht).cauchySeq
-      (Set.right_mem_Icc.mpr ht))
-
 /-- The defining convergence of the Yosida limit: `exp (t A_lambda) x -> yosidaLimit A t x` as
-`lambda -> +∞`, for every nonnegative time `t`. -/
+`lambda -> +∞`, for every nonnegative time `t`.
+
+Completeness turns the compact-time Cauchy estimate into convergence to the chosen value
+`limUnder atTop`, which is `yosidaLimit A t x` by definition. -/
 theorem tendsto_yosidaLimit (hA : IsMDissipative A) (hdense : Dense (A.domain : Set X))
     {t : ℝ} (ht : 0 ≤ t) (x : X) :
     Tendsto (fun lambda : ℝ => exp (t • yosidaApproximation A lambda) x) atTop
-      (𝓝 (yosidaLimit A t x)) := by
-  obtain ⟨y, hy⟩ := hA.exists_tendsto_exp_yosidaApproximation hdense ht x
-  have hlim : yosidaLimit A t x = y := hy.limUnder_eq
-  rw [hlim]
-  exact hy
+      (𝓝 (yosidaLimit A t x)) :=
+  ((hA.exp_yosidaApproximation_uniformCauchySeqOn_compact (T := t) hdense x ht).cauchySeq
+    (Set.right_mem_Icc.mpr ht)).tendsto_limUnder
 
 /-- The convergence to the Yosida limit is uniform on every compact time interval. -/
 theorem tendstoUniformlyOn_exp_yosidaApproximation (hA : IsMDissipative A)
@@ -242,8 +233,9 @@ theorem continuousOn_yosidaLimit (hA : IsMDissipative A) (hdense : Dense (A.doma
 
 /-- Strong continuity at time `0` of the Yosida limit, in the nonnegative-time parametrisation
 used by `StronglyContinuousSemigroup`. -/
-theorem continuousAt_yosidaLimit_zero (hA : IsMDissipative A) (hdense : Dense (A.domain : Set X))
-    (x : X) : ContinuousAt (fun t : ℝ≥0 => yosidaLimit A t x) 0 := by
+private theorem continuousAt_yosidaLimit_zero (hA : IsMDissipative A)
+    (hdense : Dense (A.domain : Set X)) (x : X) :
+    ContinuousAt (fun t : ℝ≥0 => yosidaLimit A t x) 0 := by
   have hIci : ContinuousWithinAt (fun t : ℝ => yosidaLimit A t x) (Set.Ici 0)
       (((0 : ℝ≥0) : ℝ)) := by
     simpa using hA.continuousOn_yosidaLimit hdense x 0 (Set.mem_Ici.mpr le_rfl)
@@ -254,8 +246,9 @@ theorem continuousAt_yosidaLimit_zero (hA : IsMDissipative A) (hdense : Dense (A
 
 /-! ## The contraction semigroup -/
 
-/-- The Yosida limit at a nonnegative time, packaged as a bounded operator on `X`. -/
-def yosidaLimitCLM (hA : IsMDissipative A) (hdense : Dense (A.domain : Set X)) (t : ℝ≥0) :
+/-- The Yosida limit at a nonnegative time, packaged as a bounded operator on `X`. This is the
+scaffolding of `yosidaLimitSemigroup` below, which is the public form of the construction. -/
+private def yosidaLimitCLM (hA : IsMDissipative A) (hdense : Dense (A.domain : Set X)) (t : ℝ≥0) :
     X →L[ℝ] X :=
   LinearMap.mkContinuous
     { toFun := fun x => yosidaLimit A t x
@@ -267,12 +260,12 @@ def yosidaLimitCLM (hA : IsMDissipative A) (hdense : Dense (A.domain : Set X)) (
 -- characteristic lemmas are written `(rfl)` rather than `rfl`: the parentheses opt out of
 -- exporting the definitional equality that these lemmas exist to replace.
 @[simp]
-theorem yosidaLimitCLM_apply (hA : IsMDissipative A) (hdense : Dense (A.domain : Set X))
+private theorem yosidaLimitCLM_apply (hA : IsMDissipative A) (hdense : Dense (A.domain : Set X))
     (t : ℝ≥0) (x : X) : hA.yosidaLimitCLM hdense t x = yosidaLimit A t x :=
   (rfl)
 
 /-- Each Yosida limit operator is a contraction. -/
-theorem norm_yosidaLimitCLM_le (hA : IsMDissipative A) (hdense : Dense (A.domain : Set X))
+private theorem norm_yosidaLimitCLM_le (hA : IsMDissipative A) (hdense : Dense (A.domain : Set X))
     (t : ℝ≥0) : ‖hA.yosidaLimitCLM hdense t‖ ≤ 1 :=
   LinearMap.mkContinuous_norm_le _ zero_le_one _
 

@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.Analysis.Semigroups.Generation.LimitSemigroup
+import TauCeti.Analysis.Normed.Operator.Exponential
 
 /-!
 # The Lumer--Phillips generation theorem
@@ -20,9 +21,9 @@ approximation satisfies the exact Duhamel identity
 
 `exp (t A_lambda) x - x = ∫₀ᵗ exp (u A_lambda) (A_lambda x) du`
 
-(`TauCeti.Semigroups.exp_smul_apply_sub_eq_intervalIntegral`), and for `x ∈ D(A)` both sides
-converge: the left-hand side by the defining convergence of the limit, the right-hand side
-because `A_lambda x -> A x` and because `exp (u A_lambda) -> S(u)` uniformly on `[0, t]`.
+(`TauCeti.ContinuousLinearMap.exp_smul_apply_sub_eq_intervalIntegral`), and for `x ∈ D(A)` both
+sides converge: the left-hand side by the defining convergence of the limit, the right-hand
+side because `A_lambda x -> A x` and because `exp (u A_lambda) -> S(u)` uniformly on `[0, t]`.
 That gives `S(t) x - x = ∫₀ᵗ S(u) (A x) du`, whose difference quotient at
 `t = 0` is the orbit average of `A x`, hence tends to `A x`. So `A` is a restriction of the
 generator; since `1` lies in the resolvent set of both — `A` is m-dissipative by hypothesis, and
@@ -31,7 +32,7 @@ the generator of a contraction semigroup is m-dissipative — the restriction is
 
 ## Main results
 
-* `TauCeti.Semigroups.IsMDissipative.generator_yosidaLimitSemigroup`: the generator of the
+* `TauCeti.Semigroups.IsMDissipative.yosidaLimitSemigroup_generator`: the generator of the
   Yosida limit semigroup of a densely defined m-dissipative `A` is `A`.
 * `TauCeti.Semigroups.IsMDissipative.exists_contractionSemigroup_generator_eq`: the
   **Lumer--Phillips generation theorem**.
@@ -70,7 +71,7 @@ limit orbit of `A x`, uniformly on the compact interval `[0, T]`.
 Two errors are combined: `A_lambda x -> A x` in norm, and `exp (u A_lambda) (A x)` converges to
 the limit orbit uniformly in `u`; contractivity of `exp (u A_lambda)` turns the first into a
 uniform error as well. -/
-theorem tendstoUniformlyOn_duhamel_integrand (hA : IsMDissipative A)
+private theorem tendstoUniformlyOn_duhamel_integrand (hA : IsMDissipative A)
     (hdense : Dense (A.domain : Set X)) (x : A.domain) {T : ℝ} (hT : 0 ≤ T) :
     TendstoUniformlyOn
       (fun lambda u : ℝ =>
@@ -148,7 +149,8 @@ theorem yosidaLimit_sub_eq_intervalIntegral (hA : IsMDissipative A)
       (∫ u in (0 : ℝ)..t, exp (u • yosidaApproximation A lambda)
         (yosidaApproximation A lambda (x : X))) =
       exp (t • yosidaApproximation A lambda) (x : X) - (x : X) := fun lambda =>
-    (exp_smul_apply_sub_eq_intervalIntegral (yosidaApproximation A lambda) t (x : X)).symm
+    (ContinuousLinearMap.exp_smul_apply_sub_eq_intervalIntegral
+      (yosidaApproximation A lambda) t (x : X)).symm
   simp only [heq]
   exact (hA.tendsto_yosidaLimit hdense ht (x : X)).sub_const _
 
@@ -157,7 +159,7 @@ theorem yosidaLimit_sub_eq_intervalIntegral (hA : IsMDissipative A)
 /-- For `x ∈ D(A)`, the difference quotients of the Yosida limit semigroup converge to `A x`:
 by the integrated Cauchy problem they are the orbit averages of `A x`, which converge to `A x`
 by strong continuity. -/
-theorem tendsto_genQuot_yosidaLimitSemigroup (hA : IsMDissipative A)
+private theorem tendsto_genQuot_yosidaLimitSemigroup (hA : IsMDissipative A)
     (hdense : Dense (A.domain : Set X)) (x : A.domain) :
     Tendsto (fun t : ℝ => (1 / t) •
         ((hA.yosidaLimitSemigroup hdense).realOperator t (x : X) - (x : X)))
@@ -173,7 +175,7 @@ theorem tendsto_genQuot_yosidaLimitSemigroup (hA : IsMDissipative A)
   exact (hA.yosidaLimitSemigroup_realOperator_apply hdense hu.1.le (A x)).symm
 
 /-- The operator `A` is a restriction of the generator of its Yosida limit semigroup. -/
-theorem le_generator_yosidaLimitSemigroup (hA : IsMDissipative A)
+private theorem le_yosidaLimitSemigroup_generator (hA : IsMDissipative A)
     (hdense : Dense (A.domain : Set X)) :
     A ≤ (hA.yosidaLimitSemigroup hdense).toStronglyContinuousSemigroup.generator := by
   set S := (hA.yosidaLimitSemigroup hdense).toStronglyContinuousSemigroup with hS
@@ -190,10 +192,10 @@ theorem le_generator_yosidaLimitSemigroup (hA : IsMDissipative A)
 /-- **The generator of the Yosida limit semigroup is the operator it was built from.** For a
 densely defined m-dissipative `A`, the semigroup `yosidaLimitSemigroup` has generator `A`. -/
 @[simp]
-theorem generator_yosidaLimitSemigroup (hA : IsMDissipative A)
+theorem yosidaLimitSemigroup_generator (hA : IsMDissipative A)
     (hdense : Dense (A.domain : Set X)) :
     (hA.yosidaLimitSemigroup hdense).toStronglyContinuousSemigroup.generator = A :=
-  (LinearPMap.eq_of_le_of_mem_resolventSet (hA.le_generator_yosidaLimitSemigroup hdense)
+  (LinearPMap.eq_of_le_of_mem_resolventSet (hA.le_yosidaLimitSemigroup_generator hdense)
     (hA.mem_resolventSet one_pos)
     ((ContractionSemigroup.isMDissipative_generator _).mem_resolventSet one_pos)).symm
 
@@ -206,7 +208,7 @@ by the Yosida approximations of `A`. -/
 theorem exists_contractionSemigroup_generator_eq (hA : IsMDissipative A)
     (hdense : Dense (A.domain : Set X)) :
     ∃ S : ContractionSemigroup X, S.toStronglyContinuousSemigroup.generator = A :=
-  ⟨hA.yosidaLimitSemigroup hdense, hA.generator_yosidaLimitSemigroup hdense⟩
+  ⟨hA.yosidaLimitSemigroup hdense, hA.yosidaLimitSemigroup_generator hdense⟩
 
 end IsMDissipative
 
