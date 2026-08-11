@@ -36,6 +36,8 @@ prove that the search has exactly one row per conjugacy class.
 
 ## Main results
 
+* `TauCeti.ClassData.modularClassMatrix_eq_submatrix`: the numbered modular matrices are a
+  renumbering of the class-indexed ones, so their theory transports.
 * `TauCeti.ClassData.modularClassMatrix_index_one`: the identity-class matrix is the identity.
 * `TauCeti.ClassData.vecMul_modularClassMatrix_apply_index_one`: the identity coordinate of
   `v ᵥ* Mᵢ` is `v i`.
@@ -65,37 +67,53 @@ namespace ClassData
 
 variable {G : Type*} [Group G] [Fintype G] [DecidableEq G]
 variable (d : ClassData G)
-variable {F : Type*} [Field F] [Fintype F] [DecidableEq F]
+
+section CommRing
+
+variable {F : Type*} [CommRing F]
 
 /-- The `i`-th numbered class-multiplication matrix, reduced from `ℤ` into `F`. -/
 @[expose] def modularClassMatrix (i : Fin d.numClasses) :
     Matrix (Fin d.numClasses) (Fin d.numClasses) F :=
   (d.classMultMatrix i).map (Int.cast : ℤ → F)
 
-omit [Fintype F] [DecidableEq F] in
 @[simp]
 theorem modularClassMatrix_apply (i j k : Fin d.numClasses) :
     d.modularClassMatrix (F := F) i j k = (d.structureConstant i k j : F) := by
   simp [modularClassMatrix]
+
+/-- **The numbered modular class matrix is a renumbering of the class-indexed one.** This is
+`TauCeti.ClassData.classMultMatrix_eq_submatrix` pushed through the reduction map, and is what
+transports the class-indexed matrix API to the numbered family. -/
+theorem modularClassMatrix_eq_submatrix (i : Fin d.numClasses) :
+    d.modularClassMatrix (F := F) i =
+      ((TauCeti.classMultMatrix (d.classOf i)).map (Int.cast : ℤ → F)).submatrix
+        d.equivConjClasses d.equivConjClasses := by
+  rw [modularClassMatrix, d.classMultMatrix_eq_submatrix i, Matrix.submatrix_map]
 
 /-- A numbered row is a common left eigenrow when its eigenvalue for the `i`-th class matrix is
 its own `i`-th entry. -/
 def IsModularEigenrow (v : Fin d.numClasses → F) : Prop :=
   ∀ i, v ᵥ* d.modularClassMatrix i = v i • v
 
+/-- `TauCeti.ClassData.IsModularEigenrow` restated in its defining vector form, for consumers that
+want the literal eigenvector equation without unfolding the definition. -/
+theorem isModularEigenrow_def (v : Fin d.numClasses → F) :
+    d.IsModularEigenrow v ↔ ∀ i, v ᵥ* d.modularClassMatrix i = v i • v :=
+  Iff.rfl
+
 /-- Transport a numbered row along the numbering equivalence to a row indexed by conjugacy
 classes. -/
 def reindexModularRow (v : Fin d.numClasses → F) : ConjClasses G → F :=
   v ∘ d.equivConjClasses.symm
 
-omit [Field F] [Fintype F] [DecidableEq F] in
+omit [CommRing F] in
 @[simp]
 theorem reindexModularRow_classOf (v : Fin d.numClasses → F) (i : Fin d.numClasses) :
     d.reindexModularRow v (d.classOf i) = v i := by
-  change v (d.equivConjClasses.symm (d.classOf i)) = v i
-  rw [← d.equivConjClasses_apply i, Equiv.symm_apply_apply]
+  rw [← d.equivConjClasses_apply i]
+  simp only [reindexModularRow, Function.comp_apply, Equiv.symm_apply_apply]
 
-omit [Fintype F] [DecidableEq F] in
 /-- The numbered eigenrow condition in scalar structure-constant form. -/
 theorem isModularEigenrow_iff (v : Fin d.numClasses → F) :
     d.IsModularEigenrow v ↔ ∀ i j,
@@ -110,7 +128,6 @@ theorem isModularEigenrow_iff (v : Fin d.numClasses → F) :
     rw [Matrix.vecMul_apply_eq_sum]
     simpa only [modularClassMatrix_apply, Pi.smul_apply, smul_eq_mul, mul_comm] using h i j
 
-omit [Fintype F] [DecidableEq F] in
 /-- Renumbering identifies the executable numbered eigenrow condition with the class-indexed
 `TauCeti.IsClassEigenrow` predicate used by the class-algebra API. -/
 theorem isModularEigenrow_iff_isClassEigenrow (v : Fin d.numClasses → F) :
@@ -129,33 +146,36 @@ theorem isModularEigenrow_iff_isClassEigenrow (v : Fin d.numClasses → F) :
     simpa only [equivConjClasses_apply, reindexModularRow_classOf,
       d.structureConstant_eq] using hij
 
-omit [Fintype F] [DecidableEq F] in
 /-- The numbered modular class matrix belonging to the identity conjugacy class is the identity
-matrix. -/
+matrix.  This is `TauCeti.classMultMatrix_mk_one`, renumbered. -/
 @[simp]
 theorem modularClassMatrix_index_one :
     d.modularClassMatrix (F := F) (d.index 1) = 1 := by
-  ext j k
-  simp only [modularClassMatrix_apply, Matrix.one_apply]
-  rw [d.structureConstant_eq]
-  have hclass : d.classOf j = d.classOf k ↔ j = k := by
-    rw [← d.equivConjClasses_apply, ← d.equivConjClasses_apply]
-    exact d.equivConjClasses.injective.eq_iff
-  simp [d.classOf_index, hclass]
+  rw [d.modularClassMatrix_eq_submatrix, d.classOf_index, TauCeti.classMultMatrix_mk_one,
+    Matrix.map_one _ Int.cast_zero Int.cast_one, Matrix.submatrix_one_equiv]
 
-omit [Fintype F] [DecidableEq F] in
 /-- The identity coordinate of `v ᵥ* Mᵢ` is `v i`.  This coordinate is what turns the
-eigenvalues found by simultaneous search into a canonically normalized eigenrow. -/
+eigenvalues found by simultaneous search into a canonically normalized eigenrow.  It is
+`TauCeti.vecMul_classMultMatrix_apply` at the class of `1`, renumbered. -/
 theorem vecMul_modularClassMatrix_apply_index_one (v : Fin d.numClasses → F)
     (i : Fin d.numClasses) :
     (v ᵥ* d.modularClassMatrix i) (d.index 1) = v i := by
-  rw [Matrix.vecMul_apply_eq_sum]
-  have hclass (j : Fin d.numClasses) : d.classOf j = d.classOf i ↔ j = i := by
-    rw [← d.equivConjClasses_apply, ← d.equivConjClasses_apply]
-    exact d.equivConjClasses.injective.eq_iff
-  simp [modularClassMatrix_apply, d.structureConstant_eq, d.classOf_index,
-    TauCeti.structureConstant_mk_one_right, Nat.cast_ite, Nat.cast_one, Nat.cast_zero,
-    hclass]
+  have hvecMul : v ᵥ* d.modularClassMatrix i =
+      (d.reindexModularRow v ᵥ* (TauCeti.classMultMatrix (d.classOf i)).map (Int.cast : ℤ → F)) ∘
+        d.equivConjClasses := by
+    rw [d.modularClassMatrix_eq_submatrix, Matrix.submatrix_vecMul_equiv]
+    simp only [reindexModularRow]
+  rw [hvecMul, Function.comp_apply, equivConjClasses_apply, d.classOf_index,
+    vecMul_classMultMatrix_apply]
+  simp only [structureConstant_mk_one_right, Nat.cast_ite, Nat.cast_one, Nat.cast_zero,
+    ite_mul, one_mul, zero_mul, Finset.sum_ite_eq' Finset.univ (d.classOf i), Finset.mem_univ,
+    if_true, reindexModularRow_classOf]
+
+end CommRing
+
+section Search
+
+variable {F : Type*} [Field F] [Fintype F] [DecidableEq F]
 
 /-- Search for the simultaneous left-eigenvalue tuples of the numbered modular class matrices.
 
@@ -271,6 +291,8 @@ theorem mem_centralCharacterSearch_iff_exists_algHom {a : Fin d.numClasses → F
       exact h
     · rw [d.isModularEigenrow_iff_isClassEigenrow, hrow]
       exact isClassEigenrow_classSumRow φ
+
+end Search
 
 end ClassData
 
