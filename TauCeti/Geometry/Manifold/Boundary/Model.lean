@@ -13,7 +13,9 @@ continuous linear equivalence with `EuclideanSpace ℝ (Fin n)`.
 The construction is the standard-model prerequisite for putting a manifold structure on the
 boundary of a manifold modeled on a Euclidean half-space, as prescribed by Layer 1 of the
 GeometricTopology roadmap.  The parametrization and projection API below is intended to let
-boundary charts use this identification without unfolding its coordinate construction.
+boundary charts use this identification without unfolding its coordinate construction.  The file
+also splits the ambient Euclidean space into boundary and normal coordinates; the boundary
+inclusion and the standard product collar both use this one coordinate equivalence.
 -/
 
 public section
@@ -23,6 +25,28 @@ open Function Set
 open scoped Manifold
 
 namespace TauCeti
+
+/-- Identify `EuclideanSpace ℝ (Fin n) × ℝ` with `EuclideanSpace ℝ (Fin (n + 1))` by
+placing the real factor in the zeroth coordinate.  The first factor parametrizes the boundary
+hyperplane and the second is its normal coordinate. -/
+noncomputable def euclideanHalfSpaceBoundaryNormalEquiv (n : ℕ) :
+    (EuclideanSpace ℝ (Fin n) × ℝ) ≃L[ℝ] EuclideanSpace ℝ (Fin (n + 1)) :=
+  (ContinuousLinearEquiv.prodComm ℝ (EuclideanSpace ℝ (Fin n)) ℝ).trans <|
+    ((ContinuousLinearEquiv.refl ℝ ℝ).prodCongr (EuclideanSpace.equiv (Fin n) ℝ)).trans <|
+      (Fin.consEquivL ℝ (fun _ : Fin (n + 1) ↦ ℝ)).trans
+        (EuclideanSpace.equiv (Fin (n + 1)) ℝ).symm
+
+@[simp]
+theorem euclideanHalfSpaceBoundaryNormalEquiv_apply_zero (n : ℕ)
+    (x : EuclideanSpace ℝ (Fin n)) (r : ℝ) :
+    euclideanHalfSpaceBoundaryNormalEquiv n (x, r) 0 = r := by
+  simp [euclideanHalfSpaceBoundaryNormalEquiv]
+
+@[simp]
+theorem euclideanHalfSpaceBoundaryNormalEquiv_apply_succ (n : ℕ)
+    (x : EuclideanSpace ℝ (Fin n)) (r : ℝ) (i : Fin n) :
+    euclideanHalfSpaceBoundaryNormalEquiv n (x, r) i.succ = x i := by
+  simp [euclideanHalfSpaceBoundaryNormalEquiv]
 
 /-- The coordinate hyperplane which is the boundary of the `(n + 1)`-dimensional Euclidean
 half-space. -/
