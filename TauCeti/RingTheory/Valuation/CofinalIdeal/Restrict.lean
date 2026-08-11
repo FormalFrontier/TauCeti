@@ -35,6 +35,10 @@ The point-level map on `Spv A` that Wedhorn's retraction `r_I` is built from liv
   `TauCeti.Valuation.restrictToIdeal_apply_of_eq_zero` : the two vanishing branches.
 * `TauCeti.Valuation.restrictToIdeal_eq_zero_iff` : where the restriction vanishes, totally.
 * `TauCeti.Valuation.restrictToIdeal_le_iff` : how restricted values compare, totally.
+* `TauCeti.Valuation.restrictToIdeal_ne_zero_of_le` : the restriction keeps every value above a
+  kept value.
+* `TauCeti.Valuation.restrictToIdeal_ne_zero_of_isAdmissible` : it does not kill a denominator
+  dominating an admissible numerator set.
 
 The *characterisation* lemmas — the vanishing branches, `restrictToIdeal_eq_zero_iff` and
 `restrictToIdeal_le_iff` — are phrased through `cΓ_v(I)` itself or through vanishing of the
@@ -381,5 +385,96 @@ theorem characteristicSubgroupOfIdeal_restrictToIdeal_eq_top (w : Valuation A Γ
   by_cases hm : IdealMeetsCharacteristicSubgroup w I
   · exact Or.inr (characteristicSubgroup_restrictToIdeal_eq_top_of_meets w I hfg hm)
   · exact Or.inl (cofinalValue_restrictToIdeal_of_not_meets w I hfg hm)
+
+/-- **A value whose class lies in `cΓ_v(I)` is kept by the restriction.** The contrapositive of
+the nonzero branch of `restrictToIdeal_eq_zero_iff`, in the form a consumer holding a membership
+proof wants. -/
+theorem restrictToIdeal_ne_zero_of_mem (v : Valuation A Γ₀) (I : Ideal A)
+    (hfg : ∃ J : Ideal A, J.FG ∧ I.radical = J.radical) {a : A}
+    (h0 : (MonoidWithZeroHom.ofClass v) a ≠ 0)
+    (hmem : valueGroup.mk (.ofClass v) 1 a (by simp) h0 ∈
+      characteristicSubgroupOfIdeal v I hfg) :
+    v.restrictToIdeal I hfg a ≠ 0 :=
+  fun h ↦ (restrictToIdeal_eq_zero_iff_of_ne v I hfg h0).mp h hmem
+
+/-- **The restriction keeps every value above a kept value.** A value discarded by `v|cΓ_v(I)`
+cannot dominate a kept one: the kept value's class lies in `cΓ_v(I)`, and a larger class is
+either below `1`, so convexity puts it in, or above `1`, so it is an attained characteristic
+value and `cΓ_v ≤ cΓ_v(I)` puts it in.
+
+This is the monotonicity that makes `r_I` a *horizontal* specialisation; Wedhorn uses it
+without comment in the proof of Lemma 7.5(iii). -/
+theorem restrictToIdeal_ne_zero_of_le (v : Valuation A Γ₀) (I : Ideal A)
+    (hfg : ∃ J : Ideal A, J.FG ∧ I.radical = J.radical) {a b : A}
+    (hb : v.restrictToIdeal I hfg b ≠ 0) (hab : v b ≤ v a) :
+    v.restrictToIdeal I hfg a ≠ 0 := by
+  intro ha
+  have hb0 : (ofClass v) b ≠ 0 := fun h ↦ hb (restrictToIdeal_apply_of_eq_zero v I hfg h)
+  have ha0 : (ofClass v) a ≠ 0 := fun h ↦ hb0 (le_antisymm (h ▸ hab) zero_le)
+  have hbmem : valueGroup.mk (.ofClass v) 1 b (by simp) hb0 ∈
+      characteristicSubgroupOfIdeal v I hfg := by
+    by_contra hm
+    exact hb (restrictToIdeal_apply_of_notMem v I hfg hb0 hm)
+  have hamem : valueGroup.mk (.ofClass v) 1 a (by simp) ha0 ∉
+      characteristicSubgroupOfIdeal v I hfg :=
+    (restrictToIdeal_eq_zero_iff_of_ne v I hfg ha0).mp ha
+  have hle : valueGroup.mk (.ofClass v) 1 b (by simp) hb0 ≤
+      valueGroup.mk (.ofClass v) 1 a (by simp) ha0 := by
+    have h := (v.restrict_le_iff (x := b) (y := a)).mpr hab
+    rwa [v.restrict_eq_mk hb0, v.restrict_eq_mk ha0, WithZero.coe_le_coe] at h
+  rcases le_or_gt (valueGroup.mk (.ofClass v) 1 a (by simp) ha0) 1 with h1 | h1
+  · exact hamem (ConvexSubgroup.mem_of_le_le_one hbmem hle h1)
+  · refine hamem (characteristicSubgroup_le_characteristicSubgroupOfIdeal v I hfg ?_)
+    exact mem_characteristicSubgroup_iff.mpr
+      ⟨_, mem_characteristicGenerators.mpr ⟨h1.le, a, v.restrict_eq_mk ha0⟩,
+        Left.inv_le_self h1.le, le_rfl⟩
+
+/-- **The restriction does not kill an admissible denominator.** If `u` dominates a set
+`T` with `I ⊆ √((T ∪ {u}) · A)` and `v u ≠ 0`, then `v|cΓ_v(I)` keeps `u`.
+
+This is the step Wedhorn argues by contradiction in the proof of Lemma 7.5(iii): were `u`
+discarded, `T ∪ {u}` would lie in the support of the restriction, which is prime and hence
+radical, so all of `I` would lie there — contradicting Lemma 7.2, which produces an element of
+`I` whose value lies in `cΓ_v(I)` whenever `v` does not vanish on `I`. -/
+theorem restrictToIdeal_ne_zero_of_isAdmissible (v : Valuation A Γ₀) (I : Ideal A)
+    (hfg : ∃ J : Ideal A, J.FG ∧ I.radical = J.radical) {T : Set A} {u : A}
+    (hadm : I ≤ (Ideal.span (insert u T)).radical)
+    (hu0 : v u ≠ 0) (hT : ∀ t ∈ T, v t ≤ v u) :
+    v.restrictToIdeal I hfg u ≠ 0 := by
+  intro hRu
+  set R := v.restrictToIdeal I hfg with hR
+  have hsupp : insert u T ⊆ (Valuation.supp R : Set A) := by
+    rintro t (rfl | ht)
+    · exact hRu
+    · refine Valuation.mem_supp_iff R t |>.mpr ?_
+      by_contra hRt
+      exact absurd hRu (restrictToIdeal_ne_zero_of_le v I hfg hRt (hT t ht))
+  have hI : ∀ a ∈ I, R a = 0 := by
+    have h : I ≤ Valuation.supp R := by
+      refine hadm.trans ?_
+      rw [← (Valuation.instIsPrimeSuppOfNontrivialOfNoZeroDivisors R).radical]
+      exact Ideal.radical_mono (Ideal.span_le.mpr hsupp)
+    exact fun a ha ↦ (Valuation.mem_supp_iff R a).mp (h ha)
+  have key : (∃ γ ∈ valueSet v I, γ ∈ characteristicSubgroupOfIdeal v I hfg) → False := by
+    rintro ⟨γ, hγI, hγH⟩
+    obtain ⟨a, haI, hav⟩ := mem_valueSet.mp hγI
+    have ha0 : (ofClass v) a ≠ 0 := fun h ↦ by
+      rw [v.restrict_eq_zero_iff.mpr h] at hav
+      exact WithZero.coe_ne_zero hav.symm
+    refine restrictToIdeal_ne_zero_of_mem v I hfg ha0 ?_ (hI a haI)
+    have hcoe : (valueGroup.mk (.ofClass v) 1 a (by simp) ha0 :
+        ValueGroup₀ (.ofClass v)) = γ := by
+      rw [← v.restrict_eq_mk ha0, hav]
+    rwa [WithZero.coe_inj.mp hcoe]
+  by_cases hm : IdealMeetsCharacteristicSubgroup v I
+  · obtain ⟨γ, hγI, hγc⟩ := idealMeetsCharacteristicSubgroup_iff.mp hm
+    exact key ⟨γ, hγI, characteristicSubgroup_le_characteristicSubgroupOfIdeal v I hfg hγc⟩
+  · by_cases hne : ∃ a ∈ I, (ofClass v) a ≠ 0
+    · exact key (exists_mem_valueSet_mem_characteristicSubgroupOfIdeal hfg hm hne)
+    · push Not at hne
+      have htop : characteristicSubgroupOfIdeal v I hfg = ⊤ :=
+        (characteristicSubgroupOfIdeal_eq_top_iff hfg).mpr
+          (Or.inl fun a ha ↦ cofinalValueFor_top_iff.mp (cofinalValueFor_of_eq_zero (hne a ha)))
+      exact restrictToIdeal_ne_zero_of_mem v I hfg hu0 (htop ▸ ConvexSubgroup.mem_top) hRu
 
 end TauCeti.Valuation
