@@ -21,7 +21,7 @@ extension.
 * `TauCeti.Module.Dual.baseChangeEvaluation_tmul`: its value on two pure tensors.
 * `TauCeti.Module.Dual.baseChange_coord`: base-changed dual basis elements recover the
   coordinates in the base-changed basis.
-* `TauCeti.Module.Dual.baseChange_jointly_injective`: base changes of all dual elements jointly
+* `TauCeti.Module.Dual.eq_of_baseChange_eq`: base changes of all dual elements jointly
   separate vectors when the original module is free.
 -/
 
@@ -58,6 +58,7 @@ theorem baseChangeEvaluation_tmul (a b : A) (φ : Module.Dual R M) (m : M) :
 
 /-- A coordinate in a base-changed basis is evaluation against the base change of the
 corresponding element of the dual basis. -/
+@[simp]
 theorem baseChange_coord {ι : Type*} (b : Module.Basis ι R M) (i : ι) (z : A ⊗[R] M) :
     ((TensorProduct.isBaseChange R M A).basis b).repr z i =
       Module.Dual.baseChange A (b.coord i) z := by
@@ -79,7 +80,7 @@ theorem baseChange_coord {ι : Type*} (b : Module.Basis ι R M) (i : ι) (z : A 
 
 /-- If `M` is free, the base changes of its `R`-linear functionals jointly separate vectors
 in `A ⊗[R] M`. -/
-theorem baseChange_jointly_injective [Module.Free R M] {x y : A ⊗[R] M}
+theorem eq_of_baseChange_eq [Module.Free R M] {x y : A ⊗[R] M}
     (h : ∀ φ : Module.Dual R M,
       Module.Dual.baseChange A φ x = Module.Dual.baseChange A φ y) : x = y := by
   let b := Module.Free.chooseBasis R M
