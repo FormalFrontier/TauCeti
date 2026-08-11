@@ -220,6 +220,15 @@ theorem coe_fixedPointsEquiv_apply (φ : A →ₐ[R] A)
   simp only [fixedPointsEquiv, MulEquiv.trans_apply, MulEquiv.subgroupCongr_apply,
     coe_equalizerPointsEquiv_apply]
 
+/-- The isomorphism does not move the values of a point: the value at `h` of the point over the
+fixed subalgebra is the value at `h` of the fixed point of `A`-points it comes from. -/
+@[simp]
+theorem coe_fixedPointsEquiv_symm_apply_apply (φ : A →ₐ[R] A)
+    (f : MonoidHom.eqLocus (mapValue (H := H) φ) (MonoidHom.id _)) (h : H) :
+    (((fixedPointsEquiv (H := H) φ).symm f).ofConv h : A) = (f : WithConv (H →ₐ[R] A)) h := by
+  have hf := (fixedPointsEquiv (H := H) φ).apply_symm_apply f
+  exact congrArg (fun x : WithConv (H →ₐ[R] A) => x.ofConv h) (congrArg Subtype.val hf)
+
 /-- A point fixed by two endomorphisms of the value algebra is fixed by their composite. -/
 theorem inf_eqLocus_mapValue_id_le_comp (φ ψ : A →ₐ[R] A) :
     MonoidHom.eqLocus (mapValue (H := H) φ) (MonoidHom.id _) ⊓
