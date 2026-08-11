@@ -511,21 +511,20 @@ private lemma linearIndependent_typeBSimpleRoot (n : ℕ) :
   omega
 
 /-- The support of the pinned base of type `Bₙ`: the first `n` root indices. -/
-private def typeBSimpleSupport (n : ℕ) : Finset (Fin (2 * n ^ 2)) :=
-  Finset.univ.map ⟨typeBSimpleIndex n, typeBSimpleIndex_injective⟩
+private abbrev typeBSimpleSupport (n : ℕ) : Finset (Fin (2 * n ^ 2)) :=
+  simpleSupport (typeBSimpleIndex_injective (n := n))
 
 private lemma mem_typeBSimpleSupport {k : Fin (2 * n ^ 2)} :
     k ∈ typeBSimpleSupport n ↔ (k : ℕ) < n := by
+  rw [typeBSimpleSupport, mem_simpleSupport]
   constructor
-  · rintro hk
-    obtain ⟨i, -, rfl⟩ := Finset.mem_map.mp hk
-    exact i.isLt
-  · intro hk
-    exact Finset.mem_map.mpr ⟨⟨k, hk⟩, Finset.mem_univ _, Fin.ext rfl⟩
+  · rintro ⟨i, rfl⟩
+    simpa only [typeBSimpleIndex_val] using i.isLt
+  · exact fun hk => ⟨⟨k, hk⟩, Fin.ext rfl⟩
 
 private lemma coe_typeBSimpleSupport :
-    (typeBSimpleSupport n : Set (Fin (2 * n ^ 2))) = range (typeBSimpleIndex n) := by
-  simp [typeBSimpleSupport]
+    (typeBSimpleSupport n : Set (Fin (2 * n ^ 2))) = range (typeBSimpleIndex n) :=
+  coe_simpleSupport _
 
 private lemma comp_root_typeBSimpleIndex :
     (typeBSimplyConnectedRootDatum n).root ∘ typeBSimpleIndex n =
@@ -640,25 +639,19 @@ private lemma typeB_corootOfPair_nonpos_of_sgn_eq_one_of_sgn_eq_neg_one_of_axis_
 is the set of the first `n` root indices, carrying the simple roots in Bourbaki order. -/
 def typeBSimplyConnectedBase (n : ℕ) : (typeBSimplyConnectedRootDatum n).Base where
   support := typeBSimpleSupport n
-  linearIndepOn_root := by
-    have h : LinearIndepOn ℤ (typeBSimplyConnectedRootDatum n).root
-        (range (typeBSimpleIndex n)) := by
-      rw [linearIndepOn_range_iff typeBSimpleIndex_injective, comp_root_typeBSimpleIndex]
+  linearIndepOn_root :=
+    linearIndepOn_simpleSupport _ _ <| by
+      rw [comp_root_typeBSimpleIndex]
       exact linearIndependent_typeBSimpleRoot n
-    rwa [← coe_typeBSimpleSupport] at h
-  linearIndepOn_coroot := by
-    have h : LinearIndepOn ℤ (typeBSimplyConnectedRootDatum n).coroot
-        (range (typeBSimpleIndex n)) := by
-      rw [linearIndepOn_range_iff typeBSimpleIndex_injective]
+  linearIndepOn_coroot :=
+    linearIndepOn_simpleSupport _ _ <| by
       have hcomp : (typeBSimplyConnectedRootDatum n).coroot ∘ typeBSimpleIndex n =
-          fun i : Fin n => (Pi.single i 1 : Fin n → ℤ) :=
-        funext fun i => coroot_typeBSimpleIndex i
-      have hb : (fun i : Fin n => (Pi.single i 1 : Fin n → ℤ)) = ⇑(Pi.basisFun ℤ (Fin n)) := by
+          ⇑(Pi.basisFun ℤ (Fin n)) := by
         funext i
+        rw [comp_apply, coroot_typeBSimpleIndex]
         simp
-      rw [hcomp, hb]
+      rw [hcomp]
       exact (Pi.basisFun ℤ (Fin n)).linearIndependent
-    rwa [← coe_typeBSimpleSupport] at h
   root_mem_or_neg_mem k := by
     rw [image_root_typeBSimpleSupport]
     obtain ⟨u, v, hroot⟩ : ∃ u v : Fin (2 * n),
@@ -726,37 +719,6 @@ indices. -/
     k ∈ (typeBSimplyConnectedBase n).support ↔ (k : ℕ) < n :=
   mem_typeBSimpleSupport
 
-/-- Identifies the first `n` indices in the pinned base support with `Fin n`, in Bourbaki order. -/
-def typeBBaseEquiv (n : ℕ) : (typeBSimplyConnectedBase n).support ≃ Fin n where
-  toFun x := ⟨(x : Fin (2 * n ^ 2)), mem_typeBSimpleSupport.mp x.2⟩
-  invFun i := ⟨typeBSimpleIndex n i, mem_typeBSimpleSupport.mpr (by simp)⟩
-  left_inv x := by
-    apply Subtype.ext
-    apply Fin.ext
-    simp
-  right_inv i := by
-    apply Fin.ext
-    simp
-
-private lemma typeBBaseEquiv_apply_eq (x : (typeBSimplyConnectedBase n).support) :
-    typeBBaseEquiv n x = ⟨x.1.1, mem_typeBSimplyConnectedBase_support.mp x.2⟩ := rfl
-
-private lemma typeBBaseEquiv_symm_apply_eq (i : Fin n) :
-    (typeBBaseEquiv n).symm i =
-      ⟨typeBSimpleIndex n i, mem_typeBSimplyConnectedBase_support.mpr (by simp)⟩ := rfl
-
-/-- The base equivalence sends a supported root index to the `Fin n` index with the same value. -/
-@[simp] theorem typeBBaseEquiv_apply (x : (typeBSimplyConnectedBase n).support) :
-    typeBBaseEquiv n x = ⟨x.1.1, mem_typeBSimplyConnectedBase_support.mp x.2⟩ :=
-  typeBBaseEquiv_apply_eq x
-
-/-- The inverse base equivalence returns the supported root index selected by
-`typeBSimpleIndex`. -/
-@[simp] theorem typeBBaseEquiv_symm_apply (i : Fin n) :
-    (typeBBaseEquiv n).symm i =
-      ⟨typeBSimpleIndex n i, mem_typeBSimplyConnectedBase_support.mpr (by simp)⟩ :=
-  typeBBaseEquiv_symm_apply_eq i
-
 /-- The pairing of two Bourbaki-indexed simple roots and coroots is the corresponding entry of
 the type-`B` Cartan matrix. -/
 @[simp] lemma pairing_typeBSimpleIndex (i j : Fin n) :
@@ -769,17 +731,9 @@ the type-`B` Cartan matrix. -/
 the standard Cartan matrix `CartanMatrix.B n`, with the node numbering of
 `TauCeti.DynkinType`. -/
 theorem hasCartanType_typeBSimplyConnectedRootDatum (n : ℕ) :
-    HasCartanType (typeBSimplyConnectedRootDatum n) (typeBSimplyConnectedBase n) (.B n) := by
-  rw [hasCartanType_iff]
-  refine ⟨typeBBaseEquiv n, fun i j => ?_⟩
-  have hi : (i : Fin (2 * n ^ 2)) = typeBSimpleIndex n (typeBBaseEquiv n i) :=
-    Fin.ext (by simp [typeBBaseEquiv])
-  have hj : (j : Fin (2 * n ^ 2)) = typeBSimpleIndex n (typeBBaseEquiv n j) :=
-    Fin.ext (by simp [typeBBaseEquiv])
-  rw [← (FaithfulSMul.algebraMap_injective ℤ ℤ).eq_iff,
-    RootPairing.Base.algebraMap_cartanMatrixIn_apply, hi, hj, pairing_typeBSimpleIndex,
-    cartanMatrix_B]
-  rfl
+    HasCartanType (typeBSimplyConnectedRootDatum n) (typeBSimplyConnectedBase n) (.B n) :=
+  hasCartanType_of_pairing_eq (typeBSimpleIndex_injective (n := n)) rfl fun i j =>
+    (pairing_typeBSimpleIndex i j).trans (by simp)
 
 /-- **The coroots of the pinned type `Bₙ` datum span the cocharacter lattice.** This is the simply
 connected lattice condition required by the pinned Chevalley--Demazure construction. Its
