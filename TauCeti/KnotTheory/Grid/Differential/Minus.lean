@@ -208,7 +208,6 @@ theorem constantCoeff_minusRectangleCoefficient :
     G.fullyBlockedRectangleCount_def x y]
 
 /-- The value of the minus differential on one grid-state generator. -/
-@[expose]
 noncomputable def minusDifferentialOnGenerator (x : GridState n) : GridChain (GridMinusRing n) n :=
   Finset.univ.sum fun y : GridState n =>
     Finsupp.single y (G.minusRectangleCoefficient x y)
@@ -219,14 +218,14 @@ theorem minusDifferentialOnGenerator_def (x : GridState n) :
     G.minusDifferentialOnGenerator x =
       Finset.univ.sum fun y : GridState n =>
         Finsupp.single y (G.minusRectangleCoefficient x y) :=
-  rfl
+  by simp only [minusDifferentialOnGenerator]
 
 /-- The `y`-coefficient of the minus differential on the generator `x`. -/
 @[simp]
 theorem minusDifferentialOnGenerator_apply (x y : GridState n) :
     G.minusDifferentialOnGenerator x y = G.minusRectangleCoefficient x y := by
   classical
-  rw [minusDifferentialOnGenerator, Finsupp.finsetSum_apply, Finset.sum_eq_single y]
+  rw [minusDifferentialOnGenerator_def, Finsupp.finsetSum_apply, Finset.sum_eq_single y]
   · simp
   · intro z _ hz
     simp [hz.symm]
