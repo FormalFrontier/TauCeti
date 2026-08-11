@@ -39,7 +39,9 @@ simple `K`-algebra and `A` is central simple
 same dimension as `A` over `K` (`Module.finrank_baseChange`); so Mathlib's
 `IsSimpleRing.exists_algEquiv_matrix_of_isAlgClosed` writes it as `Matrix (Fin n) (Fin n) L`, whose
 dimension is `n ^ 2`. Only simplicity of the scalar extension is used: the sharper statement that
-`L ⊗[K] A` is central simple *over `L`* is not needed here, and is not proved.
+`L ⊗[K] A` is central simple *over `L`* is not needed here. It is proved separately, as
+`TauCeti.Algebra.IsCentral.baseChange` in `TauCeti/Algebra/Central/BaseChange.lean`, which this file
+does not import.
 
 Centrality of `A` over `K` is essential rather than decorative: `ℂ` is a simple, finite-dimensional
 `ℝ`-algebra whose dimension `2` is not a perfect square. That negative control is checked at the end
@@ -76,7 +78,8 @@ size of the matrix algebra `A` becomes over an algebraically closed extension. E
 computes a degree is derived from `TauCeti.Algebra.deg_eq_of_finrank_eq_sq`, so a downstream proof
 need never unfold the definition. The two exceptions do not compute a degree and go through
 `Nat.sqrt` directly, because there is no square dimension to feed the characteristic property:
-`TauCeti.Algebra.deg_eq_of_algEquiv`, which only transports it along a linear equivalence, and
+`TauCeti.Algebra.deg_eq_of_finrank_eq`, which only transports it along an equality of dimensions
+(and from which `TauCeti.Algebra.deg_eq_of_algEquiv` is read off), and
 `TauCeti.Algebra.deg_pos`, which only needs `Module.finrank_pos`.
 
 `TauCeti.IsSimpleRing.isSquare_finrank` covers every base field, so the finite-base-field
@@ -170,10 +173,17 @@ Every lemma below that computes a degree is derived from this one, rather than b
 theorem deg_eq_of_finrank_eq_sq {n : ℕ} (h : Module.finrank K A = n ^ 2) : deg K A = n := by
   rw [deg, h, Nat.sqrt_eq']
 
+/-- Algebras of the same dimension have the same degree, even over different base fields. The
+degree being an integer square root, this needs no squareness: it transports the definition rather
+than computing a degree from `TauCeti.Algebra.deg_eq_of_finrank_eq_sq`. -/
+theorem deg_eq_of_finrank_eq {L B : Type*} [Field L] [Ring B] [Algebra L B]
+    (h : Module.finrank L B = Module.finrank K A) : deg L B = deg K A := by
+  rw [deg, deg, h]
+
 /-- Two isomorphic `K`-algebras have the same degree. -/
 theorem deg_eq_of_algEquiv {B : Type*} [Ring B] [Algebra K B] (e : A ≃ₐ[K] B) :
-    deg K A = deg K B := by
-  rw [deg, deg, e.toLinearEquiv.finrank_eq]
+    deg K A = deg K B :=
+  deg_eq_of_finrank_eq e.toLinearEquiv.finrank_eq
 
 variable (K A)
 

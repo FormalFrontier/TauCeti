@@ -53,47 +53,22 @@ public theorem semilocallySimplyConnectedAt_iff {x : X} :
       ∀ {u : X} (γ : Path u u) (_ : range γ ⊆ U),
         Path.Homotopic γ (Path.refl u) := by
   constructor
-  · -- Forward direction: SemilocallySimplyConnectedAt implies small loops are null
+  · -- Forward direction: shrink the neighborhood to an open one and restrict the loop to it
     intro ⟨U, hU_nhd, hU_loops⟩
     obtain ⟨V, hVU, hV_open, hx_in_V⟩ := mem_nhds_iff.mp hU_nhd
     refine ⟨V, hV_open, hx_in_V, ?_⟩
     intro u γ hγ_range
-    -- Since range γ ⊆ V ⊆ U, γ takes values in U
     have hγ_mem : ∀ t, γ t ∈ U := fun t ↦ hVU (hγ_range ⟨t, rfl⟩)
-    -- Restrict γ to a path in the subspace U
-    let γ_U : Path (⟨u, γ.source ▸ hγ_mem 0⟩ : U) ⟨u, γ.target ▸ hγ_mem 1⟩ := γ.codRestrict hγ_mem
-    -- The basepoint u' : U
-    let u' : U := ⟨u, γ.source ▸ hγ_mem 0⟩
-    -- The map from π₁(U, u') to π₁(X, u) has trivial range
-    have h_range := hU_loops u'
-    rw [MonoidHom.range_eq_bot_iff] at h_range
-    have h_map_eq : FundamentalGroup.map ⟨Subtype.val, continuous_subtype_val⟩ u'
-        (FundamentalGroup.fromPath ⟦γ_U⟧) =
-      FundamentalGroup.fromPath ⟦γ_U.map continuous_subtype_val⟧ :=
-        FundamentalGroup.map_fromPath ⟨Subtype.val, continuous_subtype_val⟩ u' γ_U
-    have h_map : FundamentalGroup.fromPath ⟦γ_U.map continuous_subtype_val⟧ =
-        FundamentalGroup.fromPath ⟦Path.refl u⟧ := by
-      rw [← h_map_eq, h_range]
-      -- `fromPath ⟦Path.refl u⟧` is the identity wrapper on `⟦Path.refl u⟧ = 𝟙 (mk u) = 1`.
-      exact FundamentalGroupoid.id_eq_path_refl (FundamentalGroupoid.mk u)
-    rw [Path.map_codRestrict] at h_map
-    exact Quotient.eq.mp h_map
-  · -- Backward direction: small loops null implies SemilocallySimplyConnectedAt
+    have h := (FundamentalGroup.map_range_eq_bot_iff ⟨Subtype.val, continuous_subtype_val⟩
+      (⟨u, γ.source ▸ hγ_mem 0⟩ : U)).mp (hU_loops _) (γ.codRestrict hγ_mem)
+    rwa [Path.map_codRestrict] at h
+  · -- Backward direction: the neighborhood is already open, and every loop in it is null
     intro ⟨U, hU_open, hx_in_U, hU_loops_null⟩
-    refine ⟨U, hU_open.mem_nhds hx_in_U, ?_⟩; intro base
-    simp only [MonoidHom.range_eq_bot_iff]; ext p
-    obtain ⟨γ', rfl⟩ := Quotient.exists_rep (FundamentalGroup.toPath p)
-    have hrange : range (γ'.map continuous_subtype_val) ⊆ U := by
-      rintro _ ⟨t, rfl⟩
-      exact (γ' t).property
-    have hhom := hU_loops_null (γ'.map continuous_subtype_val) hrange
-    have h_map_eq : FundamentalGroup.map ⟨Subtype.val, continuous_subtype_val⟩ base
-        (FundamentalGroup.fromPath ⟦γ'⟧) =
-      FundamentalGroup.fromPath ⟦γ'.map continuous_subtype_val⟧ :=
-        FundamentalGroup.map_fromPath ⟨Subtype.val, continuous_subtype_val⟩ base γ'
-    rw [h_map_eq, Quotient.sound hhom]
-    -- `fromPath ⟦Path.refl base⟧ = 𝟙 (mk base) = 1`.
-    exact (FundamentalGroupoid.id_eq_path_refl (FundamentalGroupoid.mk base.val)).symm
+    refine ⟨U, hU_open.mem_nhds hx_in_U, fun base ↦
+      (FundamentalGroup.map_range_eq_bot_iff ⟨Subtype.val, continuous_subtype_val⟩ base).mpr fun γ ↦
+        hU_loops_null (γ.map continuous_subtype_val) ?_⟩
+    rintro _ ⟨t, rfl⟩
+    exact (γ t).property
 
 /-- Characterization of semilocally simply connected at a point: any two paths in U between
 the same endpoints are homotopic. -/

@@ -13,6 +13,7 @@ public import Mathlib.LinearAlgebra.Finsupp.VectorSpace
 public import Mathlib.LinearAlgebra.FiniteDimensional.Defs
 public import Mathlib.LinearAlgebra.FreeModule.Finite.Basic
 public import Mathlib.RingTheory.Adjoin.Basic
+public import Mathlib.RingTheory.Idempotents
 
 /-!
 # The path algebra of a quiver
@@ -44,11 +45,18 @@ idempotents `e`, so left multiplication by `α` carries the `i`-component of a l
 
 * `TauCeti.PathAlgebra.single_mul_single`: the defining product of two basis paths.
 * `TauCeti.PathAlgebra.one_def`: the vertex idempotents sum to `1`; they are
-  orthogonal by `TauCeti.PathAlgebra.vertexIdempotent_mul_vertexIdempotent_of_ne`.
+  orthogonal by `TauCeti.PathAlgebra.vertexIdempotent_mul_vertexIdempotent_of_ne`, idempotent by
+  `TauCeti.PathAlgebra.vertexIdempotent_mul_self` and nonzero by
+  `TauCeti.PathAlgebra.vertexIdempotent_ne_zero`. The first three are bundled as
+  `TauCeti.PathAlgebra.completeOrthogonalIdempotents_vertexIdempotent`.
 * `TauCeti.module_finite_pathAlgebra` and `TauCeti.finrank_pathAlgebra`: `kQ` is a free module of
-  rank the number of paths of `Q`. The specialization to a finite acyclic quiver, whose paths are
+  rank the number of paths of `Q`, with `TauCeti.pathAlgebraBasis_repr_single` reading off the
+  coordinates of a basis path. The specialization to a finite acyclic quiver, whose paths are
   finite, is `TauCeti.finiteDimensional_pathAlgebra_of_isAcyclic` in
   `TauCeti.RepresentationTheory.Quiver.Acyclic.PathAlgebra`.
+* `TauCeti.vertexIdempotent_mul_mul_vertexIdempotent`: when the trivial path is the only path from
+  `v` to itself, `eᵥ f eᵥ` is the coefficient of `f` on that path, times `eᵥ`, so the corner
+  `eᵥ kQ eᵥ` is a copy of `k`. This is what makes the trivial paths visible to a two-sided ideal.
 * `TauCeti.PathAlgebra.adjoin_vertexIdempotents_union_arrows`: the vertex idempotents and arrows
   generate the path algebra.
 * `TauCeti.PathAlgebra.oneLoopAlgEquiv`: the one-loop path algebra is the additive monoid algebra
@@ -204,12 +212,12 @@ theorem mul?_mk {a b c : Q} (p : _root_.Quiver.Path a b) (q : _root_.Quiver.Path
 
 /-- Indexed paths that do not meet have no concatenation. -/
 theorem mul?_eq_none {x y : TotalPath Q} (h : y.2.1 ≠ x.1) : mul? x y = none := by
-  simp only [mul?, dif_neg h]
+  simp only [mul?, dite_eq_right h]
 
 /-- The concatenation of two indexed paths is undefined exactly when they do not meet. -/
 theorem mul?_eq_none_iff {x y : TotalPath Q} : mul? x y = none ↔ y.2.1 ≠ x.1 := by
   refine ⟨fun h hne => ?_, mul?_eq_none⟩
-  rw [mul?, dif_pos hne] at h
+  rw [mul?, dite_eq_left hne] at h
   exact Option.some_ne_none _ h
 
 /-- The trivial path at the target of `x` is a left unit for `x`. -/
@@ -560,6 +568,14 @@ theorem vertexIdempotent_mul_self (v : Q) :
     (vertexIdempotent k v * vertexIdempotent k v : pathAlgebra k Q) = vertexIdempotent k v := by
   rw [vertexIdempotent_eq_single, single_mul_single_of_comp, one_mul, _root_.Quiver.Path.comp_nil]
 
+/-- A vertex idempotent is nonzero: it is the basis path of the trivial path at its vertex, whose
+coefficient is `1`. -/
+@[simp]
+theorem vertexIdempotent_ne_zero [Nontrivial k] (v : Q) :
+    (vertexIdempotent k v : pathAlgebra k Q) ≠ 0 := by
+  rw [vertexIdempotent_eq_single, single_def]
+  exact Finsupp.single_ne_zero.2 one_ne_zero
+
 /-! ### The unit -/
 
 section Unit
@@ -613,6 +629,16 @@ noncomputable instance : Semiring (pathAlgebra k Q) where
     | zero => exact zero_mul _
     | add f₁ f₂ ih₁ ih₂ => rw [add_mul, ih₁, ih₂]
     | single x r => exact single_mul_one x r
+
+variable (k Q) in
+/-- **The vertex idempotents are a complete orthogonal family of idempotents**: they are
+idempotent, pairwise orthogonal, and sum to `1`. This bundles `TauCeti.PathAlgebra.one_def`
+with the orthogonality and idempotency above. -/
+theorem completeOrthogonalIdempotents_vertexIdempotent [Fintype Q] :
+    CompleteOrthogonalIdempotents fun v : Q => (vertexIdempotent k v : pathAlgebra k Q) where
+  idem v := vertexIdempotent_mul_self v
+  ortho _ _ h := vertexIdempotent_mul_vertexIdempotent_of_ne h
+  complete := one_def.symm
 
 end Unit
 
@@ -683,6 +709,57 @@ theorem coe_pathAlgebraBasis :
 theorem module_finite_pathAlgebra [Finite (Quiver.TotalPath Q)] :
     Module.Finite k (pathAlgebra k Q) :=
   Module.Finite.of_basis (pathAlgebraBasis k Q)
+
+variable {k Q}
+
+/-- The coordinates of a basis path for the path basis. -/
+@[simp]
+theorem pathAlgebraBasis_repr_single (x : Quiver.TotalPath Q) (c : k) :
+    (pathAlgebraBasis k Q).repr (PathAlgebra.single x c) = Finsupp.single x c := by
+  have hx : (PathAlgebra.single x c : pathAlgebra k Q) = c • pathAlgebraBasis k Q x := by
+    simp [coe_pathAlgebraBasis, PathAlgebra.ofPath_eq_single]
+  rw [hx, map_smul, Module.Basis.repr_self, Finsupp.smul_single, smul_eq_mul, mul_one]
+
+open PathAlgebra in
+/-- **Conjugating by a vertex idempotent reads off a coordinate.** When the trivial path is the
+only path from `v` to itself, `eᵥ f eᵥ` is the coordinate of `f` on that path, times `eᵥ`, so that
+the corner `eᵥ kQ eᵥ` is a copy of `k`. An acyclic quiver supplies the hypothesis through
+`TauCeti.Quiver.IsAcyclic.eq_nil`. -/
+theorem vertexIdempotent_mul_mul_vertexIdempotent (v : Q)
+    (h : ∀ p : _root_.Quiver.Path v v, p = _root_.Quiver.Path.nil) (f : pathAlgebra k Q) :
+    vertexIdempotent k v * f * vertexIdempotent k v
+      = (pathAlgebraBasis k Q).repr f ⟨v, v, _root_.Quiver.Path.nil⟩ • vertexIdempotent k v := by
+  induction f using PathAlgebra.induction_linear with
+  | zero => simp
+  | add f g hf hg =>
+    rw [mul_add, add_mul, hf, hg, map_add, Finsupp.add_apply, add_smul]
+  | single x c =>
+    obtain ⟨a, b, p⟩ := x
+    rw [pathAlgebraBasis_repr_single, vertexIdempotent_eq_single, smul_single, mul_one]
+    by_cases hb : v = b
+    · subst hb
+      rw [single_mul_single_of_comp (p := _root_.Quiver.Path.nil) (q := p) 1 c, one_mul,
+        _root_.Quiver.Path.comp_nil]
+      by_cases ha : v = a
+      · subst ha
+        obtain rfl := h p
+        rw [single_mul_single_of_comp (p := _root_.Quiver.Path.nil)
+            (q := _root_.Quiver.Path.nil) c 1, mul_one,
+          _root_.Quiver.Path.comp_nil, Finsupp.single_eq_same]
+      · have hne : (⟨a, v, p⟩ : Quiver.TotalPath Q) ≠ ⟨v, v, _root_.Quiver.Path.nil⟩ := by
+          intro heq
+          have hav : a = v := congrArg (fun z : Quiver.TotalPath Q => z.1) heq
+          exact ha hav.symm
+        rw [single_mul_single_of_not_composable
+          (x := ⟨a, v, p⟩) (y := ⟨v, v, _root_.Quiver.Path.nil⟩) ha c 1,
+          Finsupp.single_eq_of_ne' hne, single_zero]
+    · have hne : (⟨a, b, p⟩ : Quiver.TotalPath Q) ≠ ⟨v, v, _root_.Quiver.Path.nil⟩ := by
+        intro heq
+        have hbv : b = v := congrArg (fun z : Quiver.TotalPath Q => z.2.1) heq
+        exact hb hbv.symm
+      rw [single_mul_single_of_not_composable
+        (x := ⟨v, v, _root_.Quiver.Path.nil⟩) (y := ⟨a, b, p⟩) (fun hbv => hb hbv.symm) 1 c,
+        zero_mul, Finsupp.single_eq_of_ne' hne, single_zero]
 
 end Basis
 

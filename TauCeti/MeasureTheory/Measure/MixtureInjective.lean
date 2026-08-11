@@ -108,6 +108,39 @@ private theorem bind_infinitePi_univ (π : Measure (ProbabilityMeasure α)) :
   rw [Measure.bind_apply MeasurableSet.univ measurable_infinitePi_const.aemeasurable]
   simp
 
+/-- **The evaluation family lands in the unit box.** The pushforward of any measure on
+`ProbabilityMeasure α` along `P ↦ (P (B 0), …, P (B (k-1)))` gives measure zero to the complement
+of `[0, 1] ^ k`. -/
+private theorem map_eval_family_compl_pi_Icc_eq_zero {k : ℕ} (B : Fin k → Set α)
+    (hB : ∀ j, MeasurableSet (B j)) (π : Measure (ProbabilityMeasure α)) :
+    (π.map fun P : ProbabilityMeasure α => fun j => (P (B j) : ℝ))
+      (Set.univ.pi fun _ : Fin k => Set.Icc (0 : ℝ) 1)ᶜ = 0 := by
+  have hKc : IsCompact (Set.univ.pi fun _ : Fin k => Set.Icc (0 : ℝ) 1) :=
+    isCompact_univ_pi fun _ => isCompact_Icc
+  rw [← mem_ae_iff, _root_.MeasureTheory.mem_ae_map_iff
+    (measurable_probabilityMeasure_eval_family B hB).aemeasurable hKc.isClosed.measurableSet]
+  exact Filter.Eventually.of_forall fun P j _ =>
+    ⟨(P (B j)).coe_nonneg, by exact_mod_cast (P.apply_le_one (B j))⟩
+
+/-- **A monomial moment of the evaluation family is a mixed moment of the set measures.** The
+integral of `∏ j, x j ^ m j` against the pushforward along `P ↦ (P (B 0), …)` is
+`(∫⁻ P, ∏ j, P (B j) ^ m j).toReal`. -/
+private theorem integral_prod_pow_map_eq_toReal_lintegral {k : ℕ} (B : Fin k → Set α)
+    (hB : ∀ j, MeasurableSet (B j)) (m : Fin k → ℕ) (π : Measure (ProbabilityMeasure α)) :
+    ∫ x, ∏ j, x j ^ m j ∂(π.map fun P : ProbabilityMeasure α => fun j => (P (B j) : ℝ))
+      = (∫⁻ P, ∏ j, ((P : Measure α) (B j)) ^ m j ∂π).toReal := by
+  rw [integral_map (measurable_probabilityMeasure_eval_family B hB).aemeasurable
+    (Finset.measurable_prod _ fun j _ =>
+      (measurable_pi_apply j).pow_const _).aestronglyMeasurable]
+  rw [← integral_toReal ?meas ?fin]
+  · exact integral_congr_ae (Filter.Eventually.of_forall fun P => (toReal_prod_pow P B m).symm)
+  case meas =>
+    exact (Finset.measurable_prod _ fun j _ =>
+      ((Measure.measurable_coe (hB j)).comp measurable_subtype_coe).pow_const _).aemeasurable
+  case fin =>
+    exact Filter.Eventually.of_forall fun P =>
+      ENNReal.prod_lt_top fun j _ => (ENNReal.pow_ne_top (measure_ne_top _ _)).lt_top
+
 /-- **The i.i.d. mixture determines the mixing measure.** If two finite measures on
 `ProbabilityMeasure α` induce the same mixture `π.bind (P ↦ P^{⊗ℕ})`, they are equal.
 
@@ -125,41 +158,18 @@ theorem Measure.ext_of_bind_infinitePi_eq [IsFiniteMeasure π₁]
     exact measure_lt_top π₁ _
   refine TauCeti.MeasureTheory.Measure.ext_of_forall_map_probabilityMeasure_eval_eq
     fun k B hB => ?_
-  have hfm : Measurable fun P : ProbabilityMeasure α => fun j => (P (B j) : ℝ) :=
-    measurable_probabilityMeasure_eval_family B hB
   have : IsFiniteMeasure (π₁.map fun P : ProbabilityMeasure α => fun j => (P (B j) : ℝ)) :=
     Measure.isFiniteMeasure_map _ _
   have : IsFiniteMeasure (π₂.map fun P : ProbabilityMeasure α => fun j => (P (B j) : ℝ)) :=
     Measure.isFiniteMeasure_map _ _
   have hKc : IsCompact (Set.univ.pi fun _ : Fin k => Set.Icc (0 : ℝ) 1) :=
     isCompact_univ_pi fun _ => isCompact_Icc
-  have hsupp : ∀ π : Measure (ProbabilityMeasure α),
-      (π.map fun P : ProbabilityMeasure α => fun j => (P (B j) : ℝ))
-        (Set.univ.pi fun _ : Fin k => Set.Icc (0 : ℝ) 1)ᶜ = 0 := by
-    intro π
-    rw [Measure.map_apply hfm (hKc.isClosed.measurableSet.compl)]
-    convert measure_empty (μ := π)
-    ext P
-    simp only [Set.mem_preimage, Set.mem_compl_iff, Set.mem_pi, Set.mem_univ, Set.mem_Icc,
-      forall_const, Set.mem_empty_iff_false, iff_false, not_not]
-    exact fun j => ⟨(P (B j)).coe_nonneg, by exact_mod_cast (P.apply_le_one (B j))⟩
-  refine Measure.ext_of_forall_integral_monomial_eq_of_support hKc (hsupp π₁) (hsupp π₂) fun m => ?_
-  have hconv : ∀ π : Measure (ProbabilityMeasure α),
-      ∫ x, ∏ j, x j ^ m j ∂(π.map fun P : ProbabilityMeasure α => fun j => (P (B j) : ℝ))
-        = (∫⁻ P, ∏ j, ((P : Measure α) (B j)) ^ m j ∂π).toReal := by
-    intro π
-    rw [integral_map hfm.aemeasurable
-      (Finset.measurable_prod _ fun j _ =>
-        (measurable_pi_apply j).pow_const _).aestronglyMeasurable]
-    rw [← integral_toReal ?meas ?fin]
-    · exact integral_congr_ae (Filter.Eventually.of_forall fun P => (toReal_prod_pow P B m).symm)
-    case meas =>
-      exact (Finset.measurable_prod _ fun j _ =>
-        ((Measure.measurable_coe (hB j)).comp measurable_subtype_coe).pow_const _).aemeasurable
-    case fin =>
-      exact Filter.Eventually.of_forall fun P =>
-        ENNReal.prod_lt_top fun j _ => (ENNReal.pow_ne_top (measure_ne_top _ _)).lt_top
-  rw [hconv, hconv, lintegral_prod_pow_eq_of_bind_eq h B hB m]
+  refine Measure.ext_of_forall_integral_monomial_eq_of_support hKc
+    (map_eval_family_compl_pi_Icc_eq_zero B hB π₁)
+    (map_eval_family_compl_pi_Icc_eq_zero B hB π₂) fun m => ?_
+  rw [integral_prod_pow_map_eq_toReal_lintegral B hB m π₁,
+    integral_prod_pow_map_eq_toReal_lintegral B hB m π₂,
+    lintegral_prod_pow_eq_of_bind_eq h B hB m]
 
 end MeasureTheory
 

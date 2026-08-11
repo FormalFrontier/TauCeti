@@ -5,7 +5,7 @@ Authors: Claude
 -/
 module
 
-public import Mathlib.RepresentationTheory.Character
+public import TauCeti.RepresentationTheory.CharacterTable.ClassFunction
 public import Mathlib.RepresentationTheory.Irreducible
 public import Mathlib.RepresentationTheory.Rep.Res
 
@@ -15,7 +15,8 @@ public import Mathlib.RepresentationTheory.Rep.Res
 This file collects restriction infrastructure shared by the induction files: how the restriction
 functors `Rep.resFunctor` and `Action.res` behave under composing and inverting the homomorphism
 restricted along, and, for a subgroup `S` of a group `G`, the restriction of a finite-dimensional
-representation of `G` to `S` together with its character.  Restricting along a surjective
+representation of `G` to `S` together with its character and the class function that character
+carries (`TauCeti.ClassFunction.comap_subtype_ofFDRep`).  Restricting along a surjective
 homomorphism changes nothing essential: it identifies the lattices of invariant subspaces, and
 hence preserves irreducibility.
 
@@ -39,6 +40,8 @@ restriction of an intertwiner, the functor laws, naturality — is used straight
 
 * `TauCeti.resFunctor_comp`, `TauCeti.actionRes_comp`: restriction along a composite is
   restriction twice over.
+* `TauCeti.finrank_hom_res_mulEquiv`: restriction along an isomorphism of groups preserves the
+  dimension of an intertwining space.
 * `TauCeti.isIrreducible_comp_surjective_iff`: restriction along a surjective monoid homomorphism
   preserves irreducibility, with `TauCeti.isIrreducible_comp_equiv_iff` as the isomorphism case.
 
@@ -114,6 +117,23 @@ theorem resFunctorEquiv_inverse (e : H ≃* K) :
   (rfl)
 
 end Functor
+
+section Intertwining
+
+variable [Field k] {M M' : Type u} [Group M] [Group M']
+
+/-- Restriction along an isomorphism of groups is an equivalence of representation categories, so
+it leaves the dimension of an intertwining space unchanged. -/
+theorem finrank_hom_res_mulEquiv (e : M ≃* M') (X Y : FDRep k M') :
+    Module.finrank k ((Action.res (FGModuleCat k) (e : M →* M')).obj X ⟶
+        (Action.res (FGModuleCat k) (e : M →* M')).obj Y) = Module.finrank k (X ⟶ Y) :=
+  have hff : (Action.res (FGModuleCat.{u, u} k) (e : M →* M')).FullyFaithful :=
+    (Action.resEquiv (FGModuleCat.{u, u} k) e).fullyFaithfulFunctor
+  (LinearEquiv.ofBijective
+    ((Action.res (FGModuleCat.{u, u} k) (e : M →* M')).mapLinearMap k (X := X) (Y := Y))
+    hff.homEquiv.bijective).finrank_eq.symm
+
+end Intertwining
 
 section Subrepresentation
 
@@ -208,6 +228,15 @@ variable [Field k]
 theorem character_resFDRep (S : Subgroup G) (B : FDRep k G) (s : S) :
     (resFDRep S B).character s = B.character (s : G) :=
   rfl
+
+/-- Pulling the class function of a representation back along the inclusion of a subgroup gives
+the class function of the restricted representation: `ClassFunction.comap S.subtype` is
+restriction of class functions. -/
+@[simp]
+theorem ClassFunction.comap_subtype_ofFDRep (S : Subgroup G) (B : FDRep k G) :
+    ClassFunction.comap S.subtype (ClassFunction.ofFDRep B) =
+      ClassFunction.ofFDRep (resFDRep S B) :=
+  Subtype.ext (funext fun _ => by simp)
 
 end Character
 

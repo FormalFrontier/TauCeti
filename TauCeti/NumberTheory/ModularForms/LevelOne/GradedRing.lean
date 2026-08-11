@@ -400,7 +400,7 @@ private lemma evalE₄E₆_component_eq (p : MvPolynomial (Fin 2) ℂ) (n : ℕ)
   refine Finset.sum_eq_zero fun d hd ↦
     evalE₄E₆_monomial_apply_eq_zero_of_ne _ _ _ fun heq ↦ MvPolynomial.mem_support_iff.mp hd ?_
   rw [hq_def, MvPolynomial.coeff_sub, MvPolynomial.coeff_weightedHomogeneousComponent,
-    if_pos ?_, sub_self]
+    ite_eq_left ?_, sub_self]
   rw [weight_eq_4a_6b]
   lia
 
@@ -430,7 +430,7 @@ private lemma evalE₄E₆_discriminantPoly_mul_apply {n : ℕ}
       hcast ▸ GradedMonoid.GMul.mul (CuspForm.discriminant : ModularForm 𝒮ℒ 12)
         ((evalE₄E₆ s) ↑(n - 12)) := by
   conv_lhs => rw [map_mul, evalE₄E₆_discriminantPoly, evalE₄E₆_eq_of_apply (n - 12) s hs,
-    DirectSum.of_mul_of, DirectSum.of_apply, dif_pos hcast]
+    DirectSum.of_mul_of, DirectSum.of_apply, dite_eq_left hcast]
 
 private lemma evalE₄E₆_discriminantPoly_mul_coeff_zero {n : ℕ} (hn12 : 12 ≤ n)
     (s : MvPolynomial (Fin 2) ℂ)
@@ -617,7 +617,7 @@ private lemma reduced_isWeightedHomogeneous_eq_monomial {n : ℕ}
   rw [MvPolynomial.coeff_monomial]
   by_cases hd : d = d₀
   · simp [hd]
-  rw [if_neg (Ne.symm hd)]
+  rw [ite_eq_right (Ne.symm hd)]
   by_cases hd_supp : d ∈ r.support
   · obtain ⟨ha, hb⟩ := unique_small_weight_solution (hr_red d hd_supp) (hr_red d₀ hd₀)
       (by rw [← weight_eq_4a_6b, ← weight_eq_4a_6b,
@@ -633,13 +633,13 @@ private lemma evalE₄E₆_monomial_qExpansion_coeff_zero {n : ℕ} {d₀ : Fin 
     Algebra.algebraMap_eq_smul_one, smul_mul_assoc, one_mul, evalE₄E₆_monomial,
     DirectSum.smul_apply,
     -- Scalar action commutes with the coercion to functions
-    -- (`ModularForm.IsGLPos.coe_smul`); the ascribed `show` pins the statement at the
+    -- (`FunLike.coe_smul`); the ascribed `show` pins the statement at the
     -- right type.
     show (↑(c • ((DirectSum.of (ModularForm 𝒮ℒ) 4 E₄ ^ d₀ 0 *
         DirectSum.of (ModularForm 𝒮ℒ) 6 E₆ ^ d₀ 1) (↑n : ℤ))) : ℍ → ℂ) =
       c • (↑((DirectSum.of (ModularForm 𝒮ℒ) 4 E₄ ^ d₀ 0 *
         DirectSum.of (ModularForm 𝒮ℒ) 6 E₆ ^ d₀ 1) (↑n : ℤ)) : ℍ → ℂ) from
-      ModularForm.IsGLPos.coe_smul _ c,
+      FunLike.coe_smul c _,
     UpperHalfPlane.qExpansion_smul (ModularFormClass.analyticAt_cuspFunction_zero _
       one_pos one_mem_strictPeriods_SL) c, PowerSeries.coeff_smul,
     monomial_qExpansion_coeff_zero_eq_one hd₀_weight]
@@ -683,7 +683,7 @@ private lemma eval_discriminantPoly_mul_eq_zero_imp_eval_eq_zero {n : ℕ} (hn12
   rw [evalE₄E₆_discriminantPoly_mul_apply s hs hcast] at hds
   ext z
   have hpw := DFunLike.congr_fun hds z
-  simp only [ModularForm.zero_apply, cast_apply hcast] at hpw ⊢
+  simp only [_root_.zero_apply, cast_apply hcast] at hpw ⊢
   exact (mul_eq_zero.mp hpw).resolve_left (discriminant_ne_zero z)
 
 private lemma per_weight_injective_inductive_step (n : ℕ)

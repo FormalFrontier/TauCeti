@@ -12,7 +12,7 @@ import Mathlib.Analysis.SpecialFunctions.Integrals.Basic
 import Mathlib.Analysis.SpecialFunctions.PolarCoord
 import Mathlib.MeasureTheory.Integral.CircleIntegral
 import Mathlib.MeasureTheory.Integral.IntervalIntegral.Periodic
-import Mathlib.MeasureTheory.Integral.MeanInequalities
+import TauCeti.MeasureTheory.Function.Lp.LIntegralRpow
 import Mathlib.MeasureTheory.Integral.Prod
 import Mathlib.Topology.Order.LeftRightNhds
 
@@ -261,26 +261,6 @@ theorem lintegral_circleLIntegral_eq_lintegral (hg : Measurable g) (ζ : ℂ) :
 
 /-! ### Cauchy–Schwarz on a circle, and the length–area inequality -/
 
-/-- **Cauchy–Schwarz.** The square of the integral of a function is at most the mass of the measure
-times the integral of its square. -/
-private theorem sq_lintegral_le_measure_univ_mul {α : Type*} [MeasurableSpace α] (μ : Measure α)
-    {u : α → ℝ≥0∞} (hu : AEMeasurable u μ) :
-    (∫⁻ x, u x ∂μ) ^ 2 ≤ μ Set.univ * ∫⁻ x, u x ^ 2 ∂μ := by
-  have h := ENNReal.lintegral_mul_le_Lp_mul_Lq μ Real.HolderConjugate.two_two hu
-    (aemeasurable_const (b := (1 : ℝ≥0∞)))
-  simp only [Pi.mul_apply, mul_one, ENNReal.one_rpow, lintegral_const, one_mul] at h
-  have hrp : ∀ x : ℝ≥0∞, (x ^ (1 / 2 : ℝ)) ^ 2 = x := by
-    intro x
-    rw [← ENNReal.rpow_natCast (x ^ (1 / 2 : ℝ)) 2, ← ENNReal.rpow_mul]
-    norm_num
-  calc (∫⁻ x, u x ∂μ) ^ 2
-      ≤ ((∫⁻ x, u x ^ (2 : ℝ) ∂μ) ^ (1 / 2 : ℝ) * (μ Set.univ) ^ (1 / 2 : ℝ)) ^ 2 :=
-        pow_le_pow_left' h 2
-    _ = (∫⁻ x, u x ^ (2 : ℝ) ∂μ) * μ Set.univ := by rw [mul_pow, hrp, hrp]
-    _ = μ Set.univ * ∫⁻ x, u x ^ 2 ∂μ := by
-        rw [mul_comm]
-        exact congrArg _ (lintegral_congr fun x => ENNReal.rpow_natCast (u x) 2)
-
 /-- Cauchy–Schwarz in the angular variable: the square of the angular integral is at most `2 π`,
 the length of the angular interval, times the angular integral of the square. -/
 private theorem sq_lintegral_angle_le
@@ -290,7 +270,14 @@ private theorem sq_lintegral_angle_le
   have hvol : (volume.restrict (Ioo (-π) π)) Set.univ = ENNReal.ofReal (2 * π) := by
     rw [Measure.restrict_apply_univ, Real.volume_Ioo]
     ring_nf
-  simpa [hvol] using sq_lintegral_le_measure_univ_mul (volume.restrict (Ioo (-π) π)) hg
+  have hpow : ∀ x : ℝ≥0∞, x ^ (2 : ℝ) = x ^ 2 := fun x => by
+    rw [← ENNReal.rpow_natCast x 2]
+    norm_num
+  have hexp : (2 : ℝ) - 1 = 1 := by norm_num
+  have h := rpow_lintegral_le_measure_univ_rpow_mul (μ := volume.restrict (Ioo (-π) π))
+    (u := fun θ => g (circleMap ζ ρ θ)) hg (r := 2) one_le_two
+  rw [hvol, hexp, ENNReal.rpow_one] at h
+  simpa only [hpow] using h
 
 /-- **Cauchy–Schwarz on a circle.** The square of the circle integral of `g` is at most
 `2 π ρ` — for `ρ > 0` the circumference of the circle — times the circle integral of `g ^ 2`.

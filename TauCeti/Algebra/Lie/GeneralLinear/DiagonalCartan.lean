@@ -266,7 +266,7 @@ variable {R n}
 theorem glWeightSub_apply (i j : n) (A : diagonalCartan R n) :
     glWeightSub R n i j A = (A : Matrix n n R) i i - (A : Matrix n n R) j j := by
   simp only [glWeightSub, glWeightEquiv_apply, Pi.sub_apply, Pi.single_apply, sub_mul, ite_mul,
-    one_mul, zero_mul, Finset.sum_sub_distrib, Finset.sum_ite_eq', Finset.mem_univ, if_true]
+    one_mul, zero_mul, Finset.sum_sub_distrib, Finset.sum_ite_eq', Finset.mem_univ, ite_true]
 
 /-- The functionals `εᵢ - εᵢ` vanish. -/
 @[simp]
