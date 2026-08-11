@@ -257,21 +257,16 @@ spider relator being the addition — is served by
 def GroupPresentation.mulEquivCoxeterGroup (P : GroupPresentation)
     (M : CoxeterMatrix (Fin P.generatorCount)) (h : P.transcribed = coxeterRelators M) :
     P.Group ≃* M.Group :=
-  QuotientGroup.quotientMulEquivOfEq (by
-    calc
-      Subgroup.normalClosure P.relatorSet =
-          Subgroup.normalClosure (Relator.relatorSet P.transcribed) := by
-        rw [P.relatorSet_eq_relatorSet_transcribed]
-      _ = Subgroup.normalClosure (Relator.relatorSet (coxeterRelators M)) := by rw [h]
-      _ = Subgroup.normalClosure M.relationsSet :=
-        normalClosure_relatorSet_coxeterRelators M)
+  (QuotientGroup.quotientMulEquivOfEq (by
+    rw [P.relatorSet_eq_relatorSet_transcribed, h])).trans
+      (_root_.TauCeti.mulEquivCoxeterGroup M)
 
 @[simp]
 theorem GroupPresentation.mulEquivCoxeterGroup_apply_of (P : GroupPresentation)
     (M : CoxeterMatrix (Fin P.generatorCount)) (h : P.transcribed = coxeterRelators M)
     (i : Fin P.generatorCount) :
     P.mulEquivCoxeterGroup M h (PresentedGroup.of i) = M.simple i :=
-  QuotientGroup.quotientMulEquivOfEq_mk _ _
+  _root_.TauCeti.mulEquivCoxeterGroup_apply_of M i
 
 /-- **A transcription that appends further relators to the Coxeter relators of `M` presents the
 Coxeter relations together with those extra relations.** This is the form an audited Y-diagram
@@ -282,21 +277,16 @@ def GroupPresentation.mulEquivPresentedGroupCoxeterAppend (P : GroupPresentation
     (M : CoxeterMatrix (Fin P.generatorCount)) (extra : List (Relator (Fin P.generatorCount)))
     (h : P.transcribed = coxeterRelators M ++ extra) :
     P.Group ≃* PresentedGroup (M.relationsSet ∪ Relator.relatorSet extra) :=
-  QuotientGroup.quotientMulEquivOfEq (by
-    calc
-      Subgroup.normalClosure P.relatorSet =
-          Subgroup.normalClosure (Relator.relatorSet P.transcribed) := by
-        rw [P.relatorSet_eq_relatorSet_transcribed]
-      _ = Subgroup.normalClosure (Relator.relatorSet (coxeterRelators M ++ extra)) := by rw [h]
-      _ = Subgroup.normalClosure (M.relationsSet ∪ Relator.relatorSet extra) :=
-        normalClosure_relatorSet_coxeterRelators_append M extra)
+  (QuotientGroup.quotientMulEquivOfEq (by
+    rw [P.relatorSet_eq_relatorSet_transcribed, h])).trans
+      (_root_.TauCeti.mulEquivPresentedGroupCoxeterAppend M extra)
 
 @[simp]
 theorem GroupPresentation.mulEquivPresentedGroupCoxeterAppend_apply_of (P : GroupPresentation)
     (M : CoxeterMatrix (Fin P.generatorCount)) (extra : List (Relator (Fin P.generatorCount)))
     (h : P.transcribed = coxeterRelators M ++ extra) (i : Fin P.generatorCount) :
     P.mulEquivPresentedGroupCoxeterAppend M extra h (PresentedGroup.of i) = PresentedGroup.of i :=
-  QuotientGroup.quotientMulEquivOfEq_mk _ _
+  _root_.TauCeti.mulEquivPresentedGroupCoxeterAppend_apply_of M extra i
 
 end Coxeter
 
