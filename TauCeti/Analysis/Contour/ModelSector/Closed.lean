@@ -82,12 +82,12 @@ def modelSector (z₀ : ℂ) (r φ α : ℝ) : ℝ → ℂ :=
 theorem modelSector_of_le {z₀ : ℂ} {r φ α t : ℝ} (ht : t ≤ r) :
     modelSector z₀ r φ α t =
       twoRayCorner z₀ (Complex.exp ((φ + α : ℝ) * Complex.I))
-        (Complex.exp ((φ : ℝ) * Complex.I)) t := if_pos ht
+        (Complex.exp ((φ : ℝ) * Complex.I)) t := ite_eq_left ht
 
 /-- Pointwise value of the model sector on the arc interval. -/
 @[simp]
 theorem modelSector_of_lt {z₀ : ℂ} {r φ α t : ℝ} (ht : r < t) :
-    modelSector z₀ r φ α t = circleMap z₀ r (φ + (t - r)) := if_neg (not_le.mpr ht)
+    modelSector z₀ r φ α t = circleMap z₀ r (φ + (t - r)) := ite_eq_right (not_le.mpr ht)
 
 /-- The model sector starts at the outer end of the incoming radius. -/
 -- Not a `simp` lemma: `modelSector_of_le` rewrites the left-hand side to its `twoRayCorner`
@@ -129,7 +129,7 @@ theorem modelSector_eqOn_arc (z₀ : ℂ) (r φ : ℝ) {α : ℝ} (hα : 0 ≤ �
   intro t ht
   rw [Set.uIoo_of_le (by linarith), Set.mem_Ioo] at ht
   have : ¬ t ≤ r := not_le.mpr ht.1
-  simp only [modelSector, if_neg this, Function.comp_apply, one_mul]
+  simp only [modelSector, ite_eq_right this, Function.comp_apply, one_mul]
   ring_nf
 
 /-- The two ray directions of the model sector have equal (unit) length. -/
