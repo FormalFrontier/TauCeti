@@ -12,7 +12,7 @@ public import Mathlib.Data.Sym.Sym2.Order
 public import Mathlib.Data.Nat.Choose.Basic
 
 /-!
-# Auditable Coxeter relator lists and the Y-diagrams
+# Auditable Coxeter relator lists
 
 A Coxeter presentation is normally published as a diagram: a set of involutions, one per node, with
 a braid relation on each edge and a commuting relation on each non-edge. Mathlib turns a
@@ -24,8 +24,7 @@ among them.
 
 The count is the point. `TauCeti.length_coxeterRelators` says that a diagram on `n` nodes has
 `(n + 1).choose 2 = n * (n + 1) / 2` relators — the number of unordered pairs with repetition
-allowed, not `n.choose 2` — which is exactly the relator count that published Y-diagram
-presentations of sporadic groups record.
+allowed, not `n.choose 2`.
 
 The ordered-pair set and the unordered-pair list do not agree: `(sᵢ sⱼ) ^ mᵢⱼ` and
 `(sⱼ sᵢ) ^ mᵢⱼ` are distinct elements of the free group, so the list has to pick one of the two
@@ -38,10 +37,6 @@ and what makes the presented groups the same.
 * `TauCeti.coxeterRelator`: the relator expression `(sᵢ sⱼ) ^ M i j`.
 * `TauCeti.coxeterRelatorsOfList` and `TauCeti.coxeterRelators`: one Coxeter relator per unordered
   pair of nodes, the diagonal included.
-* `TauCeti.yParent`: the neighbour of a node towards the centre of a `Y_{p,q,r}` diagram.
-* `TauCeti.YAdjacent`: adjacency in a `Y_{p,q,r}` diagram.
-* `TauCeti.yCoxeterMatrix`: the Coxeter matrix of the `Y_{p,q,r}` diagram, three arms of `p`, `q`,
-  and `r` nodes attached to a central node.
 
 ## Main results
 
@@ -55,18 +50,13 @@ and what makes the presented groups the same.
   further relators to the Coxeter relators of `M` presents the group defined by Mathlib's Coxeter
   relations together with those extra relations. This is the shape a published Y-diagram
   presentation has, its extra relator being the spider relator.
-* `TauCeti.yCoxeterMatrix_of_adjacent` and `TauCeti.yCoxeterMatrix_of_not_adjacent`: the `Y`-diagram
-  entries, together with the shape lemmas `TauCeti.YAdjacent_pred` and
-  `TauCeti.YAdjacent_secondArmHead_zero` pinning the arms and the centre.
 
 ## References
 
-This file supplies the generic Coxeter-diagram half of milestone S1 of
-`TauCetiRoadmap/CFSGStatement/README.md`, which asks for the `Y₄₄₃` presentation of the Monster,
-the `Y₄₃₃` presentation of the Baby Monster, and the smaller `Y`-diagrams of the Fischer groups.
-The pinned diagrams themselves, their spider relators, and their published relator counts live in
-`TauCeti.GroupTheory.SpecificGroups.CFSG.YDiagram`. No presentation of a named group is asserted
-here.
+This file supplies reusable Coxeter-presentation machinery needed by milestone S1 of
+`TauCetiRoadmap/CFSGStatement/README.md`. Its application to the roadmap's sporadic-group
+presentations lives in `TauCeti.GroupTheory.SpecificGroups.CFSG.YDiagram`. No presentation of a
+named group is asserted here.
 
 `TauCeti.coxeterRelatorsOfList` is built from Mathlib's `List.sym2` in `Mathlib.Data.List.Sym`,
 whose `List.length_sym2` supplies the relator count, and from `Sym2.inf`/`Sym2.sup` in
@@ -106,28 +96,38 @@ larger node, which is the choice of order the free group forces on the transcrip
 def coxeterRelatorsOfList [LinearOrder B] (M : CoxeterMatrix B) (l : List B) : List (Relator B) :=
   l.sym2.map fun z => coxeterRelator M z.inf z.sup
 
-/-- The Coxeter relator list spelled out as a map over the unordered pairs of the node list. -/
-theorem coxeterRelatorsOfList_eq [LinearOrder B] (M : CoxeterMatrix B) (l : List B) :
-    coxeterRelatorsOfList M l = l.sym2.map fun z => coxeterRelator M z.inf z.sup := by
-  rw [coxeterRelatorsOfList]
-
 /-- A list of `n` nodes yields `(n + 1).choose 2` Coxeter relators, the number of unordered pairs
 of nodes with repetition allowed. -/
 theorem length_coxeterRelatorsOfList [LinearOrder B] (M : CoxeterMatrix B) (l : List B) :
     (coxeterRelatorsOfList M l).length = (l.length + 1).choose 2 := by
   rw [coxeterRelatorsOfList, List.length_map, List.length_sym2]
 
+/-- Membership in the Coxeter relator list, in terms of two nodes of the source list and their
+canonical increasing order. -/
+theorem mem_coxeterRelatorsOfList_iff [LinearOrder B] {M : CoxeterMatrix B} {l : List B}
+    {t : Relator B} :
+    t ∈ coxeterRelatorsOfList M l ↔
+      ∃ i ∈ l, ∃ j ∈ l, t = coxeterRelator M s(i, j).inf s(i, j).sup := by
+  rw [coxeterRelatorsOfList, List.mem_map]
+  constructor
+  · rintro ⟨z, hz, rfl⟩
+    induction z with
+    | _ i j =>
+      exact ⟨i, List.left_mem_of_mk_mem_sym2 hz, j, List.right_mem_of_mk_mem_sym2 hz, rfl⟩
+  · rintro ⟨i, hi, j, hj, rfl⟩
+    exact ⟨s(i, j), List.mk_mem_sym2 hi hj, rfl⟩
+
 /-- Every Coxeter relator in the list is the relator of a pair of nodes. -/
-theorem exists_eq_coxeterRelator_of_mem [LinearOrder B] {M : CoxeterMatrix B} {l : List B}
+private theorem exists_eq_coxeterRelator_of_mem [LinearOrder B] {M : CoxeterMatrix B} {l : List B}
     {t : Relator B} (ht : t ∈ coxeterRelatorsOfList M l) : ∃ i j, t = coxeterRelator M i j := by
-  rw [coxeterRelatorsOfList, List.mem_map] at ht
-  obtain ⟨z, -, rfl⟩ := ht
-  exact ⟨z.inf, z.sup, rfl⟩
+  obtain ⟨i, -, j, -, rfl⟩ := mem_coxeterRelatorsOfList_iff.mp ht
+  exact ⟨s(i, j).inf, s(i, j).sup, rfl⟩
 
 /-- For any two nodes of the list, the list carries the Coxeter relator of the pair in one of its
 two orders. Which one it is is fixed by the linear order on the nodes, and the two differ, so this
 is the sharpest statement available. -/
-theorem coxeterRelator_mem_or_swap_mem [LinearOrder B] (M : CoxeterMatrix B) {l : List B} {i j : B}
+private theorem coxeterRelator_mem_or_swap_mem [LinearOrder B] (M : CoxeterMatrix B)
+    {l : List B} {i j : B}
     (hi : i ∈ l) (hj : j ∈ l) :
     coxeterRelator M i j ∈ coxeterRelatorsOfList M l ∨
       coxeterRelator M j i ∈ coxeterRelatorsOfList M l := by
@@ -142,11 +142,6 @@ theorem coxeterRelator_mem_or_swap_mem [LinearOrder B] (M : CoxeterMatrix B) {l 
 numbering `0, 1, …, n - 1`. -/
 def coxeterRelators {n : ℕ} (M : CoxeterMatrix (Fin n)) : List (Relator (Fin n)) :=
   coxeterRelatorsOfList M (List.finRange n)
-
-/-- The Coxeter relator list of a `Fin n`-indexed matrix is the one drawn from `List.finRange n`. -/
-theorem coxeterRelators_eq {n : ℕ} (M : CoxeterMatrix (Fin n)) :
-    coxeterRelators M = coxeterRelatorsOfList M (List.finRange n) := by
-  rw [coxeterRelators]
 
 /-- A Coxeter diagram on `n` nodes has `(n + 1).choose 2` relators. -/
 theorem length_coxeterRelators {n : ℕ} (M : CoxeterMatrix (Fin n)) :
@@ -210,7 +205,7 @@ def mulEquivCoxeterGroup {n : ℕ} (M : CoxeterMatrix (Fin n)) :
   QuotientGroup.quotientMulEquivOfEq (normalClosure_relatorSet_coxeterRelators M)
 
 @[simp]
-theorem mulEquivCoxeterGroup_of {n : ℕ} (M : CoxeterMatrix (Fin n)) (i : Fin n) :
+theorem mulEquivCoxeterGroup_apply_of {n : ℕ} (M : CoxeterMatrix (Fin n)) (i : Fin n) :
     mulEquivCoxeterGroup M (PresentedGroup.of i) = M.simple i :=
   QuotientGroup.quotientMulEquivOfEq_mk _ _
 
@@ -224,7 +219,7 @@ def mulEquivPresentedGroupCoxeterAppend {n : ℕ} (M : CoxeterMatrix (Fin n))
   QuotientGroup.quotientMulEquivOfEq (normalClosure_relatorSet_coxeterRelators_append M extra)
 
 @[simp]
-theorem mulEquivPresentedGroupCoxeterAppend_of {n : ℕ} (M : CoxeterMatrix (Fin n))
+theorem mulEquivPresentedGroupCoxeterAppend_apply_of {n : ℕ} (M : CoxeterMatrix (Fin n))
     (extra : List (Relator (Fin n))) (i : Fin n) :
     mulEquivPresentedGroupCoxeterAppend M extra (PresentedGroup.of i) = PresentedGroup.of i :=
   QuotientGroup.quotientMulEquivOfEq_mk _ _
@@ -237,11 +232,11 @@ def GroupPresentation.mulEquivCoxeterGroup (P : GroupPresentation)
     (M : CoxeterMatrix (Fin P.generatorCount)) (h : P.transcribed = coxeterRelators M) :
     P.Group ≃* M.Group :=
   QuotientGroup.quotientMulEquivOfEq (by
-    rw [show P.relatorSet = Relator.relatorSet (coxeterRelators M) from congrArg _ h,
-      normalClosure_relatorSet_coxeterRelators])
+    change Subgroup.normalClosure (Relator.relatorSet P.transcribed) = _
+    rw [h, normalClosure_relatorSet_coxeterRelators])
 
 @[simp]
-theorem GroupPresentation.mulEquivCoxeterGroup_of (P : GroupPresentation)
+theorem GroupPresentation.mulEquivCoxeterGroup_apply_of (P : GroupPresentation)
     (M : CoxeterMatrix (Fin P.generatorCount)) (h : P.transcribed = coxeterRelators M)
     (i : Fin P.generatorCount) :
     P.mulEquivCoxeterGroup M h (PresentedGroup.of i) = M.simple i :=
@@ -257,146 +252,16 @@ def GroupPresentation.mulEquivPresentedGroupCoxeterAppend (P : GroupPresentation
     (h : P.transcribed = coxeterRelators M ++ extra) :
     P.Group ≃* PresentedGroup (M.relationsSet ∪ Relator.relatorSet extra) :=
   QuotientGroup.quotientMulEquivOfEq (by
-    rw [show P.relatorSet = Relator.relatorSet (coxeterRelators M ++ extra) from congrArg _ h,
-      normalClosure_relatorSet_coxeterRelators_append])
+    change Subgroup.normalClosure (Relator.relatorSet P.transcribed) = _
+    rw [h, normalClosure_relatorSet_coxeterRelators_append])
 
 @[simp]
-theorem GroupPresentation.mulEquivPresentedGroupCoxeterAppend_of (P : GroupPresentation)
+theorem GroupPresentation.mulEquivPresentedGroupCoxeterAppend_apply_of (P : GroupPresentation)
     (M : CoxeterMatrix (Fin P.generatorCount)) (extra : List (Relator (Fin P.generatorCount)))
     (h : P.transcribed = coxeterRelators M ++ extra) (i : Fin P.generatorCount) :
     P.mulEquivPresentedGroupCoxeterAppend M extra h (PresentedGroup.of i) = PresentedGroup.of i :=
   QuotientGroup.quotientMulEquivOfEq_mk _ _
 
 end Coxeter
-
-/-! ## The Y-diagrams -/
-
-/-- The neighbour of node `i` towards the centre of a `Y_{p,q,r}` diagram whose central node is
-`0`, whose first arm is `1, …, p`, whose second arm is `p + 1, …, p + q`, and whose third arm is
-`p + q + 1, …, p + q + r`. The first node of each arm has the centre as its neighbour, and every
-later node has its predecessor. -/
-def yParent (p q i : ℕ) : ℕ :=
-  if i = p + 1 ∨ i = p + q + 1 then 0 else i - 1
-
-/-- The neighbour towards the centre spelled out, so that a consumer outside this file can compute
-with it. -/
-theorem yParent_eq (p q i : ℕ) :
-    yParent p q i = if i = p + 1 ∨ i = p + q + 1 then 0 else i - 1 := by
-  rw [yParent]
-
-/-- Adjacency in a `Y_{p,q,r}` diagram: two distinct nodes are joined exactly when one is the
-neighbour of the other towards the centre. -/
-def YAdjacent (p q i j : ℕ) : Prop :=
-  (i ≠ 0 ∧ yParent p q i = j) ∨ (j ≠ 0 ∧ yParent p q j = i)
-
-/-- Adjacency spelled out, so that a consumer outside this file can both establish and refute
-it. -/
-theorem YAdjacent_iff (p q i j : ℕ) :
-    YAdjacent p q i j ↔ (i ≠ 0 ∧ yParent p q i = j) ∨ (j ≠ 0 ∧ yParent p q j = i) :=
-  Iff.rfl
-
-instance (p q i j : ℕ) : Decidable (YAdjacent p q i j) :=
-  inferInstanceAs (Decidable ((i ≠ 0 ∧ yParent p q i = j) ∨ (j ≠ 0 ∧ yParent p q j = i)))
-
-/-- Non-adjacency in terms of the arm arithmetic: neither node is a non-central node whose
-neighbour towards the centre is the other. -/
-theorem not_YAdjacent_iff (p q i j : ℕ) :
-    ¬YAdjacent p q i j ↔
-      (i = 0 ∨ yParent p q i ≠ j) ∧ (j = 0 ∨ yParent p q j ≠ i) := by
-  rw [YAdjacent_iff]
-  tauto
-
-/-- Adjacency in a `Y`-diagram is symmetric. -/
-theorem YAdjacent_comm {p q i j : ℕ} : YAdjacent p q i j ↔ YAdjacent p q j i :=
-  or_comm
-
-/-- Adjacent nodes of a `Y`-diagram are distinct. -/
-theorem YAdjacent.ne {p q i j : ℕ} (h : YAdjacent p q i j) : i ≠ j := by
-  rintro rfl
-  rcases h with ⟨hi, hparent⟩ | ⟨hi, hparent⟩
-  all_goals
-    rw [yParent] at hparent
-    split at hparent <;> omega
-
-@[simp]
-theorem yParent_one (p q : ℕ) : yParent p q 1 = 0 := by
-  rw [yParent]
-  split <;> omega
-
-@[simp]
-theorem yParent_secondArmHead (p q : ℕ) : yParent p q (p + 1) = 0 := by
-  rw [yParent, if_pos (Or.inl rfl)]
-
-@[simp]
-theorem yParent_thirdArmHead (p q : ℕ) : yParent p q (p + q + 1) = 0 := by
-  rw [yParent, if_pos (Or.inr rfl)]
-
-/-- Away from the head of an arm, the neighbour towards the centre is the predecessor, so each arm
-of the diagram is a chain in the node numbering. -/
-theorem yParent_of_ne_head (p q i : ℕ) (h₂ : i ≠ p + 1) (h₃ : i ≠ p + q + 1) :
-    yParent p q i = i - 1 := by
-  rw [yParent, if_neg (by tauto)]
-
-/-- The head of the first arm is joined to the centre. When the first arm is empty, node `1` heads
-the first nonempty arm instead, and is joined to the centre as well. -/
-theorem YAdjacent_one_zero (p q : ℕ) : YAdjacent p q 1 0 :=
-  Or.inl ⟨one_ne_zero, yParent_one p q⟩
-
-/-- The head of the second arm is joined to the centre. -/
-theorem YAdjacent_secondArmHead_zero (p q : ℕ) : YAdjacent p q (p + 1) 0 :=
-  Or.inl ⟨by omega, yParent_secondArmHead p q⟩
-
-/-- The head of the third arm is joined to the centre. -/
-theorem YAdjacent_thirdArmHead_zero (p q : ℕ) : YAdjacent p q (p + q + 1) 0 :=
-  Or.inl ⟨by omega, yParent_thirdArmHead p q⟩
-
-/-- Consecutive nodes of one arm are joined. -/
-theorem YAdjacent_pred (p q i : ℕ) (h₁ : i ≠ 0) (h₂ : i ≠ p + 1) (h₃ : i ≠ p + q + 1) :
-    YAdjacent p q i (i - 1) :=
-  Or.inl ⟨h₁, yParent_of_ne_head p q i h₂ h₃⟩
-
-/-- The Coxeter matrix of the `Y_{p,q,r}` diagram: `p + q + r + 1` nodes, all generators
-involutions, a braid relation of order three along each of the three arms, and commuting
-generators otherwise. -/
-def yCoxeterMatrix (p q r : ℕ) : CoxeterMatrix (Fin (p + q + r + 1)) where
-  M := Matrix.of fun i j => if i = j then 1 else if YAdjacent p q i j then 3 else 2
-  isSymm := by
-    ext i j
-    simp only [Matrix.transpose_apply, Matrix.of_apply]
-    rcases eq_or_ne i j with rfl | h
-    · rfl
-    · rw [if_neg (Ne.symm h), if_neg h]
-      exact if_congr YAdjacent_comm rfl rfl
-  diagonal i := by simp
-  off_diagonal i j h := by
-    simp only [Matrix.of_apply, if_neg h]
-    split <;> decide
-
-/-- The matrix entry is `1` on the diagonal, `3` for adjacent nodes, and `2` otherwise. -/
-theorem yCoxeterMatrix_apply (p q r : ℕ) (i j : Fin (p + q + r + 1)) :
-    yCoxeterMatrix p q r i j =
-      if i = j then 1 else if YAdjacent p q i j then 3 else 2 := by
-  rw [yCoxeterMatrix]
-  rfl
-
-/-- Every `Y`-diagram is simply laced: an entry of its Coxeter matrix is `1`, `2`, or `3`, so the
-diagram carries only single edges. -/
-theorem yCoxeterMatrix_le_three (p q r : ℕ) (i j : Fin (p + q + r + 1)) :
-    yCoxeterMatrix p q r i j ≤ 3 := by
-  rw [yCoxeterMatrix_apply]
-  split
-  · omega
-  · split <;> omega
-
-/-- Adjacent nodes of a `Y`-diagram carry a braid relation of order three. -/
-theorem yCoxeterMatrix_of_adjacent (p q r : ℕ) {i j : Fin (p + q + r + 1)}
-    (h : YAdjacent p q i j) : yCoxeterMatrix p q r i j = 3 := by
-  have hij : i ≠ j := fun hij => h.ne (congrArg Fin.val hij)
-  rw [yCoxeterMatrix_apply, if_neg hij, if_pos h]
-
-/-- Non-adjacent distinct nodes of a `Y`-diagram carry commuting generators. -/
-theorem yCoxeterMatrix_of_not_adjacent (p q r : ℕ) {i j : Fin (p + q + r + 1)} (hne : i ≠ j)
-    (h : ¬YAdjacent p q i j) : yCoxeterMatrix p q r i j = 2 := by
-  rw [yCoxeterMatrix_apply, if_neg hne, if_neg h]
 
 end TauCeti
