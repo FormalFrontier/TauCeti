@@ -9,6 +9,7 @@ public import TauCeti.Geometry.Lie.Adjoint.Exponential
 import TauCeti.Analysis.Calculus.ParametricFDeriv
 import TauCeti.Geometry.Lie.Exponential.Derivative.Basic
 import TauCeti.Geometry.Lie.InvariantVectorField.Commutation
+import TauCeti.Geometry.Manifold.ContMDiff.Prod
 import TauCeti.Geometry.Manifold.VectorField.Regularity
 
 /-!
@@ -55,34 +56,9 @@ variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
 attribute [local instance] LieGroup.minSmoothnessThree
 attribute [local instance] ContMDiffMul.boundarylessManifold
 
-/-- A smooth scalar function is jointly smooth in the two independent parameters of
-`(s, t) ↦ f (exp (s • X) * g * exp (t • (-X)))`, whose diagonal is conjugation of `g`. -/
-private theorem ContMDiffMap.contDiff_comp_mulInvariantExp_conjParameters
-    (f : C^∞⟮I, G; ℝ⟯) (X : GroupLieAlgebra I G) (g : G) :
-    let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
-    ContDiff ℝ ∞ (fun p : ℝ × ℝ =>
-      f (mulInvariantExp (I := I) (G := G) (p.1 • X) * g *
-        mulInvariantExp (I := I) (G := G) (p.2 • (-X)))) := by
-  let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
-  dsimp only
-  have hX : ContMDiff 𝓘(ℝ, ℝ) I ∞
-      (fun t : ℝ => mulInvariantExp (I := I) (G := G) (t • X)) := by
-    exact contMDiff_mulInvariantExp_smul (I := I) (G := G) X
-  have hnegX : ContMDiff 𝓘(ℝ, ℝ) I ∞
-      (fun t : ℝ => mulInvariantExp (I := I) (G := G) (t • (-X))) := by
-    exact contMDiff_mulInvariantExp_smul (I := I) (G := G) (-X)
-  have hMprod : ContMDiff (𝓘(ℝ, ℝ).prod 𝓘(ℝ, ℝ)) I ∞
-      (fun p : ℝ × ℝ =>
-        mulInvariantExp (I := I) (G := G) (p.1 • X) * g *
-          mulInvariantExp (I := I) (G := G) (p.2 • (-X))) :=
-    ((hX.comp contMDiff_fst).mul contMDiff_const).mul (hnegX.comp contMDiff_snd)
-  have hM : ContMDiff 𝓘(ℝ, ℝ × ℝ) I ∞
-      (fun p : ℝ × ℝ =>
-        mulInvariantExp (I := I) (G := G) (p.1 • X) * g *
-          mulInvariantExp (I := I) (G := G) (p.2 • (-X))) := by
-    rw [modelWithCornersSelf_prod, ← chartedSpaceSelf_prod]
-    exact hMprod
-  exact (f.contMDiff.comp hM).contDiff
+private theorem two_le_infinite_smoothness_adjoint :
+    ((2 : ℕ∞) : ℕ∞ω) ≤ ((⊤ : ℕ∞) : ℕ∞ω) :=
+  ENat.natCast_le_of_coe_top_le_withTop le_rfl 2
 
 /-- The infinitesimal generator of conjugation acts on scalar functions by the difference of
 right- and left-invariant differentiation. -/
@@ -100,7 +76,8 @@ private theorem ContMDiffMap.hasDerivAt_comp_conj_mulInvariantExp_smul
     f (mulInvariantExp (I := I) (G := G) (p.1 • X) * g *
       mulInvariantExp (I := I) (G := G) (p.2 • (-X)))
   have hF : ContDiff ℝ ∞ F :=
-    ContMDiffMap.contDiff_comp_mulInvariantExp_conjParameters f X g
+    (f.contMDiff.comp
+      (contMDiff_mulInvariantExp_smul_mul_mul_mulInvariantExp_smul g X (-X))).contDiff
   have hdiag : HasDerivAt (fun t : ℝ => F (t, t))
       (fderiv ℝ F (0, 0) (1, 1)) 0 := by
     have hemb : HasDerivAt (fun t : ℝ => (t, t)) (1, 1) 0 :=
@@ -221,9 +198,7 @@ private theorem mvfderiv_conjugationGenerator_eq_bracket
     (V := mulInvariantVectorField X)
     (W := mulInvariantVectorField Y)
     (x := (1 : G))
-    (f.contMDiff.contMDiffAt.of_le (show
-      ((2 : ℕ∞) : ℕ∞ω) ≤ ((⊤ : ℕ∞) : ℕ∞ω) from
-        WithTop.coe_le_coe.mpr le_top))
+    (f.contMDiff.contMDiffAt.of_le two_le_infinite_smoothness_adjoint)
     (by simp)
     ((contMDiff_mulInvariantVectorField_infty X).mdifferentiable
       (by simp)).mdifferentiableAt
@@ -264,13 +239,7 @@ private theorem ContMDiffMap.contDiff_comp_conj_mulInvariantExp_mulInvariantExp
           mulInvariantExp (I := I) (G := G) (p.1 • (-X))) :=
     ((hX.comp contMDiff_fst).mul (hY.comp contMDiff_snd)).mul
       (hnegX.comp contMDiff_fst)
-  have hM : ContMDiff 𝓘(ℝ, ℝ × ℝ) I ∞
-      (fun p : ℝ × ℝ =>
-        mulInvariantExp (I := I) (G := G) (p.1 • X) *
-          mulInvariantExp (I := I) (G := G) (p.2 • Y) *
-          mulInvariantExp (I := I) (G := G) (p.1 • (-X))) := by
-    rw [modelWithCornersSelf_prod, ← chartedSpaceSelf_prod]
-    exact hMprod
+  have hM := (contMDiff_prod_modelWithCornersSelf_iff (I' := I)).mp hMprod
   exact (f.contMDiff.comp hM).contDiff
 
 /-- At `t = 0`, the derivative of `t ↦ tangentAd (mulInvariantExp (t • X)) Y` along the
@@ -314,8 +283,7 @@ theorem hasDerivAt_tangentAd_mulInvariantExp_smul_apply_zero
       mulInvariantExp (I := I) (G := G) (p.1 • (-X)))
   have hF : ContDiff ℝ 2 F :=
     (ContMDiffMap.contDiff_comp_conj_mulInvariantExp_mulInvariantExp f X Y).of_le
-      (show ((2 : ℕ∞) : ℕ∞ω) ≤ ((⊤ : ℕ∞) : ℕ∞ω) from
-        WithTop.coe_le_coe.mpr le_top)
+      two_le_infinite_smoothness_adjoint
   -- Varying the second parameter conjugates the `Y`-line by `γX t`, so this spatial partial
   -- evaluates the tangent adjoint orbit against the chosen test function.
   have hspace (t : ℝ) : spatialFDeriv F 0 t 1 = q (A t) := by
