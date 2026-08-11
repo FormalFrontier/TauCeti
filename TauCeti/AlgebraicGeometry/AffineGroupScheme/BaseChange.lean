@@ -105,7 +105,7 @@ noncomputable abbrev baseChangeMap (f : R ⟶ S) {G H : AffineGroupSchemeCat R} 
 
 /-- The underlying group-object morphism of `baseChangeMap` is obtained by applying pullback. -/
 @[simp]
-lemma baseChangeMap_hom (f : R ⟶ S) {G H : AffineGroupSchemeCat R} (g : G ⟶ H) :
+lemma hom_baseChangeMap (f : R ⟶ S) {G H : AffineGroupSchemeCat R} (g : G ⟶ H) :
     (baseChangeMap f g).hom = (Over.pullback (Spec.map f)).mapGrp.map g.hom :=
   (rfl)
 
