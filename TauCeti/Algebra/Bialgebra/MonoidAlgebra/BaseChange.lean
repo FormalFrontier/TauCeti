@@ -85,12 +85,8 @@ tensor. -/
 theorem scalarTensorBialgEquiv_symm_single (g : G) (s : K) :
     (scalarTensorBialgEquiv k K).symm (_root_.MonoidAlgebra.single g s) =
       s ⊗ₜ[k] _root_.MonoidAlgebra.single g (1 : k) := by
-  apply (scalarTensorBialgEquiv k K (G := G)).toEquiv.injective
-  change scalarTensorBialgEquiv k K
-      ((scalarTensorBialgEquiv k K).symm (_root_.MonoidAlgebra.single g s)) =
-    scalarTensorBialgEquiv k K
-      (s ⊗ₜ[k] _root_.MonoidAlgebra.single g (1 : k))
-  rw [_root_.BialgEquiv.apply_symm_apply, scalarTensorBialgEquiv_tmul]
+  apply_fun scalarTensorBialgEquiv k K
+  rw [scalarTensorBialgEquiv_tmul]
   simp
 
 /-- Base change of monoid bialgebras is natural in the indexing monoid. Mapping the indices
