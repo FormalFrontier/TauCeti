@@ -390,7 +390,6 @@ adjoint `LieAlgebra.ad ℝ _ X Y`.
 
 `GroupLieAlgebra I G` reduces definitionally to the model `E`; the `show E from` ascriptions expose
 that model to the manifold derivative API. -/
-@[simp]
 theorem mvfderiv_tangentAd_apply_one (X Y : GroupLieAlgebra I G) :
     let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
     mvfderiv I
