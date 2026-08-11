@@ -33,18 +33,6 @@ open MonoidAlgebra
 
 namespace TauCeti
 
-/-- The `g`-th diagonal entry of right multiplication by `x` is the coefficient of `x` at the
-identity: the only `h` with `g * h = g` is `h = 1`. -/
-theorem MonoidAlgebra.coeff_single_one_mul_self {k G : Type*} [Semiring k] [Group G]
-    (x : MonoidAlgebra k G) (g : G) : (single g 1 * x).coeff g = x.coeff 1 := by
-  rw [coeff_single_mul_apply, one_mul, inv_mul_cancel]
-
-/-- The `g`-th diagonal entry of left multiplication by `x` is the coefficient of `x` at the
-identity: the only `h` with `h * g = g` is `h = 1`. -/
-theorem MonoidAlgebra.coeff_self_mul_single_one {k G : Type*} [Semiring k] [Group G]
-    (x : MonoidAlgebra k G) (g : G) : (x * single g 1).coeff g = x.coeff 1 := by
-  rw [coeff_mul_single_apply, mul_one, mul_inv_cancel]
-
 /-- **The trace of right multiplication on a finite group algebra.** Multiplication on the right
 by `x` has trace `|G| * x_1`. -/
 theorem MonoidAlgebra.trace_mulRight {k G : Type*} [CommRing k] [Group G] [Finite G]
@@ -56,7 +44,8 @@ theorem MonoidAlgebra.trace_mulRight {k G : Type*} [CommRing k] [Group G] [Finit
   rw [LinearMap.trace_eq_matrix_trace k (MonoidAlgebra.basis G k), Matrix.trace]
   simp only [Matrix.diag_apply, LinearMap.toMatrix_apply, MonoidAlgebra.basis_apply,
     MonoidAlgebra.basis_repr, LinearMap.mulRight_apply,
-    MonoidAlgebra.coeff_single_one_mul_self, Finset.sum_const, Finset.card_univ, nsmul_eq_mul]
+    MonoidAlgebra.coeff_single_mul_apply, one_mul, inv_mul_cancel,
+    Finset.sum_const, Finset.card_univ, nsmul_eq_mul]
   rw [Nat.card_eq_fintype_card]
 
 /-- **The trace of left multiplication on a finite group algebra.** Multiplication on the left by
@@ -70,7 +59,8 @@ theorem MonoidAlgebra.trace_mulLeft {k G : Type*} [CommRing k] [Group G] [Finite
   rw [LinearMap.trace_eq_matrix_trace k (MonoidAlgebra.basis G k), Matrix.trace]
   simp only [Matrix.diag_apply, LinearMap.toMatrix_apply, MonoidAlgebra.basis_apply,
     MonoidAlgebra.basis_repr, LinearMap.mulLeft_apply,
-    MonoidAlgebra.coeff_self_mul_single_one, Finset.sum_const, Finset.card_univ, nsmul_eq_mul]
+    MonoidAlgebra.coeff_mul_single_apply, mul_one, mul_inv_cancel,
+    Finset.sum_const, Finset.card_univ, nsmul_eq_mul]
   rw [Nat.card_eq_fintype_card]
 
 end TauCeti

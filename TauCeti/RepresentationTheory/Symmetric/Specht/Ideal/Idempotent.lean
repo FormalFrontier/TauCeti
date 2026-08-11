@@ -84,9 +84,8 @@ private theorem mulRight_youngSymmetrizer_sq (t : YoungTableau μ) {κ : ℚ}
     (hκ : youngSymmetrizer t * youngSymmetrizer t = κ • youngSymmetrizer t) :
     LinearMap.mulRight ℚ (youngSymmetrizer t) * LinearMap.mulRight ℚ (youngSymmetrizer t) =
       κ • LinearMap.mulRight ℚ (youngSymmetrizer t) := by
-  refine LinearMap.ext fun y => ?_
-  simp only [Module.End.mul_apply, LinearMap.smul_apply, LinearMap.mulRight_apply]
-  rw [mul_assoc, hκ, mul_smul_comm]
+  rw [Module.End.mul_eq_comp, ← LinearMap.mulRight_mul, hκ]
+  exact LinearMap.ext fun y => mul_smul_comm _ _ _
 
 /-- The trace of right multiplication by `c_t` on `ℚ[Sₙ]` is `n!`: every diagonal entry of its
 matrix in the basis of permutations is the coefficient of `c_t` at the identity, which is `1`. -/
