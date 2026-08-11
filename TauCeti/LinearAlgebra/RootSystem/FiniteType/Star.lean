@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+public import Mathlib.NumberTheory.ADEInequality
 public import TauCeti.LinearAlgebra.RootSystem.FiniteType.Basic
 
 public section
@@ -12,24 +13,28 @@ public section
 # The fork bound for finite-type Cartan matrices
 
 A connected finite-type diagram is a tree whose vertices have degree at most three. Such a tree may
-branch at several vertices, but choosing one branch vertex exhibits a **star** as a subdiagram: that
-vertex as the centre, with three arms hanging off it. Which stars survive is the last local
-constraint of the Cartan-Killing classification, and it is an arithmetic one. Writing
-`p, q, r` for the numbers of vertices on the three arms *counting the centre*, a star of finite
-type satisfies
+branch at several vertices, and a branch vertex together with a choice of path into each of its
+three branches carries a **star**: that vertex as the centre, with three arms hanging off it. Which
+stars survive is the fork half of the "chain/fork length constraints" of the Cartan-Killing
+classification, and it is an arithmetic constraint. Writing `p, q, r` for the numbers of vertices on
+the three arms *counting the centre*, a star of finite type satisfies
 
 `1 / p + 1 / q + 1 / r > 1`,
 
 whose solutions with `p ≤ q ≤ r` are `(1, q, r)`, `(2, 2, r)`, `(2, 3, 3)`, `(2, 3, 4)` and
 `(2, 3, 5)` - the chains `Aₙ`, the forks `Dₙ`, and `E₆`, `E₇`, `E₈`.
 
+Only that arithmetic constraint is proved here. The step that produces a star from a diagram with a
+branch vertex, and the constraints governing a multiple edge (the ones behind `B`, `C`, `F₄`), are
+both outside this file.
+
 This file builds the star as a matrix, `TauCeti.starCartanMatrix`, over an arbitrary finite index
 type of arms, and proves the bound. The elimination tool is a new one, living with the others in
 `TauCeti.LinearAlgebra.RootSystem.FiniteType.Basic`: a finite-type matrix admits no nonzero
 **subdominant** vector, one whose every coordinate `xᵢ` has `xᵢ · (A x)ᵢ ≤ 0`
-(`TauCeti.IsFiniteType.eq_zero_of_forall_mul_sum_nonpos`), because the symmetrized quadratic form
-evaluates at such a vector to `∑ᵢ dᵢ xᵢ (A x)ᵢ ≤ 0`. The certificate exhibited for a star is its
-vector of **marks** `TauCeti.starMark`, which decreases linearly along each arm, from `p q r` at
+(`TauCeti.IsFiniteType.eq_zero_of_forall_mul_sum_apply_mul_nonpos`), because the symmetrized
+quadratic form evaluates at such a vector to `∑ᵢ dᵢ xᵢ (A x)ᵢ ≤ 0`. The certificate for a star is
+its vector of **marks** `TauCeti.starMark`, which decreases linearly along each arm, from `p q r` at
 the centre down to `q r` at the far end of the first arm. The marks are annihilated by the matrix
 at every arm vertex, and at the centre they take the value `qr + pr + pq - pqr`, which is `≤ 0`
 exactly when the fork bound fails.
@@ -51,20 +56,23 @@ exclusion of `D̃₄` that `TauCeti.not_isFiniteType_affineD₄` gets from the d
 ## Main results
 
 * `TauCeti.card_sub_two_lt_sum_inv_of_isFiniteType_star` and
-  `TauCeti.not_isFiniteType_starCartanMatrix`: **the fork bound**, `∑ᵢ 1 / (ℓ i + 1) > n - 2` for a
-  star of finite type with `n` arms, and its contrapositive.
-* `TauCeti.card_sub_two_lt_sum_inv_of_star_submatrix`: the bound in the form a diagram containing a
-  star meets it, through `TauCeti.IsFiniteType.submatrix`.
+  `TauCeti.not_isFiniteType_starCartanMatrix_of_sum_inv_le`: **the fork bound**,
+  `∑ᵢ 1 / (ℓ i + 1) > n - 2` for a star of finite type with `n` arms, and its contrapositive.
+* `TauCeti.one_lt_sum_inv_of_isFiniteType_star_three` and
+  `TauCeti.not_isFiniteType_starCartanMatrix_three_of_sum_inv_le_one`: the same pair for three arms,
+  where the bound reads `1 / p + 1 / q + 1 / r > 1`.
 * `TauCeti.arms_of_isFiniteType_star_three`: **the admissible three-armed shapes**. A finite-type
   star with arms of `a ≤ b ≤ c` further vertices has `a = 0` (a chain), or `a = b = 1` (a fork of
-  type `D`), or `a = 1`, `b = 2` and `c ≤ 4` (types `E₆`, `E₇`, `E₈`).
-* `TauCeti.not_isFiniteType_starCartanMatrix_affineE₆`, `...E₇`, `...E₈`: the three critical stars
-  are not of finite type.
+  type `D`), or `a = 1`, `b = 2` and `c ≤ 4` (types `E₆`, `E₇`, `E₈`). The solutions are read off
+  Mathlib's `ADEInequality.lt_three`, `.lt_four` and `.lt_six`.
+* `TauCeti.not_isFiniteType_affineE₆`, `TauCeti.not_isFiniteType_affineE₇`,
+  `TauCeti.not_isFiniteType_affineE₈`: the three critical stars are not of finite type.
 
 ## References
 
-This file supplies the "chain/fork length constraints" step of the classification of finite-type
-Cartan matrices, Layer 5 of `TauCetiRoadmap/RepresentationTheory/RootSystems/README.md`. See
+This file supplies the fork half of the "chain/fork length constraints" step of the classification
+of finite-type Cartan matrices, Layer 5 of
+`TauCetiRoadmap/RepresentationTheory/RootSystems/README.md`. See
 J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, §11.4, step (7), where
 the inequality `1/p + 1/q + 1/r > 1` is obtained from the same linear weighting of the arms, and
 Bourbaki, *Lie Groups and Lie Algebras, Chapters 4-6*, Ch. VI §4.
@@ -100,9 +108,21 @@ lemma chainEntry_eq_zero {s t : ℕ} (h1 : s ≠ t) (h2 : s ≠ t + 1) (h3 : t �
   unfold chainEntry; split_ifs <;> omega
 
 /-- Shifting both positions of a chain by one leaves the entry unchanged: only the difference of
-the positions matters. -/
-@[simp] lemma chainEntry_succ_succ (s t : ℕ) : chainEntry (s + 1) (t + 1) = chainEntry s t := by
+the positions matters. This is not a `simp` lemma: it would rewrite the right-hand sides of the
+entry lemmas for `TauCeti.starCartanMatrix`, whose arm positions are shifted by one against the
+centre, out of the form those lemmas state. -/
+lemma chainEntry_succ_succ (s t : ℕ) : chainEntry (s + 1) (t + 1) = chainEntry s t := by
   unfold chainEntry; split_ifs <;> omega
+
+/-- A chain is symmetric: the entry depends on the unordered pair of positions. -/
+lemma chainEntry_comm (s t : ℕ) : chainEntry s t = chainEntry t s := by
+  unfold chainEntry; split_ifs <;> omega
+
+/-- A chain is Mathlib's Cartan matrix of type `A`: on `n` positions the two entry rules agree. -/
+lemma chainEntry_eq_cartanMatrix_A {n : ℕ} (i j : Fin n) :
+    chainEntry i j = CartanMatrix.A n i j := by
+  simp only [chainEntry, CartanMatrix.A, Matrix.of_apply, Fin.ext_iff]
+  split_ifs <;> omega
 
 variable {α : Type*} [DecidableEq α] {ℓ : α → ℕ}
 
@@ -123,7 +143,7 @@ def starCartanMatrix (ℓ : α → ℕ) : Matrix (StarIndex ℓ) (StarIndex ℓ)
     | some v, none => chainEntry (v.2 + 1) 0
     | some v, some w => if v.1 = w.1 then chainEntry (v.2 + 1) (w.2 + 1) else 0
 
-@[simp] lemma starCartanMatrix_none_none : starCartanMatrix ℓ none none = 2 := (rfl)
+@[simp] lemma starCartanMatrix_none_none : starCartanMatrix ℓ none none = 2 := chainEntry_self 0
 
 @[simp] lemma starCartanMatrix_none_some (w : (i : α) × Fin (ℓ i)) :
     starCartanMatrix ℓ none (some w) = chainEntry 0 ((w.2 : ℕ) + 1) := (rfl)
@@ -135,12 +155,28 @@ def starCartanMatrix (ℓ : α → ℕ) : Matrix (StarIndex ℓ) (StarIndex ℓ)
     starCartanMatrix ℓ (some v) (some w)
       = if v.1 = w.1 then chainEntry ((v.2 : ℕ) + 1) ((w.2 : ℕ) + 1) else 0 := (rfl)
 
+/-- A star is simply laced, in particular symmetric: it is built out of the symmetric
+`TauCeti.chainEntry`, and being on a common arm is a symmetric relation. -/
+@[simp] lemma starCartanMatrix_transpose : (starCartanMatrix ℓ)ᵀ = starCartanMatrix ℓ := by
+  ext v w
+  rcases v with _ | v <;> rcases w with _ | w
+  · rfl
+  · rw [Matrix.transpose_apply, starCartanMatrix_some_none, starCartanMatrix_none_some,
+      chainEntry_comm]
+  · rw [Matrix.transpose_apply, starCartanMatrix_none_some, starCartanMatrix_some_none,
+      chainEntry_comm]
+  · rw [Matrix.transpose_apply, starCartanMatrix_some_some, starCartanMatrix_some_some]
+    rcases eq_or_ne v.1 w.1 with h | h
+    · rw [if_pos h, if_pos h.symm, chainEntry_comm]
+    · rw [if_neg h, if_neg (Ne.symm h)]
+
 variable [Fintype α]
 
 /-- The **marks** of a star: the value `∏ᵢ (ℓ i + 1)` at the centre, decreasing linearly along the
 arm `i` in steps of `∏_{j ≠ i} (ℓ j + 1)`, down to that step itself at the far end of the arm.
 
-These are the marks of an extended Dynkin diagram in the critical cases, and the same formula
+In the critical cases these are a positive multiple of the marks of the corresponding extended
+Dynkin diagram - for `ℓ = ![2, 2, 2]` they are `9` times the marks of `Ẽ₆` - and the same formula
 serves in general: the Cartan matrix annihilates them at every arm vertex whatever the arm lengths
 are, and only the value at the centre feels the fork bound. -/
 def starMark (ℓ : α → ℕ) : StarIndex ℓ → ℚ
@@ -164,10 +200,20 @@ lemma starMark_pos (v : StarIndex ℓ) : 0 < starMark ℓ v := by
 /-- The mark at the centre, factored along the arm `i`: it is the product of `ℓ i + 1` with the
 weight `∏_{j ≠ i} (ℓ j + 1)` that the arm `i` decreases by. This is what makes the marks the value
 at position `0` of the linear function that describes the arm `i`. -/
-lemma starMark_none_eq (i : α) :
+private lemma starMark_none_eq_mul_prod_compl (i : α) :
     starMark ℓ none = ((ℓ i : ℚ) + 1) * ∏ j ∈ ({i}ᶜ : Finset α), ((ℓ j : ℚ) + 1) := by
   rw [starMark_none, Finset.compl_singleton]
   exact (Finset.mul_prod_erase _ _ (Finset.mem_univ i)).symm
+
+/-- The mark at the vertex of the arm `i` at distance `s + 1` from the centre, in the shape the row
+computations consume: the same weight `∏_{j ≠ i} (ℓ j + 1)`, times the value at `s + 1` of the
+linear function that takes the value `ℓ i + 1` at the centre and drops by one per step. -/
+private lemma starMark_some_eq_mul_prod_compl (i : α) (s : Fin (ℓ i)) :
+    starMark ℓ (some ⟨i, s⟩)
+      = ((ℓ i : ℚ) + 1 - ((s : ℕ) + 1)) * ∏ j ∈ ({i}ᶜ : Finset α), ((ℓ j : ℚ) + 1) := by
+  rw [starMark_some]
+  push_cast
+  ring
 
 section RowSums
 
@@ -249,7 +295,7 @@ private theorem chainEntry_arm_row {n m : ℕ} (hm : m < n) (g : ℕ → ℚ) :
 
 /-- The row of a star at the centre, in chain coordinates: only the near end of each arm meets the
 centre. -/
-private theorem chainEntry_centre_row (n : ℕ) (g : ℕ → ℚ) :
+private theorem chainEntry_center_row (n : ℕ) (g : ℕ → ℚ) :
     ∑ s ∈ Finset.range n, (chainEntry 0 (s + 1) : ℚ) * g (s + 1) = if n = 0 then 0 else -g 1 := by
   match n with
   | 0 => simp
@@ -273,15 +319,16 @@ private theorem sum_starIndex (f : StarIndex ℓ → ℚ) :
 /-- **The rows of a star at an arm vertex annihilate the marks.** The marks are linear along each
 arm, and the centre supplies exactly the value the linear function takes at position `0`, so the
 three-term recurrence of a chain closes at both ends. -/
-theorem sum_starCartanMatrix_mul_starMark_some (v : (i : α) × Fin (ℓ i)) :
+theorem sum_starCartanMatrix_mul_starMark_some_eq_zero (v : (i : α) × Fin (ℓ i)) :
     ∑ w, (starCartanMatrix ℓ (some v) w : ℚ) * starMark ℓ w = 0 := by
   set Q : ℚ := ∏ j ∈ ({v.1}ᶜ : Finset α), ((ℓ j : ℚ) + 1) with hQ
   set g : ℕ → ℚ := fun u ↦ ((ℓ v.1 : ℚ) + 1 - u) * Q with hg
   -- The marks along the arm of `v`, and at the centre, are the values of `g`.
-  have hg0 : g 0 = starMark ℓ none := by rw [hg, starMark_none_eq v.1]; norm_num [hQ]
+  have hg0 : g 0 = starMark ℓ none := by
+    rw [hg, starMark_none_eq_mul_prod_compl v.1]; norm_num [hQ]
   have hgarm : ∀ s : Fin (ℓ v.1), g ((s : ℕ) + 1) = starMark ℓ (some ⟨v.1, s⟩) := by
     intro s
-    rw [hg, starMark_some]
+    rw [hg, starMark_some_eq_mul_prod_compl]
     push_cast
     ring
   rw [sum_starIndex]
@@ -331,7 +378,7 @@ theorem sum_starCartanMatrix_mul_starMark_none :
     set g : ℕ → ℚ := fun u ↦ ((ℓ i : ℚ) + 1 - u) * Q with hg
     have hgarm : ∀ s : Fin (ℓ i), g ((s : ℕ) + 1) = starMark ℓ (some ⟨i, s⟩) := by
       intro s
-      rw [hg, starMark_some]
+      rw [hg, starMark_some_eq_mul_prod_compl]
       push_cast
       ring
     have hstep : ∑ s : Fin (ℓ i), (starCartanMatrix ℓ none (some ⟨i, s⟩) : ℚ)
@@ -339,7 +386,7 @@ theorem sum_starCartanMatrix_mul_starMark_none :
         = ∑ s : Fin (ℓ i), (chainEntry 0 ((s : ℕ) + 1) : ℚ) * g ((s : ℕ) + 1) :=
       Finset.sum_congr rfl fun s _ ↦ by rw [starCartanMatrix_none_some, hgarm s]
     rw [hstep, Fin.sum_univ_eq_sum_range (fun s ↦ (chainEntry 0 (s + 1) : ℚ) * g (s + 1)) (ℓ i),
-      chainEntry_centre_row]
+      chainEntry_center_row]
     rcases eq_or_ne (ℓ i) 0 with h0 | h0
     · rw [if_pos h0, h0]
       norm_num
@@ -353,7 +400,7 @@ theorem sum_starCartanMatrix_mul_starMark_none :
   have hsplit : ∀ i ∈ Finset.univ, -((ℓ i : ℚ) * ∏ j ∈ ({i}ᶜ : Finset α), ((ℓ j : ℚ) + 1))
       = (∏ j ∈ ({i}ᶜ : Finset α), ((ℓ j : ℚ) + 1)) - ∏ j, ((ℓ j : ℚ) + 1) := by
     intro i _
-    have hprod := starMark_none_eq (ℓ := ℓ) i
+    have hprod := starMark_none_eq_mul_prod_compl (ℓ := ℓ) i
     rw [starMark_none] at hprod
     rw [hprod]
     ring
@@ -372,15 +419,17 @@ theorem card_sub_two_lt_sum_inv_of_isFiniteType_star (h : IsFiniteType (starCart
   rw [← not_le]
   intro hle
   -- Under the negated bound the marks are subdominant, so they vanish; but they are positive.
-  refine absurd (congrFun (h.eq_zero_of_forall_mul_sum_nonpos (x := starMark ℓ) ?_) none) ?_
+  refine absurd
+    (congrFun (h.eq_zero_of_forall_mul_sum_apply_mul_nonpos (x := starMark ℓ) ?_) none) ?_
   · rintro (_ | v)
     · rw [sum_starCartanMatrix_mul_starMark_none]
       have hprod : (0 : ℚ) < ∏ i, ((ℓ i : ℚ) + 1) := Finset.prod_pos fun i _ ↦ by positivity
+      -- The `i`-th term of the sum, cleared of its denominator, is the weight of the arm `i`.
       have hterm : ∀ i ∈ Finset.univ, ((ℓ i : ℚ) + 1)⁻¹ * ∏ j, ((ℓ j : ℚ) + 1)
           = ∏ j ∈ ({i}ᶜ : Finset α), ((ℓ j : ℚ) + 1) := by
         intro i _
-        rw [Finset.compl_singleton, ← Finset.mul_prod_erase _ _ (Finset.mem_univ i),
-          ← mul_assoc, inv_mul_cancel₀ (by positivity), one_mul]
+        rw [← starMark_none, starMark_none_eq_mul_prod_compl i,
+          inv_mul_cancel_left₀ (by positivity)]
       have hsum : (∑ i, ((ℓ i : ℚ) + 1)⁻¹) * ∏ j, ((ℓ j : ℚ) + 1)
           = ∑ i, ∏ j ∈ ({i}ᶜ : Finset α), ((ℓ j : ℚ) + 1) := by
         rw [Finset.sum_mul]
@@ -390,25 +439,19 @@ theorem card_sub_two_lt_sum_inv_of_isFiniteType_star (h : IsFiniteType (starCart
         rw [← hsum]
         exact mul_le_mul_of_nonneg_right hle hprod.le
       nlinarith [starMark_pos (ℓ := ℓ) none]
-    · rw [sum_starCartanMatrix_mul_starMark_some v, mul_zero]
+    · rw [sum_starCartanMatrix_mul_starMark_some_eq_zero v, mul_zero]
   · exact (starMark_pos (ℓ := ℓ) none).ne'
 
 /-- The contrapositive of `TauCeti.card_sub_two_lt_sum_inv_of_isFiniteType_star`: a star violating
-the fork bound is not of finite type. -/
-theorem not_isFiniteType_starCartanMatrix
+the fork bound is not of finite type.
+
+This is the shape the classification consumes. A candidate diagram is excluded by exhibiting an
+embedded star with `∑ᵢ 1 / pᵢ ≤ n - 2`, that is, by `TauCeti.IsFiniteType.submatrix` along an
+injection `e` with `A.submatrix e e = starCartanMatrix ℓ`. -/
+theorem not_isFiniteType_starCartanMatrix_of_sum_inv_le
     (h : ∑ i, ((ℓ i : ℚ) + 1)⁻¹ ≤ (Fintype.card α : ℚ) - 2) :
     ¬ IsFiniteType (starCartanMatrix ℓ) := fun hft ↦
   absurd (card_sub_two_lt_sum_inv_of_isFiniteType_star hft) (not_lt.2 h)
-
-/-- **The fork bound for a diagram containing a star.** A principal submatrix of a finite-type
-matrix is of finite type, so a diagram in which a star sits as a full subdiagram inherits the
-bound. This is the shape the classification consumes: a candidate diagram is excluded by exhibiting
-one embedded star with `∑ᵢ 1 / pᵢ ≤ n - 2`. -/
-theorem card_sub_two_lt_sum_inv_of_star_submatrix {B : Type*} [Fintype B] {A : Matrix B B ℤ}
-    (h : IsFiniteType A) {e : StarIndex ℓ → B} (he : Function.Injective e)
-    (heq : A.submatrix e e = starCartanMatrix ℓ) :
-    (Fintype.card α : ℚ) - 2 < ∑ i, ((ℓ i : ℚ) + 1)⁻¹ :=
-  card_sub_two_lt_sum_inv_of_isFiniteType_star (heq ▸ h.submatrix he)
 
 section Three
 
@@ -419,30 +462,27 @@ inequality reads `1 / p + 1 / q + 1 / r > 1`. Its solutions are the chains, the 
 and the three exceptional shapes.
 -/
 
-/-- The arithmetic behind the three-armed case: the positive solutions of `qr + pr + pq > pqr`
-with `1 ≤ p ≤ q ≤ r` are `p = 1`, `(p, q) = (2, 2)`, and `(p, q) = (2, 3)` with `r ≤ 5`. -/
-private theorem three_arm_arith {p q r : ℕ} (hp : 1 ≤ p) (hpq : p ≤ q) (hqr : q ≤ r)
-    (h : p * (q * r) < q * r + p * r + p * q) :
-    p = 1 ∨ (p = 2 ∧ q = 2) ∨ (p = 2 ∧ q = 3 ∧ r ≤ 5) := by
-  -- Three arms of three or more vertices each already exhaust the form: `pqr ≥ 3qr ≥ qr + pr + pq`.
-  have hp2 : p ≤ 2 := by
-    by_contra hc
-    have h1 : p * r ≤ q * r := Nat.mul_le_mul_right r hpq
-    have h2 : p * q ≤ q * r := Nat.mul_le_mul hpq hqr
-    have h3 : 3 * (q * r) ≤ p * (q * r) := Nat.mul_le_mul_right (q * r) (by omega)
-    linarith
-  rcases Nat.lt_or_ge p 2 with hp1 | hp1
-  · exact Or.inl (by omega)
-  obtain rfl : p = 2 := by omega
-  -- With `p = 2` the form reads `qr < 2r + 2q ≤ 4r`, so `q ≤ 3`.
-  have hq3 : q ≤ 3 := by
-    by_contra hc
-    have h4 : 4 * r ≤ q * r := Nat.mul_le_mul_right r (by omega)
-    linarith
-  rcases Nat.lt_or_ge q 3 with hq2 | hq2
-  · exact Or.inr (Or.inl ⟨rfl, by omega⟩)
-  obtain rfl : q = 3 := by omega
-  exact Or.inr (Or.inr ⟨rfl, rfl, by omega⟩)
+/-- The fork bound written out for three arms: `n - 2` is `1`, and the sum has three terms. -/
+private lemma card_sub_two_lt_sum_inv_three_iff (a b c : ℕ) :
+    (Fintype.card (Fin 3) : ℚ) - 2 < ∑ i, (((![a, b, c] : Fin 3 → ℕ) i : ℚ) + 1)⁻¹
+      ↔ 1 < ((a : ℚ) + 1)⁻¹ + ((b : ℚ) + 1)⁻¹ + ((c : ℚ) + 1)⁻¹ := by
+  rw [show (Fintype.card (Fin 3) : ℚ) - 2 = 1 from by norm_num, Fin.sum_univ_three]
+  simp
+
+/-- **The fork bound for three arms**, `1 / p + 1 / q + 1 / r > 1`. -/
+theorem one_lt_sum_inv_of_isFiniteType_star_three {a b c : ℕ}
+    (h : IsFiniteType (starCartanMatrix ![a, b, c])) :
+    1 < ((a : ℚ) + 1)⁻¹ + ((b : ℚ) + 1)⁻¹ + ((c : ℚ) + 1)⁻¹ :=
+  (card_sub_two_lt_sum_inv_three_iff a b c).1 (card_sub_two_lt_sum_inv_of_isFiniteType_star h)
+
+/-- The contrapositive of `TauCeti.one_lt_sum_inv_of_isFiniteType_star_three`: a three-armed star
+with `1 / p + 1 / q + 1 / r ≤ 1` is not of finite type. -/
+theorem not_isFiniteType_starCartanMatrix_three_of_sum_inv_le_one {a b c : ℕ}
+    (h : ((a : ℚ) + 1)⁻¹ + ((b : ℚ) + 1)⁻¹ + ((c : ℚ) + 1)⁻¹ ≤ 1) :
+    ¬ IsFiniteType (starCartanMatrix ![a, b, c]) := by
+  refine not_isFiniteType_starCartanMatrix_of_sum_inv_le ?_
+  rw [← not_lt, card_sub_two_lt_sum_inv_three_iff]
+  exact not_lt.2 h
 
 /-- **The admissible three-armed shapes.** A star of finite type whose three arms carry
 `a ≤ b ≤ c` vertices besides the centre is a chain (`a = 0`), a fork of type `D` (`a = b = 1`), or
@@ -454,50 +494,41 @@ is not proved here. -/
 theorem arms_of_isFiniteType_star_three {a b c : ℕ} (hab : a ≤ b) (hbc : b ≤ c)
     (h : IsFiniteType (starCartanMatrix ![a, b, c])) :
     a = 0 ∨ (a = 1 ∧ b = 1) ∨ (a = 1 ∧ b = 2 ∧ c ≤ 4) := by
-  have hbound := card_sub_two_lt_sum_inv_of_isFiniteType_star h
-  rw [show (Fintype.card (Fin 3) : ℚ) = 3 from by norm_num, Fin.sum_univ_three] at hbound
-  simp only [Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.head_cons, Matrix.cons_val_two,
-    Matrix.tail_cons] at hbound
-  -- Clear the denominators: the bound is `qr + pr + pq > pqr` for `p = a + 1` and so on.
-  have hpa : (0 : ℚ) < (a : ℚ) + 1 := by positivity
-  have hpb : (0 : ℚ) < (b : ℚ) + 1 := by positivity
-  have hpc : (0 : ℚ) < (c : ℚ) + 1 := by positivity
-  have hclear : ((b : ℚ) + 1) * ((c : ℚ) + 1) + ((a : ℚ) + 1) * ((c : ℚ) + 1)
-      + ((a : ℚ) + 1) * ((b : ℚ) + 1) > ((a : ℚ) + 1) * (((b : ℚ) + 1) * ((c : ℚ) + 1)) := by
-    have := mul_lt_mul_of_pos_right hbound (mul_pos hpa (mul_pos hpb hpc))
-    field_simp at this
-    linarith
-  have hnat : (b + 1) * (c + 1) + (a + 1) * (c + 1) + (a + 1) * (b + 1)
-      > (a + 1) * ((b + 1) * (c + 1)) := by exact_mod_cast hclear
-  rcases three_arm_arith (Nat.le_add_left 1 a) (by omega) (by omega) hnat with
-    h1 | ⟨h1, h2⟩ | ⟨h1, h2, h3⟩
+  -- With `p = a + 1 ≤ q = b + 1 ≤ r = c + 1` the bound is Mathlib's ADE inequality, whose
+  -- solutions `ADEInequality.lt_three`, `.lt_four` and `.lt_six` cut out one at a time.
+  have hsum : 1 < ADEInequality.sumInv {a.succPNat, b.succPNat, c.succPNat} := by
+    rw [ADEInequality.sumInv_pqr]
+    push_cast [Nat.succPNat_coe]
+    exact one_lt_sum_inv_of_isFiniteType_star_three h
+  have hpq : a.succPNat ≤ b.succPNat := Nat.succPNat_le_succPNat.2 hab
+  have hqr : b.succPNat ≤ c.succPNat := Nat.succPNat_le_succPNat.2 hbc
+  have ha : a + 1 < 3 := ADEInequality.lt_three hpq hqr hsum
+  rcases Nat.lt_or_ge a 1 with ha0 | ha1
   · exact Or.inl (by omega)
-  · exact Or.inr (Or.inl ⟨by omega, by omega⟩)
-  · exact Or.inr (Or.inr ⟨by omega, by omega, by omega⟩)
+  obtain rfl : a = 1 := by omega
+  rw [show Nat.succPNat 1 = 2 from rfl] at hsum
+  have hb : b + 1 < 4 := ADEInequality.lt_four hqr hsum
+  rcases Nat.lt_or_ge b 2 with hb1 | hb2
+  · exact Or.inr (Or.inl ⟨rfl, by omega⟩)
+  obtain rfl : b = 2 := by omega
+  rw [show Nat.succPNat 2 = 3 from rfl] at hsum
+  have hc : c + 1 < 6 := ADEInequality.lt_six hsum
+  exact Or.inr (Or.inr ⟨rfl, rfl, by omega⟩)
 
 /-- The extended Dynkin diagram `Ẽ₆`, the star with three arms of two vertices each, is not of
 finite type: its marks are a null vector. -/
-theorem not_isFiniteType_starCartanMatrix_affineE₆ :
-    ¬ IsFiniteType (starCartanMatrix ![2, 2, 2]) := by
-  refine not_isFiniteType_starCartanMatrix ?_
-  rw [show (Fintype.card (Fin 3) : ℚ) = 3 from by norm_num, Fin.sum_univ_three]
-  norm_num [Matrix.cons_val_two, Matrix.tail_cons]
+theorem not_isFiniteType_affineE₆ : ¬ IsFiniteType (starCartanMatrix ![2, 2, 2]) :=
+  not_isFiniteType_starCartanMatrix_three_of_sum_inv_le_one (by norm_num)
 
 /-- The extended Dynkin diagram `Ẽ₇`, the star with arms of one, three and three vertices, is not
 of finite type. -/
-theorem not_isFiniteType_starCartanMatrix_affineE₇ :
-    ¬ IsFiniteType (starCartanMatrix ![1, 3, 3]) := by
-  refine not_isFiniteType_starCartanMatrix ?_
-  rw [show (Fintype.card (Fin 3) : ℚ) = 3 from by norm_num, Fin.sum_univ_three]
-  norm_num [Matrix.cons_val_two, Matrix.tail_cons]
+theorem not_isFiniteType_affineE₇ : ¬ IsFiniteType (starCartanMatrix ![1, 3, 3]) :=
+  not_isFiniteType_starCartanMatrix_three_of_sum_inv_le_one (by norm_num)
 
 /-- The extended Dynkin diagram `Ẽ₈`, the star with arms of one, two and five vertices, is not of
 finite type. -/
-theorem not_isFiniteType_starCartanMatrix_affineE₈ :
-    ¬ IsFiniteType (starCartanMatrix ![1, 2, 5]) := by
-  refine not_isFiniteType_starCartanMatrix ?_
-  rw [show (Fintype.card (Fin 3) : ℚ) = 3 from by norm_num, Fin.sum_univ_three]
-  norm_num [Matrix.cons_val_two, Matrix.tail_cons]
+theorem not_isFiniteType_affineE₈ : ¬ IsFiniteType (starCartanMatrix ![1, 2, 5]) :=
+  not_isFiniteType_starCartanMatrix_three_of_sum_inv_le_one (by norm_num)
 
 end Three
 
