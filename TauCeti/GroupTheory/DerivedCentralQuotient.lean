@@ -190,11 +190,11 @@ def mulEquivSelf [Group.IsPerfect ↥(commutator G)] :
   mulEquivOfCenterEqBot center_eq_bot
 
 @[simp]
-theorem mulEquivSelf_eq [Group.IsPerfect ↥(commutator G)] :
-    mulEquivSelf (G := G) = mulEquivOfCenterEqBot center_eq_bot := by
-  ext x
-  obtain ⟨y, rfl⟩ := QuotientGroup.mk_surjective x
-  exact mulEquivOfCenterEqBot_mk center_eq_bot y
+theorem mulEquivSelf_mk [Group.IsPerfect ↥(commutator G)]
+    (x : ↥(commutator (DerivedCentralQuotient G))) :
+    mulEquivSelf (G := G) (x : DerivedCentralQuotient (DerivedCentralQuotient G)) =
+      (x : DerivedCentralQuotient G) :=
+  mulEquivOfCenterEqBot_mk center_eq_bot x
 
 end DerivedCentralQuotient
 
