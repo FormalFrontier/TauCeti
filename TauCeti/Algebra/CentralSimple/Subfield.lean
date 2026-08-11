@@ -256,7 +256,7 @@ theorem toEndL_apply (r : L ⊗[K] A) (x : BaseChangeModule f) : toEndL f r x = 
   simp [toEndL]
 
 /-- The action of the scalar extension on `BaseChangeModule f` is faithful. -/
-theorem toEndL_injective [Algebra.IsCentral K A] [IsSimpleRing A] [FiniteDimensional K A] :
+theorem toEndL_injective [Algebra.IsCentral K A] [IsSimpleRing A] :
     Function.Injective (toEndL f) := by
   have : FaithfulSMul (L ⊗[K] A) (BaseChangeModule f) := faithfulSMul_of_isSimpleRing
   exact fun r r' h ↦ eq_of_smul_eq_smul (α := BaseChangeModule f) fun m ↦ by
