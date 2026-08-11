@@ -21,7 +21,7 @@ original module, and the corresponding one-sided tensor endomorphism acts compon
 
 * `TauCeti.Module.End.IsSemisimple.rTensor`: `f ⊗ 1` is semisimple when `f` is.
 * `TauCeti.Module.End.IsSemisimple.lTensor`: `1 ⊗ f` is semisimple when `f` is.
-* `TauCeti.Module.End.rTensor_commute_lTensor`: one-sided tensor endomorphisms on different factors
+* `TauCeti.Module.End.commute_rTensor_lTensor`: one-sided tensor endomorphisms on different factors
   commute.
 * `TauCeti.Module.End.IsSemisimple.tensorProduct`: tensor products of semisimple endomorphisms are
   semisimple.
@@ -101,10 +101,9 @@ theorem IsSemisimple.lTensor {f : _root_.Module.End K W} (hf : f.IsSemisimple) :
 end Left
 
 /-- One-sided tensor endomorphisms acting on different factors commute. -/
-theorem rTensor_commute_lTensor (f : _root_.Module.End K V) (g : _root_.Module.End K W) :
+theorem commute_rTensor_lTensor (f : _root_.Module.End K V) (g : _root_.Module.End K W) :
     Commute (f.rTensor W) (g.lTensor V) := by
-  change f.rTensor W * g.lTensor V = g.lTensor V * f.rTensor W
-  rw [_root_.Module.End.mul_eq_comp, _root_.Module.End.mul_eq_comp]
+  rw [commute_iff_eq, _root_.Module.End.mul_eq_comp, _root_.Module.End.mul_eq_comp]
   exact (LinearMap.rTensor_comp_lTensor V f g).trans
     (LinearMap.lTensor_comp_rTensor V f g).symm
 
@@ -126,7 +125,7 @@ theorem isNilpotent_map_sub_one {f : _root_.Module.End K V} {g : _root_.Module.E
     -- Expose the algebra homomorphism's action as left tensoring after applying the map laws.
     change IsNilpotent (g.lTensor V - 1) at hm'
     exact hm'
-  have hab := rTensor_commute_lTensor f g
+  have hab := commute_rTensor_lTensor f g
   have hnm : Commute n m := by
     dsimp only [n, m]
     exact (hab.sub_right (Commute.one_right _)).sub_left (Commute.one_left _)
@@ -153,7 +152,7 @@ theorem IsSemisimple.tensorProduct {f : _root_.Module.End K V} {g : _root_.Modul
     (hf : f.IsSemisimple) (hg : g.IsSemisimple) :
     _root_.Module.End.IsSemisimple (TensorProduct.map f g) := by
   rw [← LinearMap.lTensor_comp_rTensor, ← _root_.Module.End.mul_eq_comp]
-  exact _root_.Module.End.IsSemisimple.mul_of_commute (rTensor_commute_lTensor f g).symm
+  exact _root_.Module.End.IsSemisimple.mul_of_commute (commute_rTensor_lTensor f g).symm
     (IsSemisimple.lTensor hg) (IsSemisimple.rTensor hf)
 
 end PerfectField
