@@ -7,7 +7,7 @@ module
 public import TauCeti.Algebra.MonoidAlgebra.Trace
 public import TauCeti.LinearAlgebra.Trace.Idempotent
 public import TauCeti.RepresentationTheory.Symmetric.Factorization
-public import TauCeti.RepresentationTheory.Symmetric.Specht.Ideal.Extremes
+public import TauCeti.RepresentationTheory.Symmetric.Specht.Ideal.Basic
 
 /-!
 # Essential idempotence of the Young symmetrizer
@@ -34,6 +34,10 @@ shape `μ`. The two readings agree once the standard basis theorem identifies `d
 identification needs the straightening algorithm and is not proved here, so the dimension of the
 ideal is what appears below. Nothing in this file assumes the comparison of `ℚ[Sₙ] c_t` with the
 polytabloid presentation of `S^μ`.
+
+The two extreme shapes are the cases in which the dimension, and hence the scalar, can be read off
+directly; those evaluations live with the rest of the extreme-shape theory, in
+`TauCeti.RepresentationTheory.Symmetric.Specht.Ideal.Extremes`, which is downstream of this file.
 
 ## Main statements
 
@@ -153,28 +157,6 @@ theorem isIdempotentElem_smul_youngSymmetrizer (t : YoungTableau μ) :
     congr 1
     field_simp
   exact key
-
-/-! ### The extreme shapes
-
-For a shape with at most one row the Young symmetrizer is the sum of all of `Sₙ`, and for a shape
-with at most one column it is the signed sum; in both cases the left ideal is a line, so the
-scalar is the full `n!`. These are the two cases in which the scalar can be read off directly, and
-they check the normalisation. -/
-
-/-- On a shape with at most one row the square of the Young symmetrizer is `n!` times itself. -/
-theorem youngSymmetrizer_sq_of_rowSubgroup_eq_top (t : YoungTableau μ)
-    (h : rowSubgroup t = ⊤) :
-    youngSymmetrizer t * youngSymmetrizer t = (μ.card.factorial : ℚ) • youngSymmetrizer t := by
-  rw [youngSymmetrizer_sq t, finrank_spechtIdeal_of_rowSubgroup_eq_top t h,
-    Nat.cast_one, div_one]
-
-/-- On a shape with at most one column the square of the Young symmetrizer is `n!` times
-itself. -/
-theorem youngSymmetrizer_sq_of_colSubgroup_eq_top (t : YoungTableau μ)
-    (h : colSubgroup t = ⊤) :
-    youngSymmetrizer t * youngSymmetrizer t = (μ.card.factorial : ℚ) • youngSymmetrizer t := by
-  rw [youngSymmetrizer_sq t, finrank_spechtIdeal_of_colSubgroup_eq_top t h,
-    Nat.cast_one, div_one]
 
 end YoungTableau
 
