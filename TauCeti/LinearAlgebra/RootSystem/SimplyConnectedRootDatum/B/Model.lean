@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.LinearAlgebra.Matrix.Dual
+public import Mathlib.LinearAlgebra.Matrix.ToLin
 
 public section
 
@@ -93,7 +93,7 @@ vector. -/
 def weight (n a : ℕ) : Fin n → ℤ := fun k =>
   (if a = (k : ℕ) then (if (k : ℕ) + 1 = n then 2 else 1) else 0) -
     (if a = (k : ℕ) + 1 ∧ (k : ℕ) + 1 < n then 1 else 0)
-lemma weight_apply (n a : ℕ) (k : Fin n) : weight n a k =
+@[simp] lemma weight_apply (n a : ℕ) (k : Fin n) : weight n a k =
     (if a = (k : ℕ) then (if (k : ℕ) + 1 = n then 2 else 1) else 0) -
       (if a = (k : ℕ) + 1 ∧ (k : ℕ) + 1 < n then 1 else 0) := (rfl)
 
@@ -102,7 +102,7 @@ lemma weight_apply (n a : ℕ) (k : Fin n) : weight n a k =
 basis, so it is its double that is recorded. -/
 def coweight (n b : ℕ) : Fin n → ℤ := fun k =>
   (if (k : ℕ) + 1 = n then 1 else 2) * (if b ≤ (k : ℕ) then 1 else 0)
-lemma coweight_apply (n b : ℕ) (k : Fin n) : coweight n b k =
+@[simp] lemma coweight_apply (n b : ℕ) (k : Fin n) : coweight n b k =
     (if (k : ℕ) + 1 = n then 1 else 2) * (if b ≤ (k : ℕ) then 1 else 0) := (rfl)
 
 lemma weight_eq_zero_of_le {a : ℕ} (ha : n ≤ a) : weight n a = 0 := by
@@ -111,6 +111,12 @@ lemma weight_eq_zero_of_le {a : ℕ} (ha : n ≤ a) : weight n a = 0 := by
   simp only [weight, Pi.zero_apply]
   rw [ite_eq_right (by omega), ite_eq_right (by omega)]
   ring
+
+lemma coweight_eq_zero_of_le {b : ℕ} (hb : n ≤ b) : coweight n b = 0 := by
+  funext k
+  have := k.isLt
+  simp only [coweight, Pi.zero_apply]
+  rw [ite_eq_right (show ¬ b ≤ (k : ℕ) by omega), mul_zero]
 
 /-- **The fundamental pairing identity of type `Bₙ`.** In the classical model `⟨e_a, 2 e_b⟩` is
 `2 * [a = b]`, and the two pinned lattices see exactly that. -/

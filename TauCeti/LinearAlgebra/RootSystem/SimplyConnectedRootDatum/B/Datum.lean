@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+public import Mathlib.LinearAlgebra.Matrix.Dual
 public import TauCeti.LinearAlgebra.RootSystem.NumberOfRoots
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.B.Model
 
@@ -347,6 +348,11 @@ def typeBSimplyConnectedRootDatum (n : ℕ) :
   reflectionPerm := typeBReflPerm n
   reflectionPerm_root := typeBReflPerm_root
   reflectionPerm_coroot := typeBReflPerm_coroot
+
+/-- The pinned pairing is the classical dot product, in both the fundamental-weight and the
+simple-coroot coordinates. -/
+@[simp] theorem toLinearMap_typeBSimplyConnectedRootDatum (x y : Fin n → ℤ) :
+    (typeBSimplyConnectedRootDatum n).toLinearMap x y = x ⬝ᵥ y := (rfl)
 
 /-- The index type of the pinned datum is the root count that the roadmap attaches to `Bₙ`. -/
 example (n : ℕ) : (DynkinType.B n).numRoots = 2 * n ^ 2 := numRoots_B n
