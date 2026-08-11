@@ -19,8 +19,8 @@ elements span `AlgebraicClosure k ⊗[k] H`.
 
 The essential-image characterization of diagonalizable coordinate rings identifies this intrinsic
 definition with the usual one: after base change, the Hopf algebra is isomorphic to `k̄[M]` for a
-finitely generated commutative group `M`. In particular, every diagonalizable group is of
-multiplicative type.
+finitely generated commutative group `M`. In particular, every coordinate ring arising from
+`FGCommGrpCat` is of multiplicative type.
 
 ## Main declarations
 
@@ -28,7 +28,7 @@ multiplicative type.
   finite-type commutative Hopf algebras over a field.
 * `TauCeti.multiplicativeTypeCommHopfAlgProperty_iff_exists_iso_coordinateRing`: the
   characterization by becoming a diagonalizable coordinate ring over an algebraic closure.
-* `TauCeti.DiagonalizableGroup.coordinateRing_multiplicativeType`: every finite-type
+* `TauCeti.DiagonalizableGroup.multiplicativeType_coordinateRing`: every finite-type
   diagonalizable coordinate Hopf algebra is of multiplicative type.
 * `TauCeti.MultiplicativeTypeCommHopfAlgCat`: the full subcategory of coordinate Hopf algebras of
   multiplicative-type groups.
@@ -62,16 +62,6 @@ def multiplicativeTypeCommHopfAlgProperty (k : Type u) [Field k] :
   (DiagonalizableGroup.groupLikeSpannedProperty (AlgebraicClosure k)).inverseImage
     (FiniteTypeCommHopfAlgCat.baseChangeFunctor (K := AlgebraicClosure k))
 
-/-- Membership in the multiplicative-type object property means that the group-like elements
-span the coordinate Hopf algebra after base change to an algebraic closure. -/
-@[simp]
-theorem multiplicativeTypeCommHopfAlgProperty_iff
-    (k : Type u) [Field k] (H : FiniteTypeCommHopfAlgCat.{u, u} k) :
-    multiplicativeTypeCommHopfAlgProperty k H ↔
-      DiagonalizableGroup.groupLikeSpannedProperty (AlgebraicClosure k)
-        (FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H) :=
-  Iff.rfl
-
 /-- Being of multiplicative type is invariant under isomorphisms of finite-type commutative Hopf
 algebras. -/
 instance (k : Type u) [Field k] :
@@ -88,14 +78,14 @@ theorem multiplicativeTypeCommHopfAlgProperty_iff_exists_iso_coordinateRing
       ∃ G : FGCommGrpCat.{u}, Nonempty
         (DiagonalizableGroup.coordinateRing (AlgebraicClosure k) G ≅
           FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H) := by
-  rw [multiplicativeTypeCommHopfAlgProperty_iff,
+  rw [multiplicativeTypeCommHopfAlgProperty, ObjectProperty.prop_inverseImage_iff,
     ← DiagonalizableGroup.essImage_coordinateRingFunctor]
   rfl
 
 namespace DiagonalizableGroup
 
 /-- Every finite-type diagonalizable coordinate Hopf algebra is of multiplicative type. -/
-theorem coordinateRing_multiplicativeType
+theorem multiplicativeType_coordinateRing
     (k : Type u) [Field k] (G : FGCommGrpCat.{u}) :
     multiplicativeTypeCommHopfAlgProperty k (coordinateRing k G) := by
   rw [multiplicativeTypeCommHopfAlgProperty_iff_exists_iso_coordinateRing]
