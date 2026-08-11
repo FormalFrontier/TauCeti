@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.Geometry.Manifold.VectorField.LieBracket
+import TauCeti.Geometry.Manifold.VectorField.Regularity
 
 /-!
 # Directional derivatives and the manifold Lie bracket
@@ -173,9 +174,7 @@ private theorem mdifferentiableAt_mvfderiv_apply
       (n := 1)).mdifferentiable (by norm_num) |>.mdifferentiableAt
   apply (hsnd.comp x htangent).congr_of_eventuallyEq
   filter_upwards with y
-  rw [Function.comp_apply, tangentMap_snd, mvfderiv, ContinuousLinearMap.comp_apply]
-  -- `fromTangentSpace` is Mathlib's explicit interface for the definitional identification of the
-  -- tangent space of a normed space with that normed space.
+  rw [Function.comp_apply, tangentMap_snd, mvfderiv_apply_eq_mfderiv_apply]
   rfl
 
 /-- Let `f` have enough derivatives for symmetry of its second derivative at `x`, and let `V` and

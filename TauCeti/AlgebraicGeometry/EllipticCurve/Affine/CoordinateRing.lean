@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.AlgebraicGeometry.EllipticCurve.Affine.Point
+import TauCeti.AlgebraicGeometry.EllipticCurve.Affine.FunctionFieldFinrank
 
 /-!
 # The coordinate ring of an elliptic curve is a Dedekind domain
@@ -312,9 +313,6 @@ private theorem dvd_of_isIntegral_div {A L : Type*} [CommRing A] [IsDomain A]
 
 variable {F : Type*} [Field F] (W : _root_.WeierstrassCurve.Affine F)
 
-private lemma module_finite_coordinateRing : Module.Finite F[X] W.CoordinateRing :=
-  Module.Finite.of_basis (CoordinateRing.basis W)
-
 /-- The conjugation involution of the function field `F(W)` over `F(X)`. -/
 private noncomputable def conjFunctionField :
     W.FunctionField ≃ₐ[F[X]] W.FunctionField :=
@@ -408,7 +406,6 @@ private theorem exists_algebraMap_eq [W.IsElliptic] {z : W.FunctionField}
 of the statement that it is a Dedekind domain, and the input that the induced map on points of an
 isogeny consumes. -/
 theorem isIntegrallyClosed_coordinateRing [W.IsElliptic] : IsIntegrallyClosed W.CoordinateRing := by
-  have := module_finite_coordinateRing W
   have : Algebra.IsIntegral F[X] W.CoordinateRing := Algebra.IsIntegral.of_finite _ _
   have : IsIntegrallyClosedIn W.CoordinateRing W.FunctionField :=
     isIntegrallyClosedIn_iff.mpr ⟨FaithfulSMul.algebraMap_injective _ _,
@@ -417,7 +414,6 @@ theorem isIntegrallyClosed_coordinateRing [W.IsElliptic] : IsIntegrallyClosed W.
 
 /-- **The coordinate ring of an elliptic curve is a Dedekind domain.** -/
 theorem isDedekindDomain_coordinateRing [W.IsElliptic] : IsDedekindDomain W.CoordinateRing := by
-  have := module_finite_coordinateRing W
   have : Algebra.IsIntegral F[X] W.CoordinateRing := Algebra.IsIntegral.of_finite _ _
   have := isIntegrallyClosed_coordinateRing W
   exact { __ := Ring.DimensionLEOne.of_isIntegral F[X] W.CoordinateRing }
