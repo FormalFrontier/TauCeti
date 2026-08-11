@@ -34,17 +34,19 @@ below is the resulting homeomorphism of the level set with an open subset of `ke
 
 Three consequences record that the dimension count is not vacuous. In index `0` a regular point of
 the level set is **isolated** in it, so a compact piece of a regular index-`0` level set is
-**finite** — the finiteness that makes a Floer-type differential, which counts index-`0` solutions,
-well defined. In nonzero index a regular point is, on the contrary, never isolated, so a level set
-is locally the single point `a` precisely when the index vanishes.
+**finite** — one ingredient in the well-definedness of a Floer-type differential, which counts
+index-`0` solutions; making such a count well defined also needs a separate compactness result
+placing the counted solutions inside one such piece, which is not proved here. In nonzero index a
+regular point is, on the contrary, never isolated, so a level set is locally the single point `a`
+precisely when the index vanishes.
 
 What is proved is exactly a `ChartedSpace` structure, that is, a covering family of local models;
 nothing more is claimed. In particular this is *not* the assertion that the level set is a
 topological manifold in the usual sense, which would additionally need global hypotheses such as
 second countability, and none are assumed here. Nor are the charts claimed to be smoothly
-compatible: their transition maps are smooth exactly when `f` is, which needs the `ContDiff` form
-of the implicit function theorem and is left to a later step, so no `IsManifold` instance is
-asserted either.
+compatible: suitable `ContDiff` hypotheses on `f` should give smoothly compatible charts, through
+the `ContDiff` form of the implicit function theorem, but that is left to a later result, so no
+`IsManifold` instance is asserted either.
 
 ## Main declarations
 
@@ -97,8 +99,7 @@ noncomputable def levelSetChart (hf : HasStrictFDerivAt f f' a) (hf' : f'.range 
       have h1 : (Φ z.1).1 = c := by
         rw [hf.implicitToOpenPartialHomeomorphOfComplemented_fst hf' hker, hz2]
       have h2 : Φ z.1 = (c, (Φ z.1).2) := Prod.ext h1 rfl
-      change (c, (Φ z.1).2) ∈ Φ.target
-      rw [← h2]
+      simp only [Set.mem_preimage, ← h2]
       exact Φ.map_source hz
     map_target' := by
       intro k hk
@@ -122,9 +123,7 @@ noncomputable def levelSetChart (hf : HasStrictFDerivAt f f' a) (hf' : f'.range 
       have hr : Φ (Φ.symm (c, k)) = (c, k) := Φ.right_inv hk
       have hfc : f (Φ.symm (c, k)) = c := by
         rw [← hf.implicitToOpenPartialHomeomorphOfComplemented_fst hf' hker, hr]
-      rw [dif_pos hfc]
-      change (Φ (Φ.symm (c, k))).2 = k
-      rw [hr]
+      simp only [dif_pos hfc, hr]
     open_source := Φ.open_source.preimage continuous_subtype_val
     open_target := Φ.open_target.preimage (continuous_const.prodMk continuous_id)
     continuousOn_toFun :=
@@ -137,15 +136,17 @@ noncomputable def levelSetChart (hf : HasStrictFDerivAt f f' a) (hf' : f'.range 
       have hr : Φ (Φ.symm (c, k)) = (c, k) := Φ.right_inv hk
       have hfc : f (Φ.symm (c, k)) = c := by
         rw [← hf.implicitToOpenPartialHomeomorphOfComplemented_fst hf' hker, hr]
-      change ((if h : f (Φ.symm (c, k)) = c then ⟨_, h⟩ else ⟨a, ha⟩ :
-        ↥{x | f x = c}) : E) = _
-      rw [dif_pos hfc]
-      rfl }
+      simp only [Function.comp_apply, dif_pos hfc, id_eq] }
 
 @[simp]
 theorem levelSetChart_apply (hf : HasStrictFDerivAt f f' a) (hf' : f'.range = ⊤)
     (hker : f'.ker.ClosedComplemented) (ha : f a = c) (z : ↥{x | f x = c}) :
     levelSetChart hf hf' hker ha z = Classical.choose hker (z.1 - a) := by
+  -- `levelSetChart` is built as an explicit `OpenPartialHomeomorph` literal whose `toFun` field
+  -- is `fun z => (Φ z.1).2`, so applying it to `z` reduces to that by unfolding the definition
+  -- and projecting the structure literal — both stable reductions, since the field is written
+  -- out in this file. This lemma is the only place that relies on it: everything downstream
+  -- rewrites with `levelSetChart_apply` instead.
   change (hf.implicitToOpenPartialHomeomorphOfComplemented f f' hf' hker z.1).2 = _
   rw [hf.implicitToOpenPartialHomeomorphOfComplemented_apply hf' hker]
 
@@ -178,6 +179,17 @@ noncomputable def levelSetChartModel {n : ℕ} (hf : HasStrictFDerivAt f f' a)
     ((LinearEquiv.ofFinrankEq ↥f'.ker (Fin n → 𝕜)
       (by rw [hn, Module.finrank_fin_fun])).toContinuousLinearEquiv.toHomeomorph)
 
+/-- The model chart is normalised at its base point: it sends `a` to the origin of `Fin n → 𝕜`. -/
+@[simp]
+theorem levelSetChartModel_apply_self {n : ℕ} (hf : HasStrictFDerivAt f f' a)
+    (hf' : f'.range = ⊤) (hFred : ContinuousLinearMap.IsFredholm f')
+    (hn : finrank 𝕜 ↥f'.ker = n) (ha : f a = c) :
+    levelSetChartModel hf hf' hFred hn ha ⟨a, ha⟩ = 0 := by
+  have := hFred.finite_ker
+  rw [levelSetChartModel, OpenPartialHomeomorph.transHomeomorph_apply, Function.comp_apply,
+    levelSetChart_apply_self, ContinuousLinearEquiv.coe_toHomeomorph]
+  exact map_zero _
+
 theorem mem_levelSetChartModel_source {n : ℕ} (hf : HasStrictFDerivAt f f' a)
     (hf' : f'.range = ⊤) (hFred : ContinuousLinearMap.IsFredholm f')
     (hn : finrank 𝕜 ↥f'.ker = n) (ha : f a = c) :
@@ -202,6 +214,16 @@ noncomputable def levelSetChartAt
       rw [hindex z.1 z.2] at h
       exact_mod_cast h.symm)
     z.2
+
+/-- The preferred chart at `z` is normalised at `z`: it sends `z` to the origin of `Fin n → 𝕜`. -/
+@[simp]
+theorem levelSetChartAt_apply_self
+    (hf : ∀ x ∈ {x | f x = c}, HasStrictFDerivAt f (D x) x)
+    (hFred : ∀ x ∈ {x | f x = c}, ContinuousLinearMap.IsFredholm (D x))
+    (hsurj : ∀ x ∈ {x | f x = c}, Function.Surjective (D x))
+    (hindex : ∀ x ∈ {x | f x = c}, ContinuousLinearMap.index (D x) = n)
+    (z : ↥{x | f x = c}) : levelSetChartAt hf hFred hsurj hindex z z = 0 :=
+  levelSetChartModel_apply_self _ _ _ _ _
 
 /-- **A regular level set of a Fredholm map is locally modelled on `Fin n → 𝕜`, `n` its index.**
 If `f` is strictly differentiable at every point of the level set `{x | f x = c}` with surjective
@@ -271,37 +293,38 @@ theorem exists_mem_ne_of_index_ne_zero (hf : HasStrictFDerivAt f f' a) (hf' : f'
   have hWopen : IsOpen (Ψ.target ∩ Ψ.symm ⁻¹' (Ψ.source ∩ Subtype.val ⁻¹' U')) :=
     Ψ.continuousOn_symm.isOpen_inter_preimage Ψ.open_target hVopen
   have h0W : (0 : ↥f'.ker) ∈ Ψ.target ∩ Ψ.symm ⁻¹' (Ψ.source ∩ Subtype.val ⁻¹' U') := by
-    refine ⟨hΨ0 ▸ Ψ.map_source hz₀, ?_⟩
-    change Ψ.symm 0 ∈ Ψ.source ∩ Subtype.val ⁻¹' U'
+    refine ⟨hΨ0 ▸ Ψ.map_source hz₀, Set.mem_preimage.2 ?_⟩
     rw [← hΨ0, Ψ.left_inv hz₀]
     exact hz₀V
   obtain ⟨k, hkW, hk0⟩ :=
     Filter.nonempty_of_mem (Filter.inter_mem (nhdsWithin_le_nhds (hWopen.mem_nhds h0W))
       (self_mem_nhdsWithin (a := (0 : ↥f'.ker)) (s := {0}ᶜ)))
-  refine ⟨(Ψ.symm k : E), hU'sub hkW.2.2, (Ψ.symm k).2, fun hEq => hk0 ?_⟩
+  refine ⟨(Ψ.symm k : E), hU'sub hkW.2.2, (Ψ.symm k).2, fun hEq => ?_⟩
   have hsub : Ψ.symm k = ⟨a, ha⟩ := Subtype.ext hEq
-  change k ∈ ({0} : Set ↥f'.ker)
-  rw [← Ψ.right_inv hkW.1, hsub, hΨ0]
-  rfl
+  have hk : k = 0 := by rw [← Ψ.right_inv hkW.1, hsub, hΨ0]
+  exact hk0 (Set.mem_singleton_iff.2 hk)
 
-/-- A compact piece of a level set along which the derivative is surjective Fredholm of index zero
-is **finite**. This is the finiteness that makes a count of index-zero solutions, such as a Floer
-differential, well defined. -/
-theorem finite_inter_of_index_eq_zero {D : E → E →L[𝕜] F} {K : Set E} (hcont : Continuous f)
-    (hK : IsCompact K)
-    (hf : ∀ x ∈ {x | f x = c}, HasStrictFDerivAt f (D x) x)
-    (hFred : ∀ x ∈ {x | f x = c}, ContinuousLinearMap.IsFredholm (D x))
-    (hsurj : ∀ x ∈ {x | f x = c}, Function.Surjective (D x))
-    (hindex : ∀ x ∈ {x | f x = c}, ContinuousLinearMap.index (D x) = 0) :
+/-- A **compact** piece `{x | f x = c} ∩ K` of a level set along which the derivative is surjective
+Fredholm of index zero is **finite**. Only the points of that piece are constrained: nothing is
+assumed about `f` away from it. When `f` is continuous the level set is closed, so for a compact
+`K` the compactness hypothesis is `hK.inter_left (isClosed_eq hcont continuous_const)`.
+
+This is one ingredient in the well-definedness of a count of index-zero solutions, such as a Floer
+differential: it makes the counted set finite once a separate compactness result has placed the
+solutions to be counted inside such a piece. -/
+theorem finite_inter_of_index_eq_zero {D : E → E →L[𝕜] F} {K : Set E}
+    (hK : IsCompact ({x | f x = c} ∩ K))
+    (hf : ∀ x ∈ {x | f x = c} ∩ K, HasStrictFDerivAt f (D x) x)
+    (hFred : ∀ x ∈ {x | f x = c} ∩ K, ContinuousLinearMap.IsFredholm (D x))
+    (hsurj : ∀ x ∈ {x | f x = c} ∩ K, Function.Surjective (D x))
+    (hindex : ∀ x ∈ {x | f x = c} ∩ K, ContinuousLinearMap.index (D x) = 0) :
     ({x | f x = c} ∩ K).Finite := by
-  have hclosed : IsClosed {x | f x = c} := isClosed_eq hcont continuous_const
-  refine (hK.inter_left hclosed).finite ?_
+  refine hK.finite ?_
   rw [isDiscrete_iff_forall_mem_exists_isOpen]
   intro y hy
-  have hy' : y ∈ {x | f x = c} := hy.1
   obtain ⟨u, hu, huo, hyu⟩ := _root_.eventually_nhds_iff.1
-    (eventually_eq_of_index_eq_zero (hf y hy') (LinearMap.range_eq_top.2 (hsurj y hy'))
-      (hFred y hy') (hindex y hy') hy')
+    (eventually_eq_of_index_eq_zero (hf y hy) (LinearMap.range_eq_top.2 (hsurj y hy))
+      (hFred y hy) (hindex y hy) hy.1)
   exact ⟨u, huo, Set.eq_singleton_iff_unique_mem.2
     ⟨⟨hyu, hy⟩, fun x hx => hu x hx.1 hx.2.1⟩⟩
 
