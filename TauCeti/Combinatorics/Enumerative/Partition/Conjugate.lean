@@ -19,9 +19,9 @@ the symmetric-group and Schur–Weyl roadmap.  It supplies the order duality use
 row/column symmetry of Specht modules and permutation modules.
 
 Along the way it records the Young diagrams of the two extreme partitions, which the duality
-exchanges: the diagram of `(1ⁿ)` is a single column
-(`TauCeti.rowLen_diagramOf_ones_le_one`) and the diagram of `(n)` is a single row
-(`TauCeti.colLen_diagramOf_indiscrete_le_one`).
+exchanges: the diagram of `(1ⁿ)` has at most one column
+(`TauCeti.rowLen_diagramOf_ones_le_one`) and the diagram of `(n)` has at most one row
+(`TauCeti.colLen_diagramOf_indiscrete_le_one`).  Both are empty for `n = 0`.
 
 ## References
 
@@ -191,8 +191,8 @@ theorem rowLen_diagramOf_ones_le_one (n i : ℕ) :
   · rw [List.getD_eq_default _ _ hi]
     exact Nat.zero_le 1
 
-/-- **The Young diagram of the partition `(n)` is a single row**: the only part is `n`, so there is
-nothing below the first row. -/
+/-- **The Young diagram of the partition `(n)` has at most one row**: for `n > 0` its only part is
+`n`, so there is nothing below the first row, and for `n = 0` the diagram is empty. -/
 theorem colLen_diagramOf_indiscrete_le_one (n : ℕ) :
     (diagramOf (Nat.Partition.indiscrete n)).colLen 0 ≤ 1 := by
   have hlen : ((Nat.Partition.indiscrete n).parts.sort (· ≥ ·)).length ≤ 1 := by

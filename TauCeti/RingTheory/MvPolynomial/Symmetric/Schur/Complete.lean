@@ -23,12 +23,13 @@ monomial `∏ᵢ xᵢ ^ (multiplicity of i)` over every multiset of letters of t
 `TauCeti.diagramSchurPoly N R μ = MvPolynomial.hsymm (Fin N) R μ.card` for `μ.colLen 0 ≤ 1`.
 
 For partitions this reads `s_{(n)} = h_n`, `TauCeti.schurPoly_indiscrete`, the shape `(n)` being
-Mathlib's `Nat.Partition.indiscrete` at the top of the dominance order.  It is the `1 × 1` instance
-of the Jacobi--Trudi identity, whose general form expresses `s_μ` as a determinant of complete
-homogeneous symmetric polynomials, and the character-level shadow of `𝕊^{(n)}(V) = Symⁿ V`.  It is
-dual to `TauCeti.schurPoly_ones`, the one-column identity `s_{(1ⁿ)} = e_n`.
+Mathlib's `Nat.Partition.indiscrete` at the top of the dominance order: a single row of `n` cells
+for `n > 0`, and the empty diagram for `n = 0`.  It is the `1 × 1` instance of the Jacobi--Trudi
+identity, whose general form expresses `s_μ` as a determinant of complete homogeneous symmetric
+polynomials, and the character-level shadow of `𝕊^{(n)}(V) = Symⁿ V`.  It is dual to
+`TauCeti.schurPoly_ones`, the one-column identity `s_{(1ⁿ)} = e_n`.
 
-The identification runs through `TauCeti.BoundedSSYT.rowSymEquiv`, the bijection between the
+The identification runs through `TauCeti.BoundedSSYT.rowMultisetEquiv`, the bijection between the
 bounded tableaux of a one-row shape and the multisets of letters of size the number of columns.
 Both directions are explicit: a tableau is sent to the multiset
 `TauCeti.BoundedSSYT.rowMultiset` of the entries of its row, and a multiset is sent back to the
@@ -56,19 +57,17 @@ needs.
 * `TauCeti.BoundedSSYT.rowList`: a multiset of letters, listed in increasing order.
 * `TauCeti.BoundedSSYT.ofRowMultiset`: the one-row tableau listing a given multiset of letters in
   increasing order.
-* `TauCeti.BoundedSSYT.rowSymEquiv`: the bijection between the bounded tableaux of a one-row shape
-  and the multisets of letters of size the number of columns.
+* `TauCeti.BoundedSSYT.rowMultisetEquiv`: the bijection between the bounded tableaux of a one-row
+  shape and the multisets of letters of size the number of columns.
 
 ## Main results
 
-* `TauCeti.prod_map_X_eq_monomial`: the product of the variables indexed by a multiset is the
-  monomial counting them.
 * `TauCeti.BoundedSSYT.weight_eq_toFinsupp`: the weight of a one-row tableau is the multiplicity
   function of the multiset of letters it uses.
 * `TauCeti.diagramSchurPoly_eq_hsymm_of_colLen_le_one`: the Schur polynomial of a one-row shape is
   a complete homogeneous symmetric polynomial.
 * `TauCeti.schurPoly_indiscrete`: `s_{(n)} = h_n`.
-* `TauCeti.schurPoly_indiscrete_isSymmetric`: the Schur polynomial of a one-row partition is
+* `TauCeti.schurPoly_indiscrete_isSymmetric`: the Schur polynomial of the partition `(n)` is
   symmetric.
 
 ## References
@@ -89,7 +88,7 @@ open Finset MvPolynomial
 
 /-- **A monomial is the product of the variables it uses, with multiplicity.**  This is the form
 in which the monomials of `MvPolynomial.hsymm` are written. -/
-theorem prod_map_X_eq_monomial {σ : Type*} [DecidableEq σ] {R : Type*} [CommSemiring R]
+private theorem prod_map_X_eq_monomial {σ : Type*} [DecidableEq σ] {R : Type*} [CommSemiring R]
     (s : Multiset σ) :
     (s.map (X : σ → MvPolynomial σ R)).prod = monomial s.toFinsupp (1 : R) := by
   induction s using Multiset.induction with
@@ -127,6 +126,12 @@ theorem rowEntry_monotone (T : BoundedSSYT N μ) : Monotone (rowEntry T) := by
 /-- The multiset of letters the first row of a bounded tableau uses, with multiplicity. -/
 def rowMultiset (T : BoundedSSYT N μ) : Multiset (Fin N) :=
   Finset.univ.val.map (rowEntry T)
+
+/-- A letter is used by the first row of a bounded tableau exactly when some column carries it. -/
+@[simp]
+theorem mem_rowMultiset {T : BoundedSSYT N μ} {x : Fin N} :
+    x ∈ rowMultiset T ↔ ∃ j, rowEntry T j = x := by
+  simp [rowMultiset]
 
 /-- **The first row of a bounded tableau uses one letter per column**, counted with
 multiplicity. -/
@@ -259,12 +264,14 @@ private theorem ofFn_getD_rowList (s : Multiset (Fin N)) (hs : Multiset.card s =
 @[simp]
 theorem rowMultiset_ofRowMultiset (h : μ.colLen 0 ≤ 1) (s : Multiset (Fin N))
     (hs : Multiset.card s = μ.rowLen 0) : rowMultiset (ofRowMultiset h s hs) = s := by
+  -- `rowEntry_ofRowMultiset` reads the entries one at a time, so it has to be bundled into a
+  -- function equality before it can rewrite under `Multiset.map`.
+  have hentries : Fin.val ∘ rowEntry (ofRowMultiset h s hs)
+      = fun j : Fin (μ.rowLen 0) => (rowList s).getD (j : ℕ) 0 :=
+    funext fun j => rowEntry_ofRowMultiset h s hs j
   refine Multiset.map_injective (Fin.val_injective (n := N)) ?_
-  rw [rowMultiset, Multiset.map_map,
-    show Fin.val ∘ rowEntry (ofRowMultiset h s hs)
-        = fun j : Fin (μ.rowLen 0) => (rowList s).getD (j : ℕ) 0 from
-      funext fun j => rowEntry_ofRowMultiset h s hs j,
-    Fin.univ_val_map, ofFn_getD_rowList s hs, coe_rowList]
+  rw [rowMultiset, Multiset.map_map, hentries, Fin.univ_val_map, ofFn_getD_rowList s hs,
+    coe_rowList]
 
 /-- **The row of a one-row tableau is already sorted**, so it is the sorted word of its own
 multiset of letters. -/
@@ -297,7 +304,7 @@ theorem ofRowMultiset_rowMultiset (h : μ.colLen 0 ≤ 1) (T : BoundedSSYT N μ)
 /-- **The bounded tableaux of a one-row shape are the multisets of letters of the right size**: a
 tableau is the multiset of the letters of its row, and a multiset of letters is listed along the
 row in increasing order. -/
-def rowSymEquiv (h : μ.colLen 0 ≤ 1) : BoundedSSYT N μ ≃ Sym (Fin N) μ.card where
+def rowMultisetEquiv (h : μ.colLen 0 ≤ 1) : BoundedSSYT N μ ≃ Sym (Fin N) μ.card where
   toFun T := ⟨rowMultiset T,
     (card_rowMultiset T).trans (YoungDiagram.card_eq_rowLen_of_colLen_le_one h).symm⟩
   invFun s := ofRowMultiset h s.1 (s.2.trans (YoungDiagram.card_eq_rowLen_of_colLen_le_one h))
@@ -305,14 +312,15 @@ def rowSymEquiv (h : μ.colLen 0 ≤ 1) : BoundedSSYT N μ ≃ Sym (Fin N) μ.ca
   right_inv s := Sym.ext (rowMultiset_ofRowMultiset h s.1 _)
 
 @[simp]
-theorem rowSymEquiv_apply_coe (h : μ.colLen 0 ≤ 1) (T : BoundedSSYT N μ) :
-    (rowSymEquiv h T : Multiset (Fin N)) = rowMultiset T :=
+theorem rowMultisetEquiv_apply_coe (h : μ.colLen 0 ≤ 1) (T : BoundedSSYT N μ) :
+    (rowMultisetEquiv h T : Multiset (Fin N)) = rowMultiset T :=
   (rfl)
 
-/-- The inverse of `rowSymEquiv` lists a multiset of letters along the row in increasing order. -/
+/-- The inverse of `rowMultisetEquiv` lists a multiset of letters along the row in increasing
+order. -/
 @[simp]
-theorem rowSymEquiv_symm_apply (h : μ.colLen 0 ≤ 1) (s : Sym (Fin N) μ.card) :
-    (rowSymEquiv h).symm s
+theorem rowMultisetEquiv_symm_apply (h : μ.colLen 0 ≤ 1) (s : Sym (Fin N) μ.card) :
+    (rowMultisetEquiv h).symm s
       = ofRowMultiset h s.1 (s.2.trans (YoungDiagram.card_eq_rowLen_of_colLen_le_one h)) :=
   (rfl)
 
@@ -328,7 +336,7 @@ contributing the monomial on the letters it uses. -/
 theorem diagramSchurPoly_eq_hsymm_of_colLen_le_one (h : μ.colLen 0 ≤ 1) :
     diagramSchurPoly N R μ = hsymm (Fin N) R μ.card := by
   rw [diagramSchurPoly_eq_sum, hsymm]
-  refine Fintype.sum_equiv (BoundedSSYT.rowSymEquiv h) _ _ fun T => ?_
+  refine Fintype.sum_equiv (BoundedSSYT.rowMultisetEquiv h) _ _ fun T => ?_
   rw [prod_map_X_eq_monomial]
   exact congrArg (fun d => monomial d (1 : R)) (BoundedSSYT.weight_eq_toFinsupp h T)
 
@@ -336,8 +344,9 @@ section Partition
 
 variable {σ : Type*} [Fintype σ] [DecidableEq σ]
 
-/-- **The Schur polynomial of the one-row partition `(n)` is the `n`-th complete homogeneous
-symmetric polynomial**, `s_{(n)} = h_n`. -/
+/-- **The Schur polynomial of the partition `(n)` is the `n`-th complete homogeneous symmetric
+polynomial**, `s_{(n)} = h_n`.  The diagram of `(n)` has at most one row: it is a single row of
+`n` cells for `n > 0`, and empty for `n = 0`. -/
 @[simp]
 theorem schurPoly_indiscrete (n : ℕ) :
     schurPoly σ R (Nat.Partition.indiscrete n) = hsymm σ R n := by
@@ -346,9 +355,10 @@ theorem schurPoly_indiscrete (n : ℕ) :
     card_diagramOf, rename_hsymm]
 
 omit [DecidableEq σ] in
-/-- **The Schur polynomial of a one-row partition is symmetric.**  This is the one-row case of the
-symmetry of the Schur polynomials, which in general needs the Bender--Knuth involution and is not
-proved here; for `(n)` it is the symmetry of the complete homogeneous symmetric polynomials. -/
+/-- **The Schur polynomial of the partition `(n)` is symmetric.**  This is the at-most-one-row
+case of the symmetry of the Schur polynomials, which in general needs the Bender--Knuth involution
+and is not proved here; for `(n)` it is the symmetry of the complete homogeneous symmetric
+polynomials. -/
 theorem schurPoly_indiscrete_isSymmetric (n : ℕ) :
     (schurPoly σ R (Nat.Partition.indiscrete n)).IsSymmetric := by
   classical
