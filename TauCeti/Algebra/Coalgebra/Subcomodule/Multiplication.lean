@@ -18,9 +18,10 @@ right comodule to the regular right comodule. Consequently, if `N` and `P` are
 subcomodules of the regular comodule and a third subcomodule `Q` contains all products
 `n * p`, multiplication corestricts to a comodule morphism `N ⊗ P ⟶ Q`.
 
-When `H` is free over the base semiring and `N` and `P` are finite, the products of their
-elements lie in some finite regular subcomodule. This packages the multiplication map needed
-to compare tensor-compatible natural transformations on finite regular subcomodules.
+When `H` is free over the base semiring and `N` and `P` are finite submodules, the products
+of their elements lie in some finite regular subcomodule. This packages the multiplication
+map needed to compare tensor-compatible natural transformations on finite regular
+subcomodules.
 
 ## Main declarations
 
@@ -28,7 +29,7 @@ to compare tensor-compatible natural transformations on finite regular subcomodu
   subcomodule.
 * `TauCeti.Subcomodule.exists_finite_mul_le_of_exists_mem`: pairwise products lie in a
   finite regular subcomodule whenever every element does.
-* `TauCeti.Subcomodule.exists_finite_mul_le`: two finite regular subcomodules have all
+* `TauCeti.Subcomodule.exists_finite_mul_le`: two finite submodules have all
   their pairwise products in a third finite regular subcomodule.
 
 ## References
@@ -116,24 +117,24 @@ theorem mulHom_toLinearMap (N P Q : Subcomodule R H H)
   exact Subtype.ext (mulHom_tmul N P Q h n p)
 
 /-- If every element of `H` belongs to a finite regular subcomodule, then pairwise products
-from two finite regular subcomodules lie in a third finite regular subcomodule. -/
+from two finite submodules lie in a finite regular subcomodule. -/
 theorem exists_finite_mul_le_of_exists_mem
     (hH : ∀ h : H, ∃ Q : Subcomodule R H H, Module.Finite R Q.toSubmodule ∧ h ∈ Q)
-    (N P : Subcomodule R H H)
-    [Module.Finite R N.toSubmodule] [Module.Finite R P.toSubmodule] :
+    (N P : Submodule R H)
+    [Module.Finite R N] [Module.Finite R P] :
     ∃ Q : Subcomodule R H H, Module.Finite R Q.toSubmodule ∧
       ∀ (n : N) (p : P), (n : H) * (p : H) ∈ Q := by
-  let f := Submodule.mulMap N.toSubmodule P.toSubmodule
+  let f := Submodule.mulMap N P
   obtain ⟨Q, hQfinite, hQ⟩ :=
     exists_finite_subcomodule_of_fg_of_exists_mem hH
       f.range (Submodule.fg_range f)
   refine ⟨Q, hQfinite, fun n p ↦ hQ ?_⟩
   exact ⟨n ⊗ₜ[R] p, rfl⟩
 
-/-- If `H` is free over `R`, pairwise products from two finite regular subcomodules lie in a
-third finite regular subcomodule. -/
-theorem exists_finite_mul_le [Module.Free R H] (N P : Subcomodule R H H)
-    [Module.Finite R N.toSubmodule] [Module.Finite R P.toSubmodule] :
+/-- If `H` is free over `R`, pairwise products from two finite submodules lie in a finite
+regular subcomodule. -/
+theorem exists_finite_mul_le [Module.Free R H] (N P : Submodule R H)
+    [Module.Finite R N] [Module.Finite R P] :
     ∃ Q : Subcomodule R H H, Module.Finite R Q.toSubmodule ∧
       ∀ (n : N) (p : P), (n : H) * (p : H) ∈ Q :=
   exists_finite_mul_le_of_exists_mem

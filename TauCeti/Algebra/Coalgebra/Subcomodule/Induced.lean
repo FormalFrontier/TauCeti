@@ -258,11 +258,8 @@ noncomputable def codRestrict (f : Hom R C M N) (P : Subcomodule R C N)
               (Comodule.coact (R := R) (C := C) (M := M) m)) =
           TensorProduct.map f.toLinearMap LinearMap.id
             (Comodule.coact (R := R) (C := C) (M := M) m) := by
-              induction Comodule.coact (R := R) (C := C) (M := M) m using
-                TensorProduct.induction_on with
-              | zero => simp
-              | add x y hx hy => simpa only [map_add] using congrArg₂ (· + ·) hx hy
-              | tmul n c => rfl
+              rw [LinearMap.rTensor_def, TensorProduct.map_map]
+              rfl
         _ = Comodule.coact (R := R) (C := C) (M := N) (f m) :=
           f.map_coact_apply m
         _ = (SMulMemClass.subtype P).rTensor C
@@ -291,6 +288,15 @@ theorem codRestrict_toLinearMap (f : Hom R C M N) (P : Subcomodule R C N)
 theorem codRestrict_apply (f : Hom R C M N) (P : Subcomodule R C N)
     (h : ∀ m, f m ∈ P) (m : M) : (f.codRestrict P h m : N) = f m :=
   by exact codRestrict_apply_def f P h m
+
+/-- Composing a corestricted comodule morphism with the subcomodule inclusion recovers the
+original morphism. -/
+@[simp]
+theorem subtype_comp_codRestrict (f : Hom R C M N) (P : Subcomodule R C N)
+    (h : ∀ m, f m ∈ P) :
+    Comodule.Hom.comp (Subcomodule.subtype P) (f.codRestrict P h) = f := by
+  ext m
+  simp
 
 end Comodule.Hom
 
