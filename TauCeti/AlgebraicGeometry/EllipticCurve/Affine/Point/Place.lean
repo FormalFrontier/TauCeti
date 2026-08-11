@@ -28,6 +28,9 @@ type of nonzero primes and carries the adic valuation on the function field.
   identifying its underlying ideal as `XYIdeal W x (C y)`.
 * `TauCeti.WeierstrassCurve.Affine.CoordinateRing.pointPlace_eq_iff`: `pointPlace` is injective —
   two points have the same place exactly when they have the same coordinates.
+* `TauCeti.WeierstrassCurve.Affine.CoordinateRing.pointPlace.finrank_residueField_eq_one`:
+  consequently the
+  place of a point has degree one: its residue field is one-dimensional over the base field.
 
 `(pointPlace h).valuation W.FunctionField` is then the associated multiplicative adic valuation on
 the function field, taking values in `ℤᵐ⁰` and normalised so that a uniformiser has value
@@ -45,7 +48,16 @@ design is coordinated with D. Angdinata's in-flight upstream `CoordinateRing` wo
 
 ## Provenance
 
-Not a port. AINTLIB's `HasseWeil/Curves/Valuation.lean` builds an `ord_P` for its own
+The degree-one result corresponds to AINTLIB's `HasseWeil/Curves/ResidueFieldAtSmoothPoint.lean`
+(`SmoothPlaneCurve.quotientAlgEquivBase`, `SmoothPlaneCurve.residueFieldsAlgEquiv`,
+`CurveMap.CoordHom.inertiaDeg_eq_one_of_isAlgClosed`). There it is reached through the
+`SmoothPlaneCurve`/`SmoothPoint` wrappers with the residue field built by hand, and the residue
+degree additionally assumes an algebraically closed base; here the wrappers are dropped, the
+hypothesis is the curve equation, no closure is needed, and the content is Mathlib's
+`quotientXYIdealEquiv` rather than a fresh construction.
+
+The place itself is not a port. AINTLIB's `HasseWeil/Curves/Valuation.lean` builds an `ord_P` for
+its own
 `SmoothPlaneCurve` wrapper with about twenty lemmas — multiplicativity, the ultrametric bound,
 inverses, powers, uniformisers. None of that is reproduced: once the point is presented as a
 `HeightOneSpectrum`, those are Mathlib's `Valuation.map_mul`, `Valuation.map_add`,
@@ -88,6 +100,20 @@ theorem pointPlace_eq_iff {x₁ x₂ y₁ y₂ : F} (h₁ : W.Equation x₁ y₁
   -- both directions go through the underlying ideals, `HeightOneSpectrum` being determined by them
   rw [HeightOneSpectrum.ext_iff, pointPlace_asIdeal, pointPlace_asIdeal]
   exact XYIdeal_eq_iff h₁
+
+
+/-- **The place of a point has degree one.** The degree of a place is the rank of its residue field
+over the base, and here that rank is one — which is the sense in which the point–place dictionary
+lands in the *degree-one* places. (The identification of the residue field with `F` itself is
+Mathlib's `quotientXYIdealEquiv`, used in the proof; only the rank is stated.) -/
+@[simp]
+theorem pointPlace.finrank_residueField_eq_one {y : F} (h : W.Equation x y) :
+    Module.finrank F (W.CoordinateRing ⧸ (pointPlace h).asIdeal) = 1 := by
+  -- the `XYIdeal`-level form is not exported: it would be a one-line wrapper around
+  -- `quotientXYIdealEquiv`, so the rewrite happens here
+  rw [(Ideal.quotientEquivAlgOfEq F (pointPlace_asIdeal h)).toLinearEquiv.finrank_eq,
+    (_root_.WeierstrassCurve.Affine.CoordinateRing.quotientXYIdealEquiv h).toLinearEquiv.finrank_eq,
+    Module.finrank_self]
 
 end WeierstrassCurve.Affine.CoordinateRing
 
