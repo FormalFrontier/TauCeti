@@ -5,8 +5,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.AlgebraicGeometry.Morphisms.Smooth
+public import Mathlib.CategoryTheory.ObjectProperty.Opposite
 public import TauCeti.Algebra.AlgebraicGroup.Smooth.CommHopfAlgCat
-public import TauCeti.AlgebraicGeometry.AffineGroupScheme.Basic
+public import TauCeti.AlgebraicGeometry.AffineGroupScheme.Equivalence
 public import TauCeti.AlgebraicGeometry.AffineGroupScheme.HopfSpec
 
 /-!
@@ -65,6 +66,14 @@ lemma smoothAffineGroupSchemeProperty_iff (S : CommRingCat.{u})
     smoothAffineGroupSchemeProperty S G ↔ Smooth G.obj.X.hom :=
   Iff.rfl
 
+/-- Smoothness of the structural morphism is invariant under isomorphism of affine group
+schemes. This lets the predicate transport through equivalences. -/
+instance (S : CommRingCat.{u}) :
+    (smoothAffineGroupSchemeProperty S).IsClosedUnderIsomorphisms where
+  of_iso e hG :=
+    (MorphismProperty.over_iso_iff (@Smooth)
+      ((Grp.forget _).mapIso ((affineGroupSchemeProperty S).ι.mapIso e))).mp hG
+
 /-- A commutative Hopf algebra is smooth over its base exactly when the structural morphism of
 its Hopf spectrum is smooth.
 
@@ -83,5 +92,37 @@ theorem algebraSmooth_iff_smooth_hopfSpec
     (P := @Smooth) (eqToHom (hopfSpec_obj_X_left R H))]
   rw [HasRingHomProperty.Spec_iff (P := @Smooth)]
   exact RingHom.smooth_algebraMap.symm
+
+/-- Under the affine Hopf/group-scheme anti-equivalence, the inverse image of the smooth scheme
+property is the smooth coordinate-algebra property. -/
+theorem smoothAffineGroupSchemeProperty_inverseImage
+    (R : Type u) [CommRing R] :
+    (smoothAffineGroupSchemeProperty (CommRingCat.of R)).inverseImage
+        (commHopfAlgCatOpEquivAffineGroupSchemeCat (CommRingCat.of R)).functor =
+      (smoothCommHopfAlgProperty R).op := by
+  ext H
+  let G : AffineGroupSchemeCat (CommRingCat.of R) :=
+    ⟨(hopfSpec (CommRingCat.of R)).obj H, by
+      apply (affineGroupSchemeProperty_iff _).mpr
+      rw [← essImage_hopfSpec]
+      exact ⟨H, ⟨Iso.refl _⟩⟩⟩
+  let e : (commHopfAlgCatOpEquivAffineGroupSchemeCat
+      (CommRingCat.of R)).functor.obj H ≅ G :=
+    (affineGroupSchemeProperty (CommRingCat.of R)).ι.preimageIso
+      ((commHopfAlgCatOpEquivAffineGroupSchemeCat.functorCompιIso
+        (CommRingCat.of R)).app H)
+  rw [ObjectProperty.prop_inverseImage_iff,
+    smoothAffineGroupSchemeProperty_iff, ObjectProperty.op_iff,
+    smoothCommHopfAlgProperty_iff]
+  constructor
+  · intro h
+    have hG : smoothAffineGroupSchemeProperty (CommRingCat.of R) G :=
+      (smoothAffineGroupSchemeProperty (CommRingCat.of R)).prop_of_iso e h
+    exact (smoothCommHopfAlgProperty_iff H.unop).mp
+      ((algebraSmooth_iff_smooth_hopfSpec R H.unop).mpr hG)
+  · intro h
+    apply (smoothAffineGroupSchemeProperty (CommRingCat.of R)).prop_of_iso e.symm
+    exact (algebraSmooth_iff_smooth_hopfSpec R H.unop).mp
+      ((smoothCommHopfAlgProperty_iff H.unop).mpr h)
 
 end TauCeti

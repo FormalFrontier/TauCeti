@@ -36,7 +36,7 @@ universe u v
 
 /-- The object property on commutative Hopf algebras selecting coordinate algebras smooth over
 the base ring. -/
-@[expose] def smoothCommHopfAlgProperty (R : Type u) [CommRing R] :
+def smoothCommHopfAlgProperty (R : Type u) [CommRing R] :
     ObjectProperty (CommHopfAlgCat.{v} R) :=
   fun H => Algebra.Smooth R H
 
