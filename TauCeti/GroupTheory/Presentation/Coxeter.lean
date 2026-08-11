@@ -124,12 +124,6 @@ theorem mem_coxeterRelatorsOfList_iff [LinearOrder B] {M : CoxeterMatrix B} {l :
   · rintro ⟨i, hi, j, hj, rfl⟩
     exact ⟨s(i, j), List.mk_mem_sym2 hi hj, rfl⟩
 
-/-- Every Coxeter relator in the list is the relator of a pair of nodes. -/
-private theorem exists_eq_coxeterRelator_of_mem [LinearOrder B] {M : CoxeterMatrix B} {l : List B}
-    {t : Relator B} (ht : t ∈ coxeterRelatorsOfList M l) : ∃ i j, t = coxeterRelator M i j := by
-  obtain ⟨i, -, j, -, rfl⟩ := mem_coxeterRelatorsOfList_iff.mp ht
-  exact ⟨s(i, j).inf, s(i, j).sup, rfl⟩
-
 /-- For any two nodes of the list, the list carries the Coxeter relator of the pair in one of its
 two orders. Which one it is is fixed by the linear order on the nodes, and the two may differ, so
 this is the sharpest statement available. -/
@@ -184,9 +178,9 @@ theorem normalClosure_relatorSet_coxeterRelatorsOfList [LinearOrder B] (M : Coxe
   · intro r hr
     rw [Relator.mem_relatorSet] at hr
     obtain ⟨t, ht, rfl⟩ := hr
-    obtain ⟨i, j, rfl⟩ := exists_eq_coxeterRelator_of_mem ht
+    obtain ⟨i, -, j, -, rfl⟩ := mem_coxeterRelatorsOfList_iff.mp ht
     rw [toFreeGroup_coxeterRelator]
-    exact Subgroup.subset_normalClosure ⟨(i, j), rfl⟩
+    exact Subgroup.subset_normalClosure ⟨(s(i, j).inf, s(i, j).sup), rfl⟩
   · rintro r ⟨⟨i, j⟩, rfl⟩
     have key : ∀ a b : B, coxeterRelator M a b ∈ coxeterRelatorsOfList M l →
         M.relation a b ∈
