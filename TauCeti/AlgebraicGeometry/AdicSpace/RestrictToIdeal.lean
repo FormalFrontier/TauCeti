@@ -5,7 +5,7 @@ Authors: Chris Birkbeck
 -/
 module
 
-public import TauCeti.AlgebraicGeometry.AdicSpace.ValuationSpectrum
+public import TauCeti.AlgebraicGeometry.AdicSpace.SpvOfIdeal
 public import TauCeti.RingTheory.Valuation.CofinalIdeal.Restrict
 
 /-!
@@ -18,15 +18,20 @@ restriction itself, together with its interface, lives in
 `TauCeti.RingTheory.Valuation.CofinalIdeal.Restrict`; this file only carries it to the level of
 points.
 
-Wedhorn's retraction additionally **lands in** `Spv (A, I)` and **fixes** that subspace
-pointwise; **neither is proved here**, so the map is stated with codomain `Spv A` rather than the
-subspace, and is named for what it does — restriction to `I` — rather than for the retraction
-property it does not yet carry.
+Wedhorn's retraction has two properties beyond being this map: it **lands in** `Spv (A, I)`, and
+it **fixes** that subspace pointwise. The first is proved here, and the map is therefore also
+offered with the codomain the roadmap asks for, as `restrictToIdealCodRestrict`. The second is
+not proved here, so neither form is called `retract`: both are named for what they are shown to
+do — restriction to `I` — rather than for the retraction property still outstanding.
 
 ## Main definitions
 
 * `TauCeti.ValuationSpectrum.restrictToIdeal` : the restriction, at the level of points of
   `Spv A`.
+* `TauCeti.ValuationSpectrum.restrictToIdealCodRestrict` : the same map with the roadmap's
+  codomain, `Spv A → Spv (A, I)`, obtained by corestricting along the landing theorem below. This
+  is the canonical form for a consumer, who then holds a point of the subspace rather than a
+  point of `Spv A` together with a membership proof.
 
 ## Main results
 
@@ -34,6 +39,12 @@ property it does not yet carry.
   canonical valuation.
 * `TauCeti.ValuationSpectrum.vle_restrictToIdeal` : the valuative relation of the restricted
   point, in terms of the original one.
+* `TauCeti.ValuationSpectrum.restrictToIdeal_mem_spvOfIdeal` : the restriction lands in
+  `Spv (A, I)`. The mathematics is valuation-level and proved there, as
+  `TauCeti.Valuation.characteristicSubgroupOfIdeal_restrictToIdeal_eq_top`; this only adds that
+  membership may be tested on the canonical valuation of the point.
+* `TauCeti.ValuationSpectrum.coe_restrictToIdealCodRestrict` : the corestriction read back in
+  `Spv A`.
 
 ## References
 
@@ -76,5 +87,37 @@ theorem vle_restrictToIdeal (v : Spv A) (I : Ideal A)
         v.valuation.restrictToIdeal I hfg b ≠ 0 ∧ v.toValuativeRel.vle a b := by
   rw [restrictToIdeal_def, vle_ofValuation, TauCeti.Valuation.restrictToIdeal_le_iff]
   exact or_congr_right (and_congr_right fun _ ↦ valuation_le_iff v a b)
+
+/-- **Wedhorn §7.1.2: the restriction lands in `Spv (A, I)`.** This is the substantive half of
+the roadmap's `r_I : Spv A → Spv (A, I)`: the point `restrictToIdeal v I` really does satisfy the
+condition cutting out the subspace.
+
+The mathematics is valuation-level and lives there, as
+`TauCeti.Valuation.characteristicSubgroupOfIdeal_restrictToIdeal_eq_top`; all this adds is that
+membership of a point may be tested on its canonical valuation. -/
+@[simp]
+theorem restrictToIdeal_mem_spvOfIdeal (v : Spv A) (I : Ideal A)
+    (hfg : ∃ J : Ideal A, J.FG ∧ I.radical = J.radical) :
+    restrictToIdeal v I hfg ∈ spvOfIdeal I hfg := by
+  rw [restrictToIdeal_def, mem_spvOfIdeal_ofValuation]
+  exact TauCeti.Valuation.characteristicSubgroupOfIdeal_restrictToIdeal_eq_top _ I hfg
+
+/-- **The roadmap's `r_I : Spv A → Spv (A, I)`**, with the codomain the roadmap asks for. This is
+`restrictToIdeal` corestricted along the landing theorem, so a consumer receives a point of the
+subspace rather than an `Spv A`-point plus a membership proof to carry around.
+
+It is named for the restriction rather than for a retraction: that it *is* a retraction needs the
+second law — that it fixes `Spv (A, I)` pointwise — which is proved separately. -/
+noncomputable def restrictToIdealCodRestrict (I : Ideal A)
+    (hfg : ∃ J : Ideal A, J.FG ∧ I.radical = J.radical) (v : Spv A) :
+    (spvOfIdeal I hfg : Set (Spv A)) :=
+  ⟨restrictToIdeal v I hfg, restrictToIdeal_mem_spvOfIdeal v I hfg⟩
+
+/-- The corestricted map is the plain one, read in `Spv A`. -/
+@[simp]
+theorem coe_restrictToIdealCodRestrict (I : Ideal A)
+    (hfg : ∃ J : Ideal A, J.FG ∧ I.radical = J.radical) (v : Spv A) :
+    (restrictToIdealCodRestrict I hfg v : Spv A) = restrictToIdeal v I hfg :=
+  (rfl)
 
 end TauCeti.ValuationSpectrum
