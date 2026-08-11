@@ -33,11 +33,13 @@ it is proved; the move between the two lattices is
 `TauCeti/RepresentationTheory/Induction/Clifford/Basic.lean`, and
 `TauCeti.Representation.iSup_asSubmodule_conjSubrep_eq_top` is the supremum form of it used here.
 
-No finiteness and no invertibility of `Nat.card N` is used: irreducibility of the ambient
-representation replaces Maschke's theorem throughout, exactly as in
-`TauCeti/RepresentationTheory/Induction/Clifford/Basic.lean`.  Finite-dimensionality of `V` is
-needed only to know that a minimal `N`-stable subspace exists at all: every statement below takes
-such a subspace as a hypothesis, except
+No invertibility of `Nat.card N` is used: irreducibility of the ambient representation replaces
+Maschke's theorem throughout, exactly as in
+`TauCeti/RepresentationTheory/Induction/Clifford/Basic.lean`.  The single-orbit statements need no
+finiteness either; finiteness of `G` is assumed only by
+`TauCeti.Representation.finite_isotypicComponents`, which counts the isotypic components through the
+translates.  Finite-dimensionality of `V` is needed only to know that a minimal `N`-stable subspace
+exists at all: every statement below takes such a subspace as a hypothesis, except
 `TauCeti.Representation.exists_isAtom_forall_nonempty_linearEquiv_conjSubrep`, the packaged form of
 the theorem, which assumes finite-dimensionality and produces one.
 
@@ -54,9 +56,9 @@ the theorem, which assumes finite-dimensionality and produces one.
   packaged for a finite-dimensional irreducible representation, where the minimal subspace to
   translate is produced rather than assumed.
 * `TauCeti.Representation.isotypicComponents_eq_range`: the isotypic components of the restriction
-  are exactly the components of the translates, so `G` acts transitively on them; with
-  `TauCeti.Representation.finite_isotypicComponents` there are finitely many of them when `G` is
-  finite.
+  are exactly the components of the translates of a given minimal `N`-stable subspace, so `G` acts
+  transitively on them; `TauCeti.Representation.finite_isotypicComponents` reads off from the same
+  hypothesis that there are finitely many of them when `G` is finite.
 * `TauCeti.Representation.isIsotypicOfType_asSubmodule_iff`: the restriction is isotypic exactly
   when every translate of one constituent is isomorphic to it — the case in which the inertia group
   of the constituent is all of `G`.
@@ -179,8 +181,9 @@ theorem isotypicComponents_eq_range [ρ.IsIrreducible]
   · rintro ⟨g, rfl⟩
     exact ⟨_, (isSimpleModule_asSubmodule_iff ρ).mpr (isAtom_conjSubrep_iff.mpr hσ), rfl⟩
 
-/-- **A restriction along a normal subgroup of a finite group has finitely many isotypic
-components.**  There is one component for each translate, so at most one for each element of `G`. -/
+/-- **Given one minimal `N`-stable subspace, a restriction along a normal subgroup of a finite group
+has finitely many isotypic components.**  There is one component for each translate of that
+subspace, so at most one for each element of `G`. -/
 theorem finite_isotypicComponents [ρ.IsIrreducible] [Finite G]
     {σ : Subrepresentation (ρ.comp N.subtype)} (hσ : IsAtom σ) :
     (isotypicComponents k[N] (_root_.Representation.asModule (ρ.comp N.subtype))).Finite := by
