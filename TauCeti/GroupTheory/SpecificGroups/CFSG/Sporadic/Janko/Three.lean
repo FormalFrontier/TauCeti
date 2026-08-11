@@ -139,6 +139,6 @@ def j3Presentation : GroupPresentation where
       .pow (.pow ab1 3 ⬝ .pow (ab1 ⬝ abNeg1) 2) 4 ]
 
 /-- The generator and relator counts recorded for `J₃` agree with the transcribed data. -/
-theorem matchesMetadata_j3Presentation : j3Presentation.matchesMetadata := by decide
+theorem j3Presentation_matchesMetadata : j3Presentation.matchesMetadata := by decide
 
 end TauCeti.Sporadic
