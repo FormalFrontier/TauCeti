@@ -20,8 +20,11 @@ quadratic extension differ by `θ' = b + aθ` with `a ≠ 0`, so a statement pro
 transfers to every other. This is what makes a construction defined by "pick any `θ ∈ L ∖ K`"
 well posed up to the ambiguity that `b + aθ` describes.
 `linearIndependent_one_of_notMem_range_algebraMap` is the linear-algebra step behind the second.
+`Algebra.IsQuadraticExtension.exists_eq_algebraMap_add_algebraMap_mul'`: every element — not only a
+generator — is `b + aθ` for a fixed generator `θ`, the coordinate presentation over the basis
+`1, θ` used by the quadratic field-norm computation.
 
-Two of the three ask for no field structure on `L`, and each is stated at the weakest level its
+Two of the four ask for no field structure on `L`, and each is stated at the weakest level its
 proof supports. `Algebra.IsQuadraticExtension.exists_notMem_range_algebraMap` needs only a
 *semiring*, the level Mathlib states `Algebra.IsQuadraticExtension` itself at, because it sees
 `L` only as a free `K`-module of rank two and derives nontriviality from that rank rather than
@@ -29,11 +32,13 @@ assuming it. `linearIndependent_one_of_notMem_range_algebraMap` carries no rank 
 all — its argument is just that `θ` is not a `K`-multiple of `1`, so it does ask for `L`
 nontrivial — but it stops at a *ring*, because the `LinearIndependent.pair_iff'` it applies is
 stated over an `AddCommGroup`. So both cover the split and non-reduced quadratic algebras
-`K × K` and `K[X]/(X²)`. Only `exists_eq_algebraMap_add_algebraMap_mul` asks for a field.
+`K × K` and `K[X]/(X²)`. Both `exists_eq_algebraMap_add_algebraMap_mul` and its all-elements form
+`exists_eq_algebraMap_add_algebraMap_mul'` ask for a field.
 
 These are consumed by the extension quadratic twist in
 `TauCeti/AlgebraicGeometry/EllipticCurve/QuadraticTwist.lean`, which advances
-`TauCetiRoadmap/EllipticCurves/README.md` §Layer 5 (twists).
+`TauCetiRoadmap/EllipticCurves/README.md` §Layer 5 (twists), and by the quadratic field-norm
+computation in `TauCeti/NumberTheory/NumberField/Quadratic/Norm.lean`.
 
 Adapted from the FLT project (`ImperialCollegeLondon/FLT`,
 `FLT/Mathlib/LinearAlgebra/Dimension/IsQuadraticExtension.lean` at the roadmap's pin
