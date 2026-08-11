@@ -331,7 +331,7 @@ omit [BorelSpace E] [FiniteDimensional ℝ E] in
 /-- The maximal inequality in the degenerate case of a `0`-dimensional space, where every ball is
 the whole space and the radii carry no information. -/
 private theorem mul_measure_lt_maximalFunction_le_of_subsingleton [Subsingleton E] (μ : Measure E)
-    [μ.IsAddHaarMeasure] (f : E → F) (t : ℝ≥0∞) :
+     (f : E → F) (t : ℝ≥0∞) :
     t * μ {x | t < maximalFunction μ f x} ≤ 4 ^ finrank ℝ E * ∫⁻ x, ‖f x‖ₑ ∂μ := by
   rcases eq_empty_or_nonempty {x | t < maximalFunction μ f x} with hS | ⟨x, hx⟩
   · simp [hS]
