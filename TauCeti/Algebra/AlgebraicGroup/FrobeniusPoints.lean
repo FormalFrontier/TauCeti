@@ -8,12 +8,14 @@ public import Mathlib.Algebra.CharP.Frobenius
 public import TauCeti.Algebra.AlgebraicGroup.FunctorOfPoints
 
 /-!
-# Frobenius on the points of an affine group
+# Frobenius on convolution points
 
-Let `H` be a Hopf algebra over `ℤ` and let `A` be a commutative ring of exponential
+Let `H` be a bialgebra over `ℤ` and let `A` be a commutative ring of exponential
 characteristic `p`. Post-composition with Mathlib's `iterateFrobenius A p n` sends an `A`-valued
 point `f : H →ₐ[ℤ] A` to the point `h ↦ f(h) ^ (p ^ n)`. Functoriality of convolution makes this
-a group endomorphism of the points represented by `H`.
+a monoid endomorphism of the points represented by `H`. When `H` is a Hopf algebra, these
+convolution points form a group. If `H` is also commutative, they are the points of the affine
+group scheme `Spec H`.
 
 This is the field-endomorphism part of the pinned Chevalley--Demazure interface in Layer 9 of the
 ReductiveGroups roadmap. Once a pinned group's integral coordinate Hopf algebra is constructed,
@@ -22,14 +24,15 @@ algebraic closure. The construction itself needs neither algebraic closedness no
 
 ## Main definitions and results
 
-* `TauCeti.HopfAlgebra.iterateFrobeniusPoints` is the induced group endomorphism on convolution
+* `TauCeti.Bialgebra.iterateFrobeniusPoints` is the induced monoid endomorphism on convolution
   points.
-* `TauCeti.HopfAlgebra.iterateFrobeniusPoints_apply_apply` identifies its action with the
+* `TauCeti.Bialgebra.iterateFrobeniusPoints_apply_apply` identifies its action with the
   `p ^ n`-power map.
-* `TauCeti.HopfAlgebra.iterateFrobeniusPoints_add` gives the iteration law.
-* `TauCeti.HopfAlgebra.mapValue_iterateFrobeniusPoints` proves naturality in the value algebra.
+* `TauCeti.Bialgebra.iterateFrobeniusPoints_zero` identifies the zeroth iterate.
+* `TauCeti.Bialgebra.iterateFrobeniusPoints_add` gives the iteration law.
+* `TauCeti.Bialgebra.iterateFrobeniusPoints_comm` proves naturality in the value algebra.
 
-## References
+## Implementation notes
 
 The construction post-composes with Mathlib's `iterateFrobenius`, whose laws supply every proof
 here, and reuses Tau Ceti's convolution-valued functor of points. It advances the “points over an
@@ -43,20 +46,20 @@ open WithConv
 
 namespace TauCeti
 
-namespace HopfAlgebra
+namespace Bialgebra
 
 universe u v w
 
 variable (p n : ℕ)
-variable {H : Type u} [Semiring H] [_root_.HopfAlgebra ℤ H]
+variable {H : Type u} [Semiring H] [_root_.Bialgebra ℤ H]
 variable {A : Type v} [CommRing A] [ExpChar A p]
 
-/-- The `p ^ n`-power Frobenius endomorphism on the group of `A`-valued points represented by
-the integral Hopf algebra `H`.
+/-- The `p ^ n`-power Frobenius endomorphism on the monoid of `A`-valued points represented by
+the integral bialgebra `H`.
 
 It post-composes a point with the iterated Frobenius of `A`, regarded as a `ℤ`-algebra
-endomorphism; passing through `ℤ` is what makes it act on the `ℤ`-valued functor of points of an
-integral affine group scheme. -/
+endomorphism. Frobenius is only a ring homomorphism, not an `A`-algebra homomorphism; regarding
+it as its canonical `ℤ`-algebra homomorphism lets `AlgHom.mapValue` act at base `ℤ`. -/
 noncomputable def iterateFrobeniusPoints :
     WithConv (H →ₐ[ℤ] A) →* WithConv (H →ₐ[ℤ] A) :=
   AlgHom.mapValue (iterateFrobenius A p n).toIntAlgHom
@@ -81,34 +84,38 @@ implementation-level `iterateFrobenius` expression instead. -/
 /-- The zeroth Frobenius iterate is the identity on points. -/
 @[simp] theorem iterateFrobeniusPoints_zero :
     iterateFrobeniusPoints p 0 (H := H) (A := A) = MonoidHom.id _ := by
-  have : (iterateFrobenius A p 0).toIntAlgHom = AlgHom.id ℤ A :=
-    congrArg RingHom.toIntAlgHom (iterateFrobenius_zero A p)
+  have : (iterateFrobenius A p 0).toIntAlgHom = AlgHom.id ℤ A := by
+    ext x
+    exact iterateFrobenius_zero_apply A p x
   rw [iterateFrobeniusPoints, this, AlgHom.mapValue_id]
 
-/-- Frobenius iterates add under composition on the group of points. -/
+/-- Frobenius iterates add under composition on the monoid of points. -/
 theorem iterateFrobeniusPoints_add (m : ℕ) :
     iterateFrobeniusPoints p (n + m) (H := H) (A := A) =
       (iterateFrobeniusPoints p n).comp (iterateFrobeniusPoints p m) := by
   have : (iterateFrobenius A p (n + m)).toIntAlgHom =
-      (iterateFrobenius A p n).toIntAlgHom.comp (iterateFrobenius A p m).toIntAlgHom :=
-    congrArg RingHom.toIntAlgHom (iterateFrobenius_add A p n m)
+      (iterateFrobenius A p n).toIntAlgHom.comp (iterateFrobenius A p m).toIntAlgHom := by
+    ext x
+    exact iterateFrobenius_add_apply A p n m x
   rw [iterateFrobeniusPoints, iterateFrobeniusPoints, iterateFrobeniusPoints, this,
     AlgHom.mapValue_comp]
 
 variable {B : Type w} [CommRing B] [ExpChar B p]
 
-/-- Naturality of Frobenius on points in the value algebra: Frobenius commutes with *every*
-homomorphism `φ : A →ₐ[ℤ] B` of value algebras, so post-composing a point by `φ` before or after
-applying the `n`-fold Frobenius gives the same point. -/
-theorem mapValue_iterateFrobeniusPoints (φ : A →ₐ[ℤ] B) :
+/-- Naturality of Frobenius on points in the value algebra: Frobenius commutes with every
+homomorphism `φ : A →ₐ[ℤ] B` into a value algebra of the same exponential characteristic `p`, so
+post-composing a point by `φ` before or after applying the `n`-fold Frobenius gives the same
+point. -/
+theorem iterateFrobeniusPoints_comm (φ : A →ₐ[ℤ] B) :
     (AlgHom.mapValue (H := H) φ).comp (iterateFrobeniusPoints p n (H := H) (A := A)) =
       (iterateFrobeniusPoints p n (H := H) (A := B)).comp (AlgHom.mapValue (H := H) φ) := by
   have : φ.comp (iterateFrobenius A p n).toIntAlgHom =
-      (iterateFrobenius B p n).toIntAlgHom.comp φ :=
-    congrArg RingHom.toIntAlgHom (φ.toRingHom.iterateFrobenius_comm p n)
+      (iterateFrobenius B p n).toIntAlgHom.comp φ := by
+    ext x
+    exact φ.toRingHom.map_iterateFrobenius p x n
   rw [iterateFrobeniusPoints, iterateFrobeniusPoints, ← AlgHom.mapValue_comp,
     ← AlgHom.mapValue_comp, this]
 
-end HopfAlgebra
+end Bialgebra
 
 end TauCeti
