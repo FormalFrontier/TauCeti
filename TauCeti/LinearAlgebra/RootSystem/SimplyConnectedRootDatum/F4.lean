@@ -4,9 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.LinearAlgebra.RootSystem.DynkinType
-public import Mathlib.LinearAlgebra.Matrix.Dual
-public import Mathlib.LinearAlgebra.RootSystem.Base
+public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.Basic
 
 public section
 
@@ -32,7 +30,8 @@ the last two are short.
 * The `RootPairing.IsRootSystem` instance for `TauCeti.DynkinType.f4SimplyConnectedRootDatum` says
   that its roots span the character lattice and its coroots span the cocharacter lattice. The
   latter, `span_coroot_eq_top`, is the simply connected condition the file is named for: the datum
-  has the largest cocharacter lattice compatible with its coroots, so no isogeny quotient is taken.
+  has cocharacter lattice equal to the coroot lattice, so no central isogeny quotient of the simply
+  connected form is taken.
 * `TauCeti.DynkinType.f4SimplyConnectedBase` is its Bourbaki-numbered base.
 * `TauCeti.DynkinType.f4SimplyConnectedRootDatum_pairing_eq_cartanMatrix_F₄` pins the numbering.
 * `TauCeti.DynkinType.hasCartanType_f4SimplyConnectedRootDatum` identifies its Cartan type.
@@ -336,7 +335,8 @@ private lemma span_f4Root_eq_top : span ℤ (range f4Root) = ⊤ := by
   · exact f4Root_20 ▸ hr 20
 
 private lemma span_f4Coroot_eq_top : span ℤ (range f4Coroot) = ⊤ :=
-  span_eq_top_of_pi_single fun k => f4Coroot_castAdd k ▸ subset_span ⟨Fin.castAdd 44 k, rfl⟩
+  corootSpan_eq_top_of_coroot_eq_single (P := f4SimplyConnectedRootDatum) (e := Fin.castAdd 44)
+    f4Coroot_castAdd
 
 /-- The pinned `F4` datum is a root system: its roots and coroots span the character and
 cocharacter lattices. Coroot spanning is the simply connected lattice condition. -/
@@ -346,11 +346,15 @@ instance : f4SimplyConnectedRootDatum.IsRootSystem where
 
 /-- The support of the Bourbaki-numbered base of the pinned `F4` datum: the first four root
 indices, which carry the simple roots. -/
-def f4Support : Finset (Fin 48) := {0, 1, 2, 3}
+def f4Support : Finset (Fin 48) := simpleSupport (Fin.castAdd_injective 4 44)
 
 /-- The support of the base consists exactly of the four indices below `4`. -/
 @[simp] lemma mem_f4Support {i : Fin 48} : i ∈ f4Support ↔ (i : ℕ) < 4 := by
-  fin_cases i <;> decide
+  rw [f4Support, mem_simpleSupport]
+  constructor
+  · rintro ⟨k, rfl⟩
+    simpa only [Fin.val_castAdd] using k.isLt
+  · exact fun hi => ⟨⟨i, hi⟩, Fin.ext rfl⟩
 
 /-- The coefficients of the positive `F4` roots in the ordered simple-root basis. -/
 private def f4RootCoefficients : Fin 24 → Fin 4 → ℕ := ![
@@ -394,12 +398,12 @@ private lemma mem_or_neg_mem_of_coefficients (f : Fin 48 → (Fin 4 → ℤ))
     f i ∈ AddSubmonoid.closure (f '' (↑f4Support : Set (Fin 48))) ∨
       -f i ∈ AddSubmonoid.closure
         (f '' (↑f4Support : Set (Fin 48))) := by
-  let C := AddSubmonoid.closure (f '' (↑f4Support : Set (Fin 48)))
-  have hs (k : Fin 4) : f (Fin.castAdd 44 k) ∈ C :=
-    AddSubmonoid.subset_closure ⟨Fin.castAdd 44 k, by fin_cases k <;> simp, rfl⟩
-  have hsum (k : Fin 24) : f (Fin.castAdd 24 k) ∈ C := by
+  rw [f4Support, image_simpleSupport]
+  have hsum (k : Fin 24) : f (Fin.castAdd 24 k) ∈
+      AddSubmonoid.closure (range (f ∘ (Fin.castAdd 44 : Fin 4 → Fin 48))) := by
     rw [hc k]
-    exact C.sum_mem (t := Finset.univ) fun j _ => C.nsmul_mem (hs j) _
+    simp only [← natCast_zsmul]
+    exact sum_smul_mem_closure _ (fun j => (c k j : ℤ)) fun _ => Int.natCast_nonneg _
   induction i using Fin.addCases (m := 24) (n := 24) with
   | left k => exact Or.inl (hsum k)
   | right k => exact Or.inr (by rw [Fin.natAdd_eq_addNat, hneg, neg_neg]; exact hsum k)
@@ -418,28 +422,22 @@ private lemma f4Coroot_mem_or_neg_mem (i : Fin 48) :
         (f4Coroot '' (↑f4Support : Set (Fin 48))) :=
   mem_or_neg_mem_of_coefficients f4Coroot f4CorootCoefficients f4Coroot_eq_sum f4Coroot_addNat i
 
-/-- The support of the base, as a set, is the range of `Fin.castAdd 44`. -/
-private lemma coe_f4Support :
-    (↑f4Support : Set (Fin 48)) = range (Fin.castAdd 44 : Fin 4 → Fin 48) := by
-  ext i
-  fin_cases i <;> decide
-
 private lemma linearIndepOn_f4Root :
-    LinearIndepOn ℤ f4Root (↑f4Support : Set (Fin 48)) := by
-  rw [coe_f4Support, linearIndepOn_range_iff (Fin.castAdd_injective 4 44)]
-  have hcomp : ⇑f4Root ∘ (Fin.castAdd 44 : Fin 4 → Fin 48) = fun i => CartanMatrix.F₄ i :=
-    funext f4Root_castAdd
-  rw [hcomp]
-  exact Matrix.linearIndependent_rows_of_det_ne_zero (A := CartanMatrix.F₄)
-    (by rw [CartanMatrix.F₄_det]; norm_num)
+    LinearIndepOn ℤ f4Root (↑f4Support : Set (Fin 48)) :=
+  linearIndepOn_simpleSupport _ _ <| by
+    have hcomp : ⇑f4Root ∘ (Fin.castAdd 44 : Fin 4 → Fin 48) = fun i => CartanMatrix.F₄ i :=
+      funext f4Root_castAdd
+    rw [hcomp]
+    exact Matrix.linearIndependent_rows_of_det_ne_zero (A := CartanMatrix.F₄)
+      (by rw [CartanMatrix.F₄_det]; norm_num)
 
 private lemma linearIndepOn_f4Coroot :
-    LinearIndepOn ℤ f4Coroot (↑f4Support : Set (Fin 48)) := by
-  rw [coe_f4Support, linearIndepOn_range_iff (Fin.castAdd_injective 4 44)]
-  have hcomp : ⇑f4Coroot ∘ (Fin.castAdd 44 : Fin 4 → Fin 48) =
-      fun i : Fin 4 => Pi.single i (1 : ℤ) := funext f4Coroot_castAdd
-  rw [hcomp]
-  exact Pi.linearIndependent_single_one (Fin 4) ℤ
+    LinearIndepOn ℤ f4Coroot (↑f4Support : Set (Fin 48)) :=
+  linearIndepOn_simpleSupport _ _ <| by
+    have hcomp : ⇑f4Coroot ∘ (Fin.castAdd 44 : Fin 4 → Fin 48) =
+        fun i : Fin 4 => Pi.single i (1 : ℤ) := funext f4Coroot_castAdd
+    rw [hcomp]
+    exact Pi.linearIndependent_single_one (Fin 4) ℤ
 
 /-- The Bourbaki-numbered base of the pinned simply connected `F4` datum. Its support is the first
 four root indices, with the two long simple roots followed by the two short simple roots. -/
@@ -462,39 +460,13 @@ theorem f4SimplyConnectedRootDatum_pairing_eq_cartanMatrix_F₄ (i j : Fin 4) :
       CartanMatrix.F₄ i j := by
   rw [f4SimplyConnectedRootDatum_pairing, f4Root_castAdd, f4Coroot_castAdd, dotProduct_single_one]
 
-/-- The Bourbaki numbering of the support of `f4SimplyConnectedBase`: the simple root at support
-element `i` is Bourbaki node `i + 1`. -/
-@[expose] def f4SimplyConnectedBaseEquiv : f4SimplyConnectedBase.support ≃ Fin 4 where
-  toFun i := ⟨i, by
-    have hi := i.property
-    simp only [f4SimplyConnectedBase_support, mem_f4Support] at hi
-    omega⟩
-  invFun i := ⟨Fin.castAdd 44 i, by simp⟩
-  left_inv i := by apply Subtype.ext; apply Fin.ext; simp
-  right_inv i := by apply Fin.ext; simp
-
-/-- The support element numbered `i` by `f4SimplyConnectedBaseEquiv` is the root index
-`Fin.castAdd 44 i`, the `i`-th of the first four root indices. -/
-@[simp] lemma f4SimplyConnectedBaseEquiv_symm_apply (i : Fin 4) :
-    (f4SimplyConnectedBaseEquiv.symm i : Fin 48) = Fin.castAdd 44 i := rfl
-
-/-- The Bourbaki number `f4SimplyConnectedBaseEquiv` assigns to a support element is its root
-index. -/
-@[simp] lemma val_f4SimplyConnectedBaseEquiv (i : f4SimplyConnectedBase.support) :
-    ((f4SimplyConnectedBaseEquiv i : Fin 4) : ℕ) = ((i : Fin 48) : ℕ) := rfl
-
-/-- The pinned simply connected `F4` datum has Cartan type `F4`. -/
+/-- The pinned simply connected `F4` datum has Cartan type `F4`. Its Bourbaki-numbered base
+realizes the standard Cartan matrix `CartanMatrix.F₄`, with the node numbering of
+`TauCeti.DynkinType`. -/
 theorem hasCartanType_f4SimplyConnectedRootDatum :
-    HasCartanType f4SimplyConnectedRootDatum f4SimplyConnectedBase F4 := by
-  rw [hasCartanType_iff]
-  refine ⟨f4SimplyConnectedBaseEquiv, fun i j => ?_⟩
-  have key (k : f4SimplyConnectedBase.support) :
-      (k : Fin 48) = Fin.castAdd 44 (f4SimplyConnectedBaseEquiv k) := by
-    rw [← f4SimplyConnectedBaseEquiv_symm_apply, Equiv.symm_apply_apply]
-  rw [← (FaithfulSMul.algebraMap_injective ℤ ℤ).eq_iff,
-    RootPairing.Base.algebraMap_cartanMatrixIn_apply, cartanMatrix_F4, key i, key j,
-    f4SimplyConnectedRootDatum_pairing_eq_cartanMatrix_F₄]
-  exact (Algebra.algebraMap_self_apply _).symm
+    HasCartanType f4SimplyConnectedRootDatum f4SimplyConnectedBase F4 :=
+  hasCartanType_of_pairing_eq (Fin.castAdd_injective 4 44) rfl fun i j =>
+    (f4SimplyConnectedRootDatum_pairing_eq_cartanMatrix_F₄ i j).trans (by simp)
 
 end DynkinType
 
