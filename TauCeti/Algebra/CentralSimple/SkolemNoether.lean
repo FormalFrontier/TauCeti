@@ -113,47 +113,23 @@ theorem skolemNoether [IsSimpleRing A] [FiniteDimensional K A]
   have hrank : Module.finrank K (Bimodule f) = Module.finrank K (Bimodule g) :=
     ((Bimodule.of f).symm.trans (Bimodule.of g)).finrank_eq
   obtain ⟨φ⟩ := IsSimpleRing.nonempty_linearEquiv_of_finrank_eq (R := B ⊗[K] Aᵐᵒᵖ) K hrank
-  set u : A := (Bimodule.of g).symm (φ (Bimodule.of f 1)) with hu
-  -- Linearity of `φ` for the right action of `A` makes it left multiplication by `u`.
-  have key : ∀ a : A, (Bimodule.of g).symm (φ (Bimodule.of f a)) = u * a := by
-    intro a
-    have ha : Bimodule.of f a = (1 ⊗ₜ MulOpposite.op a : B ⊗[K] Aᵐᵒᵖ) • Bimodule.of f 1 := by
-      rw [Bimodule.smul_of]; simp
-    rw [ha, map_smul, Bimodule.symm_smul]
-    simp [hu]
-  have hu' : φ (Bimodule.of f 1) = Bimodule.of g u := by
-    have h1 := key 1
-    rw [mul_one] at h1
-    rw [← h1]
-    simp
-  -- Surjectivity of `φ` gives a right inverse of `u`.
-  obtain ⟨y, hy⟩ := φ.surjective (Bimodule.of g 1)
-  set v : A := (Bimodule.of f).symm y with hv
-  have huv : u * v = 1 := by
-    have h := key v
-    rw [hv, LinearEquiv.apply_symm_apply, hy] at h
-    simpa using h.symm
+  -- The two steps below need only linearity and that `of g 1` is hit, so use `φ` as a linear map.
+  set ψ : Bimodule f →ₗ[B ⊗[K] Aᵐᵒᵖ] Bimodule g := φ.toLinearMap with hψ
+  have hψsurj : Function.Surjective ψ := by rw [hψ]; simpa using φ.surjective
+  obtain ⟨v, huv⟩ := Bimodule.exists_symm_apply_one_mul_eq_one ψ (hψsurj _)
   -- `A` is finite-dimensional over a field, hence Artinian, hence Dedekind-finite
   -- (`IsArtinianRing.of_finite` is a theorem, not an instance, so it is supplied by hand).
-  -- A right inverse therefore already presents `u` as a unit.
+  -- A right inverse therefore already presents the conjugator as a unit.
   have : IsArtinianRing A := IsArtinianRing.of_finite K A
-  -- Linearity of `φ` for the left action of `B` is the conjugation relation.
-  have hb : ∀ b : B, u * f b = g b * u := by
-    intro b
-    have h1 : (b ⊗ₜ (1 : Aᵐᵒᵖ) : B ⊗[K] Aᵐᵒᵖ) • Bimodule.of f 1 = Bimodule.of f (f b) := by
-      rw [Bimodule.smul_of]; simp
-    calc u * f b = (Bimodule.of g).symm (φ (Bimodule.of f (f b))) := (key (f b)).symm
-      _ = (Bimodule.of g).symm (φ ((b ⊗ₜ (1 : Aᵐᵒᵖ) : B ⊗[K] Aᵐᵒᵖ) • Bimodule.of f 1)) := by
-            rw [h1]
-      _ = (Bimodule.of g).symm ((b ⊗ₜ (1 : Aᵐᵒᵖ) : B ⊗[K] Aᵐᵒᵖ) • φ (Bimodule.of f 1)) := by
-            rw [map_smul]
-      _ = (Bimodule.of g).symm ((b ⊗ₜ (1 : Aᵐᵒᵖ) : B ⊗[K] Aᵐᵒᵖ) • Bimodule.of g u) := by rw [hu']
-      _ = g b * u := by rw [Bimodule.smul_of]; simp
+  set u : A := (Bimodule.of g).symm (ψ (Bimodule.of f 1)) with hu
   -- Name the two coercions of the constructed unit through the stable `Units` API rather than
   -- relying on `Units.mkOfMulEqOne` reducing definitionally.
   have hUval : ((Units.mkOfMulEqOne u v huv : Aˣ) : A) = u := Units.val_mkOfMulEqOne huv
   have hUinv : (↑(Units.mkOfMulEqOne u v huv)⁻¹ : A) = v :=
     Units.inv_eq_of_mul_eq_one_right (by rw [hUval]; exact huv)
+  -- Name the conjugation relation at the abstraction boundary, so `u` never has to be unfolded.
+  have hb : ∀ b : B, u * f b = g b * u :=
+    Bimodule.symm_apply_one_mul_eq_mul_symm_apply_one ψ
   refine ⟨Units.mkOfMulEqOne u v huv, fun x ↦ ?_⟩
   rw [hUval, hUinv, hb x, mul_assoc, huv, mul_one]
 
