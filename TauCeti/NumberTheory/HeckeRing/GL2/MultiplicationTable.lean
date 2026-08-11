@@ -341,12 +341,9 @@ private lemma mulSupport_pp_subset (k : ℕ)
       (((diagCoset ![1, p ^ k]).rep : GL (Fin 2) ℚ)) ((A.rep : GL (Fin 2) ℚ)) ≠ 0) :
     A = diagCoset ![1, p ^ (k + 1)] ∨ A = diagCoset ![p, p ^ k] := by
   classical
-  -- Mathlib's `det_mapGL` is about the *unit* determinant `(mapGL ℚ S).det : ℚˣ`, while every
-  -- goal below is about the matrix determinant `(↑(mapGL ℚ S)).det : ℚ`. This is the bridge
-  -- between the two, used four times in the determinant bookkeeping of stage 4.
-  have hdet : ∀ S : SpecialLinearGroup (Fin 2) ℤ, (mapGL ℚ S).val.det = 1 := fun S ↦ by
-    simpa only [Matrix.GeneralLinearGroup.val_det_apply, Units.val_one] using
-      congrArg Units.val (Matrix.SpecialLinearGroup.det_mapGL (S := ℚ) S)
+  -- the matrix determinant of an `SL₂(ℤ)` element, used four times in stage 4's bookkeeping
+  have hdet : ∀ S : SpecialLinearGroup (Fin 2) ℤ, (mapGL ℚ S).val.det = 1 := fun S ↦
+    det_eq_one_of_mem_SLnZ 2 ((mem_SLnZ_iff 2).2 ⟨S, rfl⟩)
   -- Stage 1: positivity of the two input diagonals, and a diagonal representative `a` for `A`.
   have h1p_pos : ∀ i : Fin 2, 0 < (![1, p] : Fin 2 → ℕ) i := fun i ↦ by
     fin_cases i <;> simp [hp.pos]

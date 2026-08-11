@@ -32,7 +32,6 @@ imaginary quadratic field `ℚ(√d)`. -/
 theorem isTotallyComplex_of_minpoly_eq_X_sq_sub_C_of_neg (hmin : minpoly ℤ θ = X ^ 2 - C d)
     (hd : d < 0) : IsTotallyComplex K :=
   isTotallyComplex_of_sq_ratCast_of_neg (x := (θ : K)) (r := (d : ℚ))
-    (by rw [coe_gen_sq hmin, IsScalarTower.algebraMap_apply ℤ ℚ K]; norm_num)
-    (by exact_mod_cast hd)
+    (coe_gen_sq_ratCast hmin) (by exact_mod_cast hd)
 
 end TauCeti.NumberField

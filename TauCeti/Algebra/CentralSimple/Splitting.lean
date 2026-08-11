@@ -152,6 +152,16 @@ theorem isSplittingField_self_iff :
     ⟨fun ⟨e⟩ ↦ ⟨(Algebra.TensorProduct.lid K A).symm.trans e⟩,
       fun ⟨e⟩ ↦ ⟨(Algebra.TensorProduct.lid K A).trans e⟩⟩
 
+/-- **`L` splits `A` exactly when `L` splits the `L`-algebra `L ⊗[K] A`.**
+
+Both sides say `∃ n, L ⊗[K] A ≃ₐ[L] Mₙ(L)`, the left through
+`TauCeti.Algebra.isSplittingField_self_iff` and the right by definition. The lemma exists to move
+between the two readings, and so to bring results about a field splitting an algebra over *itself*
+to bear on a scalar extension. -/
+theorem isSplittingField_baseChange_self_iff :
+    IsSplittingField L (L ⊗[K] A) L ↔ IsSplittingField K A L :=
+  (isSplittingField_self_iff L (L ⊗[K] A)).trans (isSplittingField_iff K A L).symm
+
 /-- **The dimension count behind a splitting**: if `L ⊗[K] A` is `n × n` matrices over `L`, then
 `A` has dimension `n ^ 2` over `K`.
 
