@@ -54,23 +54,22 @@ private theorem surjective : Function.Surjective (f : H →+* k) := fun r ↦
 /-- The point of `Spec H` defined by an augmentation `f : H →ₐ[k] k`. Its prime ideal is
 `ker f`. -/
 def kernelPoint : Spec (CommRingCat.of H) :=
-  ⟨RingHom.ker (f : H →+* k),
-    (RingHom.ker_isMaximal_of_surjective (f : H →+* k) (surjective f)).isPrime⟩
+  PrimeSpectrum.comap (f : H →+* k) (closedPoint k)
 
 /-- The prime ideal of an augmentation point is the kernel of the augmentation. -/
 @[simp]
 theorem kernelPoint_asIdeal :
     (kernelPoint f).asIdeal = RingHom.ker (f : H →+* k) :=
-  (rfl)
+  by
+    rw [kernelPoint, PrimeSpectrum.comap_asIdeal]
+    dsimp only [closedPoint]
+    rw [IsLocalRing.maximalIdeal_eq_bot]
+    rfl
 
 /-- The augmentation point is the pullback of the closed point of the ground field. -/
 theorem kernelPoint_eq_comap_closedPoint :
     kernelPoint f = PrimeSpectrum.comap (f : H →+* k) (closedPoint k) := by
-  apply PrimeSpectrum.ext
-  rw [kernelPoint_asIdeal, PrimeSpectrum.comap_asIdeal]
-  dsimp only [closedPoint]
-  rw [IsLocalRing.maximalIdeal_eq_bot]
-  rfl
+  rw [kernelPoint]
 
 /-- The kernel of an augmentation to a field is canonically maximal. -/
 instance kernelIsMaximal : (RingHom.ker (f : H →+* k)).IsMaximal :=
@@ -96,7 +95,12 @@ instance kernelStalkIsLocalization :
     IsLocalization.AtPrime
       ((Spec (CommRingCat.of H)).presheaf.stalk (kernelPoint f))
       (RingHom.ker (f : H →+* k)) := by
-  exact StructureSheaf.IsLocalization.to_stalk H (kernelPoint f)
+  unfold kernelStalkAlgebra
+  change @IsLocalization H _ (RingHom.ker (f : H →+* k)).primeCompl
+    ((Spec.structureSheaf H).presheaf.stalk (kernelPoint f)) _
+      (StructureSheaf.stalkAlgebra H (kernelPoint f))
+  simpa only [kernelPoint_asIdeal] using
+    (StructureSheaf.IsLocalization.to_stalk H (kernelPoint f))
 
 /-- The ground field is canonically the residue field at an augmentation point. -/
 noncomputable def kernelResidueFieldRingEquiv :
