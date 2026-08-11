@@ -143,15 +143,6 @@ private lemma algEquivSelf_smul (a : A)
     (R := R) (A := A) (B := B)
     (algebraMap R B (counit a) : Bialgebra.CounitAlgebra R A B)
 
-omit [CommRing A] [Bialgebra R A] in
-private lemma algEquivSelf_coeff_smul (b : B)
-    (z : Bialgebra.CounitAlgebra R A B) :
-    Bialgebra.CounitAlgebra.algEquivSelf R A B (b • z) =
-      b • Bialgebra.CounitAlgebra.algEquivSelf R A B z := by
-  rw [Bialgebra.CounitAlgebra.algEquivSelf_apply,
-    Bialgebra.CounitAlgebra.algEquivSelf_apply]
-  rfl
-
 private noncomputable def ofCotangentLinearMap
     (f : Bialgebra.CotangentSpace R A →ₗ[R] B) :
     Derivation R A (Bialgebra.CounitAlgebra R A B) :=
@@ -254,8 +245,15 @@ private lemma cotangentLinearEquivBase_map_smul (b : B)
   apply (Bialgebra.CounitAlgebra.algEquivSelf R A B).injective
   rw [cotangentLinearEquivBase_apply, cotangentLinearEquivBase_apply,
     algEquivSelf_ofCotangentLinearMap_apply, LinearMap.smul_apply,
-    Derivation.smul_apply, algEquivSelf_coeff_smul,
-    algEquivSelf_ofCotangentLinearMap_apply]
+    Derivation.smul_apply]
+  calc
+    b • f (Bialgebra.cotangentMap R A a) =
+        b • Bialgebra.CounitAlgebra.algEquivSelf R A B (ofCotangentLinearMap f a) := by
+      rw [algEquivSelf_ofCotangentLinearMap_apply]
+    _ = Bialgebra.CounitAlgebra.algEquivSelf R A B (b • ofCotangentLinearMap f a) := by
+      rw [Bialgebra.CounitAlgebra.algEquivSelf_apply,
+        Bialgebra.CounitAlgebra.algEquivSelf_apply]
+      rfl
 
 /-- Linear functionals on the cotangent space are naturally equivalent to
 counit-valued derivations, i.e. tangent vectors at the identity. The equivalence

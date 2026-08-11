@@ -17,6 +17,8 @@ manifold differential of a function to a smooth section.
 
 * `contMDiff_tangentBundle_mk_zero`: smoothness of the zero tangent vector over a varying point.
 * `contMDiff_tangentBundle_mk_constBase`: smoothness of a varying model vector over a fixed point.
+* `mvfderiv_apply_eq_mfderiv_apply`: identifies `mvfderiv` with `mfderiv` when the target is a
+  normed vector space.
 * `ContMDiff.contMDiff_mvfderiv_apply`: applying the differential of a `C^n` function to a `C^m`
   tangent-bundle section is `C^m` when `m + 1 ≤ n`.
 
@@ -73,6 +75,15 @@ theorem contMDiff_tangentBundle_mk_constBase {v : N → E}
 
 end TangentBundleInputs
 
+omit [IsManifold I 1 M] in
+/-- For a normed vector-space target, the tangent-space identification in `mvfderiv` is the
+canonical one, so evaluating it agrees with evaluating `mfderiv`. -/
+@[simp] theorem mvfderiv_apply_eq_mfderiv_apply (f : M → F) (x : M) (v : TangentSpace I x) :
+    mvfderiv I f x v = mfderiv I 𝓘(𝕜, F) f x v := by
+  rw [mvfderiv, ContinuousLinearMap.comp_apply]
+  -- `fromTangentSpace` is Mathlib's explicit interface for this canonical identification.
+  rfl
+
 /-- Applying the differential of a `C^n` function to a `C^m` tangent-bundle section is `C^m`
 when `m + 1 ≤ n`. -/
 theorem ContMDiff.contMDiff_mvfderiv_apply {f : M → F}
@@ -87,8 +98,6 @@ theorem ContMDiff.contMDiff_mvfderiv_apply {f : M → F}
   have hsnd : ContMDiff 𝓘(𝕜, F).tangent 𝓘(𝕜, F) m
       (fun p : TangentBundle 𝓘(𝕜, F) F => p.2) :=
     contMDiff_snd_tangentBundle_modelSpace F 𝓘(𝕜, F)
-  -- `TangentSpace 𝓘(𝕜, F) (f x)` is definitionally `F`; there is no lemma-based rewrite.
-  change ContMDiff I 𝓘(𝕜, F) m
-    (fun x => mfderiv I 𝓘(𝕜, F) f x (V x))
+  simp only [mvfderiv_apply_eq_mfderiv_apply]
   have h := hsnd.comp (hdf.comp hV)
   exact h.congr fun x => rfl

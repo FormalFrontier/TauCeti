@@ -66,8 +66,7 @@ theorem hasCauchyPV_fdBoundary_logDeriv (hH : 1 ≤ H) {f : ℂ → ℂ} {S : Fi
     HasCauchyPV (fdBoundary H) 0 5 (logDeriv f)
       (2 * (Real.pi : ℂ) * Complex.I *
         ∑ z ∈ S, windingNumber (fdBoundary H) 0 5 z * (ord z : ℂ)) := by
-  have hne : H ≠ Real.sqrt 3 / 2 := by
-    nlinarith [Real.sq_sqrt (by norm_num : (3 : ℝ) ≥ 0), Real.sqrt_nonneg 3]
+  have hne : H ≠ Real.sqrt 3 / 2 := ne_of_gt (sqrt_three_div_two_lt_one.trans_le hH)
   exact hasCauchyPV_logDeriv_nullHomologous hU hoff hmero hord
     (isPwC1ImmersionOn_fdBoundary hne)
     (fun t ht => hUdom (fdBoundary_mem_coe_truncatedFundamentalDomain hH

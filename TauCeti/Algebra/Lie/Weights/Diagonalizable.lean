@@ -42,6 +42,7 @@ to honest.
 
 ## Main results
 
+* `TauCeti.nonempty_weight`: a nonzero finite-dimensional triangularizable module has a weight.
 * `TauCeti.isSemisimple_toEnd_coroot`: a coroot acts semisimply on a finite-dimensional module.
 * `TauCeti.isSemisimple_toEnd_cartan`: **every element of the Cartan subalgebra acts semisimply.**
 * `TauCeti.genWeightSpace_eq_weightSpace`: **the generalized weight spaces are honest weight
@@ -66,13 +67,35 @@ open LieAlgebra LieModule Module
 
 universe u v w
 
+/-! ### Existence of a weight -/
+
+section Triangularizable
+
+variable (K : Type u) (L : Type v) (M : Type w) [Field K] [LieRing L] [LieAlgebra K L]
+  [LieRing.IsNilpotent L]
+  [AddCommGroup M] [Module K M] [LieRingModule L M] [LieModule K L M] [FiniteDimensional K M]
+
+/-- A nonzero finite-dimensional triangularizable module has at least one weight: the *generalized*
+weight spaces span it (`LieModule.iSup_genWeightSpace_eq_top'`), and an empty supremum is `⊥`.
+`LieModule.Weight` is by definition indexed by the linear forms whose generalized weight space is
+nonzero, so no honest-weight-space hypothesis is available or needed here; nilpotency of `L` is
+carried only because `LieModule.Weight` demands it.
+
+Mathlib performs this step inside the proof of
+`LieModule.exists_nontrivial_weightSpace_of_isNilpotent` rather than naming it. -/
+theorem nonempty_weight [IsTriangularizable K L M] [Nontrivial M] : Nonempty (Weight K L M) := by
+  by_contra! contra
+  simpa only [iSup_of_empty, bot_ne_top] using iSup_genWeightSpace_eq_top' K L M
+
+end Triangularizable
+
+/-! ### Semisimplicity of the Cartan action -/
+
 variable {K : Type u} {L : Type v} [Field K] [CharZero K] [IsAlgClosed K]
   [LieRing L] [LieAlgebra K L] [IsKilling K L] [FiniteDimensional K L]
   {H : LieSubalgebra K L} [H.IsCartanSubalgebra]
   {M : Type w} [AddCommGroup M] [Module K M] [LieRingModule L M] [LieModule K L M]
   [FiniteDimensional K M]
-
-/-! ### Semisimplicity of the Cartan action -/
 
 /-- **A coroot acts semisimply.** The coroot `α^∨` of a weight `α` of `L` acts on a
 finite-dimensional module by a semisimple endomorphism.

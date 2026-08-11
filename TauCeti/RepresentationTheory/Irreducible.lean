@@ -38,7 +38,11 @@ irreducible by.
 
 ## Main results
 
+* `TauCeti.Representation.IsIrreducible.nontrivial`: an irreducible representation has a nonzero
+  carrier.
 * `TauCeti.Representation.isIrreducible_of_finrank_eq_one`: a line is irreducible.
+* `TauCeti.Representation.isIrreducible_of_linearEquiv`: irreducibility transports along an
+  equivariant linear equivalence.
 * `TauCeti.Representation.isIrreducible_toRepresentation_of_isAtom`: an atom of the lattice of
   subrepresentations carries an irreducible representation.
 * `TauCeti.Representation.isIrreducible_of_asAlgebraHom_surjective`: a representation whose
@@ -62,6 +66,16 @@ namespace Representation
 
 variable {k G V : Type*} [Field k] [Monoid G] [AddCommGroup V] [Module k V]
 
+open scoped MonoidAlgebra in
+/-- **An irreducible representation has a nonzero carrier.** This is `IsSimpleModule.nontrivial`
+for `ρ.asModule`, read back on `V` along `ρ.asModuleEquiv`; the Mathlib statement is not an
+instance, so nothing supplies `Nontrivial V` without naming it. -/
+theorem IsIrreducible.nontrivial {ρ : Representation k G V} (h : ρ.IsIrreducible) :
+    Nontrivial V :=
+  have _ : ρ.IsIrreducible := h
+  have _ := IsSimpleModule.nontrivial k[G] ρ.asModule
+  ρ.asModuleEquiv.symm.toEquiv.nontrivial
+
 /-- A representation on a one-dimensional vector space is irreducible. -/
 theorem isIrreducible_of_finrank_eq_one (ρ : Representation k G V)
     (h : Module.finrank k V = 1) : ρ.IsIrreducible := by
@@ -78,6 +92,40 @@ theorem isIrreducible_of_finrank_eq_one (ρ : Representation k G V)
 /-- The trivial representation of a monoid on the base field is irreducible, being a line. -/
 instance isIrreducible_trivial_self : (_root_.Representation.trivial k G k).IsIrreducible :=
   isIrreducible_of_finrank_eq_one _ (Module.finrank_self k)
+
+/-- **Irreducibility transports along an equivariant linear equivalence.** A linear equivalence
+intertwining two representations matches their lattices of subrepresentations, by taking preimages
+of invariant subspaces, so one is irreducible exactly when the other is.
+
+Only one direction is stated; the reverse is this one applied to `e.symm`. -/
+theorem isIrreducible_of_linearEquiv {W : Type*} [AddCommGroup W] [Module k W]
+    {ρ : Representation k G V} {σ : Representation k G W} (e : V ≃ₗ[k] W)
+    (he : ∀ g v, e (ρ g v) = σ g (e v)) (h : ρ.IsIrreducible) : σ.IsIrreducible := by
+  have _ : ρ.IsIrreducible := h
+  have hV : Nontrivial V := IsIrreducible.nontrivial h
+  have : Nontrivial W := e.symm.toEquiv.nontrivial
+  have hne : (⊥ : Subrepresentation σ) ≠ ⊤ := fun hc =>
+    bot_ne_top (α := Submodule k W) (by
+      rw [← Subrepresentation.toSubmodule_bot (ρ := σ), ← Subrepresentation.toSubmodule_top
+        (ρ := σ), hc])
+  have : Nontrivial (Subrepresentation σ) := ⟨⊥, ⊤, hne⟩
+  refine ⟨fun τ => ?_⟩
+  -- pull `τ` back along `e` to a subrepresentation of `ρ`
+  let τ' : Subrepresentation ρ :=
+    { toSubmodule := τ.toSubmodule.comap (e : V →ₗ[k] W)
+      apply_mem_toSubmodule g v hv := by
+        simp only [Submodule.mem_comap, LinearEquiv.coe_coe] at hv ⊢
+        rw [he]
+        exact τ.apply_mem_toSubmodule g hv }
+  have hmap : (τ'.toSubmodule).map (e : V →ₗ[k] W) = τ.toSubmodule :=
+    Submodule.map_comap_eq_of_surjective e.surjective _
+  refine (eq_bot_or_eq_top τ').imp (fun hτ => ?_) fun hτ => ?_
+  · refine Subrepresentation.toSubmodule_injective ?_
+    rw [← hmap, hτ, Subrepresentation.toSubmodule_bot, Submodule.map_bot,
+      Subrepresentation.toSubmodule_bot]
+  · refine Subrepresentation.toSubmodule_injective ?_
+    rw [← hmap, hτ, Subrepresentation.toSubmodule_top, Submodule.map_top, LinearEquiv.range,
+      Subrepresentation.toSubmodule_top]
 
 /-- A subrepresentation that is an **atom** of the lattice of subrepresentations -- nonzero, with
 no subrepresentation strictly between it and zero -- carries an irreducible representation.  The

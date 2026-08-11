@@ -48,6 +48,8 @@ versus `MeromorphicOn` (on a set).
 * `hasCauchyPVAt_iff` — restates the predicate as its two defining clauses, so consumers can
   characterize `HasCauchyPVAt` without unfolding its hidden body; the value `cauchyPVAt` is read off
   a witness through `HasCauchyPVAt.cauchyPVAt_eq`.
+* `intervalIntegrable_truncated_and_integral_truncated_eq_zero_of_norm_le` — where the curve
+  stays within `ε` of the centre, the truncated integrand is integrable and integrates to `0`.
 * `HasCauchyPVAt.intro` — build the predicate from its two clauses; `HasCauchyPVAt.tendsto`,
   `HasCauchyPVAt.eventually_intervalIntegrable` — the clauses as named accessors;
   `HasCauchyPVAt.cauchyPVAt_eq`, `HasCauchyPVAt.unique` — the value and its uniqueness;
@@ -185,6 +187,29 @@ theorem ae_logDeriv_sub_eq_truncated {γ : ℝ → ℂ} {z₀ : ℂ} {a b ε : �
   rw [Set.uIoc_of_le hab] at hmem
   rw [if_pos (hfar s ⟨hmem.1, lt_of_le_of_ne hmem.2 fun h ↦ hs_ne (Set.mem_singleton_iff.mpr h)⟩),
     deriv_sub_const, inv_mul_eq_div]
+
+/-- **Inside the truncation the integrand vanishes.** Where the curve stays within `ε` of the
+centre `z₀`, the `ε`-truncated integrand is almost everywhere `0`, so it is integrable and
+integrates to `0`.
+
+Nothing is used but the falsity of the truncation condition, so the nonzero branch is an
+arbitrary `g : ℝ → ℂ`, and the hypothesis is imposed only on `Set.uIoc a b` — the oriented
+half-open interval that interval integration actually sees — and only almost everywhere on it.
+This is the excised corner window: the truncation is exactly what removes the corner's
+contribution, and the whole content is that nothing survives it. -/
+theorem intervalIntegrable_truncated_and_integral_truncated_eq_zero_of_norm_le {γ : ℝ → ℂ}
+    {g : ℝ → ℂ} {z₀ : ℂ} {a b ε : ℝ}
+    (hnear : ∀ᵐ s ∂MeasureTheory.volume, s ∈ Set.uIoc a b → ‖γ s - z₀‖ ≤ ε) :
+    IntervalIntegrable (fun s => if ε < ‖γ s - z₀‖ then g s else 0)
+        MeasureTheory.volume a b ∧
+      ∫ s in a..b, (if ε < ‖γ s - z₀‖ then g s else 0) = 0 := by
+  have hae : ∀ᵐ s ∂MeasureTheory.volume, s ∈ Set.uIoc a b →
+      (if ε < ‖γ s - z₀‖ then g s else 0) = 0 := by
+    filter_upwards [hnear] with s hs hmem using if_neg (not_lt.mpr (hs hmem))
+  refine ⟨(intervalIntegrable_const (c := (0 : ℂ))).congr_ae ?_,
+    intervalIntegral.integral_zero_ae hae⟩
+  filter_upwards [(MeasureTheory.ae_restrict_iff' measurableSet_uIoc).mpr hae] with s hs
+    using hs.symm
 
 /-- Constructor for `HasCauchyPVAt` from its two clauses — eventual integrability of the excised
 integrand and convergence of the excised integrals — without unfolding the definition. -/
