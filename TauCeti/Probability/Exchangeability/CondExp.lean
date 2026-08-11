@@ -52,14 +52,13 @@ namespace Probability
 
 variable {Ω α : Type*} [MeasurableSpace Ω] [MeasurableSpace α]
 
-/-- The reindexing that reads a strictly monotone block `k` first and then the future from `c`. -/
-private def blockThenFuture {r : ℕ} (k : Fin r → ℕ) (c : ℕ) : ℕ → ℕ :=
-  fun n => if h : n < r then k ⟨n, h⟩ else c + (n - r)
-
-private theorem strictMono_blockThenFuture {r c : ℕ} {k : Fin r → ℕ} (hk : StrictMono k)
-    (hkc : ∀ i, k i < c) : StrictMono (blockThenFuture k c) := by
+/-- The reindexing that reads a strictly monotone block `k` first and then the future from `c` is
+`prefixSplitEquiv.symm` applied to that pair: it glues the block onto the tail `n ↦ c + n`. -/
+private theorem strictMono_prefixSplitEquiv_symm_block_future {r c : ℕ} {k : Fin r → ℕ}
+    (hk : StrictMono k) (hkc : ∀ i, k i < c) :
+    StrictMono ((prefixSplitEquiv (α := ℕ) r).symm (k, fun n => c + n)) := by
   intro a b hab
-  simp only [blockThenFuture]
+  simp only [prefixSplitEquiv_symm_apply]
   by_cases ha : a < r
   · by_cases hb : b < r
     · rw [dite_eq_left ha, dite_eq_left hb]
@@ -85,8 +84,8 @@ private theorem map_block_future_eq_pathLaw_map {μ : Measure Ω} [IsFiniteMeasu
       = (pathLaw μ X).map
           (fun f : ℕ → α => (fun i : Fin r => f (i : ℕ), fun n => f (r + n))) := by
   classical
-  set φ := blockThenFuture k c with hφdef
-  have hφ : StrictMono φ := strictMono_blockThenFuture hk hkc
+  set φ := (prefixSplitEquiv (α := ℕ) r).symm (k, fun n => c + n) with hφdef
+  have hφ : StrictMono φ := strictMono_prefixSplitEquiv_symm_block_future hk hkc
   have hsplit : Measurable
       (fun f : ℕ → α => (fun i : Fin r => f (i : ℕ), fun n => f (r + n))) :=
     (measurable_pi_lambda (fun (f : ℕ → α) (i : Fin r) => f (i : ℕ))
@@ -101,10 +100,11 @@ private theorem map_block_future_eq_pathLaw_map {μ : Measure Ω} [IsFiniteMeasu
     funext ω
     refine Prod.ext ?_ ?_
     · funext i
-      simp only [Function.comp_apply, hφdef, blockThenFuture, dite_eq_left i.isLt, Fin.eta]
+      simp only [Function.comp_apply, hφdef, prefixSplitEquiv_symm_apply, dite_eq_left i.isLt,
+        Fin.eta]
     · funext n
       have hnr : ¬ (r + n < r) := by omega
-      simp only [Function.comp_apply, hφdef, blockThenFuture, dite_eq_right hnr]
+      simp only [Function.comp_apply, hφdef, prefixSplitEquiv_symm_apply, dite_eq_right hnr]
       congr 1
       omega
   rw [← hcomp, ← AEMeasurable.map_map_of_aemeasurable hsplit.aemeasurable
