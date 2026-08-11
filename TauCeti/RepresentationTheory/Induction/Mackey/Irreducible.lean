@@ -45,6 +45,8 @@ quantifies over the group elements `s ∉ H` instead.
 * `TauCeti.simple_indFDRep_iff_doubleCoset`: the Mackey irreducibility criterion over the double
   cosets.
 * `TauCeti.simple_indFDRep_iff`: the same criterion quantified over the elements outside `H`.
+* `TauCeti.simple_indFDRep_iff_of_normal`: for `H ◁ G`, induction of `A` is irreducible exactly
+  when `A` is irreducible and no conjugate `{}^s A`, for `s ∉ H`, is isomorphic to `A`.
 * `TauCeti.mackeyDisjoint_mul_left_mul_right_iff`: Mackey disjointness depends only on the double
   coset.
 
@@ -81,12 +83,10 @@ field means proving the intertwining-number formula in `ℕ` from the Mackey dec
 isomorphism of representations, which is a separate roadmap target (Layer 3a) and is not
 formalized here.
 
-The normal-subgroup corollary -- for `H ◁ G`, irreducibility of `Ind_H^G A` is equivalent to
-irreducibility of `A` together with `{}^s A ≇ A` for every `s ∉ H` -- is the remaining Layer 4
-target, and is not proved here.  It needs the Mackey terms to be identified with `Hom_H(A, {}^s A)`
-across the identification of `(H ⊓ sHs⁻¹).subgroupOf H` with `⊤`, which is a transport along an
-equivalence of representation categories rather than a character computation.  Clifford theory
-(Layer 5) is its first consumer.
+For a normal subgroup the Mackey subgroup is all of `H`.  The equivalence
+`TauCeti.mackeySubgroupNormalEquiv` transports the corresponding intertwining space to
+`Hom_H(A, {}^s A)`, and `TauCeti.simple_indFDRep_iff_of_normal` gives the resulting
+normal-subgroup corollary.  This is the form used by Clifford theory (Layer 5).
 
 ## References
 
@@ -182,6 +182,65 @@ theorem mackeyDisjoint_mul_left_mul_right_iff (A : FDRep k H) {h₁ h₂ : G} (h
 
 end Disjoint
 
+section NormalDisjoint
+
+variable {k G : Type u} [Field k] [Group G] {H : Subgroup G} [H.Normal]
+
+/-- For a normal subgroup, a Mackey intertwining space is the ordinary intertwining space from
+`A` to its conjugate `{}^s A`. -/
+theorem finrank_hom_res_mackeyToH_of_normal (A : FDRep k H) (s : G) :
+    Module.finrank k (resFDRep ((mackeySubgroup s H H).subgroupOf H) A ⟶
+        (Action.res (FGModuleCat k) (mackeyToH s H H)).obj A) =
+      Module.finrank k (A ⟶ conjNormalFDRep s A) := by
+  let e := mackeySubgroupNormalEquiv (H := H) s
+  have hsubtype : ((mackeySubgroup s H H).subgroupOf H).subtype = e.toMonoidHom := by
+    ext y
+    simp [e]
+  have hconj : mackeyToH s H H =
+      (MulAut.conjNormal s⁻¹ : MulAut H).toMonoidHom.comp e.toMonoidHom := by
+    ext y
+    simp only [coe_mackeyToH_apply, MonoidHom.coe_comp, MulEquiv.coe_toMonoidHom,
+      Function.comp_apply]
+    change s⁻¹ * (y : G) * s =
+      (((MulAut.conjNormal s⁻¹ : MulAut H) (e y) : H) : G)
+    rw [show e y = (y : H) by simp [e]]
+    simp
+  have hsource : resFDRep ((mackeySubgroup s H H).subgroupOf H) A =
+      (Action.res (FGModuleCat k) e.toMonoidHom).obj A := by
+    change (Action.res (FGModuleCat k) ((mackeySubgroup s H H).subgroupOf H).subtype).obj A = _
+    rw [hsubtype]
+  have htarget : (Action.res (FGModuleCat k) (mackeyToH s H H)).obj A =
+      (Action.res (FGModuleCat k) e.toMonoidHom).obj (conjNormalFDRep s A) := by
+    rw [conjNormalFDRep, conjNormalFDRepFunctor]
+    change (Action.res (FGModuleCat k) (mackeyToH s H H)).obj A =
+      ((Action.res (FGModuleCat k) (MulAut.conjNormal s⁻¹ : MulAut H).toMonoidHom ⋙
+        Action.res (FGModuleCat k) e.toMonoidHom).obj A)
+    rw [← actionRes_comp, hconj]
+  rw [hsource, htarget]
+  exact finrank_hom_res_mulEquiv e A (conjNormalFDRep s A)
+
+/-- For a normal subgroup and an irreducible `A`, Mackey disjointness at `s` says exactly that
+the conjugate `{}^s A` is not isomorphic to `A`. -/
+theorem mackeyDisjoint_iff_isEmpty_iso_of_normal (A : FDRep k H) [Simple A] (s : G) :
+    MackeyDisjoint A s ↔ IsEmpty (conjNormalFDRep s A ≅ A) := by
+  have hsimple : Simple (conjNormalFDRep s A) := by
+    change Simple ((conjNormalFDRepFunctor s).obj A)
+    rw [← conjNormalFDRepEquiv_functor]
+    exact CategoryTheory.simple_obj _ A
+  let _ := hsimple
+  rw [mackeyDisjoint_iff_finrank_eq_zero, finrank_hom_res_mackeyToH_of_normal]
+  constructor
+  · intro h
+    have hsubsingleton : Subsingleton (A ⟶ conjNormalFDRep s A) :=
+      Module.finrank_zero_iff.mp h
+    exact ⟨fun e ↦ (CategoryTheory.isIso_iff_nonzero e.symm.hom).mp inferInstance
+      (hsubsingleton.elim e.symm.hom 0)⟩
+  · intro h
+    exact CategoryTheory.finrank_hom_simple_simple_eq_zero_of_not_iso k
+      fun e ↦ h.false e.symm
+
+end NormalDisjoint
+
 section Criterion
 
 variable {k G : Type u} [Field k] [Group G] [Finite G] [IsAlgClosed k] [CharZero k]
@@ -234,6 +293,18 @@ theorem simple_indFDRep_iff (A : FDRep k H) :
   · exact h D.out fun hmem =>
       hD ((DoubleCoset.out_eq' H H D).symm.trans
         ((doubleCosetMk_eq_mk_one_iff_mem H D.out).mpr hmem))
+
+/-- **The Mackey irreducibility criterion for a normal subgroup.**  If `H ◁ G`, then the
+representation induced from `A` is irreducible exactly when `A` is irreducible and none of its
+conjugates `{}^s A`, for `s ∉ H`, is isomorphic to `A`. -/
+theorem simple_indFDRep_iff_of_normal [H.Normal] (A : FDRep k H) :
+    Simple (indFDRep A) ↔
+      Simple A ∧ ∀ s ∉ H, IsEmpty (conjNormalFDRep s A ≅ A) := by
+  rw [simple_indFDRep_iff]
+  refine and_congr_right fun hA ↦ ?_
+  let _ := hA
+  exact forall_congr' fun s ↦ forall_congr' fun _ ↦
+    mackeyDisjoint_iff_isEmpty_iso_of_normal A s
 
 end Criterion
 
