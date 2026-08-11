@@ -198,8 +198,8 @@ theorem coe_mackeySubgroupNormalEquiv_apply (s : G) [H.Normal]
 
 /-- The homomorphism underlying `mackeySubgroupNormalEquiv` is the canonical inclusion into `H`. -/
 @[simp]
-theorem mackeySubgroupNormalEquiv_toMonoidHom (s : G) [H.Normal] :
-    (mackeySubgroupNormalEquiv (H := H) s).toMonoidHom =
+theorem coe_mackeySubgroupNormalEquiv (s : G) [H.Normal] :
+    (mackeySubgroupNormalEquiv (H := H) s : ((mackeySubgroup s H H).subgroupOf H) →* H) =
       ((mackeySubgroup s H H).subgroupOf H).subtype := by
   ext y
   exact congrArg Subtype.val (coe_mackeySubgroupNormalEquiv_apply s y)

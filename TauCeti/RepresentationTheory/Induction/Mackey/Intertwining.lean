@@ -314,7 +314,7 @@ theorem finrank_hom_res_mackeyToH_of_normal [H.Normal] (A : FDRep k H) (s : G) :
   have he_apply (y : (mackeySubgroup s H H).subgroupOf H) : e y = (y : H) :=
     coe_mackeySubgroupNormalEquiv_apply s y
   have hsubtype : ((mackeySubgroup s H H).subgroupOf H).subtype = e.toMonoidHom :=
-    (mackeySubgroupNormalEquiv_toMonoidHom s).symm
+    ((MulEquiv.toMonoidHom_eq_coe e).trans (coe_mackeySubgroupNormalEquiv s)).symm
   have hconj : mackeyToH s H H =
       (MulAut.conjNormal s⁻¹ : MulAut H).toMonoidHom.comp e.toMonoidHom := by
     ext y
