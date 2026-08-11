@@ -36,7 +36,7 @@ computation appears; inverses come from the group of points.
   the convolution group of points on the tangent space.
 
 Compatibility of the action with the Lie bracket needs the Lie structure and so lives in
-`Tangent.Lie.Adjoint`, keeping this module free of it.
+`Tangent.Lie.Adjoint.Basic`, keeping this module free of it.
 
 The action stays on the Lie functor `B ↦ Derivation R A (CounitAlgebra R A B)`; at
 each `B` it is a genuine representation. Identifying the functor's value at `B` with
@@ -157,7 +157,7 @@ theorem adDerivation_apply (g : WithConv (A →ₐ[R] Bialgebra.CounitAlgebra R 
 /-- **The conjugate of a tangent vector, in convolution form**: `Ad g d` is the product
 `g ⋆ d ⋆ g⁻¹` in the convolution algebra of linear maps.  This is the form in which the
 adjoint action is manipulated algebraically, and the bracket compatibility in
-`Tangent.Lie.Adjoint` is proved from it. -/
+`Tangent.Lie.Adjoint.Basic` is proved from it. -/
 lemma toConv_coe_adDerivation
     (g : WithConv (A →ₐ[R] Bialgebra.CounitAlgebra R A B))
     (d : Derivation R A (Bialgebra.CounitAlgebra R A B)) :
