@@ -110,6 +110,7 @@ theorem length_coxeterRelatorsOfList [LinearOrder B] (M : CoxeterMatrix B) (l : 
 
 /-- Membership in the Coxeter relator list, in terms of two nodes of the source list and their
 canonical increasing order. -/
+@[simp]
 theorem mem_coxeterRelatorsOfList_iff [LinearOrder B] {M : CoxeterMatrix B} {l : List B}
     {t : Relator B} :
     t ∈ coxeterRelatorsOfList M l ↔
@@ -152,6 +153,7 @@ def coxeterRelators {n : ℕ} (M : CoxeterMatrix (Fin n)) : List (Relator (Fin n
 /-- Membership in the Coxeter relator list of a `Fin n`-indexed matrix: every pair of nodes
 contributes, so the only condition is that the relator be the one of a pair, written in the
 canonical increasing order. -/
+@[simp]
 theorem mem_coxeterRelators_iff {n : ℕ} {M : CoxeterMatrix (Fin n)} {t : Relator (Fin n)} :
     t ∈ coxeterRelators M ↔ ∃ i j : Fin n, t = coxeterRelator M s(i, j).inf s(i, j).sup := by
   rw [coxeterRelators, mem_coxeterRelatorsOfList_iff]
