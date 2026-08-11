@@ -162,7 +162,7 @@ theorem centralizer_diagonalTorus :
   obtain ⟨u, v, huv⟩ := exists_pair_ne kˣ
   refine apply_eq_zero_of_commute_diagonal
     (commute_diagonal_of_mem_centralizer hg fun m => if m = i then u else v) ?_
-  rw [if_pos rfl, if_neg (Ne.symm hij)]
+  rw [ite_eq_left rfl, ite_eq_right (Ne.symm hij)]
   exact fun h => huv (Units.ext h)
 
 /-- A commutative subgroup of `GL n k` containing the diagonal torus equals it: this is the
