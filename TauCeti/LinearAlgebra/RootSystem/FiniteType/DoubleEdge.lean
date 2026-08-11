@@ -12,19 +12,22 @@ public section
 /-!
 # The double-edge bound for finite-type Cartan matrices
 
-A finite-type diagram carries at most one multiple edge
-(`TauCeti.IsFiniteType.apply_mul_apply_le_one_of_two_le`), and a triple edge is isolated
+In a finite-type diagram an index carrying a multiple edge is joined to every *other* index by at
+most a single edge (`TauCeti.IsFiniteType.apply_mul_apply_le_one_of_two_le`) - a restriction on what
+is incident to one endpoint of the edge, not yet a count of the multiple edges of a whole diagram -
+and a triple edge is isolated outright
 (`TauCeti.IsFiniteType.apply_eq_zero_of_apply_mul_apply_eq_three`), which leaves `G₂`. A double
-edge is not isolated, and the diagram carrying one branches nowhere: it is two chains, of `p` and
-of `q` vertices, joined at their last vertices by that edge. Which of those survive is the *chain*
-half of the "chain/fork length constraints" of the Cartan--Killing
+edge is not isolated. Once the component carrying one has been shown to have no branch vertex - a
+step taken outside this file, as noted below - it is two chains, of `p` and of `q` vertices, joined
+at their last vertices by that edge, and that is the shape this file takes as given. Which of those
+survive is the *chain* half of the "chain/fork length constraints" of the Cartan--Killing
 classification, and, like the fork half in
 `TauCeti.LinearAlgebra.RootSystem.FiniteType.Star`, it is an arithmetic constraint:
 
 `2 p q < (p + 1) (q + 1)`,
 
-equivalently `(p - 1) (q - 1) < 2`, whose solutions are `q = 1` (the chains `Cₙ`), `p = 1` (the
-chains `Bₙ`), and `p = q = 2` (`F₄`).
+equivalently `(p - 1) (q - 1) < 2`, whose solutions with both chains nonempty are `q = 1` (the
+chains `Cₙ`), `p = 1` (the chains `Bₙ`), and `p = q = 2` (`F₄`).
 
 This file builds that diagram as a matrix, `TauCeti.doubleEdgeCartanMatrix`, out of the chain
 entries of `TauCeti.LinearAlgebra.RootSystem.FiniteType.Chain`, and proves the bound. The
@@ -219,7 +222,7 @@ private theorem sum_fin_ite_last_mul_linear (n : ℕ) (c k : ℚ) :
 /-- **The rows at the first chain annihilate the marks.** Away from the double edge this is the
 second difference of a linear weight; at the double edge the first chain contributes `(p + 1) q`
 and the double edge subtracts the same amount, which is what fixes the ratio of the two slopes. -/
-theorem sum_doubleEdgeCartanMatrix_mul_doubleEdgeMark_inl (v : Fin p) :
+theorem sum_doubleEdgeCartanMatrix_mul_doubleEdgeMark_inl_eq_zero (v : Fin p) :
     ∑ w, ((doubleEdgeCartanMatrix p q (Sum.inl v) w : ℤ) : ℚ) * doubleEdgeMark p q w = 0 := by
   rw [Fintype.sum_sum_type]
   have hchain : ∑ w : Fin p,
@@ -291,7 +294,8 @@ theorem two_mul_mul_lt_succ_mul_succ_of_isFiniteType_doubleEdge
     (h : IsFiniteType (doubleEdgeCartanMatrix p q)) : 2 * p * q < (p + 1) * (q + 1) := by
   rw [← not_le]
   intro hle
-  -- Both chains are nonempty: an empty one leaves a chain, which is of finite type.
+  -- Both chains are nonempty: an empty one leaves a chain, which is of finite type. `hp` indexes
+  -- the vertex the marks are read off at, and `hq` is what the value there contradicts.
   have hp : 0 < p := by
     rcases Nat.eq_zero_or_pos p with rfl | hp
     · omega
@@ -304,7 +308,7 @@ theorem two_mul_mul_lt_succ_mul_succ_of_isFiniteType_doubleEdge
   have hsub : ∀ i, doubleEdgeMark p q i
       * ∑ j, ((doubleEdgeCartanMatrix p q i j : ℤ) : ℚ) * doubleEdgeMark p q j ≤ 0 := by
     rintro (v | w)
-    · rw [sum_doubleEdgeCartanMatrix_mul_doubleEdgeMark_inl, mul_zero]
+    · rw [sum_doubleEdgeCartanMatrix_mul_doubleEdgeMark_inl_eq_zero, mul_zero]
     · rw [sum_doubleEdgeCartanMatrix_mul_doubleEdgeMark_inr]
       rcases eq_or_ne ((w : ℕ) + 1) q with hw | hw
       · rw [ite_eq_left hw]
@@ -318,7 +322,8 @@ theorem two_mul_mul_lt_succ_mul_succ_of_isFiniteType_doubleEdge
   have hcorner := congrFun hzero (Sum.inl ⟨0, hp⟩)
   rw [doubleEdgeMark_inl] at hcorner
   simp only [Nat.cast_zero, zero_add, one_mul, Pi.zero_apply, Nat.cast_eq_zero] at hcorner
-  omega
+  -- The mark at that vertex is `q`, which the second chain being nonempty forbids from vanishing.
+  exact absurd hcorner hq.ne'
 
 /-- The contrapositive of `TauCeti.two_mul_mul_lt_succ_mul_succ_of_isFiniteType_doubleEdge`: a
 double-edge diagram violating the bound is not of finite type.
@@ -371,30 +376,20 @@ The bound excludes everything outside `Bₙ`, `Cₙ` and `F₄`, and those three
 diagram at `q = 1` with Mathlib's `CartanMatrix.C`.
 -/
 
-/-- Listing the vertices of a double-edge chain whose second chain is a single vertex in the order
-they occur along the diagram - the first chain in order, then the lone vertex - is injective. -/
-private lemma sumElim_castSucc_last_injective (p : ℕ) :
-    Function.Injective (Sum.elim Fin.castSucc fun _ : Fin 1 ↦ Fin.last p) := by
-  rintro (a | a) (b | b) h <;> simp only [Sum.elim_inl, Sum.elim_inr] at h
-  · exact congrArg Sum.inl (Fin.castSucc_injective p h)
-  · exact absurd h (Fin.castSucc_lt_last a).ne
-  · exact absurd h.symm (Fin.castSucc_lt_last b).ne
-  · exact congrArg Sum.inr (Subsingleton.elim a b)
-
 /-- **A double-edge chain whose second chain is a single vertex is of type `Cₙ`.** The `n - 1`
 vertices of the first chain are the first `n - 1` nodes of `Cₙ`, in order, and the lone vertex is
-the last node, at which the double edge of `Cₙ` points. -/
+the last node, at which the double edge of `Cₙ` points. That listing of the vertices in the order
+they occur along the diagram is Mathlib's canonical identification `finSumFinEquiv`. -/
 theorem doubleEdgeCartanMatrix_one_right (p : ℕ) :
     doubleEdgeCartanMatrix p 1
-      = (CartanMatrix.C (p + 1)).submatrix (Sum.elim Fin.castSucc fun _ ↦ Fin.last p)
-          (Sum.elim Fin.castSucc fun _ ↦ Fin.last p) := by
+      = (CartanMatrix.C (p + 1)).submatrix finSumFinEquiv finSumFinEquiv := by
   ext v w
   rcases v with a | a <;> rcases w with b | b <;>
     have ha := a.isLt <;> have hb := b.isLt <;>
-    simp only [Matrix.submatrix_apply, Sum.elim_inl, Sum.elim_inr,
+    simp only [Matrix.submatrix_apply, finSumFinEquiv_apply_left, finSumFinEquiv_apply_right,
       doubleEdgeCartanMatrix_inl_inl, doubleEdgeCartanMatrix_inr_inr,
       doubleEdgeCartanMatrix_inl_inr, doubleEdgeCartanMatrix_inr_inl, CartanMatrix.C,
-      Matrix.of_apply, chainEntry_def, Fin.ext_iff, Fin.val_castSucc, Fin.val_last] <;>
+      Matrix.of_apply, chainEntry_def, Fin.ext_iff, Fin.val_castAdd, Fin.val_natAdd] <;>
     split_ifs <;> omega
 
 /-- The double-edge diagrams with a single vertex on the second chain are of finite type: they are
@@ -402,7 +397,7 @@ the family `Cₙ`. -/
 theorem isFiniteType_doubleEdgeCartanMatrix_one_right (p : ℕ) :
     IsFiniteType (doubleEdgeCartanMatrix p 1) := by
   rw [doubleEdgeCartanMatrix_one_right]
-  exact (isFiniteType_cartanMatrix_C (p + 1)).submatrix (sumElim_castSucc_last_injective p)
+  exact (isFiniteType_cartanMatrix_C (p + 1)).submatrix finSumFinEquiv.injective
 
 /-- The double-edge diagrams with a single vertex on the first chain are of finite type: they are
 the family `Bₙ`, the transposes of the previous ones. -/

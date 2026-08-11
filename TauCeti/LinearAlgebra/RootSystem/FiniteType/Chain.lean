@@ -64,7 +64,7 @@ lemma chainEntry_def (s t : ℕ) :
   unfold chainEntry; split_ifs <;> omega
 
 /-- Away from the diagonal and its two neighbours a chain has no entry. -/
-lemma chainEntry_eq_zero {s t : ℕ} (h1 : s ≠ t) (h2 : s ≠ t + 1) (h3 : t ≠ s + 1) :
+@[simp] lemma chainEntry_eq_zero {s t : ℕ} (h1 : s ≠ t) (h2 : s ≠ t + 1) (h3 : t ≠ s + 1) :
     chainEntry s t = 0 := by
   unfold chainEntry; split_ifs <;> omega
 
