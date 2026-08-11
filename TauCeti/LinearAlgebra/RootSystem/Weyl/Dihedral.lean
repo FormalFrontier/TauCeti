@@ -6,7 +6,6 @@ module
 
 public import TauCeti.GroupTheory.SpecificGroups.Dihedral
 public import TauCeti.LinearAlgebra.RootSystem.BraidRelation
-public import TauCeti.LinearAlgebra.RootSystem.Inversions.Basic
 
 public section
 
