@@ -73,6 +73,16 @@ noncomputable def scalarExtensionComponent
     η.hom.hom.app M ≫
       eqToHom (FGComoduleCat.scalarExtensionFunctor_obj R H A M)).hom
 
+/-- Evaluation formula for a transported tensor-automorphism component. -/
+theorem scalarExtensionComponent_apply
+    (η : Aut (FGComoduleCat.scalarExtensionMonoidalFunctor R H A))
+    (M : FGComoduleCat.{u, v, u} R H) (x : A ⊗[R] M) :
+    scalarExtensionComponent R H A η M x =
+      eqToHom (FGComoduleCat.scalarExtensionFunctor_obj R H A M)
+        (η.hom.hom.app M
+          (eqToHom (FGComoduleCat.scalarExtensionFunctor_obj R H A M).symm x)) := by
+  rfl
+
 /-- The categorical morphism underlying a transported tensor-automorphism component. -/
 theorem ofHom_scalarExtensionComponent
     (η : Aut (FGComoduleCat.scalarExtensionMonoidalFunctor R H A))
