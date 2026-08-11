@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.LinearAlgebra.CliffordAlgebra.SpinAction
+public import TauCeti.LinearAlgebra.CliffordAlgebra.Spin.Action
 
 /-!
 # The Pin group acting on its quadratic space by twisted conjugation

@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.RepresentationTheory.Subrepresentation
+public import Mathlib.RingTheory.SimpleModule.Basic
 
 /-!
 # The underlying module of a subrepresentation
@@ -14,14 +15,20 @@ operations — `Subrepresentation.toSubmodule_sup` and `Subrepresentation.toSubm
 `@[simp]` and both true by `rfl` — but not how it interacts with the bounded-lattice structure,
 nor how it interacts with the order relations themselves. This file adds the four missing
 counterparts, in the same shape. It also records that the group-algebra action on a
-subrepresentation coerces to the original action.
+subrepresentation coerces to the original action, and that a subrepresentation is minimal exactly
+when the `A[G]`-submodule it carries is simple.
 
 They are stated at the typeclasses `Subrepresentation` itself asks for, so they apply wherever
 the abstraction does. The `⊥` and `⊤` lemmas let proofs about extreme subrepresentations avoid
 asserting the definitional unfolding of the `BoundedOrder` instance by hand; the `≤` and `<`
 lemmas move an order statement between the two lattices, which is what lets a submodule-level
 argument — a dimension count, say, or an orthogonal complement — settle a question about
-subrepresentations.
+subrepresentations. In the same spirit,
+`Subrepresentation.isSimpleModule_asSubmodule_iff` moves the notion of an irreducible constituent
+across `Subrepresentation.subrepresentationSubmoduleOrderIso`, so that Mathlib's simple- and
+semisimple-module API applies to minimal subrepresentations; being about `asSubmodule` it asks for
+the coefficients to be a commutative ring, as `Subrepresentation.asSubmodule` and
+`IsSimpleModule` between them do.
 
 ## Main results
 
@@ -30,6 +37,7 @@ subrepresentations.
 * `Subrepresentation.toSubmodule_le_toSubmodule`
 * `Subrepresentation.toSubmodule_lt_toSubmodule`
 * `Subrepresentation.coe_toRepresentation_asAlgebraHom_apply`
+* `Subrepresentation.isSimpleModule_asSubmodule_iff`
 -/
 
 public section
@@ -75,5 +83,22 @@ theorem coe_toRepresentation_asAlgebraHom_apply {k H V : Type*} [CommSemiring k]
   | single g r =>
       simp only [Representation.asAlgebraHom_single]
       congr 1
+
+section AsSubmodule
+
+open scoped MonoidAlgebra
+
+variable {A G W : Type*} [CommRing A] [Monoid G] [AddCommGroup W] [Module A W]
+  {ρ : Representation A G W}
+
+/-- A minimal subrepresentation is the same thing as a simple `A[G]`-submodule of the associated
+module: the dictionary between the two ways of saying "irreducible constituent".  It is
+`isSimpleModule_iff_isAtom` read across `Subrepresentation.subrepresentationSubmoduleOrderIso`. -/
+@[simp]
+theorem isSimpleModule_asSubmodule_iff {σ : Subrepresentation ρ} :
+    IsSimpleModule A[G] σ.asSubmodule ↔ IsAtom σ :=
+  isSimpleModule_iff_isAtom.trans (subrepresentationSubmoduleOrderIso.isAtom_iff σ)
+
+end AsSubmodule
 
 end Subrepresentation
