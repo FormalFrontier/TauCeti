@@ -196,4 +196,12 @@ instance : SpectralSpace (Spv A) :=
       obtain ⟨f, s, rfl⟩ := hU
       exact isClopen_patchTopology_basicOpen f s)
 
+/-- `Spv(A)(T/s)` is clopen for the patch topology: a finite intersection of patch-clopen basic
+opens. This is the input the patch criterion consumes. -/
+lemma isClopen_patchTopology_basicOpenFinset (T : Finset A) (s : A) :
+    @IsClopen (Spv A) (patchTopology A) (basicOpenFinset T s) := by
+  rw [basicOpenFinset_eq_biInter]
+  exact @Set.Finite.isClopen_biInter _ (patchTopology A) _ _ (T.finite_toSet.insert s) _
+    fun t _ ↦ isClopen_patchTopology_basicOpen t s
+
 end TauCeti.ValuationSpectrum
