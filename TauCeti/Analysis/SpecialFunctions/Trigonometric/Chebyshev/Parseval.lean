@@ -22,7 +22,6 @@ polynomial.
 
 * `TauCeti.chebyshevTHilbertBasis_repr_apply` identifies each coordinate with its weighted
   integral.
-* `TauCeti.tsum_inner_mul_inner_normalizedChebyshevTLp` is the polarized Parseval identity.
 * `TauCeti.tsum_norm_sq_integral_normalizedChebyshevT_mul_measureT` is the norm-square Parseval
   identity for the explicit integral coefficients.
 * `TauCeti.summable_norm_sq_integral_normalizedChebyshevT_mul_measureT` gives their
@@ -54,14 +53,6 @@ theorem chebyshevTHilbertBasis_repr_apply (f : Lp 𝕜 2 measureT) (n : ℕ) :
   rw [hx]
   simp only [RCLike.inner_apply, RCLike.algebraMap_eq_ofReal, RCLike.conj_ofReal, mul_comm]
 
-/-- **Parseval's identity for the Chebyshev basis** (polarized form): the Chebyshev coordinates
-of `f` and `g` pair to their inner product. -/
-theorem tsum_inner_mul_inner_normalizedChebyshevTLp (f g : Lp 𝕜 2 measureT) :
-    ∑' n : ℕ, inner 𝕜 f (normalizedChebyshevTLp 𝕜 n) *
-      inner 𝕜 (normalizedChebyshevTLp 𝕜 n) g = inner 𝕜 f g := by
-  simpa [coe_chebyshevTHilbertBasis] using
-    (chebyshevTHilbertBasis 𝕜).tsum_inner_mul_inner f g
-
 /-- **Parseval's identity for the Chebyshev basis.** The squared norms of the explicit
 Chebyshev integral coefficients of `f` sum to `‖f‖²`. -/
 theorem tsum_norm_sq_integral_normalizedChebyshevT_mul_measureT (f : Lp 𝕜 2 measureT) :
@@ -85,14 +76,5 @@ theorem hasSum_chebyshevT_expansion (f : Lp 𝕜 2 measureT) :
         normalizedChebyshevTLp 𝕜 n) f := by
   simpa only [chebyshevTHilbertBasis_repr_apply, coe_chebyshevTHilbertBasis,
     Function.comp_apply] using (chebyshevTHilbertBasis 𝕜).hasSum_repr f
-
-/-- The coordinates of the `n`-th normalized Chebyshev polynomial are a single `1` in position
-`n`. -/
-@[simp]
-theorem chebyshevTHilbertBasis_repr_self (n : ℕ) :
-    (chebyshevTHilbertBasis 𝕜).repr (normalizedChebyshevTLp 𝕜 n) =
-      lp.single 2 n (1 : 𝕜) := by
-  classical
-  simpa [coe_chebyshevTHilbertBasis] using (chebyshevTHilbertBasis 𝕜).repr_self n
 
 end TauCeti
