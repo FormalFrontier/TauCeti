@@ -33,8 +33,8 @@ The identification runs through `TauCeti.BoundedSSYT.rowMultisetEquiv`, the bije
 bounded tableaux of a one-row shape and the multisets of letters of size the number of columns.
 Both directions are explicit: a tableau is sent to the multiset
 `TauCeti.BoundedSSYT.rowMultiset` of the entries of its row, and a multiset is sent back to the
-tableau `TauCeti.BoundedSSYT.ofRowMultiset` that lists it in increasing order, along the word
-`TauCeti.BoundedSSYT.rowList` produced by `Multiset.sort`.
+tableau `TauCeti.BoundedSSYT.ofRowMultiset` that lists it in increasing order, along the sorted
+word `Multiset.sort` produces.
 
 Unlike the one-column case, where the letters of a tableau are pairwise distinct and form a
 `Finset`, a row may repeat a letter, so the enumeration `Finset.orderEmbOfFin` is unavailable and
@@ -54,7 +54,6 @@ needs.
   row.
 * `TauCeti.BoundedSSYT.rowMultiset`: the multiset of letters used by the first row of a bounded
   tableau.
-* `TauCeti.BoundedSSYT.rowList`: a multiset of letters, listed in increasing order.
 * `TauCeti.BoundedSSYT.ofRowMultiset`: the one-row tableau listing a given multiset of letters in
   increasing order.
 * `TauCeti.BoundedSSYT.rowMultisetEquiv`: the bijection between the bounded tableaux of a one-row
@@ -176,24 +175,27 @@ theorem weight_eq_toFinsupp (h : μ.colLen 0 ≤ 1) (T : BoundedSSYT N μ) :
 
 /-- A multiset of letters, listed in increasing order and read as natural numbers: the first row
 of the tableau `TauCeti.BoundedSSYT.ofRowMultiset`.  Unlike the one-column case, a row may repeat
-a letter, so this is a genuine sorted word rather than the monotone enumeration of a set. -/
-def rowList (s : Multiset (Fin N)) : List ℕ :=
+a letter, so this is a genuine sorted word rather than the monotone enumeration of a set.  It is
+an implementation detail: the tableau it builds is characterised, representation-independently, by
+the round trips `TauCeti.BoundedSSYT.rowMultiset_ofRowMultiset` and
+`TauCeti.BoundedSSYT.ofRowMultiset_rowMultiset`. -/
+private def rowList (s : Multiset (Fin N)) : List ℕ :=
   (s.map Fin.val).sort (· ≤ ·)
 
 @[simp]
-theorem coe_rowList (s : Multiset (Fin N)) :
+private theorem coe_rowList (s : Multiset (Fin N)) :
     ((rowList s : List ℕ) : Multiset ℕ) = s.map Fin.val :=
   Multiset.sort_eq _ _
 
 @[simp]
-theorem length_rowList (s : Multiset (Fin N)) :
+private theorem length_rowList (s : Multiset (Fin N)) :
     (rowList s).length = Multiset.card s := by
   rw [rowList, Multiset.length_sort, Multiset.card_map]
 
-theorem pairwise_rowList (s : Multiset (Fin N)) : (rowList s).Pairwise (· ≤ ·) :=
+private theorem pairwise_rowList (s : Multiset (Fin N)) : (rowList s).Pairwise (· ≤ ·) :=
   Multiset.pairwise_sort _ _
 
-theorem rowList_lt {s : Multiset (Fin N)} {x : ℕ} (hx : x ∈ rowList s) : x < N := by
+private theorem rowList_lt {s : Multiset (Fin N)} {x : ℕ} (hx : x ∈ rowList s) : x < N := by
   obtain ⟨y, -, rfl⟩ := Multiset.mem_map.mp ((Multiset.mem_sort _).mp hx)
   exact y.isLt
 
@@ -241,15 +243,13 @@ def ofRowMultiset (h : μ.colLen 0 ≤ 1) (s : Multiset (Fin N))
     rw [rowTableau_apply, if_pos rfl, List.getD_eq_getElem _ _ (by omega)]
     exact rowList_lt (List.getElem_mem _)⟩
 
-theorem ofRowMultiset_apply (h : μ.colLen 0 ≤ 1) (s : Multiset (Fin N))
+private theorem ofRowMultiset_apply (h : μ.colLen 0 ≤ 1) (s : Multiset (Fin N))
     (hs : Multiset.card s = μ.rowLen 0) (i j : ℕ) :
     (ofRowMultiset h s hs).1 i j = if i = 0 then (rowList s).getD j 0 else 0 :=
   rowTableau_apply h s hs i j
 
-/-- The first row of `TauCeti.BoundedSSYT.ofRowMultiset` reads off the sorted word.  This is not a
-`simp` lemma: its left-hand side is not in simp-normal form, `TauCeti.BoundedSSYT.rowEntry_val`
-rewriting it to the entry of the underlying tableau. -/
-theorem rowEntry_ofRowMultiset (h : μ.colLen 0 ≤ 1) (s : Multiset (Fin N))
+/-- The first row of `TauCeti.BoundedSSYT.ofRowMultiset` reads off the sorted word. -/
+private theorem rowEntry_ofRowMultiset (h : μ.colLen 0 ≤ 1) (s : Multiset (Fin N))
     (hs : Multiset.card s = μ.rowLen 0) (j : Fin (μ.rowLen 0)) :
     (rowEntry (ofRowMultiset h s hs) j : ℕ) = (rowList s).getD (j : ℕ) 0 := by
   rw [rowEntry_val, ofRowMultiset_apply, if_pos rfl]
