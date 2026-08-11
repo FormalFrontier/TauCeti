@@ -77,25 +77,6 @@ private abbrev h : Relator (Fin 8) := .gen 7
 @[inherit_doc Relator.mul]
 local infixl:70 " ⬝ " => Relator.mul
 
-/-- The length of a relator after compilation, computed structurally without expanding powers. -/
-private def relatorLength {α : Type*} : Relator α → ℕ
-  | .gen _ => 1
-  | .inv r => relatorLength r
-  | .mul r s => relatorLength r + relatorLength s
-  | .pow r n => n * relatorLength r
-  | .comm r s => relatorLength r + relatorLength s + relatorLength r + relatorLength s
-
-private theorem length_toWord {α : Type*} (r : Relator α) :
-    r.toWord.length = relatorLength r := by
-  induction r with
-  | gen => simp [relatorLength]
-  | inv r ih => simp [FreeGroup.invRev, relatorLength, ih]
-  | mul r s ihr ihs => simp [relatorLength, ihr, ihs]
-  | pow r n ih =>
-      simp [relatorLength, List.length_flatten, List.sum_replicate, ih]
-  | comm r s ihr ihs =>
-      simp [FreeGroup.invRev, relatorLength, ihr, ihs, Nat.add_assoc]
-
 /-- The eight involution relations and thirteen labeled-edge relations decoded from the three
 Coxeter paths of `GPLTable.Co1.1`. -/
 private def co1NodeAndEdgeRelators : List (Relator (Fin 8)) :=
@@ -189,9 +170,9 @@ theorem co1Presentation_matchesMetadata : co1Presentation.matchesMetadata := by
 /-- The compiled relators of the `Co₁` presentation contain `611` signed letters in total. -/
 theorem co1Presentation_totalLength : co1Presentation.totalLength = 611 := by
   rw [GroupPresentation.totalLength_def, GroupPresentation.relators_def]
-  simp only [co1Presentation, co1NodeAndEdgeRelators, co1NonedgeRelators,
-    co1AdditionalRelators, List.map_append, List.sum_append, length_toWord, relatorLength,
-    List.map_cons, List.map_nil, List.sum_cons, List.sum_nil]
+  simp only [co1Presentation, co1NodeAndEdgeRelators, co1NonedgeRelators, co1AdditionalRelators,
+    List.map_append, List.sum_append, Relator.length_toWord, Relator.length, List.map_cons,
+    List.map_nil, List.sum_cons, List.sum_nil]
   norm_num
 
 end TauCeti.Sporadic
