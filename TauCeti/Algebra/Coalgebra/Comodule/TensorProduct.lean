@@ -361,6 +361,31 @@ theorem lTensor_comp_tensorCombine (φ : C →ₐ[R] D) :
 
 end Slot
 
+section BaseChange
+
+variable {A : Type y} [CommSemiring A] [Algebra R A]
+variable [AddCommMonoid M] [Module R M] [AddCommMonoid N] [Module R N]
+
+/-- Combining two coefficient columns and then commuting the carrier past the coefficients
+agrees with first commuting each column and then applying scalar-extension distributivity. -/
+theorem comm_tensorCombine_eq_distribBaseChange_symm_tmul
+    (p : M ⊗[R] A) (q : N ⊗[R] A) :
+    TensorProduct.comm R (M ⊗[R] N) A
+        (tensorCombine (R := R) (C := A) (M := M) (N := N) (p ⊗ₜ[R] q)) =
+      (TensorProduct.AlgebraTensorModule.distribBaseChange R A M N).symm
+        (TensorProduct.comm R M A p ⊗ₜ[A] TensorProduct.comm R N A q) := by
+  induction p using TensorProduct.induction_on with
+  | zero => simp
+  | add p p' hp hp' => simpa only [add_tmul, map_add] using congrArg₂ (fun a b ↦ a + b) hp hp'
+  | tmul m a =>
+      induction q using TensorProduct.induction_on with
+      | zero => simp
+      | add q q' hq hq' =>
+          simpa only [tmul_add, map_add] using congrArg₂ (fun x y ↦ x + y) hq hq'
+      | tmul n b => simp
+
+end BaseChange
+
 section Reassociate
 
 variable [Semiring C] [Algebra R C]

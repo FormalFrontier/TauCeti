@@ -73,8 +73,8 @@ private theorem sum_smul_squareClass {ι : Type*} [Fintype ι] (d : ι → Kˣ) 
   rw [squareClass_prod, Finset.sum_filter]
   refine Finset.sum_congr rfl fun i _ => ?_
   rcases zmod_two_eq_zero_or_one (g i) with h | h
-  · rw [h, zero_smul]; exact (if_neg (by decide)).symm
-  · rw [h, one_smul]; exact (if_pos rfl).symm
+  · rw [h, zero_smul]; exact (ite_eq_right (by decide)).symm
+  · rw [h, one_smul]; exact (ite_eq_left rfl).symm
 
 /-- **Square-class independence is `ZMod 2`-linear independence.** For a finite family of units
 `d : ι → Kˣ`, the square classes `squareClass (d i)` are `ZMod 2`-linearly independent in the
@@ -97,7 +97,7 @@ theorem linearIndependent_squareClass_iff {ι : Type*} [Finite ι] (d : ι → K
       · rintro ⟨-, hi⟩
         by_contra hiS
         rw [hg] at hi
-        simp only [hiS, if_false] at hi
+        simp only [hiS, ite_false] at hi
         exact absurd hi (by decide)
       · intro hiS
         exact ⟨Finset.mem_univ i, by rw [hg]; simp [hiS]⟩
@@ -107,7 +107,7 @@ theorem linearIndependent_squareClass_iff {ι : Type*} [Finite ι] (d : ι → K
     obtain ⟨i, hiS⟩ := hS
     have hi0 := H g hsum i
     rw [hg] at hi0
-    simp only [hiS, if_true] at hi0
+    simp only [hiS, ite_true] at hi0
     exact absurd hi0 (by decide)
   · -- A linear dependence singles out a nonempty square subset product.
     intro H g hsum i

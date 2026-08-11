@@ -34,6 +34,8 @@ highest-weight tableau `SemistandardYoungTableau.highestWeight μ` is `μ.rowLen
 
 * `TauCeti.SemistandardYoungTableau.content`: the content (or weight) of a semistandard Young
   tableau, `content T i` being the number of cells filled with `i`.
+* `TauCeti.BoundedSSYT`: the semistandard Young tableaux of a given shape whose entries lie below
+  a given bound, that is, those written in a finite alphabet.
 * `TauCeti.diagramKostkaNumber`: the number of semistandard Young tableaux of a given shape and
   content.
 * `TauCeti.kostkaNumber`: the Kostka number of two partitions of the same natural number, the
@@ -47,8 +49,9 @@ highest-weight tableau `SemistandardYoungTableau.highestWeight μ` is `μ.rowLen
   and content `μ.rowLen` is the highest-weight tableau.
 * `TauCeti.SemistandardYoungTableau.finite_content_eq`: the tableaux of a fixed shape and content
   are finite, so the Kostka number counts them faithfully.
-* `TauCeti.finite_ssyt_lt`: likewise the tableaux of a fixed shape whose entries are bounded by a
-  fixed natural number are finite.
+* `TauCeti.finite_boundedSSYT`: likewise the tableaux of a fixed shape written in a finite alphabet,
+  `TauCeti.BoundedSSYT`, are finite.
+* `TauCeti.BoundedSSYT.isEmpty_of_lt_colLen`: a shape taller than its alphabet admits no tableau.
 * `TauCeti.kostkaNumber_self`: `K_{μ μ} = 1`.
 * `TauCeti.kostkaNumber_eq_zero_of_not_dominates`: `K_{μ ν} = 0` unless `μ` dominates `ν`.
 
@@ -167,8 +170,8 @@ theorem eq_highestWeight_of_content_eq_rowLen {T : _root_.SemistandardYoungTable
     exact le_antisymm (Nat.lt_succ_iff.mp (Finset.mem_filter.mp hmem).2) (le_entry T hij)
   ext i j
   by_cases hij : (i, j) ∈ μ
-  · rw [key i j hij, _root_.SemistandardYoungTableau.highestWeight_apply, if_pos hij]
-  · rw [T.zeros hij, _root_.SemistandardYoungTableau.highestWeight_apply, if_neg hij]
+  · rw [key i j hij, _root_.SemistandardYoungTableau.highestWeight_apply, ite_eq_left hij]
+  · rw [T.zeros hij, _root_.SemistandardYoungTableau.highestWeight_apply, ite_eq_right hij]
 
 /-- The semistandard tableaux of a fixed shape and content are finite. -/
 instance finite_content_eq (μ : YoungDiagram) (w : ℕ → ℕ) :
@@ -194,13 +197,43 @@ instance finite_content_eq (μ : YoungDiagram) (w : ℕ → ℕ) :
 
 end SemistandardYoungTableau
 
+/-- The semistandard Young tableaux of shape `μ` written in the alphabet `{0, …, n - 1}`, that
+is, those all of whose entries are smaller than `n`.  Mathlib's `SemistandardYoungTableau μ`
+allows arbitrary natural-number entries and is infinite for a nonempty `μ`, so bounding the
+alphabet is what makes the tableaux of a fixed shape finitely many. -/
+abbrev BoundedSSYT (n : ℕ) (μ : YoungDiagram) : Type :=
+  {T : _root_.SemistandardYoungTableau μ // ∀ i c : ℕ, (i, c) ∈ μ → T i c < n}
+
+namespace BoundedSSYT
+
+variable {n : ℕ} {μ : YoungDiagram}
+
+/-- The entries of a tableau written in the alphabet `{0, …, n - 1}` all use letters of that
+alphabet. -/
+theorem entry_lt (T : BoundedSSYT n μ) {i c : ℕ} (h : (i, c) ∈ μ) : T.1 i c < n :=
+  T.2 i c h
+
+/-- **A shape taller than its alphabet admits no tableau**: entries increase strictly down a
+column, so a column of more than `n` cells cannot be filled from an `n`-letter alphabet. -/
+theorem isEmpty_of_lt_colLen (h : n < μ.colLen 0) : IsEmpty (BoundedSSYT n μ) := by
+  refine ⟨fun T => absurd (entry_lt T (YoungDiagram.mem_iff_lt_colLen.mpr h)) (not_lt.mpr ?_)⟩
+  exact SemistandardYoungTableau.le_entry T.1 (YoungDiagram.mem_iff_lt_colLen.mpr h)
+
+/-- The empty shape has a unique tableau, the empty one. -/
+instance (n : ℕ) : Unique (BoundedSSYT n (⊥ : YoungDiagram)) where
+  default := ⟨_root_.SemistandardYoungTableau.highestWeight ⊥, fun _ _ hic => absurd hic (by simp)⟩
+  uniq T := Subtype.ext <| _root_.SemistandardYoungTableau.ext fun _ _ => by
+    rw [T.1.zeros (by simp), _root_.SemistandardYoungTableau.highestWeight_apply,
+      ite_eq_right (by simp)]
+
+end BoundedSSYT
+
 /-- **Bounded semistandard tableaux of a fixed shape are finitely many**: such a tableau is
 determined by its restriction to the finitely many cells of `μ`, where it takes one of `n` values.
 Mathlib's `SemistandardYoungTableau μ` allows unbounded entries and is infinite for a nonempty
 `μ`, so the bound is what makes the count finite.  No relation between `n` and the number of rows
 of `μ` is needed: for a shape taller than `n` the type is empty, columns being strict. -/
-theorem finite_ssyt_lt (n : ℕ) (μ : YoungDiagram) :
-    Finite {T : _root_.SemistandardYoungTableau μ // ∀ i c : ℕ, (i, c) ∈ μ → T i c < n} := by
+instance finite_boundedSSYT (n : ℕ) (μ : YoungDiagram) : Finite (BoundedSSYT n μ) := by
   refine Finite.of_injective (β := μ.cells → Fin n)
     (fun T x => ⟨T.1 x.1.1 x.1.2, T.2 _ _ ((YoungDiagram.mem_cells _).mp x.2)⟩) ?_
   rintro ⟨T, hT⟩ ⟨T', hT'⟩ h
@@ -208,6 +241,8 @@ theorem finite_ssyt_lt (n : ℕ) (μ : YoungDiagram) :
   by_cases hc : (i, c) ∈ μ
   · exact congrArg Fin.val (congrFun h ⟨(i, c), (YoungDiagram.mem_cells _).mpr hc⟩)
   · rw [T.zeros hc, T'.zeros hc]
+
+noncomputable instance (n : ℕ) (μ : YoungDiagram) : Fintype (BoundedSSYT n μ) := .ofFinite _
 
 /-- The **Kostka number** `K_{μ w}` of a shape and a weight function: the number of semistandard
 Young tableaux of shape `μ` whose content is `w`. -/

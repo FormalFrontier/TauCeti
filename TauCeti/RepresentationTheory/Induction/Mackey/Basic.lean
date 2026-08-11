@@ -46,6 +46,8 @@ conjugate Mackey subgroup (`TauCeti.mackeySubgroup_conj`).
 * `TauCeti.mackeyClassFun`: the conjugated function `y ↦ f (s⁻¹ y s)` on the Mackey subgroup; it is
   a class function as soon as `f` is one, and inducing it up to `K` gives the character of the
   Mackey summand when `f` is a character.
+* `TauCeti.mackeyClassFunction`: the same conjugated class function, bundled as an element of
+  `TauCeti.ClassFunction`.
 * `TauCeti.mackeySummand`: the Mackey summand `Ind_{K ⊓ sHs⁻¹}^K Res ({}^s A)` as an `FDRep k K`.
 
 ## Main statements
@@ -53,6 +55,8 @@ conjugate Mackey subgroup (`TauCeti.mackeySubgroup_conj`).
 * `TauCeti.index_eq_sum_relIndex_mackeySubgroup`: `[G : H] = ∑_{KsH} [K : K ⊓ sHs⁻¹]`.
 * `TauCeti.mackeyClassFun_mem_classFunction`: the conjugate of a class function is one.
 * `TauCeti.indClassFun_mackey`: the Mackey decomposition for induced class functions.
+* `TauCeti.comap_subtype_ind_mackey`: the same decomposition as an identity of bundled class
+  functions.
 * `TauCeti.character_resFDRep_indFDRep_mackey`: the Mackey decomposition for the character of
   `Res_K (Ind_H^G A)`.
 
@@ -252,6 +256,17 @@ theorem mackeyClassFun_mem_classFunction (s : G) (H K : Subgroup G) {f : H → k
     rw [mackeyClassFun_apply, mackeyClassFun_apply, map_mul, map_mul, map_inv]
     exact ClassFunction.mem_iff.mp hf _ _
 
+/-- The conjugated class function `TauCeti.mackeyClassFun` on the Mackey subgroup, bundled as an
+element of `TauCeti.ClassFunction`. -/
+def mackeyClassFunction (s : G) (H K : Subgroup G) (f : ClassFunction k H) :
+    ClassFunction k ((mackeySubgroup s H K).subgroupOf K) :=
+  ⟨mackeyClassFun s H K f.1, mackeyClassFun_mem_classFunction s H K f.2⟩
+
+@[simp]
+theorem mackeyClassFunction_coe (s : G) (H K : Subgroup G) (f : ClassFunction k H) :
+    (mackeyClassFunction s H K f).1 = mackeyClassFun s H K f.1 :=
+  (rfl)
+
 /-- **The Mackey subgroup sees the induced summand.**  The summand of the class function induced
 from `H` to `G`, taken at the representative `u s` and at an element of `K`, is the summand of the
 class function induced from the Mackey subgroup to `K`, taken at the representative `u`.
@@ -272,9 +287,9 @@ private theorem indTerm_mackeyClassFun (s : G) (H K : Subgroup G) (f : H → k) 
     exact ⟨fun h => ⟨SetLike.coe_mem _, h⟩, fun h => h.2⟩
   rw [indTerm_apply, indTerm_apply]
   by_cases hmem : ((u : G) * s)⁻¹ * (x : G) * ((u : G) * s) ∈ H
-  · rw [dif_pos hmem, dif_pos (hiff.mp hmem), mackeyClassFun_apply]
+  · rw [dite_eq_left hmem, dite_eq_left (hiff.mp hmem), mackeyClassFun_apply]
     exact congrArg f (Subtype.ext (by rw [coe_mackeyToH_apply]; exact hconj))
-  · rw [dif_neg hmem, dif_neg fun h => hmem (hiff.mpr h)]
+  · rw [dite_eq_right hmem, dite_eq_right fun h => hmem (hiff.mpr h)]
 
 /-- **The Mackey decomposition formula for class functions.**  For a class function `f` on a
 finite-index subgroup `H` and an element `x` of a subgroup `K`, the induced class function
@@ -321,6 +336,25 @@ theorem indClassFun_mackey [H.FiniteIndex] {f : H → k} (hf : f ∈ ClassFuncti
         Finset.sum_congr rfl fun D _ => by
           rw [indClassFun_apply]
           exact Finset.sum_congr rfl fun u _ => indTerm_apply _ _ _
+
+/-- **The Mackey decomposition of a restricted induced class function.**  Restricting to `K` a
+class function induced from `H` gives the sum, over the double cosets `K \ G / H`, of the class
+functions induced to `K` from the Mackey subgroups.
+
+This is `TauCeti.indClassFun_mackey` rewritten as an identity of bundled class functions, which is
+the form the character pairing consumes. -/
+theorem comap_subtype_ind_mackey (K : Subgroup G) [H.FiniteIndex] (f : ClassFunction k H) :
+    ClassFunction.comap K.subtype (ClassFunction.ind H f) =
+      letI := Fintype.ofFinite (DoubleCoset.Quotient (K : Set G) (H : Set G))
+      ∑ D : DoubleCoset.Quotient (K : Set G) (H : Set G),
+        ClassFunction.ind ((mackeySubgroup D.out H K).subgroupOf K)
+          (mackeyClassFunction D.out H K f) := by
+  let := Fintype.ofFinite (DoubleCoset.Quotient (K : Set G) (H : Set G))
+  refine Subtype.ext (funext fun x => ?_)
+  rw [ClassFunction.comap_apply, ClassFunction.ind_apply, Subgroup.coe_subtype]
+  simp only [Submodule.coe_sum, Finset.sum_apply, ClassFunction.ind_apply,
+    mackeyClassFunction_coe]
+  exact indClassFun_mackey f.2 x
 
 end ClassFun
 
