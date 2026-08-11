@@ -6,6 +6,7 @@ module
 
 public import Mathlib.LinearAlgebra.CliffordAlgebra.Contraction
 public import Mathlib.LinearAlgebra.FiniteDimensional.Lemmas
+import TauCeti.LinearAlgebra.CliffordAlgebra.Basic
 public import TauCeti.LinearAlgebra.CliffordAlgebra.Filtration
 
 /-!
@@ -87,8 +88,8 @@ variable {R : Type u} {M : Type v} [CommRing R] [AddCommGroup M] [Module R M]
 /-! ### The comparison with the exterior algebra
 
 Mathlib's `CliffordAlgebra.equivExterior` is only a linear equivalence. Its scalar equation is
-recorded with the Layer 0 filtration API; here we record the generator equation needed for the
-vector API. Both are immediate from its definition as a `changeForm`. -/
+recorded in the general Clifford-algebra API; here we record the generator equation needed for
+the vector API. Both are immediate from its definition as a `changeForm`. -/
 
 /-- `CliffordAlgebra.equivExterior` sends a generator to the corresponding generator of the
 exterior algebra. -/
@@ -137,12 +138,6 @@ theorem ι_inj (m n : M) : ι Q m = ι Q n ↔ m = n := (ι_injective Q).eq_iff
 @[simp]
 theorem ι_eq_zero_iff (m : M) : ι Q m = 0 ↔ m = 0 := by
   rw [← ι_inj Q m 0, map_zero]
-
-/-- With this instance the `iff` forms come from Mathlib: `algebraMap.coe_inj`,
-`FaithfulSMul.algebraMap_eq_zero_iff` and `FaithfulSMul.algebraMap_eq_one_iff` are all `simp`
-lemmas already. -/
-instance faithfulSMul : FaithfulSMul R (CliffordAlgebra Q) :=
-  (faithfulSMul_iff_algebraMap_injective R (CliffordAlgebra Q)).2 (algebraMap_injective Q)
 
 /-! ### Vectors are not scalars -/
 

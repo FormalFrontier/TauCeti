@@ -4,7 +4,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+import Mathlib.LinearAlgebra.ExteriorAlgebra.Grading
 public import TauCeti.LinearAlgebra.CliffordAlgebra.AssociatedGraded
+import TauCeti.LinearAlgebra.CliffordAlgebra.Basic
 public import TauCeti.LinearAlgebra.CliffordAlgebra.FiltrationGradedEquiv
 
 /-!
@@ -80,6 +82,25 @@ private theorem filtrationGradedPieceEquivExteriorPower_apply_mk_zero (r : R) :
           filtration Q 0)) =
       (exteriorPower.zeroEquiv R M).symm r := by
   exact filtrationGradedPieceZeroEquivExteriorPower_apply_mk Q r
+
+/-- The degree-zero piece equivalence sends a scalar class to the corresponding exterior
+scalar. -/
+@[simp]
+theorem filtrationGradedPieceEquivExteriorPower_apply_algebraMap₀ (r : R) :
+    filtrationGradedPieceEquivExteriorPower Q 0 (filtrationGradedAlgebraMap₀ Q r) =
+      (exteriorPower.zeroEquiv R M).symm r := by
+  rw [filtrationGradedAlgebraMap₀_apply]
+  exact filtrationGradedPieceEquivExteriorPower_apply_mk_zero Q r
+
+/-- The inverse degree-zero piece equivalence sends an exterior scalar to its scalar class. -/
+@[simp]
+theorem filtrationGradedPieceEquivExteriorPower_symm_apply_zeroEquiv_symm (r : R) :
+    (filtrationGradedPieceEquivExteriorPower Q 0).symm
+        ((exteriorPower.zeroEquiv R M).symm r) =
+      filtrationGradedAlgebraMap₀ Q r := by
+  apply (filtrationGradedPieceEquivExteriorPower Q 0).injective
+  rw [LinearEquiv.apply_symm_apply,
+    filtrationGradedPieceEquivExteriorPower_apply_algebraMap₀]
 
 private noncomputable def filtrationLeadingTermAll (n : ℕ) :
     ⋀[R]^n M →ₗ[R] FiltrationGradedPiece Q n :=

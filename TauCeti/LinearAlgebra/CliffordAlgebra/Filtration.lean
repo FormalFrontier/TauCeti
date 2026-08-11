@@ -46,9 +46,6 @@ supremum over the `i` of a fixed parity.
 * `TauCeti.CliffordAlgebra.filtration_zero` and
   `TauCeti.CliffordAlgebra.filtration_one` compute the first two steps, as the scalars and the
   scalars together with `LinearMap.range (ι Q)`.
-* `TauCeti.CliffordAlgebra.equivExterior_algebraMap` and
-  `TauCeti.CliffordAlgebra.algebraMap_injective`: when `2` is invertible, the scalars are a
-  faithful copy of `R` in the Clifford algebra.
 * `TauCeti.CliffordAlgebra.filtration_mul`: the filtration is multiplicative, and in fact exactly
   so: `filtration Q i * filtration Q j = filtration Q (i + j)`. This is the statement that makes
   the associated graded object an algebra, and it is the prerequisite the roadmap asks for before
@@ -98,20 +95,6 @@ namespace TauCeti
 namespace CliffordAlgebra
 
 variable {R : Type u} {M : Type v} [CommRing R] [AddCommGroup M] [Module R M]
-
-/-- `CliffordAlgebra.equivExterior` sends a scalar to the corresponding scalar of the exterior
-algebra. -/
-theorem equivExterior_algebraMap (Q : QuadraticForm R M) [Invertible (2 : R)] (r : R) :
-    equivExterior Q (algebraMap R (CliffordAlgebra Q) r) = algebraMap R (ExteriorAlgebra R M) r :=
-  changeForm_algebraMap changeForm.associated_neg_proof r
-
-/-- **The scalars of a Clifford algebra are a faithful copy of `R`.** -/
-theorem algebraMap_injective (Q : QuadraticForm R M) [Invertible (2 : R)] :
-    Function.Injective (algebraMap R (CliffordAlgebra Q)) := by
-  intro r s hrs
-  have h := congrArg (equivExterior Q) hrs
-  rwa [equivExterior_algebraMap, equivExterior_algebraMap,
-    ExteriorAlgebra.algebraMap_inj M] at h
 
 /-- The degree filtration of a Clifford algebra: `filtration Q k` is the `R`-submodule spanned by
 the products `ι Q v₁ * ⋯ * ι Q vₙ` of at most `k` generators, the empty product `1` included.
