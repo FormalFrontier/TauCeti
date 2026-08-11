@@ -42,8 +42,7 @@ instance monodromyFunctor_full [LocallyPathConnectedSpace X] : (monodromyFunctor
     -- Transport across the opaque functor's object equations for the unbundled theorem.
     let α' : p.isCoveringMap_proj.monodromyFunctor ⟶
         q.isCoveringMap_proj.monodromyFunctor :=
-      cast (by rw [← monodromyFunctor_obj, ← monodromyFunctor_obj]) α
-    have hα' : HEq α' α := cast_heq _ α
+      eqToHom (monodromyFunctor_obj p).symm ≫ α ≫ eqToHom (monodromyFunctor_obj q)
     obtain ⟨f, hf, hα⟩ := IsCoveringMap.exists_map_of_monodromyNatTrans
       p.isCoveringMap_proj q.isCoveringMap_proj α'
     let F : p ⟶ q := homMk (TopCat.ofHom f) (by
@@ -73,6 +72,8 @@ instance monodromyFunctor_full [LocallyPathConnectedSpace X] : (monodromyFunctor
             _ = (IsCoveringMap.fiberMap f hf x ⟨e, he⟩ : (q : TopCat)) :=
               (IsCoveringMap.fiberMap_apply_coe f hf x ⟨e, he⟩).symm
         _ = α' := hα
-    exact eq_of_heq ((monodromyFunctor_map F).trans ((heq_of_eq hmap).trans hα'))
+    apply (cancel_epi (eqToHom (monodromyFunctor_obj p).symm)).1
+    apply (cancel_mono (eqToHom (monodromyFunctor_obj q))).1
+    simpa only [Category.assoc] using (monodromyFunctor_map F).trans hmap
 
 end TauCeti.CoveringSpace

@@ -47,6 +47,42 @@ variable {E F : Type u} {X : Type v}
   [TopologicalSpace E] [TopologicalSpace F] [TopologicalSpace X]
   {p : E → X} {q : F → X}
 
+/-- Monodromy along a path contained in the base-side domain of a local inverse carries each
+endpoint in its sheet to the other endpoint. -/
+private theorem monodromy_eq_of_path_in_sheet (hp : _root_.IsCoveringMap p)
+    (φ : OpenPartialHomeomorph X E) (hφ : ⇑φ.symm = p) {a b : X} (γ : Path a b)
+    (hγ : ∀ t, γ t ∈ φ.source) (e : p ⁻¹' {a}) (z : p ⁻¹' {b})
+    (he : (e : E) ∈ φ.target) (hz : (z : E) ∈ φ.target) :
+    hp.monodromy (Path.Homotopic.Quotient.mk γ) e = z := by
+  have he_base : p e = a := by
+    simpa only [Set.mem_preimage, Set.mem_singleton_iff] using e.2
+  have hz_base : p z = b := by
+    simpa only [Set.mem_preimage, Set.mem_singleton_iff] using z.2
+  have heq : (e : E) = φ a := by
+    calc
+      (e : E) = φ (p e) := by
+        rw [← congrFun hφ e]
+        exact (φ.right_inv he).symm
+      _ = φ a := congrArg φ he_base
+  have hzq : (z : E) = φ b := by
+    calc
+      (z : E) = φ (p z) := by
+        rw [← congrFun hφ z]
+        exact (φ.right_inv hz).symm
+      _ = φ b := congrArg φ hz_base
+  let Γ : Path (e : E) z :=
+    (γ.map' (φ.continuousOn.mono fun _ hy ↦ by
+      obtain ⟨t, rfl⟩ := hy
+      exact hγ t)).cast heq hzq
+  apply hp.monodromy_eq_of_map_eq (Path.Homotopic.Quotient.mk Γ)
+  -- Expose the projected lift as a path-class equality so `mk_map` and `mk_cast` apply.
+  change (Path.Homotopic.Quotient.mk Γ).map ⟨p, hp.continuous⟩ =
+    (Path.Homotopic.Quotient.mk γ).cast he_base hz_base
+  rw [← Path.Homotopic.Quotient.mk_map, ← Path.Homotopic.Quotient.mk_cast]
+  apply congrArg Path.Homotopic.Quotient.mk
+  ext t
+  exact (congrFun hφ (φ (γ t))).symm.trans (φ.left_inv (hγ t))
+
 /-- The pointwise map of total spaces forced by a natural transformation of monodromy
 functors. -/
 private noncomputable def mapOfNatTrans (hp : _root_.IsCoveringMap p)
