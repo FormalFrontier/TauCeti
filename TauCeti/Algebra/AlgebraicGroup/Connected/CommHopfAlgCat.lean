@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+public import Mathlib.FieldTheory.IsAlgClosed.AlgebraicClosure
 public import TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.Basic
 public import TauCeti.RingTheory.Idempotents.ConnectedSpectrum
 import Mathlib.RingTheory.Flat.Basic
@@ -22,6 +23,8 @@ idempotents other than zero and one.
 * `TauCeti.geometricallyConnectedCommHopfAlgProperty_iff`: its connected-spectrum form.
 * `TauCeti.geometricallyConnectedCommHopfAlgProperty_iff_idempotent_eq_zero_or_one`: its
   idempotent form.
+* `TauCeti.geometricallyConnectedCommHopfAlgProperty_iff_isAlgClosed`: its characterization
+  using algebraically closed field extensions.
 
 ## References
 
@@ -98,5 +101,32 @@ theorem geometricallyConnectedCommHopfAlgProperty_iff_idempotent_eq_zero_or_one
   · intro h K _ _
     let := nontrivial_tensorProduct k H K
     exact connectedSpace_primeSpectrum_iff_idempotent_eq_zero_or_one.mpr (h K)
+
+/-- **Geometric connectedness of a commutative Hopf algebra can be tested after algebraically
+closed field extensions.** -/
+theorem geometricallyConnectedCommHopfAlgProperty_iff_isAlgClosed
+    (k : Type u) [Field k] (H : CommHopfAlgCat.{u} k) :
+    geometricallyConnectedCommHopfAlgProperty k H ↔
+      ∀ (K : Type u) [Field K] [Algebra k K] [IsAlgClosed K],
+        ConnectedSpace (PrimeSpectrum ((H : Type u) ⊗[k] K)) := by
+  rw [geometricallyConnectedCommHopfAlgProperty_iff]
+  constructor
+  · intro h K _ _ _
+    exact h K
+  · intro h K _ _
+    let Ω := AlgebraicClosure K
+    let g : K →ₐ[k] Ω := IsScalarTower.toAlgHom k K Ω
+    let f : (H : Type u) ⊗[k] K →ₐ[k] (H : Type u) ⊗[k] Ω :=
+      Algebra.TensorProduct.map (AlgHom.id k H) g
+    have hg : Function.Injective g := RingHom.injective g.toRingHom
+    have hlinear : Function.Injective (g.toLinearMap.lTensor (H : Type u)) :=
+      Module.Flat.lTensor_preserves_injective_linearMap g.toLinearMap hg
+    have hmap : f.toLinearMap = g.toLinearMap.lTensor (H : Type u) := by
+      simp only [f, Algebra.TensorProduct.toLinearMap_map,
+        TensorProduct.AlgebraTensorModule.map_eq, AlgHom.toLinearMap_id, LinearMap.lTensor_def]
+    have hf : Function.Injective f := by
+      rw [← AlgHom.coe_toLinearMap, hmap]
+      exact hlinear
+    exact connectedSpace_primeSpectrum_of_injective f.toRingHom hf
 
 end TauCeti

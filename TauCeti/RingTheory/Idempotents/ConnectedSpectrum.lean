@@ -71,10 +71,7 @@ theorem connectedSpace_primeSpectrum_iff_idempotent_eq_zero_or_one :
 variable {S : Type*} [CommRing S]
 
 omit [Nontrivial R] in
-/-- Connectedness of prime spectra descends along injective ring homomorphisms.
-
-Indeed, an idempotent in the source maps to an idempotent in the target, where connectedness
-forces it to be zero or one; injectivity then gives the same conclusion in the source. -/
+/-- Connectedness of prime spectra descends along injective ring homomorphisms. -/
 theorem connectedSpace_primeSpectrum_of_injective [ConnectedSpace (PrimeSpectrum S)]
     (f : R →+* S) (hf : Function.Injective f) : ConnectedSpace (PrimeSpectrum R) := by
   let : Nontrivial S := PrimeSpectrum.nonempty_iff_nontrivial.mp inferInstance
