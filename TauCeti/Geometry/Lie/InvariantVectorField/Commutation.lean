@@ -54,14 +54,14 @@ attribute [local instance] ContMDiffMul.boundarylessManifold
 
 private theorem two_le_infinite_smoothness :
     ((2 : ℕ∞) : ℕ∞ω) ≤ ((⊤ : ℕ∞) : ℕ∞ω) :=
-  WithTop.coe_le_coe.mpr le_top
+  ENat.natCast_le_of_coe_top_le_withTop le_rfl 2
 
 section Complete
 
 variable [CompleteSpace E]
 
-/-- A smooth scalar function evaluated on two multiplied exponential lines is smooth in both
-parameters. -/
+/-- A smooth scalar function evaluated on two exponential lines multiplied around a fixed group
+element is smooth in both parameters. -/
 private theorem contDiff_comp_mulInvariantExp_mul_mulInvariantExp
     {f : G → ℝ} (hf : ContMDiff I 𝓘(ℝ, ℝ) ∞ f) (g : G)
     (X Y : GroupLieAlgebra I G) :
@@ -71,18 +71,8 @@ private theorem contDiff_comp_mulInvariantExp_mul_mulInvariantExp
         mulInvariantExp (I := I) (G := G) (p.2 • Y))) := by
   let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
   dsimp only
-  have hX := contMDiff_mulInvariantExp_smul (I := I) (G := G) X
-  have hY := contMDiff_mulInvariantExp_smul (I := I) (G := G) Y
-  have hMprod : ContMDiff (𝓘(ℝ, ℝ).prod 𝓘(ℝ, ℝ)) I ∞ (fun p : ℝ × ℝ =>
-      mulInvariantExp (I := I) (G := G) (p.1 • X) * g *
-        mulInvariantExp (I := I) (G := G) (p.2 • Y)) :=
-    ((hX.comp contMDiff_fst).mul contMDiff_const).mul (hY.comp contMDiff_snd)
-  have hM : ContMDiff 𝓘(ℝ, ℝ × ℝ) I ∞ (fun p : ℝ × ℝ =>
-      mulInvariantExp (I := I) (G := G) (p.1 • X) * g *
-        mulInvariantExp (I := I) (G := G) (p.2 • Y)) := by
-    rw [modelWithCornersSelf_prod, ← chartedSpaceSelf_prod]
-    exact hMprod
-  exact (hf.comp hM).contDiff.of_le two_le_infinite_smoothness
+  exact (hf.comp (contMDiff_mulInvariantExp_smul_mul_mul_mulInvariantExp_smul g X Y)).contDiff.of_le
+    two_le_infinite_smoothness
 
 private theorem spatialFDeriv_mulInvariantExp_mul_mulInvariantExp
     (f : C^∞⟮I, G; ℝ⟯) (g : G) (X Y : GroupLieAlgebra I G) (s : ℝ) :

@@ -141,7 +141,10 @@ theorem norm_yosidaApproximation_le {A : X →ₗ.[ℝ] X} {lambda : ℝ}
     _ ≤ lambda + lambda := add_le_add hscaled hone
     _ = 2 * lambda := (two_mul lambda).symm
 
-private theorem exp_yosidaApproximation_eq {A : X →ₗ.[ℝ] X} (lambda t : ℝ) :
+/-- Split the exponential of a Yosida approximation into its commuting scalar and resolvent
+factors:
+`exp (t A_lambda) = exp (-t lambda I) exp (t lambda² R(lambda, A))`. -/
+theorem exp_yosidaApproximation {A : X →ₗ.[ℝ] X} (lambda t : ℝ) :
     exp (t • yosidaApproximation A lambda) =
       exp ((-(t * lambda)) • (1 : X →L[ℝ] X)) *
         exp ((t * lambda ^ 2) • LinearPMap.resolvent A lambda) := by
@@ -163,7 +166,7 @@ theorem norm_exp_smul_yosidaApproximation_le_one {A : X →ₗ.[ℝ] X} {lambda 
     ‖exp (t • yosidaApproximation A lambda)‖ =
         ‖exp ((-(t * lambda)) • (1 : X →L[ℝ] X)) *
           exp ((t * lambda ^ 2) • LinearPMap.resolvent A lambda)‖ := by
-      rw [exp_yosidaApproximation_eq]
+      rw [exp_yosidaApproximation]
     _ ≤ ‖exp ((-(t * lambda)) • (1 : X →L[ℝ] X))‖ *
           ‖exp ((t * lambda ^ 2) • LinearPMap.resolvent A lambda)‖ := norm_mul_le _ _
     _ ≤ Real.exp (-(t * lambda)) *
