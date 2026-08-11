@@ -134,8 +134,8 @@ theorem integral_chebyshevTEnvelope_mul_chebyshevTEnvelope (m n : ℕ) :
   rw [hkey, integral_eval_T_real_mul_eval_T_real_mul_chebyshevWeight]
   by_cases hmn : m = n
   · subst hmn
-    rw [if_pos rfl, if_pos rfl, Real.mul_self_sqrt hm.le, inv_mul_cancel₀ hm.ne']
-  · rw [if_neg hmn, if_neg hmn, mul_zero]
+    rw [ite_eq_left rfl, ite_eq_left rfl, Real.mul_self_sqrt hm.le, inv_mul_cancel₀ hm.ne']
+  · rw [ite_eq_right hmn, ite_eq_right hmn, mul_zero]
 
 /-! ## The Hilbert basis -/
 

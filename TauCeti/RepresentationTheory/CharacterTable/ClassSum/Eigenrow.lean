@@ -161,7 +161,7 @@ theorem eq_of_vecMul_classMultMatrix_eq_smul {v : ConjClasses G → k}
   have h₁ := congrFun h (ConjClasses.mk (1 : G))
   rw [vecMul_classMultMatrix_apply] at h₁
   simp only [structureConstant_mk_one_right, Nat.cast_ite, Nat.cast_one, Nat.cast_zero,
-    ite_mul, one_mul, zero_mul, Finset.sum_ite_eq' Finset.univ Cᵢ v, Finset.mem_univ, if_true,
+    ite_mul, one_mul, zero_mul, Finset.sum_ite_eq' Finset.univ Cᵢ v, Finset.mem_univ, ite_true,
     Pi.smul_apply, smul_eq_mul, hv₁, mul_one] at h₁
   exact h₁.symm
 

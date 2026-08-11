@@ -150,10 +150,10 @@ private theorem cycleDixonFunction_eq_cycleDixonH2 {f : ℂ → ℂ} {C : Cycle}
     (hwind : windingNumber w C = 0) :
     cycleDixonFunction f U C w = cycleDixonH2 f C w := by
   by_cases hwU : w ∈ U
-  · rw [cycleDixonFunction, if_pos hwU, cycleDixonH1_eq_cycleDixonH2_sub hf hCU hw,
+  · rw [cycleDixonFunction, ite_eq_left hwU, cycleDixonH1_eq_cycleDixonH2_sub hf hCU hw,
       hwind]
     ring
-  · rw [cycleDixonFunction, if_neg hwU]
+  · rw [cycleDixonFunction, ite_eq_right hwU]
 
 /-- The cycle Dixon function is entire. Null-homology makes the finite sum of the boundary jumps
 vanish, even though the individual generator jumps need not vanish. -/
@@ -170,7 +170,7 @@ private theorem differentiable_cycleDixonFunction {f : ℂ → ℂ} {C : Cycle} 
   by_cases hwU : w ∈ U
   · refine (hH1.differentiableAt (hU.mem_nhds hwU)).congr_of_eventuallyEq ?_
     filter_upwards [hU.mem_nhds hwU] with w' hw'U
-    rw [cycleDixonFunction, if_pos hw'U]
+    rw [cycleDixonFunction, ite_eq_left hw'U]
   · have hwtrace : w ∉ trace C := fun hw ↦ hwU (isIn_iff.mp hCU hw)
     have hH2 : DifferentiableAt ℂ (cycleDixonH2 f C) w := by
       unfold cycleDixonH2
@@ -254,7 +254,7 @@ theorem homologyCauchyTheorem {f : ℂ → ℂ} {C : Cycle} {U : Set ℂ} (hU : 
       (differentiableOn_id.sub (differentiableOn_const w)).mul hf
     have hzero := cycleDixonFunction_eq_zero hU
       htwist hCU hnull w
-    rw [cycleDixonFunction, if_pos hwU,
+    rw [cycleDixonFunction, ite_eq_left hwU,
       cycleDixonH1_eq_cycleDixonH2_sub
         htwist.continuousOn hCU hwtrace,
       cycleDixonH2_twist_eq_integral hwtrace] at hzero
