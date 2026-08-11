@@ -16,8 +16,9 @@ public import TauCeti.LinearAlgebra.Dimension.IsQuadraticExtension
 
 Shared facts about a quadratic number field `K` presented by an algebraic integer `θ : 𝓞 K` whose
 minimal polynomial over `ℤ` is `X² - d`. These feed the prime-splitting law
-(`Quadratic/Splitting.lean`), the conjugation automorphism (`Quadratic/Conjugation/Basic.lean`), and
-the ring-of-integers/discriminant computation (`Quadratic/RingOfIntegers.lean`).
+(`Quadratic/Splitting.lean`), the conjugation automorphism (`Quadratic/Conjugation/Basic.lean`), the
+ring-of-integers/discriminant computation (`Quadratic/RingOfIntegers.lean`), and the field-norm
+computation (`Quadratic/Norm.lean`).
 
 ## Main results
 
@@ -26,6 +27,7 @@ the ring-of-integers/discriminant computation (`Quadratic/RingOfIntegers.lean`).
 * `TauCeti.NumberField.coe_gen_sq`: the generator squares to the radicand, `θ² = d` in `K`.
 * `TauCeti.NumberField.coe_gen_sq_ratCast`: the same over `ℚ`, `θ² = (d : ℚ)` in `K`.
 * `TauCeti.NumberField.gen_notMem_range`: the generator is not rational, `θ ∉ ℚ`.
+* `TauCeti.NumberField.exists_eq_add_mul_gen`: every element of `K` is `b + aθ`.
 * `TauCeti.NumberField.not_isSquare_radicand`: the radicand is not a rational square.
 * `TauCeti.NumberField.trace_gen_eq_zero`: the trace of the generator is `0`.
 * `TauCeti.NumberField.discr_one_gen`: the discriminant of `{1, θ}` over `ℚ` is `4d`.

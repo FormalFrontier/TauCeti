@@ -4,7 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.RingTheory.Norm.Basic
 public import TauCeti.NumberTheory.NumberField.Quadratic.Basic
 public import TauCeti.RingTheory.Norm.Quadratic
 
@@ -15,13 +14,13 @@ For a quadratic number field `K = ℚ(√d)` presented by an algebraic integer `
 `K` over `ℚ` with `minpoly ℤ θ = X² - d`, this file computes the field norm `Algebra.norm ℚ` on
 `K` in terms of the coordinates in the basis `1, θ`:
 
-* `norm_gen`: the norm of the generator is the negative of the radicand, `N(θ) = -d`;
+* `norm_gen_eq_neg_radicand`: the norm of the generator, `N(θ) = -d` (negative of the radicand);
 * `norm_add_mul_gen`: in the coordinates `x = b + aθ` the norm is `N(b + aθ) = b² - d·a²`;
 * `norm_pos_of_radicand_neg`: when `d < 0` — the imaginary quadratic case, where `K` is totally
   complex — the norm is strictly positive on every nonzero element.
 
 The positivity is a descent input for the genus theory of the multiquadratic roadmap: for a
-norm-one element `α` it upgrades `N(α) = ±1` to `N(α) = 1`, the hypothesis of Hilbert's
+norm-`±1` element `α` it upgrades `N(α) = ±1` to `N(α) = 1`, the hypothesis of Hilbert's
 Theorem 90 used to realise a `2`-torsion class by an ambiguous ideal.
 
 See D. A. Cox, *Primes of the Form x² + ny²*, and F. Lemmermeyer, *Reciprocity Laws*.
@@ -37,7 +36,7 @@ variable {K : Type*} [Field K] [NumberField K] {θ : 𝓞 K} {d : ℤ}
 
 /-- **The norm of the generator is the negative of the radicand:** `N(θ) = -d`. It is the constant
 coefficient of the minimal polynomial `X² - d`, times the sign `(-1)^{[K:ℚ]} = +1`. -/
-@[simp] theorem norm_gen (hmin : minpoly ℤ θ = X ^ 2 - C d)
+@[simp] theorem norm_gen_eq_neg_radicand (hmin : minpoly ℤ θ = X ^ 2 - C d)
     (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) :
     Algebra.norm ℚ (θ : K) = -(d : ℚ) := by
   have hint : IsIntegral ℚ (θ : K) := θ.isIntegral_coe.tower_top
@@ -58,7 +57,7 @@ formula with `Tr(θ) = 0` and `N(θ) = -d`. -/
   have : Algebra.IsQuadraticExtension ℚ K := ⟨finrank_rat_eq_two hmin hgen⟩
   rw [← eq_ratCast (algebraMap ℚ K) b, ← eq_ratCast (algebraMap ℚ K) a,
     Algebra.IsQuadraticExtension.norm_algebraMap_add_algebraMap_mul, trace_gen_eq_zero hmin,
-    norm_gen hmin hgen]
+    norm_gen_eq_neg_radicand hmin hgen]
   ring
 
 /-- **The norm is positive in the imaginary case.** When `d < 0` the field `K = ℚ(√d)` is totally
