@@ -330,9 +330,8 @@ theorem isSemisimpleRepresentation_comp_subtype_of_isAtom [ρ.IsIrreducible]
   rw [_root_.Representation.isSemisimpleRepresentation_iff_isSemisimpleModule_asModule]
   refine IsSemisimpleModule.of_sSup_simples_eq_top
     (eq_top_of_forall_asSubmodule_conjSubrep_le ρ hσ.1 fun g => le_sSup ?_)
-  rw [Set.mem_ofPred_eq, isSimpleModule_iff_isAtom]
-  exact (Subrepresentation.subrepresentationSubmoduleOrderIso.isAtom_iff _).mpr
-    (isAtom_conjSubrep_iff.mpr hσ)
+  rw [Set.mem_ofPred_eq]
+  exact Subrepresentation.isSimpleModule_asSubmodule_iff.mpr (isAtom_conjSubrep_iff.mpr hσ)
 
 /-- **Restriction to a normal subgroup preserves semisimplicity.** The restriction to a normal
 subgroup of a finite-dimensional irreducible representation is semisimple. -/
