@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+public import TauCeti.Algebra.Group.SquareRoot
 public import TauCeti.RepresentationTheory.CharacterTable.FrobeniusSchur.Trichotomy
 public import TauCeti.RepresentationTheory.CharacterTable.Table
 
@@ -16,34 +17,34 @@ Counting the square roots of a group element,
 `θ(x) = #{g ∈ G : g² = x}`,
 
 produces a class function: conjugation carries the square roots of `x` bijectively onto those of
-`h x h⁻¹`.  Expanding `θ` in the basis of irreducible characters therefore makes sense, and this
-file computes the expansion.  The coefficient of an irreducible character `χ` is the pairing
+`h x h⁻¹` (`TauCeti/Algebra/Group/SquareRoot.lean`).  Expanding `θ` in the basis of irreducible
+characters therefore makes sense, and this file computes the expansion.  The coefficient of an
+irreducible character `χ` is the pairing
 `⟨χ, θ⟩`, and that pairing telescopes: summing `χ(x) θ(x⁻¹)` over `x` groups the group elements by
 the value of `g ↦ (g²)⁻¹`, so the sum collapses to `∑_g χ(g⁻²) = ∑_g χ(g²)`, which is `|G|` times
 the **Frobenius-Schur indicator** `ν₂(χ)`.  Hence
 
 `#{g ∈ G : g² = x} = ∑_χ ν₂(χ) χ(x)`,
 
-the degree-weighted signed sum over the irreducibles.  At `x = 1` the left side counts the
-solutions of `g² = 1` — the involutions of `G` together with the identity — and the right side is
-`∑_χ ν₂(χ) χ(1)`, weighted by the **degrees**; it is not the raw count `∑_χ ν₂(χ)` of orthogonal
-minus symplectic irreducibles.
+the sum of the irreducible characters weighted by their indicators.  At `x = 1` the left side
+counts the solutions of `g² = 1` — the involutions of `G` together with the identity — and the
+right side becomes `∑_χ ν₂(χ) χ(1)`, weighted by the **degrees**; it is not the raw sum
+`∑_χ ν₂(χ)`, which in characteristic zero is the number of orthogonal irreducibles minus the
+number of symplectic ones.
 
 Only one input is genuinely about the indicator, namely that `ν₂` *is* the pairing coefficient
-(`TauCeti.ClassFunction.characterPairing_ofCharacter_squareRootCount`); everything else is the
-expansion of a class function in the basis of irreducible characters, which
+(`TauCeti.ClassFunction.characterPairing_ofCharacter_squareRootCount_eq_frobeniusSchurIndicator`);
+everything else is the expansion of a class function in the basis of irreducible characters, which
 `TauCeti/RepresentationTheory/CharacterTable/Completeness.lean` supplies.  The identity holds over
 every algebraically closed field in which `|G|` is invertible, characteristic zero included but not
 required: nothing here uses the trichotomy, so the values `ν₂` takes are irrelevant to the count.
 
 ## Main statements
 
-* `TauCeti.squareRootConjEquiv`: conjugation is a bijection between the square roots of `x` and
-  those of `h * x * h⁻¹`, with `TauCeti.sum_card_squareRoot` the complementary count that the
-  square-root counts of a finite group add up to its order.
 * `TauCeti.ClassFunction.squareRootCount`: the class function `x ↦ #{g ∈ G : g² = x}`.
-* `TauCeti.ClassFunction.characterPairing_ofCharacter_squareRootCount`: **the Frobenius-Schur
-  indicator is the coefficient of the character** in the expansion of the square-root count.
+* `TauCeti.ClassFunction.characterPairing_ofCharacter_squareRootCount_eq_frobeniusSchurIndicator`:
+  **the Frobenius-Schur indicator is the coefficient of the character** in the expansion of the
+  square-root count.
 * `TauCeti.ClassFunction.card_squareRoot_eq_sum_frobeniusSchurIndicator`: **the involution-counting
   formula** `#{g : g² = x} = ∑_χ ν₂(χ) χ(x)`, over a complete family of irreducibles.
 * `TauCeti.frobeniusSchurIndicatorRow`: the indicator of the `i`-th row of `TauCeti.characterTable`.
@@ -77,47 +78,6 @@ public section
 namespace TauCeti
 
 universe v w
-
-/-! ### Square roots in a group -/
-
-section SquareRoot
-
-variable {G : Type v} [Group G]
-
-/-- **Conjugation permutes square roots**: `g ↦ h * g * h⁻¹` is a bijection from the square roots
-of `x` onto the square roots of `h * x * h⁻¹`. -/
-def squareRootConjEquiv (x h : G) :
-    {g : G // g * g = x} ≃ {g : G // g * g = h * x * h⁻¹} where
-  toFun g := ⟨h * g.1 * h⁻¹, by
-    have hexp : h * g.1 * h⁻¹ * (h * g.1 * h⁻¹) = h * (g.1 * g.1) * h⁻¹ := by group
-    rw [hexp, g.2]⟩
-  invFun g := ⟨h⁻¹ * g.1 * h, by
-    have hexp : h⁻¹ * g.1 * h * (h⁻¹ * g.1 * h) = h⁻¹ * (g.1 * g.1) * h := by group
-    rw [hexp, g.2]
-    group⟩
-  left_inv _ := Subtype.ext (by group)
-  right_inv _ := Subtype.ext (by group)
-
-/-- **The number of square roots is a class function of the group element**: `x` and its
-conjugate `h * x * h⁻¹` have equally many square roots. -/
-theorem card_squareRoot_conj (x h : G) :
-    Nat.card {g : G // g * g = h * x * h⁻¹} = Nat.card {g : G // g * g = x} :=
-  Nat.card_congr (squareRootConjEquiv x h).symm
-
-variable (G) in
-/-- **The square-root counts add up to the order of the group**: each `g` is a square root of
-exactly one element, namely `g * g`, so the fibres of squaring partition a finite group. -/
-theorem sum_card_squareRoot [Fintype G] :
-    ∑ x : G, Nat.card {g : G // g * g = x} = Nat.card G := by
-  classical
-  have hfib : ∀ x : G,
-      Nat.card {g : G // g * g = x} = ({g ∈ Finset.univ | g * g = x} : Finset G).card :=
-    fun x => by rw [Nat.card_eq_fintype_card, Fintype.card_subtype]
-  simp only [hfib]
-  rw [Nat.card_eq_fintype_card, ← Finset.card_univ]
-  exact (Finset.card_eq_sum_card_fiberwise fun g _ => Finset.mem_univ (g * g)).symm
-
-end SquareRoot
 
 namespace ClassFunction
 
@@ -155,7 +115,8 @@ variable {k : Type} {G : Type v} [Field k] [Group G] [Fintype G]
 Both sides are averages of a sum over `G` of character values, and the two sums agree termwise
 after the group elements are grouped by the value of `g ↦ (g²)⁻¹` and the resulting sum
 `∑_g χ(g⁻²)` is reindexed by inversion. -/
-theorem characterPairing_ofCharacter_squareRootCount {V : Type w} [AddCommGroup V] [Module k V]
+theorem characterPairing_ofCharacter_squareRootCount_eq_frobeniusSchurIndicator
+    {V : Type w} [AddCommGroup V] [Module k V]
     (ρ : Representation k G V) :
     characterPairing (ofCharacter ρ) (squareRootCount k G) =
       Representation.frobeniusSchurIndicator ρ := by
@@ -204,7 +165,7 @@ theorem card_squareRoot_eq_sum_frobeniusSchurIndicator (x : G) :
   have hexp := apply_eq_sum_characterPairing_mul_character ρ hind hcard (squareRootCount k G) x
   rw [squareRootCount_apply] at hexp
   refine hexp.trans (Finset.sum_congr rfl fun i _ => ?_)
-  rw [characterPairing_ofCharacter_squareRootCount]
+  rw [characterPairing_ofCharacter_squareRootCount_eq_frobeniusSchurIndicator]
 
 end Formula
 
@@ -237,8 +198,9 @@ Frobenius-Schur trichotomy applied to a representation affording the row. -/
 theorem frobeniusSchurIndicatorRow_eq_one_or_eq_zero_or_eq_neg_one [CharZero k]
     (i : Fin (Nat.card (ConjClasses G))) :
     frobeniusSchurIndicatorRow k i = 1 ∨ frobeniusSchurIndicatorRow k i = 0 ∨
-      frobeniusSchurIndicatorRow k i = -1 :=
-  Representation.frobeniusSchurIndicator_eq_one_or_eq_zero_or_eq_neg_one
+      frobeniusSchurIndicatorRow k i = -1 := by
+  rw [frobeniusSchurIndicatorRow_def]
+  exact Representation.frobeniusSchurIndicator_eq_one_or_eq_zero_or_eq_neg_one
     (irreducibleRepresentation k i)
 
 /-- **The involution-counting formula on the character table**: the number of square roots of `x`
@@ -255,8 +217,9 @@ theorem card_squareRoot_eq_sum_frobeniusSchurIndicatorRow_mul_characterTable (x 
 
 /-- **The count of the solutions of `g² = 1`**, the involutions of `G` together with the identity:
 it is the sum of the Frobenius-Schur indicators of the rows of the character table, each weighted
-by the **degree** of its character.  The unweighted sum `∑ᵢ ν₂(χᵢ)` counts the orthogonal
-irreducibles minus the symplectic ones and is a different quantity. -/
+by the **degree** of its character.  The unweighted sum `∑ᵢ ν₂(χᵢ)` is a different quantity; in
+characteristic zero, where the indicator takes only the values `1`, `0` and `-1`, it counts the
+orthogonal irreducibles minus the symplectic ones. -/
 theorem card_squareRoot_one_eq_sum_frobeniusSchurIndicatorRow_mul_characterDegree :
     (Nat.card {g : G // g * g = 1} : k) =
       ∑ i : Fin (Nat.card (ConjClasses G)),
