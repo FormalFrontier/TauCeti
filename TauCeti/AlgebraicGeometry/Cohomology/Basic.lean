@@ -103,7 +103,7 @@ abbrev cohomologyOnRes (n : ℕ) {U V : Opens X} (h : U ≤ V) :
 lemma cohomologyOnRes_refl (n : ℕ) (U : Opens X) :
     cohomologyOnRes M n (le_refl U) = 𝟙 _ := by
   dsimp only [cohomologyOnRes]
-  rw [Subsingleton.elim (homOfLE (le_refl U)) (𝟙 U), op_id, CategoryTheory.Functor.map_id]
+  simp only [homOfLE_refl, op_id, CategoryTheory.Functor.map_id]
 
 @[simp, reassoc]
 lemma cohomologyOnRes_comp (n : ℕ) {U V W : Opens X} (hUV : U ≤ V) (hVW : V ≤ W) :
@@ -113,9 +113,9 @@ lemma cohomologyOnRes_comp (n : ℕ) {U V W : Opens X} (hUV : U ≤ V) (hVW : V 
   rw [← CategoryTheory.Functor.map_comp, ← op_comp, homOfLE_comp]
 
 /-- The cohomology of the whole space is the cohomology of the scheme. -/
-def cohomologyOnTopIso (n : ℕ) :
+noncomputable abbrev cohomologyOnTopIso (n : ℕ) :
     cohomologyOn M n ⊤ ≅ AddCommGrpCat.of (Cohomology M n) :=
-  TauCeti.CategoryTheory.cohomologyPresheafObjIsoH n isTerminalTop _
+  TauCeti.CategoryTheory.Sheaf.cohomologyPresheafObjIsoH n isTerminalTop _
 
 end Opens
 

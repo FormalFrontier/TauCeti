@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import TauCeti.AlgebraicGeometry.Cohomology.Basic
-public import Mathlib.CategoryTheory.Sites.SheafCohomology.MayerVietoris
+public import TauCeti.CategoryTheory.Sites.SheafCohomology.MayerVietoris
 public import Mathlib.Topology.Sheaves.MayerVietoris
 
 /-!
@@ -35,9 +35,10 @@ together with the vanishing it gives when `U` and `V` cover `X`.
 
 The last two statements are the shape in which Mayer-Vietoris is used on a curve: a separated
 scheme covered by two affine opens has no cohomology above degree one in coefficients for which
-the affine opens are acyclic. Serre's acyclicity of affines supplies that input for a
-quasi-coherent `M`; the coefficients `M : X.Modules` here are arbitrary, and the acyclicity is
-taken as a hypothesis rather than proved.
+the affine opens are acyclic. For quasi-coherent `M`, Serre's acyclicity of affines will supply
+that input after the still-missing comparison `Sheaf.H' F i U ≅ Sheaf.H (F.over U) i` is
+established. The coefficients `M : X.Modules` here are arbitrary, and the acyclicity is taken as
+a hypothesis rather than proved.
 
 This advances `TauCetiRoadmap/JacobianChallenge/README.md`, Layer B, "coherent sheaves and
 cohomology `Hⁱ(X, ℱ)`: … vanishing above dimension (`H² = 0` on a curve)". No formalization is
@@ -71,14 +72,15 @@ variable (U V : Opens X)
 
 /-- The connecting map `Hⁿ⁰(U ⊓ V, M) ⟶ Hⁿ¹(U ⊔ V, M)` of the Mayer-Vietoris sequence of two
 open subsets. -/
-def mayerVietorisδ (n₀ n₁ : ℕ) (h : n₀ + 1 = n₁) :
+noncomputable abbrev mayerVietorisδ (n₀ n₁ : ℕ) (h : n₀ + 1 = n₁) :
     cohomologyOn M n₀ (U ⊓ V) ⟶ cohomologyOn M n₁ (U ⊔ V) :=
   (Opens.mayerVietorisSquare U V).δ
     ((_root_.SheafOfModules.toSheaf X.ringCatSheaf).obj M) n₀ n₁ h
 
 /-- Six consecutive terms of the Mayer-Vietoris long exact sequence of two open subsets, running
 from `Hⁿ⁰(U ⊔ V, M)` to `Hⁿ¹(U ⊓ V, M)`. -/
-def mayerVietorisSequence (n₀ n₁ : ℕ) (h : n₀ + 1 = n₁) : ComposableArrows AddCommGrpCat.{u} 5 :=
+noncomputable abbrev mayerVietorisSequence (n₀ n₁ : ℕ) (h : n₀ + 1 = n₁) :
+    ComposableArrows AddCommGrpCat.{u} 5 :=
   (Opens.mayerVietorisSquare U V).sequence
     ((_root_.SheafOfModules.toSheaf X.ringCatSheaf).obj M) n₀ n₁ h
 
@@ -98,9 +100,9 @@ lemma mayerVietorisSequence_def (n₀ n₁ : ℕ) (h : n₀ + 1 = n₁) :
           (cohomologyOnRes M n₁ (le_sup_right : V ≤ U ⊔ V)))
         (biprod.desc (cohomologyOnRes M n₁ (inf_le_left : U ⊓ V ≤ U))
           (-cohomologyOnRes M n₁ (inf_le_right : U ⊓ V ≤ V))) :=
-  -- `(rfl)` rather than `rfl`, so that this is checked as an ordinary proof rather than as an
-  -- exported definitional unfolding, which lets `mayerVietorisSequence` keep its body private.
-  (rfl)
+  -- This is definitional after unfolding Mathlib's `toBiprod` and `fromBiprod` together with
+  -- the four structure maps of `Opens.mayerVietorisSquare`.
+  rfl
 
 /-- The Mayer-Vietoris sequence of two open subsets is exact. -/
 theorem mayerVietorisSequence_exact (n₀ n₁ : ℕ) (h : n₀ + 1 = n₁) :
@@ -112,19 +114,10 @@ connecting map onto `Hⁿ⁺¹(U ⊔ V, M)` is an epimorphism. -/
 theorem epi_mayerVietorisδ (n : ℕ)
     (hU : Subsingleton (cohomologyOn M (n + 1) U))
     (hV : Subsingleton (cohomologyOn M (n + 1) V)) :
-    Epi (mayerVietorisδ M U V n (n + 1) rfl) := by
-  set F := (_root_.SheafOfModules.toSheaf X.ringCatSheaf).obj M
-  set S := Opens.mayerVietorisSquare U V
-  -- the biproduct the map lands in is a zero object
-  have hg : S.toBiprod F (n + 1) = 0 :=
-    ((biprod_isZero_iff _ _).2
-      ⟨AddCommGrpCat.isZero_of_subsingleton (cohomologyOn M (n + 1) U),
-        AddCommGrpCat.isZero_of_subsingleton (cohomologyOn M (n + 1) V)⟩).eq_of_tgt _ _
-  -- the piece of the Mayer-Vietoris sequence around `Hⁿ⁺¹(U ⊔ V, M)`
-  have hex : (ShortComplex.mk (S.δ F n (n + 1) rfl) (S.toBiprod F (n + 1))
-      (S.δ_toBiprod _ _ _ _)).Exact :=
-    (mayerVietorisSequence_exact M U V n (n + 1) rfl).exact' 2 3 4
-  exact hex.epi_f hg
+    Epi (mayerVietorisδ M U V n (n + 1) rfl) :=
+  TauCeti.CategoryTheory.GrothendieckTopology.MayerVietorisSquare.epi_δ
+    (Opens.mayerVietorisSquare U V)
+    ((_root_.SheafOfModules.toSheaf X.ringCatSheaf).obj M) n (n + 1) rfl hU hV
 
 variable {U V}
 
@@ -134,10 +127,10 @@ theorem subsingleton_cohomologyOn_sup_succ (n : ℕ)
     (hInter : Subsingleton (cohomologyOn M n (U ⊓ V)))
     (hU : Subsingleton (cohomologyOn M (n + 1) U))
     (hV : Subsingleton (cohomologyOn M (n + 1) V)) :
-    Subsingleton (cohomologyOn M (n + 1) (U ⊔ V)) := by
-  have hsurj : Function.Surjective (mayerVietorisδ M U V n (n + 1) rfl) :=
-    (AddCommGrpCat.epi_iff_surjective _).mp (epi_mayerVietorisδ M U V n hU hV)
-  exact hsurj.subsingleton
+    Subsingleton (cohomologyOn M (n + 1) (U ⊔ V)) :=
+  TauCeti.CategoryTheory.GrothendieckTopology.MayerVietorisSquare.subsingleton_H'_X₄
+    (Opens.mayerVietorisSquare U V)
+    ((_root_.SheafOfModules.toSheaf X.ringCatSheaf).obj M) n (n + 1) rfl hInter hU hV
 
 /-- A scheme covered by two open subsets whose degree `n + 1` cohomology vanishes, and whose
 intersection has vanishing degree `n` cohomology, has vanishing degree `n + 1` cohomology. -/
@@ -154,8 +147,9 @@ theorem subsingleton_cohomology_succ (hUV : U ⊔ V = ⊤) (n : ℕ)
 positive degrees has no cohomology in degrees at least two.
 
 This is the form Mayer-Vietoris takes on a separated scheme covered by two affine opens: the
-intersection is then affine as well, so for quasi-coherent `M` Serre's acyclicity of affines
-supplies the hypotheses. For a general `M : X.Modules` they have to come from elsewhere. -/
+intersection is then affine as well. For quasi-coherent `M`, applying Serre's acyclicity requires
+the still-missing comparison `Sheaf.H' F i U ≅ Sheaf.H (F.over U) i`; for a general
+`M : X.Modules` the hypotheses have to come from elsewhere. -/
 theorem subsingleton_cohomology_of_two_le (hUV : U ⊔ V = ⊤) (n : ℕ) (hn : 2 ≤ n)
     (hU : ∀ i, 0 < i → Subsingleton (cohomologyOn M i U))
     (hV : ∀ i, 0 < i → Subsingleton (cohomologyOn M i V))

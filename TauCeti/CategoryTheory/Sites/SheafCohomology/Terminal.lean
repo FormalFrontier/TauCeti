@@ -23,13 +23,9 @@ in terms of `Sheaf.H'`, so the comparison is what lets a covering of the whole s
 
 ## Main declarations
 
-* `TauCeti.CategoryTheory.yonedaObjIsoConst`: the presheaf of points of a terminal object is the
-  constant presheaf on a point;
-* `TauCeti.CategoryTheory.freeYonedaObjIsoConst`: consequently the free abelian presheaf on it is
-  the constant presheaf `ℤ`, and `freeYonedaSheafIsoConstantSheaf` sheafifies this;
-* `TauCeti.CategoryTheory.cohomologyPresheafObjIsoH`: the resulting comparison
+* `TauCeti.CategoryTheory.Sheaf.cohomologyPresheafObjIsoH`: the comparison
   `Hⁿ(T, F) ≅ Hⁿ(F)` at a terminal object `T`, as an isomorphism of abelian groups;
-* `TauCeti.CategoryTheory.cohomologyPresheafEvaluationIsoFunctorH`: the same comparison as a
+* `TauCeti.CategoryTheory.Sheaf.cohomologyPresheafEvaluationIsoFunctorH`: the same comparison as a
   natural isomorphism in the coefficient sheaf.
 
 This settles the first item of the `## TODO` list of
@@ -37,7 +33,7 @@ This settles the first item of the `## TODO` list of
 `TauCeti/AlgebraicGeometry/Cohomology/MayerVietoris.lean` to obtain the Mayer-Vietoris sequence
 for the cohomology of a scheme, which is Layer B infrastructure for
 `TauCetiRoadmap/JacobianChallenge/README.md`. No formalization is vendored: the ingredients are
-Mathlib's `CategoryTheory.isTerminalEquivUnique`, `FreeAbelianGroup.uniqueEquiv`,
+Mathlib's `CategoryTheory.Limits.IsTerminal.isTerminalObj`, `FreeAbelianGroup.uniqueEquiv`,
 `CategoryTheory.Functor.constComp` and `CategoryTheory.Abelian.extFunctor`.
 -/
 
@@ -45,29 +41,23 @@ public section
 
 open CategoryTheory Limits Opposite
 
-namespace TauCeti
-
 universe w v u
+
+namespace TauCeti
 
 namespace CategoryTheory
 
 variable {C : Type u} [Category.{v} C] {J : GrothendieckTopology C}
 
-/-- The presheaf of points of a terminal object is the constant presheaf on a point. -/
-def yonedaObjIsoConst {T : C} (hT : IsTerminal T) :
+private noncomputable def yonedaObjIsoConst {T : C} (hT : IsTerminal T) :
     yoneda.obj T ≅ (Functor.const Cᵒᵖ).obj PUnit.{v + 1} :=
-  have (U : Cᵒᵖ) : Unique (U.unop ⟶ T) := isTerminalEquivUnique _ T hT _
-  NatIso.ofComponents (fun _ => Equiv.toIso (Equiv.equivPUnit _))
-    (by intros; ext; exact Subsingleton.elim (α := PUnit.{v + 1}) _ _)
+  (hT.isTerminalObj yoneda).uniqueUpToIso (Functor.isTerminalConst Cᵒᵖ Types.isTerminalPUnit)
 
-/-- The free abelian group on a one-element type is `ℤ`. -/
-def freeObjPUnitIso :
+private def freeObjPUnitIso :
     AddCommGrpCat.free.obj PUnit.{v + 1} ≅ AddCommGrpCat.of (ULift.{v} ℤ) :=
   AddEquiv.toAddCommGrpIso ((FreeAbelianGroup.uniqueEquiv PUnit).trans AddEquiv.ulift.symm)
 
-/-- The free abelian presheaf on the presheaf of points of a terminal object is the constant
-presheaf `ℤ`. -/
-def freeYonedaObjIsoConst {T : C} (hT : IsTerminal T) :
+private noncomputable def freeYonedaObjIsoConst {T : C} (hT : IsTerminal T) :
     yoneda.obj T ⋙ AddCommGrpCat.free.{v} ≅
       (Functor.const Cᵒᵖ).obj (AddCommGrpCat.of (ULift.{v} ℤ)) :=
   Functor.isoWhiskerRight (yonedaObjIsoConst hT) AddCommGrpCat.free ≪≫
@@ -78,9 +68,7 @@ noncomputable section
 
 variable [HasWeakSheafify J AddCommGrpCat.{v}]
 
-/-- The free abelian sheaf on a terminal object is the constant sheaf `ℤ`. This is the object
-that `CategoryTheory.Sheaf.H` takes `Ext`-groups out of. -/
-def freeYonedaSheafIsoConstantSheaf {T : C} (hT : IsTerminal T) :
+private def freeYonedaSheafIsoConstantSheaf {T : C} (hT : IsTerminal T) :
     (presheafToSheaf J AddCommGrpCat.{v}).obj (yoneda.obj T ⋙ AddCommGrpCat.free) ≅
       (constantSheaf J AddCommGrpCat.{v}).obj (AddCommGrpCat.of (ULift.{v} ℤ)) :=
   (presheafToSheaf J _).mapIso (freeYonedaObjIsoConst hT)
@@ -89,23 +77,43 @@ end
 
 noncomputable section
 
+namespace Sheaf
+
 variable [HasSheafify J AddCommGrpCat.{v}] [HasExt.{w} (Sheaf J AddCommGrpCat.{v})]
+
+-- Mathlib's `functorH` and `extFunctorObj` use definitionally equal object and map data.
+-- Naming that identification here isolates the definitional coincidence used below.
+set_option backward.isDefEq.respectTransparency false in
+private noncomputable def functorHIso (n : ℕ) :
+    _root_.CategoryTheory.Sheaf.functorH J n ≅
+      (_root_.CategoryTheory.Abelian.extFunctor n).obj
+        (op ((constantSheaf J AddCommGrpCat.{v}).obj (AddCommGrpCat.of (ULift ℤ)))) :=
+  NatIso.ofComponents (fun _ => Iso.refl _)
+    (by
+      intros
+      ext
+      rfl)
 
 variable (J) in
 /-- At a terminal object `T`, the cohomology presheaf evaluated at `T` is the cohomology of the
 site, naturally in the coefficient sheaf. -/
 def cohomologyPresheafEvaluationIsoFunctorH (n : ℕ) {T : C} (hT : IsTerminal T) :
-    Sheaf.cohomologyPresheafFunctor J n ⋙ (evaluation Cᵒᵖ AddCommGrpCat.{w}).obj (op T) ≅
-      Sheaf.functorH J n :=
+    _root_.CategoryTheory.Sheaf.cohomologyPresheafFunctor J n ⋙
+        (evaluation Cᵒᵖ AddCommGrpCat.{w}).obj (op T) ≅
+      _root_.CategoryTheory.Sheaf.functorH J n :=
   (_root_.CategoryTheory.Abelian.extFunctor n).mapIso
-    (freeYonedaSheafIsoConstantSheaf hT).symm.op
+      (freeYonedaSheafIsoConstantSheaf hT).symm.op ≪≫
+    functorHIso n
 
 variable (n : ℕ) {T : C} (hT : IsTerminal T)
 
 /-- At a terminal object, the cohomology of the object is the cohomology of the site. -/
-def cohomologyPresheafObjIsoH (F : Sheaf J AddCommGrpCat.{v}) :
-    Sheaf.H' F n T ≅ AddCommGrpCat.of (Sheaf.H F n) :=
+noncomputable abbrev cohomologyPresheafObjIsoH (F : Sheaf J AddCommGrpCat.{v}) :
+    _root_.CategoryTheory.Sheaf.H' F n T ≅
+      AddCommGrpCat.of (_root_.CategoryTheory.Sheaf.H F n) :=
   (cohomologyPresheafEvaluationIsoFunctorH J n hT).app F
+
+end Sheaf
 
 end
 
