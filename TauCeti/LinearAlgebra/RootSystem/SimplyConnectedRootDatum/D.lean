@@ -387,7 +387,7 @@ private lemma sum_smul_coroot_typeDSimpleIndex (hn : 4 ≤ n) (k : Fin (2 * n * 
   rw [coroot_typeDSimplyConnectedRootDatum]
   funext j
   simp only [coroot_typeDSimpleIndex, Finset.sum_apply, Pi.smul_apply, Pi.single_apply,
-    smul_eq_mul, mul_ite, mul_one, mul_zero, Finset.sum_ite_eq, Finset.mem_univ, if_true]
+    smul_eq_mul, mul_ite, mul_one, mul_zero, Finset.sum_ite_eq, Finset.mem_univ, ite_true]
 
 private lemma image_root_typeDSimpleSupport (hn : 4 ≤ n) :
     (typeDSimplyConnectedRootDatum n hn).root ''
