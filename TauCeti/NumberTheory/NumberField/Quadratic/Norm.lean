@@ -54,9 +54,10 @@ coefficient of the minimal polynomial `X² - d`, times the sign `(-1)^{[K:ℚ]} 
 formula with `Tr(θ) = 0` and `N(θ) = -d`. -/
 @[simp] theorem norm_add_mul_gen (hmin : minpoly ℤ θ = X ^ 2 - C d)
     (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) (a b : ℚ) :
-    Algebra.norm ℚ (algebraMap ℚ K b + algebraMap ℚ K a * (θ : K)) = b ^ 2 - (d : ℚ) * a ^ 2 := by
+    Algebra.norm ℚ ((b : K) + (a : K) * (θ : K)) = b ^ 2 - (d : ℚ) * a ^ 2 := by
   have : Algebra.IsQuadraticExtension ℚ K := ⟨finrank_rat_eq_two hmin hgen⟩
-  rw [Algebra.IsQuadraticExtension.norm_algebraMap_add_algebraMap_mul, trace_gen_eq_zero hmin,
+  rw [← eq_ratCast (algebraMap ℚ K) b, ← eq_ratCast (algebraMap ℚ K) a,
+    Algebra.IsQuadraticExtension.norm_algebraMap_add_algebraMap_mul, trace_gen_eq_zero hmin,
     norm_gen hmin hgen]
   ring
 
@@ -67,6 +68,7 @@ theorem norm_pos_of_radicand_neg (hmin : minpoly ℤ θ = X ^ 2 - C d)
     (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) (hd : d < 0) {x : K} (hx : x ≠ 0) :
     0 < Algebra.norm ℚ x := by
   obtain ⟨a, b, rfl⟩ := exists_eq_add_mul_gen hmin hgen x
+  simp only [eq_ratCast]
   rw [norm_add_mul_gen hmin hgen]
   have hdq : (d : ℚ) < 0 := by exact_mod_cast hd
   have hab : a ≠ 0 ∨ b ≠ 0 := by
