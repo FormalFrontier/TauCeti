@@ -6,7 +6,6 @@ module
 
 public import TauCeti.AlgebraicGeometry.AffineGroupScheme.Basic
 public import TauCeti.AlgebraicGeometry.PullbackSpecMap
-public import Mathlib.AlgebraicGeometry.Morphisms.Affine
 
 /-!
 # Base change of affine group schemes
@@ -19,12 +18,11 @@ conditions of those two comparisons — the unit and associativity constraints t
 `R ↦ AffineGroupSchemeCat R` a pseudofunctor — are not proved here.
 
 The group structure is transported by Mathlib's left-exact pullback functor on `Over` categories.
-Affineness is preserved because the base `Spec R` is itself affine: the structure morphism of an
-affine group scheme over `Spec R` is then an affine morphism, and affine morphisms are stable
-under base change, so the fibre product with the affine scheme `Spec S` is affine. (Over a general
-base scheme this argument is unavailable, and a fibre product of affine schemes need not be
-affine.) Thus the construction applies over general commutative rings; no field or finite-type
-hypothesis is needed.
+Affineness is preserved because the base `Spec R` is itself affine: a fibre product of affine
+schemes over an affine base is again affine, so the fibre product of `G` with `Spec S` over
+`Spec R` is affine. (Over a general base scheme this argument is unavailable, and a fibre product
+of affine schemes need not be affine.) Thus the construction applies over general commutative
+rings; no field or finite-type hypothesis is needed.
 
 ## Main declarations
 
@@ -75,7 +73,7 @@ noncomputable abbrev baseChange (f : R ⟶ S) (G : AffineGroupSchemeCat R) :
   ⟨(Over.pullback (Spec.map f)).mapGrp.obj G.obj, by
     rw [affineGroupSchemeProperty_iff]
     -- unfold the pulled-back group object to its underlying fibre product `G ×[Spec R] Spec S`,
-    -- which `Mathlib.AlgebraicGeometry.Morphisms.Affine` knows to be affine
+    -- which Mathlib knows to be affine because `G`, `Spec S` and `Spec R` all are
     simp only [Functor.mapGrp_obj_X, Over.pullback_obj_left]
     infer_instance⟩
 

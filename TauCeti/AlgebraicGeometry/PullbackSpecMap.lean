@@ -5,7 +5,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.AlgebraicGeometry.Pullbacks
-public import Mathlib.CategoryTheory.Comma.Over.Pullback
 
 /-!
 # Pullback of schemes along `Spec.map`
