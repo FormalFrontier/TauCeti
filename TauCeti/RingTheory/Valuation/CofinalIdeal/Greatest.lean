@@ -467,7 +467,7 @@ theorem characteristicSubgroupOfIdeal_of_meets {v : Valuation A Γ₀} {I : Idea
     (hfg : ∃ J : Ideal A, J.FG ∧ I.radical = J.radical) (h : IdealMeetsCharacteristicSubgroup v I) :
     characteristicSubgroupOfIdeal v I hfg = characteristicSubgroup v := by
   classical
-  rw [characteristicSubgroupOfIdeal, dif_pos h]
+  rw [characteristicSubgroupOfIdeal, dite_eq_left h]
 
 /-- Second branch of Definition 7.3: off the first branch, `cΓ_v(I)` really is the greatest
 convex subgroup for which `I` is cofinal. -/
@@ -476,7 +476,7 @@ theorem isGreatestIdealCofinal_characteristicSubgroupOfIdeal {v : Valuation A Γ
     (h : ¬ IdealMeetsCharacteristicSubgroup v I) :
     IsGreatest {K | IdealCofinalFor v K I} (characteristicSubgroupOfIdeal v I hfg) := by
   classical
-  rw [characteristicSubgroupOfIdeal, dif_neg h]
+  rw [characteristicSubgroupOfIdeal, dite_eq_right h]
   exact (exists_isGreatestIdealCofinal_of_not_meets hfg h).choose_spec.1
 
 /-- **`cΓ_v(I)` always contains `cΓ_v`** — the sentence Wedhorn records immediately after
@@ -487,7 +487,7 @@ theorem characteristicSubgroup_le_characteristicSubgroupOfIdeal (v : Valuation A
   classical
   by_cases h : IdealMeetsCharacteristicSubgroup v I
   · rw [characteristicSubgroupOfIdeal_of_meets hfg h]
-  · rw [characteristicSubgroupOfIdeal, dif_neg h]
+  · rw [characteristicSubgroupOfIdeal, dite_eq_right h]
     exact (exists_isGreatestIdealCofinal_of_not_meets hfg h).choose_spec.2.1
 
 /-- **`cΓ_v(I)` meets `v(I)`** — the attainment half of Wedhorn Lemma 7.2, on the branch where
@@ -501,7 +501,7 @@ theorem exists_mem_valueSet_mem_characteristicSubgroupOfIdeal {v : Valuation A �
     (hne : ∃ a ∈ I, (MonoidWithZeroHom.ofClass v) a ≠ 0) :
     ∃ γ ∈ valueSet v I, γ ∈ characteristicSubgroupOfIdeal v I hfg := by
   classical
-  rw [characteristicSubgroupOfIdeal, dif_neg h]
+  rw [characteristicSubgroupOfIdeal, dite_eq_right h]
   exact (exists_isGreatestIdealCofinal_of_not_meets hfg h).choose_spec.2.2 hne
 
 /-- **`cΓ_v(I)` is the least convex subgroup meeting `v(I)`** — the minimality conclusion of

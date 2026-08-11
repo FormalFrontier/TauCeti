@@ -125,7 +125,7 @@ lemma scaleGL_mul (d e : ℕ) [NeZero d] [NeZero e] :
 /-- Slashing by `diag(d, 1)` rescales the argument and introduces the factor `d ^ (k - 1)`. -/
 lemma slash_scaleGL_apply [NeZero d] (k : ℤ) (f : ℍ → ℂ) (τ : ℍ) :
     (f ∣[k] scaleGL d) τ = (d : ℂ) ^ (k - 1) * f (scaleGL d • τ) := by
-  rw [ModularForm.slash_apply, UpperHalfPlane.σ, if_pos val_det_scaleGL_pos]
+  rw [ModularForm.slash_apply, UpperHalfPlane.σ, ite_eq_left val_det_scaleGL_pos]
   simp [mul_comm]
 
 /-! ### The level-raising operator -/
