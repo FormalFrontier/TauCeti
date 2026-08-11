@@ -18,6 +18,11 @@ The reversal theorem is the remaining part of the “Orders on partitions” tar
 the symmetric-group and Schur–Weyl roadmap.  It supplies the order duality used later for the
 row/column symmetry of Specht modules and permutation modules.
 
+Along the way it records the Young diagrams of the two extreme partitions, which the duality
+exchanges: the diagram of `(1ⁿ)` has at most one column
+(`TauCeti.rowLen_diagramOf_ones_le_one`) and the diagram of `(n)` has at most one row
+(`TauCeti.colLen_diagramOf_indiscrete_le_one`).  Both are empty for `n = 0`.
+
 ## References
 
 * W. Fulton, *Young Tableaux*, London Mathematical Society Student Texts 35, §1.1.
@@ -185,6 +190,23 @@ theorem rowLen_diagramOf_ones_le_one (n i : ℕ) :
       ((Multiset.mem_sort (· ≥ ·)).mp (List.getElem_mem hi)))
   · rw [List.getD_eq_default _ _ hi]
     exact Nat.zero_le 1
+
+/-- **The Young diagram of the partition `(n)` has at most one row**: for `n > 0` its only part is
+`n`, so there is nothing below the first row, and for `n = 0` the diagram is empty. -/
+theorem colLen_diagramOf_indiscrete_le_one (n : ℕ) :
+    (diagramOf (Nat.Partition.indiscrete n)).colLen 0 ≤ 1 := by
+  have hlen : ((Nat.Partition.indiscrete n).parts.sort (· ≥ ·)).length ≤ 1 := by
+    rw [Multiset.length_sort]
+    rcases eq_or_ne n 0 with rfl | hn
+    · simp
+    · rw [Nat.Partition.indiscrete_parts hn]
+      simp
+  have hrow : (diagramOf (Nat.Partition.indiscrete n)).rowLen 1 = 0 := by
+    rw [rowLen_diagramOf, List.getD_eq_default _ _ hlen]
+  refine Nat.le_of_not_lt fun hlt => ?_
+  have hmem : ((1 : ℕ), (0 : ℕ)) ∈ diagramOf (Nat.Partition.indiscrete n) :=
+    YoungDiagram.mem_iff_lt_colLen.mpr hlt
+  exact absurd (YoungDiagram.mem_iff_lt_rowLen.mp hmem) (by omega)
 
 /-- The conjugate of a partition is obtained by transposing its Young diagram. -/
 noncomputable def conjugate {n : ℕ} (μ : n.Partition) : n.Partition :=

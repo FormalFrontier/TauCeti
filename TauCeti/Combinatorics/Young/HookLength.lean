@@ -286,20 +286,9 @@ A Young diagram `μ` has at most one row exactly when `μ.colLen 0 ≤ 1`.  Its 
 `μ.card, μ.card - 1, …, 1`, so they multiply to `μ.card !`; the one-column case follows by
 transposition.  These are the two instances of the multiplicative hook-length formula
 `standardCount μ * ∏ c ∈ μ.cells, hookLength μ c = μ.card !` in which the number of standard Young
-tableaux is `1`; that count is not computed here. -/
-
-theorem cells_eq_of_colLen_le_one {μ : YoungDiagram} (h : μ.colLen 0 ≤ 1) :
-    μ.cells = {0} ×ˢ Finset.range (μ.rowLen 0) := by
-  have hrow : μ.cells = μ.row 0 := by
-    refine (Finset.filter_true_of_mem fun d hd => ?_).symm
-    have := _root_.YoungDiagram.mem_iff_lt_colLen.mp hd
-    have := μ.colLen_anti 0 d.2 (Nat.zero_le _)
-    omega
-  rw [hrow, _root_.YoungDiagram.row_eq_prod]
-
-theorem card_eq_rowLen_of_colLen_le_one {μ : YoungDiagram} (h : μ.colLen 0 ≤ 1) :
-    μ.card = μ.rowLen 0 := by
-  simp [_root_.YoungDiagram.card, cells_eq_of_colLen_le_one h]
+tableaux is `1`; that count is not computed here.  The shapes themselves are described in
+`TauCeti/Combinatorics/Young/Diagram.lean`, by `TauCeti.YoungDiagram.cells_eq_of_colLen_le_one` and
+`TauCeti.YoungDiagram.card_eq_rowLen_of_colLen_le_one`. -/
 
 theorem hookLength_eq_rowLen_sub_of_colLen_le_one {μ : YoungDiagram} (h : μ.colLen 0 ≤ 1) {j : ℕ}
     (hj : j < μ.rowLen 0) :
