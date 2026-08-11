@@ -270,19 +270,19 @@ theorem isProjectiveRep_of_representation_canonicalSection
     (htriv : ∀ (g : G) (a : kˣ), g • a = a) (π : Representation k α.Extension V)
     (hπ : ∀ a : kˣ, π (FactorSet.inl α a) = (a : k) • LinearMap.id)
     (hρ : ∀ g : G, (ρ g : V →ₗ[k] V) = π (α.canonicalSection g)) :
-    IsProjectiveRep ρ (Function.curry ⇑α) where
-  isFactorSet := α.isFactorSet_curry htriv
-  map_one := LinearEquiv.toLinearMap_injective <| by
-    rw [hρ, α.canonicalSection_one, map_one]
-    rfl
-  mul_apply g₁ g₂ v := by
-    have hρ' (g : G) (x : V) : ρ g x = π (α.canonicalSection g) x := by
-      rw [← LinearEquiv.coe_coe, hρ]
-    have key : π (α.canonicalSection g₁) (π (α.canonicalSection g₂) v)
-        = (α (g₁, g₂) : k) • π (α.canonicalSection (g₁ * g₂)) v := by
-      rw [← Module.End.mul_apply, ← map_mul, α.canonicalSection_mul, map_mul, hπ]
+    IsProjectiveRep ρ (Function.curry ⇑α) := by
+  set π' := (LinearMap.GeneralLinearGroup.generalLinearEquiv k V).toMonoidHom.comp π.asGroupHom
+    with hπ'def
+  have hπ'apply (x : α.Extension) (v : V) : π' x v = π x v := by
+    simp [hπ'def, Representation.asGroupHom_apply]
+  have hρ' : ρ = fun g ↦ π' (α.canonicalSection g) :=
+    funext fun g ↦ LinearEquiv.ext fun v ↦ by
+      rw [hπ'apply, ← LinearEquiv.coe_coe, hρ]
+  rw [hρ']
+  exact isProjectiveRep_comp_canonicalSection htriv π' fun a ↦
+    LinearEquiv.ext fun v ↦ by
+      rw [hπ'apply, hπ a, LinearEquiv.smulOfUnit_apply]
       simp
-    simpa only [hρ', Function.curry] using key
 
 /-- **A linear representation of the extension `E_α`, restricted along the canonical section**, as
 the family of linear automorphisms of `V` that a projective representation asks for: a
