@@ -100,7 +100,7 @@ theorem exists_eq_add_mul_gen (hmin : minpoly ℤ θ = X ^ 2 - C d)
     (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) (x : K) :
     ∃ a b : ℚ, x = algebraMap ℚ K b + algebraMap ℚ K a * (θ : K) := by
   have : Algebra.IsQuadraticExtension ℚ K := ⟨finrank_rat_eq_two hmin hgen⟩
-  exact Algebra.IsQuadraticExtension.exists_eq_algebraMap_add_algebraMap_mul' ℚ K
+  exact Algebra.IsQuadraticExtension.exists_eq_algebraMap_add_algebraMap_mul ℚ K
     (gen_notMem_range hmin) x
 
 /-- **The radicand of a quadratic presentation is not a rational square.** Were `d = q²`, the
