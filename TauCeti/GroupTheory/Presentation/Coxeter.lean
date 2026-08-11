@@ -26,11 +26,12 @@ The count is the point. `TauCeti.length_coxeterRelators` says that a diagram on 
 `(n + 1).choose 2 = n * (n + 1) / 2` relators — the number of unordered pairs with repetition
 allowed, not `n.choose 2`.
 
-The ordered-pair set and the unordered-pair list do not agree: `(sᵢ sⱼ) ^ mᵢⱼ` and
-`(sⱼ sᵢ) ^ mᵢⱼ` are distinct elements of the free group, so the list has to pick one of the two
-orders — here the one increasing in the node numbering. They are conjugate, so the two sets have
-the same normal closure, which is what `TauCeti.normalClosure_relatorSet_coxeterRelators` proves
-and what makes the presented groups the same.
+The ordered-pair set and the unordered-pair list need not agree: for distinct nodes,
+`(sᵢ sⱼ) ^ mᵢⱼ` and `(sⱼ sᵢ) ^ mᵢⱼ` are distinct elements of the free group, so the list has to
+pick one of the two orders — here the one increasing in the node numbering. They are conjugate, so
+the two sets have the same normal closure, which is what
+`TauCeti.normalClosure_relatorSet_coxeterRelators` proves and what makes the presented groups the
+same.
 
 ## Main definitions
 
@@ -160,8 +161,8 @@ private theorem pow_mul_mem_of_pow_mul_swap_mem {G : Type*} [Group G] {N : Subgr
   exact key ▸ hN.conj_mem _ h a
 
 /-- **The finite Coxeter relator list presents the same group as Mathlib's relation set.** The two
-sets of relations differ, since only one of `(sᵢ sⱼ) ^ mᵢⱼ` and `(sⱼ sᵢ) ^ mᵢⱼ` is transcribed, but
-they are conjugate and so have the same normal closure. -/
+sets of relations need not coincide: for distinct nodes, only one of `(sᵢ sⱼ) ^ mᵢⱼ` and
+`(sⱼ sᵢ) ^ mᵢⱼ` is transcribed. They are conjugate and so have the same normal closure. -/
 theorem normalClosure_relatorSet_coxeterRelatorsOfList [LinearOrder B] (M : CoxeterMatrix B)
     {l : List B} (hl : ∀ i : B, i ∈ l) :
     Subgroup.normalClosure (Relator.relatorSet (coxeterRelatorsOfList M l)) =

@@ -31,8 +31,6 @@ from Mathlib.
 * `TauCeti.Relator.toWord`: compilation of an expression to a signed word.
 * `TauCeti.Relator.toFreeGroup`: direct structural interpretation of an expression.
 * `TauCeti.Relator.relatorSet`: the free-group elements denoted by a list of expressions.
-* `TauCeti.Relator.ofGenerators`: the expression spelling out a word of generators with no
-  inverses.
 
 ## Main result
 
@@ -165,27 +163,6 @@ theorem mem_relatorSet {α : Type*} {l : List (Relator α)} {r : FreeGroup α} :
 theorem relatorSet_append {α : Type*} (l l' : List (Relator α)) :
     relatorSet (l ++ l') = relatorSet l ∪ relatorSet l' := by
   simp only [relatorSet, List.mem_append, Set.ofPred_or, Set.image_union]
-
-/-- The relator expression spelling out a nonempty word of generators, with no inverses. -/
-def ofGenerators {α : Type*} : α → List α → Relator α
-  | x, [] => .gen x
-  | x, y :: l => .mul (.gen x) (ofGenerators y l)
-
-/-- Compiling a spelled-out generator word returns exactly its letters, each with positive sign. -/
-@[simp]
-theorem toWord_ofGenerators {α : Type*} (x : α) (l : List α) :
-    (ofGenerators x l).toWord = (x, true) :: l.map (fun y => (y, true)) := by
-  induction l generalizing x with
-  | nil => rfl
-  | cons y l ih => simp [ofGenerators, ih]
-
-/-- A spelled-out generator word denotes the product of its letters in the free group. -/
-@[simp]
-theorem toFreeGroup_ofGenerators {α : Type*} (x : α) (l : List α) :
-    (ofGenerators x l).toFreeGroup = FreeGroup.of x * (l.map FreeGroup.of).prod := by
-  induction l generalizing x with
-  | nil => simp [ofGenerators]
-  | cons y l ih => simp [ofGenerators, ih]
 
 /-- **The compiled word denotes the direct interpretation of the relator expression.**
 
