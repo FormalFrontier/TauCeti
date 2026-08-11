@@ -175,11 +175,11 @@ private def colTableau (h : μ.rowLen 0 ≤ 1) (s : Finset (Fin N)) (hs : s.card
   col_strict' := by
     intro i1 i2 j hi hcell
     obtain ⟨hi2, rfl⟩ := (YoungDiagram.mem_iff_of_rowLen_le_one h).mp hcell
-    rw [dif_pos ⟨hi.trans hi2, rfl⟩, dif_pos ⟨hi2, rfl⟩]
+    rw [dite_eq_left ⟨hi.trans hi2, rfl⟩, dite_eq_left ⟨hi2, rfl⟩]
     exact (s.orderEmbOfFin hs).strictMono hi
   zeros' := by
     intro i j hcell
-    exact dif_neg fun hij => hcell ((YoungDiagram.mem_iff_of_rowLen_le_one h).mpr hij)
+    exact dite_eq_right fun hij => hcell ((YoungDiagram.mem_iff_of_rowLen_le_one h).mpr hij)
 
 private theorem colTableau_apply (h : μ.rowLen 0 ≤ 1) (s : Finset (Fin N))
     (hs : s.card = μ.colLen 0) (i j : ℕ) :
@@ -194,7 +194,7 @@ def ofColFinset (h : μ.rowLen 0 ≤ 1) (s : Finset (Fin N)) (hs : s.card = μ.c
   ⟨colTableau h s hs, by
     intro i c hic
     obtain ⟨hi, rfl⟩ := (YoungDiagram.mem_iff_of_rowLen_le_one h).mp hic
-    rw [colTableau_apply, dif_pos ⟨hi, rfl⟩]
+    rw [colTableau_apply, dite_eq_left ⟨hi, rfl⟩]
     exact (s.orderEmbOfFin hs ⟨i, hi⟩).isLt⟩
 
 theorem ofColFinset_apply (h : μ.rowLen 0 ≤ 1) (s : Finset (Fin N)) (hs : s.card = μ.colLen 0)
@@ -206,7 +206,7 @@ theorem ofColFinset_apply (h : μ.rowLen 0 ≤ 1) (s : Finset (Fin N)) (hs : s.c
 @[simp]
 theorem colEntry_ofColFinset (h : μ.rowLen 0 ≤ 1) (s : Finset (Fin N)) (hs : s.card = μ.colLen 0)
     (i : Fin (μ.colLen 0)) : colEntry (ofColFinset h s hs) i = s.orderEmbOfFin hs i :=
-  Fin.ext <| by rw [colEntry_val, ofColFinset_apply, dif_pos ⟨i.isLt, rfl⟩]
+  Fin.ext <| by rw [colEntry_val, ofColFinset_apply, dite_eq_left ⟨i.isLt, rfl⟩]
 
 @[simp]
 theorem colFinset_ofColFinset (h : μ.rowLen 0 ≤ 1) (s : Finset (Fin N))
@@ -221,8 +221,8 @@ theorem ofColFinset_colFinset (h : μ.rowLen 0 ≤ 1) (T : BoundedSSYT N μ) :
   rw [ofColFinset_apply]
   by_cases hij : (i, j) ∈ μ
   · obtain ⟨hi, rfl⟩ := (YoungDiagram.mem_iff_of_rowLen_le_one h).mp hij
-    rw [dif_pos ⟨hi, rfl⟩, orderEmbOfFin_colFinset T, colEntry_val]
-  · rw [dif_neg fun hc => hij ((YoungDiagram.mem_iff_of_rowLen_le_one h).mpr hc),
+    rw [dite_eq_left ⟨hi, rfl⟩, orderEmbOfFin_colFinset T, colEntry_val]
+  · rw [dite_eq_right fun hc => hij ((YoungDiagram.mem_iff_of_rowLen_le_one h).mpr hc),
       T.1.zeros hij]
 
 /-- **The bounded tableaux of a one-column shape are the sets of letters of the right size**: a

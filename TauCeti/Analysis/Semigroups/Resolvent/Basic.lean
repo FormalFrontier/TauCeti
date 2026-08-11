@@ -339,13 +339,13 @@ noncomputable def StronglyContinuousSemigroup.resolventFun
 @[simp] theorem StronglyContinuousSemigroup.resolventFun_of_lt
     (S : StronglyContinuousSemigroup X) {ω M : ℝ} (hb : S.HasGrowthBound ω M) {lambda : ℝ}
     (h : ω < lambda) : S.resolventFun hb lambda = S.resolvent hb lambda h :=
-  dif_pos h
+  dite_eq_left h
 
 /-- Below the growth exponent, `resolventFun` takes its junk value `0`. -/
 @[simp] theorem StronglyContinuousSemigroup.resolventFun_of_le
     (S : StronglyContinuousSemigroup X) {ω M : ℝ} (hb : S.HasGrowthBound ω M) {lambda : ℝ}
     (h : lambda ≤ ω) : S.resolventFun hb lambda = 0 :=
-  dif_neg (not_lt.mpr h)
+  dite_eq_right (not_lt.mpr h)
 
 /-- `resolventFun` in integral form. -/
 theorem StronglyContinuousSemigroup.resolventFun_apply

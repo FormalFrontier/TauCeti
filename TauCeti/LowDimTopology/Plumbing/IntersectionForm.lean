@@ -110,22 +110,22 @@ theorem intersectionMatrix_apply (i j : V) :
 the adjacency term vanishes. -/
 @[simp]
 theorem intersectionMatrix_diag (i : V) : P.intersectionMatrix i i = P.weight i := by
-  rw [intersectionMatrix_apply, if_pos rfl, if_neg (P.toSimpleGraph.irrefl), add_zero]
+  rw [intersectionMatrix_apply, ite_eq_left rfl, ite_eq_right (P.toSimpleGraph.irrefl), add_zero]
 
 /-- Off the diagonal the intersection matrix is the adjacency indicator. -/
 theorem intersectionMatrix_apply_of_ne {i j : V} (h : i ≠ j) :
     P.intersectionMatrix i j = if P.toSimpleGraph.Adj i j then 1 else 0 := by
-  rw [intersectionMatrix_apply, if_neg h, zero_add]
+  rw [intersectionMatrix_apply, ite_eq_right h, zero_add]
 
 /-- Two plumbed spheres meet once: an adjacency contributes the entry one. -/
 theorem intersectionMatrix_of_adj {i j : V} (h : P.toSimpleGraph.Adj i j) :
     P.intersectionMatrix i j = 1 := by
-  rw [P.intersectionMatrix_apply_of_ne h.ne, if_pos h]
+  rw [P.intersectionMatrix_apply_of_ne h.ne, ite_eq_left h]
 
 /-- Distinct non-adjacent spheres are disjoint: the entry is zero. -/
 theorem intersectionMatrix_of_not_adj {i j : V} (hij : i ≠ j) (h : ¬ P.toSimpleGraph.Adj i j) :
     P.intersectionMatrix i j = 0 := by
-  rw [P.intersectionMatrix_apply_of_ne hij, if_neg h]
+  rw [P.intersectionMatrix_apply_of_ne hij, ite_eq_right h]
 
 /-- The intersection matrix is symmetric: the diagonal framing matrix and the adjacency matrix
 are each symmetric. -/

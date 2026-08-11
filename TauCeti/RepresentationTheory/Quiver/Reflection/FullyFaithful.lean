@@ -293,12 +293,12 @@ private noncomputable def homPreimageApp (hs : Function.Surjective (incomingSum 
 private theorem homPreimageApp_self (hs : Function.Surjective (incomingSum M i)) :
     homPreimageApp θ hs i = ModuleCat.ofHom (homSink θ hs) := by
   classical
-  simp only [homPreimageApp, dif_pos rfl, eqToHom_refl, Category.id_comp, Category.comp_id]
+  simp only [homPreimageApp, dite_eq_left rfl, eqToHom_refl, Category.id_comp, Category.comp_id]
 
 private theorem homPreimageApp_of_ne (hs : Function.Surjective (incomingSum M i)) {j : Q}
     (hj : j ≠ i) : homPreimageApp θ hs j = homAway θ hj := by
   classical
-  simp only [homPreimageApp, dif_neg hj]
+  simp only [homPreimageApp, dite_eq_right hj]
 
 /-- The vertex components of the preimage of `θ` are natural along every arrow of `Q`. An arrow
 into the sink is the case that uses `TauCeti.homSink_incomingSum`, on the family supported at that
