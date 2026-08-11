@@ -60,7 +60,9 @@ required: nothing here uses the trichotomy, so the values `ν₂` takes are irre
 `Finset.filter`s that the proofs run through are introduced classically and inside the proofs.
 `TauCeti.ClassFunction.squareRootCount` is therefore defined for an arbitrary group, at the price
 of `Nat.card`'s junk value: on a group with an element having infinitely many square roots it
-returns `0` there.  Every theorem about it assumes `Fintype G`, where no such degeneracy arises.
+returns `0` there.  The pairing and counting formulas assume `Fintype G`, where no such degeneracy
+arises; only the evaluation lemma `TauCeti.ClassFunction.squareRootCount_apply`, which merely reads
+off the `Nat.card`, holds for an arbitrary group.
 
 The field is taken in `Type` rather than an arbitrary universe, matching
 `TauCeti.Representation.frobeniusSchurIndicator` in the sibling module
@@ -95,15 +97,17 @@ variable (k : Type) (G : Type v) [Semiring k] [Group G]
 a class function by `TauCeti.card_squareRoot_conj`.
 
 The count is a `Nat.card`, so on a group with an element having infinitely many square roots the
-value there is `Nat.card`'s junk value `0` rather than a count; the theorems below all assume
-`Fintype G`. -/
+value there is `Nat.card`'s junk value `0` rather than a count; the pairing and counting formulas
+below assume `Fintype G`. -/
 noncomputable def squareRootCount : ClassFunction k G :=
   ⟨fun x => (Nat.card {g : G // g * g = x} : k),
     mem_iff.mpr fun x h => by rw [card_squareRoot_conj]⟩
 
 variable {k G}
 
-/-- The square-root counting class function evaluates to the number of square roots. -/
+/-- The square-root counting class function evaluates to `Nat.card {g // g * g = x}`: the number of
+square roots of `x` when there are finitely many, and `Nat.card`'s junk value `0` otherwise.  No
+finiteness of `G` is needed. -/
 @[simp]
 theorem squareRootCount_apply (x : G) :
     (squareRootCount k G).1 x = (Nat.card {g : G // g * g = x} : k) :=
