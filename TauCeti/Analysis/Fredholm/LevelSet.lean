@@ -260,13 +260,12 @@ theorem eventually_eq_of_index_eq_zero (hf : HasStrictFDerivAt f f' a) (hf' : f'
     exact_mod_cast h.symm
   have hsub : Subsingleton ↥f'.ker := Module.finrank_zero_iff.1 hrank
   have hker := hFred.closedComplemented_ker
-  let Φ := hf.implicitToOpenPartialHomeomorphOfComplemented f f' hf' hker
-  have hmem : a ∈ Φ.source :=
-    hf.mem_implicitToOpenPartialHomeomorphOfComplemented_source hf' hker
-  refine eventually_of_mem (Φ.open_source.mem_nhds hmem) fun x hx hfx => ?_
-  refine Φ.injOn hx hmem (Prod.ext ?_ (Subsingleton.elim _ _))
-  rw [hf.implicitToOpenPartialHomeomorphOfComplemented_fst hf' hker,
-    hf.implicitToOpenPartialHomeomorphOfComplemented_fst hf' hker, hfx, ha]
+  -- Mathlib's implicit function recovers `x` from `f x` and the kernel coordinate of `x`; in index
+  -- zero the kernel is trivial, so `x` is recovered from `f x = c = f a` alone, hence `x = a`.
+  filter_upwards [hf.eq_implicitFunctionOfComplemented hf' hker] with x hx hfx
+  rw [← hx, hfx, ← ha, Subsingleton.elim
+    (hf.implicitToOpenPartialHomeomorphOfComplemented f f' hf' hker x).snd 0,
+    hf.implicitFunctionOfComplemented_apply_image hf' hker]
 
 /-- Conversely, at a regular point of **nonzero** index the level set is not locally the single
 point `a`: every neighbourhood of `a` contains a further point of the level set. With
