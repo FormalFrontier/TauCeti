@@ -10,8 +10,8 @@ public import TauCeti.Algebra.Coalgebra.Subcomodule.Multiplication
 /-!
 # Multiplicativity of Tannakian local functionals
 
-Let `H` be a commutative Hopf algebra over a field `k`, let `A` be a commutative `k`-algebra,
-and let `η` be a tensor automorphism of scalar extension on finite-dimensional `H`-comodules.
+Let `H` be a bialgebra over a commutative semiring `k`, let `A` be a commutative `k`-algebra,
+and let `η` be a tensor automorphism of scalar extension on finitely generated `H`-comodules.
 The functional extracted from `η` on a finite subcomodule of the regular comodule is compatible
 with multiplication.
 
@@ -82,8 +82,8 @@ end RegularMulHom
 
 section LocalMultiplicativity
 
-variable (k H A : Type u) [Field k] [CommRing H] [HopfAlgebra k H]
-  [CommRing A] [Algebra k A]
+variable (k H A : Type u) [CommSemiring k] [Semiring H] [Bialgebra k H]
+  [Module.Flat k H] [CommSemiring A] [Algebra k A]
 
 private theorem counitEvaluation_mul
     (N P Q : Subcomodule k H H)

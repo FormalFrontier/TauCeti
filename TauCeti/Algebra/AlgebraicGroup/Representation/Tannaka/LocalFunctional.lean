@@ -9,10 +9,11 @@ public import TauCeti.Algebra.AlgebraicGroup.Representation.Tannaka.Monoidal
 /-!
 # Local functionals from tensor automorphisms
 
-Let `H` be a Hopf algebra over a field `k`, and let `A` be a commutative `k`-algebra. A tensor
-automorphism `η` of scalar extension on the finite-dimensional `H`-comodules acts, in particular,
-on every finite subcomodule `N` of the regular comodule `H`. Applying that component to
-`1 ⊗ n` and then applying the counit to the `N`-factor gives a linear functional
+Let `H` be a bialgebra over a commutative semiring `k`, and let `A` be a commutative
+`k`-algebra. A tensor automorphism `η` of scalar extension on the finitely generated
+`H`-comodules acts, in particular, on every finite subcomodule `N` of the regular comodule `H`.
+Applying that component to `1 ⊗ n` and then applying the counit to the `N`-factor gives a linear
+functional
 
 ```text
 g_{η,N} : N → A.
@@ -64,7 +65,7 @@ end FiniteRegularObject
 section CounitEvaluation
 
 variable (k : Type u) [CommSemiring k]
-variable (H : Type u) [Semiring H] [Bialgebra k H]
+variable (H : Type u) [AddCommMonoid H] [Module k H] [Coalgebra k H]
 variable (A : Type u) [CommSemiring A] [Algebra k A]
 
 /-- Evaluation after scalar extension by applying the counit on a regular subcomodule. -/
@@ -84,8 +85,8 @@ end CounitEvaluation
 
 section LocalFunctional
 
-variable (k H A : Type u) [Field k] [CommRing H] [HopfAlgebra k H]
-  [CommRing A] [Algebra k A]
+variable (k H A : Type u) [CommSemiring k] [Semiring H] [Bialgebra k H]
+  [Module.Flat k H] [CommSemiring A] [Algebra k A]
 
 /-- Inclusion of finite regular subcomodules as a morphism in the finite comodule category. -/
 noncomputable def regularInclusion
@@ -194,6 +195,13 @@ theorem localFunctional_eq_comp_inclusion
         rfl
   exact (hcounit _).symm
 
+end LocalFunctional
+
+section Point
+
+variable (k H A : Type u) [Field k] [CommRing H] [HopfAlgebra k H]
+  [CommRing A] [Algebra k A]
+
 /-- For a tensor automorphism induced by an algebra-valued point `g`, the local functional is
 the restriction of `g` to the chosen finite subcomodule of the regular comodule. -/
 @[simp]
@@ -214,6 +222,6 @@ theorem localFunctional_fgPointTensorIso
   simpa only [φ, one_mul, hcoeff] using
     Comodule.baseChangeEvaluation_endOfPoint_tmul g.ofConv (1 : A) (1 : A) φ n
 
-end LocalFunctional
+end Point
 
 end TauCeti.Tannaka
