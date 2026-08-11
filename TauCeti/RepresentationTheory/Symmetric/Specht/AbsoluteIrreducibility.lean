@@ -204,44 +204,27 @@ private noncomputable def spechtModuleScalarAlgEquiv {n : ℕ} (mu : n.Partition
   rw [hfun]
   exact algebraMap_intertwiningMap_spechtModule_bijective mu
 
-/-- The algebra of intertwining endomorphisms of a rational Specht module is `ℚ`.
-
-The representation in the domain is the simp-normal form of `(spechtModule mu).ρ`; writing it
-explicitly lets the inverse scalar formula below be a simp lemma. -/
+/-- The algebra of intertwining endomorphisms of a rational Specht module is `ℚ`. -/
 noncomputable def spechtModuleIntertwiningEndAlgEquiv {n : ℕ} (mu : n.Partition) :
-    Representation.IntertwiningMap
-        (MonoidHom.comp (spechtSubrepresentation (diagramOf mu)).toRepresentation
-          (↑(finCongr (card_diagramOf mu).symm).permCongrHom :
-            Equiv.Perm (Fin n) →* Equiv.Perm (Fin (diagramOf mu).card)))
-        (MonoidHom.comp (spechtSubrepresentation (diagramOf mu)).toRepresentation
-          (↑(finCongr (card_diagramOf mu).symm).permCongrHom :
-            Equiv.Perm (Fin n) →* Equiv.Perm (Fin (diagramOf mu).card))) ≃ₐ[ℚ] ℚ :=
+    Representation.IntertwiningMap (spechtModule mu).ρ (spechtModule mu).ρ ≃ₐ[ℚ] ℚ :=
   (spechtModuleScalarAlgEquiv mu).symm
 
 /-- The inverse of `spechtModuleIntertwiningEndAlgEquiv` sends a rational scalar to the
 corresponding scalar intertwining endomorphism. -/
-@[simp]
 theorem spechtModuleIntertwiningEndAlgEquiv_symm_apply {n : ℕ}
     (mu : n.Partition) (q : ℚ) :
-    (spechtModuleIntertwiningEndAlgEquiv mu).symm q = algebraMap ℚ _ q := by
-  exact (spechtModuleIntertwiningEndAlgEquiv mu).symm.commutes q
+    (spechtModuleIntertwiningEndAlgEquiv mu).symm q = algebraMap ℚ _ q :=
+  (spechtModuleIntertwiningEndAlgEquiv mu).symm.commutes q
 
-/-- The algebra of `ℚ[S_n]`-linear endomorphisms of a rational Specht module is `ℚ`.
-
-The representation in the domain is the simp-normal form of `(spechtModule mu).ρ`; writing it
-explicitly lets the inverse scalar formula below be a simp lemma. -/
+/-- The algebra of `ℚ[S_n]`-linear endomorphisms of a rational Specht module is `ℚ`. -/
 noncomputable def spechtModuleEndAlgEquiv {n : ℕ} (mu : n.Partition) :
     Module.End (MonoidAlgebra ℚ (Equiv.Perm (Fin n)))
-      (_root_.Representation.asModule
-        (MonoidHom.comp (spechtSubrepresentation (diagramOf mu)).toRepresentation
-          (↑(finCongr (card_diagramOf mu).symm).permCongrHom :
-            Equiv.Perm (Fin n) →* Equiv.Perm (Fin (diagramOf mu).card)))) ≃ₐ[ℚ] ℚ :=
+      (_root_.Representation.asModule (spechtModule mu).ρ) ≃ₐ[ℚ] ℚ :=
   (Representation.IntertwiningMap.equivAlgEnd (ρ := (spechtModule mu).ρ)).symm.trans
     (spechtModuleIntertwiningEndAlgEquiv mu)
 
 /-- The inverse of `spechtModuleEndAlgEquiv` sends a rational scalar to the corresponding scalar
 `ℚ[S_n]`-linear endomorphism. -/
-@[simp]
 theorem spechtModuleEndAlgEquiv_symm_apply {n : ℕ} (mu : n.Partition) (q : ℚ) :
     (spechtModuleEndAlgEquiv mu).symm q = algebraMap ℚ _ q := by
   simpa using (spechtModuleEndAlgEquiv mu).symm.commutes q
