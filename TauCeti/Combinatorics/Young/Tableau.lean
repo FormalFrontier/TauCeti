@@ -162,6 +162,13 @@ theorem colIndex_lt_rowLen (t : YoungTableau μ) (x : Fin μ.card) :
     colIndex t x < μ.rowLen (rowIndex t x) :=
   YoungDiagram.mem_iff_lt_rowLen.mp (rowIndex_colIndex_mem t x)
 
+/-- **The row of a label is below the number of rows.** The label lies in its own column, which is
+no longer than the zeroth one. -/
+theorem rowIndex_lt_colLen_zero (t : YoungTableau μ) (x : Fin μ.card) :
+    rowIndex t x < μ.colLen 0 :=
+  (YoungDiagram.mem_iff_lt_colLen.mp (rowIndex_colIndex_mem t x)).trans_le
+    (μ.colLen_anti 0 _ (Nat.zero_le _))
+
 /-- Every cell of `μ` carries a label. -/
 theorem exists_rowIndex_colIndex (t : YoungTableau μ) {i j : ℕ} (h : (i, j) ∈ μ) :
     ∃ x, rowIndex t x = i ∧ colIndex t x = j :=

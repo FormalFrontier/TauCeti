@@ -29,8 +29,9 @@ set of no greater size is a bijection.
 Working over `ℚ` rather than over `ℂ` costs nothing here, because the counting bound is not a
 splitting-field statement: it bounds the simple modules over *any* field by the conjugacy classes,
 and the Specht modules already saturate the bound over `ℚ`. In particular the classification does
-not go through absolute irreducibility, which is the separate statement `End_{ℚ[Sₙ]} S^μ ≅ ℚ`, still
-open, and is what a corresponding classification over `ℂ` would need.
+not go through absolute irreducibility. The separate statement `End_{ℚ[Sₙ]} S^μ ≅ ℚ` is proved in
+`TauCeti.RepresentationTheory.Symmetric.Specht.AbsoluteIrreducibility`; it is the input a
+corresponding classification over `ℂ` will need.
 
 ## Main results
 

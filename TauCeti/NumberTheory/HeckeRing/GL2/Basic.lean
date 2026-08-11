@@ -69,12 +69,12 @@ exactly the tuple on which `natDiagGL` takes its junk value, which the `0 < d` b
 -- identity normal form `T(1, 1) = 1` is the more useful one, so this stays a cited lemma.
 lemma heckeTDiag_eq_diagElem {a d : ℕ} (ha : 0 < a) (hd : 0 < d) (h : a ∣ d) :
     heckeTDiag a d = diagElem ![a, d] :=
-  if_pos ⟨ha, hd, h⟩
+  ite_eq_left ⟨ha, hd, h⟩
 
 /-- `T(a, d)` is zero when the divisor-pair conditions fail. -/
 @[simp]
 lemma heckeTDiag_eq_zero {a d : ℕ} (h : ¬(0 < a ∧ 0 < d ∧ a ∣ d)) : heckeTDiag a d = 0 :=
-  if_neg h
+  ite_eq_right h
 
 /-- `T(c, c)`: the scalar Hecke operator. -/
 noncomputable def heckeTScalar (c : ℕ) : IntegralHeckeRing 2 :=

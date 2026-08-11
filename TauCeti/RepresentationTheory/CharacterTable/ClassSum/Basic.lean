@@ -42,13 +42,13 @@ theorem classSum_coeff {k : Type*} [Semiring k] (C : ConjClasses G) (g : G) :
   rw [classSum_eq_sum, MonoidAlgebra.coeff_sum, Finsupp.finsetSum_apply]
   simp only [MonoidAlgebra.of_apply, MonoidAlgebra.coeff_single, Finsupp.single_apply]
   by_cases hg : ConjClasses.mk g = C
-  · rw [if_pos hg,
+  · rw [ite_eq_left hg,
       Finset.sum_eq_single (⟨g, ConjClasses.mem_carrier_iff_mk_eq.mpr hg⟩ : C.carrier)]
     · simp
-    · exact fun b _ hb => if_neg fun h => hb (Subtype.ext h)
+    · exact fun b _ hb => ite_eq_right fun h => hb (Subtype.ext h)
     · simp
-  · rw [if_neg hg]
-    refine Finset.sum_eq_zero fun c _ => if_neg fun h => hg ?_
+  · rw [ite_eq_right hg]
+    refine Finset.sum_eq_zero fun c _ => ite_eq_right fun h => hg ?_
     rw [← h]
     exact ConjClasses.mem_carrier_iff_mk_eq.mp c.property
 

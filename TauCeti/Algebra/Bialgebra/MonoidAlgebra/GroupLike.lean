@@ -6,9 +6,9 @@ module
 
 public import Mathlib.RingTheory.Bialgebra.MonoidAlgebra
 public import Mathlib.RingTheory.Coalgebra.GroupLike
-public import Mathlib.RingTheory.Spectrum.Prime.Topology
 public import Mathlib.RingTheory.TensorProduct.MonoidAlgebra
 public import TauCeti.Algebra.Coalgebra.Subcoalgebra.GroupLike
+public import TauCeti.RingTheory.Idempotents.ConnectedSpectrum
 
 /-!
 # Group-like elements of monoid algebras
@@ -45,25 +45,9 @@ namespace MonoidAlgebra
 
 variable (R : Type u)
 
-private theorem eq_zero_or_eq_one_of_isIdempotentElem
-    [CommRing R] [ConnectedSpace (PrimeSpectrum R)] (e : R) (he : IsIdempotentElem e) :
-    e = 0 ∨ e = 1 := by
-  have hopen : IsClopen
-      (PrimeSpectrum.basicOpen e : Set (PrimeSpectrum R)) :=
-    PrimeSpectrum.isClopen_iff.mpr ⟨e, he, rfl⟩
-  rcases _root_.isClopen_iff.mp hopen with hempty | huniv
-  · left
-    apply PrimeSpectrum.basicOpen_injOn_isIdempotentElem he .zero
-    apply SetLike.ext'
-    simpa only [PrimeSpectrum.basicOpen_zero, TopologicalSpace.Opens.coe_bot] using hempty
-  · right
-    apply PrimeSpectrum.basicOpen_injOn_isIdempotentElem he .one
-    apply SetLike.ext'
-    simpa only [PrimeSpectrum.basicOpen_one, TopologicalSpace.Opens.coe_top] using huniv
-
 /-- The group-like elements of a monoid algebra span the whole algebra: every standard basis
 element is group-like, and the standard basis spans. -/
-theorem groupLikeSetSpan_eq_top [CommSemiring R] (G : Type v) [Monoid G] :
+theorem groupLikeSetSpan_eq_top [CommSemiring R] (G : Type v) :
     Subcoalgebra.groupLikeSetSpan (R := R) (C := _root_.MonoidAlgebra R G) Set.univ = ⊤ := by
   rw [Subcoalgebra.groupLikeSetSpan_eq_top_iff_span_eq_top]
   have hrange : Set.range (_root_.GroupLike.val (R := R) (A := _root_.MonoidAlgebra R G)) =
@@ -107,7 +91,7 @@ theorem isGroupLikeElem_iff_eq_single [CommRing R]
       rw [tensorEquiv_comul_apply] at hcomul
       simpa using hcomul
     have hcoeff_zero_or_one (g : H) : x.coeff g = 0 ∨ x.coeff g = 1 := by
-      apply eq_zero_or_eq_one_of_isIdempotentElem R
+      apply eq_zero_or_eq_one_of_isIdempotentElem
       exact isIdempotentElem_iff.mpr (by simpa using (hcoeff g g).symm)
     have hx_coeff_ne : x.coeff ≠ 0 := by
       intro hzero
@@ -125,7 +109,7 @@ theorem isGroupLikeElem_iff_eq_single [CommRing R]
         simp [hh_one]
       · have hk_zero : x.coeff k = 0 := by
           have horth := hcoeff k h
-          rw [if_neg hk, hh_one, mul_one] at horth
+          rw [ite_eq_right hk, hh_one, mul_one] at horth
           exact horth.symm
         simp [hk, hk_zero]
     refine ⟨h, hx_single, ?_⟩
