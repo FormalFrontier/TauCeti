@@ -25,24 +25,30 @@ condition at a critical point at all but a separate global compactness hypothesi
 every sequence along which `f` is bounded and `fderiv ℝ f` tends to `0` have a convergent
 subsequence.
 
-The point of the definition is that nondegenerate critical points are *isolated*. Neither
-`IsNondegenerateCriticalPoint` nor `IsMorseOn` contains any regularity assumption on `f`, so every
-statement below carries the regularity it needs as a separate hypothesis: `ContDiffAt ℝ 2 f` at
-the critical points, and, for the finiteness statement, continuity of `fderiv ℝ f` on the compact
-set. Under those hypotheses a Morse function has a discrete critical locus, and only finitely many
-critical points on a compact set. That finiteness is what makes the Morse chain complex of a
-compact manifold finitely generated, so it is the first structural input of Morse homology.
+Twice continuous differentiability at the point is part of `IsNondegenerateCriticalPoint`, and so
+of `IsMorseOn` at each critical point: Mathlib totalizes `fderiv` by zero where a function is not
+differentiable, so a predicate phrased on `fderiv ℝ f` alone would call a function nondegenerate
+at a point where it is not even continuous. No statement below therefore needs a separate
+regularity hypothesis at a critical point; only the finiteness statement asks for more, namely
+continuity of `fderiv ℝ f` on the compact set, which is what closes the critical locus.
+
+The point of the definition is that nondegenerate critical points are *isolated*, so a Morse
+function has a discrete critical locus, and only finitely many critical points on a compact set.
+That finiteness is what makes the Morse chain complex of a compact manifold finitely generated,
+so it is the first structural input of Morse homology.
 Because the first-order term of the chain rule drops out at a critical point, the second
 derivative there transforms as a bilinear form, and nondegeneracy is unchanged by a change of
 coordinates; this is what will let the notion be read off in any chart.
 
 ## Main declarations
 
-* `TauCeti.IsNondegenerateCriticalPoint`: the differential vanishes and the second derivative is
-  invertible as a map into the dual space.
+* `TauCeti.IsNondegenerateCriticalPoint`: `f` is twice continuously differentiable at the point,
+  its differential vanishes there, and its second derivative is invertible as a map into the dual
+  space.
 * `TauCeti.IsMorseOn`: every critical point in a given set is nondegenerate.
-* `TauCeti.isNondegenerateCriticalPoint_iff`: in finite dimensions, nondegeneracy is the classical
-  condition that the Hessian bilinear form have trivial radical.
+* `TauCeti.isNondegenerateCriticalPoint_iff`: in finite dimensions, nondegeneracy is twice
+  continuous differentiability together with the classical condition that the Hessian bilinear
+  form have trivial radical.
 * `TauCeti.IsNondegenerateCriticalPoint.eventually_fderiv_ne_zero`: a nondegenerate critical point
   is isolated among critical points.
 * `TauCeti.IsMorseOn.isDiscrete_setOf_fderiv_eq_zero`: the critical locus of a Morse function is
@@ -98,18 +104,21 @@ section Morse
 variable {E F : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
   [NormedAddCommGroup F] [NormedSpace ℝ F] {f : E → ℝ} {x : E}
 
-/-- `f` has a **nondegenerate critical point** at `x` when its differential vanishes at `x` and its
-second derivative at `x`, viewed as a continuous linear map from `E` to the dual space
-`E →L[ℝ] ℝ`, is a linear homeomorphism. -/
+/-- `f` has a **nondegenerate critical point** at `x` when it is twice continuously differentiable
+at `x`, its differential vanishes at `x`, and its second derivative at `x`, viewed as a continuous
+linear map from `E` to the dual space `E →L[ℝ] ℝ`, is a linear homeomorphism. The regularity is
+part of the definition because `fderiv` is totalized by zero where `f` is not differentiable. -/
 structure IsNondegenerateCriticalPoint (f : E → ℝ) (x : E) : Prop where
+  /-- `f` is twice continuously differentiable at `x`. -/
+  contDiffAt : ContDiffAt ℝ 2 f x
   /-- The differential of `f` vanishes at `x`. -/
   fderiv_eq_zero : fderiv ℝ f x = 0
   /-- The second derivative of `f` at `x` is invertible as a map into the dual space. -/
   isInvertible : (fderiv ℝ (fderiv ℝ f) x).IsInvertible
 
 /-- `f` is a **Morse function on `s`** when every critical point of `f` lying in `s` is
-nondegenerate. Unlike the classical notion, no regularity of `f` is part of the definition; the
-statements that need it take it as a separate hypothesis. -/
+nondegenerate; in particular `f` is twice continuously differentiable at each of them. No
+regularity is asked for away from the critical points. -/
 def IsMorseOn (f : E → ℝ) (s : Set E) : Prop :=
   ∀ ⦃x⦄, x ∈ s → fderiv ℝ f x = 0 → IsNondegenerateCriticalPoint f x
 
@@ -137,8 +146,10 @@ theorem IsNondegenerateCriticalPoint.eq_zero_of_ortho (h : IsNondegenerateCritic
 the Hessian: no nonzero vector is annihilated by the Hessian form. -/
 theorem isNondegenerateCriticalPoint_iff [FiniteDimensional ℝ E] :
     IsNondegenerateCriticalPoint f x ↔
-      fderiv ℝ f x = 0 ∧ ∀ v : E, (∀ w : E, fderiv ℝ (fderiv ℝ f) x v w = 0) → v = 0 := by
-  refine ⟨fun h ↦ ⟨h.fderiv_eq_zero, fun _ hv ↦ h.eq_zero_of_ortho hv⟩, fun ⟨h0, hnd⟩ ↦ ⟨h0, ?_⟩⟩
+      ContDiffAt ℝ 2 f x ∧ fderiv ℝ f x = 0 ∧
+        ∀ v : E, (∀ w : E, fderiv ℝ (fderiv ℝ f) x v w = 0) → v = 0 := by
+  refine ⟨fun h ↦ ⟨h.contDiffAt, h.fderiv_eq_zero, fun _ hv ↦ h.eq_zero_of_ortho hv⟩,
+    fun ⟨hd, h0, hnd⟩ ↦ ⟨hd, h0, ?_⟩⟩
   have hinj : Injective (fderiv ℝ (fderiv ℝ f) x : E →ₗ[ℝ] E →L[ℝ] ℝ) :=
     (injective_iff_map_eq_zero _).2 fun v hv ↦ hnd v fun w ↦ by
       simp only [ContinuousLinearMap.coe_coe] at hv
@@ -154,30 +165,27 @@ theorem isNondegenerateCriticalPoint_iff [FiniteDimensional ℝ E] :
 /-- **A nondegenerate critical point is isolated.** Near such a point the differential of `f`
 vanishes only at the point itself. -/
 theorem IsNondegenerateCriticalPoint.eventually_fderiv_ne_zero
-    (h : IsNondegenerateCriticalPoint f x) (hf : ContDiffAt ℝ 2 f x) :
+    (h : IsNondegenerateCriticalPoint f x) :
     ∀ᶠ y in 𝓝[≠] x, fderiv ℝ f y ≠ 0 := by
   obtain ⟨e, he⟩ := h.isInvertible
   have hd : HasFDerivAt (fderiv ℝ f) (e : E →L[ℝ] E →L[ℝ] ℝ) x := by
     rw [he]
-    exact (ContDiffAt.hasStrictFDerivAt_fderiv hf).hasFDerivAt
+    exact (ContDiffAt.hasStrictFDerivAt_fderiv h.contDiffAt).hasFDerivAt
   exact hd.eventually_ne ⟨_, e.antilipschitz⟩
 
-/-- The critical locus of a Morse function is discrete, provided `f` is twice continuously
-differentiable at its critical points. -/
-theorem IsMorseOn.isDiscrete_setOf_fderiv_eq_zero {s : Set E}
-    (hf : ∀ x ∈ s, fderiv ℝ f x = 0 → ContDiffAt ℝ 2 f x) (hM : IsMorseOn f s) :
+/-- The critical locus of a Morse function is discrete. -/
+theorem IsMorseOn.isDiscrete_setOf_fderiv_eq_zero {s : Set E} (hM : IsMorseOn f s) :
     IsDiscrete {x ∈ s | fderiv ℝ f x = 0} := by
   rw [isDiscrete_iff_nhdsNE]
   rintro y ⟨hys, hy0⟩
   rw [inf_principal_eq_bot]
-  filter_upwards [(hM hys hy0).eventually_fderiv_ne_zero (hf y hys hy0)] with z hz
+  filter_upwards [(hM hys hy0).eventually_fderiv_ne_zero] with z hz
   simpa using fun _ ↦ hz
 
 /-- **A Morse function has finitely many critical points on a compact set.** This is the finiteness
 that makes the Morse complex of a compact manifold finitely generated. -/
 theorem IsMorseOn.finite_setOf_fderiv_eq_zero {K : Set E} (hK : IsCompact K)
-    (hcont : ContinuousOn (fderiv ℝ f) K)
-    (hf : ∀ x ∈ K, fderiv ℝ f x = 0 → ContDiffAt ℝ 2 f x) (hM : IsMorseOn f K) :
+    (hcont : ContinuousOn (fderiv ℝ f) K) (hM : IsMorseOn f K) :
     {x ∈ K | fderiv ℝ f x = 0}.Finite := by
   -- Continuity of `fderiv ℝ f` on `K` makes the critical locus a closed subset of `K`.
   have hclosed : IsClosed {x ∈ K | fderiv ℝ f x = 0} := by
@@ -186,7 +194,7 @@ theorem IsMorseOn.finite_setOf_fderiv_eq_zero {K : Set E} (hK : IsCompact K)
     ext y
     simp
   exact (hK.of_isClosed_subset hclosed fun _ hx ↦ hx.1).finite
-    (hM.isDiscrete_setOf_fderiv_eq_zero hf)
+    hM.isDiscrete_setOf_fderiv_eq_zero
 
 /-! ### Change of coordinates
 
@@ -224,12 +232,12 @@ theorem fderiv_fderiv_comp_apply_of_fderiv_eq_zero {φ : F → E} {b : F} (hf : 
 of `φ` at `b` is invertible, a nondegenerate critical point of `f` at `φ b` pulls back to a
 nondegenerate critical point of `f ∘ φ` at `b`. -/
 theorem IsNondegenerateCriticalPoint.comp {φ : F → E} {b : F}
-    (h : IsNondegenerateCriticalPoint f (φ b)) (hf : ContDiffAt ℝ 2 f (φ b))
-    (hφ : ContDiffAt ℝ 2 φ b) (hinv : (fderiv ℝ φ b).IsInvertible) :
+    (h : IsNondegenerateCriticalPoint f (φ b)) (hφ : ContDiffAt ℝ 2 φ b)
+    (hinv : (fderiv ℝ φ b).IsInvertible) :
     IsNondegenerateCriticalPoint (f ∘ φ) b := by
   obtain ⟨e, he⟩ := hinv
-  refine ⟨?_, ?_⟩
-  · rw [fderiv_comp (x := b) (hf.differentiableAt (by norm_num))
+  refine ⟨h.contDiffAt.comp b hφ, ?_, ?_⟩
+  · rw [fderiv_comp (x := b) (h.contDiffAt.differentiableAt (by norm_num))
       (hφ.differentiableAt (by norm_num)), h.fderiv_eq_zero]
     simp
   · -- The Hessian pulls back as `ψ ↦ ψ ∘ e` composed with the Hessian composed with `e`, and
@@ -238,7 +246,7 @@ theorem IsNondegenerateCriticalPoint.comp {φ : F → E} {b : F}
         (e.symm.arrowCongr (ContinuousLinearEquiv.refl ℝ ℝ) : (E →L[ℝ] ℝ) →L[ℝ] F →L[ℝ] ℝ) ∘L
           fderiv ℝ (fderiv ℝ f) (φ b) ∘L (e : F →L[ℝ] E) := by
       ext v w
-      rw [fderiv_fderiv_comp_apply_of_fderiv_eq_zero hf hφ h.fderiv_eq_zero, ← he]
+      rw [fderiv_fderiv_comp_apply_of_fderiv_eq_zero h.contDiffAt hφ h.fderiv_eq_zero, ← he]
       simp
     rw [hEq]
     simpa using h.isInvertible
@@ -306,7 +314,8 @@ continuous bilinear form `B` on `E` is invertible as a map into the dual space, 
 function `z ↦ B z z` has a nondegenerate critical point at the origin. -/
 theorem isNondegenerateCriticalPoint_apply_self (B : E →L[ℝ] E →L[ℝ] ℝ)
     (hB : (B.flip + B).IsInvertible) : IsNondegenerateCriticalPoint (fun z ↦ B z z) 0 :=
-  ⟨by simp, by rw [ContinuousLinearMap.fderiv_fderiv_apply_self]; exact hB⟩
+  ⟨B.isBoundedBilinearMap.contDiff.comp₂_contDiffAt contDiffAt_id contDiffAt_id, by simp,
+    by rw [ContinuousLinearMap.fderiv_fderiv_apply_self]; exact hB⟩
 
 /-- A symmetric continuous bilinear form `B` on `E` which is invertible as a map into the dual
 space makes `z ↦ B z z` a function with a nondegenerate critical point at the origin: its
