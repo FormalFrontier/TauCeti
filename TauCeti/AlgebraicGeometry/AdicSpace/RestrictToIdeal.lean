@@ -5,7 +5,7 @@ Authors: Chris Birkbeck
 -/
 module
 
-public import TauCeti.AlgebraicGeometry.AdicSpace.SpvOfIdeal
+public import TauCeti.AlgebraicGeometry.AdicSpace.SpvOfIdeal.Basic
 public import TauCeti.RingTheory.Valuation.CofinalIdeal.Restrict
 
 /-!

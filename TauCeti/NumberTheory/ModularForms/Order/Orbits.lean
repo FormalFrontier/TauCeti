@@ -71,16 +71,10 @@ lemma orderOfVanishingOnOrbit_mk [SlashInvariantFormClass F 𝒮ℒ k] (p : ℍ)
 
 /-- For a nonzero level-one form, only finitely many orbits carry nonzero order. -/
 lemma hasFiniteSupport_orderOfVanishingOnOrbit [ModularFormClass F 𝒮ℒ k] {f : F}
-    (hf : (⇑f : ℍ → ℂ) ≠ 0) : (orderOfVanishingOnOrbit f).HasFiniteSupport := by
-  rw [Function.HasFiniteSupport, Function.support]
-  choose rep hrep_mk hrep_fd using ModularGroup.exists_rep_mem_fd
-  have h_image : rep '' {q | orderOfVanishingOnOrbit f q ≠ 0} ⊆
-      {p : ℍ | p ∈ 𝒟 ∧ orderOfVanishingAt f p ≠ 0} := by
-    rintro _ ⟨q, hq, rfl⟩
-    exact ⟨hrep_fd q, by rwa [← orderOfVanishingOnOrbit_mk f (rep q), hrep_mk q]⟩
-  have h_inj : Set.InjOn rep {q | orderOfVanishingOnOrbit f q ≠ 0} := fun q₁ _ q₂ _ h ↦ by
-    rw [← hrep_mk q₁, ← hrep_mk q₂, h]
-  exact ((finite_zeros_in_fd hf).subset h_image).of_finite_image h_inj
+    (hf : (⇑f : ℍ → ℂ) ≠ 0) : (orderOfVanishingOnOrbit f).HasFiniteSupport :=
+  -- the `rfl` pattern rewrites `q` to `⟦p⟧`, after which `orderOfVanishingOnOrbit_mk` fires
+  (finite_zeros_in_fd hf).of_surjOn Quotient.mk'' fun q hq ↦
+    (ModularGroup.exists_rep_mem_fd q).imp fun p ⟨rfl, hfd⟩ ↦ ⟨⟨hfd, by simpa using hq⟩, rfl⟩
 
 /-- A divisor sum reindexed over the orbits its points represent. The index set is arbitrary,
 mapped into `ℍ` by `p`.
@@ -131,11 +125,11 @@ lemma sum_orderOfVanishingAt_ofComplex_eq_finsum_orbit [SlashInvariantFormClass 
   have ha' : a ∈ X := by simpa using ha
   have hb' : b ∈ X := by simpa using hb
   have hfdo : ∀ z ∈ X, ofComplex z ∈ 𝒟ᵒ := fun z hz => by
-    refine ⟨Complex.one_lt_normSq_iff.mpr ?_, ?_⟩
-    · rw [hcoe z hz]; exact hnorm z hz
-    · -- `𝒟ᵒ`'s real-part bound is stated with `UpperHalfPlane.re`; unfold it to the coercion
-      change |((ofComplex z : ℍ) : ℂ).re| < 1 / 2
-      rw [hcoe z hz]; exact hre z hz
+    obtain ⟨τ, hτ, hτz⟩ : z ∈ UpperHalfPlane.coe '' 𝒟ᵒ := by
+      rw [ModularGroup.coe_fdo]; exact ⟨hpos z hz, hnorm z hz, hre z hz⟩
+    have hof : ofComplex z = τ := UpperHalfPlane.coe_injective ((hcoe z hz).trans hτz.symm)
+    rw [hof]
+    exact hτ
   have h : ofComplex a = ofComplex b :=
     ModularGroup.orbit_mk_injOn_fdo (hfdo a ha') (hfdo b hb') hab
   exact (hcoe a ha').symm.trans ((congrArg (fun w : ℍ ↦ (w : ℂ)) h).trans (hcoe b hb'))
