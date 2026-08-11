@@ -326,7 +326,7 @@ private theorem blowUpVertex_mulVec_apply_none (y : V → ℤ) (t : ℤ) :
   rw [Matrix.mulVec_apply_eq_sum, Fintype.sum_option]
   simp only [blowUpVertex_intersectionMatrix_none_none, blowUpVertex_intersectionMatrix_none_some,
     blowUpVertexEquiv_apply_none, blowUpVertexEquiv_apply_some, ite_mul, one_mul, zero_mul,
-    Finset.sum_ite_eq', Finset.mem_univ, if_true]
+    Finset.sum_ite_eq', Finset.mem_univ, ite_true]
   ring
 
 /-- The `some`-coordinates of the image of a lifted lattice point under the blown-up intersection
@@ -345,7 +345,7 @@ private theorem blowUpVertex_mulVec_apply_some (y : V → ℤ) (t : ℤ) (w : V)
   simp only [blowUpVertex_intersectionMatrix_some_none, blowUpVertex_intersectionMatrix_some_some,
     blowUpVertexEquiv_apply_none, blowUpVertexEquiv_apply_some, hsplit]
   rw [Finset.sum_sub_distrib, ← Finset.mul_sum, Matrix.mulVec_apply_eq_sum]
-  simp only [ite_mul, one_mul, zero_mul, Finset.sum_ite_eq', Finset.mem_univ, if_true]
+  simp only [ite_mul, one_mul, zero_mul, Finset.sum_ite_eq', Finset.mem_univ, ite_true]
   split_ifs <;> ring
 
 /-- **The blow-up splits the intersection form.** Under the total-transform identification
@@ -369,7 +369,7 @@ theorem intersectionForm_blowUpVertexEquiv (x y : V → ℤ) (s t : ℤ) :
   simp only [blowUpVertexEquiv_apply_none, blowUpVertexEquiv_apply_some,
     P.blowUpVertex_mulVec_apply_none v y t, P.blowUpVertex_mulVec_apply_some v y t, hterm]
   rw [Finset.sum_add_distrib, Finset.sum_ite_eq' Finset.univ v fun w => x w * t]
-  simp only [Finset.mem_univ, if_true]
+  simp only [Finset.mem_univ, ite_true]
   ring
 
 /-- The exceptional class has self-intersection `-1`. -/

@@ -8,6 +8,7 @@ module
 public import Mathlib.Data.ZMod.Basic
 public import Mathlib.LinearAlgebra.Matrix.GeneralLinearGroup.Defs
 public import Mathlib.NumberTheory.HeckeRing.Defs
+public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.DoubleCoset
 
 /-!
 # The arithmetic Hecke triple for `GL_n`
@@ -78,6 +79,31 @@ downstream cannot unfold it to `MonoidHom.range`; this lemma is how they extract
 @[simp] lemma mem_SLnZ_iff {g : GL (Fin n) ℚ} :
     g ∈ SLnZ n ↔ ∃ σ : SpecialLinearGroup (Fin n) ℤ, (σ : GL (Fin n) ℚ) = g := by
   rw [SLnZ, MonoidHom.mem_range]
+
+/-- An element of `SL_n(ℤ)` has matrix determinant one over `ℚ`.
+
+`SpecialLinearGroup.det_mapGL` is the same fact for `GeneralLinearGroup.det`, which is
+`ℚˣ`-valued; every consumer needs the `Matrix.det` of the coerced matrix, so this is the
+`Units.val` bridge rather than a second proof. -/
+lemma det_eq_one_of_mem_SLnZ {g : GL (Fin n) ℚ} (hg : g ∈ SLnZ n) :
+    (↑g : Matrix (Fin n) (Fin n) ℚ).det = 1 := by
+  obtain ⟨σ, rfl⟩ := (mem_SLnZ_iff n).mp hg
+  exact congrArg Units.val (SpecialLinearGroup.det_mapGL (S := ℚ) σ)
+
+/-- The case of coefficient subgroups inside `SL_n(ℤ)`, which is how the congruence subgroups
+get it. -/
+lemma det_eq_of_mem_doubleCoset_of_le_SLnZ {H₁ H₂ : Subgroup (GL (Fin n) ℚ)}
+    (h₁ : H₁ ≤ SLnZ n) (h₂ : H₂ ≤ SLnZ n) {a b : GL (Fin n) ℚ}
+    (hb : b ∈ DoubleCoset.doubleCoset a H₁ H₂) :
+    (↑b : Matrix (Fin n) (Fin n) ℚ).det = (↑a : Matrix (Fin n) (Fin n) ℚ).det :=
+  DoubleCoset.det_eq_of_mem_doubleCoset_of_det_eq_one
+    (fun _ hγ ↦ det_eq_one_of_mem_SLnZ n (h₁ hγ)) (fun _ hγ ↦ det_eq_one_of_mem_SLnZ n (h₂ hγ)) hb
+
+/-- The `SL_n(ℤ)` case of `det_eq_of_mem_doubleCoset_of_le_SLnZ`. -/
+lemma det_eq_of_mem_doubleCoset_SLnZ {a b : GL (Fin n) ℚ}
+    (hb : b ∈ DoubleCoset.doubleCoset a (SLnZ n) (SLnZ n)) :
+    (↑b : Matrix (Fin n) (Fin n) ℚ).det = (↑a : Matrix (Fin n) (Fin n) ℚ).det :=
+  det_eq_of_mem_doubleCoset_of_le_SLnZ n le_rfl le_rfl hb
 
 /-- The image in `GL_n(ℚ)` of a finite-index subgroup of `SL_n(ℤ)` is commensurable with
 `SL_n(ℤ)`. Since `mapGL ℚ` is injective, both relative indices transport along it: one is the

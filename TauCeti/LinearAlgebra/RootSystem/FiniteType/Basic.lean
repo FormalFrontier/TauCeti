@@ -78,6 +78,11 @@ statements the classification runs on.
   type `Ã₂` is ruled out in `TauCeti.not_isFiniteType_affineA₂`. It does not subsume the
   no-triangle theorem: `TauCeti.not_isFiniteType_doubleEdgeTriangle` exhibits a nonsingular
   triangle.
+* `TauCeti.IsFiniteType.eq_zero_of_forall_mul_sum_apply_mul_nonpos`: **a finite-type matrix has no
+  nonzero subdominant vector**, one with `xᵢ · (A x)ᵢ ≤ 0` at every index. This is the fourth
+  elimination tool, and unlike `TauCeti.IsFiniteType.det_ne_zero` it does not ask the certificate to
+  be a null vector, only to point away from the positive cone coordinatewise, so a single vector can
+  rule out a whole family of diagrams.
 * `TauCeti.isFiniteType_cartanMatrix`: **the Cartan matrix of a base of a finite crystallographic
   root system is of finite type**, and `TauCeti.HasCartanType.isFiniteType`: so is the standard
   Cartan matrix of any Dynkin type realized by such a base.
@@ -617,6 +622,32 @@ theorem det_ne_zero [DecidableEq B] (h : IsFiniteType A) : A.det ≠ 0 := by
   intro hdet
   rw [hdet] at hu
   simp at hu
+
+/-- **A finite-type matrix admits no nonzero subdominant vector.** Call a rational vector `x`
+*subdominant* for `A` when `xᵢ · (A x)ᵢ ≤ 0` at every index `i`; then `x = 0`.
+
+The symmetrized quadratic form of `A` at `x` is `∑ᵢ dᵢ · xᵢ · (A x)ᵢ`, because scaling the `i`-th
+row by `dᵢ` scales the `i`-th summand by `dᵢ`, and the symmetrizer is positive. So a subdominant
+vector makes the form nonpositive, which positive definiteness allows only at `0`.
+
+This is the elimination tool for a diagram carrying an explicit certificate. It is weaker than
+asking for a null vector, as `TauCeti.IsFiniteType.det_ne_zero` does: the certificate is allowed to
+be strictly subdominant at some indices, which is what lets a single vector rule out a whole family
+of diagrams rather than only the critical ones. -/
+theorem eq_zero_of_forall_mul_sum_apply_mul_nonpos (h : IsFiniteType A) {x : B → ℚ}
+    (hx : ∀ i, x i * ∑ j, (A i j : ℚ) * x j ≤ 0) : x = 0 := by
+  by_contra hne
+  obtain ⟨d, hd, hpd⟩ := h.exists_symmetrizer
+  have hpos := hpd.dotProduct_mulVec_pos hne
+  rw [star_trivial, Matrix.dot_mulVec_eq_sum_sum] at hpos
+  simp only [Matrix.of_apply] at hpos
+  rw [Finset.sum_comm] at hpos
+  refine absurd hpos (not_lt.2 (Finset.sum_nonpos fun i _ ↦ ?_))
+  have hrow : ∑ j, x i * (d i * (A i j : ℚ)) * x j = d i * (x i * ∑ j, (A i j : ℚ) * x j) := by
+    rw [Finset.mul_sum, Finset.mul_sum]
+    exact Finset.sum_congr rfl fun j _ ↦ by ring
+  rw [hrow]
+  simpa using mul_le_mul_of_nonneg_left (hx i) (hd i).le
 
 end IsFiniteType
 
