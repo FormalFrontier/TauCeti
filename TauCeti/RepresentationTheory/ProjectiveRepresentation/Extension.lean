@@ -44,7 +44,8 @@ it.
   `TauCeti.FactorSet` for a trivial action, so that its central extension is available.
 * `TauCeti.IsProjectiveRep.linearization`: the homomorphism `E_α → (V ≃ₗ[k] V)` attached to a
   projective representation with factor set `α`, with
-  `TauCeti.IsProjectiveRep.representation` its packaging as a `Representation k E_α V`.
+  `TauCeti.IsProjectiveRep.linearizationRepresentation` its packaging as a
+  `Representation k E_α V`.
 * `TauCeti.isProjectiveRepEquivExtensionHom`: the resulting bijection.
 
 ## Main results
@@ -56,7 +57,10 @@ it.
   `TauCeti.IsProjectiveRep.linearization_inl`: the central `kˣ` acts by its own scalars.
 * `TauCeti.isProjectiveRep_comp_canonicalSection`: conversely, restricting along the canonical
   section any linear representation of `E_α` under which `kˣ` acts by scalars gives a projective
-  representation with factor set `α`.
+  representation with factor set `α`, and
+  `TauCeti.isProjectiveRep_of_representation_canonicalSection`: the same for a linear representation
+  presented as an ordinary `Representation k E_α V`, whose scalar condition is read off the
+  linearization by `TauCeti.IsProjectiveRep.linearizationRepresentation_inl`.
 * `TauCeti.IsProjectiveRep.exists_factorSet_linearization`: **every projective representation of
   `G` is a linear representation of a central extension of `G` by `kˣ`**, for the extension built
   from the factor set the projective representation carries.
@@ -135,12 +139,6 @@ section Linearization
 
 variable {α : FactorSet G kˣ} {ρ : G → V ≃ₗ[k] V}
 
-/-- Multiplication by a unit of `k`, evaluated. The lemma is the only place where the definition of
-`LinearEquiv.smulOfUnit` is unfolded. -/
-private theorem smulOfUnit_apply (a : kˣ) (x : V) :
-    (LinearEquiv.smulOfUnit a : V ≃ₗ[k] V) x = (a : k) • x :=
-  (rfl)
-
 namespace IsProjectiveRep
 
 /-- **The linearization of a projective representation with factor set `α`**: the homomorphism from
@@ -151,12 +149,12 @@ def linearization (hρ : IsProjectiveRep ρ (Function.curry ⇑α))
     (htriv : ∀ (g : G) (a : kˣ), g • a = a) : α.Extension →* (V ≃ₗ[k] V) where
   toFun x := LinearEquiv.smulOfUnit x.left * ρ x.right
   map_one' := LinearEquiv.ext fun v ↦ by
-    simp [smulOfUnit_apply, hρ.map_one]
+    simp [LinearEquiv.smulOfUnit_apply, hρ.map_one]
   map_mul' x y := LinearEquiv.ext fun v ↦ by
     have hmul : ρ x.right (ρ y.right v)
         = (α (x.right, y.right) : k) • ρ (x.right * y.right) v :=
       hρ.mul_apply x.right y.right v
-    simp only [LinearEquiv.mul_apply, smulOfUnit_apply, FactorSet.Extension.mul_left,
+    simp only [LinearEquiv.mul_apply, LinearEquiv.smulOfUnit_apply, FactorSet.Extension.mul_left,
       FactorSet.Extension.mul_right, htriv, Units.val_mul, map_smul, hmul, smul_smul, mul_assoc,
       mul_comm]
 
@@ -176,7 +174,7 @@ condition that singles out the linearizations among all linear representations o
 theorem linearization_inl (a : kˣ) :
     hρ.linearization htriv (FactorSet.inl α a) = LinearEquiv.smulOfUnit a :=
   LinearEquiv.ext fun v ↦ by
-    simp [smulOfUnit_apply, hρ.map_one]
+    simp [LinearEquiv.smulOfUnit_apply, hρ.map_one]
 
 /-- **The projective representation is recovered from its linearization** by restricting along the
 canonical section `g ↦ ⟨1, g⟩` of the extension. Not `@[simp]`:
@@ -200,14 +198,22 @@ theorem forall_linearization_mem_iff {W : Submodule k V} :
 
 /-- The linearization, packaged as a `Representation` of the central extension `E_α` on `V`, so
 that the machinery written against `Representation` applies to it. -/
-def representation : Representation k α.Extension V :=
+def linearizationRepresentation : Representation k α.Extension V :=
   LinearEquiv.automorphismGroup.toLinearMapMonoidHom.comp (hρ.linearization htriv)
 
 /-- The packaged representation acts by the same formula as the linearization it is built from. -/
 @[simp]
-theorem representation_apply (x : α.Extension) (v : V) :
-    hρ.representation htriv x v = (x.left : k) • ρ x.right v :=
+theorem linearizationRepresentation_apply (x : α.Extension) (v : V) :
+    hρ.linearizationRepresentation htriv x v = (x.left : k) • ρ x.right v :=
   (rfl)
+
+/-- **The central copy of `kˣ` acts through the packaged representation by its own scalars**, the
+condition of `TauCeti.isProjectiveRep_of_representation_canonicalSection` read on
+`TauCeti.IsProjectiveRep.linearizationRepresentation`. -/
+@[simp]
+theorem linearizationRepresentation_inl (a : kˣ) :
+    hρ.linearizationRepresentation htriv (FactorSet.inl α a) = (a : k) • LinearMap.id :=
+  LinearMap.ext fun v ↦ by simp [hρ.map_one]
 
 end IsProjectiveRep
 
@@ -225,8 +231,33 @@ theorem isProjectiveRep_comp_canonicalSection (htriv : ∀ (g : G) (a : kˣ), g 
     have key : π (α.canonicalSection g₁) * π (α.canonicalSection g₂)
         = LinearEquiv.smulOfUnit (α (g₁, g₂)) * π (α.canonicalSection (g₁ * g₂)) := by
       rw [← map_mul, α.canonicalSection_mul, map_mul, hπ]
-    simpa only [LinearEquiv.mul_apply, smulOfUnit_apply, Function.curry]
+    simpa only [LinearEquiv.mul_apply, LinearEquiv.smulOfUnit_apply, Function.curry]
       using DFunLike.congr_fun key v
+
+/-- **The same converse for an ordinary `Representation k E_α V`**, the form in which the machinery
+written against `Representation` supplies a linear representation of the extension: if the central
+copy of `kˣ` acts by its own scalars, then a family `ρ` of linear automorphisms restricting `π`
+along the canonical section is a projective representation with factor set `α`. The automorphisms
+are taken as data because a `Representation` records only linear maps;
+`TauCeti.IsProjectiveRep.linearizationRepresentation` together with
+`TauCeti.IsProjectiveRep.linearizationRepresentation_inl` is the case that recovers `ρ` itself. -/
+theorem isProjectiveRep_of_representation_canonicalSection
+    (htriv : ∀ (g : G) (a : kˣ), g • a = a) (π : Representation k α.Extension V)
+    (hπ : ∀ a : kˣ, π (FactorSet.inl α a) = (a : k) • LinearMap.id)
+    (hρ : ∀ g : G, (ρ g : V →ₗ[k] V) = π (α.canonicalSection g)) :
+    IsProjectiveRep ρ (Function.curry ⇑α) where
+  isFactorSet := α.isFactorSet_curry htriv
+  map_one := LinearEquiv.toLinearMap_injective <| by
+    rw [hρ, α.canonicalSection_one, map_one]
+    rfl
+  mul_apply g₁ g₂ v := by
+    have hρ' (g : G) (x : V) : ρ g x = π (α.canonicalSection g) x := by
+      rw [← LinearEquiv.coe_coe, hρ]
+    have key : π (α.canonicalSection g₁) (π (α.canonicalSection g₂) v)
+        = (α (g₁, g₂) : k) • π (α.canonicalSection (g₁ * g₂)) v := by
+      rw [← Module.End.mul_apply, ← map_mul, α.canonicalSection_mul, map_mul, hπ]
+      simp
+    simpa only [hρ', Function.curry] using key
 
 variable (k V)
 
@@ -247,8 +278,8 @@ def isProjectiveRepEquivExtensionHom (α : FactorSet G kˣ)
     have h : π.1 (FactorSet.inl α x.left * α.canonicalSection x.right) v = π.1 x v := by
       rw [FactorSet.inl_mul_canonicalSection]
     rw [map_mul, π.2 x.left] at h
-    simpa only [IsProjectiveRep.linearization_apply, LinearEquiv.mul_apply, smulOfUnit_apply]
-      using h)
+    simpa only [IsProjectiveRep.linearization_apply, LinearEquiv.mul_apply,
+      LinearEquiv.smulOfUnit_apply] using h)
 
 /-- The bijection sends a projective representation to its linearization. -/
 @[simp]
