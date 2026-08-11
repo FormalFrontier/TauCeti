@@ -28,6 +28,8 @@ from Mathlib.
 
 * `TauCeti.PresentationWord`: Mathlib's left-to-right list of signed generators.
 * `TauCeti.Relator`: expressions built from generators, inverse, product, power, and commutator.
+* `TauCeti.Relator.sourceComm`: the commutator in the convention `[r, s] = r⁻¹ s⁻¹ r s` used by
+  most sources.
 * `TauCeti.Relator.toWord`: compilation of an expression to a signed word.
 * `TauCeti.Relator.toFreeGroup`: direct structural interpretation of an expression.
 
@@ -78,6 +80,14 @@ inductive Relator (α : Type*) where
   deriving DecidableEq
 
 namespace Relator
+
+/-- The commutator `[r, s] = r⁻¹ * s⁻¹ * r * s` of a source using that convention, which is
+`⁅r⁻¹, s⁻¹⁆` in Mathlib's convention.
+
+Most sources for finite presentations, including Magma, GAP and the ATLAS, bracket their
+commutators this way round, so a transcription reads like the presentation it comes from when it
+uses this abbreviation rather than `Relator.comm` applied to two inverted arguments. -/
+abbrev sourceComm {α : Type*} (r s : Relator α) : Relator α := .comm (.inv r) (.inv s)
 
 /-- Compile a relator expression to a flat signed word.
 

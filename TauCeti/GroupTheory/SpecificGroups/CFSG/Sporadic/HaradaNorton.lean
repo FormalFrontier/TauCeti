@@ -26,9 +26,10 @@ t⁵, t^a t², t^c t⁻², [t,b], (dt)³.
 
 Here `[r,s] = r⁻¹s⁻¹rs` and `r^s = s⁻¹rs`, following the Magma source. Mathlib's
 `commutatorElement` uses the opposite commutator convention, so a source commutator is represented
-by `Relator.comm (.inv r) (.inv s)`. Conjugates are expanded directly in the structured
-expressions. The proved `TauCeti.Relator.toWord_toFreeGroup` theorem is the audit boundary between
-these expressions and the signed words consumed by `PresentedGroup`.
+by `TauCeti.Relator.sourceComm`, the shared abbreviation for that convention. Conjugates are
+expanded directly in the structured expressions. The proved `TauCeti.Relator.toWord_toFreeGroup`
+theorem is the audit boundary between these expressions and the signed words consumed by
+`PresentedGroup`.
 
 Section 4 of Bray--Curtis constructs `HN` as a quotient of a progenitor by coset enumeration over
 the visible subgroup `2·HS:2`. Section 5 derives the five-generator presentation used here. The
@@ -73,10 +74,6 @@ private abbrev t : Relator (Fin 5) := .gen 4
 @[inherit_doc Relator.mul]
 local infixl:70 " ⬝ " => Relator.mul
 
-/-- The source's commutator `[r, s] = r⁻¹ s⁻¹ r s`, represented in Mathlib's convention. -/
-private abbrev sourceComm (r s : Relator (Fin 5)) : Relator (Fin 5) :=
-  .comm (.inv r) (.inv s)
-
 /-- The word `c b c b⁻¹` conjugating `d` in the fourteenth relator. -/
 private abbrev dConjugator : Relator (Fin 5) :=
   c ⬝ b ⬝ c ⬝ .inv b
@@ -107,24 +104,93 @@ def hnPresentation : GroupPresentation where
   expectedRelatorCount := 19
   transcribed :=
     [ .pow a 4,
-      sourceComm (.pow a 2) b,
+      Relator.sourceComm (.pow a 2) b,
       .pow b 7,
       .pow (a ⬝ .pow b 2) 4,
       .pow (.inv a) 2 ⬝ .pow (a ⬝ b ⬝ a ⬝ .pow b 3) 3,
       .pow (.pow (a ⬝ b) 3 ⬝ a ⬝ .pow (.inv b) 3) 2,
       .pow c 2 ⬝ .pow a 2,
-      sourceComm a c,
-      sourceComm (b ⬝ a ⬝ b) c,
+      Relator.sourceComm a c,
+      Relator.sourceComm (b ⬝ a ⬝ b) c,
       .pow (b ⬝ a ⬝ .pow b 3 ⬝ c) 3,
       .pow d 2,
       .pow (a ⬝ d) 2,
-      sourceComm b d,
+      Relator.sourceComm b d,
       .inv dConjugator ⬝ d ⬝ dConjugator ⬝ .pow (c ⬝ d) 3,
       .pow t 5,
       .inv a ⬝ t ⬝ a ⬝ .pow t 2,
       .inv c ⬝ t ⬝ c ⬝ .pow (.inv t) 2,
-      sourceComm t b,
+      Relator.sourceComm t b,
       .pow (d ⬝ t) 3 ]
+
+/-- The generator names recorded for `HN`. The row's body is sealed, so this equation is what shows
+a consumer that the transcription is on five generators, and it supplies the index bounds in
+`TauCeti.Sporadic.transcribed_hnPresentation`. -/
+@[simp]
+theorem generatorNames_hnPresentation :
+    hnPresentation.generatorNames = ["a", "b", "c", "d", "t"] := by
+  simp [hnPresentation]
+
+/-- The relator expressions transcribed for `HN`, with their generator indices written out.
+
+The row's body is sealed, so this is the equation that characterizes it: with
+`TauCeti.GroupPresentation.relators_def` it determines the compiled words, and with
+`TauCeti.GroupPresentation.mem_relatorSet_iff` it determines the relations defining
+`TauCeti.GroupPresentation.Group`, so a consumer auditing the transcription never has to unfold the
+row. Indices `0` through `4` are the generators `a`, `b`, `c`, `d` and `t`, and their bounds come
+from `TauCeti.Sporadic.generatorNames_hnPresentation`. -/
+@[simp]
+theorem transcribed_hnPresentation :
+    hnPresentation.transcribed =
+      [ -- a⁴
+        .pow (.gen ⟨0, by simp⟩) 4,
+        -- [a², b]
+        Relator.sourceComm (.pow (.gen ⟨0, by simp⟩) 2) (.gen ⟨1, by simp⟩),
+        -- b⁷
+        .pow (.gen ⟨1, by simp⟩) 7,
+        -- (ab²)⁴
+        .pow (.gen ⟨0, by simp⟩ ⬝ .pow (.gen ⟨1, by simp⟩) 2) 4,
+        -- a⁻²(abab³)³
+        .pow (.inv (.gen ⟨0, by simp⟩)) 2 ⬝
+          .pow (.gen ⟨0, by simp⟩ ⬝ .gen ⟨1, by simp⟩ ⬝ .gen ⟨0, by simp⟩ ⬝
+            .pow (.gen ⟨1, by simp⟩) 3) 3,
+        -- ((ab)³ab⁻³)²
+        .pow (.pow (.gen ⟨0, by simp⟩ ⬝ .gen ⟨1, by simp⟩) 3 ⬝ .gen ⟨0, by simp⟩ ⬝
+          .pow (.inv (.gen ⟨1, by simp⟩)) 3) 2,
+        -- c²a²
+        .pow (.gen ⟨2, by simp⟩) 2 ⬝ .pow (.gen ⟨0, by simp⟩) 2,
+        -- [a, c]
+        Relator.sourceComm (.gen ⟨0, by simp⟩) (.gen ⟨2, by simp⟩),
+        -- [bab, c]
+        Relator.sourceComm (.gen ⟨1, by simp⟩ ⬝ .gen ⟨0, by simp⟩ ⬝ .gen ⟨1, by simp⟩)
+          (.gen ⟨2, by simp⟩),
+        -- (bab³c)³
+        .pow (.gen ⟨1, by simp⟩ ⬝ .gen ⟨0, by simp⟩ ⬝ .pow (.gen ⟨1, by simp⟩) 3 ⬝
+          .gen ⟨2, by simp⟩) 3,
+        -- d²
+        .pow (.gen ⟨3, by simp⟩) 2,
+        -- (ad)²
+        .pow (.gen ⟨0, by simp⟩ ⬝ .gen ⟨3, by simp⟩) 2,
+        -- [b, d]
+        Relator.sourceComm (.gen ⟨1, by simp⟩) (.gen ⟨3, by simp⟩),
+        -- d^(cbcb⁻¹)(cd)³
+        .inv (.gen ⟨2, by simp⟩ ⬝ .gen ⟨1, by simp⟩ ⬝ .gen ⟨2, by simp⟩ ⬝
+            .inv (.gen ⟨1, by simp⟩)) ⬝ .gen ⟨3, by simp⟩ ⬝
+          (.gen ⟨2, by simp⟩ ⬝ .gen ⟨1, by simp⟩ ⬝ .gen ⟨2, by simp⟩ ⬝
+            .inv (.gen ⟨1, by simp⟩)) ⬝ .pow (.gen ⟨2, by simp⟩ ⬝ .gen ⟨3, by simp⟩) 3,
+        -- t⁵
+        .pow (.gen ⟨4, by simp⟩) 5,
+        -- t^a t²
+        .inv (.gen ⟨0, by simp⟩) ⬝ .gen ⟨4, by simp⟩ ⬝ .gen ⟨0, by simp⟩ ⬝
+          .pow (.gen ⟨4, by simp⟩) 2,
+        -- t^c t⁻²
+        .inv (.gen ⟨2, by simp⟩) ⬝ .gen ⟨4, by simp⟩ ⬝ .gen ⟨2, by simp⟩ ⬝
+          .pow (.inv (.gen ⟨4, by simp⟩)) 2,
+        -- [t, b]
+        Relator.sourceComm (.gen ⟨4, by simp⟩) (.gen ⟨1, by simp⟩),
+        -- (dt)³
+        .pow (.gen ⟨3, by simp⟩ ⬝ .gen ⟨4, by simp⟩) 3 ] := by
+  simp [hnPresentation]
 
 /-- The generator and relator counts recorded for `HN` agree with the transcribed data. -/
 theorem matchesMetadata_hnPresentation : hnPresentation.matchesMetadata := by decide
