@@ -187,6 +187,7 @@ noncomputable def localFunctional
       (TensorProduct.mk k A N.1 (1 : A))
 
 /-- Evaluation formula for the functional extracted from a finite regular subcomodule. -/
+@[simp]
 theorem localFunctional_apply
     (η : Aut (FGComoduleCat.scalarExtensionMonoidalFunctor k H A))
     (N : Subcomodule.finiteSubcomodules (R := k) (C := H) (M := H)) (n : N.1) :
@@ -261,14 +262,8 @@ theorem localFunctional_fgPointTensorIso
   let φ : Module.Dual k N.1 :=
     (Coalgebra.counit (R := k) (A := H)).comp (SMulMemClass.subtype N.1)
   have hcoeff : Comodule.matrixCoefficient (R := k) (C := H) φ n = (n : H) := by
-    have hφ : φ = (Coalgebra.counit (R := k) (A := H)).comp
-        (Subcomodule.subtype N.1).toLinearMap := by
-      unfold φ
-      rw [Subcomodule.subtype_toLinearMap]
-    rw [hφ]
-    rw [← Comodule.matrixCoefficient_map (Subcomodule.subtype N.1)
-      (Coalgebra.counit (R := k) (A := H)) n]
-    simp
+    simpa only [φ] using Comodule.matrixCoefficient_counit_comp_subtype
+      (R := k) (C := H) N.1 n
   simpa only [φ, one_mul, hcoeff] using
     Comodule.baseChangeEvaluation_endOfPoint_tmul g.ofConv (1 : A) (1 : A) φ n
 
