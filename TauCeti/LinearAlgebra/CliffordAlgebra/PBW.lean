@@ -6,7 +6,6 @@ module
 
 public import TauCeti.LinearAlgebra.CliffordAlgebra.AssociatedGraded
 public import TauCeti.LinearAlgebra.CliffordAlgebra.FiltrationGradedEquiv
-import TauCeti.LinearAlgebra.CliffordAlgebra.Vectors
 
 /-!
 # PBW equivalence for a Clifford filtration
@@ -52,7 +51,9 @@ private noncomputable def filtrationGradedPieceZeroEquivExteriorPower :
   (Submodule.quotEquivOfEqBot _ (filtrationPreviousRestricted_zero Q)).trans
     ((scalarEquivFiltrationZero Q).symm.trans (exteriorPower.zeroEquiv R M).symm)
 
-private noncomputable def filtrationGradedPieceEquivExteriorPower :
+/-- The canonical equivalence from each graded filtration piece to the corresponding exterior
+power. -/
+noncomputable def filtrationGradedPieceEquivExteriorPower :
     (n : ℕ) → FiltrationGradedPiece Q n ≃ₗ[R] ⋀[R]^n M
   | 0 => filtrationGradedPieceZeroEquivExteriorPower Q
   | n + 1 => filtrationGradedEquiv Q n
@@ -278,7 +279,9 @@ noncomputable def filtrationAssociatedGradedEquivExterior :
     (filtrationAssociatedGradedToExteriorDirectSum_bijective Q)).trans
       (DirectSum.decomposeAlgEquiv (fun n : ℕ => ⋀[R]^n M)).symm
 
-private theorem filtrationAssociatedGradedEquivExterior_apply_of (n : ℕ)
+/-- The associated-graded equivalence on an arbitrary homogeneous piece. -/
+@[simp]
+theorem filtrationAssociatedGradedEquivExterior_apply_of (n : ℕ)
     (x : FiltrationGradedPiece Q n) :
     filtrationAssociatedGradedEquivExterior Q
         (DirectSum.of (FiltrationGradedPiece Q) n x) =
@@ -295,7 +298,9 @@ private theorem filtrationAssociatedGradedEquivExterior_apply_of (n : ℕ)
         (filtrationGradedPieceEquivExteriorPower Q n x)) = _
   rw [DirectSum.decompose_symm_of]
 
-private theorem filtrationAssociatedGradedEquivExterior_symm_apply_coe (n : ℕ)
+/-- The inverse associated-graded equivalence on an arbitrary exterior power. -/
+@[simp]
+theorem filtrationAssociatedGradedEquivExterior_symm_apply_coe (n : ℕ)
     (x : ⋀[R]^n M) :
     (filtrationAssociatedGradedEquivExterior Q).symm (x : ExteriorAlgebra R M) =
       DirectSum.of (FiltrationGradedPiece Q) n
@@ -305,30 +310,8 @@ private theorem filtrationAssociatedGradedEquivExterior_symm_apply_coe (n : ℕ)
     filtrationAssociatedGradedEquivExterior_apply_of,
     LinearEquiv.apply_symm_apply]
 
-/-- On degree-zero scalars, the total equivalence is the exterior-algebra scalar map. -/
-@[simp]
-theorem filtrationAssociatedGradedEquivExterior_apply_of_zero (r : R) :
-    filtrationAssociatedGradedEquivExterior Q
-        (DirectSum.of (FiltrationGradedPiece Q) 0 (filtrationGradedAlgebraMap₀ Q r)) =
-      algebraMap R (ExteriorAlgebra R M) r := by
-  rw [filtrationAssociatedGradedEquivExterior_apply_of,
-    filtrationGradedAlgebraMap₀_apply,
-    filtrationGradedPieceEquivExteriorPower_apply_mk_zero,
-    exteriorPower.zeroEquiv_symm_apply]
-  simp [ExteriorAlgebra.ιMulti_zero_apply, Algebra.smul_def]
-
-/-- The inverse sends an exterior-algebra scalar to its degree-zero graded class. -/
-@[simp 1100]
-theorem filtrationAssociatedGradedEquivExterior_symm_apply_algebraMap (r : R) :
-    (filtrationAssociatedGradedEquivExterior Q).symm
-        (algebraMap R (ExteriorAlgebra R M) r) =
-      DirectSum.of (FiltrationGradedPiece Q) 0 (filtrationGradedAlgebraMap₀ Q r) := by
-  apply (filtrationAssociatedGradedEquivExterior Q).injective
-  rw [AlgEquiv.apply_symm_apply,
-    filtrationAssociatedGradedEquivExterior_apply_of_zero]
-
 /-- On a positive-degree homogeneous piece, the total equivalence is `filtrationGradedEquiv`. -/
-@[simp]
+@[simp 1100]
 theorem filtrationAssociatedGradedEquivExterior_apply_of_succ (n : ℕ)
     (x : FiltrationGradedPiece Q (n + 1)) :
     filtrationAssociatedGradedEquivExterior Q
@@ -337,7 +320,7 @@ theorem filtrationAssociatedGradedEquivExterior_apply_of_succ (n : ℕ)
   exact filtrationAssociatedGradedEquivExterior_apply_of Q (n + 1) x
 
 /-- The inverse on a positive-degree exterior power is the inverse graded equivalence. -/
-@[simp]
+@[simp 1100]
 theorem filtrationAssociatedGradedEquivExterior_symm_apply_coe_succ (n : ℕ)
     (x : ⋀[R]^(n + 1) M) :
     (filtrationAssociatedGradedEquivExterior Q).symm (x : ExteriorAlgebra R M) =
