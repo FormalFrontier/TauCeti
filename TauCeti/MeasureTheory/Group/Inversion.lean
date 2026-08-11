@@ -33,8 +33,7 @@ into the corresponding statement about its inverse-translate.
 ## Main statements
 
 * `TauCeti.coeFn_invLpₗᵢ`: it is represented by `g ↦ f g⁻¹`.
-* `TauCeti.invLpₗᵢ_invLpₗᵢ`: it is an involution, hence
-  (`TauCeti.invLpₗᵢ_eq_zero_iff`) injective.
+* `TauCeti.invLpₗᵢ_invLpₗᵢ`: it is an involution.
 * `TauCeti.invLpₗᵢ_mem_classFunctionLp` and `TauCeti.invLpₗᵢ_mem_classFunctionLp_iff`: it preserves
   the class functions, because inversion commutes with conjugation, and being an involution it
   reflects them too.
@@ -86,13 +85,6 @@ theorem invLpₗᵢ_invLpₗᵢ (f : Lp E p μ) : invLpₗᵢ 𝕜 (invLpₗᵢ 
     (Measure.measurePreserving_inv μ) (Measure.measurePreserving_inv μ)
     (.of_eq (funext inv_inv)) f
 
-/-- **The inverse-translate of `f` vanishes exactly when `f` does.**  Injectivity of a linear
-isometry, in the form in which the argument on the inverse-translate of a function returns a
-statement about the function itself. -/
-@[simp]
-theorem invLpₗᵢ_eq_zero_iff {f : Lp E p μ} : invLpₗᵢ 𝕜 f = 0 ↔ f = 0 :=
-  (invLpₗᵢ (E := E) (p := p) (μ := μ) 𝕜).map_eq_zero_iff
-
 end Involution
 
 section ClassFunction
@@ -109,7 +101,7 @@ theorem invLpₗᵢ_mem_classFunctionLp {f : Lp E p μ} (hf : f ∈ classFunctio
   intro c
   obtain ⟨a, rfl⟩ := DomMulAct.mk.surjective c
   obtain ⟨h, rfl⟩ := ConjAct.toConjAct.surjective a
-  rw [← conjLpₗᵢ_eq_smul (E := E) (p := p) (μ := μ) (𝕜 := 𝕜)]
+  rw [← conjLpₗᵢ_eq_smul (E := E) (p := p) (μ := μ), ← conjLpₗᵢ_apply (𝕜 := 𝕜)]
   calc
     conjLpₗᵢ 𝕜 h (invLpₗᵢ 𝕜 f) = invLpₗᵢ 𝕜 (conjLpₗᵢ 𝕜 h f) := by
       simp only [conjLpₗᵢ_apply, invLpₗᵢ, Lp.compMeasurePreservingₗᵢEquiv_apply]
@@ -123,7 +115,7 @@ theorem invLpₗᵢ_mem_classFunctionLp {f : Lp E p μ} (hf : f ∈ classFunctio
         simp [mul_assoc]
       simp only [hcomp]
     _ = invLpₗᵢ 𝕜 f := congrArg (invLpₗᵢ 𝕜)
-      ((conjLpₗᵢ_eq_smul (𝕜 := 𝕜) h f).trans (hf _))
+      ((conjLpₗᵢ_apply h f).trans ((conjLpₗᵢ_eq_smul h f).trans (hf _)))
 
 /-- **Inversion reflects the class functions.**  Preservation both ways, since inversion is an
 involution: the inverse-translate of `f` is a class function exactly when `f` is one.
