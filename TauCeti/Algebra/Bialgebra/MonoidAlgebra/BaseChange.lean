@@ -4,8 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.RingTheory.HopfAlgebra.MonoidAlgebra
-public import Mathlib.RingTheory.HopfAlgebra.TensorProduct
+public import Mathlib.RingTheory.Bialgebra.MonoidAlgebra
+public import Mathlib.RingTheory.Bialgebra.TensorProduct
 public import Mathlib.RingTheory.TensorProduct.MonoidAlgebra
 
 /-!
@@ -75,16 +75,23 @@ algebra along `k → K`. -/
 @[simp]
 theorem scalarTensorBialgEquiv_tmul (s : K) (p : _root_.MonoidAlgebra k G) :
     scalarTensorBialgEquiv k K (s ⊗ₜ[k] p) =
-      s • _root_.MonoidAlgebra.mapAlgHom G (Algebra.ofId k K) p :=
-  _root_.MonoidAlgebra.scalarTensorEquiv_tmul s p
+      s • _root_.MonoidAlgebra.mapAlgHom G (Algebra.ofId k K) p := by
+  rw [scalarTensorBialgEquiv, _root_.BialgEquiv.ofAlgEquiv_apply]
+  exact _root_.MonoidAlgebra.scalarTensorEquiv_tmul s p
 
 /-- The inverse base-change equivalence sends a monomial over `K` to the corresponding pure
 tensor. -/
 @[simp]
 theorem scalarTensorBialgEquiv_symm_single (g : G) (s : K) :
     (scalarTensorBialgEquiv k K).symm (_root_.MonoidAlgebra.single g s) =
-      s ⊗ₜ[k] _root_.MonoidAlgebra.single g (1 : k) :=
-  _root_.MonoidAlgebra.scalarTensorEquiv_symm_single g s
+      s ⊗ₜ[k] _root_.MonoidAlgebra.single g (1 : k) := by
+  apply (scalarTensorBialgEquiv k K (G := G)).toEquiv.injective
+  change scalarTensorBialgEquiv k K
+      ((scalarTensorBialgEquiv k K).symm (_root_.MonoidAlgebra.single g s)) =
+    scalarTensorBialgEquiv k K
+      (s ⊗ₜ[k] _root_.MonoidAlgebra.single g (1 : k))
+  rw [_root_.BialgEquiv.apply_symm_apply, scalarTensorBialgEquiv_tmul]
+  simp
 
 /-- Base change of monoid bialgebras is natural in the indexing monoid. Mapping the indices
 before base change gives the same bialgebra morphism as mapping them afterwards. -/
