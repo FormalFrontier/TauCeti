@@ -94,6 +94,7 @@ variable {A G W : Type*} [CommRing A] [Monoid G] [AddCommGroup W] [Module A W]
 /-- A minimal subrepresentation is the same thing as a simple `A[G]`-submodule of the associated
 module: the dictionary between the two ways of saying "irreducible constituent".  It is
 `isSimpleModule_iff_isAtom` read across `Subrepresentation.subrepresentationSubmoduleOrderIso`. -/
+@[simp]
 theorem isSimpleModule_asSubmodule_iff {σ : Subrepresentation ρ} :
     IsSimpleModule A[G] σ.asSubmodule ↔ IsAtom σ :=
   isSimpleModule_iff_isAtom.trans (subrepresentationSubmoduleOrderIso.isAtom_iff σ)

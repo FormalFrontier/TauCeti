@@ -52,8 +52,8 @@ conjugates enters.  Finite-dimensionality is used only to *produce* an atom, in
 
 * `TauCeti.Representation.iSup_conjSubrep_eq_top`: the translates of a nonzero
   `N`-subrepresentation of an irreducible representation span.
-* `TauCeti.Representation.eq_top_of_forall_asSubmodule_conjSubrep_le`: the same statement read in
-  the lattice of `k[N]`-submodules of the restriction.
+* `TauCeti.Representation.iSup_asSubmodule_conjSubrep_eq_top`: the same statement read in the
+  lattice of `k[N]`-submodules of the restriction.
 * `TauCeti.Representation.isSemisimpleRepresentation_comp_subtype_of_isAtom`: if some
   `N`-subrepresentation of an irreducible representation `IsAtom`, then the restriction to `N` is
   semisimple.
@@ -289,27 +289,28 @@ theorem iSup_conjSubrep_eq_top [ρ.IsIrreducible]
     exact le_bot_iff.mp (hbot ▸ hτσ)
   · exact congrArg Subrepresentation.toSubmodule h
 
-/-- **A `k[N]`-submodule of the restriction that contains every translate of a nonzero
-`N`-subrepresentation is everything.**  This is `TauCeti.Representation.iSup_conjSubrep_eq_top` read
-in the lattice of `k[N]`-submodules of `Representation.asModule (ρ.comp N.subtype)` instead of the
-lattice of `k`-subspaces of `V`; the two lattices are exchanged by
+/-- **The translates of a nonzero `N`-subrepresentation of an irreducible representation span, as
+`k[N]`-submodules.**  This is `TauCeti.Representation.iSup_conjSubrep_eq_top` read in the lattice of
+`k[N]`-submodules of `Representation.asModule (ρ.comp N.subtype)` instead of the lattice of
+`k`-subspaces of `V`; the two lattices are exchanged by
 `Subrepresentation.subrepresentationSubmoduleOrderIso`, and this is the only place the exchange is
 performed. -/
-theorem eq_top_of_forall_asSubmodule_conjSubrep_le [ρ.IsIrreducible]
-    {σ : Subrepresentation (ρ.comp N.subtype)} (hσ : σ ≠ ⊥)
-    {T : Submodule k[N] (_root_.Representation.asModule (ρ.comp N.subtype))}
-    (hT : ∀ g : G, (conjSubrep ρ g σ).asSubmodule ≤ T) : T = ⊤ := by
-  -- pull `T` back to a subrepresentation, where the spanning statement lives
+theorem iSup_asSubmodule_conjSubrep_eq_top [ρ.IsIrreducible]
+    {σ : Subrepresentation (ρ.comp N.subtype)} (hσ : σ ≠ ⊥) :
+    ⨆ g : G, (conjSubrep ρ g σ).asSubmodule = ⊤ := by
+  -- The lattice of subrepresentations is only a `BoundedOrder`, with no suprema of its own, so the
+  -- supremum is formed on the submodule side and pulled back, rather than pushed forward.
   set S : Subrepresentation (ρ.comp N.subtype) :=
-    Subrepresentation.subrepresentationSubmoduleOrderIso.symm T with hS
-  have hSeq : S.asSubmodule = T := by
+    Subrepresentation.subrepresentationSubmoduleOrderIso.symm
+      (⨆ g : G, (conjSubrep ρ g σ).asSubmodule) with hS
+  have hSeq : S.asSubmodule = ⨆ g : G, (conjSubrep ρ g σ).asSubmodule := by
     rw [hS, ← Subrepresentation.subrepresentationSubmoduleOrderIso_apply,
       OrderIso.apply_symm_apply]
   have hle : ∀ g : G, conjSubrep ρ g σ ≤ S := fun g => by
     rw [← Subrepresentation.subrepresentationSubmoduleOrderIso.le_iff_le,
       Subrepresentation.subrepresentationSubmoduleOrderIso_apply,
       Subrepresentation.subrepresentationSubmoduleOrderIso_apply, hSeq]
-    exact hT g
+    exact le_iSup (fun g : G => (conjSubrep ρ g σ).asSubmodule) g
   have htop : S = ⊤ := by
     refine Subrepresentation.toSubmodule_injective (le_antisymm le_top ?_)
     rw [Subrepresentation.toSubmodule_top, ← iSup_conjSubrep_eq_top ρ hσ]
@@ -328,8 +329,9 @@ theorem isSemisimpleRepresentation_comp_subtype_of_isAtom [ρ.IsIrreducible]
     {σ : Subrepresentation (ρ.comp N.subtype)} (hσ : IsAtom σ) :
     _root_.Representation.IsSemisimpleRepresentation (ρ.comp N.subtype) := by
   rw [_root_.Representation.isSemisimpleRepresentation_iff_isSemisimpleModule_asModule]
-  refine IsSemisimpleModule.of_sSup_simples_eq_top
-    (eq_top_of_forall_asSubmodule_conjSubrep_le ρ hσ.1 fun g => le_sSup ?_)
+  refine IsSemisimpleModule.of_sSup_simples_eq_top (eq_top_iff.mpr ?_)
+  rw [← iSup_asSubmodule_conjSubrep_eq_top ρ hσ.1]
+  refine iSup_le fun g => le_sSup ?_
   rw [Set.mem_ofPred_eq]
   exact Subrepresentation.isSimpleModule_asSubmodule_iff.mpr (isAtom_conjSubrep_iff.mpr hσ)
 

@@ -28,10 +28,9 @@ The argument is short because the two halves it needs are already in place.  The
 simple submodules is isomorphic to one of them (Mathlib's `Submodule.linearEquiv_of_sSup_eq_top`).
 The spanning statement is needed in the lattice of `k[N]`-submodules of the restriction viewed as a
 `k[N]`-module, where the isotypic machinery lives, rather than in the lattice of `k`-subspaces where
-it is proved; the move between the two lattices is
-`TauCeti.Representation.eq_top_of_forall_asSubmodule_conjSubrep_le` in
-`TauCeti/RepresentationTheory/Induction/Clifford/Basic.lean`, and
-`TauCeti.Representation.iSup_asSubmodule_conjSubrep_eq_top` is the supremum form of it used here.
+it is proved; that reading is `TauCeti.Representation.iSup_asSubmodule_conjSubrep_eq_top`, which
+lives in `TauCeti/RepresentationTheory/Induction/Clifford/Basic.lean` because the semisimplicity
+proof there needs it too.
 
 No invertibility of `Nat.card N` is used: irreducibility of the ambient representation replaces
 Maschke's theorem throughout, exactly as in
@@ -41,14 +40,10 @@ finiteness either; finiteness of `G` is assumed only by
 translates.  Finite-dimensionality of `V` is needed only to know that a minimal `N`-stable subspace
 exists at all: each of the orbit and isotypic-component statements below takes such a subspace as a
 hypothesis, except `TauCeti.Representation.exists_isAtom_forall_nonempty_linearEquiv_conjSubrep`,
-the packaged form of the theorem, which assumes finite-dimensionality and produces one.  The one
-auxiliary statement assumes less: `TauCeti.Representation.iSup_asSubmodule_conjSubrep_eq_top` asks
-only that the subrepresentation it translates be nonzero.
+the packaged form of the theorem, which assumes finite-dimensionality and produces one.
 
 ## Main statements
 
-* `TauCeti.Representation.iSup_asSubmodule_conjSubrep_eq_top`: the translates of a nonzero
-  `N`-subrepresentation of an irreducible representation span, as `k[N]`-submodules.
 * `TauCeti.Representation.exists_nonempty_linearEquiv_conjSubrep`: **Clifford's theorem, single
   orbit form.** Any two minimal `N`-stable subspaces of an irreducible representation are
   translates of one another, up to isomorphism of `N`-representations.
@@ -101,17 +96,6 @@ section Orbit
 
 variable {k G V : Type*} [Field k] [Group G] [AddCommGroup V] [Module k V]
   {N : Subgroup G} [N.Normal] (ρ : Representation k G V)
-
-/-- **The translates of a nonzero `N`-subrepresentation of an irreducible representation span, as
-`k[N]`-submodules.**  This is `TauCeti.Representation.iSup_conjSubrep_eq_top` read in the lattice of
-`k[N]`-submodules of `Representation.asModule (ρ.comp N.subtype)` instead of the lattice of
-`k`-subspaces of `V`; the two lattices are exchanged by
-`Subrepresentation.subrepresentationSubmoduleOrderIso`. -/
-theorem iSup_asSubmodule_conjSubrep_eq_top [ρ.IsIrreducible]
-    {σ : Subrepresentation (ρ.comp N.subtype)} (hσ : σ ≠ ⊥) :
-    ⨆ g : G, (conjSubrep ρ g σ).asSubmodule = ⊤ :=
-  eq_top_of_forall_asSubmodule_conjSubrep_le ρ hσ
-    fun g => le_iSup (fun g : G => (conjSubrep ρ g σ).asSubmodule) g
 
 /-- **Every irreducible `N`-constituent is a translate of any fixed one.**  If `σ` is a minimal
 `N`-stable subspace of an irreducible representation `ρ` and `T` is any simple `k[N]`-submodule of
