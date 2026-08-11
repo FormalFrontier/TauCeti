@@ -5,11 +5,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 import TauCeti.Analysis.Calculus.ParametricFDeriv
-public import TauCeti.Geometry.Lie.Exponential.Basic
 import TauCeti.Geometry.Lie.Exponential.Derivative.Basic
 public import TauCeti.Geometry.Lie.RightInvariantVectorField
 public import TauCeti.Geometry.Manifold.VectorField.LieBracket
-import TauCeti.Geometry.Manifold.ContMDiff.Prod
 import TauCeti.Geometry.Lie.Interior
 
 /-!
@@ -24,8 +22,6 @@ This supplies a prerequisite for Deliverable A, Layer 1 of
 
 ## Main results
 
-* `contDiff_comp_mulInvariantExp_mul_mulInvariantExp`: evaluating a smooth scalar function on two
-  multiplied exponential lines gives a smooth two-parameter function.
 * `mvfderiv_mulRightInvariantVectorField_mulInvariantVectorField_commute`: left- and
   right-invariant scalar differentiation commute at every group point.
 * `mlieBracket_mulRightInvariantVectorField_mulInvariantVectorField`: the corresponding
@@ -56,27 +52,27 @@ variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
 attribute [local instance] LieGroup.minSmoothnessThree
 attribute [local instance] ContMDiffMul.boundarylessManifold
 
+private theorem two_le_infinite_smoothness :
+    ((2 : ℕ∞) : ℕ∞ω) ≤ ((⊤ : ℕ∞) : ℕ∞ω) :=
+  ENat.natCast_le_of_coe_top_le_withTop le_rfl 2
+
 section Complete
 
 variable [CompleteSpace E]
 
-/-- A smooth scalar function evaluated on two multiplied exponential lines is smooth in both
-parameters. -/
-theorem contDiff_comp_mulInvariantExp_mul_mulInvariantExp
-    [T2Space G] [BoundarylessManifold I G]
+/-- A smooth scalar function evaluated on two exponential lines multiplied around a fixed group
+element is smooth in both parameters. -/
+private theorem contDiff_comp_mulInvariantExp_mul_mulInvariantExp
     {f : G → ℝ} (hf : ContMDiff I 𝓘(ℝ, ℝ) ∞ f) (g : G)
     (X Y : GroupLieAlgebra I G) :
-    ContDiff ℝ ∞ (fun p : ℝ × ℝ =>
+    let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
+    ContDiff ℝ 2 (fun p : ℝ × ℝ =>
       f (mulInvariantExp (I := I) (G := G) (p.1 • X) * g *
         mulInvariantExp (I := I) (G := G) (p.2 • Y))) := by
-  have hX := contMDiff_mulInvariantExp_smul (I := I) (G := G) X
-  have hY := contMDiff_mulInvariantExp_smul (I := I) (G := G) Y
-  have hMprod : ContMDiff (𝓘(ℝ, ℝ).prod 𝓘(ℝ, ℝ)) I ∞ (fun p : ℝ × ℝ =>
-      mulInvariantExp (I := I) (G := G) (p.1 • X) * g *
-        mulInvariantExp (I := I) (G := G) (p.2 • Y)) :=
-    ((hX.comp contMDiff_fst).mul contMDiff_const).mul (hY.comp contMDiff_snd)
-  have hM := hMprod.of_prod_modelWithCornersSelf
-  exact (hf.comp hM).contDiff
+  let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
+  dsimp only
+  exact (hf.comp (contMDiff_mulInvariantExp_smul_mul_mul_mulInvariantExp_smul g X Y)).contDiff.of_le
+    two_le_infinite_smoothness
 
 private theorem spatialFDeriv_mulInvariantExp_mul_mulInvariantExp
     (f : C^∞⟮I, G; ℝ⟯) (g : G) (X Y : GroupLieAlgebra I G) (s : ℝ) :
@@ -93,8 +89,7 @@ private theorem spatialFDeriv_mulInvariantExp_mul_mulInvariantExp
     f (mulInvariantExp (I := I) (G := G) (p.1 • X) * g *
       mulInvariantExp (I := I) (G := G) (p.2 • Y))
   have hF : ContDiff ℝ 2 F :=
-    (contDiff_comp_mulInvariantExp_mul_mulInvariantExp f.contMDiff g X Y).of_le
-      (ENat.natCast_le_of_coe_top_le_withTop le_rfl 2)
+    contDiff_comp_mulInvariantExp_mul_mulInvariantExp f.contMDiff g X Y
   have hFdiff : DifferentiableAt ℝ F (s, 0) := hF.differentiable (by norm_num) (s, 0)
   have hslice : DifferentiableAt ℝ (fun t => F (s, t)) 0 :=
     hFdiff.comp 0 ((differentiableAt_const s).prodMk differentiableAt_id)
@@ -127,8 +122,7 @@ private theorem timeFDeriv_mulInvariantExp_mul_mulInvariantExp
     f (mulInvariantExp (I := I) (G := G) (p.1 • X) * g *
       mulInvariantExp (I := I) (G := G) (p.2 • Y))
   have hF : ContDiff ℝ 2 F :=
-    (contDiff_comp_mulInvariantExp_mul_mulInvariantExp f.contMDiff g X Y).of_le
-      (ENat.natCast_le_of_coe_top_le_withTop le_rfl 2)
+    contDiff_comp_mulInvariantExp_mul_mulInvariantExp f.contMDiff g X Y
   have hFdiff : DifferentiableAt ℝ F (0, t) := hF.differentiable (by norm_num) (0, t)
   have hpartial := hasDerivAt_parameterCurve hFdiff
   have hfAt := f.contMDiff.mdifferentiable (by simp)
@@ -167,8 +161,7 @@ theorem mvfderiv_mulRightInvariantVectorField_mulInvariantVectorField_commute
     ⟨fun h => mvfderiv I f h (mulRightInvariantVectorField X h),
       contMDiff_mvfderiv_mulRightInvariantVectorField X f⟩
   have hF : ContDiff ℝ 2 F :=
-    (contDiff_comp_mulInvariantExp_mul_mulInvariantExp f.contMDiff g X Y).of_le
-      (ENat.natCast_le_of_coe_top_le_withTop le_rfl 2)
+    contDiff_comp_mulInvariantExp_mul_mulInvariantExp f.contMDiff g X Y
   -- Identify the two partial derivatives with the invariant directional derivatives.
   have hspaceFun : (fun s => spatialFDeriv F 0 s 1) =
       fun s => LYf (γX s * g) := by
@@ -218,7 +211,7 @@ theorem mlieBracket_mulRightInvariantVectorField_mulInvariantVectorField
     (V := mulRightInvariantVectorField X)
     (W := mulInvariantVectorField Y)
     (x := g)
-    (f.contMDiff.contMDiffAt.of_le (ENat.natCast_le_of_coe_top_le_withTop le_rfl 2))
+    (f.contMDiff.contMDiffAt.of_le two_le_infinite_smoothness)
     (by simp)
     ((contMDiff_mulRightInvariantVectorField_infty X).mdifferentiable
       (by simp)).mdifferentiableAt

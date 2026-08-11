@@ -4,13 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.Geometry.Manifold.ContMDiff.Constructions
+public import Mathlib.Geometry.Manifold.ContMDiff.Defs
 
 /-!
 # Smooth maps from product model spaces
 
 Mathlib equips a product of model vector spaces both with the product of their self-models and
-with the self-model of the product. This file provides the smoothness bridge between those
+with the self-model of the product. This file provides the `C^n` bridge between those
 definitionally distinct presentations.
 
 This supplies reusable two-parameter calculus infrastructure for Deliverable A, Layer 1 of
@@ -18,8 +18,8 @@ This supplies reusable two-parameter calculus infrastructure for Deliverable A, 
 
 ## Main result
 
-* `ContMDiff.of_prod_modelWithCornersSelf`: reinterpret a smooth map from a product of self-models
-  as a smooth map from the self-model of the product.
+* `contMDiff_prod_modelWithCornersSelf_iff`: a map from a product of model vector spaces is `C^n`
+  for the product of the self-models if and only if it is `C^n` for the self-model of the product.
 
 ## References
 
@@ -39,10 +39,9 @@ variable {𝕜 E₁ E₂ E' H' M : Type*} [NontriviallyNormedField 𝕜]
   [TopologicalSpace M] [ChartedSpace H' M]
   {n : WithTop ℕ∞} {f : E₁ × E₂ → M}
 
-/-- Reinterpret a smooth map from the product of two self-models as a smooth map from the
-self-model of the product. -/
-theorem ContMDiff.of_prod_modelWithCornersSelf
-    (hf : ContMDiff (𝓘(𝕜, E₁).prod 𝓘(𝕜, E₂)) I' n f) :
-    ContMDiff 𝓘(𝕜, E₁ × E₂) I' n f := by
+/-- A map from a product of model vector spaces is `C^n` for the product of the self-models if and
+only if it is `C^n` for the self-model of the product. -/
+theorem contMDiff_prod_modelWithCornersSelf_iff :
+    ContMDiff (𝓘(𝕜, E₁).prod 𝓘(𝕜, E₂)) I' n f ↔
+      ContMDiff 𝓘(𝕜, E₁ × E₂) I' n f := by
   rw [modelWithCornersSelf_prod, ← chartedSpaceSelf_prod]
-  exact hf
