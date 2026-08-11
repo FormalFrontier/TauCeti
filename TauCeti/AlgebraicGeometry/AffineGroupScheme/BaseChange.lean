@@ -110,10 +110,10 @@ lemma baseChangeMap_hom (f : R ⟶ S) {G H : AffineGroupSchemeCat R} (g : G ⟶ 
   (rfl)
 
 /-- Pullback along `Spec S ⟶ Spec R` defines a functor from affine group schemes over
-`Spec R` to affine group schemes over `Spec S`. It is the lift through the affineness property
-of the pullback functor on group objects, so its functor laws are the pullback functor's.
-Exposed so that the component lemmas for the comparison isomorphisms below can be stated: their
-sources and targets are the functor's values, which have to be recognised as base changes. -/
+`Spec R` to affine group schemes over `Spec S`. -/
+-- `@[expose]` is forced by the public statements below: with the body hidden, the two sides of
+-- `baseChangeFunctor_map` and of the component lemmas for the comparison isomorphisms are only
+-- definitionally equal, so those statements no longer elaborate.
 @[expose] noncomputable def baseChangeFunctor (f : R ⟶ S) :
     AffineGroupSchemeCat R ⥤ AffineGroupSchemeCat S :=
   (affineGroupSchemeProperty S).lift
