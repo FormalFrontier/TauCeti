@@ -47,7 +47,7 @@ open scoped TensorProduct
 
 namespace TauCeti.Tannaka
 
-universe u
+universe u v w
 
 section FiniteRegularObject
 
@@ -65,8 +65,8 @@ end FiniteRegularObject
 section CounitEvaluation
 
 variable (k : Type u) [CommSemiring k]
-variable (H : Type u) [AddCommMonoid H] [Module k H] [Coalgebra k H]
-variable (A : Type u) [CommSemiring A] [Algebra k A]
+variable (H : Type v) [AddCommMonoid H] [Module k H] [Coalgebra k H]
+variable (A : Type w) [CommSemiring A] [Algebra k A]
 
 /-- Evaluation after scalar extension by applying the counit on a regular subcomodule. -/
 noncomputable def counitEvaluation (N : Subcomodule k H H) : A ⊗[k] N →ₗ[A] A :=
