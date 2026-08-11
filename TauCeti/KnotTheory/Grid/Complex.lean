@@ -53,61 +53,6 @@ abbrev GridChain (R : Type*) [Zero R] (n : ℕ) :=
 
 namespace GridChain
 
-/-- Assemble a linear endomorphism of grid chains from its matrix coefficients on grid-state
-generators. -/
-noncomputable def mkDifferential {R : Type*} [CommSemiring R] {n : ℕ}
-    (coefficient : GridState n → GridState n → R) : GridChain R n →ₗ[R] GridChain R n :=
-  Finsupp.lsum R fun x : GridState n =>
-    (LinearMap.id : R →ₗ[R] R).smulRight
-      (Finset.univ.sum fun y : GridState n => Finsupp.single y (coefficient x y))
-
-/-- The linear map assembled from matrix coefficients sends a basis generator to its coefficient
-row. -/
-@[simp]
-theorem mkDifferential_single {R : Type*} [CommSemiring R] {n : ℕ}
-    (coefficient : GridState n → GridState n → R) (x : GridState n) :
-    mkDifferential coefficient (Finsupp.single x 1) =
-      Finset.univ.sum fun y : GridState n => Finsupp.single y (coefficient x y) := by
-  classical
-  rw [mkDifferential, Finsupp.lsum_single]
-  simp
-
-/-- The matrix entry of the linear map assembled from coefficients is the supplied coefficient. -/
-theorem mkDifferential_single_apply {R : Type*} [CommSemiring R] {n : ℕ}
-    (coefficient : GridState n → GridState n → R) (x y : GridState n) :
-    mkDifferential coefficient (Finsupp.single x 1) y = coefficient x y := by
-  classical
-  rw [mkDifferential_single, Finsupp.finsetSum_apply, Finset.sum_eq_single y]
-  · simp
-  · intro z _ hz
-    simp [hz.symm]
-  · intro hy
-    exact (hy (Finset.mem_univ y)).elim
-
-/-- The map assembled from matrix coefficients is the sum of its coefficient rows over the input
-support. -/
-theorem mkDifferential_apply {R : Type*} [CommSemiring R] {n : ℕ}
-    (coefficient : GridState n → GridState n → R) (c : GridChain R n) :
-    mkDifferential coefficient c =
-      c.sum fun x a => a • Finset.univ.sum fun y : GridState n =>
-        Finsupp.single y (coefficient x y) := by
-  rw [mkDifferential, Finsupp.lsum_apply]
-  simp [Finsupp.sum, LinearMap.smulRight_apply]
-
-/-- The coefficient formula for the linear map assembled from matrix coefficients. -/
-@[simp]
-theorem mkDifferential_apply_apply {R : Type*} [CommSemiring R] {n : ℕ}
-    (coefficient : GridState n → GridState n → R) (c : GridChain R n) (y : GridState n) :
-    mkDifferential coefficient c y = c.sum fun x a => a * coefficient x y := by
-  classical
-  rw [mkDifferential_apply]
-  rw [Finsupp.sum_apply]
-  refine Finsupp.sum_congr (N := R) (f := c) fun x _ => ?_
-  rw [Finsupp.smul_apply]
-  congr 1
-  simpa only [mkDifferential_single] using
-    mkDifferential_single_apply coefficient x y
-
 /-- The linear automorphism of grid chains induced by relabeling each generator `x` along an
 equivalence `e` of grid states, sending the generator `x` to the generator `e x`.
 
@@ -246,7 +191,9 @@ theorem exists_swapColumns_of_fullyBlockedDifferentialOnGenerator_ne_zero {x y :
 
 /-- The fully blocked grid differential as a `ZMod 2`-linear map on chains. -/
 noncomputable def fullyBlockedDifferential : GridChain (ZMod 2) n →ₗ[ZMod 2] GridChain (ZMod 2) n :=
-  GridChain.mkDifferential G.fullyBlockedRectangleCount
+  Finsupp.lsum (ZMod 2) fun x : GridState n =>
+    (LinearMap.id : ZMod 2 →ₗ[ZMod 2] ZMod 2).smulRight
+      (G.fullyBlockedDifferentialOnGenerator x)
 
 /-- The fully blocked differential sends a single generator to the corresponding rectangle-count
 row. -/
@@ -254,15 +201,17 @@ row. -/
 theorem fullyBlockedDifferential_single (x : GridState n) :
     G.fullyBlockedDifferential (Finsupp.single x 1) =
       G.fullyBlockedDifferentialOnGenerator x := by
-  rw [fullyBlockedDifferential, GridChain.mkDifferential_single,
-    ← fullyBlockedDifferentialOnGenerator_def]
+  classical
+  rw [fullyBlockedDifferential]
+  rw [Finsupp.lsum_single]
+  simp
 
 /-- The matrix coefficient of the fully blocked differential on a single generator is the fully
 blocked rectangle count. -/
 theorem fullyBlockedDifferential_single_apply (x y : GridState n) :
     G.fullyBlockedDifferential (Finsupp.single x 1) y =
       G.fullyBlockedRectangleCount x y := by
-  exact GridChain.mkDifferential_single_apply G.fullyBlockedRectangleCount x y
+  simp
 
 /-- There is no self-term in the fully blocked differential of a generator. -/
 theorem fullyBlockedDifferentialOnGenerator_apply_self (x : GridState n) :
@@ -279,17 +228,18 @@ of a chain. -/
 theorem fullyBlockedDifferential_apply (c : GridChain (ZMod 2) n) :
     G.fullyBlockedDifferential c =
       c.sum fun x a => a • G.fullyBlockedDifferentialOnGenerator x := by
-  rw [fullyBlockedDifferential, GridChain.mkDifferential_apply]
-  apply Finsupp.sum_congr
-  intro x _
-  rw [fullyBlockedDifferentialOnGenerator_def]
+  rw [fullyBlockedDifferential]
+  rw [Finsupp.lsum_apply]
+  simp [Finsupp.sum, LinearMap.smulRight_apply]
 
 /-- The coefficient formula for the fully blocked differential on an arbitrary chain. -/
 @[simp]
 theorem fullyBlockedDifferential_apply_apply (c : GridChain (ZMod 2) n) (y : GridState n) :
     G.fullyBlockedDifferential c y =
       c.sum fun x a => a * G.fullyBlockedRectangleCount x y := by
-  exact GridChain.mkDifferential_apply_apply G.fullyBlockedRectangleCount c y
+  classical
+  rw [fullyBlockedDifferential_apply]
+  simp [Finsupp.sum_apply]
 
 end GridDiagram
 

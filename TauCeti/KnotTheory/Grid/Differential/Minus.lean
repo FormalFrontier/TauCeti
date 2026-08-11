@@ -249,20 +249,23 @@ theorem exists_swapColumns_of_minusDifferentialOnGenerator_ne_zero {x y : GridSt
 states. -/
 noncomputable def minusDifferential :
     GridChain (GridMinusRing n) n →ₗ[GridMinusRing n] GridChain (GridMinusRing n) n :=
-  GridChain.mkDifferential G.minusRectangleCoefficient
+  Finsupp.lsum (GridMinusRing n) fun x : GridState n =>
+    (LinearMap.id : GridMinusRing n →ₗ[GridMinusRing n] GridMinusRing n).smulRight
+      (G.minusDifferentialOnGenerator x)
 
 /-- The minus differential sends a basis generator to its rectangle-coefficient row. -/
 @[simp]
 theorem minusDifferential_single (x : GridState n) :
     G.minusDifferential (Finsupp.single x 1) = G.minusDifferentialOnGenerator x := by
-  rw [minusDifferential, GridChain.mkDifferential_single,
-    ← minusDifferentialOnGenerator_def]
+  classical
+  rw [minusDifferential, Finsupp.lsum_single]
+  simp
 
 /-- The matrix coefficient of the minus differential on a basis generator is the weighted
 minus rectangle coefficient. -/
 theorem minusDifferential_single_apply (x y : GridState n) :
     G.minusDifferential (Finsupp.single x 1) y = G.minusRectangleCoefficient x y := by
-  exact GridChain.mkDifferential_single_apply G.minusRectangleCoefficient x y
+  simp
 
 /-- The self-coefficient of the minus differential on a single generator is zero. -/
 theorem minusDifferential_single_apply_self (x : GridState n) :
@@ -280,17 +283,17 @@ theorem constantCoeff_minusDifferential_single_apply (x y : GridState n) :
 theorem minusDifferential_apply (c : GridChain (GridMinusRing n) n) :
     G.minusDifferential c =
       c.sum fun x a => a • G.minusDifferentialOnGenerator x := by
-  rw [minusDifferential, GridChain.mkDifferential_apply]
-  apply Finsupp.sum_congr
-  intro x _
-  rw [minusDifferentialOnGenerator_def]
+  rw [minusDifferential, Finsupp.lsum_apply]
+  simp [Finsupp.sum, LinearMap.smulRight_apply]
 
 /-- The coefficient formula for the minus differential on an arbitrary polynomial grid chain. -/
 @[simp]
 theorem minusDifferential_apply_apply (c : GridChain (GridMinusRing n) n) (y : GridState n) :
     G.minusDifferential c y =
       c.sum fun x a => a * G.minusRectangleCoefficient x y := by
-  exact GridChain.mkDifferential_apply_apply G.minusRectangleCoefficient c y
+  classical
+  rw [minusDifferential_apply]
+  simp [Finsupp.sum_apply]
 
 end GridDiagram
 
