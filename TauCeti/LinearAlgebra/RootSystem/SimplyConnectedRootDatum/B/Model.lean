@@ -59,8 +59,8 @@ coroots is proved.
 
 ## Main definitions
 
-* `TauCeti.DynkinType.TypeB.wt` and `TauCeti.DynkinType.TypeB.cwt`: the coordinates of a signed
-  basis vector and of its double.
+* `TauCeti.DynkinType.TypeB.signedWeight` and `TauCeti.DynkinType.TypeB.signedCoweight`: the
+  coordinates of a signed basis vector and of its double.
 * `TauCeti.DynkinType.TypeB.rootOfPair` and `TauCeti.DynkinType.TypeB.corootOfPair`: the root and
   coroot named by a pair of signed basis vectors.
 * `TauCeti.DynkinType.TypeB.reflMap`: the signed permutation realising the reflection in a root.
@@ -70,7 +70,8 @@ their bodies are not exposed to importing modules.
 
 ## Main results
 
-* `TauCeti.DynkinType.TypeB.wt_reflMap` and `TauCeti.DynkinType.TypeB.cwt_reflMap`: the reflection
+* `TauCeti.DynkinType.TypeB.signedWeight_reflMap` and
+  `TauCeti.DynkinType.TypeB.signedCoweight_reflMap`: the reflection
   formulas on a single signed basis vector, from which the root-datum axioms follow additively.
 * `TauCeti.DynkinType.TypeB.eq_of_forall_mem_iff`: an index is recovered from its unordered
   signed-vector pair.
@@ -222,25 +223,27 @@ lemma eq_or_eq_opp_of_axis_eq {u v : Fin (2 * n)} (h : axis u = axis v) : u = v 
 lemma ne_of_axis_ne {u v : Fin (2 * n)} (h : axis u ≠ axis v) : u ≠ v := fun hc => h (by rw [hc])
 
 /-- The character coordinates of the signed basis vector indexed by `u`. -/
-def wt (u : Fin (2 * n)) : Fin n → ℤ := sgn u • weight n (axis u)
-lemma wt_def (u : Fin (2 * n)) : wt u = sgn u • weight n (axis u) := (rfl)
+def signedWeight (u : Fin (2 * n)) : Fin n → ℤ := sgn u • weight n (axis u)
+lemma signedWeight_def (u : Fin (2 * n)) : signedWeight u = sgn u • weight n (axis u) := (rfl)
 
 /-- The cocharacter coordinates of twice the signed basis vector indexed by `u`. -/
-def cwt (u : Fin (2 * n)) : Fin n → ℤ := sgn u • coweight n (axis u)
-lemma cwt_def (u : Fin (2 * n)) : cwt u = sgn u • coweight n (axis u) := (rfl)
+def signedCoweight (u : Fin (2 * n)) : Fin n → ℤ := sgn u • coweight n (axis u)
+lemma signedCoweight_def (u : Fin (2 * n)) :
+    signedCoweight u = sgn u • coweight n (axis u) := (rfl)
 
-@[simp] lemma wt_opp (u : Fin (2 * n)) : wt (opp u) = -wt u := by
-  simp only [wt, sgn_opp, axis_opp, neg_smul]
+@[simp] lemma signedWeight_opp (u : Fin (2 * n)) : signedWeight (opp u) = -signedWeight u := by
+  simp only [signedWeight, sgn_opp, axis_opp, neg_smul]
 
-@[simp] lemma cwt_opp (u : Fin (2 * n)) : cwt (opp u) = -cwt u := by
-  simp only [cwt, sgn_opp, axis_opp, neg_smul]
+@[simp] lemma signedCoweight_opp (u : Fin (2 * n)) :
+    signedCoweight (opp u) = -signedCoweight u := by
+  simp only [signedCoweight, sgn_opp, axis_opp, neg_smul]
 
 /-- The pairing of two signed basis vectors: `2` on the diagonal, `-2` on opposite vectors, and `0`
 on different axes. -/
-lemma wt_dotProduct_cwt (u v : Fin (2 * n)) :
-    wt u ⬝ᵥ cwt v = if u = v then 2 else if u = opp v then -2 else 0 := by
+lemma signedWeight_dotProduct_signedCoweight (u v : Fin (2 * n)) :
+    signedWeight u ⬝ᵥ signedCoweight v = if u = v then 2 else if u = opp v then -2 else 0 := by
   have h := weight_dotProduct_coweight (n := n) (a := axis u) (b := axis v) (axis_lt u)
-  simp only [wt, cwt, smul_dotProduct, dotProduct_smul, smul_eq_mul, h]
+  simp only [signedWeight, signedCoweight, smul_dotProduct, dotProduct_smul, smul_eq_mul, h]
   by_cases hax : axis u = axis v
   · rw [ite_eq_left hax]
     rcases eq_or_eq_opp_of_axis_eq hax with rfl | rfl
@@ -252,22 +255,23 @@ lemma wt_dotProduct_cwt (u v : Fin (2 * n)) :
       ite_eq_right (ne_of_axis_ne (by rwa [axis_opp]))]
     ring
 
-@[simp] lemma wt_dotProduct_cwt_self (u : Fin (2 * n)) : wt u ⬝ᵥ cwt u = 2 := by
-  rw [wt_dotProduct_cwt, ite_eq_left rfl]
+@[simp] lemma signedWeight_dotProduct_self (u : Fin (2 * n)) :
+    signedWeight u ⬝ᵥ signedCoweight u = 2 := by
+  rw [signedWeight_dotProduct_signedCoweight, ite_eq_left rfl]
 
-lemma wt_dotProduct_cwt_eq_zero {u v : Fin (2 * n)} (h1 : u ≠ v) (h2 : u ≠ opp v) :
-    wt u ⬝ᵥ cwt v = 0 := by
-  rw [wt_dotProduct_cwt, ite_eq_right h1, ite_eq_right h2]
+lemma signedWeight_dotProduct_eq_zero {u v : Fin (2 * n)} (h1 : u ≠ v) (h2 : u ≠ opp v) :
+    signedWeight u ⬝ᵥ signedCoweight v = 0 := by
+  rw [signedWeight_dotProduct_signedCoweight, ite_eq_right h1, ite_eq_right h2]
 
-lemma wt_dotProduct_cwt_of_axis_ne {u v : Fin (2 * n)} (h : axis u ≠ axis v) :
-    wt u ⬝ᵥ cwt v = 0 :=
-  wt_dotProduct_cwt_eq_zero (ne_of_axis_ne h) (ne_of_axis_ne (by rwa [axis_opp]))
+lemma signedWeight_dotProduct_of_axis_ne {u v : Fin (2 * n)} (h : axis u ≠ axis v) :
+    signedWeight u ⬝ᵥ signedCoweight v = 0 :=
+  signedWeight_dotProduct_eq_zero (ne_of_axis_ne h) (ne_of_axis_ne (by rwa [axis_opp]))
 
 /-! ## The coroot attached to a pair of signed basis vectors -/
 
 /-- The simple-coroot coordinates of the coroot named by the pair `{u, v}`: the half of
-`cwt u + cwt v`, which is integral. When `u = v` this is the short coroot `cwt u`, and otherwise it
-is the long coroot `± e_a ± e_b` itself. -/
+`signedCoweight u + signedCoweight v`, which is integral. When `u = v` this is the short coroot
+`signedCoweight u`, and otherwise it is the long coroot `± e_a ± e_b` itself. -/
 def corootOfPair (u v : Fin (2 * n)) : Fin n → ℤ := fun k =>
   if (k : ℕ) + 1 = n then (if sgn u = sgn v then sgn u else 0)
   else sgn u * (if axis u ≤ (k : ℕ) then 1 else 0) + sgn v * (if axis v ≤ (k : ℕ) then 1 else 0)
@@ -287,10 +291,10 @@ lemma corootOfPair_comm (u v : Fin (2 * n)) : corootOfPair u v = corootOfPair v 
   · rw [ite_eq_right hk, ite_eq_right hk]
     ring
 
-@[simp] lemma corootOfPair_self (u : Fin (2 * n)) : corootOfPair u u = cwt u := by
+@[simp] lemma corootOfPair_self (u : Fin (2 * n)) : corootOfPair u u = signedCoweight u := by
   funext k
   have hlt := axis_lt u
-  simp only [corootOfPair, cwt, coweight, Pi.smul_apply, smul_eq_mul]
+  simp only [corootOfPair, signedCoweight, coweight, Pi.smul_apply, smul_eq_mul]
   by_cases hk : (k : ℕ) + 1 = n
   · rw [ite_eq_left hk, ite_eq_left hk, ite_eq_left (show axis u ≤ (k : ℕ) by omega)]
     simp
@@ -299,11 +303,11 @@ lemma corootOfPair_comm (u v : Fin (2 * n)) : corootOfPair u v = corootOfPair v 
 
 /-- **The integral form of the halving.** -/
 lemma corootOfPair_add_self (u v : Fin (2 * n)) :
-    corootOfPair u v + corootOfPair u v = cwt u + cwt v := by
+    corootOfPair u v + corootOfPair u v = signedCoweight u + signedCoweight v := by
   funext k
   have hlt := axis_lt u
   have hlt' := axis_lt v
-  simp only [corootOfPair, cwt, coweight, Pi.add_apply, Pi.smul_apply, smul_eq_mul]
+  simp only [corootOfPair, signedCoweight, coweight, Pi.add_apply, Pi.smul_apply, smul_eq_mul]
   by_cases hk : (k : ℕ) + 1 = n
   · rw [ite_eq_left hk, ite_eq_left hk, ite_eq_left (show axis u ≤ (k : ℕ) by omega),
       ite_eq_left (show axis v ≤ (k : ℕ) by omega)]
@@ -313,7 +317,7 @@ lemma corootOfPair_add_self (u v : Fin (2 * n)) :
     ring
 
 lemma two_smul_corootOfPair (u v : Fin (2 * n)) :
-    (2 : ℤ) • corootOfPair u v = cwt u + cwt v := by
+    (2 : ℤ) • corootOfPair u v = signedCoweight u + signedCoweight v := by
   rw [two_smul]
   exact corootOfPair_add_self u v
 
@@ -437,17 +441,19 @@ lemma shift_index {u v : Fin (2 * n)} (h : IsPair u v) :
 /-! ## Roots and coroots -/
 
 /-- The character coordinates of the root named by a pair of signed basis vectors. -/
-def rootOfPair (u v : Fin (2 * n)) : Fin n → ℤ := if u = v then wt u else wt u + wt v
+def rootOfPair (u v : Fin (2 * n)) : Fin n → ℤ :=
+  if u = v then signedWeight u else signedWeight u + signedWeight v
 
 lemma rootOfPair_comm (u v : Fin (2 * n)) : rootOfPair u v = rootOfPair v u := by
   rcases eq_or_ne u v with rfl | huv
   · rfl
   · rw [rootOfPair, rootOfPair, ite_eq_right huv, ite_eq_right (Ne.symm huv), add_comm]
 
-@[simp] lemma rootOfPair_self (u : Fin (2 * n)) : rootOfPair u u = wt u := by
+@[simp] lemma rootOfPair_self (u : Fin (2 * n)) : rootOfPair u u = signedWeight u := by
   rw [rootOfPair, ite_eq_left rfl]
 
-@[simp] lemma rootOfPair_of_ne {u v : Fin (2 * n)} (h : u ≠ v) : rootOfPair u v = wt u + wt v := by
+@[simp] lemma rootOfPair_of_ne {u v : Fin (2 * n)} (h : u ≠ v) :
+    rootOfPair u v = signedWeight u + signedWeight v := by
   rw [rootOfPair, ite_eq_right h]
 
 /-- The root indexed by an element of `Fin (2 * n) × Fin n`. -/
@@ -473,19 +479,20 @@ lemma corootIdx_def (z : Fin (2 * n) × Fin n) :
   · rw [corootIdx, h2, h1, corootOfPair_comm]
 
 lemma two_mul_dotProduct_corootOfPair (u p q : Fin (2 * n)) :
-    2 * (wt u ⬝ᵥ corootOfPair p q) = wt u ⬝ᵥ cwt p + wt u ⬝ᵥ cwt q := by
+    2 * (signedWeight u ⬝ᵥ corootOfPair p q) =
+      signedWeight u ⬝ᵥ signedCoweight p + signedWeight u ⬝ᵥ signedCoweight q := by
   rw [← dotProduct_add, ← corootOfPair_add_self p q, dotProduct_add]
   ring
 
 lemma rootOfPair_dotProduct_corootOfPair {u v : Fin (2 * n)} (h : IsPair u v) :
     rootOfPair u v ⬝ᵥ corootOfPair u v = 2 := by
   rcases eq_or_ne u v with rfl | huv
-  · rw [rootOfPair_self, corootOfPair_self, wt_dotProduct_cwt_self]
+  · rw [rootOfPair_self, corootOfPair_self, signedWeight_dotProduct_self]
   · have hax : axis u ≠ axis v := h.resolve_left huv
     have h1 := two_mul_dotProduct_corootOfPair u u v
     have h2 := two_mul_dotProduct_corootOfPair v u v
-    rw [wt_dotProduct_cwt_self, wt_dotProduct_cwt_of_axis_ne hax] at h1
-    rw [wt_dotProduct_cwt_self, wt_dotProduct_cwt_of_axis_ne (Ne.symm hax)] at h2
+    rw [signedWeight_dotProduct_self, signedWeight_dotProduct_of_axis_ne hax] at h1
+    rw [signedWeight_dotProduct_self, signedWeight_dotProduct_of_axis_ne (Ne.symm hax)] at h2
     rw [rootOfPair_of_ne huv, add_dotProduct]
     omega
 
@@ -608,117 +615,128 @@ lemma isPair_reflMap (h : IsPair p q) {u v : Fin (2 * n)} (huv : IsPair u v) :
     exact (huv.resolve_left hne) (by rw [heq, axis_opp])
 
 /-- **The reflection formula on a single signed basis vector.** -/
-lemma wt_reflMap (h : IsPair p q) (u : Fin (2 * n)) :
-    wt (reflMap p q u) = wt u - (wt u ⬝ᵥ corootOfPair p q) • rootOfPair p q := by
+lemma signedWeight_reflMap (h : IsPair p q) (u : Fin (2 * n)) :
+    signedWeight (reflMap p q u) =
+      signedWeight u - (signedWeight u ⬝ᵥ corootOfPair p q) • rootOfPair p q := by
   -- A short root only swaps `p` and `opp p`; all other signed basis vectors are fixed and pair
   -- trivially with its coroot.
   rcases eq_or_ne p q with rfl | hpq
   · have hop := opp_ne_self p
     rw [corootOfPair_self, rootOfPair_self]
     by_cases c1 : u = p
-    · rw [c1, reflMap_fst, ite_eq_left rfl, wt_dotProduct_cwt_self, wt_opp]
+    · rw [c1, reflMap_fst, ite_eq_left rfl, signedWeight_dotProduct_self, signedWeight_opp]
       module
     · by_cases c2 : u = opp p
-      · rw [c2, reflMap_opp_fst hop, ite_eq_left rfl, wt_opp, neg_dotProduct,
-          wt_dotProduct_cwt_self]
+      · rw [c2, reflMap_opp_fst hop, ite_eq_left rfl, signedWeight_opp, neg_dotProduct,
+          signedWeight_dotProduct_self]
         module
-      · rw [reflMap_of_ne c1 c1 c2 c2, wt_dotProduct_cwt_eq_zero c1 c2]
+      · rw [reflMap_of_ne c1 c1 c2 c2, signedWeight_dotProduct_eq_zero c1 c2]
         module
   · have hax : axis p ≠ axis q := h.resolve_left hpq
     obtain ⟨h1, h2, h3, h4, h5, h6, h7, h8⟩ := long_ne hax
-    have hpq' : wt p ⬝ᵥ cwt q = 0 := wt_dotProduct_cwt_of_axis_ne hax
-    have hqp : wt q ⬝ᵥ cwt p = 0 := wt_dotProduct_cwt_of_axis_ne (Ne.symm hax)
+    have hpq' : signedWeight p ⬝ᵥ signedCoweight q = 0 := signedWeight_dotProduct_of_axis_ne hax
+    have hqp : signedWeight q ⬝ᵥ signedCoweight p = 0 :=
+      signedWeight_dotProduct_of_axis_ne (Ne.symm hax)
     rw [rootOfPair_of_ne h1]
     -- For a long root, split the signed basis vectors into `p`, `q`, their opposites, and the
     -- complement. The pairing is respectively `1`, `1`, `-1`, `-1`, and `0`.
     by_cases c1 : u = p
     · have hval := two_mul_dotProduct_corootOfPair p p q
-      rw [wt_dotProduct_cwt_self, hpq'] at hval
-      rw [c1, show wt p ⬝ᵥ corootOfPair p q = 1 by omega, reflMap_fst, ite_eq_right h1,
-        wt_opp]
+      rw [signedWeight_dotProduct_self, hpq'] at hval
+      rw [c1, show signedWeight p ⬝ᵥ corootOfPair p q = 1 by omega, reflMap_fst, ite_eq_right h1,
+        signedWeight_opp]
       module
     by_cases c2 : u = q
     · have hval := two_mul_dotProduct_corootOfPair q p q
-      rw [wt_dotProduct_cwt_self, hqp] at hval
-      rw [c2, show wt q ⬝ᵥ corootOfPair p q = 1 by omega, reflMap_snd h3, wt_opp]
+      rw [signedWeight_dotProduct_self, hqp] at hval
+      rw [c2, show signedWeight q ⬝ᵥ corootOfPair p q = 1 by omega, reflMap_snd h3,
+        signedWeight_opp]
       module
     by_cases c3 : u = opp p
-    · have e1 : wt (opp p) ⬝ᵥ cwt p = -2 := by
-        rw [wt_opp, neg_dotProduct, wt_dotProduct_cwt_self]
-      have e2 : wt (opp p) ⬝ᵥ cwt q = 0 := by rw [wt_opp, neg_dotProduct, hpq', neg_zero]
+    · have e1 : signedWeight (opp p) ⬝ᵥ signedCoweight p = -2 := by
+        rw [signedWeight_opp, neg_dotProduct, signedWeight_dotProduct_self]
+      have e2 : signedWeight (opp p) ⬝ᵥ signedCoweight q = 0 := by
+        rw [signedWeight_opp, neg_dotProduct, hpq', neg_zero]
       have hval := two_mul_dotProduct_corootOfPair (opp p) p q
       rw [e1, e2] at hval
-      rw [c3, show wt (opp p) ⬝ᵥ corootOfPair p q = -1 by omega,
-        reflMap_opp_fst h5, ite_eq_right h1, wt_opp]
+      rw [c3, show signedWeight (opp p) ⬝ᵥ corootOfPair p q = -1 by omega,
+        reflMap_opp_fst h5, ite_eq_right h1, signedWeight_opp]
       module
     by_cases c4 : u = opp q
-    · have e1 : wt (opp q) ⬝ᵥ cwt p = 0 := by rw [wt_opp, neg_dotProduct, hqp, neg_zero]
-      have e2 : wt (opp q) ⬝ᵥ cwt q = -2 := by
-        rw [wt_opp, neg_dotProduct, wt_dotProduct_cwt_self]
+    · have e1 : signedWeight (opp q) ⬝ᵥ signedCoweight p = 0 := by
+        rw [signedWeight_opp, neg_dotProduct, hqp, neg_zero]
+      have e2 : signedWeight (opp q) ⬝ᵥ signedCoweight q = -2 := by
+        rw [signedWeight_opp, neg_dotProduct, signedWeight_dotProduct_self]
       have hval := two_mul_dotProduct_corootOfPair (opp q) p q
       rw [e1, e2] at hval
-      rw [c4, show wt (opp q) ⬝ᵥ corootOfPair p q = -1 by omega,
-        reflMap_opp_snd h7 h8, wt_opp]
+      rw [c4, show signedWeight (opp q) ⬝ᵥ corootOfPair p q = -1 by omega,
+        reflMap_opp_snd h7 h8, signedWeight_opp]
       module
     · have hval := two_mul_dotProduct_corootOfPair u p q
-      rw [wt_dotProduct_cwt_eq_zero c1 c3, wt_dotProduct_cwt_eq_zero c2 c4] at hval
-      rw [show wt u ⬝ᵥ corootOfPair p q = 0 by omega, reflMap_of_ne c1 c2 c3 c4]
+      rw [signedWeight_dotProduct_eq_zero c1 c3, signedWeight_dotProduct_eq_zero c2 c4] at hval
+      rw [show signedWeight u ⬝ᵥ corootOfPair p q = 0 by omega, reflMap_of_ne c1 c2 c3 c4]
       module
 
 /-- **The reflection formula on the double of a single signed basis vector.** -/
-lemma cwt_reflMap (h : IsPair p q) (u : Fin (2 * n)) :
-    cwt (reflMap p q u) = cwt u - (rootOfPair p q ⬝ᵥ cwt u) • corootOfPair p q := by
-  -- The short-root case has the same two-point orbit as `wt_reflMap`, now on the doubled
+lemma signedCoweight_reflMap (h : IsPair p q) (u : Fin (2 * n)) :
+    signedCoweight (reflMap p q u) =
+      signedCoweight u - (rootOfPair p q ⬝ᵥ signedCoweight u) • corootOfPair p q := by
+  -- The short-root case has the same two-point orbit as `signedWeight_reflMap`, now on the doubled
   -- coweight coordinates.
   rcases eq_or_ne p q with rfl | hpq
   · have hop := opp_ne_self p
     rw [corootOfPair_self, rootOfPair_self]
     by_cases c1 : u = p
-    · rw [c1, reflMap_fst, ite_eq_left rfl, wt_dotProduct_cwt_self, cwt_opp]
+    · rw [c1, reflMap_fst, ite_eq_left rfl, signedWeight_dotProduct_self, signedCoweight_opp]
       module
     · by_cases c2 : u = opp p
-      · rw [c2, reflMap_opp_fst hop, ite_eq_left rfl, cwt_opp, dotProduct_neg,
-          wt_dotProduct_cwt_self]
+      · rw [c2, reflMap_opp_fst hop, ite_eq_left rfl, signedCoweight_opp, dotProduct_neg,
+          signedWeight_dotProduct_self]
         module
-      · rw [reflMap_of_ne c1 c1 c2 c2, wt_dotProduct_cwt_eq_zero (Ne.symm c1)
+      · rw [reflMap_of_ne c1 c1 c2 c2, signedWeight_dotProduct_eq_zero (Ne.symm c1)
           (fun hc => c2 (by rw [hc, opp_opp]))]
         module
   · have hax : axis p ≠ axis q := h.resolve_left hpq
     obtain ⟨h1, h2, h3, h4, h5, h6, h7, h8⟩ := long_ne hax
-    have hpq' : wt p ⬝ᵥ cwt q = 0 := wt_dotProduct_cwt_of_axis_ne hax
-    have hqp : wt q ⬝ᵥ cwt p = 0 := wt_dotProduct_cwt_of_axis_ne (Ne.symm hax)
+    have hpq' : signedWeight p ⬝ᵥ signedCoweight q = 0 := signedWeight_dotProduct_of_axis_ne hax
+    have hqp : signedWeight q ⬝ᵥ signedCoweight p = 0 :=
+      signedWeight_dotProduct_of_axis_ne (Ne.symm hax)
     have hsum := two_smul_corootOfPair p q
-    have hneg : ((-2 : ℤ)) • corootOfPair p q = -(cwt p + cwt q) := by
+    have hneg : ((-2 : ℤ)) • corootOfPair p q = -(signedCoweight p + signedCoweight q) := by
       rw [← hsum, show ((-2 : ℤ)) • corootOfPair p q =
         -((2 : ℤ) • corootOfPair p q) from by module]
     rw [rootOfPair_of_ne h1]
     -- As above, the long-root reflection has four exceptional signed basis vectors. Their
     -- root-pairing values are `2`, `2`, `-2`, and `-2`; the complement pairs to zero.
     by_cases c1 : u = p
-    · rw [c1, add_dotProduct, wt_dotProduct_cwt_self, hqp, reflMap_fst, ite_eq_right h1, cwt_opp,
+    · rw [c1, add_dotProduct, signedWeight_dotProduct_self, hqp, reflMap_fst, ite_eq_right h1,
+        signedCoweight_opp,
         show (2 : ℤ) + 0 = 2 by ring, hsum]
       module
     by_cases c2 : u = q
-    · rw [c2, add_dotProduct, hpq', wt_dotProduct_cwt_self, reflMap_snd h3, cwt_opp,
+    · rw [c2, add_dotProduct, hpq', signedWeight_dotProduct_self, reflMap_snd h3,
+        signedCoweight_opp,
         show (0 : ℤ) + 2 = 2 by ring, hsum]
       module
     by_cases c3 : u = opp p
-    · have e1 : wt p ⬝ᵥ cwt (opp p) = -2 := by
-        rw [cwt_opp, dotProduct_neg, wt_dotProduct_cwt_self]
-      have e2 : wt q ⬝ᵥ cwt (opp p) = 0 := by rw [cwt_opp, dotProduct_neg, hqp, neg_zero]
+    · have e1 : signedWeight p ⬝ᵥ signedCoweight (opp p) = -2 := by
+        rw [signedCoweight_opp, dotProduct_neg, signedWeight_dotProduct_self]
+      have e2 : signedWeight q ⬝ᵥ signedCoweight (opp p) = 0 := by
+        rw [signedCoweight_opp, dotProduct_neg, hqp, neg_zero]
       rw [c3, add_dotProduct, e1, e2, reflMap_opp_fst h5, ite_eq_right h1,
-        show -(2 : ℤ) + 0 = -2 by ring, hneg, cwt_opp]
+        show -(2 : ℤ) + 0 = -2 by ring, hneg, signedCoweight_opp]
       module
     by_cases c4 : u = opp q
-    · have e1 : wt p ⬝ᵥ cwt (opp q) = 0 := by rw [cwt_opp, dotProduct_neg, hpq', neg_zero]
-      have e2 : wt q ⬝ᵥ cwt (opp q) = -2 := by
-        rw [cwt_opp, dotProduct_neg, wt_dotProduct_cwt_self]
+    · have e1 : signedWeight p ⬝ᵥ signedCoweight (opp q) = 0 := by
+        rw [signedCoweight_opp, dotProduct_neg, hpq', neg_zero]
+      have e2 : signedWeight q ⬝ᵥ signedCoweight (opp q) = -2 := by
+        rw [signedCoweight_opp, dotProduct_neg, signedWeight_dotProduct_self]
       rw [c4, add_dotProduct, e1, e2, reflMap_opp_snd h7 h8,
-        show (0 : ℤ) + -2 = -2 by ring, hneg, cwt_opp]
+        show (0 : ℤ) + -2 = -2 by ring, hneg, signedCoweight_opp]
       module
     · rw [add_dotProduct,
-        wt_dotProduct_cwt_eq_zero (Ne.symm c1) (fun hc => c3 (by rw [hc, opp_opp])),
-        wt_dotProduct_cwt_eq_zero (Ne.symm c2) (fun hc => c4 (by rw [hc, opp_opp])),
+        signedWeight_dotProduct_eq_zero (Ne.symm c1) (fun hc => c3 (by rw [hc, opp_opp])),
+        signedWeight_dotProduct_eq_zero (Ne.symm c2) (fun hc => c4 (by rw [hc, opp_opp])),
         reflMap_of_ne c1 c2 c3 c4]
       module
 
@@ -727,11 +745,11 @@ end Refl
 /-! ## Recovering the index from the root -/
 
 /-- The signed basis vectors occurring in a root are exactly those pairing to `2` with it. -/
-lemma rootIdx_dotProduct_cwt_eq_two_iff (z : Fin (2 * n) × Fin n) (m : Fin (2 * n)) :
-    rootIdx z ⬝ᵥ cwt m = 2 ↔ (m = z.1 ∨ m = shift z.1 z.2) := by
+lemma rootIdx_dotProduct_signedCoweight_eq_two_iff (z : Fin (2 * n) × Fin n) (m : Fin (2 * n)) :
+    rootIdx z ⬝ᵥ signedCoweight m = 2 ↔ (m = z.1 ∨ m = shift z.1 z.2) := by
   have hpair : IsPair z.1 (shift z.1 z.2) := isPair_shift z.1 z.2
   rcases eq_or_ne z.1 (shift z.1 z.2) with heq | hne
-  · rw [rootIdx, ← heq, rootOfPair_self, wt_dotProduct_cwt]
+  · rw [rootIdx, ← heq, rootOfPair_self, signedWeight_dotProduct_signedCoweight]
     constructor
     · intro hc
       by_cases hc1 : z.1 = m
@@ -744,7 +762,8 @@ lemma rootIdx_dotProduct_cwt_eq_two_iff (z : Fin (2 * n) × Fin n) (m : Fin (2 *
       · rw [ite_eq_left rfl]
   · have hax : axis z.1 ≠ axis (shift z.1 z.2) := hpair.resolve_left hne
     obtain ⟨h1, h2, h3, h4, h5, h6, h7, h8⟩ := long_ne hax
-    rw [rootIdx, rootOfPair_of_ne hne, add_dotProduct, wt_dotProduct_cwt, wt_dotProduct_cwt]
+    rw [rootIdx, rootOfPair_of_ne hne, add_dotProduct,
+      signedWeight_dotProduct_signedCoweight, signedWeight_dotProduct_signedCoweight]
     constructor
     · intro hc
       by_cases hm1 : z.1 = m
@@ -761,13 +780,15 @@ lemma rootIdx_dotProduct_cwt_eq_two_iff (z : Fin (2 * n) × Fin n) (m : Fin (2 *
 
 /-- The signed basis vectors occurring in a coroot, detected by a doubled pairing so that both the
 short and the long case are covered. -/
-lemma two_mul_wt_dotProduct_corootIdx_iff (z : Fin (2 * n) × Fin n) (m : Fin (2 * n)) :
-    (2 * (wt m ⬝ᵥ corootIdx z) = 4 ∨ 2 * (wt m ⬝ᵥ corootIdx z) = 2) ↔
+lemma two_mul_signedWeight_dotProduct_corootIdx_iff (z : Fin (2 * n) × Fin n) (m : Fin (2 * n)) :
+    (2 * (signedWeight m ⬝ᵥ corootIdx z) = 4 ∨ 2 * (signedWeight m ⬝ᵥ corootIdx z) = 2) ↔
       (m = z.1 ∨ m = shift z.1 z.2) := by
   have hpair : IsPair z.1 (shift z.1 z.2) := isPair_shift z.1 z.2
-  have hval : 2 * (wt m ⬝ᵥ corootIdx z) = wt m ⬝ᵥ cwt z.1 + wt m ⬝ᵥ cwt (shift z.1 z.2) :=
+  have hval : 2 * (signedWeight m ⬝ᵥ corootIdx z) =
+      signedWeight m ⬝ᵥ signedCoweight z.1 +
+        signedWeight m ⬝ᵥ signedCoweight (shift z.1 z.2) :=
     two_mul_dotProduct_corootOfPair m z.1 (shift z.1 z.2)
-  rw [hval, wt_dotProduct_cwt, wt_dotProduct_cwt]
+  rw [hval, signedWeight_dotProduct_signedCoweight, signedWeight_dotProduct_signedCoweight]
   rcases eq_or_ne z.1 (shift z.1 z.2) with heq | hne
   · rw [← heq]
     constructor

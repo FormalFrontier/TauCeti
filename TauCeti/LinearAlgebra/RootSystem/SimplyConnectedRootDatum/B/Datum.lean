@@ -88,13 +88,13 @@ private lemma typeB_axis_mk_ge {a : ℕ} (h2 : a < 2 * n) (h : n ≤ a) :
     axis (⟨a, h2⟩ : Fin (2 * n)) = a - n :=
   by rw [axis_def, ite_eq_right (show ¬(a < n) by omega)]
 
-private lemma typeB_wt_mk_lt {a : ℕ} (h2 : a < 2 * n) (h : a < n) :
-    wt (⟨a, h2⟩ : Fin (2 * n)) = weight n a := by
-  rw [wt_def, typeB_sgn_mk_lt h2 h, typeB_axis_mk_lt h2 h, one_smul]
+private lemma typeB_signedWeight_mk_lt {a : ℕ} (h2 : a < 2 * n) (h : a < n) :
+    signedWeight (⟨a, h2⟩ : Fin (2 * n)) = weight n a := by
+  rw [signedWeight_def, typeB_sgn_mk_lt h2 h, typeB_axis_mk_lt h2 h, one_smul]
 
-private lemma typeB_wt_mk_ge {a : ℕ} (h2 : a < 2 * n) (h : n ≤ a) :
-    wt (⟨a, h2⟩ : Fin (2 * n)) = -weight n (a - n) := by
-  rw [wt_def, typeB_sgn_mk_ge h2 h, typeB_axis_mk_ge h2 h, neg_one_smul]
+private lemma typeB_signedWeight_mk_ge {a : ℕ} (h2 : a < 2 * n) (h : n ≤ a) :
+    signedWeight (⟨a, h2⟩ : Fin (2 * n)) = -weight n (a - n) := by
+  rw [signedWeight_def, typeB_sgn_mk_ge h2 h, typeB_axis_mk_ge h2 h, neg_one_smul]
 
 private lemma coe_shift_mk {a b : ℕ} (ha : a < 2 * n) (hb : b < n) :
     ((shift (⟨a, ha⟩ : Fin (2 * n)) ⟨b, hb⟩ : Fin (2 * n)) : ℕ) =
@@ -106,9 +106,9 @@ private lemma shift_mk {a b c : ℕ} (ha : a < 2 * n) (hb : b < n) (hc : c < 2 *
     shift (⟨a, ha⟩ : Fin (2 * n)) ⟨b, hb⟩ = ⟨c, hc⟩ :=
   Fin.ext (by rw [coe_shift_mk]; exact h)
 
-private lemma typeB_cwt_mk_lt {a : ℕ} (h2 : a < 2 * n) (h : a < n) :
-    cwt (⟨a, h2⟩ : Fin (2 * n)) = coweight n a := by
-  rw [cwt_def, typeB_sgn_mk_lt h2 h, typeB_axis_mk_lt h2 h, one_smul]
+private lemma typeB_signedCoweight_mk_lt {a : ℕ} (h2 : a < 2 * n) (h : a < n) :
+    signedCoweight (⟨a, h2⟩ : Fin (2 * n)) = coweight n a := by
+  rw [signedCoweight_def, typeB_sgn_mk_lt h2 h, typeB_axis_mk_lt h2 h, one_smul]
 
 /-! ## The reflection permutation on the raw index type -/
 
@@ -134,11 +134,12 @@ private lemma rootIdx_typeBReflIdx (z w : Fin (2 * n) × Fin n) :
   have hRw := isPair_reflMap hpq hw
   rw [typeBReflIdx, rootIdx_index hRw, rootIdx_def, rootIdx_def, corootIdx_def]
   rcases eq_or_ne w.1 (shift w.1 w.2) with heq | hne
-  · rw [← heq, rootOfPair_self, rootOfPair_self, wt_reflMap hpq]
+  · rw [← heq, rootOfPair_self, rootOfPair_self, signedWeight_reflMap hpq]
   · have hne' : reflMap z.1 (shift z.1 z.2) w.1 ≠
         reflMap z.1 (shift z.1 z.2) (shift w.1 w.2) :=
       fun hc => hne ((reflMap_involutive hpq).injective hc)
-    rw [rootOfPair_of_ne hne, rootOfPair_of_ne hne', wt_reflMap hpq, wt_reflMap hpq,
+    rw [rootOfPair_of_ne hne, rootOfPair_of_ne hne', signedWeight_reflMap hpq,
+      signedWeight_reflMap hpq,
       add_dotProduct, add_smul]
     abel
 
@@ -155,7 +156,7 @@ private lemma corootIdx_typeBReflIdx (z w : Fin (2 * n) × Fin n) :
     ← hp, ← hq, ← hu, ← hv]
   refine smul_right_injective _ (by norm_num : (2 : ℤ) ≠ 0) ?_
   have hc : (2 : ℤ) * (rootOfPair p q ⬝ᵥ corootOfPair u v) =
-      rootOfPair p q ⬝ᵥ cwt u + rootOfPair p q ⬝ᵥ cwt v := by
+      rootOfPair p q ⬝ᵥ signedCoweight u + rootOfPair p q ⬝ᵥ signedCoweight v := by
     rw [← dotProduct_add, ← corootOfPair_add_self u v, dotProduct_add]
     ring
   calc (2 : ℤ) • (corootOfPair u v -
@@ -163,27 +164,30 @@ private lemma corootIdx_typeBReflIdx (z w : Fin (2 * n) × Fin n) :
       = (2 : ℤ) • corootOfPair u v -
           ((2 : ℤ) * (rootOfPair p q ⬝ᵥ corootOfPair u v)) • corootOfPair p q := by
         simp only [smul_sub, smul_smul]
-    _ = cwt u + cwt v -
-          (rootOfPair p q ⬝ᵥ cwt u + rootOfPair p q ⬝ᵥ cwt v) • corootOfPair p q := by
+    _ = signedCoweight u + signedCoweight v -
+          (rootOfPair p q ⬝ᵥ signedCoweight u + rootOfPair p q ⬝ᵥ signedCoweight v) •
+            corootOfPair p q := by
         rw [two_smul_corootOfPair, hc]
-    _ = (cwt u - (rootOfPair p q ⬝ᵥ cwt u) • corootOfPair p q) +
-          (cwt v - (rootOfPair p q ⬝ᵥ cwt v) • corootOfPair p q) := by
+    _ = (signedCoweight u - (rootOfPair p q ⬝ᵥ signedCoweight u) • corootOfPair p q) +
+          (signedCoweight v - (rootOfPair p q ⬝ᵥ signedCoweight v) • corootOfPair p q) := by
         simp only [add_smul]
         abel
-    _ = cwt (reflMap p q u) + cwt (reflMap p q v) := by
-        rw [cwt_reflMap hpq, cwt_reflMap hpq]
+    _ = signedCoweight (reflMap p q u) + signedCoweight (reflMap p q v) := by
+        rw [signedCoweight_reflMap hpq, signedCoweight_reflMap hpq]
     _ = (2 : ℤ) • corootOfPair (reflMap p q u) (reflMap p q v) :=
       (two_smul_corootOfPair _ _).symm
 
 private lemma rootIdx_injective : Injective (rootIdx : Fin (2 * n) × Fin n → Fin n → ℤ) := by
   intro z z' h
   refine eq_of_forall_mem_iff fun m => ?_
-  rw [← rootIdx_dotProduct_cwt_eq_two_iff, ← rootIdx_dotProduct_cwt_eq_two_iff, h]
+  rw [← rootIdx_dotProduct_signedCoweight_eq_two_iff,
+    ← rootIdx_dotProduct_signedCoweight_eq_two_iff, h]
 
 private lemma corootIdx_injective : Injective (corootIdx : Fin (2 * n) × Fin n → Fin n → ℤ) := by
   intro z z' h
   refine eq_of_forall_mem_iff fun m => ?_
-  rw [← two_mul_wt_dotProduct_corootIdx_iff, ← two_mul_wt_dotProduct_corootIdx_iff, h]
+  rw [← two_mul_signedWeight_dotProduct_corootIdx_iff,
+    ← two_mul_signedWeight_dotProduct_corootIdx_iff, h]
 
 /-! ## The enumeration of the roots -/
 
@@ -403,7 +407,7 @@ private lemma rootIdx_typeBSimplePair (i : Fin n) :
   · have hshort : shift (⟨n - 1, by omega⟩ : Fin (2 * n)) (⟨0, by omega⟩ : Fin n) =
         ⟨n - 1, by omega⟩ := shift_eq_self rfl
     rw [rootIdx_def, typeBSimplePair, dite_eq_left hlast, typeBShortPair]
-    rw [hshort, rootOfPair_self, typeB_wt_mk_lt _ (show n - 1 < n by omega),
+    rw [hshort, rootOfPair_self, typeB_signedWeight_mk_lt _ (show n - 1 < n by omega),
       weight_eq_zero_of_le (le_of_eq hlast.symm), sub_zero]
     congr 1
     omega
@@ -415,8 +419,8 @@ private lemma rootIdx_typeBSimplePair (i : Fin n) :
       simp only [ne_eq, Fin.mk.injEq]
       omega
     rw [rootIdx_def, typeBSimplePair, dite_eq_right hlast]
-    rw [hv, rootOfPair_of_ne hne, typeB_wt_mk_ge _ (show n ≤ n + (i : ℕ) + 1 by omega),
-      typeB_wt_mk_lt _ (show (i : ℕ) < n by omega),
+    rw [hv, rootOfPair_of_ne hne, typeB_signedWeight_mk_ge _ (show n ≤ n + (i : ℕ) + 1 by omega),
+      typeB_signedWeight_mk_lt _ (show (i : ℕ) < n by omega),
       show n + (i : ℕ) + 1 - n = (i : ℕ) + 1 by omega]
     abel
 
@@ -444,7 +448,7 @@ coroot lattice, so that the datum is the simply connected one. -/
   · have hshort : shift (⟨n - 1, by omega⟩ : Fin (2 * n)) (⟨0, by omega⟩ : Fin n) =
         ⟨n - 1, by omega⟩ := shift_eq_self rfl
     rw [typeBSimplePair, dite_eq_left hlast, typeBShortPair, hshort, corootOfPair_self,
-      typeB_cwt_mk_lt _ (show n - 1 < n by omega)]
+      typeB_signedCoweight_mk_lt _ (show n - 1 < n by omega)]
     funext k
     have hk := k.isLt
     simp only [coweight_apply, Pi.single_apply, Fin.ext_iff]
@@ -545,20 +549,20 @@ private lemma typeB_weight_mem_closure {a : ℕ} (ha : a ≤ n) :
   have h := sub_mem_closure_of_le (n := n) (weight n) le_rfl ha
   rwa [weight_eq_zero_of_le le_rfl, sub_zero] at h
 
-private lemma typeB_wt_add_wt_mem_closure (u v : Fin (2 * n)) (hu : sgn u = 1)
+private lemma typeB_signedWeight_add_signedWeight_mem_closure (u v : Fin (2 * n)) (hu : sgn u = 1)
     (hv : sgn v = 1) :
-    wt u + wt v ∈ AddSubmonoid.closure
+    signedWeight u + signedWeight v ∈ AddSubmonoid.closure
       (range fun i : Fin n => weight n (i : ℕ) - weight n ((i : ℕ) + 1)) := by
-  rw [wt_def, wt_def, hu, hv, one_smul, one_smul]
+  rw [signedWeight_def, signedWeight_def, hu, hv, one_smul, one_smul]
   exact AddSubmonoid.add_mem _ (typeB_weight_mem_closure (le_of_lt (axis_lt u)))
     (typeB_weight_mem_closure (le_of_lt (axis_lt v)))
 
-private lemma typeB_wt_sub_wt_mem_closure (u v : Fin (2 * n)) (hu : sgn u = 1)
+private lemma typeB_signedWeight_sub_signedWeight_mem_closure (u v : Fin (2 * n)) (hu : sgn u = 1)
     (hv : sgn v = -1)
     (hle : axis u ≤ axis v) :
-    wt u + wt v ∈ AddSubmonoid.closure
+    signedWeight u + signedWeight v ∈ AddSubmonoid.closure
       (range fun i : Fin n => weight n (i : ℕ) - weight n ((i : ℕ) + 1)) := by
-  rw [wt_def, wt_def, hu, hv, one_smul, neg_one_smul, ← sub_eq_add_neg]
+  rw [signedWeight_def, signedWeight_def, hu, hv, one_smul, neg_one_smul, ← sub_eq_add_neg]
   exact sub_mem_closure_of_le (n := n) (weight n) (le_of_lt (axis_lt v)) hle
 
 private lemma typeB_mem_closure_single {w : Fin n → ℤ} (hw : ∀ j, 0 ≤ w j) :
@@ -644,31 +648,34 @@ def typeBSimplyConnectedBase (n : ℕ) : (typeBSimplyConnectedRootDatum n).Base 
     · rw [hroot, ← heq, rootOfPair_self]
       rcases sgn_eq_one_or_neg_one u with hs | hs
       · refine Or.inl ?_
-        rw [wt_def, hs, one_smul]
+        rw [signedWeight_def, hs, one_smul]
         exact typeB_weight_mem_closure (le_of_lt (axis_lt u))
       · refine Or.inr ?_
-        rw [wt_def, hs, neg_one_smul, neg_neg]
+        rw [signedWeight_def, hs, neg_one_smul, neg_neg]
         exact typeB_weight_mem_closure (le_of_lt (axis_lt u))
     · rw [hroot, rootOfPair_of_ne hne]
       rcases sgn_eq_one_or_neg_one u with hsu | hsu <;>
         rcases sgn_eq_one_or_neg_one v with hsv | hsv
-      · exact Or.inl (typeB_wt_add_wt_mem_closure u v hsu hsv)
+      · exact Or.inl (typeB_signedWeight_add_signedWeight_mem_closure u v hsu hsv)
       · rcases le_total (axis u) (axis v) with hle | hle
-        · exact Or.inl (typeB_wt_sub_wt_mem_closure u v hsu hsv hle)
+        · exact Or.inl (typeB_signedWeight_sub_signedWeight_mem_closure u v hsu hsv hle)
         · refine Or.inr ?_
-          rw [neg_add, ← wt_opp, ← wt_opp, add_comm]
-          exact typeB_wt_sub_wt_mem_closure (opp v) (opp u) (by simp [sgn_opp, hsv])
+          rw [neg_add, ← signedWeight_opp, ← signedWeight_opp, add_comm]
+          exact typeB_signedWeight_sub_signedWeight_mem_closure (opp v) (opp u)
+            (by simp [sgn_opp, hsv])
             (by simp [sgn_opp, hsu]) (by rwa [axis_opp, axis_opp])
       · rcases le_total (axis v) (axis u) with hle | hle
         · rw [add_comm]
-          exact Or.inl (typeB_wt_sub_wt_mem_closure v u hsv hsu hle)
+          exact Or.inl (typeB_signedWeight_sub_signedWeight_mem_closure v u hsv hsu hle)
         · refine Or.inr ?_
-          rw [neg_add, ← wt_opp, ← wt_opp]
-          exact typeB_wt_sub_wt_mem_closure (opp u) (opp v) (by simp [sgn_opp, hsu])
+          rw [neg_add, ← signedWeight_opp, ← signedWeight_opp]
+          exact typeB_signedWeight_sub_signedWeight_mem_closure (opp u) (opp v)
+            (by simp [sgn_opp, hsu])
             (by simp [sgn_opp, hsv]) (by rwa [axis_opp, axis_opp])
       · refine Or.inr ?_
-        rw [neg_add, ← wt_opp, ← wt_opp]
-        exact typeB_wt_add_wt_mem_closure (opp u) (opp v) (by simp [sgn_opp, hsu])
+        rw [neg_add, ← signedWeight_opp, ← signedWeight_opp]
+        exact typeB_signedWeight_add_signedWeight_mem_closure (opp u) (opp v)
+          (by simp [sgn_opp, hsu])
           (by simp [sgn_opp, hsv])
   coroot_mem_or_neg_mem k := by
     rw [image_coroot_typeBSimpleSupport]
