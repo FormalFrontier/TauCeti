@@ -201,6 +201,7 @@ index `j` to `f4ReflectionIndex i j`. -/
 
 /-- Reflection in one of the first twenty-four roots permutes root indices by the corresponding row
 of `f4ReflectionTable`. -/
+@[simp]
 lemma f4ReflectionIndex_castAdd (i : Fin 24) (j : Fin 48) :
     f4ReflectionIndex (Fin.castAdd 24 i) j = f4ReflectionTable i j := by
   simp only [f4ReflectionIndex, f4PositiveIndex_castAdd]
@@ -217,16 +218,10 @@ private lemma f4ReflectionIndex_coroot_castAdd (i : Fin 24) (j : Fin 48) :
 
 /-- Reflection in a negative root is the same permutation of root indices as reflection in its
 positive opposite. -/
+@[simp]
 lemma f4ReflectionIndex_addNat (i : Fin 24) (j : Fin 48) :
     f4ReflectionIndex (Fin.addNat i 24) j = f4ReflectionIndex (Fin.castAdd 24 i) j := by
   simp only [f4ReflectionIndex, f4PositiveIndex_addNat, f4PositiveIndex_castAdd]
-
-/-- Every root index is either one of the first twenty-four or the index of the negative of one. -/
-private lemma f4Index_cases (i : Fin 48) :
-    (∃ k : Fin 24, i = Fin.castAdd 24 k) ∨ ∃ k : Fin 24, i = Fin.addNat k 24 := by
-  by_cases hi : (i : ℕ) < 24
-  · exact Or.inl ⟨⟨i, hi⟩, Fin.ext rfl⟩
-  · exact Or.inr ⟨⟨(i : ℕ) - 24, by omega⟩, Fin.ext (by simp only [Fin.val_addNat]; omega)⟩
 
 /-- Extend a reflection identity from the first twenty-four indices to all forty-eight, given that
 passing to the negative index negates the vector and the reflection coefficient and leaves the
@@ -239,9 +234,10 @@ private lemma reflection_eq_of_castAdd {M : Type*} [AddCommGroup M] {f : Fin 48 
     (h : ∀ (k : Fin 24) (j : Fin 48),
       f j - c (Fin.castAdd 24 k) j • f (Fin.castAdd 24 k) = f (σ (Fin.castAdd 24 k) j))
     (i j : Fin 48) : f j - c i j • f i = f (σ i j) := by
-  obtain ⟨k, rfl⟩ | ⟨k, rfl⟩ := f4Index_cases i
-  · exact h k j
-  · rw [hf, hc, hσ, neg_smul, smul_neg, neg_neg]
+  induction i using Fin.addCases (m := 24) (n := 24) with
+  | left k => exact h k j
+  | right k =>
+    rw [Fin.natAdd_eq_addNat, hf, hc, hσ, neg_smul, smul_neg, neg_neg]
     exact h k j
 
 private lemma f4ReflectionIndex_root (i j : Fin 48) :
@@ -263,9 +259,10 @@ private lemma f4Root_coroot_two_castAdd (i : Fin 24) :
   decide +revert
 
 private lemma f4Root_coroot_two (i : Fin 48) : f4Root i ⬝ᵥ f4Coroot i = 2 := by
-  obtain ⟨k, rfl⟩ | ⟨k, rfl⟩ := f4Index_cases i
-  · exact f4Root_coroot_two_castAdd k
-  · rw [f4Root_addNat, f4Coroot_addNat, neg_dotProduct_neg]
+  induction i using Fin.addCases (m := 24) (n := 24) with
+  | left k => exact f4Root_coroot_two_castAdd k
+  | right k =>
+    rw [Fin.natAdd_eq_addNat, f4Root_addNat, f4Coroot_addNat, neg_dotProduct_neg]
     exact f4Root_coroot_two_castAdd k
 
 /-- The pinned simply connected root datum of type `F4`.
@@ -403,9 +400,9 @@ private lemma mem_or_neg_mem_of_coefficients (f : Fin 48 → (Fin 4 → ℤ))
   have hsum (k : Fin 24) : f (Fin.castAdd 24 k) ∈ C := by
     rw [hc k]
     exact C.sum_mem (t := Finset.univ) fun j _ => C.nsmul_mem (hs j) _
-  obtain ⟨k, rfl⟩ | ⟨k, rfl⟩ := f4Index_cases i
-  · exact Or.inl (hsum k)
-  · exact Or.inr (by rw [hneg, neg_neg]; exact hsum k)
+  induction i using Fin.addCases (m := 24) (n := 24) with
+  | left k => exact Or.inl (hsum k)
+  | right k => exact Or.inr (by rw [Fin.natAdd_eq_addNat, hneg, neg_neg]; exact hsum k)
 
 private lemma f4Root_mem_or_neg_mem (i : Fin 48) :
     f4Root i ∈
