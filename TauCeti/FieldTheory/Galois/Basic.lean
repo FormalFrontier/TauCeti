@@ -52,6 +52,13 @@ theorem algEquiv_eq_one_or_eq {σ : L ≃ₐ[K] L} (hσ : σ ≠ 1) (φ : L ≃�
   · exact .inl h1
   · exact .inr (((Nat.card_eq_two_iff' 1).mp (card_algEquiv_eq_two K L)).unique h1 hσ)
 
+/-- **Every automorphism of a separable quadratic extension is an involution.** `Gal(L/K)` has
+order two, so this needs no nontriviality hypothesis: it holds for the identity as well. -/
+@[simp]
+theorem algEquiv_mul_self (σ : L ≃ₐ[K] L) : σ * σ = 1 := by
+  rw [← sq, ← card_algEquiv_eq_two K L]
+  exact pow_card_eq_one'
+
 /-- An element fixed by a nontrivial automorphism — hence, `Gal(L/K)` having order two, by all of
 `Gal(L/K)` — lies in the base field. -/
 theorem mem_range_algebraMap_of_apply_eq {σ : L ≃ₐ[K] L} (hσ : σ ≠ 1) {x : L} (hx : σ x = x) :
@@ -61,6 +68,13 @@ theorem mem_range_algebraMap_of_apply_eq {σ : L ≃ₐ[K] L} (hσ : σ ≠ 1) {
   rcases algEquiv_eq_one_or_eq K L hσ φ with rfl | rfl
   · exact AlgEquiv.one_apply x
   · exact hx
+
+/-- **A nontrivial automorphism moves every element outside the base field.** The difference
+`σ x - x` is the square root of the discriminant of `x`'s minimal polynomial, so this is exactly
+the nondegeneracy that makes such an `x` a generator. -/
+theorem apply_sub_self_ne_zero {σ : L ≃ₐ[K] L} (hσ : σ ≠ 1) {x : L}
+    (hx : x ∉ Set.range (algebraMap K L)) : σ x - x ≠ 0 :=
+  sub_ne_zero.mpr fun heq ↦ hx (mem_range_algebraMap_of_apply_eq K L hσ heq)
 
 /-- A separable quadratic extension has a nontrivial automorphism. -/
 theorem exists_algEquiv_ne_one : ∃ σ : L ≃ₐ[K] L, σ ≠ 1 :=

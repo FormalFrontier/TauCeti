@@ -6,6 +6,7 @@ Authors: Chris Birkbeck
 module
 
 public import TauCeti.Analysis.Contour.Cauchy.PrincipalValue.Basic
+import TauCeti.Analysis.Contour.Curve.ExcisionMeasure
 import TauCeti.Analysis.Contour.Curve.Distance
 import Mathlib.MeasureTheory.Integral.DominatedConvergence
 import Mathlib.Analysis.Calculus.Deriv.Inverse
@@ -254,10 +255,7 @@ theorem HasCauchyPVWith.of_integrable_of_crossings_measure_zero {γ : ℝ → �
   classical
   set g : ℝ → ℂ := fun t => f (γ t) * deriv γ t with hg
   have hmeas : ∀ ε : ℝ, MeasureTheory.NullMeasurableSet {t | ∃ s ∈ S, ‖γ t - s‖ ≤ ε}
-      (MeasureTheory.volume.restrict (Set.uIoc a b)) := fun ε => by
-    have hset : {t | ∃ s ∈ S, ‖γ t - s‖ ≤ ε} = ⋃ s ∈ S, {t | ‖γ t - s‖ ≤ ε} := by ext t; simp
-    refine hset ▸ MeasureTheory.NullMeasurableSet.biUnion S.countable_toSet fun s _ => ?_
-    exact nullMeasurableSet_le ((hγ.sub_const s).norm) aemeasurable_const
+      (MeasureTheory.volume.restrict (Set.uIoc a b)) := fun ε => nullMeasurableSet_excision hγ S ε
   have hsm : ∀ ε : ℝ, MeasureTheory.AEStronglyMeasurable
       (fun t => if ∃ s ∈ S, ‖γ t - s‖ ≤ ε then 0 else g t)
       (MeasureTheory.volume.restrict (Set.uIoc a b)) := fun ε =>

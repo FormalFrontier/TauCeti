@@ -120,17 +120,26 @@ variable {R A B : Type*}
 
 namespace Bialgebra.CounitAlgebra
 
-/-- The coefficient synonym is a module over the coefficients, inherited from `B`. -/
-instance [Semiring B] : Module B (CounitAlgebra R A B) := inferInstanceAs (Module B B)
+/-- The coefficient synonym is a module over the coefficients, inherited from `B`.
+Its lower priority lets `Algebra.toModule` remain canonical when the coefficient and base rings
+coincide. -/
+instance (priority := 100) [Semiring B] : Module B (CounitAlgebra R A B) :=
+  inferInstanceAs (Module B B)
 
 /-- Base and coefficient scalars commute on the synonym, inherited from `B`. -/
 instance [CommSemiring R] [Semiring B] [Algebra R B] :
     SMulCommClass R B (CounitAlgebra R A B) :=
   inferInstanceAs (SMulCommClass R B B)
 
+/-- Base scalars act through the coefficient algebra on the coefficient synonym. -/
+instance [CommSemiring R] [Semiring B] [Algebra R B] :
+    IsScalarTower R B (CounitAlgebra R A B) :=
+  inferInstanceAs (IsScalarTower R B B)
+
 /-- Coefficient scalars associate with the synonym's multiplication, inherited from
 `B`. -/
-instance [Semiring B] : IsScalarTower B (CounitAlgebra R A B) (CounitAlgebra R A B) :=
+instance instIsScalarTowerSemiring [Semiring B] :
+    IsScalarTower B (CounitAlgebra R A B) (CounitAlgebra R A B) :=
   inferInstanceAs (IsScalarTower B B B)
 
 end Bialgebra.CounitAlgebra
