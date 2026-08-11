@@ -18,11 +18,11 @@ transcription notes, and the generator and relator counts stated by the source, 
 relator expressions themselves.
 
 Four decidable checks accompany every row. The first is the generator and relator counts. The second
-is the total number of letters in the compiled relator words, against the length published by the
-source. The third spells the compiled words out letter by letter, so that a reviewer comparing the
-Lean data with the source never has to unfold the relator compiler. The fourth is that every
-compiled word is cyclically reduced, which is what makes the letter count comparable with a
-published length: both sources measure length after free and cyclic reduction of each relator.
+spells the compiled words out letter by letter, so that a reviewer comparing the Lean data with the
+source never has to unfold the relator compiler. The third reads off from those letters the total
+number of them, against the length published by the source. The fourth is that every compiled word
+is cyclically reduced, which is what makes the letter count comparable with a published length: both
+sources measure length after free and cyclic reduction of each relator.
 
 ## The manifest rows
 
@@ -46,14 +46,38 @@ group. Those are downstream statements which the CFSG roadmap deliberately does 
 proved here is exactly the transcription arithmetic: the counts, the total length, the compiled
 letters, and cyclic reducedness.
 
+## Cross-checks
+
 The correctness of a transcription is a review obligation, not something these theorems establish.
-As an independent check on the relator words, and as the cross-check the roadmap asks a sporadic row
-to record, each of the three presentations below was re-enumerated outside Lean with GAP 4.15.1:
-Todd--Coxeter over the trivial subgroup returns a group of order `7920`, `95040` and `443520`
-respectively, and in each case the resulting group is simple and isomorphic to GAP's
-`MathieuGroup(11)`, `MathieuGroup(12)` and `MathieuGroup(22)`. That reproduces the published claim
-about the transcribed words, and a mistyped letter would be very unlikely to survive it. It is
-recorded here as provenance for a reviewer; no part of it is a Lean proof.
+Two external checks are recorded below as provenance for a reviewer. Neither is a Lean proof, and
+neither is claimed by any theorem in this file.
+
+The first is an independent re-enumeration of the transcribed words outside Lean, with GAP 4.15.1.
+Transcribing the compiled letters back into GAP's free-group syntax gives the input
+
+```text
+F := FreeGroup("a", "b");;  a := F.1;;  b := F.2;;
+G11 := F / [ b*a^-3*b*a^-1*b^3, b*a*b^-1*a^-1*b^-1*a^-1*b*a*b^-1*a ];;
+G12 := F / [ (b^-1*a)^3, a^5*b^6, a*b^2*a*b^-1*a^2*b*a^2*b^2 ];;
+G22 := F / [ a^4*b*a^-1*b*a^-1*b, a^2*b*a^-1*b^-1*a*b^2*a^-1*b^-1, b^11 ];;
+List([G11, G12, G22], Size);
+List([G11, G12, G22], IsSimpleGroup);
+List([[G11, 11], [G12, 12], [G22, 22]], p -> IsomorphismGroups(p[1], MathieuGroup(p[2])) <> fail);
+```
+
+on which Todd--Coxeter over the trivial subgroup returns the orders `7920`, `95040` and `443520`,
+each group is simple, and an isomorphism to `MathieuGroup(11)`, `MathieuGroup(12)` and
+`MathieuGroup(22)` is found. That reproduces the published claim about the words as transcribed
+here, and a mistyped letter would be very unlikely to survive it.
+
+The second is the comparison the CFSG roadmap asks a sporadic row to record, and these three rows
+still owe it. The roadmap points at the Lean 4 permutation-group development
+[FiniteSimpleGroups](https://github.com/KitaKen1/finite-simple-groups-lean), which builds `M₁₁`,
+`M₁₂` and `M₂₂` as subgroups of `Equiv.Perm (Fin n)` with their orders and simplicity proved, and
+asks whether the transcribed relators hold of its named generators. That is a review artifact rather
+than a Lean target, since making it one would mean importing that development, which the roadmap
+conditions on coordination with its author. It has not been carried out for these rows, and the GAP
+re-enumeration above is an additional independent check rather than a substitute for it.
 
 ## Main definitions
 
@@ -72,6 +96,10 @@ three of those rows. The two sources are:
 * M. D. E. Conder, G. Havas and C. Ramsay, *Efficient presentations for the Mathieu simple group
   `M₂₂` and its cover*, in *Finite Geometries, Groups, and Computation*, Walter de Gruyter, Berlin,
   2006, 33--41.
+
+The Lean development named in the cross-check above is
+[FiniteSimpleGroups](https://github.com/KitaKen1/finite-simple-groups-lean); nothing from it is
+imported, copied, or adapted here.
 
 The remaining two Mathieu names, `M₂₃` and `M₂₄`, are not transcribed here. The presentations on
 their ATLAS version 3 pages are stated rather than proved there, and locating a source that proves
@@ -129,12 +157,14 @@ def m11Presentation : GroupPresentation where
       -- b a B A B A b a B a
       genB ⬝ genA ⬝ invB ⬝ invA ⬝ invB ⬝ invA ⬝ genB ⬝ genA ⬝ invB ⬝ genA ]
 
+/-- The generator names recorded for `M₁₁`. The row's body is sealed, so this is what lets a
+consumer see that it is a two-generator presentation. -/
+@[simp]
+theorem m11Presentation_generatorNames : m11Presentation.generatorNames = ["a", "b"] := by
+  simp [m11Presentation]
+
 /-- The generator and relator counts recorded for `M₁₁` agree with the transcribed data. -/
 theorem m11Presentation_matchesMetadata : m11Presentation.matchesMetadata := by decide
-
-/-- The compiled relator words for `M₁₁` have the total length `19` published by the source. -/
-theorem m11Presentation_totalLength : m11Presentation.totalLength = 19 := by
-  simp [GroupPresentation.totalLength_def, m11Presentation]
 
 /-- The compiled relator words for `M₁₁`, spelled out. A letter `(i, true)` is the generator with
 index `i` and `(i, false)` is its inverse, so the two words read `b A A A b A b b b` and
@@ -145,26 +175,25 @@ theorem m11Presentation_relatorLetters :
           (1, true), (1, true)],
         [(1, true), (0, true), (1, false), (0, false), (1, false), (0, false), (1, true),
           (0, true), (1, false), (0, true)]] := by
-  simp [GroupPresentation.relatorLetters_def, GroupPresentation.generatorCount,
-    FreeGroup.invRev, m11Presentation]
+  simp [GroupPresentation.relatorLetters_def, GroupPresentation.relators_def,
+    GroupPresentation.generatorCount, FreeGroup.invRev, m11Presentation]
+
+/-- The compiled relator words for `M₁₁` have the total length `19` published by the source. This is
+read off from the spelled-out letters rather than from the record. -/
+theorem m11Presentation_totalLength : m11Presentation.totalLength = 19 := by
+  rw [← GroupPresentation.sum_map_length_relatorLetters, m11Presentation_relatorLetters]
+  decide
 
 /-- Every compiled relator word for `M₁₁` is cyclically reduced. This is what makes the letter count
 in `TauCeti.Sporadic.m11Presentation_totalLength` comparable with the length published for the
-presentation, which is measured after free and cyclic reduction of each relator. -/
-theorem m11Presentation_isCyclicallyReduced :
-    ∀ w ∈ m11Presentation.relators, FreeGroup.IsCyclicallyReduced w := by
-  rw [← List.forall_iff_forall_mem]
-  simp only [m11Presentation, List.length_cons, List.length_nil, Nat.reduceAdd,
-    GroupPresentation.generatorCount, GroupPresentation.relators_def, List.map_cons,
-    Relator.toWord_mul, Relator.toWord_gen, Fin.isValue, Relator.toWord_pow, Relator.toWord_inv,
-    FreeGroup.invRev, Bool.not_true, List.map_nil, List.reverse_cons, List.reverse_nil,
-    List.nil_append, List.reduceReplicate, List.flatten_cons, List.flatten_nil, List.append_nil,
-    List.cons_append]
-  constructor
-  · rw [FreeGroup.isCyclicallyReduced_iff, FreeGroup.isReduced_iff_reduce_eq]
-    decide
-  rw [List.forall_iff_forall_mem, List.forall_mem_singleton]
-  rw [FreeGroup.isCyclicallyReduced_iff, FreeGroup.isReduced_iff_reduce_eq]
+presentation, which is measured after free and cyclic reduction of each relator.
+
+Only the compiler needs unfolding here: once the transcribed expressions are compiled away, the
+words are closed data and the kernel decides the predicate. -/
+theorem m11Presentation_relatorsCyclicallyReduced : m11Presentation.relatorsCyclicallyReduced := by
+  simp only [GroupPresentation.relatorsCyclicallyReduced_iff, GroupPresentation.relators_def,
+    m11Presentation, List.map_cons, List.map_nil, Relator.toWord_mul, Relator.toWord_pow,
+    Relator.toWord_inv, Relator.toWord_gen]
   decide
 
 /-! ### `M₁₂` -/
@@ -198,12 +227,14 @@ def m12Presentation : GroupPresentation where
       -- a b b a B a a b a a b b
       genA ⬝ .pow genB 2 ⬝ genA ⬝ invB ⬝ .pow genA 2 ⬝ genB ⬝ .pow genA 2 ⬝ .pow genB 2 ]
 
+/-- The generator names recorded for `M₁₂`; see
+`TauCeti.Sporadic.m11Presentation_generatorNames`. -/
+@[simp]
+theorem m12Presentation_generatorNames : m12Presentation.generatorNames = ["a", "b"] := by
+  simp [m12Presentation]
+
 /-- The generator and relator counts recorded for `M₁₂` agree with the transcribed data. -/
 theorem m12Presentation_matchesMetadata : m12Presentation.matchesMetadata := by decide
-
-/-- The compiled relator words for `M₁₂` have the total length `29` published by the source. -/
-theorem m12Presentation_totalLength : m12Presentation.totalLength = 29 := by
-  simp [GroupPresentation.totalLength_def, m12Presentation]
 
 /-- The compiled relator words for `M₁₂`, spelled out. A letter `(i, true)` is the generator with
 index `i` and `(i, false)` is its inverse, so the three words read `B a B a B a`, then five copies
@@ -215,28 +246,21 @@ theorem m12Presentation_relatorLetters :
           (1, true), (1, true), (1, true)],
         [(0, true), (1, true), (1, true), (0, true), (1, false), (0, true), (0, true), (1, true),
           (0, true), (0, true), (1, true), (1, true)]] := by
-  simp [GroupPresentation.relatorLetters_def, GroupPresentation.generatorCount,
-    FreeGroup.invRev, m12Presentation]
+  simp [GroupPresentation.relatorLetters_def, GroupPresentation.relators_def,
+    GroupPresentation.generatorCount, FreeGroup.invRev, m12Presentation]
+
+/-- The compiled relator words for `M₁₂` have the total length `29` published by the source. This is
+read off from the spelled-out letters rather than from the record. -/
+theorem m12Presentation_totalLength : m12Presentation.totalLength = 29 := by
+  rw [← GroupPresentation.sum_map_length_relatorLetters, m12Presentation_relatorLetters]
+  decide
 
 /-- Every compiled relator word for `M₁₂` is cyclically reduced; see
-`TauCeti.Sporadic.m11Presentation_isCyclicallyReduced`. -/
-theorem m12Presentation_isCyclicallyReduced :
-    ∀ w ∈ m12Presentation.relators, FreeGroup.IsCyclicallyReduced w := by
-  rw [← List.forall_iff_forall_mem]
-  simp only [m12Presentation, List.length_cons, List.length_nil, Nat.reduceAdd,
-    GroupPresentation.generatorCount, GroupPresentation.relators_def, List.map_cons,
-    Relator.toWord_pow, Relator.toWord_mul, Relator.toWord_inv, FreeGroup.invRev,
-    Relator.toWord_gen, Fin.isValue, Bool.not_true, List.map_nil, List.reverse_cons,
-    List.reverse_nil, List.nil_append, List.cons_append, List.reduceReplicate, List.flatten_cons,
-    List.flatten_nil, List.append_nil]
-  constructor
-  · rw [FreeGroup.isCyclicallyReduced_iff, FreeGroup.isReduced_iff_reduce_eq]
-    decide
-  constructor
-  · rw [FreeGroup.isCyclicallyReduced_iff, FreeGroup.isReduced_iff_reduce_eq]
-    decide
-  rw [List.forall_iff_forall_mem, List.forall_mem_singleton]
-  rw [FreeGroup.isCyclicallyReduced_iff, FreeGroup.isReduced_iff_reduce_eq]
+`TauCeti.Sporadic.m11Presentation_relatorsCyclicallyReduced`. -/
+theorem m12Presentation_relatorsCyclicallyReduced : m12Presentation.relatorsCyclicallyReduced := by
+  simp only [GroupPresentation.relatorsCyclicallyReduced_iff, GroupPresentation.relators_def,
+    m12Presentation, List.map_cons, List.map_nil, Relator.toWord_mul, Relator.toWord_pow,
+    Relator.toWord_inv, Relator.toWord_gen]
   decide
 
 /-! ### `M₂₂` -/
@@ -272,12 +296,14 @@ def m22Presentation : GroupPresentation where
       -- b¹¹
       .pow genB 11 ]
 
+/-- The generator names recorded for `M₂₂`; see
+`TauCeti.Sporadic.m11Presentation_generatorNames`. -/
+@[simp]
+theorem m22Presentation_generatorNames : m22Presentation.generatorNames = ["a", "b"] := by
+  simp [m22Presentation]
+
 /-- The generator and relator counts recorded for `M₂₂` agree with the transcribed data. -/
 theorem m22Presentation_matchesMetadata : m22Presentation.matchesMetadata := by decide
-
-/-- The compiled relator words for `M₂₂` have the total length `30` published by the source. -/
-theorem m22Presentation_totalLength : m22Presentation.totalLength = 30 := by
-  simp [GroupPresentation.totalLength_def, m22Presentation]
 
 /-- The compiled relator words for `M₂₂`, spelled out. A letter `(i, true)` is the generator with
 index `i` and `(i, false)` is its inverse, so the three words read `a a a a b A b A b`,
@@ -290,28 +316,21 @@ theorem m22Presentation_relatorLetters :
           (0, false), (1, false)],
         [(1, true), (1, true), (1, true), (1, true), (1, true), (1, true), (1, true), (1, true),
           (1, true), (1, true), (1, true)]] := by
-  simp [GroupPresentation.relatorLetters_def, GroupPresentation.generatorCount,
-    FreeGroup.invRev, m22Presentation]
+  simp [GroupPresentation.relatorLetters_def, GroupPresentation.relators_def,
+    GroupPresentation.generatorCount, FreeGroup.invRev, m22Presentation]
+
+/-- The compiled relator words for `M₂₂` have the total length `30` published by the source. This is
+read off from the spelled-out letters rather than from the record. -/
+theorem m22Presentation_totalLength : m22Presentation.totalLength = 30 := by
+  rw [← GroupPresentation.sum_map_length_relatorLetters, m22Presentation_relatorLetters]
+  decide
 
 /-- Every compiled relator word for `M₂₂` is cyclically reduced; see
-`TauCeti.Sporadic.m11Presentation_isCyclicallyReduced`. -/
-theorem m22Presentation_isCyclicallyReduced :
-    ∀ w ∈ m22Presentation.relators, FreeGroup.IsCyclicallyReduced w := by
-  rw [← List.forall_iff_forall_mem]
-  simp only [m22Presentation, List.length_cons, List.length_nil, Nat.reduceAdd,
-    GroupPresentation.generatorCount, GroupPresentation.relators_def, List.map_cons,
-    Relator.toWord_mul, Relator.toWord_pow, Relator.toWord_gen, Fin.isValue, List.reduceReplicate,
-    List.flatten_cons, List.flatten_nil, List.append_nil, List.cons_append, List.nil_append,
-    Relator.toWord_inv, FreeGroup.invRev, Bool.not_true, List.map_nil, List.reverse_cons,
-    List.reverse_nil]
-  constructor
-  · rw [FreeGroup.isCyclicallyReduced_iff, FreeGroup.isReduced_iff_reduce_eq]
-    decide
-  constructor
-  · rw [FreeGroup.isCyclicallyReduced_iff, FreeGroup.isReduced_iff_reduce_eq]
-    decide
-  rw [List.forall_iff_forall_mem, List.forall_mem_singleton]
-  rw [FreeGroup.isCyclicallyReduced_iff, FreeGroup.isReduced_iff_reduce_eq]
+`TauCeti.Sporadic.m11Presentation_relatorsCyclicallyReduced`. -/
+theorem m22Presentation_relatorsCyclicallyReduced : m22Presentation.relatorsCyclicallyReduced := by
+  simp only [GroupPresentation.relatorsCyclicallyReduced_iff, GroupPresentation.relators_def,
+    m22Presentation, List.map_cons, List.map_nil, Relator.toWord_mul, Relator.toWord_pow,
+    Relator.toWord_inv, Relator.toWord_gen]
   decide
 
 end TauCeti.Sporadic
