@@ -38,7 +38,7 @@ for positive semidefinite matrices.
   with positive-definite subtraction kernel, the value at `0` is real with nonnegative real part
   and bounds the function uniformly in norm.
 * `TauCeti.map_neg_eq_conj_of_isPositiveDefiniteKernel`: such a function is conjugate-symmetric
-  under negation, `conj (ψ v) = ψ (-v)`.
+  under negation, `ψ (-v) = conj (ψ v)`.
 
 ## References
 
@@ -138,12 +138,12 @@ theorem map_zero_eq_ofReal_re_of_isPositiveDefiniteKernel
   simpa [(RCLike.nonneg_iff.mp h).2] using (RCLike.re_add_im (ψ 0)).symm
 
 /-- A function with positive-definite subtraction kernel is conjugate-symmetric under negation:
-`conj (ψ v) = ψ (-v)`. This is the Hermitian symmetry of the kernel, read along the diagonal
+`ψ (-v) = conj (ψ v)`. This is the Hermitian symmetry of the kernel, read along the diagonal
 translate `(v, 0)`. -/
 theorem map_neg_eq_conj_of_isPositiveDefiniteKernel
     (hpd : IsPositiveDefiniteKernel fun a b : V => ψ (a - b)) (v : V) :
-    conj (ψ v) = ψ (-v) := by
-  simpa using isPositiveDefiniteKernel_conj_symm hpd v 0
+    ψ (-v) = conj (ψ v) := by
+  simpa using (isPositiveDefiniteKernel_conj_symm hpd v 0).symm
 
 /-- A function with positive-definite subtraction kernel is uniformly bounded by the real part
 of its value at `0`. -/

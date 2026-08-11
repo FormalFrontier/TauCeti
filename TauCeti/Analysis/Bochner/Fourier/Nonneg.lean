@@ -9,7 +9,8 @@ public import Mathlib.MeasureTheory.Measure.Haar.OfBasis
 public import TauCeti.Analysis.PositiveDefinite.Kernel.Basic
 -- The remaining imports are proof-only: the Fejér averaging argument uses dominated convergence,
 -- Fubini, simple-function approximation, the Haar ball formulas and negation invariance, the
--- Fourier atom kernel with its Fourier-transform bridge, and the kernel Cauchy–Schwarz bounds;
+-- Fourier atom kernel with its Fourier-transform bridge, the continuity of `𝓕`/`𝓕⁻`, and the
+-- kernel Cauchy–Schwarz bounds;
 -- the integrability theorem additionally uses Fourier inversion, the Gaussian Fourier
 -- transform, the Gaussian kernel, and the real part of a Bochner integral.
 import Mathlib.Analysis.Fourier.Inversion
@@ -21,6 +22,7 @@ import Mathlib.MeasureTheory.Integral.Prod
 import Mathlib.MeasureTheory.Measure.Haar.Unique
 import Mathlib.MeasureTheory.Measure.Lebesgue.EqHaar
 import TauCeti.Analysis.Bochner.Fourier.Convention
+import TauCeti.Analysis.Fourier.Continuous
 import TauCeti.Analysis.Bochner.Gaussian.Basic
 import TauCeti.Analysis.PositiveDefinite.Kernel.Bounds
 
@@ -107,8 +109,11 @@ is itself (the coercion of) a simple function. -/
 private theorem aestronglyMeasurable_comp_simpleFunc {β : Type*} [TopologicalSpace β]
     (sn : SimpleFunc α α) (g : α → β) (μ : Measure α) :
     AEStronglyMeasurable (fun x => g (sn x)) μ := by
-  rw [show (fun x => g (sn x)) = ⇑(sn.map g) from
-    funext fun x => (SimpleFunc.map_apply g sn x).symm]
+  -- `SimpleFunc.map_apply` is stated pointwise, so the rewrite needs the `funext`ed form; the
+  -- coercion `⇑(sn.map g)` is what carries the `SimpleFunc` measurability instance.
+  have hmap : (fun x => g (sn x)) = ⇑(sn.map g) :=
+    funext fun x => (SimpleFunc.map_apply g sn x).symm
+  rw [hmap]
   exact (SimpleFunc.map _ _).aestronglyMeasurable
 
 end SimpleFuncExpansion
@@ -227,8 +232,10 @@ private theorem re_double_integral_simpleFunc_nonneg (ψ : V → ℂ)
       ring
     · -- `c * ψ (sn · - v)` is integrable for the finite measure `μ`.
       refine Integrable.const_mul ?_ _
-      rw [show (fun x => ψ (sn x - v)) = ⇑(sn.map fun u => ψ (u - v)) from
-        funext fun x => (SimpleFunc.map_apply (fun u => ψ (u - v)) sn x).symm]
+      -- as above: rewrite to the `SimpleFunc` coercion, which carries the integrability instance
+      have hmap : (fun x => ψ (sn x - v)) = ⇑(sn.map fun u => ψ (u - v)) :=
+        funext fun x => (SimpleFunc.map_apply (fun u => ψ (u - v)) sn x).symm
+      rw [hmap]
       exact SimpleFunc.integrable_of_isFiniteMeasure _
   -- Reindex both sums over the coercion of `R` to a type, then apply positive definiteness.
   rw [h_double_integral]
@@ -601,7 +608,7 @@ theorem fourier_im_eq_zero_of_isPositiveDefiniteKernel (F : V → ℂ)
     rw [← integral_conj]
     have hpt : ∀ v : V, conj (fourierAtom ξ v * F v) = fourierAtom ξ (-v) * F (-v) := by
       intro v
-      rw [map_mul, map_neg_eq_conj_of_isPositiveDefiniteKernel hpd v]
+      rw [map_mul, ← map_neg_eq_conj_of_isPositiveDefiniteKernel hpd v]
       congr 1
       rw [fourierAtom_eq_fourierChar, fourierAtom_eq_fourierChar,
         Circle.starRingEnd_addChar]

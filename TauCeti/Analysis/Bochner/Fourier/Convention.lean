@@ -19,9 +19,10 @@ Mathlib's characteristic function of a finite measure is
 normalizations and then reuses the existing characteristic-function API to show that the
 Fourier-convention transform of a finite measure is continuous and positive definite.
 
-The file also bridges Mathlib's Fourier transform `𝓕` to the Fourier atom and records the
-continuity of `𝓕` and `𝓕⁻` on integrable functions, and it carries the measure-uniqueness
-theorem — the uniqueness half of Bochner's theorem — consumed by `BochnerTheorem.lean`.
+The file also bridges Mathlib's Fourier transform `𝓕` to the Fourier atom, and it carries the
+measure-uniqueness theorem — the uniqueness half of Bochner's theorem — consumed by
+`BochnerTheorem.lean`. The convention-free continuity of `𝓕` and `𝓕⁻` lives in
+`TauCeti.Analysis.Fourier.Continuous`.
 
 This advances `TauCetiRoadmap/OneParameterSemigroups/README.md`, Part C, the positive-definite
 function API item asking for "a stated Fourier-convention conversion lemma between Mathlib's
@@ -33,9 +34,6 @@ function API item asking for "a stated Fourier-convention conversion lemma betwe
   `charFun μ ((-2π) • a)`.
 * `TauCeti.fourier_eq_integral_fourierAtom_mul`: the Fourier transform `𝓕 F` is the
   integral of `F` against the Fourier atom.
-* `TauCeti.continuous_fourier_of_integrable` and
-  `TauCeti.continuous_fourierInv_of_integrable`: the Fourier transform of an integrable function
-  and its inverse are continuous.
 * `TauCeti.fourierConventionCharFun_isPositiveDefiniteKernel`: the Fourier-convention
   translation-invariant kernel of a finite measure is positive definite.
 * `TauCeti.Measure.ext_of_forall_integral_fourierAtom_eq`: a finite measure is determined by its
@@ -96,19 +94,6 @@ theorem fourier_eq_integral_fourierAtom_mul (F : U → ℂ) (ξ : U) :
   rw [Real.fourier_eq]
   refine integral_congr_ae (ae_of_all _ fun v => ?_)
   simp only [Circle.smul_def, smul_eq_mul, fourierAtom_eq_fourierChar]
-
-/-- The Fourier transform of an integrable function is continuous. This is Mathlib's
-`VectorFourier.fourierIntegral_continuous` specialized to the inner-product pairing. -/
-theorem continuous_fourier_of_integrable {F : U → ℂ} (hint : Integrable F) : Continuous (𝓕 F) :=
-  VectorFourier.fourierIntegral_continuous Real.continuous_fourierChar
-    (by simpa only [innerₗ_apply_apply] using continuous_inner) hint
-
-/-- The inverse Fourier transform of an integrable function is continuous: it is the Fourier
-transform precomposed with negation. -/
-theorem continuous_fourierInv_of_integrable {F : U → ℂ} (hint : Integrable F) :
-    Continuous (𝓕⁻ F) := by
-  rw [funext fun ξ => Real.fourierInv_eq_fourier_neg F ξ]
-  exact (continuous_fourier_of_integrable hint).comp continuous_neg
 
 end FourierIntegral
 

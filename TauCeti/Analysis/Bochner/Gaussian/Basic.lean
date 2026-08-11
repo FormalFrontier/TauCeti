@@ -35,8 +35,9 @@ form then follows on that same generality through
 
 ## Main declarations
 
-* `TauCeti.charFun_stdGaussian_sqrt_smul`: `charFun (stdGaussian V) (√(2c) • a) = exp (-c‖a‖²)`.
-* `TauCeti.isPositiveDefinite_cexp_neg_mul_sq_norm`: on a finite-dimensional space,
+* `TauCeti.charFun_stdGaussian_sqrt_smul`: on a finite-dimensional space,
+  `charFun (stdGaussian V) (√(2c) • a) = exp (-c‖a‖²)`.
+* `TauCeti.isPositiveDefinite_cexp_neg_mul_sq_norm`: on any real inner-product space,
   `a ↦ exp (-c‖a‖²)` is positive definite for `c ≥ 0` under the negation involution.
 * `TauCeti.isPositiveDefiniteKernel_cexp_neg_mul_sq_norm`: the involution-free kernel form,
   `(a, b) ↦ exp (-c‖a - b‖²)` is a positive-definite kernel on any real inner-product space.
