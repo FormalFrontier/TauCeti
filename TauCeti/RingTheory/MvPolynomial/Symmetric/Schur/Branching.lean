@@ -59,10 +59,11 @@ carrying the top letter `n`.  Those cells are what the last variable counts.
   tableau into the weight of its restriction and the multiplicity of the top letter.
 * `TauCeti.diagramSchurPoly_eq_sum_interlacingShapes`: **the branching rule**, as an identity of
   polynomials graded by the last variable.
-* `TauCeti.eval_snoc_diagramSchurPoly`, `TauCeti.aeval_snoc_one_diagramSchurPoly`,
-  `TauCeti.eval_diagramSchurPoly_of_apply_last_eq_one` and
-  `TauCeti.eval_snoc_one_diagramSchurPoly`: the specializations of the last variable, at an
-  arbitrary value and at `1`.
+* `TauCeti.aeval_snoc_diagramSchurPoly`: the substitution of an arbitrary value for the last
+  variable, in an arbitrary algebra, from which `TauCeti.eval_snoc_diagramSchurPoly`,
+  `TauCeti.aeval_snoc_one_diagramSchurPoly`, `TauCeti.eval_snoc_one_diagramSchurPoly` and
+  `TauCeti.eval_diagramSchurPoly_of_apply_last_eq_one` — the specializations at an arbitrary
+  value and at `1` — are read off.
 * `TauCeti.aeval_snoc_zero_diagramSchurPoly`: **stability**, the specialization at `0`.
 
 ## References
@@ -89,6 +90,7 @@ variable {n : ℕ} {μ ν : _root_.YoungDiagram}
 /-- **Erasing the top letter changes no other multiplicity**, read on weights: the combinatorial
 statement is `TauCeti.BoundedSSYT.content_restrict`, and the weight of a bounded tableau is its
 content restricted to the alphabet. -/
+@[simp]
 theorem weight_restrict (T : BoundedSSYT (n + 1) μ) (hν : restrictShape T = ν) (i : Fin n) :
     weight (restrict T ν hν) i = weight T i.castSucc := by
   rw [weight_apply, weight_apply, Fin.val_castSucc, content_restrict T hν i.isLt]
@@ -97,13 +99,13 @@ theorem weight_restrict (T : BoundedSSYT (n + 1) μ) (hν : restrictShape T = ν
 letter, and the letters below the top one occupy precisely the cells of the sub-shape `ν`, so the
 multiplicity of the top letter makes up the difference `|μ| - |ν|`.  Stated as an addition, which
 is the form the exponent bookkeeping of the branching rule needs. -/
-theorem card_add_weight_last (T : BoundedSSYT (n + 1) μ) (hν : restrictShape T = ν) :
-    ν.card + weight T (Fin.last n) = μ.card := by
+theorem card_add_weight_last (T : BoundedSSYT (n + 1) μ) :
+    (restrictShape T).card + weight T (Fin.last n) = μ.card := by
   have hsum : ∑ i, weight T i = μ.card := sum_weight T
   rw [Fin.sum_univ_castSucc] at hsum
-  rw [← hsum, ← sum_weight (restrict T ν hν)]
+  rw [← hsum, ← sum_weight (restrict T _ rfl)]
   exact congrArg (· + weight T (Fin.last n))
-    (Finset.sum_congr rfl fun i _ => weight_restrict T hν i)
+    (Finset.sum_congr rfl fun i _ => weight_restrict T rfl i)
 
 /-- **The weight of a tableau splits along the top letter**: it is the weight of the restriction,
 transported into the first `n` letters, together with the multiplicity of the top letter.  This is
@@ -144,7 +146,7 @@ theorem diagramSchurPoly_eq_sum_interlacingShapes (n : ℕ) (μ : _root_.YoungDi
             rename Fin.castSucc
               (monomial (BoundedSSYT.weight (BoundedSSYT.restrict T _ rfl)) (1 : R)) := by
     intro T
-    have hcard := BoundedSSYT.card_add_weight_last T (ν := BoundedSSYT.restrictShape T) rfl
+    have hcard := BoundedSSYT.card_add_weight_last T
     have hexp : μ.card - (BoundedSSYT.restrictShape T).card
         = BoundedSSYT.weight T (Fin.last n) := by omega
     have hw : BoundedSSYT.weight T
@@ -160,22 +162,26 @@ theorem diagramSchurPoly_eq_sum_interlacingShapes (n : ℕ) (μ : _root_.YoungDi
   exact Finset.sum_congr rfl fun ν _ => by
     rw [← Finset.mul_sum, ← map_sum, diagramSchurPoly_eq_sum]
 
+/-- **The branching rule, with the last variable substituted.**  Substituting a family of values in
+an `R`-algebra for the first `n` variables of `s_μ` and `t` for the last gives the sum of
+`t ^ (|μ| - |ν|) · s_ν` over the shapes `ν` interlacing `μ`.  The specializations below are the
+cases of an evaluation in `R` itself, and of the variables themselves for the first `n`. -/
+theorem aeval_snoc_diagramSchurPoly {A : Type*} [CommSemiring A] [Algebra R A] (n : ℕ)
+    (μ : _root_.YoungDiagram) (x : Fin n → A) (t : A) :
+    aeval (Fin.snoc x t) (diagramSchurPoly (n + 1) R μ)
+      = ∑ ν ∈ YoungDiagram.interlacingShapes n μ,
+          t ^ (μ.card - ν.card) * aeval x (diagramSchurPoly n R ν) := by
+  rw [diagramSchurPoly_eq_sum_interlacingShapes, map_sum]
+  refine Finset.sum_congr rfl fun ν _ => ?_
+  rw [map_mul, map_pow, aeval_X, Fin.snoc_last, aeval_rename, Fin.snoc_comp_castSucc]
+
 /-- **The branching rule, evaluated at an arbitrary last value.**  Substituting `t` for the last
 variable of `s_μ` gives the sum of `t ^ (|μ| - |ν|) · s_ν` over the shapes `ν` interlacing `μ`. -/
 theorem eval_snoc_diagramSchurPoly (n : ℕ) (μ : _root_.YoungDiagram) (x : Fin n → R) (t : R) :
     eval (Fin.snoc x t) (diagramSchurPoly (n + 1) R μ)
       = ∑ ν ∈ YoungDiagram.interlacingShapes n μ,
           t ^ (μ.card - ν.card) * eval x (diagramSchurPoly n R ν) := by
-  rw [diagramSchurPoly_eq_sum_interlacingShapes, map_sum]
-  refine Finset.sum_congr rfl fun ν _ => ?_
-  rw [map_mul, map_pow, eval_X, Fin.snoc_last, eval_rename, Fin.snoc_comp_castSucc]
-
-/-- Substituting the variables themselves for the first `n` variables, and anything at all for the
-last, undoes the renaming that reads a polynomial in `n` variables as one in `n + 1`. -/
-private theorem aeval_snoc_rename_castSucc {n : ℕ} (t p : MvPolynomial (Fin n) R) :
-    aeval (Fin.snoc (X : Fin n → MvPolynomial (Fin n) R) t) (rename Fin.castSucc p) = p := by
-  rw [aeval_rename, Fin.snoc_comp_castSucc]
-  exact aeval_X_left_apply _
+  simpa only [aeval_eq_eval] using aeval_snoc_diagramSchurPoly (R := R) n μ x t
 
 /-- **The branching rule with the last variable set to `1`, as an identity of polynomials.**  This
 is stronger than the identity of values `TauCeti.eval_diagramSchurPoly_of_apply_last_eq_one` below:
@@ -184,42 +190,47 @@ between the polynomials themselves. -/
 theorem aeval_snoc_one_diagramSchurPoly (n : ℕ) (μ : _root_.YoungDiagram) :
     aeval (Fin.snoc (X : Fin n → MvPolynomial (Fin n) R) 1) (diagramSchurPoly (n + 1) R μ)
       = ∑ ν ∈ YoungDiagram.interlacingShapes n μ, diagramSchurPoly n R ν := by
-  rw [diagramSchurPoly_eq_sum_interlacingShapes, map_sum]
-  refine Finset.sum_congr rfl fun ν _ => ?_
-  rw [map_mul, map_pow, aeval_X, Fin.snoc_last, one_pow, one_mul,
-    aeval_snoc_rename_castSucc]
+  rw [aeval_snoc_diagramSchurPoly]
+  exact Finset.sum_congr rfl fun ν _ => by rw [one_pow, one_mul, aeval_X_left_apply]
 
 /-- **Stability of Schur polynomials.**  A shape has the same Schur polynomial in `n` and in
 `n + 1` variables, once the extra variable is set to `0`: only the shape itself survives the
 specialization, every other interlacing shape being smaller and so carrying a positive power of
 the vanishing variable.  A shape of more than `n` rows interlaces no shape of at most `n` rows
 that is as large, so there both sides vanish. -/
+@[simp]
 theorem aeval_snoc_zero_diagramSchurPoly (n : ℕ) (μ : _root_.YoungDiagram) :
     aeval (Fin.snoc (X : Fin n → MvPolynomial (Fin n) R) 0) (diagramSchurPoly (n + 1) R μ)
       = diagramSchurPoly n R μ := by
   have hvanish : ∀ ν ∈ YoungDiagram.interlacingShapes n μ, ν ≠ μ →
-      aeval (Fin.snoc (X : Fin n → MvPolynomial (Fin n) R) 0)
-          (X (Fin.last n) ^ (μ.card - ν.card) * rename Fin.castSucc (diagramSchurPoly n R ν))
-        = 0 := by
+      (0 : MvPolynomial (Fin n) R) ^ (μ.card - ν.card) * aeval X (diagramSchurPoly n R ν) = 0 := by
     intro ν hν hne
     have hsub : ν.cells ⊆ μ.cells :=
       YoungDiagram.cells_subset_iff.mpr (YoungDiagram.mem_interlacingShapes.mp hν).1.le
     have hlt : ν.card < μ.card :=
       Finset.card_lt_card (lt_of_le_of_ne hsub fun h => hne (YoungDiagram.ext h))
-    rw [map_mul, map_pow, aeval_X, Fin.snoc_last, zero_pow (by omega), zero_mul]
-  rw [diagramSchurPoly_eq_sum_interlacingShapes, map_sum]
+    rw [zero_pow (by omega), zero_mul]
+  rw [aeval_snoc_diagramSchurPoly]
   rcases le_or_gt (μ.colLen 0) n with hμ | hμ
   · have hself : μ ∈ YoungDiagram.interlacingShapes n μ :=
       YoungDiagram.mem_interlacingShapes.mpr
         ⟨YoungDiagram.interlaces_iff.mpr
           fun i => ⟨μ.rowLen_anti i (i + 1) (Nat.le_succ i), le_rfl⟩, hμ⟩
-    rw [Finset.sum_eq_single_of_mem μ hself hvanish, map_mul, map_pow, aeval_X, Fin.snoc_last,
-      Nat.sub_self, pow_zero, one_mul, aeval_snoc_rename_castSucc]
+    rw [Finset.sum_eq_single_of_mem μ hself hvanish, Nat.sub_self, pow_zero, one_mul,
+      aeval_X_left_apply]
   · rw [diagramSchurPoly_eq_zero_of_lt_colLen hμ]
     refine Finset.sum_eq_zero fun ν hν => hvanish ν hν ?_
     rintro rfl
     have := (YoungDiagram.mem_interlacingShapes.mp hν).2
     omega
+
+/-- **The branching rule for Schur polynomials**, evaluated at a family of values with a `1`
+appended. -/
+theorem eval_snoc_one_diagramSchurPoly (n : ℕ) (μ : _root_.YoungDiagram) (x : Fin n → R) :
+    eval (Fin.snoc x 1) (diagramSchurPoly (n + 1) R μ)
+      = ∑ ν ∈ YoungDiagram.interlacingShapes n μ, eval x (diagramSchurPoly n R ν) := by
+  rw [eval_snoc_diagramSchurPoly]
+  exact Finset.sum_congr rfl fun ν _ => by rw [one_pow, one_mul]
 
 /-- **The branching rule for Schur polynomials**, at any evaluation sending the last variable
 to `1`: the value of `s_μ` in `n + 1` variables is the sum of the values of the `s_ν` in the first
@@ -229,16 +240,7 @@ theorem eval_diagramSchurPoly_of_apply_last_eq_one (n : ℕ) (μ : _root_.YoungD
     eval x (diagramSchurPoly (n + 1) R μ)
       = ∑ ν ∈ YoungDiagram.interlacingShapes n μ,
           eval (fun i : Fin n => x i.castSucc) (diagramSchurPoly n R ν) := by
-  rw [diagramSchurPoly_eq_sum_interlacingShapes, map_sum]
-  refine Finset.sum_congr rfl fun ν _ => ?_
-  rw [map_mul, map_pow, eval_X, hx, one_pow, one_mul, eval_rename, Function.comp_def]
-
-/-- **The branching rule for Schur polynomials**, evaluated at a family of values with a `1`
-appended. -/
-theorem eval_snoc_one_diagramSchurPoly (n : ℕ) (μ : _root_.YoungDiagram) (x : Fin n → R) :
-    eval (Fin.snoc x 1) (diagramSchurPoly (n + 1) R μ)
-      = ∑ ν ∈ YoungDiagram.interlacingShapes n μ, eval x (diagramSchurPoly n R ν) := by
-  rw [eval_snoc_diagramSchurPoly]
-  exact Finset.sum_congr rfl fun ν _ => by rw [one_pow, one_mul]
+  conv_lhs => rw [← Fin.snoc_init_self x, hx]
+  exact eval_snoc_one_diagramSchurPoly n μ _
 
 end TauCeti
