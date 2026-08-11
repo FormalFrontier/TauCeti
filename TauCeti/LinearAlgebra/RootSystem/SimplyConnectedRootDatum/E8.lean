@@ -6,6 +6,7 @@ module
 
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.Basic
 public import Mathlib.Data.Fin.Tuple.Embedding
+public import Mathlib.LinearAlgebra.Matrix.BilinearForm
 
 public section
 
@@ -361,114 +362,69 @@ theorem e8Coroot_nonneg_or_nonpos (k : Fin 240) :
 
 /-! ## The symmetric form and the reflection formula
 
-Reflections are computed on coordinate vectors before they are transported to root indices. A
-reflection is Mathlib's `Module.preReflection` for the linear functional attached to the reflecting
-coroot by the form of `CartanMatrix.E₈`, so its involutivity and the conjugation rule
-`s_{w α} = w s_α w⁻¹` are `Module.involutive_preReflection` and
-`Module.preReflection_preReflection` rather than new computations.
+Reflections are computed on coordinate vectors before they are transported to root indices. The
+form is Mathlib's `Matrix.toBilin'` on `CartanMatrix.E₈`, so its bilinearity is that of a
+`LinearMap.BilinForm` and its symmetry is `Matrix.isSymm_toBilin'_iff_isSymm`. A reflection is
+Mathlib's `Module.preReflection` for the functional this form attaches to the reflecting coroot, so
+its involutivity and the conjugation rule `s_{w α} = w s_α w⁻¹` are
+`Module.involutive_preReflection` and `Module.preReflection_preReflection` rather than new
+computations.
 -/
 
-/-- The symmetric bilinear form attached to `CartanMatrix.E₈`, read on simple-coroot
-coordinates. -/
-private def e8Form (x y : Fin 8 → ℤ) : ℤ := (x ᵥ* CartanMatrix.E₈) ⬝ᵥ y
+/-- The symmetric bilinear form attached to `CartanMatrix.E₈`, read on simple-coroot coordinates.
+Its partial application `e8Form c` is the linear functional that the reflection in the root with
+coroot coordinates `c` pairs against. -/
+private abbrev e8Form : LinearMap.BilinForm ℤ (Fin 8 → ℤ) := Matrix.toBilin' CartanMatrix.E₈
+
+private lemma e8Form_apply (x y : Fin 8 → ℤ) : e8Form x y = (x ᵥ* CartanMatrix.E₈) ⬝ᵥ y := by
+  rw [Matrix.toBilin'_apply', Matrix.dotProduct_mulVec]
 
 private lemma e8Form_coroot_left (i : Fin 240) (v : Fin 8 → ℤ) :
-    e8Form (e8Coroot i) v = e8Root i ⬝ᵥ v := (rfl)
+    e8Form (e8Coroot i) v = e8Root i ⬝ᵥ v := e8Form_apply _ v
 
-private lemma e8Form_eq_mulVec (x y : Fin 8 → ℤ) :
-    e8Form x y = (CartanMatrix.E₈ *ᵥ x) ⬝ᵥ y := by
-  rw [e8Form]
-  conv_lhs => rw [← CartanMatrix.E₈_transpose]
-  rw [Matrix.vecMul_transpose]
+private lemma e8Form_comm (x y : Fin 8 → ℤ) : e8Form x y = e8Form y x :=
+  (Matrix.isSymm_toBilin'_iff_isSymm.mpr CartanMatrix.E₈_isSymm).eq x y
 
-private lemma e8Form_comm (x y : Fin 8 → ℤ) : e8Form x y = e8Form y x := by
-  rw [e8Form_eq_mulVec, e8Form, dotProduct_comm, Matrix.dotProduct_mulVec]
+private lemma e8Form_coroot_self (i : Fin 240) : e8Form (e8Coroot i) (e8Coroot i) = 2 :=
+  (e8Form_coroot_left i _).trans (e8Root_dotProduct_coroot i)
 
-private lemma e8Form_add_right (x y z : Fin 8 → ℤ) :
-    e8Form x (y + z) = e8Form x y + e8Form x z := by
-  rw [e8Form, e8Form, e8Form, dotProduct_add]
-
-private lemma e8Form_sub_right (x y z : Fin 8 → ℤ) :
-    e8Form x (y - z) = e8Form x y - e8Form x z := by
-  rw [e8Form, e8Form, e8Form, dotProduct_sub]
-
-private lemma e8Form_zsmul_right (a : ℤ) (x y : Fin 8 → ℤ) :
-    e8Form x (a • y) = a * e8Form x y := by
-  rw [e8Form, e8Form, dotProduct_smul, smul_eq_mul]
-
-private lemma e8Form_sub_left (x y z : Fin 8 → ℤ) :
-    e8Form (x - y) z = e8Form x z - e8Form y z := by
-  rw [e8Form_comm, e8Form_comm x z, e8Form_comm y z, e8Form_sub_right]
-
-private lemma e8Form_zsmul_left (a : ℤ) (x y : Fin 8 → ℤ) :
-    e8Form (a • x) y = a * e8Form x y := by
-  rw [e8Form_comm, e8Form_comm x y, e8Form_zsmul_right]
-
-private lemma e8Form_neg_left (x y : Fin 8 → ℤ) : e8Form (-x) y = -e8Form x y := by
-  rw [e8Form, e8Form, Matrix.neg_vecMul, neg_dotProduct]
-
-/-- The linear functional `e8Form c` attached to a coordinate vector `c` by the `E₈` form. On a
-coroot it is the pairing against the corresponding root. -/
-private def e8Dual (c : Fin 8 → ℤ) : Module.Dual ℤ (Fin 8 → ℤ) where
-  toFun := e8Form c
-  map_add' := e8Form_add_right c
-  map_smul' a y := by simpa [smul_eq_mul] using e8Form_zsmul_right a c y
-
-private lemma e8Dual_apply (c v : Fin 8 → ℤ) : e8Dual c v = e8Form c v := (rfl)
-
-/-- Reflection in the root whose coroot coordinates are `c`, as a map of coordinate vectors. -/
-private def e8Refl (c v : Fin 8 → ℤ) : Fin 8 → ℤ := Module.preReflection c (e8Dual c) v
-
-private lemma e8Refl_apply (c v : Fin 8 → ℤ) : e8Refl c v = v - e8Form c v • c :=
-  Module.preReflection_apply c (e8Dual c) v
-
-private lemma e8Refl_neg_left (c v : Fin 8 → ℤ) : e8Refl (-c) v = e8Refl c v := by
-  rw [e8Refl_apply, e8Refl_apply, e8Form_neg_left, neg_smul, smul_neg, neg_neg]
+private lemma preReflection_neg_e8Form (c v : Fin 8 → ℤ) :
+    Module.preReflection (-c) (e8Form (-c)) v = Module.preReflection c (e8Form c) v := by
+  rw [Module.preReflection_apply, Module.preReflection_apply, map_neg, LinearMap.neg_apply,
+    neg_smul, smul_neg, neg_neg]
 
 /-- Reflecting the functional attached to `x` in the functional attached to `c` gives the
 functional attached to the reflected vector. This is where the symmetry of the form enters, and it
 is what makes `Module.preReflection_preReflection` applicable. -/
-private lemma preReflection_e8Dual (c x : Fin 8 → ℤ) :
-    Module.preReflection (e8Dual c) (Module.Dual.eval ℤ (Fin 8 → ℤ) c) (e8Dual x) =
-      e8Dual (e8Refl c x) := by
+private lemma preReflection_e8Form (c x : Fin 8 → ℤ) :
+    Module.preReflection (e8Form c) (Module.Dual.eval ℤ (Fin 8 → ℤ) c) (e8Form x) =
+      e8Form (Module.preReflection c (e8Form c) x) := by
   refine LinearMap.ext fun v => ?_
-  rw [Module.preReflection_apply, LinearMap.sub_apply, LinearMap.smul_apply,
-    Module.Dual.eval_apply, smul_eq_mul]
-  simp only [e8Dual_apply]
-  rw [e8Refl_apply, e8Form_sub_left, e8Form_zsmul_left, e8Form_comm x c]
-
-private lemma e8Refl_involutive (c : Fin 8 → ℤ) (hc : e8Form c c = 2) :
-    Function.Involutive (e8Refl c) :=
-  Module.involutive_preReflection (f := e8Dual c) hc
-
-/-- **Conjugating a reflection by a reflection reflects in the image root.** This is what lets a
-single simple reflection generate the reflection in every root of its Weyl orbit. -/
-private lemma e8Refl_e8Refl (c : Fin 8 → ℤ) (hc : e8Form c c = 2) (x v : Fin 8 → ℤ) :
-    e8Refl (e8Refl c x) v = e8Refl c (e8Refl x (e8Refl c v)) := by
-  have h := Module.preReflection_preReflection (x := c) (y := x) (f := e8Dual c) (e8Dual x) hc
-  rw [preReflection_e8Dual] at h
-  exact LinearMap.congr_fun h v
-
-private lemma e8Form_coroot_self (i : Fin 240) : e8Form (e8Coroot i) (e8Coroot i) = 2 :=
-  (e8Form_coroot_left i _).trans (e8Root_dotProduct_coroot i)
+  simp only [Module.preReflection_apply, LinearMap.sub_apply, LinearMap.smul_apply,
+    Module.Dual.eval_apply, smul_eq_mul, map_sub, map_smul]
+  rw [e8Form_comm x c]
 
 /-! ## Reflections as maps of root indices -/
 
 /-- A map of root indices realizes reflection in the root indexed by `i`. -/
 private def IsReflIndex (i : Fin 240) (f : Fin 240 → Fin 240) : Prop :=
-  ∀ j, e8Coroot (f j) = e8Refl (e8Coroot i) (e8Coroot j)
+  ∀ j, e8Coroot (f j) = Module.preReflection (e8Coroot i) (e8Form (e8Coroot i)) (e8Coroot j)
 
 private lemma IsReflIndex.involutive {i : Fin 240} {f : Fin 240 → Fin 240} (h : IsReflIndex i f) :
     Function.Involutive f := fun j => e8Coroot.injective <| by
-  rw [h (f j), h j, e8Refl_involutive _ (e8Form_coroot_self i)]
+  rw [h (f j), h j, Module.involutive_preReflection (e8Form_coroot_self i)]
 
 /-- **Conjugating by a reflection.** If `g` reflects in the root indexed by `a` and `f` reflects in
-the root indexed by `m`, then `g ∘ f ∘ g` reflects in the root indexed by `g m`. -/
+the root indexed by `m`, then `g ∘ f ∘ g` reflects in the root indexed by `g m`. This is Mathlib's
+`Module.preReflection_preReflection`, read on root indices. -/
 private lemma IsReflIndex.conj {a m : Fin 240} {g f : Fin 240 → Fin 240}
     (hg : IsReflIndex a g) (hf : IsReflIndex m f) :
     IsReflIndex (g m) fun k => g (f (g k)) := fun k => by
-  rw [hg (f (g k)), hf (g k), hg k, hg m,
-    e8Refl_e8Refl _ (e8Form_coroot_self a) (e8Coroot m) (e8Coroot k)]
+  have h := Module.preReflection_preReflection (x := e8Coroot a) (y := e8Coroot m)
+    (f := e8Form (e8Coroot a)) (e8Form (e8Coroot m)) (e8Form_coroot_self a)
+  rw [preReflection_e8Form] at h
+  rw [hg (f (g k)), hf (g k), hg k, hg m]
+  exact (LinearMap.congr_fun h (e8Coroot k)).symm
 
 /-! ## The eight simple reflections
 
@@ -580,12 +536,12 @@ private def e8SimpleReflectionIndex : Fin 8 → Fin 240 → Fin 240 := ![
 `8 × 240` identities is checked in the kernel. -/
 private lemma e8SimpleReflectionIndex_coroot (s : Fin 8) (j : Fin 240) :
     e8Coroot (e8SimpleReflectionIndex s j) = e8Coroot j -
-      e8Form (e8Coroot (e8SimpleIndex s)) (e8Coroot j) • e8Coroot (e8SimpleIndex s) := by
+      (e8Root (e8SimpleIndex s) ⬝ᵥ e8Coroot j) • e8Coroot (e8SimpleIndex s) := by
   decide +kernel +revert
 
 private lemma isReflIndex_e8SimpleReflectionIndex (s : Fin 8) :
     IsReflIndex (e8SimpleIndex s) (e8SimpleReflectionIndex s) := fun j => by
-  rw [e8Refl_apply]
+  rw [Module.preReflection_apply, e8Form_coroot_left]
   exact e8SimpleReflectionIndex_coroot s j
 
 /-! ## Reflection in an arbitrary root
@@ -709,18 +665,19 @@ private lemma isReflIndex_e8ReflectionIndex (i : Fin 240) :
       conv_rhs => rw [← hneg]
       rw [coroot_e8NegativeIndex, neg_neg]
     intro j
-    rw [e8ReflectionIndex, hmod, isReflIndex_e8ReflectionIndexAux _ j, hcoroot, e8Refl_neg_left]
+    rw [e8ReflectionIndex, hmod, isReflIndex_e8ReflectionIndexAux _ j, hcoroot,
+      preReflection_neg_e8Form]
 
 private lemma e8ReflectionIndex_coroot (i j : Fin 240) :
     e8Coroot j - (e8Root i ⬝ᵥ e8Coroot j) • e8Coroot i = e8Coroot (e8ReflectionIndex i j) := by
-  rw [isReflIndex_e8ReflectionIndex i j, e8Refl_apply, e8Form_coroot_left]
+  rw [isReflIndex_e8ReflectionIndex i j, Module.preReflection_apply, e8Form_coroot_left]
 
 /-- The pairing of the pinned tables is symmetric. This is the simply-laced feature of `E₈`: the
 pairing is the symmetric bilinear form attached to `CartanMatrix.E₈`, read on the shared
 simple-root coordinates of a root and its coroot. -/
 theorem e8Root_dotProduct_e8Coroot_comm (i j : Fin 240) :
-    e8Root i ⬝ᵥ e8Coroot j = e8Root j ⬝ᵥ e8Coroot i :=
-  e8Form_comm (e8Coroot i) (e8Coroot j)
+    e8Root i ⬝ᵥ e8Coroot j = e8Root j ⬝ᵥ e8Coroot i := by
+  rw [← e8Form_coroot_left, ← e8Form_coroot_left, e8Form_comm]
 
 /-- The root reflections are the Cartan-matrix image of the coroot reflections, so they need no
 second table. -/
