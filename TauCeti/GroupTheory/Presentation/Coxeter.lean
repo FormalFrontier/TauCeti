@@ -261,9 +261,7 @@ def GroupPresentation.mulEquivCoxeterGroup (P : GroupPresentation)
     calc
       Subgroup.normalClosure P.relatorSet =
           Subgroup.normalClosure (Relator.relatorSet P.transcribed) := by
-        congr 1
-        ext r
-        simp
+        rw [P.relatorSet_eq_relatorSet_transcribed]
       _ = Subgroup.normalClosure (Relator.relatorSet (coxeterRelators M)) := by rw [h]
       _ = Subgroup.normalClosure M.relationsSet :=
         normalClosure_relatorSet_coxeterRelators M)
@@ -288,9 +286,7 @@ def GroupPresentation.mulEquivPresentedGroupCoxeterAppend (P : GroupPresentation
     calc
       Subgroup.normalClosure P.relatorSet =
           Subgroup.normalClosure (Relator.relatorSet P.transcribed) := by
-        congr 1
-        ext r
-        simp
+        rw [P.relatorSet_eq_relatorSet_transcribed]
       _ = Subgroup.normalClosure (Relator.relatorSet (coxeterRelators M ++ extra)) := by rw [h]
       _ = Subgroup.normalClosure (M.relationsSet ∪ Relator.relatorSet extra) :=
         normalClosure_relatorSet_coxeterRelators_append M extra)
