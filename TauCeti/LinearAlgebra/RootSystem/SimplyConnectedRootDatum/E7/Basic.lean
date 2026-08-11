@@ -12,12 +12,12 @@ public section
 /-!
 # The integral roots of type E7
 
-This file enumerates the 126 roots of type `E7` in the lattices used by the future pinned simply
+This file enumerates the 126 roots of type `E7` in the lattices used by the pinned simply
 connected root datum. Coroots are expressed in the simple-coroot basis and roots in the
 fundamental-weight basis. The first seven entries are the Bourbaki simple roots; the remaining
 positive roots are ordered by height, followed by their negatives.
 
-The enumeration is the root-data input for Layer 6 of the root-systems roadmap. It follows
+The enumeration is the coordinate input for the pinned datum in `E7.Datum`. It follows
 Bourbaki, *Lie Groups and Lie Algebras, Chapters 4--6*, Plate VI.
 -/
 
@@ -94,6 +94,7 @@ namespace DynkinType
       ![2, 2, 3, 4, 3, 2, 1]]]
     ⟨(i : ℕ) / 9, by omega⟩ ⟨(i : ℕ) % 9, by omega⟩
 
+/-- The positive `E7` coroot table as an embedding into the cocharacter lattice. -/
 private def e7PositiveCorootEmbedding : Fin 63 ↪ (Fin 7 → ℤ) where
   toFun := e7PositiveCoroot
   inj' := by decide
@@ -102,6 +103,7 @@ private lemma e7PositiveCoroot_ne_neg (i j : Fin 63) :
     e7PositiveCoroot i ≠ -e7PositiveCoroot j := by
   fin_cases i <;> fin_cases j <;> decide
 
+/-- The negatives of the positive `E7` coroots as an embedding. -/
 private def e7NegativeCorootEmbedding : Fin 63 ↪ (Fin 7 → ℤ) :=
   e7PositiveCorootEmbedding.trans (Equiv.neg (Fin 7 → ℤ)).toEmbedding
 
