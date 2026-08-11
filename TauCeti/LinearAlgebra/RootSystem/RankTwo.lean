@@ -6,6 +6,7 @@ module
 
 public import Mathlib.LinearAlgebra.RootSystem.Finite.G2
 public import TauCeti.LinearAlgebra.RootSystem.FiniteType.Basic
+public import TauCeti.LinearAlgebra.RootSystem.Weyl.Orbit
 
 public section
 
@@ -49,6 +50,10 @@ the Cartan matrix of `A₁ × A₁`, of finite type but not irreducible.
   disjunction.
 * `TauCeti.isG2_of_hasCartanType_G2`: a base of type `G₂` makes its pairing Mathlib's
   `RootPairing.IsG2`.
+* `TauCeti.hasCartanType_G2_of_isG2`: **conversely, a base of an `IsG2` pairing is of type `G₂`**,
+  so the two conditions agree (`TauCeti.hasCartanType_G2_iff_isG2`). This is the direction that
+  needs the roots away from the base, and it closes the recognition step that Mathlib's `G₂` file
+  lists as a TODO.
 * `TauCeti.existsUnique_dynkinType_of_card_support_eq_one`: the rank-one case, which turns on the
   diagonal entry `2` alone and so needs neither finiteness, finite type nor irreducibility.
 
@@ -348,8 +353,8 @@ theorem hasCartanType_of_card_support_eq_two [Finite ι] [CharZero R] [IsDomain 
 /-- **A base of Cartan type `G₂` makes its root pairing Mathlib's `RootPairing.IsG2`.** The entry
 `-3` of the standard `G₂` Cartan matrix is the pairing of two simple roots, which is exactly the
 datum `RootPairing.IsG2` asks for; `RootPairing.IsG2.card_base_support_eq_two` is the matching fact
-that an `IsG2` pairing has a rank-two base. The converse implication is not proved here: excluding
-type `A₂` needs the pairings of *all* roots, not only of the simple ones. -/
+that an `IsG2` pairing has a rank-two base. `TauCeti.hasCartanType_G2_of_isG2` is the converse, and
+needs more: excluding type `A₂` turns on the pairings of *all* roots, not only the simple ones. -/
 theorem isG2_of_hasCartanType_G2 [P.IsReduced] [P.IsIrreducible] {b : P.Base}
     (h : HasCartanType P b .G2) : P.IsG2 := by
   obtain ⟨e, he⟩ : ∃ e : b.support ≃ Fin 2, ∀ i j,
@@ -360,6 +365,91 @@ theorem isG2_of_hasCartanType_G2 [P.IsReduced] [P.IsIrreducible] {b : P.Base}
   have hentry := he (e.symm 1) (e.symm 0)
   rw [Equiv.apply_symm_apply, Equiv.apply_symm_apply] at hentry
   simpa [RootPairing.Base.cartanMatrixIn_def] using hentry
+
+/-- **An `IsG2` root pairing has Cartan type `G₂`.** This is the converse of
+`TauCeti.isG2_of_hasCartanType_G2`, and it is the harder direction, because `RootPairing.IsG2` asks
+only that *some* pair of roots pair to `-3`, while the conclusion is about the two simple roots of
+the given base.
+
+The bridge is root length. A pair of roots pairing to `-3` has its transposed pairing `-1`, so the
+two differ in squared length by the factor `3`; every root has the length of a simple root
+(`TauCeti.RootPairing.RootPositiveForm.exists_mem_support_rootLength_eq`), so two of the simple
+roots already differ by that factor, and reading the ratio back off the Cartan matrix makes their
+Cartan product `3`. Types `A₂` and `B₂` have Cartan product `1` and `2`, so the rank-two
+classification leaves only `G₂`.
+
+The root-positive form used is Mathlib's canonical `RootPairing.posRootForm`, but any other would
+do: the statement compares two lengths, and rescaling the form cancels from the comparison. -/
+theorem hasCartanType_G2_of_isG2 [Finite ι] [CharZero R] [IsDomain R] [P.IsRootSystem]
+    (hG2 : P.IsG2) (b : P.Base) : HasCartanType P b .G2 := by
+  classical
+  have _iG2 : P.IsG2 := hG2
+  have _i : Fintype ι := Fintype.ofFinite ι
+  have hcard : b.support.card = 2 := RootPairing.IsG2.card_base_support_eq_two b
+  set Bf := P.posRootForm ℤ
+  -- Two roots pairing to `-3`. Their transposed pairing is `-1`, the only admissible partner.
+  obtain ⟨k, l, hkl⟩ := RootPairing.IsG2.exists_pairingIn_neg_three (P := P)
+  have hlk : P.pairingIn ℤ l k = -1 := by
+    have hmem := P.pairingIn_pairingIn_mem_set_of_isCrystal_of_isRed k l
+    simp only [Set.mem_insert_iff, Set.mem_singleton_iff, Prod.mk.injEq, hkl] at hmem
+    omega
+  -- So the two differ in squared length by the factor three.
+  have hkl_len : Bf.rootLength k = 3 * Bf.rootLength l := by
+    have hswap := Bf.pairingIn_mul_eq_pairingIn_mul_swap k l
+    rw [hkl, hlk] at hswap
+    omega
+  -- Every root has the length of a simple root, so two simple roots already differ by that factor.
+  obtain ⟨p, hp, hpk⟩ := RootPairing.RootPositiveForm.exists_mem_support_rootLength_eq Bf b k
+  obtain ⟨q, hq, hql⟩ := RootPairing.RootPositiveForm.exists_mem_support_rootLength_eq Bf b l
+  have hpos : 0 < Bf.rootLength q := Bf.rootLength_pos q
+  have hlen : Bf.rootLength p = 3 * Bf.rootLength q := by omega
+  have hpq : p ≠ q := by rintro rfl; omega
+  have hne : (⟨p, hp⟩ : b.support) ≠ ⟨q, hq⟩ := fun hc ↦ hpq (congrArg Subtype.val hc)
+  -- Reading the ratio back off the Cartan matrix makes the two pairings `-3` and `-1`.
+  have hratio : P.pairingIn ℤ p q = 3 * P.pairingIn ℤ q p := by
+    have hswap := Bf.pairingIn_mul_eq_pairingIn_mul_swap p q
+    rw [hlen] at hswap
+    refine (mul_right_cancel₀ hpos.ne' ?_).symm
+    rw [← hswap]; ring
+  have hnz : P.pairingIn ℤ q p ≠ 0 := by
+    have hzero := cartanMatrix_ne_zero_of_card_support_eq_two b hcard hne.symm
+    simpa only [RootPairing.Base.cartanMatrixIn_def] using hzero
+  have hprod : P.pairingIn ℤ p q * P.pairingIn ℤ q p = 3 := by
+    have hmem := P.pairingIn_pairingIn_mem_set_of_isCrystal_of_isRed p q
+    simp only [Set.mem_insert_iff, Set.mem_singleton_iff, Prod.mk.injEq] at hmem
+    have hunit : P.pairingIn ℤ q p = 1 ∨ P.pairingIn ℤ q p = -1 := by omega
+    rcases hunit with h1 | h1 <;> rw [hratio, h1] <;> norm_num
+  -- Cartan product `3` leaves only `G₂` among the three rank-two types.
+  rcases hasCartanType_of_card_support_eq_two b hcard with h | h | h
+  · exfalso
+    obtain ⟨e, he⟩ := (hasCartanType_iff b (.A 2)).mp h
+    have he' : ∀ i j, b.cartanMatrix i j =
+        (!![2, -1; -1, 2] : Matrix (Fin 2) (Fin 2) ℤ) (e i) (e j) :=
+      fun i j ↦ by rw [he i j, DynkinType.cartanMatrix_A_two_eq]
+    have hval : b.cartanMatrix ⟨p, hp⟩ ⟨q, hq⟩ * b.cartanMatrix ⟨q, hq⟩ ⟨p, hp⟩ = 1 :=
+      (IsFiniteType.mul_eq_of_forall_eq e he' hne).trans (by decide)
+    simp only [RootPairing.Base.cartanMatrixIn_def] at hval
+    omega
+  · exfalso
+    obtain ⟨e, he⟩ := (hasCartanType_iff b (.B 2)).mp h
+    have he' : ∀ i j, b.cartanMatrix i j =
+        (!![2, -2; -1, 2] : Matrix (Fin 2) (Fin 2) ℤ) (e i) (e j) :=
+      fun i j ↦ by rw [he i j, DynkinType.cartanMatrix_B_two_eq]
+    have hval : b.cartanMatrix ⟨p, hp⟩ ⟨q, hq⟩ * b.cartanMatrix ⟨q, hq⟩ ⟨p, hp⟩ = 2 :=
+      (IsFiniteType.mul_eq_of_forall_eq e he' hne).trans (by decide)
+    simp only [RootPairing.Base.cartanMatrixIn_def] at hval
+    omega
+  · exact h
+
+/-- **Cartan type `G₂` and Mathlib's `RootPairing.IsG2` are the same condition.** The right-hand
+side does not mention the base, so an irreducible reduced crystallographic finite root system with
+one base of type `G₂` has every base of type `G₂`. The `IsG2` hypothesis of
+`TauCeti.hasCartanType_G2_of_isG2` is taken as an argument rather than as an instance, so that it
+can be supplied by the right-hand side here. -/
+theorem hasCartanType_G2_iff_isG2 [Finite ι] [CharZero R] [IsDomain R] [P.IsRootSystem]
+    [P.IsReduced] [P.IsIrreducible] (b : P.Base) :
+    HasCartanType P b .G2 ↔ P.IsG2 :=
+  ⟨isG2_of_hasCartanType_G2, fun h ↦ hasCartanType_G2_of_isG2 h b⟩
 
 /-- **A pairing with a single simple root is of type `A₁`.** Neither finiteness nor irreducibility
 is needed, nor even that the pairing is a root system: the Cartan matrix is the `1 × 1` matrix `[2]`
