@@ -4,7 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.Analysis.Normed.Operator.NormedSpace
 public import Mathlib.LinearAlgebra.LinearPMap
 public import Mathlib.Tactic.Module
 
@@ -25,34 +24,35 @@ public section
 
 namespace TauCeti.LinearPMap
 
-variable {X : Type*} [NormedAddCommGroup X] [NormedSpace ℝ X]
+variable {R X : Type*} [CommRing R] [AddCommGroup X] [Module R X]
 
 /-- Subtract the scalar operator `omega I` from an unbounded operator `A`, without changing its
 domain. -/
-def subScalar (A : X →ₗ.[ℝ] X) (omega : ℝ) : X →ₗ.[ℝ] X :=
-  (-omega • (LinearMap.id : X →ₗ[ℝ] X)) +ᵥ A
+@[expose] def subScalar (A : X →ₗ.[R] X) (omega : R) : X →ₗ.[R] X :=
+  (-omega • (LinearMap.id : X →ₗ[R] X)) +ᵥ A
 
 /-- A scalar shift does not change the domain of an unbounded operator. -/
 @[simp]
-theorem subScalar_domain (A : X →ₗ.[ℝ] X) (omega : ℝ) :
+theorem subScalar_domain (A : X →ₗ.[R] X) (omega : R) :
     (subScalar A omega).domain = A.domain := by
   exact LinearPMap.vadd_domain _ _
 
 /-- Pointwise evaluation of the shifted operator `A - omega I`. -/
 @[simp]
-theorem subScalar_apply (A : X →ₗ.[ℝ] X) (omega : ℝ) (x : (subScalar A omega).domain) :
-    subScalar A omega x = A ⟨x, by simpa using x.property⟩ - omega • (x : X) := by
+theorem subScalar_apply (A : X →ₗ.[R] X) (omega : R) (x : (subScalar A omega).domain) :
+    subScalar A omega x = A ⟨x, x.2⟩ - omega • (x : X) := by
+  -- Unfold the domain-preserving `VAdd` so both sides use its definitionally equal subtype.
   change (-omega) • (x : X) + A x = A x - omega • (x : X)
   module
 
 /-- The zero scalar shift is the original operator. -/
 @[simp]
-theorem subScalar_zero (A : X →ₗ.[ℝ] X) : subScalar A 0 = A := by
+theorem subScalar_zero (A : X →ₗ.[R] X) : subScalar A 0 = A := by
   simp [subScalar]
 
 /-- Successive scalar shifts add their parameters. -/
 @[simp]
-theorem subScalar_subScalar (A : X →ₗ.[ℝ] X) (omega mu : ℝ) :
+theorem subScalar_subScalar (A : X →ₗ.[R] X) (omega mu : R) :
     subScalar (subScalar A omega) mu = subScalar A (omega + mu) := by
   apply LinearPMap.ext (by simp)
   intro x hx hy

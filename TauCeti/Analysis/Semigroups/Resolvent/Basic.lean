@@ -8,7 +8,6 @@ public import TauCeti.Analysis.Semigroups.Generator.Basic
 public import TauCeti.Analysis.Semigroups.ExponentialShift
 import TauCeti.Analysis.Calculus.ExponentialSlope
 import TauCeti.MeasureTheory.Integral.ExpDecay
-public import Mathlib.Analysis.SpecialFunctions.ExpDeriv
 public import Mathlib.MeasureTheory.Integral.ExpDecay
 public import Mathlib.MeasureTheory.Integral.IntervalIntegral.FundThmCalculus
 public import Mathlib.Analysis.SpecialFunctions.ImproperIntegrals

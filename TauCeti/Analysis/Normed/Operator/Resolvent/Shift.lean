@@ -33,12 +33,12 @@ namespace TauCeti.LinearPMap
 
 variable {X : Type*} [NormedAddCommGroup X] [NormedSpace ℝ X]
 
-/-- An inverse for `lambda I - A` is the same as an inverse for
-`(lambda - omega) I - (A - omega I)`. -/
+/-- An inverse for `lambda I - (A - omega I)` is the same as an inverse for
+`(lambda + omega) I - A`. -/
 @[simp]
 theorem isResolventAt_subScalar_iff {A : X →ₗ.[ℝ] X} {omega lambda : ℝ}
     {R : X →L[ℝ] X} :
-    IsResolventAt (subScalar A omega) (lambda - omega) R ↔ IsResolventAt A lambda R := by
+    IsResolventAt (subScalar A omega) lambda R ↔ IsResolventAt A (lambda + omega) R := by
   constructor
   · intro h
     refine
@@ -46,15 +46,15 @@ theorem isResolventAt_subScalar_iff {A : X →ₗ.[ℝ] X} {omega lambda : ℝ}
         smul_sub_apply := fun y => ?_
         apply_smul_sub := fun x => ?_ }
     · calc
-        lambda • R y - A ⟨R y, by simpa using h.mem_domain y⟩ =
-            (lambda - omega) • R y - subScalar A omega
+        (lambda + omega) • R y - A ⟨R y, by simpa using h.mem_domain y⟩ =
+            lambda • R y - subScalar A omega
               ⟨R y, h.mem_domain y⟩ := by
           rw [subScalar_apply]
           module
         _ = y := h.smul_sub_apply y
     · calc
-        R (lambda • (x : X) - A x) =
-            R ((lambda - omega) • (x : X) - subScalar A omega
+        R ((lambda + omega) • (x : X) - A x) =
+            R (lambda • (x : X) - subScalar A omega
               ⟨x, by simp⟩) := by
           congr 1
           rw [subScalar_apply]
@@ -66,14 +66,14 @@ theorem isResolventAt_subScalar_iff {A : X →ₗ.[ℝ] X} {omega lambda : ℝ}
         smul_sub_apply := fun y => ?_
         apply_smul_sub := fun x => ?_ }
     · calc
-        (lambda - omega) • R y - subScalar A omega ⟨R y, by simpa using h.mem_domain y⟩ =
-            lambda • R y - A ⟨R y, h.mem_domain y⟩ := by
+        lambda • R y - subScalar A omega ⟨R y, by simpa using h.mem_domain y⟩ =
+            (lambda + omega) • R y - A ⟨R y, h.mem_domain y⟩ := by
           rw [subScalar_apply]
           module
         _ = y := h.smul_sub_apply y
     · calc
-        R ((lambda - omega) • (x : X) - subScalar A omega x) =
-            R (lambda • (x : X) - A ⟨x, by simpa using x.property⟩) := by
+        R (lambda • (x : X) - subScalar A omega x) =
+            R ((lambda + omega) • (x : X) - A ⟨x, by simpa using x.property⟩) := by
           congr 1
           rw [subScalar_apply]
           module
@@ -85,11 +85,8 @@ theorem mem_resolventSet_subScalar_iff {A : X →ₗ.[ℝ] X} {omega lambda : �
     lambda ∈ resolventSet (subScalar A omega) ↔ lambda + omega ∈ resolventSet A := by
   rw [mem_resolventSet_iff, mem_resolventSet_iff]
   constructor <;> rintro ⟨R, hR⟩ <;> refine ⟨R, ?_⟩
-  · have hR' : IsResolventAt (subScalar A omega) ((lambda + omega) - omega) R := by
-      simpa only [add_sub_cancel_right] using hR
-    exact isResolventAt_subScalar_iff.mp hR'
-  · simpa only [add_sub_cancel_right] using
-      (isResolventAt_subScalar_iff (A := A) (omega := omega) (lambda := lambda + omega)).mpr hR
+  · exact isResolventAt_subScalar_iff.mp hR
+  · exact isResolventAt_subScalar_iff.mpr hR
 
 /-- Exact translation of the resolvent under the scalar shift `A ↦ A - omega I`. -/
 @[simp]
@@ -98,8 +95,7 @@ theorem resolvent_subScalar {A : X →ₗ.[ℝ] X} {omega lambda : ℝ}
     resolvent (subScalar A omega) lambda = resolvent A (lambda + omega) := by
   apply resolvent_eq_of_isResolventAt
   have h := isResolventAt_resolvent hlambda
-  simpa only [add_sub_cancel_right] using
-    (isResolventAt_subScalar_iff (A := A) (omega := omega) (lambda := lambda + omega)).mpr h
+  exact (isResolventAt_subScalar_iff (A := A) (omega := omega)).mpr h
 
 end TauCeti.LinearPMap
 
