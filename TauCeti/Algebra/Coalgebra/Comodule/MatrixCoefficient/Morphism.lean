@@ -152,31 +152,6 @@ section BaseChange
 variable (A : Type x) [CommSemiring A] [Algebra R A]
 variable [Module.Free R M]
 
-private theorem baseChangeDual_jointly_injective {x y : A ⊗[R] M}
-    (h : ∀ φ : Module.Dual R M, φ.baseChange A x = φ.baseChange A y) : x = y := by
-  let b := Module.Free.chooseBasis R M
-  let ibc := TensorProduct.isBaseChange R M A
-  let bA := ibc.basis b
-  apply bA.ext_elem
-  intro i
-  have hcoord (z : A ⊗[R] M) :
-      bA.repr z i = Module.Dual.baseChange A (b.coord i) z := by
-    induction z using TensorProduct.induction_on with
-    | zero => simp
-    | add z w hz hw => simpa only [map_add, Finsupp.add_apply] using congrArg₂ (· + ·) hz hw
-    | tmul a m =>
-        calc
-          bA.repr (a ⊗ₜ[R] m) i =
-              bA.repr (a • (1 ⊗ₜ[R] m)) i := by simp [TensorProduct.smul_tmul']
-          _ = a * bA.repr (1 ⊗ₜ[R] m) i := by simp
-          _ = a * algebraMap R A (b.repr m i) := by
-            simpa only [bA, ibc, TensorProduct.mk_apply] using congrArg (a * ·)
-              (IsBaseChange.basis_repr_comp_apply b ibc m i)
-          _ = Module.Dual.baseChange A (b.coord i) (a ⊗ₜ[R] m) := by
-            simp [Module.Basis.coord_apply, Algebra.smul_def, mul_comm]
-  rw [hcoord, hcoord]
-  exact h (b.coord i)
-
 omit [Module.Free R M] in
 private theorem counit_baseChange_matrixCoefficientHom (φ : Module.Dual R M)
     (z : A ⊗[R] M) :
@@ -198,7 +173,7 @@ theorem baseChange_matrixCoefficientHom_jointly_injective {x y : A ⊗[R] M}
       (matrixCoefficientHom (C := C) φ).toLinearMap.baseChange A x =
         (matrixCoefficientHom (C := C) φ).toLinearMap.baseChange A y) :
     x = y := by
-  apply baseChangeDual_jointly_injective A
+  apply TauCeti.Module.Dual.baseChange_jointly_injective (A := A)
   intro φ
   rw [← counit_baseChange_matrixCoefficientHom (C := C) A φ x,
     ← counit_baseChange_matrixCoefficientHom (C := C) A φ y, h φ]
