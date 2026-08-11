@@ -8,7 +8,7 @@ public import TauCeti.Analysis.PositiveDefinite.SemigroupGroup.FourierLaplace.Tr
 -- Non-public: the two determinacy inputs (Fourier on `V` through the convention conversion,
 -- Laplace on `ℝ≥0`), the bound on the Laplace kernel, and the product-`σ`-algebra plumbing, all
 -- consumed inside proofs only.
-import TauCeti.Analysis.Bochner.FourierConvention
+import TauCeti.Analysis.Bochner.Fourier.Convention
 import TauCeti.Analysis.CompletelyMonotone.Laplace.Kernel
 import TauCeti.Probability.Moments.LaplaceDeterminacy
 import Mathlib.MeasureTheory.MeasurableSpace.Prod

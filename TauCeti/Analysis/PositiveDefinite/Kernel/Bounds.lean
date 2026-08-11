@@ -32,6 +32,13 @@ for positive semidefinite matrices.
   force the corresponding row or column to vanish.
 * `TauCeti.isPositiveDefiniteKernel_norm_le_one_of_apply_self_eq_one`: normalized diagonal
   entries bound off-diagonal entries by `1`.
+* `TauCeti.map_zero_re_nonneg_of_isPositiveDefiniteKernel`,
+  `TauCeti.map_zero_eq_ofReal_re_of_isPositiveDefiniteKernel` and
+  `TauCeti.norm_apply_le_map_zero_re_of_isPositiveDefiniteKernel`: for an `RCLike`-valued function
+  with positive-definite subtraction kernel, the value at `0` is real with nonnegative real part
+  and bounds the function uniformly in norm.
+* `TauCeti.map_neg_eq_conj_of_isPositiveDefiniteKernel`: such a function is conjugate-symmetric
+  under negation, `ψ (-v) = conj (ψ v)`.
 
 ## References
 
@@ -106,5 +113,49 @@ theorem isPositiveDefiniteKernel_norm_le_one_of_apply_self_eq_one
   refine le_of_sq_le_sq ?_ zero_le_one
   simpa [RCLike.normSq_eq_def', pow_two, ha, hb] using
     isPositiveDefiniteKernel_normSq_le hK a b
+
+/-! ### Bounds for subtraction kernels -/
+
+section SubtractionKernel
+
+variable {V : Type*} [AddGroup V] {ψ : V → 𝕜}
+
+/-- The value at `0` of a function with positive-definite subtraction kernel has nonnegative
+real part. -/
+theorem map_zero_re_nonneg_of_isPositiveDefiniteKernel
+    (hpd : IsPositiveDefiniteKernel fun a b : V => ψ (a - b)) :
+    0 ≤ RCLike.re (ψ 0) := by
+  have h : (0 : 𝕜) ≤ ψ 0 := by
+    simpa using isPositiveDefiniteKernel_apply_self_nonneg hpd 0
+  exact (RCLike.nonneg_iff.mp h).1
+
+/-- The value at `0` of a function with positive-definite subtraction kernel is real. -/
+theorem map_zero_eq_ofReal_re_of_isPositiveDefiniteKernel
+    (hpd : IsPositiveDefiniteKernel fun a b : V => ψ (a - b)) :
+    ψ 0 = ((RCLike.re (ψ 0) : ℝ) : 𝕜) := by
+  have h : (0 : 𝕜) ≤ ψ 0 := by
+    simpa using isPositiveDefiniteKernel_apply_self_nonneg hpd 0
+  simpa [(RCLike.nonneg_iff.mp h).2] using (RCLike.re_add_im (ψ 0)).symm
+
+/-- A function with positive-definite subtraction kernel is conjugate-symmetric under negation:
+`ψ (-v) = conj (ψ v)`. This is the Hermitian symmetry of the kernel, read along the diagonal
+translate `(v, 0)`. -/
+theorem map_neg_eq_conj_of_isPositiveDefiniteKernel
+    (hpd : IsPositiveDefiniteKernel fun a b : V => ψ (a - b)) (v : V) :
+    ψ (-v) = conj (ψ v) := by
+  simpa using (isPositiveDefiniteKernel_conj_symm hpd v 0).symm
+
+/-- A function with positive-definite subtraction kernel is uniformly bounded by the real part
+of its value at `0`. -/
+theorem norm_apply_le_map_zero_re_of_isPositiveDefiniteKernel
+    (hpd : IsPositiveDefiniteKernel fun a b : V => ψ (a - b)) (z : V) :
+    ‖ψ z‖ ≤ RCLike.re (ψ 0) := by
+  have h := isPositiveDefiniteKernel_normSq_le hpd z 0
+  simp only [sub_zero, sub_self, RCLike.normSq_eq_def'] at h
+  refine le_of_sq_le_sq ?_ (map_zero_re_nonneg_of_isPositiveDefiniteKernel hpd)
+  calc ‖ψ z‖ ^ 2 ≤ RCLike.re (ψ 0) * RCLike.re (ψ 0) := h
+    _ = RCLike.re (ψ 0) ^ 2 := (sq (RCLike.re (ψ 0))).symm
+
+end SubtractionKernel
 
 end TauCeti
