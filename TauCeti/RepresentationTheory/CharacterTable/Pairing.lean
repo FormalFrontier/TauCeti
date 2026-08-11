@@ -98,6 +98,15 @@ theorem characterPairing_isSymm :
     characterPairing (k := k) (G := G).IsSymm :=
   ⟨characterPairing_symm⟩
 
+/-- **The character pairing is invariant under inverting the group element**: the inversion twist
+`TauCeti.ClassFunction.invMap` is an isometry of the pairing. -/
+@[simp]
+theorem characterPairing_invMap_invMap (f₁ f₂ : ClassFunction k G) :
+    characterPairing (invMap f₁) (invMap f₂) = characterPairing f₁ f₂ := by
+  rw [characterPairing_apply, characterPairing_apply]
+  congr 1
+  exact Fintype.sum_equiv (Equiv.inv G) _ _ fun g => by simp
+
 /-- **Pairing against a class indicator evaluates a class function.** Pairing `f` with the indicator
 of the class of `x⁻¹` returns the value of `f` at `x`, weighted by the size of the class of `x` and
 the normalization `|G|⁻¹`. -/
@@ -121,9 +130,9 @@ theorem characterPairing_classIndicator_inv (f : ClassFunction k G) (x : G) :
       intro g
       by_cases hg : IsConj g x
       · have h' := hconj g |>.mpr hg
-        rw [classIndicator_apply, if_pos h', if_pos hg, mul_one]
+        rw [classIndicator_apply, ite_eq_left h', ite_eq_left hg, mul_one]
       · have h' : ConjClasses.mk g⁻¹ ≠ ConjClasses.mk x⁻¹ := fun h => hg (hconj g |>.mp h)
-        rw [classIndicator_apply, if_neg h', if_neg hg, mul_zero]
+        rw [classIndicator_apply, ite_eq_right h', ite_eq_right hg, mul_zero]
     _ = ∑ g ∈ Finset.univ.filter (fun g => IsConj g x), f.1 g := by
       rw [Finset.sum_filter]
     _ = ∑ _g ∈ Finset.univ.filter (fun g => IsConj g x), f.1 x := by
@@ -196,7 +205,7 @@ theorem characterPairing_ofCharacter_self {V : Type*} [AddCommGroup V] [Module k
     characterPairing (ofCharacter ρ) (ofCharacter ρ) = 1 := by
   classical
   have hrefl : Nonempty (Representation.Equiv ρ ρ) := ⟨Representation.Equiv.refl ρ⟩
-  rw [characterPairing_ofCharacter_orthonormal ρ ρ, if_pos hrefl]
+  rw [characterPairing_ofCharacter_orthonormal ρ ρ, ite_eq_left hrefl]
 
 /-- The characters of inequivalent irreducible representations pair to `0`.
 
@@ -233,7 +242,7 @@ theorem characterPairing_ofFDRep_self [Invertible (Nat.card G : k)] [IsAlgClosed
     characterPairing (ofFDRep V) (ofFDRep V) = 1 := by
   classical
   have hrefl : Nonempty (V ≅ V) := ⟨CategoryTheory.Iso.refl V⟩
-  rw [characterPairing_ofFDRep_orthonormal V V, if_pos hrefl]
+  rw [characterPairing_ofFDRep_orthonormal V V, ite_eq_left hrefl]
 
 /-- The characters of non-isomorphic simple objects of `FDRep k G` pair to `0`.
 

@@ -162,47 +162,6 @@ theorem eigenspace_toEnd_eq_bot_of_forall_ne_intCast (t : IsSl2Triple h e f)
 
 end Raising
 
-/-! ### The triple inside the subalgebra it generates -/
-
-section Restrict
-
-variable {K : Type*} [CommRing K]
-variable {L : Type*} [LieRing L] [LieAlgebra K L]
-variable {h e f : L}
-variable (t : IsSl2Triple h e f)
-
--- The three elements of the triple lie in the subalgebra they span.
-private theorem e_mem_toLieSubalgebra : e ∈ t.toLieSubalgebra K :=
-  IsSl2Triple.mem_toLieSubalgebra_iff.2 ⟨1, 0, 0, by simp⟩
-
-private theorem f_mem_toLieSubalgebra : f ∈ t.toLieSubalgebra K :=
-  IsSl2Triple.mem_toLieSubalgebra_iff.2 ⟨0, 1, 0, by simp⟩
-
-private theorem h_mem_toLieSubalgebra : h ∈ t.toLieSubalgebra K :=
-  IsSl2Triple.mem_toLieSubalgebra_iff.2 ⟨0, 0, 1, by simp [t.lie_e_f]⟩
-
-/-- The triple, read inside the subalgebra it generates: `h`, `e` and `f` lie in
-`t.toLieSubalgebra K` and satisfy the `sl₂` relations there, the brackets of a Lie subalgebra being
-those of the ambient algebra. -/
-private theorem isSl2Triple_restrict :
-    IsSl2Triple (⟨h, h_mem_toLieSubalgebra t⟩ : t.toLieSubalgebra K)
-      ⟨e, e_mem_toLieSubalgebra t⟩ ⟨f, f_mem_toLieSubalgebra t⟩ where
-  h_ne_zero hc := t.h_ne_zero (by simpa using congrArg Subtype.val hc)
-  lie_e_f := Subtype.ext (by simpa using t.lie_e_f)
-  lie_h_e_nsmul := Subtype.ext (by simpa using t.lie_h_e_nsmul)
-  lie_h_f_nsmul := Subtype.ext (by simpa using t.lie_h_f_nsmul)
-
-/-- Inside the subalgebra it generates, the triple generates everything: that subalgebra is spanned
-by `e`, `f` and `⁅e, f⁆` by construction. This is what lets the results proved for a generating
-triple be applied to an arbitrary one, after restricting the module. -/
-private theorem toLieSubalgebra_isSl2Triple_restrict_eq_top :
-    (isSl2Triple_restrict (K := K) t).toLieSubalgebra K = ⊤ :=
-  eq_top_iff.2 fun x _ ↦ by
-    obtain ⟨c₁, c₂, c₃, hx⟩ := IsSl2Triple.mem_toLieSubalgebra_iff.1 x.2
-    exact IsSl2Triple.mem_toLieSubalgebra_iff.2 ⟨c₁, c₂, c₃, Subtype.ext (by simpa using hx)⟩
-
-end Restrict
-
 /-! ### The eigenspaces of the Cartan element form a Lie submodule -/
 
 section Ladder
@@ -313,15 +272,15 @@ lies in the span, and the two meet only in `0`. So the complement is trivial. -/
 theorem iSup_eigenspace_toEnd_eq_top (t : IsSl2Triple h e f) :
     ⨆ μ : K, (toEnd K L M h).eigenspace μ = ⊤ := by
   obtain ⟨N, hN⟩ := exists_isCompl_of_toLieSubalgebra_eq_top
-    (toLieSubalgebra_isSl2Triple_restrict_eq_top t) (eigenspaceSup (K := K) (M := M) t)
+    t.restrict_toLieSubalgebra_eq_top (eigenspaceSup (K := K) (M := M) t)
   have hNbot : N = ⊥ := by
     by_contra hne
     have : Nontrivial N := (LieSubmodule.nontrivial_iff_ne_bot K _ M).2 hne
     obtain ⟨μ, hμ⟩ := LieModule.IsTriangularizable.exists_hasEigenvalue
-      (R := K) (L := t.toLieSubalgebra K) (M := ↥N) ⟨h, h_mem_toLieSubalgebra t⟩
+      (R := K) (L := t.toLieSubalgebra K) (M := ↥N) ⟨h, t.h_mem_toLieSubalgebra⟩
     obtain ⟨v, hv, hv0⟩ := hμ.exists_hasEigenvector
     have hvM : ⁅h, (v : M)⁆ = μ • (v : M) := by
-      have hv' : ⁅(⟨h, h_mem_toLieSubalgebra t⟩ : t.toLieSubalgebra K), v⁆ = μ • v := by
+      have hv' : ⁅(⟨h, t.h_mem_toLieSubalgebra⟩ : t.toLieSubalgebra K), v⁆ = μ • v := by
         simpa only [LieModule.toEnd_apply_apply] using Module.End.mem_eigenspace_iff.1 hv
       -- Push the equality in `↥N` down to `M`, through the submodule and then the subalgebra.
       simpa only [LieSubmodule.coe_bracket, LieSubalgebra.coe_bracket_of_module,

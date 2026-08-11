@@ -251,27 +251,31 @@ theorem map_prefixProj_infinitePi_const {α : Type*} [MeasurableSpace α] (p : P
       = Measure.pi (fun _ : Fin n => (p : Measure α)) :=
   map_prefixProj_infinitePi (fun _ => p) n
 
-/-- **Selecting a block from an i.i.d. power, tagged with its own law.** Reading an injective block
-`k : Fin m → ℕ` of coordinates off the countable power `Q^{⊗ℕ}` and recording `Q` alongside the
-result gives `δ_Q ⊗ Q^{⊗ Fin m}`; injectivity is what makes the selected coordinates independent.
+/-- **Selecting a block from an i.i.d. power, tagged.** Reading an injective block `k : Fin m → ℕ`
+of coordinates off the countable power `Q^{⊗ℕ}` and recording a tag `t` alongside the result gives
+`δ_t ⊗ Q^{⊗ Fin m}`; injectivity is what makes the selected coordinates independent.
+
+The tag is arbitrary and need not be `Q` itself: a mixture law carries the *parameter* `t` while
+sampling from `P t`, so the two differ there. Tagging with the law itself is the instance
+`map_infinitePi_pair_block Q Q`.
 
 This is `map_prefixProj_infinitePi_const` for an arbitrary injective block rather than a prefix,
-paired with the law, which is the form a disintegration against a directing measure consumes. -/
-theorem map_infinitePi_pair_block {α : Type*} [MeasurableSpace α] (Q : ProbabilityMeasure α)
-    {m : ℕ} {k : Fin m → ℕ} (hk : Function.Injective k) :
+paired with a tag, which is the form a disintegration against a directing measure consumes. -/
+theorem map_infinitePi_pair_block {T α : Type*} [MeasurableSpace T] [MeasurableSpace α] (t : T)
+    (Q : ProbabilityMeasure α) {m : ℕ} {k : Fin m → ℕ} (hk : Function.Injective k) :
     (Measure.infinitePi fun _ : ℕ => (Q : Measure α)).map
-        (fun x : ℕ → α => (Q, fun i : Fin m => x (k i)))
-      = (Measure.dirac Q).prod (ProbabilityMeasure.pi fun _ : Fin m => Q).toMeasure := by
+        (fun x : ℕ → α => (t, fun i : Fin m => x (k i)))
+      = (Measure.dirac t).prod (ProbabilityMeasure.pi fun _ : Fin m => Q).toMeasure := by
   have hblk : Measurable fun x : ℕ → α => fun i : Fin m => x (k i) :=
     measurable_pi_lambda _ fun i => measurable_pi_apply (k i)
   calc (Measure.infinitePi fun _ : ℕ => (Q : Measure α)).map
-        (fun x : ℕ → α => (Q, fun i : Fin m => x (k i)))
+        (fun x : ℕ → α => (t, fun i : Fin m => x (k i)))
       = ((Measure.infinitePi fun _ : ℕ => (Q : Measure α)).map
-          fun x : ℕ → α => fun i : Fin m => x (k i)).map (Prod.mk Q) :=
+          fun x : ℕ → α => fun i : Fin m => x (k i)).map (Prod.mk t) :=
         (Measure.map_map measurable_prodMk_left hblk).symm
-    _ = (Measure.pi fun _ : Fin m => (Q : Measure α)).map (Prod.mk Q) := by
+    _ = (Measure.pi fun _ : Fin m => (Q : Measure α)).map (Prod.mk t) := by
         rw [Measure.map_infinitePi_infinitePi_of_inj hk, Measure.infinitePi_eq_pi]
-    _ = (Measure.dirac Q).prod (ProbabilityMeasure.pi fun _ : Fin m => Q).toMeasure := by
+    _ = (Measure.dirac t).prod (ProbabilityMeasure.pi fun _ : Fin m => Q).toMeasure := by
         rw [ProbabilityMeasure.toMeasure_pi, Measure.dirac_prod]
 
 /-- **Bind-evaluation.** Evaluating the mixture
