@@ -163,6 +163,9 @@ indexed by the unordered `n`-tuples of basis indices. -/
 noncomputable def _root_.Module.Basis.symmetricPower : Basis (Sym κ n) R (Sym[R]^n M) :=
   Basis.ofRepr (linearEquivFinsupp n b)
 
+/-- The basis vector of `Sym[R]^n M` indexed by an unordered tuple `s : Sym κ n` of basis indices
+is the pure symmetric tensor `SymmetricPower.tprodOfSym R b s` of the corresponding basis
+vectors. -/
 @[simp]
 theorem _root_.Module.Basis.symmetricPower_apply (s : Sym κ n) :
     b.symmetricPower n s = tprodOfSym R b s :=

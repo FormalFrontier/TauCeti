@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.LinearAlgebra.SymmetricPower
+public import TauCeti.LinearAlgebra.SymmetricPower.Basic
 
 /-!
 # The universal property of the symmetric tensor power
@@ -15,7 +15,7 @@ through the symmetric tensor power. This file builds that factorization,
 `SymmetricPower.mk`: the defining relation of the quotient identifies a pure tensor with each of
 its reorderings, and `f` takes the same value on all of them.
 
-Together with `SymmetricPower.hom_ext`, which says that a linear map out of the symmetric power is
+Together with `SymmetricPower.ext`, which says that a linear map out of the symmetric power is
 determined by its values on pure symmetric tensors, this says that composing with the pure
 symmetric tensor `⨂ₛ` is a bijection from the linear maps `Sym[R] ι M →ₗ[R] N` onto the
 permutation-invariant multilinear maps `Mⁱ → N`, for every `N`.
@@ -28,7 +28,7 @@ permutation-invariant multilinear maps `Mⁱ → N`, for every `N`.
 ## Main results
 
 * `SymmetricPower.lift_tprod`: `lift f` agrees with `f` on pure symmetric tensors.
-* `SymmetricPower.hom_ext`: linear maps out of a symmetric power agreeing on pure symmetric
+* `SymmetricPower.ext`: linear maps out of a symmetric power agreeing on pure symmetric
   tensors are equal.
 -/
 
@@ -81,7 +81,7 @@ theorem lift_tprod (hf : ∀ e : Equiv.Perm ι, f.domDomCongr e = f) (m : ι →
 /-- A linear map out of a symmetric power is determined by its values on pure symmetric
 tensors. -/
 @[ext]
-theorem hom_ext {g h : Sym[R] ι M →ₗ[R] N}
+theorem ext {g h : Sym[R] ι M →ₗ[R] N}
     (hgh : ∀ m : ι → M, g (⨂ₛ[R] i, m i) = h (⨂ₛ[R] i, m i)) : g = h := by
   refine LinearMap.ext_on (span_tprod_eq_top R ι M) ?_
   rintro _ ⟨m, rfl⟩
