@@ -227,8 +227,8 @@ theorem excised_logDeriv_comp_ofComplex_fdBoundary_arc_add_four_sub_eq_neg
   have hsymm := excised_fdBoundary_arc_reflection_iff (H := H) (S := S) (ε := ε)
     ⟨ht.1.le, ht.2.le⟩ hnorm hinv
   by_cases hc : ∃ s ∈ S, ‖fdBoundary H t - s‖ ≤ ε
-  · simp only [if_pos hc, if_pos (hsymm.mpr hc), add_zero]
-  · simp only [if_neg hc, if_neg fun h => hc (hsymm.mp h)]
+  · simp only [ite_eq_left hc, ite_eq_left (hsymm.mpr hc), add_zero]
+  · simp only [ite_eq_right hc, ite_eq_right fun h => hc (hsymm.mp h)]
     exact logDeriv_comp_ofComplex_fdBoundary_arc_add_four_sub_eq_neg f hS ht (hd hc) (hne hc)
 
 /-- **An excised constant is interval-integrable.** It is measurable, because the excision set
@@ -272,8 +272,8 @@ theorem intervalIntegrable_excised_deriv_smul_logDeriv_comp_ofComplex_fdBoundary
       (-((k : ℂ) * ((Real.pi / 6 : ℝ) * Complex.I))) 1 2).congr_uIoo fun u hu => ?_
     rw [Set.uIoo_of_le (by norm_num : (1 : ℝ) ≤ 2)] at hu
     by_cases hc : ∃ s ∈ S, ‖fdBoundary H u - s‖ ≤ ε
-    · simp only [if_pos hc]
-    · simp only [if_neg hc, logDeriv_fdBoundary_arc ⟨hu.1, by linarith [hu.2]⟩]
+    · simp only [ite_eq_left hc]
+    · simp only [ite_eq_right hc, logDeriv_fdBoundary_arc ⟨hu.1, by linarith [hu.2]⟩]
   have hI := ((hconst.sub hint).comp_sub_left 4).symm
   norm_num at hI
   refine hI.congr_uIoo ?_
@@ -370,8 +370,8 @@ theorem two_mul_intervalIntegral_excised_deriv_smul_logDeriv_comp_ofComplex_fdBo
     have hsymm := excised_fdBoundary_arc_reflection_iff (H := H) (S := S) (ε := ε)
       ⟨ht.1.le, ht.2.le⟩ hnorm hinv
     by_cases hc : ∃ s ∈ S, ‖fdBoundary H t - s‖ ≤ ε
-    · rw [if_pos hc, if_pos (hsymm.mpr hc)]
-    · rw [if_neg hc, if_neg fun h => hc (hsymm.mp h), logDeriv_fdBoundary_arc ht,
+    · rw [ite_eq_left hc, ite_eq_left (hsymm.mpr hc)]
+    · rw [ite_eq_right hc, ite_eq_right fun h => hc (hsymm.mp h), logDeriv_fdBoundary_arc ht,
         logDeriv_fdBoundary_arc h4t]
   -- Add the pointwise pairing over the interval. It is only assumed on the first half: the
   -- identity is symmetric under `t ↦ 4 - t`, so on the second half it follows from the first

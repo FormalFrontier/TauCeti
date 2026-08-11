@@ -363,12 +363,12 @@ private theorem ConditionallyIIDWith.integral_indicator_sub_directing_mul_indica
         * (X i ⁻¹' B).indicator (1 : Ω → ℝ) ω = (X i ⁻¹' B).indicator (1 : Ω → ℝ) ω := by
       intro ω
       by_cases hmem : ω ∈ X i ⁻¹' B <;> simp [hmem]
-    rw [if_pos rfl, integral_congr_ae (ae_of_all _ hsq),
+    rw [ite_eq_left rfl, integral_congr_ae (ae_of_all _ hsq),
       h.integral_indicator_single i hXi hB, h.integral_directing_mul_indicator i hXi hB]
     ring
   · -- Off the diagonal the pair moment and both cross moments are `∫ q²`, so the four terms of
     -- the expansion cancel.
-    rw [if_neg hij, h.integral_indicator_pair hXi hXj hB hij,
+    rw [ite_eq_right hij, h.integral_indicator_pair hXi hXj hB hij,
       h.integral_directing_mul_indicator i hXi hB,
       h.integral_directing_mul_indicator j hXj hB]
     ring

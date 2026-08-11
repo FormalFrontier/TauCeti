@@ -136,8 +136,9 @@ theorem evalHom_one_injective (p : ℕ) (hp : 1 < p) : Function.Injective (evalH
       diagElem_def, HeckeCosetModule.single_apply]
     by_cases hxs : x = s
     · subst hxs; simp [D]
-    · rw [if_neg (fun hb ↦ hxs (Finsupp.ext fun j ↦ by
-        rw [Fin.fin_one_eq_zero j]; exact T_diag_one_ppow_inj p hp hb)), if_neg hxs, smul_zero]
+    · rw [ite_eq_right (fun hb ↦ hxs (Finsupp.ext fun j ↦ by
+        rw [Fin.fin_one_eq_zero j]; exact T_diag_one_ppow_inj p hp hb)),
+        ite_eq_right hxs, smul_zero]
   rw [Finset.sum_congr rfl hterm, Finset.sum_ite_eq_of_mem' R.support s _ hs]
 
 /-- A two-entry diagonal `![a, b]` is a divisibility chain iff `a ∣ b`. -/
@@ -270,7 +271,7 @@ private lemma T_gen_pow_support_qpower (q : ℕ) (hq : 0 < q) (e : Fin 2 → ℕ
       HeckeRing.GL2.heckeTScalar_pow q hq (e 1)] at hD''
     have h_eq : diagCoset (fun _ : Fin 2 ↦ q ^ (e 1)) = D'' := by
       by_contra h
-      exact hD'' (by rw [diagElem_def, HeckeCosetModule.single_apply, if_neg h])
+      exact hD'' (by rw [diagElem_def, HeckeCosetModule.single_apply, ite_eq_right h])
     rw [← h_eq, prod_rep_T_diag _ (fun i ↦ by fin_cases i <;> simp [pow_pos hq])]
     push_cast [Fin.prod_univ_two, ← pow_add]; ring_nf
   have h_result := det_rep_T_gen_zero_pow_mul q hq (2 * e 1) (e 0) _ D hf_det hD
@@ -341,7 +342,7 @@ private lemma T_mul_T_scalar_eval_shifted (c : ℕ) (hc : 0 < c) (f : IntegralHe
   rw [hD_eq, T_single_diag_mul_T_scalar c hc a ha_pos α]
   rw [evalAddHom_apply, HeckeCosetModule.single_apply, HeckeCosetModule.single_apply]
   by_cases hab : a = b
-  · subst hab; rw [if_pos rfl, if_pos rfl]
+  · subst hab; rw [ite_eq_left rfl, ite_eq_left rfl]
   · have h_ne_1 : diagCoset (a * fun _ : Fin 2 ↦ c) ≠ diagCoset (b * fun _ : Fin 2 ↦ c) := by
       intro heq
       have h1_eq : a * (fun _ : Fin 2 ↦ c) = b * (fun _ : Fin 2 ↦ c) :=
@@ -351,7 +352,7 @@ private lemma T_mul_T_scalar_eval_shifted (c : ℕ) (hc : 0 < c) (f : IntegralHe
       exact hab (funext fun i ↦ Nat.eq_of_mul_eq_mul_right hc (congr_fun h1_eq i))
     have h_ne_2 : diagCoset a ≠ diagCoset b := fun heq ↦ hab
       (eq_of_diagCoset_eq ha_pos hb_pos ha_div hb_div heq)
-    rw [if_neg h_ne_1, if_neg h_ne_2]
+    rw [ite_eq_right h_ne_1, ite_eq_right h_ne_2]
 
 /-- If `c ∤ d i` for some `i`, the evaluation of `f * diagElem(c,c)` at `diagCoset d` is zero. -/
 private lemma T_mul_T_scalar_eval_zero_of_not_dvd (c : ℕ) (hc : 0 < c) (f : IntegralHeckeRing 2)
@@ -372,7 +373,7 @@ private lemma T_mul_T_scalar_eval_zero_of_not_dvd (c : ℕ) (hc : 0 < c) (f : In
     have h := congr_fun h_eq i₀
     simp only [Pi.mul_apply] at h
     linarith [h.symm]
-  rw [if_neg h_ne]
+  rw [ite_eq_right h_ne]
   rfl
 
 /-- For `i ≥ 1`, evaluation of `f * heckeTScalar(p)^i` at `diagCoset ![1, k]` is zero
@@ -413,7 +414,7 @@ private lemma T_elem_p_ppow_eval_at_one_ppow_succ_zero (p : ℕ) (hp : 1 < p) {n
     (diagElem (![p, p ^ n] : Fin 2 → ℕ)) (diagCoset (![1, p ^ (n + 1)] : Fin 2 → ℕ)) = 0 := by
   classical
   rw [diagElem_def, HeckeCosetModule.single_apply]
-  refine if_neg (fun heq ↦ ?_)
+  refine ite_eq_right (fun heq ↦ ?_)
   have h_eq : (![p, p ^ n] : Fin 2 → ℕ) = (![1, p ^ (n + 1)] : Fin 2 → ℕ) :=
     eq_of_diagCoset_eq
       (fun i ↦ by fin_cases i <;> simp [Nat.zero_lt_of_lt hp, pow_pos (Nat.zero_lt_of_lt hp)])
@@ -435,7 +436,7 @@ private lemma T_ad_one_p_mul_T_ad_one_ppow_eval_leading (p : ℕ) (hp : p.Prime)
       -- intended spelling is stated here for the following rewrite to match.
       show (![1, p ^ (0 + 1)] : Fin 2 → ℕ) = (![1, p] : Fin 2 → ℕ) from by
         funext i; fin_cases i <;> simp,
-      HeckeCosetModule.single_apply, if_pos rfl]
+      HeckeCosetModule.single_apply, ite_eq_left rfl]
   · rw [← heckeT_prime p hp, heckeT_prime_mul_heckeTDiag_one_prime_pow p hp n]
     -- `Finsupp.add_apply` holds through the `IntegralHeckeRing` wrapper by defeq but does not
     -- match syntactically, so the split is stated and closed by that lemma.
@@ -450,7 +451,7 @@ private lemma T_ad_one_p_mul_T_ad_one_ppow_eval_leading (p : ℕ) (hp : p.Prime)
     -- with `single_apply` gives it, and this states the result to rewrite with.
     rw [show (diagElem (![1, p ^ (n + 1)] : Fin 2 → ℕ))
           (diagCoset (![1, p ^ (n + 1)] : Fin 2 → ℕ)) = 1 from
-        by rw [diagElem_def, HeckeCosetModule.single_apply, if_pos rfl]]
+        by rw [diagElem_def, HeckeCosetModule.single_apply, ite_eq_left rfl]]
     -- `Finsupp.smul_apply`, same obstruction as the `add_apply` above: true through the
     -- wrapper by defeq, not syntactically matchable, so the pushed-in form is stated.
     rw [show ((if n = 1 then ((p : ℤ) + 1) else (p : ℤ)) • diagElem (![p, p ^ n] : Fin 2 → ℕ))
@@ -512,7 +513,7 @@ private lemma T_ad_one_p_pow_eval_leading (p : ℕ) (hp : p.Prime) (a : ℕ) :
     -- conversion is stated and proved pointwise before `diagElem_one` can apply.
     rw [pow_zero, pow_zero, show (![1, 1] : Fin 2 → ℕ) = (fun _ : Fin 2 ↦ 1) from by
         funext i; fin_cases i <;> rfl, ← diagElem_one]
-    rw [diagElem_def, HeckeCosetModule.single_apply, if_pos rfl]
+    rw [diagElem_def, HeckeCosetModule.single_apply, ite_eq_left rfl]
   | succ n ih =>
     rw [pow_succ']
     set g := (heckeTDiag 1 p) ^ n
@@ -635,9 +636,9 @@ private lemma monomial_eval_kronecker (p : ℕ) (hp : p.Prime)
     HeckeRing.GL2.heckeTScalar_pow p hp.pos b₁]
   by_cases hmatch : a₁ = a₂ ∧ b₁ = b₂
   · obtain ⟨ha, hb⟩ := hmatch
-    rw [if_pos ⟨ha, hb⟩, ha, ← hb, T_ad_one_p_pow_mul_scalar_eval_at_one_ppow p hp.pos,
+    rw [ite_eq_left ⟨ha, hb⟩, ha, ← hb, T_ad_one_p_pow_mul_scalar_eval_at_one_ppow p hp.pos,
       T_ad_one_p_pow_eval_leading p hp a₂]
-  · rw [if_neg hmatch]
+  · rw [ite_eq_right hmatch]
     by_cases hbeq : b₁ = b₂
     · subst hbeq
       rw [T_ad_one_p_pow_mul_scalar_eval_at_one_ppow p hp.pos,
@@ -672,8 +673,8 @@ theorem evalHom_two_injective (p : ℕ) (hp : p.Prime) :
     rw [monomial_eval_kronecker p hp (d 0) (d 1) (s 0) (s 1) (hs_min d hd_mem)]
     by_cases hds : d = s
     · subst hds; simp
-    · rw [if_neg hds, if_neg (fun ⟨h0, h1⟩ ↦ hds (by ext i; fin_cases i; exacts [h0, h1])),
-        mul_zero]
+    · rw [ite_eq_right hds,
+        ite_eq_right (fun ⟨h0, h1⟩ ↦ hds (by ext i; fin_cases i; exacts [h0, h1])), mul_zero]
   rw [Finset.sum_congr rfl h_delta, Finset.sum_ite_eq_of_mem' R.support s _ hs_mem] at h_zero
   exact hs_coeff h_zero
 

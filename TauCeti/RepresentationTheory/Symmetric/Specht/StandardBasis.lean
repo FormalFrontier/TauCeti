@@ -123,11 +123,11 @@ theorem rowIndex_eq_of_rowCount_eq {t u : YoungTableau μ}
     constructor
     · intro hp
       by_contra hq
-      rw [if_pos hp, if_neg hq] at h2
+      rw [ite_eq_left hp, ite_eq_right hq] at h2
       exact absurd h2 one_ne_zero
     · intro hq
       by_contra hp
-      rw [if_neg hp, if_pos hq] at h2
+      rw [ite_eq_right hp, ite_eq_left hq] at h2
       exact absurd h2 zero_ne_one
   exact le_antisymm ((key (rowIndex u k) (rowIndex_lt_colLen_zero u k)).mpr le_rfl)
     ((key (rowIndex t k) (rowIndex_lt_colLen_zero t k)).mp le_rfl)

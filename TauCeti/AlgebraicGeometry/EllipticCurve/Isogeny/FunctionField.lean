@@ -7,7 +7,7 @@ module
 public import TauCeti.AlgebraicGeometry.EllipticCurve.Isogeny.Basic
 import Mathlib.RingTheory.Norm.Basic
 import Mathlib.RingTheory.Polynomial.IsIntegral
-import TauCeti.AlgebraicGeometry.EllipticCurve.Affine.FunctionFieldFinrank
+import TauCeti.AlgebraicGeometry.EllipticCurve.Affine.FunctionField.Finrank
 
 /-!
 # Function-field pullbacks of isogenies
