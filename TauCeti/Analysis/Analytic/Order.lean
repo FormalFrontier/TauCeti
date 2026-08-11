@@ -10,7 +10,9 @@ public import Mathlib.Analysis.Analytic.Order
 # The analytic order of products and power-compositions
 
 Two extensions of Mathlib's `analyticOrderAt` calculus: the order is additive over finite
-products, and composing with `q ↦ q ^ N` at `0` multiplies the order by `N`.
+products, and composing with `q ↦ q ^ N` at `0` multiplies the order by `N`. The finiteness a
+zero count also needs is `TauCeti.finite_setOf_mem_and_eq_zero_of_isCompact`, provided by
+`TauCeti.Analysis.Analytic.IsolatedZeros`, which mentions no order.
 
 ## Main declarations
 

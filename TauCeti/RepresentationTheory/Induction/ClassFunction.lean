@@ -193,7 +193,7 @@ private theorem indTerm_mul (hf : f ∈ ClassFunction k S) (g x : G) (s : S) :
   by_cases hx : x⁻¹ * g * x ∈ S
   · have hxs : (x * (s : G))⁻¹ * g * (x * s) ∈ S := by
       simpa [mul_assoc] using S.mul_mem (S.mul_mem (S.inv_mem s.2) hx) s.2
-    rw [indTerm, dif_pos hxs, indTerm, dif_pos hx]
+    rw [indTerm, dite_eq_left hxs, indTerm, dite_eq_left hx]
     have helem : (⟨(x * (s : G))⁻¹ * g * (x * s), hxs⟩ : S) =
         s⁻¹ * ⟨x⁻¹ * g * x, hx⟩ * s⁻¹⁻¹ := by
       apply Subtype.ext
@@ -203,7 +203,7 @@ private theorem indTerm_mul (hf : f ∈ ClassFunction k S) (g x : G) (s : S) :
   · have hxs : (x * (s : G))⁻¹ * g * (x * s) ∉ S := by
       intro h
       exact hx (by simpa [mul_assoc] using S.mul_mem (S.mul_mem s.2 h) (S.inv_mem s.2))
-    rw [indTerm, dif_neg hxs, indTerm, dif_neg hx]
+    rw [indTerm, dite_eq_right hxs, indTerm, dite_eq_right hx]
 
 /-- The summand of the induced class function depends only on the left coset of its
 representative. -/

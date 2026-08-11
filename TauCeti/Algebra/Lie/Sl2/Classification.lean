@@ -49,9 +49,11 @@ finite-dimensional triangularizable irreducible module is `V(n)` for exactly one
 * `TauCeti.Sl2Std.existsUnique_nonempty_lieModuleEquiv`: **the classification for `sl (Fin 2) K`.**
   A finite-dimensional triangularizable irreducible `sl (Fin 2) K`-module is equivalent to `V(n)`
   for exactly one `n : ℕ`.
-* `TauCeti.Sl2Std.exists_eq_sub_two_mul_of_hasEigenvalue` and
-  `TauCeti.Sl2Std.exists_int_of_hasEigenvalue`: every weight of such a module is among
-  `n, n - 2, …, -n`, and in particular is an integer.
+* `TauCeti.Sl2Std.exists_eq_sub_two_mul_of_hasEigenvalue`: every weight of such a module is among
+  `n, n - 2, …, -n`. That its weights are in particular integers holds for an arbitrary
+  finite-dimensional module, irreducible or not, and is
+  `TauCeti.exists_int_of_hasEigenvalue_slFinTwo` in
+  `TauCeti/Algebra/Lie/Sl2/Spectrum.lean`.
 
 ## References
 
@@ -223,17 +225,6 @@ theorem existsUnique_nonempty_lieModuleEquiv [FiniteDimensional K M]
   refine ⟨n, ⟨lieModuleEquivOfEqTop htop (lieModuleEquiv P)⟩, fun n' ⟨ψ⟩ ↦ ?_⟩
   exact eq_of_linearEquiv
     (ψ.symm.trans (lieModuleEquivOfEqTop htop (lieModuleEquiv P))).toLinearEquiv
-
-/-- **The integer spectrum.** Every eigenvalue of the Cartan element on a finite-dimensional
-triangularizable irreducible `sl (Fin 2) K`-module is an integer, being one of `n, n - 2, …, -n`. -/
-theorem exists_int_of_hasEigenvalue [FiniteDimensional K M]
-    [IsTriangularizable K (SpecialLinear.sl (Fin 2) K) M]
-    [LieModule.IsIrreducible K (SpecialLinear.sl (Fin 2) K) M] {μ : K}
-    (hμ : (toEnd K (SpecialLinear.sl (Fin 2) K) M (slFinTwoBasis K 2)).HasEigenvalue μ) :
-    ∃ k : ℤ, μ = k := by
-  obtain ⟨n, ⟨φ⟩, -⟩ := existsUnique_nonempty_lieModuleEquiv (K := K) M
-  obtain ⟨i, hi⟩ := exists_eq_sub_two_mul_of_hasEigenvalue φ hμ
-  exact ⟨(n : ℤ) - 2 * (i : ℕ), by push_cast [hi]; ring⟩
 
 end Sl2Std
 

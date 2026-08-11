@@ -13,7 +13,9 @@ public import TauCeti.RingTheory.KrullSchmidt.Indecomposable
 The Krull-Schmidt theorem has two halves: every module of finite length is a finite internal direct
 sum of indecomposable submodules, and that decomposition is unique up to a matching of the summands.
 This file proves the first half. Uniqueness, whose proof is the exchange argument on the local
-endomorphism rings supplied by `TauCeti.isLocalRing_end_of_isIndecomposable`, is not proved here.
+endomorphism rings supplied by `TauCeti.isLocalRing_end_of_isIndecomposable`, is
+`TauCeti.exists_equiv_linearEquiv_of_iSupIndep`, in
+`TauCeti/RingTheory/KrullSchmidt/Uniqueness.lean`.
 
 Existence needs strictly less than finite length: the descending chain condition alone suffices. A
 nonzero submodule that is not indecomposable splits as `N ⊕ Q` with both summands nonzero, hence

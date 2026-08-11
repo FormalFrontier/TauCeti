@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.Analysis.Meromorphic.NormalForm
-public import Mathlib.NumberTheory.ModularForms.Basic
+public import TauCeti.NumberTheory.ModularForms.Basic
 public import TauCeti.Analysis.Complex.UpperHalfPlane.Manifold
 
 /-!
@@ -28,6 +28,8 @@ irregular cusps in odd weight) belongs to the general-level layer and is not def
 * `TauCeti.orderOfVanishingAt_pos_iff`: for a nonzero holomorphic function, positive
   order characterizes the zeros.
 * `TauCeti.orderOfVanishingAt_smul`: invariance along the action of the group.
+* `TauCeti.orderOfVanishingAt_eq_of_coe_eq_add`: invariance under the period translation, for
+  a periodic function.
 
 ## References
 
@@ -187,30 +189,12 @@ lemma orderOfVanishingAt_smul [SlashInvariantFormClass F Γ k] (f : F) {γ}
     orderOfVanishingAt f (γ • z) = orderOfVanishingAt f z := by
   have hdet_ne : ((|(γ.det : ℝ)| : ℝ) : ℂ) ≠ 0 := by
     exact_mod_cast (abs_pos.mpr (γ.det : ℝˣ).ne_zero).ne'
-  have hpt : ∀ τ : ℍ, f (γ • τ) =
-      ((|(γ.det : ℝ)| : ℝ) : ℂ) ^ (1 - k) * denom γ (τ : ℂ) ^ k * f τ := by
-    intro τ
-    have h := congr_fun (SlashInvariantForm.slash_action_eqn f γ hγ) τ
-    rw [ModularForm.slash_def] at h
-    have hdet' : (0 : ℝ) < ↑(Matrix.GeneralLinearGroup.det γ) := by
-      rwa [Matrix.GeneralLinearGroup.val_det_apply]
-    have hσ : σ γ = ContinuousAlgEquiv.refl ℝ ℂ := by rw [σ, if_pos hdet']
-    rw [hσ] at h
-    have hden : denom γ (τ : ℂ) ≠ 0 := denom_ne_zero γ τ
-    have h2 : f (γ • τ) =
-        f τ * (((|(γ.det : ℝ)| : ℝ) : ℂ) ^ (k - 1))⁻¹ * (denom γ (τ : ℂ) ^ (-k))⁻¹ := by
-      rw [← h]
-      field_simp
-      rfl
-    have hexp : -(k - 1) = 1 - k := by ring
-    rw [h2, ← zpow_neg, ← zpow_neg, neg_neg, hexp]
-    ring
   have hcongr : (fun w : ℂ ↦ f (γ • ofComplex w)) =ᶠ[nhds (z : ℂ)]
       (fun w : ℂ ↦ ((|(γ.det : ℝ)| : ℝ) : ℂ) ^ (1 - k) *
         ((γ 1 0 : ℂ) * w + (γ 1 1 : ℂ)) ^ k) * (⇑f ∘ ofComplex) := by
     filter_upwards [isOpen_upperHalfPlaneSet.mem_nhds z.im_pos] with w hw
     rw [Pi.mul_apply, Function.comp_apply, ofComplex_apply_of_im_pos hw]
-    simpa [denom, mul_assoc] using hpt ⟨w, hw⟩
+    simpa [denom, mul_assoc] using SlashInvariantForm.slash_action_eqn_of_det_pos f hγ hdet ⟨w, hw⟩
   have h_an : AnalyticAt ℂ (fun w : ℂ ↦ ((|(γ.det : ℝ)| : ℝ) : ℂ) ^ (1 - k) *
       ((γ 1 0 : ℂ) * w + (γ 1 1 : ℂ)) ^ k) (z : ℂ) := by
     refine AnalyticAt.mul analyticAt_const (AnalyticAt.zpow (by fun_prop) ?_)
@@ -224,6 +208,25 @@ lemma orderOfVanishingAt_smul [SlashInvariantFormClass F Γ k] (f : F) {γ}
   rw [← meromorphicOrderAt_comp_smul hdet,
     meromorphicOrderAt_congr (hcongr.filter_mono nhdsWithin_le_nhds),
     meromorphicOrderAt_mul_of_ne_zero h_an h_ne]
+
+/-- The meromorphic order of a `c`-periodic function agrees at `z + c` and at `z`. Only a proof
+helper for `orderOfVanishingAt_eq_of_coe_eq_add`: it is a fact about periodic functions on `ℂ`,
+with no modular-forms content, so it is not exported from this module. -/
+private theorem meromorphicOrderAt_add_of_periodic {g : ℂ → ℂ} {c : ℂ}
+    (hper : Function.Periodic g c) (z : ℂ) :
+    meromorphicOrderAt g (z + c) = meromorphicOrderAt g z := by
+  rw [← meromorphicOrderAt_comp_add_const_eq_meromorphicOrderAt (f := g) (c := c) (x := z)]
+  exact congrArg (fun h => meromorphicOrderAt h z) (funext fun x => hper x)
+
+/-- The vanishing order of a `c`-periodic function on `ℍ` agrees at `z` and at `z + c`. For a
+level-one form and `c = 1` this is what makes the two `ρ`-corners of the fundamental domain
+contribute equally to the valence formula. -/
+theorem orderOfVanishingAt_eq_of_coe_eq_add {c : ℂ} (hper : Function.Periodic (f ∘ ofComplex) c)
+    {z w : ℍ} (hzw : (w : ℂ) = (z : ℂ) + c) :
+    orderOfVanishingAt f w = orderOfVanishingAt f z := by
+  rw [orderOfVanishingAt_def, orderOfVanishingAt_def, hzw,
+    meromorphicOrderAt_add_of_periodic hper]
+
 
 end TauCeti
 

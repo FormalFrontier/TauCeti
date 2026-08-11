@@ -20,7 +20,7 @@ holomorphic germ into a multi-valued function: one carries the germ along `γ`, 
 each parameter time. This file introduces that notion and proves its fundamental property, that a
 continuation is **determined by its initial germ**.
 
-A continuation is recorded as a family `f : X → ℂ → ℂ` of functions indexed by the path parameter,
+A continuation is recorded as a family `f : X → ℂ → E` of functions indexed by the path parameter,
 subject to the requirement that `f t` be analytic at `γ t` and that the germ of `f u` at `γ u`
 agree with the germ of `f t` at `γ u` for all `u` near `t`. Equivalently — and this is the way to
 read the definition — the assignment `t ↦ (germ of f t at γ t)` is a *continuous lift* of `γ` to
@@ -31,6 +31,32 @@ The parameter space `X` is an arbitrary topological space, and the parameter set
 constrained only by `IsPreconnected` where the mathematics needs it. Nothing here uses the order or
 the field structure of the reals, so the usual `X = ℝ` with `s = Set.Icc 0 1` and Mathlib's
 `Path`, whose parameter space is `unitInterval`, are both directly available.
+
+## Generality
+
+The germs carried are germs of maps `ℂ → E` into a complex normed space `E`. The generality is
+free rather than speculative: every analytic fact this file consumes is one Mathlib already states
+for maps into an arbitrary normed space, so the scalar case is not one line shorter. The
+uniqueness theorem rests on Mathlib's identity principle
+`AnalyticOnNhd.eqOn_of_preconnected_of_eventuallyEq` and on the openness of the analyticity locus
+`AnalyticAt.exists_ball_analyticOnNhd`; `DifferentiableOn.analyticOnNhd` produces continuations
+from holomorphy; and the closure lemmas below consume `AnalyticAt.deriv`, `.add` and `.neg`, and
+`AnalyticAt.mul` and `.pow` for the two that multiply germs. In the words of the generality bar of
+`TauCetiRoadmap/ConformalMapping/README.md`, these are *inputs consumed from Mathlib at whatever
+generality Mathlib provides*; the conformal-mapping theorems that consume this file — the
+reflection and boundary layers — are scalar and stay scalar, instantiating `E = ℂ`.
+
+Completeness of `E` is asked for exactly where those Mathlib inputs ask for it, and nowhere else:
+the definition itself, the gluing and reparametrisation lemmas, and the closure of continuations
+under sums and products need none, while everything resting on the identity principle —
+`TauCeti.IsAnalyticContinuationAlong.eventuallyEq` and all of its consequences — needs `E` to be a
+Banach space.
+
+The *domain* stays `ℂ`. That is where the roadmap's scalar bar bites: a path in a higher-dimensional
+domain is not the object the monodromy theorem and its consumers are about, and `deriv` — under
+which continuations are closed below — is one-dimensional. The two closure lemmas that multiply
+germs, `TauCeti.IsAnalyticContinuationAlong.mul` and `.pow`, ask for a complex normed algebra `A`
+in place of `E`, again the generality at which Mathlib states `AnalyticAt.mul`.
 
 ## The uniqueness theorem
 
@@ -54,11 +80,12 @@ across eventual equality of the initial function (`TauCeti.continuesAlong_congr`
 `TauCeti.continuesInside_congr`). `TauCeti.ContinuesInside` is the hypothesis of the monodromy
 theorem for a simply connected domain (`Conformal/GlobalBranch.lean`).
 
-Both predicates are closed under the ring operations and under differentiation, because a
-continuation of a combination of germs is the corresponding combination of continuations of the
-parts: the closure lemmas of `TauCeti.IsAnalyticContinuationAlong` transport to them verbatim, with
-no choice of continuation to reconcile. A function analytic at every point of a continuous path
-continues along it via the constant family (`TauCeti.ContinuesAlong.of_analyticAt`), so
+Both predicates are closed under the additive and the ring operations and under differentiation,
+because a continuation of a combination of germs is the corresponding combination of continuations
+of the parts: the closure lemmas of `TauCeti.IsAnalyticContinuationAlong` transport to them
+verbatim, with no choice of continuation to reconcile. A function analytic at every point of a
+continuous path continues along it via the constant family
+(`TauCeti.ContinuesAlong.of_analyticAt`), so
 continuability is a condition one may check on the pieces of a germ built from simpler ones.
 They are also closed under concatenating paths, which `Continuation/Trans.lean` proves.
 
@@ -112,7 +139,8 @@ namespace TauCeti
 
 open Filter Metric Topology
 
-variable {X : Type*} [TopologicalSpace X] {f g : X → ℂ → ℂ} {γ : X → ℂ} {s : Set X}
+variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℂ E]
+  {X : Type*} [TopologicalSpace X] {f g : X → ℂ → E} {γ : X → ℂ} {s : Set X}
 
 /-! ### Germ agreement is a locally constant property -/
 
@@ -120,7 +148,7 @@ variable {X : Type*} [TopologicalSpace X] {f g : X → ℂ → ℂ} {γ : X → 
 at every point of the ball. This is the identity principle in germ form: the ball is preconnected,
 so agreement near one of its points propagates to all of it, and the ball is open, so agreement on
 it is agreement near each of its points. -/
-theorem eventuallyEq_nhds_of_analyticOnNhd_ball {F G : ℂ → ℂ} {c : ℂ} {r : ℝ}
+theorem eventuallyEq_nhds_of_analyticOnNhd_ball {F G : ℂ → E} {c : ℂ} {r : ℝ}
     (hF : AnalyticOnNhd ℂ F (ball c r)) (hG : AnalyticOnNhd ℂ G (ball c r)) {z w : ℂ}
     (hz : z ∈ ball c r) (hw : w ∈ ball c r) (h : F =ᶠ[𝓝 z] G) :
     F =ᶠ[𝓝 w] G :=
@@ -129,8 +157,8 @@ theorem eventuallyEq_nhds_of_analyticOnNhd_ball {F G : ℂ → ℂ} {c : ℂ} {r
 
 /-- **Germ agreement is locally constant.** If `F` and `G` are both analytic at `z`, then for all
 `w` near `z` the germs of `F` and `G` agree at `w` exactly when they agree at `z`. -/
-theorem eventually_eventuallyEq_iff_of_analyticAt {F G : ℂ → ℂ} {z : ℂ} (hF : AnalyticAt ℂ F z)
-    (hG : AnalyticAt ℂ G z) :
+theorem eventually_eventuallyEq_iff_of_analyticAt [CompleteSpace E] {F G : ℂ → E} {z : ℂ}
+    (hF : AnalyticAt ℂ F z) (hG : AnalyticAt ℂ G z) :
     ∀ᶠ w in 𝓝 z, ((F =ᶠ[𝓝 w] G) ↔ (F =ᶠ[𝓝 z] G)) := by
   obtain ⟨r₁, hr₁, hF'⟩ := hF.exists_ball_analyticOnNhd
   obtain ⟨r₂, hr₂, hG'⟩ := hG.exists_ball_analyticOnNhd
@@ -171,7 +199,7 @@ sense that `f u` and `f t` have the same germ at `γ u` for every `u ∈ s` clos
 Only the germ of `f t` at `γ t` matters; the values of `f t` away from `γ t` are unconstrained.
 Reading the germs as points of the étale space of holomorphic germs over `ℂ`, the condition says
 precisely that `t ↦ (germ of f t at γ t)` is a continuous lift of `γ`. -/
-structure IsAnalyticContinuationAlong (f : X → ℂ → ℂ) (γ : X → ℂ) (s : Set X) : Prop where
+structure IsAnalyticContinuationAlong (f : X → ℂ → E) (γ : X → ℂ) (s : Set X) : Prop where
   /-- The path is continuous on the parameter set. -/
   continuousOn : ContinuousOn γ s
   /-- At each parameter time the carried function is analytic at the corresponding path point. -/
@@ -236,7 +264,7 @@ theorem union {s' : Set X} (hf : IsAnalyticContinuationAlong f γ s)
 
 /-- The constant family is a continuation: a function analytic at every point of the path
 continues itself along it. -/
-theorem const {F : ℂ → ℂ} (hγ : ContinuousOn γ s) (hF : ∀ t ∈ s, AnalyticAt ℂ F (γ t)) :
+theorem const {F : ℂ → E} (hγ : ContinuousOn γ s) (hF : ∀ t ∈ s, AnalyticAt ℂ F (γ t)) :
     IsAnalyticContinuationAlong (fun _ => F) γ s where
   continuousOn := hγ
   analyticAt := hF
@@ -244,14 +272,14 @@ theorem const {F : ℂ → ℂ} (hγ : ContinuousOn γ s) (hF : ∀ t ∈ s, Ana
 
 /-- A holomorphic function on an open set continues itself along any path that stays in that
 set. This is the source of the continuations that a single-valued function admits. -/
-theorem of_differentiableOn {U : Set ℂ} {F : ℂ → ℂ} (hU : IsOpen U) (hF : DifferentiableOn ℂ F U)
-    (hγ : ContinuousOn γ s) (hmem : ∀ t ∈ s, γ t ∈ U) :
+theorem of_differentiableOn [CompleteSpace E] {U : Set ℂ} {F : ℂ → E} (hU : IsOpen U)
+    (hF : DifferentiableOn ℂ F U) (hγ : ContinuousOn γ s) (hmem : ∀ t ∈ s, γ t ∈ U) :
     IsAnalyticContinuationAlong (fun _ => F) γ s :=
   const hγ fun t ht => hF.analyticOnNhd hU _ (hmem t ht)
 
 /-- **A continuation depends only on the germs it carries.** Replacing each `f t` by a function
 with the same germ at `γ t` again gives a continuation along `γ`. -/
-protected theorem congr (hf : IsAnalyticContinuationAlong f γ s) {f' : X → ℂ → ℂ}
+protected theorem congr [CompleteSpace E] (hf : IsAnalyticContinuationAlong f γ s) {f' : X → ℂ → E}
     (h : ∀ t ∈ s, f' t =ᶠ[𝓝 (γ t)] f t) : IsAnalyticContinuationAlong f' γ s where
   continuousOn := hf.continuousOn
   analyticAt t ht := (hf.analyticAt t ht).congr (h t ht).symm
@@ -274,7 +302,7 @@ theorem congr_path (hf : IsAnalyticContinuationAlong f γ s) {γ' : X → ℂ} (
     rwa [h hvs]
 
 /-- Differentiating a continuation term by term gives a continuation of the derivative germ. -/
-protected theorem deriv (hf : IsAnalyticContinuationAlong f γ s) :
+protected theorem deriv [CompleteSpace E] (hf : IsAnalyticContinuationAlong f γ s) :
     IsAnalyticContinuationAlong (fun t => _root_.deriv (f t)) γ s where
   continuousOn := hf.continuousOn
   analyticAt t ht := (hf.analyticAt t ht).deriv
@@ -288,15 +316,6 @@ protected theorem add (hf : IsAnalyticContinuationAlong f γ s)
   analyticAt t ht := (hf.analyticAt t ht).add (hg.analyticAt t ht)
   locallyEq t ht := by
     filter_upwards [hf.locallyEq t ht, hg.locallyEq t ht] with u hu hu' using hu.add hu'
-
-/-- Continuations multiply: the pointwise product family `f * g` continues along `γ` as well. -/
-protected theorem mul (hf : IsAnalyticContinuationAlong f γ s)
-    (hg : IsAnalyticContinuationAlong g γ s) :
-    IsAnalyticContinuationAlong (f * g) γ s where
-  continuousOn := hf.continuousOn
-  analyticAt t ht := (hf.analyticAt t ht).mul (hg.analyticAt t ht)
-  locallyEq t ht := by
-    filter_upwards [hf.locallyEq t ht, hg.locallyEq t ht] with u hu hu' using hu.mul hu'
 
 /-- Continuations negate: the pointwise negation family `-f` continues along `γ` as well. -/
 protected theorem neg (hf : IsAnalyticContinuationAlong f γ s) :
@@ -312,6 +331,22 @@ protected theorem sub (hf : IsAnalyticContinuationAlong f γ s)
     IsAnalyticContinuationAlong (f - g) γ s := by
   simpa only [sub_eq_add_neg] using hf.add hg.neg
 
+section Algebra
+
+variable {A : Type*} [NormedRing A] [NormedAlgebra ℂ A] {f g : X → ℂ → A}
+
+/-- Continuations multiply: the pointwise product family `f * g` continues along `γ` as well.
+
+The germs are allowed to take values in any complex normed algebra, which is the generality at
+which Mathlib's `AnalyticAt.mul` is stated. -/
+protected theorem mul (hf : IsAnalyticContinuationAlong f γ s)
+    (hg : IsAnalyticContinuationAlong g γ s) :
+    IsAnalyticContinuationAlong (f * g) γ s where
+  continuousOn := hf.continuousOn
+  analyticAt t ht := (hf.analyticAt t ht).mul (hg.analyticAt t ht)
+  locallyEq t ht := by
+    filter_upwards [hf.locallyEq t ht, hg.locallyEq t ht] with u hu hu' using hu.mul hu'
+
 /-- Continuations take powers: the pointwise power family `f ^ n` continues along `γ` as well. -/
 protected theorem pow (hf : IsAnalyticContinuationAlong f γ s) (n : ℕ) :
     IsAnalyticContinuationAlong (f ^ n) γ s where
@@ -319,11 +354,13 @@ protected theorem pow (hf : IsAnalyticContinuationAlong f γ s) (n : ℕ) :
   analyticAt t ht := (hf.analyticAt t ht).pow n
   locallyEq t ht := (hf.locallyEq t ht).mono fun _ hu => hu.pow_const n
 
+end Algebra
+
 /-! ### Uniqueness -/
 
 /-- Agreement of two continuations along the same path is a locally constant property of the
 parameter. This is the local step of the uniqueness theorem. -/
-theorem eventually_eventuallyEq_iff (hf : IsAnalyticContinuationAlong f γ s)
+theorem eventually_eventuallyEq_iff [CompleteSpace E] (hf : IsAnalyticContinuationAlong f γ s)
     (hg : IsAnalyticContinuationAlong g γ s) {t : X} (ht : t ∈ s) :
     ∀ᶠ u in 𝓝[s] t, ((f u =ᶠ[𝓝 (γ u)] g u) ↔ (f t =ᶠ[𝓝 (γ t)] g t)) := by
   have hball := eventually_eventuallyEq_iff_of_analyticAt (hf.analyticAt t ht) (hg.analyticAt t ht)
@@ -338,7 +375,7 @@ same germ at every parameter time.
 
 Preconnectedness of the parameter set cannot be dropped: over a two-point parameter set the
 hypotheses put no relation at all between the germs carried at its two points. -/
-theorem eventuallyEq (hf : IsAnalyticContinuationAlong f γ s)
+theorem eventuallyEq [CompleteSpace E] (hf : IsAnalyticContinuationAlong f γ s)
     (hg : IsAnalyticContinuationAlong g γ s) (hs : IsPreconnected s) {a b : X} (ha : a ∈ s)
     (hb : b ∈ s) (hab : f a =ᶠ[𝓝 (γ a)] g a) :
     f b =ᶠ[𝓝 (γ b)] g b :=
@@ -348,7 +385,7 @@ theorem eventuallyEq (hf : IsAnalyticContinuationAlong f γ s)
 
 /-- Two continuations along the same path that carry the same germ at one parameter time take the
 same value at every parameter time. -/
-theorem eq_of_eventuallyEq (hf : IsAnalyticContinuationAlong f γ s)
+theorem eq_of_eventuallyEq [CompleteSpace E] (hf : IsAnalyticContinuationAlong f γ s)
     (hg : IsAnalyticContinuationAlong g γ s) (hs : IsPreconnected s) {a b : X} (ha : a ∈ s)
     (hb : b ∈ s) (hab : f a =ᶠ[𝓝 (γ a)] g a) :
     f b (γ b) = g b (γ b) :=
@@ -358,8 +395,9 @@ theorem eq_of_eventuallyEq (hf : IsAnalyticContinuationAlong f γ s)
 which `F` is holomorphic, then any continuation along that path which starts at the germ of `F`
 carries the germ of `F` throughout. So continuing a holomorphic function inside its domain never
 produces a new branch: new branches can only appear once the path leaves the domain. -/
-theorem eventuallyEq_of_mapsTo {U : Set ℂ} {F : ℂ → ℂ} (hf : IsAnalyticContinuationAlong f γ s)
-    (hs : IsPreconnected s) (hU : IsOpen U) (hF : DifferentiableOn ℂ F U)
+theorem eventuallyEq_of_mapsTo [CompleteSpace E] {U : Set ℂ} {F : ℂ → E}
+    (hf : IsAnalyticContinuationAlong f γ s) (hs : IsPreconnected s) (hU : IsOpen U)
+    (hF : DifferentiableOn ℂ F U)
     (hmem : ∀ t ∈ s, γ t ∈ U) {a b : X} (ha : a ∈ s) (hb : b ∈ s) (hab : f a =ᶠ[𝓝 (γ a)] F) :
     f b =ᶠ[𝓝 (γ b)] F :=
   hf.eventuallyEq (of_differentiableOn hU hF hf.continuousOn hmem) hs ha hb hab
@@ -370,7 +408,7 @@ section Germ
 
 open unitInterval
 
-variable {U : Set ℂ} {z₀ : ℂ} {f₀ g₀ : ℂ → ℂ} {c : I → ℂ}
+variable {U : Set ℂ} {z₀ : ℂ} {f₀ g₀ : ℂ → E} {c : I → ℂ}
 
 /-! ### Continuation along a path, as a property of the initial germ -/
 
@@ -379,15 +417,15 @@ along `c` whose germ at the initial time is that of `f₀`.
 
 Only the germ of `f₀` at `c 0` enters, so this is a property of that germ rather than of `f₀`
 (`TauCeti.continuesAlong_congr`). -/
-def ContinuesAlong (f₀ : ℂ → ℂ) (c : I → ℂ) : Prop :=
-  ∃ f : I → ℂ → ℂ, IsAnalyticContinuationAlong f c Set.univ ∧ f 0 =ᶠ[𝓝 (c 0)] f₀
+def ContinuesAlong (f₀ : ℂ → E) (c : I → ℂ) : Prop :=
+  ∃ f : I → ℂ → E, IsAnalyticContinuationAlong f c Set.univ ∧ f 0 =ᶠ[𝓝 (c 0)] f₀
 
 /-- **The defining property of `TauCeti.ContinuesAlong`**: a germ continues along `c` exactly when
 some analytic continuation along `c` starts at it. This is the introduction and elimination rule
 for the predicate, whose body is not exposed. -/
 theorem continuesAlong_iff_exists :
     ContinuesAlong f₀ c ↔
-      ∃ f : I → ℂ → ℂ, IsAnalyticContinuationAlong f c Set.univ ∧ f 0 =ᶠ[𝓝 (c 0)] f₀ :=
+      ∃ f : I → ℂ → E, IsAnalyticContinuationAlong f c Set.univ ∧ f 0 =ᶠ[𝓝 (c 0)] f₀ :=
   Iff.rfl
 
 namespace ContinuesAlong
@@ -410,8 +448,8 @@ theorem of_analyticAt (hc : Continuous c) (hf₀ : ∀ x, AnalyticAt ℂ f₀ (c
   ⟨fun _ => f₀, .const hc.continuousOn fun t _ => hf₀ t, .rfl⟩
 
 /-- A function holomorphic on an open set continues along every path that stays in that set. -/
-theorem of_differentiableOn (hUo : IsOpen U) (hf₀ : DifferentiableOn ℂ f₀ U) (hc : Continuous c)
-    (hcU : ∀ x, c x ∈ U) : ContinuesAlong f₀ c :=
+theorem of_differentiableOn [CompleteSpace E] (hUo : IsOpen U) (hf₀ : DifferentiableOn ℂ f₀ U)
+    (hc : Continuous c) (hcU : ∀ x, c x ∈ U) : ContinuesAlong f₀ c :=
   of_analyticAt hc fun x => hf₀.analyticOnNhd hUo _ (hcU x)
 
 /-! #### Closure under the germ-wise operations
@@ -428,13 +466,6 @@ protected theorem add (h : ContinuesAlong f₀ c) (h' : ContinuesAlong g₀ c) :
   let ⟨g, hg, hg0⟩ := h'
   ⟨f + g, hf.add hg, hf0.add hg0⟩
 
-/-- The product of two germs that continue along a path continues along it. -/
-protected theorem mul (h : ContinuesAlong f₀ c) (h' : ContinuesAlong g₀ c) :
-    ContinuesAlong (f₀ * g₀) c :=
-  let ⟨f, hf, hf0⟩ := h
-  let ⟨g, hg, hg0⟩ := h'
-  ⟨f * g, hf.mul hg, hf0.mul hg0⟩
-
 /-- The negation of a germ that continues along a path continues along it. -/
 protected theorem neg (h : ContinuesAlong f₀ c) : ContinuesAlong (-f₀) c :=
   let ⟨f, hf, hf0⟩ := h
@@ -445,15 +476,29 @@ protected theorem sub (h : ContinuesAlong f₀ c) (h' : ContinuesAlong g₀ c) :
     ContinuesAlong (f₀ - g₀) c := by
   simpa only [sub_eq_add_neg] using h.add h'.neg
 
+/-- The derivative of a germ that continues along a path continues along it. -/
+protected theorem deriv [CompleteSpace E] (h : ContinuesAlong f₀ c) :
+    ContinuesAlong (_root_.deriv f₀) c :=
+  let ⟨f, hf, hf0⟩ := h
+  ⟨fun t => _root_.deriv (f t), hf.deriv, hf0.deriv⟩
+
+section Algebra
+
+variable {A : Type*} [NormedRing A] [NormedAlgebra ℂ A] {f₀ g₀ : ℂ → A}
+
+/-- The product of two germs that continue along a path continues along it. -/
+protected theorem mul (h : ContinuesAlong f₀ c) (h' : ContinuesAlong g₀ c) :
+    ContinuesAlong (f₀ * g₀) c :=
+  let ⟨f, hf, hf0⟩ := h
+  let ⟨g, hg, hg0⟩ := h'
+  ⟨f * g, hf.mul hg, hf0.mul hg0⟩
+
 /-- A power of a germ that continues along a path continues along it. -/
 protected theorem pow (h : ContinuesAlong f₀ c) (n : ℕ) : ContinuesAlong (f₀ ^ n) c :=
   let ⟨f, hf, hf0⟩ := h
   ⟨f ^ n, hf.pow n, hf0.pow_const n⟩
 
-/-- The derivative of a germ that continues along a path continues along it. -/
-protected theorem deriv (h : ContinuesAlong f₀ c) : ContinuesAlong (_root_.deriv f₀) c :=
-  let ⟨f, hf, hf0⟩ := h
-  ⟨fun t => _root_.deriv (f t), hf.deriv, hf0.deriv⟩
+end Algebra
 
 end ContinuesAlong
 
@@ -470,7 +515,7 @@ This is the hypothesis of the monodromy theorem. It is a condition on the germ
 (`TauCeti.continuesInside_congr`) and on the domain jointly: the germ of `Complex.log` at `1`
 continues inside `ℂ \ {0}`, and continues inside the slit plane, but is single-valued only on the
 latter. -/
-def ContinuesInside (f₀ : ℂ → ℂ) (U : Set ℂ) (z₀ : ℂ) : Prop :=
+def ContinuesInside (f₀ : ℂ → E) (U : Set ℂ) (z₀ : ℂ) : Prop :=
   ∀ c : I → ℂ, Continuous c → (∀ x, c x ∈ U) → c 0 = z₀ → ContinuesAlong f₀ c
 
 namespace ContinuesInside
@@ -499,7 +544,7 @@ protected theorem congr (H : ContinuesInside f₀ U z₀) (hfg : f₀ =ᶠ[𝓝 
   of_forall fun _ hc hcU hc0 => (H.continuesAlong hc hcU hc0).congr (hc0 ▸ hfg)
 
 /-- A function holomorphic on an open set continues inside that set from each of its points. -/
-theorem of_differentiableOn (hUo : IsOpen U) (hf₀ : DifferentiableOn ℂ f₀ U) :
+theorem of_differentiableOn [CompleteSpace E] (hUo : IsOpen U) (hf₀ : DifferentiableOn ℂ f₀ U) :
     ContinuesInside f₀ U z₀ :=
   of_forall fun _ hc hcU _ => .of_differentiableOn hUo hf₀ hc hcU
 
@@ -515,11 +560,6 @@ protected theorem add (H : ContinuesInside f₀ U z₀) (H' : ContinuesInside g�
     ContinuesInside (f₀ + g₀) U z₀ :=
   of_forall fun _ hc hcU hc0 => (H.continuesAlong hc hcU hc0).add (H'.continuesAlong hc hcU hc0)
 
-/-- The product of two germs that continue inside a domain continues inside it. -/
-protected theorem mul (H : ContinuesInside f₀ U z₀) (H' : ContinuesInside g₀ U z₀) :
-    ContinuesInside (f₀ * g₀) U z₀ :=
-  of_forall fun _ hc hcU hc0 => (H.continuesAlong hc hcU hc0).mul (H'.continuesAlong hc hcU hc0)
-
 /-- The negation of a germ that continues inside a domain continues inside it. -/
 protected theorem neg (H : ContinuesInside f₀ U z₀) : ContinuesInside (-f₀) U z₀ :=
   of_forall fun _ hc hcU hc0 => (H.continuesAlong hc hcU hc0).neg
@@ -529,15 +569,27 @@ protected theorem sub (H : ContinuesInside f₀ U z₀) (H' : ContinuesInside g�
     ContinuesInside (f₀ - g₀) U z₀ := by
   simpa only [sub_eq_add_neg] using H.add H'.neg
 
+/-- **The derivative of a germ that continues inside a domain continues inside it.** If `U` is open
+and simply connected and contains `z₀`, the derivative therefore has a branch of its own on `U`
+(`TauCeti.ContinuesInside.exists_analyticOnNhd`). -/
+protected theorem deriv [CompleteSpace E] (H : ContinuesInside f₀ U z₀) :
+    ContinuesInside (_root_.deriv f₀) U z₀ :=
+  of_forall fun _ hc hcU hc0 => (H.continuesAlong hc hcU hc0).deriv
+
+section Algebra
+
+variable {A : Type*} [NormedRing A] [NormedAlgebra ℂ A] {f₀ g₀ : ℂ → A}
+
+/-- The product of two germs that continue inside a domain continues inside it. -/
+protected theorem mul (H : ContinuesInside f₀ U z₀) (H' : ContinuesInside g₀ U z₀) :
+    ContinuesInside (f₀ * g₀) U z₀ :=
+  of_forall fun _ hc hcU hc0 => (H.continuesAlong hc hcU hc0).mul (H'.continuesAlong hc hcU hc0)
+
 /-- A power of a germ that continues inside a domain continues inside it. -/
 protected theorem pow (H : ContinuesInside f₀ U z₀) (n : ℕ) : ContinuesInside (f₀ ^ n) U z₀ :=
   of_forall fun _ hc hcU hc0 => (H.continuesAlong hc hcU hc0).pow n
 
-/-- **The derivative of a germ that continues inside a domain continues inside it.** If `U` is open
-and simply connected and contains `z₀`, the derivative therefore has a branch of its own on `U`
-(`TauCeti.ContinuesInside.exists_analyticOnNhd`). -/
-protected theorem deriv (H : ContinuesInside f₀ U z₀) : ContinuesInside (_root_.deriv f₀) U z₀ :=
-  of_forall fun _ hc hcU hc0 => (H.continuesAlong hc hcU hc0).deriv
+end Algebra
 
 end ContinuesInside
 

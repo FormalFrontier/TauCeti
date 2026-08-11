@@ -188,6 +188,19 @@ theorem mem_trace_iff {C : Cycle} {z : ℂ} :
     z ∈ trace C ↔ ∃ γ ∈ FreeAbelianGroup.support C, z ∈ γ '' uIcc γ.a γ.b := by
   simp only [trace, mem_iUnion, exists_prop]
 
+/-- A point outside the trace of a cycle is avoided by every curve in its canonical support. -/
+theorem avoids_of_mem_support {C : Cycle} {z : ℂ} (hz : z ∉ trace C)
+    {γ : PiecewiseC1ClosedCurve} (hγ : γ ∈ FreeAbelianGroup.support C) :
+    ∀ t ∈ uIcc γ.a γ.b, γ t ≠ z := by
+  intro t ht htz
+  exact hz (mem_trace_iff.mpr ⟨γ, hγ, t, ht, htz⟩)
+
+/-- The trace of a contour cycle is compact. -/
+theorem isCompact_trace (C : Cycle) : IsCompact (trace C) := by
+  rw [trace]
+  exact (FreeAbelianGroup.support C).isCompact_biUnion fun γ _ ↦
+    isCompact_uIcc.image_of_continuousOn γ.continuousOn
+
 /-- The zero cycle has empty trace. -/
 @[simp]
 theorem trace_zero : trace (0 : Cycle) = ∅ := by
@@ -298,6 +311,15 @@ theorem integral_of {E : Type*} [NormedAddCommGroup E] [NormedSpace ℂ E]
     integral f (FreeAbelianGroup.of γ) =
       ∫ t in γ.a..γ.b, deriv γ t • f (γ t) := by
   rw [integral, FreeAbelianGroup.lift_apply_of]
+
+/-- The integral over a cycle is the coefficient-weighted sum of the integrals over the curves in
+its canonical support. -/
+theorem integral_eq_sum_support {E : Type*} [NormedAddCommGroup E] [NormedSpace ℂ E]
+    (f : ℂ → E) (C : Cycle) :
+    integral f C = ∑ γ ∈ FreeAbelianGroup.support C,
+      FreeAbelianGroup.coeff γ C • (∫ t in γ.a..γ.b, deriv γ t • f (γ t)) := by
+  conv_lhs => rw [FreeAbelianGroup.eq_sum_support_coeff_smul_of C]
+  simp only [map_sum, map_zsmul, integral_of]
 
 /-- The winding number of a cycle, obtained by additively extending the generalized winding number
 of its generators. -/

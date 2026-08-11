@@ -181,7 +181,7 @@ theorem unitDiscAutEquivProd_apply_snd (e : unitDiscAut) :
 theorem unitDiscAutEquivProd_eq_iff {e : unitDiscAut} {p : Circle × Complex.UnitDisc} :
     unitDiscAutEquivProd e = p ↔
       (e : Equiv.Perm Complex.UnitDisc) = unitDiscStandardAutomorphismEquiv p.1 p.2 := by
-  rw [Equiv.apply_eq_iff_eq_symm_apply, Subtype.ext_iff, coe_unitDiscAutEquivProd_symm_apply]
+  rw [← Equiv.eq_symm_apply, Subtype.ext_iff, coe_unitDiscAutEquivProd_symm_apply]
 
 /-! ### Rigidity: two fixed points force the identity -/
 

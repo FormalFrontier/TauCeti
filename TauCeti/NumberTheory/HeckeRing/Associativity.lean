@@ -32,7 +32,8 @@ stack merges.
 * `DoubleCoset.multiplicity_doubleCoset_congr`: `m(g, h; d)` depends on `d` only through the
   double coset `Γ₁dΓ₃`.
 * `HeckeCosetModule.mul_assoc`: associativity of the convolution product at mixed levels.
-* the `Semiring (𝕋 Δ H R)` instance.
+* the `Semiring (𝕋 Δ H R)` instance, and the `Ring (𝕋 Δ H R)` instance over a ring of
+  coefficients.
 -/
 
 public section
@@ -188,14 +189,14 @@ private lemma sum_ite_mem_multiplicity [IsHeckeTriple Δ H₂ H₃] [IsHeckeTrip
   by_cases hx : ∃ F₀ ∈ Finset.univ.image (mulMap H₂ H₃ H₄ g₂ g₃),
       x ∈ doubleCoset (F₀.rep : G) H₂ H₄
   · obtain ⟨F₀, hF₀, hxF₀⟩ := hx
-    rw [Finset.sum_eq_single_of_mem F₀ hF₀ fun F hF hne ↦ if_neg fun hxF ↦
+    rw [Finset.sum_eq_single_of_mem F₀ hF₀ fun F hF hne ↦ ite_eq_right fun hxF ↦
       hne (HeckeCoset.toSet_injective (by
         rw [HeckeCoset.toSet_eq_doubleCoset_rep, HeckeCoset.toSet_eq_doubleCoset_rep,
           ← doubleCoset_eq_of_mem hxF, ← doubleCoset_eq_of_mem hxF₀])),
-      if_pos hxF₀]
+      ite_eq_left hxF₀]
     exact (multiplicity_doubleCoset_congr _ _ hxF₀).symm
   · simp only [not_exists, not_and] at hx
-    rw [Finset.sum_eq_zero fun F hF ↦ if_neg (hx F hF)]
+    rw [Finset.sum_eq_zero fun F hF ↦ ite_eq_right (hx F hF)]
     by_contra h0
     have hne : multiplicity H₂ H₃ H₄ (g₂ : G) (g₃ : G) x ≠ 0 := fun hh ↦ h0 hh.symm
     obtain ⟨w, hw, y, hy, rfl⟩ := mem_doubleCoset.mp (multiplicity_ne_zero_iff.mp hne)
@@ -295,9 +296,9 @@ private lemma sum_image_mulMap_multiplicity_left [IsHeckeTriple Δ H₁ H₂]
       refine Finset.sum_congr rfl fun p _ ↦ ?_
       by_cases hm : ((p.1.out : G) * g₁ * ((p.2.out : G) * g₂) : G ⧸ H₃) =
           (((l.out : G) * E.rep : G) : G ⧸ H₃)
-      · rw [if_pos hm, if_pos ⟨hcond, hm⟩]
-      · rw [if_neg hm, if_neg fun hh ↦ hm hh.2]
-    · exact (Finset.sum_eq_zero fun p _ ↦ if_neg fun hh ↦ hcond hh.1).symm
+      · rw [ite_eq_left hm, ite_eq_left ⟨hcond, hm⟩]
+      · rw [ite_eq_right hm, ite_eq_right fun hh ↦ hm hh.2]
+    · exact (Finset.sum_eq_zero fun p _ ↦ ite_eq_right fun hh ↦ hcond hh.1).symm
   rw [Finset.sum_congr rfl hA,
     Finset.sum_congr rfl fun (E : HeckeCoset Δ H₁ H₃) _ ↦ Finset.sum_comm, Finset.sum_comm,
     nat_card_setOf_eq_sum]
@@ -325,7 +326,7 @@ private lemma sum_image_mulMap_multiplicity_left [IsHeckeTriple Δ H₁ H₂]
   rw [Finset.sum_eq_single_of_mem E₀ hE₀mem ?hEne]
   case hEne =>
     intro E hE hne
-    refine Finset.sum_eq_zero fun l _ ↦ if_neg ?_
+    refine Finset.sum_eq_zero fun l _ ↦ ite_eq_right ?_
     rintro ⟨-, hmatch⟩
     have hwE : wG ∈ doubleCoset ((E.rep : Δ) : G) H₁ H₃ := by
       have h2 := QuotientGroup.eq.mp hmatch
@@ -337,7 +338,7 @@ private lemma sum_image_mulMap_multiplicity_left [IsHeckeTriple Δ H₁ H₂]
   rw [Finset.sum_eq_single_of_mem l₀ (Finset.mem_univ _) ?hlne]
   case hlne =>
     intro l _ hlne
-    refine if_neg ?_
+    refine ite_eq_right ?_
     rintro ⟨-, hmatch⟩
     exact hlne (mk_out_mul_injective H₁ H₃ ((E₀.rep : Δ) : G) (hmatch.symm.trans hmk))
   have hiff : ((((l₀.out : G) * (E₀.rep : G))⁻¹ * d ∈ doubleCoset (g₃ : G) H₃ H₄) ∧
@@ -356,8 +357,8 @@ private lemma sum_image_mulMap_multiplicity_left [IsHeckeTriple Δ H₁ H₂]
       rw [hw2, mul_mem_doubleCoset_iff (H₃.inv_mem hl₀)] at hh
       exact hh
   by_cases hd4 : wG⁻¹ * (d : G) ∈ doubleCoset (g₃ : G) H₃ H₄
-  · rw [if_pos (hiff.mpr hd4), if_pos hd4]
-  · rw [if_neg fun hh ↦ hd4 (hiff.mp hh), if_neg hd4]
+  · rw [ite_eq_left (hiff.mpr hd4), ite_eq_left hd4]
+  · rw [ite_eq_right fun hh ↦ hd4 (hiff.mp hh), ite_eq_right hd4]
 
 open Classical in
 /-- Associativity of the structure constants of the Hecke product (Proposition 3.2 of
@@ -383,43 +384,12 @@ open DoubleCoset
 variable {G : Type*} [Group G] {Δ : Submonoid G} {H₁ H₂ H₃ H₄ : Subgroup G}
   (R : Type*) [Semiring R]
 
-/-- `Finsupp.sum_smul_index`, restated for the wrapper type `HeckeCosetModule Δ H₁ H₂ R`. -/
-private lemma sum_smul_index_T {N : Type*} [AddCommMonoid N] (a : R)
-    (f : HeckeCosetModule Δ H₁ H₂ R) (F : HeckeCoset Δ H₁ H₂ → R → N) (h0 : ∀ D, F D 0 = 0) :
-    (a • f).sum F = f.sum fun D c ↦ F D (a * c) :=
-  Finsupp.sum_smul_index h0
-
-/-- `Finsupp.smul_apply`, restated for the wrapper type `HeckeCosetModule Δ H₁ H₂ R`. -/
-private lemma smul_apply_T (a : R) (f : HeckeCosetModule Δ H₁ H₂ R) (D : HeckeCoset Δ H₁ H₂) :
-    (a • f) D = a * f D :=
-  rfl
-
-/-- Unfolding `Finsupp.sum` with the wrapper-type coercion. -/
-private lemma sum_eq_sum_T {N : Type*} [AddCommMonoid N] (f : HeckeCosetModule Δ H₁ H₂ R)
-    (F : HeckeCoset Δ H₁ H₂ → R → N) : f.sum F = ∑ D ∈ f.support, F D (f D) :=
-  rfl
-
-/-- `Finsupp.notMem_support_iff`, restated for the wrapper type `HeckeCosetModule Δ H₁ H₂ R`. -/
-private lemma apply_eq_zero_of_notMem_support_T (f : HeckeCosetModule Δ H₁ H₂ R)
-    (D : HeckeCoset Δ H₁ H₂) (h : D ∉ f.support) : f D = 0 :=
-  Finsupp.notMem_support_iff.mp h
-
-/-- `Finsupp.zero_apply`, restated for the wrapper type `HeckeCosetModule Δ H₁ H₂ R`. -/
-private lemma zero_apply_T (D : HeckeCoset Δ H₁ H₂) : (0 : HeckeCosetModule Δ H₁ H₂ R) D = 0 :=
-  rfl
-
-/-- `Finsupp.sum_apply`, restated for the wrapper type `HeckeCosetModule Δ H₁ H₂ R`. -/
-private lemma sum_apply_T {H₁ H₂ H₃ H₄ : Subgroup G} (f : HeckeCosetModule Δ H₁ H₂ R)
-    (F : HeckeCoset Δ H₁ H₂ → R → HeckeCosetModule Δ H₃ H₄ R) (D : HeckeCoset Δ H₃ H₄) :
-    (f.sum F) D = f.sum fun E c ↦ F E c D :=
-  Finsupp.sum_apply
-
 /-- The convolution product commutes with scalar multiplication on the left factor. (Note
 that the corresponding statement for the right factor fails over a noncommutative `R`.) -/
 lemma smul_mul [IsHeckeTriple Δ H₁ H₂] [IsHeckeTriple Δ H₂ H₃] (a : R)
     (f : HeckeCosetModule Δ H₁ H₂ R) (g : HeckeCosetModule Δ H₂ H₃ R) :
     mul R (a • f) g = a • mul R f g := by
-  rw [mul_eq_sum, mul_eq_sum, sum_smul_index_T R a f _ fun D₁ ↦ by
+  rw [mul_eq_sum, mul_eq_sum, sum_smul_index a f _ fun D₁ ↦ by
     simp only [zero_smul]; exact Finsupp.sum_fun_zero (f := g)]
   refine Eq.trans ?_ Finsupp.smul_sum.symm
   refine Finsupp.sum_congr fun D₁ c ↦ Eq.trans ?_ Finsupp.smul_sum.symm
@@ -441,6 +411,50 @@ lemma mul_single [IsHeckeTriple Δ H₁ H₂] [IsHeckeTriple Δ H₂ H₃]
   rw [mul_eq_sum]
   exact Finsupp.sum_congr fun D₁ _ ↦ sum_single_index R (by simp)
 
+/-- **Associativity of the convolution product on basis elements.** -/
+private lemma mul_assoc_single [IsHeckeTriple Δ H₁ H₂] [IsHeckeTriple Δ H₂ H₃]
+    [IsHeckeTriple Δ H₃ H₄] [IsHeckeTriple Δ H₁ H₃] [IsHeckeTriple Δ H₂ H₄]
+    (D₁ : HeckeCoset Δ H₁ H₂) (D₂ : HeckeCoset Δ H₂ H₃) (D₃ : HeckeCoset Δ H₃ H₄)
+    (b₁ b₂ b₃ : R) :
+    mul R (mul R (single R D₁ b₁) (single R D₂ b₂)) (single R D₃ b₃) =
+      mul R (single R D₁ b₁) (mul R (single R D₂ b₂) (single R D₃ b₃)) := by
+  classical
+  -- Expand both sides into a double sum of structure constants; they then agree because the
+  -- multiplicities associate.
+  rw [mul_single_single R D₁ D₂ b₁ b₂, smul_mul, smul_mul, mul_single,
+    mul_single_single R D₂ D₃ b₂ b₃, single_mul,
+    sum_smul_index b₂ _ _ fun F ↦ by simp,
+    sum_smul_index b₃ _ _ fun F ↦ by simp]
+  ext D
+  rw [smul_apply, smul_apply, sum_apply, sum_apply, sum_def, sum_def,
+    Finset.sum_subset (support_structureConstants_subset R D₁.rep D₂.rep)
+      (fun E _ hE ↦ by
+        simp [notMem_support_iff.mp hE, zero_apply]),
+    Finset.sum_subset (support_structureConstants_subset R D₂.rep D₃.rep)
+      (fun F _ hF ↦ by
+        simp [notMem_support_iff.mp hF, zero_apply])]
+  simp only [smul_apply, structureConstants_apply]
+  have hL : ∀ E : HeckeCoset Δ H₁ H₃,
+      ((multiplicity H₁ H₂ H₃ (D₁.rep : G) (D₂.rep : G) (E.rep : G) : R) *
+        (b₃ * (multiplicity H₁ H₃ H₄ (E.rep : G) (D₃.rep : G) (D.rep : G) : R))) =
+      b₃ * ((multiplicity H₁ H₂ H₃ (D₁.rep : G) (D₂.rep : G) (E.rep : G) *
+        multiplicity H₁ H₃ H₄ (E.rep : G) (D₃.rep : G) (D.rep : G) : ℕ) : R) := by
+    intro E
+    rw [(Nat.cast_commute (multiplicity H₁ H₂ H₃ (D₁.rep : G) (D₂.rep : G) (E.rep : G))
+      b₃).left_comm, Nat.cast_mul]
+  have hR : ∀ F : HeckeCoset Δ H₂ H₄,
+      (b₁ * ((b₂ * (b₃ * (multiplicity H₂ H₃ H₄ (D₂.rep : G) (D₃.rep : G) (F.rep : G) :
+        R))) * (multiplicity H₁ H₂ H₄ (D₁.rep : G) (F.rep : G) (D.rep : G) : R))) =
+      b₁ * (b₂ * (b₃ * ((multiplicity H₂ H₃ H₄ (D₂.rep : G) (D₃.rep : G) (F.rep : G) *
+        multiplicity H₁ H₂ H₄ (D₁.rep : G) (F.rep : G) (D.rep : G) : ℕ) : R))) := by
+    intro F
+    rw [Nat.cast_mul, _root_.mul_assoc, _root_.mul_assoc]
+  rw [Finset.sum_congr rfl fun E _ ↦ hL E, Finset.sum_congr rfl fun F _ ↦ hR F,
+    ← Finset.mul_sum, ← Finset.mul_sum, ← Finset.mul_sum, ← Finset.mul_sum,
+    ← Nat.cast_sum, ← Nat.cast_sum]
+  exact congrArg (fun n : ℕ ↦ b₁ * (b₂ * (b₃ * (n : R))))
+    (HeckeCoset.sum_multiplicity_assoc D₁.rep D₂.rep D₃.rep D.rep)
+
 /-- Associativity of the convolution product of Hecke coset modules, at mixed levels
 (Proposition 3.2 of [Shimura][shimura1971]). -/
 theorem mul_assoc [IsHeckeTriple Δ H₁ H₂] [IsHeckeTriple Δ H₂ H₃]
@@ -461,45 +475,19 @@ theorem mul_assoc [IsHeckeTriple Δ H₁ H₂] [IsHeckeTriple Δ H₂ H₃]
       induction h using HeckeCosetModule.induction_linear with
       | h0 => simp only [HeckeCosetModule.mul_zero]
       | hadd h₁ h₂ hh₁ hh₂ => simp only [HeckeCosetModule.mul_add, hh₁, hh₂]
-      | hsingle D₃ b₃ =>
-        rw [mul_single_single R D₁ D₂ b₁ b₂, smul_mul, smul_mul, mul_single,
-          mul_single_single R D₂ D₃ b₂ b₃, single_mul,
-          sum_smul_index_T R b₂ _ _ fun F ↦ by simp,
-          sum_smul_index_T R b₃ _ _ fun F ↦ by simp]
-        ext D
-        rw [smul_apply_T, smul_apply_T, sum_apply_T, sum_apply_T, sum_eq_sum_T, sum_eq_sum_T,
-          Finset.sum_subset (support_structureConstants_subset R D₁.rep D₂.rep)
-            (fun E _ hE ↦ by
-              simp [apply_eq_zero_of_notMem_support_T _ _ _ hE, zero_apply_T]),
-          Finset.sum_subset (support_structureConstants_subset R D₂.rep D₃.rep)
-            (fun F _ hF ↦ by
-              simp [apply_eq_zero_of_notMem_support_T _ _ _ hF, zero_apply_T])]
-        simp only [smul_apply_T, structureConstants_apply]
-        have hL : ∀ E : HeckeCoset Δ H₁ H₃,
-            ((multiplicity H₁ H₂ H₃ (D₁.rep : G) (D₂.rep : G) (E.rep : G) : R) *
-              (b₃ * (multiplicity H₁ H₃ H₄ (E.rep : G) (D₃.rep : G) (D.rep : G) : R))) =
-            b₃ * ((multiplicity H₁ H₂ H₃ (D₁.rep : G) (D₂.rep : G) (E.rep : G) *
-              multiplicity H₁ H₃ H₄ (E.rep : G) (D₃.rep : G) (D.rep : G) : ℕ) : R) := by
-          intro E
-          rw [(Nat.cast_commute (multiplicity H₁ H₂ H₃ (D₁.rep : G) (D₂.rep : G) (E.rep : G))
-            b₃).left_comm, Nat.cast_mul]
-        have hR : ∀ F : HeckeCoset Δ H₂ H₄,
-            (b₁ * ((b₂ * (b₃ * (multiplicity H₂ H₃ H₄ (D₂.rep : G) (D₃.rep : G) (F.rep : G) :
-              R))) * (multiplicity H₁ H₂ H₄ (D₁.rep : G) (F.rep : G) (D.rep : G) : R))) =
-            b₁ * (b₂ * (b₃ * ((multiplicity H₂ H₃ H₄ (D₂.rep : G) (D₃.rep : G) (F.rep : G) *
-              multiplicity H₁ H₂ H₄ (D₁.rep : G) (F.rep : G) (D.rep : G) : ℕ) : R))) := by
-          intro F
-          rw [Nat.cast_mul, _root_.mul_assoc, _root_.mul_assoc]
-        rw [Finset.sum_congr rfl fun E _ ↦ hL E, Finset.sum_congr rfl fun F _ ↦ hR F,
-          ← Finset.mul_sum, ← Finset.mul_sum, ← Finset.mul_sum, ← Finset.mul_sum,
-          ← Nat.cast_sum, ← Nat.cast_sum]
-        exact congrArg (fun n : ℕ ↦ b₁ * (b₂ * (b₃ * (n : R))))
-          (HeckeCoset.sum_multiplicity_assoc D₁.rep D₂.rep D₃.rep D.rep)
+      | hsingle D₃ b₃ => exact mul_assoc_single R D₁ D₂ D₃ b₁ b₂ b₃
 
 /-- The Hecke ring is a semiring: the convolution product is associative. -/
 noncomputable instance instSemiringHeckeRing {H : Subgroup G} [IsHeckeTriple Δ H H] :
     Semiring (𝕋 Δ H R) :=
   { (inferInstance : NonAssocSemiring (𝕋 Δ H R)) with
     mul_assoc := fun f g h ↦ HeckeCosetModule.mul_assoc R f g h }
+
+/-- The Hecke ring over a ring of coefficients is a ring: the coefficientwise additive
+inverse of the underlying finitely supported functions. -/
+noncomputable instance instRingHeckeRing {H : Subgroup G} [IsHeckeTriple Δ H H]
+    {R' : Type*} [Ring R'] : Ring (𝕋 Δ H R') :=
+  { (inferInstance : Semiring (𝕋 Δ H R')),
+    (inferInstance : AddCommGroup (𝕋 Δ H R')) with }
 
 end HeckeCosetModule
