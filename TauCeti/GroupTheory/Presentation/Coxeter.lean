@@ -9,7 +9,6 @@ public import Mathlib.GroupTheory.Coxeter.Basic
 public import Mathlib.GroupTheory.QuotientGroup.Basic
 public import Mathlib.Data.List.Sym
 public import Mathlib.Data.Sym.Sym2.Order
-public import Mathlib.Data.Nat.Choose.Basic
 
 /-!
 # Auditable Coxeter relator lists
@@ -86,6 +85,7 @@ theorem toWord_coxeterRelator (M : CoxeterMatrix B) (i j : B) :
       (List.replicate (M i j) [(i, true), (j, true)]).flatten := by
   simp [coxeterRelator]
 
+/-- Interpreting a Coxeter relator in the free group yields Mathlib's Coxeter relation. -/
 @[simp]
 theorem toFreeGroup_coxeterRelator (M : CoxeterMatrix B) (i j : B) :
     (coxeterRelator M i j).toFreeGroup = M.relation i j := by
@@ -93,16 +93,17 @@ theorem toFreeGroup_coxeterRelator (M : CoxeterMatrix B) (i j : B) :
     Relator.toFreeGroup_gen, CoxeterMatrix.relation]
 
 /-- The Coxeter relators drawn from a list of nodes: one relator `(sᵢ sⱼ) ^ M i j` for each
-unordered pair `{i, j}` of nodes of the list, the diagonal pairs `{i, i}` included, so that the
-involution relators are among them. The pair is written in increasing order.
+unordered pair of list entries, including pairs that use the same entry, so that the involution
+relators are among them. Duplicate entries can produce repeated relators. The pair is written in
+increasing order.
 
 The unordered pairs are Mathlib's `List.sym2`; `Sym2.inf` and `Sym2.sup` name the smaller and the
 larger node, which is the choice of order the free group forces on the transcription. -/
 def coxeterRelatorsOfList [LinearOrder B] (M : CoxeterMatrix B) (l : List B) : List (Relator B) :=
   l.sym2.map fun z => coxeterRelator M z.inf z.sup
 
-/-- A list of `n` nodes yields `(n + 1).choose 2` Coxeter relators, the number of unordered pairs
-of nodes with repetition allowed. -/
+/-- A list of length `n` yields `(n + 1).choose 2` Coxeter relators, the number of unordered pairs
+of list positions with repetition allowed. -/
 @[simp]
 theorem length_coxeterRelatorsOfList [LinearOrder B] (M : CoxeterMatrix B) (l : List B) :
     (coxeterRelatorsOfList M l).length = (l.length + 1).choose 2 := by
@@ -260,7 +261,18 @@ theorem GroupPresentation.mulEquivCoxeterGroup_apply_of (P : GroupPresentation)
     (M : CoxeterMatrix (Fin P.generatorCount)) (h : P.transcribed = coxeterRelators M)
     (i : Fin P.generatorCount) :
     P.mulEquivCoxeterGroup M h (PresentedGroup.of i) = M.simple i :=
-  _root_.TauCeti.mulEquivCoxeterGroup_apply_of M i
+  by
+    let hset : Subgroup.normalClosure P.relatorSet =
+        Subgroup.normalClosure (Relator.relatorSet (coxeterRelators M)) := by
+      rw [P.relatorSet_eq_relatorSet_transcribed, h]
+    have hfirst : QuotientGroup.quotientMulEquivOfEq hset
+        (PresentedGroup.of (rels := P.relatorSet) i) =
+        PresentedGroup.of (rels := Relator.relatorSet (coxeterRelators M)) i := by
+      exact QuotientGroup.quotientMulEquivOfEq_mk hset (FreeGroup.of i)
+    change _root_.TauCeti.mulEquivCoxeterGroup M
+      (QuotientGroup.quotientMulEquivOfEq hset
+        (PresentedGroup.of (rels := P.relatorSet) i)) = M.simple i
+    rw [hfirst, _root_.TauCeti.mulEquivCoxeterGroup_apply_of]
 
 /-- **A transcription that appends further relators to the Coxeter relators of `M` presents the
 Coxeter relations together with those extra relations.** This is the form an audited Y-diagram
@@ -280,7 +292,18 @@ theorem GroupPresentation.mulEquivPresentedGroupCoxeterAppend_apply_of (P : Grou
     (M : CoxeterMatrix (Fin P.generatorCount)) (extra : List (Relator (Fin P.generatorCount)))
     (h : P.transcribed = coxeterRelators M ++ extra) (i : Fin P.generatorCount) :
     P.mulEquivPresentedGroupCoxeterAppend M extra h (PresentedGroup.of i) = PresentedGroup.of i :=
-  _root_.TauCeti.mulEquivPresentedGroupCoxeterAppend_apply_of M extra i
+  by
+    let hset : Subgroup.normalClosure P.relatorSet =
+        Subgroup.normalClosure (Relator.relatorSet (coxeterRelators M ++ extra)) := by
+      rw [P.relatorSet_eq_relatorSet_transcribed, h]
+    have hfirst : QuotientGroup.quotientMulEquivOfEq hset
+        (PresentedGroup.of (rels := P.relatorSet) i) =
+        PresentedGroup.of (rels := Relator.relatorSet (coxeterRelators M ++ extra)) i := by
+      exact QuotientGroup.quotientMulEquivOfEq_mk hset (FreeGroup.of i)
+    change _root_.TauCeti.mulEquivPresentedGroupCoxeterAppend M extra
+      (QuotientGroup.quotientMulEquivOfEq hset
+        (PresentedGroup.of (rels := P.relatorSet) i)) = PresentedGroup.of i
+    rw [hfirst, _root_.TauCeti.mulEquivPresentedGroupCoxeterAppend_apply_of]
 
 end Coxeter
 
