@@ -5,6 +5,8 @@ Authors: Chris Birkbeck
 -/
 module
 
+public import Mathlib.Algebra.BigOperators.Finsupp.Basic
+public import Mathlib.Data.Finsupp.SMul
 public import Mathlib.NumberTheory.HeckeRing.Defs
 public import Mathlib.GroupTheory.Index
 
@@ -15,12 +17,20 @@ Basic API for the double cosets `HeckeCoset` indexing a Hecke coset module, foll
 [Shimura][shimura1971], Chapter 3. This file provides representatives of double cosets, the
 characterisation of when two elements give the same double coset, and the quotient
 `Γ₁ ⧸ (Γ₁ ∩ gΓ₂g⁻¹)` indexing the left cosets inside a double coset `Γ₁gΓ₂`, which is used to
-define the Hecke product in later files and is finite for a Hecke triple.
+define the Hecke product in later files and is finite for a Hecke triple. It also houses
+the basis-element API of the coset module: `HeckeCosetModule.single` with its evaluation,
+summation, and additivity laws, the `induction_linear` principle, and the transported
+`Module` instance — placed at this layer so every later file (convolution, one, and the
+coset actions) can build on one shared vocabulary. Finally it defines the degree of a
+double coset, the number of left cosets in its decomposition, together with its
+relative-index form, since that count is read straight off `DecompQuotient`.
 
-Vendored from the in-review mathlib4 PR
+The coset vocabulary is vendored from the in-review mathlib4 PR
 [#41253](https://github.com/leanprover-community/mathlib4/pull/41253) (Chris Birkbeck), per the
-ModularForms roadmap's dependency policy; migrate to Mathlib and delete this file when that
-stack merges.
+ModularForms roadmap's dependency policy; migrate to Mathlib and delete it when that stack
+merges. The degree section is instead ported from the AINTLIB `LeanModularForms` project
+(`LeanModularForms/HeckeRIngs/AbstractHeckeRing/Degree.lean`, Chris Birkbeck,
+<https://github.com/CBirkbeck/AINTLIB/tree/main/projects/LeanModularForms>).
 
 ## Main definitions
 
@@ -28,6 +38,24 @@ stack merges.
 * `HeckeCoset.rep`: a chosen representative in `Δ`.
 * `DoubleCoset.DecompQuotient`: the quotient `Γ₁ ⧸ (Γ₁ ∩ gΓ₂g⁻¹)` indexing the left cosets
   in `Γ₁gΓ₂`; finite for a Hecke triple.
+* `HeckeCosetModule.single`: the basis element `b • [D]` of the Hecke coset module, with
+  `single_apply`, `sum_single_index`, `smul_single_one`, `single_add`, `induction_linear`,
+  and the `Module R` instance `HeckeCosetModule.instModule`.
+* Pointwise evaluation of the coset module: `zero_apply`, `add_apply`, `smul_apply`,
+  `mem_support_iff`, `notMem_support_iff`, `sum_def`, `sum_apply` and `sum_smul_index`.
+  `HeckeCosetModule` is a `def` over `Finsupp` carrying transported instances, so Mathlib's
+  `Finsupp` evaluation lemmas hold *definitionally* — they can be applied in term mode — but
+  `rw`, `simp` and `grind` match syntactically and so cannot see through the wrapper. These
+  restatements are what makes those facts usable tactically.
+
+  In particular these do not compete with their `Finsupp` originals: at this type
+  `simp [Finsupp.mem_support_iff]` reports the argument as unused and `simp [Finsupp.add_apply]`
+  makes no progress, because neither left-hand side matches through the wrapper. The wrapper
+  restatement is the only form `simp` can apply.
+* `HeckeCoset.degree`: the number of left cosets in the decomposition of a double coset,
+  with `degree_eq_relIndex` and `degree_mk` presenting it as a relative index,
+  `degree_eq_natCard_decompQuotient` as the (hypothesis-free) count of that quotient, and
+  `degree_one` the identity coset.
 
 ## Main results
 
@@ -80,6 +108,35 @@ lemma mk_eq_mk_of_mem {g₁ g₂ : Δ} (h : (g₁ : G) ∈ doubleCoset (g₂ : G
     mk H₁ H₂ g₁ = mk H₁ H₂ g₂ :=
   eq_iff.mpr (doubleCoset_eq_of_mem h)
 
+section Map
+
+variable {Δ' : Submonoid G} {H₁' H₂' : Subgroup G}
+
+/-- **Functoriality of `HeckeCoset` in its triple.** Inclusions `Δ ≤ Δ'`, `H₁ ≤ H₁'` and
+`H₂ ≤ H₂'` send `H₁ g H₂` to `H₁' g H₂'`: widening the coefficient subgroups can only merge
+double cosets, never split them. -/
+noncomputable def map (hΔ : Δ ≤ Δ') (h₁ : H₁ ≤ H₁') (h₂ : H₂ ≤ H₂') :
+    HeckeCoset Δ H₁ H₂ → HeckeCoset Δ' H₁' H₂' :=
+  Quotient.map (Submonoid.inclusion hΔ) fun a b hab ↦ by
+    obtain ⟨γ₁, hγ₁, γ₂, hγ₂, hb⟩ := DoubleCoset.rel_iff.mp hab
+    exact DoubleCoset.rel_iff.mpr ⟨γ₁, h₁ hγ₁, γ₂, h₂ hγ₂, hb⟩
+
+@[simp] lemma map_mk (hΔ : Δ ≤ Δ') (h₁ : H₁ ≤ H₁') (h₂ : H₂ ≤ H₂') (g : Δ) :
+    map hΔ h₁ h₂ (mk H₁ H₂ g) = mk H₁' H₂' (Submonoid.inclusion hΔ g) := (rfl)
+
+@[simp] lemma map_id (D : HeckeCoset Δ H₁ H₂) :
+    map (le_refl Δ) (le_refl H₁) (le_refl H₂) D = D :=
+  Quotient.inductionOn D fun _ ↦ rfl
+
+variable {Δ'' : Submonoid G} {H₁'' H₂'' : Subgroup G}
+
+@[simp] lemma map_map (hΔ : Δ ≤ Δ') (h₁ : H₁ ≤ H₁') (h₂ : H₂ ≤ H₂') (hΔ' : Δ' ≤ Δ'')
+    (h₁' : H₁' ≤ H₁'') (h₂' : H₂' ≤ H₂'') (D : HeckeCoset Δ H₁ H₂) :
+    map hΔ' h₁' h₂' (map hΔ h₁ h₂ D) = map (hΔ.trans hΔ') (h₁.trans h₁') (h₂.trans h₂') D :=
+  Quotient.inductionOn D fun _ ↦ rfl
+
+end Map
+
 /-- Induction: to prove something for all double cosets, prove it for `mk H₁ H₂ g`. -/
 protected lemma induction {motive : HeckeCoset Δ H₁ H₂ → Prop}
     (h : ∀ g : Δ, motive (mk H₁ H₂ g)) :
@@ -114,6 +171,27 @@ abbrev DecompQuotient (Γ₁ Γ₂ : Subgroup G) (g : G) :=
 instance (Γ₁ Γ₂ : Subgroup G) (g : G) : Nonempty (DecompQuotient Γ₁ Γ₂ g) :=
   ⟨QuotientGroup.mk 1⟩
 
+/-- The left cosets `σᵢ g Γ₂` of the decomposition of `Γ₁gΓ₂` are pairwise distinct: the map
+`i ↦ σᵢ g Γ₂` into `G ⧸ Γ₂` is injective. -/
+lemma mk_out_mul_injective (Γ₁ Γ₂ : Subgroup G) (g : G) :
+    Function.Injective fun i : DecompQuotient Γ₁ Γ₂ g ↦ (((i.out : G) * g : G) : G ⧸ Γ₂) := by
+  intro i j hij
+  simp only [QuotientGroup.eq] at hij
+  rw [← QuotientGroup.out_eq' i, ← QuotientGroup.out_eq' j, QuotientGroup.eq,
+    Subgroup.mem_subgroupOf, Subgroup.mem_pointwise_smul_iff_inv_smul_mem, ← ConjAct.toConjAct_inv,
+      ConjAct.smul_def, ConjAct.ofConjAct_toConjAct, inv_inv]
+  simpa [mul_assoc] using hij
+
+open scoped Pointwise in
+/-- The conjugation criterion for the stabilizer subgroup indexing `DecompQuotient`: an
+element of the stabilizer conjugates into `H` under `g`. -/
+lemma conj_mem_of_stabilizer {H : Subgroup G} (g : G)
+    (n : (ConjAct.toConjAct g • H).subgroupOf H) : g⁻¹ * (n : G) * g ∈ H := by
+  have hn := n.2
+  rw [Subgroup.mem_subgroupOf, Subgroup.mem_pointwise_smul_iff_inv_smul_mem,
+    ConjAct.smul_def] at hn
+  simpa [ConjAct.ofConjAct_toConjAct] using hn
+
 end DoubleCoset
 
 namespace IsHeckeTriple
@@ -131,3 +209,222 @@ noncomputable instance {Δ : Submonoid G} {H₁ H₂ : Subgroup G} [IsHeckeTripl
   Subgroup.fintypeOfIndexNeZero (IsHeckeTriple.commensurable_conjAct_right g).1
 
 end IsHeckeTriple
+
+namespace HeckeCoset
+
+variable {G : Type*} [Group G] {Δ : Submonoid G} {H₁ H₂ : Subgroup G}
+
+open scoped Pointwise in
+/-- The degree of a double coset: the number of left cosets `σᵢgH₂` in the decomposition
+`H₁gH₂ = ⊔ᵢ σᵢgH₂`, i.e. the relative index `[H₁ : H₁ ∩ gH₂g⁻¹]`. Stating it needs no
+finiteness — `Subgroup.relIndex` is a `Nat.card`, which is `0` when the index is infinite;
+the Hecke-triple hypothesis enters only where the count is genuinely finite. -/
+noncomputable def degree (D : HeckeCoset Δ H₁ H₂) : ℕ :=
+  (ConjAct.toConjAct (D.rep : G) • H₂).relIndex H₁
+
+open scoped Pointwise in
+/-- The degree as a relative index: `deg(H₁gH₂) = [H₁ : H₁ ∩ gH₂g⁻¹]`. This is the form in
+which concrete degree computations identify the count with a congruence-subgroup index. -/
+lemma degree_eq_relIndex (D : HeckeCoset Δ H₁ H₂) :
+    D.degree = (ConjAct.toConjAct (D.rep : G) • H₂).relIndex H₁ :=
+  (rfl)
+
+open scoped Pointwise in
+/-- The degree at an explicit representative: the count computed from any `g`, not only
+from the chosen `rep`. This is the form concrete coset calculations use, since they present
+a double coset as `mk H H g`. -/
+@[simp] lemma degree_mk (g : Δ) :
+    (HeckeCoset.mk H₁ H₂ g).degree = (ConjAct.toConjAct (g : G) • H₂).relIndex H₁ := by
+  obtain ⟨h₁, hh₁, h₂, hh₂, heq⟩ :=
+    DoubleCoset.mem_doubleCoset.mp (toSet_mk g ▸ rep_mem (HeckeCoset.mk H₁ H₂ g))
+  have hfix₂ : ConjAct.toConjAct h₂ • H₂ = H₂ :=
+    Subgroup.conjAct_pointwise_smul_eq_self (Subgroup.le_normalizer hh₂)
+  have hfix₁ : ConjAct.toConjAct h₁ • H₁ = H₁ :=
+    Subgroup.conjAct_pointwise_smul_eq_self (Subgroup.le_normalizer hh₁)
+  have htransport := Subgroup.relIndex_pointwise_smul
+    (ConjAct.toConjAct h₁) (ConjAct.toConjAct (g : G) • H₂) H₁
+  rw [hfix₁] at htransport
+  rw [degree_eq_relIndex, heq, map_mul, map_mul, ← smul_smul, ← smul_smul, hfix₂,
+    htransport]
+
+/-- The identity double coset has degree one: `H·1·H = H` is a single left coset. -/
+@[simp] lemma degree_one {H : Subgroup G} : (1 : HeckeCoset Δ H H).degree = 1 := by
+  rw [one_def H, degree_mk]
+  simp
+
+/-- The degree counts the decomposition quotient. No finiteness is involved: a relative
+index is by definition the `Nat.card` of exactly this quotient, so the two sides are the
+same term. -/
+lemma degree_eq_natCard_decompQuotient (D : HeckeCoset Δ H₁ H₂) :
+    D.degree = Nat.card (DecompQuotient H₁ H₂ (D.rep : G)) :=
+  (rfl)
+
+variable [IsHeckeTriple Δ H₁ H₂]
+
+/-- Under the Hecke-triple hypothesis the decomposition quotient is finite, so the degree is
+its `Fintype.card`. The hypothesis is needed only for the `Fintype` instance, not for the
+count itself — see `degree_eq_natCard_decompQuotient`. -/
+lemma degree_eq_card_decompQuotient (D : HeckeCoset Δ H₁ H₂) :
+    D.degree = Fintype.card (DecompQuotient H₁ H₂ (D.rep : G)) := by
+  rw [degree_eq_natCard_decompQuotient, Nat.card_eq_fintype_card]
+
+/-- Every double coset has positive degree. -/
+lemma degree_pos (D : HeckeCoset Δ H₁ H₂) : 0 < D.degree := by
+  rw [degree_eq_card_decompQuotient]; exact Fintype.card_pos
+
+end HeckeCoset
+
+namespace HeckeCosetModule
+
+variable {G : Type*} [Group G] {Δ : Submonoid G} {H₁ H₂ : Subgroup G}
+
+section SingleWrapper
+
+variable (R : Type*) [Zero R]
+
+/-- A basis element of the Hecke coset module: `single R D b` is the formal sum `b • [D]`. As
+for `Finsupp` itself, this is the type-correct way to produce elements of
+`HeckeCosetModule Δ H₁ H₂ R`. Only `[Zero R]` is assumed, so consumers with coefficient
+assumptions below `Semiring` (the left-coset scalar operations) can use it. -/
+noncomputable def single (D : HeckeCoset Δ H₁ H₂) (b : R) :
+    HeckeCosetModule Δ H₁ H₂ R :=
+  Finsupp.single D b
+
+/-- `Finsupp.sum_single_index`, as a wrapper-level equation: summing over a basis element
+evaluates the summand at its point. -/
+lemma sum_single_index {N : Type*} [AddCommMonoid N] {D : HeckeCoset Δ H₁ H₂} {b : R}
+    {F : HeckeCoset Δ H₁ H₂ → R → N} (h : F D 0 = 0) : (single R D b).sum F = F D b :=
+  Finsupp.sum_single_index h
+
+/-- Evaluating a basis element: `single R D b` is `b` at `D` and `0` elsewhere. -/
+@[simp, grind =]
+lemma single_apply {D A : HeckeCoset Δ H₁ H₂} {b : R} [Decidable (D = A)] :
+    single R D b A = if D = A then b else 0 :=
+  Finsupp.single_apply
+
+end SingleWrapper
+
+section SingleAlgebra
+
+variable (R : Type*) [AddCommMonoid R]
+
+/-- `Finsupp.single_zero`, as a wrapper-level equation. -/
+@[simp] lemma single_zero (D : HeckeCoset Δ H₁ H₂) : single R D (0 : R) = 0 :=
+  Finsupp.single_zero D
+
+/-- Every element is the sum of its basis components. -/
+@[simp]
+lemma sum_single (f : HeckeCosetModule Δ H₁ H₂ R) : f.sum (single R) = f :=
+  Finsupp.sum_single f
+
+/-- `Finsupp.single_add`, as a wrapper-level equation. -/
+@[simp]
+lemma single_add (D : HeckeCoset Δ H₁ H₂) (b c : R) :
+    single R D (b + c) = single R D b + single R D c :=
+  Finsupp.single_add D b c
+
+/-- `Finsupp.induction_linear`, restated for the wrapper type `HeckeCosetModule Δ H₁ H₂ R` in
+its basis vocabulary `single`, in the same way that `MonoidAlgebra.induction_linear` restates
+it for `MonoidAlgebra`: to prove a property of all elements, prove it for `0`, for sums, and
+for basis elements. -/
+lemma induction_linear {p : HeckeCosetModule Δ H₁ H₂ R → Prop}
+    (f : HeckeCosetModule Δ H₁ H₂ R) (h0 : p 0)
+    (hadd : ∀ f g : HeckeCosetModule Δ H₁ H₂ R, p f → p g → p (f + g))
+    (hsingle : ∀ (D : HeckeCoset Δ H₁ H₂) (b : R), p (single R D b)) : p f :=
+  Finsupp.induction_linear f h0 hadd hsingle
+
+end SingleAlgebra
+
+section SingleModule
+
+variable (R : Type*) [Semiring R]
+
+/-- The `R`-module structure of the Hecke coset module, transporting the standard `Finsupp`
+module structure to the wrapper type. -/
+noncomputable instance instModule : Module R (HeckeCosetModule Δ H₁ H₂ R) :=
+  inferInstanceAs (Module R (HeckeCoset Δ H₁ H₂ →₀ R))
+
+/-- Scaling the unit basis element produces the basis element of the scalar. -/
+@[simp]
+lemma smul_single_one (D : HeckeCoset Δ H₁ H₂) (b : R) : b • single R D 1 = single R D b :=
+  Finsupp.smul_single_one D b
+
+end SingleModule
+
+/-! ### Pointwise evaluation
+
+`HeckeCosetModule` is a `def` over `Finsupp`, so Mathlib's `Finsupp` evaluation lemmas hold
+definitionally but neither `rw` nor `simp` can match them through the wrapper. These are the
+wrapper-level restatements; without them every consumer re-derives its own private copies.
+Each is stated at the coefficient assumptions its underlying operation actually needs: the
+`FunLike` coercion and `Finsupp.support` need only `[Zero R]`, while the wrapper's `0`, `+`
+and `•` come from its `AddCommMonoid` and `Module` instances. -/
+
+section EvalSupport
+
+variable {R : Type*} [Zero R]
+
+/-- `Finsupp.mem_support_iff`, at the wrapper type. -/
+@[simp, grind =] lemma mem_support_iff {f : HeckeCosetModule Δ H₁ H₂ R}
+    {D : HeckeCoset Δ H₁ H₂} : D ∈ f.support ↔ f D ≠ 0 :=
+  Finsupp.mem_support_iff
+
+/-- `Finsupp.notMem_support_iff`, at the wrapper type: the elimination form of
+`mem_support_iff`. Deliberately unannotated — `mem_support_iff` is the `@[simp]` normal form,
+and `simp` discharges this direction from it. -/
+lemma notMem_support_iff {f : HeckeCosetModule Δ H₁ H₂ R} {D : HeckeCoset Δ H₁ H₂} :
+    D ∉ f.support ↔ f D = 0 :=
+  Finsupp.notMem_support_iff
+
+/-- `Finsupp.sum` unfolded to a `Finset.sum`, at the wrapper type. -/
+-- `rfl` rather than a cited lemma: `Finsupp.sum` is a plain `def` for exactly this
+-- `Finset.sum`, and Mathlib exposes no unfolding lemma to name here.
+lemma sum_def {N : Type*} [AddCommMonoid N] (f : HeckeCosetModule Δ H₁ H₂ R)
+    (F : HeckeCoset Δ H₁ H₂ → R → N) : f.sum F = ∑ D ∈ f.support, F D (f D) := (rfl)
+
+/-- `Finsupp.sum_apply`, at the wrapper type: evaluation commutes with a `Finsupp.sum`. The
+target coefficients are independent of the source's. -/
+@[simp, grind =] lemma sum_apply {S : Type*} [AddCommMonoid S] {H₃ H₄ : Subgroup G}
+    (f : HeckeCosetModule Δ H₁ H₂ R)
+    (F : HeckeCoset Δ H₁ H₂ → R → HeckeCosetModule Δ H₃ H₄ S) (D : HeckeCoset Δ H₃ H₄) :
+    (f.sum F) D = f.sum fun E c ↦ F E c D :=
+  Finsupp.sum_apply
+
+end EvalSupport
+
+section EvalZero
+
+variable {R : Type*} [AddCommMonoid R]
+
+/-- `Finsupp.zero_apply`, at the wrapper type. Not `@[grind =]`: unlike Mathlib's
+`Finsupp.zero_apply`, where `M` is recoverable from `(0 : α →₀ M)`, the wrapper's coercion
+leaves `R` and its `AddCommMonoid` uninstantiable, and `grind` rejects the pattern. -/
+@[simp] lemma zero_apply (D : HeckeCoset Δ H₁ H₂) :
+    (0 : HeckeCosetModule Δ H₁ H₂ R) D = 0 :=
+  Finsupp.zero_apply
+
+/-- `Finsupp.add_apply`, at the wrapper type. -/
+@[simp, grind =] lemma add_apply (f g : HeckeCosetModule Δ H₁ H₂ R) (D : HeckeCoset Δ H₁ H₂) :
+    (f + g) D = f D + g D :=
+  Finsupp.add_apply f g D
+
+end EvalZero
+
+section EvalSMul
+
+variable {R : Type*} [Semiring R]
+
+/-- `Finsupp.smul_apply`, at the wrapper type. -/
+@[simp, grind =] lemma smul_apply (a : R) (f : HeckeCosetModule Δ H₁ H₂ R)
+    (D : HeckeCoset Δ H₁ H₂) : (a • f) D = a * f D :=
+  (Finsupp.smul_apply a f D).trans (smul_eq_mul _ _)
+
+/-- `Finsupp.sum_smul_index`, at the wrapper type: a scalar pushes into a `Finsupp.sum`. -/
+@[grind =] lemma sum_smul_index {N : Type*} [AddCommMonoid N] (a : R)
+    (f : HeckeCosetModule Δ H₁ H₂ R) (F : HeckeCoset Δ H₁ H₂ → R → N) (h0 : ∀ D, F D 0 = 0) :
+    (a • f).sum F = f.sum fun D c ↦ F D (a * c) :=
+  Finsupp.sum_smul_index h0
+
+end EvalSMul
+
+end HeckeCosetModule

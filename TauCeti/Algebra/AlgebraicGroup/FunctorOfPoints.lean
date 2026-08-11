@@ -53,7 +53,7 @@ Yaël Dillies, Michał Mrugała and Yunzhou Xie in Mathlib.
 
 public section
 
-open Coalgebra HopfAlgebra TensorProduct WithConv
+open _root_.Coalgebra HopfAlgebra TensorProduct WithConv
 
 namespace TauCeti
 

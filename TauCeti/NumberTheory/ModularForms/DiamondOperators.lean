@@ -96,7 +96,7 @@ private noncomputable def diamondOpAux (k : ℤ) (g : ↥(Gamma0 N)) :
   map_smul' c f := by
     refine ModularForm.ext fun z ↦ ((mcast_translate_apply k g (c • f) z).trans ?_).trans
       (congrArg (fun w : ℂ ↦ c • w) (mcast_translate_apply k g f z)).symm
-    rw [ModularForm.IsGLPos.coe_smul, ModularForm.smul_slash]
+    rw [FunLike.coe_smul, ModularForm.smul_slash]
     simp
 
 /-- Slash-transport for `Γ₁(N)`-invariant functions: if `f` is invariant under
@@ -184,7 +184,7 @@ private noncomputable def diamondOpCuspAux (k : ℤ) (g : ↥(Gamma0 N)) :
   map_smul' c f := by
     refine CuspForm.ext fun z ↦ ((cusp_mcast_translate_apply k g (c • f) z).trans ?_).trans
       (congrArg (fun w : ℂ ↦ c • w) (cusp_mcast_translate_apply k g f z)).symm
-    rw [CuspForm.IsGLPos.coe_smul, ModularForm.smul_slash]
+    rw [FunLike.coe_smul, ModularForm.smul_slash]
     simp
 
 -- Well-definedness for the cusp-form diamond operator.
@@ -255,6 +255,12 @@ noncomputable def cuspFormCharSpace [NeZero N] (k : ℤ) (χ : (ZMod N)ˣ →* �
     Submodule ℂ (CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :=
   ⨅ d : (ZMod N)ˣ, Module.End.eigenspace (diamondOpCuspHom k d) (↑(χ d))
 
+/-- Defining equation for the sealed `cuspFormCharSpace`: it is the joint eigenspace of the
+diamond operators. -/
+lemma cuspFormCharSpace_def [NeZero N] (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) :
+    cuspFormCharSpace k χ =
+      ⨅ d : (ZMod N)ˣ, Module.End.eigenspace (diamondOpCuspHom k d) (↑(χ d)) := (rfl)
+
 /-- Membership in `S_k(Γ₁(N), χ)`: `f` is in the `χ`-eigenspace iff
 `⟨d⟩ f = χ(d) • f` for every `d ∈ (ZMod N)ˣ`. -/
 @[simp]
@@ -275,6 +281,12 @@ theorem diamondOpCusp_apply_of_mem_cuspFormCharSpace [NeZero N] (k : ℤ) (χ : 
 noncomputable def modFormCharSpace [NeZero N] (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) :
     Submodule ℂ (ModularForm ((Gamma1 N).map (mapGL ℝ)) k) :=
   ⨅ d : (ZMod N)ˣ, Module.End.eigenspace (diamondOpHom k d) (↑(χ d))
+
+/-- Defining equation for the sealed `modFormCharSpace`: it is the joint eigenspace of the
+diamond operators. -/
+lemma modFormCharSpace_def [NeZero N] (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) :
+    modFormCharSpace k χ =
+      ⨅ d : (ZMod N)ˣ, Module.End.eigenspace (diamondOpHom k d) (↑(χ d)) := (rfl)
 
 /-- Membership in `M_k(Γ₁(N), χ)`: `f` is in the `χ`-eigenspace iff `⟨d⟩ f = χ(d) • f`
 for every `d ∈ (ZMod N)ˣ`. -/

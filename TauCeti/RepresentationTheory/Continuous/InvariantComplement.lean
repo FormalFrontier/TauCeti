@@ -4,10 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.Analysis.InnerProductSpace.Projection.Basic
+public import Mathlib.Analysis.InnerProductSpace.Projection.Submodule
 public import Mathlib.RepresentationTheory.Semisimple
 public import Mathlib.RepresentationTheory.Submodule
-public import TauCeti.RepresentationTheory.Continuous.Unitary
+public import TauCeti.RepresentationTheory.Continuous.Unitary.Basic
+public import TauCeti.RepresentationTheory.Subrepresentation
 
 /-!
 # Invariant complements of unitary continuous representations
@@ -36,6 +37,8 @@ complemented.
   `TauCeti.ContRepresentation.IsUnitary.apply_mem_orthogonal`.
 * `TauCeti.ContRepresentation.IsUnitary.isCompl_orthogonalSubrepresentation`: a subrepresentation
   admitting an orthogonal projection is complemented by its orthogonal complement.
+* `TauCeti.ContRepresentation.IsUnitary.sup_orthogonalSubrepresentation_inf`: a subrepresentation
+  together with its orthogonal complement inside a larger one recovers the larger one.
 * `TauCeti.ContRepresentation.IsUnitary.starProjection_apply_comm`: the orthogonal projection onto
   an invariant subspace commutes with the action.
 * `TauCeti.ContRepresentation.IsUnitary.isSemisimpleRepresentation` and
@@ -167,6 +170,21 @@ theorem isCompl_orthogonalSubrepresentation (hπ : IsUnitary π)
     exact Subrepresentation.toSubmodule_injective h.inf_eq_bot
   · rw [codisjoint_iff]
     exact Subrepresentation.toSubmodule_injective h.sup_eq_top
+
+/-- A subrepresentation, together with its orthogonal complement taken inside a larger
+subrepresentation, recovers that larger subrepresentation. This is
+`Submodule.sup_orthogonal_inf_of_hasOrthogonalProjection` read in the lattice of
+subrepresentations, which is legitimate because unitarity makes the orthogonal complement
+invariant. -/
+theorem sup_orthogonalSubrepresentation_inf (hπ : IsUnitary π)
+    {σ τ : Subrepresentation π.toRepresentation} (h : σ ≤ τ)
+    [σ.toSubmodule.HasOrthogonalProjection] :
+    σ ⊔ hπ.orthogonalSubrepresentation σ ⊓ τ = τ := by
+  refine Subrepresentation.toSubmodule_injective ?_
+  rw [Subrepresentation.toSubmodule_sup, Subrepresentation.toSubmodule_inf,
+    toSubmodule_orthogonalSubrepresentation]
+  exact Submodule.sup_orthogonal_inf_of_hasOrthogonalProjection
+    (Subrepresentation.toSubmodule_le_toSubmodule.mpr h)
 
 /-! ### Complete reducibility in finite dimensions -/
 

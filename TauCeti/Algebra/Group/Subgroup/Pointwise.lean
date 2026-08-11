@@ -17,7 +17,7 @@ two laws making `s ↦ MulAut.conj s • (-)` an action of `G` on the subgroups 
 `MulAut.conj s • H` is `s⁻¹ * x * s ∈ H`, so `MulAut.conj s • H` is `sHs⁻¹` and not `s⁻¹Hs`.
 `TauCeti.mem_conj_smul` pins that reading in the form the conjugate representation
 (`TauCeti.RepresentationTheory.Induction.Conjugate`) and the Mackey subgroup
-(`TauCeti.RepresentationTheory.Induction.MackeySubgroup`) consume, so neither can be silently
+(`TauCeti.RepresentationTheory.Induction.Mackey.Subgroup`) consume, so neither can be silently
 orientation-reversed.
 
 ## Main statements

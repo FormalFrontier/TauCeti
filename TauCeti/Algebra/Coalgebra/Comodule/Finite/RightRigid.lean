@@ -8,6 +8,7 @@ public import Mathlib.CategoryTheory.Monoidal.Rigid.Basic
 public import Mathlib.LinearAlgebra.Coevaluation
 public import TauCeti.Algebra.Coalgebra.Comodule.Finite.Dual
 public import TauCeti.Algebra.Coalgebra.Comodule.Finite.Monoidal
+import TauCeti.Algebra.Coalgebra.Comodule.MatrixCoefficient.Matrix
 
 /-!
 # Right rigidity of finite-dimensional comodules
@@ -147,31 +148,6 @@ theorem dualEvaluation_toLinearMap (M : FGComoduleCat.{u, v, u} k H) :
     (dualEvaluation k H M).hom.toLinearMap = contractLeft k M :=
   dualEvaluation_toLinearMap_aux k H M
 
-/-- Multiplying the matrix-coefficient matrix by its entrywise antipode transform gives the image
-under `algebraMap` of a single basis coordinate. Taking `p` and `q` basis indices, the right-hand
-side is `1` when they agree and `0` otherwise, so the antipode transform is a right inverse of the
-matrix-coefficient matrix in this multiplication order; the opposite order is not claimed here.
-
-Stated over its own base ring, for any comodule with a finite basis: neither the ambient field,
-nor the canonical `Module.Basis.ofVectorSpace` choice, nor finite-dimensionality, nor decidable
-equality on the index type plays a part. -/
-private lemma sum_matrixCoefficient_mul_antipode_eq_algebraMap (R : Type*) [CommSemiring R]
-    (A : Type*) [Semiring A] [HopfAlgebra R A] {M : Type*} [AddCommMonoid M] [Module R M]
-    [Comodule R A M] {ι : Type*} [Fintype ι] (b : Module.Basis ι R M) (p q : ι) : (∑ x : ι,
-      Comodule.matrixCoefficient (R := R) (C := A) (b.coord p) (b x) *
-      HopfAlgebra.antipode R
-        (Comodule.matrixCoefficient (R := R) (C := A) (b.coord x) (b q))) =
-      algebraMap R A (b.coord p (b q)) := by
-  -- The basis expansion of `comul` is a `Coalgebra.Repr`, so Mathlib's antipode sum applies.
-  let repr : Coalgebra.Repr R
-      (Comodule.matrixCoefficient (R := R) (C := A) (b.coord p) (b q)) ι :=
-    { index := Finset.univ
-      left := fun x => Comodule.matrixCoefficient (R := R) (C := A) (b.coord p) (b x)
-      right := fun x => Comodule.matrixCoefficient (R := R) (C := A) (b.coord x) (b q)
-      eq := (Comodule.comul_matrixCoefficient_eq_sum b (b.coord p) (b q)).symm }
-  rw [← Comodule.counit_matrixCoefficient (R := R) (C := A) (b.coord p) (b q)]
-  exact HopfAlgebra.sum_mul_antipode_eq_algebraMap_counit repr
-
 private theorem tensorCoact_coevaluation_apply_one (M : FGComoduleCat.{u, v, u} k H) :
     Comodule.tensorCoact (R := k) (C := H) (M := M) (N := Module.Dual k M)
         (coevaluation k M 1) =
@@ -203,7 +179,8 @@ private theorem tensorCoact_coevaluation_apply_one (M : FGComoduleCat.{u, v, u} 
     mul_ite, mul_one, mul_zero, ite_smul, one_smul, zero_smul, Finset.sum_ite_eq',
     Finset.mem_univ, ↓reduceIte, Finset.sum_ite_eq, bt,
     apply_ite (algebraMap k H), map_one, map_zero] using
-    sum_matrixCoefficient_mul_antipode_eq_algebraMap k H (Module.Basis.ofVectorSpace k M) p q
+    Comodule.sum_matrixCoefficient_mul_antipode_eq_algebraMap (C := H)
+      (Module.Basis.ofVectorSpace k M) p q
 
 /-- The ordinary finite-dimensional coevaluation, as a finite-comodule morphism into the
 tensor product with the antipode-twisted dual. -/
