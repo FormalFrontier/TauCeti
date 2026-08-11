@@ -21,10 +21,10 @@ from functoriality of the multiplicative Jordan--Chevalley decomposition under a
 intertwiners. The two natural factors commute and their product recovers the original point action
 in the automorphism group of the scalar-extension functor.
 
-Tensor compatibility is a separate downstream step. Once the factors are tensor automorphisms,
-Tannakian reconstruction can lift them from compatible actions on representations to points of the
-original affine group. This is the representation-theoretic bridge in Layer 4 of the
-ReductiveGroups roadmap.
+Tensor compatibility is a separate downstream step. In the commutative coordinate-Hopf-algebra
+setting of the roadmap, once the factors are tensor automorphisms, Tannakian reconstruction can
+lift them from compatible actions on representations to points of the original affine group. This
+is the representation-theoretic bridge in Layer 4 of the ReductiveGroups roadmap.
 
 ## Main declarations
 
@@ -116,6 +116,8 @@ private noncomputable def fgPointFactorNatIso
         (φ N : Module.End K (K ⊗[k] N)).comp (f.hom.toLinearMap.baseChange K)) :
     Aut (FGComoduleCat.scalarExtensionFunctor k H K) :=
   NatIso.ofComponents (fgPointFactorIso k H K φ) (fun {M N} f ↦ by
+    -- `NatIso.ofComponents` hides the private component constructor; reduce it once so its
+    -- naturality can be proved through the public scalar-extension and linear-equivalence APIs.
     change
       (FGComoduleCat.scalarExtensionFunctor k H K).map f ≫
           eqToHom (FGComoduleCat.scalarExtensionFunctor_obj k H K N) ≫
@@ -179,12 +181,7 @@ private theorem fgPointFactor_mul_natural
         (f.hom.toLinearMap.baseChange K) := by
   apply LinearMap.ext
   intro m
-  change
-    f.hom.toLinearMap.baseChange K
-          ((φ M : Module.End K (K ⊗[k] M))
-            ((ψ M : Module.End K (K ⊗[k] M)) m)) =
-      (φ N : Module.End K (K ⊗[k] N))
-        ((ψ N : Module.End K (K ⊗[k] N)) (f.hom.toLinearMap.baseChange K m))
+  simp only [LinearMap.comp_apply, Module.End.mul_apply]
   have hφm := LinearMap.congr_fun (hφ f) ((ψ M : Module.End K (K ⊗[k] M)) m)
   have hψm := LinearMap.congr_fun (hψ f) m
   exact hφm.trans (congrArg (φ N : Module.End K (K ⊗[k] N)) hψm)
@@ -204,6 +201,8 @@ private theorem fgPointFactorNatIso_mul
   apply Aut.ext
   apply NatTrans.ext
   funext M
+  -- `Aut.ext` exposes the hom natural transformation but leaves group multiplication bundled;
+  -- reduce its component to the reverse composition specified by `Aut.Aut_mul_def`.
   change
     (fgPointFactorNatIso k H K ψ hψ).hom.app M ≫
         (fgPointFactorNatIso k H K φ hφ).hom.app M = _
@@ -214,7 +213,9 @@ private theorem fgPointFactorNatIso_mul
   simp only [Category.assoc, eqToHom_trans, eqToHom_refl, Category.comp_id,
     LinearEquiv.toModuleIsoₛ_hom]
   apply SemimoduleCat.hom_ext
-  rfl
+  simp only [SemimoduleCat.hom_comp, SemimoduleCat.hom_ofHom,
+    LinearMap.GeneralLinearGroup.toLinearEquiv_mul, LinearEquiv.coe_toLinearMap_mul,
+    Module.End.mul_eq_comp]
 
 private theorem fgPointFactorNatIso_congr
     (φ ψ : ∀ M : FGComoduleCat.{u, v, w} k H,
@@ -309,8 +310,7 @@ theorem commute_fgPointSemisimplePartNatIso_fgPointUnipotentPartNatIso
     (g : WithConv (H →ₐ[k] K)) :
     Commute (fgPointSemisimplePartNatIso k H K g)
       (fgPointUnipotentPartNatIso k H K g) := by
-  change fgPointSemisimplePartNatIso k H K g * fgPointUnipotentPartNatIso k H K g =
-    fgPointUnipotentPartNatIso k H K g * fgPointSemisimplePartNatIso k H K g
+  rw [commute_iff_eq]
   rw [fgPointSemisimplePartNatIso, fgPointUnipotentPartNatIso,
     fgPointFactorNatIso_mul, fgPointFactorNatIso_mul]
   apply fgPointFactorNatIso_congr
@@ -332,6 +332,11 @@ theorem fgPointSemisimplePartNatIso_mul_fgPointUnipotentPartNatIso
   funext M
   simp only [fgPointFactorNatIso_hom_app, fgPointNatIsoHom_hom_app]
   rw [GeneralLinearGroup.semisimplePart_mul_unipotentPart]
-  rfl
+  have haction :
+      (LinearMap.GeneralLinearGroup.ofLinearEquiv
+        (Comodule.pointsAction M g)).toLinearEquiv = Comodule.pointsAction M g :=
+    (LinearMap.GeneralLinearGroup.generalLinearEquiv K (K ⊗[k] M)).apply_symm_apply
+      (Comodule.pointsAction M g)
+  rw [haction]
 
 end TauCeti.Tannaka
