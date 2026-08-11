@@ -121,9 +121,8 @@ theorem kernelResidueFieldRingEquiv_apply (r : k) :
         ((RingHom.quotientKerEquivOfSurjective (surjective f)).symm r) = _
   have h : (RingHom.quotientKerEquivOfSurjective (surjective f)).symm r =
       Ideal.Quotient.mk (RingHom.ker (f : H →+* k)) (algebraMap k H r) := by
-    apply (RingHom.quotientKerEquivOfSurjective (surjective f)).injective
-    rw [RingEquiv.apply_symm_apply, RingHom.quotientKerEquivOfSurjective_apply_mk]
-    simp
+    simpa using RingHom.quotientKerEquivOfSurjective_symm_apply
+      (f := (f : H →+* k)) (surjective f) (algebraMap k H r)
   rw [h,
     IsLocalization.AtPrime.equivQuotMaximalIdeal_apply_mk]
 
