@@ -157,17 +157,21 @@ theorem coordinateBialgHom_surjective_iff_matrixCoefficientSubalgebra_sup_antipo
 
 section Dual
 
-variable [Module.Finite R M] [Module.Projective R M]
-
 attribute [local instance] dual Prod
 
 /-- The range of a comodule's coordinate morphism is equivalently the coefficient algebra of
 the direct sum of the comodule and its dual. -/
 theorem coordinateBialgHom_range_eq_matrixCoefficientSubalgebra_prod_dual
     (b : Basis (Fin n) R M) :
+    letI : Module.Finite R M := Module.Finite.of_basis b
+    letI : Module.Free R M := Module.Free.of_basis b
+    letI : Module.Projective R M := inferInstance
     (coordinateBialgHom (H := H) b).toAlgHom.range =
       matrixCoefficientSubalgebra (R := R) (C := H)
         (M := M × Module.Dual R M) := by
+  let : Module.Finite R M := Module.Finite.of_basis b
+  let : Module.Free R M := Module.Free.of_basis b
+  let : Module.Projective R M := inferInstance
   rw [coordinateBialgHom_range, matrixCoefficientSubalgebra_prod_dual]
 
 /-- The coordinate morphism is surjective exactly when the coefficients of the comodule and its
@@ -175,9 +179,15 @@ dual generate the coordinate Hopf algebra. This is the rigid-category form of th
 matrix-coefficient-and-antipode criterion above. -/
 theorem coordinateBialgHom_surjective_iff_matrixCoefficientSubalgebra_prod_dual
     (b : Basis (Fin n) R M) :
+    letI : Module.Finite R M := Module.Finite.of_basis b
+    letI : Module.Free R M := Module.Free.of_basis b
+    letI : Module.Projective R M := inferInstance
     Function.Surjective (coordinateBialgHom (H := H) b) ↔
       matrixCoefficientSubalgebra (R := R) (C := H)
         (M := M × Module.Dual R M) = ⊤ := by
+  let : Module.Finite R M := Module.Finite.of_basis b
+  let : Module.Free R M := Module.Free.of_basis b
+  let : Module.Projective R M := inferInstance
   -- As above, pass from the bialgebra morphism to its algebra-hom range.
   change Function.Surjective (coordinateBialgHom (H := H) b).toAlgHom ↔ _
   rw [← AlgHom.range_eq_top,
@@ -248,17 +258,21 @@ theorem isFaithful_iff_matrixCoefficientSubalgebra_sup_antipode_eq_top
 
 section Dual
 
-variable [Module.Finite k V] [Module.Projective k V]
-
 attribute [local instance] dual Prod
 
-/-- In a finite projective comodule, the faithful-representation criterion can be read as
+/-- In a finite free comodule, the faithful-representation criterion can be read as
 generation by the coefficients of the comodule together with its dual. -/
 theorem isFaithful_iff_matrixCoefficientSubalgebra_prod_dual
     (b : Basis (Fin d) k V) :
+    letI : Module.Finite k V := Module.Finite.of_basis b
+    letI : Module.Free k V := Module.Free.of_basis b
+    letI : Module.Projective k V := inferInstance
     IsFaithful (k := k) (H := H) (V := V) ↔
       matrixCoefficientSubalgebra (R := k) (C := H)
         (M := V × Module.Dual k V) = ⊤ := by
+  let : Module.Finite k V := Module.Finite.of_basis b
+  let : Module.Free k V := Module.Free.of_basis b
+  let : Module.Projective k V := inferInstance
   rw [isFaithful_iff_isClosedImmersion_coordinateGroupSchemeHom (b := b),
     isClosedImmersion_coordinateGroupSchemeHom_iff,
     coordinateBialgHom_surjective_iff_matrixCoefficientSubalgebra_prod_dual]
