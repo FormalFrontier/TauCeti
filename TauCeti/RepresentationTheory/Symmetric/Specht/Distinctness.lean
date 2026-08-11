@@ -183,7 +183,7 @@ private theorem sum_take_rowLens_le_of_intertwiningMap_ne_zero
     apply YoungTableau.polytabloid_ne_zero t
     rw [← hbv]
     have haw' := congrArg Subtype.val haw
-    rw [Subrepresentation.coe_toRepresentation_asAlgebraHom] at haw'
+    rw [Subrepresentation.coe_toRepresentation_asAlgebraHom_apply] at haw'
     exact haw'
   exact hawne (hinj (h.trans (map_zero f).symm))
 

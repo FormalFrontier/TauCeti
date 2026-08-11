@@ -29,7 +29,7 @@ subrepresentations.
 * `Subrepresentation.toSubmodule_top`
 * `Subrepresentation.toSubmodule_le_toSubmodule`
 * `Subrepresentation.toSubmodule_lt_toSubmodule`
-* `Subrepresentation.coe_toRepresentation_asAlgebraHom`
+* `Subrepresentation.coe_toRepresentation_asAlgebraHom_apply`
 -/
 
 public section
@@ -62,7 +62,7 @@ lemma toSubmodule_lt_toSubmodule {ρ₁ ρ₂ : Subrepresentation ρ} :
 /-- The group-algebra action on a subrepresentation, coerced to the ambient module, is the
 original group-algebra action. -/
 @[simp]
-theorem coe_toRepresentation_asAlgebraHom {k H V : Type*} [CommSemiring k] [Monoid H]
+theorem coe_toRepresentation_asAlgebraHom_apply {k H V : Type*} [CommSemiring k] [Monoid H]
     [AddCommMonoid V] [Module k V] {σ : Representation k H V} (S : Subrepresentation σ)
     (a : MonoidAlgebra k H) (x : S.toSubmodule) :
     ((S.toRepresentation.asAlgebraHom a x : S.toSubmodule) : V) =

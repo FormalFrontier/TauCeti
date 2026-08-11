@@ -86,6 +86,19 @@ private theorem intertwiningMap_eq_smul_one_of_apply_polytabloid_eq
     Representation.IntertwiningMap.smul_apply,
     Representation.IntertwiningMap.coe_one, id_eq, map_smul] using hf
 
+/-- A scalar intertwining endomorphism is determined by its scalar as soon as the representation
+has a nonzero vector to test against. -/
+private theorem algebraMap_intertwiningMap_injective {G V : Type*} [Monoid G] [AddCommGroup V]
+    [Module ℚ V] {rho : Representation ℚ G V} {v : V} (hv : v ≠ 0) :
+    Function.Injective (algebraMap ℚ (Representation.IntertwiningMap rho rho)) := by
+  intro q r hqr
+  have happ : q • v = r • v := by
+    simpa only [Representation.IntertwiningMap.algebraMap_apply,
+      Representation.IntertwiningMap.smul_apply, Representation.IntertwiningMap.coe_one,
+      id_eq] using congrArg (fun F => F v) hqr
+  have hsub : (q - r) • v = 0 := by rw [sub_smul, happ, sub_self]
+  exact sub_eq_zero.mp ((smul_eq_zero.mp hsub).resolve_right hv)
+
 private theorem algebraMap_intertwiningMap_spechtSubrepresentation_injective
     (mu : YoungDiagram) :
     Function.Injective
@@ -93,19 +106,10 @@ private theorem algebraMap_intertwiningMap_spechtSubrepresentation_injective
         (spechtSubrepresentation mu).toRepresentation
         (spechtSubrepresentation mu).toRepresentation)) := by
   obtain ⟨t⟩ := YoungTableau.nonempty mu
-  let et : (spechtSubrepresentation mu).toSubmodule :=
-    ⟨polytabloid t, polytabloid_mem_spechtSubrepresentation t⟩
-  intro q r hqr
-  have happ := congrArg (fun F => F et) hqr
-  have happ' : q • et = r • et := by
-    simpa only [Representation.IntertwiningMap.algebraMap_apply,
-      Representation.IntertwiningMap.smul_apply, Representation.IntertwiningMap.coe_one,
-      id_eq] using happ
-  have hcoeff := congrArg
-    (fun v : (spechtSubrepresentation mu).toSubmodule =>
-      (v : (permutationModule (shapePartition mu)).V).coeff (tabloid t)) happ'
-  simpa only [Submodule.coe_smul, MonoidAlgebra.coeff_smul, polytabloid_coeff_tabloid,
-    Finsupp.smul_apply, smul_eq_mul, mul_one, et] using hcoeff
+  refine algebraMap_intertwiningMap_injective
+    (v := (⟨polytabloid t, polytabloid_mem_spechtSubrepresentation t⟩ :
+      (spechtSubrepresentation mu).toSubmodule)) ?_
+  simpa only [ne_eq, Submodule.mk_eq_zero] using polytabloid_ne_zero t
 
 /-- Every equivariant endomorphism of the diagram-indexed rational Specht representation is a
 scalar.  In the canonical algebra structure on intertwining endomorphisms, this says that the
@@ -138,10 +142,10 @@ theorem algebraMap_intertwiningMap_spechtSubrepresentation_bijective (mu : Young
           (columnAntisymmetrizer t) v' =
           ⟨polytabloid t, polytabloid_mem_spechtSubrepresentation t⟩ := by
         apply Subtype.ext
-        simpa only [Subrepresentation.coe_toRepresentation_asAlgebraHom] using hbv
+        simpa only [Subrepresentation.coe_toRepresentation_asAlgebraHom_apply] using hbv
       rw [hbv'] at hmap'
       exact hmap'.trans (by
-        simpa only [Subrepresentation.coe_toRepresentation_asAlgebraHom,
+        simpa only [Subrepresentation.coe_toRepresentation_asAlgebraHom_apply,
           Submodule.coe_smul] using hkappa)
     refine ⟨kappa, ?_⟩
     have hfscalar := intertwiningMap_eq_smul_one_of_apply_polytabloid_eq t f kappa hpoly
@@ -156,22 +160,14 @@ theorem algebraMap_intertwiningMap_spechtModule_bijective {n : ℕ} (mu : n.Part
   · obtain ⟨t⟩ := YoungTableau.nonempty (diagramOf mu)
     let et : (spechtModule mu).V :=
       ⟨polytabloid t, polytabloid_mem_spechtSubrepresentation t⟩
-    intro q r hqr
-    have happ := congrArg (fun F => F et) hqr
-    have happ' : q • et = r • et := by
-      simpa only [Representation.IntertwiningMap.algebraMap_apply,
-        Representation.IntertwiningMap.smul_apply, Representation.IntertwiningMap.coe_one,
-        id_eq] using happ
-    have hcoeff := congrArg
+    refine algebraMap_intertwiningMap_injective (v := et) ?_
+    intro het
+    -- Expose the concrete Specht subtype hidden by the `FDRep.of` carrier.
+    refine polytabloid_ne_zero t ?_
+    simpa only [et, ZeroMemClass.coe_zero] using congrArg
       (fun v : (spechtModule mu).V =>
         ((v : (spechtSubrepresentation (diagramOf mu)).toSubmodule) :
-          (permutationModule (shapePartition (diagramOf mu))).V).coeff (tabloid t)) happ'
-    -- Expose the concrete Specht subtype hidden by the `FDRep.of` carrier.
-    change (q • polytabloid t).coeff (tabloid t) =
-      (r • polytabloid t).coeff (tabloid t) at hcoeff
-    simpa only [Submodule.coe_smul, MonoidAlgebra.coeff_smul,
-      Finsupp.smul_apply, polytabloid_coeff_tabloid, smul_eq_mul, mul_one,
-      spechtModule, FDRep.of_ρ', et] using hcoeff
+          (permutationModule (shapePartition (diagramOf mu))).V)) het
   · intro f
     let e := (finCongr (card_diagramOf mu).symm).permCongrHom
     let f' : Representation.IntertwiningMap
@@ -222,6 +218,8 @@ noncomputable def spechtModuleIntertwiningEndAlgEquiv {n : ℕ} (mu : n.Partitio
             Equiv.Perm (Fin n) →* Equiv.Perm (Fin (diagramOf mu).card))) ≃ₐ[ℚ] ℚ :=
   (spechtModuleScalarAlgEquiv mu).symm
 
+/-- The inverse of `spechtModuleIntertwiningEndAlgEquiv` sends a rational scalar to the
+corresponding scalar intertwining endomorphism. -/
 @[simp]
 theorem spechtModuleIntertwiningEndAlgEquiv_symm_apply {n : ℕ}
     (mu : n.Partition) (q : ℚ) :
@@ -241,6 +239,8 @@ noncomputable def spechtModuleEndAlgEquiv {n : ℕ} (mu : n.Partition) :
   (Representation.IntertwiningMap.equivAlgEnd (ρ := (spechtModule mu).ρ)).symm.trans
     (spechtModuleIntertwiningEndAlgEquiv mu)
 
+/-- The inverse of `spechtModuleEndAlgEquiv` sends a rational scalar to the corresponding scalar
+`ℚ[S_n]`-linear endomorphism. -/
 @[simp]
 theorem spechtModuleEndAlgEquiv_symm_apply {n : ℕ} (mu : n.Partition) (q : ℚ) :
     (spechtModuleEndAlgEquiv mu).symm q = algebraMap ℚ _ q := by
