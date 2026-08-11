@@ -142,7 +142,7 @@ the affine spectrum at the corresponding point.
 
 This is the cotangent form of the comparison between augmentation-valued derivations and the
 scheme-theoretic tangent space at the augmentation point. -/
-@[expose] noncomputable def kernelCotangentLinearEquivZariski :
+noncomputable def kernelCotangentLinearEquivZariski :
     (RingHom.ker (f : H →+* k)).Cotangent ≃ₗ[k]
       TauCeti.AlgebraicGeometry.ZariskiCotangentSpace
         (Spec (CommRingCat.of H)) (kernelPoint f) :=
@@ -267,6 +267,12 @@ theorem cotangentLinearEquivZariski_toCotangent (a : AugmentationIdeal k H) :
         ⟨algebraMap H
             ((Spec (CommRingCat.of H)).presheaf.stalk (augmentationPoint k H)) a,
           by
+            let _ : (AugmentationIdeal k H).IsMaximal :=
+              AlgHom.kernelIsMaximal (_root_.Bialgebra.counitAlgHom k H)
+            let _ : IsLocalization.AtPrime
+                ((Spec (CommRingCat.of H)).presheaf.stalk (augmentationPoint k H))
+                (AugmentationIdeal k H) :=
+              AlgHom.kernelStalkIsLocalization (_root_.Bialgebra.counitAlgHom k H)
             rw [← Ideal.mem_under,
               IsLocalization.AtPrime.under_maximalIdeal
                 ((Spec (CommRingCat.of H)).presheaf.stalk (augmentationPoint k H))

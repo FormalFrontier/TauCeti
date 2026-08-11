@@ -90,12 +90,7 @@ theorem cotangentLocalizationEquiv_toCotangent (x : p) :
   change ((maximalIdeal Rₚ).cotangentEquivIdeal.symm.restrictScalars R)
       (cotangentLocalizationIdealEquiv p (p.cotangentEquivIdeal (p.toCotangent x))) = _
   apply (maximalIdeal Rₚ).cotangentEquivIdeal.injective
-  -- `restrictScalars` has no application lemma, so expose the underlying inverse before
-  -- cancelling it with `apply_symm_apply`.
-  change (maximalIdeal Rₚ).cotangentEquivIdeal
-      ((maximalIdeal Rₚ).cotangentEquivIdeal.symm
-        (cotangentLocalizationIdealEquiv p (p.cotangentEquivIdeal (p.toCotangent x)))) = _
-  rw [LinearEquiv.apply_symm_apply]
+  rw [LinearEquiv.restrictScalars_apply, LinearEquiv.apply_symm_apply]
   apply Subtype.ext
   simp only [cotangentLocalizationIdealEquiv]
   -- The restricted `ofSubmodules` equivalence and `cotangentEquivIdeal` compute on their
