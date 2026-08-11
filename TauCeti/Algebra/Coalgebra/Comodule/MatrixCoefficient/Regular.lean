@@ -57,6 +57,7 @@ variable [AddCommMonoid C] [Module R C] [Coalgebra R C]
 
 /-- Pairing a vector in a regular subcomodule with the restricted counit recovers its
 underlying element of the coalgebra. -/
+@[simp]
 theorem matrixCoefficient_counit_comp_subtype [Module.Flat R C]
     (N : Subcomodule R C C) (n : N) :
     matrixCoefficient (R := R) (C := C)
