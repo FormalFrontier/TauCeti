@@ -19,7 +19,10 @@ This instantiates the roadmap's named representation-theory plumbing,
 "idempotent-generated submodules and left ideals as representations", for the
 Young symmetrizer, and it is the abstract half of the presentation that the
 Specht module target consumes. Nothing here uses the essential idempotence
-`c_t * c_t = (n! / f^λ) • c_t`, and nothing here identifies this representation
+`c_t * c_t = (n! / f^λ) • c_t` -- that runs the other way, since identifying the
+scalar needs the dimension of the ideal, and it is proved downstream in
+`TauCeti.RepresentationTheory.Symmetric.Specht.Ideal.Idempotent` -- and nothing here identifies
+this representation
 with the span of the polytabloids inside the Young permutation module: that
 identification is the Specht module milestone itself, and it is deliberately not
 claimed here.

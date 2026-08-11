@@ -165,7 +165,8 @@ theorem exists_eq_smul_youngSymmetrizer_mul_mul (t : YoungTableau μ)
 
 /-- The square of a Young symmetrizer is a multiple of it.  The scalar is `μ.card ! / f^μ`, with
 `f^μ` the number of standard tableaux of shape `μ`; identifying it needs the dimension of the
-Specht module and is not proved here. -/
+left ideal `ℚ[Sₙ] c_t`, so it is proved downstream, in
+`TauCeti.YoungTableau.youngSymmetrizer_sq`. -/
 theorem exists_eq_smul_youngSymmetrizer_sq (t : YoungTableau μ) :
     ∃ κ : ℚ, youngSymmetrizer t * youngSymmetrizer t = κ • youngSymmetrizer t := by
   obtain ⟨κ, hκ⟩ := exists_eq_smul_youngSymmetrizer_mul_mul t 1
