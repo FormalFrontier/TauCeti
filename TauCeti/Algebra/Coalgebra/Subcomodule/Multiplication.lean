@@ -54,9 +54,29 @@ universe u v
 namespace Subcomodule
 
 variable {R : Type u} {H : Type v}
-variable [CommSemiring R] [Semiring H] [Bialgebra R H]
+variable [CommSemiring R] [Semiring H]
 
 attribute [local instance] Comodule.tensor
+
+section MulMap
+
+variable [Algebra R H] [Coalgebra R H]
+
+/-- If a regular subcomodule contains every pairwise product from `N` and `P`, it contains
+every value of `Submodule.mulMap N.toSubmodule P.toSubmodule`. -/
+theorem mulMap_mem (N P Q : Subcomodule R H H)
+    (h : ∀ (n : N) (p : P), (n : H) * (p : H) ∈ Q) (x : N ⊗[R] P) :
+    Submodule.mulMap N.toSubmodule P.toSubmodule x ∈ Q := by
+  have hmul : N.toSubmodule * P.toSubmodule ≤ Q.toSubmodule :=
+    Submodule.mul_le.2 fun n hn p hp ↦ h ⟨n, hn⟩ ⟨p, hp⟩
+  rw [← Submodule.mulMap_range] at hmul
+  exact hmul (LinearMap.mem_range_self _ x)
+
+end MulMap
+
+section MulHom
+
+variable [Bialgebra R H]
 
 /-- Multiplication from `N ⊗ P`, corestricted to a regular subcomodule `Q` containing
 every product `n * p`. -/
@@ -67,18 +87,17 @@ noncomputable def mulHom (N P Q : Subcomodule R H H)
   let ambient : Comodule.Hom R H (N ⊗[R] P) H :=
     Comodule.Hom.comp (Comodule.Hom.regularMul (R := R) (H := H))
       (Comodule.Hom.tensorMap (Subcomodule.subtype N) (Subcomodule.subtype P))
+  have hambient : ambient.toLinearMap = Submodule.mulMap N.toSubmodule P.toSubmodule := by
+    apply TensorProduct.ext'
+    intro n p
+    simp only [Comodule.Hom.coe_toLinearMap, ambient, Comodule.Hom.comp_apply,
+      Comodule.Hom.tensorMap_tmul, Subcomodule.subtype_apply,
+      Comodule.Hom.regularMul_tmul]
+    erw [Submodule.mulMap_tmul]
   have hmem : ∀ x, ambient x ∈ Q := by
     intro x
-    induction x using TensorProduct.induction_on with
-    | zero =>
-      rw [← Comodule.Hom.coe_toLinearMap ambient, map_zero]
-      exact Q.toSubmodule.zero_mem
-    | add x y hx hy =>
-      rw [← Comodule.Hom.coe_toLinearMap ambient, map_add]
-      exact Q.toSubmodule.add_mem hx hy
-    | tmul n p =>
-      simpa only [ambient, Comodule.Hom.comp_apply, Comodule.Hom.tensorMap_tmul,
-        Subcomodule.subtype_apply, Comodule.Hom.regularMul_tmul] using h n p
+    rw [← Comodule.Hom.coe_toLinearMap ambient, hambient]
+    exact mulMap_mem N P Q h x
   Comodule.Hom.codRestrict ambient Q hmem
 
 private theorem mulHom_tmul_def (N P Q : Subcomodule R H H)
@@ -104,17 +123,17 @@ theorem mulHom_toLinearMap (N P Q : Subcomodule R H H)
     [Module.Flat R H]
     (h : ∀ (n : N) (p : P), (n : H) * (p : H) ∈ Q) :
     (mulHom N P Q h).toLinearMap =
-      (Submodule.mulMap N.toSubmodule P.toSubmodule).codRestrict Q.toSubmodule (by
-        intro x
-        induction x using TensorProduct.induction_on with
-        | zero => exact Q.toSubmodule.zero_mem
-        | add x y hx hy =>
-          rw [map_add]
-          exact Q.toSubmodule.add_mem hx hy
-        | tmul n p => exact h n p) := by
+      (Submodule.mulMap N.toSubmodule P.toSubmodule).codRestrict Q.toSubmodule
+        (mulMap_mem N P Q h) := by
   apply TensorProduct.ext'
   intro n p
   exact Subtype.ext (mulHom_tmul N P Q h n p)
+
+end MulHom
+
+section FiniteContainment
+
+variable [Algebra R H] [Coalgebra R H]
 
 /-- If every element of `H` belongs to a finite regular subcomodule, then pairwise products
 from two finite submodules lie in a finite regular subcomodule. -/
@@ -139,6 +158,8 @@ theorem exists_finite_mul_le [Module.Free R H] (N P : Submodule R H)
       ∀ (n : N) (p : P), (n : H) * (p : H) ∈ Q :=
   exists_finite_mul_le_of_exists_mem
     (exists_finite_subcomodule_mem (R := R) (C := H) (M := H)) N P
+
+end FiniteContainment
 
 end Subcomodule
 
