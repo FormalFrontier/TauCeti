@@ -93,27 +93,33 @@ def toWord {α : Type*} : Relator α → PresentationWord α
   | .comm r s => ((r.toWord ++ s.toWord) ++ FreeGroup.invRev r.toWord) ++
       FreeGroup.invRev s.toWord
 
+/-- Compilation of a generator. -/
 @[simp]
-theorem toWord_gen {α : Type*} (x : α) : (gen x).toWord = [(x, true)] := by rw [toWord]
+theorem toWord_gen {α : Type*} (x : α) : (Relator.gen x).toWord = [(x, true)] := by
+  rw [toWord]
 
+/-- Compilation of an inverse. -/
 @[simp]
 theorem toWord_inv {α : Type*} (r : Relator α) :
-    (inv r).toWord = FreeGroup.invRev r.toWord := by
+    (Relator.inv r).toWord = FreeGroup.invRev r.toWord := by
   rw [toWord]
 
+/-- Compilation of a product. -/
 @[simp]
 theorem toWord_mul {α : Type*} (r s : Relator α) :
-    (mul r s).toWord = r.toWord ++ s.toWord := by
+    (Relator.mul r s).toWord = r.toWord ++ s.toWord := by
   rw [toWord]
 
+/-- Compilation of a natural power. -/
 @[simp]
 theorem toWord_pow {α : Type*} (r : Relator α) (n : ℕ) :
-    (pow r n).toWord = (List.replicate n r.toWord).flatten := by
+    (Relator.pow r n).toWord = (List.replicate n r.toWord).flatten := by
   rw [toWord]
 
+/-- Compilation of a commutator. -/
 @[simp]
 theorem toWord_comm {α : Type*} (r s : Relator α) :
-    (comm r s).toWord =
+    (Relator.comm r s).toWord =
       ((r.toWord ++ s.toWord) ++ FreeGroup.invRev r.toWord) ++ FreeGroup.invRev s.toWord := by
   rw [toWord]
 
@@ -127,27 +133,33 @@ def toFreeGroup {α : Type*} : Relator α → FreeGroup α
   | .pow r n => r.toFreeGroup ^ n
   | .comm r s => ⁅r.toFreeGroup, s.toFreeGroup⁆
 
+/-- Interpretation of a generator. -/
 @[simp]
-theorem toFreeGroup_gen {α : Type*} (x : α) : (gen x).toFreeGroup = FreeGroup.of x := by
+theorem toFreeGroup_gen {α : Type*} (x : α) : (Relator.gen x).toFreeGroup = FreeGroup.of x := by
   rw [toFreeGroup]
 
+/-- Interpretation of an inverse. -/
 @[simp]
-theorem toFreeGroup_inv {α : Type*} (r : Relator α) : (inv r).toFreeGroup = r.toFreeGroup⁻¹ := by
+theorem toFreeGroup_inv {α : Type*} (r : Relator α) :
+    (Relator.inv r).toFreeGroup = r.toFreeGroup⁻¹ := by
   rw [toFreeGroup]
 
+/-- Interpretation of a product. -/
 @[simp]
 theorem toFreeGroup_mul {α : Type*} (r s : Relator α) :
-    (mul r s).toFreeGroup = r.toFreeGroup * s.toFreeGroup := by
+    (Relator.mul r s).toFreeGroup = r.toFreeGroup * s.toFreeGroup := by
   rw [toFreeGroup]
 
+/-- Interpretation of a natural power. -/
 @[simp]
 theorem toFreeGroup_pow {α : Type*} (r : Relator α) (n : ℕ) :
-    (pow r n).toFreeGroup = r.toFreeGroup ^ n := by
+    (Relator.pow r n).toFreeGroup = r.toFreeGroup ^ n := by
   rw [toFreeGroup]
 
+/-- Interpretation of a commutator. -/
 @[simp]
 theorem toFreeGroup_comm {α : Type*} (r s : Relator α) :
-    (comm r s).toFreeGroup = ⁅r.toFreeGroup, s.toFreeGroup⁆ := by
+    (Relator.comm r s).toFreeGroup = ⁅r.toFreeGroup, s.toFreeGroup⁆ := by
   rw [toFreeGroup]
 
 /-- The free-group elements denoted by a list of relator expressions. -/
