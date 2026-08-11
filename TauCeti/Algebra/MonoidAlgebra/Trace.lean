@@ -38,6 +38,7 @@ namespace TauCeti
 
 /-- **The regular trace reads off the coefficient at the identity.** Every diagonal entry of the
 left regular matrix of `x` is the coefficient of `x` at `1`, so the trace is `|G|` times it. -/
+@[simp]
 theorem trace_leftMulMatrix_monoidAlgebra {k G : Type*} [CommSemiring k] [Group G] [Fintype G]
     [DecidableEq G] (x : MonoidAlgebra k G) :
     Matrix.trace (Algebra.leftMulMatrix (MonoidAlgebra.basis G k) x) =
