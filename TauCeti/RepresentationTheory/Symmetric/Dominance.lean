@@ -41,6 +41,9 @@ here.
 * `TauCeti.asAlgebraHom_columnAntisymmetrizer_single_eq_zero` and
   `TauCeti.dominates_of_asAlgebraHom_columnAntisymmetrizer_ne_zero`: the sign cancellation, and
   James's dominance lemma itself.
+* `TauCeti.YoungTableau.asAlgebraHom_columnAntisymmetrizer_apply_eq_zero_of_not_dominates` and
+  `TauCeti.YoungTableau.dominates_of_asAlgebraHom_columnAntisymmetrizer_apply_ne_zero`: the same
+  lemma for an arbitrary vector of `M^μ` rather than a tabloid.
 
 ## References
 
@@ -147,5 +150,43 @@ theorem dominates_of_asAlgebraHom_columnAntisymmetrizer_ne_zero {lam : YoungDiag
   dominates_of_forall_swap_smul_ne t μ q fun _ _ hxy hcol hfix =>
     h (asAlgebraHom_columnAntisymmetrizer_single_eq_zero t μ q (swap_mem_colSubgroup hcol)
       (Equiv.Perm.sign_swap hxy) hfix)
+
+namespace YoungTableau
+
+/-- **The column antisymmetrizer of a non-dominating shape annihilates the whole permutation
+module.**  James's dominance lemma says that `b_t` kills every `μ`-tabloid once the shape of `t`
+fails to dominate `μ`; the tabloids span `M^μ`, so `b_t` kills all of it.
+
+This is to `TauCeti.dominates_of_asAlgebraHom_columnAntisymmetrizer_ne_zero` what
+`TauCeti.YoungTableau.exists_eq_smul_polytabloid` is to
+`TauCeti.YoungTableau.exists_eq_smul_polytabloid_single`: the same statement, extended off the
+tabloid basis by linearity. -/
+theorem asAlgebraHom_columnAntisymmetrizer_apply_eq_zero_of_not_dominates {lam : YoungDiagram}
+    (t : YoungTableau lam) (μ : lam.card.Partition) (h : ¬Dominates (shapePartition lam) μ)
+    (x : (permutationModule μ).V) :
+    (permutationModule μ).ρ.asAlgebraHom (columnAntisymmetrizer t) x = 0 := by
+  have hx : x ∈ Submodule.span ℚ (Set.range (permutationModuleBasis μ)) := by
+    rw [Module.Basis.span_eq]
+    exact Submodule.mem_top
+  induction hx using Submodule.span_induction with
+  | mem w hw =>
+    obtain ⟨q, rfl⟩ := hw
+    rw [MonoidAlgebra.basis_apply]
+    by_contra hne
+    exact h (dominates_of_asAlgebraHom_columnAntisymmetrizer_ne_zero t μ q hne)
+  | zero => rw [map_zero]
+  | add u v _ _ hu hv => rw [map_add, hu, hv, add_zero]
+  | smul r u _ hu => rw [map_smul, hu, smul_zero]
+
+/-- **James's dominance lemma for an arbitrary vector.**  If the column antisymmetrizer of a
+`lam`-tableau does not annihilate some vector of `M^μ`, then the shape of `lam` dominates `μ`. -/
+theorem dominates_of_asAlgebraHom_columnAntisymmetrizer_apply_ne_zero {lam : YoungDiagram}
+    (t : YoungTableau lam) (μ : lam.card.Partition) {x : (permutationModule μ).V}
+    (hx : (permutationModule μ).ρ.asAlgebraHom (columnAntisymmetrizer t) x ≠ 0) :
+    Dominates (shapePartition lam) μ := by
+  by_contra h
+  exact hx (asAlgebraHom_columnAntisymmetrizer_apply_eq_zero_of_not_dominates t μ h x)
+
+end YoungTableau
 
 end TauCeti

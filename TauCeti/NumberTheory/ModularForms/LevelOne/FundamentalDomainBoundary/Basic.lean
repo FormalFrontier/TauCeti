@@ -33,6 +33,8 @@ anchors of the valence-formula contour.
 * `TauCeti.ModularForm.continuous_fdBoundary`: the contour is (globally) continuous.
 * `TauCeti.ModularForm.isPiecewiseC1On_fdBoundary`: the contour is piecewise `C¹`
   (`contDiffOn_fdBoundary` certifies `fdBoundaryCorners` as a breakpoint witness).
+* `TauCeti.ModularForm.injOn_fdBoundary_arc`: the arc is traversed injectively — it covers less
+  than a full turn of the unit circle.
 * `TauCeti.ModularForm.fdBoundary_four_sub_vertical`, `…_four_sub_arc`: the reflection
   `t ↦ 4 - t` identifies the verticals through `z ↦ z - 1` and the arc with its own
   reversal through `z ↦ -1/z` — the boundary identifications driving the cancellations
@@ -243,35 +245,35 @@ variable {H t : ℝ}
 @[simp]
 lemma fdBoundary_of_le_one (ht : t ≤ 1) : fdBoundary H t = fdBoundary_segment1 H t := by
   unfold fdBoundary
-  rw [if_pos ht]
+  rw [ite_eq_left ht]
 
 /-- On `1 < t ≤ 2` the path follows segment 2. -/
 @[simp]
 lemma fdBoundary_of_le_two (h1 : 1 < t) (h2 : t ≤ 2) : fdBoundary H t = fdBoundary_segment2 t := by
   unfold fdBoundary
-  rw [if_neg (not_le.mpr h1), if_pos h2]
+  rw [ite_eq_right (not_le.mpr h1), ite_eq_left h2]
 
 /-- On `2 < t ≤ 3` the path follows segment 3. -/
 @[simp]
 lemma fdBoundary_of_le_three (h2 : 2 < t) (h3 : t ≤ 3) :
     fdBoundary H t = fdBoundary_segment3 t := by
   unfold fdBoundary
-  rw [if_neg (by linarith : ¬t ≤ 1), if_neg (not_le.mpr h2), if_pos h3]
+  rw [ite_eq_right (by linarith : ¬t ≤ 1), ite_eq_right (not_le.mpr h2), ite_eq_left h3]
 
 /-- On `3 < t ≤ 4` the path follows segment 4. -/
 @[simp]
 lemma fdBoundary_of_le_four (h3 : 3 < t) (h4 : t ≤ 4) :
     fdBoundary H t = fdBoundary_segment4 H t := by
   unfold fdBoundary
-  rw [if_neg (by linarith : ¬t ≤ 1), if_neg (by linarith : ¬t ≤ 2),
-    if_neg (not_le.mpr h3), if_pos h4]
+  rw [ite_eq_right (by linarith : ¬t ≤ 1), ite_eq_right (by linarith : ¬t ≤ 2),
+    ite_eq_right (not_le.mpr h3), ite_eq_left h4]
 
 /-- On `4 < t` the path follows segment 5. -/
 @[simp]
 lemma fdBoundary_of_gt_four (h4 : 4 < t) : fdBoundary H t = fdBoundary_segment5 H t := by
   unfold fdBoundary
-  rw [if_neg (by linarith : ¬t ≤ 1), if_neg (by linarith : ¬t ≤ 2),
-    if_neg (by linarith : ¬t ≤ 3), if_neg (not_le.mpr h4)]
+  rw [ite_eq_right (by linarith : ¬t ≤ 1), ite_eq_right (by linarith : ¬t ≤ 2),
+    ite_eq_right (by linarith : ¬t ≤ 3), ite_eq_right (not_le.mpr h4)]
 
 end Branches
 
@@ -387,6 +389,21 @@ private lemma fdBoundary_piece4 (H : ℝ) : ContDiffOn ℝ n (fdBoundary H) (Icc
 private lemma fdBoundary_piece5 (H : ℝ) : ContDiffOn ℝ n (fdBoundary H) (Icc 4 5) :=
   (contDiff_fdBoundary_segment5 H).contDiffOn.congr (eqOn_fdBoundary_segment5 H)
 
+
+/-- **The arc is traversed injectively.** On `[1, 3]` the boundary runs through the angles
+`[π/3, 2π/3]` of the unit circle — less than one full turn — so `circleMap` is injective there
+and distinct parameters give distinct points. -/
+theorem injOn_fdBoundary_arc (H : ℝ) : InjOn (fdBoundary H) (Icc 1 3) := by
+  have hpi := Real.pi_pos
+  have hcm : InjOn (circleMap 0 1) (Ioc 0 (2 * Real.pi)) := by
+    rw [← uIoc_of_le (by positivity : (0 : ℝ) ≤ 2 * Real.pi)]
+    exact injOn_circleMap_of_abs_sub_le one_ne_zero
+      (by rw [zero_sub, abs_neg, abs_of_pos (by positivity)])
+  have hmem : ∀ {t : ℝ}, t ∈ Icc (1 : ℝ) 3 → (t + 1) * (Real.pi / 6) ∈ Ioc 0 (2 * Real.pi) :=
+    fun ht => ⟨by nlinarith [ht.1], by nlinarith [ht.2]⟩
+  intro t₁ h₁ t₂ h₂ heq
+  rw [eqOn_fdBoundary_arc H h₁, eqOn_fdBoundary_arc H h₂] at heq
+  nlinarith [hcm (hmem h₁) (hmem h₂) heq]
 
 /-- The genuinely nonsmooth junctions of the boundary contour: the two arcs continue one
 smooth circle parameterization through `t = 2`, so only `1`, `3`, and `4` are corners. -/
@@ -532,6 +549,76 @@ theorem fdBoundary_four_sub_arc (H : ℝ) {t : ℝ} (ht : t ∈ Icc (1 : ℝ) 3)
   simp [circleMap_zero, Complex.exp_pi_mul_I]
 
 end Regularity
+
+/-! ## Coordinates of the segments
+
+The real part, imaginary part and norm of the contour, segment by segment: elementary
+computations from the segment formulas, needed wherever a point of the boundary has to be
+located. They say nothing about winding, and are used by the principal-value and capture
+arguments as much as by the winding ones.
+-/
+
+section Coordinates
+
+open Set
+
+variable {H t : ℝ}
+
+/-- The right vertical has constant real part `1/2`. -/
+lemma re_fdBoundary_of_le_one (h1 : t ≤ 1) : (fdBoundary H t).re = 1 / 2 := by
+  rw [fdBoundary_of_le_one h1, fdBoundary_segment1_apply, AffineMap.lineMap_apply_module']
+  have hchord : ((ρ : ℂ) + 1 - (1 / 2 + H * Complex.I)).re = 0 := by
+    simp [ρ]
+    norm_num
+  rw [Complex.add_re, Complex.smul_re, hchord, smul_eq_mul, mul_zero, zero_add]
+  simp
+
+/-- The right vertical runs affinely in height from the ceiling `H` to the corner row `√3/2`,
+descending when the ceiling is above that row and ascending when it is below. -/
+lemma im_fdBoundary_of_le_one (h1 : t ≤ 1) :
+    (fdBoundary H t).im = H + t * (Real.sqrt 3 / 2 - H) := by
+  rw [fdBoundary_of_le_one h1, fdBoundary_segment1_apply, AffineMap.lineMap_apply_module']
+  have hchord : ((ρ : ℂ) + 1 - (1 / 2 + H * Complex.I)).im = Real.sqrt 3 / 2 - H := by
+    simp [ρ]
+  have him : (1 / 2 + H * Complex.I : ℂ).im = H := by simp
+  rw [Complex.add_im, Complex.smul_im, hchord, him, smul_eq_mul, add_comm]
+
+/-- The left vertical has constant real part `-1/2`. -/
+lemma re_fdBoundary_of_le_four (h3 : 3 < t) (h4 : t ≤ 4) :
+    (fdBoundary H t).re = -(1 / 2) := by
+  rw [fdBoundary_of_le_four h3 h4, fdBoundary_segment4_apply, AffineMap.lineMap_apply_module']
+  have hchord : ((-1 / 2 + H * Complex.I : ℂ) - (ρ : ℂ)).re = 0 := by
+    simp [ρ]
+  rw [Complex.add_re, Complex.smul_re, hchord, smul_eq_mul, mul_zero, zero_add]
+  simp [ρ]
+  norm_num
+
+/-- The truncation ceiling runs affinely from the left corner to the right. -/
+lemma re_fdBoundary_of_gt_four (h4 : 4 < t) :
+    (fdBoundary H t).re = -(1 / 2) + (t - 4) := by
+  rw [fdBoundary_of_gt_four h4, fdBoundary_segment5_apply, AffineMap.lineMap_apply_module']
+  have hchord : ((1 / 2 + H * Complex.I : ℂ) - (-1 / 2 + H * Complex.I)).re = 1 := by
+    simp
+    norm_num
+  have hre : (-1 / 2 + H * Complex.I : ℂ).re = -(1 / 2) := by
+    simp
+    norm_num
+  rw [Complex.add_re, Complex.smul_re, hchord, hre, smul_eq_mul, mul_one, add_comm]
+
+/-- The truncation ceiling has constant height `H`. -/
+lemma im_fdBoundary_of_gt_four (h4 : 4 < t) : (fdBoundary H t).im = H := by
+  rw [fdBoundary_of_gt_four h4, fdBoundary_segment5_apply, AffineMap.lineMap_apply_module']
+  have h5 : ((1 / 2 + H * Complex.I : ℂ) - (-1 / 2 + H * Complex.I)).im = 0 := by
+    simp
+  rw [Complex.add_im, Complex.smul_im, h5, smul_eq_mul, mul_zero, zero_add]
+  simp
+
+/-- The arc lies on the unit circle. -/
+@[simp]
+lemma norm_fdBoundary_arc (h1 : 1 ≤ t) (h3 : t ≤ 3) : ‖fdBoundary H t‖ = 1 := by
+  rw [eqOn_fdBoundary_arc H ⟨h1, h3⟩, norm_circleMap_zero, abs_one]
+
+end Coordinates
 
 end ModularForm
 

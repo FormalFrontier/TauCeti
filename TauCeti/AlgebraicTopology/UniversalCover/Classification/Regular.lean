@@ -6,7 +6,7 @@ module
 
 public import TauCeti.AlgebraicTopology.UniversalCover.Classification.Pointed
 public import TauCeti.AlgebraicTopology.UniversalCover.Deck.Regular.Monodromy
-public import TauCeti.Topology.Homotopy.Monodromy
+public import TauCeti.Topology.Homotopy.Monodromy.Basic
 
 /-!
 # Regular connected covers and normal subgroups

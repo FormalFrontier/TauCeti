@@ -21,6 +21,7 @@ map.
 * `commute_oneSubExpNegDivSelf`: the series commutes with its argument.
 * `mul_oneSubExpNegDivSelf`: multiplying the series by `a` gives `1 - exp (-a)`.
 * `oneSubExpNegDivSelf_mul`: the corresponding right-multiplication identity.
+* `map_oneSubExpNegDivSelf`: continuous ring homomorphisms preserve the series.
 
 ## References
 
@@ -135,19 +136,20 @@ end Normed
 
 section Map
 
-variable {A B : Type*} [NormedRing A] [NormedAlgebra ℚ A] [CompleteSpace A]
-  [Ring B] [Algebra ℚ B] [TopologicalSpace B] [IsTopologicalRing B] [T2Space B]
+variable {𝕂 A B : Type*} [NontriviallyNormedField 𝕂] [CharZero 𝕂]
+  [ContinuousSMul ℚ 𝕂] [NormedRing A] [NormedAlgebra 𝕂 A] [CompleteSpace A]
+  [Ring B] [Algebra 𝕂 B] [TopologicalSpace B] [IsTopologicalRing B] [T2Space B]
 
 /-- Any continuous ring homomorphism commutes with `oneSubExpNegDivSelf`. -/
 theorem map_oneSubExpNegDivSelf {F : Type*} [FunLike F A B] [RingHomClass F A B]
     (f : F) (hf : Continuous f) (a : A) :
-    f (oneSubExpNegDivSelf ℚ a) = oneSubExpNegDivSelf ℚ (f a) := by
+    f (oneSubExpNegDivSelf 𝕂 a) = oneSubExpNegDivSelf 𝕂 (f a) := by
   rw [oneSubExpNegDivSelf_eq_tsum, oneSubExpNegDivSelf_eq_tsum]
-  refine ((summable_oneSubExpNegDivSelf (𝕂 := ℚ) a).hasSum.map f hf).tsum_eq.symm.trans ?_
+  refine ((summable_oneSubExpNegDivSelf (𝕂 := 𝕂) a).hasSum.map f hf).tsum_eq.symm.trans ?_
   dsimp only [Function.comp_def]
   apply tsum_congr
   intro n
-  rw [map_inv_natCast_smul f ℚ ℚ]
+  rw [map_inv_natCast_smul f 𝕂 𝕂]
   simp
 
 end Map

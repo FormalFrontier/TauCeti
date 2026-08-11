@@ -4,10 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Analysis.CompletelyMonotone.Basic
-public import Mathlib.MeasureTheory.Measure.MeasureSpaceDef
-public import Mathlib.MeasureTheory.Measure.Typeclasses.Finite
-public import Mathlib.MeasureTheory.Integral.Bochner.Basic
+public import TauCeti.Analysis.CompletelyMonotone.Laplace.Representation
 -- Non-public: the Chafaï approximating measures, their tightness, and the Prokhorov extraction are
 -- used only inside the proof; the statement mentions none of them.
 import TauCeti.Analysis.CompletelyMonotone.Bernstein.Tightness
@@ -21,15 +18,16 @@ on `ℝ≥0`.
 
 ## Main results
 
-* `TauCeti.exists_isFiniteMeasure_integral_exp_neg_mul_eq_of_isCompletelyMonotone`
+* `TauCeti.exists_representsLaplace_of_isCompletelyMonotone`
 
 ## Scope
 
 This is the **existence** half of the Bernstein milestone in
 `TauCetiRoadmap/OneParameterSemigroups/README.md`, Part B. Uniqueness of the representing measure
-(Laplace-transform injectivity) and the converse direction are not proved here, so the roadmap's
-reserved name `bernstein` — stated there as a single `∃!` biconditional — stays free for the
-assembly that combines all three.
+is `TauCeti.RepresentsLaplace.unique`, the converse direction is
+`TauCeti.isCompletelyMonotoneOnIci_laplaceTransform`, and all three combine in
+`Bernstein/HausdorffBernsteinWidder.lean` as `TauCeti.hausdorff_bernstein_widder` and
+`TauCeti.hausdorff_bernstein_widder_existsUnique`.
 
 Finiteness of the representing measure is not an extra hypothesis but a consequence of complete
 monotonicity on the *closed* half-line: `IsCompletelyMonotone` builds in `Set.Ici 0`, so `f` takes a
@@ -97,19 +95,16 @@ private theorem sub_eq_integral_exp_neg_mul_of_weak_limit {L : ℝ} {C : ℝ≥0
       (C := (C : ℝ)) (chafaiRescaled f)
       (hmass'.mono fun n hn => hn.trans
         (by simp [ENNReal.ofReal_coe_nnreal])) t ht).mono_left hU
-  -- Split the error integral, using that both kernels are bounded continuous.
+  -- the mass bound makes the Chafaï measures eventually finite along `U`
+  have hfin : ∀ᶠ n in (U : Filter ℕ), IsFiniteMeasure (chafaiRescaled f n) :=
+    Filter.Eventually.mono (hU hmass') fun n hn => ⟨hn.trans_lt ENNReal.coe_lt_top⟩
   have hsplit : ∀ᶠ n in (U : Filter ℕ), ∫ p : ℝ≥0,
       (bernsteinKernel n t (p : ℝ) - Real.exp (-(t * (p : ℝ)))) ∂(chafaiRescaled f n)
         = (∫ p, bernsteinKernel n t (p : ℝ) ∂(chafaiRescaled f n))
           - ∫ p, Real.exp (-(t * (p : ℝ))) ∂(chafaiRescaled f n) := by
-    filter_upwards [hU hmass'] with n hn
-    -- Finiteness on the tail comes from the mass bound itself.
-    have : IsFiniteMeasure (chafaiRescaled f n) := ⟨hn.trans_lt ENNReal.coe_lt_top⟩
-    have hb : Integrable (fun p : ℝ≥0 => bernsteinKernel n t (p : ℝ))
-        (chafaiRescaled f n) := by
-      have h := (bernsteinKernelBoundedContinuous n ht).integrable (chafaiRescaled f n)
-      rwa [funext (bernsteinKernelBoundedContinuous_apply n ht)] at h
-    exact integral_sub hb (integrable_exp_neg_mul (chafaiRescaled f n) ht)
+    filter_upwards [hfin] with n hn
+    exact integral_sub (integrable_bernsteinKernel (chafaiRescaled f n) n ht)
+      (integrable_exp_neg_mul (chafaiRescaled f n) ht)
   -- The Bernstein integral is constantly `f t - L` once `n ≥ 2`.
   have hconst : ∀ᶠ n in (U : Filter ℕ),
       ∫ p, bernsteinKernel n t (p : ℝ) ∂(chafaiRescaled f n) = f t - L := by
@@ -129,11 +124,11 @@ private theorem sub_eq_integral_exp_neg_mul_of_weak_limit {L : ℝ} {C : ℝ≥0
 /-- **Bernstein's theorem, existence half.** A completely monotone function on `[0, ∞)` is the
 Laplace transform of a finite positive measure on `ℝ≥0`.
 
-Uniqueness of that measure is not asserted here; see the module docstring. -/
-theorem exists_isFiniteMeasure_integral_exp_neg_mul_eq_of_isCompletelyMonotone
+Uniqueness of that measure is not asserted here; it is `TauCeti.RepresentsLaplace.unique`, and
+the two combine in the Hausdorff--Bernstein--Widder theorem. -/
+theorem exists_representsLaplace_of_isCompletelyMonotone
     (hcm : IsCompletelyMonotone f) :
-    ∃ μ : Measure ℝ≥0, IsFiniteMeasure μ ∧
-      ∀ t : ℝ, 0 ≤ t → f t = ∫ x, Real.exp (-t * (x : ℝ)) ∂μ := by
+    ∃ μ : Measure ℝ≥0, RepresentsLaplace μ f := by
   obtain ⟨L, C, hL, hL_nn, -, hmass⟩ := chafaiRescaled_prokhorov_mass_bound f hcm
   have hmass' : ∀ n, (chafaiRescaled f n) univ ≤ (C : ℝ≥0∞) := fun n => (hmass n).2
   obtain ⟨μ₀, U, hU, hμ₀fin, -, hweak⟩ :=
@@ -144,9 +139,10 @@ theorem exists_isFiniteMeasure_integral_exp_neg_mul_eq_of_isCompletelyMonotone
     fun t ht => sub_eq_integral_exp_neg_mul_of_weak_limit hcm hL (.of_forall hmass') hU hweak ht
   -- Add the atom `L · δ₀` to recover `f` itself.
   have := hμ₀fin
-  refine ⟨μ₀ + L.toNNReal • Measure.dirac 0, inferInstance, fun t ht => ?_⟩
-  simp only [neg_mul]
-  rw [integral_exp_neg_mul_add_smul_dirac_zero μ₀ _ ht, Real.coe_toNNReal L hL_nn]
+  refine ⟨μ₀ + L.toNNReal • Measure.dirac 0,
+    representsLaplace_iff.mpr ⟨inferInstance, fun t ht => ?_⟩⟩
+  rw [laplaceTransform_apply,
+    integral_exp_neg_mul_add_smul_dirac_zero μ₀ _ ht, Real.coe_toNNReal L hL_nn]
   linarith [key t ht]
 
 end TauCeti

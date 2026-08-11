@@ -97,8 +97,9 @@ theorem tangentToLeftInvariantDerivation_lie [CompleteSpace E]
 /-- Evaluation at the identity identifies left-invariant derivations with the tangent Lie algebra as
 Lie algebras. -/
 noncomputable def leftInvariantDerivationLieEquivGroupLieAlgebra
-    [FiniteDimensional ℝ E] [T2Space G] (h₁ : I.IsInteriorPoint (1 : G)) :
+    [FiniteDimensional ℝ E] (h₁ : I.IsInteriorPoint (1 : G)) :
     LeftInvariantDerivation I G ≃ₗ⁅ℝ⁆ GroupLieAlgebra I G :=
+  let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
   { leftInvariantDerivationEquivGroupLieAlgebra (I := I) (G := G) h₁ with
     map_lie' := by
       intro D D'
@@ -121,15 +122,19 @@ theorem leftInvariantDerivationLieEquivGroupLieAlgebra_apply
     (D : LeftInvariantDerivation I G) :
     leftInvariantDerivationLieEquivGroupLieAlgebra h₁ D =
       leftInvariantDerivationEquivGroupLieAlgebra h₁ D := by
+  have hT2 : (inferInstance : T2Space G) =
+      t2Space_of_lieGroup (I := I) (n := ∞) := Subsingleton.elim _ _
+  cases hT2
   rfl
 
 /-- The inverse Lie equivalence sends a tangent vector to its left-invariant derivation. -/
 @[simp]
 theorem leftInvariantDerivationLieEquivGroupLieAlgebra_symm_apply
-    [FiniteDimensional ℝ E] [T2Space G] (h₁ : I.IsInteriorPoint (1 : G))
+    [FiniteDimensional ℝ E] (h₁ : I.IsInteriorPoint (1 : G))
     (v : GroupLieAlgebra I G) :
     (leftInvariantDerivationLieEquivGroupLieAlgebra h₁).symm v =
       tangentToLeftInvariantDerivation v := by
+  let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
   let e := leftInvariantDerivationLieEquivGroupLieAlgebra h₁
   let e₀ := leftInvariantDerivationEquivGroupLieAlgebra h₁
   apply e.symm_apply_eq.mpr
