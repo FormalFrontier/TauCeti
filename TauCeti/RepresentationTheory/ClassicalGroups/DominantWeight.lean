@@ -239,11 +239,6 @@ length `λᵢ - λₙ`.  Together with `TauCeti.DominantWeight.detShift` it pres
 determinant twist of a polynomial weight. -/
 def detShiftShape (l : DominantWeight n) : YoungDiagram := (l.shift (-l.detShift)).shape
 
-/-- The polynomial part of a dominant weight for `GL n` has at most `n` rows, being the Young
-diagram of a weight for `GL n`. -/
-theorem colLen_zero_detShiftShape_le (l : DominantWeight n) : l.detShiftShape.colLen 0 ≤ n :=
-  colLen_zero_shape_le _
-
 @[simp]
 theorem rowLen_detShiftShape (l : DominantWeight n) (i : Fin n) :
     l.detShiftShape.rowLen i = (l.1 i - l.detShift).toNat := by
@@ -273,18 +268,27 @@ theorem shift_weightOfShape_detShiftShape (l : DominantWeight n) :
     (weightOfShape n l.detShiftShape).shift l.detShift = l := by
   rw [weightOfShape_detShiftShape, shift_shift, neg_add_cancel, shift_zero]
 
-/-- The polynomial part of a dominant weight for `GL (n + 1)` has at most `n` rows: its last
-entry is `λₙ₊₁ - λₙ₊₁ = 0`.  This is the row bound that makes the determinant twist unique. -/
-theorem colLen_zero_detShiftShape_le_pred (l : DominantWeight (n + 1)) :
-    l.detShiftShape.colLen 0 ≤ n := by
-  by_contra h
-  have hmem : ((n, 0) : ℕ × ℕ) ∈ l.detShiftShape :=
-    YoungDiagram.mem_iff_lt_colLen.mpr (Nat.lt_of_not_le h)
-  have hpos : 0 < l.detShiftShape.rowLen n := YoungDiagram.mem_iff_lt_rowLen.mp hmem
-  have hzero : l.detShiftShape.rowLen n = (l.1 (Fin.last n) - l.detShift).toNat :=
-    rowLen_detShiftShape l (Fin.last n)
-  rw [detShift_succ, sub_self, Int.toNat_zero] at hzero
-  omega
+/-- The polynomial part of a dominant weight for `GL n` has at most `n - 1` rows: its last entry
+is `λₙ - λₙ = 0` when there is one, and the empty weight has the empty diagram.  This is the row
+bound that makes the determinant twist unique. -/
+theorem colLen_zero_detShiftShape_le_pred (l : DominantWeight n) :
+    l.detShiftShape.colLen 0 ≤ n - 1 := by
+  cases n with
+  | zero => exact colLen_zero_shape_le _
+  | succ n =>
+    by_contra h
+    have hmem : ((n, 0) : ℕ × ℕ) ∈ l.detShiftShape :=
+      YoungDiagram.mem_iff_lt_colLen.mpr (Nat.lt_of_not_le h)
+    have hpos : 0 < l.detShiftShape.rowLen n := YoungDiagram.mem_iff_lt_rowLen.mp hmem
+    have hzero : l.detShiftShape.rowLen n = (l.1 (Fin.last n) - l.detShift).toNat :=
+      rowLen_detShiftShape l (Fin.last n)
+    rw [detShift_succ, sub_self, Int.toNat_zero] at hzero
+    omega
+
+/-- The polynomial part of a dominant weight for `GL n` has at most `n` rows, the bound in the
+form consumed by the dictionary between weights and Young diagrams. -/
+theorem colLen_zero_detShiftShape_le (l : DominantWeight n) : l.detShiftShape.colLen 0 ≤ n :=
+  (colLen_zero_detShiftShape_le_pred l).trans (Nat.sub_le n 1)
 
 /-- **Uniqueness of the determinant twist**: a dominant weight for `GL (n + 1)` is
 `μ + m·(1, …, 1)` for exactly one integer `m` and one Young diagram `μ` with at most `n` rows,

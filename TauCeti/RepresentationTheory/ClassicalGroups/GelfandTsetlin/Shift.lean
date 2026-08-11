@@ -15,8 +15,10 @@ adds that integer to every entry in the triangular array.  This file constructs 
 an equivalence and uses it to reduce patterns over an arbitrary dominant weight to the polynomial
 case.
 
-For a dominant weight `l`, subtracting its last entry gives the polynomial weight
-`l.shift (-l.detShift)`, whose Young diagram is `l.detShiftShape`.  The equivalence
+For a dominant weight `l` of nonzero rank, subtracting its last entry gives the polynomial weight
+`l.shift (-l.detShift)`, whose Young diagram is `l.detShiftShape`.  A weight of rank zero has no
+last entry; there `TauCeti.DominantWeight.detShift` is `0` and the normalization does nothing, so
+the rank-zero case needs no separate treatment below.  The equivalence
 `TauCeti.GTPattern.detShiftEquivBoundedSSYT` therefore identifies the patterns with top weight `l`
 with the bounded semistandard Young tableaux of that normalized shape.  It is the rational-weight
 bridge between the Gelfand-Tsetlin pattern count and the existing pattern-tableau correspondence;
