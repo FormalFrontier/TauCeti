@@ -48,7 +48,7 @@ theorem Subgroup.map_center_le (f : G →* H) (hf : Function.Surjective f) :
   rw [← map_mul, ← map_mul, Subgroup.mem_center_iff.mp hx z]
 
 /-- An isomorphism of groups carries the centre onto the centre. -/
-theorem Subgroup.map_center (e : G ≃* H) :
+theorem Subgroup.map_center_eq_center (e : G ≃* H) :
     (Subgroup.center G).map (e : G →* H) = Subgroup.center H := by
   apply le_antisymm (Subgroup.map_center_le _ e.surjective)
   intro y hy

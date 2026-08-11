@@ -145,7 +145,7 @@ def mulEquivOfCenterEqBot [Group.IsPerfect G] (h : center G = ⊥) :
   let e : ↥(commutator G) ≃* G :=
     (MulEquiv.subgroupCongr Group.IsPerfect.commutator_eq_top).trans Subgroup.topEquiv
   have hc : center ↥(commutator G) = ⊥ := by
-    rw [← TauCeti.Subgroup.map_center e.symm, h, Subgroup.map_bot]
+    rw [← TauCeti.Subgroup.map_center_eq_center e.symm, h, Subgroup.map_bot]
   (QuotientGroup.quotientMulEquivOfEq hc).trans (QuotientGroup.quotientBot.trans e)
 
 @[simp]
