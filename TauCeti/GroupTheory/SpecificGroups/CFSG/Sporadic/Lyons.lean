@@ -203,9 +203,80 @@ def lyPresentation : GroupPresentation where
   expectedRelatorCount := 25
   transcribed := h2Relators ++ h1Relators ++ lyExtensionRelators
 
+/-- The generator names recorded for `Ly`. -/
+@[simp]
+theorem lyPresentation_generatorNames :
+    lyPresentation.generatorNames = ["a", "b", "c", "d", "z"] := by
+  rfl
+
+/-- The source recorded for `Ly`. -/
+@[simp]
+theorem lyPresentation_source :
+    lyPresentation.source =
+      "V. Gebhardt, Two Short Presentations for Lyons' Sporadic Simple Group, \
+        Experimental Mathematics 9 (2000), no. 3, 333--338" := by
+  rfl
+
+/-- The locator recorded for `Ly`, including the DOI and full-text catalogue entry. -/
+@[simp]
+theorem lyPresentation_sourceLocator :
+    lyPresentation.sourceLocator = "Section 3B, especially p. 336, sets R_H2, R_H1, and R_G; \
+      https://doi.org/10.1080/10586458.2000.10504410; full-text catalogue at \
+      https://eudml.org/doc/222733" := by
+  rfl
+
+/-- The generator and source-notation convention recorded for `Ly`. -/
+@[simp]
+theorem lyPresentation_generatorConvention :
+    lyPresentation.generatorConvention = "The source's generators a, b, c, d, z, in that order, \
+      so indices 0, 1, 2, 3, 4 denote a, b, c, d, z. A barred letter is its inverse, x^y means \
+      y^-1*x*y, [x,y] means x^-1*y^-1*x*y, and products are read left to right." := by
+  rfl
+
+/-- The transcription and verification notes recorded for `Ly`. -/
+@[simp]
+theorem lyPresentation_transcriptionNotes :
+    lyPresentation.transcriptionNotes = "The nine R_H2 relators, seven R_H1 relators, and nine \
+      R_G relators are stored in the source's order. An equation r=s is compiled as r*s^-1. Free \
+      reduction gives block lengths 80, 160, and 309, agreeing with the source's total 549; \
+      decidable checks in this module verify each block separately and derive the total. The paper \
+      proves the presentation by double-coset enumeration. The independent FiniteSimpleGroups \
+      development does not cover Ly." := by
+  rfl
+
+/-- The generator count recorded for `Ly`. -/
+@[simp]
+theorem lyPresentation_expectedGeneratorCount : lyPresentation.expectedGeneratorCount = 5 := by
+  rfl
+
+/-- The relator count recorded for `Ly`. -/
+@[simp]
+theorem lyPresentation_expectedRelatorCount : lyPresentation.expectedRelatorCount = 25 := by
+  rfl
+
+private theorem lyPresentation_blockDecomposition :
+    lyPresentation.transcribed = h2Relators ++ h1Relators ++ lyExtensionRelators := by
+  rfl
+
+private theorem lyPresentation_h2Block :
+    lyPresentation.transcribed.take 9 = h2Relators := by
+  rw [lyPresentation_blockDecomposition]
+  rfl
+
+private theorem lyPresentation_h1Block :
+    (lyPresentation.transcribed.drop 9).take 7 = h1Relators := by
+  rw [lyPresentation_blockDecomposition]
+  rfl
+
+private theorem lyPresentation_extensionBlock :
+    lyPresentation.transcribed.drop 16 = lyExtensionRelators := by
+  rw [lyPresentation_blockDecomposition]
+  rfl
+
 /-- The twenty-five relator expressions transcribed for `Ly`, split into the three blocks used by
 the source. This self-contained equation characterizes the sealed presentation without exposing
 the file's private transcription helpers. -/
+@[simp]
 theorem lyPresentation_transcribed :
     lyPresentation.transcribed =
       let a : Relator (Fin lyPresentation.generatorNames.length) :=
@@ -302,7 +373,7 @@ theorem lyPresentation_transcribed :
 theorem lyPresentation_reducedH2Length :
     ((lyPresentation.transcribed.take 9).map fun r =>
       (FreeGroup.reduce r.toWord).length).sum = 80 := by
-  change (h2Relators.map fun r => (FreeGroup.reduce r.toWord).length).sum = 80
+  rw [lyPresentation_h2Block]
   exact reducedH2Length
 
 /-- The freely reduced lengths of relators 10 through 16 sum to `160`, as recorded for the
@@ -310,7 +381,7 @@ theorem lyPresentation_reducedH2Length :
 theorem lyPresentation_reducedH1Length :
     (((lyPresentation.transcribed.drop 9).take 7).map fun r =>
       (FreeGroup.reduce r.toWord).length).sum = 160 := by
-  change (h1Relators.map fun r => (FreeGroup.reduce r.toWord).length).sum = 160
+  rw [lyPresentation_h1Block]
   exact reducedH1Length
 
 /-- The freely reduced lengths of the final nine relators sum to `309`, as recorded for the
@@ -318,16 +389,14 @@ theorem lyPresentation_reducedH1Length :
 theorem lyPresentation_reducedExtensionLength :
     ((lyPresentation.transcribed.drop 16).map fun r =>
       (FreeGroup.reduce r.toWord).length).sum = 309 := by
-  change (lyExtensionRelators.map fun r => (FreeGroup.reduce r.toWord).length).sum = 309
+  rw [lyPresentation_extensionBlock]
   exact reducedLyExtensionLength
 
-/-- The freely reduced lengths of all relators sum to the source's total `549`. This follows from
-the three separately checked block lengths. -/
+/-- The freely reduced lengths of all twenty-five relators sum to the source's total `549`. -/
 theorem lyPresentation_reducedTotalLength :
     (lyPresentation.transcribed.map fun r =>
       (FreeGroup.reduce r.toWord).length).sum = 549 := by
-  change ((h2Relators ++ h1Relators ++ lyExtensionRelators).map fun r =>
-    (FreeGroup.reduce r.toWord).length).sum = 549
+  rw [lyPresentation_blockDecomposition]
   exact reducedTotalLength
 
 /-- The generator and relator counts recorded for `Ly` agree with the transcribed data. -/
