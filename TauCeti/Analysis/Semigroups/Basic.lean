@@ -88,6 +88,38 @@ theorem map_add (S : StronglyContinuousSemigroup X) (s t : ℝ≥0) :
   S.map_add' s t
 
 omit [CompleteSpace X] in
+/-- **The operator at a natural multiple of a time is a power.** `S (k • t) = (S t) ^ k`.
+
+Not a `simp` lemma: `nsmul_eq_mul` rewrites the left-hand side to `S (↑k * t)`, so tagging this
+would put it out of simp normal form (`simpNF`). -/
+theorem map_nsmul (S : StronglyContinuousSemigroup X) (t : ℝ≥0) (k : ℕ) :
+    S (k • t) = (S t) ^ k := by
+  induction k with
+  | zero => rw [zero_smul, S.map_zero, pow_zero, ContinuousLinearMap.one_def]
+  | succ k ih =>
+    rw [succ_nsmul', S.map_add, ih, pow_succ', ContinuousLinearMap.mul_def]
+
+omit [CompleteSpace X] in
+/-- **The power identity in simp normal form.** `S (↑k * t) = (S t) ^ k`.
+
+This is `map_nsmul` with the left-hand side normalised: `nsmul_eq_mul` rewrites `k • t` to
+`↑k * t`, so this spelling is the one `simp` can reach. -/
+@[simp]
+theorem map_natCast_mul (S : StronglyContinuousSemigroup X) (t : ℝ≥0) (k : ℕ) :
+    S ((k : ℝ≥0) * t) = (S t) ^ k := by
+  simpa [nsmul_eq_mul] using S.map_nsmul t k
+
+omit [CompleteSpace X] in
+/-- **The multi-step operator-norm bound.** If `‖S t‖ ≤ M`, then `‖S (k • t)‖ ≤ M ^ k` at every
+natural multiple of `t`. -/
+theorem norm_map_nsmul_le_pow (S : StronglyContinuousSemigroup X) (t : ℝ≥0) {M : ℝ}
+    (hMt : ‖S t‖ ≤ M) (k : ℕ) : ‖S (k • t)‖ ≤ M ^ k := by
+  rw [S.map_nsmul]
+  rcases Nat.eq_zero_or_pos k with rfl | hk
+  · simpa [ContinuousLinearMap.one_def] using ContinuousLinearMap.norm_id_le
+  · exact (norm_pow_le' _ hk).trans (pow_le_pow_left₀ (norm_nonneg _) hMt k)
+
+omit [CompleteSpace X] in
 /-- Pointwise form of `StronglyContinuousSemigroup.map_add`. -/
 theorem map_add_apply (S : StronglyContinuousSemigroup X) (s t : ℝ≥0) (x : X) :
     S (s + t) x = S s (S t x) := by

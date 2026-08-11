@@ -7,6 +7,7 @@ module
 public import TauCeti.NumberTheory.ModularForms.LevelOne.FundamentalDomainBoundary.Basic
 public import TauCeti.NumberTheory.ModularForms.STransform
 
+import TauCeti.Analysis.Contour.Curve.ExcisionMeasure
 import TauCeti.NumberTheory.ModularForms.LevelOne.FundamentalDomainBoundary.Deriv
 
 /-!
@@ -230,18 +231,6 @@ theorem excised_logDeriv_comp_ofComplex_fdBoundary_arc_add_four_sub_eq_neg
   · simp only [if_neg hc, if_neg fun h => hc (hsymm.mp h)]
     exact logDeriv_comp_ofComplex_fdBoundary_arc_add_four_sub_eq_neg f hS ht (hd hc) (hne hc)
 
-/-- **The excision set is measurable.** It is a finite union of preimages of closed balls
-under the continuous contour. -/
-theorem measurableSet_exists_norm_fdBoundary_sub_le {H ε : ℝ} {S : Finset ℂ} :
-    MeasurableSet {t : ℝ | ∃ s ∈ S, ‖fdBoundary H t - s‖ ≤ ε} := by
-  have hset : {t : ℝ | ∃ s ∈ S, ‖fdBoundary H t - s‖ ≤ ε}
-      = ⋃ s ∈ (S : Set ℂ), {t : ℝ | ‖fdBoundary H t - s‖ ≤ ε} := by
-    ext t; simp
-  rw [hset]
-  refine S.finite_toSet.measurableSet_biUnion fun s _ => ?_
-  exact measurableSet_le
-    (((continuous_fdBoundary H).sub continuous_const).norm).measurable measurable_const
-
 /-- **An excised constant is interval-integrable.** It is measurable, because the excision set
 is, and bounded by the constant's norm. -/
 theorem intervalIntegrable_excised_const {H ε : ℝ} {S : Finset ℂ} (c : ℂ) (a b : ℝ) :
@@ -249,7 +238,8 @@ theorem intervalIntegrable_excised_const {H ε : ℝ} {S : Finset ℂ} (c : ℂ)
       (fun t => if ∃ s ∈ S, ‖fdBoundary H t - s‖ ≤ ε then (0 : ℂ) else c) volume a b := by
   have hmeas : Measurable
       (fun t => if ∃ s ∈ S, ‖fdBoundary H t - s‖ ≤ ε then (0 : ℂ) else c) :=
-    measurable_const.ite measurableSet_exists_norm_fdBoundary_sub_le measurable_const
+    measurable_const.ite
+      (Contour.measurableSet_excision (continuous_fdBoundary H).measurable S ε) measurable_const
   have hbdd : ∀ t : ℝ,
       ‖(if ∃ s ∈ S, ‖fdBoundary H t - s‖ ≤ ε then (0 : ℂ) else c)‖ ≤ ‖c‖ := by
     intro t
