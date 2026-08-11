@@ -6,6 +6,7 @@ module
 
 public import Mathlib.Probability.HasLaw
 public import Mathlib.Probability.Kernel.Composition.MeasureComp
+public import TauCeti.MeasureTheory.Measure.Dirac
 
 /-!
 # Graph plans of transport maps
@@ -36,10 +37,11 @@ Kantorovich plan induced by the Monge map `T`.
 * `TauCeti.Measure.eq_graphPlan_iff` — a plan is the graph plan of `T` exactly when it is
   concentrated on the graph of `T`: this is the intrinsic description of deterministic plans;
 * `TauCeti.Measure.graphPlan_eq_graphPlan_iff` — two maps induce the same plan exactly when they
-  agree `μ`-a.e., so a transport map is pinned down by its plan only up to a null set;
-* `TauCeti.Measure.hasLaw_dirac_iff` and `TauCeti.Measure.not_hasLaw_dirac_of_forall_ne` — a
-  Dirac source can only be transported onto a Dirac target, so for some data the Monge problem
-  has no solution at all.
+  agree `μ`-a.e., so a transport map is pinned down by its plan only up to a null set.
+
+That the Monge problem is genuinely infeasible for some data — a Dirac source can only be
+transported onto a Dirac target — is not about graph plans and lives with the other
+`ProbabilityTheory.HasLaw` facts, in `TauCeti.Probability.not_hasLaw_dirac_of_forall_ne`.
 
 ## Conventions
 
@@ -105,6 +107,7 @@ theorem graphPlan_apply (hT : AEMeasurable T μ) {s : Set (X × Y)} (hs : Measur
     graphPlan T μ s = μ {x | (x, T x) ∈ s} :=
   Measure.map_apply_of_aemeasurable (aemeasurable_graphMap hT) hs
 
+/-- The graph plan over the zero measure is the zero measure. -/
 @[simp]
 theorem graphPlan_zero (T : X → Y) : graphPlan T (0 : Measure X) = 0 :=
   Measure.map_zero _
@@ -173,35 +176,24 @@ theorem snd_graphPlan_id (μ : Measure X) : (graphPlan (id : X → X) μ).snd = 
 theorem graphPlan_congr (h : T =ᵐ[μ] S) : graphPlan T μ = graphPlan S μ :=
   Measure.map_congr <| by filter_upwards [h] with x hx; rw [hx]
 
+/-- Taking the graph plan of a fixed map is additive in the source measure. -/
 @[simp]
 theorem graphPlan_add {μ₁ μ₂ : Measure X} (hT₁ : AEMeasurable T μ₁) (hT₂ : AEMeasurable T μ₂) :
     graphPlan T (μ₁ + μ₂) = graphPlan T μ₁ + graphPlan T μ₂ :=
   AEMeasurable.map_add₀ (aemeasurable_graphMap hT₁) (aemeasurable_graphMap hT₂)
 
+/-- Taking the graph plan of a fixed map commutes with rescaling the source measure by an
+extended nonnegative real. -/
 @[simp]
 theorem graphPlan_smul (T : X → Y) (c : ℝ≥0∞) (μ : Measure X) :
     graphPlan T (c • μ) = c • graphPlan T μ :=
   Measure.map_smul _ _ _
-
-/-- A Dirac measure leaves a map no room to be modified on a null set: pushing `Measure.dirac x`
-forward along a `Measure.dirac x`-a.e. measurable map is evaluating that map at `x`. -/
-theorem map_dirac_of_aemeasurable {x : X} (hT : AEMeasurable T (Measure.dirac x)) :
-    (Measure.dirac x).map T = Measure.dirac (T x) := by
-  have hx : T x = hT.mk T x := by
-    by_contra hne
-    have h0 : Measure.dirac x {y | ¬T y = hT.mk T y} = 0 := ae_iff.1 hT.ae_eq_mk
-    rw [Measure.dirac_apply_of_mem hne] at h0
-    exact one_ne_zero h0
-  rw [Measure.map_congr hT.ae_eq_mk, Measure.map_dirac' hT.measurable_mk, ← hx]
 
 /-- The graph plan over a Dirac measure is the Dirac measure at the corresponding graph point. -/
 @[simp]
 theorem graphPlan_dirac {x : X} (hT : AEMeasurable T (Measure.dirac x)) :
     graphPlan T (Measure.dirac x) = Measure.dirac (x, T x) :=
   map_dirac_of_aemeasurable (aemeasurable_graphMap hT)
-
-/-- The graph plan of the identity is the diagonal plan. -/
-theorem graphPlan_id (μ : Measure X) : graphPlan id μ = μ.map fun x ↦ (x, x) := (rfl)
 
 /-- The graph plan of the identity is the composition-product with the identity kernel. -/
 theorem graphPlan_id_eq_compProd (μ : Measure X) [SFinite μ] : graphPlan id μ = μ ⊗ₘ Kernel.id :=
@@ -304,22 +296,6 @@ theorem graphPlan_eq_graphPlan_iff [MeasurableEq Y] (hT : AEMeasurable T μ)
     (ae_map_iff (measurable_graphMap hT.measurable_mk).aemeasurable
       (measurableSet_eq_fun measurable_snd (hS.measurable_mk.comp measurable_fst))).1 hae
   exact hT.ae_eq_mk.trans (key.trans hS.ae_eq_mk.symm)
-
-/-! ### A Dirac source admits no non-Dirac transport map -/
-
-/-- An a.e. measurable map transports a Dirac measure exactly onto the Dirac measure at its
-value. The a.e. measurability is exactly what `ProbabilityTheory.HasLaw` already asks for. -/
-theorem hasLaw_dirac_iff {x : X} (hT : AEMeasurable T (Measure.dirac x)) :
-    HasLaw T ν (Measure.dirac x) ↔ ν = Measure.dirac (T x) := by
-  refine ⟨fun h ↦ ?_, fun h ↦ ⟨hT, ?_⟩⟩
-  · rw [← h.map_eq, map_dirac_of_aemeasurable hT]
-  · rw [map_dirac_of_aemeasurable hT, h]
-
-/-- **The Monge problem can be infeasible.** No map at all transports a Dirac measure onto a
-target that is not itself a Dirac measure: a transport map carries its own a.e. measurability. -/
-theorem not_hasLaw_dirac_of_forall_ne (hν : ∀ y : Y, ν ≠ Measure.dirac y) (x : X) :
-    ¬HasLaw T ν (Measure.dirac x) :=
-  fun h ↦ hν (T x) ((hasLaw_dirac_iff h.aemeasurable).1 h)
 
 end Measure
 
