@@ -30,7 +30,7 @@ transcribed in `TauCeti.GroupTheory.SpecificGroups.CFSG.Sporadic.Mathieu.TwentyT
 inside its relator list as written and is counted.
 
 The source's commutator convention is `[r,s] = r⁻¹s⁻¹rs`, opposite to Mathlib's
-`commutatorElement`, so each commutator is stored as `TauCeti.Relator.sourceComm`, the shared
+`commutatorElement`, so each commutator is stored as `TauCeti.Relator.commInvInv`, the shared
 abbreviation for that convention. The proved `TauCeti.Relator.toWord_toFreeGroup` is the audit
 boundary between these expressions and the signed words that `PresentedGroup` consumes.
 
@@ -122,8 +122,8 @@ def m24Presentation : GroupPresentation where
     [ .pow a 2,
       .pow b 3,
       .pow ab1 23,
-      .pow (Relator.sourceComm a b) 12,
-      .pow (Relator.sourceComm a (b ⬝ a ⬝ b)) 5,
+      .pow (Relator.commInvInv a b) 12,
+      .pow (Relator.commInvInv a (b ⬝ a ⬝ b)) 5,
       .pow (ab1 ⬝ ab1 ⬝ abNeg1) 3 ⬝ .pow (ab1 ⬝ abNeg1 ⬝ abNeg1) 3,
       .pow (ab1 ⬝ .pow (ab1 ⬝ abNeg1) 3) 4 ]
 

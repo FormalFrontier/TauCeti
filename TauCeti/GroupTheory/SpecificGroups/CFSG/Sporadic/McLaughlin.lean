@@ -35,7 +35,7 @@ because the coset enumerations that the source uses to justify the presentation 
 them.
 
 The source's commutator convention is `[r,s] = r⁻¹s⁻¹rs`, opposite to Mathlib's
-`commutatorElement`, so each commutator is stored as `TauCeti.Relator.sourceComm`, the shared
+`commutatorElement`, so each commutator is stored as `TauCeti.Relator.commInvInv`, the shared
 abbreviation for that convention. The proved `TauCeti.Relator.toWord_toFreeGroup` is the audit
 boundary between these expressions and the signed words that `PresentedGroup` consumes.
 
@@ -119,20 +119,20 @@ def mclPresentation : GroupPresentation where
   transcribed :=
     [ .pow a 2,
       .pow b 5,
-      .pow (Relator.sourceComm a b) 5,
+      .pow (Relator.commInvInv a b) 5,
       .pow ab1 11,
       .pow ab2 12,
-      .pow (Relator.sourceComm a (.pow b 2)) 6,
+      .pow (Relator.commInvInv a (.pow b 2)) 6,
       .pow (ab1 ⬝ abNeg2) 7,
-      .pow (Relator.sourceComm a (.pow (.inv b) 2 ⬝ ab1 ⬝ ab1 ⬝ ab2)) 2,
-      Relator.sourceComm a (.pow (.inv b) 2 ⬝ ab2 ⬝ abNeg1 ⬝ ab1 ⬝ .pow ab2 2 ⬝ ab1 ⬝ abNeg1),
-      .pow (Relator.sourceComm a (b ⬝ .pow ab2 3)) 2,
-      .pow (Relator.sourceComm a (.pow b 2 ⬝ ab1 ⬝ .pow ab2 2)) 2,
+      .pow (Relator.commInvInv a (.pow (.inv b) 2 ⬝ ab1 ⬝ ab1 ⬝ ab2)) 2,
+      Relator.commInvInv a (.pow (.inv b) 2 ⬝ ab2 ⬝ abNeg1 ⬝ ab1 ⬝ .pow ab2 2 ⬝ ab1 ⬝ abNeg1),
+      .pow (Relator.commInvInv a (b ⬝ .pow ab2 3)) 2,
+      .pow (Relator.commInvInv a (.pow b 2 ⬝ ab1 ⬝ .pow ab2 2)) 2,
       ab1 ⬝ ab2 ⬝ abNeg2 ⬝ ab1 ⬝ abNeg1 ⬝ ab2 ⬝ .pow (abNeg2 ⬝ ab1) 2 ⬝
         .pow (ab2 ⬝ abNeg2 ⬝ ab2) 2,
-      .pow (Relator.sourceComm a (.pow b 2 ⬝ ab2 ⬝ abNeg1 ⬝ ab2)) 2,
-      .pow (Relator.sourceComm a (.pow b 2 ⬝ ab1)) 4,
-      .pow (Relator.sourceComm a (.pow b 2 ⬝ ab2)) 4 ]
+      .pow (Relator.commInvInv a (.pow b 2 ⬝ ab2 ⬝ abNeg1 ⬝ ab2)) 2,
+      .pow (Relator.commInvInv a (.pow b 2 ⬝ ab1)) 4,
+      .pow (Relator.commInvInv a (.pow b 2 ⬝ ab2)) 4 ]
 
 /-- The generator and relator counts recorded for `McL` agree with the transcribed data. -/
 theorem matchesMetadata_mclPresentation : mclPresentation.matchesMetadata := by decide

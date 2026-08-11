@@ -34,7 +34,7 @@ written, so it is transcribed and the recorded relator count is nine. The source
 correctness covers the list both with and without it.
 
 The source's commutator convention is `[r,s] = r⁻¹s⁻¹rs`, opposite to Mathlib's
-`commutatorElement`, so the commutator is stored as `TauCeti.Relator.sourceComm`, the shared
+`commutatorElement`, so the commutator is stored as `TauCeti.Relator.commInvInv`, the shared
 abbreviation for that convention. The proved `TauCeti.Relator.toWord_toFreeGroup` is the audit
 boundary between these expressions and the signed words that `PresentedGroup` consumes.
 
@@ -122,7 +122,7 @@ def m23Presentation : GroupPresentation where
       .pow b 4,
       .pow ab1 23,
       .pow ab2 6,
-      .pow (Relator.sourceComm a b) 6,
+      .pow (Relator.commInvInv a b) 6,
       .pow (ab1 ⬝ abNeg1 ⬝ ab2) 4,
       .pow ab1 3 ⬝ abNeg1 ⬝ ab2 ⬝ .pow (ab1 ⬝ abNeg1) 2 ⬝ .pow ab1 3 ⬝ .pow abNeg1 3,
       .pow (ab1 ⬝ ab2 ⬝ ab2) 6,

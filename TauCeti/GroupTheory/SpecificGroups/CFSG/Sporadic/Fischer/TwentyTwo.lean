@@ -24,7 +24,7 @@ a², b¹³, (ab)¹¹, (ab²)²¹,
 ```
 
 The source's commutator convention is `[r,s] = r⁻¹s⁻¹rs`, opposite to Mathlib's
-`commutatorElement`, so each commutator is stored as `TauCeti.Relator.sourceComm`, the shared
+`commutatorElement`, so each commutator is stored as `TauCeti.Relator.commInvInv`, the shared
 abbreviation for that convention. The proved `TauCeti.Relator.toWord_toFreeGroup` is the audit
 boundary between these expressions and the signed words consumed by `PresentedGroup`.
 
@@ -98,15 +98,15 @@ def fi22Presentation : GroupPresentation where
       .pow b 13,
       .pow (a ⬝ b) 11,
       .pow (a ⬝ .pow b 2) 21,
-      .pow (Relator.sourceComm a b) 3,
-      .pow (Relator.sourceComm a (.pow b 2)) 3,
-      .pow (Relator.sourceComm a (.pow b 3)) 3,
-      .pow (Relator.sourceComm a (.pow b 4)) 2,
-      .pow (Relator.sourceComm a (.pow b 5)) 3,
-      .pow (Relator.sourceComm a (b ⬝ a ⬝ .pow b 2)) 3,
-      .pow (Relator.sourceComm a (.inv b ⬝ a ⬝ .pow (.inv b) 2)) 2,
-      .pow (Relator.sourceComm a (b ⬝ a ⬝ .pow b 5)) 2,
-      .pow (Relator.sourceComm a (.pow b 2 ⬝ a ⬝ .pow b 5)) 2 ]
+      .pow (Relator.commInvInv a b) 3,
+      .pow (Relator.commInvInv a (.pow b 2)) 3,
+      .pow (Relator.commInvInv a (.pow b 3)) 3,
+      .pow (Relator.commInvInv a (.pow b 4)) 2,
+      .pow (Relator.commInvInv a (.pow b 5)) 3,
+      .pow (Relator.commInvInv a (b ⬝ a ⬝ .pow b 2)) 3,
+      .pow (Relator.commInvInv a (.inv b ⬝ a ⬝ .pow (.inv b) 2)) 2,
+      .pow (Relator.commInvInv a (b ⬝ a ⬝ .pow b 5)) 2,
+      .pow (Relator.commInvInv a (.pow b 2 ⬝ a ⬝ .pow b 5)) 2 ]
 
 /-- The generator and relator counts recorded for `Fi₂₂` agree with the transcribed data. -/
 theorem matchesMetadata_fi22Presentation : fi22Presentation.matchesMetadata := by

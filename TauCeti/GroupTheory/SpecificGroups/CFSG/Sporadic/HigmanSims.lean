@@ -32,7 +32,7 @@ The last three are redundant, and are flagged as such by the source; they are tr
 because the coset enumerations that the source uses to justify the presentation are run with them.
 
 The source's commutator convention is `[r,s] = r⁻¹s⁻¹rs`, opposite to Mathlib's
-`commutatorElement`, so each commutator is stored as `TauCeti.Relator.sourceComm`, the shared
+`commutatorElement`, so each commutator is stored as `TauCeti.Relator.commInvInv`, the shared
 abbreviation for that convention. The proved `TauCeti.Relator.toWord_toFreeGroup` is the audit
 boundary between these expressions and the signed words that `PresentedGroup` consumes.
 
@@ -116,9 +116,9 @@ def hsPresentation : GroupPresentation where
       .pow b 5,
       .pow ab1 11,
       .pow ab2 10,
-      .pow (Relator.sourceComm a b) 5,
-      .pow (Relator.sourceComm a (b ⬝ a ⬝ b)) 3,
-      .pow (Relator.sourceComm a (.pow b 2)) 6,
+      .pow (Relator.commInvInv a b) 5,
+      .pow (Relator.commInvInv a (b ⬝ a ⬝ b)) 3,
+      .pow (Relator.commInvInv a (.pow b 2)) 6,
       ab1 ⬝ ab1 ⬝ ab2 ⬝ abNeg1 ⬝ abNeg2 ⬝ abNeg1 ⬝ ab2 ⬝ ab1 ⬝ ab1 ⬝ .pow abNeg2 4,
       ab1 ⬝ .pow (ab2 ⬝ .pow abNeg2 2) 2 ⬝ ab2 ⬝ ab1 ⬝ ab2 ⬝ .pow (abNeg1 ⬝ ab2) 2,
       ab1 ⬝ ab1 ⬝ .pow ab2 2 ⬝ ab1 ⬝ .pow abNeg1 2 ⬝ ab1 ⬝ .pow ab2 2 ⬝ ab1 ⬝ ab1 ⬝
