@@ -17,7 +17,7 @@ a nondegenerate fixed subspace by one dimension at each step.
 
 ## Main result
 
-* `TauCeti.QuadraticMap.orthogonalGroup_subgroup_eq_top_of_reflection_mem`: any subgroup containing
+* `TauCeti.QuadraticMap.subgroup_eq_top_of_reflection_mem`: any subgroup containing
   every reflection in a vector of invertible norm is the full orthogonal group.
 
 ## References
@@ -109,7 +109,7 @@ private theorem exists_mem_subgroup_mul_eqOn_of_codim
 
 /-- **Cartan--Dieudonné generation.** Any subgroup of the orthogonal group that contains every
 reflection in a vector of invertible norm is the whole orthogonal group. -/
-theorem orthogonalGroup_subgroup_eq_top_of_reflection_mem
+theorem subgroup_eq_top_of_reflection_mem
     [FiniteDimensional K V] (Q : QuadraticForm K V) (hQ : Q.Nondegenerate)
     (H : Subgroup (QuadraticMap.orthogonalGroup Q))
     (hreflection : ∀ (v : V) [Invertible (Q v)],

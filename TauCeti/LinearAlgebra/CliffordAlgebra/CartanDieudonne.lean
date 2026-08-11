@@ -41,8 +41,12 @@ universe u v
 
 namespace CliffordAlgebra
 
-variable {K : Type u} {V : Type v} [Field K] [IsSepClosed K]
+variable {K : Type u} {V : Type v} [Field K]
   [AddCommGroup V] [Module K V] (Q : QuadraticForm K V) [Invertible (2 : K)]
+
+section IsSepClosed
+
+variable [IsSepClosed K]
 
 /-- Given an orthogonal automorphism that fixes `W` and an anisotropic vector `x` orthogonal to
 `W`, a Pin-range correction makes the product fix `W ⊔ K ∙ x` pointwise. -/
@@ -57,14 +61,32 @@ theorem exists_mem_range_pinToOrthogonal_mul_eqOn_sup_span_singleton
   QuadraticMap.exists_mem_subgroup_mul_eqOn_sup_span_singleton_of_reflection_mem Q
     (pinToOrthogonal Q).range (reflection_mem_range_pinToOrthogonal Q) g W hfix x hx
 
+end IsSepClosed
+
+/-- The twisted-conjugation homomorphism from the Pin group is surjective when every reflection
+normalization scalar is a square. -/
+theorem pinToOrthogonal_surjective_of_isSquare
+    [FiniteDimensional K V] (Q : QuadraticForm K V) (hQ : Q.Nondegenerate)
+    (hsquare : ∀ (v : V) [Invertible (Q v)], IsSquare (-⅟(Q v))) :
+    Function.Surjective (pinToOrthogonal Q) :=
+  MonoidHom.range_eq_top.mp <|
+    QuadraticMap.subgroup_eq_top_of_reflection_mem
+      Q hQ (pinToOrthogonal Q).range
+      fun v _ ↦ reflection_mem_range_pinToOrthogonal_of_isSquare Q v (hsquare v)
+
+section IsSepClosed
+
+variable [IsSepClosed K]
+
 /-- The twisted-conjugation homomorphism from the Pin group is surjective for a
 finite-dimensional nondegenerate quadratic space over a separably closed field of characteristic
 other than two. -/
 theorem pinToOrthogonal_surjective
     [FiniteDimensional K V] (Q : QuadraticForm K V) (hQ : Q.Nondegenerate) :
     Function.Surjective (pinToOrthogonal Q) :=
-  MonoidHom.range_eq_top.mp <|
-    QuadraticMap.orthogonalGroup_subgroup_eq_top_of_reflection_mem
-      Q hQ (pinToOrthogonal Q).range (reflection_mem_range_pinToOrthogonal Q)
+  pinToOrthogonal_surjective_of_isSquare Q hQ fun v _ ↦
+    IsSepClosed.exists_eq_mul_self (-⅟(Q v))
+
+end IsSepClosed
 end CliffordAlgebra
 end TauCeti
