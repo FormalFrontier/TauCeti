@@ -54,7 +54,7 @@ namespace TauCeti
 
 /-- If the order of a finite group is invertible in `k`, then so is the order of any subgroup,
 because the two differ by the index. -/
-theorem isUnit_natCard_subgroup {k : Type*} {G : Type*} [Semiring k] [Group G] [Finite G]
+theorem isUnit_natCard_subgroup {k : Type*} {G : Type*} [Semiring k] [Group G]
     (S : Subgroup G) (hG : IsUnit (Nat.card G : k)) : IsUnit (Nat.card S : k) := by
   have h : IsUnit ((Nat.card S : k) * (S.index : k)) := by
     rwa [← Nat.cast_mul, S.card_mul_index]

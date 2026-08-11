@@ -104,7 +104,7 @@ private theorem exists_center_family :
       · exact d.1.zero_mem
     have hsum : ∑ d, x * (v d : R) = ∑ d, if d = c then x else 0 := by
       rw [← Finset.mul_sum, hv, mul_one, Finset.sum_ite_eq' Finset.univ c fun _ ↦ x,
-        if_pos (Finset.mem_univ c)]
+        ite_eq_left (Finset.mem_univ c)]
     simpa [hc] using (huniq _ _ (hleft x) hb hsum c).symm
   · -- Centrality: multiplying `1 = ∑ e_d` on either side decomposes the same element.
     rw [Subalgebra.mem_center_iff]

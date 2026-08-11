@@ -75,7 +75,7 @@ noncomputable def coordinateRingMap :
   IsScalarTower.toAlgHom R (MatrixMonoid.CoordinateRing R n) (CoordinateRing R n)
 
 /-- The canonical map into the determinant localization agrees with its algebra map. -/
-@[simp← ]
+@[simp ←]
 theorem coordinateRingMap_apply (x : MatrixMonoid.CoordinateRing R n) :
     coordinateRingMap R n x =
       algebraMap (MatrixMonoid.CoordinateRing R n) (CoordinateRing R n) x :=
