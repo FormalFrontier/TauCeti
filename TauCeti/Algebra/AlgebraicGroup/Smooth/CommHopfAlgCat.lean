@@ -47,4 +47,12 @@ lemma smoothCommHopfAlgProperty_iff {R : Type u} [CommRing R]
     smoothCommHopfAlgProperty R H ↔ Algebra.Smooth R H :=
   Iff.rfl
 
+/-- Smoothness is invariant under isomorphism of commutative Hopf algebras. -/
+instance (R : Type u) [CommRing R] :
+    (smoothCommHopfAlgProperty R :
+      ObjectProperty (CommHopfAlgCat.{v} R)).IsClosedUnderIsomorphisms where
+  of_iso e hH := by
+    let _ : Algebra.Smooth R _ := hH
+    exact Algebra.Smooth.of_equiv (CommHopfAlgCat.ofIso e).toAlgEquiv
+
 end TauCeti
