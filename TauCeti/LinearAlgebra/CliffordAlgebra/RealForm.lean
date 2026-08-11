@@ -142,6 +142,89 @@ theorem finrank_cliffordAlgebra_realCliffordForm (p q : ℕ) :
     finrank ℝ (CliffordAlgebra (realCliffordForm p q)) = 2 ^ (p + q) := by
   rw [TauCeti.CliffordAlgebra.finrank_eq_two_pow, Module.finrank_pi, Fintype.card_fin]
 
+private def realCliffordNegIndexEquiv (p q : ℕ) : Fin (p + q) ≃ Fin (q + p) :=
+  finSumFinEquiv.symm |>.trans
+    (Equiv.sumComm (Fin p) (Fin q)) |>.trans
+    finSumFinEquiv
+
+private theorem realCliffordNegIndexEquiv_inl (p q : ℕ) (i : Fin p) :
+    realCliffordNegIndexEquiv p q (finSumFinEquiv (Sum.inl i)) =
+      finSumFinEquiv (Sum.inr i) := by
+  simp [realCliffordNegIndexEquiv]
+
+private theorem realCliffordNegIndexEquiv_inr (p q : ℕ) (i : Fin q) :
+    realCliffordNegIndexEquiv p q (finSumFinEquiv (Sum.inr i)) =
+      finSumFinEquiv (Sum.inl i) := by
+  simp [realCliffordNegIndexEquiv]
+
+private def realCliffordNegLinearEquiv (p q : ℕ) :
+    (Fin (p + q) → ℝ) ≃ₗ[ℝ] (Fin (q + p) → ℝ) :=
+  LinearEquiv.piCongrLeft' ℝ (fun _ : Fin (p + q) ↦ ℝ) (realCliffordNegIndexEquiv p q)
+
+private theorem realCliffordNegWeight (p q : ℕ) (i : Fin (p + q)) :
+    realCliffordWeight q p (realCliffordNegIndexEquiv p q i) =
+      -realCliffordWeight p q i := by
+  rw [← finSumFinEquiv.apply_symm_apply i]
+  rcases finSumFinEquiv.symm i with i | i
+  · simp only [realCliffordNegIndexEquiv, Equiv.trans_apply, Equiv.sumComm_apply,
+      finSumFinEquiv_apply_left]
+    rw [realCliffordWeight_of_le (by simp), realCliffordWeight_of_lt (by simp)]
+  · simp only [realCliffordNegIndexEquiv, Equiv.trans_apply, Equiv.sumComm_apply,
+      finSumFinEquiv_apply_right]
+    rw [realCliffordWeight_of_lt (by simp), realCliffordWeight_of_le (by simp)]
+    norm_num
+
+private theorem realCliffordNegLinearEquiv_apply (p q : ℕ) (x : Fin (p + q) → ℝ)
+    (i : Fin (p + q)) :
+    realCliffordNegLinearEquiv p q x (realCliffordNegIndexEquiv p q i) = x i := by
+  rw [realCliffordNegLinearEquiv, LinearEquiv.piCongrLeft'_apply, Equiv.symm_apply_apply]
+
+/-- Negating a real signature form swaps its positive and negative coordinates. -/
+def realCliffordFormNegIsometry (p q : ℕ) :
+    (-(realCliffordForm p q)).IsometryEquiv (realCliffordForm q p) :=
+  { realCliffordNegLinearEquiv p q with
+    map_app' := by
+      intro x
+      rw [realCliffordForm_apply, neg_apply, realCliffordForm_apply]
+      let y := realCliffordNegLinearEquiv p q x
+      calc
+        (∑ i, realCliffordWeight q p i * (y i * y i)) =
+            ∑ i, realCliffordWeight q p (realCliffordNegIndexEquiv p q i) *
+              (y (realCliffordNegIndexEquiv p q i) *
+                y (realCliffordNegIndexEquiv p q i)) := by
+          exact (Fintype.sum_equiv (realCliffordNegIndexEquiv p q)
+            (fun i ↦ realCliffordWeight q p (realCliffordNegIndexEquiv p q i) *
+              (y (realCliffordNegIndexEquiv p q i) *
+                y (realCliffordNegIndexEquiv p q i)))
+            (fun i ↦ realCliffordWeight q p i * (y i * y i))
+            (fun _ ↦ rfl)).symm
+        _ = -(∑ i, realCliffordWeight p q i * (x i * x i)) := by
+          dsimp only [y]
+          simp only [realCliffordNegWeight, realCliffordNegLinearEquiv_apply, neg_mul,
+            ← Finset.sum_neg_distrib] }
+
+/-- Negated negative coordinates become positive coordinates under
+`realCliffordFormNegIsometry`. -/
+@[simp]
+theorem realCliffordFormNegIsometry_pos_of_neg (p q : ℕ)
+    (x : Fin (p + q) → ℝ) (i : Fin q) :
+    realCliffordFormNegIsometry p q x (Fin.castAdd p i) = x (Fin.natAdd p i) := by
+  -- Expose the bundled isometry's private reindexing map before using its coordinate equation.
+  change realCliffordNegLinearEquiv p q x _ = _
+  rw [← finSumFinEquiv_apply_left, ← realCliffordNegIndexEquiv_inr,
+    realCliffordNegLinearEquiv_apply, finSumFinEquiv_apply_right]
+
+/-- Negated positive coordinates become negative coordinates under
+`realCliffordFormNegIsometry`. -/
+@[simp]
+theorem realCliffordFormNegIsometry_neg_of_pos (p q : ℕ)
+    (x : Fin (p + q) → ℝ) (i : Fin p) :
+    realCliffordFormNegIsometry p q x (Fin.natAdd q i) = x (Fin.castAdd q i) := by
+  -- Expose the bundled isometry's private reindexing map before using its coordinate equation.
+  change realCliffordNegLinearEquiv p q x _ = _
+  rw [← finSumFinEquiv_apply_right, ← realCliffordNegIndexEquiv_inl,
+    realCliffordNegLinearEquiv_apply, finSumFinEquiv_apply_left]
+
 /-! ### The four base entries, in coordinates -/
 
 @[simp]

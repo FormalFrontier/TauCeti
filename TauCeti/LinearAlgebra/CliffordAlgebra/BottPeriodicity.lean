@@ -872,87 +872,6 @@ theorem realCliffordPositiveSplitIsometry_snd (p q : ℕ)
   rw [signatureSwitchSplitLinearEquiv_snd, signatureSwitchSplitIndexEquiv_symm_inr,
     finSumFinEquiv_apply_left]
 
-private def signatureSwitchNegIndexEquiv (p q : ℕ) : Fin (p + q) ≃ Fin (q + p) :=
-  finSumFinEquiv.symm |>.trans
-    (Equiv.sumComm (Fin p) (Fin q)) |>.trans
-    finSumFinEquiv
-
-private theorem signatureSwitchNegIndexEquiv_inl (p q : ℕ) (i : Fin p) :
-    signatureSwitchNegIndexEquiv p q (finSumFinEquiv (Sum.inl i)) =
-      finSumFinEquiv (Sum.inr i) := by
-  simp [signatureSwitchNegIndexEquiv]
-
-private theorem signatureSwitchNegIndexEquiv_inr (p q : ℕ) (i : Fin q) :
-    signatureSwitchNegIndexEquiv p q (finSumFinEquiv (Sum.inr i)) =
-      finSumFinEquiv (Sum.inl i) := by
-  simp [signatureSwitchNegIndexEquiv]
-
-private def signatureSwitchNegLinearEquiv (p q : ℕ) :
-    (Fin (p + q) → ℝ) ≃ₗ[ℝ] (Fin (q + p) → ℝ) :=
-  LinearEquiv.piCongrLeft' ℝ (fun _ : Fin (p + q) ↦ ℝ) (signatureSwitchNegIndexEquiv p q)
-
-private theorem signatureSwitchNegWeight (p q : ℕ) (i : Fin (p + q)) :
-    realCliffordWeight q p (signatureSwitchNegIndexEquiv p q i) =
-      -realCliffordWeight p q i := by
-  rw [← finSumFinEquiv.apply_symm_apply i]
-  rcases finSumFinEquiv.symm i with i | i
-  · simp only [signatureSwitchNegIndexEquiv, Equiv.trans_apply, Equiv.sumComm_apply,
-      finSumFinEquiv_apply_left]
-    rw [realCliffordWeight_of_le (by simp), realCliffordWeight_of_lt (by simp)]
-  · simp only [signatureSwitchNegIndexEquiv, Equiv.trans_apply, Equiv.sumComm_apply,
-      finSumFinEquiv_apply_right]
-    rw [realCliffordWeight_of_lt (by simp), realCliffordWeight_of_le (by simp)]
-    norm_num
-
-private theorem signatureSwitchNegLinearEquiv_apply (p q : ℕ) (x : Fin (p + q) → ℝ)
-    (i : Fin (p + q)) :
-    signatureSwitchNegLinearEquiv p q x (signatureSwitchNegIndexEquiv p q i) = x i := by
-  rw [signatureSwitchNegLinearEquiv, LinearEquiv.piCongrLeft'_apply, Equiv.symm_apply_apply]
-
-/-- Negating a real signature form swaps its positive and negative coordinates. -/
-def realCliffordFormNegIsometry (p q : ℕ) :
-    (-(realCliffordForm p q)).IsometryEquiv (realCliffordForm q p) :=
-  { signatureSwitchNegLinearEquiv p q with
-    map_app' := by
-      intro x
-      rw [realCliffordForm_apply, neg_apply, realCliffordForm_apply]
-      let y := signatureSwitchNegLinearEquiv p q x
-      calc
-        (∑ i, realCliffordWeight q p i * (y i * y i)) =
-            ∑ i, realCliffordWeight q p (signatureSwitchNegIndexEquiv p q i) *
-              (y (signatureSwitchNegIndexEquiv p q i) *
-                y (signatureSwitchNegIndexEquiv p q i)) := by
-          exact (Fintype.sum_equiv (signatureSwitchNegIndexEquiv p q)
-            (fun i ↦ realCliffordWeight q p (signatureSwitchNegIndexEquiv p q i) *
-              (y (signatureSwitchNegIndexEquiv p q i) *
-                y (signatureSwitchNegIndexEquiv p q i)))
-            (fun i ↦ realCliffordWeight q p i * (y i * y i))
-            (fun _ ↦ rfl)).symm
-        _ = -(∑ i, realCliffordWeight p q i * (x i * x i)) := by
-          dsimp only [y]
-          simp only [signatureSwitchNegWeight, signatureSwitchNegLinearEquiv_apply, neg_mul,
-            ← Finset.sum_neg_distrib] }
-
-/-- Negated negative coordinates become positive coordinates under
-`realCliffordFormNegIsometry`. -/
-@[simp]
-theorem realCliffordFormNegIsometry_pos_of_neg (p q : ℕ)
-    (x : Fin (p + q) → ℝ) (i : Fin q) :
-    realCliffordFormNegIsometry p q x (Fin.castAdd p i) = x (Fin.natAdd p i) := by
-  change signatureSwitchNegLinearEquiv p q x _ = _
-  rw [← finSumFinEquiv_apply_left, ← signatureSwitchNegIndexEquiv_inr,
-    signatureSwitchNegLinearEquiv_apply, finSumFinEquiv_apply_right]
-
-/-- Negated positive coordinates become negative coordinates under
-`realCliffordFormNegIsometry`. -/
-@[simp]
-theorem realCliffordFormNegIsometry_neg_of_pos (p q : ℕ)
-    (x : Fin (p + q) → ℝ) (i : Fin p) :
-    realCliffordFormNegIsometry p q x (Fin.natAdd q i) = x (Fin.castAdd q i) := by
-  change signatureSwitchNegLinearEquiv p q x _ = _
-  rw [← finSumFinEquiv_apply_right, ← signatureSwitchNegIndexEquiv_inl,
-    signatureSwitchNegLinearEquiv_apply, finSumFinEquiv_apply_left]
-
 /-- The coordinate isometry which turns the sign-switched form into the standard signature. -/
 def realCliffordSignSwitchStandardIsometry (p q : ℕ) :
     ((-(realCliffordForm p q)).prod (QuadraticMap.sq (R := ℝ) (A := ℝ))).IsometryEquiv
@@ -966,9 +885,7 @@ private theorem signatureSwitchStandardIsometry_split (p q : ℕ)
     realCliffordPositiveSplitIsometry q p
         (realCliffordSignSwitchStandardIsometry p q (x, r)) =
       (realCliffordFormNegIsometry p q x, r) := by
-  change realCliffordPositiveSplitIsometry q p
-    ((realCliffordPositiveSplitIsometry q p).symm
-      (realCliffordFormNegIsometry p q x, r)) = _
+  rw [realCliffordSignSwitchStandardIsometry]
   exact (realCliffordPositiveSplitIsometry q p).apply_symm_apply _
 
 /-- Negated negative coordinates become positive coordinates under
