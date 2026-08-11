@@ -142,7 +142,7 @@ def stabilizeO (newColumn newRow : Fin (n + 1)) (splitColumn : Fin n) :
           GridState.insertPoint_apply_succAbove] using
           (newRow.succAbove_ne (G.X splitColumn)).symm
       · simp only [GridState.splitPoint_apply_succAbove,
-          GridState.insertPoint_apply_succAbove, if_neg hi]
+          GridState.insertPoint_apply_succAbove, ite_eq_right hi]
         exact fun h ↦ G.disjoint i (Fin.succAbove_right_injective h)
 
 /-- Stabilize a grid diagram by splitting the `X`-marking in `splitColumn`.
@@ -166,7 +166,7 @@ def stabilizeX (newColumn newRow : Fin (n + 1)) (splitColumn : Fin n) :
           GridState.splitPoint_apply_splitColumn] using
           newRow.succAbove_ne (G.O splitColumn)
       · simp only [GridState.insertPoint_apply_succAbove,
-          GridState.splitPoint_apply_succAbove, if_neg hi]
+          GridState.splitPoint_apply_succAbove, ite_eq_right hi]
         exact fun h ↦ G.disjoint i (Fin.succAbove_right_injective h)
 
 /-- The `O` state of an `O`-stabilization is obtained by splitting the chosen `O`-marking. -/

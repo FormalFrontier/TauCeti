@@ -194,8 +194,8 @@ is a symmetric relation. -/
   · rw [Matrix.transpose_apply, starCartanMatrix_some_some_chain,
       starCartanMatrix_some_some_chain]
     rcases eq_or_ne v.1 w.1 with h | h
-    · rw [if_pos h, if_pos h.symm, chainEntry_comm]
-    · rw [if_neg h, if_neg (Ne.symm h)]
+    · rw [ite_eq_left h, ite_eq_left h.symm, chainEntry_comm]
+    · rw [ite_eq_right h, ite_eq_right (Ne.symm h)]
 
 variable [Fintype α]
 
@@ -265,18 +265,19 @@ private theorem sum_range_chainEntry_mul {n m : ℕ} (hm : m < n) (g : ℕ → �
     intro s _
     by_cases h1 : s = m
     · subst h1
-      rw [if_pos rfl, if_neg (by omega : ¬ (s + 1 = s)), if_neg (by omega : ¬ (s = s + 1)),
-        chainEntry_self]
+      rw [ite_eq_left rfl, ite_eq_right (by omega : ¬ (s + 1 = s)),
+        ite_eq_right (by omega : ¬ (s = s + 1)), chainEntry_self]
       norm_num
     by_cases h2 : s + 1 = m
     · subst h2
-      rw [if_neg h1, if_pos rfl, if_neg (by omega : ¬ (s = s + 1 + 1)), chainEntry_succ_left]
+      rw [ite_eq_right h1, ite_eq_left rfl, ite_eq_right (by omega : ¬ (s = s + 1 + 1)),
+        chainEntry_succ_left]
       norm_num
     by_cases h3 : s = m + 1
     · subst h3
-      rw [if_neg h1, if_neg h2, if_pos rfl, chainEntry_succ_right]
+      rw [ite_eq_right h1, ite_eq_right h2, ite_eq_left rfl, chainEntry_succ_right]
       norm_num
-    · rw [if_neg h1, if_neg h2, if_neg h3,
+    · rw [ite_eq_right h1, ite_eq_right h2, ite_eq_right h3,
         chainEntry_eq_zero (fun h ↦ h1 h.symm) (fun h ↦ h2 h.symm) h3]
       norm_num
   rw [Finset.sum_congr rfl key, Finset.sum_add_distrib, Finset.sum_add_distrib]
@@ -288,7 +289,7 @@ private theorem sum_range_chainEntry_mul {n m : ℕ} (hm : m < n) (g : ℕ → �
     rw [Finset.sum_ite_eq' (Finset.range n) (m + 1) fun _ ↦ -g (m + 2)]
     by_cases hn : m + 1 = n
     · simp [Finset.mem_range, hn]
-    · rw [if_pos (Finset.mem_range.2 (by omega)), if_neg hn]
+    · rw [ite_eq_left (Finset.mem_range.2 (by omega)), ite_eq_right hn]
   have h2 : ∑ s ∈ Finset.range n, (if s + 1 = m then -g m else 0)
       = -(if m = 0 then 0 else g m) := by
     match m with
@@ -301,7 +302,7 @@ private theorem sum_range_chainEntry_mul {n m : ℕ} (hm : m < n) (g : ℕ → �
       rw [Finset.sum_congr rfl hcongr,
         Finset.sum_ite_eq' (Finset.range n) k fun _ ↦ -g (k + 1)]
       have hk : k < n := by omega
-      rw [if_pos (Finset.mem_range.2 hk), if_neg (Nat.succ_ne_zero k)]
+      rw [ite_eq_left (Finset.mem_range.2 hk), ite_eq_right (Nat.succ_ne_zero k)]
   rw [h1, h2, h3]
   ring
 
@@ -314,10 +315,11 @@ private theorem chainEntry_arm_row {n m : ℕ} (hm : m < n) (g : ℕ → ℚ) :
   simp only [chainEntry_succ_succ]
   rw [sum_range_chainEntry_mul hm]
   rcases eq_or_ne m 0 with rfl | hm0
-  · rw [chainEntry_succ_left, if_pos rfl]
+  · rw [chainEntry_succ_left, ite_eq_left rfl]
     push_cast
     ring
-  · rw [chainEntry_eq_zero (Nat.succ_ne_zero m) (fun h ↦ hm0 (by omega)) (by omega), if_neg hm0]
+  · rw [chainEntry_eq_zero (Nat.succ_ne_zero m) (fun h ↦ hm0 (by omega)) (by omega),
+      ite_eq_right hm0]
     push_cast
     ring
 
@@ -376,25 +378,25 @@ theorem sum_starCartanMatrix_mul_starMark_some_eq_zero (v : (i : α) × Fin (ℓ
           else 0 := by
     intro i _
     rcases eq_or_ne i v.1 with rfl | hi
-    · rw [if_pos rfl, ← Fin.sum_univ_eq_sum_range
+    · rw [ite_eq_left rfl, ← Fin.sum_univ_eq_sum_range
         (fun s ↦ (chainEntry ((v.2 : ℕ) + 1) (s + 1) : ℚ) * g (s + 1)) (ℓ v.1)]
       exact Finset.sum_congr rfl fun s _ ↦ by
-        rw [starCartanMatrix_some_some_chain, if_pos rfl, hgarm s]
-    · refine (Finset.sum_eq_zero fun s _ ↦ ?_).trans (if_neg hi).symm
-      rw [starCartanMatrix_some_some_chain, if_neg (Ne.symm hi)]
+        rw [starCartanMatrix_some_some_chain, ite_eq_left rfl, hgarm s]
+    · refine (Finset.sum_eq_zero fun s _ ↦ ?_).trans (ite_eq_right hi).symm
+      rw [starCartanMatrix_some_some_chain, ite_eq_right (Ne.symm hi)]
       norm_num
-  rw [Finset.sum_congr rfl harms, Finset.sum_ite_eq' Finset.univ v.1, if_pos (Finset.mem_univ _),
-    starCartanMatrix_some_none_chain, ← hg0]
+  rw [Finset.sum_congr rfl harms, Finset.sum_ite_eq' Finset.univ v.1,
+    ite_eq_left (Finset.mem_univ _), starCartanMatrix_some_none_chain, ← hg0]
   rw [chainEntry_arm_row v.2.isLt g]
   -- The three-term recurrence of a linear function vanishes, and so does its truncation at the end
   -- of the arm, because the arm ends one step before the value `0`.
   rcases eq_or_ne ((v.2 : ℕ) + 1) (ℓ v.1) with hend | hend
   · have hL : ((ℓ v.1 : ℕ) : ℚ) = ((v.2 : ℕ) : ℚ) + 1 := by exact_mod_cast hend.symm
-    rw [if_pos hend]
+    rw [ite_eq_left hend]
     simp only [hg]
     push_cast
     linear_combination Q * hL
-  · rw [if_neg hend]
+  · rw [ite_eq_right hend]
     simp only [hg]
     push_cast
     ring
@@ -428,9 +430,9 @@ theorem sum_starCartanMatrix_mul_starMark_none :
     rw [hstep, Fin.sum_univ_eq_sum_range (fun s ↦ (chainEntry 0 (s + 1) : ℚ) * g (s + 1)) (ℓ i),
       chainEntry_center_row]
     rcases eq_or_ne (ℓ i) 0 with h0 | h0
-    · rw [if_pos h0, h0]
+    · rw [ite_eq_left h0, h0]
       norm_num
-    · rw [if_neg h0]
+    · rw [ite_eq_right h0]
       simp only [hg]
       push_cast
       ring

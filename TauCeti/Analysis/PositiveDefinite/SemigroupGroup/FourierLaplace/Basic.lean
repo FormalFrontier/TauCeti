@@ -57,6 +57,11 @@ theorem laplaceAtom_def (p : ℝ≥0) (t : ℝ≥0) :
     laplaceAtom p t = (Real.exp (-(t : ℝ) * (p : ℝ)) : ℂ) :=
   by simp [laplaceAtom]
 
+/-- The Laplace atom is symmetric in its two nonnegative arguments: the frequency and the time
+enter `exp (-t p)` in the same way. -/
+theorem laplaceAtom_comm (p t : ℝ≥0) : laplaceAtom p t = laplaceAtom t p := by
+  rw [laplaceAtom_def, laplaceAtom_def, neg_mul, neg_mul, mul_comm]
+
 /-- Laplace atoms turn time addition into a rank-one positive-definite kernel. -/
 theorem laplaceAtom_add (p t u : ℝ≥0) :
     laplaceAtom p (t + u) = conj (laplaceAtom p t) * laplaceAtom p u := by

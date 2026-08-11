@@ -408,7 +408,7 @@ theorem characterTable_eq_div (i : Fin (Nat.card (ConjClasses G))) (C : ConjClas
   have hC : (Nat.card (ConjClasses.mk g).carrier : k) ≠ 0 := fun h0 =>
     Invertible.ne_zero (Nat.card G : k) <| by
       have h := card_conjClass_mul_sum_characterTable_mul_characterTable_inv (k := k) g g
-      rw [if_pos (IsConj.refl g), h0, zero_mul] at h
+      rw [ite_eq_left (IsConj.refl g), h0, zero_mul] at h
       exact h.symm
   rw [eq_div_iff hC, mul_comm (characterTable k G i (ConjClasses.mk g)),
     ← centralCharacterTable_mul_characterDegree i (ConjClasses.mk g)]
