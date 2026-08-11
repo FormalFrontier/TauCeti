@@ -254,7 +254,7 @@ theorem localFunctional_fgPointTensorIso
     (g : WithConv (H →ₐ[k] A))
     (N : Subcomodule.finiteSubcomodules (R := k) (C := H) (M := H)) (n : N.1) :
     localFunctional k H A (fgPointTensorIso k H A g) N n = g.ofConv n := by
-  change localFunctional k H A (fgPointTensorIsoHom k H A g) N n = g.ofConv n
+  rw [← fgPointTensorIsoHom_apply]
   rw [localFunctional_apply, fgPointTensorIsoHom_apply,
     finiteRegularComponent_fgPointTensorIso]
   rw [Comodule.pointsAction_toLinearMap]
