@@ -67,7 +67,6 @@ simpNF TauCeti.isComplexLinear_arrowCongr_iff
 simpNF TauCeti.reflectRepMapApp_of_ne✝
 unusedArguments CongruenceSubgroup.Gamma0Map_toHomUnits_surjective
 unusedArguments CongruenceSubgroup.map_apply_of_dvd_lcm✝
-unusedArguments TauCeti.Huber.PairOfDefinition.exists_pow_mul_algebraMap_mem✝
 unusedArguments TauCeti.IsFiniteType
 unusedArguments TauCeti.IsHighestWeightVector
 unusedArguments TauCeti.Measure.instSFiniteGlue

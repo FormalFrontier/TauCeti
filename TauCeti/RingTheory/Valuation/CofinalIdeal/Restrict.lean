@@ -38,20 +38,30 @@ The point-level map on `Spv A` that Wedhorn's retraction `r_I` is built from liv
 
 The *characterisation* lemmas — the vanishing branches, `restrictToIdeal_eq_zero_iff` and
 `restrictToIdeal_le_iff` — are phrased through `cΓ_v(I)` itself or through vanishing of the
-restriction, so a consumer of them never names the transport. Two declarations necessarily do
-name it: `RestrictedValues`, which *is* the transported subgroup with a zero adjoined, and
-`restrictToIdeal_def`, whose content is the definitional unfolding and which therefore carries
-the boundedness hypothesis over that subgroup. `one_le_restrictToIdeal` mentions neither, being
-an order fact about `v.restrict`.
+restriction, so a consumer of them never names the transport. `one_le_restrictToIdeal` mentions
+neither, being an order fact about `v.restrict`.
+
+The transport is named by four declarations, each unavoidably. `RestrictedValues` *is* the
+transported subgroup with a zero adjoined, and the private `restrictToIdeal_def` is the
+definitional unfolding and so carries the boundedness hypothesis over it. The two comparison
+lemmas against an abstract bound, `coe_le_restrictToIdeal_iff` and `restrictToIdeal_lt_coe_iff`,
+quantify over a member of that subgroup: their whole point is to compare a restricted value
+against a bound arriving from the value group rather than from a ring element, and such a bound
+*is* an element of the transported subgroup. A cofinality argument needs them in that form.
 
 ## References
 
 * T. Wedhorn, *Adic Spaces*, arXiv:1910.05934v1, §7.1.2
 
-The construction is the one AINTLIB calls `restrictIdeal`
-(`aintlib-adic-spaces`, `projects/AdicSpaces/Adic spaces/CharacteristicSubgroup.lean`), built on
-`restrictToConvexBounded`. AINTLIB's `cGammaIdeal` is already phrased on `Γ₀ˣ` and so needs no
-transport.
+## Provenance
+
+The construction is the one called `restrictIdeal` in AINTLIB
+(`github.com/CBirkbeck/AINTLIB`, Apache-2.0), branch `dev/adic-spaces` at commit
+`37bbdaeb9ad9e3bc9f0d660feadc2779e455a91c`, project `projects/AdicSpaces/`, file
+`Adic spaces/CharacteristicSubgroup.lean`, built there on `restrictToConvexBounded`. The
+port was checked against that source rather than copied: AINTLIB's `cGammaIdeal` is already
+phrased on `Γ₀ˣ` and so needs no transport, whereas `cΓ_v(I)` here lives in the value group and
+is carried across by `ConvexSubgroup.comapUnitsWithZero`.
 -/
 
 public section
@@ -116,8 +126,12 @@ noncomputable def restrictToIdeal (v : Valuation A Γ₀) (I : Ideal A)
 
 /-- **The defining unfolding**, so that the lemmas below rewrite through it rather than relying
 on `restrictToIdeal` unfolding implicitly. The boundedness hypothesis is taken as an argument;
-by proof irrelevance any proof of it gives the same restriction. -/
-theorem restrictToIdeal_def (v : Valuation A Γ₀) (I : Ideal A)
+by proof irrelevance any proof of it gives the same restriction.
+
+Private: it is stated against the `restrictToConvex` representation and makes the caller supply a
+transport-level boundedness proof, neither of which a consumer should have to see. The
+characterisation lemmas below are the public interface. -/
+private theorem restrictToIdeal_def (v : Valuation A Γ₀) (I : Ideal A)
     (hfg : ∃ J : Ideal A, J.FG ∧ I.radical = J.radical)
     (hH : ∀ a : A, ∀ ha : v.restrict a ≠ 0, 1 ≤ v.restrict a →
       Units.mk0 (v.restrict a) ha ∈
@@ -238,11 +252,134 @@ by
   rw [restrictToIdeal_def v I hfg (mk0_restrict_mem_comapUnitsWithZero v I hfg),
     _root_.Valuation.restrictToConvex_le_iff, _root_.Valuation.restrict_le_iff]
 
+/-- The companion of `restrictToIdeal_lt_coe_iff` with the member on the left. -/
+theorem coe_le_restrictToIdeal_iff (v : Valuation A Γ₀) (I : Ideal A)
+    (hfg : ∃ J : Ideal A, J.FG ∧ I.radical = J.radical) (a : A)
+    (u : (ConvexSubgroup.comapUnitsWithZero
+      (characteristicSubgroupOfIdeal v I hfg)).toSubgroup) :
+    (u : RestrictedValues v I hfg) ≤ v.restrictToIdeal I hfg a ↔
+      ((u : (ValueGroup₀ (.ofClass v))ˣ) : ValueGroup₀ (.ofClass v)) ≤ v.restrict a :=
+  _root_.Valuation.coe_le_restrictToConvex_iff _ _ _ a u
+
+/-- Comparing a restricted value against an abstract member of the transported `cΓ_v(I)`,
+back in the value monoid of `v`. This is the form a cofinality argument needs, where the
+bound comes from the value group rather than from a ring element. -/
+theorem restrictToIdeal_lt_coe_iff (v : Valuation A Γ₀) (I : Ideal A)
+    (hfg : ∃ J : Ideal A, J.FG ∧ I.radical = J.radical) (a : A)
+    (u : (ConvexSubgroup.comapUnitsWithZero
+      (characteristicSubgroupOfIdeal v I hfg)).toSubgroup) :
+    v.restrictToIdeal I hfg a < (u : RestrictedValues v I hfg) ↔
+      v.restrict a < ((u : (ValueGroup₀ (.ofClass v))ˣ) : ValueGroup₀ (.ofClass v)) :=
+  _root_.Valuation.restrictToConvex_lt_coe_iff _ _ _ a u
+
 /-- A value at least `1` stays at least `1`: `cΓ_v(I)` keeps every attained value `≥ 1`. -/
 theorem one_le_restrictToIdeal (v : Valuation A Γ₀) (I : Ideal A)
     (hfg : ∃ J : Ideal A, J.FG ∧ I.radical = J.radical) {a : A} (h1 : 1 ≤ v.restrict a) :
     1 ≤ v.restrictToIdeal I hfg a := by
   rw [restrictToIdeal_def v I hfg (mk0_restrict_mem_comapUnitsWithZero v I hfg)]
   exact _root_.Valuation.one_le_restrictToConvex _ _ _ h1
+
+/-- The **meets** branch of `characteristicSubgroupOfIdeal_restrictToIdeal_eq_top`. When `I`
+meets `cΓ_v`, Wedhorn's
+`cΓ_v(I)` collapses to `cΓ_v` itself, so every element of the restricted value group is bracketed
+by a characteristic generator `g ≥ 1` and its inverse; the ring element realising `g` is then the
+witness that the restricted valuation has full characteristic group. -/
+private theorem characteristicSubgroup_restrictToIdeal_eq_top_of_meets (w : Valuation A Γ₀)
+    (I : Ideal A)
+    (hfg : ∃ J : Ideal A, J.FG ∧ I.radical = J.radical)
+    (hm : IdealMeetsCharacteristicSubgroup w I) :
+    characteristicSubgroup (w.restrictToIdeal I hfg) = ⊤ := by
+  rw [← hasFullCharacteristicGroup_iff_characteristicSubgroup_eq_top,
+    hasFullCharacteristicGroup_iff]
+  intro γ hγ
+  have hγ0 : ValueGroup₀.embedding γ ≠ 0 := fun h =>
+    hγ.ne' (ValueGroup₀.embedding_injective (by simpa using h))
+  obtain ⟨u, hu⟩ := WithZero.ne_zero_iff_exists.mp hγ0
+  -- rewriting the goal, not the hypothesis: `u`'s own type mentions `cΓ_v(I)`, so rewriting
+  -- that away inside the hypothesis is not type correct
+  have hmem : OrderMonoidIso.unitsWithZero (u : (ValueGroup₀ (.ofClass w))ˣ)
+      ∈ characteristicSubgroup w := by
+    rw [← characteristicSubgroupOfIdeal_of_meets hfg hm]
+    exact ConvexSubgroup.mem_comapUnitsWithZero.mp u.2
+  obtain ⟨g, hg, hginv, hgle⟩ := mem_characteristicSubgroup_iff.mp hmem
+  obtain ⟨hg1, a, hga⟩ := mem_characteristicGenerators.mp hg
+  refine ⟨a, ?_, ?_⟩
+  · -- `a` is kept by the restriction, since its value is the generator `g ≥ 1`
+    have h1a : (1 : RestrictedValues w I hfg) ≤
+        restrictToIdeal w I hfg a :=
+      one_le_restrictToIdeal _ _ _ (by rw [hga]; exact_mod_cast hg1)
+    rw [← ValueGroup₀.embedding_strictMono.le_iff_le, map_inv₀,
+      Valuation.embedding_restrict, ← hu,
+      inv_le_comm₀ (zero_lt_one.trans_le h1a) (pos_iff_ne_zero.mpr WithZero.coe_ne_zero),
+      ← WithZero.coe_inv, coe_le_restrictToIdeal_iff, hga]
+    have hcoe : ((OrderMonoidIso.unitsWithZero
+          ((u⁻¹ : (ConvexSubgroup.comapUnitsWithZero
+            (characteristicSubgroupOfIdeal w I hfg)).toSubgroup) :
+            (ValueGroup₀ (.ofClass w))ˣ) :
+          valueGroup (.ofClass w)) : ValueGroup₀ (.ofClass w)) =
+        (((u⁻¹ : (ConvexSubgroup.comapUnitsWithZero
+            (characteristicSubgroupOfIdeal w I hfg)).toSubgroup) :
+          (ValueGroup₀ (.ofClass w))ˣ) : ValueGroup₀ (.ofClass w)) :=
+      WithZero.coe_unitsWithZeroEquiv_eq_units_val _
+    rw [← hcoe, WithZero.coe_le_coe]
+    simp only [map_inv, InvMemClass.coe_inv]
+    simpa using inv_le_inv_iff.mpr hginv
+  · rw [← ValueGroup₀.embedding_strictMono.le_iff_le, Valuation.embedding_restrict, ← hu,
+      coe_le_restrictToIdeal_iff, hga]
+    have hcoe : ((OrderMonoidIso.unitsWithZero (u : (ValueGroup₀ (.ofClass w))ˣ) :
+        valueGroup (.ofClass w)) : ValueGroup₀ (.ofClass w)) =
+        ((u : (ValueGroup₀ (.ofClass w))ˣ) : ValueGroup₀ (.ofClass w)) :=
+      WithZero.coe_unitsWithZeroEquiv_eq_units_val _
+    rw [← hcoe, WithZero.coe_le_coe]
+    exact hgle
+
+/-- The **not-meets** branch of `characteristicSubgroupOfIdeal_restrictToIdeal_eq_top`. When
+`I` does not meet `cΓ_v`,
+`cΓ_v(I)` is the *greatest* ideal-cofinal convex subgroup, so each `a ∈ I` is already cofinal
+below every member of it — and the members are exactly the nonzero values the restriction keeps,
+so cofinality transfers to the restricted valuation. -/
+private theorem cofinalValue_restrictToIdeal_of_not_meets (w : Valuation A Γ₀)
+    (I : Ideal A)
+    (hfg : ∃ J : Ideal A, J.FG ∧ I.radical = J.radical)
+    (hm : ¬ IdealMeetsCharacteristicSubgroup w I) :
+    ∀ a ∈ I, CofinalValue (w.restrictToIdeal I hfg) a := by
+  intro a ha
+  have hgreat : IdealCofinalFor w
+      (characteristicSubgroupOfIdeal w I hfg) I :=
+    (isGreatestIdealCofinal_characteristicSubgroupOfIdeal hfg hm).1
+  have hcof := cofinalValueFor_def.mp (idealCofinalFor_def.mp hgreat a ha)
+  rw [cofinalValue_iff]
+  intro γ hγ
+  -- the bound is a nonzero element of the restricted value monoid, hence a member of `cΓ_v(I)`
+  have hγ0 : ValueGroup₀.embedding γ ≠ 0 := fun h =>
+    hγ.ne' (ValueGroup₀.embedding_injective (by simpa using h))
+  obtain ⟨u, hu⟩ := WithZero.ne_zero_iff_exists.mp hγ0
+  -- its image in the value group of `v` lies in `cΓ_v(I)`, so `a` is cofinal below it
+  have hmem := ConvexSubgroup.mem_comapUnitsWithZero.mp u.2
+  obtain ⟨n, hn⟩ := hcof _ hmem
+  refine ⟨n, ?_⟩
+  rw [← map_pow, Valuation.restrict_lt_iff_lt_embedding, ← hu,
+    restrictToIdeal_lt_coe_iff, map_pow]
+  -- `OrderMonoidIso.unitsWithZero` and `WithZero.unitsWithZeroEquiv` agree, but only up to
+  -- defeq, so the bridge has to be stated rather than rewritten with
+  have hcoe : ((OrderMonoidIso.unitsWithZero (u : (ValueGroup₀ (.ofClass w))ˣ) :
+      valueGroup (.ofClass w)) : ValueGroup₀ (.ofClass w)) =
+      ((u : (ValueGroup₀ (.ofClass w))ˣ) : ValueGroup₀ (.ofClass w)) :=
+    WithZero.coe_unitsWithZeroEquiv_eq_units_val _
+  rwa [hcoe] at hn
+
+/-- **Wedhorn §7.1.2: the restricted valuation has full characteristic subgroup for `I`.** This
+is the valuation-level content of the landing law — the restriction `v|cΓ_v(I)` satisfies the very
+condition that cuts out `Spv (A, I)`. The point-level statement is
+`TauCeti.ValuationSpectrum.restrictToIdeal_mem_spvOfIdeal`.
+
+The proof is Wedhorn's case split on whether `I` meets `cΓ_v`, each branch above. -/
+theorem characteristicSubgroupOfIdeal_restrictToIdeal_eq_top (w : Valuation A Γ₀) (I : Ideal A)
+    (hfg : ∃ J : Ideal A, J.FG ∧ I.radical = J.radical) :
+    characteristicSubgroupOfIdeal (w.restrictToIdeal I hfg) I hfg = ⊤ := by
+  rw [characteristicSubgroupOfIdeal_eq_top_iff]
+  by_cases hm : IdealMeetsCharacteristicSubgroup w I
+  · exact Or.inr (characteristicSubgroup_restrictToIdeal_eq_top_of_meets w I hfg hm)
+  · exact Or.inl (cofinalValue_restrictToIdeal_of_not_meets w I hfg hm)
 
 end TauCeti.Valuation
