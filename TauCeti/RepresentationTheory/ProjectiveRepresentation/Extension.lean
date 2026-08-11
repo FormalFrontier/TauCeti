@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+public import Mathlib.LinearAlgebra.GeneralLinearGroup.Basic
 public import Mathlib.RepresentationTheory.Basic
 public import TauCeti.GroupTheory.GroupExtension.OfFactorSet
 public import TauCeti.RepresentationTheory.ProjectiveRepresentation.Basic
@@ -46,6 +47,9 @@ it.
   projective representation with factor set `α`, with
   `TauCeti.IsProjectiveRep.linearizationRepresentation` its packaging as a
   `Representation k E_α V`.
+* `TauCeti.FactorSet.restrictCanonicalSection`: the restriction of a `Representation k E_α V` along
+  the canonical section, as linear automorphisms of `V`, the form in which it is a projective
+  representation.
 * `TauCeti.isProjectiveRepEquivExtensionHom`: the resulting bijection.
 
 ## Main results
@@ -60,7 +64,8 @@ it.
   representation with factor set `α`, and
   `TauCeti.isProjectiveRep_of_representation_canonicalSection`: the same for a linear representation
   presented as an ordinary `Representation k E_α V`, whose scalar condition is read off the
-  linearization by `TauCeti.IsProjectiveRep.linearizationRepresentation_inl`.
+  linearization by `TauCeti.IsProjectiveRep.linearizationRepresentation_inl`, with
+  `TauCeti.isProjectiveRep_restrictCanonicalSection` its instance at the canonical restriction.
 * `TauCeti.IsProjectiveRep.exists_factorSet_linearization`: **every projective representation of
   `G` is a linear representation of a central extension of `G` by `kˣ`**, for the extension built
   from the factor set the projective representation carries.
@@ -176,13 +181,21 @@ theorem linearization_inl (a : kˣ) :
   LinearEquiv.ext fun v ↦ by
     simp [LinearEquiv.smulOfUnit_apply, hρ.map_one]
 
+/-- **The projective representation is recovered from its linearization**, stated at the element
+`⟨1, g⟩` that `TauCeti.FactorSet.canonicalSection_apply` rewrites the canonical section to. This is
+the simp-normal form of `TauCeti.IsProjectiveRep.linearization_canonicalSection`, and unlike
+`TauCeti.IsProjectiveRep.linearization_apply` it applies to the linearization itself rather than to
+its value at a vector. -/
+@[simp]
+theorem linearization_mk_one (g : G) : hρ.linearization htriv ⟨1, g⟩ = ρ g :=
+  LinearEquiv.ext fun v ↦ by simp
+
 /-- **The projective representation is recovered from its linearization** by restricting along the
 canonical section `g ↦ ⟨1, g⟩` of the extension. Not `@[simp]`:
 `TauCeti.FactorSet.canonicalSection_apply` already rewrites the argument, after which
-`TauCeti.IsProjectiveRep.linearization_apply` finishes the job. -/
+`TauCeti.IsProjectiveRep.linearization_mk_one` finishes the job. -/
 theorem linearization_canonicalSection (g : G) :
-    hρ.linearization htriv (α.canonicalSection g) = ρ g :=
-  LinearEquiv.ext fun v ↦ by simp
+    hρ.linearization htriv (α.canonicalSection g) = ρ g := by simp
 
 /-- **The linearization has the same invariant submodules as the projective representation.** The
 `kˣ`-component of the extension acts by a scalar, which no submodule can escape, so invariance
@@ -240,7 +253,9 @@ copy of `kˣ` acts by its own scalars, then a family `ρ` of linear automorphism
 along the canonical section is a projective representation with factor set `α`. The automorphisms
 are taken as data because a `Representation` records only linear maps;
 `TauCeti.IsProjectiveRep.linearizationRepresentation` together with
-`TauCeti.IsProjectiveRep.linearizationRepresentation_inl` is the case that recovers `ρ` itself. -/
+`TauCeti.IsProjectiveRep.linearizationRepresentation_inl` is the case that recovers `ρ` itself, and
+`TauCeti.isProjectiveRep_restrictCanonicalSection` is the case of the canonical restriction
+`TauCeti.FactorSet.restrictCanonicalSection`, which needs no automorphisms supplied. -/
 theorem isProjectiveRep_of_representation_canonicalSection
     (htriv : ∀ (g : G) (a : kˣ), g • a = a) (π : Representation k α.Extension V)
     (hπ : ∀ a : kˣ, π (FactorSet.inl α a) = (a : k) • LinearMap.id)
@@ -258,6 +273,33 @@ theorem isProjectiveRep_of_representation_canonicalSection
       rw [← Module.End.mul_apply, ← map_mul, α.canonicalSection_mul, map_mul, hπ]
       simp
     simpa only [hρ', Function.curry] using key
+
+/-- **A linear representation of the extension `E_α`, restricted along the canonical section**, as
+the family of linear automorphisms of `V` that a projective representation asks for: a
+`Representation` records only linear maps, and `Representation.asGroupHom` together with
+`LinearMap.GeneralLinearGroup.generalLinearEquiv` promotes its values back to automorphisms. When
+the central copy of `kˣ` acts by its own scalars this family is a projective representation with
+factor set `α`, by `TauCeti.isProjectiveRep_restrictCanonicalSection`. -/
+def FactorSet.restrictCanonicalSection (α : FactorSet G kˣ) (π : Representation k α.Extension V)
+    (g : G) : V ≃ₗ[k] V :=
+  LinearMap.GeneralLinearGroup.generalLinearEquiv k V (π.asGroupHom (α.canonicalSection g))
+
+/-- The restriction along the canonical section acts as the representation does at `⟨1, g⟩`. -/
+@[simp]
+theorem FactorSet.restrictCanonicalSection_apply (α : FactorSet G kˣ)
+    (π : Representation k α.Extension V) (g : G) (v : V) :
+    α.restrictCanonicalSection π g v = π (α.canonicalSection g) v :=
+  (rfl)
+
+/-- **Restricting an ordinary `Representation k E_α V` along the canonical section gives a
+projective representation with factor set `α`**, as soon as the central copy of `kˣ` acts by its own
+scalars. This is `TauCeti.isProjectiveRep_of_representation_canonicalSection` for the canonical
+choice of automorphisms, so that no conversion has to be supplied by the caller. -/
+theorem isProjectiveRep_restrictCanonicalSection (htriv : ∀ (g : G) (a : kˣ), g • a = a)
+    (π : Representation k α.Extension V)
+    (hπ : ∀ a : kˣ, π (FactorSet.inl α a) = (a : k) • LinearMap.id) :
+    IsProjectiveRep (α.restrictCanonicalSection π) (Function.curry ⇑α) :=
+  isProjectiveRep_of_representation_canonicalSection htriv π hπ fun _ ↦ LinearMap.ext fun _ ↦ (rfl)
 
 variable (k V)
 
