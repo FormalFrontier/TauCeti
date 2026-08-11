@@ -76,7 +76,9 @@ variable {S : Type*} [CommRing S] [LinearOrder S] [Algebra S R]
 /-- **Root length is a Weyl-group invariant.** A root-positive form is invariant under the Weyl
 group by construction, and the Weyl group carries the root indexed by `i` to the root indexed by
 `P.weylGroupToPerm w i`. -/
-@[simp]
+-- Not a `simp` lemma: `simp` unfolds `P.weylGroupToPerm w i` to `(↑↑w).indexEquiv i` through
+-- `MonoidHom.domRestrict_apply` and `RootPairing.Equiv.indexHom_apply`, so this left-hand side is
+-- never in normal form. The `reflectionPerm` form below is the usable `simp` lemma.
 theorem rootLength_weylGroupToPerm (B : P.RootPositiveForm S) (w : P.weylGroup) (i : ι) :
     B.rootLength (P.weylGroupToPerm w i) = B.rootLength i := by
   apply FaithfulSMul.algebraMap_injective S R
