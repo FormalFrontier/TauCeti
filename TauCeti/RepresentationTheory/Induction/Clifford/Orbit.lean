@@ -39,9 +39,14 @@ Maschke's theorem throughout, exactly as in
 finiteness either; finiteness of `G` is assumed only by
 `TauCeti.Representation.finite_isotypicComponents`, which counts the isotypic components through the
 translates.  Finite-dimensionality of `V` is needed only to know that a minimal `N`-stable subspace
-exists at all: every statement below takes such a subspace as a hypothesis, except
-`TauCeti.Representation.exists_isAtom_forall_nonempty_linearEquiv_conjSubrep`, the packaged form of
-the theorem, which assumes finite-dimensionality and produces one.
+exists at all: each of the orbit and isotypic-component statements below takes such a subspace as a
+hypothesis, except `TauCeti.Representation.exists_isAtom_forall_nonempty_linearEquiv_conjSubrep`,
+the packaged form of the theorem, which assumes finite-dimensionality and produces one.  The two
+auxiliary statements assume less: `TauCeti.Representation.iSup_asSubmodule_conjSubrep_eq_top` asks
+only that the subrepresentation it translates be nonzero, and the dictionary
+`TauCeti.Representation.isSimpleModule_asSubmodule_iff` holds for an arbitrary subrepresentation of
+a restriction along an arbitrary subgroup, irreducibility and normality both being irrelevant to
+it.
 
 ## Main statements
 
