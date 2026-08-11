@@ -10,8 +10,8 @@ import TauCeti.Analysis.Normed.Operator.Exponential
 /-!
 # Bounded approximations for the Hille--Yosida theorem
 
-This file establishes the bounded stage of the general Hille--Yosida construction. Suppose that
-the powers of an unbounded operator's resolvent at `lambda > 0` satisfy
+This file establishes the bounded stage of the exponent-zero, general-`M` Hille--Yosida
+construction. Suppose that the powers of an unbounded operator's resolvent at `lambda > 0` satisfy
 
 `‖R(lambda, A) ^ n‖ ≤ M / lambda ^ n` for every `n ≥ 1`, with `1 ≤ M`.
 
@@ -23,12 +23,12 @@ resolvent factor in
 as a power series gives the uniform estimate `‖exp (t A_lambda)‖ ≤ M` for `t ≥ 0`. Consequently,
 the bounded-generator semigroup associated to every Yosida approximation has growth bound `(0,M)`.
 Unlike the contraction estimate in `TauCeti.Analysis.Semigroups.Generation.Yosida`, this argument
-uses the bounds on *all* resolvent powers; that distinction is exactly why the general
-Hille--Yosida hypothesis is stronger than a bound on the resolvent alone.
+uses the bounds on *all* resolvent powers; that distinction is exactly why the exponent-zero
+Hille--Yosida hypothesis for general `M` is stronger than a bound on the resolvent alone.
 
-These estimates are the first construction step in the sufficiency half of the Hille--Yosida
-generation theorem. The remaining steps are compact-time Cauchy convergence of the approximating
-semigroups, construction of their strong limit, and identification of its generator.
+For the general Hille--Yosida generation theorem, these estimates must be combined with reduction
+from `(M, omega)` to exponent zero by shifting the operator, compact-time Cauchy convergence of the
+approximating semigroups, construction of their strong limit, and identification of its generator.
 
 ## Main results
 
@@ -56,7 +56,7 @@ open NormedSpace
 variable {X : Type*} [NormedAddCommGroup X] [NormedSpace ℝ X] [CompleteSpace X]
 
 omit [CompleteSpace X] in
-/-- The Hille--Yosida bounds on the powers of `R(lambda, A)` imply the uniform bound
+/-- The exponent-zero Hille--Yosida bounds on the powers of `R(lambda, A)` imply the uniform bound
 `‖(lambda R(lambda, A)) ^ n‖ ≤ M`, including at `n = 0` when `1 ≤ M`. -/
 theorem norm_smul_resolvent_pow_le {A : X →ₗ.[ℝ] X} {lambda M : ℝ} (hM : 1 ≤ M)
     (hlambda : 0 < lambda)
@@ -120,7 +120,7 @@ private theorem norm_exp_smul_smul_resolvent_le {A : X →ₗ.[ℝ] X} {lambda M
     ring
   rwa [harg] at hbound
 
-/-- Under the general Hille--Yosida power bounds, the exponential of every positive-time
+/-- Under the exponent-zero Hille--Yosida power bounds for general `M`, every positive-time
 Yosida approximation has norm at most `M`. -/
 theorem norm_exp_smul_yosidaApproximation_le {A : X →ₗ.[ℝ] X} {lambda M t : ℝ}
     (hM : 1 ≤ M) (hlambda : 0 < lambda) (ht : 0 ≤ t)
@@ -141,8 +141,8 @@ theorem norm_exp_smul_yosidaApproximation_le {A : X →ₗ.[ℝ] X} {lambda M t 
     _ = M * (Real.exp (-(t * lambda)) * Real.exp (t * lambda)) := by ring
     _ = M := by rw [← Real.exp_add]; simp
 
-/-- The bounded-generator semigroup associated to a Hille--Yosida approximation has the uniform
-growth bound `(0, M)`. -/
+/-- The bounded-generator semigroup associated to an exponent-zero Hille--Yosida approximation
+has the uniform growth bound `(0, M)`. -/
 theorem ofBounded_yosidaApproximation_hasGrowthBound {A : X →ₗ.[ℝ] X} {lambda M : ℝ}
     (hM : 1 ≤ M) (hlambda : 0 < lambda)
     (hpow : ∀ n : ℕ, 1 ≤ n →
