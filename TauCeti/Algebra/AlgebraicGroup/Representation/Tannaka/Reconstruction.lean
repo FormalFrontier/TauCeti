@@ -91,35 +91,30 @@ noncomputable def reconstructedPoint
   toConv (AlgHom.ofLinearMap (globalFunctional k H A η)
     (globalFunctional_one k H A η) (globalFunctional_mul k H A η))
 
-private theorem reconstructedPoint_ofConv
-    (η : Aut (FGComoduleCat.scalarExtensionMonoidalFunctor k H A)) :
-    (reconstructedPoint k H A η).ofConv =
-      AlgHom.ofLinearMap (globalFunctional k H A η)
-        (globalFunctional_one k H A η) (globalFunctional_mul k H A η) :=
-  (rfl)
-
 /-- The reconstructed point evaluates as its defining global functional. -/
 @[simp]
 theorem reconstructedPoint_apply
     (η : Aut (FGComoduleCat.scalarExtensionMonoidalFunctor k H A)) (x : H) :
     (reconstructedPoint k H A η).ofConv x = globalFunctional k H A η x := by
-  rw [reconstructedPoint_ofConv, AlgHom.ofLinearMap_apply]
+  rw [reconstructedPoint, WithConv.ofConv_toConv, AlgHom.ofLinearMap_apply]
+
+/-- The underlying linear map of the reconstructed point is the global functional. -/
+@[simp]
+theorem reconstructedPoint_toLinearMap
+    (η : Aut (FGComoduleCat.scalarExtensionMonoidalFunctor k H A)) :
+    (reconstructedPoint k H A η).ofConv.toLinearMap = globalFunctional k H A η := by
+  ext x
+  exact reconstructedPoint_apply k H A η x
 
 /-- Reconstructing the tensor automorphism induced by an algebra-valued point returns that
 point. Thus reconstruction is a left inverse to the tensor action of points. -/
 @[simp]
 theorem reconstructedPoint_fgPointTensorIso (g : WithConv (H →ₐ[k] A)) :
     reconstructedPoint k H A (fgPointTensorIso k H A g) = g := by
-  have h : reconstructedPoint k H A (fgPointTensorIsoHom k H A g) = g := by
-    apply WithConv.ofConv_injective
-    apply AlgHom.toLinearMap_injective
-    rw [reconstructedPoint_ofConv, AlgHom.toLinearMap_ofLinearMap,
-      fgPointTensorIsoHom_apply, globalFunctional_fgPointTensorIso]
-  simpa only [fgPointTensorIsoHom_apply] using h
-
-/-- Reconstructing points is a left inverse to their action by tensor automorphisms. -/
-theorem reconstructedPoint_leftInverse :
-    Function.LeftInverse (reconstructedPoint k H A) (fgPointTensorIso k H A) :=
-  reconstructedPoint_fgPointTensorIso k H A
+  apply WithConv.ofConv_injective
+  apply AlgHom.toLinearMap_injective
+  rw [← fgPointTensorIsoHom_apply]
+  rw [reconstructedPoint_toLinearMap, fgPointTensorIsoHom_apply,
+    globalFunctional_fgPointTensorIso]
 
 end TauCeti.Tannaka
