@@ -84,30 +84,46 @@ variable {𝕜 G V : Type*} [RCLike 𝕜] [Group G] [TopologicalSpace G] [IsTopo
 variable {π : ContRepresentation 𝕜 G V} (hπ : Continuous π)
 
 omit [FiniteDimensional 𝕜 V] in
+/-- **Simultaneously moving the two vectors conjugates the argument of a matrix coefficient.** -/
+theorem matrixCoeffLp_map_map (hunitary : IsUnitary π) (h : G) (v w : V) :
+    matrixCoeffLp π hπ (π h v) (π h w) = conjLpₗᵢ 𝕜 h⁻¹ (matrixCoeffLp π hπ v w) := by
+  have hcoeff : matrixCoeff π hπ (π h v) (π h w) =
+      (matrixCoeff π hπ v w).comp
+        ⟨fun g ↦ h⁻¹ * g * (h⁻¹)⁻¹, (continuous_const.mul continuous_id).mul continuous_const⟩ := by
+    ext g
+    calc
+      matrixCoeff π hπ (π h v) (π h w) g =
+          matrixCoeff π hπ (π h v) w (h⁻¹ * g) := by
+        simpa using (matrixCoeff_apply_mul_left hπ hunitary (π h v) w h⁻¹ g).symm
+      _ = matrixCoeff π hπ v w ((h⁻¹ * g) * h) :=
+        (matrixCoeff_apply_mul_right π hπ v w (h⁻¹ * g) h).symm
+      _ = matrixCoeff π hπ v w (h⁻¹ * g * (h⁻¹)⁻¹) := by simp
+  rw [matrixCoeffLp_def, matrixCoeffLp_def, conjLpₗᵢ_apply]
+  calc
+    ContinuousMap.toLp 2 (haarProb G) 𝕜 (matrixCoeff π hπ (π h v) (π h w)) =
+        ContinuousMap.toLp 2 (haarProb G) 𝕜 ((matrixCoeff π hπ v w).comp
+          ⟨fun g ↦ h⁻¹ * g * (h⁻¹)⁻¹,
+            (continuous_const.mul continuous_id).mul continuous_const⟩) := congrArg _ hcoeff
+    _ = Lp.compMeasurePreserving (fun g ↦ h⁻¹ * g * (h⁻¹)⁻¹)
+          (measurePreserving_conj (haarProb G) h⁻¹)
+          (ContinuousMap.toLp 2 (haarProb G) 𝕜 (matrixCoeff π hπ v w)) :=
+      (Lp.compMeasurePreserving_toLp 𝕜 (matrixCoeff π hπ v w)
+        ⟨fun g ↦ h⁻¹ * g * (h⁻¹)⁻¹,
+          (continuous_const.mul continuous_id).mul continuous_const⟩
+        (measurePreserving_conj (haarProb G) h⁻¹)).symm
+
+omit [FiniteDimensional 𝕜 V] in
 /-- **A class function does not see a simultaneous move of the two defining vectors.**  Moving both
 vectors of a matrix coefficient by `π h` reparametrizes it by the conjugation `g ↦ h⁻¹ * g * h`,
 which fixes a class function and preserves the inner product. -/
 theorem inner_matrixCoeffLp_map_map (hunitary : IsUnitary π) {f : Lp 𝕜 2 (haarProb G)}
     (hf : f ∈ classFunctionLp 𝕜 𝕜 2 (haarProb G)) (h : G) (v w : V) :
     ⟪matrixCoeffLp π hπ (π h v) (π h w), f⟫_𝕜 = ⟪matrixCoeffLp π hπ v w, f⟫_𝕜 := by
-  -- Both sides of the reparametrization are represented by `g ↦ ⟪π (h⁻¹ * g * h) v, w⟫`.
-  have hL : ⇑(matrixCoeffLp π hπ (π h v) (π h w))
-      =ᵐ[haarProb G] fun g ↦ ⟪π (h⁻¹ * g * h) v, w⟫_𝕜 := by
-    filter_upwards [coeFn_matrixCoeffLp π hπ (π h v) (π h w)] with g hg
-    have hmul : π (h⁻¹ * g * h) v = π h⁻¹ (π g (π h v)) := by simp [map_mul]
-    rw [hg, hunitary.inner_map_right h (π g (π h v)) w, hmul]
-  have hR : ⇑(conjLpₗᵢ 𝕜 h⁻¹ (matrixCoeffLp π hπ v w))
-      =ᵐ[haarProb G] fun g ↦ ⟪π (h⁻¹ * g * h) v, w⟫_𝕜 := by
-    refine (coeFn_conjLpₗᵢ h⁻¹ (matrixCoeffLp π hπ v w)).trans ?_
-    filter_upwards [(measurePreserving_conj (haarProb G) h⁻¹).quasiMeasurePreserving.ae_eq
-      (coeFn_matrixCoeffLp π hπ v w)] with g hg
-    simpa using hg
-  have key : matrixCoeffLp π hπ (π h v) (π h w) = conjLpₗᵢ 𝕜 h⁻¹ (matrixCoeffLp π hπ v w) :=
-    Lp.ext (hL.trans hR.symm)
   calc ⟪matrixCoeffLp π hπ (π h v) (π h w), f⟫_𝕜
       = ⟪conjLpₗᵢ 𝕜 h⁻¹ (matrixCoeffLp π hπ v w), conjLpₗᵢ 𝕜 h⁻¹ f⟫_𝕜 := by
-        rw [key, conjLpₗᵢ_apply_of_mem_classFunctionLp hf]
-    _ = ⟪matrixCoeffLp π hπ v w, f⟫_𝕜 := LinearIsometry.inner_map_map _ _ _
+        rw [matrixCoeffLp_map_map hπ hunitary, conjLpₗᵢ_apply_of_mem_classFunctionLp hf]
+    _ = ⟪matrixCoeffLp π hπ v w, f⟫_𝕜 :=
+      (conjLpₗᵢ (E := 𝕜) (p := 2) (μ := haarProb G) 𝕜 h⁻¹).toLinearIsometry.inner_map_map _ _
 
 /-- **Against a class function, the matrix coefficients of an irreducible collapse to one scalar.**
 For `π` irreducible unitary and `f` a class function there is a `c` with
@@ -188,6 +204,46 @@ theorem invLpₗᵢ_characterLp {π : ContRepresentation 𝕜 G V} (hπ : Contin
 
 end Inversion
 
+section Model
+
+variable {𝕜 G : Type*} [RCLike 𝕜] [IsAlgClosed 𝕜] [Group G] [TopologicalSpace G]
+  [IsTopologicalGroup G] [CompactSpace G] [MeasurableSpace G] [BorelSpace G]
+
+/-- **Vanishing against a character kills every matrix coefficient in its irreducible block.**
+For an irreducible model, a class function pairs with all matrix coefficients of its inverse-
+translate through one scalar. The sum of the diagonal pairings is its pairing with the character,
+so that scalar vanishes when the character pairing does. -/
+theorem inner_matrixCoeffLp_inv_eq_zero_of_inner_characterLp_eq_zero (m : IrrepModel 𝕜 G)
+    {f : Lp 𝕜 2 (haarProb G)} (hf : f ∈ classFunctionLp 𝕜 𝕜 2 (haarProb G))
+    (horth : ⟪characterLp m.rep m.continuous_rep, f⟫_𝕜 = 0)
+    (v w : EuclideanSpace 𝕜 (Fin m.dim)) :
+    ⟪matrixCoeffLp m.rep m.continuous_rep v w, invLpₗᵢ 𝕜 f⟫_𝕜 = 0 := by
+  classical
+  have hinv : invLpₗᵢ 𝕜 f ∈ classFunctionLp 𝕜 𝕜 2 (haarProb G) :=
+    invLpₗᵢ_mem_classFunctionLp (𝕜 := 𝕜) hf
+  obtain ⟨c, hc⟩ := exists_forall_inner_matrixCoeffLp_eq m.continuous_rep m.isUnitary
+    m.isIrreducible hinv
+  have hdim : (m.dim : 𝕜) ≠ 0 := by
+    have hpos : 0 < Module.finrank 𝕜 (EuclideanSpace 𝕜 (Fin m.dim)) := by
+      have _ : Nontrivial (EuclideanSpace 𝕜 (Fin m.dim)) :=
+        Representation.IsIrreducible.nontrivial m.isIrreducible
+      exact Module.finrank_pos
+    rw [finrank_euclideanSpace_fin] at hpos
+    exact_mod_cast hpos.ne'
+  have hone : ∀ a, ⟪m.basis a, m.basis a⟫_𝕜 = 1 := fun a ↦ by simp
+  have hchar : ∑ a, ⟪matrixCoeffLp m.rep m.continuous_rep (m.basis a) (m.basis a),
+      invLpₗᵢ 𝕜 f⟫_𝕜 = ⟪characterLp m.rep m.continuous_rep, f⟫_𝕜 := by
+    rw [← sum_inner, ← invLpₗᵢ_characterLp m.continuous_rep m.isUnitary m.basis]
+    exact (invLpₗᵢ (E := 𝕜) (p := 2) (μ := haarProb G) 𝕜).toLinearIsometry.inner_map_map _ _
+  have hsum : c * (m.dim : 𝕜) = 0 := by
+    rw [← horth, ← hchar]
+    simp only [hc, hone, mul_one, Finset.sum_const, Finset.card_univ, Fintype.card_fin,
+      nsmul_eq_mul]
+    rw [mul_comm]
+  rw [hc v w, (mul_eq_zero.1 hsum).resolve_right hdim, zero_mul]
+
+end Model
+
 end ContRepresentation
 
 section Completeness
@@ -211,39 +267,14 @@ theorem eq_zero_of_forall_inner_characterLp_eq_zero [IsAlgClosed 𝕜] (h : IsIr
     f = 0 := by
   classical
   set u := invLpₗᵢ 𝕜 f with hu
-  have hucl : u ∈ classFunctionLp 𝕜 𝕜 2 (haarProb G) := invLpₗᵢ_mem_classFunctionLp hf
-  -- On each block the pairing with `u` is a single scalar, whose trace is the pairing of `f`
-  -- against the character, and that vanishes.
+  -- On each block the pairing with `u` vanishes because its diagonal sum is the pairing of `f`
+  -- against the corresponding character.
   have hblock : ∀ (i : ι) (v w : EuclideanSpace 𝕜 (Fin (models i).dim)),
       ⟪ContRepresentation.matrixCoeffLp (models i).rep (models i).continuous_rep v w, u⟫_𝕜 = 0 := by
     intro i v w
-    obtain ⟨c, hc⟩ := ContRepresentation.exists_forall_inner_matrixCoeffLp_eq
-      (models i).continuous_rep (models i).isUnitary (models i).isIrreducible hucl
-    have hdim : ((models i).dim : 𝕜) ≠ 0 := by
-      have hpos : 0 < Module.finrank 𝕜 (EuclideanSpace 𝕜 (Fin (models i).dim)) := by
-        have _ : Representation.IsIrreducible (models i).rep.toRepresentation :=
-          (models i).isIrreducible
-        have _ : Nontrivial (models i).rep.toRepresentation.asModule :=
-          IsSimpleModule.nontrivial (MonoidAlgebra 𝕜 G) (models i).rep.toRepresentation.asModule
-        have _ : Nontrivial (EuclideanSpace 𝕜 (Fin (models i).dim)) :=
-          (models i).rep.toRepresentation.asModuleEquiv.symm.toEquiv.nontrivial
-        exact Module.finrank_pos
-      rw [finrank_euclideanSpace_fin] at hpos
-      exact_mod_cast hpos.ne'
-    have hone : ∀ a, ⟪(models i).basis a, (models i).basis a⟫_𝕜 = 1 := fun a ↦ by simp
-    -- Summing the diagonal identifies `c * dim` with the pairing against the character.
-    have hchar : ∑ a, ⟪ContRepresentation.matrixCoeffLp (models i).rep (models i).continuous_rep
-        ((models i).basis a) ((models i).basis a), u⟫_𝕜 =
-        ⟪ContRepresentation.characterLp (models i).rep (models i).continuous_rep, f⟫_𝕜 := by
-      rw [← sum_inner, ← ContRepresentation.invLpₗᵢ_characterLp (models i).continuous_rep
-        (models i).isUnitary (models i).basis, hu]
-      exact LinearIsometry.inner_map_map _ _ _
-    have hsum : c * ((models i).dim : 𝕜) = 0 := by
-      rw [← horth i, ← hchar]
-      simp only [hc, hone, mul_one, Finset.sum_const, Finset.card_univ, Fintype.card_fin,
-        nsmul_eq_mul]
-      rw [mul_comm]
-    rw [hc v w, (mul_eq_zero.1 hsum).resolve_right hdim, zero_mul]
+    rw [hu]
+    exact ContRepresentation.inner_matrixCoeffLp_inv_eq_zero_of_inner_characterLp_eq_zero
+      (models i) hf (horth i) v w
   -- Hence `u` is orthogonal to the whole Peter-Weyl basis, so it vanishes.
   have hmem : u ∈ (Submodule.span 𝕜 (Set.range (peterWeylFamily models)))ᗮ := by
     rw [Submodule.mem_orthogonal]
@@ -295,14 +326,10 @@ theorem orthonormal_characterFamily
     (hne : Pairwise fun i j ↦
       IsEmpty (_root_.ContRepresentation.Equiv (models i).rep (models j).rep)) :
     Orthonormal 𝕜 (characterFamily models) := by
-  classical
   have hL2 := ContRepresentation.orthonormal_characterLp (fun i ↦ (models i).rep)
     (fun i ↦ (models i).continuous_rep) (fun i ↦ (models i).isUnitary)
     (fun i ↦ (models i).isIrreducible) hne
-  rw [orthonormal_iff_ite] at hL2 ⊢
-  intro i j
-  rw [Submodule.coe_inner]
-  exact hL2 i j
+  exact hL2.codRestrict _ fun i ↦ ContRepresentation.characterLp_mem_classFunctionLp _ _
 
 /-- **The characters of a skeleton are complete in the class functions.**  Their span is dense:
 its orthogonal complement inside `classFunctionLp` vanishes, which is

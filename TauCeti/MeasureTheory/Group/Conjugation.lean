@@ -9,6 +9,7 @@ public import Mathlib.GroupTheory.GroupAction.ConjAct
 public import Mathlib.MeasureTheory.Function.LpSpace.Complete
 public import Mathlib.MeasureTheory.Function.LpSpace.DomAct.Basic
 public import Mathlib.MeasureTheory.Group.Measure
+public import TauCeti.MeasureTheory.Function.Lp.CompMeasurePreservingEquiv
 
 /-!
 # Conjugation-invariance in `Lp`, and the class functions
@@ -36,9 +37,9 @@ stable under changing it on a null set, so it does not descend to `Lp` at all.  
 ## Main definitions
 
 * `TauCeti.classFunctionLp`: the class functions in `Lp E p μ`, a submodule.
-* `TauCeti.conjLpₗᵢ`: conjugation by a fixed element, as a linear isometry of `Lp E p μ`. This is
-  the same operation as the `(ConjAct G)ᵈᵐᵃ`-action, in the bundled form whose norm — and hence,
-  for `p = 2`, whose inner product — is transparently preserved.
+* `TauCeti.conjLpₗᵢ`: conjugation by a fixed element, as a linear isometric equivalence of
+  `Lp E p μ`. This is the same operation as the `(ConjAct G)ᵈᵐᵃ`-action; for `p = 2`, the bundled
+  linear isometry gives inner-product preservation through `LinearIsometry.inner_map_map`.
 
 ## Main statements
 
@@ -188,21 +189,43 @@ section Isometry
 
 variable [Fact (1 ≤ p)]
 
-/-- **Conjugation by a fixed element, as a linear isometry of `Lp E p μ`.**  It agrees with the
-action of `(ConjAct G)ᵈᵐᵃ` (`TauCeti.coeFn_conjLpₗᵢ`), and the point of the bundling is that a
-linear isometry of `L²` preserves the inner product, which the `SMul` packaging does not record. -/
-noncomputable def conjLpₗᵢ (h : G) : Lp E p μ →ₗᵢ[𝕜] Lp E p μ :=
-  Lp.compMeasurePreservingₗᵢ 𝕜 (fun g ↦ h * g * h⁻¹) (measurePreserving_conj μ h)
+/-- **Conjugation by a fixed element, as a linear isometric equivalence of `Lp E p μ`.**  It
+agrees with the action of `(ConjAct G)ᵈᵐᵃ` (`TauCeti.conjLpₗᵢ_eq_smul`), is represented by
+precomposition with conjugation (`TauCeti.coeFn_conjLpₗᵢ`), and its inverse is conjugation by
+`h⁻¹`. For `p = 2`, the underlying linear isometry records inner-product preservation through
+`LinearIsometry.inner_map_map`. -/
+noncomputable def conjLpₗᵢ (h : G) : Lp E p μ ≃ₗᵢ[𝕜] Lp E p μ :=
+  Lp.compMeasurePreservingₗᵢEquiv 𝕜 (measurePreserving_conj μ h)
+    (measurePreserving_conj μ h⁻¹)
+    (.of_eq (funext fun g ↦ by simp [mul_assoc]))
 
 variable {𝕜}
 
+/-- Conjugation as an isometric equivalence applies by `Lp.compMeasurePreserving`. -/
+@[simp]
+theorem conjLpₗᵢ_apply (h : G) (f : Lp E p μ) :
+    conjLpₗᵢ 𝕜 h f = Lp.compMeasurePreserving (fun g ↦ h * g * h⁻¹)
+      (measurePreserving_conj μ h) f :=
+  Lp.compMeasurePreservingₗᵢEquiv_apply 𝕜 _ _ _ f
+
 /-- The conjugation isometry is represented by `g ↦ f (h * g * h⁻¹)`. -/
 theorem coeFn_conjLpₗᵢ (h : G) (f : Lp E p μ) : conjLpₗᵢ 𝕜 h f =ᵐ[μ] fun g ↦ f (h * g * h⁻¹) :=
-  Lp.coeFn_compMeasurePreserving f (measurePreserving_conj μ h)
+  Lp.coeFn_compMeasurePreservingₗᵢEquiv 𝕜 (measurePreserving_conj μ h)
+    (measurePreserving_conj μ h⁻¹) _ f
+
+/-- The inverse of conjugation by `h` is conjugation by `h⁻¹`. -/
+@[simp]
+theorem conjLpₗᵢ_symm (h : G) :
+    (conjLpₗᵢ (E := E) (p := p) (μ := μ) 𝕜 h).symm =
+      conjLpₗᵢ (E := E) (p := p) (μ := μ) 𝕜 h⁻¹ := by
+  ext f
+  simp only [conjLpₗᵢ, Lp.compMeasurePreservingₗᵢEquiv_symm_apply,
+    Lp.compMeasurePreservingₗᵢEquiv_apply]
+  exact Filter.EventuallyEq.rfl
 
 /-- **The conjugation isometry is the `(ConjAct G)ᵈᵐᵃ`-action.**  The two are the same operation,
 so a statement proved for either transfers to the other; `classFunctionLp` is phrased with the
-action, and the isometry is the form that records the preservation of the norm. -/
+action, while the linear-isometry form gives inner-product preservation on `L²`. -/
 @[simp]
 theorem conjLpₗᵢ_eq_smul (h : G) (f : Lp E p μ) :
     conjLpₗᵢ 𝕜 h f = DomMulAct.mk (ConjAct.toConjAct h) • f :=
