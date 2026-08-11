@@ -54,7 +54,7 @@ structure SpinPolarizationData {K : Type u} [CommRing K] {V : Type v}
   pairingEquiv_apply :
     ∀ (y : W') (x : W), pairingEquiv y x = QuadraticMap.polar Q x y
   /-- The polar pairing has trivial left radical. -/
-  pairing_nondegenerate_left :
+  pairing_separatingLeft :
     ∀ x : W, (∀ y : W', QuadraticMap.polar Q x y = 0) → x = 0
   /-- The coordinate on the at-most-one-dimensional remainder. -/
   lineCoordinate : line →ₗ[K] K
@@ -63,16 +63,16 @@ structure SpinPolarizationData {K : Type u} [CommRing K] {V : Type v}
   /-- The quadratic form on the remainder is the square of its coordinate. -/
   lineCoordinate_sq : ∀ z : line, lineCoordinate z * lineCoordinate z = Q z
   /-- The remainder is orthogonal to the first isotropic summand. -/
-  line_orthogonal :
+  line_orthogonal_W :
     ∀ z : line, ∀ x : W, QuadraticMap.polar Q z x = 0
   /-- The remainder is orthogonal to the second isotropic summand. -/
-  line_orthogonal' :
+  line_orthogonal_W' :
     ∀ z : line, ∀ y : W', QuadraticMap.polar Q z y = 0
 
 attribute [simp, grind =] SpinPolarizationData.decompositionEquiv_apply
   SpinPolarizationData.isotropic_W SpinPolarizationData.isotropic_W'
   SpinPolarizationData.pairingEquiv_apply SpinPolarizationData.lineCoordinate_sq
-  SpinPolarizationData.line_orthogonal SpinPolarizationData.line_orthogonal'
+  SpinPolarizationData.line_orthogonal_W SpinPolarizationData.line_orthogonal_W'
 
 namespace SpinPolarizationData
 
@@ -84,6 +84,14 @@ theorem decompositionEquiv_symm_apply {K : Type u} [CommRing K] {V : Type v}
     P.decompositionEquiv.symm ((x : V) + (y : V) + (z : V)) = ((x, y), z) := by
   apply P.decompositionEquiv.injective
   rw [P.decompositionEquiv.apply_symm_apply, P.decompositionEquiv_apply]
+
+/-- The polar pairing has trivial right radical. -/
+theorem pairing_separatingRight {K : Type u} [CommRing K] {V : Type v}
+    [AddCommGroup V] [Module K V] {Q : QuadraticForm K V} (P : SpinPolarizationData Q)
+    (y : P.W') (hy : ∀ x : P.W, QuadraticMap.polar Q x y = 0) : y = 0 := by
+  apply P.pairingEquiv.injective
+  ext x
+  simp only [P.pairingEquiv_apply, hy x, map_zero, LinearMap.zero_apply]
 
 end SpinPolarizationData
 

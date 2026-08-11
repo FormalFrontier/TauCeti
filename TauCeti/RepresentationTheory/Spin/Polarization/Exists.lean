@@ -285,7 +285,7 @@ private noncomputable def modelData (n : ℕ) :
     simp
   pairingEquiv := modelPairingEquiv (K := K) n
   pairingEquiv_apply := modelPairingEquiv_apply (K := K) n
-  pairing_nondegenerate_left x hx := by
+  pairing_separatingLeft x hx := by
     apply (modelWEquivHalf (K := K) n).injective
     apply (Module.forall_dual_apply_eq_zero_iff K (modelWEquivHalf (K := K) n x)).1
     intro f
@@ -300,7 +300,7 @@ private noncomputable def modelData (n : ℕ) :
   lineCoordinate := modelLineCoordinate (K := K) n
   lineCoordinate_injective := modelLineCoordinate_injective (K := K) n
   lineCoordinate_sq := modelLineCoordinate_sq (K := K) n
-  line_orthogonal z x := by
+  line_orthogonal_W z x := by
     rcases z with ⟨⟨p, z⟩, hz⟩
     rcases x with ⟨⟨⟨f, u⟩, w⟩, hx⟩
     rw [mem_modelLine_iff] at hz
@@ -309,7 +309,7 @@ private noncomputable def modelData (n : ℕ) :
     subst p
     rcases hx with ⟨rfl, rfl⟩
     simp
-  line_orthogonal' z y := by
+  line_orthogonal_W' z y := by
     rcases z with ⟨⟨p, z⟩, hz⟩
     rcases y with ⟨⟨⟨f, u⟩, w⟩, hy⟩
     rw [mem_modelLine_iff] at hz
@@ -358,12 +358,12 @@ private noncomputable def pullback {V V' : Type*} [AddCommGroup V] [Module K V]
       isotropic_W' := ?_
       pairingEquiv := eW'.trans <| P.pairingEquiv.trans eW.dualMap
       pairingEquiv_apply := ?_
-      pairing_nondegenerate_left := ?_
+      pairing_separatingLeft := ?_
       lineCoordinate := P.lineCoordinate.comp eLine.toLinearMap
       lineCoordinate_injective := P.lineCoordinate_injective.comp eLine.injective
       lineCoordinate_sq := ?_
-      line_orthogonal := ?_
-      line_orthogonal' := ?_ }
+      line_orthogonal_W := ?_
+      line_orthogonal_W' := ?_ }
   · intro x
     apply e.toLinearEquiv.injective
     simp [decomp, P.decompositionEquiv_apply, eW_apply, eW'_apply, eLine_apply, map_add]
@@ -380,7 +380,7 @@ private noncomputable def pullback {V V' : Type*} [AddCommGroup V] [Module K V]
   · intro x hx
     apply eW.injective
     rw [map_zero]
-    apply P.pairing_nondegenerate_left (eW x)
+    apply P.pairing_separatingLeft (eW x)
     intro y
     have hy : (y : V') = e (eW'.symm y : V) := by
       rw [← eW'_apply]
@@ -396,10 +396,10 @@ private noncomputable def pullback {V V' : Type*} [AddCommGroup V] [Module K V]
     exact congrArg Q' (eLine_apply z)
   · intro z x
     rw [hpolar]
-    exact P.line_orthogonal (eLine z) (eW x)
+    exact P.line_orthogonal_W (eLine z) (eW x)
   · intro z y
     rw [hpolar]
-    exact P.line_orthogonal' (eLine z) (eW' y)
+    exact P.line_orthogonal_W' (eLine z) (eW' y)
 
 private def isometryEquivSumSquaresUnits {F : Type*} [Field F] [NeZero (2 : F)]
     [IsSepClosed F]
@@ -452,10 +452,11 @@ variable {F : Type u} [Field F] {V : Type v} [AddCommGroup V] [Module F V]
 
 /-- Every finite-dimensional nondegenerate quadratic space over a separably closed field of
 characteristic different from two admits polarization data. -/
-noncomputable def ofNondegenerate [FiniteDimensional F V] [Invertible (2 : F)]
+noncomputable def ofNondegenerate [FiniteDimensional F V] [NeZero (2 : F)]
     [IsSepClosed F] (Q : QuadraticForm F V) (hQ : Q.Nondegenerate) :
-    SpinPolarizationData Q :=
-  pullback (isometryEquivSplitModel Q hQ)
+    SpinPolarizationData Q := by
+  letI : Invertible (2 : F) := invertibleOfNonzero (NeZero.ne (2 : F))
+  exact pullback (isometryEquivSplitModel Q hQ)
     (modelData (K := F) (Module.finrank F V))
 
 end
