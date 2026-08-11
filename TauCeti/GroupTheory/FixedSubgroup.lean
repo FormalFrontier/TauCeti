@@ -56,11 +56,14 @@ theorem fixedSubgroup_eq_top_iff {F : G →* G} : fixedSubgroup F = ⊤ ↔ F = 
   · rintro rfl
     exact MonoidHom.eqLocus_same _
 
+private theorem mem_fixedSubgroup_end_pow_iff (F : Monoid.End G) (n : ℕ) (x : G) :
+    x ∈ fixedSubgroup ((F ^ n : Monoid.End G) : G →* G) ↔ F^[n] x = x := Iff.rfl
+
 private theorem mem_fixedSubgroup_pow_of_mem (F : Monoid.End G) (n : ℕ) (x : G)
     (hx : x ∈ fixedSubgroup (F : G →* G)) :
-    x ∈ fixedSubgroup ((F ^ n : Monoid.End G) : G →* G) := by
-  change (F ^ n) x = x
-  simpa using Function.iterate_fixed (show F x = x from hx) n
+    x ∈ fixedSubgroup ((F ^ n : Monoid.End G) : G →* G) :=
+  (mem_fixedSubgroup_end_pow_iff F n x).mpr
+    (Function.iterate_fixed ((mem_fixedSubgroup (F := (F : G →* G))).mp hx) n)
 
 /-- A point fixed by an endomorphism is fixed by each of its powers.
 
