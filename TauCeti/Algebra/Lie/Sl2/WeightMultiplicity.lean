@@ -8,7 +8,7 @@ public import TauCeti.Algebra.Lie.Sl2.Decomposition
 import Mathlib.Algebra.Lie.BaseChange
 import Mathlib.Data.Fin.Rev
 import Mathlib.FieldTheory.IsAlgClosed.AlgebraicClosure
-import Mathlib.RingTheory.Flat.Basic
+import Mathlib.RingTheory.Flat.Equalizer
 
 /-!
 # Symmetry of the weight multiplicities of an `sl₂`-module
@@ -54,22 +54,9 @@ open scoped TensorProduct
 private theorem finrank_ker_baseChange {K A V : Type*} [Field K] [Field A] [Algebra K A]
     [AddCommGroup V] [Module K V] (g : V →ₗ[K] V) :
     finrank A (LinearMap.ker (g.baseChange A)) = finrank K (LinearMap.ker g) := by
-  have hexact : Function.Exact ((LinearMap.ker g).subtype.baseChange A) (g.baseChange A) := by
-    simpa only [LinearMap.baseChange_eq_ltensor] using
-      Module.Flat.lTensor_exact A g.exact_subtype_ker_map
-  have hrange : LinearMap.range ((LinearMap.ker g).subtype.baseChange A) =
-      LinearMap.ker (g.baseChange A) := (LinearMap.exact_iff.mp hexact).symm
-  have hinjective : Function.Injective ((LinearMap.ker g).subtype.baseChange A) := by
-    rw [LinearMap.baseChange_eq_ltensor]
-    exact Module.Flat.lTensor_preserves_injective_linearMap _ Subtype.val_injective
-  rw [← hrange, LinearMap.finrank_range_of_inj hinjective, Module.finrank_baseChange]
-
-private theorem eigenspace_eq_ker {F W : Type*} [Field F] [AddCommGroup W] [Module F W]
-    (f : Module.End F W) (a : F) :
-    f.eigenspace a = LinearMap.ker (f - a • 1) := by
-  ext x
-  simp only [Module.End.mem_eigenspace_iff, LinearMap.mem_ker, LinearMap.sub_apply,
-    LinearMap.smul_apply, Module.End.one_apply, sub_eq_zero]
+  calc finrank A (LinearMap.ker (g.baseChange A))
+      = finrank A (A ⊗[K] LinearMap.ker g) := (LinearMap.tensorKerEquiv A A g).finrank_eq.symm
+    _ = finrank K (LinearMap.ker g) := Module.finrank_baseChange
 
 section Generated
 
@@ -178,15 +165,10 @@ Weyl invariance of the ambient module's weight multiplicities. -/
 private theorem finrank_eigenspace_toEnd_neg_of_isAlgClosed (t : IsSl2Triple h e f) (μ : K) :
     finrank K ((toEnd K L M h).eigenspace μ) =
       finrank K ((toEnd K L M h).eigenspace (-μ)) := by
-  let h' : t.toLieSubalgebra K := ⟨h, t.h_mem_toLieSubalgebra⟩
-  have htoEnd_apply (x : M) :
-      toEnd K (t.toLieSubalgebra K) M h' x = toEnd K L M h x := rfl
-  have htoEnd : toEnd K (t.toLieSubalgebra K) M h' = toEnd K L M h :=
-    LinearMap.ext htoEnd_apply
   obtain ⟨φ⟩ := nonempty_linearEquiv_eigenspace_neg_of_eq_top (M := M)
     t.isSl2Triple_restrict
     t.restrict_toLieSubalgebra_eq_top μ
-  rw [htoEnd] at φ
+  rw [LieSubalgebra.toEnd_mk] at φ
   exact φ.finrank_eq
 
 end Arbitrary
@@ -221,7 +203,7 @@ theorem finrank_eigenspace_toEnd_neg (t : IsSl2Triple h e f) (μ : K) :
         TensorProduct.tmul_neg, TensorProduct.tmul_smul] }
   have hA := finrank_eigenspace_toEnd_neg_of_isAlgClosed (M := A ⊗[K] M) tA
     (algebraMap K A μ)
-  rw [eigenspace_eq_ker, eigenspace_eq_ker, LieModule.toEnd_baseChange] at hA
+  rw [Module.End.eigenspace_def, Module.End.eigenspace_def, LieModule.toEnd_baseChange] at hA
   have hbaseChange (a : K) :
       (toEnd K L M h - a • 1).baseChange A =
         (toEnd K L M h).baseChange A - algebraMap K A a • 1 := by
@@ -231,7 +213,7 @@ theorem finrank_eigenspace_toEnd_neg (t : IsSl2Triple h e f) (μ : K) :
         (toEnd K L M h).baseChange A - -(algebraMap K A μ) • 1 := by
     simpa only [map_neg] using hbaseChange (-μ)
   rw [← hbaseChange μ, ← hbaseChange_neg] at hA
-  rw [eigenspace_eq_ker, eigenspace_eq_ker]
+  rw [Module.End.eigenspace_def, Module.End.eigenspace_def]
   rw [← finrank_ker_baseChange (A := A) (toEnd K L M h - μ • 1),
     ← finrank_ker_baseChange (A := A) (toEnd K L M h - -μ • 1)]
   exact hA
