@@ -58,10 +58,8 @@ theorem classGroupMk0_sq_eq_one_of_mem_ramifiedPrimes (hK : finrank ℚ K = 2)
     exact Ideal.ne_bot_of_liesOver_of_ne_bot (p := span {(p : ℤ)})
       (by rw [ne_eq, Ideal.span_singleton_eq_bot, Int.natCast_eq_zero]
           exact (prime_of_mem_ramifiedPrimes hmem).pos.ne') 𝔭
-  have hsq : (⟨𝔭, hnzd⟩ : nonZeroDivisors (Ideal (𝓞 K))) ^ 2 = ⟨𝔭 ^ 2, pow_mem hnzd 2⟩ :=
-    Subtype.ext (by rw [SubmonoidClass.coe_pow])
   -- `[𝔭]² = [𝔭²] = [p 𝓞 K] = 1`, as `𝔭² = p 𝓞 K` is the extension of the principal ideal `(p)`.
-  rw [← map_pow, hsq, ClassGroup.mk0_eq_one_iff,
+  rw [← map_pow, SubmonoidClass.mk_pow 𝔭 hnzd 2, ClassGroup.mk0_eq_one_iff,
     ← map_span_eq_sq_of_mem_ramifiedPrimes hK hmem 𝔭, Ideal.map_span, Set.image_singleton]
   exact ⟨_, rfl⟩
 
