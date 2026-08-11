@@ -22,7 +22,6 @@ ReductiveGroups roadmap.
 
 ## Main declarations
 
-* `Ideal.cotangentLocalizationMap`: the map on cotangent spaces induced by localization.
 * `Ideal.cotangentLocalizationEquiv`: localization at a maximal ideal preserves the cotangent
   space.
 * `Ideal.cotangentLocalizationEquiv_smul`: the equivalence is semilinear for the canonical
@@ -43,15 +42,17 @@ attribute [local instance] Ideal.Quotient.field
 
 variable {R Rₚ : Type*} [CommRing R]
 variable (p : Ideal R) [p.IsMaximal]
-variable [CommRing Rₚ] [Algebra R Rₚ] [IsLocalization.AtPrime Rₚ p] [IsLocalRing Rₚ]
+variable [CommRing Rₚ] [Algebra R Rₚ] [IsLocalization.AtPrime Rₚ p]
 
 /-- The map `p / p² → pRₚ / (pRₚ)²` induced by localization at the maximal ideal `p`.
 
 The target is written using the unique maximal ideal of the local ring `Rₚ`; this ideal is the
 extension of `p` by `IsLocalization.AtPrime.map_eq_maximalIdeal`. -/
-noncomputable def cotangentLocalizationMap :
-    p.Cotangent →ₗ[R] (maximalIdeal Rₚ).Cotangent :=
-  Ideal.mapCotangent p (maximalIdeal Rₚ) (Algebra.ofId R Rₚ) (by
+private noncomputable def cotangentLocalizationMap :
+    letI := IsLocalization.AtPrime.isLocalRing Rₚ p
+    p.Cotangent →ₗ[R] (maximalIdeal Rₚ).Cotangent := by
+  letI := IsLocalization.AtPrime.isLocalRing Rₚ p
+  exact Ideal.mapCotangent p (maximalIdeal Rₚ) (Algebra.ofId R Rₚ) (by
     intro x hx
     rw [Ideal.mem_comap, Algebra.ofId_apply, ← Ideal.mem_under,
       IsLocalization.AtPrime.under_maximalIdeal Rₚ p]
@@ -60,19 +61,23 @@ noncomputable def cotangentLocalizationMap :
 /-- The localization map on cotangent spaces sends the class of `x ∈ p` to the class of its
 image in the maximal ideal of `Rₚ`. -/
 @[simp]
-theorem cotangentLocalizationMap_toCotangent (x : p) :
+private theorem cotangentLocalizationMap_toCotangent (x : p) :
+    letI := IsLocalization.AtPrime.isLocalRing Rₚ p
     cotangentLocalizationMap p (p.toCotangent x) =
       (maximalIdeal Rₚ).toCotangent
         ⟨algebraMap R Rₚ x, by
           rw [← Ideal.mem_under, IsLocalization.AtPrime.under_maximalIdeal Rₚ p]
-          exact x.2⟩ :=
-  Ideal.mapCotangent_toCotangent p (maximalIdeal Rₚ) (Algebra.ofId R Rₚ) _ x
+          exact x.2⟩ := by
+  let _ := IsLocalization.AtPrime.isLocalRing Rₚ p
+  exact Ideal.mapCotangent_toCotangent p (maximalIdeal Rₚ) (Algebra.ofId R Rₚ) _ x
 
 /-- Localization at a maximal ideal identifies its cotangent space with the cotangent space of
 the resulting local ring. -/
-theorem cotangentLocalizationMap_bijective :
+private theorem cotangentLocalizationMap_bijective :
+    letI := IsLocalization.AtPrime.isLocalRing Rₚ p
     Function.Bijective (cotangentLocalizationMap p :
       p.Cotangent → (maximalIdeal Rₚ).Cotangent) := by
+  let _ := IsLocalization.AtPrime.isLocalRing Rₚ p
   constructor
   · rw [← LinearMap.ker_eq_bot, LinearMap.ker_eq_bot']
     intro x hx
@@ -107,27 +112,34 @@ theorem cotangentLocalizationMap_bijective :
 
 /-- The canonical linear equivalence `p / p² ≃ pRₚ / (pRₚ)²` induced by localization. -/
 noncomputable def cotangentLocalizationEquiv :
-    p.Cotangent ≃ₗ[R] (maximalIdeal Rₚ).Cotangent :=
-  LinearEquiv.ofBijective (cotangentLocalizationMap p)
+    letI := IsLocalization.AtPrime.isLocalRing Rₚ p
+    p.Cotangent ≃ₗ[R] (maximalIdeal Rₚ).Cotangent := by
+  letI := IsLocalization.AtPrime.isLocalRing Rₚ p
+  exact LinearEquiv.ofBijective (cotangentLocalizationMap p)
     (cotangentLocalizationMap_bijective p)
 
 /-- On a class represented by `x ∈ p`, the cotangent localization equivalence is induced by the
 ring localization map. -/
 @[simp]
 theorem cotangentLocalizationEquiv_toCotangent (x : p) :
+    letI := IsLocalization.AtPrime.isLocalRing Rₚ p
     cotangentLocalizationEquiv p (p.toCotangent x) =
       (maximalIdeal Rₚ).toCotangent
         ⟨algebraMap R Rₚ x, by
           rw [← Ideal.mem_under, IsLocalization.AtPrime.under_maximalIdeal Rₚ p]
-          exact x.2⟩ :=
-  cotangentLocalizationMap_toCotangent p x
+          exact x.2⟩ := by
+  let _ := IsLocalization.AtPrime.isLocalRing Rₚ p
+  exact cotangentLocalizationMap_toCotangent p x
 
 /-- The cotangent localization equivalence is semilinear for the canonical equivalence between
 the residue field `R / p` and the residue field of `Rₚ`. -/
+@[simp]
 theorem cotangentLocalizationEquiv_smul (r : R ⧸ p) (x : p.Cotangent) :
+    letI := IsLocalization.AtPrime.isLocalRing Rₚ p
     cotangentLocalizationEquiv (Rₚ := Rₚ) p (r • x) =
       IsLocalization.AtPrime.equivQuotMaximalIdeal p Rₚ r •
         cotangentLocalizationEquiv (Rₚ := Rₚ) p x := by
+  let _ := IsLocalization.AtPrime.isLocalRing Rₚ p
   obtain ⟨r, rfl⟩ := Ideal.Quotient.mk_surjective r
   rw [IsLocalization.AtPrime.equivQuotMaximalIdeal_apply_mk]
   -- Expose the quotient-module scalar actions on both sides; their public API has no

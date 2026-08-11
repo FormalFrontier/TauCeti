@@ -72,6 +72,8 @@ theorem augmentationPoint_eq_comap_closedPoint :
       PrimeSpectrum.comap (_root_.Bialgebra.counitAlgHom k H).toRingHom (closedPoint k) := by
   apply PrimeSpectrum.ext
   rw [augmentationPoint_asIdeal, PrimeSpectrum.comap_asIdeal]
+  -- Mathlib has no public lemma for this bridge: `closedPoint` is definitionally the point
+  -- whose ideal is the local ring's `maximalIdeal`.
   rw [show (closedPoint k).asIdeal = maximalIdeal k from rfl,
     IsLocalRing.maximalIdeal_eq_bot]
   rfl
