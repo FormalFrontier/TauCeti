@@ -28,9 +28,7 @@ negative generator is equivalent to tensoring with two-by-two real matrices.
 * `TauCeti.realCliffordSignatureReductionEquiv`: the reduction of a standard signature by its
   common positive and negative part;
 * `TauCeti.realCliffordSignatureSwitchRecurrenceEquiv`: the recurrence which switches a real
-  signature while adding two positive generators;
-* `TauCeti.realCliffordPositiveAxisRecurrenceEquiv`: the recurrence from a positive-axis real
-  Clifford algebra to a negative-axis algebra tensored with `M₂(ℝ)`.
+  signature while adding two positive generators.
 
 ## References
 
@@ -1069,27 +1067,5 @@ theorem realCliffordSignatureSwitchRecurrenceEquiv_ι (p q : ℕ)
   simp only [AlgEquiv.trans_apply, _root_.CliffordAlgebra.equivOfIsometry_apply,
     _root_.CliffordAlgebra.map_apply_ι, QuadraticMap.IsometryEquiv.toIsometry]
   rfl
-
-/-- Combining one sign switch with the hyperbolic Bott step gives the positive-axis recurrence
-`Cliff(n + 2, 0) ≅ Cliff(0, n) ⊗ M₂(ℝ)`. -/
-noncomputable def realCliffordPositiveAxisRecurrenceEquiv (n : ℕ) :
-    _root_.CliffordAlgebra (realCliffordForm (n + 2) 0) ≃ₐ[ℝ]
-      _root_.CliffordAlgebra (realCliffordForm 0 n) ⊗[ℝ] Matrix (Fin 2) (Fin 2) ℝ :=
-  realCliffordSignatureSwitchRecurrenceEquiv n 0
-
-/-- The positive-axis recurrence on a generator, as the `q = 0` signature-switch formula. -/
-@[simp]
-theorem realCliffordPositiveAxisRecurrenceEquiv_ι (n : ℕ) (v : Fin (n + 2) → ℝ) :
-    realCliffordPositiveAxisRecurrenceEquiv n (_root_.CliffordAlgebra.ι _ v) =
-      realCliffordBottEquiv 0 n (_root_.CliffordAlgebra.ι _
-        (realCliffordSignSwitchStandardIsometry n 0 (0, 1))) *
-        realCliffordBottEquiv 0 n (_root_.CliffordAlgebra.ι _
-          (realCliffordSignSwitchStandardIsometry n 0
-            ((realCliffordPositiveSplitIsometry n 0 v).1, 0))) +
-          (realCliffordPositiveSplitIsometry n 0 v).2 •
-            realCliffordBottEquiv 0 n (_root_.CliffordAlgebra.ι _
-              (realCliffordSignSwitchStandardIsometry n 0 (0, 1))) := by
-  simpa only [realCliffordPositiveAxisRecurrenceEquiv] using
-    realCliffordSignatureSwitchRecurrenceEquiv_ι n 0 v
 
 end TauCeti
