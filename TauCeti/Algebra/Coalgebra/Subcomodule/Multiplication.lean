@@ -70,11 +70,10 @@ noncomputable def mulHom (N P Q : Subcomodule R H H)
     intro x
     induction x using TensorProduct.induction_on with
     | zero =>
-      rw [show ambient 0 = 0 from map_zero ambient.toLinearMap]
+      rw [← Comodule.Hom.coe_toLinearMap ambient, map_zero]
       exact Q.toSubmodule.zero_mem
     | add x y hx hy =>
-      rw [show ambient (x + y) = ambient x + ambient y from
-        map_add ambient.toLinearMap x y]
+      rw [← Comodule.Hom.coe_toLinearMap ambient, map_add]
       exact Q.toSubmodule.add_mem hx hy
     | tmul n p =>
       simpa only [ambient, Comodule.Hom.comp_apply, Comodule.Hom.tensorMap_tmul,
