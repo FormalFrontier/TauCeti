@@ -299,7 +299,7 @@ theorem cauchyPVExistsAt_of_perWindow_tendsto_of_interiorDisjoint_re_boundary
       Tendsto (fun ε : ℝ => ∫ u in (t - r)..(t + r),
         if ‖γ u - s‖ > ε then g (γ u) * deriv γ u else 0) (𝓝[>] (0 : ℝ)) (𝓝 (w t)) :=
     fun t ht => by
-      have hw_eq : w t = (h_win t ht).choose := by rw [hw_def]; simp only [dif_pos ht]
+      have hw_eq : w t = (h_win t ht).choose := by rw [hw_def]; simp only [dite_eq_left ht]
       rw [hw_eq]
       exact (h_win t ht).choose_spec
   refine ⟨windowPieceSum r p w b (crossings.sort (· ≤ ·)) a,
