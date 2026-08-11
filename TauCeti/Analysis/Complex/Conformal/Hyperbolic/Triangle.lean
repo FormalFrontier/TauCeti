@@ -6,7 +6,7 @@ module
 
 public import TauCeti.Analysis.Complex.Conformal.Hyperbolic.Distance
 public import TauCeti.Analysis.Complex.Conformal.Moebius
-public import Mathlib.Analysis.Complex.Trigonometric
+public import TauCeti.Analysis.SpecialFunctions.Artanh
 
 /-!
 # The triangle inequality for the hyperbolic distance on the unit disc
@@ -36,15 +36,13 @@ hence the hyperbolic geodesics, in `Conformal/Poincare/Betweenness.lean`.
 
 Passing to the hyperbolic distance `hyperbolicDist = artanh ∘ pseudoHyperbolicExpr` uses the
 addition formula for the inverse hyperbolic tangent,
-`Real.artanh a + Real.artanh b = Real.artanh ((a + b) / (1 + a * b))` (`artanh_add`, proved
-here from `Real.sinh_add` / `Real.cosh_add` and the closed forms `Real.sinh_artanh` /
-`Real.cosh_artanh`), together with the isometry invariance of `hyperbolicDist` under the disc
-Moebius factors (`hyperbolicDist_unitDiscMoebius`): the general triangle inequality is reduced
-to the origin case by sending the middle point to `0`.
+`Real.artanh a + Real.artanh b = Real.artanh ((a + b) / (1 + a * b))` (`Real.artanh_add`, proved
+in `TauCeti/Analysis/SpecialFunctions/Artanh.lean`), together with the isometry invariance of
+`hyperbolicDist` under the disc Moebius factors (`hyperbolicDist_unitDiscMoebius`): the general
+triangle inequality is reduced to the origin case by sending the middle point to `0`.
 
 Main results:
 
-* `artanh_add` — the addition formula for `Real.artanh` on `Ioo (-1) 1`;
 * `pseudoHyperbolicExpr_le_add_div_one_add_mul_of_norm_lt_one` — the strong pseudo-hyperbolic
   triangle inequality against the origin, and
   `pseudoHyperbolicExpr_eq_add_div_one_add_mul_iff_of_norm_lt_one` — its equality case;
@@ -82,7 +80,7 @@ last group of results above therefore removes it, and does so without repeating 
 argument: since `hyperbolicDist = artanh ∘ pseudoHyperbolicExpr` and `artanh` is a strictly
 monotone bijection `(-1, 1) ≃ ℝ`, an inequality between pseudo-hyperbolic expressions is
 *equivalent* to the corresponding inequality between hyperbolic distances, and the addition
-formula `artanh_add` is exactly the dictionary translating the additive law
+formula `Real.artanh_add` is exactly the dictionary translating the additive law
 `d(z, u) + d(u, w)` into the Moebius law `(a + b) / (1 + a b)`. So the general forms are read
 off `hyperbolicDist_triangle` — which is where the transport already happened — and their
 equality cases off the injectivity of `artanh`.
@@ -100,30 +98,6 @@ namespace TauCeti
 
 open _root_.Complex Metric Set
 open scoped ComplexConjugate
-
-/-- **Addition formula for the inverse hyperbolic tangent.** For `a, b ∈ (-1, 1)`,
-`artanh a + artanh b = artanh ((a + b) / (1 + a * b))`. This is the additive law by which the
-hyperbolic distance turns the pseudo-hyperbolic expression into a genuine metric. -/
-lemma artanh_add {a b : ℝ} (ha : a ∈ Ioo (-1 : ℝ) 1) (hb : b ∈ Ioo (-1 : ℝ) 1) :
-    Real.artanh a + Real.artanh b = Real.artanh ((a + b) / (1 + a * b)) := by
-  have ha1 := ha.1
-  have ha2 := ha.2
-  have hb1 := hb.1
-  have hb2 := hb.2
-  have h1pa : 0 < 1 + a := by linarith
-  have h1ma : 0 < 1 - a := by linarith
-  have h1pb : 0 < 1 + b := by linarith
-  have h1mb : 0 < 1 - b := by linarith
-  have hab : 0 < 1 + a * b := by nlinarith
-  have hsa : Real.sqrt (1 - a ^ 2) ≠ 0 :=
-    Real.sqrt_ne_zero'.mpr (by nlinarith [mul_pos h1pa h1ma])
-  have hsb : Real.sqrt (1 - b ^ 2) ≠ 0 :=
-    Real.sqrt_ne_zero'.mpr (by nlinarith [mul_pos h1pb h1mb])
-  have key : Real.tanh (Real.artanh a + Real.artanh b) = (a + b) / (1 + a * b) := by
-    rw [Real.tanh_eq_sinh_div_cosh, Real.sinh_add, Real.cosh_add, Real.sinh_artanh ha,
-      Real.cosh_artanh ha, Real.sinh_artanh hb, Real.cosh_artanh hb]
-    field_simp
-  rw [← key, Real.artanh_tanh]
 
 /-- **Poincaré defect identity.** The factorisation behind the strong pseudo-hyperbolic triangle
 inequality against the origin: the difference of the squared cross-multiplied sides of
@@ -321,7 +295,7 @@ theorem hyperbolicDist_triangle_zero {z w : ℂ}
     hyperbolicDist_zero_right w]
   have hzIoo : ‖z‖ ∈ Ioo (-1 : ℝ) 1 := ⟨by have := norm_nonneg z; linarith, hzn⟩
   have hwIoo : ‖w‖ ∈ Ioo (-1 : ℝ) 1 := ⟨by have := norm_nonneg w; linarith, hwn⟩
-  rw [artanh_add hzIoo hwIoo]
+  rw [Real.artanh_add hzIoo hwIoo]
   refine Real.artanh_le_artanh (by linarith) ?_ ?_
   · rw [div_lt_one (by positivity)]
     nlinarith [mul_pos (sub_pos.mpr hzn) (sub_pos.mpr hwn)]
@@ -360,15 +334,6 @@ theorem hyperbolicDist_triangle {z w u : ℂ}
 
 /-! ### The pseudo-hyperbolic inequalities at an arbitrary middle point -/
 
-/-- The Moebius sum `(a + b) / (1 + a b)` of two elements of `[0, 1)` again lies in
-`Ioo (-1) 1`, so `artanh_add` may be applied to it. -/
-private lemma mem_Ioo_add_div_one_add_mul {a b : ℝ} (ha₀ : 0 ≤ a) (hb₀ : 0 ≤ b)
-    (ha₁ : a < 1) (hb₁ : b < 1) : (a + b) / (1 + a * b) ∈ Ioo (-1 : ℝ) 1 := by
-  have hmul : (0 : ℝ) ≤ a * b := mul_nonneg ha₀ hb₀
-  have hden : (0 : ℝ) < 1 + a * b := by linarith
-  have hnn : (0 : ℝ) ≤ (a + b) / (1 + a * b) := div_nonneg (by linarith) hden.le
-  exact ⟨by linarith, by rw [div_lt_one hden]; nlinarith⟩
-
 /-- **The strong pseudo-hyperbolic triangle inequality.** For three points of the open unit disc,
 `ρ(z, w) ≤ (ρ(z, u) + ρ(u, w)) / (1 + ρ(z, u) ρ(u, w))`, where `ρ = pseudoHyperbolicExpr`. This is
 `TauCeti.pseudoHyperbolicExpr_le_add_div_one_add_mul_of_norm_lt_one` with the middle point freed
@@ -391,10 +356,8 @@ theorem pseudoHyperbolicExpr_le_add_div_one_add_mul {z w u : ℂ}
     hyperbolicDist_triangle (by simpa [mem_ball_zero_iff] using hz)
       (by simpa [mem_ball_zero_iff] using hw) (by simpa [mem_ball_zero_iff] using hu)
   rw [hyperbolicDist_def z w, hyperbolicDist_def z u, hyperbolicDist_def u w,
-    artanh_add hzu huw] at hd
-  exact (Real.artanh_le_artanh_iff hzw
-    (mem_Ioo_add_div_one_add_mul (pseudoHyperbolicExpr_nonneg z u)
-      (pseudoHyperbolicExpr_nonneg u w) hzu.2 huw.2)).mp hd
+    Real.artanh_add hzu huw] at hd
+  exact (Real.artanh_le_artanh_iff hzw (Real.add_div_one_add_mul_mem_Ioo hzu huw)).mp hd
 
 /-- **The strong pseudo-hyperbolic triangle inequality (bundled unit-disc form).** The
 hypothesis-free form of `TauCeti.pseudoHyperbolicExpr_le_add_div_one_add_mul` for points of
@@ -419,10 +382,9 @@ theorem pseudoHyperbolicExpr_eq_add_div_one_add_mul_iff {z w u : ℂ}
   have huw := pseudoHyperbolicExpr_mem_Ioo_of_norm_lt_one hu hw
   have hzw := pseudoHyperbolicExpr_mem_Ioo_of_norm_lt_one hz hw
   rw [hyperbolicDist_def z w, hyperbolicDist_def z u, hyperbolicDist_def u w,
-    artanh_add hzu huw]
-  refine ⟨fun h => by rw [h], fun h => Real.artanh_injOn hzw
-    (mem_Ioo_add_div_one_add_mul (pseudoHyperbolicExpr_nonneg z u)
-      (pseudoHyperbolicExpr_nonneg u w) hzu.2 huw.2) h⟩
+    Real.artanh_add hzu huw]
+  refine ⟨fun h => by rw [h],
+    fun h => Real.artanh_injOn hzw (Real.add_div_one_add_mul_mem_Ioo hzu huw) h⟩
 
 /-- **Equality in the strong pseudo-hyperbolic triangle inequality (bundled unit-disc form).**
 The hypothesis-free form of `TauCeti.pseudoHyperbolicExpr_eq_add_div_one_add_mul_iff` for points

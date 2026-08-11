@@ -7,14 +7,19 @@ module
 public import Mathlib.FieldTheory.Galois.Basic
 public import Mathlib.NumberTheory.NumberField.Basic
 public import TauCeti.NumberTheory.RamificationInertia.Galois
+public import TauCeti.NumberTheory.RamificationInertia.Splitting
 
 /-!
-# A counting criterion for a prime to split completely in a Galois number field
+# A counting criterion for a prime to split completely in a number field
 
 For a finite Galois number field `K / ℚ`, a rational prime `p` splits completely — meaning
 there are exactly `[K : ℚ]` primes of `𝓞 K` above `p` — if and only if `p` is unramified with
 residue degree one, i.e. both the ramification index `e` and the inertia degree `f` (which are
 common to all primes above `p`, the extension being Galois) equal `1`.
+
+One direction needs no Galois hypothesis at all: a full complement of primes already forces
+`e = f = 1` at each of them, directly from the fundamental identity, and hence identifies each
+residue field with the prime field.
 
 This is the count form of the fundamental identity `(#primes) · e · f = [L : K]`: with the
 product fixed at `[L : K]`, the number of primes is maximal exactly when `e = f = 1`. The
@@ -25,14 +30,21 @@ off from residues.
 ## Main results
 
 * `TauCeti.NumberField.ncard_primesOver_eq_finrank_iff`: the rational-prime specialization.
+* `TauCeti.NumberField.bijective_algebraMap_quotient_of_ncard_primesOver_eq_finrank`:
+  complete splitting makes each residue field the prime field.
 * `TauCeti.NumberField.ncard_primesOver_eq_finrank_iff_stabilizer_eq_bot`: the orbit–stabilizer
   form — `p` splits completely iff the decomposition group of a prime above it is trivial.
 
 ## Provenance
 
-Built directly on Mathlib's Galois fundamental identity
-(`Ideal.ncard_primesOver_mul_ramificationIdxIn_mul_inertiaDegIn`); the criterion is assembled
-here for the Tau Ceti library.
+Two of Mathlib's fundamental identities are used, according to whether a Galois hypothesis is
+available. The splitting criterion itself rests on the Galois identity
+(`Ideal.ncard_primesOver_mul_ramificationIdxIn_mul_inertiaDegIn`). The consequences drawn without
+a Galois hypothesis — that complete splitting forces `e = f = 1`, and hence that the residue field
+at `Q` is the prime field — rest instead on the general identity for finite flat extensions of
+domains (`Ideal.sum_ramification_inertia_eq_finrank`), applied through
+the general theorem in `TauCeti.RamificationInertia.Splitting`.
+The criterion is assembled here for the Tau Ceti library.
 -/
 
 public section
@@ -96,5 +108,21 @@ theorem ncard_primesOver_eq_finrank_iff_stabilizer_eq_bot (L : Type*) [Field L]
   · intro hst
     rw [hst] at hkey
     simpa using hkey
+
+/-- **Complete splitting makes the residue field at `Q` the prime field.** If `p` splits
+completely then `algebraMap (ℤ ⧸ (p)) (𝓞 K ⧸ Q)` is bijective. No Galois hypothesis is needed. -/
+theorem bijective_algebraMap_quotient_of_ncard_primesOver_eq_finrank {K : Type*} [Field K]
+    [NumberField K]
+    {p : ℕ} [Fact p.Prime] (Q : Ideal (𝓞 K)) [Q.IsPrime]
+    [Q.LiesOver (span {(p : ℤ)})]
+    (hsplit : (primesOver (span {(p : ℤ)}) (𝓞 K)).ncard = finrank ℚ K) :
+    Function.Bijective (algebraMap (ℤ ⧸ span {(p : ℤ)}) (𝓞 K ⧸ Q)) := by
+  have hpne : (p : ℤ) ≠ 0 := by exact_mod_cast (Fact.out : p.Prime).ne_zero
+  have : (span {(p : ℤ)} : Ideal ℤ).IsMaximal :=
+    Ideal.IsPrime.isMaximal
+      ((Ideal.span_singleton_prime hpne).mpr (Nat.prime_iff_prime_int.mp Fact.out))
+      (by simpa [Ideal.span_singleton_eq_bot] using hpne)
+  exact RamificationInertia.bijective_algebraMap_quotient_of_ncard_primesOver_eq_finrank
+    (span {(p : ℤ)}) Q (by rwa [NumberField.RingOfIntegers.rank])
 
 end TauCeti.NumberField

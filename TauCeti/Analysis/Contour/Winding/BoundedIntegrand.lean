@@ -108,7 +108,7 @@ private theorem continuousOn_realWindingIntegrandExtension {γ : ℝ → ℂ} {w
   · have hγt := hγ2 t ht hcross
     have hcurv := continuousAt_crossingValue hγt (hvel t ht hcross)
     rw [continuousAt_iff_punctured_nhds]
-    rw [realWindingIntegrandExtension, if_pos hcross]
+    rw [realWindingIntegrandExtension, ite_eq_left hcross]
     exact (hcurv.tendsto.mono_left nhdsWithin_le_nhds).if'
       (tendsto_realWindingIntegrand_at_crossing_of_contDiffAt hγt hcross (hvel t ht hcross))
   · have hγt := hγ1 t ht
@@ -116,7 +116,7 @@ private theorem continuousOn_realWindingIntegrandExtension {γ : ℝ → ℂ} {w
     filter_upwards [hγt.continuousAt.eventually
       (isOpen_compl_singleton.mem_nhds hcross)] with s hs
     simp only [mem_singleton_iff] at hs
-    simp only [realWindingIntegrandExtension, if_neg hs]
+    simp only [realWindingIntegrandExtension, ite_eq_right hs]
 
 /-- **Hungerbühler--Wasem Proposition 2.3, bounded-integrand assertion with `C²` crossings.**
 Let `γ` be pointwise `C¹`, and be pointwise `C²` with nonzero velocity where it meets `w`, on a

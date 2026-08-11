@@ -7,8 +7,8 @@ module
 
 public import TauCeti.Analysis.Complex.Conformal.Poincare.Isometry.Equiv
 public import TauCeti.Analysis.Complex.Conformal.SchwarzPick.Isometry
+import TauCeti.Analysis.Complex.Isometry
 public import TauCeti.Analysis.Complex.UnitDisc.Basic
-public import Mathlib.Analysis.InnerProductSpace.Basic
 
 /-!
 # The isometries of the Poincaré disc are the disc automorphisms and their conjugates
@@ -51,17 +51,16 @@ fixing `0`, and there the hyperbolic metric collapses to the Euclidean one:
   `c = (1 - ‖z‖ ^ 2) * (1 - ‖w‖ ^ 2)`; since `c` depends only on the two norms, which `h`
   preserves, equality of the quotients `A / B` forces equality of the numerators.
 
-A Euclidean isometry of the disc fixing `0` preserves the real inner product by polarisation
-(`TauCeti.real_inner_map_map_of_pseudoHyperbolicExpr_map_eq`, proved from Mathlib's
-`norm_sub_sq_real`) — the inner product in question is
+That leaves a Euclidean isometry of the disc fixing `0`, and nothing hyperbolic remains in the
+problem: `TauCeti/Analysis/Complex/Isometry.lean` classifies those maps as the rotations and the
+rotated conjugations, so `h z = u * z` or `h z = u * conj z` for a single unit `u` — with the
+alternative fixed once and for all, not chosen per point. Undoing the Moebius factor turns `u`
+into the rotation and `g 0` into the centre `b`, by an explicit algebraic identity rather than by
+an appeal to the group law. The polarisation step of that Euclidean classification is also
+recorded here in hyperbolic language, as
+`TauCeti.real_inner_map_map_of_pseudoHyperbolicExpr_map_eq`; the inner product in question is
 Mathlib's own, `ℂ` carrying the `InnerProductSpace ℝ ℂ` instance with `⟪w, z⟫_ℝ = (z * conj w).re`
-(`Complex.inner`), so nothing about the Euclidean plane is re-encoded here. Two evaluations then
-pin the map down: the images of `1 / 2` and of `I / 2`, doubled, are orthogonal unit vectors
-`e₁, e₂`, so `e₂ = e₁ * I` or `e₂ = e₁ * (-I)`, while `⟪e₁, h z⟫_ℝ = z.re` and
-`⟪e₂, h z⟫_ℝ = z.im` read off the coordinates of `h z` in that orthonormal frame. Hence
-`h z = e₁ * z` or `h z = e₁ * conj z` — with the alternative fixed once and for all, not chosen
-per point. Undoing the Moebius factor turns `e₁` into the rotation `u` and `g 0` into the centre
-`b`, by an explicit algebraic identity rather than by an appeal to the group law.
+(`Complex.inner`), so nothing about the Euclidean plane is re-encoded here.
 
 ## Main results
 
@@ -107,26 +106,6 @@ open scoped ComplexConjugate InnerProductSpace
 
 variable {g : ℂ → ℂ}
 
-/-! ## Real-inner-product bookkeeping
-
-`ℂ` is a real inner product space in Mathlib (`InnerProductSpace ℝ ℂ`, with
-`Complex.inner : ⟪w, z⟫_ℝ = (z * conj w).re`), and that is the inner product used throughout. The
-two lemmas here only translate between it and the coordinates `Complex.re`, `Complex.im` in which
-the frame argument below reads off a point.
--/
-
-/-- The real inner product of `ℂ`, viewed as the Euclidean plane, in coordinates. -/
-private lemma real_inner_eq (z w : ℂ) : ⟪z, w⟫_ℝ = z.re * w.re + z.im * w.im := by
-  simp only [Complex.inner, Complex.mul_re, Complex.conj_re, Complex.conj_im]
-  ring
-
-/-- The imaginary part of `conj z * w` is the real inner product of `w` with the quarter turn of
-`z`: the two coordinates of `conj z * w` are the coordinates of `w` in the frame `z`, `z * I`. -/
-private lemma im_conj_mul (z w : ℂ) : (conj z * w).im = ⟪z * I, w⟫_ℝ := by
-  simp only [Complex.inner, map_mul, Complex.conj_I, Complex.mul_re, Complex.mul_im,
-    Complex.conj_re, Complex.conj_im, Complex.neg_re, Complex.neg_im, Complex.I_re, Complex.I_im]
-  ring
-
 /-! ## Isometries of the Poincaré disc that fix the origin -/
 
 section FixZero
@@ -156,120 +135,40 @@ theorem norm_sub_map_of_pseudoHyperbolicExpr_map_eq (h0 : g 0 = 0)
     (norm_map_of_pseudoHyperbolicExpr_map_eq hg h0 hz)
     (norm_map_of_pseudoHyperbolicExpr_map_eq hg h0 hw) (hg z hz w hw)
 
+/-- The metric restatement of `TauCeti.norm_sub_map_of_pseudoHyperbolicExpr_map_eq`, which is the
+shape in which the Euclidean results of `TauCeti/Analysis/Complex/Isometry.lean` take their
+hypothesis. -/
+private theorem dist_map_of_pseudoHyperbolicExpr_map_eq (h0 : g 0 = 0) :
+    ∀ z ∈ ball (0 : ℂ) 1, ∀ w ∈ ball (0 : ℂ) 1, dist (g z) (g w) = dist z w := fun _ hz _ hw => by
+  simpa only [dist_eq_norm] using norm_sub_map_of_pseudoHyperbolicExpr_map_eq hg h0 hz hw
+
 /-- **An isometry fixing the origin preserves the real inner product.** -/
 theorem real_inner_map_map_of_pseudoHyperbolicExpr_map_eq (h0 : g 0 = 0)
     {z w : ℂ} (hz : z ∈ ball (0 : ℂ) 1) (hw : w ∈ ball (0 : ℂ) 1) :
-    ⟪g z, g w⟫_ℝ = ⟪z, w⟫_ℝ := by
-  -- Polarisation: the inner product is determined by the three norms `‖z‖`, `‖w‖`, `‖z - w‖`.
-  have hnz := norm_map_of_pseudoHyperbolicExpr_map_eq hg h0 hz
-  have hnw := norm_map_of_pseudoHyperbolicExpr_map_eq hg h0 hw
-  have hsub := norm_sub_map_of_pseudoHyperbolicExpr_map_eq hg h0 hz hw
-  have h1 := norm_sub_sq_real (g z) (g w)
-  have h2 := norm_sub_sq_real z w
-  rw [hsub, hnz, hnw] at h1
-  linarith
-
-/-- **An isometry fixing the origin admits a coordinate frame.** There is an orthonormal pair whose
-real inner products with `g z` recover the real and imaginary parts of `z`. -/
-private theorem exists_orthonormal_pair_real_inner_map_eq (h0 : g 0 = 0) :
-    ∃ e₁ e₂ : ℂ, ‖e₁‖ = 1 ∧ ‖e₂‖ = 1 ∧ ⟪e₁, e₂⟫_ℝ = 0 ∧
-      (∀ z ∈ ball (0 : ℂ) 1, ⟪e₁, g z⟫_ℝ = z.re) ∧
-      (∀ z ∈ ball (0 : ℂ) 1, ⟪e₂, g z⟫_ℝ = z.im) := by
-  -- Take the doubled images of the probe points `1 / 2` and `I / 2`.
-  set p : ℂ := ((1 / 2 : ℝ) : ℂ) with hp_def
-  set q : ℂ := I * ((1 / 2 : ℝ) : ℂ) with hq_def
-  have hnp : ‖p‖ = 1 / 2 := by rw [hp_def, Complex.norm_real]; norm_num
-  have hnq : ‖q‖ = 1 / 2 := by
-    rw [hq_def, norm_mul, Complex.norm_I, one_mul, Complex.norm_real]
-    norm_num
-  have hp : p ∈ ball (0 : ℂ) 1 := by rw [mem_ball_zero_iff, hnp]; norm_num
-  have hq : q ∈ ball (0 : ℂ) 1 := by rw [mem_ball_zero_iff, hnq]; norm_num
-  refine ⟨(2 : ℝ) • g p, (2 : ℝ) • g q, ?_, ?_, ?_, fun z hz => ?_, fun z hz => ?_⟩
-  · rw [norm_smul, norm_map_of_pseudoHyperbolicExpr_map_eq hg h0 hp, hnp]; norm_num
-  · rw [norm_smul, norm_map_of_pseudoHyperbolicExpr_map_eq hg h0 hq, hnq]; norm_num
-  · rw [real_inner_smul_left, real_inner_smul_right,
-      real_inner_map_map_of_pseudoHyperbolicExpr_map_eq hg h0 hp hq, real_inner_eq]
-    simp only [hp_def, hq_def, Complex.mul_re, Complex.mul_im, Complex.I_re, Complex.I_im,
-      Complex.ofReal_re, Complex.ofReal_im]
-    ring
-  · rw [real_inner_smul_left,
-      real_inner_map_map_of_pseudoHyperbolicExpr_map_eq hg h0 hp hz, real_inner_eq]
-    simp only [hp_def, Complex.ofReal_re, Complex.ofReal_im]
-    ring
-  · rw [real_inner_smul_left,
-      real_inner_map_map_of_pseudoHyperbolicExpr_map_eq hg h0 hq hz, real_inner_eq]
-    simp only [hq_def, Complex.mul_re, Complex.mul_im, Complex.I_re, Complex.I_im,
-      Complex.ofReal_re, Complex.ofReal_im]
-    ring
+    ⟪g z, g w⟫_ℝ = ⟪z, w⟫_ℝ :=
+  -- Polarisation, at the generality of a real inner product space.
+  real_inner_map_map_of_dist_map_eq (mem_ball_self one_pos) h0
+    (dist_map_of_pseudoHyperbolicExpr_map_eq hg h0) hz hw
 
 end FixZero
 
-/-- Two unit complex numbers with vanishing real inner product differ by a quarter turn. -/
-private lemma eq_mul_I_or_eq_neg_mul_I {e₁ e₂ : ℂ} (h₁ : ‖e₁‖ = 1) (h₂ : ‖e₂‖ = 1)
-    (h : ⟪e₁, e₂⟫_ℝ = 0) : e₂ = e₁ * I ∨ e₂ = e₁ * (-I) := by
-  have hmul : e₁ * conj e₁ = 1 := by rw [Complex.mul_conj', h₁]; norm_num
-  have hrecover : e₁ * (conj e₁ * e₂) = e₂ := by rw [← mul_assoc, hmul, one_mul]
-  have hre : (conj e₁ * e₂).re = 0 := by rw [mul_comm, ← Complex.inner e₁ e₂, h]
-  have hnorm : ‖conj e₁ * e₂‖ = 1 := by rw [norm_mul, Complex.norm_conj, h₁, h₂, one_mul]
-  have hsq : (conj e₁ * e₂).im ^ 2 = 1 := by
-    have hns : Complex.normSq (conj e₁ * e₂) = 1 := by
-      rw [Complex.normSq_eq_norm_sq, hnorm]; norm_num
-    rw [Complex.normSq_apply, hre] at hns
-    nlinarith [hns]
-  have him : (conj e₁ * e₂).im = 1 ∨ (conj e₁ * e₂).im = -1 := by
-    have hfac : ((conj e₁ * e₂).im - 1) * ((conj e₁ * e₂).im + 1) = 0 := by nlinarith [hsq]
-    rcases mul_eq_zero.mp hfac with h' | h'
-    · exact Or.inl (by linarith)
-    · exact Or.inr (by linarith)
-  rcases him with h' | h'
-  · refine Or.inl ?_
-    have hI : conj e₁ * e₂ = I := by apply Complex.ext <;> simp [hre, h']
-    rw [← hrecover, hI]
-  · refine Or.inr ?_
-    have hI : conj e₁ * e₂ = -I := by apply Complex.ext <;> simp [hre, h']
-    rw [← hrecover, hI]
-
 /-- **Isometries fixing the origin are rotations and rotated conjugations.** A self-map of the
 open unit disc that preserves the pseudo-hyperbolic expression and fixes `0` is `z ↦ u * z` or
-`z ↦ u * conj z` for a single unit `u`. -/
+`z ↦ u * conj z` for a single unit `u`.
+
+The hyperbolic hypothesis has already done its work at
+`TauCeti.norm_sub_map_of_pseudoHyperbolicExpr_map_eq`: what is left is a Euclidean isometry of the
+disc fixing its centre, which
+`TauCeti.exists_norm_eq_one_eqOn_ball_const_mul_or_const_mul_conj_of_dist_map_eq` classifies. -/
 theorem exists_norm_eq_one_eqOn_ball_const_mul_or_const_mul_conj
     (hg : ∀ z ∈ ball (0 : ℂ) 1, ∀ w ∈ ball (0 : ℂ) 1,
       pseudoHyperbolicExpr (g z) (g w) = pseudoHyperbolicExpr z w)
     (h0 : g 0 = 0) :
     ∃ u : ℂ, ‖u‖ = 1 ∧
       (EqOn g (fun z => u * z) (ball (0 : ℂ) 1) ∨
-        EqOn g (fun z => u * conj z) (ball (0 : ℂ) 1)) := by
-  -- The orthonormal frame reading off the coordinates of `g z`.
-  obtain ⟨e₁, e₂, hn₁, hn₂, horth, hcoord₁, hcoord₂⟩ :=
-    exists_orthonormal_pair_real_inner_map_eq hg h0
-  have hmul₁ : e₁ * conj e₁ = 1 := by rw [Complex.mul_conj', hn₁]; norm_num
-  have hre : ∀ z ∈ ball (0 : ℂ) 1, (conj e₁ * g z).re = z.re := fun z hz => by
-    rw [mul_comm, ← Complex.inner e₁ (g z)]; exact hcoord₁ z hz
-  refine ⟨e₁, hn₁, ?_⟩
-  rcases eq_mul_I_or_eq_neg_mul_I hn₁ hn₂ horth with hcase | hcase
-  · left
-    intro z hz
-    have him : (conj e₁ * g z).im = z.im := by
-      rw [im_conj_mul, ← hcase]
-      exact hcoord₂ z hz
-    have hxi : conj e₁ * g z = z := Complex.ext (hre z hz) him
-    calc g z = e₁ * (conj e₁ * g z) := by rw [← mul_assoc, hmul₁, one_mul]
-      _ = e₁ * z := by rw [hxi]
-  · right
-    intro z hz
-    have him : (conj e₁ * g z).im = -z.im := by
-      have h2 := hcoord₂ z hz
-      rw [hcase, real_inner_eq] at h2
-      rw [im_conj_mul, real_inner_eq]
-      simp only [Complex.mul_re, Complex.mul_im, Complex.I_re, Complex.I_im, Complex.neg_re,
-        Complex.neg_im] at h2 ⊢
-      linarith
-    have hxi : conj e₁ * g z = conj z := by
-      apply Complex.ext
-      · rw [Complex.conj_re]; exact hre z hz
-      · rw [Complex.conj_im]; exact him
-    calc g z = e₁ * (conj e₁ * g z) := by rw [← mul_assoc, hmul₁, one_mul]
-      _ = e₁ * conj z := by rw [hxi]
+        EqOn g (fun z => u * conj z) (ball (0 : ℂ) 1)) :=
+  exists_norm_eq_one_eqOn_ball_const_mul_or_const_mul_conj_of_dist_map_eq one_pos h0
+    (dist_map_of_pseudoHyperbolicExpr_map_eq hg h0)
 
 /-! ## The classification -/
 
@@ -410,6 +309,36 @@ theorem bijOn_ball_of_hyperbolicDist_map_eq
 
 namespace PoincareDisc
 
+/-- **The scalar representative of an isometry of the Poincaré disc.** Every isometry `f` of
+`PoincareDisc` is carried by a self-map `F` of the open unit ball that preserves the hyperbolic
+distance on the ball and represents `f` in the coordinate `toUnitDisc`. -/
+private lemma exists_mapsTo_ball_and_hyperbolicDist_map_eq_of_isometry
+    {f : PoincareDisc → PoincareDisc} (hf : Isometry f) :
+    ∃ F : ℂ → ℂ, MapsTo F (ball (0 : ℂ) 1) (ball (0 : ℂ) 1) ∧
+      (∀ z ∈ ball (0 : ℂ) 1, ∀ w ∈ ball (0 : ℂ) 1,
+        hyperbolicDist (F z) (F w) = hyperbolicDist z w) ∧
+      ∀ z : PoincareDisc, F (toUnitDisc z : ℂ) = (toUnitDisc (f z) : ℂ) := by
+  classical
+  -- the representative is `0` off the ball; the first two conclusions restrict to the ball and
+  -- the third is only ever applied at `toUnitDisc z`, which is a disc point
+  refine ⟨fun z => if h : ‖z‖ < 1 then
+    ((toUnitDisc (f (Complex.UnitDisc.toPoincare (Complex.UnitDisc.mk z h)))) : ℂ) else 0, ?_, ?_,
+    ?_⟩
+  · refine mapsTo_ball_of_forall_unitDisc_coe_eq
+      (e := fun z => toUnitDisc (f (Complex.UnitDisc.toPoincare z))) fun z => ?_
+    rw [dite_eq_left z.norm_lt_one, Complex.UnitDisc.mk_coe]
+  · intro z hz w hw
+    have hz' := mem_ball_zero_iff.mp hz
+    have hw' := mem_ball_zero_iff.mp hw
+    have hdist := hf.dist_eq (Complex.UnitDisc.toPoincare (Complex.UnitDisc.mk z hz'))
+      (Complex.UnitDisc.toPoincare (Complex.UnitDisc.mk w hw'))
+    dsimp only
+    rw [dite_eq_left hz', dite_eq_left hw']
+    simpa only [dist_eq, toUnitDisc_toPoincare, Complex.UnitDisc.coe_mk] using hdist
+  · intro z
+    dsimp only
+    rw [dite_eq_left (toUnitDisc z).norm_lt_one, Complex.UnitDisc.mk_coe, toPoincare_toUnitDisc]
+
 /-- **The isometries of the Poincaré disc, bundled form.** Every isometry of the metric space
 `PoincareDisc` is a standard disc automorphism `unitDiscStandardAutomorphismIsometryEquiv u a`,
 or that automorphism precomposed with the conjugation `starIsometryEquiv`: the isometry group of
@@ -420,32 +349,8 @@ theorem exists_eq_unitDiscStandardAutomorphismIsometryEquiv_or_comp_star
     ∃ (u : Circle) (a : Complex.UnitDisc),
       (∀ z, f z = unitDiscStandardAutomorphismIsometryEquiv u a z) ∨
         (∀ z, f z = unitDiscStandardAutomorphismIsometryEquiv u a (starIsometryEquiv z)) := by
-  classical
-  set F : ℂ → ℂ := fun z =>
-    if h : ‖z‖ < 1 then
-      ((toUnitDisc (f (Complex.UnitDisc.toPoincare (Complex.UnitDisc.mk z h)))) : ℂ)
-    else 0 with hF_def
-  have hFval : ∀ (z : ℂ) (h : ‖z‖ < 1),
-      F z = ((toUnitDisc (f (Complex.UnitDisc.toPoincare (Complex.UnitDisc.mk z h)))) : ℂ) := by
-    intro z h
-    rw [hF_def]
-    simp only [dif_pos h]
-  have hFmaps : MapsTo F (ball (0 : ℂ) 1) (ball (0 : ℂ) 1) := by
-    intro z hz
-    rw [hFval z (mem_ball_zero_iff.mp hz), mem_ball_zero_iff]
-    exact Complex.UnitDisc.norm_lt_one _
-  have hFiso : ∀ z ∈ ball (0 : ℂ) 1, ∀ w ∈ ball (0 : ℂ) 1,
-      hyperbolicDist (F z) (F w) = hyperbolicDist z w := by
-    intro z hz w hw
-    have hz' := mem_ball_zero_iff.mp hz
-    have hw' := mem_ball_zero_iff.mp hw
-    have hdist := hf.dist_eq (Complex.UnitDisc.toPoincare (Complex.UnitDisc.mk z hz'))
-      (Complex.UnitDisc.toPoincare (Complex.UnitDisc.mk w hw'))
-    rw [hFval z hz', hFval w hw']
-    simpa only [dist_eq, toUnitDisc_toPoincare, Complex.UnitDisc.coe_mk] using hdist
-  -- `F` is the scalar representative of `f`, so the scalar classification applies to it.
-  have hFz : ∀ z : PoincareDisc, F (toUnitDisc z : ℂ) = (toUnitDisc (f z) : ℂ) := fun z => by
-    rw [hFval _ (toUnitDisc z).norm_lt_one, Complex.UnitDisc.mk_coe, toPoincare_toUnitDisc]
+  -- the scalar representative of `f`, to which the scalar classification applies
+  obtain ⟨F, hFmaps, hFiso, hFz⟩ := exists_mapsTo_ball_and_hyperbolicDist_map_eq_of_isometry hf
   obtain ⟨u, b, hu, hb, hcase⟩ :=
     exists_eqOn_ball_unitDiscStandardAutomorphismFormula_or_conj_of_hyperbolicDist_map_eq
       hFmaps hFiso

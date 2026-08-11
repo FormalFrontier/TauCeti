@@ -26,6 +26,9 @@ on tangent fibers rather than restating the linear algebra.
 * `TauCeti.AlmostComplexStructure`: a real-linear endomorphism `J` with `J^2 = -1`.
 * `TauCeti.IsComplexLinearMap`: a real-linear map intertwining two almost complex structures.
 * `TauCeti.SymplecticForm`: an alternating, nondegenerate real bilinear form.
+* `TauCeti.SymplecticForm.apply_smul_add_smul`: evaluation of a symplectic form on the plane
+  spanned by two vectors, and `TauCeti.SymplecticForm.exists_apply_eq_one`: existence of a
+  hyperbolic partner for every nonzero vector.
 * `TauCeti.SymplecticForm.Tames`: the positivity condition `0 < ω v (J v)` for `v ≠ 0`.
 * `TauCeti.SymplecticForm.Compatible`: `J`-invariance plus positivity of `ω(·, J ·)`.
 * `TauCeti.AlmostComplexStructure.product`: the standard almost complex structure on
@@ -369,6 +372,15 @@ lemma neg_eq (ω : SymplecticForm V) (v w : V) :
     -ω v w = ω w v :=
   ω.isAlt.neg_eq v w
 
+/-- Bilinear expansion of `ω` on the plane spanned by a pair of vectors: only the mixed term
+`ω x y` survives. -/
+lemma apply_smul_add_smul (ω : SymplecticForm V) (x y : V) (a b c d : ℝ) :
+    ω (a • x + b • y) (c • x + d • y) = (a * d - b * c) * ω x y := by
+  have hyx : ω y x = -ω x y := (ω.neg_eq x y).symm
+  simp only [map_add, map_smul, LinearMap.add_apply, LinearMap.smul_apply, smul_eq_mul,
+    self_eq_zero, hyx]
+  ring
+
 /-- The ordered area density `ω (F v) (F (J₀ v))` is unchanged when both arguments are
 precomposed by a source almost complex structure `J₀`: rotating the source by `J₀` sends the
 pair `(v, J₀ v)` to `(J₀ v, -v)`, which has the same symplectic area. This is the
@@ -391,6 +403,14 @@ lemma separatingLeft (ω : SymplecticForm V) :
 lemma separatingRight (ω : SymplecticForm V) :
     ω.toBilinForm.SeparatingRight :=
   (LinearMap.IsRefl.nondegenerate_iff_separatingRight ω.isRefl).mp ω.nondegenerate
+
+/-- Nondegeneracy supplies a **hyperbolic partner**: every nonzero vector `x` admits a vector `y`
+with `ω x y = 1`. -/
+lemma exists_apply_eq_one (ω : SymplecticForm V) {x : V} (hx : x ≠ 0) : ∃ y : V, ω x y = 1 := by
+  obtain ⟨y, hy⟩ : ∃ y : V, ω x y ≠ 0 := by
+    by_contra hcon
+    exact hx (ω.separatingLeft x fun y => not_not.1 fun hne => hcon ⟨y, hne⟩)
+  exact ⟨(ω x y)⁻¹ • y, by simp [inv_mul_cancel₀ hy]⟩
 
 /-- The bilinear form `ω(J ·, J ·)`. -/
 @[expose] def pullback (ω : SymplecticForm V) (J : AlmostComplexStructure V) :

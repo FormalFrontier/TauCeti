@@ -6,7 +6,6 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.Tangent.Basic
 public import Mathlib.Algebra.Lie.OfAssociative
-public import Mathlib.RingTheory.Bialgebra.TensorProduct
 
 /-!
 # The Lie algebra of the tangent space at the identity
@@ -54,7 +53,7 @@ public section
 
 namespace TauCeti
 
-open Coalgebra WithConv TensorProduct
+open _root_.Coalgebra WithConv TensorProduct
 
 namespace Derivation
 
@@ -62,57 +61,6 @@ section Bracket
 
 variable {R A B : Type*} [CommSemiring R] [CommSemiring A] [Bialgebra R A]
   [CommRing B] [Algebra R B]
-
-/-- The exterior convolution product on `A ⊗[R] A`: apply one factor on each tensor
-leg and multiply the results in the coefficients. -/
-private def mulTensor (s t : WithConv (A →ₗ[R] Bialgebra.CounitAlgebra R A B)) :
-    WithConv (A ⊗[R] A →ₗ[R] Bialgebra.CounitAlgebra R A B) :=
-  toConv ((Algebra.TensorProduct.lmul' R
-    (S := Bialgebra.CounitAlgebra R A B)).toLinearMap ∘ₗ map s.ofConv t.ofConv)
-
-omit [CommSemiring A] [Bialgebra R A] in
-/-- The base algebra maps of the coefficient synonym and of `B` agree. -/
-private lemma algebraMap_counitAlgebra (r : R) :
-    algebraMap R (Bialgebra.CounitAlgebra R A B) r = algebraMap R B r := rfl
-
-private lemma mulTensor_ofConv_tmul
-    (s t : WithConv (A →ₗ[R] Bialgebra.CounitAlgebra R A B)) (x y : A) :
-    (mulTensor s t).ofConv (x ⊗ₜ[R] y) = s.ofConv x * t.ofConv y := by
-  simp [mulTensor, Algebra.TensorProduct.lmul'_apply_tmul]
-
-/-- The exterior product is multiplicative for convolution: products interleave
-legwise. Push `TensorProduct.map_convMul_map` through the multiplication of the
-commutative coefficient algebra. -/
-private lemma mulTensor_convMul
-    (s t u v : WithConv (A →ₗ[R] Bialgebra.CounitAlgebra R A B)) :
-    mulTensor s t * mulTensor u v = mulTensor (s * u) (t * v) := by
-  have h := LinearMap.algHom_comp_convMul_distrib
-    (Algebra.TensorProduct.lmul' R (S := Bialgebra.CounitAlgebra R A B))
-    (toConv (map s.ofConv t.ofConv)) (toConv (map u.ofConv v.ofConv))
-  rw [map_convMul_map] at h
-  calc mulTensor s t * mulTensor u v
-      = toConv ((Algebra.TensorProduct.lmul' R
-            (S := Bialgebra.CounitAlgebra R A B)).toLinearMap ∘ₗ
-          map (s * u).ofConv (t * v).ofConv) := by
-        rw [mulTensor, mulTensor, ← toConv_ofConv (toConv _ * toConv _), ← h]
-    _ = mulTensor (s * u) (t * v) := rfl
-
-/-- The Leibniz rule in convolution form: composing a counit-valued derivation with
-the multiplication of `A` is the exterior product against the convolution unit, on
-either side. -/
-private lemma toConv_coe_comp_mul'
-    (d : Derivation R A (Bialgebra.CounitAlgebra R A B)) :
-    toConv ((d : A →ₗ[R] Bialgebra.CounitAlgebra R A B) ∘ₗ LinearMap.mul' R A) =
-      mulTensor 1 (toConv (↑d : A →ₗ[R] Bialgebra.CounitAlgebra R A B)) +
-        mulTensor (toConv (↑d : A →ₗ[R] Bialgebra.CounitAlgebra R A B)) 1 := by
-  refine ofConv_injective (TensorProduct.ext' fun x y => ?_)
-  simp only [ofConv_add, LinearMap.add_apply, LinearMap.coe_comp,
-    Function.comp_apply, LinearMap.mul'_apply, mulTensor_ofConv_tmul,
-    Derivation.coeFn_coe, LinearMap.convOne_apply, algebraMap_counitAlgebra]
-  rw [← Bialgebra.CounitAlgebra.algebraMap_apply R A B x,
-    ← Bialgebra.CounitAlgebra.algebraMap_apply R A B y, ← Algebra.commutes,
-    ← Algebra.smul_def, ← Algebra.smul_def]
-  exact d.leibniz x y
 
 /-- The convolution square of the Leibniz rule: composing a convolution product of two
 derivations with the multiplication of `A` expands into exterior products, with the
@@ -122,13 +70,13 @@ private lemma convMul_comp_mul'
     toConv ((toConv (↑d₁ : A →ₗ[R] Bialgebra.CounitAlgebra R A B) *
         toConv (↑d₂ : A →ₗ[R] Bialgebra.CounitAlgebra R A B)).ofConv ∘ₗ
           LinearMap.mul' R A) =
-      mulTensor 1 (toConv (↑d₁ : A →ₗ[R] Bialgebra.CounitAlgebra R A B) *
+      LinearMap.mulTensor 1 (toConv (↑d₁ : A →ₗ[R] Bialgebra.CounitAlgebra R A B) *
           toConv (↑d₂ : A →ₗ[R] Bialgebra.CounitAlgebra R A B)) +
-        mulTensor (toConv (↑d₁ : A →ₗ[R] Bialgebra.CounitAlgebra R A B) *
+        LinearMap.mulTensor (toConv (↑d₁ : A →ₗ[R] Bialgebra.CounitAlgebra R A B) *
           toConv (↑d₂ : A →ₗ[R] Bialgebra.CounitAlgebra R A B)) 1 +
-        (mulTensor (toConv (↑d₁ : A →ₗ[R] Bialgebra.CounitAlgebra R A B))
+        (LinearMap.mulTensor (toConv (↑d₁ : A →ₗ[R] Bialgebra.CounitAlgebra R A B))
             (toConv (↑d₂ : A →ₗ[R] Bialgebra.CounitAlgebra R A B)) +
-          mulTensor (toConv (↑d₂ : A →ₗ[R] Bialgebra.CounitAlgebra R A B))
+          LinearMap.mulTensor (toConv (↑d₂ : A →ₗ[R] Bialgebra.CounitAlgebra R A B))
             (toConv (↑d₁ : A →ₗ[R] Bialgebra.CounitAlgebra R A B))) := by
   have h := LinearMap.convMul_comp_coalgHom_distrib
     (toConv (↑d₁ : A →ₗ[R] Bialgebra.CounitAlgebra R A B))
@@ -140,7 +88,8 @@ private lemma convMul_comp_mul'
   rw [show (_root_.Bialgebra.mulCoalgHom R A).toLinearMap = LinearMap.mul' R A from rfl,
     ofConv_toConv, ofConv_toConv] at h
   rw [h, toConv_ofConv, toConv_coe_comp_mul', toConv_coe_comp_mul', add_mul, mul_add,
-    mul_add, mulTensor_convMul, mulTensor_convMul, mulTensor_convMul, mulTensor_convMul]
+    mul_add, LinearMap.mulTensor_convMul, LinearMap.mulTensor_convMul,
+    LinearMap.mulTensor_convMul, LinearMap.mulTensor_convMul]
   simp only [one_mul, mul_one]
   abel
 
@@ -158,8 +107,8 @@ private lemma convMul_ofConv_mul (d₁ d₂ : Derivation R A (Bialgebra.CounitAl
         (d₁ a * d₂ b + d₂ a * d₁ b) := by
   have h := congrArg (fun F => F.ofConv (a ⊗ₜ[R] b)) (convMul_comp_mul' d₁ d₂)
   simp only [LinearMap.coe_comp, Function.comp_apply, LinearMap.mul'_apply,
-    ofConv_add, LinearMap.add_apply, mulTensor_ofConv_tmul, LinearMap.convOne_apply,
-    algebraMap_counitAlgebra, Derivation.coeFn_coe] at h
+    ofConv_add, LinearMap.add_apply, LinearMap.mulTensor_apply_tmul, LinearMap.convOne_apply,
+    Bialgebra.CounitAlgebra.algebraMap_base, Derivation.coeFn_coe] at h
   rw [h, ← Bialgebra.CounitAlgebra.algebraMap_apply R A B a,
     ← Bialgebra.CounitAlgebra.algebraMap_apply R A B b, ← Algebra.commutes,
     ← Algebra.smul_def, ← Algebra.smul_def]
@@ -278,6 +227,17 @@ noncomputable instance instLieAlgebra :
     exact DFunLike.congr_fun (congrArg ofConv
       (lie_smul r (toConv (↑d₁ : A →ₗ[R] Bialgebra.CounitAlgebra R A B))
         (toConv (↑d₂ : A →ₗ[R] Bialgebra.CounitAlgebra R A B)))) a
+
+/-- The tangent space at the identity is a Lie algebra over the coefficient ring. -/
+noncomputable instance instLieAlgebraCoefficients :
+    LieAlgebra B (Derivation R A (Bialgebra.CounitAlgebra R A B)) where
+  lie_smul b d₁ d₂ := Derivation.ext fun a => by
+    let _ : LieRing (WithConv (A →ₗ[R] Bialgebra.CounitAlgebra R A B)) :=
+      LieRing.ofAssociativeRing
+    rw [Derivation.smul_apply, bracket_apply_ofConv, bracket_apply_ofConv,
+      Derivation.coe_smul_linearMap, toConv_smul, LieRing.of_associative_ring_bracket,
+      mul_smul_comm, smul_mul_assoc, ← smul_sub, ofConv_smul,
+      LieRing.of_associative_ring_bracket, LinearMap.smul_apply]
 
 end Lie
 

@@ -49,6 +49,8 @@ re-derive.
 * `TauCeti.orthonormal_bareNormalizedLp` — orthonormality from the orthogonality relation.
 * `TauCeti.coe_hilbertBasisOfWeightedMeasure`, `TauCeti.coe_hilbertBasisOfOrthogonalSystem` — the
   element-level characterizations (anti-vacuity pins).
+* `TauCeti.coeFn_hilbertBasisOfOrthogonalSystem` — the envelope basis vector as the explicit
+  function `fₙ·√w/√cₙ`, the form a family instance identifies with its own envelope family.
 -/
 
 public section
@@ -118,8 +120,9 @@ private theorem integral_bareNormalized_real {μ : Measure α}
           rw [horth]
           by_cases hmn : m = n
           · subst hmn
-            rw [if_pos rfl, if_pos rfl, Real.mul_self_sqrt hcn.le, inv_mul_cancel₀ hcn.ne']
-          · rw [if_neg hmn, if_neg hmn, mul_zero]
+            rw [ite_eq_left rfl, ite_eq_left rfl, Real.mul_self_sqrt hcn.le,
+              inv_mul_cancel₀ hcn.ne']
+          · rw [ite_eq_right hmn, ite_eq_right hmn, mul_zero]
 
 /-- The normalized bare functions have Kronecker-delta inner products in `L²(w·μ)`. -/
 theorem inner_bareNormalizedLp {μ : Measure α}
@@ -210,5 +213,34 @@ theorem coe_hilbertBasisOfOrthogonalSystem {μ : Measure α}
   rw [hilbertBasisOfOrthogonalSystem, HilbertBasis.mapₗᵢ_apply,
     coe_hilbertBasisOfWeightedMeasure f w c (hwpos.mono fun _ hx => hx.le) hwm hc horth hmem
       hcomplete]
+
+/-- **The envelope basis vectors are the functions `fₙ·√w/√cₙ`.** Where
+`TauCeti.coe_hilbertBasisOfOrthogonalSystem` names the `n`-th vector as a `weightL2Isometry`
+image, this multiplies that image out, so a family instance can identify the vector with its own
+envelope family by pointwise algebra alone.
+
+Positivity of `w` is what makes the statement `μ`-almost-everywhere rather than merely
+`w·μ`-almost-everywhere: it makes `μ` absolutely continuous with respect to `w·μ`, so the
+representative of the weighted-measure basis vector may be read on `μ` as well. -/
+theorem coeFn_hilbertBasisOfOrthogonalSystem {μ : Measure α}
+    (hwpos : ∀ᵐ x ∂μ, 0 < w x) (hwm : AEMeasurable w μ) (hc : ∀ n, 0 < c n)
+    (horth : ∀ m n, (∫ x, f m x * f n x * w x ∂μ) = if m = n then c n else 0)
+    (hmem : ∀ n, MemLp (fun x => (algebraMap ℝ 𝕜) (f n x / Real.sqrt (c n))) 2
+      (μ.withDensity (fun x => ENNReal.ofReal (w x)))) (hcomplete :
+      (Submodule.span 𝕜 (Set.range (bareNormalizedLp (𝕜 := 𝕜) f w c hmem)))ᗮ = ⊥) (n : ℕ) :
+    ⇑(hilbertBasisOfOrthogonalSystem f w c hwpos hwm hc horth hmem hcomplete n)
+      =ᵐ[μ] fun x => (algebraMap ℝ 𝕜) (f n x * Real.sqrt (w x) / Real.sqrt (c n)) := by
+  have hac : μ ≪ μ.withDensity fun x => ENNReal.ofReal (w x) :=
+    withDensity_absolutelyContinuous' hwm.ennreal_ofReal <| by
+      filter_upwards [hwpos] with x hx
+      simp only [ne_eq, ENNReal.ofReal_eq_zero, not_le]
+      exact hx
+  rw [coe_hilbertBasisOfOrthogonalSystem f w c hwpos hwm hc horth hmem hcomplete n]
+  filter_upwards [weightL2Isometry_apply (𝕜 := 𝕜) μ w hwpos hwm
+      (bareNormalizedLp (𝕜 := 𝕜) f w c hmem n),
+    (coeFn_bareNormalizedLp (𝕜 := 𝕜) f w c hmem n).filter_mono hac.ae_le] with x hx hbare
+  rw [hx, hbare, Algebra.smul_def, ← map_mul]
+  congr 1
+  ring
 
 end TauCeti

@@ -89,7 +89,8 @@ noncomputable def groupScheme : Grp (Over (Spec (CommRingCat.of R))) :=
   (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).obj
     (Opposite.op (coordinateHopfAlgebra R n))
 
-private lemma groupScheme_eq_hopfSpec :
+/-- The general linear group scheme is the relative spectrum of its coordinate Hopf algebra. -/
+lemma groupScheme_def :
     groupScheme R n =
       (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).obj
         (Opposite.op (coordinateHopfAlgebra R n)) := by
@@ -327,7 +328,7 @@ noncomputable def groupSchemePointMulEquiv :
       ((Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of R)) ⟶
         (groupScheme R n).X) :=
   CommHopfAlgCat.mapMulEquivOfPresentation
-    (coordinateHopfAlgebra R n) A (groupScheme_eq_hopfSpec R n)
+    (coordinateHopfAlgebra R n) A (groupScheme_def R n)
 
 /-- The underlying map of the spectrum point associated to an algebra point. -/
 @[simp]
@@ -338,7 +339,7 @@ lemma groupSchemePointMulEquiv_apply_left
         eqToHom (groupScheme_X_left R n).symm := by
   simpa only [groupSchemePointMulEquiv] using
     CommHopfAlgCat.mapMulEquivOfPresentation_apply_left
-      (coordinateHopfAlgebra R n) A (groupScheme_eq_hopfSpec R n)
+      (coordinateHopfAlgebra R n) A (groupScheme_def R n)
         (groupScheme_X_left R n) f
 
 /-- The group of scheme-valued points of the general linear group scheme is the ordinary general
@@ -396,7 +397,7 @@ theorem schemePointsMulEquiv_mapValue (φ : A →ₐ[R] B)
           (CommAlgCat.ofHom φ) q := by
     simpa only [q, groupSchemePointMulEquiv] using
       CommHopfAlgCat.mapMulEquivOfPresentation_mapValue
-        (coordinateHopfAlgebra R n) φ (groupScheme_eq_hopfSpec R n) p
+        (coordinateHopfAlgebra R n) φ (groupScheme_def R n) p
   simp only [schemePointsMulEquiv, MulEquiv.trans_apply]
   rw [hpre, HopfAlgebra.mapPoints_apply, ← AlgHom.mapValue_apply]
   exact pointsMulEquiv_mapValue n φ q
