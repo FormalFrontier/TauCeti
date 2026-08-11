@@ -177,7 +177,7 @@ theorem coordinateBialgHom_range_eq_matrixCoefficientSubalgebra_prod_dual
 /-- The coordinate morphism is surjective exactly when the coefficients of the comodule and its
 dual generate the coordinate Hopf algebra. This is the rigid-category form of the
 matrix-coefficient-and-antipode criterion above. -/
-theorem coordinateBialgHom_surjective_iff_matrixCoefficientSubalgebra_prod_dual
+theorem coordinateBialgHom_surjective_iff_matrixCoefficientSubalgebra_prod_dual_eq_top
     (b : Basis (Fin n) R M) :
     letI : Module.Finite R M := Module.Finite.of_basis b
     letI : Module.Free R M := Module.Free.of_basis b
@@ -262,7 +262,7 @@ attribute [local instance] dual Prod
 
 /-- In a finite free comodule, the faithful-representation criterion can be read as
 generation by the coefficients of the comodule together with its dual. -/
-theorem isFaithful_iff_matrixCoefficientSubalgebra_prod_dual
+theorem isFaithful_iff_matrixCoefficientSubalgebra_prod_dual_eq_top
     (b : Basis (Fin d) k V) :
     letI : Module.Finite k V := Module.Finite.of_basis b
     letI : Module.Free k V := Module.Free.of_basis b
@@ -275,7 +275,7 @@ theorem isFaithful_iff_matrixCoefficientSubalgebra_prod_dual
   let : Module.Projective k V := inferInstance
   rw [isFaithful_iff_isClosedImmersion_coordinateGroupSchemeHom (b := b),
     isClosedImmersion_coordinateGroupSchemeHom_iff,
-    coordinateBialgHom_surjective_iff_matrixCoefficientSubalgebra_prod_dual]
+    coordinateBialgHom_surjective_iff_matrixCoefficientSubalgebra_prod_dual_eq_top]
 
 end Dual
 
