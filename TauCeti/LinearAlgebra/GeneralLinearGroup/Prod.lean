@@ -16,6 +16,7 @@ compatibility with the group operations.
 ## Main declarations
 
 * `TauCeti.GeneralLinearGroup.prodMap`: the componentwise product of two linear automorphisms.
+* `TauCeti.GeneralLinearGroup.prodMap_apply`: the product automorphism acts componentwise.
 -/
 
 public section
@@ -37,11 +38,17 @@ def prodMap (g : GeneralLinearGroup K V) (h : GeneralLinearGroup K W) :
   LinearMap.GeneralLinearGroup.ofLinearEquiv (g.toLinearEquiv.prodCongr h.toLinearEquiv)
 
 /-- The endomorphism underlying a product-map automorphism is `LinearMap.prodMap`. -/
-@[simp]
 theorem coe_prodMap (g : GeneralLinearGroup K V) (h : GeneralLinearGroup K W) :
     (prodMap g h : Module.End K (V × W)) =
       (g : Module.End K V).prodMap (h : Module.End K W) :=
   (rfl)
+
+/-- A product-map automorphism acts componentwise. -/
+@[simp]
+theorem prodMap_apply (g : GeneralLinearGroup K V) (h : GeneralLinearGroup K W) (x : V × W) :
+    (prodMap g h : Module.End K (V × W)) x =
+      ((g : Module.End K V) x.1, (h : Module.End K W) x.2) := by
+  rw [coe_prodMap, LinearMap.prodMap_apply]
 
 /-- Product maps preserve multiplication. -/
 @[simp]
