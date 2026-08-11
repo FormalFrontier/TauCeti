@@ -57,24 +57,24 @@ variable {k : Type u} [Field k]
 variable {H : Type v} [CommRing H] [Algebra k H]
 variable (f : H →ₐ[k] k)
 
-private theorem surjective : Function.Surjective f := fun r ↦
+private theorem surjective : Function.Surjective (f : H →+* k) := fun r ↦
   ⟨algebraMap k H r, by simp⟩
 
 /-- The point of `Spec H` defined by an augmentation `f : H →ₐ[k] k`. Its prime ideal is
 `ker f`. -/
 def kernelPoint : Spec (CommRingCat.of H) :=
-  ⟨RingHom.ker f.toRingHom,
-    (RingHom.ker_isMaximal_of_surjective f.toRingHom (surjective f)).isPrime⟩
+  ⟨RingHom.ker (f : H →+* k),
+    (RingHom.ker_isMaximal_of_surjective (f : H →+* k) (surjective f)).isPrime⟩
 
 /-- The prime ideal of an augmentation point is the kernel of the augmentation. -/
 @[simp]
 theorem kernelPoint_asIdeal :
-    (kernelPoint f).asIdeal = RingHom.ker f.toRingHom :=
+    (kernelPoint f).asIdeal = RingHom.ker (f : H →+* k) :=
   (rfl)
 
 /-- The augmentation point is the pullback of the closed point of the ground field. -/
 theorem kernelPoint_eq_comap_closedPoint :
-    kernelPoint f = PrimeSpectrum.comap f.toRingHom (closedPoint k) := by
+    kernelPoint f = PrimeSpectrum.comap (f : H →+* k) (closedPoint k) := by
   apply PrimeSpectrum.ext
   rw [kernelPoint_asIdeal, PrimeSpectrum.comap_asIdeal]
   -- Mathlib has no public lemma for this bridge: `closedPoint` is definitionally the point
@@ -84,8 +84,8 @@ theorem kernelPoint_eq_comap_closedPoint :
   rfl
 
 /-- The kernel of an augmentation to a field is canonically maximal. -/
-instance kernelIsMaximal : (RingHom.ker f.toRingHom).IsMaximal :=
-  RingHom.ker_isMaximal_of_surjective f.toRingHom (surjective f)
+instance kernelIsMaximal : (RingHom.ker (f : H →+* k)).IsMaximal :=
+  RingHom.ker_isMaximal_of_surjective (f : H →+* k) (surjective f)
 
 /-- The stalk at an augmentation point is an `H`-algebra through the germ map. -/
 noncomputable instance kernelStalkAlgebra :
@@ -106,7 +106,7 @@ instance kernelStalkIsScalarTower :
 instance kernelStalkIsLocalization :
     IsLocalization.AtPrime
       ((Spec (CommRingCat.of H)).presheaf.stalk (kernelPoint f))
-      (RingHom.ker f.toRingHom) := by
+      (RingHom.ker (f : H →+* k)) := by
   exact StructureSheaf.IsLocalization.to_stalk H (kernelPoint f)
 
 /-- The ground field is canonically the residue field at an augmentation point. -/
@@ -114,7 +114,7 @@ noncomputable def kernelResidueFieldRingEquiv :
     k ≃+* IsLocalRing.ResidueField
       ((Spec (CommRingCat.of H)).presheaf.stalk (kernelPoint f)) :=
   (RingHom.quotientKerEquivOfSurjective (surjective f)).symm.trans
-    (IsLocalization.AtPrime.equivQuotMaximalIdeal (RingHom.ker f.toRingHom)
+    (IsLocalization.AtPrime.equivQuotMaximalIdeal (RingHom.ker (f : H →+* k))
       ((Spec (CommRingCat.of H)).presheaf.stalk (kernelPoint f)))
 
 /-- The residue-field equivalence sends a ground-field element to the residue class of its image
@@ -126,11 +126,11 @@ theorem kernelResidueFieldRingEquiv_apply (r : k) :
         (algebraMap H ((Spec (CommRingCat.of H)).presheaf.stalk (kernelPoint f))
           (algebraMap k H r)) := by
   -- Expose the composed ring equivalence so its two public representative lemmas apply.
-  change (IsLocalization.AtPrime.equivQuotMaximalIdeal (RingHom.ker f.toRingHom)
+  change (IsLocalization.AtPrime.equivQuotMaximalIdeal (RingHom.ker (f : H →+* k))
       ((Spec (CommRingCat.of H)).presheaf.stalk (kernelPoint f)))
         ((RingHom.quotientKerEquivOfSurjective (surjective f)).symm r) = _
   have h : (RingHom.quotientKerEquivOfSurjective (surjective f)).symm r =
-      Ideal.Quotient.mk (RingHom.ker f.toRingHom) (algebraMap k H r) := by
+      Ideal.Quotient.mk (RingHom.ker (f : H →+* k)) (algebraMap k H r) := by
     apply (RingHom.quotientKerEquivOfSurjective (surjective f)).injective
     rw [RingEquiv.apply_symm_apply, RingHom.quotientKerEquivOfSurjective_apply_mk]
     simp
@@ -143,19 +143,19 @@ the affine spectrum at the corresponding point.
 This is the cotangent form of the comparison between augmentation-valued derivations and the
 scheme-theoretic tangent space at the augmentation point. -/
 @[expose] noncomputable def kernelCotangentLinearEquivZariski :
-    (RingHom.ker f.toRingHom).Cotangent ≃ₗ[k]
+    (RingHom.ker (f : H →+* k)).Cotangent ≃ₗ[k]
       TauCeti.AlgebraicGeometry.ZariskiCotangentSpace
         (Spec (CommRingCat.of H)) (kernelPoint f) :=
   (Ideal.cotangentLocalizationEquiv
     (Rₚ := (Spec (CommRingCat.of H)).presheaf.stalk (kernelPoint f))
-    (RingHom.ker f.toRingHom)).restrictScalars k
+    (RingHom.ker (f : H →+* k))).restrictScalars k
 
 /-- On an element of the augmentation kernel, the cotangent comparison is induced by the map from
 the coordinate ring to its stalk. -/
 @[simp]
-theorem kernelCotangentLinearEquivZariski_toCotangent (a : RingHom.ker f.toRingHom) :
+theorem kernelCotangentLinearEquivZariski_toCotangent (a : RingHom.ker (f : H →+* k)) :
     kernelCotangentLinearEquivZariski f
-        ((RingHom.ker f.toRingHom).toCotangent a) =
+        ((RingHom.ker (f : H →+* k)).toCotangent a) =
       (maximalIdeal
           ((Spec (CommRingCat.of H)).presheaf.stalk (kernelPoint f))).toCotangent
         ⟨algebraMap H
@@ -164,25 +164,26 @@ theorem kernelCotangentLinearEquivZariski_toCotangent (a : RingHom.ker f.toRingH
             rw [← Ideal.mem_under,
               IsLocalization.AtPrime.under_maximalIdeal
                 ((Spec (CommRingCat.of H)).presheaf.stalk (kernelPoint f))
-                (RingHom.ker f.toRingHom)]
+                (RingHom.ker (f : H →+* k))]
             exact a.2⟩ := by
   exact Ideal.cotangentLocalizationEquiv_toCotangent
     (Rₚ := (Spec (CommRingCat.of H)).presheaf.stalk (kernelPoint f))
-    (RingHom.ker f.toRingHom) a
+    (RingHom.ker (f : H →+* k)) a
 
 /-- The cotangent comparison intertwines the ground-field action with the native residue-field
 action through `kernelResidueFieldRingEquiv`. -/
 @[simp]
 theorem kernelCotangentLinearEquivZariski_smul (r : k)
-    (x : (RingHom.ker f.toRingHom).Cotangent) :
-    kernelCotangentLinearEquivZariski f (r • x) =
+    (x : (RingHom.ker (f : H →+* k)).Cotangent) :
+    r • kernelCotangentLinearEquivZariski f x =
       kernelResidueFieldRingEquiv f r • kernelCotangentLinearEquivZariski f x := by
+  rw [← (kernelCotangentLinearEquivZariski f).map_smul r x]
   -- Expose the restricted-scalar wrapper before applying the localization equivalence's
   -- native residue-field scalar formula.
   unfold kernelCotangentLinearEquivZariski
   rw [LinearEquiv.restrictScalars_apply, LinearEquiv.restrictScalars_apply]
   rw [← IsScalarTower.algebraMap_smul H r x,
-    ← IsScalarTower.algebraMap_smul (H ⧸ RingHom.ker f.toRingHom) (algebraMap k H r) x,
+    ← IsScalarTower.algebraMap_smul (H ⧸ RingHom.ker (f : H →+* k)) (algebraMap k H r) x,
     Ideal.Quotient.algebraMap_eq,
     Ideal.cotangentLocalizationEquiv_smul,
     IsLocalization.AtPrime.equivQuotMaximalIdeal_apply_mk,
@@ -195,7 +196,7 @@ theorem kernelCotangentLinearEquivZariski_smul (r : k)
 have the same dimension over the ground field. -/
 @[simp]
 theorem finrank_kernelCotangent_eq_finrank_zariskiCotangentSpace :
-    Module.finrank k (RingHom.ker f.toRingHom).Cotangent =
+    Module.finrank k (RingHom.ker (f : H →+* k)).Cotangent =
       Module.finrank k
         (TauCeti.AlgebraicGeometry.ZariskiCotangentSpace
           (Spec (CommRingCat.of H)) (kernelPoint f)) :=
@@ -217,7 +218,6 @@ abbrev augmentationPoint : Spec (CommRingCat.of H) :=
   AlgHom.kernelPoint (_root_.Bialgebra.counitAlgHom k H)
 
 /-- The prime ideal of the augmentation point is the augmentation ideal. -/
-@[simp]
 theorem augmentationPoint_asIdeal :
     (augmentationPoint k H).asIdeal = AugmentationIdeal k H :=
   AlgHom.kernelPoint_asIdeal (_root_.Bialgebra.counitAlgHom k H)
@@ -226,7 +226,7 @@ theorem augmentationPoint_asIdeal :
 counit. -/
 theorem augmentationPoint_eq_comap_closedPoint :
     augmentationPoint k H =
-      PrimeSpectrum.comap (_root_.Bialgebra.counitAlgHom k H).toRingHom (closedPoint k) :=
+      PrimeSpectrum.comap (_root_.Bialgebra.counitAlgHom k H : H →+* k) (closedPoint k) :=
   AlgHom.kernelPoint_eq_comap_closedPoint (_root_.Bialgebra.counitAlgHom k H)
 
 /-- The ground field is canonically the residue field at the augmentation point. -/
@@ -279,14 +279,15 @@ theorem cotangentLinearEquivZariski_toCotangent (a : AugmentationIdeal k H) :
 residue-field action through `augmentationResidueFieldRingEquiv`. -/
 @[simp]
 theorem cotangentLinearEquivZariski_smul (r : k) (x : CotangentSpace k H) :
-    cotangentLinearEquivZariski k H (r • x) =
+    r • cotangentLinearEquivZariski k H x =
       augmentationResidueFieldRingEquiv k H r • cotangentLinearEquivZariski k H x :=
-  AlgHom.kernelCotangentLinearEquivZariski_smul
-    (_root_.Bialgebra.counitAlgHom k H) r x
+  by
+    unfold cotangentLinearEquivZariski augmentationResidueFieldRingEquiv
+    exact AlgHom.kernelCotangentLinearEquivZariski_smul
+      (_root_.Bialgebra.counitAlgHom k H) r x
 
 /-- The augmentation cotangent space and the Zariski cotangent space at the augmentation point
 have the same dimension over the ground field. -/
-@[simp]
 theorem finrank_cotangentSpace_eq_finrank_zariskiCotangentSpace :
     Module.finrank k (CotangentSpace k H) =
       Module.finrank k
