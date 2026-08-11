@@ -53,7 +53,8 @@ private theorem genPowerBasis_dim (hmin : minpoly ℤ θ = X ^ 2 - C d)
 the minimal polynomial `X² - d` (up to the sign `(-1)^{[K:ℚ]}`, here `+1`). -/
 theorem norm_gen (hmin : minpoly ℤ θ = X ^ 2 - C d) (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) :
     Algebra.norm ℚ (θ : K) = -(d : ℚ) := by
-  rw [← genPowerBasis_gen hgen, (genPowerBasis hgen).norm_gen_eq_coeff_zero_minpoly,
+  rw [← genPowerBasis_gen hgen,
+    Algebra.PowerBasis.norm_gen_eq_coeff_zero_minpoly (genPowerBasis hgen),
     genPowerBasis_dim hmin hgen, genPowerBasis_gen, minpoly_rat_quadratic hmin]
   simp [coeff_sub, coeff_X_pow, coeff_C]
 
@@ -91,7 +92,7 @@ theorem norm_pos_of_radicand_neg (hmin : minpoly ℤ θ = X ^ 2 - C d)
   have hdq : (d : ℚ) < 0 := by exact_mod_cast hd
   have hab : a ≠ 0 ∨ b ≠ 0 := by
     by_contra h
-    push_neg at h
+    simp only [not_or, not_not] at h
     exact hx (by rw [h.1, h.2]; simp)
   rcases hab with ha | hb
   · nlinarith [mul_self_pos.mpr ha, sq_nonneg b, sq_nonneg a]
