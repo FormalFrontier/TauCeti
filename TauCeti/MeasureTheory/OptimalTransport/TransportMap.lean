@@ -255,10 +255,17 @@ theorem map_swap_graphPlan_measurableEquiv (e : X ≃ᵐ Y) (μ : Measure X) :
 /-! ### Deterministic plans: concentration on a graph -/
 
 /-- A graph plan is concentrated on the graph of its map. -/
-theorem ae_snd_eq_of_graphPlan [MeasurableEq Y] (hT : Measurable T) (μ : Measure X) :
-    ∀ᵐ z ∂graphPlan T μ, z.2 = T z.1 :=
-  (ae_map_iff (measurable_graphMap hT).aemeasurable
-    (measurableSet_eq_fun measurable_snd (hT.comp measurable_fst))).2 (ae_of_all _ fun _ ↦ rfl)
+theorem ae_snd_eq_of_graphPlan [MeasurableEq Y] (hT : AEMeasurable T μ) :
+    ∀ᵐ z ∂graphPlan T μ, z.2 = T z.1 := by
+  have hmk : ∀ᵐ z ∂graphPlan T μ, z.2 = hT.mk T z.1 := by
+    rw [graphPlan_congr hT.ae_eq_mk]
+    exact (ae_map_iff (measurable_graphMap hT.measurable_mk).aemeasurable
+      (measurableSet_eq_fun measurable_snd (hT.measurable_mk.comp measurable_fst))).2
+      (ae_of_all _ fun _ ↦ rfl)
+  have hfst : Measure.QuasiMeasurePreserving Prod.fst (graphPlan T μ) μ :=
+    ⟨measurable_fst, (fst_graphPlan hT).le.absolutelyContinuous⟩
+  filter_upwards [hmk, hfst.ae hT.ae_eq_mk] with z hz hz'
+  rw [hz, ← hz']
 
 /-- A plan concentrated on the graph of `T` is the graph plan of `T` over its own first
 marginal. -/
@@ -275,23 +282,28 @@ theorem eq_graphPlan_of_ae {π : Measure (X × Y)} (hT : AEMeasurable T π.fst)
     _ = graphPlan T π.fst := rfl
 
 /-- **The deterministic plans are exactly the plans carried by a graph.** A plan on `X × Y` is
-the graph plan of a measurable `T` over its own first marginal precisely when its second
+the graph plan of an a.e. measurable `T` over its own first marginal precisely when its second
 coordinate almost everywhere equals `T` of its first coordinate. -/
-theorem eq_graphPlan_iff [MeasurableEq Y] {π : Measure (X × Y)} (hT : Measurable T) :
+theorem eq_graphPlan_iff [MeasurableEq Y] {π : Measure (X × Y)} (hT : AEMeasurable T π.fst) :
     π = graphPlan T π.fst ↔ ∀ᵐ z ∂π, z.2 = T z.1 := by
-  refine ⟨fun h ↦ ?_, eq_graphPlan_of_ae hT.aemeasurable⟩
+  refine ⟨fun h ↦ ?_, eq_graphPlan_of_ae hT⟩
   rw [h]
-  exact ae_snd_eq_of_graphPlan hT π.fst
+  exact ae_snd_eq_of_graphPlan hT
 
-/-- **A transport map is pinned down by its plan only up to a null set.** Two measurable maps
-induce the same graph plan over `μ` exactly when they agree `μ`-almost everywhere. -/
-theorem graphPlan_eq_graphPlan_iff [MeasurableEq Y] (hT : Measurable T) (hS : Measurable S)
-    (μ : Measure X) : graphPlan T μ = graphPlan S μ ↔ T =ᵐ[μ] S := by
+/-- **A transport map is pinned down by its plan only up to a null set.** Two `μ`-a.e. measurable
+maps induce the same graph plan over `μ` exactly when they agree `μ`-almost everywhere. -/
+theorem graphPlan_eq_graphPlan_iff [MeasurableEq Y] (hT : AEMeasurable T μ)
+    (hS : AEMeasurable S μ) : graphPlan T μ = graphPlan S μ ↔ T =ᵐ[μ] S := by
   refine ⟨fun h ↦ ?_, graphPlan_congr⟩
-  have hae : ∀ᵐ z ∂graphPlan T μ, z.2 = S z.1 := by
-    rw [h]; exact ae_snd_eq_of_graphPlan hS μ
-  exact (ae_map_iff (measurable_graphMap hT).aemeasurable
-    (measurableSet_eq_fun measurable_snd (hS.comp measurable_fst))).1 hae
+  have hmk : graphPlan (hT.mk T) μ = graphPlan (hS.mk S) μ := by
+    rw [← graphPlan_congr hT.ae_eq_mk, ← graphPlan_congr hS.ae_eq_mk]
+    exact h
+  have hae : ∀ᵐ z ∂graphPlan (hT.mk T) μ, z.2 = hS.mk S z.1 := by
+    rw [hmk]; exact ae_snd_eq_of_graphPlan hS.measurable_mk.aemeasurable
+  have key : hT.mk T =ᵐ[μ] hS.mk S :=
+    (ae_map_iff (measurable_graphMap hT.measurable_mk).aemeasurable
+      (measurableSet_eq_fun measurable_snd (hS.measurable_mk.comp measurable_fst))).1 hae
+  exact hT.ae_eq_mk.trans (key.trans hS.ae_eq_mk.symm)
 
 /-! ### A Dirac source admits no non-Dirac transport map -/
 
