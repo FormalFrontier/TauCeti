@@ -40,6 +40,8 @@ classical genus theory behind the inversion action of conjugation on the class g
   acts on `Cl(𝓞 K)` by inversion.
 * `TauCeti.NumberField.elementaryTwoQuotientCongr_ringOfIntegersQuadraticConj_apply_eq_self`: hence
   quadratic conjugation is the identity on the maximal elementary-2 quotient `Cl(𝓞 K)/Cl(𝓞 K)²`.
+* `TauCeti.NumberField.mulEquiv_ringOfIntegersQuadraticConj_apply_eq_self_iff`: a class is fixed by
+  quadratic conjugation iff it is 2-torsion.
 -/
 
 public section
@@ -80,5 +82,14 @@ quotient is the identity. This is the capstone reduction feeding the genus-field
   TauCeti.ClassGroup.elementaryTwoQuotientCongr_apply_eq_self_of_apply_eq_inv
     (ClassGroup.mulEquiv (ringOfIntegersQuadraticConj hmin hgen))
     (mulEquiv_ringOfIntegersQuadraticConj_apply_eq_inv hmin hgen) x
+
+/-- **A class is fixed by quadratic conjugation iff it is 2-torsion.** Because quadratic conjugation
+acts on `Cl(𝓞 K)` by inversion, the classes it fixes are exactly those equal to their own inverse,
+i.e. the 2-torsion — the *ambiguous* classes of genus theory. -/
+theorem mulEquiv_ringOfIntegersQuadraticConj_apply_eq_self_iff
+    (hmin : minpoly ℤ θ = X ^ 2 - C d) (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤)
+    (C : ClassGroup (𝓞 K)) :
+    ClassGroup.mulEquiv (ringOfIntegersQuadraticConj hmin hgen) C = C ↔ C ^ 2 = 1 := by
+  rw [mulEquiv_ringOfIntegersQuadraticConj_apply_eq_inv hmin hgen, inv_eq_iff_mul_eq_one, ← pow_two]
 
 end TauCeti.NumberField

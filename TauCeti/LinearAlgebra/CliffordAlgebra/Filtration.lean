@@ -49,15 +49,17 @@ supremum over the `i` of a fixed parity.
 * `TauCeti.CliffordAlgebra.filtration_mul`: the filtration is multiplicative, and in fact exactly
   so: `filtration Q i * filtration Q j = filtration Q (i + j)`. This is the statement that makes
   the associated graded object an algebra, and it is the prerequisite the roadmap asks for before
-  anything downstream; `TauCeti.CliffordAlgebra.filtration_pow` is its iterate.
+  anything downstream; `TauCeti.CliffordAlgebra.filtration_pow` is its iterate and
+  `TauCeti.CliffordAlgebra.mul_mem_filtration` its elementwise form.
 * `TauCeti.CliffordAlgebra.filtration_succ_eq_sup`: the recursion for the successor step.
 * `TauCeti.CliffordAlgebra.filtration_eq_iSup_pow`: the comparison with the submodule powers of
   `LinearMap.range (ι Q)`.
 * `TauCeti.CliffordAlgebra.filtrationLeadingTerm` and
   `TauCeti.CliffordAlgebra.filtrationLeadingTerm_surjective`: the exterior-power leading-term map
-  onto each successive filtration quotient, the surjectivity half of the associated-graded bridge.
-* `TauCeti.CliffordAlgebra.iSup_filtration_eq_top` and
-  `TauCeti.CliffordAlgebra.exists_mem_filtration`: the filtration is exhaustive.
+  onto each successive filtration quotient. It is surjective over any `CommRing`; when `2` is
+  invertible `TauCeti.CliffordAlgebra.filtrationGradedEquiv_comp_filtrationLeadingTerm` identifies
+  it with the inverse of the graded equivalence.
+* `TauCeti.CliffordAlgebra.iSup_filtration_eq_top`: the filtration is exhaustive.
 * `TauCeti.CliffordAlgebra.involute_mem_filtration`,
   `TauCeti.CliffordAlgebra.reverse_mem_filtration` and
   `TauCeti.CliffordAlgebra.map_mem_filtration`: the filtration is preserved by the grade
@@ -69,6 +71,9 @@ supremum over the `i` of a fixed parity.
   `TauCeti.CliffordAlgebra.changeForm_mem_filtration_iff`: contraction and change of
   quadratic form respect the filtration, contraction lowers every positive step by one, and the
   change-form equivalence transports every step exactly.
+* `TauCeti.CliffordAlgebra.changeForm_prod_map_ι_sub_prod_map_ι_mem_filtration`: change of form
+  has identity symbol, that is, it moves a word of generators only by terms two filtration degrees
+  lower.
 * `TauCeti.CliffordAlgebra.fg_filtration`: each step is a finitely generated module when `M` is.
 
 ## References
@@ -190,10 +195,6 @@ theorem filtration_zero : filtration Q 0 = 1 := by
 theorem one_mem_filtration (k : ℕ) : (1 : CliffordAlgebra Q) ∈ filtration Q k := by
   simpa using prod_map_ι_mem_filtration Q (l := []) (Nat.zero_le k)
 
-/-- The submodule form of `one_mem_filtration`: the scalars sit inside every step. -/
-theorem one_le_filtration (k : ℕ) : 1 ≤ filtration Q k :=
-  Submodule.one_le.2 (one_mem_filtration Q k)
-
 /-- Scalars lie in every step of the filtration, being multiples of the empty product. -/
 theorem algebraMap_mem_filtration (r : R) (k : ℕ) :
     algebraMap R (CliffordAlgebra Q) r ∈ filtration Q k := by
@@ -232,6 +233,13 @@ theorem filtration_mul (i j : ℕ) :
       (prod_map_ι_mem_filtration Q ?_)
     rw [List.length_drop]
     omega
+
+/-- The elementwise form of `filtration_mul`: a product of an element of the `i`-th step and an
+element of the `j`-th step lies in the `i + j`-th step. -/
+theorem mul_mem_filtration {i j : ℕ} {x y : CliffordAlgebra Q} (hx : x ∈ filtration Q i)
+    (hy : y ∈ filtration Q j) : x * y ∈ filtration Q (i + j) := by
+  rw [← filtration_mul Q i j]
+  exact Submodule.mul_mem_mul hx hy
 
 /-- Iterating `filtration_mul`: the `n`-th submodule power of the `i`-th step is the `i * n`-th
 step. -/
@@ -289,20 +297,6 @@ products of generators, so it lies in some step. -/
 theorem iSup_filtration_eq_top : ⨆ k, filtration Q k = ⊤ := by
   rw [eq_top_iff, ← iSup_ι_range_eq_top Q]
   exact iSup_mono' fun i => ⟨i, ι_range_pow_le_filtration Q i⟩
-
-/-- The pointwise form of `iSup_filtration_eq_top`, available because the filtration is a directed
-family. -/
-theorem exists_mem_filtration (x : CliffordAlgebra Q) : ∃ k, x ∈ filtration Q k := by
-  have hx : x ∈ ⨆ k, filtration Q k := by rw [iSup_filtration_eq_top]; exact Submodule.mem_top
-  rwa [Submodule.mem_iSup_of_directed _ (filtration_mono Q).directed_le] at hx
-
-/-- The generators of a Clifford algebra anticommute up to the polarization of `Q`, which is a
-scalar: the associated graded algebra of the filtration is graded-commutative in degree one, the
-symmetric sum `ι Q a * ι Q b + ι Q b * ι Q a` dropping to the previous step of the filtration. -/
-theorem ι_mul_ι_add_swap_mem_filtration_zero (a b : M) :
-    ι Q a * ι Q b + ι Q b * ι Q a ∈ filtration Q 0 := by
-  rw [ι_mul_ι_add_swap]
-  exact algebraMap_mem_filtration Q _ 0
 
 private theorem repeat_product_mem_filtration (a : M) :
     ∀ middle : List M,
@@ -420,7 +414,7 @@ private noncomputable def filtrationLeadingTermAlternating (k : ℕ) :
 filtration quotient. A repeated generator becomes a lower-filtration term under the Clifford
 relation, so the product descends to an alternating map.
 
-This is the surjectivity half of the Layer 0 `filtrationGradedEquiv` target in the
+This is the `CommRing`-level half of the Layer 0 `filtrationGradedEquiv` target in the
 [spin representations roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/SpinRepresentations/Suggested.lean#L62-L68). -/
 noncomputable def filtrationLeadingTerm (k : ℕ) : ExteriorAlgebra.exteriorPower R (k + 1) M →ₗ[R]
     FiltrationGradedPiece Q (k + 1) :=
@@ -575,19 +569,42 @@ theorem contractLeft_mem_filtration (d : Module.Dual R M) {k : ℕ} {x : Cliffor
     (hx : x ∈ filtration Q k) : contractLeft d x ∈ filtration Q k :=
   contractLeft_mem_filtration_succ Q d (filtration_mono Q (Nat.le_succ k) hx)
 
-private theorem changeForm_prod_map_ι_mem_filtration (h : B.toQuadraticMap = Q' - Q) :
-    ∀ l : List M, changeForm h (l.map (ι Q)).prod ∈ filtration Q' l.length
-  | [] => by simpa using one_mem_filtration Q' 0
-  | m :: l => by
-    rw [List.map_cons, List.prod_cons, changeForm_ι_mul]
-    refine Submodule.sub_mem _ ?_ ?_
-    · have hmul :=
-        Submodule.mul_mem_mul (ι_mem_filtration_one Q' m)
-          (changeForm_prod_map_ι_mem_filtration h l)
-      rw [filtration_mul Q' 1 l.length] at hmul
-      simpa [Nat.add_comm] using hmul
-    · exact filtration_mono Q' (Nat.le_succ _)
-        (contractLeft_mem_filtration Q' (B m) (changeForm_prod_map_ι_mem_filtration h l))
+/-- **Change of form has identity symbol, and its correction is even.** Transporting a word of at
+most `k + 2` generators along `changeForm` changes it only by terms of filtration degree at most
+`k`: the difference between the word in the `ι Q` and the same word in the `ι Q'` drops *two*
+steps. It corrects by left contractions, and each contraction removes a pair of generators, so a
+one-step bound would not be sharp. Mathlib's `changeForm_ι_mul_ι` is the first instance: a
+two-generator word is corrected by the scalar `B m₁ m₂`, which lies in `filtration Q' 0`.
+
+Where `changeForm_mem_filtration` says `changeForm` is a filtered map, this says its associated
+graded map is the identity. -/
+theorem changeForm_prod_map_ι_sub_prod_map_ι_mem_filtration (h : B.toQuadraticMap = Q' - Q) :
+    ∀ (l : List M) {k : ℕ}, l.length ≤ k + 2 →
+      changeForm h (l.map (ι Q)).prod - (l.map (ι Q')).prod ∈ filtration Q' k
+  | [], _, _ => by simp
+  | [m], _, _ => by simp
+  | m :: n :: l, 0, hk => by
+      have hl : l = [] := List.length_eq_zero_iff.mp (by simpa using hk)
+      subst hl
+      simp [changeForm_ι_mul_ι]
+  | m :: n :: l, k + 1, hk => by
+      have hl : (n :: l).length ≤ k + 2 := by simpa using hk
+      have hIH := changeForm_prod_map_ι_sub_prod_map_ι_mem_filtration h (n :: l) hl
+      -- The tail's transport is its own word plus a lower-degree correction, so it stays in range.
+      have htail : changeForm h ((n :: l).map (ι Q)).prod ∈ filtration Q' (k + 2) := by
+        simpa using Submodule.add_mem _ (filtration_mono Q' (by omega) hIH)
+          (prod_map_ι_mem_filtration Q' hl)
+      simp only [List.map_cons, List.prod_cons] at hIH htail ⊢
+      rw [changeForm_ι_mul, sub_right_comm, ← mul_sub]
+      refine Submodule.sub_mem _ ?_ ?_
+      · simpa [Nat.add_comm] using mul_mem_filtration Q' (ι_mem_filtration_one Q' m) hIH
+      · exact contractLeft_mem_filtration_succ Q' (B m) htail
+
+private theorem changeForm_prod_map_ι_mem_filtration (h : B.toQuadraticMap = Q' - Q)
+    (l : List M) : changeForm h (l.map (ι Q)).prod ∈ filtration Q' l.length := by
+  have hdiff := changeForm_prod_map_ι_sub_prod_map_ι_mem_filtration Q h l
+    (k := l.length) (by omega)
+  simpa using Submodule.add_mem _ hdiff (prod_map_ι_mem_filtration Q' (le_refl l.length))
 
 /-- Changing quadratic form by a bilinear form preserves each filtration step. -/
 theorem changeForm_mem_filtration (h : B.toQuadraticMap = Q' - Q) {k : ℕ}
