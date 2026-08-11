@@ -28,9 +28,10 @@ t², [t,x], [t,yxy(xy⁻¹)²(xy)³],
 
 Here `r^s` means `s⁻¹rs`, as in the ATLAS Magma source. The source's commutator convention is
 `[r,s] = r⁻¹s⁻¹rs`, opposite to Mathlib's `commutatorElement`, so a source commutator is stored as
-`Relator.comm (.inv r) (.inv s)`. The structured expressions otherwise preserve the source's
-products, powers, and conjugates. The proved `TauCeti.Relator.toWord_toFreeGroup` is the audit
-boundary between these expressions and the signed words consumed by `PresentedGroup`.
+`TauCeti.Relator.sourceComm`, the shared abbreviation for that convention. The structured
+expressions otherwise preserve the source's products, powers, and conjugates. The proved
+`TauCeti.Relator.toWord_toFreeGroup` is the audit boundary between these expressions and the
+signed words consumed by `PresentedGroup`.
 
 Bolt, Bray, and Curtis prove a symmetric presentation of `J₄` and convert it into an ordinary
 three-generator presentation. The ATLAS publishes the resulting relator list as `J4G2-P1`; its
@@ -71,10 +72,6 @@ private abbrev t : Relator (Fin 3) := .gen 2
 
 @[inherit_doc Relator.mul]
 local infixl:70 " ⬝ " => Relator.mul
-
-/-- The source's commutator `[r,s] = r⁻¹s⁻¹rs`, represented in Mathlib's convention. -/
-private abbrev sourceComm (r s : Relator (Fin 3)) : Relator (Fin 3) :=
-  .comm (.inv r) (.inv s)
 
 /-- The source's conjugate `r^s = s⁻¹rs`. -/
 private abbrev sourceConj (r s : Relator (Fin 3)) : Relator (Fin 3) :=
@@ -123,13 +120,13 @@ def j4Presentation : GroupPresentation where
     [ .pow x 2,
       .pow y 3,
       .pow (x ⬝ y) 23,
-      .pow (sourceComm x y) 12,
-      .pow (sourceComm x (y ⬝ x ⬝ y)) 5,
+      .pow (Relator.sourceComm x y) 12,
+      .pow (Relator.sourceComm x (y ⬝ x ⬝ y)) 5,
       sixthWord,
       .pow (x ⬝ y ⬝ .pow (x ⬝ y ⬝ x ⬝ .inv y) 3) 4,
       .pow t 2,
-      sourceComm t x,
-      sourceComm t (y ⬝ x ⬝ y ⬝ .pow (x ⬝ .inv y) 2 ⬝ .pow (x ⬝ y) 3),
+      Relator.sourceComm t x,
+      Relator.sourceComm t (y ⬝ x ⬝ y ⬝ .pow (x ⬝ .inv y) 2 ⬝ .pow (x ⬝ y) 3),
       .pow (y ⬝ sourceConj t firstConjugator) 3,
       .pow (.pow (y ⬝ x ⬝ y ⬝ x ⬝ y ⬝ x ⬝ y) 3 ⬝ t ⬝
         sourceConj t secondConjugator) 2 ]
