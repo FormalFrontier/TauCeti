@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.RingTheory.Localization.AtPrime.Basic
-public import TauCeti.RingTheory.Ideal.Cotangent.Basic
+public import Mathlib.RingTheory.Ideal.Cotangent
 
 /-!
 # Cotangent spaces and localization at a maximal ideal
