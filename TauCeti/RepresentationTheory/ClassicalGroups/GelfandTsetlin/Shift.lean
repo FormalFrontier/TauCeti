@@ -241,10 +241,7 @@ noncomputable def detShiftEquivBoundedSSYT (l : DominantWeight n) :
   exact (shiftTopWeightEquiv l (-l.detShift)).trans <|
     (shiftedTopWeightFiberEquivShape l).trans <|
       (topWeightFiberEquivTopRow l.detShiftShape).trans <|
-        gtPatternEquivSSYT n l.detShiftShape
-          (by
-            simpa only [DominantWeight.detShiftShape] using
-              DominantWeight.colLen_zero_shape_le (l.shift (-l.detShift)))
+        gtPatternEquivSSYT n l.detShiftShape l.colLen_zero_detShiftShape_le
 
 /-- Determinant normalization sends a pattern to the tableau of the pattern shifted to polynomial
 top weight. -/
@@ -252,10 +249,7 @@ top weight. -/
 theorem detShiftEquivBoundedSSYT_apply_coe (l : DominantWeight n)
     (P : {P : GTPattern n // P.topWeight = l}) :
     (detShiftEquivBoundedSSYT l P).1 =
-      (P.1.shift (-l.detShift)).toTableau
-        (by
-          simpa only [DominantWeight.detShiftShape] using
-            DominantWeight.colLen_zero_shape_le (l.shift (-l.detShift)))
+      (P.1.shift (-l.detShift)).toTableau l.colLen_zero_detShiftShape_le
         (fun i => by
           calc
             (P.1.shift (-l.detShift)).topRow i =
