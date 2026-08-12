@@ -96,9 +96,9 @@ theorem conditionallyIIDWith_directingProbabilityMeasure [StandardBorelSpace α]
   -- Integrating the factorization over the tail event `A`.
   have hmid : ∫ ω in A, blockIndicatorProd X k B ω ∂μ = ∫ ω in A, W ω ∂μ := by
     rw [← setIntegral_condExp hTail hZ_int hA_tail]
-    exact setIntegral_congr_ae hA_meas
-      ((hX.condExp_blockIndicatorProd_tailProcess_ae_eq_prod_directingMeasure hX_meas hk hB).mono
-        fun ω hω _ => hω)
+    have hfac := hX.condExp_blockIndicatorProd_strictMono_tailProcess_ae_eq_prod_directingMeasure
+      hX_meas hk hB
+    exact setIntegral_congr_ae hA_meas (hfac.mono fun ω hω _ => hω)
   calc μ (A ∩ blockCylinder X k B)
       = ENNReal.ofReal ((μ (A ∩ blockCylinder X k B)).toReal) :=
         (ENNReal.ofReal_toReal (measure_ne_top _ _)).symm
