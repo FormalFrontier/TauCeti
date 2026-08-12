@@ -34,10 +34,12 @@ coincide with a breakpoint of the immersion). The generalized winding number is 
 Cauchy principal value rather than an ordinary index integral, and this theorem shows it is still
 real and equal
 to the same bounded real integral. Unlike the avoiding case, interval-integrability of that
-integral is not assumed here: it follows from a.e. strong measurability (continuity off the
-crossings, no different from the avoiding case) together with the boundedness above, both drawn
-from the same `C^{1,1}` crossing regularity this file's boundedness result needs. (That
-regularity hypothesis is satisfied vacuously when `γ` never meets `s`, so this also recovers the
+integral is not assumed here: it follows from a.e. strong measurability together with the
+boundedness above, but the two draw from different sources -- measurability from `γ`'s
+continuity plus Mathlib's unconditional measurability of `deriv` (`aestronglyMeasurable_deriv`),
+no different from the avoiding case; boundedness alone from the `C^{1,1}` crossing regularity
+this file's boundedness result needs. (That regularity hypothesis is satisfied vacuously when
+`γ` never meets `s`, so this also recovers the
 avoiding case *for piecewise-`C¹` immersions* — but `Winding.RealIntegral.Basic`'s theorem
 remains needed for avoiding curves that are not immersions, since it only assumes continuity,
 differentiability off a countable set, avoidance, and integrability; the two are kept as separate
