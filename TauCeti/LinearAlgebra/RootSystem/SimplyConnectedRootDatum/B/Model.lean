@@ -390,6 +390,10 @@ lemma cyclicDistance_eq_rank_iff {u v : Fin (2 * n)} : cyclicDistance u v = n �
 axes, for a long root. -/
 def IsPair (u v : Fin (2 * n)) : Prop := u = v ∨ axis u ≠ axis v
 
+/-- Characterization of the signed-vector pairs that name roots of type `Bₙ`. This is the public
+introduction and elimination rule for the body-hidden predicate `IsPair`. -/
+lemma isPair_iff (u v : Fin (2 * n)) : IsPair u v ↔ u = v ∨ axis u ≠ axis v := Iff.rfl
+
 lemma IsPair.cyclicDistance_ne {u v : Fin (2 * n)} (h : IsPair u v) (huv : u ≠ v) :
     cyclicDistance u v ≠ 0 ∧ cyclicDistance u v ≠ n := by
   have hax : axis u ≠ axis v := h.resolve_left huv
