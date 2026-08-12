@@ -49,12 +49,21 @@ generate the presented algebra, rather than merely determine maps out of it.
 * `TauCeti.FreeLieAlgebra.lieSpan_range_of_eq_top`: the generators of a free Lie algebra generate it
   as a Lie subalgebra.
 
+## Implementation notes
+
+Neither `TauCeti.LieIdeal.mkQ` nor `TauCeti.LieIdeal.liftQ` is exposed: `TauCeti.LieIdeal.mkQ_apply`
+and `TauCeti.LieIdeal.liftQ_mkQ` characterise them on elements, and `TauCeti.LieIdeal.ker_mkQ`,
+`TauCeti.LieIdeal.liftQ_comp_mkQ` and `TauCeti.LieIdeal.eq_liftQ` say all a consumer needs about
+their kernel and their factorisation, so nothing downstream has to unfold the quotient. Those three
+equations are proved by the parenthesised `(rfl)`, which elaborates against the definitions
+themselves; a bare `rfl` in an exported theorem would demand that they be `@[expose]`d.
+
 ## Roadmap
 
 These are the general steps behind the universal property of the Serre presentation in
-`TauCeti/Algebra/Lie/Presentation/Serre.lean`, which supplies the split semisimple Lie algebra with
-named Chevalley generators required by the Chevalley--Demazure construction of Layer 9 of
-`TauCetiRoadmap/ReductiveGroups/README.md`.
+`TauCeti/Algebra/Lie/Presentation/Serre.lean`, which names the generators of
+`Matrix.ToLieAlgebra R CM` and maps out of it, as required by the Chevalley--Demazure construction
+of Layer 9 of `TauCetiRoadmap/ReductiveGroups/README.md`.
 -/
 
 public section
@@ -71,17 +80,20 @@ variable (I : LieIdeal R L)
 This is `LieSubmodule.Quotient.mk'` upgraded from a morphism of Lie modules over `L` to a morphism
 of Lie algebras; the bracket on the quotient is by construction the bracket of representatives, so
 there is nothing to check. -/
-@[expose] def mkQ : L →ₗ⁅R⁆ L ⧸ I where
+def mkQ : L →ₗ⁅R⁆ L ⧸ I where
   toFun := LieSubmodule.Quotient.mk
   map_add' _ _ := rfl
   map_smul' _ _ := rfl
   map_lie' := rfl
 
+/-- The quotient homomorphism sends an element to its class. -/
 @[simp]
-theorem mkQ_apply (x : L) : mkQ I x = LieSubmodule.Quotient.mk x := rfl
+theorem mkQ_apply (x : L) : mkQ I x = LieSubmodule.Quotient.mk x := (rfl)
 
+/-- The quotient homomorphism is surjective. -/
 theorem mkQ_surjective : Function.Surjective (mkQ I) := Quot.mk_surjective
 
+/-- The kernel of the quotient homomorphism is the ideal quotiented by. -/
 @[simp]
 theorem ker_mkQ : (mkQ I).ker = I := by
   ext x
@@ -89,27 +101,38 @@ theorem ker_mkQ : (mkQ I).ker = I := by
 
 variable {I}
 
+/-- A homomorphism whose kernel contains `I` kills `I` as a submodule; this is the hypothesis
+`Submodule.liftQ` asks for. -/
 theorem toSubmodule_le_ker_toLinearMap {f : L →ₗ⁅R⁆ L'} (h : I ≤ f.ker) :
     LieSubmodule.toSubmodule I ≤ LinearMap.ker (f : L →ₗ[R] L') :=
   fun _ hx => LieHom.mem_ker.mp (h hx)
 
 /-- The homomorphism `L ⧸ I →ₗ⁅R⁆ L'` induced by a homomorphism `f : L →ₗ⁅R⁆ L'` whose kernel
 contains the ideal `I`. -/
-@[expose] def liftQ (f : L →ₗ⁅R⁆ L') (h : I ≤ f.ker) : L ⧸ I →ₗ⁅R⁆ L' where
+def liftQ (f : L →ₗ⁅R⁆ L') (h : I ≤ f.ker) : L ⧸ I →ₗ⁅R⁆ L' where
   __ := LieSubmodule.toSubmodule I |>.liftQ (f : L →ₗ[R] L') (toSubmodule_le_ker_toLinearMap h)
   map_lie' {x y} := by
     induction x using Quotient.inductionOn' with | _ x
     induction y using Quotient.inductionOn' with | _ y
     exact f.map_lie x y
 
+/-- The induced homomorphism on the quotient sends the class of `x` to `f x`. -/
 @[simp]
 theorem liftQ_apply_mk (f : L →ₗ⁅R⁆ L') (h : I ≤ f.ker) (x : L) :
-    liftQ f h (LieSubmodule.Quotient.mk x) = f x := rfl
+    liftQ f h (LieSubmodule.Quotient.mk x) = f x := (rfl)
 
+/-- The induced homomorphism on the quotient agrees with `f` on the image of the quotient map.
+
+Not a `simp` lemma: `TauCeti.LieIdeal.mkQ_apply` and `TauCeti.LieIdeal.liftQ_apply_mk` already
+rewrite the left-hand side, and `simp` rejects a lemma its own set can prove. -/
+theorem liftQ_mkQ (f : L →ₗ⁅R⁆ L') (h : I ≤ f.ker) (x : L) : liftQ f h (mkQ I x) = f x := (rfl)
+
+/-- The induced homomorphism on the quotient composed with the quotient map is the original
+homomorphism. -/
 @[simp]
 theorem liftQ_comp_mkQ (f : L →ₗ⁅R⁆ L') (h : I ≤ f.ker) : (liftQ f h).comp (mkQ I) = f := by
   ext x
-  rfl
+  exact liftQ_mkQ f h x
 
 /-- Two homomorphisms out of `L ⧸ I` that agree after composition with the quotient map are
 equal. -/
@@ -123,7 +146,7 @@ theorem lieHom_qext {g₁ g₂ : L ⧸ I →ₗ⁅R⁆ L'} (h : ∀ x : L, g₁ 
 restricting to `f` along the quotient map is `TauCeti.LieIdeal.liftQ f h`. -/
 theorem eq_liftQ {f : L →ₗ⁅R⁆ L'} {h : I ≤ f.ker} {g : L ⧸ I →ₗ⁅R⁆ L'}
     (hg : ∀ x : L, g (mkQ I x) = f x) : g = liftQ f h :=
-  lieHom_qext fun x => by rw [hg, mkQ_apply, liftQ_apply_mk]
+  lieHom_qext fun x => by rw [hg, liftQ_mkQ]
 
 end LieIdeal
 
