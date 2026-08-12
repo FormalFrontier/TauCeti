@@ -73,19 +73,6 @@ theorem collarAmbientEquiv_apply_succ (n : ℕ) (x : EuclideanSpace ℝ (Fin n))
     collarAmbientEquiv n (x, t) i.succ = x i := by
   simp [collarAmbientEquiv]
 
-/-- The boundary component of the inverse ambient collar equivalence deletes coordinate zero. -/
-@[simp]
-theorem collarAmbientEquiv_symm_apply_fst (n : ℕ)
-    (y : EuclideanSpace ℝ (Fin (n + 1))) : ((collarAmbientEquiv n).symm y).1 =
-      euclideanHalfSpaceBoundaryProj n y := by
-  exact euclideanHalfSpaceBoundaryNormalEquiv_symm_apply_fst n y
-
-/-- The inverse ambient collar equivalence recovers the inward normal coordinate at zero. -/
-@[simp]
-theorem collarAmbientEquiv_symm_apply_snd_apply_zero (n : ℕ)
-    (y : EuclideanSpace ℝ (Fin (n + 1))) : ((collarAmbientEquiv n).symm y).2 0 = y 0 := by
-  exact euclideanHalfSpaceBoundaryNormalEquiv_symm_apply_snd n y
-
 /-- The product of the boundary Euclidean space and an inward half-line is homeomorphic to the
 Euclidean half-space.  The second factor is the inward normal coordinate. -/
 def collarHomeomorph (n : ℕ) :
@@ -94,7 +81,9 @@ def collarHomeomorph (n : ℕ) :
   invFun y :=
     ((collarAmbientEquiv n).symm y.1 |>.1,
       ⟨(collarAmbientEquiv n).symm y.1 |>.2, by
-        simpa using y.2⟩)
+        have hnormal : 0 ≤ ((euclideanHalfSpaceBoundaryNormalEquiv n).symm y.1).2 := by
+          simpa only [euclideanHalfSpaceBoundaryNormalEquiv_symm_apply_snd] using y.2
+        exact hnormal⟩)
   left_inv p := by
     -- Expose the two subtype-valued coordinate maps so the ambient inverse law can be applied.
     change
@@ -152,13 +141,13 @@ theorem collarHomeomorph_apply_succ (n : ℕ)
 theorem collarHomeomorph_symm_apply_fst (n : ℕ) (y : EuclideanHalfSpace (n + 1)) :
     ((collarHomeomorph n).symm y).1 = boundaryProj n y := by
   rw [boundaryProj_coe]
-  exact collarAmbientEquiv_symm_apply_fst n y.1
+  exact euclideanHalfSpaceBoundaryNormalEquiv_symm_apply_fst n y.1
 
 /-- The inverse collar homeomorphism recovers the inward normal coordinate at zero. -/
 @[simp]
 theorem collarHomeomorph_symm_apply_snd_apply_zero (n : ℕ)
     (y : EuclideanHalfSpace (n + 1)) : (collarHomeomorph n).symm y |>.2.1 0 = y.1 0 := by
-  exact collarAmbientEquiv_symm_apply_snd_apply_zero n y.1
+  exact euclideanHalfSpaceBoundaryNormalEquiv_symm_apply_snd n y.1
 
 /-- The zero-normal slice of the collar homeomorphism is the boundary parametrization. -/
 @[simp]
@@ -212,7 +201,9 @@ def collarDiffeomorph (n : ℕ) :
       rw [ModelWithCorners.range_prod, range_modelWithCornersEuclideanHalfSpace]
       refine ⟨mem_range_self _, ?_⟩
       dsimp [J]
-      simpa using y.2
+      have hnormal : 0 ≤ ((euclideanHalfSpaceBoundaryNormalEquiv n).symm y.1).2 := by
+        simpa only [euclideanHalfSpaceBoundaryNormalEquiv_symm_apply_snd] using y.2
+      exact hnormal
     refine (I.contMDiffOn_symm.comp_contMDiff hcoord hrange).congr ?_
     intro y
     let q := I.symm ((collarAmbientEquiv n).symm (J y))
