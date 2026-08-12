@@ -7,6 +7,7 @@ module
 
 public import TauCeti.RepresentationTheory.ClassicalGroups.SymmetricPower
 public import TauCeti.RepresentationTheory.SU2.Basic
+import TauCeti.RingTheory.MvPolynomial.Symmetric.Complete
 
 /-!
 # The symmetric powers of the standard representation of `SU(2)`
@@ -22,7 +23,7 @@ The character computation is the **weight string**: on `diag(z, z⁻¹)` the cha
 
 each of the `d + 1` weights `d, d-2, …, -d` occurring exactly once.  This is what the
 highest-weight classification of the irreducible representations of `SU(2)` runs on, and the
-value `d + 1` at the identity is read off it at `z = 1`.
+value at the identity is the dimension `d + 1`, the number of those weights.
 
 The route is Layer 1's `TauCeti.char_symPowerRep_diagonal`, which gives the character at a
 diagonal matrix as the complete homogeneous symmetric polynomial `h_d` in the diagonal entries,
@@ -41,7 +42,8 @@ together with its rank-two evaluation `TauCeti.eval_hsymm_fin_two`: the geometri
   the weight string `∑_{i ≤ d} z^{2i - d}`.
 * `TauCeti.SU2.character_symPower_torusExp`: the same in exponential coordinates,
   `∑_{i ≤ d} e^{i(2i - d)θ}`.
-* `TauCeti.SU2.character_symPower_one`: the dimension is `d + 1`.
+* `TauCeti.SU2.finrank_symPower` and `TauCeti.SU2.character_symPower_one`: the dimension, and so
+  the character at the identity, is `d + 1`.
 
 ## References
 
@@ -97,6 +99,13 @@ noncomputable def symPower : Representation ℂ SU2 (Sym[ℂ]^d (Fin 2 → ℂ))
 @[simp]
 theorem symPower_apply (g : SU2) : symPower d g = symPowerRep ℂ 2 d (toGL g) := (rfl)
 
+/-- **The space `Symᵈ(ℂ²)` carrying `TauCeti.SU2.symPower d` has dimension `d + 1`**: a symmetric
+power of a free module is free on the unordered tuples of basis indices, of which there are
+`Nat.multichoose 2 d = d + 1` in two variables. -/
+@[simp]
+theorem finrank_symPower : Module.finrank ℂ (Sym[ℂ]^d (Fin 2 → ℂ)) = d + 1 := by
+  rw [SymmetricPower.finrank_eq, Module.finrank_fin_fun, Nat.multichoose_two]
+
 /-- **The weight string.**  On the maximal torus the character of `Symᵈ(ℂ²)` is
 `z^{-d} + z^{2-d} + ⋯ + z^d`: the `d + 1` weights `-d, 2-d, …, d` each occur once. -/
 theorem character_symPower_torusHom (z : Circle) :
@@ -131,13 +140,12 @@ theorem character_symPower_torusExp (θ : ℝ) :
   push_cast
   ring_nf
 
-/-- **The dimension is `d + 1`**, read off the weight string at `z = 1`: there are `d + 1`
-weights, each of multiplicity one. -/
+/-- **The dimension is `d + 1`**: the character at the identity is the rank of the underlying
+space, which is the number `d + 1` of weights of the string above, each of multiplicity one. -/
 theorem character_symPower_one : (symPower d).character 1 = (d : ℂ) + 1 := by
-  have h := character_symPower_torusHom d 1
-  rw [map_one] at h
-  rw [h]
-  simp
+  rw [Representation.char_one, finrank_symPower]
+  push_cast
+  ring
 
 end SU2
 
