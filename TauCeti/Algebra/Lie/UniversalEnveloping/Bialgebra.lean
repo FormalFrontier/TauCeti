@@ -120,12 +120,6 @@ theorem comul_ι (x : L) :
         (_root_.UniversalEnvelopingAlgebra.mkAlgHom R L (TensorAlgebra.ι R x)) =
       _root_.UniversalEnvelopingAlgebra.mkAlgHom R L (TensorAlgebra.ι R x) ⊗ₜ[R] 1 +
         1 ⊗ₜ[R] _root_.UniversalEnvelopingAlgebra.mkAlgHom R L (TensorAlgebra.ι R x) := by
-  -- `Coalgebra.comul` hides the inferred bialgebra instance, so expose its projection before
-  -- unfolding the concrete `instBialgebra` construction below.
-  change (instBialgebra R L).toCoalgebra.toCoalgebraStruct.comul
-    (_root_.UniversalEnvelopingAlgebra.mkAlgHom R L (TensorAlgebra.ι R x)) = _
-  dsimp only [instBialgebra, Bialgebra.toCoalgebra, Coalgebra.toCoalgebraStruct,
-    Bialgebra.ofAlgHom, Bialgebra.mk', CoalgebraStruct.comul]
   rw [← _root_.UniversalEnvelopingAlgebra.ι_apply]
   exact _root_.UniversalEnvelopingAlgebra.lift_ι_apply R _ x
 
@@ -148,12 +142,6 @@ unfolds `ι` into `mkAlgHom` applied to the tensor algebra generator. -/
 theorem counit_ι (x : L) :
     (Coalgebra.counit (R := R))
       (_root_.UniversalEnvelopingAlgebra.mkAlgHom R L (TensorAlgebra.ι R x)) = 0 := by
-  -- `Coalgebra.counit` hides the inferred bialgebra instance, so expose its projection before
-  -- unfolding the concrete `instBialgebra` construction below.
-  change (instBialgebra R L).toCoalgebra.toCoalgebraStruct.counit
-    (_root_.UniversalEnvelopingAlgebra.mkAlgHom R L (TensorAlgebra.ι R x)) = 0
-  dsimp only [instBialgebra, Bialgebra.toCoalgebra, Coalgebra.toCoalgebraStruct,
-    Bialgebra.ofAlgHom, Bialgebra.mk', CoalgebraStruct.counit]
   rw [← _root_.UniversalEnvelopingAlgebra.ι_apply]
   exact _root_.UniversalEnvelopingAlgebra.lift_ι_apply R _ x
 
@@ -181,12 +169,24 @@ noncomputable def mapBialgHom {L₁ : Type v} {L₂ : Type w}
         comul_ι, map_add, Algebra.TensorProduct.map_tmul, map_one])
 
 /-- The bialgebra homomorphism induced by a Lie homomorphism agrees with it on Lie generators. -/
+-- `simp`-normal form is `mapBialgHom_ι'`, since `simp` unfolds `ι` through `ι_apply`.
 theorem mapBialgHom_ι {L₁ : Type v} {L₂ : Type w}
     [LieRing L₁] [LieAlgebra R L₁] [LieRing L₂] [LieAlgebra R L₂]
     (f : LieHom R L₁ L₂) (x : L₁) :
     mapBialgHom R f (_root_.UniversalEnvelopingAlgebra.ι R x) =
       _root_.UniversalEnvelopingAlgebra.ι R (f x) :=
   map_ι R f x
+
+/-- The `simp`-normal form of `mapBialgHom_ι`, stated for the canonical generators as `simp`
+writes them: `ι R x` unfolds to `mkAlgHom R L (TensorAlgebra.ι R x)`. -/
+@[simp]
+theorem mapBialgHom_ι' {L₁ : Type v} {L₂ : Type w}
+    [LieRing L₁] [LieAlgebra R L₁] [LieRing L₂] [LieAlgebra R L₂]
+    (f : LieHom R L₁ L₂) (x : L₁) :
+    mapBialgHom R f
+        (_root_.UniversalEnvelopingAlgebra.mkAlgHom R L₁ (TensorAlgebra.ι R x)) =
+      _root_.UniversalEnvelopingAlgebra.mkAlgHom R L₂ (TensorAlgebra.ι R (f x)) := by
+  simpa using mapBialgHom_ι R f x
 
 /-- The standard bialgebra structure on a universal enveloping algebra is cocommutative. -/
 instance instIsCocomm : Coalgebra.IsCocomm R U where
