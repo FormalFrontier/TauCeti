@@ -167,6 +167,7 @@ section Relabel
 
 variable {β : Type*} [DecidableEq β]
 
+omit [DecidableEq α] [DecidableEq β] in
 /-- Relabelling the arms of a star: an equivalence `e : α ≃ β` of arm indices carries the star with
 arms `ℓ ∘ e` isomorphically onto the star with arms `ℓ`, moving the vertex at position `t` of the
 arm `i` to the same position of the arm `e i` and fixing the centre. -/
