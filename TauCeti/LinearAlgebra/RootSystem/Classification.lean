@@ -50,6 +50,8 @@ types, where the degree reading fails (`F₄` has a row summing to `-1` and no b
 
 * `TauCeti.DynkinType.eq_of_valid_of_cartanMatrix_eq`: two valid Dynkin types whose standard Cartan
   matrices agree up to a simultaneous relabelling are equal.
+* `TauCeti.DynkinType.eq_of_valid_of_forall_eq`: the same statement for a matrix carrying two such
+  relabellings, which is the form the classification theorems consume.
 * `TauCeti.HasCartanType.eq_of_valid`: a base has at most one valid Cartan type.
 * `TauCeti.HasCartanType.existsUnique_of_valid`: a base of some valid Cartan type has exactly one.
 
@@ -118,9 +120,9 @@ private abbrev HasBranchWithTwoLeaves (A : Matrix α α ℤ) : Prop :=
 
 /-- Row sums are unchanged by a simultaneous relabelling of rows and columns. -/
 private lemma rowSum_congr (e : α ≃ β) (he : ∀ i j, A i j = A' (e i) (e j)) (i : α) :
-    rowSum A i = rowSum A' (e i) := by
-  rw [show rowSum A i = ∑ j, A' (e i) (e j) from Finset.sum_congr rfl fun j _ ↦ he i j]
-  exact e.sum_comp fun j ↦ A' (e i) j
+    rowSum A i = rowSum A' (e i) :=
+  calc rowSum A i = ∑ j, A' (e i) (e j) := Finset.sum_congr rfl fun j _ ↦ he i j
+    _ = rowSum A' (e i) := e.sum_comp fun j ↦ A' (e i) j
 
 private lemma hasRowSumNegOne_congr (e : α ≃ β) (he : ∀ i j, A i j = A' (e i) (e j)) :
     HasRowSumNegOne A ↔ HasRowSumNegOne A' := by
@@ -540,6 +542,20 @@ theorem eq_of_valid_of_cartanMatrix_eq {t t' : DynkinType} (ht : t.Valid) (ht' :
       · rw [eq_C_of_valid ht hsl hd hr, eq_C_of_valid ht' (fun h ↦ hsl (hs.mpr h))
           (fun h ↦ hd (hleaf.mpr h)) (fun h ↦ hr (hrow.mpr h)), hrank]
 
+/-- **A matrix has at most one valid Dynkin type.** If a matrix agrees entrywise with the standard
+Cartan matrices of two valid Dynkin types, each under its own relabelling of the index type, the two
+types are equal. This is the form the classification theorems consume, their statements being
+`∃! t, t.Valid ∧ ∃ e : α ≃ Fin t.rank, ∀ i j, A i j = t.cartanMatrix (e i) (e j)`. -/
+theorem eq_of_valid_of_forall_eq {α : Type*} {A : Matrix α α ℤ} {t t' : DynkinType} (ht : t.Valid)
+    (ht' : t'.Valid) (e : α ≃ Fin t.rank) (e' : α ≃ Fin t'.rank)
+    (he : ∀ i j, A i j = t.cartanMatrix (e i) (e j))
+    (he' : ∀ i j, A i j = t'.cartanMatrix (e' i) (e' j)) : t = t' := by
+  refine eq_of_valid_of_cartanMatrix_eq ht ht' (e.symm.trans e') fun i j ↦ ?_
+  have h1 := he (e.symm i) (e.symm j)
+  rw [Equiv.apply_symm_apply, Equiv.apply_symm_apply] at h1
+  rw [Equiv.trans_apply, Equiv.trans_apply]
+  exact h1.symm.trans (he' (e.symm i) (e.symm j))
+
 end DynkinType
 
 section RootPairing
@@ -553,11 +569,7 @@ theorem HasCartanType.eq_of_valid (h : HasCartanType P b t) (h' : HasCartanType 
     (ht : t.Valid) (ht' : t'.Valid) : t = t' := by
   obtain ⟨e, he⟩ := (hasCartanType_iff b t).mp h
   obtain ⟨e', he'⟩ := (hasCartanType_iff b t').mp h'
-  refine DynkinType.eq_of_valid_of_cartanMatrix_eq ht ht' (e.symm.trans e') fun i j ↦ ?_
-  have h1 := he (e.symm i) (e.symm j)
-  rw [Equiv.apply_symm_apply, Equiv.apply_symm_apply] at h1
-  rw [Equiv.trans_apply, Equiv.trans_apply]
-  exact h1.symm.trans (he' (e.symm i) (e.symm j))
+  exact DynkinType.eq_of_valid_of_forall_eq ht ht' e e' he he'
 
 /-- A base of some valid Cartan type has exactly one. -/
 theorem HasCartanType.existsUnique_of_valid (h : HasCartanType P b t) (ht : t.Valid) :
