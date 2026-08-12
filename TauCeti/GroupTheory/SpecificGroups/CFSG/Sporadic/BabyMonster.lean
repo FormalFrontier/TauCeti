@@ -131,6 +131,7 @@ def edges : List (Fin 11 × Fin 11) := arms.flatMap fun arm => (branchNode :: ar
 Read with the offset `tᵢ ↦ i - 1`, these are the source's ten adjacent pairs
 `(1,2), (2,3), (3,4), (4,5), (5,6), (6,7), (7,8), (5,9), (9,10), (10,11)`, the first four in the
 opposite orientation. -/
+@[simp]
 theorem edges_eq :
     edges = [(4, 3), (3, 2), (2, 1), (1, 0), (4, 5), (5, 6), (6, 7), (4, 8), (8, 9), (9, 10)] := by
   decide
@@ -156,6 +157,7 @@ def coxeterMatrix : CoxeterMatrix (Fin 11) where
     split <;> omega
 
 /-- Evaluation of the Coxeter matrix directly from the edge list. -/
+@[simp]
 theorem coxeterMatrix_apply (i j : Fin 11) :
     coxeterMatrix i j = if i = j then 1 else if (i, j) ∈ edges ∨ (j, i) ∈ edges then 3 else 2 := by
   simp only [coxeterMatrix, Matrix.of_apply]
@@ -204,6 +206,7 @@ def spiderRelator : Relator (Fin 11) :=
   .pow (t5 ⬝ t4 ⬝ t3 ⬝ t5 ⬝ t6 ⬝ t7 ⬝ t5 ⬝ t9 ⬝ t10) 10
 
 /-- The spider relator spelled out in the numbered alphabet. -/
+@[simp]
 theorem spiderRelator_eq :
     spiderRelator =
       .pow (.gen 4 ⬝ .gen 3 ⬝ .gen 2 ⬝ .gen 4 ⬝ .gen 5 ⬝ .gen 6 ⬝ .gen 4 ⬝ .gen 8 ⬝ .gen 9) 10 := by
@@ -214,6 +217,7 @@ spider relation to pass from `2 × 2·B` to `B`. -/
 def extraRelatorOne : Relator (Fin 11) := .pow (t5 ⬝ t4 ⬝ t3 ⬝ t6 ⬝ t7 ⬝ t8 ⬝ t9) 9
 
 /-- The first adjoined relator spelled out in the numbered alphabet. -/
+@[simp]
 theorem extraRelatorOne_eq :
     extraRelatorOne =
       .pow (.gen 4 ⬝ .gen 3 ⬝ .gen 2 ⬝ .gen 5 ⬝ .gen 6 ⬝ .gen 7 ⬝ .gen 8) 9 := by
@@ -224,6 +228,7 @@ spider relation to pass from `2 × 2·B` to `B`. -/
 def extraRelatorTwo : Relator (Fin 11) := .pow (t5 ⬝ t4 ⬝ t3 ⬝ t6 ⬝ t9 ⬝ t10 ⬝ t11) 9
 
 /-- The second adjoined relator spelled out in the numbered alphabet. -/
+@[simp]
 theorem extraRelatorTwo_eq :
     extraRelatorTwo =
       .pow (.gen 4 ⬝ .gen 3 ⬝ .gen 2 ⬝ .gen 5 ⬝ .gen 8 ⬝ .gen 9 ⬝ .gen 10) 9 := by
@@ -285,6 +290,7 @@ theorem presentation_generatorNames :
   simp [presentation]
 
 /-- The sources recorded for the `B` presentation. -/
+@[simp]
 theorem presentation_source :
     presentation.source = "T. Breuer, K. Magaard, and R. A. Wilson, Verification of the ordinary \
       character table of the Baby Monster, Journal of Algebra 561 (2020), 111-130; A. A. Ivanov, \
@@ -293,6 +299,7 @@ theorem presentation_source :
 
 /-- The exact locators of the `B` presentation inside its sources, and the attribution chain the
 source states for it. -/
+@[simp]
 theorem presentation_sourceLocator :
     presentation.sourceLocator = "Breuer-Magaard-Wilson, Section 3.1, \
       doi:10.1016/j.jalgebra.2019.06.047, also arXiv:1902.07758v2; Ivanov, \
@@ -304,6 +311,7 @@ theorem presentation_sourceLocator :
   simp [presentation]
 
 /-- The node numbering and word syntax used by the `B` presentation. -/
+@[simp]
 theorem presentation_generatorConvention :
     presentation.generatorConvention = "Indices 0 through 10 are the source's involutions t1 \
       through t11, so t_i is index i-1. The Coxeter diagram is the chain t1-t2-t3-t4-t5-t6-t7-t8 \
@@ -314,6 +322,7 @@ theorem presentation_generatorConvention :
 /-- The expansion of the diagram into the `66` Coxeter relators, the family-by-family form in
 which the source displays its relations and from which the expected count `11 + 55 + 1 + 2` is
 read, and the single review obligation the row still carries. -/
+@[simp]
 theorem presentation_transcriptionNotes :
     presentation.transcriptionNotes = "The Coxeter matrix expands the diagram into 66 relators: \
       eleven squares t_i^2, one relator (t_i t_j)^3 for each of the ten edges, and one relator \
@@ -338,6 +347,7 @@ theorem presentation_expectedRelatorCount : presentation.expectedRelatorCount = 
 
 /-- The relators of the row are the Coxeter relations of the diagram followed by the three
 adjoined relators. This equation characterizes the row for downstream audits. -/
+@[simp]
 theorem presentation_transcribed : presentation.transcribed = relatorList := rfl
 
 /-- **The relators of the row are the Coxeter relators of the `Y₄₃₃` diagram followed by the three
