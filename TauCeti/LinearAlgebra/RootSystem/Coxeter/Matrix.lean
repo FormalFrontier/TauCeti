@@ -47,6 +47,8 @@ roots, and there the two simple reflections commute
 
 * `TauCeti.coxeterOrder` translates a Cartan product into the order of the product of the two
   reflections.
+* `TauCeti.coxeterMatrixOfCartanMatrix` performs that translation on an arbitrary matrix whose
+  diagonal is `2` and whose off-diagonal Cartan products lie in `{0, 1, 2, 3}`.
 * `TauCeti.coxeterMatrixOfBase` is the Coxeter matrix of a base, indexed by its simple roots.
 
 ## Main results
@@ -143,6 +145,54 @@ lemma coxeterOrder_eq_two_iff {c : ℤ} (hc : c ∈ ({0, 1, 2, 3} : Set ℤ)) :
   simp only [mem_insert_iff, mem_singleton_iff] at hc
   rcases hc with rfl | rfl | rfl | rfl <;> simp
 
+/-! ## The Coxeter matrix of a generalized Cartan matrix -/
+
+section OfCartanMatrix
+
+/-- **The Coxeter matrix read off a Cartan matrix.** The entry at a pair of nodes is the Coxeter
+order `TauCeti.coxeterOrder` of their Cartan product; on the diagonal that is `1`, a node having
+Cartan product `4` with itself.
+
+Only two properties of the matrix are used, and both are hypotheses here: its diagonal entries are
+`2`, and off the diagonal its Cartan products lie in `{0, 1, 2, 3}`, the four values that name a
+dihedral order. It is the construction behind `TauCeti.coxeterMatrixOfBase`, applied to the Cartan
+matrix of a base, and behind `TauCeti.DynkinType.coxeterMatrix`, applied to a standard Cartan
+matrix in the Bourbaki numbering.
+
+The body is not exposed: `TauCeti.coxeterMatrixOfCartanMatrix_apply` is the entry API. -/
+def coxeterMatrixOfCartanMatrix {B : Type*} (A : Matrix B B ℤ) (hdiag : ∀ i, A i i = 2)
+    (hmem : ∀ i j, i ≠ j → A i j * A j i ∈ ({0, 1, 2, 3} : Set ℤ)) : CoxeterMatrix B where
+  M := .of fun i j ↦ coxeterOrder (A i j * A j i)
+  isSymm := by
+    ext i j
+    simp [Matrix.transpose_apply, mul_comm]
+  diagonal i := by simp [hdiag i]
+  off_diagonal i j hij := by
+    have := two_le_coxeterOrder (hmem i j hij)
+    simp only [Matrix.of_apply]
+    omega
+
+-- `(rfl)`, not `rfl`: the body of `coxeterMatrixOfCartanMatrix` is deliberately left unexposed, and
+-- the parenthesised form keeps this proof out of the exported definitional-equality check.
+/-- The entry of the Coxeter matrix of a Cartan matrix at a pair of nodes is `coxeterOrder` applied
+to the product of the two Cartan entries. -/
+@[simp]
+lemma coxeterMatrixOfCartanMatrix_apply {B : Type*} (A : Matrix B B ℤ) (hdiag : ∀ i, A i i = 2)
+    (hmem : ∀ i j, i ≠ j → A i j * A j i ∈ ({0, 1, 2, 3} : Set ℤ)) (i j : B) :
+    coxeterMatrixOfCartanMatrix A hdiag hmem i j = coxeterOrder (A i j * A j i) := (rfl)
+
+/-- **Two distinct nodes carry the Coxeter entry `2` exactly when the Cartan entry between them
+vanishes**, provided the zero pattern of the Cartan matrix is symmetric: the product of the two
+entries then vanishes exactly when the first of them does. -/
+lemma coxeterMatrixOfCartanMatrix_apply_eq_two_iff {B : Type*} (A : Matrix B B ℤ)
+    (hdiag : ∀ i, A i i = 2) (hmem : ∀ i j, i ≠ j → A i j * A j i ∈ ({0, 1, 2, 3} : Set ℤ))
+    (hsymm : ∀ i j, A i j = 0 → A j i = 0) {i j : B} (hij : i ≠ j) :
+    coxeterMatrixOfCartanMatrix A hdiag hmem i j = 2 ↔ A i j = 0 := by
+  rw [coxeterMatrixOfCartanMatrix_apply, coxeterOrder_eq_two_iff (hmem i j hij), mul_eq_zero]
+  exact or_iff_left_iff_imp.mpr (hsymm j i)
+
+end OfCartanMatrix
+
 variable {ι : Type u} {R : Type v} {M : Type w} {N : Type x}
   [CommRing R] [AddCommGroup M] [Module R M] [AddCommGroup N] [Module R N]
   (P : RootPairing ι R M N)
@@ -224,24 +274,16 @@ checked directly in
 `TauCeti.RootPairing.weylGroup.orderOf_ofIdx_mul_ofIdx_eq_two_of_coxeterMatrixOfBase_eq_two`.
 
 The body is not exposed: `TauCeti.coxeterMatrixOfBase_apply` is the entry API. -/
-noncomputable def coxeterMatrixOfBase : CoxeterMatrix b.support where
-  M := .of fun i j ↦ coxeterOrder (b.cartanMatrix i j * b.cartanMatrix j i)
-  isSymm := by
-    ext i j
-    simp [Matrix.transpose_apply, mul_comm]
-  diagonal i := by simp
-  off_diagonal i j hij := by
-    have := two_le_coxeterOrder (cartanMatrix_mul_cartanMatrix_mem_of_ne P b hij)
-    simp only [Matrix.of_apply]
-    omega
+noncomputable def coxeterMatrixOfBase : CoxeterMatrix b.support :=
+  coxeterMatrixOfCartanMatrix b.cartanMatrix b.cartanMatrix_apply_same
+    fun _ _ hij ↦ cartanMatrix_mul_cartanMatrix_mem_of_ne P b hij
 
--- `(rfl)`, not `rfl`: the body of `coxeterMatrixOfBase` is deliberately left unexposed, and the
--- parenthesised form keeps this proof out of the exported definitional-equality check.
 /-- The entry of the Coxeter matrix of a base at a pair of simple roots is `coxeterOrder` applied
 to the product of the two Cartan entries. -/
 @[simp]
 lemma coxeterMatrixOfBase_apply (i j : b.support) :
-    coxeterMatrixOfBase P b i j = coxeterOrder (b.cartanMatrix i j * b.cartanMatrix j i) := (rfl)
+    coxeterMatrixOfBase P b i j = coxeterOrder (b.cartanMatrix i j * b.cartanMatrix j i) :=
+  coxeterMatrixOfCartanMatrix_apply ..
 
 /-- Off the diagonal the Coxeter matrix of a base takes only the four dihedral values. -/
 lemma coxeterMatrixOfBase_mem_of_ne {i j : b.support} (hij : i ≠ j) :
