@@ -49,7 +49,7 @@ stable under changing it on a null set, so it does not descend to `Lp` at all.  
 * `TauCeti.measurePreserving_conj`: conjugation preserves a conjugation-invariant measure, stated
   through the group operation.
 * `TauCeti.conjAct_smul_Lp_ae_eq`: the induced action on `Lp` is precomposition with conjugation.
-* `TauCeti.conjLpₗᵢ_eq_smul`: the bundled isometry is that action.
+* `TauCeti.compMeasurePreserving_conj_eq_smul`: precomposition with conjugation is that action.
 * `TauCeti.mem_classFunctionLp_iff_ae`: membership read on representatives, as invariance almost
   everywhere.
 * `TauCeti.isClosed_classFunctionLp`: the class functions are a closed subspace, hence
@@ -190,10 +190,10 @@ section Isometry
 variable [Fact (1 ≤ p)]
 
 /-- **Conjugation by a fixed element, as a linear isometric equivalence of `Lp E p μ`.**  It
-agrees with the action of `(ConjAct G)ᵈᵐᵃ` (`TauCeti.conjLpₗᵢ_eq_smul`), is represented by
-precomposition with conjugation (`TauCeti.coeFn_conjLpₗᵢ`), and its inverse is conjugation by
-`h⁻¹`. For `p = 2`, the underlying linear isometry records inner-product preservation through
-`LinearIsometry.inner_map_map`. -/
+agrees with the action of `(ConjAct G)ᵈᵐᵃ` (`TauCeti.compMeasurePreserving_conj_eq_smul`), is
+represented by precomposition with conjugation (`TauCeti.coeFn_conjLpₗᵢ`), and its inverse is
+conjugation by `h⁻¹`. For `p = 2`, the underlying linear isometry records inner-product
+preservation through `LinearIsometry.inner_map_map`. -/
 noncomputable def conjLpₗᵢ (h : G) : Lp E p μ ≃ₗᵢ[𝕜] Lp E p μ :=
   Lp.compMeasurePreservingₗᵢEquiv 𝕜 (measurePreserving_conj μ h)
     (measurePreserving_conj μ h⁻¹)
@@ -229,7 +229,7 @@ operation, so a statement proved for either transfers to the other; `classFuncti
 with the action, while `TauCeti.conjLpₗᵢ_apply` connects this statement to the bundled linear
 isometry that gives inner-product preservation on `L²`. -/
 @[simp]
-theorem conjLpₗᵢ_eq_smul (h : G) (f : Lp E p μ) :
+theorem compMeasurePreserving_conj_eq_smul (h : G) (f : Lp E p μ) :
     Lp.compMeasurePreserving (fun g ↦ h * g * h⁻¹) (measurePreserving_conj μ h) f =
       DomMulAct.mk (ConjAct.toConjAct h) • f :=
   Lp.ext ((Lp.coeFn_compMeasurePreserving f (measurePreserving_conj μ h)).trans

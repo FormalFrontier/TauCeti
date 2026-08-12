@@ -4,8 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import Mathlib.MeasureTheory.Function.LpSpace.ContinuousFunctions
-public import TauCeti.MeasureTheory.Function.Lp.CompMeasurePreservingEquiv
 public import TauCeti.MeasureTheory.Group.Conjugation
 
 /-!
@@ -111,7 +109,7 @@ theorem invLpₗᵢ_mem_classFunctionLp {f : Lp E p μ} (hf : f ∈ classFunctio
   intro c
   obtain ⟨a, rfl⟩ := DomMulAct.mk.surjective c
   obtain ⟨h, rfl⟩ := ConjAct.toConjAct.surjective a
-  rw [← conjLpₗᵢ_eq_smul (E := E) (p := p) (μ := μ), ← conjLpₗᵢ_apply (𝕜 := 𝕜)]
+  rw [← compMeasurePreserving_conj_eq_smul (E := E) (p := p) (μ := μ), ← conjLpₗᵢ_apply (𝕜 := 𝕜)]
   calc
     conjLpₗᵢ 𝕜 h (invLpₗᵢ 𝕜 f) = invLpₗᵢ 𝕜 (conjLpₗᵢ 𝕜 h f) := by
       simp only [conjLpₗᵢ_apply, invLpₗᵢ_apply]
@@ -125,7 +123,7 @@ theorem invLpₗᵢ_mem_classFunctionLp {f : Lp E p μ} (hf : f ∈ classFunctio
         simp [mul_assoc]
       simp only [hcomp]
     _ = invLpₗᵢ 𝕜 f := congrArg (invLpₗᵢ 𝕜)
-      ((conjLpₗᵢ_apply h f).trans ((conjLpₗᵢ_eq_smul h f).trans (hf _)))
+      ((conjLpₗᵢ_apply h f).trans ((compMeasurePreserving_conj_eq_smul h f).trans (hf _)))
 
 /-- **Inversion reflects the class functions.**  Preservation both ways, since inversion is an
 involution: the inverse-translate of `f` is a class function exactly when `f` is one.
