@@ -153,12 +153,8 @@ theorem mvfderiv_mulRightInvariantVectorField_mulInvariantVectorField_commute
   let γX : ℝ → G := fun t => mulInvariantExp (I := I) (G := G) (t • X)
   let γY : ℝ → G := fun t => mulInvariantExp (I := I) (G := G) (t • Y)
   let F : ℝ × ℝ → ℝ := fun p => f (γX p.1 * g * γY p.2)
-  let LYf : C^∞⟮I, G; ℝ⟯ :=
-    ⟨fun h => mvfderiv I f h (mulInvariantVectorField Y h),
-      contMDiff_mvfderiv_mulInvariantVectorField Y f⟩
-  let RXf : C^∞⟮I, G; ℝ⟯ :=
-    ⟨fun h => mvfderiv I f h (mulRightInvariantVectorField X h),
-      contMDiff_mvfderiv_mulRightInvariantVectorField X f⟩
+  let LYf := tangentToLeftInvariantDerivation (I := I) (G := G) Y f
+  let RXf := rightInvariantDerivative (I := I) X f
   have hF : ContDiff ℝ 2 F :=
     (contDiff_comp_mulInvariantExp_mul_mulInvariantExp f.contMDiff g X Y).of_le
       (by simpa using (inferInstance : ENat.LEInfty (2 : ℕ∞ω)).out)
@@ -166,12 +162,12 @@ theorem mvfderiv_mulRightInvariantVectorField_mulInvariantVectorField_commute
   have hspaceFun : (fun s => spatialFDeriv F 0 s 1) =
       fun s => LYf (γX s * g) := by
     funext s
-    simpa only [LYf, ContMDiffMap.coeFn_mk] using
+    simpa only [LYf, tangentToLeftInvariantDerivation_apply] using
       spatialFDeriv_mulInvariantExp_mul_mulInvariantExp f g X Y s
   have htimeFun : timeFDeriv F 0 =
       fun t => RXf (g * γY t) := by
     funext t
-    simpa only [RXf, ContMDiffMap.coeFn_mk] using
+    simpa only [RXf, rightInvariantDerivative_apply] using
       timeFDeriv_mulInvariantExp_mul_mulInvariantExp f g X Y t
   -- Clairaut symmetry equates the derivatives of those two partial-derivative functions.
   have hFmin : ContDiffAt ℝ (minSmoothness ℝ 2) F (0, 0) := by
@@ -185,6 +181,15 @@ theorem mvfderiv_mulRightInvariantVectorField_mulInvariantVectorField_commute
     (RXf.contMDiff.mdifferentiable (by simp) g |>.hasMFDerivAt) Y
   rw [hLY.deriv, hRX.deriv] at hmixed
   rw [mvfderiv_apply_eq_mfderiv_apply, mvfderiv_apply_eq_mfderiv_apply]
+  have hLYfun : (LYf : G → ℝ) =
+      fun h => mvfderiv I f h (mulInvariantVectorField Y h) := by
+    funext h
+    exact tangentToLeftInvariantDerivation_apply Y f h
+  have hRXfun : (RXf : G → ℝ) =
+      fun h => mvfderiv I f h (mulRightInvariantVectorField X h) := by
+    funext h
+    exact rightInvariantDerivative_apply X f h
+  rw [← hLYfun, ← hRXfun]
   exact hmixed
 
 end Complete
