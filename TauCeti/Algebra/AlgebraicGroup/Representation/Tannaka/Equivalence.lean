@@ -25,6 +25,8 @@ functional used to reconstruct the point, and the scalar-extended dual separates
 
 * `TauCeti.Tannaka.fgPointTensorIso_reconstructedPoint`: reconstruction is a right inverse to
   the point action.
+* `TauCeti.Tannaka.endOfPoint_reconstructedPoint`: a reconstructed point acts through the
+  corresponding tensor-automorphism component.
 * `TauCeti.Tannaka.fgPointTensorIsoEquiv`: the Tannakian equivalence between algebra-valued
   points and tensor automorphisms of finite-comodule scalar extension.
 
@@ -160,6 +162,18 @@ theorem fgPointTensorIso_reconstructedPoint
     fgPointTensorIso k H A (reconstructedPoint k H A eta) = eta := by
   apply scalarExtensionComponent_ext
   exact scalarExtensionComponent_reconstructedPoint k H A eta
+
+/-- The action of a point reconstructed from a tensor automorphism is that automorphism's
+component on every finite-dimensional comodule. -/
+@[simp]
+theorem endOfPoint_reconstructedPoint
+    (eta : Aut (FGComoduleCat.scalarExtensionMonoidalFunctor k H A))
+    (M : FGComoduleCat.{u, u, u} k H) :
+    Comodule.endOfPoint M (reconstructedPoint k H A eta).ofConv =
+      scalarExtensionComponent k H A eta M := by
+  rw [← Comodule.pointsAction_toLinearMap,
+    ← scalarExtensionComponent_fgPointTensorIso,
+    fgPointTensorIso_reconstructedPoint]
 
 /-- Algebra-valued points of a commutative Hopf algebra over a field are equivalent to tensor
 automorphisms of scalar extension on its finite-dimensional comodules. -/

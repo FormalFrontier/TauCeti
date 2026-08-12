@@ -108,19 +108,6 @@ theorem fgPointTensorIso_unipotentPart (g : WithConv (H →ₐ[k] K)) :
   rw [← Tannaka.fgPointTensorIsoEquiv_apply]
   exact (Tannaka.fgPointTensorIsoEquiv k H K).apply_symm_apply _
 
-omit [PerfectField K] in
-/-- The action of a point reconstructed from a tensor automorphism is that automorphism's
-component on every finite-dimensional comodule. -/
-@[simp]
-theorem endOfPoint_reconstructedPoint
-    (eta : CategoryTheory.Aut (FGComoduleCat.scalarExtensionMonoidalFunctor k H K))
-    (M : FGComoduleCat.{u, u, u} k H) :
-    Comodule.endOfPoint M (Tannaka.reconstructedPoint k H K eta).ofConv =
-      Tannaka.scalarExtensionComponent k H K eta M := by
-  rw [← Comodule.pointsAction_toLinearMap,
-    ← Tannaka.scalarExtensionComponent_fgPointTensorIso,
-    Tannaka.fgPointTensorIso_reconstructedPoint]
-
 /-- In every finite-dimensional comodule, the reconstructed semisimple point acts by the
 semisimple part of the original point action. -/
 @[simp]
@@ -131,7 +118,7 @@ theorem endOfPoint_semisimplePart (g : WithConv (H →ₐ[k] K))
         (LinearMap.GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction M g)) :
           Module.End K (K ⊗[k] M)) := by
   rw [semisimplePart, Tannaka.fgPointTensorIsoEquiv_symm_apply,
-    endOfPoint_reconstructedPoint,
+    Tannaka.endOfPoint_reconstructedPoint,
     Tannaka.scalarExtensionComponent_fgPointSemisimplePartTensorIso]
 
 /-- In every finite-dimensional comodule, the reconstructed unipotent point acts by the
@@ -144,7 +131,7 @@ theorem endOfPoint_unipotentPart (g : WithConv (H →ₐ[k] K))
         (LinearMap.GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction M g)) :
           Module.End K (K ⊗[k] M)) := by
   rw [unipotentPart, Tannaka.fgPointTensorIsoEquiv_symm_apply,
-    endOfPoint_reconstructedPoint,
+    Tannaka.endOfPoint_reconstructedPoint,
     Tannaka.scalarExtensionComponent_fgPointUnipotentPartTensorIso]
 
 /-- As an element of the general linear group of any finite-dimensional comodule, the action of
