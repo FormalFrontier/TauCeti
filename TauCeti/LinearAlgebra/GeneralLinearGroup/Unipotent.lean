@@ -56,6 +56,7 @@ variable {K : Type u} {V : Type v} [CommRing K] [AddCommGroup V] [Module K V]
 
 /-- A linear equivalence is unipotent after conversion to the general linear group exactly when
 its underlying endomorphism minus the identity is nilpotent. -/
+@[simp]
 theorem isUnipotent_ofLinearEquiv_iff (f : V ≃ₗ[K] V) :
     IsUnipotent (LinearMap.GeneralLinearGroup.ofLinearEquiv f) ↔
       _root_.IsNilpotent (f.toLinearMap - 1) := by
@@ -137,6 +138,8 @@ theorem isUnipotent_conj_iff (g h : GeneralLinearGroup K V) :
     simp only [LinearMap.GeneralLinearGroup.coe_ofLinearEquiv, LinearEquiv.trans_apply,
       LinearMap.GeneralLinearGroup.coe_toLinearEquiv, Units.val_mul, Module.End.mul_apply]
     apply congrArg (fun y ↦ (h : End K V) ((g : End K V) y))
+    -- The preceding coercion normalization hides the inverse linear equivalence behind the
+    -- inverse unit's function. Expose it so the named conversion lemma can rewrite it.
     change h.toLinearEquiv.symm x = (h⁻¹).toLinearEquiv x
     rw [LinearMap.GeneralLinearGroup.toLinearEquiv_inv]
     rfl

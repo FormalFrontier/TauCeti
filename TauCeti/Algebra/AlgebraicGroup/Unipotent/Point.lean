@@ -6,7 +6,7 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.Representation.PointsAction
 public import TauCeti.Algebra.Coalgebra.Comodule.Finite.Basic
-public import TauCeti.LinearAlgebra.JordanChevalley.Unipotent
+public import TauCeti.LinearAlgebra.GeneralLinearGroup.Unipotent
 
 /-!
 # Unipotent points of an affine group
@@ -139,6 +139,8 @@ theorem IsUnipotent.pow {g : WithConv (H →ₐ[k] K)}
     (hg : IsUnipotent g) (n : ℕ) : IsUnipotent (g ^ n) := by
   intro M
   rw [map_pow]
+  -- `ofLinearEquiv` has no power lemma, so expose it as the inverse of the multiplicative
+  -- equivalence between units and linear equivalences; `map_pow` then applies directly.
   change GeneralLinearGroup.IsUnipotent
     ((LinearMap.GeneralLinearGroup.generalLinearEquiv K _).symm
       (Comodule.pointsAction M g ^ n))
