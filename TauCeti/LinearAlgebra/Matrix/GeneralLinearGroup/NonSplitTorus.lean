@@ -33,6 +33,13 @@ Deligne–Lusztig construction, which is *not* ordinary induction (the induced r
 `q - 1`). This is the elliptic counterpart of the *split* torus of diagonal matrices, whose
 characters give the principal series by ordinary induction from the Borel subgroup.
 
+The word *torus* is the algebraic-group one only when `E/F` is separable, which over a finite
+field — the setting of the roadmap target — it always is. Degree `2` alone also admits a purely
+inseparable `E/F` (characteristic `2` only), where `E ⊗[F] F̄` is `F̄[X]/(X²)` rather than
+`F̄ × F̄`, so the image of `Eˣ` is a nonreduced group scheme rather than a torus and its
+non-scalar elements are not semisimple. Everything stated below, non-splitness included, is true
+in that case too: no proof here uses separability, so no statement assumes it.
+
 "Non-split" is the assertion that, away from the scalars, the torus is not conjugate into the Borel
 subgroup: `TauCeti.GL2NonSplitTorus.conj_notMem_GL2Borel` says that if `x : Eˣ` does not lie in `F`
 then no conjugate of its matrix is upper triangular. Equivalently the matrix has no eigenvalue in
@@ -98,7 +105,10 @@ noncomputable def GL2NonSplitTorusHom (hE : Module.finrank F E = 2) : Eˣ →* G
 
 variable (F E) in
 /-- **The non-split (elliptic) torus** of `GL₂(F)` attached to a degree-`2` extension `E/F`: the
-image of `Eˣ` under multiplication on `E`, read in the basis `TauCeti.nonSplitTorusBasis`. -/
+image of `Eˣ` under multiplication on `E`, read in the basis `TauCeti.nonSplitTorusBasis`. It is a
+torus in the algebraic-group sense when `E/F` is separable, in particular whenever `F` is finite;
+for a purely inseparable `E/F` it is the same subgroup, still non-split in the sense proved below,
+but not an algebraic torus (see the module docstring). -/
 noncomputable def GL2NonSplitTorus (hE : Module.finrank F E = 2) : Subgroup (GL (Fin 2) F) :=
   (GL2NonSplitTorusHom F E hE).range
 
@@ -168,7 +178,7 @@ theorem det_sub_algebraMap_ne_zero {x : E} (hx : x ∉ Set.range (algebraMap F E
 
 /-- **The torus is non-split**: if `x : Eˣ` does not come from `F`, then no conjugate of the
 corresponding matrix is upper triangular. Equivalently, that matrix has no eigenvalue in `F`, which
-is what makes its conjugacy class elliptic. -/
+over a finite field is what makes its conjugacy class elliptic. -/
 theorem conj_notMem_GL2Borel {x : Eˣ} (hx : (x : E) ∉ Set.range (algebraMap F E))
     (g : GL (Fin 2) F) :
     g * GL2NonSplitTorusHom F E hE x * g⁻¹ ∉ GL2Borel F := fun hmem => by
