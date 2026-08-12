@@ -4,7 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.Algebra.AlgebraicGroup.Representation.ScalarExtension
 public import TauCeti.Algebra.AlgebraicGroup.Representation.Tannaka.Monoidal
 public import TauCeti.LinearAlgebra.JordanChevalley.Functoriality
 public import TauCeti.LinearAlgebra.JordanChevalley.TensorProduct
@@ -363,74 +362,6 @@ open MonoidalCategory
 variable (k : Type u) (H : Type v) (K : Type u) [CommSemiring k] [Semiring H]
   [HopfAlgebra k H] [Field K] [Algebra k K]
 
-private theorem ofLinearEquiv_pointsAction_tensorUnit_eq_one
-    (g : WithConv (H →ₐ[k] K)) :
-    LinearMap.GeneralLinearGroup.ofLinearEquiv
-        (Comodule.pointsAction (𝟙_ (FGComoduleCat k H)) g) = 1 := by
-  apply Units.ext
-  -- Equality in the general linear group reduces to the underlying point endomorphism, where
-  -- the trivial-comodule action theorem applies directly.
-  change (Comodule.pointsAction (𝟙_ (FGComoduleCat k H)) g :
-    K ⊗[k] (𝟙_ (FGComoduleCat k H)) →ₗ[K] K ⊗[k] (𝟙_ (FGComoduleCat k H))) =
-      LinearMap.id
-  rw [Comodule.pointsAction_toLinearMap, Comodule.endOfPoint_trivial]
-
-private theorem distribBaseChange_comp_pointsAction
-    (g : WithConv (H →ₐ[k] K)) (M N : FGComoduleCat.{u, v, u} k H) :
-    (TensorProduct.AlgebraTensorModule.distribBaseChange k K M N).symm.toLinearMap.comp
-        (GeneralLinearGroup.tensorProduct
-          (LinearMap.GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction M g))
-          (LinearMap.GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction N g)) :
-          Module.End K ((K ⊗[k] M) ⊗[K] (K ⊗[k] N))) =
-      (LinearMap.GeneralLinearGroup.ofLinearEquiv
-          (Comodule.pointsAction (M ⊗ N : FGComoduleCat k H) g) :
-        Module.End K (K ⊗[k] ((M ⊗ N : FGComoduleCat k H) : Type u))).comp
-          (TensorProduct.AlgebraTensorModule.distribBaseChange k K M N).symm.toLinearMap := by
-  let _ : Comodule k H (M ⊗[k] N) :=
-    inferInstanceAs (Comodule k H ((M ⊗ N : FGComoduleCat k H) : Type u))
-  let d := (TensorProduct.AlgebraTensorModule.distribBaseChange k K M N).symm.toLinearMap
-  let a := GeneralLinearGroup.tensorProduct
-    (LinearMap.GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction M g))
-    (LinearMap.GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction N g))
-  let b := LinearMap.GeneralLinearGroup.ofLinearEquiv
-    (Comodule.pointsAction (M ⊗ N : FGComoduleCat k H) g)
-  let dc :
-      (SemimoduleCat.of K (K ⊗[k] M) ⊗ SemimoduleCat.of K (K ⊗[k] N)) ⟶
-        SemimoduleCat.of K (K ⊗[k] (M ⊗[k] N)) :=
-    SemimoduleCat.ofHom d
-  have htensor :
-        (SemimoduleCat.ofHom (Comodule.endOfPoint M g.ofConv) ⊗ₘ
-            SemimoduleCat.ofHom (Comodule.endOfPoint N g.ofConv)) ≫ dc =
-      dc ≫ SemimoduleCat.ofHom (Comodule.endOfPoint
-        ((M ⊗ N : FGComoduleCat k H) : Type u) g.ofConv) := by
-    apply SemimoduleCat.hom_ext
-    exact Comodule.endOfPoint_tensor_of_coact_eq (R := k) (H := H) (A := K)
-      (V := M) (W := N) (FGComoduleCat.tensor_coact (R := k) (C := H) M N) g.ofConv
-  have hlin := congrArg SemimoduleCat.Hom.hom htensor
-  simp only [SemimoduleCat.hom_comp] at hlin
-  rw [SemimoduleCat.hom_tensorHom] at hlin
-  -- The categorical tensor source and the explicit tensor-product module are definitionally
-  -- identified only inside `SemimoduleCat`; display the resulting linear maps after forgetting.
-  change d.comp (TensorProduct.map (Comodule.endOfPoint M g.ofConv)
-      (Comodule.endOfPoint N g.ofConv)) =
-    (Comodule.endOfPoint ((M ⊗ N : FGComoduleCat k H) : Type u) g.ofConv).comp d at hlin
-  have hM :
-      (LinearMap.GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction M g) :
-        Module.End K (K ⊗[k] M)) = Comodule.endOfPoint M g.ofConv :=
-    Comodule.pointsAction_toLinearMap M g
-  have hN :
-      (LinearMap.GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction N g) :
-        Module.End K (K ⊗[k] N)) = Comodule.endOfPoint N g.ofConv :=
-    Comodule.pointsAction_toLinearMap N g
-  have hMN :
-      (LinearMap.GeneralLinearGroup.ofLinearEquiv
-          (Comodule.pointsAction (M ⊗ N : FGComoduleCat k H) g) :
-        Module.End K (K ⊗[k] ((M ⊗ N : FGComoduleCat k H) : Type u))) =
-          Comodule.endOfPoint ((M ⊗ N : FGComoduleCat k H) : Type u) g.ofConv :=
-    Comodule.pointsAction_toLinearMap (M ⊗ N : FGComoduleCat k H) g
-  rw [GeneralLinearGroup.coe_tensorProduct, hM, hN, hMN]
-  exact hlin
-
 private theorem distribBaseChange_comp_pointFactor
     (F : ∀ (V : Type u) [AddCommGroup V] [Module K V] [FiniteDimensional K V],
       LinearMap.GeneralLinearGroup K V → LinearMap.GeneralLinearGroup K V)
@@ -465,73 +396,13 @@ private theorem distribBaseChange_comp_pointFactor
   let b := LinearMap.GeneralLinearGroup.ofLinearEquiv
     (Comodule.pointsAction (M ⊗ N : FGComoduleCat k H) g)
   have hab : d.comp (a : Module.End K ((K ⊗[k] M) ⊗[K] (K ⊗[k] N))) =
-      (b : Module.End K (K ⊗[k] ((M ⊗ N : FGComoduleCat k H) : Type u))).comp d :=
-    distribBaseChange_comp_pointsAction k H K g M N
+      (b : Module.End K (K ⊗[k] ((M ⊗ N : FGComoduleCat k H) : Type u))).comp d := by
+    simpa only [d, a, b, GeneralLinearGroup.coe_tensorProduct] using
+      distribBaseChange_comp_pointsAction k H K g M N
   have h := hcomp
     (V := (K ⊗[k] M) ⊗[K] (K ⊗[k] N))
     (W := K ⊗[k] ((M ⊗ N : FGComoduleCat k H) : Type u)) d a b hab
   simpa only [d, a, b, htensor] using h
-
-private theorem isMonoidal_fgPointFactorNatIso_hom
-    (F : ∀ M : FGComoduleCat.{u, v, u} k H,
-      LinearMap.GeneralLinearGroup K (K ⊗[k] M))
-    (hF : ∀ {M N : FGComoduleCat.{u, v, u} k H} (f : M ⟶ N),
-      (f.hom.toLinearMap.baseChange K).comp (F M : Module.End K (K ⊗[k] M)) =
-        (F N : Module.End K (K ⊗[k] N)).comp (f.hom.toLinearMap.baseChange K))
-    (hunit : F (𝟙_ (FGComoduleCat k H)) = 1)
-    (htensor : ∀ M N : FGComoduleCat.{u, v, u} k H,
-      (TensorProduct.AlgebraTensorModule.distribBaseChange k K M N).symm.toLinearMap.comp
-          (GeneralLinearGroup.tensorProduct (F M) (F N) :
-            Module.End K ((K ⊗[k] M) ⊗[K] (K ⊗[k] N))) =
-        (F (M ⊗ N : FGComoduleCat k H) :
-          Module.End K (K ⊗[k] ((M ⊗ N : FGComoduleCat k H) : Type u))).comp
-            (TensorProduct.AlgebraTensorModule.distribBaseChange k K M N).symm.toLinearMap) :
-    NatTrans.IsMonoidal (fgPointFactorNatIso k H K F hF).hom := by
-  constructor
-  · rw [FGComoduleCat.scalarExtensionFunctor_ε, fgPointFactorNatIso_hom_app]
-    apply SemimoduleCat.hom_ext
-    apply LinearMap.ext
-    intro a
-    simp only [Category.assoc, SemimoduleCat.comp_apply,
-      LinearEquiv.toModuleIsoₛ_hom]
-    rw [hunit]
-    simp
-  · intro M N
-    have htensor :
-        SemimoduleCat.ofHom
-              (TensorProduct.AlgebraTensorModule.distribBaseChange k K M N).symm.toLinearMap ≫
-            SemimoduleCat.ofHom
-              (F (M ⊗ N : FGComoduleCat k H) :
-                Module.End K (K ⊗[k] ((M ⊗ N : FGComoduleCat k H) : Type u))) =
-          (SemimoduleCat.ofHom
-                (F M : Module.End K (K ⊗[k] M)) ⊗ₘ
-              SemimoduleCat.ofHom
-                (F N : Module.End K (K ⊗[k] N))) ≫
-            SemimoduleCat.ofHom
-              (TensorProduct.AlgebraTensorModule.distribBaseChange k K M N).symm.toLinearMap := by
-      apply SemimoduleCat.hom_ext
-      -- Forget the categorical tensor product so the transported intertwining identity is stated
-      -- directly with `TensorProduct.map` on the explicit scalar extensions.
-      change
-        (F (M ⊗ N : FGComoduleCat k H) :
-          Module.End K (K ⊗[k] ((M ⊗ N : FGComoduleCat k H) : Type u))).comp
-            (TensorProduct.AlgebraTensorModule.distribBaseChange k K M N).symm.toLinearMap =
-          (TensorProduct.AlgebraTensorModule.distribBaseChange k K M N).symm.toLinearMap.comp
-            (TensorProduct.map (F M : Module.End K (K ⊗[k] M))
-              (F N : Module.End K (K ⊗[k] N)))
-      simpa only [GeneralLinearGroup.coe_tensorProduct] using
-        (htensor M N).symm
-    erw [FGComoduleCat.scalarExtensionFunctor_μ,
-      fgPointFactorNatIso_hom_app, fgPointFactorNatIso_hom_app,
-      fgPointFactorNatIso_hom_app]
-    rw [← MonoidalCategory.tensorHom_comp_tensorHom,
-      ← MonoidalCategory.tensorHom_comp_tensorHom]
-    simp only [Category.assoc]
-    rw [cancel_epi]
-    erw [Category.assoc, eqToHom_trans_assoc]
-    simp only [MonoidalCategory.tensorHom_comp_tensorHom_assoc, eqToHom_trans,
-      eqToHom_refl, Category.id_comp, Category.comp_id, LinearEquiv.toModuleIsoₛ_hom]
-    erw [← Category.assoc, htensor, Category.assoc]
 
 private theorem scalarExtensionComponent_eq_of_hom_app
     (M : FGComoduleCat.{u, v, u} k H)
@@ -546,6 +417,9 @@ private theorem scalarExtensionComponent_eq_of_hom_app
   intro x
   rw [scalarExtensionComponent_apply, happ]
   let hM := FGComoduleCat.scalarExtensionFunctor_obj k H K M
+  -- The functor object is definitionally the explicit scalar extension, but this equality is
+  -- hidden by the categorical and linear-map wrappers. Displaying the four transports lets the
+  -- standard `eqToHom` simp lemmas cancel them without unfolding either public construction.
   change (eqToHom hM.symm ≫
       (eqToHom hM ≫ F.toLinearEquiv.toModuleIsoₛ.hom ≫ eqToHom hM.symm) ≫
         eqToHom hM) x = _
@@ -559,33 +433,41 @@ variable [PerfectField K]
 theorem isMonoidal_fgPointSemisimplePartNatIso_hom
     (g : WithConv (H →ₐ[k] K)) :
     NatTrans.IsMonoidal (fgPointSemisimplePartNatIso k H K g).hom := by
-  unfold fgPointSemisimplePartNatIso
-  apply isMonoidal_fgPointFactorNatIso_hom
+  apply isMonoidal_of_linear_components k H K
+    (fun M ↦ GeneralLinearGroup.semisimplePart
+      (LinearMap.GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction M g)))
+    (fgPointSemisimplePartNatIso k H K g)
+  · exact fgPointSemisimplePartNatIso_hom_app k H K g
   · rw [ofLinearEquiv_pointsAction_tensorUnit_eq_one k H K g,
       GeneralLinearGroup.semisimplePart_eq_self GeneralLinearGroup.isSemisimple_one]
   · intro M N
-    exact distribBaseChange_comp_pointFactor k H K
-      (fun V _ _ _ a ↦ GeneralLinearGroup.semisimplePart a)
-      GeneralLinearGroup.comp_semisimplePart_eq_of_comp_eq
-      GeneralLinearGroup.semisimplePart_tensorProduct g M N
+    simpa only [GeneralLinearGroup.coe_tensorProduct] using
+      distribBaseChange_comp_pointFactor k H K
+        (fun V _ _ _ a ↦ GeneralLinearGroup.semisimplePart a)
+        GeneralLinearGroup.comp_semisimplePart_eq_of_comp_eq
+        GeneralLinearGroup.semisimplePart_tensorProduct g M N
 
 /-- The natural unipotent-factor automorphism preserves the tensor unit and tensor products. -/
 theorem isMonoidal_fgPointUnipotentPartNatIso_hom
     (g : WithConv (H →ₐ[k] K)) :
     NatTrans.IsMonoidal (fgPointUnipotentPartNatIso k H K g).hom := by
-  unfold fgPointUnipotentPartNatIso
-  apply isMonoidal_fgPointFactorNatIso_hom
+  apply isMonoidal_of_linear_components k H K
+    (fun M ↦ GeneralLinearGroup.unipotentPart
+      (LinearMap.GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction M g)))
+    (fgPointUnipotentPartNatIso k H K g)
+  · exact fgPointUnipotentPartNatIso_hom_app k H K g
   · rw [ofLinearEquiv_pointsAction_tensorUnit_eq_one k H K g,
       GeneralLinearGroup.unipotentPart_eq_self GeneralLinearGroup.isUnipotent_one]
   · intro M N
-    exact distribBaseChange_comp_pointFactor k H K
-      (fun V _ _ _ a ↦ GeneralLinearGroup.unipotentPart a)
-      GeneralLinearGroup.comp_unipotentPart_eq_of_comp_eq
-      GeneralLinearGroup.unipotentPart_tensorProduct g M N
+    simpa only [GeneralLinearGroup.coe_tensorProduct] using
+      distribBaseChange_comp_pointFactor k H K
+        (fun V _ _ _ a ↦ GeneralLinearGroup.unipotentPart a)
+        GeneralLinearGroup.comp_unipotentPart_eq_of_comp_eq
+        GeneralLinearGroup.unipotentPart_tensorProduct g M N
 
 /-- The semisimple factors of a point's actions on finite comodules, as an automorphism of the
 monoidal scalar-extension functor. -/
-@[expose] noncomputable def fgPointSemisimplePartTensorIso (g : WithConv (H →ₐ[k] K)) :
+noncomputable def fgPointSemisimplePartTensorIso (g : WithConv (H →ₐ[k] K)) :
     Aut (FGComoduleCat.scalarExtensionMonoidalFunctor k H K) :=
   @LaxMonoidalFunctor.isoMk _ _ _ _ _ _ _ _
     (fgPointSemisimplePartNatIso k H K g)
@@ -593,7 +475,7 @@ monoidal scalar-extension functor. -/
 
 /-- The unipotent factors of a point's actions on finite comodules, as an automorphism of the
 monoidal scalar-extension functor. -/
-@[expose] noncomputable def fgPointUnipotentPartTensorIso (g : WithConv (H →ₐ[k] K)) :
+noncomputable def fgPointUnipotentPartTensorIso (g : WithConv (H →ₐ[k] K)) :
     Aut (FGComoduleCat.scalarExtensionMonoidalFunctor k H K) :=
   @LaxMonoidalFunctor.isoMk _ _ _ _ _ _ _ _
     (fgPointUnipotentPartNatIso k H K g)
@@ -621,7 +503,9 @@ the inverse underlying natural automorphism. -/
 theorem fgPointSemisimplePartTensorIso_inv_hom (g : WithConv (H →ₐ[k] K)) :
     (fgPointSemisimplePartTensorIso k H K g).inv.hom =
       (fgPointSemisimplePartNatIso k H K g).inv :=
-  rfl
+  by
+    unfold fgPointSemisimplePartTensorIso
+    rfl
 
 /-- Forgetting tensor compatibility from the inverse unipotent-factor automorphism recovers
 the inverse underlying natural automorphism. -/
@@ -629,7 +513,9 @@ the inverse underlying natural automorphism. -/
 theorem fgPointUnipotentPartTensorIso_inv_hom (g : WithConv (H →ₐ[k] K)) :
     (fgPointUnipotentPartTensorIso k H K g).inv.hom =
       (fgPointUnipotentPartNatIso k H K g).inv :=
-  rfl
+  by
+    unfold fgPointUnipotentPartTensorIso
+    rfl
 
 /-- The transported component of the semisimple-factor tensor automorphism is the semisimple
 part of the point action. -/
