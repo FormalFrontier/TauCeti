@@ -68,17 +68,6 @@ theorem geometricallyReducedCommHopfAlgProperty_iff
         IsReduced ((H : Type v) ⊗[k] K) :=
   Iff.rfl
 
-/-- The coordinate ring stays reduced after any chosen extension of the base field, with the
-extension field as the left tensor factor. -/
-theorem geometricallyReducedCommHopfAlgProperty.isReduced_tensorProduct_comm
-    {k : Type u} [Field k] {H : CommHopfAlgCat.{v} k}
-    (hH : geometricallyReducedCommHopfAlgProperty k H)
-    (K : Type (max u v)) [Field K] [Algebra k K] :
-    IsReduced (K ⊗[k] (H : Type v)) := by
-  let _ := hH K
-  exact isReduced_of_injective (Algebra.TensorProduct.comm k H K).symm.toRingHom
-    (Algebra.TensorProduct.comm k H K).symm.injective
-
 /-- The all-extension coordinate condition implies Mathlib's algebraic geometric-reducedness
 predicate, which over a field tests the base change to an algebraic closure. -/
 theorem geometricallyReducedCommHopfAlgProperty.isGeometricallyReduced
