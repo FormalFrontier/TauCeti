@@ -367,7 +367,7 @@ theorem lyPresentation_transcribed :
 
 The structured equation relators can contain cancellations at their concatenation boundary, so
 this checks the reduced words used for comparison with the source's published length figures. -/
-theorem lyPresentation_reducedRelatorsCyclicallyReduced :
+theorem isCyclicallyReduced_reduce_mem_lyPresentation_relators :
     ∀ w ∈ lyPresentation.relators,
       FreeGroup.IsCyclicallyReduced (FreeGroup.reduce w) := by
   simp only [GroupPresentation.relators_def, lyPresentation_transcribed, List.map_cons,
