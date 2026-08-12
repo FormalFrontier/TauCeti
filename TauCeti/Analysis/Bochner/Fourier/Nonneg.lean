@@ -222,17 +222,8 @@ private theorem exists_simpleFunc_tendsto_double_integral (ψ : V → ℂ)
       (fun u => ∫ y, ψ (u - hid.approx n y) ∂μ) μ
   have hbd2 : ∀ n, ∀ᵐ x ∂μ,
       ‖∫ y, ψ (hid.approx n x - hid.approx n y) ∂μ‖ ≤
-        (ψ 0).re * (μ Set.univ).toReal := by
-    intro n
-    refine ae_of_all _ (fun x => ?_)
-    calc ‖∫ y, ψ (hid.approx n x - hid.approx n y) ∂μ‖
-        ≤ ∫ y, ‖ψ (hid.approx n x - hid.approx n y)‖ ∂μ :=
-          norm_integral_le_integral_norm _
-      _ ≤ ∫ _, (ψ 0).re ∂μ :=
-          integral_mono_of_nonneg (ae_of_all _ (fun _ => norm_nonneg _))
-            (integrable_const _) (ae_of_all _ (fun _ => hbound _))
-      _ = (ψ 0).re * (μ Set.univ).toReal := by
-          rw [integral_const, smul_eq_mul, mul_comm, measureReal_def]
+        (ψ 0).re * (μ Set.univ).toReal := fun n =>
+    ae_of_all _ fun _ => norm_integral_le_of_norm_le_const (ae_of_all _ fun _ => hbound _)
   exact tendsto_integral_of_dominated_convergence
     (fun _ => (ψ 0).re * (μ Set.univ).toReal)
     hmeas2 (integrable_const _) hbd2 (ae_of_all _ h_inner_conv)
@@ -517,6 +508,30 @@ private theorem fejer_avg_eq_integral (ψ : V → ℂ) (hcont : Continuous ψ)
 
 /-! ### Step C: the integral of a positive-definite function has nonnegative real part -/
 
+/-- **The overlap-ratio weights converge to the integral.** For an integrable `ψ`, the integrals
+of `ψ` against the weights `overlapRatio n` converge to `∫ ψ` as `n → ∞`. -/
+private theorem tendsto_integral_overlapRatio_mul (ψ : V → ℂ) (hint : Integrable ψ) :
+    Tendsto (fun n : ℕ => ∫ v, (overlapRatio (n : ℝ) v : ℂ) * ψ v) atTop (nhds (∫ x, ψ x)) := by
+  have hone : (∫ x, ψ x) = ∫ x, (1 : ℂ) * ψ x := by simp
+  rw [hone]
+  apply tendsto_integral_of_dominated_convergence (fun v => ‖ψ v‖)
+  · intro n
+    exact (continuous_ofReal.measurable.comp
+      (measurable_overlapRatio n)).aestronglyMeasurable.mul
+      hint.aestronglyMeasurable
+  · exact hint.norm
+  · intro n
+    filter_upwards with v
+    rw [norm_mul, Complex.norm_real]
+    exact mul_le_of_le_one_left (norm_nonneg _)
+      (abs_le.mpr ⟨by linarith [overlapRatio_nonneg (n : ℝ) v],
+        overlapRatio_le_one (n : ℝ) v⟩)
+  · filter_upwards with v
+    have h2 : Tendsto (fun n : ℕ => (overlapRatio (n : ℝ) v : ℂ))
+        atTop (nhds (1 : ℂ)) :=
+      (Complex.continuous_ofReal.tendsto 1).comp (overlapRatio_tendsto_one v)
+    exact h2.mul tendsto_const_nhds
+
 /-- For a continuous integrable positive-definite function `ψ`, the integral `∫ ψ` has
 nonnegative real part: the Fejér-averaged double integral `J_R` converges to `∫ ψ` and has
 nonnegative real part for each radius `R`. -/
@@ -548,25 +563,7 @@ private theorem pd_integral_re_nonneg (ψ : V → ℂ)
       filter_upwards [Filter.eventually_ne_atTop 0] with n hn
       simp only [J, ite_eq_right hn]
       exact (fejer_avg_eq_integral ψ hcont n (Nat.cast_pos.mpr (Nat.pos_of_ne_zero hn))).symm
-    have hone : (∫ x, ψ x) = ∫ x, (1 : ℂ) * ψ x := by simp
-    rw [hone]
-    apply tendsto_integral_of_dominated_convergence (fun v => ‖ψ v‖)
-    · intro n
-      exact (continuous_ofReal.measurable.comp
-        (measurable_overlapRatio n)).aestronglyMeasurable.mul
-        hcont.aestronglyMeasurable
-    · exact hint.norm
-    · intro n
-      filter_upwards with v
-      rw [norm_mul, Complex.norm_real]
-      exact mul_le_of_le_one_left (norm_nonneg _)
-        (abs_le.mpr ⟨by linarith [overlapRatio_nonneg (n : ℝ) v],
-          overlapRatio_le_one (n : ℝ) v⟩)
-    · filter_upwards with v
-      have h2 : Tendsto (fun n : ℕ => (overlapRatio (n : ℝ) v : ℂ))
-          atTop (nhds (1 : ℂ)) :=
-        (Complex.continuous_ofReal.tendsto 1).comp (overlapRatio_tendsto_one v)
-      exact h2.mul tendsto_const_nhds
+    exact tendsto_integral_overlapRatio_mul ψ hint
   exact ge_of_tendsto' ((Complex.continuous_re.tendsto _).comp hconv) hnn
 
 /-! ### The main theorems -/

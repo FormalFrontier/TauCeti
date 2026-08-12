@@ -21,7 +21,8 @@ characters.  Together with the orthogonality relations of
 `TauCeti/RepresentationTheory/Compact/Character/Basic.lean` this says the irreducible characters
 form an orthonormal system *inside* `classFunctionLp`; that they are a Hilbert basis of it -- the
 compact-group form of "the irreducible characters are a basis of the class functions" -- needs the
-Peter-Weyl theorem and is not proved here.
+Peter-Weyl theorem and is proved in
+`TauCeti/RepresentationTheory/Compact/Character/Basis.lean`.
 
 ## Main statements
 

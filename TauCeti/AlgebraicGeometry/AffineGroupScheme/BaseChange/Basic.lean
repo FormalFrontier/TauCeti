@@ -4,7 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
-public import TauCeti.AlgebraicGeometry.AffineGroupScheme.Basic
+public import TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.BaseChange
+public import TauCeti.AlgebraicGeometry.AffineGroupScheme.Equivalence
 public import TauCeti.AlgebraicGeometry.PullbackSpecMap
 
 /-!
@@ -35,14 +36,22 @@ rings; no field or finite-type hypothesis is needed.
   components are computed by simp lemmas in terms of the underlying comparisons
   `TauCeti.AlgebraicGeometry.Over.pullbackSpecMapId` and
   `TauCeti.AlgebraicGeometry.Over.pullbackSpecMapComp` of pullback functors.
+* `TauCeti.AffineGroupSchemeCat.hopfSpecBaseChangeGrpIso` and
+  `TauCeti.AffineGroupSchemeCat.hopfSpecBaseChangeIso`: base change of a Hopf spectrum agrees
+  with scalar extension of its coordinate Hopf algebra, first for group objects and then through
+  the affine-group-scheme anti-equivalence.
+
+The comparison with base change of coordinate Hopf algebras is developed in
+`TauCeti.AlgebraicGeometry.AffineGroupScheme.BaseChange.Coordinate`.
 
 ## References
 
 The coordinate-algebra counterpart of this construction, base change of commutative Hopf
 algebras, is `TauCeti.CommHopfAlgCat.baseChangeFunctor`; the two sides are related by the
-anti-equivalence `TauCeti.commHopfAlgCatOpEquivAffineGroupSchemeCat`. Transporting either base
-change to the other along that anti-equivalence is not established here, so the two functors are
-for now independent constructions.
+anti-equivalence `TauCeti.commHopfAlgCatOpEquivAffineGroupSchemeCat`.
+`hopfSpecBaseChangeIso` identifies their values on each Hopf algebra. Their natural compatibility
+is developed in `TauCeti.AlgebraicGeometry.AffineGroupScheme.BaseChange.Coordinate` as
+`TauCeti.AffineGroupSchemeCat.hopfSpecBaseChangeNatIso`.
 
 ## Roadmap
 
@@ -192,6 +201,103 @@ lemma baseChangeFunctorCompIso_inv_app_hom_hom_hom (f : R ⟶ S) (g : S ⟶ T)
     NatIso.ofComponents_inv_app, Grp.comp', Mon.comp_hom',
     Functor.mapGrpCompIso_inv_app_hom_hom, Functor.mapGrpNatIso_inv_app_hom_hom]
   exact Category.id_comp _
+
+end AffineGroupSchemeCat
+
+namespace AffineGroupSchemeCat
+
+section HopfSpec
+
+variable {R S : Type u} [CommRing R] [CommRing S] [Algebra R S]
+
+/-- Pulling the Hopf spectrum of `H` from `Spec R` to `Spec S` gives the Hopf spectrum of the
+scalar extension `S ⊗[R] H`, as group objects over `Spec S`.
+
+The underlying scheme isomorphism first exchanges the two legs of the pullback and then applies
+the affine comparison `pullbackSpecIso'`. Mathlib proves that this map preserves the unit and
+multiplication of the Hopf spectra. -/
+noncomputable def hopfSpecBaseChangeGrpIso
+    (H : _root_.CommHopfAlgCat.{u} R) :
+    (Over.pullback (Spec.map (CommRingCat.ofHom (algebraMap R S)))).mapGrp.obj
+        ((hopfSpec (CommRingCat.of R)).obj (.op H)) ≅
+      (hopfSpec (CommRingCat.of S)).obj
+        (.op (CommHopfAlgCat.baseChange (K := S) H)) := by
+  let e := Limits.pullbackSymmetry
+      (Spec (CommRingCat.of H) ↘ Spec (CommRingCat.of R))
+      (Spec (CommRingCat.of S) ↘ Spec (CommRingCat.of R)) ≪≫ pullbackSpecIso' R S H
+  let eOver := e.asOver (Spec (CommRingCat.of S))
+  refine Grp.mkIso eOver ?_ ?_
+  · exact IsMonHom.one_hom (e.hom.asOver (Spec (CommRingCat.of S)))
+  · exact IsMonHom.mul_hom (e.hom.asOver (Spec (CommRingCat.of S)))
+
+/-- The underlying scheme map of `hopfSpecBaseChangeGrpIso` is the standard affine pullback
+comparison, after exchanging the two pullback legs. -/
+@[simp]
+lemma hopfSpecBaseChangeGrpIso_hom_hom_hom_left (H : _root_.CommHopfAlgCat.{u} R) :
+    (hopfSpecBaseChangeGrpIso H).hom.hom.hom.left =
+      (Limits.pullbackSymmetry
+        (Spec (CommRingCat.of H) ↘ Spec (CommRingCat.of R))
+        (Spec (CommRingCat.of S) ↘ Spec (CommRingCat.of R)) ≪≫
+          pullbackSpecIso' R S H).hom := by
+  rfl
+
+/-- The inverse underlying scheme map of `hopfSpecBaseChangeGrpIso` is the inverse of the standard
+affine pullback comparison. -/
+@[simp]
+lemma hopfSpecBaseChangeGrpIso_inv_hom_hom_left (H : _root_.CommHopfAlgCat.{u} R) :
+    (hopfSpecBaseChangeGrpIso H).inv.hom.hom.left =
+      (Limits.pullbackSymmetry
+        (Spec (CommRingCat.of H) ↘ Spec (CommRingCat.of R))
+        (Spec (CommRingCat.of S) ↘ Spec (CommRingCat.of R)) ≪≫
+          pullbackSpecIso' R S H).inv := by
+  rfl
+
+/-- Base change of an affine group scheme represented by a commutative Hopf algebra is represented
+by the scalar extension of that Hopf algebra. -/
+noncomputable def hopfSpecBaseChangeIso (H : _root_.CommHopfAlgCat.{u} R) :
+    baseChange (CommRingCat.ofHom (algebraMap R S))
+        ((commHopfAlgCatOpEquivAffineGroupSchemeCat (CommRingCat.of R)).functor.obj (.op H)) ≅
+      (commHopfAlgCatOpEquivAffineGroupSchemeCat (CommRingCat.of S)).functor.obj
+        (.op (CommHopfAlgCat.baseChange (K := S) H)) :=
+  (affineGroupSchemeProperty (CommRingCat.of S)).isoMk
+    ((Over.pullback (Spec.map (CommRingCat.ofHom (algebraMap R S)))).mapGrp.mapIso
+        ((commHopfAlgCatOpEquivAffineGroupSchemeCat.functorCompιIso
+          (CommRingCat.of R)).app (.op H)) ≪≫
+      hopfSpecBaseChangeGrpIso H ≪≫
+      ((commHopfAlgCatOpEquivAffineGroupSchemeCat.functorCompιIso
+        (CommRingCat.of S)).app
+          (.op (CommHopfAlgCat.baseChange (K := S) H))).symm)
+
+/-- The underlying group-scheme morphism of `hopfSpecBaseChangeIso` is the composite of the
+anti-equivalence comparison at `R`, the direct Hopf-spectrum base-change comparison, and the
+inverse anti-equivalence comparison at `S`. -/
+@[simp]
+lemma hopfSpecBaseChangeIso_hom_hom (H : _root_.CommHopfAlgCat.{u} R) :
+    (hopfSpecBaseChangeIso H).hom.hom =
+      (Over.pullback (Spec.map (CommRingCat.ofHom (algebraMap R S)))).mapGrp.map
+          ((commHopfAlgCatOpEquivAffineGroupSchemeCat.functorCompιIso
+            (CommRingCat.of R)).hom.app (.op H)) ≫
+        (hopfSpecBaseChangeGrpIso H).hom ≫
+        (commHopfAlgCatOpEquivAffineGroupSchemeCat.functorCompιIso
+          (CommRingCat.of S)).inv.app
+            (.op (CommHopfAlgCat.baseChange (K := S) H)) := by
+  rfl
+
+/-- The inverse underlying group-scheme morphism of `hopfSpecBaseChangeIso` is the reverse
+composite of the three comparison isomorphisms. -/
+@[simp]
+lemma hopfSpecBaseChangeIso_inv_hom (H : _root_.CommHopfAlgCat.{u} R) :
+    (hopfSpecBaseChangeIso H).inv.hom =
+      (commHopfAlgCatOpEquivAffineGroupSchemeCat.functorCompιIso
+          (CommRingCat.of S)).hom.app
+            (.op (CommHopfAlgCat.baseChange (K := S) H)) ≫
+        (hopfSpecBaseChangeGrpIso H).inv ≫
+        (Over.pullback (Spec.map (CommRingCat.ofHom (algebraMap R S)))).mapGrp.map
+          ((commHopfAlgCatOpEquivAffineGroupSchemeCat.functorCompιIso
+            (CommRingCat.of R)).inv.app (.op H)) := by
+  rfl
+
+end HopfSpec
 
 end AffineGroupSchemeCat
 

@@ -37,6 +37,8 @@ The point-level map on `Spv A` that Wedhorn's retraction `r_I` is built from liv
 * `TauCeti.Valuation.restrictToIdeal_le_iff` : how restricted values compare, totally.
 * `TauCeti.Valuation.restrictToIdeal_ne_zero_of_le` : the restriction keeps every value above a
   kept value.
+* `TauCeti.Valuation.exists_mem_restrictToIdeal_ne_zero` : **Wedhorn Lemma 7.5(3)**, that the
+  restriction does not vanish identically on `I` unless `v` does.
 * `TauCeti.Valuation.restrictToIdeal_ne_zero_of_isAdmissible` : it does not kill a denominator
   dominating an admissible numerator set.
 
@@ -429,13 +431,35 @@ theorem restrictToIdeal_ne_zero_of_le (v : Valuation A Γ₀) (I : Ideal A)
       ⟨_, mem_characteristicGenerators.mpr ⟨h1.le, a, v.restrict_eq_mk ha0⟩,
         Left.inv_le_self h1.le, le_rfl⟩
 
+/-- **Wedhorn Lemma 7.5(3).** If `v` does not vanish identically on `I`, neither does its
+restriction: `v(I) ≠ 0` implies `r_I(v)(I) ≠ 0`, so `I` is not contained in the support of the
+restricted valuation. This is the form Wedhorn's Theorem 7.10 consumes. -/
+theorem exists_mem_restrictToIdeal_ne_zero (v : Valuation A Γ₀) (I : Ideal A)
+    (hfg : ∃ J : Ideal A, J.FG ∧ I.radical = J.radical)
+    (hne : ∃ a ∈ I, (ofClass v) a ≠ 0) :
+    ∃ a ∈ I, v.restrictToIdeal I hfg a ≠ 0 := by
+  have hex : ∃ γ ∈ valueSet v I, γ ∈ characteristicSubgroupOfIdeal v I hfg := by
+    by_cases hm : IdealMeetsCharacteristicSubgroup v I
+    · obtain ⟨γ, hγI, hγc⟩ := idealMeetsCharacteristicSubgroup_iff.mp hm
+      exact ⟨γ, hγI, characteristicSubgroup_le_characteristicSubgroupOfIdeal v I hfg hγc⟩
+    · exact exists_mem_valueSet_mem_characteristicSubgroupOfIdeal hfg hm hne
+  obtain ⟨γ, hγI, hγH⟩ := hex
+  obtain ⟨a, haI, hav⟩ := mem_valueSet.mp hγI
+  have ha0 : (ofClass v) a ≠ 0 := fun h ↦ by
+    rw [v.restrict_eq_zero_iff.mpr h] at hav
+    exact WithZero.coe_ne_zero hav.symm
+  refine ⟨a, haI, restrictToIdeal_ne_zero_of_mem v I hfg ha0 ?_⟩
+  have hcoe : (valueGroup.mk (.ofClass v) 1 a (by simp) ha0 :
+      ValueGroup₀ (.ofClass v)) = γ := by
+    rw [← v.restrict_eq_mk ha0, hav]
+  rwa [WithZero.coe_inj.mp hcoe]
+
 /-- **The restriction does not kill an admissible denominator.** If `u` dominates a set
 `T` with `I ⊆ √((T ∪ {u}) · A)` and `v u ≠ 0`, then `v|cΓ_v(I)` keeps `u`.
 
-This is the step Wedhorn argues by contradiction in the proof of Lemma 7.5(iii): were `u`
-discarded, `T ∪ {u}` would lie in the support of the restriction, which is prime and hence
-radical, so all of `I` would lie there — contradicting Lemma 7.2, which produces an element of
-`I` whose value lies in `cΓ_v(I)` whenever `v` does not vanish on `I`. -/
+This is one of the auxiliary claims in Wedhorn's proof of Lemma 7.5(1) — step (iii) there — and
+it is what lets `restrictToIdealCodRestrict_preimage` compute the preimage of a rational
+subset. -/
 theorem restrictToIdeal_ne_zero_of_isAdmissible (v : Valuation A Γ₀) (I : Ideal A)
     (hfg : ∃ J : Ideal A, J.FG ∧ I.radical = J.radical) {T : Set A} {u : A}
     (hadm : I ≤ (Ideal.span (insert u T)).radical)
@@ -455,26 +479,13 @@ theorem restrictToIdeal_ne_zero_of_isAdmissible (v : Valuation A Γ₀) (I : Ide
       rw [← (Valuation.instIsPrimeSuppOfNontrivialOfNoZeroDivisors R).radical]
       exact Ideal.radical_mono (Ideal.span_le.mpr hsupp)
     exact fun a ha ↦ (Valuation.mem_supp_iff R a).mp (h ha)
-  have key : (∃ γ ∈ valueSet v I, γ ∈ characteristicSubgroupOfIdeal v I hfg) → False := by
-    rintro ⟨γ, hγI, hγH⟩
-    obtain ⟨a, haI, hav⟩ := mem_valueSet.mp hγI
-    have ha0 : (ofClass v) a ≠ 0 := fun h ↦ by
-      rw [v.restrict_eq_zero_iff.mpr h] at hav
-      exact WithZero.coe_ne_zero hav.symm
-    refine restrictToIdeal_ne_zero_of_mem v I hfg ha0 ?_ (hI a haI)
-    have hcoe : (valueGroup.mk (.ofClass v) 1 a (by simp) ha0 :
-        ValueGroup₀ (.ofClass v)) = γ := by
-      rw [← v.restrict_eq_mk ha0, hav]
-    rwa [WithZero.coe_inj.mp hcoe]
-  by_cases hm : IdealMeetsCharacteristicSubgroup v I
-  · obtain ⟨γ, hγI, hγc⟩ := idealMeetsCharacteristicSubgroup_iff.mp hm
-    exact key ⟨γ, hγI, characteristicSubgroup_le_characteristicSubgroupOfIdeal v I hfg hγc⟩
-  · by_cases hne : ∃ a ∈ I, (ofClass v) a ≠ 0
-    · exact key (exists_mem_valueSet_mem_characteristicSubgroupOfIdeal hfg hm hne)
-    · push Not at hne
-      have htop : characteristicSubgroupOfIdeal v I hfg = ⊤ :=
-        (characteristicSubgroupOfIdeal_eq_top_iff hfg).mpr
-          (Or.inl fun a ha ↦ cofinalValueFor_top_iff.mp (cofinalValueFor_of_eq_zero (hne a ha)))
-      exact restrictToIdeal_ne_zero_of_mem v I hfg hu0 (htop ▸ ConvexSubgroup.mem_top) hRu
+  by_cases hne : ∃ a ∈ I, (ofClass v) a ≠ 0
+  · obtain ⟨a, haI, hane⟩ := exists_mem_restrictToIdeal_ne_zero v I hfg hne
+    exact hane (hI a haI)
+  · push Not at hne
+    have htop : characteristicSubgroupOfIdeal v I hfg = ⊤ :=
+      (characteristicSubgroupOfIdeal_eq_top_iff hfg).mpr
+        (Or.inl fun a ha ↦ cofinalValueFor_top_iff.mp (cofinalValueFor_of_eq_zero (hne a ha)))
+    exact restrictToIdeal_ne_zero_of_mem v I hfg hu0 (htop ▸ ConvexSubgroup.mem_top) hRu
 
 end TauCeti.Valuation

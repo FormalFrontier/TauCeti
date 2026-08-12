@@ -7,6 +7,7 @@ module
 public import Mathlib.RingTheory.Ideal.Quotient.Operations
 public import Mathlib.RingTheory.SimpleModule.Basic
 public import TauCeti.RepresentationTheory.Quiver.Radical
+public import TauCeti.RingTheory.Semisimple.BasicAlgebra
 
 /-!
 # The semisimple quotient of a path algebra
@@ -47,9 +48,10 @@ block of size one -- and its dimension is the number of vertices.
 
 * `TauCeti.PathAlgebra.trivialCoeff_surjective` and `TauCeti.PathAlgebra.ker_trivialCoeff`: the
   trivial-coefficient map is onto `Q → k` with kernel the arrow ideal.
-* `TauCeti.PathAlgebra.isSemisimpleRing_quotient_jacobson` and
-  `TauCeti.PathAlgebra.isReduced_quotient_jacobson`: the quotient by the radical is semisimple, and
-  **the path algebra of a finite acyclic quiver is basic**, its semisimple quotient being reduced.
+* `TauCeti.PathAlgebra.isSemisimpleRing_quotient_jacobson`,
+  `TauCeti.PathAlgebra.isReduced_quotient_jacobson` and `TauCeti.PathAlgebra.isBasic`: the quotient
+  by the radical is semisimple and reduced, that is, **the path algebra of a finite acyclic quiver
+  is a basic algebra**.
 * `TauCeti.PathAlgebra.finrank_quotient_jacobson`: the semisimple quotient has dimension the number
   of vertices.
 
@@ -296,12 +298,20 @@ theorem isSemisimpleRing_quotient_jacobson (h : Quiver.IsAcyclic Q) :
     IsSemisimpleRing (pathAlgebra k Q ⧸ Ring.jacobson (pathAlgebra k Q)) :=
   (quotientJacobsonAlgEquiv k Q h).toRingEquiv.symm.isSemisimpleRing
 
-/-- **The path algebra of a finite acyclic quiver is a basic algebra**: its semisimple quotient is
-reduced, so no Wedderburn block is a matrix algebra of size greater than one. -/
+/-- The semisimple quotient of the path algebra of a finite acyclic quiver is reduced: no Wedderburn
+block of it is a matrix algebra of size greater than one. -/
 theorem isReduced_quotient_jacobson (h : Quiver.IsAcyclic Q) :
     IsReduced (pathAlgebra k Q ⧸ Ring.jacobson (pathAlgebra k Q)) :=
   isReduced_of_injective (quotientJacobsonAlgEquiv k Q h).toRingEquiv
     (quotientJacobsonAlgEquiv k Q h).toRingEquiv.injective
+
+/-- **The path algebra of a finite acyclic quiver is a basic algebra.**  This is the previous two
+results read through `TauCeti.IsBasic`: by `TauCeti.isBasic_iff_pi_divisionRing` the quotient by the
+radical is then a product of division rings -- here, one copy of `k` for each vertex -- so the
+vertices index the simple modules and the indecomposable projectives without repetition. -/
+theorem isBasic (h : Quiver.IsAcyclic Q) : IsBasic (pathAlgebra k Q) :=
+  (isBasic_def _).mpr
+    ⟨isSemisimpleRing_quotient_jacobson k Q h, isReduced_quotient_jacobson k Q h⟩
 
 /-- The semisimple quotient of the path algebra of a finite acyclic quiver is commutative. -/
 theorem mul_comm_quotient_jacobson (h : Quiver.IsAcyclic Q)

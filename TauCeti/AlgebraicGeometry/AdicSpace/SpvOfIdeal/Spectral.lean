@@ -21,8 +21,11 @@ spectral with the sets
 Spv (A, I)(T/s) = { v ∈ Spv (A, I) ; v(t) ≤ v(s) ≠ 0 for all t ∈ T },   I ⊆ √(T · A)
 ```
 
-as a generating family. (Wedhorn states them as a basis of quasi-compact opens; what is
-proved here is that they generate the topology, which is what the patch criterion consumes.)
+as a generating family. (Wedhorn states them as a basis of quasi-compact opens. Both halves that
+are about individual members are proved here: they generate the topology, which is what the patch
+criterion consumes, and each is quasi-compact. The *basis* property itself — every open a union
+of them — is not, since it needs stability under finite intersection, Wedhorn's step (i), which
+the criterion absorbs rather than proves.)
 No second topology on the subtype is introduced here: the
 `Subtype` instance *is* that topology, which is the content of
 `instTopologicalSpace_spvOfIdeal_eq_generateFrom`.
@@ -63,6 +66,12 @@ below is the public neighbourhood interface that merges them.)
   that `R` generates the subspace topology.
 * `TauCeti.ValuationSpectrum.restrictToIdealCodRestrict_preimage` : **step (iii)**,
   `r_I⁻¹(Spv(A,I)(T/s)) = Spv(A)(T/s)`.
+* `TauCeti.ValuationSpectrum.isCompact_of_mem_rationalFamily` : the members of `R` are
+  quasi-compact, the other half of what Lemma 7.5(1) asserts about them.
+* `TauCeti.ValuationSpectrum.continuous_restrictToIdealCodRestrict` : **Lemma 7.5(2)**, the
+  continuity half — steps (ii) and (iii) give it at once. Wedhorn's further claim that `r_I` is
+  a *spectral* map is not recorded here; the quasi-compactness that claim needs is available as
+  `isCompact_of_mem_rationalFamily` just above.
 
 ## References
 
@@ -70,10 +79,12 @@ below is the public neighbourhood interface that merges them.)
 
 ## Provenance
 
-The corresponding development in AINTLIB (`github.com/CBirkbeck/AINTLIB`, Apache-2.0), branch
-`dev/adic-spaces` at commit `37bbdaeb9ad9e3bc9f0d660feadc2779e455a91c`, project
+The corresponding development in AINTLIB (`github.com/CBirkbeck/AINTLIB`, Apache-2.0), project
 `projects/AdicSpaces/`, file `Adic spaces/SpvAITopology.lean`, was consulted rather than copied,
-and this file departs from it in two ways.
+and this file departs from it in two ways. Two revisions are cited below, each for what was
+checked against it: branch `dev/adic-spaces` at `37bbdaeb9ad9e3bc9f0d660feadc2779e455a91c`, the
+revision the spectrality material here was written against, and
+`2baa76f742bdb4fb8ee323fabba41203bd390e08`, the revision re-checked when Lemma 7.5(2) was added.
 
 First, AINTLIB equips `Spv (A, I)` with a *separate* topology, `SpvAI.topology`, described there
 as strictly finer than the subspace topology. That reading of Remark 7.6 is not Wedhorn's:
@@ -83,11 +94,14 @@ be a basis of the subspace topology itself. AINTLIB proves only the trivial half
 here, and the two topologies therefore agree.
 
 Second, AINTLIB's route to compactness and quasi-soberness goes through
-`SpvAI.retraction_continuous`, which is a `sorry` there, as are its dependencies
-`Spv.restrictIdeal_preimage_basicOpen_isOpen` and `SpvAI.retraction_preimage_rationalSubset`.
-Taking the witness topology coinduced along the retraction removes the need for that continuity
-statement, and quasi-soberness then comes from the patch criterion rather than from a transfer
-along the retraction.
+`SpvAI.retraction_continuous`. At `2baa76f742bdb4fb8ee323fabba41203bd390e08` that theorem carries
+a proof, but it rests on `Spv.restrictIdeal_preimage_basicOpen_isOpen` — openness of
+`r_I⁻¹(Spv(A)(f/s))` for an *arbitrary* pair `(f, s)` — which is a `sorry` there, as is
+`SpvAI.retraction_preimage_rationalSubset`. Taking the witness topology coinduced along the
+retraction removes the need for continuity in the proof of 7.5(1), and quasi-soberness then comes
+from the patch criterion rather than from a transfer along the retraction. Continuity is proved
+below all the same, as Lemma 7.5(2) in its own right, and by a route that needs only the
+*admissible* preimages already computed for 7.5(1) — never the general-`(f, s)` statement.
 
 The two branches of step (ii) below follow AINTLIB's `SpvAI.exists_rationalSubset_microbial` and
 `SpvAI.exists_rationalSubset_cofinality`, which are proved there; they are restated against
@@ -198,8 +212,11 @@ private theorem exists_basicOpenFinset_of_characteristicSubgroup_eq_top {v : Spv
 
 /-- **Wedhorn 7.5(ii), the cofinal branch.** Cofinality of each generator below `v(s)` supplies
 an exponent per generator; adjoining those powers to `{f}` gives an admissible numerator set
-inside `Spv(A)(f/s)`. Wedhorn takes one uniform exponent, which would need every generator to
-have value `≤ 1`; a separate exponent per generator avoids that. -/
+inside `Spv(A)(f/s)`. Wedhorn instead takes a single exponent for all generators, which is
+equally available here: cofinality already forces each generator's value below `1`
+(`cofinalValueFor_top_iff` with `CofinalValueFor.lt_one`), so the largest of the individual
+exponents would serve. Nothing downstream needs the exponents to agree, so they are chosen
+separately. -/
 private theorem exists_basicOpenFinset_of_forall_cofinalValue {v : Spv A} (S : Finset A)
     (hcof : ∀ σ ∈ S, CofinalValue v.valuation σ) {f s : A} (hv : v ∈ basicOpen f s) :
     ∃ T : Finset A, f ∈ T ∧ (∀ σ ∈ S, ∃ k : ℕ, σ ^ k ∈ T) ∧ v ∈ basicOpenFinset T s := by
@@ -374,6 +391,16 @@ theorem restrictToIdealCodRestrict_preimage (I : Ideal A)
 
 /-! ### Wedhorn Lemma 7.5(1) -/
 
+/-- Every member of `R` is clopen for the witness topology: step (iii) computes its `r_I`-preimage
+to be `Spv(A)(T/u)`, which is patch-clopen in `Spv A`. -/
+private lemma isClopen_patchTopologyOfIdeal_of_mem_rationalFamily (I : Ideal A)
+    (hfg : ∃ J : Ideal A, J.FG ∧ I.radical = J.radical) :
+    ∀ V ∈ rationalFamily I hfg, @IsClopen _ (patchTopologyOfIdeal I hfg) V := by
+  rintro _ ⟨T, u, hadm, rfl⟩
+  exact isClopen_patchTopologyOfIdeal_of_preimage I hfg
+    (by rw [restrictToIdealCodRestrict_preimage I hfg hadm]
+        exact isClopen_patchTopology_basicOpenFinset T u)
+
 /-- **Wedhorn, Lemma 7.5(1)**: `Spv (A, I)` is a spectral space.
 
 The patch criterion is applied with the subspace topology as the generated one — the admissible
@@ -384,10 +411,40 @@ theorem spectralSpace_spvOfIdeal (I : Ideal A)
     (hfg : ∃ J : Ideal A, J.FG ∧ I.radical = J.radical) :
     SpectralSpace (spvOfIdeal I hfg) :=
   spectralSpace_of_isClopen_generateFrom (instTopologicalSpace_spvOfIdeal_eq_generateFrom I hfg)
-    (compactSpace_patchTopologyOfIdeal I hfg) (by
-      rintro _ ⟨T, u, hadm, rfl⟩
-      exact isClopen_patchTopologyOfIdeal_of_preimage I hfg
-        (by rw [restrictToIdealCodRestrict_preimage I hfg hadm]
-            exact isClopen_patchTopology_basicOpenFinset T u))
+    (compactSpace_patchTopologyOfIdeal I hfg)
+    (isClopen_patchTopologyOfIdeal_of_mem_rationalFamily I hfg)
+
+/-- **Wedhorn Lemma 7.5(1), the quasi-compactness half.** Every member of `R` is a quasi-compact
+open of `Spv (A, I)` — the property Wedhorn states alongside "basis", and the one that
+quasi-compactness in `Spv A` does *not* supply, since `Spv (A, I)` is not closed there.
+
+Same witness topology as the spectrality proof, so the patch criterion's
+`isCompact_of_isClopen_generateFrom` applies directly. -/
+theorem isCompact_of_mem_rationalFamily (I : Ideal A)
+    (hfg : ∃ J : Ideal A, J.FG ∧ I.radical = J.radical) {V : Set (spvOfIdeal I hfg)}
+    (hV : V ∈ rationalFamily I hfg) : IsCompact V :=
+  isCompact_of_isClopen_generateFrom (t' := patchTopologyOfIdeal I hfg)
+    (instTopologicalSpace_spvOfIdeal_eq_generateFrom I hfg)
+    (compactSpace_patchTopologyOfIdeal I hfg)
+    (isClopen_patchTopologyOfIdeal_of_mem_rationalFamily I hfg) hV
+
+/-! ### Wedhorn Lemma 7.5(2) -/
+
+/-- **Wedhorn Lemma 7.5(2)**, the continuity half: the retraction `r_I : Spv A → Spv (A, I)`
+is continuous.
+
+Wedhorn also calls `r_I` a *spectral* map; that half is not recorded here. The quasi-compactness
+of the rational subsets which it additionally needs is `isCompact_of_mem_rationalFamily` above. -/
+@[fun_prop]
+theorem continuous_restrictToIdealCodRestrict (I : Ideal A)
+    (hfg : ∃ J : Ideal A, J.FG ∧ I.radical = J.radical) :
+    Continuous (restrictToIdealCodRestrict I hfg) := by
+  have h : Continuous[_, generateFrom (rationalFamily I hfg)]
+      (restrictToIdealCodRestrict I hfg) := by
+    refine continuous_generateFrom_iff.mpr ?_
+    rintro _ ⟨T, u, hadm, rfl⟩
+    rw [restrictToIdealCodRestrict_preimage I hfg hadm]
+    exact isOpen_basicOpenFinset T u
+  rwa [← instTopologicalSpace_spvOfIdeal_eq_generateFrom I hfg] at h
 
 end TauCeti.ValuationSpectrum
