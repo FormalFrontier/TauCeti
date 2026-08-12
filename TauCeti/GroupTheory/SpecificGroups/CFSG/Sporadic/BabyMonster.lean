@@ -103,6 +103,7 @@ numbering with the customary offset, so `tᵢ` is index `i - 1`. -/
 def branchNode : Fin 11 := 4
 
 /-- The branch node is index four, corresponding to the source's `t₅`. -/
+@[simp]
 theorem branchNode_eq : branchNode = 4 := (rfl)
 
 /-- The three arms of the diagram, each listed outwards from the branch node: `t₄ t₃ t₂ t₁`, then
@@ -110,6 +111,7 @@ theorem branchNode_eq : branchNode = 4 := (rfl)
 def arms : List (List (Fin 11)) := [[3, 2, 1, 0], [5, 6, 7], [8, 9, 10]]
 
 /-- The three arms, spelled out in the numbered alphabet. -/
+@[simp]
 theorem arms_eq : arms = [[3, 2, 1, 0], [5, 6, 7], [8, 9, 10]] := (rfl)
 
 /-- **The three arms have lengths four, three and three**, which is what the name `Y₄₃₃`
@@ -173,6 +175,7 @@ def neighbors (i : Fin 11) : List (Fin 11) :=
   (List.finRange 11).filter fun j => coxeterMatrix i j = 3
 
 /-- Membership in `neighbors i` is characterized by the corresponding Coxeter-matrix entry. -/
+@[simp]
 theorem mem_neighbors_iff (i j : Fin 11) : j ∈ neighbors i ↔ coxeterMatrix i j = 3 := by
   simp [neighbors]
 
@@ -247,6 +250,7 @@ def adjoinedRelators : List (Relator (Fin 11)) :=
   [spiderRelator, extraRelatorOne, extraRelatorTwo]
 
 /-- The adjoined-relator list, in source order. -/
+@[simp]
 theorem adjoinedRelators_eq :
     adjoinedRelators = [spiderRelator, extraRelatorOne, extraRelatorTwo] := (rfl)
 
@@ -255,6 +259,7 @@ followed by the spider relator and the two further relators. -/
 def relatorList : List (Relator (Fin 11)) := coxeterRelators coxeterMatrix ++ adjoinedRelators
 
 /-- The relator list is the Coxeter list followed by the three adjoined relators. -/
+@[simp]
 theorem relatorList_def :
     relatorList = coxeterRelators coxeterMatrix ++ adjoinedRelators := (rfl)
 
