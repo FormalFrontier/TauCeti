@@ -58,7 +58,7 @@ open _root_.Module
 
 universe u v w
 
-variable {K : Type u} {V : Type v} [CommRing K] [AddCommGroup V] [Module K V]
+variable {K : Type u} {V : Type v} [Ring K] [AddCommGroup V] [Module K V]
 
 /-- A linear automorphism is unipotent if its difference from the identity is nilpotent. -/
 def IsUnipotent (g : GeneralLinearGroup K V) : Prop :=

@@ -13,13 +13,14 @@ public import TauCeti.LinearAlgebra.GeneralLinearGroup.Unipotent
 
 Let `H` be a Hopf algebra over a commutative semiring `k` and let `K` be a commutative
 `k`-algebra. A
-`K`-valued point `g : H →ₐ[k] K` acts on the scalar extension of every finite-dimensional
-`H`-comodule. This file calls `g` **unipotent** when every one of those linear automorphisms is
-unipotent, meaning that its difference from the identity is nilpotent.
+`K`-valued point `g : H →ₐ[k] K` acts on the scalar extension of every finitely generated
+`H`-comodule. Over a field, these are the finite-dimensional representations relevant to the
+geometric definition. This file calls `g` **unipotent** when every one of those linear
+automorphisms is unipotent, meaning that its difference from the identity is nilpotent.
 
 For the commutative coordinate Hopf algebra of an affine group scheme, taking `K` to be an
 algebraic closure of `k` is precisely the representation-theoretic definition of a geometric
-unipotent element. The quantification over all finite-dimensional comodules is essential: testing
+unipotent element. The quantification over all finitely generated comodules is essential: testing
 nilpotence in the reduced coordinate ring would instead give the vacuous condition warned against
 in the ReductiveGroups roadmap.
 
@@ -31,7 +32,7 @@ in the general linear group.
 
 ## Main declarations
 
-* `TauCeti.HopfAlgebra.IsUnipotent`: a point acts unipotently in every finite-dimensional
+* `TauCeti.HopfAlgebra.IsUnipotent`: a point acts unipotently in every finitely generated
   comodule.
 * `TauCeti.HopfAlgebra.isUnipotent_iff_isNilpotent_endOfPoint_sub_one`: the equivalent
   nilpotence formulation using the underlying comodule action endomorphisms.
@@ -63,11 +64,12 @@ variable {k : Type u} {H : Type v} {K : Type x}
 variable [CommSemiring k] [Semiring H] [_root_.HopfAlgebra k H] [CommRing K] [Algebra k K]
 
 /-- A point of a Hopf algebra valued in a commutative algebra is unipotent when it acts by a
-unipotent linear automorphism on the scalar extension of every finite-dimensional comodule.
+unipotent linear automorphism on the scalar extension of every finitely generated comodule.
 
-When `H` is the commutative coordinate Hopf algebra of an affine group over `k` and `K` is an
-algebraic closure, this is the standard representation-theoretic definition of a geometric
-unipotent element. -/
+When `k` is a field, these comodules are the finite-dimensional representations. Thus, when `H`
+is the commutative coordinate Hopf algebra of an affine group over `k` and `K` is an algebraic
+closure, this is the standard representation-theoretic definition of a geometric unipotent
+element. -/
 def IsUnipotent (g : WithConv (H →ₐ[k] K)) : Prop :=
   ∀ M : FGComoduleCat.{u, v, u} k H,
     GeneralLinearGroup.IsUnipotent
