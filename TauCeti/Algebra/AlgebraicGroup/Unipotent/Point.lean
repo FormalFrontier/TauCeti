@@ -34,7 +34,7 @@ in the general linear group.
 
 * `TauCeti.HopfAlgebra.IsUnipotentPoint`: a point acts unipotently in every finitely generated
   comodule.
-* `TauCeti.HopfAlgebra.isUnipotentPoint_iff_isNilpotent_endOfPoint_sub_one`: the equivalent
+* `TauCeti.HopfAlgebra.isUnipotentPoint_iff_forall_isNilpotent_endOfPoint_sub_one`: the equivalent
   nilpotence formulation using the underlying comodule action endomorphisms.
 * `TauCeti.HopfAlgebra.IsUnipotentPoint.inv`, `.mul_of_commute`, and `.pow`: closure under
   inversion, commuting products, and natural powers.
@@ -86,7 +86,8 @@ theorem isUnipotentPoint_def (g : WithConv (H →ₐ[k] K)) :
 
 /-- A point is unipotent exactly when each underlying point-action endomorphism minus the
 identity is nilpotent. -/
-theorem isUnipotentPoint_iff_isNilpotent_endOfPoint_sub_one (g : WithConv (H →ₐ[k] K)) :
+theorem isUnipotentPoint_iff_forall_isNilpotent_endOfPoint_sub_one
+    (g : WithConv (H →ₐ[k] K)) :
     IsUnipotentPoint g ↔
       ∀ M : FGComoduleCat.{u, v, u} k H,
         _root_.IsNilpotent (Comodule.endOfPoint M g.ofConv - 1) := by
