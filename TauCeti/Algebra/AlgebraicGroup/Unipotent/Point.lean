@@ -32,12 +32,12 @@ in the general linear group.
 
 * `TauCeti.HopfAlgebra.IsUnipotent`: a point acts unipotently in every finite-dimensional
   comodule.
-* `TauCeti.HopfAlgebra.isUnipotent_iff_endOfPoint`: the equivalent nilpotence formulation using
-  the underlying comodule action endomorphisms.
+* `TauCeti.HopfAlgebra.isUnipotent_iff_isNilpotent_endOfPoint_sub_one`: the equivalent
+  nilpotence formulation using the underlying comodule action endomorphisms.
 * `TauCeti.HopfAlgebra.IsUnipotent.inv`, `.mul`, and `.pow`: closure under inversion, commuting
   products, and natural powers.
 * `TauCeti.HopfAlgebra.isUnipotent_inv_iff`: a point is unipotent exactly when its inverse is.
-* `TauCeti.HopfAlgebra.isUnipotent_mul_mul_inv_iff`: invariance under conjugation.
+* `TauCeti.HopfAlgebra.isUnipotent_conj_iff`: invariance under conjugation.
 
 ## References
 
@@ -83,7 +83,7 @@ theorem isUnipotent_def (g : WithConv (H →ₐ[k] K)) :
 
 /-- A point is unipotent exactly when each underlying point-action endomorphism minus the
 identity is nilpotent. -/
-theorem isUnipotent_iff_endOfPoint (g : WithConv (H →ₐ[k] K)) :
+theorem isUnipotent_iff_isNilpotent_endOfPoint_sub_one (g : WithConv (H →ₐ[k] K)) :
     IsUnipotent g ↔
       ∀ M : FGComoduleCat.{u, v, u} k H,
         _root_.IsNilpotent (Comodule.endOfPoint M g.ofConv - 1) := by
@@ -138,25 +138,29 @@ theorem IsUnipotent.mul {g h : WithConv (H →ₐ[k] K)}
 theorem IsUnipotent.pow {g : WithConv (H →ₐ[k] K)}
     (hg : IsUnipotent g) (n : ℕ) : IsUnipotent (g ^ n) := by
   intro M
-  rw [map_pow, GeneralLinearGroup.ofLinearEquiv_pow]
+  rw [map_pow]
+  change GeneralLinearGroup.IsUnipotent
+    ((LinearMap.GeneralLinearGroup.generalLinearEquiv K _).symm
+      (Comodule.pointsAction M g ^ n))
+  rw [map_pow]
   exact (hg M).pow n
 
 /-- Unipotence of points is invariant under conjugation. -/
 @[simp]
-theorem isUnipotent_mul_mul_inv_iff (g h : WithConv (H →ₐ[k] K)) :
-    IsUnipotent (h * g * h⁻¹) ↔ IsUnipotent g := by
+theorem isUnipotent_conj_iff (g h : WithConv (H →ₐ[k] K)) :
+    IsUnipotent (MulAut.conj h g) ↔ IsUnipotent g := by
   constructor
   · intro hg M
     have hM := hg M
-    simp only [map_mul, map_inv, LinearMap.GeneralLinearGroup.ofLinearEquiv_mul,
+    simp only [MulAut.conj_apply, map_mul, map_inv, LinearMap.GeneralLinearGroup.ofLinearEquiv_mul,
       LinearMap.GeneralLinearGroup.ofLinearEquiv_inv] at hM
-    exact (GeneralLinearGroup.isUnipotent_mul_mul_inv_iff
+    exact (GeneralLinearGroup.isUnipotent_conj_iff
       (LinearMap.GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction M g))
       (LinearMap.GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction M h))).mp hM
   · intro hg M
-    simp only [map_mul, map_inv, LinearMap.GeneralLinearGroup.ofLinearEquiv_mul,
+    simp only [MulAut.conj_apply, map_mul, map_inv, LinearMap.GeneralLinearGroup.ofLinearEquiv_mul,
       LinearMap.GeneralLinearGroup.ofLinearEquiv_inv]
-    exact (GeneralLinearGroup.isUnipotent_mul_mul_inv_iff
+    exact (GeneralLinearGroup.isUnipotent_conj_iff
       (LinearMap.GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction M g))
       (LinearMap.GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction M h))).mpr (hg M)
 
