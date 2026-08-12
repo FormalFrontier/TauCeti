@@ -48,7 +48,9 @@ statements below are phrased against `fieldSignatures K` so that they stand with
 * `TauCeti.NumberField.NarrowClassGroup.ker_mkPrincipal`: hence the kernel of the principal-class
   map is the preimage of `unitSignatures K`.
 * `TauCeti.NumberField.NarrowClassGroup.kerToClassGroupEquiv`: **the kernel of `Cl⁺(K) → Cl(K)` is
-  the relative signature quotient** `fieldSignatures K / unitSignatures K`.
+  the relative signature quotient** `fieldSignatures K / unitSignatures K`, with
+  `TauCeti.NumberField.NarrowClassGroup.kerToClassGroupEquiv_mkPrincipal` evaluating it on the
+  narrow class of a principal ideal `(x)` as the class of the signature of `x`.
 * `TauCeti.NumberField.NarrowClassGroup.card_ker_toClassGroup`: its order is the relative index of
   the two signature ranges.
 * `TauCeti.NumberField.NarrowClassGroup.card_eq_card_classGroup_mul_relIndex` and
@@ -63,7 +65,14 @@ statements below are phrased against `fieldSignatures K` so that they stand with
 
 This advances Layer 3 of `TauCetiRoadmap/Multiquadratic/README.md`, whose `2`-rank formula
 `2-rank = t - 1` is a theorem about the *narrow* class group and which asks for the narrow class
-group as the prerequisite for the real quadratic case. For the classical genus theory this serves
+group as the prerequisite for the real quadratic case. That case is where the two class groups come
+apart: the roadmap's own example `ℚ(√3)` has `t = 2` ramified primes and class number `1`, so the
+`t - 1` count cannot be read off `Cl(K)` there. What measures the discrepancy is the relative index
+computed here — `card_eq_card_classGroup_mul_relIndex` recovers `h⁺` from `h` and the unit
+signatures, and `toClassGroup_injective_iff` says exactly when the two groups agree, so a `2`-rank
+count may be transported between them. The previously available
+`exists_card_eq_card_classGroup_mul_two_pow` identifies the extra factor only as *some* power of
+`2`, which is too coarse for that transport. For the classical genus theory this serves
 see D. A. Cox, *Primes of the Form x² + ny²*, and F. Lemmermeyer, *Reciprocity Laws: from Euler to
 Eisenstein*; the exact sequence computing `h⁺/h` from the unit signatures is standard, see also
 H. Cohen, *A Course in Computational Algebraic Number Theory*, §5.2.
@@ -149,6 +158,23 @@ noncomputable def kerToClassGroupEquiv :
     ((QuotientGroup.quotientKerEquivRange (mkPrincipal (K := K))).symm.trans
       ((QuotientGroup.quotientMulEquivOfEq (ker_mkPrincipal.trans hker.symm)).trans
         (QuotientGroup.quotientKerEquivOfSurjective signatureQuotient hsur)))
+
+/-- **The kernel equivalence, on a principal class.** `kerToClassGroupEquiv` sends the narrow class
+of `(x)` to the class of the signature of `x`, so it is the map the name advertises and not merely
+some isomorphism of the right size. -/
+@[simp] theorem kerToClassGroupEquiv_mkPrincipal (x : Kˣ)
+    (hx : mkPrincipal x ∈ MonoidHom.ker (toClassGroup (K := K))) :
+    kerToClassGroupEquiv ⟨mkPrincipal x, hx⟩ =
+      QuotientGroup.mk (⟨fieldUnitSignature x, mem_fieldSignatures.mpr ⟨x, rfl⟩⟩ :
+        fieldSignatures K) := by
+  -- The first isomorphism theorem for `mkPrincipal` sends `⟨mkPrincipal x, _⟩` back to the class of
+  -- `x`, on which the remaining maps evaluate definitionally.
+  have hsymm : (QuotientGroup.quotientKerEquivRange (mkPrincipal (K := K))).symm
+      ((MulEquiv.subgroupCongr toClassGroup_ker) ⟨mkPrincipal x, hx⟩) = QuotientGroup.mk x :=
+    (MulEquiv.symm_apply_eq _).mpr (Subtype.ext rfl)
+  rw [kerToClassGroupEquiv]
+  simp only [MulEquiv.trans_apply, hsymm]
+  rfl
 
 /-- **The narrow-versus-ordinary defect is the relative index of the two signature ranges.** -/
 theorem card_ker_toClassGroup :
