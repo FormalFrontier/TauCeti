@@ -14,13 +14,14 @@ public import TauCeti.Algebra.Coalgebra.Subcomodule.Basic
 # The weight decomposition of a comodule over a monoid algebra
 
 Let `R[G]` be the monoid algebra of a type `G` over a commutative semiring `R`. Its coalgebra
-structure makes every `single g 1` a group-like element, so a right `R[G]`-comodule `V` is a
-representation of the diagonalizable group `D(G) = Spec R[G]`. This file proves that such a
-representation is *diagonal*: `V` is the internal direct sum of its weight submodules
+structure makes every `single g 1` a group-like element. This file proves that a right
+`R[G]`-comodule `V` is the internal direct sum of its weight submodules
 
 `weightSpace R G V g = {v | ρ v = v ⊗ single g 1}`,
 
-each of which is a subcomodule. Equivalently, `D(G)` acts on `V` through the characters `g`.
+each of which is a subcomodule. When `G` is a commutative group, `R[G]` is the coordinate Hopf
+algebra of the diagonalizable group `D(G)`, and this says that its representations decompose into
+character spaces.
 
 The proof is the classical one and uses nothing beyond the comodule axioms. Writing the coaction
 of `v` as `ρ v = ∑ g, v g ⊗ single g 1`, which is possible because `R[G]` is free on the
@@ -50,9 +51,8 @@ spanning and the independence half of the decomposition.
   submodule.
 * `TauCeti.Comodule.isInternal_weightSpace`: **a comodule over a monoid algebra is the internal
   direct sum of its weight submodules.**
-* `TauCeti.Comodule.endOfPoint_tmul_of_mem_weightSpace`: a point of `D(G)` acts on the `g`-weight
-  submodule by multiplication by its value at the group-like element `single g 1`, which is the
-  character `g` of that point.
+* `TauCeti.Comodule.endOfPoint_tmul_of_mem_weightSpace`: an algebra map out of `R[G]` acts on the
+  `g`-weight submodule by multiplication by its value at the group-like element `single g 1`.
 
 ## Implementation notes
 
@@ -60,14 +60,14 @@ Only the coalgebra structure of `R[G]` is used, so `G` is an arbitrary type: no 
 `G` and no algebra structure on `R[G]` enter the argument. That `R[G]` is free on `G` is used
 through `TensorProduct.finsuppScalarRight`, which presents `V ⊗[R] R[G]` as the finitely supported
 functions `G →₀ V` and so supplies the finite support of the weight decomposition for free; this is
-also the only reason a `DecidableEq G` hypothesis appears, and it is discharged classically in the
-statements that do not otherwise need it.
+also the only place where decidable equality on `G` is used internally, and it is discharged
+classically.
 
 ## References
 
-This is the standard statement that representations of a diagonalizable group are diagonalizable;
-see Waterhouse, *Introduction to Affine Group Schemes*, §3.2, and Milne, *Algebraic Groups*
-(2017), Theorem 12.12.
+For a commutative group `G`, this specializes to the standard statement that representations of a
+diagonalizable group are diagonalizable; see Waterhouse, *Introduction to Affine Group Schemes*,
+§3.2, and Milne, *Algebraic Groups* (2017), Theorem 12.12.
 
 It supplies a prerequisite for the Tau Ceti reductive-groups roadmap, `ReductiveGroups/README.md`
 in TauCetiRoadmap: Layer 6 asks for the linear reductivity of tori ("over an algebraically closed
@@ -110,11 +110,11 @@ theorem tensorComponent_tmul (g : G) (v : V) (x : MonoidAlgebra R G) :
   simp [tensorComponent]
 
 variable (R G V)
-variable [DecidableEq G]
 
 /-- The coefficients of an element of `V ⊗[R] R[G]`, as a finitely supported family. -/
-noncomputable def tensorCoeffEquiv : V ⊗[R] MonoidAlgebra R G ≃ₗ[R] G →₀ V :=
-  (LinearEquiv.lTensor V (MonoidAlgebra.coeffLinearEquiv R)).trans
+noncomputable def tensorCoeffEquiv : V ⊗[R] MonoidAlgebra R G ≃ₗ[R] G →₀ V := by
+  classical
+  exact (LinearEquiv.lTensor V (MonoidAlgebra.coeffLinearEquiv R)).trans
     (TensorProduct.finsuppScalarRight R R V G)
 
 variable {R G V}
@@ -123,6 +123,7 @@ variable {R G V}
 @[simp]
 theorem tensorCoeffEquiv_apply (t : V ⊗[R] MonoidAlgebra R G) (g : G) :
     tensorCoeffEquiv R G V t g = tensorComponent R G V g t := by
+  classical
   have h : (Finsupp.lapply g).comp (tensorCoeffEquiv R G V).toLinearMap =
       tensorComponent R G V g := TensorProduct.ext' fun v x => by simp [tensorCoeffEquiv]
   exact congr($h t)
@@ -131,12 +132,15 @@ theorem tensorCoeffEquiv_apply (t : V ⊗[R] MonoidAlgebra R G) (g : G) :
 theorem tensorCoeffEquiv_tmul (v : V) (x : MonoidAlgebra R G) :
     tensorCoeffEquiv R G V (v ⊗ₜ[R] x) =
       Finsupp.mapRange (fun r : R => r • v) (zero_smul R v) x.coeff :=
-  Finsupp.ext fun g => by simp
+  by
+    classical
+    exact Finsupp.ext fun g => by simp
 
 @[simp]
 theorem tensorCoeffEquiv_symm_single (g : G) (v : V) :
     (tensorCoeffEquiv R G V).symm (Finsupp.single g v) =
       v ⊗ₜ[R] MonoidAlgebra.single g (1 : R) := by
+  classical
   simp [tensorCoeffEquiv, LinearEquiv.symm_lTensor]
 
 end Component
@@ -148,7 +152,7 @@ section Weight
 variable [Comodule R (MonoidAlgebra R G) V]
 
 /-- The projection of a comodule over `R[G]` onto its `g`-weight component. -/
-@[expose] noncomputable def weightProj (g : G) : V →ₗ[R] V :=
+noncomputable def weightProj (g : G) : V →ₗ[R] V :=
   tensorComponent R G V g ∘ₗ coact (R := R) (C := MonoidAlgebra R G) (M := V)
 
 variable {R G V} in
@@ -159,9 +163,7 @@ This is deliberately not a `simp` lemma: `weightProj_weightProj_self` and
 they could never fire if `simp` first unfolded every `weightProj` to a coefficient of a coaction. -/
 theorem weightProj_apply (g : G) (v : V) :
     weightProj R G V g v = tensorComponent R G V g (coact (R := R) (C := MonoidAlgebra R G) v) :=
-  rfl
-
-variable [DecidableEq G]
+  (rfl)
 
 /-- The weight components of a comodule over `R[G]`, read off its coaction as a finitely supported
 family. -/
@@ -202,21 +204,23 @@ private noncomputable def totalSum : (G →₀ V) →ₗ[R] V := Finsupp.lsum R 
 private theorem totalSum_apply (f : G →₀ V) : totalSum R G V f = f.sum fun _ w => w := rfl
 
 variable (R G V) in
-private theorem totalSum_comp_tensorCoeffEquiv [DecidableEq G] :
+private theorem totalSum_comp_tensorCoeffEquiv :
     totalSum R G V ∘ₗ (tensorCoeffEquiv R G V).toLinearMap =
       (TensorProduct.rid R V).toLinearMap ∘ₗ
         (Coalgebra.counit (R := R) (A := MonoidAlgebra R G)).lTensor V := by
+  classical
   refine TensorProduct.ext' fun v x => ?_
   simp only [LinearMap.coe_comp, Function.comp_apply, LinearEquiv.coe_coe,
     LinearMap.lTensor_tmul, TensorProduct.rid_tmul, counit_eq_sum, totalSum_apply,
     tensorCoeffEquiv_tmul]
   rw [Finsupp.sum_mapRange_index (fun _ => rfl), Finsupp.sum, Finsupp.sum, Finset.sum_smul]
 
-variable [Comodule R (MonoidAlgebra R G) V] [DecidableEq G]
+variable [Comodule R (MonoidAlgebra R G) V]
 
 /-- **The weight components of a vector sum to it.** This is the counit axiom of the coaction. -/
 theorem weightDecomposition_sum (v : V) :
     (weightDecomposition R G V v).sum (fun _ w => w) = v := by
+  classical
   have h := congr($(totalSum_comp_tensorCoeffEquiv R G V)
     (coact (R := R) (C := MonoidAlgebra R G) v))
   simpa [totalSum_apply, weightDecomposition] using h
@@ -332,8 +336,7 @@ section WeightSpace
 variable [Comodule R (MonoidAlgebra R G) V]
 
 /-- The `g`-weight submodule of a comodule over `R[G]`: the vectors whose coaction is
-`v ↦ v ⊗ single g 1`. It is the part of the comodule on which the diagonalizable group
-`D(G) = Spec R[G]` acts through the character `g`. -/
+`v ↦ v ⊗ single g 1`. -/
 def weightSpace (g : G) : Submodule R V where
   carrier := {v | coact (R := R) (C := MonoidAlgebra R G) v =
     v ⊗ₜ[R] MonoidAlgebra.single g (1 : R)}
@@ -348,7 +351,7 @@ def weightSpace (g : G) : Submodule R V where
 variable {R G V}
 
 @[simp]
-theorem mem_weightSpace_iff {g : G} {v : V} :
+theorem mem_weightSpace {g : G} {v : V} :
     v ∈ weightSpace R G V g ↔
       coact (R := R) (C := MonoidAlgebra R G) v = v ⊗ₜ[R] MonoidAlgebra.single g (1 : R) :=
   Iff.rfl
@@ -356,13 +359,13 @@ theorem mem_weightSpace_iff {g : G} {v : V} :
 /-- On its own weight submodule the weight projection is the identity. -/
 theorem weightProj_of_mem {g : G} {v : V} (hv : v ∈ weightSpace R G V g) :
     weightProj R G V g v = v := by
-  simp [weightProj_apply, mem_weightSpace_iff.mp hv]
+  simp [weightProj_apply, mem_weightSpace.mp hv]
 
 /-- A weight projection kills the weight submodules at all other indices. -/
 theorem weightProj_of_mem_of_ne {h g : G} (hne : h ≠ g) {v : V} (hv : v ∈ weightSpace R G V g) :
     weightProj R G V h v = 0 := by
   classical
-  simp [weightProj_apply, mem_weightSpace_iff.mp hv, Ne.symm hne]
+  simp [weightProj_apply, mem_weightSpace.mp hv, Ne.symm hne]
 
 /-- **Each weight component lies in its weight submodule.** -/
 theorem weightProj_mem_weightSpace (g : G) (v : V) :
@@ -376,7 +379,7 @@ theorem weightProj_mem_weightSpace (g : G) (v : V) :
     · subst hh
       simp
     · simp [hh, weightProj_weightProj_of_ne (Ne.symm hh)]
-  rw [mem_weightSpace_iff, coact_eq_symm_weightDecomposition, hsingle,
+  rw [mem_weightSpace, coact_eq_symm_weightDecomposition, hsingle,
     tensorCoeffEquiv_symm_single]
 
 /-- The coaction on a weight component is diagonal. This is `weightProj_mem_weightSpace` in the
@@ -409,13 +412,18 @@ theorem iSupIndep_weightSpace : iSupIndep (weightSpace R G V) := by
   have h0 : weightProj R G V g v = 0 := hker hv'
   rwa [weightProj_of_mem hv] at h0
 
+section Internal
+
+attribute [local instance] Classical.decEq
+
 variable {R G V}
 
 /-- The weight projections read off the components of an element of the direct sum of the weight
 submodules. -/
-private theorem weightProj_coeAddMonoidHom [DecidableEq G] (g : G)
+private theorem weightProj_coeAddMonoidHom (g : G)
     (x : ⨁ h : G, weightSpace R G V h) :
     weightProj R G V g (DirectSum.coeAddMonoidHom (weightSpace R G V) x) = (x g : V) := by
+  classical
   induction x using DirectSum.induction_on with
   | zero => simp
   | of h w =>
@@ -429,13 +437,15 @@ private theorem weightProj_coeAddMonoidHom [DecidableEq G] (g : G)
 variable (R G V)
 
 /-- **A comodule over a monoid algebra is the internal direct sum of its weight submodules.**
-Equivalently, every representation of the diagonalizable group `D(G) = Spec R[G]` is diagonal.
+When `G` is a commutative group, this is the weight-space decomposition of a representation of
+the diagonalizable group `D(G) = Spec R[G]`.
 
 The independence and spanning statements above are packaged here by hand rather than through
 `DirectSum.isInternal_submodule_of_iSupIndep_of_iSup_eq_top`, which needs a ring: over a semiring
 the lattice-theoretic independence is too weak, whereas the weight projections give the
 decomposition directly. -/
-theorem isInternal_weightSpace [DecidableEq G] : DirectSum.IsInternal (weightSpace R G V) := by
+theorem isInternal_weightSpace : DirectSum.IsInternal (weightSpace R G V) := by
+  classical
   refine ⟨fun x y hxy => DFinsupp.ext fun g => Subtype.ext ?_, fun v => ?_⟩
   · rw [← weightProj_coeAddMonoidHom (R := R) (G := G) (V := V) g x,
       ← weightProj_coeAddMonoidHom (R := R) (G := G) (V := V) g y, hxy]
@@ -445,30 +455,32 @@ theorem isInternal_weightSpace [DecidableEq G] : DirectSum.IsInternal (weightSpa
     rw [map_sum]
     simpa [Finsupp.sum] using weightDecomposition_sum (R := R) (G := G) (V := V) v
 
+end Internal
+
 /-- The `g`-weight submodule as a subcomodule: the decomposition is one of comodules, not merely
 of modules. -/
-@[expose] def weightSubcomodule (g : G) : Subcomodule R (MonoidAlgebra R G) V where
+def weightSubcomodule (g : G) : Subcomodule R (MonoidAlgebra R G) V where
   carrier := weightSpace R G V g
   coact_mem' v hv := by
     refine ⟨(⟨v, hv⟩ : weightSpace R G V g) ⊗ₜ[R] MonoidAlgebra.single g (1 : R), ?_⟩
     rw [TensorProduct.map_tmul]
-    exact (mem_weightSpace_iff.mp hv).symm
+    exact (mem_weightSpace.mp hv).symm
 
 variable {R G V}
 
 @[simp]
 theorem weightSubcomodule_toSubmodule (g : G) :
     (weightSubcomodule R G V g).toSubmodule = weightSpace R G V g :=
-  rfl
+  (rfl)
 
 @[simp]
-theorem mem_weightSubcomodule_iff {g : G} {v : V} :
+theorem mem_weightSubcomodule {g : G} {v : V} :
     v ∈ weightSubcomodule R G V g ↔ v ∈ weightSpace R G V g :=
-  Iff.rfl
+  (Iff.rfl)
 
 end WeightSpace
 
-/-! ## The action of the points of the diagonalizable group -/
+/-! ## The action associated to an algebra map out of the monoid algebra -/
 
 section Points
 
@@ -477,13 +489,13 @@ variable {A : Type*} [CommSemiring A] [Algebra R A]
 
 variable {R G V}
 
-/-- **A point of `D(G)` acts on the `g`-weight submodule through the character `g`.** The character
-of a point `f` is `g ↦ f (single g 1)`, so this says that the weight submodules are exactly where
-the diagonalizable group acts by a scalar, one character each. -/
+/-- **The endomorphism associated to an algebra map out of `R[G]` acts by a scalar on each
+weight submodule.** When `G` is a commutative group, these algebra maps are points of `D(G)`, and
+the scalar `f (single g 1)` is the value of the character `g` at the point `f`. -/
 theorem endOfPoint_tmul_of_mem_weightSpace (f : MonoidAlgebra R G →ₐ[R] A) (a : A) {g : G} {v : V}
     (hv : v ∈ weightSpace R G V g) :
     endOfPoint V f (a ⊗ₜ[R] v) = (a * f (MonoidAlgebra.single g (1 : R))) ⊗ₜ[R] v := by
-  rw [endOfPoint_tmul, mem_weightSpace_iff.mp hv]
+  rw [endOfPoint_tmul, mem_weightSpace.mp hv]
   simp [TensorProduct.smul_tmul']
 
 end Points
