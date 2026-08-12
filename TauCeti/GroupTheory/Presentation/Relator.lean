@@ -29,6 +29,8 @@ from Mathlib.
 * `TauCeti.PresentationWord`: Mathlib's left-to-right list of signed generators.
 * `TauCeti.Relator`: expressions built from generators, inverse, product, power, and commutator.
 * `TauCeti.Relator.toWord`: compilation of an expression to a signed word.
+* `TauCeti.Relator.length`: the length of that word, computed from the expression without
+  expanding powers.
 * `TauCeti.Relator.toFreeGroup`: direct structural interpretation of an expression.
 * `TauCeti.Relator.conj` and `TauCeti.Relator.div`: the conjugate `s⁻¹ r s` and the relator `r s⁻¹`
   by which a source states an equation between two words.
@@ -124,6 +126,65 @@ theorem toWord_comm {α : Type*} (r s : Relator α) :
     (Relator.comm r s).toWord =
       ((r.toWord ++ s.toWord) ++ FreeGroup.invRev r.toWord) ++ FreeGroup.invRev s.toWord := by
   rw [toWord]
+
+/-- The number of signed letters in the compiled word of a relator expression, read off the
+expression itself rather than from the compiled list.
+
+A transcribed presentation checks its published letter count against
+`TauCeti.GroupPresentation.totalLength`. Computing that count through `Relator.toWord` alone forces
+every power to be expanded, which for a relator such as `(adefcefgh)³⁹` is hundreds of signed-letter
+constructors; this function multiplies instead of repeating, and `TauCeti.Relator.length_toWord`
+certifies that the two agree.
+
+The five equations below are the interface: a module carrying transcribed relators rewrites with
+them rather than unfolding this definition. -/
+def length {α : Type*} : Relator α → ℕ
+  | .gen _ => 1
+  | .inv r => r.length
+  | .mul r s => r.length + s.length
+  | .pow r n => n * r.length
+  | .comm r s => r.length + s.length + r.length + s.length
+
+/-- The structural length of a generator. -/
+@[simp]
+theorem length_gen {α : Type*} (x : α) : (Relator.gen x).length = 1 := by
+  rw [length]
+
+/-- The structural length of an inverse. -/
+@[simp]
+theorem length_inv {α : Type*} (r : Relator α) : (Relator.inv r).length = r.length := by
+  rw [length]
+
+/-- The structural length of a product. -/
+@[simp]
+theorem length_mul {α : Type*} (r s : Relator α) :
+    (Relator.mul r s).length = r.length + s.length := by
+  rw [length]
+
+/-- The structural length of a natural power. -/
+@[simp]
+theorem length_pow {α : Type*} (r : Relator α) (n : ℕ) :
+    (Relator.pow r n).length = n * r.length := by
+  rw [length]
+
+/-- The structural length of a commutator. -/
+@[simp]
+theorem length_comm {α : Type*} (r s : Relator α) :
+    (Relator.comm r s).length = r.length + s.length + r.length + s.length := by
+  rw [length]
+
+/-- **The structural length is the length of the compiled word.**
+
+This is stated in the direction that rewrites away `Relator.toWord`, so a letter count of a
+transcribed presentation reduces to arithmetic on the transcribed expressions. -/
+@[simp]
+theorem length_toWord {α : Type*} (r : Relator α) : r.toWord.length = r.length := by
+  induction r with
+  | gen => simp
+  | inv r ih => simp [FreeGroup.invRev, ih]
+  | mul r s ihr ihs => simp [ihr, ihs]
+  | pow r n ih => simp [List.length_flatten, List.sum_replicate, ih]
+  | comm r s ihr ihs => simp [FreeGroup.invRev, ihr, ihs, Nat.add_assoc]
 
 /-- Interpret a relator expression directly in the free group. This is deliberately independent of
 `Relator.toWord`: the comparison theorem below checks that compilation preserves meaning. As for

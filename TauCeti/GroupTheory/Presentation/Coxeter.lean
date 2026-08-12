@@ -85,6 +85,19 @@ theorem toWord_coxeterRelator (M : CoxeterMatrix B) (i j : B) :
       (List.replicate (M i j) [(i, true), (j, true)]).flatten := by
   simp [coxeterRelator]
 
+/-- A Coxeter relator contains twice as many signed letters as its matrix entry. -/
+theorem length_toWord_coxeterRelator (M : CoxeterMatrix B) (i j : B) :
+    (coxeterRelator M i j).toWord.length = 2 * M i j := by
+  rw [toWord_coxeterRelator, List.length_flatten]
+  simp [Nat.mul_comm]
+
+/-- The signed word of a Coxeter relator is cyclically reduced. -/
+theorem isCyclicallyReduced_toWord_coxeterRelator (M : CoxeterMatrix B) (i j : B) :
+    FreeGroup.IsCyclicallyReduced (coxeterRelator M i j).toWord := by
+  rw [toWord_coxeterRelator]
+  apply FreeGroup.IsCyclicallyReduced.flatten_replicate
+  simp [FreeGroup.IsCyclicallyReduced, FreeGroup.IsReduced]
+
 /-- Interpreting a Coxeter relator in the free group yields Mathlib's Coxeter relation. -/
 @[simp]
 theorem toFreeGroup_coxeterRelator (M : CoxeterMatrix B) (i j : B) :
@@ -101,6 +114,16 @@ The unordered pairs are Mathlib's `List.sym2`; `Sym2.inf` and `Sym2.sup` name th
 larger node, which is the choice of order the free group forces on the transcription. -/
 def coxeterRelatorsOfList [LinearOrder B] (M : CoxeterMatrix B) (l : List B) : List (Relator B) :=
   l.sym2.map fun z => coxeterRelator M z.inf z.sup
+
+/-- The Coxeter relator list is obtained by mapping the canonically ordered representative of
+each unordered pair of list positions to its Coxeter relator.
+
+This is the unfolding lemma for the sealed body, and like `TauCeti.GroupPresentation.relators_def`
+it is deliberately not `@[simp]`: it lets a concrete finite presentation audit the compiled words
+without the definition being exposed. -/
+theorem coxeterRelatorsOfList_def [LinearOrder B] (M : CoxeterMatrix B) (l : List B) :
+    coxeterRelatorsOfList M l = l.sym2.map fun z => coxeterRelator M z.inf z.sup := by
+  rw [coxeterRelatorsOfList]
 
 /-- A list of length `n` yields `(n + 1).choose 2` Coxeter relators, the number of unordered pairs
 of list positions with repetition allowed. -/
@@ -144,6 +167,12 @@ private theorem coxeterRelator_mem_or_swap_mem [LinearOrder B] (M : CoxeterMatri
 numbering `0, 1, …, n - 1`. -/
 def coxeterRelators {n : ℕ} (M : CoxeterMatrix (Fin n)) : List (Relator (Fin n)) :=
   coxeterRelatorsOfList M (List.finRange n)
+
+/-- The numbered Coxeter relator list uses the nodes `0, …, n - 1` in that order. This is the
+unfolding lemma for the sealed body, and like `coxeterRelatorsOfList_def` it is not `@[simp]`. -/
+theorem coxeterRelators_def {n : ℕ} (M : CoxeterMatrix (Fin n)) :
+    coxeterRelators M = coxeterRelatorsOfList M (List.finRange n) := by
+  rw [coxeterRelators]
 
 /-- Membership in the Coxeter relator list of a `Fin n`-indexed matrix: every pair of nodes
 contributes, so the only condition is that the relator be the one of a pair, written in the
