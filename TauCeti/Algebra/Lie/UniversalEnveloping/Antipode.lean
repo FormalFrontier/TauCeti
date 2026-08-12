@@ -31,7 +31,8 @@ property of the enveloping algebra is used here.
 
 * `TauCeti.UniversalEnvelopingAlgebra.antipode_ι`: the antipode negates each canonical Lie
   generator.
-* `TauCeti.UniversalEnvelopingAlgebra.antipode_mul`: the antipode reverses multiplication.
+* `TauCeti.UniversalEnvelopingAlgebra.antipode_mul_antidistrib`: the antipode reverses
+  multiplication.
 * `TauCeti.UniversalEnvelopingAlgebra.antipode_antipode`: the antipode is involutive.
 
 ## Roadmap
@@ -162,7 +163,7 @@ theorem antipode_algebraMap (r : R) :
 
 /-- The antipode reverses multiplication. -/
 @[simp]
-theorem antipode_mul (a b : _root_.UniversalEnvelopingAlgebra R L) :
+theorem antipode_mul_antidistrib (a b : _root_.UniversalEnvelopingAlgebra R L) :
     antipode R (a * b) = antipode R b * antipode R a := by
   rw [antipode_apply, map_mul, MulOpposite.unop_mul, antipode_apply, antipode_apply]
 
@@ -170,9 +171,7 @@ theorem antipode_mul (a b : _root_.UniversalEnvelopingAlgebra R L) :
 @[simp]
 theorem antipode_pow (a : _root_.UniversalEnvelopingAlgebra R L) (n : ℕ) :
     antipode R (a ^ n) = antipode R a ^ n := by
-  induction n with
-  | zero => simp
-  | succ n ih => rw [pow_succ, antipode_mul, ih, pow_succ']
+  rw [antipode_apply, map_pow, MulOpposite.unop_pow, antipode_apply]
 
 /-- Applying the opposite-valued antipode and then its opposite transform is the identity. -/
 private theorem opComm_antipodeOp_comp_antipodeOp :
@@ -239,7 +238,9 @@ theorem antipodeEquiv_symm_toAlgHom :
 theorem antipodeEquiv_symm_apply
     (a : (_root_.UniversalEnvelopingAlgebra R L)ᵐᵒᵖ) :
     (antipodeEquiv (L := L) R).symm a = antipode R a.unop := by
-  rw [antipode_apply]
+  rw [← AlgEquiv.toAlgHom_apply, antipodeEquiv_symm_toAlgHom, antipode_apply]
+  -- `AlgHom.opComm` has no application lemma, so expose its value before closing.
+  change (antipodeOp R a.unop).unop = (antipodeOp R a.unop).unop
   rfl
 
 /-- The antipode is involutive. -/
@@ -253,8 +254,6 @@ theorem antipode_antipode (a : _root_.UniversalEnvelopingAlgebra R L) :
 
 /-- The antipode is bijective. -/
 theorem antipode_bijective : Function.Bijective (antipode (L := L) R) :=
-  ⟨fun a b h => by
-      simpa only [antipode_antipode] using congrArg (antipode R) h,
-    fun a => ⟨antipode R a, antipode_antipode R a⟩⟩
+  Function.Involutive.bijective (fun a => antipode_antipode R a)
 
 end TauCeti.UniversalEnvelopingAlgebra
