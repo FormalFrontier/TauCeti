@@ -207,6 +207,8 @@ Killing-semisimple and `2` is invertible in `R` (`killingQuadraticForm_nondegene
 noncomputable def killingQuadraticForm : QuadraticForm R L :=
   LinearMap.BilinMap.toQuadraticMap (killingForm R L)
 
+/-- The Killing quadratic form evaluates at `x` to `κ(x, x)`. This is the equation the roadmap pins
+`killingQuadraticForm` by. -/
 @[simp]
 theorem killingQuadraticForm_apply (x : L) :
     killingQuadraticForm R L x = killingForm R L x x :=
