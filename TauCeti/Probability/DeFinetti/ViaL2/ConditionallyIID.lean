@@ -6,7 +6,6 @@ module
 
 public import TauCeti.Probability.Exchangeability.ConditionallyIID.Basic
 public import TauCeti.Probability.DeFinetti.DirectingMeasure.Basic
-public import TauCeti.Probability.Exchangeability.Basic
 import TauCeti.Probability.DeFinetti.ViaL2.BlockFactorization
 import TauCeti.Probability.DeFinetti.ConditionalCommonEnding
 import TauCeti.Probability.DeFinetti.DirectingMeasure.BlockCylinder
