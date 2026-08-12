@@ -152,14 +152,19 @@ theorem cliffordOperator_coe_W' (y : P.W') : P.cliffordOperator (y : V) = P.cont
 theorem cliffordOperator_coe_line (z : P.line) : P.cliffordOperator (z : V) = P.lineOperator z := by
   simp [cliffordOperator]
 
-/-! ### The anticommutation relations
+/-! ### The squares and the anticommutators of the component operators
 
-The Clifford relation is the sum of six anticommutators between the three component operators.
-Five of them are square-zero or anticommutation statements about a single Clifford algebra,
-supplied by `ExteriorAlgebra.ι_sq_zero`, `CliffordAlgebra.contractLeft_contractLeft`,
-`CliffordAlgebra.involute_involute`, `TauCeti.CliffordAlgebra.involute_ι_mul` and
-`TauCeti.CliffordAlgebra.involute_contractLeft`. The sixth is the only one that sees the
-polarization, and it is recorded here. -/
+Expanding the Clifford relation in polarization coordinates produces six terms: the squares of
+the three component operators, and the three anticommutators between distinct ones. Five are
+statements about a single Clifford algebra and come from elsewhere. The two isotropic squares
+vanish — `ExteriorAlgebra.ι_sq_zero` for creation and
+`CliffordAlgebra.contractLeft_contractLeft` for annihilation — whereas the parity square does not:
+it is the identity, by `CliffordAlgebra.involute_involute`, which is what makes the remainder
+coordinate contribute `Q z` rather than `0`. Parity anticommutes with each of the other two, by
+`CliffordAlgebra.involute_ι` through `map_mul` and by
+`TauCeti.CliffordAlgebra.involute_contractLeft`. The sixth term, the creation–annihilation
+anticommutator, is the only one that sees the polarization and the only nonzero one among the
+three; it is recorded here. -/
 
 /-- **Creation and annihilation anticommute up to the pairing**: this is the one anticommutator
 that is not zero, and the scalar it produces is the polar form of the two vectors. It is what pins
@@ -205,7 +210,8 @@ theorem cliffordOperator_sq (v : V) :
     wedge_apply, contract_apply, lineOperator_apply, map_add, map_smul, mul_add,
     ← mul_assoc, ExteriorAlgebra.ι_sq_zero, zero_mul,
     CliffordAlgebra.contractLeft_ι_mul, CliffordAlgebra.contractLeft_contractLeft,
-    TauCeti.CliffordAlgebra.involute_ι_mul, TauCeti.CliffordAlgebra.involute_contractLeft,
+    map_mul, CliffordAlgebra.involute_ι, neg_mul,
+    TauCeti.CliffordAlgebra.involute_contractLeft,
     CliffordAlgebra.involute_involute, P.pairingEquiv_apply]
   module
 

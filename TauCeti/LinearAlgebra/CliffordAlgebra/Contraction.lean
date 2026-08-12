@@ -7,22 +7,20 @@ module
 public import Mathlib.LinearAlgebra.CliffordAlgebra.Contraction
 
 /-!
-# The grade involution against the degree-shifting operators
+# Contraction anticommutes with the grade involution
 
-The two operators that shift the exterior degree by one are left multiplication by a vector, which
-raises it, and `CliffordAlgebra.contractLeft`, which lowers it. Both exchange the two halves of the
-`ℤ/2`-grading, so both anticommute with the grade involution `CliffordAlgebra.involute`. This file
-records the two identities, which Mathlib does not: `involute` is related there to products (it is
-an algebra homomorphism) and to the grading, but neither consequence is stated, and the contraction
-is never mentioned alongside it.
+Mathlib's `CliffordAlgebra.contractLeft` lowers the degree of a multivector by one, so it
+exchanges the two halves of the `ℤ/2`-grading and therefore anticommutes with the grade
+involution `CliffordAlgebra.involute`. This file proves that single identity, which Mathlib does
+not record: `involute` interacts with products (`involute` is an algebra homomorphism) and with
+the grading, but never with a contraction.
 
-The identities are what make the grade involution usable as an odd operator alongside exterior
+The identity is what makes the grade involution usable as an odd operator alongside exterior
 multiplication and contraction — for instance as the operator by which an anisotropic vector
 orthogonal to a polarization acts on a spinor module.
 
 ## Main results
 
-* `TauCeti.CliffordAlgebra.involute_ι_mul`: `involute (ι m * x) = -(ι m * involute x)`.
 * `TauCeti.CliffordAlgebra.involute_contractLeft`: `involute (d ⌋ x) = -(d ⌋ involute x)`.
 
 ## References
@@ -42,15 +40,6 @@ namespace TauCeti.CliffordAlgebra
 variable {R : Type u} {M : Type v} [CommRing R] [AddCommGroup M] [Module R M]
   {Q : QuadraticForm R M}
 
-/-- **The grade involution anticommutes with left multiplication by a vector.** A vector is odd,
-so multiplying by it swaps the even and odd parts of the Clifford algebra.
-
-Not a `simp` lemma: `simp` normalizes the left-hand side through `map_mul` and
-`CliffordAlgebra.involute_ι` instead. -/
-theorem involute_ι_mul (m : M) (x : CliffordAlgebra Q) :
-    involute (ι Q m * x) = -(ι Q m * involute x) := by
-  rw [map_mul, involute_ι, neg_mul]
-
 /-- **The grade involution anticommutes with contraction.** Contracting against a linear
 functional lowers the degree by one, hence swaps the even and odd parts of the Clifford algebra,
 so it anticommutes with the operator that is `+1` on the even part and `-1` on the odd part. -/
@@ -64,6 +53,8 @@ theorem involute_contractLeft (d : Module.Dual R M) (x : CliffordAlgebra Q) :
     have hlhs : involute (contractLeft d (ι Q a * x))
         = d a • involute x - ι Q a * contractLeft d (involute x) := by
       rw [contractLeft_ι_mul, map_sub, map_smul, map_mul, involute_ι, hx, neg_mul_neg]
-    rw [hlhs, involute_ι_mul, map_neg, neg_neg, contractLeft_ι_mul]
+    have hrhs : involute (ι Q a * x) = -(ι Q a * involute x) := by
+      rw [map_mul, involute_ι, neg_mul]
+    rw [hlhs, hrhs, map_neg, neg_neg, contractLeft_ι_mul]
 
 end TauCeti.CliffordAlgebra
