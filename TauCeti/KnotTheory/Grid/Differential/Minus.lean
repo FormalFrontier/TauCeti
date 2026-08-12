@@ -6,6 +6,7 @@ module
 
 public import Mathlib.Algebra.MvPolynomial.Basic
 public import TauCeti.KnotTheory.Grid.Complex
+import Mathlib.LinearAlgebra.Finsupp.LinearCombination
 import TauCeti.KnotTheory.Grid.Rectangle.Count
 import TauCeti.KnotTheory.Grid.Rectangle.Swap
 
@@ -248,16 +249,14 @@ theorem exists_swapColumns_of_minusDifferentialOnGenerator_ne_zero {x y : GridSt
 states. -/
 noncomputable def minusDifferential :
     GridChain (GridMinusRing n) n →ₗ[GridMinusRing n] GridChain (GridMinusRing n) n :=
-  Finsupp.lsum (GridMinusRing n) fun x : GridState n =>
-    (LinearMap.id : GridMinusRing n →ₗ[GridMinusRing n] GridMinusRing n).smulRight
-      (G.minusDifferentialOnGenerator x)
+  Finsupp.linearCombination (GridMinusRing n) G.minusDifferentialOnGenerator
 
 /-- The minus differential sends a basis generator to its rectangle-coefficient row. -/
 @[simp]
 theorem minusDifferential_single (x : GridState n) :
     G.minusDifferential (Finsupp.single x 1) = G.minusDifferentialOnGenerator x := by
   classical
-  rw [minusDifferential, Finsupp.lsum_single]
+  rw [minusDifferential, Finsupp.linearCombination_single]
   simp
 
 /-- The matrix coefficient of the minus differential on a basis generator is the weighted
@@ -282,8 +281,7 @@ theorem constantCoeff_minusDifferential_single_apply (x y : GridState n) :
 theorem minusDifferential_apply (c : GridChain (GridMinusRing n) n) :
     G.minusDifferential c =
       c.sum fun x a => a • G.minusDifferentialOnGenerator x := by
-  rw [minusDifferential, Finsupp.lsum_apply]
-  simp [Finsupp.sum, LinearMap.smulRight_apply]
+  rw [minusDifferential, Finsupp.linearCombination_apply]
 
 /-- The coefficient formula for the minus differential on an arbitrary polynomial grid chain. -/
 @[simp]
