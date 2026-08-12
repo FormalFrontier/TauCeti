@@ -83,7 +83,8 @@ def comulAlgHom : U →ₐ[R] U ⊗[R] U :=
   _root_.UniversalEnvelopingAlgebra.lift R (primitive R L)
 
 /-- The comultiplication sends each Lie generator to a primitive element. -/
-@[simp]
+-- `simp` rewrites `ι R x` by `UniversalEnvelopingAlgebra.ι_apply`, so this is not in
+-- `simp`-normal form; the `simp` lemma at the coalgebra level is `comul_ι'`.
 theorem comulAlgHom_ι (x : L) :
     comulAlgHom R L (_root_.UniversalEnvelopingAlgebra.ι R x) =
       _root_.UniversalEnvelopingAlgebra.ι R x ⊗ₜ[R] 1 +
@@ -97,7 +98,8 @@ def counitAlgHom : U →ₐ[R] R :=
   _root_.UniversalEnvelopingAlgebra.lift R (0 : L →ₗ⁅R⁆ R)
 
 /-- The counit vanishes on each Lie generator. -/
-@[simp]
+-- `simp` rewrites `ι R x` by `UniversalEnvelopingAlgebra.ι_apply`, so this is not in
+-- `simp`-normal form; the `simp` lemma at the coalgebra level is `counit_ι'`.
 theorem counitAlgHom_ι (x : L) :
     counitAlgHom R L (_root_.UniversalEnvelopingAlgebra.ι R x) = 0 := by
   simpa only [counitAlgHom, LieHom.zero_apply] using
@@ -142,13 +144,24 @@ theorem coalgebra_counit_eq :
   rfl
 
 /-- Lie generators are primitive for the bialgebra comultiplication. -/
-@[simp]
+-- `simp` rewrites `ι R x` by `UniversalEnvelopingAlgebra.ι_apply`, so this is not in
+-- `simp`-normal form; the `simp` lemma is `comul_ι'`.
 theorem comul_ι (x : L) :
     Coalgebra.comul (_root_.UniversalEnvelopingAlgebra.ι R x) =
       _root_.UniversalEnvelopingAlgebra.ι R x ⊗ₜ[R] 1 +
         1 ⊗ₜ[R] _root_.UniversalEnvelopingAlgebra.ι R x := by
   rw [coalgebra_comul_eq]
   exact comulAlgHom_ι R L x
+
+/-- Lie generators are primitive for the bialgebra comultiplication, stated in `simp`-normal
+form: `simp` unfolds `ι` into `mkAlgHom` applied to the tensor algebra generator. -/
+@[simp]
+theorem comul_ι' (x : L) :
+    Coalgebra.comul
+        (_root_.UniversalEnvelopingAlgebra.mkAlgHom R L (TensorAlgebra.ι R x)) =
+      _root_.UniversalEnvelopingAlgebra.mkAlgHom R L (TensorAlgebra.ι R x) ⊗ₜ[R] 1 +
+        1 ⊗ₜ[R] _root_.UniversalEnvelopingAlgebra.mkAlgHom R L (TensorAlgebra.ι R x) := by
+  simpa only [_root_.UniversalEnvelopingAlgebra.ι_apply] using comul_ι R L x
 
 /-- The comultiplication of a power of a Lie generator is its divided binomial expansion.
 
@@ -170,11 +183,20 @@ theorem comul_pow_ι (x : L) (n : ℕ) :
     Algebra.TensorProduct.tmul_mul_tmul, mul_one, one_mul]
 
 /-- The bialgebra counit vanishes on Lie generators. -/
-@[simp]
+-- `simp` rewrites `ι R x` by `UniversalEnvelopingAlgebra.ι_apply`, so this is not in
+-- `simp`-normal form; the `simp` lemma is `counit_ι'`.
 theorem counit_ι (x : L) :
     (Coalgebra.counit (R := R)) (_root_.UniversalEnvelopingAlgebra.ι R x) = 0 := by
   rw [coalgebra_counit_eq]
   exact counitAlgHom_ι R L x
+
+/-- The bialgebra counit vanishes on Lie generators, stated in `simp`-normal form: `simp`
+unfolds `ι` into `mkAlgHom` applied to the tensor algebra generator. -/
+@[simp]
+theorem counit_ι' (x : L) :
+    (Coalgebra.counit (R := R))
+      (_root_.UniversalEnvelopingAlgebra.mkAlgHom R L (TensorAlgebra.ι R x)) = 0 := by
+  simpa only [_root_.UniversalEnvelopingAlgebra.ι_apply] using counit_ι R L x
 
 /-- The standard bialgebra structure on a universal enveloping algebra is cocommutative. -/
 instance instIsCocomm : Coalgebra.IsCocomm R U where
