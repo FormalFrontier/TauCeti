@@ -14,8 +14,8 @@ import TauCeti.Probability.DeFinetti.DirectingMeasure.Integral
 /-!
 # Conditional i.i.d.-ness of a contractable process, via `L²`
 
-A contractable process on a standard Borel state space is conditionally i.i.d. given its tail, with
-the directing measure as witness:
+A contractable process on a standard Borel state space is conditionally i.i.d. with
+`directingProbabilityMeasure μ X` as its directing measure:
 
 ```text
 ConditionallyIIDWith μ X (directingProbabilityMeasure μ X).
@@ -68,8 +68,12 @@ namespace Contractable
 
 variable {Ω α : Type*} [MeasurableSpace Ω] [MeasurableSpace α]
 
-/-- **A contractable process on a standard Borel space is conditionally i.i.d. given its tail**,
-with the directing measure as the witness. -/
+/-- **A contractable process on a standard Borel space is conditionally i.i.d.**, with
+`directingProbabilityMeasure μ X` as its directing measure.
+
+This conditions on the directing measure itself. It does not assert conditional independence given
+the whole of `tailProcess X`, which would additionally require identifying the σ-algebra generated
+by `directingProbabilityMeasure μ X` with the tail. -/
 theorem conditionallyIIDWith_directingProbabilityMeasure [StandardBorelSpace α] [Nonempty α]
     {μ : Measure Ω} [IsFiniteMeasure μ] {X : ℕ → Ω → α} (hX : Contractable μ X)
     (hX_meas : ∀ n, Measurable (X n)) :
