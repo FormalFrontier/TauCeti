@@ -12,13 +12,13 @@ module
 -- `IsBrauerEquivalent`, `BrauerGroup`, `TauCeti.CSA.of`, `TauCeti.CSA.base` and
 -- `TauCeti.Algebra.IsSplittingField`; that is why none of those is imported again here.
 public import TauCeti.Algebra.BrauerGroup.Group
--- `TauCeti.Algebra.CentralSimple.Wedderburn` is imported publicly for `Module.finrank`, which
--- occurs in the division-algebra statements below, through the
--- `Mathlib.LinearAlgebra.Dimension.Constructions` it re-exports; that module also supplies the
--- dimension count `Module.finrank_matrix` used in the proofs. Its own main theorem
--- `TauCeti.IsSimpleRing.exists_algEquiv_matrix_centralDivisionRing` is the Wedderburn presentation
--- the argument runs on.
-public import TauCeti.Algebra.CentralSimple.Wedderburn
+-- `Mathlib.LinearAlgebra.Dimension.Constructions` is imported publicly for `Module.finrank`, which
+-- occurs in the division-algebra statements below; it also supplies the dimension count
+-- `Module.finrank_matrix` used in the proofs.
+public import Mathlib.LinearAlgebra.Dimension.Constructions
+-- Non-public: `TauCeti.IsSimpleRing.exists_algEquiv_matrix_centralDivisionRing`, the Wedderburn
+-- presentation the argument runs on, is used only in the proofs; no statement here mentions it.
+import TauCeti.Algebra.CentralSimple.Wedderburn
 -- Non-public: `TauCeti.card_eq_of_ringEquiv_matrix` and
 -- `TauCeti.length_eq_card_of_ringEquiv_matrix`, the invariance of the size of a matrix
 -- presentation, are the engine of the proofs and are mentioned by no exported statement.
