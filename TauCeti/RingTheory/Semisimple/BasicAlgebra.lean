@@ -11,10 +11,12 @@ public import Mathlib.RingTheory.Nilpotent.Defs
 public import Mathlib.RingTheory.SimpleModule.WedderburnArtin
 public import TauCeti.RingTheory.Jacobson.FiniteDimensional
 -- Non-public: used only inside proofs.  The matrix units produce the square-zero element that
--- rules out a block of size at least two, a one-by-one matrix ring collapses to its base ring, and
--- the nilradical of a commutative ring is bounded by its Jacobson radical.
+-- rules out a block of size at least two, a one-by-one matrix ring collapses to its base ring, an
+-- equivalence of rings carries the Jacobson radical onto the Jacobson radical and so descends to
+-- the quotients, and the nilradical of a commutative ring is bounded by its Jacobson radical.
 import Mathlib.Data.Matrix.Basis
 import Mathlib.LinearAlgebra.Matrix.Unique
+import Mathlib.RingTheory.Ideal.Quotient.Operations
 import Mathlib.RingTheory.KrullDimension.Basic
 import Mathlib.RingTheory.Nilpotent.Lemmas
 
@@ -47,6 +49,7 @@ finite acyclic quiver is basic (`TauCeti.PathAlgebra.isBasic`).
 ## Main results
 
 * `TauCeti.isBasic_def`: unfolding lemma for `TauCeti.IsBasic`.
+* `TauCeti.RingEquiv.isBasic_iff`: basicness is invariant under a ring equivalence.
 * `TauCeti.Matrix.isReduced_iff_subsingleton`: a matrix ring over a nonzero reduced semiring is
   reduced exactly when it has at most one index.
 * `TauCeti.isReduced_iff_pi_divisionRing`: a semisimple ring is reduced if and only if it is a
@@ -119,6 +122,7 @@ theorem Matrix.subsingleton_of_isReduced {m : Type w} {A : Type u} [DecidableEq 
 /-- **A matrix ring over a nonzero reduced semiring is reduced exactly in size at most one.**  In
 one direction this is `TauCeti.Matrix.subsingleton_of_isReduced`; in the other, a matrix ring on an
 empty index is the zero ring, and on a one-element index it is the base semiring. -/
+@[simp]
 theorem Matrix.isReduced_iff_subsingleton {m : Type w} {A : Type u} [DecidableEq m]
     [inst : Fintype m] [Semiring A] [Nontrivial A] [IsReduced A] :
     IsReduced (Matrix m m A) ↔ Subsingleton m := by
@@ -162,8 +166,8 @@ theorem isReduced_iff_pi_divisionRing (R : Type u) [Ring R] [IsSemisimpleRing R]
 
 /-- A ring is **basic** when its quotient by the Jacobson radical is reduced.  For a
 finite-dimensional algebra over a field, where that quotient is semisimple, this says that the
-quotient is a product of division rings rather than of matrix algebras over them, so that no
-Wedderburn block is repeated; see `TauCeti.isBasic_iff_pi_divisionRing`. -/
+quotient is a product of division rings rather than of matrix algebras over them, so that every
+Wedderburn block has size one; see `TauCeti.isBasic_iff_pi_divisionRing`. -/
 def IsBasic (A : Type v) [Ring A] : Prop :=
   IsReduced (A ⧸ Ring.jacobson A)
 
@@ -172,6 +176,24 @@ radical. -/
 @[simp]
 theorem isBasic_def (A : Type v) [Ring A] :
     IsBasic A ↔ IsReduced (A ⧸ Ring.jacobson A) := Iff.rfl
+
+/-- **Basicness is invariant under ring equivalence.**  A ring equivalence carries the Jacobson
+radical onto the Jacobson radical, hence descends to an equivalence of the quotients, along which
+reducedness transports. -/
+theorem RingEquiv.isBasic_iff {A : Type v} {B : Type w} [Ring A] [Ring B] (e : A ≃+* B) :
+    IsBasic A ↔ IsBasic B := by
+  have hmap : Ring.jacobson B = (Ring.jacobson A).map (e : A →+* B) :=
+    le_antisymm (by rw [Ideal.map_comap_of_equiv]; exact Ring.le_comap_jacobson (e.symm : B →+* A))
+      (Ideal.map_le_iff_le_comap.mpr (Ring.le_comap_jacobson (e : A →+* B)))
+  let q : (A ⧸ Ring.jacobson A) ≃+* (B ⧸ Ring.jacobson B) :=
+    Ideal.quotientEquiv _ _ e hmap
+  constructor
+  · intro h
+    have : IsReduced (A ⧸ Ring.jacobson A) := (isBasic_def A).mp h
+    exact (isBasic_def B).mpr (isReduced_of_injective q.symm q.symm.injective)
+  · intro h
+    have : IsReduced (B ⧸ Ring.jacobson B) := (isBasic_def B).mp h
+    exact (isBasic_def A).mpr (isReduced_of_injective q q.injective)
 
 /-- **A finite-dimensional algebra is basic exactly when its semisimple quotient is a finite product
 of division rings.**  This is `TauCeti.isReduced_iff_pi_divisionRing`, read at the quotient by the
