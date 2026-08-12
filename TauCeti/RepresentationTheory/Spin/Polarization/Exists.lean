@@ -6,7 +6,7 @@ module
 
 public import TauCeti.RepresentationTheory.Spin.Polarization.Basic
 public import Mathlib.FieldTheory.IsSepClosed
-public import Mathlib.LinearAlgebra.QuadraticForm.Dual
+import Mathlib.LinearAlgebra.QuadraticForm.Dual
 public import Mathlib.LinearAlgebra.QuadraticForm.Radical
 import Mathlib.RingTheory.Finiteness.Prod
 
@@ -66,8 +66,10 @@ private theorem polar_splitModelForm {R : Type*} [CommRing R]
     (n : ℕ) (x y : SplitModel R n) :
     QuadraticMap.polar (splitModelForm R n) x y =
       x.1.1 y.1.2 + y.1.1 x.1.2 + 2 * ∑ i, x.2 i * y.2 i := by
-  simp only [QuadraticMap.polar, splitModelForm_apply, Prod.fst_add, Prod.snd_add,
-    LinearMap.add_apply, Pi.add_apply, map_add]
+  rw [splitModelForm, QuadraticMap.polar_prod]
+  simp only [QuadraticMap.polar, QuadraticForm.dualProd_apply,
+    QuadraticMap.weightedSumSquares_apply, Prod.fst_add, Prod.snd_add, LinearMap.add_apply,
+    Pi.add_apply, map_add, Pi.one_apply, one_smul]
   simp_rw [add_mul, mul_add, Finset.sum_add_distrib]
   have hxy : (∑ i, y.2 i * x.2 i) = ∑ i, x.2 i * y.2 i := by
     apply Finset.sum_congr rfl
