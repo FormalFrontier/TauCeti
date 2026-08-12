@@ -109,13 +109,6 @@ def collarHomeomorph (n : ℕ) :
       Continuous.subtype_mk
         (((collarAmbientEquiv n).symm.continuous.comp continuous_subtype_val).snd) _)
 
-/-- The underlying map of the collar homeomorphism is the restricted ambient equivalence. -/
-theorem collarHomeomorph_coe (n : ℕ) :
-    ((collarHomeomorph n : _ → _) :
-      EuclideanSpace ℝ (Fin n) × EuclideanHalfSpace 1 → EuclideanHalfSpace (n + 1)) =
-      fun p ↦ ⟨collarAmbientEquiv n (p.1, p.2.1), by simpa using p.2.2⟩ :=
-  by rfl
-
 /-- The collar homeomorphism agrees with the ambient equivalence after coercion. -/
 theorem collarHomeomorph_apply_coe (n : ℕ)
     (p : EuclideanSpace ℝ (Fin n) × EuclideanHalfSpace 1) :
@@ -206,17 +199,11 @@ def collarDiffeomorph (n : ℕ) :
       exact hnormal
     refine (I.contMDiffOn_symm.comp_contMDiff hcoord hrange).congr ?_
     intro y
-    let q := I.symm ((collarAmbientEquiv n).symm (J y))
-    have hright : I q = (collarAmbientEquiv n).symm (J y) := I.right_inv (hrange y)
-    have hfst : q.1 = ((collarAmbientEquiv n).symm y.1).1 := by
-      simp [q, I, J]
-    have hsnd : q.2.1 = ((collarAmbientEquiv n).symm y.1).2 := by
-      simpa [q, I, J, ModelWithCorners.prod_apply] using congrArg Prod.snd hright
-    dsimp [q, I, J]
-    refine Prod.ext ?_ ?_
-    · exact hfst.symm
-    · apply Subtype.ext
-      exact hsnd.symm
+    apply I.injective
+    simp only [Function.comp_apply]
+    rw [I.right_inv (hrange y)]
+    rw [modelWithCorners_prod_coe]
+    rfl
 
 /-- The underlying homeomorphism of the collar diffeomorphism is `collarHomeomorph`. -/
 @[simp]
