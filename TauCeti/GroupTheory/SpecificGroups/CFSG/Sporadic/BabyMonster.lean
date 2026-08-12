@@ -66,7 +66,7 @@ source-to-Lean read-through remains the whole of the S1 review obligation.
 
 ## Main results
 
-* `TauCeti.Sporadic.BabyMonster.map_length_neighbours`: the degree sequence of the transcribed
+* `TauCeti.Sporadic.BabyMonster.map_length_neighbors`: the degree sequence of the transcribed
   diagram, which is the check that it is the published `Y`-shape.
 * `TauCeti.Sporadic.BabyMonster.length_relatorList` and
   `TauCeti.Sporadic.BabyMonster.matchesMetadata_presentation`: the transcription count checks.
@@ -80,11 +80,12 @@ source-to-Lean read-through remains the whole of the S1 review obligation.
   Baby Monster*, Journal of Algebra **561** (2020), 111--130,
   <https://doi.org/10.1016/j.jalgebra.2019.06.047>, also <https://arxiv.org/abs/1902.07758>.
   Section 3.1 states the `Y₄₃₃` presentation used here.
-* A. A. Ivanov, *Y-groups via transitive extension*, Journal of Algebra **218** (1999), 412--435,
-  <https://doi.org/10.1006/jabr.1999.7882>, which proves that the diagram with the spider relation
-  presents `2 × 2·B`.
-* R. L. Griess, Jr., *The friendly giant*, Inventiones Mathematicae **69** (1982), 1--102,
-  <https://doi.org/10.1007/BF01389186>, for the Schur multiplier of the Monster.
+* A. A. Ivanov, *Presenting the Baby Monster*, Journal of Algebra **163** (1994), 88--108,
+  <https://doi.org/10.1006/jabr.1994.1005>, which proves that the diagram with the spider relation
+  presents `2 × 2·B`. This is the work Breuer--Magaard--Wilson cite for the proof.
+* R. L. Griess, Jr., *The Schur multipliers of the known finite simple groups, III*, in Proceedings
+  of the Rutgers Group Theory Year, 1983--1984, Cambridge University Press, 1985, 69--80, which is
+  the work Breuer--Magaard--Wilson cite for the Schur multiplier of the Monster.
 * J. H. Conway, R. T. Curtis, S. P. Norton, R. A. Parker, and R. A. Wilson, *Atlas of Finite
   Groups*, Clarendon Press, Oxford, 1985, where the presentation was conjectured.
 -/
@@ -99,10 +100,12 @@ The source numbers its involutions `t₁` to `t₁₁`; the relator index `Fin 1
 numbering with the customary offset, so `tᵢ` is index `i - 1`. -/
 
 /-- The branch node of the diagram, the source's `t₅`. -/
+@[expose]
 def branchNode : Fin 11 := 4
 
 /-- The three arms of the diagram, each listed outwards from the branch node: `t₄ t₃ t₂ t₁`, then
 `t₆ t₇ t₈`, then `t₉ t₁₀ t₁₁`. -/
+@[expose]
 def arms : List (List (Fin 11)) := [[3, 2, 1, 0], [5, 6, 7], [8, 9, 10]]
 
 /-- **The three arms have lengths four, three and three**, which is what the name `Y₄₃₃`
@@ -160,20 +163,21 @@ theorem coxeterMatrix_apply (i j : Fin 11) :
 /-- The nodes joined to a given node by an edge, read off the Coxeter matrix rather than off the
 edge list, so that a comparison with the diagram sees the matrix that the relators are built
 from. -/
-def neighbours (i : Fin 11) : List (Fin 11) :=
+@[expose]
+def neighbors (i : Fin 11) : List (Fin 11) :=
   (List.finRange 11).filter fun j => coxeterMatrix i j = 3
 
 /-- The branch node is joined to the first node of each of the three arms. -/
-theorem neighbours_branchNode : neighbours branchNode = [3, 5, 8] := by decide
+theorem neighbors_branchNode : neighbors branchNode = [3, 5, 8] := by decide
 
 /-- **The degree sequence of the transcribed diagram.** Node `t₅`, that is index `4`, has three
-neighbours; the three arm ends `t₁`, `t₈` and `t₁₁`, that is indices `0`, `7` and `10`, have one
+neighbors; the three arm ends `t₁`, `t₈` and `t₁₁`, that is indices `0`, `7` and `10`, have one
 each; and the remaining seven nodes have two each. So the matrix that the relators are built from
 has a single branch node, of degree three, and three ends, which is the `Y`-shape; the three arm
 lengths are pinned separately by `TauCeti.Sporadic.BabyMonster.map_length_arms`, from which the
 edges are built. -/
-theorem map_length_neighbours :
-    (List.finRange 11).map (fun i => (neighbours i).length) =
+theorem map_length_neighbors :
+    (List.finRange 11).map (fun i => (neighbors i).length) =
       [1, 2, 2, 2, 3, 2, 2, 1, 2, 2, 1] := by
   decide
 
@@ -227,11 +231,13 @@ theorem extraRelatorTwo_eq :
 
 /-- The three relators the source adjoins to the Coxeter relations of the diagram, in the order it
 introduces them. -/
+@[expose]
 def adjoinedRelators : List (Relator (Fin 11)) :=
   [spiderRelator, extraRelatorOne, extraRelatorTwo]
 
 /-- The sixty-nine relators of the presentation: the Coxeter relations of the `Y₄₃₃` diagram
 followed by the spider relator and the two further relators. -/
+@[expose]
 def relatorList : List (Relator (Fin 11)) := coxeterRelators coxeterMatrix ++ adjoinedRelators
 
 /-! ### The transcribed row and its checks -/
@@ -246,13 +252,15 @@ asserted here: this definition records only the cited generators and the complet
 def presentation : GroupPresentation where
   generatorNames := ["t1", "t2", "t3", "t4", "t5", "t6", "t7", "t8", "t9", "t10", "t11"]
   source := "T. Breuer, K. Magaard, and R. A. Wilson, Verification of the ordinary character \
-    table of the Baby Monster, Journal of Algebra 561 (2020), 111-130; A. A. Ivanov, Y-groups via \
-    transitive extension, Journal of Algebra 218 (1999), 412-435"
+    table of the Baby Monster, Journal of Algebra 561 (2020), 111-130; A. A. Ivanov, Presenting \
+    the Baby Monster, Journal of Algebra 163 (1994), 88-108"
   sourceLocator := "Breuer-Magaard-Wilson, Section 3.1, doi:10.1016/j.jalgebra.2019.06.047, \
-    also arXiv:1902.07758v2; Ivanov, doi:10.1006/jabr.1999.7882. The presentation was conjectured \
+    also arXiv:1902.07758v2; Ivanov, doi:10.1006/jabr.1994.1005. The presentation was conjectured \
     in the Atlas of Finite Groups (Conway, Curtis, Norton, Parker, Wilson, 1985) and proved by \
     Ivanov, subject to the Monster having no proper double cover, which is Griess's computation of \
-    the Schur multiplier of the Monster, doi:10.1007/BF01389186."
+    the Schur multiplier of the Monster (The Schur multipliers of the known finite simple groups, \
+    III, Proceedings of the Rutgers Group Theory Year 1983-1984, Cambridge University Press, 1985, \
+    69-80)."
   generatorConvention := "Indices 0 through 10 are the source's involutions t1 through t11, so \
     t_i is index i-1. The Coxeter diagram is the chain t1-t2-t3-t4-t5-t6-t7-t8 together with the \
     arm t5-t9-t10-t11, so t5 is the branch node and the three arms have lengths 4, 3 and 3. \
@@ -280,7 +288,7 @@ theorem presentation_generatorNames :
 theorem presentation_source :
     presentation.source = "T. Breuer, K. Magaard, and R. A. Wilson, Verification of the ordinary \
       character table of the Baby Monster, Journal of Algebra 561 (2020), 111-130; A. A. Ivanov, \
-      Y-groups via transitive extension, Journal of Algebra 218 (1999), 412-435" := by
+      Presenting the Baby Monster, Journal of Algebra 163 (1994), 88-108" := by
   simp [presentation]
 
 /-- The exact locators of the `B` presentation inside its sources, and the attribution chain the
@@ -288,10 +296,11 @@ source states for it. -/
 theorem presentation_sourceLocator :
     presentation.sourceLocator = "Breuer-Magaard-Wilson, Section 3.1, \
       doi:10.1016/j.jalgebra.2019.06.047, also arXiv:1902.07758v2; Ivanov, \
-      doi:10.1006/jabr.1999.7882. The presentation was conjectured in the Atlas of Finite Groups \
+      doi:10.1006/jabr.1994.1005. The presentation was conjectured in the Atlas of Finite Groups \
       (Conway, Curtis, Norton, Parker, Wilson, 1985) and proved by Ivanov, subject to the Monster \
       having no proper double cover, which is Griess's computation of the Schur multiplier of the \
-      Monster, doi:10.1007/BF01389186." := by
+      Monster (The Schur multipliers of the known finite simple groups, III, Proceedings of the \
+      Rutgers Group Theory Year 1983-1984, Cambridge University Press, 1985, 69-80)." := by
   simp [presentation]
 
 /-- The node numbering and word syntax used by the `B` presentation. -/
@@ -302,8 +311,9 @@ theorem presentation_generatorConvention :
       lengths 4, 3 and 3. Products are read left to right." := by
   simp [presentation]
 
-/-- The expansion of the diagram into relators, and the two review obligations the row still
-carries. -/
+/-- The expansion of the diagram into the `66` Coxeter relators, the family-by-family form in
+which the source displays its relations and from which the expected count `11 + 55 + 1 + 2` is
+read, and the single review obligation the row still carries. -/
 theorem presentation_transcriptionNotes :
     presentation.transcriptionNotes = "The Coxeter matrix expands the diagram into 66 relators: \
       eleven squares t_i^2, one relator (t_i t_j)^3 for each of the ten edges, and one relator \
@@ -330,7 +340,10 @@ theorem presentation_expectedRelatorCount : presentation.expectedRelatorCount = 
 adjoined relators. This equation characterizes the row for downstream audits. -/
 theorem presentation_transcribed : presentation.transcribed = relatorList := rfl
 
-private theorem presentation_transcribed_append :
+/-- **The relators of the row are the Coxeter relators of the `Y₄₃₃` diagram followed by the three
+adjoined relators.** This is the form in which the source states the presentation, and the
+hypothesis that `TauCeti.Sporadic.BabyMonster.mulEquivPresentedGroupCoxeter` below consumes. -/
+theorem presentation_transcribed_append :
     presentation.transcribed = coxeterRelators coxeterMatrix ++ adjoinedRelators := by
   rw [presentation_transcribed, relatorList]
 
