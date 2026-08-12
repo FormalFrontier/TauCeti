@@ -37,7 +37,6 @@ are the special case `L = 0` of their type-`B` counterparts.
   Away from the two ends it is the second difference `2 g (m + 1) - g m - g (m + 2)`, so a weight
   that is linear in the position is annihilated there.
 * `TauCeti.sum_range_chainBEntry_mul`: the corresponding row sum with a double last edge.
-
 ## References
 
 The chain weighting is the calculation of J. E. Humphreys, *Introduction to Lie Algebras and

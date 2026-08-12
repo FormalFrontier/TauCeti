@@ -423,20 +423,6 @@ coroot lattice, so that the datum is the simply connected one. -/
 
 /-! ## The pinned base -/
 
-private lemma sub_mem_closure_of_le {M : Type*} [AddCommGroup M] (f : ℕ → M) {a b : ℕ}
-    (hb : b ≤ n) (hab : a ≤ b) :
-    f a - f b ∈ AddSubmonoid.closure (range fun i : Fin n => f (i : ℕ) - f ((i : ℕ) + 1)) := by
-  have hshift := Finset.sum_Ico_add' (fun i => f i - f (i + 1)) 0 (b - a) a
-  simp only [zero_add] at hshift
-  have htel : f a - f b = ∑ i ∈ Finset.Ico a b, (f i - f (i + 1)) := by
-    rw [← Nat.sub_add_cancel hab, ← hshift]
-    simpa [Nat.Ico_zero_eq_range, Nat.add_assoc, Nat.add_comm, Nat.add_left_comm] using
-      (Finset.sum_range_sub' (fun i => f (i + a)) (b - a)).symm
-  rw [htel]
-  refine AddSubmonoid.sum_mem _ fun i hi => AddSubmonoid.subset_closure ?_
-  have : i < n := lt_of_lt_of_le (Finset.mem_Ico.mp hi).2 hb
-  exact ⟨⟨i, this⟩, rfl⟩
-
 /-- **A sequence with vanishing second difference is linear.** In an additive cancellative
 commutative monoid, if `S 0 = 0` and `S (k + 1) + S (k + 1) = S k + S (k + 2)` for every `k < n`,
 then `S j = j • S 1` for every `j ≤ n + 1`. -/
