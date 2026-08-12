@@ -45,7 +45,7 @@ theorem geometricallyReducedCommHopfAlgProperty.baseChange
     (hH : geometricallyReducedCommHopfAlgProperty k H) :
     geometricallyReducedCommHopfAlgProperty K
       (CommHopfAlgCat.baseChange (K := K) H) := by
-  rw [geometricallyReducedCommHopfAlgProperty_iff]
+  rw [geometricallyReducedCommHopfAlgProperty_iff] at hH ⊢
   intro L _ _
   let _ : Algebra k L := Algebra.compHom L (algebraMap k K)
   let _ : IsScalarTower k K L := IsScalarTower.of_algebraMap_eq' rfl
