@@ -117,7 +117,7 @@ theorem isAcyclic_diagramGraph (h : IsFiniteType A) : (diagramGraph A).IsAcyclic
 
 /-- A path in an acyclic graph has no chord: vertices separated by at least one intermediate
 vertex cannot be adjacent. -/
-private theorem not_adj_getVert_of_add_one_lt {V : Type*} {G : SimpleGraph V} {u v : V}
+theorem not_adj_getVert_of_add_one_lt {V : Type*} {G : SimpleGraph V} {u v : V}
     (hG : G.IsAcyclic) {p : G.Walk u v} (hp : p.IsPath) {i j : ℕ} (hij : i + 1 < j)
     (hj : j ≤ p.length) : ¬G.Adj (p.getVert i) (p.getVert j) := by
   intro hadj
