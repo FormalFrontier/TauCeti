@@ -172,7 +172,7 @@ private theorem norm_gradient_le_ambient (J : Sobolev1JetLp mu Omega p) :
 
 omit [FiniteDimensional ℝ E] [BorelSpace E] [mu.IsAddHaarMeasure] in
 /-- At exponent two, the Sobolev jet norm is the Hilbert graph norm of its components. -/
-private theorem norm_sq_eq_value_add_gradient_ambient
+private theorem norm_sq_eq_norm_value_sq_add_norm_gradient_sq_ambient
     (J : Sobolev1JetLp mu Omega 2) :
     ‖J‖ ^ 2 = ‖Sobolev1JetLp.value J‖ ^ 2 + ‖Sobolev1JetLp.gradient J‖ ^ 2 := by
   rw [← real_inner_self_eq_norm_sq J,
@@ -473,9 +473,9 @@ theorem W1p.norm_gradient_le (u : W1p mu Omega p) : ‖W1p.gradient u‖ ≤ ‖
 
 omit [FiniteDimensional ℝ E] in
 /-- At exponent two, the norm on `W1p` is the Hilbert graph norm. -/
-theorem W1p.norm_sq_eq_value_add_gradient (u : W1p mu Omega 2) :
+theorem W1p.norm_sq_eq_norm_value_sq_add_norm_gradient_sq (u : W1p mu Omega 2) :
     ‖u‖ ^ 2 = ‖W1p.value u‖ ^ 2 + ‖W1p.gradient u‖ ^ 2 :=
-  norm_sq_eq_value_add_gradient_ambient u.1
+  norm_sq_eq_norm_value_sq_add_norm_gradient_sq_ambient u.1
 
 /-- `W^{1,p}(Ω)` is complete in its value-gradient graph norm. -/
 instance : CompleteSpace (W1p mu Omega p) :=
