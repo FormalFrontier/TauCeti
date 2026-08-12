@@ -86,6 +86,7 @@ variable {V}
 
 /-- Membership in the `x`-weight submodule, in terms of the coaction of the original comodule:
 pushing the coaction of `v` through `π` must give `v ⊗ x`. -/
+@[simp]
 theorem mem_weightSpace {π : C →ₗc[R] MonoidAlgebra R X} {x : X} {v : V} :
     v ∈ weightSpace V π x ↔
       TensorProduct.map LinearMap.id π.toLinearMap
@@ -128,16 +129,11 @@ theorem endOfPoint_tmul_of_mem_weightSpace (π : C →ₐc[R] MonoidAlgebra R X)
     (hv : v ∈ weightSpace V (π : C →ₗc[R] MonoidAlgebra R X) x) :
     Comodule.endOfPoint V (f.comp (π : C →ₐ[R] MonoidAlgebra R X)) (a ⊗ₜ[R] v) =
       (a * f (MonoidAlgebra.single x (1 : R))) ⊗ₜ[R] v := by
-  have hmap : ∀ t : V ⊗[R] C,
-      LinearMap.lTensor V (f.comp (π : C →ₐ[R] MonoidAlgebra R X)).toLinearMap t =
-        LinearMap.lTensor V f.toLinearMap
-          (TensorProduct.map LinearMap.id (π : C →ₗc[R] MonoidAlgebra R X).toLinearMap t) := by
-    intro t
-    induction t using TensorProduct.induction_on with
-    | zero => simp
-    | tmul v' c => simp
-    | add s t hs ht => simp only [map_add, hs, ht]
-  rw [Comodule.endOfPoint_tmul, hmap, mem_weightSpace.mp hv]
+  have hπ : (π : C →ₐ[R] MonoidAlgebra R X).toLinearMap =
+      (π : C →ₗc[R] MonoidAlgebra R X).toLinearMap := rfl
+  rw [Comodule.endOfPoint_tmul, LinearMap.lTensor_def, AlgHom.comp_toLinearMap,
+    hπ, ← LinearMap.id_comp LinearMap.id, TensorProduct.map_comp, LinearMap.comp_apply,
+    mem_weightSpace.mp hv]
   simp [TensorProduct.smul_tmul']
 
 end Points
