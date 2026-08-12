@@ -59,25 +59,6 @@ variable {E X Y : Type*} [TopologicalSpace E] [TopologicalSpace X] [TopologicalS
 
 namespace IsQuotientCoveringMap
 
-/-- Translating a set by an element of `H` does not change its image under a quotient covering map
-for `H`. -/
-private theorem image_smul_of_mem (hqH : IsQuotientCoveringMap qH H) {g : G} (hg : g ∈ H)
-    (S : Set E) : qH '' (g • S) = qH '' S := by
-  ext z
-  constructor
-  · rintro ⟨w, hw, rfl⟩
-    obtain ⟨s, hs, rfl⟩ := Set.mem_smul_set.mp hw
-    exact ⟨s, hs, (hqH.map_smul ⟨g, hg⟩).symm⟩
-  · rintro ⟨s, hs, rfl⟩
-    exact ⟨g • s, Set.smul_mem_smul_set hs, hqH.map_smul ⟨g, hg⟩⟩
-
-/-- Two points of `E` with the same image under a quotient covering map for `H` differ by an
-element of `H`, viewed inside the ambient group `G`. -/
-private theorem exists_mem_smul_eq (hqH : IsQuotientCoveringMap qH H) {y y' : E}
-    (h : qH y = qH y') : ∃ g ∈ H, g • y' = y := by
-  obtain ⟨⟨g, hg⟩, hgy⟩ := hqH.apply_eq_iff_mem_orbit.mp h
-  exact ⟨g, hg, hgy⟩
-
 /-- The evenly covered neighbourhood of `q e` cut out by a set `U` around `e` whose `G`-translates
 are pairwise disjoint. Its sheets are the images in `Y` of the translates `g • U`. -/
 private theorem isEvenlyCovered_of_smul_disjoint (hq : IsQuotientCoveringMap q G)
@@ -99,7 +80,10 @@ private theorem isEvenlyCovered_of_smul_disjoint (hq : IsQuotientCoveringMap q G
     rintro g g' ⟨z, ⟨w, hw, rfl⟩, w', hw', hww'⟩
     obtain ⟨u, hu, rfl⟩ := Set.mem_smul_set.mp hw
     obtain ⟨u', hu', rfl⟩ := Set.mem_smul_set.mp hw'
-    obtain ⟨h, hh, hhu⟩ := exists_mem_smul_eq hqH hww'.symm
+    obtain ⟨⟨h, hh⟩, hhu'⟩ := hqH.apply_eq_iff_mem_orbit.mp hww'.symm
+    -- `H` acts on `E` through `G`, so the orbit witness is an element of `G` fixing `qH`.
+    have hhu : h • (g' • u') = g • u := hhu'
+    have hmap : ∀ e : E, qH (h • e) = qH e := fun _ => hqH.map_smul ⟨h, hh⟩
     have hone : g⁻¹ * h * g' = 1 := by
       refine hdisj _ ⟨u, Set.mem_smul_set.mpr ⟨u', hu', ?_⟩, hu⟩
       rw [mul_smul, mul_smul, hhu, inv_smul_smul]
@@ -108,7 +92,8 @@ private theorem isEvenlyCovered_of_smul_disjoint (hq : IsQuotientCoveringMap q G
         rw [← mul_assoc, mul_inv_cancel_left]
       rw [hone, mul_one] at h2
       exact h2
-    rw [hgg', mul_smul, image_smul_of_mem hqH hh]
+    rw [hgg', mul_smul]
+    simp only [← Set.image_smul, Set.image_image, hmap]
   let : TopologicalSpace {S : Set Y // ∃ g : G, S = qH '' (g • U)} := ⊥
   have : DiscreteTopology {S : Set Y // ∃ g : G, S = qH '' (g • U)} := ⟨rfl⟩
   have : Nonempty {S : Set Y // ∃ g : G, S = qH '' (g • U)} :=
