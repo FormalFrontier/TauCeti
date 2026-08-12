@@ -15,7 +15,10 @@ It requires an authenticated `gh` CLI. In GitHub Actions, set `GH_TOKEN` to
 ## Definitions
 
 - **Total time open** is snapshot time minus PR creation time for every open PR.
-- **Awaiting author** starts when the current `awaiting-author` label was applied.
+- **Awaiting author** covers both states that put the ball in the author's court,
+  `ci-failed` and `awaiting-author`, and starts when the PR entered that pair. Swapping
+  one for the other continues the same clock; going back through `awaiting-CI` starts a
+  new one.
 - **In review** starts when the current review cycle began; the pipeline's swap to
   `review-in-progress`, and any later restoration of `awaiting-review`, remain part of
   that same clock.
