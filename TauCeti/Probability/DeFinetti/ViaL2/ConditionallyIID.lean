@@ -62,12 +62,7 @@ namespace Contractable
 variable {Ω α : Type*} [MeasurableSpace Ω] [MeasurableSpace α]
 
 /-- **A contractable process on a standard Borel space is conditionally i.i.d. given its tail**,
-with the directing measure as the witness.
-
-The `L²` route: the block factorization of `ViaL2/BlockFactorization.lean`, integrated over a
-directing-measure event, is the `hcore` hypothesis of
-`conditionallyIIDWith_of_measure_inter_blockCylinder_eq_setLIntegral`. No reverse martingale is
-involved. -/
+with the directing measure as the witness. -/
 theorem conditionallyIIDWith_directingProbabilityMeasure [StandardBorelSpace α] [Nonempty α]
     {μ : Measure Ω} [IsFiniteMeasure μ] {X : ℕ → Ω → α} (hX : Contractable μ X)
     (hX_meas : ∀ n, Measurable (X n)) :
@@ -91,8 +86,10 @@ theorem conditionallyIIDWith_directingProbabilityMeasure [StandardBorelSpace α]
     integrable_blockIndicatorProd (fun i => (hX_meas (k i)).aemeasurable) hB
   -- The cylinder's measure is the integral of its indicator over `A`.
   have hLHS : ∫ ω in A, blockIndicatorProd X k B ω ∂μ = (μ (A ∩ blockCylinder X k B)).toReal := by
-    rw [blockIndicatorProd_eq_indicator, integral_indicator hC_meas, setIntegral_const,
-      smul_eq_mul, mul_one, measureReal_def, Measure.restrict_apply hC_meas, Set.inter_comm]
+    -- `blockIndicatorProd_apply` is `@[simp]`, so anchor the indicator form first.
+    rw [blockIndicatorProd_eq_indicator]
+    simp [integral_indicator hC_meas, Measure.restrict_apply hC_meas, Set.inter_comm,
+      measureReal_def]
   -- Integrating the factorization over the tail event `A`.
   have hmid : ∫ ω in A, blockIndicatorProd X k B ω ∂μ = ∫ ω in A, W ω ∂μ := by
     rw [← setIntegral_condExp hTail hZ_int hA_tail]
