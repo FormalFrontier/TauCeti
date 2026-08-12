@@ -168,6 +168,7 @@ theorem kernelCotangentLinearEquivZariski_toCotangent (a : RingHom.ker (f : H �
 
 /-- The cotangent comparison intertwines the ground-field action with the native residue-field
 action through `kernelResidueFieldRingEquiv`. -/
+@[simp]
 theorem kernelCotangentLinearEquivZariski_smul (r : k)
     (x : (RingHom.ker (f : H →+* k)).Cotangent) :
     r • kernelCotangentLinearEquivZariski f x =
