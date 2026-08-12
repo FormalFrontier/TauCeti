@@ -177,17 +177,6 @@ private theorem sum_fin_chainEntry_mul_twoDoubleEdgeMark (i : Fin (m + 3)) :
     (fun s ↦ ((chainEntry (i : ℕ) s : ℤ) : ℚ) * twoDoubleEdgeMark m b s)]
   simpa using h
 
-/-- A single lowered entry contributes the mark of its column to the row it sits in. This is
-`Finset.sum_ite_eq'` on `Finset.range n`, read on `Fin n` and with the guard of the summand
-carrying the side condition `P` that names the row the entry sits in. -/
-private theorem sum_fin_ite_mul {n : ℕ} (P : Prop) [Decidable P] {k : ℕ} (hk : k < n) (c : ℚ)
-    (f : ℕ → ℚ) :
-    ∑ j : Fin n, (if P ∧ (j : ℕ) = k then c else 0) * f (j : ℕ)
-      = if P then c * f k else 0 := by
-  rw [Fin.sum_univ_eq_sum_range fun j ↦ (if P ∧ j = k then c else 0) * f j]
-  by_cases hP : P <;>
-    simp [hP, ite_mul, Finset.sum_ite_eq' (Finset.range n) k fun j ↦ c * f j, hk]
-
 /-- **The row identity at a vertex number.** Away from the two ends of the chain the marks are
 constant, so the second difference vanishes; at the first vertex the mark is half of its
 neighbour's, and at the last one the drop in the mark, when there is one, is exactly compensated by
@@ -209,6 +198,38 @@ private lemma twoDoubleEdgeMark_row (m : ℕ) (b : Bool) {s : ℕ} (hs : s < m +
 theorem sum_twoDoubleEdgeCartanMatrix_mul_twoDoubleEdgeMark_eq_zero (i : Fin (m + 3)) :
     ∑ j : Fin (m + 3), ((twoDoubleEdgeCartanMatrix m b i j : ℤ) : ℚ)
       * twoDoubleEdgeMark m b (j : ℕ) = 0 := by
+  have hfirst : (∑ j : Fin (m + 3),
+      (if (i : ℕ) = 1 ∧ (j : ℕ) = 0 then (1 : ℚ) else 0) *
+        twoDoubleEdgeMark m b (j : ℕ)) =
+      if (i : ℕ) = 1 then 1 * twoDoubleEdgeMark m b 0 else 0 := by
+    by_cases hi : (i : ℕ) = 1
+    · simp only [hi, true_and, ite_true]
+      simpa only [Fin.ext_iff, ite_mul, zero_mul] using
+        Fintype.sum_ite_eq' (⟨0, by omega⟩ : Fin (m + 3))
+          (fun j ↦ (1 : ℚ) * twoDoubleEdgeMark m b (j : ℕ))
+    · simp [hi]
+  have hlast : (∑ j : Fin (m + 3),
+      (if (i : ℕ) = m + 1 ∧ (j : ℕ) = m + 2 then (if b then (1 : ℚ) else 0) else 0) *
+        twoDoubleEdgeMark m b (j : ℕ)) =
+      if (i : ℕ) = m + 1 then (if b then (1 : ℚ) else 0) *
+        twoDoubleEdgeMark m b (m + 2) else 0 := by
+    by_cases hi : (i : ℕ) = m + 1
+    · simp only [hi, true_and, ite_true]
+      simpa only [Fin.ext_iff, ite_mul, zero_mul] using
+        Fintype.sum_ite_eq' (⟨m + 2, by omega⟩ : Fin (m + 3))
+          (fun j ↦ (if b then (1 : ℚ) else 0) * twoDoubleEdgeMark m b (j : ℕ))
+    · simp [hi]
+  have hlast' : (∑ j : Fin (m + 3),
+      (if (i : ℕ) = m + 2 ∧ (j : ℕ) = m + 1 then (if b then (0 : ℚ) else 1) else 0) *
+        twoDoubleEdgeMark m b (j : ℕ)) =
+      if (i : ℕ) = m + 2 then (if b then (0 : ℚ) else 1) *
+        twoDoubleEdgeMark m b (m + 1) else 0 := by
+    by_cases hi : (i : ℕ) = m + 2
+    · simp only [hi, true_and, ite_true]
+      simpa only [Fin.ext_iff, ite_mul, zero_mul] using
+        Fintype.sum_ite_eq' (⟨m + 1, by omega⟩ : Fin (m + 3))
+          (fun j ↦ (if b then (0 : ℚ) else 1) * twoDoubleEdgeMark m b (j : ℕ))
+    · simp [hi]
   have hsplit : ∀ j : Fin (m + 3), ((twoDoubleEdgeCartanMatrix m b i j : ℤ) : ℚ)
       * twoDoubleEdgeMark m b (j : ℕ)
       = ((chainEntry (i : ℕ) (j : ℕ) : ℤ) : ℚ) * twoDoubleEdgeMark m b (j : ℕ)
@@ -223,9 +244,7 @@ theorem sum_twoDoubleEdgeCartanMatrix_mul_twoDoubleEdgeMark_eq_zero (i : Fin (m 
     ring
   rw [Finset.sum_congr rfl fun j _ ↦ hsplit j, Finset.sum_sub_distrib, Finset.sum_sub_distrib,
     Finset.sum_sub_distrib, sum_fin_chainEntry_mul_twoDoubleEdgeMark,
-    sum_fin_ite_mul ((i : ℕ) = 1) (k := 0) (by omega),
-    sum_fin_ite_mul ((i : ℕ) = m + 1) (k := m + 2) (by omega),
-    sum_fin_ite_mul ((i : ℕ) = m + 2) (k := m + 1) (by omega)]
+    hfirst, hlast, hlast']
   exact twoDoubleEdgeMark_row m b i.isLt
 
 /-- **No doubly ended chain is of finite type**: whatever the length of the chain, and whichever
