@@ -116,13 +116,13 @@ theorem unitSignature_ker :
 variable (K)
 
 /-- The **sign patterns realized by `Kˣ`**: the range of the field-unit signature. -/
-@[expose] noncomputable def fieldSignatures :
+noncomputable def fieldSignatures :
     Subgroup ({w : InfinitePlace K // w.IsReal} → ℝˣ ⧸ Units.posSubgroup ℝ) :=
   (fieldUnitSignature (K := K)).range
 
 /-- The **sign patterns realized by the units of `𝓞 K`**: the range of the integer-unit
 signature. -/
-@[expose] noncomputable def unitSignatures :
+noncomputable def unitSignatures :
     Subgroup ({w : InfinitePlace K // w.IsReal} → ℝˣ ⧸ Units.posSubgroup ℝ) :=
   (unitSignature (K := K)).range
 
@@ -132,6 +132,14 @@ omit [NumberField K] in
 @[simp] theorem mem_fieldSignatures
     {s : {w : InfinitePlace K // w.IsReal} → ℝˣ ⧸ Units.posSubgroup ℝ} :
     s ∈ fieldSignatures K ↔ ∃ x : Kˣ, fieldUnitSignature x = s := Iff.rfl
+
+omit [NumberField K] in
+/-- `fieldSignatures K` is the range of the field-unit signature, the form in which lemmas about
+`MonoidHom.range` — `Subgroup.index_comap`, say — deliver it. -/
+theorem range_fieldUnitSignature :
+    (fieldUnitSignature (K := K)).range = fieldSignatures K := by
+  ext s
+  rw [MonoidHom.mem_range, mem_fieldSignatures]
 
 omit [NumberField K] in
 @[simp] theorem mem_unitSignatures

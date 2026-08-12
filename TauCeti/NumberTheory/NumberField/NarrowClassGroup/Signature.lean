@@ -80,16 +80,14 @@ namespace TauCeti.NumberField.NarrowClassGroup
 variable {K : Type*} [Field K] [NumberField K]
 
 /-- **The principal narrow classes, computed by signatures.** The principal fractional ideal `(x)`
-has trivial narrow class exactly when the signature of `x` is realized by a unit of `𝓞 K`.
-
-Left to right, two generators of the same principal ideal differ by an integer unit, so a totally
-positive generator `y` of `(x)` gives `x = y · a` with `a` an integer unit, whence `x` and `a` have
-the same signature. Right to left, if `a` is an integer unit with the signature of `x`, then
-`a⁻¹ x` is totally positive and generates `(x)`. -/
-theorem mkPrincipal_eq_one_iff {x : Kˣ} :
+has trivial narrow class exactly when the signature of `x` is realized by a unit of `𝓞 K`. -/
+@[simp] theorem mkPrincipal_eq_one_iff {x : Kˣ} :
     mkPrincipal x = 1 ↔ fieldUnitSignature x ∈ unitSignatures K := by
   rw [mkPrincipal_apply, mk_eq_one_iff, mem_narrowPrincipalSubgroup, mem_unitSignatures]
   constructor
+  -- Two generators of the same principal ideal differ by an integer unit, so a totally positive
+  -- generator `y` of `(x)` gives `x = y * a` with `a` an integer unit, whence `x` and `a` have the
+  -- same signature.
   · rintro ⟨y, hy, hyx⟩
     have h1 : toPrincipalIdeal (𝓞 K) K (y⁻¹ * x) = 1 := by
       rw [map_mul, map_inv, hyx, inv_mul_cancel]
@@ -99,6 +97,8 @@ theorem mkPrincipal_eq_one_iff {x : Kˣ} :
       rw [ha, mul_inv_cancel_left]
     rw [hx, map_mul, fieldUnitSignature_eq_one_iff.mpr hy, fieldUnitSignature_map_algebraMap]
     exact (one_mul (M := {w : InfinitePlace K // w.IsReal} → ℝˣ ⧸ Units.posSubgroup ℝ) _).symm
+  -- Conversely, if `a` is an integer unit with the signature of `x`, then `a⁻¹ * x` is totally
+  -- positive and generates `(x)`.
   · rintro ⟨a, ha⟩
     refine ⟨(Units.map (algebraMap (𝓞 K) K : (𝓞 K) →* K) a)⁻¹ * x, ?_, ?_⟩
     · rw [← fieldUnitSignature_eq_one_iff, map_mul, map_inv,
@@ -116,12 +116,11 @@ theorem ker_mkPrincipal :
   ext x
   rw [MonoidHom.mem_ker, Subgroup.mem_comap, mkPrincipal_eq_one_iff]
 
+-- Construction: by `toClassGroup_ker` the kernel is the image of the principal-class map, and by
+-- `ker_mkPrincipal` that map's own kernel is the preimage of `unitSignatures K`.
 /-- **The kernel of `Cl⁺(K) → Cl(K)` is the cokernel of the unit signature.** Forgetting positivity
 loses exactly the sign patterns that `Kˣ` realizes and the units of `𝓞 K` do not: the kernel is
-`Kˣ` modulo the elements whose signature is realized by an integer unit.
-
-By `toClassGroup_ker` the kernel is the image of the principal-class map, and by `ker_mkPrincipal`
-that map's own kernel is the preimage of `unitSignatures K`. -/
+`Kˣ` modulo the elements whose signature is realized by an integer unit. -/
 noncomputable def kerToClassGroupEquiv :
     MonoidHom.ker (toClassGroup (K := K)) ≃*
       Kˣ ⧸ Subgroup.comap (fieldUnitSignature (K := K)) (unitSignatures K) :=
@@ -134,8 +133,7 @@ theorem card_ker_toClassGroup :
     Nat.card (MonoidHom.ker (toClassGroup (K := K))) =
       (unitSignatures K).relIndex (fieldSignatures K) := by
   rw [Nat.card_congr kerToClassGroupEquiv.toEquiv, ← Subgroup.index_eq_card,
-    Subgroup.index_comap]
-  rfl
+    Subgroup.index_comap, range_fieldUnitSignature]
 
 /-- **The defect, in product form.** Multiplying by the number of sign patterns realized by the
 units clears the index: the kernel of `Cl⁺(K) → Cl(K)` and the unit signatures together account for
@@ -202,7 +200,7 @@ theorem toClassGroup_injective_iff :
   rw [← MonoidHom.ker_eq_bot_iff, toClassGroup_ker, Subgroup.eq_bot_iff_forall]
   constructor
   · refine fun h => le_antisymm (fun z hz => ?_) unitSignatures_le_fieldSignatures
-    obtain ⟨x, rfl⟩ := hz
+    obtain ⟨x, rfl⟩ := mem_fieldSignatures.mp hz
     exact mkPrincipal_eq_one_iff.mp (h _ ⟨x, rfl⟩)
   · rintro h _ ⟨x, rfl⟩
     exact mkPrincipal_eq_one_iff.mpr (h ▸ mem_fieldSignatures.mpr ⟨x, rfl⟩)
