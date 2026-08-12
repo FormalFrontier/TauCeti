@@ -55,7 +55,7 @@ legitimate because a positive root is never cancelled inside the cone
   generates under all of `L`, so in a highest weight module it is the whole module.
 * `TauCeti.iSup_genWeightSpace_sub_posRootCone_eq_top_of_isHighestWeightVector_of_lieSpan_eq_top`:
   the weight spaces at the weights `lam - ν`, `ν ∈ Q⁺`, span a highest weight module.
-* `TauCeti.exists_eq_sub_of_genWeightSpace_ne_bot_of_isHighestWeightVector_of_lieSpan_eq_top`: hence
+* `TauCeti.exists_sub_eq_of_genWeightSpace_ne_bot_of_isHighestWeightVector_of_lieSpan_eq_top`: hence
   every weight of a highest weight module is of the form `lam - ν` with `ν ∈ Q⁺`;
   `TauCeti.sub_mem_posRootCone_of_genWeightSpace_ne_bot_of_isHighestWeightVector_of_lieSpan_eq_top`
   restates that for a weight given as a linear form, and
@@ -295,7 +295,7 @@ have its weight space disjoint from the ones that already exhaust the module.
 The weight is taken to be an arbitrary function `chi : H → K` rather than a linear form, because
 `LieModule.Weight K H M` is only known to be linear when `M` is finite-dimensional; the conclusion
 says in particular that every weight of a highest weight module *is* linear. -/
-theorem exists_eq_sub_of_genWeightSpace_ne_bot_of_isHighestWeightVector_of_lieSpan_eq_top
+theorem exists_sub_eq_of_genWeightSpace_ne_bot_of_isHighestWeightVector_of_lieSpan_eq_top
     (hv : IsHighestWeightVector b lam v) (hgen : LieSubmodule.lieSpan K L {v} = ⊤) {chi : H → K}
     (hchi : genWeightSpace M chi ≠ ⊥) :
     ∃ nu ∈ posRootCone (IsKilling.rootSystem H) b, ((lam - nu : Dual K H) : H → K) = chi := by
@@ -321,7 +321,7 @@ theorem sub_mem_posRootCone_of_genWeightSpace_ne_bot_of_isHighestWeightVector_of
     {chi : Dual K H} (hchi : genWeightSpace M ((chi : Dual K H) : H → K) ≠ ⊥) :
     lam - chi ∈ posRootCone (IsKilling.rootSystem H) b := by
   obtain ⟨nu, hnu, heq⟩ :=
-    exists_eq_sub_of_genWeightSpace_ne_bot_of_isHighestWeightVector_of_lieSpan_eq_top
+    exists_sub_eq_of_genWeightSpace_ne_bot_of_isHighestWeightVector_of_lieSpan_eq_top
       hv hgen hchi
   have hnu' : lam - nu = chi := DFunLike.coe_injective heq
   rwa [← hnu', sub_sub_cancel]
