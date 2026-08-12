@@ -609,7 +609,7 @@ jobs:
           # abort the step and leave the commit with a partial set. A MISSING required status is
           # worse than a red one. `build` never appears, so GitHub holds the PR at BLOCKED
           # forever; core.derive reads no `build` status, so labels.py pins the PR at
-          # `awaiting-CI` (its ci=None branch) rather than `awaiting-author`; and nothing re-runs
+          # `awaiting-CI` (its ci=None branch) rather than `ci-failed`; and nothing re-runs
           # pr-build without a push, so no event ever corrects it. That wedged PR #1358 for seven
           # days, invisible to both the author path and the review path.
           #
