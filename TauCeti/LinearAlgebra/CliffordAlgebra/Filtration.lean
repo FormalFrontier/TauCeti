@@ -129,6 +129,11 @@ theorem filtrationPrevious_succ (Q : QuadraticForm R M) (k : ℕ) :
     filtrationPrevious Q (k + 1) = filtration Q k :=
   TauCeti.Algebra.wordFiltrationPrevious_succ (ι Q) k
 
+/-- The Clifford filtration carries Mathlib's bundled ring-filtration structure. -/
+instance instIsRingFiltration (Q : QuadraticForm R M) :
+    IsRingFiltration (filtration Q) (filtrationPrevious Q) :=
+  TauCeti.Algebra.wordFiltration.instIsRingFiltration (ι Q)
+
 /-- The filtration step preceding degree `k`, viewed inside the degree-`k` filtration step. This is
 the relation defining the degree-`k` associated-graded quotient. -/
 def filtrationPreviousRestricted (Q : QuadraticForm R M) (k : ℕ) :
