@@ -106,6 +106,14 @@ these statements cover. Centrality of `B` cannot be dropped: for `K = ℝ`, `A =
 centralizer is all of `ℂ`, so `finrank ℝ B * finrank ℝ C = 4 ≠ 2 = finrank ℝ A`; the worked example
 at the end of the file records this.
 
+Because simplicity of `B ⊗[K] Aᵐᵒᵖ` is all the dimension formula uses, the count itself is proved
+once and separately, in
+`TauCeti.finrank_mul_finrank_centralizer_of_isSimpleRing_tensorProduct`;
+`TauCeti.finrank_mul_finrank_centralizer` is the case of it where that simplicity comes from `B`
+central simple and `A` simple, and `TauCeti.finrank_mul_finrank_centralizer_of_isField` in
+`TauCeti/Algebra/CentralSimple/MaximalSubfield.lean` the case where it comes instead from `B` a
+subfield of a central simple `A`.
+
 Centrality of `A`, on the other hand, is asked only of the last three statements, and there it
 cannot be dropped either: for `K = ℝ`, `A = ℂ` and `B = ⊥`, which is central simple, the centralizer
 of `B` is all of `ℂ` and so is its centralizer in turn, which is not `⊥`. The second worked example
@@ -279,6 +287,44 @@ theorem tensorCentralizerAlgHom_tmul (b : B) (c : Subalgebra.centralizer K (B : 
 
 end Identification
 
+section DimensionCount
+
+variable {K A : Type*} [Field K] [Ring A] [Nontrivial A] [Algebra K A] [FiniteDimensional K A]
+  (B : Subalgebra K A) [IsSimpleRing (↥B ⊗[K] Aᵐᵒᵖ)]
+
+/-- **The dimension count behind the centralizer theorem**, asking only for what it uses: that the
+ring `R = B ⊗[K] Aᵐᵒᵖ` acting on `A` is simple (and that `A` is nonzero, so that the factor of
+`finrank K A` cancelled at the end is nonzero). Then
+
+  `finrank K B * finrank K C_A(B) = finrank K A`.
+
+The endomorphism algebra of `A` over `R` is the centralizer (`TauCeti.centralizerAlgEquivEnd`), and
+satisfies `finrank K (End_R A) * finrank K R = (finrank K A)²` with
+`finrank K R = finrank K B * finrank K A`; cancelling one factor of `finrank K A`, which is nonzero,
+gives the formula.
+
+Simplicity of `R` is the only point at which hypotheses on `B` and on `A` enter, and there is more
+than one way to supply it: `TauCeti.finrank_mul_finrank_centralizer` has it from `B` central simple
+and `A` simple, while `TauCeti.finrank_mul_finrank_centralizer_of_isField` has it from `B` a
+subfield and `A` central simple. -/
+theorem finrank_mul_finrank_centralizer_of_isSimpleRing_tensorProduct :
+    finrank K B * finrank K (Subalgebra.centralizer K (B : Set A)) = finrank K A := by
+  have : FiniteDimensional K ↥B :=
+    FiniteDimensional.of_injective B.val.toLinearMap Subtype.val_injective
+  have key := IsSimpleRing.finrank_end_mul_finrank_eq_sq K (R := ↥B ⊗[K] Aᵐᵒᵖ)
+    (M := Bimodule B.val)
+  rw [(Bimodule.of (B.val)).finrank_eq.symm, Module.finrank_tensorProduct,
+    (MulOpposite.opLinearEquiv K (M := A)).finrank_eq.symm,
+    ← (centralizerAlgEquivEnd B).toLinearEquiv.finrank_eq] at key
+  -- `key : c * (b * a) = a ^ 2`; cancel one factor of `a = finrank K A`.
+  have ha : 0 < finrank K A := Module.finrank_pos
+  refine Nat.eq_of_mul_eq_mul_right ha ?_
+  rw [sq] at key
+  rw [mul_comm (finrank K B), mul_assoc]
+  exact key
+
+end DimensionCount
+
 section Centralizer
 
 variable {K A : Type*} [Field K] [Ring A] [Algebra K A] [IsSimpleRing A] [FiniteDimensional K A]
@@ -302,24 +348,13 @@ simple `K`-algebra `A`, the dimensions of `B` and of its centralizer are complem
 
   `finrank K B * finrank K C_A(B) = finrank K A`.
 
-The endomorphism algebra of `A` over `R = B ⊗[K] Aᵐᵒᵖ` is the centralizer, and satisfies
-`finrank K (End_R A) * finrank K R = (finrank K A)²` with `finrank K R = finrank K B * finrank K A`;
-cancelling one factor of `finrank K A`, which is nonzero, gives the formula. -/
+This is the dimension count of
+`TauCeti.finrank_mul_finrank_centralizer_of_isSimpleRing_tensorProduct`, whose one hypothesis —
+simplicity of `B ⊗[K] Aᵐᵒᵖ` — `TauCeti.IsSimpleRing.tensorProduct` supplies from `B` central simple
+and `Aᵐᵒᵖ` simple. -/
 theorem finrank_mul_finrank_centralizer :
-    finrank K B * finrank K (Subalgebra.centralizer K (B : Set A)) = finrank K A := by
-  have : FiniteDimensional K ↥B :=
-    FiniteDimensional.of_injective B.val.toLinearMap Subtype.val_injective
-  have key := IsSimpleRing.finrank_end_mul_finrank_eq_sq K (R := ↥B ⊗[K] Aᵐᵒᵖ)
-    (M := Bimodule B.val)
-  rw [(Bimodule.of (B.val)).finrank_eq.symm, Module.finrank_tensorProduct,
-    (MulOpposite.opLinearEquiv K (M := A)).finrank_eq.symm,
-    ← (centralizerAlgEquivEnd B).toLinearEquiv.finrank_eq] at key
-  -- `key : c * (b * a) = a ^ 2`; cancel one factor of `a = finrank K A`.
-  have ha : 0 < finrank K A := Module.finrank_pos
-  refine Nat.eq_of_mul_eq_mul_right ha ?_
-  rw [sq] at key
-  rw [mul_comm (finrank K B), mul_assoc]
-  exact key
+    finrank K B * finrank K (Subalgebra.centralizer K (B : Set A)) = finrank K A :=
+  finrank_mul_finrank_centralizer_of_isSimpleRing_tensorProduct B
 
 /-- **`B` and its centralizer generate `A`, freely**: multiplication
 `B ⊗[K] C_A(B) → A` is bijective.

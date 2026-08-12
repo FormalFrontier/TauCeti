@@ -16,20 +16,16 @@ public import TauCeti.Algebra.CentralSimple.Centralizer
 -- `TauCeti.Algebra.isSplittingField_of_finrank_eq_deg` is the theorem the summit of this file
 -- feeds. It re-exports `TauCeti.Algebra.CentralSimple.Splitting` and, through it, the degree API.
 public import TauCeti.Algebra.CentralSimple.Subfield
--- Non-public: none of these appears in the type of an exported declaration. The lattice of
--- subalgebras supplies `Algebra.adjoin` and the commutativity of an adjunction of pairwise
--- commuting elements; the finite-dimensional comparison of nested subalgebras is what turns
--- maximal dimension into maximality; the Artinian criterion for a domain to be a field, and the
--- simplicity of a field, turn a maximal commutative subalgebra into a subfield; and the
--- endomorphism algebra of a module over a simple Artinian algebra is the engine of the dimension
--- count. The real quaternions and their centrality appear only in the worked examples.
-import Mathlib.Algebra.Algebra.Subalgebra.Lattice
+-- Non-public: none of these appears in the type of an exported declaration. The Artinian criterion
+-- for a domain to be a field, and the simplicity of a field, turn a maximal commutative subalgebra
+-- into a subfield; the real quaternions and their centrality appear only in the worked examples.
+-- The lattice of subalgebras, with `Algebra.adjoin` and the commutativity of an adjunction of
+-- pairwise commuting elements, and the finite-dimensional comparison of nested subalgebras come
+-- with the `Centralizer` import above and are not imported again.
 import Mathlib.Data.Real.Basic
-import Mathlib.LinearAlgebra.FiniteDimensional.Basic
 import Mathlib.RingTheory.Artinian.Module
 import Mathlib.RingTheory.SimpleRing.Field
 import TauCeti.Algebra.Central.Quaternion
-import TauCeti.RingTheory.Semisimple.EndAlgebra
 
 /-!
 # Maximal subfields of a central division algebra
@@ -61,21 +57,20 @@ subfield rather than merely a large one.
 (`TauCeti.finrank_mul_finrank_centralizer_of_isField`). Applied to `C_D(L) = L` this reads
 `(finrank K L)² = finrank K D = (deg K D)²`, so `finrank K L = deg K D`.
 
-The dimension count is the argument of `TauCeti.finrank_mul_finrank_centralizer`, run with the
-centrality hypothesis moved from the subalgebra to the ambient algebra: what
-`TauCeti.centralizerAlgEquivEnd` and `TauCeti.IsSimpleRing.finrank_end_mul_finrank_eq_sq` between
-them need is that `L ⊗[K] Aᵐᵒᵖ` be simple, and that follows from `L` being simple and `Aᵐᵒᵖ` central
-simple just as well as from `L` being central simple and `Aᵐᵒᵖ` simple. A subfield is simple but
-not central, so it is the first reading that applies here.
+That last statement is `TauCeti.finrank_mul_finrank_centralizer` with the centrality hypothesis
+moved from the subalgebra to the ambient algebra, and the count itself is not repeated: both are
+instances of `TauCeti.finrank_mul_finrank_centralizer_of_isSimpleRing_tensorProduct`, which asks
+only that `L ⊗[K] Aᵐᵒᵖ` be simple. That follows from `L` being simple and `Aᵐᵒᵖ` central simple just
+as well as from `L` being central simple and `Aᵐᵒᵖ` simple; a subfield is simple but not central, so
+it is the first reading that applies here.
 
 ## Main results
 
 * `TauCeti.exists_isMulCommutative_forall_finrank_le`: a finite-dimensional algebra has a
   commutative subalgebra of maximal dimension.
-* `TauCeti.centralizer_eq_self_of_forall_finrank_le`: in a division algebra such a subalgebra is
-  its own centralizer.
-* `TauCeti.isField_of_isMulCommutative`: a commutative subalgebra of a division algebra, finite
-  over the base field, is a field.
+* `TauCeti.centralizer_eq_self_of_forall_finrank_le`: such a subalgebra is its own centralizer.
+* `TauCeti.isField_of_isMulCommutative`: a commutative subalgebra of a domain, finite over the base
+  field, is a field.
 * `TauCeti.finrank_mul_finrank_centralizer_of_isField`: the centralizer of a **subfield** of a
   central simple algebra has the complementary dimension.
 * `TauCeti.Algebra.exists_subalgebra_isField_finrank_eq_deg`: **a central division algebra has a
@@ -91,13 +86,12 @@ what `Algebra.isMulCommutative_adjoin` produces and what the scoped instances of
 rather than carrying a hand-rolled `∀ x ∈ L, ∀ y ∈ L, x * y = y * x`.
 
 `TauCeti.finrank_mul_finrank_centralizer_of_isField` asks for `IsField ↥L` and not for the weaker
-`IsSimpleRing ↥L`. The proof would go through unchanged for a merely simple subalgebra, but that
-statement is the general centralizer theorem for a non-central simple subalgebra, which the Layer 5
-bullet of the roadmap referenced below rules out in as many words: "the general form for a merely
-simple subalgebra `B` (center `Z(B) ⊋ K`) needs a center-sensitive correction to the dimension
-formula and is a **later** target, not this one", to be taken up together with the description of
-the centralizer's centre. Only the subfield case, which is what the maximal-subfield theory needs,
-is claimed here.
+`IsSimpleRing ↥L`, which is all its proof uses. The restriction is a scope boundary and not a
+mathematical one: stated for a merely simple subalgebra, this is the general centralizer theorem for
+a non-central simple subalgebra, which the Layer 5 bullet of the roadmap referenced below defers —
+"the general form for a merely simple subalgebra `B` (center `Z(B) ⊋ K`) ... is a **later** target,
+not this one" — to be taken up together with the description of the centralizer's centre. Only the
+subfield case, which is what the maximal-subfield theory needs, is claimed here.
 
 The existence statements are stated for a **division** algebra. The passage from there to an
 arbitrary central simple algebra `A ≃ₐ[K] Mₙ(D)`, and with it the index `ind A`, needs the
@@ -119,11 +113,11 @@ namespace TauCeti
 
 open Module
 
-open scoped IsMulCommutative TensorProduct
+open scoped IsMulCommutative
 
 universe u
 
-/-! ### A commutative subalgebra of maximal dimension -/
+/-! ### Commutative subalgebras of maximal dimension -/
 
 section Maximal
 
@@ -134,7 +128,8 @@ variable (K A : Type*) [Field K] [Ring A] [Algebra K A] [FiniteDimensional K A]
 The dimensions of commutative subalgebras form a set of naturals bounded by `finrank K A` and
 containing `finrank K ⊥`, so it has a greatest element, and any subalgebra realizing it will do.
 No hypothesis beyond finite-dimensionality is needed; it is in a division algebra that such a
-subalgebra becomes interesting (`TauCeti.centralizer_eq_self_of_forall_finrank_le`). -/
+subalgebra becomes interesting
+(`TauCeti.Algebra.exists_subalgebra_isField_finrank_eq_deg`). -/
 theorem exists_isMulCommutative_forall_finrank_le :
     ∃ L : Subalgebra K A, IsMulCommutative ↥L ∧
       ∀ M : Subalgebra K A, IsMulCommutative ↥M → finrank K ↥M ≤ finrank K ↥L := by
@@ -151,49 +146,53 @@ theorem exists_isMulCommutative_forall_finrank_le :
   rw [hLn]
   exact Nat.le_findGreatest (hle M) ⟨M, hM, rfl⟩
 
-end Maximal
+variable {K A}
 
-/-! ### Maximal commutative subalgebras of a division algebra -/
-
-section DivisionRing
-
-variable {K D : Type*} [Field K] [DivisionRing D] [Algebra K D] [FiniteDimensional K D]
-
-/-- **A commutative subalgebra of maximal dimension in a division algebra is its own
-centralizer.**
+/-- **A commutative subalgebra of maximal dimension is its own centralizer.**
 
 An element `x` of the centralizer commutes with every element of `L`, and the elements of `L`
 commute with one another, so `Algebra.adjoin K (insert x L)` is a commutative subalgebra. It
-contains `L`, and maximal dimension forces the containment to be an equality, so `x ∈ L`. -/
-theorem centralizer_eq_self_of_forall_finrank_le {L : Subalgebra K D} [IsMulCommutative ↥L]
-    (hmax : ∀ M : Subalgebra K D, IsMulCommutative ↥M → finrank K ↥M ≤ finrank K ↥L) :
-    Subalgebra.centralizer K (L : Set D) = L := by
+contains `L`, and maximal dimension forces the containment to be an equality, so `x ∈ L`.
+
+Nothing beyond finite-dimensionality is asked of `A`; it is in a division algebra that the
+conclusion becomes the maximality of a subfield
+(`TauCeti.Algebra.exists_subalgebra_isField_finrank_eq_deg`). -/
+theorem centralizer_eq_self_of_forall_finrank_le {L : Subalgebra K A} [IsMulCommutative ↥L]
+    (hmax : ∀ M : Subalgebra K A, IsMulCommutative ↥M → finrank K ↥M ≤ finrank K ↥L) :
+    Subalgebra.centralizer K (L : Set A) = L := by
   refine le_antisymm (fun x hx ↦ ?_) (fun y hy z hz ↦ ?_)
   · -- The elements of `insert x L` commute pairwise.
-    have hcomm : ∀ a ∈ insert x (L : Set D), ∀ b ∈ insert x (L : Set D), a * b = b * a := by
+    have hcomm : ∀ a ∈ insert x (L : Set A), ∀ b ∈ insert x (L : Set A), a * b = b * a := by
       rintro a (rfl | ha) b (rfl | hb)
       · rfl
       · exact ((Subalgebra.mem_centralizer_iff K).1 hx b hb).symm
       · exact (Subalgebra.mem_centralizer_iff K).1 hx a ha
       · exact congrArg Subtype.val (mul_comm (⟨a, ha⟩ : ↥L) ⟨b, hb⟩)
-    have hM : IsMulCommutative ↥(Algebra.adjoin K (insert x (L : Set D))) :=
+    have hM : IsMulCommutative ↥(Algebra.adjoin K (insert x (L : Set A))) :=
       Algebra.isMulCommutative_adjoin K hcomm
-    have hsub : L ≤ Algebra.adjoin K (insert x (L : Set D)) := fun a ha ↦
+    have hsub : L ≤ Algebra.adjoin K (insert x (L : Set A)) := fun a ha ↦
       Algebra.subset_adjoin (Set.mem_insert_of_mem _ ha)
     have := Subalgebra.eq_of_le_of_finrank_le hsub (hmax _ hM)
     exact this ▸ Algebra.subset_adjoin (Set.mem_insert _ _)
   · exact congrArg Subtype.val (mul_comm (⟨z, hz⟩ : ↥L) ⟨y, hy⟩)
 
-omit [FiniteDimensional K D] in
-/-- **A commutative subalgebra of a division algebra is a field**, as soon as it is
-finite-dimensional over the base field: it is a commutative domain, and an Artinian domain is a
-field. Only `L` need be finite-dimensional; the ambient `D` need not be. -/
+end Maximal
+
+/-! ### Commutative subalgebras of a domain -/
+
+section Domain
+
+variable {K D : Type*} [Field K] [Ring D] [IsDomain D] [Algebra K D]
+
+/-- **A commutative subalgebra of a domain is a field**, as soon as it is finite-dimensional over
+the base field: it is a commutative domain, and an Artinian domain is a field. Only `L` need be
+finite-dimensional; the ambient `D` need not be, and a division ring is more than is asked of it. -/
 theorem isField_of_isMulCommutative (L : Subalgebra K D) [IsMulCommutative ↥L]
     [FiniteDimensional K ↥L] : IsField ↥L := by
   have : IsArtinianRing ↥L := IsArtinianRing.of_finite K ↥L
   exact IsArtinianRing.isField_of_isDomain ↥L
 
-end DivisionRing
+end Domain
 
 /-! ### The centralizer of a subfield -/
 
@@ -207,28 +206,18 @@ complementary one**:
 
   `finrank K L * finrank K C_A(L) = finrank K A`.
 
-This is the argument of `TauCeti.finrank_mul_finrank_centralizer` with the centrality hypothesis
-moved from the subalgebra to the ambient algebra. Both proofs need only that `L ⊗[K] Aᵐᵒᵖ` be a
-simple Artinian ring, which `TauCeti.IsSimpleRing.tensorProduct_of_isCentral_right` supplies from
-the simplicity of the field `L` and the central simplicity of `Aᵐᵒᵖ`; `L` itself is not central
-over `K` unless it is `K`, so the form proved there does not apply. -/
+This is `TauCeti.finrank_mul_finrank_centralizer` with the centrality hypothesis moved from the
+subalgebra to the ambient algebra. The shared dimension count is
+`TauCeti.finrank_mul_finrank_centralizer_of_isSimpleRing_tensorProduct`, whose one hypothesis —
+that `L ⊗[K] Aᵐᵒᵖ` be simple — `TauCeti.IsSimpleRing.tensorProduct_of_isCentral_right` supplies here
+from the simplicity of the field `L` and the central simplicity of `Aᵐᵒᵖ`; `L` itself is not central
+over `K` unless it is `K`, so the orientation used by `TauCeti.finrank_mul_finrank_centralizer` does
+not apply. -/
 theorem finrank_mul_finrank_centralizer_of_isField (L : Subalgebra K A) (hL : IsField ↥L) :
     finrank K ↥L * finrank K ↥(Subalgebra.centralizer K (L : Set A)) = finrank K A := by
-  have : FiniteDimensional K ↥L :=
-    FiniteDimensional.of_injective L.val.toLinearMap Subtype.val_injective
   have : IsMulCommutative ↥L := ⟨⟨hL.mul_comm⟩⟩
   have : IsSimpleRing ↥L := (isSimpleRing_iff_isField ↥L).2 hL
-  have key := IsSimpleRing.finrank_end_mul_finrank_eq_sq K (R := ↥L ⊗[K] Aᵐᵒᵖ)
-    (M := Bimodule L.val)
-  rw [(Bimodule.of (L.val)).finrank_eq.symm, Module.finrank_tensorProduct,
-    (MulOpposite.opLinearEquiv K (M := A)).finrank_eq.symm,
-    ← (centralizerAlgEquivEnd L).toLinearEquiv.finrank_eq] at key
-  -- `key : c * (l * a) = a ^ 2`; cancel one factor of `a = finrank K A`.
-  have ha : 0 < finrank K A := Module.finrank_pos
-  refine Nat.eq_of_mul_eq_mul_right ha ?_
-  rw [sq] at key
-  rw [mul_comm (finrank K ↥L), mul_assoc]
-  exact key
+  exact finrank_mul_finrank_centralizer_of_isSimpleRing_tensorProduct L
 
 end Centralizer
 
