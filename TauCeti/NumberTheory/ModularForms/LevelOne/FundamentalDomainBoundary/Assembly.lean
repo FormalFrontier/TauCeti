@@ -70,9 +70,9 @@ theorem intervalIntegral_logDeriv_fdBoundary [SlashInvariantFormClass F Γ k] (f
         deriv (fdBoundary H) t • logDeriv (⇑f ∘ ofComplex) (fdBoundary H t) =
       2 * Real.pi * Complex.I * qExpansionOrderAtCusp 1 ⇑f -
         k * ((Real.pi / 6 : ℝ) * Complex.I) := by
-  have hint23 := intervalIntegrable_deriv_smul_logDeriv_comp_ofComplex_fdBoundary_segment3
+  have hint23 := intervalIntegrable_deriv_smul_logDeriv_comp_ofComplex_fdBoundarySegment3
     f hS hd hne hint12
-  have hint34 := intervalIntegrable_deriv_smul_fdBoundary_segment4
+  have hint34 := intervalIntegrable_deriv_smul_fdBoundarySegment4
     (TauCeti.Function.Periodic.logDeriv hper) hint01
   have hint13 := hint12.trans hint23
   have hint35 := hint34.trans hint45
@@ -81,9 +81,9 @@ theorem intervalIntegral_logDeriv_fdBoundary [SlashInvariantFormClass F Γ k] (f
     ← intervalIntegral.integral_add_adjacent_intervals hint13 hint35,
     ← intervalIntegral.integral_add_adjacent_intervals hint34 hint45,
     intervalIntegral_deriv_smul_logDeriv_comp_ofComplex_fdBoundary_arc f hS hd hne hint12,
-    intervalIntegral_fdBoundary_segment4_eq_neg_segment1 H
+    intervalIntegral_fdBoundarySegment4_eq_neg_segment1 H
       (TauCeti.Function.Periodic.logDeriv hper),
-    (intervalIntegral_fdBoundary_segment5_eq_circleIntegral_logDeriv_cuspFunction
+    (intervalIntegral_fdBoundarySegment5_eq_circleIntegral_logDeriv_cuspFunction
       hper).trans (circleIntegral_logDeriv_cuspFunction hga hgz)]
   push_cast
   ring
