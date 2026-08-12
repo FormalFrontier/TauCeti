@@ -138,6 +138,8 @@ theorem comul_ι (x : L) :
         (_root_.UniversalEnvelopingAlgebra.mkAlgHom R L (TensorAlgebra.ι R x)) =
       _root_.UniversalEnvelopingAlgebra.mkAlgHom R L (TensorAlgebra.ι R x) ⊗ₜ[R] 1 +
         1 ⊗ₜ[R] _root_.UniversalEnvelopingAlgebra.mkAlgHom R L (TensorAlgebra.ι R x) := by
+  -- `Coalgebra.comul` hides the inferred bialgebra instance, so expose its projection before
+  -- unfolding the concrete `instBialgebra` construction below.
   change (instBialgebra R L).toCoalgebra.toCoalgebraStruct.comul
     (_root_.UniversalEnvelopingAlgebra.mkAlgHom R L (TensorAlgebra.ι R x)) = _
   dsimp only [instBialgebra, Bialgebra.toCoalgebra, Coalgebra.toCoalgebraStruct,
@@ -164,6 +166,8 @@ unfolds `ι` into `mkAlgHom` applied to the tensor algebra generator. -/
 theorem counit_ι (x : L) :
     (Coalgebra.counit (R := R))
       (_root_.UniversalEnvelopingAlgebra.mkAlgHom R L (TensorAlgebra.ι R x)) = 0 := by
+  -- `Coalgebra.counit` hides the inferred bialgebra instance, so expose its projection before
+  -- unfolding the concrete `instBialgebra` construction below.
   change (instBialgebra R L).toCoalgebra.toCoalgebraStruct.counit
     (_root_.UniversalEnvelopingAlgebra.mkAlgHom R L (TensorAlgebra.ι R x)) = 0
   dsimp only [instBialgebra, Bialgebra.toCoalgebra, Coalgebra.toCoalgebraStruct,
