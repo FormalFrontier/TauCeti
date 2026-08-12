@@ -393,14 +393,31 @@ theorem exists_isBounded_image_realWindingIntegrand_of_lipschitzOnWith_derivWith
 closed window ending or starting at `t`, on each side (a `KR`/`εR`-window to the right, a
 `KL`/`εL`-window to the left) — the two sides need not agree, so `t` may coincide with a
 breakpoint of the immersion. Packages the hypotheses of
-`exists_isBounded_image_realWindingIntegrand_of_lipschitzOnWith_derivWithin_corner` above. -/
-abbrev HasLipschitzDerivOnEachSideAt (γ : ℝ → ℂ) (t : ℝ) : Prop :=
+`exists_isBounded_image_realWindingIntegrand_of_lipschitzOnWith_derivWithin_corner` above. An
+opaque `def`, not an `abbrev`: consumers destructure it via
+`HasLipschitzDerivOnEachSideAt.exists_lipschitzOnWith` below rather than unfolding it directly. -/
+def HasLipschitzDerivOnEachSideAt (γ : ℝ → ℂ) (t : ℝ) : Prop :=
   ∃ εR > 0, ∃ KR : ℝ≥0,
     DifferentiableOn ℝ γ (Icc t (t + εR)) ∧ LipschitzOnWith KR (derivWithin γ (Icc t (t + εR)))
       (Icc t (t + εR)) ∧
     ∃ εL > 0, ∃ KL : ℝ≥0,
     DifferentiableOn ℝ γ (Icc (t - εL) t) ∧ LipschitzOnWith KL (derivWithin γ (Icc (t - εL) t))
       (Icc (t - εL) t)
+
+/-- **Eliminating `HasLipschitzDerivOnEachSideAt` into its one-sided witnesses.** The
+characteristic destructor for the opaque `def` above: exposes the `εR`/`KR`-window to the right
+and the `εL`/`KL`-window to the left as a plain nested existential, for a caller (e.g. via
+`choose!`) that needs to name the witnesses rather than only invoke the corner boundedness result
+directly. -/
+theorem HasLipschitzDerivOnEachSideAt.exists_lipschitzOnWith {γ : ℝ → ℂ} {t : ℝ}
+    (h : HasLipschitzDerivOnEachSideAt γ t) :
+    ∃ εR > 0, ∃ KR : ℝ≥0,
+      DifferentiableOn ℝ γ (Icc t (t + εR)) ∧ LipschitzOnWith KR (derivWithin γ (Icc t (t + εR)))
+        (Icc t (t + εR)) ∧
+      ∃ εL > 0, ∃ KL : ℝ≥0,
+      DifferentiableOn ℝ γ (Icc (t - εL) t) ∧ LipschitzOnWith KL (derivWithin γ (Icc (t - εL) t))
+        (Icc (t - εL) t) :=
+  h
 
 /-- **Introducing `HasLipschitzDerivOnEachSideAt` from one-sided `C^{1,1}` data on arbitrary
 pieces.** If `γ` is differentiable with Lipschitz `derivWithin` on `[c, t]` and on `[t, d]`, `t`

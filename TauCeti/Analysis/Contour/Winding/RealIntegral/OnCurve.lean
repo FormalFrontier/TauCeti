@@ -216,7 +216,7 @@ private theorem isBounded_intervalIntegrable_cauchyPV_of_interior_crossings
   -- each side already buys on a (possibly smaller) one-sided window. Each side's forced non-zero
   -- velocity is not assumed here -- `IsPwC1ImmersionOn` already forces it.
   choose! εR hεR_pos _ hdiffR hlipR εL hεL_pos _ hdiffL hlipL using fun t₀ (ht₀ : t₀ ∈ T) =>
-    hγ_lip t₀ (hT_mem.mp ht₀).1 (hT_mem.mp ht₀).2
+    (hγ_lip t₀ (hT_mem.mp ht₀).1 (hT_mem.mp ht₀).2).exists_lipschitzOnWith
   have h_Ico : ∀ t ∈ T, t ∈ Ico (min a b) (max a b) := fun t ht => by
     rw [min_eq_left hab.le, max_eq_right hab.le]; exact ⟨(h_Ioo t ht).1.le, (h_Ioo t ht).2⟩
   have h_Ioc : ∀ t ∈ T, t ∈ Ioc (min a b) (max a b) := fun t ht => by
