@@ -110,6 +110,7 @@ theorem euclideanHalfSpaceBoundaryProj_apply {n : ℕ}
     euclideanHalfSpaceBoundaryProj n x i = x i.succ :=
   by
     rw [euclideanHalfSpaceBoundaryProj, ContinuousLinearMap.comp_apply]
+    -- `comp_apply` leaves the bundled first projection; expose its product application.
     change ((euclideanHalfSpaceBoundaryNormalEquiv n).symm x).1 i = x i.succ
     rw [← euclideanHalfSpaceBoundaryNormalEquiv_apply_succ n
       ((euclideanHalfSpaceBoundaryNormalEquiv n).symm x).1

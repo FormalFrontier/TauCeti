@@ -228,10 +228,4 @@ def collarHomeomorph (n : ℕ) :
     (EuclideanSpace ℝ (Fin n) × EuclideanHalfSpace 1) ≃ₜ EuclideanHalfSpace (n + 1) :=
   (collarDiffeomorph (k := ∞) n).toHomeomorph
 
-/-- The collar homeomorphism is the underlying homeomorphism of the smooth collar. -/
-@[simp]
-theorem collarHomeomorph_eq (n : ℕ) :
-    collarHomeomorph n = (collarDiffeomorph (k := ∞) n).toHomeomorph :=
-  by ext p; rfl
-
 end TauCeti.EuclideanHalfSpace
