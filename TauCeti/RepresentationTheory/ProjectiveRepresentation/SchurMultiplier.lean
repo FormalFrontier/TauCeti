@@ -183,8 +183,10 @@ theorem IsProjectiveRep.cohomologyClass_def (h : IsProjectiveRep ρ α) :
     h.cohomologyClass = h.factorSet.cohomologyClass :=
   (rfl)
 
-/-- The class of a projective representation depends on the lift only through its factor set. -/
-theorem IsProjectiveRep.cohomologyClass_congr {ρ₁ ρ₂ : G → V ≃ₗ[k] V} {α₁ α₂ : G → G → kˣ}
+/-- The class of a projective representation depends on the lift only through its factor set — not
+even through the module it acts on. -/
+theorem IsProjectiveRep.cohomologyClass_congr {W : Type*} [AddCommMonoid W] [Module k W]
+    {ρ₁ : G → V ≃ₗ[k] V} {ρ₂ : G → W ≃ₗ[k] W} {α₁ α₂ : G → G → kˣ}
     (h₁ : IsProjectiveRep ρ₁ α₁) (h₂ : IsProjectiveRep ρ₂ α₂) (hα : α₁ = α₂) :
     h₁.cohomologyClass = h₂.cohomologyClass := by
   subst hα
@@ -266,9 +268,8 @@ theorem IsProjectiveRep.exists_monoidHom_of_cohomologyClass_eq_zero (h : IsProje
   refine LinearEquiv.ext fun v ↦ ?_
   have hg : hrs.toMonoidHom g = (ρ g).trans (LinearEquiv.smulOfUnit (x g)⁻¹) :=
     congrFun hrs.coe_toMonoidHom g
-  rw [LinearEquiv.trans_apply, hg, LinearEquiv.smulOfUnit_apply, LinearEquiv.trans_apply,
-    LinearEquiv.smulOfUnit_apply, smul_smul, ← Units.val_mul, mul_inv_cancel, Units.val_one,
-    one_smul]
+  -- rescaling by `(x g)⁻¹` and then by `x g` multiplies by `↑(x g) * ↑(x g)⁻¹ = 1`
+  simp [hg, smul_smul]
 
 /-- **A linear representation rescaled by scalars has vanishing class.** Faithfulness is what makes
 the factor set of the rescaled lift *be* the coboundary of `c`, rather than merely some factor set
