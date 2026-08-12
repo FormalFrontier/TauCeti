@@ -8,7 +8,6 @@ public import Mathlib.Algebra.CharP.IntermediateField
 public import Mathlib.FieldTheory.Finite.GaloisField
 public import Mathlib.FieldTheory.IntermediateField.Adjoin.Basic
 public import Mathlib.FieldTheory.IsAlgClosed.Basic
-public import TauCeti.FieldTheory.Finite.FrobeniusFixed
 
 /-!
 # The finite subfields cut out by the Frobenius
@@ -29,7 +28,7 @@ every element of `K` lies in one of them.
   `p ^ n`-power Frobenius has `p ^ n` elements.
 * `TauCeti.frobeniusFixedFieldRingEquivGaloisField`: it is therefore isomorphic to Mathlib's
   `GaloisField p n`.
-* `TauCeti.frobeniusFixedField_one`: the Frobenius itself fixes exactly the prime field.
+* `TauCeti.frobeniusFixedField_one`: the Frobenius itself fixes exactly the prime subfield `⊥`.
 * `TauCeti.eq_frobeniusFixedField_of_card`: conversely a subfield with `p ^ n` elements is that
   fixed subfield, so it is the only one of its order.
 * `TauCeti.frobeniusFixedField_le_iff`: the fixed subfields are ordered by divisibility of the
@@ -114,17 +113,14 @@ end ExpChar
 
 section PrimeField
 
-variable [Fact p.Prime] [CharP K p] [Algebra (ZMod p) K]
+variable [Fact p.Prime] [CharP K p]
 
-/-- **The Frobenius itself fixes exactly the prime field.** Together with
-`TauCeti.frobeniusFixedField_mono` this puts the prime field inside every fixed subfield. -/
-theorem frobeniusFixedField_one :
-    frobeniusFixedField K p 1 = (algebraMap (ZMod p) K).fieldRange := by
+/-- **The Frobenius itself fixes exactly the prime subfield.** Together with
+`TauCeti.frobeniusFixedField_mono` this puts the prime subfield inside every fixed subfield. -/
+@[simp]
+theorem frobeniusFixedField_one : frobeniusFixedField K p 1 = ⊥ := by
   ext x
-  have hx := FiniteField.pow_card_eq_self_iff_mem_range_algebraMap (K := ZMod p) (L := K) x
-  rw [ZMod.card p] at hx
-  rw [mem_frobeniusFixedField, pow_one, hx, RingHom.mem_fieldRange]
-  exact Set.mem_range
+  rw [mem_frobeniusFixedField, pow_one, Subfield.mem_bot_iff_pow_eq_self K p]
 
 end PrimeField
 
