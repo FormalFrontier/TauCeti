@@ -187,14 +187,14 @@ private theorem norm_sq_eq_norm_value_sq_add_norm_gradient_sq_ambient
   rw [WithLp.prod_inner_apply, WithLp.ofLp_fst, WithLp.ofLp_snd, ← hvalue, ← hgradient]
 
 /-- The candidate weak Fréchet derivative recorded by the gradient component of a Sobolev jet. -/
-def Sobolev1JetLp.weakFDeriv (J : Sobolev1JetLp mu Omega p) : E → E →L[ℝ] ℝ :=
+def Sobolev1JetLp.candidateWeakFDeriv (J : Sobolev1JetLp mu Omega p) : E → E →L[ℝ] ℝ :=
   fun x => innerSL ℝ (Sobolev1JetLp.gradient J x)
 
 omit [FiniteDimensional ℝ E] [BorelSpace E] [mu.IsAddHaarMeasure] in
 @[simp]
-theorem Sobolev1JetLp.weakFDeriv_apply (J : Sobolev1JetLp mu Omega p) (x v : E) :
-    Sobolev1JetLp.weakFDeriv J x v = ⟪v, Sobolev1JetLp.gradient J x⟫_ℝ := by
-  rw [Sobolev1JetLp.weakFDeriv, innerSL_apply_apply, real_inner_comm]
+theorem Sobolev1JetLp.candidateWeakFDeriv_apply (J : Sobolev1JetLp mu Omega p) (x v : E) :
+    Sobolev1JetLp.candidateWeakFDeriv J x v = ⟪v, Sobolev1JetLp.gradient J x⟫_ℝ := by
+  rw [Sobolev1JetLp.candidateWeakFDeriv, innerSL_apply_apply, real_inner_comm]
 
 private def weakDerivativeTestFunction (phi : 𝓓(Omega, ℝ)) (v : E) (x : E) :
     Sobolev1Jet E :=
@@ -269,7 +269,7 @@ private theorem weakDerivativeTestFunctional_apply (J : Sobolev1JetLp mu Omega p
     (phi : 𝓓(Omega, ℝ)) (v : E) :
     weakDerivativeTestFunctional (mu := mu) p phi v J =
       ∫ x in Omega, (lineDeriv ℝ (phi : E → ℝ) x v * Sobolev1JetLp.value J x +
-        phi x * Sobolev1JetLp.weakFDeriv J x v) ∂mu := by
+        phi x * Sobolev1JetLp.candidateWeakFDeriv J x v) ∂mu := by
   let _ : (ENNReal.conjExponent p).HolderConjugate p := ENNReal.HolderConjugate.symm
   let _ : Fact (1 <= ENNReal.conjExponent p) :=
     ⟨ENNReal.HolderConjugate.one_le _ p⟩
@@ -281,7 +281,7 @@ private theorem weakDerivativeTestFunctional_apply (J : Sobolev1JetLp mu Omega p
   filter_upwards [weakDerivativeTestJet_apply_ae (mu := mu) p phi v,
     Sobolev1JetLp.value_apply_ae J, Sobolev1JetLp.gradient_apply_ae J] with x htest hvalue hgradient
   rw [htest, innerSL_apply_apply, WithLp.prod_inner_apply,
-    Sobolev1JetLp.weakFDeriv_apply, hvalue, hgradient]
+    Sobolev1JetLp.candidateWeakFDeriv_apply, hvalue, hgradient]
   simp only [WithLp.ofLp_fst, RCLike.inner_apply, conj_trivial, WithLp.ofLp_snd,
     add_right_inj]
   rw [inner_smul_right, real_inner_comm]
@@ -299,7 +299,7 @@ theorem mem_w1pSubmodule_iff (J : Sobolev1JetLp mu Omega p) :
     J ∈ w1pSubmodule mu Omega p ↔
       ∀ (phi : 𝓓(Omega, ℝ)) (v : E),
         ∫ x in Omega, (lineDeriv ℝ (phi : E → ℝ) x v * Sobolev1JetLp.value J x +
-          phi x * Sobolev1JetLp.weakFDeriv J x v) ∂mu = 0 := by
+          phi x * Sobolev1JetLp.candidateWeakFDeriv J x v) ∂mu = 0 := by
   -- Pass through the private kernel presentation once, keeping it out of the public statement.
   rw [show J ∈ w1pSubmodule mu Omega p ↔
       ∀ (phi : 𝓓(Omega, ℝ)) (v : E),
@@ -336,17 +336,17 @@ its weak Fréchet derivative. -/
 theorem mem_w1pSubmodule_iff_hasWeakFDerivOn (J : Sobolev1JetLp mu Omega p) :
     J ∈ w1pSubmodule mu Omega p ↔
       HasWeakFDerivOn mu Omega (Sobolev1JetLp.value J)
-        (Sobolev1JetLp.weakFDeriv J) := by
+        (Sobolev1JetLp.candidateWeakFDeriv J) := by
   have hvalue : LocallyIntegrableOn (Sobolev1JetLp.value J) Omega mu :=
     locallyIntegrableOn_of_locallyIntegrable_restrict
       ((Lp.memLp (Sobolev1JetLp.value J)).locallyIntegrable Fact.out)
   have hderiv (v : E) : LocallyIntegrableOn
-      (fun x => Sobolev1JetLp.weakFDeriv J x v) Omega mu := by
+      (fun x => Sobolev1JetLp.candidateWeakFDeriv J x v) Omega mu := by
     apply locallyIntegrableOn_of_locallyIntegrable_restrict
     have hinner := (Lp.memLp (Sobolev1JetLp.gradient J)).const_inner (𝕜 := ℝ) v
     exact (hinner.locallyIntegrable Fact.out).congr <| by
       filter_upwards with x
-      simp only [Sobolev1JetLp.weakFDeriv_apply]
+      simp only [Sobolev1JetLp.candidateWeakFDeriv_apply]
   rw [mem_w1pSubmodule_iff]
   constructor
   · intro h
@@ -432,7 +432,7 @@ def W1p.mk (u : Lp ℝ p (mu.restrict Omega)) (g : Lp E p (mu.restrict Omega))
     rw [value_assembleSobolev1JetLp]
     convert h using 1
     funext x
-    rw [Sobolev1JetLp.weakFDeriv, gradient_assembleSobolev1JetLp])⟩
+    rw [Sobolev1JetLp.candidateWeakFDeriv, gradient_assembleSobolev1JetLp])⟩
 
 @[simp]
 theorem W1p.value_mk (u : Lp ℝ p (mu.restrict Omega)) (g : Lp E p (mu.restrict Omega))
