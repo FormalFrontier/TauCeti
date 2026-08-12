@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.LinearAlgebra.RootSystem.Finite.G2
+public import TauCeti.LinearAlgebra.RootSystem.Classification
 public import TauCeti.LinearAlgebra.RootSystem.FiniteType.Basic
 
 public section
@@ -18,14 +19,15 @@ indecomposable finite-type matrix on two indices is, after a single simultaneous
 rows and columns, exactly one of the three standard rank-two Cartan matrices `A₂`, `B₂`, `G₂`, and
 on one index it is `A₁`.
 
-The whole argument turns on one invariant. The **Cartan product** `AᵢⱼAⱼᵢ` of the two nodes is
+Producing the type turns on one invariant. The **Cartan product** `AᵢⱼAⱼᵢ` of the two nodes is
 unchanged by relabelling, is at least `1` because the diagram is connected, and is at most `3`
 because the matrix is of finite type (`TauCeti.IsFiniteType.apply_mul_apply_mem_of_ne`). Its three
 possible values `1`, `2`, `3` separate the three types, and each value pins the pair of off-diagonal
 entries to `(-1, -1)`, to `(-1, -2)` and to `(-1, -3)` respectively. What is left to the
 relabelling is then only the *orientation* of the multiple edge, which is what
 `TauCeti.HasCartanType` records and why the equivalence produced below is not always the one the
-ambient indexing suggests.
+ambient indexing suggests. That the type so produced is the only valid one is not proved here: it is
+`TauCeti.DynkinType.eq_of_valid_of_forall_eq`, which says that of any rank.
 
 Two remarks on what the statements say. First, `C 2` is absent from the list, and must be: it is the
 transpose of `B 2` and names the same root system, so `TauCeti.DynkinType.Valid` keeps only the name
@@ -232,42 +234,11 @@ theorem existsUnique_dynkinType_of_card_eq_two (h : IsFiniteType A) (hcard : Fin
         rw [DynkinType.cartanMatrix_G2_eq]
         exact h.forall_eq_of_apply_offDiag e₁ (by decide) (by rw [he₁0, he₁1, h10]; decide)
           (by rw [he₁0, he₁1, hc]; decide)
-  -- Uniqueness: each candidate type forces its own value of the Cartan product, and the three
-  -- values are distinct.
-  have key : ∀ u : DynkinType, u = .A 2 ∨ u = .B 2 ∨ u = .G2 →
-      ∀ eu : B ≃ Fin u.rank, (∀ i j, A i j = u.cartanMatrix (eu i) (eu j)) →
-        (A x y * A y x = 1 → u = .A 2) ∧ (A x y * A y x = 2 → u = .B 2) ∧
-          (A x y * A y x = 3 → u = .G2) := by
-    rintro u (rfl | rfl | rfl) eu heu
-    · have heu' : ∀ i j, A i j = (!![2, -1; -1, 2] : Matrix (Fin 2) (Fin 2) ℤ) (eu i) (eu j) :=
-        fun i j ↦ by rw [heu i j, DynkinType.cartanMatrix_A_two_eq]
-      have hval : A x y * A y x = 1 :=
-        (Matrix.mul_apply_mul_apply_eq_of_equiv_fin_two eu heu' hxy).trans (by decide)
-      exact ⟨fun _ ↦ rfl, fun hc ↦ by omega, fun hc ↦ by omega⟩
-    · have heu' : ∀ i j, A i j = (!![2, -2; -1, 2] : Matrix (Fin 2) (Fin 2) ℤ) (eu i) (eu j) :=
-        fun i j ↦ by rw [heu i j, DynkinType.cartanMatrix_B_two_eq]
-      have hval : A x y * A y x = 2 :=
-        (Matrix.mul_apply_mul_apply_eq_of_equiv_fin_two eu heu' hxy).trans (by decide)
-      exact ⟨fun hc ↦ by omega, fun _ ↦ rfl, fun hc ↦ by omega⟩
-    · have heu' : ∀ i j, A i j = (!![2, -1; -3, 2] : Matrix (Fin 2) (Fin 2) ℤ) (eu i) (eu j) :=
-        fun i j ↦ by rw [heu i j, DynkinType.cartanMatrix_G2_eq]
-      have hval : A x y * A y x = 3 :=
-        (Matrix.mul_apply_mul_apply_eq_of_equiv_fin_two eu heu' hxy).trans (by decide)
-      exact ⟨fun hc ↦ by omega, fun hc ↦ by omega, fun _ ↦ rfl⟩
+  -- Uniqueness is the general fact that a matrix has at most one valid Dynkin type.
   obtain ⟨t, ht, et, het⟩ := hex
-  refine ⟨t, ⟨by rcases ht with rfl | rfl | rfl <;> simp, et, het⟩, ?_⟩
-  rintro s ⟨hsv, es, hes⟩
-  have hsr : s.rank = 2 := by
-    have hc := Fintype.card_congr es
-    simpa [hcard] using hc.symm
-  have hs : s = .A 2 ∨ s = .B 2 ∨ s = .G2 := DynkinType.valid_and_rank_eq_two_iff.mp ⟨hsv, hsr⟩
-  have hks := key s hs es hes
-  have hkt := key t ht et het
-  have hcases : A x y * A y x = 1 ∨ A x y * A y x = 2 ∨ A x y * A y x = 3 := by omega
-  rcases hcases with hp | hp | hp
-  · exact (hks.1 hp).trans (hkt.1 hp).symm
-  · exact (hks.2.1 hp).trans (hkt.2.1 hp).symm
-  · exact (hks.2.2 hp).trans (hkt.2.2 hp).symm
+  have htv : t.Valid := by rcases ht with rfl | rfl | rfl <;> simp
+  exact ⟨t, ⟨htv, et, het⟩, fun s ⟨hsv, es, hes⟩ ↦
+    DynkinType.eq_of_valid_of_forall_eq hsv htv es et hes het⟩
 
 end IsFiniteType
 
@@ -278,28 +249,14 @@ theorem existsUnique_dynkinType_of_card_eq_one {B : Type*} [Fintype B] {A : Matr
     (hdiag : ∀ i, A i i = 2) (hcard : Fintype.card B = 1) :
     ∃! t : DynkinType, t.Valid ∧
       ∃ e : B ≃ Fin t.rank, ∀ i j, A i j = t.cartanMatrix (e i) (e j) := by
-  classical
-  set e₀ : B ≃ Fin 1 := Fintype.equivFinOfCardEq hcard
-  refine ⟨.A 1, ⟨by simp, e₀, fun i j ↦ ?_⟩, ?_⟩
-  · have hij : i = j := e₀.injective (Subsingleton.elim _ _)
-    subst hij
-    rw [DynkinType.cartanMatrix_apply_same, hdiag]
-  · rintro s ⟨hsv, es, -⟩
-    have hsr : s.rank = 1 := by
-      have hc := Fintype.card_congr es
-      simpa [hcard] using hc.symm
-    cases s with
-    | A n => rw [DynkinType.rank_A] at hsr; subst hsr; rfl
-    | B n =>
-        rw [DynkinType.rank_B] at hsr; subst hsr
-        exact absurd (DynkinType.valid_B.mp hsv) (by omega)
-    | C n =>
-        rw [DynkinType.rank_C] at hsr; subst hsr
-        exact absurd (DynkinType.valid_C.mp hsv) (by omega)
-    | D n =>
-        rw [DynkinType.rank_D] at hsr; subst hsr
-        exact absurd (DynkinType.valid_D.mp hsv) (by omega)
-    | _ => simp at hsr
+  have hsub : Subsingleton B := Fintype.card_le_one_iff_subsingleton.mp hcard.le
+  obtain ⟨e₀, he₀⟩ : ∃ e : B ≃ Fin (DynkinType.A 1).rank,
+      ∀ i j, A i j = (DynkinType.A 1).cartanMatrix (e i) (e j) := by
+    refine ⟨Fintype.equivFinOfCardEq hcard, fun i j ↦ ?_⟩
+    rw [Subsingleton.elim i j, DynkinType.cartanMatrix_apply_same, hdiag]
+  -- Uniqueness is the general fact that a matrix has at most one valid Dynkin type.
+  exact ⟨.A 1, ⟨by simp, e₀, he₀⟩, fun s ⟨hsv, es, hes⟩ ↦
+    DynkinType.eq_of_valid_of_forall_eq hsv (by simp) es e₀ hes he₀⟩
 
 /-! ### The classification of root systems of rank at most two -/
 
