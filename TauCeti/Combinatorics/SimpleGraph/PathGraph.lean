@@ -102,8 +102,7 @@ private lemma forall_mem_support_of_degree_le_two [Fintype V] [DecidableRel G.Ad
   have hcard : (insert b (p.toSubgraph.neighborSet a)).ncard = 3 := by
     rw [Set.ncard_insert_of_notMem hbnot, hpath]
   have hdeg' : (G.neighborSet a).ncard = G.degree a := by
-    rw [Set.ncard_eq_toFinset_card']
-    rfl
+    rw [← Set.fintypeCard_eq_ncard, card_neighborSet_eq_degree]
   have hda := hdeg a
   omega
 
