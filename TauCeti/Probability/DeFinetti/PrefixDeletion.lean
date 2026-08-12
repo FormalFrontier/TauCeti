@@ -153,12 +153,8 @@ private lemma pair_law_eq_of_contractable [IsFiniteMeasure μ]
   have hX_ae : ∀ i, AEMeasurable (X i) μ := fun i => (hX i).aemeasurable
   -- Reindexing a contractable process by a strictly increasing map preserves the path law.
   have hreindex : ∀ φ : ℕ → ℕ, StrictMono φ →
-      μ.map (fun ω (i : ℕ) => X (φ i) ω) = pathLaw μ X := by
-    intro φ hφ
-    calc μ.map (fun ω (i : ℕ) => X (φ i) ω)
-        = (pathLaw μ X).map (fun x : ℕ → α => fun i => x (φ i)) :=
-          (map_reindex_pathLaw μ hX_ae φ).symm
-      _ = pathLaw μ X := (hContr.measurePreserving_reindex hX_ae hφ).map_eq
+      μ.map (fun ω (i : ℕ) => X (φ i) ω) = pathLaw μ X :=
+    fun φ hφ => hContr.map_reindex_pathLaw_eq hX_ae hφ
   -- Measurability of the building blocks.
   have hU_meas : Measurable U := measurable_pi_lambda _ fun i => hX i.val
   have hW_meas : Measurable W := measurable_processShift fun n => hX (m + 1 + n)
