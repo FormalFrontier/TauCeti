@@ -34,9 +34,9 @@ only through strands. The middle-loop count itself is not built here.
 
 Relabelling moves the arcs of a diagram around but does not change their kinds, so it preserves
 the numbers of caps, of cups and of through strands
-(`TauCeti.BrauerDiagram.bottomCap_relabel` and its companions). Stacking with a permutation
-diagram therefore leaves those numbers alone as well; the number of through strands is the
-statistic that stratifies the Brauer algebra, and it is constant on each `Sₖ × Sₖ` orbit.
+(`TauCeti.BrauerDiagram.bottomCap_relabel` and its companions). The number of through strands is
+the statistic that stratifies the Brauer algebra, so it is constant on each `Sₖ × Sₖ` orbit, and
+by the two stacking identities above it is unchanged by stacking a permutation diagram.
 
 ## Main definitions
 
@@ -55,9 +55,10 @@ statistic that stratifies the Brauer algebra, and it is constant on each `Sₖ �
   for stacking.
 * `TauCeti.BrauerDiagram.relabel_relabel`: relabelling twice is relabelling by the product, so
   `Sₖ × Sₖ` acts on the Brauer diagrams.
-* `TauCeti.BrauerDiagram.bottomCap_relabel`, `TauCeti.BrauerDiagram.topCup_relabel` and
-  `TauCeti.BrauerDiagram.bottomThrough_relabel`: relabelling permutes the capped, cupped and
-  through boundary points, so it preserves their numbers.
+* `TauCeti.BrauerDiagram.bottomCap_relabel`, `TauCeti.BrauerDiagram.topCup_relabel`,
+  `TauCeti.BrauerDiagram.bottomThrough_relabel` and `TauCeti.BrauerDiagram.topThrough_relabel`:
+  relabelling permutes the capped, cupped and through boundary points, so it preserves their
+  numbers.
 
 ## References
 
@@ -93,12 +94,16 @@ theorem relabel_val_map (x : Fin k ⊕ Fin k) :
   rw [relabel_def]
   exact PerfectMatching.congr_val_apply_apply (Equiv.Perm.sumCongr σ τ) D x
 
+/-- The arc of a relabelled diagram at the bottom point `i` is the renamed arc at the bottom point
+`σ.symm i` that `i` was renamed from. -/
 @[simp]
 theorem relabel_val_inl (i : Fin k) :
     (D.relabel σ τ).val (Sum.inl i) = Sum.map σ τ (D.val (Sum.inl (σ.symm i))) := by
   have h := relabel_val_map D σ τ (Sum.inl (σ.symm i))
   rwa [Sum.map_inl, Equiv.apply_symm_apply] at h
 
+/-- The arc of a relabelled diagram at the top point `j` is the renamed arc at the top point
+`τ.symm j` that `j` was renamed from. -/
 @[simp]
 theorem relabel_val_inr (j : Fin k) :
     (D.relabel σ τ).val (Sum.inr j) = Sum.map σ τ (D.val (Sum.inr (τ.symm j))) := by
@@ -118,11 +123,6 @@ theorem relabel_relabel (σ' τ' : Equiv.Perm (Fin k)) :
   rw [relabel_def, relabel_def, relabel_def, PerfectMatching.congr_trans,
     Equiv.Perm.sumCongr_trans]
   rfl
-
-/-- Relabelling is injective: relabelling back by the inverses recovers the diagram. -/
-theorem relabel_injective : Function.Injective fun D : BrauerDiagram k => D.relabel σ τ :=
-  fun _ _ h => by
-    simpa [relabel_relabel] using congrArg (fun D : BrauerDiagram k => D.relabel σ⁻¹ τ⁻¹) h
 
 /-- **Relabelling a permutation diagram** conjugates the permutation: renaming the bottom points
 by `σ` and the top points by `τ` turns the strand `i ↦ ρ i` into the strand `σ i ↦ τ (ρ i)`. -/
@@ -190,6 +190,15 @@ theorem bottomThrough_relabel : (D.relabel σ τ).bottomThrough = D.bottomThroug
   · rintro ⟨i', hi', rfl⟩
     exact (isThrough_relabel_inl D σ τ i').mpr ((mem_bottomThrough _).mp hi')
 
+/-- The top endpoints of the through strands of a relabelled diagram are the renamed ones. -/
+theorem topThrough_relabel : (D.relabel σ τ).topThrough = D.topThrough.image τ := by
+  ext j
+  rw [mem_topThrough, Finset.mem_image]
+  refine ⟨fun hj => ⟨τ.symm j, (mem_topThrough _).mpr ?_, τ.apply_symm_apply j⟩, ?_⟩
+  · rwa [← isThrough_relabel_inr D σ τ (τ.symm j), Equiv.apply_symm_apply]
+  · rintro ⟨j', hj', rfl⟩
+    exact (isThrough_relabel_inr D σ τ j').mpr ((mem_topThrough _).mp hj')
+
 /-- Relabelling does not change the number of caps. -/
 @[simp]
 theorem card_bottomCap_relabel : (D.relabel σ τ).bottomCap.card = D.bottomCap.card := by
@@ -205,6 +214,11 @@ theorem card_topCup_relabel : (D.relabel σ τ).topCup.card = D.topCup.card := b
 theorem card_bottomThrough_relabel :
     (D.relabel σ τ).bottomThrough.card = D.bottomThrough.card := by
   rw [bottomThrough_relabel, Finset.card_image_of_injective _ σ.injective]
+
+/-- Relabelling does not change the number of through strands, counted at the top. -/
+@[simp]
+theorem card_topThrough_relabel : (D.relabel σ τ).topThrough.card = D.topThrough.card := by
+  rw [topThrough_relabel, Finset.card_image_of_injective _ τ.injective]
 
 end BrauerDiagram
 
@@ -274,25 +288,5 @@ theorem composeDiagram_permToBrauer_one_left : composeDiagram (permToBrauer 1) D
 @[simp]
 theorem composeDiagram_permToBrauer_one_right : composeDiagram D (permToBrauer 1) = D := by
   rw [composeDiagram_permToBrauer_right, inv_one, BrauerDiagram.relabel_one_one]
-
-/-- Stacking a permutation diagram on top does not change the number of caps. -/
-theorem card_bottomCap_composeDiagram_permToBrauer_left :
-    (composeDiagram (permToBrauer σ) D).bottomCap.card = D.bottomCap.card := by
-  rw [composeDiagram_permToBrauer_left, BrauerDiagram.card_bottomCap_relabel]
-
-/-- Stacking a permutation diagram underneath does not change the number of caps. -/
-theorem card_bottomCap_composeDiagram_permToBrauer_right :
-    (composeDiagram D (permToBrauer τ)).bottomCap.card = D.bottomCap.card := by
-  rw [composeDiagram_permToBrauer_right, BrauerDiagram.card_bottomCap_relabel]
-
-/-- Stacking a permutation diagram on top does not change the number of cups. -/
-theorem card_topCup_composeDiagram_permToBrauer_left :
-    (composeDiagram (permToBrauer σ) D).topCup.card = D.topCup.card := by
-  rw [composeDiagram_permToBrauer_left, BrauerDiagram.card_topCup_relabel]
-
-/-- Stacking a permutation diagram underneath does not change the number of cups. -/
-theorem card_topCup_composeDiagram_permToBrauer_right :
-    (composeDiagram D (permToBrauer τ)).topCup.card = D.topCup.card := by
-  rw [composeDiagram_permToBrauer_right, BrauerDiagram.card_topCup_relabel]
 
 end TauCeti

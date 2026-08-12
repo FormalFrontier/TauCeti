@@ -247,6 +247,7 @@ joining `a` to `b` becomes the arc joining `e a` to `e b`. -/
 def congr (e : α ≃ β) : PerfectMatching α ≃ PerfectMatching β :=
   e.permCongr.subtypeEquiv fun _ => (isPerfectMatching_permCongr_iff e).symm
 
+/-- The involution underlying a transported matching is the transported involution. -/
 @[simp]
 theorem congr_val (e : α ≃ β) (D : PerfectMatching α) :
     (congr e D).val = e.permCongr D.val := (rfl)
@@ -260,17 +261,25 @@ theorem congr_val_apply_apply (e : α ≃ β) (D : PerfectMatching α) (a : α) 
     (congr e D).val (e a) = e (D.val a) := by
   rw [congr_val_apply, Equiv.symm_apply_apply]
 
+/-- Transporting along the identity equivalence changes nothing. -/
 @[simp]
 theorem congr_refl (D : PerfectMatching α) : congr (Equiv.refl α) D = D :=
-  Subtype.ext (Equiv.ext fun _ => rfl)
+  Subtype.ext <| Equiv.ext fun a => by
+    rw [congr_val_apply, Equiv.refl_symm, Equiv.refl_apply, Equiv.refl_apply]
 
+/-- **Transports compose**: transporting along `e` and then along `e'` is transporting along
+`e.trans e'`, both matchings sending `c` to `e' (e (D.val (e.symm (e'.symm c))))`. -/
 theorem congr_trans (e : α ≃ β) (e' : β ≃ γ) (D : PerfectMatching α) :
     congr e' (congr e D) = congr (e.trans e') D :=
-  Subtype.ext (Equiv.ext fun _ => rfl)
+  Subtype.ext <| Equiv.ext fun c => by
+    rw [congr_val_apply, congr_val_apply, congr_val_apply, Equiv.symm_trans_apply,
+      Equiv.trans_apply]
 
+/-- Transporting back along `e` is transporting along `e.symm`, since transports compose. -/
 @[simp]
 theorem congr_symm (e : α ≃ β) : (congr e).symm = congr e.symm :=
-  Equiv.ext fun _ => Subtype.ext (Equiv.ext fun _ => rfl)
+  Equiv.ext fun D => by
+    rw [Equiv.symm_apply_eq, congr_trans, Equiv.symm_trans_self, congr_refl]
 
 end Congr
 
