@@ -50,8 +50,8 @@ Schreier generators: after that elimination each rewrites to `u⁻¹u` or `uu⁻
 
 Thus the `66` off-diagonal Coxeter relators and two further relators yield `2 · (66 + 2) = 136`
 relators on eleven generators. `TauCeti.Sporadic.fi24PrimePresentation_matchesMetadata` checks
-this count, while `TauCeti.Sporadic.fi24AutomorphismRelators_even` checks that every source relator
-does lie in the index-two subgroup before the rewrite is applied.
+this count, while `TauCeti.Sporadic.even_length_of_mem_fi24AutomorphismRelators` checks that every
+source relator does lie in the index-two subgroup before the rewrite is applied.
 
 Nothing here asserts that the presented group is nontrivial, finite, simple, of any particular
 order, or isomorphic to another realization. Kim and Michler prove that the commutator subgroup of
@@ -136,6 +136,7 @@ theorem fi24AutomorphismCoxeterMatrix_apply (i j : Fin 12) :
   simp only [fi24AutomorphismCoxeterMatrix, Matrix.of_apply]
 
 /-- The source diagram has eleven edges. -/
+@[simp]
 theorem length_fi24AutomorphismEdges : fi24AutomorphismEdges.length = 11 := by decide
 
 /-- The `66` unordered pairs of distinct source generators. -/
@@ -233,30 +234,35 @@ theorem fi24AutomorphismRelators_def :
 
 /-- The source presentation has eighty relators: `78` Coxeter relators and two additional
 relators. -/
+@[simp]
 theorem length_fi24AutomorphismRelators : fi24AutomorphismRelators.length = 80 := by
   simp [fi24AutomorphismRelators, fi24AutomorphismAdditionalRelators]
   norm_num [Nat.choose]
 
 /-- The source word `a b c d e f h` has seven letters. -/
+@[simp]
 theorem length_fi24SourceEquationWord : fi24SourceEquationWord.toWord.length = 7 := by
   simp [fi24SourceEquationWord_def]
 
 /-- The source word `d c b a k l d e f g j d h i` has fourteen letters. -/
+@[simp]
 theorem length_fi24SourceLongWord : fi24SourceLongWord.toWord.length = 14 := by
   simp [fi24SourceLongWord_def]
 
 /-- The compiled source equation for `l` has `1 + 9 · 7 = 64` letters. -/
+@[simp]
 theorem length_fi24SourceEquationRelator : fi24SourceEquationRelator.toWord.length = 64 := by
   simp [fi24SourceEquationRelator_def, Relator.div, length_fi24SourceEquationWord]
 
 /-- The compiled final source relation has `17 · 14 = 238` letters. -/
+@[simp]
 theorem length_fi24SourceLongRelator : fi24SourceLongRelator.toWord.length = 238 := by
   simp [fi24SourceLongRelator_def, length_fi24SourceLongWord]
 
 /-- Every source relator has even length, so sending all twelve involutory generators to the
 nontrivial element of `C₂` kills every relation. This is the parity check needed before applying
 the index-two Reidemeister--Schreier rewrite. -/
-theorem fi24AutomorphismRelators_even :
+theorem even_length_of_mem_fi24AutomorphismRelators :
     ∀ r ∈ fi24AutomorphismRelators, Even r.toWord.length := by
   rintro r hr
   simp only [fi24AutomorphismRelators, List.mem_append] at hr
@@ -364,9 +370,11 @@ theorem fi24PrimeRelators_def :
 
 /-- The off-diagonal source relations consist of the sixty-six unordered pairs of distinct
 generators. -/
+@[simp]
 theorem length_fi24SourcePairRelators : fi24SourcePairRelators.length = 66 := by decide
 
 /-- The Reidemeister--Schreier presentation has `136` relators. -/
+@[simp]
 theorem length_fi24PrimeRelators : fi24PrimeRelators.length = 136 := by
   simp [fi24PrimeRelators_def, length_fi24SourcePairRelators,
     fi24AutomorphismAdditionalRelators_def]
