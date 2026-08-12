@@ -68,9 +68,10 @@ equivalences and their values, not their bare existence, that the Bott-periodici
   and the diagonal real quadratic form it weights.
 * `TauCeti.realCliffordFormNegIsometry`: the isometry from the negated `(p, q)` form to the
   `(q, p)` form, with coordinate equations `..._pos_of_neg` and `..._neg_of_pos`.
+* `TauCeti.realCliffordSplitIsometry`: the shared splitter into two standard signature blocks.
 * `TauCeti.realCliffordPositiveSplitIsometry`: the isometry which separates the last positive
   coordinate from a standard signature form.
-* `TauCeti.realBottSplitIsometry`: the two-coordinate specialization of the same private signature
+* `TauCeti.realBottSplitIsometry`: the two-coordinate specialization of the same signature
   splitter, separating a hyperbolic plane.
 * `TauCeti.realCliffordSignSwitchStandardIsometry`: the isometry which puts a sign-switched form
   with one positive line back into standard signature coordinates.
@@ -315,7 +316,8 @@ private theorem realCliffordSplitLinearEquiv_snd (p₁ p₂ q₁ q₂ : ℕ)
       x ((realCliffordSplitIndexEquiv p₁ p₂ q₁ q₂).symm (Sum.inr i)) := by
   simp [realCliffordSplitLinearEquiv]
 
-private def realCliffordSplitIsometry (p₁ p₂ q₁ q₂ : ℕ) :
+/-- Splits a standard real signature form into two standard signature blocks. -/
+def realCliffordSplitIsometry (p₁ p₂ q₁ q₂ : ℕ) :
     (realCliffordForm (p₁ + p₂) (q₁ + q₂)).IsometryEquiv
       ((realCliffordForm p₁ q₁).prod (realCliffordForm p₂ q₂)) :=
   { realCliffordSplitLinearEquiv p₁ p₂ q₁ q₂ with
@@ -339,6 +341,54 @@ private def realCliffordSplitIsometry (p₁ p₂ q₁ q₂ : ℕ) :
           · simp [y, realCliffordSplitLinearEquiv, realCliffordSplitWeight_inl]
           · simp [y, realCliffordSplitLinearEquiv, realCliffordSplitWeight_inr] }
 
+/-- The first output block receives the first positive-coordinate block. -/
+@[simp]
+theorem realCliffordSplitIsometry_fst_pos (p₁ p₂ q₁ q₂ : ℕ)
+    (x : Fin ((p₁ + p₂) + (q₁ + q₂)) → ℝ) (i : Fin p₁) :
+    (realCliffordSplitIsometry p₁ p₂ q₁ q₂ x).1 (Fin.castAdd q₁ i) =
+      x (Fin.castAdd (q₁ + q₂) (Fin.castAdd p₂ i)) := by
+  -- Expose the bundled isometry's underlying linear equivalence.
+  change (realCliffordSplitLinearEquiv p₁ p₂ q₁ q₂ x).1 _ = _
+  rw [realCliffordSplitLinearEquiv_fst, ← finSumFinEquiv_apply_left,
+    realCliffordSplitIndexEquiv_symm_inl_pos]
+  congr 1
+
+/-- The first output block receives the first negative-coordinate block. -/
+@[simp]
+theorem realCliffordSplitIsometry_fst_neg (p₁ p₂ q₁ q₂ : ℕ)
+    (x : Fin ((p₁ + p₂) + (q₁ + q₂)) → ℝ) (i : Fin q₁) :
+    (realCliffordSplitIsometry p₁ p₂ q₁ q₂ x).1 (Fin.natAdd p₁ i) =
+      x (Fin.natAdd (p₁ + p₂) (Fin.castAdd q₂ i)) := by
+  -- Expose the bundled isometry's underlying linear equivalence.
+  change (realCliffordSplitLinearEquiv p₁ p₂ q₁ q₂ x).1 _ = _
+  rw [realCliffordSplitLinearEquiv_fst, ← finSumFinEquiv_apply_right,
+    realCliffordSplitIndexEquiv_symm_inl_neg]
+  congr 1
+
+/-- The second output block receives the second positive-coordinate block. -/
+@[simp]
+theorem realCliffordSplitIsometry_snd_pos (p₁ p₂ q₁ q₂ : ℕ)
+    (x : Fin ((p₁ + p₂) + (q₁ + q₂)) → ℝ) (i : Fin p₂) :
+    (realCliffordSplitIsometry p₁ p₂ q₁ q₂ x).2 (Fin.castAdd q₂ i) =
+      x (Fin.castAdd (q₁ + q₂) (Fin.natAdd p₁ i)) := by
+  -- Expose the bundled isometry's underlying linear equivalence.
+  change (realCliffordSplitLinearEquiv p₁ p₂ q₁ q₂ x).2 _ = _
+  rw [realCliffordSplitLinearEquiv_snd, ← finSumFinEquiv_apply_left,
+    realCliffordSplitIndexEquiv_symm_inr_pos]
+  congr 1
+
+/-- The second output block receives the second negative-coordinate block. -/
+@[simp]
+theorem realCliffordSplitIsometry_snd_neg (p₁ p₂ q₁ q₂ : ℕ)
+    (x : Fin ((p₁ + p₂) + (q₁ + q₂)) → ℝ) (i : Fin q₂) :
+    (realCliffordSplitIsometry p₁ p₂ q₁ q₂ x).2 (Fin.natAdd p₂ i) =
+      x (Fin.natAdd (p₁ + p₂) (Fin.natAdd q₁ i)) := by
+  -- Expose the bundled isometry's underlying linear equivalence.
+  change (realCliffordSplitLinearEquiv p₁ p₂ q₁ q₂ x).2 _ = _
+  rw [realCliffordSplitLinearEquiv_snd, ← finSumFinEquiv_apply_right,
+    realCliffordSplitIndexEquiv_symm_inr_neg]
+  congr 1
+
 private def realCliffordOnePositiveIsometry :
     (realCliffordForm 1 0).IsometryEquiv (QuadraticMap.sq (R := ℝ) (A := ℝ)) :=
   { LinearEquiv.piUnique ℝ (fun _ : Fin 1 ↦ ℝ) with
@@ -361,10 +411,9 @@ theorem realCliffordPositiveSplitIsometry_fst_pos (p q : ℕ)
     (v : Fin ((p + 1) + q) → ℝ) (i : Fin p) :
     (realCliffordPositiveSplitIsometry p q v).1 (Fin.castAdd q i) =
       v (Fin.castAdd q i.castSucc) := by
-  -- Expose the private shared splitter underlying this bundled specialization.
-  change (realCliffordSplitLinearEquiv p 1 q 0 v).1 _ = _
-  rw [realCliffordSplitLinearEquiv_fst, ← finSumFinEquiv_apply_left,
-    realCliffordSplitIndexEquiv_symm_inl_pos]
+  -- Expose the shared splitter underlying this bundled specialization.
+  change (realCliffordSplitIsometry p 1 q 0 v).1 _ = _
+  rw [realCliffordSplitIsometry_fst_pos]
   congr 1
 
 /-- The negative coordinates retained by `realCliffordPositiveSplitIsometry`. -/
@@ -373,10 +422,9 @@ theorem realCliffordPositiveSplitIsometry_fst_neg (p q : ℕ)
     (v : Fin ((p + 1) + q) → ℝ) (i : Fin q) :
     (realCliffordPositiveSplitIsometry p q v).1 (Fin.natAdd p i) =
       v (Fin.natAdd (p + 1) i) := by
-  -- Expose the private shared splitter underlying this bundled specialization.
-  change (realCliffordSplitLinearEquiv p 1 q 0 v).1 _ = _
-  rw [realCliffordSplitLinearEquiv_fst, ← finSumFinEquiv_apply_right,
-    realCliffordSplitIndexEquiv_symm_inl_neg]
+  -- Expose the shared splitter underlying this bundled specialization.
+  change (realCliffordSplitIsometry p 1 q 0 v).1 _ = _
+  rw [realCliffordSplitIsometry_fst_neg]
   congr 1
 
 /-- The last positive coordinate extracted by `realCliffordPositiveSplitIsometry`. -/
@@ -385,14 +433,10 @@ theorem realCliffordPositiveSplitIsometry_snd (p q : ℕ)
     (v : Fin ((p + 1) + q) → ℝ) :
     (realCliffordPositiveSplitIsometry p q v).2 =
       v (Fin.castAdd q (Fin.last p)) := by
-  -- Expose the private shared splitter underlying this bundled specialization.
-  change (realCliffordSplitLinearEquiv p 1 q 0 v).2 0 = _
-  rw [realCliffordSplitLinearEquiv_snd]
-  -- Normalize the unique output coordinate to the named positive-block index.
-  change v ((realCliffordSplitIndexEquiv p 1 q 0).symm
-    (Sum.inr (finSumFinEquiv (Sum.inl (0 : Fin 1))))) = _
-  rw [realCliffordSplitIndexEquiv_symm_inr_pos]
-  congr 1
+  -- Expose the shared splitter underlying this bundled specialization.
+  change (realCliffordSplitIsometry p 1 q 0 v).2 0 = _
+  convert realCliffordSplitIsometry_snd_pos p 1 q 0 v (0 : Fin 1) using 1 <;>
+    congr
 
 /-- The coordinate isometry which separates the last positive and negative coordinates of the
 signature form as a hyperbolic plane. -/
@@ -407,10 +451,9 @@ theorem realBottSplitIsometry_fst_pos (p q : ℕ)
     (v : Fin ((p + 1) + (q + 1)) → ℝ) (i : Fin p) :
     (realBottSplitIsometry p q v).1 (Fin.castAdd q i) =
       v (Fin.castAdd (q + 1) i.castSucc) := by
-  -- Expose the private shared splitter underlying this bundled specialization.
-  change (realCliffordSplitLinearEquiv p 1 q 1 v).1 _ = _
-  rw [realCliffordSplitLinearEquiv_fst, ← finSumFinEquiv_apply_left,
-    realCliffordSplitIndexEquiv_symm_inl_pos]
+  -- Expose the shared splitter underlying this bundled specialization.
+  change (realCliffordSplitIsometry p 1 q 1 v).1 _ = _
+  rw [realCliffordSplitIsometry_fst_pos]
   congr 1
 
 /-- The negative coordinates retained by `realBottSplitIsometry`. -/
@@ -419,10 +462,9 @@ theorem realBottSplitIsometry_fst_neg (p q : ℕ)
     (v : Fin ((p + 1) + (q + 1)) → ℝ) (i : Fin q) :
     (realBottSplitIsometry p q v).1 (Fin.natAdd p i) =
       v (Fin.natAdd (p + 1) i.castSucc) := by
-  -- Expose the private shared splitter underlying this bundled specialization.
-  change (realCliffordSplitLinearEquiv p 1 q 1 v).1 _ = _
-  rw [realCliffordSplitLinearEquiv_fst, ← finSumFinEquiv_apply_right,
-    realCliffordSplitIndexEquiv_symm_inl_neg]
+  -- Expose the shared splitter underlying this bundled specialization.
+  change (realCliffordSplitIsometry p 1 q 1 v).1 _ = _
+  rw [realCliffordSplitIsometry_fst_neg]
   congr 1
 
 /-- The last positive coordinate extracted by `realBottSplitIsometry`. -/
@@ -431,14 +473,8 @@ theorem realBottSplitIsometry_snd_zero (p q : ℕ)
     (v : Fin ((p + 1) + (q + 1)) → ℝ) :
     (realBottSplitIsometry p q v).2 0 =
       v (Fin.castAdd (q + 1) (Fin.last p)) := by
-  -- Expose the private shared splitter underlying this bundled specialization.
-  change (realCliffordSplitLinearEquiv p 1 q 1 v).2 0 = _
-  rw [realCliffordSplitLinearEquiv_snd]
-  -- Normalize coordinate zero to the named positive-block index.
-  change v ((realCliffordSplitIndexEquiv p 1 q 1).symm
-    (Sum.inr (finSumFinEquiv (Sum.inl (0 : Fin 1))))) = _
-  rw [realCliffordSplitIndexEquiv_symm_inr_pos]
-  congr 1
+  convert realCliffordSplitIsometry_snd_pos p 1 q 1 v (0 : Fin 1) using 1 <;>
+    congr
 
 /-- The last negative coordinate extracted by `realBottSplitIsometry`. -/
 @[simp]
@@ -446,14 +482,8 @@ theorem realBottSplitIsometry_snd_one (p q : ℕ)
     (v : Fin ((p + 1) + (q + 1)) → ℝ) :
     (realBottSplitIsometry p q v).2 1 =
       v (Fin.natAdd (p + 1) (Fin.last q)) := by
-  -- Expose the private shared splitter underlying this bundled specialization.
-  change (realCliffordSplitLinearEquiv p 1 q 1 v).2 1 = _
-  rw [realCliffordSplitLinearEquiv_snd]
-  -- Normalize coordinate one to the named negative-block index.
-  change v ((realCliffordSplitIndexEquiv p 1 q 1).symm
-    (Sum.inr (finSumFinEquiv (Sum.inr (0 : Fin 1))))) = _
-  rw [realCliffordSplitIndexEquiv_symm_inr_neg]
-  congr 1
+  convert realCliffordSplitIsometry_snd_neg p 1 q 1 v (0 : Fin 1) using 1 <;>
+    congr
 
 /-- The coordinate isometry which turns the sign-switched form into the standard signature. -/
 def realCliffordSignSwitchStandardIsometry (p q : ℕ) :
@@ -624,13 +654,14 @@ theorem realCliffordZeroOneEquivComplex_ι (v : Fin (0 + 1) → ℝ) :
 
 /-- The signature `(0,2)` form is Mathlib's `CliffordAlgebraQuaternion.Q (-1) (-1)` read on
 `Fin (0 + 2) → ℝ` instead of on `ℝ × ℝ`. -/
-private def realCliffordZeroTwoIsometry :
+def realCliffordZeroTwoIsometry :
     (realCliffordForm 0 2).IsometryEquiv (CliffordAlgebraQuaternion.Q (-1 : ℝ) (-1)) :=
   ⟨(LinearEquiv.finTwoArrow ℝ ℝ : (Fin (0 + 2) → ℝ) ≃ₗ[ℝ] ℝ × ℝ), fun v => by
     simp [realCliffordForm_zero_two_apply]⟩
 
 /-- `realCliffordZeroTwoIsometry` reads off the two coordinates. -/
-private theorem realCliffordZeroTwoIsometry_apply (v : Fin (0 + 2) → ℝ) :
+@[simp]
+theorem realCliffordZeroTwoIsometry_apply (v : Fin (0 + 2) → ℝ) :
     realCliffordZeroTwoIsometry v = (v 0, v 1) := by
   simp [realCliffordZeroTwoIsometry, ← IsometryEquiv.coe_toLinearEquiv,
     LinearEquiv.finTwoArrow_apply]
