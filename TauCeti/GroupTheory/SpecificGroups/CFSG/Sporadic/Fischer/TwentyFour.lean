@@ -316,6 +316,7 @@ theorem fi24SchreierFactors_nil (positive : Bool) :
 other letter contributes the Schreier generator it names, inverted exactly when the current
 transversal representative is `1`. With `TauCeti.Sporadic.fi24SchreierFactors_nil` this determines
 the rewrite of every source word. -/
+@[simp]
 theorem fi24SchreierFactors_cons (positive : Bool) (i : Fin 12) (sign : Bool)
     (w : PresentationWord (Fin 12)) :
     fi24SchreierFactors positive ((i, sign) :: w) =
@@ -448,7 +449,9 @@ theorem fi24PrimePresentation_transcriptionNotes :
       review obligation." := by
   simp only [fi24PrimePresentation]
 
-/-- The generator count Kim--Michler's presentation states for `Fi₂₄'` after the rewrite. With
+/-- The generator count of this row: the ten Schreier generators `ab, …, ak` that Kim--Michler
+display, together with the eleventh generator `al` that this transcription retains instead of
+eliminating it with the source relation `l = (abcdefh)⁹`. With
 `TauCeti.Sporadic.fi24PrimePresentation_generatorNames` this is what makes
 `TauCeti.Sporadic.fi24PrimePresentation_matchesMetadata` an equation between two visible numbers. -/
 @[simp]
