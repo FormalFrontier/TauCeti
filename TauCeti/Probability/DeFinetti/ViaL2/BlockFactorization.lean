@@ -55,14 +55,18 @@ intentional: the two are the corresponding steps of the two roadmap routes. Thei
 difference in what they *say* — `_prefix_` against `_strictMono_` — rather than how they are
 proved; the roadmap's `_viaL2` route suffix is reserved for the public route endpoints.
 
-Neither theorem is derivable from the other without collapsing that separation, since a single
-Lean declaration carries a single proof and a single import closure: making either canonical would
-make one route depend on the other. The genuinely shared ingredients — tail-conditioned selection
-invariance, directing-measure integrability, the `ℝ≥0∞` conversion — are already factored into
-neutral modules that both routes import.
+This statement is strictly stronger than the prefix form: it holds for every strictly monotone
+selection, not only `i ↦ i`, and does not assume `StandardBorelSpace Ω`. So the implication does
+run one way — specializing `k` to `fun i : Fin r => (i : ℕ)` turns this into the prefix statement,
+and any module importing this one can derive it (its `StandardBorelSpace Ω` hypothesis then being
+unused). The converse is unavailable, the prefix form being weaker.
 
-This statement is also strictly stronger than the prefix form: it holds for every strictly
-monotone selection, not only `i ↦ i`, and does not assume `StandardBorelSpace Ω`.
+What separate proofs buy is therefore not logical independence but independent **import closures**.
+A single Lean declaration carries a single proof and a single import closure, so making this
+theorem the canonical source of the prefix statement would put the `L²` averaging library beneath
+the martingale route. The genuinely shared ingredients — tail-conditioned selection invariance,
+directing-measure integrability, the `ℝ≥0∞` conversion — are already factored into neutral modules
+that both routes import.
 
 ## References
 
@@ -87,12 +91,6 @@ namespace Probability
 
 variable {Ω α : Type*} [MeasurableSpace Ω] [MeasurableSpace α]
 
-/-- Reading factor `i` at position `js i` of *its own* window is a strictly monotone selection:
-distinct factors occupy ordered blocks, so the factor index alone decides the order. -/
-private theorem strictMono_window_tuple {r N : ℕ} (js : Fin r → Fin N) :
-    StrictMono fun i : Fin r => window N (i : ℕ) (js i : ℕ) := fun _ _ hab =>
-  window_lt_window (js _).isLt (by exact_mod_cast hab)
-
 /-- The product-of-indicators observable on a block is measurable. -/
 private theorem measurable_prod_indicator {r : ℕ} {B : Fin r → Set α}
     (hB : ∀ i, MeasurableSet (B i)) :
@@ -115,10 +113,7 @@ private theorem condExp_prod_indicator_ae_eq {μ : Measure Ω} [IsFiniteMeasure 
 /-- **The finite-block factorization, conditionally on the tail.** For a contractable process on a
 standard Borel state space and any strictly monotone block `k`, the conditional expectation of
 `∏ i, 𝟙_{B i} ∘ X (k i)` given `tailProcess X` is the product of the directing measure's
-marginals.
-
-The two inputs are selection invariance and `L¹` convergence of the disjoint-window product; see
-the module docstring. Nothing here uses a martingale. -/
+marginals. -/
 theorem condExp_blockIndicatorProd_strictMono_tailProcess_ae_eq_prod_directingMeasure
     [StandardBorelSpace α] [Nonempty α]
     {μ : Measure Ω} [IsFiniteMeasure μ] {X : ℕ → Ω → α} (hX : Contractable μ X)
@@ -169,7 +164,7 @@ theorem condExp_blockIndicatorProd_strictMono_tailProcess_ae_eq_prod_directingMe
       fun js ω => ∏ i, Y i (window (n + 1) (i : ℕ) (js i : ℕ)) ω with hG
     -- Every tuple is a strictly monotone selection, so all the terms share one conditional law.
     have hterm : ∀ js, μ[G js | tailProcess X] =ᵐ[μ] μ[Z | tailProcess X] :=
-      fun js => hX.condExp_prod_indicator_ae_eq hX_meas (strictMono_window_tuple js) hk hB
+      fun js => hX.condExp_prod_indicator_ae_eq hX_meas (window_selection_strictMono js) hk hB
     have hsum : μ[∑ js, G js | tailProcess X] =ᵐ[μ] fun ω => c * μ[Z | tailProcess X] ω := by
       refine (condExp_finsetSum (fun js _ => hblock_int _) (tailProcess X)).trans ?_
       filter_upwards [(eventually_all_finset (Finset.univ : Finset (Fin r → Fin (n + 1)))).2

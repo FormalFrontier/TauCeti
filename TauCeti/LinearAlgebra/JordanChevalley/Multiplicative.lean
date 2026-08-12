@@ -50,7 +50,7 @@ namespace GeneralLinearGroup
 
 open Module
 
-universe u v
+universe u v w x
 
 section Definitions
 
@@ -257,6 +257,31 @@ theorem commute_semisimplePart_unipotentPart (g : GeneralLinearGroup K V) :
 theorem semisimplePart_mul_unipotentPart (g : GeneralLinearGroup K V) :
     semisimplePart g * unipotentPart g = g :=
   (jordanDecomposition_spec g).2.2.2.symm
+
+/-- A binary operation preserving multiplication, semisimplicity, and unipotence preserves the
+multiplicative Jordan decomposition. -/
+theorem jordanDecomposition_map₂
+    {W : Type w} {U : Type x}
+    [AddCommGroup W] [Module K W] [FiniteDimensional K W]
+    [AddCommGroup U] [Module K U] [FiniteDimensional K U]
+    (F : GeneralLinearGroup K V → GeneralLinearGroup K W → GeneralLinearGroup K U)
+    (map_mul : ∀ a c b d, F (a * c) (b * d) = F a b * F c d)
+    (map_isSemisimple : ∀ {a b}, IsSemisimple a → IsSemisimple b → IsSemisimple (F a b))
+    (map_isUnipotent : ∀ {a b}, IsUnipotent a → IsUnipotent b → IsUnipotent (F a b))
+    (g : GeneralLinearGroup K V) (h : GeneralLinearGroup K W) :
+    jordanDecomposition (F g h) =
+      (F (semisimplePart g) (semisimplePart h),
+        F (unipotentPart g) (unipotentPart h)) := by
+  symm
+  apply (eq_jordanDecomposition_iff (F g h) _ _).2
+  refine ⟨map_isSemisimple (isSemisimple_semisimplePart g)
+      (isSemisimple_semisimplePart h),
+    map_isUnipotent (isUnipotent_unipotentPart g) (isUnipotent_unipotentPart h), ?_, ?_⟩
+  · rw [commute_iff_eq, ← map_mul, ← map_mul]
+    exact congrArg₂ F (commute_semisimplePart_unipotentPart g).eq
+      (commute_semisimplePart_unipotentPart h).eq
+  · rw [← map_mul, semisimplePart_mul_unipotentPart,
+      semisimplePart_mul_unipotentPart]
 
 /-- The semisimple factor of an automorphism is a polynomial in that automorphism. -/
 theorem coe_semisimplePart_mem_adjoin (g : GeneralLinearGroup K V) :
