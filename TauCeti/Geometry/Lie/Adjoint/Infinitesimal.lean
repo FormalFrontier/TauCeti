@@ -158,15 +158,6 @@ private theorem mvfderiv_conjugationGenerator_eq_bracket
   have hcomm :=
     mvfderiv_mulRightInvariantVectorField_mulInvariantVectorField_commute f (1 : G) X Y
   rw [mulRightInvariantVectorField_one, mulInvariantVectorField_one] at hcomm
-  have hLYfun : (LYf : G → ℝ) =
-      fun h => mvfderiv I f h (mulInvariantVectorField Y h) := by
-    funext h
-    exact tangentToLeftInvariantDerivation_apply Y f h
-  have hRXfun : (RXf : G → ℝ) =
-      fun h => mvfderiv I f h (mulRightInvariantVectorField X h) := by
-    funext h
-    exact rightInvariantDerivative_apply X f h
-  rw [← hLYfun, ← hRXfun] at hcomm
   rw [← hcomm]
   have hbridge := congrArg
     (fun D : LeftInvariantDerivation I G => D f 1)
@@ -370,8 +361,11 @@ theorem mvfderiv_tangentAd_apply_one (X Y : GroupLieAlgebra I G) :
   have hpathModel : HasDerivAt
       (fun t : ℝ => T (mulInvariantExp (I := I) (G := G) (t • X)))
       (show E from LieAlgebra.ad ℝ (GroupLieAlgebra I G) X Y) 0 := by
-    -- Unfold `T` and the model-space ascriptions to compare the identical paths and derivatives.
-    with_unfolding_all simpa only [T] using hpath
+    change HasDerivAt
+      (fun t : ℝ => show E from tangentAd (I := I)
+        (mulInvariantExp (I := I) (G := G) (t • X)) Y)
+      (show E from LieAlgebra.ad ℝ (GroupLieAlgebra I G) X Y) 0
+    exact hpath
   exact hchain.unique hpathModel
 
 end TauCeti.Lie
