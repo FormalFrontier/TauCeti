@@ -130,7 +130,7 @@ abbrev TorusCommHopfAlgCat (k : Type u) [Field k] :=
   (torusCommHopfAlgProperty k).FullSubcategory
 
 /-- Every split torus is a torus. -/
-@[grind]
+@[grind →]
 theorem splitTorusCommHopfAlgProperty.torus
     (k : Type u) [Field k] (H : FiniteTypeCommHopfAlgCat.{u, u} k)
     (hH : splitTorusCommHopfAlgProperty k H) :
@@ -142,7 +142,7 @@ theorem splitTorusCommHopfAlgProperty.torus
     (FiniteTypeCommHopfAlgCat.baseChangeFunctor (K := AlgebraicClosure k)).mapIso i⟩⟩
 
 /-- Every torus is a group of multiplicative type. -/
-@[grind]
+@[grind →]
 theorem torusCommHopfAlgProperty.multiplicativeType
     (k : Type u) [Field k] (H : FiniteTypeCommHopfAlgCat.{u, u} k)
     (hH : torusCommHopfAlgProperty k H) :
