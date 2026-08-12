@@ -23,14 +23,16 @@ inside each ambient general linear group.
 
 ## Main declarations
 
-* `TauCeti.HopfAlgebra.semisimplePart`: the semisimple part of an algebraic-group point.
-* `TauCeti.HopfAlgebra.unipotentPart`: the unipotent part of an algebraic-group point.
-* `TauCeti.HopfAlgebra.jordanDecomposition`: the ordered pair of the two parts.
-* `TauCeti.HopfAlgebra.commute_semisimplePart_unipotentPart`: the two parts commute.
-* `TauCeti.HopfAlgebra.semisimplePart_mul_unipotentPart`: their product is the original point.
-* `TauCeti.HopfAlgebra.endOfPoint_semisimplePart` and
-  `TauCeti.HopfAlgebra.endOfPoint_unipotentPart`: every finite-dimensional representation sees
-  the corresponding linear Jordan factors.
+* `TauCeti.HopfAlgebra.Point.semisimplePart`: the semisimple part of an algebraic-group point.
+* `TauCeti.HopfAlgebra.Point.unipotentPart`: the unipotent part of an algebraic-group point.
+* `TauCeti.HopfAlgebra.Point.isSemisimple_isUnipotent_unique`: uniqueness of a commuting
+  semisimple-unipotent factorization.
+* `TauCeti.HopfAlgebra.Point.commute_semisimplePart_unipotentPart`: the two parts commute.
+* `TauCeti.HopfAlgebra.Point.semisimplePart_mul_unipotentPart`: their product is the original
+  point.
+* `TauCeti.HopfAlgebra.Point.endOfPoint_semisimplePart` and
+  `TauCeti.HopfAlgebra.Point.endOfPoint_unipotentPart`: every finite-dimensional representation
+  sees the corresponding linear Jordan factors.
 
 ## References
 
@@ -44,6 +46,7 @@ open WithConv
 open scoped TensorProduct
 
 namespace TauCeti.HopfAlgebra
+namespace Point
 
 universe u
 
@@ -66,24 +69,6 @@ noncomputable def unipotentPart (g : WithConv (H →ₐ[k] K)) : WithConv (H →
   (Tannaka.fgPointTensorIsoEquiv k H K).symm
     (Tannaka.fgPointUnipotentPartTensorIso k H K g)
 
-/-- The multiplicative Jordan decomposition of an algebraic-group point, with the semisimple
-part first and the unipotent part second. -/
-noncomputable def jordanDecomposition (g : WithConv (H →ₐ[k] K)) :
-    WithConv (H →ₐ[k] K) × WithConv (H →ₐ[k] K) :=
-  (semisimplePart k H K g, unipotentPart k H K g)
-
-/-- The first component of a point's Jordan decomposition is its semisimple part. -/
-@[simp]
-theorem jordanDecomposition_fst (g : WithConv (H →ₐ[k] K)) :
-    (jordanDecomposition k H K g).1 = semisimplePart k H K g :=
-  (rfl)
-
-/-- The second component of a point's Jordan decomposition is its unipotent part. -/
-@[simp]
-theorem jordanDecomposition_snd (g : WithConv (H →ₐ[k] K)) :
-    (jordanDecomposition k H K g).2 = unipotentPart k H K g :=
-  (rfl)
-
 /-- The Tannakian action of the semisimple part is the semisimple-factor tensor
 automorphism. -/
 @[simp]
@@ -102,6 +87,19 @@ theorem fgPointTensorIso_unipotentPart (g : WithConv (H →ₐ[k] K)) :
   rw [← Tannaka.fgPointTensorIsoEquiv_apply]
   exact (Tannaka.fgPointTensorIsoEquiv k H K).apply_symm_apply _
 
+omit [PerfectField K] in
+/-- The action of a point reconstructed from a tensor automorphism is that automorphism's
+component on every finite-dimensional comodule. -/
+@[simp]
+theorem endOfPoint_reconstructedPoint
+    (eta : CategoryTheory.Aut (FGComoduleCat.scalarExtensionMonoidalFunctor k H K))
+    (M : FGComoduleCat.{u, u, u} k H) :
+    Comodule.endOfPoint M (Tannaka.reconstructedPoint k H K eta).ofConv =
+      Tannaka.scalarExtensionComponent k H K eta M := by
+  rw [← Comodule.pointsAction_toLinearMap,
+    ← Tannaka.scalarExtensionComponent_fgPointTensorIso,
+    Tannaka.fgPointTensorIso_reconstructedPoint]
+
 /-- In every finite-dimensional comodule, the reconstructed semisimple point acts by the
 semisimple part of the original point action. -/
 @[simp]
@@ -111,9 +109,8 @@ theorem endOfPoint_semisimplePart (g : WithConv (H →ₐ[k] K))
       (GeneralLinearGroup.semisimplePart
         (LinearMap.GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction M g)) :
           Module.End K (K ⊗[k] M)) := by
-  rw [← Comodule.pointsAction_toLinearMap,
-    ← Tannaka.scalarExtensionComponent_fgPointTensorIso,
-    fgPointTensorIso_semisimplePart,
+  rw [semisimplePart, Tannaka.fgPointTensorIsoEquiv_symm_apply,
+    endOfPoint_reconstructedPoint,
     Tannaka.scalarExtensionComponent_fgPointSemisimplePartTensorIso]
 
 /-- In every finite-dimensional comodule, the reconstructed unipotent point acts by the
@@ -125,13 +122,13 @@ theorem endOfPoint_unipotentPart (g : WithConv (H →ₐ[k] K))
       (GeneralLinearGroup.unipotentPart
         (LinearMap.GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction M g)) :
           Module.End K (K ⊗[k] M)) := by
-  rw [← Comodule.pointsAction_toLinearMap,
-    ← Tannaka.scalarExtensionComponent_fgPointTensorIso,
-    fgPointTensorIso_unipotentPart,
+  rw [unipotentPart, Tannaka.fgPointTensorIsoEquiv_symm_apply,
+    endOfPoint_reconstructedPoint,
     Tannaka.scalarExtensionComponent_fgPointUnipotentPartTensorIso]
 
 /-- As an element of the general linear group of any finite-dimensional comodule, the action of
 the reconstructed semisimple point is the canonical semisimple part of the original action. -/
+@[simp]
 theorem ofLinearEquiv_pointsAction_semisimplePart (g : WithConv (H →ₐ[k] K))
     (M : FGComoduleCat.{u, u, u} k H) :
     LinearMap.GeneralLinearGroup.ofLinearEquiv
@@ -144,6 +141,7 @@ theorem ofLinearEquiv_pointsAction_semisimplePart (g : WithConv (H →ₐ[k] K))
 
 /-- As an element of the general linear group of any finite-dimensional comodule, the action of
 the reconstructed unipotent point is the canonical unipotent part of the original action. -/
+@[simp]
 theorem ofLinearEquiv_pointsAction_unipotentPart (g : WithConv (H →ₐ[k] K))
     (M : FGComoduleCat.{u, u, u} k H) :
     LinearMap.GeneralLinearGroup.ofLinearEquiv
@@ -172,6 +170,26 @@ theorem isUnipotent_pointsAction_unipotentPart (g : WithConv (H →ₐ[k] K))
   rw [ofLinearEquiv_pointsAction_unipotentPart]
   exact GeneralLinearGroup.isUnipotent_unipotentPart _
 
+omit [PerfectField K] in
+private theorem isSemisimple_pointsAction_one (M : FGComoduleCat.{u, u, u} k H) :
+    GeneralLinearGroup.IsSemisimple
+      (LinearMap.GeneralLinearGroup.ofLinearEquiv
+        (Comodule.pointsAction M (1 : WithConv (H →ₐ[k] K)))) := by
+  rw [map_one]
+  change GeneralLinearGroup.IsSemisimple
+    (1 : LinearMap.GeneralLinearGroup K (K ⊗[k] M))
+  exact GeneralLinearGroup.isSemisimple_one
+
+omit [PerfectField K] in
+private theorem isUnipotent_pointsAction_one (M : FGComoduleCat.{u, u, u} k H) :
+    GeneralLinearGroup.IsUnipotent
+      (LinearMap.GeneralLinearGroup.ofLinearEquiv
+        (Comodule.pointsAction M (1 : WithConv (H →ₐ[k] K)))) := by
+  rw [map_one]
+  change GeneralLinearGroup.IsUnipotent
+    (1 : LinearMap.GeneralLinearGroup K (K ⊗[k] M))
+  exact GeneralLinearGroup.isUnipotent_one
+
 /-- The semisimple and unipotent parts of an algebraic-group point commute. -/
 theorem commute_semisimplePart_unipotentPart (g : WithConv (H →ₐ[k] K)) :
     Commute (semisimplePart k H K g) (unipotentPart k H K g) := by
@@ -191,6 +209,111 @@ theorem semisimplePart_mul_unipotentPart (g : WithConv (H →ₐ[k] K)) :
   simp only [map_mul, Tannaka.fgPointTensorIsoEquiv_apply,
     fgPointTensorIso_semisimplePart, fgPointTensorIso_unipotentPart,
     Tannaka.fgPointSemisimplePartTensorIso_mul_fgPointUnipotentPartTensorIso]
+  -- Both sides are now the same point-induced tensor automorphism; the remaining equality is
+  -- only between the instance paths selected by the two constructions.
   rfl
 
+/-- A commuting factorization of a point into factors acting semisimply and unipotently in every
+finite-dimensional comodule is its canonical Jordan decomposition. -/
+theorem isSemisimple_isUnipotent_unique (g s u : WithConv (H →ₐ[k] K))
+    (hc : Commute s u) (hmul : s * u = g)
+    (hs : ∀ M : FGComoduleCat.{u, u, u} k H,
+      GeneralLinearGroup.IsSemisimple
+        (LinearMap.GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction M s)))
+    (hu : ∀ M : FGComoduleCat.{u, u, u} k H,
+      GeneralLinearGroup.IsUnipotent
+        (LinearMap.GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction M u))) :
+    s = semisimplePart k H K g ∧ u = unipotentPart k H K g := by
+  have h_unique (M : FGComoduleCat.{u, u, u} k H) :
+      LinearMap.GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction M s) =
+          LinearMap.GeneralLinearGroup.ofLinearEquiv
+            (Comodule.pointsAction M (semisimplePart k H K g)) ∧
+        LinearMap.GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction M u) =
+          LinearMap.GeneralLinearGroup.ofLinearEquiv
+            (Comodule.pointsAction M (unipotentPart k H K g)) := by
+    let rho : WithConv (H →ₐ[k] K) →*
+        LinearMap.GeneralLinearGroup K (K ⊗[k] M) :=
+      (LinearMap.GeneralLinearGroup.generalLinearEquiv K (K ⊗[k] M)).symm.toMonoidHom.comp
+        (Comodule.pointsAction M)
+    change rho s = rho (semisimplePart k H K g) ∧
+      rho u = rho (unipotentPart k H K g)
+    apply GeneralLinearGroup.isSemisimple_isUnipotent_unique
+    · exact hs M
+    · exact hu M
+    · exact hc.map rho
+    · exact isSemisimple_pointsAction_semisimplePart k H K g M
+    · exact isUnipotent_pointsAction_unipotentPart k H K g M
+    · exact (commute_semisimplePart_unipotentPart k H K g).map rho
+    · rw [← map_mul, ← map_mul, hmul, semisimplePart_mul_unipotentPart]
+  constructor
+  · apply (Tannaka.fgPointTensorIsoEquiv k H K).injective
+    apply Tannaka.scalarExtensionComponent_ext
+    intro M
+    simp only [Tannaka.fgPointTensorIsoEquiv_apply,
+      Tannaka.scalarExtensionComponent_fgPointTensorIso]
+    apply LinearMap.ext
+    intro x
+    exact congrArg (fun a : LinearMap.GeneralLinearGroup K (K ⊗[k] M) ↦ a.val x) (h_unique M).1
+  · apply (Tannaka.fgPointTensorIsoEquiv k H K).injective
+    apply Tannaka.scalarExtensionComponent_ext
+    intro M
+    simp only [Tannaka.fgPointTensorIsoEquiv_apply,
+      Tannaka.scalarExtensionComponent_fgPointTensorIso]
+    apply LinearMap.ext
+    intro x
+    exact congrArg (fun a : LinearMap.GeneralLinearGroup K (K ⊗[k] M) ↦ a.val x) (h_unique M).2
+
+/-- A point acting semisimply in every finite-dimensional comodule is its own semisimple part. -/
+@[simp]
+theorem semisimplePart_eq_self {g : WithConv (H →ₐ[k] K)}
+    (hg : ∀ M : FGComoduleCat.{u, u, u} k H,
+      GeneralLinearGroup.IsSemisimple
+        (LinearMap.GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction M g))) :
+    semisimplePart k H K g = g :=
+  ((isSemisimple_isUnipotent_unique k H K g g 1 (Commute.one_right g) (mul_one g) hg
+    (isUnipotent_pointsAction_one k H K)).1).symm
+
+/-- A point acting semisimply in every finite-dimensional comodule has trivial unipotent part. -/
+@[simp]
+theorem unipotentPart_eq_one_of_isSemisimple {g : WithConv (H →ₐ[k] K)}
+    (hg : ∀ M : FGComoduleCat.{u, u, u} k H,
+      GeneralLinearGroup.IsSemisimple
+        (LinearMap.GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction M g))) :
+    unipotentPart k H K g = 1 :=
+  ((isSemisimple_isUnipotent_unique k H K g g 1 (Commute.one_right g) (mul_one g) hg
+    (isUnipotent_pointsAction_one k H K)).2).symm
+
+/-- A point acting unipotently in every finite-dimensional comodule has trivial semisimple part. -/
+@[simp]
+theorem semisimplePart_eq_one_of_isUnipotent {g : WithConv (H →ₐ[k] K)}
+    (hg : ∀ M : FGComoduleCat.{u, u, u} k H,
+      GeneralLinearGroup.IsUnipotent
+        (LinearMap.GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction M g))) :
+    semisimplePart k H K g = 1 :=
+  ((isSemisimple_isUnipotent_unique k H K g 1 g (Commute.one_left g) (one_mul g)
+    (isSemisimple_pointsAction_one k H K) hg).1).symm
+
+/-- A point acting unipotently in every finite-dimensional comodule is its own unipotent part. -/
+@[simp]
+theorem unipotentPart_eq_self {g : WithConv (H →ₐ[k] K)}
+    (hg : ∀ M : FGComoduleCat.{u, u, u} k H,
+      GeneralLinearGroup.IsUnipotent
+        (LinearMap.GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction M g))) :
+    unipotentPart k H K g = g :=
+  ((isSemisimple_isUnipotent_unique k H K g 1 g (Commute.one_left g) (one_mul g)
+    (isSemisimple_pointsAction_one k H K) hg).2).symm
+
+/-- The semisimple part of the identity point is the identity. -/
+@[simp]
+theorem semisimplePart_one :
+    semisimplePart k H K (1 : WithConv (H →ₐ[k] K)) = 1 :=
+  semisimplePart_eq_self k H K (isSemisimple_pointsAction_one k H K)
+
+/-- The unipotent part of the identity point is the identity. -/
+@[simp]
+theorem unipotentPart_one :
+    unipotentPart k H K (1 : WithConv (H →ₐ[k] K)) = 1 :=
+  unipotentPart_eq_self k H K (isUnipotent_pointsAction_one k H K)
+
+end Point
 end TauCeti.HopfAlgebra
