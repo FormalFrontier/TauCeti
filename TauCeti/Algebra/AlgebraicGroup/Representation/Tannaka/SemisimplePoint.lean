@@ -4,37 +4,19 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 module
 
+public import TauCeti.Algebra.AlgebraicGroup.Representation.SemisimplePoint
 public import TauCeti.Algebra.AlgebraicGroup.Representation.Tannaka.JordanDecomposition
 
 /-!
-# Semisimple points of an affine group
+# Tannakian characterization of semisimple points
 
-Let `H` be a Hopf algebra over a commutative semiring `k` and let `K` be an extension field. A
-`K`-valued point `g : WithConv (H →ₐ[k] K)` acts on the scalar extension of every finitely
-generated `H`-comodule. This file calls `g` **semisimple** when every one of those linear
-automorphisms is semisimple. The `WithConv` wrapper supplies the convolution group structure from
-the antipode of `H`; all group operations in the closure API below refer to that convolution law.
-
-For the commutative coordinate Hopf algebra of an affine group scheme, taking `K` to be an
-algebraic closure of `k` gives the representation-theoretic definition of a geometric semisimple
-element. The definition is tied directly to the multiplicative Jordan decomposition: over a
-perfect field, a point is semisimple exactly when the natural semisimple factors of all its
-finitely generated comodule actions recover its original action.
-
-Semisimple points contain the identity and are closed under inverses and integer powers. Products
-of commuting semisimple points are semisimple over a perfect field, and semisimplicity is invariant
-under conjugation. Each statement follows from the corresponding result for general linear groups
-because every comodule point action is a group homomorphism.
+Let `H` be a Hopf algebra over a commutative semiring `k`, let `K` be a perfect extension field,
+and let `g : WithConv (H →ₐ[k] K)` be a `K`-valued point. The natural automorphism formed
+from the semisimple factors of the actions of `g` on finitely generated comodules equals the
+original point-action automorphism exactly when `g` is semisimple.
 
 ## Main declarations
 
-* `TauCeti.HopfAlgebra.IsSemisimplePoint`: a point acts semisimply in every finitely generated
-  comodule.
-* `TauCeti.HopfAlgebra.isSemisimplePoint_iff_forall_isSemisimple_endOfPoint`: the equivalent
-  formulation using the underlying comodule action endomorphisms.
-* `TauCeti.HopfAlgebra.IsSemisimplePoint.inv`, `.mul_of_commute`, and `.zpow`: closure under
-  inversion, commuting products, and integer powers.
-* `TauCeti.HopfAlgebra.isSemisimplePoint_conj_iff`: invariance under conjugation.
 * `TauCeti.HopfAlgebra.isSemisimplePoint_iff_fgPointSemisimplePartNatIso_eq_fgPointNatIsoHom`:
   the intrinsic characterization by the Tannakian semisimple-factor automorphism.
 
@@ -43,9 +25,8 @@ because every comodule point action is a group homomorphism.
 * J. C. Jantzen, *Representations of Algebraic Groups*, I.2.
 * T. A. Springer, *Linear Algebraic Groups*, §2.4.
 
-This supplies the intrinsic semisimple-element predicate needed by Layer 4, "Jordan
-decomposition", of the ReductiveGroups roadmap. It uses the representation--comodule dictionary
-built in Layer 1.
+This is a representation-theoretic step toward the Jordan decomposition of group elements in
+Layer 4 of the ReductiveGroups roadmap.
 -/
 
 public section
@@ -61,120 +42,7 @@ universe u v x
 
 variable {k : Type u} {H : Type v} {K : Type x}
 variable [CommSemiring k] [Semiring H] [_root_.HopfAlgebra k H] [Field K] [Algebra k K]
-
-/-- A point `g : WithConv (H →ₐ[k] K)` of a Hopf algebra is semisimple when it acts by a
-semisimple linear automorphism on the scalar extension of every finitely generated comodule. The
-point type carries the convolution group structure supplied by the antipode of `H`, and the closure
-properties below use this group law.
-
-When `H` is the commutative coordinate Hopf algebra of an affine group over `k` and `K` is an
-algebraic closure, this is the standard representation-theoretic definition of a geometric
-semisimple element. -/
-def IsSemisimplePoint (g : WithConv (H →ₐ[k] K)) : Prop :=
-  ∀ M : FGComoduleCat.{u, v, u} k H,
-    GeneralLinearGroup.IsSemisimple
-      (LinearMap.GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction M g))
-
-/-- A point is semisimple exactly when each underlying point-action endomorphism is
-semisimple. -/
-theorem isSemisimplePoint_iff_forall_isSemisimple_endOfPoint
-    (g : WithConv (H →ₐ[k] K)) :
-    IsSemisimplePoint g ↔
-      ∀ M : FGComoduleCat.{u, v, u} k H,
-        Module.End.IsSemisimple (Comodule.endOfPoint M g.ofConv) := by
-  unfold IsSemisimplePoint
-  constructor
-  · intro h M
-    have hM := (GeneralLinearGroup.isSemisimple_def _).mp (h M)
-    rw [← LinearMap.GeneralLinearGroup.generalLinearEquiv_to_linearMap] at hM
-    have haction :
-        LinearMap.GeneralLinearGroup.generalLinearEquiv K _
-            (LinearMap.GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction M g)) =
-          Comodule.pointsAction M g :=
-      (LinearMap.GeneralLinearGroup.generalLinearEquiv K _).apply_symm_apply _
-    rw [haction] at hM
-    simpa only [Comodule.pointsAction_toLinearMap] using hM
-  · intro h M
-    rw [GeneralLinearGroup.isSemisimple_def]
-    rw [← LinearMap.GeneralLinearGroup.generalLinearEquiv_to_linearMap]
-    have haction :
-        LinearMap.GeneralLinearGroup.generalLinearEquiv K _
-            (LinearMap.GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction M g)) =
-          Comodule.pointsAction M g :=
-      (LinearMap.GeneralLinearGroup.generalLinearEquiv K _).apply_symm_apply _
-    rw [haction]
-    simpa only [Comodule.pointsAction_toLinearMap] using h M
-
-/-- The identity point is semisimple. -/
-@[simp]
-theorem isSemisimplePoint_one :
-    IsSemisimplePoint (1 : WithConv (H →ₐ[k] K)) := by
-  intro M
-  rw [map_one]
-  exact GeneralLinearGroup.isSemisimple_one
-
-/-- The inverse of a semisimple point is semisimple. -/
-theorem IsSemisimplePoint.inv {g : WithConv (H →ₐ[k] K)}
-    (hg : IsSemisimplePoint g) : IsSemisimplePoint g⁻¹ := by
-  intro M
-  have haction :
-      LinearMap.GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction M g⁻¹) =
-        (LinearMap.GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction M g))⁻¹ := by
-    rw [map_inv, LinearMap.GeneralLinearGroup.ofLinearEquiv_inv]
-  rw [haction]
-  exact (hg M).inv
-
-/-- A point is semisimple if and only if its inverse is semisimple. -/
-@[simp]
-theorem isSemisimplePoint_inv_iff (g : WithConv (H →ₐ[k] K)) :
-    IsSemisimplePoint g⁻¹ ↔ IsSemisimplePoint g := by
-  constructor
-  · intro hg
-    have := hg.inv
-    rwa [inv_inv] at this
-  · exact IsSemisimplePoint.inv
-
-/-- Every natural power of a semisimple point is semisimple. -/
-theorem IsSemisimplePoint.pow {g : WithConv (H →ₐ[k] K)}
-    (hg : IsSemisimplePoint g) (n : ℕ) : IsSemisimplePoint (g ^ n) := by
-  intro M
-  rw [map_pow]
-  change GeneralLinearGroup.IsSemisimple
-    ((LinearMap.GeneralLinearGroup.generalLinearEquiv K _).symm
-      (Comodule.pointsAction M g ^ n))
-  rw [map_pow]
-  exact (hg M).pow n
-
-/-- Every integer power of a semisimple point is semisimple. -/
-theorem IsSemisimplePoint.zpow {g : WithConv (H →ₐ[k] K)}
-    (hg : IsSemisimplePoint g) (n : ℤ) : IsSemisimplePoint (g ^ n) := by
-  cases n with
-  | ofNat n => simpa only [Int.ofNat_eq_natCast, zpow_natCast] using hg.pow n
-  | negSucc n => simpa only [zpow_negSucc] using (hg.pow n.succ).inv
-
-/-- Semisimplicity of points is invariant under conjugation. -/
-@[simp]
-theorem isSemisimplePoint_conj_iff (g h : WithConv (H →ₐ[k] K)) :
-    IsSemisimplePoint (h * g * h⁻¹) ↔ IsSemisimplePoint g := by
-  unfold IsSemisimplePoint
-  simp only [map_mul, map_inv,
-    LinearMap.GeneralLinearGroup.ofLinearEquiv_mul,
-    LinearMap.GeneralLinearGroup.ofLinearEquiv_inv,
-    GeneralLinearGroup.isSemisimple_conj_iff]
-
-section PerfectField
-
-variable [PerfectField K]
-
-/-- The product of two commuting semisimple points is semisimple. -/
-theorem IsSemisimplePoint.mul_of_commute {g h : WithConv (H →ₐ[k] K)}
-    (hg : IsSemisimplePoint g) (hh : IsSemisimplePoint h)
-    (hcomm : Commute g h) : IsSemisimplePoint (g * h) := by
-  intro M
-  rw [map_mul, LinearMap.GeneralLinearGroup.ofLinearEquiv_mul]
-  apply (hg M).mul_of_commute (hh M)
-  exact (hcomm.map (Comodule.pointsAction M)).map
-    (LinearMap.GeneralLinearGroup.generalLinearEquiv K _).symm.toMonoidHom
+  [PerfectField K]
 
 /-- A point is semisimple exactly when the natural semisimple factors of all its
 finitely generated comodule actions recover its original point action. -/
@@ -185,18 +53,35 @@ theorem isSemisimplePoint_iff_fgPointSemisimplePartNatIso_eq_fgPointNatIsoHom
         Tannaka.fgPointNatIsoHom.{u, v, x, u} k H K g := by
   constructor
   · intro hg
+    have hg_end :=
+      (isSemisimplePoint_iff_forall_isSemisimple_endOfPoint g).mp hg
+    have hg_action : ∀ M : FGComoduleCat.{u, v, u} k H,
+        GeneralLinearGroup.IsSemisimple
+          (LinearMap.GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction M g)) := by
+      intro M
+      rw [GeneralLinearGroup.isSemisimple_def]
+      rw [← LinearMap.GeneralLinearGroup.generalLinearEquiv_to_linearMap]
+      have haction :
+          LinearMap.GeneralLinearGroup.generalLinearEquiv K _
+              (LinearMap.GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction M g)) =
+            Comodule.pointsAction M g :=
+        (LinearMap.GeneralLinearGroup.generalLinearEquiv K _).apply_symm_apply _
+      rw [haction]
+      simpa only [Comodule.pointsAction_toLinearMap] using hg_end M
     apply Aut.ext
     apply NatTrans.ext
     funext (M : FGComoduleCat.{u, v, u} k H)
     rw [Tannaka.fgPointSemisimplePartNatIso_hom_app,
       Tannaka.fgPointNatIsoHom_hom_app,
-      GeneralLinearGroup.semisimplePart_eq_self (hg M)]
+      GeneralLinearGroup.semisimplePart_eq_self (hg_action M)]
     have haction :
         (LinearMap.GeneralLinearGroup.ofLinearEquiv
           (Comodule.pointsAction M g)).toLinearEquiv = Comodule.pointsAction M g :=
       (LinearMap.GeneralLinearGroup.generalLinearEquiv K _).apply_symm_apply _
     rw [haction]
-  · intro h M
+  · intro h
+    apply (isSemisimplePoint_iff_forall_isSemisimple_endOfPoint g).2
+    intro M
     have happ := congrArg
       (fun a : Aut (FGComoduleCat.scalarExtensionFunctor.{u, v, u, x} k H K) ↦
         a.hom.app M) h
@@ -221,11 +106,20 @@ theorem isSemisimplePoint_iff_fgPointSemisimplePartNatIso_eq_fgPointNatIsoHom
             rw [← LinearMap.GeneralLinearGroup.generalLinearEquiv_to_linearMap]
             exact congrArg LinearEquiv.toLinearMap
               ((LinearMap.GeneralLinearGroup.generalLinearEquiv K _).apply_symm_apply _).symm
-    rw [← hfactor]
-    exact GeneralLinearGroup.isSemisimple_semisimplePart
-      (LinearMap.GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction M g))
-
-end PerfectField
+    have hM : GeneralLinearGroup.IsSemisimple
+        (LinearMap.GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction M g)) := by
+      rw [← hfactor]
+      exact GeneralLinearGroup.isSemisimple_semisimplePart
+        (LinearMap.GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction M g))
+    rw [GeneralLinearGroup.isSemisimple_def] at hM
+    rw [← LinearMap.GeneralLinearGroup.generalLinearEquiv_to_linearMap] at hM
+    have haction :
+        LinearMap.GeneralLinearGroup.generalLinearEquiv K _
+            (LinearMap.GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction M g)) =
+          Comodule.pointsAction M g :=
+      (LinearMap.GeneralLinearGroup.generalLinearEquiv K _).apply_symm_apply _
+    rw [haction] at hM
+    simpa only [Comodule.pointsAction_toLinearMap] using hM
 
 end HopfAlgebra
 

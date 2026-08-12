@@ -82,10 +82,18 @@ theorem isSemisimple_conj_iff (g h : GeneralLinearGroup K V) :
     IsSemisimple (h * g * h⁻¹) ↔ IsSemisimple g := by
   have heq : h * g * h⁻¹ =
       LinearMap.GeneralLinearGroup.congrLinearEquiv h.toLinearEquiv g := by
+    apply (LinearMap.GeneralLinearGroup.generalLinearEquiv K V).injective
+    rw [map_mul, map_mul, map_inv,
+      LinearMap.GeneralLinearGroup.congrLinearEquiv_apply]
+    have hroundtrip :
+        LinearMap.GeneralLinearGroup.generalLinearEquiv K V
+            (LinearMap.GeneralLinearGroup.ofLinearEquiv
+              (h.toLinearEquiv.symm.trans (g.toLinearEquiv.trans h.toLinearEquiv))) =
+          h.toLinearEquiv.symm.trans (g.toLinearEquiv.trans h.toLinearEquiv) :=
+      (LinearMap.GeneralLinearGroup.generalLinearEquiv K V).apply_symm_apply _
+    rw [hroundtrip]
     ext v
-    change h.toLinearEquiv (g.toLinearEquiv ((h⁻¹).toLinearEquiv v)) =
-      h.toLinearEquiv (g.toLinearEquiv (h.toLinearEquiv.symm v))
-    rw [LinearMap.GeneralLinearGroup.toLinearEquiv_inv, LinearEquiv.coe_inv]
+    rfl
   rw [heq, LinearMap.GeneralLinearGroup.congrLinearEquiv_apply]
   exact isSemisimple_congrLinearEquiv_iff h.toLinearEquiv g
 

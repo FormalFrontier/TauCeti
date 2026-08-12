@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 module
 
 public import Mathlib.LinearAlgebra.JordanChevalley
-public import TauCeti.LinearAlgebra.GeneralLinearGroup.Adjoin
+public import TauCeti.RingTheory.Adjoin.Unit
 
 /-!
 # Multiplicative Jordan–Chevalley decomposition
@@ -105,7 +105,8 @@ variable {K : Type u} {V : Type v} [Field K] [AddCommGroup V] [Module K V]
 theorem IsSemisimple.inv {g : GeneralLinearGroup K V} (hg : IsSemisimple g) :
     IsSemisimple g⁻¹ := by
   rw [isSemisimple_def] at hg ⊢
-  exact hg.of_mem_adjoin_singleton (Units.coe_inv_mem_adjoin g)
+  exact hg.of_mem_adjoin_singleton
+    (Units.coe_inv_mem_adjoin g (IsIntegral.of_finite K (g : End K V)))
 
 /-- A linear automorphism is semisimple if and only if its inverse is semisimple. -/
 @[simp]
