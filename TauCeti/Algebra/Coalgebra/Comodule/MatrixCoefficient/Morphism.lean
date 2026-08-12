@@ -36,6 +36,8 @@ then recovers the original finite-comodule component.
 * `TauCeti.Comodule.matrixCoefficientHom`: a matrix coefficient as a comodule morphism to the
   regular comodule.
 * `TauCeti.Comodule.matrixCoefficientHomLinear`: linearity in the functional.
+* `TauCeti.Comodule.counit_baseChange_matrixCoefficientHom`: counit evaluation after scalar
+  extension recovers the original functional.
 * `TauCeti.Comodule.eq_of_matrixCoefficientHom_eq`: coefficient morphisms jointly separate
   vectors in a free module.
 * `TauCeti.Comodule.eq_of_baseChange_matrixCoefficientHom_eq`: joint separation after
@@ -149,7 +151,9 @@ variable (A : Type x) [CommSemiring A] [Algebra R A]
 variable [Module.Free R M]
 
 omit [Module.Free R M] in
-private theorem counit_baseChange_matrixCoefficientHom (φ : Module.Dual R M)
+/-- Applying the scalar-extended counit after a scalar-extended matrix-coefficient morphism
+recovers the scalar extension of the original functional. -/
+theorem counit_baseChange_matrixCoefficientHom (φ : Module.Dual R M)
     (z : A ⊗[R] M) :
     (TensorProduct.AlgebraTensorModule.rid R A A)
         ((Coalgebra.counit (R := R) (A := C)).baseChange A

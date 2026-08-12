@@ -64,15 +64,20 @@ private theorem counitEvaluation_matrixCoefficientSubcoalgebraHom
           (M := M)).toRegularSubcomodule
         ((Comodule.matrixCoefficientSubcoalgebraHom (C := H) phi).toLinearMap.baseChange A z) =
       Module.Dual.baseChange A phi z := by
-  induction z using TensorProduct.induction_on with
-  | zero => simp
-  | add z w hz hw => simp only [map_add, hz, hw]
-  | tmul b n =>
-      simp only [LinearMap.baseChange_tmul, counitEvaluation_tmul]
-      rw [Comodule.Hom.coe_toLinearMap,
-        Comodule.matrixCoefficientSubcoalgebraHom_apply_coe,
-        Comodule.matrixCoefficientHom_apply, Comodule.counit_matrixCoefficient]
-      simp [Module.Dual.baseChange_apply_tmul, Algebra.smul_def, mul_comm]
+  rw [counitEvaluation_apply, ← LinearMap.comp_apply, ← LinearMap.baseChange_comp]
+  have hcomp :
+      (Coalgebra.counit (R := k) (A := H)).comp
+          (SMulMemClass.subtype
+            (Comodule.matrixCoefficientSubcoalgebra (R := k) (C := H)
+              (M := M)).toRegularSubcomodule) ∘ₗ
+        (Comodule.matrixCoefficientSubcoalgebraHom (C := H) phi).toLinearMap =
+      (Coalgebra.counit (R := k) (A := H)).comp
+        (Comodule.matrixCoefficientHom (C := H) phi).toLinearMap := by
+    ext m
+    exact congrArg (Coalgebra.counit (R := k) (A := H))
+      (Comodule.matrixCoefficientSubcoalgebraHom_apply_coe phi m)
+  rw [hcomp, LinearMap.baseChange_comp]
+  exact Comodule.counit_baseChange_matrixCoefficientHom (C := H) A phi z
 
 private theorem scalarExtensionComponent_reconstructedPoint_tmul
     (eta : Aut (FGComoduleCat.scalarExtensionMonoidalFunctor k H A))

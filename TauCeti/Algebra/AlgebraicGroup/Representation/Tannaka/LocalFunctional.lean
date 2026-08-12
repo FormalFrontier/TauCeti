@@ -81,6 +81,18 @@ theorem counitEvaluation_tmul (N : Subcomodule k H H) (a : A) (n : N) :
       a * algebraMap k A (Coalgebra.counit (R := k) (A := H) (n : H)) := by
   simp [counitEvaluation]
 
+/-- Counit evaluation is the base change of the counit restricted to the regular
+subcomodule. -/
+theorem counitEvaluation_apply (N : Subcomodule k H H) (z : A ⊗[k] N) :
+    counitEvaluation k H A N z =
+      (TensorProduct.AlgebraTensorModule.rid k A A)
+        (((Coalgebra.counit (R := k) (A := H)).comp
+          (SMulMemClass.subtype N)).baseChange A z) := by
+  induction z using TensorProduct.induction_on with
+  | zero => simp
+  | add x y hx hy => simp only [map_add, hx, hy]
+  | tmul a n => simp [Algebra.smul_def, mul_comm]
+
 end CounitEvaluation
 
 section LocalFunctional
