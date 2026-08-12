@@ -54,7 +54,7 @@ private def prPipelineGraphs : Html := {{
       <img class="loc-graph" src="static/pr-queue-age.svg"
            alt="Open pull request age, followed by time awaiting author and time in review"
            loading="lazy"/>
-      <figcaption>"Age of every open PR, then elapsed time in its current awaiting-author or review cycle."</figcaption>
+      <figcaption>"Age of every open PR, then elapsed time in its current author-action or review cycle."</figcaption>
     </figure>
     <figure class="loc-figure">
       <img class="loc-graph" src="static/rolling-seven-day-history.svg"
@@ -116,8 +116,10 @@ Infrastructure and refactor PRs, which advance no roadmap, are left out.
 :::
 
 How is the contribution and review pipeline behaving? The first chart separates a
-PR's total age from the clock on its current state. PRs outside the awaiting-author
-and review states appear in total time open but not in the two current-state panels.
+PR's total age from the clock on its current state. The author-action clock covers both
+states that wait on a human, a failed build and a review that requested changes. PRs
+outside the author-action and review states appear in total time open but not in the two
+current-state panels.
 The rolling history uses complete UTC days. The review-cycle chart counts durable label
 transitions rather than scoreboard comments, because a scoreboard
 may be edited in place as later rounds complete. A cycle is one entry into review from

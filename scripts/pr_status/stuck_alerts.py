@@ -363,7 +363,7 @@ def detect_missing_required_status():
     A MISSING required status is worse than a red one and cannot self-heal. GitHub holds the PR
     at BLOCKED because the required check never arrives; core.derive sees no `build` status, so
     labels.py takes its ci=None branch and pins the PR at `awaiting-CI` instead of moving it to
-    `awaiting-author`; and nothing re-runs pr-build without a push, so no event ever corrects
+    `ci-failed`; and nothing re-runs pr-build without a push, so no event ever corrects
     it. PR #1358 sat wedged this way for seven days, invisible to the author and review paths
     alike, after a transient API error killed the status-reporting step mid-way.
     """

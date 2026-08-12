@@ -49,6 +49,8 @@ formalised here.
 
 ## Main results
 
+* `TauCeti.Valuation.exists_pow_lt_of_forall_cofinalValue` : one exponent serves finitely many
+  cofinal values.
 * `TauCeti.Valuation.mem_characteristicSubgroup_iff` : Membership in `cΓ_v` is bounding by a
   single attained value `≥ 1`.
 * `TauCeti.Valuation.hasFullCharacteristicGroup_iff_characteristicSubgroup_eq_top` : The
@@ -89,6 +91,22 @@ def CofinalValue (v : Valuation A Γ₀) (a : A) : Prop :=
 theorem cofinalValue_iff {v : Valuation A Γ₀} {a : A} :
     CofinalValue v a ↔ ∀ γ : ValueGroup₀ (.ofClass v), 0 < γ → ∃ n : ℕ, v.restrict a ^ n < γ :=
   Iff.rfl
+
+/-- **A uniform exponent for finitely many cofinal values.** If every member of a finite set has
+cofinal value, then a single exponent works for all of them at once.
+
+No bound on the values need be assumed: cofinality already forces `v.restrict a ≤ 1`, by taking
+`γ = 1`. That is what makes the exponent uniform, since raising a value `≤ 1` to a higher power
+only decreases it, so the largest of the individual exponents serves. -/
+theorem exists_pow_lt_of_forall_cofinalValue {v : Valuation A Γ₀} (S : Finset A)
+    (hcof : ∀ a ∈ S, CofinalValue v a) {γ : ValueGroup₀ (.ofClass v)} (hγ : 0 < γ) :
+    ∃ n : ℕ, ∀ a ∈ S, v.restrict a ^ n < γ := by
+  have hle : ∀ a ∈ S, v.restrict a ≤ 1 := fun a ha ↦ by
+    obtain ⟨n, hn⟩ := hcof a ha 1 one_pos
+    exact not_lt.mp fun h ↦ absurd hn (not_lt.mpr (one_le_pow₀ h.le))
+  choose! f hf using fun a (ha : a ∈ S) ↦ hcof a ha γ hγ
+  exact ⟨S.sup f, fun a ha ↦
+    (pow_le_pow_right_of_le_one' (hle a ha) (Finset.le_sup ha)).trans_lt (hf a ha)⟩
 
 /-- Cofinality transports along an equivalence of valuations, through the ordered
 isomorphism of their value groups. -/
