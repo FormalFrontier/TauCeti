@@ -16,6 +16,9 @@ every extension `K / k` of the base field, the base-changed coordinate ring `H â
 connected prime spectrum. This is equivalent to saying that every such base change has no
 idempotents other than zero and one.
 
+The condition is exposed as an `ObjectProperty` on the ambient Hopf-algebra category; consumers
+can impose it without introducing a separate bundled category of connected objects.
+
 ## Main declarations
 
 * `TauCeti.geometricallyConnectedCommHopfAlgProperty`: the coordinate-ring predicate.
