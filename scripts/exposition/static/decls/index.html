@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Declarations · Tau Ceti exposition</title>
+  <link rel="icon" href="../../static/favicon.ico" sizes="any">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&amp;display=swap">
+  <link rel="stylesheet" href="../assets/style.css">
+  <link rel="stylesheet" href="../assets/viewer.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="site-title" href="../">Tau Ceti <span class="brand-sub">· exposition</span></a>
+    <nav class="site-nav">
+      <a href="../">Areas</a>
+      <a href="./" aria-current="page">Declarations</a>
+      <a href="../../docs/">API docs</a>
+      <a href="../../">Tau Ceti</a>
+      <a href="https://github.com/TauCetiProject/TauCeti">GitHub</a>
+    </nav>
+  </header>
+
+  <main class="viewer-wrap">
+    <div class="viewer-toolbar">
+      <input id="declSearch" type="search" placeholder="Search declarations…"
+             autocomplete="off" spellcheck="false"
+             aria-label="Search declarations by name">
+      <select id="areaSelect" aria-label="Filter by area">
+        <option value="-1">All areas</option>
+      </select>
+      <span id="declCount" class="decl-count" aria-live="polite">Loading…</span>
+      <div id="kindChips" class="kind-chips" role="group"
+           aria-label="Filter by kind"></div>
+    </div>
+
+    <div class="vscroll" id="vscroll">
+      <div class="vhead" id="vhead">
+        <button type="button" class="vsort" data-col="name">Name</button>
+        <button type="button" class="vsort" data-col="kind">Kind</button>
+        <button type="button" class="vsort" data-col="area">Area</button>
+      </div>
+      <div class="vspacer" id="vspacer">
+        <div class="vwindow" id="vwindow"></div>
+      </div>
+      <div class="vempty" id="vempty" hidden>
+        No declarations match the current filters.
+      </div>
+    </div>
+
+    <p class="load-error" id="loadError" hidden></p>
+  </main>
+
+  <script src="../assets/viewer.js"></script>
+</body>
+</html>

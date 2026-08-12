@@ -26,6 +26,9 @@ jobs:
           python3 scripts/pr_status/test_pr_labels.py
           python3 scripts/pr_status/test_zulip.py
           python3 scripts/test_structure_nudge.py
+          python3 scripts/exposition/test_layout.py
+          python3 scripts/exposition/test_source_text.py
+          python3 scripts/exposition/test_generate.py
 
       # The two-library split is build convenience, not a trust boundary.
       # This guard is what actually stops the AI-owned library from inheriting

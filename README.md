@@ -145,6 +145,12 @@ scheduled for regeneration every three hours from `main` with
 [`doc-gen4`](https://github.com/leanprover/doc-gen4), alongside the
 [project website](https://taucetiproject.github.io/TauCeti/).
 
+An interactive **exposition** of the library — a dependency graph per area, a searchable
+declaration index, and a map of how the areas build on each other — is published at
+[taucetiproject.github.io/TauCeti/exposition](https://taucetiproject.github.io/TauCeti/exposition/),
+regenerated from the built library on the same schedule (see
+[`scripts/exposition/`](scripts/exposition/README.md)).
+
 The moving `docgen` branch points at the mainline commit whose generated API documentation is
 currently published — not necessarily the newest, since a deployment that serves older
 documentation moves the branch back to match it. Every successful deployment from `main` attempts

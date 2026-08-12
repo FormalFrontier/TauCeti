@@ -7,6 +7,11 @@
 /lakeprof.trace_event
 /index.html
 
+# Artifacts left in the repo root by the exposition pipeline (scripts/exposition)
+/exposition-dump.jsonl
+/exposition-site/
+/exposition-fresh/
+
 __pycache__/
 *.pyc
 
