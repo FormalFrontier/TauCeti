@@ -9,15 +9,15 @@ module
 -- `TauCeti.BrauerGroup.mk_eq_one_iff_finrank_eq_one`, which makes the class of `ℍ[ℝ]` nonidentity
 -- and so turns the divisibility `orderOf ∣ 2` into an equality. It re-exports the whole
 -- Brauer-group stack, hence `CSA`, `BrauerGroup`,
--- `TauCeti.BrauerGroup.orderOf_mk_eq_two_of_algEquiv_op` and `TauCeti.Algebra.IsSplittingField`.
+-- `TauCeti.BrauerGroup.orderOf_mk_eq_two_of_algEquiv_op` and `TauCeti.Algebra.IsSplittingField`,
+-- and with the order results Mathlib's `orderOf`, which occurs in the statement of the order
+-- computation below; that is why `Mathlib.GroupTheory.OrderOfElement` is not imported again here.
 public import TauCeti.Algebra.BrauerGroup.Splitting
 -- `TauCeti.Algebra.CentralSimple.Quaternion` is imported publicly because `ℍ[ℝ]` occurs in every
 -- statement below; it re-exports `Mathlib.Algebra.Quaternion`, hence the `ℍ[·]` notation and
 -- quaternion conjugation `Quaternion.starAe`, and `TauCeti.Quaternion.instIsCentral`, which is what
 -- puts `ℍ[ℝ]` in the scope of the Brauer-group API at all.
 public import TauCeti.Algebra.CentralSimple.Quaternion
--- `orderOf` occurs in the statement of the order computation below.
-public import Mathlib.GroupTheory.OrderOfElement
 -- Non-public: the base-change homomorphism and the fundamental theorem of algebra are used only by
 -- the worked examples closing the file, so downstream importers do not pay for them.
 import Mathlib.Analysis.Complex.Polynomial.Basic

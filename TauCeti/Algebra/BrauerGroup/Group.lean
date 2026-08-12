@@ -15,8 +15,9 @@ module
 -- and opposite-matrix isomorphisms `AlgEquiv.op` and `AlgEquiv.mopMatrix`; that is why none of
 -- those is imported again here.
 public import TauCeti.Algebra.BrauerGroup.Trivial
--- Non-public: `orderOf` supports the order-divisibility result near the end of the file.
-import Mathlib.GroupTheory.OrderOfElement
+-- `Mathlib.GroupTheory.OrderOfElement` is imported publicly: `orderOf` occurs in the statements of
+-- the order results closing the file, so importers of this module get it with them.
+public import Mathlib.GroupTheory.OrderOfElement
 
 /-!
 # The Brauer group of a field is a commutative group
