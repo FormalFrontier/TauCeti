@@ -144,7 +144,8 @@ theorem isUnipotent_conj_iff (g h : GeneralLinearGroup K V) :
     rw [LinearMap.GeneralLinearGroup.toLinearEquiv_inv]
     rfl
   rw [← hconj]
-  exact isUnipotent_congrLinearEquiv_iff h.toLinearEquiv g
+  simpa only [isUnipotent_ofLinearEquiv_iff] using
+    isUnipotent_congrLinearEquiv_iff h.toLinearEquiv g
 
 end GeneralLinearGroup
 

@@ -99,18 +99,17 @@ theorem isSemisimple_conj_iff (g h : GeneralLinearGroup K V) :
   rw [heq, LinearMap.GeneralLinearGroup.congrLinearEquiv_apply]
   exact isSemisimple_congrLinearEquiv_iff h.toLinearEquiv g
 
-/-- Unipotence of a linear automorphism is invariant under transport by a linear equivalence. -/
+/-- Unipotence of a linear automorphism is invariant under transport by a linear equivalence.
+The transported side is stated as its simp-normal nilpotence criterion. -/
 @[simp]
 theorem isUnipotent_congrLinearEquiv_iff
     (e : V ≃ₗ[K] W) (g : GeneralLinearGroup K V) :
-    IsUnipotent (LinearMap.GeneralLinearGroup.ofLinearEquiv
-      (e.symm.trans (g.toLinearEquiv.trans e))) ↔ IsUnipotent g := by
-  rw [isUnipotent_def, isUnipotent_def]
-  rw [← LinearMap.GeneralLinearGroup.congrLinearEquiv_apply e g]
+    _root_.IsNilpotent
+      ((e.symm.trans (g.toLinearEquiv.trans e)).toLinearMap - 1) ↔ IsUnipotent g := by
+  rw [isUnipotent_def]
   have hmap :
       LinearEquiv.conjRingEquiv e ((g : End K V) - 1) =
-        ((LinearMap.GeneralLinearGroup.congrLinearEquiv e g :
-          GeneralLinearGroup K W) : End K W) - 1 := by
+        (e.symm.trans (g.toLinearEquiv.trans e)).toLinearMap - 1 := by
     ext x
     simp
   rw [← hmap]
@@ -135,8 +134,14 @@ theorem jordanDecomposition_congrLinearEquiv
   symm
   apply (eq_jordanDecomposition_iff
     (LinearMap.GeneralLinearGroup.congrLinearEquiv e g) _ _).2
+  have hunipotent : IsUnipotent
+      (LinearMap.GeneralLinearGroup.congrLinearEquiv e (unipotentPart g)) := by
+    rw [isUnipotent_def]
+    change _root_.IsNilpotent
+      ((e.symm.trans ((unipotentPart g).toLinearEquiv.trans e)).toLinearMap - 1)
+    exact (isUnipotent_congrLinearEquiv_iff e _).2 (isUnipotent_unipotentPart g)
   refine ⟨(isSemisimple_congrLinearEquiv_iff e _).2 (isSemisimple_semisimplePart g),
-    (isUnipotent_congrLinearEquiv_iff e _).2 (isUnipotent_unipotentPart g), ?_, ?_⟩
+    hunipotent, ?_, ?_⟩
   · exact (commute_semisimplePart_unipotentPart g).map
       (LinearMap.GeneralLinearGroup.congrLinearEquiv e).toMonoidHom
   · rw [← map_mul, semisimplePart_mul_unipotentPart]
