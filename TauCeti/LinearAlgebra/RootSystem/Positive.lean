@@ -79,6 +79,12 @@ variable {ι : Type u} {R : Type v} {M : Type w} {N : Type x}
   [CommRing R] [AddCommGroup M] [Module R M] [AddCommGroup N] [Module R N]
   (P : RootPairing ι R M N)
 
+/-- Root negation is an involution of the root index type: it is the `InvolutiveNeg` supplied by
+`RootPairing.indexNeg`, written through the self-reflection permutation. -/
+lemma involutive_reflectionPerm_self : Function.Involutive fun i : ι ↦ P.reflectionPerm i i := by
+  let := P.indexNeg
+  simpa only [← RootPairing.indexNeg_neg] using neg_involutive
+
 /-- The positive roots relative to a base. -/
 def posRoots [CharZero R] (b : P.Base) : Set ι := {i | b.IsPos i}
 
@@ -277,10 +283,7 @@ theorem image_reflectionPerm_self_posRoots :
 /-- Root negation exchanges negative and positive roots. -/
 theorem image_reflectionPerm_self_negRoots :
     (fun i ↦ P.reflectionPerm i i) '' negRoots P b = posRoots P b := by
-  let := P.indexNeg
-  have hinv : Function.Involutive (fun i : ι ↦ P.reflectionPerm i i) := by
-    intro i
-    simp only [← RootPairing.indexNeg_neg, neg_neg]
+  have hinv := involutive_reflectionPerm_self P
   calc
     (fun i ↦ P.reflectionPerm i i) '' negRoots P b =
         (fun i ↦ P.reflectionPerm i i) '' (posRoots P b)ᶜ := by rw [negRoots_eq_compl]
@@ -296,19 +299,17 @@ theorem image_reflectionPerm_self_negRoots :
 
 /-- A root pairing has equally many positive and negative roots. Root negation gives the bijection
 between the two sets. -/
+@[simp]
 theorem ncard_negRoots_eq_ncard_posRoots :
     (negRoots P b).ncard = (posRoots P b).ncard := by
   rw [← image_reflectionPerm_self_posRoots P b]
-  apply Set.ncard_image_of_injective
-  intro i j hij
-  let := P.indexNeg
-  simpa only [← RootPairing.indexNeg_neg, neg_neg] using congrArg Neg.neg hij
+  exact Set.ncard_image_of_injective _ (involutive_reflectionPerm_self P).injective
 
-/-- The positive and negative roots partition a finite root index type. -/
+/-- The numbers of positive and negative roots add up to the total number of roots. -/
 theorem ncard_posRoots_add_ncard_negRoots [Finite ι] :
     (posRoots P b).ncard + (negRoots P b).ncard = Nat.card ι := by
-  rw [← Set.ncard_union_eq (disjoint_posRoots_negRoots P b) (posRoots_finite P b)
-    (negRoots_finite P b), posRoots_union_negRoots, Set.ncard_univ]
+  rw [negRoots_eq_compl]
+  exact Set.ncard_add_ncard_compl _
 
 /-- Twice the number of positive roots is the total number of roots. -/
 theorem two_mul_ncard_posRoots [Finite ι] :
