@@ -46,10 +46,31 @@ common value. Meanwhile the same product converges in `L¹` to `∏ i, (directin
 by the disjoint-window convergence theorem in `ViaL2/WindowProduct.lean`.
 A constant sequence that converges must equal its limit, which is the factorization.
 
+## Relation to the martingale route
+
+`DeFinetti/BlockFactorization.lean` proves
+`condExp_blockIndicatorProd_prefix_ae_eq_prod_directingMeasure`, the same factorization for the
+*prefix* selection, through `TailFactorization` and reverse-martingale convergence. The overlap is
+intentional: the two are the corresponding steps of the two roadmap routes. Their names record the
+difference in what they *say* — `_prefix_` against `_strictMono_` — rather than how they are
+proved; the roadmap's `_viaL2` route suffix is reserved for the public route endpoints.
+
+Neither theorem is derivable from the other without collapsing that separation, since a single
+Lean declaration carries a single proof and a single import closure: making either canonical would
+make one route depend on the other. The genuinely shared ingredients — tail-conditioned selection
+invariance, directing-measure integrability, the `ℝ≥0∞` conversion — are already factored into
+neutral modules that both routes import.
+
+This statement is also strictly stronger than the prefix form: it holds for every strictly
+monotone selection, not only `i ↦ i`, and does not assume `StandardBorelSpace Ω`.
+
 ## References
 
 * Roadmap: `TauCetiRoadmap/Exchangeability/README.md`, **Layer 3** — the martingale-free
   standard-Borel de Finetti route, `deFinetti_viaL2`.
+* Not adapted from the pinned `cameronfreer/exchangeability` sources: the argument here is built
+  from this repository's `L²` averaging library and its tail-conditioned selection invariance,
+  and deliberately diverges from that development's `ViaL2` material.
 -/
 
 public section
@@ -98,7 +119,7 @@ marginals.
 
 The two inputs are selection invariance and `L¹` convergence of the disjoint-window product; see
 the module docstring. Nothing here uses a martingale. -/
-theorem condExp_blockIndicatorProd_tailProcess_ae_eq_prod_directingMeasure
+theorem condExp_blockIndicatorProd_strictMono_tailProcess_ae_eq_prod_directingMeasure
     [StandardBorelSpace α] [Nonempty α]
     {μ : Measure Ω} [IsFiniteMeasure μ] {X : ℕ → Ω → α} (hX : Contractable μ X)
     (hX_meas : ∀ n, Measurable (X n)) {r : ℕ} {k : Fin r → ℕ} (hk : StrictMono k)
@@ -120,10 +141,9 @@ theorem condExp_blockIndicatorProd_tailProcess_ae_eq_prod_directingMeasure
   have hcondW : μ[W | tailProcess X] =ᵐ[μ] W := by
     rw [condExp_of_stronglyMeasurable hTail hW_tail.stronglyMeasurable hW_int]
   -- Each indicator block is `blockIndicatorProd` along its own selection, hence integrable.
-  have hblock_int : ∀ s : Fin r → ℕ, Integrable (fun ω => ∏ i, Y i (s i) ω) μ := fun s => by
-    rw [show (fun ω => ∏ i, Y i (s i) ω) = blockIndicatorProd X s B from
-      (funext fun ω => blockIndicatorProd_apply X s B ω).symm]
-    exact integrable_blockIndicatorProd (fun i => (hX_meas (s i)).aemeasurable) hB
+  have hblock_int : ∀ s : Fin r → ℕ, Integrable (fun ω => ∏ i, Y i (s i) ω) μ := fun s =>
+    (integrable_blockIndicatorProd (fun i => (hX_meas (s i)).aemeasurable) hB).congr
+      (ae_of_all _ fun ω => blockIndicatorProd_apply X s B ω)
   -- The product of disjoint-window block averages, whose conditional expectation is `μ[Z | tail]`
   -- at every length and which converges in `L¹` to `W`.
   set P : ℕ → Ω → ℝ :=
