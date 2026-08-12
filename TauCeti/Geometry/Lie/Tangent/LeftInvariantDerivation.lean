@@ -94,7 +94,7 @@ theorem contMDiff_mvfderiv_mulInvariantVectorField
     (f : C^∞⟮I, G; 𝕜⟯) :
     ContMDiff I (modelWithCornersSelf 𝕜 𝕜) ∞
       (fun g ↦ mvfderiv I f g (mulInvariantVectorField v g)) :=
-  f.contMDiff.contMDiff_mvfderiv_apply
+  f.contMDiff.contMDiff_mvfderiv_apply_tangentBundle
     (contMDiff_mulInvariantVectorField_infty v) (by simp)
 
 /-- The derivation of smooth functions that differentiates along the left-invariant vector

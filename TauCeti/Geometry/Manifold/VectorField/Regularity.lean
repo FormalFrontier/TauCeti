@@ -21,8 +21,6 @@ manifold differential of a function to a smooth section.
   normed vector space.
 * `ContMDiff.contMDiff_mvfderiv_apply_tangentBundle`: applying a differential along an arbitrary
   smooth tangent-bundle-valued input is smooth.
-* `ContMDiff.contMDiff_mvfderiv_apply`: applying the differential of a `C^n` function to a `C^m`
-  tangent-bundle section is `C^m` when `m + 1 ≤ n`.
 
 ## References
 
@@ -108,16 +106,9 @@ theorem ContMDiff.contMDiff_mvfderiv_apply_tangentBundle {f : M → F}
     contMDiff_snd_tangentBundle_modelSpace F 𝓘(𝕜, F)
   simp only [mvfderiv_apply_eq_mfderiv_apply]
   have h := hsnd.comp (hdf.comp hV)
-  exact h.congr fun x => rfl
+  have htangent (x : N) :
+      ((tangentMap% f (V x)).2 : F) = mfderiv I 𝓘(𝕜, F) f (V x).1 (V x).2 := by
+    rw [tangentMap_snd]
+  exact h.congr fun x => (htangent x).symm
 
 end TangentBundleInputs
-
-/-- Applying the differential of a `C^n` function to a `C^m` tangent-bundle section is `C^m`
-when `m + 1 ≤ n`. -/
-theorem ContMDiff.contMDiff_mvfderiv_apply {f : M → F}
-    {V : ∀ x : M, TangentSpace I x}
-    (hf : ContMDiff I 𝓘(𝕜, F) n f)
-    (hV : ContMDiff I I.tangent m (fun x => (V x : TangentBundle I M)))
-    (hmn : m + 1 ≤ n) :
-    ContMDiff I 𝓘(𝕜, F) m (fun x => mvfderiv I f x (V x)) :=
-  hf.contMDiff_mvfderiv_apply_tangentBundle hV hmn
