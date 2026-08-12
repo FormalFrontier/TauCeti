@@ -78,8 +78,9 @@ def edges : List (Fin 12 × Fin 12) :=
     (0, 5), (5, 6), (6, 7), (7, 8),
     (0, 9), (9, 10), (10, 11)]
 
-/-- The explicit edge list of the numbered `Y₄₄₃` diagram. -/
-theorem edges_eq : edges =
+/-- The explicit edge list of the numbered `Y₄₄₃` diagram. This is the unfolding lemma for the
+sealed body. -/
+theorem edges_def : edges =
     [(0, 1), (1, 2), (2, 3), (3, 4),
       (0, 5), (5, 6), (6, 7), (7, 8),
       (0, 9), (9, 10), (10, 11)] := by
@@ -133,8 +134,9 @@ private abbrev d3 : Relator (Fin 12) := .gen 11
 def spiderRelator : Relator (Fin 12) :=
   .pow (a ⬝ b1 ⬝ c1 ⬝ a ⬝ b2 ⬝ c2 ⬝ a ⬝ b3 ⬝ c3) 10
 
-/-- The spider relator spelled out in the numbered alphabet. -/
-theorem spiderRelator_eq : spiderRelator =
+/-- The spider relator spelled out in the numbered alphabet. This is the unfolding lemma for the
+sealed body. -/
+theorem spiderRelator_def : spiderRelator =
     .pow (.gen 0 ⬝ .gen 1 ⬝ .gen 2 ⬝ .gen 0 ⬝ .gen 5 ⬝ .gen 6 ⬝ .gen 0 ⬝
       .gen 9 ⬝ .gen 10) 10 := by
   rw [spiderRelator]
@@ -144,19 +146,22 @@ from `Y₄₄₃ ≅ M × 2` to the Monster group `M`. -/
 def centralInvolutionRelator : Relator (Fin 12) :=
   .pow (a ⬝ b3 ⬝ c3 ⬝ d3 ⬝ b1 ⬝ c1 ⬝ b2) 9
 
-/-- Ivanov's element `f₃₁₂` spelled out in the numbered alphabet. -/
-theorem centralInvolutionRelator_eq : centralInvolutionRelator =
+/-- Ivanov's element `f₃₁₂` spelled out in the numbered alphabet. This is the unfolding lemma for
+the sealed body. -/
+theorem centralInvolutionRelator_def : centralInvolutionRelator =
     .pow (.gen 0 ⬝ .gen 9 ⬝ .gen 10 ⬝ .gen 11 ⬝ .gen 1 ⬝ .gen 2 ⬝ .gen 5) 9 := by
   rw [centralInvolutionRelator]
-
-/-- The spider and central-involution relators appended to the Coxeter relations. -/
-def additionalRelators : List (Relator (Fin 12)) :=
-  [spiderRelator, centralInvolutionRelator]
 
 /-- The eighty relators of the Monster presentation: the `Y₄₄₃` Coxeter relations, followed by
 the spider and central-involution relators. -/
 def relatorList : List (Relator (Fin 12)) :=
-  coxeterRelators coxeterMatrix ++ additionalRelators
+  coxeterRelators coxeterMatrix ++ [spiderRelator, centralInvolutionRelator]
+
+/-- The relator list decomposes into the `Y₄₄₃` Coxeter relations, the spider relator, and the
+central-involution relator. This is the unfolding lemma for the sealed body. -/
+theorem relatorList_def : relatorList =
+    coxeterRelators coxeterMatrix ++ [spiderRelator, centralInvolutionRelator] := by
+  rw [relatorList]
 
 /-! ### The presentation row and its audit interface -/
 
@@ -164,7 +169,11 @@ def relatorList : List (Relator (Fin 12)) :=
 
 Ivanov proves that `Y₄₄₃` is `M × 2` and that quotienting by the central element `f₃₁₂` gives `M`.
 No structural property of the resulting `PresentedGroup` is asserted here; this definition records
-only the cited generators and complete relator data. -/
+only the cited generators and complete relator data.
+
+The body is exposed so that `presentation_transcribed` below can state the exact typed relator
+data: the index type of a transcribed relator is `Fin presentation.generatorNames.length`, which
+is `Fin 12` only by unfolding this definition. -/
 @[expose]
 def presentation : GroupPresentation where
   generatorNames := ["a", "b1", "c1", "d1", "e1", "b2", "c2", "d2", "e2", "b3", "c3", "d3"]
@@ -233,6 +242,12 @@ theorem presentation_expectedGeneratorCount : presentation.expectedGeneratorCoun
 theorem presentation_expectedRelatorCount : presentation.expectedRelatorCount = 80 := by
   rw [presentation]
 
+/-- The relator expressions carried by the Monster presentation are exactly the transcribed
+relator list, whose decomposition is `relatorList_def`. -/
+@[simp]
+theorem presentation_transcribed : presentation.transcribed = relatorList := by
+  simp [presentation]
+
 /-- The compiled relators carried by the Monster presentation, with generator bounds forgotten. -/
 theorem presentation_relatorLetters : presentation.relatorLetters =
     relatorList.map fun r => r.toWord.map fun letter => (letter.1.val, letter.2) := by
@@ -249,61 +264,55 @@ theorem length_coxeterRelators : (coxeterRelators coxeterMatrix).length = 78 := 
 
 /-- The full Monster presentation has eighty relators. -/
 theorem length_relatorList : relatorList.length = 80 := by
-  simp [relatorList, additionalRelators]
+  simp [relatorList_def]
   norm_num [Nat.choose]
 
 /-- The generator and relator counts recorded for the Monster agree with the transcribed data. -/
 theorem presentation_matchesMetadata : presentation.matchesMetadata := by
   rw [GroupPresentation.matchesMetadata_iff]
-  constructor
-  · change presentation.generatorNames.length = 12
-    rw [presentation_generatorNames]
+  refine ⟨?_, ?_⟩
+  · rw [GroupPresentation.generatorCount, presentation_generatorNames,
+      presentation_expectedGeneratorCount]
     rfl
-  · simpa [presentation, relatorList, additionalRelators] using length_relatorList
+  · rw [presentation_transcribed, presentation_expectedRelatorCount]
+    exact length_relatorList
 
 /-- The spider relator has ninety letters. -/
-theorem spiderRelator_length : spiderRelator.toWord.length = 90 := by
+theorem length_spiderRelator : spiderRelator.toWord.length = 90 := by
   simp [spiderRelator]
 
 /-- The seventy-nine relators presenting `M × 2` have the source's total length `400`. -/
 theorem coxeterAndSpider_totalLength :
     ((coxeterRelators coxeterMatrix ++ [spiderRelator]).map
       fun r => r.toWord.length).sum = 400 := by
-  rw [coxeterRelators_eq, coxeterRelatorsOfList_eq]
+  rw [coxeterRelators_def, coxeterRelatorsOfList_def]
   rw [List.map_append, List.sum_append, List.map_map]
-  change
-    (List.map (fun z => (coxeterRelator coxeterMatrix z.inf z.sup).toWord.length)
-        (List.finRange 12).sym2).sum +
-      (List.map (fun r => r.toWord.length) [spiderRelator]).sum = 400
-  simp_rw [length_toWord_coxeterRelator]
+  simp_rw [Function.comp_def, length_toWord_coxeterRelator]
   simp only [coxeterMatrix_apply]
-  rw [edges_eq]
+  rw [edges_def]
   simp only [List.map_cons, List.map_nil, List.sum_cons, List.sum_nil, Nat.add_zero,
-    spiderRelator_length]
+    length_spiderRelator]
   decide
 
 /-- The central-involution relator `f₃₁₂` has sixty-three letters. -/
-theorem centralInvolutionRelator_length : centralInvolutionRelator.toWord.length = 63 := by
+theorem length_centralInvolutionRelator : centralInvolutionRelator.toWord.length = 63 := by
   simp [centralInvolutionRelator]
 
 /-- The compiled relators of the Monster presentation contain `463` signed letters in total. -/
 theorem presentation_totalLength : presentation.totalLength = 463 := by
   have h : (relatorList.map fun r => r.toWord.length).sum = 463 := by
-    rw [relatorList, additionalRelators]
-    rw [show coxeterRelators coxeterMatrix ++ [spiderRelator, centralInvolutionRelator] =
-        (coxeterRelators coxeterMatrix ++ [spiderRelator]) ++ [centralInvolutionRelator] by
-          simp]
-    rw [List.map_append, List.sum_append]
+    rw [relatorList_def, ← List.singleton_append, ← List.append_assoc, List.map_append,
+      List.sum_append]
     simp only [List.map_cons, List.map_nil, List.sum_cons, List.sum_nil, Nat.add_zero]
-    rw [coxeterAndSpider_totalLength, centralInvolutionRelator_length]
+    rw [coxeterAndSpider_totalLength, length_centralInvolutionRelator]
   rw [← GroupPresentation.sum_map_length_relatorLetters, presentation_relatorLetters,
     List.map_map]
   simpa only [Function.comp_def, List.length_map] using h
 
 /-- Every expression in the Monster relator list compiles to a cyclically reduced word. -/
-theorem relatorList_cyclicallyReduced (r : Relator (Fin 12)) (hr : r ∈ relatorList) :
-    FreeGroup.IsCyclicallyReduced r.toWord := by
-  rw [relatorList, additionalRelators, List.mem_append] at hr
+theorem isCyclicallyReduced_toWord_of_mem_relatorList (r : Relator (Fin 12))
+    (hr : r ∈ relatorList) : FreeGroup.IsCyclicallyReduced r.toWord := by
+  rw [relatorList_def, List.mem_append] at hr
   rcases hr with hr | hr
   · rw [mem_coxeterRelators_iff] at hr
     obtain ⟨i, j, rfl⟩ := hr
@@ -318,6 +327,6 @@ the usual presentation-length convention. -/
 theorem presentation_relatorsCyclicallyReduced :
     presentation.relatorsCyclicallyReduced := by
   simpa [GroupPresentation.relatorsCyclicallyReduced_iff, GroupPresentation.relators_def,
-    presentation] using relatorList_cyclicallyReduced
+    presentation] using isCyclicallyReduced_toWord_of_mem_relatorList
 
 end TauCeti.Sporadic.Monster

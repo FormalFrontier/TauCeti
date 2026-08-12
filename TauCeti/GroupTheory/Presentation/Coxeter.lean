@@ -116,9 +116,12 @@ def coxeterRelatorsOfList [LinearOrder B] (M : CoxeterMatrix B) (l : List B) : L
   l.sym2.map fun z => coxeterRelator M z.inf z.sup
 
 /-- The Coxeter relator list is obtained by mapping the canonically ordered representative of
-each unordered pair of list positions to its Coxeter relator. This equation lets a concrete finite
-presentation audit the compiled words without exposing the definition. -/
-theorem coxeterRelatorsOfList_eq [LinearOrder B] (M : CoxeterMatrix B) (l : List B) :
+each unordered pair of list positions to its Coxeter relator.
+
+This is the unfolding lemma for the sealed body, and like `TauCeti.GroupPresentation.relators_def`
+it is deliberately not `@[simp]`: it lets a concrete finite presentation audit the compiled words
+without the definition being exposed. -/
+theorem coxeterRelatorsOfList_def [LinearOrder B] (M : CoxeterMatrix B) (l : List B) :
     coxeterRelatorsOfList M l = l.sym2.map fun z => coxeterRelator M z.inf z.sup := by
   rw [coxeterRelatorsOfList]
 
@@ -166,8 +169,8 @@ def coxeterRelators {n : ℕ} (M : CoxeterMatrix (Fin n)) : List (Relator (Fin n
   coxeterRelatorsOfList M (List.finRange n)
 
 /-- The numbered Coxeter relator list uses the nodes `0, …, n - 1` in that order. This is the
-unfolding equation for the sealed definition. -/
-theorem coxeterRelators_eq {n : ℕ} (M : CoxeterMatrix (Fin n)) :
+unfolding lemma for the sealed body, and like `coxeterRelatorsOfList_def` it is not `@[simp]`. -/
+theorem coxeterRelators_def {n : ℕ} (M : CoxeterMatrix (Fin n)) :
     coxeterRelators M = coxeterRelatorsOfList M (List.finRange n) := by
   rw [coxeterRelators]
 
